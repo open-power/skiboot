@@ -556,25 +556,28 @@ out:
 #define MAX_RIDS	64
 #define MAX_NAME	64
 
-static uint32_t get_index(uint32_t *prids, uint16_t rid)
+static int get_index(uint16_t *prids, uint16_t rid)
 {
 	int index;
 
-	for (index = 0; prids[index] && index < MAX_RIDS; index++) {
+	for (index = 0; prids[index] && index < MAX_RIDS; index++)
 		if (prids[index] == rid)
 			return index;
-	}
+
+	if (index == MAX_RIDS)
+		return -1;
 
 	prids[index] = rid;
 	return index;
 }
 
 static void create_sensor_nodes(int index, uint16_t frc, uint16_t rid,
-		uint32_t *prids, struct dt_node *sensors)
+		uint16_t *prids, struct dt_node *sensors)
 {
 	char name[MAX_NAME];
 	struct dt_node *fs_node;
 	uint32_t value;
+	int rid_index;
 
 	switch (spcn_mod_data[index].mod) {
 	case SPCN_MOD_PRS_STATUS_FIRST:
@@ -582,9 +585,12 @@ static void create_sensor_nodes(int index, uint16_t frc, uint16_t rid,
 		switch (frc) {
 		case SENSOR_FRC_POWER_SUPPLY:
 		case SENSOR_FRC_COOLING_FAN:
+			rid_index = get_index(prids, rid);
+			if (rid_index < 0)
+				break;
 			snprintf(name, MAX_NAME, "%s#%d-%s", frc_names[frc],
 					/* Start enumeration from 1 */
-					get_index(prids, rid) + 1,
+					rid_index + 1,
 					spcn_mod_data[index].mod_attr[1].name);
 			fs_node = dt_new(sensors, name);
 			snprintf(name, MAX_NAME, "ibm,opal-sensor-%s",
@@ -606,9 +612,12 @@ static void create_sensor_nodes(int index, uint16_t frc, uint16_t rid,
 		case SENSOR_FRC_POWER_SUPPLY:
 		case SENSOR_FRC_COOLING_FAN:
 		case SENSOR_FRC_AMB_TEMP:
+			rid_index = get_index(prids, rid);
+			if (rid_index < 0)
+				break;
 			snprintf(name, MAX_NAME, "%s#%d-%s", frc_names[frc],
 					/* Start enumeration from 1 */
-					get_index(prids, rid) + 1,
+					rid_index + 1,
 					spcn_mod_data[index].mod_attr[0].name);
 			fs_node = dt_new(sensors, name);
 			snprintf(name, MAX_NAME, "ibm,opal-sensor-%s",
@@ -636,12 +645,13 @@ static void add_sensor_ids(struct dt_node *sensors)
 {
 	uint32_t MAX_FRC_NAMES = sizeof(frc_names) / sizeof(*frc_names);
 	uint8_t *sensor_buf_ptr = (uint8_t *)sensor_buffer;
-	uint32_t frc_rids[MAX_FRC_NAMES][MAX_RIDS];
+	uint16_t *prids[MAX_FRC_NAMES];
 	uint16_t sensor_frc, power_rid;
 	uint16_t sensor_mod_data[8];
-	int index, count;
+	uint32_t index, count;
 
-	memset(frc_rids, 0, sizeof(frc_rids));
+	for (index = 0; index < MAX_FRC_NAMES; index++)
+		prids[index] = zalloc(MAX_RIDS * sizeof(**prids));
 
 	for (index = 0; spcn_mod_data[index].mod != SPCN_MOD_LAST; index++) {
 		if (spcn_mod_data[index].mod == SPCN_MOD_SENSOR_POWER) {
@@ -664,13 +674,16 @@ static void add_sensor_ids(struct dt_node *sensors)
 						frc_names[sensor_frc])
 					create_sensor_nodes(index, sensor_frc,
 							power_rid,
-							frc_rids[sensor_frc],
+							prids[sensor_frc],
 							sensors);
 			}
 
 			sensor_buf_ptr += spcn_mod_data[index].entry_size;
 		}
 	}
+
+	for (index = 0; index < MAX_FRC_NAMES; index++)
+		free(prids[index]);
 }
 
 static void add_opal_sensor_node(void)
