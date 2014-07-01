@@ -2693,7 +2693,7 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	xscom_write(p->chip_id, CAPP_EPOCH_TIMER_CTRL, 	0x00000000FFF8FFE0);
 	xscom_write(p->chip_id, FLUSH_UOP_CONFIG1, 	0xB188280728000000);
 	xscom_write(p->chip_id, FLUSH_UOP_CONFIG2, 	0xB188400F00000000);
-	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0x01F0000000000000);
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xA1F0000000000000);
 }
 
 /* override some inits with CAPI defaults */
