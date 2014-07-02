@@ -292,6 +292,9 @@ struct p7ioc_phb {
 	uint8_t				index;	/* 0..5 index inside p7ioc */
 	uint8_t				gen;
 	uint32_t			flags;
+#define P7IOC_REV_DD10	0x00a20001
+#define P7IOC_REV_DD11	0x00a20002
+	uint32_t			rev;	/* Both major and minor have 2 bytes */
 	void				*regs_asb;
 	void				*regs;	/* AIB regs */
 	struct lock			lock;

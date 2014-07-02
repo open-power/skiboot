@@ -2903,8 +2903,8 @@ int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 	 * the value makes sense...
 	 */
 	val = in_be64(p->regs_asb + PHB_VERSION);
-
-	PHBDBG(p, "Version reg: %llx\n", val);
+	p->rev = ((val >> 16) & 0xffff) | (val & 0xffff);
+	PHBDBG(p, "PHB version: %08x\n", p->rev);
 
 	/*
 	 * Configure AIB operations
