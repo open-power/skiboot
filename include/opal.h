@@ -131,7 +131,8 @@
 #define OPAL_PCI_SET_PHB_CAPI_MODE		93
 #define OPAL_DUMP_INFO2				94
 #define OPAL_WRITE_OPPANEL_ASYNC		95
-#define OPAL_LAST				95
+#define OPAL_PCI_ERR_INJCT			96
+#define OPAL_LAST				96
 
 #ifndef __ASSEMBLY__
 
@@ -175,6 +176,33 @@ enum OpalPciErrorSeverity {
 	OPAL_EEH_SEV_PHB_FENCED	= 3,
 	OPAL_EEH_SEV_PE_ER	= 4,
 	OPAL_EEH_SEV_INF	= 5
+};
+
+enum OpalErrinjctType {
+	OpalErrinjctTypeIoaBusError		= 0,
+	OpalErrinjctTypeIoaBusError64		= 1,
+
+	/* IoaBusError & IoaBusError64 */
+	OpalEjtIoaLoadMemAddr			= 0,
+	OpalEjtIoaLoadMemData			= 1,
+	OpalEjtIoaLoadIoAddr			= 2,
+	OpalEjtIoaLoadIoData			= 3,
+	OpalEjtIoaLoadConfigAddr		= 4,
+	OpalEjtIoaLoadConfigData		= 5,
+	OpalEjtIoaStoreMemAddr			= 6,
+	OpalEjtIoaStoreMemData			= 7,
+	OpalEjtIoaStoreIoAddr			= 8,
+	OpalEjtIoaStoreIoData			= 9,
+	OpalEjtIoaStoreConfigAddr		= 10,
+	OpalEjtIoaStoreConfigData		= 11,
+	OpalEjtIoaDmaReadMemAddr		= 12,
+	OpalEjtIoaDmaReadMemData		= 13,
+	OpalEjtIoaDmaReadMemMaster		= 14,
+	OpalEjtIoaDmaReadMemTarget		= 15,
+	OpalEjtIoaDmaWriteMemAddr		= 16,
+	OpalEjtIoaDmaWriteMemData		= 17,
+	OpalEjtIoaDmaWriteMemMaster		= 18,
+	OpalEjtIoaDmaWriteMemTarget		= 19,
 };
 
 enum OpalShpcAction {
