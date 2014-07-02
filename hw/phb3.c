@@ -2527,6 +2527,150 @@ static int64_t phb3_eeh_next_error(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
+static int64_t phb3_err_injct(struct phb *phb, uint32_t pe_no,
+			      uint32_t type, uint32_t function,
+			      uint64_t address, uint64_t mask)
+{
+	struct phb3 *p = phb_to_phb3(phb);
+	uint64_t ctl = 0;
+	uint64_t base, prefer, addr, msk;
+	int index = 0;
+	bool bus_valid = false;
+
+	/* To support 64-bits error injection later */
+	if (type == OpalErrinjctTypeIoaBusError64)
+		return OPAL_UNSUPPORTED;
+
+	/*
+	 * How could we get here without valid RTT? But it's
+	 * worthy to check.
+	 */
+	if (!p->tbl_rtt)
+		return OPAL_HARDWARE;
+
+	/*
+	 * PE#0 is reserved PE on PHB3 and we shouldn't inject
+	 * errors to it.
+	 */
+	if (pe_no == 0x0 ||
+	    pe_no >= PHB3_MAX_PE_NUM ||
+	    function > OpalEjtIoaDmaWriteMemTarget)
+		return OPAL_PARAMETER;
+
+	/* We might have leftover from last error injection */
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_CTL, 0x0ul);
+
+	switch (function) {
+	case OpalEjtIoaLoadMemAddr:
+	case OpalEjtIoaLoadMemData:
+	case OpalEjtIoaStoreMemAddr:
+	case OpalEjtIoaStoreMemData:
+		ctl |= PHB_PAPR_ERR_INJ_CTL_OUTB;
+		if (function == OpalEjtIoaLoadMemAddr ||
+		    function == OpalEjtIoaLoadMemData)
+			ctl |= PHB_PAPR_ERR_INJ_CTL_RD;
+		else
+			ctl |= PHB_PAPR_ERR_INJ_CTL_WR;
+
+		/*
+		 * For now, we only care about M32. Looking into M32DT to see
+		 * if the input address has been assigned to the PE. Otherwise,
+		 * we have to figure one out from M32DT.
+		 */
+		addr = 0x0ul;
+		prefer = 0x0ul;
+		for (index = 0; index < 256; index++) {
+			if (GETFIELD(IODA2_M32DT_PE, p->m32d_cache[index]) ==
+			    pe_no) {
+				base = p->mm1_base +
+				       (M32_PCI_SIZE / PHB3_MAX_PE_NUM) * index;
+
+				/* Update prefer address */
+				if (!prefer) {
+					prefer = GETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, base);
+					prefer = SETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, 0x0ul, prefer);
+				}
+
+				/* The input address matches ? */
+				if (address >= base &&
+				    address < base + M32_PCI_SIZE / PHB3_MAX_PE_NUM) {
+					addr = address;
+					break;
+				}
+			}
+		}
+
+		/* Need amend the address ? */
+		if (!addr) {
+			if (!prefer)
+				return OPAL_PARAMETER;
+			addr = prefer;
+			msk = PHB_PAPR_ERR_INJ_MASK_MMIO_MASK;
+		} else {
+			msk = mask;
+		}
+
+		break;
+	case OpalEjtIoaLoadConfigAddr:
+	case OpalEjtIoaLoadConfigData:
+	case OpalEjtIoaStoreConfigAddr:
+	case OpalEjtIoaStoreConfigData:
+		ctl |= PHB_PAPR_ERR_INJ_CTL_CFG;
+		if (function == OpalEjtIoaLoadConfigAddr ||
+		    function == OpalEjtIoaLoadConfigData)
+			ctl |= PHB_PAPR_ERR_INJ_CTL_RD;
+		else
+			ctl |= PHB_PAPR_ERR_INJ_CTL_WR;
+
+		addr = 0x0ul;
+		prefer = 0x0ul;
+		for (index = 0; index < RTT_TABLE_ENTRIES; index++) {
+			if (p->rte_cache[index] == pe_no) {
+				/*
+				 * Select minimal bus number as PE
+				 * primary bus number
+				 */
+				if (!prefer)
+					prefer = index >> 8;
+				else if (prefer > (index >> 8))
+					prefer = index >> 8;
+
+				/*
+				 * Address should no greater than max bus
+				 * number within PE
+				 */
+				if ((GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG,
+				    address) <= (index >> 8)))
+					bus_valid = true;
+			}
+		}
+
+		/* Check if address is in a reasonable region */
+		if (GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, address) >= prefer
+		    && bus_valid)
+			addr = address;
+
+		if (!addr) {
+			if (!prefer)
+				return OPAL_PARAMETER;
+			addr = prefer;
+			msk = PHB_PAPR_ERR_INJ_MASK_CFG_MASK;
+		} else {
+			msk = mask;
+		}
+
+		break;
+	default:
+		return OPAL_UNSUPPORTED;
+	}
+
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_CTL, ctl);
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_ADDR, addr);
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_MASK, msk);
+
+	return OPAL_SUCCESS;
+}
+
 static int64_t phb3_get_diag_data(struct phb *phb,
 				  void *diag_buffer,
 				  uint64_t diag_buffer_len)
@@ -2847,6 +2991,7 @@ static const struct phb_ops phb3_ops = {
 	.eeh_freeze_status	= phb3_eeh_freeze_status,
 	.eeh_freeze_clear	= phb3_eeh_freeze_clear,
 	.next_error		= phb3_eeh_next_error,
+	.err_injct		= phb3_err_injct,
 	.get_diag_data		= NULL,
 	.get_diag_data2		= phb3_get_diag_data,
 	.set_capi_mode		= phb3_set_capi_mode,
