@@ -1301,6 +1301,238 @@ static int64_t p7ioc_eeh_freeze_clear(struct phb *phb, uint64_t pe_number,
 	return OPAL_SUCCESS;
 }
 
+static int64_t p7ioc_err_injct(struct phb *phb, uint32_t pe_no,
+			       uint32_t type, uint32_t function,
+			       uint64_t address, uint64_t mask)
+{
+	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
+	uint64_t pelt, ctl = 0;
+	uint64_t base, prefer, addr, msk;
+	int index = 0, bus_valid = 0;
+
+	/* To support 64-bits error later */
+	if (type == OpalErrinjctTypeIoaBusError64)
+		return OPAL_UNSUPPORTED;
+	/*
+	 * The control register might have something left from
+	 * the error injection of last time. We need clear it
+	 * for consistency
+	 */
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_CTL, 0x0ul);
+
+	/* We shouldn't inject error to the reserved PE#127 */
+	if (pe_no > 126 ||
+	    function > OpalEjtIoaDmaWriteMemTarget)
+		return OPAL_PARAMETER;
+
+	/* Looking into PELTM cache to see if the PE# is valid */
+	pelt = p->peltm_cache[pe_no];
+	if (pelt == 0x0001f80000000000)
+		return OPAL_PARAMETER;
+
+	/*
+	 * HW100549: For error injection on outbound opertions, we
+	 * need have read and write on DD10 chip.
+	 */
+	switch (function) {
+	case OpalEjtIoaLoadMemAddr:
+	case OpalEjtIoaLoadMemData:
+	case OpalEjtIoaStoreMemAddr:
+	case OpalEjtIoaStoreMemData:
+		ctl |= PHB_PAPR_ERR_INJ_CTL_OUTB;
+		if (function == OpalEjtIoaLoadMemAddr ||
+		    function == OpalEjtIoaLoadMemData)
+			ctl |= PHB_PAPR_ERR_INJ_CTL_RD;
+		else
+			ctl |= PHB_PAPR_ERR_INJ_CTL_WR;
+
+		if (p->rev == P7IOC_REV_DD10)
+			ctl |= (PHB_PAPR_ERR_INJ_CTL_RD |
+				PHB_PAPR_ERR_INJ_CTL_WR);
+
+		/*
+		 * For now, we only care about M32. Looking into M32DT to see
+		 * if the input address has been assigned to the PE.
+		 */
+		addr = 0x0ul;
+		prefer = 0x0ul;
+		for (index = 0; index < 128; index++) {
+			if (SETFIELD(IODA_XXDT_PE, 0ull, pe_no) ==
+			    p->m32d_cache[index]) {
+				base = p->m32_base + M32_PCI_START +
+				       (M32_PCI_SIZE / 128) * index;
+
+				/* Update prefer address */
+				if (!prefer) {
+					prefer = GETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, base);
+					prefer = SETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, 0x0ul, prefer);
+				}
+
+				/* The input address matches ? */
+				if (address >= base &&
+				    address < base + (M32_PCI_SIZE / 128)) {
+					addr = address;
+					break;
+				}
+			}
+		}
+
+		/* Need amend the address ? */
+		if (!addr) {
+			 if (!prefer)
+				return OPAL_PARAMETER;
+
+			addr = prefer;
+			msk = PHB_PAPR_ERR_INJ_MASK_MMIO_MASK;
+		} else {
+			msk = mask;
+		}
+
+		break;
+	case OpalEjtIoaLoadIoAddr:
+	case OpalEjtIoaLoadIoData:
+	case OpalEjtIoaStoreIoAddr:
+	case OpalEjtIoaStoreIoData:
+		ctl |= PHB_PAPR_ERR_INJ_CTL_OUTB;
+		if (function == OpalEjtIoaLoadIoAddr ||
+		    function == OpalEjtIoaLoadIoData)
+			ctl |= PHB_PAPR_ERR_INJ_CTL_RD;
+		else
+			ctl |= PHB_PAPR_ERR_INJ_CTL_WR;
+
+		if (p->rev == P7IOC_REV_DD10)
+			ctl |= (PHB_PAPR_ERR_INJ_CTL_RD |
+				PHB_PAPR_ERR_INJ_CTL_WR);
+
+		/*
+		 * Similar to M32 case. Looking into IO domain to see
+		 * if the input address is owned by the designated PE.
+		 * Otherwise, we have to pick one up from IO domain.
+		 */
+		addr = 0x0ul;
+		prefer = 0x0ul;
+		for (index = 0; index < 128; index++) {
+			if (SETFIELD(IODA_XXDT_PE, 0ull, pe_no) ==
+			    p->iod_cache[index]) {
+				base = p->io_base + (PHB_IO_SIZE / 128) * index;
+
+				/* Update prefer address */
+				if (!prefer) {
+					prefer = GETFIELD(PHB_PAPR_ERR_INJ_MASK_IO, base);
+					prefer = SETFIELD(PHB_PAPR_ERR_INJ_MASK_IO, 0x0ul, prefer);
+				}
+
+				/* The input address matches ? */
+				if (address >= base &&
+				    address <  base + (PHB_IO_SIZE / 128)) {
+					addr = address;
+					break;
+				}
+			}
+		}
+
+		/* Need amend the address ? */
+		if (!addr) {
+			if (!prefer)
+				return OPAL_PARAMETER;
+
+			addr = prefer;
+			msk = PHB_PAPR_ERR_INJ_MASK_IO_MASK;
+		} else {
+			msk = mask;
+		}
+
+		break;
+	case OpalEjtIoaLoadConfigAddr:
+	case OpalEjtIoaLoadConfigData:
+	case OpalEjtIoaStoreConfigAddr:
+	case OpalEjtIoaStoreConfigData:
+		ctl |= PHB_PAPR_ERR_INJ_CTL_CFG;
+		if (function == OpalEjtIoaLoadConfigAddr ||
+		    function == OpalEjtIoaLoadConfigData)
+			ctl |= PHB_PAPR_ERR_INJ_CTL_RD;
+		else
+			ctl |= PHB_PAPR_ERR_INJ_CTL_WR;
+
+		if (p->rev == P7IOC_REV_DD10)
+			ctl |= (PHB_PAPR_ERR_INJ_CTL_RD |
+				PHB_PAPR_ERR_INJ_CTL_WR);
+
+		/*
+		 * Looking into PELTM to see if the PCI bus# is owned
+		 * by the PE#. Otherwise, we have to figure one out.
+		 */
+		bus_valid = GETFIELD(IODA_PELTM_BUS_VALID, pelt);
+		base = GETFIELD(IODA_PELTM_BUS, pelt);
+		addr = 0x0ul;
+		prefer = SETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, 0x0ul, base);
+		switch (bus_valid) {
+		case 0x0:
+			addr = address;
+			break;
+		case 0x1:
+			return OPAL_HARDWARE;
+		default:
+			if (GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, address) >= base
+			    && GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, address)
+			    < base + (0x1ul << (7 - bus_valid)))
+				addr = address;
+			break;
+		}
+
+		/* Address needs amend ? */
+		if (!addr) {
+			addr = prefer;
+			msk = PHB_PAPR_ERR_INJ_MASK_CFG_MASK;
+		} else {
+			msk = mask;
+		}
+
+		break;
+	case OpalEjtIoaDmaReadMemAddr:
+	case OpalEjtIoaDmaReadMemData:
+	case OpalEjtIoaDmaReadMemMaster:
+	case OpalEjtIoaDmaReadMemTarget:
+	case OpalEjtIoaDmaWriteMemAddr:
+	case OpalEjtIoaDmaWriteMemData:
+	case OpalEjtIoaDmaWriteMemMaster:
+	case OpalEjtIoaDmaWriteMemTarget:
+		ctl |= PHB_PAPR_ERR_INJ_CTL_INB;
+		if (function == OpalEjtIoaDmaReadMemAddr ||
+		    function == OpalEjtIoaDmaReadMemData ||
+		    function == OpalEjtIoaDmaReadMemMaster ||
+		    function == OpalEjtIoaDmaReadMemTarget)
+			ctl |= PHB_PAPR_ERR_INJ_CTL_RD;
+		else
+			ctl |= PHB_PAPR_ERR_INJ_CTL_WR;
+
+		/* For DMA, we just pick address from TVT */
+		addr = 0x0;
+		for (index = 0; index < 128; index++) {
+			if (GETFIELD(IODA_TVT1_PE_NUM, p->tve_hi_cache[index])
+			    == pe_no) {
+				addr = SETFIELD(PHB_PAPR_ERR_INJ_MASK_DMA, 0ul, index);
+				msk = PHB_PAPR_ERR_INJ_MASK_DMA_MASK;
+				break;
+			}
+		}
+
+		/* Some PE might not have DMA capability */
+		if (index >= 128)
+			return OPAL_PARAMETER;
+
+		break;
+	default:
+		return OPAL_PARAMETER;
+	}
+
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_CTL, ctl);
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_ADDR, addr);
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_MASK, msk);
+
+	return OPAL_SUCCESS;
+}
+
 static int64_t p7ioc_get_diag_data(struct phb *phb, void *diag_buffer,
 				   uint64_t diag_buffer_len)
 {
@@ -2276,6 +2508,7 @@ static const struct phb_ops p7ioc_phb_ops = {
 	.pci_reinit		= p7ioc_pci_reinit,
 	.eeh_freeze_status	= p7ioc_eeh_freeze_status,
 	.eeh_freeze_clear	= p7ioc_eeh_freeze_clear,
+	.err_injct		= p7ioc_err_injct,
 	.get_diag_data		= NULL,
 	.get_diag_data2		= p7ioc_get_diag_data,
 	.next_error		= p7ioc_eeh_next_error,
