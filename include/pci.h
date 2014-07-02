@@ -320,6 +320,8 @@ struct phb_ops {
 
 	int64_t (*ioda_reset)(struct phb *phb, bool purge);
 
+	int64_t (*papr_errinjct_reset)(struct phb *phb);
+
 	/*
 	 * P5IOC2 only
 	 */

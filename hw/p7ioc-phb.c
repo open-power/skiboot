@@ -2494,6 +2494,24 @@ static int64_t p7ioc_ioda_reset(struct phb *phb, bool purge)
 	return OPAL_SUCCESS;
 }
 
+/*
+ * Clear anything we have in PAPR Error Injection registers. Though
+ * the spec says the PAPR error injection should be one-shot without
+ * the "sticky" bit. However, that's false according to the experiments
+ * I had. So we have to clear it at appropriate point in kernel to
+ * avoid endless frozen PE.
+ */
+static int64_t p7ioc_papr_errinjct_reset(struct phb *phb)
+{
+	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
+
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_CTL, 0x0ul);
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_ADDR, 0x0ul);
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_MASK, 0x0ul);
+
+	return OPAL_SUCCESS;
+}
+
 static const struct phb_ops p7ioc_phb_ops = {
 	.lock			= p7ioc_phb_lock,
 	.unlock			= p7ioc_phb_unlock,
@@ -2526,6 +2544,7 @@ static const struct phb_ops p7ioc_phb_ops = {
 	.get_msi_32		= p7ioc_get_msi_32,
 	.get_msi_64		= p7ioc_get_msi_64,
 	.ioda_reset		= p7ioc_ioda_reset,
+	.papr_errinjct_reset	= p7ioc_papr_errinjct_reset,
 	.presence_detect	= p7ioc_presence_detect,
 	.link_state		= p7ioc_link_state,
 	.power_state		= p7ioc_power_state,

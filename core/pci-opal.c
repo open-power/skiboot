@@ -506,6 +506,12 @@ static int64_t opal_pci_reset(uint64_t phb_id, uint8_t reset_scope,
 		if (phb->ops->ioda_reset)
 			phb->ops->ioda_reset(phb, true);
 		break;
+	case OPAL_RESET_PHB_ERROR:
+		if (assert_state != OPAL_ASSERT_RESET)
+			break;
+		if (phb->ops->papr_errinjct_reset)
+			phb->ops->papr_errinjct_reset(phb);
+		break;
 	default:
 		rc = OPAL_UNSUPPORTED;
 	}

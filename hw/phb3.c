@@ -680,6 +680,24 @@ static int64_t phb3_ioda_reset(struct phb *phb, bool purge)
 	return OPAL_SUCCESS;
 }
 
+/*
+ * Clear anything we have in PAPR Error Injection registers. Though
+ * the spec says the PAPR error injection should be one-shot without
+ * the "sticky" bit. However, that's false according to the experiments
+ * I had. So we have to clear it at appropriate point in kernel to
+ * avoid endless frozen PE.
+ */
+static int64_t phb3_papr_errinjct_reset(struct phb *phb)
+{
+	struct phb3 *p = phb_to_phb3(phb);
+
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_CTL, 0x0ul);
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_ADDR, 0x0ul);
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_MASK, 0x0ul);
+
+	return OPAL_SUCCESS;
+}
+
 static int64_t phb3_set_phb_mem_window(struct phb *phb,
 				       uint16_t window_type,
 				       uint16_t window_num,
@@ -2968,6 +2986,7 @@ static const struct phb_ops phb3_ops = {
 	.device_init		= phb3_device_init,
 	.presence_detect	= phb3_presence_detect,
 	.ioda_reset		= phb3_ioda_reset,
+	.papr_errinjct_reset	= phb3_papr_errinjct_reset,
 	.pci_reinit		= phb3_pci_reinit,
 	.set_phb_mem_window	= phb3_set_phb_mem_window,
 	.phb_mmio_enable	= phb3_phb_mmio_enable,
