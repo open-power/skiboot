@@ -1,0 +1,244 @@
+/* Copyright 2013-2014 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * 	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <trace.h>
+#include <timebase.h>
+#include <lock.h>
+#include <string.h>
+#include <stdlib.h>
+#include <cpu.h>
+#include <device.h>
+#include <libfdt.h>
+#include <processor.h>
+#include <skiboot.h>
+
+#define DEBUG_TRACES
+
+#define MAX_SIZE (sizeof(union trace) + 7)
+
+/* Smaller trace buffer for early booting */
+#define BOOT_TBUF_SZ 65536
+static struct {
+	struct trace_info trace_info;
+	char buf[BOOT_TBUF_SZ + MAX_SIZE];
+} boot_tracebuf __section(".data.boot_trace") = {
+	.trace_info = {
+		.lock = LOCK_UNLOCKED,
+		.tb = {
+		        .mask = BOOT_TBUF_SZ - 1,
+			.max_size = MAX_SIZE
+		},
+	},
+	.buf = { 0 }
+};
+
+void init_boot_tracebuf(struct cpu_thread *boot_cpu)
+{
+	boot_cpu->trace = &boot_tracebuf.trace_info;
+}
+
+static size_t tracebuf_extra(void)
+{
+	/* We make room for the largest possible record */
+	return TBUF_SZ + MAX_SIZE;
+}
+
+/* To avoid bloating each entry, repeats are actually specific entries.
+ * tb->last points to the last (non-repeat) entry. */
+static bool handle_repeat(struct tracebuf *tb, const union trace *trace)
+{
+	struct trace_hdr *prev;
+	struct trace_repeat *rpt;
+	u32 len;
+
+	prev = (void *)tb->buf + (tb->last & tb->mask);
+
+	if (prev->type != trace->hdr.type
+	    || prev->len_div_8 != trace->hdr.len_div_8
+	    || prev->cpu != trace->hdr.cpu)
+		return false;
+
+	len = prev->len_div_8 << 3;
+	if (memcmp(prev + 1, &trace->hdr + 1, len - sizeof(*prev)) != 0)
+		return false;
+
+	/* If they've consumed prev entry, don't repeat. */
+	if (tb->last < tb->start)
+		return false;
+
+	/* OK, it's a duplicate.  Do we already have repeat? */
+	if (tb->last + len != tb->end) {
+		/* FIXME: Reader is not protected from seeing this! */
+		rpt = (void *)tb->buf + ((tb->last + len) & tb->mask);
+		assert(tb->last + len + rpt->len_div_8*8 == tb->end);
+		assert(rpt->type == TRACE_REPEAT);
+
+		/* If this repeat entry is full, don't repeat. */
+		if (rpt->num == 0xFFFF)
+			return false;
+
+		rpt->num++;
+		rpt->timestamp = trace->hdr.timestamp;
+		return true;
+	}
+
+	/*
+	 * Generate repeat entry: it's the smallest possible entry, so we
+	 * must have eliminated old entries.
+	 */
+	assert(trace->hdr.len_div_8 * 8 >= sizeof(*rpt));
+
+	rpt = (void *)tb->buf + (tb->end & tb->mask);
+	rpt->timestamp = trace->hdr.timestamp;
+	rpt->type = TRACE_REPEAT;
+	rpt->len_div_8 = sizeof(*rpt) >> 3;
+	rpt->cpu = trace->hdr.cpu;
+	rpt->prev_len = trace->hdr.len_div_8 << 3;
+	rpt->num = 1;
+	lwsync(); /* write barrier: complete repeat record before exposing */
+	tb->end += sizeof(*rpt);
+	return true;
+}
+
+void trace_add(union trace *trace, u8 type, u16 len)
+{
+	struct trace_info *ti = this_cpu()->trace;
+	unsigned int tsz;
+
+	trace->hdr.type = type;
+	trace->hdr.len_div_8 = (len + 7) >> 3;
+
+	tsz = trace->hdr.len_div_8 << 3;
+
+#ifdef DEBUG_TRACES
+	assert(tsz >= sizeof(trace->hdr));
+	assert(tsz <= sizeof(*trace));
+	assert(trace->hdr.type != TRACE_REPEAT);
+	assert(trace->hdr.type != TRACE_OVERFLOW);
+#endif
+	/* Skip traces not enabled in the debug descriptor */
+	if (!((1ul << trace->hdr.type) & debug_descriptor.trace_mask))
+		return;
+
+	trace->hdr.timestamp = mftb();
+	trace->hdr.cpu = this_cpu()->server_no;
+
+	lock(&ti->lock);
+
+	/* Throw away old entries before we overwrite them. */
+	while ((ti->tb.start + ti->tb.mask + 1) < (ti->tb.end + tsz)) {
+		struct trace_hdr *hdr;
+
+		hdr = (void *)ti->tb.buf + (ti->tb.start & ti->tb.mask);
+		ti->tb.start += hdr->len_div_8 << 3;
+	}
+
+	/* Must update ->start before we rewrite new entries. */
+	lwsync(); /* write barrier */
+
+	/* Check for duplicates... */
+	if (!handle_repeat(&ti->tb, trace)) {
+		/* This may go off end, and that's why ti->tb.buf is oversize */
+		memcpy(ti->tb.buf + (ti->tb.end & ti->tb.mask), trace, tsz);
+		ti->tb.last = ti->tb.end;
+		lwsync(); /* write barrier: write entry before exposing */
+		ti->tb.end += tsz;
+	}
+	unlock(&ti->lock);
+}
+
+static void trace_add_dt_props(void)
+{
+	unsigned int i;
+	u64 *prop, tmask;
+
+	prop = malloc(sizeof(u64) * 2 * debug_descriptor.num_traces);
+
+	for (i = 0; i < debug_descriptor.num_traces; i++) {
+		prop[i * 2] = cpu_to_fdt64(debug_descriptor.trace_phys[i]);
+		prop[i * 2 + 1] = cpu_to_fdt64(debug_descriptor.trace_size[i]);
+	}
+
+	dt_add_property(opal_node, "ibm,opal-traces",
+			prop, sizeof(u64) * 2 * i);
+	free(prop);
+
+	tmask = (uint64_t)&debug_descriptor.trace_mask;
+	dt_add_property_cells(opal_node, "ibm,opal-trace-mask",
+			      hi32(tmask), lo32(tmask));
+}
+
+static void trace_add_desc(struct trace_info *t, uint64_t size)
+{
+	unsigned int i = debug_descriptor.num_traces;
+
+	if (i >= DEBUG_DESC_MAX_TRACES) {
+		prerror("TRACE: Debug descriptor trace list full !\n");
+		return;
+	}
+	debug_descriptor.num_traces++;
+
+	debug_descriptor.trace_phys[i] = (uint64_t)&t->tb;
+	debug_descriptor.trace_tce[i] = 0; /* populated later */
+	debug_descriptor.trace_size[i] = size;
+}
+
+/* Allocate trace buffers once we know memory topology */
+void init_trace_buffers(void)
+{
+	struct cpu_thread *t;
+	struct trace_info *any = &boot_tracebuf.trace_info;
+	uint64_t size;
+
+	/* Boot the boot trace in the debug descriptor */
+	trace_add_desc(any, sizeof(boot_tracebuf.buf));
+
+	/* Allocate a trace buffer for each primary cpu. */
+	for_each_cpu(t) {
+		if (t->is_secondary)
+			continue;
+
+		/* Use a 4K alignment for TCE mapping */
+		size = ALIGN_UP(sizeof(*t->trace) + tracebuf_extra(), 0x1000);
+		t->trace = local_alloc(t->chip_id, size, 0x1000);
+		if (t->trace) {
+			any = t->trace;
+			memset(t->trace, 0, size);
+			init_lock(&t->trace->lock);
+			t->trace->tb.mask = TBUF_SZ - 1;
+			t->trace->tb.max_size = MAX_SIZE;
+			trace_add_desc(any, sizeof(t->trace->tb) +
+				       tracebuf_extra());
+		} else
+			prerror("TRACE: cpu 0x%x allocation failed\n", t->pir);
+	}
+
+	/* In case any allocations failed, share trace buffers. */
+	for_each_cpu(t) {
+		if (!t->is_secondary && !t->trace)
+			t->trace = any;
+	}
+
+	/* And copy those to the secondaries. */
+	for_each_cpu(t) {
+		if (!t->is_secondary)
+			continue;
+		t->trace = t->primary->trace;
+	}
+
+	/* Trace node in DT. */
+	trace_add_dt_props();
+}

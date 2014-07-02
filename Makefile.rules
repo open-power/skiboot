@@ -1,0 +1,53 @@
+#
+# These allow for the build to be less verbose
+#
+
+ifdef V
+  VERBOSE:= $(V)
+else
+  VERBOSE:= 0
+endif
+
+ifeq ($(VERBOSE),1)
+define Q
+  $(2)
+endef
+else
+define Q
+  @echo "	[$1] $(3)"
+  @$(2)
+endef
+endif
+
+define cook_aflags
+       $(filter-out $(AFLAGS_SKIP_$(1)), $(CPPFLAGS) $(AFLAGS)) $(AFLAGS_$(1))
+endef
+
+define cook_cflags
+       $(filter-out $(CFLAGS_SKIP_$(1)), $(CPPFLAGS) $(CFLAGS)) $(CFLAGS_$(1))
+endef
+
+%.o : %.S include/asm-offsets.h
+	$(call Q,AS, $(CC) $(call cook_aflags,$@) -c $< -o $@, $@)
+
+%.s : %.S include/asm-offsets.h
+	$(call Q,CC, $(CC) $(call cook_aflags,$@) -E -c $< -o $@, $@)
+
+%.o : %.c
+	$(call Q,CC, $(CC) $(call cook_cflags,$@) -c $< -o $@, $@)
+
+# Force the use of the C compiler, not C++ for the .C files in libpore
+%.o : %.C
+	$(call Q,CC, $(CC) $(call cook_cflags,$@) -x c -c $< -o $@, $@)
+
+%.s : %.c
+	$(call Q,CC, $(CC) $(call cook_cflags,$@) -S -c $< -o $@, $@)
+
+%.i : %.c
+	$(call Q,CC, $(CC) $(call cook_cflags,$@) -E -c $< -o $@, $@)
+
+%built-in.o : %
+	$(call Q,LD, $(LD) $(LDRFLAGS) -r $^ -o $@, $@)
+
+%.lds : %.lds.S
+	$(call Q,CC, $(CC) $(CPPFLAGS) -P -E $< -o $@, $@)

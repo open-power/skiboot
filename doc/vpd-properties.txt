@@ -1,0 +1,19 @@
+VPD properties Description
+==========================
+
+/vpd		: VPD root node
+Node name	: <FRU description>@<Resource ID>
+ibm,vpd		: VPD data (binary blob)
+ccin		: Customer Card Identification Number
+fru-type	: FRU type label (two byte ASCII Char)
+fru-number	: FRU Stocking Part Number
+ibm,loc-code	: Location code
+part-number	: Part Number
+serial-number	: Serial Number
+ibm,chip-id	: Process ID
+size		: DIMM Size (applicable for DIMM VPD only)
+
+Child Node:
+===========
+A child node inherits its parent's VPD information except for the
+fru-type and location code.

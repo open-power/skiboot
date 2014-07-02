@@ -1,0 +1,18 @@
+# -*-Makefile-*-
+
+check: hdata-check 
+
+# Add some test ntuples for open source version...
+hdata-check: hdata/test/hdata_to_dt
+#	$(VALGRIND) hdata/test/hdata_to_dt -q hdata/test/spira.bin hdata/test/ntuples.bin
+
+hdata/test/stubs.o: hdata/test/stubs.c
+	$(HOSTCC) $(HOSTCFLAGS) -g -c -o $@ $<
+
+hdata/test/hdata_to_dt: hdata/test/hdata_to_dt.c hdata/test/stubs.o
+	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I hdata -I include -I . -I libfdt -o $@ $< hdata/test/stubs.o
+
+clean: hdata-test-clean
+
+hdata-test-clean:
+	$(RM) hdata/test/*.o hdata/test/hdata_to_dt
