@@ -46,7 +46,7 @@ endef
 %.i : %.c
 	$(call Q,CC, $(CC) $(call cook_cflags,$@) -E -c $< -o $@, $@)
 
-%built-in.o : %
+%built-in.o :
 	$(call Q,LD, $(LD) $(LDRFLAGS) -r $^ -o $@, $@)
 
 %.lds : %.lds.S
