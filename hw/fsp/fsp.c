@@ -64,6 +64,7 @@ enum fsp_mbx_state {
 	fsp_mbx_send,		/* Mailbox sent, waiting for ack */
 	fsp_mbx_crit_op,	/* Critical operation in progress */
 	fsp_mbx_prep_for_reset,	/* Prepare for reset sent */
+	fsp_mbx_hir_seq_done,	/* HIR sequence done, link forced down */
 	fsp_mbx_err,		/* Mailbox in error state, waiting for r&r */
 	fsp_mbx_rr,		/* Mailbox in r&r */
 };
@@ -371,8 +372,9 @@ static bool fsp_in_hir(struct fsp *fsp)
 static bool fsp_in_reset(struct fsp *fsp)
 {
 	switch (fsp->state) {
-	case fsp_mbx_err:	/* Will be reset soon */
-	case fsp_mbx_rr:	/* Already in reset */
+	case fsp_mbx_hir_seq_done:	/* Will be reset soon */
+	case fsp_mbx_err:		/* Will be reset soon */
+	case fsp_mbx_rr:		/* Already in reset */
 		return true;
 	default:
 		return false;
@@ -444,12 +446,12 @@ static void fsp_hir_poll(struct fsp *fsp, struct psi *psi)
 			if (fsp_hir_state_timeout()) {
 				prerror("FSP: Ack timeout. Triggering reset\n");
 				psi_disable_link(psi);
-				fsp->state = fsp_mbx_err;
+				fsp->state = fsp_mbx_hir_seq_done;
 			}
 		} else {
 			printf("FSP: DRCR ack received. Triggering reset\n");
 			psi_disable_link(psi);
-			fsp->state = fsp_mbx_err;
+			fsp->state = fsp_mbx_hir_seq_done;
 		}
 		break;
 	default:
@@ -587,7 +589,7 @@ static void fsp_handle_errors(struct fsp *fsp)
 		/* If we got here due to a host initiated reset, the link
 		 * is already driven down.
 		 */
-		if (fsp->state == fsp_mbx_err)
+		if (fsp->state != fsp_mbx_hir_seq_done)
 			psi_disable_link(psi);
 		fsp_start_rr(fsp);
 		return;
@@ -1460,7 +1462,8 @@ static void __fsp_poll(bool interrupt)
 	 * in the process. Let's be safe rather than sorry and handle that
 	 * here
 	 */
-	if (fsp_in_hir(fsp) || fsp->state == fsp_mbx_err) {
+	if (fsp_in_hir(fsp) || fsp->state == fsp_mbx_err ||
+			fsp->state == fsp_mbx_hir_seq_done) {
 		prerror("FSP: Late error state detection\n");
 		goto again;
 	}
