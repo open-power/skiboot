@@ -2702,6 +2702,11 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	if (mode != 1)
 		return OPAL_PARAMETER;
 
+	if (!p->capp_ucode_loaded) {
+		PHBERR(p, "capp ucode not loaded into capp unit\n");
+		return OPAL_HARDWARE;
+	}
+
 	/* poll cqstat */
 	for (i = 0; i < 500; i++) {
 		xscom_read(p->chip_id, p->pe_xscom + 0xf, &reg);
