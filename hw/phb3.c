@@ -2567,18 +2567,31 @@ static int64_t phb3_get_diag_data(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
-static uint64_t capp_fsp_lid_load(void)
+static uint64_t capp_fsp_lid_load(struct phb3 *p)
 {
-	uint32_t lid_no = 0x80a02001; /* murano dd2.1 */
-
+#define CAPP_UCODE_MURANO_21 0x80a02001
 #define CAPP_UCODE_MAX_SIZE 0x4000
-	void *data = malloc(CAPP_UCODE_MAX_SIZE);
+	uint32_t lid_no;
+	void *data;
 	size_t size;
 	int rc;
+
+	switch (p->rev) {
+	case PHB3_REV_MURANO_DD21:
+		lid_no = CAPP_UCODE_MURANO_21;
+		break;
+	default:
+		prerror("PHB3: No CAPP LID for this PHB version\n");
+		return 0;
+	}
+
+	data = malloc(CAPP_UCODE_MAX_SIZE);
 	if (!data) {
 		prerror("PHB3: Failed to allocated memory for capp ucode lid\n");
 		return 0;
 	}
+
+	lid_no = fsp_adjust_lid_side(lid_no);
 	size = CAPP_UCODE_MAX_SIZE;
 	rc = fsp_fetch_data(0, FSP_DATASET_NONSP_LID, lid_no, 0, data, &size);
 	if (rc) {
@@ -2601,7 +2614,7 @@ static int64_t capp_load_ucode(struct phb3 *p)
 
 	/* if fsp not present p->ucode_base gotten from device tree */
 	if (fsp_present() && (p->capp_ucode_base == 0))
-		p->capp_ucode_base = capp_fsp_lid_load();
+		p->capp_ucode_base = capp_fsp_lid_load(p);
 
 	if (p->capp_ucode_base == 0) {
 		PHBERR(p, "capp ucode base address not set\n");
