@@ -60,8 +60,6 @@ struct fsp_serial {
 
 static struct fsp_serial fsp_serials[MAX_SERIAL];
 static bool got_intf_query;
-static bool got_assoc_resp;
-static bool got_deassoc_resp;
 static struct lock fsp_con_lock = LOCK_UNLOCKED;
 static void* ser_buffer = NULL;
 
@@ -88,12 +86,8 @@ static void fsp_console_reinit(void)
 		if (fs->rsrc_id == 0xffff)
 			continue;
 		printf("FSP: Reassociating HVSI console %d\n", i);
-		got_assoc_resp = false;
 		fsp_sync_msg(fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
 				(fs->rsrc_id << 16) | 1, i), true);
-		/* XXX add timeout ? */
-		while(!got_assoc_resp)
-			opal_run_pollers();
 	}
 }
 
@@ -375,13 +369,11 @@ static bool fsp_con_msg_hmc(u32 cmd_sub_mod, struct fsp_msg *msg)
 	if ((cmd_sub_mod >> 8) == 0xe08a) {
 		printf("FSPCON: Got associate response, status 0x%02x\n",
 		       cmd_sub_mod & 0xff);
-		got_assoc_resp = true;
 		return true;
 	}
 	if ((cmd_sub_mod >> 8) == 0xe08b) {
 		printf("Got unassociate response, status 0x%02x\n",
 		       cmd_sub_mod & 0xff);
-		got_deassoc_resp = true;
 		return true;
 	}
 	switch(cmd_sub_mod) {
@@ -477,12 +469,8 @@ static void fsp_serial_add(int index, u16 rsrc_id, const char *loc_code,
 
 	/* DVS doesn't have that */
 	if (rsrc_id != 0xffff) {
-		got_assoc_resp = false;
 		fsp_sync_msg(fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
 				       (rsrc_id << 16) | 1, index), true);
-		/* XXX add timeout ? */
-		while(!got_assoc_resp)
-			opal_run_pollers();
 	}
 }
 
@@ -807,24 +795,16 @@ static void reopen_all_hvsi(void)
 		if (fs->rsrc_id == 0xffff)
 			continue;
 		printf("FSP: Deassociating HVSI console %d\n", i);
-		got_deassoc_resp = false;
 		fsp_sync_msg(fsp_mkmsg(FSP_CMD_UNASSOC_SERIAL, 1,
 				       (i << 16) | 1), true);
-		/* XXX add timeout ? */
-		while(!got_deassoc_resp)
-			opal_run_pollers();
 	}
  	for (i = 0; i < MAX_SERIAL; i++) {
 		struct fsp_serial *fs = &fsp_serials[i];
 		if (fs->rsrc_id == 0xffff)
 			continue;
 		printf("FSP: Reassociating HVSI console %d\n", i);
-		got_assoc_resp = false;
 		fsp_sync_msg(fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
 				       (fs->rsrc_id << 16) | 1, i), true);
-		/* XXX add timeout ? */
-		while(!got_assoc_resp)
-			opal_run_pollers();
 	}
 }
 
