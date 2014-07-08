@@ -86,8 +86,8 @@ static void fsp_console_reinit(void)
 		if (fs->rsrc_id == 0xffff)
 			continue;
 		printf("FSP: Reassociating HVSI console %d\n", i);
-		fsp_sync_msg(fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
-				(fs->rsrc_id << 16) | 1, i), true);
+		fsp_queue_msg(fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
+					(fs->rsrc_id << 16) | 1, i), fsp_freemsg);
 	}
 }
 
@@ -385,12 +385,9 @@ static bool fsp_con_msg_hmc(u32 cmd_sub_mod, struct fsp_msg *msg)
 		return true;
 	case FSP_CMD_HMC_INTF_QUERY:
 		printf("FSPCON: Got HMC interface query\n");
-
-		/* Keep that synchronous due to FSP fragile ordering
-		 * of the boot sequence
-		 */
-		fsp_sync_msg(fsp_mkmsg(FSP_RSP_HMC_INTF_QUERY, 1,
-				       msg->data.words[0] & 0x00ffffff), true);
+		fsp_queue_msg(fsp_mkmsg(FSP_RSP_HMC_INTF_QUERY, 1,
+					msg->data.words[0] & 0x00ffffff),
+			      fsp_freemsg);
 		got_intf_query = true;
 		return true;
 	}
@@ -469,8 +466,8 @@ static void fsp_serial_add(int index, u16 rsrc_id, const char *loc_code,
 
 	/* DVS doesn't have that */
 	if (rsrc_id != 0xffff) {
-		fsp_sync_msg(fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
-				       (rsrc_id << 16) | 1, index), true);
+		fsp_queue_msg(fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
+					(rsrc_id << 16) | 1, index), fsp_freemsg);
 	}
 }
 

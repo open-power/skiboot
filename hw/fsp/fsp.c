@@ -1095,13 +1095,13 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 		 * deal with that sort of stuff asynchronously if/when
 		 * we add support for auto-freeing of messages
 		 */
-		fsp_sync_msg(fsp_mkmsg(FSP_RSP_HV_STATE_CHG, 0), true);
+		fsp_queue_msg(fsp_mkmsg(FSP_RSP_HV_STATE_CHG, 0), fsp_freemsg);
 		return true;
 
 	case FSP_CMD_SP_NEW_ROLE:
 		/* FSP is assuming a new role */
 		printf("FSP: FSP assuming new role\n");
-		fsp_sync_msg(fsp_mkmsg(FSP_RSP_SP_NEW_ROLE, 0), true);
+		fsp_queue_msg(fsp_mkmsg(FSP_RSP_SP_NEW_ROLE, 0), fsp_freemsg);
 		ipl_state |= ipl_got_new_role;
 		return true;
 
@@ -1110,8 +1110,8 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 		/* XXX Do something saner. For now do a synchronous
 	         * response and hard code our capabilities
 		 */
-		fsp_sync_msg(fsp_mkmsg(FSP_RSP_SP_QUERY_CAPS, 4,
-				       0x3ff80000, 0, 0, 0), true);
+		fsp_queue_msg(fsp_mkmsg(FSP_RSP_SP_QUERY_CAPS, 4,
+					0x3ff80000, 0, 0, 0), fsp_freemsg);
 		ipl_state |= ipl_got_caps;
 		return true;
 	case FSP_CMD_FSP_FUNCTNAL:
