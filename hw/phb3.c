@@ -2570,7 +2570,7 @@ static int64_t phb3_get_diag_data(struct phb *phb,
 static uint64_t capp_fsp_lid_load(struct phb3 *p)
 {
 #define CAPP_UCODE_MURANO_21 0x80a02001
-#define CAPP_UCODE_MAX_SIZE 0x4000
+#define CAPP_UCODE_MAX_SIZE 0x20000
 	uint32_t lid_no;
 	void *data;
 	size_t size;
