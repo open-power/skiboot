@@ -558,16 +558,6 @@ struct fsp_msg {
 	/* Set if the message expects a response */
 	bool			response;
 
-	/* See if the message is a 'sync' message, and if so do we have to
-	 * 'free' the message once sent. That is, do we need to wait on this
-	 * message, till it gets sent to the FSP. This indication is useful
-	 * only in the case where we experience a PSI link loss, or a FSP
-	 * r/r, and need to queue up messages till the PSI link / FSP come back
-	 * up again.
-	 */
-	bool                    sync_msg;
-	bool                    auto_free;
-
 	/* Response will be filed by driver when response received */
 	struct fsp_msg		*resp;
 

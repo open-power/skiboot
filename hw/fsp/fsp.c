@@ -859,11 +859,6 @@ static void __fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod,
 	for (i = 0; i < add_words; i++)
 		msg->data.words[i] = va_arg(list, unsigned int);
 	va_end(list);
-
-	/* Initialize the value with false. If this ends up
-	 * in fsp_sync_msg, we will set it to true.
-	 */
-	msg->sync_msg = false;
 }
 
 extern void fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod, u8 add_words, ...)
@@ -1547,12 +1542,6 @@ void fsp_interrupt(void)
 int fsp_sync_msg(struct fsp_msg *msg, bool autofree)
 {
 	int rc;
-
-	/* This indication is useful only in the case where
-	 * we queue up messages when the FSP takes a r/r.
-	 */
-	msg->sync_msg = true;
-	msg->auto_free = autofree;
 
 	rc = fsp_queue_msg(msg, NULL);
 	if (rc)
