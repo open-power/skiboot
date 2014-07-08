@@ -61,6 +61,12 @@ static inline void lock_check(struct lock *l) { };
 static inline void unlock_check(struct lock *l) { };
 #endif /* DEBUG_LOCKS */
 
+bool lock_held_by_me(struct lock *l)
+{
+	uint64_t pir64 = this_cpu()->pir;
+
+	return l->lock_val == ((pir64 << 32) | 1);
+}
 
 bool try_lock(struct lock *l)
 {

@@ -69,6 +69,8 @@ extern bool try_lock(struct lock *l);
 extern void lock(struct lock *l);
 extern void unlock(struct lock *l);
 
+extern bool lock_held_by_me(struct lock *l);
+
 /* The debug output can happen while the FSP lock, so we need some kind
  * of recursive lock support here. I don't want all locks to be recursive
  * though, thus the caller need to explicitly call lock_recursive which
