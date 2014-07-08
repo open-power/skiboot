@@ -29,6 +29,15 @@ struct capp_ucode_data_hdr
     uint32_t num_data_chunks;		/* Number of 8-byte chunks of data that follow this header */
 };
 
+struct capp_lid_hdr {
+    uint64_t eyecatcher;
+    uint64_t version;
+    uint64_t lid_no;
+    uint64_t pad;
+    uint64_t ucode_offset;
+    uint64_t total_size;
+};
+
 enum capp_reg {
     apc_master_cresp		= 0x1,
     apc_master_uop_table	= 0x2,

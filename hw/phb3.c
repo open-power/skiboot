@@ -2608,6 +2608,7 @@ static int64_t capp_load_ucode(struct phb3 *p)
 
 	struct capp_ucode_lid_hdr *ucode_hdr;
 	struct capp_ucode_data_hdr *data_hdr;
+	struct capp_lid_hdr *lid_hdr;
 	uint64_t data, *val;
 	int size_read = 0;
 	int tmp;
@@ -2623,8 +2624,15 @@ static int64_t capp_load_ucode(struct phb3 *p)
 	}
 
 	PHBINF(p, "Loading capp microcode @%llx\n", p->capp_ucode_base);
-	ucode_hdr = (struct capp_ucode_lid_hdr *)(p->capp_ucode_base);
-	if (ucode_hdr->eyecatcher != 0x43415050554c4944) {
+	lid_hdr = (struct capp_lid_hdr *)p->capp_ucode_base;
+	if (lid_hdr->eyecatcher != 0x434150504c494448)
+		/* lid header not present due to older fw or bml boot */
+		ucode_hdr = (struct capp_ucode_lid_hdr *)(p->capp_ucode_base);
+	else
+		ucode_hdr = (struct capp_ucode_lid_hdr *)(p->capp_ucode_base +
+			lid_hdr->ucode_offset);
+
+	if (ucode_hdr->eyecatcher != 0x43415050554C4944) {
 		PHBERR(p, "capi ucode lid header eyecatcher not found\n");
 		return OPAL_HARDWARE;
 	}
