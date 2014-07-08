@@ -439,11 +439,11 @@ void fsp_code_update_wait_vpd(bool is_boot)
 	printf("CUPD: Waiting read marker LID completion...\n");
 
 	while(flash_state == FLASH_STATE_READING)
-		fsp_poll();
+		opal_run_pollers();
 
 	printf("CUPD: Waiting in flight params completion...\n");
 	while(in_flight_params)
-		fsp_poll();
+		opal_run_pollers();
 
 	if (is_boot)
 		add_opal_firmware_version();

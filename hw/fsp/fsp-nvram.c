@@ -401,7 +401,7 @@ void fsp_nvram_wait_open(void)
 		return;
 
 	while(fsp_nvram_state == NVRAM_STATE_OPENING)
-		fsp_poll();
+		opal_run_pollers();
 
 	if (!fsp_nvram_was_read) {
 		log_simple_error(&e_info(OPAL_RC_NVRAM_INIT),

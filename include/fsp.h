@@ -640,9 +640,6 @@ extern int fsp_queue_msg(struct fsp_msg *msg,
  */
 extern int fsp_sync_msg(struct fsp_msg *msg, bool autofree);
 
-/* Process FSP mailbox activity */
-extern void fsp_poll(void);
-
 /* Handle FSP interrupts */
 extern void fsp_interrupt(void);
 

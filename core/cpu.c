@@ -20,7 +20,6 @@
  */
 #include <skiboot.h>
 #include <cpu.h>
-#include <fsp.h>
 #include <device.h>
 #include <opal.h>
 #include <stack.h>
@@ -119,9 +118,9 @@ void cpu_wait_job(struct cpu_job *job, bool free_it)
 		return;
 
 	while(!job->complete) {
-		/* Handle mbox if master CPU */
+		/* Handle pollers if master CPU */
 		if (this_cpu() == boot_cpu)
-			fsp_poll();
+			opal_run_pollers();
 		else
 			smt_low();
 		lwsync();

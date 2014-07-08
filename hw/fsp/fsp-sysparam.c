@@ -177,7 +177,7 @@ int fsp_get_sys_param(uint32_t param_id, void *buffer, uint32_t length,
 
 	/* Synchronous operation requested, spin and process */
 	while(!r->done)
-		fsp_poll();
+		opal_run_pollers();
 
 	/* Will free the request */
 	return fsp_sysparam_process(r);

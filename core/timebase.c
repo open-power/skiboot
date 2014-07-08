@@ -15,14 +15,14 @@
  */
 
 #include <timebase.h>
-#include <fsp.h>
+#include <opal.h>
 
 void time_wait(unsigned long duration)
 {
 	unsigned long end = mftb() + duration;
 
 	while(tb_compare(mftb(), end) != TB_AAFTERB)
-		fsp_poll();
+		opal_run_pollers();
 }
 
 void time_wait_ms(unsigned long ms)

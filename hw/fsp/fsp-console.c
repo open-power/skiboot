@@ -93,7 +93,7 @@ static void fsp_console_reinit(void)
 				(fs->rsrc_id << 16) | 1, i), true);
 		/* XXX add timeout ? */
 		while(!got_assoc_resp)
-			fsp_poll();
+			opal_run_pollers();
 	}
 }
 
@@ -482,7 +482,7 @@ static void fsp_serial_add(int index, u16 rsrc_id, const char *loc_code,
 				       (rsrc_id << 16) | 1, index), true);
 		/* XXX add timeout ? */
 		while(!got_assoc_resp)
-			fsp_poll();
+			opal_run_pollers();
 	}
 }
 
@@ -720,7 +720,7 @@ void fsp_console_init(void)
 
 	/* Wait until we got the intf query before moving on */
 	while (!got_intf_query)
-		fsp_poll();
+		opal_run_pollers();
 
 	op_display(OP_LOG, OP_MOD_FSPCON, 0x0000);
 
@@ -812,7 +812,7 @@ static void reopen_all_hvsi(void)
 				       (i << 16) | 1), true);
 		/* XXX add timeout ? */
 		while(!got_deassoc_resp)
-			fsp_poll();
+			opal_run_pollers();
 	}
  	for (i = 0; i < MAX_SERIAL; i++) {
 		struct fsp_serial *fs = &fsp_serials[i];
@@ -824,7 +824,7 @@ static void reopen_all_hvsi(void)
 				       (fs->rsrc_id << 16) | 1, i), true);
 		/* XXX add timeout ? */
 		while(!got_assoc_resp)
-			fsp_poll();
+			opal_run_pollers();
 	}
 }
 

@@ -212,10 +212,23 @@ void opal_del_poller(void (*poller)(void *data))
 	unlock(&opal_poll_lock);
 }
 
-static int64_t opal_poll_events(uint64_t *outstanding_event_mask)
+void opal_run_pollers(void)
 {
 	struct opal_poll_entry *poll_ent;
 
+	/*
+	 * Only run the pollers if they aren't already running
+	 * on another CPU and we aren't re-entering.
+	 */
+	if (try_lock(&opal_poll_lock)) {
+		list_for_each(&opal_pollers, poll_ent, link)
+			poll_ent->poller(poll_ent->data);
+		unlock(&opal_poll_lock);
+	}
+}
+
+static int64_t opal_poll_events(uint64_t *outstanding_event_mask)
+{
 	/* Check if we need to trigger an attn for test use */
 	if (attn_trigger == 0xdeadbeef) {
 		printf("Triggering attn\n");
@@ -228,15 +241,7 @@ static int64_t opal_poll_events(uint64_t *outstanding_event_mask)
 		hir_trigger = 0;
 	}
 
-	/*
-	 * Only run the pollers if they aren't already running
-	 * on another CPU
-	 */
-	if (try_lock(&opal_poll_lock)) {
-		list_for_each(&opal_pollers, poll_ent, link)
-			poll_ent->poller(poll_ent->data);
-		unlock(&opal_poll_lock);
-	}
+	opal_run_pollers();
 
 	if (outstanding_event_mask)
 		*outstanding_event_mask = opal_pending_events;
