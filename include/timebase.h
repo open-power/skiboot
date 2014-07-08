@@ -79,13 +79,16 @@ static inline unsigned long tb_to_usecs(unsigned long tb)
 
 extern unsigned long timespec_to_tb(const struct timespec *ts);
 
-/* wait_poll - Wait a certain number of TB ticks while polling FSP */
+/* time_wait - Wait a certain number of TB ticks while polling FSP */
 extern void time_wait(unsigned long duration);
+extern void time_wait_nopoll(unsigned long duration);
 
-/* wait_poll_ms - Wait a certain number of milliseconds while polling FSP */
+/* time_wait_ms - Wait a certain number of milliseconds while polling FSP */
 extern void time_wait_ms(unsigned long ms);
+extern void time_wait_ms_nopoll(unsigned long ms);
 
-/* wait_poll_us - Wait a certain number of microseconds while polling FSP */
+/* time_wait_us - Wait a certain number of microseconds while polling FSP */
 extern void time_wait_us(unsigned long us);
+extern void time_wait_us_nopoll(unsigned long us);
 
 #endif /* __TIME_H */

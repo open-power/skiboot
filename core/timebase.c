@@ -25,14 +25,32 @@ void time_wait(unsigned long duration)
 		opal_run_pollers();
 }
 
+void time_wait_nopoll(unsigned long duration)
+{
+	unsigned long end = mftb() + duration;
+
+	while(tb_compare(mftb(), end) != TB_AAFTERB)
+		;
+}
+
 void time_wait_ms(unsigned long ms)
 {
 	time_wait(msecs_to_tb(ms));
 }
 
+void time_wait_ms_nopoll(unsigned long ms)
+{
+	time_wait_nopoll(msecs_to_tb(ms));
+}
+
 void time_wait_us(unsigned long us)
 {
 	time_wait(usecs_to_tb(us));
+}
+
+void time_wait_us_nopoll(unsigned long us)
+{
+	time_wait_nopoll(usecs_to_tb(us));
 }
 
 unsigned long timespec_to_tb(const struct timespec *ts)
