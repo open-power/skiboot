@@ -2610,6 +2610,7 @@ static int64_t capp_load_ucode(struct phb3 *p)
 	struct capp_ucode_data_hdr *data_hdr;
 	uint64_t data, *val;
 	int size_read = 0;
+	int tmp;
 	int i;
 
 	/* if fsp not present p->ucode_base gotten from device tree */
@@ -2628,14 +2629,14 @@ static int64_t capp_load_ucode(struct phb3 *p)
 		return OPAL_HARDWARE;
 	}
 
-	data_hdr = (struct capp_ucode_data_hdr *)((uint64_t)ucode_hdr + sizeof(*ucode_hdr));
+	data_hdr = (struct capp_ucode_data_hdr *)(ucode_hdr + 1);
 	while (size_read < ucode_hdr->data_size) {
 		if (data_hdr->eyecatcher != 0x4341505055434F44) {
 			PHBERR(p, "capi ucode data header eyecatcher not found!\n");
 			return OPAL_HARDWARE;
 		}
 
-		val = (uint64_t *)data_hdr + sizeof(*data_hdr)/sizeof(uint64_t);
+		val = (uint64_t *)(data_hdr + 1);
 		if (data_hdr->reg == apc_master_cresp) {
 			xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, 0);
 			for (i = 0; i < data_hdr->num_data_chunks; i++)
@@ -2659,8 +2660,9 @@ static int64_t capp_load_ucode(struct phb3 *p)
 		}
 
 		size_read += sizeof(*data_hdr) + data_hdr->num_data_chunks * 8;
-		data_hdr = (struct capp_ucode_data_hdr *)((uint64_t *)data_hdr +
-				sizeof(*data_hdr)/8 + data_hdr->num_data_chunks);
+		tmp = data_hdr->num_data_chunks;
+		data_hdr++;
+		data_hdr = (struct capp_ucode_data_hdr *)((uint64_t *)data_hdr + tmp);
 	}
 
 	p->capp_ucode_loaded = true;
