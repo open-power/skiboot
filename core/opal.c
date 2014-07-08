@@ -212,9 +212,29 @@ void opal_del_poller(void (*poller)(void *data))
 	unlock(&opal_poll_lock);
 }
 
-void opal_run_pollers(void)
+bool __opal_check_poll_recursion(const char *caller)
+{
+	if (!lock_held_by_me(&opal_poll_lock))
+		return false;
+	prerror("OPAL: poller recursion caught in %s !\n", caller);
+	backtrace();
+
+	return true;
+}
+
+void __opal_run_pollers(const char *caller)
 {
 	struct opal_poll_entry *poll_ent;
+
+	/* Debug path. Warn if we recursed */
+	if (__opal_check_poll_recursion(caller)) {
+		/* This shouldn't happen. However, if it does, we are goin
+		 * to end up warning a *LOT* so let's introduce an arbitrary
+		 * delay here.
+		 */
+		time_wait_ms_nopoll(10);
+		return;
+	}
 
 	/*
 	 * Only run the pollers if they aren't already running
