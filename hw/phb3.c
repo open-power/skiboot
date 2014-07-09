@@ -2569,6 +2569,7 @@ static int64_t phb3_get_diag_data(struct phb *phb,
 
 static uint64_t capp_fsp_lid_load(struct phb3 *p)
 {
+#define CAPP_UCODE_MURANO_20 0x80a02002
 #define CAPP_UCODE_MURANO_21 0x80a02001
 #define CAPP_UCODE_MAX_SIZE 0x20000
 	uint32_t lid_no;
@@ -2577,6 +2578,9 @@ static uint64_t capp_fsp_lid_load(struct phb3 *p)
 	int rc;
 
 	switch (p->rev) {
+	case PHB3_REV_MURANO_DD20:
+		lid_no = CAPP_UCODE_MURANO_20;
+		break;
 	case PHB3_REV_MURANO_DD21:
 		lid_no = CAPP_UCODE_MURANO_21;
 		break;
