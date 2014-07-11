@@ -982,16 +982,25 @@ static int fsp_flash_firmware(void)
 	 *   LID CRC here.
 	 */
 
-	if (validate_ipl_side() != 0)
+	if (validate_ipl_side() != 0) {
+		log_simple_error(&e_info(OPAL_RC_CU_FLASH), "CUPD: "
+				 "Rename (Swap T and P) failed!\n");
 		goto out;
+	}
 
 	/* Set next IPL side */
-	if (code_update_set_ipl_side() != 0)
+	if (code_update_set_ipl_side() != 0) {
+		log_simple_error(&e_info(OPAL_RC_CU_FLASH), "CUPD: "
+				 "Setting next IPL side failed!\n");
 		goto out;
+	}
 
 	/* Start code update process */
-	if (code_update_start() != 0)
+	if (code_update_start() != 0) {
+		log_simple_error(&e_info(OPAL_RC_CU_FLASH), "CUPD: "
+				 "Code update start failed!\n");
 		goto out;
+	}
 
 	/*
 	 * Delete T side LIDs before writing.
@@ -1007,21 +1016,27 @@ static int fsp_flash_firmware(void)
 	for (i = 0; i < be16_to_cpu(header->number_lids); i++) {
 		if (be32_to_cpu(idx_entry->size) > LID_MAX_SIZE) {
 			log_simple_error(&e_info(OPAL_RC_CU_FLASH), "CUPD: "
-				"LID size 0x%x is > max LID size \n",
-				be32_to_cpu(idx_entry->size));
-
+				"LID size 0x%x is > max LID size (0x%x).\n",
+				be32_to_cpu(idx_entry->size), LID_MAX_SIZE);
 			goto abort_update;
 		}
 
 		rc = get_lid_data(list, be32_to_cpu(idx_entry->size),
 				  be32_to_cpu(idx_entry->offset));
-		if (rc)
+		if (rc) {
+			log_simple_error(&e_info(OPAL_RC_CU_FLASH), "CUPD: "
+				"Failed to parse LID from firmware image."
+				" (rc : %d).\n", rc);
 			goto abort_update;
+		}
 
 		rc = code_update_write_lid(be32_to_cpu(idx_entry->id),
 					   be32_to_cpu(idx_entry->size));
-		if (rc)
+		if (rc) {
+			log_simple_error(&e_info(OPAL_RC_CU_FLASH), "CUPD: "
+				"Failed to write LID to FSP. (rc : %d).\n", rc);
 			goto abort_update;
+		}
 
 		/* Unmap TCE */
 		code_update_tce_unmap(PSI_DMA_CODE_UPD_SIZE);
@@ -1037,9 +1052,11 @@ static int fsp_flash_firmware(void)
 	return rc;
 
 abort_update:
-	log_simple_error(&e_info(OPAL_RC_CU_FLASH), "CUPD: LID update failed "
-					"Aborting codeupdate! rc:%d", rc);
 	rc = code_update_complete(FSP_CMD_FLASH_ABORT);
+	if (rc)
+		log_simple_error(&e_info(OPAL_RC_CU_FLASH), "CUPD: "
+			 "Code update abort command failed. (rc : %d).", rc);
+
 out:
 	unlock(&flash_lock);
 	return -1;
