@@ -197,7 +197,7 @@ static void get_platform_hmc_managed(void)
 			       got_platform_hmc_managed, NULL);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_CU_INIT),
-			"FLASH: Error %d queueing param request\n", rc);
+			"CUPD: Error %d queueing param request\n", rc);
 		dec_in_flight_param();
 	}
 }
