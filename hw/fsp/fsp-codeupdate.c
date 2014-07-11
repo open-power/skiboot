@@ -19,10 +19,11 @@
 #include <fsp.h>
 #include <fsp-sysparam.h>
 #include <lock.h>
-#include <codeupdate.h>
 #include <device.h>
 #include <ccan/endian/endian.h>
 #include <fsp-elog.h>
+
+#include "fsp-codeupdate.h"
 
 enum flash_state {
 	FLASH_STATE_ABSENT,
