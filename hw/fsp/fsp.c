@@ -614,6 +614,13 @@ static void fsp_handle_errors(struct fsp *fsp)
 	 */
 	if ((disr & FSP_DISR_FSP_IN_RR) || (fsp->state == fsp_mbx_err)) {
 		/*
+		 * If we get here with DEBUG_IN_PROGRESS also set, the
+		 * FSP is in debug and we should *not* reset it now
+		 */
+		if (disr & FSP_DISR_DBG_IN_PROGRESS)
+			return;
+
+		/*
 		 * When the linux comes back up, we still see that bit
 		 * set for a bit, so just move on, nothing to see here
 		 */
