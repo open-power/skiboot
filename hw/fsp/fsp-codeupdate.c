@@ -29,6 +29,7 @@ enum flash_state {
 	FLASH_STATE_INVALID, /* IPL side marker lid is invalid */
 	FLASH_STATE_READING,
 	FLASH_STATE_READ,
+	FLASH_STATE_ABORT,
 };
 
 enum lid_fetch_side {
@@ -207,6 +208,7 @@ static int64_t code_update_check_state(void)
 	case FLASH_STATE_ABSENT:
 		return OPAL_HARDWARE;
 	case FLASH_STATE_INVALID:
+	case FLASH_STATE_ABORT:
 		return OPAL_INTERNAL_ERROR;
 	case FLASH_STATE_READING:
 		return OPAL_BUSY;
@@ -1158,6 +1160,50 @@ static bool code_update_notify(uint32_t cmd_sub_mod, struct fsp_msg *msg)
 	return true;
 }
 
+/*
+ * Handle FSP R/R event.
+ *
+ * Note:
+ *   If FSP R/R happens during code update, then entire system reboots
+ *   and comes up with P side image (and T side image will be invalid).
+ *   Hence we don't need to handle R/R during code update.
+ *
+ *   Also if FSP R/R happens in init path (while retrieving in_flight_params)
+ *   then system fails to continue booting (because we have not yet loaded
+ *   all required data/LID from FSP). Hence we don't need to handle R/R
+ *   for system params.
+ */
+static bool fsp_code_update_rr(uint32_t cmd_sub_mod,
+			       struct fsp_msg *msg __unused)
+{
+	switch (cmd_sub_mod) {
+	case FSP_RESET_START:
+		lock(&flash_lock);
+
+		if (code_update_check_state() == OPAL_BUSY)
+			flash_state = FLASH_STATE_ABORT;
+
+		unlock(&flash_lock);
+		return true;
+	case FSP_RELOAD_COMPLETE:
+		lock(&flash_lock);
+
+		/* Lets try to parse marker LID again, if we failed
+		 * to parse marker LID last time.
+		 */
+		if (code_update_check_state() == OPAL_INTERNAL_ERROR)
+			fetch_com_marker_lid();
+
+		unlock(&flash_lock);
+		return true;
+	}
+	return false;
+}
+
+static struct fsp_client fsp_cupd_client_rr = {
+	        .message = fsp_code_update_rr,
+};
+
 static struct fsp_client fsp_get_notify = {
 	.message = code_update_notify,
 };
@@ -1176,6 +1222,8 @@ void fsp_code_update_init(void)
 
 	/* register Code Update Class D3 */
 	fsp_register_client(&fsp_get_notify, FSP_MCLASS_CODE_UPDATE);
+	/* Register for Class AA (FSP R/R) */
+	fsp_register_client(&fsp_cupd_client_rr, FSP_MCLASS_RR_EVENT);
 
 	/* Flash hook */
 	fsp_flash_term_hook = NULL;
