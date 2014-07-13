@@ -1386,7 +1386,6 @@ static void phb3_err_ER_clear(struct phb3 *p)
 static void phb3_read_phb_status(struct phb3 *p,
 				 struct OpalIoPhb3ErrorData *stat)
 {
-	bool locked;
 	uint16_t val;
 	uint64_t *pPEST;
 	uint64_t val64 = 0;
@@ -1407,7 +1406,6 @@ static void phb3_read_phb_status(struct phb3 *p,
 	 */
 
 	/* Use ASB to access PCICFG if the PHB has been fenced */
-	locked = lock_recursive(&p->lock);
 	p->flags |= PHB3_CFG_USE_ASB;
 
 	/* Grab RC bridge control, make it 32-bit */
@@ -1460,10 +1458,6 @@ static void phb3_read_phb_status(struct phb3 *p,
 
 	/* Restore to AIB */
 	p->flags &= ~PHB3_CFG_USE_ASB;
-	if (locked) {
-		unlock(&p->lock);
-		pci_put_phb(&p->phb);
-	}
 
 	/* PEC NFIR */
 	xscom_read(p->chip_id, p->pe_xscom + 0x0, &stat->nFir);
