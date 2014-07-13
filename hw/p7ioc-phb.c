@@ -854,7 +854,6 @@ static int64_t p7ioc_poll(struct phb *phb)
 static void p7ioc_eeh_read_phb_status(struct p7ioc_phb *p,
 				      struct OpalIoP7IOCPhbErrorData *stat)
 {
-	bool locked;
 	uint16_t tmp16;
 	unsigned int i;
 
@@ -879,7 +878,6 @@ static void p7ioc_eeh_read_phb_status(struct p7ioc_phb *p,
 	 */
 
 	/* Use ASB to access PCICFG if the PHB has been fenced */
-	locked = lock_recursive(&p->lock);
 	p->flags |= P7IOC_PHB_CFG_USE_ASB;
 
 	/* Grab RC bridge control, make it 32-bit */
@@ -935,10 +933,6 @@ static void p7ioc_eeh_read_phb_status(struct p7ioc_phb *p,
 
 	/* Restore to AIB */
 	p->flags &= ~P7IOC_PHB_CFG_USE_ASB;
-	if (locked) {
-		unlock(&p->lock);
-		pci_put_phb(&p->phb);
-	}
 
 	/*
 	 * No idea what that that is supposed to be, opal.h says
