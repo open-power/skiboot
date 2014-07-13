@@ -122,17 +122,13 @@ static void psi_link_poll(void *data __unused)
 		(tb_compare(now, psi_link_timer) == TB_AAFTERB) ||
 		(tb_compare(now, psi_link_timer) == TB_AEQUALB)) {
 
+		lock(&psi_lock);
+
 		list_for_each(&psis, psi, list) {
 			u64 val;
 
 			if (psi->active || !psi->working)
 				continue;
-
-			lock(&psi_lock);
-			if (psi->active || !psi->working) {
-				unlock(&psi_lock);
-				continue;
-			}
 
 			val = in_be64(psi->regs + PSIHB_CR);
 
@@ -150,9 +146,7 @@ static void psi_link_poll(void *data __unused)
 				fsp_reinit_fsp();
 				return;
 			}
-			unlock(&psi_lock);
 		}
-
 		if (!psi_link_timeout)
 			psi_link_timeout =
 				now + secs_to_tb(PSI_LINK_RECOVERY_TIMEOUT);
@@ -165,6 +159,8 @@ static void psi_link_poll(void *data __unused)
 
 		/* Poll every 10 seconds */
 		psi_link_timer = now + secs_to_tb(PSI_LINK_CHECK_INTERVAL);
+
+		unlock(&psi_lock);
 	}
 }
 

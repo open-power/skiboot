@@ -900,11 +900,7 @@ extern void __opal_register(uint64_t token, void *func, unsigned num_args);
  */
 extern void opal_add_poller(void (*poller)(void *data), void *data);
 extern void opal_del_poller(void (*poller)(void *data));
-extern void __opal_run_pollers(const char *caller);
-extern bool __opal_check_poll_recursion(const char *caller);
-
-#define opal_run_pollers() __opal_run_pollers(__func__)
-#define opal_check_poll_recursion() __opal_check_poll_recursion(__func__)
+extern void opal_run_pollers(void);
 
 /*
  * Warning: no locking, only call that from the init processor

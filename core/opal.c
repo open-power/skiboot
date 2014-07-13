@@ -201,50 +201,33 @@ void opal_del_poller(void (*poller)(void *data))
 {
 	struct opal_poll_entry *ent;
 
+	/* XXX This is currently unused. To solve various "interesting"
+	 * locking issues, the pollers are run locklessly, so if we were
+	 * to free them, we would have to be careful, using something
+	 * akin to RCU to synchronize with other OPAL entries. For now
+	 * if anybody uses it, print a warning and leak the entry, don't
+	 * free it.
+	 */
+	prerror("WARNING: Unsupported opal_del_poller\n");
+
 	lock(&opal_poll_lock);
 	list_for_each(&opal_pollers, ent, link) {
 		if (ent->poller == poller) {
 			list_del(&ent->link);
-			free(ent);
+			/* free(ent); */
 			break;
 		}
 	}
 	unlock(&opal_poll_lock);
 }
 
-bool __opal_check_poll_recursion(const char *caller)
-{
-	if (!lock_held_by_me(&opal_poll_lock))
-		return false;
-	prerror("OPAL: poller recursion caught in %s !\n", caller);
-	backtrace();
-
-	return true;
-}
-
-void __opal_run_pollers(const char *caller)
+void opal_run_pollers(void)
 {
 	struct opal_poll_entry *poll_ent;
 
-	/* Debug path. Warn if we recursed */
-	if (__opal_check_poll_recursion(caller)) {
-		/* This shouldn't happen. However, if it does, we are goin
-		 * to end up warning a *LOT* so let's introduce an arbitrary
-		 * delay here.
-		 */
-		time_wait_ms_nopoll(10);
-		return;
-	}
-
-	/*
-	 * Only run the pollers if they aren't already running
-	 * on another CPU and we aren't re-entering.
-	 */
-	if (try_lock(&opal_poll_lock)) {
-		list_for_each(&opal_pollers, poll_ent, link)
-			poll_ent->poller(poll_ent->data);
-		unlock(&opal_poll_lock);
-	}
+	/* The pollers are run lokelessly, see comment in opal_del_poller */
+	list_for_each(&opal_pollers, poll_ent, link)
+		poll_ent->poller(poll_ent->data);
 }
 
 static int64_t opal_poll_events(uint64_t *outstanding_event_mask)

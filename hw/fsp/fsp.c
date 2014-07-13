@@ -1544,22 +1544,8 @@ int fsp_sync_msg(struct fsp_msg *msg, bool autofree)
 	if (rc)
 		goto bail;
 
-	/* Debug .. make sure we aren't recursing on the poll lock
-	 * or the FSP lock
-	 */
-	if (opal_check_poll_recursion()) {
-		/* Until we're confident we found all culprits, fallback
-		 * to the old way of just polling the FSP
-		 */
-		while(fsp_msg_busy(msg)) {
-			lock(&fsp_lock);
-			__fsp_poll(false);
-			unlock(&fsp_lock);
-		}
-	} else {
-		while(fsp_msg_busy(msg))
-			opal_run_pollers();
-	}
+	while(fsp_msg_busy(msg))
+		opal_run_pollers();
 
 	switch(msg->state) {
 	case fsp_msg_done:
