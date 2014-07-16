@@ -346,6 +346,8 @@
 #define FSP_CMD_POWERDOWN_PCIRS	0x1ce4d02 /* HV->FSP: PCI cfg reset power dwn */
 #define FSP_CMD_REBOOT		0x1ce4e00 /* HV->FSP: Standard IPL */
 #define FSP_CMD_DEEP_REBOOT	0x1ce4e04 /* HV->FSP: Deep IPL */
+#define FSP_CMD_INIT_DPO	0x0ce5b00 /* FSP->HV: Initialize Delayed Power Off */
+#define FSP_RSP_INIT_DPO	0x0cedb00 /* HV->FSP: Response for DPO init command */
 #define FSP_CMD_PANELSTATUS	0x0ce5c00 /* FSP->HV */
 #define FSP_CMD_PANELSTATUS_EX1	0x0ce5c02 /* FSP->HV */
 #define FSP_CMD_PANELSTATUS_EX2	0x0ce5c03 /* FSP->HV */
