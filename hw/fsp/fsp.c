@@ -38,7 +38,7 @@
 #include <opal.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_FSP_POLL_TIMEOUT, OPAL_PLATFORM_ERR_EVT, OPAL_FSP,
-		OPAL_PLATFORM_FIRMWARE, OPAL_ERROR_PANIC, OPAL_NA, NULL);
+		 OPAL_PLATFORM_FIRMWARE, OPAL_ERROR_PANIC, OPAL_NA, NULL);
 
 //#define DBG(fmt...)	printf(fmt)
 #define DBG(fmt...)	do { } while(0)
@@ -1918,6 +1918,8 @@ static void fsp_timeout_poll(void *data __unused)
 		/* Now check if the response has timed out */
 		if (tb_compare(time_to_comp, timeout_val) == TB_AAFTERB) {
 			u64 resetbit = 0;
+			u32 w0, w1;
+			enum fsp_msg_state mstate;
 
 			/* Take the FSP lock now and re-check */
 			lock(&fsp_lock);
@@ -1927,10 +1929,11 @@ static void fsp_timeout_poll(void *data __unused)
 				goto next_bit;
 			}
 			req = list_top(&cmdclass->msgq,	struct fsp_msg, link);
-			log_simple_error(&e_info(OPAL_RC_FSP_POLL_TIMEOUT),
-				"FSP: Response from FSP timed out, word0 = %x,"
-				"word1 = %x state: %d\n",
-			       req->word0, req->word1, req->state);
+			w0 = req->word0;
+			w1 = req->word1;
+			mstate = req->state;
+			printf("FSP: Response from FSP timed out, word0 = %x,"
+			       "word1 = %x state: %d\n", w0, w1, mstate);
 			fsp_reg_dump();
 			resetbit = ~fsp_get_class_bit(req->word0 & 0xff);
 			fsp_cmdclass_resp_bitmask &= resetbit;
@@ -1940,6 +1943,9 @@ static void fsp_timeout_poll(void *data __unused)
 			fsp_complete_msg(req);
 			__fsp_trigger_reset();
 			unlock(&fsp_lock);
+			log_simple_error(&e_info(OPAL_RC_FSP_POLL_TIMEOUT),
+					 "FSP: Response from FSP timed out, word0 = %x,"
+					 "word1 = %x state: %d\n", w0, w1, mstate);
 		}
 	next_bit:
 		cmdclass_resp_bitmask = cmdclass_resp_bitmask >> 1;
