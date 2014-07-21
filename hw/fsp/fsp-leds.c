@@ -25,13 +25,14 @@
 #include <console.h>
 #include <timebase.h>
 #include <device.h>
-#include <fsp-leds.h>
 #include <stdio.h>
 #include <spcn.h>
 #include <timebase.h>
 #include <hdata/spira.h>
 #include <hdata/hdata.h>
 #include <fsp-elog.h>
+
+#include "fsp-leds.h"
 
 /* Debug prefix */
 #define PREFIX		"FSPLED: "
