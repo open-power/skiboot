@@ -2431,6 +2431,40 @@ static int64_t phb3_eeh_freeze_clear(struct phb *phb, uint64_t pe_number,
 	return OPAL_SUCCESS;
 }
 
+static int64_t phb3_eeh_freeze_set(struct phb *phb, uint64_t pe_number,
+                                   uint64_t eeh_action_token)
+{
+        struct phb3 *p = phb_to_phb3(phb);
+        uint64_t data;
+
+	if (p->state == PHB3_STATE_BROKEN)
+		return OPAL_HARDWARE;
+
+	if (pe_number >= PHB3_MAX_PE_NUM)
+		return OPAL_PARAMETER;
+
+	if (eeh_action_token != OPAL_EEH_ACTION_SET_FREEZE_MMIO &&
+	    eeh_action_token != OPAL_EEH_ACTION_SET_FREEZE_DMA &&
+	    eeh_action_token != OPAL_EEH_ACTION_SET_FREEZE_ALL)
+		return OPAL_PARAMETER;
+
+	if (eeh_action_token & OPAL_EEH_ACTION_SET_FREEZE_MMIO) {
+		phb3_ioda_sel(p, IODA2_TBL_PESTA, pe_number, false);
+		data = in_be64(p->regs + PHB_IODA_DATA0);
+		data |= IODA2_PESTA_MMIO_FROZEN;
+		out_be64(p->regs + PHB_IODA_DATA0, data);
+	}
+
+	if (eeh_action_token & OPAL_EEH_ACTION_SET_FREEZE_DMA) {
+		phb3_ioda_sel(p, IODA2_TBL_PESTB, pe_number, false);
+		data = in_be64(p->regs + PHB_IODA_DATA0);
+		data |= IODA2_PESTB_DMA_STOPPED;
+		out_be64(p->regs + PHB_IODA_DATA0, data);
+	}
+
+	return OPAL_SUCCESS;
+}
+
 static int64_t phb3_eeh_next_error(struct phb *phb,
 				   uint64_t *first_frozen_pe,
 				   uint16_t *pci_error_type,
@@ -3009,6 +3043,7 @@ static const struct phb_ops phb3_ops = {
 	.poll			= phb3_poll,
 	.eeh_freeze_status	= phb3_eeh_freeze_status,
 	.eeh_freeze_clear	= phb3_eeh_freeze_clear,
+	.eeh_freeze_set		= phb3_eeh_freeze_set,
 	.next_error		= phb3_eeh_next_error,
 	.err_injct		= phb3_err_injct,
 	.get_diag_data		= NULL,
