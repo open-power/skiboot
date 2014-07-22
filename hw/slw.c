@@ -428,8 +428,9 @@ struct cpu_idle_states {
 #define IDLE_LOSE_FULL_CONTEXT	0x00000400 /* Restore hypervisor resource
 					      by searching PACA */
 #define IDLE_USE_INST_NAP	0x00010000 /* Use nap instruction */
-#define IDLE_USE_INST_SLEEP	0x00020000 /* Use sleep instruction */
+#define IDLE_USE_INST_SLEEP	0x00020000 /* Use sleep instruction (no workaround) */
 #define IDLE_USE_INST_WINKLE	0x00040000 /* Use winkle instruction */
+#define IDLE_USE_INST_SLEEP_ER1	0x00080000 /* Use sleep instruction (need workaround)*/
 #define IDLE_USE_PMICR		0x00800000 /* Use SPR PMICR instruction */
 
 #define IDLE_FASTSLEEP_PMICR	0x0000002000000000
@@ -472,8 +473,8 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 		       | 0*IDLE_USE_PMICR,
 		.pmicr = 0,
 		.pmicr_mask = 0 },
-	{ /* fast sleep */
-		.name = "fastsleep",
+	{ /* fast sleep (with workaround) */
+		.name = "fastsleep_",
 		.latency_ns = 100000,
 		.flags = 1*IDLE_DEC_STOP \
 		       | 1*IDLE_TB_STOP  \
@@ -481,7 +482,7 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 		       | 0*IDLE_LOSE_HYP_CONTEXT \
 		       | 0*IDLE_LOSE_FULL_CONTEXT \
 		       | 0*IDLE_USE_INST_NAP \
-		       | 1*IDLE_USE_INST_SLEEP \
+		       | 1*IDLE_USE_INST_SLEEP_ER1 \
 		       | 0*IDLE_USE_INST_WINKLE \
 		       | 0*IDLE_USE_PMICR, /* Not enabled until deep
 						states are available */
