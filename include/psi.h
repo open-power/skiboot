@@ -214,6 +214,7 @@ extern void psi_init(void);
 extern struct psi *psi_find_link(uint32_t chip_id);
 extern void psi_init_for_fsp(struct psi *psi);
 extern void psi_disable_link(struct psi *psi);
+extern void psi_reset_fsp(struct psi *psi);
 extern bool psi_check_link_active(struct psi *psi);
 extern bool psi_poll_fsp_interrupt(struct psi *psi);
 

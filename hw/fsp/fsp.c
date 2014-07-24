@@ -372,7 +372,7 @@ static bool fsp_in_hir(struct fsp *fsp)
 static bool fsp_in_reset(struct fsp *fsp)
 {
 	switch (fsp->state) {
-	case fsp_mbx_hir_seq_done:	/* Link pulled down */
+	case fsp_mbx_hir_seq_done:	/* FSP reset triggered */
 	case fsp_mbx_err:		/* Will be reset soon */
 	case fsp_mbx_rr:		/* Mbx activity stopped pending reset */
 		return true;
@@ -445,12 +445,12 @@ static void fsp_hir_poll(struct fsp *fsp, struct psi *psi)
 		if (drcr & FSP_DRCR_ACK_MASK) {
 			if (fsp_hir_state_timeout()) {
 				prerror("FSP: Ack timeout. Triggering reset\n");
-				psi_disable_link(psi);
+				psi_reset_fsp(psi);
 				fsp->state = fsp_mbx_hir_seq_done;
 			}
 		} else {
 			printf("FSP: DRCR ack received. Triggering reset\n");
-			psi_disable_link(psi);
+			psi_reset_fsp(psi);
 			fsp->state = fsp_mbx_hir_seq_done;
 		}
 		break;
@@ -593,11 +593,6 @@ static void fsp_handle_errors(struct fsp *fsp)
 		fsp_trace_event(fsp, TRACE_FSP_EVT_LINK_DOWN, 0, 0, 0, 0);
 		prerror("FSP #%d: Link down, starting R&R\n", fsp->index);
 
-		/* If we got here due to a host initiated reset, the link
-		 * is already driven down.
-		 */
-		if (fsp->state != fsp_mbx_hir_seq_done)
-			psi_disable_link(psi);
 		fsp_start_rr(fsp);
 		return;
 	}
@@ -1495,8 +1490,7 @@ static void __fsp_poll(bool interrupt)
 	 * in the process. Let's be safe rather than sorry and handle that
 	 * here
 	 */
-	if (fsp_in_hir(fsp) || fsp->state == fsp_mbx_err ||
-			fsp->state == fsp_mbx_hir_seq_done) {
+	if (fsp_in_hir(fsp) || fsp->state == fsp_mbx_err) {
 		prerror("FSP: Late error state detection\n");
 		goto again;
 	}
