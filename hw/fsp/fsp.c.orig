@@ -1227,6 +1227,11 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 		 * sequence successfully and hence force power off the system.
 		 */
 		return true;
+	case FSP_CMD_PANELSTATUS:
+	case FSP_CMD_PANELSTATUS_EX1:
+	case FSP_CMD_PANELSTATUS_EX2:
+		/* Panel status messages. We currently just ignore them */
+		return true;
 	case FSP_CMD_CLOSE_HMC_INTF:
 		/* Close the HMC interface */
 		/* Though Sapphire does not support a HMC connection, the FSP
