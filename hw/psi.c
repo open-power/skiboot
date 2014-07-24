@@ -54,8 +54,6 @@ void psi_set_link_polling(bool active)
 
 void psi_disable_link(struct psi *psi)
 {
-	u64 val;
-
 	lock(&psi_lock);
 
 	/*
@@ -66,16 +64,32 @@ void psi_disable_link(struct psi *psi)
 	 * mentioning first the link having gone down then being disabled.
 	 */
 	if (psi->active) {
+		u64 reg;
 		psi->active = false;
 
-		printf("PSI[0x%03x]: Disabling link!\n", psi->chip_id);
+		/* Mask errors in SEMR */
+		reg = in_be64(psi->regs + PSIHB_SEMR);
+		reg = ((0xfffull << 36) | (0xfffull << 20));
+		out_be64(psi->regs + PSIHB_SEMR, reg);
+		printf("PSI: SEMR set to %llx\n", reg);
 
-		/* Clear the link enable bit and disable FSP interrupts */
-		val = in_be64(psi->regs + PSIHB_CR);
-		val &= ~PSIHB_CR_PSI_LINK_ENABLE;
-		val &= ~PSIHB_CR_FSP_IRQ_ENABLE;
-		val &= ~PSIHB_CR_FSP_IRQ; /* Clear interrupt state too */
-		out_be64(psi->regs + PSIHB_CR, val);
+		/* Reset all the error bits in PSIHB_CR and
+		 * disable FSP interrupts
+		 */
+		reg = in_be64(psi->regs + PSIHB_CR);
+		reg &= ~(0x7ffull << 20);
+		reg &= ~PSIHB_CR_PSI_LINK_ENABLE;	/* flip link enable */
+		/*
+		 * Ensure no commands/spurious interrupts reach
+		 * the processor, by flipping the command enable.
+		 */
+		reg &= ~PSIHB_CR_FSP_CMD_ENABLE;
+		reg &= ~PSIHB_CR_FSP_IRQ_ENABLE;
+		reg &= ~PSIHB_CR_FSP_IRQ; /* Clear interrupt state too */
+		printf("PSI[0x%03x]: Disabling link!\n", psi->chip_id);
+		out_be64(psi->regs + PSIHB_CR, reg);
+		printf("PSI: PSIHB_CR (error bits) set to %llx\n",
+				in_be64(psi->regs + PSIHB_CR));
 	}
 
 	unlock(&psi_lock);
@@ -208,40 +222,12 @@ static void decode_psihb_error(u64 val)
 
 static void handle_psi_interrupt(struct psi *psi, u64 val)
 {
-	u64 reg;
-
 	printf("PSI[0x%03x]: PSI mgmnt interrupt CR=0x%016llx\n",
 	       psi->chip_id, val);
 
 	if (val & (0xfffull << 20)) {
-		lock(&psi_lock);
-		psi->active = false;
-
 		decode_psihb_error(val);
-
-		/* Mask errors in SEMR */
-		reg = in_be64(psi->regs + PSIHB_SEMR);
-		reg = ((0xfffull << 36) | (0xfffull << 20));
-		out_be64(psi->regs + PSIHB_SEMR, reg);
-		printf("PSI: SEMR set to %llx\n", reg);
-
-		/* Reset all the error bits in PSIHB_CR and
-		 * disable FSP interrupts
-		 */
-		val = in_be64(psi->regs + PSIHB_CR);
-		val &= ~(0x7ffull << 20);
-		val &= ~PSIHB_CR_PSI_LINK_ENABLE;	/* flip link enable */
-		/*
-		 * Ensure no commands/spurious interrupts reach
-		 * the processor, by flipping the command enable.
-		 */
-		val &= ~PSIHB_CR_FSP_CMD_ENABLE;
-		val &= ~PSIHB_CR_FSP_IRQ_ENABLE;
-		val &= ~PSIHB_CR_FSP_IRQ; /* Clear interrupt state too */
-		out_be64(psi->regs + PSIHB_CR, val);
-		printf("PSI: PSIHB_CR (error bits) set to %llx\n",
-				in_be64(psi->regs + PSIHB_CR));
-		unlock(&psi_lock);
+		psi_disable_link(psi);
 	} else if (val & (0x1full << 11))
 		printf("PSI: FSP error detected\n");
 }
