@@ -828,5 +828,10 @@ extern void opal_run_pollers(void);
 extern void opal_add_host_sync_notifier(bool (*notify)(void *data), void *data);
 extern void opal_del_host_sync_notifier(bool (*notify)(void *data));
 
+/*
+ * Opal internal function prototype
+ */
+extern int handle_hmi_exception(uint64_t hmer);
+
 #endif /* __ASSEMBLY__ */
 #endif /* __OPAL_H */

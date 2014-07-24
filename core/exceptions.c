@@ -362,50 +362,12 @@ void handle_hmi(struct stack_frame *stack);
 
 void handle_hmi(struct stack_frame *stack)
 {
-	uint64_t hmer, orig_hmer;
-	bool assert = false;
+	uint64_t orig_hmer;
+	int recover;
 
-	orig_hmer = hmer = mfspr(SPR_HMER);
-	printf("HMI: Received HMI interrupt: HMER = 0x%016llx\n", hmer);
-	if (hmer & (SPR_HMER_PROC_RECV_DONE
-			| SPR_HMER_PROC_RECV_ERROR_MASKED)) {
-		hmer &= ~(SPR_HMER_PROC_RECV_DONE
-			| SPR_HMER_PROC_RECV_ERROR_MASKED);
-		printf("HMI: Processor recovery Done.\n");
-	}
-	if (hmer & SPR_HMER_PROC_RECV_AGAIN) {
-		hmer &= ~SPR_HMER_PROC_RECV_AGAIN;
-		printf("HMI: Processor recovery occurred again before"
-			"bit2 was cleared\n");
-	}
-	/* Assert if we see malfunction alert, we can not continue. */
-	if (hmer & SPR_HMER_MALFUNCTION_ALERT) {
-		hmer &= ~SPR_HMER_MALFUNCTION_ALERT;
-		assert = true;
-	}
-
-	/* Assert if we see Hypervisor resource error, we can not continue. */
-	if (hmer & SPR_HMER_HYP_RESOURCE_ERR) {
-		hmer &= ~SPR_HMER_HYP_RESOURCE_ERR;
-		assert = true;
-	}
-
-	/*
-	 * Assert for now for all TOD errors. In future we need to decode
-	 * TFMR and take corrective action wherever required.
-	 */
-	if (hmer & (SPR_HMER_TFAC_ERROR | SPR_HMER_TFMR_PARITY_ERROR)) {
-		hmer &= ~(SPR_HMER_TFAC_ERROR | SPR_HMER_TFMR_PARITY_ERROR);
-		assert = true;
-	}
-
-	/*
-	 * HMER bits are sticky, once set to 1 they remain set to 1 until
-	 * they are set to 0. Reset the error source bit to 0, otherwise
-	 * we keep getting HMI interrupt again and again.
-	 */
-	mtspr(SPR_HMER, hmer);
-	if (!assert)
+	orig_hmer = mfspr(SPR_HMER);
+	recover = handle_hmi_exception(orig_hmer);
+	if (recover)
 		return;
 
 	/*
