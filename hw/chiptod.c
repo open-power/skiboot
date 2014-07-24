@@ -286,7 +286,7 @@ static bool chiptod_check_tb_running(void)
 	return true;
 }
 
-static void chiptod_reset_tb_errors(void)
+static bool chiptod_reset_tb_errors(void)
 {
 	uint64_t tfmr;
 	unsigned long timeout = 0;
@@ -310,14 +310,15 @@ static void chiptod_reset_tb_errors(void)
 			 * now ... not much we can do, panic maybe ?
 			 */
 			prerror("CHIPTOD: TB error reset timeout !\n");
-			return;
+			return false;
 		}
 		tfmr = mfspr(SPR_TFMR);
 		if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
 			prerror("CHIPTOD: TB error reset: corrupt TFMR !\n");
-			return;
+			return false;
 		}
 	} while(tfmr & SPR_TFMR_CLEAR_TB_ERRORS);
+	return true;
 }
 
 static void chiptod_cleanup_thread_tfmr(void)
@@ -541,6 +542,116 @@ bool chiptod_wakeup_resync(void)
 	prerror("CHIPTOD: Resync failed ! TFMR=0x%16lx\n", mfspr(SPR_TFMR));
 	unlock(&chiptod_lock);
 	return false;
+}
+
+
+static int chiptod_recover_tod_errors(void)
+{
+	uint64_t terr;
+
+	/* Read TOD error register */
+	if (xscom_readme(TOD_ERROR, &terr) != 0) {
+		prerror("CHIPTOD: XSCOM error reading TOD_ERROR reg\n");
+		return 0;
+	}
+	/* Check for sync check error and recover */
+	if (terr & TOD_ERR_TOD_SYNC_CHECK) {
+		chiptod_reset_tod_errors();
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * Sync up TOD with other chips and get TOD in running state.
+ * For non-master, we request TOD value from another chip.
+ * For master chip, we need switch topology to recover. For now just fail.
+ */
+static int chiptod_start_tod(void)
+{
+	/* Switch local chiptod to "Not Set" state */
+	if (xscom_writeme(TOD_LOAD_TOD_MOD, (1UL << 63)) != 0) {
+		printf("CHIPTOD: XSCOM error sending LOAD_TOD_MOD\n");
+		return 0;
+	}
+
+	/*  TODO: Handle TOD recovery on master chip. */
+	if (this_cpu()->chip_id == chiptod_primary)
+		return 0;
+
+	/*
+	 * Request the current TOD value from another chip.
+	 * This will move TOD in running state
+	 */
+	if (xscom_writeme(TOD_TTYPE_3, (1UL << 63)) != 0) {
+		prerror("CHIPTOD: XSCOM error sending TTYPE_3\n");
+		return 0;
+	}
+
+	/* Check if chip TOD is running. */
+	if (!chiptod_poll_running())
+		return 0;
+
+	return 1;
+}
+
+int chiptod_recover_tb_errors(void)
+{
+	uint64_t tfmr;
+	int rc = 1;
+
+	lock(&chiptod_lock);
+
+	/* Get fresh copy of TFMR */
+	tfmr = mfspr(SPR_TFMR);
+
+	/*
+	 * Check for TB errors.
+	 * On Sync check error, bit 44 of TFMR is set. Check for it and
+	 * clear it.
+	 */
+	if (tfmr & SPR_TFMR_TB_MISSING_STEP) {
+		if (!chiptod_reset_tb_errors()) {
+			rc = 0;
+			goto error_out;
+		}
+	}
+
+	/*
+	 * Check for TOD sync check error.
+	 * On TOD errors, bit 51 of TFMR is set. If this bit is on then we
+	 * need to fetch TOD error register and recover from TOD errors.
+	 * Bit 33 of TOD error register indicates sync check error.
+	 */
+	if (tfmr & SPR_TFMR_CHIP_TOD_INTERRUPT)
+		rc = chiptod_recover_tod_errors();
+
+	/* Check if TB is running. If not then we need to get it running. */
+	if (!(tfmr & SPR_TFMR_TB_VALID)) {
+		rc = 0;
+
+		/* Place TB in Notset state. */
+		if (!chiptod_mod_tb())
+			goto error_out;
+
+		/*
+		 * Before we move TOD to core TB check if TOD is running.
+		 * If not, then get TOD in running state.
+		 */
+		if (!chiptod_poll_running())
+			if (!chiptod_start_tod())
+				goto error_out;
+
+		/* Move chiptod value to core TB */
+		if (!chiptod_to_tb())
+			goto error_out;
+
+		/* We have successfully able to get TB running. */
+		rc = 1;
+	}
+error_out:
+	unlock(&chiptod_lock);
+	return rc;
 }
 
 static int64_t opal_resync_timebase(void)

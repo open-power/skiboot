@@ -8,6 +8,7 @@
 #include <opal.h>
 #include <opal-msg.h>
 #include <processor.h>
+#include <chiptod.h>
 
 /*
  * HMER register layout:
@@ -193,7 +194,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			hmi_evt->type = OpalHMI_ERROR_TFAC;
 			hmi_evt->tfmr = mfspr(SPR_TFMR);
 		}
-		recover = 0;
+		recover = chiptod_recover_tb_errors();
 	}
 	if (hmer & SPR_HMER_TFMR_PARITY_ERROR) {
 		hmer &= ~SPR_HMER_TFMR_PARITY_ERROR;

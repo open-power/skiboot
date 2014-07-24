@@ -24,5 +24,6 @@
 extern void chiptod_init(u32 master_cpu);
 
 extern bool chiptod_wakeup_resync(void);
+extern int chiptod_recover_tb_errors(void);
 
 #endif /* __CHIPTOD_H */
