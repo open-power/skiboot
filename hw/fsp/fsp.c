@@ -697,6 +697,9 @@ static void fsp_handle_errors(struct fsp *fsp)
 			 * incoming messages
 			 */
 			fsp->state = fsp_mbx_idle;
+
+			/* Also clear R&R complete bit in DISR */
+			fsp_wreg(fsp, FSP_DISR_REG, FSP_DISR_FSP_RR_COMPLETE);
 		}
 	}
 
