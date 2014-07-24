@@ -53,8 +53,11 @@ void psi_set_link_polling(bool active)
 }
 
 /*
- * Send an encoded reset sequence to the FSP. We should get a PSI interrupt
- * soon after.
+ * Resetting the FSP is a multi step sequence:
+ * 1. Read the PSIHBCR
+ * 2. Set the PSIHBCR[6] -- write register back.
+ * 3. Read PSIHBCR again
+ * 4. Reset PSIHBCR[6] -- write register back.
  */
 void psi_reset_fsp(struct psi *psi)
 {
@@ -66,8 +69,15 @@ void psi_reset_fsp(struct psi *psi)
 		printf("PSI: Driving FSP reset via PSI\n");
 		reg = in_be64(psi->regs + PSIHB_CR);
 		reg &= ~(0xfffull << 20);	/* Reset error bits */
-		reg |= PSIHB_CR_FSP_RESET;	/* Send FSP reset sequence */
-		printf("PSI[0x%03x]: PSIHBCR set to %llx\n",
+		reg |= PSIHB_CR_FSP_RESET;	/* FSP reset trigger start */
+		out_be64(psi->regs + PSIHB_CR, reg);
+		printf("PSI[0x%03x]: FSP reset start PSIHBCR set to %llx\n",
+			psi->chip_id, in_be64(psi->regs + PSIHB_CR));
+
+		reg = in_be64(psi->regs + PSIHB_CR);
+		reg &= ~PSIHB_CR_FSP_RESET;	/* Clear FSP reset bit */
+		out_be64(psi->regs + PSIHB_CR, reg);	/* Complete reset */
+		printf("PSI[0x%03x]: FSP reset complete. PSIHBCR set to %llx\n",
 			psi->chip_id, in_be64(psi->regs + PSIHB_CR));
 	}
 	unlock(&psi_lock);
