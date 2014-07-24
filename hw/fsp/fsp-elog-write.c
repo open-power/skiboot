@@ -50,11 +50,14 @@ static uint32_t sapphire_elog_id = 0xB0000000;
 static uint32_t powernv_elog_id = 0xB1000000;
 
 /* log buffer  to copy FSP log for READ */
-#define ELOG_WRITE_TO_FSP_BUFFER_SIZE	0x00050000
+#define ELOG_WRITE_TO_FSP_BUFFER_SIZE	0x00040000
 static void *elog_write_to_fsp_buffer;
 
 #define ELOG_PANIC_WRITE_BUFFER_SIZE	0x0010000
 static void *elog_panic_write_buffer;
+
+#define ELOG_WRITE_TO_HOST_BUFFER_SIZE	0x0010000
+static void *elog_write_to_host_buffer;
 
 struct opal_errorlog *panic_write_buffer;
 static int panic_write_buffer_valid;
@@ -656,12 +659,22 @@ void fsp_elog_write_init(void)
 		return;
 	}
 
+	elog_write_to_host_buffer = memalign(TCE_PSIZE,
+					ELOG_WRITE_TO_HOST_BUFFER_SIZE);
+	if (!elog_write_to_host_buffer) {
+		prerror("FSP: could not allocate ELOG_WRITE_TO_HOST_BUFFER!\n");
+		return;
+	}
+
 	/* Map TCEs */
 	fsp_tce_map(PSI_DMA_ELOG_PANIC_WRITE_BUF, elog_panic_write_buffer,
 					PSI_DMA_ELOG_PANIC_WRITE_BUF_SZ);
 
 	fsp_tce_map(PSI_DMA_ERRLOG_WRITE_BUF, elog_write_to_fsp_buffer,
 					PSI_DMA_ERRLOG_WRITE_BUF_SZ);
+
+	fsp_tce_map(PSI_DMA_ELOG_WR_TO_HOST_BUF, elog_write_to_host_buffer,
+					PSI_DMA_ELOG_WR_TO_HOST_BUF_SZ);
 
 	/* pre-allocate memory for 64 records */
 	if (init_elog_write_free_list(ELOG_WRITE_MAX_RECORD)) {
