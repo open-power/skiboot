@@ -372,9 +372,9 @@ static bool fsp_in_hir(struct fsp *fsp)
 static bool fsp_in_reset(struct fsp *fsp)
 {
 	switch (fsp->state) {
-	case fsp_mbx_hir_seq_done:	/* Will be reset soon */
+	case fsp_mbx_hir_seq_done:	/* Link pulled down */
 	case fsp_mbx_err:		/* Will be reset soon */
-	case fsp_mbx_rr:		/* Already in reset */
+	case fsp_mbx_rr:		/* Mbx activity stopped pending reset */
 		return true;
 	default:
 		return false;
@@ -506,6 +506,10 @@ void fsp_trigger_reset(void)
 	unlock(&fsp_lock);
 }
 
+/*
+ * Called when we trigger a HIR or when the FSP tells us via the DISR's
+ * RR bit that one is impending. We should therefore stop all mbox activity.
+ */
 static void fsp_start_rr(struct fsp *fsp)
 {
 	struct fsp_iopath *iop;
@@ -533,6 +537,12 @@ static void fsp_start_rr(struct fsp *fsp)
 	unlock(&fsp_lock);
 	fsp_notify_rr_state(FSP_RESET_START);
 	lock(&fsp_lock);
+
+	/*
+	 * Unlike earlier, we don't trigger the PSI link polling
+	 * from this point. We wait for the PSI interrupt to tell
+	 * us the FSP is really down and then start the polling there.
+	 */
 }
 
 static void fsp_trace_event(struct fsp *fsp, u32 evt,
@@ -604,12 +614,25 @@ static void fsp_handle_errors(struct fsp *fsp)
 		disr_last_print = disr;
 	}
 
-	/*
-	 * We detect FSP_IN_RR in DSISR or we have a deferred mbox
-	 * error, we trigger an R&R after a bit of housekeeping to
-	 * limit the chance of a stray interrupt
+	/* On a deferred mbox error, trigger a HIR
+	 * Note: We may never get here since the link inactive case is handled
+	 * above and the other case is when the iop->psi is NULL, which is
+	 * quite rare.
 	 */
-	if ((disr & FSP_DISR_FSP_IN_RR) || (fsp->state == fsp_mbx_err)) {
+	if (fsp->state == fsp_mbx_err) {
+		prerror("FSP #%d: Triggering HIR on mbx_err\n",
+				fsp->index);
+		fsp_trigger_reset();
+		return;
+	}
+
+	/*
+	 * If we get here as part of normal flow, the FSP is telling
+	 * us that there will be an impending R&R, so we stop all mbox
+	 * activity. The actual link down trigger is via a PSI
+	 * interrupt that may arrive in due course.
+	 */
+	if (disr & FSP_DISR_FSP_IN_RR) {
 		/*
 		 * If we get here with DEBUG_IN_PROGRESS also set, the
 		 * FSP is in debug and we should *not* reset it now
@@ -624,9 +647,19 @@ static void fsp_handle_errors(struct fsp *fsp)
 		if (fsp->state == fsp_mbx_rr)
 			return;
 
+		printf("FSP #%d: FSP in Reset. Waiting for PSI interrupt\n",
+				fsp->index);
+		fsp_start_rr(fsp);
+	}
+
+	/*
+	 * However, if the Unit Check is also set, the FSP is asking us
+	 * to trigger a HIR so it can try to recover via the DRCR route.
+	 */
+	if (disr & FSP_DISR_FSP_UNIT_CHECK) {
 		fsp_trace_event(fsp, TRACE_FSP_EVT_SOFT_RR, disr, 0, 0, 0);
 
-		printf("FSP #%d: FSP in reset or delayed error, starting R&R\n",
+		printf("FSP #%d: DISR's unit check set, starting HIR\n",
 		       fsp->index);
 
 		/* Clear all interrupt conditions */
@@ -635,11 +668,7 @@ static void fsp_handle_errors(struct fsp *fsp)
 		/* Make sure this happened */
 		fsp_rreg(fsp, FSP_HDIR_REG);
 
-		/* Bring the PSI link down */
-		psi_disable_link(psi);
-
-		/* Start R&R process */
-		fsp_start_rr(fsp);
+		fsp_trigger_reset();
 		return;
 	}
 
@@ -1396,7 +1425,7 @@ static void __fsp_poll(bool interrupt)
  again:
 	if (fsp->active_iopath < 0) {
 		/* That should never happen */
-		if (interrupt)
+		if (interrupt && (fsp->state != fsp_mbx_rr))
 			prerror("FSP: Interrupt with no working IO path\n");
 		return;
 	}
