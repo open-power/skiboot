@@ -46,7 +46,7 @@ static LIST_HEAD(mem_error_list);
  */
 static struct lock mem_err_lock = LOCK_UNLOCKED;
 
-void mem_err_info_dump(struct opal_errorlog *buf, void *data, uint16_t size);
+static void mem_err_info_dump(struct errorlog *buf, void *data, uint16_t size);
 
 DEFINE_LOG_ENTRY(OPAL_RC_MEM_ERR_RES, OPAL_PLATFORM_ERR_EVT, OPAL_MEM_ERR,
 			OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,
@@ -56,7 +56,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_MEM_ERR_DEALLOC, OPAL_PLATFORM_ERR_EVT, OPAL_MEM_ERR,
 			OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,
 			OPAL_NA, mem_err_info_dump);
 
-void mem_err_info_dump(struct opal_errorlog *buf, void *data, uint16_t size)
+static void mem_err_info_dump(struct errorlog *buf, void *data, uint16_t size)
 {
 	opal_elog_update_user_dump(buf, data, 0x44455350, size);
 }

@@ -344,7 +344,7 @@ struct opal_err_info {
 	uint8_t subsystem;
 	uint8_t sev;
 	uint8_t event_subtype;
-	void (*call_out)(struct opal_errorlog *buf, void *data, uint16_t size);
+	void (*call_out)(struct errorlog *buf, void *data, uint16_t size);
 };
 
 #define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\
@@ -355,12 +355,12 @@ severity, subtype, callout_func) struct opal_err_info err_##reason =	\
 
 #define e_info(reason_code) err_##reason_code
 
-struct opal_errorlog *opal_elog_create(struct opal_err_info *e_info);
+struct errorlog *opal_elog_create(struct opal_err_info *e_info);
 
-int opal_elog_update_user_dump(struct opal_errorlog *buf, unsigned char *data,
+int opal_elog_update_user_dump(struct errorlog *buf, unsigned char *data,
 						uint32_t tag, uint16_t size);
 
-int elog_fsp_commit(struct opal_errorlog *buf);
+int elog_fsp_commit(struct errorlog *buf);
 
 bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size);
 

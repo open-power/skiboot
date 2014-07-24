@@ -63,7 +63,7 @@ static void *elog_panic_write_buffer;
 #define ELOG_WRITE_TO_HOST_BUFFER_SIZE	0x0010000
 static void *elog_write_to_host_buffer;
 
-struct opal_errorlog *panic_write_buffer;
+struct errorlog *panic_write_buffer;
 static int panic_write_buffer_valid;
 static uint32_t elog_write_retries;
 
@@ -72,13 +72,13 @@ static uint32_t elog_plid_fsp_commit = -1;
 enum elog_head_state elog_write_to_host_head_state = ELOG_STATE_NONE;
 
 /* Need forward declaration because of Circular dependency */
-static int create_opal_event(struct opal_errorlog *elog_data, char *pel_buffer);
+static int create_opal_event(struct errorlog *elog_data, char *pel_buffer);
 static int opal_send_elog_to_fsp(void);
 
 void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
 	       const char *fmt, ...)
 {
-	struct opal_errorlog *buf;
+	struct errorlog *buf;
 	int tag = 0x44455343;  /* ASCII of DESC */
 	va_list list;
 	char err_msg[250];
@@ -106,7 +106,7 @@ void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
 
 void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
 {
-	struct opal_errorlog *buf;
+	struct errorlog *buf;
 	int tag = 0x44455343;  /* ASCII of DESC */
 	va_list list;
 	char err_msg[250];
@@ -128,9 +128,9 @@ void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
 	}
 }
 
-static struct opal_errorlog *get_write_buffer(int opal_event_severity)
+static struct errorlog *get_write_buffer(int opal_event_severity)
 {
-	struct opal_errorlog *buf;
+	struct errorlog *buf;
 
 	lock(&elog_write_lock);
 	if (list_empty(&elog_write_free)) {
@@ -138,7 +138,7 @@ static struct opal_errorlog *get_write_buffer(int opal_event_severity)
 		if (opal_event_severity == OPAL_ERROR_PANIC) {
 			lock(&elog_panic_write_lock);
 			if (panic_write_buffer_valid == 0) {
-				buf = (struct opal_errorlog *)
+				buf = (struct errorlog *)
 						panic_write_buffer;
 				panic_write_buffer_valid = 1; /* In Use */
 				unlock(&elog_panic_write_lock);
@@ -152,18 +152,18 @@ static struct opal_errorlog *get_write_buffer(int opal_event_severity)
 			return NULL;
 		}
 	} else {
-		buf = list_pop(&elog_write_free, struct opal_errorlog, link);
+		buf = list_pop(&elog_write_free, struct errorlog, link);
 		unlock(&elog_write_lock);
 	}
 
-	memset(buf, 0, sizeof(struct opal_errorlog));
+	memset(buf, 0, sizeof(struct errorlog));
 	return buf;
 }
 
-/* Reporting of error via struct opal_errorlog */
-struct opal_errorlog *opal_elog_create(struct opal_err_info *e_info)
+/* Reporting of error via struct errorlog */
+struct errorlog *opal_elog_create(struct opal_err_info *e_info)
 {
-	struct opal_errorlog *buf;
+	struct errorlog *buf;
 
 	buf = get_write_buffer(e_info->sev);
 	if (buf) {
@@ -185,15 +185,15 @@ struct opal_errorlog *opal_elog_create(struct opal_err_info *e_info)
 
 static void remove_elog_head_entry(void)
 {
-	struct opal_errorlog *head, *entry;
+	struct errorlog *head, *entry;
 
 	lock(&elog_write_lock);
 	if (!list_empty(&elog_write_to_fsp_pending)) {
 		head = list_top(&elog_write_to_fsp_pending,
-					struct opal_errorlog, link);
+					struct errorlog, link);
 		if (head->plid == elog_plid_fsp_commit) {
 			entry = list_pop(&elog_write_to_fsp_pending,
-					struct opal_errorlog, link);
+					struct errorlog, link);
 			list_add_tail(&elog_write_free, &entry->link);
 			/* Reset the counter */
 			elog_plid_fsp_commit = -1;
@@ -249,13 +249,13 @@ static int64_t fsp_opal_elog_write(size_t opal_elog_size)
 
 bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size)
 {
-	struct opal_errorlog *head;
+	struct errorlog *head;
 	bool rc = false;
 
 	lock(&elog_write_to_host_lock);
 	if (elog_write_to_host_head_state == ELOG_STATE_FETCHED_DATA) {
 		head = list_top(&elog_write_to_host_pending,
-					struct opal_errorlog, link);
+					struct errorlog, link);
 		*opal_elog_id = head->plid;
 		*opal_elog_size = head->log_size;
 		elog_write_to_host_head_state = ELOG_STATE_FETCHED_INFO;
@@ -268,13 +268,13 @@ bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size)
 static void opal_commit_elog_in_host(void)
 {
 
-	struct opal_errorlog *buf;
+	struct errorlog *buf;
 
 	lock(&elog_write_to_host_lock);
 	if (!list_empty(&elog_write_to_host_pending) &&
 			(elog_write_to_host_head_state == ELOG_STATE_NONE)) {
 		buf = list_top(&elog_write_to_host_pending,
-				struct opal_errorlog, link);
+				struct errorlog, link);
 		buf->log_size = create_opal_event(buf,
 					(char *)elog_write_to_host_buffer);
 		elog_write_to_host_head_state = ELOG_STATE_FETCHED_DATA;
@@ -288,13 +288,13 @@ static void opal_commit_elog_in_host(void)
 bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 						uint64_t opal_elog_id)
 {
-	struct opal_errorlog *log_data;
+	struct errorlog *log_data;
 	bool rc = false;
 
 	lock(&elog_write_to_host_lock);
 	if (elog_write_to_host_head_state == ELOG_STATE_FETCHED_INFO) {
 		log_data = list_top(&elog_write_to_host_pending,
-					struct opal_errorlog, link);
+					struct errorlog, link);
 
 		if ((opal_elog_id != log_data->plid) &&
 				(opal_elog_size != log_data->log_size)) {
@@ -318,8 +318,8 @@ bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 bool opal_elog_ack(uint64_t ack_id)
 {
 	bool rc = false;
-	struct opal_errorlog *log_data;
-	struct opal_errorlog *record, *next_record;
+	struct errorlog *log_data;
+	struct errorlog *record, *next_record;
 
 	lock(&elog_write_to_host_lock);
 	if (!list_empty(&elog_write_to_host_processed)) {
@@ -335,7 +335,7 @@ bool opal_elog_ack(uint64_t ack_id)
 
 	if ((!rc) && (!list_empty(&elog_write_to_host_pending))) {
 		log_data = list_top(&elog_write_to_host_pending,
-					struct opal_errorlog, link);
+					struct errorlog, link);
 		if (ack_id == log_data->plid)
 			elog_write_to_host_head_state = ELOG_STATE_NONE;
 
@@ -354,7 +354,7 @@ bool opal_elog_ack(uint64_t ack_id)
 
 void opal_resend_pending_logs(void)
 {
-	struct opal_errorlog *record;
+	struct errorlog *record;
 
 	lock(&elog_write_to_host_lock);
 	if (list_empty(&elog_write_to_host_processed)) {
@@ -364,7 +364,7 @@ void opal_resend_pending_logs(void)
 
 	while (!list_empty(&elog_write_to_host_processed)) {
 		record = list_pop(&elog_write_to_host_processed,
-					struct opal_errorlog, link);
+					struct errorlog, link);
 		list_add_tail(&elog_write_to_host_pending, &record->link);
 	}
 	elog_write_to_host_head_state = ELOG_STATE_NONE;
@@ -374,7 +374,7 @@ void opal_resend_pending_logs(void)
 
 static int opal_send_elog_to_fsp(void)
 {
-	struct opal_errorlog *head;
+	struct errorlog *head;
 	int rc = OPAL_SUCCESS;
 
 	/* Convert entry to PEL
@@ -384,7 +384,7 @@ static int opal_send_elog_to_fsp(void)
 	lock(&elog_write_lock);
 	if (!list_empty(&elog_write_to_fsp_pending)) {
 		head = list_top(&elog_write_to_fsp_pending,
-					 struct opal_errorlog, link);
+					 struct errorlog, link);
 		elog_plid_fsp_commit = head->plid;
 		head->log_size = create_opal_event(head,
 					(char *)elog_write_to_fsp_buffer);
@@ -396,7 +396,7 @@ static int opal_send_elog_to_fsp(void)
 	return rc;
 }
 
-static int opal_push_logs_sync_to_fsp(struct opal_errorlog *buf)
+static int opal_push_logs_sync_to_fsp(struct errorlog *buf)
 {
 	struct fsp_msg *elog_msg;
 	int opal_elog_size = 0;
@@ -441,7 +441,7 @@ static inline u64 get_elog_timeout(void)
 	return (mftb() + secs_to_tb(ERRORLOG_TIMEOUT_INTERVAL));
 }
 
-int elog_fsp_commit(struct opal_errorlog *buf)
+int elog_fsp_commit(struct errorlog *buf)
 {
 	int rc = OPAL_SUCCESS;
 
@@ -465,11 +465,11 @@ int elog_fsp_commit(struct opal_errorlog *buf)
 	return rc;
 }
 
-int opal_elog_update_user_dump(struct opal_errorlog *buf, unsigned char *data,
+int opal_elog_update_user_dump(struct errorlog *buf, unsigned char *data,
 						uint32_t tag, uint16_t size)
 {
 	char *buffer;
-	struct opal_user_data_section *tmp;
+	struct elog_user_data_section *tmp;
 
 	if (!buf) {
 		prerror("ELOG: Cannot update user data. Buffer is invalid\n");
@@ -482,9 +482,9 @@ int opal_elog_update_user_dump(struct opal_errorlog *buf, unsigned char *data,
 		return -1;
 	}
 
-	tmp = (struct opal_user_data_section *)buffer;
+	tmp = (struct elog_user_data_section *)buffer;
 	tmp->tag = tag;
-	tmp->size = size + sizeof(struct opal_user_data_section) - 1;
+	tmp->size = size + sizeof(struct elog_user_data_section) - 1;
 	memcpy(tmp->data_dump, data, size);
 
 	buf->user_section_size += tmp->size;
@@ -493,7 +493,7 @@ int opal_elog_update_user_dump(struct opal_errorlog *buf, unsigned char *data,
 }
 
 /* Create MTMS section for sapphire log */
-static void create_mtms_section(struct opal_errorlog *elog_data,
+static void create_mtms_section(struct errorlog *elog_data,
 					char *pel_buffer, int *pel_offset)
 {
 	struct opal_mtms_section *mtms = (struct opal_mtms_section *)
@@ -515,7 +515,7 @@ static void create_mtms_section(struct opal_errorlog *elog_data,
 }
 
 /* Create extended header section */
-static void create_extended_header_section(struct opal_errorlog *elog_data,
+static void create_extended_header_section(struct errorlog *elog_data,
 					char *pel_buffer, int *pel_offset)
 {
 	const char  *opalmodel = NULL;
@@ -577,7 +577,7 @@ static void setrefcode(struct opal_src_section *src, uint16_t src_refcode)
 }
 
 /* Create SRC section of OPAL log */
-static void create_src_section(struct opal_errorlog *elog_data,
+static void create_src_section(struct errorlog *elog_data,
 					char *pel_buffer, int *pel_offset)
 {
 	struct opal_src_section *src = (struct opal_src_section *)
@@ -606,7 +606,7 @@ static void create_src_section(struct opal_errorlog *elog_data,
 }
 
 /* Create user header section */
-static void create_user_header_section(struct opal_errorlog *elog_data,
+static void create_user_header_section(struct errorlog *elog_data,
 					char *pel_buffer, int *pel_offset)
 {
 	struct opal_user_header_section *usrhdr =
@@ -633,7 +633,7 @@ static void create_user_header_section(struct opal_errorlog *elog_data,
 }
 
 /* Create private header section */
-static void create_private_header_section(struct opal_errorlog *elog_data,
+static void create_private_header_section(struct errorlog *elog_data,
 					char *pel_buffer, int *pel_offset)
 {
 	uint64_t ctime;
@@ -665,13 +665,13 @@ static void create_private_header_section(struct opal_errorlog *elog_data,
 	*pel_offset += PRIVATE_HEADER_SECTION_SIZE;
 }
 
-static void create_user_defined_section(struct opal_errorlog *elog_data,
+static void create_user_defined_section(struct errorlog *elog_data,
 					char *pel_buffer, int *pel_offset)
 {
 	char *dump = (char *)pel_buffer + *pel_offset;
 	char *opal_buf = (char *)elog_data->user_data_dump;
 	struct opal_user_section *usrhdr;
-	struct opal_user_data_section *opal_usr_data;
+	struct elog_user_data_section *opal_usr_data;
 	struct opal_private_header_section *privhdr =
 			 (struct opal_private_header_section *)pel_buffer;
 	int i;
@@ -679,7 +679,7 @@ static void create_user_defined_section(struct opal_errorlog *elog_data,
 	for (i = 0; i < elog_data->user_section_count; i++) {
 
 		usrhdr = (struct opal_user_section *)dump;
-		opal_usr_data = (struct opal_user_data_section *)opal_buf;
+		opal_usr_data = (struct elog_user_data_section *)opal_buf;
 
 		usrhdr->v6header.id = ELOG_SID_USER_DEFINED;
 		usrhdr->v6header.version = OPAL_ELOG_VERSION;
@@ -697,7 +697,7 @@ static void create_user_defined_section(struct opal_errorlog *elog_data,
 }
 
 /* Create all require section of PEL log and write to TCE buffer */
-static int create_opal_event(struct opal_errorlog *elog_data, char *pel_buffer)
+static int create_opal_event(struct errorlog *elog_data, char *pel_buffer)
 {
 	int pel_offset = 0;
 
@@ -717,10 +717,10 @@ static int create_opal_event(struct opal_errorlog *elog_data, char *pel_buffer)
 /* Pre-allocate memory for writing error log to FSP */
 static int init_elog_write_free_list(uint32_t num_entries)
 {
-	struct opal_errorlog *entry;
+	struct errorlog *entry;
 	int i;
 
-	entry = zalloc(sizeof(struct opal_errorlog) * num_entries);
+	entry = zalloc(sizeof(struct errorlog) * num_entries);
 	if (!entry)
 		goto out_err;
 
@@ -730,7 +730,7 @@ static int init_elog_write_free_list(uint32_t num_entries)
 	}
 
 	/* Pre-allocate one single buffer for PANIC path */
-	panic_write_buffer = zalloc(sizeof(struct opal_errorlog));
+	panic_write_buffer = zalloc(sizeof(struct errorlog));
 	if (!panic_write_buffer)
 		goto out_err;
 
@@ -740,7 +740,7 @@ out_err:
 	return -ENOMEM;
 }
 
-static void elog_append_write_to_host(struct opal_errorlog *buf)
+static void elog_append_write_to_host(struct errorlog *buf)
 {
 
 	lock(&elog_write_to_host_lock);
@@ -757,7 +757,7 @@ static void elog_append_write_to_host(struct opal_errorlog *buf)
 static void elog_timeout_poll(void *data __unused)
 {
 	uint64_t now;
-	struct opal_errorlog *head, *entry;
+	struct errorlog *head, *entry;
 
 	lock(&elog_write_lock);
 	if (list_empty(&elog_write_to_fsp_pending)) {
@@ -765,12 +765,12 @@ static void elog_timeout_poll(void *data __unused)
 		return;
 	} else {
 		head = list_top(&elog_write_to_fsp_pending,
-					struct opal_errorlog, link);
+					struct errorlog, link);
 		now = mftb();
 		if ((tb_compare(now, head->elog_timeout) == TB_AAFTERB) ||
 			(tb_compare(now, head->elog_timeout) == TB_AEQUALB)) {
 				entry = list_pop(&elog_write_to_fsp_pending,
-						struct opal_errorlog, link);
+						struct errorlog, link);
 				unlock(&elog_write_lock);
 				elog_append_write_to_host(entry);
 		} else

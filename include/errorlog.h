@@ -98,7 +98,7 @@
 #define OPAL_LOG_MAX_DUMP	14336
 
 /* Multiple user data sections */
-struct __attribute__((__packed__))opal_user_data_section {
+struct __attribute__((__packed__))elog_user_data_section {
 	uint32_t tag;
 	uint16_t size;
 	uint16_t component_id;
@@ -110,7 +110,7 @@ struct __attribute__((__packed__))opal_user_data_section {
  * needs to populate this structure using pre-defined interfaces
  * only
  */
-struct __attribute__((__packed__)) opal_errorlog {
+struct __attribute__((__packed__)) errorlog {
 
 	uint16_t component_id;
 	uint8_t error_event_type;
