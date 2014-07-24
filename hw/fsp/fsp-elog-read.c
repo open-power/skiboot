@@ -91,7 +91,7 @@ static struct lock elog_read_lock = LOCK_UNLOCKED;
 
 /* log buffer  to copy FSP log for READ */
 #define ELOG_READ_BUFFER_SIZE	0x00040000
-static void *elog_read_buffer = NULL;
+static void *elog_read_buffer;
 static uint32_t elog_head_id;	/* FSP entry ID */
 static size_t elog_head_size;	/* actual FSP log size */
 static uint32_t elog_read_retries;	/* bad response status count */
@@ -252,7 +252,7 @@ static void fsp_elog_queue_fetch(void)
 }
 
 /* opal interface for powernv to read log size and log ID from sapphire */
-static int64_t fsp_opal_elog_info(uint64_t *opla_elog_id,
+static int64_t fsp_opal_elog_info(uint64_t *opal_elog_id,
 				  uint64_t *opal_elog_size, uint64_t *elog_type)
 {
 	struct fsp_log_entry *log_data;
@@ -266,7 +266,7 @@ static int64_t fsp_opal_elog_info(uint64_t *opla_elog_id,
 		return OPAL_WRONG_STATE;
 	}
 	log_data = list_top(&elog_read_pending, struct fsp_log_entry, link);
-	*opla_elog_id = log_data->log_id;
+	*opal_elog_id = log_data->log_id;
 	*opal_elog_size = log_data->log_size;
 	unlock(&elog_read_lock);
 	return OPAL_SUCCESS;
@@ -274,7 +274,7 @@ static int64_t fsp_opal_elog_info(uint64_t *opla_elog_id,
 
 /* opal interface for powernv to read log from sapphire */
 static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
-				  uint64_t opla_elog_id)
+				  uint64_t opal_elog_id)
 {
 	struct fsp_log_entry *log_data;
 
@@ -291,7 +291,7 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 	log_data = list_top(&elog_read_pending, struct fsp_log_entry, link);
 
 	/* Check log ID and log size are same and then read log from buffer */
-	if ((opla_elog_id != log_data->log_id) &&
+	if ((opal_elog_id != log_data->log_id) &&
 				(opal_elog_size != log_data->log_size)) {
 		unlock(&elog_read_lock);
 		return OPAL_PARAMETER;

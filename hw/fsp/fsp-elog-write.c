@@ -50,10 +50,10 @@ static uint32_t powernv_elog_id = 0xB1000000;
 
 /* log buffer  to copy FSP log for READ */
 #define ELOG_WRITE_BUFFER_SIZE	0x00050000
-static void *elog_write_buffer = NULL;
+static void *elog_write_buffer;
 
 #define ELOG_PANIC_WRITE_BUFFER_SIZE	0x0010000
-static void *elog_panic_write_buffer = NULL;
+static void *elog_panic_write_buffer;
 
 struct opal_errorlog *panic_write_buffer;
 static int panic_write_buffer_valid;
@@ -640,7 +640,7 @@ void fsp_elog_write_init(void)
 	fsp_tce_map(PSI_DMA_ERRLOG_WRITE_BUF, elog_write_buffer,
 					PSI_DMA_ERRLOG_WRITE_BUF_SZ);
 
-	/* pre-allocate memory for 128 records */
+	/* pre-allocate memory for 64 records */
 	if (init_elog_write_free_list(ELOG_WRITE_MAX_RECORD)) {
 		prerror("ELOG: Cannot allocate WRITE buffers to log errors!\n");
 		return;
