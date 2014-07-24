@@ -366,8 +366,10 @@ static void fsp_opal_resend_pending_logs(void)
 {
 	struct fsp_log_entry  *entry;
 
-	lock(&elog_read_lock);
+	/* Check if any Sapphire logs are pending */
+	opal_resend_pending_logs();
 
+	lock(&elog_read_lock);
 	/*
 	 * If processed list is not empty add all record from
 	 * processed list to pending list at head of the list

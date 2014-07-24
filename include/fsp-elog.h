@@ -368,6 +368,8 @@ bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 
 bool opal_elog_ack(uint64_t ack_id);
 
+void opal_resend_pending_logs(void);
+
 /* This is wrapper around the error log function, which creates
  * and commits the error to FSP.
  * Used for simple error logging

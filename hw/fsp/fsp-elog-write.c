@@ -351,6 +351,26 @@ bool opal_elog_ack(uint64_t ack_id)
 	return rc;
 }
 
+void opal_resend_pending_logs(void)
+{
+	struct opal_errorlog *record;
+
+	lock(&elog_write_to_host_lock);
+	if (list_empty(&elog_write_to_host_processed)) {
+		unlock(&elog_write_to_host_lock);
+		return;
+	}
+
+	while (!list_empty(&elog_write_to_host_processed)) {
+		record = list_pop(&elog_write_to_host_processed,
+					struct opal_errorlog, link);
+		list_add_tail(&elog_write_to_host_pending, &record->link);
+	}
+	elog_write_to_host_head_state = ELOG_STATE_NONE;
+	unlock(&elog_write_to_host_lock);
+	opal_commit_elog_in_host();
+}
+
 static int opal_send_elog_to_fsp(void)
 {
 	struct opal_errorlog *head;
