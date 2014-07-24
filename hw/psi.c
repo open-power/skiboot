@@ -90,6 +90,7 @@ void psi_disable_link(struct psi *psi)
 		out_be64(psi->regs + PSIHB_CR, reg);
 		printf("PSI: PSIHB_CR (error bits) set to %llx\n",
 				in_be64(psi->regs + PSIHB_CR));
+		psi_set_link_polling(true);
 	}
 
 	unlock(&psi_lock);
@@ -156,6 +157,7 @@ static void psi_link_poll(void *data __unused)
 				psi_link_timeout = 0;
 				psi->active = true;
 				psi_activate_phb(psi);
+				psi_set_link_polling(false);
 				unlock(&psi_lock);
 				fsp_reinit_fsp();
 				return;

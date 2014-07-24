@@ -533,9 +533,6 @@ static void fsp_start_rr(struct fsp *fsp)
 	unlock(&fsp_lock);
 	fsp_notify_rr_state(FSP_RESET_START);
 	lock(&fsp_lock);
-
-	/* Start polling PSI */
-	psi_set_link_polling(true);
 }
 
 static void fsp_trace_event(struct fsp *fsp, u32 evt,
@@ -1772,9 +1769,6 @@ static void fsp_update_links_states(struct fsp *fsp)
 void fsp_reinit_fsp(void)
 {
 	struct fsp *fsp;
-
-	/* Stop polling PSI */
-	psi_set_link_polling(false);
 
 	/* Notify all FSPs to check for an updated link state */
 	for (fsp = first_fsp; fsp; fsp = fsp->link)
