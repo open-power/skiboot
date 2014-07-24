@@ -38,7 +38,7 @@
  */
 #define ELOG_WRITE_MAX_RECORD		64
 
-static LIST_HEAD(elog_write_pending);
+static LIST_HEAD(elog_write_to_fsp_pending);
 static LIST_HEAD(elog_write_free);
 
 static struct lock elog_write_lock = LOCK_UNLOCKED;
@@ -49,8 +49,8 @@ static uint32_t sapphire_elog_id = 0xB0000000;
 static uint32_t powernv_elog_id = 0xB1000000;
 
 /* log buffer  to copy FSP log for READ */
-#define ELOG_WRITE_BUFFER_SIZE	0x00050000
-static void *elog_write_buffer;
+#define ELOG_WRITE_TO_FSP_BUFFER_SIZE	0x00050000
+static void *elog_write_to_fsp_buffer;
 
 #define ELOG_PANIC_WRITE_BUFFER_SIZE	0x0010000
 static void *elog_panic_write_buffer;
@@ -176,7 +176,8 @@ static void remove_elog_head_entry(void)
 	struct opal_errorlog *entry;
 
 	lock(&elog_write_lock);
-	entry = list_pop(&elog_write_pending, struct opal_errorlog, link);
+	entry = list_pop(&elog_write_to_fsp_pending,
+				struct opal_errorlog, link);
 	list_add_tail(&elog_write_free, &entry->link);
 	elog_write_retries = 0;
 	unlock(&elog_write_lock);
@@ -236,11 +237,11 @@ static int opal_send_elog_to_fsp(void)
 	 * FSP.
 	 */
 	lock(&elog_write_lock);
-	if (!list_empty(&elog_write_pending)) {
-		head = list_top(&elog_write_pending,
+	if (!list_empty(&elog_write_to_fsp_pending)) {
+		head = list_top(&elog_write_to_fsp_pending,
 					 struct opal_errorlog, link);
 		head->log_size = create_opal_event(head,
-					(char *)elog_write_buffer);
+					(char *)elog_write_to_fsp_buffer);
 		rc = fsp_opal_elog_write(head->log_size);
 		unlock(&elog_write_lock);
 		return rc;
@@ -298,13 +299,13 @@ int elog_fsp_commit(struct opal_errorlog *buf)
 	}
 
 	lock(&elog_write_lock);
-	if (list_empty(&elog_write_pending)) {
-		list_add_tail(&elog_write_pending, &buf->link);
+	if (list_empty(&elog_write_to_fsp_pending)) {
+		list_add_tail(&elog_write_to_fsp_pending, &buf->link);
 		unlock(&elog_write_lock);
 		rc = opal_send_elog_to_fsp();
 		return rc;
 	}
-	list_add_tail(&elog_write_pending, &buf->link);
+	list_add_tail(&elog_write_to_fsp_pending, &buf->link);
 	unlock(&elog_write_lock);
 	return rc;
 }
@@ -627,8 +628,9 @@ void fsp_elog_write_init(void)
 		return;
 	}
 
-	elog_write_buffer = memalign(TCE_PSIZE, ELOG_WRITE_BUFFER_SIZE);
-	if (!elog_write_buffer) {
+	elog_write_to_fsp_buffer = memalign(TCE_PSIZE,
+						ELOG_WRITE_TO_FSP_BUFFER_SIZE);
+	if (!elog_write_to_fsp_buffer) {
 		prerror("FSP: could not allocate ELOG_WRITE_BUFFER!\n");
 		return;
 	}
@@ -637,7 +639,7 @@ void fsp_elog_write_init(void)
 	fsp_tce_map(PSI_DMA_ELOG_PANIC_WRITE_BUF, elog_panic_write_buffer,
 					PSI_DMA_ELOG_PANIC_WRITE_BUF_SZ);
 
-	fsp_tce_map(PSI_DMA_ERRLOG_WRITE_BUF, elog_write_buffer,
+	fsp_tce_map(PSI_DMA_ERRLOG_WRITE_BUF, elog_write_to_fsp_buffer,
 					PSI_DMA_ERRLOG_WRITE_BUF_SZ);
 
 	/* pre-allocate memory for 64 records */
