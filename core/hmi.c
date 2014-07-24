@@ -6,6 +6,7 @@
  * Supplement V032404DR-3 dated August 16, 2012 (the “NDA”). */
 #include <skiboot.h>
 #include <opal.h>
+#include <opal-msg.h>
 #include <processor.h>
 
 /*
@@ -129,31 +130,55 @@
  * NOTE: Per Dave Larson, never enable 8,9,21-23
  */
 
-int handle_hmi_exception(uint64_t hmer)
+int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 {
 	int recover = 1;
 
 	printf("HMI: Received HMI interrupt: HMER = 0x%016llx\n", hmer);
-	if (hmer & (SPR_HMER_PROC_RECV_DONE
-			| SPR_HMER_PROC_RECV_ERROR_MASKED)) {
-		hmer &= ~(SPR_HMER_PROC_RECV_DONE
-			| SPR_HMER_PROC_RECV_ERROR_MASKED);
+	if (hmi_evt)
+		hmi_evt->hmer = hmer;
+	if (hmer & SPR_HMER_PROC_RECV_DONE) {
+		hmer &= ~SPR_HMER_PROC_RECV_DONE;
+		if (hmi_evt) {
+			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
+			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE;
+		}
 		printf("HMI: Processor recovery Done.\n");
+	}
+	if (hmer & SPR_HMER_PROC_RECV_ERROR_MASKED) {
+		hmer &= ~SPR_HMER_PROC_RECV_ERROR_MASKED;
+		if (hmi_evt) {
+			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
+			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_MASKED;
+		}
+		printf("HMI: Processor recovery Done (masked).\n");
 	}
 	if (hmer & SPR_HMER_PROC_RECV_AGAIN) {
 		hmer &= ~SPR_HMER_PROC_RECV_AGAIN;
+		if (hmi_evt) {
+			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
+			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE_AGAIN;
+		}
 		printf("HMI: Processor recovery occurred again before"
 			"bit2 was cleared\n");
 	}
 	/* Assert if we see malfunction alert, we can not continue. */
 	if (hmer & SPR_HMER_MALFUNCTION_ALERT) {
 		hmer &= ~SPR_HMER_MALFUNCTION_ALERT;
+		if (hmi_evt) {
+			hmi_evt->severity = OpalHMI_SEV_FATAL;
+			hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
+		}
 		recover = 0;
 	}
 
 	/* Assert if we see Hypervisor resource error, we can not continue. */
 	if (hmer & SPR_HMER_HYP_RESOURCE_ERR) {
 		hmer &= ~SPR_HMER_HYP_RESOURCE_ERR;
+		if (hmi_evt) {
+			hmi_evt->severity = OpalHMI_SEV_FATAL;
+			hmi_evt->type = OpalHMI_ERROR_HYP_RESOURCE;
+		}
 		recover = 0;
 	}
 
@@ -161,8 +186,22 @@ int handle_hmi_exception(uint64_t hmer)
 	 * Assert for now for all TOD errors. In future we need to decode
 	 * TFMR and take corrective action wherever required.
 	 */
-	if (hmer & (SPR_HMER_TFAC_ERROR | SPR_HMER_TFMR_PARITY_ERROR)) {
-		hmer &= ~(SPR_HMER_TFAC_ERROR | SPR_HMER_TFMR_PARITY_ERROR);
+	if (hmer & SPR_HMER_TFAC_ERROR) {
+		hmer &= ~SPR_HMER_TFAC_ERROR;
+		if (hmi_evt) {
+			hmi_evt->severity = OpalHMI_SEV_ERROR_SYNC;
+			hmi_evt->type = OpalHMI_ERROR_TFAC;
+			hmi_evt->tfmr = mfspr(SPR_TFMR);
+		}
+		recover = 0;
+	}
+	if (hmer & SPR_HMER_TFMR_PARITY_ERROR) {
+		hmer &= ~SPR_HMER_TFMR_PARITY_ERROR;
+		if (hmi_evt) {
+			hmi_evt->severity = OpalHMI_SEV_FATAL;
+			hmi_evt->type = OpalHMI_ERROR_TFMR_PARITY;
+			hmi_evt->tfmr = mfspr(SPR_TFMR);
+		}
 		recover = 0;
 	}
 
@@ -174,3 +213,42 @@ int handle_hmi_exception(uint64_t hmer)
 	mtspr(SPR_HMER, hmer);
 	return recover;
 }
+
+static int queue_hmi_event(struct OpalHMIEvent *hmi_evt)
+{
+	uint64_t *hmi_data;
+
+	/*
+	 * struct OpalHMIEvent is of (3 * 64 bits) size and well packed
+	 * structure. Hence use uint64_t pointer to pass entire structure
+	 * using 4 params in generic message format.
+	 */
+	hmi_data = (uint64_t *)hmi_evt;
+
+	/* queue up for delivery to host. */
+	return opal_queue_msg(OPAL_MSG_HMI_EVT, NULL, NULL,
+				hmi_data[0], hmi_data[1], hmi_data[2]);
+}
+
+static int64_t opal_handle_hmi(void)
+{
+	uint64_t hmer;
+	int rc = OPAL_SUCCESS;
+	struct OpalHMIEvent hmi_evt;
+	int recover;
+
+	memset(&hmi_evt, 0, sizeof(struct OpalHMIEvent));
+	hmi_evt.version = OpalHMIEvt_V1;
+
+	hmer = mfspr(SPR_HMER);		/* Get HMER register value */
+	recover = handle_hmi_exception(hmer, &hmi_evt);
+
+	if (recover)
+		hmi_evt.disposition = OpalHMI_DISPOSITION_RECOVERED;
+	else
+		hmi_evt.disposition = OpalHMI_DISPOSITION_NOT_RECOVERED;
+
+	rc = queue_hmi_event(&hmi_evt);
+	return rc;
+}
+opal_call(OPAL_HANDLE_HMI, opal_handle_hmi, 0);

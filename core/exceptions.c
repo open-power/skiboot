@@ -366,7 +366,7 @@ void handle_hmi(struct stack_frame *stack)
 	int recover;
 
 	orig_hmer = mfspr(SPR_HMER);
-	recover = handle_hmi_exception(orig_hmer);
+	recover = handle_hmi_exception(orig_hmer, NULL);
 	if (recover)
 		return;
 

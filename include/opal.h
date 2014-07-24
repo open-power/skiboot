@@ -133,7 +133,8 @@
 #define OPAL_WRITE_OPPANEL_ASYNC		95
 #define OPAL_PCI_ERR_INJCT			96
 #define OPAL_PCI_EEH_FREEZE_SET			97
-#define OPAL_LAST				97
+#define OPAL_HANDLE_HMI				98
+#define OPAL_LAST				98
 
 #ifndef __ASSEMBLY__
 
@@ -429,6 +430,7 @@ enum OpalMessageType {
 	OPAL_MSG_MEM_ERR,
 	OPAL_MSG_EPOW,
 	OPAL_MSG_SHUTDOWN,
+	OPAL_MSG_HMI_EVT,
 	OPAL_MSG_TYPE_MAX,
 };
 
@@ -542,6 +544,50 @@ struct OpalMemoryErrorData {
 			uint64_t	physical_address_end;
 		} dyn_dealloc;
 	} u;
+};
+
+/* HMI interrupt event */
+enum OpalHMI_Version {
+	OpalHMIEvt_V1 = 1,
+};
+
+enum OpalHMI_Severity {
+	OpalHMI_SEV_NO_ERROR = 0,
+	OpalHMI_SEV_WARNING = 1,
+	OpalHMI_SEV_ERROR_SYNC = 2,
+	OpalHMI_SEV_FATAL = 3,
+};
+
+enum OpalHMI_Disposition {
+	OpalHMI_DISPOSITION_RECOVERED = 0,
+	OpalHMI_DISPOSITION_NOT_RECOVERED = 1,
+};
+
+enum OpalHMI_ErrType {
+	OpalHMI_ERROR_MALFUNC_ALERT	= 0,
+	OpalHMI_ERROR_PROC_RECOV_DONE,
+	OpalHMI_ERROR_PROC_RECOV_DONE_AGAIN,
+	OpalHMI_ERROR_PROC_RECOV_MASKED,
+	OpalHMI_ERROR_TFAC,
+	OpalHMI_ERROR_TFMR_PARITY,
+	OpalHMI_ERROR_HA_OVERFLOW_WARN,
+	OpalHMI_ERROR_XSCOM_FAIL,
+	OpalHMI_ERROR_XSCOM_DONE,
+	OpalHMI_ERROR_SCOM_FIR,
+	OpalHMI_ERROR_DEBUG_TRIG_FIR,
+	OpalHMI_ERROR_HYP_RESOURCE,
+};
+
+struct OpalHMIEvent {
+	uint8_t		version;	/* 0x00 */
+	uint8_t		severity;	/* 0x01 */
+	uint8_t		type;		/* 0x02 */
+	uint8_t		disposition;	/* 0x03 */
+	uint8_t		reserved_1[4];	/* 0x04 */
+
+	uint64_t	hmer;
+	/* TFMR register. Valid only for TFAC and TFMR_PARITY error type. */
+	uint64_t	tfmr;
 };
 
 enum {
@@ -831,7 +877,7 @@ extern void opal_del_host_sync_notifier(bool (*notify)(void *data));
 /*
  * Opal internal function prototype
  */
-extern int handle_hmi_exception(uint64_t hmer);
+extern int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt);
 
 #endif /* __ASSEMBLY__ */
 #endif /* __OPAL_H */
