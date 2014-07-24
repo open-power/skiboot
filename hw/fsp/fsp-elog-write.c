@@ -50,7 +50,8 @@ static struct lock elog_write_to_host_lock = LOCK_UNLOCKED;
 
 /* Platform Log ID as per the spec */
 static uint32_t sapphire_elog_id = 0xB0000000;
-static uint32_t powernv_elog_id = 0xB1000000;
+/* Reserved for future use */
+/* static uint32_t powernv_elog_id = 0xB1000000; */
 
 /* log buffer  to copy FSP log for READ */
 #define ELOG_WRITE_TO_FSP_BUFFER_SIZE	0x00040000
@@ -464,36 +465,6 @@ int elog_fsp_commit(struct opal_errorlog *buf)
 	return rc;
 }
 
-/* This function is called from POWERNV to push logs
- * on FSP
- */
-static int opal_commit_log_to_fsp(struct opal_errorlog *buf)
-{
-	struct opal_errorlog *opal_buf;
-	int rc = OPAL_SUCCESS;
-	uint32_t plid;
-
-	/* Copy the buffer to Sapphire and queue it to push
-	 * to FSP and return
-	 */
-	lock(&elog_write_lock);
-	if (list_empty(&elog_write_free)) {
-		unlock(&elog_write_lock);
-		prerror("ELOG: Error! Write buffer list is full. Retry later\n");
-		return -1;
-	}
-	opal_buf = list_pop(&elog_write_free, struct opal_errorlog, link);
-	plid = ++powernv_elog_id;
-	unlock(&elog_write_lock);
-
-	memcpy(opal_buf, buf, sizeof(struct opal_errorlog));
-	opal_buf->elog_origin = ORG_POWERNV;
-	opal_buf->plid = plid;
-
-	rc = elog_fsp_commit(opal_buf);
-	return rc;
-}
-
 int opal_elog_update_user_dump(struct opal_errorlog *buf, unsigned char *data,
 						uint32_t tag, uint16_t size)
 {
@@ -849,9 +820,6 @@ void fsp_elog_write_init(void)
 		prerror("ELOG: Cannot allocate WRITE buffers to log errors!\n");
 		return;
 	}
-
-	/* register opal Interface */
-	opal_register(OPAL_ELOG_SEND, opal_commit_log_to_fsp, 1);
 
 	/* Add a poller */
 	opal_add_poller(elog_timeout_poll, NULL);

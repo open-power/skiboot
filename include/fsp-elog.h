@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <opal.h>
+#include <errorlog.h>
 #ifndef __ELOG_H
 #define __ELOG_H
 
