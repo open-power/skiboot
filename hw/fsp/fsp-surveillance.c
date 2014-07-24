@@ -38,6 +38,10 @@ DEFINE_LOG_ENTRY(OPAL_RC_SURVE_STATUS, OPAL_MISC_ERR_EVT, OPAL_SURVEILLANCE,
 		OPAL_SURVEILLANCE_ERR, OPAL_PREDICTIVE_ERR_GENERAL,
 		OPAL_MISCELLANEOUS_INFO_ONLY, NULL);
 
+DEFINE_LOG_ENTRY(OPAL_RC_SURVE_ACK, OPAL_MISC_ERR_EVT, OPAL_SURVEILLANCE,
+		OPAL_SURVEILLANCE_ERR, OPAL_PREDICTIVE_ERR_GENERAL,
+		OPAL_MISCELLANEOUS_INFO_ONLY, NULL);
+
 static void fsp_surv_ack(struct fsp_msg *msg)
 {
 	uint8_t val;
@@ -71,7 +75,8 @@ static void fsp_surv_check_timeout(void)
 		/* XXX: We should be logging a PEL to the host, assuming
 		 * the FSP is dead, pending a R/R.
 		 */
-		prerror("SURV: [%16llx] Surv ACK timed out; initiating R/R\n",
+		log_simple_error(&e_info(OPAL_RC_SURVE_ACK),
+			"SURV: [%16llx] Surv ACK timed out; initiating R/R\n",
 			now);
 
 		/* Reset the pending trigger too */
