@@ -692,7 +692,7 @@ static void fsp_handle_errors(struct fsp *fsp)
 
 		printf("FSP #%d: HDES stat change = 0x%08x\n",
 		       fsp->index, hstate);
-		hstate_last_print = disr;
+		hstate_last_print = hstate;
 	}
 
 	if (hstate == 0xffffffff)
