@@ -555,7 +555,12 @@ static int chiptod_recover_tod_errors(void)
 		return 0;
 	}
 	/* Check for sync check error and recover */
-	if (terr & TOD_ERR_TOD_SYNC_CHECK) {
+	if ((terr & TOD_ERR_TOD_SYNC_CHECK) ||
+		(terr & TOD_ERR_TOD_FSM_PARITY) ||
+		(terr & TOD_ERR_CTCR_PARITY) ||
+		(terr & TOD_ERR_PSS_HAMMING_DISTANCE) ||
+		(terr & TOD_ERR_DELAY_COMPL_PARITY) ||
+		(terr & TOD_ERR_TOD_REGISTER_PARITY)) {
 		chiptod_reset_tod_errors();
 		return 1;
 	}
@@ -565,19 +570,34 @@ static int chiptod_recover_tod_errors(void)
 /*
  * Sync up TOD with other chips and get TOD in running state.
  * For non-master, we request TOD value from another chip.
- * For master chip, we need switch topology to recover. For now just fail.
+ * For master chip, Switch the topology to recover.
  */
 static int chiptod_start_tod(void)
 {
+	/*  Handle TOD recovery on master chip. */
+	if (this_cpu()->chip_id == chiptod_primary) {
+		/*
+		 * TOD is not running on master chip. We need to sync with
+		 * secondary chip TOD. But before we do that we need to
+		 * switch topology to make backup master as the new
+		 * active master. Once we switch the topology we can
+		 * then request TOD value from new master chip TOD.
+		 * But make sure we move local chiptod to Not Set before
+		 * request TOD value.
+		 */
+		if (xscom_writeme(TOD_TTYPE_1, (1UL << 63)) != 0) {
+			prerror("CHIPTOD: XSCOM error switching primary/secondary\n");
+			return 0;
+		}
+		chiptod_primary = chiptod_secondary;
+		chiptod_secondary = this_cpu()->chip_id;
+	}
+
 	/* Switch local chiptod to "Not Set" state */
 	if (xscom_writeme(TOD_LOAD_TOD_MOD, (1UL << 63)) != 0) {
 		printf("CHIPTOD: XSCOM error sending LOAD_TOD_MOD\n");
 		return 0;
 	}
-
-	/*  TODO: Handle TOD recovery on master chip. */
-	if (this_cpu()->chip_id == chiptod_primary)
-		return 0;
 
 	/*
 	 * Request the current TOD value from another chip.
@@ -610,7 +630,8 @@ int chiptod_recover_tb_errors(void)
 	 * On Sync check error, bit 44 of TFMR is set. Check for it and
 	 * clear it.
 	 */
-	if (tfmr & SPR_TFMR_TB_MISSING_STEP) {
+	if ((tfmr & SPR_TFMR_TB_MISSING_STEP) ||
+		(tfmr & SPR_TFMR_TB_MISSING_SYNC)) {
 		if (!chiptod_reset_tb_errors()) {
 			rc = 0;
 			goto error_out;
