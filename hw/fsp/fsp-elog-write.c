@@ -162,6 +162,10 @@ struct opal_errorlog *opal_elog_create(struct opal_err_info *e_info)
 		buf->event_subtype = e_info->event_subtype;
 		buf->reason_code = e_info->reason_code;
 		buf->elog_origin = ORG_SAPPHIRE;
+
+		lock(&elog_write_lock);
+		buf->plid = ++sapphire_elog_id;
+		unlock(&elog_write_lock);
 	}
 
 	return buf;
@@ -312,6 +316,7 @@ static int opal_commit_log_to_fsp(struct opal_errorlog *buf)
 {
 	struct opal_errorlog *opal_buf;
 	int rc = OPAL_SUCCESS;
+	uint32_t plid;
 
 	/* Copy the buffer to Sapphire and queue it to push
 	 * to FSP and return
@@ -323,9 +328,13 @@ static int opal_commit_log_to_fsp(struct opal_errorlog *buf)
 		return -1;
 	}
 	opal_buf = list_pop(&elog_write_free, struct opal_errorlog, link);
+	plid = ++powernv_elog_id;
 	unlock(&elog_write_lock);
+
 	memcpy(opal_buf, buf, sizeof(struct opal_errorlog));
 	opal_buf->elog_origin = ORG_POWERNV;
+	opal_buf->plid = plid;
+
 	rc = elog_fsp_commit(opal_buf);
 	return rc;
 }
@@ -511,6 +520,7 @@ static void create_private_header_section(struct opal_errorlog *elog_data,
 	privhdr->v6header.version = OPAL_ELOG_VERSION;
 	privhdr->v6header.subtype = OPAL_ELOG_SST;
 	privhdr->v6header.component_id = elog_data->component_id;
+	privhdr->plid = elog_data->plid;
 
 	fsp_rtc_get_cached_tod(&privhdr->create_date, &ctime);
 	privhdr->create_time = ctime >> 32;
@@ -519,13 +529,11 @@ static void create_private_header_section(struct opal_errorlog *elog_data,
 	privhdr->creator_subid_hi = 0x00;
 	privhdr->creator_subid_lo = 0x00;
 
-	if (elog_data->elog_origin == ORG_SAPPHIRE) {
-		privhdr->plid = ++sapphire_elog_id;
+	if (elog_data->elog_origin == ORG_SAPPHIRE)
 		privhdr->creator_id = OPAL_CID_SAPPHIRE;
-	} else {
-		privhdr->plid = ++powernv_elog_id;
+	else
 		privhdr->creator_id = OPAL_CID_POWERNV;
-	}
+
 	privhdr->log_entry_id = 0x00;   /* entry id is updated by FSP */
 
 	*pel_offset += PRIVATE_HEADER_SECTION_SIZE;
