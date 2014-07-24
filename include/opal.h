@@ -886,6 +886,7 @@ struct __attribute__((__packed__)) opal_errorlog {
 
 	uint32_t plid;
 	uint32_t log_size;
+	uint64_t elog_timeout;
 
 	char user_data_dump[OPAL_LOG_MAX_DUMP];
 	struct list_node link;

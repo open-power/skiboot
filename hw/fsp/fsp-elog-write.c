@@ -30,6 +30,7 @@
 #include <lock.h>
 #include <errno.h>
 #include <fsp-elog.h>
+#include <timebase.h>
 
 /*
  * Maximum number buffers that are pre-allocated
@@ -58,6 +59,8 @@ static void *elog_panic_write_buffer;
 struct opal_errorlog *panic_write_buffer;
 static int panic_write_buffer_valid;
 static uint32_t elog_write_retries;
+/* Manipulate this only with write_lock held */
+static uint32_t elog_plid_fsp_commit = -1;
 
 /* Need forward declaration because of Circular dependency */
 static int create_opal_event(struct opal_errorlog *elog_data, char *pel_buffer);
@@ -173,12 +176,20 @@ struct opal_errorlog *opal_elog_create(struct opal_err_info *e_info)
 
 static void remove_elog_head_entry(void)
 {
-	struct opal_errorlog *entry;
+	struct opal_errorlog *head, *entry;
 
 	lock(&elog_write_lock);
-	entry = list_pop(&elog_write_to_fsp_pending,
-				struct opal_errorlog, link);
-	list_add_tail(&elog_write_free, &entry->link);
+	if (!list_empty(&elog_write_to_fsp_pending)) {
+		head = list_top(&elog_write_to_fsp_pending,
+					struct opal_errorlog, link);
+		if (head->plid == elog_plid_fsp_commit) {
+			entry = list_pop(&elog_write_to_fsp_pending,
+					struct opal_errorlog, link);
+			list_add_tail(&elog_write_free, &entry->link);
+			/* Reset the counter */
+			elog_plid_fsp_commit = -1;
+		}
+	}
 	elog_write_retries = 0;
 	unlock(&elog_write_lock);
 }
@@ -240,6 +251,7 @@ static int opal_send_elog_to_fsp(void)
 	if (!list_empty(&elog_write_to_fsp_pending)) {
 		head = list_top(&elog_write_to_fsp_pending,
 					 struct opal_errorlog, link);
+		elog_plid_fsp_commit = head->plid;
 		head->log_size = create_opal_event(head,
 					(char *)elog_write_to_fsp_buffer);
 		rc = fsp_opal_elog_write(head->log_size);
@@ -263,7 +275,8 @@ static int opal_push_logs_sync_to_fsp(struct opal_errorlog *buf)
 	elog_msg = fsp_mkmsg(FSP_CMD_CREATE_ERRLOG, 3, opal_elog_size,
 					0, PSI_DMA_ELOG_PANIC_WRITE_BUF);
 	if (!elog_msg) {
-		prerror("ELOG: Failed to create message for WRITE to FSP\n");
+		prerror("ELOG: PLID: 0x%x Failed to create message for WRITE "
+							"to FSP\n", buf->plid);
 		unlock(&elog_panic_write_lock);
 		return OPAL_INTERNAL_ERROR;
 	}
@@ -289,9 +302,17 @@ static int opal_push_logs_sync_to_fsp(struct opal_errorlog *buf)
 	return rc;
 }
 
+static inline u64 get_elog_timeout(void)
+{
+	return (mftb() + secs_to_tb(ERRORLOG_TIMEOUT_INTERVAL));
+}
+
 int elog_fsp_commit(struct opal_errorlog *buf)
 {
 	int rc = OPAL_SUCCESS;
+
+	/* Error needs to be committed, update the time out value */
+	buf->elog_timeout = get_elog_timeout();
 
 	if (buf->event_severity == OPAL_ERROR_PANIC) {
 		rc = opal_push_logs_sync_to_fsp(buf);

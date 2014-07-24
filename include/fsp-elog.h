@@ -245,6 +245,9 @@ struct opal_v6_header {
 #define ORG_SAPPHIRE	1
 #define ORG_POWERNV	2
 
+/* MAX time for error log commit */
+#define ERRORLOG_TIMEOUT_INTERVAL	180
+
 /*struct opal_private head section_ */
 struct opal_private_header_section {
 
