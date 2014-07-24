@@ -648,14 +648,20 @@ static void fsp_handle_errors(struct fsp *fsp)
 	}
 
 	/*
-	 * However, if the Unit Check is also set, the FSP is asking us
+	 * However, if any of Unit Check or Runtime Termintated or
+	 * Flash Terminated bits is also set, the FSP is asking us
 	 * to trigger a HIR so it can try to recover via the DRCR route.
 	 */
-	if (disr & FSP_DISR_FSP_UNIT_CHECK) {
+	if (disr & FSP_DISR_HIR_TRIGGER_MASK) {
 		fsp_trace_event(fsp, TRACE_FSP_EVT_SOFT_RR, disr, 0, 0, 0);
 
-		printf("FSP #%d: DISR's unit check set, starting HIR\n",
-		       fsp->index);
+		if (disr & FSP_DISR_FSP_UNIT_CHECK)
+			printf("FSP: DISR Unit Check set\n");
+		else if (disr & FSP_DISR_FSP_RUNTIME_TERM)
+			printf("FSP: DISR Runtime Terminate set\n");
+		else if (disr & FSP_DISR_FSP_FLASH_TERM)
+			printf("FSP: DISR Flash Terminate set\n");
+		printf("FSP: Triggering host initiated reset sequence\n");
 
 		/* Clear all interrupt conditions */
 		fsp_wreg(fsp, FSP_HDIR_REG, FSP_DBIRQ_ALL);

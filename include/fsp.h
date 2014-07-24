@@ -105,13 +105,19 @@
 
 /* Bit masks for DISR */
 #define FSP_DISR_FSP_UNIT_CHECK		PPC_BIT32(16)
+#define FSP_DISR_FSP_RUNTIME_TERM	PPC_BIT32(21)
 #define FSP_DISR_FSP_RR_COMPLETE	PPC_BIT32(22)
+#define FSP_DISR_FSP_FLASH_TERM		PPC_BIT32(23)
 #define FSP_DISR_RUNTIME_STATE_SYNCD	PPC_BIT32(24)
 #define FSP_DISR_DBG_IN_PROGRESS	PPC_BIT32(25)
 #define FSP_DISR_FSP_IN_RR		PPC_BIT32(26)
 #define FSP_DISR_FSP_REBOOT_IN_PROGRESS	PPC_BIT32(27)
 #define FSP_DISR_CRIT_OP_IN_PROGRESS	PPC_BIT32(28)
 #define FSP_DISR_STATUS_ACK_RXD		PPC_BIT32(31)
+
+#define FSP_DISR_HIR_TRIGGER_MASK	(FSP_DISR_FSP_UNIT_CHECK | \
+						FSP_DISR_FSP_RUNTIME_TERM | \
+						FSP_DISR_FSP_FLASH_TERM)
 
 /* The host version of the control register shares bits with the FSP's
  * control reg. Those bits are defined such that one side can set
