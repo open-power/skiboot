@@ -41,9 +41,11 @@
 
 static LIST_HEAD(elog_write_to_fsp_pending);
 static LIST_HEAD(elog_write_free);
+static LIST_HEAD(elog_write_to_host_pending);
 
 static struct lock elog_write_lock = LOCK_UNLOCKED;
 static struct lock elog_panic_write_lock = LOCK_UNLOCKED;
+static struct lock elog_write_to_host_lock = LOCK_UNLOCKED;
 
 /* Platform Log ID as per the spec */
 static uint32_t sapphire_elog_id = 0xB0000000;
@@ -639,6 +641,47 @@ out_err:
 	return -ENOMEM;
 }
 
+static void elog_append_write_to_host(struct opal_errorlog *buf)
+{
+
+	lock(&elog_write_to_host_lock);
+	if (list_empty(&elog_write_to_host_pending)) {
+		list_add(&elog_write_to_host_pending, &buf->link);
+		buf->log_size = create_opal_event(buf,
+					(char *)elog_write_to_host_buffer);
+		unlock(&elog_write_to_host_lock);
+		opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL,
+						OPAL_EVENT_ERROR_LOG_AVAIL);
+	} else {
+		list_add_tail(&elog_write_to_host_pending, &buf->link);
+		unlock(&elog_write_to_host_lock);
+	}
+}
+
+static void elog_timeout_poll(void *data __unused)
+{
+	uint64_t now;
+	struct opal_errorlog *head, *entry;
+
+	lock(&elog_write_lock);
+	if (list_empty(&elog_write_to_fsp_pending)) {
+		unlock(&elog_write_lock);
+		return;
+	} else {
+		head = list_top(&elog_write_to_fsp_pending,
+					struct opal_errorlog, link);
+		now = mftb();
+		if ((tb_compare(now, head->elog_timeout) == TB_AAFTERB) ||
+			(tb_compare(now, head->elog_timeout) == TB_AEQUALB)) {
+				entry = list_pop(&elog_write_to_fsp_pending,
+						struct opal_errorlog, link);
+				unlock(&elog_write_lock);
+				elog_append_write_to_host(entry);
+		} else
+			unlock(&elog_write_lock);
+	}
+}
+
 /* fsp elog init function */
 void fsp_elog_write_init(void)
 {
@@ -684,4 +727,7 @@ void fsp_elog_write_init(void)
 
 	/* register opal Interface */
 	opal_register(OPAL_ELOG_SEND, opal_commit_log_to_fsp, 1);
+
+	/* Add a poller */
+	opal_add_poller(elog_timeout_poll, NULL);
 }
