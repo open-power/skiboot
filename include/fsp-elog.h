@@ -361,6 +361,13 @@ int opal_elog_update_user_dump(struct opal_errorlog *buf, unsigned char *data,
 
 int elog_fsp_commit(struct opal_errorlog *buf);
 
+bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size);
+
+bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
+						uint64_t opal_elog_id);
+
+bool opal_elog_ack(uint64_t ack_id);
+
 /* This is wrapper around the error log function, which creates
  * and commits the error to FSP.
  * Used for simple error logging

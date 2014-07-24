@@ -250,6 +250,10 @@ static int64_t fsp_opal_elog_info(uint64_t *opal_elog_id,
 	/* copy type of the error log */
 	*elog_type = ELOG_TYPE_PEL;
 
+	/* Check if any OPAL log needs to be reported to the host */
+	if (opal_elog_info(opal_elog_id, opal_elog_size))
+		return OPAL_SUCCESS;
+
 	lock(&elog_read_lock);
 	if (elog_read_from_fsp_head_state != ELOG_STATE_FETCHED_DATA) {
 		unlock(&elog_read_lock);
@@ -268,6 +272,10 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 {
 	struct fsp_log_entry *log_data;
 
+
+	/* Check if any OPAL log needs to be reported to the host */
+	if (opal_elog_read(buffer, opal_elog_size, opal_elog_id))
+		return OPAL_SUCCESS;
 	/*
 	 * Read top entry from list.
 	 * as we know always top record of the list is fetched from FSP
@@ -320,6 +328,9 @@ static int64_t fsp_opal_elog_ack(uint64_t ack_id)
 {
 	int rc = 0;
 	struct fsp_log_entry  *record, *next_record;
+
+	if (opal_elog_ack(ack_id))
+		return rc;
 
 	/* Send acknowledgement to FSP */
 	rc = fsp_send_elog_ack(ack_id);

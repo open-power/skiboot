@@ -42,6 +42,7 @@
 static LIST_HEAD(elog_write_to_fsp_pending);
 static LIST_HEAD(elog_write_free);
 static LIST_HEAD(elog_write_to_host_pending);
+static LIST_HEAD(elog_write_to_host_processed);
 
 static struct lock elog_write_lock = LOCK_UNLOCKED;
 static struct lock elog_panic_write_lock = LOCK_UNLOCKED;
@@ -64,8 +65,10 @@ static void *elog_write_to_host_buffer;
 struct opal_errorlog *panic_write_buffer;
 static int panic_write_buffer_valid;
 static uint32_t elog_write_retries;
+
 /* Manipulate this only with write_lock held */
 static uint32_t elog_plid_fsp_commit = -1;
+enum elog_head_state elog_write_to_host_head_state = ELOG_STATE_NONE;
 
 /* Need forward declaration because of Circular dependency */
 static int create_opal_event(struct opal_errorlog *elog_data, char *pel_buffer);
@@ -241,6 +244,111 @@ static int64_t fsp_opal_elog_write(size_t opal_elog_size)
 		return OPAL_INTERNAL_ERROR;
 	}
 	return OPAL_SUCCESS;
+}
+
+bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size)
+{
+	struct opal_errorlog *head;
+	bool rc = false;
+
+	lock(&elog_write_to_host_lock);
+	if (elog_write_to_host_head_state == ELOG_STATE_FETCHED_DATA) {
+		head = list_top(&elog_write_to_host_pending,
+					struct opal_errorlog, link);
+		*opal_elog_id = head->plid;
+		*opal_elog_size = head->log_size;
+		elog_write_to_host_head_state = ELOG_STATE_FETCHED_INFO;
+		rc = true;
+	}
+	unlock(&elog_write_to_host_lock);
+	return rc;
+}
+
+static void opal_commit_elog_in_host(void)
+{
+
+	struct opal_errorlog *buf;
+
+	lock(&elog_write_to_host_lock);
+	if (!list_empty(&elog_write_to_host_pending) &&
+			(elog_write_to_host_head_state == ELOG_STATE_NONE)) {
+		buf = list_top(&elog_write_to_host_pending,
+				struct opal_errorlog, link);
+		buf->log_size = create_opal_event(buf,
+					(char *)elog_write_to_host_buffer);
+		elog_write_to_host_head_state = ELOG_STATE_FETCHED_DATA;
+		opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL,
+					OPAL_EVENT_ERROR_LOG_AVAIL);
+	}
+	unlock(&elog_write_to_host_lock);
+}
+
+
+bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
+						uint64_t opal_elog_id)
+{
+	struct opal_errorlog *log_data;
+	bool rc = false;
+
+	lock(&elog_write_to_host_lock);
+	if (elog_write_to_host_head_state == ELOG_STATE_FETCHED_INFO) {
+		log_data = list_top(&elog_write_to_host_pending,
+					struct opal_errorlog, link);
+
+		if ((opal_elog_id != log_data->plid) &&
+				(opal_elog_size != log_data->log_size)) {
+			unlock(&elog_write_to_host_lock);
+			return rc;
+		}
+
+		memcpy((void *)buffer, elog_write_to_host_buffer,
+							opal_elog_size);
+
+		list_del(&log_data->link);
+		list_add(&elog_write_to_host_processed, &log_data->link);
+		elog_write_to_host_head_state = ELOG_STATE_NONE;
+		rc = true;
+	}
+	unlock(&elog_write_to_host_lock);
+	opal_commit_elog_in_host();
+	return rc;
+}
+
+bool opal_elog_ack(uint64_t ack_id)
+{
+	bool rc = false;
+	struct opal_errorlog *log_data;
+	struct opal_errorlog *record, *next_record;
+
+	lock(&elog_write_to_host_lock);
+	if (!list_empty(&elog_write_to_host_processed)) {
+		list_for_each_safe(&elog_write_to_host_processed, record,
+							next_record, link) {
+			if (record->plid != ack_id)
+				continue;
+			list_del(&record->link);
+			list_add(&elog_write_free, &record->link);
+			rc = true;
+		}
+	}
+
+	if ((!rc) && (!list_empty(&elog_write_to_host_pending))) {
+		log_data = list_top(&elog_write_to_host_pending,
+					struct opal_errorlog, link);
+		if (ack_id == log_data->plid)
+			elog_write_to_host_head_state = ELOG_STATE_NONE;
+
+		list_for_each_safe(&elog_write_to_host_pending, record,
+							next_record, link) {
+			if (record->plid != ack_id)
+				continue;
+			list_del(&record->link);
+			list_add(&elog_write_free, &record->link);
+			rc = true;
+		}
+	}
+	unlock(&elog_write_to_host_lock);
+	return rc;
 }
 
 static int opal_send_elog_to_fsp(void)
@@ -561,7 +669,7 @@ static void create_private_header_section(struct opal_errorlog *elog_data,
 	else
 		privhdr->creator_id = OPAL_CID_POWERNV;
 
-	privhdr->log_entry_id = 0x00;   /* entry id is updated by FSP */
+	privhdr->log_entry_id = elog_data->plid; /*entry id is updated by FSP*/
 
 	*pel_offset += PRIVATE_HEADER_SECTION_SIZE;
 }
@@ -602,7 +710,7 @@ static int create_opal_event(struct opal_errorlog *elog_data, char *pel_buffer)
 {
 	int pel_offset = 0;
 
-	memset(pel_buffer, 0, PSI_DMA_ERRLOG_WRITE_BUF_SZ);
+	memset(pel_buffer, 0, PSI_DMA_ELOG_WR_TO_HOST_BUF_SZ);
 
 	create_private_header_section(elog_data, pel_buffer, &pel_offset);
 	create_user_header_section(elog_data, pel_buffer, &pel_offset);
@@ -647,11 +755,8 @@ static void elog_append_write_to_host(struct opal_errorlog *buf)
 	lock(&elog_write_to_host_lock);
 	if (list_empty(&elog_write_to_host_pending)) {
 		list_add(&elog_write_to_host_pending, &buf->link);
-		buf->log_size = create_opal_event(buf,
-					(char *)elog_write_to_host_buffer);
 		unlock(&elog_write_to_host_lock);
-		opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL,
-						OPAL_EVENT_ERROR_LOG_AVAIL);
+		opal_commit_elog_in_host();
 	} else {
 		list_add_tail(&elog_write_to_host_pending, &buf->link);
 		unlock(&elog_write_to_host_lock);
