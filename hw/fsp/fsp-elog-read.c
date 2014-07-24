@@ -60,18 +60,6 @@
  */
 #define ELOG_READ_MAX_RECORD		128
 
-/* Following variables are used to indicate state of the
- * head log entry which is being fetched from FSP and
- * these variables are not overwritten until next log is
- * retrieved from FSP.
- */
-enum elog_head_state {
-	ELOG_STATE_FETCHING,    /*In the process of reading log from FSP. */
-	ELOG_STATE_FETCHED,     /* Indicates reading log from FSP completed */
-	ELOG_STATE_NONE,        /* Indicates to fetch next log */
-	ELOG_STATE_REJECTED,    /* resend all pending logs to linux */
-};
-
 /* structure to maintain log-id,log-size, pending and processed list */
 struct fsp_log_entry {
 	uint32_t log_id;
@@ -97,7 +85,7 @@ static size_t elog_head_size;	/* actual FSP log size */
 static uint32_t elog_read_retries;	/* bad response status count */
 
 /* Initialize the state of the log */
-static enum elog_head_state elog_head_state = ELOG_STATE_NONE;
+static enum elog_head_state elog_read_from_fsp_head_state = ELOG_STATE_NONE;
 
 /* Need forward declaration because of Circular dependency */
 static void fsp_elog_queue_fetch(void);
@@ -143,7 +131,7 @@ static void fsp_elog_check_and_fetch_head(void)
 {
 	lock(&elog_read_lock);
 
-	if (elog_head_state != ELOG_STATE_NONE ||
+	if (elog_read_from_fsp_head_state != ELOG_STATE_NONE ||
 			list_empty(&elog_read_pending)) {
 		unlock(&elog_read_lock);
 		return;
@@ -159,14 +147,16 @@ static void fsp_elog_check_and_fetch_head(void)
 /* this function should be called with the lock held */
 static void fsp_elog_set_head_state(enum elog_head_state state)
 {
-	enum elog_head_state old_state = elog_head_state;
+	enum elog_head_state old_state = elog_read_from_fsp_head_state;
 
-	elog_head_state = state;
+	elog_read_from_fsp_head_state = state;
 
-	if (state == ELOG_STATE_FETCHED && old_state != ELOG_STATE_FETCHED)
+	if (state == ELOG_STATE_FETCHED_DATA &&
+			old_state != ELOG_STATE_FETCHED_DATA)
 		opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL,
 					OPAL_EVENT_ERROR_LOG_AVAIL);
-	if (state != ELOG_STATE_FETCHED && old_state == ELOG_STATE_FETCHED)
+	if (state != ELOG_STATE_FETCHED_DATA &&
+			old_state == ELOG_STATE_FETCHED_DATA)
 		opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL, 0);
 }
 
@@ -202,7 +192,7 @@ static void fsp_elog_read_complete(struct fsp_msg *read_msg)
 
 	switch (val) {
 	case FSP_STATUS_SUCCESS:
-		fsp_elog_set_head_state(ELOG_STATE_FETCHED);
+		fsp_elog_set_head_state(ELOG_STATE_FETCHED_DATA);
 		break;
 
 	case FSP_STATUS_DMA_ERROR:
@@ -222,7 +212,7 @@ static void fsp_elog_read_complete(struct fsp_msg *read_msg)
 	default:
 		fsp_elog_fetch_failure(val);
 	}
-	if (elog_head_state == ELOG_STATE_REJECTED)
+	if (elog_read_from_fsp_head_state == ELOG_STATE_REJECTED)
 		fsp_elog_set_head_state(ELOG_STATE_NONE);
 	unlock(&elog_read_lock);
 
@@ -261,7 +251,7 @@ static int64_t fsp_opal_elog_info(uint64_t *opal_elog_id,
 	*elog_type = ELOG_TYPE_PEL;
 
 	lock(&elog_read_lock);
-	if (elog_head_state != ELOG_STATE_FETCHED) {
+	if (elog_read_from_fsp_head_state != ELOG_STATE_FETCHED_DATA) {
 		unlock(&elog_read_lock);
 		return OPAL_WRONG_STATE;
 	}
@@ -283,7 +273,7 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 	 * as we know always top record of the list is fetched from FSP
 	 */
 	lock(&elog_read_lock);
-	if (elog_head_state != ELOG_STATE_FETCHED) {
+	if (elog_read_from_fsp_head_state != ELOG_STATE_FETCHED_DATA) {
 		unlock(&elog_read_lock);
 		return OPAL_WRONG_STATE;
 	}
@@ -319,9 +309,9 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 /* set state of the log head before fetching the log */
 static void elog_reject_head(void)
 {
-	if (elog_head_state == ELOG_STATE_FETCHING)
+	if (elog_read_from_fsp_head_state == ELOG_STATE_FETCHING)
 		fsp_elog_set_head_state(ELOG_STATE_REJECTED);
-	if (elog_head_state == ELOG_STATE_FETCHED)
+	if (elog_read_from_fsp_head_state == ELOG_STATE_FETCHED_DATA)
 		fsp_elog_set_head_state(ELOG_STATE_NONE);
 }
 

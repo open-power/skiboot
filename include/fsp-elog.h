@@ -20,6 +20,19 @@
 #define ELOG_TYPE_PEL			0
 #define MAX_RETRIES			3
 
+/* Following variables are used to indicate state of the
+ * head log entry which is being fetched from FSP/OPAL and
+ * these variables are not overwritten until next log is
+ * retrieved from FSP/OPAL.
+ */
+enum elog_head_state {
+	ELOG_STATE_FETCHING,    /*In the process of reading log from FSP. */
+	ELOG_STATE_FETCHED_INFO,/* Indicates reading log info is completed */
+	ELOG_STATE_FETCHED_DATA,/* Indicates reading log is completed */
+	ELOG_STATE_NONE,        /* Indicates to fetch next log */
+	ELOG_STATE_REJECTED,    /* resend all pending logs to linux */
+};
+
 /* Component IDs */
 /* In PEL error log format, Creator ID is hypervisor
  * But we can have various component ID to distinguish
