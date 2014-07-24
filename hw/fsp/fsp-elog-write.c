@@ -230,7 +230,6 @@ static int opal_send_elog_to_fsp(void)
 {
 	struct opal_errorlog *head;
 	int rc = OPAL_SUCCESS;
-	int pel_offset = 0;
 
 	/* Convert entry to PEL
 	 * and push it down to FSP. We wait for the ack from
@@ -240,8 +239,9 @@ static int opal_send_elog_to_fsp(void)
 	if (!list_empty(&elog_write_pending)) {
 		head = list_top(&elog_write_pending,
 					 struct opal_errorlog, link);
-		pel_offset = create_opal_event(head, (char *)elog_write_buffer);
-		rc = fsp_opal_elog_write(pel_offset);
+		head->log_size = create_opal_event(head,
+					(char *)elog_write_buffer);
+		rc = fsp_opal_elog_write(head->log_size);
 		unlock(&elog_write_lock);
 		return rc;
 	}
