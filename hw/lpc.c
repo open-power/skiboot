@@ -139,7 +139,7 @@ static int64_t opb_write(struct proc_chip *chip, uint32_t addr, uint32_t data,
 			}
 			return OPAL_SUCCESS;
 		}
-		time_wait(100);
+		time_wait_nopoll(100);
 	}
 	log_simple_error(&e_info(OPAL_RC_LPC_WRITE), "LPC: Write timeout !\n");
 	return OPAL_HARDWARE;
@@ -194,7 +194,7 @@ static int64_t opb_read(struct proc_chip *chip, uint32_t addr, uint32_t *data,
 			}
 			return 0;
 		}
-		time_wait(100);
+		time_wait_nopoll(100);
 	}
 	log_simple_error(&e_info(OPAL_RC_LPC_READ), "LPC: Read timeout !\n");
 	return OPAL_HARDWARE;
