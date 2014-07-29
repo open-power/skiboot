@@ -527,7 +527,7 @@ void add_cpu_idle_state_properties(void)
 
 		/* Check if hostboot say we can sleep */
 		if (p && !dt_prop_find_string(p, "fastsleep"))
-			can_sleep = false;
+			can_sleep = true;
 
 		/* Clip to NAP only on Murano DD1.x */
 		if (chip->type == PROC_CHIP_P8_MURANO &&
@@ -874,3 +874,90 @@ void slw_init(void)
 		slw_init_chip(chip);
 }
 
+/* Workarounds while entering fast-sleep */
+
+static void fast_sleep_enter(void)
+{
+	uint32_t core = pir_to_core_id(this_cpu()->pir);
+	uint32_t chip_id = this_cpu()->chip_id;
+	struct cpu_thread *primary_thread;
+	uint64_t tmp;
+	int rc;
+
+	primary_thread = this_cpu()->primary;
+
+	rc = xscom_read(chip_id, XSCOM_ADDR_P8_EX(core, L2_FIR_ACTION1),
+			&tmp);
+	if (rc) {
+		printf("fast_sleep_enter XSCOM failed\n");
+		return;
+	}
+
+	primary_thread->save_l2_fir_action1 = tmp;
+	tmp = tmp & ~0x0200000000000000ULL;
+	rc = xscom_write(chip_id, XSCOM_ADDR_P8_EX(core, L2_FIR_ACTION1),
+			 tmp);
+	if (rc) {
+		printf("fast_sleep_enter XSCOM failed\n");
+		return;
+	}
+	rc = xscom_read(chip_id, XSCOM_ADDR_P8_EX(core, L2_FIR_ACTION1),
+			&tmp);
+	printf("fastsleep: core %d: l2 fir before %016llx, after %016llx\n",
+			this_cpu()->pir, primary_thread->save_l2_fir_action1, tmp);
+	if (rc) {
+		printf("fast_sleep_enter XSCOM failed\n");
+		return;
+	}
+
+}
+
+/* Workarounds while exiting fast-sleep */
+
+static void fast_sleep_exit(void)
+{
+	uint32_t core = pir_to_core_id(this_cpu()->pir);
+	uint32_t chip_id = this_cpu()->chip_id;
+	struct cpu_thread *primary_thread;
+	int rc;
+
+	primary_thread = this_cpu()->primary;
+
+	rc = xscom_write(chip_id, XSCOM_ADDR_P8_EX(core, L2_FIR_ACTION1),
+			primary_thread->save_l2_fir_action1);
+	if (rc) {
+		printf("fast_sleep_exit XSCOM failed\n");
+		return;
+	}
+	printf("fastsleep: core %d: l2 fir restored %016llx\n",
+			this_cpu()->pir, primary_thread->save_l2_fir_action1);
+}
+
+/*
+ * Setup and cleanup method for fast-sleep workarounds
+ * state = 1 fast-sleep
+ * enter = 1 Enter state
+ * exit  = 0 Exit state
+ */
+
+static int64_t opal_config_cpu_idle_state(uint64_t state, uint64_t enter)
+{
+	/* Only fast-sleep for now */
+	if (state != 1)
+		return OPAL_PARAMETER;	
+
+	switch(enter) {
+	case 1:
+		fast_sleep_enter();
+		break;
+	case 0:
+		fast_sleep_exit();
+		break;
+	default:
+		return OPAL_PARAMETER;
+	}
+
+	return OPAL_SUCCESS;
+}
+
+opal_call(OPAL_CONFIG_CPU_IDLE_STATE, opal_config_cpu_idle_state, 2);

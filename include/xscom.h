@@ -120,6 +120,7 @@
 
 /* Per core power mgt registers */
 #define PM_OHA_MODE_REG		0x1002000D
+#define L2_FIR_ACTION1		0x10012807
 
 /* EX slave per-core power mgt slave regisers */
 #define EX_PM_GP0			0x0100

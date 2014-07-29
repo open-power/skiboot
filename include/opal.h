@@ -134,7 +134,8 @@
 #define OPAL_PCI_ERR_INJCT			96
 #define OPAL_PCI_EEH_FREEZE_SET			97
 #define OPAL_HANDLE_HMI				98
-#define OPAL_LAST				98
+#define OPAL_CONFIG_CPU_IDLE_STATE		99
+#define OPAL_LAST				99
 
 #ifndef __ASSEMBLY__
 
