@@ -27,6 +27,7 @@
 #include <interrupts.h>
 #include <timebase.h>
 #include <fsp-elog.h>
+#include <libfdt/libfdt.h>
 
 #ifdef __HAVE_LIBPORE__
 #include <p8_pore_table_gen_api.H>
@@ -492,6 +493,21 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 						states are available */
 		.pmicr = IDLE_FASTSLEEP_PMICR,
 		.pmicr_mask = IDLE_SLEEP_PMICR_MASK },
+	{ /* Winkle */
+		.name = "winkle",
+		.latency_ns = 10000000,
+		.flags = 1*IDLE_DEC_STOP \
+		       | 1*IDLE_TB_STOP  \
+		       | 1*IDLE_LOSE_USER_CONTEXT \
+		       | 1*IDLE_LOSE_HYP_CONTEXT \
+		       | 1*IDLE_LOSE_FULL_CONTEXT \
+		       | 0*IDLE_USE_INST_NAP \
+		       | 0*IDLE_USE_INST_SLEEP \
+		       | 1*IDLE_USE_INST_WINKLE \
+		       | 0*IDLE_USE_PMICR, /* Currently choosing deep vs
+						fast via EX_PM_GP1 reg */
+		.pmicr = 0,
+		.pmicr_mask = 0 },
 };
 
 /* Add device tree properties to describe idle states */
@@ -501,6 +517,20 @@ void add_cpu_idle_state_properties(void)
 	struct cpu_idle_states *states;
 	struct proc_chip *chip;
 	int nr_states;
+
+	bool can_sleep = true, can_winkle = true;
+	u8 i;
+
+	/* Buffers to hold idle state properties */
+	char *name_buf;
+	u32 *latency_ns_buf;
+	u32 *flags_buf;
+	u64 *pmicr_buf;
+	u64 *pmicr_mask_buf;
+
+	/* Variables to track buffer length */
+	u8 name_buf_len;
+	u8 num_supported_idle_states;
 
 	printf("CPU idle state device tree init\n");
 
@@ -522,7 +552,6 @@ void add_cpu_idle_state_properties(void)
 	if (chip->type == PROC_CHIP_P8_MURANO ||
 	    chip->type == PROC_CHIP_P8_VENICE) {
 		const struct dt_property *p;
-		bool can_sleep = true;
 
 		p = dt_find_property(dt_root, "ibm,enabled-idle-states");
 
@@ -538,52 +567,85 @@ void add_cpu_idle_state_properties(void)
 		    chip->ec_level < 0x20)
 			can_sleep = false;
 
-		if (!can_sleep)
-			nr_states = 1;
 	} else {
 		states = power7_cpu_idle_states;
 		nr_states = ARRAY_SIZE(power7_cpu_idle_states);
 	}
 
+	/* Enable winkle only if slw image is intact */
+	can_winkle = (chip->slw_base && chip->slw_bar_size &&
+			chip->slw_image_size);
+
 	/*
-	 * XXX Creating variable size properties is awkward. For now we hard wire
-	 * the 1 and 2 states cases. Long run we want to implement functions to
-	 * "append" strings and cells to properties so we can just have a loop
-	 * of nr_states here
+	 * Currently we can't append strings and cells to dt properties.
+	 * So create buffers to which you can append values, then create
+	 * dt properties with this buffer content.
 	 */
-	switch (nr_states) {
-		case 1:
-			dt_add_property_strings(power_mgt, "ibm,cpu-idle-state-names",
-						states[0].name);
-			dt_add_property_cells(power_mgt, "ibm,cpu-idle-state-latencies-ns",
-					      states[0].latency_ns);
-			dt_add_property_cells(power_mgt, "ibm,cpu-idle-state-flags",
-					      states[0].flags);
-			dt_add_property_u64s(power_mgt, "ibm,cpu-idle-state-pmicr",
-					     states[0].pmicr);
-			dt_add_property_u64s(power_mgt, "ibm,cpu-idle-state-pmicr-mask",
-					     states[0].pmicr_mask);
-			break;
-		case 2:
-			dt_add_property_strings(power_mgt, "ibm,cpu-idle-state-names",
-						states[0].name,
-						states[1].name);
-			dt_add_property_cells(power_mgt, "ibm,cpu-idle-state-latencies-ns",
-					      states[0].latency_ns,
-					      states[1].latency_ns);
-			dt_add_property_cells(power_mgt, "ibm,cpu-idle-state-flags",
-					      states[0].flags,
-					      states[1].flags);
-			dt_add_property_u64s(power_mgt, "ibm,cpu-idle-state-pmicr",
-					     states[0].pmicr,
-					     states[1].pmicr);
-			dt_add_property_u64s(power_mgt, "ibm,cpu-idle-state-pmicr-mask",
-					     states[0].pmicr_mask,
-					     states[1].pmicr_mask);
-			break;
-		default:
-			prerror("SLW: Unsupported number of states\n");
+
+	/* Allocate memory to idle state property buffers. */
+	name_buf	= (char *) malloc(nr_states * sizeof(char) * MAX_NAME_LEN);
+	latency_ns_buf	=  (u32 *) malloc(nr_states * sizeof(u32));
+	flags_buf	=  (u32 *) malloc(nr_states * sizeof(u32));
+	pmicr_buf	=  (u64 *) malloc(nr_states * sizeof(u64));
+	pmicr_mask_buf	=  (u64 *) malloc(nr_states * sizeof(u64));
+
+	name_buf_len = 0;
+	num_supported_idle_states = 0;
+
+	for (i = 0; i < nr_states; i++) {
+		/* For each state, check if it is one of the supported states. */
+		if( (states[i].flags & IDLE_USE_INST_NAP) ||
+		   ((states[i].flags & IDLE_USE_INST_SLEEP_ER1) && can_sleep) ||
+		   ((states[i].flags & IDLE_USE_INST_WINKLE) && can_winkle) ) {
+			/*
+			 * If a state is supported add each of its property
+			 * to its corresponding property buffer.
+			 */
+			strcpy(name_buf, states[i].name);
+			name_buf = name_buf + strlen(states[i].name) + 1;
+
+			*latency_ns_buf = cpu_to_fdt32(states[i].latency_ns);
+			latency_ns_buf++;
+
+			*flags_buf = cpu_to_fdt32(states[i].flags);
+			flags_buf++;
+
+			*pmicr_buf = cpu_to_fdt64(states[i].pmicr);
+			pmicr_buf++;
+
+			*pmicr_mask_buf = cpu_to_fdt64(states[i].pmicr);
+			pmicr_mask_buf++;
+
+			/* Increment buffer length trackers */
+			name_buf_len += strlen(states[i].name) + 1;
+			num_supported_idle_states++;
+		}
 	}
+
+	/* Point buffer pointers back to beginning of the buffer */
+	name_buf -= name_buf_len;
+	latency_ns_buf -= num_supported_idle_states;
+	flags_buf -= num_supported_idle_states;
+	pmicr_buf -= num_supported_idle_states;
+	pmicr_mask_buf -= num_supported_idle_states;
+
+	/* Create dt properties with the buffer content */
+	dt_add_property(power_mgt, "ibm,cpu-idle-state-names", name_buf,
+			name_buf_len* sizeof(char));
+	dt_add_property(power_mgt, "ibm,cpu-idle-state-latencies-ns",
+			latency_ns_buf, num_supported_idle_states * sizeof(u32));
+	dt_add_property(power_mgt, "ibm,cpu-idle-state-flags", flags_buf,
+			num_supported_idle_states * sizeof(u32));
+	dt_add_property(power_mgt, "ibm,cpu-idle-state-pmicr", pmicr_buf,
+			num_supported_idle_states * sizeof(u64));
+	dt_add_property(power_mgt, "ibm,cpu-idle-state-pmicr-mask",
+			pmicr_mask_buf, num_supported_idle_states * sizeof(u64));
+
+	free(name_buf);
+	free(latency_ns_buf);
+	free(flags_buf);
+	free(pmicr_buf);
+	free(pmicr_mask_buf);
 }
 
 static bool slw_prepare_chip(struct proc_chip *chip)
