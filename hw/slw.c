@@ -1027,3 +1027,36 @@ static int64_t opal_config_cpu_idle_state(uint64_t state, uint64_t enter)
 }
 
 opal_call(OPAL_CONFIG_CPU_IDLE_STATE, opal_config_cpu_idle_state, 2);
+static int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
+{
+
+	struct cpu_thread *c = find_cpu_by_pir(cpu_pir);
+	struct proc_chip *chip = get_chip(c->chip_id);
+	void *image = (void *) chip->slw_base;
+	int rc;
+
+	/* Adding HSPRG0, can be extended for other SPRs */
+	switch (sprn) {
+		case SPR_HSPRG0:
+			rc = p8_pore_gen_cpureg_fixed(image, P8_SLW_MODEBUILD_SRAM,
+							P8_SPR_HSPRG0, val,
+							cpu_get_core_index(c),
+							cpu_get_thread_index(c));
+
+			if (rc) {
+				log_simple_error(&e_info(OPAL_RC_SLW_REG),
+					"SLW: Failed to set HSPRG0 for CPU %x\n",
+					c->pir);
+				return OPAL_INTERNAL_ERROR;
+			}
+			break;
+
+		default:
+			return OPAL_UNSUPPORTED;
+	}
+
+	return OPAL_SUCCESS;
+
+}
+
+opal_call(OPAL_SLW_SET_REG, opal_slw_set_reg, 3);
