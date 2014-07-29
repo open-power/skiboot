@@ -317,15 +317,19 @@ static bool slw_set_deep_mode(struct proc_chip *chip, struct cpu_thread *c)
 	return true;
 }
 
-static bool slw_set_fast_mode(struct proc_chip *chip, struct cpu_thread *c)
+static bool slw_set_idle_mode(struct proc_chip *chip, struct cpu_thread *c)
 {
 	uint32_t core = pir_to_core_id(c->pir);
 	uint64_t tmp;
 	int rc;
 
-	/* Init PM GP1 for fast mode or deep mode */
+	/*
+	 * PM GP1 allows fast/deep mode to be selected independently for sleep
+	 * and winkle. Init PM GP1 so that sleep happens in fast mode and
+	 * winkle happens in deep mode.
+	 */
 	rc = xscom_write(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_GP1),
-			 EX_PM_SETUP_GP1_FAST_SLEEP);
+			 EX_PM_SETUP_GP1_FAST_SLEEP_DEEP_WINKLE);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_SLW_SET),
 				"SLW: Failed to write PM_GP1\n");
@@ -390,7 +394,7 @@ static bool slw_prepare_core(struct proc_chip *chip, struct cpu_thread *c)
 	return true;
 }
 
-static bool fastsleep_prepare_core(struct proc_chip *chip, struct cpu_thread *c)
+static bool idle_prepare_core(struct proc_chip *chip, struct cpu_thread *c)
 {
 	DBG("FASTSLEEP: Prepare core %x:%x\n",
 	    chip->id, pir_to_core_id(c->pir));
@@ -399,7 +403,7 @@ static bool fastsleep_prepare_core(struct proc_chip *chip, struct cpu_thread *c)
 		return false;
 	if(!slw_set_overrides(chip, c))
 		return false;
-	if(!slw_set_fast_mode(chip, c))
+	if(!slw_set_idle_mode(chip, c))
 		return false;
 	if(!slw_get_idle_state_history(chip, c))
 		return false;
@@ -859,7 +863,7 @@ static void slw_init_chip(struct proc_chip *chip)
 
 	/* At power ON setup inits for fast-sleep */
 	for_each_available_core_in_chip(c, chip->id) {
-		fastsleep_prepare_core(chip, c);
+		idle_prepare_core(chip, c);
 	}
 }
 
