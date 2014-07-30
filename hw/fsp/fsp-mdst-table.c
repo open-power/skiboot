@@ -176,11 +176,52 @@ static int64_t fsp_update_mdst_table(void)
 	return rc;
 }
 
+static int dump_region_del_entry(uint32_t id)
+{
+	int i;
+	uint32_t size;
+	bool found = false;
+	int rc = OPAL_SUCCESS;
+
+	lock(&mdst_lock);
+
+	for (i = 0; i < cur_mdst_entry; i++) {
+		if (dump_mem_region[i].type != id)
+			continue;
+
+		found = true;
+		break;
+	}
+
+	if (!found) {
+		rc = OPAL_PARAMETER;
+		goto del_out;
+	}
+
+	/* Adjust current dump size */
+	size = get_dump_region_map_size(dump_mem_region[i].addr,
+					dump_mem_region[i].size);
+	cur_dump_size -= size;
+
+	for ( ; i < cur_mdst_entry - 1; i++)
+		dump_mem_region[i] = dump_mem_region[i + 1];
+
+	dump_mem_region[i].type = 0;
+	cur_mdst_entry--;
+
+del_out:
+	unlock(&mdst_lock);
+	return rc;
+}
+
 /* Add entry to MDST table */
 static int __dump_region_add_entry(uint32_t id, uint64_t addr, uint32_t size)
 {
 	int rc = OPAL_INTERNAL_ERROR;
 	uint32_t act_size;
+
+	/* Delete function takes lock before modifying table */
+	dump_region_del_entry(id);
 
 	lock(&mdst_lock);
 
