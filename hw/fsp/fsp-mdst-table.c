@@ -310,6 +310,36 @@ static int64_t fsp_opal_register_dump_region(uint32_t id,
 	return rc;
 }
 
+static int64_t fsp_opal_unregister_dump_region(uint32_t id)
+{
+	int rc = OPAL_SUCCESS;
+
+	if (!fsp_present())
+		return rc;
+
+	if (!fsp_mdst_supported()) {
+		printf("MDST: Not supported\n");
+		return rc;
+	}
+
+	/* Validate memory region id */
+	if (id < DUMP_REGION_HOST_START || id > DUMP_REGION_HOST_END) {
+		prerror("MDST: Invalid dump region id : 0x%x\n", id);
+		return OPAL_PARAMETER;
+	}
+
+	rc = dump_region_del_entry(id);
+	if (rc) {
+		prerror("MDST: dump region id : 0x%x not found\n", id);
+		return OPAL_PARAMETER;
+	}
+
+	/* Send updated MDST to FSP */
+	rc = fsp_update_mdst_table();
+
+	return rc;
+}
+
 /* TCE mapping */
 static inline void mdst_table_tce_map(void)
 {
@@ -374,6 +404,8 @@ void fsp_mdst_table_init(void)
 	/* OPAL interface */
 	opal_register(OPAL_REGISTER_DUMP_REGION,
 		      fsp_opal_register_dump_region, 3);
+	opal_register(OPAL_UNREGISTER_DUMP_REGION,
+		      fsp_opal_unregister_dump_region, 1);
 
 	if (!fsp_mdst_supported())
 		return;
