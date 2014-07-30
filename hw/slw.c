@@ -473,8 +473,6 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 		       | 0*IDLE_LOSE_HYP_CONTEXT \
 		       | 0*IDLE_LOSE_FULL_CONTEXT \
 		       | 1*IDLE_USE_INST_NAP \
-		       | 0*IDLE_USE_INST_SLEEP \
-		       | 0*IDLE_USE_INST_WINKLE \
 		       | 0*IDLE_USE_PMICR,
 		.pmicr = 0,
 		.pmicr_mask = 0 },
@@ -486,9 +484,7 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 		       | 1*IDLE_LOSE_USER_CONTEXT \
 		       | 0*IDLE_LOSE_HYP_CONTEXT \
 		       | 0*IDLE_LOSE_FULL_CONTEXT \
-		       | 0*IDLE_USE_INST_NAP \
 		       | 1*IDLE_USE_INST_SLEEP_ER1 \
-		       | 0*IDLE_USE_INST_WINKLE \
 		       | 0*IDLE_USE_PMICR, /* Not enabled until deep
 						states are available */
 		.pmicr = IDLE_FASTSLEEP_PMICR,
@@ -501,8 +497,6 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 		       | 1*IDLE_LOSE_USER_CONTEXT \
 		       | 1*IDLE_LOSE_HYP_CONTEXT \
 		       | 1*IDLE_LOSE_FULL_CONTEXT \
-		       | 0*IDLE_USE_INST_NAP \
-		       | 0*IDLE_USE_INST_SLEEP \
 		       | 1*IDLE_USE_INST_WINKLE \
 		       | 0*IDLE_USE_PMICR, /* Currently choosing deep vs
 						fast via EX_PM_GP1 reg */
@@ -595,6 +589,7 @@ void add_cpu_idle_state_properties(void)
 	for (i = 0; i < nr_states; i++) {
 		/* For each state, check if it is one of the supported states. */
 		if( (states[i].flags & IDLE_USE_INST_NAP) ||
+		   ((states[i].flags & IDLE_USE_INST_SLEEP) && can_sleep) ||
 		   ((states[i].flags & IDLE_USE_INST_SLEEP_ER1) && can_sleep) ||
 		   ((states[i].flags & IDLE_USE_INST_WINKLE) && can_winkle) ) {
 			/*
