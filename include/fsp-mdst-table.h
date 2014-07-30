@@ -18,9 +18,9 @@
 #ifndef __FSPMDST_H
 #define __FSPMDST_H
 
-/* Dump section type */
-#define DUMP_SECTION_CONSOLE	0x01
-#define DUMP_SECTION_HBRT_LOG	0x02
+/* Dump region ids */
+#define DUMP_REGION_CONSOLE	0x01
+#define DUMP_REGION_HBRT_LOG	0x02
 
 /*
  * Sapphire Memory Dump Source Table

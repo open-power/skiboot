@@ -122,7 +122,7 @@ static int64_t fsp_update_mdst_table(void)
 }
 
 /* Add entry to MDST table */
-static int __mdst_table_add_entry(void *addr, uint32_t type, uint32_t size)
+static int __dump_region_add_entry(uint32_t id, void *addr, uint32_t size)
 {
 	int rc = OPAL_INTERNAL_ERROR;
 
@@ -147,8 +147,8 @@ static int __mdst_table_add_entry(void *addr, uint32_t type, uint32_t size)
 	fsp_tce_map(PSI_DMA_HYP_DUMP + cur_dump_size, addr, ALIGN_UP(size, TCE_PSIZE));
 
 	/* Add entry to MDST table */
+	mdst_table[cur_mdst_entry].type = id;
 	mdst_table[cur_mdst_entry].addr = PSI_DMA_HYP_DUMP + cur_dump_size;
-	mdst_table[cur_mdst_entry].type = type;
 	mdst_table[cur_mdst_entry].size = size;
 
 	/* Update MDST count and dump size */
@@ -165,19 +165,19 @@ out:
 	return rc;
 }
 
-static int mdst_table_add_entries(void)
+static int dump_region_add_entries(void)
 {
 	int rc;
 
 	/* Add console buffer */
-	rc = __mdst_table_add_entry((void *)INMEM_CON_START,
-				    DUMP_SECTION_CONSOLE, INMEM_CON_LEN);
+	rc = __dump_region_add_entry(DUMP_REGION_CONSOLE,
+				     (void *)INMEM_CON_START, INMEM_CON_LEN);
 	if (rc)
 		return rc;
 
 	/* Add HBRT buffer */
-	rc = __mdst_table_add_entry((void *)HBRT_CON_START,
-				    DUMP_SECTION_HBRT_LOG, HBRT_CON_LEN);
+	rc = __dump_region_add_entry(DUMP_REGION_HBRT_LOG,
+				     (void *)HBRT_CON_START, HBRT_CON_LEN);
 
 	return rc;
 }
@@ -191,9 +191,6 @@ static inline void mdst_table_tce_map(void)
 /* Initialize MDST table */
 static int mdst_table_init(void)
 {
-	max_mdst_entry = PSI_DMA_MDST_TABLE_SIZE / sizeof(*mdst_table);
-	printf("MDST: Max entries in MDST table : %d\n", max_mdst_entry);
-
 	mdst_table = memalign(TCE_PSIZE, PSI_DMA_MDST_TABLE_SIZE);
 	if (!mdst_table) {
 		log_simple_error(&e_info(OPAL_RC_DUMP_MDST_INIT),
@@ -203,6 +200,9 @@ static int mdst_table_init(void)
 
 	memset(mdst_table, 0, PSI_DMA_MDST_TABLE_SIZE);
 	mdst_table_tce_map();
+
+	max_mdst_entry = PSI_DMA_MDST_TABLE_SIZE / sizeof(*mdst_table);
+	printf("MDST: Max entries in MDST table : %d\n", max_mdst_entry);
 
 	return OPAL_SUCCESS;
 }
@@ -244,7 +244,7 @@ void fsp_mdst_table_init(void)
 	 * Ignore return code from mdst_table_add_entries so that
 	 * we can atleast capture partial dump.
 	 */
-	mdst_table_add_entries();
+	dump_region_add_entries();
 	fsp_update_mdst_table();
 
 	/* Register for Class AA (FSP R/R) */
