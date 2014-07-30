@@ -49,8 +49,15 @@ DEFINE_LOG_ENTRY(OPAL_RC_DUMP_MDST_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_DUMP,
 		 OPAL_NA, NULL);
 
 DEFINE_LOG_ENTRY(OPAL_RC_DUMP_MDST_UPDATE, OPAL_PLATFORM_ERR_EVT, OPAL_DUMP,
-		 OPAL_PLATFORM_FIRMWARE, OPAL_PREDICTIVE_ERR_GENERAL,
+		 OPAL_PLATFORM_FIRMWARE,
+		 OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_REBOOT,
 		 OPAL_NA, NULL);
+
+DEFINE_LOG_ENTRY(OPAL_RC_DUMP_MDST_ADD, OPAL_PLATFORM_ERR_EVT, OPAL_DUMP,
+		 OPAL_PLATFORM_FIRMWARE, OPAL_INFO, OPAL_NA, NULL);
+
+DEFINE_LOG_ENTRY(OPAL_RC_DUMP_MDST_REMOVE, OPAL_PLATFORM_ERR_EVT, OPAL_DUMP,
+		 OPAL_PLATFORM_FIRMWARE, OPAL_INFO, OPAL_NA, NULL);
 
 
 static struct dump_mdst_table *mdst_table;
@@ -131,8 +138,8 @@ static void update_mdst_table_complete(struct fsp_msg *msg)
 
 	if (status)
 		log_simple_error(&e_info(OPAL_RC_DUMP_MDST_UPDATE),
-				 "MDST: MDST table update failed: 0x%x\n",
-				 status);
+				 "MDST: Update table MBOX command failed: "
+				 "0x%x\n", status);
 	else
 		printf("MDST: Table updated.\n");
 
@@ -226,7 +233,8 @@ static int __dump_region_add_entry(uint32_t id, uint64_t addr, uint32_t size)
 	lock(&mdst_lock);
 
 	if (cur_mdst_entry >= max_mdst_entry) {
-		printf("MDST: Table is full.\n");
+		log_simple_error(&e_info(OPAL_RC_DUMP_MDST_ADD),
+				 "MDST: Table is full.\n");
 		goto out;
 	}
 
@@ -235,8 +243,9 @@ static int __dump_region_add_entry(uint32_t id, uint64_t addr, uint32_t size)
 
 	/* Make sure we don't cross dump size limit */
 	if (cur_dump_size + act_size > max_dump_size) {
-		printf("MDST: %d is crossing max dump size (%d) limit.\n",
-		       cur_dump_size + act_size, max_dump_size);
+		log_simple_error(&e_info(OPAL_RC_DUMP_MDST_ADD),
+			 "MDST: 0x%x is crossing max dump size (0x%x) limit.\n",
+			 cur_dump_size + act_size, max_dump_size);
 		goto out;
 	}
 
@@ -249,7 +258,7 @@ static int __dump_region_add_entry(uint32_t id, uint64_t addr, uint32_t size)
 	cur_mdst_entry++;
 	cur_dump_size += act_size;
 
-	printf("MDST: Addr = 0x%llx [size : %d bytes] added to MDST table.\n",
+	printf("MDST: Addr = 0x%llx [size : 0x%x bytes] added to MDST table.\n",
 	       (uint64_t)addr, size);
 
 	rc = OPAL_SUCCESS;
@@ -291,12 +300,14 @@ static int64_t fsp_opal_register_dump_region(uint32_t id,
 
 	/* Validate memory region id */
 	if (id < DUMP_REGION_HOST_START || id > DUMP_REGION_HOST_END) {
-		prerror("MDST: Invalid dump region id : 0x%x\n", id);
+		log_simple_error(&e_info(OPAL_RC_DUMP_MDST_ADD),
+				 "MDST: Invalid dump region id : 0x%x\n", id);
 		return OPAL_PARAMETER;
 	}
 
 	if (size <= 0) {
-		prerror("MDST: Invalid size : 0x%llx\n", size);
+		log_simple_error(&e_info(OPAL_RC_DUMP_MDST_ADD),
+				 "MDST: Invalid size : 0x%llx\n", size);
 		return OPAL_PARAMETER;
 	}
 
@@ -324,13 +335,15 @@ static int64_t fsp_opal_unregister_dump_region(uint32_t id)
 
 	/* Validate memory region id */
 	if (id < DUMP_REGION_HOST_START || id > DUMP_REGION_HOST_END) {
-		prerror("MDST: Invalid dump region id : 0x%x\n", id);
+		log_simple_error(&e_info(OPAL_RC_DUMP_MDST_REMOVE),
+				 "MDST: Invalid dump region id : 0x%x\n", id);
 		return OPAL_PARAMETER;
 	}
 
 	rc = dump_region_del_entry(id);
 	if (rc) {
-		prerror("MDST: dump region id : 0x%x not found\n", id);
+		log_simple_error(&e_info(OPAL_RC_DUMP_MDST_REMOVE),
+				 "MDST: dump region id : 0x%x not found\n", id);
 		return OPAL_PARAMETER;
 	}
 
