@@ -133,6 +133,7 @@ static inline bool is_pow2(unsigned long val)
 
 /* TCE alignment */
 #define TCE_PSIZE	0x1000
+#define TCE_MASK	0xfff
 
 /* Not the greatest variants but will do for now ... */
 #define MIN(a, b)	((a) < (b) ? (a) : (b))

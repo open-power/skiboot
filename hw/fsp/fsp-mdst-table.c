@@ -54,6 +54,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_DUMP_MDST_UPDATE, OPAL_PLATFORM_ERR_EVT, OPAL_DUMP,
 
 
 static struct dump_mdst_table *mdst_table;
+static struct dump_mdst_table *dump_mem_region;
 
 static int cur_mdst_entry;
 static int max_mdst_entry;
@@ -76,6 +77,54 @@ static inline bool fsp_mdst_supported(void)
 	return proc_gen >= proc_gen_p8;
 }
 
+static inline uint32_t get_dump_region_map_size(uint64_t addr, uint32_t size)
+{
+	uint64_t start, end;
+
+	start = addr & ~TCE_MASK;
+	end = addr + size;
+	end = (end + (TCE_MASK - 1)) & ~TCE_MASK;
+
+	return (end - start);
+}
+
+static int dump_region_tce_map(void)
+{
+	int i;
+	uint32_t t_size = 0, size;
+	uint64_t addr;
+
+	for (i = 0; i < cur_mdst_entry; i++) {
+
+		addr = dump_mem_region[i].addr & ~TCE_MASK;
+		size = get_dump_region_map_size(dump_mem_region[i].addr,
+						dump_mem_region[i].size);
+
+		if (t_size + size > max_dump_size)
+			break;
+
+		/* TCE mapping */
+		fsp_tce_map(PSI_DMA_HYP_DUMP + t_size, (void *)addr, size);
+
+		/* Add entry to MDST table */
+		mdst_table[i].type = dump_mem_region[i].type;
+		mdst_table[i].size = dump_mem_region[i].size;
+		mdst_table[i].addr = PSI_DMA_HYP_DUMP + t_size;
+
+		/* TCE alignment adjustment */
+		mdst_table[i].addr += dump_mem_region[i].addr & 0xfff;
+
+		t_size += size;
+	}
+
+	return i;
+}
+
+static inline void dump_region_tce_unmap(void)
+{
+	fsp_tce_unmap(PSI_DMA_HYP_DUMP, PSI_DMA_HYP_DUMP_SIZE);
+}
+
 static void update_mdst_table_complete(struct fsp_msg *msg)
 {
 	uint8_t status = (msg->resp->word1 >> 8) & 0xff;
@@ -94,6 +143,7 @@ static void update_mdst_table_complete(struct fsp_msg *msg)
 static int64_t fsp_update_mdst_table(void)
 {
 	struct fsp_msg *msg;
+	int count;
 	int rc = OPAL_SUCCESS;
 
 	if (cur_mdst_entry <= 0) {
@@ -102,9 +152,14 @@ static int64_t fsp_update_mdst_table(void)
 	}
 
 	lock(&mdst_lock);
+
+	/* Unmap previous mapping */
+	dump_region_tce_unmap();
+	count = dump_region_tce_map();
+
 	msg = fsp_mkmsg(FSP_CMD_HYP_MDST_TABLE, 4, 0,
 			PSI_DMA_MDST_TABLE,
-			sizeof(*mdst_table) * cur_mdst_entry,
+			sizeof(*mdst_table) * count,
 			sizeof(*mdst_table));
 	unlock(&mdst_lock);
 
@@ -122,38 +177,36 @@ static int64_t fsp_update_mdst_table(void)
 }
 
 /* Add entry to MDST table */
-static int __dump_region_add_entry(uint32_t id, void *addr, uint32_t size)
+static int __dump_region_add_entry(uint32_t id, uint64_t addr, uint32_t size)
 {
 	int rc = OPAL_INTERNAL_ERROR;
+	uint32_t act_size;
 
 	lock(&mdst_lock);
-
-	if (!mdst_table)
-		goto out;
 
 	if (cur_mdst_entry >= max_mdst_entry) {
 		printf("MDST: Table is full.\n");
 		goto out;
 	}
 
+	/* TCE alignment adjustment */
+	act_size = get_dump_region_map_size(addr, size);
+
 	/* Make sure we don't cross dump size limit */
-	if (cur_dump_size + size > max_dump_size) {
+	if (cur_dump_size + act_size > max_dump_size) {
 		printf("MDST: %d is crossing max dump size (%d) limit.\n",
-		       cur_dump_size + size, max_dump_size);
+		       cur_dump_size + act_size, max_dump_size);
 		goto out;
 	}
 
-	/* TCE mapping */
-	fsp_tce_map(PSI_DMA_HYP_DUMP + cur_dump_size, addr, ALIGN_UP(size, TCE_PSIZE));
+	/* Add entry to dump memory region table */
+	dump_mem_region[cur_mdst_entry].type = id;
+	dump_mem_region[cur_mdst_entry].addr = addr;
+	dump_mem_region[cur_mdst_entry].size = size;
 
-	/* Add entry to MDST table */
-	mdst_table[cur_mdst_entry].type = id;
-	mdst_table[cur_mdst_entry].addr = PSI_DMA_HYP_DUMP + cur_dump_size;
-	mdst_table[cur_mdst_entry].size = size;
-
-	/* Update MDST count and dump size */
+	/* Update dump region count and dump size */
 	cur_mdst_entry++;
-	cur_dump_size += ALIGN_UP(size, TCE_PSIZE);
+	cur_dump_size += act_size;
 
 	printf("MDST: Addr = 0x%llx [size : %d bytes] added to MDST table.\n",
 	       (uint64_t)addr, size);
@@ -171,13 +224,13 @@ static int dump_region_add_entries(void)
 
 	/* Add console buffer */
 	rc = __dump_region_add_entry(DUMP_REGION_CONSOLE,
-				     (void *)INMEM_CON_START, INMEM_CON_LEN);
+				     INMEM_CON_START, INMEM_CON_LEN);
 	if (rc)
 		return rc;
 
 	/* Add HBRT buffer */
 	rc = __dump_region_add_entry(DUMP_REGION_HBRT_LOG,
-				     (void *)HBRT_CON_START, HBRT_CON_LEN);
+				     HBRT_CON_START, HBRT_CON_LEN);
 
 	return rc;
 }
@@ -191,6 +244,16 @@ static inline void mdst_table_tce_map(void)
 /* Initialize MDST table */
 static int mdst_table_init(void)
 {
+	dump_mem_region = memalign(TCE_PSIZE, PSI_DMA_MDST_TABLE_SIZE);
+	if (!dump_mem_region) {
+		log_simple_error(&e_info(OPAL_RC_DUMP_MDST_INIT),
+			 "MDST: Failed to allocate memory for dump "
+			 "memory region table.\n");
+		return -ENOMEM;
+	}
+
+	memset(dump_mem_region, 0, PSI_DMA_MDST_TABLE_SIZE);
+
 	mdst_table = memalign(TCE_PSIZE, PSI_DMA_MDST_TABLE_SIZE);
 	if (!mdst_table) {
 		log_simple_error(&e_info(OPAL_RC_DUMP_MDST_INIT),
