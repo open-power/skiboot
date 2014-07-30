@@ -216,7 +216,12 @@ static struct fsp_client fsp_epow_client = {
 
 void fsp_epow_init(void)
 {
+	struct dt_node *np;
+
 	fsp_register_client(&fsp_epow_client, FSP_MCLASS_SERVICE);
 	opal_register(OPAL_GET_EPOW_STATUS, fsp_opal_get_epow_status, 2);
+	np = dt_new(opal_node, "epow");
+	dt_add_property_strings(np, "compatible", "ibm,opal-v3-epow");
+	dt_add_property_strings(np, "epow-classes", "power", "temperature", "cooling");
 	printf(PREFIX "FSP EPOW support initialized\n");
 }
