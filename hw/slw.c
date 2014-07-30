@@ -548,18 +548,23 @@ void add_cpu_idle_state_properties(void)
 		const struct dt_property *p;
 
 		p = dt_find_property(dt_root, "ibm,enabled-idle-states");
-
+		if (p)
+			printf("SLW: HB-provided idle states property found\n");
 		states = power8_cpu_idle_states;
 		nr_states = ARRAY_SIZE(power8_cpu_idle_states);
 
 		/* Check if hostboot say we can sleep */
-		if (p && !dt_prop_find_string(p, "fastsleep"))
-			can_sleep = true;
+		if (!p || !dt_prop_find_string(p, "fastsleep")) {
+			printf("SLW: Sleep not enabled by HB on this platform\n");
+			can_sleep = false;
+		}
 
 		/* Clip to NAP only on Murano DD1.x */
 		if (chip->type == PROC_CHIP_P8_MURANO &&
-		    chip->ec_level < 0x20)
+		    chip->ec_level < 0x20) {
+			printf("SLW: Sleep not enabled on Murano DD1.x\n");
 			can_sleep = false;
+		}
 
 	} else {
 		states = power7_cpu_idle_states;
