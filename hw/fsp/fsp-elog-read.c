@@ -416,6 +416,13 @@ static bool fsp_elog_msg(uint32_t cmd_sub_mod, struct fsp_msg *msg)
 	printf("ELOG: Notified of log 0x%08x (size: %d)\n",
 	       log_id, log_size);
 
+	/* Make sure we don't cross read buffer size */
+	if (log_size > ELOG_READ_BUFFER_SIZE) {
+		log_size = ELOG_READ_BUFFER_SIZE;
+		printf("ELOG: Truncated log (0x%08x) to 0x%x\n",
+		       log_id, log_size);
+	}
+
 	/* take a lock until we take out the node from elog_read_free */
 	lock(&elog_read_lock);
 	if (!list_empty(&elog_read_free)) {
