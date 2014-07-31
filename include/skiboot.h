@@ -76,10 +76,20 @@ struct debug_descriptor {
 };
 extern struct debug_descriptor debug_descriptor;
 
-/* General utilities */
+/* Console logging */
+#define PR_EMERG	0
+#define PR_ALERT	1
+#define PR_CRIT		2
+#define PR_ERR		3
+#define PR_WARNING	4
+#define PR_NOTICE	5
+#define PR_PRINTF	PR_NOTICE
+#define PR_INFO		6
+#define PR_DEBUG	7
+#define PR_TRACE	8
+#define PR_INSANE	9
 void prlog(int log_level, const char* fmt, ...) __attribute__((format (printf, 2, 3)));
-#define prerror(fmt...)	do { prlog(0, fmt); } while(0)
-#define PR_PRINTF	5
+#define prerror(fmt...)	do { prlog(PR_ERR, fmt); } while(0)
 
 /* Location codes  -- at most 80 chars with null termination */
 #define LOC_CODE_SIZE	80
