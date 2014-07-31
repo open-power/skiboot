@@ -953,20 +953,32 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 			/* LEDs captured on the system */
 			printf(PREFIX "CEC LEDs captured on the system:\n");
 			list_for_each_safe(&cec_ledq, led, next, link) {
-				printf(PREFIX "rid: %x\t", led->rid);
-				printf("len: %x      ", led->lc_len);
-				printf("lcode: %-30s\t", led->loc_code);
-				printf("parms: %04x\t", led->parms);
-				printf("status: %04x\n", led->status);
+				printf(PREFIX
+				       "rid: %x\t"
+				       "len: %x      "
+				       "lcode: %-30s\t"
+				       "parms: %04x\t"
+				       "status: %04x\n",
+				       led->rid,
+				       led->lc_len,
+				       led->loc_code,
+				       led->parms,
+				       led->status);
 			}
 
 			printf(PREFIX "ENCL LEDs captured on the system:\n");
 			list_for_each_safe(&encl_ledq, led, next, link) {
-				printf(PREFIX "rid: %x\t", led->rid);
-				printf("len: %x      ", led->lc_len);
-				printf("lcode: %-30s\t", led->loc_code);
-				printf("parms: %04x\t", led->parms);
-				printf("status: %04x\n", led->status);
+				printf(PREFIX
+				       "rid: %x\t"
+				       "len: %x      "
+				       "lcode: %-30s\t"
+				       "parms: %04x\t"
+				       "status: %04x\n",
+				       led->rid,
+				       led->lc_len,
+				       led->loc_code,
+				       led->parms,
+				       led->status);
 			}
 
 			break;
