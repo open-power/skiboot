@@ -45,10 +45,10 @@ endif
 CPPFLAGS += -D__SKIBOOT__ -nostdinc
 CPPFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 CPPFLAGS += -DBITS_PER_LONG=64 -m64 -DHAVE_BIG_ENDIAN
-# Ideally we want -ffreestanding and remove our copy of stdint.h
+# We might want to remove our copy of stdint.h
 # but that means uint64_t becomes an ulong instead of an ullong
-# causing all our printf's to warn ... so leave that alone for now
-#CPPFLAGS += -ffreestanding
+# causing all our printf's to warn
+CPPFLAGS += -ffreestanding
 
 CFLAGS := -fno-strict-aliasing -fno-stack-protector -pie
 CFLAGS += $(CWARNS) $(OPTS) $(DBG)
