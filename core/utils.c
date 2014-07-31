@@ -32,7 +32,7 @@ void abort(void)
 
 	op_display(OP_FATAL, OP_MOD_CORE, 0x6666);
 	
-	fputs("Aborting!\n", stderr);
+	prlog(PR_EMERG, "Aborting!\n");
 	backtrace();
 
 	/* XXX FIXME: We should fsp_poll for a while to ensure any pending
