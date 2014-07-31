@@ -559,10 +559,11 @@ void add_cpu_idle_state_properties(void)
 			can_sleep = false;
 		}
 
-		/* Clip to NAP only on Murano DD1.x */
-		if (chip->type == PROC_CHIP_P8_MURANO &&
+		/* Clip to NAP only on Murano and Venice DD1.x */
+		if ((chip->type == PROC_CHIP_P8_MURANO ||
+		     chip->type == PROC_CHIP_P8_VENICE) &&
 		    chip->ec_level < 0x20) {
-			printf("SLW: Sleep not enabled on Murano DD1.x\n");
+			printf("SLW: Sleep not enabled on P8 DD1.x\n");
 			can_sleep = false;
 		}
 
