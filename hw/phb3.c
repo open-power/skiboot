@@ -51,26 +51,12 @@
 
 static void phb3_init_hw(struct phb3 *p);
 
-static void phb3_trace(struct phb3 *p, FILE *s, const char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
-
-static void phb3_trace(struct phb3 *p, FILE *s, const char *fmt, ...)
-{
-	/* Use a temp stack buffer to print all at once to avoid
-	 * mixups of a trace entry on SMP
-	 */
-	char tbuf[128 + 10];
-	va_list args;
-	char *b = tbuf;
-
-	b += sprintf(b, "PHB%d: ", p->phb.opal_id);
-	va_start(args, fmt);
-	vsnprintf(b, 128, fmt, args);
-	va_end(args);
-	fputs(tbuf, s);
-}
-#define PHBDBG(p, fmt...)	phb3_trace(p, stdout, fmt)
-#define PHBINF(p, fmt...)	phb3_trace(p, stderr, fmt)
-#define PHBERR(p, fmt...)	phb3_trace(p, stderr, fmt)
+#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB%d: " fmt, \
+				      (p)->phb.opal_id, ## a)
+#define PHBINF(p, fmt, a...)	prlog(PR_INFO, "PHB%d: " fmt, \
+				      (p)->phb.opal_id, ## a)
+#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB%d: " fmt, \
+				      (p)->phb.opal_id, ## a)
 
 /*
  * Lock callbacks. Allows the OPAL API handlers to lock the

@@ -26,26 +26,10 @@
 #include <opal.h>
 #include <ccan/str/str.h>
 
-static void p7ioc_phb_trace(struct p7ioc_phb *p, FILE *s, const char *fmt, ...)
-__attribute__ ((format (printf, 3, 4)));
-
-static void p7ioc_phb_trace(struct p7ioc_phb *p, FILE *s, const char *fmt, ...)
-{
-	/* Use a temp stack buffer to print all at once to avoid
-	 * mixups of a trace entry on SMP
-	 */
-	char tbuf[128 + 10];
-	va_list args;
-	char *b = tbuf;
-
-	b += sprintf(b, "PHB%d: ", p->phb.opal_id);
-	va_start(args, fmt);
-	vsnprintf(b, 128, fmt, args);
-	va_end(args);
-	fputs(tbuf, s);
-}
-#define PHBDBG(p, fmt...)	p7ioc_phb_trace(p, stdout, fmt)
-#define PHBERR(p, fmt...)	p7ioc_phb_trace(p, stderr, fmt)
+#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB%d: " fmt, \
+				      (p)->phb.opal_id, ## a)
+#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB%d: " fmt, \
+				      (p)->phb.opal_id, ## a)
 
 /* Helper to select an IODA table entry */
 static inline void p7ioc_phb_ioda_sel(struct p7ioc_phb *p, uint32_t table,
