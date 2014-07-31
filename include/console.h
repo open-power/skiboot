@@ -17,6 +17,7 @@
 #ifndef __CONSOLE_H
 #define __CONSOLE_H
 
+#include "unistd.h"
 #include <lock.h>
 
 /*
@@ -56,8 +57,10 @@ extern struct lock con_lock;
 extern bool dummy_console_enabled(void);
 extern void force_dummy_console(void);
 extern bool flush_console(void);
-extern bool __flush_console(void);
+extern bool __flush_console(bool flush_to_drivers);
 extern void set_console(struct con_ops *driver);
+
+ssize_t console_write(bool flush_to_drivers, const void *buf, size_t count);
 
 extern void clear_console(void);
 extern void memcons_add_properties(void);

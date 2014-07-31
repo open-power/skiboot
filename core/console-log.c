@@ -24,6 +24,7 @@
 #include "skiboot.h"
 #include "unistd.h"
 #include "stdio.h"
+#include "console.h"
 #include "timebase.h"
 
 static int vprlog(int log_level, const char *fmt, va_list ap)
@@ -34,7 +35,8 @@ static int vprlog(int log_level, const char *fmt, va_list ap)
 	count = snprintf(buffer, sizeof(buffer), "[%lu,%d] ",
 			 mftb(), log_level);
 	count+= vsnprintf(buffer+count, sizeof(buffer)-count, fmt, ap);
-	write(0, buffer, count);
+
+	console_write((log_level > PR_NOTICE) ? false : true, buffer, count);
 
 	return count;
 }

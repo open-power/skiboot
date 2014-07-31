@@ -667,7 +667,7 @@ void fsp_console_poll(void *data __unused)
 			if (sb->next_out == sb->next_in)
 				continue;
 			if (fs->log_port)
-				__flush_console();
+				__flush_console(true);
 			else {
 #ifdef OPAL_DEBUG_CONSOLE_POLL
 				if (debug < 5) {

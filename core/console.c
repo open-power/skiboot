@@ -81,9 +81,11 @@ void clear_console(void)
 
 /*
  * Flush the console buffer into the driver, returns true
- * if there is more to go
+ * if there is more to go.
+ * Optionally can skip flushing to drivers, leaving messages
+ * just in memory console.
  */
-bool __flush_console(void)
+bool __flush_console(bool flush_to_drivers)
 {
 	struct cpu_thread *cpu = this_cpu();
 	size_t req, len = 0;
@@ -124,18 +126,27 @@ bool __flush_console(void)
 		more_flush = false;
 		if (con_out > con_in) {
 			req = INMEM_CON_OUT_LEN - con_out;
-			unlock(&con_lock);
-			len = con_driver->write(con_buf + con_out, req);
-			lock(&con_lock);
+			if (!flush_to_drivers) {
+				len = req;
+			} else {
+				unlock(&con_lock);
+				len = con_driver->write(con_buf + con_out,
+							req);
+				lock(&con_lock);
+			}
 			con_out = (con_out + len) % INMEM_CON_OUT_LEN;
 			if (len < req)
 				goto bail;
 		}
 		if (con_out < con_in) {
-			unlock(&con_lock);
-			len = con_driver->write(con_buf + con_out,
-						con_in - con_out);
-			lock(&con_lock);
+			if (!flush_to_drivers) {
+				len = con_in - con_out;
+			} else {
+				unlock(&con_lock);
+				len = con_driver->write(con_buf + con_out,
+							con_in - con_out);
+				lock(&con_lock);
+			}
 			con_out = (con_out + len) % INMEM_CON_OUT_LEN;
 		}
 	} while(more_flush);
@@ -149,7 +160,7 @@ bool flush_console(void)
 	bool ret;
 
 	lock(&con_lock);
-	ret = __flush_console();
+	ret = __flush_console(true);
 	unlock(&con_lock);
 
 	return ret;
@@ -206,7 +217,7 @@ static void write_char(char c)
 	inmem_write(c);
 }
 
-ssize_t write(int fd __unused, const void *buf, size_t count)
+ssize_t console_write(bool flush_to_drivers, const void *buf, size_t count)
 {
 	/* We use recursive locking here as we can get called
 	 * from fairly deep debug path
@@ -221,12 +232,17 @@ ssize_t write(int fd __unused, const void *buf, size_t count)
 		write_char(c);
 	}
 
-	__flush_console();
+	__flush_console(flush_to_drivers);
 
 	if (need_unlock)
 		unlock(&con_lock);
 
 	return count;
+}
+
+ssize_t write(int fd __unused, const void *buf, size_t count)
+{
+	return console_write(true, buf, count);
 }
 
 ssize_t read(int fd __unused, void *buf, size_t req_count)
