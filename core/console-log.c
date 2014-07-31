@@ -52,3 +52,15 @@ void prlog(int log_level, const char* fmt, ...)
 	vprlog(log_level, fmt, ap);
 	va_end(ap);
 }
+
+int printf(const char* fmt, ...)
+{
+	int count;
+	va_list ap;
+    
+	va_start(ap, fmt);
+	count = vprlog(PR_PRINTF, fmt, ap);
+	va_end(ap);
+    
+	return count;
+}

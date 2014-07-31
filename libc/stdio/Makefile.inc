@@ -14,7 +14,7 @@
 SUBDIRS += $(LIBCDIR)/stdio
 
 STDIO_OBJS = fscanf.o sprintf.o vfprintf.o vsnprintf.o vsprintf.o fprintf.o \
-	     printf.o setvbuf.o fputc.o puts.o fputs.o putchar.o scanf.o \
+	     setvbuf.o fputc.o puts.o fputs.o putchar.o scanf.o \
 	     stdchnls.o vfscanf.o vsscanf.o fileno.o snprintf.o
 
 STDIO = $(LIBCDIR)/stdio/built-in.o

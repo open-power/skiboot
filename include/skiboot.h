@@ -79,6 +79,7 @@ extern struct debug_descriptor debug_descriptor;
 /* General utilities */
 void prlog(int log_level, const char* fmt, ...) __attribute__((format (printf, 2, 3)));
 #define prerror(fmt...)	do { prlog(0, fmt); } while(0)
+#define PR_PRINTF	5
 
 /* Location codes  -- at most 80 chars with null termination */
 #define LOC_CODE_SIZE	80
