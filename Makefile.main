@@ -111,7 +111,7 @@ endif
 OBJS += $(LIBC) $(CCAN) $(DEVSRC_OBJ) gitid.o
 
 $(TARGET).lid: $(TARGET).elf
-	$(OBJCOPY) -O binary -S $^ $@
+	$(call Q,OBJCOPY, $(OBJCOPY) -O binary -S $^ $@, $@)
 
 $(TARGET).elf: $(OBJS) $(TARGET).lds $(KERNEL)
 	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(OBJS) -o $@, $@)
