@@ -1351,9 +1351,10 @@ static void fsp_handle_incoming(struct fsp *fsp)
 			__fsp_drop_incoming(fsp);
 			return;
 		}
-		
-		if (!cmdclass->busy || list_empty(&cmdclass->msgq)) {	
-			prerror("FSP #%d: Got orphan response !\n", fsp->index);
+
+		if (!cmdclass->busy || list_empty(&cmdclass->msgq)) {
+			prerror("FSP #%d: Got orphan response! w0 = 0x%08x w1 = 0x%08x\n",
+					fsp->index, w0, w1);
 			__fsp_drop_incoming(fsp);
 			return;
 		}
@@ -1364,8 +1365,8 @@ static void fsp_handle_incoming(struct fsp *fsp)
 		    (req->word0 & 0xff) != (w0 & 0xff) ||
 		    (req->word1 & 0xff) != (w1 & 0x7f)) {
 			__fsp_drop_incoming(fsp);
-			prerror("FSP #%d: Response doesn't match pending msg\n",
-				fsp->index);
+			prerror("FSP #%d: Response doesn't match pending msg. w0 = 0x%08x w1 = 0x%08x\n",
+				fsp->index, w0, w1);
 			return;
 		} else {
 			u64 resetbit = ~fsp_get_class_bit(req->word0 & 0xff);
