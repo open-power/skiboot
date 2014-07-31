@@ -31,12 +31,26 @@ static int vprlog(int log_level, const char *fmt, va_list ap)
 {
 	int count;
 	char buffer[320];
+	bool flush_to_drivers = true;
+
+	/* It's safe to return 0 when we "did" something here
+	 * as only printf cares about how much we wrote, and
+	 * if you change log_level to below PR_PRINTF then you
+	 * get everything you deserve.
+	 * By default, only PR_DEBUG and higher are stored in memory.
+	 * PR_TRACE and PR_INSANE are for those having a bad day.
+	 */
+	if (log_level > (debug_descriptor.console_log_levels >> 4))
+		return 0;
 
 	count = snprintf(buffer, sizeof(buffer), "[%lu,%d] ",
 			 mftb(), log_level);
 	count+= vsnprintf(buffer+count, sizeof(buffer)-count, fmt, ap);
 
-	console_write((log_level > PR_NOTICE) ? false : true, buffer, count);
+	if (log_level > (debug_descriptor.console_log_levels & 0x0f))
+		flush_to_drivers = false;
+
+	console_write(flush_to_drivers, buffer, count);
 
 	return count;
 }

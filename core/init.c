@@ -60,6 +60,7 @@ struct debug_descriptor debug_descriptor = {
 	.version	= DEBUG_DESC_VERSION,
 	.memcons_phys	= (uint64_t)&memcons,
 	.trace_mask	= 0, /* All traces disabled by default */
+	.console_log_levels = (PR_DEBUG << 4) | PR_NOTICE,
 };
 
 static bool try_load_elf64_le(struct elf_hdr *header)
@@ -488,6 +489,10 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	clear_console();
 
 	printf("SkiBoot %s starting...\n", gitid);
+	printf("initial console log level: memory %d, driver %d\n",
+	       (debug_descriptor.console_log_levels >> 4),
+	       (debug_descriptor.console_log_levels & 0x0f));
+	prlog(PR_TRACE, "You will not see this\n");
 
 	/* Initialize boot cpu's cpu_thread struct */
 	init_boot_cpu();

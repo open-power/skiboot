@@ -58,7 +58,11 @@ struct debug_descriptor {
 	u8	eye_catcher[8];	/* "OPALdbug" */
 #define DEBUG_DESC_VERSION	1
 	u32	version;
-	u32	reserved[3];
+	u8	console_log_levels;	/* high 4 bits in memory,
+					 * low 4 bits driver (e.g. uart). */
+	u8	reserved1;
+	u16	reserved2;
+	u32	reserved[2];
 
 	/* Memory console */
 	u64	memcons_phys;
