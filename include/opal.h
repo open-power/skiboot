@@ -136,7 +136,8 @@
 #define OPAL_HANDLE_HMI				98
 #define OPAL_CONFIG_CPU_IDLE_STATE		99
 #define OPAL_SLW_SET_REG			100
-#define OPAL_LAST				100
+#define OPAL_REGISTER_DUMP_REGION		101
+#define OPAL_LAST				101
 
 #ifndef __ASSEMBLY__
 
@@ -859,6 +860,12 @@ struct opal_sg_list {
 	struct opal_sg_list *next;
 	struct opal_sg_entry entry[];
 };
+
+/*
+ * Dump region ID range usable by the OS
+ */
+#define OPAL_DUMP_REGION_OS_START		0x80
+#define OPAL_DUMP_REGION_OS_END			0xFF
 
 
 /****** Internal **********/

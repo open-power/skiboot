@@ -18,7 +18,19 @@
 #ifndef __FSPMDST_H
 #define __FSPMDST_H
 
-/* Dump region ids */
+/*
+ * Dump region ids
+ *
+ * 0x01 - 0x7F : OPAL
+ * 0x80 - 0xFF : Kernel
+ *
+ * Some of those IDs are duplicated in opal.h
+ */
+#define DUMP_REGION_OPAL_START		0x01
+#define DUMP_REGION_OPAL_END		0x7F
+#define DUMP_REGION_HOST_START		0x80
+#define DUMP_REGION_HOST_END		0xFF
+
 #define DUMP_REGION_CONSOLE	0x01
 #define DUMP_REGION_HBRT_LOG	0x02
 
