@@ -424,13 +424,14 @@ struct cpu_idle_states {
 };
 
 /* Flag definitions */
+/* Set bits to avoid misinterpretation even if kernel has endian bugs */
 
 #define IDLE_DEC_STOP		0x00000001 /* Decrementer would stop */
 #define IDLE_TB_STOP		0x00000002 /* Timebase would stop */
-#define IDLE_LOSE_USER_CONTEXT	0x00000100 /* Restore GPRs like nap */
-#define IDLE_LOSE_HYP_CONTEXT	0x00000200 /* Restore hypervisor resource
+#define IDLE_LOSE_USER_CONTEXT	0x00001000 /* Restore GPRs like nap */
+#define IDLE_LOSE_HYP_CONTEXT	0x00002000 /* Restore hypervisor resource
 					      from PACA pointer */
-#define IDLE_LOSE_FULL_CONTEXT	0x00000400 /* Restore hypervisor resource
+#define IDLE_LOSE_FULL_CONTEXT	0x00004000 /* Restore hypervisor resource
 					      by searching PACA */
 #define IDLE_USE_INST_NAP	0x00010000 /* Use nap instruction */
 #define IDLE_USE_INST_SLEEP	0x00020000 /* Use sleep instruction (no workaround) */
