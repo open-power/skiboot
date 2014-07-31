@@ -22,9 +22,10 @@
 #include <device.h>
 #include <stdio.h>
 #include <spcn.h>
-#include <fsp-epow.h>
 #include <opal.h>
 #include <opal-msg.h>
+
+#include "fsp-epow.h"
 
 #define PREFIX "EPOW: "
 
