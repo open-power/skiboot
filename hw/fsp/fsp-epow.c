@@ -52,23 +52,46 @@ static void epow_process_base_event(u8 *epow)
 	 * FIXME: As of now, SPCN_FAULT_LOG event is not being used
 	 * as it does not map to any generic defined OPAL EPOW event.
 	 */
-	if (epow[3] & SPCN_CNF_CHNG)
+	if (epow[3] & SPCN_CNF_CHNG) {
+		/*
+		 * The frequency of the SPCN_CNF_CHNG message is very
+		 * high on POWER7 and POWER8 systems which will fill
+		 * up the Sapphire log buffer. SPCN configuration
+		 * change does not take down the system, hence the
+		 * logging of these type of messages can be avoided to
+		 * save precious log buffer space.
+		 */
 		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_CHNG;
-	if (epow[3] & SPCN_POWR_FAIL)
+	}
+
+	if (epow[3] & SPCN_POWR_FAIL) {
+		printf(PREFIX "FSP message with SPCN_POWR_FAIL\n");
 		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_FAIL;
-	if (epow[3] & SPCN_INCL_POWR)
+	}
+
+	if (epow[3] & SPCN_INCL_POWR) {
+		printf(PREFIX "FSP message with SPCN_INCL_POWR\n");
 		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_INCL;
+	}
 }
 
 /* Process FSP sent EPOW based information */
 static void epow_process_ex1_event(u8 *epow)
 {
-	if (epow[4] == EPOW_ON_UPS)
+	if (epow[4] == EPOW_ON_UPS) {
+		printf(PREFIX "FSP message with EPOW_ON_UPS\n");
 		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_UPS;
-	if (epow[4] == EPOW_TMP_AMB)
+	}
+
+	if (epow[4] == EPOW_TMP_AMB) {
+		printf(PREFIX "FSP message with EPOW_TMP_AMB\n");
 		epow_status[OPAL_SYSEPOW_TEMP] |= OPAL_SYSTEMP_AMB;
-	if (epow[4] == EPOW_TMP_INT)
+	}
+
+	if (epow[4] == EPOW_TMP_INT) {
+		printf(PREFIX "FSP message with EPOW_TMP_INT\n");
 		epow_status[OPAL_SYSEPOW_TEMP] |= OPAL_SYSTEMP_INT;
+	}
 }
 
 /* Update the system EPOW status */
@@ -205,15 +228,12 @@ static bool fsp_epow_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
 	switch(cmd_sub_mod) {
 	case FSP_CMD_PANELSTATUS:
-		printf(PREFIX "Received normal EPOW from FSP\n");
 		fsp_process_epow(msg, EPOW_NORMAL);
 		return true;
 	case FSP_CMD_PANELSTATUS_EX1:
-		printf(PREFIX "Received extended 1 EPOW from FSP\n");
 		fsp_process_epow(msg, EPOW_EX1);
 		return true;
 	case FSP_CMD_PANELSTATUS_EX2:
-		printf(PREFIX "Received extended 2 EPOW from FSP\n");
 		fsp_process_epow(msg, EPOW_EX2);
 		return true;
 	}
