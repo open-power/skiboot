@@ -34,7 +34,7 @@ void backtrace(void)
 	/* XXX Handle SMP */
 	fprintf(stderr, "CPU %08x Backtrace:\n", pir);
 	while(sp > bottom && sp < top) {
-		fprintf(stderr, " S: %016lx R: %016lx\n",
+		prlog(PR_EMERG, " S: %016lx R: %016lx\n",
 			(unsigned long)sp, sp[2]);
 		sp = (unsigned long *)sp[0];
 	}
