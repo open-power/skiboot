@@ -48,6 +48,9 @@ static struct lock epow_lock = LOCK_UNLOCKED;
 /* Process FSP sent SPCN based information */
 static void epow_process_base_event(u8 *epow)
 {
+
+	epow_status[OPAL_SYSEPOW_POWER] &= ~(OPAL_SYSPOWER_CHNG |
+				OPAL_SYSPOWER_FAIL | OPAL_SYSPOWER_INCL);
 	/*
 	 * FIXME: As of now, SPCN_FAULT_LOG event is not being used
 	 * as it does not map to any generic defined OPAL EPOW event.
@@ -78,6 +81,9 @@ static void epow_process_base_event(u8 *epow)
 /* Process FSP sent EPOW based information */
 static void epow_process_ex1_event(u8 *epow)
 {
+	epow_status[OPAL_SYSEPOW_POWER] &= ~OPAL_SYSPOWER_UPS;
+	epow_status[OPAL_SYSEPOW_TEMP] &= ~(OPAL_SYSTEMP_AMB | OPAL_SYSTEMP_INT);
+
 	if (epow[4] == EPOW_ON_UPS) {
 		printf(PREFIX "FSP message with EPOW_ON_UPS\n");
 		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_UPS;
@@ -105,7 +111,6 @@ static void fsp_epow_update(u8 *epow, int epow_type)
 
 	/* Copy over and clear system EPOW status */
 	memcpy(old_epow_status, epow_status, sizeof(old_epow_status));
-	memset(epow_status, 0, sizeof(epow_status));
 	switch(epow_type) {
 	case EPOW_NORMAL:
 		epow_process_base_event(epow);
@@ -127,7 +132,7 @@ static void fsp_epow_update(u8 *epow, int epow_type)
 	}
 	unlock(&epow_lock);
 
-	if (epow_status != old_epow_status)
+	if (memcmp(epow_status, old_epow_status, sizeof(epow_status)))
 		epow_changed = true;
 
 	/* Send OPAL message notification */
