@@ -537,6 +537,38 @@ struct cechub_io_hub {
 #define IOKID_KW_VPD		1
 
 /*
+ * CPU Controls Legacy Structure
+ */
+struct cpu_ctl_legacy {
+	__be64 addr;
+	__be64 size;
+} __packed;
+
+/*
+ * CPU Control Legacy table
+ *
+ * Format of this table is defined in FIPS PHYP Attn spec.
+ */
+struct cpu_ctl_legacy_table {
+	struct cpu_ctl_legacy spat;
+	struct cpu_ctl_legacy sp_attn_area1;
+	struct cpu_ctl_legacy sp_attn_area2;
+	struct cpu_ctl_legacy hsr_area;
+	struct cpu_ctl_legacy reserved[12];
+} __packed;
+
+/*
+ * CPU Controls Header Structure
+ */
+#define CPU_CTL_HDIF_SIG	"CPUCTL"
+struct cpu_ctl_init_data {
+	struct HDIF_common_hdr		hdr;
+	struct HDIF_idata_ptr		cpu_ctl;
+	uint8_t				reserved[8];
+	struct cpu_ctl_legacy_table	cpu_ctl_lt;
+} __packed __align(0x10);
+
+/*
  * Slot Location Code Array (aka SLCA)
  *
  * This is a pile of location codes referenced by various other

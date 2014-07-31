@@ -13,11 +13,15 @@
 #ifndef _ASSERT_H
 #define _ASSERT_H
 
+extern void  update_sp_attn_area(const char *msg);
+
 #define assert(cond)						\
-	do { if (!(cond))					\
+	do { if (!(cond)) {					\
+                     update_sp_attn_area(__FILE__		\
+				":" stringify(__LINE__));	\
 		     assert_fail(__FILE__			\
 				 ":" stringify(__LINE__)	\
-				 ":" stringify(cond));		\
+				 ":" stringify(cond));	}	\
 	} while(0)
 
 void __attribute__((noreturn)) assert_fail(const char *msg);

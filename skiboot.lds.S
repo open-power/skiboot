@@ -41,6 +41,11 @@ SECTIONS
 		KEEP(*(.mdst.data))
 	}
 
+	. = CPU_CTL_OFF;
+	.cpuctrl : {
+		KEEP(*(.cpuctrl.data))
+	}
+
 	. = ALIGN(0x10);
  	.text : {
 		*(.text*)

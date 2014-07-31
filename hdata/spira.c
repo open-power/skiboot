@@ -23,6 +23,7 @@
 #include <ccan/str/str.h>
 #include <chip.h>
 #include <fsp-mdst-table.h>
+#include <fsp-attn.h>
 
 #include "hdata.h"
 #include "hostservices.h"
@@ -43,6 +44,34 @@ __section(".procin.data") struct proc_init_data proc_init_data = {
 	.regs = {
 		.nia = CPU_TO_BE64(0x180),
 		.msr = CPU_TO_BE64(0x9000000000000000ULL), /* SF | HV */
+	},
+};
+
+__section(".cpuctrl.data") struct sp_addr_table cpu_ctl_spat_area;
+__section(".cpuctrl.data") struct sp_attn_area cpu_ctl_sp_attn_area1;
+__section(".cpuctrl.data") struct sp_attn_area cpu_ctl_sp_attn_area2;
+__section(".cpuctrl.data") struct hsr_data_area cpu_ctl_hsr_area;
+
+__section(".cpuctrl.data") struct cpu_ctl_init_data cpu_ctl_init_data = {
+	.hdr = HDIF_SIMPLE_HDR(CPU_CTL_HDIF_SIG, 2, struct cpu_ctl_init_data),
+	.cpu_ctl = HDIF_IDATA_PTR(offsetof(struct cpu_ctl_init_data, cpu_ctl_lt), sizeof(struct cpu_ctl_legacy_table)),
+	.cpu_ctl_lt = {
+		.spat = {
+			.addr = CPU_TO_BE64((unsigned long)&(cpu_ctl_spat_area) + SKIBOOT_BASE),
+			.size = CPU_TO_BE64(sizeof(struct sp_addr_table)),
+		},
+		.sp_attn_area1 = {
+			.addr = CPU_TO_BE64((unsigned long)&(cpu_ctl_sp_attn_area1) + SKIBOOT_BASE),
+			.size = CPU_TO_BE64(sizeof(struct sp_attn_area)),
+		},
+		.sp_attn_area2 = {
+			.addr = CPU_TO_BE64((unsigned long)&(cpu_ctl_sp_attn_area2) + SKIBOOT_BASE),
+			.size = CPU_TO_BE64(sizeof(struct sp_attn_area)),
+		},
+		.hsr_area = {
+			.addr = CPU_TO_BE64((unsigned long)&(cpu_ctl_hsr_area) + SKIBOOT_BASE),
+			.size = CPU_TO_BE64(sizeof(struct hsr_data_area)),
+		},
 	},
 };
 
@@ -103,6 +132,13 @@ __section(".spira.data") struct spira spira = {
 			.act_cnt	= CPU_TO_BE16(ARRAY_SIZE(init_mdst_table)),
 			.alloc_len	=
 				CPU_TO_BE32(sizeof(init_mdst_table)),
+		},
+		.cpu_ctrl = {
+			.addr		= CPU_TO_BE64((unsigned long)&cpu_ctl_init_data),
+			.alloc_cnt	= CPU_TO_BE16(1),
+			.act_cnt	= CPU_TO_BE16(1),
+			.alloc_len	=
+					CPU_TO_BE32(sizeof(cpu_ctl_init_data)),
 		},
 	},
 };

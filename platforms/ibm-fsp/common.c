@@ -103,6 +103,9 @@ void ibm_fsp_init(void)
 	/* Start FSP/HV state controller & perform OPL */
 	fsp_opl();
 
+	/* Initialize SP attention area */
+	fsp_attn_init();
+
 	/* Send MDST table notification to FSP */
 	op_display(OP_LOG, OP_MOD_INIT, 0x0000);
 	fsp_mdst_table_init();

@@ -719,6 +719,9 @@ extern void fsp_code_update_wait_vpd(bool is_boot);
 extern void fsp_dump_init(void);
 extern void fsp_fips_dump_notify(uint32_t dump_id, uint32_t dump_len);
 
+/* Attention Handler */
+extern void fsp_attn_init(void);
+
 /* MDST table */
 extern void fsp_mdst_table_init(void);
 

@@ -46,6 +46,11 @@
  */
 #define MDST_TABLE_OFF		(SPIRA_OFF + 0x1000)
 
+/* Like MDST, we need fixed address for CPU control header.
+ * We leave a 2k gap for MDST. CPU_CTL table is of size ~4k
+ */
+#define CPU_CTL_OFF             (SPIRA_OFF + 0x1800)
+
 /* We keep a gap of 2M for skiboot text & bss for now. We will
  * then we have our heap which goes up to base + 14M (so 12M for
  * now, though we can certainly reduce that a lot).
