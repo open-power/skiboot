@@ -13,7 +13,7 @@
 SUBDIRS += $(LIBCDIR)/stdlib
 
 STDLIB_OBJS = error.o atoi.o atol.o strtol.o strtoul.o \
-	      rand.o abort.o
+	      rand.o
 
 STDLIB = $(LIBCDIR)/stdlib/built-in.o
 $(STDLIB): $(STDLIB_OBJS:%=$(LIBCDIR)/stdlib/%)

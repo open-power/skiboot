@@ -19,6 +19,12 @@
 #include <fsp.h>
 #include <processor.h>
 
+void assert_fail(const char *msg)
+{
+	prlog(PR_EMERG, "Assert fail: %s\n", msg);
+	abort();
+}
+
 void abort(void)
 {
 	static bool in_abort = false;
