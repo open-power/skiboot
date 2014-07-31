@@ -157,6 +157,16 @@ static void fsp_process_epow(struct fsp_msg *msg, int epow_type)
 	epow[2] = msg->data.bytes[2];
 	epow[3] = msg->data.bytes[3];
 
+	/*
+	 * After receiving the FSP async message, HV needs to
+	 * ask for the detailed panel status through corresponding
+	 * mbox command. HV need not use the received details status
+	 * as it does not have any thing more or new than what came
+	 * along with the original FSP async message. But requesting
+	 * for the detailed panel status exclussively is necessary as
+	 * it forms a kind of handshaking with the FSP. Without this
+	 * step, FSP wont be sending any new panel status messages.
+	 */
 	switch(epow_type) {
 	case EPOW_NORMAL:
 		fsp_queue_msg(fsp_mkmsg(FSP_CMD_STATUS_REQ, 0), fsp_freemsg);

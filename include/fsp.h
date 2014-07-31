@@ -358,9 +358,9 @@
 #define FSP_CMD_GET_IPL_SIDE	0x1ce0600 /* HV->FSP: Get IPL side and speed */
 #define FSP_CMD_SET_IPL_SIDE	0x1ce0780 /* HV->FSP: Set next IPL side */
 #define FSP_CMD_PCI_POWER_CONF	0x1ce1b00 /* HV->FSP: Send PCIe list to FSP */
-#define FSP_CMD_STATUS_REQ	0x0ce4800 /* HV->FSP: Request normal panel status */
-#define FSP_CMD_STATUS_EX1_REQ	0x0ce4802 /* HV->FSP: Request extended 1 panel status */
-#define FSP_CMD_STATUS_EX2_REQ	0x0ce4803 /* HV->FSP: Request extended 2 panel status */
+#define FSP_CMD_STATUS_REQ	0x1ce4800 /* HV->FSP: Request normal panel status */
+#define FSP_CMD_STATUS_EX1_REQ	0x1ce4802 /* HV->FSP: Request extended 1 panel status */
+#define FSP_CMD_STATUS_EX2_REQ	0x1ce4803 /* HV->FSP: Request extended 2 panel status */
 
 /*
  * Class 0xD2
