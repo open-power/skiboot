@@ -95,7 +95,7 @@ bool __flush_console(void)
 
 	/*
 	 * Console flushing is suspended on this CPU, typically because
-	 * some critical locks are held that would potentially case a
+	 * some critical locks are held that would potentially cause a
 	 * flush to deadlock
 	 */
 	if (cpu->con_suspend) {
