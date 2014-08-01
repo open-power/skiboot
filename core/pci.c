@@ -15,6 +15,7 @@
  */
 
 #include <skiboot.h>
+#include <cpu.h>
 #include <pci.h>
 #include <pci-cfg.h>
 #include <timebase.h>
@@ -591,7 +592,7 @@ int32_t pci_configure_mps(struct phb *phb, struct pci_device *pd)
  * been on, we will issue fundamental reset. Otherwise,
  * we will power it on before issuing fundamental reset.
  */
-static int64_t pci_reset_phb(struct phb *phb)
+static int64_t pci_phb_reset(struct phb *phb)
 {
 	const char *desc;
 	int64_t rc;
@@ -631,8 +632,9 @@ static int64_t pci_reset_phb(struct phb *phb)
         return rc;
 }
 
-static void pci_init_slot(struct phb *phb)
+static void pci_reset_phb(void *data)
 {
+	struct phb *phb = data;
 	int64_t rc;
 
 	printf("PHB%d: Init slot\n", phb->opal_id);
@@ -656,11 +658,12 @@ static void pci_init_slot(struct phb *phb)
 	 * fundamental way while powering on. The reset
 	 * state machine is going to wait for the link
 	 */
-	pci_reset_phb(phb);
+	pci_phb_reset(phb);
 }
 
-static void pci_scan_phb(struct phb *phb)
+static void pci_scan_phb(void *data)
 {
+	struct phb *phb = data;
 	uint32_t mps = 0xffffffff;
 	bool has_link = false;
 	int64_t rc;
@@ -1317,6 +1320,48 @@ void pci_reset(void)
 	unlock(&pci_lock);
 }
 
+static void pci_do_jobs(void (*fn)(void *))
+{
+	struct cpu_thread *cpu = first_available_cpu();
+	void *jobs[ARRAY_SIZE(phbs)];
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
+		if (!phbs[i]) {
+			jobs[i] = NULL;
+			continue;
+		}
+
+		/* Don't queue job to current CPU, which is always
+		 * the poller.
+		 */
+		while (cpu) {
+			if (cpu != this_cpu())
+				break;
+
+			cpu = next_available_cpu(cpu);
+			if (!cpu)
+				cpu = first_available_cpu();
+		}
+
+		jobs[i] = __cpu_queue_job(cpu, fn, phbs[i], false);
+		assert(jobs[i]);
+
+		/* For next CPU */
+		cpu = next_available_cpu(cpu);
+		if (!cpu)
+			cpu = first_available_cpu();
+	}
+
+	/* Wait until all tasks are done */
+	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
+		if (!jobs[i])
+			continue;
+
+		cpu_wait_job(jobs[i], true);
+	}
+}
+
 void pci_init_slots(void)
 {
 	unsigned int i;
@@ -1325,21 +1370,8 @@ void pci_init_slots(void)
 
 	lock(&pci_lock);
 
-	/* XXX Do those in parallel (at least the power up
-	 * state machine could be done in parallel)
-	 */
-	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
-		if (!phbs[i])
-			continue;
-		pci_init_slot(phbs[i]);
-	}
-
-	/* Scan PHBs one by one */
-	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
-		if (!phbs[i])
-			continue;
-		pci_scan_phb(phbs[i]);
-	}
+	pci_do_jobs(pci_reset_phb);
+	pci_do_jobs(pci_scan_phb);
 
 	if (platform.pci_probe_complete)
 		platform.pci_probe_complete();
