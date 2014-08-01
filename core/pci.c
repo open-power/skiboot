@@ -22,8 +22,7 @@
 #include <device.h>
 
 static struct lock pci_lock = LOCK_UNLOCKED;
-#define PCI_MAX_PHBs	64
-static struct phb *phbs[PCI_MAX_PHBs];
+static struct phb *phbs[64];
 
 #define DBG(fmt...) do { } while(0)
 
@@ -634,9 +633,7 @@ static int64_t pci_reset_phb(struct phb *phb)
 
 static void pci_init_slot(struct phb *phb)
 {
-	uint32_t mps = 0xffffffff;
 	int64_t rc;
-	bool has_link;
 
 	printf("PHB%d: Init slot\n", phb->opal_id);
 
@@ -659,26 +656,40 @@ static void pci_init_slot(struct phb *phb)
 	 * fundamental way while powering on. The reset
 	 * state machine is going to wait for the link
 	 */
-	rc = pci_reset_phb(phb);
-	if (rc && rc != OPAL_CLOSED)
-		return;
+	pci_reset_phb(phb);
+}
 
-	/* It's up, print some things */
+static void pci_scan_phb(struct phb *phb)
+{
+	uint32_t mps = 0xffffffff;
+	bool has_link = false;
+	int64_t rc;
+
 	rc = phb->ops->link_state(phb);
 	if (rc < 0) {
 		printf("PHB%d: Failed to query link state, rc=%lld\n",
 		       phb->opal_id, rc);
 		return;
 	}
-	has_link = rc != OPAL_SHPC_LINK_DOWN;
 
-	if(!has_link)
+	/*
+	 * We will probe the root port. If the PHB has trained
+	 * link, we will probe the downstream port as well.
+	 */
+	if (rc != OPAL_SHPC_LINK_DOWN)
+		has_link = true;
+
+	if (has_link && phb->phb_type >= phb_type_pcie_v1)
+		printf("PHB%d: Link up at x%lld width\n",
+		       phb->opal_id, rc);
+	else if (has_link)
+		printf("PHB%d: Link up\n", phb->opal_id);
+	else
 		printf("PHB%d: Link down\n", phb->opal_id);
-	else if (phb->phb_type >= phb_type_pcie_v1)
-		printf("PHB%d: Link up at x%lld width\n", phb->opal_id, rc);
 
-	printf("PHB%d: Scanning (upstream%s)...\n", phb->opal_id,
-	       has_link ? "+downsteam" : " only");
+	/* Scan root port and downstream ports if applicable */
+	printf("PHB%d: Scanning (upstream%s)...\n",
+	       phb->opal_id, has_link ? "+downsteam" : " only");
 	pci_scan(phb, 0, 0xff, &phb->devices, NULL, has_link);
 
 	/* Configre MPS (Max Payload Size) for PCIe domain */
@@ -693,10 +704,10 @@ int64_t pci_register_phb(struct phb *phb)
 	unsigned int i;
 
 	lock(&pci_lock);
-	for (i = 0; i < PCI_MAX_PHBs; i++)
+	for (i = 0; i < ARRAY_SIZE(phbs); i++)
 		if (!phbs[i])
 			break;
-	if (i >= PCI_MAX_PHBs) {
+	if (i >= ARRAY_SIZE(phbs)) {
 		prerror("PHB: Failed to find a free ID slot\n");
 		rc = OPAL_RESOURCE;
 	} else {
@@ -729,7 +740,7 @@ int64_t pci_unregister_phb(struct phb *phb)
 
 struct phb *pci_get_phb(uint64_t phb_id)
 {
-	if (phb_id >= PCI_MAX_PHBs)
+	if (phb_id >= ARRAY_SIZE(phbs))
 		return NULL;
 
 	/* XXX See comment in pci_unregister_phb() about locking etc... */
@@ -1298,7 +1309,7 @@ void pci_reset(void)
 	/* XXX Do those in parallel (at least the power up
 	 * state machine could be done in parallel)
 	 */
-	for (i = 0; i < PCI_MAX_PHBs; i++) {
+	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
 		if (!phbs[i])
 			continue;
 		__pci_reset(&phbs[i]->devices);
@@ -1317,17 +1328,24 @@ void pci_init_slots(void)
 	/* XXX Do those in parallel (at least the power up
 	 * state machine could be done in parallel)
 	 */
-	for (i = 0; i < PCI_MAX_PHBs; i++) {
+	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
 		if (!phbs[i])
 			continue;
 		pci_init_slot(phbs[i]);
+	}
+
+	/* Scan PHBs one by one */
+	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
+		if (!phbs[i])
+			continue;
+		pci_scan_phb(phbs[i]);
 	}
 
 	if (platform.pci_probe_complete)
 		platform.pci_probe_complete();
 
 	printf("PCI: Summary\n");
-	for (i = 0; i < PCI_MAX_PHBs; i++) {
+	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
 		if (!phbs[i])
 			continue;
 		pci_add_nodes(phbs[i]);
