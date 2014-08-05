@@ -285,8 +285,9 @@ struct p7ioc_err {
 
 struct p7ioc;
 
-#define P7IOC_PHB_CFG_USE_ASB	1	/* ASB to access PCI-CFG	*/
-#define P7IOC_PHB_CFG_BLOCKED	2	/* PCI-CFG blocked except 0	*/
+#define P7IOC_PHB_CFG_USE_ASB	0x00000001 /* ASB to access PCI-CFG     */
+#define P7IOC_PHB_CFG_BLOCKED	0x00000002 /* PCI-CFG blocked except 0	*/
+#define P7IOC_RESTORE_BUS_NUM	0x00000004 /* Restore buses after reset */
 
 struct p7ioc_phb {
 	uint8_t				index;	/* 0..5 index inside p7ioc */

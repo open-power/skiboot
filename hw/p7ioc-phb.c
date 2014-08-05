@@ -336,6 +336,16 @@ static int64_t p7ioc_sm_freset(struct p7ioc_phb *p)
 
 			p->state = P7IOC_PHB_STATE_FUNCTIONAL;
 			p->flags &= ~P7IOC_PHB_CFG_BLOCKED;
+
+			/*
+			 * We might be required to restore bus numbers for PCI bridges
+			 * for complete reset
+			 */
+			if (p->flags & P7IOC_RESTORE_BUS_NUM) {
+				p->flags &= ~P7IOC_RESTORE_BUS_NUM;
+				pci_restore_bridge_buses(&p->phb);
+			}
+
 			return OPAL_SUCCESS;
 		}
 
@@ -653,6 +663,9 @@ static int64_t p7ioc_complete_reset(struct phb *phb, uint8_t assert)
 	} else {
 		if (p->state != P7IOC_PHB_STATE_FUNCTIONAL)
 			return OPAL_HARDWARE;
+
+		/* Restore bus numbers for bridges */
+		p->flags |= P7IOC_RESTORE_BUS_NUM;
 
 		return p7ioc_sm_slot_power_on(p);
 	}

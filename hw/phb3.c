@@ -1929,6 +1929,15 @@ static void phb3_setup_for_link_up(struct phb3 *p)
 
 	/* Don't block PCI-CFG */
 	p->flags &= ~PHB3_CFG_BLOCKED;
+
+	/*
+	 * For complete reset, we might be required to restore
+	 * bus numbers for PCI bridges.
+	 */
+	if (p->flags & PHB3_RESTORE_BUS_NUM) {
+		p->flags &= ~PHB3_RESTORE_BUS_NUM;
+		pci_restore_bridge_buses(&p->phb);
+	}
 }
 
 static int64_t phb3_sm_link_poll(struct phb3 *p)
@@ -2251,6 +2260,9 @@ static int64_t phb3_complete_reset(struct phb *phb, uint8_t assert)
 		PHBINF(p, "Starting PHB reset sequence\n");
 		return phb3_sm_complete_reset(p);
 	} else {
+		/* Restore bus numbers for bridges */
+		p->flags |= PHB3_RESTORE_BUS_NUM;
+
 		return phb3_sm_hot_reset(p);
 	}
 }

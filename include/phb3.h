@@ -257,6 +257,7 @@ struct phb3_err {
 #define PHB3_AIB_FENCED		0x00000001
 #define PHB3_CFG_USE_ASB	0x00000002
 #define PHB3_CFG_BLOCKED	0x00000004
+#define PHB3_RESTORE_BUS_NUM	0x00000008
 
 struct phb3 {
 	unsigned int		index;	    /* 0..2 index inside P8 */

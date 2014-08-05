@@ -117,6 +117,9 @@ struct pci_device {
 	bool			is_bridge;
 	bool			is_multifunction;
 	uint8_t			dev_type; /* PCIE */
+	uint8_t			primary_bus;
+	uint8_t			secondary_bus;
+	uint8_t			subordinate_bus;
 	uint32_t		scan_map;
 
 	uint64_t		cap_list;
@@ -489,6 +492,7 @@ extern struct pci_device *pci_walk_dev(struct phb *phb,
 						 void *),
 				       void *userdata);
 extern struct pci_device *pci_find_dev(struct phb *phb, uint16_t bdfn);
+extern void pci_restore_bridge_buses(struct phb *phb);
 
 /* Manage PHBs */
 extern int64_t pci_register_phb(struct phb *phb);

@@ -187,7 +187,8 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	 * This will help when walking down those bridges later on
 	 */
 	if (pd->is_bridge) {
-		pci_cfg_write8(phb, bdfn, PCI_CFG_PRIMARY_BUS, bdfn >> 8);
+		pd->primary_bus = (bdfn >> 8);
+		pci_cfg_write8(phb, bdfn, PCI_CFG_PRIMARY_BUS, pd->primary_bus);
 		pci_cfg_write8(phb, bdfn, PCI_CFG_SECONDARY_BUS, 0);
 		pci_cfg_write8(phb, bdfn, PCI_CFG_SUBORDINATE_BUS, 0);
 	}
@@ -501,6 +502,9 @@ static uint8_t pci_scan(struct phb *phb, uint8_t bus, uint8_t max_bus,
 			       pd->bdfn);
 			max_bus = next_bus = 0; /* Failure case */
 		}
+
+		pd->secondary_bus = next_bus;
+		pd->subordinate_bus = max_bus;
 		pci_cfg_write8(phb, pd->bdfn, PCI_CFG_SECONDARY_BUS, next_bus);
 		pci_cfg_write8(phb, pd->bdfn, PCI_CFG_SUBORDINATE_BUS, max_bus);
 		if (!next_bus)
@@ -536,6 +540,7 @@ static uint8_t pci_scan(struct phb *phb, uint8_t bus, uint8_t max_bus,
 		/* Update the max subordinate as described previously */
 		if (use_max)
 			max_sub = max_bus;
+		pd->subordinate_bus = max_sub;
 		pci_cfg_write8(phb, pd->bdfn, PCI_CFG_SUBORDINATE_BUS, max_sub);
 		next_bus = max_sub + 1;
 	}
@@ -1143,15 +1148,13 @@ static void pci_print_summary_line(struct phb *phb, struct pci_device *pd,
 	} else
 		dtype = pd->is_bridge ? "PCIB" : "PCID";
 
-	if (pd->is_bridge) {
-		uint8_t sec_bus, sub_bus;
-		pci_cfg_read8(phb, pd->bdfn, PCI_CFG_SECONDARY_BUS, &sec_bus);
-		pci_cfg_read8(phb, pd->bdfn, PCI_CFG_SUBORDINATE_BUS, &sub_bus);
+	if (pd->is_bridge)
 		printf(" %04x:%02x:%02x.%x [%s] %04x %04x R:%02x C:%06x B:%02x..%02x %s\n",
 		       phb->opal_id, pd->bdfn >> 8, (pd->bdfn >> 3) & 0x1f,
 		       pd->bdfn & 0x7, dtype, vdid & 0xffff, vdid >> 16,
-		       rev_class & 0xff, rev_class >> 8, sec_bus, sub_bus, slotstr);
-	} else
+		       rev_class & 0xff, rev_class >> 8, pd->secondary_bus,
+		       pd->subordinate_bus, slotstr);
+	else
 		printf(" %04x:%02x:%02x.%x [%s] %04x %04x R:%02x C:%06x (%14s) %s\n",
 		       phb->opal_id, pd->bdfn >> 8, (pd->bdfn >> 3) & 0x1f,
 		       pd->bdfn & 0x7, dtype, vdid & 0xffff, vdid >> 16,
@@ -1385,6 +1388,11 @@ void pci_init_slots(void)
 	unlock(&pci_lock);
 }
 
+/*
+ * Complete iteration on current level before switching to
+ * child level, which is the proper order for restoring
+ * PCI bus range on bridges.
+ */
 static struct pci_device *__pci_walk_dev(struct phb *phb,
 					 struct list_head *l,
 					 int (*cb)(struct phb *,
@@ -1400,11 +1408,13 @@ static struct pci_device *__pci_walk_dev(struct phb *phb,
 	list_for_each(l, pd, link) {
 		if (cb && cb(phb, pd, userdata))
 			return pd;
+	}
 
+	list_for_each(l, pd, link) {
 		child = __pci_walk_dev(phb, &pd->children, cb, userdata);
 		if (child)
 			return child;
-        }
+	}
 
 	return NULL;
 }
@@ -1435,4 +1445,25 @@ static int __pci_find_dev(struct phb *phb,
 struct pci_device *pci_find_dev(struct phb *phb, uint16_t bdfn)
 {
 	return pci_walk_dev(phb, __pci_find_dev, &bdfn);
+}
+
+static int __pci_restore_bridge_buses(struct phb *phb,
+				      struct pci_device *pd,
+				      void *data __unused)
+{
+	if (!pd->is_bridge)
+		return 0;
+
+	pci_cfg_write8(phb, pd->bdfn, PCI_CFG_PRIMARY_BUS,
+		       pd->primary_bus);
+	pci_cfg_write8(phb, pd->bdfn, PCI_CFG_SECONDARY_BUS,
+		       pd->secondary_bus);
+	pci_cfg_write8(phb, pd->bdfn, PCI_CFG_SUBORDINATE_BUS,
+		       pd->subordinate_bus);
+	return 0;
+}
+
+void pci_restore_bridge_buses(struct phb *phb)
+{
+	pci_walk_dev(phb, __pci_restore_bridge_buses, NULL);
 }
