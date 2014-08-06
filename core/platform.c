@@ -50,6 +50,8 @@ opal_call(OPAL_CEC_REBOOT, opal_cec_reboot, 0);
 
 static void generic_platform_init(void)
 {
+	fake_rtc_init();
+
 	/* Do we want to unconditionally enable it ? */
 	if (dummy_console_enabled())
 		dummy_console_add_nodes();
