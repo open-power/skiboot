@@ -486,8 +486,8 @@ static int64_t phb3_presence_detect(struct phb *phb)
 	/* Read hotplug override */
 	hp_override = in_be64(p->regs + PHB_HOTPLUG_OVERRIDE);
 
-	printf("PHB%d: slot_stat: 0x%04x, hp_override: 0x%016llx\n",
-	       phb->opal_id, slot_stat, hp_override);
+	PHBDBG(p, "slot_stat: 0x%04x, hp_override: 0x%016llx\n",
+	       slot_stat, hp_override);
 
 	/* So if the slot status says nothing connected, we bail out */
 	if (!(slot_stat & PCICAP_EXP_SLOTSTAT_PDETECTST))
