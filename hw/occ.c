@@ -90,7 +90,7 @@ static bool wait_for_all_occ_init(void)
 		 * homer_base+size before passing memory to host services.
 		 * This ensures occ_data->valid == 0 before OCC load
 		 */
-		tries = 20; /* 2 secs */
+		tries = 600; /* 60 secs */
 		while((occ_data->valid != 1) && tries--) {
 			time_wait_ms(100);
 		}
