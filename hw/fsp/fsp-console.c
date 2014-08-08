@@ -299,6 +299,9 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 		 */
 		fsp_used_by_console();
 		fsp_con_lock.in_con_path = true;
+		/* See comment in fsp_used_by_console */
+		lock(&fsp_con_lock);
+		unlock(&fsp_con_lock);
 		set_console(&fsp_con_ops);
 	}
 #endif

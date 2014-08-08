@@ -515,4 +515,12 @@ void xscom_init(void)
 void xscom_used_by_console(void)
 {
 	xscom_lock.in_con_path = true;
+
+	/*
+	 * Some other processor might hold it without having
+	 * disabled the console locally so let's make sure that
+	 * is over by taking/releasing the lock ourselves
+	 */
+	lock(&xscom_lock);
+	unlock(&xscom_lock);
 }

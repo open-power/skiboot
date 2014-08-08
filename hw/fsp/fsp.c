@@ -2213,4 +2213,12 @@ int fsp_fetch_data_queue(uint8_t flags, uint16_t id, uint32_t sub_id,
 void fsp_used_by_console(void)
 {
 	fsp_lock.in_con_path = true;
+
+	/*
+	 * Some other processor might hold it without having
+	 * disabled the console locally so let's make sure that
+	 * is over by taking/releasing the lock ourselves
+	 */
+	lock(&fsp_lock);
+	unlock(&fsp_lock);
 }

@@ -495,6 +495,9 @@ void lpc_used_by_console(void)
 
 	xscom_used_by_console();
 
-	for_each_chip(chip)
+	for_each_chip(chip) {
 		chip->lpc_lock.in_con_path = true;
+		lock(&chip->lpc_lock);
+		unlock(&chip->lpc_lock);
+	}
 }
