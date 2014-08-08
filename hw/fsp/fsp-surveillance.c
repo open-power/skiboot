@@ -52,12 +52,14 @@ static void fsp_surv_ack(struct fsp_msg *msg)
 	val = (msg->resp->word1 >> 8) & 0xff;
 	if (val == 0) {
 		/* reset the pending flag */
-		printf("SURV: Received heartbeat acknowledge from FSP\n");
+		prlog(PR_DEBUG,
+		      "SURV: Received heartbeat acknowledge from FSP\n");
 		lock(&surv_lock);
 		fsp_surv_ack_pending = false;
 		unlock(&surv_lock);
 	} else
-		prerror("SURV: Heartbeat Acknowledgment error from FSP\n");
+		prlog(PR_ERR,
+		      "SURV: Heartbeat Acknowledgment error from FSP\n");
 
 	fsp_freemsg(msg);
 }
@@ -108,8 +110,8 @@ static void fsp_surv_hbeat(void)
 	if (surv_timer == 0 ||
 	    (tb_compare(now, surv_timer) == TB_AAFTERB) ||
 	    (tb_compare(now, surv_timer) == TB_AEQUALB)) {
-		printf("SURV: [%16llx] Sending the hearbeat command to FSP\n",
-		       now);
+		prlog(PR_DEBUG,
+		      "SURV: Sending the hearbeat command to FSP\n");
 		fsp_queue_msg(fsp_mkmsg(FSP_CMD_SURV_HBEAT, 1, 120),
 			      fsp_surv_ack);
 
