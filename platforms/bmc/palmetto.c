@@ -22,14 +22,19 @@
 #include <chip.h>
 #include <xscom.h>
 #include <ast.h>
+#include <ipmi.h>
 
 #include "bmc.h"
 
 /* UART1 config */
 #define UART_IO_BASE	0x3f8
 #define UART_IO_COUNT	8
-
 #define UART_LPC_IRQ	4
+
+/* BT config */
+#define BT_IO_BASE	0xe4
+#define BT_IO_COUNT	3
+#define BT_LPC_IRQ	10
 
 static void palmetto_ext_irq(unsigned int chip_id __unused)
 {
@@ -49,6 +54,28 @@ static void palmetto_init(void)
 	pnor_init();
 }
 
+static void palmetto_fixup_dt_bt(struct dt_node *lpc)
+{
+	struct dt_node *bt;
+	char namebuf[32];
+
+	/* First check if the BT interface is already there */
+	dt_for_each_child(lpc, bt) {
+		if (dt_node_is_compatible(bt, "bt"))
+			return;
+	}
+
+	sprintf(namebuf, "ipmi-bt@i%x", BT_IO_BASE);
+	bt = dt_new(lpc, namebuf);
+
+	dt_add_property_cells(bt, "reg",
+			      1, /* IO space */
+			      BT_IO_BASE, BT_IO_COUNT);
+	dt_add_property_strings(bt, "compatible", "ipmi-bt");
+
+	/* Mark it as reserved to avoid Linux trying to claim it */
+	dt_add_property_strings(bt, "status", "reserved");
+}
 
 static void palmetto_fixup_dt_uart(struct dt_node *lpc)
 {
@@ -118,6 +145,8 @@ static void palmetto_fixup_dt(void)
 	/* Fixup the UART, that might be missing from HB */
 	palmetto_fixup_dt_uart(primary_lpc);
 
+	palmetto_fixup_dt_bt(primary_lpc);
+
 	/* Force the dummy console for now */
 	force_dummy_console();
 }
@@ -173,6 +202,9 @@ static bool palmetto_probe(void)
 
 	/* Setup UART and use it as console with interrupts */
 	uart_init(true);
+
+	/* Setup IPMI */
+	ipmi_init();
 
 	return true;
 }
