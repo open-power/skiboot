@@ -37,6 +37,12 @@
 #define IPMI_READ_EVENT_MSG_BUFFER_CMD	0x35
 #define IPMI_GET_CHANNEL_INFO_CMD	0x42
 
+#define IPMI_NETFN_CHASSIS_REQUEST	0x00
+#define IPMI_NETFN_CHASSIS_RESPONSE	0x01
+#define   IPMI_SET_CHASSIS_PWR_DOWN_CMD 0x00
+#define   IPMI_SET_CHASSIS_PWR_UP_CMD   0x01
+#define   IPMI_SET_CHASSIS_PWR_CYCLE_CMD 0x02
+
 #define IPMI_NETFN_STORAGE_REQUEST	0x0a
 #define IPMI_NETFN_STORAGE_RESPONSE	0x0b
 #define   IPMI_GET_SEL_INFO_CMD		0x40
@@ -71,5 +77,8 @@ struct ipmi_msg {
 
 /* Initialise the IPMI interface */
 void ipmi_init(void);
+
+/* Change the power state of the P8 */
+int64_t ipmi_opal_chassis_request(uint64_t request);
 
 #endif

@@ -209,10 +209,29 @@ static bool palmetto_probe(void)
 	return true;
 }
 
+static int64_t palmetto_ipmi_power_down(uint64_t request __unused)
+{
+	/* Request is:
+	 *  0 = normal
+	 *  1 = immediate
+	 * When doing "shutdown -h now" from linux, we get a 0.
+	 * However, I believe at that point we are ready to shut down,
+	 * so unconditionally tell the BMC to immediately power us down.
+	 */
+	return ipmi_opal_chassis_request(IPMI_SET_CHASSIS_PWR_DOWN_CMD);
+}
+
+static int64_t palmetto_ipmi_reboot(void)
+{
+	return ipmi_opal_chassis_request(IPMI_SET_CHASSIS_PWR_CYCLE_CMD);
+}
+
 DECLARE_PLATFORM(palmetto) = {
 	.name			= "Palmetto",
 	.probe			= palmetto_probe,
 	.init			= palmetto_init,
 	.external_irq		= palmetto_ext_irq,
+	.cec_power_down         = palmetto_ipmi_power_down,
+	.cec_reboot             = palmetto_ipmi_reboot,
 };
 
