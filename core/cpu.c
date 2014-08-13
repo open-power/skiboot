@@ -62,6 +62,19 @@ void __attrconst *cpu_stack_bottom(unsigned int pir)
 	return (void *)&cpu_stacks[pir] + sizeof(struct cpu_thread);
 }
 
+void cpu_relax(void)
+{
+	/* Relax a bit to give sibling threads some breathing space */
+	smt_low();
+	smt_very_low();
+	asm volatile("nop; nop; nop\n");
+	asm volatile("nop; nop; nop\n");
+	asm volatile("nop; nop; nop\n");
+	asm volatile("nop; nop; nop\n");
+	asm volatile("nop; nop; nop\n");
+	smt_medium();
+}
+
 void __attrconst *cpu_stack_top(unsigned int pir)
 {
 	/* This is the top of the MC stack which is above the normal
@@ -121,8 +134,7 @@ void cpu_wait_job(struct cpu_job *job, bool free_it)
 		/* Handle pollers if master CPU */
 		if (this_cpu() == boot_cpu)
 			opal_run_pollers();
-		else
-			smt_low();
+		cpu_relax();
 		lwsync();
 	}
 	lwsync();

@@ -16,13 +16,17 @@
 
 #include <timebase.h>
 #include <opal.h>
+#include <cpu.h>
 
 void time_wait(unsigned long duration)
 {
 	unsigned long end = mftb() + duration;
 
-	while(tb_compare(mftb(), end) != TB_AAFTERB)
+	while(tb_compare(mftb(), end) != TB_AAFTERB) {
 		opal_run_pollers();
+		cpu_relax();
+        }
+
 }
 
 void time_wait_nopoll(unsigned long duration)
@@ -30,7 +34,7 @@ void time_wait_nopoll(unsigned long duration)
 	unsigned long end = mftb() + duration;
 
 	while(tb_compare(mftb(), end) != TB_AAFTERB)
-		;
+		cpu_relax();
 }
 
 void time_wait_ms(unsigned long ms)

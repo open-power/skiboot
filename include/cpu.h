@@ -78,6 +78,8 @@ extern unsigned int cpu_thread_count;
 /* Boot CPU. */
 extern struct cpu_thread *boot_cpu;
 
+extern void cpu_relax(void);
+
 /* Initialize CPUs */
 void pre_init_boot_cpu(void);
 void init_boot_cpu(void);
