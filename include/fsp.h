@@ -761,4 +761,7 @@ extern void fsp_set_led_state(struct fsp_msg *msg);
 /* EPOW */
 extern void fsp_epow_init(void);
 
+/* DPO */
+extern void fsp_dpo_init(void);
+
 #endif /* __FSP_H */

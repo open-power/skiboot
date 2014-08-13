@@ -146,6 +146,10 @@ void ibm_fsp_init(void)
 	op_display(OP_LOG, OP_MOD_INIT, 0x000A);
 	fsp_epow_init();
 
+	/* EPOW */
+	op_display(OP_LOG, OP_MOD_INIT, 0x000B);
+	fsp_dpo_init();
+
 	/* Setup console */
 	if (fsp_present())
 		fsp_console_add_nodes();

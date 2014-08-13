@@ -100,9 +100,6 @@ static u64 fsp_hir_timeout;
 #define FSP_CRITICAL_OP_TIMEOUT		128
 #define FSP_DRCR_CLEAR_TIMEOUT		128
 
-/* DPO pending state */
-static bool fsp_dpo_pending = false;
-
 /*
  * We keep track on last logged values for some things to print only on
  * value changes, but also to releive pressure on the tracer which
@@ -1123,7 +1120,6 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
 	u32 cmd = 0;
 	u32 rsp_data = 0;
-	int rc;
 
 	switch(cmd_sub_mod) {
 	case FSP_CMD_CONTINUE_IPL:
@@ -1183,49 +1179,6 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 			fsp_notify_rr_state(FSP_RELOAD_COMPLETE);
 			fsp_repost_queued_msgs_post_rr();
 		}
-		return true;
-	case FSP_CMD_INIT_DPO:
-		printf("FSP: SP initiated DPO (Delayed Power Off)\n");
-		cmd = FSP_RSP_INIT_DPO;
-
-		/* DPO message does not have the correct signatures */
-		if ((msg->data.bytes[0] != 0xf4) || (msg->data.bytes[1] != 0x20)) {
-			printf("DPO: Message signatures did not match\n");
-			cmd |= FSP_STATUS_INVALID_CMD;
-			fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
-			return false;
-		}
-
-		/* Sapphire is already in "DPO pending" state */
-		if (fsp_dpo_pending) {
-			printf("DPO: Sapphire is already in DPO pending state\n");
-			cmd |= FSP_STATUS_INVALID_DPOSTATE;
-			fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
-			return false;
-		}
-
-		/* Inform the host about DPO */
-		rc = opal_queue_msg(OPAL_MSG_DPO, NULL, NULL);
-		if (rc) {
-			printf("DPO: OPAL message queuing failed\n");
-			return false;
-		}
-
-		/* Acknowledge the FSP on DPO */
-		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
-		fsp_dpo_pending = true;
-
-		/*
-		 * Sapphire is now in DPO pending state. After first detecting DPO
-		 * condition from Sapphire, the host will have 45 minutes to prepare
-		 * the system for shutdown. The host must take all necessary actions
-		 * required in that regard and at the end shutdown itself. The host
-		 * shutdown sequence eventually will make the call OPAL_CEC_POWER_DOWN
-		 * which in turn ask the FSP to shutdown the CEC. If the FSP does not
-		 * receive the cec power down command from Sapphire within 45 minutes,
-		 * it will assume that the host and the Sapphire has processed the DPO
-		 * sequence successfully and hence force power off the system.
-		 */
 		return true;
 	case FSP_CMD_CLOSE_HMC_INTF:
 		/* Close the HMC interface */
