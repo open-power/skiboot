@@ -687,8 +687,7 @@ void fsp_rtc_init(void)
 
 	np = dt_new(opal_node, "rtc");
 	dt_add_property_strings(np, "compatible", "ibm,opal-rtc");
-	dt_add_property(np, "tpo-date", NULL, 0);
-	dt_add_property(np, "tpo-time", NULL, 0);
+	dt_add_property(np, "has-tpo", NULL, 0);
 
 	/* Register for the reset/reload event */
 	fsp_register_client(&fsp_rtc_client_rr, FSP_MCLASS_RR_EVENT);
