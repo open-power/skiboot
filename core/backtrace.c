@@ -19,11 +19,17 @@
 #include <processor.h>
 #include <cpu.h>
 
-void backtrace(void)
+/* Upto 10 frames each of length 40 bytes + header = 430 bytes */
+#define STACK_BUF_SZ		440
+
+/* Dumps backtrace to buffer */
+void __backtrace(char *bt_buf, int bt_buf_len)
 {
 	unsigned int pir = mfspr(SPR_PIR);
 	unsigned long *sp;
 	unsigned long *bottom, *top;
+	char *buf;
+	int len = 0;
 
 	/* Check if there's a __builtin_something instead */
 	asm("mr %0,1" : "=r" (sp));
@@ -31,11 +37,25 @@ void backtrace(void)
 	bottom = cpu_stack_bottom(pir);
 	top = cpu_stack_top(pir);
 
+	if (!bt_buf || !bt_buf_len)
+		return;
+
+	buf = bt_buf;
+	len += snprintf(buf, bt_buf_len, "CPU %08x Backtrace:\n", pir);
 	/* XXX Handle SMP */
-	fprintf(stderr, "CPU %08x Backtrace:\n", pir);
-	while(sp > bottom && sp < top) {
-		prlog(PR_EMERG, " S: %016lx R: %016lx\n",
-			(unsigned long)sp, sp[2]);
+	while (sp > bottom && sp < top) {
+		len += snprintf(buf + len, bt_buf_len - len, " S: %016lx "
+				"R: %016lx\n", (unsigned long)sp, sp[2]);
 		sp = (unsigned long *)sp[0];
 	}
+}
+
+void backtrace(void)
+{
+	char bt_buf[STACK_BUF_SZ];
+
+	memset(bt_buf, 0, STACK_BUF_SZ);
+	__backtrace(bt_buf, STACK_BUF_SZ);
+
+	fputs(bt_buf, stderr);
 }

@@ -121,6 +121,7 @@ extern void *boot_stack_top;
 
 /* For use by debug code */
 extern void backtrace(void);
+extern void __backtrace(char *bt_buf, int bt_buf_len);
 
 /* Convert a 4-bit number to a hex char */
 extern char tohex(uint8_t nibble);
