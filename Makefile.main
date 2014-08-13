@@ -128,8 +128,10 @@ $(SUBDIRS):
 # Set V=1 if you want to see everything.
 include $(SRC)/Makefile.rules
 
+GIT_SHA ?= $(shell cd $(SRC); GIT_DIR=$(SRC)/.git git describe --always --dirty 2> /dev/null)
+
 gitid.c:
-	@echo "const char gitid[] = \"`cd $(SRC); git describe --always --dirty`\";" > $@
+	@echo "const char gitid[] = \"$(GIT_SHA)\";" > $@
 
 include $(shell find $(SRC)/* -name Makefile.check)
 
