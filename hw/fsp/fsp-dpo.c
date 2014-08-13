@@ -21,12 +21,33 @@
 #include <fsp.h>
 #include <device.h>
 #include <stdio.h>
+#include <timebase.h>
 #include <opal.h>
 #include <opal-msg.h>
 
 #define PREFIX "FSPDPO: "
 
+#define DPO_TIMEOUT 2700 /* 45 minutes in seconds */
 static bool fsp_dpo_pending = false;
+unsigned long fsp_dpo_init_tb = 0;
+
+/*
+ * OPAL DPO interface
+ *
+ * Returns zero if DPO is not active, positive value indicating number
+ * of seconds remaining for a forced system shutdown. This will enable
+ * the host to schedule for shutdown voluntarily before timeout occurs.
+ */
+static int64_t fsp_opal_get_dpo_status(int64_t *dpo_timeout)
+{
+	int64_t timeout = 0;
+
+	if (fsp_dpo_init_tb && fsp_dpo_pending)
+		timeout = DPO_TIMEOUT - tb_to_secs(mftb() - fsp_dpo_init_tb);
+
+	*dpo_timeout = timeout;
+	return OPAL_SUCCESS;
+}
 
 /* Process FSP DPO init message */
 static void fsp_process_dpo(struct fsp_msg *msg)
@@ -49,6 +70,9 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
 		return;
 	}
+
+	/* Record the DPO init time */
+	fsp_dpo_init_tb = mftb();
 
 	/* Inform the host about DPO */
 	rc = opal_queue_msg(OPAL_MSG_DPO, NULL, NULL);
@@ -90,5 +114,6 @@ static struct fsp_client fsp_dpo_client = {
 void fsp_dpo_init(void)
 {
 	fsp_register_client(&fsp_dpo_client, FSP_MCLASS_SERVICE);
+	opal_register(OPAL_GET_DPO_STATUS, fsp_opal_get_dpo_status, 1);
 	printf(PREFIX "FSP DPO support initialized\n");
 }

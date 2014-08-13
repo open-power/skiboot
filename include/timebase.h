@@ -57,6 +57,11 @@ static inline unsigned long secs_to_tb(unsigned long secs)
 	return secs * tb_hz;
 }
 
+static inline unsigned long tb_to_secs(unsigned long tb)
+{
+	return tb / tb_hz;
+}
+
 static inline unsigned long msecs_to_tb(unsigned long msecs)
 {
 	return msecs * (tb_hz / 1000);

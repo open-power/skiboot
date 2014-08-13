@@ -140,7 +140,8 @@
 #define OPAL_UNREGISTER_DUMP_REGION		102
 #define OPAL_WRITE_TPO				103
 #define OPAL_READ_TPO				104
-#define OPAL_LAST				104
+#define OPAL_GET_DPO_STATUS			105
+#define OPAL_LAST				105
 
 #ifndef __ASSEMBLY__
 
