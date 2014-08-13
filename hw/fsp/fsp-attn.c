@@ -47,11 +47,10 @@
  */
 #define TI_SRC_LEN	0x48
 
-/* Generate src from assert function's address
- * First byte in the SRC used for source opal src_type
- * Next 3 bytes used for assert function call address
+/* Generate hex word from assert function's address
+ * 4 bytes used for assert function call address
  */
-#define generate_attn_src(addr)	(OPAL_SRC_TYPE_ERROR << 24 | (addr & 0xffffff))
+#define generate_hex_word(addr)	(addr & 0xffffffff)
 
 static struct ti_attn *ti_attn;
 
@@ -83,6 +82,7 @@ static void init_sp_attn_area(void)
 	/* #HEX words */
 	ti_attn->hex_cnt = TI_HEX_WORDS;
 	ti_attn->src_len = CPU_TO_BE16(TI_SRC_LEN);
+	sprintf(ti_attn->src, "%X", generate_src_from_comp(OPAL_RC_ATTN));
 }
 
 /* Updates src in sp attention area
@@ -92,8 +92,8 @@ void update_sp_attn_area(const char *msg)
 	if (!fsp_present())
 		return;
 
-	sprintf(ti_attn->src, "%X",
-			(uint32_t)generate_attn_src((uint64_t)__builtin_return_address(0)));
+	ti_attn->src_word[0] =
+			(uint32_t)generate_hex_word((uint64_t)__builtin_return_address(0));
 
 	ti_attn->msg_len = strlen(msg);
 	sprintf(ti_attn->msg, "%s", msg);

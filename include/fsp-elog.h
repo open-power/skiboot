@@ -355,6 +355,10 @@ severity, subtype, callout_func) struct opal_err_info err_##reason =	\
 .subsystem = subsys, .sev = severity, .event_subtype = subtype,		\
 .call_out = callout_func }
 
+/* Generate src from opal reason code (src_comp) */
+#define generate_src_from_comp(src_comp)  (OPAL_SRC_TYPE_ERROR << 24 | \
+				OPAL_FAILING_SUBSYSTEM << 16 | src_comp)
+
 #define e_info(reason_code) err_##reason_code
 
 struct errorlog *opal_elog_create(struct opal_err_info *e_info);
