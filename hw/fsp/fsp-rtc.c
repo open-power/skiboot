@@ -19,7 +19,9 @@
 #include <lock.h>
 #include <timebase.h>
 #include <time.h>
+#include <opal-msg.h>
 #include <fsp-elog.h>
+#include <device.h>
 
 //#define DBG(fmt...)	printf("RTC: " fmt)
 #define DBG(fmt...)	do { } while(0)
@@ -73,6 +75,12 @@ static struct {
 	unsigned long	tb;
 	bool		dirty;
 } rtc_tod_cache;
+
+struct opal_tpo_data {
+	uint64_t tpo_async_token;
+	uint32_t *year_month_day;
+	uint32_t *hour_min;
+};
 
 /* Timebase value when we last initiated a RTC read request */
 static unsigned long read_req_tb;
@@ -240,24 +248,70 @@ static void tm_to_datetime(struct tm *tm, uint32_t *y_m_d, uint64_t *h_m_s_m)
 	*h_m_s_m = h_m_s << 32;
 }
 
+static void fsp_tpo_req_complete(struct fsp_msg *read_resp)
+{
+	 struct opal_tpo_data *attr = read_resp->user_data;
+	int val;
+	int rc;
+
+	val = (read_resp->resp->word1 >> 8) & 0xff;
+	switch (val) {
+	case FSP_STATUS_TOD_RESET:
+		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
+			"RTC TPO in invalid state\n");
+		rc = OPAL_INTERNAL_ERROR;
+		break;
+
+	case FSP_STATUS_TOD_PERMANENT_ERROR:
+		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
+			"RTC TPO in permanent error state\n");
+		rc = OPAL_INTERNAL_ERROR;
+		break;
+	case FSP_STATUS_INVALID_DATA:
+		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
+			"RTC TPO in permanent error state\n");
+		rc = OPAL_PARAMETER;
+		break;
+	case FSP_STATUS_SUCCESS:
+		/* Save the read TPO value in our cache */
+		if (attr->year_month_day)
+			*(attr->year_month_day) =
+				read_resp->resp->data.words[0];
+		if (attr->hour_min)
+			*(attr->hour_min) = read_resp->resp->data.words[1];
+		rc = OPAL_SUCCESS;
+		break;
+
+	default:
+		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
+			"TPO read failed: %d\n", val);
+		rc = OPAL_INTERNAL_ERROR;
+		break;
+	}
+	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+		       attr->tpo_async_token, rc);
+	free(attr);
+	fsp_freemsg(read_resp);
+}
+
 static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 {
 	int val = (read_resp->word1 >> 8) & 0xff;
 
 	switch (val) {
-	case 0xa9:
+	case FSP_STATUS_TOD_RESET:
 		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
 				"RTC TOD in invalid state\n");
 		rtc_tod_state = RTC_TOD_INVALID;
 		break;
 
-	case 0xaf:
+	case FSP_STATUS_TOD_PERMANENT_ERROR:
 		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
 			"RTC TOD in permanent error state\n");
 		rtc_tod_state = RTC_TOD_PERMANENT_ERROR;
 		break;
 
-	case 0:
+	case FSP_STATUS_SUCCESS:
 		/* Save the read RTC value in our cache */
 		rtc_to_tm(read_resp, &rtc_tod_cache.tm);
 		rtc_tod_cache.tb = mftb();
@@ -492,6 +546,83 @@ static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
 	return rc;
 }
 
+/* Set timed power on values to fsp */
+static int64_t fsp_opal_tpo_write(uint64_t async_token, uint32_t y_m_d,
+			uint32_t hr_min)
+{
+	static struct opal_tpo_data *attr;
+	struct fsp_msg *msg;
+
+	if (!fsp_present())
+		return OPAL_HARDWARE;
+
+	attr = zalloc(sizeof(struct opal_tpo_data));
+	if (!attr)
+		return OPAL_NO_MEM;
+
+	/* Create a request and send it.*/
+	attr->tpo_async_token = async_token;
+
+	DBG("Sending TPO write request...\n");
+
+	msg = fsp_mkmsg(FSP_CMD_TPO_WRITE, 2, y_m_d, hr_min);
+	if (!msg) {
+		prerror("TPO: Failed to create message for WRITE to FSP\n");
+		free(attr);
+		return OPAL_INTERNAL_ERROR;
+	}
+	msg->user_data = attr;
+	if (fsp_queue_msg(msg, fsp_tpo_req_complete)) {
+		free(attr);
+		fsp_freemsg(msg);
+		return OPAL_INTERNAL_ERROR;
+	}
+	return OPAL_ASYNC_COMPLETION;
+}
+
+/* Read Timed power on (TPO) from FSP */
+static int64_t fsp_opal_tpo_read(uint64_t async_token, uint32_t *y_m_d,
+			uint32_t *hr_min)
+{
+	static struct opal_tpo_data *attr;
+	struct fsp_msg *msg;
+	int64_t rc;
+
+	if (!fsp_present())
+		return OPAL_HARDWARE;
+
+	if (!y_m_d || !hr_min)
+		return OPAL_PARAMETER;
+
+	attr = zalloc(sizeof(*attr));
+	if (!attr)
+		return OPAL_NO_MEM;
+
+	/* Send read requet to FSP */
+	attr->tpo_async_token = async_token;
+	attr->year_month_day = y_m_d;
+	attr->hour_min = hr_min;
+
+	DBG("Sending new TPO read request\n");
+	msg = fsp_mkmsg(FSP_CMD_TPO_READ, 0);
+	if (!msg) {
+		log_simple_error(&e_info(OPAL_RC_RTC_READ),
+			"TPO: failed to allocate read message\n");
+		free(attr);
+		return OPAL_INTERNAL_ERROR;
+	}
+	msg->user_data = attr;
+	rc = fsp_queue_msg(msg, fsp_tpo_req_complete);
+	if (rc) {
+		free(attr);
+		fsp_freemsg(msg);
+		log_simple_error(&e_info(OPAL_RC_RTC_READ),
+			"TPO: failed to queue read message: %lld\n", rc);
+		return OPAL_INTERNAL_ERROR;
+	}
+	return OPAL_ASYNC_COMPLETION;
+}
+
 static void rtc_flush_cached_tod(void)
 {
 	struct fsp_msg *msg;
@@ -541,6 +672,7 @@ static struct fsp_client fsp_rtc_client_rr = {
 void fsp_rtc_init(void)
 {
 	struct fsp_msg msg, resp;
+	struct dt_node *np;
 	int rc;
 
 	if (!fsp_present()) {
@@ -550,6 +682,13 @@ void fsp_rtc_init(void)
 
 	opal_register(OPAL_RTC_READ, fsp_opal_rtc_read, 2);
 	opal_register(OPAL_RTC_WRITE, fsp_opal_rtc_write, 2);
+	opal_register(OPAL_WRITE_TPO, fsp_opal_tpo_write, 3);
+	opal_register(OPAL_READ_TPO,  fsp_opal_tpo_read, 3);
+
+	np = dt_new(opal_node, "rtc");
+	dt_add_property_strings(np, "compatible", "ibm,opal-rtc");
+	dt_add_property(np, "tpo-date", NULL, 0);
+	dt_add_property(np, "tpo-time", NULL, 0);
 
 	/* Register for the reset/reload event */
 	fsp_register_client(&fsp_rtc_client_rr, FSP_MCLASS_RR_EVENT);

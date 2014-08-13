@@ -138,7 +138,9 @@
 #define OPAL_SLW_SET_REG			100
 #define OPAL_REGISTER_DUMP_REGION		101
 #define OPAL_UNREGISTER_DUMP_REGION		102
-#define OPAL_LAST				102
+#define OPAL_WRITE_TPO				103
+#define OPAL_READ_TPO				104
+#define OPAL_LAST				104
 
 #ifndef __ASSEMBLY__
 

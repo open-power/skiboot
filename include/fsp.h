@@ -69,6 +69,8 @@
 #define FSP_STAUS_INVALID_HMC_ID	0x51
 #define FSP_STATUS_SPCN_ERROR		0xA8	/* SPCN error */
 #define FSP_STATUS_INVALID_LC		0xC0	/* Invalid location code */
+#define FSP_STATUS_TOD_RESET		0xA9	/* TOD reset due to invalid state at POR */
+#define FSP_STATUS_TOD_PERMANENT_ERROR	0xAF	/* Permanent error in TOD */
 
 /*
  * FSP registers
@@ -361,6 +363,8 @@
 #define FSP_CMD_STATUS_REQ	0x1ce4800 /* HV->FSP: Request normal panel status */
 #define FSP_CMD_STATUS_EX1_REQ	0x1ce4802 /* HV->FSP: Request extended 1 panel status */
 #define FSP_CMD_STATUS_EX2_REQ	0x1ce4803 /* HV->FSP: Request extended 2 panel status */
+#define FSP_CMD_TPO_WRITE	0x1ce4301 /* HV->FSP */
+#define FSP_CMD_TPO_READ	0x1ce4201 /* FSP->HV */
 
 /*
  * Class 0xD2
