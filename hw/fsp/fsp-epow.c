@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /*
- * Handle FSP EPOW (Environmental and Power Warning) events notification
+ * Handle FSP Environmental and Power Warning (EPOW) events notification
  */
 #include <skiboot.h>
 #include <console.h>
@@ -27,7 +27,7 @@
 
 #include "fsp-epow.h"
 
-#define PREFIX "EPOW: "
+#define PREFIX "FSPEPOW: "
 
 /*
  * System EPOW status
