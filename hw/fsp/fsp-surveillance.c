@@ -78,8 +78,7 @@ static void fsp_surv_check_timeout(void)
 		 * the FSP is dead, pending a R/R.
 		 */
 		log_simple_error(&e_info(OPAL_RC_SURVE_ACK),
-			"SURV: [%16llx] Surv ACK timed out; initiating R/R\n",
-			now);
+			"SURV: Surv ACK timed out; initiating R/R\n");
 
 		/* Reset the pending trigger too */
 		fsp_surv_ack_pending = false;
