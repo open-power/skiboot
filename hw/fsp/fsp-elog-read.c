@@ -270,6 +270,7 @@ static int64_t fsp_opal_elog_info(uint64_t *opal_elog_id,
 static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 				  uint64_t opal_elog_id)
 {
+	int size = opal_elog_size;
 	struct fsp_log_entry *log_data;
 
 
@@ -288,14 +289,18 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 
 	log_data = list_top(&elog_read_pending, struct fsp_log_entry, link);
 
-	/* Check log ID and log size are same and then read log from buffer */
-	if ((opal_elog_id != log_data->log_id) &&
-				(opal_elog_size != log_data->log_size)) {
+	/* Check log ID and then read log from buffer */
+	if (opal_elog_id != log_data->log_id) {
 		unlock(&elog_read_lock);
 		return OPAL_PARAMETER;
 	}
 
-	memcpy((void *)buffer, elog_read_buffer, opal_elog_size);
+	/* Do not copy more than actual log size */
+	if (opal_elog_size > log_data->log_size)
+		size = log_data->log_size;
+
+	memset((void *)buffer, 0, opal_elog_size);
+	memcpy((void *)buffer, elog_read_buffer, size);
 
 	/*
 	 * once log is read from linux move record from pending
