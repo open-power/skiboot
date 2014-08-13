@@ -18,7 +18,8 @@ extern void  update_sp_attn_area(const char *msg);
 #define assert(cond)						\
 	do { if (!(cond)) {					\
                      update_sp_attn_area(__FILE__		\
-				":" stringify(__LINE__));	\
+				":" stringify(__LINE__)		\
+				":" stringify(cond));		\
 		     assert_fail(__FILE__			\
 				 ":" stringify(__LINE__)	\
 				 ":" stringify(cond));	}	\

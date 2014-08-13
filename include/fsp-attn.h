@@ -57,6 +57,20 @@ struct sp_attn_area {
 #define SRC_LEN		32
 /* Max limit of user data size is 940 (due to attention area size) */
 #define TI_MSG_LEN	940
+
+/* Maximum sapphire version length (approx) */
+#define GITID_LEN	40
+/* Upto 10 frames each of length 40 bytes + header = 430 bytes */
+#define BT_FRAME_LEN 430
+/* File info length : Use the rest of the memory for file details */
+#define FILE_INFO_LEN	(TI_MSG_LEN - GITID_LEN - BT_FRAME_LEN)
+
+struct user_data {
+	char		gitid[GITID_LEN];
+	char		bt_buf[BT_FRAME_LEN];
+	char		file_info[FILE_INFO_LEN];
+} __packed;
+
 /* Terminate Immediate Attention */
 struct ti_attn {
 	/* Command valid */
@@ -84,8 +98,8 @@ struct ti_attn {
 	/* ASCII data */
 	char		src[SRC_LEN];
 	uint32_t	msg_len;
-	/* User data: Simple error message */
-	char		msg[TI_MSG_LEN];
+	/* User data: Debug details */
+	struct user_data msg;
 } __packed __align(ATTN_AREA_SZ);
 
 /* Hypervisor Service Routine Data area: Structure is not used as of today,

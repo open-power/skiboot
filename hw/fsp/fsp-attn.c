@@ -95,8 +95,12 @@ void update_sp_attn_area(const char *msg)
 	ti_attn->src_word[0] =
 			(uint32_t)generate_hex_word((uint64_t)__builtin_return_address(0));
 
-	ti_attn->msg_len = strlen(msg);
-	sprintf(ti_attn->msg, "%s", msg);
+	snprintf(ti_attn->msg.gitid, GITID_LEN, "%s", gitid);
+	__backtrace(ti_attn->msg.bt_buf, BT_FRAME_LEN);
+	snprintf(ti_attn->msg.file_info, FILE_INFO_LEN, "%s", msg);
+
+	ti_attn->msg_len = GITID_LEN + BT_FRAME_LEN +
+                                   strlen(ti_attn->msg.file_info);
 }
 
 /* Intialises SP attention area */
