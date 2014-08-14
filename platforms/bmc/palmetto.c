@@ -218,12 +218,12 @@ static int64_t palmetto_ipmi_power_down(uint64_t request __unused)
 	 * However, I believe at that point we are ready to shut down,
 	 * so unconditionally tell the BMC to immediately power us down.
 	 */
-	return ipmi_opal_chassis_request(IPMI_SET_CHASSIS_PWR_DOWN_CMD);
+	return ipmi_opal_chassis_control(IPMI_CHASSIS_PWR_DOWN);
 }
 
 static int64_t palmetto_ipmi_reboot(void)
 {
-	return ipmi_opal_chassis_request(IPMI_SET_CHASSIS_PWR_CYCLE_CMD);
+	return ipmi_opal_chassis_control(IPMI_CHASSIS_PWR_CYCLE);
 }
 
 DECLARE_PLATFORM(palmetto) = {

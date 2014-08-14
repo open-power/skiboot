@@ -37,21 +37,28 @@ out:
 	free(msg);
 }
 
-int64_t ipmi_opal_chassis_request(uint64_t request)
+static uint8_t chassis_control;
+int64_t ipmi_opal_chassis_control(uint64_t request)
 {
 	struct ipmi_msg *msg = zalloc(sizeof(struct ipmi_msg));
 
 	if (!msg)
 		return OPAL_HARDWARE;
 
-	msg->cmd = request;
+	if (request > IPMI_CHASSIS_SOFT_SHUTDOWN)
+		return OPAL_PARAMETER;
+
+	chassis_control = request;
+
+	msg->cmd = IPMI_CHASSIS_CONTROL_CMD;
 	msg->netfn = IPMI_NETFN_CHASSIS_REQUEST;
-	msg->req_data = NULL;
-	msg->req_data_len = 0;
+	msg->req_data = (uint8_t *)&chassis_control;
+	msg->req_data_len = sizeof(chassis_control);
 	msg->resp_data = NULL;
 	msg->resp_data_len = 0;
 
-	prlog(PR_INFO, "IPMI: sending chassis request %llu\n", request);
+	prlog(PR_INFO, "IPMI: sending chassis control request %llu\n",
+			request);
 
 	return bt_add_ipmi_msg_wait(msg);
 }
