@@ -13,9 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* Add any stub functions required for linking here. */
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 
+void prlog(int log_level __attribute__((unused)), char *fmt, ...)
+{
+        va_list ap;
+
+        va_start(ap, fmt);
+        vprintf(fmt, ap);
+        va_end(ap);
+}
+
+/* Add any stub functions required for linking here. */
 static void stub_function(void)
 {
 	abort();
