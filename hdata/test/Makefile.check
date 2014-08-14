@@ -10,7 +10,7 @@ hdata/test/stubs.o: hdata/test/stubs.c
 	$(HOSTCC) $(HOSTCFLAGS) -g -c -o $@ $<
 
 hdata/test/hdata_to_dt: hdata/test/hdata_to_dt.c hdata/test/stubs.o
-	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I hdata -I include -I . -I libfdt -o $@ $< hdata/test/stubs.o
+	$(HOSTCC) $(HOSTCFLAGS) -DTEST -O0 -g -I hdata -I include -I . -I libfdt -o $@ $< hdata/test/stubs.o
 
 clean: hdata-test-clean
 

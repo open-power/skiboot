@@ -55,6 +55,7 @@ __section(".cpuctrl.data") struct hsr_data_area cpu_ctl_hsr_area;
 __section(".cpuctrl.data") struct cpu_ctl_init_data cpu_ctl_init_data = {
 	.hdr = HDIF_SIMPLE_HDR(CPU_CTL_HDIF_SIG, 2, struct cpu_ctl_init_data),
 	.cpu_ctl = HDIF_IDATA_PTR(offsetof(struct cpu_ctl_init_data, cpu_ctl_lt), sizeof(struct cpu_ctl_legacy_table)),
+#if !defined(TEST)
 	.cpu_ctl_lt = {
 		.spat = {
 			.addr = CPU_TO_BE64((unsigned long)&(cpu_ctl_spat_area) + SKIBOOT_BASE),
@@ -73,6 +74,7 @@ __section(".cpuctrl.data") struct cpu_ctl_init_data cpu_ctl_init_data = {
 			.size = CPU_TO_BE64(sizeof(struct hsr_data_area)),
 		},
 	},
+#endif
 };
 
 /* Populate MDST table
@@ -133,6 +135,7 @@ __section(".spira.data") struct spira spira = {
 			.alloc_len	=
 				CPU_TO_BE32(sizeof(init_mdst_table)),
 		},
+#if !defined(TEST)
 		.cpu_ctrl = {
 			.addr		= CPU_TO_BE64((unsigned long)&cpu_ctl_init_data),
 			.alloc_cnt	= CPU_TO_BE16(1),
@@ -140,6 +143,7 @@ __section(".spira.data") struct spira spira = {
 			.alloc_len	=
 					CPU_TO_BE32(sizeof(cpu_ctl_init_data)),
 		},
+#endif
 	},
 };
 
