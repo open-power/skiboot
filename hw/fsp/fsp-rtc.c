@@ -119,7 +119,7 @@ static void tm_add(struct tm *in, struct tm *out, unsigned long secs)
 {
 	unsigned long year, month, mday, hour, minute, second, d;
 	static const unsigned long sec_in_400_years =
-		((3903ul * 365) + (97 * 366)) * 24 * 60 * 60;
+		((303ul * 365) + (97 * 366)) * 24 * 60 * 60;
 
 	assert(in);
 	assert(out);
