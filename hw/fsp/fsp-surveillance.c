@@ -134,8 +134,9 @@ static void fsp_surv_got_param(uint32_t param_id __unused, int err_len,
 {
 	if (err_len != 4) {
 		log_simple_error(&e_info(OPAL_RC_SURVE_STATUS),
-			"SURV: Error retreiving surveillance status: %d\n",
+		"SURV: Error (%d) retrieving surv status; initiating R/R\n",
 			err_len);
+		fsp_trigger_reset();
 		return;
 	}
 
