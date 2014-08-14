@@ -372,7 +372,7 @@ void bt_init(void (*ipmi_cmd_done)(struct ipmi_msg *))
 	const struct dt_property *prop;
 
 	/* We support only one */
-	n = dt_find_compatible_node(dt_root, NULL, "ibmi-bt");
+	n = dt_find_compatible_node(dt_root, NULL, "ipmi-bt");
 	if (!n)
 		return;
 
