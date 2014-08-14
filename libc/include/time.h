@@ -33,10 +33,12 @@ struct timespec {
 	long   tv_nsec;       /* nanoseconds */
 };
 
+struct tm *gmtime_r(const time_t *timep, struct tm *result);
+time_t mktime(struct tm *tm);
+
 /* Not implemented by libc but by hosting environment, however
  * this is where the prototype is expected
  */
 int nanosleep(const struct timespec *req, struct timespec *rem);
 
 #endif /* _TIME_H */
-

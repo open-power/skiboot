@@ -1,0 +1,22 @@
+# -*-Makefile-*-
+LIBC_TEST := libc/test/run-time
+
+check: $(LIBC_TEST:%=%-check)
+
+$(LIBC_TEST:%=%-check) : %-check: %
+	$(VALGRIND) $<
+
+$(LIBC_TEST) : % : %.c
+	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -I libc/include -o $@ $<
+
+$(LIBC_TEST): % : %.d
+
+libc/test/%.d: libc/test/%.c
+	$(HOSTCC) $(HOSTCFLAGS) -I include -I . -I libfdt -I libc/include -M $< > $@
+
+-include libc/test/*.d
+
+clean: libc-test-clean
+
+libc-test-clean:
+	$(RM) -f libc/test/*.[od] $(LIBC_TEST)
