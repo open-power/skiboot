@@ -555,7 +555,7 @@ void add_cpu_idle_state_properties(void)
 		nr_states = ARRAY_SIZE(power8_cpu_idle_states);
 
 		/* Check if hostboot say we can sleep */
-		if (!p || !dt_prop_find_string(p, "fastsleep")) {
+		if (!p || !dt_prop_find_string(p, "fast-sleep")) {
 			printf("SLW: Sleep not enabled by HB on this platform\n");
 			can_sleep = false;
 		}
