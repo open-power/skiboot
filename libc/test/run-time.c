@@ -37,7 +37,6 @@ int main(void)
 {
 	struct tm tm;
 	time_t t = 0;
-	uint32_t time;
 
 	TIME_TEST(1970, 0, 1, 0, 0, 0, 0);
 	TIME_TEST(1971, 0, 1, 0, 0, 0, 365*SECS_PER_DAY);
