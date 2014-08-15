@@ -19,6 +19,7 @@
 #include <lock.h>
 #include <timebase.h>
 #include <time.h>
+#include <time-utils.h>
 #include <opal-msg.h>
 #include <fsp-elog.h>
 #include <device.h>
@@ -97,155 +98,14 @@ DEFINE_LOG_ENTRY(OPAL_RC_RTC_READ, OPAL_PLATFORM_ERR_EVT, OPAL_RTC,
 			OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
 			OPAL_NA, NULL);
 
-static int days_in_month(int month, int year)
-{
-	static int month_days[] = {
-		31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
-	};
-
-	assert(1 <= month && month <= 12);
-
-	/* we may need to update this in the year 4000, pending a
-	 * decision on whether or not it's a leap year */
-	if (month == 2) {
-		bool is_leap = !(year % 400) || ((year % 100) && !(year % 4));
-		return is_leap ? 29 : 28;
-	}
-
-	return month_days[month - 1];
-}
-
 static void tm_add(struct tm *in, struct tm *out, unsigned long secs)
 {
-	unsigned long year, month, mday, hour, minute, second, d;
-	static const unsigned long sec_in_400_years =
-		((303ul * 365) + (97 * 366)) * 24 * 60 * 60;
-
 	assert(in);
 	assert(out);
 
-	second = in->tm_sec;
-	minute = in->tm_min;
-	hour = in->tm_hour;
-	mday = in->tm_mday;
-	month = in->tm_mon;
-	year = in->tm_year;
-
-	second += secs;
-
-	/* There are the same number of seconds in any 400-year block; this
-	 * limits the iterations in the loop below */
-	year += 400 * (second / sec_in_400_years);
-	second = second % sec_in_400_years;
-
-	if (second >= 60) {
-		minute += second / 60;
-		second = second % 60;
-	}
-
-	if (minute >= 60) {
-		hour += minute / 60;
-		minute = minute % 60;
-	}
-
-	if (hour >= 24) {
-		mday += hour / 24;
-		hour = hour % 24;
-	}
-
-	for (d = days_in_month(month, year); mday >= d;
-			d = days_in_month(month, year)) {
-		month++;
-		if (month > 12) {
-			month = 1;
-			year++;
-		}
-		mday -= d;
-	}
-
-	out->tm_year = year;
-	out->tm_mon = month;
-	out->tm_mday = mday;
-	out->tm_hour = hour;
-	out->tm_min = minute;
-	out->tm_sec = second;
-}
-
-/* MSB is byte 3, LSB is byte 0 */
-static unsigned int bcd_byte(uint32_t bcd, int byteno)
-{
-	bcd >>= byteno * 8;
-	return (bcd >> 4 & 0xf) * 10 + (bcd & 0xf);
-}
-
-static uint32_t int_to_bcd2(unsigned int x)
-{
-	return (((x / 10) << 4) & 0xf0) | (x % 10);
-}
-
-static uint32_t int_to_bcd4(unsigned int x)
-{
-	return int_to_bcd2(x / 100) << 8 | int_to_bcd2(x % 100);
-}
-
-static void rtc_to_tm(struct fsp_msg *msg, struct tm *tm)
-{
-	uint32_t x;
-
-	/* The FSP returns in BCD:
-	 *
-	 *  |      year       | month |   mday   |
-	 *  +------------------------------------+
-	 *  |  hour  | minute | secs  | reserved |
-	 *  +------------------------------------+
-	 *  |             microseconds           |
-	 */
-	x = msg->data.words[0];
-	tm->tm_year = bcd_byte(x, 3) * 100 + bcd_byte(x, 2);
-	tm->tm_mon = bcd_byte(x, 1);
-	tm->tm_mday = bcd_byte(x, 0);
-
-	x = msg->data.words[1];
-	tm->tm_hour = bcd_byte(x, 3);
-	tm->tm_min = bcd_byte(x, 2);
-	tm->tm_sec = bcd_byte(x, 1);
-}
-
-static void tm_to_datetime(struct tm *tm, uint32_t *y_m_d, uint64_t *h_m_s_m)
-{
-	uint64_t h_m_s;
-	/*
-	 * The OPAL API is defined as returned a u64 of a similar
-	 * format to the FSP message; the 32-bit date field is
-	 * in the format:
-	 *
-	 * |  year | year | month  | day |
-	 *
-	 */
-	*y_m_d = int_to_bcd4(tm->tm_year) << 16 |
-		 int_to_bcd2(tm->tm_mon) << 8 |
-		 int_to_bcd2(tm->tm_mday);
-
-	/*
-	 * ... and the 64-bit time field is in the format
-	 *
-	 *  |  hour  | minutes | secs  | millisec |
-	 *  | -------------------------------------
-	 *  |        millisec          | reserved |
-	 *
-	 * We simply ignore the microseconds/milliseconds for now
-	 * as I don't quite understand why the OPAL API defines that
-	 * it needs 6 digits for the milliseconds :-) I suspect the
-	 * doc got that wrong and it's supposed to be micro but
-	 * let's ignore it.
-	 *
-	 * Note that Linux doesn't use nor set the ms field anyway.
-	 */
-	h_m_s = int_to_bcd2(tm->tm_hour) << 24 |
-	        int_to_bcd2(tm->tm_min) << 16 |
-	        int_to_bcd2(tm->tm_sec) << 8;
-
-	*h_m_s_m = h_m_s << 32;
+	*out = *in;
+	out->tm_sec += secs;
+	mktime(out);
 }
 
 static void fsp_tpo_req_complete(struct fsp_msg *read_resp)
@@ -313,7 +173,8 @@ static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 
 	case FSP_STATUS_SUCCESS:
 		/* Save the read RTC value in our cache */
-		rtc_to_tm(read_resp, &rtc_tod_cache.tm);
+		datetime_to_tm(read_resp->data.words[0],
+			       (u64) read_resp->data.words[1] << 32, &rtc_tod_cache.tm);
 		rtc_tod_cache.tb = mftb();
 		rtc_tod_state = RTC_TOD_VALID;
 		break;
@@ -514,7 +375,7 @@ static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
 	w0 = year_month_day;
 	w1 = (hour_minute_second_millisecond >> 32) & 0xffffff00;
 	w2 = 0;
-	
+
 	rtc_write_msg = fsp_mkmsg(FSP_CMD_WRITE_TOD, 3, w0, w1, w2);
 	if (!rtc_write_msg) {
 		DBG(" -> allocation failed !\n");
@@ -524,7 +385,8 @@ static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
 	DBG(" -> req at %p\n", rtc_write_msg);
 
 	if (fsp_in_reset) {
-		rtc_to_tm(rtc_write_msg,  &rtc_tod_cache.tm);
+		datetime_to_tm(rtc_write_msg->data.words[0],
+			       (u64) rtc_write_msg->data.words[1] << 32,  &rtc_tod_cache.tm);
 		rtc_tod_cache.tb = mftb();
 		rtc_tod_cache.dirty = true;
 		fsp_freemsg(rtc_write_msg);
