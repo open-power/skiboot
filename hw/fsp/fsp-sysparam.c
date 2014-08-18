@@ -54,7 +54,8 @@ static struct sysparam_attr {
 	{"fw-license-policy",	SYS_PARAM_FW_LICENSE,	4,	_RW},
 	{"world-wide-port-num", SYS_PARAM_WWPN,		12,	_W},
 	{"default-boot-device",	SYS_PARAM_DEF_BOOT_DEV,	1,	_RW},
-	{"next-boot-device",	SYS_PARAM_NEXT_BOOT_DEV,1,	_RW}
+	{"next-boot-device",	SYS_PARAM_NEXT_BOOT_DEV,1,	_RW},
+	{"console-select",	SYS_PARAM_CONSOLE_SELECT,1,	_RW}
 #undef _R
 #undef _W
 #undef _RW

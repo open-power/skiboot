@@ -28,7 +28,7 @@
 #define SYS_PARAM_WWPN			0xf0000023
 #define SYS_PARAM_DEF_BOOT_DEV		0xf0000024
 #define SYS_PARAM_NEXT_BOOT_DEV		0xf0000025
-
+#define SYS_PARAM_CONSOLE_SELECT	0xf0000026
 
 
 /* Completion for a sysparam call. err_len is either a negative error

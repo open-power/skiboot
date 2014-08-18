@@ -25,6 +25,7 @@
 #include <opal.h>
 #include <timebase.h>
 #include <device.h>
+#include <fsp-sysparam.h>
 
 struct fsp_serbuf_hdr {
 	u16	partition_id;
@@ -863,40 +864,62 @@ void fsp_console_add_nodes(void)
 
 void fsp_console_select_stdout(void)
 {
-	struct dt_node *iplp;
-	u32 ipl_mode = 0;
+	bool use_serial = false;
 
 	if (!fsp_present())
 		return;
 
-	/*
-	 * We hijack the "os-ipl-mode" setting in iplparams to select
-	 * out output console. This is the "i5/OS partition mode boot"
-	 * setting in ASMI converted to an integer: 0=A, 1=B, ...
-	 */
-	iplp = dt_find_by_path(dt_root, "ipl-params/ipl-params");
-	if (iplp)
-		ipl_mode = dt_prop_get_u32_def(iplp, "os-ipl-mode", 0);
+	/* On P8, we have a sysparam ! yay ! */
+	if (proc_gen >= proc_gen_p8) {
+		int rc;
+		u8 param;
 
-	/*
-	 * Now, if ipl_mode is 1 or 2, we set the corresponding serial
-	 * port if it exists (ie, is opened) as the default console.
-	 *
-	 * In any other case, we set the default console to serial0
-	 * which is DVS or IPMI
-	 */
-	if (ipl_mode == 1 && fsp_serials[1].open) {
+		rc = fsp_get_sys_param(SYS_PARAM_CONSOLE_SELECT,
+				       &param, 1, NULL, NULL);
+		if (rc != 1)
+			prerror("FSPCON: Failed to get console"
+				" sysparam rc %d\n", rc);
+		else {
+			switch(param) {
+			case 0:
+				use_serial = false;
+				break;
+			case 1:
+				use_serial = true;
+				break;
+			default:
+				prerror("FSPCON: Unknown console"
+					" sysparam %d\n", param);
+			}
+		}
+	} else {
+		struct dt_node *iplp;
+		u32 ipl_mode = 0;
+
+		/*
+		 * We hijack the "os-ipl-mode" setting in iplparams to select
+		 * out output console. This is the "i5/OS partition mode boot"
+		 * setting in ASMI converted to an integer: 0=A, 1=B.
+		 */
+		iplp = dt_find_by_path(dt_root, "ipl-params/ipl-params");
+		if (iplp) {
+			ipl_mode = dt_prop_get_u32_def(iplp, "os-ipl-mode", 0);
+			use_serial = ipl_mode > 0;
+
+			/*
+			 * Now, if ipl_mode is > 0, we use serial port A else
+			 * we use IPMI/SOL/DVS
+			 */
+		}
+	}
+	if (fsp_serials[1].open && use_serial) {
 		dt_add_property_string(dt_chosen, "linux,stdout-path",
 				       "/ibm,opal/consoles/serial@1");
-		printf("FSPCON: default console 1\n");
-	} else if (ipl_mode == 2 && fsp_serials[2].open) {
-		dt_add_property_string(dt_chosen, "linux,stdout-path",
-				       "/ibm,opal/consoles/serial@2");
-		printf("FSPCON: default console 2\n");
+		printf("FSPCON: default console set to serial A\n");
 	} else {
 		dt_add_property_string(dt_chosen, "linux,stdout-path",
 				       "/ibm,opal/consoles/serial@0");
-		printf("FSPCON: default console 0\n");
+		printf("FSPCON: default console set to SOL/DVS\n");
 	}
 }
 
