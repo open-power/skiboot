@@ -641,7 +641,8 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 			 * That might be a race with return CPU during kexec
 			 * where we are still, wait a bit and try again
 			 */
-			for (i = 0; (i < 3) && (cpu->state == cpu_state_os); i++)
+			for (i = 0; (i < 1000) &&
+				     (cpu->state == cpu_state_os); i++)
 				time_wait_ms(1);
 			if (cpu->state == cpu_state_os) {
 				prerror("OPAL: CPU 0x%x not in OPAL !\n", cpu->pir);
