@@ -605,9 +605,31 @@ static int pci_configure_mps(struct phb *phb,
 	return 0;
 }
 
+static void pci_disable_completion_timeout(struct phb *phb, struct pci_device *pd)
+{
+	uint32_t ecap;
+	uint32_t val;
+
+	/* PCIE capability required */
+	if (!pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false))
+		return;
+
+	/* Check if it has capability to disable completion timeout */
+	ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+	pci_cfg_read32(phb, pd->bdfn, ecap + PCIECAP_EXP_DCAP2, &val);
+	if (!(val & PCICAP_EXP_DCAP2_CMPTOUT_DIS))
+		return;
+
+	/* Disable completion timeout without more check */
+	pci_cfg_read32(phb, pd->bdfn, ecap + PCICAP_EXP_DCTL2, &val);
+	val |= PCICAP_EXP_DCTL2_CMPTOUT_DIS;
+	pci_cfg_write32(phb, pd->bdfn, ecap + PCICAP_EXP_DCTL2, val);
+}
+
 void pci_device_init(struct phb *phb, struct pci_device *pd)
 {
 	pci_configure_mps(phb, pd, NULL);
+	pci_disable_completion_timeout(phb, pd);
 }
 
 /*
