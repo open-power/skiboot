@@ -436,8 +436,8 @@ static void phb3_device_init(struct phb *phb, struct pci_device *dev)
 		}
 	}
 
-	/* Reconfigure the MPS */
-	pci_configure_mps(phb, dev);
+	/* Common initialization for the device */
+	pci_device_init(phb, dev);
 
 	if (dev->dev_type == PCIE_TYPE_ROOT_PORT)
 		phb3_root_port_init(phb, dev, ecap, aercap);

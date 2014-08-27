@@ -578,9 +578,9 @@ static int pci_get_mps(struct phb *phb,
 	return 0;
 }
 
-static int __pci_configure_mps(struct phb *phb,
-			       struct pci_device *pd,
-			       void *userdata __unused)
+static int pci_configure_mps(struct phb *phb,
+			     struct pci_device *pd,
+			     void *userdata __unused)
 {
 	uint32_t ecap, mps = phb->mps;
 	uint16_t val;
@@ -605,9 +605,9 @@ static int __pci_configure_mps(struct phb *phb,
 	return 0;
 }
 
-int32_t pci_configure_mps(struct phb *phb, struct pci_device *pd)
+void pci_device_init(struct phb *phb, struct pci_device *pd)
 {
-	return __pci_configure_mps(phb, pd, NULL);
+	pci_configure_mps(phb, pd, NULL);
 }
 
 /*
@@ -718,7 +718,7 @@ static void pci_scan_phb(void *data)
 	/* Configre MPS (Max Payload Size) for PCIe domain */
 	pci_walk_dev(phb, pci_get_mps, &mps);
 	phb->mps = mps;
-	pci_walk_dev(phb, __pci_configure_mps, NULL);
+	pci_walk_dev(phb, pci_configure_mps, NULL);
 }
 
 int64_t pci_register_phb(struct phb *phb)
