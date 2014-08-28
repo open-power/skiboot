@@ -107,6 +107,15 @@ struct platform {
 	int		(*nvram_start_read)(void *dst, uint32_t src,
 					    uint32_t len);
 	int		(*nvram_write)(uint32_t dst, void *src, uint32_t len);
+
+	/*
+	 * OCC timeout. This return how long we should wait for the OCC
+	 * before timing out. This lets us use a high value on larger FSP
+	 * machines and cut it off completely on BML boots and OpenPower
+	 * machines without pre-existing OCC firmware. Returns a value in
+	 * seconds.
+	 */
+	uint32_t	(*occ_timeout)(void);
 };
 
 extern struct platform __platforms_start;

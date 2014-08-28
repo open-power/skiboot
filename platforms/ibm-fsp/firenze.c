@@ -232,6 +232,12 @@ static void firenze_setup_phb(struct phb *phb, unsigned int index)
 	lxvpd_process_slot_entries(phb, dt_root, hub_id, index);
 }
 
+static uint32_t ibm_fsp_occ_timeout(void)
+{
+	/* Use a fixed 60s value for now */
+	return 60;
+}
+
 DECLARE_PLATFORM(firenze) = {
 	.name			= "Firenze",
 	.probe			= firenze_probe,
@@ -244,4 +250,5 @@ DECLARE_PLATFORM(firenze) = {
 	.nvram_info		= fsp_nvram_info,
 	.nvram_start_read	= fsp_nvram_start_read,
 	.nvram_write		= fsp_nvram_write,
+	.occ_timeout		= ibm_fsp_occ_timeout,
 } ;

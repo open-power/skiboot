@@ -72,6 +72,10 @@ static bool wait_for_all_occ_init(void)
 	struct occ_pstate_table *occ_data;
 	int tries;
 	uint64_t start_time, end_time;
+	uint32_t timeout = 0;
+
+	if (platform.occ_timeout)
+		timeout = platform.occ_timeout();
 
 	start_time = mftb();
 	for_each_chip(chip) {
@@ -90,7 +94,7 @@ static bool wait_for_all_occ_init(void)
 		 * homer_base+size before passing memory to host services.
 		 * This ensures occ_data->valid == 0 before OCC load
 		 */
-		tries = 600; /* 60 secs */
+		tries = timeout * 10;
 		while((occ_data->valid != 1) && tries--) {
 			time_wait_ms(100);
 		}

@@ -46,7 +46,7 @@ static inline int64_t lpc_fw_read32(uint32_t *val, uint32_t addr)
 
 static inline int64_t lpc_fw_write32(uint32_t val, uint32_t addr)
 {
-	return lpc_write(OPAL_LPC_FW, addr, cpu_to_be64(val), 4);
+	return lpc_write(OPAL_LPC_FW, addr, val, 4);
 }
 
 
