@@ -147,7 +147,6 @@ void add_opal_node(void)
 	add_opal_firmware_node();
 	add_associativity_ref_point();
 	memcons_add_properties();
-	add_cpu_idle_state_properties();
 }
 
 void opal_update_pending_evt(uint64_t evt_mask, uint64_t evt_values)

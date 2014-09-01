@@ -192,7 +192,6 @@ extern void probe_p7ioc(void);
 extern void probe_phb3(void);
 extern void uart_init(bool enable_interrupt);
 extern void homer_init(void);
-extern void add_cpu_idle_state_properties(void);
 extern void occ_pstates_init(void);
 extern void slw_init(void);
 extern void occ_fsp_init(void);

@@ -566,6 +566,9 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	/* Initialize host services. */
 	hservices_init();
 
+	/* Add the /opal node to the device-tree */
+	add_opal_node();
+
 	/*
 	 * We probe the platform now. This means the platform probe gets
 	 * the opportunity to reserve additional areas of memory if needed.
@@ -576,9 +579,6 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 
 	/* Initialize the rest of the cpu thread structs */
 	init_all_cpus();
-
-	/* Add the /opal node to the device-tree */
-	add_opal_node();
 
 	/* Allocate our split trace buffers now. Depends add_opal_node() */
 	init_trace_buffers();
