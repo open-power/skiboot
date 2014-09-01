@@ -18,10 +18,12 @@
 #include <bt.h>
 #include <ipmi.h>
 #include <opal.h>
+#include <device.h>
 #include <time.h>
 #include <time-utils.h>
 
-static time_t time = 0;
+/* Sane default (2014/01/01) */
+static time_t time = 1388494800;
 
 static void ipmi_process_storage_resp(struct ipmi_msg *msg)
 {
@@ -111,6 +113,15 @@ static int64_t ipmi_opal_rtc_write(uint32_t year_month_day,
 	return OPAL_SUCCESS;
 }
 
+static void ipmi_rtc_init(void)
+{
+	struct dt_node *np = dt_new(opal_node, "rtc");
+	dt_add_property_strings(np, "compatible", "ibm,opal-rtc");
+
+	opal_register(OPAL_RTC_READ, ipmi_opal_rtc_read, 2);
+	opal_register(OPAL_RTC_WRITE, ipmi_opal_rtc_write, 2);
+}
+
 static void ipmi_cmd_done(struct ipmi_msg *msg)
 {
 	if (msg->cc != IPMI_CC_NO_ERROR) {
@@ -162,6 +173,6 @@ int64_t ipmi_opal_chassis_control(uint64_t request)
 void ipmi_init(void)
 {
 	bt_init(ipmi_cmd_done);
-	opal_register(OPAL_RTC_READ, ipmi_opal_rtc_read, 2);
-	opal_register(OPAL_RTC_WRITE, ipmi_opal_rtc_write, 2);
+
+	ipmi_rtc_init();
 }
