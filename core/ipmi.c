@@ -63,7 +63,7 @@ struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
 	return msg;
 }
 
-int ipmi_sync_queue_msg(struct ipmi_msg *msg)
+int ipmi_queue_msg(struct ipmi_msg *msg)
 {
 	/* Here we could choose which interface to use if we want to support
 	   multiple interfaces. */

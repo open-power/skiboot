@@ -24,14 +24,16 @@
 /* Sane default (2014/01/01) */
 static time_t time = 1388494800;
 
+static enum {idle, waiting, updated} time_status;
+
 static void get_sel_time_complete(struct ipmi_msg *msg)
 {
 	uint32_t result;
 
 	memcpy(&result, msg->data, 4);
 	time = le32_to_cpu(result);
+	time_status = updated;
 }
-
 
 static int64_t ipmi_get_sel_time(void)
 {
@@ -42,7 +44,7 @@ static int64_t ipmi_get_sel_time(void)
 	if (!msg)
 		return OPAL_HARDWARE;
 
-	return ipmi_sync_queue_msg(msg);
+	return ipmi_queue_msg(msg);
 }
 
 static int64_t ipmi_set_sel_time(uint32_t tv)
@@ -54,20 +56,37 @@ static int64_t ipmi_set_sel_time(uint32_t tv)
 	if (!msg)
 		return OPAL_HARDWARE;
 
-	return ipmi_sync_queue_msg(msg);
+	return ipmi_queue_msg(msg);
 }
 
+void bt_poll(void *data __unused);
 static int64_t ipmi_opal_rtc_read(uint32_t *y_m_d,
 				 uint64_t *h_m_s_m)
 {
 	struct tm tm;
+	int ret = 0;
 
-	if (ipmi_get_sel_time() < 0)
-		return OPAL_HARDWARE;
+	switch(time_status) {
+	case idle:
+		if (ipmi_get_sel_time() < 0)
+			return OPAL_HARDWARE;
+		time_status = waiting;
+		ret = OPAL_BUSY_EVENT;
+		break;
 
-	gmtime_r(&time, &tm);
-	tm_to_datetime(&tm, y_m_d, h_m_s_m);
-	return OPAL_SUCCESS;
+	case waiting:
+		ret = OPAL_BUSY_EVENT;
+		break;
+
+	case updated:
+		gmtime_r(&time, &tm);
+		tm_to_datetime(&tm, y_m_d, h_m_s_m);
+		time_status = idle;
+		ret = OPAL_SUCCESS;
+		break;
+	}
+
+	return ret;
 }
 
 static int64_t ipmi_opal_rtc_write(uint32_t year_month_day,

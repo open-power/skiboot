@@ -36,5 +36,5 @@ int64_t ipmi_opal_chassis_control(uint64_t request)
 	prlog(PR_INFO, "IPMI: sending chassis control request %llu\n",
 			request);
 
-	return ipmi_sync_queue_msg(msg);
+	return ipmi_queue_msg(msg);
 }

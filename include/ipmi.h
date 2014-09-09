@@ -129,7 +129,8 @@ struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
 			    void *user_data, void *req_data, size_t req_size,
 			    size_t resp_size);
 
-int ipmi_sync_queue_msg(struct ipmi_msg *msg);
+/* Add an ipmi message to the queue */
+int ipmi_queue_msg(struct ipmi_msg *msg);
 
 /* Process a completed message */
 void ipmi_cmd_done(struct ipmi_msg *msg);

@@ -116,8 +116,10 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
 	bt_msg->lun = 0;
+	lock(&bt.lock);
 	bt_msg->seq = ipmi_seq++;
 	list_add_tail(&bt.msgq, &bt_msg->link);
+	unlock(&bt.lock);
 
 	return 0;
 }
@@ -134,15 +136,19 @@ static bool bt_try_send_msg(void)
 	struct bt_msg *bt_msg;
 	struct ipmi_msg *ipmi_msg;
 
+	lock(&bt.lock);
 	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
-	if (!bt_msg)
+	if (!bt_msg) {
+		unlock(&bt.lock);
 		return true;
+	}
 
 	ipmi_msg = &bt_msg->ipmi_msg;
 
 	if (!bt_idle()) {
 		prerror("BT: Interface in an unexpected state, attempting reset\n");
 		bt_reset_interface();
+		unlock(&bt.lock);
 		return false;
 	}
 
@@ -167,6 +173,8 @@ static bool bt_try_send_msg(void)
 
 	bt_setmask(BT_CTRL_H2B_ATN, BT_CTRL);
 	bt_set_state(BT_STATE_RESP_WAIT);
+	unlock(&bt.lock);
+
 	return true;
 }
 
@@ -188,8 +196,11 @@ static bool bt_get_resp(void)
 	uint8_t cc = IPMI_CC_NO_ERROR;
 
 	/* Wait for BMC to signal response */
-	if (!(bt_inb(BT_CTRL) & BT_CTRL_B2H_ATN))
+	lock(&bt.lock);
+	if (!(bt_inb(BT_CTRL) & BT_CTRL_B2H_ATN)) {
+		unlock(&bt.lock);
 		return true;
+	}
 
 	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
 	if (!bt_msg) {
@@ -197,6 +208,7 @@ static bool bt_get_resp(void)
 		prlog(PR_INFO, "BT: Nobody cared about a response to an BT/IPMI message\n");
 		bt_flush_msg();
 		bt_set_state(BT_STATE_B_BUSY);
+		unlock(&bt.lock);
 		return false;
 	}
 
@@ -248,6 +260,7 @@ static bool bt_get_resp(void)
 	/* Make sure the other side is idle before we move to the idle state */
 	bt_set_state(BT_STATE_B_BUSY);
 	list_del(&bt_msg->link);
+	unlock(&bt.lock);
 
 	/*
 	 * Call the IPMI layer to finish processing the message.
@@ -258,7 +271,7 @@ static bool bt_get_resp(void)
 	return false;
 }
 
-static void bt_poll(void)
+static void bt_poll(void *data __unused)
 {
 	bool ret = true;
 
@@ -281,27 +294,6 @@ static void bt_poll(void)
 		}
 	}
 	while(!ret);
-}
-
-/*
- * Crank the state machine to wait for a specific state. Returns true on
- * success and false if there is a timeout.
- */
-static bool bt_wait_state(enum bt_states state)
-{
-	int timeout;
-	struct timespec ts;
-
-	ts.tv_sec = 0;
-	ts.tv_nsec = 100000;
-	for (timeout = POLL_TIMEOUT; timeout > 0; timeout--) {
-		if (bt.state == state)
-			return true;
-		bt_poll();
-		nanosleep(&ts, NULL);
-	}
-
-	return false;
 }
 
 /*
@@ -335,41 +327,6 @@ static void bt_free_ipmi_msg(struct ipmi_msg *ipmi_msg)
 }
 
 /*
- * Add an ipmi message to the queue and wait for a response.
- */
-static int bt_add_ipmi_msg_wait(struct ipmi_msg *msg)
-{
-	int ret = 0;
-
-	/*
-	 * TODO: We may need finer grained locks if we start using an
-	 * asynchronous operation model, but this should be fine for the moment.
-	 */
-	lock(&bt.lock);
-	if (!bt_wait_state(BT_STATE_IDLE)) {
-		ret = -1;
-		goto out;
-	}
-
-	if (bt_add_ipmi_msg(msg)) {
-		ret = -1;
-		goto out;
-	}
-
-	/* Make sure we get out of the idle state */
-	bt_poll();
-
-	if (!bt_wait_state(BT_STATE_IDLE)) {
-		ret = -1;
-		goto out;
-	}
-
-out:
-	unlock(&bt.lock);
-	return ret;
-}
-
-/*
  * Remove a message from the queue. The memory allocated for the ipmi message
  * will need to be freed by the caller with bt_free_ipmi_msg() as it will no
  * longer be in the queue of messages.
@@ -387,7 +344,7 @@ static int bt_del_ipmi_msg(struct ipmi_msg *ipmi_msg)
 struct ipmi_backend bt_backend = {
 	.alloc_msg = bt_alloc_ipmi_msg,
 	.free_msg = bt_free_ipmi_msg,
-	.queue_msg = bt_add_ipmi_msg_wait,
+	.queue_msg = bt_add_ipmi_msg,
 	.dequeue_msg = bt_del_ipmi_msg,
 };
 
@@ -421,6 +378,8 @@ void bt_init(void)
 	 */
 	bt_set_state(BT_STATE_B_BUSY);
 	list_head_init(&bt.msgq);
+
+	opal_add_poller(bt_poll, NULL);
 
 	ipmi_register_backend(&bt_backend);
 }
