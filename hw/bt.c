@@ -62,9 +62,9 @@ const char *state_str[] = {
 
 struct bt_msg {
 	struct list_node link;
-	struct ipmi_msg *ipmi_msg;
 	uint8_t seq;
 	uint8_t lun;
+	struct ipmi_msg ipmi_msg;
 };
 
 struct bt {
@@ -114,14 +114,10 @@ static inline void bt_set_state(enum bt_states next_state)
 
 static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 {
-	struct bt_msg *bt_msg = malloc(sizeof(struct bt_msg));
-
-	if (!bt_msg)
-		return -1;
+	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
 	bt_msg->lun = 0;
 	bt_msg->seq = ipmi_seq++;
-	bt_msg->ipmi_msg = ipmi_msg;
 	list_add_tail(&bt.msgq, &bt_msg->link);
 
 	return 0;
@@ -143,7 +139,7 @@ static bool bt_try_send_msg(void)
 	if (!bt_msg)
 		return true;
 
-	ipmi_msg = bt_msg->ipmi_msg;
+	ipmi_msg = &bt_msg->ipmi_msg;
 
 	if (!bt_idle()) {
 		prerror("BT: Interface in an unexpected state, attempting reset\n");
@@ -168,7 +164,7 @@ static bool bt_try_send_msg(void)
 
 	/* Byte 5:N - Data */
 	for (i = 0; i < ipmi_msg->req_data_len; i++)
-		bt_outb(ipmi_msg->req_data[i], BT_HOST2BMC);
+		bt_outb(ipmi_msg->data[i], BT_HOST2BMC);
 
 	bt_setmask(BT_CTRL_H2B_ATN, BT_CTRL);
 	bt_set_state(BT_STATE_RESP_WAIT);
@@ -205,7 +201,7 @@ static bool bt_get_resp(void)
 		return false;
 	}
 
-	ipmi_msg = bt_msg->ipmi_msg;
+	ipmi_msg = &bt_msg->ipmi_msg;
 	bt_setmask(BT_CTRL_H_BUSY, BT_CTRL);
 	bt_clearmask(BT_CTRL_B2H_ATN, BT_CTRL);
 	bt_setmask(BT_CTRL_CLR_RD_PTR, BT_CTRL);
@@ -242,7 +238,7 @@ static bool bt_get_resp(void)
 
 	/* Byte 6:N - Data */
 	for (i = 0; i < resp_len; i++)
-		ipmi_msg->resp_data[i] = bt_inb(BT_HOST2BMC);
+		ipmi_msg->data[i] = bt_inb(BT_HOST2BMC);
 	bt_clearmask(BT_CTRL_H_BUSY, BT_CTRL);
 
 	if (cc != IPMI_CC_NO_ERROR) {
@@ -259,12 +255,6 @@ static bool bt_get_resp(void)
 	 */
 	if (bt.ipmi_cmd_done)
 		bt.ipmi_cmd_done(ipmi_msg);
-
-	/*
-	 * The IPMI layer should have freed any data it allocated for the IPMI
-	 * message in the completion function above.
-	 */
-	free(bt_msg);
 
 	/* Immediately send the next message */
 	return false;
@@ -317,6 +307,35 @@ static bool bt_wait_state(enum bt_states state)
 }
 
 /*
+ * Allocate a BT-IPMI message and return the IPMI message struct. Allocates
+ * enough space for the request and response data.
+ */
+struct ipmi_msg *bt_alloc_ipmi_msg(size_t request_size, size_t response_size)
+{
+	struct bt_msg *bt_msg;
+
+	bt_msg = malloc(sizeof(struct bt_msg) + MAX(request_size, response_size));
+	if (!bt_msg)
+		return NULL;
+
+	bt_msg->ipmi_msg.req_data_len = request_size;
+	bt_msg->ipmi_msg.resp_data_len = response_size;
+	bt_msg->ipmi_msg.data = (uint8_t *) (bt_msg + 1);
+
+	return &bt_msg->ipmi_msg;
+}
+
+/*
+ * Free a previously allocated BT-IPMI message.
+ */
+void bt_free_ipmi_msg(struct ipmi_msg *ipmi_msg)
+{
+	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
+
+	free(bt_msg);
+}
+
+/*
  * Add an ipmi message to the queue and wait for a response.
  */
 int bt_add_ipmi_msg_wait(struct ipmi_msg *msg)
@@ -351,18 +370,17 @@ out:
 	return ret;
 }
 
+/*
+ * Remove a message from the queue. The memory allocated for the ipmi message
+ * will need to be freed by the caller with bt_free_ipmi_msg() as it will no
+ * longer be in the queue of messages.
+ */
 void bt_del_ipmi_msg(struct ipmi_msg *ipmi_msg)
 {
-	struct bt_msg *bt_msg;
-	struct bt_msg *next;
+	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
 	lock(&bt.lock);
-	list_for_each_safe(&bt.msgq, bt_msg, next, link) {
-		if (bt_msg->ipmi_msg == ipmi_msg) {
-			list_del(&bt_msg->link);
-			break;
-		}
-	}
+	list_del(&bt_msg->link);
 	unlock(&bt.lock);
 }
 

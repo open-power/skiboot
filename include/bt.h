@@ -22,6 +22,12 @@
 /* Initialise the BT interface */
 void bt_init(void (*ipmi_cmd_done)(struct ipmi_msg *));
 
+/* Allocate an BT-IPMI message */
+struct ipmi_msg *bt_alloc_ipmi_msg(size_t request_size, size_t response_size);
+
+/* Free a BT-IPMI message */
+void bt_free_ipmi_msg(struct ipmi_msg *ipmi_msg);
+
 /* Add an IPMI message to the BT queue and wait for a resposne */
 int bt_add_ipmi_msg_wait(struct ipmi_msg *msg);
 

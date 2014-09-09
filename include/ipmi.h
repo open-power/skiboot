@@ -91,10 +91,9 @@ struct ipmi_msg {
 	uint8_t netfn;
 	uint8_t cmd;
 	uint8_t cc;
-	uint8_t *req_data;
 	uint8_t req_data_len;
-	uint8_t *resp_data;
 	uint8_t resp_data_len;
+	uint8_t *data;
 };
 
 /* Initialise the IPMI interface */

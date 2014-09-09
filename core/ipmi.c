@@ -35,7 +35,7 @@ static void ipmi_process_storage_resp(struct ipmi_msg *msg)
 		 * I couldn't find any mention of endianess in the IPMI spec,
 		 * but ipmitool seemed to assume little endian?
 		 */
-		memcpy(&new_time, msg->resp_data, 4);
+		memcpy(&new_time, msg->data, 4);
 		time = le32_to_cpu(new_time);
 		break;
 
@@ -48,39 +48,37 @@ static void ipmi_process_storage_resp(struct ipmi_msg *msg)
 	}
 }
 
-static uint32_t time_result;
 static int64_t ipmi_get_sel_time(void)
 {
-	struct ipmi_msg *msg = malloc(sizeof(struct ipmi_msg));
+	struct ipmi_msg *msg;
+	static uint32_t time_result;
 
+	msg = bt_alloc_ipmi_msg(0, 4);
 	if (!msg)
 		return OPAL_HARDWARE;
 
 	msg->cmd = IPMI_GET_SEL_TIME_CMD;
 	msg->netfn = IPMI_NETFN_STORAGE_REQUEST;
-	msg->req_data = NULL;
-	msg->req_data_len = 0;
-	msg->resp_data = (uint8_t *) &time_result;
-	msg->resp_data_len = 4;
+
 	if (bt_add_ipmi_msg_wait(msg))
 		return -1;
+
+	memcpy(&time_result, msg->data, sizeof(time_result));
 
 	return time_result;
 }
 
 static int64_t ipmi_set_sel_time(uint32_t tv)
 {
-	struct ipmi_msg *msg = malloc(sizeof(struct ipmi_msg));
+	struct ipmi_msg *msg;
 
+	msg = bt_alloc_ipmi_msg(sizeof(tv), 0);
 	if (!msg)
 		return OPAL_HARDWARE;
 
 	msg->cmd = IPMI_SET_SEL_TIME_CMD;
 	msg->netfn = IPMI_NETFN_STORAGE_REQUEST;
-	msg->req_data = (uint8_t *) &tv;
-	msg->req_data_len = 4;
-	msg->resp_data = NULL;
-	msg->resp_data_len = 0;
+	memcpy(msg->data, &tv, sizeof(tv));
 
 	return bt_add_ipmi_msg_wait(msg);
 }
@@ -141,28 +139,24 @@ static void ipmi_cmd_done(struct ipmi_msg *msg)
 	}
 
 out:
-	free(msg);
+	bt_free_ipmi_msg(msg);
 }
 
-static uint8_t chassis_control;
 int64_t ipmi_opal_chassis_control(uint64_t request)
 {
-	struct ipmi_msg *msg = zalloc(sizeof(struct ipmi_msg));
+	struct ipmi_msg *msg;
+	uint8_t chassis_control = request;
 
+	msg = bt_alloc_ipmi_msg(sizeof(chassis_control), 0);
 	if (!msg)
 		return OPAL_HARDWARE;
 
 	if (request > IPMI_CHASSIS_SOFT_SHUTDOWN)
 		return OPAL_PARAMETER;
 
-	chassis_control = request;
-
 	msg->cmd = IPMI_CHASSIS_CONTROL_CMD;
 	msg->netfn = IPMI_NETFN_CHASSIS_REQUEST;
-	msg->req_data = (uint8_t *)&chassis_control;
-	msg->req_data_len = sizeof(chassis_control);
-	msg->resp_data = NULL;
-	msg->resp_data_len = 0;
+	msg->data[0] = chassis_control;
 
 	prlog(PR_INFO, "IPMI: sending chassis control request %llu\n",
 			request);
