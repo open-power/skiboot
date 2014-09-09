@@ -47,11 +47,6 @@
  */
 #define TI_SRC_LEN	0x48
 
-/* Generate hex word from assert function's address
- * 4 bytes used for assert function call address
- */
-#define generate_hex_word(addr)	(addr & 0xffffffff)
-
 static struct ti_attn *ti_attn;
 
 /* Initialises SP attention area with default values */
@@ -82,7 +77,7 @@ static void init_sp_attn_area(void)
 	/* #HEX words */
 	ti_attn->hex_cnt = TI_HEX_WORDS;
 	ti_attn->src_len = CPU_TO_BE16(TI_SRC_LEN);
-	sprintf(ti_attn->src, "%X", generate_src_from_comp(OPAL_RC_ATTN));
+	snprintf(ti_attn->src, SRC_LEN, "%X", generate_src_from_comp(OPAL_RC_ATTN));
 }
 
 /* Updates src in sp attention area
@@ -93,7 +88,7 @@ void update_sp_attn_area(const char *msg)
 		return;
 
 	ti_attn->src_word[0] =
-			(uint32_t)generate_hex_word((uint64_t)__builtin_return_address(0));
+			(uint32_t)((uint64_t)__builtin_return_address(0) & 0xffffffff);
 
 	snprintf(ti_attn->msg.gitid, GITID_LEN, "%s", gitid);
 	__backtrace(ti_attn->msg.bt_buf, BT_FRAME_LEN);
