@@ -72,7 +72,6 @@ struct bt {
 	enum bt_states state;
 	struct lock lock;
 	struct list_head msgq;
-	void (*ipmi_cmd_done)(struct ipmi_msg *);
 };
 static struct bt bt;
 
@@ -151,7 +150,7 @@ static bool bt_try_send_msg(void)
 	bt_setmask(BT_CTRL_CLR_WR_PTR, BT_CTRL);
 
 	/* Byte 1 - Length */
-	bt_outb(ipmi_msg->req_data_len + BT_MIN_REQ_LEN, BT_HOST2BMC);
+	bt_outb(ipmi_msg->req_size + BT_MIN_REQ_LEN, BT_HOST2BMC);
 
 	/* Byte 2 - NetFn/LUN */
 	bt_outb((ipmi_msg->netfn << 2) | (bt_msg->lun & 0x3), BT_HOST2BMC);
@@ -163,7 +162,7 @@ static bool bt_try_send_msg(void)
 	bt_outb(ipmi_msg->cmd, BT_HOST2BMC);
 
 	/* Byte 5:N - Data */
-	for (i = 0; i < ipmi_msg->req_data_len; i++)
+	for (i = 0; i < ipmi_msg->req_size; i++)
 		bt_outb(ipmi_msg->data[i], BT_HOST2BMC);
 
 	bt_setmask(BT_CTRL_H2B_ATN, BT_CTRL);
@@ -215,12 +214,12 @@ static bool bt_get_resp(void)
 	 * are unsigned we will also trigger this error if
 	 * bt_inb(BT_HOST2BMC) < BT_MIN_RESP_LEN (which should never occur).
 	 */
-	if (resp_len > ipmi_msg->resp_data_len) {
+	if (resp_len > ipmi_msg->resp_size) {
 		prerror("BT: Invalid resp_len %d for ipmi_msg->cmd = 0x%02x\n", resp_len, ipmi_msg->cmd);
-		resp_len = ipmi_msg->resp_data_len;
+		resp_len = ipmi_msg->resp_size;
 		cc = IPMI_ERR_MSG_TRUNCATED;
 	}
-	ipmi_msg->resp_data_len = resp_len;
+	ipmi_msg->resp_size = resp_len;
 
 	/* Byte 2 - NetFn/LUN */
 	netfn = bt_inb(BT_HOST2BMC);
@@ -253,8 +252,7 @@ static bool bt_get_resp(void)
 	/*
 	 * Call the IPMI layer to finish processing the message.
 	 */
-	if (bt.ipmi_cmd_done)
-		bt.ipmi_cmd_done(ipmi_msg);
+	ipmi_cmd_done(ipmi_msg);
 
 	/* Immediately send the next message */
 	return false;
@@ -307,28 +305,29 @@ static bool bt_wait_state(enum bt_states state)
 }
 
 /*
- * Allocate a BT-IPMI message and return the IPMI message struct. Allocates
- * enough space for the request and response data.
+ * Allocate an ipmi message and bt container and return the ipmi
+ * message struct. Allocates enough space for the request and response
+ * data.
  */
-struct ipmi_msg *bt_alloc_ipmi_msg(size_t request_size, size_t response_size)
+static struct ipmi_msg *bt_alloc_ipmi_msg(size_t request_size, size_t response_size)
 {
 	struct bt_msg *bt_msg;
 
-	bt_msg = malloc(sizeof(struct bt_msg) + MAX(request_size, response_size));
+	bt_msg = zalloc(sizeof(struct bt_msg) + MAX(request_size, response_size));
 	if (!bt_msg)
 		return NULL;
 
-	bt_msg->ipmi_msg.req_data_len = request_size;
-	bt_msg->ipmi_msg.resp_data_len = response_size;
+	bt_msg->ipmi_msg.req_size = request_size;
+	bt_msg->ipmi_msg.resp_size = response_size;
 	bt_msg->ipmi_msg.data = (uint8_t *) (bt_msg + 1);
 
 	return &bt_msg->ipmi_msg;
 }
 
 /*
- * Free a previously allocated BT-IPMI message.
+ * Free a previously allocated ipmi message.
  */
-void bt_free_ipmi_msg(struct ipmi_msg *ipmi_msg)
+static void bt_free_ipmi_msg(struct ipmi_msg *ipmi_msg)
 {
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
@@ -338,7 +337,7 @@ void bt_free_ipmi_msg(struct ipmi_msg *ipmi_msg)
 /*
  * Add an ipmi message to the queue and wait for a response.
  */
-int bt_add_ipmi_msg_wait(struct ipmi_msg *msg)
+static int bt_add_ipmi_msg_wait(struct ipmi_msg *msg)
 {
 	int ret = 0;
 
@@ -375,16 +374,24 @@ out:
  * will need to be freed by the caller with bt_free_ipmi_msg() as it will no
  * longer be in the queue of messages.
  */
-void bt_del_ipmi_msg(struct ipmi_msg *ipmi_msg)
+static int bt_del_ipmi_msg(struct ipmi_msg *ipmi_msg)
 {
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
 	lock(&bt.lock);
 	list_del(&bt_msg->link);
 	unlock(&bt.lock);
+	return 0;
 }
 
-void bt_init(void (*ipmi_cmd_done)(struct ipmi_msg *))
+struct ipmi_backend bt_backend = {
+	.alloc_msg = bt_alloc_ipmi_msg,
+	.free_msg = bt_free_ipmi_msg,
+	.queue_msg = bt_add_ipmi_msg_wait,
+	.dequeue_msg = bt_del_ipmi_msg,
+};
+
+void bt_init(void)
 {
 	struct dt_node *n;
 	const struct dt_property *prop;
@@ -413,6 +420,7 @@ void bt_init(void (*ipmi_cmd_done)(struct ipmi_msg *))
 	 * initialised it.
 	 */
 	bt_set_state(BT_STATE_B_BUSY);
-	bt.ipmi_cmd_done = ipmi_cmd_done;
 	list_head_init(&bt.msgq);
+
+	ipmi_register_backend(&bt_backend);
 }

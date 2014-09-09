@@ -23,6 +23,7 @@
 #include <xscom.h>
 #include <ast.h>
 #include <ipmi.h>
+#include <bt.h>
 
 #include "bmc.h"
 
@@ -203,8 +204,9 @@ static bool palmetto_probe(void)
 	/* Setup UART and use it as console with interrupts */
 	uart_init(true);
 
-	/* Setup IPMI */
-	ipmi_init();
+	/* Register the BT interface with the IPMI layer */
+	bt_init();
+	ipmi_rtc_init();
 
 	return true;
 }
@@ -234,4 +236,3 @@ DECLARE_PLATFORM(palmetto) = {
 	.cec_power_down         = palmetto_ipmi_power_down,
 	.cec_reboot             = palmetto_ipmi_reboot,
 };
-

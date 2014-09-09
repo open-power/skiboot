@@ -14,10 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef __BT_H
-#define __BT_H
+#include <stdlib.h>
+#include <ipmi.h>
+#include <opal.h>
 
-/* Initialise the BT interface */
-void bt_init(void);
+int64_t ipmi_opal_chassis_control(uint64_t request)
+{
+	struct ipmi_msg *msg;
+	uint8_t chassis_control = request;
 
-#endif
+	if (chassis_control > IPMI_CHASSIS_SOFT_SHUTDOWN)
+		return OPAL_PARAMETER;
+
+
+	msg = ipmi_mkmsg_simple(IPMI_CHASSIS_CONTROL, &chassis_control,
+				sizeof(chassis_control));
+	if (!msg)
+		return OPAL_HARDWARE;
+
+
+	prlog(PR_INFO, "IPMI: sending chassis control request %llu\n",
+			request);
+
+	return ipmi_sync_queue_msg(msg);
+}

@@ -10,6 +10,6 @@ HW=hw/built-in.o
 include $(SRC)/hw/fsp/Makefile.inc
 include $(SRC)/hw/ec/Makefile.inc
 include $(SRC)/hw/ast-bmc/Makefile.inc
+include $(SRC)/hw/ipmi/Makefile.inc
 
-$(HW): $(HW_OBJS:%=hw/%) $(FSP) $(EC) $(AST_BMC)
-
+$(HW): $(HW_OBJS:%=hw/%) $(FSP) $(EC) $(AST_BMC) $(IPMI)

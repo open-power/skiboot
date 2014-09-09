@@ -22,8 +22,6 @@
 /*
  * IPMI codes as defined by the standard.
  */
-#define IPMI_NETFN_APP_REQUEST		0x06
-#define IPMI_NETFN_APP_RESPONSE		0x07
 #define IPMI_GET_DEVICE_ID_CMD		0x01
 #define IPMI_COLD_RESET_CMD		0x02
 #define IPMI_WARM_RESET_CMD		0x03
@@ -54,8 +52,6 @@
 #define IPMI_CHASSIS_GET_SYS_BOOT_OPT_CMD	0x0b
 #define IPMI_CHASSIS_GET_POH_COUNTER_CMD	0x0f
 
-#define IPMI_NETFN_CHASSIS_REQUEST		0x00
-#define IPMI_NETFN_CHASSIS_RESPONSE		0x01
 
 /* 28.3. Chassis Control Command */
 #define   IPMI_CHASSIS_PWR_DOWN 		0x00
@@ -65,11 +61,18 @@
 #define   IPMI_CHASSIS_PULSE_DIAG		0x04
 #define   IPMI_CHASSIS_SOFT_SHUTDOWN		0x05
 
-#define IPMI_NETFN_STORAGE_REQUEST	0x0a
-#define IPMI_NETFN_STORAGE_RESPONSE	0x0b
-#define   IPMI_GET_SEL_INFO_CMD		0x40
-#define   IPMI_GET_SEL_TIME_CMD		0x48
-#define   IPMI_SET_SEL_TIME_CMD		0x49
+#define IPMI_CODE(netfn, cmd)		((netfn) << 8 | (cmd))
+#define IPMI_CMD(code)			((code) & 0xff)
+#define IPMI_NETFN(code)		((code) >> 8 & 0xff)
+
+#define IPMI_NETFN_CHASSIS		0x00
+#define IPMI_NETFN_STORAGE		0x0a
+#define IPMI_NETFN_APP			0x06
+
+#define IPMI_GET_SEL_INFO		IPMI_CODE(IPMI_NETFN_STORAGE, 0x40)
+#define IPMI_GET_SEL_TIME		IPMI_CODE(IPMI_NETFN_STORAGE, 0x48)
+#define IPMI_SET_SEL_TIME		IPMI_CODE(IPMI_NETFN_STORAGE, 0x49)
+#define IPMI_CHASSIS_CONTROL		IPMI_CODE(IPMI_NETFN_CHASSIS, 0x02)
 
 /*
  * IPMI response codes.
@@ -87,19 +90,57 @@
 #define IPMI_NAK_ON_WRITE_ERR		0x83
 #define IPMI_ERR_UNSPECIFIED		0xff
 
+#define IPMI_DEFAULT_INTERFACE		0
+
+struct ipmi_backend;
 struct ipmi_msg {
+	struct ipmi_backend *backend;
 	uint8_t netfn;
 	uint8_t cmd;
 	uint8_t cc;
-	uint8_t req_data_len;
-	uint8_t resp_data_len;
+
+	/* Called when a response is received to the ipmi message */
+	void (*complete)(struct ipmi_msg *);
+
+	/* Called if non-NULL when the ipmi layer detects an error */
+	void (*error)(struct ipmi_msg *);
+	void *user_data;
+
+	uint8_t req_size;
+	uint8_t resp_size;
 	uint8_t *data;
+};
+
+struct ipmi_backend {
+	struct ipmi_msg *(*alloc_msg)(size_t, size_t);
+	void (*free_msg)(struct ipmi_msg *);
+	int (*queue_msg)(struct ipmi_msg *);
+	int (*dequeue_msg)(struct ipmi_msg *);
 };
 
 /* Initialise the IPMI interface */
 void ipmi_init(void);
 
+void ipmi_free_msg(struct ipmi_msg *msg);
+
+struct ipmi_msg *ipmi_mkmsg_simple(uint32_t code, void *req_data, size_t req_size);
+struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
+			    void (*complete)(struct ipmi_msg *),
+			    void *user_data, void *req_data, size_t req_size,
+			    size_t resp_size);
+
+int ipmi_sync_queue_msg(struct ipmi_msg *msg);
+
+/* Process a completed message */
+void ipmi_cmd_done(struct ipmi_msg *msg);
+
 /* Change the power state of the P8 */
 int64_t ipmi_opal_chassis_control(uint64_t request);
+
+/* Register a backend with the ipmi core. Currently we only support one. */
+void ipmi_register_backend(struct ipmi_backend *backend);
+
+/* Register rtc ipmi commands with as opal callbacks. */
+void ipmi_rtc_init(void);
 
 #endif
