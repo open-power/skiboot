@@ -308,7 +308,7 @@ void ast_setup_uart1(uint16_t io_base, uint8_t irq)
 	bmc_sio_outb(0x02, 0x07);
 
 	/* Disable UART1 for configuration */
-	bmc_sio_outb(0x01, 0x30);
+	bmc_sio_outb(0x00, 0x30);
 
 	/* Configure base and interrupt */
 	bmc_sio_outb(io_base >> 8, 0x60);
