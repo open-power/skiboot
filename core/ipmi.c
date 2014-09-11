@@ -19,8 +19,6 @@
 #include <ipmi.h>
 #include <opal.h>
 #include <device.h>
-#include <time.h>
-#include <time-utils.h>
 
 static struct ipmi_backend *ipmi_backend = NULL;
 
