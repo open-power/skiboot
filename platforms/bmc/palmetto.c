@@ -211,21 +211,19 @@ static bool palmetto_probe(void)
 	return true;
 }
 
-static int64_t palmetto_ipmi_power_down(uint64_t request __unused)
+static int64_t palmetto_ipmi_power_down(uint64_t request)
 {
-	/* Request is:
-	 *  0 = normal
-	 *  1 = immediate
-	 * When doing "shutdown -h now" from linux, we get a 0.
-	 * However, I believe at that point we are ready to shut down,
-	 * so unconditionally tell the BMC to immediately power us down.
-	 */
-	return ipmi_opal_chassis_control(IPMI_CHASSIS_PWR_DOWN);
+	if (request != IPMI_CHASSIS_PWR_DOWN) {
+		prlog(PR_WARNING, "PLAT: unexpected shutdown request %llx\n",
+				   request);
+	}
+
+	return ipmi_chassis_control(request);
 }
 
 static int64_t palmetto_ipmi_reboot(void)
 {
-	return ipmi_opal_chassis_control(IPMI_CHASSIS_PWR_CYCLE);
+	return ipmi_chassis_control(IPMI_CHASSIS_HARD_RESET);
 }
 
 DECLARE_PLATFORM(palmetto) = {

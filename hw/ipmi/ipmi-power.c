@@ -18,17 +18,15 @@
 #include <ipmi.h>
 #include <opal.h>
 
-int64_t ipmi_opal_chassis_control(uint64_t request)
+int ipmi_chassis_control(uint8_t request)
 {
 	struct ipmi_msg *msg;
-	uint8_t chassis_control = request;
 
-	if (chassis_control > IPMI_CHASSIS_SOFT_SHUTDOWN)
+	if (request > IPMI_CHASSIS_SOFT_SHUTDOWN)
 		return OPAL_PARAMETER;
 
-
-	msg = ipmi_mkmsg_simple(IPMI_CHASSIS_CONTROL, &chassis_control,
-				sizeof(chassis_control));
+	msg = ipmi_mkmsg_simple(IPMI_CHASSIS_CONTROL, &request,
+				sizeof(request));
 	if (!msg)
 		return OPAL_HARDWARE;
 

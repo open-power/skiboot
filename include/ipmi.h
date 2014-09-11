@@ -135,8 +135,8 @@ int ipmi_queue_msg(struct ipmi_msg *msg);
 /* Process a completed message */
 void ipmi_cmd_done(struct ipmi_msg *msg);
 
-/* Change the power state of the P8 */
-int64_t ipmi_opal_chassis_control(uint64_t request);
+/* 28.3 Chassis Control Command. Changes the power state of the P8. */
+int ipmi_chassis_control(uint8_t request);
 
 /* Register a backend with the ipmi core. Currently we only support one. */
 void ipmi_register_backend(struct ipmi_backend *backend);
