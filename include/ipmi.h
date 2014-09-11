@@ -18,6 +18,7 @@
 #define __IPMI_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /*
  * IPMI codes as defined by the standard.
@@ -135,6 +136,8 @@ struct ipmi_backend {
 
 /* Initialise the IPMI interface */
 void ipmi_init(void);
+
+bool ipmi_present(void);
 
 void ipmi_free_msg(struct ipmi_msg *msg);
 

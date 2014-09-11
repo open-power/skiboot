@@ -22,6 +22,9 @@ int ipmi_chassis_control(uint8_t request)
 {
 	struct ipmi_msg *msg;
 
+	if (!ipmi_present())
+		return OPAL_CLOSED;
+
 	if (request > IPMI_CHASSIS_SOFT_SHUTDOWN)
 		return OPAL_PARAMETER;
 
@@ -43,6 +46,9 @@ int ipmi_set_power_state(uint8_t system, uint8_t device)
 		uint8_t system;
 		uint8_t device;
 	} power_state;
+
+	if (!ipmi_present())
+		return OPAL_CLOSED;
 
 	power_state.system = system;
 	power_state.device = device;

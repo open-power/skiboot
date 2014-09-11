@@ -96,3 +96,8 @@ void ipmi_register_backend(struct ipmi_backend *backend)
 	assert(backend->dequeue_msg);
 	ipmi_backend = backend;
 }
+
+bool ipmi_present(void)
+{
+	return ipmi_backend != NULL;
+}
