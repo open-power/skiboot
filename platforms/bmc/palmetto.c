@@ -208,6 +208,9 @@ static bool palmetto_probe(void)
 	bt_init();
 	ipmi_rtc_init();
 
+	/* As soon as IPMI is up, inform BMC we are in "S0" */
+	ipmi_set_power_state(IPMI_PWR_SYS_S0_WORKING, IPMI_PWR_NOCHANGE);
+
 	return true;
 }
 

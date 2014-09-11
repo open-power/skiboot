@@ -30,9 +30,36 @@ int ipmi_chassis_control(uint8_t request)
 	if (!msg)
 		return OPAL_HARDWARE;
 
-
-	prlog(PR_INFO, "IPMI: sending chassis control request %llu\n",
+	prlog(PR_INFO, "IPMI: sending chassis control request 0x%02x\n",
 			request);
+
+	return ipmi_queue_msg(msg);
+}
+
+int ipmi_set_power_state(uint8_t system, uint8_t device)
+{
+	struct ipmi_msg *msg;
+	struct {
+		uint8_t system;
+		uint8_t device;
+	} power_state;
+
+	power_state.system = system;
+	power_state.device = device;
+
+	if (system != IPMI_PWR_NOCHANGE)
+		power_state.system |= 0x80;
+	if (device != IPMI_PWR_NOCHANGE)
+		power_state.device |= 0x80;
+
+	msg = ipmi_mkmsg_simple(IPMI_SET_POWER_STATE, &power_state,
+				sizeof(power_state));
+
+	if (!msg)
+		return OPAL_HARDWARE;
+
+	prlog(PR_INFO, "IPMI: setting power state: sys %02x, dev %02x\n",
+			power_state.system, power_state.device);
 
 	return ipmi_queue_msg(msg);
 }

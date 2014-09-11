@@ -61,6 +61,19 @@
 #define   IPMI_CHASSIS_PULSE_DIAG		0x04
 #define   IPMI_CHASSIS_SOFT_SHUTDOWN		0x05
 
+/* 20.7. ACPI Power State Command */
+#define   IPMI_PWR_SYS_S0_WORKING		0x00
+#define   IPMI_PWR_SYS_S1			0x01
+#define   IPMI_PWR_SYS_S2			0x02
+#define   IPMI_PWR_SYS_S3_SUSPEND_TO_RAM	0x03
+#define   IPMI_PWR_SYS_S4_SUSPEND_TO_DISK	0x04
+#define   IPMI_PWR_SYS_S5_SOFT_OFF		0x05
+#define   IPMI_PWR_SYS_SUSPEND			0x06
+#define   IPMI_PWR_SYS_LEGACY_ON		0x20
+#define   IPMI_PWR_SYS_LEGACY_OFF		0x21
+#define   IPMI_PWR_SYS_UNKNOWN			0x2a
+#define   IPMI_PWR_NOCHANGE                     0x7f
+
 #define IPMI_CODE(netfn, cmd)		((netfn) << 8 | (cmd))
 #define IPMI_CMD(code)			((code) & 0xff)
 #define IPMI_NETFN(code)		((code) >> 8 & 0xff)
@@ -73,6 +86,8 @@
 #define IPMI_GET_SEL_TIME		IPMI_CODE(IPMI_NETFN_STORAGE, 0x48)
 #define IPMI_SET_SEL_TIME		IPMI_CODE(IPMI_NETFN_STORAGE, 0x49)
 #define IPMI_CHASSIS_CONTROL		IPMI_CODE(IPMI_NETFN_CHASSIS, 0x02)
+#define IPMI_SET_POWER_STATE		IPMI_CODE(IPMI_NETFN_APP, 0x06)
+#define IPMI_GET_POWER_STATE		IPMI_CODE(IPMI_NETFN_APP, 0x07)
 
 /*
  * IPMI response codes.
@@ -137,6 +152,10 @@ void ipmi_cmd_done(struct ipmi_msg *msg);
 
 /* 28.3 Chassis Control Command. Changes the power state of the P8. */
 int ipmi_chassis_control(uint8_t request);
+
+/* 20.7 ACPI Power State Command (without the ACPI part). Informative only,
+ * use chassis control to perform power off and reboot. */
+int ipmi_set_power_state(uint8_t system, uint8_t device);
 
 /* Register a backend with the ipmi core. Currently we only support one. */
 void ipmi_register_backend(struct ipmi_backend *backend);
