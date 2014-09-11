@@ -20,7 +20,12 @@
 
 #include <opal.h>
 
-#define OPAL_MAX_ASYNC_COMP	2
+/*
+ * It dictates the number of asynchronous tokens available at the kernel,
+ * ideally the value matches to the number of modules using async
+ * infrastructure, but not necessarily the same..
+ */
+#define OPAL_MAX_ASYNC_COMP	8
 
 int _opal_queue_msg(enum OpalMessageType msg_type, void *data,
 		    void (*consumed)(void *data), size_t num_params,
