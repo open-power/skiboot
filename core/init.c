@@ -260,12 +260,6 @@ static bool try_load_elf32(struct elf_hdr *header)
 	return true;
 }
 
-/* LID numbers. For now we hijack some of pHyp's own until i figure
- * out the whole business with the MasterLID
- */
-#define KERNEL_LID_PHYP	0x80a00701
-#define KERNEL_LID_OPAL	0x80f00101
-
 extern char __builtin_kernel_start[];
 extern char __builtin_kernel_end[];
 extern uint64_t boot_offset;
@@ -273,49 +267,33 @@ extern uint64_t boot_offset;
 static bool load_kernel(void)
 {
 	struct elf_hdr *kh;
-	uint32_t lid;
-	size_t ksize;
-	const char *ltype;
+	size_t ksize = 0;
 
-	ltype = dt_prop_get_def(dt_root, "lid-type", NULL);
+	/* Try to load an external kernel payload through the platform hooks */
+	if (platform.load_resource) {
+		ksize = KERNEL_LOAD_SIZE;
+		if (!platform.load_resource(RESOURCE_ID_KERNEL,
+				KERNEL_LOAD_BASE, &ksize)) {
+			printf("INIT: platform kernel load failed\n");
+			ksize = 0;
+		}
+	}
 
-	/* No lid-type, assume stradale, currently pre-loaded at fixed
-	 * address
-	 */
-	if (!ltype) {
-		printf("No lid-type property, assuming FSP-less setup\n");
+	/* Try embedded kernel payload */
+	if (!ksize) {
 		ksize = __builtin_kernel_end - __builtin_kernel_start;
 		if (ksize) {
 			/* Move the built-in kernel up */
 			uint64_t builtin_base =
 				((uint64_t)__builtin_kernel_start) -
-				SKIBOOT_BASE + boot_offset;    
+				SKIBOOT_BASE + boot_offset;
 			printf("Using built-in kernel\n");
 			memmove(KERNEL_LOAD_BASE, (void*)builtin_base, ksize);
-		} else
-			printf("Assuming kernel at 0x%p\n", KERNEL_LOAD_BASE);
-	} else {
-		ksize = KERNEL_LOAD_SIZE;
-
-		/* First try to load an OPAL secondary LID always */
-		lid = fsp_adjust_lid_side(KERNEL_LID_OPAL);
-		printf("Trying to load OPAL secondary LID...\n");
-		if (fsp_fetch_data(0, FSP_DATASET_NONSP_LID, lid, 0,
-				   KERNEL_LOAD_BASE, &ksize) != 0) {	
-			if (!strcmp(ltype, "opal")) {
-				prerror("Failed to load in OPAL mode...\n");
-				return false;
-			}
-			printf("Trying to load as PHYP LID...\n");
-			lid = fsp_adjust_lid_side(KERNEL_LID_PHYP);
-			ksize = KERNEL_LOAD_SIZE;
-			if (fsp_fetch_data(0, FSP_DATASET_NONSP_LID, lid, 0,
-					   KERNEL_LOAD_BASE, &ksize) != 0) {	
-				prerror("Failed to load kernel\n");
-				return false;
-			}
 		}
 	}
+
+	if (!ksize)
+		printf("Assuming kernel at 0x%p\n", KERNEL_LOAD_BASE);
 
 	printf("INIT: Kernel loaded, size: %zu bytes (0 = unknown preload)\n",
 	       ksize);

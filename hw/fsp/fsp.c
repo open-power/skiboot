@@ -98,6 +98,12 @@ static u64 fsp_hir_timeout;
 #define FSP_CRITICAL_OP_TIMEOUT		128
 #define FSP_DRCR_CLEAR_TIMEOUT		128
 
+/* LID numbers. For now we hijack some of pHyp's own until i figure
+ * out the whole business with the MasterLID
+ */
+#define KERNEL_LID_PHYP			0x80a00701
+#define KERNEL_LID_OPAL			0x80f00101
+
 /*
  * We keep track on last logged values for some things to print only on
  * value changes, but also to releive pressure on the tracer which
@@ -2169,6 +2175,48 @@ int fsp_fetch_data_queue(uint8_t flags, uint16_t id, uint32_t sub_id,
 		return OPAL_INTERNAL_ERROR;
 	}
 	return OPAL_SUCCESS;
+}
+
+bool fsp_load_resource(enum resource_id id, void *buf, size_t *size)
+{
+	uint32_t lid_no, lid;
+	size_t tmp_size;
+	int rc;
+
+	switch (id) {
+	case RESOURCE_ID_KERNEL:
+		lid_no = KERNEL_LID_OPAL;
+		break;
+	default:
+		return false;
+	}
+
+retry:
+	tmp_size = *size;
+
+	printf("Trying to load OPAL LID %08x...\n", lid_no);
+	lid = fsp_adjust_lid_side(lid_no);
+	rc = fsp_fetch_data(0, FSP_DATASET_NONSP_LID, lid, 0, buf, &tmp_size);
+
+	/* Fall back to a PHYP LID for kernel loads */
+	if (rc && lid_no == KERNEL_LID_OPAL) {
+		const char *ltype = dt_prop_get_def(dt_root, "lid-type", NULL);
+		if (!ltype || strcmp(ltype, "opal")) {
+			prerror("Failed to load in OPAL mode...\n");
+			return false;
+		}
+		printf("Trying to load as PHYP LID...\n");
+		lid_no = KERNEL_LID_PHYP;
+		goto retry;
+	}
+
+	if (rc) {
+		prerror("Failed to load LID\n");
+		return false;
+	}
+
+	*size = tmp_size;
+	return true;
 }
 
 void fsp_used_by_console(void)

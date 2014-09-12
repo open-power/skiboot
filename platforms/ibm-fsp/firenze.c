@@ -248,4 +248,5 @@ DECLARE_PLATFORM(firenze) = {
 	.nvram_write		= fsp_nvram_write,
 	.occ_timeout		= ibm_fsp_occ_timeout,
 	.elog_commit		= elog_fsp_commit,
+	.load_resource		= fsp_load_resource,
 } ;

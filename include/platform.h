@@ -22,6 +22,10 @@ struct phb;
 struct pci_device;
 struct errorlog;
 
+enum resource_id {
+	RESOURCE_ID_KERNEL,
+};
+
 /*
  * Each platform can provide a set of hooks
  * that can affect the generic code
@@ -119,6 +123,13 @@ struct platform {
 	uint32_t	(*occ_timeout)(void);
 
 	int		(*elog_commit)(struct errorlog *buf);
+
+	/*
+	 * Load an external resource (eg, kernel payload) into a preallocated
+	 * buffer. Returns true on success.
+	 */
+	bool		(*load_resource)(enum resource_id id,
+					 void *buf, size_t *len);
 };
 
 extern struct platform __platforms_start;
