@@ -19,8 +19,9 @@
 #include <processor.h>
 #include <cpu.h>
 
-/* Upto 10 frames each of length 40 bytes + header = 430 bytes */
+/* Upto 10 frames each of length 40 bytes + header = 440 bytes */
 #define STACK_BUF_SZ		440
+static char backtrace_buffer[STACK_BUF_SZ];
 
 /* Dumps backtrace to buffer */
 void __backtrace(char *bt_buf, int bt_buf_len)
@@ -52,10 +53,8 @@ void __backtrace(char *bt_buf, int bt_buf_len)
 
 void backtrace(void)
 {
-	char bt_buf[STACK_BUF_SZ];
+	memset(backtrace_buffer, 0, STACK_BUF_SZ);
+	__backtrace(backtrace_buffer, STACK_BUF_SZ);
 
-	memset(bt_buf, 0, STACK_BUF_SZ);
-	__backtrace(bt_buf, STACK_BUF_SZ);
-
-	fputs(bt_buf, stderr);
+	fputs(backtrace_buffer, stderr);
 }
