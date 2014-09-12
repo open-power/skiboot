@@ -103,6 +103,7 @@ static u64 fsp_hir_timeout;
  */
 #define KERNEL_LID_PHYP			0x80a00701
 #define KERNEL_LID_OPAL			0x80f00101
+#define INITRAMFS_LID_OPAL		0x80f00102
 
 /*
  * We keep track on last logged values for some things to print only on
@@ -2186,6 +2187,9 @@ bool fsp_load_resource(enum resource_id id, void *buf, size_t *size)
 	switch (id) {
 	case RESOURCE_ID_KERNEL:
 		lid_no = KERNEL_LID_OPAL;
+		break;
+	case RESOURCE_ID_INITRAMFS:
+		lid_no = INITRAMFS_LID_OPAL;
 		break;
 	default:
 		return false;
