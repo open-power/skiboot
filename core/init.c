@@ -308,6 +308,29 @@ static bool load_kernel(void)
 	return false;
 }
 
+static void load_initramfs(void)
+{
+	size_t size;
+	bool loaded;
+
+	if (!platform.load_resource)
+		return;
+
+	size = INITRAMFS_LOAD_SIZE;
+	loaded = platform.load_resource(RESOURCE_ID_INITRAMFS,
+			INITRAMFS_LOAD_BASE, &size);
+
+	if (!loaded || !size)
+		return;
+
+	printf("INIT: Initramfs loaded, size: %zu bytes\n", size);
+
+	dt_add_property_u64(dt_chosen, "linux,initrd-start",
+			(uint64_t)INITRAMFS_LOAD_BASE);
+	dt_add_property_u64(dt_chosen, "linux,initrd-end",
+			(uint64_t)INITRAMFS_LOAD_BASE + size);
+}
+
 void __noreturn load_and_boot_kernel(bool is_reboot)
 {
 	const struct dt_property *memprop;
@@ -327,6 +350,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 		op_display(OP_FATAL, OP_MOD_INIT, 1);
 		abort();
 	}
+
+	load_initramfs();
 
 	if (!is_reboot) {
 		/* We wait for the nvram read to complete here so we can

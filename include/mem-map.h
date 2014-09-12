@@ -110,7 +110,10 @@
  * without a built-in kernel.
  */
 #define KERNEL_LOAD_BASE	((void *)0x20000000)
-#define KERNEL_LOAD_SIZE	0x10000000
+#define KERNEL_LOAD_SIZE	0x08000000
+
+#define INITRAMFS_LOAD_BASE	KERNEL_LOAD_BASE + KERNEL_LOAD_SIZE
+#define INITRAMFS_LOAD_SIZE	0x08000000
 
 /* Size allocated to build the device-tree */
 #define	DEVICE_TREE_MAX_SIZE	0x80000

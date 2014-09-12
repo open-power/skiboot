@@ -24,6 +24,7 @@ struct errorlog;
 
 enum resource_id {
 	RESOURCE_ID_KERNEL,
+	RESOURCE_ID_INITRAMFS,
 };
 
 /*
