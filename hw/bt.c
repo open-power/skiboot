@@ -18,7 +18,7 @@
 #include <lpc.h>
 #include <lock.h>
 #include <device.h>
-#include <time.h>
+#include <timebase.h>
 #include <ipmi.h>
 #include <bt.h>
 
@@ -53,6 +53,11 @@
  */
 #define BT_MAX_QUEUE_LEN 5
 
+/*
+ * How long (in TB ticks) before a message is timed out.
+ */
+#define BT_MSG_TIMEOUT (secs_to_tb(1))
+
 enum bt_states {
 	BT_STATE_IDLE = 0,
 	BT_STATE_RESP_WAIT,
@@ -67,6 +72,7 @@ const char *state_str[] = {
 
 struct bt_msg {
 	struct list_node link;
+	unsigned long tb;
 	uint8_t seq;
 	uint8_t lun;
 	struct ipmi_msg ipmi_msg;
@@ -117,12 +123,21 @@ static inline void bt_set_state(enum bt_states next_state)
 	bt.state = next_state;
 }
 
+static void bt_msg_del(struct bt_msg *bt_msg)
+{
+	list_del(&bt_msg->link);
+	bt.queue_len--;
+	ipmi_cmd_done(bt_msg->ipmi_msg.cmd, bt_msg->ipmi_msg.netfn + 1,
+		      IPMI_TIMEOUT_ERR, &bt_msg->ipmi_msg);
+}
+
 static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 {
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
 	bt_msg->lun = 0;
 	lock(&bt.lock);
+	bt_msg->tb = mftb();
 	bt_msg->seq = ipmi_seq++;
 	list_add_tail(&bt.msgq, &bt_msg->link);
 	bt.queue_len++;
@@ -132,10 +147,7 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 		prerror("BT: Maximum queue length exceeded\n");
 		bt_msg = list_tail(&bt.msgq, struct bt_msg, link);
 		assert(bt_msg);
-		list_del(&bt_msg->link);
-		bt.queue_len--;
-		ipmi_cmd_done(bt_msg->ipmi_msg.cmd, bt_msg->ipmi_msg.netfn,
-			      IPMI_TIMEOUT_ERR, &bt_msg->ipmi_msg);
+		bt_msg_del(bt_msg);
 	}
 	unlock(&bt.lock);
 
@@ -295,11 +307,29 @@ static bool bt_get_resp(void)
 	return false;
 }
 
+static void bt_expire_old_msg(void)
+{
+	unsigned long tb;
+	struct bt_msg *bt_msg, *next;
+
+	lock(&bt.lock);
+	tb = mftb();
+	list_for_each_safe(&bt.msgq, bt_msg, next, link) {
+		if ((bt_msg->tb + BT_MSG_TIMEOUT) < tb) {
+			prerror("BT: Expiring old messsage number 0x%02x\n", bt_msg->seq);
+			bt_msg_del(bt_msg);
+		}
+	}
+	unlock(&bt.lock);
+}
+
 static void bt_poll(void *data __unused)
 {
 	bool ret = true;
 
 	do {
+		bt_expire_old_msg();
+
 		switch(bt.state) {
 		case BT_STATE_IDLE:
 			ret = bt_try_send_msg();

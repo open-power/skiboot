@@ -24,7 +24,13 @@
 /* Sane default (2014/01/01) */
 static time_t time = 1388494800;
 
-static enum {idle, waiting, updated} time_status;
+static enum {idle, waiting, updated, error} time_status;
+
+static void get_sel_time_error(struct ipmi_msg *msg)
+{
+	time_status = error;
+	ipmi_free_msg(msg);
+}
 
 static void get_sel_time_complete(struct ipmi_msg *msg)
 {
@@ -33,6 +39,7 @@ static void get_sel_time_complete(struct ipmi_msg *msg)
 	memcpy(&result, msg->data, 4);
 	time = le32_to_cpu(result);
 	time_status = updated;
+	ipmi_free_msg(msg);
 }
 
 static int64_t ipmi_get_sel_time(void)
@@ -43,6 +50,8 @@ static int64_t ipmi_get_sel_time(void)
 			 get_sel_time_complete, &time, NULL, 0, 4);
 	if (!msg)
 		return OPAL_HARDWARE;
+
+	msg->error = get_sel_time_error;
 
 	return ipmi_queue_msg(msg);
 }
@@ -59,7 +68,6 @@ static int64_t ipmi_set_sel_time(uint32_t tv)
 	return ipmi_queue_msg(msg);
 }
 
-void bt_poll(void *data __unused);
 static int64_t ipmi_opal_rtc_read(uint32_t *y_m_d,
 				 uint64_t *h_m_s_m)
 {
@@ -83,6 +91,11 @@ static int64_t ipmi_opal_rtc_read(uint32_t *y_m_d,
 		tm_to_datetime(&tm, y_m_d, h_m_s_m);
 		time_status = idle;
 		ret = OPAL_SUCCESS;
+		break;
+
+	case error:
+		time_status = idle;
+		ret = OPAL_HARDWARE;
 		break;
 	}
 
