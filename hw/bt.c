@@ -48,6 +48,11 @@
  */
 #define POLL_TIMEOUT 10000
 
+/*
+ * Maximum number of outstanding messages to allow in the queue.
+ */
+#define BT_MAX_QUEUE_LEN 5
+
 enum bt_states {
 	BT_STATE_IDLE = 0,
 	BT_STATE_RESP_WAIT,
@@ -72,6 +77,7 @@ struct bt {
 	enum bt_states state;
 	struct lock lock;
 	struct list_head msgq;
+	int queue_len;
 };
 static struct bt bt;
 
@@ -119,6 +125,18 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 	lock(&bt.lock);
 	bt_msg->seq = ipmi_seq++;
 	list_add_tail(&bt.msgq, &bt_msg->link);
+	bt.queue_len++;
+	if (bt.queue_len > BT_MAX_QUEUE_LEN) {
+		/* Maximum ueue lenght exceeded - remove the oldest message
+		   from the queue. */
+		prerror("BT: Maximum queue length exceeded\n");
+		bt_msg = list_tail(&bt.msgq, struct bt_msg, link);
+		assert(bt_msg);
+		list_del(&bt_msg->link);
+		bt.queue_len--;
+		ipmi_cmd_done(bt_msg->ipmi_msg.cmd, bt_msg->ipmi_msg.netfn,
+			      IPMI_TIMEOUT_ERR, &bt_msg->ipmi_msg);
+	}
 	unlock(&bt.lock);
 
 	return 0;
@@ -265,6 +283,7 @@ static bool bt_get_resp(void)
 	/* Make sure the other side is idle before we move to the idle state */
 	bt_set_state(BT_STATE_B_BUSY);
 	list_del(&bt_msg->link);
+	bt.queue_len--;
 	unlock(&bt.lock);
 
 	/*
@@ -342,6 +361,7 @@ static int bt_del_ipmi_msg(struct ipmi_msg *ipmi_msg)
 
 	lock(&bt.lock);
 	list_del(&bt_msg->link);
+	bt.queue_len--;
 	unlock(&bt.lock);
 	return 0;
 }
@@ -383,6 +403,7 @@ void bt_init(void)
 	 */
 	bt_set_state(BT_STATE_B_BUSY);
 	list_head_init(&bt.msgq);
+	bt.queue_len = 0;
 
 	opal_add_poller(bt_poll, NULL);
 
