@@ -151,7 +151,7 @@ struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
 int ipmi_queue_msg(struct ipmi_msg *msg);
 
 /* Process a completed message */
-void ipmi_cmd_done(struct ipmi_msg *msg);
+void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg);
 
 /* 28.3 Chassis Control Command. Changes the power state of the P8. */
 int ipmi_chassis_control(uint8_t request);

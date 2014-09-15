@@ -66,15 +66,23 @@ int ipmi_queue_msg(struct ipmi_msg *msg)
 	/* Here we could choose which interface to use if we want to support
 	   multiple interfaces. */
 
-	/* We should also store the original message cmd/netfn here if we wish
-	   to validate it when we get the response. */
-
 	return msg->backend->queue_msg(msg);
 }
 
-void ipmi_cmd_done(struct ipmi_msg *msg)
+void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 {
-	if (msg->cc != IPMI_CC_NO_ERROR) {
+	msg->cc = cc;
+	if (msg->cmd != cmd) {
+		prerror("IPMI: Incorrect cmd 0x%02x in response\n", cmd);
+		cc = IPMI_ERR_UNSPECIFIED;
+	}
+
+	if (msg->netfn + 1 != netfn) {
+		prerror("IPMI: Incorrect netfn 0x%02x in response\n", netfn);
+		cc = IPMI_ERR_UNSPECIFIED;
+	}
+
+	if (cc != IPMI_CC_NO_ERROR) {
 		prerror("IPMI: Got error response 0x%02x\n", msg->cc);
 
 		if (msg->error)
@@ -84,7 +92,6 @@ void ipmi_cmd_done(struct ipmi_msg *msg)
 
 	/* At this point the message has should have been freed by the
 	   completion functions. */
-	msg = NULL;
 }
 
 void ipmi_register_backend(struct ipmi_backend *backend)

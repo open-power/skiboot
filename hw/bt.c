@@ -191,8 +191,7 @@ static bool bt_get_resp(void)
 	int i;
 	struct bt_msg *bt_msg;
 	struct ipmi_msg *ipmi_msg;
-	uint8_t resp_len;
-	uint8_t netfn;
+	uint8_t resp_len, netfn, seq, cmd;
 	uint8_t cc = IPMI_CC_NO_ERROR;
 
 	/* Wait for BMC to signal response */
@@ -202,8 +201,34 @@ static bool bt_get_resp(void)
 		return true;
 	}
 
-	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
-	if (!bt_msg) {
+	bt_setmask(BT_CTRL_H_BUSY, BT_CTRL);
+	bt_clearmask(BT_CTRL_B2H_ATN, BT_CTRL);
+	bt_setmask(BT_CTRL_CLR_RD_PTR, BT_CTRL);
+
+	/* Read the response */
+	/* Byte 1 - Length (includes header size) */
+	resp_len = bt_inb(BT_HOST2BMC) - BT_MIN_RESP_LEN;
+
+	/* Byte 2 - NetFn/LUN */
+	netfn = bt_inb(BT_HOST2BMC);
+
+	/* Byte 3 - Seq */
+	seq = bt_inb(BT_HOST2BMC);
+
+	/* Byte 4 - Cmd */
+	cmd = bt_inb(BT_HOST2BMC);
+
+	/* Byte 5 - Completion Code */
+	cc = bt_inb(BT_HOST2BMC);
+
+	/* Find the corresponding messasge */
+	list_for_each(&bt.msgq, bt_msg, link) {
+		if (bt_msg->seq == seq) {
+			break;
+		}
+
+	}
+	if (!bt_msg || (bt_msg->seq != seq)) {
 		/* A response to a message we no longer care about. */
 		prlog(PR_INFO, "BT: Nobody cared about a response to an BT/IPMI message\n");
 		bt_flush_msg();
@@ -213,13 +238,6 @@ static bool bt_get_resp(void)
 	}
 
 	ipmi_msg = &bt_msg->ipmi_msg;
-	bt_setmask(BT_CTRL_H_BUSY, BT_CTRL);
-	bt_clearmask(BT_CTRL_B2H_ATN, BT_CTRL);
-	bt_setmask(BT_CTRL_CLR_RD_PTR, BT_CTRL);
-
-	/* Read the response */
-	/* Byte 1 - Length (includes header size) */
-	resp_len = bt_inb(BT_HOST2BMC) - BT_MIN_RESP_LEN;
 
 	/*
 	 * Make sure we have enough room to store the resposne. As all values
@@ -233,29 +251,16 @@ static bool bt_get_resp(void)
 	}
 	ipmi_msg->resp_size = resp_len;
 
-	/* Byte 2 - NetFn/LUN */
-	netfn = bt_inb(BT_HOST2BMC);
-	ipmi_msg->netfn = netfn >> 2;
 	bt_msg->lun = netfn & 0x3;
-
-	/* Byte 3 - Seq */
-	bt_msg->seq = bt_inb(BT_HOST2BMC);
-
-	/* Byte 4 - Cmd */
-	ipmi_msg->cmd = bt_inb(BT_HOST2BMC);
-
-	/* Byte 5 - Completion Code */
-	ipmi_msg->cc = bt_inb(BT_HOST2BMC);
+	netfn = netfn >> 2;
 
 	/* Byte 6:N - Data */
 	for (i = 0; i < resp_len; i++)
 		ipmi_msg->data[i] = bt_inb(BT_HOST2BMC);
 	bt_clearmask(BT_CTRL_H_BUSY, BT_CTRL);
 
-	if (cc != IPMI_CC_NO_ERROR) {
+	if (cc != IPMI_CC_NO_ERROR)
 		prerror("BT: Host error 0x%02x receiving BT/IPMI response\n", cc);
-		ipmi_msg->cc = cc;
-	}
 
 	/* Make sure the other side is idle before we move to the idle state */
 	bt_set_state(BT_STATE_B_BUSY);
@@ -265,7 +270,7 @@ static bool bt_get_resp(void)
 	/*
 	 * Call the IPMI layer to finish processing the message.
 	 */
-	ipmi_cmd_done(ipmi_msg);
+	ipmi_cmd_done(cmd, netfn, cc, ipmi_msg);
 
 	/* Immediately send the next message */
 	return false;
