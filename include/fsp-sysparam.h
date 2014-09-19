@@ -29,6 +29,7 @@
 #define SYS_PARAM_DEF_BOOT_DEV		0xf0000024
 #define SYS_PARAM_NEXT_BOOT_DEV		0xf0000025
 #define SYS_PARAM_CONSOLE_SELECT	0xf0000026
+#define SYS_PARAM_BOOT_DEV_PATH		0xf0000027
 
 
 /* Completion for a sysparam call. err_len is either a negative error
