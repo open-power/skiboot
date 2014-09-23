@@ -250,9 +250,9 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 	u8 status = resp->word1 & 0xff00;
 
 	/*
- 	 * LED state update request came as part of FSP async message
- 	 * FSP_CMD_SET_LED_STATE, hence need to send response message.
-  	 */
+	 * LED state update request came as part of FSP async message
+	 * FSP_CMD_SET_LED_STATE, hence need to send response message.
+	 */
 	fail = (status == FSP_STATUS_INVALID_DATA) ||
 		(status == FSP_STATUS_DMA_ERROR) ||
 		(status == FSP_STATUS_SPCN_ERROR);
@@ -273,8 +273,8 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 			->ckpt_status;
 
 		/* Rollback the changes */
-		update_led_list(loc_code, ckpt_status);	
-	}	
+		update_led_list(loc_code, ckpt_status);
+	}
 	fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
 }
 
@@ -282,12 +282,12 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
  * Set the state of the LED pointed by the location code
  *
  * LED command:		FAULT state or IDENTIFY state
- * LED state  : 	OFF (reset) or ON (set)
+ * LED state  :		OFF (reset) or ON (set)
  *
  * SPCN TCE mapped buffer entries for setting LED state
  *
  * struct spcn_led_data {
- * 	u8	lc_len;
+ *	u8	lc_len;
  *	u16	state;
  *	char	lc_code[LOC_CODE_SIZE];
  *};
@@ -323,10 +323,10 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 		return rc;
 	}
 
-	/* 
- 	 * Checkpoint the status here, will use it if the SPCN
- 	 * command eventually fails.
- 	 */
+	/*
+	 * Checkpoint the status here, will use it if the SPCN
+	 * command eventually fails.
+	 */
 	led->ckpt_status = led->status;
 	sled.state = led->status;
 
@@ -367,14 +367,14 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 	buf_write(buf, u8, sled.lc_len);	 /* Location code length */
 	strncpy(buf, sled.lc_code, sled.lc_len); /* Location code */
 	buf += sled.lc_len;
-	buf_write(buf, u16, sled.state);  	 /* LED state */
+	buf_write(buf, u16, sled.state);	/* LED state */
 
 	msg = fsp_mkmsg(FSP_CMD_SPCN_PASSTHRU, 4,
 			SPCN_ADDR_MODE_CEC_NODE, cmd_hdr, 0, PSI_DMA_LED_BUF);
-	/* 
- 	 * Update the local lists based on the attempted SPCN command to
- 	 * set/reset an individual led (CEC or ENCL).
- 	 */
+	/*
+	 * Update the local lists based on the attempted SPCN command to
+	 * set/reset an individual led (CEC or ENCL).
+	 */
 	lock(&led_lock);
 	update_led_list(loc_code, sled.state);
 	msg->user_data = led;
@@ -428,7 +428,7 @@ static u32 fsp_push_data_to_tce(struct fsp_led_data *led, u8 *out_data,
 	lcode.size = sizeof(lcode);
 	lcode.status &= 0x0f;
 
-	/* 
+	/*
 	 * Check for outbound buffer overflow. If there are still
 	 * more LEDs to be sent across to FSP, dont send, ignore.
 	 */
@@ -466,11 +466,11 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 	/* CEC LED list */
 	list_for_each_safe(&cec_ledq, led, next, link) {
 		/*
- 		 * When the request type is system wide led list
- 		 * i.e GET_LC_CMPLT_SYS, send the entire contents
- 		 * of the CEC list including both all descendents
- 		 * and all of their enclosures.
- 		 */
+		 * When the request type is system wide led list
+		 * i.e GET_LC_CMPLT_SYS, send the entire contents
+		 * of the CEC list including both all descendents
+		 * and all of their enclosures.
+		 */
 
 		if (req_type == GET_LC_ENCLOSURES)
 			break;

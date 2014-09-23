@@ -43,8 +43,8 @@
 /* SPCN set LED */
 struct spcn_led_data {
 	u8	lc_len;
-	u16	state; 
- 	char	lc_code[LOC_CODE_SIZE];
+	u16	state;
+	char	lc_code[LOC_CODE_SIZE];
 };
 
 /* LED data */
