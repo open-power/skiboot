@@ -287,6 +287,18 @@ static void handle_extra_interrupt(struct psi *psi)
 	if (val & PSIHB_IRQ_STAT_HOST_ERR) {
 		if (platform.external_irq)
 			platform.external_irq(psi->chip_id);
+	} else {
+		u64 xivr;
+
+		/*
+		 * The way our FPGA "pulses" the external interrupt
+		 * on BMC machines means we might not see it in the
+		 * status register anymore, so look at the latch in
+		 * the XIVR
+		 */
+		xivr = in_be64(psi->regs + PSIHB_XIVR_HOST_ERR);
+		if (xivr & PPC_BIT(39) && platform.external_irq)
+			platform.external_irq(psi->chip_id);
 	}
 
 	/*
