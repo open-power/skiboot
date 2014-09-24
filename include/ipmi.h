@@ -89,6 +89,7 @@
 #define IPMI_NETFN(code)		((code) >> 8 & 0xff)
 
 #define IPMI_NETFN_CHASSIS		0x00
+#define IPMI_NETFN_SE			0x04
 #define IPMI_NETFN_STORAGE		0x0a
 #define IPMI_NETFN_APP			0x06
 
@@ -108,6 +109,7 @@
 #define IPMI_GET_MESSAGE_FLAGS		IPMI_CODE(IPMI_NETFN_APP, 0x31)
 #define IPMI_GET_MESSAGE		IPMI_CODE(IPMI_NETFN_APP, 0x33)
 #define IPMI_READ_EVENT			IPMI_CODE(IPMI_NETFN_APP, 0x35)
+#define IPMI_SET_SENSOR_READING		IPMI_CODE(IPMI_NETFN_SE, 0x30)
 
 /* AMI OEM comamnds. AMI uses NETFN 0x3a and 0x32 */
 #define IPMI_PARTIAL_ADD_ESEL		IPMI_CODE(0x32, 0xf0)
@@ -210,6 +212,10 @@ int ipmi_chassis_control(uint8_t request);
  * use chassis control to perform power off and reboot. */
 int ipmi_set_power_state(uint8_t system, uint8_t device);
 
+/* 35.17 Set Sensor Reading Command */
+int ipmi_set_sensor(uint8_t sensor, uint8_t *reading, size_t len);
+int ipmi_set_fw_progress_sensor(uint8_t state);
+
 /* Register a backend with the ipmi core. Currently we only support one. */
 void ipmi_register_backend(struct ipmi_backend *backend);
 
@@ -238,5 +244,8 @@ void ipmi_wdt_stop(void);
 /* Reset the watchdog timer. Does not return until the timer has been
  * reset and does not schedule future resets. */
 void ipmi_wdt_final_reset(void);
+
+/* Discover id of settable ipmi sensors */
+void ipmi_sensor_init(void);
 
 #endif
