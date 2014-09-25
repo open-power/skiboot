@@ -297,27 +297,6 @@ static bool slw_unset_overrides(struct proc_chip *chip, struct cpu_thread *c)
 	return true;
 }
 
-static bool slw_set_deep_mode(struct proc_chip *chip, struct cpu_thread *c)
-{
-	uint32_t core = pir_to_core_id(c->pir);
-	uint64_t tmp;
-	int rc;
-
-	/* Init PM GP1 for fast mode or deep mode */
-	rc = xscom_write(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_GP1),
-			 EX_PM_SETUP_GP1_DEEP_SLEEP);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_SLW_SET),
-					"SLW: Failed to write PM_GP1\n");
-		return false;
-	}
-
-	/* Read back for debug */
-	xscom_read(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_GP1), &tmp);
-	DBG("SLW: PMGP1 read   0x%016llx\n", tmp);
-	return true;
-}
-
 static bool slw_set_idle_mode(struct proc_chip *chip, struct cpu_thread *c)
 {
 	uint32_t core = pir_to_core_id(c->pir);
@@ -328,12 +307,26 @@ static bool slw_set_idle_mode(struct proc_chip *chip, struct cpu_thread *c)
 	 * PM GP1 allows fast/deep mode to be selected independently for sleep
 	 * and winkle. Init PM GP1 so that sleep happens in fast mode and
 	 * winkle happens in deep mode.
+	 * Make use of the OR XSCOM for this since the OCC might be manipulating
+	 * the PM_GP1 register as well. Before doing this ensure that the bits
+	 * managing idle states are cleared so as to override any bits set at
+	 * init time.
 	 */
-	rc = xscom_write(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_GP1),
+
+	tmp = ~EX_PM_GP1_SLEEP_WINKLE_MASK;
+	rc = xscom_write(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_CLEAR_GP1),
+			 tmp);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_SLW_SET),
+						"SLW: Failed to write PM_GP1\n");
+		return false;
+	}
+
+	rc = xscom_write(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_SET_GP1),
 			 EX_PM_SETUP_GP1_FAST_SLEEP_DEEP_WINKLE);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_SLW_SET),
-				"SLW: Failed to write PM_GP1\n");
+						"SLW: Failed to write PM_GP1\n");
 		return false;
 	}
 
@@ -374,23 +367,6 @@ static bool slw_get_idle_state_history(struct proc_chip *chip, struct cpu_thread
 
 	DBG("SLW: core %x:%x history: 0x%016llx (old2)\n",
 	    chip->id, core, tmp);
-
-	return true;
-}
-
-static bool slw_prepare_core(struct proc_chip *chip, struct cpu_thread *c)
-{
-	DBG("SLW: Prepare core %x:%x\n",
-	    chip->id, pir_to_core_id(c->pir));
-
-	if(!slw_general_init(chip, c))
-		return false;
-	if(!slw_set_overrides(chip, c))
-		return false;
-	if(!slw_set_deep_mode(chip, c))
-		return false;
-	if(!slw_get_idle_state_history(chip, c))
-		return false;
 
 	return true;
 }
@@ -650,17 +626,6 @@ static void add_cpu_idle_state_properties(void)
 	free(pmicr_mask_buf);
 }
 
-static bool slw_prepare_chip(struct proc_chip *chip)
-{
-	struct cpu_thread *c;
-	
-	for_each_available_core_in_chip(c, chip->id) {
-		if (!slw_prepare_core(chip, c))
-			return false;
-	}
-	return true;
-}
-
 static void slw_cleanup_core(struct proc_chip *chip, struct cpu_thread *c)
 {
 	uint64_t tmp;
@@ -771,11 +736,7 @@ int64_t slw_reinit(uint64_t flags)
 				"SLW: Not found on chip %d\n", chip->id);
 			return OPAL_HARDWARE;
 		}
-		if (!slw_prepare_chip(chip)) {
-			log_simple_error(&e_info(OPAL_RC_SLW_INIT),
-				"SLW: Error preparing chip %d\n", chip->id);
-			return OPAL_HARDWARE;
-		}
+
 		slw_patch_scans(chip, target_le);
 	}
 	slw_current_le = target_le;

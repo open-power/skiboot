@@ -197,10 +197,13 @@ static bool cpu_pstates_prepare_core(struct proc_chip *chip, struct cpu_thread *
 	 * Need to ensure only relevant bits are inited
 	 */
 
-	/* Init PM GP1 for SCOM based PSTATE control to set nominal freq */
-	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_GP1), &tmp);
-	tmp = tmp | EX_PM_SETUP_GP1_PM_SPR_OVERRIDE_EN;
-	rc = xscom_write(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_GP1), tmp);
+	/* Init PM GP1 for SCOM based PSTATE control to set nominal freq
+	 *
+	 * Use the OR SCOM to set the required bits in PM_GP1 register
+	 * since the OCC might be mainpulating the PM_GP1 register as well.
+	 */ 
+	rc = xscom_write(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_SET_GP1),
+			 EX_PM_SETUP_GP1_PM_SPR_OVERRIDE_EN);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_OCC_PSTATE_INIT),
 			"OCC: Failed to write PM_GP1 in pstates init\n");
@@ -225,10 +228,13 @@ static bool cpu_pstates_prepare_core(struct proc_chip *chip, struct cpu_thread *
 	 * cleared by OCC.  Sapphire need not clear.
 	 * However wait for DVFS state machine to become idle after min->nominal
 	 * transition initiated above.  If not switch over to SPR control could fail.
+	 *
+	 * Use the AND SCOM to clear the required bits in PM_GP1 register
+	 * since the OCC might be mainpulating the PM_GP1 register as well.
 	 */
-	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_GP1), &tmp);
-	tmp = tmp & ~EX_PM_SETUP_GP1_PM_SPR_OVERRIDE_EN;
-	rc = xscom_write(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_GP1), tmp);
+	tmp = ~EX_PM_SETUP_GP1_PM_SPR_OVERRIDE_EN;
+	rc = xscom_write(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_CLEAR_GP1),
+			tmp);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_OCC_PSTATE_INIT),
 			"OCC: Failed to write PM_GP1 in pstates init\n");
