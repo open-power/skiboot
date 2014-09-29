@@ -43,13 +43,13 @@ unsigned long fsp_dpo_init_tb = 0;
  */
 static int64_t fsp_opal_get_dpo_status(int64_t *dpo_timeout)
 {
-	int64_t timeout = 0;
-
-	if (fsp_dpo_init_tb && fsp_dpo_pending)
-		timeout = DPO_TIMEOUT - tb_to_secs(mftb() - fsp_dpo_init_tb);
-
-	*dpo_timeout = timeout;
-	return OPAL_SUCCESS;
+	if (fsp_dpo_init_tb && fsp_dpo_pending) {
+		*dpo_timeout = DPO_TIMEOUT - tb_to_secs(mftb() - fsp_dpo_init_tb);
+		return OPAL_SUCCESS;
+	} else {
+		*dpo_timeout = 0;
+		return OPAL_WRONG_STATE;
+	}
 }
 
 /* Process FSP DPO init message */
