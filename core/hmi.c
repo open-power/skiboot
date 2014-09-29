@@ -18,6 +18,7 @@
 #include <opal-msg.h>
 #include <processor.h>
 #include <chiptod.h>
+#include <lock.h>
 
 /*
  * HMER register layout:
@@ -140,6 +141,8 @@
  * NOTE: Per Dave Larson, never enable 8,9,21-23
  */
 
+static struct lock hmi_lock = LOCK_UNLOCKED;
+
 int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 {
 	int recover = 1;
@@ -250,8 +253,10 @@ static int64_t opal_handle_hmi(void)
 	memset(&hmi_evt, 0, sizeof(struct OpalHMIEvent));
 	hmi_evt.version = OpalHMIEvt_V1;
 
+	lock(&hmi_lock);
 	hmer = mfspr(SPR_HMER);		/* Get HMER register value */
 	recover = handle_hmi_exception(hmer, &hmi_evt);
+	unlock(&hmi_lock);
 
 	if (recover)
 		hmi_evt.disposition = OpalHMI_DISPOSITION_RECOVERED;
