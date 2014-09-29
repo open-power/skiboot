@@ -107,6 +107,7 @@ static bool fsp_dpo_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 	if (cmd_sub_mod == FSP_CMD_INIT_DPO) {
 		printf(PREFIX "SP initiated Delayed Power Off (DPO)\n");
 		fsp_process_dpo(msg);
+		return true;
 	}
 	return false;
 }
