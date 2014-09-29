@@ -19,6 +19,9 @@
 #include <processor.h>
 #include <chiptod.h>
 #include <lock.h>
+#include <xscom.h>
+#include <capp.h>
+#include <pci.h>
 
 /*
  * HMER register layout:
@@ -143,6 +146,75 @@
 
 static struct lock hmi_lock = LOCK_UNLOCKED;
 
+static int is_capp_recoverable(int chip_id)
+{
+	uint64_t reg;
+	xscom_read(chip_id, CAPP_ERR_STATUS_CTRL, &reg);
+	return (reg & PPC_BIT(0)) != 0;
+}
+
+static void handle_capp_recoverable(int chip_id)
+{
+	struct dt_node *np;
+	u64 phb_id;
+	u32 dt_chip_id;
+	struct phb *phb;
+	u32 phb_index;
+
+	dt_for_each_compatible(dt_root, np, "ibm,power8-pciex") {
+		dt_chip_id = dt_prop_get_u32(np, "ibm,chip-id");
+		phb_index = dt_prop_get_u32(np, "ibm,phb-index");
+		phb_id = dt_prop_get_u64(np, "ibm,opal-phbid");
+
+		if ((phb_index == 0) && (chip_id == dt_chip_id)) {
+			phb = pci_get_phb(phb_id);
+			phb->ops->lock(phb);
+			phb->ops->set_capp_recovery(phb);
+			phb->ops->unlock(phb);
+		}
+	}
+}
+
+static int decode_one_malfunction(int flat_chip_id, struct OpalHMIEvent *hmi_evt)
+{
+	hmi_evt->severity = OpalHMI_SEV_FATAL;
+	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
+
+	if (is_capp_recoverable(flat_chip_id)) {
+		handle_capp_recoverable(flat_chip_id);
+
+		hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
+		hmi_evt->type = OpalHMI_ERROR_CAPP_RECOVERY;
+		return 1;
+	}
+	/* TODO check other FIRs */
+	return 0;
+}
+
+static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
+{
+	int i;
+	int node;
+	int chip;
+	int flat_chip_id;
+	int recover = -1;
+	uint64_t malf_alert;
+
+	xscom_read(this_cpu()->chip_id, 0x2020011, &malf_alert);
+
+	for (i = 0; i < 64; i++) {
+		if (malf_alert & PPC_BIT(i)) {
+			chip = i % 8;
+			node = i / 7;
+			flat_chip_id = chip * node;
+			recover = decode_one_malfunction(flat_chip_id, hmi_evt);
+			xscom_write(this_cpu()->chip_id, 0x02020011, ~PPC_BIT(i));
+		}
+	}
+
+	return recover;
+}
+
 int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 {
 	int recover = 1;
@@ -178,11 +250,9 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	/* Assert if we see malfunction alert, we can not continue. */
 	if (hmer & SPR_HMER_MALFUNCTION_ALERT) {
 		hmer &= ~SPR_HMER_MALFUNCTION_ALERT;
-		if (hmi_evt) {
-			hmi_evt->severity = OpalHMI_SEV_FATAL;
-			hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
-		}
-		recover = 0;
+
+		if (hmi_evt)
+			recover = decode_malfunction(hmi_evt);
 	}
 
 	/* Assert if we see Hypervisor resource error, we can not continue. */
@@ -258,12 +328,13 @@ static int64_t opal_handle_hmi(void)
 	recover = handle_hmi_exception(hmer, &hmi_evt);
 	unlock(&hmi_lock);
 
-	if (recover)
+	if (recover == 1)
 		hmi_evt.disposition = OpalHMI_DISPOSITION_RECOVERED;
-	else
+	else if (recover == 0)
 		hmi_evt.disposition = OpalHMI_DISPOSITION_NOT_RECOVERED;
 
-	rc = queue_hmi_event(&hmi_evt);
+	if (recover != -1)
+		queue_hmi_event(&hmi_evt);
 	return rc;
 }
 opal_call(OPAL_HANDLE_HMI, opal_handle_hmi, 0);
