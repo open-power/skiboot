@@ -2871,18 +2871,20 @@ static int64_t capp_load_ucode(struct phb3 *p)
 
 static void phb3_init_capp_regs(struct phb3 *p)
 {
-	/* writing these vals directly based on lab procedures
-	   but some values included in microcode need to investigate */
+	/* writing field vals directly */
+	uint64_t reg;
 
+	xscom_read(p->chip_id, APC_MASTER_PB_CTRL, &reg);
+	reg |= PPC_BIT(3);
+	xscom_write(p->chip_id, APC_MASTER_PB_CTRL, reg);
 	/*      port0    port1
 	 * 100   PHB0   disabled
 	 * we're told it's the same for Venice
          */
-	xscom_write(p->chip_id, APC_MASTER_PB_CTRL, 	0x10000000000000FF);
-	xscom_write(p->chip_id, APC_MASTER_CONFIG, 	0x4070000000000000);
+	xscom_write(p->chip_id, APC_MASTER_CAPI_CTRL, 	0x4070000000000000);
 
 	/* tlb and mmio */
-	xscom_write(p->chip_id, TRANSPORT_CONTROL, 	0x4028000100000000);
+	xscom_write(p->chip_id, TRANSPORT_CONTROL, 	0x4028000104000000);
 
 	xscom_write(p->chip_id, CANNED_PRESP_MAP0, 	0);
 	xscom_write(p->chip_id, CANNED_PRESP_MAP1, 	0xFFFFFFFF00000000);
@@ -2891,8 +2893,8 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	/* error recovery */
 	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);
 
-	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP,   	0x0ABCDEF000000000);
-	xscom_write(p->chip_id, CAPP_EPOCH_TIMER_CTRL, 	0x00000000FFF8FFE0);
+	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP,   	0x1DC20B6600000000);
+	xscom_write(p->chip_id, CAPP_EPOCH_TIMER_CTRL, 	0xC0000000FFF0FFE0);
 	xscom_write(p->chip_id, FLUSH_UOP_CONFIG1, 	0xB188280728000000);
 	xscom_write(p->chip_id, FLUSH_UOP_CONFIG2, 	0xB188400F00000000);
 	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xA1F0000000000000);
