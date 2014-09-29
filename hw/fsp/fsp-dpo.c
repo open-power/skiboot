@@ -82,6 +82,8 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 	rc = opal_queue_msg(OPAL_MSG_DPO, NULL, NULL);
 	if (rc) {
 		printf(PREFIX "OPAL message queuing failed\n");
+		cmd |= FSP_STATUS_GENERIC_ERROR;
+		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
 		return;
 	}
 
