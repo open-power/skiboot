@@ -27,7 +27,10 @@
 
 #define PREFIX "FSPDPO: "
 
-#define DPO_TIMEOUT 2700 /* 45 minutes in seconds */
+#define DPO_CMD_SGN_BYTE0	0xf4 /* Byte[0] signature */
+#define DPO_CMD_SGN_BYTE1	0x20 /* Byte[1] signature */
+#define DPO_TIMEOUT		2700 /* 45 minutes in seconds */
+
 static bool fsp_dpo_pending = false;
 unsigned long fsp_dpo_init_tb = 0;
 
@@ -56,8 +59,9 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 	int rc;
 
 	/* DPO message does not have the correct signatures */
-	if ((msg->data.bytes[0] != 0xf4) || (msg->data.bytes[1] != 0x20)) {
-		printf("DPO: Message signatures did not match\n");
+	if ((msg->data.bytes[0] != DPO_CMD_SGN_BYTE0)
+			|| (msg->data.bytes[1] != DPO_CMD_SGN_BYTE1)) {
+		printf(PREFIX "Message signatures did not match\n");
 		cmd |= FSP_STATUS_INVALID_CMD;
 		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
 		return;
@@ -65,7 +69,7 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 
 	/* Sapphire is already in "DPO pending" state */
 	if (fsp_dpo_pending) {
-		printf("DPO: Sapphire is already in DPO pending state\n");
+		printf(PREFIX "OPAL is already in DPO pending state\n");
 		cmd |= FSP_STATUS_INVALID_DPOSTATE;
 		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
 		return;
@@ -77,7 +81,7 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 	/* Inform the host about DPO */
 	rc = opal_queue_msg(OPAL_MSG_DPO, NULL, NULL);
 	if (rc) {
-		printf("DPO: OPAL message queuing failed\n");
+		printf(PREFIX "OPAL message queuing failed\n");
 		return;
 	}
 
