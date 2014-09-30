@@ -412,6 +412,8 @@ struct phb_ops {
 
 	/* Put phb in capi mode or pcie mode */
 	int64_t (*set_capi_mode)(struct phb *phb, uint64_t mode, uint64_t pe_number);
+
+	int64_t (*set_capp_recovery)(struct phb *phb);
 };
 
 enum phb_type {

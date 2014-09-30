@@ -2125,8 +2125,11 @@ static int64_t phb3_sm_fundamental_reset(struct phb3 *p)
 		out_be64(p->regs + PHB_RESET, reg);
 		PHBDBG(p, "Slot freset: Deasserting PERST\n");
 
-		/* Wait 200ms before polling link */
 		p->state = PHB3_STATE_FRESET_DEASSERT_DELAY;
+		/* CAPP fpga requires 1s to flash before polling link */
+		if (p->flags & PHB3_CAPP_RECOVERY)
+			return phb3_set_sm_timeout(p, secs_to_tb(1));
+		/* Wait 200ms before polling link dd*/
 		return phb3_set_sm_timeout(p, msecs_to_tb(200));
 
 	case PHB3_STATE_FRESET_DEASSERT_DELAY:
@@ -2156,6 +2159,7 @@ static int64_t phb3_fundamental_reset(struct phb *phb)
 	return phb3_sm_fundamental_reset(p);
 }
 
+static void do_capp_recovery_scoms(struct phb3 *phb);
 /*
  * The OS is expected to do fundamental reset after complete
  * reset to make sure the PHB could be recovered from the
@@ -2176,6 +2180,11 @@ static int64_t phb3_sm_complete_reset(struct phb3 *p)
 	switch (p->state) {
 	case PHB3_STATE_FENCED:
 	case PHB3_STATE_FUNCTIONAL:
+
+		/* do steps 3-5 of capp recovery procedure */
+		if (p->flags & PHB3_CAPP_RECOVERY)
+			do_capp_recovery_scoms(p);
+
 		/*
 		 * The users might be doing error injection through PBCQ
 		 * Error Inject Control Register. Without clearing that,
@@ -2221,6 +2230,7 @@ static int64_t phb3_sm_complete_reset(struct phb3 *p)
 		return phb3_set_sm_timeout(p, msecs_to_tb(10));
 	case PHB3_STATE_CRESET_REINIT:
 		p->flags &= ~PHB3_AIB_FENCED;
+		p->flags &= ~PHB3_CAPP_RECOVERY;
 		phb3_init_hw(p);
 
 		p->state = PHB3_STATE_CRESET_FRESET;
@@ -2330,8 +2340,8 @@ static int64_t phb3_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 		return OPAL_HARDWARE;
 	}
 
-	/* Check fence */
-	if (phb3_fenced(p)) {
+	/* Check fence and CAPP recovery */
+	if (phb3_fenced(p) || (p->flags & PHB3_CAPP_RECOVERY)) {
 		*freeze_state = OPAL_EEH_STOPPED_MMIO_DMA_FREEZE;
 		*pci_error_type = OPAL_EEH_PHB_ERROR;
 		if (severity)
@@ -2477,6 +2487,12 @@ static int64_t phb3_eeh_next_error(struct phb *phb,
 	if (p->state == PHB3_STATE_BROKEN) {
 		*pci_error_type = OPAL_EEH_PHB_ERROR;
 		*severity = OPAL_EEH_SEV_PHB_DEAD;
+		return OPAL_SUCCESS;
+	}
+
+	if ((p->flags & PHB3_CAPP_RECOVERY)) {
+		*pci_error_type = OPAL_EEH_PHB_ERROR;
+		*severity = OPAL_EEH_SEV_PHB_FENCED;
 		return OPAL_SUCCESS;
 	}
 
@@ -2925,6 +2941,15 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 		return OPAL_BUSY;
 	}
 
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
+	if ((reg & PPC_BIT(5))) {
+		PHBERR(p, "CAPP recovery failed (%016llx)\n", reg);
+		return OPAL_HARDWARE;
+	} else if ((reg & PPC_BIT(0)) && (!(reg & PPC_BIT(1)))) {
+		PHBDBG(p, "CAPP recovery in progress\n");
+		return OPAL_BUSY;
+	}
+
 	if (mode == OPAL_PHB_MODE_PCIE)
 		return OPAL_UNSUPPORTED;
 
@@ -3036,6 +3061,37 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	return OPAL_SUCCESS;
 }
 
+static int64_t phb3_set_capp_recovery(struct phb *phb)
+{
+	struct phb3 *p = phb_to_phb3(phb);
+
+	if (p->flags & PHB3_CAPP_RECOVERY)
+		return 0;
+
+	/* set opal event flag to indicate eeh condition */
+	opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
+				OPAL_EVENT_PCI_ERROR);
+
+	p->flags |= PHB3_CAPP_RECOVERY;
+
+	return 0;
+}
+
+static void do_capp_recovery_scoms(struct phb3 *p)
+{
+	uint64_t reg;
+	PHBDBG(p, "Doing CAPP recovery scoms\n");
+
+	xscom_write(p->chip_id, 0x201301a, 0); /* disable snoops */
+	capp_load_ucode(p);
+	xscom_write(p->chip_id, 0x2013013, 0); /* clear err rpt reg*/
+	xscom_write(p->chip_id, 0x2013000, 0); /* clear capp fir */
+
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
+	reg &= ~(PPC_BIT(0) | PPC_BIT(1));
+	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL, reg);
+}
+
 static const struct phb_ops phb3_ops = {
 	.lock			= phb3_lock,
 	.unlock			= phb3_unlock,
@@ -3078,6 +3134,7 @@ static const struct phb_ops phb3_ops = {
 	.get_diag_data		= NULL,
 	.get_diag_data2		= phb3_get_diag_data,
 	.set_capi_mode		= phb3_set_capi_mode,
+	.set_capp_recovery	= phb3_set_capp_recovery,
 };
 
 /*
