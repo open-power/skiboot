@@ -871,6 +871,11 @@ struct opal_sg_list {
 #define OPAL_DUMP_REGION_OS_START		0x80
 #define OPAL_DUMP_REGION_OS_END			0xFF
 
+/* CAPI flags */
+#define OPAL_PHB_MODE_PCIE		0x00000000
+#define OPAL_PHB_MODE_CAPI		0x00000001
+#define OPAL_PHB_MODE_SNOOP_OFF		0x00000002
+#define OPAL_PHB_MODE_SNOOP_ON		0x00000004
 
 /****** Internal **********/
 #include <skiboot.h>

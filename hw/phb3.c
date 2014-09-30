@@ -2916,8 +2916,37 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	uint64_t reg;
 	int i;
 
-	if (mode != 1)
-		return OPAL_PARAMETER;
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
+	if ((reg & PPC_BIT(5))) {
+		PHBERR(p, "CAPP recovery failed (%016llx)\n", reg);
+		return OPAL_HARDWARE;
+	} else if ((reg & PPC_BIT(0)) && (!(reg & PPC_BIT(1)))) {
+		PHBDBG(p, "CAPP recovery in progress\n");
+		return OPAL_BUSY;
+	}
+
+	if (mode == OPAL_PHB_MODE_PCIE)
+		return OPAL_UNSUPPORTED;
+
+	if (mode == OPAL_PHB_MODE_SNOOP_OFF) {
+		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0x0000000000000000);
+		return OPAL_SUCCESS;
+	}
+
+	if (mode == OPAL_PHB_MODE_SNOOP_ON) {
+		xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0x0000000000000000);
+		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xA1F0000000000000);
+		return OPAL_SUCCESS;
+	}
+
+	if (mode != OPAL_PHB_MODE_CAPI)
+		return OPAL_UNSUPPORTED;
+
+	xscom_read(p->chip_id, 0x9013c03, &reg);
+	if (reg & PPC_BIT(0)) {
+		PHBDBG(p, "Already in CAPP mode\n");
+		return OPAL_SUCCESS;
+	}
 
 	if (!p->capp_ucode_loaded) {
 		PHBERR(p, "capp ucode not loaded into capp unit\n");
@@ -4087,6 +4116,9 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 	}
 	max_link_speed = dt_prop_get_u32_def(pbcq, "ibm,max-link-speed", 3);
 	dt_add_property_cells(np, "ibm,max-link-speed", max_link_speed);
+	dt_add_property_cells(np, "ibm,capi-modes", OPAL_PHB_MODE_CAPI |
+							OPAL_PHB_MODE_SNOOP_ON |
+							OPAL_PHB_MODE_SNOOP_OFF);
 
 	add_chip_dev_associativity(np);
 }

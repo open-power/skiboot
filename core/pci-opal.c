@@ -703,15 +703,10 @@ static int64_t opal_pci_set_phb_capi_mode(uint64_t phb_id, uint64_t mode, uint64
 		return OPAL_PARAMETER;
 	if (!phb->ops->set_capi_mode)
 		return OPAL_UNSUPPORTED;
-	if (mode == 1) {
-		phb->ops->lock(phb);
-		rc = phb->ops->set_capi_mode(phb, mode, pe_number);
-		phb->ops->unlock(phb);
-		return rc;
-	}
-	if (mode == 0) {
-		/* FIXME add support for PCI mode*/
-	}
-	return OPAL_UNSUPPORTED;
+
+	phb->ops->lock(phb);
+	rc = phb->ops->set_capi_mode(phb, mode, pe_number);
+	phb->ops->unlock(phb);
+	return rc;
 }
 opal_call(OPAL_PCI_SET_PHB_CAPI_MODE, opal_pci_set_phb_capi_mode, 3);
