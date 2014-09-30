@@ -127,14 +127,13 @@ bool cpu_poll_job(struct cpu_job *job)
 
 void cpu_wait_job(struct cpu_job *job, bool free_it)
 {
+	unsigned long ticks = usecs_to_tb(5);
+
 	if (!job)
 		return;
 
 	while(!job->complete) {
-		/* Handle pollers if master CPU */
-		if (this_cpu() == boot_cpu)
-			opal_run_pollers();
-		cpu_relax();
+		time_wait(ticks);
 		lwsync();
 	}
 	lwsync();
