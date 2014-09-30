@@ -18,15 +18,31 @@
 #include <opal.h>
 #include <cpu.h>
 
+static void time_wait_poll(unsigned long duration)
+{
+	unsigned long remaining = duration;
+	unsigned long end = mftb() + duration;
+	unsigned long period = msecs_to_tb(5);
+
+	while (tb_compare(mftb(), end) != TB_AAFTERB) {
+		/* Call pollers periodically but not continually to avoid
+		 * bouncing cachelines due to lock contention. */
+		if (remaining >= period) {
+			opal_run_pollers();
+			time_wait_nopoll(period);
+			remaining -= period;
+		}
+
+		cpu_relax();
+	}
+}
+
 void time_wait(unsigned long duration)
 {
-	unsigned long end = mftb() + duration;
-
-	while(tb_compare(mftb(), end) != TB_AAFTERB) {
-		opal_run_pollers();
-		cpu_relax();
-        }
-
+	if (this_cpu() != boot_cpu)
+		time_wait_nopoll(duration);
+	else
+		time_wait_poll(duration);
 }
 
 void time_wait_nopoll(unsigned long duration)
