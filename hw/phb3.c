@@ -2950,21 +2950,21 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 		return OPAL_BUSY;
 	}
 
-	if (mode == OPAL_PHB_MODE_PCIE)
+	if (mode == OPAL_PHB_CAPI_MODE_PCIE)
 		return OPAL_UNSUPPORTED;
 
-	if (mode == OPAL_PHB_MODE_SNOOP_OFF) {
+	if (mode == OPAL_PHB_CAPI_MODE_SNOOP_OFF) {
 		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0x0000000000000000);
 		return OPAL_SUCCESS;
 	}
 
-	if (mode == OPAL_PHB_MODE_SNOOP_ON) {
+	if (mode == OPAL_PHB_CAPI_MODE_SNOOP_ON) {
 		xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0x0000000000000000);
 		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xA1F0000000000000);
 		return OPAL_SUCCESS;
 	}
 
-	if (mode != OPAL_PHB_MODE_CAPI)
+	if (mode != OPAL_PHB_CAPI_MODE_CAPI)
 		return OPAL_UNSUPPORTED;
 
 	xscom_read(p->chip_id, 0x9013c03, &reg);
@@ -4173,9 +4173,8 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 	}
 	max_link_speed = dt_prop_get_u32_def(pbcq, "ibm,max-link-speed", 3);
 	dt_add_property_cells(np, "ibm,max-link-speed", max_link_speed);
-	dt_add_property_cells(np, "ibm,capi-modes", OPAL_PHB_MODE_CAPI |
-							OPAL_PHB_MODE_SNOOP_ON |
-							OPAL_PHB_MODE_SNOOP_OFF);
+	dt_add_property_cells(np, "ibm,capi-flags",
+			      OPAL_PHB_CAPI_FLAG_SNOOP_CONTROL);
 
 	add_chip_dev_associativity(np);
 }

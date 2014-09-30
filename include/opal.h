@@ -624,6 +624,7 @@ enum OpalHMI_ErrType {
 	OpalHMI_ERROR_SCOM_FIR,
 	OpalHMI_ERROR_DEBUG_TRIG_FIR,
 	OpalHMI_ERROR_HYP_RESOURCE,
+	OpalHMI_ERROR_CAPP_RECOVERY,
 };
 
 struct OpalHMIEvent {
@@ -871,11 +872,17 @@ struct opal_sg_list {
 #define OPAL_DUMP_REGION_OS_START		0x80
 #define OPAL_DUMP_REGION_OS_END			0xFF
 
-/* CAPI flags */
-#define OPAL_PHB_MODE_PCIE		0x00000000
-#define OPAL_PHB_MODE_CAPI		0x00000001
-#define OPAL_PHB_MODE_SNOOP_OFF		0x00000002
-#define OPAL_PHB_MODE_SNOOP_ON		0x00000004
+/* CAPI modes for PHB */
+enum {
+	OPAL_PHB_CAPI_MODE_PCIE		= 0,
+	OPAL_PHB_CAPI_MODE_CAPI		= 1,
+	OPAL_PHB_CAPI_MODE_SNOOP_OFF    = 2,
+	OPAL_PHB_CAPI_MODE_SNOOP_ON	= 3,
+};
+
+/* CAPI feature flags (in device-tree) */
+#define OPAL_PHB_CAPI_FLAG_SNOOP_CONTROL	0x00000001
+#define OPAL_PHB_CAPI_FLAG_REVERT_TO_PCIE	0x00000002
 
 /****** Internal **********/
 #include <skiboot.h>
