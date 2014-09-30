@@ -50,14 +50,8 @@ static struct phb *phbs[64];
  * Generic PCI utilities
  */
 
-/* pci_find_cap - Find a PCI capability in a device config space
- *
- * This will return a config space offset (positive) or a negative
- * error (OPAL error codes).
- *
- * OPAL_UNSUPPORTED is returned if the capability doesn't exist
- */
-int64_t pci_find_cap(struct phb *phb, uint16_t bdfn, uint8_t want)
+static int64_t __pci_find_cap(struct phb *phb, uint16_t bdfn,
+			      uint8_t want, bool check_cap_indicator)
 {
 	int64_t rc;
 	uint16_t stat, cap;
@@ -66,7 +60,7 @@ int64_t pci_find_cap(struct phb *phb, uint16_t bdfn, uint8_t want)
 	rc = pci_cfg_read16(phb, bdfn, PCI_CFG_STAT, &stat);
 	if (rc)
 		return rc;
-	if (!(stat & PCI_CFG_STAT_CAP))
+	if (check_cap_indicator && !(stat & PCI_CFG_STAT_CAP))
 		return OPAL_UNSUPPORTED;
 	rc = pci_cfg_read8(phb, bdfn, PCI_CFG_CAP, &pos);
 	if (rc)
@@ -86,6 +80,18 @@ int64_t pci_find_cap(struct phb *phb, uint16_t bdfn, uint8_t want)
 		pos = next;
 	}
 	return OPAL_UNSUPPORTED;
+}
+
+/* pci_find_cap - Find a PCI capability in a device config space
+ *
+ * This will return a config space offset (positive) or a negative
+ * error (OPAL error codes).
+ *
+ * OPAL_UNSUPPORTED is returned if the capability doesn't exist
+ */
+int64_t pci_find_cap(struct phb *phb, uint16_t bdfn, uint8_t want)
+{
+	return __pci_find_cap(phb, bdfn, want, true);
 }
 
 /* pci_find_ecap - Find a PCIe extended capability in a device
@@ -166,7 +172,24 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	pd->is_bridge = (htype & 0x7f) != 0;
 	pd->scan_map = 0xffffffff; /* Default */
 
-	ecap = pci_find_cap(phb, bdfn, PCI_CFG_CAP_ID_EXP);
+	/* On the upstream port of PLX bridge 8724 (rev ba), PCI_STATUS
+	 * register doesn't have capability indicator though it support
+	 * various PCI capabilities. So we need ignore that bit when
+	 * looking for PCI capabilities on the upstream port, which is
+	 * limited to one that seats directly under root port.
+	 */
+	if (vdid == 0x872410b5 && parent && !parent->parent) {
+		uint8_t rev;
+
+		pci_cfg_read8(phb, bdfn, PCI_CFG_REV_ID, &rev);
+		if (rev == 0xba)
+			ecap = __pci_find_cap(phb, bdfn,
+					      PCI_CFG_CAP_ID_EXP, false);
+		else
+			ecap = pci_find_cap(phb, bdfn, PCI_CFG_CAP_ID_EXP);
+	} else {
+		ecap = pci_find_cap(phb, bdfn, PCI_CFG_CAP_ID_EXP);
+	}
 	if (ecap > 0) {
 		pci_set_cap(pd, PCI_CFG_CAP_ID_EXP, ecap, false);
 		pci_cfg_read16(phb, bdfn, ecap + PCICAP_EXP_CAPABILITY_REG,
