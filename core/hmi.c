@@ -153,7 +153,7 @@ static int is_capp_recoverable(int chip_id)
 	return (reg & PPC_BIT(0)) != 0;
 }
 
-static void handle_capp_recoverable(int chip_id)
+static int handle_capp_recoverable(int chip_id)
 {
 	struct dt_node *np;
 	u64 phb_id;
@@ -171,8 +171,10 @@ static void handle_capp_recoverable(int chip_id)
 			phb->ops->lock(phb);
 			phb->ops->set_capp_recovery(phb);
 			phb->ops->unlock(phb);
+			return 1;
 		}
 	}
+	return 0;
 }
 
 static int decode_one_malfunction(int flat_chip_id, struct OpalHMIEvent *hmi_evt)
@@ -181,7 +183,8 @@ static int decode_one_malfunction(int flat_chip_id, struct OpalHMIEvent *hmi_evt
 	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
 
 	if (is_capp_recoverable(flat_chip_id)) {
-		handle_capp_recoverable(flat_chip_id);
+		if (handle_capp_recoverable(flat_chip_id) == 0)
+			return 0;
 
 		hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 		hmi_evt->type = OpalHMI_ERROR_CAPP_RECOVERY;
@@ -194,23 +197,16 @@ static int decode_one_malfunction(int flat_chip_id, struct OpalHMIEvent *hmi_evt
 static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
 {
 	int i;
-	int node;
-	int chip;
-	int flat_chip_id;
 	int recover = -1;
 	uint64_t malf_alert;
 
 	xscom_read(this_cpu()->chip_id, 0x2020011, &malf_alert);
 
-	for (i = 0; i < 64; i++) {
+	for (i = 0; i < 64; i++)
 		if (malf_alert & PPC_BIT(i)) {
-			chip = i % 8;
-			node = i / 7;
-			flat_chip_id = chip * node;
-			recover = decode_one_malfunction(flat_chip_id, hmi_evt);
+			recover = decode_one_malfunction(i, hmi_evt);
 			xscom_write(this_cpu()->chip_id, 0x02020011, ~PPC_BIT(i));
 		}
-	}
 
 	return recover;
 }
