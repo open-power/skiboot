@@ -2663,6 +2663,80 @@ static int64_t phb3_err_inject_mem32(struct phb3 *p, uint32_t pe_no,
 	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
 }
 
+static int64_t phb3_err_inject_mem64(struct phb3 *p, uint32_t pe_no,
+				     uint64_t addr, uint64_t mask,
+				     bool is_write)
+{
+	uint64_t base, len, segstart, segsize;
+	uint64_t cache, a, m;
+	uint64_t ctrl = PHB_PAPR_ERR_INJ_CTL_OUTB;
+	uint32_t index;
+
+	a = base = len = 0x0ull;
+	for (index = 0; index < ARRAY_SIZE(p->m64b_cache); index++) {
+		cache = p->m64b_cache[index];
+		if (!(cache & IODA2_M64BT_ENABLE))
+			continue;
+
+		if (cache & IODA2_M64BT_SINGLE_PE) {
+			if (GETFIELD(IODA2_M64BT_PE_HI, cache) != (pe_no >> 5) ||
+			    GETFIELD(IODA2_M64BT_PE_LOW, cache) != (pe_no & 0x1f))
+				continue;
+
+			segstart = GETFIELD(IODA2_M64BT_SINGLE_BASE, cache);
+			segstart <<= 25;	/* 32MB aligned */
+			segsize = GETFIELD(IODA2_M64BT_SINGLE_MASK, cache);
+			segsize = (0x2000000ull - segsize) << 25;
+		} else {
+			segstart = GETFIELD(IODA2_M64BT_BASE, cache);
+			segstart <<= 20;	/* 1MB aligned */
+			segsize = GETFIELD(IODA2_M64BT_MASK, cache);
+			segsize = (0x40000000ull - segsize) << 20;
+
+			segsize /= PHB3_MAX_PE_NUM;
+			segstart = segstart + segsize * pe_no;
+		}
+
+		/* We expect contiguous segments. Otherwise, to
+		 * pick the bigger one, which has more possibility
+		 * to be accessed
+		 */
+		if (!len) {
+			base = segstart;
+			len = segsize;
+		} else if ((base + len) == segstart) {
+			len += segsize;
+		} else if (segsize > len) {
+			base = segstart;
+			len = segsize;
+		}
+
+		/* Specified address is valid one */
+		if (addr >= segstart && addr < (segstart + segsize)) {
+			a = addr;
+			break;
+		}
+	}
+
+	/* No MM64 segments assigned to the PE */
+	if (!len)
+		return OPAL_PARAMETER;
+
+	/* Address specified or calculated */
+	if (!a) {
+		a = base;
+		len = len & ~(len - 1);
+		m = ~(len - 1);
+	} else {
+		m = mask;
+	}
+
+	a = SETFIELD(PHB_PAPR_ERR_INJ_ADDR_MMIO, 0x0ull, a);
+	m = SETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, 0x0ull, m);
+
+	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
+}
+
 static int64_t phb3_err_inject_cfg(struct phb3 *p, uint32_t pe_no,
 				   uint64_t addr, uint64_t mask,
 				   bool is_write)
@@ -2717,10 +2791,6 @@ static int64_t phb3_err_inject(struct phb *phb, uint32_t pe_no,
 			   uint64_t addr, uint64_t mask, bool is_write);
 	bool is_write;
 
-	/* To support 64-bits error injection later */
-	if (type == OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64)
-		return OPAL_UNSUPPORTED;
-
 	/* How could we get here without valid RTT? */
 	if (!p->tbl_rtt)
 		return OPAL_HARDWARE;
@@ -2736,12 +2806,18 @@ static int64_t phb3_err_inject(struct phb *phb, uint32_t pe_no,
 	case OPAL_ERR_INJECT_FUNC_IOA_LD_MEM_ADDR:
 	case OPAL_ERR_INJECT_FUNC_IOA_LD_MEM_DATA:
 		is_write = false;
-		handler = phb3_err_inject_mem32;
+		if (type == OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64)
+			handler = phb3_err_inject_mem64;
+		else
+			handler = phb3_err_inject_mem32;
 		break;
 	case OPAL_ERR_INJECT_FUNC_IOA_ST_MEM_ADDR:
 	case OPAL_ERR_INJECT_FUNC_IOA_ST_MEM_DATA:
 		is_write = true;
-		handler = phb3_err_inject_mem32;
+		if (type == OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64)
+			handler = phb3_err_inject_mem64;
+		else
+			handler = phb3_err_inject_mem32;
 		break;
 	case OPAL_ERR_INJECT_FUNC_IOA_LD_CFG_ADDR:
 	case OPAL_ERR_INJECT_FUNC_IOA_LD_CFG_DATA:
