@@ -2613,43 +2613,52 @@ static int64_t phb3_err_inject_mem32(struct phb3 *p, uint32_t pe_no,
 				     uint64_t addr, uint64_t mask,
 				     bool is_write)
 {
-	uint64_t a, m, prefer, base;
+	uint64_t base, len, segstart, segsize;
+	uint64_t a, m;
 	uint64_t ctrl = PHB_PAPR_ERR_INJ_CTL_OUTB;
-	int index;
+	uint32_t index;
 
-	a = 0x0ull;
-	prefer = 0x0ull;
+	segsize = (M32_PCI_SIZE / PHB3_MAX_PE_NUM);
+	a = base = len = 0x0ull;
+
 	for (index = 0; index < PHB3_MAX_PE_NUM; index++) {
 		if (GETFIELD(IODA2_M32DT_PE, p->m32d_cache[index]) != pe_no)
 			continue;
 
-		base = p->mm1_base + (M32_PCI_SIZE / PHB3_MAX_PE_NUM) * index;
-
-		/* Update preferred address */
-		if (!prefer) {
-			prefer = GETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, base);
-			prefer = SETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, 0x0ull, prefer);
+		/* Obviously, we can't support discontiguous segments.
+		 * We have to pick the first batch of contiguous segments
+		 * for that case
+		 */
+		segstart = p->mm1_base + segsize * index;
+		if (!len) {
+			base = segstart;
+			len = segsize;
+		} else if ((base + len) == segstart) {
+			len += segsize;
 		}
 
-		/* The input address matches ? */
-		if (addr >= base &&
-		    addr < base + M32_PCI_SIZE / PHB3_MAX_PE_NUM) {
+		/* Check the specified address is valid one */
+		if (addr >= segstart && addr < (segstart + segsize)) {
 			a = addr;
 			break;
 		}
 	}
 
-	/* Invalid PE number */
-	if (!prefer)
+	/* No MM32 segments assigned to the PE */
+	if (!len)
 		return OPAL_PARAMETER;
 
 	/* Specified address is out of range */
 	if (!a) {
-		a = prefer;
-		m = PHB_PAPR_ERR_INJ_MASK_MMIO_MASK;
+		a = base;
+		len = len & ~(len - 1);
+		m = ~(len - 1);
 	} else {
 		m = mask;
 	}
+
+	a = SETFIELD(PHB_PAPR_ERR_INJ_ADDR_MMIO, 0x0ull, a);
+	m = SETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, 0x0ull, m);
 
 	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
 }
