@@ -2782,6 +2782,84 @@ static int64_t phb3_err_inject_cfg(struct phb3 *p, uint32_t pe_no,
 	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
 }
 
+static int64_t phb3_err_inject_dma(struct phb3 *p, uint32_t pe_no,
+				   uint64_t addr, uint64_t mask,
+				   bool is_write, bool is_64bits)
+{
+	uint32_t index, page_size;
+	uint64_t tve, table_entries;
+	uint64_t base, start, end, len, a, m;
+	uint64_t ctrl = PHB_PAPR_ERR_INJ_CTL_INB;
+
+	/* TVE index and base address */
+	if (!is_64bits) {
+		index = (pe_no << 1);
+		base = 0x0ull;
+	} else {
+		index = ((pe_no << 1) + 1);
+		base = (0x1ull << 59);
+	}
+
+	/* Raw data of table entries and page size */
+	tve = p->tve_cache[index];
+	table_entries = GETFIELD(IODA2_TVT_TCE_TABLE_SIZE, tve);
+	table_entries = (0x1ull << (table_entries + 8));
+	page_size = GETFIELD(IODA2_TVT_IO_PSIZE, tve);
+	if (!page_size && !(tve & PPC_BIT(51)))
+		return OPAL_UNSUPPORTED;
+
+	/* Check the page size */
+	switch (page_size) {
+	case 0:	/* bypass */
+		start = ((tve & (0x3ull << 10)) << 14) |
+			((tve & (0xffffffull << 40)) >> 40);
+		end   = ((tve & (0x3ull << 8)) << 16) |
+			((tve & (0xffffffull << 16)) >> 16);
+
+		/* 16MB aligned size */
+		len   = (end - start) << 24;
+		break;
+	case 5:  /* 64KB */
+		len = table_entries * 0x10000ull;
+		break;
+	case 13: /* 16MB */
+		len = table_entries * 0x1000000ull;
+		break;
+	case 17: /* 256MB */
+		len = table_entries * 0x10000000ull;
+		break;
+	case 1:  /* 4KB */
+	default:
+		len = table_entries * 0x1000ull;
+	}
+
+	/* The specified address is in range */
+	if (addr && addr >= base && addr < (base + len)) {
+		a = addr;
+		m = mask;
+	} else {
+		a = base;
+		len = len & ~(len - 1);
+		m = ~(len - 1);
+	}
+
+	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
+}
+
+static int64_t phb3_err_inject_dma32(struct phb3 *p, uint32_t pe_no,
+				     uint64_t addr, uint64_t mask,
+				     bool is_write)
+{
+	return phb3_err_inject_dma(p, pe_no, addr, mask, is_write, false);
+}
+
+static int64_t phb3_err_inject_dma64(struct phb3 *p, uint32_t pe_no,
+				     uint64_t addr, uint64_t mask,
+				     bool is_write)
+{
+	return phb3_err_inject_dma(p, pe_no, addr, mask, is_write, true);	
+}
+
 static int64_t phb3_err_inject(struct phb *phb, uint32_t pe_no,
 			       uint32_t type, uint32_t func,
 			       uint64_t addr, uint64_t mask)
@@ -2828,6 +2906,26 @@ static int64_t phb3_err_inject(struct phb *phb, uint32_t pe_no,
 	case OPAL_ERR_INJECT_FUNC_IOA_ST_CFG_DATA:
 		is_write = true;
 		handler = phb3_err_inject_cfg;
+		break;
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_DATA:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_MASTER:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_TARGET:
+		is_write = false;
+		if (type == OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64)
+			handler = phb3_err_inject_dma64;
+		else
+			handler = phb3_err_inject_dma32;
+		break;
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_DATA:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_MASTER:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_TARGET:
+		is_write = true;
+		if (type == OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64)
+			handler = phb3_err_inject_dma64;
+		else
+			handler = phb3_err_inject_dma32;
 		break;
 	default:
 		return OPAL_PARAMETER;
