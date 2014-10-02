@@ -112,31 +112,30 @@ static int64_t opal_pci_eeh_freeze_set(uint64_t phb_id, uint64_t pe_number,
 }
 opal_call(OPAL_PCI_EEH_FREEZE_SET, opal_pci_eeh_freeze_set, 3);
 
-static int64_t opal_pci_err_injct(uint64_t phb_id, uint32_t pe_no,
-				  uint32_t type, uint32_t function,
-				  uint64_t addr, uint64_t mask)
+static int64_t opal_pci_err_inject(uint64_t phb_id, uint32_t pe_no,
+				   uint32_t type, uint32_t func,
+				   uint64_t addr, uint64_t mask)
 {
 	struct phb *phb = pci_get_phb(phb_id);
 	int64_t rc;
 
 	if (!phb)
 		return OPAL_PARAMETER;
-	if (!phb->ops || !phb->ops->err_injct)
+	if (!phb->ops || !phb->ops->err_inject)
 		return OPAL_UNSUPPORTED;
 
-	if (type != OpalErrinjctTypeIoaBusError &&
-	    type != OpalErrinjctTypeIoaBusError64)
+	if (type != OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR &&
+	    type != OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64)
 		return OPAL_PARAMETER;
 
 	phb->ops->lock(phb);
-	rc = phb->ops->err_injct(phb, pe_no, type,
-				 function, addr, mask);
+	rc = phb->ops->err_inject(phb, pe_no, type, func, addr, mask);
 	phb->ops->unlock(phb);
 	pci_put_phb(phb);
 
 	return rc;
 }
-opal_call(OPAL_PCI_ERR_INJCT, opal_pci_err_injct, 6);
+opal_call(OPAL_PCI_ERR_INJECT, opal_pci_err_inject, 6);
 
 static int64_t opal_pci_phb_mmio_enable(uint64_t phb_id, uint16_t window_type,
 					uint16_t window_num, uint16_t enable)

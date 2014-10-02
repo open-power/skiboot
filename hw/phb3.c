@@ -2593,148 +2593,162 @@ static int64_t phb3_eeh_next_error(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
-static int64_t phb3_err_injct(struct phb *phb, uint32_t pe_no,
-			      uint32_t type, uint32_t function,
-			      uint64_t address, uint64_t mask)
+static int64_t phb3_err_inject_finalize(struct phb3 *p, uint64_t addr,
+					uint64_t mask, uint64_t ctrl,
+					bool is_write)
+{
+	if (is_write)
+		ctrl |= PHB_PAPR_ERR_INJ_CTL_WR;
+	else
+		ctrl |= PHB_PAPR_ERR_INJ_CTL_RD;
+
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_ADDR, addr);
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_MASK, mask);
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_CTL, ctrl);
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t phb3_err_inject_mem32(struct phb3 *p, uint32_t pe_no,
+				     uint64_t addr, uint64_t mask,
+				     bool is_write)
+{
+	uint64_t a, m, prefer, base;
+	uint64_t ctrl = PHB_PAPR_ERR_INJ_CTL_OUTB;
+	int index;
+
+	a = 0x0ull;
+	prefer = 0x0ull;
+	for (index = 0; index < PHB3_MAX_PE_NUM; index++) {
+		if (GETFIELD(IODA2_M32DT_PE, p->m32d_cache[index]) != pe_no)
+			continue;
+
+		base = p->mm1_base + (M32_PCI_SIZE / PHB3_MAX_PE_NUM) * index;
+
+		/* Update preferred address */
+		if (!prefer) {
+			prefer = GETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, base);
+			prefer = SETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, 0x0ull, prefer);
+		}
+
+		/* The input address matches ? */
+		if (addr >= base &&
+		    addr < base + M32_PCI_SIZE / PHB3_MAX_PE_NUM) {
+			a = addr;
+			break;
+		}
+	}
+
+	/* Invalid PE number */
+	if (!prefer)
+		return OPAL_PARAMETER;
+
+	/* Specified address is out of range */
+	if (!a) {
+		a = prefer;
+		m = PHB_PAPR_ERR_INJ_MASK_MMIO_MASK;
+	} else {
+		m = mask;
+	}
+
+	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
+}
+
+static int64_t phb3_err_inject_cfg(struct phb3 *p, uint32_t pe_no,
+				   uint64_t addr, uint64_t mask,
+				   bool is_write)
+{
+	uint64_t a, m, prefer;
+	uint64_t ctrl = PHB_PAPR_ERR_INJ_CTL_CFG;
+	int bus_no, bdfn;
+
+	a = 0xffffull;
+	prefer = 0xffffull;
+	for (bdfn = 0; bdfn < RTT_TABLE_ENTRIES; bdfn++) {
+		if (p->rte_cache[bdfn] != pe_no)
+			continue;
+
+		/* Select minimal bus number as PE
+		 * primary bus number
+		 */
+		bus_no = (bdfn >> 8);
+		if (prefer == 0xffffull)
+			prefer = SETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, 0x0ull, bus_no);
+
+		/* Address should no greater than max bus
+		 * number within PE
+		 */
+		if ((GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, addr) == bus_no)) {
+			a = addr;
+			break;
+		}
+	}
+
+	/* Invalid PE number */
+	if (prefer == 0xffffull)
+		return OPAL_PARAMETER;
+
+	/* Specified address is out of range */
+	if (a == 0xffffull) {
+		a = prefer;
+		m = PHB_PAPR_ERR_INJ_MASK_CFG_MASK;
+	} else {
+		m = mask;
+	}
+
+	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
+}
+
+static int64_t phb3_err_inject(struct phb *phb, uint32_t pe_no,
+			       uint32_t type, uint32_t func,
+			       uint64_t addr, uint64_t mask)
 {
 	struct phb3 *p = phb_to_phb3(phb);
-	uint64_t ctl = 0;
-	uint64_t base, prefer, addr, msk;
-	int index = 0;
-	bool bus_valid = false;
+	int64_t (*handler)(struct phb3 *p, uint32_t pe_no,
+			   uint64_t addr, uint64_t mask, bool is_write);
+	bool is_write;
 
 	/* To support 64-bits error injection later */
-	if (type == OpalErrinjctTypeIoaBusError64)
+	if (type == OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64)
 		return OPAL_UNSUPPORTED;
 
-	/*
-	 * How could we get here without valid RTT? But it's
-	 * worthy to check.
-	 */
+	/* How could we get here without valid RTT? */
 	if (!p->tbl_rtt)
 		return OPAL_HARDWARE;
 
-	/*
-	 * PE#0 is reserved PE on PHB3 and we shouldn't inject
-	 * errors to it.
-	 */
-	if (pe_no == 0x0 ||
-	    pe_no >= PHB3_MAX_PE_NUM ||
-	    function > OpalEjtIoaDmaWriteMemTarget)
+	/* We can't inject error to the reserved PE#0 */
+	if (pe_no == 0x0 || pe_no >= PHB3_MAX_PE_NUM)
 		return OPAL_PARAMETER;
 
-	/* We might have leftover from last error injection */
+	/* Clear leftover from last time */
 	out_be64(p->regs + PHB_PAPR_ERR_INJ_CTL, 0x0ul);
 
-	switch (function) {
-	case OpalEjtIoaLoadMemAddr:
-	case OpalEjtIoaLoadMemData:
-	case OpalEjtIoaStoreMemAddr:
-	case OpalEjtIoaStoreMemData:
-		ctl |= PHB_PAPR_ERR_INJ_CTL_OUTB;
-		if (function == OpalEjtIoaLoadMemAddr ||
-		    function == OpalEjtIoaLoadMemData)
-			ctl |= PHB_PAPR_ERR_INJ_CTL_RD;
-		else
-			ctl |= PHB_PAPR_ERR_INJ_CTL_WR;
-
-		/*
-		 * For now, we only care about M32. Looking into M32DT to see
-		 * if the input address has been assigned to the PE. Otherwise,
-		 * we have to figure one out from M32DT.
-		 */
-		addr = 0x0ul;
-		prefer = 0x0ul;
-		for (index = 0; index < 256; index++) {
-			if (GETFIELD(IODA2_M32DT_PE, p->m32d_cache[index]) ==
-			    pe_no) {
-				base = p->mm1_base +
-				       (M32_PCI_SIZE / PHB3_MAX_PE_NUM) * index;
-
-				/* Update prefer address */
-				if (!prefer) {
-					prefer = GETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, base);
-					prefer = SETFIELD(PHB_PAPR_ERR_INJ_MASK_MMIO, 0x0ul, prefer);
-				}
-
-				/* The input address matches ? */
-				if (address >= base &&
-				    address < base + M32_PCI_SIZE / PHB3_MAX_PE_NUM) {
-					addr = address;
-					break;
-				}
-			}
-		}
-
-		/* Need amend the address ? */
-		if (!addr) {
-			if (!prefer)
-				return OPAL_PARAMETER;
-			addr = prefer;
-			msk = PHB_PAPR_ERR_INJ_MASK_MMIO_MASK;
-		} else {
-			msk = mask;
-		}
-
+	switch (func) {
+	case OPAL_ERR_INJECT_FUNC_IOA_LD_MEM_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_LD_MEM_DATA:
+		is_write = false;
+		handler = phb3_err_inject_mem32;
 		break;
-	case OpalEjtIoaLoadConfigAddr:
-	case OpalEjtIoaLoadConfigData:
-	case OpalEjtIoaStoreConfigAddr:
-	case OpalEjtIoaStoreConfigData:
-		ctl |= PHB_PAPR_ERR_INJ_CTL_CFG;
-		if (function == OpalEjtIoaLoadConfigAddr ||
-		    function == OpalEjtIoaLoadConfigData)
-			ctl |= PHB_PAPR_ERR_INJ_CTL_RD;
-		else
-			ctl |= PHB_PAPR_ERR_INJ_CTL_WR;
-
-		addr = 0x0ul;
-		prefer = 0x0ul;
-		for (index = 0; index < RTT_TABLE_ENTRIES; index++) {
-			if (p->rte_cache[index] == pe_no) {
-				/*
-				 * Select minimal bus number as PE
-				 * primary bus number
-				 */
-				if (!prefer)
-					prefer = index >> 8;
-				else if (prefer > (index >> 8))
-					prefer = index >> 8;
-
-				/*
-				 * Address should no greater than max bus
-				 * number within PE
-				 */
-				if ((GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG,
-				    address) <= (index >> 8)))
-					bus_valid = true;
-			}
-		}
-
-		/* Check if address is in a reasonable region */
-		if (GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, address) >= prefer
-		    && bus_valid)
-			addr = address;
-
-		if (!addr) {
-			if (!prefer)
-				return OPAL_PARAMETER;
-			addr = prefer;
-			msk = PHB_PAPR_ERR_INJ_MASK_CFG_MASK;
-		} else {
-			msk = mask;
-		}
-
+	case OPAL_ERR_INJECT_FUNC_IOA_ST_MEM_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_ST_MEM_DATA:
+		is_write = true;
+		handler = phb3_err_inject_mem32;
+		break;
+	case OPAL_ERR_INJECT_FUNC_IOA_LD_CFG_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_LD_CFG_DATA:
+		is_write = false;
+		handler = phb3_err_inject_cfg;
+		break;
+	case OPAL_ERR_INJECT_FUNC_IOA_ST_CFG_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_ST_CFG_DATA:
+		is_write = true;
+		handler = phb3_err_inject_cfg;
 		break;
 	default:
-		return OPAL_UNSUPPORTED;
+		return OPAL_PARAMETER;
 	}
 
-	out_be64(p->regs + PHB_PAPR_ERR_INJ_CTL, ctl);
-	out_be64(p->regs + PHB_PAPR_ERR_INJ_ADDR, addr);
-	out_be64(p->regs + PHB_PAPR_ERR_INJ_MASK, msk);
-
-	return OPAL_SUCCESS;
+	return handler(p, pe_no, addr, mask, is_write);
 }
 
 static int64_t phb3_get_diag_data(struct phb *phb,
@@ -3130,7 +3144,7 @@ static const struct phb_ops phb3_ops = {
 	.eeh_freeze_clear	= phb3_eeh_freeze_clear,
 	.eeh_freeze_set		= phb3_eeh_freeze_set,
 	.next_error		= phb3_eeh_next_error,
-	.err_injct		= phb3_err_injct,
+	.err_inject		= phb3_err_inject,
 	.get_diag_data		= NULL,
 	.get_diag_data2		= phb3_get_diag_data,
 	.set_capi_mode		= phb3_set_capi_mode,
