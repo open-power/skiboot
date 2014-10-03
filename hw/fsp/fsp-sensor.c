@@ -37,9 +37,6 @@
 #include <opal-msg.h>
 #include<fsp-elog.h>
 
-//#define DBG(fmt...)	printf("SENSOR: " fmt)
-#define DBG(fmt...)	do { } while (0)
-
 #define SENSOR_PREFIX	"sensor: "
 #define INVALID_DATA	((uint32_t)-1)
 
@@ -255,18 +252,19 @@ static void fsp_sensor_process_data(struct opal_sensor_data *attr)
 				sensor_data = 0;
 				for (i=0; i < nr_power; i++) {
 					power = *(uint32_t *) &sensor_buf_ptr[2 + i * 5];
-					DBG("Power[%d]: %d mW\n", i, power);
+					prlog(PR_TRACE, "Power[%d]: %d mW\n",
+					      i, power);
 					sensor_data += power/1000;
 				}
 			} else {
-				DBG("Power Sensor data not valid\n");
+				prlog(PR_TRACE, "Power Sensor data not valid\n");
 			}
 		} else if (sensor_mod_data[0] == attr->frc &&
 				sensor_mod_data[1] == attr->rid) {
 			switch (attr->spcn_attr) {
 			/* modifier 0x01, 0x02 */
 			case SENSOR_PRESENT:
-				DBG("Not exported to device tree\n");
+				prlog(PR_TRACE,"Not exported to device tree\n");
 				break;
 			case SENSOR_FAULTED:
 				sensor_data = sensor_mod_data[3] & 0x02;
@@ -274,14 +272,14 @@ static void fsp_sensor_process_data(struct opal_sensor_data *attr)
 			case SENSOR_AC_FAULTED:
 			case SENSOR_ON:
 			case SENSOR_ON_SUPPORTED:
-				DBG("Not exported to device tree\n");
+				prlog(PR_TRACE,"Not exported to device tree\n");
 				break;
 			/* modifier 0x10, 0x11 */
 			case SENSOR_THRS:
 				sensor_data = sensor_mod_data[6];
 				break;
 			case SENSOR_LOCATION:
-				DBG("Not exported to device tree\n");
+				prlog(PR_TRACE,"Not exported to device tree\n");
 				break;
 			/* modifier 0x12, 0x13 */
 			case SENSOR_DATA:
@@ -343,7 +341,8 @@ static int fsp_sensor_process_read(struct fsp_msg *resp_msg)
 
 static void queue_msg_for_delivery(int rc, struct opal_sensor_data *attr)
 {
-	DBG("%s: rc:%d, data:%d\n", __func__, rc, *(attr->sensor_data));
+	prlog(PR_INSANE, "%s: rc:%d, data:%d\n",
+	      __func__, rc, *(attr->sensor_data));
 	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
 			attr->async_token, rc);
 	spcn_mod_data[attr->mod_index].entry_count = 0;
@@ -357,7 +356,7 @@ static void fsp_sensor_read_complete(struct fsp_msg *msg)
 	enum spcn_rsp_status status;
 	int rc, size;
 
-	DBG("Sensor read completed\n");
+	prlog(PR_INSANE, "%s()\n", __func__);
 
 	status = (msg->resp->data.words[1] >> 24) & 0xff;
 	size = fsp_sensor_process_read(msg->resp);
@@ -413,7 +412,9 @@ static int64_t fsp_sensor_send_read_request(struct opal_sensor_data *attr)
 	uint32_t align;
 	uint32_t cmd_header;
 
-	DBG("Get the data for modifier [%d]\n", spcn_mod_data[attr->mod_index].mod);
+	prlog(PR_INSANE, "Get the data for modifier [%d]\n",
+	      spcn_mod_data[attr->mod_index].mod);
+
 	if (spcn_mod_data[attr->mod_index].mod == SPCN_MOD_PROC_JUNC_TEMP) {
 		/* TODO Support this modifier '0x14', if required */
 		align = attr->offset % sizeof(*sensor_buf_ptr);
@@ -495,7 +496,8 @@ static int64_t fsp_opal_read_sensor(uint32_t sensor_hndl, int token,
 	struct opal_sensor_data *attr;
 	int64_t rc;
 
-	DBG("fsp_opal_read_sensor [%08x]\n", sensor_hndl);
+	prlog(PR_INSANE, "fsp_opal_read_sensor [%08x]\n", sensor_hndl);
+
 	if (sensor_state == SENSOR_PERMANENT_ERROR) {
 		rc = OPAL_HARDWARE;
 		goto out;
@@ -735,7 +737,8 @@ void fsp_init_sensor(void)
 	 * in the system */
 	for (index = 0; spcn_mod_data[index].mod != SPCN_MOD_LAST &&
 			sensor_state == SENSOR_VALID_DATA;) {
-		DBG("Get the data for modifier [%d]\n", spcn_mod_data[index].mod);
+		prlog(PR_TRACE, "Get the data for modifier [%d]\n",
+		      spcn_mod_data[index].mod);
 		if (spcn_mod_data[index].mod == SPCN_MOD_PROC_JUNC_TEMP) {
 			/* TODO Support this modifier 0x14, if required */
 			align = psi_dma_offset % sizeof(*sensor_buf_ptr);
