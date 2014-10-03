@@ -27,9 +27,6 @@
 
 #include "lxvpd.h"
 
-#define DBG(fmt...)        do { } while(0)
-//#define DBG(fmt...)	printf(fmt)
-
 /*
  * XXX TODO: Add 1006 maps to add function loc codes and loc code maps
  * (ie. -Tn part of the location code) 
@@ -84,7 +81,7 @@ void lxvpd_get_slot_info(struct phb *phb, struct pci_device * pd)
 	if (!sdata)
 		return;
 
-	DBG("LXVPD: Get Slot Info PHB%d pd=%x\n", phb->opal_id,
+	prlog(PR_TRACE, "LXVPD: Get Slot Info PHB%d pd=%x\n", phb->opal_id,
 	    pd ? pd->bdfn : 0);
 
 	/*
@@ -94,7 +91,7 @@ void lxvpd_get_slot_info(struct phb *phb, struct pci_device * pd)
 	 * bridge.
 	 */
 	if (!lxvpd_supported_slot(phb, pd)) {
-		DBG("LXVPD: Unsupported slot\n");
+		prlog(PR_TRACE, "LXVPD: Unsupported slot\n");
 		return;
 	}
 
@@ -118,16 +115,24 @@ void lxvpd_get_slot_info(struct phb *phb, struct pci_device * pd)
 
 	if (entry_found) {
 		pd->slot_info = &sdata->info[idx];
-		DBG("PCI: PCIE Slot Info: \n");
-		DBG("       Label       %s\n", pd->slot_info->label);
-		DBG("       Pluggable   0x%x\n", pd->slot_info->pluggable?1:0);
-		DBG("       Power Ctl   0x%x\n", pd->slot_info->power_ctl?1:0);
-		DBG("       Wired Lanes 0x%x\n", pd->slot_info->wired_lanes);
-		DBG("       Bus Clock   0x%x\n", pd->slot_info->bus_clock);
-		DBG("       Connector   0x%x\n", pd->slot_info->connector_type);
-		DBG("       Slot Index  %d\n", pd->slot_info->slot_index);
-	} else
-		DBG("PCI: PCIE Slot Info Not Found\n");
+		prlog(PR_TRACE, "PCI: PCIE Slot Info: \n"
+		      "       Label       %s\n"
+		      "       Pluggable   0x%x\n"
+		      "       Power Ctl   0x%x\n"
+		      "       Wired Lanes 0x%x\n"
+		      "       Bus Clock   0x%x\n"
+		      "       Connector   0x%x\n"
+		      "       Slot Index  %d\n",
+		      pd->slot_info->label,
+		      pd->slot_info->pluggable?1:0,
+		      pd->slot_info->power_ctl?1:0,
+		      pd->slot_info->wired_lanes,
+		      pd->slot_info->bus_clock,
+		      pd->slot_info->connector_type,
+		      pd->slot_info->slot_index);
+	} else {
+		prlog(PR_TRACE, "PCI: PCIE Slot Info Not Found\n");
+	}
 }
 
 static struct pci_slot_info *lxvpd_alloc_slot_info(struct phb *phb, int count)
@@ -262,8 +267,8 @@ void lxvpd_process_slot_entries(struct phb *phb,
 	}
 	pr_end = pr_rec + pr_size;
 
-	DBG("LXVPD: %s record for PHB%d is %ld bytes\n",
-	    record, phb->opal_id, pr_size);
+	prlog(PR_TRACE, "LXVPD: %s record for PHB%d is %ld bytes\n",
+	      record, phb->opal_id, pr_size);
 
 	/* As long as there's still something in the PRxy record... */
 	while(pr_rec < pr_end) {
@@ -279,7 +284,7 @@ void lxvpd_process_slot_entries(struct phb *phb,
 				       record);
 			return;
 		}
-		DBG("LXVPD: Found 0x%04x map...\n", *mf);
+		prlog(PR_TRACE, "LXVPD: Found 0x%04x map...\n", *mf);
 
 		switch (*mf) {
 		case 0x1004:
