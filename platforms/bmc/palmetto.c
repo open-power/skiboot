@@ -198,8 +198,23 @@ static bool palmetto_probe(void)
 	/* Send external interrupts to me */
 	psi_set_external_irq_policy(EXTERNAL_IRQ_POLICY_SKIBOOT);
 
-	/* Configure UART1 on SuperIO */
-	ast_setup_uart1(UART_IO_BASE, UART_LPC_IRQ);
+	/*
+	 * Depending on which image we are running, it may be configuring
+	 * the virtual UART or not. Check if VUART is enabled and use
+	 * SIO if not. We also correct the configuration of VUART as some
+	 * BMC images don't setup the interrupt properly
+	 */
+	if (ast_is_vuart1_enabled()) {
+		printf("PLAT: Using virtual UART\n");
+		ast_disable_sio_uart1();
+		ast_setup_vuart1(UART_IO_BASE, UART_LPC_IRQ);
+	} else {
+		printf("PLAT: Using SuperIO UART\n");
+		ast_setup_sio_uart1(UART_IO_BASE, UART_LPC_IRQ);
+	}
+
+	/* Similarily, some BMCs don't configure the BT interrupt properly */
+	ast_setup_ibt(BT_IO_BASE, BT_LPC_IRQ);
 
 	/* Setup UART and use it as console with interrupts */
 	uart_init(true);

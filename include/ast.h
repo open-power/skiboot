@@ -36,6 +36,14 @@
 #define LPC_HICR6		(LPC_BASE + 0x80)
 #define LPC_HICR7		(LPC_BASE + 0x88)
 #define LPC_HICR8		(LPC_BASE + 0x8c)
+#define LPC_iBTCR0		(LPC_BASE + 0x140)
+
+/* VUART1 */
+#define VUART1_BASE		0x1e787000
+#define VUART1_GCTRLA		(VUART1_BASE + 0x20)
+#define VUART1_GCTRLB		(VUART1_BASE + 0x24)
+#define VUART1_ADDRL		(VUART1_BASE + 0x28)
+#define VUART1_ADDRH		(VUART1_BASE + 0x2c)
 
 /*
  * AHB Accessors
@@ -59,8 +67,15 @@ int ast_copy_from_ahb(void *dst, uint32_t reg, uint32_t len);
 
 void ast_io_init(void);
 
-/* UART init */
-void ast_setup_uart1(uint16_t io_base, uint8_t irq);
+/* UART configuration */
+
+bool ast_is_vuart1_enabled(void);
+void ast_setup_vuart1(uint16_t io_base, uint8_t irq);
+void ast_setup_sio_uart1(uint16_t io_base, uint8_t irq);
+void ast_disable_sio_uart1(void);
+
+/* BT configuration */
+void ast_setup_ibt(uint16_t io_base, uint8_t irq);
 
 #endif /* __SKIBOOT__ */
 
