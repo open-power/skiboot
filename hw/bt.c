@@ -24,17 +24,19 @@
 
 /* BT registers */
 #define BT_CTRL			0
-#define   BT_CTRL_B_BUSY	0x00000080
-#define   BT_CTRL_H_BUSY	0x00000040
-#define   BT_CTRL_OEM0		0x00000020
-#define   BT_CTRL_SMS_ATN	0x00000010
-#define   BT_CTRL_B2H_ATN	0x00000008
-#define   BT_CTRL_H2B_ATN	0x00000004
-#define   BT_CTRL_CLR_RD_PTR	0x00000002
-#define   BT_CTRL_CLR_WR_PTR	0x00000001
+#define   BT_CTRL_B_BUSY		0x80
+#define   BT_CTRL_H_BUSY		0x40
+#define   BT_CTRL_OEM0			0x20
+#define   BT_CTRL_SMS_ATN		0x10
+#define   BT_CTRL_B2H_ATN		0x08
+#define   BT_CTRL_H2B_ATN		0x04
+#define   BT_CTRL_CLR_RD_PTR		0x02
+#define   BT_CTRL_CLR_WR_PTR		0x01
 #define BT_HOST2BMC		1
 #define BT_INTMASK		2
-#define   BT_INTMASK_BMC_HWRST	0x00000001
+#define   BT_INTMASK_B2H_IRQEN		0x01
+#define   BT_INTMASK_B2H_IRQ		0x02
+#define   BT_INTMASK_BMC_HWRST		0x80
 
 /*
  * Minimum size of an IPMI request/response including
@@ -99,23 +101,18 @@ static inline void bt_outb(uint8_t data, uint32_t reg)
 	lpc_outb(data, bt.base_addr + reg);
 }
 
+static inline void bt_set_h_busy(bool value)
+{
+	uint8_t rval;
+
+	rval = bt_inb(BT_CTRL);
+	if (value != !!(rval & BT_CTRL_H_BUSY))
+		bt_outb(BT_CTRL_H_BUSY, BT_CTRL);
+}
+
 static inline bool bt_idle(void)
 {
 	return !(bt_inb(BT_CTRL) & (BT_CTRL_B_BUSY | BT_CTRL_H2B_ATN));
-}
-
-static void bt_setmask(uint8_t mask, uint32_t reg)
-{
-	uint8_t tmp;
-	tmp = bt_inb(reg);
-	bt_outb(tmp | mask, reg);
-}
-
-static void bt_clearmask(uint8_t mask, uint32_t reg)
-{
-	uint8_t tmp;
-	tmp = bt_inb(reg);
-	bt_outb(tmp & ~mask, reg);
 }
 
 static inline void bt_set_state(enum bt_states next_state)
@@ -156,7 +153,18 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 
 static void bt_reset_interface(void)
 {
-	bt_setmask(BT_INTMASK_BMC_HWRST, BT_INTMASK);
+	bt_outb(BT_INTMASK_BMC_HWRST, BT_INTMASK);
+	bt_set_state(BT_STATE_B_BUSY);
+}
+
+static void bt_init_interface(void)
+{
+	/* Clear interrupt condition & enable irq */
+	bt_outb(BT_INTMASK_B2H_IRQ | BT_INTMASK_B2H_IRQEN, BT_INTMASK);
+
+	/* Take care of a stable H_BUSY if any */
+	bt_set_h_busy(false);
+
 	bt_set_state(BT_STATE_B_BUSY);
 }
 
@@ -183,7 +191,7 @@ static bool bt_try_send_msg(void)
 	}
 
 	/* Send the message */
-	bt_setmask(BT_CTRL_CLR_WR_PTR, BT_CTRL);
+	bt_outb(BT_CTRL_CLR_WR_PTR, BT_CTRL);
 
 	/* Byte 1 - Length */
 	bt_outb(ipmi_msg->req_size + BT_MIN_REQ_LEN, BT_HOST2BMC);
@@ -201,7 +209,7 @@ static bool bt_try_send_msg(void)
 	for (i = 0; i < ipmi_msg->req_size; i++)
 		bt_outb(ipmi_msg->data[i], BT_HOST2BMC);
 
-	bt_setmask(BT_CTRL_H2B_ATN, BT_CTRL);
+	bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
 	bt_set_state(BT_STATE_RESP_WAIT);
 	unlock(&bt.lock);
 
@@ -210,10 +218,8 @@ static bool bt_try_send_msg(void)
 
 static void bt_flush_msg(void)
 {
-	bt_setmask(BT_CTRL_H_BUSY, BT_CTRL);
-	bt_clearmask(BT_CTRL_B2H_ATN, BT_CTRL);
-	bt_setmask(BT_CTRL_CLR_RD_PTR, BT_CTRL);
-	bt_clearmask(BT_CTRL_H_BUSY, BT_CTRL);
+	bt_outb(BT_CTRL_B2H_ATN | BT_CTRL_CLR_RD_PTR, BT_CTRL);
+	bt_set_h_busy(false);
 }
 
 static bool bt_get_resp(void)
@@ -231,9 +237,12 @@ static bool bt_get_resp(void)
 		return true;
 	}
 
-	bt_setmask(BT_CTRL_H_BUSY, BT_CTRL);
-	bt_clearmask(BT_CTRL_B2H_ATN, BT_CTRL);
-	bt_setmask(BT_CTRL_CLR_RD_PTR, BT_CTRL);
+	/* Indicate BMC that we are busy */
+	bt_set_h_busy(true);
+
+	/* Clear B2H_ATN and read pointer */
+	bt_outb(BT_CTRL_B2H_ATN, BT_CTRL);
+	bt_outb(BT_CTRL_CLR_RD_PTR, BT_CTRL);
 
 	/* Read the response */
 	/* Byte 1 - Length (includes header size) */
@@ -287,7 +296,7 @@ static bool bt_get_resp(void)
 	/* Byte 6:N - Data */
 	for (i = 0; i < resp_len; i++)
 		ipmi_msg->data[i] = bt_inb(BT_HOST2BMC);
-	bt_clearmask(BT_CTRL_H_BUSY, BT_CTRL);
+	bt_set_h_busy(false);
 
 	if (cc != IPMI_CC_NO_ERROR)
 		prerror("BT: Host error 0x%02x receiving BT/IPMI response\n", cc);
@@ -348,6 +357,16 @@ static void bt_poll(void *data __unused)
 		}
 	}
 	while(!ret);
+}
+
+void bt_irq(void)
+{
+	uint8_t ireg = bt_inb(BT_INTMASK);
+
+	if (ireg & BT_INTMASK_B2H_IRQ) {
+		bt_outb(BT_INTMASK_B2H_IRQ | BT_INTMASK_B2H_IRQEN, BT_INTMASK);
+		bt_poll(NULL);
+	}
 }
 
 /*
@@ -424,7 +443,9 @@ void bt_init(void)
 		return;
 	}
 	bt.base_addr = dt_property_get_cell(prop, 1);
-	bt_reset_interface();
+	printf("BT: Interface intialized, IO 0x%04x\n", bt.base_addr);
+
+	bt_init_interface();
 	init_lock(&bt.lock);
 
 	/*

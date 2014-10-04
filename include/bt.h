@@ -19,5 +19,6 @@
 
 /* Initialise the BT interface */
 void bt_init(void);
+void bt_irq(void);
 
 #endif

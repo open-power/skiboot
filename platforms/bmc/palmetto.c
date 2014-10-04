@@ -40,6 +40,7 @@
 static void palmetto_ext_irq(unsigned int chip_id __unused)
 {
 	uart_irq();
+	bt_irq();
 }
 
 static void palmetto_init(void)
