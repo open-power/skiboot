@@ -605,7 +605,7 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	/*
 	 * We have initialized the basic HW, we can now call into the
 	 * platform to perform subsequent inits, such as establishing
-	 * communication with the FSP.
+	 * communication with the FSP or starting IPMI.
 	 */
 	if (platform.init)
 		platform.init();

@@ -15,10 +15,14 @@
  */
 
 
-#ifndef __BMC_H
-#define __BMC_H
+#ifndef __ASTBMC_H
+#define __ASTBMC_H
 
-extern void bmc_ext_irq(uint32_t chip_id);
+extern void astbmc_early_init(void);
+extern int64_t astbmc_ipmi_reboot(void);
+extern int64_t astbmc_ipmi_power_down(uint64_t request);
+extern void astbmc_init(void);
+extern void astbmc_ext_irq(unsigned int chip_id);
 extern int pnor_init(void);
 
-#endif /* __BMC_H */
+#endif /* __ASTBMC_H */

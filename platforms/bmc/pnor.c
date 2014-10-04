@@ -21,9 +21,9 @@
 #include <opal.h>
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
+#include <ast.h>
 
-#include "bmc.h"
-#include "ast.h"
+#include "astbmc.h"
 
 static struct spi_flash_ctrl *pnor_ctrl;
 static struct flash_chip *pnor_chip;
