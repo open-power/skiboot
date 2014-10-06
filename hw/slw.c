@@ -34,9 +34,6 @@
 #include <sbe_xip_image.h>
 #endif
 
-//#define DBG(fmt...)	printf("SLW: " fmt)
-#define DBG(fmt...)	do { } while(0)
-
 #define MAX_RESET_PATCH_SIZE	64
 static uint32_t slw_saved_reset[MAX_RESET_PATCH_SIZE];
 
@@ -118,8 +115,10 @@ static void slw_do_rvwinkle(void *data)
 				 XSCOM_ADDR_P8_EX_SLAVE(pir_to_core_id(c->pir),
 							EX_PM_IDLE_STATE_HISTORY_PHYP),
 				   &tmp);	
-			DBG("SLW: core %x:%x history: 0x%016llx (mid2)\n",
-			    chip->id, pir_to_core_id(c->pir), tmp);
+			prlog(PR_TRACE, "SLW: core %x:%x"
+			      " history: 0x%016llx (mid2)\n",
+			      chip->id, pir_to_core_id(c->pir),
+			      tmp);
 		}
 	}
 
@@ -195,11 +194,11 @@ static bool slw_general_init(struct proc_chip *chip, struct cpu_thread *c)
 				"SLW: Failed to write PM_GP0\n");
 		return false;
 	}
-	DBG("SLW: PMGP0 set to 0x%016llx\n", tmp);
+	prlog(PR_TRACE, "SLW: PMGP0 set to 0x%016llx\n", tmp);
 
 	/* Read back for debug */
 	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_GP0), &tmp);
-	DBG("SLW: PMGP0 read   0x%016llx\n", tmp);
+	prlog(PR_TRACE, "SLW: PMGP0 read   0x%016llx\n", tmp);
 
 
 	/* Set CORE and ECO PFET Vret to select zero */
@@ -249,11 +248,11 @@ static bool slw_set_overrides(struct proc_chip *chip, struct cpu_thread *c)
 				"SLW: Failed to write PM_OHA_MODE_REG\n");
 		return false;
 	}
-	DBG("SLW: PM_OHA_MODE_REG set to 0x%016llx\n", tmp);
+	prlog(PR_TRACE, "SLW: PM_OHA_MODE_REG set to 0x%016llx\n", tmp);
 
 	/* Read back for debug */
 	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX(core, PM_OHA_MODE_REG),&tmp);
-	DBG("SLW: PM_OHA_MODE_REG read   0x%016llx\n", tmp);
+	prlog(PR_TRACE, "SLW: PM_OHA_MODE_REG read   0x%016llx\n", tmp);
 
 	/*
 	 * Clear special wakeup bits that could hold power mgt
@@ -332,7 +331,7 @@ static bool slw_set_idle_mode(struct proc_chip *chip, struct cpu_thread *c)
 
 	/* Read back for debug */
 	xscom_read(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_GP1), &tmp);
-	DBG("SLW: PMGP1 read   0x%016llx\n", tmp);
+	prlog(PR_TRACE, "SLW: PMGP1 read   0x%016llx\n", tmp);
 	return true;
 }
 
@@ -352,7 +351,7 @@ static bool slw_get_idle_state_history(struct proc_chip *chip, struct cpu_thread
 		return false;
 	}
 
-	DBG("SLW: core %x:%x history: 0x%016llx (old1)\n",
+	prlog(PR_TRACE, "SLW: core %x:%x history: 0x%016llx (old1)\n",
 	    chip->id, core, tmp);
 
 	rc = xscom_read(chip->id,
@@ -365,7 +364,7 @@ static bool slw_get_idle_state_history(struct proc_chip *chip, struct cpu_thread
 		return false;
 	}
 
-	DBG("SLW: core %x:%x history: 0x%016llx (old2)\n",
+	prlog(PR_TRACE, "SLW: core %x:%x history: 0x%016llx (old2)\n",
 	    chip->id, core, tmp);
 
 	return true;
@@ -373,7 +372,7 @@ static bool slw_get_idle_state_history(struct proc_chip *chip, struct cpu_thread
 
 static bool idle_prepare_core(struct proc_chip *chip, struct cpu_thread *c)
 {
-	DBG("FASTSLEEP: Prepare core %x:%x\n",
+	prlog(PR_TRACE, "FASTSLEEP: Prepare core %x:%x\n",
 	    chip->id, pir_to_core_id(c->pir));
 
 	if(!slw_general_init(chip, c))
@@ -694,7 +693,7 @@ static void slw_patch_scans(struct proc_chip *chip, bool le_mode)
 
 	new_val = le_mode ? 0 : 1;
 
-	DBG("SLW: Chip %d, LE value was: %lld, setting to %lld\n",
+	prlog(PR_TRACE, "SLW: Chip %d, LE value was: %lld, setting to %lld\n",
 	    chip->id, old_val, new_val);
 
 	rc = sbe_xip_set_scalar((void *)chip->slw_base,
@@ -726,8 +725,10 @@ int64_t slw_reinit(uint64_t flags)
 	if (flags & OPAL_REINIT_CPUS_HILE_LE)
 		target_le = true;
 
-	DBG("SLW Reinit from CPU PIR 0x%04x, HILE set to %s endian...\n",
-	    this_cpu()->pir, target_le ? "little" : "big");
+	prlog(PR_TRACE, "SLW Reinit from CPU PIR 0x%04x,"
+	      " HILE set to %s endian...\n",
+	      this_cpu()->pir,
+	      target_le ? "little" : "big");
 
 	/* Prepare chips/cores for rvwinkle */
 	for_each_chip(chip) {
@@ -769,9 +770,9 @@ int64_t slw_reinit(uint64_t flags)
 	}
 
 	/* XXX Wait one second ! (should check xscom state ? ) */
-	DBG("SLW: [TB=0x%016lx] Waiting one second...\n", mftb());
+	prlog(PR_TRACE, "SLW: [TB=0x%016lx] Waiting one second...\n", mftb());
 	time_wait_ms(1000);
-	DBG("SLW: [TB=0x%016lx] Done.\n", mftb());
+	prlog(PR_TRACE, "SLW: [TB=0x%016lx] Done.\n", mftb());
 
 	for_each_chip(chip) {
 		struct cpu_thread *c;
@@ -803,7 +804,7 @@ int64_t slw_reinit(uint64_t flags)
 	 * other core in the system, we can't do it
 	 */
 	if (!has_waker) {
-		DBG("SLW: No candidate waker, giving up !\n");
+		prlog(PR_TRACE, "SLW: No candidate waker, giving up !\n");
 		return OPAL_HARDWARE;
 	}
 
@@ -817,7 +818,7 @@ int64_t slw_reinit(uint64_t flags)
 	for_each_chip(chip)
 		slw_cleanup_chip(chip);
 
-	DBG("SLW Reinit complete !\n");
+	prlog(PR_TRACE, "SLW Reinit complete !\n");
 
 	return OPAL_SUCCESS;
 }
