@@ -21,9 +21,6 @@
 #include <device.h>
 #include <fsp-elog.h>
 
-//#define DBG(fmt...)	printf("RTC: " fmt)
-#define DBG(fmt...)	do { } while(0)
-
 /*
  * The FSP NVRAM API operates in "blocks" of 4K. It is entirely exposed
  * to the OS via the OPAL APIs.
