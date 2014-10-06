@@ -24,9 +24,6 @@
 #include <fsp-elog.h>
 #include <device.h>
 
-//#define DBG(fmt...)	printf("RTC: " fmt)
-#define DBG(fmt...)	do { } while(0)
-
 /*
  * Note on how those operate:
  *
@@ -200,7 +197,7 @@ static void opal_rtc_eval_events(void)
 static void fsp_rtc_req_complete(struct fsp_msg *msg)
 {
 	lock(&rtc_lock);
-	DBG("RTC completion %p\n", msg);
+	prlog(PR_TRACE, "RTC completion %p\n", msg);
 	if (msg == rtc_read_msg)
 		fsp_rtc_process_read(msg->resp);
 	opal_rtc_eval_events();
@@ -289,13 +286,13 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 	/* If we don't have a read pending already, fire off a request and
 	 * return */
 	if (!msg) {
-		DBG("Sending new RTC read request\n");
+		prlog(PR_TRACE, "Sending new RTC read request\n");
 		rc = fsp_rtc_send_read_request();
 
 	/* If our pending read is done, clear events and return the time
 	 * from the cache */
 	} else if (!fsp_msg_busy(msg)) {
-		DBG("RTC read complete, state %d\n", rtc_tod_state);
+		prlog(PR_TRACE, "RTC read complete, state %d\n", rtc_tod_state);
 
 		rtc_read_msg = NULL;
 		opal_rtc_eval_events();
@@ -311,7 +308,7 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 	/* Timeout: return our cached value (updated from tb), but leave the
 	 * read request pending so it will update the cache later */
 	} else if (mftb() > read_req_tb + msecs_to_tb(rtc_read_timeout_ms)) {
-		DBG("RTC read timed out\n");
+		prlog(PR_TRACE, "RTC read timed out\n");
 
 		encode_cached_tod(year_month_day,
 				hour_minute_second_millisecond);
@@ -351,14 +348,17 @@ static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
 			goto bail;
 		}
 
-		DBG("Completed write request @%p, state=%d\n", msg, msg->state);
+		prlog(PR_TRACE, "Completed write request @%p, state=%d\n",
+		      msg, msg->state);
+
 		/* It's complete, clear events */
 		rtc_write_msg = NULL;
 		opal_rtc_eval_events();
 
 		/* Check error state */
 		if (msg->state != fsp_msg_done) {
-			DBG(" -> request not in done state -> error !\n");
+			prlog(PR_TRACE, " -> request not in done state ->"
+			      " error !\n");
 			rc = OPAL_INTERNAL_ERROR;
 			goto bail;
 		}
@@ -366,7 +366,7 @@ static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
 		goto bail;
 	}
 
-	DBG("Sending new write request...\n");
+	prlog(PR_TRACE, "Sending new write request...\n");
 
 	/* Create a request and send it. Just like for read, we ignore
 	 * the "millisecond" field which is probably supposed to be
@@ -378,11 +378,11 @@ static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
 
 	rtc_write_msg = fsp_mkmsg(FSP_CMD_WRITE_TOD, 3, w0, w1, w2);
 	if (!rtc_write_msg) {
-		DBG(" -> allocation failed !\n");
+		prlog(PR_TRACE, " -> allocation failed !\n");
 		rc = OPAL_INTERNAL_ERROR;
 		goto bail;
 	}
-	DBG(" -> req at %p\n", rtc_write_msg);
+	prlog(PR_TRACE, " -> req at %p\n", rtc_write_msg);
 
 	if (fsp_in_reset) {
 		datetime_to_tm(rtc_write_msg->data.words[0],
@@ -394,7 +394,7 @@ static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
 		rc = OPAL_SUCCESS;
 		goto bail;
 	} else if (fsp_queue_msg(rtc_write_msg, fsp_rtc_req_complete)) {
-		DBG(" -> queueing failed !\n");
+		prlog(PR_TRACE, " -> queueing failed !\n");
 		rc = OPAL_INTERNAL_ERROR;
 		fsp_freemsg(rtc_write_msg);
 		rtc_write_msg = NULL;
@@ -425,7 +425,7 @@ static int64_t fsp_opal_tpo_write(uint64_t async_token, uint32_t y_m_d,
 	/* Create a request and send it.*/
 	attr->tpo_async_token = async_token;
 
-	DBG("Sending TPO write request...\n");
+	prlog(PR_TRACE, "Sending TPO write request...\n");
 
 	msg = fsp_mkmsg(FSP_CMD_TPO_WRITE, 2, y_m_d, hr_min);
 	if (!msg) {
@@ -465,7 +465,7 @@ static int64_t fsp_opal_tpo_read(uint64_t async_token, uint32_t *y_m_d,
 	attr->year_month_day = y_m_d;
 	attr->hour_min = hr_min;
 
-	DBG("Sending new TPO read request\n");
+	prlog(PR_TRACE, "Sending new TPO read request\n");
 	msg = fsp_mkmsg(FSP_CMD_TPO_READ, 0);
 	if (!msg) {
 		log_simple_error(&e_info(OPAL_RC_RTC_READ),
@@ -557,7 +557,7 @@ void fsp_rtc_init(void)
 	msg.resp = &resp;
 	fsp_fillmsg(&msg, FSP_CMD_READ_TOD, 0);
 
-	DBG("Getting initial RTC TOD\n");
+	prlog(PR_TRACE, "Getting initial RTC TOD\n");
 
 	lock(&rtc_lock);
 
