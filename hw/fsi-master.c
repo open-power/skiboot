@@ -20,10 +20,6 @@
 #include <chip.h>
 #include <fsi-master.h>
 
-//#define DBG(fmt...) printf("MFSI: " fmt)
-#define DBG(fmt...) do { } while(0)
-
-
 /*
  * FSI Masters sit on OPB busses behind PIB2OPB bridges
  *
@@ -128,7 +124,7 @@ static int64_t mfsi_opb_poll(uint32_t chip, uint32_t xscom_base,
 			prerror("MFSI: XSCOM error %lld read OPB STAT\n", rc);
 			return rc;
 		}
-		DBG("  STAT=0x%16llx...\n", sval);
+		prlog(PR_INSANE, "  STAT=0x%16llx...\n", sval);
 
 		stat = sval >> 32;
 
@@ -174,8 +170,8 @@ static int64_t mfsi_opb_read(uint32_t chip, uint32_t xscom_base,
 	opb_cmd |= addr;
 	opb_cmd <<= 32;
 
-	DBG("MFSI_OPB_READ: Writing 0x%16llx to XSCOM %x\n",
-	    opb_cmd, xscom_base);
+	prlog(PR_INSANE, "MFSI_OPB_READ: Writing 0x%16llx to XSCOM %x\n",
+	      opb_cmd, xscom_base);
 
 	rc = xscom_write(chip, xscom_base + PIB2OPB_REG_CMD, opb_cmd);
 	if (rc) {
@@ -198,7 +194,7 @@ static int64_t mfsi_opb_write(uint32_t chip, uint32_t xscom_base,
 	opb_cmd <<= 32;
 	opb_cmd |= data;
 
-	DBG("MFSI_OPB_WRITE: Writing 0x%16llx to XSCOM %x\n",
+	prlog(PR_INSANE, "MFSI_OPB_WRITE: Writing 0x%16llx to XSCOM %x\n",
 	    opb_cmd, xscom_base);
 
 	rc = xscom_write(chip, xscom_base + PIB2OPB_REG_CMD, opb_cmd);
