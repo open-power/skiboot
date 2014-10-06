@@ -41,8 +41,6 @@
 DEFINE_LOG_ENTRY(OPAL_RC_FSP_POLL_TIMEOUT, OPAL_PLATFORM_ERR_EVT, OPAL_FSP,
 		 OPAL_PLATFORM_FIRMWARE, OPAL_ERROR_PANIC, OPAL_NA, NULL);
 
-//#define DBG(fmt...)	printf(fmt)
-#define DBG(fmt...)	do { } while(0)
 #define FSP_TRACE_MSG
 #define FSP_TRACE_EVENT
 
@@ -809,7 +807,7 @@ static bool fsp_post_msg(struct fsp *fsp, struct fsp_msg *msg)
 	u32 ctl, reg;
 	int i, wlen;
 
-	DBG("FSP #%d: fsp_post_msg (w0: 0x%08x w1: 0x%08x)\n",
+	prlog(PR_INSANE, "FSP #%d: fsp_post_msg (w0: 0x%08x w1: 0x%08x)\n",
 	    fsp->index, msg->word0, msg->word1);
 
 	/* Note: We used to read HCTL here and only modify some of
@@ -846,7 +844,7 @@ static bool fsp_post_msg(struct fsp *fsp, struct fsp_msg *msg)
 	ctl = 4 << FSP_MBX_CTL_HCHOST_SHIFT;
 	ctl |= (msg->dlen + 8) << FSP_MBX_CTL_DCHOST_SHIFT;
 	ctl |= FSP_MBX_CTL_PTS | FSP_MBX_CTL_SPPEND;
-	DBG("    new ctl: %08x\n", ctl);
+	prlog(PR_INSANE, "    new ctl: %08x\n", ctl);
 	fsp_wreg(fsp, FSP_MBX1_HCTL_REG, ctl);
 
 	return true;
@@ -1007,7 +1005,7 @@ static void fsp_complete_msg(struct fsp_msg *msg)
 
 	assert(cmdclass);
 
-	DBG("  completing msg,  word0: 0x%08x\n", msg->word0);
+	prlog(PR_INSANE, "  completing msg,  word0: 0x%08x\n", msg->word0);
 
 	comp = msg->complete;
 	list_del_from(&cmdclass->msgq, &msg->link);
@@ -1031,7 +1029,7 @@ static void fsp_complete_send(struct fsp *fsp)
 
 	fsp->pending = NULL;
 
-	DBG("  completing send, word0: 0x%08x, resp: %d\n",
+	prlog(PR_INSANE, "  completing send, word0: 0x%08x, resp: %d\n",
 	    msg->word0, msg->response);
 
 	if (msg->response) {
@@ -1285,7 +1283,7 @@ static void fsp_handle_incoming(struct fsp *fsp)
 	w0 = fsp_rreg(fsp, FSP_MBX1_FDATA_AREA);
 	w1 = fsp_rreg(fsp, FSP_MBX1_FDATA_AREA + 4);
 
-	DBG("  Incoming: w0: 0x%08x, w1: 0x%08x, dlen: %d\n",
+	prlog(PR_INSANE, "  Incoming: w0: 0x%08x, w1: 0x%08x, dlen: %d\n",
 	    w0, w1, dlen);
 
 	/* Some responses are expected out of band */
@@ -1517,7 +1515,7 @@ static void __fsp_poll(bool interrupt)
 
 	/* Poll FSP CTL */
 	if (ctl & (FSP_MBX_CTL_XUP | FSP_MBX_CTL_HPEND))
-		DBG("FSP #%d: poll, ctl: %x\n", fsp->index, ctl);
+		prlog(PR_INSANE, "FSP #%d: poll, ctl: %x\n", fsp->index, ctl);
 
 	/* Do we have a pending message waiting to complete ? */
 	if (ctl & FSP_MBX_CTL_XUP) {
