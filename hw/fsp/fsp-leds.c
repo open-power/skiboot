@@ -42,9 +42,6 @@
 #define buf_read(p, type, addr)  do { *addr = *(type *)(p);\
 					p += sizeof(type); } while(0)
 
-//#define DBG(fmt...)	do { printf(PREFIX fmt); } while(0)
-#define DBG(fmt...)	do { } while(0)
-
 /* SPCN replay threshold */
 #define SPCN_REPLAY_THRESHOLD 2
 
@@ -642,11 +639,11 @@ void fsp_get_led_state(struct fsp_msg *msg)
 	}
 	memcpy(&req, buf, sizeof(req));
 
-	DBG("%s: tce=0x%08x buf=%p rq.sz=%d rq.lc_len=%d rq.fld_sz=%d"
-	    " LC: %02x %02x %02x %02x....\n", __func__,
-	    tce_token, buf, req.size, req.lc_len, req.fld_sz,
-	    req.loc_code[0], req.loc_code[1],
-	    req.loc_code[2], req.loc_code[3]);
+	prlog(PR_TRACE, "%s: tce=0x%08x buf=%p rq.sz=%d rq.lc_len=%d"
+	      " rq.fld_sz=%d LC: %02x %02x %02x %02x....\n", __func__,
+	      tce_token, buf, req.size, req.lc_len, req.fld_sz,
+	      req.loc_code[0], req.loc_code[1],
+	      req.loc_code[2], req.loc_code[3]);
 
 	/* Bound check */
 	if (req.lc_len >= LOC_CODE_SIZE) {
@@ -685,12 +682,12 @@ void fsp_set_led_state(struct fsp_msg *msg)
 	}
 	memcpy(&req, buf, sizeof(req));
 
-	DBG("%s: tce=0x%08x buf=%p rq.sz=%d rq.typ=0x%04x rq.lc_len=%d"
-	    " rq.fld_sz=%d LC: %02x %02x %02x %02x....\n", __func__,
-	    tce_token, buf, req.size, req.lc_len, req.fld_sz,
-	    req.req_type,
-	    req.loc_code[0], req.loc_code[1],
-	    req.loc_code[2], req.loc_code[3]);
+	prlog(PR_TRACE, "%s: tce=0x%08x buf=%p rq.sz=%d rq.typ=0x%04x"
+	      " rq.lc_len=%d rq.fld_sz=%d LC: %02x %02x %02x %02x....\n",
+	      __func__, tce_token, buf, req.size, req.lc_len, req.fld_sz,
+	      req.req_type,
+	      req.loc_code[0], req.loc_code[1],
+	      req.loc_code[2], req.loc_code[3]);
 
 	/* Bound check */
 	if (req.lc_len >= LOC_CODE_SIZE) {
