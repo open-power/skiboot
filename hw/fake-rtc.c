@@ -18,9 +18,6 @@
 #include <opal.h>
 #include <mem_region.h>
 
-//#define DBG(fmt...)	printf("FAKERTC: " fmt)
-#define DBG(fmt...)	do { } while(0)
-
 uint32_t *fake_ymd;
 uint64_t *fake_hmsm;
 
@@ -53,7 +50,7 @@ void fake_rtc_init(void)
 
 	/* Should we register anyway? */
 	if (!rtc_region) {
-		DBG("No initial RTC value found\n");
+		prlog(PR_TRACE, "No initial RTC value found\n");
 		return;
 	}
 
@@ -62,7 +59,8 @@ void fake_rtc_init(void)
 	fake_ymd = rtc;
 	fake_hmsm = ((uint64_t *) &rtc[1]);
 
-	DBG("Init fake RTC to 0x%x 0x%llx\n", *fake_ymd, *fake_hmsm);
+	prlog(PR_TRACE, "Init fake RTC to 0x%x 0x%llx\n",
+	      *fake_ymd, *fake_hmsm);
 
 	opal_register(OPAL_RTC_READ, fake_rtc_read, 2);
 	opal_register(OPAL_RTC_WRITE, fake_rtc_write, 2);
