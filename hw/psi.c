@@ -30,10 +30,6 @@
 #include <timebase.h>
 #include <platform.h>
 
-//#define DBG(fmt...)	printf(fmt)
-#define DBG(fmt...)	do { } while(0)
-//#define FSP_TRACE
-
 static LIST_HEAD(psis);
 static u64 psi_link_timer;
 static u64 psi_link_timeout;
