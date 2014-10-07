@@ -24,9 +24,6 @@
 #include <cpu.h>
 #include <timebase.h>
 
-//#define DBG(fmt...)	printf("CHIPTOD: " fmt)
-#define DBG(fmt...)	do { } while(0)
-
 /* TOD chip XSCOM addresses */
 #define TOD_TTYPE_0			0x00040011
 #define TOD_TTYPE_1			0x00040012 /* PSS switch */
@@ -394,7 +391,7 @@ static void chiptod_sync_master(void *data)
 	/* Switch timebase to "Not Set" state */
 	if (!chiptod_mod_tb())
 		goto error;
-	DBG("SYNC MASTER Step 2 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prlog(PR_INSANE, "SYNC MASTER Step 2 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Chip TOD step checkers enable */
 	if (xscom_writeme(TOD_TTYPE_2, (1UL << 63)) != 0) {
@@ -402,12 +399,12 @@ static void chiptod_sync_master(void *data)
 		goto error;
 	}
 
-	DBG("SYNC MASTER Step 3 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prlog(PR_INSANE, "SYNC MASTER Step 3 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Chip TOD interrupt check */
 	if (!chiptod_interrupt_check())
 		goto error;	
-	DBG("SYNC MASTER Step 4 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prlog(PR_INSANE, "SYNC MASTER Step 4 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Switch local chiptod to "Not Set" state */
 	if (xscom_writeme(TOD_LOAD_TOD_MOD, (1UL << 63)) != 0) {
@@ -427,16 +424,16 @@ static void chiptod_sync_master(void *data)
 		goto error;
 	}
 
-	DBG("SYNC MASTER Step 5 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prlog(PR_INSANE, "SYNC MASTER Step 5 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	if (!chiptod_poll_running())
 		goto error;
-	DBG("SYNC MASTER Step 6 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prlog(PR_INSANE, "SYNC MASTER Step 6 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Move chiptod value to core TB */
 	if (!chiptod_to_tb())
 		goto error;
-	DBG("SYNC MASTER Step 7 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prlog(PR_INSANE, "SYNC MASTER Step 7 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Send local chip TOD to all chips TOD */
 	if (xscom_writeme(TOD_TTYPE_4, (1ULL << 63)) != 0) {
@@ -448,7 +445,7 @@ static void chiptod_sync_master(void *data)
 	if (!chiptod_check_tb_running())
 		goto error;
 
-	DBG("Master sync completed, TB=%lx\n", mfspr(SPR_TBRL));
+	prlog(PR_INSANE, "Master sync completed, TB=%lx\n", mfspr(SPR_TBRL));
 
 	/*
 	 * A little delay to make sure the remote chips get up to
@@ -495,28 +492,28 @@ static void chiptod_sync_slave(void *data)
 	/* Switch timebase to "Not Set" state */
 	if (!chiptod_mod_tb())
 		goto error;
-	DBG("SYNC SLAVE Step 2 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prlog(PR_INSANE, "SYNC SLAVE Step 2 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Chip TOD running check */
 	if (!chiptod_poll_running())
 		goto error;
-	DBG("SYNC SLAVE Step 3 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prlog(PR_INSANE, "SYNC SLAVE Step 3 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Chip TOD interrupt check */
 	if (!chiptod_interrupt_check())
 		goto error;
-	DBG("SYNC SLAVE Step 4 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prlog(PR_INSANE, "SYNC SLAVE Step 4 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Move chiptod value to core TB */
 	if (!chiptod_to_tb())
 		goto error;
-	DBG("SYNC SLAVE Step 5 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
+	prlog(PR_INSANE, "SYNC SLAVE Step 5 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Check if TB is running */
 	if (!chiptod_check_tb_running())
 		goto error;
 
-	DBG("Slave sync completed, TB=%lx\n", mfspr(SPR_TBRL));
+	prlog(PR_INSANE, "Slave sync completed, TB=%lx\n", mfspr(SPR_TBRL));
 
 	*result = true;
 	return;
