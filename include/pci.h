@@ -257,8 +257,8 @@ struct phb_ops {
 				    uint64_t eeh_action_token);
 	int64_t (*eeh_freeze_set)(struct phb *phb, uint64_t pe_number,
 				  uint64_t eeh_action_token);
-	int64_t (*err_injct)(struct phb *phb, uint32_t pe_no, uint32_t type,
-			     uint32_t function, uint64_t addr, uint64_t mask);
+	int64_t (*err_inject)(struct phb *phb, uint32_t pe_no, uint32_t type,
+			      uint32_t func, uint64_t addr, uint64_t mask);
 	int64_t (*get_diag_data)(struct phb *phb, void *diag_buffer,
 				 uint64_t diag_buffer_len);
 	int64_t (*get_diag_data2)(struct phb *phb, void *diag_buffer,
