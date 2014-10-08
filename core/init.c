@@ -673,8 +673,7 @@ void __noreturn __secondary_cpu_entry(void)
 		/* Relax a bit to give the simulator some breathing space */
 		i = 1000;
 		while (--i)
-			smt_very_low();
-		smt_low();
+			cpu_relax();
 	}
 }
 

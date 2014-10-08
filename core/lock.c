@@ -87,9 +87,8 @@ void lock(struct lock *l)
 	for (;;) {
 		if (try_lock(l))
 			break;
-		smt_low();
+		cpu_relax();
 	}
-	smt_medium();
 }
 
 void unlock(struct lock *l)
