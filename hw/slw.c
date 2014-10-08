@@ -973,8 +973,6 @@ static void fast_sleep_enter(void)
 	}
 	rc = xscom_read(chip_id, XSCOM_ADDR_P8_EX(core, L2_FIR_ACTION1),
 			&tmp);
-	printf("fastsleep: core %d: l2 fir before %016llx, after %016llx\n",
-			this_cpu()->pir, primary_thread->save_l2_fir_action1, tmp);
 	if (rc) {
 		printf("fast_sleep_enter XSCOM failed\n");
 		return;
@@ -999,8 +997,6 @@ static void fast_sleep_exit(void)
 		printf("fast_sleep_exit XSCOM failed\n");
 		return;
 	}
-	printf("fastsleep: core %d: l2 fir restored %016llx\n",
-			this_cpu()->pir, primary_thread->save_l2_fir_action1);
 }
 
 /*
