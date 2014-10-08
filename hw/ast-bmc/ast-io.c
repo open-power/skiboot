@@ -91,7 +91,21 @@
 
 #include "ast.h"
 
+enum {
+	BMC_SIO_DEV_NONE	= -1,
+	BMC_SIO_DEV_UART1	= 2,
+	BMC_SIO_DEV_UART2	= 3,
+	BMC_SIO_DEV_SWC		= 4,
+	BMC_SIO_DEV_KBC		= 5,
+	BMC_SIO_DEV_P80		= 7,
+	BMC_SIO_DEV_UART3	= 0xb,
+	BMC_SIO_DEV_UART4	= 0xc,
+	BMC_SIO_DEV_LPC2AHB	= 0xd,
+	BMC_SIO_DEV_MBOX	= 0xe,
+};
+
 static struct lock bmc_sio_lock = LOCK_UNLOCKED;
+static int bmc_sio_cur_dev = BMC_SIO_DEV_NONE;
 
 /*
  * SuperIO indirect accesses
@@ -108,12 +122,45 @@ static uint8_t bmc_sio_inb(uint8_t reg)
 	return lpc_inb(0x2f);
 }
 
+static void bmc_sio_get(int dev)
+{
+	lock(&bmc_sio_lock);
+
+	if (bmc_sio_cur_dev == dev || dev < 0)
+		return;
+
+	if (bmc_sio_cur_dev == BMC_SIO_DEV_NONE) {
+		/* Send SuperIO password */
+		lpc_outb(0xa5, 0x2e);
+		lpc_outb(0xa5, 0x2e);
+	}
+
+	/* Select logical dev */
+	bmc_sio_outb(dev, 0x07);
+
+	bmc_sio_cur_dev = dev;
+}
+
+static void bmc_sio_put(bool lock_sio)
+{
+	if (lock_sio) {
+		/* Re-lock SuperIO */
+		lpc_outb(0xaa, 0x2e);
+
+		bmc_sio_cur_dev = BMC_SIO_DEV_NONE;
+	}
+	unlock(&bmc_sio_lock);
+}
+
 /*
  * AHB accesses via iLPC->AHB in SuperIO. Works on byteswapped
  * values (ie. Little Endian registers)
  */
 static void bmc_sio_ahb_prep(uint32_t reg, uint8_t type)
 {
+	/* Enable iLPC->AHB */
+	bmc_sio_outb(0x01, 0x30);
+
 	/* Address */
 	bmc_sio_outb((reg >> 24) & 0xff, 0xf0);
 	bmc_sio_outb((reg >> 16) & 0xff, 0xf1);
@@ -126,7 +173,7 @@ static void bmc_sio_ahb_prep(uint32_t reg, uint8_t type)
 
 static void bmc_sio_ahb_writel(uint32_t val, uint32_t reg)
 {
-	lock(&bmc_sio_lock);
+	bmc_sio_get(BMC_SIO_DEV_LPC2AHB);
 
 	bmc_sio_ahb_prep(reg, 2);
 
@@ -139,14 +186,14 @@ static void bmc_sio_ahb_writel(uint32_t val, uint32_t reg)
 	/* Trigger */
 	bmc_sio_outb(0xcf, 0xfe);
 
-	unlock(&bmc_sio_lock);
+	bmc_sio_put(false);
 }
 
 static uint32_t bmc_sio_ahb_readl(uint32_t reg)
 {
 	uint32_t val = 0;
 
-	lock(&bmc_sio_lock);
+	bmc_sio_get(BMC_SIO_DEV_LPC2AHB);
 
 	bmc_sio_ahb_prep(reg, 2);
 
@@ -159,26 +206,9 @@ static uint32_t bmc_sio_ahb_readl(uint32_t reg)
 	val = (val << 8) | bmc_sio_inb(0xf6);
 	val = (val << 8) | bmc_sio_inb(0xf7);
 
-	unlock(&bmc_sio_lock);
+	bmc_sio_put(false);
 
 	return val;
-}
-
-static void bmc_sio_ahb_init(void)
-{
-	/* Send SuperIO password */
-	lpc_outb(0xa5, 0x2e);
-	lpc_outb(0xa5, 0x2e);
-
-	/* Select logical dev d */
-	bmc_sio_outb(0x0d, 0x07);
-
-	/* Enable iLPC->AHB */
-	bmc_sio_outb(0x01, 0x30);
-
-	/* We leave the SuperIO enabled and unlocked for
-	 * subsequent accesses.
-	 */
 }
 
 /*
@@ -288,56 +318,55 @@ int ast_copy_from_ahb(void *dst, uint32_t reg, uint32_t len)
 
 static void ast_setup_sio_irq_polarity(void)
 {
-	/* Send SuperIO password */
-	lpc_outb(0xa5, 0x2e);
-	lpc_outb(0xa5, 0x2e);
-
 	/* Select logical dev 2 */
-	bmc_sio_outb(0x02, 0x07);
+	bmc_sio_get(BMC_SIO_DEV_UART1);
 	bmc_sio_outb(0x01, 0x71); /* level low */
+	bmc_sio_put(false);
 
 	/* Select logical dev 3 */
-	bmc_sio_outb(0x03, 0x07);
+	bmc_sio_get(BMC_SIO_DEV_UART2);
 	bmc_sio_outb(0x01, 0x71); /* irq level low */
+	bmc_sio_put(false);
 
 	/* Select logical dev 4 */
-	bmc_sio_outb(0x04, 0x07);
+	bmc_sio_get(BMC_SIO_DEV_SWC);
 	bmc_sio_outb(0x01, 0x71); /* irq level low */
+	bmc_sio_put(false);
 
 	/* Select logical dev 5 */
-	bmc_sio_outb(0x05, 0x07);
+	bmc_sio_get(BMC_SIO_DEV_KBC);
 	bmc_sio_outb(0x01, 0x71); /* irq level low */
 	bmc_sio_outb(0x01, 0x73); /* irq level low */
+	bmc_sio_put(false);
 
 	/* Select logical dev 7 */
-	bmc_sio_outb(0x07, 0x07);
+	bmc_sio_get(BMC_SIO_DEV_P80);
 	bmc_sio_outb(0x01, 0x71); /* irq level low */
+	bmc_sio_put(false);
 
 	/* Select logical dev d */
-	bmc_sio_outb(0x0b, 0x07);
+	bmc_sio_get(BMC_SIO_DEV_UART3);
 	bmc_sio_outb(0x01, 0x71); /* irq level low */
+	bmc_sio_put(false);
 
 	/* Select logical dev c */
-	bmc_sio_outb(0x0c, 0x07);
+	bmc_sio_get(BMC_SIO_DEV_UART4);
 	bmc_sio_outb(0x01, 0x71); /* irq level low */
+	bmc_sio_put(false);
 
 	/* Select logical dev d */
-	bmc_sio_outb(0x0d, 0x07);
+	bmc_sio_get(BMC_SIO_DEV_LPC2AHB);
 	bmc_sio_outb(0x01, 0x71); /* irq level low */
+	bmc_sio_put(false);
 
 	/* Select logical dev e */
-	bmc_sio_outb(0x0e, 0x07);
+	bmc_sio_get(BMC_SIO_DEV_MBOX);
 	bmc_sio_outb(0x01, 0x71); /* irq level low */
-
-	/* Re-lock SuperIO */
-	lpc_outb(0xaa, 0x2e);
+	bmc_sio_put(true);
 }
 
 void ast_io_init(void)
 {
-	/* Initialize iLPC->AHB bridge */
-	bmc_sio_ahb_init();
-
 	/* Configure the LPC->AHB bridge for PNOR access (just in case) */
 	bmc_sio_ahb_writel(0x30000e00, LPC_HICR7);
 	bmc_sio_ahb_writel(0xfe0001ff, LPC_HICR8);
@@ -374,6 +403,7 @@ void ast_setup_vuart1(uint16_t io_base, uint8_t irq)
 	v = bmc_sio_ahb_readl(VUART1_GCTRLA);
 	v = v & ~2u;
 	bmc_sio_ahb_writel(v, VUART1_GCTRLA);
+	v = bmc_sio_ahb_readl(VUART1_GCTRLA);
 
 	/* IRQ number */
 	v = bmc_sio_ahb_readl(VUART1_GCTRLB);
@@ -388,12 +418,7 @@ void ast_setup_vuart1(uint16_t io_base, uint8_t irq)
 /* Setup SuperIO UART 1 */
 void ast_setup_sio_uart1(uint16_t io_base, uint8_t irq)
 {
-	/* Send SuperIO password */
-	lpc_outb(0xa5, 0x2e);
-	lpc_outb(0xa5, 0x2e);
-
-	/* Select logical dev 2 */
-	bmc_sio_outb(0x02, 0x07);
+	bmc_sio_get(BMC_SIO_DEV_UART1);
 
 	/* Disable UART1 for configuration */
 	bmc_sio_outb(0x00, 0x30);
@@ -407,22 +432,15 @@ void ast_setup_sio_uart1(uint16_t io_base, uint8_t irq)
 	/* Enable UART1 */
 	bmc_sio_outb(0x01, 0x30);
 
-	/* Re-lock SuperIO */
-	lpc_outb(0xaa, 0x2e);
+	bmc_sio_put(true);
 }
 
 void ast_disable_sio_uart1(void)
 {
-	/* Send SuperIO password */
-	lpc_outb(0xa5, 0x2e);
-	lpc_outb(0xa5, 0x2e);
-
-	/* Select logical dev 2 */
-	bmc_sio_outb(0x02, 0x07);
+	bmc_sio_get(BMC_SIO_DEV_UART1);
 
 	/* Disable UART1 */
 	bmc_sio_outb(0x00, 0x30);
 
-	/* Re-lock SuperIO */
-	lpc_outb(0xaa, 0x2e);
+	bmc_sio_put(true);
 }
