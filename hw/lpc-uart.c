@@ -23,6 +23,7 @@
 #include <processor.h>
 #include <fsp-elog.h>
 #include <trace.h>
+#include <cpu.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_UART_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_UART,
 		 OPAL_CEC_HARDWARE, OPAL_PREDICTIVE_ERR_GENERAL,
@@ -55,6 +56,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_UART_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_UART,
 
 static uint32_t uart_base;
 static bool has_irq, irq_disabled;
+static uint8_t tx_room;
 
 /*
  * We implement a simple buffer to buffer input data as some bugs in
@@ -92,22 +94,28 @@ static inline void uart_write(unsigned int reg, uint8_t val)
 	lpc_outb(val, uart_base + reg);
 }
 
+static void uart_wait_tx_room(void)
+{
+	while ((uart_read(REG_LSR) & LSR_THRE) == 0)
+		cpu_relax();
+	/* FIFO is 16 entries */
+	tx_room = 16;
+}
+
 static size_t uart_con_write(const char *buf, size_t len)
 {
 	size_t written = 0;
 
 	while(written < len) {
-		while ((uart_read(REG_LSR) & LSR_THRE) == 0) {
-			int i = 0;
-
-			/* Give the simulator some breathing space */
-			for (; i < 1000; ++i)
-				smt_very_low();
+		if (tx_room == 0) {
+			uart_wait_tx_room();
+			if (tx_room == 0)
+				return written;
+		} else {
+			uart_write(REG_THR, buf[written++]);
+			tx_room--;
 		}
-		smt_medium();
-		uart_write(REG_THR, buf[written++]);
-	};
-
+	}
 	return written;
 }
 
