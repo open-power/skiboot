@@ -45,10 +45,6 @@ void astbmc_ext_irq(unsigned int chip_id __unused)
 
 void astbmc_init(void)
 {
-	/* Setup dummy console nodes */
-	if (dummy_console_enabled())
-		dummy_console_add_nodes();
-
 	/* Initialize PNOR/NVRAM */
 	pnor_init();
 

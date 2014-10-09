@@ -153,8 +153,6 @@ void ibm_fsp_init(void)
 	/* Setup console */
 	if (fsp_present())
 		fsp_console_add_nodes();
-	else if (dummy_console_enabled())
-		dummy_console_add_nodes();
 }
 
 int64_t ibm_fsp_cec_reboot(void)

@@ -177,9 +177,6 @@ static int rhesus_pnor_init(void)
 
 static void rhesus_init(void)
 {
-	if (dummy_console_enabled())
-		dummy_console_add_nodes();
-
 	/* Initialize PNOR/NVRAM */
 	rhesus_pnor_init();
 }
