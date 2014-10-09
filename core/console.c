@@ -313,18 +313,13 @@ opal_call(OPAL_CONSOLE_READ, dummy_console_read, 3);
 
 static void dummy_console_poll(void *data __unused)
 {
-	bool uart_has_data;
-
 	lock(&con_lock);
-	uart_has_data = uart_console_poll();
-
-	if (uart_has_data || memcons.in_prod != memcons.in_cons)
+	if (memcons.in_prod != memcons.in_cons)
 		opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT,
 					OPAL_EVENT_CONSOLE_INPUT);
 	else
 		opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT, 0);
 	unlock(&con_lock);
-
 }
 
 void dummy_console_add_nodes(void)

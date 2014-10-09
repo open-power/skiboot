@@ -23,6 +23,7 @@
 #include <processor.h>
 #include <fsp-elog.h>
 #include <trace.h>
+#include <timebase.h>
 #include <cpu.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_UART_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_UART,
@@ -43,20 +44,26 @@ DEFINE_LOG_ENTRY(OPAL_RC_UART_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_UART,
 #define REG_MSR		6
 #define REG_SCR		7
 
-#define LSR_DR   0x01  /* Data ready */
-#define LSR_OE   0x02  /* Overrun */
-#define LSR_PE   0x04  /* Parity error */
-#define LSR_FE   0x08  /* Framing error */
-#define LSR_BI   0x10  /* Break */
-#define LSR_THRE 0x20  /* Xmit holding register empty */
-#define LSR_TEMT 0x40  /* Xmitter empty */
-#define LSR_ERR  0x80  /* Error */
+#define LSR_DR		0x01  /* Data ready */
+#define LSR_OE		0x02  /* Overrun */
+#define LSR_PE		0x04  /* Parity error */
+#define LSR_FE		0x08  /* Framing error */
+#define LSR_BI		0x10  /* Break */
+#define LSR_THRE	0x20  /* Xmit holding register empty */
+#define LSR_TEMT	0x40  /* Xmitter empty */
+#define LSR_ERR		0x80  /* Error */
 
-#define LCR_DLAB 0x80  /* DLL access */
+#define LCR_DLAB 	0x80  /* DLL access */
 
+#define IER_RX		0x01
+#define IER_THRE	0x02
+
+static struct lock uart_lock = LOCK_UNLOCKED;
+static struct dt_node *uart_node;
 static uint32_t uart_base;
-static bool has_irq, irq_disabled;
+static bool has_irq, rx_full, tx_full;
 static uint8_t tx_room;
+static uint8_t cached_ier;
 
 /*
  * We implement a simple buffer to buffer input data as some bugs in
@@ -94,32 +101,109 @@ static inline void uart_write(unsigned int reg, uint8_t val)
 	lpc_outb(val, uart_base + reg);
 }
 
-static void uart_wait_tx_room(void)
+static void uart_check_tx_room(void)
 {
-	while ((uart_read(REG_LSR) & LSR_THRE) == 0)
-		cpu_relax();
-	/* FIFO is 16 entries */
-	tx_room = 16;
+	if (uart_read(REG_LSR) & LSR_THRE)
+		/* FIFO is 16 entries */
+		tx_room = 16;
 }
 
+static void uart_wait_tx_room(void)
+{
+	while(!tx_room) {
+		uart_check_tx_room();
+		if (!tx_room)
+			cpu_relax();
+	}
+}
+
+static void uart_update_ier(void)
+{
+	uint8_t ier = 0;
+
+	if (!has_irq)
+		return;
+	if (!rx_full)
+		ier |= IER_RX;
+	if (tx_full)
+		ier |= IER_THRE;
+	if (ier != cached_ier) {
+		uart_write(REG_IER, ier);
+		cached_ier = ier;
+	}
+}
+
+/*
+ * Internal console driver (output only)
+ */
 static size_t uart_con_write(const char *buf, size_t len)
 {
 	size_t written = 0;
 
+	lock(&uart_lock);
 	while(written < len) {
 		if (tx_room == 0) {
 			uart_wait_tx_room();
 			if (tx_room == 0)
-				return written;
+				goto bail;
 		} else {
 			uart_write(REG_THR, buf[written++]);
 			tx_room--;
 		}
 	}
+ bail:
+	unlock(&uart_lock);
 	return written;
 }
 
-/* Must be called with console lock held */
+static struct con_ops uart_con_driver = {
+	.write = uart_con_write
+};
+
+/*
+ * OPAL console driver
+ */
+
+static int64_t uart_opal_write(int64_t term_number, int64_t *length,
+			       const uint8_t *buffer)
+{
+	size_t req = *length, written = 0;
+
+	if (term_number != 0)
+		return OPAL_PARAMETER;
+
+	lock(&uart_lock);
+	while(written < req) {
+		if (tx_room == 0) {
+			uart_check_tx_room();
+			if (tx_room == 0)
+				goto bail;
+		} else {
+			uart_write(REG_THR, buffer[written++]);
+			tx_room--;
+		}
+	}
+ bail:
+	unlock(&uart_lock);
+	*length = written;
+
+	return written ? OPAL_SUCCESS : OPAL_BUSY_EVENT;
+}
+
+static int64_t uart_opal_write_buffer_space(int64_t term_number,
+					    int64_t *length)
+{
+	if (term_number != 0)
+		return OPAL_PARAMETER;
+
+	lock(&uart_lock);
+	uart_check_tx_room();
+	*length = tx_room;
+	unlock(&uart_lock);
+	return OPAL_SUCCESS;
+}
+
+/* Must be called with UART lock held */
 static void uart_read_to_buffer(void)
 {
 	/* As long as there is room in the buffer */
@@ -135,38 +219,41 @@ static void uart_read_to_buffer(void)
 		in_buf[in_count++] = uart_read(REG_RBR);
 	}
 
-	if (!has_irq)
-		return;
-
 	/* If the buffer is full disable the interrupt */
-	if (in_count == IN_BUF_SIZE) {
-		if (!irq_disabled)
-			uart_write(REG_IER, 0x00);
-		irq_disabled = true;
-	} else {
-		/* Otherwise, enable it */
-		if (irq_disabled) 
-			uart_write(REG_IER, 0x01);
-		irq_disabled = false;
-	}
+	rx_full = (in_count == IN_BUF_SIZE);
+	uart_update_ier();
+}
+
+static void uart_adjust_opal_event(void)
+{
+	if (in_count)
+		opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT,
+					OPAL_EVENT_CONSOLE_INPUT);
+	else
+		opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT, 0);
 }
 
 /* This is called with the console lock held */
-static size_t uart_con_read(char *buf, size_t len)
+static int64_t uart_opal_read(int64_t term_number, int64_t *length,
+			      uint8_t *buffer)
 {
-	size_t read_cnt = 0;
+	size_t req_count = *length, read_cnt = 0;
 	uint8_t lsr = 0;
 
+	if (term_number != 0)
+		return OPAL_PARAMETER;
 	if (!in_buf)
-		return 0;
+		return OPAL_INTERNAL_ERROR;
+
+	lock(&uart_lock);
 
 	/* Read from buffer first */
 	if (in_count) {
 		read_cnt = in_count;
-		if (len < read_cnt)
-			read_cnt = len;
-		memcpy(buf, in_buf, read_cnt);
-		len -= read_cnt;
+		if (req_count < read_cnt)
+			read_cnt = req_count;
+		memcpy(buffer, in_buf, read_cnt);
+		req_count -= read_cnt;
 		if (in_count != read_cnt)
 			memmove(in_buf, in_buf + read_cnt, in_count - read_cnt);
 		in_count -= read_cnt;
@@ -176,45 +263,35 @@ static size_t uart_con_read(char *buf, size_t len)
 	 * If there's still room in the user buffer, read from the UART
 	 * directly
 	 */
-	while(len) {
+	while(req_count) {
 		lsr = uart_read(REG_LSR);
 		if ((lsr & LSR_DR) == 0)
 			break;
-		buf[read_cnt++] = uart_read(REG_RBR);
-		len--;
+		buffer[read_cnt++] = uart_read(REG_RBR);
+		req_count--;
 	}
 
 	/* Finally, flush whatever's left in the UART into our buffer */
 	uart_read_to_buffer();
+
+	uart_trace(TRACE_UART_CTX_READ, read_cnt, tx_full, in_count);
+
+	unlock(&uart_lock);
 	
 	/* Adjust the OPAL event */
-	if (in_count)
-		opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT,
-					OPAL_EVENT_CONSOLE_INPUT);
-	else
-		opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT, 0);
+	uart_adjust_opal_event();
 
-	uart_trace(TRACE_UART_CTX_READ, read_cnt, irq_disabled, in_count);
-
-	return read_cnt;
+	*length = read_cnt;
+	return OPAL_SUCCESS;
 }
 
-static struct con_ops uart_con_driver = {
-	.read = uart_con_read,
-	.write = uart_con_write
-};
-
-bool uart_console_poll(void)
+static void uart_console_poll(void *data __unused)
 {
-	if (!in_buf)
-		return false;
-
-	/* Grab what's in the UART and stash it into our buffer */
+	lock(&uart_lock);
 	uart_read_to_buffer();
+	unlock(&uart_lock);
 
-	uart_trace(TRACE_UART_CTX_POLL, 0, irq_disabled, in_count);
-
-	return !!in_count;
+	uart_adjust_opal_event();
 }
 
 void uart_irq(void)
@@ -222,19 +299,70 @@ void uart_irq(void)
 	if (!in_buf)
 		return;
 
-	/* This needs locking vs read() */
-	lock(&con_lock);
-
 	/* Grab what's in the UART and stash it into our buffer */
+	lock(&uart_lock);
 	uart_read_to_buffer();
+	uart_trace(TRACE_UART_CTX_IRQ, 0, tx_full, in_count);
+	unlock(&uart_lock);
 
-	/* Set the event if the buffer has anything in it */
-	if (in_count)
-		opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT,
-					OPAL_EVENT_CONSOLE_INPUT);
+	uart_adjust_opal_event();
+}
 
-	uart_trace(TRACE_UART_CTX_IRQ, 0, irq_disabled, in_count);
-	unlock(&con_lock);
+void uart_setup_linux_passthrough(void)
+{
+	char *path;
+
+	dt_add_property_strings(uart_node, "status", "ok");
+	path = dt_get_path(uart_node);
+	dt_add_property_string(dt_chosen, "linux,stdout-path", path);
+	free(path);
+	printf("UART: Enabled as OS pass-through\n");
+}
+
+void uart_setup_opal_console(void)
+{
+	struct dt_node *con, *consoles;
+
+	/* Create OPAL console node */
+	consoles = dt_new(opal_node, "consoles");
+	assert(consoles);
+	dt_add_property_cells(consoles, "#address-cells", 1);
+	dt_add_property_cells(consoles, "#size-cells", 0);
+
+	con = dt_new_addr(consoles, "serial", 0);
+	assert(con);
+	dt_add_property_string(con, "compatible", "ibm,opal-console-raw");
+	dt_add_property_cells(con, "#write-buffer-size", INMEM_CON_OUT_LEN);
+	dt_add_property_cells(con, "reg", 0);
+	dt_add_property_string(con, "device_type", "serial");
+
+	dt_add_property_string(dt_chosen, "linux,stdout-path",
+			       "/ibm,opal/consoles/serial@0");
+
+	/*
+	 * We mark the UART as reserved since we don't want the
+	 * kernel to start using it with its own 8250 driver
+	 */
+	dt_add_property_strings(uart_node, "status", "reserved");
+
+	/*
+	 * If the interrupt is enabled, turn on RX interrupts (and
+	 * only these for now
+	 */
+	tx_full = rx_full = false;
+	uart_update_ier();
+
+	/* Allocate an input buffer */
+	in_buf = zalloc(IN_BUF_SIZE);
+	printf("UART: Enabled as OS console\n");
+
+	/* Register OPAL APIs */
+	opal_register(OPAL_CONSOLE_READ, uart_opal_read, 3);
+	opal_register(OPAL_CONSOLE_WRITE_BUFFER_SPACE,
+		      uart_opal_write_buffer_space, 2);
+	opal_register(OPAL_CONSOLE_WRITE, uart_opal_write, 3);
+
+	opal_add_poller(uart_console_poll, NULL);
 }
 
 static bool uart_init_hw(unsigned int speed, unsigned int clock)
@@ -275,8 +403,13 @@ void uart_init(bool enable_interrupt)
 	if (!lpc_present())
 		return;
 
+	/* UART lock is in the console path and thus must block
+	 * printf re-entrancy
+	 */
+	uart_lock.in_con_path = true;
+
 	/* We support only one */
-	n = dt_find_compatible_node(dt_root, NULL, "ns16550");
+	uart_node = n = dt_find_compatible_node(dt_root, NULL, "ns16550");
 	if (!n)
 		return;
 
@@ -314,38 +447,9 @@ void uart_init(bool enable_interrupt)
 	irqchip = dt_prop_get_u32(n, "ibm,irq-chip-id");
 	irq = get_psi_interrupt(irqchip) + P8_IRQ_PSI_HOST_ERR;
 	printf("UART: IRQ connected to chip %d, irq# is 0x%x\n", irqchip, irq);
-	if (enable_interrupt) {
+	has_irq = enable_interrupt;
+	if (has_irq) {
 		dt_add_property_cells(n, "interrupts", irq);
 		dt_add_property_cells(n, "interrupt-parent", get_ics_phandle());
-	}
-
-	if (dummy_console_enabled()) {
-		/*
-		 * If the dummy console is enabled, we mark the UART as
-		 * reserved since we don't want the kernel to start using it
-		 * with its own 8250 driver
-		 */
-		dt_add_property_strings(n, "status", "reserved");
-
-		/*
-		 * If the interrupt is enabled, turn on RX interrupts (and
-		 * only these for now
-		 */
-		if (enable_interrupt) {
-			uart_write(REG_IER, 0x01);
-			has_irq = true;
-			irq_disabled = false;
-		}
-
-		/* Allocate an input buffer */
-		in_buf = zalloc(IN_BUF_SIZE);
-		printf("UART: Enabled as OS console\n");
-	} else {
-		/* Else, we expose it as our chosen console */
-		dt_add_property_strings(n, "status", "ok");
-		path = dt_get_path(n);
-		dt_add_property_string(dt_chosen, "linux,stdout-path", path);
-		free(path);
-		printf("UART: Enabled as OS pass-through\n");
 	}
 }

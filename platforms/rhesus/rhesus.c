@@ -179,6 +179,9 @@ static void rhesus_init(void)
 {
 	/* Initialize PNOR/NVRAM */
 	rhesus_pnor_init();
+
+	/* Setup UART for direct use by Linux */
+	uart_setup_linux_passthrough();
 }
 
 static void rhesus_dt_fixup_uart(struct dt_node *lpc)

@@ -54,6 +54,10 @@ void astbmc_init(void)
 
 	/* As soon as IPMI is up, inform BMC we are in "S0" */
 	ipmi_set_power_state(IPMI_PWR_SYS_S0_WORKING, IPMI_PWR_NOCHANGE);
+
+	/* Setup UART console for use by Linux via OPAL API */
+	if (!dummy_console_enabled())
+		uart_setup_opal_console();
 }
 
 int64_t astbmc_ipmi_power_down(uint64_t request)
@@ -163,9 +167,6 @@ static void astbmc_fixup_dt(void)
 	astbmc_fixup_dt_uart(primary_lpc);
 
 	astbmc_fixup_dt_bt(primary_lpc);
-
-	/* Force the dummy console for now */
-	force_dummy_console();
 }
 
 static void astbmc_fixup_psi_bar(void)

@@ -205,8 +205,10 @@ struct flash_chip;
 extern int flash_nvram_init(struct flash_chip *chip, uint32_t start,
 			    uint32_t size);
 
-/* UART interrupt */
+/* UART stuff */
 extern void uart_irq(void);
+extern void uart_setup_linux_passthrough(void);
+extern void uart_setup_opal_console(void);
 
 /* Flatten device-tree */
 extern void *create_dtb(const struct dt_node *root);
