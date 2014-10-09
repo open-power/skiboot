@@ -64,6 +64,10 @@ DEFINE_LOG_ENTRY(OPAL_RC_OCC_PSTATE_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_OCC,
 		OPAL_CEC_HARDWARE, OPAL_INFO,
 		OPAL_NA, NULL);
 
+DEFINE_LOG_ENTRY(OPAL_RC_OCC_TIMEOUT, OPAL_PLATFORM_ERR_EVT, OPAL_OCC,
+		 OPAL_CEC_HARDWARE, OPAL_UNRECOVERABLE_ERR_GENERAL,
+		 OPAL_NA, NULL);
+
 /* Check each chip's HOMER/Sapphire area for PState valid bit */
 static bool wait_for_all_occ_init(void)
 {
@@ -269,8 +273,9 @@ void occ_pstates_init(void)
 
 	/* Wait for all OCC to boot up */
 	if(!wait_for_all_occ_init()) {
-		log_simple_error(&e_info(OPAL_RC_OCC_PSTATE_INIT),
-					"OCC: All OCC did not init.  Timed Out\n");
+		log_simple_error(&e_info(OPAL_RC_OCC_TIMEOUT),
+			 "OCC: Initialization on all chips did not complete"
+			 "(timed out)\n");
 		return;
 	}
 
