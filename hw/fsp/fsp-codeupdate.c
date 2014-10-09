@@ -1015,9 +1015,10 @@ static int fsp_flash_firmware(void)
 
 	for (i = 0; i < be16_to_cpu(header->number_lids); i++) {
 		if (be32_to_cpu(idx_entry->size) > LID_MAX_SIZE) {
-			log_simple_error(&e_info(OPAL_RC_CU_FLASH), "CUPD: "
-				"LID size 0x%x is > max LID size (0x%x).\n",
-				be32_to_cpu(idx_entry->size), LID_MAX_SIZE);
+			log_simple_error(&e_info(OPAL_RC_CU_FLASH), "CUPD: LID"
+				" (0x%x) size 0x%x is > max LID size (0x%x).\n",
+				 be32_to_cpu(idx_entry->id),
+				 be32_to_cpu(idx_entry->size), LID_MAX_SIZE);
 			goto abort_update;
 		}
 
