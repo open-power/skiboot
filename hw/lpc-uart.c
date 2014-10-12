@@ -65,21 +65,6 @@ static bool has_irq, rx_full, tx_full;
 static uint8_t tx_room;
 static uint8_t cached_ier;
 
-/*
- * We implement a simple buffer to buffer input data as some bugs in
- * Linux make it fail to read fast enough after we get an interrupt.
- *
- * We use it on non-interrupt operations as well while at it because
- * it doesn't cost us much and might help in a few cases where Linux
- * is calling opal_poll_events() but not actually reading.
- *
- * Most of the time I expect we'll flush it completely to Linux into
- * it's tty flip buffers so I don't bother with a ring buffer.
- */
-#define IN_BUF_SIZE	0x1000
-static uint8_t	*in_buf;
-static uint32_t	in_count;
-
 static void uart_trace(u8 ctx, u8 cnt, u8 irq_state, u8 in_count)
 {
 	union trace t;
@@ -103,9 +88,11 @@ static inline void uart_write(unsigned int reg, uint8_t val)
 
 static void uart_check_tx_room(void)
 {
-	if (uart_read(REG_LSR) & LSR_THRE)
+	if (uart_read(REG_LSR) & LSR_THRE) {
 		/* FIFO is 16 entries */
 		tx_room = 16;
+		tx_full = false;
+	}
 }
 
 static void uart_wait_tx_room(void)
@@ -164,30 +151,82 @@ static struct con_ops uart_con_driver = {
  * OPAL console driver
  */
 
+/*
+ * We implement a simple buffer to buffer input data as some bugs in
+ * Linux make it fail to read fast enough after we get an interrupt.
+ *
+ * We use it on non-interrupt operations as well while at it because
+ * it doesn't cost us much and might help in a few cases where Linux
+ * is calling opal_poll_events() but not actually reading.
+ *
+ * Most of the time I expect we'll flush it completely to Linux into
+ * it's tty flip buffers so I don't bother with a ring buffer.
+ */
+#define IN_BUF_SIZE	0x1000
+static uint8_t	*in_buf;
+static uint32_t	in_count;
+
+/*
+ * We implement a ring buffer for output data as well to speed things
+ * up a bit. This allows us to have interrupt driven sends. This is only
+ * for the output data coming from the OPAL API, not the internal one
+ * which is already bufferred.
+ */
+#define OUT_BUF_SIZE	0x1000
+static uint8_t *out_buf;
+static uint8_t out_buf_prod;
+static uint8_t out_buf_cons;
+
+static void uart_flush_out(void)
+{
+	bool tx_was_full = tx_full;
+
+	while(out_buf_prod != out_buf_cons) {
+		if (tx_room == 0)
+			uart_check_tx_room();
+		if (tx_room == 0) {
+			tx_full = true;
+			break;
+		}
+		uart_write(REG_THR, out_buf[out_buf_cons++]);
+		out_buf_cons %= OUT_BUF_SIZE;
+		tx_room--;
+	}
+	if (tx_full != tx_was_full)
+		uart_update_ier();
+}
+
+static uint32_t uart_tx_buf_space(void)
+{
+	return OUT_BUF_SIZE - 1 -
+		(out_buf_prod + OUT_BUF_SIZE - out_buf_cons) % OUT_BUF_SIZE;
+}
+
 static int64_t uart_opal_write(int64_t term_number, int64_t *length,
 			       const uint8_t *buffer)
 {
-	size_t req = *length, written = 0;
+	size_t written = 0, len = *length;
 
 	if (term_number != 0)
 		return OPAL_PARAMETER;
 
 	lock(&uart_lock);
-	while(written < req) {
-		if (tx_room == 0) {
-			uart_check_tx_room();
-			if (tx_room == 0)
-				goto bail;
-		} else {
-			uart_write(REG_THR, buffer[written++]);
-			tx_room--;
-		}
+
+	/* Copy data to out buffer */
+	while (uart_tx_buf_space() && len--) {
+		out_buf[out_buf_prod++] = *(buffer++);
+		out_buf_prod %= OUT_BUF_SIZE;
+		written++;
 	}
- bail:
+
+	/* Flush out buffer again */
+	uart_flush_out();
+
 	unlock(&uart_lock);
+
 	*length = written;
 
-	return written ? OPAL_SUCCESS : OPAL_BUSY_EVENT;
+	return OPAL_SUCCESS;
 }
 
 static int64_t uart_opal_write_buffer_space(int64_t term_number,
@@ -197,9 +236,9 @@ static int64_t uart_opal_write_buffer_space(int64_t term_number,
 		return OPAL_PARAMETER;
 
 	lock(&uart_lock);
-	uart_check_tx_room();
-	*length = tx_room;
+	*length = uart_tx_buf_space();
 	unlock(&uart_lock);
+
 	return OPAL_SUCCESS;
 }
 
@@ -285,28 +324,33 @@ static int64_t uart_opal_read(int64_t term_number, int64_t *length,
 	return OPAL_SUCCESS;
 }
 
-static void uart_console_poll(void *data __unused)
-{
-	lock(&uart_lock);
-	uart_read_to_buffer();
-	unlock(&uart_lock);
-
-	uart_adjust_opal_event();
-}
-
-void uart_irq(void)
+static void __uart_do_poll(u8 trace_ctx)
 {
 	if (!in_buf)
 		return;
 
-	/* Grab what's in the UART and stash it into our buffer */
 	lock(&uart_lock);
 	uart_read_to_buffer();
-	uart_trace(TRACE_UART_CTX_IRQ, 0, tx_full, in_count);
+	uart_flush_out();
+	uart_trace(trace_ctx, 0, tx_full, in_count);
 	unlock(&uart_lock);
 
 	uart_adjust_opal_event();
 }
+
+static void uart_console_poll(void *data __unused)
+{
+	__uart_do_poll(TRACE_UART_CTX_POLL);
+}
+
+void uart_irq(void)
+{
+	__uart_do_poll(TRACE_UART_CTX_IRQ);
+}
+
+/*
+ * Common setup/inits
+ */
 
 void uart_setup_linux_passthrough(void)
 {
