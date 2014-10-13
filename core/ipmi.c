@@ -55,6 +55,9 @@ struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
 	msg->complete = complete;
 	msg->user_data = user_data;
 
+	/* Commands are free to over ride this if they want to handle errors */
+	msg->error = ipmi_free_msg;
+
 	if (req_data)
 		memcpy(msg->data, req_data, req_size);
 
@@ -85,8 +88,8 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 	if (cc != IPMI_CC_NO_ERROR) {
 		prerror("IPMI: Got error response 0x%02x\n", msg->cc);
 
-		if (msg->error)
-			msg->error(msg);
+		assert(msg->error);
+		msg->error(msg);
 	} else if (msg->complete)
 		msg->complete(msg);
 
