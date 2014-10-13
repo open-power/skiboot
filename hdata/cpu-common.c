@@ -33,12 +33,12 @@ struct dt_node * add_core_common(struct dt_node *cpus,
 	const uint8_t pa_features[] = {
 		6, 0, 0xf6, 0x3f, 0xc7, 0x00, 0x80, 0xc0 };
 
-	printf("    Cache: I=%u D=%u/%u/%u/%u\n",
-	       be32_to_cpu(cache->icache_size_kb),
-	       be32_to_cpu(cache->l1_dcache_size_kb),
-	       be32_to_cpu(cache->l2_dcache_size_kb),
-	       be32_to_cpu(cache->l3_dcache_size_kb),
-	       be32_to_cpu(cache->l35_dcache_size_kb));
+	prlog(PR_INFO, "    Cache: I=%u D=%u/%u/%u/%u\n",
+	      be32_to_cpu(cache->icache_size_kb),
+	      be32_to_cpu(cache->l1_dcache_size_kb),
+	      be32_to_cpu(cache->l2_dcache_size_kb),
+	      be32_to_cpu(cache->l3_dcache_size_kb),
+	      be32_to_cpu(cache->l35_dcache_size_kb));
 
 	/* Use the boot CPU PVR to make up a CPU name in the device-tree
 	 * since the HDAT doesn't seem to tell....

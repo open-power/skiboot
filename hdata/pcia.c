@@ -124,11 +124,11 @@ static struct dt_node *add_core_node(struct dt_node *cpus,
 		   >> CPU_ID_NUM_SECONDARY_THREAD_SHIFT) + 1;
 	assert(threads <= PCIA_MAX_THREADS);
 
-	printf("CORE[%i]: PIR=%i RES=%i %s %s(%u threads)\n",
-	       pcia_index(pcia), t->pir, t->proc_int_line,
-	       ve_flags & CPU_ID_PACA_RESERVED
-	       ? "**RESERVED**" : cpu_state(ve_flags),
-	       be32_to_cpu(t->pir) == boot_cpu->pir ? "[boot] " : "", threads);
+	prlog(PR_INFO, "CORE[%i]: PIR=%i RES=%i %s %s(%u threads)\n",
+	      pcia_index(pcia), t->pir, t->proc_int_line,
+	      ve_flags & CPU_ID_PACA_RESERVED
+	      ? "**RESERVED**" : cpu_state(ve_flags),
+	      be32_to_cpu(t->pir) == boot_cpu->pir ? "[boot] " : "", threads);
 
 	timebase = HDIF_get_idata(pcia, SPPCIA_IDATA_TIMEBASE, &size);
 	if (!timebase || size < sizeof(*timebase)) {
@@ -198,7 +198,7 @@ bool pcia_parse(void)
 	if (!pcia)
 		return false;
 
-	printf("Got PCIA !\n");
+	prlog(PR_INFO, "Got PCIA !\n");
 
 	got_pcia = true;
 
@@ -229,11 +229,12 @@ bool pcia_parse(void)
 			okay = false;
 		}
 
-		printf("CORE[%i]: HW_PROC_ID=%i PROC_CHIP_ID=%i EC=0x%x %s\n",
-		       pcia_index(pcia), be32_to_cpu(id->hw_proc_id),
-		       be32_to_cpu(id->proc_chip_id),
-		       be32_to_cpu(id->chip_ec_level),
-		       okay ? "OK" : "UNAVAILABLE");
+		prlog(okay ? PR_INFO : PR_WARNING,
+		      "CORE[%i]: HW_PROC_ID=%i PROC_CHIP_ID=%i EC=0x%x %s\n",
+		      pcia_index(pcia), be32_to_cpu(id->hw_proc_id),
+		      be32_to_cpu(id->proc_chip_id),
+		      be32_to_cpu(id->chip_ec_level),
+		      okay ? "OK" : "UNAVAILABLE");
 
 		if (!add_core_node(cpus, pcia, id, okay))
 			break;
