@@ -583,7 +583,7 @@ opal_call(OPAL_QUERY_CPU_STATUS, opal_query_cpu_status, 2);
 
 static int64_t opal_return_cpu(void)
 {
-	printf("OPAL: Returning CPU 0x%04x\n", this_cpu()->pir);
+	prlog(PR_DEBUG, "OPAL: Returning CPU 0x%04x\n", this_cpu()->pir);
 
 	__secondary_cpu_entry();
 
