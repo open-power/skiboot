@@ -71,7 +71,8 @@ static void slw_do_rvwinkle(void *data)
 	/* Setup LPCR to wakeup on external interrupts only */
 	mtspr(SPR_LPCR, ((lpcr & ~SPR_LPCR_P8_PECE) | SPR_LPCR_P8_PECE2));
 
-	printf("SLW: CPU PIR 0x%04x goint to rvwinkle...\n", cpu->pir);
+	prlog(PR_DEBUG, "SLW: CPU PIR 0x%04x goint to rvwinkle...\n",
+	      cpu->pir);
 
 	/* Tell that we got it */
 	cpu->state = cpu_state_rvwinkle;
@@ -81,7 +82,7 @@ static void slw_do_rvwinkle(void *data)
 	/* Ok, it's ours again */
 	cpu->state = cpu_state_active;
 
-	printf("SLW: CPU PIR 0x%04x woken up !\n", cpu->pir);
+	prlog(PR_DEBUG, "SLW: CPU PIR 0x%04x woken up !\n", cpu->pir);
 
 	/* Cleanup our ICP */
 	reset_cpu_icp();
@@ -98,7 +99,8 @@ static void slw_do_rvwinkle(void *data)
 	if (!master)
 		return;
 
-	printf("SLW: CPU PIR 0x%04x waiting for master...\n", cpu->pir);
+	prlog(PR_DEBUG, "SLW: CPU PIR 0x%04x waiting for master...\n",
+	      cpu->pir);
 
 	/* Allriiiight... now wait for master to go down */
 	while(master->state != cpu_state_rvwinkle)
@@ -122,7 +124,7 @@ static void slw_do_rvwinkle(void *data)
 		}
 	}
 
-	printf("SLW: Waking master (PIR 0x%04x)...\n", master->pir);
+	prlog(PR_DEBUG, "SLW: Waking master (PIR 0x%04x)...\n", master->pir);
 
 	/* Now poke all the secondary threads on the master's core */
 	for_each_cpu(cpu) {
@@ -292,7 +294,7 @@ static bool slw_unset_overrides(struct proc_chip *chip, struct cpu_thread *c)
 	uint32_t core = pir_to_core_id(c->pir);
 
 	/* XXX FIXME: Save and restore the overrides */
-	printf("SLW: slw_unset_overrides %x:%x\n", chip->id, core);
+	prlog(PR_DEBUG, "SLW: slw_unset_overrides %x:%x\n", chip->id, core);
 	return true;
 }
 
@@ -502,12 +504,12 @@ static void add_cpu_idle_state_properties(void)
 	u8 name_buf_len;
 	u8 num_supported_idle_states;
 
-	printf("CPU idle state device tree init\n");
+	prlog(PR_DEBUG, "CPU idle state device tree init\n");
 
 	/* Create /ibm,opal/power-mgt */
 	power_mgt = dt_new(opal_node, "power-mgt");
 	if (!power_mgt) {
-		printf("creating dt node /ibm,opal/power-mgt failed\n");
+		prlog(PR_ERR, "creating dt node /ibm,opal/power-mgt failed\n");
 		return;
 	}
 
@@ -525,13 +527,15 @@ static void add_cpu_idle_state_properties(void)
 
 		p = dt_find_property(dt_root, "ibm,enabled-idle-states");
 		if (p)
-			printf("SLW: HB-provided idle states property found\n");
+			prlog(PR_WARNING,
+			      "SLW: HB-provided idle states property found\n");
 		states = power8_cpu_idle_states;
 		nr_states = ARRAY_SIZE(power8_cpu_idle_states);
 
 		/* Check if hostboot say we can sleep */
 		if (!p || !dt_prop_find_string(p, "fast-sleep")) {
-			printf("SLW: Sleep not enabled by HB on this platform\n");
+			prlog(PR_NOTICE, "SLW: Sleep not enabled by HB"
+			      " on this platform\n");
 			can_sleep = false;
 		}
 
@@ -539,7 +543,7 @@ static void add_cpu_idle_state_properties(void)
 		if ((chip->type == PROC_CHIP_P8_MURANO ||
 		     chip->type == PROC_CHIP_P8_VENICE) &&
 		    chip->ec_level < 0x20) {
-			printf("SLW: Sleep not enabled on P8 DD1.x\n");
+			prlog(PR_NOTICE, "SLW: Sleep not enabled on P8 DD1.x\n");
 			can_sleep = false;
 		}
 
@@ -641,7 +645,7 @@ static void slw_cleanup_core(struct proc_chip *chip, struct cpu_thread *c)
 		/* XXX error handling ? return false; */
 	}
 
-	printf("SLW: core %x:%x history: 0x%016llx (new1)\n",
+	prlog(PR_DEBUG, "SLW: core %x:%x history: 0x%016llx (new1)\n",
 	       chip->id, pir_to_core_id(c->pir), tmp);
 
 	rc = xscom_read(chip->id,
@@ -654,7 +658,7 @@ static void slw_cleanup_core(struct proc_chip *chip, struct cpu_thread *c)
 		/* XXX error handling ? return false; */
 	}
 
-	printf("SLW: core %x:%x history: 0x%016llx (new2)\n",
+	prlog(PR_DEBUG, "SLW: core %x:%x history: 0x%016llx (new2)\n",
 	       chip->id, pir_to_core_id(c->pir), tmp);
 
 	/*
@@ -782,8 +786,9 @@ int64_t slw_reinit(uint64_t flags)
 				 XSCOM_ADDR_P8_EX_SLAVE(pir_to_core_id(c->pir),
 							EX_PM_IDLE_STATE_HISTORY_PHYP),
 				   &tmp);
-			printf("SLW: core %x:%x history: 0x%016llx (mid)\n",
-			       chip->id, pir_to_core_id(c->pir), tmp);
+			prlog(PR_DEBUG, "SLW: core %x:%x"
+			      " history: 0x%016llx (mid)\n",
+			      chip->id, pir_to_core_id(c->pir), tmp);
 		}
 	}
 
@@ -855,7 +860,7 @@ static void slw_init_chip(struct proc_chip *chip)
 	int rc __unused;
 	struct cpu_thread *c;
 
-	prerror("SLW: Init chip 0x%x\n", chip->id);
+	prlog(PR_DEBUG, "SLW: Init chip 0x%x\n", chip->id);
 
 	if (!chip->slw_base) {
 		prerror("SLW: No image found !\n");
@@ -875,7 +880,8 @@ static void slw_init_chip(struct proc_chip *chip)
 		chip->slw_image_size = 0;
 		return;
 	}
-	printf("SLW: Image size from image: 0x%llx\n", chip->slw_image_size);
+	prlog(PR_DEBUG, "SLW: Image size from image: 0x%llx\n",
+	      chip->slw_image_size);
 
 	if (chip->slw_image_size > chip->slw_bar_size) {
 		log_simple_error(&e_info(OPAL_RC_SLW_INIT),
@@ -921,7 +927,9 @@ static void fast_sleep_enter(void)
 	rc = xscom_read(chip_id, XSCOM_ADDR_P8_EX(core, L2_FIR_ACTION1),
 			&tmp);
 	if (rc) {
-		printf("fast_sleep_enter XSCOM failed\n");
+		prlog(PR_WARNING, "fast_sleep_enter XSCOM failed(1):"
+		      " rc=%d chip_id=%d core=%d\n",
+		      rc, chip_id, core);
 		return;
 	}
 
@@ -930,13 +938,17 @@ static void fast_sleep_enter(void)
 	rc = xscom_write(chip_id, XSCOM_ADDR_P8_EX(core, L2_FIR_ACTION1),
 			 tmp);
 	if (rc) {
-		printf("fast_sleep_enter XSCOM failed\n");
+		prlog(PR_WARNING, "fast_sleep_enter XSCOM failed(2):"
+		      " rc=%d chip_id=%d core=%d\n",
+		      rc, chip_id, core);
 		return;
 	}
 	rc = xscom_read(chip_id, XSCOM_ADDR_P8_EX(core, L2_FIR_ACTION1),
 			&tmp);
 	if (rc) {
-		printf("fast_sleep_enter XSCOM failed\n");
+		prlog(PR_WARNING, "fast_sleep_enter XSCOM failed(3):"
+		      " rc=%d chip_id=%d core=%d\n",
+		      rc, chip_id, core);
 		return;
 	}
 
@@ -956,7 +968,9 @@ static void fast_sleep_exit(void)
 	rc = xscom_write(chip_id, XSCOM_ADDR_P8_EX(core, L2_FIR_ACTION1),
 			primary_thread->save_l2_fir_action1);
 	if (rc) {
-		printf("fast_sleep_exit XSCOM failed\n");
+		prlog(PR_WARNING, "fast_sleep_exit XSCOM failed:"
+		      " rc=%d chip_id=%d core=%d\n",
+		      rc, chip_id, core);
 		return;
 	}
 }
