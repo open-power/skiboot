@@ -39,9 +39,10 @@ static struct dt_node *fsp_create_node(const void *spss, int i,
 		return NULL;
 	}
 
-	printf("FSP #%d: FSP HW version %d, SW version %d, chip DD%d.%d\n",
-	       i, sp_impl->hw_version, sp_impl->sw_version,
-	       sp_impl->chip_version >> 4, sp_impl->chip_version & 0xf);
+	prlog(PR_INFO, "FSP #%d: FSP HW version %d, SW version %d,"
+	      " chip DD%d.%d\n",
+	      i, sp_impl->hw_version, sp_impl->sw_version,
+	      sp_impl->chip_version >> 4, sp_impl->chip_version & 0xf);
 	mask = SPSS_SP_IMPL_FLAGS_INSTALLED | SPSS_SP_IMPL_FLAGS_FUNCTIONAL;
 	if ((be16_to_cpu(sp_impl->func_flags) & mask) != mask) {
 		prerror("FSP #%d: FSP not installed or not functional\n", i);
@@ -97,8 +98,8 @@ static uint32_t fsp_create_link(const struct spss_iopath *iopath, int index,
 	default:
 		ststr = "Unknown";
 	}
-	printf("FSP #%d: IO PATH %d is %s PSI Link, GXHB at %llx\n",
-	       fsp_index, index, ststr, (long long)iopath->psi.gxhb_base);
+	prlog(PR_DEBUG, "FSP #%d: IO PATH %d is %s PSI Link, GXHB at %llx\n",
+	      fsp_index, index, ststr, (long long)iopath->psi.gxhb_base);
 
 	chip_id = pcid_to_chip_id(iopath->psi.proc_chip_id);
 	node = dt_find_compatible_node_on_chip(dt_root, NULL, "ibm,psihb-x",
@@ -127,7 +128,7 @@ static void fsp_create_links(const void *spss, int index,
 		prerror("FSP #%d: Can't find IO PATH array size !\n", index);
 		return;
 	}
-	printf("FSP #%d: Found %d IO PATH\n", index, count);
+	prlog(PR_DEBUG, "FSP #%d: Found %d IO PATH\n", index, count);
 
 	/* Iterate all links */
 	for (i = 0; i < count; i++) {
@@ -181,7 +182,7 @@ void fsp_parse(void)
 	/* Find SPSS in SPIRA */
 	base_spss = get_hdif(&spira.ntuples.sp_subsys, SPSS_HDIF_SIG);
 	if (!base_spss) {
-		printf("FSP: No SPSS in SPIRA !\n");
+		prlog(PR_WARNING, "FSP: No SPSS in SPIRA !\n");
 		return;
 	}
 
