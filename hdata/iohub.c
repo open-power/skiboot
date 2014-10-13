@@ -78,13 +78,13 @@ static bool io_get_lx_info(const void *kwvpd, unsigned int kwvpd_sz,
 			lx_idx = VPD_LOAD_LXRN_VINI;
 	}
 	if (!lxr) {
-		printf("CEC:     LXR%x not found !\n", lx_idx);
+		prlog(PR_DEBUG, "CEC:     LXR%x not found !\n", lx_idx);
 		return false;
 	}
 
-	printf("CEC:     LXRn=%d LXR=%016lx\n", lx_idx,
-	       lxr ? *(unsigned long *)lxr : 0);
-	printf("CEC:     LX Info added to %llx\n", (long long)hn);
+	prlog(PR_DEBUG, "CEC:     LXRn=%d LXR=%016lx\n", lx_idx,
+	      lxr ? *(unsigned long *)lxr : 0);
+	prlog(PR_DEBUG, "CEC:     LX Info added to %llx\n", (long long)hn);
 
 	/* Add the LX info */
 	if (!dt_has_node_property(hn, "ibm,vpd-lx-info", NULL)) {
@@ -118,14 +118,15 @@ static void io_get_loc_code(const void *sp_iohubs, struct dt_node *hn, const cha
 				dt_add_property(hn, prop_name, loc_code,
 						strlen(loc_code) + 1);
 			}
-			printf("CEC:     %s: %s (SLCA rsrc 0x%x)\n",
-			       prop_name, loc_code, be16_to_cpu(fru_id->rsrc_id));
+			prlog(PR_DEBUG, "CEC:     %s: %s (SLCA rsrc 0x%x)\n",
+			      prop_name, loc_code,
+			      be16_to_cpu(fru_id->rsrc_id));
 		} else {
-			printf("CEC:     SLCA Loc not found: index %d\n",
-			       fru_id->slca_index);
+			prlog(PR_DEBUG, "CEC:     SLCA Loc not found: "
+			      "index %d\n", fru_id->slca_index);
 		}
 	} else {
-		printf("CEC:     Hub FRU ID not found...\n");
+		prlog(PR_DEBUG, "CEC:     Hub FRU ID not found...\n");
 	}
 }
 
@@ -138,14 +139,19 @@ static struct dt_node *io_add_p5ioc2(const struct cechub_io_hub *hub,
 	const void *kwvpd;
 	unsigned int kwvpd_sz;
 
-	printf("    GX#%d BUID_Ext = 0x%x\n",
-	       be32_to_cpu(hub->gx_index),
-	       be32_to_cpu(hub->buid_ext));
-	printf("    GX BAR 0 = 0x%016llx\n", be64_to_cpu(hub->gx_ctrl_bar0));
-	printf("    GX BAR 1 = 0x%016llx\n", be64_to_cpu(hub->gx_ctrl_bar1));
-	printf("    GX BAR 2 = 0x%016llx\n", be64_to_cpu(hub->gx_ctrl_bar2));
-	printf("    GX BAR 3 = 0x%016llx\n", be64_to_cpu(hub->gx_ctrl_bar3));
-	printf("    GX BAR 4 = 0x%016llx\n", be64_to_cpu(hub->gx_ctrl_bar4));
+	prlog(PR_DEBUG, "    GX#%d BUID_Ext = 0x%x\n",
+	      be32_to_cpu(hub->gx_index),
+	      be32_to_cpu(hub->buid_ext));
+	prlog(PR_DEBUG, "    GX BAR 0 = 0x%016llx\n",
+	      be64_to_cpu(hub->gx_ctrl_bar0));
+	prlog(PR_DEBUG, "    GX BAR 1 = 0x%016llx\n",
+	      be64_to_cpu(hub->gx_ctrl_bar1));
+	prlog(PR_DEBUG, "    GX BAR 2 = 0x%016llx\n",
+	      be64_to_cpu(hub->gx_ctrl_bar2));
+	prlog(PR_DEBUG, "    GX BAR 3 = 0x%016llx\n",
+	      be64_to_cpu(hub->gx_ctrl_bar3));
+	prlog(PR_DEBUG, "    GX BAR 4 = 0x%016llx\n",
+	      be64_to_cpu(hub->gx_ctrl_bar4));
 
 	/* We assume SBAR == GX0 + some hard coded offset */
 	reg[0] = cleanup_addr(be64_to_cpu(hub->gx_ctrl_bar0) + P5IOC2_REGS_OFFSET);
@@ -168,7 +174,7 @@ static struct dt_node *io_add_p5ioc2(const struct cechub_io_hub *hub,
 		if (!io_get_lx_info(kwvpd, kwvpd_sz, 0, hn))
 			io_get_lx_info(kwvpd, kwvpd_sz, 1, hn);
 	} else
-		printf("CEC:     P5IOC2 Keywords not found.\n");
+		prlog(PR_DEBUG, "CEC:     P5IOC2 Keywords not found.\n");
 
 	/* Get slots base loc code */
 	io_get_loc_code(sp_iohubs, hn, "ibm,io-base-loc-code");
@@ -185,14 +191,19 @@ static struct dt_node *io_add_p7ioc(const struct cechub_io_hub *hub,
 	const void *kwvpd;
 	unsigned int kwvpd_sz;
 
-	printf("    GX#%d BUID_Ext = 0x%x\n",
-	       be32_to_cpu(hub->gx_index),
-	       be32_to_cpu(hub->buid_ext));
-	printf("    GX BAR 0 = 0x%016llx\n", be64_to_cpu(hub->gx_ctrl_bar0));
-	printf("    GX BAR 1 = 0x%016llx\n", be64_to_cpu(hub->gx_ctrl_bar1));
-	printf("    GX BAR 2 = 0x%016llx\n", be64_to_cpu(hub->gx_ctrl_bar2));
-	printf("    GX BAR 3 = 0x%016llx\n", be64_to_cpu(hub->gx_ctrl_bar3));
-	printf("    GX BAR 4 = 0x%016llx\n", be64_to_cpu(hub->gx_ctrl_bar4));
+	prlog(PR_DEBUG, "    GX#%d BUID_Ext = 0x%x\n",
+	      be32_to_cpu(hub->gx_index),
+	      be32_to_cpu(hub->buid_ext));
+	prlog(PR_DEBUG, "    GX BAR 0 = 0x%016llx\n",
+	      be64_to_cpu(hub->gx_ctrl_bar0));
+	prlog(PR_DEBUG, "    GX BAR 1 = 0x%016llx\n",
+	      be64_to_cpu(hub->gx_ctrl_bar1));
+	prlog(PR_DEBUG, "    GX BAR 2 = 0x%016llx\n",
+	      be64_to_cpu(hub->gx_ctrl_bar2));
+	prlog(PR_DEBUG, "    GX BAR 3 = 0x%016llx\n",
+	      be64_to_cpu(hub->gx_ctrl_bar3));
+	prlog(PR_DEBUG, "    GX BAR 4 = 0x%016llx\n",
+	      be64_to_cpu(hub->gx_ctrl_bar4));
 
 	/* We only know about memory map 1 */
 	if (hub->mem_map_vers != 1) {
@@ -219,8 +230,9 @@ static struct dt_node *io_add_p7ioc(const struct cechub_io_hub *hub,
 		 */
 		if (!io_get_lx_info(kwvpd, kwvpd_sz, 0, hn))
 			io_get_lx_info(kwvpd, kwvpd_sz, 1, hn);
-	} else
-		printf("CEC:     P7IOC Keywords not found.\n");
+	} else {
+		prlog(PR_DEBUG, "CEC:     P7IOC Keywords not found.\n");
+	}
 
 	io_get_loc_code(sp_iohubs, hn, "ibm,io-base-loc-code");
 
@@ -301,8 +313,8 @@ static struct dt_node *io_add_murano(const struct cechub_io_hub *hub,
 
 	chip_id = pcid_to_chip_id(be32_to_cpu(hub->proc_chip_id));
 
-	printf("CEC:     HW CHIP=0x%x, HW TOPO=0x%04x\n", chip_id,
-	       be16_to_cpu(hub->hw_topology));
+	prlog(PR_INFO, "CEC:     HW CHIP=0x%x, HW TOPO=0x%04x\n", chip_id,
+	      be16_to_cpu(hub->hw_topology));
 
 	xscom = find_xscom_for_chip(chip_id);
 	if (!xscom) {
@@ -334,22 +346,22 @@ static void io_add_p8_cec_vpd(const struct HDIF_common_hdr *sp_iohubs)
 	/* P8 LXR0 kept in IO KID Keyword VPD */
 	iokids = HDIF_child_arr(sp_iohubs, CECHUB_CHILD_IO_KIDS);
 	if (!CHECK_SPPTR(iokids)) {
-		printf("CEC:     No IOKID child array !\n");
+		prlog(PR_WARNING, "CEC:     No IOKID child array !\n");
 		return;
 	}
 	if (!iokids->count) {
-		printf("CEC:     IOKID count is 0 !\n");
+		prlog(PR_WARNING, "CEC:     IOKID count is 0 !\n");
 		return;
 	}
 	if (iokids->count > 1) {
-		printf("CEC:     WARNING ! More than 1 IO KID !!! (%d)\n",
-		       iokids->count);
+		prlog(PR_WARNING, "CEC:     WARNING ! More than 1 IO KID !!! (%d)\n",
+		      iokids->count);
 		/* Ignoring the additional ones */
 	}
 
 	iokid = HDIF_child(sp_iohubs, iokids, 0, "IO KID");
 	if (!iokid) {
-		printf("CEC:     No IO KID structure in child array !\n");
+		prlog(PR_WARNING, "CEC:     No IO KID structure in child array !\n");
 		return;
 	}
 
@@ -358,7 +370,7 @@ static void io_add_p8_cec_vpd(const struct HDIF_common_hdr *sp_iohubs)
 
 	kwvpd = HDIF_get_idata(iokid, CECHUB_ASCII_KEYWORD_VPD, &kwvpd_sz);
 	if (!kwvpd) {
-		printf("CEC:     No VPD entry in IO KID !\n");
+		prlog(PR_WARNING, "CEC:     No VPD entry in IO KID !\n");
 		return;
 	}
 
@@ -476,7 +488,7 @@ static struct dt_node *io_add_hea(const struct cechub_io_hub *hub,
 		return NULL;
 	}
 	if (iokids->count > 1) {
-		printf("HEA: WARNING ! More than 1 IO KID !!! (%d)\n",
+		prlog(PR_WARNING, "HEA: WARNING ! More than 1 IO KID !!! (%d)\n",
 		       iokids->count);
 	}
 	iokid = HDIF_child(sp_io, iokids, 0, "IO KID");
@@ -524,7 +536,7 @@ static struct dt_node *io_add_hea(const struct cechub_io_hub *hub,
 	reg[0] = hub->gx_ctrl_bar3 + 0x4000000000;
 	reg[1] = 0xc0000000;
 
-	printf("CEC:    * Adding HEA to P5IOC2, assuming GBA=0x%llx\n",
+	prlog(PR_DEBUG, "CEC:    * Adding HEA to P5IOC2, assuming GBA=0x%llx\n",
 	       (long long)reg[0]);
 	np = dt_new_addr(dt_root, "ibm,hea", reg[0]);
 	if (!np)
@@ -585,7 +597,7 @@ static void io_parse_fru(const void *sp_iohubs)
 		return;
 	}
 
-	printf("CEC:   %d chips in FRU\n", count);
+	prlog(PR_INFO, "CEC:   %d chips in FRU\n", count);
 
 	/* Iterate IO hub array */
 	for (i = 0; i < count; i++) {
@@ -598,49 +610,52 @@ static void io_parse_fru(const void *sp_iohubs)
 			prerror("CEC:     IO-HUB Chip %d bad idata\n", i);
 			continue;
 		}
-		printf("CEC:   IO Hub Chip #%d:\n", i);
+
 		switch (hub->flags & CECHUB_HUB_FLAG_STATE_MASK) {
 		case CECHUB_HUB_FLAG_STATE_OK:
-			printf("CEC:     OK\n");
+			prlog(PR_DEBUG, "CEC:   IO Hub Chip #%d OK\n", i);
 			break;
 		case CECHUB_HUB_FLAG_STATE_FAILURES:
-			printf("CEC:     OK with failures\n");
+			prlog(PR_WARNING, "CEC:   IO Hub Chip #%d OK"
+			      " with failures\n", i);
 			break;
 		case CECHUB_HUB_FLAG_STATE_NOT_INST:
-			printf("CEC:     Not installed\n");
+			prlog(PR_DEBUG, "CEC:   IO Hub Chip #%d"
+			      " Not installed\n", i);
 			continue;
 		case CECHUB_HUB_FLAG_STATE_UNUSABLE:
-			printf("CEC:     Unusable");
+			prlog(PR_DEBUG, "CEC:   IO Hub Chip #%d Unusable", i);
 			continue;
 		}
 
 		hub_id = be16_to_cpu(hub->iohub_id);
 
 		/* GX BAR assignment */
-		printf("CEC:   PChip: %d HUB ID: %04x [EC=0x%x] Hub#=%d)\n",
-		       be32_to_cpu(hub->proc_chip_id), hub_id,
-		       be32_to_cpu(hub->ec_level), be32_to_cpu(hub->hub_num));
+		prlog(PR_DEBUG, "CEC:   PChip: %d HUB ID: %04x [EC=0x%x]"
+		      " Hub#=%d)\n",
+		      be32_to_cpu(hub->proc_chip_id), hub_id,
+		      be32_to_cpu(hub->ec_level), be32_to_cpu(hub->hub_num));
 
 		switch(hub_id) {
 		case CECHUB_HUB_P7IOC:
-			printf("CEC:     P7IOC !\n");
+			prlog(PR_INFO, "CEC:     P7IOC !\n");
 			hn = io_add_p7ioc(hub, sp_iohubs);
 			io_add_common(hn, hub);
 			break;
 		case CECHUB_HUB_P5IOC2:
-			printf("CEC:     P5IOC2 !\n");
+			prlog(PR_INFO, "CEC:     P5IOC2 !\n");
 			hn = io_add_p5ioc2(hub, sp_iohubs);
 			io_add_common(hn, hub);
 			io_add_hea(hub, sp_iohubs);
 			break;
 		case CECHUB_HUB_MURANO:
 		case CECHUB_HUB_MURANO_SEGU:
-			printf("CEC:     Murano !\n");
+			prlog(PR_INFO, "CEC:     Murano !\n");
 			hn = io_add_murano(hub, sp_iohubs);
 			break;
 		default:
-			printf("CEC:     Hub ID 0x%04x unsupported !\n",
-			       hub_id);
+			prlog(PR_ERR, "CEC:     Hub ID 0x%04x unsupported !\n",
+			      hub_id);
 			hn = NULL;
 		}
 	}
@@ -688,8 +703,8 @@ void io_parse(void)
 		}
 		type = fru_id_data->card_type;
 
-		printf("CEC: HUB FRU %d is %s\n",
-		       i, type > 4 ? "Unknown" : typestr[type]);
+		prlog(PR_INFO, "CEC: HUB FRU %d is %s\n",
+		      i, type > 4 ? "Unknown" : typestr[type]);
 
 		/*
 		 * We currently only handle the backplane (Juno) and
