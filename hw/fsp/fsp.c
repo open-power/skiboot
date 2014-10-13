@@ -1049,8 +1049,8 @@ static void  fsp_alloc_inbound(struct fsp_msg *msg)
 	u8 rc = 0;
 	void *buf;
 
-	printf("FSP: Allocate inbound buffer func: %04x len: %d\n",
-	       func_id, len);
+	prlog(PR_DEBUG, "FSP: Allocate inbound buffer func: %04x len: %d\n",
+	      func_id, len);
 
 	lock(&fsp_lock);
 	if ((fsp_inbound_off + len) > FSP_INBOUND_SIZE) {
@@ -1073,8 +1073,8 @@ static void  fsp_alloc_inbound(struct fsp_msg *msg)
 	len = (len + 0xfff) & ~0xfff;
 	fsp_inbound_off += len;
 	fsp_tce_map(tce_token, buf, len);
-	printf("FSP:  -> buffer at 0x%p, TCE: 0x%08x, alen: 0x%x\n",
-	       buf, tce_token, len);
+	prlog(PR_DEBUG, "FSP:  -> buffer at 0x%p, TCE: 0x%08x, alen: 0x%x\n",
+	      buf, tce_token, len);
 	act_len = len;
 
  reply:
