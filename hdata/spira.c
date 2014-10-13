@@ -777,7 +777,7 @@ static void add_iplparams_serials(const void *iplp, struct dt_node *node)
 		prerror("IPLPARAMS: No serial ports\n");
 		return;
 	}
-	prerror("IPLPARAMS: %d serial ports in array\n", count);
+	prlog(PR_INFO, "IPLPARAMS: %d serial ports in array\n", count);
 
 	node = dt_new(node, "fsp-serial");
 	assert(node);
@@ -791,8 +791,8 @@ static void add_iplparams_serials(const void *iplp, struct dt_node *node)
 		if (!CHECK_SPPTR(ipser))
 			continue;
 		rsrc_id = be16_to_cpu(ipser->rsrc_id);
-		printf("IPLPARAMS: Serial %d rsrc: %04x loc: %s\n",
-		       i, rsrc_id, ipser->loc_code);
+		prlog(PR_INFO, "IPLPARAMS: Serial %d rsrc: %04x loc: %s\n",
+		      i, rsrc_id, ipser->loc_code);
 		ser_node = dt_new_addr(node, "serial", rsrc_id);
 		if (!ser_node)
 			continue;
