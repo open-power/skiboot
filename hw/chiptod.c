@@ -116,8 +116,9 @@ static void chiptod_setup_base_tfmr(void)
 	 * The max jitter factor is set to 240 based on what pHyp uses.
 	 */
 	mcbs = (core_freq * 240) / (4 * tod_freq) / 100;
-	printf("CHIPTOD: Calculated MCBS is 0x%llx (Cfreq=%lld Tfreq=%lld)\n",
-	       mcbs, core_freq, tod_freq);
+	prlog(PR_INFO, "CHIPTOD: Calculated MCBS is 0x%llx"
+	      " (Cfreq=%lld Tfreq=%lld)\n",
+	      mcbs, core_freq, tod_freq);
 
 	/* Bake that all into TFMR */
 	base_tfmr = SETFIELD(SPR_TFMR_MAX_CYC_BET_STEPS, base_tfmr, mcbs);
@@ -372,7 +373,8 @@ static void chiptod_sync_master(void *data)
 {
 	bool *result = data;
 
-	printf("CHIPTOD: Master sync on CPU PIR 0x%04x...\n", this_cpu()->pir);
+	prlog(PR_DEBUG, "CHIPTOD: Master sync on CPU PIR 0x%04x...\n",
+	      this_cpu()->pir);
 
 	/* Apply base tfmr */
 	mtspr(SPR_TFMR, base_tfmr);
@@ -476,7 +478,8 @@ static void chiptod_sync_slave(void *data)
 		return;
 	}
 
-	printf("CHIPTOD: Slave sync on CPU PIR 0x%04x...\n", this_cpu()->pir);
+	prlog(PR_DEBUG, "CHIPTOD: Slave sync on CPU PIR 0x%04x...\n",
+	      this_cpu()->pir);
 
 	/* Apply base tfmr */
 	mtspr(SPR_TFMR, base_tfmr);
@@ -699,8 +702,8 @@ opal_call(OPAL_RESYNC_TIMEBASE, opal_resync_timebase, 0);
 
 static void chiptod_print_tb(void *data __unused)
 {
-	printf("CHIPTOD: PIR 0x%04x TB=%lx\n",
-	       this_cpu()->pir, mfspr(SPR_TBRL));
+	prlog(PR_DEBUG, "CHIPTOD: PIR 0x%04x TB=%lx\n",
+	      this_cpu()->pir, mfspr(SPR_TBRL));
 }
 
 static bool chiptod_probe(u32 master_cpu)
@@ -736,8 +739,10 @@ static bool chiptod_probe(u32 master_cpu)
 	 */
 	if (chiptod_primary < 0) {
 		struct cpu_thread *t = find_cpu_by_pir(master_cpu);
-		printf("CHIPTOD: Cannot find a primary TOD in device-tree\n");
-		printf("CHIPTOD: Falling back to Master CPU: %d\n", master_cpu);
+		prlog(PR_WARNING,
+		      "CHIPTOD: Cannot find a primary TOD in device-tree\n");
+		prlog(PR_WARNING, "CHIPTOD: Falling back to Master CPU: %d\n",
+		      master_cpu);
 		if (!t) {
 			prerror("CHIPTOD: NOT FOUND !\n");
 			return false;
@@ -785,7 +790,7 @@ void chiptod_init(u32 master_cpu)
 	/* Calculate the base TFMR value used for everybody */
 	chiptod_setup_base_tfmr();
 
-	printf("CHIPTOD: Base TFMR=0x%016llx\n", base_tfmr);
+	prlog(PR_DEBUG, "CHIPTOD: Base TFMR=0x%016llx\n", base_tfmr);
 
 	/* Schedule master sync */
 	sres = false;
