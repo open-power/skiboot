@@ -514,9 +514,9 @@ static void add_chiptod_node(unsigned int chip_id, int flags)
 		return;
 	}
 
-	printf("CHIPTOD: Found on chip 0x%x %s\n", chip_id,
-	       (flags & CHIPTOD_ID_FLAGS_PRIMARY) ? "[primary]" :
-	       ((flags & CHIPTOD_ID_FLAGS_SECONDARY) ? "[secondary]" : ""));
+	prlog(PR_DEBUG, "CHIPTOD: Found on chip 0x%x %s\n", chip_id,
+	      (flags & CHIPTOD_ID_FLAGS_PRIMARY) ? "[primary]" :
+	      ((flags & CHIPTOD_ID_FLAGS_SECONDARY) ? "[secondary]" : ""));
 
 	node = dt_new_addr(xscom_node, "chiptod", addr);
 	if (!node)
