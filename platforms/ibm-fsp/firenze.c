@@ -25,9 +25,6 @@
 #include "ibm-fsp.h"
 #include "lxvpd.h"
 
-/* Enable that to dump the PCIe inventory table before sending to FSP */
-#define DEBUG_INVENTORY
-
 /* Structure used to send PCIe card info to FSP */
 struct fsp_pcie_entry {
 	uint32_t	hw_proc_id;
@@ -64,25 +61,24 @@ static void firenze_send_pci_inventory(void)
 	if (!fsp_pcie_inv)
 		return;
 
-	printf("PLAT: Sending PCI inventory to FSP, table has %d entries\n",
-	       fsp_pcie_inv->num_entries);
+	prlog(PR_DEBUG, "PLAT: Sending PCI inventory to FSP, table has"
+	      " %d entries\n",
+	      fsp_pcie_inv->num_entries);
 
-#ifdef DEBUG_INVENTORY
 	{
 		unsigned int i;
 
-		printf("HWP SLT VDID DVID SVID SDID\n");
-		printf("---------------------------\n");
+		prlog(PR_DEBUG, "HWP SLT VDID DVID SVID SDID\n");
+		prlog(PR_DEBUG, "---------------------------\n");
 		for (i = 0; i < fsp_pcie_inv->num_entries; i++) {
 			struct fsp_pcie_entry *e = &fsp_pcie_inv->entries[i];
 
-			printf("%03d %03d %04x %04x %04x %04x\n",
-			       e->hw_proc_id, e->slot_idx,
-			       e->vendor_id, e->device_id,
-			       e->subsys_vendor_id, e->subsys_device_id);
+			prlog(PR_DEBUG, "%03d %03d %04x %04x %04x %04x\n",
+			      e->hw_proc_id, e->slot_idx,
+			      e->vendor_id, e->device_id,
+			      e->subsys_vendor_id, e->subsys_device_id);
 		}
 	}
-#endif
 
 	/*
 	 * Get the location of the table in a form we can send
