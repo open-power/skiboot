@@ -741,6 +741,8 @@ void fsp_set_led_state(struct fsp_msg *msg)
 /* Handle received indicator message from FSP */
 static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
+	u32 cmd;
+
 	/* LED support not available yet */
 	if (!led_support) {
 		log_simple_error(&e_info(OPAL_RC_LED_SUPPORT),
@@ -770,12 +772,73 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 			       "FSP_CMD_SET_LED_STATE command received\n");
 			fsp_set_led_state(msg);
 			return true;
+		/*
+		 * FSP async sub commands which have not been implemented.
+		 * For these async sub commands, print for the log and ack
+		 * the field service processor with a generic error.
+		 */
+		case FSP_CMD_GET_MTMS_LIST:
+			prlog(PR_TRACE, PREFIX
+				"FSP_CMD_GET_MTMS_LIST command received\n");
+			cmd = FSP_RSP_GET_MTMS_LIST;
+			break;
+		case FSP_CMD_RET_MTMS_BUFFER:
+			prlog(PR_TRACE, PREFIX
+				"FSP_CMD_RET_MTMS_BUFFER command received\n");
+			cmd = FSP_RSP_RET_MTMS_BUFFER;
+			break;
+		case FSP_CMD_SET_ENCL_MTMS:
+			prlog(PR_TRACE, PREFIX
+				"FSP_CMD_SET_MTMS command received\n");
+			cmd = FSP_RSP_SET_ENCL_MTMS;
+			break;
+		case FSP_CMD_CLR_INCT_ENCL:
+			prlog(PR_TRACE, PREFIX
+				"FSP_CMD_CLR_INCT_ENCL command received\n");
+			cmd = FSP_RSP_CLR_INCT_ENCL;
+			break;
+		case FSP_CMD_ENCL_MCODE_INIT:
+			prlog(PR_TRACE, PREFIX
+				"FSP_CMD_ENCL_MCODE_INIT command received\n");
+			cmd = FSP_RSP_ENCL_MCODE_INIT;
+			break;
+		case FSP_CMD_ENCL_MCODE_INTR:
+			prlog(PR_TRACE, PREFIX
+				"FSP_CMD_ENCL_MCODE_INTR command received\n");
+			cmd = FSP_RSP_ENCL_MCODE_INTR;
+			break;
+		case FSP_CMD_ENCL_POWR_TRACE:
+			prlog(PR_TRACE, PREFIX
+				"FSP_CMD_ENCL_POWR_TRACE command received\n");
+			cmd = FSP_RSP_ENCL_POWR_TRACE;
+			break;
+		case FSP_CMD_RET_ENCL_TRACE_BUFFER:
+			prlog(PR_TRACE, PREFIX
+				"FSP_CMD_RET_ENCL_TRACE_BUFFER \
+						command received\n");
+			cmd = FSP_RSP_RET_ENCL_TRACE_BUFFER;
+			break;
+		case FSP_CMD_GET_SPCN_LOOP_STATUS:
+			prlog(PR_TRACE, PREFIX
+				"FSP_CMD_GET_SPCN_LOOP_STATUS \
+						command received\n");
+			cmd = FSP_RSP_GET_SPCN_LOOP_STATUS;
+			break;
+		case FSP_CMD_INITIATE_LAMP_TEST:
+			/* XXX: FSP ACK not required for this sub command */
+			prlog(PR_TRACE, PREFIX
+				"FSP_CMD_INITIATE_LAMP_TEST \
+						command received\n");
+			return true;
 		default:
 			prlog(PR_WARNING, PREFIX
 			       "Invalid FSP async sub command %06x\n",
 			       cmd_sub_mod);
 			return false;
 	}
+	cmd |= FSP_STATUS_GENERIC_ERROR;
+	fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
+	return true;
 }
 
 /* Indicator class client */

@@ -453,6 +453,27 @@
 #define FSP_RSP_GET_LED_STATE  0x00da9100
 #define FSP_CMD_SET_LED_STATE  0x00da1104 /* Set Service Indicator State */
 #define FSP_RSP_SET_LED_STATE  0x00da9100
+#define FSP_CMD_GET_MTMS_LIST  0x00da1105 /* Get MTMS and config ID list */
+#define FSP_RSP_GET_MTMS_LIST  0x00da9100
+#define FSP_CMD_SET_ENCL_MTMS  0x00da1106 /* Set MTMS */
+#define FSP_RSP_SET_ENCL_MTMS  0x00da9100
+#define FSP_CMD_SET_ENCL_CNFG  0x00da1107 /* Set config ID */
+#define FSP_RSP_SET_ENCL_CNFG  0x00da9100
+#define FSP_CMD_CLR_INCT_ENCL  0x00da1108 /* Clear inactive address */
+#define FSP_RSP_CLR_INCT_ENCL  0x00da9100
+#define FSP_CMD_RET_MTMS_BUFFER  0x00da1109 /* Return MTMS buffer */
+#define FSP_RSP_RET_MTMS_BUFFER  0x00da9100
+#define FSP_CMD_ENCL_MCODE_INIT  0x00da110A /* Mcode update (Initiate download) */
+#define FSP_RSP_ENCL_MCODE_INIT  0x00da9100
+#define FSP_CMD_ENCL_MCODE_INTR  0x00da110B /* Mcode update (Interrupt download) */
+#define FSP_RSP_ENCL_MCODE_INTR  0x00da9100
+#define FSP_CMD_ENCL_POWR_TRACE  0x00da110D /* Enclosure power network trace */
+#define FSP_RSP_ENCL_POWR_TRACE  0x00da9100
+#define FSP_CMD_RET_ENCL_TRACE_BUFFER  0x00da110E /* Return power trace buffer */
+#define FSP_RSP_RET_ENCL_TRACE_BUFFER  0x00da9100
+#define FSP_CMD_GET_SPCN_LOOP_STATUS   0x00da110F /* Get SPCN loop status */
+#define FSP_RSP_GET_SPCN_LOOP_STATUS   0x00da9100
+#define FSP_CMD_INITIATE_LAMP_TEST     0x00da1300 /* Initiate LAMP test */
 
 /*
  * Class 0xE0
