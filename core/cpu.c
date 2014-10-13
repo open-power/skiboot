@@ -361,14 +361,16 @@ void init_boot_cpu(void)
 		cpu_thread_count = 4;
 		cpu_max_pir = SPR_PIR_P7_MASK;
 		proc_gen = proc_gen_p7;
-		printf("CPU: P7 generation processor\n");
+		prlog(PR_INFO, "CPU: P7 generation processor"
+		      "(max %d threads/core)\n", cpu_thread_count);
 		break;
 	case PVR_TYPE_P8E:
 	case PVR_TYPE_P8:
 		cpu_thread_count = 8;
 		cpu_max_pir = SPR_PIR_P8_MASK;
 		proc_gen = proc_gen_p8;
-		printf("CPU: P8 generation processor\n");
+		prlog(PR_INFO, "CPU: P8 generation processor"
+		      "(max %d threads/core)\n", cpu_thread_count);
 		break;
 	default:
 		prerror("CPU: Unknown PVR, assuming 1 thread\n");
@@ -377,9 +379,9 @@ void init_boot_cpu(void)
 		proc_gen = proc_gen_unknown;
 	}
 
-	printf("CPU: Boot CPU PIR is 0x%04x PVR is 0x%08x\n", pir, pvr);
-	printf("CPU: Initial max PIR set to 0x%x\n", cpu_max_pir);
-	printf("CPU: Assuming max %d threads per core\n", cpu_thread_count);
+	prlog(PR_DEBUG, "CPU: Boot CPU PIR is 0x%04x PVR is 0x%08x\n",
+	      pir, pvr);
+	prlog(PR_DEBUG, "CPU: Initial max PIR set to 0x%x\n", cpu_max_pir);
 
 	/* Clear the CPU structs */
 	for (i = 0; i <= cpu_max_pir; i++)
@@ -427,8 +429,8 @@ void init_all_cpus(void)
 		else
 			state = cpu_state_unavailable;
 
-		printf("CPU: CPU from DT PIR=0x%04x Server#=0x%x State=%d\n",
-		       pir, server_no, state);
+		prlog(PR_INFO, "CPU: CPU from DT PIR=0x%04x Server#=0x%x"
+		      " State=%d\n", pir, server_no, state);
 
 		/* Setup thread 0 */
 		t = pt = &cpu_stacks[pir].cpu;
@@ -455,7 +457,8 @@ void init_all_cpus(void)
 		if (!p)
 			continue;
 		for (thread = 1; thread < (p->len / 4); thread++) {
-			printf("CPU:   secondary thread %d found\n", thread);
+			prlog(PR_TRACE, "CPU:   secondary thread %d found\n",
+			      thread);
 			t = &cpu_stacks[pir + thread].cpu;
 			init_cpu_thread(t, state, pir + thread);
 			t->trace = boot_cpu->trace;
@@ -465,6 +468,7 @@ void init_all_cpus(void)
 			t->node = cpu;
 			t->chip_id = chip_id;
 		}
+		prlog(PR_INFO, "CPU:  %d secondary threads\n", thread);
 	}
 	cpu_max_pir = new_max_pir;
 	printf("CPU: New max PIR set to 0x%x\n", new_max_pir);
