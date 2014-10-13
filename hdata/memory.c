@@ -120,9 +120,10 @@ static bool add_address_range(struct dt_node *root,
 	char name[sizeof("memory@") + STR_MAX_CHARS(reg[0])];
 	u32 chip_id;
 
-	printf("  Range: 0x%016llx..0x%016llx on Chip 0x%x mattr: 0x%x\n",
-	       (long long)arange->start, (long long)arange->end,
-	       pcid_to_chip_id(arange->chip), arange->mirror_attr);
+	prlog(PR_DEBUG, "  Range: 0x%016llx..0x%016llx "
+	      "on Chip 0x%x mattr: 0x%x\n",
+	      (long long)arange->start, (long long)arange->end,
+	      pcid_to_chip_id(arange->chip), arange->mirror_attr);
 
 	/* reg contains start and length */
 	reg[0] = cleanup_addr(be64_to_cpu(arange->start));
@@ -263,7 +264,7 @@ static void get_msareas(struct dt_node *root,
 		}
 
 		flags = be16_to_cpu(id->flags);
-		printf("MS VPD: %p, area %i: %s %s %s\n",
+		prlog(PR_DEBUG, "MS VPD: %p, area %i: %s %s %s\n",
 		       ms_vpd, i,
 		       flags & MS_AREA_INSTALLED ?
 		       "installed" : "not installed",
