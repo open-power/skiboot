@@ -85,7 +85,7 @@ static bool wait_for_all_occ_init(void)
 	for_each_chip(chip) {
 		/* Check for valid homer address */
 		if (!chip->homer_base) {
-			printf("OCC: Chip: %x homer_base is not valid\n",
+			prerror("OCC: Chip: %x homer_base is not valid\n",
 				chip->id);
 			return false;
 		}
@@ -103,16 +103,17 @@ static bool wait_for_all_occ_init(void)
 			time_wait_ms(100);
 		}
 		if (occ_data->valid != 1) {
-			printf("OCC: Chip: %x PState table is not valid\n",
+			prerror("OCC: Chip: %x PState table is not valid\n",
 				chip->id);
 			return false;
 		}
-		printf("OCC: Chip %02x Data (%016llx) = %016llx\n",
-				chip->id, occ_data_area,
-				*(uint64_t *)occ_data_area);
+		prlog(PR_DEBUG, "OCC: Chip %02x Data (%016llx) = %016llx\n",
+		      chip->id, occ_data_area,
+		      *(uint64_t *)occ_data_area);
 	}
 	end_time = mftb();
-	printf("OCC: All Chip Rdy after %lld ms\n", (end_time - start_time) / 512 / 1000);
+	prlog(PR_NOTICE, "OCC: All Chip Rdy after %lld ms\n",
+	      (end_time - start_time) / 512 / 1000);
 	return true;
 }
 
@@ -130,7 +131,7 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 	u32 dt_freq[MAX_PSTATES];
 	int i;
 
-	printf("OCC: CPU pstate state device tree init\n");
+	prlog(PR_DEBUG, "OCC: CPU pstate state device tree init\n");
 
 	/* Find first chip and core */
 	chip = next_chip(NULL);
@@ -140,25 +141,25 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 	/* Dump state table */
 	occ_data_area = chip->homer_base + P8_HOMER_SAPPHIRE_DATA_OFFSET;
 
-	printf("OCC: Data (%16llx) = %16llx %16llx\n",
-	       occ_data_area,
-	       *(uint64_t *)occ_data_area,
-	       *(uint64_t *)(occ_data_area+8));
+	prlog(PR_DEBUG, "OCC: Data (%16llx) = %16llx %16llx\n",
+	      occ_data_area,
+	      *(uint64_t *)occ_data_area,
+	      *(uint64_t *)(occ_data_area+8));
 	
 	occ_data = (struct occ_pstate_table *)occ_data_area;
 
 	if (!occ_data->valid) {
-		printf("OCC: PState table is not valid\n");
+		prerror("OCC: PState table is not valid\n");
 		return false;
 	}
 
 	nr_pstates = occ_data->pstate_max - occ_data->pstate_min + 1;
-	printf("OCC: Min %d Nom %d Max %d Nr States %d\n", 
-	       occ_data->pstate_min, occ_data->pstate_nom,
-	       occ_data->pstate_max, nr_pstates);
+	prlog(PR_DEBUG, "OCC: Min %d Nom %d Max %d Nr States %d\n", 
+	      occ_data->pstate_min, occ_data->pstate_nom,
+	      occ_data->pstate_max, nr_pstates);
 
 	if (nr_pstates <= 1 || nr_pstates > 128) {
-		printf("OCC: OCC range is not valid\n");
+		prerror("OCC: OCC range is not valid\n");
 		return false;
 	}
 
@@ -170,7 +171,7 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 
 	power_mgt = dt_find_by_path(dt_root, "/ibm,opal/power-mgt");
 	if (!power_mgt) {
-		printf("OCC: dt node /ibm,opal/power-mgt not found\n");
+		prerror("OCC: dt node /ibm,opal/power-mgt not found\n");
 		return false;
 	}
 
@@ -247,7 +248,8 @@ static bool cpu_pstates_prepare_core(struct proc_chip *chip, struct cpu_thread *
 
 	/* Just debug */
 	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_PPMSR), &tmp);
-	printf("OCC: Chip %x Core %x PPMSR %016llx\n", chip->id, core, tmp);
+	prlog(PR_DEBUG, "OCC: Chip %x Core %x PPMSR %016llx\n",
+	      chip->id, core, tmp);
 
 	/*
 	 * If PMSR is still in transition at this point due to PState change
@@ -337,7 +339,7 @@ static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 
 	/* Handle fallback to preload */
 	if (rc == -ENOENT && chip->homer_base) {
-		printf("OCC: Load: Fallback to preloaded image\n");
+		prlog(PR_INFO, "OCC: Load: Fallback to preloaded image\n");
 		rc = 0;
 	} else if (!rc) {
 		/* Success, start OCC */
@@ -399,7 +401,7 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 
 	/* Handle fallback to preload */
 	if (rc == -ENOENT && chip->homer_base) {
-		printf("OCC: Reset: Fallback to preloaded image\n");
+		prlog(PR_INFO, "OCC: Reset: Fallback to preloaded image\n");
 		rc = 0;
 	}
 	if (!rc) {
@@ -453,8 +455,8 @@ static bool fsp_occ_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 		scope = msg->data.bytes[3];
 		dbob_id = msg->data.words[1];
 		seq_id = msg->data.words[2];
-		printf("OCC: Got OCC Load message, scope=0x%x dbob=0x%x"
-		       " seq=0x%x\n", scope, dbob_id, seq_id);
+		prlog(PR_INFO, "OCC: Got OCC Load message, scope=0x%x"
+		      " dbob=0x%x seq=0x%x\n", scope, dbob_id, seq_id);
 		occ_do_load(scope, dbob_id, seq_id);
 		return true;
 
@@ -466,8 +468,8 @@ static bool fsp_occ_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 		scope = msg->data.bytes[3];
 		dbob_id = msg->data.words[1];
 		seq_id = msg->data.words[2];
-		printf("OCC: Got OCC Reset message, scope=0x%x dbob=0x%x"
-		       " seq=0x%x\n", scope, dbob_id, seq_id);
+		prlog(PR_INFO, "OCC: Got OCC Reset message, scope=0x%x"
+		      " dbob=0x%x seq=0x%x\n", scope, dbob_id, seq_id);
 		occ_do_reset(scope, dbob_id, seq_id);
 		return true;
 	}
