@@ -684,7 +684,7 @@ void __noreturn secondary_cpu_entry(void)
 {
 	struct cpu_thread *cpu = this_cpu();
 
-	printf("INIT: CPU PIR 0x%04x called in\n", cpu->pir);
+	prlog(PR_DEBUG, "INIT: CPU PIR 0x%04x called in\n", cpu->pir);
 
 	__secondary_cpu_entry();
 }
