@@ -1368,7 +1368,7 @@ void pci_reset(void)
 {
 	unsigned int i;
 
-	printf("PCI: Clearing all devices...\n");
+	prlog(PR_NOTICE, "PCI: Clearing all devices...\n");
 
 	lock(&pci_lock);
 
@@ -1431,24 +1431,23 @@ void pci_init_slots(void)
 
 	lock(&pci_lock);
 
-	printf("PCI: Resetting PHBs...\n");
+	prlog(PR_NOTICE, "PCI: Resetting PHBs...\n");
 	pci_do_jobs(pci_reset_phb);
 
-	printf("PCI: Probing slots...\n");
+	prlog(PR_NOTICE, "PCI: Probing slots...\n");
 	pci_do_jobs(pci_scan_phb);
 
 	if (platform.pci_probe_complete)
 		platform.pci_probe_complete();
 
-	printf("------------------------------------------------------------\n");
-	printf("PCI Summary\n");
-	printf("------------------------------------------------------------\n");
+	prlog(PR_DEBUG, "PCI Summary:\n");
+
 	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
 		if (!phbs[i])
 			continue;
 		pci_add_nodes(phbs[i]);
 	}
-	printf("------------------------------------------------------------\n");
+
 	unlock(&pci_lock);
 }
 
