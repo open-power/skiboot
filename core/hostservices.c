@@ -274,7 +274,7 @@ static void hservice_elog_write_complete(struct fsp_msg *msg)
 	struct hbrt_elog_ent *ent = msg->user_data;
 
 	lock(&hbrt_elog_lock);
-	printf("HBRT: Completed send of PLID 0x%08x\n", ent->plid);
+	prlog(PR_DEBUG, "HBRT: Completed send of PLID 0x%08x\n", ent->plid);
 	hbrt_elog_sending = false;
 	fsp_tce_unmap(PSI_DMA_HBRT_LOG_WRITE_BUF,
 		      PSI_DMA_HBRT_LOG_WRITE_BUF_SZ);
@@ -297,7 +297,7 @@ static void hservice_start_elog_send(void)
 
 	hbrt_elog_sending = true;
 
-	printf("HBRT: Starting send of PLID 0x%08x\n", ent->plid);
+	prlog(PR_DEBUG, "HBRT: Starting send of PLID 0x%08x\n", ent->plid);
 
 	fsp_tce_map(PSI_DMA_HBRT_LOG_WRITE_BUF, ent->buf,
 		    PSI_DMA_HBRT_LOG_WRITE_BUF_SZ);
@@ -393,7 +393,7 @@ static int hservice_lid_load(uint32_t lid, void **buf, size_t *len)
 	static size_t lid_cache_len;
 	static uint32_t lid_cache_id;
 
-	printf("HBRT: LID load request for 0x%08x\n", lid);
+	prlog(PR_INFO, "HBRT: LID load request for 0x%08x\n", lid);
 
 	/* Adjust LID side first or we get a cache mismatch */
 	lid = fsp_adjust_lid_side(lid);
@@ -402,14 +402,15 @@ static int hservice_lid_load(uint32_t lid, void **buf, size_t *len)
 	if (lid_cache && lid_cache_id == lid) {
 		*buf = lid_cache;
 		*len = lid_cache_len;
-		printf("HBRT: Serviced from cache, len=0x%lx\n", lid_cache_len);
+		prlog(PR_DEBUG, "HBRT: Serviced from cache, len=0x%lx\n",
+		      lid_cache_len);
 		return 0;
 	}
 
 	/* Cache mismatch, discard old one */
 	if (lid_cache) {
-		printf("HBRT: Cache mismatch, discarding old 0x%08x\n",
-		       lid_cache_id);
+		prlog(PR_DEBUG, "HBRT: Cache mismatch, discarding old"
+		      " 0x%08x\n", lid_cache_id);
 		free(lid_cache);
 		lid_cache = NULL;
 	}
@@ -429,8 +430,8 @@ static int hservice_lid_load(uint32_t lid, void **buf, size_t *len)
 		lid_cache_len = *len;
 		lid_cache_id = lid;
 
-		printf("HBRT: LID 0x%08x successfully loaded and cached"
-		       ", len=0x%lx\n", lid, lid_cache_len);
+		prlog(PR_DEBUG, "HBRT: LID 0x%08x successfully loaded and"
+		      " cached, len=0x%lx\n", lid, lid_cache_len);
 	}
 
 	return rc;
@@ -547,8 +548,8 @@ static int hservice_set_special_wakeup(struct cpu_thread *cpu)
 	/* Success ? */
 	if (val & EX_PM_GP0_SPECIAL_WAKEUP_DONE) {
 		uint64_t now = mftb();
-		printf("HBRT: Special wakeup complete after %ld us\n",
-		       tb_to_usecs(now - stamp));
+		prlog(PR_TRACE, "HBRT: Special wakeup complete after %ld us\n",
+		      tb_to_usecs(now - stamp));
 		return 0;
 	}
 
@@ -639,8 +640,8 @@ static int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 		cpu = find_cpu_by_pir(i_core << 3);
 		if (!cpu)
 			return OPAL_PARAMETER;
-		printf("HBRT: Special wakeup assert for core 0x%x, count=%d\n",
-		       i_core, cpu->hbrt_spec_wakeup);
+		prlog(PR_DEBUG, "HBRT: Special wakeup assert for core 0x%x,"
+		      " count=%d\n", i_core, cpu->hbrt_spec_wakeup);
 		if (cpu->hbrt_spec_wakeup == 0)
 			rc = hservice_set_special_wakeup(cpu);
 		if (rc == 0)
@@ -651,8 +652,8 @@ static int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 		cpu = find_cpu_by_pir(i_core << 3);
 		if (!cpu)
 			return OPAL_PARAMETER;
-		printf("HBRT: Special wakeup release for core 0x%x, count=%d\n",
-		       i_core, cpu->hbrt_spec_wakeup);
+		prlog(PR_DEBUG, "HBRT: Special wakeup release for core"
+		      " 0x%x, count=%d\n", i_core, cpu->hbrt_spec_wakeup);
 		if (cpu->hbrt_spec_wakeup == 0) {
 			prerror("HBRT: Special wakeup clear"
 				" on core 0x%x with count=0\n",
@@ -665,7 +666,7 @@ static int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 			rc = hservice_clr_special_wakeup(cpu);
 		return rc;
 	case 2: /* Clear all special wakeups */
-		printf("HBRT: Special wakeup release for all cores\n");
+		prlog(PR_DEBUG, "HBRT: Special wakeup release for all cores\n");
 		for_each_cpu(cpu) {
 			if (cpu->hbrt_spec_wakeup) {
 				cpu->hbrt_spec_wakeup = 0;
@@ -701,7 +702,7 @@ int host_services_occ_load(void)
 	struct proc_chip *chip;
 	int rc = 0;
 
-	printf("HBRT: OCC Load requested\n");
+	prlog(PR_DEBUG, "HBRT: OCC Load requested\n");
 
 	if (!(hservice_runtime && hservice_runtime->loadOCC)) {
 		prerror("HBRT: No hservice_runtime->loadOCC\n");
@@ -710,12 +711,12 @@ int host_services_occ_load(void)
 
 	for_each_chip(chip) {
 
-		printf("HBRT: [%16lx] Calling loadOCC() homer %016llx, occ_common_area %016llx, "
-		       "chip %04x\n",
-		       mftb(),
-		       chip->homer_base,
-		       chip->occ_common_base,
-		       chip->id);
+		prlog(PR_DEBUG, "HBRT: [%16lx] Calling loadOCC() homer"
+		      " %016llx, occ_common_area %016llx, chip %04x\n",
+		      mftb(),
+		      chip->homer_base,
+		      chip->occ_common_base,
+		      chip->id);
 
 		rc = hservice_runtime->loadOCC(chip->homer_base,
 						chip->homer_base,
@@ -724,7 +725,7 @@ int host_services_occ_load(void)
 						chip->id);
 
 		hservice_mark();
-		printf("HBRT: [%16lx] -> rc = %d\n", mftb(), rc);
+		prlog(PR_DEBUG, "HBRT: [%16lx] -> rc = %d\n", mftb(), rc);
 	}
 	return rc;
 }
@@ -735,7 +736,7 @@ int host_services_occ_start(void)
 	int i, rc = 0, nr_chips=0;
 	uint64_t chipids[MAX_CHIPS];
 
-	printf("HBRT: OCC Start requested\n");
+	prlog(PR_INFO, "HBRT: OCC Start requested\n");
 
 	if (!(hservice_runtime && hservice_runtime->startOCCs)) {
 		prerror("HBRT: No hservice_runtime->startOCCs\n");
@@ -746,15 +747,14 @@ int host_services_occ_start(void)
 		chipids[nr_chips++] = chip->id;
 	}
 
-	printf("HBRT: [%16lx] Calling startOCC() for IDs: ", mftb());
 	for (i = 0; i < nr_chips; i++)
-		printf("%04llx ", chipids[i]);
-	printf("\n");
+		prlog(PR_TRACE, "HBRT: Calling startOCC() for %04llx ",
+		      chipids[i]);
 
 	/* Lets start all OCC */
 	rc = hservice_runtime->startOCCs(chipids, nr_chips);
 	hservice_mark();
-	printf("HBRT: [%16lx] -> rc = %d\n", mftb(), rc);
+	prlog(PR_DEBUG, "HBRT: startOCCs() rc  = %d\n", rc);
 	return rc;
 }
 
@@ -775,10 +775,10 @@ void host_services_occ_base_setup(void)
 		chip->homer_size = HOMER_IMAGE_SIZE;
 		memset((void *)chip->homer_base, 0, chip->homer_size);
 
-		printf("HBRT: Chip %d HOMER base %016llx : %08llx "
-			"OCC common base %016llx : %08llx\n",
-			chip->id, chip->homer_base, chip->homer_size,
-			chip->occ_common_base, chip->occ_common_size);
+		prlog(PR_DEBUG, "HBRT: Chip %d HOMER base %016llx : %08llx "
+		      "OCC common base %016llx : %08llx\n",
+		      chip->id, chip->homer_base, chip->homer_size,
+		      chip->occ_common_base, chip->occ_common_size);
 	}
 }
 
@@ -803,7 +803,8 @@ bool hservices_init(void)
 		return false;
 	}
 
-	printf("HBRT: Found HostBoot Runtime version %llu\n", ((u64 *)code)[1]);
+	prlog(PR_INFO, "HBRT: Found HostBoot Runtime version %llu\n",
+	      ((u64 *)code)[1]);
 
 	/* We enter at 0x100 into the image. */
 	fdesc.addr = code + 0x100;
@@ -819,8 +820,8 @@ bool hservices_init(void)
 		return false;
 	}
 
-	printf("HBRT: Interface version %llu\n",
-	       hservice_runtime->interface_version);
+	prlog(PR_INFO, "HBRT: Interface version %llu\n",
+	      hservice_runtime->interface_version);
 
 	return true;
 }		
