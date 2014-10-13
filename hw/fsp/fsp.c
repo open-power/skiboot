@@ -299,15 +299,15 @@ static u32 fsp_rreg(struct fsp *fsp, u32 reg)
 static void fsp_reg_dump(void)
 {
 #define FSP_DUMP_ONE(x)	\
-	printf("  %20s: %x\n", #x, fsp_rreg(fsp, x));
+	prlog(PR_DEBUG, "  %20s: %x\n", #x, fsp_rreg(fsp, x));
 
 	struct fsp *fsp = fsp_get_active();
 
 	if (!fsp)
 		return;
 
-	printf("FSP #%d: Register dump (state=%d)\n",
-	       fsp->index, fsp->state);
+	prlog(PR_DEBUG, "FSP #%d: Register dump (state=%d)\n",
+	      fsp->index, fsp->state);
 	FSP_DUMP_ONE(FSP_DRCR_REG);
 	FSP_DUMP_ONE(FSP_DISR_REG);
 	FSP_DUMP_ONE(FSP_MBX1_HCTL_REG);
@@ -411,7 +411,7 @@ static void fsp_prep_for_reset(struct fsp *fsp)
 {
 	u32 drcr = fsp_rreg(fsp, FSP_DRCR_REG);
 
-	printf("FSP: Writing reset to DRCR\n");
+	prlog(PR_TRACE, "FSP: Writing reset to DRCR\n");
 	drcr_last_print = drcr;
 	fsp_wreg(fsp, FSP_DRCR_REG, (drcr | FSP_PREP_FOR_RESET_CMD));
 	fsp->state = fsp_mbx_prep_for_reset;
@@ -436,8 +436,9 @@ static void fsp_hir_poll(struct fsp *fsp, struct psi *psi)
 		drcr = fsp_rreg(fsp, FSP_DRCR_REG);
 
 		if (drcr != drcr_last_print) {
-			printf("FSP: DRCR changed, old = %x, new = %x\n",
-					drcr_last_print, drcr);
+			prlog(PR_TRACE, "FSP: DRCR changed, old = %x,"
+			      " new = %x\n",
+			      drcr_last_print, drcr);
 			drcr_last_print = drcr;
 		}
 
@@ -448,7 +449,8 @@ static void fsp_hir_poll(struct fsp *fsp, struct psi *psi)
 				fsp->state = fsp_mbx_hir_seq_done;
 			}
 		} else {
-			printf("FSP: DRCR ack received. Triggering reset\n");
+			prlog(PR_TRACE, "FSP: DRCR ack received."
+			      " Triggering reset\n");
 			psi_reset_fsp(psi);
 			fsp->state = fsp_mbx_hir_seq_done;
 		}
@@ -491,7 +493,7 @@ static void __fsp_trigger_reset(void)
 	 * by FSP_DISR_CRIT_OP_IN_PROGRESS. Timeout is 128 seconds
 	 */
 	if (fsp_crit_op_in_progress(fsp)) {
-		printf("FSP: Critical operation in progress\n");
+		prlog(PR_NOTICE, "FSP: Critical operation in progress\n");
 		fsp->state = fsp_mbx_crit_op;
 		fsp_set_hir_timeout(FSP_CRITICAL_OP_TIMEOUT);
 	} else
@@ -603,8 +605,8 @@ static void fsp_handle_errors(struct fsp *fsp)
 	if (disr != disr_last_print) {
 		fsp_trace_event(fsp, TRACE_FSP_EVT_DISR_CHG, disr, 0, 0, 0);
 
-		printf("FSP #%d: DISR stat change = 0x%08x\n",
-		       fsp->index, disr);
+		prlog(PR_TRACE, "FSP #%d: DISR stat change = 0x%08x\n",
+		      fsp->index, disr);
 		disr_last_print = disr;
 	}
 
@@ -641,8 +643,9 @@ static void fsp_handle_errors(struct fsp *fsp)
 		if (fsp->state == fsp_mbx_rr)
 			return;
 
-		printf("FSP #%d: FSP in Reset. Waiting for PSI interrupt\n",
-				fsp->index);
+		prlog(PR_NOTICE, "FSP #%d: FSP in Reset."
+		      " Waiting for PSI interrupt\n",
+		      fsp->index);
 		fsp_start_rr(fsp);
 	}
 
@@ -655,12 +658,13 @@ static void fsp_handle_errors(struct fsp *fsp)
 		fsp_trace_event(fsp, TRACE_FSP_EVT_SOFT_RR, disr, 0, 0, 0);
 
 		if (disr & FSP_DISR_FSP_UNIT_CHECK)
-			printf("FSP: DISR Unit Check set\n");
+			prlog(PR_DEBUG, "FSP: DISR Unit Check set\n");
 		else if (disr & FSP_DISR_FSP_RUNTIME_TERM)
-			printf("FSP: DISR Runtime Terminate set\n");
+			prlog(PR_DEBUG, "FSP: DISR Runtime Terminate set\n");
 		else if (disr & FSP_DISR_FSP_FLASH_TERM)
-			printf("FSP: DISR Flash Terminate set\n");
-		printf("FSP: Triggering host initiated reset sequence\n");
+			prlog(PR_DEBUG, "FSP: DISR Flash Terminate set\n");
+		prlog(PR_NOTICE, "FSP: Triggering host initiated reset"
+		      " sequence\n");
 
 		/* Clear all interrupt conditions */
 		fsp_wreg(fsp, FSP_HDIR_REG, FSP_DBIRQ_ALL);
@@ -683,8 +687,8 @@ static void fsp_handle_errors(struct fsp *fsp)
 		if (fsp->state == fsp_mbx_rr) {
 			fsp_trace_event(fsp, TRACE_FSP_EVT_RR_COMPL, 0,0,0,0);
 
-			printf("FSP #%d: Detected R&R complete, acking\n",
-			       fsp->index);
+			prlog(PR_NOTICE, "FSP #%d: Detected R&R complete,"
+			      " acking\n", fsp->index);
 
 			/* Clear HDATA area */
 			fsp_wreg(fsp, FSP_MBX1_HDATA_AREA, 0xff);
@@ -719,8 +723,8 @@ static void fsp_handle_errors(struct fsp *fsp)
 	if (hstate != hstate_last_print) {
 		fsp_trace_event(fsp, TRACE_FSP_EVT_HDES_CHG, hstate, 0, 0, 0);
 
-		printf("FSP #%d: HDES stat change = 0x%08x\n",
-		       fsp->index, hstate);
+		prlog(PR_DEBUG, "FSP #%d: HDES stat change = 0x%08x\n",
+		      fsp->index, hstate);
 		hstate_last_print = hstate;
 	}
 
@@ -1122,13 +1126,13 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 	switch(cmd_sub_mod) {
 	case FSP_CMD_CONTINUE_IPL:
 		/* We get a CONTINUE_IPL as a response to OPL */
-		printf("FSP: Got CONTINUE_IPL !\n");
+		prlog(PR_NOTICE, "FSP: Got CONTINUE_IPL !\n");
 		ipl_state |= ipl_got_continue;
 		return true;
 
 	case FSP_CMD_HV_STATE_CHG:
-		printf("FSP: Got HV state change request to %d\n",
-		       msg->data.bytes[0]);
+		prlog(PR_NOTICE, "FSP: Got HV state change request to %d\n",
+		      msg->data.bytes[0]);
 
 		/* Send response synchronously for now, we might want to
 		 * deal with that sort of stuff asynchronously if/when
@@ -1139,13 +1143,13 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 
 	case FSP_CMD_SP_NEW_ROLE:
 		/* FSP is assuming a new role */
-		printf("FSP: FSP assuming new role\n");
+		prlog(PR_INFO, "FSP: FSP assuming new role\n");
 		fsp_queue_msg(fsp_mkmsg(FSP_RSP_SP_NEW_ROLE, 0), fsp_freemsg);
 		ipl_state |= ipl_got_new_role;
 		return true;
 
 	case FSP_CMD_SP_QUERY_CAPS:
-		printf("FSP: FSP query capabilities\n");
+		prlog(PR_INFO, "FSP: FSP query capabilities\n");
 		/* XXX Do something saner. For now do a synchronous
 	         * response and hard code our capabilities
 		 */
@@ -1154,25 +1158,25 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 		ipl_state |= ipl_got_caps;
 		return true;
 	case FSP_CMD_FSP_FUNCTNAL:
-		printf("FSP: Got FSP Functional\n");
+		prlog(PR_INFO, "FSP: Got FSP Functional\n");
 		ipl_state |= ipl_got_fsp_functional;
 		return true;
 	case FSP_CMD_ALLOC_INBOUND:
 		fsp_alloc_inbound(msg);
 		return true;
 	case FSP_CMD_SP_RELOAD_COMP:
-		printf("FSP: SP says Reset/Reload complete\n");
+		prlog(PR_INFO, "FSP: SP says Reset/Reload complete\n");
 		if (msg->data.bytes[3] & PPC_BIT8(0)) {
 			fsp_fips_dump_notify(msg->data.words[1],
 					     msg->data.words[2]);
 
 			if (msg->data.bytes[3] & PPC_BIT8(1))
-				printf("      PLID is %x\n",
-						msg->data.words[3]);
+				prlog(PR_DEBUG, "      PLID is %x\n",
+				      msg->data.words[3]);
 		}
-		if (msg->data.bytes[3] & PPC_BIT8(2))
-			printf("  A Reset/Reload was NOT done\n");
-		else {
+		if (msg->data.bytes[3] & PPC_BIT8(2)) {
+			prlog(PR_DEBUG, "  A Reset/Reload was NOT done\n");
+		} else {
 			/* Notify clients that the FSP is back up */
 			fsp_notify_rr_state(FSP_RELOAD_COMPLETE);
 			fsp_repost_queued_msgs_post_rr();
@@ -1659,9 +1663,9 @@ static int fsp_init_mbox(struct fsp *fsp)
 	reg = fsp_rreg(fsp, FSP_SCRATCH0_REG);
 	if (reg & PPC_BIT32(0)) {		/* Is it a valid connection */
 		if (reg & PPC_BIT32(3))
-			printf("FSP: Connected to FSP-B\n");
+			prlog(PR_INFO, "FSP: Connected to FSP-B\n");
 		else
-			printf("FSP: Connected to FSP-A\n");
+			prlog(PR_INFO, "FSP: Connected to FSP-A\n");
 	}
 
 	return 0;
@@ -1750,8 +1754,8 @@ static void fsp_init_links(struct dt_node *fsp_node)
 			continue;
 		}
 
-		printf("FSP #%d: Found PSI HB link to chip %d\n",
-		       fsp->index, link);
+		prlog(PR_DEBUG, "FSP #%d: Found PSI HB link to chip %d\n",
+		      fsp->index, link);
 
 		psi_fsp_link_in_use(fiop->psi);
 
@@ -1827,7 +1831,7 @@ static void fsp_create_fsp(struct dt_node *fsp_node)
 	fsp->active_iopath = -1;
 
 	count = linksprop->len / 4;
-	printf("FSP #%d: Found %d IO PATH\n", index, count);
+	prlog(PR_DEBUG, "FSP #%d: Found %d IO PATH\n", index, count);
 	if (count > FSP_MAX_IOPATH) {
 		prerror("FSP #%d: WARNING, limited to %d IO PATH\n",
 			index, FSP_MAX_IOPATH);
@@ -1887,12 +1891,12 @@ static bool fsp_init_one(const char *compat)
 
 void fsp_init(void)
 {
-	printf("FSP: Looking for FSP...\n");
+	prlog(PR_DEBUG, "FSP: Looking for FSP...\n");
 
 	fsp_init_tce_table();
 
 	if (!fsp_init_one("ibm,fsp1") && !fsp_init_one("ibm,fsp2")) {
-		printf("FSP: No FSP on this machine\n");
+		prlog(PR_DEBUG, "FSP: No FSP on this machine\n");
 		return;
 	}
 }
@@ -1953,8 +1957,9 @@ static void fsp_timeout_poll(void *data __unused)
 			w0 = req->word0;
 			w1 = req->word1;
 			mstate = req->state;
-			printf("FSP: Response from FSP timed out, word0 = %x,"
-			       "word1 = %x state: %d\n", w0, w1, mstate);
+			prlog(PR_WARNING, "FSP: Response from FSP timed out,"
+			      " word0 = %x, word1 = %x state: %d\n",
+			      w0, w1, mstate);
 			fsp_reg_dump();
 			resetbit = ~fsp_get_class_bit(req->word0 & 0xff);
 			fsp_cmdclass_resp_bitmask &= resetbit;
@@ -1991,10 +1996,10 @@ void fsp_opl(void)
 	fsp_sync_msg(fsp_mkmsg(FSP_CMD_CONTINUE_ACK, 0), true);
 
 	/* Wait for various FSP messages */
-	printf("INIT: Waiting for FSP to advertize new role...\n");
+	prlog(PR_INFO, "INIT: Waiting for FSP to advertize new role...\n");
 	while(!(ipl_state & ipl_got_new_role))
 		opal_run_pollers();
-	printf("INIT: Waiting for FSP to request capabilities...\n");
+	prlog(PR_INFO, "INIT: Waiting for FSP to request capabilities...\n");
 	while(!(ipl_state & ipl_got_caps))
 		opal_run_pollers();
 
@@ -2002,16 +2007,16 @@ void fsp_opl(void)
 	opal_add_poller(fsp_timeout_poll, NULL);
 
 	/* Tell FSP we are in standby */
-	printf("INIT: Sending HV Functional: Standby...\n");
+	prlog(PR_INFO, "INIT: Sending HV Functional: Standby...\n");
 	fsp_sync_msg(fsp_mkmsg(FSP_CMD_HV_FUNCTNAL, 1, 0x01000000), true);
 
 	/* Wait for FSP functional */
-	printf("INIT: Waiting for FSP functional\n");
+	prlog(PR_INFO, "INIT: Waiting for FSP functional\n");
 	while(!(ipl_state & ipl_got_fsp_functional))
 		opal_run_pollers();
 
 	/* Tell FSP we are in running state */
-	printf("INIT: Sending HV Functional: Runtime...\n");
+	prlog(PR_INFO, "INIT: Sending HV Functional: Runtime...\n");
 	fsp_sync_msg(fsp_mkmsg(FSP_CMD_HV_FUNCTNAL, 1, 0x02000000), true);
 
 	/*
@@ -2022,7 +2027,8 @@ void fsp_opl(void)
 	 */
 	iplp = dt_find_by_path(dt_root, "ipl-params/ipl-params");
 	if (iplp && dt_find_property(iplp, "pci-busno-reset-ipl")) {
-		printf("INIT: PCI Bus Reset requested. Sending Power Down\n");
+		prlog(PR_DEBUG, "INIT: PCI Bus Reset requested."
+		      " Sending Power Down\n");
 		fsp_sync_msg(fsp_mkmsg(FSP_CMD_POWERDOWN_PCIRS, 0), true);
 	}
 
@@ -2034,7 +2040,7 @@ void fsp_opl(void)
 	 * OS is up but we don't currently have a very good way to do
 	 * that so this will do as a stop-gap
 	 */
-	printf("INIT: Sending HV Functional: Runtime all parts...\n");
+	prlog(PR_NOTICE, "INIT: Sending HV Functional: Runtime all partitions\n");
 	fsp_sync_msg(fsp_mkmsg(FSP_CMD_HV_FUNCTNAL, 1, 0x04000000), true);
 }
 
@@ -2065,8 +2071,9 @@ int fsp_fetch_data(uint8_t flags, uint16_t id, uint32_t sub_id,
 	if (!fsp_present())
 		return -ENODEV;
 
-	printf("FSP: Fetch data id: %02x sid: %08x to %p (0x%x bytes)\n",
-	       id, sub_id, buffer, remaining);
+	prlog(PR_DEBUG, "FSP: Fetch data id: %02x sid: %08x to %p"
+	      "(0x%x bytes)\n",
+	      id, sub_id, buffer, remaining);
 
 	/*
 	 * Use a lock to avoid multiple processors trying to fetch
@@ -2089,8 +2096,9 @@ int fsp_fetch_data(uint8_t flags, uint16_t id, uint32_t sub_id,
 			chunk = PSI_DMA_FETCH_SIZE - boff;
 		bsize = ((boff + chunk) + 0xfff) & ~0xffful;
 
-		printf("FSP:  0x%08x bytes balign=%llx boff=%llx bsize=%llx\n",
-		       chunk, balign, boff, bsize);
+		prlog(PR_DEBUG, "FSP:  0x%08x bytes balign=%llx"
+		      " boff=%llx bsize=%llx\n",
+		      chunk, balign, boff, bsize);
 		fsp_tce_map(PSI_DMA_FETCH, (void *)balign, bsize);
 		taddr = PSI_DMA_FETCH + boff;
 		msg = fsp_mkmsg(FSP_CMD_FETCH_SP_DATA, 6,
@@ -2101,8 +2109,9 @@ int fsp_fetch_data(uint8_t flags, uint16_t id, uint32_t sub_id,
 
 		woffset = msg->resp->data.words[1];
 		wlen = msg->resp->data.words[2];
-		printf("FSP:   -> rc=0x%02x off: %08x twritten: %08x\n",
-		       rc, woffset, wlen);
+		prlog(PR_DEBUG, "FSP:   -> rc=0x%02x off: %08x"
+		      " twritten: %08x\n",
+		      rc, woffset, wlen);
 		fsp_freemsg(msg);
 
 		/* XXX Is flash busy (0x3f) a reason for retry ? */
