@@ -207,7 +207,8 @@ void opal_del_poller(void (*poller)(void *data))
 	 * if anybody uses it, print a warning and leak the entry, don't
 	 * free it.
 	 */
-	prerror("WARNING: Unsupported opal_del_poller\n");
+	prlog(PR_ALERT, "WARNING: Unsupported opal_del_poller."
+	      " Interesting locking issues, don't call this.\n");
 
 	lock(&opal_poll_lock);
 	list_for_each(&opal_pollers, ent, link) {
