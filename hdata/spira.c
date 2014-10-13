@@ -186,7 +186,7 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 	addr = base | ((uint64_t)hw_id << PPC_BITLSHIFT(28));
 	size = (u64)1 << PPC_BITLSHIFT(28);
 
-	printf("XSCOM: Found HW ID 0x%x (PCID 0x%x) @ 0x%llx\n",
+	prlog(PR_INFO, "XSCOM: Found HW ID 0x%x (PCID 0x%x) @ 0x%llx\n",
 	       hw_id, proc_chip_id, (long long)addr);
 
 	node = dt_new_addr(dt_root, "xscom", addr);
