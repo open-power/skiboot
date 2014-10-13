@@ -1813,7 +1813,8 @@ static void fsp_create_fsp(struct dt_node *fsp_node)
 	int count, index;
 
 	index = dt_prop_get_u32(fsp_node, "reg");
-	prerror("FSP #%d: Found in device-tree, setting up...\n", index);
+	prlog(PR_INFO, "FSP #%d: Found in device-tree, setting up...\n",
+	      index);
 
 	linksprop = dt_find_property(fsp_node, "ibm,psi-links");
 	if (!linksprop || linksprop->len < 4) {
