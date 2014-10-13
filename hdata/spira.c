@@ -949,11 +949,7 @@ void parse_hdat(bool is_opal, uint32_t master_cpu)
 {
 	cpu_type = PVR_TYPE(mfspr(SPR_PVR));
 
-	printf("\n");
-	printf("-----------------------------------------------\n");
-	printf("-------------- Parsing HDAT ... ---------------\n");
-	printf("-----------------------------------------------\n");
-	printf("\n");
+	prlog(PR_DEBUG, "Parsing HDAT...\n");
 
 	dt_root = dt_new_root("");
 
@@ -997,9 +993,7 @@ void parse_hdat(bool is_opal, uint32_t master_cpu)
 	vpd_parse();
 
 	/* Host services information. */
-	hostservices_parse();
+ 	hostservices_parse();
 
-	printf("\n");
-	printf("-----------------------------------------------\n");
-	printf("\n");
+	prlog(PR_INFO, "Parsing HDAT...done\n");
 }
