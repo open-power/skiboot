@@ -238,7 +238,7 @@ static void hservice_mark(void)
 
 static void hservice_assert(void)
 {
-	prerror("HBRT: Assertion from hostservices\n");
+	prlog(PR_EMERG, "HBRT: Assertion from hostservices\n");
 	abort();
 }
 
@@ -330,7 +330,7 @@ static int hservice_send_error_log(uint32_t plid, uint32_t dsize, void *data)
 	struct hbrt_elog_ent *ent;
 	void *abuf;
 
-	printf("HBRT: Error log generated with plid 0x%08x\n", plid);
+	prlog(PR_ERR, "HBRT: Error log generated with plid 0x%08x\n", plid);
 
 	/* We only know how to send error logs to FSP */
 	if (!fsp_present()) {
