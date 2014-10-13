@@ -57,11 +57,12 @@ DEFINE_LOG_ENTRY(OPAL_RC_UART_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_UART,
 
 #define IER_RX		0x01
 #define IER_THRE	0x02
+#define IER_ALL		0x0f
 
 static struct lock uart_lock = LOCK_UNLOCKED;
 static struct dt_node *uart_node;
 static uint32_t uart_base;
-static bool has_irq, rx_full, tx_full;
+static bool has_irq, irq_ok, rx_full, tx_full;
 static uint8_t tx_room;
 static uint8_t cached_ier;
 
@@ -110,6 +111,13 @@ static void uart_update_ier(void)
 
 	if (!has_irq)
 		return;
+	/* If we have never got an interrupt, enable them all,
+	 * the first interrupt received will tell us if interrupts
+	 * are functional (some boards are missing an EC or FPGA
+	 * programming causing LPC interrupts not to work).
+	 */
+	if (!irq_ok)
+		ier = IER_ALL;
 	if (!rx_full)
 		ier |= IER_RX;
 	if (tx_full)
@@ -182,8 +190,18 @@ static void uart_flush_out(void)
 	bool tx_was_full = tx_full;
 
 	while(out_buf_prod != out_buf_cons) {
-		if (tx_room == 0)
-			uart_check_tx_room();
+		if (tx_room == 0) {
+			/*
+			 * If the interrupt is not functional,
+			 * we force a full synchronous flush,
+			 * otherwise the Linux console isn't
+			 * usable (too slow).
+			 */
+			if (irq_ok)
+				uart_check_tx_room();
+			else
+				uart_wait_tx_room();
+		}
 		if (tx_room == 0) {
 			tx_full = true;
 			break;
@@ -345,6 +363,10 @@ static void uart_console_poll(void *data __unused)
 
 void uart_irq(void)
 {
+	if (!irq_ok) {
+		printf("UART: IRQ functional !\n");
+		irq_ok = true;
+	}
 	__uart_do_poll(TRACE_UART_CTX_IRQ);
 }
 
