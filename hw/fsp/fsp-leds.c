@@ -556,7 +556,7 @@ void fsp_get_led_list(struct fsp_msg *msg)
 	}
 	memcpy(&req, buf, sizeof(req));
 
-	printf(PREFIX "Request for loc code list type 0x%04x LC=%s\n",
+	prlog(PR_TRACE, PREFIX "Request for loc code list type 0x%04x LC=%s\n",
 	       req.req_type, req.loc_code);
 
 	fsp_ret_loc_code_list(req.req_type, req.loc_code);
@@ -751,27 +751,27 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 
 	switch(cmd_sub_mod) {
 		case FSP_CMD_GET_LED_LIST:
-			printf(PREFIX
+			prlog(PR_TRACE, PREFIX
 			       "FSP_CMD_GET_LED_LIST command received\n");
 			fsp_get_led_list(msg);
 			return true;
 		case FSP_CMD_RET_LED_BUFFER:
-			printf(PREFIX
+			prlog(PR_TRACE, PREFIX
 			       "FSP_CMD_RET_LED_BUFFER command received\n");
 			fsp_free_led_list_buf(msg);
 			return true;
 		case FSP_CMD_GET_LED_STATE:
-			printf(PREFIX
+			prlog(PR_TRACE, PREFIX
 			       "FSP_CMD_GET_LED_STATE command received\n");
 			fsp_get_led_state(msg);
 			return true;
 		case FSP_CMD_SET_LED_STATE:
-			printf(PREFIX
+			prlog(PR_TRACE, PREFIX
 			       "FSP_CMD_SET_LED_STATE command received\n");
 			fsp_set_led_state(msg);
 			return true;
 		default:
-			printf(PREFIX
+			prlog(PR_WARNING, PREFIX
 			       "Invalid FSP async sub command %06x\n",
 			       cmd_sub_mod);
 			return false;
@@ -885,7 +885,7 @@ static void replay_spcn_cmd(u32 last_spcn_cmd)
 					     PSI_DMA_LED_BUF),
 				   fsp_read_leds_data_complete);
 		if (rc)
-			printf(PREFIX
+			prlog(PR_ERR, PREFIX
 			       "Replay SPCN_MOD_PRS_LED_DATA_FIRST"
 			       " command could not be queued\n");
 	}
@@ -897,7 +897,7 @@ static void replay_spcn_cmd(u32 last_spcn_cmd)
 					     0, PSI_DMA_LED_BUF),
 				   fsp_read_leds_data_complete);
 		if (rc)
-			printf(PREFIX
+			prlog(PR_ERR, PREFIX
 			       "Replay SPCN_MOD_PRS_LED_DATA_SUB"
 			       " command could not be queued\n");
 	}
@@ -939,18 +939,19 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
         switch (led_status) {
 		/* Last 1KB of LED data */
 		case SPCN_RSP_STATUS_SUCCESS:
-			printf(PREFIX
-			       "SPCN_RSP_STATUS_SUCCESS: %d bytes received\n",
-			       data_len);
+			prlog(PR_DEBUG, PREFIX
+			      "SPCN_RSP_STATUS_SUCCESS: %d bytes received\n",
+			      data_len);
 
 			/* Copy data to the local list */
 			fsp_process_leds_data(data_len);
 			led_support = true;
 
 			/* LEDs captured on the system */
-			printf(PREFIX "CEC LEDs captured on the system:\n");
+			prlog(PR_DEBUG, PREFIX
+			      "CEC LEDs captured on the system:\n");
 			list_for_each_safe(&cec_ledq, led, next, link) {
-				printf(PREFIX
+				prlog(PR_DEBUG, PREFIX
 				       "rid: %x\t"
 				       "len: %x      "
 				       "lcode: %-30s\t"
@@ -963,9 +964,10 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 				       led->status);
 			}
 
-			printf(PREFIX "ENCL LEDs captured on the system:\n");
+			prlog(PR_DEBUG, PREFIX
+			      "ENCL LEDs captured on the system:\n");
 			list_for_each_safe(&encl_ledq, led, next, link) {
-				printf(PREFIX
+				prlog(PR_DEBUG, PREFIX
 				       "rid: %x\t"
 				       "len: %x      "
 				       "lcode: %-30s\t"
@@ -982,9 +984,9 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 
 		/* If more 1KB of LED data present */
 		case SPCN_RSP_STATUS_COND_SUCCESS:
-			printf(PREFIX
-			       "SPCN_RSP_STATUS_COND_SUCCESS: %d bytes "
-			       " received\n", data_len);
+			prlog(PR_DEBUG, PREFIX
+			      "SPCN_RSP_STATUS_COND_SUCCESS: %d bytes "
+			      " received\n", data_len);
 
 			/* Copy data to the local list */
 			fsp_process_leds_data(data_len);
@@ -999,7 +1001,7 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 						     0, PSI_DMA_LED_BUF),
 					   fsp_read_leds_data_complete);
 			if (rc)
-				printf(PREFIX
+				prlog(PR_ERR, PREFIX
 				       "SPCN_MOD_PRS_LED_DATA_SUB command"
 				       " could not be queued\n");
 			break;
@@ -1067,7 +1069,7 @@ static void fsp_leds_query_spcn()
 			SPCN_ADDR_MODE_CEC_NODE, cmd_hdr, 0,
 				PSI_DMA_LED_BUF), fsp_read_leds_data_complete);
 	if (rc)
-		printf(PREFIX
+		prlog(PR_ERR, PREFIX
 		       "SPCN_MOD_PRS_LED_DATA_FIRST command could"
 		       " not be queued\n");
 }
@@ -1082,9 +1084,9 @@ void fsp_led_init(void)
 	list_head_init(&encl_ledq);
 
 	fsp_leds_query_spcn();
-	printf(PREFIX "Init completed\n");
+	prlog(PR_TRACE, PREFIX "Init completed\n");
 
 	/* Handle FSP initiated async LED commands */
 	fsp_register_client(&fsp_indicator_client, FSP_MCLASS_INDICATOR);
-	printf(PREFIX "FSP async command client registered\n");
+	prlog(PR_TRACE, PREFIX "FSP async command client registered\n");
 }
