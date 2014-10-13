@@ -471,19 +471,19 @@ void init_all_cpus(void)
 		prlog(PR_INFO, "CPU:  %d secondary threads\n", thread);
 	}
 	cpu_max_pir = new_max_pir;
-	printf("CPU: New max PIR set to 0x%x\n", new_max_pir);
+	prlog(PR_DEBUG, "CPU: New max PIR set to 0x%x\n", new_max_pir);
 }
 
 void cpu_bringup(void)
 {
 	struct cpu_thread *t;
 
-	printf("CPU: Setting up secondary CPU state\n");
+	prlog(PR_INFO, "CPU: Setting up secondary CPU state\n");
 
 	op_display(OP_LOG, OP_MOD_CPU, 0x0000);
 
 	/* Tell everybody to chime in ! */	
-	printf("CPU: Calling in all processors...\n");
+	prlog(PR_INFO, "CPU: Calling in all processors...\n");
 	cpu_secondary_start = 1;
 	sync();
 
@@ -502,7 +502,7 @@ void cpu_bringup(void)
 		smt_medium();
 	}
 
-	printf("CPU: All processors called in...\n");
+	prlog(PR_INFO, "CPU: All processors called in...\n");
 
 	op_display(OP_LOG, OP_MOD_CPU, 0x0003);
 }
@@ -532,7 +532,7 @@ static int64_t opal_start_cpu_thread(uint64_t server_no, uint64_t start_address)
 		prerror("OPAL: Start invalid CPU 0x%04llx !\n", server_no);
 		return OPAL_PARAMETER;
 	}
-	printf("OPAL: Start CPU 0x%04llx (PIR 0x%04x) -> 0x%016llx\n",
+	prlog(PR_DEBUG, "OPAL: Start CPU 0x%04llx (PIR 0x%04x) -> 0x%016llx\n",
 	       server_no, cpu->pir, start_address);
 
 	lock(&reinit_lock);
@@ -601,7 +601,8 @@ static void cpu_change_hile(void *hilep)
 		hid0 |= SPR_HID0_HILE;
 	else
 		hid0 &= ~SPR_HID0_HILE;
-	printf("CPU: [%08x] HID0 set to 0x%016lx\n", this_cpu()->pir, hid0);
+	prlog(PR_DEBUG, "CPU: [%08x] HID0 set to 0x%016lx\n",
+	      this_cpu()->pir, hid0);
 	set_hid0(hid0);
 
 	this_cpu()->current_hile = hile;
@@ -611,7 +612,7 @@ static int64_t cpu_change_all_hile(bool hile)
 {
 	struct cpu_thread *cpu;
 
-	printf("CPU: Switching HILE on all CPUs to %d\n", hile);
+	prlog(PR_INFO, "CPU: Switching HILE on all CPUs to %d\n", hile);
 
 	for_each_available_cpu(cpu) {
 		if (cpu->current_hile == hile)
