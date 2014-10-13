@@ -86,7 +86,7 @@ static void fsp_console_reinit(void)
 
 		if (fs->rsrc_id == 0xffff)
 			continue;
-		printf("FSP: Reassociating HVSI console %d\n", i);
+		prlog(PR_DEBUG, "FSP: Reassociating HVSI console %d\n", i);
 		fsp_queue_msg(fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
 					(fs->rsrc_id << 16) | 1, i), fsp_freemsg);
 	}
@@ -116,7 +116,7 @@ static void fsp_close_consoles(void)
 		}
 		unlock(&fsp_con_lock);
 	}
-	printf("FSPCON: Closed consoles on account of FSP reset/reload\n");
+	prlog(PR_DEBUG, "FSPCON: Closed consoles due to FSP reset/reload\n");
 }
 
 static void fsp_pokemsg_reclaim(struct fsp_msg *msg)
@@ -289,7 +289,7 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 				0, tce_in, 0, tce_out), fsp_freemsg);
 
 #ifdef DVS_CONSOLE
-	printf("  log_port  = %d\n", fs->log_port);
+	prlog(PR_DEBUG, "  log_port  = %d\n", fs->log_port);
 	if (fs->log_port) {
 		fsp_con_port = sess_id;
 		sync();
@@ -371,13 +371,13 @@ static bool fsp_con_msg_hmc(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
 	/* Associate response */
 	if ((cmd_sub_mod >> 8) == 0xe08a) {
-		printf("FSPCON: Got associate response, status 0x%02x\n",
-		       cmd_sub_mod & 0xff);
+		prlog(PR_TRACE, "FSPCON: Got associate response, status"
+		      " 0x%02x\n", cmd_sub_mod & 0xff);
 		return true;
 	}
 	if ((cmd_sub_mod >> 8) == 0xe08b) {
-		printf("Got unassociate response, status 0x%02x\n",
-		       cmd_sub_mod & 0xff);
+		prlog(PR_TRACE, "Got unassociate response, status 0x%02x\n",
+		      cmd_sub_mod & 0xff);
 		return true;
 	}
 	switch(cmd_sub_mod) {
@@ -388,7 +388,7 @@ static bool fsp_con_msg_hmc(u32 cmd_sub_mod, struct fsp_msg *msg)
 		fsp_close_vserial(msg);
 		return true;
 	case FSP_CMD_HMC_INTF_QUERY:
-		printf("FSPCON: Got HMC interface query\n");
+		prlog(PR_DEBUG, "FSPCON: Got HMC interface query\n");
 		fsp_queue_msg(fsp_mkmsg(FSP_RSP_HMC_INTF_QUERY, 1,
 					msg->data.words[0] & 0x00ffffff),
 			      fsp_freemsg);
@@ -537,13 +537,14 @@ static int64_t fsp_console_write(int64_t term_number, int64_t *length,
 	written = fsp_write_vserial(fs, buffer, requested);
 
 #ifdef OPAL_DEBUG_CONSOLE_IO
-	printf("OPAL: console write req=%ld written=%ld ni=%d no=%d\n",
-	       requested, written, fs->out_buf->next_in, fs->out_buf->next_out);
-	printf("      %02x %02x %02x %02x "
-	       "%02x \'%c\' %02x \'%c\' %02x \'%c\'.%02x \'%c\'..\n",
-	       buffer[0], buffer[1], buffer[2], buffer[3],
-	       buffer[4], buffer[4], buffer[5], buffer[5],
-	       buffer[6], buffer[6], buffer[7], buffer[7]);
+	prlog(PR_TRACE, "OPAL: console write req=%ld written=%ld"
+	      " ni=%d no=%d\n",
+	      requested, written, fs->out_buf->next_in, fs->out_buf->next_out);
+	prlog(PR_TRACE, "      %02x %02x %02x %02x "
+	      "%02x \'%c\' %02x \'%c\' %02x \'%c\'.%02x \'%c\'..\n",
+	      buffer[0], buffer[1], buffer[2], buffer[3],
+	      buffer[4], buffer[4], buffer[5], buffer[5],
+	      buffer[6], buffer[6], buffer[7], buffer[7]);
 #endif /* OPAL_DEBUG_CONSOLE_IO */
 
 	*length = written;
@@ -614,9 +615,9 @@ static int64_t fsp_console_read(int64_t term_number, int64_t *length,
 	sb->next_out = (sb->next_out + n) % SER_BUF_DATA_SIZE;
 
 #ifdef OPAL_DEBUG_CONSOLE_IO
-	printf("OPAL: console read req=%d read=%d ni=%d no=%d\n",
-	       req, n, sb->next_in, sb->next_out);
-	printf("      %02x %02x %02x %02x %02x %02x %02x %02x ...\n",
+	prlog(PR_TRACE, "OPAL: console read req=%d read=%d ni=%d no=%d\n",
+	      req, n, sb->next_in, sb->next_out);
+	prlog(PR_TRACE, "      %02x %02x %02x %02x %02x %02x %02x %02x ...\n",
 	       buffer[0], buffer[1], buffer[2], buffer[3],
 	       buffer[4], buffer[5], buffer[6], buffer[7]);
 #endif /* OPAL_DEBUG_CONSOLE_IO */
@@ -675,9 +676,9 @@ void fsp_console_poll(void *data __unused)
 			else {
 #ifdef OPAL_DEBUG_CONSOLE_POLL
 				if (debug < 5) {
-					printf("OPAL: %d still pending"
-					       " ni=%d no=%d\n",
-					       i, sb->next_in, sb->next_out);
+					prlog(PR_DEBUG,"OPAL: %d still pending"
+					      " ni=%d no=%d\n",
+					      i, sb->next_in, sb->next_out);
 					debug++;
 				}
 #endif /* OPAL_DEBUG_CONSOLE_POLL */
