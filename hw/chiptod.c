@@ -606,7 +606,7 @@ static int chiptod_start_tod(void)
 
 	/* Switch local chiptod to "Not Set" state */
 	if (xscom_writeme(TOD_LOAD_TOD_MOD, (1UL << 63)) != 0) {
-		printf("CHIPTOD: XSCOM error sending LOAD_TOD_MOD\n");
+		prerror("CHIPTOD: XSCOM error sending LOAD_TOD_MOD\n");
 		return 0;
 	}
 
@@ -689,7 +689,7 @@ error_out:
 static int64_t opal_resync_timebase(void)
 {
        if (!chiptod_wakeup_resync()) {
-               printf("OPAL: Resync timebase failed on CPU 0x%04x\n",
+               prerror("OPAL: Resync timebase failed on CPU 0x%04x\n",
 		      this_cpu()->pir);
                return OPAL_HARDWARE;
        }
