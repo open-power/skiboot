@@ -233,7 +233,7 @@ static int64_t opal_poll_events(uint64_t *outstanding_event_mask)
 {
 	/* Check if we need to trigger an attn for test use */
 	if (attn_trigger == 0xdeadbeef) {
-		printf("Triggering attn\n");
+		prlog(PR_EMERG, "Triggering attn\n");
 		assert(false);
 	}
 
