@@ -221,17 +221,17 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 	u32 tce_in, tce_out;
 	struct fsp_serial *fs;
 
-	printf("FSPCON: Got VSerial Open\n");
-	printf("  part_id   = 0x%04x\n", part_id);
-	printf("  sess_id   = 0x%04x\n", sess_id);
-	printf("  hmc_sess  = 0x%02x\n", hmc_sess);
-	printf("  hmc_indx  = 0x%02x\n", hmc_indx);
-	printf("  authority = 0x%02x\n", authority);
+	prlog(PR_INFO, "FSPCON: Got VSerial Open\n");
+	prlog(PR_DEBUG, "  part_id   = 0x%04x\n", part_id);
+	prlog(PR_DEBUG, "  sess_id   = 0x%04x\n", sess_id);
+	prlog(PR_DEBUG, "  hmc_sess  = 0x%02x\n", hmc_sess);
+	prlog(PR_DEBUG, "  hmc_indx  = 0x%02x\n", hmc_indx);
+	prlog(PR_DEBUG, "  authority = 0x%02x\n", authority);
 
 	if (sess_id >= MAX_SERIAL || !fsp_serials[sess_id].available) {
 		fsp_queue_msg(fsp_mkmsg(FSP_RSP_OPEN_VSERIAL | 0x2f, 0),
 			      fsp_freemsg);
-		printf("  NOT AVAILABLE !\n");
+		prlog(PR_WARNING, "FSPCON: 0x%04x  NOT AVAILABLE!\n", sess_id);
 		return;
 	}
 
@@ -256,7 +256,7 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 
 	lock(&fsp_con_lock);
 	if (fs->open) {
-		printf("  already open, skipping init !\n");
+		prlog(PR_DEBUG, "  already open, skipping init !\n");
 		unlock(&fsp_con_lock);
 		goto already_open;
 	}
@@ -317,15 +317,15 @@ static void fsp_close_vserial(struct fsp_msg *msg)
 	u8 authority = msg->data.bytes[4];
 	struct fsp_serial *fs;
 
-	printf("FSPCON: Got VSerial Close\n");
-	printf("  part_id   = 0x%04x\n", part_id);
-	printf("  sess_id   = 0x%04x\n", sess_id);
-	printf("  hmc_sess  = 0x%02x\n", hmc_sess);
-	printf("  hmc_indx  = 0x%02x\n", hmc_indx);
-	printf("  authority = 0x%02x\n", authority);
+	prlog(PR_INFO, "FSPCON: Got VSerial Close\n");
+	prlog(PR_DEBUG, "  part_id   = 0x%04x\n", part_id);
+	prlog(PR_DEBUG, "  sess_id   = 0x%04x\n", sess_id);
+	prlog(PR_DEBUG, "  hmc_sess  = 0x%02x\n", hmc_sess);
+	prlog(PR_DEBUG, "  hmc_indx  = 0x%02x\n", hmc_indx);
+	prlog(PR_DEBUG, "  authority = 0x%02x\n", authority);
 
 	if (sess_id >= MAX_SERIAL || !fsp_serials[sess_id].available) {
-		printf("  NOT AVAILABLE !\n");
+		prlog(PR_WARNING, "FSPCON: 0x%04x  NOT AVAILABLE!\n", sess_id);
 		goto skip_close;
 	}
 
@@ -338,7 +338,7 @@ static void fsp_close_vserial(struct fsp_msg *msg)
 		if (part_id == 1)
 			fs->has_part1 = false;
 		if (fs->has_part0 || fs->has_part1) {
-			printf("  skipping close !\n");
+			prlog(PR_DEBUG, "  skipping close !\n");
 			goto skip_close;
 		}
 	}
@@ -728,8 +728,8 @@ void fsp_console_init(void)
 		u32 rsrc_id = dt_prop_get_u32(ser, "reg");
 		const void *lc = dt_prop_get(ser, "ibm,loc-code");
 
-		printf("FSPCON: Serial %d rsrc: %04x loc: %s\n",
-		       i, rsrc_id, (const char *)lc);
+		prlog(PR_NOTICE, "FSPCON: Serial %d rsrc: %04x loc: %s\n",
+		      i, rsrc_id, (const char *)lc);
 		fsp_serial_add(i++, rsrc_id, lc, false);
 		op_display(OP_LOG, OP_MOD_FSPCON, 0x0010 + i);
 	}
@@ -795,7 +795,7 @@ static void reopen_all_hvsi(void)
 		struct fsp_serial *fs = &fsp_serials[i];
 		if (fs->rsrc_id == 0xffff)
 			continue;
-		printf("FSP: Deassociating HVSI console %d\n", i);
+		prlog(PR_NOTICE, "FSP: Deassociating HVSI console %d\n", i);
 		fsp_sync_msg(fsp_mkmsg(FSP_CMD_UNASSOC_SERIAL, 1,
 				       (i << 16) | 1), true);
 	}
@@ -803,7 +803,7 @@ static void reopen_all_hvsi(void)
 		struct fsp_serial *fs = &fsp_serials[i];
 		if (fs->rsrc_id == 0xffff)
 			continue;
-		printf("FSP: Reassociating HVSI console %d\n", i);
+		prlog(PR_NOTICE, "FSP: Reassociating HVSI console %d\n", i);
 		fsp_sync_msg(fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
 				       (fs->rsrc_id << 16) | 1, i), true);
 	}
@@ -811,7 +811,7 @@ static void reopen_all_hvsi(void)
 
 void fsp_console_reset(void)
 {
-	printf("FSP: Console reset !\n");
+	prlog(PR_NOTICE, "FSP: Console reset !\n");
 
 	/* This is called on a fast-reset. To work around issues with HVSI
 	 * initial negotiation, before we reboot the kernel, we flush all
@@ -915,11 +915,11 @@ void fsp_console_select_stdout(void)
 	if (fsp_serials[1].open && use_serial) {
 		dt_add_property_string(dt_chosen, "linux,stdout-path",
 				       "/ibm,opal/consoles/serial@1");
-		printf("FSPCON: default console set to serial A\n");
+		prlog(PR_NOTICE, "FSPCON: default console set to serial A\n");
 	} else {
 		dt_add_property_string(dt_chosen, "linux,stdout-path",
 				       "/ibm,opal/consoles/serial@0");
-		printf("FSPCON: default console set to SOL/DVS\n");
+		prlog(PR_NOTICE, "FSPCON: default console set to SOL/DVS\n");
 	}
 }
 
