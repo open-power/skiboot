@@ -43,8 +43,8 @@ static bool read_pba_bar(struct proc_chip *chip, unsigned int bar_no,
 			rc, bar_no, chip->id);
 		return false;
 	}
-	printf("  PBA BAR%d : 0x%016llx\n", bar_no, bar);
-	printf("  PBA MASK%d: 0x%016llx\n", bar_no, mask);
+	prlog(PR_DEBUG, "  PBA BAR%d : 0x%016llx\n", bar_no, bar);
+	prlog(PR_DEBUG, "  PBA MASK%d: 0x%016llx\n", bar_no, mask);
 
 	*base = bar & 0x0ffffffffffffffful;
 	*size = (mask | 0xfffff) + 1;
@@ -70,8 +70,8 @@ static void homer_init_chip(struct proc_chip *chip)
 	 * case to cover SLW (OCC not running).
 	 */
 	if (read_pba_bar(chip, 0, &hbase, &hsize)) {
-		printf("  HOMER Image at 0x%llx size %lldMB\n",
-		       hbase, hsize / 0x100000);
+		prlog(PR_DEBUG, "  HOMER Image at 0x%llx size %lldMB\n",
+		      hbase, hsize / 0x100000);
 		mem_reserve("ibm,homer-image", hbase, hsize);
 
 		chip->homer_base = hbase;
@@ -83,8 +83,8 @@ static void homer_init_chip(struct proc_chip *chip)
 	 * SLW image in the struct proc_chip for use by the slw.c code
 	 */
 	if (read_pba_bar(chip, 2, &sbase, &ssize)) {
-		printf("  SLW Image at 0x%llx size %lldMB\n",
-		       sbase, ssize / 0x100000);
+		prlog(PR_DEBUG, "  SLW Image at 0x%llx size %lldMB\n",
+		      sbase, ssize / 0x100000);
 
 		/*
 		 * Only reserve it if we have no homer image or if it
@@ -100,8 +100,8 @@ static void homer_init_chip(struct proc_chip *chip)
 	}
 
 	if (read_pba_bar(chip, 3, &obase, &osize)) {
-		printf("  OCC Common Area at 0x%llx size %lldMB\n",
-		       obase, osize / 0x100000);
+		prlog(PR_DEBUG, "  OCC Common Area at 0x%llx size %lldMB\n",
+		      obase, osize / 0x100000);
 		chip->occ_common_base = obase;
 		chip->occ_common_size = osize;
 	}
@@ -121,7 +121,7 @@ void homer_init(void)
 	 * or we'll load the SLW & OCC images ourselves using Host Services.
 	 */
 	for_each_chip(chip) {
-		printf("HOMER: Init chip %d\n", chip->id);
+		prlog(PR_INFO, "HOMER: Init chip %d\n", chip->id);
 		homer_init_chip(chip);
 	}
 
