@@ -333,7 +333,7 @@ static bool __memory_parse(struct dt_node *root)
 		return false;
 	}
 
-	printf("MS VPD: is at %p\n", ms_vpd);
+	prlog(PR_DEBUG, "MS VPD: is at %p\n", ms_vpd);
 
 	msac = HDIF_get_idata(ms_vpd, MSVPD_IDATA_MS_ADDR_CONFIG, &size);
 	if (!CHECK_SPPTR(msac) || size < sizeof(*msac)) {
@@ -341,7 +341,7 @@ static bool __memory_parse(struct dt_node *root)
 		op_display(OP_FATAL, OP_MOD_MEM, 0x0002);
 		return false;
 	}
-	printf("MS VPD: MSAC is at %p\n", msac);
+	prlog(PR_DEBUG, "MS VPD: MSAC is at %p\n", msac);
 
 	dt_add_property_u64(dt_root, DT_PRIVATE "maxmem",
 			    be64_to_cpu(msac->max_configured_ms_address));
@@ -352,16 +352,16 @@ static bool __memory_parse(struct dt_node *root)
 		op_display(OP_FATAL, OP_MOD_MEM, 0x0003);
 		return false;
 	}
-	printf("MS VPD: TCMS is at %p\n", tcms);
+	prlog(PR_DEBUG, "MS VPD: TCMS is at %p\n", tcms);
 
-	printf("MS VPD: Maximum configured address: 0x%llx\n",
-	       (long long)be64_to_cpu(msac->max_configured_ms_address));
-	printf("MS VPD: Maximum possible address: 0x%llx\n",
-	       (long long)be64_to_cpu(msac->max_possible_ms_address));
+	prlog(PR_DEBUG, "MS VPD: Maximum configured address: 0x%llx\n",
+	      (long long)be64_to_cpu(msac->max_configured_ms_address));
+	prlog(PR_DEBUG, "MS VPD: Maximum possible address: 0x%llx\n",
+	      (long long)be64_to_cpu(msac->max_possible_ms_address));
 
 	get_msareas(root, ms_vpd);
 
-	printf("MS VPD: Total MB of RAM: 0x%llx\n",
+	prlog(PR_INFO, "MS VPD: Total MB of RAM: 0x%llx\n",
 	       (long long)be64_to_cpu(tcms->total_in_mb));
 
 	return true;
