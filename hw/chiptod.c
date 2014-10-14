@@ -635,10 +635,23 @@ static int chiptod_start_tod(void)
 	return 1;
 }
 
+/*
+ * Recover from TB and TOD errors.
+ * Timebase register is per core and first thread that gets chance to
+ * handle interrupt would fix actual TFAC errors and rest of the threads
+ * from same core would see no errors. Return -1 if no errors have been
+ * found. The caller (handle_hmi_exception) of this function would not
+ * send an HMI event to host if return value is -1.
+ *
+ * Return values:
+ *	0	<= Failed to recover from errors
+ *	1	<= Successfully recovered from errors
+ *	-1	<= No errors found. Errors are already been fixed.
+ */
 int chiptod_recover_tb_errors(void)
 {
 	uint64_t tfmr;
-	int rc = 1;
+	int rc = -1;
 
 	if (chiptod_primary < 0)
 		return 0;
