@@ -75,7 +75,9 @@ void unlock(struct lock *l)
 int main(void)
 {
 	uint64_t i, len;
-	void *p[NUM_ALLOCS];
+	void **p = real_malloc(sizeof(void*)*NUM_ALLOCS);
+
+	assert(p);
 
 	/* Use malloc for the heap, so valgrind can find issues. */
 	skiboot_heap.start = (unsigned long)real_malloc(skiboot_heap.len);
@@ -90,5 +92,6 @@ int main(void)
 	assert(mem_check(&skiboot_heap));
 	assert(mem_region_lock.lock_val == 0);
 	free(region_start(&skiboot_heap));
+	real_free(p);
 	return 0;
 }
