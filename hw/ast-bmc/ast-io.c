@@ -376,7 +376,7 @@ void ast_io_init(void)
 
 	hicr7 = bmc_sio_ahb_readl(LPC_HICR7);
 	pnor_lpc_offset = (hicr7 & 0xffffu) << 16;
-	printf("AST: PNOR LPC offset: 0x%08x\n", hicr7);
+	prlog(PR_DEBUG, "AST: PNOR LPC offset: 0x%08x\n", pnor_lpc_offset);
 
 	/* Configure all AIO interrupts to level low */
 	ast_setup_sio_irq_polarity();
