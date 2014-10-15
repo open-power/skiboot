@@ -182,8 +182,8 @@ static uint32_t	in_count;
  */
 #define OUT_BUF_SIZE	0x1000
 static uint8_t *out_buf;
-static uint8_t out_buf_prod;
-static uint8_t out_buf_cons;
+static uint32_t out_buf_prod;
+static uint32_t out_buf_cons;
 
 static void uart_flush_out(void)
 {
