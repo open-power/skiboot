@@ -57,7 +57,7 @@
  * This comes pre-configured by the BMC or HostBoot to access the PNOR
  * flash from IDSEL 0 as follow:
  *
- * ADRBASE=0x3000 HWMBASE=0x0e00
+ * ADRBASE=0x3000 HWMBASE=0x0e00 for 32MB
  * ADRMASK=0xfe00 HWNCARE=0x01ff 
  *
  * Which means mapping of   LPC 0x0e000000..0x0fffffff onto
@@ -221,7 +221,7 @@ static uint32_t bmc_sio_ahb_readl(uint32_t reg)
  * that for now.
  */
 #define PNOR_AHB_ADDR	0x30000000
-#define PNOR_LPC_OFFSET	0x0e000000
+static uint32_t pnor_lpc_offset;
 
 void ast_ahb_writel(uint32_t val, uint32_t reg)
 {
@@ -243,7 +243,7 @@ int ast_copy_to_ahb(uint32_t reg, const void *src, uint32_t len)
 
 	/* SPI flash, use LPC->AHB bridge */	
 	if ((reg >> 28) == (PNOR_AHB_ADDR >> 28)) {
-		uint32_t chunk, off = reg - PNOR_AHB_ADDR + PNOR_LPC_OFFSET;
+		uint32_t chunk, off = reg - PNOR_AHB_ADDR + pnor_lpc_offset;
 		int64_t rc;
 
 		while(len) {
@@ -282,7 +282,7 @@ int ast_copy_from_ahb(void *dst, uint32_t reg, uint32_t len)
 
 	/* SPI flash, use LPC->AHB bridge */
 	if ((reg >> 28) == (PNOR_AHB_ADDR >> 28)) {
-		uint32_t chunk, off = reg - PNOR_AHB_ADDR + PNOR_LPC_OFFSET;
+		uint32_t chunk, off = reg - PNOR_AHB_ADDR + pnor_lpc_offset;
 		int64_t rc;
 
 		while(len) {
@@ -367,10 +367,16 @@ static void ast_setup_sio_irq_polarity(void)
 
 void ast_io_init(void)
 {
-	/* Configure the LPC->AHB bridge for PNOR access (just in case) */
-	bmc_sio_ahb_writel(0x30000e00, LPC_HICR7);
-	bmc_sio_ahb_writel(0xfe0001ff, LPC_HICR8);
-	bmc_sio_ahb_writel(0x00000500, LPC_HICR6);
+	uint32_t hicr7;
+
+	/* Read the configuration of the LPC->AHB bridge for PNOR
+	 * to extract the PNOR LPC offset which can be different
+	 * depending on flash size
+	 */
+
+	hicr7 = bmc_sio_ahb_readl(LPC_HICR7);
+	pnor_lpc_offset = (hicr7 & 0xffffu) << 16;
+	printf("AST: PNOR LPC offset: 0x%08x\n", hicr7);
 
 	/* Configure all AIO interrupts to level low */
 	ast_setup_sio_irq_polarity();
