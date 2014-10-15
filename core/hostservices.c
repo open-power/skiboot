@@ -775,9 +775,9 @@ void host_services_occ_base_setup(void)
 		chip->homer_size = HOMER_IMAGE_SIZE;
 		memset((void *)chip->homer_base, 0, chip->homer_size);
 
-		prlog(PR_DEBUG, "HBRT: Chip %d HOMER base %016llx : %08llx "
-		      "OCC common base %016llx : %08llx\n",
-		      chip->id, chip->homer_base, chip->homer_size,
+		prlog(PR_DEBUG, "HBRT: Chip %d HOMER base %016llx : %08llx\n",
+		      chip->id, chip->homer_base, chip->homer_size);
+		prlog(PR_DEBUG, "HBRT: OCC common base %016llx : %08llx\n",
 		      chip->occ_common_base, chip->occ_common_size);
 	}
 }
