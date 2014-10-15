@@ -52,9 +52,9 @@ void register_irq_source(const struct irq_source_ops *ops, void *data,
 	is->ops = ops;
 	is->data = data;
 
-	printf("IRQ: Registering %04x..%04x ops @%p (data %p) %s\n",
-	       start, start + count - 1, ops, data,
-	       ops->interrupt ? "[Internal]" : "[OS]");
+	prlog(PR_DEBUG, "IRQ: Registering %04x..%04x ops @%p (data %p) %s\n",
+	      start, start + count - 1, ops, data,
+	      ops->interrupt ? "[Internal]" : "[OS]");
 
 	lock(&irq_lock);
 	list_for_each(&irq_sources, is1, link) {

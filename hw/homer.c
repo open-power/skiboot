@@ -121,7 +121,7 @@ void homer_init(void)
 	 * or we'll load the SLW & OCC images ourselves using Host Services.
 	 */
 	for_each_chip(chip) {
-		prlog(PR_INFO, "HOMER: Init chip %d\n", chip->id);
+		prlog(PR_DEBUG, "HOMER: Init chip %d\n", chip->id);
 		homer_init_chip(chip);
 	}
 
