@@ -21,21 +21,30 @@
 #include <ccan/container_of/container_of.h>
 
 /* Flash commands */
-#define CMD_PP		0x02
-#define CMD_READ	0x03
-#define CMD_WRDI	0x04
-#define CMD_RDSR	0x05
-#define CMD_WREN	0x06
-#define CMD_SE		0x20
-#define CMD_RDSCUR	0x2b
-#define CMD_BE32K	0x52
-#define CMD_CE		0x60
-#define CMD_RDID	0x9f
-#define CMD_EN4B	0xb7
-#define CMD_BE		0xd8
-#define CMD_RDDPB	0xe0
-#define CMD_RDSPB	0xe2
-#define CMD_EX4B	0xe9
+#define CMD_WRSR		0x01	/* Write Status Register (also config. on Macronix) */
+#define CMD_PP			0x02	/* Page Program */
+#define CMD_READ		0x03	/* READ */
+#define CMD_WRDI		0x04	/* Write Disable */
+#define CMD_RDSR		0x05	/* Read Status Register */
+#define CMD_WREN		0x06	/* Write Enable */
+#define CMD_RDCR		0x15	/* Read configuration register (Macronix) */
+#define CMD_SE			0x20	/* Sector (4K) Erase */
+#define CMD_RDSCUR		0x2b	/* Read Security Register (Macronix) */
+#define CMD_BE32K		0x52	/* Block (32K) Erase */
+#define CMD_RDSFDP		0x5a	/* Read SFDP JEDEC info */
+#define CMD_CE			0x60	/* Chip Erase (Macronix/Winbond) */
+#define CMD_MIC_WREVCONF	0x61	/* Micron Write Enhanced Volatile Config */
+#define CMD_MIC_RDEVCONF       	0x65	/* Micron Read Enhanced Volatile Config */
+#define CMD_MIC_RDFLST		0x70	/* Micron Read Flag Status */
+#define CMD_MIC_WRVCONF		0x81	/* Micron Write Volatile Config */
+#define CMD_MIC_RDVCONF		0x85	/* Micron Read Volatile Config */
+#define CMD_RDID		0x9f	/* Read JEDEC ID */
+#define CMD_EN4B		0xb7	/* Enable 4B addresses */
+#define CMD_MIC_BULK_ERASE	0xc7	/* Micron Bulk Erase */
+#define CMD_BE			0xd8	/* Block (64K) Erase */
+#define CMD_RDDPB		0xe0	/* Read dynamic protection (Macronix) */
+#define CMD_RDSPB		0xe2	/* Read static protection (Macronix) */
+#define CMD_EX4B		0xe9	/* Exit 4B addresses */
 
 /* Flash status bits */
 #define STAT_WIP	0x01
@@ -49,7 +58,9 @@ struct flash_info {
 #define FL_ERASE_4K	0x00000001	/* Supports 4k erase */
 #define FL_ERASE_32K	0x00000002	/* Supports 32k erase */
 #define FL_ERASE_64K	0x00000004	/* Supports 64k erase */
-#define FL_ERASE_CHIP	0x00000008	/* Supports 64k erase */
+#define FL_ERASE_CHIP	0x00000008	/* Supports 0x60 cmd chip erase */
+#define FL_ERASE_BULK	0x00000010	/* Supports 0xc7 cmd bulk erase */
+#define FL_MICRON_BUGS	0x00000020	/* Various micron bug workarounds */
 #define FL_ERASE_ALL	(FL_ERASE_4K | FL_ERASE_32K | FL_ERASE_64K | \
 			 FL_ERASE_CHIP)
 #define FL_CAN_4B	0x00000010	/* Supports 4b mode */
@@ -76,7 +87,7 @@ struct spi_flash_ctrl {
 	 * **************************************************/
 
 	/*
-	 * - setup(ctrl, info, tsize)
+	 * - setup(ctrl, tsize)
 	 *
 	 * Provides the controller with an option to configure itself
 	 * based on the specific flash type. It can also override some
@@ -84,8 +95,7 @@ struct spi_flash_ctrl {
 	 * which can be needed for high level controllers. It can also
 	 * override the total flash size.
 	 */
-	int (*setup)(struct spi_flash_ctrl *ctrl, struct flash_info *info,
-		     uint32_t *tsize);
+	int (*setup)(struct spi_flash_ctrl *ctrl, uint32_t *tsize);
 
 	/*
 	 * - set_4b(ctrl, enable)
@@ -208,6 +218,14 @@ struct spi_flash_ctrl {
 	int (*cmd_wr)(struct spi_flash_ctrl *ctrl, uint8_t cmd,
 		      bool has_addr, uint32_t addr, const void *buffer,
 		      uint32_t size);
+
+	/* The core will establish this at init, after chip ID has
+	 * been probed
+	 */
+	struct flash_info *finfo;
 };
+
+extern int fl_wren(struct spi_flash_ctrl *ct);
+extern int fl_sync_wait_idle(struct spi_flash_ctrl *ct);
 
 #endif /* LIBFLASH_PRIV_H */

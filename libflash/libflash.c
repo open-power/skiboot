@@ -21,10 +21,13 @@
 #include "libflash-priv.h"
 
 static const struct flash_info flash_info[] = {
-	{ 0xc22019, 0x02000000, FL_ERASE_ALL | FL_CAN_4B, "MXxxL25635F"},
-	{ 0xc2201a, 0x04000000, FL_ERASE_ALL | FL_CAN_4B, "MXxxL51235F"},
-	{ 0xef4018, 0x01000000, FL_ERASE_ALL,             "W25Q128BV"  },
-	{ 0x55aa55, 0x00100000, FL_ERASE_ALL | FL_CAN_4B, "TEST_FLASH"},
+	{ 0xc22019, 0x02000000, FL_ERASE_ALL | FL_CAN_4B, "Macronix MXxxL25635F"},
+	{ 0xc2201a, 0x04000000, FL_ERASE_ALL | FL_CAN_4B, "Macronix MXxxL51235F"},
+	{ 0xef4018, 0x01000000, FL_ERASE_ALL,             "Winbond W25Q128BV"   },
+	{ 0x20ba20, 0x04000000, FL_ERASE_4K  | FL_ERASE_64K | FL_CAN_4B |
+                                FL_ERASE_BULK | FL_MICRON_BUGS,
+                                                          "Micron N25Qx512Ax"   },
+	{ 0x55aa55, 0x00100000, FL_ERASE_ALL | FL_CAN_4B, "TEST_FLASH" },
 };
 
 struct flash_chip {
@@ -37,24 +40,22 @@ struct flash_chip {
 	void			*smart_buf;	/* Buffer for smart writes */
 };
 
-static int fl_read_stat(struct flash_chip *c, uint8_t *stat)
+static int fl_read_stat(struct spi_flash_ctrl *ct, uint8_t *stat)
 {
-	struct spi_flash_ctrl *ct = c->ctrl;
-
 	return ct->cmd_rd(ct, CMD_RDSR, false, 0, stat, 1);
 }
 
-static int fl_wren(struct flash_chip *c)
+/* Exported for internal use */
+int fl_wren(struct spi_flash_ctrl *ct)
 {
-	struct spi_flash_ctrl *ct = c->ctrl;
 	uint8_t stat;
 	int i, rc;
 
 	/* Some flashes need it to be hammered */
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < 1000; i++) {
 		rc = ct->cmd_wr(ct, CMD_WREN, false, 0, NULL, 0);
 		if (rc) return rc;
-		rc = fl_read_stat(c, &stat);
+		rc = fl_read_stat(ct, &stat);
 		if (rc) return rc;
 		if (stat & STAT_WEN)
 			return 0;
@@ -62,18 +63,33 @@ static int fl_wren(struct flash_chip *c)
 	return FLASH_ERR_WREN_TIMEOUT;
 }
 
-/* Synchronous write completion, probably need a yield hook */
-static int fl_sync_wait_idle(struct flash_chip *c)
+static void fl_micron_status(struct spi_flash_ctrl *ct)
 {
-	int rc;
+	uint8_t flst;
+
+	/*
+	 * After a success status on a write or erase, we
+	 * need to do that command or some chip variants will
+	 * lock
+	 */
+	ct->cmd_rd(ct, CMD_MIC_RDFLST, false, 0, &flst, 1);
+}
+
+/* Synchronous write completion, probably need a yield hook */
+int fl_sync_wait_idle(struct spi_flash_ctrl *ct)
+{
 	uint8_t stat;
+	int rc;
 
 	/* XXX Add timeout */
 	for (;;) {
-		rc = fl_read_stat(c, &stat);
+		rc = fl_read_stat(ct, &stat);
 		if (rc) return rc;
-		if (!(stat & STAT_WIP))
+		if (!(stat & STAT_WIP)) {
+			if (ct->finfo->flags & FL_MICRON_BUGS)
+				fl_micron_status(ct);
 			return 0;
+		}
 	}
 	/* return FLASH_ERR_WIP_TIMEOUT; */
 }
@@ -157,7 +173,7 @@ int flash_erase(struct flash_chip *c, uint32_t dst, uint32_t size)
 		fl_get_best_erase(c, dst, size, &chunk, &cmd);
 
 		/* Poke write enable */
-		rc = fl_wren(c);
+		rc = fl_wren(ct);
 		if (rc)
 			return rc;
 
@@ -167,7 +183,7 @@ int flash_erase(struct flash_chip *c, uint32_t dst, uint32_t size)
 			return rc;
 
 		/* Wait for write complete */
-		rc = fl_sync_wait_idle(c);
+		rc = fl_sync_wait_idle(ct);
 		if (rc)
 			return rc;
 
@@ -183,7 +199,7 @@ int flash_erase_chip(struct flash_chip *c)
 	int rc;
 
 	/* XXX TODO: Fallback to using normal erases */
-	if (!(c->info.flags & FL_ERASE_CHIP))
+	if (!(c->info.flags & (FL_ERASE_CHIP|FL_ERASE_BULK)))
 		return FLASH_ERR_CHIP_ER_NOT_SUPPORTED;
 
 	FL_DBG("LIBFLASH: Erasing chip...\n");
@@ -192,15 +208,18 @@ int flash_erase_chip(struct flash_chip *c)
 	if (ct->erase)
 		return ct->erase(ct, 0, 0xffffffff);
 
-	rc = fl_wren(c);
+	rc = fl_wren(ct);
 	if (rc) return rc;
 
-	rc = ct->cmd_wr(ct, CMD_CE, false, 0, NULL, 0);
+	if (c->info.flags & FL_ERASE_CHIP)
+		rc = ct->cmd_wr(ct, CMD_CE, false, 0, NULL, 0);
+	else
+		rc = ct->cmd_wr(ct, CMD_MIC_BULK_ERASE, false, 0, NULL, 0);
 	if (rc)
 		return rc;
 
 	/* Wait for write complete */
-	return fl_sync_wait_idle(c);
+	return fl_sync_wait_idle(ct);
 }
 
 static int fl_wpage(struct flash_chip *c, uint32_t dst, const void *src,
@@ -212,7 +231,7 @@ static int fl_wpage(struct flash_chip *c, uint32_t dst, const void *src,
 	if (size < 1 || size > 0x100)
 		return FLASH_ERR_BAD_PAGE_SIZE;
 
-	rc = fl_wren(c);
+	rc = fl_wren(ct);
 	if (rc) return rc;
 
 	rc = ct->cmd_wr(ct, CMD_PP, true, dst, src, size);
@@ -220,7 +239,7 @@ static int fl_wpage(struct flash_chip *c, uint32_t dst, const void *src,
 		return rc;
 
 	/* Wait for write complete */
-	return fl_sync_wait_idle(c);
+	return fl_sync_wait_idle(ct);
 }
 
 int flash_write(struct flash_chip *c, uint32_t dst, const void *src,
@@ -406,7 +425,6 @@ int flash_smart_write(struct flash_chip *c, uint32_t dst, const void *src,
 	return 0;
 }
 
-
 static int flash_identify(struct flash_chip *c)
 {
 	struct spi_flash_ctrl *ct = c->ctrl;
@@ -446,18 +464,19 @@ static int flash_identify(struct flash_chip *c)
 		if (info->id == iid)
 			break;		
 	}
-	if (info->id != iid)
+	if (!info || info->id != iid)
 		return FLASH_ERR_CHIP_UNKNOWN;
 
 	c->info = *info;
 	c->tsize = info->size;
+	ct->finfo = &c->info;
 
 	/*
 	 * Let controller know about our settings and possibly
 	 * override them
 	 */
 	if (ct->setup) {
-		rc = ct->setup(ct, &c->info, &c->tsize);
+		rc = ct->setup(ct, &c->tsize);
 		if (rc)
 			return rc;
 	}
@@ -484,6 +503,10 @@ static int flash_identify(struct flash_chip *c)
 static int flash_set_4b(struct flash_chip *c, bool enable)
 {
 	struct spi_flash_ctrl *ct = c->ctrl;
+
+	/* Some flash chips want this */
+	fl_wren(ct);
+	/* Ignore error in case chip is write protected */
 
 	return ct->cmd_wr(ct, enable ? CMD_EN4B : CMD_EX4B, false, 0, NULL, 0);
 }

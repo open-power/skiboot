@@ -383,10 +383,10 @@ static int sfc_erase(struct spi_flash_ctrl *ctrl, uint32_t addr,
 	return 0;
 }
 
-static int sfc_setup(struct spi_flash_ctrl *ctrl, struct flash_info *info,
-		     uint32_t *tsize)
+static int sfc_setup(struct spi_flash_ctrl *ctrl, uint32_t *tsize)
 {
 	struct sfc_ctrl *ct = container_of(ctrl, struct sfc_ctrl, ops);
+	struct flash_info *info = ctrl->finfo;
 	uint32_t er_flags;
 
 	(void)tsize;

@@ -23,12 +23,14 @@
 /* SPI Flash controller #1 (BMC) */
 #define BMC_SPI_FCTL_BASE	0x1E620000
 #define BMC_SPI_FCTL_CTRL	(BMC_SPI_FCTL_BASE + 0x10)
+#define BMC_SPI_FREAD_TIMING	(BMC_SPI_FCTL_BASE + 0x94)
 #define BMC_FLASH_BASE		0x20000000
 
 /* SPI Flash controller #2 (PNOR) */
 #define PNOR_SPI_FCTL_BASE	0x1E630000
 #define PNOR_SPI_FCTL_CONF	(PNOR_SPI_FCTL_BASE + 0x00)
 #define PNOR_SPI_FCTL_CTRL	(PNOR_SPI_FCTL_BASE + 0x04)
+#define PNOR_SPI_FREAD_TIMING	(PNOR_SPI_FCTL_BASE + 0x14)
 #define PNOR_FLASH_BASE		0x30000000
 
 /* LPC registers */
@@ -44,6 +46,10 @@
 #define VUART1_GCTRLB		(VUART1_BASE + 0x24)
 #define VUART1_ADDRL		(VUART1_BASE + 0x28)
 #define VUART1_ADDRH		(VUART1_BASE + 0x2c)
+
+/* SCU registers */
+#define SCU_BASE		0x1e6e2000
+#define SCU_HW_STRAPPING	(SCU_BASE + 0x70)
 
 /*
  * AHB Accessors
