@@ -420,6 +420,7 @@ void uart_setup_opal_console(void)
 
 	/* Allocate an input buffer */
 	in_buf = zalloc(IN_BUF_SIZE);
+	out_buf = zalloc(OUT_BUF_SIZE);
 	prlog(PR_DEBUG, "UART: Enabled as OS console\n");
 
 	/* Register OPAL APIs */
