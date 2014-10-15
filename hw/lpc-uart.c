@@ -364,7 +364,7 @@ static void uart_console_poll(void *data __unused)
 void uart_irq(void)
 {
 	if (!irq_ok) {
-		printf("UART: IRQ functional !\n");
+		prlog(PR_DEBUG, "UART: IRQ functional !\n");
 		irq_ok = true;
 	}
 	__uart_do_poll(TRACE_UART_CTX_IRQ);
@@ -382,7 +382,7 @@ void uart_setup_linux_passthrough(void)
 	path = dt_get_path(uart_node);
 	dt_add_property_string(dt_chosen, "linux,stdout-path", path);
 	free(path);
-	printf("UART: Enabled as OS pass-through\n");
+	prlog(PR_DEBUG, "UART: Enabled as OS pass-through\n");
 }
 
 void uart_setup_opal_console(void)
@@ -420,7 +420,7 @@ void uart_setup_opal_console(void)
 
 	/* Allocate an input buffer */
 	in_buf = zalloc(IN_BUF_SIZE);
-	printf("UART: Enabled as OS console\n");
+	prlog(PR_DEBUG, "UART: Enabled as OS console\n");
 
 	/* Register OPAL APIs */
 	opal_register(OPAL_CONSOLE_READ, uart_opal_read, 3);
@@ -512,7 +512,7 @@ void uart_init(bool enable_interrupt)
 	/* Setup the interrupts properties since HB couldn't do it */
 	irqchip = dt_prop_get_u32(n, "ibm,irq-chip-id");
 	irq = get_psi_interrupt(irqchip) + P8_IRQ_PSI_HOST_ERR;
-	printf("UART: IRQ connected to chip %d, irq# is 0x%x\n", irqchip, irq);
+	prlog(PR_DEBUG, "UART: IRQ connected to chip %d, irq# is 0x%x\n", irqchip, irq);
 	has_irq = enable_interrupt;
 	if (has_irq) {
 		dt_add_property_cells(n, "interrupts", irq);
