@@ -399,7 +399,7 @@ void mem_free(struct mem_region *region, void *mem, const char *location)
 size_t mem_size(const struct mem_region *region __unused, const void *ptr)
 {
 	const struct alloc_hdr *hdr = ptr - sizeof(*hdr);
-	return hdr->num_longs * sizeof(long);
+	return hdr->num_longs * sizeof(long) - sizeof(struct alloc_hdr);
 }
 
 bool mem_resize(struct mem_region *region, void *mem, size_t len,

@@ -25,6 +25,23 @@ struct cpu_thread {
 	unsigned int			chip_id;
 };
 
+#include <stdlib.h>
+
+/* Use these before we undefine them below. */
+static inline void *real_malloc(size_t size)
+{
+	return malloc(size);
+}
+
+static inline void real_free(void *p)
+{
+	return free(p);
+}
+
+#undef malloc
+#undef free
+#undef realloc
+
 #include <skiboot.h>
 
 #define is_rodata(p) true
@@ -60,7 +77,8 @@ static bool heap_empty(void)
 
 int main(void)
 {
-	char test_heap[TEST_HEAP_SIZE], *p, *p2, *p3, *p4;
+	char *test_heap = real_malloc(TEST_HEAP_SIZE);
+	char *p, *p2, *p3, *p4;
 	size_t i;
 
 	/* Use malloc for the heap, so valgrind can find issues. */
@@ -116,13 +134,17 @@ int main(void)
 
 	/* Realloc with move. */
 	p2 = malloc(TEST_HEAP_SIZE - 64 - sizeof(struct alloc_hdr)*2);
+	memset(p2, 'a', TEST_HEAP_SIZE - 64 - sizeof(struct alloc_hdr)*2);
 	assert(p2);
 	p = malloc(64);
+	memset(p, 'b', 64);
+	p[63] = 'c';
 	assert(p);
 	free(p2);
 
 	p2 = realloc(p, 128);
 	assert(p2 != p);
+	assert(p2[63] == 'c');
 	free(p2);
 	assert(heap_empty());
 	assert(!mem_region_lock.lock_val);
@@ -140,5 +162,6 @@ int main(void)
 	assert(heap_empty());
 	assert(!mem_region_lock.lock_val);
 
+	real_free(test_heap);
 	return 0;
 }
