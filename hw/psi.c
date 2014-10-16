@@ -52,37 +52,6 @@ void psi_set_link_polling(bool active)
 	psi_link_poll_active = active;
 }
 
-/*
- * Resetting the FSP is a multi step sequence:
- * 1. Read the PSIHBCR
- * 2. Set the PSIHBCR[6] -- write register back.
- * 3. Read PSIHBCR again
- * 4. Reset PSIHBCR[6] -- write register back.
- */
-void psi_reset_fsp(struct psi *psi)
-{
-	lock(&psi_lock);
-
-	if (psi->active) {
-		u64 reg;
-
-		printf("PSI: Driving FSP reset via PSI\n");
-		reg = in_be64(psi->regs + PSIHB_CR);
-		reg &= ~(0xfffull << 20);	/* Reset error bits */
-		reg |= PSIHB_CR_FSP_RESET;	/* FSP reset trigger start */
-		out_be64(psi->regs + PSIHB_CR, reg);
-		printf("PSI[0x%03x]: FSP reset start PSIHBCR set to %llx\n",
-			psi->chip_id, in_be64(psi->regs + PSIHB_CR));
-
-		reg = in_be64(psi->regs + PSIHB_CR);
-		reg &= ~PSIHB_CR_FSP_RESET;	/* Clear FSP reset bit */
-		out_be64(psi->regs + PSIHB_CR, reg);	/* Complete reset */
-		printf("PSI[0x%03x]: FSP reset complete. PSIHBCR set to %llx\n",
-			psi->chip_id, in_be64(psi->regs + PSIHB_CR));
-	}
-	unlock(&psi_lock);
-}
-
 void psi_disable_link(struct psi *psi)
 {
 	lock(&psi_lock);
@@ -125,6 +94,40 @@ void psi_disable_link(struct psi *psi)
 	}
 
 	unlock(&psi_lock);
+}
+
+/*
+ * Resetting the FSP is a multi step sequence:
+ * 1. Read the PSIHBCR
+ * 2. Set the PSIHBCR[6] -- write register back.
+ * 3. Read PSIHBCR again
+ * 4. Reset PSIHBCR[6] -- write register back.
+ */
+void psi_reset_fsp(struct psi *psi)
+{
+	lock(&psi_lock);
+
+	if (psi->active) {
+		u64 reg;
+
+		printf("PSI: Driving FSP reset via PSI\n");
+		reg = in_be64(psi->regs + PSIHB_CR);
+		reg &= ~(0xfffull << 20);	/* Reset error bits */
+		reg |= PSIHB_CR_FSP_RESET;	/* FSP reset trigger start */
+		out_be64(psi->regs + PSIHB_CR, reg);
+		printf("PSI[0x%03x]: FSP reset start PSIHBCR set to %llx\n",
+			psi->chip_id, in_be64(psi->regs + PSIHB_CR));
+
+		reg = in_be64(psi->regs + PSIHB_CR);
+		reg &= ~PSIHB_CR_FSP_RESET;	/* Clear FSP reset bit */
+		out_be64(psi->regs + PSIHB_CR, reg);	/* Complete reset */
+		printf("PSI[0x%03x]: FSP reset complete. PSIHBCR set to %llx\n",
+			psi->chip_id, in_be64(psi->regs + PSIHB_CR));
+	}
+	unlock(&psi_lock);
+
+	/* Now bring down the PSI link too... */
+	psi_disable_link(psi);
 }
 
 bool psi_check_link_active(struct psi *psi)
