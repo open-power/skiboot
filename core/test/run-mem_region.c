@@ -101,7 +101,7 @@ int main(void)
 		assert(!strcmp(((struct alloc_hdr *)p)[-1].location, "here"));
 		assert(p > (void *)test_heap);
 		assert(p + (1ULL << i) <= (void *)test_heap + TEST_HEAP_SIZE);
-		assert(mem_size(&skiboot_heap, p) >= 1ULL << i);
+		assert(mem_allocated_size(p) >= 1ULL << i);
 		mem_free(&skiboot_heap, p, "freed");
 		assert(heap_empty());
 		assert(mem_check(&skiboot_heap));
@@ -177,7 +177,7 @@ int main(void)
 	p = mem_alloc(&skiboot_heap, 1, 1, "one byte");
 	assert(p);
 	assert(mem_resize(&skiboot_heap, p, 100, "hundred bytes"));
-	assert(mem_size(&skiboot_heap, p) >= 100);
+	assert(mem_allocated_size(p) >= 100);
 	assert(mem_check(&skiboot_heap));
 	assert(!strcmp(((struct alloc_hdr *)p)[-1].location, "hundred bytes"));
 	mem_free(&skiboot_heap, p, "freed");
@@ -186,7 +186,7 @@ int main(void)
 	p = mem_alloc(&skiboot_heap, 100, 1, "100 bytes");
 	assert(p);
 	assert(mem_resize(&skiboot_heap, p, 1, "1 byte"));
-	assert(mem_size(&skiboot_heap, p) < 100);
+	assert(mem_allocated_size(p) < 100);
 	assert(mem_check(&skiboot_heap));
 	assert(!strcmp(((struct alloc_hdr *)p)[-1].location, "1 byte"));
 	mem_free(&skiboot_heap, p, "freed");
@@ -196,7 +196,7 @@ int main(void)
 	assert(p);
 	for (i = 1; i <= TEST_HEAP_SIZE - sizeof(struct alloc_hdr); i++) {
 		assert(mem_resize(&skiboot_heap, p, i, "enlarge"));
-		assert(mem_size(&skiboot_heap, p) >= i);
+		assert(mem_allocated_size(p) >= i);
 		assert(mem_check(&skiboot_heap));
 	}
 

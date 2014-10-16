@@ -63,7 +63,7 @@ void *__realloc(void *ptr, size_t size, const char *location)
 		newptr = mem_alloc(&skiboot_heap, size, DEFAULT_ALIGN,
 				   location);
 		if (newptr) {
-			size_t copy = mem_size(&skiboot_heap, ptr);
+			size_t copy = mem_allocated_size(ptr);
 			if (copy > size)
 				copy = size;
 			memcpy(newptr, ptr, copy);

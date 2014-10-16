@@ -50,7 +50,7 @@ void mem_free(struct mem_region *region, void *mem,
 	      const char *location);
 bool mem_resize(struct mem_region *region, void *mem, size_t len,
 		const char *location);
-size_t mem_size(const struct mem_region *region, const void *ptr);
+size_t mem_allocated_size(const void *ptr);
 bool mem_check(const struct mem_region *region);
 void mem_region_release_unused(void);
 
