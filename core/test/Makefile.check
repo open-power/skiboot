@@ -1,5 +1,5 @@
 # -*-Makefile-*-
-CORE_TEST := core/test/run-device core/test/run-mem_region core/test/run-malloc core/test/run-malloc-speed core/test/run-mem_region_init core/test/run-mem_region_release_unused core/test/run-mem_region_release_unused_noalloc core/test/run-trace core/test/run-msg
+CORE_TEST := core/test/run-device core/test/run-mem_region core/test/run-malloc core/test/run-malloc-speed core/test/run-mem_region_init core/test/run-mem_region_release_unused core/test/run-mem_region_release_unused_noalloc core/test/run-trace core/test/run-msg core/test/run-pel
 
 check: $(CORE_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
 
@@ -16,7 +16,7 @@ core/test/stubs.o: core/test/stubs.c
 
 $(CORE_TEST) : core/test/stubs.o
 
-$(CORE_TEST) : % : %.c 
+$(CORE_TEST) : % : %.c
 	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -o $@ $< core/test/stubs.o
 
 $(CORE_TEST): % : %.d

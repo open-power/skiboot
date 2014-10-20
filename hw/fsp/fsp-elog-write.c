@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <fsp-elog.h>
 #include <timebase.h>
+#include <pel.h>
 
 /*
  * Maximum number buffers that are pre-allocated
@@ -72,7 +73,6 @@ static uint32_t elog_plid_fsp_commit = -1;
 enum elog_head_state elog_write_to_host_head_state = ELOG_STATE_NONE;
 
 /* Need forward declaration because of Circular dependency */
-static int create_opal_event(struct errorlog *elog_data, char *pel_buffer);
 static int opal_send_elog_to_fsp(void);
 
 void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
@@ -275,8 +275,9 @@ static void opal_commit_elog_in_host(void)
 			(elog_write_to_host_head_state == ELOG_STATE_NONE)) {
 		buf = list_top(&elog_write_to_host_pending,
 				struct errorlog, link);
-		buf->log_size = create_opal_event(buf,
-					(char *)elog_write_to_host_buffer);
+		buf->log_size = create_pel_log(buf,
+					       (char *)elog_write_to_host_buffer,
+					       ELOG_WRITE_TO_HOST_BUFFER_SIZE);
 		elog_write_to_host_head_state = ELOG_STATE_FETCHED_DATA;
 		opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL,
 					OPAL_EVENT_ERROR_LOG_AVAIL);
@@ -386,8 +387,9 @@ static int opal_send_elog_to_fsp(void)
 		head = list_top(&elog_write_to_fsp_pending,
 					 struct errorlog, link);
 		elog_plid_fsp_commit = head->plid;
-		head->log_size = create_opal_event(head,
-					(char *)elog_write_to_fsp_buffer);
+		head->log_size = create_pel_log(head,
+						(char *)elog_write_to_fsp_buffer,
+						ELOG_WRITE_TO_FSP_BUFFER_SIZE);
 		rc = fsp_opal_elog_write(head->log_size);
 		unlock(&elog_write_lock);
 		return rc;
@@ -403,8 +405,9 @@ static int opal_push_logs_sync_to_fsp(struct errorlog *buf)
 	int rc = OPAL_SUCCESS;
 
 	lock(&elog_panic_write_lock);
-	opal_elog_size = create_opal_event(buf,
-				(char *)elog_panic_write_buffer);
+	opal_elog_size = create_pel_log(buf,
+					(char *)elog_panic_write_buffer,
+					ELOG_PANIC_WRITE_BUFFER_SIZE);
 
 	elog_msg = fsp_mkmsg(FSP_CMD_CREATE_ERRLOG, 3, opal_elog_size,
 					0, PSI_DMA_ELOG_PANIC_WRITE_BUF);
@@ -490,228 +493,6 @@ int opal_elog_update_user_dump(struct errorlog *buf, unsigned char *data,
 	buf->user_section_size += tmp->size;
 	buf->user_section_count++;
 	return 0;
-}
-
-/* Create MTMS section for sapphire log */
-static void create_mtms_section(struct errorlog *elog_data,
-					char *pel_buffer, int *pel_offset)
-{
-	struct opal_mtms_section *mtms = (struct opal_mtms_section *)
-				(pel_buffer + *pel_offset);
-
-	mtms->v6header.id = ELOG_SID_MACHINE_TYPE;
-	mtms->v6header.length = MTMS_SECTION_SIZE;
-	mtms->v6header.version = OPAL_EXT_HRD_VER;
-	mtms->v6header.subtype = 0;
-	mtms->v6header.component_id = elog_data->component_id;
-
-	memset(mtms->model, 0x00, sizeof(mtms->model));
-	memcpy(mtms->model, dt_prop_get(dt_root, "model"), OPAL_SYS_MODEL_LEN);
-	memset(mtms->serial_no, 0x00, sizeof(mtms->serial_no));
-
-	memcpy(mtms->serial_no, dt_prop_get(dt_root, "system-id"),
-						 OPAL_SYS_SERIAL_LEN);
-	*pel_offset += MTMS_SECTION_SIZE;
-}
-
-/* Create extended header section */
-static void create_extended_header_section(struct errorlog *elog_data,
-					char *pel_buffer, int *pel_offset)
-{
-	const char  *opalmodel = NULL;
-	uint64_t extd_time;
-
-	struct opal_extended_header_section *extdhdr =
-			(struct opal_extended_header_section *)
-					(pel_buffer + *pel_offset);
-
-	extdhdr->v6header.id = ELOG_SID_EXTENDED_HEADER;
-	extdhdr->v6header.length = EXTENDED_HEADER_SECTION_SIZE;
-	extdhdr->v6header.version = OPAL_EXT_HRD_VER;
-	extdhdr->v6header.subtype = 0;
-	extdhdr->v6header.component_id = elog_data->component_id;
-
-	memset(extdhdr->model, 0x00, sizeof(extdhdr->model));
-	opalmodel = dt_prop_get(dt_root, "model");
-	memcpy(extdhdr->model, opalmodel, OPAL_SYS_MODEL_LEN);
-
-	memset(extdhdr->serial_no, 0x00, sizeof(extdhdr->serial_no));
-	memcpy(extdhdr->serial_no, dt_prop_get(dt_root, "system-id"),
-							OPAL_SYS_SERIAL_LEN);
-
-	memset(extdhdr->opal_release_version, 0x00,
-				sizeof(extdhdr->opal_release_version));
-	memset(extdhdr->opal_subsys_version, 0x00,
-				sizeof(extdhdr->opal_subsys_version));
-
-	fsp_rtc_get_cached_tod(&extdhdr->extended_header_date, &extd_time);
-	extdhdr->extended_header_time = extd_time >> 32;
-	extdhdr->opal_symid_len = 0;
-	memset(extdhdr->opalsymid, 0x00, sizeof(extdhdr->opalsymid));
-
-	*pel_offset += EXTENDED_HEADER_SECTION_SIZE;
-}
-
-/* set src type */
-static void settype(struct opal_src_section *src, uint8_t src_type)
-{
-	char type[4];
-	sprintf(type, "%02X", src_type);
-	memcpy(src->srcstring, type, 2);
-}
-
-/* set SRC subsystem type */
-static void setsubsys(struct opal_src_section *src, uint8_t src_subsys)
-{
-	char subsys[4];
-	sprintf(subsys, "%02X", src_subsys);
-	memcpy(src->srcstring+2, subsys, 2);
-}
-
-/* Ser reason code of SRC */
-static void setrefcode(struct opal_src_section *src, uint16_t src_refcode)
-{
-	char refcode[8];
-	sprintf(refcode, "%04X", src_refcode);
-	memcpy(src->srcstring+4, refcode, 4);
-}
-
-/* Create SRC section of OPAL log */
-static void create_src_section(struct errorlog *elog_data,
-					char *pel_buffer, int *pel_offset)
-{
-	struct opal_src_section *src = (struct opal_src_section *)
-						(pel_buffer + *pel_offset);
-
-	src->v6header.id = ELOG_SID_PRIMARY_SRC;
-	src->v6header.length = SRC_SECTION_SIZE;
-	src->v6header.version = OPAL_ELOG_VERSION;
-	src->v6header.subtype = OPAL_ELOG_SST;
-	src->v6header.component_id = elog_data->component_id;
-
-	src->version = OPAL_SRC_SEC_VER;
-	src->flags = 0;
-	src->wordcount = OPAL_SRC_MAX_WORD_COUNT;
-	src->srclength = SRC_LENGTH;
-	settype(src, OPAL_SRC_TYPE_ERROR);
-	setsubsys(src, OPAL_FAILING_SUBSYSTEM);
-	setrefcode(src, elog_data->reason_code);
-	memset(src->hexwords, 0 , (8 * 4));
-	src->hexwords[0] = OPAL_SRC_FORMAT;
-	src->hexwords[4] = elog_data->additional_info[0];
-	src->hexwords[5] = elog_data->additional_info[1];
-	src->hexwords[6] = elog_data->additional_info[2];
-	src->hexwords[7] = elog_data->additional_info[3];
-	*pel_offset += SRC_SECTION_SIZE;
-}
-
-/* Create user header section */
-static void create_user_header_section(struct errorlog *elog_data,
-					char *pel_buffer, int *pel_offset)
-{
-	struct opal_user_header_section *usrhdr =
-				(struct opal_user_header_section *)
-						(pel_buffer + *pel_offset);
-
-	usrhdr->v6header.id = ELOG_SID_USER_HEADER;
-	usrhdr->v6header.length = USER_HEADER_SECTION_SIZE;
-	usrhdr->v6header.version = OPAL_ELOG_VERSION;
-	usrhdr->v6header.subtype = OPAL_ELOG_SST;
-	usrhdr->v6header.component_id = elog_data->component_id;
-
-	usrhdr->subsystem_id = elog_data->subsystem_id;
-	usrhdr->event_scope = 0;
-	usrhdr->event_severity = elog_data->event_severity;
-	usrhdr->event_type = elog_data->event_subtype;
-
-	if (elog_data->elog_origin == ORG_SAPPHIRE)
-		usrhdr->action_flags = ERRL_ACTION_REPORT;
-	else
-		usrhdr->action_flags = ERRL_ACTION_NONE;
-
-	*pel_offset += USER_HEADER_SECTION_SIZE;
-}
-
-/* Create private header section */
-static void create_private_header_section(struct errorlog *elog_data,
-					char *pel_buffer, int *pel_offset)
-{
-	uint64_t ctime;
-	struct opal_private_header_section *privhdr =
-				(struct opal_private_header_section *)
-								pel_buffer;
-
-	privhdr->v6header.id = ELOG_SID_PRIVATE_HEADER;
-	privhdr->v6header.length = PRIVATE_HEADER_SECTION_SIZE;
-	privhdr->v6header.version = OPAL_ELOG_VERSION;
-	privhdr->v6header.subtype = OPAL_ELOG_SST;
-	privhdr->v6header.component_id = elog_data->component_id;
-	privhdr->plid = elog_data->plid;
-
-	fsp_rtc_get_cached_tod(&privhdr->create_date, &ctime);
-	privhdr->create_time = ctime >> 32;
-	privhdr->section_count = 5;
-
-	privhdr->creator_subid_hi = 0x00;
-	privhdr->creator_subid_lo = 0x00;
-
-	if (elog_data->elog_origin == ORG_SAPPHIRE)
-		privhdr->creator_id = OPAL_CID_SAPPHIRE;
-	else
-		privhdr->creator_id = OPAL_CID_POWERNV;
-
-	privhdr->log_entry_id = elog_data->plid; /*entry id is updated by FSP*/
-
-	*pel_offset += PRIVATE_HEADER_SECTION_SIZE;
-}
-
-static void create_user_defined_section(struct errorlog *elog_data,
-					char *pel_buffer, int *pel_offset)
-{
-	char *dump = (char *)pel_buffer + *pel_offset;
-	char *opal_buf = (char *)elog_data->user_data_dump;
-	struct opal_user_section *usrhdr;
-	struct elog_user_data_section *opal_usr_data;
-	struct opal_private_header_section *privhdr =
-			 (struct opal_private_header_section *)pel_buffer;
-	int i;
-
-	for (i = 0; i < elog_data->user_section_count; i++) {
-
-		usrhdr = (struct opal_user_section *)dump;
-		opal_usr_data = (struct elog_user_data_section *)opal_buf;
-
-		usrhdr->v6header.id = ELOG_SID_USER_DEFINED;
-		usrhdr->v6header.version = OPAL_ELOG_VERSION;
-		usrhdr->v6header.length = sizeof(struct opal_v6_header) +
-							opal_usr_data->size;
-		usrhdr->v6header.subtype = OPAL_ELOG_SST;
-		usrhdr->v6header.component_id = elog_data->component_id;
-
-		memcpy(usrhdr->dump, opal_buf, opal_usr_data->size);
-		*pel_offset += usrhdr->v6header.length;
-		dump += usrhdr->v6header.length;
-		opal_buf += opal_usr_data->size;
-		privhdr->section_count++;
-	}
-}
-
-/* Create all require section of PEL log and write to TCE buffer */
-static int create_opal_event(struct errorlog *elog_data, char *pel_buffer)
-{
-	int pel_offset = 0;
-
-	memset(pel_buffer, 0, PSI_DMA_ELOG_WR_TO_HOST_BUF_SZ);
-
-	create_private_header_section(elog_data, pel_buffer, &pel_offset);
-	create_user_header_section(elog_data, pel_buffer, &pel_offset);
-	create_src_section(elog_data, pel_buffer, &pel_offset);
-	create_extended_header_section(elog_data, pel_buffer, &pel_offset);
-	create_mtms_section(elog_data, pel_buffer, &pel_offset);
-	if (elog_data->user_section_count)
-		create_user_defined_section(elog_data, pel_buffer, &pel_offset);
-
-	return pel_offset;
 }
 
 /* Pre-allocate memory for writing error log to FSP */
