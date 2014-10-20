@@ -23,4 +23,7 @@ extern void ibm_fsp_init(void);
 extern int64_t ibm_fsp_cec_power_down(uint64_t request);
 extern int64_t ibm_fsp_cec_reboot(void);
 
+struct errorlog;
+extern int elog_fsp_commit(struct errorlog *buf);
+
 #endif /*  __IBM_FSP_COMMON_H */

@@ -41,9 +41,14 @@ static uint32_t sapphire_elog_id = 0xB0000000;
 static struct pool elog_pool;
 static struct lock elog_lock = LOCK_UNLOCKED;
 
+static bool elog_available = false;
+
 static struct errorlog *get_write_buffer(int opal_event_severity)
 {
 	struct errorlog *buf;
+
+	if (!elog_available)
+		return NULL;
 
 	lock(&elog_lock);
 	if (opal_event_severity == OPAL_ERROR_PANIC)
@@ -137,7 +142,7 @@ void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
 		/* Append any number of call out dumps */
 		if (e_info->call_out)
 			e_info->call_out(buf, data, size);
-		if (elog_fsp_commit(buf))
+		if (platform.elog_commit(buf))
 			prerror("ELOG: Re-try error logging\n");
 	}
 }
@@ -161,7 +166,7 @@ void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
 		prerror("ELOG: Error getting buffer to log error\n");
 	else {
 		opal_elog_update_user_dump(buf, err_msg, tag, strlen(err_msg));
-		if (elog_fsp_commit(buf))
+		if (platform.elog_commit(buf))
 			prerror("ELOG: Re-try error logging\n");
 	}
 }
@@ -172,5 +177,6 @@ int elog_init(void)
 	if (pool_init(&elog_pool, sizeof(struct errorlog), ELOG_WRITE_MAX_RECORD, 1))
 		return OPAL_RESOURCE;
 
+	elog_available = true;
 	return 0;
 }

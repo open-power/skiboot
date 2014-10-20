@@ -20,6 +20,7 @@
 /* Some fwd declarations for types used further down */
 struct phb;
 struct pci_device;
+struct errorlog;
 
 /*
  * Each platform can provide a set of hooks
@@ -116,6 +117,8 @@ struct platform {
 	 * seconds.
 	 */
 	uint32_t	(*occ_timeout)(void);
+
+	int		(*elog_commit)(struct errorlog *buf);
 };
 
 extern struct platform __platforms_start;
