@@ -97,6 +97,10 @@
 /* Max user dump size is 14K	*/
 #define OPAL_LOG_MAX_DUMP	14336
 
+/* Origin of error, elog_origin */
+#define ORG_SAPPHIRE	1
+#define ORG_POWERNV	2
+
 /* Multiple user data sections */
 struct __attribute__((__packed__))elog_user_data_section {
 	uint32_t tag;
@@ -132,4 +136,41 @@ struct __attribute__((__packed__)) errorlog {
 	char user_data_dump[OPAL_LOG_MAX_DUMP];
 	struct list_node link;
 };
+
+struct opal_err_info {
+	uint32_t reason_code;
+	uint8_t err_type;
+	uint16_t cmp_id;
+	uint8_t subsystem;
+	uint8_t sev;
+	uint8_t event_subtype;
+	void (*call_out)(struct errorlog *buf, void *data, uint16_t size);
+};
+
+#define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\
+severity, subtype, callout_func) struct opal_err_info err_##reason =	\
+{ .reason_code = reason, .err_type = type, .cmp_id = id,		\
+.subsystem = subsys, .sev = severity, .event_subtype = subtype,		\
+.call_out = callout_func }
+
+/* This is wrapper around the error log function, which creates
+ * and commits the error to FSP.
+ * Used for simple error logging
+ */
+void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
+		const char *fmt, ...) __attribute__ ((format (printf, 4, 5)));
+
+int opal_elog_update_user_dump(struct errorlog *buf, unsigned char *data,
+						uint32_t tag, uint16_t size);
+
+struct errorlog *opal_elog_create(struct opal_err_info *e_info);
+
+/* Called by the backend after an error has been logged by the
+ * backend. If the error could not be logged successfully success is
+ * set to false. */
+void opal_elog_complete(struct errorlog *elog, bool success);
+
+int elog_init(void);
+
 #endif /* __ERRORLOG_H */

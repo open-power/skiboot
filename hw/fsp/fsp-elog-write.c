@@ -32,27 +32,15 @@
 #include <fsp-elog.h>
 #include <timebase.h>
 #include <pel.h>
-
-/*
- * Maximum number buffers that are pre-allocated
- * to hold elogs that are reported on Sapphire and
- * powernv.
- */
-#define ELOG_WRITE_MAX_RECORD		64
+#include <pool.h>
 
 static LIST_HEAD(elog_write_to_fsp_pending);
-static LIST_HEAD(elog_write_free);
 static LIST_HEAD(elog_write_to_host_pending);
 static LIST_HEAD(elog_write_to_host_processed);
 
 static struct lock elog_write_lock = LOCK_UNLOCKED;
 static struct lock elog_panic_write_lock = LOCK_UNLOCKED;
 static struct lock elog_write_to_host_lock = LOCK_UNLOCKED;
-
-/* Platform Log ID as per the spec */
-static uint32_t sapphire_elog_id = 0xB0000000;
-/* Reserved for future use */
-/* static uint32_t powernv_elog_id = 0xB1000000; */
 
 /* log buffer  to copy FSP log for READ */
 #define ELOG_WRITE_TO_FSP_BUFFER_SIZE	0x00040000
@@ -64,8 +52,6 @@ static void *elog_panic_write_buffer;
 #define ELOG_WRITE_TO_HOST_BUFFER_SIZE	0x0010000
 static void *elog_write_to_host_buffer;
 
-struct errorlog *panic_write_buffer;
-static int panic_write_buffer_valid;
 static uint32_t elog_write_retries;
 
 /* Manipulate this only with write_lock held */
@@ -74,114 +60,6 @@ enum elog_head_state elog_write_to_host_head_state = ELOG_STATE_NONE;
 
 /* Need forward declaration because of Circular dependency */
 static int opal_send_elog_to_fsp(void);
-
-void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
-	       const char *fmt, ...)
-{
-	struct errorlog *buf;
-	int tag = 0x44455343;  /* ASCII of DESC */
-	va_list list;
-	char err_msg[250];
-
-	va_start(list, fmt);
-	vsnprintf(err_msg, sizeof(err_msg), fmt, list);
-	va_end(list);
-
-	/* Log the error on to Sapphire console */
-	prerror("%s", err_msg);
-
-	buf = opal_elog_create(e_info);
-	if (buf == NULL)
-		prerror("ELOG: Error getting buffer to log error\n");
-	else {
-		opal_elog_update_user_dump(buf, err_msg, tag, strlen(err_msg));
-		/* Append any number of call out dumps */
-		if (e_info->call_out)
-			e_info->call_out(buf, data, size);
-		if (elog_fsp_commit(buf))
-			prerror("ELOG: Re-try error logging\n");
-	}
-}
-
-
-void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
-{
-	struct errorlog *buf;
-	int tag = 0x44455343;  /* ASCII of DESC */
-	va_list list;
-	char err_msg[250];
-
-	va_start(list, fmt);
-	vsnprintf(err_msg, sizeof(err_msg), fmt, list);
-	va_end(list);
-
-	/* Log the error on to Sapphire console */
-	prerror("%s", err_msg);
-
-	buf = opal_elog_create(e_info);
-	if (buf == NULL)
-		prerror("ELOG: Error getting buffer to log error\n");
-	else {
-		opal_elog_update_user_dump(buf, err_msg, tag, strlen(err_msg));
-		if (elog_fsp_commit(buf))
-			prerror("ELOG: Re-try error logging\n");
-	}
-}
-
-static struct errorlog *get_write_buffer(int opal_event_severity)
-{
-	struct errorlog *buf;
-
-	lock(&elog_write_lock);
-	if (list_empty(&elog_write_free)) {
-		unlock(&elog_write_lock);
-		if (opal_event_severity == OPAL_ERROR_PANIC) {
-			lock(&elog_panic_write_lock);
-			if (panic_write_buffer_valid == 0) {
-				buf = (struct errorlog *)
-						panic_write_buffer;
-				panic_write_buffer_valid = 1; /* In Use */
-				unlock(&elog_panic_write_lock);
-			} else {
-				unlock(&elog_panic_write_lock);
-				prerror("ELOG: Write buffer full. Retry later\n");
-				return NULL;
-			}
-		} else {
-			prerror("ELOG: Write buffer list is full. Retry later\n");
-			return NULL;
-		}
-	} else {
-		buf = list_pop(&elog_write_free, struct errorlog, link);
-		unlock(&elog_write_lock);
-	}
-
-	memset(buf, 0, sizeof(struct errorlog));
-	return buf;
-}
-
-/* Reporting of error via struct errorlog */
-struct errorlog *opal_elog_create(struct opal_err_info *e_info)
-{
-	struct errorlog *buf;
-
-	buf = get_write_buffer(e_info->sev);
-	if (buf) {
-		buf->error_event_type = e_info->err_type;
-		buf->component_id = e_info->cmp_id;
-		buf->subsystem_id = e_info->subsystem;
-		buf->event_severity = e_info->sev;
-		buf->event_subtype = e_info->event_subtype;
-		buf->reason_code = e_info->reason_code;
-		buf->elog_origin = ORG_SAPPHIRE;
-
-		lock(&elog_write_lock);
-		buf->plid = ++sapphire_elog_id;
-		unlock(&elog_write_lock);
-	}
-
-	return buf;
-}
 
 static void remove_elog_head_entry(void)
 {
@@ -194,7 +72,7 @@ static void remove_elog_head_entry(void)
 		if (head->plid == elog_plid_fsp_commit) {
 			entry = list_pop(&elog_write_to_fsp_pending,
 					struct errorlog, link);
-			list_add_tail(&elog_write_free, &entry->link);
+			opal_elog_complete(entry, elog_write_retries < MAX_RETRIES);
 			/* Reset the counter */
 			elog_plid_fsp_commit = -1;
 		}
@@ -329,7 +207,7 @@ bool opal_elog_ack(uint64_t ack_id)
 			if (record->plid != ack_id)
 				continue;
 			list_del(&record->link);
-			list_add(&elog_write_free, &record->link);
+			opal_elog_complete(record, true);
 			rc = true;
 		}
 	}
@@ -345,7 +223,7 @@ bool opal_elog_ack(uint64_t ack_id)
 			if (record->plid != ack_id)
 				continue;
 			list_del(&record->link);
-			list_add(&elog_write_free, &record->link);
+			opal_elog_complete(record, true);
 			rc = true;
 		}
 	}
@@ -425,17 +303,9 @@ static int opal_push_logs_sync_to_fsp(struct errorlog *buf)
 		rc = (elog_msg->resp->word1 >> 8) & 0xff;
 		fsp_freemsg(elog_msg);
 	}
+	unlock(&elog_panic_write_lock);
 
-	if ((buf == panic_write_buffer) && (panic_write_buffer_valid == 1)) {
-		panic_write_buffer_valid = 0;
-		unlock(&elog_panic_write_lock);
-	} else {
-		/* buffer got from the elog_write list , put it back */
-		unlock(&elog_panic_write_lock);
-		lock(&elog_write_lock);
-		list_add_tail(&elog_write_free, &buf->link);
-		unlock(&elog_write_lock);
-	}
+	opal_elog_complete(buf, true);
 	return rc;
 }
 
@@ -466,59 +336,6 @@ int elog_fsp_commit(struct errorlog *buf)
 	list_add_tail(&elog_write_to_fsp_pending, &buf->link);
 	unlock(&elog_write_lock);
 	return rc;
-}
-
-int opal_elog_update_user_dump(struct errorlog *buf, unsigned char *data,
-						uint32_t tag, uint16_t size)
-{
-	char *buffer;
-	struct elog_user_data_section *tmp;
-
-	if (!buf) {
-		prerror("ELOG: Cannot update user data. Buffer is invalid\n");
-		return -1;
-	}
-
-	buffer = (char *)buf->user_data_dump + buf->user_section_size;
-	if ((buf->user_section_size + size) > OPAL_LOG_MAX_DUMP) {
-		prerror("ELOG: Size of dump data overruns buffer\n");
-		return -1;
-	}
-
-	tmp = (struct elog_user_data_section *)buffer;
-	tmp->tag = tag;
-	tmp->size = size + sizeof(struct elog_user_data_section) - 1;
-	memcpy(tmp->data_dump, data, size);
-
-	buf->user_section_size += tmp->size;
-	buf->user_section_count++;
-	return 0;
-}
-
-/* Pre-allocate memory for writing error log to FSP */
-static int init_elog_write_free_list(uint32_t num_entries)
-{
-	struct errorlog *entry;
-	int i;
-
-	entry = zalloc(sizeof(struct errorlog) * num_entries);
-	if (!entry)
-		goto out_err;
-
-	for (i = 0; i < num_entries; ++i) {
-		list_add_tail(&elog_write_free, &entry->link);
-		entry++;
-	}
-
-	/* Pre-allocate one single buffer for PANIC path */
-	panic_write_buffer = zalloc(sizeof(struct errorlog));
-	if (!panic_write_buffer)
-		goto out_err;
-
-	return 0;
-
-out_err:
-	return -ENOMEM;
 }
 
 static void elog_append_write_to_host(struct errorlog *buf)
@@ -596,11 +413,7 @@ void fsp_elog_write_init(void)
 	fsp_tce_map(PSI_DMA_ELOG_WR_TO_HOST_BUF, elog_write_to_host_buffer,
 					PSI_DMA_ELOG_WR_TO_HOST_BUF_SZ);
 
-	/* pre-allocate memory for 64 records */
-	if (init_elog_write_free_list(ELOG_WRITE_MAX_RECORD)) {
-		prerror("ELOG: Cannot allocate WRITE buffers to log errors!\n");
-		return;
-	}
+	elog_init();
 
 	/* Add a poller */
 	opal_add_poller(elog_timeout_poll, NULL);

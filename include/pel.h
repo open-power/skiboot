@@ -16,6 +16,8 @@
 #ifndef __PEL_H
 #define __PEL_H
 
+#include <errorlog.h>
+
 /* Data Structures for PEL data. */
 
 #define PRIVATE_HEADER_SECTION_SIZE		48

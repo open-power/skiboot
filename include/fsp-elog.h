@@ -193,16 +193,6 @@ enum opal_reasoncode {
 				= OPAL_FP | 0x10,
 };
 
-struct opal_err_info {
-	uint32_t reason_code;
-	uint8_t err_type;
-	uint16_t cmp_id;
-	uint8_t subsystem;
-	uint8_t sev;
-	uint8_t event_subtype;
-	void (*call_out)(struct errorlog *buf, void *data, uint16_t size);
-};
-
 #define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\
 severity, subtype, callout_func) struct opal_err_info err_##reason =	\
 { .reason_code = reason, .err_type = type, .cmp_id = id,		\
