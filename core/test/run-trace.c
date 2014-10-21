@@ -98,7 +98,7 @@ extern struct dt_node *opal_node;
 
 #define rmb() lwsync()
 
-#include "../external/trace.c"
+#include "../external/trace/trace.c"
 #include "../device.c"
 
 char __rodata_start[1], __rodata_end[1];

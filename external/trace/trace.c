@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /* This example code shows how to read from the trace buffer. */
-#include <external/trace.h>
+#include <external/trace/trace.h>
 #include <trace_types.h>
 #include <errno.h>
 
