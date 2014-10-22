@@ -149,6 +149,16 @@ int main(void)
 	assert(heap_empty());
 	assert(!mem_region_lock.lock_val);
 
+	/* Realloc with failure to allocate new size */
+	p2 = malloc(TEST_HEAP_SIZE - sizeof(struct alloc_hdr)*2);
+	assert(p2);
+	memset(p2, 'a', TEST_HEAP_SIZE - sizeof(struct alloc_hdr)*2);
+	p = p2;
+	p2 = realloc(p, TEST_HEAP_SIZE*2);
+	assert(p2==NULL);
+	memset(p, 'b', TEST_HEAP_SIZE - sizeof(struct alloc_hdr)*2);
+	free(p);
+
 	/* Reproduce bug BZ109128/SW257364 */
 	p = malloc(100);
 	p2 = malloc(100);
