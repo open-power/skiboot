@@ -32,3 +32,7 @@ core/test/run-trace
 core/test/*-gcov
 external/dump_trace
 hdata/test/hdata_to_dt
+libc/test/run-time
+libc/test/run-time-gcov
+libflash/test/test-flash
+libflash/test/test-flash-gcov
