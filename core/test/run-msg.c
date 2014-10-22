@@ -18,12 +18,16 @@
 #include <assert.h>
 
 static bool zalloc_should_fail = false;
+static int zalloc_should_fail_after = 0;
+
 static void *zalloc(size_t size)
 {
-        if (zalloc_should_fail) {
+        if (zalloc_should_fail && zalloc_should_fail_after == 0) {
                 errno = ENOMEM;
                 return NULL;
         }
+	if (zalloc_should_fail_after > 0)
+		zalloc_should_fail_after--;
 
         return calloc(size, 1);
 }
@@ -74,7 +78,12 @@ int main(void)
         static struct opal_msg m;
         uint64_t *m_ptr = (uint64_t *)&m;
 
-        opal_init_msg();
+	zalloc_should_fail = true;
+	zalloc_should_fail_after = 3;
+	opal_init_msg();
+
+	zalloc_should_fail = false;
+	opal_init_msg();
 
         assert(list_count(&msg_pending_list) == npending);
         assert(list_count(&msg_free_list) == nfree);
