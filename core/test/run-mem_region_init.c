@@ -124,6 +124,7 @@ int main(void)
 
 	/* Now convert. */
 	mem_region_init();
+	mem_dump_allocs();
 	assert(mem_check(&skiboot_heap));
 
 	builtins = 0;
