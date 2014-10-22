@@ -133,7 +133,15 @@ GIT_SHA ?= $(shell cd $(SRC); GIT_DIR=$(SRC)/.git git describe --always --dirty 
 gitid.c:
 	@echo "const char gitid[] = \"$(GIT_SHA)\";" > $@
 
+.PHONY: coverage
 include $(shell find $(SRC)/* -name Makefile.check)
+
+coverage-report: skiboot.info
+	genhtml -q -o $@ $<
+
+skiboot.info: coverage
+	lcov -q -c -d . -o $@
+
 
 tags:
 	find . -name '*.[chS]' | xargs ctags

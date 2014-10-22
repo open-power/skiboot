@@ -1,6 +1,8 @@
 *~
 *.o
 *.d
+*.gcda
+*.gcno
 *.rej
 *.swp
 skiboot-nosection.elf
@@ -8,6 +10,8 @@ skiboot.elf
 skiboot.lds
 skiboot.lid
 skiboot.map
+skiboot.info
+coverage-report/
 TAGS
 tags
 cscope.out
@@ -23,5 +27,6 @@ core/test/run-mem_region_release_unused
 core/test/run-mem_region_release_unused_noalloc
 core/test/run-msg
 core/test/run-trace
+core/test/*-gcov
 external/dump_trace
 hdata/test/hdata_to_dt

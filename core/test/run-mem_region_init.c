@@ -111,16 +111,16 @@ int main(void)
 	/* Use malloc for the heap, so valgrind can find issues. */
 	skiboot_heap.start = (unsigned long)heap;
 	skiboot_heap.len = TEST_HEAP_SIZE;
-	skiboot_os_reserve.len = (unsigned long)heap;
+	skiboot_os_reserve.len = 16384;
 
 	dt_root = dt_new_root("");
 	dt_add_property_cells(dt_root, "#address-cells", 2);
 	dt_add_property_cells(dt_root, "#size-cells", 2);
 
 	/* Make sure we overlap the heap, at least. */
-	add_mem_node(0, 0x100000000ULL);
-	add_mem_node(0x100000000ULL, 0x100000000ULL);
-	end = 0x200000000ULL;
+	add_mem_node(0, heap + 0x100000000ULL);
+	add_mem_node(heap+0x100000000ULL , 0x100000000ULL);
+	end = heap+ 0x100000000ULL + 0x100000000ULL;
 
 	/* Now convert. */
 	mem_region_init();

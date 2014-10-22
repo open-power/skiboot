@@ -1,7 +1,12 @@
 # -*-Makefile-*-
 LIBFLASH_TEST := libflash/test/test-flash
 
-check: $(LIBFLASH_TEST:%=%-check)
+check: $(LIBFLASH_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
+
+coverage: $(LIBFLASH_TEST:%=%-gcov-run)
+
+$(LIBFLASH_TEST:%=%-gcov-run) : %-run: %
+	$<
 
 $(LIBFLASH_TEST:%=%-check) : %-check: %
 	$(VALGRIND) $<
@@ -14,7 +19,13 @@ $(LIBFLASH_TEST) : libflash/test/stubs.o libflash/libflash.c
 $(LIBFLASH_TEST) : % : %.c 
 	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o
 
+$(LIBFLASH_TEST:%=%-gcov): %-gcov : %.c %
+	$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -lgcov -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o
+
+$(LIBFLASH_TEST:%=%-gcov): % : $(%.d:-gcov=)
+
 clean: libflash-test-clean
 
 libflash-test-clean:
 	$(RM) libflash/test/*.o $(LIBFLASH_TEST)
+	$(RM) libflash/test/*-gcov

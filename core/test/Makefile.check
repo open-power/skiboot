@@ -1,7 +1,12 @@
 # -*-Makefile-*-
 CORE_TEST := core/test/run-device core/test/run-mem_region core/test/run-malloc core/test/run-malloc-speed core/test/run-mem_region_init core/test/run-mem_region_release_unused core/test/run-mem_region_release_unused_noalloc core/test/run-trace core/test/run-msg
 
-check: $(CORE_TEST:%=%-check)
+check: $(CORE_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
+
+coverage: $(CORE_TEST:%=%-gcov-run)
+
+$(CORE_TEST:%=%-gcov-run) : %-run: %
+	$<
 
 $(CORE_TEST:%=%-check) : %-check: %
 	$(VALGRIND) $<
@@ -16,6 +21,11 @@ $(CORE_TEST) : % : %.c
 
 $(CORE_TEST): % : %.d
 
+$(CORE_TEST:%=%-gcov): %-gcov : %.c %
+	$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -O0 -g -I include -I . -I libfdt -lgcov -o $@ $< core/test/stubs.o
+
+$(CORE_TEST:%=%-gcov): % : $(%.d:-gcov=)
+
 core/test/stubs.o: core/test/stubs.d
 
 core/test/%.d: core/test/%.c
@@ -26,4 +36,6 @@ core/test/%.d: core/test/%.c
 clean: core-test-clean
 
 core-test-clean:
-	$(RM) -f core/test/*.[od] $(CORE_TEST)
+	$(RM) -f core/test/*.[od] $(CORE_TEST) $(CORE_TEST:%=%-gcov)
+	$(RM) -f *.gcda *.gcno skiboot.info
+	$(RM) -rf coverage-report

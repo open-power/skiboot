@@ -3,6 +3,11 @@ LIBC_TEST := libc/test/run-time
 
 check: $(LIBC_TEST:%=%-check)
 
+coverage: $(LIBC_TEST:%=%-gcov-run)
+
+$(LIBC_TEST:%=%-gcov-run) : %-run: %
+	$<
+
 $(LIBC_TEST:%=%-check) : %-check: %
 	$(VALGRIND) $<
 
@@ -10,6 +15,11 @@ $(LIBC_TEST) : % : %.c
 	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -I libc/include -o $@ $<
 
 $(LIBC_TEST): % : %.d
+
+$(LIBC_TEST:%=%-gcov): %-gcov : %.c %
+	$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -lgcov -O0 -g -I include -I . -I libfdt -I libc/include -o $@ $<
+
+$(LIBC_TEST:%=%-gcov): % : $(%.d:-gcov=)
 
 libc/test/%.d: libc/test/%.c
 	$(HOSTCC) $(HOSTCFLAGS) -I include -I . -I libfdt -I libc/include -M $< > $@
@@ -19,4 +29,4 @@ libc/test/%.d: libc/test/%.c
 clean: libc-test-clean
 
 libc-test-clean:
-	$(RM) -f libc/test/*.[od] $(LIBC_TEST)
+	$(RM) -f libc/test/*.[od] $(LIBC_TEST) $(LIBC_TEST:%=%-gcov)
