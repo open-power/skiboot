@@ -132,6 +132,10 @@ int main(void)
 	assert(!mem_region_lock.lock_val);
 	assert(heap_empty());
 
+	/* zalloc failure */
+	p2 = zalloc(TEST_HEAP_SIZE * 2);
+	assert(p2 == NULL);
+
 	/* Realloc with move. */
 	p2 = malloc(TEST_HEAP_SIZE - 64 - sizeof(struct alloc_hdr)*2);
 	memset(p2, 'a', TEST_HEAP_SIZE - 64 - sizeof(struct alloc_hdr)*2);
