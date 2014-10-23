@@ -35,6 +35,7 @@ int main(void)
 	OFFSET(CPUTHREAD_PIR, cpu_thread, pir);
 	OFFSET(CPUTHREAD_SAVE_R1, cpu_thread, save_r1);
 	OFFSET(CPUTHREAD_STATE, cpu_thread, state);
+	OFFSET(CPUTHREAD_CUR_TOKEN, cpu_thread, current_token);
 
 	OFFSET(STACK_TYPE,	stack_frame, type);
 	OFFSET(STACK_LOCALS,	stack_frame, locals);

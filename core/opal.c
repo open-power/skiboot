@@ -157,11 +157,26 @@ void opal_update_pending_evt(uint64_t evt_mask, uint64_t evt_values)
 	/* XXX FIXME: Use atomics instead ??? Or caller locks (con_lock ?) */
 	lock(&evt_lock);
 	new_evts = (opal_pending_events & ~evt_mask) | evt_values;
+	if (opal_pending_events != new_evts) {
+		uint64_t tok;
+
 #ifdef OPAL_TRACE_EVT_CHG
-	printf("OPAL: Evt change: 0x%016llx -> 0x%016llx\n",
-	       opal_pending_events, new_evts);
+		printf("OPAL: Evt change: 0x%016llx -> 0x%016llx\n",
+		       opal_pending_events, new_evts);
 #endif
-	opal_pending_events = new_evts;
+		/*
+		 * If an event gets *set* while we are in a different call chain
+		 * than opal_handle_interrupt() or opal_handle_hmi(), then we
+		 * artificially generate an interrupt (OCC interrupt specifically)
+		 * to ensure that Linux properly broadcast the event change internally
+		 */
+		if ((new_evts & ~opal_pending_events) != 0) {
+			tok = this_cpu()->current_token;
+			if (tok != OPAL_HANDLE_INTERRUPT && tok != OPAL_HANDLE_HMI)
+				occ_send_dummy_interrupt();
+		}
+		opal_pending_events = new_evts;
+	}
 	unlock(&evt_lock);
 }
 

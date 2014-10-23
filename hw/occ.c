@@ -480,6 +480,48 @@ static struct fsp_client fsp_occ_client = {
 	.message = fsp_occ_msg,
 };
 
+#define OCB_OCI_OCCMISC		0x6a020
+#define OCB_OCI_OCCMISC_AND	0x6a021
+#define OCB_OCI_OCCMISC_OR	0x6a022
+#define OCB_OCI_OCIMISC_IRQ		PPC_BIT(0)
+#define OCB_OCI_OCIMISC_IRQ_TMGT	PPC_BIT(1)
+#define OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY	PPC_BIT(15)
+
+void occ_send_dummy_interrupt(void)
+{
+	xscom_writeme(OCB_OCI_OCCMISC_OR,
+		      OCB_OCI_OCIMISC_IRQ |
+		      OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY);
+}
+
+static void occ_tmgt_interrupt(void)
+{
+	/* Not currently expected */
+	printf("OCC: TMGT interrupt !\n");
+}
+
+void occ_interrupt(void)
+{
+	uint64_t ireg;
+	int64_t rc;
+
+	/* The OCC interrupt is used to mux up to 15 different sources */
+	rc = xscom_readme(OCB_OCI_OCCMISC, &ireg);
+	if (rc) {
+		prerror("OCC: Failed to read interrupt status !\n");
+		/* Should we mask it in the XIVR ? */
+		return;
+	}
+	prlog(PR_TRACE, "OCC: IRQ received: %04llx\n", ireg >> 48);
+
+	/* Clear the bits */
+	xscom_writeme(OCB_OCI_OCCMISC_AND, ~ireg);
+
+	/* Dispatch */
+	if (ireg & OCB_OCI_OCIMISC_IRQ_TMGT)
+		occ_tmgt_interrupt();
+}
+
 void occ_fsp_init(void)
 {
 	/* OCC is P8 only */

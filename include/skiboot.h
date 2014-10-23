@@ -204,11 +204,14 @@ extern void nvram_read_complete(bool success);
 struct flash_chip;
 extern int flash_nvram_init(struct flash_chip *chip, uint32_t start,
 			    uint32_t size);
-
 /* UART stuff */
 extern void uart_irq(void);
 extern void uart_setup_linux_passthrough(void);
 extern void uart_setup_opal_console(void);
+
+/* OCC interrupt */
+extern void occ_interrupt(void);
+extern void occ_send_dummy_interrupt(void);
 
 /* Flatten device-tree */
 extern void *create_dtb(const struct dt_node *root);

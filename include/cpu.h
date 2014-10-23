@@ -58,6 +58,7 @@ struct cpu_thread {
 	bool				con_need_flush;
 	uint32_t			hbrt_spec_wakeup; /* primary only */
 	uint64_t			save_l2_fir_action1;
+	uint64_t			current_token;
 
 	struct lock			job_lock;
 	struct list_head		job_queue;

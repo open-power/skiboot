@@ -276,7 +276,7 @@ static void handle_extra_interrupt(struct psi *psi)
 	 * when available.
 	 */
 	if (val & PSIHB_IRQ_STAT_OCC)
-		printf("PSI: OCC irq received\n");
+		occ_interrupt();
 	if (val & PSIHB_IRQ_STAT_FSI)
 		printf("PSI: FSI irq received\n");
 	if (val & PSIHB_IRQ_STAT_LPC)

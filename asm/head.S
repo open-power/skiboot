@@ -777,6 +777,9 @@ opal_entry:
 	/* Get the CPU thread */
 	GET_CPU()
 
+	/* Store token in CPU thread */
+	std	%r0,CPUTHREAD_CUR_TOKEN(%r13)
+
 	/* Mark the stack frame */
 	li	%r12,STACK_ENTRY_OPAL_API	
 	std	%r12,STACK_TYPE(%r1)
