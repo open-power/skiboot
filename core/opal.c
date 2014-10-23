@@ -41,6 +41,11 @@ static u8 opal_num_args[OPAL_LAST+1];
 /* OPAL anchor node */
 struct dt_node *opal_node;
 
+/* mask of dynamic vs fixed events; opal_allocate_dynamic_event will
+ * only allocate from this range */
+static const uint64_t opal_dynamic_events_mask = 0xffffffff00000000ul;
+static uint64_t opal_dynamic_events;
+
 extern uint32_t attn_trigger;
 extern uint32_t hir_trigger;
 
@@ -149,9 +154,10 @@ void add_opal_node(void)
 	memcons_add_properties();
 }
 
+static struct lock evt_lock = LOCK_UNLOCKED;
+
 void opal_update_pending_evt(uint64_t evt_mask, uint64_t evt_values)
 {
-	static struct lock evt_lock = LOCK_UNLOCKED;
 	uint64_t new_evts;
 
 	/* XXX FIXME: Use atomics instead ??? Or caller locks (con_lock ?) */
@@ -180,6 +186,38 @@ void opal_update_pending_evt(uint64_t evt_mask, uint64_t evt_values)
 	unlock(&evt_lock);
 }
 
+uint64_t opal_dynamic_event_alloc(void)
+{
+	uint64_t new_event;
+	int n;
+
+	lock(&evt_lock);
+
+	/* Create the event mask. This set-bit will be within the event mask
+	 * iff there are free events, or out of the mask if there are no free
+	 * events. If opal_dynamic_events is all ones (ie, all events are
+	 * dynamic, and allocated), then ilog2 will return -1, and we'll have a
+	 * zero mask.
+	 */
+	n = ilog2(~opal_dynamic_events);
+	new_event = 1ull << n;
+
+	/* Ensure we're still within the allocatable dynamic events range */
+	if (new_event & opal_dynamic_events_mask)
+		opal_dynamic_events |= new_event;
+	else
+		new_event = 0;
+
+	unlock(&evt_lock);
+	return new_event;
+}
+
+void opal_dynamic_event_free(uint64_t event)
+{
+	lock(&evt_lock);
+	opal_dynamic_events &= ~event;
+	unlock(&evt_lock);
+}
 
 static uint64_t opal_test_func(uint64_t arg)
 {

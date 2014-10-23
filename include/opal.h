@@ -921,6 +921,8 @@ extern struct dt_node *opal_node;
 
 extern void opal_table_init(void);
 extern void opal_update_pending_evt(uint64_t evt_mask, uint64_t evt_values);
+uint64_t opal_dynamic_event_alloc(void);
+void opal_dynamic_event_free(uint64_t event);
 extern void add_opal_node(void);
 
 #define opal_register(token, func, nargs)				\
