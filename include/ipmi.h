@@ -18,6 +18,7 @@
 #define __IPMI_H
 
 #include <stdint.h>
+#include <ccan/list/list.h>
 #include <stdbool.h>
 
 /*
@@ -108,8 +109,14 @@
 
 #define IPMI_DEFAULT_INTERFACE		0
 
+#define IPMI_MAX_REQ_SIZE		64
+#define IPMI_MAX_RESP_SIZE		64
+
 struct ipmi_backend;
 struct ipmi_msg {
+	/* Can be used by command implementations to track requests */
+	struct list_node link;
+
 	struct ipmi_backend *backend;
 	uint8_t netfn;
 	uint8_t cmd;
@@ -128,11 +135,14 @@ struct ipmi_msg {
 };
 
 struct ipmi_backend {
+	uint64_t opal_event_ipmi_recv;
 	struct ipmi_msg *(*alloc_msg)(size_t, size_t);
 	void (*free_msg)(struct ipmi_msg *);
 	int (*queue_msg)(struct ipmi_msg *);
 	int (*dequeue_msg)(struct ipmi_msg *);
 };
+
+extern struct ipmi_backend *ipmi_backend;
 
 /* Initialise the IPMI interface */
 void ipmi_init(void);
@@ -165,5 +175,8 @@ void ipmi_register_backend(struct ipmi_backend *backend);
 
 /* Register rtc ipmi commands with as opal callbacks. */
 void ipmi_rtc_init(void);
+
+/* Register ipmi host interface access callbacks */
+void ipmi_opal_init(void);
 
 #endif

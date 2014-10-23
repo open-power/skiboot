@@ -20,7 +20,7 @@
 #include <opal.h>
 #include <device.h>
 
-static struct ipmi_backend *ipmi_backend = NULL;
+struct ipmi_backend *ipmi_backend = NULL;
 
 void ipmi_free_msg(struct ipmi_msg *msg)
 {
@@ -49,7 +49,7 @@ struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
 
 	msg->backend = ipmi_backend;
 	msg->cmd = IPMI_CMD(code);
-	msg->netfn = IPMI_NETFN(code);
+	msg->netfn = IPMI_NETFN(code) << 2;
 	msg->req_size = req_size;
 	msg->resp_size = resp_size;
 	msg->complete = complete;
@@ -80,10 +80,11 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 		cc = IPMI_ERR_UNSPECIFIED;
 	}
 
-	if (msg->netfn + 1 != netfn) {
+	if ((msg->netfn >> 2) + 1 != (netfn >> 2)) {
 		prerror("IPMI: Incorrect netfn 0x%02x in response\n", netfn);
 		cc = IPMI_ERR_UNSPECIFIED;
 	}
+	msg->netfn = netfn;
 
 	if (cc != IPMI_CC_NO_ERROR) {
 		prerror("IPMI: Got error response 0x%02x\n", msg->cc);
@@ -105,6 +106,7 @@ void ipmi_register_backend(struct ipmi_backend *backend)
 	assert(backend->queue_msg);
 	assert(backend->dequeue_msg);
 	ipmi_backend = backend;
+	ipmi_backend->opal_event_ipmi_recv = opal_dynamic_event_alloc();
 }
 
 bool ipmi_present(void)

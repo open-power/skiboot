@@ -36,6 +36,7 @@
 #define OPAL_HARDWARE_FROZEN	-13
 #define OPAL_WRONG_STATE	-14
 #define OPAL_ASYNC_COMPLETION	-15
+#define OPAL_EMPTY		-16
 
 /* API Tokens (in r0) */
 #define OPAL_TEST				0
@@ -142,7 +143,9 @@
 #define OPAL_READ_TPO				104
 #define OPAL_GET_DPO_STATUS			105
 #define OPAL_I2C_REQUEST			106
-#define OPAL_LAST				106
+#define OPAL_IPMI_SEND				107
+#define OPAL_IPMI_RECV				108
+#define OPAL_LAST				108
 
 #ifndef __ASSEMBLY__
 

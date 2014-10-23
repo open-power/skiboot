@@ -58,7 +58,9 @@
 /*
  * How long (in TB ticks) before a message is timed out.
  */
-#define BT_MSG_TIMEOUT (secs_to_tb(1))
+#define BT_MSG_TIMEOUT (secs_to_tb(3))
+
+#define BT_QUEUE_DEBUG 0
 
 enum bt_states {
 	BT_STATE_IDLE = 0,
@@ -76,7 +78,6 @@ struct bt_msg {
 	struct list_node link;
 	unsigned long tb;
 	uint8_t seq;
-	uint8_t lun;
 	struct ipmi_msg ipmi_msg;
 };
 
@@ -132,7 +133,6 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 {
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
-	bt_msg->lun = 0;
 	lock(&bt.lock);
 	bt_msg->tb = mftb();
 	bt_msg->seq = ipmi_seq++;
@@ -197,7 +197,7 @@ static bool bt_try_send_msg(void)
 	bt_outb(ipmi_msg->req_size + BT_MIN_REQ_LEN, BT_HOST2BMC);
 
 	/* Byte 2 - NetFn/LUN */
-	bt_outb((ipmi_msg->netfn << 2) | (bt_msg->lun & 0x3), BT_HOST2BMC);
+	bt_outb(ipmi_msg->netfn, BT_HOST2BMC);
 
 	/* Byte 3 - Seq */
 	bt_outb(bt_msg->seq, BT_HOST2BMC);
@@ -290,16 +290,13 @@ static bool bt_get_resp(void)
 	}
 	ipmi_msg->resp_size = resp_len;
 
-	bt_msg->lun = netfn & 0x3;
-	netfn = netfn >> 2;
-
 	/* Byte 6:N - Data */
 	for (i = 0; i < resp_len; i++)
 		ipmi_msg->data[i] = bt_inb(BT_HOST2BMC);
 	bt_set_h_busy(false);
 
 	if (cc != IPMI_CC_NO_ERROR)
-		prerror("BT: Host error 0x%02x receiving BT/IPMI response\n", cc);
+		prerror("BT: Host error 0x%02x receiving BT/IPMI response for msg 0x%02x\n", cc, seq);
 
 	/* Make sure the other side is idle before we move to the idle state */
 	bt_set_state(BT_STATE_B_BUSY);
@@ -310,6 +307,10 @@ static bool bt_get_resp(void)
 	/*
 	 * Call the IPMI layer to finish processing the message.
 	 */
+#if BT_QUEUE_DEBUG
+	prlog(PR_DEBUG, "cmd 0x%02x done\n", seq);
+#endif
+
 	ipmi_cmd_done(cmd, netfn, cc, ipmi_msg);
 
 	/* Immediately send the next message */
@@ -337,6 +338,25 @@ static void bt_poll(void *data __unused)
 	bool ret = true;
 
 	do {
+
+#if BT_QUEUE_DEBUG
+		struct bt_msg *msg;
+		static bool printed = false;
+		lock(&bt.lock);
+		if (!list_empty(&bt.msgq)) {
+			printed = false;
+			prlog(PR_DEBUG, "-------- BT Msg Queue --------\n");
+			list_for_each(&bt.msgq, msg, link) {
+				prlog(PR_DEBUG, "Seq: 0x%02x Cmd: 0x%02x\n", msg->seq, msg->ipmi_msg.cmd);
+			}
+			prlog(PR_DEBUG, "-----------------------------\n");
+		} else if (!printed) {
+			printed = true;
+			prlog(PR_DEBUG, "----- BT Msg Queue Empty -----\n");
+		}
+		unlock(&bt.lock);
+#endif
+
 		bt_expire_old_msg();
 
 		switch(bt.state) {

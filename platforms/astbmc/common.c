@@ -51,6 +51,7 @@ void astbmc_init(void)
 	/* Register the BT interface with the IPMI layer */
 	bt_init();
 	ipmi_rtc_init();
+	ipmi_opal_init();
 
 	/* As soon as IPMI is up, inform BMC we are in "S0" */
 	ipmi_set_power_state(IPMI_PWR_SYS_S0_WORKING, IPMI_PWR_NOCHANGE);
@@ -228,4 +229,3 @@ void astbmc_early_init(void)
 	/* Setup UART and use it as console with interrupts */
 	uart_init(true);
 }
-
