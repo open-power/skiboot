@@ -33,6 +33,7 @@
 #include <device.h>
 #include <pci.h>
 #include <lpc.h>
+#include <i2c.h>
 #include <chip.h>
 #include <interrupts.h>
 #include <mem_region.h>
@@ -550,6 +551,8 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * BMC if needed.
 	 */
 	lpc_init();
+
+	p8_i2c_init();
 
 	/*
 	 * Now, we init our memory map from the device-tree, and immediately
