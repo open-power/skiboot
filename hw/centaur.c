@@ -308,7 +308,7 @@ void centaur_init(void)
 {
 	struct dt_node *cn;
 
-	dt_for_each_compatible(dt_root, cn, "ibm,centaur-v10") {
+	dt_for_each_compatible(dt_root, cn, "ibm,centaur") {
 		uint32_t chip_id, mchip, meng, mport;
 
 		chip_id = dt_prop_get_u32(cn, "ibm,chip-id");
