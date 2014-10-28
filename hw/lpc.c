@@ -20,6 +20,7 @@
 #include <lock.h>
 #include <chip.h>
 #include <lpc.h>
+#include <i2c.h>
 #include <timebase.h>
 #include <fsp-elog.h>
 
@@ -452,6 +453,14 @@ static int64_t opal_lpc_read(uint32_t chip_id, enum OpalLPCAddressType addr_type
 bool lpc_present(void)
 {
 	return lpc_default_chip_id >= 0;
+}
+
+void lpc_interrupt(void)
+{
+	/* i2c interrupts are routed through lpc */
+	p8_i2c_interrupt();
+
+	/* Handle the lpc interrupt source */
 }
 
 void lpc_init(void)

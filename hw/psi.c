@@ -27,6 +27,7 @@
 #include <trace.h>
 #include <xscom.h>
 #include <chip.h>
+#include <lpc.h>
 #include <timebase.h>
 #include <platform.h>
 
@@ -280,7 +281,7 @@ static void handle_extra_interrupt(struct psi *psi)
 	if (val & PSIHB_IRQ_STAT_FSI)
 		printf("PSI: FSI irq received\n");
 	if (val & PSIHB_IRQ_STAT_LPC)
-		printf("PSI: LPC/I2C irq received\n");
+		lpc_interrupt();
 	if (val & PSIHB_IRQ_STAT_LOCAL_ERR)
 		printf("PSI: ATTN irq received\n");
 	if (val & PSIHB_IRQ_STAT_HOST_ERR) {

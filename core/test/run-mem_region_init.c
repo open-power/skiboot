@@ -83,7 +83,9 @@ static void add_mem_node(uint64_t start, uint64_t len)
 {
 	struct dt_node *mem;
 	u64 reg[2];
-	char name[sizeof("memory@") + STR_MAX_CHARS(reg[0])];
+	char *name= (char*)malloc(sizeof("memory@") + STR_MAX_CHARS(reg[0]));
+
+	assert(name);
 
 	/* reg contains start and length */
 	reg[0] = cpu_to_be64(start);
@@ -95,6 +97,7 @@ static void add_mem_node(uint64_t start, uint64_t len)
 	assert(mem);
 	dt_add_property_string(mem, "device_type", "memory");
 	dt_add_property(mem, "reg", reg, sizeof(reg));
+	free(name);
 }
 
 void add_chip_dev_associativity(struct dt_node *dev __attribute__((unused)))

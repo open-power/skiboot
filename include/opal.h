@@ -141,7 +141,8 @@
 #define OPAL_WRITE_TPO				103
 #define OPAL_READ_TPO				104
 #define OPAL_GET_DPO_STATUS			105
-#define OPAL_LAST				105
+#define OPAL_I2C_REQUEST			106
+#define OPAL_LAST				106
 
 #ifndef __ASSEMBLY__
 

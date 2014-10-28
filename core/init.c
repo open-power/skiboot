@@ -33,6 +33,7 @@
 #include <device.h>
 #include <pci.h>
 #include <lpc.h>
+#include <i2c.h>
 #include <chip.h>
 #include <interrupts.h>
 #include <mem_region.h>
@@ -400,10 +401,103 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	start_kernel(kernel_entry, fdt, mem_top);
 }
 
+struct i2c_device {
+	const char	*label;
+	uint8_t		dev_addr;
+};
+
+
+static struct dt_node *dt_create_i2c_master(struct dt_node *n, uint32_t eng_id)
+{
+	struct dt_node *i2cm;
+
+	/* Each master registers set is of length 0x20 */
+	i2cm = dt_new_addr(n, "i2cm", 0xa0000 + eng_id * 0x20);
+	if (!i2cm)
+		return NULL;
+
+	dt_add_property_string(i2cm, "compatible",
+			       "ibm,power8-i2cm");
+	dt_add_property_cells(i2cm, "reg", 0xa0000 + eng_id * 0x20,
+			      0x20);
+	dt_add_property_cells(i2cm, "bus-speed-khz", 400);
+	dt_add_property_cells(i2cm, "local-bus-freq-mhz", 50);
+
+	return i2cm;
+}
+
+static struct dt_node *dt_create_i2c_bus(struct dt_node *i2cm, const char *compat,
+			      uint32_t port_id)
+{
+	static struct dt_node *port;
+	static uint32_t bus_id = 0;
+
+	port = dt_new_addr(i2cm, "i2c-bus", port_id);
+	if (!port)
+		return NULL;
+
+	dt_add_property_string(port, "compatible", compat);
+	dt_add_property_cells(port, "port-id", port_id);
+	dt_add_property_cells(port, "bus-id", ++bus_id);
+
+	return port;
+}
+
+static void dt_create_i2c_devices(struct dt_node *port,
+				  struct i2c_device *devices, uint32_t count)
+{
+	struct i2c_device *dev;
+	uint32_t i, size = 0;
+	char *names, *s;
+	uint8_t *addr;
+
+	for (i = 0, dev = devices; i < count; i++, dev++)
+		size = size + strlen(dev->label) + 1;
+
+	names = zalloc(size);
+	if (!names) {
+		prerror("Failed to allocate device names\n");
+		return;
+	}
+
+	addr = zalloc(count * sizeof(*addr));
+	if (!addr) {
+		prerror("Failed to allocate device addresses");
+		free(names);
+		return;
+	}
+
+	s = names;
+	for (i = 0, dev = devices; i < count; i++, dev++) {
+		strcpy(s, dev->label);
+		s = s + strlen(dev->label) + 1;
+
+		addr[i] = dev->dev_addr;
+	}
+
+	dt_add_property(port, "device-type", names, size);
+	dt_add_property(port, "device-addr", addr,
+			count * sizeof(*addr));
+	free(addr);
+	free(names);
+}
+
 static void dt_fixups(void)
 {
-	struct dt_node *n;
+	struct dt_node *n, *i2cm, *port;
 	struct dt_node *primary_lpc = NULL;
+	uint32_t chip_id;
+	struct i2c_device i2c_pci_slots_0[] = {
+		{"slot-C10-C11", 0x32},
+		{"slot-C6-C7",	 0x35},
+		{"slot-C8-C9",	 0x36},
+		{"slot-C12",	 0x39}
+	};
+
+	struct i2c_device i2c_pci_slots_1[] = {
+		{"slot-C4-C5",	0x39},
+		{"slot-C2-C3",	0x3a}
+	};
 
 	/* lpc node missing #address/size cells. Also pick one as
 	 * primary for now (TBD: How to convey that from HB)
@@ -422,10 +516,87 @@ static void dt_fixups(void)
 	if (primary_lpc && !dt_has_node_property(primary_lpc, "primary", NULL))
 		dt_add_property(primary_lpc, "primary", NULL, 0);
 
-	/* Missing "scom-controller" */
 	dt_for_each_compatible(dt_root, n, "ibm,xscom") {
+		/* Missing "scom-controller" */
 		if (!dt_has_node_property(n, "scom-controller", NULL))
 			dt_add_property(n, "scom-controller", NULL, 0);
+
+		/*
+		 * DCM	Chip	Engine	bus/port
+		 * -----------------------------
+		 * 0	0	0	0, 1
+		 * 0	0	1	0
+		 *
+		 * 0	1	0	0
+		 *
+		 * 1	0	0	0, 1
+		 * 1	0	1	0
+		 *
+		 * 1	1	0	0
+		 */
+		chip_id = dt_get_chip_id(n);
+		switch (chip_id) {
+		case 0x00:
+			/* Engine: 0, port: 0/1 */
+			i2cm = dt_create_i2c_master(n, 0);
+			if (!i2cm)
+				continue;
+
+			port = dt_create_i2c_bus(i2cm, "ibm,opal-vpd", 0);
+			port = dt_create_i2c_bus(i2cm, "ibm,opal-vpd", 1);
+
+			/* Engine: 1, port: 0 */
+			i2cm = dt_create_i2c_master(n, 1);
+			if (!i2cm)
+				continue;
+
+			port = dt_create_i2c_bus(i2cm, "ibm,opal-maxim-mex", 0);
+			if (!port)
+				continue;
+
+			dt_create_i2c_devices(port, i2c_pci_slots_0,
+					      ARRAY_SIZE(i2c_pci_slots_0));
+			break;
+		case 0x01:
+			/* Engine: 1, port: 0 */
+			i2cm = dt_create_i2c_master(n, 0);
+			if (!i2cm)
+				continue;
+
+			port = dt_create_i2c_bus(i2cm, "ibm,opal-vpd", 0);
+			break;
+		case 0x10:
+			/* Engine: 0, port: 0/1 */
+			i2cm = dt_create_i2c_master(n, 0);
+			if (!i2cm)
+				continue;
+
+			port = dt_create_i2c_bus(i2cm, "ibm,opal-vpd", 0);
+			port = dt_create_i2c_bus(i2cm, "ibm,opal-vpd", 1);
+
+			/* Engine: 1, port: 0 */
+			i2cm = dt_create_i2c_master(n, 1);
+			if (!i2cm)
+				continue;
+
+			port = dt_create_i2c_bus(i2cm, "ibm,opal-maxim-mex", 0);
+			if (!port)
+				continue;
+
+			dt_create_i2c_devices(port, i2c_pci_slots_1,
+					      ARRAY_SIZE(i2c_pci_slots_1));
+			break;
+		case 0x11:
+			/* Engine: 1, port: 0 */
+			i2cm = dt_create_i2c_master(n, 0);
+			if (!i2cm)
+				continue;
+
+			port = dt_create_i2c_bus(i2cm, "ibm,opal-vpd", 0);
+			break;
+		default:
+			break;
+		}
 	}
 }
 
@@ -550,6 +721,8 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * BMC if needed.
 	 */
 	lpc_init();
+
+	p8_i2c_init();
 
 	/*
 	 * Now, we init our memory map from the device-tree, and immediately

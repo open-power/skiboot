@@ -27,6 +27,9 @@ extern void lpc_init(void);
 /* Check for a default bus */
 extern bool lpc_present(void);
 
+/* Handle the interrupt from LPC source */
+extern void lpc_interrupt(void);
+
 /* Default bus accessors */
 extern int64_t lpc_write(enum OpalLPCAddressType addr_type, uint32_t addr,
 			 uint32_t data, uint32_t sz);
