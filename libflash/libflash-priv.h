@@ -226,6 +226,7 @@ struct spi_flash_ctrl {
 };
 
 extern int fl_wren(struct spi_flash_ctrl *ct);
+extern int fl_read_stat(struct spi_flash_ctrl *ct, uint8_t *stat);
 extern int fl_sync_wait_idle(struct spi_flash_ctrl *ct);
 
 #endif /* LIBFLASH_PRIV_H */

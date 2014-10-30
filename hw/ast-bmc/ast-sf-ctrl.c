@@ -29,7 +29,7 @@
 #define __unused __attribute__((unused))
 #endif
 
-#define CALIBRATE_BUF_SIZE	1024
+#define CALIBRATE_BUF_SIZE	16384
 
 struct ast_sf_ctrl {
 	/* We have 2 controllers, one for the BMC flash, one for the PNOR */
@@ -223,22 +223,23 @@ static void ast_get_ahb_freq(void)
 	FL_DBG("AST: AHB frequency: %d Mhz\n", ast_ahb_freq / 1000000);
 }
 
-static int ast_sf_check_reads(struct ast_sf_ctrl *ct, const uint8_t *test_buf)
+static int ast_sf_check_reads(struct ast_sf_ctrl *ct,
+			      const uint8_t *golden_buf, uint8_t *test_buf)
 {
-	uint8_t buf[CALIBRATE_BUF_SIZE];
 	int i, rc;
 
 	for (i = 0; i < 10; i++) {
-		rc = ast_copy_from_ahb(buf, ct->flash, CALIBRATE_BUF_SIZE);
+		rc = ast_copy_from_ahb(test_buf, ct->flash, CALIBRATE_BUF_SIZE);
 		if (rc)
 			return rc;
-		if (memcmp(buf, test_buf, CALIBRATE_BUF_SIZE) != 0)
+		if (memcmp(test_buf, golden_buf, CALIBRATE_BUF_SIZE) != 0)
 			return FLASH_ERR_VERIFY_FAILURE;
 	}
 	return 0;
 }
 
-static int ast_sf_calibrate_reads(struct ast_sf_ctrl *ct, uint32_t hdiv, const uint8_t *test_buf)
+static int ast_sf_calibrate_reads(struct ast_sf_ctrl *ct, uint32_t hdiv,
+				  const uint8_t *golden_buf, uint8_t *test_buf)
 {
 	int i, rc;
 	int good_pass = -1, pass_count = 0;
@@ -256,7 +257,7 @@ static int ast_sf_calibrate_reads(struct ast_sf_ctrl *ct, uint32_t hdiv, const u
 		ct->fread_timing_val &= mask;
 		ct->fread_timing_val |= FREAD_TPASS(i) << shift;
 		ast_ahb_writel(ct->fread_timing_val, ct->fread_timing_reg);
-		rc = ast_sf_check_reads(ct, test_buf);
+		rc = ast_sf_check_reads(ct, golden_buf, test_buf);
 		if (rc && rc != FLASH_ERR_VERIFY_FAILURE)
 			return rc;
 		pass = (rc == 0);
@@ -280,15 +281,39 @@ static int ast_sf_calibrate_reads(struct ast_sf_ctrl *ct, uint32_t hdiv, const u
 	ct->fread_timing_val &= mask;
 	ct->fread_timing_val |= FREAD_TPASS(good_pass) << shift;
 	ast_ahb_writel(ct->fread_timing_val, ct->fread_timing_reg);
-	FL_DBG("AST:  * -> good is pass %d [0x%08x]\n", good_pass, ct->fread_timing_val);
+	FL_DBG("AST:  * -> good is pass %d [0x%08x]\n",
+	       good_pass, ct->fread_timing_val);
 	return 0;
 }
 
-static int ast_sf_optimize_reads(struct ast_sf_ctrl *ct, uint32_t max_freq)
+static bool ast_calib_data_usable(const uint8_t *test_buf, uint32_t size)
 {
-	uint8_t test_buf[CALIBRATE_BUF_SIZE];
+	const uint32_t *tb32 = (const uint32_t *)test_buf;
+	uint32_t i, cnt = 0;
+
+	/* We check if we have enough words that are neither all 0
+	 * nor all 1's so the calibration can be considered valid.
+	 *
+	 * I use an arbitrary threshold for now of 64
+	 */
+	size >>= 2;
+	for (i = 0; i < size; i++) {
+		if (tb32[i] != 0 && tb32[i] != 0xffffffff)
+			cnt++;
+	}
+	return cnt >= 64;
+}
+
+static int ast_sf_optimize_reads(struct ast_sf_ctrl *ct,
+				 struct flash_info *info __unused,
+				 uint32_t max_freq)
+{
+	uint8_t *golden_buf, *test_buf;
 	int i, rc, best_div = -1;
 	uint32_t save_read_val = ct->ctl_read_val;
+
+	test_buf = malloc(CALIBRATE_BUF_SIZE * 2);
+	golden_buf = test_buf + CALIBRATE_BUF_SIZE;
 
 	/* We start with the dumbest setting and read some data */
 	ct->ctl_read_val = (ct->ctl_read_val & 0x2000) |
@@ -300,12 +325,23 @@ static int ast_sf_optimize_reads(struct ast_sf_ctrl *ct, uint32_t max_freq)
 		(0x00);        /* normal read */
 	ast_ahb_writel(ct->ctl_read_val, ct->ctl_reg);
 
-	rc = ast_copy_from_ahb(test_buf, ct->flash, CALIBRATE_BUF_SIZE);
-	if (rc)
+	rc = ast_copy_from_ahb(golden_buf, ct->flash, CALIBRATE_BUF_SIZE);
+	if (rc) {
+		free(test_buf);
 		return rc;
+	}
 
 	/* Establish our read mode with freq field set to 0 */
 	ct->ctl_read_val = save_read_val & 0xfffff0ff;
+
+	/* Check if calibration data is suitable */
+	if (!ast_calib_data_usable(golden_buf, CALIBRATE_BUF_SIZE)) {
+		FL_INF("AST: Calibration area too uniform, "
+		       "using low speed\n");
+		ast_ahb_writel(ct->ctl_read_val, ct->ctl_reg);
+		free(test_buf);
+		return 0;
+	}
 
 	/* Now we iterate the HCLK dividers until we find our breaking point */
 	for (i = 5; i > 0; i--) {
@@ -320,14 +356,17 @@ static int ast_sf_optimize_reads(struct ast_sf_ctrl *ct, uint32_t max_freq)
 		tv = ct->ctl_read_val | (ast_ct_hclk_divs[i - 1] << 8);
 		ast_ahb_writel(tv, ct->ctl_reg);
 		FL_DBG("AST: Trying HCLK/%d...\n", i);
-		rc = ast_sf_calibrate_reads(ct, i, test_buf);
+		rc = ast_sf_calibrate_reads(ct, i, golden_buf, test_buf);
 
 		/* Some other error occurred, bail out */
-		if (rc && rc != FLASH_ERR_VERIFY_FAILURE)
+		if (rc && rc != FLASH_ERR_VERIFY_FAILURE) {
+			free(test_buf);
 			return rc;
+		}
 		if (rc == 0)
 			best_div = i;
 	}
+	free(test_buf);
 
 	/* Nothing found ? */
 	if (best_div < 0)
@@ -345,7 +384,16 @@ static int ast_sf_get_hclk(uint32_t *ctl_val, uint32_t max_freq)
 {
 	int i;
 
-	for (i = 1; i <= 5; i++) {
+	/* It appears that running commands at HCLK/2 on some micron
+	 * chips results in occasionally reads of bogus status (that
+	 * or unrelated chip hangs).
+	 *
+	 * Since we cannot calibrate properly the reads for commands,
+	 * instead, let's limit our SPI frequency to HCLK/4 to stay
+	 * on the safe side of things
+	 */
+#define MIN_CMD_FREQ	4
+	for (i = MIN_CMD_FREQ; i <= 5; i++) {
 		uint32_t freq = ast_ahb_freq / i;
 		if (freq >= max_freq)
 			continue;
@@ -357,10 +405,8 @@ static int ast_sf_get_hclk(uint32_t *ctl_val, uint32_t max_freq)
 
 static int ast_sf_setup_macronix(struct ast_sf_ctrl *ct, struct flash_info *info)
 {
-	int rc, div;
+	int rc, div __unused;
 	uint8_t srcr[2];
-
-	(void)info;
 
 	/*
 	 * Those Macronix chips support dual reads at 104Mhz
@@ -431,7 +477,7 @@ static int ast_sf_setup_macronix(struct ast_sf_ctrl *ct, struct flash_info *info
 		(0x01);	       /* fast read */
 
 	/* Configure SPI flash read timing */
-	rc = ast_sf_optimize_reads(ct, 104000000);
+	rc = ast_sf_optimize_reads(ct, info, 104000000);
 	if (rc) {
 		FL_ERR("AST: Failed to setup proper read timings, rc=%d\n", rc);
 		return rc;
@@ -452,7 +498,6 @@ static int ast_sf_setup_macronix(struct ast_sf_ctrl *ct, struct flash_info *info
 		(0x00);	       /* normal read */
 
 	div = ast_sf_get_hclk(&ct->ctl_val, 106000000);
-	(void)div;
 	FL_DBG("AST: Command timing set to HCLK/%d\n", div);
 
 	/* Update chip with current read config */
@@ -462,9 +507,7 @@ static int ast_sf_setup_macronix(struct ast_sf_ctrl *ct, struct flash_info *info
 
 static int ast_sf_setup_winbond(struct ast_sf_ctrl *ct, struct flash_info *info)
 {
-	int rc, div;
-
-	(void)info;
+	int rc, div __unused;
 
 	FL_DBG("AST: Setting up Windbond...\n");
 
@@ -484,7 +527,7 @@ static int ast_sf_setup_winbond(struct ast_sf_ctrl *ct, struct flash_info *info)
 		(0x01);	       /* fast read */
 
 	/* Configure SPI flash read timing */
-	rc = ast_sf_optimize_reads(ct, 104000000);
+	rc = ast_sf_optimize_reads(ct, info, 104000000);
 	if (rc) {
 		FL_ERR("AST: Failed to setup proper read timings, rc=%d\n", rc);
 		return rc;
@@ -504,7 +547,6 @@ static int ast_sf_setup_winbond(struct ast_sf_ctrl *ct, struct flash_info *info)
 		(0x01);	       /* fast read */
 
 	div = ast_sf_get_hclk(&ct->ctl_val, 106000000);
-	(void)div;
 	FL_DBG("AST: Command timing set to HCLK/%d\n", div);
 
 	/* Update chip with current read config */
@@ -515,7 +557,7 @@ static int ast_sf_setup_winbond(struct ast_sf_ctrl *ct, struct flash_info *info)
 static int ast_sf_setup_micron(struct ast_sf_ctrl *ct, struct flash_info *info)
 {
 	uint8_t	vconf, ext_id[6];
-	int rc, div;
+	int rc, div __unused;
 
 	FL_DBG("AST: Setting up Micron...\n");
 
@@ -560,8 +602,14 @@ static int ast_sf_setup_micron(struct ast_sf_ctrl *ct, struct flash_info *info)
 
 	rc = ast_sf_cmd_wr(&ct->ops, CMD_MIC_WRVCONF, false, 0, &vconf, 1);
 	if (rc != 0) {
-		FL_ERR("AST: Failed to write Micron vconf, sticking to dumb speed\n");
+		FL_ERR("AST: Failed to write Micron vconf, "
+		       " sticking to dumb speed\n");
 		goto dumb;
+	}
+	rc = fl_sync_wait_idle(&ct->ops);;
+	if (rc != 0) {
+		FL_ERR("AST: Failed waiting for config write\n");
+		return rc;
 	}
 	FL_DBG("AST: Updated to  : 0x%02x\n", vconf);
 
@@ -580,7 +628,7 @@ static int ast_sf_setup_micron(struct ast_sf_ctrl *ct, struct flash_info *info)
 		(0x01);	       /* fast read */
 
 	/* Configure SPI flash read timing */
-	rc = ast_sf_optimize_reads(ct, 133000000);
+	rc = ast_sf_optimize_reads(ct, info, 133000000);
 	if (rc) {
 		FL_ERR("AST: Failed to setup proper read timings, rc=%d\n", rc);
 		return rc;
@@ -600,11 +648,11 @@ static int ast_sf_setup_micron(struct ast_sf_ctrl *ct, struct flash_info *info)
 		(0x00);	       /* norm read */
 
 	div = ast_sf_get_hclk(&ct->ctl_val, 133000000);
-	(void)div;
 	FL_DBG("AST: Command timing set to HCLK/%d\n", div);
 
 	/* Update chip with current read config */
 	ast_ahb_writel(ct->ctl_read_val, ct->ctl_reg);
+
 	return 0;
 
  dumb:

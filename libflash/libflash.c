@@ -40,27 +40,11 @@ struct flash_chip {
 	void			*smart_buf;	/* Buffer for smart writes */
 };
 
-static int fl_read_stat(struct spi_flash_ctrl *ct, uint8_t *stat)
+bool libflash_debug;
+
+int fl_read_stat(struct spi_flash_ctrl *ct, uint8_t *stat)
 {
 	return ct->cmd_rd(ct, CMD_RDSR, false, 0, stat, 1);
-}
-
-/* Exported for internal use */
-int fl_wren(struct spi_flash_ctrl *ct)
-{
-	uint8_t stat;
-	int i, rc;
-
-	/* Some flashes need it to be hammered */
-	for (i = 0; i < 1000; i++) {
-		rc = ct->cmd_wr(ct, CMD_WREN, false, 0, NULL, 0);
-		if (rc) return rc;
-		rc = fl_read_stat(ct, &stat);
-		if (rc) return rc;
-		if (stat & STAT_WEN)
-			return 0;
-	}
-	return FLASH_ERR_WREN_TIMEOUT;
 }
 
 static void fl_micron_status(struct spi_flash_ctrl *ct)
@@ -92,6 +76,31 @@ int fl_sync_wait_idle(struct spi_flash_ctrl *ct)
 		}
 	}
 	/* return FLASH_ERR_WIP_TIMEOUT; */
+}
+
+/* Exported for internal use */
+int fl_wren(struct spi_flash_ctrl *ct)
+{
+	int i, rc;
+	uint8_t stat;
+
+	/* Some flashes need it to be hammered */
+	for (i = 0; i < 1000; i++) {
+		rc = ct->cmd_wr(ct, CMD_WREN, false, 0, NULL, 0);
+		if (rc) return rc;
+		rc = fl_read_stat(ct, &stat);
+		if (rc) return rc;
+		if (stat & STAT_WIP) {
+			FL_ERR("LIBFLASH: WREN has WIP status set !\n");
+			rc = fl_sync_wait_idle(ct);
+			if (rc)
+				return rc;
+			continue;
+		}
+		if (stat & STAT_WEN)
+			return 0;
+	}
+	return FLASH_ERR_WREN_TIMEOUT;
 }
 
 int flash_read(struct flash_chip *c, uint32_t pos, void *buf, uint32_t len)
@@ -425,6 +434,35 @@ int flash_smart_write(struct flash_chip *c, uint32_t dst, const void *src,
 	return 0;
 }
 
+static int fl_chip_id(struct spi_flash_ctrl *ct, uint8_t *id_buf,
+		      uint32_t *id_size)
+{
+	int rc;
+	uint8_t stat;
+
+	/* Check initial status */
+	rc = fl_read_stat(ct, &stat);
+	if (rc)
+		return rc;
+
+	/* If stuck writing, wait for idle */
+	if (stat & STAT_WIP) {
+		FL_ERR("LIBFLASH: Flash in writing state ! Waiting...\n");
+		rc = fl_sync_wait_idle(ct);
+		if (rc)
+			return rc;
+	} else
+		FL_DBG("LIBFLASH: Init status: %02x\n", stat);
+
+	/* Fallback to get ID manually */
+	rc = ct->cmd_rd(ct, CMD_RDID, false, 0, id_buf, 3);
+	if (rc)
+		return rc;
+	*id_size = 3;
+
+	return 0;
+}
+
 static int flash_identify(struct flash_chip *c)
 {
 	struct spi_flash_ctrl *ct = c->ctrl;
@@ -438,15 +476,10 @@ static int flash_identify(struct flash_chip *c)
 		/* High level controller interface */
 		id_size = MAX_ID_SIZE;
 		rc = ct->chip_id(ct, id, &id_size);
-		if (rc)
-			return rc;
-	} else {
-		/* Fallback to get ID manually */
-		rc = ct->cmd_rd(ct, CMD_RDID, false, 0, id, 3);
-		if (rc)
-			return rc;
-		id_size = 3;
-	}
+	} else
+		rc = fl_chip_id(ct, id, &id_size);
+	if (rc)
+		return rc;
 	if (id_size < 3)
 		return FLASH_ERR_CHIP_UNKNOWN;
 
@@ -503,9 +536,15 @@ static int flash_identify(struct flash_chip *c)
 static int flash_set_4b(struct flash_chip *c, bool enable)
 {
 	struct spi_flash_ctrl *ct = c->ctrl;
+	int rc;
 
 	/* Some flash chips want this */
-	fl_wren(ct);
+	rc = fl_wren(ct);
+	if (rc) {
+		FL_ERR("LIBFLASH: Error %d enabling write for set_4b\n", rc);
+		/* Ignore the error & move on (could be wrprotect chip) */
+	}
+
 	/* Ignore error in case chip is write protected */
 
 	return ct->cmd_wr(ct, enable ? CMD_EN4B : CMD_EX4B, false, 0, NULL, 0);
