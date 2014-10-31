@@ -1,0 +1,45 @@
+skiboot
+-------
+
+Firmware for OpenPower systems
+
+https://github.com/open-power/skiboot
+
+OPAL firmware (OpenPower Abstraction Layer) comes in several parts.
+
+A simplified flow of what happens when the power button is pressed is:
+
+ 1) The baseboard management controller (BMC) powers the system on.
+ 2) The BMC selects the master chip and releases the self-boot engines (SBEs)
+    on the POWER8 chips, master last.
+ 3) The BMC relinquishes control of the flexible service interface (FSI)
+    SCAN/SCOM engines.
+ 4) The hostboot firmware IPLs the system. It initiates a secondary power-on
+    sequence through a digital power systems sweep (DPSS).
+ 5) The hostboot firmware loads the OPAL image and moves all processors to
+    their execution starting points.
+
+Here, the OPAL image is three parts:
+ 1) skiboot (includes OPAL runtime services)
+ 2) skiroot - the bootloader environment
+    a) kernel
+    b) initramfs (containing petitboot bootloader)
+
+They may be all part of one payload or three separate images (depending on
+platform).
+
+The bootloader will kexec a host kernel (probably linux). The host OS can
+make OPAL calls. A TODO item is to extensively document this API.
+
+See doc/overview.txt for a more in depth overview of skiboot.
+
+
+Hacking
+-------
+You will need a C compiler (gcc 4.8) for ppc64 (big endian).
+You will need a POWER8 system that you can deploy new firmware to.
+
+License
+-------
+See LICENSE
+
