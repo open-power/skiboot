@@ -101,12 +101,15 @@ void astbmc_init(void)
 	ipmi_opal_init();
 	ipmi_fru_init(0x01);
 	elog_init();
+	ipmi_sensor_init();
 
 	/* As soon as IPMI is up, inform BMC we are in "S0" */
 	ipmi_set_power_state(IPMI_PWR_SYS_S0_WORKING, IPMI_PWR_NOCHANGE);
 
         /* Enable IPMI OEM message interrupts */
         astbmc_ipmi_setenables();
+
+	ipmi_set_fw_progress_sensor(IPMI_FW_MOTHERBOARD_INIT);
 
 	/* Setup UART console for use by Linux via OPAL API */
 	if (!dummy_console_enabled())

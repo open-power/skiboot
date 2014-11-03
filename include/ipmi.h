@@ -84,6 +84,11 @@
 #define IPMI_MESSAGE_FLAGS_OEM1			(1<<6)
 #define IPMI_MESSAGE_FLAGS_OEM2			(1<<7)
 
+/* Firmware Progress Sensor states */
+#define IPMI_FW_PCI_INIT		0x07
+#define IPMI_FW_OS_BOOT			0x13
+#define IPMI_FW_MOTHERBOARD_INIT	0x14
+
 #define IPMI_CODE(netfn, cmd)		((netfn) << 8 | (cmd))
 #define IPMI_CMD(code)			((code) & 0xff)
 #define IPMI_NETFN(code)		((code) >> 8 & 0xff)
