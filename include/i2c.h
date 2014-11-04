@@ -18,7 +18,6 @@
 #define __I2C_H
 
 struct i2c_request;
-extern struct list_head i2c_bus_list;
 
 struct i2c_bus {
 	struct list_node	link;

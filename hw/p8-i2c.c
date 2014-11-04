@@ -25,8 +25,8 @@
 
 #define USEC_PER_SEC		1000000
 #define USEC_PER_MSEC		1000
-#define I2C_WRITE_DELAY_MS	5 /* 5 msecs */
-#define MAX_POLL_COUNT(x)	((I2C_WRITE_DELAY_MS * USEC_PER_MSEC)/(x))
+#define I2C_RESET_DELAY_MS	5 /* 5 msecs */
+#define MAX_POLL_COUNT(x)	((I2C_RESET_DELAY_MS * USEC_PER_MSEC)/(x))
 #define I2C_FIFO_HI_LVL		4
 #define I2C_FIFO_LO_LVL		4
 #define I2C_PAGE_WRITE_SIZE	(0x1u << 8)
@@ -152,14 +152,11 @@
 
 struct p8_i2cm_state {
 	enum request_state {
-		REQ_LIST_EMPTY	= 0x1,	/* i2cm request queue is empty */
-		REQ_BEGIN	= 0x2,	/* Fresh request pushed on the bus */
-		REQ_SM_OFFSET	= 0x4,	/* SMBUS offset writing in progress */
-		REQ_DATA	= 0x8,	/* Device data read/write in progress */
-		REQ_DATA_CONT	= 0x10,	/* Data request with no stop for data */
-		REQ_WR_COMPLETE	= 0x20,	/* Write request on the device completed,
-					 * waiting for the device to settle down
-					 */
+		STATE_IDLE	= 0x1,	/* Fresh request pushed on the bus */
+		STATE_OFFSET	= 0x2,	/* SMBUS offset writing in progress */
+		STATE_DATA	= 0x4,	/* Device data read/write in progress */
+		STATE_DATA_CONT	= 0x8,	/* Data request with no stop for data */
+		STATE_ERROR	= 0x10, /* STOP sequence following an error */
 	} req_state;
 	uint32_t bytes_sent;
 };
@@ -170,8 +167,6 @@ struct p8_i2c_master {
 	uint64_t		poll_timer;	/* Poll timer expiration */
 	uint64_t		poll_interval;	/* Polling interval in usec */
 	uint64_t		poll_count;	/* Max poll attempts */
-	uint64_t		write_delay;	/* Wait for the slave device to
-						 * settle down after write */
 	uint64_t		xscom_base;	/* xscom base of i2cm */
 	uint32_t		bit_rate_div;	/* Divisor to set bus speed*/
 	uint32_t		fifo_size;	/* Maximum size of FIFO  */
@@ -196,7 +191,7 @@ struct opal_p8_i2c_data {
 	uint64_t		token;
 };
 
-LIST_HEAD(i2c_bus_list);
+static LIST_HEAD(i2c_bus_list);
 static int p8_i2c_start_request(struct p8_i2c_master *master);
 static void p8_i2c_complete_request(struct p8_i2c_master *master, int rc);
 static int p8_i2c_prog_mode(struct p8_i2c_master *master, bool reset,
@@ -235,7 +230,7 @@ static int p8_i2c_buf_to_fifo(struct p8_i2c_master *master,
 	uint8_t *buf;
 	int rc = 0;
 
-	if (master->state.req_state & REQ_SM_OFFSET) {
+	if (master->state.req_state & STATE_OFFSET) {
 		offset = req->offset + master->state.bytes_sent;
 		buf = (uint8_t *)&offset;
 		/* MSB address byte is followed by the LSB byte */
@@ -260,7 +255,7 @@ static int p8_i2c_buf_to_fifo(struct p8_i2c_master *master,
 		 * START condition for data read.
 		 */
 		if (req->op == SMBUS_WRITE)
-			master->state.req_state &= ~REQ_SM_OFFSET;
+			master->state.req_state &= ~STATE_OFFSET;
 	}
 
 	buf = (uint8_t *)req->rw_buf + master->state.bytes_sent;
@@ -301,11 +296,34 @@ static int p8_i2c_get_fifo_left(struct p8_i2c_master *master, uint32_t fifo_coun
 	return 0;
 }
 
+static int p8_i2c_enable_irqs(struct p8_i2c_master *master)
+{
+	int rc;
+
+	/* Enable the interrupts */
+	rc = xscom_write(master->chip_id, master->xscom_base +
+			 I2C_INTR_COND_REG, I2C_STAT_ANY_ERR >> 16 |
+			 I2C_INTR_CMD_COMP | I2C_INTR_DATA_REQ);
+	if (rc)
+		prlog(PR_ERR, "I2C: Failed to enable the interrupts\n");
+
+	return rc;
+}
+
 static void p8_i2c_status_error(struct p8_i2c_master *master, uint64_t status)
 {
 	int rc;
 
-	prlog(PR_WARNING, "Error occured STATUS_REG:0x%016llx\n", status);
+	/* Display any error other than I2C_INTR_NACK_RCVD_ERR since
+	 * getting NACK's is normal if Linux is probing the bus
+	 */
+	if ((status & I2C_STAT_ANY_ERR) != I2C_STAT_NACK_RCVD_ERR)
+		prlog(PR_ERR, "Error occured STATUS_REG:0x%016llx, st: 0x%02x\n",
+		      status, master->state.req_state);
+	/* XXX */
+	else
+		prlog(PR_ERR, "NAK! (0x%02x)\n", master->state.req_state);
+
 	/* Reset the i2c engine */
 	rc = xscom_write(master->chip_id, master->xscom_base +
 			 I2C_RESET_I2C_REG, 0);
@@ -332,10 +350,7 @@ static void p8_i2c_status_error(struct p8_i2c_master *master, uint64_t status)
 		p8_i2c_complete_request(master, OPAL_HARDWARE);
 
 	/*
-	 * Reset the bus by issuing a STOP command to slave, when
-	 * command completion happens for this STOP the current request
-	 * will get popped out and fresh request will be pushed on the
-	 * bus.
+	 * Reset the bus by issuing a STOP command to slave.
 	 * TODO Should we give couple retries to the current request in
 	 * case of NACK received error before eventually doing a STOP
 	 * reset to the bus.
@@ -346,7 +361,10 @@ static void p8_i2c_status_error(struct p8_i2c_master *master, uint64_t status)
 		if (rc)
 			goto exit;
 
-		master->state.req_state = REQ_BEGIN;
+		/* Enable the interrupt */
+		p8_i2c_enable_irqs(master);
+
+		master->state.req_state = STATE_ERROR;
 		rc = xscom_write(master->chip_id, master->xscom_base +
 				 I2C_CMD_REG, I2C_CMD_WITH_STOP);
 		if (rc) {
@@ -355,13 +373,19 @@ static void p8_i2c_status_error(struct p8_i2c_master *master, uint64_t status)
 		}
 	}
 
+	/* TODO Fix it, the code run in paralled to OS and may lead lateny and
+	 * stall to the OS
+	 */ 
+	time_wait_ms(I2C_RESET_DELAY_MS);
+
 	return;
 
 exit:
 	p8_i2c_complete_request(master, rc);
 }
 
-static void p8_i2c_status_data_request(struct p8_i2c_master *master, uint64_t status)
+static void p8_i2c_status_data_request(struct p8_i2c_master *master,
+				       uint64_t status)
 {
 	struct i2c_request *req = list_top(&master->req_list,
 					   struct i2c_request, link);
@@ -375,7 +399,7 @@ static void p8_i2c_status_data_request(struct p8_i2c_master *master, uint64_t st
 		rc = p8_i2c_fifo_to_buf(master, req, fifo_count);
 		break;
 	case SMBUS_READ:
-		if (master->state.req_state & REQ_SM_OFFSET) {
+		if (master->state.req_state & STATE_OFFSET) {
 			rc = p8_i2c_get_fifo_left(master, fifo_count,
 						  &fifo_left);
 			if (rc)
@@ -401,62 +425,39 @@ static void p8_i2c_status_data_request(struct p8_i2c_master *master, uint64_t st
 	if (rc)
 		prlog(PR_INFO, "I2C: i2c operation '%d' failed\n", req->op);
 
-	/* Enable the interrupts */
-	rc = xscom_write(master->chip_id, master->xscom_base +
-			 I2C_INTR_COND_REG, I2C_STAT_ANY_ERR >> 16 |
-			 I2C_INTR_CMD_COMP | I2C_INTR_DATA_REQ);
-	if (rc)
-		prlog(PR_ERR, "I2C: Failed to enable the interrupts\n");
+	p8_i2c_enable_irqs(master);
 }
 
 static void p8_i2c_status_cmd_completion(struct p8_i2c_master *master)
 {
-	struct i2c_request *req = list_top(&master->req_list,
-					   struct i2c_request, link);
 	struct p8_i2cm_state *state = &master->state;
 	int rc;
 
 	/* Continue with the same request in the list */
-	if (state->req_state & REQ_SM_OFFSET ||
-	    state->req_state & REQ_DATA_CONT) {
-		/* Reset the poll variables */
-		master->poll_timer = 0;
-		master->poll_count = MAX_POLL_COUNT(master->poll_interval);
-
-		/*
-		 * It takes maximum of 5 msecs time for the device to get ready
-		 * for any later operations after WRITE command, though the core
-		 * is ready to issue the next
-		 */
-		if (req->op == I2C_WRITE || req->op == SMBUS_WRITE) {
-			master->write_delay = mftb() +
-					      msecs_to_tb(I2C_WRITE_DELAY_MS);
-			state->req_state |= REQ_WR_COMPLETE;
-		} else {
-			rc = p8_i2c_start_request(master);
-			if (rc)
-				p8_i2c_complete_request(master, rc);
-		}
+	if (state->req_state & STATE_OFFSET ||
+	    state->req_state & STATE_DATA_CONT) {
+		rc = p8_i2c_start_request(master);
+		if (rc)
+			p8_i2c_complete_request(master, rc);
 
 	/* Completed the current request, remove it from the list and start
 	 * off with the the fresh one
 	 */
 	} else {
 		state->bytes_sent = 0;
-		if (req->op == I2C_WRITE || req->op == SMBUS_WRITE) {
-			master->write_delay = mftb() +
-					      msecs_to_tb(I2C_WRITE_DELAY_MS);
-			state->req_state = REQ_WR_COMPLETE;
-		}
+		rc = (state->req_state & STATE_ERROR) ? OPAL_HARDWARE :
+							OPAL_SUCCESS;
+		if (rc)
+			prlog(PR_ERR, "Completion with err %d\n", rc);
 
-		p8_i2c_complete_request(master, OPAL_SUCCESS);
+		p8_i2c_complete_request(master, rc);
 	}
 	/* Don't require to explicitly enable the interrupts as call to
 	 * p8_i2c_start_request() will do
 	 */
 }
 
-static void  __p8_i2c_poll(struct p8_i2c_master *master)
+static void  __p8_i2c_check_status(struct p8_i2c_master *master)
 {
 	uint64_t status;
 	int rc;
@@ -480,7 +481,6 @@ static void  __p8_i2c_poll(struct p8_i2c_master *master)
 		return;
 	}
 
-
 	if (status & I2C_STAT_ANY_ERR)
 		p8_i2c_status_error(master, status);
 	else if (status & I2C_STAT_DATA_REQ)
@@ -493,51 +493,17 @@ static void  __p8_i2c_poll(struct p8_i2c_master *master)
 
 static void p8_i2c_complete_request(struct p8_i2c_master *master, int ret)
 {
-	struct p8_i2cm_state *state = &master->state;
 	struct i2c_request *req;
-	int rc;
-
-	/* Reset the poll variables */
-	master->poll_timer = 0;
-	master->poll_count = MAX_POLL_COUNT(master->poll_interval);
 
 	/* Delete the top request completed */
 	req = list_top(&master->req_list, struct i2c_request, link);
 	list_del(&req->link);
-
+	master->state.req_state = STATE_IDLE;
 	unlock(&master->lock);
 	if (req->completion)
 		req->completion(ret, req);
 
 	lock(&master->lock);
-	if (state->req_state & REQ_WR_COMPLETE) {
-		if (tb_compare(mftb(), master->write_delay) == TB_ABEFOREB) {
-			prlog(PR_INFO, "I2C: Waiting for the write delay\n");
-			return;
-		} else {
-			state->req_state |= ~REQ_WR_COMPLETE;
-		}
-	}
-
-	/* Push the fresh request from the list */
-	do {
-		req = list_top(&master->req_list, struct i2c_request, link);
-		if (!req) {
-			state->req_state = REQ_LIST_EMPTY;
-			return;
-		}
-
-		state->req_state = REQ_BEGIN;
-		rc = p8_i2c_start_request(master);
-		if (rc) {
-			list_del(&req->link);
-
-			unlock(&master->lock);
-			if (req->completion)
-				req->completion(rc, req);
-			lock(&master->lock);
-		}
-	} while (rc);
 }
 
 static int p8_i2c_prog_mode(struct p8_i2c_master *master, bool reset,
@@ -605,10 +571,9 @@ static int p8_i2c_prog_watermark(struct p8_i2c_master *master)
  * Need to do multiple START if data requested > I2C_MAX_TFR_LEN, with
  * 'Read continue' set and STOP condition only for the last one
  */
-static void p8_i2c_read_cmd(struct p8_i2c_master *master, uint64_t *cmd)
+static void p8_i2c_read_cmd(struct p8_i2c_master *master,
+			    struct i2c_request *req, uint64_t *cmd)
 {
-	struct i2c_request *req = list_top(&master->req_list,
-					   struct i2c_request, link);
 	struct p8_i2cm_state *state = &master->state;
 	uint32_t data_bytes_left;
 
@@ -617,24 +582,22 @@ static void p8_i2c_read_cmd(struct p8_i2c_master *master, uint64_t *cmd)
 	if (data_bytes_left & ~I2C_MAX_TFR_LEN) {
 		*cmd |= I2C_CMD_READ_CONT;
 		*cmd = SETFIELD(I2C_CMD_LEN_BYTES, *cmd, I2C_MAX_TFR_LEN);
-		state->req_state = REQ_DATA_CONT;
+		state->req_state = STATE_DATA_CONT;
 	} else {
 		*cmd |= I2C_CMD_WITH_STOP;
 		*cmd = SETFIELD(I2C_CMD_LEN_BYTES, *cmd, data_bytes_left);
-		state->req_state = REQ_DATA;
+		state->req_state = STATE_DATA;
 	}
 }
 
 /* START + (dev_addr + WRITE) + STOP */
-static void p8_i2c_write_cmd(struct p8_i2c_master *master, uint64_t *cmd)
+static void p8_i2c_write_cmd(struct p8_i2c_master *master,
+			     struct i2c_request *req, uint64_t *cmd)
 {
-	struct i2c_request *req = list_top(&master->req_list,
-					   struct i2c_request, link);
-
 	*cmd |= I2C_CMD_WITH_STOP;
 	*cmd = SETFIELD(I2C_CMD_LEN_BYTES, *cmd,
 		        req->rw_len & I2C_MAX_TFR_LEN);
-	master->state.req_state = REQ_DATA;
+	master->state.req_state = STATE_DATA;
 }
 
 /*
@@ -642,17 +605,16 @@ static void p8_i2c_write_cmd(struct p8_i2c_master *master, uint64_t *cmd)
  * START + (dev_addr + WRITE) + offset +
  * START + (dev_addr + READ) + data(n) + STOP
  */
-static void p8_smbus_read_cmd(struct p8_i2c_master *master, uint64_t *cmd)
+static void p8_smbus_read_cmd(struct p8_i2c_master *master,
+			      struct i2c_request *req, uint64_t *cmd)
 {
-	struct i2c_request *req = list_top(&master->req_list,
-					   struct i2c_request, link);
 	struct p8_i2cm_state *state = &master->state;
 	uint32_t data_bytes_left;
 
-	if (state->req_state & REQ_BEGIN) {
+	if (state->req_state & STATE_IDLE) {
 		*cmd = SETFIELD(I2C_CMD_LEN_BYTES, *cmd,
 			       req->offset_bytes);
-		state->req_state = REQ_SM_OFFSET;
+		state->req_state = STATE_OFFSET;
 	} else {
 		*cmd |= I2C_CMD_READ_NOT_WRITE;
 		data_bytes_left = req->rw_len - state->bytes_sent;
@@ -660,12 +622,12 @@ static void p8_smbus_read_cmd(struct p8_i2c_master *master, uint64_t *cmd)
 			*cmd |= I2C_CMD_READ_CONT;
 			*cmd = SETFIELD(I2C_CMD_LEN_BYTES, *cmd,
 					I2C_MAX_TFR_LEN);
-			state->req_state = REQ_DATA_CONT;
+			state->req_state = STATE_DATA_CONT;
 		} else {
 			*cmd |= I2C_CMD_WITH_STOP;
 			*cmd = SETFIELD(I2C_CMD_LEN_BYTES, *cmd,
 					data_bytes_left);
-			state->req_state = REQ_DATA;
+			state->req_state = STATE_DATA;
 		}
 	}
 
@@ -675,10 +637,9 @@ static void p8_smbus_read_cmd(struct p8_i2c_master *master, uint64_t *cmd)
  * Single START/addr/STOP phase for both the offset and data
  * START + (dev_addr + WRITE) + offset + data(n) + STOP
  */
-static void p8_smbus_write_cmd(struct p8_i2c_master *master, uint64_t *cmd)
+static void p8_smbus_write_cmd(struct p8_i2c_master *master,
+			       struct i2c_request *req, uint64_t *cmd)
 {
-	struct i2c_request *req = list_top(&master->req_list,
-					   struct i2c_request, link);
 	struct p8_i2cm_state *state = &master->state;
 	uint32_t data_bytes_left, page_bytes_left;
 
@@ -700,11 +661,11 @@ static void p8_smbus_write_cmd(struct p8_i2c_master *master, uint64_t *cmd)
 	if (page_bytes_left < data_bytes_left) {
 		*cmd = SETFIELD(I2C_CMD_LEN_BYTES, *cmd,
 				page_bytes_left + req->offset_bytes);
-		state->req_state = REQ_SM_OFFSET | REQ_DATA_CONT;
+		state->req_state = STATE_OFFSET | STATE_DATA_CONT;
 	} else {
 		*cmd = SETFIELD(I2C_CMD_LEN_BYTES, *cmd,
 				data_bytes_left + req->offset_bytes);
-		state->req_state = REQ_SM_OFFSET | REQ_DATA;
+		state->req_state = STATE_OFFSET | STATE_DATA;
 	}
 }
 
@@ -715,25 +676,23 @@ static int p8_i2c_start_request(struct p8_i2c_master *master)
 	uint64_t cmd;
 	int rc;
 
+	master->poll_timer = 0;
+	master->poll_count = MAX_POLL_COUNT(master->poll_interval);
 	/*
 	 * Setting the port-id in mode register is required only if the request
 	 * is being pushed on the bus first time and *not* if it's repeated
 	 * START condition
 	 */
-	if (master->state.req_state & REQ_BEGIN) {
+	if (master->state.req_state & STATE_IDLE) {
 		rc = p8_i2c_prog_mode(master, false, false);
 		if (rc)
 			return rc;
 	}
 
 	/* Enable the interrupts */
-	rc = xscom_write(master->chip_id, master->xscom_base +
-			 I2C_INTR_COND_REG, I2C_STAT_ANY_ERR >> 16 |
-			 I2C_INTR_CMD_COMP | I2C_INTR_DATA_REQ);
-	if (rc) {
-		prlog(PR_ERR, "I2C: Failed to enable the interrupts\n");
+	rc = p8_i2c_enable_irqs(master);
+	if (rc)
 		return OPAL_HARDWARE;
-	}
 
 	/* Set up the command register */
 	cmd = 0x0ull;
@@ -742,16 +701,16 @@ static int p8_i2c_start_request(struct p8_i2c_master *master)
 
 	switch (req->op) {
 	case I2C_READ:
-		p8_i2c_read_cmd(master, &cmd);
+		p8_i2c_read_cmd(master, req, &cmd);
 		break;
 	case I2C_WRITE:
-		p8_i2c_write_cmd(master, &cmd);
+		p8_i2c_write_cmd(master, req, &cmd);
 		break;
 	case SMBUS_READ:
-		p8_smbus_read_cmd(master, &cmd);
+		p8_smbus_read_cmd(master, req, &cmd);
 		break;
 	case SMBUS_WRITE:
-		p8_smbus_write_cmd(master, &cmd);
+		p8_smbus_write_cmd(master, req, &cmd);
 		break;
 	default:
 		return OPAL_PARAMETER;
@@ -765,6 +724,18 @@ static int p8_i2c_start_request(struct p8_i2c_master *master)
 	}
 
 	return OPAL_SUCCESS;
+}
+
+static void p8_i2c_check_work(struct p8_i2c_master *master)
+{
+	int rc;
+
+	if (master->state.req_state == STATE_IDLE &&
+	    !list_empty(&master->req_list)) {
+		rc = p8_i2c_start_request(master);
+		if (rc)
+			p8_i2c_complete_request(master, rc);
+	}
 }
 
 static int p8_i2c_queue_request(struct i2c_bus *bus, struct i2c_request *req)
@@ -782,16 +753,7 @@ static int p8_i2c_queue_request(struct i2c_bus *bus, struct i2c_request *req)
 
 	lock(&master->lock);
 	list_add_tail(&master->req_list, &req->link);
-
-	/* If the list is empty, start this request otherwise some request is
-	 * already in progress on this master.
-	 */
-	if (master->state.req_state & REQ_LIST_EMPTY) {
-		master->state.req_state = REQ_BEGIN;
-		rc = p8_i2c_start_request(master);
-		if (rc)
-			p8_i2c_complete_request(master, rc);
-	}
+	p8_i2c_check_work(master);
 	unlock(&master->lock);
 
 	return rc;
@@ -850,7 +812,8 @@ static void p8_i2c_compare_poll_timer(struct p8_i2c_master *master)
 		}
 
 		master->poll_timer = now + usecs_to_tb(master->poll_interval);
-		__p8_i2c_poll(master);
+		p8_i2c_check_work(master);
+		__p8_i2c_check_status(master);
 	}
 }
 
@@ -859,7 +822,6 @@ static void p8_i2c_poll_each_master(bool interrupt)
 	struct p8_i2c_master *master = NULL;
 	struct p8_i2c_master_port *port;
 	struct i2c_bus *bus;
-	int rc;
 
 	list_for_each(&i2c_bus_list, bus, link) {
 		port = container_of(bus, struct p8_i2c_master_port, bus);
@@ -873,26 +835,15 @@ static void p8_i2c_poll_each_master(bool interrupt)
 			continue;
 
 		lock(&master->lock);
-		if (master->state.req_state & REQ_LIST_EMPTY) {
+		if (list_empty(&master->req_list)) {
 			unlock(&master->lock);
 			continue;
-		} else if (master->state.req_state & REQ_WR_COMPLETE) {
-			if (tb_compare(mftb(), master->write_delay) ==
-			    TB_ABEFOREB) {
-				unlock(&master->lock);
-				continue;
-			} else {
-				master->state.req_state |= ~REQ_WR_COMPLETE;
-				rc = p8_i2c_start_request(master);
-				if (rc)
-					p8_i2c_complete_request(master, rc);
-			}
 		}
 
 		if (!interrupt)
 			p8_i2c_compare_poll_timer(master);
 		else
-			__p8_i2c_poll(master);
+			__p8_i2c_check_status(master);
 
 		unlock(&master->lock);
 	}
@@ -923,8 +874,8 @@ static int opal_p8_i2c_request(uint64_t async_token, uint32_t bus_id,
 {
 	struct opal_p8_i2c_data *opal_data;
 	struct p8_i2c_master_port *port;
+	struct i2c_bus *bus = NULL;
 	struct i2c_request *req;
-	struct i2c_bus *bus;
 	int rc;
 
 	list_for_each(&i2c_bus_list, bus, link) {
@@ -1005,6 +956,7 @@ void p8_i2c_init(void)
 		lb_freq = dt_prop_get_u32(i2cm, "local-bus-freq-mhz");
 
 		/* Initialise the i2c master structure */
+		master->state.req_state = STATE_IDLE;
 		master->chip_id = dt_get_chip_id(i2cm);
 		master->xscom_base = dt_get_address(i2cm, 0, NULL);
 
@@ -1016,10 +968,8 @@ void p8_i2c_init(void)
 		}
 
 		master->fifo_size = GETFIELD(I2C_EXTD_STAT_FIFO_SIZE, ex_stat);
-		master->state.req_state = REQ_LIST_EMPTY;
 		list_head_init(&master->req_list);
 		master->poll_interval = p8_i2c_get_poll_interval(bus_speed);
-		master->poll_count = MAX_POLL_COUNT(master->poll_interval);
 
 		/* Reset the i2c engine */
 		rc = xscom_write(master->chip_id, master->xscom_base +
@@ -1066,8 +1016,8 @@ void p8_i2c_init(void)
 		}
 
 		dt_for_each_child(i2cm, i2cm_port) {
-			port->bus_id = dt_prop_get_u32(i2cm_port, "bus-id");
-			port->port_num = dt_prop_get_u32(i2cm_port, "port-id");
+			port->bus_id = dt_prop_get_u32(i2cm_port, "ibm,opal-id");
+			port->port_num = dt_prop_get_u32(i2cm_port, "reg");
 			port->common = master;
 			port->bus.i2c_port = i2cm_port;
 			port->bus.queue_req = p8_i2c_queue_request;

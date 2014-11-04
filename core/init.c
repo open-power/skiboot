@@ -555,8 +555,6 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 */
 	lpc_init();
 
-	p8_i2c_init();
-
 	/*
 	 * Now, we init our memory map from the device-tree, and immediately
 	 * reserve areas which we know might contain data coming from
@@ -607,6 +605,9 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * all core timebases to the global ChipTOD network
 	 */
 	chiptod_init(master_cpu);
+
+	/* Initialize i2c */
+	p8_i2c_init();
 
 	/*
 	 * We have initialized the basic HW, we can now call into the
