@@ -130,12 +130,6 @@ static void bt_msg_del(struct bt_msg *bt_msg)
 		      IPMI_TIMEOUT_ERR, &bt_msg->ipmi_msg);
 }
 
-static void bt_reset_interface(void)
-{
-	bt_outb(BT_INTMASK_BMC_HWRST, BT_INTMASK);
-	bt_set_state(BT_STATE_B_BUSY);
-}
-
 static void bt_init_interface(void)
 {
 	/* Clear interrupt condition & enable irq */
@@ -145,6 +139,12 @@ static void bt_init_interface(void)
 	bt_set_h_busy(false);
 
 	bt_set_state(BT_STATE_B_BUSY);
+}
+
+static void bt_reset_interface(void)
+{
+	bt_outb(BT_INTMASK_BMC_HWRST, BT_INTMASK);
+	bt_init_interface();
 }
 
 static bool bt_try_send_msg(void)
