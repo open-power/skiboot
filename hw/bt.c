@@ -84,7 +84,8 @@ struct bt_msg {
 struct bt {
 	uint32_t base_addr;
 	enum bt_states state;
-	struct lock lock;
+	struct lock bt_lock;
+	struct lock msgq_lock;
 	struct list_head msgq;
 	int queue_len;
 };
@@ -152,10 +153,10 @@ static bool bt_try_send_msg(void)
 	struct bt_msg *bt_msg;
 	struct ipmi_msg *ipmi_msg;
 
-	lock(&bt.lock);
+	lock(&bt.msgq_lock);
 	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
 	if (!bt_msg) {
-		unlock(&bt.lock);
+		unlock(&bt.msgq_lock);
 		return true;
 	}
 
@@ -164,7 +165,7 @@ static bool bt_try_send_msg(void)
 	if (!bt_idle()) {
 		prerror("BT: Interface in an unexpected state, attempting reset\n");
 		bt_reset_interface();
-		unlock(&bt.lock);
+		unlock(&bt.msgq_lock);
 		return false;
 	}
 
@@ -189,7 +190,7 @@ static bool bt_try_send_msg(void)
 
 	bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
 	bt_set_state(BT_STATE_RESP_WAIT);
-	unlock(&bt.lock);
+	unlock(&bt.msgq_lock);
 
 	return true;
 }
@@ -209,9 +210,9 @@ static bool bt_get_resp(void)
 	uint8_t cc = IPMI_CC_NO_ERROR;
 
 	/* Wait for BMC to signal response */
-	lock(&bt.lock);
+	lock(&bt.msgq_lock);
 	if (!(bt_inb(BT_CTRL) & BT_CTRL_B2H_ATN)) {
-		unlock(&bt.lock);
+		unlock(&bt.msgq_lock);
 		return true;
 	}
 
@@ -250,7 +251,7 @@ static bool bt_get_resp(void)
 		prlog(PR_INFO, "BT: Nobody cared about a response to an BT/IPMI message\n");
 		bt_flush_msg();
 		bt_set_state(BT_STATE_B_BUSY);
-		unlock(&bt.lock);
+		unlock(&bt.msgq_lock);
 		return false;
 	}
 
@@ -280,7 +281,7 @@ static bool bt_get_resp(void)
 	bt_set_state(BT_STATE_B_BUSY);
 	list_del(&bt_msg->link);
 	bt.queue_len--;
-	unlock(&bt.lock);
+	unlock(&bt.msgq_lock);
 
 	/*
 	 * Call the IPMI layer to finish processing the message.
@@ -300,7 +301,7 @@ static void bt_expire_old_msg(void)
 	unsigned long tb;
 	struct bt_msg *bt_msg, *next;
 
-	lock(&bt.lock);
+	lock(&bt.msgq_lock);
 	tb = mftb();
 	list_for_each_safe(&bt.msgq, bt_msg, next, link) {
 		if ((bt_msg->tb + BT_MSG_TIMEOUT) < tb) {
@@ -308,7 +309,7 @@ static void bt_expire_old_msg(void)
 			bt_msg_del(bt_msg);
 		}
 	}
-	unlock(&bt.lock);
+	unlock(&bt.msgq_lock);
 }
 
 static void bt_poll(void *data __unused)
@@ -320,7 +321,7 @@ static void bt_poll(void *data __unused)
 #if BT_QUEUE_DEBUG
 		struct bt_msg *msg;
 		static bool printed = false;
-		lock(&bt.lock);
+		lock(&bt.msgq_lock);
 		if (!list_empty(&bt.msgq)) {
 			printed = false;
 			prlog(PR_DEBUG, "-------- BT Msg Queue --------\n");
@@ -332,26 +333,30 @@ static void bt_poll(void *data __unused)
 			printed = true;
 			prlog(PR_DEBUG, "----- BT Msg Queue Empty -----\n");
 		}
-		unlock(&bt.lock);
+		unlock(&bt.msgq_lock);
 #endif
 
-		bt_expire_old_msg();
+		ret = true;
+		if (try_lock(&bt.bt_lock)) {
+			bt_expire_old_msg();
 
-		switch(bt.state) {
-		case BT_STATE_IDLE:
-			ret = bt_try_send_msg();
-			break;
+			switch(bt.state) {
+			case BT_STATE_IDLE:
+				ret = bt_try_send_msg();
+				break;
 
-		case BT_STATE_RESP_WAIT:
-			ret = bt_get_resp();
-			break;
+			case BT_STATE_RESP_WAIT:
+				ret = bt_get_resp();
+				break;
 
-		case BT_STATE_B_BUSY:
-			if (bt_idle()) {
-				bt_set_state(BT_STATE_IDLE);
-				ret = false;
+			case BT_STATE_B_BUSY:
+				if (bt_idle()) {
+					bt_set_state(BT_STATE_IDLE);
+					ret = false;
+				}
+				break;
 			}
-			break;
+			unlock(&bt.bt_lock);
 		}
 	}
 	while(!ret);
@@ -361,7 +366,7 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 {
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
-	lock(&bt.lock);
+	lock(&bt.msgq_lock);
 	bt_msg->tb = mftb();
 	bt_msg->seq = ipmi_seq++;
 	list_add_tail(&bt.msgq, &bt_msg->link);
@@ -374,7 +379,7 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 		assert(bt_msg);
 		bt_msg_del(bt_msg);
 	}
-	unlock(&bt.lock);
+	unlock(&bt.msgq_lock);
 
 	bt_poll(NULL);
 
@@ -430,10 +435,10 @@ static int bt_del_ipmi_msg(struct ipmi_msg *ipmi_msg)
 {
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
-	lock(&bt.lock);
+	lock(&bt.msgq_lock);
 	list_del(&bt_msg->link);
 	bt.queue_len--;
-	unlock(&bt.lock);
+	unlock(&bt.msgq_lock);
 	return 0;
 }
 
@@ -468,7 +473,8 @@ void bt_init(void)
 	printf("BT: Interface intialized, IO 0x%04x\n", bt.base_addr);
 
 	bt_init_interface();
-	init_lock(&bt.lock);
+	init_lock(&bt.msgq_lock);
+	init_lock(&bt.bt_lock);
 
 	/*
 	 * The iBT interface comes up in the busy state until the daemon has
