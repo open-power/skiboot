@@ -305,8 +305,8 @@ static struct dt_node *io_add_phb3(const struct cechub_io_hub *hub,
 	return pbcq;
 }
 
-static struct dt_node *io_add_murano(const struct cechub_io_hub *hub,
-				     const struct HDIF_common_hdr *sp_iohubs)
+static struct dt_node *io_add_p8(const struct cechub_io_hub *hub,
+				 const struct HDIF_common_hdr *sp_iohubs)
 {
 	struct dt_node *xscom;
 	unsigned int i, chip_id;
@@ -318,14 +318,14 @@ static struct dt_node *io_add_murano(const struct cechub_io_hub *hub,
 
 	xscom = find_xscom_for_chip(chip_id);
 	if (!xscom) {
-		prerror("MURANO: Can't find XSCOM for chip %d\n", chip_id);
+		prerror("P8: Can't find XSCOM for chip %d\n", chip_id);
 		return NULL;
 	}
 
 	/* Create PHBs, max 3 */
 	for (i = 0; i < 3; i++) {
 		if (hub->fab_br0_pdt & (0x80 >> i))
-			/* XSCOM addresses for murano DD1.0 */
+			/* XSCOM addresses are the same on Murano and Venice */
 			io_add_phb3(hub, sp_iohubs, i, xscom,
 				    0x02012000 + (i * 0x400),
 				    0x09012000 + (i * 0x400),
@@ -651,7 +651,11 @@ static void io_parse_fru(const void *sp_iohubs)
 		case CECHUB_HUB_MURANO:
 		case CECHUB_HUB_MURANO_SEGU:
 			prlog(PR_INFO, "CEC:     Murano !\n");
-			hn = io_add_murano(hub, sp_iohubs);
+			hn = io_add_p8(hub, sp_iohubs);
+			break;
+		case CECHUB_HUB_VENICE_WYATT:
+			prlog(PR_INFO, "CEC:     Venice !\n");
+			hn = io_add_p8(hub, sp_iohubs);
 			break;
 		default:
 			prlog(PR_ERR, "CEC:     Hub ID 0x%04x unsupported !\n",
