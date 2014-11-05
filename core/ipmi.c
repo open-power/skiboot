@@ -87,7 +87,7 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 	msg->netfn = netfn;
 
 	if (cc != IPMI_CC_NO_ERROR) {
-		prerror("IPMI: Got error response 0x%02x\n", msg->cc);
+		prlog(PR_DEBUG, "IPMI: Got error response 0x%02x\n", msg->cc);
 
 		assert(msg->error);
 		msg->error(msg);

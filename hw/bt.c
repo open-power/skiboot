@@ -275,9 +275,6 @@ static bool bt_get_resp(void)
 		ipmi_msg->data[i] = bt_inb(BT_HOST2BMC);
 	bt_set_h_busy(false);
 
-	if (cc != IPMI_CC_NO_ERROR)
-		prerror("BT: Host error 0x%02x receiving BT/IPMI response for msg 0x%02x\n", cc, seq);
-
 	/* Make sure the other side is idle before we move to the idle state */
 	bt_set_state(BT_STATE_B_BUSY);
 	list_del(&bt_msg->link);
