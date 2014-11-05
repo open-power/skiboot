@@ -129,28 +129,6 @@ static void bt_msg_del(struct bt_msg *bt_msg)
 		      IPMI_TIMEOUT_ERR, &bt_msg->ipmi_msg);
 }
 
-static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
-{
-	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
-
-	lock(&bt.lock);
-	bt_msg->tb = mftb();
-	bt_msg->seq = ipmi_seq++;
-	list_add_tail(&bt.msgq, &bt_msg->link);
-	bt.queue_len++;
-	if (bt.queue_len > BT_MAX_QUEUE_LEN) {
-		/* Maximum ueue lenght exceeded - remove the oldest message
-		   from the queue. */
-		prerror("BT: Maximum queue length exceeded\n");
-		bt_msg = list_tail(&bt.msgq, struct bt_msg, link);
-		assert(bt_msg);
-		bt_msg_del(bt_msg);
-	}
-	unlock(&bt.lock);
-
-	return 0;
-}
-
 static void bt_reset_interface(void)
 {
 	bt_outb(BT_INTMASK_BMC_HWRST, BT_INTMASK);
@@ -377,6 +355,30 @@ static void bt_poll(void *data __unused)
 		}
 	}
 	while(!ret);
+}
+
+static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
+{
+	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
+
+	lock(&bt.lock);
+	bt_msg->tb = mftb();
+	bt_msg->seq = ipmi_seq++;
+	list_add_tail(&bt.msgq, &bt_msg->link);
+	bt.queue_len++;
+	if (bt.queue_len > BT_MAX_QUEUE_LEN) {
+		/* Maximum ueue lenght exceeded - remove the oldest message
+		   from the queue. */
+		prerror("BT: Maximum queue length exceeded\n");
+		bt_msg = list_tail(&bt.msgq, struct bt_msg, link);
+		assert(bt_msg);
+		bt_msg_del(bt_msg);
+	}
+	unlock(&bt.lock);
+
+	bt_poll(NULL);
+
+	return 0;
 }
 
 void bt_irq(void)
