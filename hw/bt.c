@@ -188,6 +188,7 @@ static bool bt_try_send_msg(void)
 	for (i = 0; i < ipmi_msg->req_size; i++)
 		bt_outb(ipmi_msg->data[i], BT_HOST2BMC);
 
+	bt_msg->tb = mftb();
 	bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
 	bt_set_state(BT_STATE_RESP_WAIT);
 	unlock(&bt.msgq_lock);
@@ -299,15 +300,21 @@ static bool bt_get_resp(void)
 static void bt_expire_old_msg(void)
 {
 	unsigned long tb;
-	struct bt_msg *bt_msg, *next;
+	struct bt_msg *bt_msg;
 
 	lock(&bt.msgq_lock);
 	tb = mftb();
-	list_for_each_safe(&bt.msgq, bt_msg, next, link) {
-		if ((bt_msg->tb + BT_MSG_TIMEOUT) < tb) {
-			prerror("BT: Expiring old messsage number 0x%02x\n", bt_msg->seq);
-			bt_msg_del(bt_msg);
-		}
+	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
+
+	if (bt_msg && bt_msg->tb > 0 && (bt_msg->tb + BT_MSG_TIMEOUT) < tb) {
+		prerror("BT: Expiring old messsage number 0x%02x\n", bt_msg->seq);
+		bt_msg_del(bt_msg);
+
+		/* Timing out a message is inherently racy as the BMC
+		   may start writing just as we decide to kill the
+		   message. Hopefully resetting the interface is
+		   sufficient to guard against such things. */
+		   bt_reset_interface();
 	}
 	unlock(&bt.msgq_lock);
 }
@@ -367,7 +374,7 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
 	lock(&bt.msgq_lock);
-	bt_msg->tb = mftb();
+	bt_msg->tb = 0;
 	bt_msg->seq = ipmi_seq++;
 	list_add_tail(&bt.msgq, &bt_msg->link);
 	bt.queue_len++;
