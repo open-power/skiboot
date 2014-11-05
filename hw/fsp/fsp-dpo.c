@@ -61,7 +61,7 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 	/* DPO message does not have the correct signatures */
 	if ((msg->data.bytes[0] != DPO_CMD_SGN_BYTE0)
 			|| (msg->data.bytes[1] != DPO_CMD_SGN_BYTE1)) {
-		printf(PREFIX "Message signatures did not match\n");
+		prlog(PR_ERR, PREFIX "Message signatures did not match\n");
 		cmd |= FSP_STATUS_INVALID_CMD;
 		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
 		return;
@@ -69,7 +69,7 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 
 	/* Sapphire is already in "DPO pending" state */
 	if (fsp_dpo_pending) {
-		printf(PREFIX "OPAL is already in DPO pending state\n");
+		prlog(PR_ERR, PREFIX "OPAL is already in DPO pending state\n");
 		cmd |= FSP_STATUS_INVALID_DPOSTATE;
 		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
 		return;
@@ -81,7 +81,7 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 	/* Inform the host about DPO */
 	rc = opal_queue_msg(OPAL_MSG_DPO, NULL, NULL);
 	if (rc) {
-		printf(PREFIX "OPAL message queuing failed\n");
+		prlog(PR_ERR, PREFIX "OPAL message queuing failed\n");
 		cmd |= FSP_STATUS_GENERIC_ERROR;
 		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
 		return;
@@ -107,7 +107,7 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 static bool fsp_dpo_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
 	if (cmd_sub_mod == FSP_CMD_INIT_DPO) {
-		printf(PREFIX "SP initiated Delayed Power Off (DPO)\n");
+		prlog(PR_TRACE, PREFIX "SP initiated Delayed Power Off (DPO)\n");
 		fsp_process_dpo(msg);
 		return true;
 	}
@@ -122,5 +122,5 @@ void fsp_dpo_init(void)
 {
 	fsp_register_client(&fsp_dpo_client, FSP_MCLASS_SERVICE);
 	opal_register(OPAL_GET_DPO_STATUS, fsp_opal_get_dpo_status, 1);
-	printf(PREFIX "FSP DPO support initialized\n");
+	prlog(PR_TRACE, PREFIX "FSP DPO support initialized\n");
 }
