@@ -23,6 +23,7 @@
 #include <cec.h>
 #include <device.h>
 #include <ccan/str/str.h>
+#include <timer.h>
 
 /* ICP registers */
 #define ICP_XIRR		0x4	/* 32-bit access */
@@ -291,11 +292,16 @@ static int64_t opal_handle_interrupt(uint32_t isn, uint64_t *outstanding_event_m
 	struct irq_source *is = irq_find_source(isn);
 	int64_t rc = OPAL_SUCCESS;
 
+	/* We run the timers first */
+	check_timers();
+
+	/* No source ? return */
 	if (!is || !is->ops->interrupt) {
 		rc = OPAL_PARAMETER;
 		goto bail;
 	}
 
+	/* Run it */
 	is->ops->interrupt(is->data, isn);
 
 	/* Update output events */
