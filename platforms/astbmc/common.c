@@ -149,6 +149,94 @@ static void astbmc_fixup_dt_uart(struct dt_node *lpc)
 	dt_add_property_cells(uart, "ibm,irq-chip-id", dt_get_chip_id(lpc));
 }
 
+static struct dt_node *dt_create_i2c_master(struct dt_node *n, uint32_t eng_id)
+{
+	struct dt_node *i2cm;
+
+	/* Each master registers set is of length 0x20 */
+	i2cm = dt_new_addr(n, "i2cm", 0xa0000 + eng_id * 0x20);
+	if (!i2cm)
+		return NULL;
+
+	dt_add_property_string(i2cm, "compatible",
+			       "ibm,power8-i2cm");
+	dt_add_property_cells(i2cm, "reg", 0xa0000 + eng_id * 0x20,
+			      0x20);
+	dt_add_property_cells(i2cm, "bus-speed-khz", 400);
+	dt_add_property_cells(i2cm, "local-bus-freq-mhz", 50);
+	dt_add_property_cells(i2cm, "#address-cells", 1);
+	dt_add_property_cells(i2cm, "#size-cells", 0);
+
+	return i2cm;
+}
+
+static struct dt_node *dt_create_i2c_bus(struct dt_node *i2cm, const char *port_name,
+					 uint32_t port_id)
+{
+	static struct dt_node *port;
+	static uint32_t bus_id = 0;
+
+	port = dt_new_addr(i2cm, "i2c-bus", port_id);
+	if (!port)
+		return NULL;
+
+	dt_add_property_string(port, "compatible", "ibm,power8-i2c-port");
+	dt_add_property_string(port, "port-name", port_name);
+	dt_add_property_cells(port, "reg", port_id);
+	dt_add_property_cells(port, "ibm,opal-id", ++bus_id);
+	dt_add_property_cells(port, "#address-cells", 1);
+	dt_add_property_cells(port, "#size-cells", 0);
+
+	return port;
+}
+
+static struct dt_node *dt_create_i2c_device(struct dt_node *bus, uint8_t addr,
+					    const char *name, const char *compat,
+					    const char *label)
+{
+	struct dt_node *dev;
+
+	dev = dt_new_addr(bus, name, addr);
+	if (!dev)
+		return NULL;
+
+	dt_add_property_string(dev, "compatible", compat);
+	dt_add_property_string(dev, "label", label);
+	dt_add_property_cells(dev, "reg", addr);
+	dt_add_property_string(dev, "status", "ok");
+
+	return dev;
+}
+
+static void astbmc_fixup_dt_i2cm(void)
+{
+	struct proc_chip *c;
+	struct dt_node *master, *bus;
+	char name[32];
+
+	/*
+	 * Look if any i2c is in the device-tree, in which
+	 * case we assume HB did the job
+	 */
+	if (dt_find_compatible_node(dt_root, NULL, "ibm,power8-i2cm"))
+		return;
+
+	/* Create nodes for i2cm1 of chip 0 */
+	c = get_chip(0);
+	assert(c);
+
+	master = dt_create_i2c_master(c->devnode, 1);
+	assert(master);
+	sprintf(name,"p8_%08x_e%dp%d\n", c->id, 1, 0);
+	bus = dt_create_i2c_bus(master, name, 0);
+	assert(bus);
+	sprintf(name,"p8_%08x_e%dp%d\n", c->id, 1, 2);
+	bus = dt_create_i2c_bus(master, name, 2);
+	assert(bus);
+	dt_create_i2c_device(bus, 0x50, "eeprom", "atmel,24c64", "system-vpd");
+	assert(bus);
+}
+
 static void astbmc_fixup_dt(void)
 {
 	struct dt_node *n, *primary_lpc = NULL;
@@ -167,7 +255,11 @@ static void astbmc_fixup_dt(void)
 	/* Fixup the UART, that might be missing from HB */
 	astbmc_fixup_dt_uart(primary_lpc);
 
+	/* BT is not in HB either */
 	astbmc_fixup_dt_bt(primary_lpc);
+
+	/* Add i2c masters if needed */
+	astbmc_fixup_dt_i2cm();
 }
 
 static void astbmc_fixup_psi_bar(void)
