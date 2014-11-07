@@ -25,11 +25,12 @@ struct i2c_bus {
 	int			(*queue_req)(struct i2c_bus *bus,
 					     struct i2c_request *req);
 	struct i2c_request	*(*alloc_req)(struct i2c_bus *bus);
-	void			(*dealloc_req)(struct i2c_request *req);
+	void			(*free_req)(struct i2c_request *req);
 };
 
 struct i2c_request {
 	struct list_node	link;
+	struct i2c_bus		*bus;
 	enum i2c_operation {
 		I2C_READ,	/* RAW read from the device without offset */
 		I2C_WRITE,	/* RAW write to the device without offset */
