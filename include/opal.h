@@ -142,10 +142,11 @@
 #define OPAL_WRITE_TPO				103
 #define OPAL_READ_TPO				104
 #define OPAL_GET_DPO_STATUS			105
-#define OPAL_I2C_REQUEST			106
+#define OPAL_OLD_I2C_REQUEST			106	/* Deprecated */
 #define OPAL_IPMI_SEND				107
 #define OPAL_IPMI_RECV				108
-#define OPAL_LAST				108
+#define OPAL_I2C_REQUEST			109
+#define OPAL_LAST				109
 
 #ifndef __ASSEMBLY__
 
@@ -889,6 +890,24 @@ enum {
 /* CAPI feature flags (in device-tree) */
 #define OPAL_PHB_CAPI_FLAG_SNOOP_CONTROL	0x00000001
 #define OPAL_PHB_CAPI_FLAG_REVERT_TO_PCIE	0x00000002
+
+/* OPAL I2C request */
+struct opal_i2c_request {
+	uint8_t	type;
+#define OPAL_I2C_RAW_READ	0
+#define OPAL_I2C_RAW_WRITE	1
+#define OPAL_I2C_SM_READ	2
+#define OPAL_I2C_SM_WRITE	3
+	uint8_t flags;
+#define OPAL_I2C_ADDR_10	0x01	/* Not supported yet */
+	uint8_t	subaddr_sz;		/* Max 4 */
+	uint8_t reserved;
+	uint16_t addr;			/* 7 or 10 bit address */
+	uint16_t reserved2;
+	uint32_t subaddr;		/* Sub-address if any */
+	uint32_t size;			/* Data size */
+	uint64_t buffer_ra;		/* Buffer real address */
+};
 
 /****** Internal **********/
 #include <skiboot.h>

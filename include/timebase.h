@@ -24,6 +24,7 @@
 
 #include <time.h>
 
+#ifndef __TEST__
 static inline unsigned long mftb(void)
 {
 	unsigned long tb;
@@ -34,6 +35,7 @@ static inline unsigned long mftb(void)
 	asm volatile("mftb %0" : "=r"(tb) : : "memory");
 	return tb;
 }
+#endif
 
 enum tb_cmpval {
 	TB_ABEFOREB = -1,

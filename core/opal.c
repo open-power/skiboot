@@ -28,6 +28,7 @@
 #include <timebase.h>
 #include <affinity.h>
 #include <opal-msg.h>
+#include <timer.h>
 
 /* Pending events to signal via opal_poll_events */
 uint64_t opal_pending_events;
@@ -277,6 +278,9 @@ void opal_del_poller(void (*poller)(void *data))
 void opal_run_pollers(void)
 {
 	struct opal_poll_entry *poll_ent;
+
+	/* We run the timers first */
+	check_timers();
 
 	/* The pollers are run lokelessly, see comment in opal_del_poller */
 	list_for_each(&opal_pollers, poll_ent, link)

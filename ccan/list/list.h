@@ -165,6 +165,25 @@ static inline void list_add(struct list_head *h, struct list_node *n)
 }
 
 /**
+ * list_add_before - add an entry before another entry.
+ * @h: the list_head to add the node to (we use it for debug purposes, can be NULL)
+ * @n: the list_node to add to the list.
+ * @p: the list_node of the other entry
+ *
+ * The list_node does not need to be initialized; it will be overwritten.
+ */
+static inline void list_add_before(struct list_head *h, struct list_node *n,
+				   struct list_node *p)
+{
+	n->next = p;
+	n->prev = p->prev;
+	p->prev = n;
+	n->prev->next = n;
+	if (h)
+		(void)list_debug(h);
+}
+
+/**
  * list_add_tail - add an entry at the end of a linked list.
  * @h: the list_head to add the node to
  * @n: the list_node to add to the list.
