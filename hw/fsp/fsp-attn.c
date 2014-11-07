@@ -52,6 +52,10 @@ static struct ti_attn *ti_attn;
 /* Initialises SP attention area with default values */
 static void init_sp_attn_area(void)
 {
+	/* Already done */
+	if (ti_attn)
+		return;
+
 	/* We are just enabling attention area 1 */
 	ti_attn = (struct ti_attn *)&cpu_ctl_sp_attn_area1;
 
@@ -87,8 +91,12 @@ void update_sp_attn_area(const char *msg)
 	if (!fsp_present())
 		return;
 
+	/* This can be called early */
+	if (!ti_attn)
+		init_sp_attn_area();
+
 	ti_attn->src_word[0] =
-			(uint32_t)((uint64_t)__builtin_return_address(0) & 0xffffffff);
+		(uint32_t)((uint64_t)__builtin_return_address(0) & 0xffffffff);
 
 	snprintf(ti_attn->msg.gitid, GITID_LEN, "%s", gitid);
 	__backtrace(ti_attn->msg.bt_buf, BT_FRAME_LEN);
