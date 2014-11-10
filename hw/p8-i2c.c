@@ -28,10 +28,12 @@
 
 #ifdef DEBUG
 #define DBG(fmt...) prlog(PR_ERR, "I2C: " fmt)
-#define I2C_TIMEOUT_MS		1 /* 1s timeout */
+#define I2C_TIMEOUT_IRQ_MS		100	/* 100ms/byte timeout */
+#define I2C_TIMEOUT_POLL_MS		4000	/* 4s/byte timeout */
 #else
 #define DBG(fmt...) prlog(PR_TRACE, "I2C: " fmt)
-#define I2C_TIMEOUT_MS		100 /* 100 msec timeout */
+#define I2C_TIMEOUT_IRQ_MS		1	/* 1ms/byte timeout */
+#define I2C_TIMEOUT_POLL_MS		4000	/* 4s/byte timeout */
 #endif
 
 #define USEC_PER_SEC		1000000
@@ -168,13 +170,13 @@ struct p8_i2c_master {
 	struct lock		lock;		/* Lock to guard the members */
 	uint64_t		poll_timer;	/* Poll timer expiration */
 	uint64_t		poll_interval;	/* Polling interval in usec */
-	uint64_t		poll_count;	/* Max poll attempts */
 	uint64_t		xscom_base;	/* xscom base of i2cm */
 	uint32_t		bit_rate_div;	/* Divisor to set bus speed*/
 	uint32_t		fifo_size;	/* Maximum size of FIFO  */
 	uint32_t		chip_id;	/* Chip the i2cm sits on */
 	uint8_t			obuf[4];	/* Offset buffer */
 	uint32_t		bytes_sent;
+	bool			irq_ok;		/* Interrupt working ? */
 	enum request_state {
 		state_idle,
 		state_offset,
@@ -183,6 +185,7 @@ struct p8_i2c_master {
 		state_recovery,
 	}			state;
 	struct list_head	req_list;	/* Request queue head */
+	struct timer		poller;
 	struct timer		timeout;
 };
 
@@ -200,6 +203,27 @@ struct p8_i2c_request {
 };
 
 static LIST_HEAD(i2c_bus_list);
+
+static bool p8_i2c_has_irqs(void)
+{
+	struct proc_chip *chip = next_chip(NULL);
+
+	/* The i2c interrurpt was only added to Murano DD2.1 and Venice
+	 * DD2.0. When operating without interrupts, we need to bump the
+	 * timeouts as we rely solely on the polls from Linux which can
+	 * be up to 2s appart !
+	 *
+	 * Also we don't have interrupts for the Centaur i2c.
+	 */
+	switch (chip->type) {
+	case PROC_CHIP_P8_MURANO:
+		return chip->ec_level >= 0x21;
+	case PROC_CHIP_P8_VENICE:
+		return chip->ec_level >= 0x20;
+	default:
+		return false;
+	}
+}
 
 static int p8_i2c_enable_irqs(struct p8_i2c_master *master)
 {
@@ -701,8 +725,8 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 {
 	struct p8_i2c_request *request =
 		container_of(req, struct p8_i2c_request, req);
-	uint64_t cmd;
-	int rc;
+	uint64_t cmd, now;
+	int rc, tbytes;
 
 	DBG("Starting req %d len=%d addr=%02x (offset=%x)\n",
 	    req->op, req->rw_len, req->dev_addr, req->offset);
@@ -773,8 +797,21 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	/* Enable the interrupts */
 	p8_i2c_enable_irqs(master);
 
+	/* If interrupts aren't working, start the poll timer. Also
+	 * calculate the timeout differently
+	 */
+	now = mftb();
+	tbytes = req->rw_len + req->offset_bytes + 2;
+	if (!master->irq_ok) {
+		schedule_timer_at(&master->poller,
+				  now + master->poll_interval);
+		request->timeout = now +
+			tbytes * msecs_to_tb(I2C_TIMEOUT_POLL_MS);
+	} else
+		request->timeout = now +
+			tbytes * msecs_to_tb(I2C_TIMEOUT_IRQ_MS);
+
 	/* Start the timeout */
-	request->timeout = mftb() + msecs_to_tb(I2C_TIMEOUT_MS);
 	schedule_timer_at(&master->timeout, request->timeout);
 
 	return OPAL_SUCCESS;
@@ -854,8 +891,11 @@ static inline uint32_t p8_i2c_get_bit_rate_divisor(uint32_t lb_freq_mhz,
 
 static inline uint64_t p8_i2c_get_poll_interval(uint32_t bus_speed)
 {
+	uint64_t usec;
+
 	/* Polling Interval = 8 * (1/bus_speed) * (1/10) -> convert to uSec */
-	return ((8 * USEC_PER_SEC) / (10 * bus_speed * 1000));
+	usec = ((8 * USEC_PER_SEC) / (10 * bus_speed * 1000));
+	return usecs_to_tb(usec);
 }
 
 static void p8_i2c_timeout(struct timer *t __unused, void *data)
@@ -900,16 +940,28 @@ static void p8_i2c_timeout(struct timer *t __unused, void *data)
 	unlock(&master->lock);
 }
 
-static void p8_i2c_compare_poll_timer(struct p8_i2c_master *master)
+static void p8_i2c_poll(struct timer *t __unused, void *data)
 {
+	struct p8_i2c_master *master = data;
 	uint64_t now = mftb();
 
-	if (master->poll_timer == 0 ||
-	    tb_compare(now, master->poll_timer) == TB_AAFTERB ||
-	    tb_compare(now, master->poll_timer) == TB_AEQUALB) {
-		master->poll_timer = now + usecs_to_tb(master->poll_interval);
-		p8_i2c_check_status(master);
-	}
+	/*
+	 * This is called when the interrupt isn't functional and
+	 * will essentially just run the state machine from a timer
+	 *
+	 * There is some (mild) duplication with the OPAL poller but
+	 * the latter is going to generally run very slowly so this
+	 * isn't a problem. During boot they will both kick in but
+	 * here too, this isn't a real problem.
+	 */
+	lock(&master->lock);
+	master->poll_timer = now + master->poll_interval;
+	p8_i2c_check_status(master);
+	if (master->state != state_idle)
+		schedule_timer_at(&master->poller,
+				  now + master->poll_interval);
+	p8_i2c_check_work(master);
+	unlock(&master->lock);
 }
 
 static void p8_i2c_poll_each_master(bool interrupt)
@@ -919,6 +971,8 @@ static void p8_i2c_poll_each_master(bool interrupt)
 	struct i2c_bus *bus;
 
 	list_for_each(&i2c_bus_list, bus, link) {
+		uint64_t now = mftb();
+
 		port = container_of(bus, struct p8_i2c_master_port, bus);
 
 		/* Each master serves 1 or more ports, check for the first
@@ -935,11 +989,17 @@ static void p8_i2c_poll_each_master(bool interrupt)
 			continue;
 
 		lock(&master->lock);
-		if (!interrupt)
-			p8_i2c_compare_poll_timer(master);
-		else
+
+		/* Run the state machine */
+		if (interrupt || master->poll_timer == 0 ||
+		    tb_compare(now, master->poll_timer) == TB_AAFTERB ||
+		    tb_compare(now, master->poll_timer) == TB_AEQUALB) {
+			master->poll_timer = now + master->poll_interval;
 			p8_i2c_check_status(master);
+		}
+		/* Check for new work */
 		p8_i2c_check_work(master);
+
 		unlock(&master->lock);
 	}
 }
@@ -1035,6 +1095,7 @@ void p8_i2c_init(void)
 	struct i2c_bus *bus, *next_bus;
 	struct p8_i2c_master *master;
 	uint64_t ex_stat;
+	static bool irq_printed;
 	int rc;
 
 	dt_for_each_compatible(dt_root, i2cm, "ibm,power8-i2cm") {
@@ -1067,6 +1128,15 @@ void p8_i2c_init(void)
 		master->poll_timer = 0;
 		master->bit_rate_div = p8_i2c_get_bit_rate_divisor(lb_freq,
 								   bus_speed);
+		/* Check if interrupt is usable */
+		init_timer(&master->poller, p8_i2c_poll, master);
+		master->irq_ok = p8_i2c_has_irqs();
+		if (!irq_printed) {
+			irq_printed = true;
+			prlog(PR_INFO, "I2C: Interrupts %sfunctional\n",
+			      master->irq_ok ? "" : "non-");
+		}
+
 		/* Allocate ports driven by this master */
 		count = 0;
 		dt_for_each_child(i2cm, i2cm_port)
@@ -1092,7 +1162,10 @@ void p8_i2c_init(void)
 		}
 	}
 
-	/* Register the poller, one poller will cater all the masters */
+	/* Register the poller, one poller will cater all the masters,
+	 * this is needed for when we operate without Linux running
+	 * and thus no interrupts
+	 */
 	opal_add_poller(p8_i2c_opal_poll, NULL);
 
 	/* Register the OPAL interface */
