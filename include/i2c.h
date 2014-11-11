@@ -21,9 +21,9 @@ struct i2c_request;
 
 struct i2c_bus {
 	struct list_node	link;
-	struct dt_node		*i2c_port;
-	int			(*queue_req)(struct i2c_bus *bus,
-					     struct i2c_request *req);
+	struct dt_node		*dt_node;
+	uint32_t		opal_id;
+	int			(*queue_req)(struct i2c_request *req);
 	struct i2c_request	*(*alloc_req)(struct i2c_bus *bus);
 	void			(*free_req)(struct i2c_request *req);
 };
@@ -47,6 +47,28 @@ struct i2c_request {
 	void			*user_data;	/* Client data */
 };
 
+extern struct list_head i2c_bus_list;
+
+/* Generic i2c */
+extern void i2c_add_bus(struct i2c_bus *bus);
+extern struct i2c_bus *i2c_find_bus_by_id(uint32_t opal_id);
+
+static inline struct i2c_request *i2c_alloc_req(struct i2c_bus *bus)
+{
+	return bus->alloc_req(bus);
+}
+
+static inline void i2c_free_req(struct i2c_request *req)
+{
+	req->bus->free_req(req);
+}
+
+static inline int i2c_queue_req(struct i2c_request *req)
+{
+	return req->bus->queue_req(req);
+}
+
+/* P8 implementation details */
 extern void p8_i2c_init(void);
 extern void p8_i2c_interrupt(void);
 

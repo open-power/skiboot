@@ -16,7 +16,6 @@
 
 #undef DEBUG
 
-#include <fsp.h>
 #include <opal.h>
 #include <lock.h>
 #include <chip.h>
@@ -24,7 +23,6 @@
 #include <xscom.h>
 #include <timebase.h>
 #include <timer.h>
-#include <opal-msg.h>
 
 #ifdef DEBUG
 #define DBG(fmt...) prlog(PR_ERR, "I2C: " fmt)
@@ -192,7 +190,6 @@ struct p8_i2c_master {
 struct p8_i2c_master_port {
 	struct i2c_bus		bus; /* Abstract bus struct for the client */
 	struct p8_i2c_master	*common;
-	uint32_t		bus_id;
 	uint32_t		port_num;
 };
 
@@ -201,8 +198,6 @@ struct p8_i2c_request {
 	uint32_t		port_num;
 	uint64_t		timeout;
 };
-
-static LIST_HEAD(i2c_bus_list);
 
 static bool p8_i2c_has_irqs(void)
 {
@@ -830,8 +825,9 @@ static void p8_i2c_check_work(struct p8_i2c_master *master)
 	}
 }
 
-static int p8_i2c_queue_request(struct i2c_bus *bus, struct i2c_request *req)
+static int p8_i2c_queue_request(struct i2c_request *req)
 {
+	struct i2c_bus *bus = req->bus;
 	struct p8_i2c_master_port *port =
 		container_of(bus, struct p8_i2c_master_port, bus);
 	struct p8_i2c_master *master = port->common;
@@ -1014,85 +1010,11 @@ void p8_i2c_interrupt(void)
 	p8_i2c_poll_each_master(true);
 }
 
-static void opal_p8_i2c_request_complete(int rc, struct i2c_request *req)
-{
-	uint64_t token = (uint64_t)(unsigned long)req->user_data;
-
-	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL, token, rc);
-	req->bus->free_req(req);
-}
-
-static int opal_p8_i2c_request(uint64_t async_token, uint32_t bus_id,
-			       struct opal_i2c_request *oreq)
-{
-	struct p8_i2c_master_port *port;
-	struct i2c_bus *bus = NULL;
-	struct i2c_request *req;
-	int rc;
-
-	if (oreq->flags & OPAL_I2C_ADDR_10)
-		return OPAL_UNSUPPORTED;
-
-	list_for_each(&i2c_bus_list, bus, link) {
-		port = container_of(bus, struct p8_i2c_master_port, bus);
-		if (port->bus_id == bus_id)
-			break;
-	}
-	if (!bus) {
-		prlog(PR_ERR, "I2C: Invalid 'bus_id' passed to the OPAL\n");
-		return OPAL_PARAMETER;
-	}
-
-	req = bus->alloc_req(bus);
-	if (!req) {
-		prlog(PR_ERR, "I2C: Failed to allocate 'i2c_request'\n");
-		return OPAL_NO_MEM;
-	}
-
-	switch(oreq->type) {
-	case OPAL_I2C_RAW_READ:
-		req->op = I2C_READ;
-		break;
-	case OPAL_I2C_RAW_WRITE:
-		req->op = I2C_WRITE;
-		break;
-	case OPAL_I2C_SM_READ:
-		req->op = SMBUS_READ;
-		req->offset = oreq->subaddr;
-		req->offset_bytes = oreq->subaddr_sz;
-		break;
-	case OPAL_I2C_SM_WRITE:
-		req->op = SMBUS_WRITE;
-		req->offset = oreq->subaddr;
-		req->offset_bytes = oreq->subaddr_sz;
-		break;
-	default:
-		bus->free_req(req);
-		return OPAL_PARAMETER;
-	}
-	req->dev_addr = oreq->addr;
-	req->rw_len = oreq->size;
-	req->rw_buf = (void *)oreq->buffer_ra;
-	req->completion = opal_p8_i2c_request_complete;
-	req->user_data = (void *)(unsigned long)async_token;
-	req->bus = bus;
-
-	/* Finally, queue the OPAL i2c request and return */
-	rc = bus->queue_req(bus, req);
-	if (rc) {
-		bus->free_req(req);
-		return rc;
-	}
-
-	return OPAL_ASYNC_COMPLETION;
-}
-
 void p8_i2c_init(void)
 {
-	struct p8_i2c_master_port *port, *prev_port;
+	struct p8_i2c_master_port *port;
 	uint32_t bus_speed, lb_freq, count;
 	struct dt_node *i2cm, *i2cm_port;
-	struct i2c_bus *bus, *next_bus;
 	struct p8_i2c_master *master;
 	uint64_t ex_stat;
 	static bool irq_printed;
@@ -1102,7 +1024,7 @@ void p8_i2c_init(void)
 		master = zalloc(sizeof(*master));
 		if (!master) {
 			prlog(PR_ERR,"I2C: Failed to allocate p8_i2c_master\n");
-			goto exit_free_list;
+			break;
 		}
 
 		/* Bus speed in KHz */
@@ -1119,7 +1041,8 @@ void p8_i2c_init(void)
 				I2C_EXTD_STAT_REG, &ex_stat);
 		if (rc) {
 			prlog(PR_ERR, "I2C: Failed to read EXTD_STAT_REG\n");
-			goto exit_free_master;
+			free(master);
+			break;
 		}
 
 		master->fifo_size = GETFIELD(I2C_EXTD_STAT_FIFO_SIZE, ex_stat);
@@ -1145,19 +1068,18 @@ void p8_i2c_init(void)
 		port = zalloc(sizeof(*port) * count);
 		if (!port) {
 			prlog(PR_ERR, "I2C: Insufficient memory\n");
-			goto exit_free_master;
+			free(master);
+			break;
 		}
 
 		dt_for_each_child(i2cm, i2cm_port) {
-			port->bus_id = dt_prop_get_u32(i2cm_port,
-						       "ibm,opal-id");
 			port->port_num = dt_prop_get_u32(i2cm_port, "reg");
 			port->common = master;
-			port->bus.i2c_port = i2cm_port;
+			port->bus.dt_node = i2cm_port;
 			port->bus.queue_req = p8_i2c_queue_request;
 			port->bus.alloc_req = p8_i2c_alloc_request;
 			port->bus.free_req = p8_i2c_free_request;
-			list_add_tail(&i2c_bus_list, &port->bus.link);
+			i2c_add_bus(&port->bus);
 			port++;
 		}
 	}
@@ -1167,32 +1089,4 @@ void p8_i2c_init(void)
 	 * and thus no interrupts
 	 */
 	opal_add_poller(p8_i2c_opal_poll, NULL);
-
-	/* Register the OPAL interface */
-	opal_register(OPAL_I2C_REQUEST, opal_p8_i2c_request, 3);
-
-	return;
-
-exit_free_master:
-	free(master);
-exit_free_list:
-	prev_port = NULL;
-	list_for_each_safe(&i2c_bus_list, bus, next_bus, link) {
-		port = container_of(bus, struct p8_i2c_master_port, bus);
-		if (!prev_port) {
-			prev_port = port;
-			continue;
-		} else if (prev_port->common == port->common) {
-			continue;
-		} else {
-			free(prev_port->common);
-			free(prev_port);
-			prev_port = NULL;
-		}
-	}
-
-	if (prev_port) { /* Last node left */
-		free(prev_port->common);
-		free(prev_port);
-	}
 }

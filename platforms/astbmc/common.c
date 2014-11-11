@@ -174,7 +174,6 @@ static struct dt_node *dt_create_i2c_bus(struct dt_node *i2cm, const char *port_
 					 uint32_t port_id)
 {
 	static struct dt_node *port;
-	static uint32_t bus_id = 0;
 
 	port = dt_new_addr(i2cm, "i2c-bus", port_id);
 	if (!port)
@@ -183,7 +182,6 @@ static struct dt_node *dt_create_i2c_bus(struct dt_node *i2cm, const char *port_
 	dt_add_property_string(port, "compatible", "ibm,power8-i2c-port");
 	dt_add_property_string(port, "port-name", port_name);
 	dt_add_property_cells(port, "reg", port_id);
-	dt_add_property_cells(port, "ibm,opal-id", ++bus_id);
 	dt_add_property_cells(port, "#address-cells", 1);
 	dt_add_property_cells(port, "#size-cells", 0);
 
