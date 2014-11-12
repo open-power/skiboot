@@ -78,7 +78,7 @@ extern void cancel_timer(struct timer *t);
 extern void cancel_timer_async(struct timer *t);
 
 /* Run the timers */
-extern void check_timers(void);
+extern void check_timers(bool from_interrupt);
 
 /* Core init */
 void late_init_timers(void);

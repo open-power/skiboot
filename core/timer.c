@@ -198,7 +198,7 @@ static void __check_timers(uint64_t now)
 	}
 }
 
-void check_timers(void)
+void check_timers(bool from_interrupt)
 {
 	struct timer *t;
 	uint64_t now = mftb();
@@ -215,7 +215,8 @@ void check_timers(void)
 
 	/* Take lock and try again */
 	lock(&timer_lock);
-	__check_poll_timers();
+	if (!from_interrupt)
+		__check_poll_timers();
 	__check_timers(now);
 	unlock(&timer_lock);
 }

@@ -280,7 +280,7 @@ void opal_run_pollers(void)
 	struct opal_poll_entry *poll_ent;
 
 	/* We run the timers first */
-	check_timers();
+	check_timers(false);
 
 	/* The pollers are run lokelessly, see comment in opal_del_poller */
 	list_for_each(&opal_pollers, poll_ent, link)
