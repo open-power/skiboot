@@ -21,6 +21,7 @@
 #include <timebase.h>
 #include <ipmi.h>
 #include <bt.h>
+#include <timer.h>
 
 /* BT registers */
 #define BT_CTRL			0
@@ -37,6 +38,9 @@
 #define   BT_INTMASK_B2H_IRQEN		0x01
 #define   BT_INTMASK_B2H_IRQ		0x02
 #define   BT_INTMASK_BMC_HWRST		0x80
+
+/* Default poll interval before interrupts are working */
+#define BT_DEFAULT_POLL_MS	200
 
 /*
  * Minimum size of an IPMI request/response including
@@ -87,6 +91,8 @@ struct bt {
 	struct lock bt_lock;
 	struct lock msgq_lock;
 	struct list_head msgq;
+	struct timer poller;
+	bool irq_ok;
 	int queue_len;
 };
 static struct bt bt;
@@ -316,7 +322,7 @@ static void bt_expire_old_msg(void)
 	unlock(&bt.msgq_lock);
 }
 
-static void bt_poll(void *data __unused)
+static void bt_poll(struct timer *t __unused, void *data __unused)
 {
 	bool ret = true;
 
@@ -362,8 +368,10 @@ static void bt_poll(void *data __unused)
 			}
 			unlock(&bt.bt_lock);
 		}
-	}
-	while(!ret);
+	} while(!ret);
+
+	schedule_timer(&bt.poller,
+		       bt.irq_ok ? TIMER_POLL : msecs_to_tb(BT_DEFAULT_POLL_MS));
 }
 
 static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
@@ -385,7 +393,7 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 	}
 	unlock(&bt.msgq_lock);
 
-	bt_poll(NULL);
+	bt_poll(NULL, NULL);
 
 	return 0;
 }
@@ -394,9 +402,10 @@ void bt_irq(void)
 {
 	uint8_t ireg = bt_inb(BT_INTMASK);
 
+	bt.irq_ok = true;
 	if (ireg & BT_INTMASK_B2H_IRQ) {
 		bt_outb(BT_INTMASK_B2H_IRQ | BT_INTMASK_B2H_IRQEN, BT_INTMASK);
-		bt_poll(NULL);
+		bt_poll(NULL, NULL);
 	}
 }
 
@@ -474,7 +483,7 @@ void bt_init(void)
 		return;
 	}
 	bt.base_addr = dt_property_get_cell(prop, 1);
-	printf("BT: Interface intialized, IO 0x%04x\n", bt.base_addr);
+	init_timer(&bt.poller, bt_poll, NULL);
 
 	bt_init_interface();
 	init_lock(&bt.msgq_lock);
@@ -488,7 +497,13 @@ void bt_init(void)
 	list_head_init(&bt.msgq);
 	bt.queue_len = 0;
 
-	opal_add_poller(bt_poll, NULL);
+	printf("BT: Interface intialized, IO 0x%04x\n", bt.base_addr);
 
 	ipmi_register_backend(&bt_backend);
+
+	/* We initially schedule the poller as a relatively fast timer, at
+	 * least until we have at least one interrupt occurring at which
+	 * point we turn it into a background poller
+	 */
+	schedule_timer(&bt.poller, msecs_to_tb(BT_DEFAULT_POLL_MS));
 }
