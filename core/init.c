@@ -43,6 +43,7 @@
 #include <centaur.h>
 #include <libfdt/libfdt.h>
 #include <hostservices.h>
+#include <timer.h>
 
 /*
  * Boot semaphore, incremented by each CPU calling in
@@ -644,6 +645,9 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 
 	/* Initialize PCI */
 	pci_init_slots();
+
+	/* Add OPAL timer related properties */
+	late_init_timers();
 
 	/*
 	 * These last few things must be done as late as possible

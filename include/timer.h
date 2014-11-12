@@ -24,6 +24,7 @@ struct timer {
 	timer_func_t		expiry;
 	void *			user_data;
 	void *			running;
+	uint64_t		gen;
 };
 
 extern void init_timer(struct timer *t, timer_func_t expiry, void *data);
@@ -33,8 +34,20 @@ extern void init_timer(struct timer *t, timer_func_t expiry, void *data);
  * This doesn't synchronize so if the timer also reschedules itself there
  * is no telling which one "wins". The advantage is that this can be called
  * with any lock held or from the timer expiry itself.
+ *
+ * We support a magic expiry of TIMER_POLL which causes a given timer to
+ * be called whenever OPAL main polling loop is run, which is often during
+ * boot and occasionally while Linux is up. This can be used with both
+ * schedule_timer() and schedule_timer_at()
+ *
+ * This is useful for a number of interrupt driven drivers to have a way
+ * to crank their state machine at times when the interrupt isn't available
+ * such as during early boot.
+ *
+ * Note: For convenience, schedule_timer() returns the current TB value
  */
-extern void schedule_timer(struct timer *t, uint64_t how_long);
+#define TIMER_POLL	((uint64_t)-1)
+extern uint64_t schedule_timer(struct timer *t, uint64_t how_long);
 extern void schedule_timer_at(struct timer *t, uint64_t when);
 
 /* Synchronization point with the timer. If the callback has started before
@@ -66,5 +79,8 @@ extern void cancel_timer_async(struct timer *t);
 
 /* Run the timers */
 extern void check_timers(void);
+
+/* Core init */
+void late_init_timers(void);
 
 #endif /* __TIMER_H */
