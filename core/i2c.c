@@ -20,7 +20,7 @@
 #include <device.h>
 #include <opal-msg.h>
 
-LIST_HEAD(i2c_bus_list);
+static LIST_HEAD(i2c_bus_list);
 
 /* Used to assign OPAL IDs */
 static uint32_t i2c_next_bus;

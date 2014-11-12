@@ -28,6 +28,7 @@
 #include <xscom.h>
 #include <chip.h>
 #include <lpc.h>
+#include <i2c.h>
 #include <timebase.h>
 #include <platform.h>
 
@@ -280,8 +281,15 @@ static void handle_extra_interrupt(struct psi *psi)
 		occ_interrupt();
 	if (val & PSIHB_IRQ_STAT_FSI)
 		printf("PSI: FSI irq received\n");
-	if (val & PSIHB_IRQ_STAT_LPC)
-		lpc_interrupt();
+	if (val & PSIHB_IRQ_STAT_LPC) {
+		lpc_interrupt(psi->chip_id);
+
+		/*
+		 * i2c interrupts are ORed with the LPC ones on
+		 * Murano DD2.1 and Venice DD2.0
+		 */
+		p8_i2c_interrupt(psi->chip_id);
+	}
 	if (val & PSIHB_IRQ_STAT_LOCAL_ERR)
 		printf("PSI: ATTN irq received\n");
 	if (val & PSIHB_IRQ_STAT_HOST_ERR) {

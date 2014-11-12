@@ -20,7 +20,6 @@
 #include <lock.h>
 #include <chip.h>
 #include <lpc.h>
-#include <i2c.h>
 #include <timebase.h>
 #include <fsp-elog.h>
 
@@ -455,12 +454,9 @@ bool lpc_present(void)
 	return lpc_default_chip_id >= 0;
 }
 
-void lpc_interrupt(void)
+void lpc_interrupt(uint32_t chip_id __unused)
 {
-	/* i2c interrupts are routed through lpc */
-	p8_i2c_interrupt();
-
-	/* Handle the lpc interrupt source */
+	/* Handle the lpc interrupt source (errors etc...) TODO... */
 }
 
 void lpc_init(void)

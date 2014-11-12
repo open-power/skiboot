@@ -166,8 +166,8 @@
 
 struct p8_i2c_master {
 	struct lock		lock;		/* Lock to guard the members */
-	uint64_t		poll_timer;	/* Poll timer expiration */
-	uint64_t		poll_interval;	/* Polling interval in usec */
+	uint64_t		poll_interval;	/* Polling interval  */
+	uint64_t		byte_timeout;	/* Timeout per byte */
 	uint64_t		xscom_base;	/* xscom base of i2cm */
 	uint32_t		bit_rate_div;	/* Divisor to set bus speed*/
 	uint32_t		fifo_size;	/* Maximum size of FIFO  */
@@ -185,6 +185,7 @@ struct p8_i2c_master {
 	struct list_head	req_list;	/* Request queue head */
 	struct timer		poller;
 	struct timer		timeout;
+	struct list_node	link;
 };
 
 struct p8_i2c_master_port {
@@ -792,19 +793,14 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	/* Enable the interrupts */
 	p8_i2c_enable_irqs(master);
 
-	/* If interrupts aren't working, start the poll timer. Also
-	 * calculate the timeout differently
+	/* Run a poll timer for boot cases or non-working interrupts
+	 * cases
 	 */
-	now = mftb();
+	now = schedule_timer(&master->poller, master->poll_interval);
+
+	/* Calculate and start timeout */
 	tbytes = req->rw_len + req->offset_bytes + 2;
-	if (!master->irq_ok) {
-		schedule_timer_at(&master->poller,
-				  now + master->poll_interval);
-		request->timeout = now +
-			tbytes * msecs_to_tb(I2C_TIMEOUT_POLL_MS);
-	} else
-		request->timeout = now +
-			tbytes * msecs_to_tb(I2C_TIMEOUT_IRQ_MS);
+	request->timeout = now + tbytes * master->byte_timeout;
 
 	/* Start the timeout */
 	schedule_timer_at(&master->timeout, request->timeout);
@@ -939,75 +935,47 @@ static void p8_i2c_timeout(struct timer *t __unused, void *data)
 static void p8_i2c_poll(struct timer *t __unused, void *data)
 {
 	struct p8_i2c_master *master = data;
-	uint64_t now = mftb();
 
 	/*
-	 * This is called when the interrupt isn't functional and
-	 * will essentially just run the state machine from a timer
-	 *
-	 * There is some (mild) duplication with the OPAL poller but
-	 * the latter is going to generally run very slowly so this
-	 * isn't a problem. During boot they will both kick in but
-	 * here too, this isn't a real problem.
+	 * This is called when the interrupt isn't functional or
+	 * generally from the opal pollers, so fast while booting
+	 * and slowly when Linux is up.
 	 */
+
+	/* Lockless fast bailout */
+	if (master->state == state_idle)
+		return;
+
 	lock(&master->lock);
-	master->poll_timer = now + master->poll_interval;
 	p8_i2c_check_status(master);
 	if (master->state != state_idle)
-		schedule_timer_at(&master->poller,
-				  now + master->poll_interval);
+		schedule_timer(&master->poller, master->poll_interval);
 	p8_i2c_check_work(master);
 	unlock(&master->lock);
 }
 
-static void p8_i2c_poll_each_master(bool interrupt)
+void p8_i2c_interrupt(uint32_t chip_id)
 {
+	struct proc_chip *chip = get_chip(chip_id);
 	struct p8_i2c_master *master = NULL;
-	struct p8_i2c_master_port *port;
-	struct i2c_bus *bus;
 
-	list_for_each(&i2c_bus_list, bus, link) {
-		uint64_t now = mftb();
+	assert(chip);
+	list_for_each(&chip->i2cms, master, link) {
 
-		port = container_of(bus, struct p8_i2c_master_port, bus);
-
-		/* Each master serves 1 or more ports, check for the first
-		 * one found..
-		 */
-		if (!master || master != port->common)
-			master = port->common;
-		else
-			continue;
-
-		/* Lockless fast bailout for polling mode */
-		if (!interrupt && master->state == state_idle &&
-		    list_empty(&master->req_list))
+		/* Lockless fast bailout (shared interrupt) */
+		if (master->state == state_idle)
 			continue;
 
 		lock(&master->lock);
 
 		/* Run the state machine */
-		if (interrupt || master->poll_timer == 0 ||
-		    tb_compare(now, master->poll_timer) == TB_AAFTERB ||
-		    tb_compare(now, master->poll_timer) == TB_AEQUALB) {
-			master->poll_timer = now + master->poll_interval;
-			p8_i2c_check_status(master);
-		}
+		p8_i2c_check_status(master);
+
 		/* Check for new work */
 		p8_i2c_check_work(master);
 
 		unlock(&master->lock);
 	}
-}
-
-static void p8_i2c_opal_poll(void *data __unused)
-{
-	p8_i2c_poll_each_master(false);
-}
-
-void p8_i2c_interrupt(void)
-{
-	p8_i2c_poll_each_master(true);
 }
 
 void p8_i2c_init(void)
@@ -1016,6 +984,7 @@ void p8_i2c_init(void)
 	uint32_t bus_speed, lb_freq, count;
 	struct dt_node *i2cm, *i2cm_port;
 	struct p8_i2c_master *master;
+	struct proc_chip *chip;
 	uint64_t ex_stat;
 	static bool irq_printed;
 	int rc;
@@ -1035,7 +1004,10 @@ void p8_i2c_init(void)
 		master->state = state_idle;
 		master->chip_id = dt_get_chip_id(i2cm);
 		master->xscom_base = dt_get_address(i2cm, 0, NULL);
+		chip = get_chip(master->chip_id);
+		assert(chip);
 		init_timer(&master->timeout, p8_i2c_timeout, master);
+		init_timer(&master->poller, p8_i2c_poll, master);
 
 		rc = xscom_read(master->chip_id, master->xscom_base +
 				I2C_EXTD_STAT_REG, &ex_stat);
@@ -1047,18 +1019,29 @@ void p8_i2c_init(void)
 
 		master->fifo_size = GETFIELD(I2C_EXTD_STAT_FIFO_SIZE, ex_stat);
 		list_head_init(&master->req_list);
-		master->poll_interval = p8_i2c_get_poll_interval(bus_speed);
-		master->poll_timer = 0;
 		master->bit_rate_div = p8_i2c_get_bit_rate_divisor(lb_freq,
 								   bus_speed);
 		/* Check if interrupt is usable */
-		init_timer(&master->poller, p8_i2c_poll, master);
 		master->irq_ok = p8_i2c_has_irqs();
 		if (!irq_printed) {
 			irq_printed = true;
 			prlog(PR_INFO, "I2C: Interrupts %sfunctional\n",
 			      master->irq_ok ? "" : "non-");
 		}
+
+		/* If we have no interrupt, calculate a poll interval, otherwise
+		 * just use a TIMER_POLL timer which will tick on OPAL pollers
+		 * only (which allows us to operate during boot before
+		 * interrupts are functional etc...
+		 */
+		if (master->irq_ok)
+			master->poll_interval = TIMER_POLL;
+		else
+			master->poll_interval =
+				p8_i2c_get_poll_interval(bus_speed);
+		master->byte_timeout = master->irq_ok ?
+			msecs_to_tb(I2C_TIMEOUT_IRQ_MS) :
+			msecs_to_tb(I2C_TIMEOUT_POLL_MS);
 
 		/* Allocate ports driven by this master */
 		count = 0;
@@ -1072,6 +1055,9 @@ void p8_i2c_init(void)
 			break;
 		}
 
+		/* Add master to chip's list */
+		list_add_tail(&chip->i2cms, &master->link);
+
 		dt_for_each_child(i2cm, i2cm_port) {
 			port->port_num = dt_prop_get_u32(i2cm_port, "reg");
 			port->common = master;
@@ -1083,10 +1069,4 @@ void p8_i2c_init(void)
 			port++;
 		}
 	}
-
-	/* Register the poller, one poller will cater all the masters,
-	 * this is needed for when we operate without Linux running
-	 * and thus no interrupts
-	 */
-	opal_add_poller(p8_i2c_opal_poll, NULL);
 }

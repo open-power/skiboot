@@ -20,6 +20,8 @@
 #include <stdint.h>
 #include <lock.h>
 
+#include <ccan/list/list.h>
+
 /*
  * Note on chip IDs:
  *
@@ -132,6 +134,9 @@ struct proc_chip {
 
 	/* Used by hw/centaur.c */
 	struct centaur_chip	*centaurs;
+
+	/* Used by hw/p8-i2c.c */
+	struct list_head	i2cms;
 };
 
 extern uint32_t pir_to_chip_id(uint32_t pir);

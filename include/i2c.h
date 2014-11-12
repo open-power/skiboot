@@ -47,8 +47,6 @@ struct i2c_request {
 	void			*user_data;	/* Client data */
 };
 
-extern struct list_head i2c_bus_list;
-
 /* Generic i2c */
 extern void i2c_add_bus(struct i2c_bus *bus);
 extern struct i2c_bus *i2c_find_bus_by_id(uint32_t opal_id);
@@ -70,6 +68,6 @@ static inline int i2c_queue_req(struct i2c_request *req)
 
 /* P8 implementation details */
 extern void p8_i2c_init(void);
-extern void p8_i2c_interrupt(void);
+extern void p8_i2c_interrupt(uint32_t chip_id);
 
 #endif /* __I2C_H */
