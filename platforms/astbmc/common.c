@@ -81,6 +81,15 @@ int64_t astbmc_ipmi_reboot(void)
 	return ipmi_chassis_control(IPMI_CHASSIS_PWR_CYCLE);
 }
 
+static void astbmc_fixup_dt_system_id(void)
+{
+	/* Make sure we don't already have one */
+	if (dt_find_property(dt_root, "system-id"))
+		return;
+
+	dt_add_property_strings(dt_root, "system-id", "unavailable");
+}
+
 static void astbmc_fixup_dt_bt(struct dt_node *lpc)
 {
 	struct dt_node *bt;
@@ -265,6 +274,10 @@ static void astbmc_fixup_dt(void)
 
 	/* Add i2c masters if needed */
 	astbmc_fixup_dt_i2cm();
+
+	/* The pel logging code needs a system-id property to work so
+	   make sure we have one. */
+	astbmc_fixup_dt_system_id();
 }
 
 static void astbmc_fixup_psi_bar(void)
