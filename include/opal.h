@@ -20,7 +20,7 @@
 /****** OPAL APIs ******/
 
 /* Return codes */
-#define OPAL_SUCCESS 		0
+#define OPAL_SUCCESS		0
 #define OPAL_PARAMETER		-1
 #define OPAL_BUSY		-2
 #define OPAL_PARTIAL		-3
@@ -37,6 +37,14 @@
 #define OPAL_WRONG_STATE	-14
 #define OPAL_ASYNC_COMPLETION	-15
 #define OPAL_EMPTY		-16
+#define OPAL_I2C_TIMEOUT	-17
+#define OPAL_I2C_INVALID_CMD	-18
+#define OPAL_I2C_LBUS_PARITY	-19
+#define OPAL_I2C_BKEND_OVERRUN	-20
+#define OPAL_I2C_BKEND_ACCESS	-21
+#define OPAL_I2C_ARBT_LOST	-22
+#define OPAL_I2C_NACK_RCVD	-23
+#define OPAL_I2C_STOP_ERR	-24
 
 /* API Tokens (in r0) */
 #define OPAL_TEST				0

@@ -28,6 +28,19 @@ struct i2c_bus {
 	void			(*free_req)(struct i2c_request *req);
 };
 
+/*
+ * I2C specific OPAL error codes:
+ *
+ * OPAL_I2C_TIMEOUT		I2C request timed out
+ * OPAL_I2C_INVALID_CMD		New command given when old not completed yet
+ * OPAL_I2C_LBUS_PARITY		Local bus parity error
+ * OPAL_I2C_BKEND_OVERRUN	Writing/reading into full/empty fifo respectively
+ * OPAL_I2C_BKEND_ACCESS	Writing/reading more data than requested
+ * OPAL_I2C_ARBT_LOST		I2C bus is held by some other master
+ * OPAL_I2C_NACK_RCVD		Slave is not responding back with the ACK
+ * OPAL_I2C_STOP_ERR		Did not able to send the STOP condtion on bus
+ */
+
 struct i2c_request {
 	struct list_node	link;
 	struct i2c_bus		*bus;
@@ -37,6 +50,7 @@ struct i2c_request {
 		SMBUS_READ,	/* SMBUS protocol read from the device */
 		SMBUS_WRITE,	/* SMBUS protocol write to the device */
 	} op;
+	int			result;		/* OPAL i2c error code */
 	uint32_t		dev_addr;	/* Slave device address */
 	uint32_t		offset_bytes;	/* Internal device offset */
 	uint32_t		offset;		/* Internal device offset */

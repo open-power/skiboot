@@ -23,6 +23,22 @@
 #include <xscom.h>
 #include <timebase.h>
 #include <timer.h>
+#include <opal-msg.h>
+#include <errorlog.h>
+/* XXX SRC's will be moved to errorlog.h and then remove fsp-elog.h */
+#include <fsp-elog.h>
+
+DEFINE_LOG_ENTRY(OPAL_RC_I2C_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_I2C,
+		 OPAL_IO_SUBSYSTEM, OPAL_PREDICTIVE_ERR_DEGRADED_PERF,
+		 OPAL_NA, NULL);
+DEFINE_LOG_ENTRY(OPAL_RC_I2C_START_REQ, OPAL_INPUT_OUTPUT_ERR_EVT, OPAL_I2C,
+		 OPAL_IO_SUBSYSTEM, OPAL_INFO, OPAL_NA, NULL);
+DEFINE_LOG_ENTRY(OPAL_RC_I2C_TIMEOUT, OPAL_INPUT_OUTPUT_ERR_EVT, OPAL_I2C,
+		 OPAL_IO_SUBSYSTEM, OPAL_INFO, OPAL_NA, NULL);
+DEFINE_LOG_ENTRY(OPAL_RC_I2C_TRANSFER, OPAL_INPUT_OUTPUT_ERR_EVT, OPAL_I2C,
+		 OPAL_IO_SUBSYSTEM, OPAL_INFO, OPAL_NA, NULL);
+DEFINE_LOG_ENTRY(OPAL_RC_I2C_RESET, OPAL_INPUT_OUTPUT_ERR_EVT, OPAL_I2C,
+		 OPAL_IO_SUBSYSTEM, OPAL_INFO, OPAL_NA, NULL);
 
 #ifdef DEBUG
 #define DBG(fmt...) prlog(PR_ERR, "I2C: " fmt)
@@ -39,8 +55,6 @@
 #define I2C_RESET_DELAY_MS	5 /* 5 msecs */
 #define I2C_FIFO_HI_LVL		4
 #define I2C_FIFO_LO_LVL		4
-#define I2C_PAGE_WRITE_SIZE	(0x1u << 8)
-#define I2C_PAGE_WRITE_MASK	(I2C_PAGE_WRITE_SIZE - 1)
 
 /*
  * I2C registers set.
@@ -200,6 +214,65 @@ struct p8_i2c_request {
 	uint64_t		timeout;
 };
 
+static void p8_i2c_print_debug_info(struct p8_i2c_master *master,
+				    struct i2c_request *req)
+{
+	uint64_t cmd, mode, stat, estat, intr;
+	int rc;
+
+	/* Print master and request structure bits */
+	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Master info--\n"
+			 "chip_id:%d\txscom_base:0x%016llx\tstate:%d\t"
+			 "bytes_sent:%d\n", master->chip_id, master->xscom_base,
+			 master->state, master->bytes_sent);
+
+	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Request info--\n"
+			 "addr:0x%04x\toffset_bytes:%d\toffset:%d\tlength:%d\n",
+			 req->dev_addr, req->offset_bytes, req->offset,
+			 req->rw_len);
+
+	/* Dump the current state of i2c registers */
+	rc = xscom_read(master->chip_id, master->xscom_base + I2C_CMD_REG,
+			&cmd);
+	if (rc) {
+		prlog(PR_DEBUG, "I2C: Failed to read CMD_REG\n");
+		cmd = 0ull;
+	}
+
+	rc = xscom_read(master->chip_id, master->xscom_base + I2C_MODE_REG,
+			&mode);
+	if (rc) {
+		prlog(PR_DEBUG, "I2C: Failed to read MODE_REG\n");
+		mode = 0ull;
+	}
+
+	rc = xscom_read(master->chip_id, master->xscom_base + I2C_STAT_REG,
+			&stat);
+	if (rc) {
+		prlog(PR_DEBUG, "I2C: Failed to read STAT_REG\n");
+		stat = 0ull;
+	}
+
+	rc = xscom_read(master->chip_id, master->xscom_base + I2C_EXTD_STAT_REG,
+			&estat);
+	if (rc) {
+		prlog(PR_DEBUG, "I2C: Failed to read EXTD_STAT_REG\n");
+		estat = 0ull;
+	}
+
+	rc = xscom_read(master->chip_id, master->xscom_base + I2C_INTR_MASK_REG,
+			&intr);
+	if (rc) {
+		prlog(PR_DEBUG, "I2C: Failed to read INTR_MASK_REG\n");
+		intr = 0ull;
+	}
+
+	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Register dump--\n"
+			 "cmd:0x%016llx\tmode:0x%016llx\tstat:0x%016llx\n"
+			 "estat:0x%016llx\tintr:0x%016llx\n", cmd, mode, stat,
+			 estat, intr);
+}
+
 static bool p8_i2c_has_irqs(void)
 {
 	struct proc_chip *chip = next_chip(NULL);
@@ -244,7 +317,7 @@ static int p8_i2c_prog_watermark(struct p8_i2c_master *master)
 			&watermark);
 	if (rc) {
 		prlog(PR_ERR, "I2C: Failed to read the WATERMARK_REG\n");
-		return OPAL_HARDWARE;
+		return rc;
 	}
 
 	/* Set the high/low watermark */
@@ -252,12 +325,10 @@ static int p8_i2c_prog_watermark(struct p8_i2c_master *master)
 	watermark = SETFIELD(I2C_WATERMARK_LOW, watermark, I2C_FIFO_LO_LVL);
 	rc = xscom_write(master->chip_id, master->xscom_base +
 			 I2C_WATERMARK_REG, watermark);
-	if (rc) {
+	if (rc)
 		prlog(PR_ERR, "I2C: Failed to set high/low watermark level\n");
-		return OPAL_HARDWARE;
-	}
 
-	return 0;
+	return rc;
 }
 
 static int p8_i2c_prog_mode(struct p8_i2c_master *master, bool enhanced_mode)
@@ -273,7 +344,7 @@ static int p8_i2c_prog_mode(struct p8_i2c_master *master, bool enhanced_mode)
 			I2C_MODE_REG, &mode);
 	if (rc) {
 		prlog(PR_ERR, "I2C: Failed to read the MODE_REG\n");
-		return OPAL_HARDWARE;
+		return rc;
 	}
 	omode = mode;
 	mode = SETFIELD(I2C_MODE_PORT_NUM, mode, request->port_num);
@@ -287,12 +358,10 @@ static int p8_i2c_prog_mode(struct p8_i2c_master *master, bool enhanced_mode)
 
 	rc = xscom_write(master->chip_id, master->xscom_base + I2C_MODE_REG,
 			 mode);
-	if (rc) {
+	if (rc)
 		prlog(PR_ERR, "I2C: Failed to write the MODE_REG\n");
-		return OPAL_HARDWARE;
-	}
 
-	return 0;
+	return rc;
 }
 
 static void p8_i2c_complete_request(struct p8_i2c_master *master,
@@ -320,15 +389,44 @@ static int p8_i2c_engine_reset(struct p8_i2c_master *master)
 	rc = xscom_write(master->chip_id, master->xscom_base +
 			 I2C_RESET_I2C_REG, 0);
 	if (rc) {
-		prlog(PR_ERR, "I2C: Failed to reset the i2c engine\n");
+		log_simple_error(&e_info(OPAL_RC_I2C_RESET), "I2C: Failed "
+				 "to reset the i2c engine\n");
 		return rc;
 	}
 
 	/* Reprogram the watermark and mode */
 	rc = p8_i2c_prog_watermark(master);
-	if (rc == 0)
-		rc = p8_i2c_prog_mode(master, false);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_I2C_RESET), "I2C: Failed to"
+				 "program the WATERMARK_REG\n");
+		return rc;
+	}
+
+	rc = p8_i2c_prog_mode(master, false);
+	if (rc)
+		log_simple_error(&e_info(OPAL_RC_I2C_RESET), "I2C: Failed to"
+				 "program the MODE_REG\n");
+
 	return rc;
+}
+
+static void p8_i2c_translate_error(struct i2c_request *req, uint64_t status)
+{
+	/* Assuming there are not more than one type of error simultaneously */
+	if (status & I2C_STAT_NACK_RCVD_ERR)
+		req->result = OPAL_I2C_NACK_RCVD;
+	else if (status & I2C_STAT_INVALID_CMD)
+		req->result = OPAL_I2C_INVALID_CMD;
+	else if (status & I2C_STAT_LBUS_PARITY_ERR)
+		req->result = OPAL_I2C_LBUS_PARITY;
+	else if (status & I2C_STAT_BKEND_OVERRUN_ERR)
+		req->result = OPAL_I2C_BKEND_OVERRUN;
+	else if (status & I2C_STAT_BKEND_ACCESS_ERR)
+		req->result = OPAL_I2C_BKEND_ACCESS;
+	else if (status & I2C_STAT_ARBT_LOST_ERR)
+		req->result = OPAL_I2C_ARBT_LOST;
+	else if (status & I2C_STAT_STOP_ERR)
+		req->result = OPAL_I2C_STOP_ERR;
 }
 
 static void p8_i2c_status_error(struct p8_i2c_master *master,
@@ -336,15 +434,17 @@ static void p8_i2c_status_error(struct p8_i2c_master *master,
 				uint64_t status)
 {
 	int rc;
-	uint64_t estat;
 
 	/* Display any error other than I2C_INTR_NACK_RCVD_ERR since
 	 * getting NACK's is normal if Linux is probing the bus
 	 */
-	if ((status & I2C_STAT_ANY_ERR) != I2C_STAT_NACK_RCVD_ERR)
-		prlog(PR_ERR, "I2C: Transfer error occured, "
-		      "sreg=0x%016llx, state=%d\n",
-		      status, master->state);
+	if (!(status & I2C_STAT_NACK_RCVD_ERR)) {
+		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
+				 "I2C: Transfer error occured\n");
+		p8_i2c_print_debug_info(master, req);
+	}
+
+	p8_i2c_translate_error(req, status);
 
 	rc = p8_i2c_engine_reset(master);
 	if (rc)
@@ -353,23 +453,11 @@ static void p8_i2c_status_error(struct p8_i2c_master *master,
 	if (status & (I2C_STAT_LBUS_PARITY_ERR | I2C_STAT_ARBT_LOST_ERR |
 		      I2C_STAT_STOP_ERR)) {
 		/*
-		 * For those errors, we also grab the extended status reg
-		 * in order to display it
-		 */
-		rc = xscom_read(master->chip_id,
-				master->xscom_base + I2C_EXTD_STAT_REG,
-				&estat);
-		if (rc)
-			prlog(PR_ERR, "I2C: Failed to grab extende status\n");
-		else
-			prlog(PR_ERR, "I2C: Extended status=%016llx\n", estat);
-
-		/*
 		 * Don't bother issuing a STOP command for those errors
 		 * just get rid of the current request and start off with
 		 * the fresh one in the list
 		 */
-		p8_i2c_complete_request(master, req, OPAL_HARDWARE);
+		p8_i2c_complete_request(master, req, req->result);
 	} else {
 		/*
 		 * Reset the bus by issuing a STOP command to slave.
@@ -377,8 +465,11 @@ static void p8_i2c_status_error(struct p8_i2c_master *master,
 		 * Reprogram the mode register with 'enhanced bit' set
 		 */
 		rc = p8_i2c_prog_mode(master, true);
-		if (rc)
+		if (rc) {
+			log_simple_error(&e_info(OPAL_RC_I2C_RESET), "I2C: "
+					 "Failed to program the MODE_REG\n");
 			goto exit;
+		}
 
 		/* Enable the interrupt */
 		p8_i2c_enable_irqs(master);
@@ -388,14 +479,15 @@ static void p8_i2c_status_error(struct p8_i2c_master *master,
 		rc = xscom_write(master->chip_id, master->xscom_base +
 				 I2C_CMD_REG, I2C_CMD_WITH_STOP);
 		if (rc) {
-			prlog(PR_ERR, "I2C: Failed to issue imm. STOP\n");
+			log_simple_error(&e_info(OPAL_RC_I2C_RESET), "I2C: "
+					 "Failed to issue immediate STOP\n");
 			goto exit;
 		}
 	}
 	return;
 
 exit:
-	p8_i2c_complete_request(master, req, rc);
+	p8_i2c_complete_request(master, req, req->result);
 }
 
 static int p8_i2c_fifo_read(struct p8_i2c_master *master,
@@ -409,7 +501,8 @@ static int p8_i2c_fifo_read(struct p8_i2c_master *master,
 		rc = xscom_read(master->chip_id, master->xscom_base +
 				I2C_FIFO_REG, &fifo);
 		if (rc) {
-			prlog(PR_ERR, "I2C: Failed to read the fifo\n");
+			log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
+					 "I2C: Failed to read the fifo\n");
 			break;
 		}
 
@@ -430,7 +523,8 @@ static int p8_i2c_fifo_write(struct p8_i2c_master *master,
 		rc = xscom_write(master->chip_id, master->xscom_base +
 				 I2C_FIFO_REG, fifo);
 		if (rc) {
-			prlog(PR_ERR, "I2C: Failed to write the fifo\n");
+			log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
+					 "I2C: Failed to write the fifo\n");
 			break;
 		}
 	}
@@ -455,7 +549,8 @@ static void p8_i2c_status_data_request(struct p8_i2c_master *master,
 	case state_offset:
 		/* We assume the offset can always be written in one go */
 		if (fifo_free < req->offset_bytes) {
-			prlog(PR_ERR, "I2C: Fifo too small for offset !\n");
+			log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
+					 "I2C: Fifo too small for offset !\n");
 			rc = OPAL_HARDWARE;
 		} else {
 			rc = p8_i2c_fifo_write(master, master->obuf,
@@ -468,9 +563,10 @@ static void p8_i2c_status_data_request(struct p8_i2c_master *master,
 	case state_data:
 		/* Sanity check */
 		if (master->bytes_sent >= req->rw_len) {
-			prlog(PR_ERR, "I2C: Data req with no data to send"
-			      " sent=%d req=%d\n", master->bytes_sent,
-			      req->rw_len);
+			log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: "
+					 "Data req with no data to send sent=%d "
+					 "req=%d\n", master->bytes_sent,
+					 req->rw_len);
 			rc = OPAL_HARDWARE;
 			break;
 		}
@@ -493,9 +589,9 @@ static void p8_i2c_status_data_request(struct p8_i2c_master *master,
 			master->bytes_sent += count;
 		break;
 	default:
-		prlog(PR_ERR, "I2C: Invalid state %d in data req !\n",
-		      master->state);
-		rc = OPAL_HARDWARE;
+		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Invalid "
+				 "state %d in data req !\n", master->state);
+		rc = OPAL_WRONG_STATE;
 	}
 	if (rc)
 		p8_i2c_complete_request(master, req, rc);
@@ -515,7 +611,8 @@ static void p8_i2c_complete_offset(struct p8_i2c_master *master,
 	 * write commands
 	 */
 	if (req->op == SMBUS_WRITE && req->rw_len != 0) {
-		prlog(PR_ERR, "I2C: Write completion in offset state !\n");
+		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Write "
+				 "completion in offset state !\n");
 		rc = OPAL_HARDWARE;
 		goto complete;
 	}
@@ -541,8 +638,8 @@ static void p8_i2c_complete_offset(struct p8_i2c_master *master,
 	rc = xscom_write(master->chip_id, master->xscom_base + I2C_CMD_REG,
 			 cmd);
 	if (rc) {
-		prlog(PR_ERR, "I2C: Failed to write the CMD_REG\n");
-		rc = OPAL_HARDWARE;
+		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Failed "
+				 "to write the CMD_REG\n");
 		goto complete;
 	}
 
@@ -574,11 +671,12 @@ static void p8_i2c_status_cmd_completion(struct p8_i2c_master *master,
 	 * completed our data transfer properly
 	 */
 	if (master->state != state_error && master->bytes_sent != req->rw_len) {
-		prlog(PR_ERR, "I2C: Request complete with residual data"
-		      " req=%d done=%d\n", req->rw_len, master->bytes_sent);
+		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Request "
+				 "complete with residual data req=%d done=%d\n",
+				 req->rw_len, master->bytes_sent);
 		/* Should we error out here ? */
 	}
-	rc = master->state == state_error ? OPAL_HARDWARE : OPAL_SUCCESS;
+	rc = master->state == state_error ? req->result : OPAL_SUCCESS;
 	p8_i2c_complete_request(master, req, rc);
 }
 
@@ -599,7 +697,8 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 	rc = xscom_read(master->chip_id, master->xscom_base + I2C_STAT_REG,
 			&status);
 	if (rc) {
-		prlog(PR_ERR, "I2C: Failed to read the STAT_REG\n");
+		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Failed "
+				 "to read the STAT_REG\n");
 		return;
 	}
 
@@ -614,7 +713,8 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 	rc = xscom_write(master->chip_id, master->xscom_base + I2C_INTR_REG,
 			 ~I2C_INTR_ALL_MASK);
 	if (rc) {
-		prlog(PR_ERR, "I2C: Failed to disable the interrupts\n");
+		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Failed "
+				 "to disable the interrupts\n");
 		return;
 	}
 
@@ -622,8 +722,8 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 	 * the interrupt
 	 */
 	if (req == NULL) {
-		prlog(PR_ERR, "I2C: Interrupt with no request,status=%016llx\n",
-		      status);
+		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Interrupt "
+				 "with no request, status=0x%016llx\n", status);
 		return;
 	}
 
@@ -648,7 +748,8 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master *master)
 	rc = xscom_read(master->chip_id, master->xscom_base + I2C_STAT_REG,
 			&status);
 	if (rc) {
-		prlog(PR_ERR, "I2C: Failed to read the STAT_REG\n");
+		log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: Failed "
+				 "to read the STAT_REG\n");
 		return rc;
 	}
 
@@ -656,7 +757,8 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master *master)
 			master->xscom_base + I2C_EXTD_STAT_REG,
 			&estat);
 	if (rc) {
-		prlog(PR_ERR, "I2C: Failed to read the EXTD_STAT_REG\n");
+		log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: Failed "
+				 "to read the EXTD_STAT_REG\n");
 		return rc;
 	}
 	if (estat & (I2C_EXTD_STAT_I2C_BUSY | I2C_EXTD_STAT_SELF_BUSY)) {
@@ -666,10 +768,12 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master *master)
 
 	/* Nothing happened ? Go back */
 	if (status & I2C_STAT_ANY_ERR) {
-		prlog(PR_ERR, "I2C: Initial error status %016llx\n", status);
+		log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: "
+				 "Initial error status 0x%016llx\n", status);
 
 		if (pass > 0) {
-			prlog(PR_ERR, "I2C: Error stuck, aborting\n");
+			log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: "
+					 "Error stuck, aborting !!\n");
 			return OPAL_HARDWARE;
 		}
 
@@ -692,10 +796,12 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master *master)
 
 	/* Still busy ? */
 	if (!(status & I2C_STAT_CMD_COMP)) {
-		prlog(PR_ERR, "I2C: Initial commmand complete not set\n");
+		log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: Initial "
+				 "command complete not set\n");
 
 		if (pass > 4) {
-			prlog(PR_ERR, "I2C: Command stuck, aborting\n");
+			log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: "
+					 "Command stuck, aborting !!\n");
 			return OPAL_HARDWARE;
 		}
 
@@ -744,8 +850,11 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 
 	/* Program mode register */
 	rc = p8_i2c_prog_mode(master, false);
-	if (rc)
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: Failed "
+				 "to program the MODE_REG\n");
 		return rc;
+	}
 
 	/* Check status */
 	rc = p8_i2c_check_initial_status(master);
@@ -786,8 +895,9 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	rc = xscom_write(master->chip_id, master->xscom_base + I2C_CMD_REG,
 			 cmd);
 	if (rc) {
-		prlog(PR_ERR, "I2C: Failed to write the CMD_REG\n");
-		return OPAL_HARDWARE;
+		log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: Failed "
+				 "to write the CMD_REG\n");
+		return rc;
 	}
 
 	/* Enable the interrupts */
@@ -831,13 +941,12 @@ static int p8_i2c_queue_request(struct i2c_request *req)
 
 	/* Parameter check */
 	if (req->rw_len > I2C_MAX_TFR_LEN) {
-		prlog(PR_ERR, "I2C: Too large transfer %d byes\n", req->rw_len);
+		prlog(PR_ERR, "I2C: Too large transfer %d bytes\n", req->rw_len);
 		return OPAL_PARAMETER;
 	}
 
 	if (req->offset_bytes > 4) {
-		prlog(PR_ERR, "I2C: Invalid offset size %d\n",
-		      req->offset_bytes);
+		prlog(PR_ERR, "I2C: Invalid offset size %d\n", req->offset_bytes);
 		return OPAL_PARAMETER;
 	}
 	lock(&master->lock);
@@ -920,13 +1029,15 @@ static void p8_i2c_timeout(struct timer *t __unused, void *data)
 	}
 
 	/* Allright, we have a request and it has timed out ... */
-	prlog(PR_ERR, "I2C: Request timeout !\n");
+	log_simple_error(&e_info(OPAL_RC_I2C_TIMEOUT),
+			 "I2C: Request timeout !\n");
+	p8_i2c_print_debug_info(master, req);
 
 	/* Reset the engine */
 	p8_i2c_engine_reset(master);
 
 	/* Should we send a stop ? For now just complete */
-	p8_i2c_complete_request(master, req, OPAL_HARDWARE);
+	p8_i2c_complete_request(master, req, OPAL_I2C_TIMEOUT);
 
  exit:
 	unlock(&master->lock);
@@ -992,7 +1103,8 @@ void p8_i2c_init(void)
 	dt_for_each_compatible(dt_root, i2cm, "ibm,power8-i2cm") {
 		master = zalloc(sizeof(*master));
 		if (!master) {
-			prlog(PR_ERR,"I2C: Failed to allocate p8_i2c_master\n");
+			log_simple_error(&e_info(OPAL_RC_I2C_INIT), "I2C: "
+					 "Failed to allocate master structure\n");
 			break;
 		}
 
@@ -1012,7 +1124,8 @@ void p8_i2c_init(void)
 		rc = xscom_read(master->chip_id, master->xscom_base +
 				I2C_EXTD_STAT_REG, &ex_stat);
 		if (rc) {
-			prlog(PR_ERR, "I2C: Failed to read EXTD_STAT_REG\n");
+			log_simple_error(&e_info(OPAL_RC_I2C_INIT), "I2C: "
+					 "Failed to read EXTD_STAT_REG\n");
 			free(master);
 			break;
 		}
@@ -1043,6 +1156,15 @@ void p8_i2c_init(void)
 			msecs_to_tb(I2C_TIMEOUT_IRQ_MS) :
 			msecs_to_tb(I2C_TIMEOUT_POLL_MS);
 
+		/* Program the watermark register */
+		rc = p8_i2c_prog_watermark(master);
+		if (rc) {
+			log_simple_error(&e_info(OPAL_RC_I2C_INIT), "I2C: "
+					 "Failed to program the WATERMARK_REG\n");
+			free(master);
+			break;
+		}
+
 		/* Allocate ports driven by this master */
 		count = 0;
 		dt_for_each_child(i2cm, i2cm_port)
@@ -1050,7 +1172,8 @@ void p8_i2c_init(void)
 
 		port = zalloc(sizeof(*port) * count);
 		if (!port) {
-			prlog(PR_ERR, "I2C: Insufficient memory\n");
+			log_simple_error(&e_info(OPAL_RC_I2C_INIT),
+					 "I2C: Insufficient memory\n");
 			free(master);
 			break;
 		}

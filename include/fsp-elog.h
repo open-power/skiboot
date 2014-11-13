@@ -74,6 +74,7 @@ enum elog_head_state {
 #define OPAL_SENSOR			0x5345	/* SE */
 #define OPAL_SLW			0x534C	/* SL */
 #define OPAL_FSP			0x4650	/* FP */
+#define OPAL_I2C			0x4943	/* IC */
 
 /* SAPPHIRE SRC componenet ID*/
 #define OPAL_CU				0x1000
@@ -104,6 +105,7 @@ enum elog_head_state {
 #define OPAL_SE				0x2000
 #define OPAL_SL				0x2100
 #define OPAL_FP				0x2200
+#define OPAL_IC				0x2300
 
 enum opal_reasoncode {
 /* code update */
@@ -191,6 +193,12 @@ enum opal_reasoncode {
 /* FSP	*/
 	OPAL_RC_FSP_POLL_TIMEOUT
 				= OPAL_FP | 0x10,
+/* I2C */
+	OPAL_RC_I2C_INIT	= OPAL_IC | 0X10,
+	OPAL_RC_I2C_START_REQ	= OPAL_IC | 0X11,
+	OPAL_RC_I2C_TIMEOUT	= OPAL_IC | 0x12,
+	OPAL_RC_I2C_TRANSFER	= OPAL_IC | 0x13,
+	OPAL_RC_I2C_RESET	= OPAL_IC | 0x14,
 };
 
 #define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\
