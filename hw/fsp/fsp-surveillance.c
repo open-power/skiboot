@@ -19,7 +19,7 @@
 #include <processor.h>
 #include <timebase.h>
 #include <fsp-sysparam.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 
 static bool fsp_surv_state = false;
 static bool fsp_surv_ack_pending = false;

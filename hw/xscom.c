@@ -21,7 +21,7 @@
 #include <device.h>
 #include <chip.h>
 #include <centaur.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 
 /* Mask of bits to clear in HMER before an access */
 #define HMER_CLR_MASK	(~(SPR_HMER_XSCOM_FAIL | \

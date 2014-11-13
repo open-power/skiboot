@@ -23,7 +23,7 @@
 #include <fsp.h>
 #include <timebase.h>
 #include <hostservices.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 
 /* OCC Communication Area for PStates */
 

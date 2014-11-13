@@ -19,7 +19,7 @@
 #include <opal-msg.h>
 #include <lock.h>
 #include <fsp.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 
 /* debug message prefix */
 #define PREFIX			"FSPMEMERR: "

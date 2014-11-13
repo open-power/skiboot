@@ -21,7 +21,7 @@
 #include <time.h>
 #include <time-utils.h>
 #include <opal-msg.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 #include <device.h>
 
 /*

@@ -21,7 +21,7 @@
 #include <device.h>
 #include <interrupts.h>
 #include <processor.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 #include <trace.h>
 #include <timebase.h>
 #include <cpu.h>

@@ -21,7 +21,7 @@
 #include <device.h>
 #include <processor.h>
 #include <opal-msg.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_PANEL_WRITE, OPAL_PLATFORM_ERR_EVT, OPAL_OP_PANEL,
 		 OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,

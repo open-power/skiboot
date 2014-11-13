@@ -26,7 +26,7 @@
 #include <chiptod.h>
 #include <interrupts.h>
 #include <timebase.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 #include <libfdt/libfdt.h>
 
 #ifdef __HAVE_LIBPORE__

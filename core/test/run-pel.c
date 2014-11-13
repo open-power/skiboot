@@ -42,7 +42,7 @@ const void *dt_prop_get(const struct dt_node *node __unused, const char *prop __
 	return dt_prop;
 }
 
-int fsp_rtc_get_cached_tod(uint32_t *year_month_day,
+int rtc_cache_get_datetime(uint32_t *year_month_day,
 			   uint64_t *hour_minute_second_millisecond)
 {
 	*year_month_day = 0;

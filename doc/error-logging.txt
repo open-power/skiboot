@@ -32,7 +32,7 @@ Step 1: To report an error, invoke opal_elog_create() with required argument.
 
 	Parameters:
 
-	 int reason_code: Reason for failure as stated in include/fsp-elog.h
+	 int reason_code: Reason for failure as stated in include/errorlog.h
 				for Sapphire
 			Eg: Reason code for code-update failures can be
 				OPAL_RC_CU_INIT  -> Initialisation failure
@@ -53,7 +53,7 @@ Step 1: To report an error, invoke opal_elog_create() with required argument.
 		#define OPAL_MISC_ERR_EVT               0x04
 
 	uint16_t component_id: Component ID of Sapphire component as
-				listed in include/fsp-elog.h
+				listed in include/errorlog.h
 
 	uint8_t subsystem_id: ID of the sub-system reporting error.
 		/* OPAL Subsystem IDs listed for reporting events/errors */
@@ -129,7 +129,7 @@ Step 1: To report an error, invoke opal_elog_create() with required argument.
 			should be provided during reporting of an event/error.
 
 
-	 uint32_t reason_code: Reason for failure as stated in include/fsp-elog.h
+	 uint32_t reason_code: Reason for failure as stated in include/errorlog.h
 				for Sapphire
 			Eg: Reason code for code-update failures can be
 				OPAL_RC_CU_INIT  -> Initialisation failure

@@ -35,7 +35,7 @@
 #include <device.h>
 #include <spcn.h>
 #include <opal-msg.h>
-#include<fsp-elog.h>
+#include<errorlog.h>
 
 #define INVALID_DATA	((uint32_t)-1)
 

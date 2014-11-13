@@ -30,7 +30,7 @@
 #include <timebase.h>
 #include <hdata/spira.h>
 #include <hdata/hdata.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 
 #include "fsp-leds.h"
 

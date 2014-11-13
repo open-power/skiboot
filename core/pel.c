@@ -1,5 +1,5 @@
 #include <string.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 #include <device.h>
 #include <fsp.h>
 #include <pel.h>

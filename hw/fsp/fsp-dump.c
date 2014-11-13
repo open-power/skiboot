@@ -40,7 +40,7 @@
 #include <lock.h>
 #include <device.h>
 #include <skiboot.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 
 /*
  * Max outstanding dumps to retrieve

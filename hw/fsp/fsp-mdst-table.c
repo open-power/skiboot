@@ -31,7 +31,7 @@
 #include <opal.h>
 #include <lock.h>
 #include <skiboot.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 #include <fsp-mdst-table.h>
 
 /*

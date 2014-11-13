@@ -34,7 +34,7 @@
 #include <trace.h>
 #include <timebase.h>
 #include <cpu.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 #include <opal.h>
 #include <opal-msg.h>
 

@@ -22,7 +22,7 @@
 #include <skiboot.h>
 #include <lock.h>
 #include <errorlog.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 #include <pool.h>
 
 /*

@@ -19,7 +19,7 @@
 #include <opal.h>
 #include <lock.h>
 #include <device.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 
 /*
  * The FSP NVRAM API operates in "blocks" of 4K. It is entirely exposed

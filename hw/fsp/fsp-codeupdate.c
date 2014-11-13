@@ -21,7 +21,7 @@
 #include <lock.h>
 #include <device.h>
 #include <ccan/endian/endian.h>
-#include <fsp-elog.h>
+#include <errorlog.h>
 
 #include "fsp-codeupdate.h"
 
