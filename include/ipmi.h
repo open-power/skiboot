@@ -140,6 +140,7 @@ struct ipmi_backend {
 	struct ipmi_msg *(*alloc_msg)(size_t, size_t);
 	void (*free_msg)(struct ipmi_msg *);
 	int (*queue_msg)(struct ipmi_msg *);
+	int (*queue_msg_head)(struct ipmi_msg *);
 	int (*dequeue_msg)(struct ipmi_msg *);
 };
 
@@ -160,6 +161,9 @@ struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
 
 /* Add an ipmi message to the queue */
 int ipmi_queue_msg(struct ipmi_msg *msg);
+
+/* Add an ipmi message to the start of the queue */
+int ipmi_queue_msg_head(struct ipmi_msg *msg);
 
 /* Process a completed message */
 void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg);

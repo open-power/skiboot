@@ -64,6 +64,11 @@ struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
 	return msg;
 }
 
+int ipmi_queue_msg_head(struct ipmi_msg *msg)
+{
+	return msg->backend->queue_msg_head(msg);
+}
+
 int ipmi_queue_msg(struct ipmi_msg *msg)
 {
 	/* Here we could choose which interface to use if we want to support
