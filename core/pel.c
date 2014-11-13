@@ -3,6 +3,7 @@
 #include <device.h>
 #include <fsp.h>
 #include <pel.h>
+#include <rtc.h>
 
 /* Create MTMS section for sapphire log */
 static void create_mtms_section(struct errorlog *elog_data,
@@ -56,7 +57,7 @@ static void create_extended_header_section(struct errorlog *elog_data,
 	memset(extdhdr->opal_subsys_version, 0x00,
 				sizeof(extdhdr->opal_subsys_version));
 
-	fsp_rtc_get_cached_tod(&extdhdr->extended_header_date, &extd_time);
+	rtc_cache_get_datetime(&extdhdr->extended_header_date, &extd_time);
 	extdhdr->extended_header_time = extd_time >> 32;
 	extdhdr->opal_symid_len = 0;
 
@@ -159,7 +160,7 @@ static void create_private_header_section(struct errorlog *elog_data,
 	privhdr->v6header.component_id = elog_data->component_id;
 	privhdr->plid = elog_data->plid;
 
-	fsp_rtc_get_cached_tod(&privhdr->create_date, &ctime);
+	rtc_cache_get_datetime(&privhdr->create_date, &ctime);
 	privhdr->create_time = ctime >> 32;
 	privhdr->section_count = 5;
 

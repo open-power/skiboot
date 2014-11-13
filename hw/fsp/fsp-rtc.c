@@ -52,11 +52,15 @@
  * of the two has a pending event to signal.
  */
 
+#include <rtc.h>
+
 enum {
 	RTC_TOD_VALID,
 	RTC_TOD_INVALID,
 	RTC_TOD_PERMANENT_ERROR,
 } rtc_tod_state = RTC_TOD_INVALID;
+
+bool rtc_tod_cache_dirty = false;
 
 static struct lock rtc_lock;
 static struct fsp_msg *rtc_read_msg;
@@ -66,13 +70,6 @@ static struct fsp_msg *rtc_write_msg;
  * later optimization
  */
 static bool fsp_in_reset = false;
-
-/* last synchonisation point */
-static struct {
-	struct tm	tm;
-	unsigned long	tb;
-	bool		dirty;
-} rtc_tod_cache;
 
 struct opal_tpo_data {
 	uint64_t tpo_async_token;
@@ -94,16 +91,6 @@ DEFINE_LOG_ENTRY(OPAL_RC_RTC_TOD, OPAL_PLATFORM_ERR_EVT, OPAL_RTC,
 DEFINE_LOG_ENTRY(OPAL_RC_RTC_READ, OPAL_PLATFORM_ERR_EVT, OPAL_RTC,
 			OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
 			OPAL_NA, NULL);
-
-static void tm_add(struct tm *in, struct tm *out, unsigned long secs)
-{
-	assert(in);
-	assert(out);
-
-	*out = *in;
-	out->tm_sec += secs;
-	mktime(out);
-}
 
 static void fsp_tpo_req_complete(struct fsp_msg *read_resp)
 {
@@ -154,6 +141,7 @@ static void fsp_tpo_req_complete(struct fsp_msg *read_resp)
 static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 {
 	int val = (read_resp->word1 >> 8) & 0xff;
+	struct tm tm;
 
 	switch (val) {
 	case FSP_STATUS_TOD_RESET:
@@ -171,9 +159,8 @@ static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 	case FSP_STATUS_SUCCESS:
 		/* Save the read RTC value in our cache */
 		datetime_to_tm(read_resp->data.words[0],
-			       (u64) read_resp->data.words[1] << 32, &rtc_tod_cache.tm);
-		rtc_tod_cache.tb = mftb();
-		rtc_tod_state = RTC_TOD_VALID;
+			       (u64) read_resp->data.words[1] << 32, &tm);
+		rtc_cache_update(&tm);
 		break;
 
 	default:
@@ -230,32 +217,6 @@ static int64_t fsp_rtc_send_read_request(void)
 	return OPAL_BUSY_EVENT;
 }
 
-static void encode_cached_tod(uint32_t *year_month_day,
-		uint64_t *hour_minute_second_millisecond)
-{
-	unsigned long cache_age_sec;
-	struct tm tm;
-
-	cache_age_sec = tb_to_msecs(mftb() - rtc_tod_cache.tb) / 1000;
-
-	tm_add(&rtc_tod_cache.tm, &tm, cache_age_sec);
-
-	/* Format to OPAL API values */
-	tm_to_datetime(&tm, year_month_day, hour_minute_second_millisecond);
-}
-
-int fsp_rtc_get_cached_tod(uint32_t *year_month_day,
-		uint64_t *hour_minute_second_millisecond)
-{
-
-	if (rtc_tod_state != RTC_TOD_VALID)
-		return -1;
-
-	encode_cached_tod(year_month_day,
-			hour_minute_second_millisecond);
-	return 0;
-}
-
 static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 				 uint64_t *hour_minute_second_millisecond)
 {
@@ -268,7 +229,7 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 	lock(&rtc_lock);
 	/* During R/R of FSP, read cached TOD */
 	if (fsp_in_reset) {
-		fsp_rtc_get_cached_tod(year_month_day,
+		rtc_cache_get_datetime(year_month_day,
 				hour_minute_second_millisecond);
 		rc = OPAL_SUCCESS;
 		goto out;
@@ -299,7 +260,7 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 		fsp_freemsg(msg);
 
 		if (rtc_tod_state == RTC_TOD_VALID) {
-			encode_cached_tod(year_month_day,
+			rtc_cache_get_datetime(year_month_day,
 					hour_minute_second_millisecond);
 			rc = OPAL_SUCCESS;
 		} else
@@ -310,7 +271,7 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 	} else if (mftb() > read_req_tb + msecs_to_tb(rtc_read_timeout_ms)) {
 		prlog(PR_TRACE, "RTC read timed out\n");
 
-		encode_cached_tod(year_month_day,
+		rtc_cache_get_datetime(year_month_day,
 				hour_minute_second_millisecond);
 		rc = OPAL_SUCCESS;
 
@@ -329,6 +290,7 @@ static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
 	struct fsp_msg *msg;
 	uint32_t w0, w1, w2;
 	int64_t rc;
+	struct tm tm;
 
 	lock(&rtc_lock);
 	if (rtc_tod_state == RTC_TOD_PERMANENT_ERROR) {
@@ -386,9 +348,9 @@ static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
 
 	if (fsp_in_reset) {
 		datetime_to_tm(rtc_write_msg->data.words[0],
-			       (u64) rtc_write_msg->data.words[1] << 32,  &rtc_tod_cache.tm);
-		rtc_tod_cache.tb = mftb();
-		rtc_tod_cache.dirty = true;
+			       (u64) rtc_write_msg->data.words[1] << 32,  &tm);
+		rtc_cache_update(&tm);
+		rtc_tod_cache_dirty = true;
 		fsp_freemsg(rtc_write_msg);
 		rtc_write_msg = NULL;
 		rc = OPAL_SUCCESS;
@@ -491,7 +453,7 @@ static void rtc_flush_cached_tod(void)
 	uint64_t h_m_s_m;
 	uint32_t y_m_d;
 
-	if (fsp_rtc_get_cached_tod(&y_m_d, &h_m_s_m))
+	if (rtc_cache_get_datetime(&y_m_d, &h_m_s_m))
 		return;
 	msg = fsp_mkmsg(FSP_CMD_WRITE_TOD, 3, y_m_d,
 			(h_m_s_m >> 32) & 0xffffff00, 0);
@@ -515,9 +477,9 @@ static bool fsp_rtc_msg_rr(u32 cmd_sub_mod, struct fsp_msg *msg)
 	case FSP_RELOAD_COMPLETE:
 		lock(&rtc_lock);
 		fsp_in_reset = false;
-		if (rtc_tod_cache.dirty) {
+		if (rtc_tod_cache_dirty) {
 			rtc_flush_cached_tod();
-			rtc_tod_cache.dirty = false;
+			rtc_tod_cache_dirty = false;
 		}
 		unlock(&rtc_lock);
 		rc = true;
