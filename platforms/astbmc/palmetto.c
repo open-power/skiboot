@@ -19,6 +19,7 @@
 #include <device.h>
 #include <console.h>
 #include <chip.h>
+#include <ipmi.h>
 
 #include "astbmc.h"
 
@@ -49,4 +50,5 @@ DECLARE_PLATFORM(palmetto) = {
 	.external_irq		= astbmc_ext_irq,
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
+	.elog_commit		= ipmi_elog_commit,
 };

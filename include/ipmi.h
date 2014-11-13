@@ -83,14 +83,18 @@
 #define IPMI_NETFN_CHASSIS		0x00
 #define IPMI_NETFN_STORAGE		0x0a
 #define IPMI_NETFN_APP			0x06
+#define IPMI_NETFN_OEM			0x32
 
 #define IPMI_WRITE_FRU			IPMI_CODE(IPMI_NETFN_STORAGE, 0x12)
 #define IPMI_GET_SEL_INFO		IPMI_CODE(IPMI_NETFN_STORAGE, 0x40)
+#define IPMI_RESERVE_SEL		IPMI_CODE(IPMI_NETFN_STORAGE, 0x42)
 #define IPMI_GET_SEL_TIME		IPMI_CODE(IPMI_NETFN_STORAGE, 0x48)
 #define IPMI_SET_SEL_TIME		IPMI_CODE(IPMI_NETFN_STORAGE, 0x49)
 #define IPMI_CHASSIS_CONTROL		IPMI_CODE(IPMI_NETFN_CHASSIS, 0x02)
 #define IPMI_SET_POWER_STATE		IPMI_CODE(IPMI_NETFN_APP, 0x06)
 #define IPMI_GET_POWER_STATE		IPMI_CODE(IPMI_NETFN_APP, 0x07)
+
+#define IPMI_PARTIAL_ADD_ESEL		IPMI_CODE(IPMI_NETFN_OEM, 0xf0)
 
 /*
  * IPMI response codes.
@@ -186,5 +190,9 @@ void ipmi_opal_init(void);
 
 /* Populate fru data */
 void ipmi_fru_init(uint8_t fru_dev_id);
+
+/* Commit an error log to the bmc using the OEM add eSEL commands */
+struct errorlog;
+int ipmi_elog_commit(struct errorlog *elog_buf);
 
 #endif
