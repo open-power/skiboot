@@ -20,9 +20,7 @@
 #include <time-utils.h>
 #include <device.h>
 #include <opal.h>
-
-/* Sane default (2014/01/01) */
-static time_t time = 1388494800;
+#include <rtc.h>
 
 static enum {idle, waiting, updated, error} time_status;
 
@@ -34,10 +32,14 @@ static void get_sel_time_error(struct ipmi_msg *msg)
 
 static void get_sel_time_complete(struct ipmi_msg *msg)
 {
+	struct tm tm;
 	uint32_t result;
+	time_t time;
 
 	memcpy(&result, msg->data, 4);
 	time = le32_to_cpu(result);
+	gmtime_r(&time, &tm);
+	rtc_cache_update(&tm);
 	time_status = updated;
 	ipmi_free_msg(msg);
 }
@@ -47,7 +49,7 @@ static int64_t ipmi_get_sel_time(void)
 	struct ipmi_msg *msg;
 
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_GET_SEL_TIME,
-			 get_sel_time_complete, &time, NULL, 0, 4);
+			 get_sel_time_complete, NULL, NULL, 0, 4);
 	if (!msg)
 		return OPAL_HARDWARE;
 
@@ -71,8 +73,10 @@ static int64_t ipmi_set_sel_time(uint32_t tv)
 static int64_t ipmi_opal_rtc_read(uint32_t *y_m_d,
 				 uint64_t *h_m_s_m)
 {
-	struct tm tm;
 	int ret = 0;
+
+	if (!y_m_d || !h_m_s_m)
+		return OPAL_PARAMETER;
 
 	switch(time_status) {
 	case idle:
@@ -87,8 +91,7 @@ static int64_t ipmi_opal_rtc_read(uint32_t *y_m_d,
 		break;
 
 	case updated:
-		gmtime_r(&time, &tm);
-		tm_to_datetime(&tm, y_m_d, h_m_s_m);
+		rtc_cache_get_datetime(y_m_d, h_m_s_m);
 		time_status = idle;
 		ret = OPAL_SUCCESS;
 		break;
@@ -123,4 +126,7 @@ void ipmi_rtc_init(void)
 
 	opal_register(OPAL_RTC_READ, ipmi_opal_rtc_read, 2);
 	opal_register(OPAL_RTC_WRITE, ipmi_opal_rtc_write, 2);
+
+	/* Initialise the rtc cache */
+	ipmi_get_sel_time();
 }
