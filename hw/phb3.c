@@ -2127,10 +2127,7 @@ static int64_t phb3_sm_fundamental_reset(struct phb3 *p)
 
 		p->state = PHB3_STATE_FRESET_DEASSERT_DELAY;
 		/* CAPP fpga requires 1s to flash before polling link */
-		if (p->flags & PHB3_CAPP_RECOVERY)
-			return phb3_set_sm_timeout(p, secs_to_tb(1));
-		/* Wait 200ms before polling link dd*/
-		return phb3_set_sm_timeout(p, msecs_to_tb(200));
+		return phb3_set_sm_timeout(p, secs_to_tb(1));
 
 	case PHB3_STATE_FRESET_DEASSERT_DELAY:
 		/* Switch to generic link poll state machine */
