@@ -48,9 +48,135 @@ static struct fsp_pcie_inventory *fsp_pcie_inv;
 static unsigned int fsp_pcie_inv_alloc_count;
 #define FSP_PCIE_INV_ALLOC_CHUNK	4
 
+static struct dt_node *dt_create_i2c_master(struct dt_node *n, uint32_t eng_id)
+{
+	struct dt_node *i2cm;
+
+	/* Each master registers set is of length 0x20 */
+	i2cm = dt_new_addr(n, "i2cm", 0xa0000 + eng_id * 0x20);
+	if (!i2cm)
+		return NULL;
+
+	dt_add_property_string(i2cm, "compatible",
+			       "ibm,power8-i2cm");
+	dt_add_property_cells(i2cm, "reg", 0xa0000 + eng_id * 0x20,
+			      0x20);
+	dt_add_property_cells(i2cm, "clock-frequency", 50000000);
+	dt_add_property_cells(i2cm, "chip-engine#", eng_id);
+	dt_add_property_cells(i2cm, "#address-cells", 1);
+	dt_add_property_cells(i2cm, "#size-cells", 0);
+
+	return i2cm;
+}
+
+static struct dt_node *dt_create_i2c_bus(struct dt_node *i2cm,
+					 const char *port_name, uint32_t port_id)
+{
+	static struct dt_node *port;
+
+	port = dt_new_addr(i2cm, "i2c-bus", port_id);
+	if (!port)
+		return NULL;
+
+	dt_add_property_strings(port, "compatible", "ibm,power8-i2c-port",
+				"ibm,opal-i2c");
+	dt_add_property_string(port, "ibm,port-name", port_name);
+	dt_add_property_cells(port, "reg", port_id);
+	dt_add_property_cells(port, "bus-frequency", 400000);
+	dt_add_property_cells(port, "#address-cells", 1);
+	dt_add_property_cells(port, "#size-cells", 0);
+
+	return port;
+}
+
+static struct dt_node *dt_create_i2c_device(struct dt_node *bus, uint8_t addr,
+					    const char *name, const char *compat,
+					    const char *label)
+{
+	struct dt_node *dev;
+
+	dev = dt_new_addr(bus, name, addr);
+	if (!dev)
+		return NULL;
+
+	dt_add_property_string(dev, "compatible", compat);
+	dt_add_property_string(dev, "label", label);
+	dt_add_property_cells(dev, "reg", addr);
+	dt_add_property_string(dev, "status", "reserved");
+
+	return dev;
+}
+
+static void firenze_dt_fixup_i2cm(void)
+{
+	struct dt_node *master, *bus;
+	struct proc_chip *c;
+	const uint32_t *p;
+	char name[32];
+	uint64_t lx;
+
+	if (dt_find_compatible_node(dt_root, NULL, "ibm,power8-i2cm"))
+		return;
+
+	p = dt_prop_get_def(dt_root, "ibm,vpd-lx-info", NULL);
+	if (!p)
+		return;
+
+	lx = ((uint64_t)p[1] << 32) | p[2];
+
+	switch (lx) {
+	case LX_VPD_2S4U_BACKPLANE:
+	case LX_VPD_2S2U_BACKPLANE:
+	case LX_VPD_SHARK_BACKPLANE: /* XXX confirm ? */
+		/* i2c nodes on chip 0x10 */
+		c = get_chip(0x10);
+		assert(c);
+
+		/* Engine 1 */
+		master = dt_create_i2c_master(c->devnode, 1);
+		assert(master);
+		sprintf(name,"p8_%08x_e%dp%d", c->id, 1, 0);
+		bus = dt_create_i2c_bus(master, name, 0);
+		assert(bus);
+		dt_create_i2c_device(bus, 0x39, "slot-C4-C5", "maxim,5961",
+				     "pcie-hotplug");
+		dt_create_i2c_device(bus, 0x3a, "slot-C2-C3", "maxim,5961",
+				     "pcie-hotplug");
+	/* Fall through */
+	case LX_VPD_1S4U_BACKPLANE:
+	case LX_VPD_1S2U_BACKPLANE:
+		/* i2c nodes on chip 0 */
+		c = get_chip(0);
+		assert(c);
+
+		/* Engine 1*/
+		master = dt_create_i2c_master(c->devnode, 1);
+		assert(master);
+		sprintf(name,"p8_%08x_e%dp%d", c->id, 1, 0);
+		bus = dt_create_i2c_bus(master, name, 0);
+		assert(bus);
+		dt_create_i2c_device(bus, 0x32, "slot-C10-C11", "maxim,5961",
+				     "pcie-hotplug");
+		dt_create_i2c_device(bus, 0x35, "slot-C6-C7", "maxim,5961",
+				     "pcie-hotplug");
+		dt_create_i2c_device(bus, 0x36, "slot-C8-C9", "maxim,5961",
+				     "pcie-hotplug");
+		dt_create_i2c_device(bus, 0x39, "slot-C12", "maxim,5961",
+				     "pcie-hotplug");
+		break;
+	default:
+		break;
+	}
+}
+
 static bool firenze_probe(void)
 {
-	return dt_node_is_compatible(dt_root, "ibm,firenze");
+	if (!dt_node_is_compatible(dt_root, "ibm,firenze"))
+		return false;
+
+	firenze_dt_fixup_i2cm();
+
+	return true;
 }
 
 static void firenze_send_pci_inventory(void)
