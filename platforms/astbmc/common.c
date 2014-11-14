@@ -162,8 +162,8 @@ static struct dt_node *dt_create_i2c_master(struct dt_node *n, uint32_t eng_id)
 			       "ibm,power8-i2cm");
 	dt_add_property_cells(i2cm, "reg", 0xa0000 + eng_id * 0x20,
 			      0x20);
-	dt_add_property_cells(i2cm, "bus-speed-khz", 400);
-	dt_add_property_cells(i2cm, "local-bus-freq-mhz", 50);
+	dt_add_property_cells(i2cm, "clock-frequency", 50000000);
+	dt_add_property_cells(i2cm, "chip-engine#", eng_id);
 	dt_add_property_cells(i2cm, "#address-cells", 1);
 	dt_add_property_cells(i2cm, "#size-cells", 0);
 
@@ -179,9 +179,11 @@ static struct dt_node *dt_create_i2c_bus(struct dt_node *i2cm, const char *port_
 	if (!port)
 		return NULL;
 
-	dt_add_property_string(port, "compatible", "ibm,power8-i2c-port");
-	dt_add_property_string(port, "port-name", port_name);
+	dt_add_property_strings(port, "compatible",
+				"ibm,power8-i2c-port", "ibm,opal-i2c");
+	dt_add_property_string(port, "ibm,port-name", port_name);
 	dt_add_property_cells(port, "reg", port_id);
+	dt_add_property_cells(port, "bus-frequency", 400000);
 	dt_add_property_cells(port, "#address-cells", 1);
 	dt_add_property_cells(port, "#size-cells", 0);
 
@@ -225,10 +227,10 @@ static void astbmc_fixup_dt_i2cm(void)
 
 	master = dt_create_i2c_master(c->devnode, 1);
 	assert(master);
-	sprintf(name,"p8_%08x_e%dp%d\n", c->id, 1, 0);
+	sprintf(name,"p8_%08x_e%dp%d", c->id, 1, 0);
 	bus = dt_create_i2c_bus(master, name, 0);
 	assert(bus);
-	sprintf(name,"p8_%08x_e%dp%d\n", c->id, 1, 2);
+	sprintf(name,"p8_%08x_e%dp%d", c->id, 1, 2);
 	bus = dt_create_i2c_bus(master, name, 2);
 	assert(bus);
 	dt_create_i2c_device(bus, 0x50, "eeprom", "atmel,24c64", "system-vpd");

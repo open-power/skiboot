@@ -183,9 +183,9 @@ struct p8_i2c_master {
 	uint64_t		poll_interval;	/* Polling interval  */
 	uint64_t		byte_timeout;	/* Timeout per byte */
 	uint64_t		xscom_base;	/* xscom base of i2cm */
-	uint32_t		bit_rate_div;	/* Divisor to set bus speed*/
 	uint32_t		fifo_size;	/* Maximum size of FIFO  */
 	uint32_t		chip_id;	/* Chip the i2cm sits on */
+	uint32_t		engine_id;	/* Engine# on chip */
 	uint8_t			obuf[4];	/* Offset buffer */
 	uint32_t		bytes_sent;
 	bool			irq_ok;		/* Interrupt working ? */
@@ -204,8 +204,9 @@ struct p8_i2c_master {
 
 struct p8_i2c_master_port {
 	struct i2c_bus		bus; /* Abstract bus struct for the client */
-	struct p8_i2c_master	*common;
+	struct p8_i2c_master	*master;
 	uint32_t		port_num;
+	uint32_t		bit_rate_div;	/* Divisor to set bus speed*/
 };
 
 struct p8_i2c_request {
@@ -214,20 +215,22 @@ struct p8_i2c_request {
 	uint64_t		timeout;
 };
 
-static void p8_i2c_print_debug_info(struct p8_i2c_master *master,
+static void p8_i2c_print_debug_info(struct p8_i2c_master_port *port,
 				    struct i2c_request *req)
 {
+	struct p8_i2c_master *master = port->master;
 	uint64_t cmd, mode, stat, estat, intr;
 	int rc;
 
 	/* Print master and request structure bits */
-	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Master info--\n"
-			 "chip_id:%d\txscom_base:0x%016llx\tstate:%d\t"
-			 "bytes_sent:%d\n", master->chip_id, master->xscom_base,
-			 master->state, master->bytes_sent);
+	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
+			 "I2C: Chip %08x Eng. %d Port %d--\n"
+			 " xscom_base=0x%016llx\tstate=%d\tbytes_sent=%d\n",
+			 master->chip_id, master->engine_id, port->port_num,
+			 master->xscom_base, master->state, master->bytes_sent);
 
 	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Request info--\n"
-			 "addr:0x%04x\toffset_bytes:%d\toffset:%d\tlength:%d\n",
+			 " addr=0x%04x\toffset_bytes=%d\toffset=%d\tlen=%d\n",
 			 req->dev_addr, req->offset_bytes, req->offset,
 			 req->rw_len);
 
@@ -331,8 +334,9 @@ static int p8_i2c_prog_watermark(struct p8_i2c_master *master)
 	return rc;
 }
 
-static int p8_i2c_prog_mode(struct p8_i2c_master *master, bool enhanced_mode)
+static int p8_i2c_prog_mode(struct p8_i2c_master_port *port, bool enhanced_mode)
 {
+	struct p8_i2c_master *master = port->master;
 	struct i2c_request *req = list_top(&master->req_list,
 					   struct i2c_request, link);
 	struct p8_i2c_request *request =
@@ -348,7 +352,7 @@ static int p8_i2c_prog_mode(struct p8_i2c_master *master, bool enhanced_mode)
 	}
 	omode = mode;
 	mode = SETFIELD(I2C_MODE_PORT_NUM, mode, request->port_num);
-	mode = SETFIELD(I2C_MODE_BIT_RATE_DIV, mode, master->bit_rate_div);
+	mode = SETFIELD(I2C_MODE_BIT_RATE_DIV, mode, port->bit_rate_div);
 	if (enhanced_mode)
 		mode |= I2C_MODE_ENHANCED;
 	else
@@ -381,8 +385,9 @@ static void p8_i2c_complete_request(struct p8_i2c_master *master,
 }
 
 
-static int p8_i2c_engine_reset(struct p8_i2c_master *master)
+static int p8_i2c_engine_reset(struct p8_i2c_master_port *port)
 {
+	struct p8_i2c_master *master = port->master;
 	int rc;
 
 	/* Reset the i2c engine */
@@ -395,14 +400,14 @@ static int p8_i2c_engine_reset(struct p8_i2c_master *master)
 	}
 
 	/* Reprogram the watermark and mode */
-	rc = p8_i2c_prog_watermark(master);
+	rc = p8_i2c_prog_watermark(port->master);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_I2C_RESET), "I2C: Failed to"
 				 "program the WATERMARK_REG\n");
 		return rc;
 	}
 
-	rc = p8_i2c_prog_mode(master, false);
+	rc = p8_i2c_prog_mode(port, false);
 	if (rc)
 		log_simple_error(&e_info(OPAL_RC_I2C_RESET), "I2C: Failed to"
 				 "program the MODE_REG\n");
@@ -429,10 +434,11 @@ static void p8_i2c_translate_error(struct i2c_request *req, uint64_t status)
 		req->result = OPAL_I2C_STOP_ERR;
 }
 
-static void p8_i2c_status_error(struct p8_i2c_master *master,
+static void p8_i2c_status_error(struct p8_i2c_master_port *port,
 				struct i2c_request *req,
 				uint64_t status)
 {
+	struct p8_i2c_master *master = port->master;
 	int rc;
 
 	/* Display any error other than I2C_INTR_NACK_RCVD_ERR since
@@ -441,12 +447,12 @@ static void p8_i2c_status_error(struct p8_i2c_master *master,
 	if (!(status & I2C_STAT_NACK_RCVD_ERR)) {
 		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
 				 "I2C: Transfer error occured\n");
-		p8_i2c_print_debug_info(master, req);
+		p8_i2c_print_debug_info(port, req);
 	}
 
 	p8_i2c_translate_error(req, status);
 
-	rc = p8_i2c_engine_reset(master);
+	rc = p8_i2c_engine_reset(port);
 	if (rc)
 		goto exit;
 
@@ -464,7 +470,7 @@ static void p8_i2c_status_error(struct p8_i2c_master *master,
 		 *
 		 * Reprogram the mode register with 'enhanced bit' set
 		 */
-		rc = p8_i2c_prog_mode(master, true);
+		rc = p8_i2c_prog_mode(port, true);
 		if (rc) {
 			log_simple_error(&e_info(OPAL_RC_I2C_RESET), "I2C: "
 					 "Failed to program the MODE_REG\n");
@@ -682,8 +688,8 @@ static void p8_i2c_status_cmd_completion(struct p8_i2c_master *master,
 
 static void  p8_i2c_check_status(struct p8_i2c_master *master)
 {
-	struct i2c_request *req = list_top(&master->req_list,
-					   struct i2c_request, link);
+	struct p8_i2c_master_port *port;
+	struct i2c_request *req;
 	uint64_t status;
 	int rc;
 
@@ -721,25 +727,31 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 	/* No request ? That's not normal ! Bail out without re-enabling
 	 * the interrupt
 	 */
+	req = list_top(&master->req_list, struct i2c_request, link);
 	if (req == NULL) {
-		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Interrupt "
-				 "with no request, status=0x%016llx\n", status);
+		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
+				 "I2C: Interrupt with no request"
+				 ", status=0x%016llx\n", status);
 		return;
 	}
+
+	/* Get port for current request */
+	port = container_of(req->bus, struct p8_i2c_master_port, bus);
 
 	/* Handle the status in that order: errors, data requests and
 	 * command completion.
 	 */
 	if (status & I2C_STAT_ANY_ERR)
-		p8_i2c_status_error(master, req, status);
+		p8_i2c_status_error(port, req, status);
 	else if (status & I2C_STAT_DATA_REQ)
 		p8_i2c_status_data_request(master, req, status);
 	else if (status & I2C_STAT_CMD_COMP)
 		p8_i2c_status_cmd_completion(master, req);
 }
 
-static int p8_i2c_check_initial_status(struct p8_i2c_master *master)
+static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
 {
+	struct p8_i2c_master *master = port->master;
 	int rc, pass = 0;
 	uint64_t status, estat;
 
@@ -781,7 +793,7 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master *master)
 		master->state = state_recovery;
 
 		/* Reset the engine */
-		p8_i2c_engine_reset(master);
+		p8_i2c_engine_reset(port);
 
 		/* Some delay XXX use state machine to avoid blocking OS */
 		unlock(&master->lock);
@@ -825,6 +837,7 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master *master)
 static int p8_i2c_start_request(struct p8_i2c_master *master,
 				struct i2c_request *req)
 {
+	struct p8_i2c_master_port *port;
 	struct p8_i2c_request *request =
 		container_of(req, struct p8_i2c_request, req);
 	uint64_t cmd, now;
@@ -832,6 +845,9 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 
 	DBG("Starting req %d len=%d addr=%02x (offset=%x)\n",
 	    req->op, req->rw_len, req->dev_addr, req->offset);
+
+	/* Get port */
+	port = container_of(req->bus, struct p8_i2c_master_port, bus);
 
 	/* Convert the offset if needed */
 	if (req->offset_bytes) {
@@ -849,7 +865,7 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	}
 
 	/* Program mode register */
-	rc = p8_i2c_prog_mode(master, false);
+	rc = p8_i2c_prog_mode(port, false);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: Failed "
 				 "to program the MODE_REG\n");
@@ -857,7 +873,7 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	}
 
 	/* Check status */
-	rc = p8_i2c_check_initial_status(master);
+	rc = p8_i2c_check_initial_status(port);
 	if (rc)
 		return rc;
 
@@ -936,7 +952,7 @@ static int p8_i2c_queue_request(struct i2c_request *req)
 	struct i2c_bus *bus = req->bus;
 	struct p8_i2c_master_port *port =
 		container_of(bus, struct p8_i2c_master_port, bus);
-	struct p8_i2c_master *master = port->common;
+	struct p8_i2c_master *master = port->master;
 	int rc = 0;
 
 	/* Parameter check */
@@ -982,10 +998,10 @@ static void p8_i2c_free_request(struct i2c_request *req)
 	free(request);
 }
 
-static inline uint32_t p8_i2c_get_bit_rate_divisor(uint32_t lb_freq_mhz,
+static inline uint32_t p8_i2c_get_bit_rate_divisor(uint32_t lb_freq_hz,
 						   uint32_t bus_speed)
 {
-	uint64_t lb_freq = lb_freq_mhz * 1000;
+	uint64_t lb_freq = lb_freq_hz / 1000;
 
 	return (((lb_freq / bus_speed) - 1) / 4);
 }
@@ -1001,6 +1017,7 @@ static inline uint64_t p8_i2c_get_poll_interval(uint32_t bus_speed)
 
 static void p8_i2c_timeout(struct timer *t __unused, void *data)
 {
+	struct p8_i2c_master_port *port;
 	struct p8_i2c_master *master = data;
 	struct p8_i2c_request *request;
 	struct i2c_request *req;
@@ -1027,14 +1044,15 @@ static void p8_i2c_timeout(struct timer *t __unused, void *data)
 		DBG("I2C: Timeout with request not expired\n");
 		goto exit;
 	}
+	port = container_of(req->bus, struct p8_i2c_master_port, bus);
 
 	/* Allright, we have a request and it has timed out ... */
 	log_simple_error(&e_info(OPAL_RC_I2C_TIMEOUT),
 			 "I2C: Request timeout !\n");
-	p8_i2c_print_debug_info(master, req);
+	p8_i2c_print_debug_info(port, req);
 
 	/* Reset the engine */
-	p8_i2c_engine_reset(master);
+	p8_i2c_engine_reset(port);
 
 	/* Should we send a stop ? For now just complete */
 	p8_i2c_complete_request(master, req, OPAL_I2C_TIMEOUT);
@@ -1092,7 +1110,7 @@ void p8_i2c_interrupt(uint32_t chip_id)
 void p8_i2c_init(void)
 {
 	struct p8_i2c_master_port *port;
-	uint32_t bus_speed, lb_freq, count;
+	uint32_t lb_freq, count, max_bus_speed;
 	struct dt_node *i2cm, *i2cm_port;
 	struct p8_i2c_master *master;
 	struct proc_chip *chip;
@@ -1104,22 +1122,25 @@ void p8_i2c_init(void)
 		master = zalloc(sizeof(*master));
 		if (!master) {
 			log_simple_error(&e_info(OPAL_RC_I2C_INIT), "I2C: "
-					 "Failed to allocate master structure\n");
+				     "Failed to allocate master structure\n");
 			break;
 		}
 
-		/* Bus speed in KHz */
-		bus_speed = dt_prop_get_u32(i2cm, "bus-speed-khz");
-		lb_freq = dt_prop_get_u32(i2cm, "local-bus-freq-mhz");
+		/* Local bus speed in Hz */
+		lb_freq = dt_prop_get_u32(i2cm, "clock-frequency");
 
 		/* Initialise the i2c master structure */
 		master->state = state_idle;
 		master->chip_id = dt_get_chip_id(i2cm);
+		master->engine_id = dt_prop_get_u32(i2cm, "chip-engine#");
 		master->xscom_base = dt_get_address(i2cm, 0, NULL);
 		chip = get_chip(master->chip_id);
 		assert(chip);
 		init_timer(&master->timeout, p8_i2c_timeout, master);
 		init_timer(&master->poller, p8_i2c_poll, master);
+
+		prlog(PR_INFO, "I2C: Chip %08x Eng. %d\n",
+		      master->chip_id, master->engine_id);
 
 		rc = xscom_read(master->chip_id, master->xscom_base +
 				I2C_EXTD_STAT_REG, &ex_stat);
@@ -1132,8 +1153,7 @@ void p8_i2c_init(void)
 
 		master->fifo_size = GETFIELD(I2C_EXTD_STAT_FIFO_SIZE, ex_stat);
 		list_head_init(&master->req_list);
-		master->bit_rate_div = p8_i2c_get_bit_rate_divisor(lb_freq,
-								   bus_speed);
+
 		/* Check if interrupt is usable */
 		master->irq_ok = p8_i2c_has_irqs();
 		if (!irq_printed) {
@@ -1141,20 +1161,6 @@ void p8_i2c_init(void)
 			prlog(PR_INFO, "I2C: Interrupts %sfunctional\n",
 			      master->irq_ok ? "" : "non-");
 		}
-
-		/* If we have no interrupt, calculate a poll interval, otherwise
-		 * just use a TIMER_POLL timer which will tick on OPAL pollers
-		 * only (which allows us to operate during boot before
-		 * interrupts are functional etc...
-		 */
-		if (master->irq_ok)
-			master->poll_interval = TIMER_POLL;
-		else
-			master->poll_interval =
-				p8_i2c_get_poll_interval(bus_speed);
-		master->byte_timeout = master->irq_ok ?
-			msecs_to_tb(I2C_TIMEOUT_IRQ_MS) :
-			msecs_to_tb(I2C_TIMEOUT_POLL_MS);
 
 		/* Program the watermark register */
 		rc = p8_i2c_prog_watermark(master);
@@ -1180,16 +1186,43 @@ void p8_i2c_init(void)
 
 		/* Add master to chip's list */
 		list_add_tail(&chip->i2cms, &master->link);
+		max_bus_speed = 0;
 
 		dt_for_each_child(i2cm, i2cm_port) {
+			uint32_t speed;
+
 			port->port_num = dt_prop_get_u32(i2cm_port, "reg");
-			port->common = master;
+			port->master = master;
+			speed = dt_prop_get_u32(i2cm_port, "bus-frequency");
+			speed /= 1000;
+			if (speed > max_bus_speed)
+				max_bus_speed = speed;
+			port->bit_rate_div =
+				p8_i2c_get_bit_rate_divisor(lb_freq, speed);
 			port->bus.dt_node = i2cm_port;
 			port->bus.queue_req = p8_i2c_queue_request;
 			port->bus.alloc_req = p8_i2c_alloc_request;
 			port->bus.free_req = p8_i2c_free_request;
 			i2c_add_bus(&port->bus);
+			prlog(PR_INFO, " P%d: <%s> %d kHz\n",
+			      port->port_num,
+			      (char *)dt_prop_get(i2cm_port, "ibm,port-name"),
+			      speed);
 			port++;
 		}
+
+		/* If we have no interrupt, calculate a poll interval, otherwise
+		 * just use a TIMER_POLL timer which will tick on OPAL pollers
+		 * only (which allows us to operate during boot before
+		 * interrupts are functional etc...
+		 */
+		if (master->irq_ok)
+			master->poll_interval = TIMER_POLL;
+		else
+			master->poll_interval =
+				p8_i2c_get_poll_interval(max_bus_speed);
+		master->byte_timeout = master->irq_ok ?
+			msecs_to_tb(I2C_TIMEOUT_IRQ_MS) :
+			msecs_to_tb(I2C_TIMEOUT_POLL_MS);
 	}
 }
