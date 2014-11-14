@@ -238,8 +238,8 @@ void late_init_timers(void)
 	 * faster than that.
 	 */
 	if (fsp_present())
-		dt_add_property_cells(opal_node, "ibm,heartbeat-freq", 2000);
+		dt_add_property_cells(opal_node, "ibm,heartbeat-ms", 2000);
 	else
-		dt_add_property_cells(opal_node, "ibm,heartbeat-freq", 250);
+		dt_add_property_cells(opal_node, "ibm,heartbeat-ms", 250);
 }
 #endif
