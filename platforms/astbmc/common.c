@@ -73,7 +73,9 @@ int64_t astbmc_ipmi_power_down(uint64_t request)
 
 int64_t astbmc_ipmi_reboot(void)
 {
-	return ipmi_chassis_control(IPMI_CHASSIS_HARD_RESET);
+        /* TODO: we should send a IPMI_CHASSIS_HARD_RESET, but the BMC
+         * doesn't respond to this command yet */
+	return ipmi_chassis_control(IPMI_CHASSIS_PWR_CYCLE);
 }
 
 static void astbmc_fixup_dt_bt(struct dt_node *lpc)
