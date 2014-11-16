@@ -15,12 +15,8 @@
  */
 
 
-#define stringify(expr)		stringify_1(expr)
-/* Double-indirection required to stringify expansions */
-#define stringify_1(expr)	#expr
-
 	.section ".builtin_kernel","a"
 	.balign	0x10000
 #ifdef BUILTIN_KERNEL
-	.incbin stringify(BUILTIN_KERNEL)
+	.incbin BUILTIN_KERNEL
 #endif

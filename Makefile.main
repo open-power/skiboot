@@ -75,7 +75,7 @@ CFLAGS += -mno-multiple
 #CFLAGS += -mno-update
 
 ifneq ($(KERNEL),)
-CPPFLAGS += -DBUILTIN_KERNEL="$(KERNEL)"
+CPPFLAGS += -DBUILTIN_KERNEL="\"$(KERNEL)\""
 endif
 
 .SECONDARY:
