@@ -3615,8 +3615,10 @@ static void phb3_init_utl(struct phb3 *p)
 	 */
 	out_be64(p->regs + UTL_PCIE_TAGS_ALLOC,            0x0800000000000000);
 
-	/* Init_82: PCI Express port control */
-	out_be64(p->regs + UTL_PCIE_PORT_CONTROL,          0x8588006000000000);
+	/* Init_82: PCI Express port control
+	 * SW283991: Set Outbound Non-Posted request timeout to 16ms (RTOS).
+	 */
+	out_be64(p->regs + UTL_PCIE_PORT_CONTROL,          0x8588007000000000);
 
 	/* Init_83..85: Clean & setup port errors */
 	out_be64(p->regs + UTL_PCIE_PORT_STATUS,           0xffdfffffffffffff);
@@ -3701,11 +3703,43 @@ static void phb3_init_errors(struct phb3 *p)
 	out_be64(p->regs + PHB_LEM_WOF,			   0x0000000000000000);
 }
 
+static int64_t phb3_fixup_pec_inits(struct phb3 *p)
+{
+	int64_t rc;
+	uint64_t val;
+
+	/* These fixups handle some timer updates that HB doesn't yet do
+	 * to work around problems with some adapters or external drawers
+	 * (SW283991)
+	 */
+
+	/* PCI Hardware Configuration 0 Register */
+	rc = xscom_read(p->chip_id, p->pe_xscom + 0x18, &val);
+	if (rc) {
+		PHBERR(p, "Can't read CS0 !\n");
+		return rc;
+	}
+	val = val & 0x0f0fffffffffffffull;
+	val = val | 0x1010000000000000ull;
+	rc = xscom_write(p->chip_id, p->pe_xscom + 0x18, val);
+	if (rc) {
+		PHBERR(p, "Can't write CS0 !\n");
+		return rc;
+	}
+	return 0;
+}
+
 static void phb3_init_hw(struct phb3 *p)
 {
 	uint64_t val;
 
 	PHBDBG(p, "Initializing PHB...\n");
+
+	/* Fixups for PEC inits */
+	if (phb3_fixup_pec_inits(p)) {
+		PHBERR(p, "Failed to init PEC, PHB appears broken\n");
+		goto failed;
+	}
 
 	/* Lift reset */
 	xscom_read(p->chip_id, p->spci_xscom + 1, &val);/* HW275117 */
@@ -3871,8 +3905,10 @@ static void phb3_init_hw(struct phb3 *p)
 	if (p->rev == PHB3_REV_MURANO_DD20)
 		phb3_write_reg_asb(p, PHB_TCE_WATERMARK,	0x0003000000030302);
 
-	/* Init_142 - PHB3 - Timeout Control Register 1 */
-	out_be64(p->regs + PHB_TIMEOUT_CTRL1,			0x1713132016200000);
+	/* Init_142 - PHB3 - Timeout Control Register 1
+	 * SW283991: Increase timeouts
+	 */
+	out_be64(p->regs + PHB_TIMEOUT_CTRL1,			0x1715152016200000);
 
 	/* Init_143 - PHB3 - Timeout Control Register 2 */
 	out_be64(p->regs + PHB_TIMEOUT_CTRL2,			0x2320d71600000000);
