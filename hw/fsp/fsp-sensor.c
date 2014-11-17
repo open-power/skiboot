@@ -37,7 +37,6 @@
 #include <opal-msg.h>
 #include<fsp-elog.h>
 
-#define SENSOR_PREFIX	"sensor: "
 #define INVALID_DATA	((uint32_t)-1)
 
 /* Entry size of PRS command modifiers */
@@ -440,8 +439,8 @@ static int64_t fsp_sensor_send_read_request(struct opal_sensor_data *attr)
 			PSI_DMA_SENSOR_BUF + attr->offset);
 
 	if (!msg) {
-		prerror(SENSOR_PREFIX "%s: Failed to allocate read message"
-				"\n", __func__);
+		log_simple_error(&e_info(OPAL_RC_SENSOR_READ), "SENSOR: Failed "
+				 "to allocate read message\n");
 		return OPAL_INTERNAL_ERROR;
 	}
 
@@ -450,8 +449,8 @@ static int64_t fsp_sensor_send_read_request(struct opal_sensor_data *attr)
 	if (rc) {
 		fsp_freemsg(msg);
 		msg = NULL;
-		prerror(SENSOR_PREFIX "%s: Failed to queue read message, "
-				"%d\n", __func__, rc);
+		log_simple_error(&e_info(OPAL_RC_SENSOR_READ), "SENSOR: Failed "
+				 "to queue read message (%d)\n", rc);
 		return OPAL_INTERNAL_ERROR;
 	}
 
@@ -512,7 +511,7 @@ static int64_t fsp_opal_read_sensor(uint32_t sensor_hndl, int token,
 	if (prev_msg_consumed) {
 		attr = zalloc(sizeof(*attr));
 		if (!attr) {
-			log_simple_error(&e_info(OPAL_RC_SENSOR_INIT),
+			log_simple_error(&e_info(OPAL_RC_SENSOR_READ),
 				"SENSOR: Failed to allocate memory\n");
 			rc = OPAL_NO_MEM;
 			goto out_lock;
@@ -721,7 +720,8 @@ void fsp_init_sensor(void)
 
 	sensor_buffer = memalign(TCE_PSIZE, SENSOR_MAX_SIZE);
 	if (!sensor_buffer) {
-		prerror("FSP: could not allocate sensor_buffer!\n");
+		log_simple_error(&e_info(OPAL_RC_SENSOR_INIT), "SENSOR: could "
+				 "not allocate sensor_buffer!\n");
 		return;
 	}
 
