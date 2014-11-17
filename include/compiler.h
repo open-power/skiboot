@@ -35,6 +35,8 @@
 #define offsetof(type,m)	__builtin_offsetof(type,m)
 #endif
 
+#define __nomcount		__attribute__((no_instrument_function))
+
 /* Compiler barrier */
 static inline void barrier(void)
 {

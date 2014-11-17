@@ -36,6 +36,10 @@ int main(void)
 	OFFSET(CPUTHREAD_SAVE_R1, cpu_thread, save_r1);
 	OFFSET(CPUTHREAD_STATE, cpu_thread, state);
 	OFFSET(CPUTHREAD_CUR_TOKEN, cpu_thread, current_token);
+	DEFINE(CPUTHREAD_GAP, sizeof(struct cpu_thread) + STACK_SAFETY_GAP);
+	OFFSET(CPUTHREAD_STACK_BOT_MARK, cpu_thread, stack_bot_mark);
+	OFFSET(CPUTHREAD_STACK_BOT_PC, cpu_thread, stack_bot_pc);
+	OFFSET(CPUTHREAD_STACK_BOT_TOK, cpu_thread, stack_bot_tok);
 
 	OFFSET(STACK_TYPE,	stack_frame, type);
 	OFFSET(STACK_LOCALS,	stack_frame, locals);

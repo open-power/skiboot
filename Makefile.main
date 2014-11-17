@@ -50,7 +50,16 @@ CPPFLAGS += -DBITS_PER_LONG=64 -m64 -DHAVE_BIG_ENDIAN
 # causing all our printf's to warn
 CPPFLAGS += -ffreestanding
 
-CFLAGS := -fno-strict-aliasing -fno-stack-protector -pie
+CFLAGS := -fno-strict-aliasing -fstack-protector-all -pie
+
+ifeq ($(STACK_CHECK),1)
+CFLAGS += -fstack-protector-all -pg
+CPPFLAGS += -DSTACK_CHECK_ENABLED
+else
+# XXX Add -fstack-protector-strong on gcc 4.9
+CFLAGS += -fstack-protector
+endif
+
 CFLAGS += $(CWARNS) $(OPTS) $(DBG)
 
 LDFLAGS := -m64 -static -nostdlib -Wl,--gc-sections -pie

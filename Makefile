@@ -20,6 +20,11 @@ PORE ?= 1
 KERNEL ?=
 
 #
+# Optional build with advanced stack checking
+#
+STACK_CHECK ?= 0
+
+#
 # Where is the source directory, must be a full path (no ~)
 # Example: SRC= /home/me/skiboot
 #

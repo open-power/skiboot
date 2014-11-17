@@ -17,6 +17,7 @@
 #include <asm-utils.h>
 #include <asm-offsets.h>
 #include <processor.h>
+#include <stack.h>
 
 	.section ".text","ax"
 	.balign	0x10
@@ -41,3 +42,11 @@ trigger_attn:
 	isync
 	attn
 	blr
+
+#ifdef STACK_CHECK_ENABLED
+.global _mcount
+_mcount:
+	mr	%r3,%r1
+	mflr	%r4
+	b	__mcount_stack_check
+#endif

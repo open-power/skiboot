@@ -62,7 +62,17 @@ void __attrconst *cpu_stack_bottom(unsigned int pir)
 	return (void *)&cpu_stacks[pir] + sizeof(struct cpu_thread);
 }
 
-void cpu_relax(void)
+void __attrconst *cpu_stack_top(unsigned int pir)
+{
+	/* This is the top of the MC stack which is above the normal
+	 * stack, which means a SP between cpu_stack_bottom() and
+	 * cpu_stack_top() can either be a normal stack pointer or
+	 * a Machine Check stack pointer
+	 */
+	return (void *)&cpu_stacks[pir] + STACK_SIZE - STACK_TOP_GAP;
+}
+
+void __nomcount cpu_relax(void)
 {
 	/* Relax a bit to give sibling threads some breathing space */
 	smt_low();
@@ -72,16 +82,6 @@ void cpu_relax(void)
 	asm volatile("nop; nop; nop; nop\n");
 	asm volatile("nop; nop; nop; nop\n");
 	smt_medium();
-}
-
-void __attrconst *cpu_stack_top(unsigned int pir)
-{
-	/* This is the top of the MC stack which is above the normal
-	 * stack, which means a SP between cpu_stack_bottom() and
-	 * cpu_stack_top() can either be a normal stack pointer or
-	 * a Machine Check stack pointer
-	 */
-	return (void *)&cpu_stacks[pir] + STACK_SIZE - STACK_TOP_GAP;
 }
 
 struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
@@ -337,6 +337,7 @@ static void init_cpu_thread(struct cpu_thread *t,
 	list_head_init(&t->job_queue);
 	t->state = state;
 	t->pir = pir;
+	t->stack_bot_mark = LONG_MAX;
 	assert(pir == container_of(t, struct cpu_stack, cpu) - cpu_stacks);
 }
 

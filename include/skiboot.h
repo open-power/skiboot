@@ -122,6 +122,11 @@ extern void *boot_stack_top;
 /* For use by debug code */
 extern void backtrace(void);
 extern void __backtrace(char *bt_buf, int bt_buf_len);
+#ifdef STACK_CHECK_ENABLED
+extern void check_stacks(void);
+#else
+static inline void check_stacks(void) { }
+#endif
 
 /* Convert a 4-bit number to a hex char */
 extern char tohex(uint8_t nibble);

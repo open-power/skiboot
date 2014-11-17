@@ -24,7 +24,7 @@
 static char backtrace_buffer[STACK_BUF_SZ];
 
 /* Dumps backtrace to buffer */
-void __backtrace(char *bt_buf, int bt_buf_len)
+void __nomcount __backtrace(char *bt_buf, int bt_buf_len)
 {
 	unsigned int pir = mfspr(SPR_PIR);
 	unsigned long *sp;

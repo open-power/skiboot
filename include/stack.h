@@ -17,6 +17,8 @@
 #ifndef __STACKFRAME_H
 #define __STACKFRAME_H
 
+#include <mem-map.h>
+
 #define STACK_ENTRY_OPAL_API	0	/* OPAL call */
 #define STACK_ENTRY_MCHECK	0x0200	/* Machine check */
 #define STACK_ENTRY_HMI		0x0e60	/* Hypervisor maintainance */
@@ -38,6 +40,16 @@
 
 /* Offset to get to machine check CPU stacks */
 #define CPU_MC_STACKS_OFFSET	(CPU_STACKS_BASE + STACK_SIZE - STACK_TOP_GAP)
+
+/* Gap below the stack. If our stack checker sees the stack below that
+ * gap, it will flag a stack overflow
+ */
+#define STACK_SAFETY_GAP	512
+
+/* Warning threshold, if stack goes below that on mcount, print a
+ * warning
+ */
+#define STACK_WARNING_GAP	1024
 
 #ifndef __ASSEMBLY__
 

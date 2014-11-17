@@ -56,10 +56,13 @@ struct cpu_thread {
 	void				*icp_regs;
 	uint32_t			con_suspend;
 	bool				con_need_flush;
+	bool				in_mcount;
 	uint32_t			hbrt_spec_wakeup; /* primary only */
 	uint64_t			save_l2_fir_action1;
 	uint64_t			current_token;
-
+	int64_t				stack_bot_mark;
+	uint64_t			stack_bot_pc;
+	uint64_t			stack_bot_tok;
 	struct lock			job_lock;
 	struct list_head		job_queue;
 };
@@ -138,7 +141,7 @@ extern struct cpu_thread *next_available_core_in_chip(struct cpu_thread *cpu, u3
 
 /* Return the caller CPU (only after init_cpu_threads) */
 register struct cpu_thread *__this_cpu asm("r13");
-static inline struct cpu_thread *this_cpu(void)
+static inline __nomcount struct cpu_thread *this_cpu(void)
 {
 	return __this_cpu;
 }

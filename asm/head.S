@@ -308,8 +308,14 @@ boot_entry:
 	addi	%r3,%r3,8
 	bdnz	1b
 
-	/* Jump to C */
+	/* Get our per-cpu pointer into r13 */
 	GET_CPU()
+
+	/* Initialize stack bottom mark to 0, it will be updated in C code */
+	li	%r0,0
+	std	%r0,CPUTHREAD_STACK_BOT_MARK(%r13)
+
+	/* Jump to C */
 	mr	%r3,%r27
 	mr	%r4,%r25
 	bl	main_cpu_entry

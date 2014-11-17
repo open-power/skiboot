@@ -10,4 +10,7 @@ CORE_OBJS += console-log.o ipmi.o time-utils.o pel.o pool.o errorlog.o
 CORE_OBJS += timer.o i2c.o
 CORE=core/built-in.o
 
+CFLAGS_SKIP_core/relocate.o = -pg -fstack-protector-all
+CFLAGS_SKIP_core/relocate.o += -fstack-protector -fstack-protector-strong
+
 $(CORE): $(CORE_OBJS:%=core/%)

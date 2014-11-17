@@ -285,6 +285,9 @@ void opal_run_pollers(void)
 	/* The pollers are run lokelessly, see comment in opal_del_poller */
 	list_for_each(&opal_pollers, poll_ent, link)
 		poll_ent->poller(poll_ent->data);
+
+	/* On debug builds, print max stack usage */
+	check_stacks();
 }
 
 static int64_t opal_poll_events(uint64_t *outstanding_event_mask)
