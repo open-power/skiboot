@@ -22,6 +22,7 @@
 #include <lock.h>
 #include <device.h>
 #include <opal.h>
+#include <stack.h>
 
 /*
  * cpu_thread is our internal structure representing each
@@ -60,9 +61,14 @@ struct cpu_thread {
 	uint32_t			hbrt_spec_wakeup; /* primary only */
 	uint64_t			save_l2_fir_action1;
 	uint64_t			current_token;
+#ifdef STACK_CHECK_ENABLED
 	int64_t				stack_bot_mark;
 	uint64_t			stack_bot_pc;
 	uint64_t			stack_bot_tok;
+#define CPU_BACKTRACE_SIZE	20
+	struct bt_entry			stack_bot_bt[CPU_BACKTRACE_SIZE];
+	unsigned int			stack_bot_bt_count;
+#endif
 	struct lock			job_lock;
 	struct list_head		job_queue;
 };

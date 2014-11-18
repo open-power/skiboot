@@ -47,9 +47,9 @@
 #define STACK_SAFETY_GAP	512
 
 /* Warning threshold, if stack goes below that on mcount, print a
- * warning
+ * warning.
  */
-#define STACK_WARNING_GAP	1024
+#define STACK_WARNING_GAP	2048
 
 #ifndef __ASSEMBLY__
 

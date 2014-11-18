@@ -339,7 +339,9 @@ static void init_cpu_thread(struct cpu_thread *t,
 	list_head_init(&t->job_queue);
 	t->state = state;
 	t->pir = pir;
+#ifdef STACK_CHECK_ENABLED
 	t->stack_bot_mark = LONG_MAX;
+#endif
 	assert(pir == container_of(t, struct cpu_stack, cpu) - cpu_stacks);
 }
 

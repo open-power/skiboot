@@ -311,10 +311,11 @@ boot_entry:
 	/* Get our per-cpu pointer into r13 */
 	GET_CPU()
 
+#ifdef STACK_CHECK_ENABLED
 	/* Initialize stack bottom mark to 0, it will be updated in C code */
 	li	%r0,0
 	std	%r0,CPUTHREAD_STACK_BOT_MARK(%r13)
-
+#endif
 	/* Jump to C */
 	mr	%r3,%r27
 	mr	%r4,%r25

@@ -110,6 +110,9 @@ void __noreturn __nomcount __stack_chk_fail(void)
 
 #ifdef STACK_CHECK_ENABLED
 
+static int64_t lowest_stack_mark = LONG_MAX;
+static struct lock stack_check_lock = LOCK_UNLOCKED;
+
 void __nomcount __mcount_stack_check(uint64_t sp, uint64_t lr);
 void __nomcount __mcount_stack_check(uint64_t sp, uint64_t lr)
 {
@@ -129,9 +132,14 @@ void __nomcount __mcount_stack_check(uint64_t sp, uint64_t lr)
 
 	/* Capture lowest stack for this thread */
 	if (mark < c->stack_bot_mark) {
+		unsigned int count = CPU_BACKTRACE_SIZE;
+		lock(&stack_check_lock);
 		c->stack_bot_mark = mark;
 		c->stack_bot_pc = lr;
 		c->stack_bot_tok = c->current_token;
+		__backtrace(c->stack_bot_bt, &count);
+		c->stack_bot_bt_count = count;
+		unlock(&stack_check_lock);
 	}
 
 	/* Stack is within bounds ? check for warning and bail */
@@ -152,14 +160,17 @@ void __nomcount __mcount_stack_check(uint64_t sp, uint64_t lr)
 	abort();
 }
 
-static int64_t lowest_stack_mark = LONG_MAX;
-static struct lock stack_check_lock = LOCK_UNLOCKED;
-
 void check_stacks(void)
 {
 	struct cpu_thread *c;
-	uint64_t lmark, lpc, ltok;
-	int found = -1;
+
+	/* We should never call that from mcount */
+	assert(!this_cpu()->in_mcount);
+
+	/* Mark ourselves "in_mcount" to avoid deadlock on stack
+	 * check lock
+	 */
+	this_cpu()->in_mcount = true;
 
 	for_each_cpu(c) {
 		if (!c->stack_bot_mark ||
@@ -170,15 +181,15 @@ void check_stacks(void)
 			unlock(&stack_check_lock);
 			continue;
 		}
-		lmark = lowest_stack_mark = c->stack_bot_mark;
-		lpc = c->stack_bot_pc;
-		ltok = c->stack_bot_tok;
-		found = c->pir;
+		prlog(PR_NOTICE, "CPU %04x lowest stack mark %lld bytes left"
+		      " pc=%08llx token=%lld\n",
+		      c->pir, c->stack_bot_mark, c->stack_bot_pc,
+		      c->stack_bot_tok);
+		__print_backtrace(c->pir, c->stack_bot_bt,
+				  c->stack_bot_bt_count, NULL, NULL);
 		unlock(&stack_check_lock);
 	}
-	if (found >= 0)
-		prlog(PR_NOTICE, "CPU %04x lowest stack mark %lld bytes left"
-		      " pc=%08llx token=%lld\n", found, lmark, lpc, ltok);
-}
 
+	this_cpu()->in_mcount = false;
+}
 #endif /* STACK_CHECK_ENABLED */
