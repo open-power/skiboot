@@ -18,7 +18,6 @@
 #include <fsp.h>
 #include <fsp-sysparam.h>
 #include <psi.h>
-#include <memory.h>
 #include <chiptod.h>
 #include <nx.h>
 #include <cpu.h>

@@ -19,7 +19,6 @@
 #include <libfdt.h>
 #include <device.h>
 #include <cpu.h>
-#include <memory.h>
 #include <opal.h>
 #include <interrupts.h>
 #include <fsp.h>

@@ -23,7 +23,6 @@
 #include <interrupts.h>
 #include <cec.h>
 #include <timebase.h>
-#include <memory.h>
 #include <pci.h>
 #include <chip.h>
 

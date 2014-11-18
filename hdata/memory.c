@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <memory.h>
 #include <cpu.h>
 #include <device_tree.h>
 #include <device.h>

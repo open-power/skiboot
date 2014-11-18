@@ -17,7 +17,6 @@
 #include <device.h>
 #include "spira.h"
 #include <cpu.h>
-#include <memory.h>
 #include <vpd.h>
 #include <ccan/str/str.h>
 #include <device_tree.h>
