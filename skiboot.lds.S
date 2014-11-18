@@ -47,11 +47,13 @@ SECTIONS
 	}
 
 	. = ALIGN(0x10);
+	_stext = .;
  	.text : {
 		*(.text*)
 		*(.sfpr)
 	}
-  
+	_etext = .;
+
 	.rodata : {
 		__rodata_start = .;
 		*(.rodata .rodata.*)

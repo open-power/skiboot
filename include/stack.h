@@ -99,6 +99,32 @@ struct stack_frame {
 	uint64_t	srr1;
 } __attribute__((aligned(16)));
 
+/* Backtrace */
+struct bt_entry {
+	unsigned long	sp;
+	unsigned long	pc;
+};
+
+/* Boot stack top */
+extern void *boot_stack_top;
+
+/* Create a backtrace */
+extern void __backtrace(struct bt_entry *entries, unsigned int *count);
+
+/* Convert a backtrace to ASCII */
+extern void __print_backtrace(unsigned int pir, struct bt_entry *entries,
+			      unsigned int count, char *out_buf,
+			      unsigned int *len);
+
+/* For use by debug code, create and print backtrace, uses a static buffer */
+extern void backtrace(void);
+
+#ifdef STACK_CHECK_ENABLED
+extern void check_stacks(void);
+#else
+static inline void check_stacks(void) { }
+#endif
+
 #endif /* __ASSEMBLY__ */
 #endif /* __STACKFRAME_H */
 

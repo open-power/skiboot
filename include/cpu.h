@@ -208,7 +208,7 @@ static inline void cpu_give_self_os(void)
 	__this_cpu->state = cpu_state_os;
 }
 
-extern void *cpu_stack_bottom(unsigned int pir);
-extern void *cpu_stack_top(unsigned int pir);
+extern unsigned long cpu_stack_bottom(unsigned int pir);
+extern unsigned long cpu_stack_top(unsigned int pir);
 
 #endif /* __CPU_H */

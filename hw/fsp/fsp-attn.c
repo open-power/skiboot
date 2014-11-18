@@ -18,6 +18,8 @@
 #include <fsp-elog.h>
 #include <fsp-attn.h>
 #include <hdata/spira.h>
+#include <stack.h>
+#include <processor.h>
 
 #define TI_CMD_VALID	0x1	/* Command valid */
 #define TI_CMD		0xA1	/* Terminate Immediate command */
@@ -88,6 +90,10 @@ static void init_sp_attn_area(void)
  */
 void update_sp_attn_area(const char *msg)
 {
+#define STACK_BUF_ENTRIES	20
+	struct bt_entry bt_buf[STACK_BUF_ENTRIES];
+	unsigned int ent_cnt, len;
+
 	if (!fsp_present())
 		return;
 
@@ -99,7 +105,11 @@ void update_sp_attn_area(const char *msg)
 		(uint32_t)((uint64_t)__builtin_return_address(0) & 0xffffffff);
 
 	snprintf(ti_attn->msg.gitid, GITID_LEN, "%s", gitid);
-	__backtrace(ti_attn->msg.bt_buf, BT_FRAME_LEN);
+	ent_cnt = STACK_BUF_ENTRIES;
+	__backtrace(bt_buf, &ent_cnt);
+	len = BT_FRAME_LEN;
+	__print_backtrace(mfspr(SPR_PIR), bt_buf, ent_cnt,
+			  ti_attn->msg.bt_buf, &len);
 	snprintf(ti_attn->msg.file_info, FILE_INFO_LEN, "%s", msg);
 
 	ti_attn->msg_len = GITID_LEN + BT_FRAME_LEN +

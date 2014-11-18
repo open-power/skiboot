@@ -18,43 +18,85 @@
 #include <skiboot.h>
 #include <processor.h>
 #include <cpu.h>
+#include <stack.h>
 
-/* Upto 10 frames each of length 40 bytes + header = 440 bytes */
-#define STACK_BUF_SZ		440
-static char backtrace_buffer[STACK_BUF_SZ];
+#define STACK_BUF_ENTRIES	20
+static struct bt_entry bt_buf[STACK_BUF_ENTRIES];
+
+extern uint32_t _stext, _etext;
 
 /* Dumps backtrace to buffer */
-void __nomcount __backtrace(char *bt_buf, int bt_buf_len)
+void __nomcount __backtrace(struct bt_entry *entries, unsigned int *count)
 {
-	unsigned int pir = mfspr(SPR_PIR);
-	unsigned long *sp;
-	unsigned long *bottom, *top;
-	char *buf;
-	int len = 0;
+	unsigned int room = *count;
+	unsigned int i = 1; /* Start at level 1 */
 
-	/* Check if there's a __builtin_something instead */
-	asm("mr %0,1" : "=r" (sp));
+	*count = 0;
+	while(room) {
+		unsigned long pc,
+			fp = (unsigned long)__builtin_frame_address(i);
+		if (!fp)
+			break;
+		pc = (unsigned long)__builtin_return_address(i);
+		entries->sp = fp;
+		entries->pc = pc;
+		entries++;
+		*count = (*count) + 1;
+		room--;
+	}
+}
+
+void __print_backtrace(unsigned int pir,
+		       struct bt_entry *entries, unsigned int count,
+		       char *out_buf, unsigned int *len)
+{
+	int i, l = 0, max;
+	char *buf = out_buf;
+	unsigned long bottom, top, tbot, ttop;
+	char mark;
+
+	if (len)
+		max = *len - 1;
+	else
+		max = INT_MAX;
 
 	bottom = cpu_stack_bottom(pir);
 	top = cpu_stack_top(pir);
+	tbot = (unsigned long)&_stext;
+	ttop = (unsigned long)&_etext;
 
-	if (!bt_buf || !bt_buf_len)
-		return;
-
-	buf = bt_buf;
-	len += snprintf(buf, bt_buf_len, "CPU %08x Backtrace:\n", pir);
-	/* XXX Handle SMP */
-	while (sp > bottom && sp < top) {
-		len += snprintf(buf + len, bt_buf_len - len, " S: %016lx "
-				"R: %016lx\n", (unsigned long)sp, sp[2]);
-		sp = (unsigned long *)sp[0];
+	if (buf)
+		l += snprintf(buf, max, "CPU %04x Backtrace:\n", pir);
+	else
+		l += printf("CPU %04x Backtrace:\n", pir);
+	for (i = 0; i < count && l < max; i++) {
+		if (entries->sp < bottom || entries->sp > top)
+			mark = '!';
+		else if (entries->pc < tbot || entries->pc > ttop)
+			mark = '*';
+		else
+			mark = ' ';
+		if (buf)
+			l += snprintf(buf + l, max - l,
+				      " S: %016lx R: %016lx %c\n",
+				      entries->sp, entries->pc, mark);
+		else
+			l += printf(" S: %016lx R: %016lx %c\n",
+				    entries->sp, entries->pc, mark);
+		entries++;
 	}
+	if (buf)
+		buf[l++] = 0;
+	else
+		l++;
+	if (len)
+		*len = l;
 }
 
 void backtrace(void)
 {
-	memset(backtrace_buffer, 0, STACK_BUF_SZ);
-	__backtrace(backtrace_buffer, STACK_BUF_SZ);
+	unsigned int ents = STACK_BUF_ENTRIES;
 
-	fputs(backtrace_buffer, stderr);
+	__backtrace(bt_buf, &ents);
+	__print_backtrace(mfspr(SPR_PIR), bt_buf, ents, NULL, NULL);
 }

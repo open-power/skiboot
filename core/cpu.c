@@ -57,19 +57,21 @@ struct cpu_job {
 };
 
 /* attribute const as cpu_stacks is constant. */
-void __attrconst *cpu_stack_bottom(unsigned int pir)
+unsigned long __attrconst cpu_stack_bottom(unsigned int pir)
 {
-	return (void *)&cpu_stacks[pir] + sizeof(struct cpu_thread);
+	return ((unsigned long)&cpu_stacks[pir]) +
+		sizeof(struct cpu_thread) + STACK_SAFETY_GAP;
 }
 
-void __attrconst *cpu_stack_top(unsigned int pir)
+unsigned long __attrconst cpu_stack_top(unsigned int pir)
 {
 	/* This is the top of the MC stack which is above the normal
 	 * stack, which means a SP between cpu_stack_bottom() and
 	 * cpu_stack_top() can either be a normal stack pointer or
 	 * a Machine Check stack pointer
 	 */
-	return (void *)&cpu_stacks[pir] + STACK_SIZE - STACK_TOP_GAP;
+	return ((unsigned long)&cpu_stacks[pir]) +
+		NORMAL_STACK_SIZE - STACK_TOP_GAP;
 }
 
 void __nomcount cpu_relax(void)
