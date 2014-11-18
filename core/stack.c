@@ -19,6 +19,7 @@
 #include <processor.h>
 #include <cpu.h>
 #include <stack.h>
+#include <mem_region.h>
 
 #define STACK_BUF_ENTRIES	20
 static struct bt_entry bt_buf[STACK_BUF_ENTRIES];
@@ -29,20 +30,18 @@ extern uint32_t _stext, _etext;
 void __nomcount __backtrace(struct bt_entry *entries, unsigned int *count)
 {
 	unsigned int room = *count;
-	unsigned int i = 1; /* Start at level 1 */
+	unsigned long *fp = __builtin_frame_address(1);
 
 	*count = 0;
 	while(room) {
-		unsigned long pc,
-			fp = (unsigned long)__builtin_frame_address(i);
-		if (!fp)
+		if (!fp || (unsigned long)fp > top_of_ram)
 			break;
-		pc = (unsigned long)__builtin_return_address(i);
-		entries->sp = fp;
-		entries->pc = pc;
+		entries->sp = (unsigned long)fp;
+		entries->pc = fp[2];
 		entries++;
 		*count = (*count) + 1;
 		room--;
+		fp = (unsigned long *)fp[0];
 	}
 }
 
@@ -162,7 +161,7 @@ void __nomcount __mcount_stack_check(uint64_t sp, uint64_t lr)
 
 void check_stacks(void)
 {
-	struct cpu_thread *c;
+	struct cpu_thread *c, *lowest = NULL;
 
 	/* We should never call that from mcount */
 	assert(!this_cpu()->in_mcount);
@@ -177,16 +176,20 @@ void check_stacks(void)
 		    c->stack_bot_mark >= lowest_stack_mark)
 			continue;
 		lock(&stack_check_lock);
-		if (c->stack_bot_mark >= lowest_stack_mark) {
-			unlock(&stack_check_lock);
-			continue;
+		if (c->stack_bot_mark < lowest_stack_mark) {
+			lowest = c;
+			lowest_stack_mark = c->stack_bot_mark;
 		}
+		unlock(&stack_check_lock);
+	}
+	if (lowest) {
+		lock(&stack_check_lock);
 		prlog(PR_NOTICE, "CPU %04x lowest stack mark %lld bytes left"
 		      " pc=%08llx token=%lld\n",
-		      c->pir, c->stack_bot_mark, c->stack_bot_pc,
-		      c->stack_bot_tok);
-		__print_backtrace(c->pir, c->stack_bot_bt,
-				  c->stack_bot_bt_count, NULL, NULL);
+		      lowest->pir, lowest->stack_bot_mark, lowest->stack_bot_pc,
+		      lowest->stack_bot_tok);
+		__print_backtrace(lowest->pir, lowest->stack_bot_bt,
+				  lowest->stack_bot_bt_count, NULL, NULL);
 		unlock(&stack_check_lock);
 	}
 

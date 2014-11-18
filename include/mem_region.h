@@ -44,6 +44,8 @@ struct mem_region {
 };
 
 extern struct lock mem_region_lock;
+extern unsigned long top_of_ram;
+
 void *mem_alloc(struct mem_region *region, size_t size, size_t align,
 		const char *location);
 void mem_free(struct mem_region *region, void *mem,

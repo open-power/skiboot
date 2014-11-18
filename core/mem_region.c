@@ -34,6 +34,8 @@ struct lock mem_region_lock = LOCK_UNLOCKED;
 
 static struct list_head regions = LIST_HEAD_INIT(regions);
 
+unsigned long top_of_ram = SKIBOOT_BASE + SKIBOOT_SIZE;
+
 static struct mem_region skiboot_os_reserve = {
 	.name		= "ibm,os-reserve",
 	.start		= 0,
@@ -766,6 +768,8 @@ void mem_region_init(void)
 			abort();
 		}
 		list_add(&regions, &region->list);
+		if ((start + len) > top_of_ram)
+			top_of_ram = start + len;
 		unlock(&mem_region_lock);
 	}
 
