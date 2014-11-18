@@ -119,14 +119,19 @@ OBJS += $(LIBPORE)
 endif
 OBJS += $(LIBC) $(CCAN) $(DEVSRC_OBJ) gitid.o
 
+OBJS_1 = $(OBJS) asm/dummy_map.o
+OBJS_2 = $(OBJS) asm/real_map.o
+
 $(TARGET).lid: $(TARGET).elf
 	$(call Q,OBJCOPY, $(OBJCOPY) -O binary -S $^ $@, $@)
 
-$(TARGET).elf: $(OBJS) $(TARGET).lds $(KERNEL)
-	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(OBJS) -o $@, $@)
+$(TARGET).tmp.elf: $(OBJS_1) $(TARGET).lds $(KERNEL)
+	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(OBJS_1) -o $@, $@)
 
-$(TARGET).map: $(TARGET).elf
-	$(call Q,NM, $(NM) -n $< | grep -v '\( [aNUw] \)\|\(__crc_\)\|\( \$[adt]\)' > $@, $@)
+asm/real_map.o : $(TARGET).tmp.map
+
+$(TARGET).elf: $(OBJS_2) $(TARGET).lds $(KERNEL)
+	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(OBJS_2) -o $@, $@)
 
 $(SUBDIRS):
 	$(call Q,MKDIR,mkdir $@, $@)
@@ -165,7 +170,7 @@ cscope:
 
 clean:
 	$(RM) *.[odsa] $(SUBDIRS:%=%/*.[odsa])
-	$(RM) $(TARGET).elf $(TARGET).lid $(TARGET).map $(TARGET).lds
+	$(RM) *.elf $(TARGET).lid *.map $(TARGET).lds
 	$(RM) include/asm-offsets.h gitid.c
 
 distclean: clean

@@ -51,3 +51,6 @@ endef
 
 %.lds : %.lds.S
 	$(call Q,CC, $(CC) $(CPPFLAGS) -P -E $< -o $@, $@)
+
+%.map: %.elf
+	$(call Q,NM, $(NM) -n $< | grep -v '\( [aNUw] \)\|\(__crc_\)\|\( \$[adt]\)' > $@, $@)

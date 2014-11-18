@@ -114,7 +114,7 @@ extern void __backtrace(struct bt_entry *entries, unsigned int *count);
 /* Convert a backtrace to ASCII */
 extern void __print_backtrace(unsigned int pir, struct bt_entry *entries,
 			      unsigned int count, char *out_buf,
-			      unsigned int *len);
+			      unsigned int *len, bool symbols);
 
 /* For use by debug code, create and print backtrace, uses a static buffer */
 extern void backtrace(void);

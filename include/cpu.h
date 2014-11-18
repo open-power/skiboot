@@ -65,7 +65,7 @@ struct cpu_thread {
 	int64_t				stack_bot_mark;
 	uint64_t			stack_bot_pc;
 	uint64_t			stack_bot_tok;
-#define CPU_BACKTRACE_SIZE	20
+#define CPU_BACKTRACE_SIZE	60
 	struct bt_entry			stack_bot_bt[CPU_BACKTRACE_SIZE];
 	unsigned int			stack_bot_bt_count;
 #endif

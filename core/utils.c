@@ -68,3 +68,30 @@ char __attrconst tohex(uint8_t nibble)
 	return __tohex[nibble];
 }
 
+unsigned long get_symbol(unsigned long addr, char **sym, char **sym_end)
+{
+	unsigned long prev = 0, next;
+	char *psym = NULL, *p = __sym_map_start;
+
+	*sym = *sym_end = NULL;
+	while(p < __sym_map_end) {
+		next = strtoul(p, &p, 16) | SKIBOOT_BASE;
+		if (next > addr && prev <= addr) {
+			p = psym + 3;;
+			if (p >= __sym_map_end)
+				return 0;
+			*sym = p;
+			while(p < __sym_map_end && *p != 10)
+				p++;
+			*sym_end = p;
+			return prev;
+		}
+		prev = next;
+		psym = p;
+		while(p < __sym_map_end && *p != 10)
+			p++;
+		p++;
+	}
+	return 0;
+}
+

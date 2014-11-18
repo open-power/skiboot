@@ -109,7 +109,7 @@ void update_sp_attn_area(const char *msg)
 	__backtrace(bt_buf, &ent_cnt);
 	len = BT_FRAME_LEN;
 	__print_backtrace(mfspr(SPR_PIR), bt_buf, ent_cnt,
-			  ti_attn->msg.bt_buf, &len);
+			  ti_attn->msg.bt_buf, &len, false);
 	snprintf(ti_attn->msg.file_info, FILE_INFO_LEN, "%s", msg);
 
 	ti_attn->msg_len = GITID_LEN + BT_FRAME_LEN +

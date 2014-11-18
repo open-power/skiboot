@@ -171,6 +171,12 @@ extern struct dt_node *dt_root;
 /* Generated git id. */
 extern const char gitid[];
 
+/* Debug support */
+extern char __sym_map_start[];
+extern char __sym_map_end[];
+extern unsigned long get_symbol(unsigned long addr,
+				char **sym, char **sym_end);
+
 /* Fast reboot support */
 extern void fast_reset(void);
 extern void __secondary_cpu_entry(void);

@@ -20,8 +20,9 @@
 #include <cpu.h>
 #include <stack.h>
 #include <mem_region.h>
+#include <unistd.h>
 
-#define STACK_BUF_ENTRIES	20
+#define STACK_BUF_ENTRIES	60
 static struct bt_entry bt_buf[STACK_BUF_ENTRIES];
 
 extern uint32_t _stext, _etext;
@@ -47,27 +48,27 @@ void __nomcount __backtrace(struct bt_entry *entries, unsigned int *count)
 
 void __print_backtrace(unsigned int pir,
 		       struct bt_entry *entries, unsigned int count,
-		       char *out_buf, unsigned int *len)
+		       char *out_buf, unsigned int *len, bool symbols)
 {
+	static char bt_text_buf[4096];
 	int i, l = 0, max;
 	char *buf = out_buf;
-	unsigned long bottom, top, tbot, ttop;
+	unsigned long bottom, top, tbot, ttop, saddr = 0;
+	char *sym = NULL, *sym_end = NULL;
 	char mark;
 
-	if (len)
+	if (!out_buf) {
+		buf = bt_text_buf;
+		max = sizeof(bt_text_buf) - 16;
+	} else
 		max = *len - 1;
-	else
-		max = INT_MAX;
 
 	bottom = cpu_stack_bottom(pir);
 	top = cpu_stack_top(pir);
-	tbot = (unsigned long)&_stext;
+	tbot = SKIBOOT_BASE;
 	ttop = (unsigned long)&_etext;
 
-	if (buf)
-		l += snprintf(buf, max, "CPU %04x Backtrace:\n", pir);
-	else
-		l += printf("CPU %04x Backtrace:\n", pir);
+	l += snprintf(buf, max, "CPU %04x Backtrace:\n", pir);
 	for (i = 0; i < count && l < max; i++) {
 		if (entries->sp < bottom || entries->sp > top)
 			mark = '!';
@@ -75,19 +76,23 @@ void __print_backtrace(unsigned int pir,
 			mark = '*';
 		else
 			mark = ' ';
-		if (buf)
-			l += snprintf(buf + l, max - l,
-				      " S: %016lx R: %016lx %c\n",
-				      entries->sp, entries->pc, mark);
+		if (symbols)
+			saddr = get_symbol(entries->pc, &sym, &sym_end);
+		l += snprintf(buf + l, max - l,
+			      " S: %016lx R: %016lx %c ",
+			      entries->sp, entries->pc, mark);
+		while(sym < sym_end && l < max)
+			buf[l++] = *(sym++);
+		if (sym && l < max)
+			l += snprintf(buf + l, max - l, "+0x%lx\n",
+				      entries->pc - saddr);
 		else
-			l += printf(" S: %016lx R: %016lx %c\n",
-				    entries->sp, entries->pc, mark);
+			l += snprintf(buf + l, max - l, "\n");
 		entries++;
 	}
-	if (buf)
-		buf[l++] = 0;
-	else
-		l++;
+	if (!out_buf)
+		write(stdout->fd, bt_text_buf, l);
+	buf[l++] = 0;
 	if (len)
 		*len = l;
 }
@@ -97,7 +102,7 @@ void backtrace(void)
 	unsigned int ents = STACK_BUF_ENTRIES;
 
 	__backtrace(bt_buf, &ents);
-	__print_backtrace(mfspr(SPR_PIR), bt_buf, ents, NULL, NULL);
+	__print_backtrace(mfspr(SPR_PIR), bt_buf, ents, NULL, NULL, true);
 }
 
 void __noreturn __nomcount __stack_chk_fail(void);
@@ -189,7 +194,7 @@ void check_stacks(void)
 		      lowest->pir, lowest->stack_bot_mark, lowest->stack_bot_pc,
 		      lowest->stack_bot_tok);
 		__print_backtrace(lowest->pir, lowest->stack_bot_bt,
-				  lowest->stack_bot_bt_count, NULL, NULL);
+				  lowest->stack_bot_bt_count, NULL, NULL, true);
 		unlock(&stack_check_lock);
 	}
 

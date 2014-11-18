@@ -125,7 +125,17 @@ SECTIONS
 	.dynsym : { *(.dynsym) }
 	.dynstr : { *(.dynstr) }
 
-	. = ALIGN(0x1000);
+	. = ALIGN(0x10);
+	.sym_map : {
+		__sym_map_start = . ;
+		KEEP(*(.sym_map))
+		__sym_map_end = . ;
+		KEEP(*(.sym_map))
+	}
+
+	/* We locate the BSS at 1M to leave room for the symbol map */
+	. = 0x100000;
+
 	_sbss = .;
 	.bss : {
 		*(.bss*)
