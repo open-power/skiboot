@@ -139,7 +139,6 @@ VERSION ?= $(shell cd $(SRC); GIT_DIR=$(SRC)/.git $(SRC)/make_version.sh)
 	@rm -f $@.tmp
 
 version.c: make_version.sh $(OBJS_NO_VER) .version
-	@echo $(VERSION)
 	@(if [ "a$(VERSION)" = "a" ]; then \
 		echo "#error You need to set SKIBOOT_VERSION environment variable" > $@ ;\
         else \
