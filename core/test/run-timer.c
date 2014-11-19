@@ -49,7 +49,7 @@ int main(void)
 	}
 	count = NUM_TIMERS;
 	while(count) {
-		check_timers();
+		check_timers(false);
 		stamp++;
 	}
 	return 0;
