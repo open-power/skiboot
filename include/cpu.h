@@ -51,7 +51,6 @@ struct cpu_thread {
 	struct cpu_thread		*primary;
 	enum cpu_thread_state		state;
 	struct dt_node			*node;
-	struct opal_machine_check_event	mc_event;
 	struct trace_info		*trace;
 	uint64_t			save_r1;
 	void				*icp_regs;

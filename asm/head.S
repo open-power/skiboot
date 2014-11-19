@@ -35,11 +35,6 @@
 	b . ;
 
 
-/**
- * patch_exception() makes assumptions about this macro, in order to extract
- * the correct stack during MC. If you update this, also check the offset and
- * the patch code in that function.
- */
 #define GET_STACK(stack_reg,pir_reg)				\
 	sldi	stack_reg,pir_reg,STACK_SHIFT;			\
 	addis	stack_reg,stack_reg,CPU_STACKS_OFFSET@ha;	\
