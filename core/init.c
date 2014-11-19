@@ -493,7 +493,7 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 */
 	clear_console();
 
-	printf("SkiBoot %s starting...\n", gitid);
+	printf("SkiBoot %s starting...\n", version);
 	printf("initial console log level: memory %d, driver %d\n",
 	       (debug_descriptor.console_log_levels >> 4),
 	       (debug_descriptor.console_log_levels & 0x0f));

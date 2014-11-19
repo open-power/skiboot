@@ -118,7 +118,7 @@ static void add_opal_firmware_node(void)
 
 	dt_add_property_string(firmware, "compatible", "ibm,opal-firmware");
 	dt_add_property_string(firmware, "name", "firmware");
-	dt_add_property_string(firmware, "git-id", gitid);
+	dt_add_property_string(firmware, "version", version);
 }
 
 void add_opal_node(void)
