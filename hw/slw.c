@@ -780,9 +780,9 @@ int64_t slw_reinit(uint64_t flags)
 	}
 
 	/* XXX Wait one second ! (should check xscom state ? ) */
-	prlog(PR_TRACE, "SLW: [TB=0x%016lx] Waiting one second...\n", mftb());
+	prlog(PR_TRACE, "SLW: Waiting one second...\n");
 	time_wait_ms(1000);
-	prlog(PR_TRACE, "SLW: [TB=0x%016lx] Done.\n", mftb());
+	prlog(PR_TRACE, "SLW: Done.\n");
 
 	for_each_chip(chip) {
 		struct cpu_thread *c;

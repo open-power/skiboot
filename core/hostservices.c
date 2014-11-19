@@ -711,9 +711,8 @@ int host_services_occ_load(void)
 
 	for_each_chip(chip) {
 
-		prlog(PR_DEBUG, "HBRT: [%16lx] Calling loadOCC() homer"
+		prlog(PR_DEBUG, "HBRT: Calling loadOCC() homer"
 		      " %016llx, occ_common_area %016llx, chip %04x\n",
-		      mftb(),
 		      chip->homer_base,
 		      chip->occ_common_base,
 		      chip->id);
@@ -725,7 +724,7 @@ int host_services_occ_load(void)
 						chip->id);
 
 		hservice_mark();
-		prlog(PR_DEBUG, "HBRT: [%16lx] -> rc = %d\n", mftb(), rc);
+		prlog(PR_DEBUG, "HBRT: -> rc = %d\n", rc);
 	}
 	return rc;
 }
@@ -748,7 +747,7 @@ int host_services_occ_start(void)
 	}
 
 	for (i = 0; i < nr_chips; i++)
-		prlog(PR_TRACE, "HBRT: Calling startOCC() for %04llx ",
+		prlog(PR_TRACE, "HBRT: Calling startOCC() for %04llx\n",
 		      chipids[i]);
 
 	/* Lets start all OCC */
