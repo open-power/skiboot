@@ -421,29 +421,8 @@ static int64_t patch_exception(uint64_t vector, uint64_t glue, bool hv)
 	/* Patch-in the vector number */
 	*(uint32_t *)(glue + exc_secondary_patch_type) |= vector;
 
-	/*
-	 * If machine check, patch GET_STACK to get to the MC stack
-	 * instead of the normal stack.
-	 *
-	 * To simplify the arithmetic involved I make assumptions
-	 * on the fact that the base of all CPU stacks is 64k aligned
-	 * and that our stack size is < 32k, which means that the
-	 * "addi" instruction used in GET_STACK() is always using a
-	 * small (<32k) positive offset, which we can then easily
-	 * fixup with a simple addition
-	 */
 	BUILD_ASSERT(STACK_SIZE < 0x8000);
 	BUILD_ASSERT(!(CPU_STACKS_BASE & 0xffff));
-
-	if (vector == 0x200) {
-		/*
-		 * The addi we try to patch is the 3rd instruction
-		 * of GET_STACK(). If you change the macro, you must
-		 * update this code
-		 */
-		iaddr = glue + exc_secondary_patch_stack + 8;
-		*(uint32_t *)iaddr += MC_STACK_SIZE;
-	}
 
 	/* Standard exception ? All done */
 	if (!hv)
@@ -469,13 +448,10 @@ static int64_t patch_exception(uint64_t vector, uint64_t glue, bool hv)
 }
 
 static int64_t opal_register_exc_handler(uint64_t opal_exception,
-					 uint64_t handler_address,
+					 uint64_t handler_address __unused,
 					 uint64_t glue_cache_line)
 {
 	switch(opal_exception) {
-	case OPAL_MACHINE_CHECK_HANDLER:
-		client_mc_address = handler_address;
-		return patch_exception(0x200, glue_cache_line, false);
 	case OPAL_HYPERVISOR_MAINTENANCE_HANDLER:
 		return patch_exception(0xe60, glue_cache_line, true);
 #if 0 /* We let Linux handle softpatch */
