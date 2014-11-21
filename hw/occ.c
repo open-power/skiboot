@@ -313,7 +313,7 @@ static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 	}
 
 	/* First queue up an OK response to the load message itself */
-	rsp = fsp_mkmsg(FSP_RSP_LOAD_OCC, 0 | err);
+	rsp = fsp_mkmsg(FSP_RSP_LOAD_OCC | err, 0);
 	if (rsp)
 		rc = fsp_queue_msg(rsp, fsp_freemsg);
 	if (rc) {
@@ -375,7 +375,7 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 	}
 
 	/* First queue up an OK response to the reset message itself */
-	rsp = fsp_mkmsg(FSP_RSP_RESET_OCC, 0 | err);
+	rsp = fsp_mkmsg(FSP_RSP_RESET_OCC | err, 0);
 	if (rsp)
 		rc = fsp_queue_msg(rsp, fsp_freemsg);
 	if (rc) {
