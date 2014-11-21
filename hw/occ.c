@@ -388,8 +388,13 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 	if (err)
 		return;
 
-	/* Call HBRT... */
-	rc = host_services_occ_start();
+	/*
+	 * Call HBRT to stop OCC and leave it stopped.  FSP will send load/start
+	 * request subsequently.  Also after few runtime restarts (currently 3),
+	 * FSP will request OCC to left in stopped state.
+	 */
+
+	rc = host_services_occ_stop();
 
 	/* Handle fallback to preload */
 	if (rc == -ENOENT && chip->homer_base) {

@@ -758,6 +758,35 @@ int host_services_occ_start(void)
 	return rc;
 }
 
+int host_services_occ_stop(void)
+{
+	struct proc_chip *chip;
+	int i, rc = 0, nr_chips=0;
+	uint64_t chipids[MAX_CHIPS];
+
+	prlog(PR_INFO, "HBRT: OCC Stop requested\n");
+
+	if (!(hservice_runtime && hservice_runtime->stopOCCs)) {
+		prerror("HBRT: No hservice_runtime->stopOCCs\n");
+		return -ENOENT;
+	}
+
+	for_each_chip(chip) {
+		chipids[nr_chips++] = chip->id;
+	}
+
+	for (i = 0; i < nr_chips; i++)
+		prlog(PR_TRACE, "HBRT: Calling stopOCC() for %04llx ",
+		      chipids[i]);
+
+	/* Lets STOP all OCC */
+	rc = hservice_runtime->stopOCCs(chipids, nr_chips);
+	hservice_mark();
+	prlog(PR_DEBUG, "HBRT: stopOCCs() rc  = %d\n", rc);
+	return rc;
+}
+
+
 void host_services_occ_base_setup(void)
 {
 	struct proc_chip *chip;
