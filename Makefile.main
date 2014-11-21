@@ -117,21 +117,23 @@ OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBFLASH)
 ifeq ($(PORE),1)
 OBJS += $(LIBPORE)
 endif
-OBJS += $(LIBC) $(CCAN) $(DEVSRC_OBJ) gitid.o
+OBJS += $(LIBC) $(CCAN) $(DEVSRC_OBJ)
+OBJS_NO_VER = $(OBJS)
+ALL_OBJS = $(OBJS) version.o
 
-OBJS_1 = $(OBJS) asm/dummy_map.o
-OBJS_2 = $(OBJS) asm/real_map.o
+ALL_OBJS_1 = $(ALL_OBJS) asm/dummy_map.o
+ALL_OBJS_2 = $(ALL_OBJS) asm/real_map.o
 
 $(TARGET).lid: $(TARGET).elf
 	$(call Q,OBJCOPY, $(OBJCOPY) -O binary -S $^ $@, $@)
 
-$(TARGET).tmp.elf: $(OBJS_1) $(TARGET).lds $(KERNEL)
-	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(OBJS_1) -o $@, $@)
+$(TARGET).tmp.elf: $(ALL_OBJS_1) $(TARGET).lds $(KERNEL)
+	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(ALL_OBJS_1) -o $@, $@)
 
 asm/real_map.o : $(TARGET).tmp.map
 
-$(TARGET).elf: $(OBJS_2) $(TARGET).lds $(KERNEL)
-	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(OBJS_2) -o $@, $@)
+$(TARGET).elf: $(ALL_OBJS_2) $(TARGET).lds $(KERNEL)
+	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(ALL_OBJS_2) -o $@, $@)
 
 $(SUBDIRS):
 	$(call Q,MKDIR,mkdir $@, $@)
@@ -142,10 +144,20 @@ $(SUBDIRS):
 # Set V=1 if you want to see everything.
 include $(SRC)/Makefile.rules
 
-GIT_SHA ?= $(shell cd $(SRC); GIT_DIR=$(SRC)/.git git describe --always --dirty 2> /dev/null)
+VERSION ?= $(shell cd $(SRC); GIT_DIR=$(SRC)/.git $(SRC)/make_version.sh)
 
-gitid.c:
-	@echo "const char gitid[] = \"$(GIT_SHA)\";" > $@
+.PHONY: VERSION-always
+.version: VERSION-always
+	@echo $(VERSION) > $@.tmp
+	@cmp -s $@ $@.tmp || cp $@.tmp $@
+	@rm -f $@.tmp
+
+version.c: make_version.sh $(OBJS_NO_VER) .version
+	@(if [ "a$(VERSION)" = "a" ]; then \
+		echo "#error You need to set SKIBOOT_VERSION environment variable" > $@ ;\
+        else \
+                echo "const char version[] = \"$(VERSION)\";" ;\
+        fi) > $@
 
 .PHONY: coverage
 include $(shell find $(SRC)/* -name Makefile.check)
@@ -163,7 +175,7 @@ tags:
 TAGS:
 	find . -name '*.[chS]' | xargs etags
 
-.PHONY: tags TAGS check gitid.c
+.PHONY: tags TAGS check
 
 cscope:
 	find . -name '*.[chS]' | xargs cscope
@@ -171,7 +183,7 @@ cscope:
 clean:
 	$(RM) *.[odsa] $(SUBDIRS:%=%/*.[odsa])
 	$(RM) *.elf $(TARGET).lid *.map $(TARGET).lds
-	$(RM) include/asm-offsets.h gitid.c
+	$(RM) include/asm-offsets.h version.c
 
 distclean: clean
 	$(RM) *~ $(SUBDIRS:%=%/*~) include/*~

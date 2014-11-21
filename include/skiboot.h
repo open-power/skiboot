@@ -168,8 +168,8 @@ extern void parse_hdat(bool is_opal, uint32_t master_cpu);
 /* Root of device tree. */
 extern struct dt_node *dt_root;
 
-/* Generated git id. */
-extern const char gitid[];
+/* Full skiboot version number (possibly includes gitid). */
+extern const char version[];
 
 /* Debug support */
 extern char __sym_map_start[];

@@ -3704,11 +3704,43 @@ static void phb3_init_errors(struct phb3 *p)
 	out_be64(p->regs + PHB_LEM_WOF,			   0x0000000000000000);
 }
 
+static int64_t phb3_fixup_pec_inits(struct phb3 *p)
+{
+	int64_t rc;
+	uint64_t val;
+
+	/* These fixups handle some timer updates that HB doesn't yet do
+	 * to work around problems with some adapters or external drawers
+	 * (SW283991)
+	 */
+
+	/* PCI Hardware Configuration 0 Register */
+	rc = xscom_read(p->chip_id, p->pe_xscom + 0x18, &val);
+	if (rc) {
+		PHBERR(p, "Can't read CS0 !\n");
+		return rc;
+	}
+	val = val & 0x0f0fffffffffffffull;
+	val = val | 0x1010000000000000ull;
+	rc = xscom_write(p->chip_id, p->pe_xscom + 0x18, val);
+	if (rc) {
+		PHBERR(p, "Can't write CS0 !\n");
+		return rc;
+	}
+	return 0;
+}
+
 static void phb3_init_hw(struct phb3 *p)
 {
 	uint64_t val;
 
 	PHBDBG(p, "Initializing PHB...\n");
+
+	/* Fixups for PEC inits */
+	if (phb3_fixup_pec_inits(p)) {
+		PHBERR(p, "Failed to init PEC, PHB appears broken\n");
+		goto failed;
+	}
 
 	/* Lift reset */
 	xscom_read(p->chip_id, p->spci_xscom + 1, &val);/* HW275117 */

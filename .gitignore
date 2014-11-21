@@ -17,7 +17,7 @@ tags
 cscope.out
 asm/asm-offsets.s
 include/asm-offsets.h
-gitid.c
+version.c
 core/test/run-device
 core/test/run-malloc
 core/test/run-malloc-speed
@@ -36,3 +36,4 @@ libc/test/run-time
 libc/test/run-time-gcov
 libflash/test/test-flash
 libflash/test/test-flash-gcov
+VERSION
