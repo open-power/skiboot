@@ -126,8 +126,7 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 	struct dt_node *power_mgt;
 	u8 nr_pstates;
 	/* Arrays for device tree */
-	u32 dt_id[MAX_PSTATES];
-	u32 dt_freq[MAX_PSTATES];
+	u32 *dt_id, *dt_freq;
 	int i;
 
 	printf("OCC: CPU pstate state device tree init\n");
@@ -162,16 +161,30 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 		return false;
 	}
 
-	/* Setup arrays for device-tree */
-	for( i=0; i < nr_pstates; i++) {
-		dt_id[i] = occ_data->pstates[i].id;
-		dt_freq[i] = occ_data->pstates[i].freq_khz/1000;
-	}
-
 	power_mgt = dt_find_by_path(dt_root, "/ibm,opal/power-mgt");
 	if (!power_mgt) {
 		printf("OCC: dt node /ibm,opal/power-mgt not found\n");
 		return false;
+	}
+
+	/* Setup arrays for device-tree */
+	/* Allocate memory */
+	dt_id = (u32 *) malloc(MAX_PSTATES * sizeof(u32));
+	if (!dt_id) {
+		printf("OCC: dt_id array alloc failure\n");
+		return false;
+	}
+
+	dt_freq = (u32 *) malloc(MAX_PSTATES * sizeof(u32));
+	if (!dt_freq) {
+		printf("OCC: dt_freq array alloc failure\n");
+		free(dt_id);
+		return false;
+	}
+
+	for( i=0; i < nr_pstates; i++) {
+		dt_id[i] = occ_data->pstates[i].id;
+		dt_freq[i] = occ_data->pstates[i].freq_khz/1000;
 	}
 
 	/* Add the device-tree entries */
@@ -183,6 +196,9 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 
 	/* Return pstate to set for each core */
 	*pstate_nom = occ_data->pstate_nom;
+	/* Free memory */
+	free(dt_id);
+	free(dt_freq);
 	return true;
 }
 
