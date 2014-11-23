@@ -90,6 +90,7 @@ endif
 .SECONDARY:
 
 vpath %.c $(SRC)
+vpath %.C $(SRC)
 vpath %.S $(SRC)
 
 default: all
@@ -152,7 +153,7 @@ VERSION ?= $(shell cd $(SRC); GIT_DIR=$(SRC)/.git $(SRC)/make_version.sh)
 	@cmp -s $@ $@.tmp || cp $@.tmp $@
 	@rm -f $@.tmp
 
-version.c: make_version.sh $(OBJS_NO_VER) .version
+version.c: $(SRC)/make_version.sh $(OBJS_NO_VER) .version
 	@(if [ "a$(VERSION)" = "a" ]; then \
 		echo "#error You need to set SKIBOOT_VERSION environment variable" > $@ ;\
         else \
