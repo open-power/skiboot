@@ -31,7 +31,7 @@ core/test/stubs.o: core/test/stubs.d
 core/test/%.d: core/test/%.c
 	$(HOSTCC) $(HOSTCFLAGS) -I include -I . -I libfdt -M $< > $@
 
--include core/test/*.d
+-include $(wildcard core/test/*.d)
 
 clean: core-test-clean
 

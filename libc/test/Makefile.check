@@ -24,7 +24,7 @@ $(LIBC_TEST:%=%-gcov): % : $(%.d:-gcov=)
 libc/test/%.d: libc/test/%.c
 	$(HOSTCC) $(HOSTCFLAGS) -I include -I . -I libfdt -I libc/include -M $< > $@
 
--include libc/test/*.d
+-include $(wildcard libc/test/*.d)
 
 clean: libc-test-clean
 
