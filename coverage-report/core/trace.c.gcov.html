@@ -1,0 +1,329 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - skiboot.info - core/trace.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">core</a> - trace.c<span style="font-size: 80%;"> (source / <a href="trace.c.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">skiboot.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">97</td>
+            <td class="headerCovTableEntry">105</td>
+            <td class="headerCovTableEntryHi">92.4 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2014-11-24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntryMed">85.7 %</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntry">39</td>
+            <td class="headerCovTableEntry">54</td>
+            <td class="headerCovTableEntryLo">72.2 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>                :            : /* Copyright 2013-2014 IBM Corp.</a>
+<span class="lineNum">       2 </span>                :            :  *
+<span class="lineNum">       3 </span>                :            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<span class="lineNum">       4 </span>                :            :  * you may not use this file except in compliance with the License.
+<span class="lineNum">       5 </span>                :            :  * You may obtain a copy of the License at
+<span class="lineNum">       6 </span>                :            :  *
+<span class="lineNum">       7 </span>                :            :  *      http://www.apache.org/licenses/LICENSE-2.0
+<span class="lineNum">       8 </span>                :            :  *
+<span class="lineNum">       9 </span>                :            :  * Unless required by applicable law or agreed to in writing, software
+<span class="lineNum">      10 </span>                :            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<span class="lineNum">      11 </span>                :            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+<span class="lineNum">      12 </span>                :            :  * implied.
+<span class="lineNum">      13 </span>                :            :  * See the License for the specific language governing permissions and
+<span class="lineNum">      14 </span>                :            :  * limitations under the License.
+<span class="lineNum">      15 </span>                :            :  */
+<span class="lineNum">      16 </span>                :            : 
+<span class="lineNum">      17 </span>                :            : #include &lt;trace.h&gt;
+<span class="lineNum">      18 </span>                :            : #include &lt;timebase.h&gt;
+<span class="lineNum">      19 </span>                :            : #include &lt;lock.h&gt;
+<span class="lineNum">      20 </span>                :            : #include &lt;string.h&gt;
+<span class="lineNum">      21 </span>                :            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      22 </span>                :            : #include &lt;cpu.h&gt;
+<span class="lineNum">      23 </span>                :            : #include &lt;device.h&gt;
+<span class="lineNum">      24 </span>                :            : #include &lt;libfdt.h&gt;
+<span class="lineNum">      25 </span>                :            : #include &lt;processor.h&gt;
+<span class="lineNum">      26 </span>                :            : #include &lt;skiboot.h&gt;
+<span class="lineNum">      27 </span>                :            : 
+<span class="lineNum">      28 </span>                :            : #define DEBUG_TRACES
+<span class="lineNum">      29 </span>                :            : 
+<span class="lineNum">      30 </span>                :            : #define MAX_SIZE (sizeof(union trace) + 7)
+<span class="lineNum">      31 </span>                :            : 
+<span class="lineNum">      32 </span>                :            : /* Smaller trace buffer for early booting */
+<span class="lineNum">      33 </span>                :            : #define BOOT_TBUF_SZ 65536
+<span class="lineNum">      34 </span>                :            : static struct {
+<span class="lineNum">      35 </span>                :            :         struct trace_info trace_info;
+<span class="lineNum">      36 </span>                :            :         char buf[BOOT_TBUF_SZ + MAX_SIZE];
+<span class="lineNum">      37 </span>                :            : } boot_tracebuf __section(&quot;.data.boot_trace&quot;) = {
+<span class="lineNum">      38 </span>                :            :         .trace_info = {
+<span class="lineNum">      39 </span>                :            :                 .lock = LOCK_UNLOCKED,
+<span class="lineNum">      40 </span>                :            :                 .tb = {
+<span class="lineNum">      41 </span>                :            :                         .mask = BOOT_TBUF_SZ - 1,
+<span class="lineNum">      42 </span>                :            :                         .max_size = MAX_SIZE
+<span class="lineNum">      43 </span>                :            :                 },
+<span class="lineNum">      44 </span>                :            :         },
+<span class="lineNum">      45 </span>                :            :         .buf = { 0 }
+<a name="46"><span class="lineNum">      46 </span>                :            : };</a>
+<span class="lineNum">      47 </span>                :            : 
+<span class="lineNum">      48 </span>                :<span class="lineNoCov">          0 : void init_boot_tracebuf(struct cpu_thread *boot_cpu)</span>
+<span class="lineNum">      49 </span>                :            : {
+<span class="lineNum">      50 </span>                :<span class="lineNoCov">          0 :         boot_cpu-&gt;trace = &amp;boot_tracebuf.trace_info;</span>
+<a name="51"><span class="lineNum">      51 </span>                :<span class="lineNoCov">          0 : }</span></a>
+<span class="lineNum">      52 </span>                :            : 
+<span class="lineNum">      53 </span>                :<span class="lineCov">         40 : static size_t tracebuf_extra(void)</span>
+<span class="lineNum">      54 </span>                :            : {
+<span class="lineNum">      55 </span>                :            :         /* We make room for the largest possible record */
+<span class="lineNum">      56 </span>                :<span class="lineCov">         40 :         return TBUF_SZ + MAX_SIZE;</span>
+<span class="lineNum">      57 </span>                :            : }
+<span class="lineNum">      58 </span>                :            : 
+<a name="59"><span class="lineNum">      59 </span>                :            : /* To avoid bloating each entry, repeats are actually specific entries.</a>
+<span class="lineNum">      60 </span>                :            :  * tb-&gt;last points to the last (non-repeat) entry. */
+<span class="lineNum">      61 </span>                :<span class="lineCov">   30670916 : static bool handle_repeat(struct tracebuf *tb, const union trace *trace)</span>
+<span class="lineNum">      62 </span>                :            : {
+<span class="lineNum">      63 </span>                :            :         struct trace_hdr *prev;
+<span class="lineNum">      64 </span>                :            :         struct trace_repeat *rpt;
+<span class="lineNum">      65 </span>                :            :         u32 len;
+<span class="lineNum">      66 </span>                :            : 
+<span class="lineNum">      67 </span>                :<span class="lineCov">   30670916 :         prev = (void *)tb-&gt;buf + (tb-&gt;last &amp; tb-&gt;mask);</span>
+<span class="lineNum">      68 </span>                :            : 
+<span class="lineNum">      69 </span>        [<span class="branchCov" title="Branch 0 was taken 15160670 times"> + </span><span class="branchCov" title="Branch 1 was taken 15510246 times"> + </span>]:<span class="lineCov">   30670916 :         if (prev-&gt;type != trace-&gt;hdr.type</span>
+<span class="lineNum">      70 </span>        [<span class="branchCov" title="Branch 0 was taken 15160670 times"> + </span><span class="branchNoCov" title="Branch 1 was not taken"> - </span>]:<span class="lineCov">   15160670 :             || prev-&gt;len_div_8 != trace-&gt;hdr.len_div_8</span>
+<span class="lineNum">      71 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 15160670 times"> + </span>]:<span class="lineCov">   15160670 :             || prev-&gt;cpu != trace-&gt;hdr.cpu)</span>
+<span class="lineNum">      72 </span>                :<span class="lineCov">   15510246 :                 return false;</span>
+<span class="lineNum">      73 </span>                :            : 
+<span class="lineNum">      74 </span>                :<span class="lineCov">   15160670 :         len = prev-&gt;len_div_8 &lt;&lt; 3;</span>
+<span class="lineNum">      75 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 15160670 times"> + </span>]:<span class="lineCov">   15160670 :         if (memcmp(prev + 1, &amp;trace-&gt;hdr + 1, len - sizeof(*prev)) != 0)</span>
+<span class="lineNum">      76 </span>                :<span class="lineNoCov">          0 :                 return false;</span>
+<span class="lineNum">      77 </span>                :            : 
+<span class="lineNum">      78 </span>                :            :         /* If they've consumed prev entry, don't repeat. */
+<span class="lineNum">      79 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 15160670 times"> + </span>]:<span class="lineCov">   15160670 :         if (tb-&gt;last &lt; tb-&gt;start)</span>
+<span class="lineNum">      80 </span>                :<span class="lineNoCov">          0 :                 return false;</span>
+<span class="lineNum">      81 </span>                :            : 
+<span class="lineNum">      82 </span>                :            :         /* OK, it's a duplicate.  Do we already have repeat? */
+<span class="lineNum">      83 </span>        [<span class="branchCov" title="Branch 0 was taken 12888566 times"> + </span><span class="branchCov" title="Branch 1 was taken 2272104 times"> + </span>]:<span class="lineCov">   15160670 :         if (tb-&gt;last + len != tb-&gt;end) {</span>
+<span class="lineNum">      84 </span>                :            :                 /* FIXME: Reader is not protected from seeing this! */
+<span class="lineNum">      85 </span>                :<span class="lineCov">   12888566 :                 rpt = (void *)tb-&gt;buf + ((tb-&gt;last + len) &amp; tb-&gt;mask);</span>
+<span class="lineNum">      86 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 12888566 times"> + </span>]:<span class="lineCov">   12888566 :                 assert(tb-&gt;last + len + rpt-&gt;len_div_8*8 == tb-&gt;end);</span>
+<span class="lineNum">      87 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 12888566 times"> + </span>]:<span class="lineCov">   12888566 :                 assert(rpt-&gt;type == TRACE_REPEAT);</span>
+<span class="lineNum">      88 </span>                :            : 
+<span class="lineNum">      89 </span>                :            :                 /* If this repeat entry is full, don't repeat. */
+<span class="lineNum">      90 </span>        [<span class="branchCov" title="Branch 0 was taken 160 times"> + </span><span class="branchCov" title="Branch 1 was taken 12888406 times"> + </span>]:<span class="lineCov">   12888566 :                 if (rpt-&gt;num == 0xFFFF)</span>
+<span class="lineNum">      91 </span>                :<span class="lineCov">        160 :                         return false;</span>
+<span class="lineNum">      92 </span>                :            : 
+<span class="lineNum">      93 </span>                :<span class="lineCov">   12888406 :                 rpt-&gt;num++;</span>
+<span class="lineNum">      94 </span>                :<span class="lineCov">   12888406 :                 rpt-&gt;timestamp = trace-&gt;hdr.timestamp;</span>
+<span class="lineNum">      95 </span>                :<span class="lineCov">   12888406 :                 return true;</span>
+<span class="lineNum">      96 </span>                :            :         }
+<span class="lineNum">      97 </span>                :            : 
+<span class="lineNum">      98 </span>                :            :         /*
+<span class="lineNum">      99 </span>                :            :          * Generate repeat entry: it's the smallest possible entry, so we
+<span class="lineNum">     100 </span>                :            :          * must have eliminated old entries.
+<span class="lineNum">     101 </span>                :            :          */
+<span class="lineNum">     102 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2272104 times"> + </span>]:<span class="lineCov">    2272104 :         assert(trace-&gt;hdr.len_div_8 * 8 &gt;= sizeof(*rpt));</span>
+<span class="lineNum">     103 </span>                :            : 
+<span class="lineNum">     104 </span>                :<span class="lineCov">    2272104 :         rpt = (void *)tb-&gt;buf + (tb-&gt;end &amp; tb-&gt;mask);</span>
+<span class="lineNum">     105 </span>                :<span class="lineCov">    2272104 :         rpt-&gt;timestamp = trace-&gt;hdr.timestamp;</span>
+<span class="lineNum">     106 </span>                :<span class="lineCov">    2272104 :         rpt-&gt;type = TRACE_REPEAT;</span>
+<span class="lineNum">     107 </span>                :<span class="lineCov">    2272104 :         rpt-&gt;len_div_8 = sizeof(*rpt) &gt;&gt; 3;</span>
+<span class="lineNum">     108 </span>                :<span class="lineCov">    2272104 :         rpt-&gt;cpu = trace-&gt;hdr.cpu;</span>
+<span class="lineNum">     109 </span>                :<span class="lineCov">    2272104 :         rpt-&gt;prev_len = trace-&gt;hdr.len_div_8 &lt;&lt; 3;</span>
+<span class="lineNum">     110 </span>                :<span class="lineCov">    2272104 :         rpt-&gt;num = 1;</span>
+<span class="lineNum">     111 </span>                :<span class="lineCov">    2272104 :         lwsync(); /* write barrier: complete repeat record before exposing */</span>
+<span class="lineNum">     112 </span>                :<span class="lineCov">    2272104 :         tb-&gt;end += sizeof(*rpt);</span>
+<span class="lineNum">     113 </span>                :<span class="lineCov">   30670916 :         return true;</span>
+<a name="114"><span class="lineNum">     114 </span>                :            : }</a>
+<span class="lineNum">     115 </span>                :            : 
+<span class="lineNum">     116 </span>                :<span class="lineCov">   30670916 : void trace_add(union trace *trace, u8 type, u16 len)</span>
+<span class="lineNum">     117 </span>                :            : {
+<span class="lineNum">     118 </span>                :<span class="lineCov">   30670916 :         struct trace_info *ti = this_cpu()-&gt;trace;</span>
+<span class="lineNum">     119 </span>                :            :         unsigned int tsz;
+<span class="lineNum">     120 </span>                :            : 
+<span class="lineNum">     121 </span>                :<span class="lineCov">   30670916 :         trace-&gt;hdr.type = type;</span>
+<span class="lineNum">     122 </span>                :<span class="lineCov">   30670916 :         trace-&gt;hdr.len_div_8 = (len + 7) &gt;&gt; 3;</span>
+<span class="lineNum">     123 </span>                :            : 
+<span class="lineNum">     124 </span>                :<span class="lineCov">   30670916 :         tsz = trace-&gt;hdr.len_div_8 &lt;&lt; 3;</span>
+<span class="lineNum">     125 </span>                :            : 
+<span class="lineNum">     126 </span>                :            : #ifdef DEBUG_TRACES
+<span class="lineNum">     127 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 30670916 times"> + </span>]:<span class="lineCov">   30670916 :         assert(tsz &gt;= sizeof(trace-&gt;hdr));</span>
+<span class="lineNum">     128 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 30670916 times"> + </span>]:<span class="lineCov">   30670916 :         assert(tsz &lt;= sizeof(*trace));</span>
+<span class="lineNum">     129 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 30670916 times"> + </span>]:<span class="lineCov">   30670916 :         assert(trace-&gt;hdr.type != TRACE_REPEAT);</span>
+<span class="lineNum">     130 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 30670916 times"> + </span>]:<span class="lineCov">   30670916 :         assert(trace-&gt;hdr.type != TRACE_OVERFLOW);</span>
+<span class="lineNum">     131 </span>                :            : #endif
+<span class="lineNum">     132 </span>                :            :         /* Skip traces not enabled in the debug descriptor */
+<span class="lineNum">     133 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 30670916 times"> + </span>]:<span class="lineCov">   30670916 :         if (!((1ul &lt;&lt; trace-&gt;hdr.type) &amp; debug_descriptor.trace_mask))</span>
+<span class="lineNum">     134 </span>                :<span class="lineCov">   30670916 :                 return;</span>
+<span class="lineNum">     135 </span>                :            : 
+<span class="lineNum">     136 </span>                :<span class="lineCov">   30670916 :         trace-&gt;hdr.timestamp = mftb();</span>
+<span class="lineNum">     137 </span>                :<span class="lineCov">   30670916 :         trace-&gt;hdr.cpu = this_cpu()-&gt;server_no;</span>
+<span class="lineNum">     138 </span>                :            : 
+<span class="lineNum">     139 </span>                :<span class="lineCov">   30670916 :         lock(&amp;ti-&gt;lock);</span>
+<span class="lineNum">     140 </span>                :            : 
+<span class="lineNum">     141 </span>                :            :         /* Throw away old entries before we overwrite them. */
+<span class="lineNum">     142 </span>        [<span class="branchCov" title="Branch 0 was taken 17094102 times"> + </span><span class="branchCov" title="Branch 1 was taken 30670916 times"> + </span>]:<span class="lineCov">   47765018 :         while ((ti-&gt;tb.start + ti-&gt;tb.mask + 1) &lt; (ti-&gt;tb.end + tsz)) {</span>
+<span class="lineNum">     143 </span>                :            :                 struct trace_hdr *hdr;
+<span class="lineNum">     144 </span>                :            : 
+<span class="lineNum">     145 </span>                :<span class="lineCov">   17094102 :                 hdr = (void *)ti-&gt;tb.buf + (ti-&gt;tb.start &amp; ti-&gt;tb.mask);</span>
+<span class="lineNum">     146 </span>                :<span class="lineCov">   17094102 :                 ti-&gt;tb.start += hdr-&gt;len_div_8 &lt;&lt; 3;</span>
+<span class="lineNum">     147 </span>                :            :         }
+<span class="lineNum">     148 </span>                :            : 
+<span class="lineNum">     149 </span>                :            :         /* Must update -&gt;start before we rewrite new entries. */
+<span class="lineNum">     150 </span>                :<span class="lineCov">   30670916 :         lwsync(); /* write barrier */</span>
+<span class="lineNum">     151 </span>                :            : 
+<span class="lineNum">     152 </span>                :            :         /* Check for duplicates... */
+<span class="lineNum">     153 </span>        [<span class="branchCov" title="Branch 1 was taken 15510406 times"> + </span><span class="branchCov" title="Branch 2 was taken 15160510 times"> + </span>]:<span class="lineCov">   30670916 :         if (!handle_repeat(&amp;ti-&gt;tb, trace)) {</span>
+<span class="lineNum">     154 </span>                :            :                 /* This may go off end, and that's why ti-&gt;tb.buf is oversize */
+<span class="lineNum">     155 </span>                :<span class="lineCov">   15510406 :                 memcpy(ti-&gt;tb.buf + (ti-&gt;tb.end &amp; ti-&gt;tb.mask), trace, tsz);</span>
+<span class="lineNum">     156 </span>                :<span class="lineCov">   15510406 :                 ti-&gt;tb.last = ti-&gt;tb.end;</span>
+<span class="lineNum">     157 </span>                :<span class="lineCov">   15510406 :                 lwsync(); /* write barrier: write entry before exposing */</span>
+<span class="lineNum">     158 </span>                :<span class="lineCov">   15510406 :                 ti-&gt;tb.end += tsz;</span>
+<span class="lineNum">     159 </span>                :            :         }
+<span class="lineNum">     160 </span>                :<span class="lineCov">   30670916 :         unlock(&amp;ti-&gt;lock);</span>
+<a name="161"><span class="lineNum">     161 </span>                :            : }</a>
+<span class="lineNum">     162 </span>                :            : 
+<span class="lineNum">     163 </span>                :<span class="lineCov">         10 : static void trace_add_dt_props(void)</span>
+<span class="lineNum">     164 </span>                :            : {
+<span class="lineNum">     165 </span>                :            :         unsigned int i;
+<span class="lineNum">     166 </span>                :            :         u64 *prop, tmask;
+<span class="lineNum">     167 </span>                :            : 
+<span class="lineNum">     168 </span>                :<span class="lineCov">         10 :         prop = malloc(sizeof(u64) * 2 * debug_descriptor.num_traces);</span>
+<span class="lineNum">     169 </span>                :            : 
+<span class="lineNum">     170 </span>        [<span class="branchCov" title="Branch 0 was taken 30 times"> + </span><span class="branchCov" title="Branch 1 was taken 10 times"> + </span>]:<span class="lineCov">         40 :         for (i = 0; i &lt; debug_descriptor.num_traces; i++) {</span>
+<span class="lineNum">     171 </span>                :<span class="lineCov">         30 :                 prop[i * 2] = cpu_to_fdt64(debug_descriptor.trace_phys[i]);</span>
+<span class="lineNum">     172 </span>                :<span class="lineCov">         30 :                 prop[i * 2 + 1] = cpu_to_fdt64(debug_descriptor.trace_size[i]);</span>
+<span class="lineNum">     173 </span>                :            :         }
+<span class="lineNum">     174 </span>                :            : 
+<span class="lineNum">     175 </span>                :<span class="lineCov">         10 :         dt_add_property(opal_node, &quot;ibm,opal-traces&quot;,</span>
+<span class="lineNum">     176 </span>                :            :                         prop, sizeof(u64) * 2 * i);
+<span class="lineNum">     177 </span>                :<span class="lineCov">         10 :         free(prop);</span>
+<span class="lineNum">     178 </span>                :            : 
+<span class="lineNum">     179 </span>                :<span class="lineCov">         10 :         tmask = (uint64_t)&amp;debug_descriptor.trace_mask;</span>
+<span class="lineNum">     180 </span>                :<span class="lineCov">         10 :         dt_add_property_cells(opal_node, &quot;ibm,opal-trace-mask&quot;,</span>
+<span class="lineNum">     181 </span>                :            :                               hi32(tmask), lo32(tmask));
+<a name="182"><span class="lineNum">     182 </span>                :<span class="lineCov">         10 : }</span></a>
+<span class="lineNum">     183 </span>                :            : 
+<span class="lineNum">     184 </span>                :<span class="lineCov">         30 : static void trace_add_desc(struct trace_info *t, uint64_t size)</span>
+<span class="lineNum">     185 </span>                :            : {
+<span class="lineNum">     186 </span>                :<span class="lineCov">         30 :         unsigned int i = debug_descriptor.num_traces;</span>
+<span class="lineNum">     187 </span>                :            : 
+<span class="lineNum">     188 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 30 times"> + </span>]:<span class="lineCov">         30 :         if (i &gt;= DEBUG_DESC_MAX_TRACES) {</span>
+<span class="lineNum">     189 </span>                :<span class="lineNoCov">          0 :                 prerror(&quot;TRACE: Debug descriptor trace list full !\n&quot;);</span>
+<span class="lineNum">     190 </span>                :<span class="lineCov">         30 :                 return;</span>
+<span class="lineNum">     191 </span>                :            :         }
+<span class="lineNum">     192 </span>                :<span class="lineCov">         30 :         debug_descriptor.num_traces++;</span>
+<span class="lineNum">     193 </span>                :            : 
+<span class="lineNum">     194 </span>                :<span class="lineCov">         30 :         debug_descriptor.trace_phys[i] = (uint64_t)&amp;t-&gt;tb;</span>
+<span class="lineNum">     195 </span>                :<span class="lineCov">         30 :         debug_descriptor.trace_tce[i] = 0; /* populated later */</span>
+<span class="lineNum">     196 </span>                :<span class="lineCov">         30 :         debug_descriptor.trace_size[i] = size;</span>
+<span class="lineNum">     197 </span>                :            : }
+<a name="198"><span class="lineNum">     198 </span>                :            : </a>
+<span class="lineNum">     199 </span>                :            : /* Allocate trace buffers once we know memory topology */
+<span class="lineNum">     200 </span>                :<span class="lineCov">         10 : void init_trace_buffers(void)</span>
+<span class="lineNum">     201 </span>                :            : {
+<span class="lineNum">     202 </span>                :            :         struct cpu_thread *t;
+<span class="lineNum">     203 </span>                :<span class="lineCov">         10 :         struct trace_info *any = &amp;boot_tracebuf.trace_info;</span>
+<span class="lineNum">     204 </span>                :            :         uint64_t size;
+<span class="lineNum">     205 </span>                :            : 
+<span class="lineNum">     206 </span>                :            :         /* Boot the boot trace in the debug descriptor */
+<span class="lineNum">     207 </span>                :<span class="lineCov">         10 :         trace_add_desc(any, sizeof(boot_tracebuf.buf));</span>
+<span class="lineNum">     208 </span>                :            : 
+<span class="lineNum">     209 </span>                :            :         /* Allocate a trace buffer for each primary cpu. */
+<span class="lineNum">     210 </span>        [<span class="branchCov" title="Branch 2 was taken 40 times"> + </span><span class="branchCov" title="Branch 3 was taken 10 times"> + </span>]:<span class="lineCov">         50 :         for_each_cpu(t) {</span>
+<span class="lineNum">     211 </span>        [<span class="branchCov" title="Branch 0 was taken 20 times"> + </span><span class="branchCov" title="Branch 1 was taken 20 times"> + </span>]:<span class="lineCov">         40 :                 if (t-&gt;is_secondary)</span>
+<span class="lineNum">     212 </span>                :<span class="lineCov">         20 :                         continue;</span>
+<span class="lineNum">     213 </span>                :            : 
+<span class="lineNum">     214 </span>                :            :                 /* Use a 4K alignment for TCE mapping */
+<span class="lineNum">     215 </span>                :<span class="lineCov">         20 :                 size = ALIGN_UP(sizeof(*t-&gt;trace) + tracebuf_extra(), 0x1000);</span>
+<span class="lineNum">     216 </span>                :<span class="lineCov">         20 :                 t-&gt;trace = local_alloc(t-&gt;chip_id, size, 0x1000);</span>
+<span class="lineNum">     217 </span>        [<span class="branchCov" title="Branch 0 was taken 20 times"> + </span><span class="branchNoCov" title="Branch 1 was not taken"> - </span>]:<span class="lineCov">         20 :                 if (t-&gt;trace) {</span>
+<span class="lineNum">     218 </span>                :<span class="lineCov">         20 :                         any = t-&gt;trace;</span>
+<span class="lineNum">     219 </span>                :<span class="lineCov">         20 :                         memset(t-&gt;trace, 0, size);</span>
+<span class="lineNum">     220 </span>                :<span class="lineCov">         20 :                         init_lock(&amp;t-&gt;trace-&gt;lock);</span>
+<span class="lineNum">     221 </span>                :<span class="lineCov">         20 :                         t-&gt;trace-&gt;tb.mask = TBUF_SZ - 1;</span>
+<span class="lineNum">     222 </span>                :<span class="lineCov">         20 :                         t-&gt;trace-&gt;tb.max_size = MAX_SIZE;</span>
+<span class="lineNum">     223 </span>                :<span class="lineCov">         20 :                         trace_add_desc(any, sizeof(t-&gt;trace-&gt;tb) +</span>
+<span class="lineNum">     224 </span>                :<span class="lineCov">         20 :                                        tracebuf_extra());</span>
+<span class="lineNum">     225 </span>                :            :                 } else
+<span class="lineNum">     226 </span>                :<span class="lineNoCov">          0 :                         prerror(&quot;TRACE: cpu 0x%x allocation failed\n&quot;, t-&gt;pir);</span>
+<span class="lineNum">     227 </span>                :            :         }
+<span class="lineNum">     228 </span>                :            : 
+<span class="lineNum">     229 </span>                :            :         /* In case any allocations failed, share trace buffers. */
+<span class="lineNum">     230 </span>        [<span class="branchCov" title="Branch 2 was taken 40 times"> + </span><span class="branchCov" title="Branch 3 was taken 10 times"> + </span>]:<span class="lineCov">         50 :         for_each_cpu(t) {</span>
+<span class="lineNum">     231 </span>[<span class="branchCov" title="Branch 0 was taken 20 times"> + </span><span class="branchCov" title="Branch 1 was taken 20 times"> + </span>][<span class="branchNoCov" title="Branch 2 was not taken"> - </span><span class="branchCov" title="Branch 3 was taken 20 times"> + </span>]:<span class="lineCov">         40 :                 if (!t-&gt;is_secondary &amp;&amp; !t-&gt;trace)</span>
+<span class="lineNum">     232 </span>                :<span class="lineNoCov">          0 :                         t-&gt;trace = any;</span>
+<span class="lineNum">     233 </span>                :            :         }
+<span class="lineNum">     234 </span>                :            : 
+<span class="lineNum">     235 </span>                :            :         /* And copy those to the secondaries. */
+<span class="lineNum">     236 </span>        [<span class="branchCov" title="Branch 2 was taken 40 times"> + </span><span class="branchCov" title="Branch 3 was taken 10 times"> + </span>]:<span class="lineCov">         50 :         for_each_cpu(t) {</span>
+<span class="lineNum">     237 </span>        [<span class="branchCov" title="Branch 0 was taken 20 times"> + </span><span class="branchCov" title="Branch 1 was taken 20 times"> + </span>]:<span class="lineCov">         40 :                 if (!t-&gt;is_secondary)</span>
+<span class="lineNum">     238 </span>                :<span class="lineCov">         20 :                         continue;</span>
+<span class="lineNum">     239 </span>                :<span class="lineCov">         20 :                 t-&gt;trace = t-&gt;primary-&gt;trace;</span>
+<span class="lineNum">     240 </span>                :            :         }
+<span class="lineNum">     241 </span>                :            : 
+<span class="lineNum">     242 </span>                :            :         /* Trace node in DT. */
+<span class="lineNum">     243 </span>                :<span class="lineCov">         10 :         trace_add_dt_props();</span>
+<span class="lineNum">     244 </span>                :<span class="lineCov">         10 : }</span>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.9</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

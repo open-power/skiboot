@@ -1,0 +1,596 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - skiboot.info - ccan/list/list.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">ccan/list</a> - list.h<span style="font-size: 80%;"> (source / <a href="list.h.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">skiboot.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">45</td>
+            <td class="headerCovTableEntry">45</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2014-11-24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntryMed">83.3 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>                :            : /* Licensed under BSD-MIT - see LICENSE file for details */</a>
+<span class="lineNum">       2 </span>                :            : #ifndef CCAN_LIST_H
+<span class="lineNum">       3 </span>                :            : #define CCAN_LIST_H
+<span class="lineNum">       4 </span>                :            : #include &lt;stdbool.h&gt;
+<span class="lineNum">       5 </span>                :            : #include &lt;assert.h&gt;
+<span class="lineNum">       6 </span>                :            : #include &lt;ccan/container_of/container_of.h&gt;
+<span class="lineNum">       7 </span>                :            : #include &lt;ccan/check_type/check_type.h&gt;
+<span class="lineNum">       8 </span>                :            : 
+<span class="lineNum">       9 </span>                :            : /**
+<span class="lineNum">      10 </span>                :            :  * struct list_node - an entry in a doubly-linked list
+<span class="lineNum">      11 </span>                :            :  * @next: next entry (self if empty)
+<span class="lineNum">      12 </span>                :            :  * @prev: previous entry (self if empty)
+<span class="lineNum">      13 </span>                :            :  *
+<span class="lineNum">      14 </span>                :            :  * This is used as an entry in a linked list.
+<span class="lineNum">      15 </span>                :            :  * Example:
+<span class="lineNum">      16 </span>                :            :  *      struct child {
+<span class="lineNum">      17 </span>                :            :  *              const char *name;
+<span class="lineNum">      18 </span>                :            :  *              // Linked list of all us children.
+<span class="lineNum">      19 </span>                :            :  *              struct list_node list;
+<span class="lineNum">      20 </span>                :            :  *      };
+<span class="lineNum">      21 </span>                :            :  */
+<span class="lineNum">      22 </span>                :            : struct list_node
+<span class="lineNum">      23 </span>                :            : {
+<span class="lineNum">      24 </span>                :            :         struct list_node *next, *prev;
+<span class="lineNum">      25 </span>                :            : };
+<span class="lineNum">      26 </span>                :            : 
+<span class="lineNum">      27 </span>                :            : /**
+<span class="lineNum">      28 </span>                :            :  * struct list_head - the head of a doubly-linked list
+<span class="lineNum">      29 </span>                :            :  * @h: the list_head (containing next and prev pointers)
+<span class="lineNum">      30 </span>                :            :  *
+<span class="lineNum">      31 </span>                :            :  * This is used as the head of a linked list.
+<span class="lineNum">      32 </span>                :            :  * Example:
+<span class="lineNum">      33 </span>                :            :  *      struct parent {
+<span class="lineNum">      34 </span>                :            :  *              const char *name;
+<span class="lineNum">      35 </span>                :            :  *              struct list_head children;
+<span class="lineNum">      36 </span>                :            :  *              unsigned int num_children;
+<span class="lineNum">      37 </span>                :            :  *      };
+<span class="lineNum">      38 </span>                :            :  */
+<span class="lineNum">      39 </span>                :            : struct list_head
+<span class="lineNum">      40 </span>                :            : {
+<span class="lineNum">      41 </span>                :            :         struct list_node n;
+<span class="lineNum">      42 </span>                :            : };
+<span class="lineNum">      43 </span>                :            : 
+<span class="lineNum">      44 </span>                :            : /**
+<span class="lineNum">      45 </span>                :            :  * list_check - check head of a list for consistency
+<span class="lineNum">      46 </span>                :            :  * @h: the list_head
+<span class="lineNum">      47 </span>                :            :  * @abortstr: the location to print on aborting, or NULL.
+<span class="lineNum">      48 </span>                :            :  *
+<span class="lineNum">      49 </span>                :            :  * Because list_nodes have redundant information, consistency checking between
+<span class="lineNum">      50 </span>                :            :  * the back and forward links can be done.  This is useful as a debugging check.
+<span class="lineNum">      51 </span>                :            :  * If @abortstr is non-NULL, that will be printed in a diagnostic if the list
+<span class="lineNum">      52 </span>                :            :  * is inconsistent, and the function will abort.
+<span class="lineNum">      53 </span>                :            :  *
+<span class="lineNum">      54 </span>                :            :  * Returns the list head if the list is consistent, NULL if not (it
+<span class="lineNum">      55 </span>                :            :  * can never return NULL if @abortstr is set).
+<span class="lineNum">      56 </span>                :            :  *
+<span class="lineNum">      57 </span>                :            :  * See also: list_check_node()
+<span class="lineNum">      58 </span>                :            :  *
+<span class="lineNum">      59 </span>                :            :  * Example:
+<span class="lineNum">      60 </span>                :            :  *      static void dump_parent(struct parent *p)
+<span class="lineNum">      61 </span>                :            :  *      {
+<span class="lineNum">      62 </span>                :            :  *              struct child *c;
+<span class="lineNum">      63 </span>                :            :  *
+<span class="lineNum">      64 </span>                :            :  *              printf(&quot;%s (%u children):\n&quot;, p-&gt;name, p-&gt;num_children);
+<span class="lineNum">      65 </span>                :            :  *              list_check(&amp;p-&gt;children, &quot;bad child list&quot;);
+<span class="lineNum">      66 </span>                :            :  *              list_for_each(&amp;p-&gt;children, c, list)
+<span class="lineNum">      67 </span>                :            :  *                      printf(&quot; -&gt; %s\n&quot;, c-&gt;name);
+<span class="lineNum">      68 </span>                :            :  *      }
+<span class="lineNum">      69 </span>                :            :  */
+<span class="lineNum">      70 </span>                :            : struct list_head *list_check(const struct list_head *h, const char *abortstr);
+<span class="lineNum">      71 </span>                :            : 
+<span class="lineNum">      72 </span>                :            : /**
+<span class="lineNum">      73 </span>                :            :  * list_check_node - check node of a list for consistency
+<span class="lineNum">      74 </span>                :            :  * @n: the list_node
+<span class="lineNum">      75 </span>                :            :  * @abortstr: the location to print on aborting, or NULL.
+<span class="lineNum">      76 </span>                :            :  *
+<span class="lineNum">      77 </span>                :            :  * Check consistency of the list node is in (it must be in one).
+<span class="lineNum">      78 </span>                :            :  *
+<span class="lineNum">      79 </span>                :            :  * See also: list_check()
+<span class="lineNum">      80 </span>                :            :  *
+<span class="lineNum">      81 </span>                :            :  * Example:
+<span class="lineNum">      82 </span>                :            :  *      static void dump_child(const struct child *c)
+<span class="lineNum">      83 </span>                :            :  *      {
+<span class="lineNum">      84 </span>                :            :  *              list_check_node(&amp;c-&gt;list, &quot;bad child list&quot;);
+<span class="lineNum">      85 </span>                :            :  *              printf(&quot;%s\n&quot;, c-&gt;name);
+<span class="lineNum">      86 </span>                :            :  *      }
+<span class="lineNum">      87 </span>                :            :  */
+<span class="lineNum">      88 </span>                :            : struct list_node *list_check_node(const struct list_node *n,
+<span class="lineNum">      89 </span>                :            :                                   const char *abortstr);
+<span class="lineNum">      90 </span>                :            : 
+<span class="lineNum">      91 </span>                :            : #ifdef CCAN_LIST_DEBUG
+<span class="lineNum">      92 </span>                :            : #define list_debug(h) list_check((h), __func__)
+<span class="lineNum">      93 </span>                :            : #define list_debug_node(n) list_check_node((n), __func__)
+<span class="lineNum">      94 </span>                :            : #else
+<span class="lineNum">      95 </span>                :            : #define list_debug(h) (h)
+<span class="lineNum">      96 </span>                :            : #define list_debug_node(n) (n)
+<span class="lineNum">      97 </span>                :            : #endif
+<span class="lineNum">      98 </span>                :            : 
+<span class="lineNum">      99 </span>                :            : /**
+<span class="lineNum">     100 </span>                :            :  * LIST_HEAD_INIT - initializer for an empty list_head
+<span class="lineNum">     101 </span>                :            :  * @name: the name of the list.
+<span class="lineNum">     102 </span>                :            :  *
+<span class="lineNum">     103 </span>                :            :  * Explicit initializer for an empty list.
+<span class="lineNum">     104 </span>                :            :  *
+<span class="lineNum">     105 </span>                :            :  * See also:
+<span class="lineNum">     106 </span>                :            :  *      LIST_HEAD, list_head_init()
+<span class="lineNum">     107 </span>                :            :  *
+<span class="lineNum">     108 </span>                :            :  * Example:
+<span class="lineNum">     109 </span>                :            :  *      static struct list_head my_list = LIST_HEAD_INIT(my_list);
+<span class="lineNum">     110 </span>                :            :  */
+<span class="lineNum">     111 </span>                :            : #define LIST_HEAD_INIT(name) { { &amp;name.n, &amp;name.n } }
+<span class="lineNum">     112 </span>                :            : 
+<span class="lineNum">     113 </span>                :            : /**
+<span class="lineNum">     114 </span>                :            :  * LIST_HEAD - define and initialize an empty list_head
+<span class="lineNum">     115 </span>                :            :  * @name: the name of the list.
+<span class="lineNum">     116 </span>                :            :  *
+<span class="lineNum">     117 </span>                :            :  * The LIST_HEAD macro defines a list_head and initializes it to an empty
+<span class="lineNum">     118 </span>                :            :  * list.  It can be prepended by &quot;static&quot; to define a static list_head.
+<span class="lineNum">     119 </span>                :            :  *
+<span class="lineNum">     120 </span>                :            :  * See also:
+<span class="lineNum">     121 </span>                :            :  *      LIST_HEAD_INIT, list_head_init()
+<span class="lineNum">     122 </span>                :            :  *
+<span class="lineNum">     123 </span>                :            :  * Example:
+<span class="lineNum">     124 </span>                :            :  *      static LIST_HEAD(my_global_list);
+<span class="lineNum">     125 </span>                :            :  */
+<span class="lineNum">     126 </span>                :            : #define LIST_HEAD(name) \
+<span class="lineNum">     127 </span>                :            :         struct list_head name = LIST_HEAD_INIT(name)
+<span class="lineNum">     128 </span>                :            : 
+<span class="lineNum">     129 </span>                :            : /**
+<span class="lineNum">     130 </span>                :            :  * list_head_init - initialize a list_head
+<span class="lineNum">     131 </span>                :            :  * @h: the list_head to set to the empty list
+<span class="lineNum">     132 </span>                :            :  *
+<span class="lineNum">     133 </span>                :            :  * Example:
+<span class="lineNum">     134 </span>                :            :  *      ...
+<span class="lineNum">     135 </span>                :            :  *      struct parent *parent = malloc(sizeof(*parent));
+<span class="lineNum">     136 </span>                :            :  *
+<span class="lineNum">     137 </span>                :            :  *      list_head_init(&amp;parent-&gt;children);
+<a name="138"><span class="lineNum">     138 </span>                :            :  *      parent-&gt;num_children = 0;</a>
+<span class="lineNum">     139 </span>                :            :  */
+<span class="lineNum">     140 </span>                :<span class="lineCov">        100 : static inline void list_head_init(struct list_head *h)</span>
+<span class="lineNum">     141 </span>                :            : {
+<span class="lineNum">     142 </span>                :<span class="lineCov">        100 :         h-&gt;n.next = h-&gt;n.prev = &amp;h-&gt;n;</span>
+<span class="lineNum">     143 </span>                :<span class="lineCov">        100 : }</span>
+<span class="lineNum">     144 </span>                :            : 
+<span class="lineNum">     145 </span>                :            : /**
+<span class="lineNum">     146 </span>                :            :  * list_add - add an entry at the start of a linked list.
+<span class="lineNum">     147 </span>                :            :  * @h: the list_head to add the node to
+<span class="lineNum">     148 </span>                :            :  * @n: the list_node to add to the list.
+<span class="lineNum">     149 </span>                :            :  *
+<span class="lineNum">     150 </span>                :            :  * The list_node does not need to be initialized; it will be overwritten.
+<span class="lineNum">     151 </span>                :            :  * Example:
+<span class="lineNum">     152 </span>                :            :  *      struct child *child = malloc(sizeof(*child));
+<span class="lineNum">     153 </span>                :            :  *
+<span class="lineNum">     154 </span>                :            :  *      child-&gt;name = &quot;marvin&quot;;
+<span class="lineNum">     155 </span>                :            :  *      list_add(&amp;parent-&gt;children, &amp;child-&gt;list);
+<a name="156"><span class="lineNum">     156 </span>                :            :  *      parent-&gt;num_children++;</a>
+<span class="lineNum">     157 </span>                :            :  */
+<span class="lineNum">     158 </span>                :<span class="lineCov">      10224 : static inline void list_add(struct list_head *h, struct list_node *n)</span>
+<span class="lineNum">     159 </span>                :            : {
+<span class="lineNum">     160 </span>                :<span class="lineCov">      10224 :         n-&gt;next = h-&gt;n.next;</span>
+<span class="lineNum">     161 </span>                :<span class="lineCov">      10224 :         n-&gt;prev = &amp;h-&gt;n;</span>
+<span class="lineNum">     162 </span>                :<span class="lineCov">      10224 :         h-&gt;n.next-&gt;prev = n;</span>
+<span class="lineNum">     163 </span>                :<span class="lineCov">      10224 :         h-&gt;n.next = n;</span>
+<span class="lineNum">     164 </span>                :            :         (void)list_debug(h);
+<span class="lineNum">     165 </span>                :<span class="lineCov">      10224 : }</span>
+<span class="lineNum">     166 </span>                :            : 
+<span class="lineNum">     167 </span>                :            : /**
+<span class="lineNum">     168 </span>                :            :  * list_add_before - add an entry before another entry.
+<span class="lineNum">     169 </span>                :            :  * @h: the list_head to add the node to (we use it for debug purposes, can be NULL)
+<span class="lineNum">     170 </span>                :            :  * @n: the list_node to add to the list.
+<span class="lineNum">     171 </span>                :            :  * @p: the list_node of the other entry
+<span class="lineNum">     172 </span>                :            :  *
+<a name="173"><span class="lineNum">     173 </span>                :            :  * The list_node does not need to be initialized; it will be overwritten.</a>
+<span class="lineNum">     174 </span>                :            :  */
+<span class="lineNum">     175 </span>                :<span class="lineCov">        192 : static inline void list_add_before(struct list_head *h, struct list_node *n,</span>
+<span class="lineNum">     176 </span>                :            :                                    struct list_node *p)
+<span class="lineNum">     177 </span>                :            : {
+<span class="lineNum">     178 </span>                :<span class="lineCov">        192 :         n-&gt;next = p;</span>
+<span class="lineNum">     179 </span>                :<span class="lineCov">        192 :         n-&gt;prev = p-&gt;prev;</span>
+<span class="lineNum">     180 </span>                :<span class="lineCov">        192 :         p-&gt;prev = n;</span>
+<span class="lineNum">     181 </span>                :<span class="lineCov">        192 :         n-&gt;prev-&gt;next = n;</span>
+<span class="lineNum">     182 </span>                :            :         if (h)
+<span class="lineNum">     183 </span>                :            :                 (void)list_debug(h);
+<span class="lineNum">     184 </span>                :<span class="lineCov">        192 : }</span>
+<span class="lineNum">     185 </span>                :            : 
+<span class="lineNum">     186 </span>                :            : /**
+<span class="lineNum">     187 </span>                :            :  * list_add_tail - add an entry at the end of a linked list.
+<span class="lineNum">     188 </span>                :            :  * @h: the list_head to add the node to
+<span class="lineNum">     189 </span>                :            :  * @n: the list_node to add to the list.
+<span class="lineNum">     190 </span>                :            :  *
+<span class="lineNum">     191 </span>                :            :  * The list_node does not need to be initialized; it will be overwritten.
+<span class="lineNum">     192 </span>                :            :  * Example:
+<span class="lineNum">     193 </span>                :            :  *      list_add_tail(&amp;parent-&gt;children, &amp;child-&gt;list);
+<a name="194"><span class="lineNum">     194 </span>                :            :  *      parent-&gt;num_children++;</a>
+<span class="lineNum">     195 </span>                :            :  */
+<span class="lineNum">     196 </span>                :<span class="lineCov">        244 : static inline void list_add_tail(struct list_head *h, struct list_node *n)</span>
+<span class="lineNum">     197 </span>                :            : {
+<span class="lineNum">     198 </span>                :<span class="lineCov">        244 :         n-&gt;next = &amp;h-&gt;n;</span>
+<span class="lineNum">     199 </span>                :<span class="lineCov">        244 :         n-&gt;prev = h-&gt;n.prev;</span>
+<span class="lineNum">     200 </span>                :<span class="lineCov">        244 :         h-&gt;n.prev-&gt;next = n;</span>
+<span class="lineNum">     201 </span>                :<span class="lineCov">        244 :         h-&gt;n.prev = n;</span>
+<span class="lineNum">     202 </span>                :            :         (void)list_debug(h);
+<span class="lineNum">     203 </span>                :<span class="lineCov">        244 : }</span>
+<span class="lineNum">     204 </span>                :            : 
+<span class="lineNum">     205 </span>                :            : /**
+<span class="lineNum">     206 </span>                :            :  * list_empty - is a list empty?
+<span class="lineNum">     207 </span>                :            :  * @h: the list_head
+<span class="lineNum">     208 </span>                :            :  *
+<span class="lineNum">     209 </span>                :            :  * If the list is empty, returns true.
+<span class="lineNum">     210 </span>                :            :  *
+<span class="lineNum">     211 </span>                :            :  * Example:
+<a name="212"><span class="lineNum">     212 </span>                :            :  *      assert(list_empty(&amp;parent-&gt;children) == (parent-&gt;num_children == 0));</a>
+<span class="lineNum">     213 </span>                :            :  */
+<span class="lineNum">     214 </span>                :<span class="lineCov">     273180 : static inline bool list_empty(const struct list_head *h)</span>
+<span class="lineNum">     215 </span>                :            : {
+<span class="lineNum">     216 </span>                :            :         (void)list_debug(h);
+<span class="lineNum">     217 </span>                :<span class="lineCov">     273180 :         return h-&gt;n.next == &amp;h-&gt;n;</span>
+<span class="lineNum">     218 </span>                :            : }
+<span class="lineNum">     219 </span>                :            : 
+<span class="lineNum">     220 </span>                :            : /**
+<span class="lineNum">     221 </span>                :            :  * list_del - delete an entry from an (unknown) linked list.
+<span class="lineNum">     222 </span>                :            :  * @n: the list_node to delete from the list.
+<span class="lineNum">     223 </span>                :            :  *
+<span class="lineNum">     224 </span>                :            :  * Note that this leaves @n in an undefined state; it can be added to
+<span class="lineNum">     225 </span>                :            :  * another list, but not deleted again.
+<span class="lineNum">     226 </span>                :            :  *
+<span class="lineNum">     227 </span>                :            :  * See also:
+<span class="lineNum">     228 </span>                :            :  *      list_del_from()
+<span class="lineNum">     229 </span>                :            :  *
+<span class="lineNum">     230 </span>                :            :  * Example:
+<span class="lineNum">     231 </span>                :            :  *      list_del(&amp;child-&gt;list);
+<a name="232"><span class="lineNum">     232 </span>                :            :  *      parent-&gt;num_children--;</a>
+<span class="lineNum">     233 </span>                :            :  */
+<span class="lineNum">     234 </span>                :<span class="lineCov">      10620 : static inline void list_del(struct list_node *n)</span>
+<span class="lineNum">     235 </span>                :            : {
+<span class="lineNum">     236 </span>                :            :         (void)list_debug_node(n);
+<span class="lineNum">     237 </span>                :<span class="lineCov">      10620 :         n-&gt;next-&gt;prev = n-&gt;prev;</span>
+<span class="lineNum">     238 </span>                :<span class="lineCov">      10620 :         n-&gt;prev-&gt;next = n-&gt;next;</span>
+<span class="lineNum">     239 </span>                :            : #ifdef CCAN_LIST_DEBUG
+<span class="lineNum">     240 </span>                :            :         /* Catch use-after-del. */
+<span class="lineNum">     241 </span>                :            :         n-&gt;next = n-&gt;prev = NULL;
+<span class="lineNum">     242 </span>                :            : #endif
+<span class="lineNum">     243 </span>                :<span class="lineCov">      10620 : }</span>
+<span class="lineNum">     244 </span>                :            : 
+<span class="lineNum">     245 </span>                :            : /**
+<span class="lineNum">     246 </span>                :            :  * list_del_from - delete an entry from a known linked list.
+<span class="lineNum">     247 </span>                :            :  * @h: the list_head the node is in.
+<span class="lineNum">     248 </span>                :            :  * @n: the list_node to delete from the list.
+<span class="lineNum">     249 </span>                :            :  *
+<span class="lineNum">     250 </span>                :            :  * This explicitly indicates which list a node is expected to be in,
+<span class="lineNum">     251 </span>                :            :  * which is better documentation and can catch more bugs.
+<span class="lineNum">     252 </span>                :            :  *
+<span class="lineNum">     253 </span>                :            :  * See also: list_del()
+<span class="lineNum">     254 </span>                :            :  *
+<span class="lineNum">     255 </span>                :            :  * Example:
+<span class="lineNum">     256 </span>                :            :  *      list_del_from(&amp;parent-&gt;children, &amp;child-&gt;list);
+<a name="257"><span class="lineNum">     257 </span>                :            :  *      parent-&gt;num_children--;</a>
+<span class="lineNum">     258 </span>                :            :  */
+<span class="lineNum">     259 </span>                :<span class="lineCov">      10158 : static inline void list_del_from(struct list_head *h, struct list_node *n)</span>
+<span class="lineNum">     260 </span>                :            : {
+<span class="lineNum">     261 </span>                :            : #ifdef CCAN_LIST_DEBUG
+<span class="lineNum">     262 </span>                :            :         {
+<span class="lineNum">     263 </span>                :            :                 /* Thorough check: make sure it was in list! */
+<span class="lineNum">     264 </span>                :            :                 struct list_node *i;
+<span class="lineNum">     265 </span>                :            :                 for (i = h-&gt;n.next; i != n; i = i-&gt;next)
+<span class="lineNum">     266 </span>                :            :                         assert(i != &amp;h-&gt;n);
+<span class="lineNum">     267 </span>                :            :         }
+<span class="lineNum">     268 </span>                :            : #endif /* CCAN_LIST_DEBUG */
+<span class="lineNum">     269 </span>                :            : 
+<span class="lineNum">     270 </span>                :            :         /* Quick test that catches a surprising number of bugs. */
+<span class="lineNum">     271 </span>        [<span class="branchNoCov" title="Branch 1 was not taken"> - </span><span class="branchCov" title="Branch 2 was taken 10158 times"> + </span>]:<span class="lineCov">      10158 :         assert(!list_empty(h));</span>
+<span class="lineNum">     272 </span>                :<span class="lineCov">      10158 :         list_del(n);</span>
+<span class="lineNum">     273 </span>                :<span class="lineCov">      10158 : }</span>
+<span class="lineNum">     274 </span>                :            : 
+<span class="lineNum">     275 </span>                :            : /**
+<span class="lineNum">     276 </span>                :            :  * list_entry - convert a list_node back into the structure containing it.
+<span class="lineNum">     277 </span>                :            :  * @n: the list_node
+<span class="lineNum">     278 </span>                :            :  * @type: the type of the entry
+<span class="lineNum">     279 </span>                :            :  * @member: the list_node member of the type
+<span class="lineNum">     280 </span>                :            :  *
+<span class="lineNum">     281 </span>                :            :  * Example:
+<span class="lineNum">     282 </span>                :            :  *      // First list entry is children.next; convert back to child.
+<span class="lineNum">     283 </span>                :            :  *      child = list_entry(parent-&gt;children.n.next, struct child, list);
+<span class="lineNum">     284 </span>                :            :  *
+<span class="lineNum">     285 </span>                :            :  * See Also:
+<span class="lineNum">     286 </span>                :            :  *      list_top(), list_for_each()
+<span class="lineNum">     287 </span>                :            :  */
+<span class="lineNum">     288 </span>                :            : #define list_entry(n, type, member) container_of(n, type, member)
+<span class="lineNum">     289 </span>                :            : 
+<span class="lineNum">     290 </span>                :            : /**
+<span class="lineNum">     291 </span>                :            :  * list_top - get the first entry in a list
+<span class="lineNum">     292 </span>                :            :  * @h: the list_head
+<span class="lineNum">     293 </span>                :            :  * @type: the type of the entry
+<span class="lineNum">     294 </span>                :            :  * @member: the list_node member of the type
+<span class="lineNum">     295 </span>                :            :  *
+<span class="lineNum">     296 </span>                :            :  * If the list is empty, returns NULL.
+<span class="lineNum">     297 </span>                :            :  *
+<span class="lineNum">     298 </span>                :            :  * Example:
+<span class="lineNum">     299 </span>                :            :  *      struct child *first;
+<span class="lineNum">     300 </span>                :            :  *      first = list_top(&amp;parent-&gt;children, struct child, list);
+<span class="lineNum">     301 </span>                :            :  *      if (!first)
+<span class="lineNum">     302 </span>                :            :  *              printf(&quot;Empty list!\n&quot;);
+<span class="lineNum">     303 </span>                :            :  */
+<span class="lineNum">     304 </span>                :            : #define list_top(h, type, member)                                       \
+<a name="305"><span class="lineNum">     305 </span>                :            :         ((type *)list_top_((h), list_off_(type, member)))</a>
+<span class="lineNum">     306 </span>                :            : 
+<span class="lineNum">     307 </span>                :<span class="lineCov">     131648 : static inline const void *list_top_(const struct list_head *h, size_t off)</span>
+<span class="lineNum">     308 </span>                :            : {
+<span class="lineNum">     309 </span>        [<span class="branchCov" title="Branch 1 was taken 260 times"> + </span><span class="branchCov" title="Branch 2 was taken 131388 times"> + </span>]:<span class="lineCov">     131648 :         if (list_empty(h))</span>
+<span class="lineNum">     310 </span>                :<span class="lineCov">        260 :                 return NULL;</span>
+<span class="lineNum">     311 </span>                :<span class="lineCov">     131648 :         return (const char *)h-&gt;n.next - off;</span>
+<span class="lineNum">     312 </span>                :            : }
+<span class="lineNum">     313 </span>                :            : 
+<span class="lineNum">     314 </span>                :            : /**
+<span class="lineNum">     315 </span>                :            :  * list_pop - get the first entry in a list and dequeue it
+<span class="lineNum">     316 </span>                :            :  * @h: the list_head
+<span class="lineNum">     317 </span>                :            :  * @type: the type of the entry
+<span class="lineNum">     318 </span>                :            :  * @member: the list_node member of the type
+<span class="lineNum">     319 </span>                :            :  */
+<a name="320"><span class="lineNum">     320 </span>                :            : #define list_pop(h, type, member)                                       \</a>
+<span class="lineNum">     321 </span>                :            :         ((type *)list_pop_((h), list_off_(type, member)))
+<span class="lineNum">     322 </span>                :<span class="lineCov">        278 : static inline const void *list_pop_(struct list_head *h, size_t off)</span>
+<span class="lineNum">     323 </span>                :            : {
+<span class="lineNum">     324 </span>                :            :         struct list_node *n;
+<span class="lineNum">     325 </span>                :            : 
+<span class="lineNum">     326 </span>        [<span class="branchCov" title="Branch 1 was taken 42 times"> + </span><span class="branchCov" title="Branch 2 was taken 236 times"> + </span>]:<span class="lineCov">        278 :         if (list_empty(h))</span>
+<span class="lineNum">     327 </span>                :<span class="lineCov">         42 :                 return NULL;</span>
+<span class="lineNum">     328 </span>                :<span class="lineCov">        236 :         n = h-&gt;n.next;</span>
+<span class="lineNum">     329 </span>                :<span class="lineCov">        236 :         list_del(n);</span>
+<span class="lineNum">     330 </span>                :<span class="lineCov">        278 :         return (const char *)n - off;</span>
+<span class="lineNum">     331 </span>                :            : }
+<span class="lineNum">     332 </span>                :            : 
+<span class="lineNum">     333 </span>                :            : /**
+<span class="lineNum">     334 </span>                :            :  * list_tail - get the last entry in a list
+<span class="lineNum">     335 </span>                :            :  * @h: the list_head
+<span class="lineNum">     336 </span>                :            :  * @type: the type of the entry
+<span class="lineNum">     337 </span>                :            :  * @member: the list_node member of the type
+<span class="lineNum">     338 </span>                :            :  *
+<span class="lineNum">     339 </span>                :            :  * If the list is empty, returns NULL.
+<span class="lineNum">     340 </span>                :            :  *
+<span class="lineNum">     341 </span>                :            :  * Example:
+<span class="lineNum">     342 </span>                :            :  *      struct child *last;
+<span class="lineNum">     343 </span>                :            :  *      last = list_tail(&amp;parent-&gt;children, struct child, list);
+<span class="lineNum">     344 </span>                :            :  *      if (!last)
+<span class="lineNum">     345 </span>                :            :  *              printf(&quot;Empty list!\n&quot;);
+<span class="lineNum">     346 </span>                :            :  */
+<span class="lineNum">     347 </span>                :            : #define list_tail(h, type, member) \
+<span class="lineNum">     348 </span>                :            :         ((type *)list_tail_((h), list_off_(type, member)))
+<span class="lineNum">     349 </span>                :            : 
+<span class="lineNum">     350 </span>                :            : static inline const void *list_tail_(const struct list_head *h, size_t off)
+<span class="lineNum">     351 </span>                :            : {
+<span class="lineNum">     352 </span>                :            :         if (list_empty(h))
+<span class="lineNum">     353 </span>                :            :                 return NULL;
+<span class="lineNum">     354 </span>                :            :         return (const char *)h-&gt;n.prev - off;
+<span class="lineNum">     355 </span>                :            : }
+<span class="lineNum">     356 </span>                :            : 
+<span class="lineNum">     357 </span>                :            : /**
+<span class="lineNum">     358 </span>                :            :  * list_for_each - iterate through a list.
+<span class="lineNum">     359 </span>                :            :  * @h: the list_head (warning: evaluated multiple times!)
+<span class="lineNum">     360 </span>                :            :  * @i: the structure containing the list_node
+<span class="lineNum">     361 </span>                :            :  * @member: the list_node member of the structure
+<span class="lineNum">     362 </span>                :            :  *
+<span class="lineNum">     363 </span>                :            :  * This is a convenient wrapper to iterate @i over the entire list.  It's
+<span class="lineNum">     364 </span>                :            :  * a for loop, so you can break and continue as normal.
+<span class="lineNum">     365 </span>                :            :  *
+<span class="lineNum">     366 </span>                :            :  * Example:
+<span class="lineNum">     367 </span>                :            :  *      list_for_each(&amp;parent-&gt;children, child, list)
+<span class="lineNum">     368 </span>                :            :  *              printf(&quot;Name: %s\n&quot;, child-&gt;name);
+<span class="lineNum">     369 </span>                :            :  */
+<span class="lineNum">     370 </span>                :            : #define list_for_each(h, i, member)                                     \
+<span class="lineNum">     371 </span>                :            :         list_for_each_off(h, i, list_off_var_(i, member))
+<span class="lineNum">     372 </span>                :            : 
+<span class="lineNum">     373 </span>                :            : /**
+<span class="lineNum">     374 </span>                :            :  * list_for_each_rev - iterate through a list backwards.
+<span class="lineNum">     375 </span>                :            :  * @h: the list_head
+<span class="lineNum">     376 </span>                :            :  * @i: the structure containing the list_node
+<span class="lineNum">     377 </span>                :            :  * @member: the list_node member of the structure
+<span class="lineNum">     378 </span>                :            :  *
+<span class="lineNum">     379 </span>                :            :  * This is a convenient wrapper to iterate @i over the entire list.  It's
+<span class="lineNum">     380 </span>                :            :  * a for loop, so you can break and continue as normal.
+<span class="lineNum">     381 </span>                :            :  *
+<span class="lineNum">     382 </span>                :            :  * Example:
+<span class="lineNum">     383 </span>                :            :  *      list_for_each_rev(&amp;parent-&gt;children, child, list)
+<span class="lineNum">     384 </span>                :            :  *              printf(&quot;Name: %s\n&quot;, child-&gt;name);
+<span class="lineNum">     385 </span>                :            :  */
+<span class="lineNum">     386 </span>                :            : #define list_for_each_rev(h, i, member)                                 \
+<span class="lineNum">     387 </span>                :            :         for (i = container_of_var(list_debug(h)-&gt;n.prev, i, member); \
+<span class="lineNum">     388 </span>                :            :              &amp;i-&gt;member != &amp;(h)-&gt;n;                                       \
+<span class="lineNum">     389 </span>                :            :              i = container_of_var(i-&gt;member.prev, i, member))
+<span class="lineNum">     390 </span>                :            : 
+<span class="lineNum">     391 </span>                :            : /**
+<span class="lineNum">     392 </span>                :            :  * list_for_each_safe - iterate through a list, maybe during deletion
+<span class="lineNum">     393 </span>                :            :  * @h: the list_head
+<span class="lineNum">     394 </span>                :            :  * @i: the structure containing the list_node
+<span class="lineNum">     395 </span>                :            :  * @nxt: the structure containing the list_node
+<span class="lineNum">     396 </span>                :            :  * @member: the list_node member of the structure
+<span class="lineNum">     397 </span>                :            :  *
+<span class="lineNum">     398 </span>                :            :  * This is a convenient wrapper to iterate @i over the entire list.  It's
+<span class="lineNum">     399 </span>                :            :  * a for loop, so you can break and continue as normal.  The extra variable
+<span class="lineNum">     400 </span>                :            :  * @nxt is used to hold the next element, so you can delete @i from the list.
+<span class="lineNum">     401 </span>                :            :  *
+<span class="lineNum">     402 </span>                :            :  * Example:
+<span class="lineNum">     403 </span>                :            :  *      struct child *next;
+<span class="lineNum">     404 </span>                :            :  *      list_for_each_safe(&amp;parent-&gt;children, child, next, list) {
+<span class="lineNum">     405 </span>                :            :  *              list_del(&amp;child-&gt;list);
+<span class="lineNum">     406 </span>                :            :  *              parent-&gt;num_children--;
+<span class="lineNum">     407 </span>                :            :  *      }
+<span class="lineNum">     408 </span>                :            :  */
+<span class="lineNum">     409 </span>                :            : #define list_for_each_safe(h, i, nxt, member)                           \
+<span class="lineNum">     410 </span>                :            :         list_for_each_safe_off(h, i, nxt, list_off_var_(i, member))
+<span class="lineNum">     411 </span>                :            : 
+<span class="lineNum">     412 </span>                :            : /**
+<span class="lineNum">     413 </span>                :            :  * list_for_each_off - iterate through a list of memory regions.
+<span class="lineNum">     414 </span>                :            :  * @h: the list_head
+<span class="lineNum">     415 </span>                :            :  * @i: the pointer to a memory region wich contains list node data.
+<span class="lineNum">     416 </span>                :            :  * @off: offset(relative to @i) at which list node data resides.
+<span class="lineNum">     417 </span>                :            :  *
+<span class="lineNum">     418 </span>                :            :  * This is a low-level wrapper to iterate @i over the entire list, used to
+<span class="lineNum">     419 </span>                :            :  * implement all oher, more high-level, for-each constructs. It's a for loop,
+<span class="lineNum">     420 </span>                :            :  * so you can break and continue as normal.
+<span class="lineNum">     421 </span>                :            :  *
+<span class="lineNum">     422 </span>                :            :  * WARNING! Being the low-level macro that it is, this wrapper doesn't know
+<span class="lineNum">     423 </span>                :            :  * nor care about the type of @i. The only assumtion made is that @i points
+<span class="lineNum">     424 </span>                :            :  * to a chunk of memory that at some @offset, relative to @i, contains a
+<span class="lineNum">     425 </span>                :            :  * properly filled `struct node_list' which in turn contains pointers to
+<span class="lineNum">     426 </span>                :            :  * memory chunks and it's turtles all the way down. Whith all that in mind
+<span class="lineNum">     427 </span>                :            :  * remember that given the wrong pointer/offset couple this macro will
+<span class="lineNum">     428 </span>                :            :  * happilly churn all you memory untill SEGFAULT stops it, in other words
+<span class="lineNum">     429 </span>                :            :  * caveat emptor.
+<span class="lineNum">     430 </span>                :            :  *
+<span class="lineNum">     431 </span>                :            :  * It is worth mentioning that one of legitimate use-cases for that wrapper
+<span class="lineNum">     432 </span>                :            :  * is operation on opaque types with known offset for `struct list_node'
+<span class="lineNum">     433 </span>                :            :  * member(preferably 0), because it allows you not to disclose the type of
+<span class="lineNum">     434 </span>                :            :  * @i.
+<span class="lineNum">     435 </span>                :            :  *
+<span class="lineNum">     436 </span>                :            :  * Example:
+<span class="lineNum">     437 </span>                :            :  *      list_for_each_off(&amp;parent-&gt;children, child,
+<span class="lineNum">     438 </span>                :            :  *                              offsetof(struct child, list))
+<span class="lineNum">     439 </span>                :            :  *              printf(&quot;Name: %s\n&quot;, child-&gt;name);
+<span class="lineNum">     440 </span>                :            :  */
+<span class="lineNum">     441 </span>                :            : #define list_for_each_off(h, i, off)                                    \
+<span class="lineNum">     442 </span>                :            :   for (i = list_node_to_off_(list_debug(h)-&gt;n.next, (off));             \
+<span class="lineNum">     443 </span>                :            :        list_node_from_off_((void *)i, (off)) != &amp;(h)-&gt;n;                \
+<span class="lineNum">     444 </span>                :            :        i = list_node_to_off_(list_node_from_off_((void *)i, (off))-&gt;next, \
+<span class="lineNum">     445 </span>                :            :                              (off)))
+<span class="lineNum">     446 </span>                :            : 
+<span class="lineNum">     447 </span>                :            : /**
+<span class="lineNum">     448 </span>                :            :  * list_for_each_safe_off - iterate through a list of memory regions, maybe
+<span class="lineNum">     449 </span>                :            :  * during deletion
+<span class="lineNum">     450 </span>                :            :  * @h: the list_head
+<span class="lineNum">     451 </span>                :            :  * @i: the pointer to a memory region wich contains list node data.
+<span class="lineNum">     452 </span>                :            :  * @nxt: the structure containing the list_node
+<span class="lineNum">     453 </span>                :            :  * @off: offset(relative to @i) at which list node data resides.
+<span class="lineNum">     454 </span>                :            :  *
+<span class="lineNum">     455 </span>                :            :  * For details see `list_for_each_off' and `list_for_each_safe'
+<span class="lineNum">     456 </span>                :            :  * descriptions.
+<span class="lineNum">     457 </span>                :            :  *
+<span class="lineNum">     458 </span>                :            :  * Example:
+<span class="lineNum">     459 </span>                :            :  *      list_for_each_safe_off(&amp;parent-&gt;children, child,
+<span class="lineNum">     460 </span>                :            :  *              next, offsetof(struct child, list))
+<span class="lineNum">     461 </span>                :            :  *              printf(&quot;Name: %s\n&quot;, child-&gt;name);
+<span class="lineNum">     462 </span>                :            :  */
+<span class="lineNum">     463 </span>                :            : #define list_for_each_safe_off(h, i, nxt, off)                          \
+<span class="lineNum">     464 </span>                :            :   for (i = list_node_to_off_(list_debug(h)-&gt;n.next, (off)),             \
+<span class="lineNum">     465 </span>                :            :          nxt = list_node_to_off_(list_node_from_off_(i, (off))-&gt;next,   \
+<span class="lineNum">     466 </span>                :            :                                  (off));                                \
+<span class="lineNum">     467 </span>                :            :        list_node_from_off_(i, (off)) != &amp;(h)-&gt;n;                        \
+<span class="lineNum">     468 </span>                :            :        i = nxt,                                                         \
+<span class="lineNum">     469 </span>                :            :          nxt = list_node_to_off_(list_node_from_off_(i, (off))-&gt;next,   \
+<span class="lineNum">     470 </span>                :            :                                  (off)))
+<span class="lineNum">     471 </span>                :            : 
+<span class="lineNum">     472 </span>                :            : 
+<span class="lineNum">     473 </span>                :            : /* Other -off variants. */
+<span class="lineNum">     474 </span>                :            : #define list_entry_off(n, type, off)            \
+<span class="lineNum">     475 </span>                :            :         ((type *)list_node_from_off_((n), (off)))
+<span class="lineNum">     476 </span>                :            : 
+<span class="lineNum">     477 </span>                :            : #define list_head_off(h, type, off)             \
+<span class="lineNum">     478 </span>                :            :         ((type *)list_head_off((h), (off)))
+<span class="lineNum">     479 </span>                :            : 
+<span class="lineNum">     480 </span>                :            : #define list_tail_off(h, type, off)             \
+<span class="lineNum">     481 </span>                :            :         ((type *)list_tail_((h), (off)))
+<span class="lineNum">     482 </span>                :            : 
+<span class="lineNum">     483 </span>                :            : #define list_add_off(h, n, off)                 \
+<span class="lineNum">     484 </span>                :            :         list_add((h), list_node_from_off_((n), (off)))
+<span class="lineNum">     485 </span>                :            : 
+<span class="lineNum">     486 </span>                :            : #define list_del_off(n, off)                    \
+<span class="lineNum">     487 </span>                :            :         list_del(list_node_from_off_((n), (off)))
+<span class="lineNum">     488 </span>                :            : 
+<span class="lineNum">     489 </span>                :            : #define list_del_from_off(h, n, off)                    \
+<span class="lineNum">     490 </span>                :            :         list_del_from(h, list_node_from_off_((n), (off)))
+<a name="491"><span class="lineNum">     491 </span>                :            : </a>
+<span class="lineNum">     492 </span>                :            : /* Offset helper functions so we only single-evaluate. */
+<span class="lineNum">     493 </span>                :<span class="lineCov">      49560 : static inline void *list_node_to_off_(struct list_node *node, size_t off)</span>
+<span class="lineNum">     494 </span>                :            : {
+<a name="495"><span class="lineNum">     495 </span>                :<span class="lineCov">      49560 :         return (void *)((char *)node - off);</span></a>
+<span class="lineNum">     496 </span>                :            : }
+<span class="lineNum">     497 </span>                :<span class="lineCov">      73206 : static inline struct list_node *list_node_from_off_(void *ptr, size_t off)</span>
+<span class="lineNum">     498 </span>                :            : {
+<span class="lineNum">     499 </span>                :<span class="lineCov">      73206 :         return (struct list_node *)((char *)ptr + off);</span>
+<span class="lineNum">     500 </span>                :            : }
+<span class="lineNum">     501 </span>                :            : 
+<span class="lineNum">     502 </span>                :            : /* Get the offset of the member, but make sure it's a list_node. */
+<span class="lineNum">     503 </span>                :            : #define list_off_(type, member)                                 \
+<span class="lineNum">     504 </span>                :            :         (container_off(type, member) +                          \
+<span class="lineNum">     505 </span>                :            :          check_type(((type *)0)-&gt;member, struct list_node))
+<span class="lineNum">     506 </span>                :            : 
+<span class="lineNum">     507 </span>                :            : #define list_off_var_(var, member)                      \
+<span class="lineNum">     508 </span>                :            :         (container_off_var(var, member) +               \
+<span class="lineNum">     509 </span>                :            :          check_type(var-&gt;member, struct list_node))
+<span class="lineNum">     510 </span>                :            : 
+<span class="lineNum">     511 </span>                :            : #endif /* CCAN_LIST_H */
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.9</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

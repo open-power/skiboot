@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - skiboot.info - libfdt/libfdt_env.h</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">libfdt</a> - libfdt_env.h<span style="font-size: 80%;"> (source / <a href="libfdt_env.h.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">skiboot.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2014-11-24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>                :            : #ifndef _LIBFDT_ENV_H</a>
+<span class="lineNum">       2 </span>                :            : #define _LIBFDT_ENV_H
+<span class="lineNum">       3 </span>                :            : 
+<span class="lineNum">       4 </span>                :            : #include &lt;stddef.h&gt;
+<span class="lineNum">       5 </span>                :            : #include &lt;stdint.h&gt;
+<span class="lineNum">       6 </span>                :            : #include &lt;string.h&gt;
+<span class="lineNum">       7 </span>                :            : #include &lt;stdarg.h&gt;
+<a name="8"><span class="lineNum">       8 </span>                :            : </a>
+<span class="lineNum">       9 </span>                :            : #define _B(n)   ((unsigned long long)((uint8_t *)&amp;x)[n])
+<span class="lineNum">      10 </span>                :<span class="lineCov">         88 : static inline uint32_t fdt32_to_cpu(uint32_t x)</span>
+<span class="lineNum">      11 </span>                :            : {
+<span class="lineNum">      12 </span>                :<span class="lineCov">         88 :         return (_B(0) &lt;&lt; 24) | (_B(1) &lt;&lt; 16) | (_B(2) &lt;&lt; 8) | _B(3);</span>
+<span class="lineNum">      13 </span>                :            : }
+<a name="14"><span class="lineNum">      14 </span>                :            : #define cpu_to_fdt32(x) fdt32_to_cpu(x)</a>
+<span class="lineNum">      15 </span>                :            : 
+<span class="lineNum">      16 </span>                :<span class="lineCov">         60 : static inline uint64_t fdt64_to_cpu(uint64_t x)</span>
+<span class="lineNum">      17 </span>                :            : {
+<span class="lineNum">      18 </span>                :<span class="lineCov">         60 :         return (_B(0) &lt;&lt; 56) | (_B(1) &lt;&lt; 48) | (_B(2) &lt;&lt; 40) | (_B(3) &lt;&lt; 32)</span>
+<span class="lineNum">      19 </span>                :<span class="lineCov">         60 :                 | (_B(4) &lt;&lt; 24) | (_B(5) &lt;&lt; 16) | (_B(6) &lt;&lt; 8) | _B(7);</span>
+<span class="lineNum">      20 </span>                :            : }
+<span class="lineNum">      21 </span>                :            : #define cpu_to_fdt64(x) fdt64_to_cpu(x)
+<span class="lineNum">      22 </span>                :            : #undef _B
+<span class="lineNum">      23 </span>                :            : 
+<span class="lineNum">      24 </span>                :            : #endif /* _LIBFDT_ENV_H */
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.9</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

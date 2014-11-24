@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - skiboot.info - core/test/run-pel.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">core/test</a> - run-pel.c<span style="font-size: 80%;"> (source / <a href="run-pel.c.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">skiboot.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">24</td>
+            <td class="headerCovTableEntry">24</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2014-11-24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntryLo">50.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>                :            : /* Copyright 2013-2014 IBM Corp.</a>
+<span class="lineNum">       2 </span>                :            :  *
+<span class="lineNum">       3 </span>                :            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<span class="lineNum">       4 </span>                :            :  * you may not use this file except in compliance with the License.
+<span class="lineNum">       5 </span>                :            :  * You may obtain a copy of the License at
+<span class="lineNum">       6 </span>                :            :  *
+<span class="lineNum">       7 </span>                :            :  *      http://www.apache.org/licenses/LICENSE-2.0
+<span class="lineNum">       8 </span>                :            :  *
+<span class="lineNum">       9 </span>                :            :  * Unless required by applicable law or agreed to in writing, software
+<span class="lineNum">      10 </span>                :            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<span class="lineNum">      11 </span>                :            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+<span class="lineNum">      12 </span>                :            :  * implied.
+<span class="lineNum">      13 </span>                :            :  * See the License for the specific language governing permissions and
+<span class="lineNum">      14 </span>                :            :  * limitations under the License.
+<span class="lineNum">      15 </span>                :            :  */
+<span class="lineNum">      16 </span>                :            : 
+<span class="lineNum">      17 </span>                :            : /* Test for our PEL record generation. Currently this doesn't actually
+<span class="lineNum">      18 </span>                :            :  * test that the records we generate are correct, but it at least lets
+<span class="lineNum">      19 </span>                :            :  * us run valgrind over the generation routines to check for buffer
+<span class="lineNum">      20 </span>                :            :  * overflows, etc.
+<span class="lineNum">      21 </span>                :            :  */
+<span class="lineNum">      22 </span>                :            : 
+<span class="lineNum">      23 </span>                :            : #include &lt;skiboot.h&gt;
+<span class="lineNum">      24 </span>                :            : #include &lt;inttypes.h&gt;
+<span class="lineNum">      25 </span>                :            : #include &lt;assert.h&gt;
+<span class="lineNum">      26 </span>                :            : #include &lt;pel.h&gt;
+<span class="lineNum">      27 </span>                :            : #include &lt;errorlog.h&gt;
+<span class="lineNum">      28 </span>                :            : 
+<span class="lineNum">      29 </span>                :            : #define TEST_ERROR 0x1234
+<span class="lineNum">      30 </span>                :            : #define TEST_SUBSYS 0x5678
+<span class="lineNum">      31 </span>                :            : 
+<span class="lineNum">      32 </span>                :            : DEFINE_LOG_ENTRY(TEST_ERROR, OPAL_PLATFORM_ERR_EVT, TEST_SUBSYS,
+<span class="lineNum">      33 </span>                :            :                         OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
+<span class="lineNum">      34 </span>                :            :                         OPAL_NA, NULL);
+<span class="lineNum">      35 </span>                :            : 
+<span class="lineNum">      36 </span>                :            : #include &quot;../pel.c&quot;
+<span class="lineNum">      37 </span>                :            : 
+<a name="38"><span class="lineNum">      38 </span>                :            : struct dt_node *dt_root = NULL;</a>
+<span class="lineNum">      39 </span>                :            : char dt_prop[] = &quot;DUMMY DT PROP&quot;;
+<span class="lineNum">      40 </span>                :<span class="lineCov">          8 : const void *dt_prop_get(const struct dt_node *node __unused, const char *prop __unused)</span>
+<span class="lineNum">      41 </span>                :            : {
+<span class="lineNum">      42 </span>                :<span class="lineCov">          8 :         return dt_prop;</span>
+<a name="43"><span class="lineNum">      43 </span>                :            : }</a>
+<span class="lineNum">      44 </span>                :            : 
+<span class="lineNum">      45 </span>                :<span class="lineCov">          4 : int fsp_rtc_get_cached_tod(uint32_t *year_month_day,</span>
+<span class="lineNum">      46 </span>                :            :                            uint64_t *hour_minute_second_millisecond)
+<span class="lineNum">      47 </span>                :            : {
+<span class="lineNum">      48 </span>                :<span class="lineCov">          4 :         *year_month_day = 0;</span>
+<span class="lineNum">      49 </span>                :<span class="lineCov">          4 :         *hour_minute_second_millisecond = 0;</span>
+<span class="lineNum">      50 </span>                :            : 
+<span class="lineNum">      51 </span>                :<span class="lineCov">          4 :         return 0;</span>
+<a name="52"><span class="lineNum">      52 </span>                :            : }</a>
+<span class="lineNum">      53 </span>                :            : 
+<span class="lineNum">      54 </span>                :<span class="lineCov">          2 : int main(void)</span>
+<span class="lineNum">      55 </span>                :            : {
+<span class="lineNum">      56 </span>                :            :         char *pel_buf;
+<span class="lineNum">      57 </span>                :            :         size_t size;
+<span class="lineNum">      58 </span>                :            :         struct errorlog *elog;
+<span class="lineNum">      59 </span>                :<span class="lineCov">          2 :         struct opal_err_info *opal_err_info = &amp;err_TEST_ERROR;</span>
+<span class="lineNum">      60 </span>                :            : 
+<span class="lineNum">      61 </span>                :<span class="lineCov">          2 :         elog = malloc(sizeof(struct errorlog));</span>
+<span class="lineNum">      62 </span>                :<span class="lineCov">          2 :         pel_buf = malloc(PEL_MIN_SIZE + 4);</span>
+<span class="lineNum">      63 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          2 :         assert(elog);</span>
+<span class="lineNum">      64 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          2 :         assert(pel_buf);</span>
+<span class="lineNum">      65 </span>                :            : 
+<span class="lineNum">      66 </span>                :<span class="lineCov">          2 :         memset(elog, 0, sizeof(struct errorlog));</span>
+<span class="lineNum">      67 </span>                :            : 
+<span class="lineNum">      68 </span>                :<span class="lineCov">          2 :         elog-&gt;error_event_type = opal_err_info-&gt;err_type;</span>
+<span class="lineNum">      69 </span>                :<span class="lineCov">          2 :         elog-&gt;component_id = opal_err_info-&gt;cmp_id;</span>
+<span class="lineNum">      70 </span>                :<span class="lineCov">          2 :         elog-&gt;subsystem_id = opal_err_info-&gt;subsystem;</span>
+<span class="lineNum">      71 </span>                :<span class="lineCov">          2 :         elog-&gt;event_severity = opal_err_info-&gt;sev;</span>
+<span class="lineNum">      72 </span>                :<span class="lineCov">          2 :         elog-&gt;event_subtype = opal_err_info-&gt;event_subtype;</span>
+<span class="lineNum">      73 </span>                :<span class="lineCov">          2 :         elog-&gt;reason_code = opal_err_info-&gt;reason_code;</span>
+<span class="lineNum">      74 </span>                :<span class="lineCov">          2 :         elog-&gt;elog_origin = ORG_SAPPHIRE;</span>
+<span class="lineNum">      75 </span>                :            : 
+<span class="lineNum">      76 </span>                :<span class="lineCov">          2 :         size = pel_size(elog);</span>
+<span class="lineNum">      77 </span>                :<span class="lineCov">          2 :         printf(&quot;PEL Size: %ld\n&quot;, size);</span>
+<span class="lineNum">      78 </span>        [<span class="branchNoCov" title="Branch 1 was not taken"> - </span><span class="branchCov" title="Branch 2 was taken 2 times"> + </span>]:<span class="lineCov">          2 :         assert(size == create_pel_log(elog, pel_buf, size));</span>
+<span class="lineNum">      79 </span>                :            : 
+<span class="lineNum">      80 </span>                :<span class="lineCov">          2 :         return 0;</span>
+<span class="lineNum">      81 </span>                :            : }
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.9</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

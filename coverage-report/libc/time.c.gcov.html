@@ -1,0 +1,228 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - skiboot.info - libc/time.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">libc</a> - time.c<span style="font-size: 80%;"> (source / <a href="time.c.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">skiboot.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">66</td>
+            <td class="headerCovTableEntry">66</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2014-11-24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntry">23</td>
+            <td class="headerCovTableEntry">24</td>
+            <td class="headerCovTableEntryHi">95.8 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>                :            : #include &lt;stdbool.h&gt;</a>
+<span class="lineNum">       2 </span>                :            : #include &lt;time.h&gt;
+<span class="lineNum">       3 </span>                :            : 
+<span class="lineNum">       4 </span>                :            : /*
+<a name="5"><span class="lineNum">       5 </span>                :            :  * Returns the number of leap years prior to the given year.</a>
+<span class="lineNum">       6 </span>                :            :  */
+<span class="lineNum">       7 </span>                :<span class="lineCov">        128 : static int leap_years(int year)</span>
+<span class="lineNum">       8 </span>                :            : {
+<span class="lineNum">       9 </span>                :<span class="lineCov">        128 :         return (year-1)/4 + (year-1)/400 - (year-1)/100;</span>
+<a name="10"><span class="lineNum">      10 </span>                :            : }</a>
+<span class="lineNum">      11 </span>                :            : 
+<span class="lineNum">      12 </span>                :<span class="lineCov">        306 : static int is_leap_year(int year)</span>
+<span class="lineNum">      13 </span>                :            : {
+<span class="lineNum">      14 </span>[<span class="branchCov" title="Branch 0 was taken 232 times"> + </span><span class="branchCov" title="Branch 1 was taken 74 times"> + </span>][<span class="branchCov" title="Branch 2 was taken 66 times"> + </span><span class="branchCov" title="Branch 3 was taken 166 times"> + </span>]:<span class="lineCov">        306 :         return ((year % 4 == 0) &amp;&amp; (year % 100 != 0)) || (year % 400 == 0);</span>
+<span class="lineNum">         </span>        [<span class="branchCov" title="Branch 4 was taken 36 times"> + </span><span class="branchCov" title="Branch 5 was taken 104 times"> + </span>]
+<a name="15"><span class="lineNum">      15 </span>                :            : }</a>
+<span class="lineNum">      16 </span>                :            : 
+<span class="lineNum">      17 </span>                :<span class="lineCov">         60 : static int days_in_month(int month, int year)</span>
+<span class="lineNum">      18 </span>                :            : {
+<span class="lineNum">      19 </span>                :            :         static int month_days[] = {
+<span class="lineNum">      20 </span>                :            :                 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+<span class="lineNum">      21 </span>                :            :         };
+<span class="lineNum">      22 </span>                :            : 
+<span class="lineNum">      23 </span>                :            :         /* we may need to update this in the year 4000, pending a
+<span class="lineNum">      24 </span>                :            :          * decision on whether or not it's a leap year */
+<span class="lineNum">      25 </span>        [<span class="branchCov" title="Branch 0 was taken 6 times"> + </span><span class="branchCov" title="Branch 1 was taken 54 times"> + </span>]:<span class="lineCov">         60 :         if (month == 1)</span>
+<span class="lineNum">      26 </span>        [<span class="branchCov" title="Branch 1 was taken 4 times"> + </span><span class="branchCov" title="Branch 2 was taken 2 times"> + </span>]:<span class="lineCov">          6 :                 return is_leap_year(year) ? 29 : 28;</span>
+<span class="lineNum">      27 </span>                :            : 
+<span class="lineNum">      28 </span>                :<span class="lineCov">         60 :         return month_days[month];</span>
+<span class="lineNum">      29 </span>                :            : }
+<span class="lineNum">      30 </span>                :            : 
+<span class="lineNum">      31 </span>                :            : static const int days_per_month[2][13] =
+<span class="lineNum">      32 </span>                :            :         {{0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365},
+<span class="lineNum">      33 </span>                :            :          {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366}};
+<span class="lineNum">      34 </span>                :            : 
+<span class="lineNum">      35 </span>                :            : #define SECS_PER_MIN 60
+<span class="lineNum">      36 </span>                :            : #define SECS_PER_HOUR (SECS_PER_MIN*60)
+<a name="37"><span class="lineNum">      37 </span>                :            : #define SECS_PER_DAY (24*SECS_PER_HOUR)</a>
+<span class="lineNum">      38 </span>                :            : #define DAYS_PER_YEAR 365
+<span class="lineNum">      39 </span>                :<span class="lineCov">         30 : struct tm *gmtime_r(const time_t *timep, struct tm *result)</span>
+<span class="lineNum">      40 </span>                :            : {
+<span class="lineNum">      41 </span>                :            :         int i;
+<span class="lineNum">      42 </span>                :            :         int Y;
+<span class="lineNum">      43 </span>                :            :         int M;
+<span class="lineNum">      44 </span>                :            :         int D;
+<span class="lineNum">      45 </span>                :            :         int h;
+<span class="lineNum">      46 </span>                :            :         int m;
+<span class="lineNum">      47 </span>                :            :         int s;
+<span class="lineNum">      48 </span>                :            : 
+<span class="lineNum">      49 </span>                :<span class="lineCov">         30 :         D = *timep / SECS_PER_DAY;</span>
+<span class="lineNum">      50 </span>                :<span class="lineCov">         30 :         s = *timep % SECS_PER_DAY;</span>
+<span class="lineNum">      51 </span>                :<span class="lineCov">         30 :         m = s / 60;</span>
+<span class="lineNum">      52 </span>                :<span class="lineCov">         30 :         h = m / 60;</span>
+<span class="lineNum">      53 </span>                :<span class="lineCov">         30 :         m %= 60;</span>
+<span class="lineNum">      54 </span>                :<span class="lineCov">         30 :         s %= 60;</span>
+<span class="lineNum">      55 </span>                :            : 
+<span class="lineNum">      56 </span>                :            :         /*
+<span class="lineNum">      57 </span>                :            :          * Work out the year. We subtract one day for every four years
+<span class="lineNum">      58 </span>                :            :          * and every 400 years after 1969. However as leap years don't
+<span class="lineNum">      59 </span>                :            :          * occur every 100 years we add one day back to counteract the
+<span class="lineNum">      60 </span>                :            :          * the substraction for every 4 years.
+<span class="lineNum">      61 </span>                :            :          */
+<span class="lineNum">      62 </span>                :<span class="lineCov">         30 :         Y = (D - (1+D/365)/4 + (69+D/365)/100 - (369+D/365)/400)/365;</span>
+<span class="lineNum">      63 </span>                :            : 
+<span class="lineNum">      64 </span>                :            :         /*
+<span class="lineNum">      65 </span>                :            :          * Remember we're doing integer arithmetic here so
+<span class="lineNum">      66 </span>                :            :          * leap_years(Y+1970) - leap_years(1970) != leap_years(Y)
+<span class="lineNum">      67 </span>                :            :          */
+<span class="lineNum">      68 </span>                :<span class="lineCov">         30 :         D = D - Y*365 - (leap_years(Y+1970) - leap_years(1970)) + 1;</span>
+<span class="lineNum">      69 </span>                :<span class="lineCov">         30 :         Y += 1970;</span>
+<span class="lineNum">      70 </span>                :            : 
+<span class="lineNum">      71 </span>                :<span class="lineCov">         30 :         M = 0;</span>
+<span class="lineNum">      72 </span>        [<span class="branchCov" title="Branch 0 was taken 236 times"> + </span><span class="branchNoCov" title="Branch 1 was not taken"> - </span>]:<span class="lineCov">        236 :         for (i = 0; i &lt; 13; i++)</span>
+<span class="lineNum">      73 </span>        [<span class="branchCov" title="Branch 1 was taken 30 times"> + </span><span class="branchCov" title="Branch 2 was taken 206 times"> + </span>]:<span class="lineCov">        236 :                 if (D &lt;= days_per_month[is_leap_year(Y) ? 1 : 0][i]) {</span>
+<span class="lineNum">      74 </span>                :<span class="lineCov">         30 :                         M = i;</span>
+<span class="lineNum">      75 </span>                :<span class="lineCov">         30 :                         break;</span>
+<span class="lineNum">      76 </span>                :            :                 }
+<span class="lineNum">      77 </span>                :            : 
+<span class="lineNum">      78 </span>                :<span class="lineCov">         30 :         D -= days_per_month[is_leap_year(Y)][M-1];</span>
+<span class="lineNum">      79 </span>                :<span class="lineCov">         30 :         result-&gt;tm_year = Y;</span>
+<span class="lineNum">      80 </span>                :<span class="lineCov">         30 :         result-&gt;tm_mon = M - 1;</span>
+<span class="lineNum">      81 </span>                :<span class="lineCov">         30 :         result-&gt;tm_mday = D;</span>
+<span class="lineNum">      82 </span>                :<span class="lineCov">         30 :         result-&gt;tm_hour = h;</span>
+<span class="lineNum">      83 </span>                :<span class="lineCov">         30 :         result-&gt;tm_min = m;</span>
+<span class="lineNum">      84 </span>                :<span class="lineCov">         30 :         result-&gt;tm_sec = s;</span>
+<span class="lineNum">      85 </span>                :<span class="lineCov">         30 :         return result;</span>
+<a name="86"><span class="lineNum">      86 </span>                :            : }</a>
+<span class="lineNum">      87 </span>                :            : 
+<span class="lineNum">      88 </span>                :<span class="lineCov">         34 : time_t mktime(struct tm *tm)</span>
+<span class="lineNum">      89 </span>                :            : {
+<span class="lineNum">      90 </span>                :            :         unsigned long year, month, mday, hour, minute, second, d;
+<span class="lineNum">      91 </span>                :            :         static const unsigned long sec_in_400_years =
+<span class="lineNum">      92 </span>                :            :                 ((3903ul * 365) + (97 * 366)) * 24 * 60 * 60;
+<span class="lineNum">      93 </span>                :            : 
+<span class="lineNum">      94 </span>                :<span class="lineCov">         34 :         second = tm-&gt;tm_sec;</span>
+<span class="lineNum">      95 </span>                :<span class="lineCov">         34 :         minute = tm-&gt;tm_min;</span>
+<span class="lineNum">      96 </span>                :<span class="lineCov">         34 :         hour = tm-&gt;tm_hour;</span>
+<span class="lineNum">      97 </span>                :<span class="lineCov">         34 :         mday = tm-&gt;tm_mday;</span>
+<span class="lineNum">      98 </span>                :<span class="lineCov">         34 :         month = tm-&gt;tm_mon;</span>
+<span class="lineNum">      99 </span>                :<span class="lineCov">         34 :         year = tm-&gt;tm_year;</span>
+<span class="lineNum">     100 </span>                :            : 
+<span class="lineNum">     101 </span>                :            :         /* There are the same number of seconds in any 400-year block; this
+<span class="lineNum">     102 </span>                :            :          * limits the iterations in the loop below */
+<span class="lineNum">     103 </span>                :<span class="lineCov">         34 :         year += 400 * (second / sec_in_400_years);</span>
+<span class="lineNum">     104 </span>                :<span class="lineCov">         34 :         second = second % sec_in_400_years;</span>
+<span class="lineNum">     105 </span>                :            : 
+<span class="lineNum">     106 </span>        [<span class="branchCov" title="Branch 0 was taken 4 times"> + </span><span class="branchCov" title="Branch 1 was taken 30 times"> + </span>]:<span class="lineCov">         34 :         if (second &gt;= 60) {</span>
+<span class="lineNum">     107 </span>                :<span class="lineCov">          4 :                 minute += second / 60;</span>
+<span class="lineNum">     108 </span>                :<span class="lineCov">          4 :                 second = second % 60;</span>
+<span class="lineNum">     109 </span>                :            :         }
+<span class="lineNum">     110 </span>                :            : 
+<span class="lineNum">     111 </span>        [<span class="branchCov" title="Branch 0 was taken 2 times"> + </span><span class="branchCov" title="Branch 1 was taken 32 times"> + </span>]:<span class="lineCov">         34 :         if (minute &gt;= 60) {</span>
+<span class="lineNum">     112 </span>                :<span class="lineCov">          2 :                 hour += minute / 60;</span>
+<span class="lineNum">     113 </span>                :<span class="lineCov">          2 :                 minute = minute % 60;</span>
+<span class="lineNum">     114 </span>                :            :         }
+<span class="lineNum">     115 </span>                :            : 
+<span class="lineNum">     116 </span>        [<span class="branchCov" title="Branch 0 was taken 2 times"> + </span><span class="branchCov" title="Branch 1 was taken 32 times"> + </span>]:<span class="lineCov">         34 :         if (hour &gt;= 24) {</span>
+<span class="lineNum">     117 </span>                :<span class="lineCov">          2 :                 mday += hour / 24;</span>
+<span class="lineNum">     118 </span>                :<span class="lineCov">          2 :                 hour = hour % 24;</span>
+<span class="lineNum">     119 </span>                :            :         }
+<span class="lineNum">     120 </span>                :            : 
+<span class="lineNum">     121 </span>        [<span class="branchCov" title="Branch 1 was taken 26 times"> + </span><span class="branchCov" title="Branch 2 was taken 34 times"> + </span>]:<span class="lineCov">         60 :         for (d = days_in_month(month, year); mday &gt; d;</span>
+<span class="lineNum">     122 </span>                :<span class="lineCov">         26 :                         d = days_in_month(month, year)) {</span>
+<span class="lineNum">     123 </span>                :<span class="lineCov">         26 :                 month++;</span>
+<span class="lineNum">     124 </span>        [<span class="branchCov" title="Branch 0 was taken 2 times"> + </span><span class="branchCov" title="Branch 1 was taken 24 times"> + </span>]:<span class="lineCov">         26 :                 if (month &gt; 12) {</span>
+<span class="lineNum">     125 </span>                :<span class="lineCov">          2 :                         month = 0;</span>
+<span class="lineNum">     126 </span>                :<span class="lineCov">          2 :                         year++;</span>
+<span class="lineNum">     127 </span>                :            :                 }
+<span class="lineNum">     128 </span>                :<span class="lineCov">         26 :                 mday -= d;</span>
+<span class="lineNum">     129 </span>                :            :         }
+<span class="lineNum">     130 </span>                :            : 
+<span class="lineNum">     131 </span>                :<span class="lineCov">         34 :         tm-&gt;tm_year = year;</span>
+<span class="lineNum">     132 </span>                :<span class="lineCov">         34 :         tm-&gt;tm_mon = month;</span>
+<span class="lineNum">     133 </span>                :<span class="lineCov">         34 :         tm-&gt;tm_mday = mday;</span>
+<span class="lineNum">     134 </span>                :<span class="lineCov">         34 :         tm-&gt;tm_hour = hour;</span>
+<span class="lineNum">     135 </span>                :<span class="lineCov">         34 :         tm-&gt;tm_min = minute;</span>
+<span class="lineNum">     136 </span>                :<span class="lineCov">         34 :         tm-&gt;tm_sec = second;</span>
+<span class="lineNum">     137 </span>                :            : 
+<span class="lineNum">     138 </span>                :<span class="lineCov">         34 :         d = mday;</span>
+<span class="lineNum">     139 </span>                :<span class="lineCov">         34 :         d += days_per_month[is_leap_year(year)][month];</span>
+<span class="lineNum">     140 </span>                :<span class="lineCov">         34 :         d += (year-1970)*DAYS_PER_YEAR + leap_years(year) - leap_years(1970) - 1;</span>
+<span class="lineNum">     141 </span>                :<span class="lineCov">         34 :         return d*SECS_PER_DAY + hour*SECS_PER_HOUR + minute*SECS_PER_MIN + second;</span>
+<span class="lineNum">     142 </span>                :            : }
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.9</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

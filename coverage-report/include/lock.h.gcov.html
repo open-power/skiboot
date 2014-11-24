@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - skiboot.info - include/lock.h</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">include</a> - lock.h<span style="font-size: 80%;"> (source / <a href="lock.h.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">skiboot.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2014-11-24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>                :            : /* Copyright 2013-2014 IBM Corp.</a>
+<span class="lineNum">       2 </span>                :            :  *
+<span class="lineNum">       3 </span>                :            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<span class="lineNum">       4 </span>                :            :  * you may not use this file except in compliance with the License.
+<span class="lineNum">       5 </span>                :            :  * You may obtain a copy of the License at
+<span class="lineNum">       6 </span>                :            :  *
+<span class="lineNum">       7 </span>                :            :  *      http://www.apache.org/licenses/LICENSE-2.0
+<span class="lineNum">       8 </span>                :            :  *
+<span class="lineNum">       9 </span>                :            :  * Unless required by applicable law or agreed to in writing, software
+<span class="lineNum">      10 </span>                :            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<span class="lineNum">      11 </span>                :            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+<span class="lineNum">      12 </span>                :            :  * implied.
+<span class="lineNum">      13 </span>                :            :  * See the License for the specific language governing permissions and
+<span class="lineNum">      14 </span>                :            :  * limitations under the License.
+<span class="lineNum">      15 </span>                :            :  */
+<span class="lineNum">      16 </span>                :            : 
+<span class="lineNum">      17 </span>                :            : #ifndef __LOCK_H
+<span class="lineNum">      18 </span>                :            : #define __LOCK_H
+<span class="lineNum">      19 </span>                :            : 
+<span class="lineNum">      20 </span>                :            : #include &lt;stdbool.h&gt;
+<span class="lineNum">      21 </span>                :            : 
+<span class="lineNum">      22 </span>                :            : struct lock {
+<span class="lineNum">      23 </span>                :            :         /* Lock value has bit 63 as lock bit and the PIR of the owner
+<span class="lineNum">      24 </span>                :            :          * in the top 32-bit
+<span class="lineNum">      25 </span>                :            :          */
+<span class="lineNum">      26 </span>                :            :         unsigned long lock_val;
+<span class="lineNum">      27 </span>                :            : 
+<span class="lineNum">      28 </span>                :            :         /*
+<span class="lineNum">      29 </span>                :            :          * Set to true if lock is involved in the console flush path
+<span class="lineNum">      30 </span>                :            :          * in which case taking it will suspend console flushing
+<span class="lineNum">      31 </span>                :            :          */
+<span class="lineNum">      32 </span>                :            :         bool in_con_path;
+<span class="lineNum">      33 </span>                :            : };
+<span class="lineNum">      34 </span>                :            : 
+<span class="lineNum">      35 </span>                :            : /* Initializer */
+<span class="lineNum">      36 </span>                :            : #define LOCK_UNLOCKED   { .lock_val = 0, .in_con_path = 0 }
+<span class="lineNum">      37 </span>                :            : 
+<span class="lineNum">      38 </span>                :            : /* Note vs. libc and locking:
+<span class="lineNum">      39 </span>                :            :  *
+<span class="lineNum">      40 </span>                :            :  * The printf() family of
+<span class="lineNum">      41 </span>                :            :  * functions use stack based t buffers and call into skiboot
+<span class="lineNum">      42 </span>                :            :  * underlying read() and write() which use a console lock.
+<span class="lineNum">      43 </span>                :            :  *
+<span class="lineNum">      44 </span>                :            :  * The underlying FSP console code will thus operate within that
+<span class="lineNum">      45 </span>                :            :  * console lock.
+<span class="lineNum">      46 </span>                :            :  *
+<span class="lineNum">      47 </span>                :            :  * The libc does *NOT* lock stream buffer operations, so don't
+<span class="lineNum">      48 </span>                :            :  * try to scanf() from the same FILE from two different processors.
+<span class="lineNum">      49 </span>                :            :  *
+<span class="lineNum">      50 </span>                :            :  * FSP operations are locked using an FSP lock, so all processors
+<span class="lineNum">      51 </span>                :            :  * can safely call the FSP API
+<span class="lineNum">      52 </span>                :            :  *
+<span class="lineNum">      53 </span>                :            :  * Note about ordering:
+<span class="lineNum">      54 </span>                :            :  *
+<span class="lineNum">      55 </span>                :            :  * lock() is a full memory barrier. unlock() is a lwsync
+<span class="lineNum">      56 </span>                :            :  *
+<span class="lineNum">      57 </span>                :            :  */
+<span class="lineNum">      58 </span>                :            : 
+<a name="59"><span class="lineNum">      59 </span>                :            : extern bool bust_locks;</a>
+<span class="lineNum">      60 </span>                :            : 
+<span class="lineNum">      61 </span>                :<span class="lineCov">         20 : static inline void init_lock(struct lock *l)</span>
+<span class="lineNum">      62 </span>                :            : {
+<span class="lineNum">      63 </span>                :<span class="lineCov">         20 :         l-&gt;lock_val = 0;</span>
+<span class="lineNum">      64 </span>                :<span class="lineCov">         20 :         l-&gt;in_con_path = false;</span>
+<span class="lineNum">      65 </span>                :<span class="lineCov">         20 : }</span>
+<span class="lineNum">      66 </span>                :            : 
+<span class="lineNum">      67 </span>                :            : extern bool __try_lock(struct lock *l);
+<span class="lineNum">      68 </span>                :            : extern bool try_lock(struct lock *l);
+<span class="lineNum">      69 </span>                :            : extern void lock(struct lock *l);
+<span class="lineNum">      70 </span>                :            : extern void unlock(struct lock *l);
+<span class="lineNum">      71 </span>                :            : 
+<span class="lineNum">      72 </span>                :            : extern bool lock_held_by_me(struct lock *l);
+<span class="lineNum">      73 </span>                :            : 
+<span class="lineNum">      74 </span>                :            : /* The debug output can happen while the FSP lock, so we need some kind
+<span class="lineNum">      75 </span>                :            :  * of recursive lock support here. I don't want all locks to be recursive
+<span class="lineNum">      76 </span>                :            :  * though, thus the caller need to explicitly call lock_recursive which
+<span class="lineNum">      77 </span>                :            :  * returns false if the lock was already held by this cpu. If it returns
+<span class="lineNum">      78 </span>                :            :  * true, then the caller shall release it when done.
+<span class="lineNum">      79 </span>                :            :  */
+<span class="lineNum">      80 </span>                :            : extern bool lock_recursive(struct lock *l);
+<span class="lineNum">      81 </span>                :            : 
+<span class="lineNum">      82 </span>                :            : /* Called after per-cpu data structures are available */
+<span class="lineNum">      83 </span>                :            : extern void init_locks(void);
+<span class="lineNum">      84 </span>                :            : 
+<span class="lineNum">      85 </span>                :            : #endif /* __LOCK_H */
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.9</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

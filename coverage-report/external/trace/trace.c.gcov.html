@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - skiboot.info - external/trace/trace.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">external/trace</a> - trace.c<span style="font-size: 80%;"> (source / <a href="trace.c.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">skiboot.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">37</td>
+            <td class="headerCovTableEntry">37</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2014-11-24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntry">19</td>
+            <td class="headerCovTableEntry">20</td>
+            <td class="headerCovTableEntryHi">95.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>                :            : /* Copyright 2013-2014 IBM Corp.</a>
+<span class="lineNum">       2 </span>                :            :  *
+<span class="lineNum">       3 </span>                :            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<span class="lineNum">       4 </span>                :            :  * you may not use this file except in compliance with the License.
+<span class="lineNum">       5 </span>                :            :  * You may obtain a copy of the License at
+<span class="lineNum">       6 </span>                :            :  *
+<span class="lineNum">       7 </span>                :            :  *      http://www.apache.org/licenses/LICENSE-2.0
+<span class="lineNum">       8 </span>                :            :  *
+<span class="lineNum">       9 </span>                :            :  * Unless required by applicable law or agreed to in writing, software
+<span class="lineNum">      10 </span>                :            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<span class="lineNum">      11 </span>                :            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+<span class="lineNum">      12 </span>                :            :  * implied.
+<span class="lineNum">      13 </span>                :            :  * See the License for the specific language governing permissions and
+<span class="lineNum">      14 </span>                :            :  * limitations under the License.
+<span class="lineNum">      15 </span>                :            :  */
+<span class="lineNum">      16 </span>                :            : /* This example code shows how to read from the trace buffer. */
+<span class="lineNum">      17 </span>                :            : #include &lt;external/trace/trace.h&gt;
+<span class="lineNum">      18 </span>                :            : #include &lt;trace_types.h&gt;
+<a name="19"><span class="lineNum">      19 </span>                :            : #include &lt;errno.h&gt;</a>
+<span class="lineNum">      20 </span>                :            : 
+<span class="lineNum">      21 </span>                :<span class="lineCov">   23703075 : bool trace_empty(const struct tracebuf *tb)</span>
+<span class="lineNum">      22 </span>                :            : {
+<span class="lineNum">      23 </span>                :            :         const struct trace_repeat *rep;
+<span class="lineNum">      24 </span>                :            : 
+<span class="lineNum">      25 </span>        [<span class="branchCov" title="Branch 0 was taken 67726 times"> + </span><span class="branchCov" title="Branch 1 was taken 23635349 times"> + </span>]:<span class="lineCov">   23703075 :         if (tb-&gt;rpos == tb-&gt;end)</span>
+<span class="lineNum">      26 </span>                :<span class="lineCov">      67726 :                 return true;</span>
+<span class="lineNum">      27 </span>                :            : 
+<span class="lineNum">      28 </span>                :            :         /*
+<span class="lineNum">      29 </span>                :            :          * If we have a single element only, and it's a repeat buffer
+<span class="lineNum">      30 </span>                :            :          * we've already seen every repeat for (yet which may be
+<span class="lineNum">      31 </span>                :            :          * incremented in future), we're also empty.
+<span class="lineNum">      32 </span>                :            :          */
+<span class="lineNum">      33 </span>                :<span class="lineCov">   23635349 :         rep = (void *)tb-&gt;buf + (tb-&gt;rpos &amp; tb-&gt;mask);</span>
+<span class="lineNum">      34 </span>        [<span class="branchCov" title="Branch 0 was taken 2625529 times"> + </span><span class="branchCov" title="Branch 1 was taken 21009820 times"> + </span>]:<span class="lineCov">   23635349 :         if (tb-&gt;end != tb-&gt;rpos + sizeof(*rep))</span>
+<span class="lineNum">      35 </span>                :<span class="lineCov">    2625529 :                 return false;</span>
+<span class="lineNum">      36 </span>                :            : 
+<span class="lineNum">      37 </span>        [<span class="branchCov" title="Branch 0 was taken 35 times"> + </span><span class="branchCov" title="Branch 1 was taken 21009785 times"> + </span>]:<span class="lineCov">   21009820 :         if (rep-&gt;type != TRACE_REPEAT)</span>
+<span class="lineNum">      38 </span>                :<span class="lineCov">         35 :                 return false;</span>
+<span class="lineNum">      39 </span>                :            : 
+<span class="lineNum">      40 </span>        [<span class="branchCov" title="Branch 0 was taken 10511239 times"> + </span><span class="branchCov" title="Branch 1 was taken 10498546 times"> + </span>]:<span class="lineCov">   21009785 :         if (rep-&gt;num != tb-&gt;last_repeat)</span>
+<span class="lineNum">      41 </span>                :<span class="lineCov">   10511239 :                 return false;</span>
+<span class="lineNum">      42 </span>                :            : 
+<span class="lineNum">      43 </span>                :<span class="lineCov">   23703075 :         return true;</span>
+<span class="lineNum">      44 </span>                :            : }
+<a name="45"><span class="lineNum">      45 </span>                :            : </a>
+<span class="lineNum">      46 </span>                :            : /* You can't read in parallel, so some locking required in caller. */
+<span class="lineNum">      47 </span>                :<span class="lineCov">   23703035 : bool trace_get(union trace *t, struct tracebuf *tb)</span>
+<span class="lineNum">      48 </span>                :            : {
+<span class="lineNum">      49 </span>                :            :         u64 start;
+<span class="lineNum">      50 </span>        [<span class="branchCov" title="Branch 0 was taken 1912175 times"> + </span><span class="branchCov" title="Branch 1 was taken 21790860 times"> + </span>]:<span class="lineCov">   23703035 :         size_t len = sizeof(*t) &lt; tb-&gt;max_size ? sizeof(*t) : tb-&gt;max_size;</span>
+<span class="lineNum">      51 </span>                :            : 
+<span class="lineNum">      52 </span>        [<span class="branchCov" title="Branch 1 was taken 10566232 times"> + </span><span class="branchCov" title="Branch 2 was taken 13136803 times"> + </span>]:<span class="lineCov">   23703035 :         if (trace_empty(tb))</span>
+<span class="lineNum">      53 </span>                :<span class="lineCov">   10566232 :                 return false;</span>
+<span class="lineNum">      54 </span>                :            : 
+<span class="lineNum">      55 </span>                :            : again:
+<span class="lineNum">      56 </span>                :            :         /*
+<span class="lineNum">      57 </span>                :            :          * The actual buffer is slightly larger than tbsize, so this
+<span class="lineNum">      58 </span>                :            :          * memcpy is always valid.
+<span class="lineNum">      59 </span>                :            :          */
+<span class="lineNum">      60 </span>                :<span class="lineCov">   13855050 :         memcpy(t, tb-&gt;buf + (tb-&gt;rpos &amp; tb-&gt;mask), len);</span>
+<span class="lineNum">      61 </span>                :            : 
+<span class="lineNum">      62 </span>                :<span class="lineCov">   13855050 :         rmb(); /* read barrier, so we read tb-&gt;start after copying record. */</span>
+<span class="lineNum">      63 </span>                :            : 
+<span class="lineNum">      64 </span>                :<span class="lineCov">   13855050 :         start = tb-&gt;start;</span>
+<span class="lineNum">      65 </span>                :            : 
+<span class="lineNum">      66 </span>                :            :         /* Now, was that overwritten? */
+<span class="lineNum">      67 </span>        [<span class="branchCov" title="Branch 0 was taken 43 times"> + </span><span class="branchCov" title="Branch 1 was taken 13855007 times"> + </span>]:<span class="lineCov">   13855050 :         if (tb-&gt;rpos &lt; start) {</span>
+<span class="lineNum">      68 </span>                :            :                 /* Create overflow record. */
+<span class="lineNum">      69 </span>                :<span class="lineCov">         43 :                 t-&gt;overflow.unused64 = 0;</span>
+<span class="lineNum">      70 </span>                :<span class="lineCov">         43 :                 t-&gt;overflow.type = TRACE_OVERFLOW;</span>
+<span class="lineNum">      71 </span>                :<span class="lineCov">         43 :                 t-&gt;overflow.len_div_8 = sizeof(t-&gt;overflow) / 8;</span>
+<span class="lineNum">      72 </span>                :<span class="lineCov">         43 :                 t-&gt;overflow.bytes_missed = start - tb-&gt;rpos;</span>
+<span class="lineNum">      73 </span>                :<span class="lineCov">         43 :                 tb-&gt;rpos += t-&gt;overflow.bytes_missed;</span>
+<span class="lineNum">      74 </span>                :<span class="lineCov">         43 :                 return true;</span>
+<span class="lineNum">      75 </span>                :            :         }
+<span class="lineNum">      76 </span>                :            : 
+<span class="lineNum">      77 </span>                :            :         /* Repeat entries need special handling */
+<span class="lineNum">      78 </span>        [<span class="branchCov" title="Branch 0 was taken 11921948 times"> + </span><span class="branchCov" title="Branch 1 was taken 1933059 times"> + </span>]:<span class="lineCov">   13855007 :         if (t-&gt;hdr.type == TRACE_REPEAT) {</span>
+<span class="lineNum">      79 </span>                :<span class="lineCov">   11921948 :                 u32 num = t-&gt;repeat.num;</span>
+<span class="lineNum">      80 </span>                :            : 
+<span class="lineNum">      81 </span>                :            :                 /* In case we've read some already... */
+<span class="lineNum">      82 </span>                :<span class="lineCov">   11921948 :                 t-&gt;repeat.num -= tb-&gt;last_repeat;</span>
+<span class="lineNum">      83 </span>                :            : 
+<span class="lineNum">      84 </span>                :            :                 /* Record how many repeats we saw this time. */
+<span class="lineNum">      85 </span>                :<span class="lineCov">   11921948 :                 tb-&gt;last_repeat = num;</span>
+<span class="lineNum">      86 </span>                :            : 
+<span class="lineNum">      87 </span>                :            :                 /* Don't report an empty repeat buffer. */
+<span class="lineNum">      88 </span>        [<span class="branchCov" title="Branch 0 was taken 718247 times"> + </span><span class="branchCov" title="Branch 1 was taken 11203701 times"> + </span>]:<span class="lineCov">   11921948 :                 if (t-&gt;repeat.num == 0) {</span>
+<span class="lineNum">      89 </span>                :            :                         /*
+<span class="lineNum">      90 </span>                :            :                          * This can't be the last buffer, otherwise
+<span class="lineNum">      91 </span>                :            :                          * trace_empty would have returned true.
+<span class="lineNum">      92 </span>                :            :                          */
+<span class="lineNum">      93 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 718247 times"> + </span>]:<span class="lineCov">     718247 :                         assert(tb-&gt;end &gt; tb-&gt;rpos + t-&gt;hdr.len_div_8 * 8);</span>
+<span class="lineNum">      94 </span>                :            :                         /* Skip to next entry. */
+<span class="lineNum">      95 </span>                :<span class="lineCov">     718247 :                         tb-&gt;rpos += t-&gt;hdr.len_div_8 * 8;</span>
+<span class="lineNum">      96 </span>                :<span class="lineCov">     718247 :                         tb-&gt;last_repeat = 0;</span>
+<span class="lineNum">      97 </span>                :<span class="lineCov">     718247 :                         goto again;</span>
+<span class="lineNum">      98 </span>                :            :                 }
+<span class="lineNum">      99 </span>                :            :         } else {
+<span class="lineNum">     100 </span>                :<span class="lineCov">    1933059 :                 tb-&gt;last_repeat = 0;</span>
+<span class="lineNum">     101 </span>                :<span class="lineCov">    1933059 :                 tb-&gt;rpos += t-&gt;hdr.len_div_8 * 8;</span>
+<span class="lineNum">     102 </span>                :            :         }
+<span class="lineNum">     103 </span>                :            : 
+<span class="lineNum">     104 </span>                :<span class="lineCov">   23703035 :         return true;</span>
+<span class="lineNum">     105 </span>                :            : }
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.9</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

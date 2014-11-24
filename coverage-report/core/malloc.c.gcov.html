@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - skiboot.info - core/malloc.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">core</a> - malloc.c<span style="font-size: 80%;"> (source / <a href="malloc.c.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">skiboot.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">34</td>
+            <td class="headerCovTableEntry">35</td>
+            <td class="headerCovTableEntryHi">97.1 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2014-11-24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryHi">91.7 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>                :            : /* Copyright 2013-2014 IBM Corp.</a>
+<span class="lineNum">       2 </span>                :            :  *
+<span class="lineNum">       3 </span>                :            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<span class="lineNum">       4 </span>                :            :  * you may not use this file except in compliance with the License.
+<span class="lineNum">       5 </span>                :            :  * You may obtain a copy of the License at
+<span class="lineNum">       6 </span>                :            :  *
+<span class="lineNum">       7 </span>                :            :  *      http://www.apache.org/licenses/LICENSE-2.0
+<span class="lineNum">       8 </span>                :            :  *
+<span class="lineNum">       9 </span>                :            :  * Unless required by applicable law or agreed to in writing, software
+<span class="lineNum">      10 </span>                :            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<span class="lineNum">      11 </span>                :            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+<span class="lineNum">      12 </span>                :            :  * implied.
+<span class="lineNum">      13 </span>                :            :  * See the License for the specific language governing permissions and
+<span class="lineNum">      14 </span>                :            :  * limitations under the License.
+<span class="lineNum">      15 </span>                :            :  */
+<span class="lineNum">      16 </span>                :            : /* Wrappers for malloc, et. al. */
+<span class="lineNum">      17 </span>                :            : #include &lt;mem_region.h&gt;
+<span class="lineNum">      18 </span>                :            : #include &lt;lock.h&gt;
+<span class="lineNum">      19 </span>                :            : #include &lt;string.h&gt;
+<span class="lineNum">      20 </span>                :            : #include &lt;mem_region-malloc.h&gt;
+<span class="lineNum">      21 </span>                :            : 
+<a name="22"><span class="lineNum">      22 </span>                :            : #define DEFAULT_ALIGN __alignof__(long)</a>
+<span class="lineNum">      23 </span>                :            : 
+<span class="lineNum">      24 </span>                :<span class="lineCov">       8282 : void *__memalign(size_t blocksize, size_t bytes, const char *location)</span>
+<span class="lineNum">      25 </span>                :            : {
+<span class="lineNum">      26 </span>                :            :         void *p;
+<span class="lineNum">      27 </span>                :            : 
+<span class="lineNum">      28 </span>                :<span class="lineCov">       8282 :         lock(&amp;mem_region_lock);</span>
+<span class="lineNum">      29 </span>                :<span class="lineCov">       8282 :         p = mem_alloc(&amp;skiboot_heap, bytes, blocksize, location);</span>
+<span class="lineNum">      30 </span>                :<span class="lineCov">       8282 :         unlock(&amp;mem_region_lock);</span>
+<span class="lineNum">      31 </span>                :            : 
+<span class="lineNum">      32 </span>                :<span class="lineCov">       8282 :         return p;</span>
+<a name="33"><span class="lineNum">      33 </span>                :            : }</a>
+<span class="lineNum">      34 </span>                :            : 
+<span class="lineNum">      35 </span>                :<span class="lineCov">       8282 : void *__malloc(size_t bytes, const char *location)</span>
+<span class="lineNum">      36 </span>                :            : {
+<span class="lineNum">      37 </span>                :<span class="lineCov">       8282 :         return __memalign(DEFAULT_ALIGN, bytes, location);</span>
+<a name="38"><span class="lineNum">      38 </span>                :            : }</a>
+<span class="lineNum">      39 </span>                :            : 
+<span class="lineNum">      40 </span>                :<span class="lineCov">         94 : void __free(void *p, const char *location)</span>
+<span class="lineNum">      41 </span>                :            : {
+<span class="lineNum">      42 </span>                :<span class="lineCov">         94 :         lock(&amp;mem_region_lock);</span>
+<span class="lineNum">      43 </span>                :<span class="lineCov">         94 :         mem_free(&amp;skiboot_heap, p, location);</span>
+<span class="lineNum">      44 </span>                :<span class="lineCov">         94 :         unlock(&amp;mem_region_lock);</span>
+<a name="45"><span class="lineNum">      45 </span>                :<span class="lineCov">         94 : }</span></a>
+<span class="lineNum">      46 </span>                :            : 
+<span class="lineNum">      47 </span>                :<span class="lineCov">         18 : void *__realloc(void *ptr, size_t size, const char *location)</span>
+<span class="lineNum">      48 </span>                :            : {
+<span class="lineNum">      49 </span>                :            :         void *newptr;
+<span class="lineNum">      50 </span>                :            : 
+<span class="lineNum">      51 </span>                :            :         /* Two classic malloc corner cases. */
+<span class="lineNum">      52 </span>        [<span class="branchCov" title="Branch 0 was taken 2 times"> + </span><span class="branchCov" title="Branch 1 was taken 16 times"> + </span>]:<span class="lineCov">         18 :         if (!size) {</span>
+<span class="lineNum">      53 </span>                :<span class="lineCov">          2 :                 __free(ptr, location);</span>
+<span class="lineNum">      54 </span>                :<span class="lineCov">          2 :                 return NULL;</span>
+<span class="lineNum">      55 </span>                :            :         }
+<span class="lineNum">      56 </span>        [<span class="branchCov" title="Branch 0 was taken 6 times"> + </span><span class="branchCov" title="Branch 1 was taken 10 times"> + </span>]:<span class="lineCov">         16 :         if (!ptr)</span>
+<span class="lineNum">      57 </span>                :<span class="lineCov">          6 :                 return __malloc(size, location);</span>
+<span class="lineNum">      58 </span>                :            : 
+<span class="lineNum">      59 </span>                :<span class="lineCov">         10 :         lock(&amp;mem_region_lock);</span>
+<span class="lineNum">      60 </span>        [<span class="branchCov" title="Branch 1 was taken 6 times"> + </span><span class="branchCov" title="Branch 2 was taken 4 times"> + </span>]:<span class="lineCov">         10 :         if (mem_resize(&amp;skiboot_heap, ptr, size, location)) {</span>
+<span class="lineNum">      61 </span>                :<span class="lineCov">          6 :                 newptr = ptr;</span>
+<span class="lineNum">      62 </span>                :            :         } else {
+<span class="lineNum">      63 </span>                :<span class="lineCov">          4 :                 newptr = mem_alloc(&amp;skiboot_heap, size, DEFAULT_ALIGN,</span>
+<span class="lineNum">      64 </span>                :            :                                    location);
+<span class="lineNum">      65 </span>        [<span class="branchCov" title="Branch 0 was taken 2 times"> + </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          4 :                 if (newptr) {</span>
+<span class="lineNum">      66 </span>                :<span class="lineCov">          2 :                         size_t copy = mem_allocated_size(ptr);</span>
+<span class="lineNum">      67 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          2 :                         if (copy &gt; size)</span>
+<span class="lineNum">      68 </span>                :<span class="lineNoCov">          0 :                                 copy = size;</span>
+<span class="lineNum">      69 </span>                :<span class="lineCov">          2 :                         memcpy(newptr, ptr, copy);</span>
+<span class="lineNum">      70 </span>                :<span class="lineCov">          2 :                         mem_free(&amp;skiboot_heap, ptr, location);</span>
+<span class="lineNum">      71 </span>                :            :                 }
+<span class="lineNum">      72 </span>                :            :         }
+<span class="lineNum">      73 </span>                :<span class="lineCov">         10 :         unlock(&amp;mem_region_lock);</span>
+<span class="lineNum">      74 </span>                :<span class="lineCov">         18 :         return newptr;</span>
+<a name="75"><span class="lineNum">      75 </span>                :            : }</a>
+<span class="lineNum">      76 </span>                :            : 
+<span class="lineNum">      77 </span>                :<span class="lineCov">          6 : void *__zalloc(size_t bytes, const char *location)</span>
+<span class="lineNum">      78 </span>                :            : {
+<span class="lineNum">      79 </span>                :<span class="lineCov">          6 :         void *p = __malloc(bytes, location);</span>
+<span class="lineNum">      80 </span>                :            : 
+<span class="lineNum">      81 </span>        [<span class="branchCov" title="Branch 0 was taken 4 times"> + </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          6 :         if (p)</span>
+<span class="lineNum">      82 </span>                :<span class="lineCov">          4 :                 memset(p, 0, bytes);</span>
+<span class="lineNum">      83 </span>                :<span class="lineCov">          6 :         return p;</span>
+<span class="lineNum">      84 </span>                :            : }
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.9</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

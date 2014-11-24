@@ -1,0 +1,431 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - skiboot.info - ccan/endian/endian.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">ccan/endian</a> - endian.h<span style="font-size: 80%;"> (source / <a href="endian.h.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">skiboot.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2014-11-24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>                :            : /* CC0 (Public domain) - see LICENSE file for details */</a>
+<span class="lineNum">       2 </span>                :            : #ifndef CCAN_ENDIAN_H
+<span class="lineNum">       3 </span>                :            : #define CCAN_ENDIAN_H
+<span class="lineNum">       4 </span>                :            : #include &lt;stdint.h&gt;
+<span class="lineNum">       5 </span>                :            : #include &quot;config.h&quot;
+<span class="lineNum">       6 </span>                :            : 
+<span class="lineNum">       7 </span>                :            : /**
+<span class="lineNum">       8 </span>                :            :  * BSWAP_16 - reverse bytes in a constant uint16_t value.
+<span class="lineNum">       9 </span>                :            :  * @val: constant value whose bytes to swap.
+<span class="lineNum">      10 </span>                :            :  *
+<span class="lineNum">      11 </span>                :            :  * Designed to be usable in constant-requiring initializers.
+<span class="lineNum">      12 </span>                :            :  *
+<span class="lineNum">      13 </span>                :            :  * Example:
+<span class="lineNum">      14 </span>                :            :  *      struct mystruct {
+<span class="lineNum">      15 </span>                :            :  *              char buf[BSWAP_16(0x1234)];
+<span class="lineNum">      16 </span>                :            :  *      };
+<span class="lineNum">      17 </span>                :            :  */
+<span class="lineNum">      18 </span>                :            : #define BSWAP_16(val)                           \
+<span class="lineNum">      19 </span>                :            :         ((((uint16_t)(val) &amp; 0x00ff) &lt;&lt; 8)    \
+<span class="lineNum">      20 </span>                :            :          | (((uint16_t)(val) &amp; 0xff00) &gt;&gt; 8))
+<span class="lineNum">      21 </span>                :            : 
+<span class="lineNum">      22 </span>                :            : /**
+<span class="lineNum">      23 </span>                :            :  * BSWAP_32 - reverse bytes in a constant uint32_t value.
+<span class="lineNum">      24 </span>                :            :  * @val: constant value whose bytes to swap.
+<span class="lineNum">      25 </span>                :            :  *
+<span class="lineNum">      26 </span>                :            :  * Designed to be usable in constant-requiring initializers.
+<span class="lineNum">      27 </span>                :            :  *
+<span class="lineNum">      28 </span>                :            :  * Example:
+<span class="lineNum">      29 </span>                :            :  *      struct mystruct {
+<span class="lineNum">      30 </span>                :            :  *              char buf[BSWAP_32(0xff000000)];
+<span class="lineNum">      31 </span>                :            :  *      };
+<span class="lineNum">      32 </span>                :            :  */
+<span class="lineNum">      33 </span>                :            : #define BSWAP_32(val)                                   \
+<span class="lineNum">      34 </span>                :            :         ((((uint32_t)(val) &amp; 0x000000ff) &lt;&lt; 24)               \
+<span class="lineNum">      35 </span>                :            :          | (((uint32_t)(val) &amp; 0x0000ff00) &lt;&lt; 8)              \
+<span class="lineNum">      36 </span>                :            :          | (((uint32_t)(val) &amp; 0x00ff0000) &gt;&gt; 8)              \
+<span class="lineNum">      37 </span>                :            :          | (((uint32_t)(val) &amp; 0xff000000) &gt;&gt; 24))
+<span class="lineNum">      38 </span>                :            : 
+<span class="lineNum">      39 </span>                :            : /**
+<span class="lineNum">      40 </span>                :            :  * BSWAP_64 - reverse bytes in a constant uint64_t value.
+<span class="lineNum">      41 </span>                :            :  * @val: constantvalue whose bytes to swap.
+<span class="lineNum">      42 </span>                :            :  *
+<span class="lineNum">      43 </span>                :            :  * Designed to be usable in constant-requiring initializers.
+<span class="lineNum">      44 </span>                :            :  *
+<span class="lineNum">      45 </span>                :            :  * Example:
+<span class="lineNum">      46 </span>                :            :  *      struct mystruct {
+<span class="lineNum">      47 </span>                :            :  *              char buf[BSWAP_64(0xff00000000000000ULL)];
+<span class="lineNum">      48 </span>                :            :  *      };
+<span class="lineNum">      49 </span>                :            :  */
+<span class="lineNum">      50 </span>                :            : #define BSWAP_64(val)                                           \
+<span class="lineNum">      51 </span>                :            :         ((((uint64_t)(val) &amp; 0x00000000000000ffULL) &lt;&lt; 56)    \
+<span class="lineNum">      52 </span>                :            :          | (((uint64_t)(val) &amp; 0x000000000000ff00ULL) &lt;&lt; 40)  \
+<span class="lineNum">      53 </span>                :            :          | (((uint64_t)(val) &amp; 0x0000000000ff0000ULL) &lt;&lt; 24)  \
+<span class="lineNum">      54 </span>                :            :          | (((uint64_t)(val) &amp; 0x00000000ff000000ULL) &lt;&lt; 8)   \
+<span class="lineNum">      55 </span>                :            :          | (((uint64_t)(val) &amp; 0x000000ff00000000ULL) &gt;&gt; 8)   \
+<span class="lineNum">      56 </span>                :            :          | (((uint64_t)(val) &amp; 0x0000ff0000000000ULL) &gt;&gt; 24)  \
+<span class="lineNum">      57 </span>                :            :          | (((uint64_t)(val) &amp; 0x00ff000000000000ULL) &gt;&gt; 40)  \
+<span class="lineNum">      58 </span>                :            :          | (((uint64_t)(val) &amp; 0xff00000000000000ULL) &gt;&gt; 56))
+<span class="lineNum">      59 </span>                :            : 
+<span class="lineNum">      60 </span>                :            : #if HAVE_BYTESWAP_H
+<span class="lineNum">      61 </span>                :            : #include &lt;byteswap.h&gt;
+<span class="lineNum">      62 </span>                :            : #else
+<span class="lineNum">      63 </span>                :            : /**
+<span class="lineNum">      64 </span>                :            :  * bswap_16 - reverse bytes in a uint16_t value.
+<span class="lineNum">      65 </span>                :            :  * @val: value whose bytes to swap.
+<span class="lineNum">      66 </span>                :            :  *
+<span class="lineNum">      67 </span>                :            :  * Example:
+<span class="lineNum">      68 </span>                :            :  *      // Output contains &quot;1024 is 4 as two bytes reversed&quot;
+<span class="lineNum">      69 </span>                :            :  *      printf(&quot;1024 is %u as two bytes reversed\n&quot;, bswap_16(1024));
+<span class="lineNum">      70 </span>                :            :  */
+<span class="lineNum">      71 </span>                :            : static inline uint16_t bswap_16(uint16_t val)
+<span class="lineNum">      72 </span>                :            : {
+<span class="lineNum">      73 </span>                :            :         return BSWAP_16(val);
+<span class="lineNum">      74 </span>                :            : }
+<span class="lineNum">      75 </span>                :            : 
+<span class="lineNum">      76 </span>                :            : /**
+<span class="lineNum">      77 </span>                :            :  * bswap_32 - reverse bytes in a uint32_t value.
+<span class="lineNum">      78 </span>                :            :  * @val: value whose bytes to swap.
+<span class="lineNum">      79 </span>                :            :  *
+<span class="lineNum">      80 </span>                :            :  * Example:
+<span class="lineNum">      81 </span>                :            :  *      // Output contains &quot;1024 is 262144 as four bytes reversed&quot;
+<span class="lineNum">      82 </span>                :            :  *      printf(&quot;1024 is %u as four bytes reversed\n&quot;, bswap_32(1024));
+<span class="lineNum">      83 </span>                :            :  */
+<span class="lineNum">      84 </span>                :            : static inline uint32_t bswap_32(uint32_t val)
+<span class="lineNum">      85 </span>                :            : {
+<span class="lineNum">      86 </span>                :            :         return BSWAP_32(val);
+<span class="lineNum">      87 </span>                :            : }
+<span class="lineNum">      88 </span>                :            : #endif /* !HAVE_BYTESWAP_H */
+<span class="lineNum">      89 </span>                :            : 
+<span class="lineNum">      90 </span>                :            : #if !HAVE_BSWAP_64
+<span class="lineNum">      91 </span>                :            : /**
+<span class="lineNum">      92 </span>                :            :  * bswap_64 - reverse bytes in a uint64_t value.
+<span class="lineNum">      93 </span>                :            :  * @val: value whose bytes to swap.
+<span class="lineNum">      94 </span>                :            :  *
+<span class="lineNum">      95 </span>                :            :  * Example:
+<span class="lineNum">      96 </span>                :            :  *      // Output contains &quot;1024 is 1125899906842624 as eight bytes reversed&quot;
+<span class="lineNum">      97 </span>                :            :  *      printf(&quot;1024 is %llu as eight bytes reversed\n&quot;,
+<span class="lineNum">      98 </span>                :            :  *              (unsigned long long)bswap_64(1024));
+<span class="lineNum">      99 </span>                :            :  */
+<span class="lineNum">     100 </span>                :            : static inline uint64_t bswap_64(uint64_t val)
+<span class="lineNum">     101 </span>                :            : {
+<span class="lineNum">     102 </span>                :            :         return BSWAP_64(val);
+<span class="lineNum">     103 </span>                :            : }
+<span class="lineNum">     104 </span>                :            : #endif
+<span class="lineNum">     105 </span>                :            : 
+<span class="lineNum">     106 </span>                :            : /* Sanity check the defines.  We don't handle weird endianness. */
+<span class="lineNum">     107 </span>                :            : #if !HAVE_LITTLE_ENDIAN &amp;&amp; !HAVE_BIG_ENDIAN
+<span class="lineNum">     108 </span>                :            : #error &quot;Unknown endian&quot;
+<span class="lineNum">     109 </span>                :            : #elif HAVE_LITTLE_ENDIAN &amp;&amp; HAVE_BIG_ENDIAN
+<span class="lineNum">     110 </span>                :            : #error &quot;Can't compile for both big and little endian.&quot;
+<span class="lineNum">     111 </span>                :            : #endif
+<span class="lineNum">     112 </span>                :            : 
+<span class="lineNum">     113 </span>                :            : #ifdef __CHECKER__
+<span class="lineNum">     114 </span>                :            : /* sparse needs forcing to remove bitwise attribute from ccan/short_types */
+<span class="lineNum">     115 </span>                :            : #define ENDIAN_CAST __attribute__((force))
+<span class="lineNum">     116 </span>                :            : #define ENDIAN_TYPE __attribute__((bitwise))
+<span class="lineNum">     117 </span>                :            : #else
+<span class="lineNum">     118 </span>                :            : #define ENDIAN_CAST
+<span class="lineNum">     119 </span>                :            : #define ENDIAN_TYPE
+<span class="lineNum">     120 </span>                :            : #endif
+<span class="lineNum">     121 </span>                :            : 
+<span class="lineNum">     122 </span>                :            : typedef uint64_t ENDIAN_TYPE leint64_t;
+<span class="lineNum">     123 </span>                :            : typedef uint64_t ENDIAN_TYPE beint64_t;
+<span class="lineNum">     124 </span>                :            : typedef uint32_t ENDIAN_TYPE leint32_t;
+<span class="lineNum">     125 </span>                :            : typedef uint32_t ENDIAN_TYPE beint32_t;
+<span class="lineNum">     126 </span>                :            : typedef uint16_t ENDIAN_TYPE leint16_t;
+<span class="lineNum">     127 </span>                :            : typedef uint16_t ENDIAN_TYPE beint16_t;
+<span class="lineNum">     128 </span>                :            : 
+<span class="lineNum">     129 </span>                :            : #if HAVE_LITTLE_ENDIAN
+<span class="lineNum">     130 </span>                :            : /**
+<span class="lineNum">     131 </span>                :            :  * CPU_TO_LE64 - convert a constant uint64_t value to little-endian
+<span class="lineNum">     132 </span>                :            :  * @native: constant to convert
+<span class="lineNum">     133 </span>                :            :  */
+<span class="lineNum">     134 </span>                :            : #define CPU_TO_LE64(native) ((ENDIAN_CAST leint64_t)(native))
+<span class="lineNum">     135 </span>                :            : 
+<span class="lineNum">     136 </span>                :            : /**
+<span class="lineNum">     137 </span>                :            :  * CPU_TO_LE32 - convert a constant uint32_t value to little-endian
+<span class="lineNum">     138 </span>                :            :  * @native: constant to convert
+<span class="lineNum">     139 </span>                :            :  */
+<span class="lineNum">     140 </span>                :            : #define CPU_TO_LE32(native) ((ENDIAN_CAST leint32_t)(native))
+<span class="lineNum">     141 </span>                :            : 
+<span class="lineNum">     142 </span>                :            : /**
+<span class="lineNum">     143 </span>                :            :  * CPU_TO_LE16 - convert a constant uint16_t value to little-endian
+<span class="lineNum">     144 </span>                :            :  * @native: constant to convert
+<span class="lineNum">     145 </span>                :            :  */
+<span class="lineNum">     146 </span>                :            : #define CPU_TO_LE16(native) ((ENDIAN_CAST leint16_t)(native))
+<span class="lineNum">     147 </span>                :            : 
+<span class="lineNum">     148 </span>                :            : /**
+<span class="lineNum">     149 </span>                :            :  * LE64_TO_CPU - convert a little-endian uint64_t constant
+<span class="lineNum">     150 </span>                :            :  * @le_val: little-endian constant to convert
+<span class="lineNum">     151 </span>                :            :  */
+<span class="lineNum">     152 </span>                :            : #define LE64_TO_CPU(le_val) ((ENDIAN_CAST uint64_t)(le_val))
+<span class="lineNum">     153 </span>                :            : 
+<span class="lineNum">     154 </span>                :            : /**
+<span class="lineNum">     155 </span>                :            :  * LE32_TO_CPU - convert a little-endian uint32_t constant
+<span class="lineNum">     156 </span>                :            :  * @le_val: little-endian constant to convert
+<span class="lineNum">     157 </span>                :            :  */
+<span class="lineNum">     158 </span>                :            : #define LE32_TO_CPU(le_val) ((ENDIAN_CAST uint32_t)(le_val))
+<span class="lineNum">     159 </span>                :            : 
+<span class="lineNum">     160 </span>                :            : /**
+<span class="lineNum">     161 </span>                :            :  * LE16_TO_CPU - convert a little-endian uint16_t constant
+<span class="lineNum">     162 </span>                :            :  * @le_val: little-endian constant to convert
+<span class="lineNum">     163 </span>                :            :  */
+<span class="lineNum">     164 </span>                :            : #define LE16_TO_CPU(le_val) ((ENDIAN_CAST uint16_t)(le_val))
+<span class="lineNum">     165 </span>                :            : 
+<span class="lineNum">     166 </span>                :            : #else /* ... HAVE_BIG_ENDIAN */
+<span class="lineNum">     167 </span>                :            : #define CPU_TO_LE64(native) ((ENDIAN_CAST leint64_t)BSWAP_64(native))
+<span class="lineNum">     168 </span>                :            : #define CPU_TO_LE32(native) ((ENDIAN_CAST leint32_t)BSWAP_32(native))
+<span class="lineNum">     169 </span>                :            : #define CPU_TO_LE16(native) ((ENDIAN_CAST leint16_t)BSWAP_16(native))
+<span class="lineNum">     170 </span>                :            : #define LE64_TO_CPU(le_val) BSWAP_64((ENDIAN_CAST uint64_t)le_val)
+<span class="lineNum">     171 </span>                :            : #define LE32_TO_CPU(le_val) BSWAP_32((ENDIAN_CAST uint32_t)le_val)
+<span class="lineNum">     172 </span>                :            : #define LE16_TO_CPU(le_val) BSWAP_16((ENDIAN_CAST uint16_t)le_val)
+<span class="lineNum">     173 </span>                :            : #endif /* HAVE_BIG_ENDIAN */
+<span class="lineNum">     174 </span>                :            : 
+<span class="lineNum">     175 </span>                :            : #if HAVE_BIG_ENDIAN
+<span class="lineNum">     176 </span>                :            : /**
+<span class="lineNum">     177 </span>                :            :  * CPU_TO_BE64 - convert a constant uint64_t value to big-endian
+<span class="lineNum">     178 </span>                :            :  * @native: constant to convert
+<span class="lineNum">     179 </span>                :            :  */
+<span class="lineNum">     180 </span>                :            : #define CPU_TO_BE64(native) ((ENDIAN_CAST beint64_t)(native))
+<span class="lineNum">     181 </span>                :            : 
+<span class="lineNum">     182 </span>                :            : /**
+<span class="lineNum">     183 </span>                :            :  * CPU_TO_BE32 - convert a constant uint32_t value to big-endian
+<span class="lineNum">     184 </span>                :            :  * @native: constant to convert
+<span class="lineNum">     185 </span>                :            :  */
+<span class="lineNum">     186 </span>                :            : #define CPU_TO_BE32(native) ((ENDIAN_CAST beint32_t)(native))
+<span class="lineNum">     187 </span>                :            : 
+<span class="lineNum">     188 </span>                :            : /**
+<span class="lineNum">     189 </span>                :            :  * CPU_TO_BE16 - convert a constant uint16_t value to big-endian
+<span class="lineNum">     190 </span>                :            :  * @native: constant to convert
+<span class="lineNum">     191 </span>                :            :  */
+<span class="lineNum">     192 </span>                :            : #define CPU_TO_BE16(native) ((ENDIAN_CAST beint16_t)(native))
+<span class="lineNum">     193 </span>                :            : 
+<span class="lineNum">     194 </span>                :            : /**
+<span class="lineNum">     195 </span>                :            :  * BE64_TO_CPU - convert a big-endian uint64_t constant
+<span class="lineNum">     196 </span>                :            :  * @le_val: big-endian constant to convert
+<span class="lineNum">     197 </span>                :            :  */
+<span class="lineNum">     198 </span>                :            : #define BE64_TO_CPU(le_val) ((ENDIAN_CAST uint64_t)(le_val))
+<span class="lineNum">     199 </span>                :            : 
+<span class="lineNum">     200 </span>                :            : /**
+<span class="lineNum">     201 </span>                :            :  * BE32_TO_CPU - convert a big-endian uint32_t constant
+<span class="lineNum">     202 </span>                :            :  * @le_val: big-endian constant to convert
+<span class="lineNum">     203 </span>                :            :  */
+<span class="lineNum">     204 </span>                :            : #define BE32_TO_CPU(le_val) ((ENDIAN_CAST uint32_t)(le_val))
+<span class="lineNum">     205 </span>                :            : 
+<span class="lineNum">     206 </span>                :            : /**
+<span class="lineNum">     207 </span>                :            :  * BE16_TO_CPU - convert a big-endian uint16_t constant
+<span class="lineNum">     208 </span>                :            :  * @le_val: big-endian constant to convert
+<span class="lineNum">     209 </span>                :            :  */
+<span class="lineNum">     210 </span>                :            : #define BE16_TO_CPU(le_val) ((ENDIAN_CAST uint16_t)(le_val))
+<span class="lineNum">     211 </span>                :            : 
+<span class="lineNum">     212 </span>                :            : #else /* ... HAVE_LITTLE_ENDIAN */
+<span class="lineNum">     213 </span>                :            : #define CPU_TO_BE64(native) ((ENDIAN_CAST beint64_t)BSWAP_64(native))
+<span class="lineNum">     214 </span>                :            : #define CPU_TO_BE32(native) ((ENDIAN_CAST beint32_t)BSWAP_32(native))
+<span class="lineNum">     215 </span>                :            : #define CPU_TO_BE16(native) ((ENDIAN_CAST beint16_t)BSWAP_16(native))
+<span class="lineNum">     216 </span>                :            : #define BE64_TO_CPU(le_val) BSWAP_64((ENDIAN_CAST uint64_t)le_val)
+<span class="lineNum">     217 </span>                :            : #define BE32_TO_CPU(le_val) BSWAP_32((ENDIAN_CAST uint32_t)le_val)
+<span class="lineNum">     218 </span>                :            : #define BE16_TO_CPU(le_val) BSWAP_16((ENDIAN_CAST uint16_t)le_val)
+<span class="lineNum">     219 </span>                :            : #endif /* HAVE_LITTE_ENDIAN */
+<span class="lineNum">     220 </span>                :            : 
+<span class="lineNum">     221 </span>                :            : 
+<span class="lineNum">     222 </span>                :            : /**
+<span class="lineNum">     223 </span>                :            :  * cpu_to_le64 - convert a uint64_t value to little-endian
+<span class="lineNum">     224 </span>                :            :  * @native: value to convert
+<span class="lineNum">     225 </span>                :            :  */
+<span class="lineNum">     226 </span>                :            : static inline leint64_t cpu_to_le64(uint64_t native)
+<span class="lineNum">     227 </span>                :            : {
+<span class="lineNum">     228 </span>                :            :         return CPU_TO_LE64(native);
+<span class="lineNum">     229 </span>                :            : }
+<span class="lineNum">     230 </span>                :            : 
+<span class="lineNum">     231 </span>                :            : /**
+<span class="lineNum">     232 </span>                :            :  * cpu_to_le32 - convert a uint32_t value to little-endian
+<span class="lineNum">     233 </span>                :            :  * @native: value to convert
+<span class="lineNum">     234 </span>                :            :  */
+<span class="lineNum">     235 </span>                :            : static inline leint32_t cpu_to_le32(uint32_t native)
+<span class="lineNum">     236 </span>                :            : {
+<span class="lineNum">     237 </span>                :            :         return CPU_TO_LE32(native);
+<span class="lineNum">     238 </span>                :            : }
+<span class="lineNum">     239 </span>                :            : 
+<span class="lineNum">     240 </span>                :            : /**
+<span class="lineNum">     241 </span>                :            :  * cpu_to_le16 - convert a uint16_t value to little-endian
+<span class="lineNum">     242 </span>                :            :  * @native: value to convert
+<span class="lineNum">     243 </span>                :            :  */
+<span class="lineNum">     244 </span>                :            : static inline leint16_t cpu_to_le16(uint16_t native)
+<span class="lineNum">     245 </span>                :            : {
+<span class="lineNum">     246 </span>                :            :         return CPU_TO_LE16(native);
+<span class="lineNum">     247 </span>                :            : }
+<span class="lineNum">     248 </span>                :            : 
+<span class="lineNum">     249 </span>                :            : /**
+<span class="lineNum">     250 </span>                :            :  * le64_to_cpu - convert a little-endian uint64_t value
+<span class="lineNum">     251 </span>                :            :  * @le_val: little-endian value to convert
+<span class="lineNum">     252 </span>                :            :  */
+<span class="lineNum">     253 </span>                :            : static inline uint64_t le64_to_cpu(leint64_t le_val)
+<span class="lineNum">     254 </span>                :            : {
+<span class="lineNum">     255 </span>                :            :         return LE64_TO_CPU(le_val);
+<span class="lineNum">     256 </span>                :            : }
+<span class="lineNum">     257 </span>                :            : 
+<span class="lineNum">     258 </span>                :            : /**
+<span class="lineNum">     259 </span>                :            :  * le32_to_cpu - convert a little-endian uint32_t value
+<span class="lineNum">     260 </span>                :            :  * @le_val: little-endian value to convert
+<span class="lineNum">     261 </span>                :            :  */
+<span class="lineNum">     262 </span>                :            : static inline uint32_t le32_to_cpu(leint32_t le_val)
+<span class="lineNum">     263 </span>                :            : {
+<span class="lineNum">     264 </span>                :            :         return LE32_TO_CPU(le_val);
+<span class="lineNum">     265 </span>                :            : }
+<span class="lineNum">     266 </span>                :            : 
+<span class="lineNum">     267 </span>                :            : /**
+<span class="lineNum">     268 </span>                :            :  * le16_to_cpu - convert a little-endian uint16_t value
+<span class="lineNum">     269 </span>                :            :  * @le_val: little-endian value to convert
+<span class="lineNum">     270 </span>                :            :  */
+<span class="lineNum">     271 </span>                :            : static inline uint16_t le16_to_cpu(leint16_t le_val)
+<span class="lineNum">     272 </span>                :            : {
+<span class="lineNum">     273 </span>                :            :         return LE16_TO_CPU(le_val);
+<span class="lineNum">     274 </span>                :            : }
+<span class="lineNum">     275 </span>                :            : 
+<span class="lineNum">     276 </span>                :            : /**
+<span class="lineNum">     277 </span>                :            :  * cpu_to_be64 - convert a uint64_t value to big endian.
+<a name="278"><span class="lineNum">     278 </span>                :            :  * @native: value to convert</a>
+<span class="lineNum">     279 </span>                :            :  */
+<span class="lineNum">     280 </span>                :<span class="lineCov">         20 : static inline beint64_t cpu_to_be64(uint64_t native)</span>
+<span class="lineNum">     281 </span>                :            : {
+<span class="lineNum">     282 </span>                :<span class="lineCov">         20 :         return CPU_TO_BE64(native);</span>
+<span class="lineNum">     283 </span>                :            : }
+<span class="lineNum">     284 </span>                :            : 
+<span class="lineNum">     285 </span>                :            : /**
+<span class="lineNum">     286 </span>                :            :  * cpu_to_be32 - convert a uint32_t value to big endian.
+<a name="287"><span class="lineNum">     287 </span>                :            :  * @native: value to convert</a>
+<span class="lineNum">     288 </span>                :            :  */
+<span class="lineNum">     289 </span>                :<span class="lineCov">       1060 : static inline beint32_t cpu_to_be32(uint32_t native)</span>
+<span class="lineNum">     290 </span>                :            : {
+<span class="lineNum">     291 </span>                :<span class="lineCov">       1060 :         return CPU_TO_BE32(native);</span>
+<span class="lineNum">     292 </span>                :            : }
+<span class="lineNum">     293 </span>                :            : 
+<span class="lineNum">     294 </span>                :            : /**
+<span class="lineNum">     295 </span>                :            :  * cpu_to_be16 - convert a uint16_t value to big endian.
+<a name="296"><span class="lineNum">     296 </span>                :            :  * @native: value to convert</a>
+<span class="lineNum">     297 </span>                :            :  */
+<span class="lineNum">     298 </span>                :<span class="lineCov">     131072 : static inline beint16_t cpu_to_be16(uint16_t native)</span>
+<span class="lineNum">     299 </span>                :            : {
+<span class="lineNum">     300 </span>                :<span class="lineCov">     131072 :         return CPU_TO_BE16(native);</span>
+<span class="lineNum">     301 </span>                :            : }
+<span class="lineNum">     302 </span>                :            : 
+<span class="lineNum">     303 </span>                :            : /**
+<span class="lineNum">     304 </span>                :            :  * be64_to_cpu - convert a big-endian uint64_t value
+<span class="lineNum">     305 </span>                :            :  * @be_val: big-endian value to convert
+<span class="lineNum">     306 </span>                :            :  */
+<span class="lineNum">     307 </span>                :            : static inline uint64_t be64_to_cpu(beint64_t be_val)
+<span class="lineNum">     308 </span>                :            : {
+<span class="lineNum">     309 </span>                :            :         return BE64_TO_CPU(be_val);
+<span class="lineNum">     310 </span>                :            : }
+<span class="lineNum">     311 </span>                :            : 
+<span class="lineNum">     312 </span>                :            : /**
+<span class="lineNum">     313 </span>                :            :  * be32_to_cpu - convert a big-endian uint32_t value
+<a name="314"><span class="lineNum">     314 </span>                :            :  * @be_val: big-endian value to convert</a>
+<span class="lineNum">     315 </span>                :            :  */
+<span class="lineNum">     316 </span>                :<span class="lineCov">         40 : static inline uint32_t be32_to_cpu(beint32_t be_val)</span>
+<span class="lineNum">     317 </span>                :            : {
+<span class="lineNum">     318 </span>                :<span class="lineCov">         40 :         return BE32_TO_CPU(be_val);</span>
+<span class="lineNum">     319 </span>                :            : }
+<span class="lineNum">     320 </span>                :            : 
+<span class="lineNum">     321 </span>                :            : /**
+<span class="lineNum">     322 </span>                :            :  * be16_to_cpu - convert a big-endian uint16_t value
+<span class="lineNum">     323 </span>                :            :  * @be_val: big-endian value to convert
+<span class="lineNum">     324 </span>                :            :  */
+<span class="lineNum">     325 </span>                :            : static inline uint16_t be16_to_cpu(beint16_t be_val)
+<span class="lineNum">     326 </span>                :            : {
+<span class="lineNum">     327 </span>                :            :         return BE16_TO_CPU(be_val);
+<span class="lineNum">     328 </span>                :            : }
+<span class="lineNum">     329 </span>                :            : 
+<span class="lineNum">     330 </span>                :            : /* Whichever they include first, they get these definitions. */
+<span class="lineNum">     331 </span>                :            : #ifdef CCAN_SHORT_TYPES_H
+<span class="lineNum">     332 </span>                :            : /**
+<span class="lineNum">     333 </span>                :            :  * be64/be32/be16 - 64/32/16 bit big-endian representation.
+<span class="lineNum">     334 </span>                :            :  */
+<span class="lineNum">     335 </span>                :            : typedef beint64_t be64;
+<span class="lineNum">     336 </span>                :            : typedef beint32_t be32;
+<span class="lineNum">     337 </span>                :            : typedef beint16_t be16;
+<span class="lineNum">     338 </span>                :            : 
+<span class="lineNum">     339 </span>                :            : /**
+<span class="lineNum">     340 </span>                :            :  * le64/le32/le16 - 64/32/16 bit little-endian representation.
+<span class="lineNum">     341 </span>                :            :  */
+<span class="lineNum">     342 </span>                :            : typedef leint64_t le64;
+<span class="lineNum">     343 </span>                :            : typedef leint32_t le32;
+<span class="lineNum">     344 </span>                :            : typedef leint16_t le16;
+<span class="lineNum">     345 </span>                :            : #endif
+<span class="lineNum">     346 </span>                :            : #endif /* CCAN_ENDIAN_H */
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.9</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

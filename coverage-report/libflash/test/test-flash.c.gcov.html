@@ -1,0 +1,506 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - skiboot.info - libflash/test/test-flash.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">libflash/test</a> - test-flash.c<span style="font-size: 80%;"> (source / <a href="test-flash.c.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">skiboot.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">140</td>
+            <td class="headerCovTableEntry">207</td>
+            <td class="headerCovTableEntryLo">67.6 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2014-11-24</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="headerItem">Branches:</td>
+            <td class="headerCovTableEntry">60</td>
+            <td class="headerCovTableEntry">115</td>
+            <td class="headerCovTableEntryLo">52.2 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">           Branch data     Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>                :            : /* Copyright 2013-2014 IBM Corp.</a>
+<span class="lineNum">       2 </span>                :            :  *
+<span class="lineNum">       3 </span>                :            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+<span class="lineNum">       4 </span>                :            :  * you may not use this file except in compliance with the License.
+<span class="lineNum">       5 </span>                :            :  * You may obtain a copy of the License at
+<span class="lineNum">       6 </span>                :            :  *
+<span class="lineNum">       7 </span>                :            :  *      http://www.apache.org/licenses/LICENSE-2.0
+<span class="lineNum">       8 </span>                :            :  *
+<span class="lineNum">       9 </span>                :            :  * Unless required by applicable law or agreed to in writing, software
+<span class="lineNum">      10 </span>                :            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+<span class="lineNum">      11 </span>                :            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+<span class="lineNum">      12 </span>                :            :  * implied.
+<span class="lineNum">      13 </span>                :            :  * See the License for the specific language governing permissions and
+<span class="lineNum">      14 </span>                :            :  * limitations under the License.
+<span class="lineNum">      15 </span>                :            :  */
+<span class="lineNum">      16 </span>                :            : #include &lt;stdio.h&gt;
+<span class="lineNum">      17 </span>                :            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      18 </span>                :            : #include &lt;stdint.h&gt;
+<span class="lineNum">      19 </span>                :            : #include &lt;string.h&gt;
+<span class="lineNum">      20 </span>                :            : 
+<span class="lineNum">      21 </span>                :            : #include &lt;libflash/libflash.h&gt;
+<span class="lineNum">      22 </span>                :            : #include &lt;libflash/libflash-priv.h&gt;
+<span class="lineNum">      23 </span>                :            : 
+<span class="lineNum">      24 </span>                :            : #include &quot;../libflash.c&quot;
+<span class="lineNum">      25 </span>                :            : 
+<span class="lineNum">      26 </span>                :            : #define __unused                __attribute__((unused))
+<span class="lineNum">      27 </span>                :            : 
+<span class="lineNum">      28 </span>                :            : #define ERR(fmt...) fprintf(stderr, fmt)
+<span class="lineNum">      29 </span>                :            : 
+<span class="lineNum">      30 </span>                :            : /* Flash commands */
+<span class="lineNum">      31 </span>                :            : #define CMD_PP          0x02
+<span class="lineNum">      32 </span>                :            : #define CMD_READ        0x03
+<span class="lineNum">      33 </span>                :            : #define CMD_WRDI        0x04
+<span class="lineNum">      34 </span>                :            : #define CMD_RDSR        0x05
+<span class="lineNum">      35 </span>                :            : #define CMD_WREN        0x06
+<span class="lineNum">      36 </span>                :            : #define CMD_SE          0x20
+<span class="lineNum">      37 </span>                :            : #define CMD_RDSCUR      0x2b
+<span class="lineNum">      38 </span>                :            : #define CMD_BE32K       0x52
+<span class="lineNum">      39 </span>                :            : #define CMD_CE          0x60
+<span class="lineNum">      40 </span>                :            : #define CMD_RDID        0x9f
+<span class="lineNum">      41 </span>                :            : #define CMD_EN4B        0xb7
+<span class="lineNum">      42 </span>                :            : #define CMD_BE          0xd8
+<span class="lineNum">      43 </span>                :            : #define CMD_RDDPB       0xe0
+<span class="lineNum">      44 </span>                :            : #define CMD_RDSPB       0xe2
+<span class="lineNum">      45 </span>                :            : #define CMD_EX4B        0xe9
+<span class="lineNum">      46 </span>                :            : 
+<span class="lineNum">      47 </span>                :            : /* Flash status bits */
+<span class="lineNum">      48 </span>                :            : #define STAT_WIP        0x01
+<span class="lineNum">      49 </span>                :            : #define STAT_WEN        0x02
+<span class="lineNum">      50 </span>                :            : 
+<span class="lineNum">      51 </span>                :            : static uint8_t *sim_image;
+<span class="lineNum">      52 </span>                :            : static uint32_t sim_image_sz = 0x100000;
+<span class="lineNum">      53 </span>                :            : static uint32_t sim_index;
+<span class="lineNum">      54 </span>                :            : static uint32_t sim_addr;
+<span class="lineNum">      55 </span>                :            : static uint32_t sim_er_size;
+<span class="lineNum">      56 </span>                :            : static uint8_t sim_sr;
+<span class="lineNum">      57 </span>                :            : static bool sim_fl_4b;
+<span class="lineNum">      58 </span>                :            : static bool sim_ct_4b;
+<span class="lineNum">      59 </span>                :            : 
+<span class="lineNum">      60 </span>                :            : static enum sim_state {
+<span class="lineNum">      61 </span>                :            :         sim_state_idle,
+<span class="lineNum">      62 </span>                :            :         sim_state_rdid,
+<span class="lineNum">      63 </span>                :            :         sim_state_rdsr,
+<span class="lineNum">      64 </span>                :            :         sim_state_read_addr,
+<span class="lineNum">      65 </span>                :            :         sim_state_read_data,
+<span class="lineNum">      66 </span>                :            :         sim_state_write_addr,
+<span class="lineNum">      67 </span>                :            :         sim_state_write_data,
+<span class="lineNum">      68 </span>                :            :         sim_state_erase_addr,
+<span class="lineNum">      69 </span>                :            :         sim_state_erase_done,
+<span class="lineNum">      70 </span>                :            : } sim_state;
+<span class="lineNum">      71 </span>                :            : 
+<span class="lineNum">      72 </span>                :            : /*
+<a name="73"><span class="lineNum">      73 </span>                :            :  * Simulated flash &amp; controller</a>
+<span class="lineNum">      74 </span>                :            :  */
+<span class="lineNum">      75 </span>                :<span class="lineCov">       5310 : static int sim_start_cmd(uint8_t cmd)</span>
+<span class="lineNum">      76 </span>                :            : {
+<span class="lineNum">      77 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 5310 times"> + </span>]:<span class="lineCov">       5310 :         if (sim_state != sim_state_idle) {</span>
+<span class="lineNum">      78 </span>                :<span class="lineNoCov">          0 :                 ERR(&quot;SIM: Command %02x in wrong state %d\n&quot;, cmd, sim_state);</span>
+<span class="lineNum">      79 </span>                :<span class="lineNoCov">          0 :                 return -1;</span>
+<span class="lineNum">      80 </span>                :            :         }
+<span class="lineNum">      81 </span>                :            : 
+<span class="lineNum">      82 </span>                :<span class="lineCov">       5310 :         sim_index = 0;</span>
+<span class="lineNum">      83 </span>                :<span class="lineCov">       5310 :         sim_addr = 0;</span>
+<span class="lineNum">      84 </span>                :            : 
+<span class="lineNum">      85 </span>  [<span class="branchCov" title="Branch 0 was taken 2 times"> + </span><span class="branchCov" title="Branch 1 was taken 3184 times"> + </span><span class="branchCov" title="Branch 2 was taken 2 times"> + </span><span class="branchNoCov" title="Branch 3 was not taken"> - </span> :<span class="lineCov">       5310 :         switch(cmd) {</span>
+<span class="lineNum">         </span><span class="branchCov" title="Branch 4 was taken 1062 times"> + </span><span class="branchNoCov" title="Branch 5 was not taken"> - </span><span class="branchCov" title="Branch 6 was taken 1058 times"> + </span><span class="branchCov" title="Branch 7 was taken 2 times"> + </span><span class="branchNoCov" title="Branch 8 was not taken"> - </span> 
+<span class="lineNum">         </span>            <span class="branchNoCov" title="Branch 9 was not taken"> - </span>]
+<span class="lineNum">      86 </span>                :            :         case CMD_RDID:
+<span class="lineNum">      87 </span>                :<span class="lineCov">          2 :                 sim_state = sim_state_rdid;</span>
+<span class="lineNum">      88 </span>                :<span class="lineCov">          2 :                 break;</span>
+<span class="lineNum">      89 </span>                :            :         case CMD_RDSR:
+<span class="lineNum">      90 </span>                :<span class="lineCov">       3184 :                 sim_state = sim_state_rdsr;</span>
+<span class="lineNum">      91 </span>                :<span class="lineCov">       3184 :                 break;</span>
+<span class="lineNum">      92 </span>                :            :         case CMD_EX4B:
+<span class="lineNum">      93 </span>                :<span class="lineCov">          2 :                 sim_fl_4b = false;</span>
+<span class="lineNum">      94 </span>                :<span class="lineCov">          2 :                 break;</span>
+<span class="lineNum">      95 </span>                :            :         case CMD_EN4B:
+<span class="lineNum">      96 </span>                :<span class="lineNoCov">          0 :                 sim_fl_4b = true;</span>
+<span class="lineNum">      97 </span>                :<span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">      98 </span>                :            :         case CMD_WREN:
+<span class="lineNum">      99 </span>                :<span class="lineCov">       1062 :                 sim_sr |= STAT_WEN;</span>
+<span class="lineNum">     100 </span>                :<span class="lineCov">       1062 :                 break;</span>
+<span class="lineNum">     101 </span>                :            :         case CMD_READ:
+<span class="lineNum">     102 </span>                :<span class="lineNoCov">          0 :                 sim_state = sim_state_read_addr;</span>
+<span class="lineNum">     103 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchNoExec" title="Branch 1 was not executed"> # </span>]:<span class="lineNoCov">          0 :                 if (sim_ct_4b != sim_fl_4b)</span>
+<span class="lineNum">     104 </span>                :<span class="lineNoCov">          0 :                         ERR(&quot;SIM: 4b mode mismatch in READ !\n&quot;);</span>
+<span class="lineNum">     105 </span>                :<span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     106 </span>                :            :         case CMD_PP:
+<span class="lineNum">     107 </span>                :<span class="lineCov">       1058 :                 sim_state = sim_state_write_addr;</span>
+<span class="lineNum">     108 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 1058 times"> + </span>]:<span class="lineCov">       1058 :                 if (sim_ct_4b != sim_fl_4b)</span>
+<span class="lineNum">     109 </span>                :<span class="lineNoCov">          0 :                         ERR(&quot;SIM: 4b mode mismatch in PP !\n&quot;);</span>
+<span class="lineNum">     110 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 1058 times"> + </span>]:<span class="lineCov">       1058 :                 if (!(sim_sr &amp; STAT_WEN))</span>
+<span class="lineNum">     111 </span>                :<span class="lineNoCov">          0 :                         ERR(&quot;SIM: PP without WEN, ignoring... \n&quot;);</span>
+<span class="lineNum">     112 </span>                :<span class="lineCov">       1058 :                 break;</span>
+<span class="lineNum">     113 </span>                :            :         case CMD_SE:
+<span class="lineNum">     114 </span>                :            :         case CMD_BE32K:
+<span class="lineNum">     115 </span>                :            :         case CMD_BE:
+<span class="lineNum">     116 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          2 :                 if (sim_ct_4b != sim_fl_4b)</span>
+<span class="lineNum">     117 </span>                :<span class="lineNoCov">          0 :                         ERR(&quot;SIM: 4b mode mismatch in SE/BE !\n&quot;);</span>
+<span class="lineNum">     118 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          2 :                 if (!(sim_sr &amp; STAT_WEN))</span>
+<span class="lineNum">     119 </span>                :<span class="lineNoCov">          0 :                         ERR(&quot;SIM: SE/BE without WEN, ignoring... \n&quot;);</span>
+<span class="lineNum">     120 </span>                :<span class="lineCov">          2 :                 sim_state = sim_state_erase_addr;</span>
+<span class="lineNum">     121 </span>  [<span class="branchCov" title="Branch 0 was taken 2 times"> + </span><span class="branchNoCov" title="Branch 1 was not taken"> - </span><span class="branchNoCov" title="Branch 2 was not taken"> - </span><span class="branchNoCov" title="Branch 3 was not taken"> - </span>]:<span class="lineCov">          2 :                 switch(cmd) {</span>
+<span class="lineNum">     122 </span>                :<span class="lineCov">          2 :                 case CMD_SE:    sim_er_size = 0x1000; break;</span>
+<span class="lineNum">     123 </span>                :<span class="lineNoCov">          0 :                 case CMD_BE32K: sim_er_size = 0x8000; break;</span>
+<span class="lineNum">     124 </span>                :<span class="lineNoCov">          0 :                 case CMD_BE:    sim_er_size = 0x10000; break;</span>
+<span class="lineNum">     125 </span>                :            :                 }
+<span class="lineNum">     126 </span>                :<span class="lineCov">          2 :                 break;</span>
+<span class="lineNum">     127 </span>                :            :         case CMD_CE:
+<span class="lineNum">     128 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchNoExec" title="Branch 1 was not executed"> # </span>]:<span class="lineNoCov">          0 :                 if (!(sim_sr &amp; STAT_WEN)) {</span>
+<span class="lineNum">     129 </span>                :<span class="lineNoCov">          0 :                         ERR(&quot;SIM: CE without WEN, ignoring... \n&quot;);</span>
+<span class="lineNum">     130 </span>                :<span class="lineNoCov">          0 :                         break;</span>
+<span class="lineNum">     131 </span>                :            :                 }
+<span class="lineNum">     132 </span>                :<span class="lineNoCov">          0 :                 memset(sim_image, 0xff, sim_image_sz);</span>
+<span class="lineNum">     133 </span>                :<span class="lineNoCov">          0 :                 sim_sr |= STAT_WIP;</span>
+<span class="lineNum">     134 </span>                :<span class="lineNoCov">          0 :                 sim_sr &amp;= ~STAT_WEN;</span>
+<span class="lineNum">     135 </span>                :<span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     136 </span>                :            :         default:
+<span class="lineNum">     137 </span>                :<span class="lineNoCov">          0 :                 ERR(&quot;SIM: Unsupported command %02x\n&quot;, cmd);</span>
+<span class="lineNum">     138 </span>                :<span class="lineNoCov">          0 :                 return -1;</span>
+<span class="lineNum">     139 </span>                :            :         }
+<span class="lineNum">     140 </span>                :<span class="lineCov">       5310 :         return 0;</span>
+<a name="141"><span class="lineNum">     141 </span>                :            : }</a>
+<span class="lineNum">     142 </span>                :            : 
+<span class="lineNum">     143 </span>                :<span class="lineCov">       5310 : static void sim_end_cmd(void)</span>
+<span class="lineNum">     144 </span>                :            : {
+<span class="lineNum">     145 </span>                :            :         /* For write and sector/block erase, set WIP &amp; clear WEN here */
+<span class="lineNum">     146 </span>        [<span class="branchCov" title="Branch 0 was taken 1058 times"> + </span><span class="branchCov" title="Branch 1 was taken 4252 times"> + </span>]:<span class="lineCov">       5310 :         if (sim_state == sim_state_write_data) {</span>
+<span class="lineNum">     147 </span>                :<span class="lineCov">       1058 :                 sim_sr |= STAT_WIP;</span>
+<span class="lineNum">     148 </span>                :<span class="lineCov">       1058 :                 sim_sr &amp;= ~STAT_WEN;</span>
+<span class="lineNum">     149 </span>                :            :         }
+<span class="lineNum">     150 </span>                :<span class="lineCov">       5310 :         sim_state = sim_state_idle;</span>
+<a name="151"><span class="lineNum">     151 </span>                :<span class="lineCov">       5310 : }</span></a>
+<span class="lineNum">     152 </span>                :            : 
+<span class="lineNum">     153 </span>                :<span class="lineCov">       1060 : static bool sim_do_address(const uint8_t **buf, uint32_t *len)</span>
+<span class="lineNum">     154 </span>                :            : {
+<span class="lineNum">     155 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 1060 times"> + </span>]:<span class="lineCov">       1060 :         uint8_t asize = sim_fl_4b ? 4 : 3;</span>
+<span class="lineNum">     156 </span>                :<span class="lineCov">       1060 :         const uint8_t *p = *buf;</span>
+<span class="lineNum">     157 </span>                :            : 
+<span class="lineNum">     158 </span>        [<span class="branchCov" title="Branch 0 was taken 3180 times"> + </span><span class="branchNoCov" title="Branch 1 was not taken"> - </span>]:<span class="lineCov">       3180 :         while(*len) {</span>
+<span class="lineNum">     159 </span>                :<span class="lineCov">       3180 :                 sim_addr = (sim_addr &lt;&lt; 8) | *(p++);</span>
+<span class="lineNum">     160 </span>                :<span class="lineCov">       3180 :                 *buf = p;</span>
+<span class="lineNum">     161 </span>                :<span class="lineCov">       3180 :                 *len = *len - 1;</span>
+<span class="lineNum">     162 </span>                :<span class="lineCov">       3180 :                 sim_index++;</span>
+<span class="lineNum">     163 </span>        [<span class="branchCov" title="Branch 0 was taken 1060 times"> + </span><span class="branchCov" title="Branch 1 was taken 2120 times"> + </span>]:<span class="lineCov">       3180 :                 if (sim_index &gt;= asize)</span>
+<span class="lineNum">     164 </span>                :<span class="lineCov">       1060 :                         return true;</span>
+<span class="lineNum">     165 </span>                :            :         }
+<span class="lineNum">     166 </span>                :<span class="lineCov">       1060 :         return false;</span>
+<a name="167"><span class="lineNum">     167 </span>                :            : }</a>
+<span class="lineNum">     168 </span>                :            :                         
+<span class="lineNum">     169 </span>                :<span class="lineCov">       2118 : static int sim_wbytes(const void *buf, uint32_t len)</span>
+<span class="lineNum">     170 </span>                :            : {
+<span class="lineNum">     171 </span>                :<span class="lineCov">       2118 :         const uint8_t *b = buf;</span>
+<span class="lineNum">     172 </span>                :            :         bool addr_complete;
+<span class="lineNum">     173 </span>                :            : 
+<span class="lineNum">     174 </span>                :            :  again:
+<span class="lineNum">     175 </span>  [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 1058 times"> + </span><span class="branchCov" title="Branch 2 was taken 1058 times"> + </span><span class="branchCov" title="Branch 3 was taken 2 times"> + </span> :<span class="lineCov">       2118 :         switch(sim_state) {</span>
+<span class="lineNum">         </span>            <span class="branchNoCov" title="Branch 4 was not taken"> - </span>]
+<span class="lineNum">     176 </span>                :            :         case sim_state_read_addr:
+<span class="lineNum">     177 </span>                :<span class="lineNoCov">          0 :                 addr_complete = sim_do_address(&amp;b, &amp;len);</span>
+<span class="lineNum">     178 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchNoExec" title="Branch 1 was not executed"> # </span>]:<span class="lineNoCov">          0 :                 if (addr_complete) {</span>
+<span class="lineNum">     179 </span>                :<span class="lineNoCov">          0 :                         sim_state = sim_state_read_data;</span>
+<span class="lineNum">     180 </span>                :<span class="lineNoCov">          0 :                         sim_index = 0;</span>
+<span class="lineNum">     181 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchNoExec" title="Branch 1 was not executed"> # </span>]:<span class="lineNoCov">          0 :                         if (len)</span>
+<span class="lineNum">     182 </span>                :<span class="lineNoCov">          0 :                                 goto again;</span>
+<span class="lineNum">     183 </span>                :            :                 }
+<span class="lineNum">     184 </span>                :<span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     185 </span>                :            :         case sim_state_write_addr:
+<span class="lineNum">     186 </span>                :<span class="lineCov">       1058 :                 addr_complete = sim_do_address(&amp;b, &amp;len);</span>
+<span class="lineNum">     187 </span>        [<span class="branchCov" title="Branch 0 was taken 1058 times"> + </span><span class="branchNoCov" title="Branch 1 was not taken"> - </span>]:<span class="lineCov">       1058 :                 if (addr_complete) {</span>
+<span class="lineNum">     188 </span>                :<span class="lineCov">       1058 :                         sim_state = sim_state_write_data;</span>
+<span class="lineNum">     189 </span>                :<span class="lineCov">       1058 :                         sim_index = 0;</span>
+<span class="lineNum">     190 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 1058 times"> + </span>]:<span class="lineCov">       1058 :                         if (len)</span>
+<span class="lineNum">     191 </span>                :<span class="lineNoCov">          0 :                                 goto again;</span>
+<span class="lineNum">     192 </span>                :            :                 }
+<span class="lineNum">     193 </span>                :<span class="lineCov">       1058 :                 break;</span>
+<span class="lineNum">     194 </span>                :            :         case sim_state_write_data:
+<span class="lineNum">     195 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 1058 times"> + </span>]:<span class="lineCov">       1058 :                 if (!(sim_sr &amp; STAT_WEN))</span>
+<span class="lineNum">     196 </span>                :<span class="lineNoCov">          0 :                         break;</span>
+<span class="lineNum">     197 </span>        [<span class="branchCov" title="Branch 0 was taken 270352 times"> + </span><span class="branchCov" title="Branch 1 was taken 1058 times"> + </span>]:<span class="lineCov">     271410 :                 while(len--) {</span>
+<span class="lineNum">     198 </span>                :<span class="lineCov">     270352 :                         uint8_t c = *(b++);</span>
+<span class="lineNum">     199 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 270352 times"> + </span>]:<span class="lineCov">     270352 :                         if (sim_addr &gt;= sim_image_sz) {</span>
+<span class="lineNum">     200 </span>                :<span class="lineNoCov">          0 :                                 ERR(&quot;SIM: Write past end of flash\n&quot;);</span>
+<span class="lineNum">     201 </span>                :<span class="lineNoCov">          0 :                                 return -1;</span>
+<span class="lineNum">     202 </span>                :            :                         }
+<span class="lineNum">     203 </span>                :            :                         /* Flash write only clears bits */
+<span class="lineNum">     204 </span>                :<span class="lineCov">     270352 :                         sim_image[sim_addr] &amp;= c;</span>
+<span class="lineNum">     205 </span>                :<span class="lineCov">     270352 :                         sim_addr = (sim_addr &amp; 0xffffff00) |</span>
+<span class="lineNum">     206 </span>                :<span class="lineCov">     270352 :                                 ((sim_addr + 1) &amp; 0xff);</span>
+<span class="lineNum">     207 </span>                :            :                 }
+<span class="lineNum">     208 </span>                :<span class="lineCov">       1058 :                 break;</span>
+<span class="lineNum">     209 </span>                :            :         case sim_state_erase_addr:
+<span class="lineNum">     210 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          2 :                 if (!(sim_sr &amp; STAT_WEN))</span>
+<span class="lineNum">     211 </span>                :<span class="lineNoCov">          0 :                         break;</span>
+<span class="lineNum">     212 </span>                :<span class="lineCov">          2 :                 addr_complete = sim_do_address(&amp;b, &amp;len);</span>
+<span class="lineNum">     213 </span>        [<span class="branchCov" title="Branch 0 was taken 2 times"> + </span><span class="branchNoCov" title="Branch 1 was not taken"> - </span>]:<span class="lineCov">          2 :                 if (addr_complete) {</span>
+<span class="lineNum">     214 </span>                :<span class="lineCov">          2 :                         memset(sim_image + sim_addr, 0xff, sim_er_size);</span>
+<span class="lineNum">     215 </span>                :<span class="lineCov">          2 :                         sim_sr |= STAT_WIP;</span>
+<span class="lineNum">     216 </span>                :<span class="lineCov">          2 :                         sim_sr &amp;= ~STAT_WEN;</span>
+<span class="lineNum">     217 </span>                :<span class="lineCov">          2 :                         sim_state = sim_state_erase_done;</span>
+<span class="lineNum">     218 </span>                :            :                 }
+<span class="lineNum">     219 </span>                :<span class="lineCov">          2 :                 break;</span>
+<span class="lineNum">     220 </span>                :            :         default:
+<span class="lineNum">     221 </span>                :<span class="lineNoCov">          0 :                 ERR(&quot;SIM: Write in wrong state %d\n&quot;, sim_state);</span>
+<span class="lineNum">     222 </span>                :<span class="lineNoCov">          0 :                 return -1;</span>
+<span class="lineNum">     223 </span>                :            :         }
+<span class="lineNum">     224 </span>                :<span class="lineCov">       2118 :         return 0;</span>
+<a name="225"><span class="lineNum">     225 </span>                :            : }</a>
+<span class="lineNum">     226 </span>                :            : 
+<span class="lineNum">     227 </span>                :<span class="lineCov">       3186 : static int sim_rbytes(void *buf, uint32_t len)</span>
+<span class="lineNum">     228 </span>                :            : {
+<span class="lineNum">     229 </span>                :<span class="lineCov">       3186 :         uint8_t *b = buf;</span>
+<span class="lineNum">     230 </span>                :            : 
+<span class="lineNum">     231 </span>  [<span class="branchCov" title="Branch 0 was taken 2 times"> + </span><span class="branchCov" title="Branch 1 was taken 3184 times"> + </span><span class="branchNoCov" title="Branch 2 was not taken"> - </span><span class="branchNoCov" title="Branch 3 was not taken"> - </span>]:<span class="lineCov">       3186 :         switch(sim_state) {</span>
+<span class="lineNum">     232 </span>                :            :         case sim_state_rdid:
+<span class="lineNum">     233 </span>        [<span class="branchCov" title="Branch 0 was taken 6 times"> + </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          8 :                 while(len--) {</span>
+<span class="lineNum">     234 </span>  [<span class="branchCov" title="Branch 0 was taken 2 times"> + </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span><span class="branchCov" title="Branch 2 was taken 2 times"> + </span><span class="branchNoCov" title="Branch 3 was not taken"> - </span>]:<span class="lineCov">          6 :                         switch(sim_index) {</span>
+<span class="lineNum">     235 </span>                :            :                         case 0:
+<span class="lineNum">     236 </span>                :<span class="lineCov">          2 :                                 *(b++) = 0x55;</span>
+<span class="lineNum">     237 </span>                :<span class="lineCov">          2 :                                 break;</span>
+<span class="lineNum">     238 </span>                :            :                         case 1:
+<span class="lineNum">     239 </span>                :<span class="lineCov">          2 :                                 *(b++) = 0xaa;</span>
+<span class="lineNum">     240 </span>                :<span class="lineCov">          2 :                                 break;</span>
+<span class="lineNum">     241 </span>                :            :                         case 2:
+<span class="lineNum">     242 </span>                :<span class="lineCov">          2 :                                 *(b++) = 0x55;</span>
+<span class="lineNum">     243 </span>                :<span class="lineCov">          2 :                                 break;</span>
+<span class="lineNum">     244 </span>                :            :                         default:
+<span class="lineNum">     245 </span>                :<span class="lineNoCov">          0 :                                 ERR(&quot;SIM: RDID index %d\n&quot;, sim_index);</span>
+<span class="lineNum">     246 </span>                :<span class="lineNoCov">          0 :                                 *(b++) = 0;</span>
+<span class="lineNum">     247 </span>                :<span class="lineNoCov">          0 :                                 break;</span>
+<span class="lineNum">     248 </span>                :            :                         }
+<span class="lineNum">     249 </span>                :<span class="lineCov">          6 :                         sim_index++;</span>
+<span class="lineNum">     250 </span>                :            :                 }
+<span class="lineNum">     251 </span>                :<span class="lineCov">          2 :                 break;</span>
+<span class="lineNum">     252 </span>                :            :         case sim_state_rdsr:
+<span class="lineNum">     253 </span>        [<span class="branchCov" title="Branch 0 was taken 3184 times"> + </span><span class="branchCov" title="Branch 1 was taken 3184 times"> + </span>]:<span class="lineCov">       6368 :                 while(len--) {</span>
+<span class="lineNum">     254 </span>                :<span class="lineCov">       3184 :                         *(b++) = sim_sr;</span>
+<span class="lineNum">     255 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 3184 times"> + </span>]:<span class="lineCov">       3184 :                         if (sim_index &gt; 0)</span>
+<span class="lineNum">     256 </span>                :<span class="lineNoCov">          0 :                                 ERR(&quot;SIM: RDSR index %d\n&quot;, sim_index);</span>
+<span class="lineNum">     257 </span>                :<span class="lineCov">       3184 :                         sim_index++;</span>
+<span class="lineNum">     258 </span>                :            : 
+<span class="lineNum">     259 </span>                :            :                         /* If WIP was 1, clear it, ie, simulate write/erase
+<span class="lineNum">     260 </span>                :            :                          * completion
+<span class="lineNum">     261 </span>                :            :                          */
+<span class="lineNum">     262 </span>                :<span class="lineCov">       3184 :                         sim_sr &amp;= ~STAT_WIP;</span>
+<span class="lineNum">     263 </span>                :            :                 }
+<span class="lineNum">     264 </span>                :<span class="lineCov">       3184 :                 break;</span>
+<span class="lineNum">     265 </span>                :            :         case sim_state_read_data:
+<span class="lineNum">     266 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchNoExec" title="Branch 1 was not executed"> # </span>]:<span class="lineNoCov">          0 :                 while(len--) {</span>
+<span class="lineNum">     267 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchNoExec" title="Branch 1 was not executed"> # </span>]:<span class="lineNoCov">          0 :                         if (sim_addr &gt;= sim_image_sz) {</span>
+<span class="lineNum">     268 </span>                :<span class="lineNoCov">          0 :                                 ERR(&quot;SIM: Read past end of flash\n&quot;);</span>
+<span class="lineNum">     269 </span>                :<span class="lineNoCov">          0 :                                 return -1;</span>
+<span class="lineNum">     270 </span>                :            :                         }
+<span class="lineNum">     271 </span>                :<span class="lineNoCov">          0 :                         *(b++) = sim_image[sim_addr++];</span>
+<span class="lineNum">     272 </span>                :            :                 }
+<span class="lineNum">     273 </span>                :<span class="lineNoCov">          0 :                 break;</span>
+<span class="lineNum">     274 </span>                :            :         default:
+<span class="lineNum">     275 </span>                :<span class="lineNoCov">          0 :                 ERR(&quot;SIM: Read in wrong state %d\n&quot;, sim_state);</span>
+<span class="lineNum">     276 </span>                :<span class="lineNoCov">          0 :                 return -1;</span>
+<span class="lineNum">     277 </span>                :            :         }
+<span class="lineNum">     278 </span>                :<span class="lineCov">       3186 :         return 0;</span>
+<a name="279"><span class="lineNum">     279 </span>                :            : }</a>
+<span class="lineNum">     280 </span>                :            : 
+<span class="lineNum">     281 </span>                :<span class="lineCov">       1060 : static int sim_send_addr(uint32_t addr)</span>
+<span class="lineNum">     282 </span>                :            : {
+<span class="lineNum">     283 </span>                :            :         const void *ap;
+<span class="lineNum">     284 </span>                :            : 
+<span class="lineNum">     285 </span>                :            :         /* Layout address MSB first in memory */
+<span class="lineNum">     286 </span>                :<span class="lineCov">       1060 :         addr = cpu_to_be32(addr);</span>
+<span class="lineNum">     287 </span>                :            : 
+<span class="lineNum">     288 </span>                :            :         /* Send the right amount of bytes */
+<span class="lineNum">     289 </span>                :<span class="lineCov">       1060 :         ap = (char *)&amp;addr;</span>
+<span class="lineNum">     290 </span>                :            : 
+<span class="lineNum">     291 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 1060 times"> + </span>]:<span class="lineCov">       1060 :         if (sim_ct_4b)</span>
+<span class="lineNum">     292 </span>                :<span class="lineNoCov">          0 :                 return sim_wbytes(ap, 4);</span>
+<span class="lineNum">     293 </span>                :            :         else
+<span class="lineNum">     294 </span>                :<span class="lineCov">       1060 :                 return sim_wbytes(ap + 1, 3);</span>
+<a name="295"><span class="lineNum">     295 </span>                :            : }</a>
+<span class="lineNum">     296 </span>                :            : 
+<span class="lineNum">     297 </span>                :<span class="lineCov">       3186 : static int sim_cmd_rd(struct spi_flash_ctrl *ctrl __unused, uint8_t cmd,</span>
+<span class="lineNum">     298 </span>                :            :                       bool has_addr, uint32_t addr, void *buffer,
+<span class="lineNum">     299 </span>                :            :                       uint32_t size)
+<span class="lineNum">     300 </span>                :            : {
+<span class="lineNum">     301 </span>                :            :         int rc;
+<span class="lineNum">     302 </span>                :            : 
+<span class="lineNum">     303 </span>                :<span class="lineCov">       3186 :         rc = sim_start_cmd(cmd);</span>
+<span class="lineNum">     304 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 3186 times"> + </span>]:<span class="lineCov">       3186 :         if (rc)</span>
+<span class="lineNum">     305 </span>                :<span class="lineNoCov">          0 :                 goto bail;</span>
+<span class="lineNum">     306 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 3186 times"> + </span>]:<span class="lineCov">       3186 :         if (has_addr) {</span>
+<span class="lineNum">     307 </span>                :<span class="lineNoCov">          0 :                 rc = sim_send_addr(addr);</span>
+<span class="lineNum">     308 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchNoExec" title="Branch 1 was not executed"> # </span>]:<span class="lineNoCov">          0 :                 if (rc)</span>
+<span class="lineNum">     309 </span>                :<span class="lineNoCov">          0 :                         goto bail;</span>
+<span class="lineNum">     310 </span>                :            :         }
+<span class="lineNum">     311 </span>[<span class="branchCov" title="Branch 0 was taken 3186 times"> + </span><span class="branchNoCov" title="Branch 1 was not taken"> - </span>][<span class="branchCov" title="Branch 2 was taken 3186 times"> + </span><span class="branchNoCov" title="Branch 3 was not taken"> - </span>]:<span class="lineCov">       3186 :         if (buffer &amp;&amp; size)</span>
+<span class="lineNum">     312 </span>                :<span class="lineCov">       3186 :                 rc = sim_rbytes(buffer, size);</span>
+<span class="lineNum">     313 </span>                :            :  bail:
+<span class="lineNum">     314 </span>                :<span class="lineCov">       3186 :         sim_end_cmd();</span>
+<span class="lineNum">     315 </span>                :<span class="lineCov">       3186 :         return rc;</span>
+<a name="316"><span class="lineNum">     316 </span>                :            : }</a>
+<span class="lineNum">     317 </span>                :            : 
+<span class="lineNum">     318 </span>                :<span class="lineCov">       2124 : static int sim_cmd_wr(struct spi_flash_ctrl *ctrl __unused, uint8_t cmd,</span>
+<span class="lineNum">     319 </span>                :            :                       bool has_addr, uint32_t addr, const void *buffer,
+<span class="lineNum">     320 </span>                :            :                       uint32_t size)
+<span class="lineNum">     321 </span>                :            : {
+<span class="lineNum">     322 </span>                :            :         int rc;
+<span class="lineNum">     323 </span>                :            : 
+<span class="lineNum">     324 </span>                :<span class="lineCov">       2124 :         rc = sim_start_cmd(cmd);</span>
+<span class="lineNum">     325 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2124 times"> + </span>]:<span class="lineCov">       2124 :         if (rc)</span>
+<span class="lineNum">     326 </span>                :<span class="lineNoCov">          0 :                 goto bail;</span>
+<span class="lineNum">     327 </span>        [<span class="branchCov" title="Branch 0 was taken 1060 times"> + </span><span class="branchCov" title="Branch 1 was taken 1064 times"> + </span>]:<span class="lineCov">       2124 :         if (has_addr) {</span>
+<span class="lineNum">     328 </span>                :<span class="lineCov">       1060 :                 rc = sim_send_addr(addr);</span>
+<span class="lineNum">     329 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 1060 times"> + </span>]:<span class="lineCov">       1060 :                 if (rc)</span>
+<span class="lineNum">     330 </span>                :<span class="lineNoCov">          0 :                         goto bail;</span>
+<span class="lineNum">     331 </span>                :            :         }
+<span class="lineNum">     332 </span>[<span class="branchCov" title="Branch 0 was taken 1058 times"> + </span><span class="branchCov" title="Branch 1 was taken 1066 times"> + </span>][<span class="branchCov" title="Branch 2 was taken 1058 times"> + </span><span class="branchNoCov" title="Branch 3 was not taken"> - </span>]:<span class="lineCov">       2124 :         if (buffer &amp;&amp; size)</span>
+<span class="lineNum">     333 </span>                :<span class="lineCov">       1058 :                 rc = sim_wbytes(buffer, size);</span>
+<span class="lineNum">     334 </span>                :            :  bail:
+<span class="lineNum">     335 </span>                :<span class="lineCov">       2124 :         sim_end_cmd();</span>
+<span class="lineNum">     336 </span>                :<span class="lineCov">       2124 :         return rc;</span>
+<a name="337"><span class="lineNum">     337 </span>                :            : }</a>
+<span class="lineNum">     338 </span>                :            : 
+<span class="lineNum">     339 </span>                :<span class="lineCov">          2 : static int sim_set_4b(struct spi_flash_ctrl *ctrl __unused, bool enable)</span>
+<span class="lineNum">     340 </span>                :            : {
+<span class="lineNum">     341 </span>                :<span class="lineCov">          2 :         sim_ct_4b = enable;</span>
+<span class="lineNum">     342 </span>                :            : 
+<span class="lineNum">     343 </span>                :<span class="lineCov">          2 :         return 0;</span>
+<a name="344"><span class="lineNum">     344 </span>                :            : }</a>
+<span class="lineNum">     345 </span>                :            : 
+<span class="lineNum">     346 </span>                :<span class="lineCov">       1126 : static int sim_read(struct spi_flash_ctrl *ctrl __unused, uint32_t pos,</span>
+<span class="lineNum">     347 </span>                :            :                     void *buf, uint32_t len)
+<span class="lineNum">     348 </span>                :            : {
+<span class="lineNum">     349 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 1126 times"> + </span>]:<span class="lineCov">       1126 :         if (sim_ct_4b != sim_fl_4b)</span>
+<span class="lineNum">     350 </span>                :<span class="lineNoCov">          0 :                 ERR(&quot;SIM: 4b mode mismatch in autoread !\n&quot;);</span>
+<span class="lineNum">     351 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 1126 times"> + </span>]:<span class="lineCov">       1126 :         if ((pos + len) &lt; pos)</span>
+<span class="lineNum">     352 </span>                :<span class="lineNoCov">          0 :                 return -1;</span>
+<span class="lineNum">     353 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 1126 times"> + </span>]:<span class="lineCov">       1126 :         if ((pos + len) &gt; sim_image_sz)</span>
+<span class="lineNum">     354 </span>                :<span class="lineNoCov">          0 :                 return -1;</span>
+<span class="lineNum">     355 </span>                :<span class="lineCov">       1126 :         memcpy(buf, sim_image + pos, len);</span>
+<span class="lineNum">     356 </span>                :<span class="lineCov">       1126 :         return 0;</span>
+<span class="lineNum">     357 </span>                :            : };
+<span class="lineNum">     358 </span>                :            : 
+<span class="lineNum">     359 </span>                :            : struct spi_flash_ctrl sim_ctrl = {
+<span class="lineNum">     360 </span>                :            :         .cmd_wr = sim_cmd_wr,
+<span class="lineNum">     361 </span>                :            :         .cmd_rd = sim_cmd_rd,
+<span class="lineNum">     362 </span>                :            :         .set_4b = sim_set_4b,
+<span class="lineNum">     363 </span>                :            :         .read = sim_read,
+<a name="364"><span class="lineNum">     364 </span>                :            : };</a>
+<span class="lineNum">     365 </span>                :            : 
+<span class="lineNum">     366 </span>                :<span class="lineCov">          2 : int main(void)</span>
+<span class="lineNum">     367 </span>                :            : {
+<span class="lineNum">     368 </span>                :            :         struct flash_chip *fl;
+<span class="lineNum">     369 </span>                :            :         uint32_t total_size, erase_granule;
+<span class="lineNum">     370 </span>                :            :         const char *name;
+<span class="lineNum">     371 </span>                :            :         uint16_t *test;
+<span class="lineNum">     372 </span>                :            :         int i, rc;
+<span class="lineNum">     373 </span>                :            : 
+<span class="lineNum">     374 </span>                :<span class="lineCov">          2 :         sim_image = malloc(sim_image_sz);</span>
+<span class="lineNum">     375 </span>                :<span class="lineCov">          2 :         memset(sim_image, 0xff, sim_image_sz);</span>
+<span class="lineNum">     376 </span>                :<span class="lineCov">          2 :         test = malloc(0x10000 * 2);</span>
+<span class="lineNum">     377 </span>                :            : 
+<span class="lineNum">     378 </span>                :<span class="lineCov">          2 :         rc = flash_init(&amp;sim_ctrl, &amp;fl);</span>
+<span class="lineNum">     379 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          2 :         if (rc) {</span>
+<span class="lineNum">     380 </span>                :<span class="lineNoCov">          0 :                 ERR(&quot;flash_init failed with err %d\n&quot;, rc);</span>
+<span class="lineNum">     381 </span>                :<span class="lineNoCov">          0 :                 exit(1);</span>
+<span class="lineNum">     382 </span>                :            :         }
+<span class="lineNum">     383 </span>                :<span class="lineCov">          2 :         rc = flash_get_info(fl, &amp;name, &amp;total_size, &amp;erase_granule);</span>
+<span class="lineNum">     384 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          2 :         if (rc) {</span>
+<span class="lineNum">     385 </span>                :<span class="lineNoCov">          0 :                 ERR(&quot;flash_get_info failed with err %d\n&quot;, rc);</span>
+<span class="lineNum">     386 </span>                :<span class="lineNoCov">          0 :                 exit(1);</span>
+<span class="lineNum">     387 </span>                :            :         }
+<span class="lineNum">     388 </span>                :            : 
+<span class="lineNum">     389 </span>                :            :         /* Make up a test pattern */
+<span class="lineNum">     390 </span>        [<span class="branchCov" title="Branch 0 was taken 131072 times"> + </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">     131074 :         for (i=0; i&lt;0x10000;i++)</span>
+<span class="lineNum">     391 </span>                :<span class="lineCov">     131072 :                 test[i] = cpu_to_be16(i);</span>
+<span class="lineNum">     392 </span>                :            : 
+<span class="lineNum">     393 </span>                :            :         /* Write 64k of stuff at 0 and at 128k */
+<span class="lineNum">     394 </span>                :<span class="lineCov">          2 :         printf(&quot;Writing test patterns...\n&quot;);</span>
+<span class="lineNum">     395 </span>                :<span class="lineCov">          2 :         flash_smart_write(fl, 0, test, 0x10000);</span>
+<span class="lineNum">     396 </span>                :<span class="lineCov">          2 :         flash_smart_write(fl, 0x20000, test, 0x10000);</span>
+<span class="lineNum">     397 </span>                :            : 
+<span class="lineNum">     398 </span>                :            :         /* Write &quot;Hello world&quot; straddling the 64k boundary */
+<span class="lineNum">     399 </span>                :            : #define HW &quot;Hello World&quot;
+<span class="lineNum">     400 </span>                :<span class="lineCov">          2 :         printf(&quot;Writing test string...\n&quot;);</span>
+<span class="lineNum">     401 </span>                :<span class="lineCov">          2 :         flash_smart_write(fl, 0xfffc, HW, sizeof(HW));</span>
+<span class="lineNum">     402 </span>                :            : 
+<span class="lineNum">     403 </span>                :            :         /* Check result */
+<span class="lineNum">     404 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          2 :         if (memcmp(sim_image + 0xfffc, HW, sizeof(HW))) {</span>
+<span class="lineNum">     405 </span>                :<span class="lineNoCov">          0 :                 ERR(&quot;Test string mismatch !\n&quot;);</span>
+<span class="lineNum">     406 </span>                :<span class="lineNoCov">          0 :                 exit(1);</span>
+<span class="lineNum">     407 </span>                :            :         }
+<span class="lineNum">     408 </span>                :<span class="lineCov">          2 :         printf(&quot;Test string pass\n&quot;);</span>
+<span class="lineNum">     409 </span>        [<span class="branchNoCov" title="Branch 0 was not taken"> - </span><span class="branchCov" title="Branch 1 was taken 2 times"> + </span>]:<span class="lineCov">          2 :         if (memcmp(sim_image, test, 0xfffc)) {</span>
+<span class="lineNum">     410 </span>                :<span class="lineNoCov">          0 :                 ERR(&quot;Test pattern mismatch !\n&quot;);</span>
+<span class="lineNum">     411 </span>                :<span class="lineNoCov">          0 :                 exit(1);</span>
+<span class="lineNum">     412 </span>                :            :         }
+<span class="lineNum">     413 </span>                :<span class="lineCov">          2 :         printf(&quot;Test pattern pass\n&quot;);</span>
+<span class="lineNum">     414 </span>                :<span class="lineCov">          2 :         flash_exit(fl);</span>
+<span class="lineNum">     415 </span>                :            : 
+<span class="lineNum">     416 </span>                :<span class="lineCov">          2 :         return 0;</span>
+<span class="lineNum">     417 </span>                :            : }
+<span class="lineNum">     418 </span>                :            :  
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.9</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
