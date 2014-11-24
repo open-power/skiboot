@@ -949,7 +949,7 @@ int fsp_queue_msg(struct fsp_msg *msg, void (*comp)(struct fsp_msg *msg))
 	u16 seq;
 	int rc = 0;
 
-	if (!fsp)
+	if (!fsp || !msg)
 		return -1;
 
 	/* Recursive locking */
