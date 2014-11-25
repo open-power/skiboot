@@ -235,7 +235,7 @@ static void astbmc_fixup_dt_i2cm(void)
 	sprintf(name,"p8_%08x_e%dp%d", c->id, 1, 2);
 	bus = dt_create_i2c_bus(master, name, 2);
 	assert(bus);
-	dt_create_i2c_device(bus, 0x50, "eeprom", "atmel,24c64", "system-vpd");
+	dt_create_i2c_device(bus, 0x50, "eeprom", "atmel,24c256", "system-vpd");
 	assert(bus);
 }
 
