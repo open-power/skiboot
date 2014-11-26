@@ -691,7 +691,8 @@ void dt_expand(const void *fdt)
 
 	dt_root = dt_new_root("");
 
-	dt_expand_node(dt_root, fdt, 0);
+	if (dt_expand_node(dt_root, fdt, 0) < 0)
+		abort();
 }
 
 u64 dt_get_number(const void *pdata, unsigned int cells)
