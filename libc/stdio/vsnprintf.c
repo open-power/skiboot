@@ -29,22 +29,22 @@ print_itoa(char **buffer, unsigned long value, unsigned short base, bool upper)
 {
 	const char zeichen[] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
 	char c;
+	int i = 0;
+	char tmp[16];
 
 	if(base <= 2 || base > 16)
 		return 0;
 
-	if (value < base) {
-		c = zeichen[value];
-		if (upper)
-			c = toupper(c);
-		**buffer = c;
-		*buffer += 1;
-	} else {
-		print_itoa(buffer, value / base, base, upper);
+	do {
 		c = zeichen[value % base];
 		if (upper)
 			c = toupper(c);
-		**buffer = c;
+		tmp[i++] = c;
+		value /= base;
+	} while(value);
+
+	while (i--) {
+		**buffer = tmp[i];
 		*buffer += 1;
 	}
 
