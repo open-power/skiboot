@@ -25,8 +25,8 @@
 #include <stddef.h>
 #include <unistd.h>
 
-#include "../ccan/endian/endian.h"
-#include "../ccan/short_types/short_types.h"
+#include "../../ccan/endian/endian.h"
+#include "../../ccan/short_types/short_types.h"
 #include <trace_types.h>
 
 /* Handles trace from debugfs (one record at a time) or file */ 
@@ -57,39 +57,40 @@ static void display_header(const struct trace_hdr *h)
 	u64 ts = be64_to_cpu(h->timestamp);
 
 	printf("%16lx (+%8lx) [%03x] : ",
-	       ts, prev_ts ? (ts - prev_ts) : 0, h->cpu);
+	       ts, prev_ts ? (ts - prev_ts) : 0, be16_to_cpu(h->cpu));
 	prev_ts = ts;
 }
 
 static void dump_fsp_event(struct trace_fsp_event *t)
 {
-	printf("FSP_EVT [st=%d] ", t->fsp_state);
+	printf("FSP_EVT [st=%d] ", be16_to_cpu(t->fsp_state));
 
-	switch(t->event) {
+	switch(be16_to_cpu(t->event)) {
 	case TRACE_FSP_EVT_LINK_DOWN:
 		printf("LINK DOWN");
 		break;
 	case TRACE_FSP_EVT_DISR_CHG:
-		printf("DISR CHANGE (0x%08x)", t->data[0]);
+		printf("DISR CHANGE (0x%08x)", be32_to_cpu(t->data[0]));
 		break;
 	case TRACE_FSP_EVT_SOFT_RR:
-		printf("SOFT R&R (DISR=0x%08x)", t->data[0]);
+		printf("SOFT R&R (DISR=0x%08x)", be32_to_cpu(t->data[0]));
 		break;
 	case TRACE_FSP_EVT_RR_COMPL:
 		printf("R&R COMPLETE");
 		break;
 	case TRACE_FSP_EVT_HDES_CHG:
-		printf("HDES CHANGE (0x%08x)", t->data[0]);
+		printf("HDES CHANGE (0x%08x)", be32_to_cpu(t->data[0]));
 		break;
 	case TRACE_FSP_EVT_POLL_IRQ:
 		printf("%s HDIR=%08x CTL=%08x PSI_IRQ=%d",
-		       t->data[0] ? "IRQ " : "POLL", t->data[1],
-		       t->data[2], t->data[3]);
+		       t->data[0] ? "IRQ " : "POLL", be32_to_cpu(t->data[1]),
+		       be32_to_cpu(t->data[2]), be32_to_cpu(t->data[3]));
 		break;
 	default:
 		printf("Unknown %d (d: %08x %08x %08x %08x)",
-		       t->event, t->data[0], t->data[1],
-		       t->data[2], t->data[3]);
+		       be16_to_cpu(t->event), be32_to_cpu(t->data[0]),
+		       be32_to_cpu(t->data[1]), be32_to_cpu(t->data[2]),
+		       be32_to_cpu(t->data[3]));
 	}
 	printf("\n");
 }
@@ -132,19 +133,19 @@ static void dump_uart(struct trace_uart *t)
 	switch(t->ctx) {
 	case TRACE_UART_CTX_IRQ:
 		printf(": IRQ  IRQEN=%d IN_CNT=%d\n",
-		       !t->irq_state, t->in_count);
+		       !t->irq_state, be16_to_cpu(t->in_count));
 		break;
 	case TRACE_UART_CTX_POLL:
 		printf(": POLL IRQEN=%d IN_CNT=%d\n",
-		       !t->irq_state, t->in_count);
+		       !t->irq_state, be16_to_cpu(t->in_count));
 		break;
 	case TRACE_UART_CTX_READ:
 		printf(": READ IRQEN=%d IN_CNT=%d READ=%d\n",
-		       !t->irq_state, t->in_count, t->cnt);
+		       !t->irq_state, be16_to_cpu(t->in_count), t->cnt);
 		break;
 	default:
 		printf(": ???? IRQEN=%d IN_CNT=%d\n",
-		       !t->irq_state, t->in_count);
+		       !t->irq_state, be16_to_cpu(t->in_count));
 		break;
 	}
 }
