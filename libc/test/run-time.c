@@ -1,6 +1,7 @@
 #include "/usr/include/assert.h"
 #include <stdio.h>
 #include <time.h>
+#include <stdint.h>
 
 #include "../time.c"
 
