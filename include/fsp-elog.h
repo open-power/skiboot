@@ -213,19 +213,19 @@ severity, subtype, callout_func) struct opal_err_info err_##reason =	\
 
 #define e_info(reason_code) err_##reason_code
 
-struct errorlog *opal_elog_create(struct opal_err_info *e_info);
+struct errorlog *opal_elog_create(struct opal_err_info *e_info) __warn_unused_result;
 
 int opal_elog_update_user_dump(struct errorlog *buf, unsigned char *data,
 						uint32_t tag, uint16_t size);
 
-int elog_fsp_commit(struct errorlog *buf);
+int elog_fsp_commit(struct errorlog *buf) __warn_unused_result;
 
-bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size);
+bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size) __warn_unused_result;
 
 bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
-						uint64_t opal_elog_id);
+						uint64_t opal_elog_id) __warn_unused_result;
 
-bool opal_elog_ack(uint64_t ack_id);
+bool opal_elog_ack(uint64_t ack_id) __warn_unused_result;
 
 void opal_resend_pending_logs(void);
 

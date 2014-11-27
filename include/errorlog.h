@@ -164,7 +164,7 @@ void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
 int opal_elog_update_user_dump(struct errorlog *buf, unsigned char *data,
 						uint32_t tag, uint16_t size);
 
-struct errorlog *opal_elog_create(struct opal_err_info *e_info);
+struct errorlog *opal_elog_create(struct opal_err_info *e_info) __warn_unused_result;
 
 /* Called by the backend after an error has been logged by the
  * backend. If the error could not be logged successfully success is
