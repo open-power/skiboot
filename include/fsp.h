@@ -661,7 +661,7 @@ extern void fsp_cancelmsg(struct fsp_msg *msg);
  * commands to the FSP.
  */
 extern int fsp_queue_msg(struct fsp_msg *msg,
-			 void (*comp)(struct fsp_msg *msg));
+			 void (*comp)(struct fsp_msg *msg)) __warn_unused_result;
 
 /* Synchronously send a command. If there's a response, the status is
  * returned as a positive number. A negative result means an error
