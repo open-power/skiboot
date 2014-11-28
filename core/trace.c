@@ -64,7 +64,7 @@ static bool handle_repeat(struct tracebuf *tb, const union trace *trace)
 	struct trace_repeat *rpt;
 	u32 len;
 
-	prev = (void *)tb->buf + (tb->last & tb->mask);
+	prev = (void *)tb->buf + be64_to_cpu(tb->last & tb->mask);
 
 	if (prev->type != trace->hdr.type
 	    || prev->len_div_8 != trace->hdr.len_div_8
@@ -76,21 +76,22 @@ static bool handle_repeat(struct tracebuf *tb, const union trace *trace)
 		return false;
 
 	/* If they've consumed prev entry, don't repeat. */
-	if (tb->last < tb->start)
+	if (be64_to_cpu(tb->last) < be64_to_cpu(tb->start))
 		return false;
 
 	/* OK, it's a duplicate.  Do we already have repeat? */
-	if (tb->last + len != tb->end) {
+	if (be64_to_cpu(tb->last) + len != be64_to_cpu(tb->end)) {
+		u64 pos = be64_to_cpu(tb->last) + len;
 		/* FIXME: Reader is not protected from seeing this! */
-		rpt = (void *)tb->buf + ((tb->last + len) & tb->mask);
-		assert(tb->last + len + rpt->len_div_8*8 == tb->end);
+		rpt = (void *)tb->buf + (pos & be64_to_cpu(tb->mask));
+		assert(pos + rpt->len_div_8*8 == be64_to_cpu(tb->end));
 		assert(rpt->type == TRACE_REPEAT);
 
 		/* If this repeat entry is full, don't repeat. */
-		if (rpt->num == 0xFFFF)
+		if (be16_to_cpu(rpt->num) == 0xFFFF)
 			return false;
 
-		rpt->num++;
+		rpt->num = cpu_to_be16(be16_to_cpu(rpt->num) + 1);
 		rpt->timestamp = trace->hdr.timestamp;
 		return true;
 	}
@@ -101,15 +102,15 @@ static bool handle_repeat(struct tracebuf *tb, const union trace *trace)
 	 */
 	assert(trace->hdr.len_div_8 * 8 >= sizeof(*rpt));
 
-	rpt = (void *)tb->buf + (tb->end & tb->mask);
+	rpt = (void *)tb->buf + be64_to_cpu(tb->end & tb->mask);
 	rpt->timestamp = trace->hdr.timestamp;
 	rpt->type = TRACE_REPEAT;
 	rpt->len_div_8 = sizeof(*rpt) >> 3;
 	rpt->cpu = trace->hdr.cpu;
 	rpt->prev_len = trace->hdr.len_div_8 << 3;
-	rpt->num = 1;
+	rpt->num = cpu_to_be16(1);
 	lwsync(); /* write barrier: complete repeat record before exposing */
-	tb->end += sizeof(*rpt);
+	tb->end = cpu_to_be64(be64_to_cpu(tb->end) + sizeof(*rpt));
 	return true;
 }
 
@@ -133,17 +134,20 @@ void trace_add(union trace *trace, u8 type, u16 len)
 	if (!((1ul << trace->hdr.type) & debug_descriptor.trace_mask))
 		return;
 
-	trace->hdr.timestamp = mftb();
-	trace->hdr.cpu = this_cpu()->server_no;
+	trace->hdr.timestamp = cpu_to_be64(mftb());
+	trace->hdr.cpu = cpu_to_be16(this_cpu()->server_no);
 
 	lock(&ti->lock);
 
 	/* Throw away old entries before we overwrite them. */
-	while ((ti->tb.start + ti->tb.mask + 1) < (ti->tb.end + tsz)) {
+	while ((be64_to_cpu(ti->tb.start) + be64_to_cpu(ti->tb.mask) + 1)
+	       < (be64_to_cpu(ti->tb.end) + tsz)) {
 		struct trace_hdr *hdr;
 
-		hdr = (void *)ti->tb.buf + (ti->tb.start & ti->tb.mask);
-		ti->tb.start += hdr->len_div_8 << 3;
+		hdr = (void *)ti->tb.buf +
+			be64_to_cpu(ti->tb.start & ti->tb.mask);
+		ti->tb.start = cpu_to_be64(be64_to_cpu(ti->tb.start) +
+					   (hdr->len_div_8 << 3));
 	}
 
 	/* Must update ->start before we rewrite new entries. */
@@ -152,10 +156,11 @@ void trace_add(union trace *trace, u8 type, u16 len)
 	/* Check for duplicates... */
 	if (!handle_repeat(&ti->tb, trace)) {
 		/* This may go off end, and that's why ti->tb.buf is oversize */
-		memcpy(ti->tb.buf + (ti->tb.end & ti->tb.mask), trace, tsz);
+		memcpy(ti->tb.buf + be64_to_cpu(ti->tb.end & ti->tb.mask),
+		       trace, tsz);
 		ti->tb.last = ti->tb.end;
 		lwsync(); /* write barrier: write entry before exposing */
-		ti->tb.end += tsz;
+		ti->tb.end = cpu_to_be64(be64_to_cpu(ti->tb.end) + tsz);
 	}
 	unlock(&ti->lock);
 }
@@ -218,8 +223,8 @@ void init_trace_buffers(void)
 			any = t->trace;
 			memset(t->trace, 0, size);
 			init_lock(&t->trace->lock);
-			t->trace->tb.mask = TBUF_SZ - 1;
-			t->trace->tb.max_size = MAX_SIZE;
+			t->trace->tb.mask = cpu_to_be64(TBUF_SZ - 1);
+			t->trace->tb.max_size = cpu_to_be32(MAX_SIZE);
 			trace_add_desc(any, sizeof(t->trace->tb) +
 				       tracebuf_extra());
 		} else

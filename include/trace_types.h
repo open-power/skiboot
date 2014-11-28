@@ -17,6 +17,8 @@
 #ifndef __TRACE_TYPES_H
 #define __TRACE_TYPES_H
 
+#include <types.h>
+
 #define TRACE_REPEAT	1
 #define TRACE_OVERFLOW	2
 #define TRACE_OPAL	3	/* OPAL call */
@@ -27,56 +29,56 @@
 /* One per cpu, plus one for NMIs */
 struct tracebuf {
 	/* Mask to apply to get buffer offset. */
-	u64 mask;
+	__be64 mask;
 	/* This where the buffer starts. */
-	u64 start;
+	__be64 start;
 	/* This is where writer has written to. */
-	u64 end;
+	__be64 end;
 	/* This is where the writer wrote to previously. */
-	u64 last;
+	__be64 last;
 	/* This is where the reader is up to. */
-	u64 rpos;
+	__be64 rpos;
 	/* If the last one we read was a repeat, this shows how many. */
-	u32 last_repeat;
+	__be32 last_repeat;
 	/* Maximum possible size of a record. */
-	u32 max_size;
+	__be32 max_size;
 
 	char buf[/* TBUF_SZ + max_size */];
 };
 
 /* Common header for all trace entries. */
 struct trace_hdr {
-	u64 timestamp;
+	__be64 timestamp;
 	u8 type;
 	u8 len_div_8;
-	u16 cpu;
+	__be16 cpu;
 	u8 unused[4];
 };
 
 /* Note: all other entries must be at least as large as this! */
 struct trace_repeat {
-	u64 timestamp; /* Last repeat happened at this timestamp */
+	__be64 timestamp; /* Last repeat happened at this timestamp */
 	u8 type; /* == TRACE_REPEAT */
 	u8 len_div_8;
-	u16 cpu;
-	u16 prev_len;
-	u16 num; /* Starts at 1, ie. 1 repeat, or two traces. */
+	__be16 cpu;
+	__be16 prev_len;
+	__be16 num; /* Starts at 1, ie. 1 repeat, or two traces. */
 	/* Note that the count can be one short, if read races a repeat. */
 };
 
 /* Overflow is special */
 struct trace_overflow {
-	u64 unused64; /* Timestamp is unused */
+	__be64 unused64; /* Timestamp is unused */
 	u8 type; /* == TRACE_OVERFLOW */
 	u8 len_div_8;
 	u8 unused[6]; /* ie. hdr.cpu is indeterminate */
-	u64 bytes_missed;
+	__be64 bytes_missed;
 };
 
 /* All other trace types have a full header */
 struct trace_opal {
 	struct trace_hdr hdr;
-	u64 token, lr, sp, r3_to_11[9];
+	__be64 token, lr, sp, r3_to_11[9];
 };
 
 #define TRACE_FSP_MSG_IN	0
@@ -84,8 +86,8 @@ struct trace_opal {
 
 struct trace_fsp_msg {
 	struct trace_hdr hdr;
-	u32 word0;
-	u32 word1;
+	__be32 word0;
+	__be32 word1;
 	u8 dlen;
 	u8 dir; /* TRACE_FSP_MSG_IN or TRACE_FSP_MSG_OUT */
 	u8 data[56]; /* See dlen, but max is 56 bytes. */
@@ -100,9 +102,9 @@ struct trace_fsp_msg {
 
 struct trace_fsp_event {
 	struct trace_hdr hdr;
-	u16 event;
-	u16 fsp_state;
-	u32 data[4]; /* event type specific */
+	__be16 event;
+	__be16 fsp_state;
+	__be32 data[4]; /* event type specific */
 };
 
 #define TRACE_UART_CTX_IRQ		0
@@ -115,7 +117,7 @@ struct trace_uart {
 	u8 cnt;
 	u8 irq_state;
 	u8 unused;
-	u16 in_count;
+	__be16 in_count;
 };
 
 union trace {

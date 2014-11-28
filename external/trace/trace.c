@@ -85,7 +85,7 @@ again:
 		u32 num = be16_to_cpu(t->repeat.num);
 
 		/* In case we've read some already... */
-		t->repeat.num = cpu_to_be16(num - tb->last_repeat);
+		t->repeat.num = cpu_to_be16(num - be32_to_cpu(tb->last_repeat));
 
 		/* Record how many repeats we saw this time. */
 		tb->last_repeat = cpu_to_be32(num);

@@ -174,8 +174,8 @@ static void test_parallel(void)
 
 	for (i = 0; i < CPUS; i++) {
 		fake_cpus[i].trace = p + i * len;
-		fake_cpus[i].trace->tb.mask = TBUF_SZ - 1;
-		fake_cpus[i].trace->tb.max_size = sizeof(union trace);
+		fake_cpus[i].trace->tb.mask = cpu_to_be64(TBUF_SZ - 1);
+		fake_cpus[i].trace->tb.max_size = cpu_to_be32(sizeof(union trace));
 		fake_cpus[i].is_secondary = false;
 	}
 
@@ -202,27 +202,27 @@ static void test_parallel(void)
 		i = (i + last) % CPUS;
 		last = i;
 
-		assert(t.hdr.cpu < CPUS);
-		assert(!done[t.hdr.cpu]);
+		assert(be16_to_cpu(t.hdr.cpu) < CPUS);
+		assert(!done[be16_to_cpu(t.hdr.cpu)]);
 
 		if (t.hdr.type == TRACE_OVERFLOW) {
 			/* Conveniently, each record is 16 bytes here. */
-			assert(t.overflow.bytes_missed % 16 == 0);
-			overflows[i] += t.overflow.bytes_missed / 16;
+			assert(be64_to_cpu(t.overflow.bytes_missed) % 16 == 0);
+			overflows[i] += be64_to_cpu(t.overflow.bytes_missed) / 16;
 			num_overflows[i]++;
 			continue;
 		}
 
-		assert(t.hdr.timestamp % CPUS == t.hdr.cpu);
+		assert(be64_to_cpu(t.hdr.timestamp) % CPUS == be16_to_cpu(t.hdr.cpu));
 		if (t.hdr.type == TRACE_REPEAT) {
 			assert(t.hdr.len_div_8 * 8 == sizeof(t.repeat));
-			assert(t.repeat.num != 0);
-			assert(t.repeat.num <= t.hdr.cpu);
-			repeats[t.hdr.cpu] += t.repeat.num;
+			assert(be16_to_cpu(t.repeat.num) != 0);
+			assert(be16_to_cpu(t.repeat.num) <= be16_to_cpu(t.hdr.cpu));
+			repeats[be16_to_cpu(t.hdr.cpu)] += be16_to_cpu(t.repeat.num);
 		} else if (t.hdr.type == 0x70) {
-			done[t.hdr.cpu] = true;
+			done[be16_to_cpu(t.hdr.cpu)] = true;
 		} else {
-			counts[t.hdr.cpu]++;
+			counts[be16_to_cpu(t.hdr.cpu)]++;
 		}
 	}
 
@@ -235,7 +235,7 @@ static void test_parallel(void)
 	for (i = 0; i < CPUS; i++) {
 		printf("Child %i: %u produced, %u overflows, %llu total\n", i,
 		       counts[i], overflows[i],
-		       (long long)fake_cpus[i].trace->tb.end);
+		       (long long)be64_to_cpu(fake_cpus[i].trace->tb.end));
 		assert(counts[i] + repeats[i] <= PER_CHILD_TRACES);
 	}
 	/* Child 0 never repeats. */
@@ -276,7 +276,7 @@ int main(void)
 	trace_add(&minimal, 100, sizeof(trace.hdr));
 	assert(trace_get(&trace, &my_fake_cpu->trace->tb));
 	assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);
-	assert(trace.hdr.timestamp == timestamp);
+	assert(be64_to_cpu(trace.hdr.timestamp) == timestamp);
 
 	/* Make it wrap once. */
 	for (i = 0; i < TBUF_SZ / (minimal.hdr.len_div_8 * 8) + 1; i++) {
@@ -288,12 +288,12 @@ int main(void)
 	/* First one must be overflow marker. */
 	assert(trace.hdr.type == TRACE_OVERFLOW);
 	assert(trace.hdr.len_div_8 * 8 == sizeof(trace.overflow));
-	assert(trace.overflow.bytes_missed == minimal.hdr.len_div_8 * 8);
+	assert(be64_to_cpu(trace.overflow.bytes_missed) == minimal.hdr.len_div_8 * 8);
 
 	for (i = 0; i < TBUF_SZ / (minimal.hdr.len_div_8 * 8); i++) {
 		assert(trace_get(&trace, &my_fake_cpu->trace->tb));
 		assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);
-		assert(trace.hdr.timestamp == i+1);
+		assert(be64_to_cpu(trace.hdr.timestamp) == i+1);
 		assert(trace.hdr.type == 99 + ((i+1)%2));
 	}
 	assert(!trace_get(&trace, &my_fake_cpu->trace->tb));
@@ -309,9 +309,9 @@ int main(void)
 	assert(trace.hdr.type == TRACE_OVERFLOW);
 	assert(trace_get(&trace, &my_fake_cpu->trace->tb));
 	assert(trace.hdr.len_div_8 == large.hdr.len_div_8);
-	i = trace.hdr.timestamp;
+	i = be64_to_cpu(trace.hdr.timestamp);
 	while (trace_get(&trace, &my_fake_cpu->trace->tb))
-		assert(trace.hdr.timestamp == ++i);
+		assert(be64_to_cpu(trace.hdr.timestamp) == ++i);
 
 	/* Test repeats. */
 	for (i = 0; i < 65538; i++) {
@@ -330,33 +330,33 @@ int main(void)
 	assert(trace_get(&trace, &my_fake_cpu->trace->tb));
 	assert(trace.hdr.type == TRACE_REPEAT);
 	assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));
-	assert(trace.repeat.num == 65535);
-	assert(trace.repeat.timestamp == 65535);
+	assert(be16_to_cpu(trace.repeat.num) == 65535);
+	assert(be64_to_cpu(trace.repeat.timestamp) == 65535);
 	assert(trace_get(&trace, &my_fake_cpu->trace->tb));
-	assert(trace.hdr.timestamp == 65536);
+	assert(be64_to_cpu(trace.hdr.timestamp) == 65536);
 	assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);
 	assert(trace.hdr.type == 100);
 	assert(trace_get(&trace, &my_fake_cpu->trace->tb));
 	assert(trace.hdr.type == TRACE_REPEAT);
 	assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));
-	assert(trace.repeat.num == 1);
-	assert(trace.repeat.timestamp == 65537);
+	assert(be16_to_cpu(trace.repeat.num) == 1);
+	assert(be64_to_cpu(trace.repeat.timestamp) == 65537);
 
 	assert(trace_get(&trace, &my_fake_cpu->trace->tb));
-	assert(trace.hdr.timestamp == 65538);
+	assert(be64_to_cpu(trace.hdr.timestamp) == 65538);
 	assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);
 	assert(trace.hdr.type == 101);
 	assert(trace_get(&trace, &my_fake_cpu->trace->tb));
 	assert(trace.hdr.type == TRACE_REPEAT);
 	assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));
-	assert(trace.repeat.num == 1);
-	assert(trace.repeat.timestamp == 65539);
+	assert(be16_to_cpu(trace.repeat.num) == 1);
+	assert(be64_to_cpu(trace.repeat.timestamp) == 65539);
 
 	/* Now, test adding repeat while we're reading... */
 	timestamp = 0;
 	trace_add(&minimal, 100, sizeof(trace.hdr));
 	assert(trace_get(&trace, &my_fake_cpu->trace->tb));
-	assert(trace.hdr.timestamp == 0);
+	assert(be64_to_cpu(trace.hdr.timestamp) == 0);
 	assert(trace.hdr.len_div_8 == minimal.hdr.len_div_8);
 	assert(trace.hdr.type == 100);
 
@@ -370,9 +370,9 @@ int main(void)
 		} else {
 			assert(trace.hdr.type == TRACE_REPEAT);
 			assert(trace.hdr.len_div_8 * 8 == sizeof(trace.repeat));
-			assert(trace.repeat.num == 1);
+			assert(be16_to_cpu(trace.repeat.num) == 1);
 		}
-		assert(trace.repeat.timestamp == i);
+		assert(be64_to_cpu(trace.repeat.timestamp) == i);
 		assert(!trace_get(&trace, &my_fake_cpu->trace->tb));
 	}
 
