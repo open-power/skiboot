@@ -17,7 +17,7 @@ static int my_fprintf(FILE *stream, const char *format, ...)
 	va_list ap;
 	int ret;
 	va_start(ap, format);
-	ret = vsprintf(printf_buffer, format, ap);
+	ret = vsnprintf(printf_buffer, sizeof(printf_buffer), format, ap);
 	va_end(ap);
 	return ret;
 }

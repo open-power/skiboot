@@ -44,7 +44,6 @@ int printf(const char *format, ...) __attribute__((format (printf, 1, 2)));
 int fprintf(FILE *stream, const char *format, ...) __attribute__((format (printf, 2, 3)));
 int snprintf(char *str, size_t size, const char *format, ...)  __attribute__((format (printf, 3, 4)));
 int vfprintf(FILE *stream, const char *format, va_list);
-int vsprintf(char *str, const char *format, va_list);
 int vsnprintf(char *str, size_t size, const char *format, va_list);
 void setbuf(FILE *stream, char *buf);
 int setvbuf(FILE *stream, char *buf, int mode , size_t size);
