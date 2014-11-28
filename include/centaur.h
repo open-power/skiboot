@@ -17,8 +17,8 @@
 #ifndef __CENTAUR_H
 #define __CENTAUR_H
 
-extern int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val);
-extern int64_t centaur_xscom_write(uint32_t id, uint64_t pcb_addr, uint64_t val);
+extern int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val) __warn_unused_result;
+extern int64_t centaur_xscom_write(uint32_t id, uint64_t pcb_addr, uint64_t val) __warn_unused_result;
 extern void centaur_init(void);
 
 #endif /* __CENTAUR_H */

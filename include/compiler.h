@@ -30,6 +30,7 @@
 #define __noreturn		__attribute__((noreturn))
 /* not __const as this has a different meaning (const) */
 #define __attrconst		__attribute__((const))
+#define __warn_unused_result	__attribute__((warn_unused_result))
 
 #if 0 /* Provided by gcc stddef.h */
 #define offsetof(type,m)	__builtin_offsetof(type,m)

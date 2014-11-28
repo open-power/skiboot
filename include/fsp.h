@@ -631,8 +631,8 @@ extern bool fsp_present(void);
  * WARNING: Do _NOT_ use free() on an fsp_msg, use fsp_freemsg()
  * instead as we will eventually use pre-allocated message pools
  */
-extern struct fsp_msg *fsp_allocmsg(bool alloc_response);
-extern struct fsp_msg *fsp_mkmsg(u32 cmd_sub_mod, u8 add_words, ...);
+extern struct fsp_msg *fsp_allocmsg(bool alloc_response) __warn_unused_result;
+extern struct fsp_msg *fsp_mkmsg(u32 cmd_sub_mod, u8 add_words, ...) __warn_unused_result;
 
 /* Populate a pre-allocated msg */
 extern void fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod, u8 add_words, ...);

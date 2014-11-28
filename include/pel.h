@@ -16,6 +16,7 @@
 #ifndef __PEL_H
 #define __PEL_H
 
+#include <compiler.h>
 #include <errorlog.h>
 
 /* Data Structures for PEL data. */
@@ -174,6 +175,6 @@ struct opal_user_section {
 
 size_t pel_size(struct errorlog *elog_data);
 int create_pel_log(struct errorlog *elog_data, char *pel_buffer,
-		   size_t pel_buffer_size);
+		   size_t pel_buffer_size) __warn_unused_result;
 
 #endif

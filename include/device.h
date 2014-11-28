@@ -18,6 +18,7 @@
 #define __DEVICE_H
 #include <ccan/list/list.h>
 #include <ccan/short_types/short_types.h>
+#include <compiler.h>
 
 /* Any property or node with this prefix will not be passed to the kernel. */
 #define DT_PRIVATE	"skiboot,"
@@ -187,7 +188,7 @@ void dt_free(struct dt_node *node);
 
 /* Parse an initial fdt */
 void dt_expand(const void *fdt);
-int dt_expand_node(struct dt_node *node, const void *fdt, int fdt_node);
+int dt_expand_node(struct dt_node *node, const void *fdt, int fdt_node) __warn_unused_result;
 
 /* Simplified accessors */
 u64 dt_prop_get_u64(const struct dt_node *node, const char *prop);

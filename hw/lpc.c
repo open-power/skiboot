@@ -454,7 +454,7 @@ bool lpc_present(void)
 	return lpc_default_chip_id >= 0;
 }
 
-void lpc_interrupt(uint32_t chip_id __unused)
+void __attrconst lpc_interrupt(uint32_t chip_id __unused)
 {
 	/* Handle the lpc interrupt source (errors etc...) TODO... */
 }
