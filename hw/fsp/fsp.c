@@ -1081,7 +1081,7 @@ static void  fsp_alloc_inbound(struct fsp_msg *msg)
 
 	buf = fsp_inbound_buf + fsp_inbound_off;
 	tce_token = PSI_DMA_INBOUND_BUF + fsp_inbound_off;
-	len = (len + 0xfff) & ~0xfff;
+	len = (len + TCE_MASK) & ~TCE_MASK;
 	fsp_inbound_off += len;
 	fsp_tce_map(tce_token, buf, len);
 	prlog(PR_DEBUG, "FSP:  -> buffer at 0x%p, TCE: 0x%08x, alen: 0x%x\n",
@@ -1693,26 +1693,26 @@ void fsp_tce_map(u32 offset, void *addr, u32 size)
 {
 	u64 raddr = (u64)addr;
 
-	assert(!(offset & 0xfff));
-	assert(!(raddr  & 0xfff));
-	assert(!(size   & 0xfff));
+	assert(!(offset & TCE_MASK));
+	assert(!(raddr  & TCE_MASK));
+	assert(!(size   & TCE_MASK));
 
-	size   >>= 12;
-	offset >>= 12;
+	size   >>= TCE_SHIFT;
+	offset >>= TCE_SHIFT;
 
 	while(size--) {
 		fsp_tce_table[offset++] = raddr | 0x3;
-		raddr += 0x1000;
+		raddr += TCE_PSIZE;
 	}
 }
 
 void fsp_tce_unmap(u32 offset, u32 size)
 {
-	assert(!(offset & 0xfff));
-	assert(!(size   & 0xfff));
+	assert(!(offset & TCE_MASK));
+	assert(!(size   & TCE_MASK));
 
-	size   >>= 12;
-	offset >>= 12;
+	size   >>= TCE_SHIFT;
+	offset >>= TCE_SHIFT;
 
 	while(size--)
 		fsp_tce_table[offset++] = 0;
@@ -2095,14 +2095,14 @@ int fsp_fetch_data(uint8_t flags, uint16_t id, uint32_t sub_id,
 
 		/* Calculate alignment skew */
 		baddr = (uint64_t)buffer;
-		balign = baddr & ~0xffful;
-		boff = baddr & 0xffful;
+		balign = baddr & ~TCE_MASK;
+		boff = baddr & TCE_MASK;
 
 		/* Get a chunk */
 		chunk = remaining;
 		if (chunk > (PSI_DMA_FETCH_SIZE - boff))
 			chunk = PSI_DMA_FETCH_SIZE - boff;
-		bsize = ((boff + chunk) + 0xfff) & ~0xffful;
+		bsize = ((boff + chunk) + TCE_MASK) & ~TCE_MASK;
 
 		prlog(PR_DEBUG, "FSP:  0x%08x bytes balign=%llx"
 		      " boff=%llx bsize=%llx\n",
