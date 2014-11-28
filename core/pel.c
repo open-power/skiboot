@@ -67,7 +67,7 @@ static void create_extended_header_section(struct errorlog *elog_data,
 static void settype(struct opal_src_section *src, uint8_t src_type)
 {
 	char type[4];
-	sprintf(type, "%02X", src_type);
+	snprintf(type, sizeof(type), "%02X", src_type);
 	memcpy(src->srcstring, type, 2);
 }
 
@@ -75,7 +75,7 @@ static void settype(struct opal_src_section *src, uint8_t src_type)
 static void setsubsys(struct opal_src_section *src, uint8_t src_subsys)
 {
 	char subsys[4];
-	sprintf(subsys, "%02X", src_subsys);
+	snprintf(subsys, sizeof(subsys), "%02X", src_subsys);
 	memcpy(src->srcstring+2, subsys, 2);
 }
 
@@ -83,7 +83,7 @@ static void setsubsys(struct opal_src_section *src, uint8_t src_subsys)
 static void setrefcode(struct opal_src_section *src, uint16_t src_refcode)
 {
 	char refcode[8];
-	sprintf(refcode, "%04X", src_refcode);
+	snprintf(refcode, sizeof(refcode), "%04X", src_refcode);
 	memcpy(src->srcstring+4, refcode, 4);
 }
 

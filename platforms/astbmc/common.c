@@ -89,7 +89,7 @@ static void astbmc_fixup_dt_bt(struct dt_node *lpc)
 			return;
 	}
 
-	sprintf(namebuf, "ipmi-bt@i%x", BT_IO_BASE);
+	snprintf(namebuf, sizeof(namebuf), "ipmi-bt@i%x", BT_IO_BASE);
 	bt = dt_new(lpc, namebuf);
 
 	dt_add_property_cells(bt, "reg",
@@ -122,7 +122,7 @@ static void astbmc_fixup_dt_uart(struct dt_node *lpc)
 	}
 
 	/* Otherwise, add a node for it */
-	sprintf(namebuf, "serial@i%x", UART_IO_BASE);
+	snprintf(namebuf, sizeof(namebuf), "serial@i%x", UART_IO_BASE);
 	uart = dt_new(lpc, namebuf);
 
 	dt_add_property_cells(uart, "reg",
@@ -229,10 +229,10 @@ static void astbmc_fixup_dt_i2cm(void)
 
 	master = dt_create_i2c_master(c->devnode, 1);
 	assert(master);
-	sprintf(name,"p8_%08x_e%dp%d", c->id, 1, 0);
+	snprintf(name, sizeof(name), "p8_%08x_e%dp%d", c->id, 1, 0);
 	bus = dt_create_i2c_bus(master, name, 0);
 	assert(bus);
-	sprintf(name,"p8_%08x_e%dp%d", c->id, 1, 2);
+	snprintf(name, sizeof(name), "p8_%08x_e%dp%d", c->id, 1, 2);
 	bus = dt_create_i2c_bus(master, name, 2);
 	assert(bus);
 	dt_create_i2c_device(bus, 0x50, "eeprom", "atmel,24c256", "system-vpd");

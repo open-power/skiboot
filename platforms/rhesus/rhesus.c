@@ -202,7 +202,7 @@ static void rhesus_dt_fixup_uart(struct dt_node *lpc)
 #define UART_IO_BASE	0x3f8
 #define UART_IO_COUNT	8
 
-	sprintf(namebuf, "serial@i%x", UART_IO_BASE);
+	snprintf(namebuf, sizeof(namebuf), "serial@i%x", UART_IO_BASE);
 	uart = dt_new(lpc, namebuf);
 
 	dt_add_property_cells(uart, "reg",

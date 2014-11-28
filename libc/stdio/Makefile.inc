@@ -13,7 +13,7 @@
 
 SUBDIRS += $(LIBCDIR)/stdio
 
-STDIO_OBJS = fscanf.o sprintf.o vfprintf.o vsnprintf.o vsprintf.o fprintf.o \
+STDIO_OBJS = fscanf.o vfprintf.o vsnprintf.o vsprintf.o fprintf.o \
 	     setvbuf.o fputc.o puts.o fputs.o putchar.o scanf.o \
 	     stdchnls.o vfscanf.o vsscanf.o fileno.o snprintf.o
 

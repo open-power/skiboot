@@ -135,7 +135,7 @@ static void firenze_dt_fixup_i2cm(void)
 		/* Engine 1 */
 		master = dt_create_i2c_master(c->devnode, 1);
 		assert(master);
-		sprintf(name,"p8_%08x_e%dp%d", c->id, 1, 0);
+		snprintf(name, sizeof(name), "p8_%08x_e%dp%d", c->id, 1, 0);
 		bus = dt_create_i2c_bus(master, name, 0);
 		assert(bus);
 		dt_create_i2c_device(bus, 0x39, "slot-C4-C5", "maxim,5961",
@@ -152,7 +152,7 @@ static void firenze_dt_fixup_i2cm(void)
 		/* Engine 1*/
 		master = dt_create_i2c_master(c->devnode, 1);
 		assert(master);
-		sprintf(name,"p8_%08x_e%dp%d", c->id, 1, 0);
+		snprintf(name, sizeof(name), "p8_%08x_e%dp%d", c->id, 1, 0);
 		bus = dt_create_i2c_bus(master, name, 0);
 		assert(bus);
 		dt_create_i2c_device(bus, 0x32, "slot-C10-C11", "maxim,5961",

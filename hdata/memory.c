@@ -139,7 +139,7 @@ static bool add_address_range(struct dt_node *root,
 			return true;
 		}
 	}
-	sprintf(name, "memory@%llx", (long long)reg[0]);
+	snprintf(name, sizeof(name), "memory@%llx", (long long)reg[0]);
 
 	mem = dt_new(root, name);
 	dt_add_property_string(mem, "device_type", "memory");
