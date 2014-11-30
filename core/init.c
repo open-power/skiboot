@@ -293,7 +293,7 @@ static bool load_kernel(void)
 	}
 
 	if (!ksize)
-		printf("Assuming kernel at 0x%p\n", KERNEL_LOAD_BASE);
+		printf("Assuming kernel at %p\n", KERNEL_LOAD_BASE);
 
 	printf("INIT: Kernel loaded, size: %zu bytes (0 = unknown preload)\n",
 	       ksize);
@@ -537,6 +537,8 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * to access chips via that path early on.
 	 */
 	init_chips();
+	if (is_mambo_chip)
+		enable_mambo_console();
 	xscom_init();
 	mfsi_init();
 

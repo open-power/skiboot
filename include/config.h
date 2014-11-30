@@ -52,8 +52,10 @@
 //#define OPAL_DEBUG_CONSOLE_IO	1
 //#define OPAL_DEBUG_CONSOLE_POLL	1
 
-/* Enable this for mambo console */
-//#define MAMBO_CONSOLE		1
+/* Enable this to force all writes to the in-memory console to
+ * be mirrored on the mambo console
+ */
+//#define MAMBO_DEBUG_CONSOLE		1
 
 /* Enable this to hookup SkiBoot log to the DVS console */
 #define DVS_CONSOLE		1

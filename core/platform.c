@@ -50,6 +50,7 @@ opal_call(OPAL_CEC_REBOOT, opal_cec_reboot, 0);
 
 static void generic_platform_init(void)
 {
+	force_dummy_console();
 	fake_rtc_init();
 }
 

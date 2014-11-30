@@ -435,9 +435,15 @@ int xscom_writeme(uint64_t pcb_addr, uint64_t val)
 static void xscom_init_chip_info(struct proc_chip *chip)
 {
 	uint64_t val;
-	int64_t rc;
+	int64_t rc = 0;
 
-	rc = xscom_read(chip->id, 0xf000f, &val);
+	/* Mambo chip model lacks the f000f register, just make
+	 * something up (Murano DD2.1)
+	 */
+	if (is_mambo_chip)
+		val = 0x221EF04980000000;
+	else
+		rc = xscom_read(chip->id, 0xf000f, &val);
 	if (rc) {
 		prerror("XSCOM: Error %lld reading 0xf000f register\n", rc);
 		/* We leave chip type to UNKNOWN */

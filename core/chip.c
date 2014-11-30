@@ -20,6 +20,7 @@
 #include <device.h>
 
 static struct proc_chip *chips[MAX_CHIPS];
+bool is_mambo_chip;
 
 uint32_t pir_to_chip_id(uint32_t pir)
 {
@@ -65,6 +66,10 @@ void init_chips(void)
 {
 	struct proc_chip *chip;
 	struct dt_node *xn;
+
+	/* Detect mambo chip */
+	if (dt_find_by_path(dt_root, "/mambo"))
+		is_mambo_chip = true;
 
 	/* We walk the chips based on xscom nodes in the tree */
 	dt_for_each_compatible(dt_root, xn, "ibm,xscom") {

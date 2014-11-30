@@ -19,6 +19,7 @@
  */
 #include <skiboot.h>
 #include <chiptod.h>
+#include <chip.h>
 #include <xscom.h>
 #include <io.h>
 #include <cpu.h>
@@ -528,6 +529,9 @@ static void chiptod_sync_slave(void *data)
 
 bool chiptod_wakeup_resync(void)
 {
+	if (chiptod_primary < 0)
+		return 0;
+
 	lock(&chiptod_lock);
 
 	/* Apply base tfmr */
@@ -633,6 +637,9 @@ int chiptod_recover_tb_errors(void)
 {
 	uint64_t tfmr;
 	int rc = 1;
+
+	if (chiptod_primary < 0)
+		return 0;
 
 	lock(&chiptod_lock);
 
@@ -773,6 +780,10 @@ void chiptod_init(u32 master_cpu)
 {
 	struct cpu_thread *cpu0, *cpu;
 	bool sres;
+
+	/* Mambo doesn't simulate the chiptod */
+	if (is_mambo_chip)
+		return;
 
 	op_display(OP_LOG, OP_MOD_CHIPTOD, 0);
 

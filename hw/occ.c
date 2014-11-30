@@ -510,6 +510,9 @@ static struct fsp_client fsp_occ_client = {
 
 void occ_send_dummy_interrupt(void)
 {
+	/* Mambo chip doesn't do this */
+	if (is_mambo_chip)
+		return;
 	xscom_writeme(OCB_OCI_OCCMISC_OR,
 		      OCB_OCI_OCIMISC_IRQ |
 		      OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY);

@@ -59,20 +59,47 @@ void force_dummy_console(void)
 	dt_add_property(dt_chosen, "sapphire,enable-dummy-console", NULL, 0);
 }
 
-#ifdef MAMBO_CONSOLE
-static void mambo_write(const char *buf, size_t count)
+
+static int mambo_char = -1;
+
+static bool mambo_con_poll_read(void)
 {
-#define SIM_WRITE_CONSOLE_CODE	0
-	register int c asm("r3") = 0; /* SIM_WRITE_CONSOLE_CODE */
-	register unsigned long a1 asm("r4") = (unsigned long)buf;
-	register unsigned long a2 asm("r5") = count;
-	register unsigned long a3 asm("r6") = 0;
-	asm volatile (".long 0x000eaeb0":"=r" (c):"r"(c), "r"(a1), "r"(a2),
-		      "r"(a3));
+	if (mambo_char < 0)
+		mambo_char = mambo_read();
+	return mambo_char >= 0;
 }
-#else
-static void mambo_write(const char *buf __unused, size_t count __unused) { }
-#endif /* MAMBO_CONSOLE */
+
+static size_t mambo_con_read(char *buf, size_t len)
+{
+	size_t count = 0;
+
+	while(count < len) {
+		if (!mambo_con_poll_read())
+			break;
+		*(buf++) = mambo_char;
+		mambo_char = -1;
+		count++;
+	}
+	return count;
+}
+
+static size_t mambo_con_write(const char *buf, size_t len)
+{
+	mambo_write(buf, len);
+	return len;
+}
+
+static struct con_ops mambo_con_driver = {
+	.poll_read = mambo_con_poll_read,
+	.read = mambo_con_read,
+	.write = mambo_con_write,
+};
+
+void enable_mambo_console(void)
+{
+	prlog(PR_NOTICE, "Enabling Mambo console\n");
+	set_console(&mambo_con_driver);
+}
 
 void clear_console(void)
 {
@@ -213,7 +240,9 @@ static size_t inmem_read(char *buf, size_t req)
 
 static void write_char(char c)
 {
+#ifdef MAMBO_DEBUG_CONSOLE
 	mambo_write(&c, 1);
+#endif
 	inmem_write(c);
 }
 
@@ -306,6 +335,7 @@ static int64_t dummy_console_read(int64_t term_number, int64_t *length,
 	if (term_number != 0)
 		return OPAL_PARAMETER;
 	*length = read(0, buffer, *length);
+	opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT, 0);
 
 	return OPAL_SUCCESS;
 }
@@ -313,8 +343,14 @@ opal_call(OPAL_CONSOLE_READ, dummy_console_read, 3);
 
 static void dummy_console_poll(void *data __unused)
 {
+	bool has_data = false;
+
 	lock(&con_lock);
+	if (con_driver && con_driver->poll_read)
+		has_data = con_driver->poll_read;
 	if (memcons.in_prod != memcons.in_cons)
+		has_data = true;
+	if (has_data)
 		opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT,
 					OPAL_EVENT_CONSOLE_INPUT);
 	else
@@ -325,6 +361,7 @@ static void dummy_console_poll(void *data __unused)
 void dummy_console_add_nodes(void)
 {
 	struct dt_node *con, *consoles;
+	struct dt_property *p;
 
 	consoles = dt_new(opal_node, "consoles");
 	assert(consoles);
@@ -337,6 +374,11 @@ void dummy_console_add_nodes(void)
 	dt_add_property_cells(con, "#write-buffer-size", INMEM_CON_OUT_LEN);
 	dt_add_property_cells(con, "reg", 0);
 	dt_add_property_string(con, "device_type", "serial");
+
+	/* Mambo might have left a crap one, clear it */
+	p = __dt_find_property(dt_chosen, "linux,stdout-path");
+	if (p)
+		dt_del_property(dt_chosen, p);
 
 	dt_add_property_string(dt_chosen, "linux,stdout-path",
 			       "/ibm,opal/consoles/serial@0");

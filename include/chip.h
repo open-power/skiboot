@@ -139,6 +139,9 @@ struct proc_chip {
 	struct list_head	i2cms;
 };
 
+/* Mambo simplified chip model lacks some features, handle it here */
+extern bool is_mambo_chip;
+
 extern uint32_t pir_to_chip_id(uint32_t pir);
 extern uint32_t pir_to_core_id(uint32_t pir);
 extern uint32_t pir_to_thread_id(uint32_t pir);
