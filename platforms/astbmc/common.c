@@ -52,6 +52,7 @@ void astbmc_init(void)
 	bt_init();
 	ipmi_rtc_init();
 	ipmi_opal_init();
+	ipmi_fru_init(0x01);
 
 	/* As soon as IPMI is up, inform BMC we are in "S0" */
 	ipmi_set_power_state(IPMI_PWR_SYS_S0_WORKING, IPMI_PWR_NOCHANGE);

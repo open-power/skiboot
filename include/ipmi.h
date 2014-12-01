@@ -84,6 +84,7 @@
 #define IPMI_NETFN_STORAGE		0x0a
 #define IPMI_NETFN_APP			0x06
 
+#define IPMI_WRITE_FRU			IPMI_CODE(IPMI_NETFN_STORAGE, 0x12)
 #define IPMI_GET_SEL_INFO		IPMI_CODE(IPMI_NETFN_STORAGE, 0x40)
 #define IPMI_GET_SEL_TIME		IPMI_CODE(IPMI_NETFN_STORAGE, 0x48)
 #define IPMI_SET_SEL_TIME		IPMI_CODE(IPMI_NETFN_STORAGE, 0x49)
@@ -109,8 +110,8 @@
 
 #define IPMI_DEFAULT_INTERFACE		0
 
-#define IPMI_MAX_REQ_SIZE		64
-#define IPMI_MAX_RESP_SIZE		64
+#define IPMI_MAX_REQ_SIZE		60
+#define IPMI_MAX_RESP_SIZE		60
 
 struct ipmi_backend;
 struct ipmi_msg {
@@ -178,5 +179,8 @@ void ipmi_rtc_init(void);
 
 /* Register ipmi host interface access callbacks */
 void ipmi_opal_init(void);
+
+/* Populate fru data */
+void ipmi_fru_init(uint8_t fru_dev_id);
 
 #endif

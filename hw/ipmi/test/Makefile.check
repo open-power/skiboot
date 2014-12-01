@@ -1,0 +1,34 @@
+# -*-Makefile-*-
+IPMI_TEST := hw/ipmi/test/run-fru
+
+check: $(IPMI_TEST:%=%-check) $(IPMI_TEST:%=%-gcov-run)
+
+coverage: $(IPMI_TEST:%=%-gcov-run)
+
+$(IPMI_TEST:%=%-gcov-run) : %-run: %
+	$<
+
+$(IPMI_TEST:%=%-check) : %-check: %
+	$(VALGRIND) $<
+
+$(IPMI_TEST) : % : %.c
+	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -o $@ $<
+
+$(IPMI_TEST): % : %.d
+
+$(IPMI_TEST:%=%-gcov): %-gcov : %.c %
+	$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -O0 -g -I include -I . -I libfdt -lgcov -o $@ $<
+
+$(IPMI_TEST:%=%-gcov): % : $(%.d:-gcov=)
+
+hw/ipmi/test/%.d: hw/ipmi/test/%.c
+	$(HOSTCC) $(HOSTCFLAGS) -I include -I . -I libfdt -M $< > $@
+
+-include $(wildcard hw/ipmi/test/*.d)
+
+clean: ipmi-test-clean
+
+ipmi-test-clean:
+	$(RM) -f hw/ipmi/test/*.[od] $(IPMI_TEST) $(IPMI_TEST:%=%-gcov)
+	$(RM) -f *.gcda *.gcno skiboot.info
+	$(RM) -rf coverage-report
