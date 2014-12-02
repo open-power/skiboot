@@ -84,6 +84,15 @@ bool dt_attach_root(struct dt_node *parent, struct dt_node *root)
 
 	return true;
 }
+
+static inline void dt_destroy(struct dt_node *dn)
+{
+	if (!dn)
+		return;
+
+	free_name(dn->name);
+	free(dn);
+}
 	
 struct dt_node *dt_new(struct dt_node *parent, const char *name)
 {
@@ -92,8 +101,7 @@ struct dt_node *dt_new(struct dt_node *parent, const char *name)
 
 	new = new_node(name);
 	if (!dt_attach_root(parent, new)) {
-		free_name(new->name);
-		free(new);
+		dt_destroy(new);
 		return NULL;
 	}
 	return new;
@@ -115,8 +123,7 @@ struct dt_node *dt_new_addr(struct dt_node *parent, const char *name,
 	new = new_node(lname);
 	free(lname);
 	if (!dt_attach_root(parent, new)) {
-		free_name(new->name);
-		free(new);
+		dt_destroy(new);
 		return NULL;
 	}
 	return new;
@@ -139,8 +146,7 @@ struct dt_node *dt_new_2addr(struct dt_node *parent, const char *name,
 	new = new_node(lname);
 	free(lname);
 	if (!dt_attach_root(parent, new)) {
-		free_name(new->name);
-		free(new);
+		dt_destroy(new);
 		return NULL;
 	}
 	return new;
@@ -634,8 +640,7 @@ void dt_free(struct dt_node *node)
 
 	if (node->parent)
 		list_del_from(&node->parent->children, &node->list);
-	free_name(node->name);
-	free(node);
+	dt_destroy(node);
 }
 
 int dt_expand_node(struct dt_node *node, const void *fdt, int fdt_node)
