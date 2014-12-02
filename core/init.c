@@ -54,7 +54,6 @@ enum proc_gen proc_gen;
 
 static uint64_t kernel_entry;
 static bool kernel_32bit;
-static void *fdt;
 
 struct debug_descriptor debug_descriptor = {
 	.eye_catcher	= "OPALdbug",
@@ -335,6 +334,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 {
 	const struct dt_property *memprop;
 	uint64_t mem_top;
+	void *fdt;
 
 	memprop = dt_find_property(dt_root, DT_PRIVATE "maxmem");
 	if (memprop)
