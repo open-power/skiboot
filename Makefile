@@ -5,7 +5,12 @@
 # Prefix of cross toolchain, if anything
 # Example: CROSS= powerpc64-unknown-linux-gnu-
 #
-CROSS ?= powerpc64-linux-
+ARCH = $(shell uname -m)
+ifeq ("$(ARCH)", "ppc64")
+	CROSS ?=
+else
+	CROSS ?= powerpc64-linux-
+endif
 
 #
 # Set to enable SLW bits
