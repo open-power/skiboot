@@ -38,14 +38,13 @@ static void full_barrier(void)
 	asm volatile("mfence" : : : "memory");
 }
 #define lwsync full_barrier
-#define sync full_barrier
 #elif defined(__powerpc__) || defined(__powerpc64__)
 static inline void lwsync(void)
 {
 	asm volatile("lwsync" : : : "memory");
 }
 #else
-#error "Define sync & lwsync for this arch"
+#error "Define lwsync for this arch"
 #endif
 
 #define zalloc(size) calloc((size), 1)
