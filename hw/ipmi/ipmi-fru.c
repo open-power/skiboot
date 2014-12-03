@@ -127,7 +127,7 @@ static int fru_fill_product_info(u8 *buf, struct product_info *info, size_t size
 static int fru_add(u8 *buf, int size)
 {
 	int len;
-	char short_version[MAX_STR_LEN];
+	char short_version[MAX_STR_LEN + 1];
 	struct common_header common_hdr;
 	struct product_info info = {
 		.manufacturer = (char *) "IBM",
@@ -154,10 +154,14 @@ static int fru_add(u8 *buf, int size)
 	memcpy(buf, &common_hdr, sizeof(common_hdr));
 
 	info.version = short_version;
-	strncpy(info.version, version, MAX_STR_LEN);
-	info.version[MAX_STR_LEN] = '\0';
-	if (info.version[MAX_STR_LEN - 1] != '\0')
+	if (!strncmp(version, "skiboot-", 8))
+		strncpy(info.version, &version[8], MAX_STR_LEN + 1);
+	else
+		strncpy(info.version, version, MAX_STR_LEN + 1);
+
+	if (info.version[MAX_STR_LEN] != '\0')
 		info.version[MAX_STR_LEN - 1] = '+';
+	info.version[MAX_STR_LEN] = '\0';
 
 	len = fru_fill_product_info(&buf[64], &info, size - 64);
 	if (len < 0)
