@@ -278,7 +278,7 @@ static void handle_extra_interrupt(struct psi *psi)
 	 * when available.
 	 */
 	if (val & PSIHB_IRQ_STAT_OCC)
-		occ_interrupt();
+		occ_interrupt(psi->chip_id);
 	if (val & PSIHB_IRQ_STAT_FSI)
 		printf("PSI: FSI irq received\n");
 	if (val & PSIHB_IRQ_STAT_LPC) {
