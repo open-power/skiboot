@@ -23,8 +23,8 @@ CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 	  -Winit-self \
 	  -Wsuggest-attribute=const \
 	  -Wsuggest-attribute=noreturn \
-	  -Wframe-larger-than=2048 \
-	  -Wstack-usage=4096
+	  -Wframe-larger-than=1024 \
+	  -Wstack-usage=1024
 
 # Host tools and options
 HOSTCC=gcc
