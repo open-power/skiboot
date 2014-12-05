@@ -115,12 +115,14 @@ void __opal_register(uint64_t token, void *func, unsigned int nargs)
 static void add_opal_firmware_node(void)
 {
 	struct dt_node *firmware = dt_new(opal_node, "firmware");
-
+	uint64_t sym_start = (uint64_t)__sym_map_start;
+	uint64_t sym_size = (uint64_t)__sym_map_end - sym_start;
 	dt_add_property_string(firmware, "compatible", "ibm,opal-firmware");
 	dt_add_property_string(firmware, "name", "firmware");
 	dt_add_property_string(firmware, "version", version);
-	dt_add_property(firmware, "symbol-map", __sym_map_start,
-			__sym_map_end - __sym_map_start);
+	dt_add_property_cells(firmware, "symbol-map",
+			      hi32(sym_start), lo32(sym_start),
+			      hi32(sym_size), lo32(sym_size));
 }
 
 void add_opal_node(void)
