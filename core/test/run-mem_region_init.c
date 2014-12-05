@@ -121,9 +121,9 @@ int main(void)
 	dt_add_property_cells(dt_root, "#size-cells", 2);
 
 	/* Make sure we overlap the heap, at least. */
-	add_mem_node(0, heap + 0x100000000ULL);
-	add_mem_node(heap+0x100000000ULL , 0x100000000ULL);
-	end = heap+ 0x100000000ULL + 0x100000000ULL;
+	add_mem_node(0, (uint64_t)(heap + 0x100000000ULL));
+	add_mem_node((uint64_t)heap+0x100000000ULL , 0x100000000ULL);
+	end = (uint64_t)(heap+ 0x100000000ULL + 0x100000000ULL);
 
 	/* Now convert. */
 	mem_region_init();
