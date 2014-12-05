@@ -116,8 +116,10 @@ static bool add_address_range(struct dt_node *root,
 {
 	struct dt_node *mem;
 	u64 reg[2];
-	char name[sizeof("memory@") + STR_MAX_CHARS(reg[0])];
+	char *name;
 	u32 chip_id;
+
+	name = (char*)malloc(sizeof("memory@") + STR_MAX_CHARS(reg[0]));
 
 	prlog(PR_DEBUG, "  Range: 0x%016llx..0x%016llx "
 	      "on Chip 0x%x mattr: 0x%x\n",
@@ -148,6 +150,8 @@ static bool add_address_range(struct dt_node *root,
 	if (be16_to_cpu(id->flags) & MS_AREA_SHARED)
 		dt_add_property_cells(mem, DT_PRIVATE "share-id",
 				      be16_to_cpu(id->share_id));
+
+	free(name);
 
 	return true;
 }
