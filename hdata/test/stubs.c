@@ -17,7 +17,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-void prlog(int log_level __attribute__((unused)), char *fmt, ...)
+void prlog(int log_level __attribute__((unused)), const char* fmt, ...) __attribute__((format (printf, 2, 3)));
+
+void prlog(int log_level __attribute__((unused)), const char* fmt, ...)
 {
         va_list ap;
 
