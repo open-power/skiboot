@@ -79,6 +79,7 @@ int main(void)
 {
 	char *test_heap = real_malloc(TEST_HEAP_SIZE);
 	char *p, *p2, *p3, *p4;
+	char *pr;
 	size_t i;
 
 	/* Use malloc for the heap, so valgrind can find issues. */
@@ -169,7 +170,8 @@ int main(void)
 	p3 = malloc(100);
 	p4 = malloc(100);
 	free(p2);
-	realloc(p,216);
+	pr = realloc(p,216);
+	assert(pr);
 	free(p3);
 	free(p);
 	free(p4);
