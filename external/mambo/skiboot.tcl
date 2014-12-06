@@ -33,6 +33,29 @@ mconfig payload_addr PAYLOAD_ADDR 0x20000000;
 # FW: Where should ePAPR Flat Devtree Binary be loaded
 mconfig epapr_dt_addr EPAPR_DT_ADDR 0x1f00000;# place at 31M
 
+# Disk: Location of file to use a bogus disk 0
+mconfig rootdisk ROOTDISK none
+
+# Disk: File to use for re COW file: none or <file>
+mconfig rootdisk_cow MAMBO_ROOTDISK_COW none
+
+# Disk: COW method to use
+mconfig rootdisk_cow_method MAMBO_ROOTDISK_COW_METHOD newcow
+
+# Disk: COW hash size
+mconfig rootdisk_cow_hash MAMBO_ROOTDISK_COW_HASH 1024
+
+# Net: What type of networking: none, phea, bogus
+mconfig net MAMBO_NET none
+
+# Net: What is the base interface for the tun/tap device
+mconfig tap_base MAMBO_NET_TAP_BASE 0
+
+
+#
+# Create machine config
+#
+
 define dup pegasus myconf
 myconf config processor/number_of_threads $mconf(threads)
 myconf config memory_size $mconf(memory)
@@ -47,15 +70,51 @@ myconf config enable_pseries_nvram false
 
 define machine myconf mysim
 
-source $env(LIB_DIR)/common/epapr.tcl
+#
+# Include various utilities
+#
 
+source $env(LIB_DIR)/common/epapr.tcl
 if {![info exists of::encode_compat]} {
     source $env(LIB_DIR)/common/openfirmware_utils.tcl
 }
+source mambo_utils.tcl
 
-# xscom
+#
+# Instanciate xscom
+#
+
 set xscom_base 0x1A0000000000
 mysim xscom create $xscom_base
+
+# Setup bogus IO
+
+if { $mconf(rootdisk) != "none" } {
+    # Now load the bogus disk image
+    switch $mconf(rootdisk_cow) {
+	none {
+	    mysim bogus disk init 0 $mconf(rootdisk) rw
+	    puts "bogusdisk initialized for $mconf(rootdisk)"
+	}
+	default {
+	    mysim bogus disk init 0 $mconf(rootdisk) \
+		$mconf(rootdisk_cow_method) \
+		$mconf(rootdisk_cow) $mconf(rootdisk_cow_hash)
+	}
+    }
+}
+switch $mconf(net) {
+    none {
+	puts "No network support selected"
+    }
+    bogus - bogusnet {
+	set net_tap [format "tap%d" $mconf(tap_base)]
+	mysim bogus net init 0 $mconf(net_mac) $net_tap
+    }
+    default {
+	error "Bad net \[none | bogus]: $mconf(net)"
+    }
+}
 
 # Device tree fixups
 
@@ -87,7 +146,11 @@ lappend compat "ibm,power8-xscom"
 set compat [of::encode_compat $compat]
 mysim of addprop $xscom_node byte_array "compatible" $compat
 
+# Flatten it
+
 epapr::of2dtb mysim $mconf(epapr_dt_addr) 
+
+# Load images
 
 set boot_size [file size $mconf(boot_image)]
 mysim memory fread $mconf(boot_load) $boot_size $mconf(boot_image)
@@ -95,13 +158,18 @@ mysim memory fread $mconf(boot_load) $boot_size $mconf(boot_image)
 set payload_size [file size $mconf(payload)]
 mysim memory fread $mconf(payload_addr) $payload_size $mconf(payload)
 
+# Init CPUs
+
 for { set i 0 } { $i < $mconf(threads) } { incr i } {
     mysim mcm 0 cpu 0 thread $i set spr pc $mconf(boot_pc) 
     mysim mcm 0 cpu 0 thread $i set gpr 3 $mconf(epapr_dt_addr)
     mysim mcm 0 cpu 0 thread $i config_on    
 }
 
-source mambo_utils.tcl
+# Tools
 
+# Turbo mode & run
 ton
+c
+
 
