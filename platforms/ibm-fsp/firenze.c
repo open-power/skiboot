@@ -109,7 +109,7 @@ static struct dt_node *dt_create_i2c_device(struct dt_node *bus, uint8_t addr,
 
 static void firenze_dt_fixup_i2cm(void)
 {
-	struct dt_node *master, *bus;
+	struct dt_node *master, *bus, *dev;
 	struct proc_chip *c;
 	const uint32_t *p;
 	char name[32];
@@ -138,10 +138,15 @@ static void firenze_dt_fixup_i2cm(void)
 		snprintf(name, sizeof(name), "p8_%08x_e%dp%d", c->id, 1, 0);
 		bus = dt_create_i2c_bus(master, name, 0);
 		assert(bus);
-		dt_create_i2c_device(bus, 0x39, "slot-C4-C5", "maxim,5961",
-				     "pcie-hotplug");
-		dt_create_i2c_device(bus, 0x3a, "slot-C2-C3", "maxim,5961",
-				     "pcie-hotplug");
+		dev = dt_create_i2c_device(bus, 0x39, "power-control",
+					   "maxim,5961", "pcie-hotplug");
+		assert(dev);
+		dt_add_property_strings(dev, "target-list", "slot-C4", "slot-C5");
+
+		dev = dt_create_i2c_device(bus, 0x3a, "power-control",
+					   "maxim,5961", "pcie-hotplug");
+		assert(dev);
+		dt_add_property_strings(dev, "target-list", "slot-C2", "slot-C3");
 	/* Fall through */
 	case LX_VPD_1S4U_BACKPLANE:
 	case LX_VPD_1S2U_BACKPLANE:
@@ -155,14 +160,25 @@ static void firenze_dt_fixup_i2cm(void)
 		snprintf(name, sizeof(name), "p8_%08x_e%dp%d", c->id, 1, 0);
 		bus = dt_create_i2c_bus(master, name, 0);
 		assert(bus);
-		dt_create_i2c_device(bus, 0x32, "slot-C10-C11", "maxim,5961",
-				     "pcie-hotplug");
-		dt_create_i2c_device(bus, 0x35, "slot-C6-C7", "maxim,5961",
-				     "pcie-hotplug");
-		dt_create_i2c_device(bus, 0x36, "slot-C8-C9", "maxim,5961",
-				     "pcie-hotplug");
-		dt_create_i2c_device(bus, 0x39, "slot-C12", "maxim,5961",
-				     "pcie-hotplug");
+		dev = dt_create_i2c_device(bus, 0x32, "power-control",
+					   "maxim,5961", "pcie-hotplug");
+		assert(dev);
+		dt_add_property_strings(dev, "target-list", "slot-C10", "slot-C11");
+
+		dev = dt_create_i2c_device(bus, 0x35, "power-control",
+					   "maxim,5961", "pcie-hotplug");
+		assert(dev);
+		dt_add_property_strings(dev, "target-list", "slot-C6", "slot-C7");
+
+		dev = dt_create_i2c_device(bus, 0x36, "power-control",
+					   "maxim,5961", "pcie-hotplug");
+		assert(dev);
+		dt_add_property_strings(dev, "target-list", "slot-C8", "slot-C9");
+
+		dev = dt_create_i2c_device(bus, 0x39, "power-control", "maxim,5961",
+					   "pcie-hotplug");
+		assert(dev);
+		dt_add_property_strings(dev, "target-list", "slot-C12");
 		break;
 	default:
 		break;
