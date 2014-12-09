@@ -524,13 +524,13 @@ static void occ_tmgt_interrupt(void)
 	printf("OCC: TMGT interrupt !\n");
 }
 
-void occ_interrupt(void)
+void occ_interrupt(uint32_t chip_id)
 {
 	uint64_t ireg;
 	int64_t rc;
 
 	/* The OCC interrupt is used to mux up to 15 different sources */
-	rc = xscom_readme(OCB_OCI_OCCMISC, &ireg);
+	rc = xscom_read(chip_id, OCB_OCI_OCCMISC, &ireg);
 	if (rc) {
 		prerror("OCC: Failed to read interrupt status !\n");
 		/* Should we mask it in the XIVR ? */
@@ -539,7 +539,7 @@ void occ_interrupt(void)
 	prlog(PR_TRACE, "OCC: IRQ received: %04llx\n", ireg >> 48);
 
 	/* Clear the bits */
-	xscom_writeme(OCB_OCI_OCCMISC_AND, ~ireg);
+	xscom_write(chip_id, OCB_OCI_OCCMISC_AND, ~ireg);
 
 	/* Dispatch */
 	if (ireg & OCB_OCI_OCIMISC_IRQ_TMGT)

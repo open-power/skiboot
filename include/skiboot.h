@@ -210,7 +210,7 @@ extern void uart_setup_linux_passthrough(void);
 extern void uart_setup_opal_console(void);
 
 /* OCC interrupt */
-extern void occ_interrupt(void);
+extern void occ_interrupt(uint32_t chip_id);
 extern void occ_send_dummy_interrupt(void);
 
 /* Flatten device-tree */
