@@ -89,6 +89,7 @@ static void *fsp_inbound_buf = NULL;
 static u32 fsp_inbound_off;
 
 static struct lock fsp_lock = LOCK_UNLOCKED;
+static struct lock fsp_poll_lock = LOCK_UNLOCKED;
 
 static u64 fsp_cmdclass_resp_bitmask;
 static u64 timeout_timer;
@@ -1930,11 +1931,14 @@ static void fsp_timeout_poll(void *data __unused)
 	 * So every 30secs, check if there is any message
 	 * waiting for a response from the FSP
 	 */
-	if ((tb_compare(now, timeout_timer) == TB_AAFTERB) ||
-		(tb_compare(now, timeout_timer) == TB_AEQUALB))
-		timeout_timer = now + secs_to_tb(30);
-	else
+	if (tb_compare(now, timeout_timer) == TB_ABEFOREB)
 		return;
+	if (!try_lock(&fsp_poll_lock))
+		return;
+	if (tb_compare(now, timeout_timer) == TB_ABEFOREB) {
+		unlock(&fsp_poll_lock);
+		return;
+	}
 
 	while (cmdclass_resp_bitmask) {
 		u64 time_sent = 0;
@@ -1950,18 +1954,25 @@ static void fsp_timeout_poll(void *data __unused)
 
 		/* Now check if the response has timed out */
 		if (tb_compare(time_to_comp, timeout_val) == TB_AAFTERB) {
-			u64 resetbit = 0;
 			u32 w0, w1;
 			enum fsp_msg_state mstate;
 
 			/* Take the FSP lock now and re-check */
 			lock(&fsp_lock);
-			if (!(fsp_cmdclass_resp_bitmask & (1 << index)) ||
+			if (!(fsp_cmdclass_resp_bitmask & (1ull << index)) ||
 			    time_sent != cmdclass->timesent) {
 				unlock(&fsp_lock);
 				goto next_bit;
 			}
 			req = list_top(&cmdclass->msgq,	struct fsp_msg, link);
+			if (!req) {
+				printf("FSP: Timeout state mismatch on class %d\n",
+				       index);
+				fsp_cmdclass_resp_bitmask &= ~(1ull << index);
+				cmdclass->timesent = 0;
+				unlock(&fsp_lock);
+				goto next_bit;
+			}
 			w0 = req->word0;
 			w1 = req->word1;
 			mstate = req->state;
@@ -1969,8 +1980,7 @@ static void fsp_timeout_poll(void *data __unused)
 			      " word0 = %x, word1 = %x state: %d\n",
 			      w0, w1, mstate);
 			fsp_reg_dump();
-			resetbit = ~fsp_get_class_bit(req->word0 & 0xff);
-			fsp_cmdclass_resp_bitmask &= resetbit;
+			fsp_cmdclass_resp_bitmask &= ~(1ull << index);
 			cmdclass->timesent = 0;
 			if (req->resp)
 				req->resp->state = fsp_msg_timeout;
@@ -1985,6 +1995,7 @@ static void fsp_timeout_poll(void *data __unused)
 		cmdclass_resp_bitmask = cmdclass_resp_bitmask >> 1;
 		index++;
 	}
+	unlock(&fsp_poll_lock);
 }
 
 void fsp_opl(void)
