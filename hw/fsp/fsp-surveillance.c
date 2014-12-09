@@ -92,6 +92,7 @@ static void fsp_surv_check_timeout(void)
 static void fsp_surv_hbeat(void)
 {
 	u64 now = mftb();
+	struct fsp_msg *msg;
 
 	/* Check if an ack is pending... if so, don't send the ping just yet */
 	if (fsp_surv_ack_pending) {
@@ -111,12 +112,19 @@ static void fsp_surv_hbeat(void)
 	    (tb_compare(now, surv_timer) == TB_AEQUALB)) {
 		prlog(PR_DEBUG,
 		      "SURV: Sending the hearbeat command to FSP\n");
-		fsp_queue_msg(fsp_mkmsg(FSP_CMD_SURV_HBEAT, 1, 120),
-			      fsp_surv_ack);
-
-		fsp_surv_ack_pending = true;
-		surv_timer = now + secs_to_tb(60);
-		surv_ack_timer = now + secs_to_tb(FSP_SURV_ACK_TIMEOUT);
+		msg = fsp_mkmsg(FSP_CMD_SURV_HBEAT, 1, 120);
+		if (!msg) {
+			prerror("SURV: Failed to allocate hbeat msg\n");
+			return;
+		}
+		if (fsp_queue_msg(msg, fsp_surv_ack)) {
+			fsp_freemsg(msg);
+			prerror("SURV: Failed to queue hbeat msg\n");
+		} else {
+			fsp_surv_ack_pending = true;
+			surv_timer = now + secs_to_tb(60);
+			surv_ack_timer = now + secs_to_tb(FSP_SURV_ACK_TIMEOUT);
+		}
 	}
 }
 
