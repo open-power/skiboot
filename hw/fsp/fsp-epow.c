@@ -148,6 +148,7 @@ static void fsp_epow_update(u8 *epow, int epow_type)
 /* Process captured EPOW event notification */
 static void fsp_process_epow(struct fsp_msg *msg, int epow_type)
 {
+	struct fsp_msg *resp;
 	u8 epow[8];
 
 	/* Basic EPOW signature */
@@ -174,15 +175,45 @@ static void fsp_process_epow(struct fsp_msg *msg, int epow_type)
 	 */
 	switch(epow_type) {
 	case EPOW_NORMAL:
-		fsp_queue_msg(fsp_mkmsg(FSP_CMD_STATUS_REQ, 0), fsp_freemsg);
+		resp = fsp_mkmsg(FSP_CMD_STATUS_REQ, 0);
+		if (resp == NULL) {
+			prerror(PREFIX "%s : Message allocation failed\n",
+				__func__);
+			break;
+		}
+		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			fsp_freemsg(resp);
+			prerror(PREFIX "%s : Failed to queue response "
+				"message\n", __func__);
+		}
 		break;
 	case EPOW_EX1:
 		/* EPOW_EX1 specific extra event data */
 		epow[4] = msg->data.bytes[4];
-		fsp_queue_msg(fsp_mkmsg(FSP_CMD_STATUS_EX1_REQ, 0), fsp_freemsg);
+		resp = fsp_mkmsg(FSP_CMD_STATUS_EX1_REQ, 0);
+		if (resp == NULL) {
+			prerror(PREFIX "%s : Message allocation failed\n",
+				__func__);
+			break;
+		}
+		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			fsp_freemsg(resp);
+			prerror(PREFIX "%s : Failed to queue response "
+				"message\n", __func__);
+		}
 		break;
 	case EPOW_EX2:
-		fsp_queue_msg(fsp_mkmsg(FSP_CMD_STATUS_EX2_REQ, 0), fsp_freemsg);
+		resp = fsp_mkmsg(FSP_CMD_STATUS_EX2_REQ, 0);
+		if (resp == NULL) {
+			prerror(PREFIX "%s : Message allocation failed\n",
+				__func__);
+			break;
+		}
+		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			fsp_freemsg(resp);
+			prerror(PREFIX "%s : Failed to queue response "
+				"message\n", __func__);
+		}
 		break;
 	default:
 		prlog(PR_WARNING, PREFIX "Unknown EPOW event notification\n");
