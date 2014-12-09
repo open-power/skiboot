@@ -55,6 +55,7 @@ static int64_t fsp_opal_get_dpo_status(int64_t *dpo_timeout)
 /* Process FSP DPO init message */
 static void fsp_process_dpo(struct fsp_msg *msg)
 {
+	struct fsp_msg *resp;
 	u32 cmd = FSP_RSP_INIT_DPO;
 	int rc;
 
@@ -63,7 +64,17 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 			|| (msg->data.bytes[1] != DPO_CMD_SGN_BYTE1)) {
 		prlog(PR_ERR, PREFIX "Message signatures did not match\n");
 		cmd |= FSP_STATUS_INVALID_CMD;
-		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
+		resp = fsp_mkmsg(cmd, 0);
+		if (resp == NULL) {
+			prerror(PREFIX "%s : Message allocation failed\n",
+				__func__);
+			return;
+		}
+		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			fsp_freemsg(resp);
+			prerror(PREFIX "%s : Failed to queue response "
+				"message\n", __func__);
+		}
 		return;
 	}
 
@@ -71,7 +82,17 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 	if (fsp_dpo_pending) {
 		prlog(PR_ERR, PREFIX "OPAL is already in DPO pending state\n");
 		cmd |= FSP_STATUS_INVALID_DPOSTATE;
-		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
+		resp = fsp_mkmsg(cmd, 0);
+		if (resp == NULL) {
+			prerror(PREFIX "%s : Message allocation failed\n",
+				__func__);
+			return;
+		}
+		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			fsp_freemsg(resp);
+			prerror(PREFIX "%s : Failed to queue response "
+				"message\n", __func__);
+		}
 		return;
 	}
 
@@ -83,13 +104,34 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 	if (rc) {
 		prlog(PR_ERR, PREFIX "OPAL message queuing failed\n");
 		cmd |= FSP_STATUS_GENERIC_ERROR;
-		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
+		resp = fsp_mkmsg(cmd, 0);
+		if (resp == NULL) {
+			prerror(PREFIX "%s : Message allocation failed\n",
+				__func__);
+			return;
+		}
+		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			fsp_freemsg(resp);
+			prerror(PREFIX "%s : Failed to queue response "
+				"message\n", __func__);
+		}
 		return;
 	}
 
 	/* Acknowledge the FSP on DPO */
-	fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
+	resp = fsp_mkmsg(cmd, 0);
+	if (resp == NULL) {
+		prerror(PREFIX "%s : Message allocation failed\n", __func__);
+		return;
+	}
+	if (fsp_queue_msg(resp, fsp_freemsg)) {
+		fsp_freemsg(resp);
+		prerror(PREFIX "%s : Failed to queue response message\n",
+			__func__);
+	}
+
 	fsp_dpo_pending = true;
+
 	/*
 	 * Sapphire is now in DPO pending state. After first detecting DPO
 	 * condition from Sapphire, the host will have 45 minutes to prepare
