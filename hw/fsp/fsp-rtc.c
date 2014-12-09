@@ -457,8 +457,17 @@ static void rtc_flush_cached_tod(void)
 		return;
 	msg = fsp_mkmsg(FSP_CMD_WRITE_TOD, 3, y_m_d,
 			(h_m_s_m >> 32) & 0xffffff00, 0);
-	if (msg)
-		fsp_queue_msg(msg, fsp_freemsg);
+	if (!msg) {
+		prerror("TPO: %s : Failed to allocate write TOD message\n",
+			__func__);
+		return;
+	}
+	if (fsp_queue_msg(msg, fsp_freemsg)) {
+		fsp_freemsg(msg);
+		prerror("TPO: %s : Failed to queue WRITE_TOD command\n",
+			__func__);
+		return;
+	}
 }
 
 static bool fsp_rtc_msg_rr(u32 cmd_sub_mod, struct fsp_msg *msg)
