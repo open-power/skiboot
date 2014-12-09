@@ -121,7 +121,7 @@ static void get_ipl_side(void)
 	iplp = dt_find_by_path(dt_root, "ipl-params/ipl-params");
 	if (iplp)
 		side = dt_prop_get_def(iplp, "cec-ipl-side", NULL);
-	printf("CUPD: IPL SIDE = %s\n", side);
+	prlog(PR_NOTICE, "CUPD: IPL SIDE = %s\n", side);
 
 	if (!side || !strcmp(side, "temp"))
 		ipl_side = FW_IPL_SIDE_TEMP;
@@ -157,8 +157,8 @@ static void got_code_update_policy(uint32_t param_id __unused, int err_len,
 		log_simple_error(&e_info(OPAL_RC_CU_INIT), "CUPD: Error "
 			"retrieving code update policy: %d\n", err_len);
 	} else
-		printf("CUPD: Code update policy from FSP: %d\n",
-		       update_policy);
+		prlog(PR_NOTICE, "CUPD: Code update policy from FSP: %d\n",
+		      update_policy);
 
 	dec_in_flight_param();
 }
@@ -184,7 +184,8 @@ static void got_platform_hmc_managed(uint32_t param_id __unused, int err_len,
 		log_simple_error(&e_info(OPAL_RC_CU_INIT), "CUPD: Error "
 			"retrieving hmc managed status: %d\n", err_len);
 	} else
-		printf("CUPD: HMC managed status from FSP: %d\n", hmc_managed);
+		prlog(PR_NOTICE, "CUPD: HMC managed status from FSP: %d\n",
+		      hmc_managed);
 
 	dec_in_flight_param();
 }
@@ -266,8 +267,8 @@ static void parse_marker_lid(uint32_t side)
 
 	strncpy(fw_vpd[side].MI_keyword, mi_sec->MI_keyword, MI_KEYWORD_SIZE);
 	fw_vpd[side].MI_keyword[MI_KEYWORD_SIZE - 1] = '\0';
-	printf("CUPD: %s side MI Keyword = %s\n",
-	       side == 0x00 ? "P" : "T", fw_vpd[side].MI_keyword);
+	prlog(PR_NOTICE, "CUPD: %s side MI Keyword = %s\n",
+	      side == 0x00 ? "P" : "T", fw_vpd[side].MI_keyword);
 
 	/* Get ML details */
 	adf_sec = (void *)header + be32_to_cpu(mi_sec->adf_offset);
@@ -279,8 +280,8 @@ static void parse_marker_lid(uint32_t side)
 		(void *)adf_sp + be32_to_cpu(adf_sp->sp_name_offset),
 		ML_KEYWORD_SIZE);
 	fw_vpd[side].ext_fw_id[ML_KEYWORD_SIZE - 1] = '\0';
-	printf("CUPD: %s side ML Keyword = %s\n",
-	       side == 0x00 ? "P" : "T", fw_vpd[side].ext_fw_id);
+	prlog(PR_NOTICE, "CUPD: %s side ML Keyword = %s\n",
+	      side == 0x00 ? "P" : "T", fw_vpd[side].ext_fw_id);
 }
 
 static void validate_com_marker_lid(void)
@@ -311,8 +312,9 @@ static void fetch_lid_data_complete(struct fsp_msg *msg)
 	offset = msg->resp->data.words[1];
 	length = msg->resp->data.words[2];
 
-	printf("CUPD: Marker LID id : size : status = 0x%x : 0x%x : 0x%x\n",
-	       msg->data.words[1], msg->resp->data.words[2], status);
+	prlog(PR_NOTICE, "CUPD: Marker LID id : size : status = "
+	      "0x%x : 0x%x : 0x%x\n",
+	      msg->data.words[1], msg->resp->data.words[2], status);
 
 	fsp_freemsg(msg);
 
@@ -439,12 +441,12 @@ void fsp_code_update_wait_vpd(bool is_boot)
 	if (!fsp_present())
 		return;
 
-	printf("CUPD: Waiting read marker LID completion...\n");
+	prlog(PR_NOTICE, "CUPD: Waiting read marker LID completion...\n");
 
 	while(flash_state == FLASH_STATE_READING)
 		opal_run_pollers();
 
-	printf("CUPD: Waiting in flight params completion...\n");
+	prlog(PR_NOTICE, "CUPD: Waiting in flight params completion...\n");
 	while(in_flight_params)
 		opal_run_pollers();
 
@@ -1155,15 +1157,15 @@ static bool code_update_notify(uint32_t cmd_sub_mod, struct fsp_msg *msg)
 	switch(cmd_sub_mod) {
 	case FSP_CMD_FLASH_CACHE:
 		cmd = FSP_CMD_FLASH_CACHE_RSP;
-		printf("CUPD: Update LID cache event [data = 0x%x]\n",
-		       msg->data.words[0]);
+		prlog(PR_NOTICE, "CUPD: Update LID cache event [data = 0x%x]\n",
+		      msg->data.words[0]);
 		break;
 	case FSP_CMD_FLASH_OUTC:
 	case FSP_CMD_FLASH_OUTR:
 	case FSP_CMD_FLASH_OUTS:
 		cmd = FSP_CMD_FLASH_OUT_RSP;
-		printf("CUPD: Out of band commit notify [Type = 0x%x]\n",
-		       (msg->word1 >> 8) & 0xff);
+		prlog(PR_NOTICE, "CUPD: Out of band commit notify "
+		      "[Type = 0x%x]\n", (msg->word1 >> 8) & 0xff);
 		break;
 	default:
 		log_simple_error(&e_info(OPAL_RC_CU_NOTIFY), "CUPD: Unknown "
