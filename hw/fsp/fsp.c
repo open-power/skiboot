@@ -250,7 +250,7 @@ void __fsp_freemsg(struct fsp_msg *msg)
 
 void fsp_freemsg(struct fsp_msg *msg)
 {
-	if (msg->resp)
+	if (msg && msg->resp)
 		__fsp_freemsg(msg->resp);
 	__fsp_freemsg(msg);
 }
