@@ -56,7 +56,9 @@ bool dummy_console_enabled(void)
 
 void force_dummy_console(void)
 {
-	dt_add_property(dt_chosen, "sapphire,enable-dummy-console", NULL, 0);
+	if (!dummy_console_enabled())
+		dt_add_property(dt_chosen, "sapphire,enable-dummy-console",
+						NULL, 0);
 }
 
 
