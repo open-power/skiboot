@@ -134,10 +134,17 @@ bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size)
 	if (elog_write_to_host_head_state == ELOG_STATE_FETCHED_DATA) {
 		head = list_top(&elog_write_to_host_pending,
 					struct errorlog, link);
-		*opal_elog_id = head->plid;
-		*opal_elog_size = head->log_size;
-		elog_write_to_host_head_state = ELOG_STATE_FETCHED_INFO;
-		rc = true;
+		if (!head) {
+			prlog(PR_ERR,
+			      "%s: Inconsistent internal list state !\n",
+			      __func__);
+			elog_write_to_host_head_state = ELOG_STATE_NONE;
+		} else {
+			*opal_elog_id = head->plid;
+			*opal_elog_size = head->log_size;
+			elog_write_to_host_head_state = ELOG_STATE_FETCHED_INFO;
+			rc = true;
+		}
 	}
 	unlock(&elog_write_to_host_lock);
 	return rc;
@@ -165,7 +172,7 @@ static void opal_commit_elog_in_host(void)
 
 
 bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
-						uint64_t opal_elog_id)
+		    uint64_t opal_elog_id)
 {
 	struct errorlog *log_data;
 	bool rc = false;
@@ -174,9 +181,13 @@ bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 	if (elog_write_to_host_head_state == ELOG_STATE_FETCHED_INFO) {
 		log_data = list_top(&elog_write_to_host_pending,
 					struct errorlog, link);
-
+		if (!log_data) {
+			elog_write_to_host_head_state = ELOG_STATE_NONE;
+			unlock(&elog_write_to_host_lock);
+			return rc;
+		}
 		if ((opal_elog_id != log_data->plid) &&
-				(opal_elog_size != log_data->log_size)) {
+		    (opal_elog_size != log_data->log_size)) {
 			unlock(&elog_write_to_host_lock);
 			return rc;
 		}

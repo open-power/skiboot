@@ -173,10 +173,16 @@ static void fsp_elog_fetch_failure(uint8_t fsp_status)
 
 	/* read top list and delete the node */
 	log_data = list_top(&elog_read_pending, struct fsp_log_entry, link);
-	list_del(&log_data->link);
-	list_add(&elog_read_free, &log_data->link);
-	prerror("ELOG: received invalid data: %x FSP status: 0x%x\n",
-		log_data->log_id, fsp_status);
+	if (!log_data) {
+		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
+		      __func__);
+	} else {
+		list_del(&log_data->link);
+		list_add(&elog_read_free, &log_data->link);
+		prerror("ELOG: received invalid data: %x FSP status: 0x%x\n",
+			log_data->log_id, fsp_status);
+
+	}
 	fsp_elog_set_head_state(ELOG_STATE_NONE);
 }
 
@@ -228,6 +234,12 @@ static void fsp_elog_queue_fetch(void)
 	struct fsp_log_entry *entry;
 
 	entry = list_top(&elog_read_pending, struct fsp_log_entry, link);
+	if (!entry) {
+		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
+		      __func__);
+		fsp_elog_set_head_state(ELOG_STATE_NONE);
+		return;
+	}
 	fsp_elog_set_head_state(ELOG_STATE_FETCHING);
 	elog_head_id = entry->log_id;
 	elog_head_size = entry->log_size;
@@ -260,6 +272,12 @@ static int64_t fsp_opal_elog_info(uint64_t *opal_elog_id,
 		return OPAL_WRONG_STATE;
 	}
 	log_data = list_top(&elog_read_pending, struct fsp_log_entry, link);
+	if (!log_data) {
+		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
+		      __func__);
+		unlock(&elog_read_lock);
+		return OPAL_WRONG_STATE;
+	}
 	*opal_elog_id = log_data->log_id;
 	*opal_elog_size = log_data->log_size;
 	unlock(&elog_read_lock);
@@ -288,6 +306,12 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 	}
 
 	log_data = list_top(&elog_read_pending, struct fsp_log_entry, link);
+	if (!log_data) {
+		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
+		      __func__);
+		unlock(&elog_read_lock);
+		return OPAL_WRONG_STATE;
+	}
 
 	/* Check log ID and then read log from buffer */
 	if (opal_elog_id != log_data->log_id) {
