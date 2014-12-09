@@ -68,6 +68,7 @@ static void fsp_console_reinit(void)
 {
 	int i;
 	void *base;
+	struct fsp_msg *msg;
 
 	/* Initialize out data structure pointers & TCE maps */
 	base = ser_buffer;
@@ -87,8 +88,17 @@ static void fsp_console_reinit(void)
 		if (fs->rsrc_id == 0xffff)
 			continue;
 		prlog(PR_DEBUG, "FSP: Reassociating HVSI console %d\n", i);
-		fsp_queue_msg(fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
-					(fs->rsrc_id << 16) | 1, i), fsp_freemsg);
+		msg = fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
+				(fs->rsrc_id << 16) | 1, i);
+		if (!msg) {
+			prerror("FSPCON: Failed to allocate associate msg\n");
+			return;
+		}
+		if (fsp_queue_msg(msg, fsp_freemsg)) {
+			fsp_freemsg(msg);
+			prerror("FSPCON: Failed to queue associate msg\n");
+			return;
+		}
 	}
 }
 
@@ -131,8 +141,12 @@ static void fsp_pokemsg_reclaim(struct fsp_msg *msg)
 	lock(&fsp_con_lock);
 	if (fs->open && fs->poke_msg == msg) {
 		if (fs->out_poke) {
-			fs->out_poke = false;
-			fsp_queue_msg(fs->poke_msg, fsp_pokemsg_reclaim);
+			if (fsp_queue_msg(fs->poke_msg, fsp_pokemsg_reclaim)) {
+				prerror("FSPCON: failed to queue poke msg\n");
+				fsp_freemsg(msg);
+			} else {
+				fs->out_poke = false;
+			}
 		} else
 			fs->poke_msg->state = fsp_msg_unused;
 	} else
@@ -169,9 +183,10 @@ static size_t fsp_write_vserial(struct fsp_serial *fs, const char *buf,
 	sync();
 
 	if (sb->next_out == old_nin && fs->poke_msg) {
-		if (fs->poke_msg->state == fsp_msg_unused)
-			fsp_queue_msg(fs->poke_msg, fsp_pokemsg_reclaim);
-		else
+		if (fs->poke_msg->state == fsp_msg_unused) {
+			if (fsp_queue_msg(fs->poke_msg, fsp_pokemsg_reclaim))
+				prerror("FSPCON: poke msg queuing failed\n");
+		} else
 			fs->out_poke = true;
 	}
 #ifndef DISABLE_CON_PENDING_EVT
@@ -213,6 +228,8 @@ static struct con_ops fsp_con_ops = {
 
 static void fsp_open_vserial(struct fsp_msg *msg)
 {
+	struct fsp_msg *resp;
+
 	u16 part_id = msg->data.words[0] & 0xffff;
 	u16 sess_id = msg->data.words[1] & 0xffff;
 	u8 hmc_sess = msg->data.bytes[0];	
@@ -229,9 +246,16 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 	prlog(PR_DEBUG, "  authority = 0x%02x\n", authority);
 
 	if (sess_id >= MAX_SERIAL || !fsp_serials[sess_id].available) {
-		fsp_queue_msg(fsp_mkmsg(FSP_RSP_OPEN_VSERIAL | 0x2f, 0),
-			      fsp_freemsg);
 		prlog(PR_WARNING, "FSPCON: 0x%04x  NOT AVAILABLE!\n", sess_id);
+		resp = fsp_mkmsg(FSP_RSP_OPEN_VSERIAL | 0x2f, 0);
+		if (!resp) {
+			prerror("FSPCON: Response allocation failed\n");
+			return;
+		}
+		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			fsp_freemsg(resp);
+			prerror("FSPCON: Failed to queue response msg\n");
+		}
 		return;
 	}
 
@@ -283,10 +307,17 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 	unlock(&fsp_con_lock);
 
  already_open:
-	fsp_queue_msg(fsp_mkmsg(FSP_RSP_OPEN_VSERIAL, 6,
-				msg->data.words[0],
-				msg->data.words[1] & 0xffff,
-				0, tce_in, 0, tce_out), fsp_freemsg);
+	resp = fsp_mkmsg(FSP_RSP_OPEN_VSERIAL, 6, msg->data.words[0],
+			msg->data.words[1] & 0xffff, 0, tce_in, 0, tce_out);
+	if (!resp) {
+		prerror("FSPCON: Failed to allocate open msg response\n");
+		return;
+	}
+	if (fsp_queue_msg(resp, fsp_freemsg)) {
+		fsp_freemsg(resp);
+		prerror("FSPCON: Failed to queue open msg response\n");
+		return;
+	}
 
 #ifdef DVS_CONSOLE
 	prlog(PR_DEBUG, "  log_port  = %d\n", fs->log_port);
@@ -316,6 +347,7 @@ static void fsp_close_vserial(struct fsp_msg *msg)
 	u8 hmc_indx = msg->data.bytes[1];
 	u8 authority = msg->data.bytes[4];
 	struct fsp_serial *fs;
+	struct fsp_msg *resp;
 
 	prlog(PR_INFO, "FSPCON: Got VSerial Close\n");
 	prlog(PR_DEBUG, "  part_id   = 0x%04x\n", part_id);
@@ -361,14 +393,22 @@ static void fsp_close_vserial(struct fsp_msg *msg)
 	}
 	unlock(&fsp_con_lock);
  skip_close:
-	fsp_queue_msg(fsp_mkmsg(FSP_RSP_CLOSE_VSERIAL, 2,
-				msg->data.words[0],
-				msg->data.words[1] & 0xffff),
-		      fsp_freemsg);
+	resp = fsp_mkmsg(FSP_RSP_CLOSE_VSERIAL, 2, msg->data.words[0],
+			msg->data.words[1] & 0xffff);
+	if (!resp) {
+		prerror("FSPCON: Failed to allocate close msg response\n");
+		return;
+	}
+	if (fsp_queue_msg(resp, fsp_freemsg)) {
+		fsp_freemsg(resp);
+		prerror("FSPCON: Failed to queue close msg response\n");
+	}
 }
 
 static bool fsp_con_msg_hmc(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
+	struct fsp_msg *resp;
+
 	/* Associate response */
 	if ((cmd_sub_mod >> 8) == 0xe08a) {
 		prlog(PR_TRACE, "FSPCON: Got associate response, status"
@@ -389,10 +429,17 @@ static bool fsp_con_msg_hmc(u32 cmd_sub_mod, struct fsp_msg *msg)
 		return true;
 	case FSP_CMD_HMC_INTF_QUERY:
 		prlog(PR_DEBUG, "FSPCON: Got HMC interface query\n");
-		fsp_queue_msg(fsp_mkmsg(FSP_RSP_HMC_INTF_QUERY, 1,
-					msg->data.words[0] & 0x00ffffff),
-			      fsp_freemsg);
 		got_intf_query = true;
+		resp = fsp_mkmsg(FSP_RSP_HMC_INTF_QUERY, 1,
+				msg->data.words[0] & 0x00ffffff);
+		if (!resp) {
+			prerror("FSPCON: Failed to allocate hmc intf response\n");
+			return true;
+		}
+		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			fsp_freemsg(resp);
+			prerror("FSPCON: Failed to queue hmc intf response\n");
+		}
 		return true;
 	}
 	return false;
@@ -453,6 +500,7 @@ static void fsp_serial_add(int index, u16 rsrc_id, const char *loc_code,
 			   bool log_port)
 {
 	struct fsp_serial *ser;
+	struct fsp_msg *msg;
 
 	lock(&fsp_con_lock);
 	ser = &fsp_serials[index];
@@ -470,8 +518,17 @@ static void fsp_serial_add(int index, u16 rsrc_id, const char *loc_code,
 
 	/* DVS doesn't have that */
 	if (rsrc_id != 0xffff) {
-		fsp_queue_msg(fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
-					(rsrc_id << 16) | 1, index), fsp_freemsg);
+		msg = fsp_mkmsg(FSP_CMD_ASSOC_SERIAL, 2,
+				(rsrc_id << 16) | 1, index);
+		if (!msg) {
+			prerror("FSPCON: Assoc serial alloc failed\n");
+			return;
+		}
+		if (fsp_queue_msg(msg, fsp_freemsg)) {
+			fsp_freemsg(msg);
+			prerror("FSPCON: Assoc serial queue failed\n");
+			return;
+		}
 	}
 }
 
