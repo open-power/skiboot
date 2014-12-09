@@ -1060,6 +1060,7 @@ static void  fsp_alloc_inbound(struct fsp_msg *msg)
 	u32 tce_token = 0, act_len = 0;
 	u8 rc = 0;
 	void *buf;
+	struct fsp_msg *resp;
 
 	prlog(PR_DEBUG, "FSP: Allocate inbound buffer func: %04x len: %d\n",
 	      func_id, len);
@@ -1091,8 +1092,17 @@ static void  fsp_alloc_inbound(struct fsp_msg *msg)
 
  reply:
 	unlock(&fsp_lock);
-	fsp_queue_msg(fsp_mkmsg(FSP_RSP_ALLOC_INBOUND | rc,
-				3, 0, tce_token, act_len), fsp_freemsg);
+
+	resp = fsp_mkmsg(FSP_RSP_ALLOC_INBOUND | rc, 3, 0, tce_token, act_len);
+	if (!resp) {
+		prerror("FSP: response message allocation failed\n");
+		return;
+	}
+	if (fsp_queue_msg(resp, fsp_freemsg)) {
+		fsp_freemsg(resp);
+		prerror("FSP: Failed to queue response message\n");
+		return;
+	}
 }
 
 void *fsp_inbound_buf_from_tce(u32 tce_token)
@@ -1130,6 +1140,7 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
 	u32 cmd = 0;
 	u32 rsp_data = 0;
+	struct fsp_msg *resp;
 
 	switch(cmd_sub_mod) {
 	case FSP_CMD_CONTINUE_IPL:
@@ -1146,13 +1157,29 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 		 * deal with that sort of stuff asynchronously if/when
 		 * we add support for auto-freeing of messages
 		 */
-		fsp_queue_msg(fsp_mkmsg(FSP_RSP_HV_STATE_CHG, 0), fsp_freemsg);
+		resp = fsp_mkmsg(FSP_RSP_HV_STATE_CHG, 0);
+		if (!resp)
+			prerror("FSP: Failed to allocate HV state response\n");
+		else {
+			if (fsp_queue_msg(resp, fsp_freemsg)) {
+				fsp_freemsg(resp);
+				prerror("FSP: Failed to queue HV state resp\n");
+			}
+		}
 		return true;
 
 	case FSP_CMD_SP_NEW_ROLE:
 		/* FSP is assuming a new role */
 		prlog(PR_INFO, "FSP: FSP assuming new role\n");
-		fsp_queue_msg(fsp_mkmsg(FSP_RSP_SP_NEW_ROLE, 0), fsp_freemsg);
+		resp = fsp_mkmsg(FSP_RSP_SP_NEW_ROLE, 0);
+		if (!resp)
+			prerror("FSP: Failed to allocate SP role response\n");
+		else {
+			if (fsp_queue_msg(resp, fsp_freemsg)) {
+				fsp_freemsg(resp);
+				prerror("FSP: Failed to queue SP role resp\n");
+			}
+		}
 		ipl_state |= ipl_got_new_role;
 		return true;
 
@@ -1161,8 +1188,15 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 		/* XXX Do something saner. For now do a synchronous
 	         * response and hard code our capabilities
 		 */
-		fsp_queue_msg(fsp_mkmsg(FSP_RSP_SP_QUERY_CAPS, 4,
-					0x3ff80000, 0, 0, 0), fsp_freemsg);
+		resp = fsp_mkmsg(FSP_RSP_SP_QUERY_CAPS, 4, 0x3ff80000, 0, 0, 0);
+		if (!resp)
+			prerror("FSP: Failed to allocate CAPS response\n");
+		else {
+			if (fsp_queue_msg(resp, fsp_freemsg)) {
+				fsp_freemsg(resp);
+				prerror("FSP: Failed to queue CAPS resp\n");
+			}
+		}
 		ipl_state |= ipl_got_caps;
 		return true;
 	case FSP_CMD_FSP_FUNCTNAL:
@@ -1199,7 +1233,15 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 		cmd = FSP_RSP_CLOSE_HMC_INTF | FSP_STAUS_INVALID_HMC_ID;
 		rsp_data = msg->data.bytes[0] << 24 | msg->data.bytes[1] << 16;
 		rsp_data &= 0xffff0000;
-		fsp_queue_msg(fsp_mkmsg(cmd, 1, rsp_data), fsp_freemsg);
+		resp = fsp_mkmsg(cmd, 1, rsp_data);
+		if (!resp)
+			prerror("FSP: Failed to allocate HMC close response\n");
+		else {
+			if (fsp_queue_msg(resp, fsp_freemsg)) {
+				fsp_freemsg(resp);
+				prerror("FSP: Failed to queue HMC close resp\n");
+			}
+		}
 		return true;
 	}
 	return false;
@@ -1211,6 +1253,7 @@ static void fsp_handle_command(struct fsp_msg *msg)
 {
 	struct fsp_cmdclass *cmdclass = fsp_get_cmdclass(msg);
 	struct fsp_client *client, *next;
+	struct fsp_msg *resp;
 	u32 cmd_sub_mod;
 
 	if (!cmdclass) {
@@ -1238,8 +1281,16 @@ static void fsp_handle_command(struct fsp_msg *msg)
 	/* We don't know whether the message expected some kind of
 	 * response, so we send one anyway
 	 */
-	fsp_queue_msg(fsp_mkmsg((cmd_sub_mod & 0xffff00) | 0x008020, 0),
-		      fsp_freemsg);
+	resp = fsp_mkmsg((cmd_sub_mod & 0xffff00) | 0x008020, 0);
+	if (!resp)
+		prerror("FSP: Failed to allocate default response\n");
+	else {
+		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			fsp_freemsg(resp);
+			prerror("FSP: Failed to queue default response\n");
+		}
+	}
+
  free:
 	fsp_freemsg(msg);
 }
