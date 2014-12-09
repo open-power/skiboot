@@ -708,7 +708,7 @@ extern int fsp_fetch_data(uint8_t flags, uint16_t id, uint32_t sub_id,
 			  uint32_t offset, void *buffer, size_t *length);
 extern int fsp_fetch_data_queue(uint8_t flags, uint16_t id, uint32_t sub_id,
 				uint32_t offset, void *buffer, size_t *length,
-				void (*comp)(struct fsp_msg *msg));
+				void (*comp)(struct fsp_msg *msg)) __warn_unused_result;
 extern bool fsp_load_resource(enum resource_id id, void *buf, size_t *size);
 
 /* FSP console stuff */

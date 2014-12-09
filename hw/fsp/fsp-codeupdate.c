@@ -304,6 +304,7 @@ static void fetch_lid_data_complete(struct fsp_msg *msg)
 	uint32_t lid_id, offset;
 	uint16_t id;
 	uint8_t flags, status;
+	int rc;
 
 	status = (msg->resp->word1 >> 8) & 0xff;
 	flags = (msg->data.words[0] >> 16) & 0xff;
@@ -327,10 +328,16 @@ static void fetch_lid_data_complete(struct fsp_msg *msg)
 		chunk = MARKER_LID_SIZE - offset;
 		if (chunk > 0) {
 			buffer = (void *)PSI_DMA_CODE_UPD + offset;
-			fsp_fetch_data_queue(flags, id, lid_id,
-					     offset, buffer, &chunk,
-					     fetch_lid_data_complete);
-			return;
+			rc = fsp_fetch_data_queue(flags, id, lid_id,
+						  offset, buffer, &chunk,
+						  fetch_lid_data_complete);
+
+			/* If queue msg fails, then continue with marker LID
+			 * validation hoping that we have at least boot side
+			 * information.
+			 */
+			if (rc == OPAL_SUCCESS)
+				return;
 		}
 		break;
 	default:	/* Fetch LID call failed */
@@ -341,10 +348,16 @@ static void fetch_lid_data_complete(struct fsp_msg *msg)
 	if (lid_id == P_COM_MARKER_LID_ID &&
 	    lid_fetch_side == FETCH_BOTH_SIDE) {
 		length = MARKER_LID_SIZE;
-		fsp_fetch_data_queue(flags, id, T_COM_MARKER_LID_ID,
-				     0, (void *)PSI_DMA_CODE_UPD,
-				     &length, fetch_lid_data_complete);
-		return;
+		rc = fsp_fetch_data_queue(flags, id, T_COM_MARKER_LID_ID,
+					  0, (void *)PSI_DMA_CODE_UPD,
+					  &length, fetch_lid_data_complete);
+
+		/* If queue msg fails, then continue with marker LID
+		 * validation hoping that we have at least boot side
+		 * information.
+		 */
+		if (rc == OPAL_SUCCESS)
+			return;
 	}
 
 	lock(&flash_lock);
