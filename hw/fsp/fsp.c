@@ -349,12 +349,16 @@ static void fsp_reset_cmdclass(void)
 	int i;
 	struct fsp_msg *msg;
 
+	/*
+	 * The FSP is in reset and hence we can't expect any response
+	 * to outstanding messages that we've already sent. Clear the
+	 * bitmap to reflect that.
+	 */
+	fsp_cmdclass_resp_bitmask = 0;
 	for (i = 0; i <= (FSP_MCLASS_LAST - FSP_MCLASS_FIRST); i++) {
 		struct fsp_cmdclass *cmdclass = &fsp_cmdclass[i];
 		cmdclass->busy = false;
 		cmdclass->timesent = 0;
-
-		/* We also need to reset the 'timeout' timers here */
 
 		/* Make sure the message queue is empty */
 		while(!list_empty(&cmdclass->msgq)) {
