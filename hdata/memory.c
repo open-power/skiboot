@@ -118,8 +118,9 @@ static bool add_address_range(struct dt_node *root,
 	u64 reg[2];
 	char *name;
 	u32 chip_id;
+	size_t namesz = sizeof("memory@") + STR_MAX_CHARS(reg[0]);
 
-	name = (char*)malloc(sizeof("memory@") + STR_MAX_CHARS(reg[0]));
+	name = (char*)malloc(namesz);
 
 	prlog(PR_DEBUG, "  Range: 0x%016llx..0x%016llx "
 	      "on Chip 0x%x mattr: 0x%x\n",
@@ -141,7 +142,7 @@ static bool add_address_range(struct dt_node *root,
 			return true;
 		}
 	}
-	snprintf(name, sizeof(name), "memory@%llx", (long long)reg[0]);
+	snprintf(name, namesz, "memory@%llx", (long long)reg[0]);
 
 	mem = dt_new(root, name);
 	dt_add_property_string(mem, "device_type", "memory");
