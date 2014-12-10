@@ -54,6 +54,8 @@
 #include <libfdt.h>
 
 #include "libfdt_internal.h"
+#include <assert.h>
+#include <mem_region-malloc.h>
 
 static int _fdt_sw_check_header(void *fdt)
 {
@@ -213,8 +215,11 @@ int fdt_property(void *fdt, const char *name, const void *val, int len)
 int fdt_property_cells_v(void *fdt, unsigned const char *name, int count,
 			 va_list args)
 {
-	uint32_t buffer[count];
+	uint32_t *buffer;
 	int i;
+
+	buffer = (uint32_t*)malloc(sizeof(uint32_t)*count);
+	assert(buffer);
 
 	for (i = 0; i < count; i++)
 		buffer[i] = cpu_to_fdt32(va_arg(args, uint32_t));
