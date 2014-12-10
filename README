@@ -3,8 +3,18 @@ skiboot
 
 Firmware for OpenPower systems
 
+Source:
 https://github.com/open-power/skiboot
 
+Mailing list: skiboot@lists.ozlabs.org
+Info/subscribe: https://lists.ozlabs.org/listinfo/skiboot
+Archives: https://lists.ozlabs.org/pipermail/skiboot/
+
+Patchwork:
+http://patchwork.ozlabs.org/project/skiboot/list/
+
+Overview
+--------
 OPAL firmware (OpenPower Abstraction Layer) comes in several parts.
 
 A simplified flow of what happens when the power button is pressed is:
@@ -38,6 +48,18 @@ Hacking
 -------
 You will need a C compiler (gcc 4.8) for ppc64 (big endian).
 You will need a POWER8 system that you can deploy new firmware to.
+
+You may also use the IBM POWER8 Functional Simulator to test on.
+http://www-304.ibm.com/support/customercare/sas/f/pwrfs/home.html
+
+Qemu (as of 2.2.0) is not suitable as it does not (yet) implement
+the HyperVisor mode of the POWER8 processor.
+
+All patches should be sent to the mailing list with linux-kernel style
+'Signed-Off-By'.
+
+You probably want to read the linux documentation/SubmittingPatches as
+much of it applies to skiboot.
 
 License
 -------
