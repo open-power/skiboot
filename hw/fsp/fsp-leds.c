@@ -246,6 +246,7 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 	u16 ckpt_status;
 	char loc_code[LOC_CODE_SIZE + 1];
 	struct fsp_msg *resp = msg->resp;
+	struct fsp_msg *smsg = NULL;
 	u32 cmd = FSP_RSP_SET_LED_STATE;
 	u8 status = resp->word1 & 0xff00;
 
@@ -275,7 +276,15 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 		/* Rollback the changes */
 		update_led_list(loc_code, ckpt_status);
 	}
-	fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
+
+	smsg = fsp_mkmsg(cmd, 0);
+	if (!smsg) {
+		prerror("LED: Failed to allocate FSP_RSP_SET_LED_STATE\n");
+	} else {
+		if (fsp_queue_msg(msg, fsp_freemsg)) {
+			prerror("LED: Failed to queue FSP_RSP_SET_LED_STATE\n");
+		}
+	}
 }
 
 /*
@@ -317,9 +326,21 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 	if (led == NULL) {
 		u32 cmd = 0;
 		int rc = -1;
+		struct fsp_msg *msg = NULL;
+		
 
 		cmd = FSP_RSP_SET_LED_STATE | FSP_STATUS_INVALID_LC;
-		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
+		msg = fsp_mkmsg(cmd, 0);
+		if (!msg) {
+			prerror("LED: Could not allocate "
+				"FSP_RSP_SET_LED_STATE|FSP_STATUS_INVALID_LC\n");
+		} else {
+			if (fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg)) {
+				prerror("LED: Couldn't queue "
+					"FSP_RSP_SET_LED_STATE"
+					"|FSP_STATUS_INVALID_LC\n");
+			}
+		}
 		return rc;
 	}
 
@@ -449,6 +470,7 @@ static u32 fsp_push_data_to_tce(struct fsp_led_data *led, u8 *out_data,
 static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 {
 	struct fsp_led_data *led, *next;
+	struct fsp_msg *msg;
 
 	u8 *data;			/* Start of TCE mapped buffer */
 	u8 *out_data;			/* Start of location code data */
@@ -521,9 +543,15 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 
 	memcpy(data +  sizeof(total_size) + sizeof(header_size), &flags,
 	       sizeof(flags));
-	fsp_queue_msg(fsp_mkmsg(FSP_RSP_GET_LED_LIST,
-				3, 0, PSI_DMA_LOC_COD_BUF, total_size),
-		      fsp_freemsg);
+	msg = fsp_mkmsg(FSP_RSP_GET_LED_LIST, 3, 0,
+			PSI_DMA_LOC_COD_BUF, total_size);
+	if (!msg) {
+		prerror("LED: Failed to allocate FSP_RSP_GET_LED_LIST.\n");
+	} else {
+		if (fsp_queue_msg(msg, fsp_freemsg)) {
+			prerror("LED: Failed to queue FSP_RSP_GET_LED_LIST\n");
+		}
+	}
 }
 
 /*
@@ -549,9 +577,19 @@ void fsp_get_led_list(struct fsp_msg *msg)
 	/* Parse inbound buffer */
 	buf = fsp_inbound_buf_from_tce(tce_token);
 	if (!buf) {
-		fsp_queue_msg(fsp_mkmsg(FSP_RSP_GET_LED_LIST |
-					FSP_STATUS_INVALID_DATA,
-					0), fsp_freemsg);
+		struct fsp_msg *msg;
+		msg = fsp_mkmsg(FSP_RSP_GET_LED_LIST | FSP_STATUS_INVALID_DATA,
+				0);
+		if (!msg) {
+			prerror("LED: Failed to allocate FSP_RSP_GET_LED_LIST"
+				" | FSP_STATUS_INVALID_DATA\n");
+		} else {
+			if (fsp_queue_msg(msg, fsp_freemsg)) {
+				prerror("LED: Failed to queue "
+					"FSP_RSP_GET_LED_LIST |"
+					" FSP_STATUS_INVALID_DATA\n");
+			}
+		}
 		return;
 	}
 	memcpy(&req, buf, sizeof(req));
@@ -574,27 +612,44 @@ void fsp_free_led_list_buf(struct fsp_msg *msg)
 {
 	u32 tce_token = msg->data.words[1];
 	u32 cmd = FSP_RSP_RET_LED_BUFFER;
+	struct fsp_msg *resp;
 
 	/* Token does not point to outbound buffer */
 	if (tce_token != PSI_DMA_LOC_COD_BUF) {
 		log_simple_error(&e_info(OPAL_RC_LED_BUFF),
 			"LED: Invalid tce token from FSP\n");
 		cmd |=  FSP_STATUS_GENERIC_ERROR;
-		fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
+		resp = fsp_mkmsg(cmd, 0);
+		if (!resp) {
+			prerror("LED: Failed to allocate FSP_RSP_RET_LED_BUFFER"
+				"|FSP_STATUS_GENERIC_ERROR\n");
+			return;
+		}
+
+		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			prerror("LED: Failed to queue RET_LED_BUFFER|ERROR\n");
+		}
 		return;
 	}
 
 	/* Unmap the location code DMA buffer */
 	fsp_tce_unmap(PSI_DMA_LOC_COD_BUF, PSI_DMA_LOC_COD_BUF_SZ);
 
-	/* Respond the FSP */
-	fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
+	resp = fsp_mkmsg(cmd, 0);
+	if (!resp) {
+		prerror("LED: Failed to allocate FSP_RSP_RET_LED_BUFFER\n");
+		return;
+	}
+	if (fsp_queue_msg(resp, fsp_freemsg)) {
+		prerror("LED: Failed to queue FSP_RSP_RET_LED_BUFFER\n");
+	}
 }
 
 static void fsp_ret_led_state(char *loc_code)
 {
 	struct fsp_led_data *led, *next;
 	u8 ind_state = 0;
+	struct fsp_msg *msg;
 
 	list_for_each_safe(&cec_ledq, led, next, link) {
 		if (strcmp(loc_code, led->loc_code))
@@ -605,8 +660,14 @@ static void fsp_ret_led_state(char *loc_code)
 			ind_state |= FSP_IND_IDENTIFY_ACTV;
 		if (led->status & SPCN_LED_FAULT_MASK)
 			ind_state |= FSP_IND_FAULT_ACTV;
-		fsp_queue_msg(fsp_mkmsg(FSP_RSP_GET_LED_STATE, 1, ind_state),
-			      fsp_freemsg);
+		msg = fsp_mkmsg(FSP_RSP_GET_LED_STATE, 1, ind_state);
+		if (!msg) {
+			prerror("LED: Couldn't alloc FSP_RSP_GET_LED_STATE\n");
+			return;
+		}
+		if (fsp_queue_msg(msg, fsp_freemsg)) {
+			prerror("LED: Couldn't queue FSP_RSP_GET_LED_STATE\n");
+		}
 		return;
 	}
 
@@ -614,8 +675,16 @@ static void fsp_ret_led_state(char *loc_code)
 	log_simple_error(&e_info(OPAL_RC_LED_LC),
 		"LED: Could not find the location code LC=%s\n", loc_code);
 
-	fsp_queue_msg(fsp_mkmsg(FSP_RSP_GET_LED_STATE |
-				FSP_STATUS_INVALID_LC, 1, 0xff), fsp_freemsg);
+	msg = fsp_mkmsg(FSP_RSP_GET_LED_STATE | FSP_STATUS_INVALID_LC, 1, 0xff);
+	if (!msg) {
+		prerror("LED: Failed to alloc FSP_RSP_GET_LED_STATE "
+			"| FSP_STATUS_INVALID_LC\n");
+		return;
+	}
+	if (fsp_queue_msg(msg, fsp_freemsg)) {
+		prerror("LED: Failed to queue FSP_RSP_GET_LED_STATE "
+			"| FSP_STATUS_INVALID_LC\n");
+	}
 }
 
 /*
@@ -632,9 +701,18 @@ void fsp_get_led_state(struct fsp_msg *msg)
 	/* Parse the inbound buffer */
 	buf = fsp_inbound_buf_from_tce(tce_token);
 	if (!buf) {
-		fsp_queue_msg(fsp_mkmsg(FSP_RSP_GET_LED_STATE |
-					FSP_STATUS_INVALID_DATA, 0),
-			      fsp_freemsg);
+		struct fsp_msg *msg;
+		msg = fsp_mkmsg(FSP_RSP_GET_LED_STATE |
+				FSP_STATUS_INVALID_DATA, 0);
+		if (!msg) {
+			prerror("LED: Failed to allocate FSP_RSP_GET_LED_STATE"
+				"|FSP_STATUS_INVALID_DATA\n");
+			return;
+		}
+		if (fsp_queue_msg(msg, fsp_freemsg)) {
+			prerror("LED: Failed to queue  FSP_RSP_GET_LED_STATE"
+				"|FSP_STATUS_INVALID_DATA\n");
+		}
 		return;
 	}
 	memcpy(&req, buf, sizeof(req));
@@ -671,13 +749,24 @@ void fsp_set_led_state(struct fsp_msg *msg)
 	u32 tce_token = msg->data.words[1];
 	bool command, state;
 	void *buf;
+	struct fsp_msg *resp;
 
 	/* Parse the inbound buffer */
 	buf = fsp_inbound_buf_from_tce(tce_token);
 	if (!buf) {
-		fsp_queue_msg(fsp_mkmsg(FSP_RSP_SET_LED_STATE |
-					FSP_STATUS_INVALID_DATA,
-					0), fsp_freemsg);
+		struct fsp_msg *msg;
+		msg = fsp_mkmsg(FSP_RSP_SET_LED_STATE |
+				FSP_STATUS_INVALID_DATA,
+				0);
+		if (!msg) {
+			prerror("LED: Couldn't allocate FSP_RSP_SET_LED_STATE |"
+				" FSP_STATUS_INVALID_DATA\n");
+			return;
+		}
+		if (fsp_queue_msg(msg, fsp_freemsg)) {
+			prerror("LED: Couldn't queue FSP_RSP_SET_LED_STATE |"
+				" FSP_STATUS_INVALID_DATA\n");
+		}
 		return;
 	}
 	memcpy(&req, buf, sizeof(req));
@@ -732,9 +821,17 @@ void fsp_set_led_state(struct fsp_msg *msg)
 				req.loc_code);
 		break;
 	default:
-		fsp_queue_msg(fsp_mkmsg(FSP_RSP_SET_LED_STATE |
-					FSP_STATUS_NOT_SUPPORTED, 0),
-			      fsp_freemsg);
+		resp = fsp_mkmsg(FSP_RSP_SET_LED_STATE |
+				 FSP_STATUS_NOT_SUPPORTED, 0);
+		if (!resp) {
+			prerror("LED: Unable to alloc FSP_RSP_SET_LED_STATE |"
+				" FSP_STATUS_NOT_SUPPORTED\n");
+			break;
+		}
+		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			prerror("LED: Failed to queue FSP_RSP_SET_LED_STATE |"
+				" FSP_STATUS_NOT_SUPPORTED\n");
+		}
 	}
 }
 
@@ -742,6 +839,7 @@ void fsp_set_led_state(struct fsp_msg *msg)
 static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
 	u32 cmd;
+	struct fsp_msg *resp;
 
 	/* LED support not available yet */
 	if (!led_support) {
@@ -837,7 +935,15 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 			return false;
 	}
 	cmd |= FSP_STATUS_GENERIC_ERROR;
-	fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg);
+	resp = fsp_mkmsg(cmd, 0);
+	if (!resp) {
+		prerror("LED: Failed to allocate FSP_STATUS_GENERIC_ERROR\n");
+		return false;
+	}
+	if (fsp_queue_msg(resp, fsp_freemsg)) {
+		prerror("LED: Failed to queue FSP_STATUS_GENERIC_ERROR\n");
+		return false;
+	}
 	return true;
 }
 
