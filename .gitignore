@@ -36,4 +36,5 @@ libc/test/run-time
 libc/test/run-time-gcov
 libflash/test/test-flash
 libflash/test/test-flash-gcov
+test/hello_world/hello_kernel/hello_kernel
 VERSION

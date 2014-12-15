@@ -1,0 +1,23 @@
+HELLO_WORLD_TEST := test/hello_world/hello_kernel/hello_kernel
+
+check: $(HELLO_WORLD_TEST:%=%-check)
+
+$(HELLO_WORLD_TEST:%=%-check) : %-check: %
+	./test/hello_world/run_hello_world.sh
+
+CFLAGS=-I.
+ASFLAGS=-I.
+
+test/hello_world/hello_kernel/hello_kernel.o: test/hello_world/hello_kernel/hello_kernel.S
+	$(call Q,CC, $(CC) -m64 -c -Itest/hello_world/hello_kernel/ -o $@ $^ ,$@)
+
+hello_kernel_LDFLAGS=-m64 -Wl,--build-id=none -T test/hello_world/hello_kernel/hello_kernel.ld -ffreestanding -nostdlib -Ttext=0x0 -lgcc
+
+test/hello_world/hello_kernel/hello_kernel: test/hello_world/hello_kernel/hello_kernel.o
+	$(call Q,LD, $(CC) $(hello_kernel_LDFLAGS) -o $@ $^ , $@)
+
+clean: hello_world-test-clean
+
+hello_world-test-clean:
+	$(RM) -f test/hello_world/hello_kernel/hello_kernel
+	$(RM) -f test/hello_world/hello_kernel/hello_kernel.o
