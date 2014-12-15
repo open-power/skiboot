@@ -5,9 +5,6 @@ check: $(HELLO_WORLD_TEST:%=%-check)
 $(HELLO_WORLD_TEST:%=%-check) : %-check: %
 	./test/hello_world/run_hello_world.sh
 
-CFLAGS=-I.
-ASFLAGS=-I.
-
 test/hello_world/hello_kernel/hello_kernel.o: test/hello_world/hello_kernel/hello_kernel.S
 	$(call Q,CC, $(CC) -m64 -c -Itest/hello_world/hello_kernel/ -o $@ $^ ,$@)
 
