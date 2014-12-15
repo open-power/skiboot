@@ -29,7 +29,7 @@ CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 # Host tools and options
 HOSTCC=gcc
 HOSTEND=$(shell uname -m | sed -e 's/^i.*86$$/LITTLE/' -e 's/^x86.*/LITTLE/' -e 's/^ppc.*/BIG/')
-HOSTCFLAGS=-O1 $(CWARNS) -DHAVE_$(HOSTEND)_ENDIAN
+HOSTCFLAGS=-O1 $(CWARNS) -DHAVE_$(HOSTEND)_ENDIAN -MMD
 VALGRIND=valgrind -q --show-reachable=yes --error-exitcode=99
 
 # Target options

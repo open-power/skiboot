@@ -14,15 +14,8 @@ $(LIBC_TEST:%=%-check) : %-check: %
 $(LIBC_TEST) : % : %.c
 	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -I libc/include -o $@ $<
 
-$(LIBC_TEST): % : %.d
-
 $(LIBC_TEST:%=%-gcov): %-gcov : %.c %
 	$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -lgcov -O0 -g -I include -I . -I libfdt -I libc/include -o $@ $<
-
-$(LIBC_TEST:%=%-gcov): % : $(%.d:-gcov=)
-
-libc/test/%.d: libc/test/%.c
-	$(HOSTCC) $(HOSTCFLAGS) -I include -I . -I libfdt -I libc/include -M $< > $@
 
 -include $(wildcard libc/test/*.d)
 

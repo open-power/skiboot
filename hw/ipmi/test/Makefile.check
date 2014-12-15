@@ -14,15 +14,10 @@ $(IPMI_TEST:%=%-check) : %-check: %
 $(IPMI_TEST) : % : %.c
 	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -o $@ $<
 
-$(IPMI_TEST): % : %.d
-
 $(IPMI_TEST:%=%-gcov): %-gcov : %.c %
 	$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -O0 -g -I include -I . -I libfdt -lgcov -o $@ $<
 
 $(IPMI_TEST:%=%-gcov): % : $(%.d:-gcov=)
-
-hw/ipmi/test/%.d: hw/ipmi/test/%.c
-	$(HOSTCC) $(HOSTCFLAGS) -I include -I . -I libfdt -M $< > $@
 
 -include $(wildcard hw/ipmi/test/*.d)
 

@@ -22,7 +22,7 @@ $(LIBFLASH_TEST) : % : %.c
 $(LIBFLASH_TEST:%=%-gcov): %-gcov : %.c %
 	$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -lgcov -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o
 
-$(LIBFLASH_TEST:%=%-gcov): % : $(%.d:-gcov=)
+-include $(wildcard libflash/test/*.d)
 
 clean: libflash-test-clean
 

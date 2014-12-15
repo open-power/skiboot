@@ -12,6 +12,8 @@ hdata/test/stubs.o: hdata/test/stubs.c
 hdata/test/hdata_to_dt: hdata/test/hdata_to_dt.c hdata/test/stubs.o
 	$(HOSTCC) $(HOSTCFLAGS) -DTEST -O0 -g -I hdata -I include -I . -I libfdt -o $@ $< hdata/test/stubs.o
 
+-include $(wildcard hdata/test/*.d)
+
 clean: hdata-test-clean
 
 hdata-test-clean:

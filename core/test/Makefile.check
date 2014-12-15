@@ -19,17 +19,8 @@ $(CORE_TEST) : core/test/stubs.o
 $(CORE_TEST) : % : %.c
 	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -o $@ $< core/test/stubs.o
 
-$(CORE_TEST): % : %.d
-
 $(CORE_TEST:%=%-gcov): %-gcov : %.c %
 	$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -O0 -g -I include -I . -I libfdt -lgcov -o $@ $< core/test/stubs.o
-
-$(CORE_TEST:%=%-gcov): % : $(%.d:-gcov=)
-
-core/test/stubs.o: core/test/stubs.d
-
-core/test/%.d: core/test/%.c
-	$(HOSTCC) $(HOSTCFLAGS) -I include -I . -I libfdt -M $< > $@
 
 -include $(wildcard core/test/*.d)
 

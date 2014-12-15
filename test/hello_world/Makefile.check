@@ -2,13 +2,15 @@ HELLO_WORLD_TEST := test/hello_world/hello_kernel/hello_kernel
 
 check: $(HELLO_WORLD_TEST:%=%-check)
 
-$(HELLO_WORLD_TEST:%=%-check) : %-check: %
+$(HELLO_WORLD_TEST:%=%-check) : %-check: % skiboot.lid
 	./test/hello_world/run_hello_world.sh
 
 test/hello_world/hello_kernel/hello_kernel.o: test/hello_world/hello_kernel/hello_kernel.S
-	$(call Q,CC, $(CC) -m64 -c -Itest/hello_world/hello_kernel/ -o $@ $^ ,$@)
+	$(call Q,CC, $(CC) -m64 -c -MMD -Itest/hello_world/hello_kernel/ -o $@ $^ ,$@)
 
 hello_kernel_LDFLAGS=-m64 -Wl,--build-id=none -T test/hello_world/hello_kernel/hello_kernel.ld -ffreestanding -nostdlib -Ttext=0x0 -lgcc
+
+-include $(wildcard test/hello_world/hello_kernel/*.d)
 
 test/hello_world/hello_kernel/hello_kernel: test/hello_world/hello_kernel/hello_kernel.o
 	$(call Q,LD, $(CC) $(hello_kernel_LDFLAGS) -o $@ $^ , $@)
