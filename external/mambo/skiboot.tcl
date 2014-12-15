@@ -25,7 +25,10 @@ mconfig boot_load MAMBO_BOOT_LOAD 0
 mconfig boot_pc	MAMBO_BOOT_PC 0x10
 
 # Payload: Allow for a Linux style ramdisk/initrd
-mconfig payload PAYLOAD /tmp/zImage.epapr
+if { ![info exists env(SKIBOOT_ZIMAGE)] } {
+	error "Please set SKIBOOT_ZIMAGE to the path of your zImage.epapr"
+}
+mconfig payload PAYLOAD $env(SKIBOOT_ZIMAGE)
 
 # Paylod: Memory location for a Linux style ramdisk/initrd
 mconfig payload_addr PAYLOAD_ADDR 0x20000000;
