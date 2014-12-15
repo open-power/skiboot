@@ -6,6 +6,9 @@
 # Example: CROSS= powerpc64-unknown-linux-gnu-
 #
 ARCH = $(shell uname -m)
+ifdef CROSS_COMPILE
+	CROSS ?= $(CROSS_COMPILE)
+endif
 ifeq ("$(ARCH)", "ppc64")
 	CROSS ?=
 else
