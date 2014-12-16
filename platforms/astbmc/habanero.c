@@ -32,7 +32,7 @@ static bool habanero_probe(void)
 	/* Temporary ... eventually we'll get that in compatible */
 	model = dt_prop_get_def(dt_root, "model", NULL);
 	if ((!model || !strstr(model, "habanero")) &&
-	    (!dt_node_is_compatible(dt_root, "ibm,habanero")))
+	    (!dt_node_is_compatible(dt_root, "tyan,habanero")))
 		return false;
 
 	/* Lot of common early inits here */

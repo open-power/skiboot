@@ -33,7 +33,7 @@ static bool palmetto_probe(void)
 	/* Temporary ... eventually we'll get that in compatible */
 	model = dt_prop_get_def(dt_root, "model", NULL);
 	if ((!model || !strstr(model, "palmetto")) &&
-	    (!dt_node_is_compatible(dt_root, "ibm,palmetto")))
+	    (!dt_node_is_compatible(dt_root, "tyan,palmetto")))
 		return false;
 
 	/* Lot of common early inits here */
