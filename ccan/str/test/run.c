@@ -25,6 +25,9 @@ int main(int argc, char *argv[])
 {
 	unsigned int i, j, n;
 	char *strings[NUM_SUBSTRINGS * NUM_SUBSTRINGS];
+
+	(void)argc;
+	(void)argv;
 	
 	n = 0;
 	for (i = 0; i < NUM_SUBSTRINGS; i++) {

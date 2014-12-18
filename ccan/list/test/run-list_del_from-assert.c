@@ -14,6 +14,9 @@ int main(int argc, char *argv[])
 	pid_t child;
 	int status;
 
+	(void)argc;
+	(void)argv;
+
 	plan_tests(1);
 	list_head_init(&list1);
 	list_head_init(&list2);
@@ -25,6 +28,7 @@ int main(int argc, char *argv[])
 	if (child) {
 		wait(&status);
 	} else {
+		close(2); /* Close stderr so we don't print confusing assert */
 		/* This should abort. */
 		list_del_from(&list1, &n3);
 		exit(0);

@@ -167,8 +167,8 @@ coverage-report: skiboot.info
 	genhtml -q -o $@ $<
 
 skiboot.info: coverage
-	lcov -q -c -d . -o $@
-
+	lcov -q -c -d . $(LCOV_DIRS) -o $@
+	lcov -q -r $@ $(LCOV_EXCLUDE) -o $@
 
 tags:
 	find . -name '*.[chS]' | xargs ctags
@@ -176,7 +176,7 @@ tags:
 TAGS:
 	find . -name '*.[chS]' | xargs etags
 
-.PHONY: tags TAGS check
+.PHONY: tags TAGS check coverage
 
 cscope:
 	find . -name '*.[chS]' | xargs cscope

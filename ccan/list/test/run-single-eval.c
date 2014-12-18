@@ -28,6 +28,9 @@ int main(int argc, char *argv[])
 		node_count = 0;
 	struct list_head list = LIST_HEAD_INIT(list);
 
+	(void)argc;
+	(void)argv;
+
 	plan_tests(74);
 	/* Test LIST_HEAD, LIST_HEAD_INIT, list_empty and check_list */
 	ok1(list_empty(ref(&static_list, static_count)));

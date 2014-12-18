@@ -12,6 +12,9 @@ int main(int argc, char *argv[])
 	int *intp = &foo.a;
 	char *charp = &foo.b;
 
+	(void)argc;
+	(void)argv;
+
 	plan_tests(6);
 	ok1(container_of(intp, struct foo, a) == &foo);
 	ok1(container_of(charp, struct foo, b) == &foo);

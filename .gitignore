@@ -18,6 +18,8 @@ cscope.out
 asm/asm-offsets.s
 include/asm-offsets.h
 version.c
+ccan/*/test/*-gcov
+ccan/*/test/gmon.out
 core/test/run-device
 core/test/run-malloc
 core/test/run-malloc-speed

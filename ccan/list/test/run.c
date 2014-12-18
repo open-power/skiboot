@@ -1,3 +1,4 @@
+#include <ccan/list/test/helper.c>
 #include <ccan/list/list.h>
 #include <ccan/tap/tap.h>
 #include <ccan/list/list.c>
@@ -24,6 +25,9 @@ int main(int argc, char *argv[])
 	struct list_head list = LIST_HEAD_INIT(list);
 	opaque_t *q, *nq;
 	struct list_head opaque_list = LIST_HEAD_INIT(opaque_list);
+
+	(void)argc;
+	(void)argv;
 
 	plan_tests(65);
 	/* Test LIST_HEAD, LIST_HEAD_INIT, list_empty and check_list */

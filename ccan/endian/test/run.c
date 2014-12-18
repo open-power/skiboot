@@ -18,6 +18,9 @@ int main(int argc, char *argv[])
 		unsigned char u16_bytes[2];
 	} u16;
 
+	(void)argc;
+	(void)argv;
+
 	plan_tests(48);
 
 	/* Straight swap tests. */

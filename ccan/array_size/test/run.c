@@ -18,6 +18,9 @@ static int array4_size = ARRAY_SIZE(array4);
 
 int main(int argc, char *argv[])
 {
+	(void)argc;
+	(void)argv;
+
 	plan_tests(8);
 	ok1(array1_size == 1);
 	ok1(array2_size == 2);
