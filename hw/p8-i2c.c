@@ -998,11 +998,9 @@ static void p8_i2c_free_request(struct i2c_request *req)
 	free(request);
 }
 
-static inline uint32_t p8_i2c_get_bit_rate_divisor(uint32_t lb_freq_hz,
+static inline uint32_t p8_i2c_get_bit_rate_divisor(uint32_t lb_freq,
 						   uint32_t bus_speed)
 {
-	uint64_t lb_freq = lb_freq_hz / 1000;
-
 	return (((lb_freq / bus_speed) - 1) / 4);
 }
 
@@ -1011,7 +1009,7 @@ static inline uint64_t p8_i2c_get_poll_interval(uint32_t bus_speed)
 	uint64_t usec;
 
 	/* Polling Interval = 8 * (1/bus_speed) * (1/10) -> convert to uSec */
-	usec = ((8 * USEC_PER_SEC) / (10 * bus_speed * 1000));
+	usec = ((8 * USEC_PER_SEC) / (10 * bus_speed));
 	return usecs_to_tb(usec);
 }
 
@@ -1194,7 +1192,6 @@ void p8_i2c_init(void)
 			port->port_num = dt_prop_get_u32(i2cm_port, "reg");
 			port->master = master;
 			speed = dt_prop_get_u32(i2cm_port, "bus-frequency");
-			speed /= 1000;
 			if (speed > max_bus_speed)
 				max_bus_speed = speed;
 			port->bit_rate_div =
@@ -1207,7 +1204,7 @@ void p8_i2c_init(void)
 			prlog(PR_INFO, " P%d: <%s> %d kHz\n",
 			      port->port_num,
 			      (char *)dt_prop_get(i2cm_port, "ibm,port-name"),
-			      speed);
+			      speed/1000);
 			port++;
 		}
 
