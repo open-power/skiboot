@@ -14,7 +14,12 @@ if [ ! -x "$MAMBO_PATH/$MAMBO_BINARY" ]; then
     exit 0;
 fi
 
-if [ ! -x `which expect` ]; then
+if [ -n "$KERNEL" ]; then
+    echo 'Please rebuild skiboot without KERNEL set. Skipping hello_world test';
+    exit 0;
+fi
+
+if [ ! `command -v expect` ]; then
     echo 'Could not find expect binary. Skipping hello_world test';
     exit 0;
 fi
