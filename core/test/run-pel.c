@@ -74,7 +74,11 @@ int main(void)
 	elog->elog_origin = ORG_SAPPHIRE;
 
 	size = pel_size(elog);
-	printf("PEL Size: %ld\n", size);
+
+	printf("Test buffer too small: ");
+	assert(0 == create_pel_log(elog, NULL, size - 1));
+
+	assert(size <= PEL_MIN_SIZE + 4);
 	assert(size == create_pel_log(elog, pel_buf, size));
 
 	return 0;

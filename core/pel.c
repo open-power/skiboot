@@ -237,7 +237,7 @@ int create_pel_log(struct errorlog *elog_data, char *pel_buffer,
 	int pel_offset = 0;
 
 	if (pel_buffer_size < pel_size(elog_data)) {
-		prerror("PEL buffer too small to create record");
+		prerror("PEL buffer too small to create record\n");
 		return 0;
 	}
 
