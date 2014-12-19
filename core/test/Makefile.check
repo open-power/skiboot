@@ -6,21 +6,21 @@ check: $(CORE_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
 coverage: $(CORE_TEST:%=%-gcov-run)
 
 $(CORE_TEST:%=%-gcov-run) : %-run: %
-	$<
+	$(call Q, TEST-COVERAGE ,$< , $<)
 
 $(CORE_TEST:%=%-check) : %-check: %
-	$(VALGRIND) $<
+	$(call Q, RUN-TEST ,$(VALGRIND) $<, $<)
 
 core/test/stubs.o: core/test/stubs.c
-	$(HOSTCC) $(HOSTCFLAGS) -g -c -o $@ $<
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -g -c -o $@ $<, $<)
 
 $(CORE_TEST) : core/test/stubs.o
 
 $(CORE_TEST) : % : %.c
-	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -o $@ $< core/test/stubs.o
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -o $@ $< core/test/stubs.o, $<)
 
 $(CORE_TEST:%=%-gcov): %-gcov : %.c %
-	$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -O0 -g -I include -I . -I libfdt -lgcov -o $@ $< core/test/stubs.o
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -O0 -g -I include -I . -I libfdt -lgcov -o $@ $< core/test/stubs.o, $<)
 
 -include $(wildcard core/test/*.d)
 

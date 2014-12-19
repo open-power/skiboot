@@ -6,21 +6,21 @@ check: $(LIBFLASH_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
 coverage: $(LIBFLASH_TEST:%=%-gcov-run)
 
 $(LIBFLASH_TEST:%=%-gcov-run) : %-run: %
-	$<
+	$(call Q, TEST-COVERAGE ,$< , $<)
 
 $(LIBFLASH_TEST:%=%-check) : %-check: %
-	$(VALGRIND) $<
+	$(call Q, RUN-TEST ,$(VALGRIND) $<, $<)
 
 libflash/test/stubs.o: libflash/test/stubs.c
-	$(HOSTCC) $(HOSTCFLAGS) -g -c -o $@ $<
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -g -c -o $@ $<, $<)
 
 $(LIBFLASH_TEST) : libflash/test/stubs.o libflash/libflash.c
 
 $(LIBFLASH_TEST) : % : %.c 
-	$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o, $<)
 
 $(LIBFLASH_TEST:%=%-gcov): %-gcov : %.c %
-	$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -lgcov -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -lgcov -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o, $<)
 
 -include $(wildcard libflash/test/*.d)
 
