@@ -1,6 +1,8 @@
 # -*-Makefile-*-
 IPMI_TEST := hw/ipmi/test/run-fru
 
+LCOV_EXCLUDE += $(IPMI_TEST:%=%.c)
+
 check: $(IPMI_TEST:%=%-check) $(IPMI_TEST:%=%-gcov-run)
 
 coverage: $(IPMI_TEST:%=%-gcov-run)

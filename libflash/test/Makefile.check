@@ -1,6 +1,8 @@
 # -*-Makefile-*-
 LIBFLASH_TEST := libflash/test/test-flash
 
+LCOV_EXCLUDE += $(LIBFLASH_TEST:%=%.c)
+
 check: $(LIBFLASH_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
 
 coverage: $(LIBFLASH_TEST:%=%-gcov-run)

@@ -1,6 +1,8 @@
 # -*-Makefile-*-
 LIBC_TEST := libc/test/run-time
 
+LCOV_EXCLUDE += $(LIBC_TEST:%=%.c)
+
 check: $(LIBC_TEST:%=%-check)
 
 coverage: $(LIBC_TEST:%=%-gcov-run)
