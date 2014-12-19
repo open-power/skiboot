@@ -49,5 +49,6 @@ clean: core-test-clean
 
 core-test-clean:
 	$(RM) -f core/test/*.[od] $(CORE_TEST) $(CORE_TEST:%=%-gcov)
+	$(RM) -f $(CORE_TEST_NOSTUB) $(CORE_TEST_NOSTUB:%=%-gcov)
 	$(RM) -f *.gcda *.gcno skiboot.info
 	$(RM) -rf coverage-report
