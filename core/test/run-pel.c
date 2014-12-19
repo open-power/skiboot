@@ -57,6 +57,8 @@ int main(void)
 	size_t size;
 	struct errorlog *elog;
 	struct opal_err_info *opal_err_info = &err_TEST_ERROR;
+	char *buffer;
+	struct elog_user_data_section *tmp;
 
 	elog = malloc(sizeof(struct errorlog));
 	pel_buf = malloc(PEL_MIN_SIZE + 4);
@@ -80,6 +82,37 @@ int main(void)
 
 	assert(size <= PEL_MIN_SIZE + 4);
 	assert(size == create_pel_log(elog, pel_buf, size));
+
+	memset(elog, 0, sizeof(struct errorlog));
+
+	elog->error_event_type = opal_err_info->err_type;
+	elog->component_id = opal_err_info->cmp_id;
+	elog->subsystem_id = opal_err_info->subsystem;
+	elog->event_severity = opal_err_info->sev;
+	elog->event_subtype = opal_err_info->event_subtype;
+	elog->reason_code = opal_err_info->reason_code;
+	elog->elog_origin = ORG_SAPPHIRE;
+
+	size = pel_size(elog);
+	pel_buf = realloc(pel_buf, size);
+	assert(pel_buf);
+	
+	buffer = elog->user_data_dump + elog->user_section_size;
+	tmp = (struct elog_user_data_section *)buffer;
+	tmp->tag = 0x44455343;  /* ASCII of DESC */
+	tmp->size = size + sizeof(struct elog_user_data_section) - 1;
+	strcpy(tmp->data_dump, "Hello World!");
+	elog->user_section_size += tmp->size;
+	elog->user_section_count++;
+
+	size = pel_size(elog);
+	pel_buf = realloc(pel_buf, size);
+	assert(pel_buf);
+
+	assert(size == create_pel_log(elog, pel_buf, size));
+
+	free(pel_buf);
+	free(elog);
 
 	return 0;
 }
