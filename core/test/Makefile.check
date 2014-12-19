@@ -1,16 +1,29 @@
 # -*-Makefile-*-
 CORE_TEST := core/test/run-device core/test/run-mem_region core/test/run-malloc core/test/run-malloc-speed core/test/run-mem_region_init core/test/run-mem_region_release_unused core/test/run-mem_region_release_unused_noalloc core/test/run-trace core/test/run-msg core/test/run-pel core/test/run-pool core/test/run-timer
 
+CORE_TEST_NOSTUB := core/test/run-console-log
+
 LCOV_EXCLUDE += $(CORE_TEST:%=%.c) core/test/stubs.c
+LCOV_EXCLUDE += $(CORE_TEST_NOSTUB:%=%.c) /usr/include/*
 
 check: $(CORE_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
 
+check: $(CORE_TEST_NOSTUB:%=%-check) $(CORE_TEST_NOSTUB:%=%-gcov-run)
+
 coverage: $(CORE_TEST:%=%-gcov-run)
+
+coverage: $(CORE_TEST_NOSTUB:%=%-gcov-run)
 
 $(CORE_TEST:%=%-gcov-run) : %-run: %
 	$(call Q, TEST-COVERAGE ,$< , $<)
 
+$(CORE_TEST_NOSTUB:%=%-gcov-run) : %-run: %
+	$(call Q, TEST-COVERAGE ,$< , $<)
+
 $(CORE_TEST:%=%-check) : %-check: %
+	$(call Q, RUN-TEST ,$(VALGRIND) $<, $<)
+
+$(CORE_TEST_NOSTUB:%=%-check) : %-check: %
 	$(call Q, RUN-TEST ,$(VALGRIND) $<, $<)
 
 core/test/stubs.o: core/test/stubs.c
@@ -21,8 +34,14 @@ $(CORE_TEST) : core/test/stubs.o
 $(CORE_TEST) : % : %.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -o $@ $< core/test/stubs.o, $<)
 
+$(CORE_TEST_NOSTUB) : % : %.c
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -o $@ $< , $<)
+
 $(CORE_TEST:%=%-gcov): %-gcov : %.c %
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -O0 -g -I include -I . -I libfdt -lgcov -o $@ $< core/test/stubs.o, $<)
+
+$(CORE_TEST_NOSTUB:%=%-gcov) : %-gcov : %.c %
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -O0 -g -I include -I . -I libfdt -lgcov -o $@ $< , $<)
 
 -include $(wildcard core/test/*.d)
 
