@@ -5,6 +5,7 @@
 *.gcno
 *.rej
 *.swp
+.version
 skiboot-nosection.elf
 skiboot.elf
 skiboot.lds
@@ -19,6 +20,15 @@ asm/asm-offsets.s
 include/asm-offsets.h
 version.c
 ccan/*/test/*-gcov
+ccan/*/test/run
+ccan/build_assert/test/run-BUILD_ASSERT_OR_ZERO
+ccan/list/test/run-check-corrupt
+ccan/list/test/run-list_del_from-assert
+ccan/list/test/run-single-eval
+ccan/list/test/run-with-debug
+ccan/str/test/run-STR_MAX_CHARS
+core/test/run-console-log
+core/test/run-timer
 ccan/*/test/gmon.out
 core/test/run-device
 core/test/run-malloc
@@ -34,9 +44,10 @@ core/test/run-trace
 core/test/*-gcov
 external/dump_trace
 hdata/test/hdata_to_dt
+hw/ipmi/test/run-fru
+hw/ipmi/test/*-gcov
 libc/test/run-time
 libc/test/run-time-gcov
 libflash/test/test-flash
 libflash/test/test-flash-gcov
 test/hello_world/hello_kernel/hello_kernel
-VERSION
