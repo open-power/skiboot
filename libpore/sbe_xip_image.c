@@ -1628,9 +1628,11 @@ sbe_xip_normalize(void* io_image)
     int rc, i;
     SbeXipSection section;
     SbeXipToc* imageToc;
-    SbeXipHashedToc* fixedImageToc;
-    SbeXipHashedToc* fixedTocEntry;
-    size_t tocEntries, fixedTocEntries, fixedEntriesRemaining;
+    SbeXipHashedToc* fixedImageToc = NULL;
+    SbeXipHashedToc* fixedTocEntry = NULL;
+    size_t tocEntries = 0;
+    size_t fixedTocEntries = 0;
+    size_t fixedEntriesRemaining = 0;
        
     do {
         rc = xipQuickCheck(io_image, 0);
