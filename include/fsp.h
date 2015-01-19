@@ -730,8 +730,6 @@ extern void fsp_nvram_wait_open(void);
 
 /* RTC */
 extern void fsp_rtc_init(void);
-extern int fsp_rtc_get_cached_tod(uint32_t *year_month_day,
-		uint64_t *hour_minute_second_millisecond);
 
 /* ELOG */
 extern void fsp_elog_read_init(void);
