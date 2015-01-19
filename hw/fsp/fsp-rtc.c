@@ -158,6 +158,7 @@ static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 
 	case FSP_STATUS_SUCCESS:
 		/* Save the read RTC value in our cache */
+		rtc_tod_state = RTC_TOD_VALID;
 		datetime_to_tm(read_resp->data.words[0],
 			       (u64) read_resp->data.words[1] << 32, &tm);
 		rtc_cache_update(&tm);
