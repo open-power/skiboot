@@ -130,29 +130,37 @@ static void firenze_dt_fixup_i2cm(void)
 	case LX_VPD_SHARK_BACKPLANE: /* XXX confirm ? */
 		/* i2c nodes on chip 0x10 */
 		c = get_chip(0x10);
-		assert(c);
+		if (c) {
+			/* Engine 1 */
+			master = dt_create_i2c_master(c->devnode, 1);
+			assert(master);
+			snprintf(name, sizeof(name), "p8_%08x_e%dp%d", c->id, 1, 0);
+			bus = dt_create_i2c_bus(master, name, 0);
+			assert(bus);
+			dev = dt_create_i2c_device(bus, 0x39, "power-control",
+						   "maxim,5961", "pcie-hotplug");
+			assert(dev);
+			dt_add_property_strings(dev, "target-list", "slot-C4",
+						"slot-C5");
 
-		/* Engine 1 */
-		master = dt_create_i2c_master(c->devnode, 1);
-		assert(master);
-		snprintf(name, sizeof(name), "p8_%08x_e%dp%d", c->id, 1, 0);
-		bus = dt_create_i2c_bus(master, name, 0);
-		assert(bus);
-		dev = dt_create_i2c_device(bus, 0x39, "power-control",
-					   "maxim,5961", "pcie-hotplug");
-		assert(dev);
-		dt_add_property_strings(dev, "target-list", "slot-C4", "slot-C5");
+			dev = dt_create_i2c_device(bus, 0x3a, "power-control",
+						   "maxim,5961", "pcie-hotplug");
+			assert(dev);
+			dt_add_property_strings(dev, "target-list", "slot-C2",
+						"slot-C3");
+		} else {
+			prlog(PR_INFO, "PLAT: Chip not found for the id 0x10\n");
+		}
 
-		dev = dt_create_i2c_device(bus, 0x3a, "power-control",
-					   "maxim,5961", "pcie-hotplug");
-		assert(dev);
-		dt_add_property_strings(dev, "target-list", "slot-C2", "slot-C3");
 	/* Fall through */
 	case LX_VPD_1S4U_BACKPLANE:
 	case LX_VPD_1S2U_BACKPLANE:
 		/* i2c nodes on chip 0 */
 		c = get_chip(0);
-		assert(c);
+		if (!c) {
+			prlog(PR_INFO, "PLAT: Chip not found for the id 0x0\n");
+			break;
+		}
 
 		/* Engine 1*/
 		master = dt_create_i2c_master(c->devnode, 1);
