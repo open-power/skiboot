@@ -4,7 +4,9 @@ LIBC_TEST := libc/test/run-time
 # We have some tricky tests that have system libc and skiboot libc,
 # so that we can test parts of skiboot libc but in userspace.
 
-LIBC_DUALLIB_TEST := libc/test/run-snprintf libc/test/run-memops
+LIBC_DUALLIB_TEST := libc/test/run-snprintf \
+	libc/test/run-memops \
+	libc/test/run-stdlib
 
 LCOV_EXCLUDE += $(LIBC_TEST:%=%.c) $(LIBC_DUALLIB_TEST:%=%.c) $(LIBC_DUALLIB_TEST:%=%-test.c)
 
