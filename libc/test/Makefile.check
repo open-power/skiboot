@@ -6,7 +6,8 @@ LIBC_TEST := libc/test/run-time
 
 LIBC_DUALLIB_TEST := libc/test/run-snprintf \
 	libc/test/run-memops \
-	libc/test/run-stdlib
+	libc/test/run-stdlib \
+	libc/test/run-ctype
 
 LCOV_EXCLUDE += $(LIBC_TEST:%=%.c) $(LIBC_DUALLIB_TEST:%=%.c) $(LIBC_DUALLIB_TEST:%=%-test.c)
 
