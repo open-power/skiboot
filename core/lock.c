@@ -31,10 +31,10 @@ bool bust_locks = true;
 
 static void lock_error(struct lock *l, const char *reason, uint16_t err)
 {
-	op_display(OP_FATAL, OP_MOD_LOCK, err);
-
 	fprintf(stderr, "LOCK ERROR: %s @%p (state: 0x%016lx)\n",
 		reason, l, l->lock_val);
+	op_display(OP_FATAL, OP_MOD_LOCK, err);
+
 	abort();
 }
 

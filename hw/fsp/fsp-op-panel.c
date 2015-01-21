@@ -63,7 +63,14 @@ void op_display(enum op_severity sev, enum op_module mod, uint16_t code)
 	 * in case of fatal errors
 	 */
 	fsp_fillmsg(&op_msg, FSP_CMD_DISP_SRC_DIRECT, 3, 1, w0, w1);
-	fsp_sync_msg(&op_msg, false);
+
+	if (sev == OP_FATAL) {
+		if(fsp_queue_msg(&op_msg, NULL))
+			prerror("Failed to queue FSP message for OP PANEL\n");
+	} else {
+		fsp_sync_msg(&op_msg, false);
+	}
+
 	unlock(&op_lock);
 }
 
