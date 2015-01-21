@@ -42,8 +42,11 @@ int rtc_cache_get(struct tm *tm)
 	unsigned long cache_age_sec;
 
 	lock(&rtc_tod_lock);
-	if (!rtc_tod_cache.valid)
+
+	if (!rtc_tod_cache.valid) {
+		unlock(&rtc_tod_lock);
 		return -1;
+	}
 
 	cache_age_sec = tb_to_msecs(mftb() - rtc_tod_cache.tb) / 1000;
 	*tm = rtc_tod_cache.tm;
