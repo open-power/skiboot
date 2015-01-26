@@ -1,0 +1,4 @@
+check: boot-check
+
+boot-check: skiboot.lid
+	./test/run_boot_test.sh
