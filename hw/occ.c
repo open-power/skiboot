@@ -128,6 +128,8 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 	u8 nr_pstates;
 	/* Arrays for device tree */
 	u32 *dt_id, *dt_freq;
+	u8 *dt_vdd, *dt_vcs;
+	bool rc;
 	int i;
 
 	prlog(PR_DEBUG, "OCC: CPU pstate state device tree init\n");
@@ -168,39 +170,63 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 		return false;
 	}
 
+	rc = false;
+
 	/* Setup arrays for device-tree */
 	/* Allocate memory */
 	dt_id = (u32 *) malloc(MAX_PSTATES * sizeof(u32));
 	if (!dt_id) {
 		printf("OCC: dt_id array alloc failure\n");
-		return false;
+		goto out;
 	}
 
 	dt_freq = (u32 *) malloc(MAX_PSTATES * sizeof(u32));
 	if (!dt_freq) {
 		printf("OCC: dt_freq array alloc failure\n");
-		free(dt_id);
-		return false;
+		goto out_free_id;
+	}
+
+	dt_vdd = (u8 *) malloc(MAX_PSTATES * sizeof(u8));
+	if (!dt_vdd) {
+		printf("OCC: dt_vdd array alloc failure\n");
+		goto out_free_freq;
+	}
+
+	dt_vcs = (u8 *) malloc(MAX_PSTATES * sizeof(u8));
+	if (!dt_vcs) {
+		printf("OCC: dt_vcs array alloc failure\n");
+		goto out_free_vdd;
 	}
 
 	for( i=0; i < nr_pstates; i++) {
 		dt_id[i] = occ_data->pstates[i].id;
 		dt_freq[i] = occ_data->pstates[i].freq_khz/1000;
+		dt_vdd[i] = occ_data->pstates[i].vdd;
+		dt_vcs[i] = occ_data->pstates[i].vcs;
 	}
 
 	/* Add the device-tree entries */
 	dt_add_property(power_mgt, "ibm,pstate-ids", dt_id, nr_pstates * 4);
 	dt_add_property(power_mgt, "ibm,pstate-frequencies-mhz", dt_freq, nr_pstates * 4);
+	dt_add_property(power_mgt, "ibm,pstate-vdds", dt_vdd, nr_pstates);
+	dt_add_property(power_mgt, "ibm,pstate-vcss", dt_vcs, nr_pstates);
 	dt_add_property_cells(power_mgt, "ibm,pstate-min", occ_data->pstate_min);
 	dt_add_property_cells(power_mgt, "ibm,pstate-nominal", occ_data->pstate_nom);
 	dt_add_property_cells(power_mgt, "ibm,pstate-max", occ_data->pstate_max);
 
 	/* Return pstate to set for each core */
 	*pstate_nom = occ_data->pstate_nom;
-	/* Free memory */
+	rc = true;
+
+	free(dt_vcs);
+out_free_vdd:
+	free(dt_vdd);
+out_free_id:
 	free(dt_id);
+out_free_freq:
 	free(dt_freq);
-	return true;
+out:
+	return rc;
 }
 
 /*
