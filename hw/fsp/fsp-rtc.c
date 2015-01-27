@@ -162,6 +162,9 @@ static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 		datetime_to_tm(read_resp->data.words[0],
 			       (u64) read_resp->data.words[1] << 32, &tm);
 		rtc_cache_update(&tm);
+		prlog(PR_TRACE, "FSP-RTC Got time: %d-%d-%d %d:%d:%d\n",
+		      tm.tm_year, tm.tm_mon, tm.tm_mday,
+		      tm.tm_hour, tm.tm_min, tm.tm_sec);
 		break;
 
 	default:
@@ -263,6 +266,9 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 		if (rtc_tod_state == RTC_TOD_VALID) {
 			rtc_cache_get_datetime(year_month_day,
 					hour_minute_second_millisecond);
+			prlog(PR_TRACE,"FSP-RTC Cached datetime: %x %llx\n",
+			      *year_month_day,
+			      *hour_minute_second_millisecond);
 			rc = OPAL_SUCCESS;
 		} else
 			rc = OPAL_INTERNAL_ERROR;
@@ -535,10 +541,12 @@ void fsp_rtc_init(void)
 
 	rc = fsp_sync_msg(&msg, false);
 
-	if (rc >= 0)
+	if (rc >= 0) {
 		fsp_rtc_process_read(&resp);
-	else
+	} else {
 		rtc_tod_state = RTC_TOD_PERMANENT_ERROR;
+		prlog(PR_ERR, "Failed to get initial FSP-RTC TOD %d\n",rc);
+	}
 
 	unlock(&rtc_lock);
 }
