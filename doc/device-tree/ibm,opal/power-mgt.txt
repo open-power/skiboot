@@ -1,0 +1,51 @@
+ibm,opal/power-mgt device tree entries
+--------------------------------------
+
+All available CPU idle states are listed in ibm,cpu-idle-state-names
+
+For example:
+ibm,cpu-idle-state-names = "nap", "fastsleep_", "winkle";
+
+The idle states are characterized by latency and residency
+numbers which determine the breakeven point for entry into them. The
+latency is a measure of the exit overhead from the idle state and
+residency is the minimum amount of time that a CPU must be predicted
+to be idle so as to reap the powersavings from entering into that idle
+state.
+
+These numbers are made use of by the cpuidle governors in the kernel to
+arrive at the appropriate idle state that a CPU must enter into when there is
+no work to be done. The values in ibm,cpu-idle-state-latencies-ns are the
+the measured latency numbers for the idle states. The residency numbers have
+been arrived at experimentally after ensuring that the performance of latency
+sensitive workloads do not regress while allowing deeper idle states to be
+entered into during low load situations. The kernel is expected to use these
+values for optimal power efficiency.
+ 
+ibm,cpu-idle-state-residency-ns = <0x1 0x2 0x3>
+ibm,cpu-idle-state-latencies-ns = <0x1 0x2 0x3>
+
+ibm,pstate-vcss ibm,pstate-vdds
+-------------------------------
+
+During characterisation, we'd like to allow userspace to see the vdd and
+vcs values exposed by the OCC. This change adds two new properties to
+expose these:
+    
+ ibm,pstate-vdds
+ ibm,pstate-vcss
+
+- containing one byte per pstate, representing the Vdd or Vcs value for
+  that pstate.
+
+
+FIXME: document these:
+ibm,cpu-idle-state-flags
+ibm,cpu-idle-state-names
+ibm,cpu-idle-state-pmicr
+ibm,cpu-idle-state-pmicr-mask
+ibm,pstate-frequencies-mhz
+ibm,pstate-ids
+ibm,pstate-max
+ibm,pstate-min
+ibm,pstate-nominal
