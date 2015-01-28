@@ -418,6 +418,7 @@ static bool idle_prepare_core(struct proc_chip *chip, struct cpu_thread *c)
 struct cpu_idle_states {
 	char name[MAX_NAME_LEN];
 	u32 latency_ns;
+	u32 residency_ns;
 	u32 flags;
 	u64 pmicr;
 	u64 pmicr_mask;
@@ -450,7 +451,8 @@ struct cpu_idle_states {
 static struct cpu_idle_states power7_cpu_idle_states[] = {
 	{ /* nap */
 		.name = "nap",
-		.latency_ns = 1000,
+		.latency_ns = 4000,
+		.residency_ns = 100000,
 		.flags = 0*IDLE_DEC_STOP \
 		       | 0*IDLE_TB_STOP  \
 		       | 1*IDLE_LOSE_USER_CONTEXT \
@@ -467,7 +469,8 @@ static struct cpu_idle_states power7_cpu_idle_states[] = {
 static struct cpu_idle_states power8_cpu_idle_states[] = {
 	{ /* nap */
 		.name = "nap",
-		.latency_ns = 1000,
+		.latency_ns = 4000,
+		.residency_ns = 100000,
 		.flags = 0*IDLE_DEC_STOP \
 		       | 0*IDLE_TB_STOP  \
 		       | 1*IDLE_LOSE_USER_CONTEXT \
@@ -479,7 +482,8 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 		.pmicr_mask = 0 },
 	{ /* fast sleep (with workaround) */
 		.name = "fastsleep_",
-		.latency_ns = 100000,
+		.latency_ns = 40000,
+		.residency_ns = 300000000,
 		.flags = 1*IDLE_DEC_STOP \
 		       | 1*IDLE_TB_STOP  \
 		       | 1*IDLE_LOSE_USER_CONTEXT \
@@ -493,6 +497,8 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 	{ /* Winkle */
 		.name = "winkle",
 		.latency_ns = 10000000,
+		.residency_ns = 1000000000, /* Placeholder only.Winkle is not used by 
+						the cpuidle subsystem today */
 		.flags = 1*IDLE_DEC_STOP \
 		       | 1*IDLE_TB_STOP  \
 		       | 1*IDLE_LOSE_USER_CONTEXT \
@@ -519,6 +525,7 @@ static void add_cpu_idle_state_properties(void)
 	/* Buffers to hold idle state properties */
 	char *name_buf;
 	u32 *latency_ns_buf;
+	u32 *residency_ns_buf;
 	u32 *flags_buf;
 	u64 *pmicr_buf;
 	u64 *pmicr_mask_buf;
@@ -586,6 +593,7 @@ static void add_cpu_idle_state_properties(void)
 	/* Allocate memory to idle state property buffers. */
 	name_buf	= (char *) malloc(nr_states * sizeof(char) * MAX_NAME_LEN);
 	latency_ns_buf	=  (u32 *) malloc(nr_states * sizeof(u32));
+	residency_ns_buf=  (u32 *) malloc(nr_states * sizeof(u32));
 	flags_buf	=  (u32 *) malloc(nr_states * sizeof(u32));
 	pmicr_buf	=  (u64 *) malloc(nr_states * sizeof(u64));
 	pmicr_mask_buf	=  (u64 *) malloc(nr_states * sizeof(u64));
@@ -609,6 +617,9 @@ static void add_cpu_idle_state_properties(void)
 			*latency_ns_buf = cpu_to_fdt32(states[i].latency_ns);
 			latency_ns_buf++;
 
+			*residency_ns_buf = cpu_to_fdt32(states[i].residency_ns);
+			residency_ns_buf++;
+
 			*flags_buf = cpu_to_fdt32(states[i].flags);
 			flags_buf++;
 
@@ -627,6 +638,7 @@ static void add_cpu_idle_state_properties(void)
 	/* Point buffer pointers back to beginning of the buffer */
 	name_buf -= name_buf_len;
 	latency_ns_buf -= num_supported_idle_states;
+	residency_ns_buf -= num_supported_idle_states;
 	flags_buf -= num_supported_idle_states;
 	pmicr_buf -= num_supported_idle_states;
 	pmicr_mask_buf -= num_supported_idle_states;
@@ -636,6 +648,8 @@ static void add_cpu_idle_state_properties(void)
 			name_buf_len* sizeof(char));
 	dt_add_property(power_mgt, "ibm,cpu-idle-state-latencies-ns",
 			latency_ns_buf, num_supported_idle_states * sizeof(u32));
+	dt_add_property(power_mgt, "ibm,cpu-idle-state-residency-ns",
+			residency_ns_buf, num_supported_idle_states * sizeof(u32));
 	dt_add_property(power_mgt, "ibm,cpu-idle-state-flags", flags_buf,
 			num_supported_idle_states * sizeof(u32));
 	dt_add_property(power_mgt, "ibm,cpu-idle-state-pmicr", pmicr_buf,
@@ -645,6 +659,7 @@ static void add_cpu_idle_state_properties(void)
 
 	free(name_buf);
 	free(latency_ns_buf);
+	free(residency_ns_buf);
 	free(flags_buf);
 	free(pmicr_buf);
 	free(pmicr_mask_buf);
