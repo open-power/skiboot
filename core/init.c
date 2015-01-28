@@ -111,6 +111,7 @@ static bool try_load_elf64(struct elf_hdr *header)
 	struct elf64_hdr *kh = (struct elf64_hdr *)header;
 	uint64_t load_base = (uint64_t)kh;
 	struct elf64_phdr *ph;
+	struct elf64_shdr *sh;
 	unsigned int i;
 
 	/* Check it's a ppc64 LE ELF */
@@ -152,6 +153,25 @@ static bool try_load_elf64(struct elf_hdr *header)
 		prerror("INIT: Failed to find kernel entry !\n");
 		return false;
 	}
+
+	/* For the normal big-endian ELF ABI, the kernel entry points
+	 * to a function descriptor in the data section. Linux instead
+	 * has it point directly to code. Test whether it is pointing
+	 * into an executable section or not to figure this out. Default
+	 * to assuming it obeys the ABI.
+	 */
+	sh = (struct elf64_shdr *)(load_base + kh->e_shoff);
+	for (i = 0; i < kh->e_shnum; i++, sh++) {
+		if (sh->sh_addr <= kh->e_entry &&
+		      (sh->sh_addr + sh->sh_size) > kh->e_entry)
+			break;
+	}
+
+	if (i == kh->e_shnum || !(sh->sh_flags & ELF_SFLAGS_X)) {
+		kernel_entry = *(uint64_t *)(kernel_entry + load_base);
+		kernel_entry = kernel_entry - ph->p_vaddr + ph->p_offset;
+	}
+
 	kernel_entry += load_base;
 	kernel_32bit = false;
 

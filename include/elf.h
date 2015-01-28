@@ -76,6 +76,23 @@ struct elf64_phdr {
 	uint64_t p_align;
 };
 
+/* 64-bit ELF section header */
+struct elf64_shdr {
+	uint32_t sh_name;
+	uint32_t sh_type;
+	uint64_t sh_flags;
+#define ELF_SFLAGS_X	0x4
+#define ELF_SFLAGS_A	0x2
+#define ELF_SFLAGS_W	0x1
+	uint64_t sh_addr;
+	uint64_t sh_offset;
+	uint64_t sh_size;
+	uint32_t sh_link;
+	uint32_t sh_info;
+	uint64_t sh_addralign;
+	int64_t sh_entsize;
+};
+
 /* Some relocation related stuff used in relocate.c */
 struct elf64_dyn {
 	int64_t	 d_tag;
