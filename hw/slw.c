@@ -474,8 +474,13 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 	{ /* Winkle */
 		.name = "winkle",
 		.latency_ns = 10000000,
-		.residency_ns = 1000000000, /* Placeholder only.Winkle is not used by 
-						the cpuidle subsystem today */
+		.residency_ns = 1000000000, /* Educated guess (not measured).
+					     * Winkle is not currently used by 
+					     * linux cpuidle subsystem so we
+					     * don't have real world user.
+					     * However, this should be roughly
+					     * accurate for when linux does
+					     * use it. */
 		.flags = 1*IDLE_DEC_STOP \
 		       | 1*IDLE_TB_STOP  \
 		       | 1*IDLE_LOSE_USER_CONTEXT \
