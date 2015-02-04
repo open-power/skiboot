@@ -599,6 +599,8 @@ struct cpu_ctl_init_data {
  */
 #define SLCA_IDATA_ARRAY	0
 
+#define SLCA_ROOT_INDEX		0
+
 /* Note: An "index" (or idx) is always an index into the SLCA array
  * and "id" is a reference to some other object.
  */

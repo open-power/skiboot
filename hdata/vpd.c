@@ -70,6 +70,9 @@ static const struct card_info card_table[] = {
 	/* Other cards */
 };
 
+static struct dt_node *dt_create_vpd_node(struct dt_node *parent,
+					  const struct slca_entry *entry);
+
 static const struct card_info *card_info_lookup(char *ccin)
 {
 	int i;
@@ -425,88 +428,6 @@ static const char *vpd_map_name(const char *vpd_name)
 
 static bool valid_child_entry(const struct slca_entry *entry)
 {
-	if (!entry)
-		return false;
-
-	/*
-	 * Skip entries with independent ntuple FRUVPD/MSVPD, etc.,
-	 * representations, since they have a unique PN, FN, SN, et al.
-	 * We add details for those devices via the ntuple walk.
-	 */
-	switch (entry->fru_id[0]) {
-	case 'A':
-		switch (entry->fru_id[1]) {
-		case 'V':	/* AV */
-			return false;
-		}
-		break;
-	case 'B':
-		switch (entry->fru_id[1]) {
-		case 'P':	/* BP */
-		case 'X':	/* BX */
-			return false;
-		}
-		break;
-	case 'C':
-		switch (entry->fru_id[1]) {
-		case 'C':	/* CC */
-			return false;
-		}
-		break;
-	case 'D':
-		switch (entry->fru_id[1]) {
-		case 'B':	/* DB */
-			return false;
-		}
-		break;
-	case 'E':
-		switch (entry->fru_id[1]) {
-		case 'V':	/* EV */
-			return false;
-		}
-		break;
-	case 'M':
-		switch (entry->fru_id[1]) {
-		case 'S':	/* MS */
-			return false;
-		}
-		break;
-	case 'O':
-		switch (entry->fru_id[1]) {
-		case 'P':	/* OP */
-			return false;
-		}
-		break;
-	case 'R':
-		switch (entry->fru_id[1]) {
-		case 'I':	/* RI */
-			return false;
-		}
-		break;
-	case 'P':
-		switch (entry->fru_id[1]) {
-		case '2':	/* P2 */
-		case '5':	/* P5 */
-		case 'F':	/* PF */
-			return false;
-		}
-		break;
-	case 'S':
-		switch (entry->fru_id[1]) {
-		case 'P':	/* SP */
-			return false;
-		}
-		break;
-	case 'T':
-		switch (entry->fru_id[1]) {
-		case 'P':	/* TP */
-			return false;
-		}
-		break;
-	default:
-		break;
-	}
-
 	if ((entry->install_indic == SLCA_INSTALL_INSTALLED) &&
 		(entry->vpd_collected == SLCA_VPD_COLLECTED))
 		return true;
@@ -546,26 +467,11 @@ static void vpd_add_children(struct dt_node *parent, uint16_t slca_index)
 			return;
 
 		if (valid_child_entry(child)) {
-			const char *name;
-			uint64_t addr;
 			struct dt_node *node;
 
-			/* create new node, add location code */
-			name = vpd_map_name(child->fru_id);
-			addr = (uint64_t)be16_to_cpu(child->rsrc_id);
-			node = dt_new_addr(parent, name, addr);
-			if (!node) {
-				prerror("VPD: Creating node at %s@%llx failed\n",
-						name, addr);
+			node = dt_create_vpd_node(parent, child);
+			if (!node)
 				return;
-			}
-			slca_vpd_add_loc_code(node, be16_to_cpu(child->my_index));
-
-			/* Add child FRU type */
-			dt_add_property(node, "fru-type", child->fru_id, 2);
-
-			/* recursively add children */
-			vpd_add_children(node, be16_to_cpu(child->my_index));
 		}
 
 		/* Skip dups -- currently we presume dups are contiguous */
@@ -576,83 +482,110 @@ static void vpd_add_children(struct dt_node *parent, uint16_t slca_index)
 	return;
 }
 
+/* Create the vpd node and add its children */
+static struct dt_node *dt_create_vpd_node(struct dt_node *parent,
+					  const struct slca_entry *entry)
+{
+	struct dt_node *node;
+	const char *name;
+	uint64_t addr;
+
+	name = vpd_map_name(entry->fru_id);
+	addr = (uint64_t)be16_to_cpu(entry->rsrc_id);
+	node = dt_new_addr(parent, name, addr);
+	if (!node) {
+		prerror("VPD: Creating node at %s@%llx failed\n", name, addr);
+		return NULL;
+	}
+
+	/* Add location code */
+	slca_vpd_add_loc_code(node, be16_to_cpu(entry->my_index));
+	/* Add FRU label */
+	dt_add_property(node, "fru-type", entry->fru_id, 2);
+	/* Recursively add children */
+	vpd_add_children(node, be16_to_cpu(entry->my_index));
+
+	return node;
+}
+
 struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 				int indx_fru, int indx_vpd)
 {
-	const void	*fruvpd;
-	unsigned int	fruvpd_sz;
-	unsigned int	fru_id_sz;
-	uint64_t	addr;
-	struct dt_node  *dt_vpd;
-	struct dt_node  *node;
 	const struct spira_fru_id *fru_id;
-	const struct slca_entry *s_entry;
-	const char *vpd_name;
+	unsigned int fruvpd_sz, fru_id_sz;
+	const struct slca_entry *entry;
+	struct dt_node *dt_vpd, *node;
+	static bool first = true;
+	const void *fruvpd;
 	const char *name;
-	int len;
+	uint64_t addr;
 	char *lname;
+	int len;
 
 	fru_id = HDIF_get_idata(hdr, indx_fru, &fru_id_sz);
 	if (!fru_id)
-		return NULL;
-
-	s_entry = slca_get_entry(be16_to_cpu(fru_id->slca_index));
-	if (valid_child_entry(s_entry))	/* Don't populate child VPD here */
 		return NULL;
 
 	fruvpd = HDIF_get_idata(hdr, indx_vpd, &fruvpd_sz);
 	if (!CHECK_SPPTR(fruvpd))
 		return NULL;
 
-	vpd_name = slca_get_vpd_name(be16_to_cpu(fru_id->slca_index));
-	if (!vpd_name) {
-		prerror("VPD: VPD name at index %d couldn't be found\n",
-				fru_id->slca_index);
-		return NULL;
-	}
-
 	dt_vpd = dt_find_by_path(dt_root, "/vpd");
 	if (!dt_vpd)
 		return NULL;
 
-	/* Get node name */
-	name = vpd_map_name(vpd_name);
-	addr = (uint64_t)be16_to_cpu(fru_id->rsrc_id);
+	if (first) {
+		entry = slca_get_entry(SLCA_ROOT_INDEX);
+		if (!entry) {
+			prerror("VPD: Could not find the slca root entry\n");
+			return NULL;
+		}
+
+		node = dt_create_vpd_node(dt_vpd, entry);
+		if (!node)
+			return NULL;
+
+		first = false;
+	}
+
+	entry = slca_get_entry(fru_id->slca_index);
+	if (!entry)
+		return NULL;
+
+	name = vpd_map_name(entry->fru_id);
+	addr = (uint64_t)be16_to_cpu(entry->rsrc_id);
 	len = strlen(name) + STR_MAX_CHARS(addr) + 2;
 	lname = zalloc(len);
 	if (!lname) {
 		prerror("VPD: Failed to allocate memory\n");
 		return NULL;
 	}
+
 	snprintf(lname, len, "%s@%llx", name, (long long)addr);
 
-	/*
-	 * FRU can be a child of some other FRU. Make sure
-	 * we have not added this node already.
-	 */
-	node = dt_find_by_path(dt_vpd, lname);
-	if (node) {
-		free(lname);
-		return NULL;
-	}
-
-	node = dt_new(dt_vpd, lname);
-	if (!node) {
-		free(lname);
-		return NULL;
-	}
-
-	/* Parse VPD fields */
-	dt_add_property(node, "ibm,vpd", fruvpd, fruvpd_sz);
-	vpd_vini_parse(node, fruvpd, fruvpd_sz);
-
-	/* Location code */
-	slca_vpd_add_loc_code(node, be16_to_cpu(fru_id->slca_index));
-	/* Add FRU label */
-	dt_add_property(node, "fru-type", vpd_name, 2);
-	vpd_add_children(node, be16_to_cpu(fru_id->slca_index));
-
+	/* Get the node already created */
+	node = dt_find_by_name(dt_vpd, lname);
 	free(lname);
+	/*
+	 * It is unlikely that node not found because vpd nodes have the
+	 * corresponding slca entry which we would have used to populate the vpd
+	 * tree during the 'first' pass above so that we just need to perform
+	 * VINI parse and add the vpd data..
+	 * Still, we consider this case and create fresh node under '/vpd' if
+	 * 'node' not found.
+	 */
+	if (!node) {
+		node = dt_create_vpd_node(dt_vpd, entry);
+		if (!node)
+			return NULL;
+	}
+
+	/* Parse VPD fields, ensure that it has not been added already */
+	if (!dt_find_property(node, "ibm,vpd")) {
+		dt_add_property(node, "ibm,vpd", fruvpd, fruvpd_sz);
+		vpd_vini_parse(node, fruvpd, fruvpd_sz);
+	}
+
 	return node;
 }
 
