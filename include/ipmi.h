@@ -176,6 +176,10 @@ int ipmi_queue_msg(struct ipmi_msg *msg);
 /* Add an ipmi message to the start of the queue */
 int ipmi_queue_msg_head(struct ipmi_msg *msg);
 
+/* Synchronously send an ipmi message. This won't return until the
+ * messages callback has been called. */
+void ipmi_queue_msg_sync(struct ipmi_msg *msg);
+
 /* Process a completed message */
 void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg);
 

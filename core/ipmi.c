@@ -22,8 +22,13 @@
 #include <opal-api.h>
 #include <device.h>
 #include <skiboot.h>
+#include <lock.h>
+#include <cpu.h>
+#include <timebase.h>
 
 struct ipmi_backend *ipmi_backend = NULL;
+static struct lock sync_lock = LOCK_UNLOCKED;
+static struct ipmi_msg *sync_msg = NULL;
 
 void ipmi_free_msg(struct ipmi_msg *msg)
 {
@@ -112,6 +117,24 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 
 	/* At this point the message has should have been freed by the
 	   completion functions. */
+
+	/* If this is a synchronous message flag that we are done */
+	if (msg == sync_msg)
+		sync_msg = NULL;
+}
+
+void ipmi_queue_msg_sync(struct ipmi_msg *msg)
+{
+	lock(&sync_lock);
+
+	assert(!sync_msg);
+	sync_msg = msg;
+	ipmi_queue_msg(msg);
+
+	while (sync_msg)
+		time_wait_ms(100);
+
+	unlock(&sync_lock);
 }
 
 void ipmi_register_backend(struct ipmi_backend *backend)
