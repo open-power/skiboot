@@ -101,6 +101,8 @@
 #define IPMI_CHASSIS_CONTROL		IPMI_CODE(IPMI_NETFN_CHASSIS, 0x02)
 #define IPMI_SET_POWER_STATE		IPMI_CODE(IPMI_NETFN_APP, 0x06)
 #define IPMI_GET_POWER_STATE		IPMI_CODE(IPMI_NETFN_APP, 0x07)
+#define IPMI_RESET_WDT			IPMI_CODE(IPMI_NETFN_APP, 0x22)
+#define IPMI_SET_WDT			IPMI_CODE(IPMI_NETFN_APP, 0x24)
 #define IPMI_SET_ENABLES		IPMI_CODE(IPMI_NETFN_APP, 0x2E)
 #define IPMI_GET_ENABLES		IPMI_CODE(IPMI_NETFN_APP, 0x2F)
 #define IPMI_CLEAR_MESSAGE_FLAGS	IPMI_CODE(IPMI_NETFN_APP, 0x30)
@@ -225,5 +227,15 @@ int ipmi_elog_commit(struct errorlog *elog_buf);
 
 /* Callback to parse an OEM SEL message */
 void ipmi_parse_sel(struct ipmi_msg *msg);
+
+/* Starts the watchdog timer */
+void ipmi_wdt_init(void);
+
+/* Stop the wdt */
+void ipmi_wdt_stop(void);
+
+/* Reset the watchdog timer. Does not return until the timer has been
+ * reset and does not schedule future resets. */
+void ipmi_wdt_final_reset(void);
 
 #endif

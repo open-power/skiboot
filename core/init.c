@@ -45,6 +45,8 @@
 #include <hostservices.h>
 #include <timer.h>
 
+#include <ipmi.h>
+
 /*
  * Boot semaphore, incremented by each CPU calling in
  *
@@ -388,7 +390,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	}
 	fsp_console_select_stdout();
 
-	/* 
+	/*
 	 * OCC takes few secs to boot.  Call this as late as
 	 * as possible to avoid delay.
 	 */
@@ -728,4 +730,3 @@ void __noreturn secondary_cpu_entry(void)
 
 	__secondary_cpu_entry();
 }
-

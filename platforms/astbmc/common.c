@@ -96,6 +96,7 @@ void astbmc_init(void)
 
 	/* Register the BT interface with the IPMI layer */
 	bt_init();
+	ipmi_wdt_init();
 	ipmi_rtc_init();
 	ipmi_opal_init();
 	ipmi_fru_init(0x01);
