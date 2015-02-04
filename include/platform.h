@@ -131,6 +131,11 @@ struct platform {
 	 */
 	bool		(*load_resource)(enum resource_id id,
 					 void *buf, size_t *len);
+
+	/*
+	 * Executed just prior to handing control over to the payload.
+	 */
+	void		(*exit)(void);
 };
 
 extern struct platform __platforms_start;

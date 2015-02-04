@@ -366,6 +366,9 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	op_display(OP_LOG, OP_MOD_INIT, 0x000A);
 
+	if (platform.exit)
+		platform.exit();
+
 	/* Load kernel LID */
 	if (!load_kernel()) {
 		op_display(OP_FATAL, OP_MOD_INIT, 1);
