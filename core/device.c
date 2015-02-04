@@ -250,6 +250,22 @@ struct dt_node *dt_find_by_path(struct dt_node *root, const char *path)
 	return root;
 }
 
+struct dt_node *dt_find_by_name(struct dt_node *root, const char *name)
+{
+	struct dt_node *child, *match;
+
+	list_for_each(&root->children, child, list) {
+		if (!strcmp(child->name, name))
+			return child;
+
+		match = dt_find_by_name(child, name);
+		if (match)
+			return match;
+	}
+
+	return NULL;
+}
+
 struct dt_node *dt_find_by_phandle(struct dt_node *root, u32 phandle)
 {
 	struct dt_node *node;
