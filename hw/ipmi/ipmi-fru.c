@@ -183,10 +183,9 @@ static void fru_write_complete(struct ipmi_msg *msg)
 		goto out;
 
 	offset = msg->data[WRITE_INDEX];
-	msg->req_size = MIN(msg->data[REMAINING] + 3, IPMI_MAX_REQ_SIZE);
-	msg->cmd = IPMI_CMD(IPMI_WRITE_FRU);
-	msg->netfn = IPMI_NETFN(IPMI_WRITE_FRU) << 2;
-	msg->resp_size = 2;
+	ipmi_init_msg(msg, IPMI_DEFAULT_INTERFACE, IPMI_WRITE_FRU,
+		      fru_write_complete, NULL,
+		      MIN(msg->data[REMAINING] + 3, IPMI_MAX_REQ_SIZE), 2);
 
 	memmove(&msg->data[3], &msg->data[offset + 3], msg->req_size - 3);
 

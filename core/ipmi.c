@@ -30,6 +30,22 @@ void ipmi_free_msg(struct ipmi_msg *msg)
 	msg->backend->free_msg(msg);
 }
 
+void ipmi_init_msg(struct ipmi_msg *msg, int interface,
+		   uint32_t code, void (*complete)(struct ipmi_msg *),
+		   void *user_data, size_t req_size, size_t resp_size)
+{
+	/* We don't actually support multiple interfaces at the moment. */
+	assert(interface == IPMI_DEFAULT_INTERFACE);
+
+	msg->backend = ipmi_backend;
+	msg->cmd = IPMI_CMD(code);
+	msg->netfn = IPMI_NETFN(code) << 2;
+	msg->req_size = req_size;
+	msg->resp_size = resp_size;
+	msg->complete = complete;
+	msg->user_data = user_data;
+}
+
 struct ipmi_msg *ipmi_mkmsg_simple(uint32_t code, void *req_data, size_t req_size)
 {
 	return ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, code, ipmi_free_msg, NULL,
@@ -43,20 +59,12 @@ struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
 {
 	struct ipmi_msg *msg;
 
-	/* We don't actually support multiple interfaces at the moment. */
-	assert(interface == IPMI_DEFAULT_INTERFACE);
-
 	msg = ipmi_backend->alloc_msg(req_size, resp_size);
 	if (!msg)
 		return NULL;
 
-	msg->backend = ipmi_backend;
-	msg->cmd = IPMI_CMD(code);
-	msg->netfn = IPMI_NETFN(code) << 2;
-	msg->req_size = req_size;
-	msg->resp_size = resp_size;
-	msg->complete = complete;
-	msg->user_data = user_data;
+	ipmi_init_msg(msg, interface, code, complete, user_data, req_size,
+		      resp_size);
 
 	/* Commands are free to over ride this if they want to handle errors */
 	msg->error = ipmi_free_msg;

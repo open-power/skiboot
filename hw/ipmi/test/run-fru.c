@@ -27,6 +27,14 @@ void ipmi_free_msg(struct ipmi_msg __unused *msg)
 {
 }
 
+void ipmi_init_msg(struct ipmi_msg __unused *msg, int __unused interface,
+		   uint32_t __unused code,
+		   void __unused (*complete)(struct ipmi_msg *),
+		   void __unused *user_data, size_t __unused req_size,
+		   size_t __unused resp_size)
+{
+}
+
 struct ipmi_msg *ipmi_mkmsg(int __unused interface, uint32_t __unused code,
 			    void __unused (*complete)(struct ipmi_msg *),
 			    void __unused *user_data, void __unused *req_data, size_t __unused req_size,

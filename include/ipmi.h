@@ -163,6 +163,13 @@ struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
 			    void *user_data, void *req_data, size_t req_size,
 			    size_t resp_size);
 
+/* Initialise a previously allocated message with the required
+fields. The caller must ensure the message is large enough to hold the
+request and response data. */
+void ipmi_init_msg(struct ipmi_msg *msg, int interface,
+		   uint32_t code, void (*complete)(struct ipmi_msg *),
+		   void *user_data, size_t req_size, size_t resp_size);
+
 /* Add an ipmi message to the queue */
 int ipmi_queue_msg(struct ipmi_msg *msg);
 

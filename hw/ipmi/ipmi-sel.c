@@ -69,6 +69,7 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 	static unsigned int reservation_id = 0;
 	static unsigned int record_id = 0;
 	struct errorlog *elog_buf = (struct errorlog *) msg->user_data;
+	size_t req_size;
 
 	if (msg->cmd == IPMI_CMD(IPMI_RESERVE_SEL)) {
 		reservation_id = msg->data[0];
@@ -103,9 +104,17 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 		return;
 	}
 
-	msg->cmd = IPMI_CMD(IPMI_PARTIAL_ADD_ESEL);
-	msg->netfn = IPMI_NETFN(IPMI_PARTIAL_ADD_ESEL) << 2;
-	msg->resp_size = 2;
+	if ((pel_size - index) < (IPMI_MAX_REQ_SIZE - ESEL_HDR_SIZE)) {
+		/* Last data to send */
+		msg->data[6] = 1;
+		req_size = pel_size - index + ESEL_HDR_SIZE;
+	} else {
+		msg->data[6] = 0;
+		req_size = IPMI_MAX_REQ_SIZE;
+	}
+
+	ipmi_init_msg(msg, IPMI_DEFAULT_INTERFACE, IPMI_PARTIAL_ADD_ESEL,
+		      ipmi_elog_poll, elog_buf, req_size, 2);
 
 	msg->data[0] = reservation_id & 0xff;
 	msg->data[1] = (reservation_id >> 8) & 0xff;
@@ -113,15 +122,6 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 	msg->data[3] = (record_id >> 8) & 0xff;
 	msg->data[4] = index & 0xff;
 	msg->data[5] = (index >> 8) & 0xff;
-
-	if ((pel_size - index) < (IPMI_MAX_REQ_SIZE - ESEL_HDR_SIZE)) {
-		/* Last data to send */
-		msg->data[6] = 1;
-		msg->req_size = pel_size - index + ESEL_HDR_SIZE;
-	} else {
-		msg->data[6] = 0;
-		msg->req_size = IPMI_MAX_REQ_SIZE;
-	}
 
 	memcpy(&msg->data[ESEL_HDR_SIZE], &pel_buf[index], msg->req_size - ESEL_HDR_SIZE);
 	index += msg->req_size - ESEL_HDR_SIZE;
