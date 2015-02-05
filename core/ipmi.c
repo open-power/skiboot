@@ -137,6 +137,46 @@ void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 	unlock(&sync_lock);
 }
 
+static void ipmi_read_event_complete(struct ipmi_msg *msg)
+{
+	prlog(PR_DEBUG, "IPMI read event %02x complete: %d bytes. cc: %02x\n",
+	      msg->cmd, msg->resp_size, msg->cc);
+
+	/* TODO: Handle power control & PNOR handshake events */
+
+	ipmi_free_msg(msg);
+}
+
+static void ipmi_get_message_flags_complete(struct ipmi_msg *msg)
+{
+	uint8_t flags = msg->data[0];
+
+	ipmi_free_msg(msg);
+
+	prlog(PR_DEBUG, "IPMI Get Message Flags: %02x\n", flags);
+
+	/* Message available in the event buffer? Queue a Read Event command
+	 * to retrieve it. The flag is cleared by performing a read */
+	if (flags & IPMI_MESSAGE_FLAGS_EVENT_BUFFER) {
+		msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_READ_EVENT,
+				ipmi_read_event_complete, NULL, NULL, 0, 16);
+		ipmi_queue_msg(msg);
+	}
+}
+
+void ipmi_sms_attention(void)
+{
+	struct ipmi_msg *msg;
+
+	/* todo: when we handle multiple IPMI interfaces, we'll need to
+	 * ensure that this message is associated with the appropriate
+	 * backend. */
+	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_GET_MESSAGE_FLAGS,
+			ipmi_get_message_flags_complete, NULL, NULL, 0, 1);
+
+	ipmi_queue_msg(msg);
+}
+
 void ipmi_register_backend(struct ipmi_backend *backend)
 {
 	/* We only support one backend at the moment */

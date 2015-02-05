@@ -76,6 +76,14 @@
 #define   IPMI_PWR_SYS_UNKNOWN			0x2a
 #define   IPMI_PWR_NOCHANGE                     0x7f
 
+/* 22.{3,4} Clear / Get message flags */
+#define	IPMI_MESSAGE_FLAGS_RX_MESSAGE_QUEUE	(1<<0)
+#define IPMI_MESSAGE_FLAGS_EVENT_BUFFER		(1<<1)
+#define IPMI_MESSAGE_FLAGS_WATCHDOG_PRE_TIMEOUT	(1<<3)
+#define IPMI_MESSAGE_FLAGS_OEM0			(1<<5)
+#define IPMI_MESSAGE_FLAGS_OEM1			(1<<6)
+#define IPMI_MESSAGE_FLAGS_OEM2			(1<<7)
+
 #define IPMI_CODE(netfn, cmd)		((netfn) << 8 | (cmd))
 #define IPMI_CMD(code)			((code) & 0xff)
 #define IPMI_NETFN(code)		((code) >> 8 & 0xff)
@@ -93,6 +101,10 @@
 #define IPMI_CHASSIS_CONTROL		IPMI_CODE(IPMI_NETFN_CHASSIS, 0x02)
 #define IPMI_SET_POWER_STATE		IPMI_CODE(IPMI_NETFN_APP, 0x06)
 #define IPMI_GET_POWER_STATE		IPMI_CODE(IPMI_NETFN_APP, 0x07)
+#define IPMI_CLEAR_MESSAGE_FLAGS	IPMI_CODE(IPMI_NETFN_APP, 0x30)
+#define IPMI_GET_MESSAGE_FLAGS		IPMI_CODE(IPMI_NETFN_APP, 0x31)
+#define IPMI_GET_MESSAGE		IPMI_CODE(IPMI_NETFN_APP, 0x33)
+#define IPMI_READ_EVENT			IPMI_CODE(IPMI_NETFN_APP, 0x35)
 
 #define IPMI_PARTIAL_ADD_ESEL		IPMI_CODE(IPMI_NETFN_OEM, 0xf0)
 
@@ -169,6 +181,9 @@ request and response data. */
 void ipmi_init_msg(struct ipmi_msg *msg, int interface,
 		   uint32_t code, void (*complete)(struct ipmi_msg *),
 		   void *user_data, size_t req_size, size_t resp_size);
+
+/* called by backend code to indicate a SMS_ATN event */
+void ipmi_sms_attention(void);
 
 /* Add an ipmi message to the queue */
 int ipmi_queue_msg(struct ipmi_msg *msg);
