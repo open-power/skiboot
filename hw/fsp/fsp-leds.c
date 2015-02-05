@@ -67,7 +67,6 @@ static u32 last_spcn_cmd;
 static int replay = 0;
 
 
-static void fsp_leds_query_spcn(void);
 static void fsp_read_leds_data_complete(struct fsp_msg *msg);
 
 DEFINE_LOG_ENTRY(OPAL_RC_LED_SPCN, OPAL_PLATFORM_ERR_EVT, OPAL_LED,
@@ -1202,7 +1201,7 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
  * on LED. Also need to be called to re-fetch data from SPCN after any LED state
  * have been updated.
  */
-static void fsp_leds_query_spcn()
+static void fsp_leds_query_spcn(void)
 {
 	struct fsp_led_data *led = NULL;
 	int rc = 0;
