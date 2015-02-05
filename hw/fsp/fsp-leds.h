@@ -108,6 +108,14 @@ struct fsp_set_ind_state_req {
 	char	loc_code[LOC_CODE_SIZE];
 };
 
+/* LED set SPCN command */
+struct led_set_cmd {
+	char	loc_code[LOC_CODE_SIZE];
+	u8	command;
+	u8	state;
+	struct	list_node link;
+};
+
 /* LED commands and state */
 #define LED_COMMAND_FAULT		1
 #define LED_COMMAND_IDENTIFY		0

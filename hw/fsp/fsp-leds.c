@@ -64,16 +64,21 @@ static void *led_buffer;
  */
 static struct list_head  cec_ledq;		/* CEC LED list */
 static struct list_head	 encl_ledq;	/* Enclosure LED list */
+static struct list_head  spcn_cmdq;	/* SPCN command queue */
 
 /* LED lock */
 static struct lock led_lock = LOCK_UNLOCKED;
+static struct lock spcn_cmd_lock = LOCK_UNLOCKED;
+
+static bool spcn_cmd_complete = true;	/* SPCN command complete */
 
 /* Last SPCN command */
 static u32 last_spcn_cmd;
 static int replay = 0;
 
-
+/* Forward declaration */
 static void fsp_read_leds_data_complete(struct fsp_msg *msg);
+static int process_led_state_change(void);
 
 DEFINE_LOG_ENTRY(OPAL_RC_LED_SPCN, OPAL_PLATFORM_ERR_EVT, OPAL_LED,
 		OPAL_PLATFORM_FIRMWARE, OPAL_PREDICTIVE_ERR_GENERAL,
@@ -281,7 +286,12 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 			prerror(PREFIX "Failed to queue FSP_RSP_SET_LED_STATE\n");
 		}
 	}
+
+	/* free msg */
 	fsp_freemsg(msg);
+
+	/* Process pending LED update request */
+	process_led_state_change();
 }
 
 /*
@@ -298,7 +308,7 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
  *	char	lc_code[LOC_CODE_SIZE];
  *};
  */
-static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
+static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 {
 	struct spcn_led_data sled;
 	struct fsp_msg *msg = NULL;
@@ -308,8 +318,8 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 	u32 cmd_hdr = 0;
 	int rc = -1;
 
-	sled.lc_len = strlen(loc_code);
-	strncpy(sled.lc_code, loc_code, sled.lc_len);
+	sled.lc_len = strlen(spcn_cmd->loc_code);
+	strncpy(sled.lc_code, spcn_cmd->loc_code, sled.lc_len);
 
 	/* Location code length + Location code + LED control */
 	data_len = LOC_CODE_LEN + sled.lc_len + LED_CONTROL_LEN;
@@ -317,7 +327,7 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 		data_len;
 
 	/* Fetch the current state of LED */
-	led = fsp_find_cec_led(loc_code);
+	led = fsp_find_cec_led(spcn_cmd->loc_code);
 
 	/* LED not present */
 	if (led == NULL) {
@@ -349,35 +359,35 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 	sled.state = led->status;
 
 	/* Update the exclussive LED bits  */
-	if (is_enclosure_led(loc_code)) {
-		if (command == LED_COMMAND_FAULT) {
-			if (state == LED_STATE_ON)
+	if (is_enclosure_led(spcn_cmd->loc_code)) {
+		if (spcn_cmd->command == LED_COMMAND_FAULT) {
+			if (spcn_cmd->state == LED_STATE_ON)
 				led->excl_bit |= FSP_LED_EXCL_FAULT;
-			if (state == LED_STATE_OFF)
+			if (spcn_cmd->state == LED_STATE_OFF)
 				led->excl_bit &= ~FSP_LED_EXCL_FAULT;
 		}
 
-		if (command == LED_COMMAND_IDENTIFY) {
-			if (state == LED_STATE_ON)
+		if (spcn_cmd->command == LED_COMMAND_IDENTIFY) {
+			if (spcn_cmd->state == LED_STATE_ON)
 				led->excl_bit |= FSP_LED_EXCL_IDENTIFY;
-			if (state == LED_STATE_OFF)
+			if (spcn_cmd->state == LED_STATE_OFF)
 				led->excl_bit &= ~FSP_LED_EXCL_IDENTIFY;
 		}
 	}
 
 	/* LED FAULT commad */
-	if (command == LED_COMMAND_FAULT) {
-		if (state == LED_STATE_ON)
+	if (spcn_cmd->command == LED_COMMAND_FAULT) {
+		if (spcn_cmd->state == LED_STATE_ON)
 			sled.state |= SPCN_LED_FAULT_MASK;
-		if (state == LED_STATE_OFF)
+		if (spcn_cmd->state == LED_STATE_OFF)
 			sled.state &= ~SPCN_LED_FAULT_MASK;
 	}
 
 	/* LED IDENTIFY command */
-	if (command == LED_COMMAND_IDENTIFY) {
-		if (state == LED_STATE_ON)
+	if (spcn_cmd->command == LED_COMMAND_IDENTIFY) {
+		if (spcn_cmd->state == LED_STATE_ON)
 			sled.state |= SPCN_LED_IDENTIFY_MASK;
-		if (state == LED_STATE_OFF)
+		if (spcn_cmd->state == LED_STATE_OFF)
 			sled.state &= ~SPCN_LED_IDENTIFY_MASK;
 	}
 
@@ -396,13 +406,94 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 	 * set/reset an individual led (CEC or ENCL).
 	 */
 	lock(&led_lock);
-	update_led_list(loc_code, sled.state);
+	update_led_list(spcn_cmd->loc_code, sled.state);
 	msg->user_data = led;
 	unlock(&led_lock);
 
 	rc = fsp_queue_msg(msg, fsp_spcn_set_led_completion);
 	if (rc != OPAL_SUCCESS)
 		fsp_freemsg(msg);
+	return rc;
+}
+
+/*
+ * process_led_state_change
+ *
+ * If the command queue is empty, it sets the 'spcn_cmd_complete' as true
+ * and just returns. Else it pops one element from the command queue
+ * and processes the command for the requested LED state change.
+ */
+static int process_led_state_change(void)
+{
+	struct led_set_cmd *spcn_cmd;
+	int rc = 0;
+
+	/*
+	 * The command queue is empty. This will only
+	 * happen during the SPCN command callback path
+	 * in which case we set 'spcn_cmd_complete' as true.
+	 */
+	lock(&spcn_cmd_lock);
+	if (list_empty(&spcn_cmdq)) {
+		spcn_cmd_complete = true;
+		unlock(&spcn_cmd_lock);
+		return rc;
+	}
+
+	spcn_cmd = list_pop(&spcn_cmdq, struct led_set_cmd, link);
+	unlock(&spcn_cmd_lock);
+
+	rc = fsp_msg_set_led_state(spcn_cmd);
+	if (rc)
+		log_simple_error(&e_info(OPAL_RC_LED_STATE),
+				 PREFIX "Set led state failed at LC=%s\n",
+				 spcn_cmd->loc_code);
+	free(spcn_cmd);
+	return rc;
+}
+
+/*
+ * queue_led_state_change
+ *
+ * FSP async command or OPAL based request for LED state change gets queued
+ * up in the command queue. If no previous SPCN command is pending, then it
+ * immediately pops up one element from the list and processes it. If previous
+ * SPCN commands are still pending then it just queues up and return. When the
+ * SPCN command callback gets to execute, it processes one element from the
+ * list and keeps the chain execution going. At last when there are no elements
+ * in the command queue it sets 'spcn_cmd_complete' as true again.
+ */
+static int queue_led_state_change(char *loc_code, u8 command, u8 state)
+{
+	struct led_set_cmd *cmd;
+	int rc = 0;
+
+	/* New request node */
+	cmd = zalloc(sizeof(struct led_set_cmd));
+	if (!cmd) {
+		prlog(PR_ERR, PREFIX
+		      "SPCN set command node allocation failed\n");
+		return -1;
+	}
+
+	/* Save the request */
+	strncpy(cmd->loc_code, loc_code, strlen(loc_code));
+	cmd->command = command;
+	cmd->state = state;
+
+	/* Add to the queue */
+	lock(&spcn_cmd_lock);
+	list_add_tail(&spcn_cmdq,  &cmd->link);
+
+	/* No previous SPCN command pending */
+	if (spcn_cmd_complete) {
+		spcn_cmd_complete = false;
+		unlock(&spcn_cmd_lock);
+		rc = process_led_state_change();
+		return rc;
+	}
+
+	unlock(&spcn_cmd_lock);
 	return rc;
 }
 
@@ -819,19 +910,12 @@ static void fsp_set_led_state(struct fsp_msg *msg)
 			if (!strcmp(led->loc_code, req.loc_code))
 				continue;
 
-			if (fsp_msg_set_led_state(led->loc_code,
-						  command, state))
-				log_simple_error(&e_info(OPAL_RC_LED_STATE),
-					PREFIX "Set led state failed at LC=%s\n",
-					led->loc_code);
+			queue_led_state_change(led->loc_code, command, state);
 		}
 		break;
 	case SET_IND_SINGLE_LOC_CODE:
 		/* Set led state for single descendent led */
-		if (fsp_msg_set_led_state(req.loc_code, command, state))
-			log_simple_error(&e_info(OPAL_RC_LED_STATE),
-				PREFIX "Set led state failed at LC=%s\n",
-				req.loc_code);
+		queue_led_state_change(req.loc_code, command, state);
 		break;
 	default:
 		resp = fsp_mkmsg(FSP_RSP_SET_LED_STATE |
@@ -1274,6 +1358,7 @@ void fsp_led_init(void)
 	/* Init the master lists */
 	list_head_init(&cec_ledq);
 	list_head_init(&encl_ledq);
+	list_head_init(&spcn_cmdq);
 
 	fsp_leds_query_spcn();
 	prlog(PR_TRACE, PREFIX "Init completed\n");
