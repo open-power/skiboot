@@ -281,7 +281,7 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 	if (!smsg) {
 		prerror("LED: Failed to allocate FSP_RSP_SET_LED_STATE\n");
 	} else {
-		if (fsp_queue_msg(msg, fsp_freemsg)) {
+		if (fsp_queue_msg(smsg, fsp_freemsg)) {
 			prerror("LED: Failed to queue FSP_RSP_SET_LED_STATE\n");
 		}
 	}
@@ -335,7 +335,7 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 			prerror("LED: Could not allocate "
 				"FSP_RSP_SET_LED_STATE|FSP_STATUS_INVALID_LC\n");
 		} else {
-			if (fsp_queue_msg(fsp_mkmsg(cmd, 0), fsp_freemsg)) {
+			if (fsp_queue_msg(msg, fsp_freemsg)) {
 				prerror("LED: Couldn't queue "
 					"FSP_RSP_SET_LED_STATE"
 					"|FSP_STATUS_INVALID_LC\n");
