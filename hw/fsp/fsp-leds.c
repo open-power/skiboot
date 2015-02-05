@@ -1249,6 +1249,9 @@ void fsp_led_init(void)
 {
 	led_buffer = NULL;
 
+	if (!fsp_present())
+		return;
+
 	/* Init the master lists */
 	list_head_init(&cec_ledq);
 	list_head_init(&encl_ledq);
