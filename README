@@ -1,7 +1,7 @@
 skiboot
 -------
 
-Firmware for OpenPower systems.
+Firmware for OpenPower systems
 
 Source:
 https://github.com/open-power/skiboot
@@ -43,52 +43,22 @@ make OPAL calls. A TODO item is to extensively document this API.
 
 See doc/overview.txt for a more in depth overview of skiboot.
 
-Building
---------
-You can build on a linux host. Modern Debian and Ubuntu are well known
-to be suitable. Build and testing on x86 is fine. You do not need a POWER
-host to build and test skiboot.
 
-You will need a C compiler for big endian ppc64. If your distro does
-not provide one, crosstool built compilers work well:
-https://www.kernel.org/pub/tools/crosstool/
-
-You should then be able to just (where 4=nr cpu cores of your machine)
-$ make -j4
-$ make -j4 check
-
-If using crosstool compilers, add /opt/cross/gcc-4.8.0-nolibc/powerpc64-linux/bin/
-to your PATH.
-
-If using packaged cross compilers on Ubuntu, you may need to set the
-following environment variable:
-CROSS=powerpc-linux-gnu-
-
-Testing
+Hacking
 -------
-To test in a simulator, install the IBM POWER8 Functional Simulator from:
+You will need a C compiler (gcc 4.8) for ppc64 (big endian).
+You will need a POWER8 system that you can deploy new firmware to.
+
+You may also use the IBM POWER8 Functional Simulator to test on.
 http://www-304.ibm.com/support/customercare/sas/f/pwrfs/home.html
 
 Qemu (as of 2.2.0) is not suitable as it does not (yet) implement
 the HyperVisor mode of the POWER8 processor.
 
-To run a boot-to-bootloader test, you'll need a zImage.papr built using
-the mambo_defconfig config for op-build. See
-https://github.com/open-power/op-build/ on howto build. Drop zImage.epapr
-in the skiboot directory and the skiboot test suite will automatically pick
-it up.
-
-To test on real hardware, you will need to understand how to flash new
-skiboot onto your system. This will vary from platform to platform.
-
-Hacking
--------
 All patches should be sent to the mailing list with linux-kernel style
-'Signed-Off-By'. The following git commands are your friends:
-- git commit -s
-- git format-patch
+'Signed-Off-By'.
 
-You probably want to read the linux Documentation/SubmittingPatches as
+You probably want to read the linux documentation/SubmittingPatches as
 much of it applies to skiboot.
 
 License

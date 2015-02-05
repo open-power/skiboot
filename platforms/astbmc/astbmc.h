@@ -24,6 +24,5 @@ extern int64_t astbmc_ipmi_power_down(uint64_t request);
 extern void astbmc_init(void);
 extern void astbmc_ext_irq(unsigned int chip_id);
 extern int pnor_init(void);
-extern bool pnor_load_resource(enum resource_id id, void *buf, size_t *len);
 
 #endif /* __ASTBMC_H */

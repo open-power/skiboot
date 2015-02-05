@@ -57,15 +57,6 @@ $(LIBC_DUALLIB_TEST:%=%-gcov-test.o): %-gcov-test.o : %-test.c %
 clean: libc-test-clean
 
 libc-test-clean:
-	$(RM) -f libc/test/*.[od]
-	$(RM) -f $(LIBC_TEST) \
-		$(LIBC_TEST:%=%-gcov) \
-		$(LIBC_TEST:%=%.gcda) \
-		$(LIBC_TEST:%=%.gcno)
-	$(RM) -f $(LIBC_DUALLIB_TEST) \
-		$(LIBC_DUALLIB_TEST:%=%-gcov) \
-		$(LIBC_DUALLIB_TEST:%=%-gcov.gcda) \
-		$(LIBC_DUALLIB_TEST:%=%-gcov.gcno) \
-		$(LIBC_DUALLIB_TEST:%=%-gcov-test.gcda) \
-		$(LIBC_DUALLIB_TEST:%=%-gcov-test.gcno) \
+	$(RM) -f libc/test/*.[od] $(LIBC_TEST) $(LIBC_TEST:%=%-gcov)
+	$(RM) -f $(LIBC_DUALLIB_TEST) $(LIBC_DUALLIB_TEST:%=%-gcov) \
 		$(LIBC_DUALLIB_TEST:%=%-test.o)

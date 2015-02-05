@@ -39,5 +39,5 @@ ccan-test-clean:
 		$(CCAN_TEST:%=%-gcov) \
 		$(CCAN_TEST:%=%.d) \
 		$(CCAN_TEST:%=%.o) \
-		$(CCAN_TEST:%=%.gcda) \
-		$(CCAN_TEST:%=%.gcno)
+		$(CCAN_TEST:%=%-gcov.gcda) \
+		$(CCAN_TEST:%=%-gcov.gcno)
