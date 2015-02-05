@@ -27,7 +27,7 @@
 
 #include "fsp-leds.h"
 
-/* Debug prefix */
+/* LED prefix */
 #define PREFIX		"FSPLED: "
 
 #define buf_write(p, type, val)  do { *(type *)(p) = val;\
@@ -192,7 +192,7 @@ static void update_led_list(char *loc_code, u32 led_state)
 	led = fsp_find_cec_led(loc_code);
 	if (!led) {
 		log_simple_error(&e_info(OPAL_RC_LED_LC),
-			"LED: Could not find descendent LED in CEC LC=%s\n",
+			PREFIX "Could not find descendent LED in CEC LC=%s\n",
 			loc_code);
 		return;
 	}
@@ -203,7 +203,7 @@ enclosure:
 	encl_cec_led = fsp_find_encl_cec_led(loc_code);
 	if (!encl_cec_led) {
 		log_simple_error(&e_info(OPAL_RC_LED_LC),
-			"LED: Could not find enclosure LED in CEC LC=%s\n",
+			PREFIX "Could not find enclosure LED in CEC LC=%s\n",
 			loc_code);
 		return;
 	}
@@ -212,7 +212,7 @@ enclosure:
 	encl_led = fsp_find_encl_encl_led(loc_code);
 	if (!encl_led) {
 		log_simple_error(&e_info(OPAL_RC_LED_LC),
-			"LED: Could not find enclosure LED in ENCL LC=%s\n",
+			PREFIX "Could not find enclosure LED in ENCL LC=%s\n",
 			loc_code);
 		return;
 	}
@@ -253,7 +253,7 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 	/* SPCN command failed: Identify the command and roll back changes */
 	if (fail) {
 		log_simple_error(&e_info(OPAL_RC_LED_SPCN),
-			"LED: Last SPCN command failed, status=%02x\n",
+			PREFIX "Last SPCN command failed, status=%02x\n",
 			status);
 		cmd |= FSP_STATUS_GENERIC_ERROR;
 
@@ -271,11 +271,11 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 
 	smsg = fsp_mkmsg(cmd, 0);
 	if (!smsg) {
-		prerror("LED: Failed to allocate FSP_RSP_SET_LED_STATE\n");
+		prerror(PREFIX "Failed to allocate FSP_RSP_SET_LED_STATE\n");
 	} else {
 		if (fsp_queue_msg(smsg, fsp_freemsg)) {
 			fsp_freemsg(smsg);
-			prerror("LED: Failed to queue FSP_RSP_SET_LED_STATE\n");
+			prerror(PREFIX "Failed to queue FSP_RSP_SET_LED_STATE\n");
 		}
 	}
 	fsp_freemsg(msg);
@@ -326,12 +326,13 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 		cmd = FSP_RSP_SET_LED_STATE | FSP_STATUS_INVALID_LC;
 		msg = fsp_mkmsg(cmd, 0);
 		if (!msg) {
-			prerror("LED: Could not allocate "
-				"FSP_RSP_SET_LED_STATE|FSP_STATUS_INVALID_LC\n");
+			prerror(PREFIX "Could not allocate "
+				"FSP_RSP_SET_LED_STATE | "
+				"FSP_STATUS_INVALID_LC\n");
 		} else {
 			if (fsp_queue_msg(msg, fsp_freemsg)) {
 				fsp_freemsg(msg);
-				prerror("LED: Couldn't queue "
+				prerror(PREFIX "Couldn't queue "
 					"FSP_RSP_SET_LED_STATE"
 					"|FSP_STATUS_INVALID_LC\n");
 			}
@@ -543,11 +544,12 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 	msg = fsp_mkmsg(FSP_RSP_GET_LED_LIST, 3, 0,
 			PSI_DMA_LOC_COD_BUF, total_size);
 	if (!msg) {
-		prerror("LED: Failed to allocate FSP_RSP_GET_LED_LIST.\n");
+		prerror(PREFIX "Failed to allocate FSP_RSP_GET_LED_LIST.\n");
 	} else {
 		if (fsp_queue_msg(msg, fsp_freemsg)) {
 			fsp_freemsg(msg);
-			prerror("LED: Failed to queue FSP_RSP_GET_LED_LIST\n");
+			prerror(PREFIX
+				"Failed to queue FSP_RSP_GET_LED_LIST\n");
 		}
 	}
 }
@@ -579,12 +581,12 @@ void fsp_get_led_list(struct fsp_msg *msg)
 		msg = fsp_mkmsg(FSP_RSP_GET_LED_LIST | FSP_STATUS_INVALID_DATA,
 				0);
 		if (!msg) {
-			prerror("LED: Failed to allocate FSP_RSP_GET_LED_LIST"
+			prerror(PREFIX "Failed to allocate FSP_RSP_GET_LED_LIST"
 				" | FSP_STATUS_INVALID_DATA\n");
 		} else {
 			if (fsp_queue_msg(msg, fsp_freemsg)) {
 				fsp_freemsg(msg);
-				prerror("LED: Failed to queue "
+				prerror(PREFIX "Failed to queue "
 					"FSP_RSP_GET_LED_LIST |"
 					" FSP_STATUS_INVALID_DATA\n");
 			}
@@ -616,18 +618,19 @@ void fsp_free_led_list_buf(struct fsp_msg *msg)
 	/* Token does not point to outbound buffer */
 	if (tce_token != PSI_DMA_LOC_COD_BUF) {
 		log_simple_error(&e_info(OPAL_RC_LED_BUFF),
-			"LED: Invalid tce token from FSP\n");
+			PREFIX "Invalid tce token from FSP\n");
 		cmd |=  FSP_STATUS_GENERIC_ERROR;
 		resp = fsp_mkmsg(cmd, 0);
 		if (!resp) {
-			prerror("LED: Failed to allocate FSP_RSP_RET_LED_BUFFER"
-				"|FSP_STATUS_GENERIC_ERROR\n");
+			prerror(PREFIX "Failed to allocate FSP_RSP_RET_LED_BUFFER"
+				"| FSP_STATUS_GENERIC_ERROR\n");
 			return;
 		}
 
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
 			fsp_freemsg(resp);
-			prerror("LED: Failed to queue RET_LED_BUFFER|ERROR\n");
+			prerror(PREFIX "Failed to queue "
+				"RET_LED_BUFFER|ERROR\n");
 		}
 		return;
 	}
@@ -637,12 +640,12 @@ void fsp_free_led_list_buf(struct fsp_msg *msg)
 
 	resp = fsp_mkmsg(cmd, 0);
 	if (!resp) {
-		prerror("LED: Failed to allocate FSP_RSP_RET_LED_BUFFER\n");
+		prerror(PREFIX "Failed to allocate FSP_RSP_RET_LED_BUFFER\n");
 		return;
 	}
 	if (fsp_queue_msg(resp, fsp_freemsg)) {
 		fsp_freemsg(resp);
-		prerror("LED: Failed to queue FSP_RSP_RET_LED_BUFFER\n");
+		prerror(PREFIX "Failed to queue FSP_RSP_RET_LED_BUFFER\n");
 	}
 }
 
@@ -663,29 +666,31 @@ static void fsp_ret_led_state(char *loc_code)
 			ind_state |= FSP_IND_FAULT_ACTV;
 		msg = fsp_mkmsg(FSP_RSP_GET_LED_STATE, 1, ind_state);
 		if (!msg) {
-			prerror("LED: Couldn't alloc FSP_RSP_GET_LED_STATE\n");
+			prerror(PREFIX
+				"Couldn't alloc FSP_RSP_GET_LED_STATE\n");
 			return;
 		}
 		if (fsp_queue_msg(msg, fsp_freemsg)) {
 			fsp_freemsg(msg);
-			prerror("LED: Couldn't queue FSP_RSP_GET_LED_STATE\n");
+			prerror(PREFIX
+				"Couldn't queue FSP_RSP_GET_LED_STATE\n");
 		}
 		return;
 	}
 
 	/* Location code not found */
 	log_simple_error(&e_info(OPAL_RC_LED_LC),
-		"LED: Could not find the location code LC=%s\n", loc_code);
+		PREFIX "Could not find the location code LC=%s\n", loc_code);
 
 	msg = fsp_mkmsg(FSP_RSP_GET_LED_STATE | FSP_STATUS_INVALID_LC, 1, 0xff);
 	if (!msg) {
-		prerror("LED: Failed to alloc FSP_RSP_GET_LED_STATE "
+		prerror(PREFIX "Failed to alloc FSP_RSP_GET_LED_STATE "
 			"| FSP_STATUS_INVALID_LC\n");
 		return;
 	}
 	if (fsp_queue_msg(msg, fsp_freemsg)) {
 		fsp_freemsg(msg);
-		prerror("LED: Failed to queue FSP_RSP_GET_LED_STATE "
+		prerror(PREFIX "Failed to queue FSP_RSP_GET_LED_STATE "
 			"| FSP_STATUS_INVALID_LC\n");
 	}
 }
@@ -708,14 +713,14 @@ void fsp_get_led_state(struct fsp_msg *msg)
 		msg = fsp_mkmsg(FSP_RSP_GET_LED_STATE |
 				FSP_STATUS_INVALID_DATA, 0);
 		if (!msg) {
-			prerror("LED: Failed to allocate FSP_RSP_GET_LED_STATE"
-				"|FSP_STATUS_INVALID_DATA\n");
+			prerror(PREFIX "Failed to allocate FSP_RSP_GET_LED_STATE"
+				" | FSP_STATUS_INVALID_DATA\n");
 			return;
 		}
 		if (fsp_queue_msg(msg, fsp_freemsg)) {
 			fsp_freemsg(msg);
-			prerror("LED: Failed to queue  FSP_RSP_GET_LED_STATE"
-				"|FSP_STATUS_INVALID_DATA\n");
+			prerror(PREFIX "Failed to queue FSP_RSP_GET_LED_STATE"
+				" | FSP_STATUS_INVALID_DATA\n");
 		}
 		return;
 	}
@@ -730,7 +735,7 @@ void fsp_get_led_state(struct fsp_msg *msg)
 	/* Bound check */
 	if (req.lc_len >= LOC_CODE_SIZE) {
 		log_simple_error(&e_info(OPAL_RC_LED_LC),
-			"LED: Loc code too large in %s: %d bytes\n",
+			PREFIX "Loc code too large in %s: %d bytes\n",
 			__func__, req.lc_len);
 		req.lc_len = LOC_CODE_SIZE - 1;
 	}
@@ -763,13 +768,13 @@ void fsp_set_led_state(struct fsp_msg *msg)
 				FSP_STATUS_INVALID_DATA,
 				0);
 		if (!msg) {
-			prerror("LED: Couldn't allocate FSP_RSP_SET_LED_STATE |"
+			prerror(PREFIX "Couldn't allocate FSP_RSP_SET_LED_STATE |"
 				" FSP_STATUS_INVALID_DATA\n");
 			return;
 		}
 		if (fsp_queue_msg(msg, fsp_freemsg)) {
 			fsp_freemsg(msg);
-			prerror("LED: Couldn't queue FSP_RSP_SET_LED_STATE |"
+			prerror(PREFIX "Couldn't queue FSP_RSP_SET_LED_STATE |"
 				" FSP_STATUS_INVALID_DATA\n");
 		}
 		return;
@@ -786,7 +791,7 @@ void fsp_set_led_state(struct fsp_msg *msg)
 	/* Bound check */
 	if (req.lc_len >= LOC_CODE_SIZE) {
 		log_simple_error(&e_info(OPAL_RC_LED_LC),
-			"LED: Loc code too large in %s: %d bytes\n",
+			PREFIX "Loc code too large in %s: %d bytes\n",
 			__func__, req.lc_len);
 		req.lc_len = LOC_CODE_SIZE - 1;
 	}
@@ -814,7 +819,7 @@ void fsp_set_led_state(struct fsp_msg *msg)
 			if (fsp_msg_set_led_state(led->loc_code,
 						  command, state))
 				log_simple_error(&e_info(OPAL_RC_LED_STATE),
-					"LED: Set led state failed at LC=%s\n",
+					PREFIX "Set led state failed at LC=%s\n",
 					led->loc_code);
 		}
 		break;
@@ -822,20 +827,20 @@ void fsp_set_led_state(struct fsp_msg *msg)
 		/* Set led state for single descendent led */
 		if (fsp_msg_set_led_state(req.loc_code, command, state))
 			log_simple_error(&e_info(OPAL_RC_LED_STATE),
-				"LED: Set led state failed at LC=%s\n",
+				PREFIX "Set led state failed at LC=%s\n",
 				req.loc_code);
 		break;
 	default:
 		resp = fsp_mkmsg(FSP_RSP_SET_LED_STATE |
 				 FSP_STATUS_NOT_SUPPORTED, 0);
 		if (!resp) {
-			prerror("LED: Unable to alloc FSP_RSP_SET_LED_STATE |"
+			prerror(PREFIX "Unable to alloc FSP_RSP_SET_LED_STATE |"
 				" FSP_STATUS_NOT_SUPPORTED\n");
 			break;
 		}
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
 			fsp_freemsg(resp);
-			prerror("LED: Failed to queue FSP_RSP_SET_LED_STATE |"
+			prerror(PREFIX "Failed to queue FSP_RSP_SET_LED_STATE |"
 				" FSP_STATUS_NOT_SUPPORTED\n");
 		}
 	}
@@ -939,12 +944,14 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 	cmd |= FSP_STATUS_GENERIC_ERROR;
 	resp = fsp_mkmsg(cmd, 0);
 	if (!resp) {
-		prerror("LED: Failed to allocate FSP_STATUS_GENERIC_ERROR\n");
+		prerror(PREFIX
+			"Failed to allocate FSP_STATUS_GENERIC_ERROR\n");
 		return false;
 	}
 	if (fsp_queue_msg(resp, fsp_freemsg)) {
 		fsp_freemsg(resp);
-		prerror("LED: Failed to queue FSP_STATUS_GENERIC_ERROR\n");
+		prerror(PREFIX
+			"Failed to queue FSP_STATUS_GENERIC_ERROR\n");
 		return false;
 	}
 	return true;
@@ -1100,7 +1107,7 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 
 	if (msg_status != FSP_STATUS_SUCCESS) {
 		log_simple_error(&e_info(OPAL_RC_LED_SUPPORT),
-			"LED: FSP returned error %x LED not supported\n",
+			PREFIX "FSP returned error %x LED not supported\n",
 								 msg_status);
 		/* LED support not available */
 		led_support = false;
