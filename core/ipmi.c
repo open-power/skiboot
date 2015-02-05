@@ -142,7 +142,8 @@ static void ipmi_read_event_complete(struct ipmi_msg *msg)
 	prlog(PR_DEBUG, "IPMI read event %02x complete: %d bytes. cc: %02x\n",
 	      msg->cmd, msg->resp_size, msg->cc);
 
-	/* TODO: Handle power control & PNOR handshake events */
+	/* Handle power control & PNOR handshake events */
+	ipmi_parse_sel(msg);
 
 	ipmi_free_msg(msg);
 }

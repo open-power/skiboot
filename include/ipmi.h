@@ -223,4 +223,7 @@ void ipmi_fru_init(uint8_t fru_dev_id);
 struct errorlog;
 int ipmi_elog_commit(struct errorlog *elog_buf);
 
+/* Callback to parse an OEM SEL message */
+void ipmi_parse_sel(struct ipmi_msg *msg);
+
 #endif
