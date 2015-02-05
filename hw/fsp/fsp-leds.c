@@ -38,8 +38,14 @@
 /* SPCN replay threshold */
 #define SPCN_REPLAY_THRESHOLD 2
 
-/* Sapphire LED support */
-static bool led_support;
+/* LED support status */
+enum led_support_state {
+	LED_STATE_ABSENT,
+	LED_STATE_READING,
+	LED_STATE_PRESENT,
+};
+
+enum led_support_state led_support = LED_STATE_ABSENT;
 
 /*
  *  PSI mapped buffer for LED data
@@ -850,7 +856,7 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 	struct fsp_msg *resp;
 
 	/* LED support not available yet */
-	if (!led_support) {
+	if (led_support != LED_STATE_PRESENT) {
 		log_simple_error(&e_info(OPAL_RC_LED_SUPPORT),
 			PREFIX "Indicator message while LED support not"
 			" available yet\n");
@@ -1041,11 +1047,12 @@ static void fsp_process_leds_data(u16 len)
 static void replay_spcn_cmd(u32 last_spcn_cmd)
 {
 	u32 cmd_hdr = 0;
-	int rc = 0;
+	int rc = -1;
 
 	/* Reached threshold */
 	if (replay == SPCN_REPLAY_THRESHOLD) {
 		replay = 0;
+		led_support = LED_STATE_ABSENT;
 		return;
 	}
 
@@ -1075,6 +1082,10 @@ static void replay_spcn_cmd(u32 last_spcn_cmd)
 			       "Replay SPCN_MOD_PRS_LED_DATA_SUB"
 			       " command could not be queued\n");
 	}
+
+	/* Failed to queue MBOX message */
+	if (rc)
+		led_support = LED_STATE_ABSENT;
 }
 
 /*
@@ -1105,7 +1116,7 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 			PREFIX "FSP returned error %x LED not supported\n",
 								 msg_status);
 		/* LED support not available */
-		led_support = false;
+		led_support = LED_STATE_ABSENT;
 
 		fsp_freemsg(msg);
 		return;
@@ -1119,9 +1130,10 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 		      "SPCN_RSP_STATUS_SUCCESS: %d bytes received\n",
 		      data_len);
 
+		led_support = LED_STATE_PRESENT;
+
 		/* Copy data to the local list */
 		fsp_process_leds_data(data_len);
-		led_support = true;
 
 		/* LEDs captured on the system */
 		prlog(PR_DEBUG, PREFIX
@@ -1173,9 +1185,12 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 					     SPCN_ADDR_MODE_CEC_NODE,
 					     cmd_hdr, 0, PSI_DMA_LED_BUF),
 				   fsp_read_leds_data_complete);
-		if (rc)
+		if (rc) {
 			prlog(PR_ERR, PREFIX "SPCN_MOD_PRS_LED_DATA_SUB command"
 			       " could not be queued\n");
+
+			led_support = LED_STATE_ABSENT;
+		}
 		break;
 
 	/* Other expected error codes*/
@@ -1184,6 +1199,7 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 	case SPCN_RSP_STATUS_INVALID_MOD:
 	case SPCN_RSP_STATUS_STATE_PROHIBIT:
 	case SPCN_RSP_STATUS_UNKNOWN:
+	default:
 		/* Replay the previous SPCN command */
 		replay_spcn_cmd(last_spcn_cmd);
 	}
@@ -1211,7 +1227,6 @@ static void fsp_leds_query_spcn(void)
 	u32 cmd_hdr = SPCN_MOD_PRS_LED_DATA_FIRST << 24 | SPCN_CMD_PRS << 16;
 
 	/* Till the last batch of LED data */
-	led_support = false;
 	last_spcn_cmd = 0;
 
 	/* Empty the lists */
@@ -1244,6 +1259,8 @@ static void fsp_leds_query_spcn(void)
 		prlog(PR_ERR, PREFIX
 		       "SPCN_MOD_PRS_LED_DATA_FIRST command could"
 		       " not be queued\n");
+	else	/* Initiated LED list fetch MBOX command */
+		led_support = LED_STATE_READING;
 }
 
 /* Init the LED subsystem at boot time */
