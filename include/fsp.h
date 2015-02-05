@@ -773,10 +773,6 @@ extern void fsp_init_diag(void);
 
 /* LED */
 extern void fsp_led_init(void);
-extern void fsp_get_led_list(struct fsp_msg *msg);
-extern void fsp_free_led_list_buf(struct fsp_msg *msg);
-extern void fsp_get_led_state(struct fsp_msg *msg);
-extern void fsp_set_led_state(struct fsp_msg *msg);
 
 /* EPOW */
 extern void fsp_epow_init(void);

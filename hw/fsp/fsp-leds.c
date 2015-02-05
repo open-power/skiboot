@@ -568,7 +568,7 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
  * 1 byte - Location code field size
  * `Field size` bytes - NULL terminated ASCII location code string
  */
-void fsp_get_led_list(struct fsp_msg *msg)
+static void fsp_get_led_list(struct fsp_msg *msg)
 {
 	struct fsp_loc_code_req req;
 	u32 tce_token = msg->data.words[1];
@@ -609,7 +609,7 @@ void fsp_get_led_list(struct fsp_msg *msg)
  * way FSP tells Sapphire that it has consumed all the data present
  * on the outbound buffer and Sapphire can reuse it for next request.
  */
-void fsp_free_led_list_buf(struct fsp_msg *msg)
+static void fsp_free_led_list_buf(struct fsp_msg *msg)
 {
 	u32 tce_token = msg->data.words[1];
 	u32 cmd = FSP_RSP_RET_LED_BUFFER;
@@ -700,7 +700,7 @@ static void fsp_ret_led_state(char *loc_code)
  *
  * With this command FSP query the state for any given LED
  */
-void fsp_get_led_state(struct fsp_msg *msg)
+static void fsp_get_led_state(struct fsp_msg *msg)
 {
 	struct fsp_get_ind_state_req req;
 	u32 tce_token = msg->data.words[1];
@@ -751,7 +751,7 @@ void fsp_get_led_state(struct fsp_msg *msg)
  *
  * With this command FSP sets/resets the state for any given LED
  */
-void fsp_set_led_state(struct fsp_msg *msg)
+static void fsp_set_led_state(struct fsp_msg *msg)
 {
 	struct fsp_set_ind_state_req req;
 	struct fsp_led_data *led, *next;
