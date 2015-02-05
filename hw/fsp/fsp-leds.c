@@ -234,7 +234,6 @@ enclosure:
 
 static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 {
-	bool fail;
 	u16 ckpt_status;
 	char loc_code[LOC_CODE_SIZE + 1];
 	struct fsp_msg *resp = msg->resp;
@@ -245,13 +244,11 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 	/*
 	 * LED state update request came as part of FSP async message
 	 * FSP_CMD_SET_LED_STATE, hence need to send response message.
+	 *
+	 * Also if SPCN command failed, then identify the command and
+	 * roll back changes.
 	 */
-	fail = (status == FSP_STATUS_INVALID_DATA) ||
-		(status == FSP_STATUS_DMA_ERROR) ||
-		(status == FSP_STATUS_SPCN_ERROR);
-
-	/* SPCN command failed: Identify the command and roll back changes */
-	if (fail) {
+	if (status != FSP_STATUS_SUCCESS) {
 		log_simple_error(&e_info(OPAL_RC_LED_SPCN),
 			PREFIX "Last SPCN command failed, status=%02x\n",
 			status);
