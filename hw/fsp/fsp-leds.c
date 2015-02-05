@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ *	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -96,7 +96,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_LED_SUPPORT, OPAL_PLATFORM_ERR_EVT, OPAL_LED,
 		OPAL_PLATFORM_FIRMWARE, OPAL_INFO, OPAL_NA, NULL);
 
 /* Find descendent LED record with CEC location code in CEC list */
-static struct fsp_led_data * fsp_find_cec_led(char * loc_code)
+static struct fsp_led_data *fsp_find_cec_led(char *loc_code)
 {
 	struct fsp_led_data *led, *next;
 
@@ -109,7 +109,7 @@ static struct fsp_led_data * fsp_find_cec_led(char * loc_code)
 }
 
 /* Find encl LED record with ENCL location code in ENCL list */
-static struct fsp_led_data * fsp_find_encl_led(char * loc_code)
+static struct fsp_led_data *fsp_find_encl_led(char *loc_code)
 {
 	struct fsp_led_data *led, *next;
 
@@ -122,7 +122,7 @@ static struct fsp_led_data * fsp_find_encl_led(char * loc_code)
 }
 
 /* Find encl LED record with CEC location code in CEC list */
-static struct fsp_led_data * fsp_find_encl_cec_led(char *loc_code)
+static struct fsp_led_data *fsp_find_encl_cec_led(char *loc_code)
 {
 	struct fsp_led_data *led, *next;
 
@@ -137,7 +137,7 @@ static struct fsp_led_data * fsp_find_encl_cec_led(char *loc_code)
 }
 
 /* Find encl LED record with CEC location code in ENCL list */
-static struct fsp_led_data * fsp_find_encl_encl_led(char *loc_code)
+static struct fsp_led_data *fsp_find_encl_encl_led(char *loc_code)
 {
 	struct fsp_led_data *led, *next;
 
@@ -377,7 +377,7 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 	}
 
 	/* LED IDENTIFY command */
-	if (command == LED_COMMAND_IDENTIFY){
+	if (command == LED_COMMAND_IDENTIFY) {
 		if (state == LED_STATE_ON)
 			sled.state |= SPCN_LED_IDENTIFY_MASK;
 		if (state == LED_STATE_OFF)
@@ -435,9 +435,9 @@ static u32 fsp_push_data_to_tce(struct fsp_led_data *led, u8 *out_data,
 	/* LED indicator status */
 	lcode.ind_state = FSP_IND_INACTIVE;
 	if (led->status & SPCN_LED_IDENTIFY_MASK)
-                lcode.ind_state |= FSP_IND_IDENTIFY_ACTV;
+		lcode.ind_state |= FSP_IND_IDENTIFY_ACTV;
 	if (led->status & SPCN_LED_FAULT_MASK)
-                lcode.ind_state |= FSP_IND_FAULT_ACTV;
+		lcode.ind_state |= FSP_IND_FAULT_ACTV;
 
 	/* Location code */
 	memset(lcode.loc_code, 0, LOC_CODE_SIZE);
@@ -482,7 +482,7 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 	out_data = NULL;
 
 	/* Unmapping through FSP_CMD_RET_LOC_BUFFER command */
-	fsp_tce_map(PSI_DMA_LOC_COD_BUF, (void*)data, PSI_DMA_LOC_COD_BUF_SZ);
+	fsp_tce_map(PSI_DMA_LOC_COD_BUF, (void *)data, PSI_DMA_LOC_COD_BUF_SZ);
 	out_data = data + 8;
 
 	/* CEC LED list */
@@ -511,7 +511,7 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 		bytes_sent = 0;
 		bytes_sent = fsp_push_data_to_tce(led, out_data, total_size);
 
-	        /* Advance the TCE pointer */
+		/* Advance the TCE pointer */
 		out_data += bytes_sent;
 		total_size += bytes_sent;
 	}
@@ -795,7 +795,7 @@ void fsp_set_led_state(struct fsp_msg *msg)
 		LED_STATE_ON : LED_STATE_OFF;
 
 	/* Handle requests */
-	switch(req.req_type) {
+	switch (req.req_type) {
 	case SET_IND_ENCLOSURE:
 		list_for_each_safe(&cec_ledq, led, next, link) {
 			/* Only descendants of the same enclosure */
@@ -849,90 +849,86 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 		return false;
 	}
 
-	switch(cmd_sub_mod) {
-		case FSP_CMD_GET_LED_LIST:
-			prlog(PR_TRACE, PREFIX
-			       "FSP_CMD_GET_LED_LIST command received\n");
-			fsp_get_led_list(msg);
-			return true;
-		case FSP_CMD_RET_LED_BUFFER:
-			prlog(PR_TRACE, PREFIX
-			       "FSP_CMD_RET_LED_BUFFER command received\n");
-			fsp_free_led_list_buf(msg);
-			return true;
-		case FSP_CMD_GET_LED_STATE:
-			prlog(PR_TRACE, PREFIX
-			       "FSP_CMD_GET_LED_STATE command received\n");
-			fsp_get_led_state(msg);
-			return true;
-		case FSP_CMD_SET_LED_STATE:
-			prlog(PR_TRACE, PREFIX
-			       "FSP_CMD_SET_LED_STATE command received\n");
-			fsp_set_led_state(msg);
-			return true;
-		/*
-		 * FSP async sub commands which have not been implemented.
-		 * For these async sub commands, print for the log and ack
-		 * the field service processor with a generic error.
-		 */
-		case FSP_CMD_GET_MTMS_LIST:
-			prlog(PR_TRACE, PREFIX
-				"FSP_CMD_GET_MTMS_LIST command received\n");
-			cmd = FSP_RSP_GET_MTMS_LIST;
-			break;
-		case FSP_CMD_RET_MTMS_BUFFER:
-			prlog(PR_TRACE, PREFIX
-				"FSP_CMD_RET_MTMS_BUFFER command received\n");
-			cmd = FSP_RSP_RET_MTMS_BUFFER;
-			break;
-		case FSP_CMD_SET_ENCL_MTMS:
-			prlog(PR_TRACE, PREFIX
-				"FSP_CMD_SET_MTMS command received\n");
-			cmd = FSP_RSP_SET_ENCL_MTMS;
-			break;
-		case FSP_CMD_CLR_INCT_ENCL:
-			prlog(PR_TRACE, PREFIX
-				"FSP_CMD_CLR_INCT_ENCL command received\n");
-			cmd = FSP_RSP_CLR_INCT_ENCL;
-			break;
-		case FSP_CMD_ENCL_MCODE_INIT:
-			prlog(PR_TRACE, PREFIX
-				"FSP_CMD_ENCL_MCODE_INIT command received\n");
-			cmd = FSP_RSP_ENCL_MCODE_INIT;
-			break;
-		case FSP_CMD_ENCL_MCODE_INTR:
-			prlog(PR_TRACE, PREFIX
-				"FSP_CMD_ENCL_MCODE_INTR command received\n");
-			cmd = FSP_RSP_ENCL_MCODE_INTR;
-			break;
-		case FSP_CMD_ENCL_POWR_TRACE:
-			prlog(PR_TRACE, PREFIX
-				"FSP_CMD_ENCL_POWR_TRACE command received\n");
-			cmd = FSP_RSP_ENCL_POWR_TRACE;
-			break;
-		case FSP_CMD_RET_ENCL_TRACE_BUFFER:
-			prlog(PR_TRACE, PREFIX
-				"FSP_CMD_RET_ENCL_TRACE_BUFFER \
-						command received\n");
-			cmd = FSP_RSP_RET_ENCL_TRACE_BUFFER;
-			break;
-		case FSP_CMD_GET_SPCN_LOOP_STATUS:
-			prlog(PR_TRACE, PREFIX
-				"FSP_CMD_GET_SPCN_LOOP_STATUS \
-						command received\n");
-			cmd = FSP_RSP_GET_SPCN_LOOP_STATUS;
-			break;
-		case FSP_CMD_INITIATE_LAMP_TEST:
-			/* XXX: FSP ACK not required for this sub command */
-			prlog(PR_TRACE, PREFIX
-				"FSP_CMD_INITIATE_LAMP_TEST \
-						command received\n");
-			return true;
-		default:
-			prlog(PR_WARNING, PREFIX
-			       "Invalid FSP async sub command %06x\n",
-			       cmd_sub_mod);
-			return false;
+	switch (cmd_sub_mod) {
+	case FSP_CMD_GET_LED_LIST:
+		prlog(PR_TRACE, PREFIX
+		      "FSP_CMD_GET_LED_LIST command received\n");
+		fsp_get_led_list(msg);
+		return true;
+	case FSP_CMD_RET_LED_BUFFER:
+		prlog(PR_TRACE, PREFIX
+		      "FSP_CMD_RET_LED_BUFFER command received\n");
+		fsp_free_led_list_buf(msg);
+		return true;
+	case FSP_CMD_GET_LED_STATE:
+		prlog(PR_TRACE, PREFIX
+		      "FSP_CMD_GET_LED_STATE command received\n");
+		fsp_get_led_state(msg);
+		return true;
+	case FSP_CMD_SET_LED_STATE:
+		prlog(PR_TRACE, PREFIX
+		      "FSP_CMD_SET_LED_STATE command received\n");
+		fsp_set_led_state(msg);
+		return true;
+	/*
+	 * FSP async sub commands which have not been implemented.
+	 * For these async sub commands, print for the log and ack
+	 * the field service processor with a generic error.
+	 */
+	case FSP_CMD_GET_MTMS_LIST:
+		prlog(PR_TRACE, PREFIX
+		      "FSP_CMD_GET_MTMS_LIST command received\n");
+		cmd = FSP_RSP_GET_MTMS_LIST;
+		break;
+	case FSP_CMD_RET_MTMS_BUFFER:
+		prlog(PR_TRACE, PREFIX
+		      "FSP_CMD_RET_MTMS_BUFFER command received\n");
+		cmd = FSP_RSP_RET_MTMS_BUFFER;
+		break;
+	case FSP_CMD_SET_ENCL_MTMS:
+		prlog(PR_TRACE, PREFIX
+		      "FSP_CMD_SET_MTMS command received\n");
+		cmd = FSP_RSP_SET_ENCL_MTMS;
+		break;
+	case FSP_CMD_CLR_INCT_ENCL:
+		prlog(PR_TRACE, PREFIX
+		      "FSP_CMD_CLR_INCT_ENCL command received\n");
+		cmd = FSP_RSP_CLR_INCT_ENCL;
+		break;
+	case FSP_CMD_ENCL_MCODE_INIT:
+		prlog(PR_TRACE, PREFIX
+		      "FSP_CMD_ENCL_MCODE_INIT command received\n");
+		cmd = FSP_RSP_ENCL_MCODE_INIT;
+		break;
+	case FSP_CMD_ENCL_MCODE_INTR:
+		prlog(PR_TRACE, PREFIX
+		      "FSP_CMD_ENCL_MCODE_INTR command received\n");
+		cmd = FSP_RSP_ENCL_MCODE_INTR;
+		break;
+	case FSP_CMD_ENCL_POWR_TRACE:
+		prlog(PR_TRACE, PREFIX
+		      "FSP_CMD_ENCL_POWR_TRACE command received\n");
+		cmd = FSP_RSP_ENCL_POWR_TRACE;
+		break;
+	case FSP_CMD_RET_ENCL_TRACE_BUFFER:
+		prlog(PR_TRACE, PREFIX "FSP_CMD_RET_ENCL_TRACE_BUFFER \
+		      command received\n");
+		cmd = FSP_RSP_RET_ENCL_TRACE_BUFFER;
+		break;
+	case FSP_CMD_GET_SPCN_LOOP_STATUS:
+		prlog(PR_TRACE, PREFIX "FSP_CMD_GET_SPCN_LOOP_STATUS \
+		      command received\n");
+		cmd = FSP_RSP_GET_SPCN_LOOP_STATUS;
+		break;
+	case FSP_CMD_INITIATE_LAMP_TEST:
+		/* XXX: FSP ACK not required for this sub command */
+		prlog(PR_TRACE, PREFIX "FSP_CMD_INITIATE_LAMP_TEST \
+		      command received\n");
+		return true;
+	default:
+		prlog(PR_WARNING, PREFIX "Invalid FSP async sub command %06x\n",
+		      cmd_sub_mod);
+		return false;
 	}
 	cmd |= FSP_STATUS_GENERIC_ERROR;
 	resp = fsp_mkmsg(cmd, 0);
@@ -1093,7 +1089,7 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 
 	u32 msg_status = resp->word1 & 0xff00;
 	u32 led_status = (resp->data.words[1] >> 24) & 0xff;
-        u16 data_len = (u16)(resp->data.words[1] & 0xffff);
+	u16 data_len = (u16)(resp->data.words[1] & 0xffff);
 
 	if (msg_status != FSP_STATUS_SUCCESS) {
 		log_simple_error(&e_info(OPAL_RC_LED_SUPPORT),
@@ -1105,84 +1101,80 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 	}
 
 	/* SPCN command status */
-        switch (led_status) {
-		/* Last 1KB of LED data */
-		case SPCN_RSP_STATUS_SUCCESS:
+	switch (led_status) {
+	/* Last 1KB of LED data */
+	case SPCN_RSP_STATUS_SUCCESS:
+		prlog(PR_DEBUG, PREFIX
+		      "SPCN_RSP_STATUS_SUCCESS: %d bytes received\n",
+		      data_len);
+
+		/* Copy data to the local list */
+		fsp_process_leds_data(data_len);
+		led_support = true;
+
+		/* LEDs captured on the system */
+		prlog(PR_DEBUG, PREFIX
+		      "CEC LEDs captured on the system:\n");
+		list_for_each_safe(&cec_ledq, led, next, link) {
 			prlog(PR_DEBUG, PREFIX
-			      "SPCN_RSP_STATUS_SUCCESS: %d bytes received\n",
-			      data_len);
+			       "rid: %x\t"
+			       "len: %x      "
+			       "lcode: %-30s\t"
+			       "parms: %04x\t"
+			       "status: %04x\n",
+			       led->rid,
+			       led->lc_len,
+			       led->loc_code,
+			       led->parms,
+			       led->status);
+		}
 
-			/* Copy data to the local list */
-			fsp_process_leds_data(data_len);
-			led_support = true;
-
-			/* LEDs captured on the system */
+		prlog(PR_DEBUG, PREFIX "ENCL LEDs captured on the system:\n");
+		list_for_each_safe(&encl_ledq, led, next, link) {
 			prlog(PR_DEBUG, PREFIX
-			      "CEC LEDs captured on the system:\n");
-			list_for_each_safe(&cec_ledq, led, next, link) {
-				prlog(PR_DEBUG, PREFIX
-				       "rid: %x\t"
-				       "len: %x      "
-				       "lcode: %-30s\t"
-				       "parms: %04x\t"
-				       "status: %04x\n",
-				       led->rid,
-				       led->lc_len,
-				       led->loc_code,
-				       led->parms,
-				       led->status);
-			}
+			       "rid: %x\t"
+			       "len: %x      "
+			       "lcode: %-30s\t"
+			       "parms: %04x\t"
+			       "status: %04x\n",
+			       led->rid,
+			       led->lc_len,
+			       led->loc_code,
+			       led->parms,
+			       led->status);
+		}
 
-			prlog(PR_DEBUG, PREFIX
-			      "ENCL LEDs captured on the system:\n");
-			list_for_each_safe(&encl_ledq, led, next, link) {
-				prlog(PR_DEBUG, PREFIX
-				       "rid: %x\t"
-				       "len: %x      "
-				       "lcode: %-30s\t"
-				       "parms: %04x\t"
-				       "status: %04x\n",
-				       led->rid,
-				       led->lc_len,
-				       led->loc_code,
-				       led->parms,
-				       led->status);
-			}
+		break;
 
-			break;
+	/* If more 1KB of LED data present */
+	case SPCN_RSP_STATUS_COND_SUCCESS:
+		prlog(PR_DEBUG, PREFIX
+		      "SPCN_RSP_STATUS_COND_SUCCESS: %d bytes "
+		      " received\n", data_len);
 
-		/* If more 1KB of LED data present */
-		case SPCN_RSP_STATUS_COND_SUCCESS:
-			prlog(PR_DEBUG, PREFIX
-			      "SPCN_RSP_STATUS_COND_SUCCESS: %d bytes "
-			      " received\n", data_len);
+		/* Copy data to the local list */
+		fsp_process_leds_data(data_len);
 
-			/* Copy data to the local list */
-			fsp_process_leds_data(data_len);
+		/* Fetch the remaining data from SPCN */
+		last_spcn_cmd = SPCN_MOD_PRS_LED_DATA_SUB;
+		cmd_hdr = SPCN_MOD_PRS_LED_DATA_SUB << 24 | SPCN_CMD_PRS << 16;
+		rc = fsp_queue_msg(fsp_mkmsg(FSP_CMD_SPCN_PASSTHRU, 4,
+					     SPCN_ADDR_MODE_CEC_NODE,
+					     cmd_hdr, 0, PSI_DMA_LED_BUF),
+				   fsp_read_leds_data_complete);
+		if (rc)
+			prlog(PR_ERR, PREFIX "SPCN_MOD_PRS_LED_DATA_SUB command"
+			       " could not be queued\n");
+		break;
 
-			/* Fetch the remaining data from SPCN */
-			last_spcn_cmd = SPCN_MOD_PRS_LED_DATA_SUB;
-			cmd_hdr = SPCN_MOD_PRS_LED_DATA_SUB << 24 |
-				SPCN_CMD_PRS << 16;
-			rc = fsp_queue_msg(fsp_mkmsg(FSP_CMD_SPCN_PASSTHRU, 4,
-						     SPCN_ADDR_MODE_CEC_NODE,
-						     cmd_hdr,
-						     0, PSI_DMA_LED_BUF),
-					   fsp_read_leds_data_complete);
-			if (rc)
-				prlog(PR_ERR, PREFIX
-				       "SPCN_MOD_PRS_LED_DATA_SUB command"
-				       " could not be queued\n");
-			break;
-
-		/* Other expected error codes*/
-		case SPCN_RSP_STATUS_INVALID_RACK:
-		case SPCN_RSP_STATUS_INVALID_SLAVE:
-		case SPCN_RSP_STATUS_INVALID_MOD:
-		case SPCN_RSP_STATUS_STATE_PROHIBIT:
-		case SPCN_RSP_STATUS_UNKNOWN:
-			/* Replay the previous SPCN command */
-			replay_spcn_cmd(last_spcn_cmd);
+	/* Other expected error codes*/
+	case SPCN_RSP_STATUS_INVALID_RACK:
+	case SPCN_RSP_STATUS_INVALID_SLAVE:
+	case SPCN_RSP_STATUS_INVALID_MOD:
+	case SPCN_RSP_STATUS_STATE_PROHIBIT:
+	case SPCN_RSP_STATUS_UNKNOWN:
+		/* Replay the previous SPCN command */
+		replay_spcn_cmd(last_spcn_cmd);
 	}
 	fsp_freemsg(msg);
 }
