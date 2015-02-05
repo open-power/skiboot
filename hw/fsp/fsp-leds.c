@@ -19,17 +19,10 @@
  * LED location code and indicator handling
  */
 #include <skiboot.h>
-#include <processor.h>
-#include <io.h>
 #include <fsp.h>
-#include <console.h>
-#include <timebase.h>
 #include <device.h>
-#include <stdio.h>
 #include <spcn.h>
-#include <timebase.h>
-#include <hdata/spira.h>
-#include <hdata/hdata.h>
+#include <lock.h>
 #include <errorlog.h>
 
 #include "fsp-leds.h"
