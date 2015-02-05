@@ -386,6 +386,8 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 
 	msg = fsp_mkmsg(FSP_CMD_SPCN_PASSTHRU, 4,
 			SPCN_ADDR_MODE_CEC_NODE, cmd_hdr, 0, PSI_DMA_LED_BUF);
+	if (!msg)
+		return rc;
 	/*
 	 * Update the local lists based on the attempted SPCN command to
 	 * set/reset an individual led (CEC or ENCL).
