@@ -934,8 +934,6 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 		      command received\n");
 		return true;
 	default:
-		prlog(PR_WARNING, PREFIX "Invalid FSP async sub command %06x\n",
-		      cmd_sub_mod);
 		return false;
 	}
 	cmd |= FSP_STATUS_GENERIC_ERROR;
