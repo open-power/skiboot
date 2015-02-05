@@ -282,9 +282,11 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 		prerror("LED: Failed to allocate FSP_RSP_SET_LED_STATE\n");
 	} else {
 		if (fsp_queue_msg(smsg, fsp_freemsg)) {
+			fsp_freemsg(smsg);
 			prerror("LED: Failed to queue FSP_RSP_SET_LED_STATE\n");
 		}
 	}
+	fsp_freemsg(msg);
 }
 
 /*
@@ -336,6 +338,7 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 				"FSP_RSP_SET_LED_STATE|FSP_STATUS_INVALID_LC\n");
 		} else {
 			if (fsp_queue_msg(msg, fsp_freemsg)) {
+				fsp_freemsg(msg);
 				prerror("LED: Couldn't queue "
 					"FSP_RSP_SET_LED_STATE"
 					"|FSP_STATUS_INVALID_LC\n");
@@ -402,6 +405,8 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 	unlock(&led_lock);
 
 	rc = fsp_queue_msg(msg, fsp_spcn_set_led_completion);
+	if (rc != OPAL_SUCCESS)
+		fsp_freemsg(msg);
 	return rc;
 }
 
@@ -549,6 +554,7 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 		prerror("LED: Failed to allocate FSP_RSP_GET_LED_LIST.\n");
 	} else {
 		if (fsp_queue_msg(msg, fsp_freemsg)) {
+			fsp_freemsg(msg);
 			prerror("LED: Failed to queue FSP_RSP_GET_LED_LIST\n");
 		}
 	}
@@ -585,6 +591,7 @@ void fsp_get_led_list(struct fsp_msg *msg)
 				" | FSP_STATUS_INVALID_DATA\n");
 		} else {
 			if (fsp_queue_msg(msg, fsp_freemsg)) {
+				fsp_freemsg(msg);
 				prerror("LED: Failed to queue "
 					"FSP_RSP_GET_LED_LIST |"
 					" FSP_STATUS_INVALID_DATA\n");
@@ -627,6 +634,7 @@ void fsp_free_led_list_buf(struct fsp_msg *msg)
 		}
 
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			fsp_freemsg(resp);
 			prerror("LED: Failed to queue RET_LED_BUFFER|ERROR\n");
 		}
 		return;
@@ -641,6 +649,7 @@ void fsp_free_led_list_buf(struct fsp_msg *msg)
 		return;
 	}
 	if (fsp_queue_msg(resp, fsp_freemsg)) {
+		fsp_freemsg(resp);
 		prerror("LED: Failed to queue FSP_RSP_RET_LED_BUFFER\n");
 	}
 }
@@ -666,6 +675,7 @@ static void fsp_ret_led_state(char *loc_code)
 			return;
 		}
 		if (fsp_queue_msg(msg, fsp_freemsg)) {
+			fsp_freemsg(msg);
 			prerror("LED: Couldn't queue FSP_RSP_GET_LED_STATE\n");
 		}
 		return;
@@ -682,6 +692,7 @@ static void fsp_ret_led_state(char *loc_code)
 		return;
 	}
 	if (fsp_queue_msg(msg, fsp_freemsg)) {
+		fsp_freemsg(msg);
 		prerror("LED: Failed to queue FSP_RSP_GET_LED_STATE "
 			"| FSP_STATUS_INVALID_LC\n");
 	}
@@ -710,6 +721,7 @@ void fsp_get_led_state(struct fsp_msg *msg)
 			return;
 		}
 		if (fsp_queue_msg(msg, fsp_freemsg)) {
+			fsp_freemsg(msg);
 			prerror("LED: Failed to queue  FSP_RSP_GET_LED_STATE"
 				"|FSP_STATUS_INVALID_DATA\n");
 		}
@@ -764,6 +776,7 @@ void fsp_set_led_state(struct fsp_msg *msg)
 			return;
 		}
 		if (fsp_queue_msg(msg, fsp_freemsg)) {
+			fsp_freemsg(msg);
 			prerror("LED: Couldn't queue FSP_RSP_SET_LED_STATE |"
 				" FSP_STATUS_INVALID_DATA\n");
 		}
@@ -829,6 +842,7 @@ void fsp_set_led_state(struct fsp_msg *msg)
 			break;
 		}
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
+			fsp_freemsg(resp);
 			prerror("LED: Failed to queue FSP_RSP_SET_LED_STATE |"
 				" FSP_STATUS_NOT_SUPPORTED\n");
 		}
@@ -937,6 +951,7 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 		return false;
 	}
 	if (fsp_queue_msg(resp, fsp_freemsg)) {
+		fsp_freemsg(resp);
 		prerror("LED: Failed to queue FSP_STATUS_GENERIC_ERROR\n");
 		return false;
 	}
@@ -1097,6 +1112,8 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 								 msg_status);
 		/* LED support not available */
 		led_support = false;
+
+		fsp_freemsg(msg);
 		return;
 	}
 
