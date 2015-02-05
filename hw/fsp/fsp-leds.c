@@ -303,7 +303,7 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 	void *buf = led_buffer;
 	u16 data_len = 0;
 	u32 cmd_hdr = 0;
-	int rc = 0;
+	int rc = -1;
 
 	sled.lc_len = strlen(loc_code);
 	strncpy(sled.lc_code, loc_code, sled.lc_len);
@@ -319,9 +319,7 @@ static int fsp_msg_set_led_state(char *loc_code, bool command, bool state)
 	/* LED not present */
 	if (led == NULL) {
 		u32 cmd = 0;
-		int rc = -1;
 		struct fsp_msg *msg = NULL;
-		
 
 		cmd = FSP_RSP_SET_LED_STATE | FSP_STATUS_INVALID_LC;
 		msg = fsp_mkmsg(cmd, 0);
