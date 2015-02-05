@@ -1,0 +1,57 @@
+OAPL_MESSAGE
+============
+
+The host OS can use OPAL_GET_MSG to retrive messages queued by OPAL. The
+messages are defined by enum OpalMessageType.
+
+OPAL_MSG_ASYNC_COMP
+-------------------
+
+params[0] = token
+params[1] = rc
+
+Additional parameters are function-specific.
+
+OPAL_MSG_MEM_ERR
+----------------
+
+OPAL_MSG_EPOW
+-------------
+
+OPAL_MSG_SHUTDOWN
+-----------------
+
+Used by OPAL to inform the host OS it must imitate a graceful shutdown. Uses
+the first parameter to indicate weather the system is going down for shutdown
+or a reboot.
+
+params[0] = 0x01 reboot, 0x00 shutdown
+
+OPAL_MSG_HMI_EVT
+----------------
+
+Sends the OPAL HMI Event to the host OS
+
+TODO: Describe what HMI is
+
+struct OpalHMIEvent {
+        uint8_t         version;        /* 0x00 */
+        uint8_t         severity;       /* 0x01 */
+        uint8_t         type;           /* 0x02 */
+        uint8_t         disposition;    /* 0x03 */
+        uint8_t         reserved_1[4];  /* 0x04 */
+
+        uint64_t        hmer;
+        /* TFMR register. Valid only for TFAC and TFMR_PARITY error type. */
+        uint64_t        tfmr;
+};
+
+
+OPAL_MSG_DPO
+------------
+
+Used for delayed power off, where OPAL can inform a host OS that it intends to
+perform a shutdown in the future.
+
+The host OS can use the separate API OPAL_GET_DPO_STATUS to query OPAL for the
+number of seconds before a forced shutdown will occur.

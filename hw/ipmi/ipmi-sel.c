@@ -23,6 +23,7 @@
 #include <lock.h>
 #include <errorlog.h>
 #include <pel.h>
+#include <opal-msg.h>
 
 /* OEM SEL fields */
 #define SEL_OEM_ID_0		0x55
@@ -35,6 +36,9 @@
 /* OEM SEL Commands */
 #define CMD_AMI_POWER		0x04
 #define CMD_AMI_PNOR_ACCESS	0x07
+
+#define SOFT_OFF	        0x00
+#define SOFT_REBOOT	        0x01
 
 struct oem_sel {
 	/* SEL header */
@@ -175,6 +179,23 @@ int ipmi_elog_commit(struct errorlog *elog_buf)
 	return 0;
 }
 
+static void sel_power(uint8_t power)
+{
+	switch (power) {
+	case SOFT_OFF:
+		prlog(PR_NOTICE, "IPMI: soft shutdown requested\n");
+		opal_queue_msg(OPAL_MSG_SHUTDOWN, NULL, NULL, SOFT_OFF);
+		break;
+	case SOFT_REBOOT:
+		prlog(PR_NOTICE, "IPMI: soft reboot rqeuested\n");
+		opal_queue_msg(OPAL_MSG_SHUTDOWN, NULL, NULL, SOFT_REBOOT);
+		break;
+	default:
+		prlog(PR_WARNING, "IPMI: requested bad power state: %02x\n",
+		      power);
+	}
+}
+
 static void dump_sel(struct oem_sel *sel)
 {
 	const int level = PR_DEBUG;
@@ -220,6 +241,7 @@ void ipmi_parse_sel(struct ipmi_msg *msg)
 
 	switch (sel.cmd) {
 	case CMD_AMI_POWER:
+		sel_power(sel.data[0]);
 		break;
 	case CMD_AMI_PNOR_ACCESS:
 		break;
