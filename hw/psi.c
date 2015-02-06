@@ -160,7 +160,7 @@ struct psi *psi_find_link(uint32_t chip_id)
 }
 
 #define PSI_LINK_CHECK_INTERVAL		10	/* Interval in secs */
-#define PSI_LINK_RECOVERY_TIMEOUT	900	/* 15 minutes */
+#define PSI_LINK_RECOVERY_TIMEOUT	1800	/* 30 minutes */
 
 static void psi_link_poll(void *data __unused)
 {
