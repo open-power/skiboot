@@ -163,9 +163,6 @@
 
 #ifndef __ASSEMBLY__
 
-#include <compiler.h>
-#include <stdint.h>
-
 /* Other enums */
 
 enum OpalVendorApiTokens {
