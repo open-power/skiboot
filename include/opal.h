@@ -51,7 +51,6 @@
 #define OPAL_I2C_STOP_ERR	-24
 
 /* API Tokens (in r0) */
-#define OPAL_INVALID_CALL		       -1
 #define OPAL_TEST				0
 #define OPAL_CONSOLE_WRITE			1
 #define OPAL_CONSOLE_READ			2
@@ -164,7 +163,6 @@
 #ifndef __ASSEMBLY__
 
 /* Other enums */
-
 enum OpalVendorApiTokens {
 	OPAL_START_VENDOR_API_RANGE = 1000, OPAL_END_VENDOR_API_RANGE = 1999
 };
@@ -256,6 +254,7 @@ enum OpalMmioWindowType {
 	OPAL_M64_WINDOW_TYPE = 2,
 	OPAL_IO_WINDOW_TYPE  = 3
 };
+
 enum OpalShpcSlotState {
 	OPAL_SHPC_DEV_NOT_PRESENT = 0,
 	OPAL_SHPC_DEV_PRESENT	  = 1

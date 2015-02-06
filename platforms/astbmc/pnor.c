@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #include <skiboot.h>
 #include <device.h>
 #include <console.h>
@@ -85,3 +84,58 @@ int pnor_init(void)
 	return rc;
 }
 
+static const struct {
+	enum resource_id id;
+	char name[PART_NAME_MAX+1];
+} part_name_map[] = {
+	{ RESOURCE_ID_KERNEL, "KERNEL" },
+	{ RESOURCE_ID_INITRAMFS, "ROOTFS" },
+};
+
+bool pnor_load_resource(enum resource_id id, void *buf, size_t *len)
+{
+	int i, rc, part_num, part_size, part_start;
+	const char *name;
+
+	if (!pnor_ffs || !pnor_chip)
+		return false;
+
+	for (i = 0, name = NULL; i < ARRAY_SIZE(part_name_map); i++) {
+		if (part_name_map[i].id == id) {
+			name = part_name_map[i].name;
+			break;
+		}
+	}
+	if (!name) {
+		prerror("PLAT: Couldn't find partition for id %d\n", id);
+		return false;
+	}
+
+	rc = ffs_lookup_part(pnor_ffs, name, &part_num);
+	if (rc) {
+		prerror("PLAT: No %s partition in PNOR\n", name);
+		return false;
+	}
+	rc = ffs_part_info(pnor_ffs, part_num, NULL,
+			   &part_start, &part_size, NULL);
+	if (rc) {
+		prerror("PLAT: Failed to get %s partition info\n", name);
+		return false;
+	}
+
+	if (part_size > *len) {
+		prerror("PLAT: %s image too large (%d > %zd)\n", name,
+			part_size, *len);
+		return false;
+	}
+
+	rc = flash_read(pnor_chip, part_start, buf, part_size);
+	if (rc) {
+		prerror("PLAT: failed to read %s partition\n", name);
+		return false;
+	}
+
+	*len = part_size;
+
+	return true;
+}
