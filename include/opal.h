@@ -241,45 +241,46 @@ enum OpalShpcAction {
 };
 
 enum OpalShpcLinkState {
-	OPAL_SHPC_LINK_DOWN = 0,
-	OPAL_SHPC_LINK_UP_x1 = 1,
-	OPAL_SHPC_LINK_UP_x2 = 2,
-	OPAL_SHPC_LINK_UP_x4 = 4,
-	OPAL_SHPC_LINK_UP_x8 = 8,
-	OPAL_SHPC_LINK_UP_x16 = 16,
-	OPAL_SHPC_LINK_UP_x32 = 32
+	OPAL_SHPC_LINK_DOWN	  = 0,
+	OPAL_SHPC_LINK_UP_x1	  = 1,
+	OPAL_SHPC_LINK_UP_x2	  = 2,
+	OPAL_SHPC_LINK_UP_x4	  = 4,
+	OPAL_SHPC_LINK_UP_x8	  = 8,
+	OPAL_SHPC_LINK_UP_x16	  = 16,
+	OPAL_SHPC_LINK_UP_x32	  = 32
 };
 enum OpalMmioWindowType {
 	OPAL_M32_WINDOW_TYPE = 1,
 	OPAL_M64_WINDOW_TYPE = 2,
-	OPAL_IO_WINDOW_TYPE = 3
+	OPAL_IO_WINDOW_TYPE  = 3
 };
 enum OpalShpcSlotState {
 	OPAL_SHPC_DEV_NOT_PRESENT = 0,
-	OPAL_SHPC_DEV_PRESENT = 1
+	OPAL_SHPC_DEV_PRESENT	  = 1
 };
 enum OpalShpcPowerState {
-	OPAL_SHPC_POWER_OFF = 0,
-	OPAL_SHPC_POWER_ON = 1
+	OPAL_SHPC_POWER_OFF	  = 0,
+	OPAL_SHPC_POWER_ON	  = 1
 };
 enum OpalExceptionHandler {
-	OPAL_MACHINE_CHECK_HANDLER = 1,
+	OPAL_MACHINE_CHECK_HANDLER	    = 1,
 	OPAL_HYPERVISOR_MAINTENANCE_HANDLER = 2,
-	OPAL_SOFTPATCH_HANDLER = 3
+	OPAL_SOFTPATCH_HANDLER		    = 3
 };
+
 enum OpalPendingState {
-	OPAL_EVENT_OPAL_INTERNAL = 0x1,
-	OPAL_EVENT_NVRAM = 0x2,
-	OPAL_EVENT_RTC = 0x4,
-	OPAL_EVENT_CONSOLE_OUTPUT = 0x8,
-	OPAL_EVENT_CONSOLE_INPUT = 0x10,
+	OPAL_EVENT_OPAL_INTERNAL   = 0x1,
+	OPAL_EVENT_NVRAM	   = 0x2,
+	OPAL_EVENT_RTC		   = 0x4,
+	OPAL_EVENT_CONSOLE_OUTPUT  = 0x8,
+	OPAL_EVENT_CONSOLE_INPUT   = 0x10,
 	OPAL_EVENT_ERROR_LOG_AVAIL = 0x20,
-	OPAL_EVENT_ERROR_LOG = 0x40,
-	OPAL_EVENT_EPOW = 0x80,
-	OPAL_EVENT_LED_STATUS = 0x100,
-	OPAL_EVENT_PCI_ERROR = 0x200,
-	OPAL_EVENT_DUMP_AVAIL = 0x400,
-	OPAL_EVENT_MSG_PENDING = 0x800,
+	OPAL_EVENT_ERROR_LOG	   = 0x40,
+	OPAL_EVENT_EPOW		   = 0x80,
+	OPAL_EVENT_LED_STATUS	   = 0x100,
+	OPAL_EVENT_PCI_ERROR	   = 0x200,
+	OPAL_EVENT_DUMP_AVAIL	   = 0x400,
+	OPAL_EVENT_MSG_PENDING	   = 0x800,
 };
 
 enum OpalThreadStatus {
@@ -334,8 +335,8 @@ enum OpalPciResetScope {
 	OPAL_RESET_PCI_LINK		= 2,
 	OPAL_RESET_PHB_ERROR		= 3,
 	OPAL_RESET_PCI_HOT		= 4,
-	OPAL_RESET_PCI_FUNDAMENTAL 	= 5,
-	OPAL_RESET_PCI_IODA_TABLE 	= 6
+	OPAL_RESET_PCI_FUNDAMENTAL	= 5,
+	OPAL_RESET_PCI_IODA_TABLE	= 6
 };
 
 enum OpalPciReinitScope {
@@ -344,12 +345,12 @@ enum OpalPciReinitScope {
 	 * OpalPciResetScope as OPAL v2 used the same
 	 * enum for both
 	 */
-	OPAL_REINIT_PCI_DEV		= 1000
+	OPAL_REINIT_PCI_DEV = 1000
 };
 
 enum OpalPciResetState {
-	OPAL_DEASSERT_RESET	= 0,
-	OPAL_ASSERT_RESET	= 1
+	OPAL_DEASSERT_RESET = 0,
+	OPAL_ASSERT_RESET   = 1
 };
 
 enum OpalPciMaskAction {
@@ -581,22 +582,22 @@ struct OpalIoP7IOCErrorData {
 
 	union {
 		struct OpalIoP7IOCRgcErrorData {
-			__be64 rgcStatus;		/* 3E1C10 */
+			__be64 rgcStatus;	/* 3E1C10 */
 			__be64 rgcLdcp;		/* 3E1C18 */
 		}rgc;
 		struct OpalIoP7IOCBiErrorData {
 			__be64 biLdcp0;		/* 3C0100, 3C0118 */
 			__be64 biLdcp1;		/* 3C0108, 3C0120 */
 			__be64 biLdcp2;		/* 3C0110, 3C0128 */
-			__be64 biFenceStatus;		/* 3C0130, 3C0130 */
+			__be64 biFenceStatus;	/* 3C0130, 3C0130 */
 
-			uint8_t  biDownbound;		/* BI Downbound or Upbound */
+			uint8_t  biDownbound;	/* BI Downbound or Upbound */
 		}bi;
 		struct OpalIoP7IOCCiErrorData {
-			__be64 ciPortStatus;		/* 3Dn008 */
-			__be64 ciPortLdcp;		/* 3Dn010 */
+			__be64 ciPortStatus;	/* 3Dn008 */
+			__be64 ciPortLdcp;	/* 3Dn010 */
 
-			uint8_t  ciPort;		/* Index of CI port: 0/1 */
+			uint8_t ciPort;		/* Index of CI port: 0/1 */
 		}ci;
 	};
 };
