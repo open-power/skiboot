@@ -178,6 +178,7 @@ enum OpalFreezeState {
 	OPAL_EEH_STOPPED_TEMP_UNAVAIL = 5,
 	OPAL_EEH_STOPPED_PERM_UNAVAIL = 6
 };
+
 enum OpalEehFreezeActionToken {
 	OPAL_EEH_ACTION_CLEAR_FREEZE_MMIO = 1,
 	OPAL_EEH_ACTION_CLEAR_FREEZE_DMA = 2,
@@ -249,6 +250,7 @@ enum OpalShpcLinkState {
 	OPAL_SHPC_LINK_UP_x16	  = 16,
 	OPAL_SHPC_LINK_UP_x32	  = 32
 };
+
 enum OpalMmioWindowType {
 	OPAL_M32_WINDOW_TYPE = 1,
 	OPAL_M64_WINDOW_TYPE = 2,
@@ -262,6 +264,7 @@ enum OpalShpcPowerState {
 	OPAL_SHPC_POWER_OFF	  = 0,
 	OPAL_SHPC_POWER_ON	  = 1
 };
+
 enum OpalExceptionHandler {
 	OPAL_MACHINE_CHECK_HANDLER	    = 1,
 	OPAL_HYPERVISOR_MAINTENANCE_HANDLER = 2,
