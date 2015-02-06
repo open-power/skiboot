@@ -292,11 +292,11 @@ static int64_t fsp_opal_register_dump_region(uint32_t id,
 	int rc = OPAL_SUCCESS;
 
 	if (!fsp_present())
-		return rc;
+		return OPAL_UNSUPPORTED;
 
 	if (!fsp_mdst_supported()) {
 		printf("MDST: Not supported\n");
-		return rc;
+		return OPAL_UNSUPPORTED;
 	}
 
 	/* Validate memory region id */
@@ -327,11 +327,11 @@ static int64_t fsp_opal_unregister_dump_region(uint32_t id)
 	int rc = OPAL_SUCCESS;
 
 	if (!fsp_present())
-		return rc;
+		return OPAL_UNSUPPORTED;
 
 	if (!fsp_mdst_supported()) {
 		printf("MDST: Not supported\n");
-		return rc;
+		return OPAL_UNSUPPORTED;
 	}
 
 	/* Validate memory region id */
