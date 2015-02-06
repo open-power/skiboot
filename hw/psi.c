@@ -32,6 +32,7 @@
 #include <i2c.h>
 #include <timebase.h>
 #include <platform.h>
+#include <errorlog.h>
 
 static LIST_HEAD(psis);
 static u64 psi_link_timer;
@@ -43,6 +44,10 @@ static void psi_register_interrupts(struct psi *psi);
 static void psi_activate_phb(struct psi *psi);
 
 static struct lock psi_lock = LOCK_UNLOCKED;
+
+DEFINE_LOG_ENTRY(OPAL_RC_PSI_TIMEOUT, OPAL_PLATFORM_ERR_EVT, OPAL_PSI,
+		OPAL_PLATFORM_FIRMWARE,
+		OPAL_UNRECOVERABLE_ERR_LOSS_OF_FUNCTION, OPAL_NA, NULL);
 
 void psi_set_link_polling(bool active)
 {
@@ -201,9 +206,10 @@ static void psi_link_poll(void *data __unused)
 				now + secs_to_tb(PSI_LINK_RECOVERY_TIMEOUT);
 
 		if (tb_compare(now, psi_link_timeout) == TB_AAFTERB) {
-			prerror("PSI: Timed out looking for a PSI link\n");
-
-			/* Log error to the host from here */
+			log_simple_error(&e_info(OPAL_RC_PSI_TIMEOUT),
+				"PSI: Link timeout -- loss of FSP\n");
+			/* Reset the link timeout and continue looking */
+			psi_link_timeout = 0;
 		}
 
 		/* Poll every 10 seconds */
