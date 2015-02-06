@@ -17,6 +17,7 @@
 #include <skiboot.h>
 #include <i2c.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <device.h>
 #include <opal-msg.h>
 

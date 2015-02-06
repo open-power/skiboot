@@ -15,6 +15,7 @@
  */
 #include <skiboot.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <opal-msg.h>
 #include <processor.h>
 #include <chiptod.h>

@@ -17,6 +17,8 @@
 #undef DEBUG
 
 #include <opal.h>
+#include <skiboot.h>
+#include <mem_region-malloc.h>
 #include <lock.h>
 #include <chip.h>
 #include <i2c.h>

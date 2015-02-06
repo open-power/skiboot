@@ -17,6 +17,7 @@
 #ifndef __ERRORLOG_H
 #define __ERRORLOG_H
 
+#include <compiler.h>
 #include <opal.h>
 #include <stdint.h>
 #include <ccan/list/list.h>

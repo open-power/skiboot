@@ -23,6 +23,7 @@
 #include <fsp.h>
 #include <console.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <timebase.h>
 #include <device.h>
 #include <fsp-sysparam.h>

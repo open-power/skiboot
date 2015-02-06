@@ -4,6 +4,7 @@
 #include <fsp.h>
 #include <device.h>
 #include <opal.h>
+#include <opal-api.h>
 
 #ifdef __TEST__
 #define this_cpu()	((void *)-1)

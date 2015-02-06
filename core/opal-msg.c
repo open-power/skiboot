@@ -17,6 +17,7 @@
 
 #include <skiboot.h>
 #include <opal-msg.h>
+#include <opal-api.h>
 #include <lock.h>
 
 #define OPAL_MAX_MSGS		(OPAL_MSG_TYPE_MAX + OPAL_MAX_ASYNC_COMP - 1)

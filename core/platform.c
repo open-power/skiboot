@@ -17,6 +17,7 @@
 
 #include <skiboot.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <console.h>
 
 /*

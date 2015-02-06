@@ -25,6 +25,7 @@
 #include <xscom.h>
 #include <device_tree.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <opal-msg.h>
 #include <elf.h>
 #include <io.h>

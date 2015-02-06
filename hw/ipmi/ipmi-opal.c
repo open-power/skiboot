@@ -15,9 +15,11 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <ipmi.h>
 #include <lock.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <device.h>
 #include <ccan/list/list.h>
 

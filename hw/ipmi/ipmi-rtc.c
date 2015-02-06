@@ -15,11 +15,13 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <ipmi.h>
 #include <time.h>
 #include <time-utils.h>
 #include <device.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <rtc.h>
 
 static enum {idle, waiting, updated, error} time_status;

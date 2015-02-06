@@ -18,6 +18,7 @@
 #include <fsp.h>
 #include <lock.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <device.h>
 #include <processor.h>
 #include <opal-msg.h>

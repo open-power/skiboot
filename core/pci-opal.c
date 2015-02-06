@@ -15,6 +15,7 @@
  */
 
 #include <skiboot.h>
+#include <opal-api.h>
 #include <pci.h>
 #include <pci-cfg.h>
 #include <timebase.h>

@@ -20,6 +20,7 @@
 #include <timebase.h>
 #include <time.h>
 #include <time-utils.h>
+#include <opal-api.h>
 #include <opal-msg.h>
 #include <errorlog.h>
 #include <device.h>

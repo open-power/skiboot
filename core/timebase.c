@@ -16,6 +16,7 @@
 
 #include <timebase.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <cpu.h>
 
 static void time_wait_poll(unsigned long duration)

@@ -41,6 +41,7 @@
 #include <device.h>
 #include <skiboot.h>
 #include <errorlog.h>
+#include <opal-api.h>
 
 /*
  * Max outstanding dumps to retrieve

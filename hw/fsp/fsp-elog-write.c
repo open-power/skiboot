@@ -33,6 +33,7 @@
 #include <timebase.h>
 #include <pel.h>
 #include <pool.h>
+#include <opal-api.h>
 
 static LIST_HEAD(elog_write_to_fsp_pending);
 static LIST_HEAD(elog_write_to_host_pending);

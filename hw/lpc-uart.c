@@ -18,6 +18,7 @@
 #include <lpc.h>
 #include <console.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <device.h>
 #include <interrupts.h>
 #include <processor.h>

@@ -19,6 +19,7 @@
 #include <p7ioc-regs.h>
 #include <cec.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <io.h>
 #include <vpd.h>
 #include <interrupts.h>

@@ -53,6 +53,7 @@
 #include <errno.h>
 #include <psi.h>
 #include <fsp-elog.h>
+#include <opal-api.h>
 
 /*
  * Maximum number of entries that are pre-allocated

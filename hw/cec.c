@@ -19,6 +19,7 @@
 #include <p7ioc.h>
 #include <p5ioc2.h>
 #include <interrupts.h>
+#include <opal-api.h>
 
 /*
  * Note: This file os only used on P7/P7+

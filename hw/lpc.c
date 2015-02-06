@@ -22,6 +22,7 @@
 #include <lpc.h>
 #include <timebase.h>
 #include <errorlog.h>
+#include <opal-api.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_LPC_READ, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 		 OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,

@@ -22,6 +22,7 @@
 #include <chip.h>
 #include <centaur.h>
 #include <errorlog.h>
+#include <opal-api.h>
 
 /* Mask of bits to clear in HMER before an access */
 #define HMER_CLR_MASK	(~(SPR_HMER_XSCOM_FAIL | \

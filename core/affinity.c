@@ -45,6 +45,7 @@
  */
 #include <skiboot.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <device.h>
 #include <console.h>
 #include <trace.h>

@@ -24,6 +24,7 @@
 #include <libfdt.h>
 #include <processor.h>
 #include <skiboot.h>
+#include <opal-api.h>
 
 #define DEBUG_TRACES
 

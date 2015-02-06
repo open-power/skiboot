@@ -22,6 +22,7 @@
 #include <device.h>
 #include <ccan/endian/endian.h>
 #include <errorlog.h>
+#include <opal-api.h>
 
 #include "fsp-codeupdate.h"
 

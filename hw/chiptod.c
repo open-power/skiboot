@@ -24,6 +24,7 @@
 #include <io.h>
 #include <cpu.h>
 #include <timebase.h>
+#include <opal-api.h>
 
 /* TOD chip XSCOM addresses */
 #define TOD_TTYPE_0			0x00040011

@@ -15,10 +15,13 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <bt.h>
 #include <ipmi.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <device.h>
+#include <skiboot.h>
 
 struct ipmi_backend *ipmi_backend = NULL;
 

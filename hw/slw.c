@@ -28,6 +28,7 @@
 #include <timebase.h>
 #include <errorlog.h>
 #include <libfdt/libfdt.h>
+#include <opal-api.h>
 
 #ifdef __HAVE_LIBPORE__
 #include <p8_pore_table_gen_api.H>

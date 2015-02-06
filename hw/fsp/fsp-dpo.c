@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <timebase.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <opal-msg.h>
 
 #define PREFIX "FSPDPO: "

@@ -24,6 +24,7 @@
 #include <pci-cfg.h>
 #include <interrupts.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <ccan/str/str.h>
 
 #define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB%d: " fmt, \

@@ -34,6 +34,7 @@
 #include <lock.h>
 #include <device.h>
 #include <spcn.h>
+#include <opal-api.h>
 #include <opal-msg.h>
 #include<errorlog.h>
 

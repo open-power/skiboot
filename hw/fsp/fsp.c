@@ -36,6 +36,7 @@
 #include <cpu.h>
 #include <errorlog.h>
 #include <opal.h>
+#include <opal-api.h>
 #include <opal-msg.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_FSP_POLL_TIMEOUT, OPAL_PLATFORM_ERR_EVT, OPAL_FSP,

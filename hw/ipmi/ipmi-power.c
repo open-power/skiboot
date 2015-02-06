@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <skiboot.h>
 #include <stdlib.h>
 #include <ipmi.h>
 #include <opal.h>
