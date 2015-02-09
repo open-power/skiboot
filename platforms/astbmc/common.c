@@ -44,6 +44,51 @@ void astbmc_ext_irq(unsigned int chip_id __unused)
 	bt_irq();
 }
 
+static void astbmc_ipmi_error(struct ipmi_msg *msg)
+{
+        prlog(PR_DEBUG, "ASTBMC: error sending msg. cc = %02x\n", msg->cc);
+
+        ipmi_free_msg(msg);
+}
+
+static void astbmc_ipmi_setenables(void)
+{
+        struct ipmi_msg *msg;
+
+        struct {
+                uint8_t oem2_en : 1;
+                uint8_t oem1_en : 1;
+                uint8_t oem0_en : 1;
+                uint8_t reserved : 1;
+                uint8_t sel_en : 1;
+                uint8_t msgbuf_en : 1;
+                uint8_t msgbuf_full_int_en : 1;
+                uint8_t rxmsg_queue_int_en : 1;
+        } data;
+
+        memset(&data, 0, sizeof(data));
+
+        /* The spec says we need to read-modify-write to not clobber
+         * the state of the other flags. These are set on by the bmc */
+        data.rxmsg_queue_int_en = 1;
+        data.sel_en = 1;
+
+        /* These are the ones we want to set on */
+        data.msgbuf_en = 1;
+
+        msg = ipmi_mkmsg_simple(IPMI_SET_ENABLES, &data, sizeof(data));
+        if (!msg) {
+                prlog(PR_ERR, "ASTBMC: failed to set enables\n");
+                return;
+        }
+
+        msg->error = astbmc_ipmi_error;
+
+        ipmi_queue_msg(msg);
+
+}
+
+
 void astbmc_init(void)
 {
 	/* Initialize PNOR/NVRAM */
@@ -58,6 +103,9 @@ void astbmc_init(void)
 
 	/* As soon as IPMI is up, inform BMC we are in "S0" */
 	ipmi_set_power_state(IPMI_PWR_SYS_S0_WORKING, IPMI_PWR_NOCHANGE);
+
+        /* Enable IPMI OEM message interrupts */
+        astbmc_ipmi_setenables();
 
 	/* Setup UART console for use by Linux via OPAL API */
 	if (!dummy_console_enabled())

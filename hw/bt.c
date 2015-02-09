@@ -418,11 +418,17 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 void bt_irq(void)
 {
 	uint8_t ireg = bt_inb(BT_INTMASK);
+	uint8_t ctrl = bt_inb(BT_CTRL);
 
 	bt.irq_ok = true;
 	if (ireg & BT_INTMASK_B2H_IRQ) {
 		bt_outb(BT_INTMASK_B2H_IRQ | BT_INTMASK_B2H_IRQEN, BT_INTMASK);
 		bt_poll(NULL, NULL);
+	}
+
+	if (ctrl & BT_CTRL_SMS_ATN) {
+		bt_outb(BT_CTRL_SMS_ATN, BT_CTRL);
+		ipmi_sms_attention();
 	}
 }
 
