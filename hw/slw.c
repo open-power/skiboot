@@ -412,10 +412,6 @@ struct cpu_idle_states {
 					      from PACA pointer */
 #define IDLE_LOSE_FULL_CONTEXT	0x00004000 /* Restore hypervisor resource
 					      by searching PACA */
-#define IDLE_USE_INST_NAP	0x00010000 /* Use nap instruction */
-#define IDLE_USE_INST_SLEEP	0x00020000 /* Use sleep instruction (no workaround) */
-#define IDLE_USE_INST_WINKLE	0x00040000 /* Use winkle instruction */
-#define IDLE_USE_INST_SLEEP_ER1	0x00080000 /* Use sleep instruction (need workaround)*/
 #define IDLE_USE_PMICR		0x00800000 /* Use SPR PMICR instruction */
 
 #define IDLE_FASTSLEEP_PMICR	0x0000002000000000
@@ -436,9 +432,9 @@ static struct cpu_idle_states power7_cpu_idle_states[] = {
 		       | 1*IDLE_LOSE_USER_CONTEXT \
 		       | 0*IDLE_LOSE_HYP_CONTEXT \
 		       | 0*IDLE_LOSE_FULL_CONTEXT \
-		       | 1*IDLE_USE_INST_NAP \
-		       | 0*IDLE_USE_INST_SLEEP \
-		       | 0*IDLE_USE_INST_WINKLE \
+		       | 1*OPAL_PM_NAP_ENABLED \
+		       | 0*OPAL_PM_SLEEP_ENABLED \
+		       | 0*OPAL_PM_WINKLE_ENABLED \
 		       | 0*IDLE_USE_PMICR,
 		.pmicr = 0,
 		.pmicr_mask = 0 },
@@ -454,7 +450,7 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 		       | 1*IDLE_LOSE_USER_CONTEXT \
 		       | 0*IDLE_LOSE_HYP_CONTEXT \
 		       | 0*IDLE_LOSE_FULL_CONTEXT \
-		       | 1*IDLE_USE_INST_NAP \
+		       | 1*OPAL_PM_NAP_ENABLED \
 		       | 0*IDLE_USE_PMICR,
 		.pmicr = 0,
 		.pmicr_mask = 0 },
@@ -467,7 +463,7 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 		       | 1*IDLE_LOSE_USER_CONTEXT \
 		       | 0*IDLE_LOSE_HYP_CONTEXT \
 		       | 0*IDLE_LOSE_FULL_CONTEXT \
-		       | 1*IDLE_USE_INST_SLEEP_ER1 \
+		       | 1*OPAL_PM_SLEEP_ENABLED_ER1 \
 		       | 0*IDLE_USE_PMICR, /* Not enabled until deep
 						states are available */
 		.pmicr = IDLE_FASTSLEEP_PMICR,
@@ -487,7 +483,7 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 		       | 1*IDLE_LOSE_USER_CONTEXT \
 		       | 1*IDLE_LOSE_HYP_CONTEXT \
 		       | 1*IDLE_LOSE_FULL_CONTEXT \
-		       | 1*IDLE_USE_INST_WINKLE \
+		       | 1*OPAL_PM_WINKLE_ENABLED \
 		       | 0*IDLE_USE_PMICR, /* Currently choosing deep vs
 						fast via EX_PM_GP1 reg */
 		.pmicr = 0,
@@ -594,10 +590,10 @@ static void add_cpu_idle_state_properties(void)
 
 	for (i = 0; i < nr_states; i++) {
 		/* For each state, check if it is one of the supported states. */
-		if( (states[i].flags & IDLE_USE_INST_NAP) ||
-		   ((states[i].flags & IDLE_USE_INST_SLEEP) && can_sleep) ||
-		   ((states[i].flags & IDLE_USE_INST_SLEEP_ER1) && can_sleep) ||
-		   ((states[i].flags & IDLE_USE_INST_WINKLE) && can_winkle) ) {
+		if( (states[i].flags & OPAL_PM_NAP_ENABLED) ||
+		   ((states[i].flags & OPAL_PM_SLEEP_ENABLED) && can_sleep) ||
+		   ((states[i].flags & OPAL_PM_SLEEP_ENABLED_ER1) && can_sleep) ||
+		   ((states[i].flags & OPAL_PM_WINKLE_ENABLED) && can_winkle) ) {
 			/*
 			 * If a state is supported add each of its property
 			 * to its corresponding property buffer.

@@ -161,6 +161,16 @@
 #define OPAL_I2C_REQUEST			109
 #define OPAL_LAST				109
 
+/* Device tree flags */
+
+/* Flags set in power-mgmt nodes in device tree if
+ * respective idle states are supported in the platform.
+ */
+#define OPAL_PM_NAP_ENABLED		0x00010000
+#define OPAL_PM_SLEEP_ENABLED		0x00020000
+#define OPAL_PM_WINKLE_ENABLED		0x00040000
+#define OPAL_PM_SLEEP_ENABLED_ER1	0x00080000 /* with workaround */
+
 #ifndef __ASSEMBLY__
 
 /* Other enums */
