@@ -425,9 +425,9 @@ struct opal_msg {
 
 /* System parameter permission */
 enum OpalSysparamPerm {
-	OPAL_SYSPARAM_READ 	= 0x1,
-	OPAL_SYSPARAM_WRITE	= 0x2,
-	OPAL_SYSPARAM_RW	= (OPAL_SYSPARAM_READ | OPAL_SYSPARAM_WRITE),
+	OPAL_SYSPARAM_READ  = 0x1,
+	OPAL_SYSPARAM_WRITE = 0x2,
+	OPAL_SYSPARAM_RW    = (OPAL_SYSPARAM_READ | OPAL_SYSPARAM_WRITE),
 };
 
 enum {
