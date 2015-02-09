@@ -51,6 +51,7 @@
 #define OPAL_I2C_STOP_ERR	-24
 
 /* API Tokens (in r0) */
+#define OPAL_INVALID_CALL		       -1
 #define OPAL_TEST				0
 #define OPAL_CONSOLE_WRITE			1
 #define OPAL_CONSOLE_READ			2
