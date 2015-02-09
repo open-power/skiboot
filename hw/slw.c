@@ -751,6 +751,9 @@ int64_t slw_reinit(uint64_t flags)
 	return OPAL_UNSUPPORTED;
 #endif
 
+	if (proc_gen < proc_gen_p8)
+		return OPAL_UNSUPPORTED;
+
 	if (flags & OPAL_REINIT_CPUS_HILE_BE)
 		target_le = false;
 	if (flags & OPAL_REINIT_CPUS_HILE_LE)

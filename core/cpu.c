@@ -679,6 +679,13 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 		rc = cpu_change_all_hile(hile);
 	}
 
+	/* If we have a P7, error out for LE switch, do nothing for BE */
+	if (proc_gen < proc_gen_p8) {
+		if (flags & OPAL_REINIT_CPUS_HILE_LE)
+			rc = OPAL_UNSUPPORTED;
+		flags &= ~(OPAL_REINIT_CPUS_HILE_BE | OPAL_REINIT_CPUS_HILE_LE);
+	}
+
 	/* Any flags left ? */
 	if (flags != 0)
 		rc = slw_reinit(flags);
