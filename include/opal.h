@@ -807,8 +807,9 @@ struct opal_sg_list {
 /*
  * Dump region ID range usable by the OS
  */
-#define OPAL_DUMP_REGION_OS_START		0x80
-#define OPAL_DUMP_REGION_OS_END			0xFF
+#define OPAL_DUMP_REGION_HOST_START		0x80
+#define OPAL_DUMP_REGION_LOG_BUF		0x80
+#define OPAL_DUMP_REGION_HOST_END		0xFF
 
 /* CAPI modes for PHB */
 enum {
