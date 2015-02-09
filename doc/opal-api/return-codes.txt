@@ -19,7 +19,10 @@ The core set of return codes are:
 Success!
 
 #define OPAL_PARAMETER		-1
-A parameter was invalid.
+A parameter was invalid. This will also be returned if you call an
+invalid OPAL call. To determine if a specific OPAL call is supported
+or not, OPAL_CHECK_TOKEN should be called rather than relying on
+OPAL_PARAMETER being returned for an invalid token.
 
 #define OPAL_BUSY		-2
 Try again later.
