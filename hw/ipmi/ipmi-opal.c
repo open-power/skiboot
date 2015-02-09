@@ -23,17 +23,6 @@
 #include <device.h>
 #include <ccan/list/list.h>
 
-enum {
-	OPAL_IPMI_MSG_FORMAT_VERSION_1 = 1,
-};
-
-struct opal_ipmi_msg {
-	uint8_t version;
-	uint8_t netfn;
-	uint8_t cmd;
-	uint8_t data[];
-};
-
 static struct lock msgq_lock = LOCK_UNLOCKED;
 static struct list_head msgq = LIST_HEAD_INIT(msgq);
 

@@ -430,6 +430,17 @@ enum OpalSysparamPerm {
 	OPAL_SYSPARAM_RW	= (OPAL_SYSPARAM_READ | OPAL_SYSPARAM_WRITE),
 };
 
+enum {
+	OPAL_IPMI_MSG_FORMAT_VERSION_1 = 1,
+};
+
+struct opal_ipmi_msg {
+	uint8_t version;
+	uint8_t netfn;
+	uint8_t cmd;
+	uint8_t data[];
+};
+
 /*
  * EPOW status sharing (OPAL and the host)
  *
