@@ -299,7 +299,7 @@ enum OpalPendingState {
 enum OpalThreadStatus {
 	OPAL_THREAD_INACTIVE = 0x0,
 	OPAL_THREAD_STARTED = 0x1,
-	OPAL_THREAD_UNAVAILABLE = 0x2
+	OPAL_THREAD_UNAVAILABLE = 0x2 /* opal-v3 */
 };
 
 enum OpalPciBusCompare {
@@ -782,7 +782,7 @@ typedef struct oppanel_line {
 } oppanel_line_t;
 
 /*
- * SG entries used for code update
+ * SG entries
  *
  * WARNING: The current implementation requires each entry
  * to represent a block that is 4k aligned *and* each block
@@ -842,4 +842,5 @@ struct opal_i2c_request {
 };
 
 #endif /* __ASSEMBLY__ */
+
 #endif /* __OPAL_H */
