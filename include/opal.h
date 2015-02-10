@@ -17,9 +17,11 @@
 #ifndef __OPAL_H
 #define __OPAL_H
 
+#ifdef __SKIBOOT__
 #ifndef __ASSEMBLY__
 #include <types.h>
 #endif /* __ASSEMBLY__ */
+#endif /* __SKIBOOT__ */
 
 /****** OPAL APIs ******/
 
