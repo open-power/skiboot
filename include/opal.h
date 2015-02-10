@@ -617,7 +617,7 @@ struct OpalIoP7IOCErrorData {
 			__be64 biLdcp2;		/* 3C0110, 3C0128 */
 			__be64 biFenceStatus;	/* 3C0130, 3C0130 */
 
-			uint8_t  biDownbound;	/* BI Downbound or Upbound */
+			uint8_t biDownbound;	/* BI Downbound or Upbound */
 		}bi;
 		struct OpalIoP7IOCCiErrorData {
 			__be64 ciPortStatus;	/* 3Dn008 */
