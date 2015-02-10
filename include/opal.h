@@ -777,7 +777,7 @@ enum {
 };
 
 typedef struct oppanel_line {
-	const char * 	line;
+	const char *line;
 	__be64 	line_len;
 } oppanel_line_t;
 
