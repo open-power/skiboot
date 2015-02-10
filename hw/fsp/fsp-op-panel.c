@@ -189,13 +189,17 @@ static int64_t __opal_write_oppanel(oppanel_line_t *lines, uint64_t num_lines,
 	op_src.total_size = sizeof(op_src);
 	op_src.word2 = 0; /* should be unneeded */
 
-	len = lines[0].line_len > 16 ? 16 : lines[0].line_len;
+	len = be64_to_cpu(lines[0].line_len);
+	if (len > 16)
+		len = 16;
 
 	memset(op_src.ascii + len, ' ', 16-len);
-	memcpy(op_src.ascii, lines[0].line, len);
+	memcpy(op_src.ascii, (void*)be64_to_cpu(lines[0].line), len);
 	if (num_lines > 1) {
-		len = lines[1].line_len > 16 ? 16 : lines[1].line_len;
-		memcpy(op_src.ascii + 16, lines[1].line, len);
+		len = be64_to_cpu(lines[1].line_len);
+		if (len > 16)
+			len = 16;
+		memcpy(op_src.ascii + 16, (void*)be64_to_cpu(lines[1].line), len);
 		memset(op_src.ascii + 16 + len, ' ', 16-len);
 	}
 

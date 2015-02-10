@@ -779,8 +779,8 @@ enum {
 };
 
 typedef struct oppanel_line {
-	const char *line;
-	__be64 	line_len;
+	__be64 line;
+	__be64 line_len;
 } oppanel_line_t;
 
 /*
@@ -791,8 +791,8 @@ typedef struct oppanel_line {
  * size except the last one in the list to be as well.
  */
 struct opal_sg_entry {
-	void *data;
-	long length;
+	__be64 data;
+	__be64 length;
 };
 
 /*
@@ -801,8 +801,8 @@ struct opal_sg_entry {
  * length = VER | length
  */
 struct opal_sg_list {
-	unsigned long length;
-	struct opal_sg_list *next;
+	__be64 length;
+	__be64 next;
 	struct opal_sg_entry entry[];
 };
 

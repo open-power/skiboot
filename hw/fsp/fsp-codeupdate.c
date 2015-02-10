@@ -835,8 +835,8 @@ static int get_lid_data(struct opal_sg_list *list,
 	/* Reset TCE start address */
 	tce_start = 0;
 
-	for (sg = list; sg; sg = sg->next) {
-		length = (sg->length & ~(SG_LIST_VERSION << 56)) - 16;
+	for (sg = list; sg; sg = (struct opal_sg_list*)be64_to_cpu(sg->next)) {
+		length = (be64_to_cpu(sg->length) & ~(SG_LIST_VERSION << 56)) - 16;
 		num_entries = length / sizeof(struct opal_sg_entry);
 		if (num_entries <= 0)
 			return -1;
@@ -848,8 +848,8 @@ static int get_lid_data(struct opal_sg_list *list,
 			 * Continue until we get data block which
 			 * contains LID data
 			 */
-			if (lid_offset > entry->length) {
-				lid_offset -= entry->length;
+			if (lid_offset > be64_to_cpu(entry->length)) {
+				lid_offset -= be64_to_cpu(entry->length);
 				continue;
 			}
 
@@ -858,16 +858,16 @@ static int get_lid_data(struct opal_sg_list *list,
 			 * Map only required pages, instead of
 			 * mapping entire entry.
 			 */
-			map_act = entry->length;
-			map_size = entry->length;
+			map_act = be64_to_cpu(entry->length);
+			map_size = be64_to_cpu(entry->length);
 
 			/* First TCE mapping */
 			if (!tce_start) {
 				tce_start = PSI_DMA_CODE_UPD +
 						(lid_offset & 0xfff);
-				map_act = entry->length - lid_offset;
+				map_act = be64_to_cpu(entry->length) - lid_offset;
 				lid_offset &= ~0xfff;
-				map_size = entry->length - lid_offset;
+				map_size = be64_to_cpu(entry->length) - lid_offset;
 			}
 
 			/* Check pending LID size to map */
@@ -885,7 +885,9 @@ static int get_lid_data(struct opal_sg_list *list,
 			lid_size -= map_act;
 
 			/* TCE mapping */
-			code_update_tce_map(buf_pos, entry->data + lid_offset,
+			code_update_tce_map(buf_pos,
+					    (void*)(be64_to_cpu(entry->data)
+						    + lid_offset),
 					    map_size);
 			buf_pos += map_size;
 			/* Reset LID offset count */
@@ -989,7 +991,7 @@ static int fsp_flash_firmware(void)
 	if (!list)
 		goto out;
 	entry = &list->entry[0];
-	header = (struct update_image_header *)entry->data;
+	header = (struct update_image_header *)be64_to_cpu(entry->data);
 	idx_entry = (void *)header + be16_to_cpu(header->lid_index_offset);
 
 	/* FIXME:
@@ -1086,8 +1088,8 @@ static int64_t validate_sglist(struct opal_sg_list *list)
 	int length, num_entries, i;
 
 	prev_entry = NULL;
-	for (sg = list; sg; sg = sg->next) {
-		length = (sg->length & ~(SG_LIST_VERSION << 56)) - 16;
+	for (sg = list; sg; sg = (struct opal_sg_list*)be64_to_cpu(sg->next)) {
+		length = (be64_to_cpu(sg->length) & ~(SG_LIST_VERSION << 56)) - 16;
 		num_entries = length / sizeof(struct opal_sg_entry);
 		if (num_entries <= 0)
 			return -1;
@@ -1096,7 +1098,7 @@ static int64_t validate_sglist(struct opal_sg_list *list)
 			entry = &sg->entry[i];
 
 			/* All entries must be aligned */
-			if (((uint64_t)entry->data) & 0xfff)
+			if (((uint64_t)be64_to_cpu(entry->data)) & 0xfff)
 				return OPAL_PARAMETER;
 
 			/* All non-terminal entries size must be aligned */
@@ -1129,14 +1131,14 @@ static int64_t fsp_opal_update_flash(struct opal_sg_list *list)
 		rc = OPAL_SUCCESS;
 		goto out;
 	}
-	length = (list->length & ~(SG_LIST_VERSION << 56)) - 16;
+	length = (be64_to_cpu(list->length) & ~(SG_LIST_VERSION << 56)) - 16;
 	num_entries = length / sizeof(struct opal_sg_entry);
 	if (num_entries <= 0)
 		goto out;
 
 	/* Validate image header */
 	entry = &list->entry[0];
-	rc = validate_candidate_image((uint64_t)entry->data,
+	rc = validate_candidate_image((uint64_t)be64_to_cpu(entry->data),
 				      VALIDATE_BUF_SIZE, &result);
 	if (!rc && (result != VALIDATE_FLASH_AUTH &&
 		   result != VALIDATE_INVALID_IMG)) {

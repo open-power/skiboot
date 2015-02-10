@@ -411,8 +411,8 @@ static int64_t validate_dump_sglist(struct opal_sg_list *list,
 
 	prev_entry = NULL;
 	*size = 0;
-	for (sg = list; sg; sg = sg->next) {
-		length = sg->length - 16;
+	for (sg = list; sg; sg = (struct opal_sg_list*)be64_to_cpu(sg->next)) {
+		length = be64_to_cpu(sg->length) - 16;
 		num_entries = length / sizeof(struct opal_sg_entry);
 		if (num_entries <= 0)
 			return OPAL_PARAMETER;
@@ -422,11 +422,11 @@ static int64_t validate_dump_sglist(struct opal_sg_list *list,
 			*size += entry->length;
 
 			/* All entries must be aligned */
-			if (((uint64_t)entry->data) & 0xfff)
+			if (((uint64_t)be64_to_cpu(entry->data)) & 0xfff)
 				return OPAL_PARAMETER;
 
 			/* All non-terminal entries size must be aligned */
-			if (prev_entry && (prev_entry->length & 0xfff))
+			if (prev_entry && (be64_to_cpu(prev_entry->length) & 0xfff))
 				return OPAL_PARAMETER;
 
 			prev_entry = entry;
@@ -458,8 +458,8 @@ static int64_t map_dump_buffer(void)
 	fetch_off = fetch_remain;
 	tce_off = sg_off = 0;
 
-	for (sg = dump_data; sg; sg = sg->next) {
-		num_entries = (sg->length - 16) /
+	for (sg = dump_data; sg; sg = (struct opal_sg_list*)be64_to_cpu(sg->next)) {
+		num_entries = (be64_to_cpu(sg->length) - 16) /
 					sizeof(struct opal_sg_entry);
 		if (num_entries <= 0)
 			return OPAL_PARAMETER;
@@ -468,8 +468,8 @@ static int64_t map_dump_buffer(void)
 			entry = &sg->entry[i];
 
 			/* Continue until we get offset */
-			if ((sg_off + entry->length) < dump_offset) {
-				sg_off += entry->length;
+			if ((sg_off + be64_to_cpu(entry->length)) < dump_offset) {
+				sg_off += be64_to_cpu(entry->length);
 				continue;
 			}
 
@@ -480,10 +480,10 @@ static int64_t map_dump_buffer(void)
 			 */
 			if (!tce_off) {
 				buf_off = (dump_offset - sg_off) & ~0xfff;
-				length = entry->length - buf_off;
+				length = be64_to_cpu(entry->length) - buf_off;
 			} else {
 				buf_off = 0;
-				length = entry->length;
+				length = be64_to_cpu(entry->length);
 			}
 
 			/* Adjust length for last mapping */
@@ -493,11 +493,11 @@ static int64_t map_dump_buffer(void)
 			}
 
 			/* Adjust offset */
-			sg_off += entry->length;
+			sg_off += be64_to_cpu(entry->length);
 			fetch_off -= length;
 
 			/* TCE mapping */
-			dump_tce_map(tce_off, entry->data + buf_off, length);
+			dump_tce_map(tce_off, (void*)(be64_to_cpu(entry->data) + buf_off), length);
 			tce_off += length;
 
 			/* TCE mapping complete */
