@@ -26,10 +26,10 @@ unsigned long __stack_chk_guard = 0xdeadf00dbaad300d;
 void __noreturn assert_fail(const char *msg)
 {
 	prlog(PR_EMERG, "Assert fail: %s\n", msg);
-	abort();
+	_abort();
 }
 
-void __noreturn abort(void)
+void __noreturn _abort(void)
 {
 	static bool in_abort = false;
 	unsigned long hid0;
