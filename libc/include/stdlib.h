@@ -25,6 +25,12 @@ unsigned long int strtoul(const char *nptr, char **endptr, int base);
 long int strtol(const char *nptr, char **endptr, int base);
 
 int rand(void);
-void __attribute__((noreturn)) abort(void);
+void __attribute__((noreturn)) _abort(void);
+#define abort() do {                                           \
+               update_sp_attn_area("abort():" __FILE__         \
+                                   ":" stringify(__LINE__));   \
+               _abort();                                       \
+       } while(0)
+
 
 #endif

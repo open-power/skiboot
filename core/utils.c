@@ -22,10 +22,10 @@
 void assert_fail(const char *msg)
 {
 	prlog(PR_EMERG, "Assert fail: %s\n", msg);
-	abort();
+	_abort();
 }
 
-void abort(void)
+void _abort(void)
 {
 	static bool in_abort = false;
 	unsigned long hid0;
