@@ -7,10 +7,10 @@
 *.swp
 .version
 skiboot-nosection.elf
-skiboot.elf
+skiboot*.elf
 skiboot.lds
 skiboot.lid
-skiboot.map
+skiboot*.map
 skiboot.info
 coverage-report/
 TAGS
