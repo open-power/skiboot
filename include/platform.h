@@ -26,6 +26,8 @@ enum resource_id {
 	RESOURCE_ID_KERNEL,
 	RESOURCE_ID_INITRAMFS,
 };
+#define RESOURCE_SUBID_NONE 0
+#define RESOURCE_SUBID_SUPPORTED 1
 
 /*
  * Each platform can provide a set of hooks
@@ -129,7 +131,7 @@ struct platform {
 	 * Load an external resource (eg, kernel payload) into a preallocated
 	 * buffer. Returns true on success.
 	 */
-	bool		(*load_resource)(enum resource_id id,
+	bool		(*load_resource)(enum resource_id id, uint32_t idx,
 					 void *buf, size_t *len);
 
 	/*
@@ -148,7 +150,7 @@ static const struct platform __used __section(".platforms") name ##_platform
 
 extern void probe_platform(void);
 
-extern bool load_resource(enum resource_id id,
+extern bool load_resource(enum resource_id id, uint32_t subid,
 			  void *buf, size_t *len);
 
 #endif /* __PLATFORM_H */

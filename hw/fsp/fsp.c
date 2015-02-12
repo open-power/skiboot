@@ -2245,22 +2245,33 @@ int fsp_fetch_data_queue(uint8_t flags, uint16_t id, uint32_t sub_id,
 	return OPAL_SUCCESS;
 }
 
-bool fsp_load_resource(enum resource_id id, void *buf, size_t *size)
-{
-	uint32_t lid_no, lid;
-	size_t tmp_size;
-	int rc;
+static struct {
+	enum resource_id	id;
+	uint32_t		idx;
+	uint32_t		lid_no;
+} fsp_lid_map[] = {
+	{ RESOURCE_ID_KERNEL,	RESOURCE_SUBID_NONE,	KERNEL_LID_OPAL },
+	{ RESOURCE_ID_INITRAMFS,RESOURCE_SUBID_NONE,	INITRAMFS_LID_OPAL },
+};
 
-	switch (id) {
-	case RESOURCE_ID_KERNEL:
-		lid_no = KERNEL_LID_OPAL;
-		break;
-	case RESOURCE_ID_INITRAMFS:
-		lid_no = INITRAMFS_LID_OPAL;
-		break;
-	default:
-		return false;
+bool fsp_load_resource(enum resource_id id, uint32_t idx,
+		       void *buf, size_t *size)
+{
+	uint32_t lid_no = 0, lid;
+	size_t tmp_size;
+	int rc, i;
+
+	for (i = 0; i < ARRAY_SIZE(fsp_lid_map); i++) {
+		if (id != fsp_lid_map[i].id)
+			continue;
+
+		if (fsp_lid_map[i].idx == idx) {
+			lid_no = fsp_lid_map[i].lid_no;
+			break;
+		}
 	}
+	if (lid_no == 0)
+		return false;
 
 retry:
 	tmp_size = *size;
@@ -2285,8 +2296,10 @@ retry:
 		prerror("Failed to load LID\n");
 		return false;
 	}
-
+	if (*size < tmp_size)
+		return false;
 	*size = tmp_size;
+
 	return true;
 }
 

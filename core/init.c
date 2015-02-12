@@ -293,7 +293,8 @@ static bool load_kernel(void)
 
 	/* Try to load an external kernel payload through the platform hooks */
 	ksize = KERNEL_LOAD_SIZE;
-	if (!load_resource(RESOURCE_ID_KERNEL, KERNEL_LOAD_BASE,
+	if (!load_resource(RESOURCE_ID_KERNEL, RESOURCE_SUBID_NONE,
+			   KERNEL_LOAD_BASE,
 			   &ksize)) {
 		printf("INIT: platform kernel load failed\n");
 		ksize = 0;
@@ -334,7 +335,7 @@ static void load_initramfs(void)
 	bool loaded;
 
 	size = INITRAMFS_LOAD_SIZE;
-	loaded = load_resource(RESOURCE_ID_INITRAMFS,
+	loaded = load_resource(RESOURCE_ID_INITRAMFS, RESOURCE_SUBID_NONE,
 			       INITRAMFS_LOAD_BASE, &size);
 
 	if (!loaded || !size)
