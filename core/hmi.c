@@ -147,6 +147,32 @@
 
 static struct lock hmi_lock = LOCK_UNLOCKED;
 
+static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
+{
+	uint64_t *hmi_data;
+
+	/* Don't queue up event if recover == -1 */
+	if (recover == -1)
+		return 0;
+
+	/* set disposition */
+	if (recover == 1)
+		hmi_evt->disposition = OpalHMI_DISPOSITION_RECOVERED;
+	else if (recover == 0)
+		hmi_evt->disposition = OpalHMI_DISPOSITION_NOT_RECOVERED;
+
+	/*
+	 * struct OpalHMIEvent is of (3 * 64 bits) size and well packed
+	 * structure. Hence use uint64_t pointer to pass entire structure
+	 * using 4 params in generic message format.
+	 */
+	hmi_data = (uint64_t *)hmi_evt;
+
+	/* queue up for delivery to host. */
+	return opal_queue_msg(OPAL_MSG_HMI_EVT, NULL, NULL,
+				hmi_data[0], hmi_data[1], hmi_data[2]);
+}
+
 static int is_capp_recoverable(int chip_id)
 {
 	uint64_t reg;
@@ -215,6 +241,7 @@ static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
 int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 {
 	int recover = 1;
+	uint64_t tfmr;
 
 	printf("HMI: Received HMI interrupt: HMER = 0x%016llx\n", hmer);
 	if (hmi_evt)
@@ -224,6 +251,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE;
+			queue_hmi_event(hmi_evt, recover);
 		}
 		printf("HMI: Processor recovery Done.\n");
 	}
@@ -232,6 +260,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_MASKED;
+			queue_hmi_event(hmi_evt, recover);
 		}
 		printf("HMI: Processor recovery Done (masked).\n");
 	}
@@ -240,6 +269,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE_AGAIN;
+			queue_hmi_event(hmi_evt, recover);
 		}
 		printf("HMI: Processor recovery occurred again before"
 			"bit2 was cleared\n");
@@ -247,19 +277,23 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	/* Assert if we see malfunction alert, we can not continue. */
 	if (hmer & SPR_HMER_MALFUNCTION_ALERT) {
 		hmer &= ~SPR_HMER_MALFUNCTION_ALERT;
+		recover = 0;
 
-		if (hmi_evt)
+		if (hmi_evt) {
 			recover = decode_malfunction(hmi_evt);
+			queue_hmi_event(hmi_evt, recover);
+		}
 	}
 
 	/* Assert if we see Hypervisor resource error, we can not continue. */
 	if (hmer & SPR_HMER_HYP_RESOURCE_ERR) {
 		hmer &= ~SPR_HMER_HYP_RESOURCE_ERR;
+		recover = 0;
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_FATAL;
 			hmi_evt->type = OpalHMI_ERROR_HYP_RESOURCE;
+			queue_hmi_event(hmi_evt, recover);
 		}
-		recover = 0;
 	}
 
 	/*
@@ -267,22 +301,26 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	 * TFMR and take corrective action wherever required.
 	 */
 	if (hmer & SPR_HMER_TFAC_ERROR) {
+		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
 		hmer &= ~SPR_HMER_TFAC_ERROR;
+		recover = chiptod_recover_tb_errors();
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_ERROR_SYNC;
 			hmi_evt->type = OpalHMI_ERROR_TFAC;
-			hmi_evt->tfmr = mfspr(SPR_TFMR);
+			hmi_evt->tfmr = tfmr;
+			queue_hmi_event(hmi_evt, recover);
 		}
-		recover = chiptod_recover_tb_errors();
 	}
 	if (hmer & SPR_HMER_TFMR_PARITY_ERROR) {
+		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
 		hmer &= ~SPR_HMER_TFMR_PARITY_ERROR;
+		recover = 0;
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_FATAL;
 			hmi_evt->type = OpalHMI_ERROR_TFMR_PARITY;
-			hmi_evt->tfmr = mfspr(SPR_TFMR);
+			hmi_evt->tfmr = tfmr;
+			queue_hmi_event(hmi_evt, recover);
 		}
-		recover = 0;
 	}
 
 	/*
@@ -294,44 +332,20 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	return recover;
 }
 
-static int queue_hmi_event(struct OpalHMIEvent *hmi_evt)
-{
-	uint64_t *hmi_data;
-
-	/*
-	 * struct OpalHMIEvent is of (3 * 64 bits) size and well packed
-	 * structure. Hence use uint64_t pointer to pass entire structure
-	 * using 4 params in generic message format.
-	 */
-	hmi_data = (uint64_t *)hmi_evt;
-
-	/* queue up for delivery to host. */
-	return opal_queue_msg(OPAL_MSG_HMI_EVT, NULL, NULL,
-				hmi_data[0], hmi_data[1], hmi_data[2]);
-}
-
 static int64_t opal_handle_hmi(void)
 {
 	uint64_t hmer;
 	int rc = OPAL_SUCCESS;
 	struct OpalHMIEvent hmi_evt;
-	int recover;
 
 	memset(&hmi_evt, 0, sizeof(struct OpalHMIEvent));
 	hmi_evt.version = OpalHMIEvt_V1;
 
 	lock(&hmi_lock);
 	hmer = mfspr(SPR_HMER);		/* Get HMER register value */
-	recover = handle_hmi_exception(hmer, &hmi_evt);
+	handle_hmi_exception(hmer, &hmi_evt);
 	unlock(&hmi_lock);
 
-	if (recover == 1)
-		hmi_evt.disposition = OpalHMI_DISPOSITION_RECOVERED;
-	else if (recover == 0)
-		hmi_evt.disposition = OpalHMI_DISPOSITION_NOT_RECOVERED;
-
-	if (recover != -1)
-		queue_hmi_event(&hmi_evt);
 	return rc;
 }
 opal_call(OPAL_HANDLE_HMI, opal_handle_hmi, 0);
