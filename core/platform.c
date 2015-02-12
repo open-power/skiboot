@@ -76,3 +76,13 @@ void probe_platform(void)
 
 	printf("PLAT: Detected %s platform\n", platform.name);
 }
+
+bool load_resource(enum resource_id id,
+		   void *buf, size_t *len)
+{
+	if (!platform.load_resource)
+		return false;
+
+	return platform.load_resource(id, buf, len);
+
+}

@@ -289,16 +289,14 @@ extern uint64_t boot_offset;
 static bool load_kernel(void)
 {
 	struct elf_hdr *kh;
-	size_t ksize = 0;
+	size_t ksize;
 
 	/* Try to load an external kernel payload through the platform hooks */
-	if (platform.load_resource) {
-		ksize = KERNEL_LOAD_SIZE;
-		if (!platform.load_resource(RESOURCE_ID_KERNEL,
-				KERNEL_LOAD_BASE, &ksize)) {
-			printf("INIT: platform kernel load failed\n");
-			ksize = 0;
-		}
+	ksize = KERNEL_LOAD_SIZE;
+	if (!load_resource(RESOURCE_ID_KERNEL, KERNEL_LOAD_BASE,
+			   &ksize)) {
+		printf("INIT: platform kernel load failed\n");
+		ksize = 0;
 	}
 
 	/* Try embedded kernel payload */
@@ -335,12 +333,9 @@ static void load_initramfs(void)
 	size_t size;
 	bool loaded;
 
-	if (!platform.load_resource)
-		return;
-
 	size = INITRAMFS_LOAD_SIZE;
-	loaded = platform.load_resource(RESOURCE_ID_INITRAMFS,
-			INITRAMFS_LOAD_BASE, &size);
+	loaded = load_resource(RESOURCE_ID_INITRAMFS,
+			       INITRAMFS_LOAD_BASE, &size);
 
 	if (!loaded || !size)
 		return;

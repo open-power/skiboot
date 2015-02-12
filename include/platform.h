@@ -148,4 +148,7 @@ static const struct platform __used __section(".platforms") name ##_platform
 
 extern void probe_platform(void);
 
+extern bool load_resource(enum resource_id id,
+			  void *buf, size_t *len);
+
 #endif /* __PLATFORM_H */
