@@ -60,8 +60,7 @@ extern bool bust_locks;
 
 static inline void init_lock(struct lock *l)
 {
-	l->lock_val = 0;
-	l->in_con_path = false;
+	*l = (struct lock)LOCK_UNLOCKED;
 }
 
 extern bool __try_lock(struct lock *l);
