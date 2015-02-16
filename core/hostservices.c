@@ -467,7 +467,7 @@ static void hservice_nanosleep(uint64_t i_seconds, uint64_t i_nano_seconds)
 
 	ts.tv_sec = i_seconds;
 	ts.tv_nsec = i_nano_seconds;
-	nanosleep(&ts, NULL);
+	nanosleep_nopoll(&ts, NULL);
 }
 
 static int hservice_set_special_wakeup(struct cpu_thread *cpu)
