@@ -386,36 +386,26 @@ static int hservice_scom_write(uint64_t chip_id, uint64_t addr,
 	return xscom_write(chip_id, addr, val);
 }
 
-static int hservice_lid_load(uint32_t lid, void **buf, size_t *len)
+struct hbrt_lid {
+	void *load_addr;
+	size_t len;
+	uint32_t id;
+	struct list_node link;
+};
+static LIST_HEAD(hbrt_lid_list);
+
+/* TODO: Few of the following routines can be generalized */
+static int __hservice_lid_load(uint32_t lid, void **buf, size_t *len)
 {
 	int rc;
-	static void *lid_cache;
-	static size_t lid_cache_len;
-	static uint32_t lid_cache_id;
-
-	prlog(PR_INFO, "HBRT: LID load request for 0x%08x\n", lid);
 
 	/* Adjust LID side first or we get a cache mismatch */
 	lid = fsp_adjust_lid_side(lid);
 
-	/* Check for cache */
-	if (lid_cache && lid_cache_id == lid) {
-		*buf = lid_cache;
-		*len = lid_cache_len;
-		prlog(PR_DEBUG, "HBRT: Serviced from cache, len=0x%lx\n",
-		      lid_cache_len);
-		return 0;
-	}
-
-	/* Cache mismatch, discard old one */
-	if (lid_cache) {
-		prlog(PR_DEBUG, "HBRT: Cache mismatch, discarding old"
-		      " 0x%08x\n", lid_cache_id);
-		free(lid_cache);
-		lid_cache = NULL;
-	}
-
-	/* Allocate a new buffer and load the LID into it */
+	/*
+	 * Allocate a new buffer and load the LID into it
+	 * XXX: We currently use the same size for each HBRT lid.
+	 */
 	*buf = malloc(HBRT_LOAD_LID_SIZE);
 	*len = HBRT_LOAD_LID_SIZE;
 	rc = fsp_fetch_data(0, FSP_DATASET_NONSP_LID, lid, 0, *buf, len);
@@ -424,17 +414,80 @@ static int hservice_lid_load(uint32_t lid, void **buf, size_t *len)
 		*len = 0;
 	*buf = realloc(*buf, *len);
 
-	/* We managed, let's cache it */
-	if (rc == 0 && *len) {
-		lid_cache = *buf;
-		lid_cache_len = *len;
-		lid_cache_id = lid;
-
-		prlog(PR_DEBUG, "HBRT: LID 0x%08x successfully loaded and"
-		      " cached, len=0x%lx\n", lid, lid_cache_len);
-	}
+	prlog(PR_DEBUG, "HBRT: LID 0x%08x successfully loaded, len=0x%lx\n",
+			lid, (unsigned long)len);
 
 	return rc;
+}
+
+static int __hservice_lid_preload(const uint32_t lid)
+{
+	struct hbrt_lid *hlid;
+	void *buf;
+	size_t len;
+	int rc;
+
+	hlid = zalloc(sizeof(struct hbrt_lid));
+	if (!hlid) {
+		prerror("HBRT: Could not allocate struct hbrt_lid\n");
+		return OPAL_NO_MEM;
+	}
+
+	rc = __hservice_lid_load(lid, &buf, &len);
+	if (rc) {
+		free(hlid);
+		return rc;
+	}
+
+	hlid->load_addr = buf;
+	hlid->len = len;
+	hlid->id = lid;
+	list_add_tail(&hbrt_lid_list, &hlid->link);
+
+	return 0;
+}
+
+/* Find and preload all lids needed by hostservices */
+void hservices_lid_preload(void)
+{
+	const uint32_t *lid_list = NULL;
+	size_t num_lids;
+
+	if (!hservice_runtime)
+		return;
+
+	lid_list = (const uint32_t *)hservice_runtime->get_lid_list(&num_lids);
+	if (!lid_list) {
+		prerror("HBRT: get_lid_list() returned NULL\n");
+		return;
+	}
+
+	prlog(PR_INFO, "HBRT: %d lids to load\n", (int)num_lids);
+
+	/* Currently HBRT needs only one (OCC) lid */
+	while (num_lids--)
+		__hservice_lid_preload(lid_list[num_lids]);
+}
+
+static int hservice_lid_load(uint32_t lid, void **buf, size_t *len)
+{
+	struct hbrt_lid *hlid;
+
+	prlog(PR_INFO, "HBRT: Lid load request for 0x%08x\n", lid);
+
+	if (list_empty(&hbrt_lid_list))	/* Should not happen */
+		hservices_lid_preload();
+
+	list_for_each(&hbrt_lid_list, hlid, link) {
+		if (hlid->id == lid) {
+			*buf = hlid->load_addr;
+			*len = hlid->len;
+			prlog(PR_DEBUG, "HBRT: Serviced from cache,"
+					" len=0x%lx\n", hlid->len);
+			return 0;
+		}
+	}
+	return -ENOENT;
 }
 
 static int hservice_lid_unload(void *buf __unused)

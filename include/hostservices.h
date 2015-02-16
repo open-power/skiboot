@@ -18,6 +18,7 @@
 #define __HOSTSERVICES_H
 
 bool hservices_init(void);
+void hservices_lid_preload(void);
 
 int host_services_occ_load(void);
 int host_services_occ_start(void);
