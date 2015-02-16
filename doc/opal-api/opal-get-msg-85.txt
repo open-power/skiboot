@@ -1,7 +1,7 @@
-OPAL_GET_MESSAGE
-----------------
+OPAL_GET_MSG
+------------
 
-OPAL_GET_MESSAGE will get the next pending OPAL_MESSAGE (see
+OPAL_GET_MSG will get the next pending OPAL Message (see
 opal-messages.txt).
 
 Parameters:
@@ -20,7 +20,7 @@ than 72 bytes. Naturally, a HOST OS will only be able to interpret these
 if it correctly uses opal-msg-size. Any OPAL message > 72 bytes, a host OS
 may safely ignore.
 
-A host OS *SHOULD* always supply a buffer to OPAL_GET_MESSAGE of either 72
+A host OS *SHOULD* always supply a buffer to OPAL_GET_MSG of either 72
 bytes or opal-msg-size. It MUST NOT supply a buffer of < 72 bytes.
 
 
