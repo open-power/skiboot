@@ -104,3 +104,14 @@ int nanosleep(const struct timespec *req, struct timespec *rem)
 	}
 	return 0;
 }
+
+int nanosleep_nopoll(const struct timespec *req, struct timespec *rem)
+{
+	time_wait_nopoll(timespec_to_tb(req));
+
+	if (rem) {
+		rem->tv_sec = 0;
+		rem->tv_nsec = 0;
+	}
+	return 0;
+}

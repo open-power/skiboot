@@ -98,4 +98,6 @@ extern void time_wait_ms_nopoll(unsigned long ms);
 extern void time_wait_us(unsigned long us);
 extern void time_wait_us_nopoll(unsigned long us);
 
+/* nanosleep_nopoll - variant for use from hostservices */
+extern int nanosleep_nopoll(const struct timespec *req, struct timespec *rem);
 #endif /* __TIME_H */
