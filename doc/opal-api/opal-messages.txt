@@ -2,7 +2,29 @@ OAPL_MESSAGE
 ============
 
 The host OS can use OPAL_GET_MSG to retrive messages queued by OPAL. The
-messages are defined by enum OpalMessageType.
+messages are defined by enum OpalMessageType. The host is notified of there
+being messages to be consumed by the OPAL_EVENT_MSG_PENDING bit being set.
+
+An opal_msg is:
+struct opal_msg {
+	__be32 msg_type;
+	__be32 reserved;
+	__be64 params[8];
+};
+
+The data structure is ALWAYS at least this size (4+4+8*8 = 72 bytes). Some
+messages define fewer than eight parameters. For messages that do not
+define all eight parameters, the value in the undefined parameters is
+undefined, although can safely be memcpy()d or otherwise moved.
+
+In the device tree, there's an opal-msg-size property of the OPAL node that
+says the size of a struct opal-msg. In the future, OPAL may support larger
+messages. See OPAL_GET_MESSAGE documentation for details.
+
+  ibm,opal {
+            opal-msg-size = <0x48>;
+  }
+
 
 OPAL_MSG_ASYNC_COMP
 -------------------
