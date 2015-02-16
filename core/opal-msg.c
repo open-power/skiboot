@@ -36,7 +36,7 @@ static LIST_HEAD(msg_pending_list);
 
 static struct lock opal_msg_lock = LOCK_UNLOCKED;
 
-int _opal_queue_msg(enum OpalMessageType msg_type, void *data,
+int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
 		    void (*consumed)(void *data), size_t num_params,
 		    const u64 *params)
 {

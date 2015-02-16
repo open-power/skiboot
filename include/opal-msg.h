@@ -27,7 +27,7 @@
  */
 #define OPAL_MAX_ASYNC_COMP	8
 
-int _opal_queue_msg(enum OpalMessageType msg_type, void *data,
+int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
 		    void (*consumed)(void *data), size_t num_params,
 		    const u64 *params);
 

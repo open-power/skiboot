@@ -407,7 +407,7 @@ enum OpalLPCAddressType {
 	OPAL_LPC_FW	= 2,
 };
 
-enum OpalMessageType {
+enum opal_msg_type {
 	OPAL_MSG_ASYNC_COMP = 0,	/* params[0] = token, params[1] = rc,
 					 * additional params function-specific
 					 */

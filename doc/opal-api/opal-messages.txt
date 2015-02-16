@@ -2,7 +2,7 @@ OAPL_MESSAGE
 ============
 
 The host OS can use OPAL_GET_MSG to retrive messages queued by OPAL. The
-messages are defined by enum OpalMessageType. The host is notified of there
+messages are defined by enum opal_msg_type. The host is notified of there
 being messages to be consumed by the OPAL_EVENT_MSG_PENDING bit being set.
 
 An opal_msg is:
