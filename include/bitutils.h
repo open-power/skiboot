@@ -36,15 +36,16 @@
  * PPC bitmask field manipulation
  */
 
+/* Find left shift from first set bit in mask */
+#define MASK_TO_LSH(m)		(__builtin_ffsl(m) - 1)
+
 /* Extract field fname from val */
-#define GETFIELD(fname, val)			\
-	(((val) & fname##_MASK) >> fname##_LSH)
+#define GETFIELD(m, v)		(((v) & (m)) >> MASK_TO_LSH(m))
 
 /* Set field fname of oval to fval
  * NOTE: oval isn't modified, the combined result is returned
  */
-#define SETFIELD(fname, oval, fval)			\
-	(((oval) & ~fname##_MASK) | \
-	 ((((typeof(oval))(fval)) << fname##_LSH) & fname##_MASK))
+#define SETFIELD(m, v, val)				\
+	(((v) & ~(m)) |	((((typeof(v))(val)) << MASK_TO_LSH(m)) & (m)))
 
 #endif /* __BITUTILS_H */
