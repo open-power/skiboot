@@ -42,8 +42,7 @@
 /* -- TOD PIB Master reg -- */
 #define TOD_PIB_MASTER			0x00040027
 #define   TOD_PIBM_ADDR_CFG_MCAST	PPC_BIT(25)
-#define   TOD_PIBM_ADDR_CFG_SLADDR_MASK	PPC_BITMASK(26,31)
-#define   TOD_PIBM_ADDR_CFG_SLADDR_LSH	PPC_BITLSHIFT(31)
+#define   TOD_PIBM_ADDR_CFG_SLADDR	PPC_BITMASK(26,31)
 
 /* -- TOD Error interrupt register -- */
 #define TOD_ERROR			0x00040030
