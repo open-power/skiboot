@@ -888,7 +888,7 @@ static void p5ioc2_phb_hwinit(struct p5ioc2_phb *p)
 	out_be32(p->ca_regs + CA_PHBIDn(p->index), phbid);
 
 	/* Set BUID */
-	out_be32(p->regs + CAP_BUID, SETFIELD(CAP_BUID, 0,
+	out_be32(p->regs + CAP_BUID, SETFIELD(CAP_BUID_MASK, 0,
 					      P7_BUID_BASE(p->buid)));
 	out_be32(p->regs + CAP_MSIBASE, P7_BUID_BASE(p->buid) << 16);
 

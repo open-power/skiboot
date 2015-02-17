@@ -706,7 +706,7 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 
 	/* Mask the interrupts for this engine */
 	rc = xscom_write(master->chip_id, master->xscom_base + I2C_INTR_REG,
-			 ~I2C_INTR_ALL_MASK);
+			 ~I2C_INTR_ALL);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Failed "
 				 "to disable the interrupts\n");

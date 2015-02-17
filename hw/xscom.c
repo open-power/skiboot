@@ -27,7 +27,7 @@
 /* Mask of bits to clear in HMER before an access */
 #define HMER_CLR_MASK	(~(SPR_HMER_XSCOM_FAIL | \
 			   SPR_HMER_XSCOM_DONE | \
-			   SPR_HMER_XSCOM_STATUS_MASK))
+			   SPR_HMER_XSCOM_STATUS))
 
 #define XSCOM_ADDR_IND_FLAG		PPC_BIT(0)
 #define XSCOM_ADDR_IND_ADDR		PPC_BITMASK(12,31)
@@ -259,7 +259,7 @@ static int xscom_indirect_read(uint32_t gcid, uint64_t pcb_addr, uint64_t *val)
 	/* Write indirect address */
 	addr = pcb_addr & 0x7fffffff;
 	data = XSCOM_DATA_IND_READ |
-		(pcb_addr & XSCOM_ADDR_IND_ADDR_MASK);
+		(pcb_addr & XSCOM_ADDR_IND_ADDR);
 	rc = __xscom_write(gcid, addr, data);
 	if (rc)
 		goto bail;
@@ -270,8 +270,8 @@ static int xscom_indirect_read(uint32_t gcid, uint64_t pcb_addr, uint64_t *val)
 		if (rc)
 			goto bail;
 		if ((data & XSCOM_DATA_IND_COMPLETE) &&
-		    ((data & XSCOM_DATA_IND_ERR_MASK) == 0)) {
-			*val = data & XSCOM_DATA_IND_DATA_MSK;
+		    ((data & XSCOM_DATA_IND_ERR) == 0)) {
+			*val = data & XSCOM_DATA_IND_DATA;
 			break;
 		}
 		if ((data & XSCOM_DATA_IND_COMPLETE) ||
@@ -299,8 +299,8 @@ static int xscom_indirect_write(uint32_t gcid, uint64_t pcb_addr, uint64_t val)
 
 	/* Write indirect address & data */
 	addr = pcb_addr & 0x7fffffff;
-	data = pcb_addr & XSCOM_ADDR_IND_ADDR_MASK;
-	data |= val & XSCOM_ADDR_IND_DATA_MSK;
+	data = pcb_addr & XSCOM_ADDR_IND_ADDR;
+	data |= val & XSCOM_ADDR_IND_DATA;
 
 	rc = __xscom_write(gcid, addr, data);
 	if (rc)
@@ -312,7 +312,7 @@ static int xscom_indirect_write(uint32_t gcid, uint64_t pcb_addr, uint64_t val)
 		if (rc)
 			goto bail;
 		if ((data & XSCOM_DATA_IND_COMPLETE) &&
-		    ((data & XSCOM_DATA_IND_ERR_MASK) == 0))
+		    ((data & XSCOM_DATA_IND_ERR) == 0))
 			break;
 		if ((data & XSCOM_DATA_IND_COMPLETE) ||
 		    (retries >= XSCOM_IND_MAX_RETRIES)) {

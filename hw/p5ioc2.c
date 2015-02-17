@@ -160,7 +160,7 @@ static void p5ioc2_ca_init(struct p5ioc2 *ioc, int ca)
 	printf("P5IOC2: Initializing Calgary %d...\n", ca);
 
 	/* Setup device BUID */
-	val = SETFIELD(CA_DEVBUID, 0ul, ca ? P5IOC2_CA1_BUID : P5IOC2_CA0_BUID);
+	val = SETFIELD(CA_DEVBUID_MASK, 0ul, ca ? P5IOC2_CA1_BUID : P5IOC2_CA0_BUID);
 	out_be32(regs + CA_DEVBUID, val);
 
 	/* Setup HubID in TARm (and keep TCE clear, Linux will init that)

@@ -2773,7 +2773,7 @@ static int64_t phb3_err_inject_cfg(struct phb3 *p, uint32_t pe_no,
 	/* Specified address is out of range */
 	if (a == 0xffffull) {
 		a = prefer;
-		m = PHB_PAPR_ERR_INJ_MASK_CFG_MASK;
+		m = PHB_PAPR_ERR_INJ_MASK_CFG;
 	} else {
 		m = mask;
 	}

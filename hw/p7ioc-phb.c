@@ -1391,7 +1391,7 @@ static int64_t p7ioc_err_inject_mem32(struct p7ioc_phb *p, uint32_t pe_no,
 	/* Specified address is out of range */
 	if (!a) {
 		a = prefer;
-		m = PHB_PAPR_ERR_INJ_MASK_MMIO_MASK;
+		m = PHB_PAPR_ERR_INJ_MASK_MMIO;
 	} else {
 		m = mask;
 	}
@@ -1436,7 +1436,7 @@ static int64_t p7ioc_err_inject_io32(struct p7ioc_phb *p, uint32_t pe_no,
 	/* Specified address is out of range */
 	if (!a) {
 		a = prefer;
-		m = PHB_PAPR_ERR_INJ_MASK_IO_MASK;
+		m = PHB_PAPR_ERR_INJ_MASK_IO;
 	} else {
 		m = mask;
 	}
@@ -1467,7 +1467,7 @@ static int64_t p7ioc_err_inject_cfg(struct p7ioc_phb *p, uint32_t pe_no,
 		base = GETFIELD(IODA_PELTM_BUS, p->peltm_cache[pe_no]);
 		base &= (0xff - (((1 << (7 - v_bits)) - 1)));
 		a = SETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, 0x0ul, base);
-		m = PHB_PAPR_ERR_INJ_MASK_CFG_MASK;
+		m = PHB_PAPR_ERR_INJ_MASK_CFG;
 
 		bus_no = GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, addr);
 		bus_no &= (0xff - (((1 << (7 - v_bits)) - 1)));
@@ -1498,7 +1498,7 @@ static int64_t p7ioc_err_inject_dma(struct p7ioc_phb *p, uint32_t pe_no,
 			continue;
 
 		addr = SETFIELD(PHB_PAPR_ERR_INJ_MASK_DMA, 0ul, index);
-		mask = PHB_PAPR_ERR_INJ_MASK_DMA_MASK;
+		mask = PHB_PAPR_ERR_INJ_MASK_DMA;
 		break;
 	}
 
