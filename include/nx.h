@@ -17,6 +17,157 @@
 #ifndef __NX_H
 #define __NX_H
 
+/*************************************/
+/* Register addresses and bit fields */
+/*************************************/
+
+/* Random Number Generator */
+#define NX_P7_RNG_BAR		XSCOM_SAT(0x1, 0x2, 0x0c)
+#define   NX_P7_RNG_BAR_ADDR		PPC_BITMASK(18, 51)
+#define   NX_P7_RNG_BAR_SIZE		PPC_BITMASK(53, 55)
+#define   NX_P7_RNG_BAR_ENABLE		PPC_BIT(52)
+#define NX_P8_RNG_BAR		XSCOM_SAT(0xc, 0x2, 0x0d)
+#define   NX_P8_RNG_BAR_ADDR		PPC_BITMASK(14, 51)
+#define   NX_P8_RNG_BAR_SIZE		PPC_BITMASK(53, 55)
+#define   NX_P8_RNG_BAR_ENABLE		PPC_BIT(52)
+
+#define NX_P7_RNG_CFG		XSCOM_SAT(0x1, 0x2, 0x12)
+#define   NX_P7_RNG_CFG_ENABLE		PPC_BIT(63)
+#define NX_P8_RNG_CFG		XSCOM_SAT(0xc, 0x2, 0x12)
+#define   NX_P8_RNG_CFG_ENABLE		PPC_BIT(63)
+
+/* Symmetric Crypto */
+#define NX_P8_SYM_CFG		XSCOM_SAT(0xc, 0x2, 0x0a)
+#define   NX_P8_SYM_CFG_CI		PPC_BITMASK(2, 14)
+#define   NX_P8_SYM_CFG_CT		PPC_BITMASK(18, 23)
+#define   NX_P8_SYM_CFG_FC_ENABLE	PPC_BITMASK(32, 39)
+#define   NX_P8_SYM_CFG_ENABLE		PPC_BIT(63)
+
+/* Asymmetric Crypto */
+#define NX_P8_ASYM_CFG		XSCOM_SAT(0xc, 0x2, 0x0b)
+#define   NX_P8_ASYM_CFG_CI		PPC_BITMASK(2, 14)
+#define   NX_P8_ASYM_CFG_CT		PPC_BITMASK(18, 23)
+#define   NX_P8_ASYM_CFG_FC_ENABLE	PPC_BITMASK(32, 52)
+#define   NX_P8_ASYM_CFG_ENABLE		PPC_BIT(63)
+
+/* 842 Compression */
+#define NX_P8_842_CFG		XSCOM_SAT(0xc, 0x2, 0x0c)
+#define   NX_P8_842_CFG_CI		PPC_BITMASK(2, 14)
+#define   NX_P8_842_CFG_CT		PPC_BITMASK(18, 23)
+#define   NX_P8_842_CFG_FC_ENABLE	PPC_BITMASK(32, 36)
+#define   NX_P8_842_CFG_ENABLE		PPC_BIT(63)
+
+/* DMA */
+#define NX_P8_DMA_CFG		XSCOM_SAT(0xc, 0x1, 0x02)
+#define   NX_P8_DMA_CFG_842_COMPRESS_PREFETCH		PPC_BIT(23)
+#define   NX_P8_DMA_CFG_842_DECOMPRESS_PREFETCH		PPC_BIT(24)
+#define   NX_P8_DMA_CFG_AES_SHA_MAX_RR			PPC_BITMASK(25, 28)
+#define   NX_P8_DMA_CFG_AMF_MAX_RR			PPC_BITMASK(29, 32)
+#define   NX_P8_DMA_CFG_842_COMPRESS_MAX_RR		PPC_BITMASK(33, 36)
+#define   NX_P8_DMA_CFG_842_DECOMPRESS_MAX_RR		PPC_BITMASK(37, 40)
+#define   NX_P8_DMA_CFG_AES_SHA_CSB_WR			PPC_BITMASK(41, 42)
+#define   NX_P8_DMA_CFG_AES_SHA_COMPLETION_MODE		PPC_BITMASK(43, 44)
+#define   NX_P8_DMA_CFG_AES_SHA_CPB_WR			PPC_BITMASK(45, 46)
+#define   NX_P8_DMA_CFG_AES_SHA_OUTPUT_DATA_WR		PPC_BIT(47)
+#define   NX_P8_DMA_CFG_AMF_CSB_WR			PPC_BITMASK(49, 50)
+#define   NX_P8_DMA_CFG_AMF_COMPLETION_MODE		PPC_BITMASK(51, 52)
+#define   NX_P8_DMA_CFG_AMF_CPB_WR			PPC_BITMASK(53, 54)
+#define   NX_P8_DMA_CFG_AMF_OUTPUT_DATA_WR		PPC_BIT(55)
+#define   NX_P8_DMA_CFG_842_SPBC			PPC_BIT(56)
+#define   NX_P8_DMA_CFG_842_CSB_WR			PPC_BITMASK(57, 58)
+#define   NX_P8_DMA_CFG_842_COMPLETION_MODE		PPC_BITMASK(59, 60)
+#define   NX_P8_DMA_CFG_842_CPB_WR			PPC_BITMASK(61, 62)
+#define   NX_P8_DMA_CFG_842_OUTPUT_DATA_WR		PPC_BIT(63)
+
+/* Engine Enable Register */
+#define NX_P8_EE_CFG	XSCOM_SAT(0xc, 0x1, 0x01)
+#define   NX_P8_EE_CFG_EFUSE	PPC_BIT(0)
+#define   NX_P8_EE_CFG_AMF_3	PPC_BIT(53)
+#define   NX_P8_EE_CFG_AMF_2	PPC_BIT(54)
+#define   NX_P8_EE_CFG_AMF_1	PPC_BIT(55)
+#define   NX_P8_EE_CFG_AMF_0	PPC_BIT(56)
+#define   NX_P8_EE_CFG_SYM_1	PPC_BIT(57)
+#define   NX_P8_EE_CFG_SYM_0	PPC_BIT(58)
+#define   NX_P8_EE_CFG_842_1	PPC_BIT(62)
+#define   NX_P8_EE_CFG_842_0	PPC_BIT(63)
+
+
+/**************************************/
+/* Register field values/restrictions */
+/**************************************/
+
+/* Arbitrary Coprocessor Type values */
+#define NX_CT_SYM	(1)
+#define NX_CT_ASYM	(2)
+#define NX_CT_842	(3)
+
+/* Coprocessor Instance counter
+ * P8 NX workbook, section 5.5.1
+ * "Assigning <CT,CI> Values"
+ */
+#define NX_P8_SYM_CFG_CI_MAX		(511)
+#define NX_P8_SYM_CFG_CI_LSHIFT		(2)
+#define NX_P8_ASYM_CFG_CI_MAX		(127)
+#define NX_P8_ASYM_CFG_CI_LSHIFT	(4)
+#define NX_P8_842_CFG_CI_MAX		(511)
+#define NX_P8_842_CFG_CI_LSHIFT		(2)
+
+/* DMA configuration values
+ * P8 NX workbook, section 5.2.3, table 5-4
+ * "DMA Configuration Register Bits"
+ *
+ * These values can be used for the AES/SHA, AMF, and 842 DMA
+ * configuration fields in the DMA configuration register.
+ *
+ * Abbreviations used below:
+ *   pDMA - "partial DMA write"
+ *   fDMA - "full DMA write"
+ *   CI - Cache Inject
+ */
+/* NX_DMA_CSB_WR values:
+ * 0 = Always perform 8 or 16 byte pDMA
+ * 1 = Do 128 byte CI if CSB at end of cache line, else pDMA
+ * 2 = Do 128 byte fDMA if CSB at end of cache line, else pDMA
+ */
+#define NX_DMA_CSB_WR_PDMA		(0)
+#define NX_DMA_CSB_WR_CI		(1)
+#define NX_DMA_CSB_WR_FDMA		(2)
+/* NX_DMA_COMPLETION_MODE values:
+ * 0 = Always perform 8 byte pDMA
+ * 1 = Do 128 byte CI, replicating 8 bytes across entire 128 byte cache line
+ * 2 = Do 128 byte fDMA, replicating 8 bytes across entire 128 byte cache line
+ */
+#define NX_DMA_COMPLETION_MODE_PDMA	(0)
+#define NX_DMA_COMPLETION_MODE_CI	(1)
+#define NX_DMA_COMPLETION_MODE_FDMA	(2)
+/* NX_DMA_CPB_WR values:
+ * 0 = Always do pDMA or fDMA, based on number of bytes and alignment
+ * 1 = Always do pDMA on non-aligned cache lines, fDMA on aligned cache lines
+ *      (may store dummy data at the end of the aligned data)
+ * 2 = Do 128 byte CI when writing 128 aligned bytes, else pDMA
+ * 3 = Do 128 byte CI when writing aligned cache lines, else pDMA
+ *      (may store dummy data at the end of the aligned data)
+ */
+#define NX_DMA_CPB_WR_DMA_NOPAD		(0)
+#define NX_DMA_CPB_WR_DMA_PAD		(1)
+#define NX_DMA_CPB_WR_CI_NOPAD		(2)
+#define NX_DMA_CPB_WR_CI_PAD		(3)
+/* NX_DMA_OUTPUT_DATA_WR values:
+ * 0 = Always do pDMA or fDMA, based on number of bytes and alignment
+ * 1 = Do 128 byte CI when writing 128 aligned bytes, else pDMA
+ */
+#define NX_DMA_OUTPUT_DATA_WR_DMA	(0)
+#define NX_DMA_OUTPUT_DATA_WR_CI	(1)
+
+
+/******************************/
+/* NX node creation functions */
+/******************************/
+
+extern void nx_create_rng_node(struct dt_node *);
+extern void nx_create_crypto_node(struct dt_node *);
+extern void nx_create_842_node(struct dt_node *);
+
 extern void nx_init(void);
 
 #endif /* __NX_H */
