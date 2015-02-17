@@ -98,9 +98,10 @@ static int64_t p5ioc2_pcicfg_address(struct p5ioc2_phb *p, uint32_t bdfn,
 	 * bus number register ?
 	 */
 
-	addr = CAP_PCADR_ENABLE | ((uint64_t)bdfn << CAP_PCADR_FUNC_LSH);
+	addr = CAP_PCADR_ENABLE;
+	addr = SETFIELD(CAP_PCADR_BDFN, addr, bdfn);
+	addr = SETFIELD(CAP_PCADR_EXTOFF, addr, offset >> 8);
 	addr |= (offset & 0xff);
-	addr |= ((offset & 0xf00) << (CAP_PCADR_EXTOFF_LSH - 8));
 	out_le32(p->regs + CAP_PCADR, addr);
 
 	return OPAL_SUCCESS;

@@ -135,6 +135,7 @@
 #define CAP_PCADR			0x140
 #define   CAP_PCADR_ENABLE		PPC_BIT32(0)
 #define   CAP_PCADR_FUNC		PPC_BITMASK32(21,23)
+#define   CAP_PCADR_BDFN		PPC_BITMASK32(8,23) /* bus,dev,func */
 #define   CAP_PCADR_EXTOFF		PPC_BITMASK32(4,7)
 #define CAP_PCDAT			0x130
 #define CAP_PCFGRW			0x160

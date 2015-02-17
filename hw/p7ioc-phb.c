@@ -138,7 +138,8 @@ static int64_t p7ioc_pcicfg_read##size(struct phb *phb, uint32_t bdfn,	\
 		return OPAL_HARDWARE;					\
 	}								\
 									\
-	addr = PHB_CA_ENABLE | ((uint64_t)bdfn << PHB_CA_FUNC_LSH);	\
+	addr = PHB_CA_ENABLE;						\
+	addr = SETFIELD(PHB_CA_BDFN, addr, bdfn);			\
 	addr = SETFIELD(PHB_CA_REG, addr, offset);			\
 	out_be64(base + PHB_CONFIG_ADDRESS, addr);			\
 	*data = in_le##size(base + PHB_CONFIG_DATA +			\
@@ -169,7 +170,8 @@ static int64_t p7ioc_pcicfg_write##size(struct phb *phb, uint32_t bdfn,	\
 		return OPAL_HARDWARE;					\
 	}								\
 									\
-	addr = PHB_CA_ENABLE | ((uint64_t)bdfn << PHB_CA_FUNC_LSH);	\
+	addr = PHB_CA_ENABLE;						\
+	addr = SETFIELD(PHB_CA_BDFN, addr, bdfn);			\
 	addr = SETFIELD(PHB_CA_REG, addr, offset);			\
 	out_be64(base + PHB_CONFIG_ADDRESS, addr);			\
 	out_le##size(base + PHB_CONFIG_DATA +				\

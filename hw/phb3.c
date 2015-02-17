@@ -173,7 +173,8 @@ static int64_t phb3_pcicfg_read##size(struct phb *phb, uint32_t bdfn,	\
 		return OPAL_HARDWARE;					\
 	}								\
 									\
-	addr = PHB_CA_ENABLE | ((uint64_t)bdfn << PHB_CA_FUNC_LSH);	\
+	addr = PHB_CA_ENABLE;						\
+	addr = SETFIELD(PHB_CA_BDFN, addr, bdfn);			\
 	addr = SETFIELD(PHB_CA_REG, addr, offset);			\
 	addr = SETFIELD(PHB_CA_PE, addr, pe);				\
 	if (use_asb) {							\
@@ -212,7 +213,8 @@ static int64_t phb3_pcicfg_write##size(struct phb *phb, uint32_t bdfn,	\
 		return OPAL_HARDWARE;					\
 	}								\
 									\
-	addr = PHB_CA_ENABLE | ((uint64_t)bdfn << PHB_CA_FUNC_LSH);	\
+	addr = PHB_CA_ENABLE;						\
+	addr = SETFIELD(PHB_CA_BDFN, addr, bdfn);			\
 	addr = SETFIELD(PHB_CA_REG, addr, offset);			\
 	addr = SETFIELD(PHB_CA_PE, addr, pe);				\
 	if (use_asb) {							\

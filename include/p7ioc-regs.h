@@ -125,6 +125,7 @@
 #define	  PHB_CA_BUS			PPC_BITMASK(4,11)
 #define   PHB_CA_DEV			PPC_BITMASK(12,16)
 #define   PHB_CA_FUNC			PPC_BITMASK(17,19)
+#define   PHB_CA_BDFN			PPC_BITMASK(4,19) /* bus,dev,func */
 #define   PHB_CA_REG			PPC_BITMASK(20,31)
 #define PHB_LOCK1			0x148
 #define PHB_PHB2_CONFIG			0x160
