@@ -533,6 +533,8 @@ static struct fsp_client fsp_occ_client = {
 #define OCB_OCI_OCIMISC_IRQ		PPC_BIT(0)
 #define OCB_OCI_OCIMISC_IRQ_TMGT	PPC_BIT(1)
 #define OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY	PPC_BIT(15)
+#define OCB_OCI_OCIMISC_MASK		(OCB_OCI_OCIMISC_IRQ_TMGT | \
+					 OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY )
 
 void occ_send_dummy_interrupt(void)
 {
@@ -570,6 +572,14 @@ void occ_interrupt(uint32_t chip_id)
 	/* Dispatch */
 	if (ireg & OCB_OCI_OCIMISC_IRQ_TMGT)
 		occ_tmgt_interrupt();
+
+	/* We may have masked-out OCB_OCI_OCIMISC_IRQ in the previous
+	 * OCCMISC_AND write. Check if there are any new source bits set,
+	 * and trigger another interrupt if so.
+	 */
+	rc = xscom_read(chip_id, OCB_OCI_OCCMISC, &ireg);
+	if (!rc && (ireg & OCB_OCI_OCIMISC_MASK))
+		xscom_write(chip_id, OCB_OCI_OCCMISC_OR, OCB_OCI_OCIMISC_IRQ);
 }
 
 void occ_fsp_init(void)
