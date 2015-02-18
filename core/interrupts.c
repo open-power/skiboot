@@ -186,10 +186,12 @@ void add_opal_interrupts(void)
 	unlock(&irq_lock);
 
 	/* The opal-interrupts property has one cell per interrupt,
-	 * it is not a standard interrupt property
+	 * it is not a standard interrupt property.
+	 *
+	 * Note: Even if empty, create it, otherwise some bogus error
+	 * handling in Linux can cause problems.
 	 */
-	if (irqs)
-		dt_add_property(opal_node, "opal-interrupts", irqs, count * 4);
+	dt_add_property(opal_node, "opal-interrupts", irqs, count * 4);
 }
 
 /*
