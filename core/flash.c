@@ -37,6 +37,105 @@ static struct flash *system_flash;
 /* Using a single lock as we only have one flash at present. */
 static struct lock flash_lock;
 
+/* nvram-on-flash support */
+static struct flash *nvram_flash;
+static u32 nvram_offset, nvram_size;
+
+static int flash_nvram_info(uint32_t *total_size)
+{
+	int rc = OPAL_HARDWARE;
+
+	lock(&flash_lock);
+	if (nvram_flash) {
+		*total_size = nvram_size;
+		rc = OPAL_SUCCESS;
+	}
+	unlock(&flash_lock);
+
+	return rc;
+}
+
+static int flash_nvram_start_read(void *dst, uint32_t src, uint32_t len)
+{
+	int rc;
+
+	lock(&flash_lock);
+
+	if (!nvram_flash) {
+		rc = OPAL_HARDWARE;
+		goto out;
+	}
+
+	if ((src + len) > nvram_size) {
+		prerror("FLASH_NVRAM: read out of bound (0x%x,0x%x)\n",
+			src, len);
+		rc = OPAL_PARAMETER;
+		goto out;
+	}
+
+	rc = flash_read(nvram_flash->chip, nvram_offset + src, dst, len);
+
+out:
+	unlock(&flash_lock);
+	if (!rc)
+		nvram_read_complete(true);
+	return rc;
+}
+
+static int flash_nvram_write(uint32_t dst, void *src, uint32_t len)
+{
+	int rc;
+
+	lock(&flash_lock);
+
+	/* TODO: When we have async jobs for PRD, turn this into one */
+
+	if ((dst + len) > nvram_size) {
+		prerror("FLASH_NVRAM: write out of bound (0x%x,0x%x)\n",
+			dst, len);
+		rc = OPAL_PARAMETER;
+		goto out;
+	}
+	rc = flash_smart_write(nvram_flash->chip, nvram_offset + dst, src, len);
+
+out:
+	unlock(&flash_lock);
+	return rc;
+}
+
+static int flash_nvram_probe(struct flash *flash, struct ffs_handle *ffs)
+{
+	uint32_t start, size, part;
+	int rc;
+
+	prlog(PR_INFO, "FLASH: probing for NVRAM\n");
+
+	rc = ffs_lookup_part(ffs, "NVRAM", &part);
+	if (rc) {
+		prlog(PR_WARNING, "FLASH: no NVRAM partition found\n");
+		return OPAL_HARDWARE;
+	}
+
+	rc = ffs_part_info(ffs, part, NULL,
+			   &start, &size, NULL);
+	if (rc) {
+		prlog(PR_ERR, "FLASH: Can't parse ffs info for NVRAM\n");
+		return OPAL_HARDWARE;
+	}
+
+	nvram_flash = flash;
+	nvram_offset = start;
+	nvram_size = size;
+
+	platform.nvram_info = flash_nvram_info;
+	platform.nvram_start_read = flash_nvram_start_read;
+	platform.nvram_write = flash_nvram_write;
+
+	return 0;
+}
+
+/* core flash support */
+
 static void flash_add_dt_partition_node(struct dt_node *flash_node, char *name,
 		uint32_t start, uint32_t size)
 {
@@ -124,10 +223,12 @@ int flash_register(struct flash_chip *chip, bool is_system_flash)
 		ffs = NULL;
 	}
 
-	if (is_system_flash && !system_flash)
-		system_flash = flash;
-
 	flash_add_dt_node(flash, i, ffs);
+
+	if (is_system_flash && !system_flash) {
+		system_flash = flash;
+		flash_nvram_probe(flash, ffs);
+	}
 
 	ffs_close(ffs);
 
