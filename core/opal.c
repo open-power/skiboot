@@ -284,6 +284,11 @@ void opal_run_pollers(void)
 {
 	struct opal_poll_entry *poll_ent;
 
+	if (this_cpu()->lock_depth) {
+		prlog(PR_ERR, "Running pollers with lock held !\n");
+		backtrace();
+	}
+
 	/* We run the timers first */
 	check_timers(false);
 
