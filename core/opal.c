@@ -283,10 +283,15 @@ void opal_del_poller(void (*poller)(void *data))
 void opal_run_pollers(void)
 {
 	struct opal_poll_entry *poll_ent;
+	static int pollers_with_lock_warnings = 0;
 
-	if (this_cpu()->lock_depth) {
+	if (this_cpu()->lock_depth && pollers_with_lock_warnings < 64) {
 		prlog(PR_ERR, "Running pollers with lock held !\n");
 		backtrace();
+		pollers_with_lock_warnings++;
+		if (pollers_with_lock_warnings == 64)
+			prlog(PR_ERR, "opal_run_pollers with lock run 64 "
+			      "times, disabling warning.\n");
 	}
 
 	/* We run the timers first */
