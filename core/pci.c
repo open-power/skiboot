@@ -1405,6 +1405,13 @@ static void pci_do_jobs(void (*fn)(void *))
 			cpu = next_available_cpu(cpu);
 			if (!cpu)
 				cpu = first_available_cpu();
+
+			/* No CPU to run on, just run synchro */
+			if (cpu == this_cpu()) {
+				fn(phbs[i]);
+				jobs[i] = NULL;
+				goto next_phb;
+			}
 		}
 
 		jobs[i] = __cpu_queue_job(cpu, fn, phbs[i], false);
@@ -1414,6 +1421,8 @@ static void pci_do_jobs(void (*fn)(void *))
 		cpu = next_available_cpu(cpu);
 		if (!cpu)
 			cpu = first_available_cpu();
+	next_phb:
+		;
 	}
 
 	/* Wait until all tasks are done */
