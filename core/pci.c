@@ -19,10 +19,8 @@
 #include <pci.h>
 #include <pci-cfg.h>
 #include <timebase.h>
-#include <lock.h>
 #include <device.h>
 
-static struct lock pci_lock = LOCK_UNLOCKED;
 static struct phb *phbs[64];
 
 #define PCITRACE(_p, _bdfn, fmt, a...) \
@@ -771,7 +769,7 @@ int64_t pci_register_phb(struct phb *phb)
 	int64_t rc = OPAL_SUCCESS;
 	unsigned int i;
 
-	lock(&pci_lock);
+	/* This is called at init time in non-concurrent way, so no lock needed */
 	for (i = 0; i < ARRAY_SIZE(phbs); i++)
 		if (!phbs[i])
 			break;
@@ -786,7 +784,6 @@ int64_t pci_register_phb(struct phb *phb)
 		PCIDBG(phb, 0, "PCI: Registered PHB\n");
 	}
 	list_head_init(&phb->devices);
-	unlock(&pci_lock);
 
 	return rc;
 }
@@ -799,9 +796,7 @@ int64_t pci_unregister_phb(struct phb *phb)
 	 *
 	 * Right now we don't unregister so we are fine
 	 */
-	lock(&pci_lock);
 	phbs[phb->opal_id] = phb;
-	unlock(&pci_lock);
 
 	return OPAL_SUCCESS;
 }
@@ -1370,7 +1365,7 @@ void pci_reset(void)
 
 	prlog(PR_NOTICE, "PCI: Clearing all devices...\n");
 
-	lock(&pci_lock);
+	/* This is a remnant of fast-reboot, not currently used */
 
 	/* XXX Do those in parallel (at least the power up
 	 * state machine could be done in parallel)
@@ -1380,7 +1375,6 @@ void pci_reset(void)
 			continue;
 		__pci_reset(&phbs[i]->devices);
 	}
-	unlock(&pci_lock);
 }
 
 static void pci_do_jobs(void (*fn)(void *))
@@ -1438,8 +1432,6 @@ void pci_init_slots(void)
 {
 	unsigned int i;
 
-	lock(&pci_lock);
-
 	prlog(PR_NOTICE, "PCI: Resetting PHBs...\n");
 	pci_do_jobs(pci_reset_phb);
 
@@ -1456,8 +1448,6 @@ void pci_init_slots(void)
 			continue;
 		pci_add_nodes(phbs[i]);
 	}
-
-	unlock(&pci_lock);
 }
 
 /*
