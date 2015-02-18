@@ -732,7 +732,7 @@ static void chiptod_print_tb(void *data __unused)
 	      this_cpu()->pir, mfspr(SPR_TBRL));
 }
 
-static bool chiptod_probe(u32 master_cpu)
+static bool chiptod_probe(void)
 {
 	struct dt_node *np;
 
@@ -757,36 +757,6 @@ static bool chiptod_probe(u32 master_cpu)
 
 	}
 
-	/*
-	 * If ChipTOD isn't found in the device-tree, we fallback
-	 * based on the master CPU passed by OPAL boot since the
-	 * FSP strips off the ChipTOD info from the HDAT when booting
-	 * in OPAL mode :-(
-	 */
-	if (chiptod_primary < 0) {
-		struct cpu_thread *t = find_cpu_by_pir(master_cpu);
-		prlog(PR_WARNING,
-		      "CHIPTOD: Cannot find a primary TOD in device-tree\n");
-		prlog(PR_WARNING, "CHIPTOD: Falling back to Master CPU: %d\n",
-		      master_cpu);
-		if (!t) {
-			prerror("CHIPTOD: NOT FOUND !\n");
-			return false;
-		}
-		chiptod_primary = t->chip_id;
-		switch(proc_gen) {
-		case proc_gen_p7:
-			chiptod_type = chiptod_p7;
-			return true;
-		case proc_gen_p8:
-			chiptod_type = chiptod_p8;
-			return true;
-		default:
-			break;
-		}	
-		prerror("CHIPTOD: Unknown fallback CPU type !\n");
-		return false;
-	}
 	if (chiptod_type == chiptod_unknown) {
 		prerror("CHIPTOD: Unknown TOD type !\n");
 		return false;
@@ -795,7 +765,7 @@ static bool chiptod_probe(u32 master_cpu)
 	return true;
 }
 
-void chiptod_init(u32 master_cpu)
+void chiptod_init(void)
 {
 	struct cpu_thread *cpu0, *cpu;
 	bool sres;
@@ -806,7 +776,7 @@ void chiptod_init(u32 master_cpu)
 
 	op_display(OP_LOG, OP_MOD_CHIPTOD, 0);
 
-	if (!chiptod_probe(master_cpu)) {
+	if (!chiptod_probe()) {
 		prerror("CHIPTOD: Failed ChipTOD detection !\n");
 		op_display(OP_FATAL, OP_MOD_CHIPTOD, 0);
 		abort();

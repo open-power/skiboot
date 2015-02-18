@@ -21,8 +21,7 @@
  * time base across the fabric.
  */
 
-extern void chiptod_init(u32 master_cpu);
-
+extern void chiptod_init(void);
 extern bool chiptod_wakeup_resync(void);
 extern int chiptod_recover_tb_errors(void);
 
