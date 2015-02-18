@@ -201,6 +201,8 @@ struct p8_i2c_master {
 	struct list_head	req_list;	/* Request queue head */
 	struct timer		poller;
 	struct timer		timeout;
+	struct timer		recovery;
+	uint8_t			recovery_pass;
 	struct list_node	link;
 };
 
@@ -754,10 +756,11 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
 {
 	struct p8_i2c_master *master = port->master;
-	int rc, pass = 0;
 	uint64_t status, estat;
+	int rc;
 
- retry:
+	master->recovery_pass++;
+
 	/* Read status register */
 	rc = xscom_read(master->chip_id, master->xscom_base + I2C_STAT_REG,
 			&status);
@@ -785,7 +788,7 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
 		log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: "
 				 "Initial error status 0x%016llx\n", status);
 
-		if (pass > 0) {
+		if (master->recovery_pass > 1) {
 			log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: "
 					 "Error stuck, aborting !!\n");
 			return OPAL_HARDWARE;
@@ -797,15 +800,10 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
 		/* Reset the engine */
 		p8_i2c_engine_reset(port);
 
-		/* Some delay XXX use state machine to avoid blocking OS */
+		/* Delay 5ms for bus to settle */
+		schedule_timer(&master->recovery, msecs_to_tb(5));
 		unlock(&master->lock);
-		time_wait_ms(5);
-		lock(&master->lock);
-
-		master->state = state_idle;
-
-		pass++;
-		goto retry;
+		return OPAL_BUSY;
 	}
 
 	/* Still busy ? */
@@ -813,7 +811,7 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
 		log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: Initial "
 				 "command complete not set\n");
 
-		if (pass > 4) {
+		if (master->recovery_pass > 5) {
 			log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: "
 					 "Command stuck, aborting !!\n");
 			return OPAL_HARDWARE;
@@ -822,17 +820,13 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
 
 		master->state = state_recovery;
 
-		/* Some delay XXX use state machine to avoid blocking OS */
+		/* Delay 5ms for bus to settle */
+		schedule_timer(&master->recovery, msecs_to_tb(5));
 		unlock(&master->lock);
-		time_wait_ms(5);
-		lock(&master->lock);
-
-		master->state = state_idle;
-
-		pass++;
-		goto retry;
+		return OPAL_BUSY;
 	}
 
+	master->recovery_pass = 0;
 	return 0;
 }
 
@@ -876,6 +870,8 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 
 	/* Check status */
 	rc = p8_i2c_check_initial_status(port);
+	if (rc != OPAL_BUSY)
+		master->recovery_pass = 0;
 	if (rc)
 		return rc;
 
@@ -944,7 +940,7 @@ static void p8_i2c_check_work(struct p8_i2c_master *master)
 	while (master->state == state_idle && !list_empty(&master->req_list)) {
 		req = list_top(&master->req_list, struct i2c_request, link);
 		rc = p8_i2c_start_request(master, req);
-		if (rc)
+		if (rc && rc != OPAL_BUSY)
 			p8_i2c_complete_request(master, req, rc);
 	}
 }
@@ -1061,6 +1057,17 @@ static void p8_i2c_timeout(struct timer *t __unused, void *data)
 	unlock(&master->lock);
 }
 
+static void p8_i2c_recover(struct timer *t __unused, void *data)
+{
+	struct p8_i2c_master *master = data;
+
+	lock(&master->lock);
+	assert(master->state == state_recovery);
+	master->state = state_idle;
+	p8_i2c_check_work(master);
+	unlock(&master->lock);
+}
+
 static void p8_i2c_poll(struct timer *t __unused, void *data)
 {
 	struct p8_i2c_master *master = data;
@@ -1138,6 +1145,7 @@ void p8_i2c_init(void)
 		assert(chip);
 		init_timer(&master->timeout, p8_i2c_timeout, master);
 		init_timer(&master->poller, p8_i2c_poll, master);
+		init_timer(&master->recovery, p8_i2c_recover, master);
 
 		prlog(PR_INFO, "I2C: Chip %08x Eng. %d\n",
 		      master->chip_id, master->engine_id);
