@@ -3175,11 +3175,11 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	}
 
 	/* poll cqstat */
-	for (i = 0; i < 500; i++) {
+	for (i = 0; i < 500000; i++) {
 		xscom_read(p->chip_id, p->pe_xscom + 0xf, &reg);
 		if (!(reg & 0xC000000000000000))
 			break;
-		time_wait_ms(10);
+		time_wait_us(10);
 	}
 	if (reg & 0xC000000000000000) {
 		PHBERR(p, "Timeout waiting for pending transaction\n");
@@ -3420,7 +3420,7 @@ static void phb3_init_ioda2(struct phb3 *p)
 		 PHB_PHB3C_64BIT_MSI_EN);
 
 	/* Init_26 - At least 512ns delay according to spec */
-	time_wait_ms(1);
+	time_wait_us(2);
 
 	/* Init_27..36 - On-chip IODA tables init */
 	phb3_ioda_reset(&p->phb, false);
@@ -3443,14 +3443,14 @@ static bool phb3_wait_dlp_reset(struct phb3 *p)
 	 * eventually time-out and will return an all ones response if the
 	 * link is down.
 	 */
-#define DLP_RESET_ATTEMPTS	400
+#define DLP_RESET_ATTEMPTS	40000
 
 	PHBDBG(p, "Waiting for DLP PG reset to complete...\n");
 	for (i = 0; i < DLP_RESET_ATTEMPTS; i++) {
 		val = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
 		if (!(val & PHB_PCIE_DLP_TC_DL_PGRESET))
 			break;
-		time_wait_ms(1);
+		time_wait_us(10);
 	}
 	if (val & PHB_PCIE_DLP_TC_DL_PGRESET) {
 		PHBERR(p, "Timeout waiting for DLP PG reset !\n");
@@ -3746,6 +3746,8 @@ static void phb3_init_hw(struct phb3 *p)
 	/* Lift reset */
 	xscom_read(p->chip_id, p->spci_xscom + 1, &val);/* HW275117 */
 	xscom_write(p->chip_id, p->pci_xscom + 0xa, 0);
+
+	/* XXX FIXME, turn that into a state machine or a worker thread */
 	time_wait_ms(100);
 
 	/* Grab version and fit it in an int */
