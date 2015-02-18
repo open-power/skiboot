@@ -383,7 +383,7 @@ call_relocate:
 	mtlr	%r14
 	blr
 1:	/* Fatal relocate failure */
-	b	.
+	attn
 
 /* This is a little piece of code that is copied down to
  * 0x100 when doing a "fast reset"
