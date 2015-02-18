@@ -23,6 +23,8 @@
 #include <ccan/endian/endian.h>
 #include <errorlog.h>
 #include <opal-api.h>
+#include <fsp-elog.h>
+#include <timebase.h>
 
 #include "fsp-codeupdate.h"
 
@@ -455,14 +457,13 @@ void fsp_code_update_wait_vpd(bool is_boot)
 	if (!fsp_present())
 		return;
 
-	prlog(PR_NOTICE, "CUPD: Waiting read marker LID completion...\n");
-
-	while(flash_state == FLASH_STATE_READING)
-		opal_run_pollers();
-
-	prlog(PR_NOTICE, "CUPD: Waiting in flight params completion...\n");
-	while(in_flight_params)
-		opal_run_pollers();
+	prlog(PR_NOTICE, "CUPD: Waiting read marker LID"
+	      " and in flight parsm completion...\n");
+	while (flash_state == FLASH_STATE_READING || in_flight_params) {
+		unlock(&flash_lock);
+		time_wait_ms(100);
+		lock(&flash_lock);
+	}
 
 	if (is_boot)
 		add_opal_firmware_version();

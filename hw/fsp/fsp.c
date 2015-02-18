@@ -1643,8 +1643,10 @@ int fsp_sync_msg(struct fsp_msg *msg, bool autofree)
 	if (rc)
 		goto bail;
 
-	while(fsp_msg_busy(msg))
+	while(fsp_msg_busy(msg)) {
+		cpu_relax();
 		opal_run_pollers();
+	}
 
 	switch(msg->state) {
 	case fsp_msg_done:
@@ -2064,19 +2066,25 @@ void fsp_opl(void)
 	/* Send OPL */
 	ipl_state |= ipl_opl_sent;
 	fsp_sync_msg(fsp_mkmsg(FSP_CMD_OPL, 0), true);
-	while(!(ipl_state & ipl_got_continue))
+	while(!(ipl_state & ipl_got_continue)) {
 		opal_run_pollers();
+		cpu_relax();
+	}
 
 	/* Send continue ACK */
 	fsp_sync_msg(fsp_mkmsg(FSP_CMD_CONTINUE_ACK, 0), true);
 
 	/* Wait for various FSP messages */
 	prlog(PR_INFO, "INIT: Waiting for FSP to advertize new role...\n");
-	while(!(ipl_state & ipl_got_new_role))
+	while(!(ipl_state & ipl_got_new_role)) {
+		cpu_relax();
 		opal_run_pollers();
+	}
 	prlog(PR_INFO, "INIT: Waiting for FSP to request capabilities...\n");
-	while(!(ipl_state & ipl_got_caps))
+	while(!(ipl_state & ipl_got_caps)) {
+		cpu_relax();
 		opal_run_pollers();
+	}
 
 	/* Initiate the timeout poller */
 	opal_add_poller(fsp_timeout_poll, NULL);
@@ -2087,8 +2095,10 @@ void fsp_opl(void)
 
 	/* Wait for FSP functional */
 	prlog(PR_INFO, "INIT: Waiting for FSP functional\n");
-	while(!(ipl_state & ipl_got_fsp_functional))
+	while(!(ipl_state & ipl_got_fsp_functional)) {
+		cpu_relax();
 		opal_run_pollers();
+	}
 
 	/* Tell FSP we are in running state */
 	prlog(PR_INFO, "INIT: Sending HV Functional: Runtime...\n");
