@@ -223,3 +223,189 @@ static int64_t opal_flash_erase(uint64_t id, uint64_t offset, uint64_t size,
 opal_call(OPAL_FLASH_READ, opal_flash_read, 5);
 opal_call(OPAL_FLASH_WRITE, opal_flash_write, 5);
 opal_call(OPAL_FLASH_ERASE, opal_flash_erase, 4);
+
+/* flash resource API */
+static struct {
+	enum resource_id	id;
+	uint32_t		subid;
+	char			name[PART_NAME_MAX+1];
+} part_name_map[] = {
+	{ RESOURCE_ID_KERNEL,	RESOURCE_SUBID_NONE,		"KERNEL" },
+	{ RESOURCE_ID_INITRAMFS,RESOURCE_SUBID_NONE,		"ROOTFS" },
+};
+
+/* This mimics the hostboot SBE format */
+#define FLASH_SUBPART_ALIGNMENT 0x1000
+#define FLASH_SUBPART_HEADER_SIZE FLASH_SUBPART_ALIGNMENT
+
+struct flash_hostboot_toc {
+	be32 ec;
+	be32 offset; /* From start of header.  4K aligned */
+	be32 size;
+};
+#define FLASH_HOSTBOOT_TOC_MAX_ENTRIES ((FLASH_SUBPART_HEADER_SIZE - 8) \
+		/sizeof(struct flash_hostboot_toc))
+
+struct flash_hostboot_header {
+	char eyecatcher[4];
+	be32 version;
+	struct flash_hostboot_toc toc[FLASH_HOSTBOOT_TOC_MAX_ENTRIES];
+};
+
+static int flash_find_subpartition(struct flash_chip *chip, uint32_t subid,
+		uint32_t *start, uint32_t *total_size)
+{
+	struct flash_hostboot_header *header;
+	char eyecatcher[5];
+	uint32_t i;
+	bool rc;
+
+	header = malloc(FLASH_SUBPART_HEADER_SIZE);
+	if (!header)
+		return false;
+
+	/* Get the TOC */
+	rc = flash_read(chip, *start, header, FLASH_SUBPART_HEADER_SIZE);
+	if (rc) {
+		prerror("FLASH: flash subpartition TOC read failed %i", rc);
+		goto end;
+	}
+
+	/* Perform sanity */
+	i = be32_to_cpu(header->version);
+	if (i != 1) {
+		prerror("FLASH: flash subpartition TOC version unknown %i", i);
+		rc = OPAL_RESOURCE;
+		goto end;
+	}
+	/* NULL terminate eyecatcher */
+	strncpy(eyecatcher, header->eyecatcher, 4);
+	eyecatcher[4] = 0;
+	prlog(PR_DEBUG, "FLASH: flash subpartition eyecatcher %s\n",
+			eyecatcher);
+
+	rc = OPAL_RESOURCE;
+	for (i = 0; i< FLASH_HOSTBOOT_TOC_MAX_ENTRIES; i++) {
+		uint32_t ec, offset, size;
+
+		ec = be32_to_cpu(header->toc[i].ec);
+		offset = be32_to_cpu(header->toc[i].offset);
+		size = be32_to_cpu(header->toc[i].size);
+		/* Check for null terminating entry */
+		if (!ec && !offset && !size) {
+			prerror("FLASH: flash subpartition not found.");
+			goto end;
+		}
+
+		if (ec != subid)
+			continue;
+
+		/* Sanity check the offset and size */
+		if (offset + size > *total_size) {
+			prerror("FLASH: flash subpartition too big: %i", i);
+			goto end;
+		}
+		if (!size) {
+			prerror("FLASH: flash subpartition zero size: %i", i);
+			goto end;
+		}
+		if (offset < FLASH_SUBPART_HEADER_SIZE) {
+			prerror("FLASH: flash subpartition "
+					"offset too small: %i", i);
+			goto end;
+		}
+
+		/* All good, let's adjust the start and size */
+		prlog(PR_DEBUG, "FLASH: flash found subpartition: "
+				"%i size: %i offset %i\n",
+				i, size, offset);
+		*start += offset;
+		size = (size + (FLASH_SUBPART_ALIGNMENT - 1)) &
+				~(FLASH_SUBPART_ALIGNMENT - 1);
+		*total_size = size;
+		rc = 0;
+		goto end;
+	}
+
+end:
+	free(header);
+	return rc;
+}
+
+bool flash_load_resource(enum resource_id id, uint32_t subid,
+		void *buf, size_t *len)
+{
+	int i, rc, part_num, part_size, part_start;
+	struct ffs_handle *ffs;
+	struct flash *flash;
+	const char *name;
+	bool status;
+
+	status = false;
+
+	lock(&flash_lock);
+
+	if (!system_flash)
+		goto out_unlock;
+
+	flash = system_flash;
+
+	for (i = 0, name = NULL; i < ARRAY_SIZE(part_name_map); i++) {
+		if (part_name_map[i].id == id) {
+			name = part_name_map[i].name;
+			subid = part_name_map[i].subid;
+			break;
+		}
+	}
+	if (!name) {
+		prerror("FLASH: Couldn't find partition for id %d\n", id);
+		goto out_unlock;
+	}
+
+	rc = ffs_open_flash(flash->chip, 0, flash->size, &ffs);
+	if (rc) {
+		prerror("FLASH: Can't open ffs handle\n");
+		goto out_unlock;
+	}
+
+	rc = ffs_lookup_part(ffs, name, &part_num);
+	if (rc) {
+		prerror("FLASH: No %s partition\n", name);
+		goto out_free_ffs;
+	}
+	rc = ffs_part_info(ffs, part_num, NULL,
+			   &part_start, &part_size, NULL);
+	if (rc) {
+		prerror("FLASH: Failed to get %s partition info\n", name);
+		goto out_free_ffs;
+	}
+
+	if (part_size > *len) {
+		prerror("FLASH: %s image too large (%d > %zd)\n", name,
+			part_size, *len);
+		goto out_free_ffs;
+	}
+
+	/* Find the sub partition if required */
+	if (subid != RESOURCE_SUBID_NONE) {
+		rc = flash_find_subpartition(flash->chip, subid, &part_start,
+					    &part_size);
+		if (rc)
+			return false;
+	}
+
+	rc = flash_read(flash->chip, part_start, buf, part_size);
+	if (rc) {
+		prerror("FLASH: failed to read %s partition\n", name);
+		goto out_free_ffs;
+	}
+
+	*len = part_size;
+	status = true;
+
+out_free_ffs:
+	ffs_close(ffs);
+out_unlock:
+	unlock(&flash_lock);
+	return status;
+}

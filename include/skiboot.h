@@ -199,7 +199,8 @@ extern void occ_fsp_init(void);
 /* flash support */
 struct flash_chip;
 extern int flash_register(struct flash_chip *chip, bool is_system_flash);
-extern bool flash_load_resource(enum resource_id id, void *buf, size_t *len);
+extern bool flash_load_resource(enum resource_id id, uint32_t subid,
+		void *buf, size_t *len);
 
 /* NVRAM support */
 extern void nvram_init(void);
