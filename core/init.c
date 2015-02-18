@@ -559,7 +559,7 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * to access chips via that path early on.
 	 */
 	init_chips();
-	if (is_mambo_chip)
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
 		enable_mambo_console();
 	xscom_init();
 	mfsi_init();
@@ -628,7 +628,7 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * value (so they appear to go backward at this point), and synchronize
 	 * all core timebases to the global ChipTOD network
 	 */
-	chiptod_init(master_cpu);
+	chiptod_init();
 
 	/* Initialize i2c */
 	p8_i2c_init();

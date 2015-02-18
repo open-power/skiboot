@@ -770,8 +770,8 @@ void chiptod_init(void)
 	struct cpu_thread *cpu0, *cpu;
 	bool sres;
 
-	/* Mambo doesn't simulate the chiptod */
-	if (is_mambo_chip)
+	/* Mambo and qemu doesn't simulate the chiptod */
+	if (chip_quirk(QUIRK_NO_CHIPTOD))
 		return;
 
 	op_display(OP_LOG, OP_MOD_CHIPTOD, 0);

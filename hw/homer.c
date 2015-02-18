@@ -111,7 +111,7 @@ void homer_init(void)
 {
 	struct proc_chip *chip;
 
-	if (proc_gen != proc_gen_p8 || 	is_mambo_chip)
+	if (proc_gen != proc_gen_p8 || chip_quirk(QUIRK_NO_PBA))
 		return;
 
 	/*

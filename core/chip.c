@@ -20,7 +20,7 @@
 #include <device.h>
 
 static struct proc_chip *chips[MAX_CHIPS];
-bool is_mambo_chip;
+enum proc_chip_quirks proc_chip_quirks;
 
 uint32_t pir_to_chip_id(uint32_t pir)
 {
@@ -68,8 +68,16 @@ void init_chips(void)
 	struct dt_node *xn;
 
 	/* Detect mambo chip */
-	if (dt_find_by_path(dt_root, "/mambo"))
-		is_mambo_chip = true;
+	if (dt_find_by_path(dt_root, "/mambo")) {
+		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_MAMBO_CALLOUTS
+			| QUIRK_NO_F000F | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ
+			| QUIRK_DISABLE_NAP;
+		prlog(PR_NOTICE, "CHIP: Detected Mambo simulator\n");
+	}
+	if (dt_node_is_compatible(dt_root, "qemu,powernv")) {
+		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ;
+		prlog(PR_NOTICE, "CHIP: Detected Qemu simulator\n");
+	}
 
 	/* We walk the chips based on xscom nodes in the tree */
 	dt_for_each_compatible(dt_root, xn, "ibm,xscom") {

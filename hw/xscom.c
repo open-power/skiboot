@@ -441,7 +441,7 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 	/* Mambo chip model lacks the f000f register, just make
 	 * something up (Murano DD2.1)
 	 */
-	if (is_mambo_chip)
+	if (chip_quirk(QUIRK_NO_F000F))
 		val = 0x221EF04980000000;
 	else
 		rc = xscom_read(chip->id, 0xf000f, &val);

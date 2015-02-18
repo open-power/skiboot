@@ -89,6 +89,21 @@ enum proc_chip_type {
 	PROC_CHIP_P8_VENICE,
 };
 
+/* Simulator quirks */
+enum proc_chip_quirks {
+	QUIRK_NO_CHIPTOD	= 0x00000001,
+	QUIRK_MAMBO_CALLOUTS	= 0x00000002,
+	QUIRK_NO_F000F		= 0x00000004,
+	QUIRK_NO_PBA		= 0x00000008,
+	QUIRK_NO_OCC_IRQ       	= 0x00000010,
+	QUIRK_DISABLE_NAP	= 0x00000020,
+} proc_chip_quirks;
+
+static inline bool chip_quirk(unsigned int q)
+{
+	return !!(proc_chip_quirks & q);
+}
+
 #define MAX_CHIPS	(1 << 6)	/* 6-bit chip ID */
 
 /*
@@ -138,9 +153,6 @@ struct proc_chip {
 	/* Used by hw/p8-i2c.c */
 	struct list_head	i2cms;
 };
-
-/* Mambo simplified chip model lacks some features, handle it here */
-extern bool is_mambo_chip;
 
 extern uint32_t pir_to_chip_id(uint32_t pir);
 extern uint32_t pir_to_core_id(uint32_t pir);

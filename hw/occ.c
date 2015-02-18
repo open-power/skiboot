@@ -538,8 +538,8 @@ static struct fsp_client fsp_occ_client = {
 
 void occ_send_dummy_interrupt(void)
 {
-	/* Mambo chip and P7 don't do this */
-	if (is_mambo_chip || proc_gen != proc_gen_p8)
+	/* Emulators and P7 doesn't do this */
+	if (proc_gen != proc_gen_p8 || chip_quirk(QUIRK_NO_OCC_IRQ))
 		return;
 	xscom_writeme(OCB_OCI_OCCMISC_OR,
 		      OCB_OCI_OCIMISC_IRQ |
