@@ -819,7 +819,6 @@ static bool send_all_hvsi_close(void)
 	bool has_hvsi = false;
 	static const uint8_t close_packet[] = { 0xfe, 6, 0, 1, 0, 3 };
 
-	lock(&fsp_con_lock);
  	for (i = 0; i < MAX_SERIAL; i++) {
 		struct fsp_serial *fs = &fsp_serials[i];
 		struct fsp_serbuf_hdr *sb = fs->out_buf;
@@ -839,9 +838,10 @@ static bool send_all_hvsi_close(void)
 				break;
 			time_wait_ms(500);
 		}
+		lock(&fsp_con_lock);
 		fsp_write_vserial(fs, close_packet, 6);
+		unlock(&fsp_con_lock);
 	}
-	unlock(&fsp_con_lock);
 
 	return has_hvsi;
 }
