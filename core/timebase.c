@@ -1,3 +1,4 @@
+
 /* Copyright 2013-2014 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,7 +41,14 @@ static void time_wait_poll(unsigned long duration)
 
 void time_wait(unsigned long duration)
 {
-	if (this_cpu() != boot_cpu)
+	struct cpu_thread *c = this_cpu();
+
+	if (this_cpu()->lock_depth) {
+		time_wait_nopoll(duration);
+		return;
+	}
+
+	if (c != boot_cpu)
 		time_wait_nopoll(duration);
 	else
 		time_wait_poll(duration);
