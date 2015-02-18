@@ -28,73 +28,81 @@ DEFINE_LOG_ENTRY(OPAL_RC_PANEL_WRITE, OPAL_PLATFORM_ERR_EVT, OPAL_OP_PANEL,
 		 OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,
 		 OPAL_NA, NULL);
 
-static struct fsp_msg op_msg_resp;
-static struct fsp_msg op_msg = {
-	.resp = &op_msg_resp,
-};
+/* For OPAL OP_PANEL API we can only have one in flight due to TCEs */
 static struct fsp_msg *op_req;
 static uint64_t op_async_token;
 static struct lock op_lock = LOCK_UNLOCKED;
 
+static void fsp_op_display_fatal(uint32_t w0, uint32_t w1)
+{
+	static struct fsp_msg op_msg_resp;
+	static struct fsp_msg op_msg = {
+		.resp = &op_msg_resp,
+	};
+
+	fsp_fillmsg(&op_msg, FSP_CMD_DISP_SRC_DIRECT, 3, 1, w0, w1);
+
+	fsp_sync_msg(&op_msg, false);
+}
+
 void op_display(enum op_severity sev, enum op_module mod, uint16_t code)
 {
-	uint32_t w0 = sev << 16 | mod;
+	struct fsp_msg *op_msg;
+	uint32_t w0;
 	uint32_t w1;
-	bool clean_lock;
 
 	if (!fsp_present())
 		return;
+
+	w0 = sev << 16 | mod;
 
 	w1 =  tohex((code >> 12) & 0xf) << 24;
 	w1 |= tohex((code >>  8) & 0xf) << 16;
 	w1 |= tohex((code >>  4) & 0xf) <<  8;
 	w1 |= tohex((code      ) & 0xf);
 
-	/*
-	 * We use lock_recursive to detect recursion. We avoid sending
-	 * the message if that happens as this could be a case of a
-	 * locking error in the FSP driver for example
-	 */
-	clean_lock = lock_recursive(&op_lock);
-	if (!clean_lock)
-		return;
-
-	/* We don't use mkmsg, we use a preallocated msg to avoid
-	 * going down the malloc path etc... since this can be called
-	 * in case of fatal errors
-	 */
-	fsp_fillmsg(&op_msg, FSP_CMD_DISP_SRC_DIRECT, 3, 1, w0, w1);
-
 	if (sev == OP_FATAL) {
-		if(fsp_queue_msg(&op_msg, NULL))
-			prerror("Failed to queue FSP message for OP PANEL\n");
+		fsp_op_display_fatal(w0, w1);
 	} else {
-		fsp_sync_msg(&op_msg, false);
-	}
+		op_msg = fsp_allocmsg(true);
+		if (!op_msg) {
+			prerror("Failed to allocate FSP message for PANEL\n");
+			return;
+		}
 
-	unlock(&op_lock);
+		fsp_fillmsg(op_msg, FSP_CMD_DISP_SRC_DIRECT, 3, 1, w0, w1);
+
+		if(fsp_queue_msg(op_msg, fsp_freemsg))
+			prerror("Failed to queue FSP message for OP PANEL\n");
+	}
 }
 
 void op_panel_disable_src_echo(void)
 {
+	struct fsp_msg op_msg_resp;
+	struct fsp_msg op_msg = {
+		.resp = &op_msg_resp,
+	};
+
 	if (!fsp_present())
 		return;
 
-	lock(&op_lock);
 	fsp_fillmsg(&op_msg, FSP_CMD_DIS_SRC_ECHO, 0);
 	fsp_sync_msg(&op_msg, false);
-	unlock(&op_lock);
 }
 
 void op_panel_clear_src(void)
 {
+	struct fsp_msg op_msg_resp;
+	struct fsp_msg op_msg = {
+		.resp = &op_msg_resp,
+	};
+
 	if (!fsp_present())
 		return;
 
-	lock(&op_lock);
 	fsp_fillmsg(&op_msg, FSP_CMD_CLEAR_SRC, 0);
 	fsp_sync_msg(&op_msg, false);
-	unlock(&op_lock);
 }
 
 /* opal_write_oppanel - Write to the physical op panel.
@@ -136,8 +144,11 @@ static struct op_src op_src __align(0x1000);
 static void __op_panel_write_complete(struct fsp_msg *msg)
 {
 	fsp_tce_unmap(PSI_DMA_OP_PANEL_MISC, 0x1000);
-	lwsync();
+
+	lock(&op_lock);
 	op_req = NULL;
+	unlock(&op_lock);
+
 	fsp_freemsg(msg);
 }
 
@@ -163,19 +174,21 @@ static int64_t __opal_write_oppanel(oppanel_line_t *lines, uint64_t num_lines,
 	if (num_lines < 1 || num_lines > 2)
 		return OPAL_PARAMETER;
 
-	lock(&op_lock);
-
 	/* Only one in flight */
+	lock(&op_lock);
 	if (op_req) {
 		rc = OPAL_BUSY_EVENT;
+		unlock(&op_lock);
 		goto bail;
 	}
 
 	op_req = fsp_allocmsg(true);
 	if (!op_req) {
 		rc = OPAL_NO_MEM;
+		unlock(&op_lock);
 		goto bail;
 	}
+	unlock(&op_lock);
 
 	op_async_token = async_token;
 
@@ -232,7 +245,6 @@ static int64_t __opal_write_oppanel(oppanel_line_t *lines, uint64_t num_lines,
 		rc = OPAL_INTERNAL_ERROR;
 	}
  bail:
-	unlock(&op_lock);
 	log_simple_error(&e_info(OPAL_RC_PANEL_WRITE),
 			"FSP: Error updating Op Panel: %lld\n", rc);
 	return rc;
