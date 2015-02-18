@@ -54,6 +54,9 @@ static void unlock_check(struct lock *l)
 
 	if (l->in_con_path && this_cpu()->con_suspend == 0)
 		lock_error(l, "Unlock con lock with console not suspended", 3);
+
+	if (this_cpu()->lock_depth == 0)
+		lock_error(l, "Releasing lock with 0 depth", 4);
 }
 
 #else
@@ -73,6 +76,7 @@ bool try_lock(struct lock *l)
 	if (__try_lock(l)) {
 		if (l->in_con_path)
 			this_cpu()->con_suspend++;
+		this_cpu()->lock_depth++;
 		return true;
 	}
 	return false;
@@ -101,6 +105,7 @@ void unlock(struct lock *l)
 	unlock_check(l);
 
 	lwsync();
+	this_cpu()->lock_depth--;
 	l->lock_val = 0;
 
 	if (l->in_con_path) {

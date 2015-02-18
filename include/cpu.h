@@ -54,6 +54,7 @@ struct cpu_thread {
 	struct trace_info		*trace;
 	uint64_t			save_r1;
 	void				*icp_regs;
+	uint32_t			lock_depth;
 	uint32_t			con_suspend;
 	bool				con_need_flush;
 	bool				in_mcount;
