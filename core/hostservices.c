@@ -452,6 +452,7 @@ void hservices_lid_preload(void)
 {
 	const uint32_t *lid_list = NULL;
 	size_t num_lids;
+	int i;
 
 	if (!hservice_runtime)
 		return;
@@ -465,8 +466,8 @@ void hservices_lid_preload(void)
 	prlog(PR_INFO, "HBRT: %d lids to load\n", (int)num_lids);
 
 	/* Currently HBRT needs only one (OCC) lid */
-	while (num_lids--)
-		__hservice_lid_preload(lid_list[num_lids]);
+	for (i = 0; i < num_lids; i++)
+		__hservice_lid_preload(lid_list[i]);
 }
 
 static int hservice_lid_load(uint32_t lid, void **buf, size_t *len)
