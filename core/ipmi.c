@@ -126,15 +126,13 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 {
 	lock(&sync_lock);
-
-	assert(!sync_msg);
+	while (sync_msg);
 	sync_msg = msg;
 	ipmi_queue_msg(msg);
-
-	while (sync_msg)
-		time_wait_ms(100);
-
 	unlock(&sync_lock);
+
+	while (sync_msg == msg)
+		time_wait_ms(100);
 }
 
 static void ipmi_read_event_complete(struct ipmi_msg *msg)
