@@ -347,34 +347,36 @@ void occ_pstates_init(void)
 	}
 }
 
-static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
+struct occ_load_req {
+	u8 scope;
+	u32 dbob_id;
+	u32 seq_id;
+	struct list_node link;
+};
+static LIST_HEAD(occ_load_req_list);
+
+static void occ_queue_load(u8 scope, u32 dbob_id, u32 seq_id)
 {
-	struct fsp_msg *rsp, *stat;
+	struct occ_load_req *occ_req;
+
+	occ_req = zalloc(sizeof(struct occ_load_req));
+	if (!occ_req) {
+		prerror("OCC: Could not allocate occ_load_req\n");
+		return;
+	}
+
+	occ_req->scope = scope;
+	occ_req->dbob_id = dbob_id;
+	occ_req->seq_id = seq_id;
+	list_add_tail(&occ_load_req_list, &occ_req->link);
+}
+
+static void __occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
+{
+	struct fsp_msg *stat;
 	int rc = -ENOMEM;
 	int status_word = 0;
 	struct proc_chip *chip = next_chip(NULL);
-	u8 err = 0;
-
-	/* Check arguments */
-	if (scope != 0x01 && scope != 0x02) {
-		prerror("OCC: Load message with invalid scope 0x%x\n",
-			scope);
-		err = 0x22;
-	}
-
-	/* First queue up an OK response to the load message itself */
-	rsp = fsp_mkmsg(FSP_RSP_LOAD_OCC | err, 0);
-	if (rsp)
-		rc = fsp_queue_msg(rsp, fsp_freemsg);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_OCC_LOAD),
-			"OCC: Error %d queueing FSP OCC LOAD reply\n", rc);
-		return;
-	}
-
-	/* If we had an error, return */
-	if (err)
-		return;
 
 	/* Call HBRT... */
 	rc = host_services_occ_load();
@@ -397,7 +399,7 @@ static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 			break;
 		}
 		log_simple_error(&e_info(OPAL_RC_OCC_LOAD),
-			"OCC: Error %d in load/start OCC\n", err);
+			"OCC: Error %d in load/start OCC\n", rc);
 	}
 
 	/* Send a single response for all chips */
@@ -408,6 +410,56 @@ static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 		log_simple_error(&e_info(OPAL_RC_OCC_LOAD),
 			"OCC: Error %d queueing FSP OCC LOAD STATUS msg", rc);
 	}
+}
+
+void occ_poke_load_queue(void)
+{
+	struct occ_load_req *occ_req;
+
+	if (list_empty(&occ_load_req_list))
+		return;
+
+	list_for_each(&occ_load_req_list, occ_req, link) {
+		__occ_do_load(occ_req->scope, occ_req->dbob_id,
+				occ_req->seq_id);
+		list_del(&occ_req->link);
+		free(occ_req);
+	}
+}
+
+static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
+{
+	struct fsp_msg *rsp;
+	int rc = -ENOMEM;
+	u8 err = 0;
+
+	if (scope != 0x01 && scope != 0x02) {
+		prerror("OCC: Load message with invalid scope 0x%x\n",
+				scope);
+		err = 0x22;
+	}
+
+	/* First queue up an OK response to the load message itself */
+	rsp = fsp_mkmsg(FSP_RSP_LOAD_OCC | err, 0);
+	if (rsp)
+		rc = fsp_queue_msg(rsp, fsp_freemsg);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_OCC_LOAD),
+			"OCC: Error %d queueing FSP OCC LOAD reply\n", rc);
+		return;
+	}
+
+	if (err)
+		return;
+
+	/*
+	 * Check if hostservices lid caching is complete. If not, queue
+	 * the load request.
+	 */
+	if (!hservices_lid_preload_complete())
+		occ_queue_load(scope, dbob_id, seq_id);
+
+	__occ_do_load(scope, dbob_id, seq_id);
 }
 
 static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)

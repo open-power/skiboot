@@ -394,6 +394,13 @@ struct hbrt_lid {
 };
 static LIST_HEAD(hbrt_lid_list);
 
+static bool hbrt_lid_preload_complete = false;
+
+bool hservices_lid_preload_complete(void)
+{
+	return hbrt_lid_preload_complete;
+}
+
 /* TODO: Few of the following routines can be generalized */
 static int __hservice_lid_load(uint32_t lid, void **buf, size_t *len)
 {
@@ -468,6 +475,9 @@ void hservices_lid_preload(void)
 	/* Currently HBRT needs only one (OCC) lid */
 	for (i = 0; i < num_lids; i++)
 		__hservice_lid_preload(lid_list[i]);
+
+	hbrt_lid_preload_complete = true;
+	occ_poke_load_queue();
 }
 
 static int hservice_lid_load(uint32_t lid, void **buf, size_t *len)

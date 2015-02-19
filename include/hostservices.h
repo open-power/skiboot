@@ -19,6 +19,7 @@
 
 bool hservices_init(void);
 void hservices_lid_preload(void);
+bool hservices_lid_preload_complete(void);
 
 int host_services_occ_load(void);
 int host_services_occ_start(void);

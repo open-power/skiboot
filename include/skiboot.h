@@ -215,6 +215,9 @@ extern void uart_setup_opal_console(void);
 extern void occ_interrupt(uint32_t chip_id);
 extern void occ_send_dummy_interrupt(void);
 
+/* OCC load support */
+extern void occ_poke_load_queue(void);
+
 /* Flatten device-tree */
 extern void *create_dtb(const struct dt_node *root);
 
