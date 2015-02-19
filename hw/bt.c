@@ -88,8 +88,7 @@ struct bt_msg {
 struct bt {
 	uint32_t base_addr;
 	enum bt_states state;
-	struct lock bt_lock;
-	struct lock msgq_lock;
+	struct lock lock;
 	struct list_head msgq;
 	struct timer poller;
 	bool irq_ok;
@@ -120,7 +119,9 @@ static inline void bt_set_h_busy(bool value)
 
 static inline bool bt_idle(void)
 {
-	return !(bt_inb(BT_CTRL) & (BT_CTRL_B_BUSY | BT_CTRL_H2B_ATN));
+	uint8_t bt_ctrl = bt_inb(BT_CTRL);
+
+	return !(bt_ctrl & BT_CTRL_B_BUSY) && !(bt_ctrl & BT_CTRL_H2B_ATN);
 }
 
 static inline void bt_set_state(enum bt_states next_state)
@@ -153,26 +154,25 @@ static void bt_reset_interface(void)
 	bt_init_interface();
 }
 
-static bool bt_try_send_msg(void)
+/* Try and send a message from the message queue. Caller must hold
+ * bt.bt_lock and bt.lock and ensue the message queue is not
+ * empty. */
+static void bt_send_msg(void)
 {
 	int i;
 	struct bt_msg *bt_msg;
 	struct ipmi_msg *ipmi_msg;
 
-	lock(&bt.msgq_lock);
 	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
-	if (!bt_msg) {
-		unlock(&bt.msgq_lock);
-		return true;
-	}
+	assert(bt_msg);
 
 	ipmi_msg = &bt_msg->ipmi_msg;
 
 	if (!bt_idle()) {
 		prerror("BT: Interface in an unexpected state, attempting reset\n");
 		bt_reset_interface();
-		unlock(&bt.msgq_lock);
-		return false;
+		unlock(&bt.lock);
+		return;
 	}
 
 	/* Send the message */
@@ -197,9 +197,8 @@ static bool bt_try_send_msg(void)
 	bt_msg->tb = mftb();
 	bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
 	bt_set_state(BT_STATE_RESP_WAIT);
-	unlock(&bt.msgq_lock);
 
-	return true;
+	return;
 }
 
 static void bt_flush_msg(void)
@@ -208,7 +207,7 @@ static void bt_flush_msg(void)
 	bt_set_h_busy(false);
 }
 
-static bool bt_get_resp(void)
+static void bt_get_resp(void)
 {
 	int i;
 	struct bt_msg *bt_msg;
@@ -216,14 +215,7 @@ static bool bt_get_resp(void)
 	uint8_t resp_len, netfn, seq, cmd;
 	uint8_t cc = IPMI_CC_NO_ERROR;
 
-	/* Wait for BMC to signal response */
-	lock(&bt.msgq_lock);
-	if (!(bt_inb(BT_CTRL) & BT_CTRL_B2H_ATN)) {
-		unlock(&bt.msgq_lock);
-		return true;
-	}
-
-	/* Indicate BMC that we are busy */
+	/* Indicate to the BMC that we are busy */
 	bt_set_h_busy(true);
 
 	/* Clear B2H_ATN and read pointer */
@@ -258,8 +250,8 @@ static bool bt_get_resp(void)
 		prlog(PR_INFO, "BT: Nobody cared about a response to an BT/IPMI message\n");
 		bt_flush_msg();
 		bt_set_state(BT_STATE_B_BUSY);
-		unlock(&bt.msgq_lock);
-		return false;
+		unlock(&bt.lock);
+		return;
 	}
 
 	ipmi_msg = &bt_msg->ipmi_msg;
@@ -281,11 +273,11 @@ static bool bt_get_resp(void)
 		ipmi_msg->data[i] = bt_inb(BT_HOST2BMC);
 	bt_set_h_busy(false);
 
-	/* Make sure the other side is idle before we move to the idle state */
 	bt_set_state(BT_STATE_B_BUSY);
+
 	list_del(&bt_msg->link);
 	bt.queue_len--;
-	unlock(&bt.msgq_lock);
+	unlock(&bt.lock);
 
 	/*
 	 * Call the IPMI layer to finish processing the message.
@@ -295,9 +287,9 @@ static bool bt_get_resp(void)
 #endif
 
 	ipmi_cmd_done(cmd, netfn, cc, ipmi_msg);
+	lock(&bt.lock);
 
-	/* Immediately send the next message */
-	return false;
+	return;
 }
 
 static void bt_expire_old_msg(void)
@@ -305,7 +297,6 @@ static void bt_expire_old_msg(void)
 	unsigned long tb;
 	struct bt_msg *bt_msg;
 
-	lock(&bt.msgq_lock);
 	tb = mftb();
 	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
 
@@ -319,56 +310,74 @@ static void bt_expire_old_msg(void)
 		   sufficient to guard against such things. */
 		   bt_reset_interface();
 	}
-	unlock(&bt.msgq_lock);
+}
+
+#if BT_QUEUE_DEBUG
+static void print_debug_queue_info(void)
+{
+	struct bt_msg *msg;
+	static bool printed = false;
+
+	if (!list_empty(&bt.msgq)) {
+		printed = false;
+		prlog(PR_DEBUG, "-------- BT Msg Queue --------\n");
+		list_for_each(&bt.msgq, msg, link) {
+			prlog(PR_DEBUG, "Seq: 0x%02x Cmd: 0x%02x\n", msg->seq, msg->ipmi_msg.cmd);
+		}
+		prlog(PR_DEBUG, "-----------------------------\n");
+	} else if (!printed) {
+		printed = true;
+		prlog(PR_DEBUG, "----- BT Msg Queue Empty -----\n");
+	}
+}
+#else
+static void print_debug_queue_info(void) {}
+#endif
+
+static void bt_send_and_unlock(void)
+{
+	if (bt.state == BT_STATE_IDLE && !list_empty(&bt.msgq))
+		bt_send_msg();
+
+	unlock(&bt.lock);
+	return;
 }
 
 static void bt_poll(struct timer *t __unused, void *data __unused)
 {
-	bool ret = true;
+	uint8_t bt_ctrl;
 
-	do {
+	/* If we can't get the lock assume someone else will notice
+	 * the new message and process it. */
+	lock(&bt.lock);
+	bt_ctrl = bt_inb(BT_CTRL);
 
-#if BT_QUEUE_DEBUG
-		struct bt_msg *msg;
-		static bool printed = false;
-		lock(&bt.msgq_lock);
-		if (!list_empty(&bt.msgq)) {
-			printed = false;
-			prlog(PR_DEBUG, "-------- BT Msg Queue --------\n");
-			list_for_each(&bt.msgq, msg, link) {
-				prlog(PR_DEBUG, "Seq: 0x%02x Cmd: 0x%02x\n", msg->seq, msg->ipmi_msg.cmd);
-			}
-			prlog(PR_DEBUG, "-----------------------------\n");
-		} else if (!printed) {
-			printed = true;
-			prlog(PR_DEBUG, "----- BT Msg Queue Empty -----\n");
-		}
-		unlock(&bt.msgq_lock);
-#endif
+	print_debug_queue_info();
+	bt_expire_old_msg();
 
-		ret = true;
-		if (try_lock(&bt.bt_lock)) {
-			bt_expire_old_msg();
+	/* Is there a response waiting for us? */
+	if (bt.state == BT_STATE_RESP_WAIT &&
+	    (bt_ctrl & BT_CTRL_B2H_ATN))
+		bt_get_resp();
 
-			switch(bt.state) {
-			case BT_STATE_IDLE:
-				ret = bt_try_send_msg();
-				break;
+	/* We need to wait for B_BUSY to clear */
+	if (bt.state == BT_STATE_B_BUSY && bt_idle())
+		bt_set_state(BT_STATE_IDLE);
 
-			case BT_STATE_RESP_WAIT:
-				ret = bt_get_resp();
-				break;
+	/* Check for sms_atn */
+	if (bt_inb(BT_CTRL) & BT_CTRL_SMS_ATN) {
+		bt_outb(BT_CTRL_SMS_ATN, BT_CTRL);
+		unlock(&bt.lock);
+		ipmi_sms_attention();
+		lock(&bt.lock);
+	}
 
-			case BT_STATE_B_BUSY:
-				if (bt_idle()) {
-					bt_set_state(BT_STATE_IDLE);
-					ret = false;
-				}
-				break;
-			}
-			unlock(&bt.bt_lock);
-		}
-	} while(!ret);
+	/* Send messages if we can. If the BMC was really quick we
+	   could loop back to the start and check for a response
+	   instead of unlocking, but testing shows the BMC isn't that
+	   fast so we will wait for the IRQ or a call to the pollers
+	   instead. */
+	bt_send_and_unlock();
 
 	schedule_timer(&bt.poller,
 		       bt.irq_ok ? TIMER_POLL : msecs_to_tb(BT_DEFAULT_POLL_MS));
@@ -393,12 +402,11 @@ static int bt_add_ipmi_msg_head(struct ipmi_msg *ipmi_msg)
 {
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
-	lock(&bt.msgq_lock);
+	lock(&bt.lock);
 	bt_add_msg(bt_msg);
 	list_add(&bt.msgq, &bt_msg->link);
-	unlock(&bt.msgq_lock);
+	bt_send_and_unlock();
 
-	bt_poll(NULL, NULL);
 	return 0;
 }
 
@@ -406,29 +414,22 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 {
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
-	lock(&bt.msgq_lock);
+	lock(&bt.lock);
 	bt_add_msg(bt_msg);
 	list_add_tail(&bt.msgq, &bt_msg->link);
-	unlock(&bt.msgq_lock);
+	bt_send_and_unlock();
 
-	bt_poll(NULL, NULL);
 	return 0;
 }
 
 void bt_irq(void)
 {
 	uint8_t ireg = bt_inb(BT_INTMASK);
-	uint8_t ctrl = bt_inb(BT_CTRL);
 
 	bt.irq_ok = true;
 	if (ireg & BT_INTMASK_B2H_IRQ) {
 		bt_outb(BT_INTMASK_B2H_IRQ | BT_INTMASK_B2H_IRQEN, BT_INTMASK);
 		bt_poll(NULL, NULL);
-	}
-
-	if (ctrl & BT_CTRL_SMS_ATN) {
-		bt_outb(BT_CTRL_SMS_ATN, BT_CTRL);
-		ipmi_sms_attention();
 	}
 }
 
@@ -471,10 +472,10 @@ static int bt_del_ipmi_msg(struct ipmi_msg *ipmi_msg)
 {
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
-	lock(&bt.msgq_lock);
+	lock(&bt.lock);
 	list_del(&bt_msg->link);
 	bt.queue_len--;
-	unlock(&bt.msgq_lock);
+	bt_send_and_unlock();
 	return 0;
 }
 
@@ -510,8 +511,7 @@ void bt_init(void)
 	init_timer(&bt.poller, bt_poll, NULL);
 
 	bt_init_interface();
-	init_lock(&bt.msgq_lock);
-	init_lock(&bt.bt_lock);
+	init_lock(&bt.lock);
 
 	/*
 	 * The iBT interface comes up in the busy state until the daemon has
