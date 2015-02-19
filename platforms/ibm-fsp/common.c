@@ -20,6 +20,7 @@
 #include <fsp-sysparam.h>
 #include <opal.h>
 #include <console.h>
+#include <hostservices.h>
 
 #include "ibm-fsp.h"
 
@@ -102,6 +103,9 @@ void ibm_fsp_init(void)
 
 	/* Start FSP/HV state controller & perform OPL */
 	fsp_opl();
+
+	/* Preload hostservices lids */
+	hservices_lid_preload();
 
 	/* Initialize SP attention area */
 	fsp_attn_init();

@@ -641,9 +641,6 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	if (platform.init)
 		platform.init();
 
-	/* Preload hostservices lids */
-	hservices_lid_preload();
-
 	/* Setup dummy console nodes if it's enabled */
 	if (dummy_console_enabled())
 		dummy_console_add_nodes();
