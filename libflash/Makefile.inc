@@ -1,4 +1,4 @@
-LIBFLASH_SRCS = libflash.c libffs.c
+LIBFLASH_SRCS = libflash.c libffs.c ecc.c
 LIBFLASH_OBJS = $(LIBFLASH_SRCS:%.c=%.o)
 
 SUBDIRS += libflash
