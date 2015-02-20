@@ -147,6 +147,10 @@ struct proc_chip {
 	uint64_t		occ_common_base;
 	uint64_t		occ_common_size;
 
+	/* Must hold capi_lock to change */
+	u8			capp_phb3_attached_mask;
+	bool			capp_ucode_loaded;
+
 	/* Used by hw/centaur.c */
 	struct centaur_chip	*centaurs;
 

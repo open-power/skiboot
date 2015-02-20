@@ -46,6 +46,7 @@
 #include <phb3-regs.h>
 #include <capp.h>
 #include <fsp.h>
+#include <chip.h>
 
 /* Enable this to disable error interrupts for debug purposes */
 #undef DISABLE_ERR_INTS
@@ -2160,66 +2161,99 @@ static int64_t phb3_fundamental_reset(struct phb *phb)
 	return phb3_sm_fundamental_reset(p);
 }
 
-static uint64_t capp_fsp_lid_load(struct phb3 *p)
-{
-#define CAPP_UCODE_MURANO_20 0x80a02002
-#define CAPP_UCODE_MURANO_21 0x80a02001
+struct lock capi_lock = LOCK_UNLOCKED;
+static struct {
+	uint32_t			ec_level;
+	struct capp_lid_hdr		*lid;
+} capp_ucode_info = { 0, NULL };
+
 #define CAPP_UCODE_MAX_SIZE 0x20000
-	uint32_t lid_no;
-	void *data;
-	size_t size;
-	int rc;
 
-	switch (p->rev) {
-	case PHB3_REV_MURANO_DD20:
-		lid_no = CAPP_UCODE_MURANO_20;
-		break;
-	case PHB3_REV_MURANO_DD21:
-		lid_no = CAPP_UCODE_MURANO_21;
-		break;
-	default:
-		prerror("PHB3: No CAPP LID for this PHB version\n");
-		return 0;
-	}
+static int64_t capp_lid_download(struct phb3 *p)
+{
+	struct proc_chip *chip = get_chip(p->chip_id);
 
-	data = malloc(CAPP_UCODE_MAX_SIZE);
-	if (!data) {
-		prerror("PHB3: Failed to allocated memory for capp ucode lid\n");
-		return 0;
-	}
+	size_t size = CAPP_UCODE_MAX_SIZE;
+	int64_t ret;
+	uint32_t index;
+	struct capp_lid_hdr *lid;
+	uint64_t rc;
 
-	lid_no = fsp_adjust_lid_side(lid_no);
-	size = CAPP_UCODE_MAX_SIZE;
-	rc = fsp_fetch_data(0, FSP_DATASET_NONSP_LID, lid_no, 0, data, &size);
+	rc = xscom_read_cfam_chipid(chip->id, &index);
 	if (rc) {
-		prerror("PHB3: Error %d loading capp ucode lid\n", rc);
-		free(data);
-		return 0;
+		prerror("CAPP: Error reading cfam chip-id\n");
+		ret = OPAL_HARDWARE;
+		goto end;
+	}
+	/* Keep ChipID and Major/Minor EC.  Mask out the Location Code. */
+	index = index & 0xf0fff;
+
+	lock(&capi_lock);
+
+	if (capp_ucode_info.lid) {
+		ret = OPAL_SUCCESS;
+		/*
+		 * Check if this ec_level of this chip is the same as the
+		 * currently downloaded ucode. This is a safety incase someone
+		 * builds a system with different ec level chips.
+		 */
+		if (capp_ucode_info.ec_level != index) {
+			prerror("CAPP: Chip EC level mismatch in system\n");
+			ret = OPAL_HARDWARE;
+		}
+		goto end;
+	}
+	capp_ucode_info.ec_level = index;
+
+	/* Is the ucode preloaded like for BML? */
+	if (dt_has_node_property(p->phb.dt_node, "ibm,capp-ucode", NULL)) {
+		capp_ucode_info.lid = (struct capp_lid_hdr *)(u64)
+			dt_prop_get_u32(p->phb.dt_node,	"ibm,capp-ucode");
+		ret = OPAL_SUCCESS;
+		goto end;
 	}
 
-	return (uint64_t)data;
+	/* If we successfully download the ucode, we leave it around forever */
+	lid = malloc(CAPP_UCODE_MAX_SIZE);
+	if (!lid) {
+		prerror("CAPP: Can't allocate space for ucode lid\n");
+		ret = OPAL_NO_MEM;
+		goto end;
+	}
+	if (!load_resource(RESOURCE_ID_CAPP, index, lid, &size)) {
+		prerror("CAPP: Error loading ucode lid. index=%x\n", index);
+		ret = OPAL_RESOURCE;
+		free(lid);
+		goto end;
+	}
+
+	capp_ucode_info.lid = lid;
+	ret = OPAL_SUCCESS;
+end:
+	unlock(&capi_lock);
+	return ret;
 }
 
 static int64_t capp_load_ucode(struct phb3 *p)
 {
+	struct proc_chip *chip = get_chip(p->chip_id);
 	struct capp_lid_hdr *lid;
 	struct capp_ucode_lid *ucode;
 	struct capp_ucode_data *data;
-	uint64_t val, addr;
+	uint64_t rc, val, addr;
 	uint32_t chunk_count, offset;
 	int i;
 
-	/* if fsp not present p->ucode_base gotten from device tree */
-	if (fsp_present() && (p->capp_ucode_base == 0))
-		p->capp_ucode_base = capp_fsp_lid_load(p);
+	if (chip->capp_ucode_loaded)
+		return OPAL_SUCCESS;
 
-	if (p->capp_ucode_base == 0) {
-		PHBERR(p, "capp ucode base address not set\n");
-		return OPAL_HARDWARE;
-	}
+	rc = capp_lid_download(p);
+	if (rc)
+		return rc;
 
-	PHBINF(p, "Loading capp microcode @%llx\n", p->capp_ucode_base);
-	lid = (struct capp_lid_hdr *)p->capp_ucode_base;
+	prlog(PR_INFO, "CHIP%i: CAPP ucode lid loaded at %p\n",
+	      p->chip_id, capp_ucode_info.lid);
+	lid = capp_ucode_info.lid;
 	/*
 	 * If lid header is present (on FSP machines), it'll tell us where to
 	 * find the ucode.  Otherwise this is the ucode.
@@ -2284,7 +2318,7 @@ static int64_t capp_load_ucode(struct phb3 *p)
 		}
 	}
 
-	p->capp_ucode_loaded = true;
+	chip->capp_ucode_loaded = true;
 	return OPAL_SUCCESS;
 }
 
@@ -3172,24 +3206,47 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 				  uint64_t pe_number)
 {
 	struct phb3 *p = phb_to_phb3(phb);
+	struct proc_chip *chip = get_chip(p->chip_id);
 	uint64_t reg;
 	int i;
+	u8 mask;
+
+	if (!chip->capp_ucode_loaded) {
+		PHBERR(p, "CAPP: ucode not loaded\n");
+		return OPAL_RESOURCE;
+	}
+
+	/*
+	 * Check if CAPP port is being used by any another PHB.
+	 * Check and set chip->capp_phb3_attached_mask atomically incase
+	 * two phb3_set_capi_mode() calls race.
+	 */
+	lock(&capi_lock);
+	mask = ~(1 << p->index);
+	if (chip->capp_phb3_attached_mask & mask) {
+		PHBERR(p, "CAPP: port already in use by another PHB:%x\n",
+			chip->capp_phb3_attached_mask);
+		unlock(&capi_lock);
+		return false;
+	}
+	chip->capp_phb3_attached_mask = 1 << p->index;
+	unlock(&capi_lock);
 
 	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
 	if ((reg & PPC_BIT(5))) {
-		PHBERR(p, "CAPP recovery failed (%016llx)\n", reg);
+		PHBERR(p, "CAPP: recovery failed (%016llx)\n", reg);
 		return OPAL_HARDWARE;
 	} else if ((reg & PPC_BIT(0)) && (!(reg & PPC_BIT(1)))) {
-		PHBDBG(p, "CAPP recovery in progress\n");
+		PHBDBG(p, "CAPP: recovery in progress\n");
 		return OPAL_BUSY;
 	}
 
 	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
 	if ((reg & PPC_BIT(5))) {
-		PHBERR(p, "CAPP recovery failed (%016llx)\n", reg);
+		PHBERR(p, "CAPP: recovery failed (%016llx)\n", reg);
 		return OPAL_HARDWARE;
 	} else if ((reg & PPC_BIT(0)) && (!(reg & PPC_BIT(1)))) {
-		PHBDBG(p, "CAPP recovery in progress\n");
+		PHBDBG(p, "CAPP: recovery in progress\n");
 		return OPAL_BUSY;
 	}
 
@@ -3212,13 +3269,8 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 
 	xscom_read(p->chip_id, 0x9013c03, &reg);
 	if (reg & PPC_BIT(0)) {
-		PHBDBG(p, "Already in CAPP mode\n");
+		PHBDBG(p, "CAPP: Already in CAPP mode\n");
 		return OPAL_SUCCESS;
-	}
-
-	if (!p->capp_ucode_loaded) {
-		PHBERR(p, "capp ucode not loaded into capp unit\n");
-		return OPAL_HARDWARE;
 	}
 
 	/* poll cqstat */
@@ -3229,7 +3281,7 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 		time_wait_us(10);
 	}
 	if (reg & 0xC000000000000000) {
-		PHBERR(p, "Timeout waiting for pending transaction\n");
+		PHBERR(p, "CAPP: Timeout waiting for pending transaction\n");
 		return OPAL_HARDWARE;
 	}
 
@@ -4143,10 +4195,6 @@ static void phb3_create(struct dt_node *np)
 	p->phb.ops = &phb3_ops;
 	p->phb.phb_type = phb_type_pcie_v3;
 	p->phb.scan_map = 0x1; /* Only device 0 to scan */
-	p->capp_ucode_base = 0;
-	p->capp_ucode_loaded = false;
-	if (dt_has_node_property(np, "ibm,capp-ucode", NULL))
-		p->capp_ucode_base = dt_prop_get_u32(np, "ibm,capp-ucode");
 	p->max_link_speed = dt_prop_get_u32_def(np, "ibm,max-link-speed", 3);
 	p->state = PHB3_STATE_UNINITIALIZED;
 
@@ -4251,9 +4299,8 @@ static void phb3_create(struct dt_node *np)
 	/* Get the HW up and running */
 	phb3_init_hw(p);
 
-	/* Load capp microcode into capp unit if PHB0 */
-	if (p->index == 0)
-		capp_load_ucode(p);
+	/* Load capp microcode into capp unit */
+	capp_load_ucode(p);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)

@@ -298,8 +298,6 @@ struct phb3 {
 	int64_t			ecap;	    /* cached PCI-E cap offset */
 	int64_t			aercap;	    /* cached AER ecap offset */
 	const __be64		*lane_eq;
-	uint64_t		capp_ucode_base;
-	bool			capp_ucode_loaded;
 	unsigned int		max_link_speed;
 
 	uint16_t		rte_cache[RTT_TABLE_SIZE/2];
