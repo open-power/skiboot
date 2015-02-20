@@ -2160,7 +2160,135 @@ static int64_t phb3_fundamental_reset(struct phb *phb)
 	return phb3_sm_fundamental_reset(p);
 }
 
-static void do_capp_recovery_scoms(struct phb3 *phb);
+static uint64_t capp_fsp_lid_load(struct phb3 *p)
+{
+#define CAPP_UCODE_MURANO_20 0x80a02002
+#define CAPP_UCODE_MURANO_21 0x80a02001
+#define CAPP_UCODE_MAX_SIZE 0x20000
+	uint32_t lid_no;
+	void *data;
+	size_t size;
+	int rc;
+
+	switch (p->rev) {
+	case PHB3_REV_MURANO_DD20:
+		lid_no = CAPP_UCODE_MURANO_20;
+		break;
+	case PHB3_REV_MURANO_DD21:
+		lid_no = CAPP_UCODE_MURANO_21;
+		break;
+	default:
+		prerror("PHB3: No CAPP LID for this PHB version\n");
+		return 0;
+	}
+
+	data = malloc(CAPP_UCODE_MAX_SIZE);
+	if (!data) {
+		prerror("PHB3: Failed to allocated memory for capp ucode lid\n");
+		return 0;
+	}
+
+	lid_no = fsp_adjust_lid_side(lid_no);
+	size = CAPP_UCODE_MAX_SIZE;
+	rc = fsp_fetch_data(0, FSP_DATASET_NONSP_LID, lid_no, 0, data, &size);
+	if (rc) {
+		prerror("PHB3: Error %d loading capp ucode lid\n", rc);
+		free(data);
+		return 0;
+	}
+
+	return (uint64_t)data;
+}
+
+static int64_t capp_load_ucode(struct phb3 *p)
+{
+
+	struct capp_ucode_lid_hdr *ucode_hdr;
+	struct capp_ucode_data_hdr *data_hdr;
+	struct capp_lid_hdr *lid_hdr;
+	uint64_t data, *val;
+	int size_read = 0;
+	int tmp;
+	int i;
+
+	/* if fsp not present p->ucode_base gotten from device tree */
+	if (fsp_present() && (p->capp_ucode_base == 0))
+		p->capp_ucode_base = capp_fsp_lid_load(p);
+
+	if (p->capp_ucode_base == 0) {
+		PHBERR(p, "capp ucode base address not set\n");
+		return OPAL_HARDWARE;
+	}
+
+	PHBINF(p, "Loading capp microcode @%llx\n", p->capp_ucode_base);
+	lid_hdr = (struct capp_lid_hdr *)p->capp_ucode_base;
+	if (lid_hdr->eyecatcher != 0x434150504c494448)
+		/* lid header not present due to older fw or bml boot */
+		ucode_hdr = (struct capp_ucode_lid_hdr *)(p->capp_ucode_base);
+	else
+		ucode_hdr = (struct capp_ucode_lid_hdr *)(p->capp_ucode_base +
+			lid_hdr->ucode_offset);
+
+	if (ucode_hdr->eyecatcher != 0x43415050554C4944) {
+		PHBERR(p, "capi ucode lid header eyecatcher not found\n");
+		return OPAL_HARDWARE;
+	}
+
+	data_hdr = (struct capp_ucode_data_hdr *)(ucode_hdr + 1);
+	while (size_read < ucode_hdr->data_size) {
+		if (data_hdr->eyecatcher != 0x4341505055434F44) {
+			PHBERR(p, "capi ucode data header eyecatcher not found!\n");
+			return OPAL_HARDWARE;
+		}
+
+		val = (uint64_t *)(data_hdr + 1);
+		if (data_hdr->reg == apc_master_cresp) {
+			xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, 0);
+			for (i = 0; i < data_hdr->num_data_chunks; i++)
+				xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_WRITE_REG, *val++);
+			xscom_read(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, &data);
+		} else if (data_hdr->reg == apc_master_uop_table) {
+			xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, 0x180ULL << 52);
+			for (i = 0; i < data_hdr->num_data_chunks; i++)
+				xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_WRITE_REG, *val++);
+			xscom_read(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, &data);
+		} else if (data_hdr->reg == snp_ttype) {
+			xscom_write(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, 0x5000ULL << 48);
+			for (i = 0; i < data_hdr->num_data_chunks; i++)
+				xscom_write(p->chip_id, CAPP_SNP_ARRAY_WRITE_REG, *val++);
+			xscom_read(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, &data);
+		} else if (data_hdr->reg == snp_uop_table) {
+			xscom_write(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, 0x4000ULL << 48);
+			for (i = 0; i < data_hdr->num_data_chunks; i++)
+				xscom_write(p->chip_id, CAPP_SNP_ARRAY_WRITE_REG, *val++);
+			xscom_read(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, &data);
+		}
+
+		size_read += sizeof(*data_hdr) + data_hdr->num_data_chunks * 8;
+		tmp = data_hdr->num_data_chunks;
+		data_hdr++;
+		data_hdr = (struct capp_ucode_data_hdr *)((uint64_t *)data_hdr + tmp);
+	}
+
+	p->capp_ucode_loaded = true;
+	return OPAL_SUCCESS;
+}
+
+static void do_capp_recovery_scoms(struct phb3 *p)
+{
+	uint64_t reg;
+	PHBDBG(p, "Doing CAPP recovery scoms\n");
+
+	xscom_write(p->chip_id, 0x201301a, 0); /* disable snoops */
+	capp_load_ucode(p);
+	xscom_write(p->chip_id, 0x2013013, 0); /* clear err rpt reg*/
+	xscom_write(p->chip_id, 0x2013000, 0); /* clear capp fir */
+
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
+	reg &= ~(PPC_BIT(0) | PPC_BIT(1));
+	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL, reg);
+}
+
 /*
  * The OS is expected to do fundamental reset after complete
  * reset to make sure the PHB could be recovered from the
@@ -2969,120 +3097,6 @@ static int64_t phb3_get_diag_data(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
-static uint64_t capp_fsp_lid_load(struct phb3 *p)
-{
-#define CAPP_UCODE_MURANO_20 0x80a02002
-#define CAPP_UCODE_MURANO_21 0x80a02001
-#define CAPP_UCODE_MAX_SIZE 0x20000
-	uint32_t lid_no;
-	void *data;
-	size_t size;
-	int rc;
-
-	switch (p->rev) {
-	case PHB3_REV_MURANO_DD20:
-		lid_no = CAPP_UCODE_MURANO_20;
-		break;
-	case PHB3_REV_MURANO_DD21:
-		lid_no = CAPP_UCODE_MURANO_21;
-		break;
-	default:
-		prerror("PHB3: No CAPP LID for this PHB version\n");
-		return 0;
-	}
-
-	data = malloc(CAPP_UCODE_MAX_SIZE);
-	if (!data) {
-		prerror("PHB3: Failed to allocated memory for capp ucode lid\n");
-		return 0;
-	}
-
-	lid_no = fsp_adjust_lid_side(lid_no);
-	size = CAPP_UCODE_MAX_SIZE;
-	rc = fsp_fetch_data(0, FSP_DATASET_NONSP_LID, lid_no, 0, data, &size);
-	if (rc) {
-		prerror("PHB3: Error %d loading capp ucode lid\n", rc);
-		free(data);
-		return 0;
-	}
-
-	return (uint64_t)data;
-}
-
-static int64_t capp_load_ucode(struct phb3 *p)
-{
-
-	struct capp_ucode_lid_hdr *ucode_hdr;
-	struct capp_ucode_data_hdr *data_hdr;
-	struct capp_lid_hdr *lid_hdr;
-	uint64_t data, *val;
-	int size_read = 0;
-	int tmp;
-	int i;
-
-	/* if fsp not present p->ucode_base gotten from device tree */
-	if (fsp_present() && (p->capp_ucode_base == 0))
-		p->capp_ucode_base = capp_fsp_lid_load(p);
-
-	if (p->capp_ucode_base == 0) {
-		PHBERR(p, "capp ucode base address not set\n");
-		return OPAL_HARDWARE;
-	}
-
-	PHBINF(p, "Loading capp microcode @%llx\n", p->capp_ucode_base);
-	lid_hdr = (struct capp_lid_hdr *)p->capp_ucode_base;
-	if (lid_hdr->eyecatcher != 0x434150504c494448)
-		/* lid header not present due to older fw or bml boot */
-		ucode_hdr = (struct capp_ucode_lid_hdr *)(p->capp_ucode_base);
-	else
-		ucode_hdr = (struct capp_ucode_lid_hdr *)(p->capp_ucode_base +
-			lid_hdr->ucode_offset);
-
-	if (ucode_hdr->eyecatcher != 0x43415050554C4944) {
-		PHBERR(p, "capi ucode lid header eyecatcher not found\n");
-		return OPAL_HARDWARE;
-	}
-
-	data_hdr = (struct capp_ucode_data_hdr *)(ucode_hdr + 1);
-	while (size_read < ucode_hdr->data_size) {
-		if (data_hdr->eyecatcher != 0x4341505055434F44) {
-			PHBERR(p, "capi ucode data header eyecatcher not found!\n");
-			return OPAL_HARDWARE;
-		}
-
-		val = (uint64_t *)(data_hdr + 1);
-		if (data_hdr->reg == apc_master_cresp) {
-			xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, 0);
-			for (i = 0; i < data_hdr->num_data_chunks; i++)
-				xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_WRITE_REG, *val++);
-			xscom_read(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, &data);
-		} else if (data_hdr->reg == apc_master_uop_table) {
-			xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, 0x180ULL << 52);
-			for (i = 0; i < data_hdr->num_data_chunks; i++)
-				xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_WRITE_REG, *val++);
-			xscom_read(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, &data);
-		} else if (data_hdr->reg == snp_ttype) {
-			xscom_write(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, 0x5000ULL << 48);
-			for (i = 0; i < data_hdr->num_data_chunks; i++)
-				xscom_write(p->chip_id, CAPP_SNP_ARRAY_WRITE_REG, *val++);
-			xscom_read(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, &data);
-		} else if (data_hdr->reg == snp_uop_table) {
-			xscom_write(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, 0x4000ULL << 48);
-			for (i = 0; i < data_hdr->num_data_chunks; i++)
-				xscom_write(p->chip_id, CAPP_SNP_ARRAY_WRITE_REG, *val++);
-			xscom_read(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, &data);
-		}
-
-		size_read += sizeof(*data_hdr) + data_hdr->num_data_chunks * 8;
-		tmp = data_hdr->num_data_chunks;
-		data_hdr++;
-		data_hdr = (struct capp_ucode_data_hdr *)((uint64_t *)data_hdr + tmp);
-	}
-
-	p->capp_ucode_loaded = true;
-	return OPAL_SUCCESS;
-}
-
 static void phb3_init_capp_regs(struct phb3 *p)
 {
 	uint64_t reg;
@@ -3290,21 +3304,6 @@ static int64_t phb3_set_capp_recovery(struct phb *phb)
 	p->flags |= PHB3_CAPP_RECOVERY;
 
 	return 0;
-}
-
-static void do_capp_recovery_scoms(struct phb3 *p)
-{
-	uint64_t reg;
-	PHBDBG(p, "Doing CAPP recovery scoms\n");
-
-	xscom_write(p->chip_id, 0x201301a, 0); /* disable snoops */
-	capp_load_ucode(p);
-	xscom_write(p->chip_id, 0x2013013, 0); /* clear err rpt reg*/
-	xscom_write(p->chip_id, 0x2013000, 0); /* clear capp fir */
-
-	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
-	reg &= ~(PPC_BIT(0) | PPC_BIT(1));
-	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL, reg);
 }
 
 static const struct phb_ops phb3_ops = {
