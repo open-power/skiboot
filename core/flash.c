@@ -117,7 +117,7 @@ static int flash_nvram_probe(struct flash *flash, struct ffs_handle *ffs)
 	}
 
 	rc = ffs_part_info(ffs, part, NULL,
-			   &start, &size, NULL);
+			   &start, &size, NULL, NULL);
 	if (rc) {
 		prlog(PR_ERR, "FLASH: Can't parse ffs info for NVRAM\n");
 		return OPAL_HARDWARE;
@@ -172,7 +172,7 @@ static void flash_add_dt_node(struct flash *flash, int id,
 		char *name;
 		int rc;
 
-		rc = ffs_part_info(ffs, i, &name, &start, NULL, &size);
+		rc = ffs_part_info(ffs, i, &name, &start, NULL, &size, NULL);
 		if (rc)
 			break;
 
@@ -483,7 +483,7 @@ bool flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_free_ffs;
 	}
 	rc = ffs_part_info(ffs, part_num, NULL,
-			   &part_start, &part_size, NULL);
+			   &part_start, &part_size, NULL, NULL);
 	if (rc) {
 		prerror("FLASH: Failed to get %s partition info\n", name);
 		goto out_free_ffs;

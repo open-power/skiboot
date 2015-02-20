@@ -101,7 +101,7 @@ static void print_flash_info(void)
 		uint32_t start, size, act, end;
 		char *name;
 
-		rc = ffs_part_info(ffsh, i, &name, &start, &size, &act);
+		rc = ffs_part_info(ffsh, i, &name, &start, &size, &act, NULL);
 		if (rc == FFS_ERR_PART_NOT_FOUND)
 			break;
 		if (rc) {
@@ -723,7 +723,7 @@ int main(int argc, char *argv[])
 		int rc;
 
 		rc = ffs_part_info(ffsh, ffs_index, NULL,
-				   &pstart, &pmaxsz, &pactsize);
+				   &pstart, &pmaxsz, &pactsize, NULL);
 		if (rc) {
 			fprintf(stderr,"Failed to get partition info\n");
 			exit(1);

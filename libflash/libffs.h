@@ -47,7 +47,7 @@ int ffs_lookup_part(struct ffs_handle *ffs, const char *name,
 
 int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 		  char **name, uint32_t *start,
-		  uint32_t *total_size, uint32_t *act_size);
+		  uint32_t *total_size, uint32_t *act_size, bool *ecc);
 
 int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 			uint32_t act_size);

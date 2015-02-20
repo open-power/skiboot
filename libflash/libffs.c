@@ -215,7 +215,7 @@ int ffs_lookup_part(struct ffs_handle *ffs, const char *name,
 
 int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 		  char **name, uint32_t *start,
-		  uint32_t *total_size, uint32_t *act_size)
+		  uint32_t *total_size, uint32_t *act_size, bool *ecc)
 {
 	struct ffs_entry *raw_ent;
 	struct ffs_entry ent;
@@ -240,6 +240,9 @@ int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 		*total_size = ent.size * ffs->hdr.block_size;
 	if (act_size)
 		*act_size = ent.actual;
+	if (ecc)
+		*ecc = ((ent.user.datainteg & FFS_ENRY_INTEG_ECC) != 0);
+
 	if (name) {
 		n = malloc(PART_NAME_MAX + 1);
 		memset(n, 0, PART_NAME_MAX + 1);
