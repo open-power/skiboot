@@ -254,7 +254,6 @@ static void bt_get_resp(void)
 		prlog(PR_INFO, "BT: Nobody cared about a response to an BT/IPMI message\n");
 		bt_flush_msg();
 		bt_set_state(BT_STATE_B_BUSY);
-		unlock(&bt.lock);
 		return;
 	}
 
