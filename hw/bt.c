@@ -66,6 +66,10 @@
 
 #define BT_QUEUE_DEBUG 0
 
+#define BT_ERR(msg, fmt, args...) \
+	do { prerror("BT seq 0x%02x cmd 0x%02x: " fmt "\n", \
+	     (msg)->seq, (msg)->ipmi_msg.cmd, ##args);  } while(0)
+
 enum bt_states {
 	BT_STATE_IDLE = 0,
 	BT_STATE_RESP_WAIT,
@@ -133,7 +137,7 @@ static void bt_msg_del(struct bt_msg *bt_msg)
 {
 	list_del(&bt_msg->link);
 	bt.queue_len--;
-	ipmi_cmd_done(bt_msg->ipmi_msg.cmd, bt_msg->ipmi_msg.netfn + 1,
+	ipmi_cmd_done(bt_msg->ipmi_msg.cmd, bt_msg->ipmi_msg.netfn + (1 << 2),
 		      IPMI_TIMEOUT_ERR, &bt_msg->ipmi_msg);
 }
 
@@ -169,7 +173,7 @@ static void bt_send_msg(void)
 	ipmi_msg = &bt_msg->ipmi_msg;
 
 	if (!bt_idle()) {
-		prerror("BT: Interface in an unexpected state, attempting reset\n");
+		BT_ERR(bt_msg, "Interface in unexpected state, attempting reset\n");
 		bt_reset_interface();
 		unlock(&bt.lock);
 		return;
@@ -262,7 +266,7 @@ static void bt_get_resp(void)
 	 * bt_inb(BT_HOST2BMC) < BT_MIN_RESP_LEN (which should never occur).
 	 */
 	if (resp_len > ipmi_msg->resp_size) {
-		prerror("BT: Invalid resp_len %d for ipmi_msg->cmd = 0x%02x\n", resp_len, ipmi_msg->cmd);
+		BT_ERR(bt_msg, "Invalid resp_len %d", resp_len);
 		resp_len = ipmi_msg->resp_size;
 		cc = IPMI_ERR_MSG_TRUNCATED;
 	}
@@ -301,7 +305,7 @@ static void bt_expire_old_msg(void)
 	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
 
 	if (bt_msg && bt_msg->tb > 0 && (bt_msg->tb + BT_MSG_TIMEOUT) < tb) {
-		prerror("BT: Expiring old messsage number 0x%02x\n", bt_msg->seq);
+		BT_ERR(bt_msg, "Timeout sending message");
 		bt_msg_del(bt_msg);
 
 		/* Timing out a message is inherently racy as the BMC
@@ -391,9 +395,10 @@ static void bt_add_msg(struct bt_msg *bt_msg)
 	if (bt.queue_len > BT_MAX_QUEUE_LEN) {
 		/* Maximum ueue lenght exceeded - remove the oldest message
 		   from the queue. */
-		prerror("BT: Maximum queue length exceeded\n");
+		BT_ERR(bt_msg, "Maximum queue length exceeded");
 		bt_msg = list_tail(&bt.msgq, struct bt_msg, link);
 		assert(bt_msg);
+		BT_ERR(bt_msg, "Removed from queue");
 		bt_msg_del(bt_msg);
 	}
 }
