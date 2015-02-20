@@ -25,6 +25,7 @@ struct errorlog;
 enum resource_id {
 	RESOURCE_ID_KERNEL,
 	RESOURCE_ID_INITRAMFS,
+	RESOURCE_ID_CAPP,
 };
 #define RESOURCE_SUBID_NONE 0
 #define RESOURCE_SUBID_SUPPORTED 1

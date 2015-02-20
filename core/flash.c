@@ -334,6 +334,7 @@ static struct {
 } part_name_map[] = {
 	{ RESOURCE_ID_KERNEL,	RESOURCE_SUBID_NONE,		"KERNEL" },
 	{ RESOURCE_ID_INITRAMFS,RESOURCE_SUBID_NONE,		"ROOTFS" },
+	{ RESOURCE_ID_CAPP,	RESOURCE_SUBID_SUPPORTED,	"CAPP" },
 };
 
 /* This mimics the hostboot SBE format */

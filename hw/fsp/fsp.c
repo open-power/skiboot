@@ -2255,6 +2255,11 @@ int fsp_fetch_data_queue(uint8_t flags, uint16_t id, uint32_t sub_id,
 	return OPAL_SUCCESS;
 }
 
+#define CAPP_IDX_VENICE_DD10 0x100ea
+#define CAPP_IDX_VENICE_DD20 0x200ea
+#define CAPP_IDX_MURANO_DD20 0x200ef
+#define CAPP_IDX_MURANO_DD21 0x201ef
+
 static struct {
 	enum resource_id	id;
 	uint32_t		idx;
@@ -2262,6 +2267,10 @@ static struct {
 } fsp_lid_map[] = {
 	{ RESOURCE_ID_KERNEL,	RESOURCE_SUBID_NONE,	KERNEL_LID_OPAL },
 	{ RESOURCE_ID_INITRAMFS,RESOURCE_SUBID_NONE,	INITRAMFS_LID_OPAL },
+	{ RESOURCE_ID_CAPP,	CAPP_IDX_MURANO_DD20,	0x80a02002 },
+	{ RESOURCE_ID_CAPP,	CAPP_IDX_MURANO_DD21,	0x80a02001 },
+	{ RESOURCE_ID_CAPP,	CAPP_IDX_VENICE_DD10,	0x80a02003 },
+	{ RESOURCE_ID_CAPP,	CAPP_IDX_VENICE_DD20,	0x80a02004 },
 };
 
 bool fsp_load_resource(enum resource_id id, uint32_t idx,
