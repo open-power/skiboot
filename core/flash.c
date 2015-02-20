@@ -22,6 +22,7 @@
 #include <device.h>
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
+#include <ecc.h>
 
 struct flash {
 	bool			registered;
@@ -353,20 +354,28 @@ struct flash_hostboot_header {
 	struct flash_hostboot_toc toc[FLASH_HOSTBOOT_TOC_MAX_ENTRIES];
 };
 
+/* start and total size include ECC */
 static int flash_find_subpartition(struct flash_chip *chip, uint32_t subid,
-		uint32_t *start, uint32_t *total_size)
+				   uint32_t *start, uint32_t *total_size,
+				   bool *ecc)
 {
 	struct flash_hostboot_header *header;
 	char eyecatcher[5];
-	uint32_t i;
+	uint32_t i, partsize;
 	bool rc;
 
 	header = malloc(FLASH_SUBPART_HEADER_SIZE);
 	if (!header)
 		return false;
 
+	/* Get raw partition size without ECC */
+	partsize = *total_size;
+	if (ecc)
+		partsize = BUFFER_SIZE_MINUS_ECC(*total_size);
+
 	/* Get the TOC */
-	rc = flash_read(chip, *start, header, FLASH_SUBPART_HEADER_SIZE);
+	rc = ffs_flash_read(chip, *start, header, FLASH_SUBPART_HEADER_SIZE,
+			    ecc);
 	if (rc) {
 		prerror("FLASH: flash subpartition TOC read failed %i\n", rc);
 		goto end;
@@ -401,8 +410,8 @@ static int flash_find_subpartition(struct flash_chip *chip, uint32_t subid,
 		if (ec != subid)
 			continue;
 
-		/* Sanity check the offset and size */
-		if (offset + size > *total_size) {
+		/* Sanity check the offset and size. */
+		if (offset + size > partsize) {
 			prerror("FLASH: flash subpartition too big: %i\n", i);
 			goto end;
 		}
@@ -416,14 +425,20 @@ static int flash_find_subpartition(struct flash_chip *chip, uint32_t subid,
 			goto end;
 		}
 
-		/* All good, let's adjust the start and size */
 		prlog(PR_DEBUG, "FLASH: flash found subpartition: "
 				"%i size: %i offset %i\n",
 				i, size, offset);
+
+		/*
+		 * Adjust the start and size.  The start location in the needs
+		 * to account for ecc but the size doesn't.
+		 */
 		*start += offset;
-		size = (size + (FLASH_SUBPART_ALIGNMENT - 1)) &
-				~(FLASH_SUBPART_ALIGNMENT - 1);
 		*total_size = size;
+		if (ecc) {
+			*start += ECC_SIZE(offset);
+			*total_size += ECC_SIZE(size);
+		}
 		rc = 0;
 		goto end;
 	}
@@ -433,14 +448,18 @@ end:
 	return rc;
 }
 
+/*
+ * load a resource from FLASH
+ * buf and len shouldn't account for ECC even if partition is ECCed.
+ */
 bool flash_load_resource(enum resource_id id, uint32_t subid,
 		void *buf, size_t *len)
 {
-	int i, rc, part_num, part_size, part_start;
+	int i, rc, part_num, part_size, part_start, size;
 	struct ffs_handle *ffs;
 	struct flash *flash;
 	const char *name;
-	bool status;
+	bool status, ecc;
 
 	status = false;
 
@@ -483,33 +502,51 @@ bool flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_free_ffs;
 	}
 	rc = ffs_part_info(ffs, part_num, NULL,
-			   &part_start, &part_size, NULL, NULL);
+			   &part_start, &part_size, NULL, &ecc);
 	if (rc) {
 		prerror("FLASH: Failed to get %s partition info\n", name);
 		goto out_free_ffs;
 	}
+	prlog(PR_DEBUG,"FLASH: %s partition %s ECC\n",
+	      name, ecc  ? "has" : "doesn't have");
+
+	/*
+	 * part_start/size are raw pointers into the partition.
+	 *  ie. they will account for ECC if included.
+	 */
 
 	/* Find the sub partition if required */
 	if (subid != RESOURCE_SUBID_NONE) {
 		rc = flash_find_subpartition(flash->chip, subid, &part_start,
-					    &part_size);
+					     &part_size, &ecc);
 		if (rc)
 			goto out_free_ffs;
 	}
 
-	if (part_size > *len) {
+	/* Work out what the final size of buffer will be without ECC */
+	size = part_size;
+	if (ecc) {
+		if ECC_BUFFER_SIZE_CHECK(part_size) {
+			prerror("FLASH: %s image invalid size for ECC %d\n",
+				name, part_size);
+			goto out_free_ffs;
+		}
+		size = BUFFER_SIZE_MINUS_ECC(part_size);
+	}
+
+	if (size > *len) {
 		prerror("FLASH: %s image too large (%d > %zd)\n", name,
 			part_size, *len);
 		goto out_free_ffs;
 	}
 
-	rc = flash_read(flash->chip, part_start, buf, part_size);
+	rc = ffs_flash_read(flash->chip, part_start, buf, size, ecc);
 	if (rc) {
 		prerror("FLASH: failed to read %s partition\n", name);
 		goto out_free_ffs;
 	}
 
-	*len = part_size;
+	*len = size;
 	status = true;
 
 out_free_ffs:
