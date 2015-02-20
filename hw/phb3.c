@@ -3085,17 +3085,34 @@ static int64_t capp_load_ucode(struct phb3 *p)
 
 static void phb3_init_capp_regs(struct phb3 *p)
 {
-	/* writing field vals directly */
 	uint64_t reg;
 
 	xscom_read(p->chip_id, APC_MASTER_PB_CTRL, &reg);
 	reg |= PPC_BIT(3);
 	xscom_write(p->chip_id, APC_MASTER_PB_CTRL, reg);
-	/*      port0    port1
-	 * 100   PHB0   disabled
-	 * we're told it's the same for Venice
-         */
-	xscom_write(p->chip_id, APC_MASTER_CAPI_CTRL, 	0x4070000000000000);
+
+	/* Dynamically workout which PHB to connect to port 0 of the CAPP.
+	 * Here is the table from the CAPP workbook:
+	 *	     APC_MASTER		CAPP		CAPP
+	 *	      bits 1:3		port0		port1
+	 *		000		 disabled	 disabled
+	 *	     *	001		 PHB2		 disabled
+	 *	     *	010		 PHB1		 disabled
+	 *		011		 PHB1		 PHB2
+	 *	     *	100		 PHB0		 disabled
+	 *		101		 PHB0		 PHB2
+	 *		110		 PHB0		 PHB1
+	 *
+	 * We don't use port1 so only those starred above are used.
+	 * Hence reduce table to:
+	 *    PHB0 -> APC MASTER(bits 1:3) = 0b100
+	 *    PHB1 -> APC MASTER(bits 1:3) = 0b010
+	 *    PHB2 -> APC MASTER(bits 1:3) = 0b001
+	 */
+	reg = 0x4000000000000000ULL >> p->index;
+	reg |= 0x0070000000000000;
+	xscom_write(p->chip_id, APC_MASTER_CAPI_CTRL,reg);
+	PHBINF(p, "CAPP: port attached\n");
 
 	/* tlb and mmio */
 	xscom_write(p->chip_id, TRANSPORT_CONTROL, 	0x4028000104000000);
