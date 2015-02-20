@@ -39,14 +39,17 @@ int main(void)
 	assert(atoi(buf) == 42);
 	assert(atoi("42isthemagicnumber") == 42);
 
-	/* our atoi recognises hex!  */
-	assert(atoi("0x800") == 0x800);
-	/* But not with a duplicate prefix */
-	assert(atoi("0x0x800") == 0);
+	/* atoi is base 10 only */
+	assert(atoi("0x800") == 0);
 
 	/* atol - ensure it recognises longs */
 	assert(atol("2147483648") == 2147483648);
 	assert(atol("-2147483649") == -2147483649);
+
+	/* strtol detects hex */
+	assert(strtol("0x800", NULL, 0) == 0x800);
+	/* But not with a duplicate prefix */
+	assert(strtol("0x0x800", NULL, 0) == 0);
 
 	/* strtol - invalid/weird bases */
 	assert(strtol("z", NULL, -1) == 0);

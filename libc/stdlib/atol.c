@@ -14,5 +14,5 @@
 
 long atol(const char *str)
 {
-	return strtol(str, NULL, 0);
+	return strtol(str, NULL, 10);
 }
