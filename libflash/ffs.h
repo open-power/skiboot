@@ -70,10 +70,29 @@ enum type {
 #define FFS_FLAGS_PROTECTED	0x0001
 #define FFS_FLAGS_U_BOOT_ENV	0x0002
 
-/*
- * Number of user data words
+/* Data integrity flags */
+#define FFS_ENRY_INTEG_ECC 0x8000
+
+/**
+ * struct ffs_entry_user - User data enties
+ *
+ *  @chip:		Chip Select (0,1)
+ *  @compressType:	Compression Indication/alg (0=not compressed)
+ *  @dataInteg:		Indicates Data Integrity mechanism
+ *  @verCheck:		Indicates Version check type
+ *  @miscFlags:		Misc Partition related Flags
+ *  @freeMisc[2]:	Unused Miscellaneious Info
+ *  @freeUser[14]:	Unused User Data
  */
-#define FFS_USER_WORDS 16
+struct ffs_entry_user {
+	uint8_t  chip;
+	uint8_t  compresstype;
+	uint16_t datainteg;
+	uint8_t  vercheck;
+	uint8_t  miscflags;
+	uint8_t  freemisc[2];
+	uint32_t reserved[14];
+};
 
 /**
  * struct ffs_entry - Partition entry
@@ -100,9 +119,7 @@ struct ffs_entry {
 	uint32_t flags;
 	uint32_t actual;
 	uint32_t resvd[4];
-	struct {
-		uint32_t data[FFS_USER_WORDS];
-	} user;
+	struct ffs_entry_user user;
 	uint32_t checksum;
 } __attribute__ ((packed));
 

@@ -183,6 +183,7 @@ static int ffs_check_convert_entry(struct ffs_entry *dst, struct ffs_entry *src)
 	dst->type = be32_to_cpu(src->type);
 	dst->flags = be32_to_cpu(src->flags);
 	dst->actual = be32_to_cpu(src->actual);
+	dst->user.datainteg = be16_to_cpu(src->user.datainteg);
 
 	return 0;
 }
