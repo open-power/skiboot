@@ -13,43 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-struct capp_ucode_lid_hdr {
-    uint64_t eyecatcher;		/* 'CAPPULID' in ASCII */
-    uint64_t version;
-    uint64_t data_size;		  	/* total size of all capp microcode data following header */
-    u8 reserved[40];			/* zeroed, pads to 64 byte boundary */
-};
-
-struct capp_ucode_data_hdr
-{
-    uint64_t eyecatcher;  		/* 'CAPPUCOD' in ASCII */
-    u8 version;
-    u8 reg;
-    u8 reserved[2];
-    uint32_t num_data_chunks;		/* Number of 8-byte chunks of data that follow this header */
-};
 
 struct capp_lid_hdr {
-    uint64_t eyecatcher;
-    uint64_t version;
-    uint64_t lid_no;
-    uint64_t pad;
-    uint64_t ucode_offset;
-    uint64_t total_size;
+	be64 eyecatcher;	/* 'CAPPLIDH' in ASCII */
+	be64 version;
+	be64 lid_no;
+	be64 pad;
+	be64 ucode_offset;
+	be64 total_size;
 };
 
+struct capp_ucode_data_hdr {
+	be64 eyecatcher;  	/* 'CAPPUCOD' in ASCII */
+	u8 version;
+	u8 reg;
+	u8 reserved[2];
+	be32 chunk_count;	/* Num of 8-byte chunks that follow */
+};
+
+struct capp_ucode_data {
+	struct capp_ucode_data_hdr hdr;
+	be64 data[];
+};
+
+struct capp_ucode_lid {
+	be64 eyecatcher;	/* 'CAPPULID' in ASCII */
+	be64 version;
+	be64 data_size;		/* Total size of all capp microcode data */
+	u8 reserved[40];
+	struct capp_ucode_data data; /* This repeats */
+};
+
+
 enum capp_reg {
-    apc_master_cresp		= 0x1,
-    apc_master_uop_table	= 0x2,
-    snp_ttype			= 0x3,
-    snp_uop_table		= 0x4,
-    apt_master_capi_ctrl	= 0x5,
-    snoop_capi_cnfg		= 0x6,
-    canned_presp_map0		= 0x7,
-    canned_presp_map1		= 0x8,
-    canned_presp_map2		= 0x9,
-    flush_sue_state_map		= 0xA,
-    apc_master_powerbus_ctrl	= 0xB
+	apc_master_cresp		= 0x1,
+	apc_master_uop_table		= 0x2,
+	snp_ttype			= 0x3,
+	snp_uop_table			= 0x4,
+	apt_master_capi_ctrl		= 0x5,
+	snoop_capi_cnfg			= 0x6,
+	canned_presp_map0		= 0x7,
+	canned_presp_map1		= 0x8,
+	canned_presp_map2		= 0x9,
+	flush_sue_state_map		= 0xA,
+	apc_master_powerbus_ctrl	= 0xB
 };
 
 #define CAPP_SNP_ARRAY_ADDR_REG			0x2013028

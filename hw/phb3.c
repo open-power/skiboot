@@ -2202,13 +2202,11 @@ static uint64_t capp_fsp_lid_load(struct phb3 *p)
 
 static int64_t capp_load_ucode(struct phb3 *p)
 {
-
-	struct capp_ucode_lid_hdr *ucode_hdr;
-	struct capp_ucode_data_hdr *data_hdr;
-	struct capp_lid_hdr *lid_hdr;
-	uint64_t data, *val;
-	int size_read = 0;
-	int tmp;
+	struct capp_lid_hdr *lid;
+	struct capp_ucode_lid *ucode;
+	struct capp_ucode_data *data;
+	uint64_t val, addr;
+	uint32_t chunk_count, offset;
 	int i;
 
 	/* if fsp not present p->ucode_base gotten from device tree */
@@ -2221,53 +2219,69 @@ static int64_t capp_load_ucode(struct phb3 *p)
 	}
 
 	PHBINF(p, "Loading capp microcode @%llx\n", p->capp_ucode_base);
-	lid_hdr = (struct capp_lid_hdr *)p->capp_ucode_base;
-	if (lid_hdr->eyecatcher != 0x434150504c494448)
-		/* lid header not present due to older fw or bml boot */
-		ucode_hdr = (struct capp_ucode_lid_hdr *)(p->capp_ucode_base);
-	else
-		ucode_hdr = (struct capp_ucode_lid_hdr *)(p->capp_ucode_base +
-			lid_hdr->ucode_offset);
-
-	if (ucode_hdr->eyecatcher != 0x43415050554C4944) {
-		PHBERR(p, "capi ucode lid header eyecatcher not found\n");
-		return OPAL_HARDWARE;
+	lid = (struct capp_lid_hdr *)p->capp_ucode_base;
+	/*
+	 * If lid header is present (on FSP machines), it'll tell us where to
+	 * find the ucode.  Otherwise this is the ucode.
+	 */
+	ucode = (struct capp_ucode_lid *)lid;
+	if (be64_to_cpu(lid->eyecatcher) == 0x434150504c494448) {
+		if (be64_to_cpu(lid->version) != 0x1) {
+			PHBERR(p, "capi ucode lid header invalid\n");
+			return OPAL_HARDWARE;
+		}
+		ucode = (struct capp_ucode_lid *)
+			((char *)ucode + be64_to_cpu(lid->ucode_offset));
 	}
 
-	data_hdr = (struct capp_ucode_data_hdr *)(ucode_hdr + 1);
-	while (size_read < ucode_hdr->data_size) {
-		if (data_hdr->eyecatcher != 0x4341505055434F44) {
-			PHBERR(p, "capi ucode data header eyecatcher not found!\n");
+	if ((be64_to_cpu(ucode->eyecatcher) != 0x43415050554C4944) ||
+	    (ucode->version != 1)) {
+		PHBERR(p, "CAPP: ucode header invalid\n");
+		    return OPAL_HARDWARE;
+	}
+
+	offset = 0;
+	while (offset < be64_to_cpu(ucode->data_size)) {
+		data = (struct capp_ucode_data *)
+			((char *)&ucode->data + offset);
+		chunk_count = be32_to_cpu(data->hdr.chunk_count);
+		offset += sizeof(struct capp_ucode_data_hdr) + chunk_count * 8;
+
+		if (be64_to_cpu(data->hdr.eyecatcher) != 0x4341505055434F44) {
+			PHBERR(p, "CAPP: ucode data header invalid:%i\n",
+			       offset);
 			return OPAL_HARDWARE;
 		}
 
-		val = (uint64_t *)(data_hdr + 1);
-		if (data_hdr->reg == apc_master_cresp) {
-			xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, 0);
-			for (i = 0; i < data_hdr->num_data_chunks; i++)
-				xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_WRITE_REG, *val++);
-			xscom_read(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, &data);
-		} else if (data_hdr->reg == apc_master_uop_table) {
-			xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, 0x180ULL << 52);
-			for (i = 0; i < data_hdr->num_data_chunks; i++)
-				xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_WRITE_REG, *val++);
-			xscom_read(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG, &data);
-		} else if (data_hdr->reg == snp_ttype) {
-			xscom_write(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, 0x5000ULL << 48);
-			for (i = 0; i < data_hdr->num_data_chunks; i++)
-				xscom_write(p->chip_id, CAPP_SNP_ARRAY_WRITE_REG, *val++);
-			xscom_read(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, &data);
-		} else if (data_hdr->reg == snp_uop_table) {
-			xscom_write(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, 0x4000ULL << 48);
-			for (i = 0; i < data_hdr->num_data_chunks; i++)
-				xscom_write(p->chip_id, CAPP_SNP_ARRAY_WRITE_REG, *val++);
-			xscom_read(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG, &data);
+		switch (data->hdr.reg) {
+		case apc_master_cresp:
+			xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG,
+				    0);
+			addr = CAPP_APC_MASTER_ARRAY_WRITE_REG;
+			break;
+		case apc_master_uop_table:
+			xscom_write(p->chip_id, CAPP_APC_MASTER_ARRAY_ADDR_REG,
+				    0x180ULL << 52);
+			addr = CAPP_APC_MASTER_ARRAY_WRITE_REG;
+			break;
+		case snp_ttype:
+			xscom_write(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG,
+				    0x5000ULL << 48);
+			addr = CAPP_SNP_ARRAY_WRITE_REG;
+			break;
+		case snp_uop_table:
+			xscom_write(p->chip_id, CAPP_SNP_ARRAY_ADDR_REG,
+				    0x4000ULL << 48);
+			addr = CAPP_SNP_ARRAY_WRITE_REG;
+			break;
+		default:
+			continue;
 		}
 
-		size_read += sizeof(*data_hdr) + data_hdr->num_data_chunks * 8;
-		tmp = data_hdr->num_data_chunks;
-		data_hdr++;
-		data_hdr = (struct capp_ucode_data_hdr *)((uint64_t *)data_hdr + tmp);
+		for (i = 0; i < chunk_count; i++) {
+			val = be64_to_cpu(data->data[i]);
+			xscom_write(p->chip_id, addr, val);
+		}
 	}
 
 	p->capp_ucode_loaded = true;
