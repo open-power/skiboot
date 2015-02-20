@@ -13,10 +13,16 @@ define Q
   $(2)
 endef
 else
+ifneq ($(filter s% -s%,$(MAKEFLAGS)),)
+define Q
+  @$(2)
+endef
+else
 define Q
   @echo "	[$1] $(3)"
   @$(2)
 endef
+endif
 endif
 
 define cook_aflags
