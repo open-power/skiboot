@@ -454,13 +454,21 @@ bool flash_load_resource(enum resource_id id, uint32_t subid,
 	for (i = 0, name = NULL; i < ARRAY_SIZE(part_name_map); i++) {
 		if (part_name_map[i].id == id) {
 			name = part_name_map[i].name;
-			subid = part_name_map[i].subid;
 			break;
 		}
 	}
 	if (!name) {
 		prerror("FLASH: Couldn't find partition for id %d\n", id);
 		goto out_unlock;
+	}
+	/*
+	 * If partition doesn't have a subindex but the caller specifies one,
+	 * we fail.  eg. kernel partition doesn't have a subindex
+	 */
+	if ((part_name_map[i].subid == RESOURCE_SUBID_NONE) &&
+	    (subid != RESOURCE_SUBID_NONE)) {
+		prerror("PLAT: Partition %s doesn't have subindex\n", name);
+		return false;
 	}
 
 	rc = ffs_open_flash(flash->chip, 0, flash->size, &ffs);
@@ -481,18 +489,18 @@ bool flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_free_ffs;
 	}
 
-	if (part_size > *len) {
-		prerror("FLASH: %s image too large (%d > %zd)\n", name,
-			part_size, *len);
-		goto out_free_ffs;
-	}
-
 	/* Find the sub partition if required */
 	if (subid != RESOURCE_SUBID_NONE) {
 		rc = flash_find_subpartition(flash->chip, subid, &part_start,
 					    &part_size);
 		if (rc)
-			return false;
+			goto out_free_ffs;
+	}
+
+	if (part_size > *len) {
+		prerror("FLASH: %s image too large (%d > %zd)\n", name,
+			part_size, *len);
+		goto out_free_ffs;
 	}
 
 	rc = flash_read(flash->chip, part_start, buf, part_size);
