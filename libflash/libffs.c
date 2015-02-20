@@ -267,6 +267,10 @@ int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 	FL_DBG("FFS: part index %d at offset 0x%08x\n",
 	       part_idx, offset);
 
+	/*
+	 * NOTE: We are accessing the unconverted ffs_entry from the PNOR here
+	 * (since we are going to write it back) so we need to be endian safe.
+	 */
 	if (ent->actual == cpu_to_be32(act_size)) {
 		FL_DBG("FFS: ent->actual alrady matches: 0x%08x==0x%08x\n",
 		       cpu_to_be32(act_size), ent->actual);
