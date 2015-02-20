@@ -173,4 +173,6 @@ extern void xscom_init(void);
 /* Mark XSCOM lock as being in console path */
 extern void xscom_used_by_console(void);
 
+extern int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id);
+
 #endif /* __XSCOM_H */

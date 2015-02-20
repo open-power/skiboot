@@ -431,10 +431,10 @@ int xscom_writeme(uint64_t pcb_addr, uint64_t val)
 	return xscom_write(this_cpu()->chip_id, pcb_addr, val);
 }
 
-static void xscom_init_chip_info(struct proc_chip *chip)
+int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id)
 {
 	uint64_t val;
-	int64_t rc = 0;
+	int64_t rc = OPAL_SUCCESS;
 
 	/* Mambo chip model lacks the f000f register, just make
 	 * something up (Murano DD2.1)
@@ -442,15 +442,25 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 	if (chip_quirk(QUIRK_NO_F000F))
 		val = 0x221EF04980000000;
 	else
-		rc = xscom_read(chip->id, 0xf000f, &val);
+		rc = xscom_read(partid, 0xf000f, &val);
+
+	/* Extract CFAM id */
+	*chip_id = (uint32_t)(val >> 44);
+
+	return rc;
+}
+
+static void xscom_init_chip_info(struct proc_chip *chip)
+{
+	uint32_t val;
+	int64_t rc;
+
+	rc = xscom_read_cfam_chipid(chip->id, &val);
 	if (rc) {
 		prerror("XSCOM: Error %lld reading 0xf000f register\n", rc);
 		/* We leave chip type to UNKNOWN */
 		return;
 	}
-
-	/* Extract CFAM id */
-	val >>= 44;
 
 	/* Identify chip */
 	switch(val & 0xff) {
