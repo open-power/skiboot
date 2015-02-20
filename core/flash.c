@@ -368,14 +368,14 @@ static int flash_find_subpartition(struct flash_chip *chip, uint32_t subid,
 	/* Get the TOC */
 	rc = flash_read(chip, *start, header, FLASH_SUBPART_HEADER_SIZE);
 	if (rc) {
-		prerror("FLASH: flash subpartition TOC read failed %i", rc);
+		prerror("FLASH: flash subpartition TOC read failed %i\n", rc);
 		goto end;
 	}
 
 	/* Perform sanity */
 	i = be32_to_cpu(header->version);
 	if (i != 1) {
-		prerror("FLASH: flash subpartition TOC version unknown %i", i);
+		prerror("FLASH: flash subpartition TOC version unknown %i\n", i);
 		rc = OPAL_RESOURCE;
 		goto end;
 	}
@@ -394,7 +394,7 @@ static int flash_find_subpartition(struct flash_chip *chip, uint32_t subid,
 		size = be32_to_cpu(header->toc[i].size);
 		/* Check for null terminating entry */
 		if (!ec && !offset && !size) {
-			prerror("FLASH: flash subpartition not found.");
+			prerror("FLASH: flash subpartition not found.\n");
 			goto end;
 		}
 
@@ -403,16 +403,16 @@ static int flash_find_subpartition(struct flash_chip *chip, uint32_t subid,
 
 		/* Sanity check the offset and size */
 		if (offset + size > *total_size) {
-			prerror("FLASH: flash subpartition too big: %i", i);
+			prerror("FLASH: flash subpartition too big: %i\n", i);
 			goto end;
 		}
 		if (!size) {
-			prerror("FLASH: flash subpartition zero size: %i", i);
+			prerror("FLASH: flash subpartition zero size: %i\n", i);
 			goto end;
 		}
 		if (offset < FLASH_SUBPART_HEADER_SIZE) {
 			prerror("FLASH: flash subpartition "
-					"offset too small: %i", i);
+					"offset too small: %i\n", i);
 			goto end;
 		}
 
