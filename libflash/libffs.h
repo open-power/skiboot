@@ -32,6 +32,7 @@ struct ffs_handle;
 #define FFS_ERR_BAD_VERSION	101
 #define FFS_ERR_BAD_CKSUM	102
 #define FFS_ERR_PART_NOT_FOUND	103
+#define FFS_ERR_BAD_ECC		104
 
 int ffs_open_flash(struct flash_chip *chip, uint32_t offset,
 		   uint32_t max_size, struct ffs_handle **ffs);
@@ -51,6 +52,9 @@ int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 
 int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 			uint32_t act_size);
+
+int ffs_flash_read(struct flash_chip *c, uint32_t pos, void *buf, uint32_t len,
+		   bool ecc);
 
 
 #endif /* __LIBFFS_H */

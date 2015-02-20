@@ -51,6 +51,7 @@ extern bool libflash_debug;
 #define FLASH_ERR_CHIP_ER_NOT_SUPPORTED	11
 #define FLASH_ERR_CTRL_CMD_UNSUPPORTED	12
 #define FLASH_ERR_CTRL_TIMEOUT		13
+#define FLASH_ERR_ECC_INVALID		14
 
 /* Flash chip, opaque */
 struct flash_chip;

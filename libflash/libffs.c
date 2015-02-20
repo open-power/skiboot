@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ecc.h>
 
 #include <ccan/endian/endian.h>
 
@@ -285,4 +286,55 @@ int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 	if (!ffs->chip)
 		return 0;
 	return flash_smart_write(ffs->chip, offset, ent, FFS_ENTRY_SIZE);
+}
+
+#define COPY_BUFFER_LENGTH 4096
+
+/*
+ * This provides a wrapper around flash_read on ECCed data
+ * len is length of data without ECC attached
+ */
+int ffs_flash_read(struct flash_chip *c, uint32_t pos, void *buf, uint32_t len,
+		   bool ecc)
+{
+	uint64_t *bufecc;
+	uint32_t copylen;
+	int rc;
+	uint8_t ret;
+
+	if (!ecc)
+		return flash_read(c, pos, buf, len);
+
+	/* Copy the buffer in chunks */
+	bufecc = malloc(ECC_BUFFER_SIZE(COPY_BUFFER_LENGTH));
+	if (!bufecc)
+		return FLASH_ERR_MALLOC_FAILED;
+
+	while (len > 0) {
+		/* What's left to copy? */
+		copylen = MIN(len, COPY_BUFFER_LENGTH);
+
+		/* Read ECCed data from flash */
+		rc = flash_read(c, pos, bufecc, ECC_BUFFER_SIZE(copylen));
+		if (rc)
+			goto err;
+
+		/* Extract data from ECCed data */
+		ret = eccmemcpy(buf, bufecc, copylen);
+		if (ret == UE) {
+			rc = FLASH_ERR_ECC_INVALID;
+			goto err;
+		}
+
+		/* Update for next copy */
+		len -= copylen;
+		buf = (uint8_t *)buf + copylen;
+		pos += ECC_BUFFER_SIZE(copylen);
+	}
+
+	return 0;
+
+err:
+	free(bufecc);
+	return rc;
 }
