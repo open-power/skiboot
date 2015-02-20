@@ -41,8 +41,8 @@ int main(void)
 
 	/* our atoi recognises hex!  */
 	assert(atoi("0x800") == 0x800);
-	/* Really weird hex! */
-	assert(atoi("0x0x800") == 0x800);
+	/* But not with a duplicate prefix */
+	assert(atoi("0x0x800") == 0);
 
 	/* atol - ensure it recognises longs */
 	assert(atol("2147483648") == 2147483648);
@@ -73,8 +73,7 @@ int main(void)
 	/* strtoul - autodetection of base */
 	assert(strtoul(" 123456", NULL, 0) == 123456);
 	assert(strtoul("0x800", NULL, 0) == 0x800);
-	/* Again, really weird hex */
-	assert(strtoul("0x0x800", NULL, 0) == 0x800);
+	assert(strtoul("0x0x800", NULL, 0) == 0);
 
 	/* strtoul - weird/invalid bases */
 	assert(strtoul("z", NULL, -1) == 0);

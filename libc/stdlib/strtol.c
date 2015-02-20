@@ -53,8 +53,6 @@ long int strtol(const char *S, char **PTR,int BASE)
 		if ((**PTR == '0') && (*((*PTR)+1) == 'x'))
 		{
 			BASE = 16;
-			(*PTR)++;
-			(*PTR)++;
 		}
 		else
 		{
