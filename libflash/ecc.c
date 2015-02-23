@@ -19,6 +19,8 @@
 #include <stdint.h>
 #include <ecc.h>
 
+#include "libflash.h"
+
 /*
  * Matrix used for ECC calculation.
  *
@@ -146,7 +148,7 @@ uint8_t eccmemcpy(uint64_t *dst, uint64_t *src, uint32_t len)
 
 	if (len & 0x7) {
 		/* TODO: we could probably handle this */
-		prerror("ECC data length must be 8 byte aligned length:%i\n",
+		FL_ERR("ECC data length must be 8 byte aligned length:%i\n",
 			len);
 		return UE;
 	}
@@ -160,13 +162,13 @@ uint8_t eccmemcpy(uint64_t *dst, uint64_t *src, uint32_t len)
 
 		badbit = eccverify(*data, *ecc);
 		if (badbit == UE) {
-			prerror("ECC: uncorrectable error: %016lx %02x\n",
+			FL_ERR("ECC: uncorrectable error: %016lx %02x\n",
 				(long unsigned int)*data, *ecc);
 			return badbit;
 		}
 		*dst = *data;
 		if (badbit <= UE)
-			prlog(PR_INFO, "ECC: correctable error: %i\n", badbit);
+			FL_INF("ECC: correctable error: %i\n", badbit);
 		if (badbit < 64)
 			*dst = *data ^ (1ul << (63 - badbit));
 		dst++;
