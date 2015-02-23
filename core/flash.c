@@ -385,7 +385,7 @@ static int flash_find_subpartition(struct flash_chip *chip, uint32_t subid,
 	struct flash_hostboot_header *header;
 	char eyecatcher[5];
 	uint32_t i, partsize;
-	bool rc;
+	int rc;
 
 	header = malloc(FLASH_SUBPART_HEADER_SIZE);
 	if (!header)
