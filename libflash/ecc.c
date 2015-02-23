@@ -108,6 +108,22 @@ static enum eccbitfields syndromematrix[] = {
         UE, UE, UE, UE,  4, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE, UE,
 };
 
+static uint8_t parity(uint64_t data)
+{
+#ifdef __SKIBOOT__
+	uint8_t p;
+
+	asm volatile(
+		"popcntb %1,%0\n"
+		"prtyd   %1,%1\n"
+		: "=r"(p) : "r"(data));
+
+	return p;
+#else
+	return __builtin_parityl(data);
+#endif
+}
+
 /**
  * Create the ECC field corresponding to a 8-byte data field
  *
@@ -120,7 +136,7 @@ static uint8_t eccgenerate(uint64_t data)
 	uint8_t result = 0;
 
 	for (i = 0; i < 8; i++)
-		result |= __builtin_parityl(eccmatrix[i] & data) << i;
+		result |= parity(eccmatrix[i] & data) << i;
 
 	return result;
 }
