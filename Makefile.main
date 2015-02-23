@@ -158,7 +158,6 @@ OBJS += $(LIBPORE)
 endif
 OBJS += $(LIBC) $(CCAN) $(DEVSRC_OBJ)
 OBJS_NO_VER = $(OBJS)
-EXTRA_LIBS = -Wl,-lgcc
 ALL_OBJS = $(OBJS) version.o
 
 ALL_OBJS_1 = $(ALL_OBJS) asm/dummy_map.o
@@ -168,12 +167,12 @@ $(TARGET).lid: $(TARGET).elf
 	$(call Q,OBJCOPY, $(OBJCOPY) -O binary -S $^ $@, $@)
 
 $(TARGET).tmp.elf: $(ALL_OBJS_1) $(TARGET).lds $(KERNEL)
-	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(ALL_OBJS_1) $(EXTRA_LIBS) -o $@, $@)
+	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(ALL_OBJS_1) -o $@, $@)
 
 asm/real_map.o : $(TARGET).tmp.map
 
 $(TARGET).elf: $(ALL_OBJS_2) $(TARGET).lds $(KERNEL)
-	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(ALL_OBJS_2) $(EXTRA_LIBS) -o $@, $@)
+	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(ALL_OBJS_2) -o $@, $@)
 
 $(SUBDIRS):
 	$(call Q,MKDIR,mkdir $@, $@)
