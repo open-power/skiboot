@@ -747,7 +747,7 @@ pore_inline_context_create(PoreInlineContext *ctx,
         PORE_INLINE_8_BYTE_DATA      |
         PORE_INLINE_DISASSEMBLE_UNKNOWN;
 
-    if ((ctx == 0) || ((memory == 0) && (size != 0)) || 
+    if ((ctx == NULL) || ((memory == NULL) && (size != 0)) ||
 	((options & ~valid_options) != 0)) {
 	rc = PORE_INLINE_INVALID_PARAMETER;
     } else {
@@ -759,7 +759,7 @@ pore_inline_context_create(PoreInlineContext *ctx,
 	pore_inline_context_reset(ctx);
     }
 
-    if (ctx != 0) {
+    if (ctx != NULL) {
         ctx->error = rc;
         if (rc) {
             ctx->size = 0;      /* Effectively prevents using the ctx */

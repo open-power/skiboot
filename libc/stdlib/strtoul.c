@@ -18,7 +18,7 @@ unsigned long int strtoul(const char *S, char **PTR,int BASE)
 	short int digit;
 	// *PTR is S, unless PTR is NULL, in which case i override it with my own ptr
 	char* ptr;
-	if (PTR == 0)
+	if (PTR == NULL)
 	{
 		//override
 		PTR = &ptr;

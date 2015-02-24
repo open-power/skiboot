@@ -449,7 +449,7 @@ void init_all_cpus(void)
 		t->primary = t;
 		t->node = cpu;
 		t->chip_id = chip_id;
-		t->icp_regs = 0; /* Will be set later */
+		t->icp_regs = NULL; /* Will be set later */
 
 		/* Add associativity properties */
 		add_core_associativity(t);

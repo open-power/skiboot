@@ -901,7 +901,7 @@ bool hservices_init(void)
 	/* We enter at 0x100 into the image. */
 	fdesc.addr = code + 0x100;
 	/* It doesn't care about TOC */
-	fdesc.toc = 0;
+	fdesc.toc = NULL;
 
 	hbrt_init = (void *)&fdesc;
 
