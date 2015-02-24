@@ -57,7 +57,7 @@ static uint32_t elog_write_retries;
 
 /* Manipulate this only with write_lock held */
 static uint32_t elog_plid_fsp_commit = -1;
-enum elog_head_state elog_write_to_host_head_state = ELOG_STATE_NONE;
+static enum elog_head_state elog_write_to_host_head_state = ELOG_STATE_NONE;
 
 /* Need forward declaration because of Circular dependency */
 static int opal_send_elog_to_fsp(void);
