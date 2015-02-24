@@ -51,6 +51,7 @@
  *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <compiler.h>
 #include <libfdt_env.h>
 #include <fdt.h>
 
@@ -1163,6 +1164,6 @@ int fdt_del_node(void *fdt, int nodeoffset);
 /* Debugging / informational functions                                */
 /**********************************************************************/
 
-const char *fdt_strerror(int errval);
+const char * __attrconst fdt_strerror(int errval);
 
 #endif /* _LIBFDT_H */
