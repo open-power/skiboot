@@ -24,6 +24,10 @@
 #include "libffs.h"
 #include "ecc.h"
 
+#ifndef MIN
+#define MIN(a, b)	((a) < (b) ? (a) : (b))
+#endif
+
 enum ffs_type {
 	ffs_type_flash,
 	ffs_type_image,

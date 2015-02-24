@@ -20,7 +20,6 @@
 #define __ECC_H
 
 #include <stdint.h>
-#include <skiboot.h>
 
 /* Bit field identifiers for syndrome calculations. */
 enum eccbitfields
@@ -45,6 +44,10 @@ extern uint8_t eccmemcpy(uint64_t *dst, uint64_t *src, uint32_t len);
  * We add 1 byte of ecc for every 8 bytes of data.  So we need to round up to 8
  * bytes length and then add 1/8
  */
+#ifndef ALIGN_UP
+#define ALIGN_UP(_v, _a)	(((_v) + (_a) - 1) & ~((_a) - 1))
+#endif
+
 #define ECC_SIZE(len) (ALIGN_UP((len), 8) >> 3)
 #define ECC_BUFFER_SIZE(len) (ALIGN_UP((len), 8) + ECC_SIZE(len))
 #define ECC_BUFFER_SIZE_CHECK(len) ((len) % 9)
