@@ -10,6 +10,7 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
+#include <errno.h>
 
 int errno;
 
