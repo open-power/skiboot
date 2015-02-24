@@ -87,6 +87,9 @@ ifneq ($(KERNEL),)
 CPPFLAGS += -DBUILTIN_KERNEL="\"$(KERNEL)\""
 endif
 
+CHECK		= sparse
+CHECKFLAGS     := $(CF)
+
 .SECONDARY:
 
 vpath %.c $(SRC)

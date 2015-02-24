@@ -33,6 +33,15 @@ define cook_cflags
        $(filter-out $(CFLAGS_SKIP_$(1)), $(CPPFLAGS) $(CFLAGS)) $(CFLAGS_$(1))
 endef
 
+ifeq ($(C),1)
+  ifeq ($(VERBOSE),1)
+	cmd_check = $(CHECK) $(CHECKFLAGS) $(call cook_cflags,$@) $<
+  else
+	cmd_check = @$(CHECK) $(CHECKFLAGS) $(call cook_cflags,$@) $<
+  endif
+endif
+
+
 %.o : %.S include/asm-offsets.h
 	$(call Q,AS, $(CC) $(call cook_aflags,$@) -c $< -o $@, $@)
 
@@ -40,10 +49,12 @@ endef
 	$(call Q,CC, $(CC) $(call cook_aflags,$@) -E -c $< -o $@, $@)
 
 %.o : %.c
+	$(call cmd_check)
 	$(call Q,CC, $(CC) $(call cook_cflags,$@) -c $< -o $@, $@)
 
 # Force the use of the C compiler, not C++ for the .C files in libpore
 %.o : %.C
+	$(call cmd_check)
 	$(call Q,CC, $(CC) $(call cook_cflags,$@) -x c -c $< -o $@, $@)
 
 %.s : %.c
