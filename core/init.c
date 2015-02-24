@@ -489,7 +489,7 @@ static void dt_init_misc(void)
 }
 
 /* Called from head.S, thus no prototype. */
-void main_cpu_entry(const void *fdt, u32 master_cpu);
+void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu);
 
 void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 {
@@ -716,7 +716,7 @@ void __noreturn __secondary_cpu_entry(void)
 }
 
 /* Called from head.S, thus no prototype. */
-void secondary_cpu_entry(void);
+void __noreturn secondary_cpu_entry(void);
 
 void __noreturn secondary_cpu_entry(void)
 {

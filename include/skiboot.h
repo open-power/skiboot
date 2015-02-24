@@ -117,7 +117,7 @@ enum proc_gen {
 extern enum proc_gen proc_gen;
 
 /* Convert a 4-bit number to a hex char */
-extern char tohex(uint8_t nibble);
+extern char __attrconst tohex(uint8_t nibble);
 
 /* Bit position of the most significant 1-bit (LSB=0, MSB=63) */
 static inline int ilog2(unsigned long val)
@@ -180,8 +180,8 @@ extern unsigned long get_symbol(unsigned long addr,
 
 /* Fast reboot support */
 extern void fast_reset(void);
-extern void __secondary_cpu_entry(void);
-extern void load_and_boot_kernel(bool is_reboot);
+extern void __noreturn __secondary_cpu_entry(void);
+extern void __noreturn load_and_boot_kernel(bool is_reboot);
 extern void cleanup_tlb(void);
 extern void init_shared_sprs(void);
 extern void init_replicated_sprs(void);

@@ -247,9 +247,9 @@ static void memory_reset(void)
 #endif /* FAST_REBOOT_CLEARS_MEMORY */
 
 /* Entry from asm after a fast reset */
-void fast_reboot(void);
+void __noreturn fast_reboot(void);
 
-void fast_reboot(void)
+void __noreturn fast_reboot(void)
 {
 	static volatile bool fast_boot_release;
 	struct cpu_thread *cpu;
