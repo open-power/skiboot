@@ -76,12 +76,6 @@ enum bt_states {
 	BT_STATE_B_BUSY,
 };
 
-const char *state_str[] = {
-	"BT_STATE_IDLE",
-	"BT_STATE_RESP_WAIT",
-	"BT_STATE_B_BUSY",
-};
-
 struct bt_msg {
 	struct list_node link;
 	unsigned long tb;
