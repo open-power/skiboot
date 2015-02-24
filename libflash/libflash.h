@@ -25,6 +25,7 @@
 #define FL_DBG(fmt...) do { prlog(PR_DEBUG, fmt); } while(0)
 #define FL_ERR(fmt...) do { prlog(PR_ERR, fmt);   } while(0)
 #else
+#include <stdio.h>
 extern bool libflash_debug;
 #define FL_DBG(fmt...) do { if (libflash_debug) printf(fmt); } while(0)
 #define FL_INF(fmt...) do { printf(fmt); } while(0)
