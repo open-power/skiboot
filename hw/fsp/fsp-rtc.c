@@ -55,13 +55,13 @@
 
 #include <rtc.h>
 
-enum {
+static enum {
 	RTC_TOD_VALID,
 	RTC_TOD_INVALID,
 	RTC_TOD_PERMANENT_ERROR,
 } rtc_tod_state = RTC_TOD_INVALID;
 
-bool rtc_tod_cache_dirty = false;
+static bool rtc_tod_cache_dirty = false;
 
 static struct lock rtc_lock;
 static struct fsp_msg *rtc_read_msg;
