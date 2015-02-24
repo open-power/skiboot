@@ -320,7 +320,7 @@ enum opal_reasoncode {
 };
 
 #define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\
-severity, subtype, callout_func) struct opal_err_info err_##reason =	\
+severity, subtype, callout_func) static struct opal_err_info err_##reason =	\
 { .reason_code = reason, .err_type = type, .cmp_id = id,		\
 .subsystem = subsys, .sev = severity, .event_subtype = subtype,		\
 .call_out = callout_func }
