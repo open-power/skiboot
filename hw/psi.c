@@ -37,7 +37,7 @@
 static LIST_HEAD(psis);
 static u64 psi_link_timer;
 static u64 psi_link_timeout;
-bool psi_link_poll_active;
+static bool psi_link_poll_active;
 static bool psi_ext_irq_policy = EXTERNAL_IRQ_POLICY_LINUX;
 
 static void psi_register_interrupts(struct psi *psi);
