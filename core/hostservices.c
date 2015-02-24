@@ -189,7 +189,7 @@ static bool hbrt_con_wrapped;
 #define HBRT_CON_IN_LEN		0
 #define HBRT_CON_OUT_LEN	(HBRT_CON_LEN - HBRT_CON_IN_LEN)
 
-struct memcons hbrt_memcons __section(".data.memcons") = {
+static struct memcons hbrt_memcons __section(".data.memcons") = {
 	.magic		= MEMCONS_MAGIC,
 	.obuf_phys	= HBRT_CON_START,
 	.ibuf_phys	= HBRT_CON_START + HBRT_CON_OUT_LEN,
