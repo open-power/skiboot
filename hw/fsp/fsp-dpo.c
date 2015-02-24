@@ -33,7 +33,7 @@
 #define DPO_TIMEOUT		2700 /* 45 minutes in seconds */
 
 static bool fsp_dpo_pending = false;
-unsigned long fsp_dpo_init_tb = 0;
+static unsigned long fsp_dpo_init_tb = 0;
 
 /*
  * OPAL DPO interface
