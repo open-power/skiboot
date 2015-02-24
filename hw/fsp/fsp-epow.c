@@ -41,7 +41,7 @@
  * more of power subsystem specific EPOW events like OPAL_SYSPOWER_UPS,
  * OPAL_SYSPOWER_CHNG, OPAL_SYSPOWER_FAIL or OPAL_SYSPOWER_INCL.
  */
-int16_t epow_status[OPAL_SYSEPOW_MAX];
+static int16_t epow_status[OPAL_SYSEPOW_MAX];
 
 /* EPOW lock */
 static struct lock epow_lock = LOCK_UNLOCKED;
