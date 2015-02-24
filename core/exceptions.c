@@ -37,7 +37,7 @@ extern uint32_t exc_secondary_patch_mtsrr0;
 extern uint32_t exc_secondary_patch_mtsrr1;
 extern uint32_t exc_secondary_patch_rfid;
 
-struct lock hmi_lock = LOCK_UNLOCKED;
+static struct lock hmi_lock = LOCK_UNLOCKED;
 
 #define REG		"%016llx"
 #define REGS_PER_LINE	4
