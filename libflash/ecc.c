@@ -17,9 +17,9 @@
 /* This is based on the hostboot ecc code */
 
 #include <stdint.h>
-#include <ecc.h>
 
 #include "libflash.h"
+#include "ecc.h"
 
 /*
  * Matrix used for ECC calculation.

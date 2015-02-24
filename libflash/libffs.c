@@ -18,11 +18,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <ecc.h>
 
 #include <ccan/endian/endian.h>
 
 #include "libffs.h"
+#include "ecc.h"
 
 enum ffs_type {
 	ffs_type_flash,
