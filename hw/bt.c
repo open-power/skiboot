@@ -477,7 +477,7 @@ static int bt_del_ipmi_msg(struct ipmi_msg *ipmi_msg)
 	return 0;
 }
 
-struct ipmi_backend bt_backend = {
+static struct ipmi_backend bt_backend = {
 	.alloc_msg = bt_alloc_ipmi_msg,
 	.free_msg = bt_free_ipmi_msg,
 	.queue_msg = bt_add_ipmi_msg,
