@@ -45,7 +45,7 @@ enum led_support_state {
 	LED_STATE_PRESENT,
 };
 
-enum led_support_state led_support = LED_STATE_ABSENT;
+static enum led_support_state led_support = LED_STATE_ABSENT;
 
 /*
  *  PSI mapped buffer for LED data
