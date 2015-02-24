@@ -20,6 +20,8 @@
 #include <opal-api.h>
 #include <console.h>
 
+struct platform	platform;
+
 /*
  * Various wrappers for platform functions
  */

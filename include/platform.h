@@ -144,7 +144,7 @@ struct platform {
 extern struct platform __platforms_start;
 extern struct platform __platforms_end;
 
-struct platform	platform;
+extern struct platform	platform;
 
 #define DECLARE_PLATFORM(name)\
 static const struct platform __used __section(".platforms") name ##_platform
