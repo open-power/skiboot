@@ -917,7 +917,7 @@ static void __fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod,
 	va_end(list);
 }
 
-extern void fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod, u8 add_words, ...)
+void fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod, u8 add_words, ...)
 {
 	va_list list;
 
