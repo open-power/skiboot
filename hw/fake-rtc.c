@@ -19,8 +19,8 @@
 #include <opal-api.h>
 #include <mem_region.h>
 
-uint32_t *fake_ymd;
-uint64_t *fake_hmsm;
+static uint32_t *fake_ymd;
+static uint64_t *fake_hmsm;
 
 static int64_t fake_rtc_write(uint32_t ymd, uint64_t hmsm)
 {
