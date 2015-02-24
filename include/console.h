@@ -29,7 +29,7 @@
  */
 struct memcons {
 	uint64_t magic;
-#define MEMCONS_MAGIC	0x6630696567726173
+#define MEMCONS_MAGIC	0x6630696567726173LL
 	uint64_t obuf_phys;
 	uint64_t ibuf_phys;
 	uint32_t obuf_size;
