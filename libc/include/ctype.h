@@ -13,12 +13,14 @@
 #ifndef _CTYPE_H
 #define _CTYPE_H
 
-int isdigit(int c);
-int isxdigit(int c);
-int isprint(int c);
-int isspace(int c);
+#include <compiler.h>
 
-int tolower(int c);
-int toupper(int c);
+int __attrconst isdigit(int c);
+int __attrconst isxdigit(int c);
+int __attrconst isprint(int c);
+int __attrconst isspace(int c);
+
+int __attrconst tolower(int c);
+int __attrconst toupper(int c);
 
 #endif
