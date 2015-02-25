@@ -45,7 +45,9 @@ struct flash_chip {
 	void			*smart_buf;	/* Buffer for smart writes */
 };
 
+#ifndef __SKIBOOT__
 bool libflash_debug;
+#endif
 
 int fl_read_stat(struct spi_flash_ctrl *ct, uint8_t *stat)
 {
