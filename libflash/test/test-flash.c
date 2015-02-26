@@ -22,6 +22,7 @@
 #include <libflash/libflash-priv.h>
 
 #include "../libflash.c"
+#include "../ecc.c"
 
 #define __unused		__attribute__((unused))
 

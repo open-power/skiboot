@@ -53,8 +53,4 @@ int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 			uint32_t act_size);
 
-int ffs_flash_read(struct flash_chip *c, uint32_t pos, void *buf, uint32_t len,
-		   bool ecc);
-
-
 #endif /* __LIBFFS_H */

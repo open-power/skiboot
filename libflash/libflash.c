@@ -19,6 +19,11 @@
 
 #include "libflash.h"
 #include "libflash-priv.h"
+#include "ecc.h"
+
+#ifndef MIN
+#define MIN(a, b)	((a) < (b) ? (a) : (b))
+#endif
 
 static const struct flash_info flash_info[] = {
 	{ 0xc22019, 0x02000000, FL_ERASE_ALL | FL_CAN_4B, "Macronix MXxxL25635F"},
@@ -123,6 +128,56 @@ int flash_read(struct flash_chip *c, uint32_t pos, void *buf, uint32_t len)
 	return ct->cmd_rd(ct, CMD_READ, true, pos, buf, len);
 }
 
+#define COPY_BUFFER_LENGTH 4096
+
+/*
+ * This provides a wrapper around flash_read on ECCed data
+ * len is length of data without ECC attached
+ */
+int flash_read_corrected(struct flash_chip *c, uint32_t pos, void *buf,
+		uint32_t len, bool ecc)
+{
+	uint64_t *bufecc;
+	uint32_t copylen;
+	int rc;
+	uint8_t ret;
+
+	if (!ecc)
+		return flash_read(c, pos, buf, len);
+
+	/* Copy the buffer in chunks */
+	bufecc = malloc(ECC_BUFFER_SIZE(COPY_BUFFER_LENGTH));
+	if (!bufecc)
+		return FLASH_ERR_MALLOC_FAILED;
+
+	while (len > 0) {
+		/* What's left to copy? */
+		copylen = MIN(len, COPY_BUFFER_LENGTH);
+
+		/* Read ECCed data from flash */
+		rc = flash_read(c, pos, bufecc, ECC_BUFFER_SIZE(copylen));
+		if (rc)
+			goto err;
+
+		/* Extract data from ECCed data */
+		ret = eccmemcpy(buf, bufecc, copylen);
+		if (ret == UE) {
+			rc = FLASH_ERR_ECC_INVALID;
+			goto err;
+		}
+
+		/* Update for next copy */
+		len -= copylen;
+		buf = (uint8_t *)buf + copylen;
+		pos += ECC_BUFFER_SIZE(copylen);
+	}
+
+	return 0;
+
+err:
+	free(bufecc);
+	return rc;
+}
 static void fl_get_best_erase(struct flash_chip *c, uint32_t dst, uint32_t size,
 			      uint32_t *chunk, uint8_t *cmd)
 {

@@ -375,8 +375,8 @@ static int flash_find_subpartition(struct flash_chip *chip, uint32_t subid,
 		partsize = BUFFER_SIZE_MINUS_ECC(*total_size);
 
 	/* Get the TOC */
-	rc = ffs_flash_read(chip, *start, header, FLASH_SUBPART_HEADER_SIZE,
-			    ecc);
+	rc = flash_read_corrected(chip, *start, header,
+			FLASH_SUBPART_HEADER_SIZE, ecc);
 	if (rc) {
 		prerror("FLASH: flash subpartition TOC read failed %i\n", rc);
 		goto end;
@@ -541,7 +541,7 @@ bool flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_free_ffs;
 	}
 
-	rc = ffs_flash_read(flash->chip, part_start, buf, size, ecc);
+	rc = flash_read_corrected(flash->chip, part_start, buf, size, ecc);
 	if (rc) {
 		prerror("FLASH: failed to read %s partition\n", name);
 		goto out_free_ffs;

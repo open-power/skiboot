@@ -70,6 +70,8 @@ int flash_get_info(struct flash_chip *chip, const char **name,
 int flash_force_4b_mode(struct flash_chip *chip, bool enable_4b);
 
 int flash_read(struct flash_chip *c, uint32_t pos, void *buf, uint32_t len);
+int flash_read_corrected(struct flash_chip *c, uint32_t pos, void *buf,
+		uint32_t len, bool ecc);
 int flash_erase(struct flash_chip *c, uint32_t dst, uint32_t size);
 int flash_write(struct flash_chip *c, uint32_t dst, const void *src,
 		uint32_t size, bool verify);
