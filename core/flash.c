@@ -186,6 +186,8 @@ static struct dt_node *flash_add_dt_node(struct flash *flash, int id,
 static void setup_system_flash(struct flash *flash, struct dt_node *node,
 		const char *name, struct ffs_handle *ffs)
 {
+	char *path;
+
 	if (system_flash) {
 		prlog(PR_WARNING, "FLASH: attempted to register a second "
 				"system flash device %s\n", name);
@@ -199,7 +201,9 @@ static void setup_system_flash(struct flash *flash, struct dt_node *node,
 	}
 
 	system_flash = flash;
-	dt_add_property_string(dt_chosen, "ibm,system-flash", node->name);
+	path = dt_get_path(node);
+	dt_add_property_string(dt_chosen, "ibm,system-flash", path);
+	free(path);
 
 	prlog(PR_INFO, "FLASH: registered system flash device %s\n", name);
 
@@ -273,7 +277,6 @@ static int64_t opal_flash_op(enum flash_op op, uint64_t id, uint64_t offset,
 		uint64_t buf, uint64_t size, uint64_t token)
 {
 	struct flash *flash;
-	uint32_t mask;
 	int rc;
 
 	if (id >= ARRAY_SIZE(flashes))
@@ -290,12 +293,6 @@ static int64_t opal_flash_op(enum flash_op op, uint64_t id, uint64_t offset,
 
 	if (size >= flash->size || offset >= flash->size
 			|| offset + size >= flash->size) {
-		rc = OPAL_PARAMETER;
-		goto err;
-	}
-
-	mask = flash->block_size - 1;
-	if (size & mask || offset & mask) {
 		rc = OPAL_PARAMETER;
 		goto err;
 	}
