@@ -1173,6 +1173,12 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	/* Local bus speed in Hz */
 	lb_freq = dt_prop_get_u32(i2cm, "clock-frequency");
 
+	/* XXX HACK for bad HB value */
+	if (lb_freq == 600000000) {
+		prlog(PR_ERR, "I2C: Fixing up HB bad clock freq !\n");
+		lb_freq = 50000000;
+	}
+
 	/* Initialise the i2c master structure */
 	master->state = state_idle;
 	master->chip_id = dt_get_chip_id(i2cm);
