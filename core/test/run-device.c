@@ -53,61 +53,61 @@ int main(void)
 	struct dt_property *p2;
 	unsigned int n;
 
-	root = dt_new_root("root");
+	root = dt_new_root("");
 	assert(!list_top(&root->properties, struct dt_property, list));
-	check_path(root, "/root");
+	check_path(root, "/");
 
 	c1 = dt_new(root, "c1");
 	assert(!list_top(&c1->properties, struct dt_property, list));
-	check_path(c1, "root/c1");
+	check_path(c1, "/c1");
 	assert(dt_find_by_name(root, "c1") == c1);
 	assert(dt_find_by_path(root, "/c1") == c1);
 
 	c2 = dt_new(root, "c2");
 	assert(!list_top(&c2->properties, struct dt_property, list));
-	check_path(c2, "root/c2");
+	check_path(c2, "/c2");
 	assert(dt_find_by_name(root, "c2") == c2);
 	assert(dt_find_by_path(root, "/c2") == c2);
 
 	gc1 = dt_new(c1, "gc1");
 	assert(!list_top(&gc1->properties, struct dt_property, list));
-	check_path(gc1, "root/c1/gc1");
+	check_path(gc1, "/c1/gc1");
 	assert(dt_find_by_name(root, "gc1") == gc1);
 	assert(dt_find_by_path(root, "/c1/gc1") == gc1);
 
 	gc2 = dt_new(c1, "gc2");
 	assert(!list_top(&gc2->properties, struct dt_property, list));
-	check_path(gc2, "root/c1/gc2");
+	check_path(gc2, "/c1/gc2");
 	assert(dt_find_by_name(root, "gc2") == gc2);
 	assert(dt_find_by_path(root, "/c1/gc2") == gc2);
 
 	gc3 = dt_new(c1, "gc3");
 	assert(!list_top(&gc3->properties, struct dt_property, list));
-	check_path(gc3, "root/c1/gc3");
+	check_path(gc3, "/c1/gc3");
 	assert(dt_find_by_name(root, "gc3") == gc3);
 	assert(dt_find_by_path(root, "/c1/gc3") == gc3);
 
 	ggc1 = dt_new(gc1, "ggc1");
 	assert(!list_top(&ggc1->properties, struct dt_property, list));
-	check_path(ggc1, "root/c1/gc1/ggc1");
+	check_path(ggc1, "/c1/gc1/ggc1");
 	assert(dt_find_by_name(root, "ggc1") == ggc1);
 	assert(dt_find_by_path(root, "/c1/gc1/ggc1") == ggc1);
 
 	addrs = dt_new(root, "addrs");
 	assert(!list_top(&addrs->properties, struct dt_property, list));
-	check_path(addrs, "root/addrs");
+	check_path(addrs, "/addrs");
 	assert(dt_find_by_name(root, "addrs") == addrs);
 	assert(dt_find_by_path(root, "/addrs") == addrs);
 
 	addr1 = dt_new_addr(addrs, "addr", 0x1337);
 	assert(!list_top(&addr1->properties, struct dt_property, list));
-	check_path(addr1, "root/addrs/addr@1337");
+	check_path(addr1, "/addrs/addr@1337");
 	assert(dt_find_by_name(root, "addr@1337") == addr1);
 	assert(dt_find_by_path(root, "/addrs/addr@1337") == addr1);
 
 	addr2 = dt_new_2addr(addrs, "2addr", 0xdead, 0xbeef);
 	assert(!list_top(&addr2->properties, struct dt_property, list));
-	check_path(addr2, "root/addrs/2addr@dead,beef");
+	check_path(addr2, "/addrs/2addr@dead,beef");
 	assert(dt_find_by_name(root, "2addr@dead,beef") == addr2);
 	assert(dt_find_by_path(root, "/addrs/2addr@dead,beef") == addr2);
 
