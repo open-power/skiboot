@@ -165,8 +165,15 @@ DEFINE_LOG_ENTRY(OPAL_RC_I2C_RESET, OPAL_INPUT_OUTPUT_ERR_EVT, OPAL_I2C,
 /* Port busy register */
 #define I2C_PORT_BUYS_REG		0xe
 
+enum p8_i2c_master_type {
+	I2C_POWER8,
+	I2C_CENTAUR,
+	MAX_I2C_TYPE,
+};
+
 struct p8_i2c_master {
 	struct lock		lock;		/* Lock to guard the members */
+	enum p8_i2c_master_type	type;		/* P8 vs. Centaur */
 	uint64_t		poll_interval;	/* Polling interval  */
 	uint64_t		byte_timeout;	/* Timeout per byte */
 	uint64_t		xscom_base;	/* xscom base of i2cm */
@@ -1099,122 +1106,180 @@ void p8_i2c_interrupt(uint32_t chip_id)
 	}
 }
 
-void p8_i2c_init(void)
+static const char *compat[] = {
+	"ibm,power8-i2cm",
+	"ibm,centaur-i2cm"
+};
+
+static void p8_i2c_add_bus_prop(struct p8_i2c_master_port *port)
+{
+	const struct dt_property *c, *p;
+	struct dt_node *np = port->bus.dt_node;
+	char name[32];
+
+	c = dt_find_property(np, "compatible");
+	p = dt_find_property(np, "ibm,port-name");
+
+	if (!c) {
+		if (port->master->type == I2C_POWER8)
+			dt_add_property_strings(np, "compatible",
+						"ibm,power8-i2c-port",
+						"ibm,opal-i2c");
+		else if (port->master->type == I2C_CENTAUR)
+			dt_add_property_strings(np, "compatible",
+						"ibm,centaur-i2c-port",
+						"ibm,opal-i2c");
+	}
+
+	if (!p) {
+		if (port->master->type == I2C_POWER8)
+			snprintf(name, sizeof(name), "p8_%08x_e%dp%d",
+				 port->master->chip_id, port->master->engine_id,
+				 port->port_num);
+		else if (port->master->type == I2C_CENTAUR)
+			snprintf(name, sizeof(name), "cen_%08x_e%dp%d",
+				 port->master->chip_id, port->master->engine_id,
+				 port->port_num);
+
+		dt_add_property_string(np, "ibm,port-name", name);
+	}
+}
+
+static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 {
 	struct p8_i2c_master_port *port;
 	uint32_t lb_freq, count, max_bus_speed;
-	struct dt_node *i2cm, *i2cm_port;
+	struct dt_node *i2cm_port;
 	struct p8_i2c_master *master;
 	struct proc_chip *chip;
 	uint64_t ex_stat;
 	static bool irq_printed;
 	int rc;
 
-	dt_for_each_compatible(dt_root, i2cm, "ibm,power8-i2cm") {
-		master = zalloc(sizeof(*master));
-		if (!master) {
-			log_simple_error(&e_info(OPAL_RC_I2C_INIT), "I2C: "
-				     "Failed to allocate master structure\n");
-			break;
-		}
+	if (type == I2C_CENTAUR) {
+		/* Not supported yet ! No interrupt, possibly diff reg layout... */
+		return;
+	}
 
-		/* Local bus speed in Hz */
-		lb_freq = dt_prop_get_u32(i2cm, "clock-frequency");
+	master = zalloc(sizeof(*master));
+	if (!master) {
+		log_simple_error(&e_info(OPAL_RC_I2C_INIT),
+				 "I2C: Failed to allocate master "
+				 "structure\n");
+		return;
+	}
+	master->type = type;
 
-		/* Initialise the i2c master structure */
-		master->state = state_idle;
-		master->chip_id = dt_get_chip_id(i2cm);
-		master->engine_id = dt_prop_get_u32(i2cm, "chip-engine#");
-		master->xscom_base = dt_get_address(i2cm, 0, NULL);
-		chip = get_chip(master->chip_id);
-		assert(chip);
-		init_timer(&master->timeout, p8_i2c_timeout, master);
-		init_timer(&master->poller, p8_i2c_poll, master);
-		init_timer(&master->recovery, p8_i2c_recover, master);
+	/* Local bus speed in Hz */
+	lb_freq = dt_prop_get_u32(i2cm, "clock-frequency");
 
-		prlog(PR_INFO, "I2C: Chip %08x Eng. %d\n",
-		      master->chip_id, master->engine_id);
+	/* Initialise the i2c master structure */
+	master->state = state_idle;
+	master->chip_id = dt_get_chip_id(i2cm);
+	master->engine_id = dt_prop_get_u32(i2cm, "chip-engine#");
+	master->xscom_base = dt_get_address(i2cm, 0, NULL);
+	chip = get_chip(master->chip_id);
+	assert(chip);
+	init_timer(&master->timeout, p8_i2c_timeout, master);
+	init_timer(&master->poller, p8_i2c_poll, master);
+	init_timer(&master->recovery, p8_i2c_recover, master);
 
-		rc = xscom_read(master->chip_id, master->xscom_base +
-				I2C_EXTD_STAT_REG, &ex_stat);
-		if (rc) {
-			log_simple_error(&e_info(OPAL_RC_I2C_INIT), "I2C: "
-					 "Failed to read EXTD_STAT_REG\n");
-			free(master);
-			break;
-		}
+	prlog(PR_INFO, "I2C: Chip %08x Eng. %d\n",
+	      master->chip_id, master->engine_id);
 
-		master->fifo_size = GETFIELD(I2C_EXTD_STAT_FIFO_SIZE, ex_stat);
-		list_head_init(&master->req_list);
+	rc = xscom_read(master->chip_id, master->xscom_base +
+			I2C_EXTD_STAT_REG, &ex_stat);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_I2C_INIT), "I2C: "
+				 "Failed to read EXTD_STAT_REG\n");
+		free(master);
+		return;
+	}
 
-		/* Check if interrupt is usable */
-		master->irq_ok = p8_i2c_has_irqs();
-		if (!irq_printed) {
-			irq_printed = true;
-			prlog(PR_INFO, "I2C: Interrupts %sfunctional\n",
-			      master->irq_ok ? "" : "non-");
-		}
+	master->fifo_size = GETFIELD(I2C_EXTD_STAT_FIFO_SIZE, ex_stat);
+	list_head_init(&master->req_list);
 
-		/* Program the watermark register */
-		rc = p8_i2c_prog_watermark(master);
-		if (rc) {
-			log_simple_error(&e_info(OPAL_RC_I2C_INIT), "I2C: "
-					 "Failed to program the WATERMARK_REG\n");
-			free(master);
-			break;
-		}
+	/* Check if interrupt is usable */
+	master->irq_ok = p8_i2c_has_irqs();
+	if (!irq_printed) {
+		irq_printed = true;
+		prlog(PR_INFO, "I2C: Interrupts %sfunctional\n",
+		      master->irq_ok ? "" : "non-");
+	}
 
-		/* Allocate ports driven by this master */
-		count = 0;
-		dt_for_each_child(i2cm, i2cm_port)
-			count++;
+	/* Program the watermark register */
+	rc = p8_i2c_prog_watermark(master);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_I2C_INIT),
+				 "I2C: Failed to program the "
+				 "WATERMARK_REG\n");
+		free(master);
+		return;
+	}
 
-		port = zalloc(sizeof(*port) * count);
-		if (!port) {
-			log_simple_error(&e_info(OPAL_RC_I2C_INIT),
-					 "I2C: Insufficient memory\n");
-			free(master);
-			break;
-		}
+	/* Allocate ports driven by this master */
+	count = 0;
+	dt_for_each_child(i2cm, i2cm_port)
+		count++;
 
-		/* Add master to chip's list */
-		list_add_tail(&chip->i2cms, &master->link);
-		max_bus_speed = 0;
+	port = zalloc(sizeof(*port) * count);
+	if (!port) {
+		log_simple_error(&e_info(OPAL_RC_I2C_INIT),
+				 "I2C: Insufficient memory\n");
+		free(master);
+		return;
+	}
 
-		dt_for_each_child(i2cm, i2cm_port) {
-			uint32_t speed;
+	/* Add master to chip's list */
+	list_add_tail(&chip->i2cms, &master->link);
+	max_bus_speed = 0;
 
-			port->port_num = dt_prop_get_u32(i2cm_port, "reg");
-			port->master = master;
-			speed = dt_prop_get_u32(i2cm_port, "bus-frequency");
-			if (speed > max_bus_speed)
-				max_bus_speed = speed;
-			port->bit_rate_div =
-				p8_i2c_get_bit_rate_divisor(lb_freq, speed);
-			port->bus.dt_node = i2cm_port;
-			port->bus.queue_req = p8_i2c_queue_request;
-			port->bus.alloc_req = p8_i2c_alloc_request;
-			port->bus.free_req = p8_i2c_free_request;
-			i2c_add_bus(&port->bus);
-			prlog(PR_INFO, " P%d: <%s> %d kHz\n",
-			      port->port_num,
-			      (char *)dt_prop_get(i2cm_port, "ibm,port-name"),
-			      speed/1000);
-			port++;
-		}
+	dt_for_each_child(i2cm, i2cm_port) {
+		uint32_t speed;
 
-		/* If we have no interrupt, calculate a poll interval, otherwise
-		 * just use a TIMER_POLL timer which will tick on OPAL pollers
-		 * only (which allows us to operate during boot before
-		 * interrupts are functional etc...
-		 */
-		if (master->irq_ok)
-			master->poll_interval = TIMER_POLL;
-		else
-			master->poll_interval =
-				p8_i2c_get_poll_interval(max_bus_speed);
-		master->byte_timeout = master->irq_ok ?
-			msecs_to_tb(I2C_TIMEOUT_IRQ_MS) :
-			msecs_to_tb(I2C_TIMEOUT_POLL_MS);
+		port->port_num = dt_prop_get_u32(i2cm_port, "reg");
+		port->master = master;
+		speed = dt_prop_get_u32(i2cm_port, "bus-frequency");
+		if (speed > max_bus_speed)
+			max_bus_speed = speed;
+		port->bit_rate_div =
+			p8_i2c_get_bit_rate_divisor(lb_freq, speed);
+		port->bus.dt_node = i2cm_port;
+		port->bus.queue_req = p8_i2c_queue_request;
+		port->bus.alloc_req = p8_i2c_alloc_request;
+		port->bus.free_req = p8_i2c_free_request;
+		i2c_add_bus(&port->bus);
+
+		/* Add OPAL properties to the bus node */
+		p8_i2c_add_bus_prop(port);
+		prlog(PR_INFO, " P%d: <%s> %d kHz\n",
+		      port->port_num,
+		      (char *)dt_prop_get(i2cm_port,
+					  "ibm,port-name"), speed/1000);
+		port++;
+	}
+
+	/* If we have no interrupt, calculate a poll interval,
+	 * otherwise just use a TIMER_POLL timer which will tick
+	 * on OPAL pollers only (which allows us to operate
+	 * during boot before interrupts are functional etc...
+	 */
+	if (master->irq_ok)
+		master->poll_interval = TIMER_POLL;
+	else
+		master->poll_interval = p8_i2c_get_poll_interval(max_bus_speed);
+	master->byte_timeout = master->irq_ok ?
+		msecs_to_tb(I2C_TIMEOUT_IRQ_MS) :
+		msecs_to_tb(I2C_TIMEOUT_POLL_MS);
+}
+
+void p8_i2c_init(void)
+{
+	struct dt_node *i2cm;
+	int i;
+
+	for (i = 0; i < MAX_I2C_TYPE; i++) {
+		dt_for_each_compatible(dt_root, i2cm, compat[i])
+			p8_i2c_init_one(i2cm, i);
 	}
 }
