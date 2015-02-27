@@ -598,12 +598,6 @@ void occ_send_dummy_interrupt(void)
 		      OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY);
 }
 
-static void occ_tmgt_interrupt(void)
-{
-	/* Not currently expected */
-	printf("OCC: TMGT interrupt !\n");
-}
-
 void occ_interrupt(uint32_t chip_id)
 {
 	uint64_t ireg;
@@ -623,7 +617,7 @@ void occ_interrupt(uint32_t chip_id)
 
 	/* Dispatch */
 	if (ireg & OCB_OCI_OCIMISC_IRQ_TMGT)
-		occ_tmgt_interrupt();
+		prd_tmgt_interrupt(chip_id);
 
 	/* We may have masked-out OCB_OCI_OCIMISC_IRQ in the previous
 	 * OCCMISC_AND write. Check if there are any new source bits set,
