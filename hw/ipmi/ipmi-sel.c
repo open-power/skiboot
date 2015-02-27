@@ -36,6 +36,7 @@
 /* OEM SEL Commands */
 #define CMD_AMI_POWER		0x04
 #define CMD_AMI_PNOR_ACCESS	0x07
+#define CMD_AMI_OCC_RESET	0x0e
 
 #define SOFT_OFF	        0x00
 #define SOFT_REBOOT	        0x01
@@ -196,6 +197,29 @@ static void sel_power(uint8_t power)
 	}
 }
 
+static uint32_t occ_sensor_id_to_chip(uint8_t sensor, uint32_t *chip)
+{
+	/* todo: lookup sensor ID node in the DT, and map to a chip id */
+	(void)sensor;
+	*chip = 0;
+	return 0;
+}
+
+static void sel_occ_reset(uint8_t sensor)
+{
+	uint32_t chip;
+	int rc;
+
+	rc = occ_sensor_id_to_chip(sensor, &chip);
+	if (rc) {
+		prlog(PR_ERR, "IPMI: SEL message to reset an unknown OCC "
+				"(sensor ID 0x%02x)\n", sensor);
+		return;
+	}
+
+	prd_occ_reset(chip);
+}
+
 static void dump_sel(struct oem_sel *sel)
 {
 	const int level = PR_DEBUG;
@@ -242,6 +266,9 @@ void ipmi_parse_sel(struct ipmi_msg *msg)
 	switch (sel.cmd) {
 	case CMD_AMI_POWER:
 		sel_power(sel.data[0]);
+		break;
+	case CMD_AMI_OCC_RESET:
+		sel_occ_reset(sel.data[0]);
 		break;
 	case CMD_AMI_PNOR_ACCESS:
 		break;
