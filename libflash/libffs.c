@@ -19,6 +19,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef __SKIBOOT__
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 #include <ccan/endian/endian.h>
 
 #include "libffs.h"
@@ -144,12 +149,84 @@ int ffs_open_flash(struct flash_chip *chip, uint32_t offset,
 	return rc;
 }
 
-#if 0 /* XXX TODO: For FW updates so we can copy nvram around */
-int ffs_open_image(void *image, uint32_t size, uint32_t offset,
-		   struct ffs_handle **ffs)
+/* ffs_open_image is Linux only as it uses lseek, which skiboot does not
+ * implement */
+#ifndef __SKIBOOT__
+int ffs_open_image(int fd, uint32_t size, uint32_t offset,
+		   struct ffs_handle **ffsh)
 {
+	struct ffs_hdr hdr;
+	struct ffs_handle *f;
+	int rc;
+
+	if (!ffsh)
+		return FLASH_ERR_PARM_ERROR;
+	*ffsh = NULL;
+
+	if (fd < 0)
+		return FLASH_ERR_PARM_ERROR;
+
+	if ((offset + size) < offset)
+		return FLASH_ERR_PARM_ERROR;
+
+	/* Read flash header */
+	rc = lseek(fd, offset, SEEK_SET);
+	if (rc < 0)
+		return FLASH_ERR_PARM_ERROR;
+
+	rc = read(fd, &hdr, sizeof(hdr));
+	if (rc != sizeof(hdr))
+		return FLASH_ERR_BAD_READ;
+
+	/* Allocate ffs_handle structure and start populating */
+	f = malloc(sizeof(*f));
+	if (!f)
+		return FLASH_ERR_MALLOC_FAILED;
+	memset(f, 0, sizeof(*f));
+	f->type = ffs_type_image;
+	f->flash_offset = offset;
+	f->max_size = size;
+	f->chip = NULL;
+
+	/* Convert and check flash header */
+	rc = ffs_check_convert_header(&f->hdr, &hdr);
+	if (rc) {
+		FL_ERR("FFS: Error %d checking flash header\n", rc);
+		free(f);
+		return rc;
+	}
+
+	/*
+	 * Decide how much of the image to grab to get the whole
+	 * partition map.
+	 */
+	f->cached_size = f->hdr.block_size * f->hdr.size;
+	FL_DBG("FFS: Partition map size: 0x%x\n", f->cached_size);
+
+	/* Allocate cache */
+	f->cache = malloc(f->cached_size);
+	if (!f->cache) {
+		free(f);
+		return FLASH_ERR_MALLOC_FAILED;
+	}
+
+	/* Read the cached map */
+	rc = lseek(fd, offset, SEEK_SET);
+	if (rc < 0)
+		return FLASH_ERR_PARM_ERROR;
+
+	rc = read(fd, f->cache, f->cached_size);
+	if (rc != f->cached_size) {
+		FL_ERR("FFS: Error %d reading flash partition map\n", rc);
+		free(f);
+		return FLASH_ERR_BAD_READ;
+	}
+
+	*ffsh = f;
+
+	return 0;
 }
-#endif
+#endif /*!__SKIBOOT__*/
 
 void ffs_close(struct ffs_handle *ffs)
 {
