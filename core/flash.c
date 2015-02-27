@@ -323,7 +323,7 @@ static int64_t opal_flash_op(enum flash_op op, uint64_t id, uint64_t offset,
 
 err:
 	unlock(&flash_lock);
-	return OPAL_HARDWARE;
+	return rc;
 }
 
 static int64_t opal_flash_read(uint64_t id, uint64_t offset, uint64_t buf,
