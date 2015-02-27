@@ -20,11 +20,12 @@
 #include <skiboot.h>
 #include <string.h>
 
-/* This field controls whether the sensor reading byte is written or left
- * unchanged according to the sensor */
-#define IPMI_WRITE_SENSOR 0x01
+#define IPMI_WRITE_SENSOR	 (1 << 1)
+#define IPMI_SET_ASSERTION	 (1 << 5)
+#define IPMI_ASSERTION_STATE(state) (1 << state)
 
-#define FW_PROGRESS_SENSOR     0x0F
+#define FW_PROGRESS_SENSOR	0x0F
+#define BOOT_COUNT_SENSOR	0xAA
 
 /* Ghetto. TODO: Do something smarter */
 int16_t sensors[255];
@@ -34,6 +35,27 @@ struct set_sensor_req {
         u8 operation;
         u8 reading[8];
 };
+
+int ipmi_set_boot_count(void)
+{
+	struct set_sensor_req req;
+	struct ipmi_msg *msg;
+
+	memset(&req, 0, sizeof(req));
+
+	req.sensor = BOOT_COUNT_SENSOR;
+	/* Set assertion bit */
+	req.operation = IPMI_SET_ASSERTION;
+	/* Set state 2 */
+	req.reading[1] = IPMI_ASSERTION_STATE(2);
+
+	/* We just need the first 4 bytes */
+	msg = ipmi_mkmsg_simple(IPMI_SET_SENSOR_READING, &req, 4);
+	if (!msg)
+		return OPAL_HARDWARE;
+
+	return ipmi_queue_msg(msg);
+}
 
 int ipmi_set_fw_progress_sensor(uint8_t state)
 {
