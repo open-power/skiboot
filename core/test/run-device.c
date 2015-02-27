@@ -54,6 +54,7 @@ int main(void)
 	unsigned int n;
 	char *s;
 	size_t sz;
+	u32 phandle;
 
 	root = dt_new_root("");
 	assert(!list_top(&root->properties, struct dt_property, list));
@@ -240,6 +241,61 @@ int main(void)
 	list_check(&c1->properties, "properties after delete");
 
 	/* No leaks for valgrind! */
+	dt_free(root);
+
+	/* Test compatible and chip id. */
+	root = dt_new_root("");
+
+	c1 = dt_new(root, "chip1");
+	dt_add_property_cells(c1, "ibm,chip-id", 0xcafe);
+	assert(dt_get_chip_id(c1) == 0xcafe);
+	dt_add_property_strings(c1, "compatible",
+				"specific-fake-chip",
+				"generic-fake-chip");
+	assert(dt_node_is_compatible(c1, "specific-fake-chip"));
+	assert(dt_node_is_compatible(c1, "generic-fake-chip"));
+
+	c2 = dt_new(root, "chip2");
+	dt_add_property_cells(c2, "ibm,chip-id", 0xbeef);
+	assert(dt_get_chip_id(c2) == 0xbeef);
+	dt_add_property_strings(c2, "compatible",
+				"specific-fake-bus",
+				"generic-fake-bus");
+
+	gc1 = dt_new(c1, "coprocessor1");
+	dt_add_property_strings(gc1, "compatible",
+				"specific-fake-coprocessor");
+
+	gc2 = dt_new(c1, "node-without-compatible");
+	assert(__dt_find_property(gc2, "compatible") == NULL);
+	assert(!dt_node_is_compatible(gc2, "any-property"));
+
+	assert(dt_find_compatible_node(root, NULL, "generic-fake-bus") == c2);
+	assert(dt_find_compatible_node(root, c2, "generic-fake-bus") == NULL);
+
+	/* we can find the coprocessor once on the cpu */
+	assert(dt_find_compatible_node_on_chip(root,
+					       NULL,
+					       "specific-fake-coprocessor",
+					       0xcafe) == gc1);
+	assert(dt_find_compatible_node_on_chip(root,
+					       gc1,
+					       "specific-fake-coprocessor",
+					       0xcafe) == NULL);
+
+	/* we can't find the coprocessor on the bus */
+	assert(dt_find_compatible_node_on_chip(root,
+					       NULL,
+					       "specific-fake-coprocessor",
+					       0xbeef) == NULL);
+
+	/* Test phandles. We override the automatically generated one. */
+	phandle = 0xf00;
+	dt_add_property(gc2, "phandle", (const void *)&phandle, 4);
+	assert(last_phandle == 0xf00);
+	assert(dt_find_by_phandle(root, 0xf00) == gc2);
+	assert(dt_find_by_phandle(root, 0xf0f) == NULL);
+
 	dt_free(root);
 	return 0;
 }
