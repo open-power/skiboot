@@ -537,6 +537,34 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 	}
 }
 
+#define PV_OCC_GP0		0x01000000
+#define PV_OCC_GP0_AND		0x01000004
+#define PV_OCC_GP0_OR		0x01000005
+#define PV_OCC_GP0_PNOR_OWNER	PPC_BIT(18) /* 1 = OCC / Host, 0 = BMC */
+
+static void occ_pnor_set_one_owner(uint32_t chip_id, enum pnor_owner owner)
+{
+	uint64_t reg, mask;
+
+	if (owner == PNOR_OWNER_HOST) {
+		reg = PV_OCC_GP0_OR;
+		mask = PV_OCC_GP0_PNOR_OWNER;
+	} else {
+		reg = PV_OCC_GP0_AND;
+		mask = ~PV_OCC_GP0_PNOR_OWNER;
+	}
+
+	xscom_write(chip_id, reg, mask);
+}
+
+void occ_pnor_set_owner(enum pnor_owner owner)
+{
+	struct proc_chip *chip;
+
+	for_each_chip(chip)
+		occ_pnor_set_one_owner(chip->id, owner);
+}
+
 static bool fsp_occ_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
 	u32 dbob_id, seq_id;

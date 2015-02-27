@@ -221,6 +221,13 @@ extern void occ_send_dummy_interrupt(void);
 /* OCC load support */
 extern void occ_poke_load_queue(void);
 
+/* OCC/Host PNOR ownership */
+enum pnor_owner {
+	PNOR_OWNER_HOST,
+	PNOR_OWNER_EXTERNAL,
+};
+extern void occ_pnor_set_owner(enum pnor_owner owner);
+
 /* PRD */
 extern void prd_psi_interrupt(uint32_t proc);
 extern void prd_tmgt_interrupt(uint32_t proc);

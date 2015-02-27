@@ -195,6 +195,8 @@ static void sel_pnor(uint8_t access)
 	case REQUEST_PNOR:
 		prlog(PR_NOTICE, "IPMI: PNOR access requested\n");
 		granted = flash_reserve();
+		if (granted)
+			occ_pnor_set_owner(PNOR_OWNER_EXTERNAL);
 
 		/* Ack the request */
 		msg = ipmi_mkmsg_simple(IPMI_PNOR_ACCESS_STATUS, &granted, 1);
@@ -203,6 +205,7 @@ static void sel_pnor(uint8_t access)
 	case RELEASE_PNOR:
 		prlog(PR_NOTICE, "IPMI: PNOR access released\n");
 		flash_release();
+		occ_pnor_set_owner(PNOR_OWNER_HOST);
 		break;
 	default:
 		prlog(PR_ERR, "IPMI: invalid PNOR access requested: %02x\n",
