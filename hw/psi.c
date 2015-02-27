@@ -298,7 +298,7 @@ static void handle_extra_interrupt(struct psi *psi)
 		p8_i2c_interrupt(psi->chip_id);
 	}
 	if (val & PSIHB_IRQ_STAT_LOCAL_ERR)
-		printf("PSI: ATTN irq received\n");
+		prd_psi_interrupt(psi->chip_id);
 	if (val & PSIHB_IRQ_STAT_HOST_ERR) {
 		if (platform.external_irq)
 			platform.external_irq(psi->chip_id);

@@ -77,3 +77,48 @@ perform a shutdown in the future.
 
 The host OS can use the separate API OPAL_GET_DPO_STATUS to query OPAL for the
 number of seconds before a forced shutdown will occur.
+
+OPAL_MSG_PRD
+------------
+
+This message is a OPAL-to-HBRT notification, and contains a
+struct opal_prd_msg:
+
+	enum opal_prd_msg_type {
+		OPAL_PRD_MSG_TYPE_INIT = 0,	/* HBRT --> OPAL */
+		OPAL_PRD_MSG_TYPE_FINI,		/* HBRT --> OPAL */
+		OPAL_PRD_MSG_TYPE_ATTN,		/* HBRT <-- OPAL */
+		OPAL_PRD_MSG_TYPE_ATTN_ACK,	/* HBRT --> OPAL */
+		OPAL_PRD_MSG_TYPE_OCC_ERROR,	/* HBRT <-- OPAL */
+		OPAL_PRD_MSG_TYPE_OCC_RESET,	/* HBRT <-- OPAL */
+	};
+
+	struct opal_prd_msg {
+		uint8_t		type;
+		uint8_t		pad[3];
+		__be32		token;
+		union {
+			struct {
+				__be64	version;
+				__be64	ipoll;
+			} init;
+			struct {
+				__be64	proc;
+				__be64	ipoll_status;
+				__be64	ipoll_mask;
+			} attn;
+			struct {
+				__be64	proc;
+				__be64	ipoll_ack;
+			} attn_ack;
+			struct {
+				__be64	chip;
+			} occ_error;
+			struct {
+				__be64	chip;
+			} occ_reset;
+		};
+	};
+
+Responses from the kernel use the same message format, but are passed
+through the opal_prd_msg call.

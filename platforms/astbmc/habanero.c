@@ -38,6 +38,8 @@ static bool habanero_probe(void)
 	/* Lot of common early inits here */
 	astbmc_early_init();
 
+	prd_init();
+
 	return true;
 }
 
