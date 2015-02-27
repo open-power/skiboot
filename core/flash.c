@@ -148,7 +148,7 @@ static void flash_add_dt_partition_node(struct dt_node *flash_node, char *name,
 		dt_add_property_strings(part_node, "label", name);
 }
 
-static void flash_add_dt_node(struct flash *flash, int id,
+static struct dt_node *flash_add_dt_node(struct flash *flash, int id,
 		struct ffs_handle *ffs)
 {
 	struct dt_node *flash_node;
@@ -166,7 +166,7 @@ static void flash_add_dt_node(struct flash *flash, int id,
 	dt_add_property_cells(flash_node, "#size-cells", 1);
 
 	if (!ffs)
-		return;
+		return flash_node;
 
 	for (i = 0; ; i++) {
 		uint32_t start, size;
@@ -179,12 +179,38 @@ static void flash_add_dt_node(struct flash *flash, int id,
 
 		flash_add_dt_partition_node(flash_node, name, start, size);
 	}
+
+	return flash_node;
+}
+
+static void setup_system_flash(struct flash *flash, struct dt_node *node,
+		const char *name, struct ffs_handle *ffs)
+{
+	if (system_flash) {
+		prlog(PR_WARNING, "FLASH: attempted to register a second "
+				"system flash device %s\n", name);
+		return;
+	}
+
+	if (!ffs) {
+		prlog(PR_WARNING, "FLASH: attempted to register system flash "
+				"%s, wwhich has no partition info\n", name);
+		return;
+	}
+
+	system_flash = flash;
+	dt_add_property_string(dt_chosen, "ibm,system-flash", node->name);
+
+	prlog(PR_INFO, "FLASH: registered system flash device %s\n", name);
+
+	flash_nvram_probe(flash, ffs);
 }
 
 int flash_register(struct flash_chip *chip, bool is_system_flash)
 {
 	uint32_t size, block_size;
 	struct ffs_handle *ffs;
+	struct dt_node *node;
 	struct flash *flash;
 	const char *name;
 	unsigned int i;
@@ -224,14 +250,13 @@ int flash_register(struct flash_chip *chip, bool is_system_flash)
 		ffs = NULL;
 	}
 
-	flash_add_dt_node(flash, i, ffs);
+	node = flash_add_dt_node(flash, i, ffs);
 
-	if (is_system_flash && !system_flash) {
-		system_flash = flash;
-		flash_nvram_probe(flash, ffs);
-	}
+	if (is_system_flash)
+		setup_system_flash(flash, node, name, ffs);
 
-	ffs_close(ffs);
+	if (ffs)
+		ffs_close(ffs);
 
 	unlock(&flash_lock);
 
