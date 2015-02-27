@@ -52,6 +52,8 @@ int main(void)
 	const struct dt_property *p;
 	struct dt_property *p2;
 	unsigned int n;
+	char *s;
+	size_t sz;
 
 	root = dt_new_root("");
 	assert(!list_top(&root->properties, struct dt_property, list));
@@ -126,14 +128,40 @@ int main(void)
 	}
 	assert(n == 9);
 
+	/* Test cells */
 	dt_add_property_cells(c1, "some-property", 1, 2, 3);
 	p = dt_find_property(c1, "some-property");
 	assert(p);
 	assert(strcmp(p->name, "some-property") == 0);
 	assert(p->len == sizeof(u32) * 3);
 	assert(fdt32_to_cpu(*(u32 *)p->prop) == 1);
+	assert(dt_prop_get_cell(c1, "some-property", 0) == 1);
 	assert(fdt32_to_cpu(*((u32 *)p->prop + 1)) == 2);
+	assert(dt_prop_get_cell(c1, "some-property", 1) == 2);
 	assert(fdt32_to_cpu(*((u32 *)p->prop + 2)) == 3);
+	assert(dt_prop_get_cell_def(c1, "some-property", 2, 42) == 3);
+
+	assert(dt_prop_get_cell_def(c1, "not-a-property", 2, 42) == 42);
+
+	/* Test u64s */
+	dt_add_property_u64s(c2, "some-property", (2LL << 33), (3LL << 33), (4LL << 33));
+	p = dt_find_property(c2, "some-property");
+	assert(p);
+	assert(p->len == sizeof(u64) * 3);
+	assert(fdt64_to_cpu(*(u64 *)p->prop) == (2LL << 33));
+	assert(fdt64_to_cpu(*((u64 *)p->prop + 1)) == (3LL << 33));
+	assert(fdt64_to_cpu(*((u64 *)p->prop + 2)) == (4LL << 33));
+
+	/* Test u32/u64 get defaults */
+	assert(dt_prop_get_u32_def(c1, "u32", 42) == 42);
+	dt_add_property_cells(c1, "u32", 1337);
+	assert(dt_prop_get_u32_def(c1, "u32", 42) == 1337);
+	assert(dt_prop_get_u32(c1, "u32") == 1337);
+
+	assert(dt_prop_get_u64_def(c1, "u64", (42LL << 42)) == (42LL << 42));
+	dt_add_property_u64s(c1, "u64", (1337LL << 42));
+	assert(dt_prop_get_u64_def(c1, "u64", (42LL << 42)) == (1337LL << 42));
+	assert(dt_prop_get_u64(c1, "u64") == (1337LL << 42));
 
 	/* Test freeing a single node */
 	assert(!list_empty(&gc1->children));
@@ -153,6 +181,48 @@ int main(void)
 	assert(!dt_has_node_property(ggc1, "somestrin", "someval"));
 	assert(!dt_has_node_property(ggc1, "somestring", "someva"));
 	assert(!dt_has_node_property(ggc1, "somestring", "somevale"));
+
+	/* Test nstr, which allows for non-null-terminated inputs */
+	dt_add_property_nstr(ggc1, "nstring", "somevalue_long", 7);
+	assert(dt_has_node_property(ggc1, "nstring", "someval"));
+	assert(!dt_has_node_property(ggc1, "nstring", "someva"));
+	assert(!dt_has_node_property(ggc1, "nstring", "somevalue_long"));
+
+	/* Test multiple strings */
+	dt_add_property_strings(ggc1, "somestrings",
+				"These", "are", "strings!");
+	p = dt_find_property(ggc1, "somestrings");
+	assert(p);
+	assert(p->len == sizeof(char) * (6 + 4 + 9));
+	s = (char *)p->prop;
+	assert(strcmp(s, "These") == 0);
+	assert(strlen(s) == 5);
+	s += 6;
+	assert(strcmp(s, "are") == 0);
+	assert(strlen(s) == 3);
+	s += 4;
+	assert(strcmp(s, "strings!") == 0);
+	assert(strlen(s) == 8);
+	s += 9;
+	assert(s == (char *)p->prop + p->len);
+	assert(dt_prop_find_string(p, "These"));
+	/* dt_prop_find_string is case insensitve */
+	assert(dt_prop_find_string(p, "ARE"));
+	assert(!dt_prop_find_string(p, "integers!"));
+	/* And always returns false for NULL properties */
+	assert(!dt_prop_find_string(NULL, "anything!"));
+
+	/* Test more get/get_def varieties */
+	assert(dt_prop_get_def(c1, "does-not-exist", NULL) == NULL);
+	sz = 0xbad;
+	assert(dt_prop_get_def_size(c1, "does-not-exist", NULL, &sz) == NULL);
+	assert(sz == 0);
+	dt_add_property_string(c1, "another-property", "xyzzy");
+	assert(dt_prop_get_def(c1, "another-property", NULL) != NULL);
+	assert(strcmp(dt_prop_get(c1, "another-property"), "xyzzy") == 0);
+	n = 0xbad;
+	assert(dt_prop_get_def_size(c1, "another-property", NULL, &sz) != NULL);
+	assert(sz == strlen("xyzzy") + 1);
 
 	/* Test resizing property. */
 	p = p2 = __dt_find_property(c1, "some-property");
