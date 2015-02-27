@@ -21,6 +21,7 @@
 #include <pci.h>
 #include <pci-cfg.h>
 #include <chip.h>
+#include <hostservices.h>
 
 #include "ibm-fsp.h"
 #include "lxvpd.h"
@@ -384,10 +385,24 @@ static uint32_t ibm_fsp_occ_timeout(void)
 	return 60;
 }
 
+static void firenze_init(void)
+{
+	/* We call hservices_init to relocate the hbrt image now, as the FSP
+	 * may request an OCC load any time after ibm_fsp_init.
+	 */
+	hservices_init();
+
+	ibm_fsp_init();
+
+	/* Preload hostservices lids */
+	hservices_lid_preload();
+
+}
+
 DECLARE_PLATFORM(firenze) = {
 	.name			= "Firenze",
 	.probe			= firenze_probe,
-	.init			= ibm_fsp_init,
+	.init			= firenze_init,
 	.cec_power_down		= ibm_fsp_cec_power_down,
 	.cec_reboot		= ibm_fsp_cec_reboot,
 	.pci_setup_phb		= firenze_setup_phb,

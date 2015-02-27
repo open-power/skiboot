@@ -42,7 +42,6 @@
 #include <fsi-master.h>
 #include <centaur.h>
 #include <libfdt/libfdt.h>
-#include <hostservices.h>
 #include <timer.h>
 
 #include <ipmi.h>
@@ -590,9 +589,6 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 
 	/* Reserve HOMER and OCC area */
 	homer_init();
-
-	/* Initialize host services. */
-	hservices_init();
 
 	/* Add the /opal node to the device-tree */
 	add_opal_node();
