@@ -5,6 +5,9 @@ LDFLAGS = -m64
 ASFLAGS = -m64
 CPPFLAGS = -I. -I../../include -I../../
 
+prefix = /usr/local/
+sbindir = $(prefix)/sbin
+
 # Use make V=1 for a verbose build.
 ifndef V
         Q_CC=	@echo '    CC ' $@;
@@ -49,6 +52,9 @@ test: test/test_pnor
 
 test/test_pnor: test/test_pnor.o pnor.o libflash/libflash.o libflash/libffs.o
 	$(Q_LINK)$(LINK.o) -o $@ $^
+
+install: all
+	install -D opal-prd $(DESTDIR)$(sbindir)/opal-prd
 
 clean:
 	$(RM) *.[odsa] opal-prd
