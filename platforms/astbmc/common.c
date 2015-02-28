@@ -213,6 +213,37 @@ static void astbmc_fixup_dt_uart(struct dt_node *lpc)
 	dt_add_property_cells(uart, "ibm,irq-chip-id", dt_get_chip_id(lpc));
 }
 
+static void del_compatible(struct dt_node *node)
+{
+	struct dt_property *prop;
+
+	prop = __dt_find_property(node, "compatible");
+	if (prop)
+		dt_del_property(node, prop);
+}
+
+
+static void astbmc_fixup_bmc_sensors(void)
+{
+	struct dt_node *parent, *node;
+
+	parent = dt_find_by_path(dt_root, "bmc");
+	if (!parent)
+		return;
+	del_compatible(parent);
+
+	parent = dt_find_by_name(parent, "sensors");
+	if (!parent)
+		return;
+	del_compatible(parent);
+
+	dt_for_each_child(parent, node) {
+		if (dt_find_property(node, "compatible"))
+			continue;
+		dt_add_property_string(node, "compatible", "ibm,ipmi-sensor");
+	}
+}
+
 static void astbmc_fixup_dt(void)
 {
 	struct dt_node *n, *primary_lpc = NULL;
@@ -237,6 +268,8 @@ static void astbmc_fixup_dt(void)
 	/* The pel logging code needs a system-id property to work so
 	   make sure we have one. */
 	astbmc_fixup_dt_system_id();
+
+	astbmc_fixup_bmc_sensors();
 }
 
 static void astbmc_fixup_psi_bar(void)
