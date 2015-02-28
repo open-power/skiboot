@@ -24,8 +24,8 @@
 #define IPMI_SET_ASSERTION	 (1 << 5)
 #define IPMI_ASSERTION_STATE(state) (1 << state)
 
-#define FW_PROGRESS_SENSOR	0x0F
-#define BOOT_COUNT_SENSOR	0xAA
+#define FW_PROGRESS_SENSOR_TYPE	0x0F
+#define BOOT_COUNT_SENSOR_TYPE	0xAA
 
 /* Ghetto. TODO: Do something smarter */
 int16_t sensors[255];
@@ -40,10 +40,17 @@ int ipmi_set_boot_count(void)
 {
 	struct set_sensor_req req;
 	struct ipmi_msg *msg;
+	int sensor_id;
+
+	sensor_id = sensors[BOOT_COUNT_SENSOR_TYPE];
+	if (sensor_id < 0) {
+                prlog(PR_DEBUG, "SENSOR: boot count set but not present\n");
+                return OPAL_HARDWARE;
+	}
 
 	memset(&req, 0, sizeof(req));
 
-	req.sensor = BOOT_COUNT_SENSOR;
+	req.sensor = sensor_id;
 	/* Set assertion bit */
 	req.operation = IPMI_SET_ASSERTION;
 	/* Set state 2 */
@@ -59,7 +66,7 @@ int ipmi_set_boot_count(void)
 
 int ipmi_set_fw_progress_sensor(uint8_t state)
 {
-       int fw_sensor_id = sensors[FW_PROGRESS_SENSOR];
+       int fw_sensor_id = sensors[FW_PROGRESS_SENSOR_TYPE];
 
         if (fw_sensor_id < 0) {
                 prlog(PR_DEBUG, "SENSOR: fw progress set but not present\n");
@@ -102,23 +109,26 @@ int ipmi_set_sensor(uint8_t sensor, uint8_t *reading, size_t len)
 
 void ipmi_sensor_init(void)
 {
+	const struct dt_property *type_prop, *num_prop;
+	uint8_t num, type;
 	struct dt_node *n;
-	const struct dt_property *type, *num;
 
 	memset(sensors, -1, sizeof(sensors));
 
 	dt_for_each_compatible(dt_root, n, "ibm,ipmi-sensor") {
-		type = dt_find_property(n, "ipmi-sensor-type");
-		if (!type) {
+		type_prop = dt_find_property(n, "ipmi-sensor-type");
+		if (!type_prop) {
 			prerror("IPMI: sensor doesn't have ipmi-sensor-type\n");
 			continue;
 		}
 
-		num = dt_find_property(n, "reg");
-		if (!num) {
+		num_prop = dt_find_property(n, "reg");
+		if (!num_prop) {
 			prerror("IPMI: sensor doesn't have reg property\n");
 			continue;
 		}
-		sensors[(uint8_t)num->prop[0]] = type->prop[0];
+		num = (uint8_t)dt_property_get_cell(num_prop, 0);
+		type = (uint8_t)dt_property_get_cell(type_prop, 0);
+		sensors[type] = num;
 	}
 }
