@@ -18,6 +18,8 @@
 
 #include <stdint.h>
 
+#include <ccan/endian/endian.h>
+
 #include "libflash.h"
 #include "ecc.h"
 
@@ -141,7 +143,7 @@ static uint8_t eccverify(uint64_t data, uint8_t ecc)
  */
 uint8_t eccmemcpy(uint64_t *dst, uint64_t *src, uint32_t len)
 {
-	uint64_t *data;
+	beint64_t *data;
 	uint8_t *ecc;
 	uint32_t i;
 	uint8_t badbit;
@@ -157,20 +159,21 @@ uint8_t eccmemcpy(uint64_t *dst, uint64_t *src, uint32_t len)
 	len >>= 3;
 
 	for (i = 0; i < len; i++) {
-		data = (uint64_t *)((uint8_t *)src + i*9);
+		data = (beint64_t *)((uint8_t *)src + i * 9);
 		ecc = (uint8_t *)data + 8;
 
-		badbit = eccverify(*data, *ecc);
+		badbit = eccverify(be64_to_cpu(*data), *ecc);
 		if (badbit == UE) {
 			FL_ERR("ECC: uncorrectable error: %016lx %02x\n",
-				(long unsigned int)*data, *ecc);
+				(long unsigned int)be64_to_cpu(*data), *ecc);
 			return badbit;
 		}
 		*dst = *data;
 		if (badbit <= UE)
 			FL_INF("ECC: correctable error: %i\n", badbit);
 		if (badbit < 64)
-			*dst = *data ^ (1ul << (63 - badbit));
+			*dst = (uint64_t)cpu_to_be64(be64_to_cpu(*data) ^
+					(1ul << (63 - badbit)));
 		dst++;
 	}
 	return GD;
