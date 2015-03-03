@@ -99,12 +99,12 @@ static uint8_t syndromematrix[] = {
 static uint8_t eccgenerate(uint64_t data)
 {
 	int i;
-        uint8_t result = 0;
+	uint8_t result = 0;
 
-        for (i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 		result |= __builtin_parityl(eccmatrix[i] & data) << i;
 
-        return result;
+	return result;
 }
 
 /**
@@ -121,7 +121,7 @@ static uint8_t eccgenerate(uint64_t data)
  */
 static uint8_t eccverify(uint64_t data, uint8_t ecc)
 {
-        return syndromematrix[eccgenerate(data) ^ ecc];
+	return syndromematrix[eccgenerate(data) ^ ecc];
 }
 
 /**
@@ -172,6 +172,6 @@ uint8_t eccmemcpy(uint64_t *dst, uint64_t *src, uint32_t len)
 		if (badbit < 64)
 			*dst = *data ^ (1ul << (63 - badbit));
 		dst++;
-        }
-        return GD;
+	}
+	return GD;
 }
