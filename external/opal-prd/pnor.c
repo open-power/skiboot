@@ -240,11 +240,16 @@ out:
 	return rc;
 }
 
+/* Similar to read(2), this performs partial operations where the number of
+ * bytes read/written may be less than size.
+ *
+ * Returns number of bytes written, or a negative value on failure. */
 int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
-		   void *data, size_t size, enum pnor_op op)
+		   void *data, size_t requested_size, enum pnor_op op)
 {
 	int rc, fd;
 	uint32_t pstart, psize, idx;
+	int size;
 
 	if (!pnor->ffsh) {
 		warnx("PNOR: ffs not initialised");
@@ -263,9 +268,23 @@ int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
 		return -ENOENT;
 	}
 
-	if (size > psize || offset > psize || size + offset > psize) {
-		warnx("PNOR: offset (%ld) or size (%ld) out of bounds (%d)",
-		      offset, size, psize);
+	if (offset > psize) {
+		warnx("PNOR: offset (%ld) out of bounds (%d)", offset, psize);
+		return -ERANGE;
+	}
+
+	/* Large requests are trimmed */
+	if (requested_size > psize)
+		size = psize;
+	else
+		size = requested_size;
+
+	if (size + offset > psize)
+		size = psize - offset;
+
+	if (size < 0) {
+		warnx("PNOR: size (%zd) and offset (%ld) out of bounds (%d)",
+				requested_size, offset, psize);
 		return -ERANGE;
 	}
 
@@ -297,11 +316,8 @@ int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
 	if (rc < 0)
 		warn("PNOR: MTD operation failed");
 	else if (rc != size)
-		warnx("PNOR: mtd operation returned %d, expected %zd",
+		warnx("PNOR: mtd operation returned %d, expected %d",
 				rc, size);
-	else
-		rc = 0;
-
 
 out:
 	close(fd);

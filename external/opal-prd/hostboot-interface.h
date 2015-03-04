@@ -170,7 +170,7 @@ struct host_interfaces {
 	 * @param[in] i_offset: offset within the partition
 	 * @param[out] o_data: pointer to the data read
 	 * @param[in] i_sizeBytes: size of data to read
-	 * @retval rc - non-zero on error
+	 * @retval rc - number of bytes read, or non-zero on error
 	 * @platform OpenPOWER
 	 */
 	int (*pnor_read) ( uint32_t i_proc, const char* i_partitionName,
@@ -183,7 +183,7 @@ struct host_interfaces {
 	 * @param[in] i_offset: offset withing the partition
 	 * @param[in] i_data: pointer to the data to write
 	 * @param[in] i_sizeBytes: size of data to write
-	 * @retval rc - non-zero on error
+	 * @retval rc - number of bytes written, or non-zero on error
 	 * @platform OpenPOWER
 	 */
 	int (*pnor_write) ( uint32_t i_proc, const char* i_partitionName,
