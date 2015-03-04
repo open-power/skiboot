@@ -174,7 +174,7 @@ int flash_read_corrected(struct flash_chip *c, uint32_t pos, void *buf,
 		pos += ECC_BUFFER_SIZE(copylen);
 	}
 
-	return 0;
+	rc = 0;
 
 err:
 	free(bufecc);
