@@ -294,18 +294,12 @@ int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
 		return fd;
 	}
 
-	rc = lseek(fd, pstart, SEEK_SET);
-	if (rc < 0) {
-		perror(pnor->path);
-		goto out;
-	}
-
 	switch (op) {
 	case PNOR_OP_READ:
-		rc = mtd_read(pnor, fd, data, offset, size);
+		rc = mtd_read(pnor, fd, data, pstart + offset, size);
 		break;
 	case PNOR_OP_WRITE:
-		rc = mtd_write(pnor, fd, data, offset, size);
+		rc = mtd_write(pnor, fd, data, pstart + offset, size);
 		break;
 	default:
 		rc  = -EIO;
