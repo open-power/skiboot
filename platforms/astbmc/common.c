@@ -88,6 +88,25 @@ static void astbmc_ipmi_setenables(void)
 
 }
 
+static int astbmc_fru_init(void)
+{
+	const struct dt_property *prop;
+	struct dt_node *node;
+	uint8_t fru_id;
+
+	node = dt_find_by_path(dt_root, "bmc");
+	if (!node)
+		return -1;
+
+	prop = dt_find_property(node, "firmware-fru-id");
+	if (!prop)
+		return -1;
+
+	fru_id = dt_property_get_cell(prop, 0) & 0xff;
+	ipmi_fru_init(fru_id);
+	return 0;
+}
+
 
 void astbmc_init(void)
 {
@@ -99,7 +118,7 @@ void astbmc_init(void)
 	ipmi_wdt_init();
 	ipmi_rtc_init();
 	ipmi_opal_init();
-	ipmi_fru_init(0x01);
+	astbmc_fru_init();
 	elog_init();
 	ipmi_sensor_init();
 
