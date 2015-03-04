@@ -139,6 +139,8 @@ name##_thunk:									;\
 	.llong name
 #endif
 
+#define DISABLED_THUNK(name) .llong 0x0
+
 	/* Here's the callback table generation. It creates the table and
 	 * all the thunks for all the callbacks from HBRT to us
 	 */
@@ -155,15 +157,15 @@ hinterface:
 	CALLBACK_THUNK(hservice_malloc)
 	CALLBACK_THUNK(hservice_free)
 	CALLBACK_THUNK(hservice_realloc)
-	CALLBACK_THUNK(hservice_send_error_log)
+	DISABLED_THUNK(hservice_send_error_log)
 	CALLBACK_THUNK(hservice_scom_read)
 	CALLBACK_THUNK(hservice_scom_write)
-	CALLBACK_THUNK(hservice_lid_load)
-	CALLBACK_THUNK(hservice_lid_unload)
+	DISABLED_THUNK(hservice_lid_load)
+	DISABLED_THUNK(hservice_lid_unload)
 	CALLBACK_THUNK(hservice_get_reserved_mem)
-	CALLBACK_THUNK(hservice_wakeup)
+	DISABLED_THUNK(hservice_wakeup)
 	CALLBACK_THUNK(hservice_nanosleep)
-	CALLBACK_THUNK(hservice_report_occ_failure)
+	DISABLED_THUNK(hservice_report_occ_failure)
 	CALLBACK_THUNK(hservice_clock_gettime)
 	CALLBACK_THUNK(hservice_pnor_read)
 	CALLBACK_THUNK(hservice_pnor_write)
