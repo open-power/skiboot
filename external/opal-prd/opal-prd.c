@@ -316,8 +316,8 @@ int hservice_pnor_write(uint32_t i_proc, const char* i_partitionName,
 			      i_sizeBytes, PNOR_OP_WRITE);
 }
 
-int hservice_i2c_read(uint64_t i_master, uint8_t i_engine, uint8_t i_port,
-		uint16_t i_devAddr, uint32_t i_offsetSize, uint32_t i_offset,
+int hservice_i2c_read(uint64_t i_master, uint16_t i_devAddr,
+		uint32_t i_offsetSize, uint32_t i_offset,
 		uint32_t i_length, void* o_data)
 {
 	uint32_t chip_id;
@@ -333,8 +333,8 @@ int hservice_i2c_read(uint64_t i_master, uint8_t i_engine, uint8_t i_port,
 			i_offset, i_length, o_data);
 }
 
-int hservice_i2c_write(uint64_t i_master, uint8_t i_engine, uint8_t i_port,
-		uint16_t i_devAddr, uint32_t i_offsetSize, uint32_t i_offset,
+int hservice_i2c_write(uint64_t i_master, uint16_t i_devAddr,
+		uint32_t i_offsetSize, uint32_t i_offset,
 		uint32_t i_length, void* i_data)
 {
 	uint32_t chip_id;
