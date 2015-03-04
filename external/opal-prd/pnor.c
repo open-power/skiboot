@@ -105,8 +105,8 @@ void dump_parts(struct ffs_handle *ffs) {
 	}
 }
 
-int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
-	      size_t len)
+static int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
+		     size_t len)
 {
 	int write_start, write_len, start_waste, rc;
 	bool end_waste = false;
@@ -115,7 +115,7 @@ int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
 
 	if (len > pnor->size || offset > pnor->size ||
 	    len + offset > pnor->size)
-		return -1;
+		return -ERANGE;
 
 	start_waste = offset % pnor->erasesize;
 	write_start = offset - start_waste;
@@ -191,8 +191,8 @@ out:
 	return rc;
 }
 
-int mtd_read(struct pnor *pnor, int fd, void *data, uint64_t offset,
-	     size_t len)
+static int mtd_read(struct pnor *pnor, int fd, void *data, uint64_t offset,
+		    size_t len)
 {
 	int read_start, read_len, start_waste, rc;
 	int mask = pnor->erasesize - 1;
@@ -200,7 +200,7 @@ int mtd_read(struct pnor *pnor, int fd, void *data, uint64_t offset,
 
 	if (len > pnor->size || offset > pnor->size ||
 	    len + offset > pnor->size)
-		return -1;
+		return -ERANGE;
 
 	/* Align start to erase block size */
 	start_waste = offset % pnor->erasesize;
@@ -214,7 +214,7 @@ int mtd_read(struct pnor *pnor, int fd, void *data, uint64_t offset,
 	/* Ensure read is not out of bounds */
 	if (read_start + read_len > pnor->size) {
 		fprintf(stderr, "PNOR: read out of bounds\n");
-		return -1;
+		return -ERANGE;
 	}
 
 	buf = malloc(read_len);
@@ -231,7 +231,7 @@ int mtd_read(struct pnor *pnor, int fd, void *data, uint64_t offset,
 		goto out;
 	}
 
-	/* Copy data into destination, cafefully avoiding the extra data we
+	/* Copy data into destination, carefully avoiding the extra data we
 	 * added to align to block size */
 	memcpy(data, buf + start_waste, len);
 	rc = len;
@@ -246,19 +246,28 @@ int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
 	int rc, fd;
 	uint32_t pstart, psize, idx;
 
-	if (!pnor->ffsh)
-		return -1;
+	if (!pnor->ffsh) {
+		warnx("PNOR: ffs not initialised");
+		return -EBUSY;
+	}
 
 	rc = ffs_lookup_part(pnor->ffsh, name, &idx);
-	if (rc)
-		return -1;
+	if (rc) {
+		warnx("PNOR: failed to find partition '%s'", name);
+		return -ENOENT;
+	}
 
 	ffs_part_info(pnor->ffsh, idx, NULL, &pstart, &psize, NULL, NULL);
-	if (rc)
-		return -1;
+	if (rc) {
+		warnx("PNOR: unable to fetch partition info");
+		return -ENOENT;
+	}
 
-	if (size > psize || offset > psize || size + offset > psize)
-		return -1;
+	if (size > psize || offset > psize || size + offset > psize) {
+		warnx("PNOR: offset (%ld) or size (%ld) out of bounds (%d)",
+		      offset, size, psize);
+		return -ERANGE;
+	}
 
 	fd = open(pnor->path, O_RDWR);
 	if (fd < 0) {
@@ -280,7 +289,7 @@ int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
 		rc = mtd_write(pnor, fd, data, offset, size);
 		break;
 	default:
-		rc  = -1;
+		rc  = -EIO;
 		fprintf(stderr, "PNOR: Invalid operation\n");
 		goto out;
 	}
