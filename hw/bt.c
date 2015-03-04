@@ -57,7 +57,7 @@
 /*
  * Maximum number of outstanding messages to allow in the queue.
  */
-#define BT_MAX_QUEUE_LEN 5
+#define BT_MAX_QUEUE_LEN 10
 
 /*
  * How long (in TB ticks) before a message is timed out.
@@ -386,7 +386,7 @@ static void bt_add_msg(struct bt_msg *bt_msg)
 	bt_msg->seq = ipmi_seq++;
 	bt.queue_len++;
 	if (bt.queue_len > BT_MAX_QUEUE_LEN) {
-		/* Maximum ueue lenght exceeded - remove the oldest message
+		/* Maximum queue length exceeded - remove the oldest message
 		   from the queue. */
 		BT_ERR(bt_msg, "Maximum queue length exceeded");
 		bt_msg = list_tail(&bt.msgq, struct bt_msg, link);
