@@ -121,7 +121,7 @@ static int flash_nvram_write(uint32_t dst, void *src, uint32_t len)
 {
 	int rc;
 
-	if (try_lock(&flash_lock))
+	if (!try_lock(&flash_lock))
 		return OPAL_BUSY;
 
 	if (nvram_flash->busy) {
