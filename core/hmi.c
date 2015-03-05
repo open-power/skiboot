@@ -149,6 +149,15 @@
 
 /* xscom addresses for core FIR (Fault Isolation Register) */
 #define CORE_FIR		0x10013100
+#define NX_STATUS_REG		0x02013040 /* NX status register */
+#define NX_DMA_ENGINE_FIR	0x02013100 /* DMA & Engine FIR Data Register */
+#define NX_PBI_FIR		0x02013080 /* PowerBus Interface FIR Register */
+
+/*
+ * Bit 54 from NX status register is set to 1 when HMI interrupt is triggered
+ * due to NX checksop.
+ */
+#define NX_HMI_ACTIVE		PPC_BIT(54)
 
 static const struct core_xstop_bit_info {
 	uint8_t bit;		/* CORE FIR bit number */
@@ -171,6 +180,29 @@ static const struct core_xstop_bit_info {
 	{ 54, CORE_CHECKSTOP_PC_AMBI_HANG_DETECTED },
 	{ 60, CORE_CHECKSTOP_PC_DEBUG_TRIG_ERR_INJ },
 	{ 63, CORE_CHECKSTOP_PC_SPRD_HYP_ERR_INJ },
+};
+
+static const struct nx_xstop_bit_info {
+	uint8_t bit;		/* NX FIR bit number */
+	enum OpalHMI_NestAccelXstopReason reason;
+} nx_dma_xstop_bits[] = {
+	{ 1, NX_CHECKSTOP_SHM_INVAL_STATE_ERR },
+	{ 15, NX_CHECKSTOP_DMA_INVAL_STATE_ERR_1 },
+	{ 16, NX_CHECKSTOP_DMA_INVAL_STATE_ERR_2 },
+	{ 20, NX_CHECKSTOP_DMA_CH0_INVAL_STATE_ERR },
+	{ 21, NX_CHECKSTOP_DMA_CH1_INVAL_STATE_ERR },
+	{ 22, NX_CHECKSTOP_DMA_CH2_INVAL_STATE_ERR },
+	{ 23, NX_CHECKSTOP_DMA_CH3_INVAL_STATE_ERR },
+	{ 24, NX_CHECKSTOP_DMA_CH4_INVAL_STATE_ERR },
+	{ 25, NX_CHECKSTOP_DMA_CH5_INVAL_STATE_ERR },
+	{ 26, NX_CHECKSTOP_DMA_CH6_INVAL_STATE_ERR },
+	{ 27, NX_CHECKSTOP_DMA_CH7_INVAL_STATE_ERR },
+	{ 31, NX_CHECKSTOP_DMA_CRB_UE },
+	{ 32, NX_CHECKSTOP_DMA_CRB_SUE },
+};
+
+static const struct nx_xstop_bit_info nx_pbi_xstop_bits[] = {
+	{ 12, NX_CHECKSTOP_PBI_ISN_UE },
 };
 
 static struct lock hmi_lock = LOCK_UNLOCKED;
@@ -319,6 +351,58 @@ static void find_core_checkstop_reason(struct OpalHMIEvent *hmi_evt,
 	}
 }
 
+static void find_nx_checkstop_reason(int flat_chip_id,
+			struct OpalHMIEvent *hmi_evt, int *event_generated)
+{
+	uint64_t nx_status;
+	uint64_t nx_dma_fir;
+	uint64_t nx_pbi_fir;
+	int i;
+
+	/* Get NX status register value. */
+	if (xscom_read(flat_chip_id, NX_STATUS_REG, &nx_status) != 0) {
+		prerror("HMI: XSCOM error reading NX_STATUS_REG\n");
+		return;
+	}
+
+	/* Check if NX has driven an HMI interrupt. */
+	if (!(nx_status & NX_HMI_ACTIVE))
+		return;
+
+	/* Initialize HMI event */
+	hmi_evt->severity = OpalHMI_SEV_FATAL;
+	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
+	hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_NX;
+	hmi_evt->u.xstop_error.u.chip_id = flat_chip_id;
+
+	/* Get DMA & Engine FIR data register value. */
+	if (xscom_read(flat_chip_id, NX_DMA_ENGINE_FIR, &nx_dma_fir) != 0) {
+		prerror("HMI: XSCOM error reading NX_DMA_ENGINE_FIR\n");
+		return;
+	}
+
+	/* Get PowerBus Interface FIR data register value. */
+	if (xscom_read(flat_chip_id, NX_PBI_FIR, &nx_pbi_fir) != 0) {
+		prerror("HMI: XSCOM error reading NX_DMA_ENGINE_FIR\n");
+		return;
+	}
+
+	/* Find NX checkstop reason and populate HMI event with error info. */
+	for (i = 0; i < ARRAY_SIZE(nx_dma_xstop_bits); i++)
+		if (nx_dma_fir & PPC_BIT(nx_dma_xstop_bits[i].bit))
+			hmi_evt->u.xstop_error.xstop_reason
+						|= nx_dma_xstop_bits[i].reason;
+
+	for (i = 0; i < ARRAY_SIZE(nx_pbi_xstop_bits); i++)
+		if (nx_pbi_fir & PPC_BIT(nx_pbi_xstop_bits[i].bit))
+			hmi_evt->u.xstop_error.xstop_reason
+						|= nx_pbi_xstop_bits[i].reason;
+
+	/* Send an HMI event. */
+	queue_hmi_event(hmi_evt, 0);
+	*event_generated = 1;
+}
+
 static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
 {
 	int i;
@@ -336,6 +420,8 @@ static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
 				queue_hmi_event(hmi_evt, recover);
 				event_generated = 1;
 			}
+
+			find_nx_checkstop_reason(i, hmi_evt, &event_generated);
 		}
 
 	if (recover != -1) {
