@@ -23,6 +23,8 @@
 #include <xscom.h>
 #include <capp.h>
 #include <pci.h>
+#include <cpu.h>
+#include <chip.h>
 
 /*
  * HMER register layout:
@@ -145,6 +147,32 @@
  * NOTE: Per Dave Larson, never enable 8,9,21-23
  */
 
+/* xscom addresses for core FIR (Fault Isolation Register) */
+#define CORE_FIR		0x10013100
+
+static const struct core_xstop_bit_info {
+	uint8_t bit;		/* CORE FIR bit number */
+	enum OpalHMI_CoreXstopReason reason;
+} xstop_bits[] = {
+	{ 3, CORE_CHECKSTOP_IFU_REGFILE },
+	{ 5, CORE_CHECKSTOP_IFU_LOGIC },
+	{ 8, CORE_CHECKSTOP_PC_DURING_RECOV },
+	{ 10, CORE_CHECKSTOP_ISU_REGFILE },
+	{ 12, CORE_CHECKSTOP_ISU_LOGIC },
+	{ 21, CORE_CHECKSTOP_FXU_LOGIC },
+	{ 25, CORE_CHECKSTOP_VSU_LOGIC },
+	{ 26, CORE_CHECKSTOP_PC_RECOV_IN_MAINT_MODE },
+	{ 32, CORE_CHECKSTOP_LSU_REGFILE },
+	{ 36, CORE_CHECKSTOP_PC_FWD_PROGRESS },
+	{ 38, CORE_CHECKSTOP_LSU_LOGIC },
+	{ 45, CORE_CHECKSTOP_PC_LOGIC },
+	{ 48, CORE_CHECKSTOP_PC_HYP_RESOURCE },
+	{ 52, CORE_CHECKSTOP_PC_HANG_RECOV_FAILED },
+	{ 54, CORE_CHECKSTOP_PC_AMBI_HANG_DETECTED },
+	{ 60, CORE_CHECKSTOP_PC_DEBUG_TRIG_ERR_INJ },
+	{ 63, CORE_CHECKSTOP_PC_SPRD_HYP_ERR_INJ },
+};
+
 static struct lock hmi_lock = LOCK_UNLOCKED;
 
 static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
@@ -162,7 +190,7 @@ static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
 		hmi_evt->disposition = OpalHMI_DISPOSITION_NOT_RECOVERED;
 
 	/*
-	 * struct OpalHMIEvent is of (3 * 64 bits) size and well packed
+	 * V2 of struct OpalHMIEvent is of (4 * 64 bits) size and well packed
 	 * structure. Hence use uint64_t pointer to pass entire structure
 	 * using 4 params in generic message format.
 	 */
@@ -170,7 +198,8 @@ static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
 
 	/* queue up for delivery to host. */
 	return opal_queue_msg(OPAL_MSG_HMI_EVT, NULL, NULL,
-				hmi_data[0], hmi_data[1], hmi_data[2]);
+				hmi_data[0], hmi_data[1], hmi_data[2],
+				hmi_data[3]);
 }
 
 static int is_capp_recoverable(int chip_id)
@@ -221,11 +250,81 @@ static int decode_one_malfunction(int flat_chip_id, struct OpalHMIEvent *hmi_evt
 	return 0;
 }
 
+static bool decode_core_fir(struct cpu_thread *cpu,
+				struct OpalHMIEvent *hmi_evt)
+{
+	uint64_t core_fir;
+	uint32_t core_id;
+	int i;
+	bool found = false;
+
+	/* Sanity check */
+	if (!cpu || !hmi_evt)
+		return false;
+
+	core_id = pir_to_core_id(cpu->pir);
+
+	/* Get CORE FIR register value. */
+	if (xscom_read(cpu->chip_id, XSCOM_ADDR_P8_EX(core_id, CORE_FIR),
+							&core_fir) != 0) {
+		prerror("HMI: XSCOM error reading CORE FIR\n");
+		return false;
+	}
+
+	prlog(PR_INFO, "HMI: CHIP ID: %x, CORE ID: %x, FIR: %016llx\n",
+			cpu->chip_id, core_id, core_fir);
+
+	/* Check CORE FIR bits and populate HMI event with error info. */
+	for (i = 0; i < ARRAY_SIZE(xstop_bits); i++) {
+		if (core_fir & PPC_BIT(xstop_bits[i].bit)) {
+			found = true;
+			hmi_evt->u.xstop_error.xstop_reason
+						|= xstop_bits[i].reason;
+		}
+	}
+	return found;
+}
+
+static void find_core_checkstop_reason(struct OpalHMIEvent *hmi_evt,
+					int *event_generated)
+{
+	struct cpu_thread *cpu;
+
+	/* Initialize HMI event */
+	hmi_evt->severity = OpalHMI_SEV_FATAL;
+	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
+	hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_CORE;
+
+	/*
+	 * Check CORE FIRs and find the reason for core checkstop.
+	 * Send a separate HMI event for each core that has checkstopped.
+	 */
+	for_each_cpu(cpu) {
+		/* GARDed CPUs are marked unavailable. Skip them.  */
+		if (cpu->state == cpu_state_unavailable)
+			continue;
+
+		/* Only check on primaries (ie. core), not threads */
+		if (cpu->is_secondary)
+			continue;
+
+		/* Initialize xstop_error fields. */
+		hmi_evt->u.xstop_error.xstop_reason = 0;
+		hmi_evt->u.xstop_error.u.pir = cpu->pir;
+
+		if (decode_core_fir(cpu, hmi_evt)) {
+			queue_hmi_event(hmi_evt, 0);
+			*event_generated = 1;
+		}
+	}
+}
+
 static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
 {
 	int i;
 	int recover = -1;
 	uint64_t malf_alert;
+	int event_generated = 0;
 
 	xscom_read(this_cpu()->chip_id, 0x2020011, &malf_alert);
 
@@ -233,7 +332,25 @@ static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
 		if (malf_alert & PPC_BIT(i)) {
 			recover = decode_one_malfunction(i, hmi_evt);
 			xscom_write(this_cpu()->chip_id, 0x02020011, ~PPC_BIT(i));
+			if (recover) {
+				queue_hmi_event(hmi_evt, recover);
+				event_generated = 1;
+			}
 		}
+
+	if (recover != -1) {
+		find_core_checkstop_reason(hmi_evt, &event_generated);
+
+		/*
+		 * In case, if we fail to find checkstop reason send an
+		 * unknown HMI event.
+		 */
+		if (!event_generated) {
+			hmi_evt->u.xstop_error.xstop_type =
+						CHECKSTOP_TYPE_UNKNOWN;
+			hmi_evt->u.xstop_error.xstop_reason = 0;
+		}
+	}
 
 	return recover;
 }
@@ -345,7 +462,7 @@ static int64_t opal_handle_hmi(void)
 	BUILD_ASSERT(sizeof(struct opal_msg) >= sizeof(struct OpalHMIEvent));
 
 	memset(&hmi_evt, 0, sizeof(struct OpalHMIEvent));
-	hmi_evt.version = OpalHMIEvt_V1;
+	hmi_evt.version = OpalHMIEvt_V2;
 
 	lock(&hmi_lock);
 	hmer = mfspr(SPR_HMER);		/* Get HMER register value */
