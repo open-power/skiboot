@@ -52,9 +52,28 @@ params[0] = 0x01 reboot, 0x00 shutdown
 OPAL_MSG_HMI_EVT
 ----------------
 
-Sends the OPAL HMI Event to the host OS
+Used by OPAL to sends the OPAL HMI Event to the host OS that reports a
+summary of HMI error and whether it was successfully recovered or not.
 
-TODO: Describe what HMI is
+HMI is a Hypervisor Maintenance Interrupt usually reports error related
+to processor recovery/checkstop, NX checkstop and Timer facility. Hypervisor
+then takes this opportunity to analyze and recover from some of these errors.
+Hypervisor takes assistance from OPAL layer to handle and recover from
+HMI. After handling HMI, OPAL layer sends the summary of error report and
+status of recovery action using HMI event structure shown below.
+
+The HMI event structure uses version numbering to allow future enhancement
+to accommodate additional members. The version start from V1 onward.
+Version 0 is invalid version and unsupported.
+
+The current version of HMI event structure V2 and is backward compatible
+to V1 version.
+
+Notes:
+- When adding new structure to the union in future, the version number
+  must be bumped.
+- All future versions must be backward compatible to all its older versions.
+- Size of this structure should not exceed that of struct opal_msg.
 
 struct OpalHMIEvent {
         uint8_t         version;        /* 0x00 */
@@ -63,9 +82,26 @@ struct OpalHMIEvent {
         uint8_t         disposition;    /* 0x03 */
         uint8_t         reserved_1[4];  /* 0x04 */
 
-        uint64_t        hmer;
-        /* TFMR register. Valid only for TFAC and TFMR_PARITY error type. */
-        uint64_t        tfmr;
+	__be64		hmer;
+	/* TFMR register. Valid only for TFAC and TFMR_PARITY error type. */
+	__be64		tfmr;
+
+	/* version 2 and later */
+	union {
+		/*
+		 * checkstop info (Core/NX).
+		 * Valid for OpalHMI_ERROR_MALFUNC_ALERT.
+		 */
+		struct {
+			uint8_t	xstop_type;	/* enum OpalHMI_XstopType */
+			uint8_t reserved_1[3];
+			__be32 xstop_reason;
+			union {
+				__be32 pir;	  /* for CHECKSTOP_TYPE_CORE */
+				__be32 chip_id; /* for CHECKSTOP_TYPE_NX */
+			} u;
+		} xstop_error;
+	} u;
 };
 
 
