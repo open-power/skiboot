@@ -338,6 +338,12 @@ static int64_t opal_handle_hmi(void)
 	int rc = OPAL_SUCCESS;
 	struct OpalHMIEvent hmi_evt;
 
+	/*
+	 * Compiled time check to see size of OpalHMIEvent do not exceed
+	 * that of struct opal_msg.
+	 */
+	BUILD_ASSERT(sizeof(struct opal_msg) >= sizeof(struct OpalHMIEvent));
+
 	memset(&hmi_evt, 0, sizeof(struct OpalHMIEvent));
 	hmi_evt.version = OpalHMIEvt_V1;
 
