@@ -617,6 +617,15 @@ static inline bool fsp_msg_busy(struct fsp_msg *msg)
 	return true;
 }
 
+static inline u32 fsp_msg_cmd(const struct fsp_msg *msg)
+{
+	u32 cmd_sub_mod;
+	cmd_sub_mod = (msg->word0 & 0xff) << 16;
+	cmd_sub_mod |= (msg->word1 & 0xff) << 8;
+	cmd_sub_mod |= (msg->word1 & 0xff00) >> 8;
+	return cmd_sub_mod;
+}
+
 /* Initialize the FSP mailbox driver */
 extern void fsp_init(void);
 
