@@ -596,7 +596,7 @@ static void p7ioc_create_hub(struct dt_node *np)
 
 	/* Use the BUID extension as ID and add it to device-tree */
 	id = dt_prop_get_u32(np, "ibm,buid-ext");
-	path = dt_get_path(np);	
+	path = dt_get_path(np);
 	printf("P7IOC: Found at %s ID 0x%x\n", path, id);
 	free(path);
 
@@ -659,7 +659,7 @@ static void p7ioc_create_hub(struct dt_node *np)
 		else
 			ioc->phbs[i].state = P7IOC_PHB_STATE_OFF;
 	}
-	
+
 	/* Now, we do the bulk of the inits */
 	p7ioc_inits(ioc);
 
