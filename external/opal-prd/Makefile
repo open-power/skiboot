@@ -5,11 +5,15 @@ LDFLAGS = -m64
 ASFLAGS = -m64
 CPPFLAGS = -I. -I../../include -I../../
 
+prefix = /usr/local/
+sbindir = $(prefix)/sbin
+
 # Use make V=1 for a verbose build.
 ifndef V
         Q_CC=	@echo '    CC ' $@;
         Q_LINK=	@echo '  LINK ' $@;
         Q_LN=   @echo '    LN ' $@;
+        Q_MKDIR=@echo ' MKDIR ' $@;
 endif
 
 OBJS = opal-prd.o thunk.o pnor.o i2c.o libffs.o libflash.o ecc.o
@@ -26,6 +30,7 @@ ccan:
 	$(Q_LN)ln -sfr ../../ccan ./ccan
 
 asm/opal-prd.h:
+	$(Q_MKDIR)mkdir -p asm
 	$(Q_LN)ln -sfr $(KERNEL_DIR)/arch/powerpc/include/uapi/asm/opal-prd.h \
 			asm/opal-prd.h
 
@@ -47,6 +52,9 @@ test: test/test_pnor
 
 test/test_pnor: test/test_pnor.o pnor.o libflash/libflash.o libflash/libffs.o
 	$(Q_LINK)$(LINK.o) -o $@ $^
+
+install: all
+	install -D opal-prd $(DESTDIR)$(sbindir)/opal-prd
 
 clean:
 	$(RM) *.[odsa] opal-prd

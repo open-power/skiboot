@@ -58,7 +58,6 @@ struct opal_prd_ctx {
 	void			*code_addr;
 	size_t			code_size;
 	bool			debug;
-	bool			allow_fsp_calls;
 	struct pnor		pnor;
 	char			*hbrt_file_name;
 };
@@ -149,23 +148,6 @@ extern void call_process_occ_error (uint64_t i_chipId);
 extern int call_enable_attns(void);
 extern int call_enable_occ_actuation(bool i_occActivation);
 extern void call_process_occ_reset(uint64_t i_chipId);
-
-/* Dummy calls for hservices */
-static inline int __fsp_only_assert(const char *name)
-{
-	printf("error: %s is only implemented for FSP\n", name);
-	if (!ctx->allow_fsp_calls)
-		exit(EXIT_FAILURE);
-	return 0;
-}
-#define fsp_stub(name) \
-	int hservice_ ##name(void) { return __fsp_only_assert(#name); }
-
-fsp_stub(send_error_log);
-fsp_stub(lid_load);
-fsp_stub(lid_unload);
-fsp_stub(wakeup);
-fsp_stub(report_occ_failure);
 
 void hservice_puts(const char *str)
 {
@@ -316,8 +298,8 @@ int hservice_pnor_write(uint32_t i_proc, const char* i_partitionName,
 			      i_sizeBytes, PNOR_OP_WRITE);
 }
 
-int hservice_i2c_read(uint64_t i_master, uint8_t i_engine, uint8_t i_port,
-		uint16_t i_devAddr, uint32_t i_offsetSize, uint32_t i_offset,
+int hservice_i2c_read(uint64_t i_master, uint16_t i_devAddr,
+		uint32_t i_offsetSize, uint32_t i_offset,
 		uint32_t i_length, void* o_data)
 {
 	uint32_t chip_id;
@@ -333,8 +315,8 @@ int hservice_i2c_read(uint64_t i_master, uint8_t i_engine, uint8_t i_port,
 			i_offset, i_length, o_data);
 }
 
-int hservice_i2c_write(uint64_t i_master, uint8_t i_engine, uint8_t i_port,
-		uint16_t i_devAddr, uint32_t i_offsetSize, uint32_t i_offset,
+int hservice_i2c_write(uint64_t i_master, uint16_t i_devAddr,
+		uint32_t i_offsetSize, uint32_t i_offset,
 		uint32_t i_length, void* i_data)
 {
 	uint32_t chip_id;
@@ -1095,8 +1077,7 @@ out_close:
 static void usage(const char *progname)
 {
 	printf("Usage:\n");
-	printf("\t%s [--debug] [--file <hbrt-image>] [--pnor <device>]\n"
-			"\t\t[--allow-fsp-calls]\n",
+	printf("\t%s [--debug] [--file <hbrt-image>] [--pnor <device>]\n",
 			progname);
 	printf("\t%s occ <enable|disable>\n", progname);
 	printf("\n");
@@ -1104,17 +1085,13 @@ static void usage(const char *progname)
 "\t--debug            verbose logging for debug information\n"
 "\t--pnor DEVICE      use PNOR MTD device\n"
 "\t--file FILE        use FILE for hostboot runtime code (instead of code\n"
-"\t                     exported by firmware)\n"
-"\t--allow-fsp-calls  don't exit on FSP-only callbacks from HBRT code, but\n"
-"\t                     return success instead. Intended for workarounds\n"
-"\t                     during PRD testing only.\n");
+"\t                     exported by firmware)\n");
 }
 
 static struct option opal_diag_options[] = {
 	{"file", required_argument, NULL, 'f'},
 	{"pnor", required_argument, NULL, 'p'},
 	{"debug", no_argument, NULL, 'd'},
-	{"allow-fsp-calls", no_argument, NULL, 'a'},
 	{"help", no_argument, NULL, 'h'},
 	{ 0 },
 };
@@ -1166,9 +1143,6 @@ int main(int argc, char *argv[])
 			break;
 		case 'p':
 			ctx->pnor.path = strndup(optarg, PATH_MAX);
-			break;
-		case 'a':
-			ctx->allow_fsp_calls = true;
 			break;
 		case 'h':
 			usage(argv[0]);

@@ -41,6 +41,9 @@
 #define SOFT_OFF	        0x00
 #define SOFT_REBOOT	        0x01
 
+#define RELEASE_PNOR		0x00
+#define REQUEST_PNOR		0x01
+
 struct oem_sel {
 	/* SEL header */
 	uint8_t id[2];
@@ -180,6 +183,36 @@ int ipmi_elog_commit(struct errorlog *elog_buf)
 	return 0;
 }
 
+#define ACCESS_DENIED	0x00
+#define ACCESS_GRANTED	0x01
+
+static void sel_pnor(uint8_t access)
+{
+	struct ipmi_msg *msg;
+	uint8_t granted = ACCESS_GRANTED;
+
+	switch (access) {
+	case REQUEST_PNOR:
+		prlog(PR_NOTICE, "IPMI: PNOR access requested\n");
+		granted = flash_reserve();
+		if (granted)
+			occ_pnor_set_owner(PNOR_OWNER_EXTERNAL);
+
+		/* Ack the request */
+		msg = ipmi_mkmsg_simple(IPMI_PNOR_ACCESS_STATUS, &granted, 1);
+		ipmi_queue_msg(msg);
+		break;
+	case RELEASE_PNOR:
+		prlog(PR_NOTICE, "IPMI: PNOR access released\n");
+		flash_release();
+		occ_pnor_set_owner(PNOR_OWNER_HOST);
+		break;
+	default:
+		prlog(PR_ERR, "IPMI: invalid PNOR access requested: %02x\n",
+		      access);
+	}
+}
+
 static void sel_power(uint8_t power)
 {
 	switch (power) {
@@ -271,9 +304,11 @@ void ipmi_parse_sel(struct ipmi_msg *msg)
 		sel_occ_reset(sel.data[0]);
 		break;
 	case CMD_AMI_PNOR_ACCESS:
+		sel_pnor(sel.data[0]);
 		break;
 	default:
-		printf("IPMI: unknown OEM SEL command %02x received\n",
-		       sel.cmd);
+		prlog(PR_WARNING,
+		      "IPMI: unknown OEM SEL command %02x received\n",
+		      sel.cmd);
 	}
 }

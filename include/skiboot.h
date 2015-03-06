@@ -201,6 +201,9 @@ struct flash_chip;
 extern int flash_register(struct flash_chip *chip, bool is_system_flash);
 extern bool flash_load_resource(enum resource_id id, uint32_t subid,
 		void *buf, size_t *len);
+extern bool flash_reserve(void);
+extern void flash_release(void);
+
 
 /* NVRAM support */
 extern void nvram_init(void);
@@ -217,6 +220,13 @@ extern void occ_send_dummy_interrupt(void);
 
 /* OCC load support */
 extern void occ_poke_load_queue(void);
+
+/* OCC/Host PNOR ownership */
+enum pnor_owner {
+	PNOR_OWNER_HOST,
+	PNOR_OWNER_EXTERNAL,
+};
+extern void occ_pnor_set_owner(enum pnor_owner owner);
 
 /* PRD */
 extern void prd_psi_interrupt(uint32_t proc);

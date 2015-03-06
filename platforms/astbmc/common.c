@@ -88,6 +88,25 @@ static void astbmc_ipmi_setenables(void)
 
 }
 
+static int astbmc_fru_init(void)
+{
+	const struct dt_property *prop;
+	struct dt_node *node;
+	uint8_t fru_id;
+
+	node = dt_find_by_path(dt_root, "bmc");
+	if (!node)
+		return -1;
+
+	prop = dt_find_property(node, "firmware-fru-id");
+	if (!prop)
+		return -1;
+
+	fru_id = dt_property_get_cell(prop, 0) & 0xff;
+	ipmi_fru_init(fru_id);
+	return 0;
+}
+
 
 void astbmc_init(void)
 {
@@ -99,14 +118,17 @@ void astbmc_init(void)
 	ipmi_wdt_init();
 	ipmi_rtc_init();
 	ipmi_opal_init();
-	ipmi_fru_init(0x01);
+	astbmc_fru_init();
 	elog_init();
+	ipmi_sensor_init();
 
 	/* As soon as IPMI is up, inform BMC we are in "S0" */
 	ipmi_set_power_state(IPMI_PWR_SYS_S0_WORKING, IPMI_PWR_NOCHANGE);
 
         /* Enable IPMI OEM message interrupts */
         astbmc_ipmi_setenables();
+
+	ipmi_set_fw_progress_sensor(IPMI_FW_MOTHERBOARD_INIT);
 
 	/* Setup UART console for use by Linux via OPAL API */
 	if (!dummy_console_enabled())
@@ -210,6 +232,37 @@ static void astbmc_fixup_dt_uart(struct dt_node *lpc)
 	dt_add_property_cells(uart, "ibm,irq-chip-id", dt_get_chip_id(lpc));
 }
 
+static void del_compatible(struct dt_node *node)
+{
+	struct dt_property *prop;
+
+	prop = __dt_find_property(node, "compatible");
+	if (prop)
+		dt_del_property(node, prop);
+}
+
+
+static void astbmc_fixup_bmc_sensors(void)
+{
+	struct dt_node *parent, *node;
+
+	parent = dt_find_by_path(dt_root, "bmc");
+	if (!parent)
+		return;
+	del_compatible(parent);
+
+	parent = dt_find_by_name(parent, "sensors");
+	if (!parent)
+		return;
+	del_compatible(parent);
+
+	dt_for_each_child(parent, node) {
+		if (dt_find_property(node, "compatible"))
+			continue;
+		dt_add_property_string(node, "compatible", "ibm,ipmi-sensor");
+	}
+}
+
 static void astbmc_fixup_dt(void)
 {
 	struct dt_node *n, *primary_lpc = NULL;
@@ -234,6 +287,8 @@ static void astbmc_fixup_dt(void)
 	/* The pel logging code needs a system-id property to work so
 	   make sure we have one. */
 	astbmc_fixup_dt_system_id();
+
+	astbmc_fixup_bmc_sensors();
 }
 
 static void astbmc_fixup_psi_bar(void)

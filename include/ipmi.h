@@ -84,14 +84,19 @@
 #define IPMI_MESSAGE_FLAGS_OEM1			(1<<6)
 #define IPMI_MESSAGE_FLAGS_OEM2			(1<<7)
 
+/* Firmware Progress Sensor states */
+#define IPMI_FW_PCI_INIT		0x07
+#define IPMI_FW_OS_BOOT			0x13
+#define IPMI_FW_MOTHERBOARD_INIT	0x14
+
 #define IPMI_CODE(netfn, cmd)		((netfn) << 8 | (cmd))
 #define IPMI_CMD(code)			((code) & 0xff)
 #define IPMI_NETFN(code)		((code) >> 8 & 0xff)
 
 #define IPMI_NETFN_CHASSIS		0x00
+#define IPMI_NETFN_SE			0x04
 #define IPMI_NETFN_STORAGE		0x0a
 #define IPMI_NETFN_APP			0x06
-#define IPMI_NETFN_OEM			0x32
 
 #define IPMI_WRITE_FRU			IPMI_CODE(IPMI_NETFN_STORAGE, 0x12)
 #define IPMI_GET_SEL_INFO		IPMI_CODE(IPMI_NETFN_STORAGE, 0x40)
@@ -109,8 +114,11 @@
 #define IPMI_GET_MESSAGE_FLAGS		IPMI_CODE(IPMI_NETFN_APP, 0x31)
 #define IPMI_GET_MESSAGE		IPMI_CODE(IPMI_NETFN_APP, 0x33)
 #define IPMI_READ_EVENT			IPMI_CODE(IPMI_NETFN_APP, 0x35)
+#define IPMI_SET_SENSOR_READING		IPMI_CODE(IPMI_NETFN_SE, 0x30)
 
-#define IPMI_PARTIAL_ADD_ESEL		IPMI_CODE(IPMI_NETFN_OEM, 0xf0)
+/* AMI OEM comamnds. AMI uses NETFN 0x3a and 0x32 */
+#define IPMI_PARTIAL_ADD_ESEL		IPMI_CODE(0x32, 0xf0)
+#define IPMI_PNOR_ACCESS_STATUS 	IPMI_CODE(0x3a, 0x07)
 
 /*
  * IPMI response codes.
@@ -209,6 +217,10 @@ int ipmi_chassis_control(uint8_t request);
  * use chassis control to perform power off and reboot. */
 int ipmi_set_power_state(uint8_t system, uint8_t device);
 
+/* 35.17 Set Sensor Reading Command */
+int ipmi_set_sensor(uint8_t sensor, uint8_t *reading, size_t len);
+int ipmi_set_fw_progress_sensor(uint8_t state);
+
 /* Register a backend with the ipmi core. Currently we only support one. */
 void ipmi_register_backend(struct ipmi_backend *backend);
 
@@ -237,5 +249,11 @@ void ipmi_wdt_stop(void);
 /* Reset the watchdog timer. Does not return until the timer has been
  * reset and does not schedule future resets. */
 void ipmi_wdt_final_reset(void);
+
+/* Discover id of settable ipmi sensors */
+void ipmi_sensor_init(void);
+
+/* Set the boot count once the OS is up and running */
+int ipmi_set_boot_count(void);
 
 #endif

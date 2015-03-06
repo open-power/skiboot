@@ -43,6 +43,7 @@
 #include <centaur.h>
 #include <libfdt/libfdt.h>
 #include <timer.h>
+#include <ipmi.h>
 
 #include <ipmi.h>
 
@@ -374,6 +375,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	load_initramfs();
 
+	ipmi_set_fw_progress_sensor(IPMI_FW_OS_BOOT);
+
 	if (!is_reboot) {
 		/* We wait for the nvram read to complete here so we can
 		 * grab stuff from there such as the kernel arguments
@@ -667,6 +670,8 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 
 	/* Add OPAL timer related properties */
 	late_init_timers();
+
+	ipmi_set_fw_progress_sensor(IPMI_FW_PCI_INIT);
 
 	/*
 	 * These last few things must be done as late as possible

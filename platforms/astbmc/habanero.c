@@ -19,6 +19,7 @@
 #include <device.h>
 #include <console.h>
 #include <chip.h>
+#include <ipmi.h>
 
 #include "astbmc.h"
 
@@ -51,5 +52,7 @@ DECLARE_PLATFORM(habanero) = {
 	.external_irq		= astbmc_ext_irq,
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
+	.elog_commit		= ipmi_elog_commit,
 	.load_resource		= flash_load_resource,
+	.exit			= ipmi_wdt_final_reset,
 };

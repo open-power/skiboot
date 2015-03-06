@@ -26,6 +26,7 @@
 
 struct flash {
 	bool			registered;
+	bool			busy;
 	struct flash_chip	*chip;
 	uint32_t		size;
 	uint32_t		block_size;
@@ -42,12 +43,39 @@ static struct lock flash_lock;
 static struct flash *nvram_flash;
 static u32 nvram_offset, nvram_size;
 
+bool flash_reserve(void)
+{
+	bool rc = false;
+
+	if (!try_lock(&flash_lock))
+		return false;
+
+	if (!system_flash->busy) {
+		system_flash->busy = true;
+		rc = true;
+	}
+	unlock(&flash_lock);
+
+	return rc;
+}
+
+void flash_release(void)
+{
+	lock(&flash_lock);
+	system_flash->busy = false;
+	unlock(&flash_lock);
+}
+
 static int flash_nvram_info(uint32_t *total_size)
 {
-	int rc = OPAL_HARDWARE;
+	int rc;
 
 	lock(&flash_lock);
-	if (nvram_flash) {
+	if (!nvram_flash) {
+		rc = OPAL_HARDWARE;
+	} else if (nvram_flash->busy) {
+		rc = OPAL_BUSY;
+	} else {
 		*total_size = nvram_size;
 		rc = OPAL_SUCCESS;
 	}
@@ -60,10 +88,16 @@ static int flash_nvram_start_read(void *dst, uint32_t src, uint32_t len)
 {
 	int rc;
 
-	lock(&flash_lock);
+	if (!try_lock(&flash_lock))
+		return OPAL_BUSY;
 
 	if (!nvram_flash) {
 		rc = OPAL_HARDWARE;
+		goto out;
+	}
+
+	if (nvram_flash->busy) {
+		rc = OPAL_BUSY;
 		goto out;
 	}
 
@@ -87,7 +121,13 @@ static int flash_nvram_write(uint32_t dst, void *src, uint32_t len)
 {
 	int rc;
 
-	lock(&flash_lock);
+	if (!try_lock(&flash_lock))
+		return OPAL_BUSY;
+
+	if (nvram_flash->busy) {
+		rc = OPAL_BUSY;
+		goto out;
+	}
 
 	/* TODO: When we have async jobs for PRD, turn this into one */
 
@@ -235,6 +275,7 @@ int flash_register(struct flash_chip *chip, bool is_system_flash)
 
 		flash = &flashes[i];
 		flash->registered = true;
+		flash->busy = false;
 		flash->chip = chip;
 		flash->size = size;
 		flash->block_size = block_size;
@@ -286,6 +327,12 @@ static int64_t opal_flash_op(enum flash_op op, uint64_t id, uint64_t offset,
 		return OPAL_BUSY;
 
 	flash = &flashes[id];
+
+	if (flash->busy) {
+		rc = OPAL_BUSY;
+		goto err;
+	}
+
 	if (!flash->registered) {
 		rc = OPAL_PARAMETER;
 		goto err;
@@ -492,6 +539,9 @@ bool flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_unlock;
 
 	flash = system_flash;
+
+	if (flash->busy)
+		goto out_unlock;
 
 	for (i = 0, name = NULL; i < ARRAY_SIZE(part_name_map); i++) {
 		if (part_name_map[i].id == id) {
