@@ -68,9 +68,10 @@ static enum {
 } rtc_tod_state = RTC_TOD_INVALID;
 
 /* State machine for getting an RTC request.
- * RTC_READ_NO_REQUEST -> RTC_READ_PENDING_REQUEST (one in flight)
- * RTC_READ_PENDING_REQUEST -> RTC_READ_REQUEST_AVAILABLE, when FSP responds
- * RTC_READ_REQUEST_AVAILABLE -> RTC_READ_NO_REQUEST,
+ * RTC_{READ/WRITE}_NO_REQUEST -> RTC_{READ/WRITE}_PENDING_REQUEST (one in flight)
+ * RTC_{READ/WRITE}_PENDING_REQUEST -> RTC_{READ/WRITE}_REQUEST_AVAILABLE,
+ * when FSP responds
+ * RTC_{READ/WRITE}_REQUEST_AVAILABLE -> RTC_{READ/WRITE}_NO_REQUEST,
  * when OS retrieves it
  */
 static enum {
@@ -79,7 +80,11 @@ static enum {
 	RTC_READ_REQUEST_AVAILABLE,
 } rtc_read_request_state = RTC_READ_NO_REQUEST;
 
-static bool rtc_write_in_flight = false;
+static enum {
+	RTC_WRITE_NO_REQUEST,
+	RTC_WRITE_PENDING_REQUEST,
+	RTC_WRITE_REQUEST_AVAILABLE,
+} rtc_write_request_state = RTC_WRITE_NO_REQUEST;
 
 static bool rtc_tod_cache_dirty = false;
 
@@ -200,9 +205,16 @@ static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 	}
 }
 
-static void opal_rtc_eval_events(void)
+static void opal_rtc_eval_events(bool read_write)
 {
-	bool request_available = (rtc_read_request_state == RTC_READ_REQUEST_AVAILABLE);
+	bool request_available;
+
+	if (read_write)
+		request_available = (rtc_read_request_state ==
+				     RTC_READ_REQUEST_AVAILABLE);
+	else
+		request_available = (rtc_write_request_state ==
+				    RTC_WRITE_REQUEST_AVAILABLE);
 
 	assert(lock_held_by_me(&rtc_lock));
 	opal_update_pending_evt(OPAL_EVENT_RTC,
@@ -214,12 +226,15 @@ static void fsp_rtc_req_complete(struct fsp_msg *msg)
 	lock(&rtc_lock);
 	prlog(PR_TRACE, "RTC completion %p\n", msg);
 
-	if (fsp_msg_cmd(msg) == (FSP_CMD_READ_TOD & 0xffffff))
+	if (fsp_msg_cmd(msg) == (FSP_CMD_READ_TOD & 0xffffff)) {
 		fsp_rtc_process_read(msg->resp);
-	else
-		rtc_write_in_flight = false;
+		opal_rtc_eval_events(true);
+	} else {
+		assert(rtc_write_request_state == RTC_WRITE_PENDING_REQUEST);
+		rtc_write_request_state = RTC_WRITE_REQUEST_AVAILABLE;
+		opal_rtc_eval_events(false);
+	}
 
-	opal_rtc_eval_events();
 	unlock(&rtc_lock);
 	fsp_freemsg(msg);
 }
@@ -287,7 +302,7 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
                 prlog(PR_TRACE, "RTC read complete, state %d\n", rtc_tod_state);
 		rtc_read_request_state = RTC_READ_NO_REQUEST;
 
-                opal_rtc_eval_events();
+                opal_rtc_eval_events(true);
 
                 if (rtc_tod_state == RTC_TOD_VALID) {
                         rtc_cache_get_datetime(year_month_day,
@@ -319,26 +334,15 @@ out:
 	return rc;
 }
 
-static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
-				  uint64_t hour_minute_second_millisecond)
+static int64_t fsp_rtc_send_write_request(uint32_t year_month_day,
+					  uint64_t hour_minute_second_millisecond)
 {
-	struct fsp_msg *rtc_write_msg;
+	struct fsp_msg *msg;
 	uint32_t w0, w1, w2;
-	int64_t rc;
 	struct tm tm;
 
-	lock(&rtc_lock);
-	if (rtc_tod_state == RTC_TOD_PERMANENT_ERROR) {
-		rc = OPAL_HARDWARE;
-		goto bail;
-	}
-
-	if (rtc_write_in_flight) {
-		rc = OPAL_BUSY_EVENT;
-		goto bail;
-	}
-
-	prlog(PR_TRACE, "Sending new write request...\n");
+	assert(lock_held_by_me(&rtc_lock));
+	assert(rtc_write_request_state == RTC_WRITE_NO_REQUEST);
 
 	/* Create a request and send it. Just like for read, we ignore
 	 * the "millisecond" field which is probably supposed to be
@@ -348,31 +352,57 @@ static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
 	w1 = (hour_minute_second_millisecond >> 32) & 0xffffff00;
 	w2 = 0;
 
-	rtc_write_msg = fsp_mkmsg(FSP_CMD_WRITE_TOD, 3, w0, w1, w2);
-	if (!rtc_write_msg) {
+	msg = fsp_mkmsg(FSP_CMD_WRITE_TOD, 3, w0, w1, w2);
+	if (!msg) {
 		prlog(PR_TRACE, " -> allocation failed !\n");
-		rc = OPAL_INTERNAL_ERROR;
-		goto bail;
+		return OPAL_INTERNAL_ERROR;
 	}
-	prlog(PR_TRACE, " -> req at %p\n", rtc_write_msg);
+	prlog(PR_TRACE, " -> req at %p\n", msg);
 
 	if (fsp_in_reset) {
-		datetime_to_tm(rtc_write_msg->data.words[0],
-			       (u64) rtc_write_msg->data.words[1] << 32,  &tm);
+		datetime_to_tm(msg->data.words[0],
+			       (u64) msg->data.words[1] << 32,  &tm);
 		rtc_cache_update(&tm);
 		rtc_tod_cache_dirty = true;
-		rc = OPAL_SUCCESS;
-		fsp_freemsg(rtc_write_msg);
-		goto bail;
-	} else if (fsp_queue_msg(rtc_write_msg, fsp_rtc_req_complete)) {
+		fsp_freemsg(msg);
+		return OPAL_SUCCESS;
+	} else if (fsp_queue_msg(msg, fsp_rtc_req_complete)) {
 		prlog(PR_TRACE, " -> queueing failed !\n");
-		rc = OPAL_INTERNAL_ERROR;
-		fsp_freemsg(rtc_write_msg);
-		goto bail;
+		fsp_freemsg(msg);
+		return OPAL_INTERNAL_ERROR;
 	}
-	rc = OPAL_BUSY_EVENT;
-	rtc_write_in_flight = true;
- bail:
+
+	rtc_write_request_state = RTC_WRITE_PENDING_REQUEST;
+
+	return OPAL_BUSY_EVENT;
+}
+
+static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
+				  uint64_t hour_minute_second_millisecond)
+{
+	int rc;
+
+	lock(&rtc_lock);
+	if (rtc_tod_state == RTC_TOD_PERMANENT_ERROR) {
+		rc = OPAL_HARDWARE;
+		goto out;
+	}
+
+	if (rtc_write_request_state == RTC_WRITE_NO_REQUEST) {
+		prlog(PR_TRACE, "Sending new RTC write request\n");
+		rc = fsp_rtc_send_write_request(year_month_day,
+						hour_minute_second_millisecond);
+	} else if (rtc_write_request_state == RTC_WRITE_PENDING_REQUEST) {
+		rc = OPAL_BUSY_EVENT;
+	} else {
+		assert(rtc_write_request_state == RTC_WRITE_REQUEST_AVAILABLE);
+		rtc_write_request_state = RTC_WRITE_NO_REQUEST;
+
+		opal_rtc_eval_events(false);
+		rc = OPAL_SUCCESS;
+	}
+
+out:
 	unlock(&rtc_lock);
 	return rc;
 }
