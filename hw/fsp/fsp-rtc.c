@@ -68,15 +68,16 @@ static enum {
 } rtc_tod_state = RTC_TOD_INVALID;
 
 /* State machine for getting an RTC request.
- * RTC_NO_REQUEST -> RTC_PENDING_REQUEST (one in flight)
- * RTC_PENDING_REQUEST -> RTC_REQUEST_AVAILABLE when FSP responds
- * RTC_REQUEST_AVAILABLE -> RTC_NO_REQUEST when OS retrieves it
+ * RTC_READ_NO_REQUEST -> RTC_READ_PENDING_REQUEST (one in flight)
+ * RTC_READ_PENDING_REQUEST -> RTC_READ_REQUEST_AVAILABLE, when FSP responds
+ * RTC_READ_REQUEST_AVAILABLE -> RTC_READ_NO_REQUEST,
+ * when OS retrieves it
  */
 static enum {
-	RTC_NO_REQUEST,
-	RTC_PENDING_REQUEST,
-	RTC_REQUEST_AVAILABLE,
-} rtc_request_state = RTC_NO_REQUEST;
+	RTC_READ_NO_REQUEST,
+	RTC_READ_PENDING_REQUEST,
+	RTC_READ_REQUEST_AVAILABLE,
+} rtc_read_request_state = RTC_READ_NO_REQUEST;
 
 static bool rtc_write_in_flight = false;
 
@@ -162,26 +163,26 @@ static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 
 	assert(lock_held_by_me(&rtc_lock));
 
-	assert(rtc_request_state == RTC_PENDING_REQUEST);
+	assert(rtc_read_request_state == RTC_READ_PENDING_REQUEST);
 
 	switch (val) {
 	case FSP_STATUS_TOD_RESET:
 		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
 				"RTC TOD in invalid state\n");
 		rtc_tod_state = RTC_TOD_INVALID;
-		rtc_request_state = RTC_NO_REQUEST;
+		rtc_read_request_state = RTC_READ_NO_REQUEST;
 		break;
 
 	case FSP_STATUS_TOD_PERMANENT_ERROR:
 		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
 			"RTC TOD in permanent error state\n");
 		rtc_tod_state = RTC_TOD_PERMANENT_ERROR;
-		rtc_request_state = RTC_NO_REQUEST;
+		rtc_read_request_state = RTC_READ_NO_REQUEST;
 		break;
 
 	case FSP_STATUS_SUCCESS:
 		/* Save the read RTC value in our cache */
-		rtc_request_state = RTC_REQUEST_AVAILABLE;
+		rtc_read_request_state = RTC_READ_REQUEST_AVAILABLE;
 		rtc_tod_state = RTC_TOD_VALID;
 		datetime_to_tm(read_resp->data.words[0],
 			       (u64) read_resp->data.words[1] << 32, &tm);
@@ -195,13 +196,13 @@ static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
 				"RTC TOD read failed: %d\n", val);
 		rtc_tod_state = RTC_TOD_INVALID;
-		rtc_request_state = RTC_NO_REQUEST;
+		rtc_read_request_state = RTC_READ_NO_REQUEST;
 	}
 }
 
 static void opal_rtc_eval_events(void)
 {
-	bool request_available = (rtc_request_state == RTC_REQUEST_AVAILABLE);
+	bool request_available = (rtc_read_request_state == RTC_READ_REQUEST_AVAILABLE);
 
 	assert(lock_held_by_me(&rtc_lock));
 	opal_update_pending_evt(OPAL_EVENT_RTC,
@@ -229,7 +230,7 @@ static int64_t fsp_rtc_send_read_request(void)
 	int rc;
 
 	assert(lock_held_by_me(&rtc_lock));
-	assert(rtc_request_state == RTC_NO_REQUEST);
+	assert(rtc_read_request_state == RTC_READ_NO_REQUEST);
 
 	msg = fsp_mkmsg(FSP_CMD_READ_TOD, 0);
 	if (!msg) {
@@ -246,7 +247,7 @@ static int64_t fsp_rtc_send_read_request(void)
 		return OPAL_INTERNAL_ERROR;
 	}
 
-	rtc_request_state = RTC_PENDING_REQUEST;
+	rtc_read_request_state = RTC_READ_PENDING_REQUEST;
 
 	read_req_tb = mftb();
 
@@ -277,14 +278,14 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 
 	/* If we don't have a read pending already, fire off a request and
 	 * return */
-	if (rtc_request_state == RTC_NO_REQUEST) {
+	if (rtc_read_request_state == RTC_READ_NO_REQUEST) {
 		prlog(PR_TRACE, "Sending new RTC read request\n");
 		rc = fsp_rtc_send_read_request();
 	/* If our pending read is done, clear events and return the time
 	 * from the cache */
-	} else if (rtc_request_state == RTC_REQUEST_AVAILABLE) {
+	} else if (rtc_read_request_state == RTC_READ_REQUEST_AVAILABLE) {
                 prlog(PR_TRACE, "RTC read complete, state %d\n", rtc_tod_state);
-		rtc_request_state = RTC_NO_REQUEST;
+		rtc_read_request_state = RTC_READ_NO_REQUEST;
 
                 opal_rtc_eval_events();
 
@@ -310,7 +311,7 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 
 	/* Otherwise, we're still waiting on the read to complete */
 	} else {
-		assert(rtc_request_state == RTC_PENDING_REQUEST);
+		assert(rtc_read_request_state == RTC_READ_PENDING_REQUEST);
 		rc = OPAL_BUSY_EVENT;
 	}
 out:
