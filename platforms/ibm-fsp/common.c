@@ -159,6 +159,16 @@ void ibm_fsp_init(void)
 		fsp_console_add_nodes();
 }
 
+void ibm_fsp_exit(void)
+{
+	/*
+	 * LED related SPCN commands might take a while to
+	 * complete. Call this as late as possible to
+	 * ensure we have all the LED information.
+	 */
+	create_led_device_nodes();
+}
+
 int64_t ibm_fsp_cec_reboot(void)
 {
 	uint32_t cmd = FSP_CMD_REBOOT;

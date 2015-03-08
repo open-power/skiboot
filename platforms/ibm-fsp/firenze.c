@@ -403,6 +403,7 @@ DECLARE_PLATFORM(firenze) = {
 	.name			= "Firenze",
 	.probe			= firenze_probe,
 	.init			= firenze_init,
+	.exit			= ibm_fsp_exit,
 	.cec_power_down		= ibm_fsp_cec_power_down,
 	.cec_reboot		= ibm_fsp_cec_reboot,
 	.pci_setup_phb		= firenze_setup_phb,

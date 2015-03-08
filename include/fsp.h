@@ -783,6 +783,7 @@ extern void fsp_init_diag(void);
 
 /* LED */
 extern void fsp_led_init(void);
+extern void create_led_device_nodes(void);
 
 /* EPOW */
 extern void fsp_epow_init(void);

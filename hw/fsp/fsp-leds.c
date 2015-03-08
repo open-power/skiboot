@@ -24,6 +24,7 @@
 #include <spcn.h>
 #include <lock.h>
 #include <errorlog.h>
+#include <opal-api.h>
 
 #include "fsp-leds.h"
 
@@ -1046,6 +1047,65 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 static struct fsp_client fsp_indicator_client = {
 	.message = fsp_indicator_message,
 };
+
+/*
+ * create_led_device_node
+ *
+ * Creates the system parent LED device node and all individual
+ * child LED device nodes under it. This is called right before
+ * starting the payload (Linux) to ensure that the SPCN command
+ * sequence to fetch the LED location code list has been finished
+ * and to have a better chance of creating the deviced nodes.
+ */
+void create_led_device_nodes(void)
+{
+	struct fsp_led_data *led, *next;
+	struct dt_node *pled, *cled;
+
+	if (!fsp_present())
+		return;
+
+	/* Make sure LED list read is completed */
+	while (led_support == LED_STATE_READING)
+		opal_run_pollers();
+
+	if (led_support == LED_STATE_ABSENT) {
+		prlog(PR_WARNING, PREFIX "LED support not available, \
+		      hence device tree nodes will not be created\n");
+		return;
+	}
+
+	if (!opal_node) {
+		prlog(PR_WARNING, PREFIX
+		      "OPAL parent device node not available\n");
+		return;
+	}
+
+	/* LED parent node */
+	pled = dt_new(opal_node, "led");
+	if (!pled) {
+		prlog(PR_WARNING, PREFIX
+		      "Parent device node creation failed\n");
+		return;
+	}
+	dt_add_property_strings(pled, "compatible", "ibm,opal-v3-led");
+
+	/* LED child nodes */
+	list_for_each_safe(&cec_ledq, led, next, link) {
+		cled = dt_new(pled, led->loc_code);
+		if (!cled) {
+			prlog(PR_WARNING, PREFIX
+			      "Child device node creation failed\n");
+			continue;
+		}
+
+		dt_add_property_strings(cled, "led-types", "identify", "fault");
+		if (is_enclosure_led(led->loc_code))
+			dt_add_property_strings(cled, "led-loc", "enclosure");
+		else
+			dt_add_property_strings(cled, "led-loc", "descendent");
+	}
+}
 
 /*
  * Process the received LED data from SPCN

@@ -1,0 +1,33 @@
+Service Indicators (LEDS)
+-------------------------
+
+The 'led' node under 'ibm,opal' lists service indicators available in the
+system and their capabilities.
+
+led {
+	compatible = "ibm,opal-v3-led";
+	phandle = <0x1000006b>;
+	linux,phandle = <0x1000006b>;
+
+	U78C9.001.RST0027-P1-C1 {
+		led-types = "identify", "fault";
+		led-loc = "descendent";
+		phandle = <0x1000006f>;
+		linux,phandle = <0x1000006f>;
+	};
+	...
+	...
+};
+
+'compatible' property describes LEDs compatibility.
+
+Each node under 'led' node describes location code of FRU/Enclosure.
+
+The properties under each node:
+
+  led-types : Supported indicators (attention/identify/fault).
+
+  led-loc   : enclosure/descendent(FRU) location code.
+
+These LEDs can be accessed through OPAL_LEDS_{GET/SET}_INDICATOR interfaces.
+Refer to doc/opal-api/opal-led-get-set-114-115.txt for interface details.

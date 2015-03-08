@@ -51,6 +51,7 @@ DECLARE_PLATFORM(apollo) = {
 	.name			= "Apollo",
 	.probe			= apollo_probe,
 	.init			= ibm_fsp_init,
+	.exit			= ibm_fsp_exit,
 	.cec_power_down		= ibm_fsp_cec_power_down,
 	.cec_reboot		= ibm_fsp_cec_reboot,
 	.pci_setup_phb		= apollo_setup_phb,
