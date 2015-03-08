@@ -69,8 +69,12 @@
 #define FSP_STAUS_INVALID_HMC_ID	0x51
 #define FSP_STATUS_SPCN_ERROR		0xA8	/* SPCN error */
 #define FSP_STATUS_INVALID_LC		0xC0	/* Invalid location code */
+#define FSP_STATUS_ENCL_IND_RESET	0xC2	/* Enclosure Indicator cannot be reset */
 #define FSP_STATUS_TOD_RESET		0xA9	/* TOD reset due to invalid state at POR */
 #define FSP_STATUS_TOD_PERMANENT_ERROR	0xAF	/* Permanent error in TOD */
+#define FSP_STATUS_I2C_TRANS_ERROR	0xE4	/* I2C device / transmission error */
+#define FSP_STATUS_IND_PARTIAL_SUCCESS	0xE5	/* Indicator partial success */
+#define FSP_STATUS_GENERIC_FAILURE	0xEF	/* Generic Failure in execution */
 
 /*
  * FSP registers

@@ -244,9 +244,29 @@ enclosure:
 	encl_led->excl_bit = encl_cec_led->excl_bit;
 }
 
+static int fsp_set_led_response(uint32_t cmd)
+{
+	struct fsp_msg *msg;
+	int rc = -1;
+
+	msg = fsp_mkmsg(cmd, 0);
+	if (!msg) {
+		prerror(PREFIX
+			"Failed to allocate FSP_RSP_SET_LED_STATE [cmd=%x])\n",
+			cmd);
+	} else {
+		rc = fsp_queue_msg(msg, fsp_freemsg);
+		if (rc != OPAL_SUCCESS) {
+			fsp_freemsg(msg);
+			prerror(PREFIX "Failed to queue "
+				"FSP_RSP_SET_LED_STATE [cmd=%x]\n", cmd);
+		}
+	}
+	return rc;
+}
+
 static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 {
-	struct fsp_msg *smsg = NULL;
 	struct fsp_msg *resp = msg->resp;
 	u32 cmd = FSP_RSP_SET_LED_STATE;
 	u8 status = resp->word1 & 0xff00;
@@ -272,19 +292,8 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 	}
 
 	/* FSP initiated SPCN command */
-	if (spcn_cmd->cmd_src == SPCN_SRC_FSP) {
-		smsg = fsp_mkmsg(cmd, 0);
-		if (!smsg) {
-			prerror(PREFIX
-				"Failed to allocate FSP_RSP_SET_LED_STATE\n");
-		} else {
-			if (fsp_queue_msg(smsg, fsp_freemsg)) {
-				fsp_freemsg(smsg);
-				prerror(PREFIX "Failed to queue "
-					"FSP_RSP_SET_LED_STATE\n");
-			}
-		}
-	}
+	if (spcn_cmd->cmd_src == SPCN_SRC_FSP)
+		fsp_set_led_response(cmd);
 
 	unlock(&led_lock);
 
@@ -318,6 +327,7 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	void *buf = led_buffer;
 	u16 data_len = 0;
 	u32 cmd_hdr = 0;
+	u32 cmd = FSP_RSP_SET_LED_STATE;
 	int rc = -1;
 
 	sled.lc_len = strlen(spcn_cmd->loc_code);
@@ -335,22 +345,9 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 
 	/* LED not present */
 	if (led == NULL) {
-		u32 cmd = 0;
-		struct fsp_msg *msg = NULL;
-
-		cmd = FSP_RSP_SET_LED_STATE | FSP_STATUS_INVALID_LC;
-		msg = fsp_mkmsg(cmd, 0);
-		if (!msg) {
-			prerror(PREFIX "Could not allocate "
-				"FSP_RSP_SET_LED_STATE | "
-				"FSP_STATUS_INVALID_LC\n");
-		} else {
-			if (fsp_queue_msg(msg, fsp_freemsg)) {
-				fsp_freemsg(msg);
-				prerror(PREFIX "Couldn't queue "
-					"FSP_RSP_SET_LED_STATE"
-					"|FSP_STATUS_INVALID_LC\n");
-			}
+		if (spcn_cmd->cmd_src == SPCN_SRC_FSP) {
+			cmd |= FSP_STATUS_INVALID_LC;
+			fsp_set_led_response(cmd);
 		}
 
 		unlock(&led_lock);
@@ -407,9 +404,10 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	msg = fsp_mkmsg(FSP_CMD_SPCN_PASSTHRU, 4,
 			SPCN_ADDR_MODE_CEC_NODE, cmd_hdr, 0, PSI_DMA_LED_BUF);
 	if (!msg) {
-		unlock(&led_lock);
 		free(spcn_cmd);
-		return rc;
+		cmd |= FSP_STATUS_GENERIC_ERROR;
+		rc = -1;
+		goto update_fail;
 	}
 
 	/*
@@ -421,10 +419,21 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 
 	rc = fsp_queue_msg(msg, fsp_spcn_set_led_completion);
 	if (rc != OPAL_SUCCESS) {
+		cmd |= FSP_STATUS_GENERIC_ERROR;
 		fsp_freemsg(msg);
 		free(spcn_cmd);
 		/* Revert LED state update */
 		update_led_list(spcn_cmd->loc_code, spcn_cmd->ckpt_status);
+	}
+
+update_fail:
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_LED_STATE),
+				 PREFIX "Set led state failed at LC=%s\n",
+				 spcn_cmd->loc_code);
+
+		if (spcn_cmd->cmd_src == SPCN_SRC_FSP)
+			fsp_set_led_response(cmd);
 	}
 
 	unlock(&led_lock);
@@ -458,12 +467,7 @@ static int process_led_state_change(void)
 	spcn_cmd = list_pop(&spcn_cmdq, struct led_set_cmd, link);
 	unlock(&spcn_cmd_lock);
 
-	rc = fsp_msg_set_led_state(spcn_cmd);
-	if (rc)
-		log_simple_error(&e_info(OPAL_RC_LED_STATE),
-				 PREFIX "Set led state failed at LC=%s\n",
-				 spcn_cmd->loc_code);
-
+	fsp_msg_set_led_state(spcn_cmd);
 	return rc;
 }
 
@@ -869,25 +873,13 @@ static void fsp_set_led_state(struct fsp_msg *msg)
 	u32 tce_token = msg->data.words[1];
 	bool command, state;
 	void *buf;
-	struct fsp_msg *resp;
+	int rc;
 
 	/* Parse the inbound buffer */
 	buf = fsp_inbound_buf_from_tce(tce_token);
 	if (!buf) {
-		struct fsp_msg *msg;
-		msg = fsp_mkmsg(FSP_RSP_SET_LED_STATE |
-				FSP_STATUS_INVALID_DATA,
-				0);
-		if (!msg) {
-			prerror(PREFIX "Couldn't allocate FSP_RSP_SET_LED_STATE |"
-				" FSP_STATUS_INVALID_DATA\n");
-			return;
-		}
-		if (fsp_queue_msg(msg, fsp_freemsg)) {
-			fsp_freemsg(msg);
-			prerror(PREFIX "Couldn't queue FSP_RSP_SET_LED_STATE |"
-				" FSP_STATUS_INVALID_DATA\n");
-		}
+		fsp_set_led_response(FSP_RSP_SET_LED_STATE |
+				     FSP_STATUS_INVALID_DATA);
 		return;
 	}
 	memcpy(&req, buf, sizeof(req));
@@ -927,28 +919,25 @@ static void fsp_set_led_state(struct fsp_msg *msg)
 			if (!strcmp(led->loc_code, req.loc_code))
 				continue;
 
-			queue_led_state_change(led->loc_code,
-					       command, state, SPCN_SRC_FSP);
+			rc = queue_led_state_change(led->loc_code, command,
+						    state, SPCN_SRC_FSP);
+			if (rc != 0)
+				fsp_set_led_response(FSP_RSP_SET_LED_STATE |
+						     FSP_STATUS_GENERIC_ERROR);
 		}
 		break;
 	case SET_IND_SINGLE_LOC_CODE:
 		/* Set led state for single descendent led */
-		queue_led_state_change(req.loc_code,
-				       command, state, SPCN_SRC_FSP);
+		rc = queue_led_state_change(req.loc_code,
+					    command, state, SPCN_SRC_FSP);
+		if (rc != 0)
+			fsp_set_led_response(FSP_RSP_SET_LED_STATE |
+					     FSP_STATUS_GENERIC_ERROR);
 		break;
 	default:
-		resp = fsp_mkmsg(FSP_RSP_SET_LED_STATE |
-				 FSP_STATUS_NOT_SUPPORTED, 0);
-		if (!resp) {
-			prerror(PREFIX "Unable to alloc FSP_RSP_SET_LED_STATE |"
-				" FSP_STATUS_NOT_SUPPORTED\n");
-			break;
-		}
-		if (fsp_queue_msg(resp, fsp_freemsg)) {
-			fsp_freemsg(resp);
-			prerror(PREFIX "Failed to queue FSP_RSP_SET_LED_STATE |"
-				" FSP_STATUS_NOT_SUPPORTED\n");
-		}
+		fsp_set_led_response(FSP_RSP_SET_LED_STATE |
+				     FSP_STATUS_NOT_SUPPORTED);
+		break;
 	}
 }
 
