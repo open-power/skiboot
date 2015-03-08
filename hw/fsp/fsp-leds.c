@@ -252,6 +252,8 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 	u8 status = resp->word1 & 0xff00;
 	struct led_set_cmd *spcn_cmd = (struct led_set_cmd *)msg->user_data;
 
+	lock(&led_lock);
+
 	/*
 	 * LED state update request came as part of FSP async message
 	 * FSP_CMD_SET_LED_STATE, hence need to send response message.
@@ -283,6 +285,8 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 			}
 		}
 	}
+
+	unlock(&led_lock);
 
 	/* free msg and spcn command */
 	free(spcn_cmd);
@@ -319,6 +323,8 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	sled.lc_len = strlen(spcn_cmd->loc_code);
 	strncpy(sled.lc_code, spcn_cmd->loc_code, sled.lc_len);
 
+	lock(&led_lock);
+
 	/* Location code length + Location code + LED control */
 	data_len = LOC_CODE_LEN + sled.lc_len + LED_CONTROL_LEN;
 	cmd_hdr =  SPCN_MOD_SET_LED_CTL_LOC_CODE << 24 | SPCN_CMD_SET << 16 |
@@ -346,6 +352,8 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 					"|FSP_STATUS_INVALID_LC\n");
 			}
 		}
+
+		unlock(&led_lock);
 		free(spcn_cmd);
 		return rc;
 	}
@@ -399,6 +407,7 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	msg = fsp_mkmsg(FSP_CMD_SPCN_PASSTHRU, 4,
 			SPCN_ADDR_MODE_CEC_NODE, cmd_hdr, 0, PSI_DMA_LED_BUF);
 	if (!msg) {
+		unlock(&led_lock);
 		free(spcn_cmd);
 		return rc;
 	}
@@ -407,10 +416,8 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	 * Update the local lists based on the attempted SPCN command to
 	 * set/reset an individual led (CEC or ENCL).
 	 */
-	lock(&led_lock);
 	update_led_list(spcn_cmd->loc_code, sled.state);
 	msg->user_data = spcn_cmd;
-	unlock(&led_lock);
 
 	rc = fsp_queue_msg(msg, fsp_spcn_set_led_completion);
 	if (rc != OPAL_SUCCESS) {
@@ -418,6 +425,7 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 		free(spcn_cmd);
 	}
 
+	unlock(&led_lock);
 	return rc;
 }
 
