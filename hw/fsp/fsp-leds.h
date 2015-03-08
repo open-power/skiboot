@@ -40,6 +40,13 @@
 #define FSP_LED_EXCL_FAULT	1UL << 0
 #define FSP_LED_EXCL_IDENTIFY	1UL << 1
 
+/* LED update message source */
+enum spcn_cmd_src {
+	SPCN_SRC_FSP	= 0,
+	SPCN_SRC_OPAL	= 1,
+	SPCN_SRC_MAX	= 2
+};
+
 /* SPCN set LED */
 struct spcn_led_data {
 	u8	lc_len;
@@ -113,6 +120,7 @@ struct led_set_cmd {
 	u8	command;
 	u8	state;
 	u16	ckpt_status;		/* Checkpointed status */
+	enum	spcn_cmd_src cmd_src;	/* OPAL or FSP based */
 	struct	list_node link;
 };
 

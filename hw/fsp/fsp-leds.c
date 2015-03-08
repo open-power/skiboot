@@ -269,13 +269,18 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 		update_led_list(spcn_cmd->loc_code, spcn_cmd->ckpt_status);
 	}
 
-	smsg = fsp_mkmsg(cmd, 0);
-	if (!smsg) {
-		prerror(PREFIX "Failed to allocate FSP_RSP_SET_LED_STATE\n");
-	} else {
-		if (fsp_queue_msg(smsg, fsp_freemsg)) {
-			fsp_freemsg(smsg);
-			prerror(PREFIX "Failed to queue FSP_RSP_SET_LED_STATE\n");
+	/* FSP initiated SPCN command */
+	if (spcn_cmd->cmd_src == SPCN_SRC_FSP) {
+		smsg = fsp_mkmsg(cmd, 0);
+		if (!smsg) {
+			prerror(PREFIX
+				"Failed to allocate FSP_RSP_SET_LED_STATE\n");
+		} else {
+			if (fsp_queue_msg(smsg, fsp_freemsg)) {
+				fsp_freemsg(smsg);
+				prerror(PREFIX "Failed to queue "
+					"FSP_RSP_SET_LED_STATE\n");
+			}
 		}
 	}
 
@@ -463,7 +468,8 @@ static int process_led_state_change(void)
  * list and keeps the chain execution going. At last when there are no elements
  * in the command queue it sets 'spcn_cmd_complete' as true again.
  */
-static int queue_led_state_change(char *loc_code, u8 command, u8 state)
+static int queue_led_state_change(char *loc_code, u8 command,
+				  u8 state, int cmd_src)
 {
 	struct led_set_cmd *cmd;
 	int rc = 0;
@@ -480,6 +486,7 @@ static int queue_led_state_change(char *loc_code, u8 command, u8 state)
 	strncpy(cmd->loc_code, loc_code, strlen(loc_code));
 	cmd->command = command;
 	cmd->state = state;
+	cmd->cmd_src = cmd_src;
 
 	/* Add to the queue */
 	lock(&spcn_cmd_lock);
@@ -910,12 +917,14 @@ static void fsp_set_led_state(struct fsp_msg *msg)
 			if (!strcmp(led->loc_code, req.loc_code))
 				continue;
 
-			queue_led_state_change(led->loc_code, command, state);
+			queue_led_state_change(led->loc_code,
+					       command, state, SPCN_SRC_FSP);
 		}
 		break;
 	case SET_IND_SINGLE_LOC_CODE:
 		/* Set led state for single descendent led */
-		queue_led_state_change(req.loc_code, command, state);
+		queue_led_state_change(req.loc_code,
+				       command, state, SPCN_SRC_FSP);
 		break;
 	default:
 		resp = fsp_mkmsg(FSP_RSP_SET_LED_STATE |
