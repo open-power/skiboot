@@ -246,12 +246,11 @@ enclosure:
 
 static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 {
-	u16 ckpt_status;
-	char loc_code[LOC_CODE_SIZE + 1];
-	struct fsp_msg *resp = msg->resp;
 	struct fsp_msg *smsg = NULL;
+	struct fsp_msg *resp = msg->resp;
 	u32 cmd = FSP_RSP_SET_LED_STATE;
 	u8 status = resp->word1 & 0xff00;
+	struct led_set_cmd *spcn_cmd = (struct led_set_cmd *)msg->user_data;
 
 	/*
 	 * LED state update request came as part of FSP async message
@@ -266,16 +265,8 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 			status);
 		cmd |= FSP_STATUS_GENERIC_ERROR;
 
-		/* Identify the failed command */
-		memset(loc_code, 0, sizeof(loc_code));
-		strncpy(loc_code,
-			((struct fsp_led_data *)(msg->user_data))->loc_code,
-			LOC_CODE_SIZE);
-		ckpt_status = ((struct fsp_led_data *)(msg->user_data))
-			->ckpt_status;
-
 		/* Rollback the changes */
-		update_led_list(loc_code, ckpt_status);
+		update_led_list(spcn_cmd->loc_code, spcn_cmd->ckpt_status);
 	}
 
 	smsg = fsp_mkmsg(cmd, 0);
@@ -288,7 +279,8 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 		}
 	}
 
-	/* free msg */
+	/* free msg and spcn command */
+	free(spcn_cmd);
 	fsp_freemsg(msg);
 
 	/* Process pending LED update request */
@@ -349,6 +341,7 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 					"|FSP_STATUS_INVALID_LC\n");
 			}
 		}
+		free(spcn_cmd);
 		return rc;
 	}
 
@@ -356,7 +349,7 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	 * Checkpoint the status here, will use it if the SPCN
 	 * command eventually fails.
 	 */
-	led->ckpt_status = led->status;
+	spcn_cmd->ckpt_status = led->status;
 	sled.state = led->status;
 
 	/* Update the exclussive LED bits  */
@@ -400,20 +393,26 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 
 	msg = fsp_mkmsg(FSP_CMD_SPCN_PASSTHRU, 4,
 			SPCN_ADDR_MODE_CEC_NODE, cmd_hdr, 0, PSI_DMA_LED_BUF);
-	if (!msg)
+	if (!msg) {
+		free(spcn_cmd);
 		return rc;
+	}
+
 	/*
 	 * Update the local lists based on the attempted SPCN command to
 	 * set/reset an individual led (CEC or ENCL).
 	 */
 	lock(&led_lock);
 	update_led_list(spcn_cmd->loc_code, sled.state);
-	msg->user_data = led;
+	msg->user_data = spcn_cmd;
 	unlock(&led_lock);
 
 	rc = fsp_queue_msg(msg, fsp_spcn_set_led_completion);
-	if (rc != OPAL_SUCCESS)
+	if (rc != OPAL_SUCCESS) {
 		fsp_freemsg(msg);
+		free(spcn_cmd);
+	}
+
 	return rc;
 }
 
@@ -449,7 +448,7 @@ static int process_led_state_change(void)
 		log_simple_error(&e_info(OPAL_RC_LED_STATE),
 				 PREFIX "Set led state failed at LC=%s\n",
 				 spcn_cmd->loc_code);
-	free(spcn_cmd);
+
 	return rc;
 }
 

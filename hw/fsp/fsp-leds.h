@@ -54,7 +54,6 @@ struct fsp_led_data {
         char			loc_code[LOC_CODE_SIZE];
 	u16			parms;			/* Parameters */
 	u16			status;			/* Status */
-	u16			ckpt_status;		/* Checkpointed status */
 	u16			excl_bit;		/* Exclussive LED bit */
 	struct list_node	link;
 };
@@ -113,6 +112,7 @@ struct led_set_cmd {
 	char	loc_code[LOC_CODE_SIZE];
 	u8	command;
 	u8	state;
+	u16	ckpt_status;		/* Checkpointed status */
 	struct	list_node link;
 };
 
