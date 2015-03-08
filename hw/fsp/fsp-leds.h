@@ -120,6 +120,7 @@ struct led_set_cmd {
 	u8	command;
 	u8	state;
 	u16	ckpt_status;		/* Checkpointed status */
+	u64	async_token;		/* OPAL async token */
 	enum	spcn_cmd_src cmd_src;	/* OPAL or FSP based */
 	struct	list_node link;
 };

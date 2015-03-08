@@ -1,0 +1,36 @@
+Service Indicators (LEDS)
+-------------------------
+
+The service indicator is one element of an overall hardware service strategy
+where end user simplicity is a high priority. The goal is system firmware or
+operating system code to isolate hardware failures to the failing FRU and
+automatically activate the fault indicator associated with the failing FRU.
+The end user then needs only to look for the FRU with the active fault
+indicator to know which part to replace.
+
+Different types of indicators handled by LED code:
+  - System attention indicator (Check log indicator)
+	Indicates there is a problem with the system that needs attention.
+  - Identify
+	Helps the user locate/identify a particular FRU or resource in the
+	system.
+  - Fault
+	Indicates there is a problem with the FRU or resource at the
+	location with which the indicator is associated.
+
+
+Note:
+  - For more information regarding service indicator refer to PAPR spec
+    (Service Indicators chapter).
+
+There are two OPAL calls relating to LED operations.
+
+OPAL_LEDS_GET_INDICATOR
+-----------------------
+  Returns LED state for the given location code.
+
+OPAL_LEDS_SET_INDICATOR
+-----------------------
+  Sets LED state for the given location code.
+
+See hw/fsp/fsp-leds.c for more deatails.

@@ -25,6 +25,8 @@
 #include <lock.h>
 #include <errorlog.h>
 #include <opal-api.h>
+#include <opal.h>
+#include <opal-msg.h>
 
 #include "fsp-leds.h"
 
@@ -81,6 +83,7 @@ static int replay = 0;
 static void fsp_read_leds_data_complete(struct fsp_msg *msg);
 static int process_led_state_change(void);
 
+
 DEFINE_LOG_ENTRY(OPAL_RC_LED_SPCN, OPAL_PLATFORM_ERR_EVT, OPAL_LED,
 		OPAL_PLATFORM_FIRMWARE, OPAL_PREDICTIVE_ERR_GENERAL,
 		OPAL_NA, NULL);
@@ -98,6 +101,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_LED_STATE, OPAL_PLATFORM_ERR_EVT, OPAL_LED,
 
 DEFINE_LOG_ENTRY(OPAL_RC_LED_SUPPORT, OPAL_PLATFORM_ERR_EVT, OPAL_LED,
 		OPAL_PLATFORM_FIRMWARE, OPAL_INFO, OPAL_NA, NULL);
+
 
 /* Find descendent LED record with CEC location code in CEC list */
 static struct fsp_led_data *fsp_find_cec_led(char *loc_code)
@@ -185,6 +189,11 @@ static bool is_enclosure_led(char *loc_code)
 	if (!fsp_find_cec_led(loc_code) || !fsp_find_encl_led(loc_code))
 		return false;
 	return true;
+}
+
+static inline void opal_led_update_complete(u64 async_token, u64 result)
+{
+	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL, async_token, result);
 }
 
 /*
@@ -276,10 +285,9 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 
 	/*
 	 * LED state update request came as part of FSP async message
-	 * FSP_CMD_SET_LED_STATE, hence need to send response message.
+	 * FSP_CMD_SET_LED_STATE, we need to send response message.
 	 *
-	 * Also if SPCN command failed, then identify the command and
-	 * roll back changes.
+	 * Also if SPCN command failed, then roll back changes.
 	 */
 	if (status != FSP_STATUS_SUCCESS) {
 		log_simple_error(&e_info(OPAL_RC_LED_SPCN),
@@ -294,6 +302,16 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 	/* FSP initiated SPCN command */
 	if (spcn_cmd->cmd_src == SPCN_SRC_FSP)
 		fsp_set_led_response(cmd);
+
+	/* OPAL initiated SPCN command */
+	if (spcn_cmd->cmd_src == SPCN_SRC_OPAL) {
+		if (status != FSP_STATUS_SUCCESS)
+			opal_led_update_complete(spcn_cmd->async_token,
+						 OPAL_INTERNAL_ERROR);
+		else
+			opal_led_update_complete(spcn_cmd->async_token,
+						 OPAL_SUCCESS);
+	}
 
 	unlock(&led_lock);
 
@@ -349,6 +367,10 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 			cmd |= FSP_STATUS_INVALID_LC;
 			fsp_set_led_response(cmd);
 		}
+
+		if (spcn_cmd->cmd_src == SPCN_SRC_OPAL)
+			opal_led_update_complete(spcn_cmd->async_token,
+						 OPAL_INTERNAL_ERROR);
 
 		unlock(&led_lock);
 		free(spcn_cmd);
@@ -434,6 +456,10 @@ update_fail:
 
 		if (spcn_cmd->cmd_src == SPCN_SRC_FSP)
 			fsp_set_led_response(cmd);
+
+		if (spcn_cmd->cmd_src == SPCN_SRC_OPAL)
+			opal_led_update_complete(spcn_cmd->async_token,
+						 OPAL_INTERNAL_ERROR);
 	}
 
 	unlock(&led_lock);
@@ -483,7 +509,7 @@ static int process_led_state_change(void)
  * in the command queue it sets 'spcn_cmd_complete' as true again.
  */
 static int queue_led_state_change(char *loc_code, u8 command,
-				  u8 state, int cmd_src)
+				  u8 state, int cmd_src, uint64_t async_token)
 {
 	struct led_set_cmd *cmd;
 	int rc = 0;
@@ -501,6 +527,7 @@ static int queue_led_state_change(char *loc_code, u8 command,
 	cmd->command = command;
 	cmd->state = state;
 	cmd->cmd_src = cmd_src;
+	cmd->async_token = async_token;
 
 	/* Add to the queue */
 	lock(&spcn_cmd_lock);
@@ -920,7 +947,7 @@ static void fsp_set_led_state(struct fsp_msg *msg)
 				continue;
 
 			rc = queue_led_state_change(led->loc_code, command,
-						    state, SPCN_SRC_FSP);
+						    state, SPCN_SRC_FSP, 0);
 			if (rc != 0)
 				fsp_set_led_response(FSP_RSP_SET_LED_STATE |
 						     FSP_STATUS_GENERIC_ERROR);
@@ -929,7 +956,7 @@ static void fsp_set_led_state(struct fsp_msg *msg)
 	case SET_IND_SINGLE_LOC_CODE:
 		/* Set led state for single descendent led */
 		rc = queue_led_state_change(req.loc_code,
-					    command, state, SPCN_SRC_FSP);
+					    command, state, SPCN_SRC_FSP, 0);
 		if (rc != 0)
 			fsp_set_led_response(FSP_RSP_SET_LED_STATE |
 					     FSP_STATUS_GENERIC_ERROR);
@@ -1054,6 +1081,193 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 static struct fsp_client fsp_indicator_client = {
 	.message = fsp_indicator_message,
 };
+
+
+/*
+ * fsp_opal_leds_get_ind (OPAL_LEDS_GET_INDICATOR)
+ *
+ * Argument	 Description				Updated By
+ * --------	 -----------				----------
+ * loc_code	 Location code of the LEDs		(Host)
+ * led_mask	 LED types whose status is available	(OPAL)
+ * led_value	 Status of the available LED types	(OPAL)
+ * max_led_type  Maximum number of supported LED types	(Host/OPAL)
+ *
+ * The host will pass the location code of the LED types (loc_code) and
+ * maximum number of LED types it understands (max_led_type). OPAL will
+ * update the 'led_mask' with set bits pointing to LED types whose status
+ * is available and updates the 'led_value' with actual status. OPAL checks
+ * the 'max_led_type' to understand whether the host is newer or older
+ * compared to itself. In the case where the OPAL is newer compared
+ * to host (OPAL's max_led_type > host's max_led_type), it will update
+ * led_mask and led_value according to max_led_type requested by the host.
+ * When the host is newer compared to the OPAL (host's max_led_type >
+ * OPAL's max_led_type), OPAL updates 'max_led_type' to the maximum
+ * number of LED type it understands and updates 'led_mask', 'led_value'
+ * based on that maximum value of LED types.
+ */
+static int64_t fsp_opal_leds_get_ind(char *loc_code, u64 *led_mask,
+				     u64 *led_value, u64 *max_led_type)
+{
+	bool supported = true;
+	int64_t max;
+	struct fsp_led_data *led;
+
+	/* FSP not present */
+	if (!fsp_present())
+		return OPAL_HARDWARE;
+
+	/* LED support not available */
+	if (led_support != LED_STATE_PRESENT)
+		return OPAL_HARDWARE;
+
+	/* Adjust max LED type */
+	if (*max_led_type > OPAL_SLOT_LED_TYPE_MAX) {
+		supported = false;
+		*max_led_type = OPAL_SLOT_LED_TYPE_MAX;
+	}
+
+	/* Invalid parameter */
+	max = *max_led_type;
+	if (max <= 0)
+		return OPAL_PARAMETER;
+
+	/* LED not found */
+	led = fsp_find_cec_led(loc_code);
+	if (!led)
+		return OPAL_PARAMETER;
+
+	*led_mask = 0;
+	*led_value = 0;
+
+	/* Identify LED */
+	--max;
+	*led_mask |= OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ID;
+	if (led->status & SPCN_LED_IDENTIFY_MASK)
+		*led_value |=
+			OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ID;
+
+	/* Fault LED */
+	if (!max)
+		return OPAL_SUCCESS;
+
+	--max;
+	*led_mask |= OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_FAULT;
+	if (led->status & SPCN_LED_FAULT_MASK)
+		*led_value |=
+			OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_FAULT;
+
+	/* OPAL doesn't support all the LED type requested by payload */
+	if (!supported)
+		return OPAL_PARTIAL;
+
+	return OPAL_SUCCESS;
+}
+
+/*
+ * fsp_opal_leds_set_ind (OPAL_LEDS_SET_INDICATOR)
+ *
+ * Argument	 Description				Updated By
+ * --------	 -----------				----------
+ * loc_code	 Location code of the LEDs		(Host)
+ * led_mask	 LED types whose status will be updated	(Host)
+ * led_value	 Requested status of various LED types	(Host)
+ * max_led_type  Maximum number of supported LED types	(Host/OPAL)
+ *
+ * The host will pass the location code of the LED types, mask, value
+ * and maximum number of LED types it understands. OPAL will update
+ * LED status for all the LED types mentioned in the mask with their
+ * value mentioned. OPAL checks the 'max_led_type' to understand
+ * whether the host is newer or older compared to itself. In case where
+ * the OPAL is newer compared to the host (OPAL's max_led_type >
+ * host's max_led_type), it updates LED status based on max_led_type
+ * requested from the host. When the host is newer compared to the OPAL
+ * (host's max_led_type > OPAL's max_led_type), OPAL updates
+ * 'max_led_type' to the maximum number of LED type it understands and
+ * then it updates LED status based on that updated  maximum value of LED
+ * types. Host needs to check the returned updated value of max_led_type
+ * to figure out which part of it's request got served and which ones got
+ * ignored.
+ */
+static int64_t fsp_opal_leds_set_ind(uint64_t async_token,
+				     char *loc_code, const u64 led_mask,
+				     const u64 led_value, u64 *max_led_type)
+{
+	bool supported = true;
+	int command, state, rc = OPAL_SUCCESS;
+	int64_t max;
+	struct fsp_led_data *led;
+
+	/* FSP not present */
+	if (!fsp_present())
+		return OPAL_HARDWARE;
+
+	/* LED support not available */
+	if (led_support != LED_STATE_PRESENT)
+		return OPAL_HARDWARE;
+
+	/* Adjust max LED type */
+	if (*max_led_type > OPAL_SLOT_LED_TYPE_MAX) {
+		supported = false;
+		*max_led_type = OPAL_SLOT_LED_TYPE_MAX;
+	}
+
+	max = *max_led_type;
+	/* Invalid parameter */
+	if (max <= 0)
+		return OPAL_PARAMETER;
+
+	/* LED not found */
+	led = fsp_find_cec_led(loc_code);
+	if (!led)
+		return OPAL_PARAMETER;
+
+	/* Indentify LED mask */
+	--max;
+
+	if ((led_mask >> OPAL_SLOT_LED_TYPE_ID) & OPAL_SLOT_LED_STATE_ON) {
+		supported = true;
+
+		command = LED_COMMAND_IDENTIFY;
+		state = LED_STATE_OFF;
+		if ((led_value >> OPAL_SLOT_LED_TYPE_ID)
+					& OPAL_SLOT_LED_STATE_ON)
+			state = LED_STATE_ON;
+
+		rc = queue_led_state_change(loc_code, command,
+					    state, SPCN_SRC_OPAL, async_token);
+	}
+
+	if (!max)
+		goto success;
+
+	/* Fault LED mask */
+	--max;
+	if ((led_mask >> OPAL_SLOT_LED_TYPE_FAULT) & OPAL_SLOT_LED_STATE_ON) {
+		supported = true;
+
+		command = LED_COMMAND_FAULT;
+		state = LED_STATE_OFF;
+		if ((led_value >> OPAL_SLOT_LED_TYPE_FAULT)
+					& OPAL_SLOT_LED_STATE_ON)
+			state = LED_STATE_ON;
+
+		rc = queue_led_state_change(loc_code, command,
+					    state, SPCN_SRC_OPAL, async_token);
+	}
+
+success:
+	/* Unsupported LED type */
+	if (!supported)
+		return OPAL_UNSUPPORTED;
+
+	if (rc == OPAL_SUCCESS)
+		rc = OPAL_ASYNC_COMPLETION;
+	else
+		rc = OPAL_INTERNAL_ERROR;
+
+	return rc;
+}
 
 /*
  * create_led_device_node
@@ -1433,4 +1647,8 @@ void fsp_led_init(void)
 	/* Handle FSP initiated async LED commands */
 	fsp_register_client(&fsp_indicator_client, FSP_MCLASS_INDICATOR);
 	prlog(PR_TRACE, PREFIX "FSP async command client registered\n");
+
+	opal_register(OPAL_LEDS_GET_INDICATOR, fsp_opal_leds_get_ind, 4);
+	opal_register(OPAL_LEDS_SET_INDICATOR, fsp_opal_leds_set_ind, 5);
+	prlog(PR_TRACE, PREFIX "LED OPAL interface registered\n");
 }
