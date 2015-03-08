@@ -278,16 +278,21 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 		return OPAL_PARAMETER;
 
 	lock(&rtc_lock);
-	/* During R/R of FSP, read cached TOD */
-	if (fsp_in_reset) {
-		rtc_cache_get_datetime(year_month_day,
-				hour_minute_second_millisecond);
-		rc = OPAL_SUCCESS;
-		goto out;
-	}
 
 	if (rtc_tod_state == RTC_TOD_PERMANENT_ERROR) {
 		rc = OPAL_HARDWARE;
+		goto out;
+	}
+
+	/* During R/R of FSP, read cached TOD */
+	if (fsp_in_reset) {
+		if (rtc_tod_state == RTC_TOD_VALID) {
+			rtc_cache_get_datetime(year_month_day,
+					       hour_minute_second_millisecond);
+			rc = OPAL_SUCCESS;
+		} else {
+			rc = OPAL_INTERNAL_ERROR;
+		}
 		goto out;
 	}
 
@@ -320,10 +325,13 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 	} else if (mftb() > read_req_tb + msecs_to_tb(rtc_read_timeout_ms)) {
 		prlog(PR_TRACE, "RTC read timed out\n");
 
-		rtc_cache_get_datetime(year_month_day,
-				hour_minute_second_millisecond);
-		rc = OPAL_SUCCESS;
-
+		if (rtc_tod_state == RTC_TOD_VALID) {
+			rtc_cache_get_datetime(year_month_day,
+					       hour_minute_second_millisecond);
+			rc = OPAL_SUCCESS;
+		} else {
+                        rc = OPAL_INTERNAL_ERROR;
+		}
 	/* Otherwise, we're still waiting on the read to complete */
 	} else {
 		assert(rtc_read_request_state == RTC_READ_PENDING_REQUEST);
