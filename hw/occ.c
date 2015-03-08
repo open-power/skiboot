@@ -409,6 +409,7 @@ static void __occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_OCC_LOAD),
 			"OCC: Error %d queueing FSP OCC LOAD STATUS msg", rc);
+		fsp_freemsg(stat);
 	}
 }
 
@@ -446,6 +447,7 @@ static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_OCC_LOAD),
 			"OCC: Error %d queueing FSP OCC LOAD reply\n", rc);
+		fsp_freemsg(rsp);
 		return;
 	}
 
@@ -483,6 +485,7 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 	if (rsp)
 		rc = fsp_queue_msg(rsp, fsp_freemsg);
 	if (rc) {
+		fsp_freemsg(rsp);
 		log_simple_error(&e_info(OPAL_RC_OCC_RESET),
 			"OCC: Error %d queueing FSP OCC RESET reply\n", rc);
 		return;
@@ -511,6 +514,7 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 		if (stat)
 			rc = fsp_queue_msg(stat, fsp_freemsg);
 		if (rc) {
+			fsp_freemsg(stat);
 			log_simple_error(&e_info(OPAL_RC_OCC_RESET),
 				"OCC: Error %d queueing FSP OCC RESET"
 					" STATUS message\n", rc);
@@ -530,6 +534,7 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 			if (stat)
 				rc = fsp_queue_msg(stat, fsp_freemsg);
 			if (rc) {
+				fsp_freemsg(stat);
 				log_simple_error(&e_info(OPAL_RC_OCC_RESET),
 					"OCC: Error %d queueing FSP OCC RESET"
 						" STATUS message\n", rc);
