@@ -201,25 +201,11 @@ static inline void opal_led_update_complete(u64 async_token, u64 result)
  * occured with the recent SPCN command. Subsequent LED requests will
  * be served with these updates changed to the list.
  */
-static void update_led_list(char *loc_code, u32 led_state)
+static void update_led_list(char *loc_code, u32 led_state, u32 excl_bit)
 {
 	struct fsp_led_data *led = NULL, *encl_led = NULL, *encl_cec_led = NULL;
 	bool is_encl_led = is_enclosure_led(loc_code);
 
-	if (is_encl_led)
-		goto enclosure;
-
-	/* Descendant LED in CEC list */
-	led = fsp_find_cec_led(loc_code);
-	if (!led) {
-		log_simple_error(&e_info(OPAL_RC_LED_LC),
-			PREFIX "Could not find descendent LED in CEC LC=%s\n",
-			loc_code);
-		return;
-	}
-	led->status = led_state;
-
-enclosure:
 	/* Enclosure LED in CEC list */
 	encl_cec_led = fsp_find_encl_cec_led(loc_code);
 	if (!encl_cec_led) {
@@ -227,6 +213,21 @@ enclosure:
 			PREFIX "Could not find enclosure LED in CEC LC=%s\n",
 			loc_code);
 		return;
+	}
+
+	/* Update state */
+	if (is_encl_led) {
+		/* Enclosure exclusive bit */
+		encl_cec_led->excl_bit = excl_bit;
+	} else {	/* Descendant LED in CEC list */
+		led = fsp_find_cec_led(loc_code);
+		if (!led) {
+			log_simple_error(&e_info(OPAL_RC_LED_LC), PREFIX
+					 "Could not find descendent LED in \
+					 CEC LC=%s\n", loc_code);
+			return;
+		}
+		led->status = led_state;
 	}
 
 	/* Enclosure LED in ENCL list */
@@ -296,7 +297,8 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 		cmd |= FSP_STATUS_GENERIC_ERROR;
 
 		/* Rollback the changes */
-		update_led_list(spcn_cmd->loc_code, spcn_cmd->ckpt_status);
+		update_led_list(spcn_cmd->loc_code,
+				spcn_cmd->ckpt_status, spcn_cmd->ckpt_excl_bit);
 	}
 
 	/* FSP initiated SPCN command */
@@ -382,6 +384,7 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	 * command eventually fails.
 	 */
 	spcn_cmd->ckpt_status = led->status;
+	spcn_cmd->ckpt_excl_bit = led->excl_bit;
 	sled.state = led->status;
 
 	/* Update the exclussive LED bits  */
@@ -436,7 +439,7 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	 * Update the local lists based on the attempted SPCN command to
 	 * set/reset an individual led (CEC or ENCL).
 	 */
-	update_led_list(spcn_cmd->loc_code, sled.state);
+	update_led_list(spcn_cmd->loc_code, sled.state, led->excl_bit);
 	msg->user_data = spcn_cmd;
 
 	rc = fsp_queue_msg(msg, fsp_spcn_set_led_completion);
@@ -445,7 +448,8 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 		fsp_freemsg(msg);
 		free(spcn_cmd);
 		/* Revert LED state update */
-		update_led_list(spcn_cmd->loc_code, spcn_cmd->ckpt_status);
+		update_led_list(spcn_cmd->loc_code, spcn_cmd->ckpt_status,
+				spcn_cmd->ckpt_excl_bit);
 	}
 
 update_fail:
