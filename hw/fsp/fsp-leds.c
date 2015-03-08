@@ -423,6 +423,8 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	if (rc != OPAL_SUCCESS) {
 		fsp_freemsg(msg);
 		free(spcn_cmd);
+		/* Revert LED state update */
+		update_led_list(spcn_cmd->loc_code, spcn_cmd->ckpt_status);
 	}
 
 	unlock(&led_lock);
