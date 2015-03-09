@@ -33,7 +33,7 @@ static int64_t opal_sensor_read(uint32_t sensor_hndl, int token,
 	if (platform.sensor_read)
 		return platform.sensor_read(sensor_hndl, token, sensor_data);
 
-	return OPAL_PARAMETER;
+	return OPAL_UNSUPPORTED;
 }
 
 void sensor_init(void)

@@ -20,6 +20,7 @@ Parameters:
 Return values:
 	OPAL_SUCCESS
 	OPAL_PARAMETER - invalid sensor handler
+	OPAL_UNSUPPORTED - plateform does not support reading sensors.
 
 in case of communication with the FSP on IBM systems
 
