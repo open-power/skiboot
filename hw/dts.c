@@ -114,6 +114,12 @@ static int dts_read_core_temp(uint32_t pir, struct dts *dts)
 
 	prlog(PR_TRACE, "DTS: Chip %x Core %x temp:%dC trip:%x\n",
 	      chip_id, core, dts->temp, dts->trip);
+
+	/*
+	 * FIXME: The trip bits are always set ?! Just discard
+	 * them for the moment until we understand why.
+	 */
+	dts->trip = 0;
 	return 0;
 }
 
@@ -194,6 +200,9 @@ bool dts_sensor_create_nodes(struct dt_node *sensors)
 			dt_add_property_string(node, "compatible",
 					       "ibm,opal-sensor");
 			dt_add_property_cells(node, "sensor-data", handler);
+			handler = sensor_make_handler(sensor_class,
+					c->pir, SENSOR_DTS_ATTR_TEMP_TRIP);
+			dt_add_property_cells(node, "sensor-status", handler);
 		}
 	}
 
