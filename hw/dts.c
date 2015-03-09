@@ -203,6 +203,7 @@ bool dts_sensor_create_nodes(struct dt_node *sensors)
 			handler = sensor_make_handler(sensor_class,
 					c->pir, SENSOR_DTS_ATTR_TEMP_TRIP);
 			dt_add_property_cells(node, "sensor-status", handler);
+			dt_add_property_string(node, "sensor-type", "temp");
 		}
 	}
 
