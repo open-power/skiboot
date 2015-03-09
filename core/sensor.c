@@ -20,12 +20,16 @@
 #include <device.h>
 #include <opal.h>
 #include <opal-api.h>
+#include <dts.h>
 
 struct dt_node *sensor_node;
 
 static int64_t opal_sensor_read(uint32_t sensor_hndl, int token,
 		uint32_t *sensor_data)
 {
+	if (sensor_is_dts(sensor_hndl))
+		return dts_sensor_read(sensor_hndl, sensor_data);
+
 	if (platform.sensor_read)
 		return platform.sensor_read(sensor_hndl, token, sensor_data);
 

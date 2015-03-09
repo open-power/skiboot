@@ -44,6 +44,9 @@
  * the appropriate component. FSP is the initial family.
  */
 #define SENSOR_FSP 0x0
+#define SENSOR_DTS 0x80
+
+#define sensor_is_dts(handler)	(sensor_get_frc(handler) & SENSOR_DTS)
 
 /*
  * root node of all sensors : /ibm,opal/sensors
