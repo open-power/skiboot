@@ -30,6 +30,14 @@
 #define EX_THERM_CONTROL_REG	0x10050012
 #define EX_THERM_ERR_STATUS_REG	0x10050013
 
+/* Per memory controller Digital Thermal Sensors */
+#define THERM_MEM_DTS_RESULT0	0x2050000
+
+/* Per memory controller Digital Thermal Sensors control registers */
+#define THERM_MEM_MODE_REG	0x205000F
+#define THERM_MEM_CONTROL_REG	0x2050012
+#define THERM_MEM_ERR_STATUS_REG	0x2050013
+
 struct dts {
 	uint8_t		valid;
 	uint8_t		trip;
@@ -123,12 +131,58 @@ static int dts_read_core_temp(uint32_t pir, struct dts *dts)
 	return 0;
 }
 
+
+/* Different sensor locations */
+#define P8_MEM_DTS0	0
+#define P8_MEM_DTS1	1
+#define P8_MEM_ZONES	2
+
+static int dts_read_mem_temp(uint32_t chip_id, struct dts *dts)
+{
+	uint64_t dts0;
+	struct dts temps[P8_MEM_ZONES];
+	int i;
+	int rc;
+
+	rc = xscom_read(chip_id, THERM_MEM_DTS_RESULT0, &dts0);
+	if (rc)
+		return rc;
+
+	dts_decode_one_dts(dts0 >> 48, &temps[P8_MEM_DTS0]);
+	dts_decode_one_dts(dts0 >> 32, &temps[P8_MEM_DTS1]);
+
+	for (i = 0; i < P8_MEM_ZONES; i++) {
+		int16_t t = temps[i].temp;
+
+		if (!temps[i].valid)
+			continue;
+
+		/* keep the max temperature of all 4 sensors */
+		if (t > dts->temp)
+			dts->temp = t;
+
+		dts->valid++;
+		dts->trip |= temps[i].trip;
+	}
+
+	prlog(PR_TRACE, "DTS: Chip %x temp:%dC trip:%x\n",
+	      chip_id, dts->temp, dts->trip);
+
+	/*
+	 * FIXME: The trip bits are always set ?! Just discard
+	 * them for the moment until we understand why.
+	 */
+	dts->trip = 0;
+	return 0;
+}
+
 /*
  * DTS sensor class ids. Only one for the moment: the core
  * temperature.
  */
 enum sensor_dts_class {
 	SENSOR_DTS_CORE_TEMP,
+	SENSOR_DTS_MEM_TEMP,
 	/* To be continued */
 };
 
@@ -156,6 +210,14 @@ int64_t dts_sensor_read(uint32_t sensor_hndl, uint32_t *sensor_data)
 	case SENSOR_DTS_CORE_TEMP:
 		rc = dts_read_core_temp(rid, &dts);
 		break;
+	case SENSOR_DTS_MEM_TEMP:
+		/*
+		 * restore centaur chip id which was truncated to fit
+		 * in the sensor handler
+		 */
+		rid |= 0x80000000;
+		rc = dts_read_mem_temp(rid, &dts);
+		break;
 	default:
 		rc = OPAL_PARAMETER;
 		break;
@@ -176,6 +238,7 @@ bool dts_sensor_create_nodes(struct dt_node *sensors)
 	uint8_t sensor_class = SENSOR_DTS_CORE_TEMP|SENSOR_DTS;
 
 	struct proc_chip *chip;
+	struct dt_node *cn;
 	char name[64];
 
 	/* build the device tree nodes :
@@ -207,6 +270,39 @@ bool dts_sensor_create_nodes(struct dt_node *sensors)
 			dt_add_property_cells(node, "ibm,pir", c->pir);
 			dt_add_property_string(node, "label", "Core");
 		}
+	}
+
+	sensor_class = SENSOR_DTS_MEM_TEMP|SENSOR_DTS;
+
+	/*
+	 * sensors/mem-temp@chip for Centaurs
+	 */
+	dt_for_each_compatible(dt_root, cn, "ibm,centaur") {
+		uint32_t chip_id;
+		struct dt_node *node;
+		uint32_t handler;
+
+		chip_id = dt_prop_get_u32(cn, "ibm,chip-id");
+
+		snprintf(name, sizeof(name), "mem-temp@%x", chip_id);
+
+		/*
+		 * We only have two bytes for the resource
+		 * identifier. Let's trunctate the centaur chip id
+		 */
+		handler = sensor_make_handler(sensor_class,
+			      chip_id & 0xffff, SENSOR_DTS_ATTR_TEMP_MAX);
+		node = dt_new(sensors, name);
+		dt_add_property_string(node, "compatible",
+				       "ibm,opal-sensor");
+		dt_add_property_cells(node, "sensor-data", handler);
+
+		handler = sensor_make_handler(sensor_class,
+				chip_id, SENSOR_DTS_ATTR_TEMP_TRIP);
+		dt_add_property_cells(node, "sensor-status", handler);
+		dt_add_property_string(node, "sensor-type", "temp");
+		dt_add_property_cells(node, "ibm,chip-id", chip_id);
+		dt_add_property_string(node, "label", "Centaur");
 	}
 
 	return true;
