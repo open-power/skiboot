@@ -40,6 +40,8 @@ void sensor_init(void)
 {
 	sensor_node = dt_new(opal_node, "sensors");
 
+	dts_sensor_create_nodes(sensor_node);
+
 	/* Register OPAL interface */
 	opal_register(OPAL_SENSOR_READ, opal_sensor_read, 3);
 }

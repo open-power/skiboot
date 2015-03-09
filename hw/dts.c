@@ -19,6 +19,7 @@
 #include <sensor.h>
 #include <dts.h>
 #include <skiboot.h>
+#include <opal-api.h>
 
 /* Per core Digital Thermal Sensors */
 #define EX_THERM_DTS_RESULT0	0x10050000
@@ -162,4 +163,39 @@ int64_t dts_sensor_read(uint32_t sensor_hndl, uint32_t *sensor_data)
 		*sensor_data = dts.trip;
 
 	return 0;
+}
+
+bool dts_sensor_create_nodes(struct dt_node *sensors)
+{
+	uint8_t sensor_class = SENSOR_DTS_CORE_TEMP|SENSOR_DTS;
+
+	struct proc_chip *chip;
+	char name[64];
+
+	/* build the device tree nodes :
+	 *
+	 *     sensors/core-temp@pir
+	 *
+	 * The core is identified by its PIR, is stored in the resource
+	 * number of the sensor handler.
+	 */
+	for_each_chip(chip) {
+		struct cpu_thread *c;
+
+		for_each_available_core_in_chip(c, chip->id) {
+			struct dt_node *node;
+			uint32_t handler;
+
+			snprintf(name, sizeof(name), "core-temp@%x", c->pir);
+
+			handler = sensor_make_handler(sensor_class,
+					c->pir, SENSOR_DTS_ATTR_TEMP_MAX);
+			node = dt_new(sensors, name);
+			dt_add_property_string(node, "compatible",
+					       "ibm,opal-sensor");
+			dt_add_property_cells(node, "sensor-data", handler);
+		}
+	}
+
+	return true;
 }
