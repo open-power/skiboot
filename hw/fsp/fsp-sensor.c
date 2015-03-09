@@ -629,6 +629,10 @@ static void create_sensor_nodes(int index, uint16_t frc, uint16_t rid,
 			value = spcn_mod_data[index].mod_attr[0].val << 24 |
 					(frc & 0xff) << 16 | rid;
 			dt_add_property_cells(fs_node, "sensor-id", value);
+			if (spcn_mod_data[index].mod == SPCN_MOD_SENSOR_DATA_FIRST &&
+			    frc == SENSOR_FRC_AMB_TEMP)
+				dt_add_property_string(fs_node, "label", "Ambient");
+
 			break;
 		default:
 			break;
