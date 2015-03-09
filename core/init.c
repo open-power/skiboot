@@ -44,8 +44,7 @@
 #include <libfdt/libfdt.h>
 #include <timer.h>
 #include <ipmi.h>
-
-#include <ipmi.h>
+#include <sensor.h>
 
 /*
  * Boot semaphore, incremented by each CPU calling in
@@ -643,6 +642,9 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 
 	/* Initialize i2c */
 	p8_i2c_init();
+
+	/* Register routine to dispatch and read sensors */
+	sensor_init();
 
 	/*
 	 * We have initialized the basic HW, we can now call into the

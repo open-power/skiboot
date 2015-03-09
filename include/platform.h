@@ -152,6 +152,12 @@ struct platform {
 	 * Executed just prior to handing control over to the payload.
 	 */
 	void		(*exit)(void);
+
+	/*
+	 * Read a sensor value
+	 */
+	int64_t		(*sensor_read)(uint32_t sensor_hndl, int token,
+				       uint32_t *sensor_data);
 };
 
 extern struct platform __platforms_start;

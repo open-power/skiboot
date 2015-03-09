@@ -27,4 +27,7 @@ extern int64_t ibm_fsp_cec_reboot(void);
 struct errorlog;
 extern int elog_fsp_commit(struct errorlog *buf);
 
+extern int64_t ibm_fsp_sensor_read(uint32_t sensor_hndl, int token,
+				uint32_t *sensor_data);
+
 #endif /*  __IBM_FSP_COMMON_H */

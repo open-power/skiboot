@@ -36,7 +36,8 @@
 #include <spcn.h>
 #include <opal-api.h>
 #include <opal-msg.h>
-#include<errorlog.h>
+#include <errorlog.h>
+#include <sensor.h>
 
 #define INVALID_DATA	((uint32_t)-1)
 
@@ -490,7 +491,7 @@ static int64_t parse_sensor_id(uint32_t id, struct opal_sensor_data *attr)
 }
 
 
-static int64_t fsp_opal_read_sensor(uint32_t sensor_hndl, int token,
+int64_t fsp_opal_read_sensor(uint32_t sensor_hndl, int token,
 		uint32_t *sensor_data)
 {
 	struct opal_sensor_data *attr;
@@ -691,14 +692,11 @@ static void add_sensor_ids(struct dt_node *sensors)
 static void add_opal_sensor_node(void)
 {
 	int index;
-	struct dt_node *sensors;
 
 	if (!fsp_present())
 		return;
 
-	sensors = dt_new(opal_node, "sensors");
-
-	add_sensor_ids(sensors);
+	add_sensor_ids(sensor_node);
 
 	/* Reset the entry count of each modifier */
 	for (index = 0; spcn_mod_data[index].mod != SPCN_MOD_LAST;
@@ -728,9 +726,6 @@ void fsp_init_sensor(void)
 
 	/* Map TCE */
 	fsp_tce_map(PSI_DMA_SENSOR_BUF, sensor_buffer, PSI_DMA_SENSOR_BUF_SZ);
-
-	/* Register OPAL interface */
-	opal_register(OPAL_SENSOR_READ, fsp_opal_read_sensor, 3);
 
 	msg.resp = &resp;
 

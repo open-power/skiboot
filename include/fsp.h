@@ -783,6 +783,8 @@ extern void fsp_memory_err_init(void);
 
 /* Sensor */
 extern void fsp_init_sensor(void);
+extern int64_t fsp_opal_read_sensor(uint32_t sensor_hndl, int token,
+			uint32_t *sensor_data);
 
 /* Diagnostic */
 extern void fsp_init_diag(void);
