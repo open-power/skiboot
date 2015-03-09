@@ -204,6 +204,8 @@ bool dts_sensor_create_nodes(struct dt_node *sensors)
 					c->pir, SENSOR_DTS_ATTR_TEMP_TRIP);
 			dt_add_property_cells(node, "sensor-status", handler);
 			dt_add_property_string(node, "sensor-type", "temp");
+			dt_add_property_cells(node, "ibm,pir", c->pir);
+			dt_add_property_string(node, "label", "Core");
 		}
 	}
 
