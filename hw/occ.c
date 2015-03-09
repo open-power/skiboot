@@ -456,8 +456,10 @@ static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 	 * Check if hostservices lid caching is complete. If not, queue
 	 * the load request.
 	 */
-	if (!hservices_lid_preload_complete())
+	if (!hservices_lid_preload_complete()) {
 		occ_queue_load(scope, dbob_id, seq_id);
+		return;
+	}
 
 	__occ_do_load(scope, dbob_id, seq_id);
 }
