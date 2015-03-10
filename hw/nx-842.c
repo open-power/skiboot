@@ -23,8 +23,8 @@
 /* Configuration settings */
 #define CFG_842_FC_ENABLE	(0x1f) /* enable all 842 functions */
 #define CFG_842_ENABLE		(1) /* enable 842 engines */
-#define DMA_COMPRESS_PREFETCH	(1) /* enable prefetching */
-#define DMA_DECOMPRESS_PREFETCH	(1) /* enable prefetching */
+#define DMA_COMPRESS_PREFETCH	(1) /* enable prefetching (on P8) */
+#define DMA_DECOMPRESS_PREFETCH	(1) /* enable prefetching (on P8) */
 #define DMA_COMPRESS_MAX_RR	(15) /* range 1-15 */
 #define DMA_DECOMPRESS_MAX_RR	(15) /* range 1-15 */
 #define DMA_SPBC		(1) /* write SPBC in CPB */
@@ -32,8 +32,8 @@
 #define DMA_COMPLETION_MODE	NX_DMA_COMPLETION_MODE_CI
 #define DMA_CPB_WR		NX_DMA_CPB_WR_CI_PAD
 #define DMA_OUTPUT_DATA_WR	NX_DMA_OUTPUT_DATA_WR_CI
-#define EE_0			(1) /* enable engine 0 */
-#define EE_1			(1) /* enable engine 1 */
+#define EE_1			(1) /* enable engine 842 1 */
+#define EE_0			(1) /* enable engine 842 0 */
 
 /* counter used to provide unique Coprocessor Instance number */
 static u64 nx_842_ci_counter = 1;
@@ -43,9 +43,9 @@ static int nx_cfg_842(u32 gcid, u64 xcfg, u64 instance)
 	u64 cfg, ci, ct;
 	int rc;
 
-	if (instance > NX_P8_842_CFG_CI_MAX) {
+	if (instance > NX_842_CFG_CI_MAX) {
 		prerror("NX%d: ERROR: 842 CI %u exceeds max %u\n",
-			gcid, (unsigned int)instance, NX_P8_842_CFG_CI_MAX);
+			gcid, (unsigned int)instance, NX_842_CFG_CI_MAX);
 		return OPAL_INTERNAL_ERROR;
 	}
 
@@ -53,7 +53,7 @@ static int nx_cfg_842(u32 gcid, u64 xcfg, u64 instance)
 	if (rc)
 		return rc;
 
-	ct = GETFIELD(NX_P8_842_CFG_CT, cfg);
+	ct = GETFIELD(NX_842_CFG_CT, cfg);
 	if (!ct)
 		prlog(PR_INFO, "NX%d:   842 CT set to %u\n", gcid, NX_CT_842);
 	else if (ct == NX_CT_842)
@@ -63,12 +63,12 @@ static int nx_cfg_842(u32 gcid, u64 xcfg, u64 instance)
 		prlog(PR_INFO, "NX%d:   842 CT already set to %u, "
 		      "changing to %u\n", gcid, (unsigned int)ct, NX_CT_842);
 	ct = NX_CT_842;
-	cfg = SETFIELD(NX_P8_842_CFG_CT, cfg, ct);
+	cfg = SETFIELD(NX_842_CFG_CT, cfg, ct);
 
 	/* Coprocessor Instance must be shifted left.
 	 * See hw doc Section 5.5.1.
 	 */
-	ci = GETFIELD(NX_P8_842_CFG_CI, cfg) >> NX_P8_842_CFG_CI_LSHIFT;
+	ci = GETFIELD(NX_842_CFG_CI, cfg) >> NX_842_CFG_CI_LSHIFT;
 	if (!ci)
 		prlog(PR_INFO, "NX%d:   842 CI set to %u\n", gcid,
 		      (unsigned int)instance);
@@ -80,12 +80,12 @@ static int nx_cfg_842(u32 gcid, u64 xcfg, u64 instance)
 		      "changing to %u\n", gcid,
 		      (unsigned int)ci, (unsigned int)instance);
 	ci = instance;
-	cfg = SETFIELD(NX_P8_842_CFG_CI, cfg, ci << NX_P8_842_CFG_CI_LSHIFT);
+	cfg = SETFIELD(NX_842_CFG_CI, cfg, ci << NX_842_CFG_CI_LSHIFT);
 
 	/* Enable all functions */
-	cfg = SETFIELD(NX_P8_842_CFG_FC_ENABLE, cfg, CFG_842_FC_ENABLE);
+	cfg = SETFIELD(NX_842_CFG_FC_ENABLE, cfg, CFG_842_FC_ENABLE);
 
-	cfg = SETFIELD(NX_P8_842_CFG_ENABLE, cfg, CFG_842_ENABLE);
+	cfg = SETFIELD(NX_842_CFG_ENABLE, cfg, CFG_842_ENABLE);
 
 	rc = xscom_write(gcid, xcfg, cfg);
 	if (rc)
@@ -98,7 +98,7 @@ static int nx_cfg_842(u32 gcid, u64 xcfg, u64 instance)
 	return rc;
 }
 
-static int nx_cfg_dma(u32 gcid, u64 xcfg)
+static int nx_cfg_dma(u32 gcid, u64 xcfg, int pnum)
 {
 	u64 cfg;
 	int rc;
@@ -108,22 +108,22 @@ static int nx_cfg_dma(u32 gcid, u64 xcfg)
 		return rc;
 
 	cfg = SETFIELD(NX_P8_DMA_CFG_842_COMPRESS_PREFETCH, cfg,
-		       DMA_COMPRESS_PREFETCH);
+		       pnum == 8 ? DMA_COMPRESS_PREFETCH : 0);
 	cfg = SETFIELD(NX_P8_DMA_CFG_842_DECOMPRESS_PREFETCH, cfg,
-		       DMA_DECOMPRESS_PREFETCH);
-	cfg = SETFIELD(NX_P8_DMA_CFG_842_COMPRESS_MAX_RR, cfg,
+		       pnum == 8 ? DMA_DECOMPRESS_PREFETCH : 0);
+	cfg = SETFIELD(NX_DMA_CFG_842_COMPRESS_MAX_RR, cfg,
 		       DMA_COMPRESS_MAX_RR);
-	cfg = SETFIELD(NX_P8_DMA_CFG_842_DECOMPRESS_MAX_RR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_842_DECOMPRESS_MAX_RR, cfg,
 		       DMA_DECOMPRESS_MAX_RR);
-	cfg = SETFIELD(NX_P8_DMA_CFG_842_SPBC, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_842_SPBC, cfg,
 		       DMA_SPBC);
-	cfg = SETFIELD(NX_P8_DMA_CFG_842_CSB_WR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_842_CSB_WR, cfg,
 		       DMA_CSB_WR);
-	cfg = SETFIELD(NX_P8_DMA_CFG_842_COMPLETION_MODE, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_842_COMPLETION_MODE, cfg,
 		       DMA_COMPLETION_MODE);
-	cfg = SETFIELD(NX_P8_DMA_CFG_842_CPB_WR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_842_CPB_WR, cfg,
 		       DMA_CPB_WR);
-	cfg = SETFIELD(NX_P8_DMA_CFG_842_OUTPUT_DATA_WR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_842_OUTPUT_DATA_WR, cfg,
 		       DMA_OUTPUT_DATA_WR);
 
 	rc = xscom_write(gcid, xcfg, cfg);
@@ -145,8 +145,8 @@ static int nx_cfg_ee(u32 gcid, u64 xcfg)
 	if (rc)
 		return rc;
 
-	cfg = SETFIELD(NX_P8_EE_CFG_842_0, cfg, EE_0);
-	cfg = SETFIELD(NX_P8_EE_CFG_842_1, cfg, EE_1);
+	cfg = SETFIELD(NX_EE_CFG_CH1, cfg, EE_1);
+	cfg = SETFIELD(NX_EE_CFG_CH0, cfg, EE_0);
 
 	rc = xscom_write(gcid, xcfg, cfg);
 	if (rc)
@@ -164,7 +164,7 @@ void nx_create_842_node(struct dt_node *node)
 	u32 pb_base;
 	u64 cfg_dma, cfg_842, cfg_ee;
 	u64 instance;
-	int rc;
+	int rc, pnum;
 
 	gcid = dt_get_chip_id(node);
 	pb_base = dt_get_address(node, 0, NULL);
@@ -172,18 +172,21 @@ void nx_create_842_node(struct dt_node *node)
 	prlog(PR_INFO, "NX%d: 842 at 0x%x\n", gcid, pb_base);
 
 	if (dt_node_is_compatible(node, "ibm,power7-nx")) {
-		prerror("NX%d: ERROR: 842 not supported on Power7\n", gcid);
-		return;
+		cfg_dma = pb_base + NX_P7_DMA_CFG;
+		cfg_842 = pb_base + NX_P7_842_CFG;
+		cfg_ee = pb_base + NX_P7_EE_CFG;
+		pnum = 7;
 	} else if (dt_node_is_compatible(node, "ibm,power8-nx")) {
 		cfg_dma = pb_base + NX_P8_DMA_CFG;
 		cfg_842 = pb_base + NX_P8_842_CFG;
 		cfg_ee = pb_base + NX_P8_EE_CFG;
+		pnum = 8;
 	} else {
 		prerror("NX%d: ERROR: Unknown NX type!\n", gcid);
 		return;
 	}
 
-	rc = nx_cfg_dma(gcid, cfg_dma);
+	rc = nx_cfg_dma(gcid, cfg_dma, pnum);
 	if (rc)
 		return;
 

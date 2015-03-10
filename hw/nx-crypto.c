@@ -35,12 +35,12 @@
 #define AMF_COMPLETION_MODE	NX_DMA_COMPLETION_MODE_PDMA
 #define AMF_CPB_WR		(0) /* CPB WR not done with AMF */
 #define AMF_OUTPUT_DATA_WR	NX_DMA_OUTPUT_DATA_WR_DMA
-#define EE_AMF_0		(0) /* disable AMF engine 0 */
-#define EE_AMF_1		(0) /* disable AMF engine 1 */
-#define EE_AMF_2		(0) /* disable AMF engine 2 */
-#define EE_AMF_3		(0) /* disable AMF engine 3 */
-#define EE_SYM_0		(0) /* disable SYM engine 0 */
-#define EE_SYM_1		(0) /* disable SYM engine 1 */
+#define EE_CH7			(0) /* disable engine AMF 2(P7) / 3(P8) */
+#define EE_CH6			(0) /* disable engine AMF 1(P7) / 2(P8) */
+#define EE_CH5			(0) /* disable engine AMF 0(P7) / 1(P8) */
+#define EE_CH4			(0) /* disable engine SYM 2(P7) / AMF 0(P8) */
+#define EE_CH3			(0) /* disable engine SYM 1 */
+#define EE_CH2			(0) /* disable engine SYM 0 */
 
 /* counters used to provide unique Coprocessor Instance numbers */
 static u64 nx_sym_ci_counter = 1;
@@ -51,9 +51,9 @@ static int nx_cfg_sym(u32 gcid, u64 xcfg, u64 instance)
 	u64 cfg, ci, ct;
 	int rc;
 
-	if (instance > NX_P8_SYM_CFG_CI_MAX) {
+	if (instance > NX_SYM_CFG_CI_MAX) {
 		prerror("NX%d: ERROR: SYM CI %u exceeds max %u\n",
-			gcid, (unsigned int)instance, NX_P8_SYM_CFG_CI_MAX);
+			gcid, (unsigned int)instance, NX_SYM_CFG_CI_MAX);
 		return OPAL_INTERNAL_ERROR;
 	}
 
@@ -61,7 +61,7 @@ static int nx_cfg_sym(u32 gcid, u64 xcfg, u64 instance)
 	if (rc)
 		return rc;
 
-	ct = GETFIELD(NX_P8_SYM_CFG_CT, cfg);
+	ct = GETFIELD(NX_SYM_CFG_CT, cfg);
 	if (!ct)
 		prlog(PR_INFO, "NX%d:   SYM CT set to %u\n", gcid, NX_CT_SYM);
 	else if (ct == NX_CT_SYM)
@@ -71,12 +71,12 @@ static int nx_cfg_sym(u32 gcid, u64 xcfg, u64 instance)
 		prlog(PR_INFO, "NX%d:   SYM CT already set to %u, "
 		      "changing to %u\n", gcid, (unsigned int)ct, NX_CT_SYM);
 	ct = NX_CT_SYM;
-	cfg = SETFIELD(NX_P8_SYM_CFG_CT, cfg, ct);
+	cfg = SETFIELD(NX_SYM_CFG_CT, cfg, ct);
 
 	/* Coprocessor Instance must be shifted left.
 	 * See hw doc Section 5.5.1.
 	 */
-	ci = GETFIELD(NX_P8_SYM_CFG_CI, cfg) >> NX_P8_SYM_CFG_CI_LSHIFT;
+	ci = GETFIELD(NX_SYM_CFG_CI, cfg) >> NX_SYM_CFG_CI_LSHIFT;
 	if (!ci)
 		prlog(PR_INFO, "NX%d:   SYM CI set to %u\n", gcid,
 		      (unsigned int)instance);
@@ -88,11 +88,11 @@ static int nx_cfg_sym(u32 gcid, u64 xcfg, u64 instance)
 		      "changing to %u\n", gcid,
 		      (unsigned int)ci, (unsigned int)instance);
 	ci = instance;
-	cfg = SETFIELD(NX_P8_SYM_CFG_CI, cfg, ci << NX_P8_SYM_CFG_CI_LSHIFT);
+	cfg = SETFIELD(NX_SYM_CFG_CI, cfg, ci << NX_SYM_CFG_CI_LSHIFT);
 
-	cfg = SETFIELD(NX_P8_SYM_CFG_FC_ENABLE, cfg, CFG_SYM_FC_ENABLE);
+	cfg = SETFIELD(NX_SYM_CFG_FC_ENABLE, cfg, CFG_SYM_FC_ENABLE);
 
-	cfg = SETFIELD(NX_P8_SYM_CFG_ENABLE, cfg, CFG_SYM_ENABLE);
+	cfg = SETFIELD(NX_SYM_CFG_ENABLE, cfg, CFG_SYM_ENABLE);
 
 	rc = xscom_write(gcid, xcfg, cfg);
 	if (rc)
@@ -110,9 +110,9 @@ static int nx_cfg_asym(u32 gcid, u64 xcfg, u64 instance)
 	u64 cfg, ci, ct;
 	int rc;
 
-	if (instance > NX_P8_ASYM_CFG_CI_MAX) {
+	if (instance > NX_ASYM_CFG_CI_MAX) {
 		prerror("NX%d: ERROR: ASYM CI %u exceeds max %u\n",
-			gcid, (unsigned int)instance, NX_P8_ASYM_CFG_CI_MAX);
+			gcid, (unsigned int)instance, NX_ASYM_CFG_CI_MAX);
 		return OPAL_INTERNAL_ERROR;
 	}
 
@@ -120,7 +120,7 @@ static int nx_cfg_asym(u32 gcid, u64 xcfg, u64 instance)
 	if (rc)
 		return rc;
 
-	ct = GETFIELD(NX_P8_ASYM_CFG_CT, cfg);
+	ct = GETFIELD(NX_ASYM_CFG_CT, cfg);
 	if (!ct)
 		prlog(PR_INFO, "NX%d:   ASYM CT set to %u\n",
 		      gcid, NX_CT_ASYM);
@@ -131,12 +131,12 @@ static int nx_cfg_asym(u32 gcid, u64 xcfg, u64 instance)
 		prlog(PR_INFO, "NX%d:   ASYM CT already set to %u, "
 		      "changing to %u\n", gcid, (unsigned int)ct, NX_CT_ASYM);
 	ct = NX_CT_ASYM;
-	cfg = SETFIELD(NX_P8_ASYM_CFG_CT, cfg, ct);
+	cfg = SETFIELD(NX_ASYM_CFG_CT, cfg, ct);
 
 	/* Coprocessor Instance must be shifted left.
 	 * See hw doc Section 5.5.1.
 	 */
-	ci = GETFIELD(NX_P8_ASYM_CFG_CI, cfg) >> NX_P8_ASYM_CFG_CI_LSHIFT;
+	ci = GETFIELD(NX_ASYM_CFG_CI, cfg) >> NX_ASYM_CFG_CI_LSHIFT;
 	if (!ci)
 		prlog(PR_INFO, "NX%d:   ASYM CI set to %u\n", gcid,
 		      (unsigned int)instance);
@@ -148,11 +148,11 @@ static int nx_cfg_asym(u32 gcid, u64 xcfg, u64 instance)
 		      "changing to %u\n", gcid,
 		      (unsigned int)ci, (unsigned int)instance);
 	ci = instance;
-	cfg = SETFIELD(NX_P8_ASYM_CFG_CI, cfg, ci << NX_P8_ASYM_CFG_CI_LSHIFT);
+	cfg = SETFIELD(NX_ASYM_CFG_CI, cfg, ci << NX_ASYM_CFG_CI_LSHIFT);
 
-	cfg = SETFIELD(NX_P8_ASYM_CFG_FC_ENABLE, cfg, CFG_ASYM_FC_ENABLE);
+	cfg = SETFIELD(NX_ASYM_CFG_FC_ENABLE, cfg, CFG_ASYM_FC_ENABLE);
 
-	cfg = SETFIELD(NX_P8_ASYM_CFG_ENABLE, cfg, CFG_ASYM_ENABLE);
+	cfg = SETFIELD(NX_ASYM_CFG_ENABLE, cfg, CFG_ASYM_ENABLE);
 
 	rc = xscom_write(gcid, xcfg, cfg);
 	if (rc)
@@ -174,26 +174,26 @@ static int nx_cfg_dma(u32 gcid, u64 xcfg)
 	if (rc)
 		return rc;
 
-	cfg = SETFIELD(NX_P8_DMA_CFG_AES_SHA_MAX_RR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_AES_SHA_MAX_RR, cfg,
 		       AES_SHA_MAX_RR);
-	cfg = SETFIELD(NX_P8_DMA_CFG_AES_SHA_CSB_WR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_AES_SHA_CSB_WR, cfg,
 		       AES_SHA_CSB_WR);
-	cfg = SETFIELD(NX_P8_DMA_CFG_AES_SHA_COMPLETION_MODE, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_AES_SHA_COMPLETION_MODE, cfg,
 		       AES_SHA_COMPLETION_MODE);
-	cfg = SETFIELD(NX_P8_DMA_CFG_AES_SHA_CPB_WR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_AES_SHA_CPB_WR, cfg,
 		       AES_SHA_CPB_WR);
-	cfg = SETFIELD(NX_P8_DMA_CFG_AES_SHA_OUTPUT_DATA_WR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_AES_SHA_OUTPUT_DATA_WR, cfg,
 		       AES_SHA_OUTPUT_DATA_WR);
 
-	cfg = SETFIELD(NX_P8_DMA_CFG_AMF_MAX_RR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_AMF_MAX_RR, cfg,
 		       AMF_MAX_RR);
-	cfg = SETFIELD(NX_P8_DMA_CFG_AMF_CSB_WR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_AMF_CSB_WR, cfg,
 		       AMF_CSB_WR);
-	cfg = SETFIELD(NX_P8_DMA_CFG_AMF_COMPLETION_MODE, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_AMF_COMPLETION_MODE, cfg,
 		       AMF_COMPLETION_MODE);
-	cfg = SETFIELD(NX_P8_DMA_CFG_AMF_CPB_WR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_AMF_CPB_WR, cfg,
 		       AMF_CPB_WR);
-	cfg = SETFIELD(NX_P8_DMA_CFG_AMF_OUTPUT_DATA_WR, cfg,
+	cfg = SETFIELD(NX_DMA_CFG_AMF_OUTPUT_DATA_WR, cfg,
 		       AMF_OUTPUT_DATA_WR);
 
 	rc = xscom_write(gcid, xcfg, cfg);
@@ -215,12 +215,12 @@ static int nx_cfg_ee(u32 gcid, u64 xcfg)
 	if (rc)
 		return rc;
 
-	cfg = SETFIELD(NX_P8_EE_CFG_AMF_0, cfg, EE_AMF_0);
-	cfg = SETFIELD(NX_P8_EE_CFG_AMF_1, cfg, EE_AMF_1);
-	cfg = SETFIELD(NX_P8_EE_CFG_AMF_2, cfg, EE_AMF_2);
-	cfg = SETFIELD(NX_P8_EE_CFG_AMF_3, cfg, EE_AMF_3);
-	cfg = SETFIELD(NX_P8_EE_CFG_SYM_0, cfg, EE_SYM_0);
-	cfg = SETFIELD(NX_P8_EE_CFG_SYM_1, cfg, EE_SYM_1);
+	cfg = SETFIELD(NX_EE_CFG_CH7, cfg, EE_CH7);
+	cfg = SETFIELD(NX_EE_CFG_CH6, cfg, EE_CH6);
+	cfg = SETFIELD(NX_EE_CFG_CH5, cfg, EE_CH5);
+	cfg = SETFIELD(NX_EE_CFG_CH4, cfg, EE_CH4);
+	cfg = SETFIELD(NX_EE_CFG_CH3, cfg, EE_CH3);
+	cfg = SETFIELD(NX_EE_CFG_CH2, cfg, EE_CH2);
 
 	rc = xscom_write(gcid, xcfg, cfg);
 	if (rc)
@@ -245,8 +245,10 @@ void nx_create_crypto_node(struct dt_node *node)
 	prlog(PR_INFO, "NX%d: Crypto at 0x%x\n", gcid, pb_base);
 
 	if (dt_node_is_compatible(node, "ibm,power7-nx")) {
-		prerror("NX%d: ERROR: Crypto not supported on Power7\n", gcid);
-		return;
+		cfg_dma = pb_base + NX_P7_DMA_CFG;
+		cfg_sym = pb_base + NX_P7_SYM_CFG;
+		cfg_asym = pb_base + NX_P7_ASYM_CFG;
+		cfg_ee = pb_base + NX_P7_EE_CFG;
 	} else if (dt_node_is_compatible(node, "ibm,power8-nx")) {
 		cfg_dma = pb_base + NX_P8_DMA_CFG;
 		cfg_sym = pb_base + NX_P8_SYM_CFG;

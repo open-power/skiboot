@@ -28,7 +28,7 @@ void nx_create_rng_node(struct dt_node *node)
 	u64 xbar, xcfg;
 	u32 pb_base;
 	u32 gcid;
-	u64 rng_addr, rng_len, len;
+	u64 rng_addr, rng_len, len, addr_mask;
 	struct dt_node *rng;
 	int rc;
 
@@ -38,9 +38,11 @@ void nx_create_rng_node(struct dt_node *node)
 	if (dt_node_is_compatible(node, "ibm,power7-nx")) {
 		xbar = pb_base + NX_P7_RNG_BAR;
 		xcfg = pb_base + NX_P7_RNG_CFG;
+		addr_mask = NX_P7_RNG_BAR_ADDR;
 	} else if (dt_node_is_compatible(node, "ibm,power8-nx")) {
 		xbar = pb_base + NX_P8_RNG_BAR;
 		xcfg = pb_base + NX_P8_RNG_CFG;
+		addr_mask = NX_P8_RNG_BAR_ADDR;
 	} else {
 		prerror("NX%d: Unknown NX type!\n", gcid);
 		return;
@@ -55,16 +57,13 @@ void nx_create_rng_node(struct dt_node *node)
 		return;
 
 	/*
-	 * We use the P8 BAR constants. The layout of the BAR is the
-	 * same, with more bits at the top of P8 which are hard wired to
-	 * 0 on P7. We also mask in-place rather than using GETFIELD
-	 * for the base address as we happen to *know* that it's properly
-	 * aligned in the register.
+	 * We mask in-place rather than using GETFIELD for the base address
+	 * as we happen to *know* that it's properly aligned in the register.
 	 *
 	 * FIXME? Always assusme BAR gets a valid address from FSP
 	 */
-	rng_addr = bar & NX_P8_RNG_BAR_ADDR;
-	len  = GETFIELD(NX_P8_RNG_BAR_SIZE, bar);
+	rng_addr = bar & addr_mask;
+	len  = GETFIELD(NX_RNG_BAR_SIZE, bar);
 	if (len > 4) {
 		prerror("NX%d: Corrupted bar size %lld\n", gcid, len);
 		return;
@@ -80,12 +79,12 @@ void nx_create_rng_node(struct dt_node *node)
 	      gcid, rng_addr, rng_addr + rng_len - 1);
 
 	/* RNG must be enabled before MMIO is enabled */
-	rc = xscom_write(gcid, xcfg, cfg | NX_P8_RNG_CFG_ENABLE);
+	rc = xscom_write(gcid, xcfg, cfg | NX_RNG_CFG_ENABLE);
 	if (rc)
 		return;
 
 	/* The BAR needs to be enabled too */
-	rc = xscom_write(gcid, xbar, bar | NX_P8_RNG_BAR_ENABLE);
+	rc = xscom_write(gcid, xbar, bar | NX_RNG_BAR_ENABLE);
 	if (rc)
 		return;
 	rng = dt_new_addr(dt_root, "hwrng", rng_addr);
