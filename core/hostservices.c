@@ -486,8 +486,10 @@ static int hservice_lid_load(uint32_t lid, void **buf, size_t *len)
 
 	prlog(PR_INFO, "HBRT: Lid load request for 0x%08x\n", lid);
 
-	if (list_empty(&hbrt_lid_list))	/* Should not happen */
-		hservices_lid_preload();
+	if (list_empty(&hbrt_lid_list))	{ /* Should not happen */
+		prlog(PR_CRIT, "HBRT: LID Load failed\n");
+		abort();
+	}
 
 	list_for_each(&hbrt_lid_list, hlid, link) {
 		if (hlid->id == lid) {
