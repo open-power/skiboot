@@ -633,6 +633,41 @@ static int chiptod_start_tod(void)
 	return 1;
 }
 
+static bool tfmr_recover_tb_errors(uint64_t tfmr)
+{
+	uint64_t tfmr_reset_error;
+	unsigned long timeout = 0;
+
+	/* Ask for automatic clear of errors */
+	tfmr_reset_error = base_tfmr | SPR_TFMR_CLEAR_TB_ERRORS;
+
+	/* Additionally pHyp sets these (write-1-to-clear ?) */
+	if (tfmr & SPR_TFMR_TB_MISSING_SYNC)
+		tfmr_reset_error |= SPR_TFMR_TB_MISSING_SYNC;
+
+	if (tfmr & SPR_TFMR_TB_MISSING_STEP)
+		tfmr_reset_error |= SPR_TFMR_TB_MISSING_STEP;
+
+	mtspr(SPR_TFMR, tfmr_reset_error);
+
+	/* We have to write "Clear TB Errors" again */
+	tfmr_reset_error = base_tfmr | SPR_TFMR_CLEAR_TB_ERRORS;
+	mtspr(SPR_TFMR, tfmr_reset_error);
+
+	do {
+		if (++timeout >= TIMEOUT_LOOPS) {
+			prerror("CHIPTOD: TB error reset timeout !\n");
+			return false;
+		}
+		tfmr = mfspr(SPR_TFMR);
+		if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
+			prerror("CHIPTOD: TB error reset: corrupt TFMR !\n");
+			return false;
+		}
+	} while (tfmr & SPR_TFMR_CLEAR_TB_ERRORS);
+	return true;
+}
+
 /*
  * Recover from TB and TOD errors.
  * Timebase register is per core and first thread that gets chance to
@@ -666,7 +701,7 @@ int chiptod_recover_tb_errors(void)
 	 */
 	if ((tfmr & SPR_TFMR_TB_MISSING_STEP) ||
 		(tfmr & SPR_TFMR_TB_MISSING_SYNC)) {
-		if (!chiptod_reset_tb_errors()) {
+		if (!tfmr_recover_tb_errors(tfmr)) {
 			rc = 0;
 			goto error_out;
 		}
