@@ -47,6 +47,7 @@
 /* SPR register definitions */
 #define SPR_DSISR	0x012	/* RW: Data storage interrupt status reg */
 #define SPR_DAR		0x013	/* RW: Data address reg */
+#define SPR_DEC		0x016	/* RW: Decrement Register */
 #define SPR_SDR1	0x019
 #define SPR_SRR0	0x01a	/* RW: Exception save/restore reg 0 */
 #define SPR_SRR1	0x01b	/* RW: Exception save/restore reg 1 */
