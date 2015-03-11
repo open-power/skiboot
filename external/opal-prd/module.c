@@ -20,7 +20,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <module.h>
+#include "module.h"
+#include "opal-prd.h"
 
 int insert_module(const char *module)
 {
@@ -35,18 +36,20 @@ int insert_module(const char *module)
 
 	pid = waitpid(pid, &status, 0);
 	if (pid < 0) {
-		warn("waitpid failed for modprobe process");
+		pr_log(LOG_ERR, "KMOD: waitpid failed for "
+				"modprobe process: %m");
 		return -1;
 	}
 
 	if (!WIFEXITED(status)) {
-		warnx("modprobe %s: process didn't exit cleanly", module);
+		pr_log(LOG_WARNING, "KMOD: modprobe %s: process didn't "
+				"exit cleanly", module);
 		return -1;
 	}
 
 	if (WEXITSTATUS(status) != 0) {
-		warnx("modprobe %s failed, status %d", module,
-				WEXITSTATUS(status));
+		pr_log(LOG_WARNING, "KMOD: modprobe %s failed, status %d",
+				module, WEXITSTATUS(status));
 		return -1;
 	}
 

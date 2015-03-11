@@ -30,7 +30,6 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <time.h>
-#include <err.h>
 #include <poll.h>
 
 #include <endian.h>
@@ -46,10 +45,12 @@
 #include <asm/opal-prd.h>
 #include <opal.h>
 
+#include "opal-prd.h"
 #include "hostboot-interface.h"
 #include "module.h"
 #include "pnor.h"
 #include "i2c.h"
+
 
 struct opal_prd_ctx {
 	int			fd;
@@ -61,6 +62,8 @@ struct opal_prd_ctx {
 	bool			debug;
 	struct pnor		pnor;
 	char			*hbrt_file_name;
+	bool			use_syslog;
+	void			(*vlog)(int, const char *, va_list);
 };
 
 enum control_msg_type {
@@ -124,16 +127,49 @@ static struct opal_prd_range *find_range(const char *name)
 	return NULL;
 }
 
-static void pr_debug(struct opal_prd_ctx *ctx, const char *fmt, ...)
+static void pr_log_stdio(int priority, const char *fmt, va_list ap)
+{
+	if (!ctx->debug && priority >= LOG_DEBUG)
+		return;
+
+	vprintf(fmt, ap);
+	printf("\n");
+}
+
+/* standard logging prefixes:
+ * HBRT:  Messages from hostboot runtime code
+ * FW:    Interactions with OPAL firmware
+ * IMAGE: HBRT image loading
+ * MEM:   Memory failure interface
+ * SCOM:  Chip SCOM interface
+ * IPMI:  IPMI interface
+ * PNOR:  PNOR interface
+ * I2C:   i2c interface
+ * OCC:   OCC interface
+ * CTRL:  User-triggered control events
+ * KMOD:   Kernel module functions
+ */
+
+void pr_log(int priority, const char *fmt, ...)
 {
 	va_list ap;
 
-	if (!ctx->debug)
-		return;
-
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	ctx->vlog(priority, fmt, ap);
 	va_end(ap);
+}
+
+static void pr_log_nocall(const char *name)
+{
+	pr_log(LOG_WARNING, "HBRT: Call %s not provided", name);
+}
+
+static void pr_log_daemon_init(void)
+{
+	if (ctx->use_syslog) {
+		openlog("opal-prd", LOG_NDELAY, LOG_DAEMON);
+		ctx->vlog = vsyslog;
+	}
 }
 
 /* HBRT init wrappers */
@@ -152,12 +188,12 @@ extern void call_process_occ_reset(uint64_t i_chipId);
 
 void hservice_puts(const char *str)
 {
-	printf("%s\n", str);
+	pr_log(LOG_INFO, "HBRT: %s", str);
 }
 
 void hservice_assert(void)
 {
-	fprintf(stderr, "ERR: assert! exiting.\n");
+	pr_log(LOG_ERR, "HBRT: Failed assertion! exiting.");
 	exit(EXIT_FAILURE);
 }
 
@@ -186,11 +222,12 @@ int hservice_scom_read(uint64_t chip_id, uint64_t addr, void *buf)
 
 	rc = ioctl(ctx->fd, OPAL_PRD_SCOM_READ, &scom);
 	if (rc) {
-		perror("ioctl scom_read");
+		pr_log(LOG_ERR, "SCOM: ioctl read(chip 0x%lx, addr 0x%lx) "
+				"failed: %m", chip_id, addr);
 		return 0;
 	}
 
-	pr_debug(ctx, "scom read: chip %lx addr %lx val %lx\n",
+	pr_debug("SCOM: read: chip 0x%lx, addr 0x%lx, val 0x%lx",
 			chip_id, addr, scom.data);
 
 	*(uint64_t *)buf = htobe64(scom.data);
@@ -210,11 +247,12 @@ int hservice_scom_write(uint64_t chip_id, uint64_t addr,
 
 	rc = ioctl(ctx->fd, OPAL_PRD_SCOM_WRITE, &scom);
 	if (rc) {
-		perror("ioctl scom_write");
+		pr_log(LOG_ERR, "SCOM: ioctl write(chip 0x%lx, addr 0x%lx) "
+				"failed: %m", chip_id, addr);
 		return 0;
 	}
 
-	pr_debug(ctx, "scom write: chip %lx addr %lx val %lx\n",
+	pr_debug("SCOM: write: chip 0x%lx, addr 0x%lx, val 0x%lx",
 			chip_id, addr, scom.data);
 
 	return 0;
@@ -226,15 +264,16 @@ uint64_t hservice_get_reserved_mem(const char *name)
 	struct opal_prd_range *range;
 	void *addr;
 
-	pr_debug(ctx, "hservice_get_reserved_mem: %s\n", name);
+	pr_debug("IMAGE: hservice_get_reserved_mem: %s", name);
 
 	range = find_range(name);
 	if (!range) {
-		warnx("get_reserved_mem: no such range %s", name);
+		pr_log(LOG_WARNING, "IMAGE: get_reserved_mem: "
+				"no such range %s", name);
 		return 0;
 	}
 
-	pr_debug(ctx, "Mapping 0x%016lx 0x%08lx %s\n",
+	pr_debug("IMAGE: Mapping 0x%016lx 0x%08lx %s",
 			range->physaddr, range->size, range->name);
 
 	align_physaddr = range->physaddr & ~(ctx->page_size-1);
@@ -243,15 +282,15 @@ uint64_t hservice_get_reserved_mem(const char *name)
 				MAP_SHARED, ctx->fd, align_physaddr);
 
 	if (addr == MAP_FAILED) {
-		perror("mmap");
+		pr_log(LOG_ERR, "IMAGE: mmap of %s(0x%016lx) failed: %m",
+				name, range->physaddr);
 		return 0;
 	}
 
-	pr_debug(ctx, "hservice_get_reserved_mem: %s address %p\n", name, addr);
-	if (addr)
-		return (uint64_t)addr + offset;
+	pr_debug("IMAGE: hservice_get_reserved_mem: %s(0x%016lx) address %p",
+			name, range->physaddr, addr);
 
-	return 0;
+	return (uint64_t)addr + offset;
 }
 
 void hservice_nanosleep(uint64_t i_seconds, uint64_t i_nano_seconds)
@@ -266,7 +305,8 @@ void hservice_nanosleep(uint64_t i_seconds, uint64_t i_nano_seconds)
 
 int hservice_set_page_execute(void *addr)
 {
-	pr_debug(ctx, "FIXME: hservice_set_page_execute(%p)\n", addr);
+	/* HBRT calls this on the pages that are already being executed,
+	 * nothing to do here */
 	return -1;
 }
 
@@ -380,11 +420,11 @@ static int ipmi_recv(int fd, uint8_t *netfn, uint8_t *cmd, long *seq,
 
 	rc = ioctl(fd, IPMICTL_RECEIVE_MSG_TRUNC, &recv);
 	if (rc < 0 && errno != EMSGSIZE) {
-		warn("IPMI: recv (%zd bytes) failed: %m\n", *len);
+		pr_log(LOG_WARNING, "IPMI: recv (%zd bytes) failed: %m", *len);
 		return -1;
 	} else if (rc < 0 && errno == EMSGSIZE) {
-		warn("IPMI: truncated message (netfn %d, cmd %d, "
-				"size %zd), continuing anyway\n",
+		pr_log(LOG_NOTICE, "IPMI: truncated message (netfn %d, cmd %d, "
+				"size %zd), continuing anyway",
 				recv.msg.netfn, recv.msg.cmd, *len);
 	}
 
@@ -410,17 +450,18 @@ int hservice_ipmi_msg(uint8_t netfn, uint8_t cmd,
 
 	fd = open(ipmi_devnode, O_RDWR);
 	if (fd < 0) {
-		warn("Failed to open IPMI device %s", ipmi_devnode);
+		pr_log(LOG_WARNING, "IPMI: Failed to open IPMI device %s: %m",
+				ipmi_devnode);
 		return -1;
 	}
 
 	seq++;
-	pr_debug(ctx, "IPMI: sending %zd bytes (netfn 0x%02x, cmd 0x%02x)\n",
+	pr_debug("IPMI: sending %zd bytes (netfn 0x%02x, cmd 0x%02x)",
 			tx_size, netfn, cmd);
 
 	rc = ipmi_send(fd, netfn, cmd, seq, tx_buf, tx_size);
 	if (rc) {
-		warnx("IPMI: send failed");
+		pr_log(LOG_WARNING, "IPMI: send failed");
 		goto out;
 	}
 
@@ -442,12 +483,14 @@ int hservice_ipmi_msg(uint8_t netfn, uint8_t cmd,
 
 		rc = poll(pollfds, 1, timeout);
 		if (rc < 0) {
-			warn("poll(%s)", ipmi_devnode);
+			pr_log(LOG_ERR, "IPMI: poll(%s) failed: %m",
+					ipmi_devnode);
 			break;
 		}
 
 		if (rc == 0) {
-			warnx("IPMI response timeout");
+			pr_log(LOG_WARNING, "IPMI: response timeout (>%dms)",
+					ipmi_timeout_ms);
 			rc = -1;
 			break;
 		}
@@ -457,13 +500,13 @@ int hservice_ipmi_msg(uint8_t netfn, uint8_t cmd,
 			break;
 
 		if (seq != rx_seq) {
-			pr_debug(ctx, "IPMI: out-of-sequence reply: %ld, "
-					"expected %ld. Dropping message.\n",
+			pr_log(LOG_NOTICE, "IPMI: out-of-sequence reply: %ld, "
+					"expected %ld. Dropping message.",
 					rx_seq, seq);
 			continue;
 		}
 
-		pr_debug(ctx, "IPMI: received %zd bytes\n", tx_size);
+		pr_debug("IPMI: received %zd bytes", tx_size);
 		*rx_size = be64toh(size);
 		rc = 0;
 		break;
@@ -477,29 +520,34 @@ out:
 int hservice_memory_error(uint64_t i_start_addr, uint64_t i_endAddr,
 		enum MemoryError_t i_errorType)
 {
+	const char *sysfsfile, *typestr;
 	char buf[ADDR_STRING_SZ];
-	const char *sysfsfile;
 	int memfd, rc, n;
 	uint64_t addr;
-
-	pr_debug(ctx, "Memory error addr:%016lx-%016lx type: %d\n",
-			i_start_addr, i_endAddr, i_errorType);
 
 	switch(i_errorType) {
 	case MEMORY_ERROR_CE:
 		sysfsfile = mem_offline_soft;
+		typestr = "correctable";
 		break;
 	case MEMORY_ERROR_UE:
 		sysfsfile = mem_offline_hard;
+		typestr = "uncorrectable";
 		break;
 	default:
-		warn("Invalid memory error type %d", i_errorType);
+		pr_log(LOG_WARNING, "MEM: Invalid memory error type %d",
+				i_errorType);
 		return -1;
 	}
 
+	pr_log(LOG_ERR, "MEM: Memory error: range %016lx-%016lx, type: %s",
+			i_start_addr, i_endAddr, typestr);
+
+
 	memfd = open(sysfsfile, O_WRONLY);
 	if (memfd < 0) {
-		warn("Unable to open sysfs: %s", sysfsfile);
+		pr_log(LOG_CRIT, "MEM: Failed to offline memory! "
+				"Unable to open sysfs node %s: %m", sysfsfile);
 		return -1;
 	}
 
@@ -507,7 +555,8 @@ int hservice_memory_error(uint64_t i_start_addr, uint64_t i_endAddr,
 		n = snprintf(buf, ADDR_STRING_SZ, "0x%lx", addr);
 		rc = write(memfd, buf, n);
 		if (rc != n) {
-			warn("Memory offine of addr: %016lx type: %d failed",
+			pr_log(LOG_CRIT, "MEM: Failed to offline memory! "
+					"page addr: %016lx type: %d: %m",
 				addr, i_errorType);
 			return rc;
 		}
@@ -521,7 +570,7 @@ void hservices_init(struct opal_prd_ctx *ctx, void *code)
 	uint64_t *s, *d;
 	int i, sz;
 
-	pr_debug(ctx, "Code Address : [%p]\n", code);
+	pr_debug("IMAGE: code address: %p", code);
 
 	/* We enter at 0x100 into the image. */
 	/* Load func desc in BE since we reverse it in thunk */
@@ -530,13 +579,13 @@ void hservices_init(struct opal_prd_ctx *ctx, void *code)
 	hbrt_entry.toc = 0; /* No toc for init entry point */
 
 	if (memcmp(code, "HBRTVERS", 8) != 0)
-		errx(EXIT_FAILURE, "HBRT: Bad signature for "
-				"ibm,hbrt-code-image! exiting\n");
+		pr_log(LOG_ERR, "IMAGE: Bad signature for "
+				"ibm,hbrt-code-image! exiting");
 
-	pr_debug(ctx, "HBRT: calling ibm,hbrt_init() %p\n", hservice_runtime);
+	pr_debug("IMAGE: calling ibm,hbrt_init()");
 	hservice_runtime = call_hbrt_init(&hinterface);
-	pr_debug(ctx, "HBRT: hbrt_init passed..... %p version %016lx\n",
-			hservice_runtime, hservice_runtime->interface_version);
+	pr_log(LOG_NOTICE, "IMAGE: hbrt_init complete, version %016lx",
+			hservice_runtime->interface_version);
 
 	sz = sizeof(struct runtime_interfaces)/sizeof(uint64_t);
 	s = (uint64_t *)hservice_runtime;
@@ -577,13 +626,13 @@ static int map_hbrt_file(struct opal_prd_ctx *ctx, const char *name)
 
 	fd = open(name, O_RDONLY);
 	if (fd < 0) {
-		warn("open(%s)", name);
+		pr_log(LOG_ERR, "IMAGE: HBRT file open(%s) failed: %m", name);
 		return -1;
 	}
 
 	rc = fstat(fd, &statbuf);
 	if (rc < 0) {
-		warn("fstat(%s)", name);
+		pr_log(LOG_ERR, "IMAGE: HBRT file fstat(%s) failed: %m", name);
 		close(fd);
 		return -1;
 	}
@@ -593,7 +642,8 @@ static int map_hbrt_file(struct opal_prd_ctx *ctx, const char *name)
 	close(fd);
 
 	if (buf == MAP_FAILED) {
-		warn("mmap(%s)", name);
+		pr_log(LOG_ERR, "IMAGE: HBRT file mmap(%s, 0x%zx) failed: %m",
+				name, statbuf.st_size);
 		return -1;
 	}
 
@@ -609,14 +659,16 @@ static int map_hbrt_physmem(struct opal_prd_ctx *ctx, const char *name)
 
 	range = find_range(name);
 	if (!range) {
-		warnx("can't find code region %s\n", name);
+		pr_log(LOG_ERR, "IMAGE: can't find code region %s", name);
 		return -1;
 	}
 
 	buf = mmap(NULL, range->size, PROT_READ | PROT_WRITE | PROT_EXEC,
 			MAP_PRIVATE, ctx->fd, range->physaddr);
 	if (buf == MAP_FAILED) {
-		warn("mmap(range:%s)\n", name);
+		pr_log(LOG_ERR, "IMAGE: mmap(range:%s, "
+				"phys:0x%016lx, size:0x%016lx) failed: %m",
+				name, range->physaddr, range->size);
 		return -1;
 	}
 
@@ -634,17 +686,20 @@ static void dump_hbrt_map(struct opal_prd_ctx *ctx)
 		return;
 
 	fd = open(dump_name, O_WRONLY | O_CREAT, 0644);
-	if (fd < 0)
-		err(EXIT_FAILURE, "couldn't open %s for writing", dump_name);
+	if (fd < 0) {
+		pr_log(LOG_NOTICE, "IMAGE: couldn't debug image %s for writing",
+				dump_name);
+		return;
+	}
 
 	ftruncate(fd, 0);
 	rc = write(fd, ctx->code_addr, ctx->code_size);
 	close(fd);
 
 	if (rc != ctx->code_size)
-		warn("write to %s failed", dump_name);
+		pr_log(LOG_NOTICE, "IMAGE: write to %s failed: %m", dump_name);
 	else
-		pr_debug(ctx, "dumped HBRT binary to %s\n", dump_name);
+		pr_debug("IMAGE: dumped HBRT binary to %s", dump_name);
 }
 
 static int prd_init(struct opal_prd_ctx *ctx)
@@ -656,13 +711,14 @@ static int prd_init(struct opal_prd_ctx *ctx)
 	/* set up the device, and do our get_info ioctl */
 	ctx->fd = open(opal_prd_devnode, O_RDWR);
 	if (ctx->fd < 0) {
-		warn("Can't open PRD device %s\n", opal_prd_devnode);
+		pr_log(LOG_ERR, "FW: Can't open PRD device %s: %m",
+				opal_prd_devnode);
 		return -1;
 	}
 
 	rc = ioctl(ctx->fd, OPAL_PRD_GET_INFO, &ctx->info);
 	if (rc) {
-		warn("Can't get PRD info");
+		pr_log(LOG_ERR, "FW: Can't query PRD information: %m");
 		return -1;
 	}
 
@@ -679,13 +735,13 @@ static int handle_msg_attn(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 	ipoll_mask = be64toh(msg->attn.ipoll_mask);
 
 	if (!hservice_runtime->handle_attns) {
-		fprintf(stderr, "no handle_attns call\n");
+		pr_log_nocall("handle_attns");
 		return -1;
 	}
 
 	rc = call_handle_attns(proc, ipoll_status, ipoll_mask);
 	if (rc) {
-		fprintf(stderr, "enable_attns(%lx,%lx,%lx) failed, rc %d",
+		pr_log(LOG_ERR, "HBRT: enable_attns(%lx,%lx,%lx) failed, rc %d",
 				proc, ipoll_status, ipoll_mask, rc);
 		return -1;
 	}
@@ -697,7 +753,7 @@ static int handle_msg_attn(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 	rc = write(ctx->fd, msg, sizeof(*msg));
 
 	if (rc != sizeof(*msg)) {
-		warn("write(ATTN_ACK) failed");
+		pr_log(LOG_WARNING, "FW: Failed to send ATTN_ACK message: %m");
 		return -1;
 	}
 
@@ -712,7 +768,7 @@ static int handle_msg_occ_error(struct opal_prd_ctx *ctx,
 	proc = be64toh(msg->occ_error.chip);
 
 	if (!hservice_runtime->process_occ_error) {
-		fprintf(stderr, "no process_occ_error call\n");
+		pr_log_nocall("process_occ_error");
 		return -1;
 	}
 
@@ -728,7 +784,7 @@ static int handle_msg_occ_reset(struct opal_prd_ctx *ctx,
 	proc = be64toh(msg->occ_reset.chip);
 
 	if (!hservice_runtime->process_occ_reset) {
-		fprintf(stderr, "no handle_reset call\n");
+		pr_log_nocall("process_occ_reset");
 		return -1;
 	}
 
@@ -746,7 +802,7 @@ static int handle_prd_msg(struct opal_prd_ctx *ctx)
 		return -1;
 
 	if (rc != sizeof(msg)) {
-		warn("read on opal prd device failed");
+		pr_log(LOG_WARNING, "FW: Error reading events from OPAL: %m");
 		return -1;
 	}
 
@@ -761,7 +817,8 @@ static int handle_prd_msg(struct opal_prd_ctx *ctx)
 		rc = handle_msg_occ_error(ctx, &msg);
 		break;
 	default:
-		warn("Invalid incoming message type 0x%x\n", msg.type);
+		pr_log(LOG_WARNING, "Invalid incoming message type 0x%x",
+				msg.type);
 		return -1;
 	}
 
@@ -776,7 +833,8 @@ static int handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 
 	rc = recv(fd, &msg, sizeof(msg), MSG_TRUNC);
 	if (rc != sizeof(msg)) {
-		warn("recvfrom");
+		pr_log(LOG_WARNING, "CTRL: failed to receive "
+				"control message: %m");
 		return -1;
 	}
 
@@ -789,34 +847,34 @@ static int handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 		/* fall through */
 	case CONTROL_MSG_DISABLE_OCCS:
 		if (!hservice_runtime->enable_occ_actuation) {
-			fprintf(stderr, "no enable_occ_actuation call\n");
+			pr_log_nocall("enable_occ_actuation");
 		} else {
-			pr_debug(ctx, "calling enable_occ_actuation(%s)\n",
+			pr_debug("CTRL: calling enable_occ_actuation(%s)",
 					enabled ? "true" : "false");
 			rc = call_enable_occ_actuation(enabled);
-			pr_debug(ctx, " -> %d\n", rc);
+			pr_debug("CTRL:  -> %d", rc);
 		}
 		break;
 	case CONTROL_MSG_TEMP_OCC_RESET:
 		if (hservice_runtime->process_occ_reset) {
-			pr_debug(ctx, "calling process_occ_reset(0)\n");
+			pr_debug("CTRL: calling process_occ_reset(0)");
 			call_process_occ_reset(0);
 			rc = 0;
 		} else {
-			fprintf(stderr, "no process_occ_reset call\n");
+			pr_log_nocall("process_occ_reset");
 		}
 		break;
 	case CONTROL_MSG_TEMP_OCC_ERROR:
 		if (hservice_runtime->process_occ_error) {
-			pr_debug(ctx, "calling process_occ_error(0)\n");
+			pr_debug("CTRL: calling process_occ_error(0)");
 			call_process_occ_error(0);
 			rc = 0;
 		} else {
-			fprintf(stderr, "no process_occ_error call\n");
+			pr_log_nocall("process_occ_error");
 		}
 		break;
 	default:
-		fprintf(stderr, "Unknown control message action %d",
+		pr_log(LOG_WARNING, "CTRL: Unknown control message action %d",
 				msg.type);
 	}
 
@@ -824,10 +882,10 @@ static int handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 	msg.response = rc;
 	rc = send(fd, &msg, sizeof(msg), MSG_DONTWAIT | MSG_NOSIGNAL);
 	if (rc && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EPIPE))
-		pr_debug(ctx, "control send() returned %d, ignoring failure\n",
+		pr_debug("CTRL: control send() returned %d, ignoring failure",
 				rc);
 	else if (rc != sizeof(msg))
-		warn("control socket send failed");
+		pr_log(LOG_NOTICE, "CTRL: Failed to send control response: %m");
 
 	return 0;
 }
@@ -839,10 +897,11 @@ static int run_attn_loop(struct opal_prd_ctx *ctx)
 	int rc, fd;
 
 	if (hservice_runtime->enable_attns) {
-		pr_debug(ctx, "calling enable_attns()\n");
+		pr_debug("HBRT: calling enable_attns");
 		rc = call_enable_attns();
 		if (rc) {
-			fprintf(stderr, "enable_attns() failed, aborting\n");
+			pr_log(LOG_ERR, "HBRT: enable_attns() failed, "
+					"aborting");
 			return -1;
 		}
 	}
@@ -852,10 +911,10 @@ static int run_attn_loop(struct opal_prd_ctx *ctx)
 	msg.init.version = htobe64(opal_prd_version);
 	msg.init.ipoll = htobe64(opal_prd_ipoll);
 
-	pr_debug(ctx, "writing init message\n");
+	pr_debug("FW: writing init message");
 	rc = write(ctx->fd, &msg, sizeof(msg));
 	if (rc != sizeof(msg)) {
-		warn("init message failed, aborting");
+		pr_log(LOG_ERR, "FW: Init message failed: %m. Aborting.");
 		return -1;
 	}
 
@@ -866,8 +925,10 @@ static int run_attn_loop(struct opal_prd_ctx *ctx)
 
 	for (;;) {
 		rc = poll(pollfds, 2, -1);
-		if (rc < 0)
-			err(EXIT_FAILURE, "poll");
+		if (rc < 0) {
+			pr_log(LOG_ERR, "FW: event poll failed: %m");
+			exit(EXIT_FAILURE);
+		}
 
 		if (!rc)
 			continue;
@@ -878,7 +939,7 @@ static int run_attn_loop(struct opal_prd_ctx *ctx)
 		if (pollfds[1].revents & POLLIN) {
 			fd = accept(ctx->socket, NULL, NULL);
 			if (fd < 0) {
-				warn("accept");
+				pr_log(LOG_NOTICE, "CTRL: accept failed: %m");
 				continue;
 			}
 			handle_prd_control(ctx, fd);
@@ -901,31 +962,41 @@ static int init_control_socket(struct opal_prd_ctx *ctx)
 
 	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (fd < 0) {
-		warn("Can't open control socket %s", opal_prd_socket);
+		pr_log(LOG_WARNING, "CTRL: Can't open control socket %s: %m",
+				opal_prd_socket);
 		return -1;
 	}
 
 	rc = bind(fd, (struct sockaddr *)&addr, sizeof(addr));
 	if (rc) {
-		warn("Can't bind control socket %s", opal_prd_socket);
+		pr_log(LOG_WARNING, "CTRL: Can't bind control socket %s: %m",
+				opal_prd_socket);
 		close(fd);
 		return -1;
 	}
 
 	rc = listen(fd, 0);
 	if (rc) {
-		warn("Can't listen on control socket %s", opal_prd_socket);
+		pr_log(LOG_WARNING, "CTRL: Can't listen on "
+				"control socket %s: %m", opal_prd_socket);
 		close(fd);
 		return -1;
 	}
+
+	pr_log(LOG_INFO, "CTRL: Listening on control socket %s",
+			opal_prd_socket);
 
 	ctx->socket = fd;
 	return 0;
 }
 
+
 static int run_prd_daemon(struct opal_prd_ctx *ctx)
 {
 	int rc;
+
+	/* log to syslog */
+	pr_log_daemon_init();
 
 	ctx->fd = -1;
 	ctx->socket = -1;
@@ -938,9 +1009,9 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 		int i;
 
 		rc = i2c_read(0, 1, 2, 0x50, 2, 0x10, 128, foo);
-		printf("read rc: %d\n", rc);
+		pr_debug("I2C: read rc: %d", rc);
 		for (i = 0; i < sizeof(foo); i += 8) {
-			printf("%02x %02x %02x %02x %02x %02x %02x %02x\n",
+			pr_debug("I2C: %02x %02x %02x %02x %02x %02x %02x %02x",
 			       foo[i + 0], foo[i + 1], foo[i + 2], foo[i + 3],
 			       foo[i + 4], foo[i + 5], foo[i + 6], foo[i + 7]);
 		}
@@ -948,14 +1019,14 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 #endif
 	rc = init_control_socket(ctx);
 	if (rc) {
-		warnx("Error initialising PRD control");
+		pr_log(LOG_WARNING, "CTRL: Error initialising PRD control: %m");
 		goto out_close;
 	}
 
 
 	rc = prd_init(ctx);
 	if (rc) {
-		warnx("Error initialising PRD setup");
+		pr_log(LOG_ERR, "FW: Error initialising PRD channel");
 		goto out_close;
 	}
 
@@ -963,31 +1034,33 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	if (ctx->hbrt_file_name) {
 		rc = map_hbrt_file(ctx, ctx->hbrt_file_name);
 		if (rc) {
-			warnx("can't access hbrt file %s", ctx->hbrt_file_name);
+			pr_log(LOG_ERR, "IMAGE: Can't access hbrt file %s",
+					ctx->hbrt_file_name);
 			goto out_close;
 		}
 	} else {
 		rc = map_hbrt_physmem(ctx, hbrt_code_region_name);
 		if (rc) {
-			warn("can't access hbrt physical memory");
+			pr_log(LOG_ERR, "IMAGE: Can't access hbrt "
+					"physical memory");
 			goto out_close;
 		}
 		dump_hbrt_map(ctx);
 	}
 
-	pr_debug(ctx, "hbrt map at %p, size 0x%zx\n",
+	pr_debug("IMAGE: hbrt map at %p, size 0x%zx",
 			ctx->code_addr, ctx->code_size);
 
 	fixup_hinterface_table();
 
-	pr_debug(ctx, "calling hservices_init\n");
+	pr_debug("HBRT: calling hservices_init");
 	hservices_init(ctx, ctx->code_addr);
-	pr_debug(ctx, "hservices_init done\n");
+	pr_debug("HBRT: hservices_init done");
 
 	if (ctx->pnor.path) {
 		rc = pnor_init(&ctx->pnor);
 		if (rc) {
-			printf("Failed to open pnor\n");
+			pr_log(LOG_ERR, "PNOR: Failed to open pnor: %m");
 			goto out_close;
 		}
 	}
@@ -997,10 +1070,10 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	/* Test a scom */
 	if (ctx->debug) {
 		uint64_t val;
-		printf("trying scom read\n");
+		pr_debug("SCOM: trying scom read");
 		fflush(stdout);
 		hservice_scom_read(0x00, 0xf000f, &val);
-		printf("f00f: %lx\n", be64toh(val));
+		pr_debug("SCOM:  f00f: %lx", be64toh(val));
 	}
 
 	run_attn_loop(ctx);
@@ -1032,13 +1105,13 @@ static int send_occ_control(struct opal_prd_ctx *ctx, const char *str)
 	} else if (!strcmp(str, "process-error")) {
 		msg.type = CONTROL_MSG_TEMP_OCC_ERROR;
 	} else {
-		fprintf(stderr, "Invalid OCC action '%s'\n", str);
+		pr_log(LOG_ERR, "OCC: Invalid OCC action '%s'", str);
 		return -1;
 	}
 
 	sd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (!sd) {
-		warn("Failed to create control socket");
+		pr_log(LOG_ERR, "CTRL: Failed to create control socket: %m");
 		return -1;
 	}
 
@@ -1047,13 +1120,13 @@ static int send_occ_control(struct opal_prd_ctx *ctx, const char *str)
 
 	rc = connect(sd, (struct sockaddr *)&addr, sizeof(addr));
 	if (rc) {
-		warn("Failed to connect to prd daemon");
+		pr_log(LOG_ERR, "CTRL: Failed to connect to prd daemon: %m");
 		goto out_close;
 	}
 
 	rc = send(sd, &msg, sizeof(msg), 0);
 	if (rc != sizeof(msg)) {
-		warn("send");
+		pr_log(LOG_ERR, "CTRL: Failed to send control message: %m");
 		rc = -1;
 		goto out_close;
 	}
@@ -1061,17 +1134,17 @@ static int send_occ_control(struct opal_prd_ctx *ctx, const char *str)
 	/* wait for our reply */
 	rc = recv(sd, &msg, sizeof(msg), 0);
 	if (rc < 0) {
-		warn("control socket receive failed");
+		pr_log(LOG_ERR, "CTRL: Failed to receive control message: %m");
 		goto out_close;
 
 	} else if (rc != sizeof(msg)) {
-		warnx("short read from control socket");
+		pr_log(LOG_WARNING, "CTRL: Short read from control socket");
 		rc = -1;
 		goto out_close;
 	}
 
 	if (msg.response || ctx->debug) {
-		warnx("OCC action %s returned status %ld\n",
+		pr_debug("OCC: OCC action %s returned status %ld",
 				str, msg.response);
 	}
 
@@ -1093,7 +1166,8 @@ static void usage(const char *progname)
 "\t--debug            verbose logging for debug information\n"
 "\t--pnor DEVICE      use PNOR MTD device\n"
 "\t--file FILE        use FILE for hostboot runtime code (instead of code\n"
-"\t                     exported by firmware)\n");
+"\t                     exported by firmware)\n"
+"\t--stdio            log to stdio, instead of syslog\n");
 }
 
 static struct option opal_diag_options[] = {
@@ -1101,6 +1175,7 @@ static struct option opal_diag_options[] = {
 	{"pnor", required_argument, NULL, 'p'},
 	{"debug", no_argument, NULL, 'd'},
 	{"help", no_argument, NULL, 'h'},
+	{"stdio", no_argument, NULL, 's'},
 	{ 0 },
 };
 
@@ -1121,7 +1196,7 @@ static int parse_action(const char *str, enum action *action)
 		return 0;
 	}
 
-	fprintf(stderr, "unknown argument '%s'\n", str);
+	pr_log(LOG_ERR, "CTRL: unknown argument '%s'", str);
 	return -1;
 }
 
@@ -1133,12 +1208,14 @@ int main(int argc, char *argv[])
 
 	ctx = &_ctx;
 	memset(ctx, 0, sizeof(*ctx));
+	ctx->vlog = pr_log_stdio;
+	ctx->use_syslog = true;
 
 	/* Parse options */
 	for (;;) {
 		int c;
 
-		c = getopt_long(argc, argv, "f:p:dh", opal_diag_options, NULL);
+		c = getopt_long(argc, argv, "f:p:dhs", opal_diag_options, NULL);
 		if (c == -1)
 			break;
 
@@ -1151,6 +1228,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'p':
 			ctx->pnor.path = strndup(optarg, PATH_MAX);
+			break;
+		case 's':
+			ctx->use_syslog = false;
 			break;
 		case 'h':
 			usage(argv[0]);
@@ -1176,7 +1256,8 @@ int main(int argc, char *argv[])
 	} else if (action == ACTION_OCC_CONTROL) {
 
 		if (optind + 1 >= argc) {
-			fprintf(stderr, "occ command requires an argument\n");
+			pr_log(LOG_ERR, "CTRL: occ command requires "
+					"an argument");
 			return EXIT_FAILURE;
 		}
 

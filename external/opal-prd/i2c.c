@@ -32,6 +32,7 @@
 #include <linux/i2c-dev.h>
 #include <ccan/list/list.h>
 
+#include "opal-prd.h"
 #include "module.h"
 #include "i2c.h"
 
@@ -57,14 +58,15 @@ static int i2c_get_dev(uint32_t chip, uint8_t eng, uint8_t port, uint16_t dev)
 		}
 	}
 	if (!bus) {
-		printf("I2C: Bus %08x/%d/%d not found\n", chip, eng, port);
+		pr_log(LOG_WARNING, "I2C: Bus %08x/%d/%d not found",
+				chip, eng, port);
 		return -1;
 	}
 	if (bus->fd < 0) {
 		bus->fd = open(bus->devpath, O_RDWR);
 		if (bus->fd < 0) {
-			fprintf(stderr, "Failed to open %s: %s\n",
-				bus->devpath, strerror(errno));
+			pr_log(LOG_ERR, "I2C: Failed to open %s: %m",
+				bus->devpath);
 			return -1;
 		}
 	}
@@ -86,7 +88,8 @@ int i2c_read(uint32_t chip_id, uint8_t engine, uint8_t port,
 	int fd, i, midx = 0;
 
 	if (offset_size > 4) {
-		fprintf(stderr,"I2C: Invalid offset_size %d\n", offset_size);
+		pr_log(LOG_ERR, "I2C: Invalid write offset_size %d",
+				offset_size);
 		return -1;
 	}
 	fd = i2c_get_dev(chip_id, engine, port, device);
@@ -117,10 +120,10 @@ int i2c_read(uint32_t chip_id, uint8_t engine, uint8_t port,
 	ioargs.msgs = msgs;
 	ioargs.nmsgs = midx;
 	if (ioctl(fd, I2C_RDWR, &ioargs) < 0) {
-		fprintf(stderr, "I2C: Read error: %s\n", strerror(errno));
+		pr_log(LOG_ERR, "I2C: Read error: %m");
 		return -1;
 	}
-	printf("I2C: Read from %08x:%d:%d@%02x+0x%x %d bytes ok\n",
+	pr_debug("I2C: Read from %08x:%d:%d@%02x+0x%x %d bytes ok",
 	       chip_id, engine, port, device, offset_size ? offset : 0, length);
 
 	return 0;
@@ -136,7 +139,8 @@ int i2c_write(uint32_t chip_id, uint8_t engine, uint8_t port,
 	uint8_t *buf;
 
 	if (offset_size > 4) {
-		fprintf(stderr,"I2C: Invalid offset_size %d\n", offset_size);
+		pr_log(LOG_ERR, "I2C: Invalid write offset_size %d",
+				offset_size);
 		return -1;
 	}
 	fd = i2c_get_dev(chip_id, engine, port, device);
@@ -150,7 +154,7 @@ int i2c_write(uint32_t chip_id, uint8_t engine, uint8_t port,
 	size = offset_size + length;
 	buf = malloc(size);
 	if (!buf) {
-		fprintf(stderr, "I2C: Out of memory !\n");
+		pr_log(LOG_ERR, "I2C: Out of memory");
 		return -1;
 	}
 
@@ -173,7 +177,7 @@ int i2c_write(uint32_t chip_id, uint8_t engine, uint8_t port,
 	rc = ioctl(fd, I2C_RDWR, &ioargs);
 	free(buf);
 	if (rc < 0) {
-		fprintf(stderr, "I2C: Write error: %s\n", strerror(errno));
+		pr_log(LOG_ERR, "I2C: Write error: %m");
 		return -1;
 	}
 
@@ -187,8 +191,8 @@ static void i2c_add_bus(uint32_t chip, uint32_t engine, uint32_t port,
 	char *dn;
 
 	if (asprintf(&dn, "/dev/%s", devname) < 0) {
-		fprintf(stderr, "Error creating devpath for %s: %s\n",
-			devname, strerror(errno));
+		pr_log(LOG_ERR, "I2C: Error creating devpath for %s: %m",
+			devname);
 		return;
 	}
 
@@ -218,8 +222,8 @@ void i2c_init(void)
 	/* Get directory of i2c char devs in sysfs */
 	devsdir = opendir(SYSFS "/class/i2c-dev");
 	if (!devsdir) {
-		fprintf(stderr, "Error opening " SYSFS "/class/i2c-dev: %s\n",
-			strerror(errno));
+		pr_log(LOG_ERR, "I2C: Error opening "
+					SYSFS "/class/i2c-dev: %m");
 		return;
 	}
 	while ((devent = readdir(devsdir)) != NULL) {
@@ -232,15 +236,15 @@ void i2c_init(void)
 		sprintf(dpath, SYSFS "/class/i2c-dev/%s/name", devent->d_name);
 		f = fopen(dpath, "r");
 		if (!f) {
-			fprintf(stderr, "Can't open %s: %s, skipping...\n",
-				dpath, strerror(errno));
+			pr_log(LOG_NOTICE, "I2C: Can't open %s: %m, skipping.",
+					dpath);
 			continue;
 		}
 		s = fgets(busname, sizeof(busname), f);
 		fclose(f);
 		if (!s) {
-			fprintf(stderr, "Failed to read %s, skipping...\n",
-				dpath);
+			pr_log(LOG_NOTICE, "Failed to read %s, skipping.",
+					dpath);
 			continue;
 		}
 
@@ -252,7 +256,7 @@ void i2c_init(void)
 		else
 			continue;
 
-		printf("I2C: Found Chip: %08x engine %d port %d\n",
+		pr_log(LOG_INFO, "I2C: Found Chip: %08x engine %d port %d",
 		       chip, engine, port);
 		i2c_add_bus(chip, engine, port, devent->d_name);
 	}

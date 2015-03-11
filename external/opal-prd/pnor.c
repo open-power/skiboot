@@ -16,7 +16,6 @@
 
 #include <libflash/libffs.h>
 #include <errno.h>
-#include <err.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -28,7 +27,8 @@
 #include <sys/ioctl.h>
 #include <mtd/mtd-user.h>
 
-#include <pnor.h>
+#include "pnor.h"
+#include "opal-prd.h"
 
 int pnor_init(struct pnor *pnor)
 {
@@ -49,7 +49,7 @@ int pnor_init(struct pnor *pnor)
 #if defined(__powerpc__)
 	rc = ioctl(fd, MEMGETINFO, &mtd_info);
 	if (rc < 0) {
-		fprintf(stderr, "PNOR: ioctl failed to get pnor info\n");
+		pr_log(LOG_ERR, "PNOR: ioctl failed to get pnor info: %m");
 		goto out;
 	}
 	pnor->size = mtd_info.size;
@@ -64,12 +64,12 @@ int pnor_init(struct pnor *pnor)
 	pnor->erasesize = 1024;
 #endif
 
-	printf("Found PNOR: %d bytes (%d blocks)\n", pnor->size,
+	pr_debug("PNOR: Found PNOR: %d bytes (%d blocks)", pnor->size,
 	       pnor->erasesize);
 
 	rc = ffs_open_image(fd, pnor->size, 0, &pnor->ffsh);
 	if (rc)
-		fprintf(stderr, "Failed to open pnor partition table\n");
+		pr_log(LOG_ERR, "PNOR: Failed to open pnor partition table");
 
 out:
 	close(fd);
@@ -94,13 +94,15 @@ void dump_parts(struct ffs_handle *ffs) {
 	uint32_t start, size, act_size;
 	char *name;
 
-	printf(" %10s %8s %8s %8s\n", "name", "start", "size", "act_size");
+	pr_debug("PNOR: %10s %8s %8s %8s",
+			"name", "start", "size", "act_size");
 	for (i = 0; ; i++) {
 		rc = ffs_part_info(ffs, i, &name, &start,
 				&size, &act_size, NULL);
 		if (rc)
 			break;
-		printf(" %10s %08x %08x %08x\n", name, start, size, act_size);
+		pr_debug("PNOR: %10s %08x %08x %08x",
+				name, start, size, act_size);
 		free(name);
 	}
 }
@@ -132,7 +134,8 @@ static int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
 	if (start_waste) {
 		rc = lseek(fd, write_start, SEEK_SET);
 		if (rc < 0) {
-			perror("lseek write_start");
+			pr_log(LOG_ERR, "PNOR: lseek write_start(0x%x) "
+					"failed; %m", write_start);
 			goto out;
 		}
 
@@ -144,6 +147,10 @@ static int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
 			   SEEK_SET);
 		if (rc < 0) {
 			perror("lseek last write block");
+			pr_log(LOG_ERR, "PNOR: lseek last write block(0x%x) "
+					"failed; %m",
+						write_start + write_len -
+						pnor->erasesize);
 			goto out;
 		}
 
@@ -156,7 +163,7 @@ static int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
 	/* Not sure if this is required */
 	rc = lseek(fd, 0, SEEK_SET);
 	if (rc < 0) {
-		perror("lseek 0");
+		pr_log(LOG_NOTICE, "PNOR: lseek(0) failed: %m");
 		goto out;
 	}
 
@@ -166,20 +173,23 @@ static int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
 
 	rc = ioctl(fd, MEMERASE, &erase);
 	if (rc < 0) {
-		perror("ioctl MEMERASE");
+		pr_log(LOG_ERR, "PNOR: erase(start 0x%x, len 0x%x) ioctl "
+				"failed: %m", write_start, write_len);
 		goto out;
 	}
 
 	/* Write */
 	rc = lseek(fd, write_start, SEEK_SET);
 	if (rc < 0) {
-		perror("lseek write_start");
+		pr_log(LOG_ERR, "PNOR: lseek write_start(0x%x) failed: %m",
+				write_start);
 		goto out;
 	}
 
 	rc = write(fd, buf, write_len);
 	if (rc < 0) {
-		perror("write to fd");
+		pr_log(LOG_ERR, "PNOR: write(0x%x bytes) failed: %m",
+				write_len);
 		goto out;
 	}
 
@@ -213,7 +223,7 @@ static int mtd_read(struct pnor *pnor, int fd, void *data, uint64_t offset,
 
 	/* Ensure read is not out of bounds */
 	if (read_start + read_len > pnor->size) {
-		fprintf(stderr, "PNOR: read out of bounds\n");
+		pr_log(LOG_ERR, "PNOR: read out of bounds");
 		return -ERANGE;
 	}
 
@@ -221,13 +231,15 @@ static int mtd_read(struct pnor *pnor, int fd, void *data, uint64_t offset,
 
 	rc = lseek(fd, read_start, SEEK_SET);
 	if (rc < 0) {
-		perror("lseek read_start");
+		pr_log(LOG_ERR, "PNOR: lseek read_start(0x%x) failed: %m",
+				read_start);
 		goto out;
 	}
 
 	rc = read(fd, buf, read_len);
 	if (rc < 0) {
-		perror("read from fd");
+		pr_log(LOG_ERR, "PNOR: write(offset 0x%x, len 0x%x) "
+				"failed: %m", read_start, read_len);
 		goto out;
 	}
 
@@ -252,24 +264,27 @@ int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
 	int size;
 
 	if (!pnor->ffsh) {
-		warnx("PNOR: ffs not initialised");
+		pr_log(LOG_ERR, "PNOR: ffs not initialised");
 		return -EBUSY;
 	}
 
 	rc = ffs_lookup_part(pnor->ffsh, name, &idx);
 	if (rc) {
-		warnx("PNOR: failed to find partition '%s'", name);
+		pr_log(LOG_WARNING, "PNOR: no partiton named '%s'", name);
 		return -ENOENT;
 	}
 
 	ffs_part_info(pnor->ffsh, idx, NULL, &pstart, &psize, NULL, NULL);
 	if (rc) {
-		warnx("PNOR: unable to fetch partition info");
+		pr_log(LOG_ERR, "PNOR: unable to fetch partition info for %s",
+				name);
 		return -ENOENT;
 	}
 
 	if (offset > psize) {
-		warnx("PNOR: offset (%ld) out of bounds (%d)", offset, psize);
+		pr_log(LOG_WARNING, "PNOR: partition %s(size 0x%x) "
+				"offset (0x%lx) out of bounds",
+				name, psize, offset);
 		return -ERANGE;
 	}
 
@@ -283,8 +298,10 @@ int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
 		size = psize - offset;
 
 	if (size < 0) {
-		warnx("PNOR: size (%zd) and offset (%ld) out of bounds (%d)",
-				requested_size, offset, psize);
+		pr_log(LOG_WARNING, "PNOR: partition %s(size 0x%x) "
+				"read size (0x%zx) and offset (0x%lx) "
+				"out of bounds",
+				name, psize, requested_size, offset);
 		return -ERANGE;
 	}
 
@@ -303,14 +320,15 @@ int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
 		break;
 	default:
 		rc  = -EIO;
-		fprintf(stderr, "PNOR: Invalid operation\n");
+		pr_log(LOG_ERR, "PNOR: Invalid operation");
 		goto out;
 	}
 
 	if (rc < 0)
-		warn("PNOR: MTD operation failed");
+		pr_log(LOG_ERR, "PNOR: MTD operation failed");
 	else if (rc != size)
-		warnx("PNOR: mtd operation returned %d, expected %d",
+		pr_log(LOG_WARNING, "PNOR: mtd operation "
+				"returned %d, expected %d",
 				rc, size);
 
 out:
