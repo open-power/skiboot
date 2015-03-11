@@ -517,7 +517,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	if (hmer & SPR_HMER_TFMR_PARITY_ERROR) {
 		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
 		hmer &= ~SPR_HMER_TFMR_PARITY_ERROR;
-		recover = 0;
+		recover = chiptod_recover_tb_errors();
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_FATAL;
 			hmi_evt->type = OpalHMI_ERROR_TFMR_PARITY;

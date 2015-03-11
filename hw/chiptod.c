@@ -73,6 +73,9 @@
 /* Number of iterations for the various timeouts */
 #define TIMEOUT_LOOPS		20000000
 
+/* Timebase State Machine error state */
+#define TBST_STATE_ERROR	9
+
 static enum chiptod_type {
 	chiptod_unknown,
 	chiptod_p7,
@@ -562,7 +565,6 @@ bool chiptod_wakeup_resync(void)
 	return false;
 }
 
-
 static int chiptod_recover_tod_errors(void)
 {
 	uint64_t terr;
@@ -684,6 +686,47 @@ static bool tfmr_recover_tb_errors(uint64_t tfmr)
 }
 
 /*
+ * TFMR parity error recovery as per pc_workbook:
+ *	MT(TFMR) bits 11 and 60 are b’1’
+ *	MT(HMER) all bits 1 except for bits 4,5
+ */
+static bool chiptod_recover_tfmr_error(void)
+{
+	uint64_t tfmr;
+
+	/* Get the base TFMR */
+	tfmr = base_tfmr;
+
+	/* Set bit 60 to clear TFMR parity error. */
+	tfmr |= SPR_TFMR_TFMR_CORRUPT;
+	mtspr(SPR_TFMR, tfmr);
+
+	/* Write twice to clear the error */
+	mtspr(SPR_TFMR, tfmr);
+
+	/* Get fresh copy of TFMR */
+	tfmr = mfspr(SPR_TFMR);
+
+	/* Check if TFMR parity error still present. */
+	if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
+		prerror("CHIPTOD: TFMR error recovery: corrupt TFMR !\n");
+		return false;
+	}
+
+	/*
+	 * Now that we have sane value in TFMR, check if Timebase machine
+	 * state is in ERROR state. If yes, clear TB errors so that
+	 * Timebase machine state changes to RESET state. Once in RESET state
+	 * then we can then load TB with TOD value.
+	 */
+	if (GETFIELD(SPR_TFMR_TBST_ENCODED, tfmr) == TBST_STATE_ERROR) {
+		if (!chiptod_reset_tb_errors())
+			return false;
+	}
+	return true;
+}
+
+/*
  * Recover from TB and TOD errors.
  * Timebase register is per core and first thread that gets chance to
  * handle interrupt would fix actual TFAC errors and rest of the threads
@@ -705,6 +748,21 @@ int chiptod_recover_tb_errors(void)
 		return 0;
 
 	lock(&chiptod_lock);
+
+	/* Get fresh copy of TFMR */
+	tfmr = mfspr(SPR_TFMR);
+
+	/*
+	 * Check for TFMR parity error and recover from it.
+	 * We can not trust any other bits in TFMR If it is corrupt. Fix this
+	 * before we do anything.
+	 */
+	if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
+		if (!chiptod_recover_tfmr_error()) {
+			rc = 0;
+			goto error_out;
+		}
+	}
 
 	/* Get fresh copy of TFMR */
 	tfmr = mfspr(SPR_TFMR);
