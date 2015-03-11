@@ -24,5 +24,6 @@
 extern void chiptod_init(void);
 extern bool chiptod_wakeup_resync(void);
 extern int chiptod_recover_tb_errors(void);
+extern void chiptod_reset_tb(void);
 
 #endif /* __CHIPTOD_H */

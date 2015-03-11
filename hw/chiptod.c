@@ -650,14 +650,12 @@ static bool tfmr_recover_tb_errors(uint64_t tfmr)
 	if (tfmr & SPR_TFMR_TB_MISSING_STEP)
 		tfmr_reset_error |= SPR_TFMR_TB_MISSING_STEP;
 
-	if (tfmr & SPR_TFMR_TB_RESIDUE_ERR) {
-		/* To recover TB residue error, reset the TB register. */
-		mtspr(SPR_TBWU, 0);
-		mtspr(SPR_TBWL, 0);
-
-		/* write 1 to bit 45 to clear the error */
+	/*
+	 * write 1 to bit 45 to clear TB residue the error.
+	 * TB register has already been reset to zero as part pre-recovery.
+	 */
+	if (tfmr & SPR_TFMR_TB_RESIDUE_ERR)
 		tfmr_reset_error |= SPR_TFMR_TB_RESIDUE_ERR;
-	}
 
 	if (tfmr & SPR_TFMR_FW_CONTROL_ERR)
 		tfmr_reset_error |= SPR_TFMR_FW_CONTROL_ERR;
@@ -689,13 +687,12 @@ static bool tfmr_recover_non_tb_errors(uint64_t tfmr)
 {
 	uint64_t tfmr_reset_errors = 0;
 
-	if (tfmr & SPR_TFMR_HDEC_PARITY_ERROR) {
-		/* Reset HDEC register */
-		mtspr(SPR_HDEC, 0);
-
-		/* Set bit 26 to clear TFMR HDEC parity error. */
+	/*
+	 * write 1 to bit 26 to clear TFMR HDEC parity error.
+	 * HDEC register has already been reset to zero as part pre-recovery.
+	 */
+	if (tfmr & SPR_TFMR_HDEC_PARITY_ERROR)
 		tfmr_reset_errors |= SPR_TFMR_HDEC_PARITY_ERROR;
-	}
 
 	if (tfmr & SPR_TFMR_DEC_PARITY_ERR) {
 		/* Set DEC with all ones */

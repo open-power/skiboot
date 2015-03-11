@@ -72,6 +72,19 @@ struct cpu_thread {
 #endif
 	struct lock			job_lock;
 	struct list_head		job_queue;
+	/*
+	 * Per-core mask tracking for threads in HMI handler and
+	 * a cleanup done bit.
+	 *	[D][TTTTTTTT]
+	 *
+	 * The member 'core_hmi_state' is primary only.
+	 * The 'core_hmi_state_ptr' member from all secondry cpus will point
+	 * to 'core_hmi_state' member in primary cpu.
+	 */
+	uint32_t			core_hmi_state; /* primary only */
+	uint32_t			*core_hmi_state_ptr;
+	/* Mask to indicate thread id in core. */
+	uint8_t				thread_mask;
 };
 
 /* This global is set to 1 to allow secondaries to callin,

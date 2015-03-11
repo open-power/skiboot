@@ -450,6 +450,9 @@ void init_all_cpus(void)
 		t->node = cpu;
 		t->chip_id = chip_id;
 		t->icp_regs = NULL; /* Will be set later */
+		t->core_hmi_state = 0;
+		t->core_hmi_state_ptr = &t->core_hmi_state;
+		t->thread_mask = 1;
 
 		/* Add associativity properties */
 		add_core_associativity(t);
@@ -473,6 +476,8 @@ void init_all_cpus(void)
 			t->primary = pt;
 			t->node = cpu;
 			t->chip_id = chip_id;
+			t->core_hmi_state_ptr = &pt->core_hmi_state;
+			t->thread_mask = 1 << thread;
 		}
 		prlog(PR_INFO, "CPU:  %d secondary threads\n", thread);
 	}
