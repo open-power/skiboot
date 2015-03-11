@@ -68,7 +68,7 @@ proc i { pc { t 0 } { c 0 } } {
     set pc_laddr [mysim cpu $c util itranslate $pc]
     set inst [mysim cpu $c memory display $pc_laddr 4]
     set disasm [mysim cpu $c util ppc_disasm $inst $pc]
-    return "[$c:$t]: $pc ($pc_laddr) Enc:$inst : $disasm"
+    return "\[$c:$t\]: $pc ($pc_laddr) Enc:$inst : $disasm"
 }
 
 proc ipc { {t 0} {c 0}} {
