@@ -685,6 +685,35 @@ static bool tfmr_recover_tb_errors(uint64_t tfmr)
 	return true;
 }
 
+static bool tfmr_recover_non_tb_errors(uint64_t tfmr)
+{
+	uint64_t tfmr_reset_errors = 0;
+
+	if (tfmr & SPR_TFMR_HDEC_PARITY_ERROR) {
+		/* Reset HDEC register */
+		mtspr(SPR_HDEC, 0);
+
+		/* Set bit 26 to clear TFMR HDEC parity error. */
+		tfmr_reset_errors |= SPR_TFMR_HDEC_PARITY_ERROR;
+	}
+
+	/* Write TFMR twice to clear the error */
+	mtspr(SPR_TFMR, base_tfmr | tfmr_reset_errors);
+	mtspr(SPR_TFMR, base_tfmr | tfmr_reset_errors);
+
+	/* Get fresh copy of TFMR */
+	tfmr = mfspr(SPR_TFMR);
+
+	/* Check if TFMR non-TB errors still present. */
+	if (tfmr & tfmr_reset_errors) {
+		prerror(
+		"CHIPTOD: TFMR non-TB error recovery failed! TFMR=0x%016lx\n",
+							mfspr(SPR_TFMR));
+		return false;
+	}
+	return true;
+}
+
 /*
  * TFMR parity error recovery as per pc_workbook:
  *	MT(TFMR) bits 11 and 60 are b’1’
@@ -815,6 +844,18 @@ int chiptod_recover_tb_errors(void)
 		/* We have successfully able to get TB running. */
 		rc = 1;
 	}
+
+	/*
+	 * Now that TB is running, check for TFMR non-TB errors.
+	 */
+	if (tfmr & SPR_TFMR_HDEC_PARITY_ERROR) {
+		if (!tfmr_recover_non_tb_errors(tfmr)) {
+			rc = 0;
+			goto error_out;
+		}
+		rc = 1;
+	}
+
 error_out:
 	unlock(&chiptod_lock);
 	return rc;
