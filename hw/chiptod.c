@@ -705,6 +705,28 @@ static bool tfmr_recover_non_tb_errors(uint64_t tfmr)
 		tfmr_reset_errors |= SPR_TFMR_DEC_PARITY_ERR;
 	}
 
+	/*
+	 * Reset PURR/SPURR to recover. We also need help from KVM
+	 * layer to handle this change in PURR/SPURR. That needs
+	 * to be handled in kernel KVM layer. For now, to recover just
+	 * reset it.
+	 */
+	if (tfmr & SPR_TFMR_PURR_PARITY_ERR) {
+		/* set PURR register with sane value or reset it. */
+		mtspr(SPR_PURR, 0);
+
+		/* set bit 57 to clear TFMR PURR parity error. */
+		tfmr_reset_errors |= SPR_TFMR_PURR_PARITY_ERR;
+	}
+
+	if (tfmr & SPR_TFMR_SPURR_PARITY_ERR) {
+		/* set PURR register with sane value or reset it. */
+		mtspr(SPR_SPURR, 0);
+
+		/* set bit 58 to clear TFMR PURR parity error. */
+		tfmr_reset_errors |= SPR_TFMR_SPURR_PARITY_ERR;
+	}
+
 	/* Write TFMR twice to clear the error */
 	mtspr(SPR_TFMR, base_tfmr | tfmr_reset_errors);
 	mtspr(SPR_TFMR, base_tfmr | tfmr_reset_errors);
@@ -857,6 +879,8 @@ int chiptod_recover_tb_errors(void)
 	 * Now that TB is running, check for TFMR non-TB errors.
 	 */
 	if ((tfmr & SPR_TFMR_HDEC_PARITY_ERROR) ||
+		(tfmr & SPR_TFMR_PURR_PARITY_ERR) ||
+		(tfmr & SPR_TFMR_SPURR_PARITY_ERR) ||
 		(tfmr & SPR_TFMR_DEC_PARITY_ERR)) {
 		if (!tfmr_recover_non_tb_errors(tfmr)) {
 			rc = 0;
