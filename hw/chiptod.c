@@ -311,8 +311,6 @@ static bool chiptod_reset_tb_errors(void)
 	tfmr |= SPR_TFMR_TB_MISSING_SYNC;
 	tfmr |= SPR_TFMR_TB_MISSING_STEP;
 	tfmr |= SPR_TFMR_TB_RESIDUE_ERR;
-	tfmr |= SPR_TFMR_FW_CONTROL_ERR;
-	tfmr |= SPR_TFMR_CHIP_TOD_PARITY_ERR;
 	mtspr(SPR_TFMR, tfmr);
 
 	/* We have to write "Clear TB Errors" again */
@@ -667,9 +665,6 @@ int chiptod_recover_tb_errors(void)
 	 * clear it.
 	 */
 	if ((tfmr & SPR_TFMR_TB_MISSING_STEP) ||
-		(tfmr & SPR_TFMR_TB_RESIDUE_ERR) ||
-		(tfmr & SPR_TFMR_FW_CONTROL_ERR) ||
-		(tfmr & SPR_TFMR_CHIP_TOD_PARITY_ERR) ||
 		(tfmr & SPR_TFMR_TB_MISSING_SYNC)) {
 		if (!chiptod_reset_tb_errors()) {
 			rc = 0;
