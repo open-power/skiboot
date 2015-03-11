@@ -648,6 +648,14 @@ static bool tfmr_recover_tb_errors(uint64_t tfmr)
 	if (tfmr & SPR_TFMR_TB_MISSING_STEP)
 		tfmr_reset_error |= SPR_TFMR_TB_MISSING_STEP;
 
+	if (tfmr & SPR_TFMR_TB_RESIDUE_ERR) {
+		/* To recover TB residue error, reset the TB register. */
+		mtspr(SPR_TBWU, 0);
+		mtspr(SPR_TBWL, 0);
+
+		/* write 1 to bit 45 to clear the error */
+		tfmr_reset_error |= SPR_TFMR_TB_RESIDUE_ERR;
+	}
 	mtspr(SPR_TFMR, tfmr_reset_error);
 
 	/* We have to write "Clear TB Errors" again */
@@ -700,6 +708,7 @@ int chiptod_recover_tb_errors(void)
 	 * clear it.
 	 */
 	if ((tfmr & SPR_TFMR_TB_MISSING_STEP) ||
+		(tfmr & SPR_TFMR_TB_RESIDUE_ERR) ||
 		(tfmr & SPR_TFMR_TB_MISSING_SYNC)) {
 		if (!tfmr_recover_tb_errors(tfmr)) {
 			rc = 0;
