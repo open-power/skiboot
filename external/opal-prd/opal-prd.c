@@ -47,6 +47,7 @@
 #include <opal.h>
 
 #include "hostboot-interface.h"
+#include "module.h"
 #include "pnor.h"
 #include "i2c.h"
 
@@ -330,6 +331,11 @@ int hservice_i2c_write(uint64_t i_master, uint16_t i_devAddr,
 		HBRT_I2C_MASTER_PORT_SHIFT;
 	return i2c_write(chip_id, engine, port, i_devAddr, i_offsetSize,
 			 i_offset, i_length, i_data);
+}
+
+static void ipmi_init(struct opal_prd_ctx *ctx)
+{
+	insert_module("ipmi_devintf");
 }
 
 static int ipmi_send(int fd, uint8_t netfn, uint8_t cmd, long seq,
@@ -985,6 +991,8 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 			goto out_close;
 		}
 	}
+
+	ipmi_init(ctx);
 
 	/* Test a scom */
 	if (ctx->debug) {

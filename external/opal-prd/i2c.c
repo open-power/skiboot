@@ -32,6 +32,7 @@
 #include <linux/i2c-dev.h>
 #include <ccan/list/list.h>
 
+#include "module.h"
 #include "i2c.h"
 
 struct i2c_bus {
@@ -211,10 +212,8 @@ void i2c_init(void)
 	FILE *f;
 	unsigned int chip, engine, port;
 
-	/* Ensure i2c-dev is loaded (must be root ! might need to
-	 * move that to some helper script or something ...)
-	 */
-	system("modprobe -a i2c-dev i2c-opal");
+	/* Ensure i2c-dev is loaded */
+	insert_module("i2c-dev");
 
 	/* Get directory of i2c char devs in sysfs */
 	devsdir = opendir(SYSFS "/class/i2c-dev");
