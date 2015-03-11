@@ -656,6 +656,13 @@ static bool tfmr_recover_tb_errors(uint64_t tfmr)
 		/* write 1 to bit 45 to clear the error */
 		tfmr_reset_error |= SPR_TFMR_TB_RESIDUE_ERR;
 	}
+
+	if (tfmr & SPR_TFMR_FW_CONTROL_ERR)
+		tfmr_reset_error |= SPR_TFMR_FW_CONTROL_ERR;
+
+	if (tfmr & SPR_TFMR_TBST_CORRUPT)
+		tfmr_reset_error |= SPR_TFMR_TBST_CORRUPT;
+
 	mtspr(SPR_TFMR, tfmr_reset_error);
 
 	/* We have to write "Clear TB Errors" again */
@@ -709,6 +716,8 @@ int chiptod_recover_tb_errors(void)
 	 */
 	if ((tfmr & SPR_TFMR_TB_MISSING_STEP) ||
 		(tfmr & SPR_TFMR_TB_RESIDUE_ERR) ||
+		(tfmr & SPR_TFMR_FW_CONTROL_ERR) ||
+		(tfmr & SPR_TFMR_TBST_CORRUPT) ||
 		(tfmr & SPR_TFMR_TB_MISSING_SYNC)) {
 		if (!tfmr_recover_tb_errors(tfmr)) {
 			rc = 0;
