@@ -1,5 +1,5 @@
 # -*-Makefile-*-
-LIBFLASH_TEST := libflash/test/test-flash
+LIBFLASH_TEST := libflash/test/test-flash libflash/test/test-ecc
 
 LCOV_EXCLUDE += $(LIBFLASH_TEST:%=%.c)
 

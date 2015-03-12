@@ -126,6 +126,15 @@ static uint8_t eccverify(uint64_t data, uint8_t ecc)
 	return syndromematrix[eccgenerate(data) ^ ecc];
 }
 
+/* IBM bit ordering */
+static inline uint64_t eccflipbit(uint64_t data, uint8_t bit)
+{
+	if (bit > 63)
+		return data;
+
+	return data ^ (1ul << (63 - bit));
+}
+
 /**
  * Copy data from an input buffer with ECC to an output buffer without ECC.
  * Correct it along the way and check for errors.
@@ -141,10 +150,10 @@ static uint8_t eccverify(uint64_t data, uint8_t ecc)
  * @retval UE - Data is uncorrectable.
  * @retval all others - which bit was corrected.
  */
-uint8_t eccmemcpy(uint64_t *dst, uint64_t *src, uint32_t len)
+uint8_t memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len)
 {
-	beint64_t *data;
-	uint8_t *ecc;
+	beint64_t data;
+	uint8_t ecc;
 	uint32_t i;
 	uint8_t badbit;
 
@@ -159,22 +168,60 @@ uint8_t eccmemcpy(uint64_t *dst, uint64_t *src, uint32_t len)
 	len >>= 3;
 
 	for (i = 0; i < len; i++) {
-		data = (beint64_t *)((uint8_t *)src + i * 9);
-		ecc = (uint8_t *)data + 8;
+		data = (src + i)->data;
+		ecc = (src + i)->ecc;
 
-		badbit = eccverify(be64_to_cpu(*data), *ecc);
+		badbit = eccverify(be64_to_cpu(data), ecc);
 		if (badbit == UE) {
 			FL_ERR("ECC: uncorrectable error: %016lx %02x\n",
-				(long unsigned int)be64_to_cpu(*data), *ecc);
+				(long unsigned int)be64_to_cpu(data), ecc);
 			return badbit;
 		}
-		*dst = *data;
+		*dst = data;
 		if (badbit <= UE)
 			FL_INF("ECC: correctable error: %i\n", badbit);
 		if (badbit < 64)
-			*dst = (uint64_t)cpu_to_be64(be64_to_cpu(*data) ^
-					(1ul << (63 - badbit)));
+			*dst = (uint64_t)be64_to_cpu(eccflipbit(be64_to_cpu(data), badbit));
 		dst++;
 	}
+	return GD;
+}
+
+/**
+ * Copy data from an input buffer without ECC to an output buffer with ECC.
+ *
+ * @dst:	destination buffer with ECC
+ * @src:	source buffer without ECC
+ * @len:	number of bytes of data to copy (without ecc, length of src).
+ *       Note: dst must be big enough to hold ecc bytes as well.
+                     Must be 8 byte aligned.
+ *
+ * @return:	eccBitfield.
+ *
+ * @retval GD - Success.
+ * @retval UE - Length is not 8 byte aligned.
+ */
+uint8_t memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint32_t len)
+{
+	struct ecc64 ecc_word;
+	uint32_t i;
+
+	if (len & 0x7) {
+		/* TODO: we could problably handle this */
+		FL_ERR("Data to add ECC bytes to must be 8 byte aligned length: %i\n",
+				len);
+		return UE;
+	}
+
+	/* Handle in chunks of 8 bytes, so adjust the length */
+	len >>= 3;
+
+	for (i = 0; i < len; i++) {
+		ecc_word.ecc = eccgenerate(be64_to_cpu(*(src + i)));
+		ecc_word.data = *(src + i);
+
+		*(dst + i) = ecc_word;
+	}
+
 	return GD;
 }

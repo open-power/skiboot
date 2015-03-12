@@ -139,7 +139,7 @@ int flash_read(struct flash_chip *c, uint32_t pos, void *buf, uint32_t len)
 int flash_read_corrected(struct flash_chip *c, uint32_t pos, void *buf,
 		uint32_t len, bool ecc)
 {
-	uint64_t *bufecc;
+	struct ecc64 *bufecc;
 	uint32_t copylen;
 	int rc;
 	uint8_t ret;
@@ -162,7 +162,7 @@ int flash_read_corrected(struct flash_chip *c, uint32_t pos, void *buf,
 			goto err;
 
 		/* Extract data from ECCed data */
-		ret = eccmemcpy(buf, bufecc, copylen);
+		ret = memcpy_from_ecc(buf, bufecc, copylen);
 		if (ret == UE) {
 			rc = FLASH_ERR_ECC_INVALID;
 			goto err;
@@ -180,6 +180,7 @@ err:
 	free(bufecc);
 	return rc;
 }
+
 static void fl_get_best_erase(struct flash_chip *c, uint32_t dst, uint32_t size,
 			      uint32_t *chunk, uint8_t *cmd)
 {
@@ -384,6 +385,51 @@ int flash_write(struct flash_chip *c, uint32_t dst, const void *src,
 	return 0;
 }
 
+int flash_write_corrected(struct flash_chip *c, uint32_t pos, const void *buf,
+		uint32_t len, bool verify, bool ecc)
+{
+	struct ecc64 *bufecc;
+	uint32_t copylen;
+	int rc;
+	uint8_t ret;
+
+	if (!ecc)
+		return flash_write(c, pos, buf, len, verify);
+
+	/* Copy the buffer in chunks */
+	bufecc = malloc(ECC_BUFFER_SIZE(COPY_BUFFER_LENGTH));
+	if (!bufecc)
+		return FLASH_ERR_MALLOC_FAILED;
+
+	while (len > 0) {
+		/* What's left to copy? */
+		copylen = MIN(len, COPY_BUFFER_LENGTH);
+
+		/* Add the ecc byte to the data */
+		ret = memcpy_to_ecc(bufecc, buf, BUFFER_SIZE_MINUS_ECC(copylen));
+		if (ret == UE) {
+			rc = FLASH_ERR_ECC_INVALID;
+			goto err;
+		}
+
+		/* Write ECCed data to the flash */
+		rc = flash_write(c, pos, bufecc, copylen, verify);
+		if (rc)
+			goto err;
+
+		/* Update for next copy */
+		len -= BUFFER_SIZE_MINUS_ECC(copylen);
+		buf = (uint8_t *)buf + BUFFER_SIZE_MINUS_ECC(copylen);
+		pos += copylen;
+	}
+
+	rc = 0;
+
+err:
+	free(bufecc);
+	return rc;
+}
+
 enum sm_comp_res {
 	sm_no_change,
 	sm_need_write,
@@ -489,6 +535,32 @@ int flash_smart_write(struct flash_chip *c, uint32_t dst, const void *src,
 		size -= chunk;
 	}
 	return 0;
+}
+
+int flash_smart_write_corrected(struct flash_chip *c, uint32_t dst, const void *src,
+		      uint32_t size, bool ecc)
+{
+	struct ecc64 *buf;
+	int rc;
+
+	if (!ecc)
+		return flash_smart_write(c, dst, src, size);
+
+	buf = malloc(ECC_BUFFER_SIZE(size));
+	if (!buf)
+		return FLASH_ERR_MALLOC_FAILED;
+
+	rc = memcpy_to_ecc(buf, src, size);
+	if (rc != GD) {
+		rc = FLASH_ERR_ECC_INVALID;
+		goto out;
+	}
+
+	rc = flash_smart_write(c, dst, buf, ECC_BUFFER_SIZE(size));
+
+out:
+	free(buf);
+	return rc;
 }
 
 static int fl_chip_id(struct spi_flash_ctrl *ct, uint8_t *id_buf,

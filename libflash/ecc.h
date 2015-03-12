@@ -20,6 +20,7 @@
 #define __ECC_H
 
 #include <stdint.h>
+#include <ccan/endian/endian.h>
 
 /* Bit field identifiers for syndrome calculations. */
 enum eccbitfields
@@ -36,7 +37,14 @@ enum eccbitfields
         E7 = 64         //< Error in ECC bit 7
 };
 
-extern uint8_t eccmemcpy(uint64_t *dst, uint64_t *src, uint32_t len);
+struct ecc64 {
+	beint64_t data;
+	uint8_t ecc;
+} __attribute__((__packed__));
+
+extern uint8_t memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len);
+
+extern uint8_t memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint32_t len);
 
 /*
  * Calculate the size of a buffer if ECC is added

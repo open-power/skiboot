@@ -370,6 +370,8 @@ int main(void)
 	uint32_t total_size, erase_granule;
 	const char *name;
 	uint16_t *test;
+	struct ecc64 *ecc_test;
+	uint64_t *test64;
 	int i, rc;
 
 	sim_image = malloc(sim_image_sz);
@@ -412,8 +414,45 @@ int main(void)
 		exit(1);
 	}
 	printf("Test pattern pass\n");
+
+	printf("Test ECC interfaces\n");
+	flash_smart_write_corrected(fl, 0, test, 0x10000, 1);
+	ecc_test = (struct ecc64 *)sim_image;
+	test64 = (uint64_t *)test;
+	for (i = 0; i < 0x10000 / sizeof(*ecc_test); i++) {
+		if (test64[i] != ecc_test[i].data) {
+			ERR("flash_smart_write_corrected() pattern missmatch at %d: 0x%016lx vs 0x%016lx\n",
+					i, test64[i], ecc_test[i].data);
+			exit(1);
+		}
+		if (ecc_test[i].ecc != eccgenerate(be64toh(test64[i]))) {
+			ERR("ECCs don't match 0x%02x vs 0x%02x\n", ecc_test[i].ecc, eccgenerate(test64[i]));
+			exit(1);
+		}
+	}
+	printf("Test ECC interface pass\n");
+
+	printf("Test ECC erase\n");
+	if (flash_erase(fl, 0, 0x10000) != 0) {
+		ERR("flash_erase didn't return 0\n");
+		exit(1);
+	}
+
+	for (i = 0; i < 0x10000 / sizeof(*ecc_test); i++) {
+		uint8_t zero = 0;
+		if (ecc_test[i].data != 0xFFFFFFFFFFFFFFFF) {
+			ERR("Data not properly cleared at %d\n", i);
+			exit(1);
+		}
+		rc = flash_write(fl, i * sizeof(*ecc_test) + 8, &zero, 1, 0);
+		if (rc || ecc_test[i].ecc != 0) {
+			ERR("Cleared data not correctly ECCed: 0x%02x (0x%016lx) expecting 0 at %d\n", ecc_test[i].ecc, ecc_test[i].data, i);
+			exit(1);
+		}
+	}
+	printf("Test ECC erase pass\n");
+
 	flash_exit(fl);
 
 	return 0;
 }
- 
