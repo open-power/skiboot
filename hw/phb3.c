@@ -2183,7 +2183,7 @@ static int64_t capp_lid_download(struct phb3 *p)
 	if (rc) {
 		prerror("CAPP: Error reading cfam chip-id\n");
 		ret = OPAL_HARDWARE;
-		goto end;
+		return ret;
 	}
 	/* Keep ChipID and Major/Minor EC.  Mask out the Location Code. */
 	index = index & 0xf0fff;
