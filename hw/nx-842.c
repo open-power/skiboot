@@ -164,9 +164,7 @@ void nx_create_842_node(struct dt_node *node)
 	u32 pb_base;
 	u64 cfg_dma, cfg_842, cfg_ee;
 	u64 instance;
-	struct dt_node *dt_842;
 	int rc;
-	char node_name[32];
 
 	gcid = dt_get_chip_id(node);
 	pb_base = dt_get_address(node, 0, NULL);
@@ -200,13 +198,6 @@ void nx_create_842_node(struct dt_node *node)
 
 	prlog(PR_INFO, "NX%d: 842 Coprocessor Enabled\n", gcid);
 
-	snprintf(node_name, sizeof(node_name), "ibm,nx842-powernv#%d", gcid);
-	dt_842 = dt_new(dt_root, node_name);
-	if (!dt_842)
-		return;
-
-	dt_add_property_strings(dt_842, "compatible", "ibm,nx842-powernv");
-	dt_add_property_cells(dt_842, "ibm,chip-id", gcid);
-	dt_add_property_cells(dt_842, "ibm,coprocessor-type", NX_CT_842);
-	dt_add_property_cells(dt_842, "ibm,coprocessor-instance", instance);
+	dt_add_property_cells(node, "ibm,842-coprocessor-type", NX_CT_842);
+	dt_add_property_cells(node, "ibm,842-coprocessor-instance", instance);
 }
