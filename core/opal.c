@@ -285,6 +285,14 @@ void opal_run_pollers(void)
 	struct opal_poll_entry *poll_ent;
 	static int pollers_with_lock_warnings = 0;
 
+	/* Don't re-enter on this CPU */
+	if (this_cpu()->in_poller) {
+		prlog(PR_ERR, "OPAL: Poller recursion detected.\n");
+		backtrace();
+		return;
+	}
+	this_cpu()->in_poller = true;
+
 	if (this_cpu()->lock_depth && pollers_with_lock_warnings < 64) {
 		prlog(PR_ERR, "Running pollers with lock held !\n");
 		backtrace();
@@ -300,6 +308,9 @@ void opal_run_pollers(void)
 	/* The pollers are run lokelessly, see comment in opal_del_poller */
 	list_for_each(&opal_pollers, poll_ent, link)
 		poll_ent->poller(poll_ent->data);
+
+	/* Disable poller flag */
+	this_cpu()->in_poller = false;
 
 	/* On debug builds, print max stack usage */
 	check_stacks();

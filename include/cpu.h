@@ -58,6 +58,7 @@ struct cpu_thread {
 	uint32_t			con_suspend;
 	bool				con_need_flush;
 	bool				in_mcount;
+	bool				in_poller;
 	uint32_t			hbrt_spec_wakeup; /* primary only */
 	uint64_t			save_l2_fir_action1;
 	uint64_t			current_token;
