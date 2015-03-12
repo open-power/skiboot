@@ -722,6 +722,8 @@ static void fsp_handle_errors(struct fsp *fsp)
 
 			/* Also clear R&R complete bit in DISR */
 			fsp_wreg(fsp, FSP_DISR_REG, FSP_DISR_FSP_RR_COMPLETE);
+
+			psi_enable_fsp_interrupt(psi);
 		}
 	}
 
@@ -1859,7 +1861,6 @@ static void fsp_update_links_states(struct fsp *fsp)
 		fiop = &fsp->iopath[fsp->active_iopath];
 		psi_init_for_fsp(fiop->psi);
 		fsp_init_mbox(fsp);
-		psi_enable_fsp_interrupt(fiop->psi);
 	}
 }
 
@@ -1911,6 +1912,7 @@ static void fsp_create_fsp(struct dt_node *fsp_node)
 
 	fsp_init_links(fsp_node);
 	fsp_update_links_states(fsp);
+	psi_enable_fsp_interrupt(fsp->iopath[fsp->active_iopath].psi);
 }
 
 static void fsp_opal_poll(void *data __unused)
