@@ -79,13 +79,13 @@ const char *slca_get_loc_code_index(uint16_t slca_index)
 void slca_vpd_add_loc_code(struct dt_node *node, uint16_t slca_index)
 {
 	const char *fru_loc_code;
-	char loc_code[LOC_CODE_SIZE + 1];
+	char loc_code[LOC_CODE_SIZE];
 
 	memset(loc_code, 0, sizeof(loc_code));
 	fru_loc_code = slca_get_loc_code_index(slca_index);
 	if (!fru_loc_code)
 		return;
 
-	strncpy(loc_code, fru_loc_code, LOC_CODE_SIZE);
+	strncpy(loc_code, fru_loc_code, LOC_CODE_SIZE - 1);
 	dt_add_property(node, "ibm,loc-code", loc_code, strlen(loc_code) + 1);
 }
