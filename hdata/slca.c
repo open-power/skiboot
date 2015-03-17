@@ -45,7 +45,8 @@ const struct slca_entry *slca_get_entry(uint16_t slca_index)
 		if (s_entry && entry_sz >= sizeof(*s_entry))
 			return s_entry;
 	} else
-		printf("SLCA: Can't find slca_entry for index %d\n", slca_index);
+		prlog(PR_NOTICE,
+		      "SLCA: Can't find slca_entry for index %d\n", slca_index);
 	return NULL;
 }
 
@@ -57,7 +58,8 @@ const char *slca_get_vpd_name(uint16_t slca_index)
 	if (s_entry)
 		return (const char *)s_entry->fru_id;
 	else
-		printf("SLCA: Can't find fru_id for index %d\n", slca_index);
+		prlog(PR_NOTICE,
+		      "SLCA: Can't find fru_id for index %d\n", slca_index);
 	return NULL;
 }
 
@@ -69,7 +71,7 @@ const char *slca_get_loc_code_index(uint16_t slca_index)
 	if (s_entry)
 		return s_entry->loc_code;
 	else
-		printf("SLCA: Entry %d bad idata\n", slca_index);
+		prlog(PR_NOTICE, "SLCA: Entry %d bad idata\n", slca_index);
 
 	return NULL;
 }
