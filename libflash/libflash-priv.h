@@ -223,6 +223,8 @@ struct spi_flash_ctrl {
 	 * been probed
 	 */
 	struct flash_info *finfo;
+
+	void *priv;
 };
 
 extern int fl_wren(struct spi_flash_ctrl *ct);
