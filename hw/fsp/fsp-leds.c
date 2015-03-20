@@ -1319,6 +1319,13 @@ void create_led_device_nodes(void)
 
 	/* LED child nodes */
 	list_for_each_safe(&cec_ledq, led, next, link) {
+		/* Duplicate LED location code */
+		if (dt_find_by_path(pled, led->loc_code)) {
+			prlog(PR_WARNING, PREFIX "duplicate location code %s",
+			      led->loc_code);
+			continue;
+		}
+
 		cled = dt_new(pled, led->loc_code);
 		if (!cled) {
 			prlog(PR_WARNING, PREFIX
