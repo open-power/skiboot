@@ -72,6 +72,7 @@ int ast_copy_to_ahb(uint32_t reg, const void *src, uint32_t len);
 int ast_copy_from_ahb(void *dst, uint32_t reg, uint32_t len);
 
 void ast_io_init(void);
+bool ast_is_ahb_lpc_pnor(void);
 
 /* UART configuration */
 
@@ -90,6 +91,7 @@ void ast_setup_ibt(uint16_t io_base, uint8_t irq);
  */
 #define AST_SF_TYPE_PNOR	0
 #define AST_SF_TYPE_BMC		1
+#define AST_SF_TYPE_MEM		2
 
 struct spi_flash_ctrl;
 int ast_sf_open(uint8_t type, struct spi_flash_ctrl **ctrl);

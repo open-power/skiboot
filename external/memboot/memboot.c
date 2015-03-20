@@ -33,6 +33,10 @@
 #define LPC_HICR6		0x80
 #define LPC_HICR7		0x88
 #define LPC_HICR8		0x8c
+#define LPC_SCR0SIO		0x170
+
+#define MEMBOOT_SIO_VERSION_FLAG 0x42
+#define MEMBOOT_SIO_FLAG	(0x10 << 8)
 
 uint32_t readl(void *addr)
 {
@@ -97,6 +101,7 @@ int main(int argc, char *argv[])
 {
 	int mem_fd;
 	void *lpcreg;
+	uint32_t lpc_scr0sio_val;
 	uint32_t lpc_hicr7_val = (FLASH_IMG_BASE | 0xe00);
 
 	if (argc > 2) {
@@ -117,9 +122,17 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	lpc_scr0sio_val = readl(lpcreg+LPC_SCR0SIO);
+	lpc_scr0sio_val &= ~0xff;
+	lpc_scr0sio_val |= MEMBOOT_SIO_VERSION_FLAG;
+	lpc_scr0sio_val &= ~MEMBOOT_SIO_FLAG;
+
 	if (argc == 2) {
 		boot_firmware_image(mem_fd, argv[1]);
 		lpc_hicr7_val = (MEM_IMG_BASE | 0xe00);
+
+		/* Set the boot mode scratch register to indicate a memboot */
+		lpc_scr0sio_val |= MEMBOOT_SIO_FLAG;
 		printf("Booting from memory after power cycle\n");
 	}
 
@@ -128,6 +141,10 @@ int main(int argc, char *argv[])
 		writel(lpc_hicr7_val, lpcreg+LPC_HICR7);
 	}
 
+	/* Set the magic value */
+	writel(0x42, lpcreg+LPC_SCR0SIO);
+
+	writel(lpc_scr0sio_val, lpcreg+LPC_SCR0SIO);
 	printf("LPC_HICR7 = 0x%x\n", lpc_hicr7_val);
 	return 0;
 }

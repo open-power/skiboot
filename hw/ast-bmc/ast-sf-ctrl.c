@@ -672,7 +672,7 @@ static int ast_sf_setup_micron(struct ast_sf_ctrl *ct, struct flash_info *info)
 
 static int ast_sf_setup(struct spi_flash_ctrl *ctrl, uint32_t *tsize)
 {
-	struct ast_sf_ctrl *ct = container_of(ctrl, struct ast_sf_ctrl, ops);	
+	struct ast_sf_ctrl *ct = container_of(ctrl, struct ast_sf_ctrl, ops);
 	struct flash_info *info = ctrl->finfo;
 
 	(void)tsize;
@@ -681,7 +681,7 @@ static int ast_sf_setup(struct spi_flash_ctrl *ctrl, uint32_t *tsize)
 	 * Configure better timings and read mode for known
 	 * flash chips
 	 */
-	switch(info->id) {		
+	switch(info->id) {
 	case 0xc22019: /* MX25L25635F */
 	case 0xc2201a: /* MX66L51235F */
 		return ast_sf_setup_macronix(ct, info);
@@ -787,11 +787,69 @@ static bool ast_sf_init_bmc(struct ast_sf_ctrl *ct)
 	return true;
 }
 
+static int ast_mem_set4b(struct spi_flash_ctrl *ctrl __unused,
+			 bool enable __unused)
+{
+	return 0;
+}
+
+static int ast_mem_setup(struct spi_flash_ctrl *ctrl __unused,
+			 uint32_t *tsize __unused)
+{
+	return 0;
+}
+
+static int ast_mem_chipid(struct spi_flash_ctrl *ctrl __unused, uint8_t *id_buf,
+			  uint32_t *id_size)
+{
+	if (*id_size < 3)
+		return -1;
+
+	id_buf[0] = 0xaa;
+	id_buf[1] = 0x55;
+	id_buf[2] = 0xaa;
+	*id_size = 3;
+	return 0;
+}
+
+static int ast_mem_write(struct spi_flash_ctrl *ctrl, uint32_t pos,
+			const void *buf, uint32_t len)
+{
+	struct ast_sf_ctrl *ct = container_of(ctrl, struct ast_sf_ctrl, ops);
+
+	/*
+	 * This only works when the ahb is pointed at system memory.
+	 */
+	return ast_copy_to_ahb(ct->flash + pos, buf, len);
+}
+
+static int ast_mem_erase(struct spi_flash_ctrl *ctrl, uint32_t addr, uint32_t size)
+{
+	struct ast_sf_ctrl *ct = container_of(ctrl, struct ast_sf_ctrl, ops);
+	uint32_t pos, len, end = addr + size;
+	uint64_t zero = 0;
+	int ret;
+
+	for (pos = addr; pos < end; pos += sizeof(zero)) {
+		if (pos + sizeof(zero) > end)
+			len = end - pos;
+		else
+			len = sizeof(zero);
+
+		ret = ast_copy_to_ahb(ct->flash + pos, &zero, len);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
 int ast_sf_open(uint8_t type, struct spi_flash_ctrl **ctrl)
 {
 	struct ast_sf_ctrl *ct;
 
-	if (type != AST_SF_TYPE_PNOR && type != AST_SF_TYPE_BMC)
+	if (type != AST_SF_TYPE_PNOR && type != AST_SF_TYPE_BMC
+	    && type != AST_SF_TYPE_MEM)
 		return -EINVAL;
 
 	*ctrl = NULL;
@@ -802,18 +860,31 @@ int ast_sf_open(uint8_t type, struct spi_flash_ctrl **ctrl)
 	}
 	memset(ct, 0, sizeof(*ct));
 	ct->type = type;
-	ct->ops.cmd_wr = ast_sf_cmd_wr;
-	ct->ops.cmd_rd = ast_sf_cmd_rd;
-	ct->ops.set_4b = ast_sf_set_4b;
-	ct->ops.read = ast_sf_read;
-	ct->ops.setup = ast_sf_setup;
+
+	if (type == AST_SF_TYPE_MEM) {
+		ct->ops.cmd_wr = NULL;
+		ct->ops.cmd_rd = NULL;
+		ct->ops.read = ast_sf_read;
+		ct->ops.set_4b = ast_mem_set4b;
+		ct->ops.write = ast_mem_write;
+		ct->ops.erase = ast_mem_erase;
+		ct->ops.setup = ast_mem_setup;
+		ct->ops.chip_id = ast_mem_chipid;
+		ct->flash = PNOR_FLASH_BASE;
+	} else {
+		ct->ops.cmd_wr = ast_sf_cmd_wr;
+		ct->ops.cmd_rd = ast_sf_cmd_rd;
+		ct->ops.set_4b = ast_sf_set_4b;
+		ct->ops.read = ast_sf_read;
+		ct->ops.setup = ast_sf_setup;
+	}
 
 	ast_get_ahb_freq();
 
 	if (type == AST_SF_TYPE_PNOR) {
 		if (!ast_sf_init_pnor(ct))
 			goto fail;
-	} else {
+	} else if (type == AST_SF_TYPE_BMC) {
 		if (!ast_sf_init_bmc(ct))
 			goto fail;
 	}
@@ -843,4 +914,3 @@ void ast_sf_close(struct spi_flash_ctrl *ctrl)
 	/* Free the whole lot */
 	free(ct);
 }
-

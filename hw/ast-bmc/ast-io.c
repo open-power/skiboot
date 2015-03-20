@@ -58,7 +58,7 @@
  * flash from IDSEL 0 as follow:
  *
  * ADRBASE=0x3000 HWMBASE=0x0e00 for 32MB
- * ADRMASK=0xfe00 HWNCARE=0x01ff 
+ * ADRMASK=0xfe00 HWNCARE=0x01ff
  *
  * Which means mapping of   LPC 0x0e000000..0x0fffffff onto
  *                          AHB 0x30000000..0x31ffffff
@@ -83,13 +83,19 @@
  * we'll only do that after the boot script/program on the BMC is
  * updated to restore the bridge to a state compatible with the SBE
  * expectations on boot.
- */ 
- 
+ */
+
 #include <skiboot.h>
 #include <lpc.h>
 #include <lock.h>
 
 #include "ast.h"
+
+#define BMC_SIO_SCR28 0x28
+#define BOOT_FLAGS_VERSION 0x42
+
+#define BMC_SIO_SCR29 0x29
+#define BMC_SIO_SCR29_MEMBOOT 0x10
 
 enum {
 	BMC_SIO_DEV_NONE	= -1,
@@ -197,7 +203,7 @@ static uint32_t bmc_sio_ahb_readl(uint32_t reg)
 
 	bmc_sio_ahb_prep(reg, 2);
 
-	/* Trigger */	
+	/* Trigger */
 	bmc_sio_inb(0xfe);
 
 	/* Read results */
@@ -241,7 +247,7 @@ int ast_copy_to_ahb(uint32_t reg, const void *src, uint32_t len)
 	if ((reg ^ (reg + len - 1)) >> 28)
 		return -EINVAL;
 
-	/* SPI flash, use LPC->AHB bridge */	
+	/* SPI flash, use LPC->AHB bridge */
 	if ((reg >> 28) == (PNOR_AHB_ADDR >> 28)) {
 		uint32_t chunk, off = reg - PNOR_AHB_ADDR + pnor_lpc_offset;
 		int64_t rc;
@@ -380,6 +386,19 @@ void ast_io_init(void)
 
 	/* Configure all AIO interrupts to level low */
 	ast_setup_sio_irq_polarity();
+}
+
+bool ast_is_ahb_lpc_pnor(void)
+{
+	uint8_t boot_version;
+	uint8_t boot_flags;
+
+	boot_version = bmc_sio_inb(BMC_SIO_SCR28);
+	if (boot_version != BOOT_FLAGS_VERSION)
+		return true;
+
+	boot_flags = bmc_sio_inb(BMC_SIO_SCR29);
+	return !(boot_flags & BMC_SIO_SCR29_MEMBOOT);
 }
 
 void ast_setup_ibt(uint16_t io_base, uint8_t irq)

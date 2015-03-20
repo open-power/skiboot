@@ -30,8 +30,16 @@ int pnor_init(void)
 	struct flash_chip *pnor_chip;
 	int rc;
 
-	/* Open controller and flash */
-	rc = ast_sf_open(AST_SF_TYPE_PNOR, &pnor_ctrl);
+	/* Open controller and flash. If the LPC->AHB doesn't point to
+	 * the PNOR flash base we assume we're booting from BMC system
+	 * memory (or some other place setup by the BMC to support LPC
+	 * FW reads & writes). */
+	if (ast_is_ahb_lpc_pnor())
+		rc = ast_sf_open(AST_SF_TYPE_PNOR, &pnor_ctrl);
+	else {
+		printf("PLAT: Memboot detected\n");
+		rc = ast_sf_open(AST_SF_TYPE_MEM, &pnor_ctrl);
+	}
 	if (rc) {
 		prerror("PLAT: Failed to open PNOR flash controller\n");
 		goto fail;
@@ -54,4 +62,3 @@ int pnor_init(void)
 
 	return rc;
 }
-
