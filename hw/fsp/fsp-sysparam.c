@@ -152,11 +152,11 @@ int fsp_get_sys_param(uint32_t param_id, void *buffer, uint32_t length,
 	 * possible, so if this is going to be used a lot at runtime,
 	 * we probably want to pre-allocate a pool of these
 	 */
+	if (length > 4096)
+		return -EINVAL;
 	r = zalloc(sizeof(struct sysparam_req));
 	if (!r)
 		return -ENOMEM;
-	if (length > 4096)
-		return -EINVAL;
 	r->completion = async_complete;
 	r->comp_data = comp_data;
 	r->done = false;
@@ -173,6 +173,9 @@ int fsp_get_sys_param(uint32_t param_id, void *buffer, uint32_t length,
 	fsp_fillmsg(&r->msg, FSP_CMD_QUERY_SPARM, 3,
 		    param_id, length, tce_token);
 	rc = fsp_queue_msg(&r->msg, fsp_sysparam_get_complete);
+
+	if (rc)
+		free(r);
 
 	/* Asynchronous operation or queueing failure, return */
 	if (rc || async_complete)
@@ -324,8 +327,10 @@ static int64_t fsp_opal_set_param(uint64_t async_token, uint32_t param_id,
 	}
 
 	comp_data = zalloc(sizeof(struct sysparam_comp_data));
-	if (!comp_data)
+	if (!comp_data) {
+		fsp_freemsg(msg);
 		return OPAL_NO_MEM;
+	}
 
 	comp_data->param_len = length;
 	comp_data->async_token = async_token;
