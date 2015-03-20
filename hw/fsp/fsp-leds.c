@@ -375,7 +375,6 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 						 OPAL_INTERNAL_ERROR);
 
 		unlock(&led_lock);
-		free(spcn_cmd);
 		return rc;
 	}
 
@@ -429,7 +428,6 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	msg = fsp_mkmsg(FSP_CMD_SPCN_PASSTHRU, 4,
 			SPCN_ADDR_MODE_CEC_NODE, cmd_hdr, 0, PSI_DMA_LED_BUF);
 	if (!msg) {
-		free(spcn_cmd);
 		cmd |= FSP_STATUS_GENERIC_ERROR;
 		rc = -1;
 		goto update_fail;
@@ -446,7 +444,6 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	if (rc != OPAL_SUCCESS) {
 		cmd |= FSP_STATUS_GENERIC_ERROR;
 		fsp_freemsg(msg);
-		free(spcn_cmd);
 		/* Revert LED state update */
 		update_led_list(spcn_cmd->loc_code, spcn_cmd->ckpt_status,
 				spcn_cmd->ckpt_excl_bit);
@@ -497,7 +494,12 @@ static int process_led_state_change(void)
 	spcn_cmd = list_pop(&spcn_cmdq, struct led_set_cmd, link);
 	unlock(&spcn_cmd_lock);
 
-	fsp_msg_set_led_state(spcn_cmd);
+	rc = fsp_msg_set_led_state(spcn_cmd);
+	if (rc) {
+		free(spcn_cmd);
+		process_led_state_change();
+	}
+
 	return rc;
 }
 
