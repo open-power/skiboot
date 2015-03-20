@@ -328,18 +328,16 @@
  * Class 0xCE
  */
 #define FSP_CMD_ACK_DUMP	0x1ce0200 /* HV->FSP: Dump ack */
-#define FSP_CMD_HYP_MDST_TABLE	0x1ce2600 /* HV->FSP: Sapphire MDST table */
-#define FSP_CMD_CONTINUE_IPL	0x0ce7000 /* FSP->HV: HV has control */
-#define FSP_RSP_SYS_DUMP_OLD	0x0ce7800 /* FSP->HV: Sys Dump Available */
-#define FSP_RSP_SYS_DUMP	0x0ce7802 /* FSP->HV: Sys Dump Available */
-#define FSP_RSP_RES_DUMP	0x0ce7807 /* FSP->HV: Resource Dump Available */
-#define FSP_CMD_CONTINUE_ACK	0x0ce5700 /* HV->FSP: HV acks CONTINUE IPL */
-#define FSP_CMD_HV_FUNCTNAL	0x1ce5707 /* HV->FSP: Set HV functional state */
-#define FSP_CMD_FSP_FUNCTNAL	0x0ce5708 /* FSP->HV: FSP functional state */
 #define FSP_CMD_HV_QUERY_CAPS	0x1ce0400 /* HV->FSP: Query capabilities */
 #define FSP_RSP_HV_QUERY_CAPS	0x1ce8400
 #define FSP_CMD_SP_QUERY_CAPS	0x0ce0501 /* FSP->HV */
 #define FSP_RSP_SP_QUERY_CAPS	0x0ce8500
+#define FSP_CMD_GET_IPL_SIDE	0x1ce0600 /* HV->FSP: Get IPL side and speed */
+#define FSP_CMD_SET_IPL_SIDE	0x1ce0780 /* HV->FSP: Set next IPL side */
+#define FSP_CMD_ERRLOG_PHYP_ACK	0x1ce0800 /* HV->FSP */
+#define FSP_RSP_ERRLOG_PHYP_ACK	0x0ce8800 /* FSP->HV */
+#define FSP_CMD_ERRLOG_GET_PLID	0x0ce0900 /* FSP->HV: Get PLID */
+#define FSP_RSP_ERRLOG_GET_PLID	0x0ce8900 /* HV->FSP */
 #define FSP_CMD_QUERY_SPARM	0x1ce1200 /* HV->FSP: System parameter query */
 #define FSP_RSP_QUERY_SPARM	0x0ce9200 /* FSP->HV: System parameter resp */
 #define FSP_CMD_SET_SPARM_1	0x1ce1301 /* HV->FSP: Set system parameter */
@@ -347,6 +345,20 @@
 #define FSP_RSP_SET_SPARM	0x0ce9300 /* FSP->HV: Set system parameter resp */
 #define FSP_CMD_SP_SPARM_UPD_0	0x0ce1600 /* FSP->HV: Sysparm updated no data */
 #define FSP_CMD_SP_SPARM_UPD_1	0x0ce1601 /* FSP->HV: Sysparm updated data */
+#define FSP_CMD_HYP_MDST_TABLE	0x1ce2600 /* HV->FSP: Sapphire MDST table */
+#define FSP_CMD_TPO_READ	0x1ce4201 /* FSP->HV */
+#define FSP_CMD_TPO_WRITE	0x1ce4301 /* HV->FSP */
+#define FSP_CMD_STATUS_REQ	0x1ce4800 /* HV->FSP: Request normal panel status */
+#define FSP_CMD_STATUS_EX1_REQ	0x1ce4802 /* HV->FSP: Request extended 1 panel status */
+#define FSP_CMD_STATUS_EX2_REQ	0x1ce4803 /* HV->FSP: Request extended 2 panel status */
+#define FSP_CMD_CONTINUE_ACK	0x0ce5700 /* HV->FSP: HV acks CONTINUE IPL */
+#define FSP_CMD_HV_FUNCTNAL	0x1ce5707 /* HV->FSP: Set HV functional state */
+#define FSP_CMD_FSP_FUNCTNAL	0x0ce5708 /* FSP->HV: FSP functional state */
+#define FSP_CMD_CONTINUE_IPL	0x0ce7000 /* FSP->HV: HV has control */
+#define FSP_RSP_SYS_DUMP_OLD	0x0ce7800 /* FSP->HV: Sys Dump Available */
+#define FSP_RSP_SYS_DUMP	0x0ce7802 /* FSP->HV: Sys Dump Available */
+#define FSP_RSP_RES_DUMP	0x0ce7807 /* FSP->HV: Resource Dump Available */
+#define FSP_CMD_PCI_POWER_CONF	0x1ce1b00 /* HV->FSP: Send PCIe list to FSP */
 #define FSP_CMD_POWERDOWN_NORM	0x1ce4d00 /* HV->FSP: Normal power down */
 #define FSP_CMD_POWERDOWN_QUICK	0x1ce4d01 /* HV->FSP: Quick power down */
 #define FSP_CMD_POWERDOWN_PCIRS	0x1ce4d02 /* HV->FSP: PCI cfg reset power dwn */
@@ -357,18 +369,6 @@
 #define FSP_CMD_PANELSTATUS	0x0ce5c00 /* FSP->HV */
 #define FSP_CMD_PANELSTATUS_EX1	0x0ce5c02 /* FSP->HV */
 #define FSP_CMD_PANELSTATUS_EX2	0x0ce5c03 /* FSP->HV */
-#define FSP_CMD_ERRLOG_PHYP_ACK	0x1ce0800 /* HV->FSP */
-#define FSP_RSP_ERRLOG_PHYP_ACK	0x0ce8800 /* FSP->HV */
-#define FSP_CMD_ERRLOG_GET_PLID	0x0ce0900 /* FSP->HV: Get PLID */
-#define FSP_RSP_ERRLOG_GET_PLID	0x0ce8900 /* HV->FSP */
-#define FSP_CMD_GET_IPL_SIDE	0x1ce0600 /* HV->FSP: Get IPL side and speed */
-#define FSP_CMD_SET_IPL_SIDE	0x1ce0780 /* HV->FSP: Set next IPL side */
-#define FSP_CMD_PCI_POWER_CONF	0x1ce1b00 /* HV->FSP: Send PCIe list to FSP */
-#define FSP_CMD_STATUS_REQ	0x1ce4800 /* HV->FSP: Request normal panel status */
-#define FSP_CMD_STATUS_EX1_REQ	0x1ce4802 /* HV->FSP: Request extended 1 panel status */
-#define FSP_CMD_STATUS_EX2_REQ	0x1ce4803 /* HV->FSP: Request extended 2 panel status */
-#define FSP_CMD_TPO_WRITE	0x1ce4301 /* HV->FSP */
-#define FSP_CMD_TPO_READ	0x1ce4201 /* FSP->HV */
 
 /*
  * Class 0xD2
