@@ -64,6 +64,11 @@
  */
 #define BT_MSG_TIMEOUT (secs_to_tb(3))
 
+/*
+ * Maximum number of times to attempt sending a message before giving up.
+ */
+#define BT_MAX_RETRY_COUNT 1
+
 #define BT_QUEUE_DEBUG 0
 
 #define BT_ERR(msg, fmt, args...) \
@@ -80,6 +85,7 @@ struct bt_msg {
 	struct list_node link;
 	unsigned long tb;
 	uint8_t seq;
+	uint8_t retry_count;
 	struct ipmi_msg ipmi_msg;
 };
 
@@ -298,14 +304,25 @@ static void bt_expire_old_msg(void)
 	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
 
 	if (bt_msg && bt_msg->tb > 0 && (bt_msg->tb + BT_MSG_TIMEOUT) < tb) {
-		BT_ERR(bt_msg, "Timeout sending message");
-		bt_msg_del(bt_msg);
+		if (bt_msg->retry_count < BT_MAX_RETRY_COUNT) {
+			/* A message timeout is usually due to the BMC
+			clearing the H2B_ATN flag without actually
+			doing anything. The data will still be in the
+			FIFO so just reset the flag.*/
+			BT_ERR(bt_msg, "Retry sending message");
+			bt_msg->retry_count++;
+			bt_msg->tb = mftb();
+			bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
+		} else {
+			BT_ERR(bt_msg, "Timeout sending message");
+			bt_msg_del(bt_msg);
 
-		/* Timing out a message is inherently racy as the BMC
-		   may start writing just as we decide to kill the
-		   message. Hopefully resetting the interface is
-		   sufficient to guard against such things. */
-		   bt_reset_interface();
+			/* Timing out a message is inherently racy as the BMC
+			   may start writing just as we decide to kill the
+			   message. Hopefully resetting the interface is
+			   sufficient to guard against such things. */
+			bt_reset_interface();
+		}
 	}
 }
 
@@ -384,6 +401,7 @@ static void bt_add_msg(struct bt_msg *bt_msg)
 {
 	bt_msg->tb = 0;
 	bt_msg->seq = ipmi_seq++;
+	bt_msg->retry_count = 0;
 	bt.queue_len++;
 	if (bt.queue_len > BT_MAX_QUEUE_LEN) {
 		/* Maximum queue length exceeded - remove the oldest message
