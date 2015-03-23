@@ -2275,8 +2275,8 @@ static struct {
 	{ RESOURCE_ID_CAPP,	CAPP_IDX_VENICE_DD20,	0x80a02004 },
 };
 
-bool fsp_load_resource(enum resource_id id, uint32_t idx,
-		       void *buf, size_t *size)
+int fsp_start_preload_resource(enum resource_id id, uint32_t idx,
+				void *buf, size_t *size)
 {
 	uint32_t lid_no = 0, lid;
 	size_t tmp_size;
@@ -2292,7 +2292,7 @@ bool fsp_load_resource(enum resource_id id, uint32_t idx,
 		}
 	}
 	if (lid_no == 0)
-		return false;
+		return OPAL_PARAMETER;
 
 retry:
 	tmp_size = *size;
@@ -2306,7 +2306,7 @@ retry:
 		const char *ltype = dt_prop_get_def(dt_root, "lid-type", NULL);
 		if (!ltype || strcmp(ltype, "opal")) {
 			prerror("Failed to load in OPAL mode...\n");
-			return false;
+			return OPAL_PARAMETER;
 		}
 		printf("Trying to load as PHYP LID...\n");
 		lid_no = KERNEL_LID_PHYP;
@@ -2315,13 +2315,13 @@ retry:
 
 	if (rc) {
 		prerror("Failed to load LID\n");
-		return false;
+		return rc;
 	}
 	if (*size < tmp_size)
-		return false;
+		return OPAL_INTERNAL_ERROR;
 	*size = tmp_size;
 
-	return true;
+	return OPAL_SUCCESS;
 }
 
 void fsp_used_by_console(void)

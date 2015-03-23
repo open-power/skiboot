@@ -53,6 +53,6 @@ DECLARE_PLATFORM(palmetto) = {
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
 	.elog_commit		= ipmi_elog_commit,
-	.load_resource		= flash_load_resource,
+	.start_preload_resource	= flash_start_preload_resource,
 	.exit			= ipmi_wdt_final_reset,
 };

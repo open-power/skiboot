@@ -19,6 +19,8 @@
 #include <opal.h>
 #include <opal-api.h>
 #include <console.h>
+#include <timebase.h>
+#include <cpu.h>
 
 struct platform	platform;
 
@@ -79,12 +81,33 @@ void probe_platform(void)
 	printf("PLAT: Detected %s platform\n", platform.name);
 }
 
-bool load_resource(enum resource_id id, uint32_t subid,
-		   void *buf, size_t *len)
+int start_preload_resource(enum resource_id id, uint32_t subid,
+			   void *buf, size_t *len)
 {
-	if (!platform.load_resource)
-		return false;
+	if (!platform.start_preload_resource)
+		return OPAL_UNSUPPORTED;
 
-	return platform.load_resource(id, subid, buf, len);
+	return platform.start_preload_resource(id, subid, buf, len);
+}
 
+int resource_loaded(enum resource_id id, uint32_t idx)
+{
+	if (!platform.resource_loaded)
+		return OPAL_SUCCESS;
+
+	return platform.resource_loaded(id, idx);
+}
+
+int wait_for_resource_loaded(enum resource_id id, uint32_t idx)
+{
+	int r = resource_loaded(id, idx);
+
+	while(r == OPAL_BUSY) {
+		opal_run_pollers();
+		time_wait_nopoll(msecs_to_tb(5));
+		cpu_relax();
+		r = resource_loaded(id, idx);
+	}
+
+	return r;
 }

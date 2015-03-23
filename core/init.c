@@ -290,12 +290,19 @@ static bool load_kernel(void)
 {
 	struct elf_hdr *kh;
 	size_t ksize;
+	int loaded;
 
 	/* Try to load an external kernel payload through the platform hooks */
 	ksize = KERNEL_LOAD_SIZE;
-	if (!load_resource(RESOURCE_ID_KERNEL, RESOURCE_SUBID_NONE,
-			   KERNEL_LOAD_BASE,
-			   &ksize)) {
+	loaded = start_preload_resource(RESOURCE_ID_KERNEL,
+					RESOURCE_SUBID_NONE,
+					KERNEL_LOAD_BASE,
+					&ksize);
+	if (loaded == OPAL_SUCCESS)
+		loaded = wait_for_resource_loaded(RESOURCE_ID_KERNEL,
+						  RESOURCE_SUBID_NONE);
+
+	if (loaded != OPAL_SUCCESS) {
 		printf("INIT: platform kernel load failed\n");
 		ksize = 0;
 	}
@@ -332,13 +339,18 @@ static bool load_kernel(void)
 static void load_initramfs(void)
 {
 	size_t size;
-	bool loaded;
+	int loaded;
 
 	size = INITRAMFS_LOAD_SIZE;
-	loaded = load_resource(RESOURCE_ID_INITRAMFS, RESOURCE_SUBID_NONE,
-			       INITRAMFS_LOAD_BASE, &size);
+	loaded = start_preload_resource(RESOURCE_ID_INITRAMFS,
+					RESOURCE_SUBID_NONE,
+					INITRAMFS_LOAD_BASE, &size);
 
-	if (!loaded || !size)
+	if (loaded == OPAL_SUCCESS)
+		loaded = wait_for_resource_loaded(RESOURCE_ID_INITRAMFS,
+						  RESOURCE_SUBID_NONE);
+
+	if (loaded != OPAL_SUCCESS || !size)
 		return;
 
 	printf("INIT: Initramfs loaded, size: %zu bytes\n", size);

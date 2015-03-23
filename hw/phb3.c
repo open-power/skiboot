@@ -2178,6 +2178,7 @@ static int64_t capp_lid_download(struct phb3 *p)
 	uint32_t index;
 	struct capp_lid_hdr *lid;
 	uint64_t rc;
+	int loaded;
 
 	rc = xscom_read_cfam_chipid(chip->id, &index);
 	if (rc) {
@@ -2220,7 +2221,14 @@ static int64_t capp_lid_download(struct phb3 *p)
 		ret = OPAL_NO_MEM;
 		goto end;
 	}
-	if (!load_resource(RESOURCE_ID_CAPP, index, lid, &size)) {
+
+	loaded = start_preload_resource(RESOURCE_ID_CAPP, index,
+					    lid, &size);
+	if (loaded == OPAL_SUCCESS)
+		loaded = wait_for_resource_loaded(RESOURCE_ID_CAPP,
+						  index);
+
+	if (loaded != OPAL_SUCCESS) {
 		prerror("CAPP: Error loading ucode lid. index=%x\n", index);
 		ret = OPAL_RESOURCE;
 		free(lid);

@@ -129,11 +129,24 @@ struct platform {
 	int		(*elog_commit)(struct errorlog *buf);
 
 	/*
-	 * Load an external resource (eg, kernel payload) into a preallocated
-	 * buffer. Returns true on success.
+	 * Initiate loading an external resource (e.g. kernel payload, OCC)
+	 * into a preallocated buffer.
+	 * This is designed to asynchronously load external resources.
+	 * Returns OPAL_SUCCESS or error.
 	 */
-	bool		(*load_resource)(enum resource_id id, uint32_t idx,
-					 void *buf, size_t *len);
+	int		(*start_preload_resource)(enum resource_id id,
+						  uint32_t idx,
+						  void *buf, size_t *len);
+
+	/*
+	 * Returns true when resource is loaded.
+	 * Only has to return true once, for the
+	 * preivous start_preload_resource call for this resource.
+	 * If not implemented, will return true and start_preload_resource
+	 * *must* have synchronously done the load.
+	 * Retruns OPAL_SUCCESS, OPAL_BUSY or an error code
+	 */
+	int		(*resource_loaded)(enum resource_id id, uint32_t idx);
 
 	/*
 	 * Executed just prior to handing control over to the payload.
@@ -151,7 +164,11 @@ static const struct platform __used __section(".platforms") name ##_platform
 
 extern void probe_platform(void);
 
-extern bool load_resource(enum resource_id id, uint32_t subid,
-			  void *buf, size_t *len);
+extern int start_preload_resource(enum resource_id id, uint32_t subid,
+				  void *buf, size_t *len);
+
+extern int resource_loaded(enum resource_id id, uint32_t idx);
+
+extern int wait_for_resource_loaded(enum resource_id id, uint32_t idx);
 
 #endif /* __PLATFORM_H */
