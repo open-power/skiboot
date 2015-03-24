@@ -531,6 +531,7 @@ int flash_load_resource(enum resource_id id, uint32_t subid,
 	const char *name;
 	bool status, ecc;
 
+	rc = OPAL_RESOURCE;
 	status = false;
 
 	lock(&flash_lock);
@@ -560,7 +561,7 @@ int flash_load_resource(enum resource_id id, uint32_t subid,
 	if ((part_name_map[i].subid == RESOURCE_SUBID_NONE) &&
 	    (subid != RESOURCE_SUBID_NONE)) {
 		prerror("PLAT: Partition %s doesn't have subindex\n", name);
-		return false;
+		goto out_unlock;
 	}
 
 	rc = ffs_open_flash(flash->chip, 0, flash->size, &ffs);
@@ -626,5 +627,5 @@ out_free_ffs:
 	ffs_close(ffs);
 out_unlock:
 	unlock(&flash_lock);
-	return status;
+	return status ? OPAL_SUCCESS : rc;
 }
