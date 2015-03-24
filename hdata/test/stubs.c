@@ -54,7 +54,7 @@ STUB(dt_next);
 STUB(dt_has_node_property);
 STUB(dt_get_address);
 STUB(op_display);
-STUB(fsp_fetch_data);
+STUB(fsp_load_lid);
 STUB(get_ics_phandle);
 STUB(get_psi_interrupt);
 STUB(fsp_adjust_lid_side);

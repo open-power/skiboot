@@ -155,7 +155,7 @@ static void *vpd_lid_load(const uint8_t *lx, uint8_t lxrn, size_t *size)
 	*size = VPD_LID_MAX_SIZE;
 
 	/* Load it from the FSP */
-	rc = fsp_fetch_data(0, FSP_DATASET_NONSP_LID, lid_no, 0, data, size);
+	rc = fsp_load_lid(lid_no, data, size);
 	if (rc) {
 		prerror("VPD: Error %d loading VPD LID\n", rc);
 		goto fail;

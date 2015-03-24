@@ -61,4 +61,5 @@ DECLARE_PLATFORM(apollo) = {
 	.nvram_write		= fsp_nvram_write,
 	.elog_commit		= elog_fsp_commit,
 	.start_preload_resource	= fsp_start_preload_resource,
+	.resource_loaded	= fsp_resource_loaded,
 };

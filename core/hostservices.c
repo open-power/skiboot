@@ -415,7 +415,7 @@ static int __hservice_lid_load(uint32_t lid, void **buf, size_t *len)
 	 */
 	*buf = malloc(HBRT_LOAD_LID_SIZE);
 	*len = HBRT_LOAD_LID_SIZE;
-	rc = fsp_fetch_data(0, FSP_DATASET_NONSP_LID, lid, 0, *buf, len);
+	rc = fsp_load_lid(lid, *buf, len);
 	if (rc != 0)
 		/* Take advantage of realloc corner case here. */
 		*len = 0;

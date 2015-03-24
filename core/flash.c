@@ -522,7 +522,7 @@ end:
  * load a resource from FLASH
  * buf and len shouldn't account for ECC even if partition is ECCed.
  */
-int flash_start_preload_resource(enum resource_id id, uint32_t subid,
+int flash_load_resource(enum resource_id id, uint32_t subid,
 				 void *buf, size_t *len)
 {
 	int i, rc, part_num, part_size, part_start, size;

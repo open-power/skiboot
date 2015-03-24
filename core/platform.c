@@ -104,8 +104,7 @@ int wait_for_resource_loaded(enum resource_id id, uint32_t idx)
 
 	while(r == OPAL_BUSY) {
 		opal_run_pollers();
-		time_wait_nopoll(msecs_to_tb(5));
-		cpu_relax();
+		time_wait_ms_nopoll(5);
 		r = resource_loaded(id, idx);
 	}
 

@@ -415,4 +415,5 @@ DECLARE_PLATFORM(firenze) = {
 	.occ_timeout		= ibm_fsp_occ_timeout,
 	.elog_commit		= elog_fsp_commit,
 	.start_preload_resource	= fsp_start_preload_resource,
+	.resource_loaded	= fsp_resource_loaded,
 } ;

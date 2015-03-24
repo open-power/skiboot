@@ -38,6 +38,7 @@
 #include <opal.h>
 #include <opal-api.h>
 #include <opal-msg.h>
+#include <ccan/list/list.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_FSP_POLL_TIMEOUT, OPAL_PLATFORM_ERR_EVT, OPAL_FSP,
 		 OPAL_PLATFORM_FIRMWARE, OPAL_ERROR_PANIC, OPAL_NA, NULL);
@@ -2144,88 +2145,36 @@ uint32_t fsp_adjust_lid_side(uint32_t lid_no)
 	return lid_no;
 }
 
-int fsp_fetch_data(uint8_t flags, uint16_t id, uint32_t sub_id,
-		   uint32_t offset, void *buffer, size_t *length)
-{
-	uint32_t total, remaining = *length;
-	uint64_t baddr;
-	uint64_t balign, boff, bsize;
-	struct fsp_msg *msg;
-	static struct lock fsp_fetch_lock = LOCK_UNLOCKED;
+struct fsp_fetch_lid_item {
+	enum resource_id id;
+	uint32_t idx;
 
-	*length = total = 0;
+	uint32_t lid;
+	uint32_t lid_no;
+	uint64_t bsize;
+	uint32_t offset;
+	void *buffer;
+	size_t *length;
+	size_t remaining;
+	struct list_node link;
+	int result;
+};
 
-	if (!fsp_present())
-		return -ENODEV;
-
-	prlog(PR_DEBUG, "FSP: Fetch data id: %02x sid: %08x to %p"
-	      "(0x%x bytes)\n",
-	      id, sub_id, buffer, remaining);
-
-	/*
-	 * Use a lock to avoid multiple processors trying to fetch
-	 * at the same time and colliding on the TCE space
-	 */
-	lock(&fsp_fetch_lock);
-
-	while(remaining) {
-		uint32_t chunk, taddr, woffset, wlen;
-		uint8_t rc;
-
-		/* Calculate alignment skew */
-		baddr = (uint64_t)buffer;
-		balign = baddr & ~TCE_MASK;
-		boff = baddr & TCE_MASK;
-
-		/* Get a chunk */
-		chunk = remaining;
-		if (chunk > (PSI_DMA_FETCH_SIZE - boff))
-			chunk = PSI_DMA_FETCH_SIZE - boff;
-		bsize = ((boff + chunk) + TCE_MASK) & ~TCE_MASK;
-
-		prlog(PR_DEBUG, "FSP:  0x%08x bytes balign=%llx"
-		      " boff=%llx bsize=%llx\n",
-		      chunk, balign, boff, bsize);
-		fsp_tce_map(PSI_DMA_FETCH, (void *)balign, bsize);
-		taddr = PSI_DMA_FETCH + boff;
-		msg = fsp_mkmsg(FSP_CMD_FETCH_SP_DATA, 6,
-				flags << 16 | id, sub_id, offset,
-				0, taddr, chunk);
-		rc = fsp_sync_msg(msg, false);
-		fsp_tce_unmap(PSI_DMA_FETCH, bsize);
-
-		woffset = msg->resp->data.words[1];
-		wlen = msg->resp->data.words[2];
-		prlog(PR_DEBUG, "FSP:   -> rc=0x%02x off: %08x"
-		      " twritten: %08x\n",
-		      rc, woffset, wlen);
-		fsp_freemsg(msg);
-
-		/* XXX Is flash busy (0x3f) a reason for retry ? */
-		if (rc != 0 && rc != 2) {
-			unlock(&fsp_fetch_lock);
-			return -EIO;
-		}
-
-		remaining -= wlen;
-		total += wlen;
-		buffer += wlen;
-		offset += wlen;
-
-		/* The doc seems to indicate that we get rc=2 if there's
-		 * more data and rc=0 if we reached the end of file, but
-		 * it looks like I always get rc=0, so let's consider
-		 * an EOF if we got less than what we asked
-		 */
-		if (wlen < chunk)
-			break;
-	}
-	unlock(&fsp_fetch_lock);
-
-	*length = total;
-
-	return 0;
-}
+/*
+ * We have a queue of things to fetch
+ * when fetched, it moves to fsp_fetched_lid until we're asked if it
+ * has been fetched, in which case it's free()d.
+ *
+ * Everything is protected with fsp_fetch_lock.
+ *
+ * We use PSI_DMA_FETCH TCE entry for this fetching queue. If something
+ * is in the fsp_fetch_lid_queue, it means we're using this TCE entry!
+ *
+ * If we add the first entry to fsp_fetch_lid_queue, we trigger fetching!
+ */
+static LIST_HEAD(fsp_fetch_lid_queue);
+static LIST_HEAD(fsp_fetched_lid);
+static struct lock fsp_fetch_lock = LOCK_UNLOCKED;
 
 /*
  * Asynchronous fsp fetch data call
@@ -2275,12 +2224,156 @@ static struct {
 	{ RESOURCE_ID_CAPP,	CAPP_IDX_VENICE_DD20,	0x80a02004 },
 };
 
+static void fsp_start_fetching_next_lid(void);
+static void fsp_fetch_lid_next_chunk(struct fsp_fetch_lid_item *last);
+
+static void fsp_fetch_lid_complete(struct fsp_msg *msg)
+{
+	struct fsp_fetch_lid_item *last;
+	uint32_t woffset, wlen;
+	uint8_t rc;
+
+	lock(&fsp_fetch_lock);
+	last = list_top(&fsp_fetch_lid_queue, struct fsp_fetch_lid_item, link);
+	fsp_tce_unmap(PSI_DMA_FETCH, last->bsize);
+
+	woffset = msg->resp->data.words[1];
+	wlen = msg->resp->data.words[2];
+	rc = (msg->resp->word1 >> 8) & 0xff;
+
+	/* Fall back to a PHYP LID for kernel loads */
+	if (rc && last->lid_no == KERNEL_LID_OPAL) {
+		const char *ltype = dt_prop_get_def(dt_root, "lid-type", NULL);
+		if (!ltype || strcmp(ltype, "opal")) {
+			prerror("Failed to load in OPAL mode...\n");
+			last->result = OPAL_PARAMETER;
+			last = list_pop(&fsp_fetch_lid_queue,
+					struct fsp_fetch_lid_item, link);
+			list_add_tail(&fsp_fetched_lid, &last->link);
+			fsp_start_fetching_next_lid();
+			unlock(&fsp_fetch_lock);
+			return;
+		}
+		printf("Trying to load as PHYP LID...\n");
+		last->lid = KERNEL_LID_PHYP;
+		/* Retry with different LID */
+		fsp_fetch_lid_next_chunk(last);
+	}
+
+	if (rc !=0 && rc != 2) {
+		last->result = -EIO;
+		last = list_pop(&fsp_fetch_lid_queue, struct fsp_fetch_lid_item, link);
+		list_add_tail(&fsp_fetched_lid, &last->link);
+		fsp_start_fetching_next_lid();
+		unlock(&fsp_fetch_lock);
+		return;
+	}
+
+	if (rc == 0)
+		last->result = OPAL_SUCCESS;
+
+	fsp_freemsg(msg);
+
+	last->remaining -= wlen;
+	*(last->length) += wlen;
+	last->buffer += wlen;
+	last->offset += wlen;
+
+	prlog(PR_DEBUG, "FSP: LID %x Chunk read -> rc=0x%02x off: %08x"
+	      " twritten: %08x\n", last->lid, rc, woffset, wlen);
+
+	fsp_fetch_lid_next_chunk(last);
+
+	unlock(&fsp_fetch_lock);
+}
+
+static void fsp_fetch_lid_next_chunk(struct fsp_fetch_lid_item *last)
+{
+	uint64_t baddr;
+	uint64_t balign, boff;
+	uint32_t chunk;
+	uint32_t taddr;
+	struct fsp_msg *msg;
+	uint8_t flags = 0;
+	uint16_t id = FSP_DATASET_NONSP_LID;
+	uint32_t sub_id;
+
+	assert(lock_held_by_me(&fsp_fetch_lock));
+
+	if (last->remaining == 0 || last->result == OPAL_SUCCESS) {
+		last->result = OPAL_SUCCESS;
+		last = list_pop(&fsp_fetch_lid_queue,
+				struct fsp_fetch_lid_item, link);
+		list_add_tail(&fsp_fetched_lid, &last->link);
+		fsp_start_fetching_next_lid();
+		return;
+	}
+
+	baddr = (uint64_t)last->buffer;
+	balign = baddr & ~TCE_MASK;
+	boff = baddr & TCE_MASK;
+
+	chunk = last->remaining;
+	if (chunk > (PSI_DMA_FETCH_SIZE - boff))
+		chunk = PSI_DMA_FETCH_SIZE - boff;
+	last->bsize = ((boff + chunk) + TCE_MASK) & ~TCE_MASK;
+
+	prlog(PR_DEBUG, "FSP: Loading Chunk 0x%08x bytes balign=%llx"
+	      " boff=%llx bsize=%llx\n",
+	      chunk, balign, boff, last->bsize);
+
+	fsp_tce_map(PSI_DMA_FETCH, (void *)balign, last->bsize);
+	taddr = PSI_DMA_FETCH + boff;
+
+	sub_id = last->lid;
+
+	msg = fsp_mkmsg(FSP_CMD_FETCH_SP_DATA, 6,
+			flags << 16 | id, sub_id, last->offset,
+			0, taddr, chunk);
+
+	if (fsp_queue_msg(msg, fsp_fetch_lid_complete)) {
+		fsp_freemsg(msg);
+		prerror("FSP: Failed to queue fetch data message\n");
+		last->result = OPAL_INTERNAL_ERROR;
+		last = list_pop(&fsp_fetch_lid_queue,
+				struct fsp_fetch_lid_item, link);
+		list_add_tail(&fsp_fetched_lid, &last->link);
+	}
+}
+
+static void fsp_start_fetching_next_lid(void)
+{
+	struct fsp_fetch_lid_item *last;
+
+	assert(lock_held_by_me(&fsp_fetch_lock));
+
+	last = list_top(&fsp_fetch_lid_queue, struct fsp_fetch_lid_item, link);
+
+	if (last == NULL)
+		return;
+
+	fsp_fetch_lid_next_chunk(last);
+}
+
 int fsp_start_preload_resource(enum resource_id id, uint32_t idx,
 				void *buf, size_t *size)
 {
-	uint32_t lid_no = 0, lid;
-	size_t tmp_size;
-	int rc, i;
+	struct fsp_fetch_lid_item *resource;
+	uint32_t lid_no = 0;
+	int i;
+
+	resource = malloc(sizeof(struct fsp_fetch_lid_item));
+	assert(resource != NULL);
+
+	resource->id = id;
+	resource->idx = idx;
+
+	resource->offset = 0;
+	resource->buffer = buf;
+	resource->remaining = *size;
+	*size = 0;
+	resource->length = size;
+	resource->result = OPAL_BUSY;
 
 	for (i = 0; i < ARRAY_SIZE(fsp_lid_map); i++) {
 		if (id != fsp_lid_map[i].id)
@@ -2294,34 +2387,111 @@ int fsp_start_preload_resource(enum resource_id id, uint32_t idx,
 	if (lid_no == 0)
 		return OPAL_PARAMETER;
 
-retry:
-	tmp_size = *size;
-
 	printf("Trying to load OPAL LID %08x...\n", lid_no);
-	lid = fsp_adjust_lid_side(lid_no);
-	rc = fsp_fetch_data(0, FSP_DATASET_NONSP_LID, lid, 0, buf, &tmp_size);
+	resource->lid_no = lid_no;
+	resource->lid = fsp_adjust_lid_side(lid_no);
 
-	/* Fall back to a PHYP LID for kernel loads */
-	if (rc && lid_no == KERNEL_LID_OPAL) {
-		const char *ltype = dt_prop_get_def(dt_root, "lid-type", NULL);
-		if (!ltype || strcmp(ltype, "opal")) {
-			prerror("Failed to load in OPAL mode...\n");
-			return OPAL_PARAMETER;
-		}
-		printf("Trying to load as PHYP LID...\n");
-		lid_no = KERNEL_LID_PHYP;
-		goto retry;
-	}
-
-	if (rc) {
-		prerror("Failed to load LID\n");
-		return rc;
-	}
-	if (*size < tmp_size)
-		return OPAL_INTERNAL_ERROR;
-	*size = tmp_size;
+	lock(&fsp_fetch_lock);
+	list_add_tail(&fsp_fetch_lid_queue, &resource->link);
+	fsp_start_fetching_next_lid();
+	unlock(&fsp_fetch_lock);
 
 	return OPAL_SUCCESS;
+}
+
+int fsp_resource_loaded(enum resource_id id, uint32_t idx)
+{
+	struct fsp_fetch_lid_item *resource = NULL;
+	struct fsp_fetch_lid_item *r;
+	int rc = OPAL_BUSY;
+
+	lock(&fsp_fetch_lock);
+	list_for_each(&fsp_fetched_lid, r, link) {
+		if (r->id == id && r->idx == idx) {
+			resource = r;
+			break;
+		}
+	}
+
+	if (resource) {
+		rc = resource->result;
+		if (rc == OPAL_SUCCESS) {
+			list_del(&resource->link);
+			free(resource);
+		}
+	}
+	unlock(&fsp_fetch_lock);
+
+	return rc;
+}
+
+static int fsp_lid_loaded(uint32_t lid_no)
+{
+	struct fsp_fetch_lid_item *resource = NULL;
+	struct fsp_fetch_lid_item *r;
+	int rc = OPAL_BUSY;
+
+	lock(&fsp_fetch_lock);
+	list_for_each(&fsp_fetched_lid, r, link) {
+		if (r->lid_no == lid_no) {
+			resource = r;
+			break;
+		}
+	}
+
+	if (resource) {
+		rc = resource->result;
+		if (rc == OPAL_SUCCESS) {
+			list_del(&resource->link);
+			free(resource);
+		}
+	}
+	unlock(&fsp_fetch_lock);
+
+	return rc;
+}
+
+int fsp_load_lid(uint32_t lid_no, char *buf, size_t *size)
+{
+	struct fsp_fetch_lid_item *resource;
+	int r;
+
+	resource = malloc(sizeof(struct fsp_fetch_lid_item));
+	assert(resource != NULL);
+
+	resource->id = -1;
+	resource->idx = -1;
+
+	resource->offset = 0;
+	resource->buffer = buf;
+	resource->remaining = *size;
+	*size = 0;
+	resource->length = size;
+	resource->result = OPAL_BUSY;
+
+	if (lid_no == 0)
+		return OPAL_PARAMETER;
+
+	printf("Trying to load LID %08x from FSP\n", lid_no);
+	resource->lid_no = lid_no;
+	resource->lid = fsp_adjust_lid_side(lid_no);
+
+	lock(&fsp_fetch_lock);
+	list_add_tail(&fsp_fetch_lid_queue, &resource->link);
+	fsp_start_fetching_next_lid();
+	unlock(&fsp_fetch_lock);
+
+	r = fsp_lid_loaded(lid_no);
+
+	while(r == OPAL_BUSY) {
+		opal_run_pollers();
+		time_wait_nopoll(msecs_to_tb(5));
+		cpu_relax();
+		r = fsp_lid_loaded(lid_no);
+	}
+
+	return r;
+
 }
 
 void fsp_used_by_console(void)
