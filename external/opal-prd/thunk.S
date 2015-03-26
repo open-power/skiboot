@@ -1,4 +1,12 @@
 #include <endian.h>
+#include <asm/unistd.h>
+
+#ifndef __NR_switch_endian
+#define __NR_switch_endian 363
+#endif
+
+/* a constant to use in the SI field of a little-endian D-form instruction */
+#define le_si16(x) (((x & 0xff) << 24) | ((x & 0xff00) << 8))
 
 	.text
 
@@ -9,8 +17,6 @@
 	 */
 
 call_be:
-
-#define __NR_fast_endian_switch		0x1ebe
 
 	/* Before we switch, we need to perform some ABI
 	 * conversion. We are currently running LE with the
@@ -45,14 +51,15 @@ call_be:
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 	/* Switch to the "other endian" */
-	li %r0,__NR_fast_endian_switch
+	li %r0,__NR_switch_endian
 	sc
 
 	/* Branch to CTR */
 	.long 0x2104804e /* (byteswapped bctrl) */
 
 	/* Switch endian back */
-	.long 0xbe1e0038 /* byteswapped li %r0,__NR_fast_endian_switch */
+	.long 0x00000038 | le_si16(__NR_switch_endian)
+			/* byteswapped li %r0,__NR_switch_endian */
 	.long 0x02000044 /* byteswapped sc */
 #else
 	bctrl
@@ -110,7 +117,7 @@ call_le:
 	mtlr %r0
 
 	/* Switch endian back to BE */
-	li %r0,__NR_fast_endian_switch
+	li %r0,__NR_switch_endian
 	sc
 
 	/* Return to BE */
@@ -125,7 +132,8 @@ call_le:
 	.pushsection ".text","ax" 						;\
 	.globl	name##_thunk							;\
 name##_thunk:									;\
-	.long 0xbe1e0038 /* byteswapped li %r0,__NR_fast_endian_switch */       ;\
+	.long 0x00000038 | le_si16(__NR_switch_endian)				;\
+			/* byteswapped li %r0,__NR_switch_endian */		;\
 	.long 0x02000044 /* byteswapped sc */					;\
 	ld %r11,name@got(%r2)							;\
 	b call_le								;\
