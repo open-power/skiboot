@@ -96,6 +96,12 @@
 #define   NX_EE_CFG_CH1			PPC_BIT(62) /* 842 */
 #define   NX_EE_CFG_CH0			PPC_BIT(63) /* 842 */
 
+/* PowerBus Registers */
+#define NX_P7_CRB_IQ		NX_P7_SAT(0x2, 0x0e)
+#define NX_P8_CRB_IQ		NX_P8_SAT(0x2, 0x0f)
+#define   NX_CRB_IQ_SYM			PPC_BITMASK(0, 2)
+#define   NX_CRB_IQ_ASYM		PPC_BITMASK(3, 5)
+
 
 /**************************************/
 /* Register field values/restrictions */

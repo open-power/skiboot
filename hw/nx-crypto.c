@@ -25,6 +25,8 @@
 #define CFG_SYM_ENABLE		(0) /* disable sym engines */
 #define CFG_ASYM_FC_ENABLE	(0) /* disable all asym functions */
 #define CFG_ASYM_ENABLE		(0) /* disable asym engines */
+#define CFG_CRB_IQ_SYM		(0) /* don't use any extra input queues */
+#define CFG_CRB_IQ_ASYM	(0) /* don't use any extra input queues */
 #define AES_SHA_MAX_RR		(1) /* valid range: 1-8 */
 #define AES_SHA_CSB_WR		NX_DMA_CSB_WR_PDMA
 #define AES_SHA_COMPLETION_MODE	NX_DMA_COMPLETION_MODE_PDMA
@@ -206,6 +208,28 @@ static int nx_cfg_dma(u32 gcid, u64 xcfg)
 	return rc;
 }
 
+static int nx_cfg_iq(u32 gcid, u64 xcfg)
+{
+	u64 cfg;
+	int rc;
+
+	rc = xscom_read(gcid, xcfg, &cfg);
+	if (rc)
+		return rc;
+
+	cfg = SETFIELD(NX_CRB_IQ_SYM, cfg, CFG_CRB_IQ_SYM);
+	cfg = SETFIELD(NX_CRB_IQ_ASYM, cfg, CFG_CRB_IQ_ASYM);
+
+	rc = xscom_write(gcid, xcfg, cfg);
+	if (rc)
+		prerror("NX%d: ERROR: CRB Input Queue failure %d\n", gcid, rc);
+	else
+		prlog(PR_DEBUG, "NX%d:   CRB Input Queue 0x%016lx\n",
+		      gcid, (unsigned long)cfg);
+
+	return rc;
+}
+
 static int nx_cfg_ee(u32 gcid, u64 xcfg)
 {
 	u64 cfg;
@@ -236,7 +260,7 @@ void nx_create_crypto_node(struct dt_node *node)
 {
 	u32 gcid;
 	u32 pb_base;
-	u64 cfg_dma, cfg_sym, cfg_asym, cfg_ee;
+	u64 cfg_dma, cfg_sym, cfg_asym, cfg_iq, cfg_ee;
 	int rc;
 
 	gcid = dt_get_chip_id(node);
@@ -248,11 +272,13 @@ void nx_create_crypto_node(struct dt_node *node)
 		cfg_dma = pb_base + NX_P7_DMA_CFG;
 		cfg_sym = pb_base + NX_P7_SYM_CFG;
 		cfg_asym = pb_base + NX_P7_ASYM_CFG;
+		cfg_iq = pb_base + NX_P7_CRB_IQ;
 		cfg_ee = pb_base + NX_P7_EE_CFG;
 	} else if (dt_node_is_compatible(node, "ibm,power8-nx")) {
 		cfg_dma = pb_base + NX_P8_DMA_CFG;
 		cfg_sym = pb_base + NX_P8_SYM_CFG;
 		cfg_asym = pb_base + NX_P8_ASYM_CFG;
+		cfg_iq = pb_base + NX_P8_CRB_IQ;
 		cfg_ee = pb_base + NX_P8_EE_CFG;
 	} else {
 		prerror("NX%d: ERROR: Unknown NX type!\n", gcid);
@@ -268,6 +294,10 @@ void nx_create_crypto_node(struct dt_node *node)
 		return;
 
 	rc = nx_cfg_asym(gcid, cfg_asym, nx_asym_ci_counter++);
+	if (rc)
+		return;
+
+	rc = nx_cfg_iq(gcid, cfg_iq);
 	if (rc)
 		return;
 
