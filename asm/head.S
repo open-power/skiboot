@@ -28,13 +28,6 @@
 #define PPC_INST_SLEEP		.long 0x4c0003a4
 #define PPC_INST_RVWINKLE	.long 0x4c0003e4
 
-#define EXCEPTION(nr)		\
-	.= nr;			\
-	mtsprg0	%r3;		\
-	mfspr	%r3,SPR_CFAR;	\
-	b . ;
-
-
 #define GET_STACK(stack_reg,pir_reg)				\
 	sldi	stack_reg,pir_reg,STACK_SHIFT;			\
 	addis	stack_reg,stack_reg,CPU_STACKS_OFFSET@ha;	\
@@ -113,6 +106,14 @@ hir_trigger:
 	li	%r25,0
 	b	boot_entry
 
+#define EXCEPTION(nr)		\
+	.= nr			;\
+	mtsprg0	%r3		;\
+	mfspr	%r3,SPR_CFAR	;\
+	mtsprg1 %r4		;\
+	li	%r4,nr		;\
+	b	_exception
+
 	/* More exception stubs */
 	EXCEPTION(0x200)
 	EXCEPTION(0x300)
@@ -132,7 +133,6 @@ hir_trigger:
 	EXCEPTION(0xe00)
 	EXCEPTION(0xe20)
 	EXCEPTION(0xe40)
-	EXCEPTION(0xe50)
 	EXCEPTION(0xe60)
 	EXCEPTION(0xf00)
 	EXCEPTION(0xf20)
@@ -144,15 +144,72 @@ hir_trigger:
 	EXCEPTION(0x1400)
 	EXCEPTION(0x1500)
 	EXCEPTION(0x1600)
-	EXCEPTION(0x1700)
-	EXCEPTION(0x1800)
-	EXCEPTION(0x1900)
-	EXCEPTION(0x1a00)
-	EXCEPTION(0x1b00)
-	EXCEPTION(0x1c00)
-	EXCEPTION(0x1d00)
-	EXCEPTION(0x1e00)
-	EXCEPTION(0x1f00)
+
+	.= 0x1e00
+_exception:
+	std	%r4,16(%r1)
+	stdu	%r1,-STACK_FRAMESIZE(%r1)
+	std	%r3,STACK_CFAR(%r1)
+	std	%r4,STACK_TYPE(%r1)
+	mfsprg0	%r3
+	mfsprg1 %r4
+	SAVE_GPR(0,%r1)
+	SAVE_GPR(1,%r1)
+	SAVE_GPR(2,%r1)
+	SAVE_GPR(3,%r1)
+	SAVE_GPR(4,%r1)
+	SAVE_GPR(5,%r1)
+	SAVE_GPR(6,%r1)
+	SAVE_GPR(7,%r1)
+	SAVE_GPR(8,%r1)
+	SAVE_GPR(9,%r1)
+	SAVE_GPR(10,%r1)
+	SAVE_GPR(11,%r1)
+	SAVE_GPR(12,%r1)
+	SAVE_GPR(13,%r1)
+	SAVE_GPR(14,%r1)
+	SAVE_GPR(15,%r1)
+	SAVE_GPR(16,%r1)
+	SAVE_GPR(17,%r1)
+	SAVE_GPR(18,%r1)
+	SAVE_GPR(19,%r1)
+	SAVE_GPR(20,%r1)
+	SAVE_GPR(21,%r1)
+	SAVE_GPR(22,%r1)
+	SAVE_GPR(23,%r1)
+	SAVE_GPR(24,%r1)
+	SAVE_GPR(25,%r1)
+	SAVE_GPR(26,%r1)
+	SAVE_GPR(27,%r1)
+	SAVE_GPR(28,%r1)
+	SAVE_GPR(29,%r1)
+	SAVE_GPR(30,%r1)
+	SAVE_GPR(31,%r1)
+	mfcr	%r3
+	mfxer	%r4
+	mfctr	%r5
+	mflr	%r6
+	stw	%r3,STACK_CR(%r1)
+	stw	%r4,STACK_XER(%r1)
+	stw	%r5,STACK_CTR(%r1)
+	stw	%r5,STACK_LR(%r1)
+	mfspr	%r3,SPR_SRR0
+	mfspr	%r4,SPR_SRR1
+	mfspr	%r5,SPR_HSRR0
+	mfspr	%r6,SPR_HSRR1
+	std	%r3,STACK_SRR0(%r1)
+	std	%r4,STACK_SRR1(%r1)
+	std	%r5,STACK_HSRR0(%r1)
+	std	%r6,STACK_HSRR1(%r1)
+	mr	%r3,%r1
+	LOAD_IMM64(%r4, SKIBOOT_BASE)
+	LOAD_IMM32(%r5, exception_entry_foo - __head)
+	add	%r4,%r4,%r5
+	mtctr	%r4
+	bctrl
+	b	.
+exception_entry_foo:
+	b	exception_entry
 
 	.= 0x2000
 	/* This is the OPAL branch table. It's populated at boot time

@@ -28,18 +28,14 @@ static void dump_regs(struct stack_frame *stack)
 {
 	unsigned int i;
 
-	printf("SRR0 : "REG" SRR1 : "REG"\n", stack->srr0, stack->srr1);
-	printf("HSRR0: "REG" HSRR1: "REG"\n", stack->srr0, stack->srr1);
-	printf("CFAR : "REG" LR   : "REG" CTR: "REG"\n",
-		stack->cfar, stack->lr, stack->ctr);
-	printf("  CR: %08x  XER: %08x\n", stack->cr, stack->xer);
-
-	for (i = 0;  i < 32;  i++) {
-		if ((i % REGS_PER_LINE) == 0)
-			printf("\nGPR%02d: ", i);
-		printf(REG " ", stack->gpr[i]);
-	}
-	printf("\n");
+	prerror("SRR0 : "REG" SRR1 : "REG"\n", stack->srr0, stack->srr1);
+	prerror("HSRR0: "REG" HSRR1: "REG"\n", stack->srr0, stack->srr1);
+	prerror("LR   : "REG" CTR  : "REG"\n", stack->lr, stack->ctr);
+	prerror("CFAR : "REG"\n", stack->cfar);
+	prerror("CR   : %08x  XER: %08x\n", stack->cr, stack->xer);
+	for (i = 0;  i < 16;  i++)
+		prerror("GPR%02d: "REG" GPR%02d: "REG"\n",
+		       i, stack->gpr[i], i + 16, stack->gpr[i + 16]);
 }
 
 /* Called from head.S, thus no prototype */
@@ -47,9 +43,9 @@ void exception_entry(struct stack_frame *stack) __noreturn;
 
 void exception_entry(struct stack_frame *stack)
 {
+	prerror("***********************************************\n");
 	prerror("Unexpected exception %llx !\n", stack->type);
 	dump_regs(stack);
-	backtrace();
 	_abort();
 }
 

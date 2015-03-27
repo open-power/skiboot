@@ -90,6 +90,8 @@ struct stack_frame {
 	uint64_t	cfar;
 	uint64_t	srr0;
 	uint64_t	srr1;
+	uint64_t	hsrr0;
+	uint64_t	hsrr1;
 } __attribute__((aligned(16)));
 
 /* Backtrace */
