@@ -119,6 +119,19 @@ void opal_elog_complete(struct errorlog *buf, bool success)
 	unlock(&elog_lock);
 }
 
+static void elog_commit(struct errorlog *elog)
+{
+	int rc;
+
+	if (platform.elog_commit) {
+		rc = platform.elog_commit(elog);
+		if (rc)
+			prerror("ELOG: Platform commit error %d\n", rc);
+		return;
+	}
+	opal_elog_complete(elog, false);
+}
+
 void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
 	       const char *fmt, ...)
 {
@@ -142,8 +155,7 @@ void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
 		/* Append any number of call out dumps */
 		if (e_info->call_out)
 			e_info->call_out(buf, data, size);
-		if (platform.elog_commit(buf))
-			prerror("ELOG: Re-try error logging\n");
+		elog_commit(buf);
 	}
 }
 
@@ -166,8 +178,7 @@ void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
 		prerror("ELOG: Error getting buffer to log error\n");
 	else {
 		opal_elog_update_user_dump(buf, err_msg, tag, strlen(err_msg));
-		if (platform.elog_commit(buf))
-			prerror("ELOG: Re-try error logging\n");
+		elog_commit(buf);
 	}
 }
 
