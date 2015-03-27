@@ -70,4 +70,4 @@ endif
 	$(call Q,CC, $(CC) $(CPPFLAGS) -P -E $< -o $@, $@)
 
 %.map: %.elf
-	$(call Q,NM, $(NM) -n $< | grep -v '\( [aNUw] \)\|\(__crc_\)\|\( \$[adt]\)' > $@, $@)
+	$(call Q,NM, $(NM) --synthetic -n $< | grep -v '\( [aNUw] \)\|\(__crc_\)\|\( \$[adt]\)' > $@, $@)
