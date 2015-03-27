@@ -19,6 +19,7 @@
 #include <device.h>
 #include <console.h>
 #include <chip.h>
+#include <ipmi.h>
 
 #include "astbmc.h"
 
