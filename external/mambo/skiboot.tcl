@@ -81,7 +81,12 @@ source $env(LIB_DIR)/common/epapr.tcl
 if {![info exists of::encode_compat]} {
     source $env(LIB_DIR)/common/openfirmware_utils.tcl
 }
-source mambo_utils.tcl
+
+# Only source mambo_utils.tcl if it exists in the current directory. That
+# allows running mambo in another directory to the one skiboot.tcl is in.
+if { [file exists mambo_utils.tcl] } then {
+	source mambo_utils.tcl
+}
 
 #
 # Instanciate xscom
@@ -169,9 +174,7 @@ for { set i 0 } { $i < $mconf(threads) } { incr i } {
     mysim mcm 0 cpu 0 thread $i config_on    
 }
 
-# Tools
-
 # Turbo mode & run
-ton
-c
+mysim mode turbo
+mysim go
 exit
