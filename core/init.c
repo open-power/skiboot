@@ -501,6 +501,17 @@ static void dt_init_misc(void)
 	dt_fixups();
 }
 
+static void branch_null(void)
+{
+	assert_fail("Branch to NULL !");
+}
+
+static void setup_branch_null_catcher(void)
+{
+	void (*bn)(void) = branch_null;
+	memcpy(0, bn, 16);
+}
+
 /* Called from head.S, thus no prototype. */
 void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu);
 
@@ -526,6 +537,11 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * reading tools might think it has wrapped
 	 */
 	clear_console();
+
+	/* Put at 0 an OPD to a warning function in case we branch through
+	 * a NULL function pointer
+	 */
+	setup_branch_null_catcher();
 
 	printf("SkiBoot %s starting...\n", version);
 	printf("initial console log level: memory %d, driver %d\n",
