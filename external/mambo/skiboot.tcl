@@ -174,5 +174,4 @@ for { set i 0 } { $i < $mconf(threads) } { incr i } {
 # Turbo mode & run
 ton
 c
-
-
+exit
