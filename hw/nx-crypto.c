@@ -15,6 +15,7 @@
  */
 
 #include <skiboot.h>
+#include <chip.h>
 #include <xscom.h>
 #include <io.h>
 #include <cpu.h>
@@ -44,20 +45,12 @@
 #define EE_CH3			(0) /* disable engine SYM 1 */
 #define EE_CH2			(0) /* disable engine SYM 0 */
 
-/* counters used to provide unique Coprocessor Instance numbers */
-static u64 nx_sym_ci_counter = 1;
-static u64 nx_asym_ci_counter = 1;
-
-static int nx_cfg_sym(u32 gcid, u64 xcfg, u64 instance)
+static int nx_cfg_sym(u32 gcid, u64 xcfg)
 {
 	u64 cfg, ci, ct;
 	int rc;
 
-	if (instance > NX_SYM_CFG_CI_MAX) {
-		prerror("NX%d: ERROR: SYM CI %u exceeds max %u\n",
-			gcid, (unsigned int)instance, NX_SYM_CFG_CI_MAX);
-		return OPAL_INTERNAL_ERROR;
-	}
+	BUILD_ASSERT(MAX_CHIPS <= NX_SYM_CFG_CI_MAX);
 
 	rc = xscom_read(gcid, xcfg, &cfg);
 	if (rc)
@@ -80,16 +73,14 @@ static int nx_cfg_sym(u32 gcid, u64 xcfg, u64 instance)
 	 */
 	ci = GETFIELD(NX_SYM_CFG_CI, cfg) >> NX_SYM_CFG_CI_LSHIFT;
 	if (!ci)
-		prlog(PR_INFO, "NX%d:   SYM CI set to %u\n", gcid,
-		      (unsigned int)instance);
-	else if (ci == instance)
+		prlog(PR_INFO, "NX%d:   SYM CI set to %d\n", gcid, gcid);
+	else if (ci == gcid)
 		prlog(PR_INFO, "NX%d:   SYM CI already set to %u\n", gcid,
-		      (unsigned int)instance);
+		      (unsigned int)ci);
 	else
 		prlog(PR_INFO, "NX%d:   SYM CI already set to %u, "
-		      "changing to %u\n", gcid,
-		      (unsigned int)ci, (unsigned int)instance);
-	ci = instance;
+		      "changing to %d\n", gcid, (unsigned int)ci, gcid);
+	ci = gcid;
 	cfg = SETFIELD(NX_SYM_CFG_CI, cfg, ci << NX_SYM_CFG_CI_LSHIFT);
 
 	cfg = SETFIELD(NX_SYM_CFG_FC_ENABLE, cfg, CFG_SYM_FC_ENABLE);
@@ -107,16 +98,12 @@ static int nx_cfg_sym(u32 gcid, u64 xcfg, u64 instance)
 	return rc;
 }
 
-static int nx_cfg_asym(u32 gcid, u64 xcfg, u64 instance)
+static int nx_cfg_asym(u32 gcid, u64 xcfg)
 {
 	u64 cfg, ci, ct;
 	int rc;
 
-	if (instance > NX_ASYM_CFG_CI_MAX) {
-		prerror("NX%d: ERROR: ASYM CI %u exceeds max %u\n",
-			gcid, (unsigned int)instance, NX_ASYM_CFG_CI_MAX);
-		return OPAL_INTERNAL_ERROR;
-	}
+	BUILD_ASSERT(MAX_CHIPS <= NX_ASYM_CFG_CI_MAX);
 
 	rc = xscom_read(gcid, xcfg, &cfg);
 	if (rc)
@@ -140,16 +127,14 @@ static int nx_cfg_asym(u32 gcid, u64 xcfg, u64 instance)
 	 */
 	ci = GETFIELD(NX_ASYM_CFG_CI, cfg) >> NX_ASYM_CFG_CI_LSHIFT;
 	if (!ci)
-		prlog(PR_INFO, "NX%d:   ASYM CI set to %u\n", gcid,
-		      (unsigned int)instance);
-	else if (ci == instance)
+		prlog(PR_INFO, "NX%d:   ASYM CI set to %d\n", gcid, gcid);
+	else if (ci == gcid)
 		prlog(PR_INFO, "NX%d:   ASYM CI already set to %u\n", gcid,
-		      (unsigned int)instance);
+		      (unsigned int)ci);
 	else
 		prlog(PR_INFO, "NX%d:   ASYM CI already set to %u, "
-		      "changing to %u\n", gcid,
-		      (unsigned int)ci, (unsigned int)instance);
-	ci = instance;
+		      "changing to %d\n", gcid, (unsigned int)ci, gcid);
+	ci = gcid;
 	cfg = SETFIELD(NX_ASYM_CFG_CI, cfg, ci << NX_ASYM_CFG_CI_LSHIFT);
 
 	cfg = SETFIELD(NX_ASYM_CFG_FC_ENABLE, cfg, CFG_ASYM_FC_ENABLE);
@@ -289,11 +274,11 @@ void nx_create_crypto_node(struct dt_node *node)
 	if (rc)
 		return;
 
-	rc = nx_cfg_sym(gcid, cfg_sym, nx_sym_ci_counter++);
+	rc = nx_cfg_sym(gcid, cfg_sym);
 	if (rc)
 		return;
 
-	rc = nx_cfg_asym(gcid, cfg_asym, nx_asym_ci_counter++);
+	rc = nx_cfg_asym(gcid, cfg_asym);
 	if (rc)
 		return;
 
