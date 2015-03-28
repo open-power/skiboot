@@ -90,7 +90,7 @@ static int nx_cfg_842(u32 gcid, u64 xcfg)
 	return rc;
 }
 
-static int nx_cfg_dma(u32 gcid, u64 xcfg, int pnum)
+static int nx_cfg_dma(u32 gcid, u64 xcfg)
 {
 	u64 cfg;
 	int rc;
@@ -99,10 +99,13 @@ static int nx_cfg_dma(u32 gcid, u64 xcfg, int pnum)
 	if (rc)
 		return rc;
 
-	cfg = SETFIELD(NX_P8_DMA_CFG_842_COMPRESS_PREFETCH, cfg,
-		       pnum == 8 ? DMA_COMPRESS_PREFETCH : 0);
-	cfg = SETFIELD(NX_P8_DMA_CFG_842_DECOMPRESS_PREFETCH, cfg,
-		       pnum == 8 ? DMA_DECOMPRESS_PREFETCH : 0);
+	if (proc_gen == proc_gen_p8) {
+		cfg = SETFIELD(NX_P8_DMA_CFG_842_COMPRESS_PREFETCH, cfg,
+			       DMA_COMPRESS_PREFETCH);
+		cfg = SETFIELD(NX_P8_DMA_CFG_842_DECOMPRESS_PREFETCH, cfg,
+			       DMA_DECOMPRESS_PREFETCH);
+	}
+
 	cfg = SETFIELD(NX_DMA_CFG_842_COMPRESS_MAX_RR, cfg,
 		       DMA_COMPRESS_MAX_RR);
 	cfg = SETFIELD(NX_DMA_CFG_842_DECOMPRESS_MAX_RR, cfg,
@@ -155,7 +158,7 @@ void nx_create_842_node(struct dt_node *node)
 	u32 gcid;
 	u32 pb_base;
 	u64 cfg_dma, cfg_842, cfg_ee;
-	int rc, pnum;
+	int rc;
 
 	gcid = dt_get_chip_id(node);
 	pb_base = dt_get_address(node, 0, NULL);
@@ -166,18 +169,16 @@ void nx_create_842_node(struct dt_node *node)
 		cfg_dma = pb_base + NX_P7_DMA_CFG;
 		cfg_842 = pb_base + NX_P7_842_CFG;
 		cfg_ee = pb_base + NX_P7_EE_CFG;
-		pnum = 7;
 	} else if (dt_node_is_compatible(node, "ibm,power8-nx")) {
 		cfg_dma = pb_base + NX_P8_DMA_CFG;
 		cfg_842 = pb_base + NX_P8_842_CFG;
 		cfg_ee = pb_base + NX_P8_EE_CFG;
-		pnum = 8;
 	} else {
 		prerror("NX%d: ERROR: Unknown NX type!\n", gcid);
 		return;
 	}
 
-	rc = nx_cfg_dma(gcid, cfg_dma, pnum);
+	rc = nx_cfg_dma(gcid, cfg_dma);
 	if (rc)
 		return;
 
