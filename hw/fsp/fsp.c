@@ -2156,6 +2156,7 @@ struct fsp_fetch_lid_item {
 	void *buffer;
 	size_t *length;
 	size_t remaining;
+	size_t chunk_requested;
 	struct list_node link;
 	int result;
 };
@@ -2269,7 +2270,20 @@ static void fsp_fetch_lid_complete(struct fsp_msg *msg)
 		return;
 	}
 
-	if (rc == 0)
+	/*
+	 * As per documentation, rc=2 means end of file not reached and
+	 * rc=1 means we reached end of file. But it looks like we always
+	 * get rc=0 irrespective of whether end of file is reached or not.
+	 * The old implementation (fsp_sync_msg) used to rely on
+	 * (wlen < chunk) to decide whether we reached end of file.
+	 *
+	 * Ideally FSP folks should be fix their code as per documentation.
+	 * but until they do, adding the old check (hack) here again.
+	 *
+	 * Without this hack some systems would load partial lid and won't
+	 * be able to boot into petitboot kernel.
+	 */
+	if (rc == 0 && (wlen < last->chunk_requested))
 		last->result = OPAL_SUCCESS;
 
 	fsp_freemsg(msg);
@@ -2317,6 +2331,7 @@ static void fsp_fetch_lid_next_chunk(struct fsp_fetch_lid_item *last)
 	if (chunk > (PSI_DMA_FETCH_SIZE - boff))
 		chunk = PSI_DMA_FETCH_SIZE - boff;
 	last->bsize = ((boff + chunk) + TCE_MASK) & ~TCE_MASK;
+	last->chunk_requested = chunk;
 
 	prlog(PR_DEBUG, "FSP: Loading Chunk 0x%08x bytes balign=%llx"
 	      " boff=%llx bsize=%llx\n",
