@@ -20,87 +20,80 @@
 #include <skiboot.h>
 #include <string.h>
 
-#define IPMI_WRITE_SENSOR	 (1 << 1)
-#define IPMI_SET_ASSERTION	 (1 << 5)
-#define IPMI_ASSERTION_STATE(state) (1 << state)
+#define IPMI_WRITE_SENSOR		(1 << 0)
+#define IPMI_WRITE_EVENT_BYTES		(1 << 7)
+#define IPMI_SET_ASSERTION		(1 << 4)
 
 #define FW_PROGRESS_SENSOR_TYPE	0x0F
-#define BOOT_COUNT_SENSOR_TYPE	0xAA
+#define BOOT_COUNT_SENSOR_TYPE	0xC3
 
-/* Ghetto. TODO: Do something smarter */
-int16_t sensors[255];
+static int16_t sensors[255];
 
 struct set_sensor_req {
-        u8 sensor;
-        u8 operation;
-        u8 reading[8];
+	u8 sensor_number;
+	u8 operation;
+	u8 sensor_reading;
+	u8 assertion_mask[2];
+	u8 deassertion_mask[2];
+	u8 event_data[3];
 };
 
 int ipmi_set_boot_count(void)
 {
 	struct set_sensor_req req;
 	struct ipmi_msg *msg;
-	int sensor_id;
+	int boot_count_sensor = sensors[BOOT_COUNT_SENSOR_TYPE];
 
-	sensor_id = sensors[BOOT_COUNT_SENSOR_TYPE];
-	if (sensor_id < 0) {
-                prlog(PR_DEBUG, "SENSOR: boot count set but not present\n");
-                return OPAL_HARDWARE;
+	if (!ipmi_present())
+		return OPAL_CLOSED;
+
+	if (boot_count_sensor < 0) {
+		prlog(PR_DEBUG, "IPMI: boot count set but not present\n");
+		return OPAL_HARDWARE;
 	}
 
 	memset(&req, 0, sizeof(req));
 
-	req.sensor = sensor_id;
-	/* Set assertion bit */
-	req.operation = IPMI_SET_ASSERTION;
-	/* Set state 2 */
-	req.reading[1] = IPMI_ASSERTION_STATE(2);
+	req.sensor_number = boot_count_sensor;
+	req.operation = IPMI_WRITE_SENSOR;
+	req.sensor_reading = 0x00;
+	req.assertion_mask[0] = 0x02;
 
-	/* We just need the first 4 bytes */
-	msg = ipmi_mkmsg_simple(IPMI_SET_SENSOR_READING, &req, 4);
+	msg = ipmi_mkmsg_simple(IPMI_SET_SENSOR_READING, &req, sizeof(req));
 	if (!msg)
 		return OPAL_HARDWARE;
+
+	printf("IPMI: Resetting boot count on successful boot\n");
 
 	return ipmi_queue_msg(msg);
 }
 
 int ipmi_set_fw_progress_sensor(uint8_t state)
 {
-       int fw_sensor_id = sensors[FW_PROGRESS_SENSOR_TYPE];
-
-        if (fw_sensor_id < 0) {
-                prlog(PR_DEBUG, "SENSOR: fw progress set but not present\n");
-                return OPAL_HARDWARE;
-        }
-
-        return ipmi_set_sensor(fw_sensor_id, &state, sizeof(state));
-}
-
-int ipmi_set_sensor(uint8_t sensor, uint8_t *reading, size_t len)
-{
 	struct ipmi_msg *msg;
 	struct set_sensor_req request;
+	int fw_sensor_num = sensors[FW_PROGRESS_SENSOR_TYPE];
 
 	if (!ipmi_present())
 		return OPAL_CLOSED;
 
-	if (len > 8) {
-		prlog(PR_ERR, "IPMI: sensor setting length %zd invalid\n",
-			      len);
-		return OPAL_PARAMETER;
+	if (fw_sensor_num < 0) {
+		prlog(PR_DEBUG, "IPMI: fw progress set but not present\n");
+		return OPAL_HARDWARE;
 	}
 
 	memset(&request, 0, sizeof(request));
 
-	request.sensor = sensor;
-	request.operation = IPMI_WRITE_SENSOR;
-	memcpy(request.reading, reading, len);
+	request.sensor_number = fw_sensor_num;
+	request.operation = IPMI_WRITE_EVENT_BYTES;
+	request.assertion_mask[0] = 0x02; /* Firmware progress offset */
+	request.event_data[1] = state;
 
-	prlog(PR_INFO, "IPMI: setting sensor %02x to %02x ...\n",
-			request.sensor, request.reading[0]);
+	prlog(PR_INFO, "IPMI: fw progress sensor (%02x) to %02x ...\n",
+			request.sensor_number, request.event_data[1]);
 
-	/* Send the minimial length message: header plus the reading bytes */
-	msg = ipmi_mkmsg_simple(IPMI_SET_SENSOR_READING, &request, len + 2);
+	msg = ipmi_mkmsg_simple(IPMI_SET_SENSOR_READING, &request,
+			sizeof(request));
 	if (!msg)
 		return OPAL_HARDWARE;
 
