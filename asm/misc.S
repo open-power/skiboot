@@ -69,3 +69,8 @@ mambo_write:
 	.long	0x000eaeb0
 	blr
 
+.global mambo_sim_exit
+mambo_sim_exit:
+	li	%r3, 31	/* aka. SimExitCode */
+	.long	0x000eaeb0
+	b	.

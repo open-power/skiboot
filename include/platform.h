@@ -177,4 +177,6 @@ extern int resource_loaded(enum resource_id id, uint32_t idx);
 
 extern int wait_for_resource_loaded(enum resource_id id, uint32_t idx);
 
+extern void mambo_sim_exit(void);
+
 #endif /* __PLATFORM_H */

@@ -21,6 +21,7 @@
 #include <console.h>
 #include <timebase.h>
 #include <cpu.h>
+#include <chip.h>
 
 struct platform	platform;
 
@@ -59,9 +60,18 @@ static void generic_platform_init(void)
 	fake_rtc_init();
 }
 
+static int64_t generic_cec_power_down(uint64_t request __unused)
+{
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+		mambo_sim_exit();
+
+	return OPAL_UNSUPPORTED;
+}
+
 static struct platform generic_platform = {
-	.name	= "generic",
-	.init	= generic_platform_init,
+	.name		= "generic",
+	.init		= generic_platform_init,
+	.cec_power_down	= generic_cec_power_down,
 };
 
 void probe_platform(void)
