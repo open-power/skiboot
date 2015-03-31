@@ -18,7 +18,7 @@
 #include <asm-offsets.h>
 #include <mem-map.h>
 #include <processor.h>
-#include <opal.h>
+#include <opal-api.h>
 #include <stack.h>
 
 #define EPAPR_MAGIC	0x65504150
