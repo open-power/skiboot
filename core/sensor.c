@@ -19,7 +19,6 @@
 #include <skiboot.h>
 #include <device.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <dts.h>
 
 struct dt_node *sensor_node;

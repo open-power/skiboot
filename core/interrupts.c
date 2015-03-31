@@ -19,7 +19,6 @@
 #include <fsp.h>
 #include <interrupts.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <io.h>
 #include <cec.h>
 #include <device.h>

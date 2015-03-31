@@ -16,7 +16,6 @@
 
 #include <skiboot.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <stack.h>
 #include <lock.h>
 #include <fsp.h>

@@ -36,7 +36,6 @@
 #include <cpu.h>
 #include <errorlog.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <opal-msg.h>
 #include <ccan/list/list.h>
 

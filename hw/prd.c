@@ -19,7 +19,6 @@
 #include <lock.h>
 #include <xscom.h>
 #include <chip.h>
-#include <opal-api.h>
 #include <opal-msg.h>
 #include <fsp.h>
 
