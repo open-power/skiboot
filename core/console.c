@@ -23,7 +23,6 @@
 #include <unistd.h>
 #include <console.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <device.h>
 #include <processor.h>
 #include <cpu.h>

@@ -18,7 +18,6 @@
 #include <lock.h>
 #include <opal.h>
 #include <opal-msg.h>
-#include <opal-api.h>
 #include <device.h>
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>

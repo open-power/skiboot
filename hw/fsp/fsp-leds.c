@@ -24,7 +24,6 @@
 #include <spcn.h>
 #include <lock.h>
 #include <errorlog.h>
-#include <opal-api.h>
 #include <opal.h>
 #include <opal-msg.h>
 

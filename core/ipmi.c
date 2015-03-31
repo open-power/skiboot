@@ -19,7 +19,6 @@
 #include <bt.h>
 #include <ipmi.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <device.h>
 #include <skiboot.h>
 #include <lock.h>

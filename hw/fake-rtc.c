@@ -16,7 +16,6 @@
 
 #include <skiboot.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <mem_region.h>
 
 static uint32_t *fake_ymd;

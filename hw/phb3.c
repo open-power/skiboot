@@ -35,7 +35,6 @@
 #include <vpd.h>
 #include <interrupts.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <cpu.h>
 #include <device.h>
 #include <ccan/str/str.h>

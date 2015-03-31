@@ -29,7 +29,6 @@
 #include <fsp.h>
 #include <psi.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <lock.h>
 #include <skiboot.h>
 #include <errorlog.h>

@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <spcn.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <opal-msg.h>
 
 #include "fsp-epow.h"

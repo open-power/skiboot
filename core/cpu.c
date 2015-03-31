@@ -22,7 +22,6 @@
 #include <cpu.h>
 #include <device.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <stack.h>
 #include <trace.h>
 #include <affinity.h>

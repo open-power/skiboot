@@ -21,7 +21,6 @@
 #include <psi.h>
 #include <fsp.h>
 #include <opal.h>
-#include <opal-api.h>
 #include <gx.h>
 #include <interrupts.h>
 #include <cpu.h>
