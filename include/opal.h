@@ -19,6 +19,7 @@
 
 #ifdef __SKIBOOT__
 #ifndef __ASSEMBLY__
+#include <opal-internal.h>
 #include <types.h>
 #endif /* __ASSEMBLY__ */
 #endif /* __SKIBOOT__ */
