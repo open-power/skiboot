@@ -47,15 +47,15 @@ call_be:
 	ld %r2,8(%r11)
 #endif
 
-	mtctr %r0
+	mtlr %r0
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 	/* Switch to the "other endian" */
 	li %r0,__NR_switch_endian
 	sc
 
-	/* Branch to CTR */
-	.long 0x2104804e /* (byteswapped bctrl) */
+	/* Branch to LR */
+	.long 0x2100804e /* (byteswapped blrl) */
 
 	/* Switch endian back */
 	.long 0x00000038 | le_si16(__NR_switch_endian)
