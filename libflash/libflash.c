@@ -93,10 +93,6 @@ int fl_wren(struct spi_flash_ctrl *ct)
 	int i, rc;
 	uint8_t stat;
 
-	/* If lower level interface not implmented, just return */
-	if (!ct->cmd_wr)
-		return 0;
-
 	/* Some flashes need it to be hammered */
 	for (i = 0; i < 1000; i++) {
 		rc = ct->cmd_wr(ct, CMD_WREN, false, 0, NULL, 0);
@@ -673,6 +669,10 @@ static int flash_set_4b(struct flash_chip *c, bool enable)
 	struct spi_flash_ctrl *ct = c->ctrl;
 	int rc;
 
+	/* Don't have low level interface, assume all is well */
+	if (!ct->cmd_wr)
+		return 0;
+
 	/* Some flash chips want this */
 	rc = fl_wren(ct);
 	if (rc) {
@@ -680,13 +680,7 @@ static int flash_set_4b(struct flash_chip *c, bool enable)
 		/* Ignore the error & move on (could be wrprotect chip) */
 	}
 
-	/* Don't have low level interface, assume all is well */
-	if (!ct->cmd_wr)
-		return 0;
-
-
 	/* Ignore error in case chip is write protected */
-
 	return ct->cmd_wr(ct, enable ? CMD_EN4B : CMD_EX4B, false, 0, NULL, 0);
 }
 
