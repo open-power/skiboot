@@ -26,8 +26,7 @@
 #include <errorlog.h>
 #include <opal.h>
 #include <opal-msg.h>
-
-#include "fsp-leds.h"
+#include <fsp-leds.h>
 
 /* LED prefix */
 #define PREFIX		"FSPLED: "
