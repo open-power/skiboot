@@ -23,6 +23,7 @@
 #include <chip.h>
 #include <fsp-mdst-table.h>
 #include <fsp-attn.h>
+#include <fsp-leds.h>
 
 #include "hdata.h"
 #include "hostservices.h"
@@ -906,6 +907,22 @@ uint32_t pcid_to_chip_id(uint32_t proc_chip_id)
 	return (uint32_t)-1;
 }
 
+/* Create '/ibm,opal/led' node */
+static void dt_init_led_node(void)
+{
+	struct dt_node *led_node;
+
+	/* Create /ibm,opal node, if its not created already */
+	if (!opal_node) {
+		opal_node = dt_new(dt_root, "ibm,opal");
+		assert(opal_node);
+	}
+
+	/* Crete LED parent node */
+	led_node = dt_new(opal_node, DT_PROPERTY_LED_NODE);
+	assert(led_node);
+}
+
 static void dt_init_vpd_node(void)
 {
 	struct dt_node *dt_vpd;
@@ -961,6 +978,9 @@ void parse_hdat(bool is_opal, uint32_t master_cpu)
 
 	/* Create /vpd node */
 	dt_init_vpd_node();
+
+	/* Create /ibm,opal/led node */
+	dt_init_led_node();
 
 	/* Parse SPPACA and/or PCIA */
 	if (!pcia_parse())
