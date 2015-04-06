@@ -459,11 +459,8 @@ void fsp_code_update_wait_vpd(bool is_boot)
 
 	prlog(PR_NOTICE, "CUPD: Waiting read marker LID"
 	      " and in flight parsm completion...\n");
-	while (flash_state == FLASH_STATE_READING || in_flight_params) {
-		unlock(&flash_lock);
+	while (flash_state == FLASH_STATE_READING || in_flight_params)
 		time_wait_ms(100);
-		lock(&flash_lock);
-	}
 
 	if (is_boot)
 		add_opal_firmware_version();
@@ -980,8 +977,6 @@ static int fsp_flash_firmware(void)
 	struct opal_sg_entry *entry;
 	int rc, i;
 
-	lock(&flash_lock);
-
 	/* Make sure no outstanding LID read is in progress */
 	rc = code_update_check_state();
 	if (rc == OPAL_BUSY)
@@ -1068,7 +1063,6 @@ static int fsp_flash_firmware(void)
 	/* Code update completed */
 	rc = code_update_complete(FSP_CMD_FLASH_COMPLETE);
 
-	unlock(&flash_lock);
 	return rc;
 
 abort_update:
@@ -1078,7 +1072,6 @@ abort_update:
 			 "Code update abort command failed. (rc : %d).", rc);
 
 out:
-	unlock(&flash_lock);
 	return -1;
 }
 
