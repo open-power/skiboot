@@ -55,4 +55,16 @@ int fsp_get_sys_param(uint32_t param_id, void *buffer, uint32_t length,
 
 void fsp_sysparam_init(void);
 
+/*
+ * System parameter update notification.
+ * param_id : parameter id
+ * len      : length of data
+ * data     : pointer to data
+ */
+typedef bool (*sysparam_update_notify)(struct fsp_msg *msg);
+
+/* Register/unregister for system parameter update notifier chain */
+void sysparam_add_update_notifier(sysparam_update_notify notify);
+void sysparam_del_update_notifier(sysparam_update_notify notify);
+
 #endif /*  __FSP_SYSPARAM_H */

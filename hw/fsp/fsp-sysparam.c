@@ -346,6 +346,52 @@ static int64_t fsp_opal_set_param(uint64_t async_token, uint32_t param_id,
 	return OPAL_ASYNC_COMPLETION;
 }
 
+struct sysparam_notify_entry {
+	struct	list_node	link;
+	sysparam_update_notify	notify;
+};
+
+static LIST_HEAD(sysparam_update_notifiers);
+
+/* Add client to notifier chain */
+void sysparam_add_update_notifier(sysparam_update_notify notify)
+{
+	struct sysparam_notify_entry *entry;
+
+	entry = zalloc(sizeof(struct sysparam_notify_entry));
+	assert(entry);
+
+	entry->notify = notify;
+	list_add_tail(&sysparam_update_notifiers, &entry->link);
+}
+
+/* Remove client from notifier chain */
+void sysparam_del_update_notifier(sysparam_update_notify notify)
+{
+	struct sysparam_notify_entry *entry;
+
+	list_for_each(&sysparam_update_notifiers, entry, link) {
+		if (entry->notify == notify) {
+			list_del(&entry->link);
+			free(entry);
+			return;
+		}
+	}
+}
+
+/* Update notification chain */
+static void sysparam_run_update_notifier(struct fsp_msg *msg)
+{
+	bool ret;
+	struct sysparam_notify_entry *entry;
+
+	list_for_each(&sysparam_update_notifiers, entry, link) {
+		ret = entry->notify(msg);
+		if (ret == true)
+			break;
+	}
+}
+
 static bool fsp_sysparam_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
 	struct fsp_msg *rsp;
@@ -356,6 +402,9 @@ static bool fsp_sysparam_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 	case FSP_CMD_SP_SPARM_UPD_1:
 		printf("FSP: Got sysparam update, param ID 0x%x\n",
 		       msg->data.words[0]);
+
+		sysparam_run_update_notifier(msg);
+
 		rsp = fsp_mkmsg((cmd_sub_mod & 0xffff00) | 0x008000, 0);
 		if (rsp)
 			rc = fsp_queue_msg(rsp, fsp_freemsg);
