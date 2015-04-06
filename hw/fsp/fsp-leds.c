@@ -1307,13 +1307,13 @@ void create_led_device_nodes(void)
 	}
 
 	/* LED parent node */
-	pled = dt_new(opal_node, "led");
+	pled = dt_new(opal_node, DT_PROPERTY_LED_NODE);
 	if (!pled) {
 		prlog(PR_WARNING, PREFIX
 		      "Parent device node creation failed\n");
 		return;
 	}
-	dt_add_property_strings(pled, "compatible", "ibm,opal-v3-led");
+	dt_add_property_strings(pled, "compatible", DT_PROPERTY_LED_COMPATIBLE);
 
 	/* LED child nodes */
 	list_for_each_safe(&cec_ledq, led, next, link) {
@@ -1331,11 +1331,14 @@ void create_led_device_nodes(void)
 			continue;
 		}
 
-		dt_add_property_strings(cled, "led-types", "identify", "fault");
+		dt_add_property_strings(cled, DT_PROPERTY_LED_TYPES,
+					LED_TYPE_IDENTIFY, LED_TYPE_FAULT);
 		if (is_enclosure_led(led->loc_code))
-			dt_add_property_strings(cled, "led-loc", "enclosure");
+			dt_add_property_strings(cled, DT_PROPERTY_LED_LOCATION,
+						LED_LOC_ENCLOSURE);
 		else
-			dt_add_property_strings(cled, "led-loc", "descendent");
+			dt_add_property_strings(cled, DT_PROPERTY_LED_LOCATION,
+						LED_LOC_DESCENDENT);
 	}
 }
 

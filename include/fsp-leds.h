@@ -150,4 +150,24 @@ struct led_set_cmd {
 #define LED_CONTROL_LEN			2
 #define FSP_LC_STRUCT_FIXED_SZ		0x0a
 
+/* LED Device tree property names */
+#define DT_PROPERTY_LED_COMPATIBLE	"ibm,opal-v3-led"
+#define DT_PROPERTY_LED_NODE		"led"
+#define DT_PROPERTY_LED_MODE		"led-mode"
+#define DT_PROPERTY_LED_TYPES		"led-types"
+#define DT_PROPERTY_LED_LOCATION	"led-loc"
+
+/* LED Mode */
+#define LED_MODE_LIGHT_PATH		"lightpath"
+#define LED_MODE_GUIDING_LIGHT		"guidinglight"
+
+/* LED type */
+#define LED_TYPE_IDENTIFY		"identify"
+#define LED_TYPE_FAULT			"fault"
+#define LED_TYPE_ATTENTION		"attention"
+
+/* LED location */
+#define LED_LOC_ENCLOSURE		"enclosure"
+#define LED_LOC_DESCENDENT		"descendent"
+
 #endif
