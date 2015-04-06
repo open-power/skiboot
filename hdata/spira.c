@@ -737,6 +737,7 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 static void add_iplparams_ipl_params(const void *iplp, struct dt_node *node)
 {
 	const struct iplparams_iplparams *p;
+	struct dt_node *led_node;
 
 	p = HDIF_get_idata(iplp, IPLPARAMS_IPLPARAMS, NULL);
 	if (!CHECK_SPPTR(p)) {
@@ -764,6 +765,17 @@ static void add_iplparams_ipl_params(const void *iplp, struct dt_node *node)
 	dt_add_property_cells(node, "os-ipl-mode", p->os_ipl_mode);
 	dt_add_property_strings(node, "cec-major-type",
 				p->cec_ipl_maj_type ? "hot" : "cold");
+
+	/* Add LED type info under '/ibm,opal/led' node */
+	led_node = dt_find_by_path(opal_node, DT_PROPERTY_LED_NODE);
+	assert(led_node);
+
+	if (p->other_attrib & IPLPARAMS_OATRR_LIGHT_PATH)
+		dt_add_property_strings(led_node, DT_PROPERTY_LED_MODE,
+					LED_MODE_LIGHT_PATH);
+	else
+		dt_add_property_strings(led_node, DT_PROPERTY_LED_MODE,
+					LED_MODE_GUIDING_LIGHT);
 }
 
 static void add_iplparams_serials(const void *iplp, struct dt_node *node)

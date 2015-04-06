@@ -8,6 +8,7 @@ led {
 	compatible = "ibm,opal-v3-led";
 	phandle = <0x1000006b>;
 	linux,phandle = <0x1000006b>;
+	led-mode = "lightpath";
 
 	U78C9.001.RST0027-P1-C1 {
 		led-types = "identify", "fault";
@@ -20,6 +21,8 @@ led {
 };
 
 'compatible' property describes LEDs compatibility.
+
+'led-mode' property describes service indicator mode (lightpath/guidinglight).
 
 Each node under 'led' node describes location code of FRU/Enclosure.
 

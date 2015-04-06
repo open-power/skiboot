@@ -265,6 +265,7 @@ struct iplparams_iplparams {
 	__be32		other_attrib;
 #define IPLPARAMS_OATTR_RST_PCI_BUSNO	0x08000000
 #define IPLPARAMS_OATTR_CLEAR_NVRAM	0x04000000
+#define IPLPARAMS_OATRR_LIGHT_PATH	0x00000004
 	__be16		huge_page_count;
 	uint8_t		huge_page_size;
 #define IPLPARAMS_HUGE_PG_SIZE_16G	0
