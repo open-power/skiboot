@@ -376,7 +376,8 @@ enum OpalPciMaskAction {
 enum OpalSlotLedType {
 	OPAL_SLOT_LED_TYPE_ID = 0,	/* IDENTIFY LED */
 	OPAL_SLOT_LED_TYPE_FAULT = 1,	/* FAULT LED */
-	OPAL_SLOT_LED_TYPE_MAX = 2
+	OPAL_SLOT_LED_TYPE_ATTN = 2,	/* System Attention LED */
+	OPAL_SLOT_LED_TYPE_MAX = 3
 };
 
 enum OpalSlotLedState {

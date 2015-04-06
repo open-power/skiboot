@@ -338,6 +338,8 @@
 #define FSP_RSP_ERRLOG_PHYP_ACK	0x0ce8800 /* FSP->HV */
 #define FSP_CMD_ERRLOG_GET_PLID	0x0ce0900 /* FSP->HV: Get PLID */
 #define FSP_RSP_ERRLOG_GET_PLID	0x0ce8900 /* HV->FSP */
+#define FSP_CMD_SA_INDICATOR	0x1ce1000 /* HV->FSP: read/update SAI */
+#define FSP_RSP_SA_INDICATOR	0x0ce9000 /* FSP->HV */
 #define FSP_CMD_QUERY_SPARM	0x1ce1200 /* HV->FSP: System parameter query */
 #define FSP_RSP_QUERY_SPARM	0x0ce9200 /* FSP->HV: System parameter resp */
 #define FSP_CMD_SET_SPARM_1	0x1ce1301 /* HV->FSP: Set system parameter */
@@ -369,6 +371,16 @@
 #define FSP_CMD_PANELSTATUS	0x0ce5c00 /* FSP->HV */
 #define FSP_CMD_PANELSTATUS_EX1	0x0ce5c02 /* FSP->HV */
 #define FSP_CMD_PANELSTATUS_EX2	0x0ce5c03 /* FSP->HV */
+
+/* SAI read/update sub commands */
+#define FSP_LED_RESET_REAL_SAI		0x00
+#define FSP_LED_READ_REAL_SAI		0x02
+#define FSP_LED_RESET_PARTITION_SAI	0x80
+#define FSP_LED_SET_PARTITION_SAI	0x81
+#define FSP_LED_READ_PARTITION_SAI	0x82
+#define FSP_LED_READ_PLAT_SAI		0x83
+#define FSP_LED_RESET_PLAT_SAI		0x84
+#define FSP_LED_SET_PLAT_SAI		0x85
 
 /*
  * Class 0xD2

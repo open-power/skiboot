@@ -70,6 +70,7 @@ static struct list_head  spcn_cmdq;	/* SPCN command queue */
 /* LED lock */
 static struct lock led_lock = LOCK_UNLOCKED;
 static struct lock spcn_cmd_lock = LOCK_UNLOCKED;
+static struct lock sai_lock = LOCK_UNLOCKED;
 
 static bool spcn_cmd_complete = true;	/* SPCN command complete */
 
@@ -200,6 +201,135 @@ static inline void opal_led_update_complete(u64 async_token, u64 result)
 {
 	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL, async_token, result);
 }
+
+static inline bool is_sai_loc_code(char *loc_code)
+{
+	if (!strcmp(sai_data.loc_code, loc_code))
+		return true;
+
+	return false;
+}
+
+/* Set/Reset System attention indicator */
+static void fsp_set_sai_complete(struct fsp_msg *msg)
+{
+	int ret = OPAL_SUCCESS;
+	int rc = msg->resp->word1 & 0xff00;
+	struct led_set_cmd *spcn_cmd = (struct led_set_cmd *)msg->user_data;
+
+	if (rc) {
+		prlog(PR_ERR, PREFIX "Update SAI cmd failed [rc=%d].\n", rc);
+		ret = OPAL_INTERNAL_ERROR;
+
+		/* Roll back */
+		lock(&sai_lock);
+		sai_data.state = spcn_cmd->ckpt_status;
+		unlock(&sai_lock);
+	}
+
+	if (spcn_cmd->cmd_src == SPCN_SRC_OPAL)
+		opal_led_update_complete(spcn_cmd->async_token, ret);
+
+	/* free msg and spcn command */
+	free(spcn_cmd);
+	fsp_freemsg(msg);
+
+	/* Process pending LED update request */
+	process_led_state_change();
+}
+
+static int fsp_set_sai(struct led_set_cmd *spcn_cmd)
+{
+	int rc = -ENOMEM;
+	uint32_t cmd = FSP_CMD_SA_INDICATOR;
+	struct fsp_msg *msg;
+
+	/*
+	 * FSP does not allow hypervisor to set real SAI, but we can
+	 * reset real SAI. Also in our case only host can control
+	 * LEDs, not guests. Hence we will set platform virtual SAI
+	 * and reset real SAI.
+	 */
+	if (spcn_cmd->state == LED_STATE_ON)
+		cmd |= FSP_LED_SET_PLAT_SAI;
+	else
+		cmd |= FSP_LED_RESET_REAL_SAI;
+
+	prlog(PR_TRACE, PREFIX
+	      "Update SAI Indicator [cur : 0x%x, new : 0x%x].\n",
+	      sai_data.state, spcn_cmd->state);
+
+	msg = fsp_mkmsg(cmd, 0);
+	if (!msg) {
+		prlog(PR_ERR, PREFIX
+		      "%s: Memory allocation failed.\n", __func__);
+		goto sai_fail;
+	}
+
+	spcn_cmd->ckpt_status = sai_data.state;
+	msg->user_data = spcn_cmd;
+	rc = fsp_queue_msg(msg, fsp_set_sai_complete);
+	if (rc) {
+		fsp_freemsg(msg);
+		prlog(PR_ERR, PREFIX
+		      "%s: Failed to queue the message\n", __func__);
+		goto sai_fail;
+	}
+
+	lock(&sai_lock);
+	sai_data.state = spcn_cmd->state;
+	unlock(&sai_lock);
+
+	return OPAL_SUCCESS;
+
+sai_fail:
+	if (spcn_cmd->cmd_src == SPCN_SRC_OPAL)
+		opal_led_update_complete(spcn_cmd->async_token,
+					 OPAL_INTERNAL_ERROR);
+
+	return OPAL_INTERNAL_ERROR;
+}
+
+static void fsp_get_sai_complete(struct fsp_msg *msg)
+{
+	int rc = msg->resp->word1 & 0xff00;
+
+	if (rc) {
+		prlog(PR_ERR, PREFIX
+		      "Read real SAI cmd failed [rc = 0x%x].\n", rc);
+	} else { /* Update SAI state */
+		lock(&sai_lock);
+		sai_data.state = msg->resp->data.words[0] & 0xff;
+		unlock(&sai_lock);
+
+		prlog(PR_TRACE, PREFIX
+		      "SAI initial state = 0x%x\n", sai_data.state);
+	}
+
+	fsp_freemsg(msg);
+}
+
+/* Read initial SAI state. */
+static void fsp_get_sai(void)
+{
+	int rc;
+	uint32_t cmd = FSP_CMD_SA_INDICATOR | FSP_LED_READ_REAL_SAI;
+	struct fsp_msg *msg;
+
+	msg = fsp_mkmsg(cmd, 0);
+	if (!msg) {
+		prlog(PR_ERR, PREFIX
+		      "%s: Memory allocation failed.\n", __func__);
+		return;
+	}
+	rc = fsp_queue_msg(msg, fsp_get_sai_complete);
+	if (rc) {
+		fsp_freemsg(msg);
+		prlog(PR_ERR, PREFIX
+		      "%s: Failed to queue the message\n", __func__);
+	}
+}
+
 
 /*
  * Update both the local LED lists to reflect upon led state changes
@@ -499,7 +629,11 @@ static int process_led_state_change(void)
 	spcn_cmd = list_pop(&spcn_cmdq, struct led_set_cmd, link);
 	unlock(&spcn_cmd_lock);
 
-	rc = fsp_msg_set_led_state(spcn_cmd);
+	if (is_sai_loc_code(spcn_cmd->loc_code))
+		rc = fsp_set_sai(spcn_cmd);
+	else
+		rc = fsp_msg_set_led_state(spcn_cmd);
+
 	if (rc) {
 		free(spcn_cmd);
 		process_led_state_change();
@@ -1094,6 +1228,31 @@ static struct fsp_client fsp_indicator_client = {
 };
 
 
+static int fsp_opal_get_sai(u64 *led_mask, u64 *led_value)
+{
+	*led_mask |= OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ATTN;
+	if (sai_data.state & OPAL_SLOT_LED_STATE_ON)
+		*led_value |=
+			OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ATTN;
+
+	return OPAL_SUCCESS;
+}
+
+static int fsp_opal_set_sai(uint64_t async_token, char *loc_code,
+			    const u64 led_mask, const u64 led_value)
+{
+	int state = LED_STATE_OFF;
+
+	if (!((led_mask >> OPAL_SLOT_LED_TYPE_ATTN) & OPAL_SLOT_LED_STATE_ON))
+		return OPAL_PARAMETER;
+
+	if ((led_value >> OPAL_SLOT_LED_TYPE_ATTN) & OPAL_SLOT_LED_STATE_ON)
+		state = LED_STATE_ON;
+
+	return queue_led_state_change(loc_code, 0,
+				      state, SPCN_SRC_OPAL, async_token);
+}
+
 /*
  * fsp_opal_leds_get_ind (OPAL_LEDS_GET_INDICATOR)
  *
@@ -1122,6 +1281,7 @@ static int64_t fsp_opal_leds_get_ind(char *loc_code, u64 *led_mask,
 {
 	bool supported = true;
 	int64_t max;
+	int rc;
 	struct fsp_led_data *led;
 
 	/* FSP not present */
@@ -1142,6 +1302,12 @@ static int64_t fsp_opal_leds_get_ind(char *loc_code, u64 *led_mask,
 	max = *max_led_type;
 	if (max <= 0)
 		return OPAL_PARAMETER;
+
+	/* Get System attention indicator state */
+	if (is_sai_loc_code(loc_code)) {
+		rc = fsp_opal_get_sai(led_mask, led_value);
+		return rc;
+	}
 
 	/* LED not found */
 	led = fsp_find_cec_led(loc_code);
@@ -1227,6 +1393,14 @@ static int64_t fsp_opal_leds_set_ind(uint64_t async_token,
 	/* Invalid parameter */
 	if (max <= 0)
 		return OPAL_PARAMETER;
+
+	/* Set System attention indicator state */
+	if (is_sai_loc_code(loc_code)) {
+		supported = true;
+		rc = fsp_opal_set_sai(async_token,
+				      loc_code, led_mask, led_value);
+		goto success;
+	}
 
 	/* LED not found */
 	led = fsp_find_cec_led(loc_code);
@@ -1719,6 +1893,7 @@ void fsp_led_init(void)
 
 	/* Get System attention indicator state */
 	dt_get_sai_loc_code();
+	fsp_get_sai();
 
 	/* Handle FSP initiated async LED commands */
 	fsp_register_client(&fsp_indicator_client, FSP_MCLASS_INDICATOR);

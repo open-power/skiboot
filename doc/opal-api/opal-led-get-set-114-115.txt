@@ -19,6 +19,25 @@ Different types of indicators handled by LED code:
 	location with which the indicator is associated.
 
 
+LED Design:
+-----------
+  When it comes to implementation we can classify LEDs into two
+  categories:
+    1 - Hypervisor (OPAL) controlled LEDs (All identify & fault indicators)
+	During boot, we read/cache these LED details in OPAL (location code,
+        state, etc). We use cached data to serve read request from FSP/Host.
+	And we use SPCN passthrough MBOX command to update these LED state.
+
+    2 - Service processor (FSP) controlled LEDs (System Attention Indicator)
+	During boot, we read/cache this LED info using MBOX command. Later
+	anytime FSP updates this LED, it sends update system parameter
+	notification MBOX command. We use that data to update cached data.
+	LED update request is sent via set/reset attn MBOX command.
+
+  LED update request:
+    Both FSP and Host will send LED update requests. We have to serialize
+    SPCN passthrough command. Hence we maintain local queue.
+
 Note:
   - For more information regarding service indicator refer to PAPR spec
     (Service Indicators chapter).
