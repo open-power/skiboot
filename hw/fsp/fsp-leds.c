@@ -27,6 +27,8 @@
 #include <opal.h>
 #include <opal-msg.h>
 #include <fsp-leds.h>
+#include <fsp-sysparam.h>
+
 
 /* LED prefix */
 #define PREFIX		"FSPLED: "
@@ -328,6 +330,31 @@ static void fsp_get_sai(void)
 		prlog(PR_ERR, PREFIX
 		      "%s: Failed to queue the message\n", __func__);
 	}
+}
+
+static bool sai_update_notification(struct fsp_msg *msg)
+{
+	uint32_t *state = &msg->data.words[2];
+	uint32_t param_id = msg->data.words[0];
+	int len = msg->data.words[1] & 0xffff;
+
+	if (param_id != SYS_PARAM_REAL_SAI && param_id != SYS_PARAM_PLAT_SAI)
+		return false;
+
+	if ( len != 4)
+		return false;
+
+	if (*state != LED_STATE_ON && *state != LED_STATE_OFF)
+		return false;
+
+	/* Update SAI state */
+	lock(&sai_lock);
+	sai_data.state = *state;
+	unlock(&sai_lock);
+
+	prlog(PR_TRACE, PREFIX
+	      "SAI updated. New SAI state = 0x%x\n", *state);
+	return true;
 }
 
 
@@ -1898,6 +1925,9 @@ void fsp_led_init(void)
 	/* Handle FSP initiated async LED commands */
 	fsp_register_client(&fsp_indicator_client, FSP_MCLASS_INDICATOR);
 	prlog(PR_TRACE, PREFIX "FSP async command client registered\n");
+
+	/* Register for SAI update notification */
+	sysparam_add_update_notifier(sai_update_notification);
 
 	opal_register(OPAL_LEDS_GET_INDICATOR, fsp_opal_leds_get_ind, 4);
 	opal_register(OPAL_LEDS_SET_INDICATOR, fsp_opal_leds_set_ind, 5);
