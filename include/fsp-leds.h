@@ -126,6 +126,12 @@ struct led_set_cmd {
 	struct	list_node link;
 };
 
+/* System Attention Indicator */
+struct sai_data {
+	uint8_t	state;
+	char	loc_code[LOC_CODE_SIZE];
+};
+
 /* LED commands and state */
 #define LED_COMMAND_FAULT		1
 #define LED_COMMAND_IDENTIFY		0

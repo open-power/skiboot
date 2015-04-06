@@ -77,6 +77,13 @@ static bool spcn_cmd_complete = true;	/* SPCN command complete */
 static u32 last_spcn_cmd;
 static int replay = 0;
 
+/*
+ * FSP controls System Attention Indicator. But it expects hypervisor
+ * keep track of the status and serve get LED state request (both from
+ * Linux and FSP itself)!
+ */
+static struct sai_data sai_data;
+
 /* Forward declaration */
 static void fsp_read_leds_data_complete(struct fsp_msg *msg);
 static int process_led_state_change(void);
@@ -1273,6 +1280,53 @@ success:
 	return rc;
 }
 
+/* Get LED node from device tree */
+static struct dt_node *dt_get_led_node(void)
+{
+	struct dt_node *pled;
+
+	if (!opal_node) {
+		prlog(PR_WARNING, PREFIX
+		      "OPAL parent device node not available\n");
+		return NULL;
+	}
+
+	pled = dt_find_by_path(opal_node, DT_PROPERTY_LED_NODE);
+	if (!pled)
+		prlog(PR_WARNING, PREFIX
+		      "Parent device node not available\n");
+
+	return pled;
+}
+
+/* Get System attention indicator location code from device tree */
+static void dt_get_sai_loc_code(void)
+{
+	struct dt_node *pled, *child;
+	const char *led_type = NULL;
+
+	memset(sai_data.loc_code, 0, LOC_CODE_SIZE);
+
+	pled = dt_get_led_node();
+	if (!pled)
+		return;
+
+	list_for_each(&pled->children, child, list) {
+		led_type = dt_prop_get(child, DT_PROPERTY_LED_TYPES);
+		if (!led_type)
+			continue;
+
+		if (strcmp(led_type, LED_TYPE_ATTENTION))
+			continue;
+
+		memcpy(sai_data.loc_code, child->name, LOC_CODE_SIZE - 1);
+
+		prlog(PR_TRACE, PREFIX "SAI Location code = %s\n",
+		      sai_data.loc_code);
+		return;
+	}
+}
+
 /*
  * create_led_device_node
  *
@@ -1301,19 +1355,10 @@ void create_led_device_nodes(void)
 		return;
 	}
 
-	if (!opal_node) {
-		prlog(PR_WARNING, PREFIX
-		      "OPAL parent device node not available\n");
-		return;
-	}
-
 	/* Get LED node */
-	pled = dt_find_by_path(opal_node, DT_PROPERTY_LED_NODE);
-	if (!pled) {
-		prlog(PR_WARNING, PREFIX
-		      "Parent device node not available\n");
+	pled = dt_get_led_node();
+	if (!pled)
 		return;
-	}
 
 	dt_add_property_strings(pled, "compatible", DT_PROPERTY_LED_COMPATIBLE);
 
@@ -1671,6 +1716,9 @@ void fsp_led_init(void)
 
 	fsp_leds_query_spcn();
 	prlog(PR_TRACE, PREFIX "Init completed\n");
+
+	/* Get System attention indicator state */
+	dt_get_sai_loc_code();
 
 	/* Handle FSP initiated async LED commands */
 	fsp_register_client(&fsp_indicator_client, FSP_MCLASS_INDICATOR);
