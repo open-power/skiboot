@@ -1284,6 +1284,7 @@ success:
  */
 void create_led_device_nodes(void)
 {
+	const char *led_mode = NULL;
 	struct fsp_led_data *led, *next;
 	struct dt_node *pled, *cled;
 
@@ -1316,6 +1317,12 @@ void create_led_device_nodes(void)
 
 	dt_add_property_strings(pled, "compatible", DT_PROPERTY_LED_COMPATIBLE);
 
+	led_mode = dt_prop_get(pled, DT_PROPERTY_LED_MODE);
+	if (!led_mode) {
+		prlog(PR_WARNING, PREFIX "Unknown LED operating mode\n");
+		return;
+	}
+
 	/* LED child nodes */
 	list_for_each_safe(&cec_ledq, led, next, link) {
 		/* Duplicate LED location code */
@@ -1332,8 +1339,14 @@ void create_led_device_nodes(void)
 			continue;
 		}
 
-		dt_add_property_strings(cled, DT_PROPERTY_LED_TYPES,
-					LED_TYPE_IDENTIFY, LED_TYPE_FAULT);
+		if (!strcmp(led_mode, LED_MODE_LIGHT_PATH))
+			dt_add_property_strings(cled, DT_PROPERTY_LED_TYPES,
+						LED_TYPE_IDENTIFY,
+						LED_TYPE_FAULT);
+		else
+			dt_add_property_strings(cled, DT_PROPERTY_LED_TYPES,
+						LED_TYPE_IDENTIFY);
+
 		if (is_enclosure_led(led->loc_code))
 			dt_add_property_strings(cled, DT_PROPERTY_LED_LOCATION,
 						LED_LOC_ENCLOSURE);
