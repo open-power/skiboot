@@ -1026,5 +1026,8 @@ void parse_hdat(bool is_opal, uint32_t master_cpu)
 	/* Host services information. */
  	hostservices_parse();
 
+	/* Parse System Attention Indicator inforamtion */
+	slca_dt_add_sai_node();
+
 	prlog(PR_INFO, "Parsing HDAT...done\n");
 }

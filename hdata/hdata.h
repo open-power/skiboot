@@ -43,6 +43,7 @@ extern const struct slca_entry *slca_get_entry(uint16_t slca_index);
 extern const char *slca_get_vpd_name(uint16_t slca_index);
 extern const char *slca_get_loc_code_index(uint16_t slca_index);
 extern void slca_vpd_add_loc_code(struct dt_node *node, uint16_t slca_index);
+extern void slca_dt_add_sai_node(void);
 
 extern bool hservices_from_hdat(const void *fdt, size_t size);
 

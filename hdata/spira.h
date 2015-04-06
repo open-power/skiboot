@@ -611,6 +611,7 @@ struct slca_entry {
 	uint8_t		fru_id[2];	/* ASCII VPD ID */
 #define SLCA_ROOT_VPD_ID	VPD_ID('V','V')
 #define SLCA_SYSTEM_VPD_ID	VPD_ID('S','V')
+#define SLCA_SAI_INDICATOR_ID	VPD_ID('S','A')
 	__be16		parent_index;	/* Parent entry index */
 	uint8_t		flags;
 #define SLCA_FLAG_NON_FUNCTIONAL	0x02	/* For redundant entries */
