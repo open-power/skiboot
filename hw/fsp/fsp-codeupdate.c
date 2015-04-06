@@ -109,7 +109,7 @@ static inline void code_update_tce_unmap(uint32_t size)
 
 static inline void set_def_fw_version(uint32_t side)
 {
-	strncpy(fw_vpd[side].MI_keyword, FW_VERSION_UNKNOWN, MI_KEYWORD_SIZE);
+	strncpy(fw_vpd[side].mi_keyword, FW_VERSION_UNKNOWN, MI_KEYWORD_SIZE);
 	strncpy(fw_vpd[side].ext_fw_id, FW_VERSION_UNKNOWN, ML_KEYWORD_SIZE);
 }
 
@@ -265,13 +265,13 @@ static void parse_marker_lid(uint32_t side)
 	 * If Marker LID is invalid, then FSP will return a Marker
 	 * LID with ASCII zeros for the entire MI keyword.
 	 */
-	if (mi_sec->MI_keyword[0] == '0')
+	if (mi_sec->mi_keyword[0] == '0')
 		return;
 
-	strncpy(fw_vpd[side].MI_keyword, mi_sec->MI_keyword, MI_KEYWORD_SIZE);
-	fw_vpd[side].MI_keyword[MI_KEYWORD_SIZE - 1] = '\0';
+	strncpy(fw_vpd[side].mi_keyword, mi_sec->mi_keyword, MI_KEYWORD_SIZE);
+	fw_vpd[side].mi_keyword[MI_KEYWORD_SIZE - 1] = '\0';
 	prlog(PR_NOTICE, "CUPD: %s side MI Keyword = %s\n",
-	      side == 0x00 ? "P" : "T", fw_vpd[side].MI_keyword);
+	      side == 0x00 ? "P" : "T", fw_vpd[side].mi_keyword);
 
 	/* Get ML details */
 	adf_sec = (void *)header + be32_to_cpu(mi_sec->adf_offset);
@@ -289,7 +289,7 @@ static void parse_marker_lid(uint32_t side)
 
 static void validate_com_marker_lid(void)
 {
-	if (!strncmp(fw_vpd[ipl_side].MI_keyword, FW_VERSION_UNKNOWN,
+	if (!strncmp(fw_vpd[ipl_side].mi_keyword, FW_VERSION_UNKNOWN,
 		     sizeof(FW_VERSION_UNKNOWN))) {
 		log_simple_error(&e_info(OPAL_RC_CU_MARKER_LID),
 			"CUPD: IPL side Marker LID is not valid\n");
@@ -422,14 +422,14 @@ static void add_opal_firmware_version(void)
 
 	/* MI version */
 	offset = snprintf(buffer, FW_VER_SIZE, "MI %s %s",
-			  fw_vpd[FW_IPL_SIDE_TEMP].MI_keyword,
-			  fw_vpd[FW_IPL_SIDE_PERM].MI_keyword);
+			  fw_vpd[FW_IPL_SIDE_TEMP].mi_keyword,
+			  fw_vpd[FW_IPL_SIDE_PERM].mi_keyword);
 	if (ipl_side == FW_IPL_SIDE_TEMP)
 		snprintf(buffer + offset, FW_VER_SIZE - offset,
-			 " %s", fw_vpd[FW_IPL_SIDE_TEMP].MI_keyword);
+			 " %s", fw_vpd[FW_IPL_SIDE_TEMP].mi_keyword);
 	else
 		snprintf(buffer + offset, FW_VER_SIZE - offset,
-			 " %s", fw_vpd[FW_IPL_SIDE_PERM].MI_keyword);
+			 " %s", fw_vpd[FW_IPL_SIDE_PERM].mi_keyword);
 
 	dt_add_property(dt_fw, "mi-version", buffer, strlen(buffer));
 
@@ -680,11 +680,11 @@ static int64_t validate_image_version(struct update_image_header *header,
 	int t_valid = 0, p_valid = 0, cton_ver = -1, ptot_ver = -1;
 
 	/* Valid flash image level? */
-	if (strncmp(fw_vpd[0].MI_keyword, FW_VERSION_UNKNOWN,
+	if (strncmp(fw_vpd[0].mi_keyword, FW_VERSION_UNKNOWN,
 		    sizeof(FW_VERSION_UNKNOWN)) != 0)
 		p_valid = 1;
 
-	if (strncmp(fw_vpd[1].MI_keyword, FW_VERSION_UNKNOWN,
+	if (strncmp(fw_vpd[1].mi_keyword, FW_VERSION_UNKNOWN,
 		    sizeof(FW_VERSION_UNKNOWN)) != 0)
 		t_valid = 1;
 
@@ -692,24 +692,24 @@ static int64_t validate_image_version(struct update_image_header *header,
 	vpd = fw_vpd[ipl_side];
 
 	/* Validate platform identifier (first two char of MI keyword) */
-	if (strncmp(vpd.MI_keyword, header->MI_keyword_data, 2) != 0) {
+	if (strncmp(vpd.mi_keyword, header->mi_keyword_data, 2) != 0) {
 		*result = VALIDATE_INVALID_IMG;
 		return OPAL_SUCCESS;
 	}
 
 	/* Don't flash different FW series (like P7 image on P8) */
-	if (vpd.MI_keyword[2] != header->MI_keyword_data[2]) {
+	if (vpd.mi_keyword[2] != header->mi_keyword_data[2]) {
 		*result = VALIDATE_INVALID_IMG;
 		return OPAL_SUCCESS;
 	}
 
 	/* Get current to new version difference */
-	cton_ver = strncmp(vpd.MI_keyword + 3, header->MI_keyword_data + 3, 6);
+	cton_ver = strncmp(vpd.mi_keyword + 3, header->mi_keyword_data + 3, 6);
 
 	/* Get P to T version difference */
 	if (t_valid && p_valid)
-		ptot_ver = strncmp(fw_vpd[0].MI_keyword + 3,
-				   fw_vpd[1].MI_keyword + 3, 6);
+		ptot_ver = strncmp(fw_vpd[0].mi_keyword + 3,
+				   fw_vpd[1].mi_keyword + 3, 6);
 
 	/* Update validation result */
 	if (ipl_side == FW_IPL_SIDE_TEMP) {
@@ -774,20 +774,20 @@ static int validate_out_buf_mi_data(void *buffer, int offset, uint32_t result)
 	/* Current T & P side MI data */
 	offset += snprintf(buffer + offset, VALIDATE_BUF_SIZE - offset,
 			   "MI %s %s\n",
-			   fw_vpd[1].MI_keyword, fw_vpd[0].MI_keyword);
+			   fw_vpd[1].mi_keyword, fw_vpd[0].mi_keyword);
 
 	/* New T & P side MI data */
 	offset += snprintf(buffer + offset, VALIDATE_BUF_SIZE - offset,
-			   "MI %s", header->MI_keyword_data);
+			   "MI %s", header->mi_keyword_data);
 	if (result == VALIDATE_TMP_COMMIT_DL ||
 	    result == VALIDATE_TMP_COMMIT)
 		offset += snprintf(buffer + offset,
 				   VALIDATE_BUF_SIZE - offset,
-				   " %s\n", fw_vpd[1].MI_keyword);
+				   " %s\n", fw_vpd[1].mi_keyword);
 	else
 		offset += snprintf(buffer + offset,
 				   VALIDATE_BUF_SIZE - offset,
-				   " %s\n", fw_vpd[0].MI_keyword);
+				   " %s\n", fw_vpd[0].mi_keyword);
 	return offset;
 }
 

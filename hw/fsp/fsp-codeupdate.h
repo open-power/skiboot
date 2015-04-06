@@ -82,7 +82,7 @@
 
 /* Firmware image VPD data */
 struct fw_image_vpd {
-	char	MI_keyword[MI_KEYWORD_SIZE];	/* NNSSS_FFF */
+	char	mi_keyword[MI_KEYWORD_SIZE];	/* NNSSS_FFF */
 	char	ext_fw_id[ML_KEYWORD_SIZE];	/* FWxxx.yy */
 };
 
@@ -90,8 +90,8 @@ struct fw_image_vpd {
 struct master_lid_header {
 	char		key[3];		/* "MLH" */
 	uint8_t		version;	/* 0x02 */
-	uint16_t	headerSize;
-	uint16_t	entrySize;
+	uint16_t	header_size;
+	uint16_t	entry_size;
 	uint8_t		reserved[56];
 };
 
@@ -129,8 +129,8 @@ struct update_image_header {
 	uint16_t	lid_index_offset;
 	uint16_t	number_lids;
 	uint16_t	package_flags;
-	uint16_t	MI_keyword_size;
-	char		MI_keyword_data[40];
+	uint16_t	mi_keyword_size;
+	char		mi_keyword_data[40];
 	uint16_t	ext_fw_id_size;
 	/* Rest of the image data including ext fw id, sp flags */
 	char		data[];
@@ -187,7 +187,7 @@ struct com_marker_header {
 /* MI Keyword section */
 struct com_marker_mi_section {
 	uint32_t	MI_size;
-	char		MI_keyword[40];	/* MI Keyword */
+	char		mi_keyword[40];	/* MI Keyword */
 	char		lst_disrupt_fix_lvl[3];
 	char		skip[21];	/* Skip not interested fields */
 	uint32_t	adf_offset;	/* Offset to ADF section */
