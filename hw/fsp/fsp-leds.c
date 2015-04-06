@@ -1306,13 +1306,14 @@ void create_led_device_nodes(void)
 		return;
 	}
 
-	/* LED parent node */
-	pled = dt_new(opal_node, DT_PROPERTY_LED_NODE);
+	/* Get LED node */
+	pled = dt_find_by_path(opal_node, DT_PROPERTY_LED_NODE);
 	if (!pled) {
 		prlog(PR_WARNING, PREFIX
-		      "Parent device node creation failed\n");
+		      "Parent device node not available\n");
 		return;
 	}
+
 	dt_add_property_strings(pled, "compatible", DT_PROPERTY_LED_COMPATIBLE);
 
 	/* LED child nodes */
