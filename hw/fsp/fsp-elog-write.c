@@ -44,13 +44,13 @@ static struct lock elog_panic_write_lock = LOCK_UNLOCKED;
 static struct lock elog_write_to_host_lock = LOCK_UNLOCKED;
 
 /* log buffer  to copy FSP log for READ */
-#define ELOG_WRITE_TO_FSP_BUFFER_SIZE	0x00040000
+#define ELOG_WRITE_TO_FSP_BUFFER_SIZE	0x00004000
 static void *elog_write_to_fsp_buffer;
 
-#define ELOG_PANIC_WRITE_BUFFER_SIZE	0x0010000
+#define ELOG_PANIC_WRITE_BUFFER_SIZE	0x00004000
 static void *elog_panic_write_buffer;
 
-#define ELOG_WRITE_TO_HOST_BUFFER_SIZE	0x0010000
+#define ELOG_WRITE_TO_HOST_BUFFER_SIZE	0x00004000
 static void *elog_write_to_host_buffer;
 
 static uint32_t elog_write_retries;
