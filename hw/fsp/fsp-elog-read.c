@@ -197,6 +197,11 @@ static void fsp_elog_read_complete(struct fsp_msg *read_msg)
 	val = (read_msg->resp->word1 >> 8) & 0xff;
 	fsp_freemsg(read_msg);
 
+	if (elog_read_from_fsp_head_state == ELOG_STATE_REJECTED) {
+		fsp_elog_set_head_state(ELOG_STATE_NONE);
+		goto elog_read_out;
+	}
+
 	switch (val) {
 	case FSP_STATUS_SUCCESS:
 		fsp_elog_set_head_state(ELOG_STATE_FETCHED_DATA);
@@ -219,8 +224,8 @@ static void fsp_elog_read_complete(struct fsp_msg *read_msg)
 	default:
 		fsp_elog_fetch_failure(val);
 	}
-	if (elog_read_from_fsp_head_state == ELOG_STATE_REJECTED)
-		fsp_elog_set_head_state(ELOG_STATE_NONE);
+
+elog_read_out:
 	unlock(&elog_read_lock);
 
 	/* Check if a new log needs fetching */
