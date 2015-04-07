@@ -305,6 +305,7 @@ static int opal_push_logs_sync_to_fsp(struct errorlog *buf)
 		prerror("ELOG: PLID: 0x%x Failed to create message for WRITE "
 							"to FSP\n", buf->plid);
 		unlock(&elog_panic_write_lock);
+		opal_elog_complete(buf, false);
 		return OPAL_INTERNAL_ERROR;
 	}
 
@@ -317,7 +318,10 @@ static int opal_push_logs_sync_to_fsp(struct errorlog *buf)
 	}
 	unlock(&elog_panic_write_lock);
 
-	opal_elog_complete(buf, true);
+	if (rc != OPAL_SUCCESS)
+		opal_elog_complete(buf, false);
+	else
+		opal_elog_complete(buf, true);
 	return rc;
 }
 
