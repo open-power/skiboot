@@ -79,7 +79,7 @@ static LIST_HEAD(elog_read_free);
 static struct lock elog_read_lock = LOCK_UNLOCKED;
 
 /* log buffer  to copy FSP log for READ */
-#define ELOG_READ_BUFFER_SIZE	0x00040000
+#define ELOG_READ_BUFFER_SIZE	0x00004000
 static void *elog_read_buffer;
 static uint32_t elog_head_id;	/* FSP entry ID */
 static size_t elog_head_size;	/* actual FSP log size */
