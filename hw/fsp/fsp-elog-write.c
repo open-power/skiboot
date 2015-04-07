@@ -426,9 +426,6 @@ void fsp_elog_write_init(void)
 	fsp_tce_map(PSI_DMA_ERRLOG_WRITE_BUF, elog_write_to_fsp_buffer,
 					PSI_DMA_ERRLOG_WRITE_BUF_SZ);
 
-	fsp_tce_map(PSI_DMA_ELOG_WR_TO_HOST_BUF, elog_write_to_host_buffer,
-					PSI_DMA_ELOG_WR_TO_HOST_BUF_SZ);
-
 	elog_init();
 
 	/* Add a poller */
