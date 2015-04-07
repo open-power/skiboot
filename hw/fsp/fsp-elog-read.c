@@ -374,8 +374,6 @@ static int64_t fsp_opal_elog_ack(uint64_t ack_id)
 		return rc;
 	}
 	lock(&elog_read_lock);
-	if (ack_id == elog_head_id)
-		elog_reject_head();
 	list_for_each_safe(&elog_read_pending, record, next_record, link) {
 		if (record->log_id != ack_id)
 			continue;
