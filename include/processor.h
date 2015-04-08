@@ -179,6 +179,7 @@
 #define PVR_TYPE_P7P	0x004a
 #define PVR_TYPE_P8E	0x004b /* Murano */
 #define PVR_TYPE_P8	0x004d /* Venice */
+#define PVR_TYPE_P8NVL	0x004c /* Naples */
 
 #ifdef __ASSEMBLY__
 

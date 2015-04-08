@@ -480,6 +480,10 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 		chip->type = PROC_CHIP_P8_VENICE;
 		assert(proc_gen == proc_gen_p8);
 		break;
+	case 0xd3:
+		chip->type = PROC_CHIP_P8_NAPLES;
+		assert(proc_gen == proc_gen_p8);
+		break;
 	default:
 		printf("CHIP: Unknown chip type 0x%02x !!!\n",
 		       (unsigned char)(val & 0xff));

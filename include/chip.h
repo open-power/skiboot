@@ -87,6 +87,7 @@ enum proc_chip_type {
 	PROC_CHIP_P7P,
 	PROC_CHIP_P8_MURANO,
 	PROC_CHIP_P8_VENICE,
+	PROC_CHIP_P8_NAPLES,
 };
 
 /* Simulator quirks */

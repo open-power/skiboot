@@ -45,6 +45,7 @@ unsigned int cpu_thread_count;
 unsigned int cpu_max_pir;
 struct cpu_thread *boot_cpu;
 static struct lock reinit_lock = LOCK_UNLOCKED;
+static bool hile_supported;
 
 unsigned long cpu_secondary_start __force_data = 0;
 
@@ -359,21 +360,36 @@ void init_boot_cpu(void)
 	pir = mfspr(SPR_PIR);
 	pvr = mfspr(SPR_PVR);
 
-	/* Get a CPU thread count and an initial max PIR based on PVR */
+	/* Get CPU family and other flags based on PVR */
 	switch(PVR_TYPE(pvr)) {
 	case PVR_TYPE_P7:
 	case PVR_TYPE_P7P:
-		cpu_thread_count = 4;
-		cpu_max_pir = SPR_PIR_P7_MASK;
 		proc_gen = proc_gen_p7;
-		prlog(PR_INFO, "CPU: P7 generation processor"
-		      "(max %d threads/core)\n", cpu_thread_count);
 		break;
 	case PVR_TYPE_P8E:
 	case PVR_TYPE_P8:
+		proc_gen = proc_gen_p8;
+		hile_supported = PVR_VERS_MAJ(mfspr(SPR_PVR)) >= 2;
+		break;
+	case PVR_TYPE_P8NVL:
+		proc_gen = proc_gen_p8;
+		hile_supported = true;
+		break;
+	default:
+		proc_gen = proc_gen_unknown;
+	}
+
+	/* Get a CPU thread count and an initial max PIR based on family */
+	switch(proc_gen) {
+	case proc_gen_p7:
+		cpu_thread_count = 4;
+		cpu_max_pir = SPR_PIR_P7_MASK;
+		prlog(PR_INFO, "CPU: P7 generation processor"
+		      "(max %d threads/core)\n", cpu_thread_count);
+		break;
+	case proc_gen_p8:
 		cpu_thread_count = 8;
 		cpu_max_pir = SPR_PIR_P8_MASK;
-		proc_gen = proc_gen_p8;
 		prlog(PR_INFO, "CPU: P8 generation processor"
 		      "(max %d threads/core)\n", cpu_thread_count);
 		break;
@@ -381,7 +397,6 @@ void init_boot_cpu(void)
 		prerror("CPU: Unknown PVR, assuming 1 thread\n");
 		cpu_thread_count = 1;
 		cpu_max_pir = mfspr(SPR_PIR);
-		proc_gen = proc_gen_unknown;
 	}
 
 	prlog(PR_DEBUG, "CPU: Boot CPU PIR is 0x%04x PVR is 0x%08x\n",
@@ -679,7 +694,7 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 	 * use the HID bit. We use the PVR (we could use the EC level in
 	 * the chip but the PVR is more readily available).
 	 */
-	if (proc_gen == proc_gen_p8 && PVR_VERS_MAJ(mfspr(SPR_PVR)) >= 2 &&
+	if (hile_supported &&
 	    (flags & (OPAL_REINIT_CPUS_HILE_BE | OPAL_REINIT_CPUS_HILE_LE))) {
 		bool hile = !!(flags & OPAL_REINIT_CPUS_HILE_LE);
 
