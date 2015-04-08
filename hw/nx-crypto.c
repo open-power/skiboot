@@ -48,9 +48,9 @@
 static int nx_cfg_sym(u32 gcid, u64 xcfg)
 {
 	u64 cfg, ci, ct;
-	int rc;
+	int rc, instance = gcid + 1;
 
-	BUILD_ASSERT(MAX_CHIPS <= NX_SYM_CFG_CI_MAX);
+	BUILD_ASSERT(MAX_CHIPS < NX_SYM_CFG_CI_MAX);
 
 	rc = xscom_read(gcid, xcfg, &cfg);
 	if (rc)
@@ -73,14 +73,14 @@ static int nx_cfg_sym(u32 gcid, u64 xcfg)
 	 */
 	ci = GETFIELD(NX_SYM_CFG_CI, cfg) >> NX_SYM_CFG_CI_LSHIFT;
 	if (!ci)
-		prlog(PR_INFO, "NX%d:   SYM CI set to %d\n", gcid, gcid);
-	else if (ci == gcid)
+		prlog(PR_INFO, "NX%d:   SYM CI set to %d\n", gcid, instance);
+	else if (ci == instance)
 		prlog(PR_INFO, "NX%d:   SYM CI already set to %u\n", gcid,
 		      (unsigned int)ci);
 	else
 		prlog(PR_INFO, "NX%d:   SYM CI already set to %u, "
-		      "changing to %d\n", gcid, (unsigned int)ci, gcid);
-	ci = gcid;
+		      "changing to %d\n", gcid, (unsigned int)ci, instance);
+	ci = instance;
 	cfg = SETFIELD(NX_SYM_CFG_CI, cfg, ci << NX_SYM_CFG_CI_LSHIFT);
 
 	cfg = SETFIELD(NX_SYM_CFG_FC_ENABLE, cfg, CFG_SYM_FC_ENABLE);
@@ -101,9 +101,9 @@ static int nx_cfg_sym(u32 gcid, u64 xcfg)
 static int nx_cfg_asym(u32 gcid, u64 xcfg)
 {
 	u64 cfg, ci, ct;
-	int rc;
+	int rc, instance = gcid + 1;
 
-	BUILD_ASSERT(MAX_CHIPS <= NX_ASYM_CFG_CI_MAX);
+	BUILD_ASSERT(MAX_CHIPS < NX_ASYM_CFG_CI_MAX);
 
 	rc = xscom_read(gcid, xcfg, &cfg);
 	if (rc)
@@ -127,14 +127,14 @@ static int nx_cfg_asym(u32 gcid, u64 xcfg)
 	 */
 	ci = GETFIELD(NX_ASYM_CFG_CI, cfg) >> NX_ASYM_CFG_CI_LSHIFT;
 	if (!ci)
-		prlog(PR_INFO, "NX%d:   ASYM CI set to %d\n", gcid, gcid);
-	else if (ci == gcid)
+		prlog(PR_INFO, "NX%d:   ASYM CI set to %d\n", gcid, instance);
+	else if (ci == instance)
 		prlog(PR_INFO, "NX%d:   ASYM CI already set to %u\n", gcid,
 		      (unsigned int)ci);
 	else
 		prlog(PR_INFO, "NX%d:   ASYM CI already set to %u, "
-		      "changing to %d\n", gcid, (unsigned int)ci, gcid);
-	ci = gcid;
+		      "changing to %d\n", gcid, (unsigned int)ci, instance);
+	ci = instance;
 	cfg = SETFIELD(NX_ASYM_CFG_CI, cfg, ci << NX_ASYM_CFG_CI_LSHIFT);
 
 	cfg = SETFIELD(NX_ASYM_CFG_FC_ENABLE, cfg, CFG_ASYM_FC_ENABLE);

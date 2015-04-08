@@ -39,9 +39,9 @@
 static int nx_cfg_842(u32 gcid, u64 xcfg)
 {
 	u64 cfg, ci, ct;
-	int rc;
+	int rc, instance = gcid + 1;
 
-	BUILD_ASSERT(MAX_CHIPS <= NX_842_CFG_CI_MAX);
+	BUILD_ASSERT(MAX_CHIPS < NX_842_CFG_CI_MAX);
 
 	rc = xscom_read(gcid, xcfg, &cfg);
 	if (rc)
@@ -64,14 +64,14 @@ static int nx_cfg_842(u32 gcid, u64 xcfg)
 	 */
 	ci = GETFIELD(NX_842_CFG_CI, cfg) >> NX_842_CFG_CI_LSHIFT;
 	if (!ci)
-		prlog(PR_INFO, "NX%d:   842 CI set to %d\n", gcid, gcid);
-	else if (ci == gcid)
+		prlog(PR_INFO, "NX%d:   842 CI set to %d\n", gcid, instance);
+	else if (ci == instance)
 		prlog(PR_INFO, "NX%d:   842 CI already set to %u\n", gcid,
 		      (unsigned int)ci);
 	else
 		prlog(PR_INFO, "NX%d:   842 CI already set to %u, "
-		      "changing to %d\n", gcid, (unsigned int)ci, gcid);
-	ci = gcid;
+		      "changing to %d\n", gcid, (unsigned int)ci, instance);
+	ci = instance;
 	cfg = SETFIELD(NX_842_CFG_CI, cfg, ci << NX_842_CFG_CI_LSHIFT);
 
 	/* Enable all functions */
@@ -193,5 +193,5 @@ void nx_create_842_node(struct dt_node *node)
 	prlog(PR_INFO, "NX%d: 842 Coprocessor Enabled\n", gcid);
 
 	dt_add_property_cells(node, "ibm,842-coprocessor-type", NX_CT_842);
-	dt_add_property_cells(node, "ibm,842-coprocessor-instance", gcid);
+	dt_add_property_cells(node, "ibm,842-coprocessor-instance", gcid + 1);
 }
