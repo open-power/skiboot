@@ -21,8 +21,6 @@
 #include <string.h>
 
 #define IPMI_WRITE_SENSOR		(1 << 0)
-#define IPMI_WRITE_EVENT_BYTES		(1 << 7)
-#define IPMI_SET_ASSERTION		(1 << 4)
 
 #define FW_PROGRESS_SENSOR_TYPE	0x0F
 #define BOOT_COUNT_SENSOR_TYPE	0xC3
@@ -85,11 +83,11 @@ int ipmi_set_fw_progress_sensor(uint8_t state)
 	memset(&request, 0, sizeof(request));
 
 	request.sensor_number = fw_sensor_num;
-	request.operation = IPMI_WRITE_EVENT_BYTES;
-	request.assertion_mask[0] = 0x02; /* Firmware progress offset */
+	request.operation = 0xa0; /* Set event data bytes, assertion bits */
+	request.assertion_mask[0] = 0x04; /* Firmware progress offset */
 	request.event_data[1] = state;
 
-	prlog(PR_INFO, "IPMI: fw progress sensor (%02x) to %02x ...\n",
+	prlog(PR_INFO, "IPMI: setting fw progress sensor %02x to %02x\n",
 			request.sensor_number, request.event_data[1]);
 
 	msg = ipmi_mkmsg_simple(IPMI_SET_SENSOR_READING, &request,
