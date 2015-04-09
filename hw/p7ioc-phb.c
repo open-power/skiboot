@@ -2740,7 +2740,7 @@ static void p7ioc_phb_err_interrupt(void *data, uint32_t isn)
 
 	PHBDBG(p, "Got interrupt 0x%04x\n", isn);
 
-	opal_update_pending_evt(OPAL_EVENT_PCI_ERROR, OPAL_EVENT_PCI_ERROR);
+	opal_pci_eeh_set_evt(p->phb.opal_id);
 
 	/* If the PHB is broken, go away */
 	if (p->state == P7IOC_PHB_STATE_BROKEN)

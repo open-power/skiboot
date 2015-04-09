@@ -21,6 +21,8 @@
 #include <timebase.h>
 #include <device.h>
 
+/* The eeh event code will need updating if this is ever increased to
+ * support more than 64 phbs */
 static struct phb *phbs[64];
 
 #define PCITRACE(_p, _bdfn, fmt, a...) \

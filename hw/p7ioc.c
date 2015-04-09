@@ -575,8 +575,11 @@ static void p7ioc_rgc_interrupt(void *data, uint32_t isn)
 
 	/* We will notify OS while getting error from GEM */
 	if (p7ioc_check_GEM(ioc))
-		opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
-					OPAL_EVENT_PCI_ERROR);
+		/* This is a bit hacky but works - we raise the event
+		on a downstream phb as the OS needs to call
+		opal_pci_next_error for all phbs to ensure all events
+		are cleared anyway. */
+		opal_pci_eeh_set_evt(ioc->phbs[0].phb.opal_id);
 }
 
 static const struct irq_source_ops p7ioc_rgc_irq_ops = {

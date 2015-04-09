@@ -511,4 +511,7 @@ extern void pci_std_swizzle_irq_map(struct dt_node *dt_node,
 extern void pci_init_slots(void);
 extern void pci_reset(void);
 
+extern void opal_pci_eeh_set_evt(uint64_t phb_id);
+extern void opal_pci_eeh_clear_evt(uint64_t phb_id);
+
 #endif /* __PCI_H */

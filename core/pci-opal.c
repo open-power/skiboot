@@ -53,6 +53,26 @@ opal_call(OPAL_PCI_CONFIG_WRITE_BYTE, opal_pci_config_write_byte, 4);
 opal_call(OPAL_PCI_CONFIG_WRITE_HALF_WORD, opal_pci_config_write_half_word, 4);
 opal_call(OPAL_PCI_CONFIG_WRITE_WORD, opal_pci_config_write_word, 4);
 
+static struct lock opal_eeh_evt_lock = LOCK_UNLOCKED;
+static uint64_t opal_eeh_evt = 0;
+
+void opal_pci_eeh_set_evt(uint64_t phb_id)
+{
+	lock(&opal_eeh_evt_lock);
+	opal_eeh_evt |= 1ULL << phb_id;
+	opal_update_pending_evt(OPAL_EVENT_PCI_ERROR, OPAL_EVENT_PCI_ERROR);
+	unlock(&opal_eeh_evt_lock);
+}
+
+void opal_pci_eeh_clear_evt(uint64_t phb_id)
+{
+	lock(&opal_eeh_evt_lock);
+	opal_eeh_evt &= ~(1ULL << phb_id);
+	if (!opal_eeh_evt)
+		opal_update_pending_evt(OPAL_EVENT_PCI_ERROR, 0);
+	unlock(&opal_eeh_evt_lock);
+}
+
 static int64_t opal_pci_eeh_freeze_status(uint64_t phb_id, uint64_t pe_number,
 					  uint8_t *freeze_state,
 					  uint16_t *pci_error_type,
@@ -660,8 +680,7 @@ static int64_t opal_pci_next_error(uint64_t phb_id, uint64_t *first_frozen_pe,
 		return OPAL_UNSUPPORTED;
 	phb->ops->lock(phb);
 
-	/* Any call to this function clears the error event */
-	opal_update_pending_evt(OPAL_EVENT_PCI_ERROR, 0);
+	opal_pci_eeh_clear_evt(phb_id);
 	rc = phb->ops->next_error(phb, first_frozen_pe, pci_error_type,
 				  severity);
 	phb->ops->unlock(phb);
