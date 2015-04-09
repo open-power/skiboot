@@ -3497,7 +3497,9 @@ static void phb3_init_ioda2(struct phb3 *p)
 	/* Init_24 - Interrupt represent timers
 	 * The register doesn't take effect on Murano DD1.0
 	 */
-	if (p->rev >= PHB3_REV_MURANO_DD20)
+	if (p->rev >= PHB3_REV_NAPLES_DD10)
+		out_be64(p->regs + PHB_INTREP_TIMER, 0x0014000000000000);
+	else if (p->rev >= PHB3_REV_MURANO_DD20)
 		out_be64(p->regs + PHB_INTREP_TIMER, 0x0004000000000000);
 	else
 		out_be64(p->regs + PHB_INTREP_TIMER, 0);
@@ -3703,10 +3705,8 @@ static void phb3_init_utl(struct phb3 *p)
 
 	/* Init_80..81: Setup tag allocations
 	 *
-         * Don't touch UTL_GBIF_READ_TAGS_ALLOC, it differs betwen PHBs
-         * and the default is correct
+         * Stick to HW defaults. May differs between PHB implementations
 	 */
-	out_be64(p->regs + UTL_PCIE_TAGS_ALLOC,            0x0800000000000000);
 
 	/* Init_82: PCI Express port control
 	 * SW283991: Set Outbound Non-Posted request timeout to 16ms (RTOS).
@@ -3856,18 +3856,16 @@ static void phb3_init_hw(struct phb3 *p)
 
 	/* Init_8 - PCIE System Configuration Register
 	 *
-	 * Not changed from default values. Beware that bits [04:09] should
-	 * be different between PHBs (x16 vs x8).
+	 * Use default values, clear bit 15 (SYS_EC00_SLOT) to avoid incorrect
+	 * slot power limit message and adjust max speed based on system
+	 * config. Don't hard wire default value as some bits are different
+	 * between implementations.
 	 */
-	PHBDBG(p, "Default system config: 0x%016llx\n",
-	       in_be64(p->regs + PHB_PCIE_SYSTEM_CONFIG));
-	if (p->index == 2)
-		val = 0x421000fc00000000;
-	else
-		val = 0x441000fc00000000;
-	val |= (uint64_t)p->max_link_speed << PPC_BITLSHIFT(35);
+	val = in_be64(p->regs + PHB_PCIE_SYSTEM_CONFIG);
+	PHBDBG(p, "Default system config: 0x%016llx\n", val);
+	val = SETFIELD(PHB_PCIE_SCONF_SLOT, val, 0);
+	val = SETFIELD(PHB_PCIE_SCONF_MAXLINKSPEED, val, p->max_link_speed);
 	out_be64(p->regs + PHB_PCIE_SYSTEM_CONFIG, val);
-
 	PHBDBG(p, "New system config    : 0x%016llx\n",
 	       in_be64(p->regs + PHB_PCIE_SYSTEM_CONFIG));
 
@@ -3886,9 +3884,10 @@ static void phb3_init_hw(struct phb3 *p)
 	/* Init_XX - (PHB2 errata)
 	 *
          * Set proper credits, needs adjustment due to wrong defaults
-	 * on PHB2 before we lift the reset.
+	 * on PHB2 before we lift the reset. This only applies to Murano
+	 * and Venice
 	 */
-	if (p->index == 2)
+	if (p->index == 2 && p->rev < PHB3_REV_NAPLES_DD10)
 		out_be64(p->regs + PHB_PCIE_SYS_LINK_INIT, 0x9008133332120000);
 
 	/* Init_13 - PCIE Reset */
@@ -3935,6 +3934,14 @@ static void phb3_init_hw(struct phb3 *p)
 #endif
 	if (p->rev >= PHB3_REV_MURANO_DD20)
 		val |= 0x0000010000000000;
+	if (p->rev >= PHB3_REV_NAPLES_DD10) {
+		/* Enable 32-bit bypass support on Naples and tell the OS
+		 * about it
+		 */
+		val |= 0x0010000000000000;
+		dt_add_property(p->phb.dt_node,
+				"ibm,32-bit-bypass-supported", NULL, 0);
+	}
 	out_be64(p->regs + PHB_CONTROL, val);
 
 	/* Init_88..128  : Setup error registers */

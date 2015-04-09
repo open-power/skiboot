@@ -270,6 +270,7 @@ struct phb3 {
 #define PHB3_REV_MURANO_DD20	0xa30003
 #define PHB3_REV_MURANO_DD21	0xa30004
 #define PHB3_REV_VENICE_DD20	0xa30005
+#define PHB3_REV_NAPLES_DD10	0xb30001
 	void			*regs;
 	uint64_t		pe_xscom;   /* XSCOM bases */
 	uint64_t		pci_xscom;
