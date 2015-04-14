@@ -132,9 +132,14 @@ static void vpd_vini_parse(struct dt_node *node,
 		memcpy(str, kw, kwsz);
 		dt_add_property_string(node, "ccin", str);
 		cinfo = card_info_lookup(str);
-		if (cinfo)
-			dt_add_property_string(node, 
+		if (cinfo) {
+			dt_add_property_string(node,
 				       "description", cinfo->description);
+		} else {
+			dt_add_property_string(node, "description", "Unknown");
+			prlog(PR_WARNING,
+			      "VPD: CCIN desc not available for : %s\n", str);
+		}
 		free(str);
 	}
 	return;
@@ -423,6 +428,9 @@ static const char *vpd_map_name(const char *vpd_name)
 		}
 		break;
 	}
+
+	prlog(PR_WARNING,
+	      "VPD: Could not map FRU ID %s to a known name\n", vpd_name);
 	return "Unknown";
 }
 
@@ -632,8 +640,13 @@ static void sysvpd_parse(void)
 	memcpy(str, model, sz);
 	dt_add_property_string(dt_root, "model", str);
 	mi = machine_info_lookup(str);
-	if (mi)
+	if (mi) {
 		dt_add_property_string(dt_root, "model-name", mi->name);
+	} else {
+		dt_add_property_string(dt_root, "model-name", "Unknown");
+		prlog(PR_WARNING, "VPD: Model name %s not known\n", str);
+	}
+
 	free(str);
 	dt_add_property_string(dt_root, "vendor", "IBM");
 
