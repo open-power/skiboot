@@ -213,6 +213,8 @@ static int fru_write(void)
 	 */
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_WRITE_FRU,
 			 fru_write_complete, NULL, NULL, FRU_DATA_SIZE + 5, 2);
+	if (!msg)
+		return OPAL_RESOURCE;
 
 	msg->data[0] = fru_dev_id;	/* FRU Device ID */
 	msg->data[1] = 0x0;		/* Offset LSB (we always write a new common header) */

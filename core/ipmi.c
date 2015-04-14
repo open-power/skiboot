@@ -31,6 +31,15 @@ static struct ipmi_msg *sync_msg = NULL;
 
 void ipmi_free_msg(struct ipmi_msg *msg)
 {
+	/* ipmi_free_msg frees messages allocated by the
+	 * backend. Without a backend we couldn't have allocated
+	 * messages to free (we don't support removing backends
+	 * yet). */
+	if (!ipmi_present()) {
+		prerror("IPMI: Trying to free message without backend\n");
+		return;
+	}
+
 	msg->backend->free_msg(msg);
 }
 
@@ -63,6 +72,9 @@ struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
 {
 	struct ipmi_msg *msg;
 
+	if (!ipmi_present())
+		return NULL;
+
 	msg = ipmi_backend->alloc_msg(req_size, resp_size);
 	if (!msg)
 		return NULL;
@@ -81,6 +93,14 @@ struct ipmi_msg *ipmi_mkmsg(int interface, uint32_t code,
 
 int ipmi_queue_msg_head(struct ipmi_msg *msg)
 {
+	if (!ipmi_present())
+		return OPAL_HARDWARE;
+
+	if (!msg) {
+		prerror("%s: Attempting to queue NULL message\n", __func__);
+		return OPAL_PARAMETER;
+	}
+
 	return msg->backend->queue_msg_head(msg);
 }
 
@@ -88,6 +108,13 @@ int ipmi_queue_msg(struct ipmi_msg *msg)
 {
 	/* Here we could choose which interface to use if we want to support
 	   multiple interfaces. */
+	if (!ipmi_present())
+		return OPAL_HARDWARE;
+
+	if (!msg) {
+		prerror("%s: Attempting to queue NULL message\n", __func__);
+		return OPAL_PARAMETER;
+	}
 
 	return msg->backend->queue_msg(msg);
 }
@@ -124,6 +151,14 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 
 void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 {
+	if (!ipmi_present())
+		return;
+
+	if (!msg) {
+		prerror("%s: Attempting to queue NULL message\n", __func__);
+		return;
+	}
+
 	lock(&sync_lock);
 	while (sync_msg);
 	sync_msg = msg;
@@ -176,6 +211,9 @@ static void ipmi_get_message_flags_complete(struct ipmi_msg *msg)
 void ipmi_sms_attention(void)
 {
 	struct ipmi_msg *msg;
+
+	if (!ipmi_present())
+		return;
 
 	/* todo: when we handle multiple IPMI interfaces, we'll need to
 	 * ensure that this message is associated with the appropriate
