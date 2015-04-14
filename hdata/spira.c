@@ -941,6 +941,7 @@ static void dt_init_vpd_node(void)
 
 	dt_vpd = dt_new(dt_root, "vpd");
 	assert(dt_vpd);
+	dt_add_property_string(dt_vpd, "compatible", "ibm,opal-v3-vpd");
 }
 
 static void hostservices_parse(void)
