@@ -57,6 +57,7 @@ void ast_io_init(void);
  */
 #define AST_SF_TYPE_PNOR	0
 #define AST_SF_TYPE_BMC		1
+#define AST_SF_TYPE_MEM 	2
 
 struct spi_flash_ctrl;
 int ast_sf_open(uint8_t type, struct spi_flash_ctrl **ctrl);
