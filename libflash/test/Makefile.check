@@ -18,7 +18,7 @@ libflash/test/stubs.o: libflash/test/stubs.c
 
 $(LIBFLASH_TEST) : libflash/test/stubs.o libflash/libflash.c libflash/ecc.c
 
-$(LIBFLASH_TEST) : % : %.c 
+$(LIBFLASH_TEST) : % : %.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o, $<)
 
 $(LIBFLASH_TEST:%=%-gcov): %-gcov : %.c %
@@ -30,4 +30,5 @@ clean: libflash-test-clean
 
 libflash-test-clean:
 	$(RM) libflash/test/*.o $(LIBFLASH_TEST)
+	$(RM) libflash/test/*.d
 	$(RM) libflash/test/*-gcov
