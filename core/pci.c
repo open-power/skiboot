@@ -301,8 +301,11 @@ static bool pci_enable_bridge(struct phb *phb, struct pci_device *pd)
 	bctl &= ~PCI_CFG_BRCTL_MABORT_REPORT;
 	pci_cfg_write16(phb, pd->bdfn, PCI_CFG_BRCTL, bctl);
 
-	/* PCI-E bridge, check the slot state */
-	if (pd->dev_type == PCIE_TYPE_ROOT_PORT ||
+	/* PCI-E bridge, check the slot state. We don't do that on the
+	 * root complex as this is handled separately and not all our
+	 * RCs implement the standard register set.
+	 */
+	if ((pd->dev_type == PCIE_TYPE_ROOT_PORT && pd->primary_bus > 0) ||
 	    pd->dev_type == PCIE_TYPE_SWITCH_DNPORT) {
 		uint16_t slctl, slcap, slsta, lctl;
 

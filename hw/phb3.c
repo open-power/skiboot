@@ -470,9 +470,7 @@ static int64_t phb3_pci_reinit(struct phb *phb, uint64_t scope, uint64_t data)
 static int64_t phb3_presence_detect(struct phb *phb)
 {
 	struct phb3 *p = phb_to_phb3(phb);
-	uint16_t slot_stat;
 	uint64_t hp_override;
-	int64_t rc;
 
 	/* Test for PHB in error state ? */
 	if (p->state == PHB3_STATE_BROKEN)
@@ -480,30 +478,16 @@ static int64_t phb3_presence_detect(struct phb *phb)
 
 	/* XXX Check bifurcation stuff ? */
 
-	/* Read slot status register */
-	rc = phb3_pcicfg_read16(&p->phb, 0, p->ecap + PCICAP_EXP_SLOTSTAT,
-					&slot_stat);
-	if (rc != OPAL_SUCCESS)
-		return OPAL_HARDWARE;
-
 	/* Read hotplug override */
 	hp_override = in_be64(p->regs + PHB_HOTPLUG_OVERRIDE);
 
-	PHBDBG(p, "slot_stat: 0x%04x, hp_override: 0x%016llx\n",
-	       slot_stat, hp_override);
-
-	/* So if the slot status says nothing connected, we bail out */
-	if (!(slot_stat & PCICAP_EXP_SLOTSTAT_PDETECTST))
-		return OPAL_SHPC_DEV_NOT_PRESENT;
+	PHBDBG(p, "hp_override: 0x%016llx\n", hp_override);
 
 	/*
-	 * At this point, we can have one of those funky IBM
-	 * systems that has the presence bit set in the slot
-	 * status and nothing actually connected. If so, we
-	 * check the hotplug override A/B bits
+	 * On P8, the slot status isn't wired up properly, we have to
+	 * use the hotplug override A/B bits.
 	 */
-	if (p->use_ab_detect &&
-	    (hp_override & PHB_HPOVR_PRESENCE_A) &&
+	if ((hp_override & PHB_HPOVR_PRESENCE_A) &&
 	    (hp_override & PHB_HPOVR_PRESENCE_B))
 		return OPAL_SHPC_DEV_NOT_PRESENT;
 
@@ -4258,9 +4242,6 @@ static void phb3_create(struct dt_node *np)
 	PHBINF(p, "  M64 [0x%016llx..0x%016llx]\n",
 	       p->mm0_base, p->mm0_base + p->mm0_size - 1);
 	free(path);
-
-	/* Check if we can use the A/B detect pins */
-	p->use_ab_detect = dt_has_node_property(np, "ibm,use-ab-detect", NULL);
 
 	/* Find base location code from root node */
 	p->phb.base_loc_code = dt_prop_get_def(dt_root,

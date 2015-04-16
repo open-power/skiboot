@@ -292,7 +292,6 @@ struct phb3 {
 
 	bool			skip_perst; /* Skip first perst */
 	bool			has_link;
-	bool			use_ab_detect;
 	enum phb3_state		state;
 	uint64_t		delay_tgt_tb;
 	uint64_t		retries;
