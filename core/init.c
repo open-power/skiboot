@@ -290,6 +290,8 @@ static bool load_kernel(void)
 	size_t ksize;
 	int loaded;
 
+	prlog(PR_NOTICE, "INIT: Loading kernel\n");
+
 	/* Try to load an external kernel payload through the platform hooks */
 	ksize = KERNEL_LOAD_SIZE;
 	loaded = start_preload_resource(RESOURCE_ID_KERNEL,
