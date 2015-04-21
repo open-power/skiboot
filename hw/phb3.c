@@ -2318,10 +2318,10 @@ static void do_capp_recovery_scoms(struct phb3 *p)
 	uint64_t reg;
 	PHBDBG(p, "Doing CAPP recovery scoms\n");
 
-	xscom_write(p->chip_id, 0x201301a, 0); /* disable snoops */
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 0); /* disable snoops */
 	capp_load_ucode(p);
-	xscom_write(p->chip_id, 0x2013013, 0); /* clear err rpt reg*/
-	xscom_write(p->chip_id, 0x2013000, 0); /* clear capp fir */
+	xscom_write(p->chip_id, CAPP_ERR_RPT_CLR, 0); /* clear err rpt reg*/
+	xscom_write(p->chip_id, CAPP_FIR, 0); /* clear capp fir */
 
 	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
 	reg &= ~(PPC_BIT(0) | PPC_BIT(1));
