@@ -72,8 +72,9 @@
 #define BT_QUEUE_DEBUG 0
 
 #define BT_ERR(msg, fmt, args...) \
-	do { prerror("BT seq 0x%02x cmd 0x%02x: " fmt "\n", \
-	     (msg)->seq, (msg)->ipmi_msg.cmd, ##args);  } while(0)
+	do { prerror("BT seq 0x%02x netfn 0x%02x cmd 0x%02x: " fmt "\n", \
+	     (msg)->seq, (msg)->ipmi_msg.netfn, (msg)->ipmi_msg.cmd, ##args); \
+	} while(0)
 
 enum bt_states {
 	BT_STATE_IDLE = 0,
