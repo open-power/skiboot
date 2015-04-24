@@ -120,14 +120,12 @@ bool lock_recursive(struct lock *l)
 	if (bust_locks)
 		return false;
 
-	if ((l->lock_val & 1) &&
-	    (l->lock_val >> 32) == this_cpu()->pir)
+	if (lock_held_by_me(l))
 		return false;
 
 	lock(l);
 	return true;
 }
-
 
 void init_locks(void)
 {
