@@ -226,12 +226,13 @@ static int ipoll_record_and_mask_pending(uint32_t proc)
 
 	lock(&ipoll_lock);
 	rc = xscom_read(proc, PRD_IPOLL_REG_STATUS, &status);
+	status &= PRD_IPOLL_MASK;
 	if (!rc)
 		__ipoll_update_mask(proc, true, status);
 	unlock(&ipoll_lock);
 
 	if (!rc)
-		ipoll_status[proc] |= (status & PRD_IPOLL_MASK);
+		ipoll_status[proc] |= status;
 
 	return rc;
 }
@@ -284,7 +285,8 @@ static int prd_msg_handle_init(struct opal_prd_msg *msg)
 
 	lock(&ipoll_lock);
 	for_each_chip(chip) {
-		__ipoll_update_mask(chip->id, false, msg->init.ipoll);
+		__ipoll_update_mask(chip->id, false,
+			msg->init.ipoll & PRD_IPOLL_MASK);
 	}
 	unlock(&ipoll_lock);
 
@@ -309,7 +311,7 @@ static int prd_msg_handle_fini(void)
 
 	lock(&ipoll_lock);
 	for_each_chip(chip) {
-		__ipoll_update_mask(chip->id, true, -1ul);
+		__ipoll_update_mask(chip->id, true, PRD_IPOLL_MASK);
 	}
 	unlock(&ipoll_lock);
 
@@ -345,7 +347,7 @@ void prd_init(void)
 	/* mask everything */
 	lock(&ipoll_lock);
 	for_each_chip(chip) {
-		__ipoll_update_mask(chip->id, true, -1ul);
+		__ipoll_update_mask(chip->id, true, PRD_IPOLL_MASK);
 	}
 	unlock(&ipoll_lock);
 
