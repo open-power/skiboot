@@ -165,6 +165,7 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	pd->is_multifunction = !!(htype & 0x80);
 	pd->is_bridge = (htype & 0x7f) != 0;
 	pd->scan_map = 0xffffffff; /* Default */
+	pd->primary_bus = (bdfn >> 8);
 
 	ecap = pci_find_cap(phb, bdfn, PCI_CFG_CAP_ID_EXP);
 	if (ecap > 0) {
@@ -205,7 +206,6 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	 * This will help when walking down those bridges later on
 	 */
 	if (pd->is_bridge) {
-		pd->primary_bus = (bdfn >> 8);
 		pci_cfg_write8(phb, bdfn, PCI_CFG_PRIMARY_BUS, pd->primary_bus);
 		pci_cfg_write8(phb, bdfn, PCI_CFG_SECONDARY_BUS, 0);
 		pci_cfg_write8(phb, bdfn, PCI_CFG_SUBORDINATE_BUS, 0);

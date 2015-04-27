@@ -417,10 +417,43 @@ static void phb3_endpoint_init(struct phb *phb,
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, val32);
 }
 
+static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
+{
+	struct phb3 *p = phb_to_phb3(phb);
+	u64 modectl;
+	u32 vdid;
+	u16 vendor, device;
+
+	/* For these adapters, if they are directly under the PHB, we
+	 * adjust some settings for performances
+	 */
+	xscom_read(p->chip_id, p->pe_xscom + 0x0b, &modectl);
+
+	pci_cfg_read32(phb, dev->bdfn, 0, &vdid);
+	vendor = vdid & 0xffff;
+	device = vdid >> 16;
+	if (vendor == 0x15b3 &&
+	    (device == 0x1003 ||	/* Travis3-EN (CX3) */
+	     device == 0x1011 ||	/* HydePark (ConnectIB) */
+	     device == 0x1013))	{	/* GlacierPark (CX4) */
+		/* Set disable_wr_scope_group bit */
+		modectl |= PPC_BIT(14);
+	} else {
+		/* Clear disable_wr_scope_group bit */
+		modectl &= ~PPC_BIT(14);
+	}
+
+	xscom_write(p->chip_id, p->pe_xscom + 0x0b, modectl);
+}
+
 static void phb3_device_init(struct phb *phb, struct pci_device *dev)
 {
 	int ecap = 0;
 	int aercap = 0;
+
+	/* Some special adapter tweaks for devices directly under the PHB */
+	if (dev->primary_bus == 1)
+		phb3_check_device_quirks(phb, dev);
 
 	/* Figure out PCIe & AER capability */
 	if (pci_has_cap(dev, PCI_CFG_CAP_ID_EXP, false)) {
