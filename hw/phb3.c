@@ -2031,7 +2031,7 @@ static int64_t phb3_start_link_poll(struct phb3 *p)
 	 */
 	p->retries = PHB3_LINK_ELECTRICAL_RETRIES;
 	p->state = PHB3_STATE_WAIT_LINK_ELECTRICAL;
-	return phb3_set_sm_timeout(p, msecs_to_tb(100));
+	return phb3_set_sm_timeout(p, msecs_to_tb(1000));
 }
 
 static int64_t phb3_sm_hot_reset(struct phb3 *p)
