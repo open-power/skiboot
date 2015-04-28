@@ -112,15 +112,15 @@ static void fsp_surv_hbeat(void)
 	    (tb_compare(now, surv_timer) == TB_AAFTERB) ||
 	    (tb_compare(now, surv_timer) == TB_AEQUALB)) {
 		prlog(PR_DEBUG,
-		      "SURV: Sending the hearbeat command to FSP\n");
+		      "SURV: Sending the heartbeat command to FSP\n");
 		msg = fsp_mkmsg(FSP_CMD_SURV_HBEAT, 1, 120);
 		if (!msg) {
-			prerror("SURV: Failed to allocate hbeat msg\n");
+			prerror("SURV: Failed to allocate heartbeat msg\n");
 			return;
 		}
 		if (fsp_queue_msg(msg, fsp_surv_ack)) {
 			fsp_freemsg(msg);
-			prerror("SURV: Failed to queue hbeat msg\n");
+			prerror("SURV: Failed to queue heartbeat msg\n");
 		} else {
 			fsp_surv_ack_pending = true;
 			surv_timer = now + secs_to_tb(60);
