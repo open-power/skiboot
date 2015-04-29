@@ -135,6 +135,10 @@ static size_t uart_con_write(const char *buf, size_t len)
 {
 	size_t written = 0;
 
+	/* If LPC bus is bad, we just swallow data */
+	if (!lpc_ok())
+		return written;
+
 	lock(&uart_lock);
 	while(written < len) {
 		if (tx_room == 0) {

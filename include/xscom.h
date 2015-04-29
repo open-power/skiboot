@@ -173,6 +173,11 @@ extern void xscom_init(void);
 /* Mark XSCOM lock as being in console path */
 extern void xscom_used_by_console(void);
 
+/* Returns true if XSCOM can be used. Typically this returns false if
+ * the current CPU holds the XSCOM lock (to avoid re-entrancy from error path).
+ */
+extern bool xscom_ok(void);
+
 extern int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id);
 
 #endif /* __XSCOM_H */

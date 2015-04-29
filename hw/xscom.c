@@ -527,3 +527,8 @@ void xscom_used_by_console(void)
 	lock(&xscom_lock);
 	unlock(&xscom_lock);
 }
+
+bool xscom_ok(void)
+{
+	return !lock_held_by_me(&xscom_lock);
+}

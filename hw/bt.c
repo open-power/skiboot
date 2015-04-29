@@ -350,7 +350,8 @@ static void print_debug_queue_info(void) {}
 
 static void bt_send_and_unlock(void)
 {
-	if (bt.state == BT_STATE_IDLE && !list_empty(&bt.msgq))
+	if (lpc_ok() &&
+	    bt.state == BT_STATE_IDLE && !list_empty(&bt.msgq))
 		bt_send_msg();
 
 	unlock(&bt.lock);
@@ -360,6 +361,10 @@ static void bt_send_and_unlock(void)
 static void bt_poll(struct timer *t __unused, void *data __unused)
 {
 	uint8_t bt_ctrl;
+
+	/* Don't do anything if the LPC bus is offline */
+	if (!lpc_ok())
+		return;
 
 	/* If we can't get the lock assume someone else will notice
 	 * the new message and process it. */
@@ -440,7 +445,9 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 
 void bt_irq(void)
 {
-	uint8_t ireg = bt_inb(BT_INTMASK);
+	uint8_t ireg;
+
+	ireg = bt_inb(BT_INTMASK);
 
 	bt.irq_ok = true;
 	if (ireg & BT_INTMASK_B2H_IRQ) {

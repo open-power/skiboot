@@ -500,3 +500,15 @@ void lpc_used_by_console(void)
 		unlock(&chip->lpc_lock);
 	}
 }
+
+bool lpc_ok(void)
+{
+	struct proc_chip *chip;
+
+	if (lpc_default_chip_id < 0)
+		return false;
+	if (!xscom_ok())
+		return false;
+	chip = get_chip(lpc_default_chip_id);
+	return !lock_held_by_me(&chip->lpc_lock);
+}
