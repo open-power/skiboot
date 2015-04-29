@@ -342,7 +342,6 @@ static uint32_t xscom_decode_chiplet(uint32_t partid, uint64_t *pcb_addr)
  */
 int xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val)
 {
-	bool need_unlock;
 	uint32_t gcid;
 	int rc;
 
@@ -360,12 +359,8 @@ int xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val)
 		return OPAL_PARAMETER;
 	}
 
-	/*
-	 * HW822317 requires locking. We use a recursive lock as error
-	 * conditions might cause printf's which might then try to take
-	 * the lock again
-	 */
-	need_unlock = lock_recursive(&xscom_lock);
+	/* HW822317 requires us to do global locking */
+	lock(&xscom_lock);
 
 	/* Direct vs indirect access */
 	if (pcb_addr & XSCOM_ADDR_IND_FLAG)
@@ -374,8 +369,7 @@ int xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val)
 		rc = __xscom_read(gcid, pcb_addr & 0x7fffffff, val);
 
 	/* Unlock it */
-	if (need_unlock)
-		unlock(&xscom_lock);
+	unlock(&xscom_lock);
 	return rc;
 }
 
@@ -383,7 +377,6 @@ opal_call(OPAL_XSCOM_READ, xscom_read, 3);
 
 int xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val)
 {
-	bool need_unlock;
 	uint32_t gcid;
 	int rc;
 
@@ -401,12 +394,8 @@ int xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val)
 		return OPAL_PARAMETER;
 	}
 
-	/*
-	 * HW822317 requires locking. We use a recursive lock as error
-	 * conditions might cause printf's which might then try to take
-	 * the lock again
-	 */
-	need_unlock = lock_recursive(&xscom_lock);
+	/* HW822317 requires us to do global locking */
+	lock(&xscom_lock);
 
 	/* Direct vs indirect access */
 	if (pcb_addr & XSCOM_ADDR_IND_FLAG)
@@ -415,8 +404,7 @@ int xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val)
 		rc = __xscom_write(gcid, pcb_addr & 0x7fffffff, val);
 
 	/* Unlock it */
-	if (need_unlock)
-		unlock(&xscom_lock);
+	unlock(&xscom_lock);
 	return rc;
 }
 opal_call(OPAL_XSCOM_WRITE, xscom_write, 3);
