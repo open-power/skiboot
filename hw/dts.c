@@ -44,6 +44,67 @@ struct dts {
 	int16_t		temp;
 };
 
+/* Different sensor locations */
+#define P7_CT_ZONE_LSU	0
+#define P7_CT_ZONE_ISU	1
+#define P7_CT_ZONE_IFU	2
+#define P7_CT_ZONE_VFU	3
+#define P7_CT_ZONE_L3C	4
+#define P7_CT_ZONES	5
+
+/* Per core Digital Thermal Sensors */
+#define EX_THERM_P7_DTS_RESULT0	0x8050000
+#define EX_THERM_P7_DTS_RESULT1	0x8050001
+
+/*
+ * DTS2 Thermal Sensor Results
+ *
+ * 0..7		sensor with id 0.
+ * 8..15	sensor with id 1. (Only chiplets)
+ * 16..23	sensor with id 2. (Only chiplets)
+ * 24..31	sensor with id 3. (Only chiplets)
+ * 32..39	sensor with id 4. (Only chiplets)
+ * 40..56	reserved0
+ * 57		Trip warning history
+ * 58		Trip critical history
+ * 59		Trip fatal history
+ * 60		reserved1
+ * 61..63	ID of worst case DTS2 (Only valid in EX core chiplets)
+ */
+static int dts_read_core_temp_p7(uint32_t pir, struct dts *dts)
+{
+	int32_t chip_id = pir_to_chip_id(pir);
+	int32_t core = pir_to_core_id(pir);
+	uint64_t dts0;
+	struct dts temps[P7_CT_ZONES];
+	int i;
+	int rc;
+
+	rc = xscom_read(chip_id,
+			XSCOM_ADDR_P8_EX(core, EX_THERM_P7_DTS_RESULT0),
+			&dts0);
+	if (rc)
+		return rc;
+
+	temps[P7_CT_ZONE_LSU].temp = (dts0 >> 56) & 0xff;
+	temps[P7_CT_ZONE_ISU].temp = (dts0 >> 48) & 0xff;
+	temps[P7_CT_ZONE_IFU].temp = (dts0 >> 40) & 0xff;
+	temps[P7_CT_ZONE_VFU].temp = (dts0 >> 32) & 0xff;
+	temps[P7_CT_ZONE_L3C].temp = (dts0 >> 24) & 0xff;
+
+	/* keep the max DTS  */
+	for (i = 0; i < P7_CT_ZONES; i++) {
+		int16_t t = temps[i].temp;
+		if (t > dts->temp)
+			dts->temp = t;
+	}
+	dts->trip = (dts0 >> 3) & 0xf;
+
+	prlog(PR_TRACE, "DTS: Chip %x Core %x temp:%dC trip:%x\n",
+	      chip_id, core, dts->temp, dts->trip);
+
+	return 0;
+}
 
 /* Therm mac result masking for DTS (result(0:15)
  *  0:3   - 0x0
@@ -82,7 +143,7 @@ static void dts_decode_one_dts(uint16_t raw, struct dts *dts)
  * Returns the temperature as the max of all 4 zones and a global trip
  * attribute.
  */
-static int dts_read_core_temp(uint32_t pir, struct dts *dts)
+static int dts_read_core_temp_p8(uint32_t pir, struct dts *dts)
 {
 	int32_t chip_id = pir_to_chip_id(pir);
 	int32_t core = pir_to_core_id(pir);
@@ -129,6 +190,23 @@ static int dts_read_core_temp(uint32_t pir, struct dts *dts)
 	 */
 	dts->trip = 0;
 	return 0;
+}
+
+static int dts_read_core_temp(uint32_t pir, struct dts *dts)
+{
+	int rc;
+
+	switch (proc_gen) {
+	case proc_gen_p7:
+		rc = dts_read_core_temp_p7(pir, dts);
+		break;
+	case proc_gen_p8:
+		rc = dts_read_core_temp_p8(pir, dts);
+		break;
+	default:
+		assert(false);
+	}
+	return rc;
 }
 
 
