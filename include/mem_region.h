@@ -60,7 +60,7 @@ void mem_region_release_unused(void);
 extern struct mem_region skiboot_heap;
 
 void mem_region_init(void);
-
+void adjust_cpu_stacks_alloc(void);
 void mem_region_add_dt_reserved(void);
 
 /* Mark memory as reserved */

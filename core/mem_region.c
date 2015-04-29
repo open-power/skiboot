@@ -725,6 +725,15 @@ struct mem_region *find_mem_region(const char *name)
 	return NULL;
 }
 
+void adjust_cpu_stacks_alloc(void)
+{
+	/* CPU stacks start at 0, then when we know max possible PIR,
+	 * we adjust, then when we bring all CPUs online we know the
+	 * runtime max PIR, so we adjust this a few times during boot.
+	 */
+	skiboot_cpu_stacks.len = (cpu_max_pir + 1) * STACK_SIZE;
+}
+
 /* Trawl through device tree, create memory regions from nodes. */
 void mem_region_init(void)
 {
@@ -773,8 +782,7 @@ void mem_region_init(void)
 		unlock(&mem_region_lock);
 	}
 
-	/* Now we know how many CPU stacks we have, fix that up. */
-	skiboot_cpu_stacks.len = (cpu_max_pir + 1) * STACK_SIZE;
+	adjust_cpu_stacks_alloc();
 
 	lock(&mem_region_lock);
 

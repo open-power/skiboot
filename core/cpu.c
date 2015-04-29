@@ -21,6 +21,7 @@
 #include <skiboot.h>
 #include <cpu.h>
 #include <device.h>
+#include <mem_region.h>
 #include <opal.h>
 #include <stack.h>
 #include <trace.h>
@@ -497,6 +498,7 @@ void init_all_cpus(void)
 	}
 	cpu_max_pir = new_max_pir;
 	prlog(PR_DEBUG, "CPU: New max PIR set to 0x%x\n", new_max_pir);
+	adjust_cpu_stacks_alloc();
 }
 
 void cpu_bringup(void)
