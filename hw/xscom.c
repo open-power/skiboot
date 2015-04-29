@@ -504,7 +504,7 @@ void xscom_init(void)
 		struct proc_chip *chip;
 		const char *chip_name;
 		static const char *chip_names[] = {
-			"UNKNOWN", "P7", "P7+", "P8E", "P8",
+			"UNKNOWN", "P7", "P7+", "P8E", "P8", "P8NVL",
 		};
 
 		chip = get_chip(gcid);
@@ -521,8 +521,11 @@ void xscom_init(void)
 		/* Grab processor type and EC level */
 		xscom_init_chip_info(chip);
 
-		chip_name = chip->type > PROC_CHIP_P8_VENICE ? "INVALID" :
-			chip_names[chip->type];
+		if (chip->type >= ARRAY_SIZE(chip_names))
+			chip_name = "INVALID";
+		else
+			chip_name = chip_names[chip->type];
+
 		printf("XSCOM: chip 0x%x at 0x%llx [%s DD%x.%x]\n",
 		       gcid, chip->xscom_base,
 		       chip_name,
