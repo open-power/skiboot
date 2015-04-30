@@ -1,5 +1,5 @@
 #Number of times to sleep
-BOOT_TIMEOUT="10";
+BOOT_TIMEOUT="20";
 
 #Username/password for for ssh to FSP machines
 SSHUSER=${SSHUSER:-}
