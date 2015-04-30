@@ -38,7 +38,7 @@ function linux_boot {
 	ipmiresult=$($IPMI_COMMAND sol deactivate 2>&1);
 	retval=$?
 	if [ $retval -ne 0 -a "$ipmiresult" != "Info: SOL payload already de-activated" ]; then
-	    error "IPMI failed; it has probably stalled on the FSP."
+	    msg "IPMI sol deactivate failed; IPMI may have stalled, may just be IPMI. Good luck."
 	fi
 
 	LINUXBOOT_LOG=$(mktemp --tmpdir builder-2.XXXXXX);

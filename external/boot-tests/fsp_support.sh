@@ -2,11 +2,11 @@
 BOOT_TIMEOUT="20";
 
 #Username/password for for ssh to FSP machines
-SSHUSER=${SSHUSER:-}
-SSHPASS=${SSHPASS:-}
+SSHUSER=${FSPSSHUSER:-}
+SSHPASS=${FSPSSHPASS:-}
 
 if [ -z $SSHUSER ] || [ -z $SSHPASS ] ; then
-	msg "Set SSHUSER and SSHPASS in ENV or ~/.skiboot_boot_tests"
+	msg "Set FSPSSHUSER and FSPSSHPASS in ENV or ~/.skiboot_boot_tests"
 	exit 1;
 fi
 
@@ -113,7 +113,7 @@ function boot_firmware {
 	i=0;
 	state=$($SSHCMD "$GET_PROFILE; smgr mfgState");
 	while [ \( "$state" != "runtime" \) -a \( "$i" -lt "$BOOT_TIMEOUT" \) ] ; do
-		msg "Waiting $BOOT_SLEEP_PERIOD more seconds";
+		msg "Waiting $BOOT_SLEEP_PERIOD more seconds (istep: `grep iStep $ISTEP_LOG|tail -n 1`)";
 		sleep "$BOOT_SLEEP_PERIOD";
 		i=$(expr $i + 1);
 		state=$($SSHCMD "$GET_PROFILE; smgr mfgState");
