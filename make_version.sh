@@ -33,6 +33,11 @@ else
 	then
 		echo $SKIBOOT_VERSION
 	else
-		exit 1;
+		if [ ! -z "`cat .version`" ];
+		then
+			cat .version
+		else
+			exit 1;
+		fi
 	fi
 fi
