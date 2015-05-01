@@ -27,6 +27,12 @@ extern void lpc_init(void);
 /* Check for a default bus */
 extern bool lpc_present(void);
 
+/* Return of LPC is currently usable. This can be false if the caller
+ * currently holds a lock that would make it unsafe, or the LPC bus
+ * is known to be in some error condition (TBI).
+ */
+extern bool lpc_ok(void);
+
 /* Handle the interrupt from LPC source */
 extern void __attrconst lpc_interrupt(uint32_t chip_id);
 
