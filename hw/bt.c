@@ -79,7 +79,6 @@
 enum bt_states {
 	BT_STATE_IDLE = 0,
 	BT_STATE_RESP_WAIT,
-	BT_STATE_B_BUSY,
 };
 
 struct bt_msg {
@@ -150,7 +149,7 @@ static void bt_init_interface(void)
 	/* Take care of a stable H_BUSY if any */
 	bt_set_h_busy(false);
 
-	bt_set_state(BT_STATE_B_BUSY);
+	bt_set_state(BT_STATE_IDLE);
 }
 
 static void bt_reset_interface(void)
@@ -172,13 +171,6 @@ static void bt_send_msg(void)
 	assert(bt_msg);
 
 	ipmi_msg = &bt_msg->ipmi_msg;
-
-	if (!bt_idle()) {
-		BT_ERR(bt_msg, "Interface in unexpected state, attempting reset\n");
-		bt_reset_interface();
-		unlock(&bt.lock);
-		return;
-	}
 
 	/* Send the message */
 	bt_outb(BT_CTRL_CLR_WR_PTR, BT_CTRL);
@@ -254,7 +246,7 @@ static void bt_get_resp(void)
 		/* A response to a message we no longer care about. */
 		prlog(PR_INFO, "BT: Nobody cared about a response to an BT/IPMI message\n");
 		bt_flush_msg();
-		bt_set_state(BT_STATE_B_BUSY);
+		bt_set_state(BT_STATE_IDLE);
 		return;
 	}
 
@@ -277,7 +269,7 @@ static void bt_get_resp(void)
 		ipmi_msg->data[i] = bt_inb(BT_HOST2BMC);
 	bt_set_h_busy(false);
 
-	bt_set_state(BT_STATE_B_BUSY);
+	bt_set_state(BT_STATE_IDLE);
 
 	list_del(&bt_msg->link);
 	bt.queue_len--;
@@ -351,8 +343,8 @@ static void print_debug_queue_info(void) {}
 
 static void bt_send_and_unlock(void)
 {
-	if (lpc_ok() &&
-	    bt.state == BT_STATE_IDLE && !list_empty(&bt.msgq))
+	if (lpc_ok() && bt_idle() && !list_empty(&bt.msgq)
+	    && bt.state == BT_STATE_IDLE)
 		bt_send_msg();
 
 	unlock(&bt.lock);
@@ -379,10 +371,6 @@ static void bt_poll(struct timer *t __unused, void *data __unused)
 	if (bt.state == BT_STATE_RESP_WAIT &&
 	    (bt_ctrl & BT_CTRL_B2H_ATN))
 		bt_get_resp();
-
-	/* We need to wait for B_BUSY to clear */
-	if (bt.state == BT_STATE_B_BUSY && bt_idle())
-		bt_set_state(BT_STATE_IDLE);
 
 	/* Check for sms_atn */
 	if (bt_inb(BT_CTRL) & BT_CTRL_SMS_ATN) {
@@ -541,7 +529,7 @@ void bt_init(void)
 	 * The iBT interface comes up in the busy state until the daemon has
 	 * initialised it.
 	 */
-	bt_set_state(BT_STATE_B_BUSY);
+	bt_set_state(BT_STATE_IDLE);
 	list_head_init(&bt.msgq);
 	bt.queue_len = 0;
 
