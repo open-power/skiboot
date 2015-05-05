@@ -94,6 +94,14 @@ extern struct debug_descriptor debug_descriptor;
 #define PR_INSANE	9
 void prlog(int log_level, const char* fmt, ...) __attribute__((format (printf, 2, 3)));
 #define prerror(fmt...)	do { prlog(PR_ERR, fmt); } while(0)
+#define prlog_once(arg, ...)	 		\
+({						\
+	static bool __prlog_once = false;	\
+	if (!__prlog_once) {			\
+		__prlog_once = true;		\
+		prlog(arg, ##__VA_ARGS__);	\
+	}					\
+})
 
 /* Location codes  -- at most 80 chars with null termination */
 #define LOC_CODE_SIZE	80
