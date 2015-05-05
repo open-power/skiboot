@@ -217,6 +217,7 @@ extern void psi_disable_link(struct psi *psi);
 extern void psi_reset_fsp(struct psi *psi);
 extern bool psi_check_link_active(struct psi *psi);
 extern bool psi_poll_fsp_interrupt(struct psi *psi);
+extern struct psi *psi_find_functional_chip(void);
 
 /* Interrupts */
 extern void psi_irq_reset(void);

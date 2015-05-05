@@ -885,6 +885,8 @@ static bool psi_init_psihb(struct dt_node *psihb)
 	psi->chip_id = chip->id;
 	psi->interrupt = get_psi_interrupt(chip->id);
 
+	chip->psi = psi;
+
 	psi_create_mm_dtnode(psi);
 	psi_register_interrupts(psi);
 	psi_activate_phb(psi);
@@ -903,6 +905,11 @@ void psi_fsp_link_in_use(struct psi *psi __unused)
 		poller_created = true;
 		opal_add_poller(psi_link_poll, NULL);
 	}
+}
+
+struct psi *psi_find_functional_chip(void)
+{
+	return list_top(&psis, struct psi, list);
 }
 
 void psi_init(void)

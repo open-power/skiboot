@@ -625,12 +625,28 @@ static struct fsp_client fsp_occ_client = {
 
 void occ_send_dummy_interrupt(void)
 {
+	struct psi *psi;
+	struct proc_chip *chip = get_chip(this_cpu()->chip_id);
+
 	/* Emulators and P7 doesn't do this */
 	if (proc_gen != proc_gen_p8 || chip_quirk(QUIRK_NO_OCC_IRQ))
 		return;
-	xscom_writeme(OCB_OCI_OCCMISC_OR,
-		      OCB_OCI_OCIMISC_IRQ |
-		      OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY);
+
+	/* Find a functional PSI. This ensures an interrupt even if
+	 * the psihb on the current chip is not configured */
+	if (chip->psi)
+		psi = chip->psi;
+	else
+		psi = psi_find_functional_chip();
+
+	if (!psi) {
+		prlog_once(PR_WARNING, "PSI: no functional PSI HB found, "
+				       "no self interrupts delivered\n");
+		return;
+	}
+
+	xscom_write(psi->chip_id, OCB_OCI_OCCMISC_OR,
+		    OCB_OCI_OCIMISC_IRQ | OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY);
 }
 
 void occ_interrupt(uint32_t chip_id)
