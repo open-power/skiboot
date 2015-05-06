@@ -284,47 +284,72 @@ extern char __builtin_kernel_start[];
 extern char __builtin_kernel_end[];
 extern uint64_t boot_offset;
 
+static size_t kernel_size;
+static size_t initramfs_size;
+
+static bool start_preload_kernel(void)
+{
+	int loaded;
+
+	/* Try to load an external kernel payload through the platform hooks */
+	kernel_size = KERNEL_LOAD_SIZE;
+	loaded = start_preload_resource(RESOURCE_ID_KERNEL,
+					RESOURCE_SUBID_NONE,
+					KERNEL_LOAD_BASE,
+					&kernel_size);
+	if (loaded != OPAL_SUCCESS) {
+		printf("INIT: platform start load kernel failed\n");
+		kernel_size = 0;
+		return false;
+	}
+
+	initramfs_size = INITRAMFS_LOAD_SIZE;
+	loaded = start_preload_resource(RESOURCE_ID_INITRAMFS,
+					RESOURCE_SUBID_NONE,
+					INITRAMFS_LOAD_BASE, &initramfs_size);
+	if (loaded != OPAL_SUCCESS) {
+		printf("INIT: platform start load initramfs failed\n");
+		initramfs_size = 0;
+		return false;
+	}
+
+	return true;
+}
+
 static bool load_kernel(void)
 {
 	struct elf_hdr *kh;
-	size_t ksize;
 	int loaded;
 
 	prlog(PR_NOTICE, "INIT: Loading kernel\n");
 
-	/* Try to load an external kernel payload through the platform hooks */
-	ksize = KERNEL_LOAD_SIZE;
-	loaded = start_preload_resource(RESOURCE_ID_KERNEL,
-					RESOURCE_SUBID_NONE,
-					KERNEL_LOAD_BASE,
-					&ksize);
-	if (loaded == OPAL_SUCCESS)
-		loaded = wait_for_resource_loaded(RESOURCE_ID_KERNEL,
-						  RESOURCE_SUBID_NONE);
+	loaded = wait_for_resource_loaded(RESOURCE_ID_KERNEL,
+					  RESOURCE_SUBID_NONE);
 
 	if (loaded != OPAL_SUCCESS) {
-		printf("INIT: platform kernel load failed\n");
-		ksize = 0;
+		printf("INIT: platform wait for kernel load failed\n");
+		kernel_size = 0;
 	}
 
 	/* Try embedded kernel payload */
-	if (!ksize) {
-		ksize = __builtin_kernel_end - __builtin_kernel_start;
-		if (ksize) {
+	if (!kernel_size) {
+		kernel_size = __builtin_kernel_end - __builtin_kernel_start;
+		if (kernel_size) {
 			/* Move the built-in kernel up */
 			uint64_t builtin_base =
 				((uint64_t)__builtin_kernel_start) -
 				SKIBOOT_BASE + boot_offset;
 			printf("Using built-in kernel\n");
-			memmove(KERNEL_LOAD_BASE, (void*)builtin_base, ksize);
+			memmove(KERNEL_LOAD_BASE, (void*)builtin_base,
+				kernel_size);
 		}
 	}
 
-	if (!ksize)
+	if (!kernel_size)
 		printf("Assuming kernel at %p\n", KERNEL_LOAD_BASE);
 
 	printf("INIT: Kernel loaded, size: %zu bytes (0 = unknown preload)\n",
-	       ksize);
+	       kernel_size);
 
 	kh = (struct elf_hdr *)KERNEL_LOAD_BASE;
 	if (kh->ei_class == ELF_CLASS_64)
@@ -338,27 +363,20 @@ static bool load_kernel(void)
 
 static void load_initramfs(void)
 {
-	size_t size;
 	int loaded;
 
-	size = INITRAMFS_LOAD_SIZE;
-	loaded = start_preload_resource(RESOURCE_ID_INITRAMFS,
-					RESOURCE_SUBID_NONE,
-					INITRAMFS_LOAD_BASE, &size);
+	loaded = wait_for_resource_loaded(RESOURCE_ID_INITRAMFS,
+					  RESOURCE_SUBID_NONE);
 
-	if (loaded == OPAL_SUCCESS)
-		loaded = wait_for_resource_loaded(RESOURCE_ID_INITRAMFS,
-						  RESOURCE_SUBID_NONE);
-
-	if (loaded != OPAL_SUCCESS || !size)
+	if (loaded != OPAL_SUCCESS || !initramfs_size)
 		return;
 
-	printf("INIT: Initramfs loaded, size: %zu bytes\n", size);
+	printf("INIT: Initramfs loaded, size: %zu bytes\n", initramfs_size);
 
 	dt_add_property_u64(dt_chosen, "linux,initrd-start",
 			(uint64_t)INITRAMFS_LOAD_BASE);
 	dt_add_property_u64(dt_chosen, "linux,initrd-end",
-			(uint64_t)INITRAMFS_LOAD_BASE + size);
+			(uint64_t)INITRAMFS_LOAD_BASE + initramfs_size);
 }
 
 void __noreturn load_and_boot_kernel(bool is_reboot)
@@ -682,6 +700,8 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 
 	/* Read in NVRAM and set it up */
 	nvram_init();
+
+	start_preload_kernel();
 
 	/* NX init */
 	nx_init();
