@@ -15,6 +15,7 @@
  */
 
 #include <skiboot.h>
+#include <cpu.h>
 #include <lock.h>
 #include <opal.h>
 #include <opal-msg.h>
@@ -521,8 +522,8 @@ end:
  * load a resource from FLASH
  * buf and len shouldn't account for ECC even if partition is ECCed.
  */
-int flash_load_resource(enum resource_id id, uint32_t subid,
-				 void *buf, size_t *len)
+static int flash_load_resource(enum resource_id id, uint32_t subid,
+			       void *buf, size_t *len)
 {
 	int i, rc, part_num, part_size, part_start, size;
 	struct ffs_handle *ffs;
@@ -627,4 +628,118 @@ out_free_ffs:
 out_unlock:
 	unlock(&flash_lock);
 	return status ? OPAL_SUCCESS : rc;
+}
+
+
+struct flash_load_resource_item {
+	enum resource_id id;
+	uint32_t subid;
+	int result;
+	void *buf;
+	size_t *len;
+	struct list_node link;
+};
+
+static LIST_HEAD(flash_load_resource_queue);
+static LIST_HEAD(flash_loaded_resources);
+static struct lock flash_load_resource_lock = LOCK_UNLOCKED;
+static struct cpu_job *flash_load_job = NULL;
+
+int flash_resource_loaded(enum resource_id id, uint32_t subid)
+{
+	struct flash_load_resource_item *resource = NULL;
+	struct flash_load_resource_item *r;
+	int rc = OPAL_BUSY;
+
+	lock(&flash_load_resource_lock);
+	list_for_each(&flash_loaded_resources, r, link) {
+		if (r->id == id && r->subid == subid) {
+			resource = r;
+			break;
+		}
+	}
+
+	if (resource) {
+		rc = resource->result;
+		list_del(&resource->link);
+		free(resource);
+	}
+
+	if (list_empty(&flash_load_resource_queue) && flash_load_job) {
+		cpu_wait_job(flash_load_job, true);
+		flash_load_job = NULL;
+	}
+
+	unlock(&flash_load_resource_lock);
+
+	return rc;
+}
+
+static void flash_load_resources(void *data __unused)
+{
+	struct flash_load_resource_item *r;
+	int result;
+
+	do {
+		lock(&flash_load_resource_lock);
+		if (list_empty(&flash_load_resource_queue)) {
+			unlock(&flash_load_resource_lock);
+			break;
+		}
+		r = list_top(&flash_load_resource_queue,
+			     struct flash_load_resource_item, link);
+		assert(r->result == OPAL_EMPTY);
+		r->result = OPAL_BUSY;
+		unlock(&flash_load_resource_lock);
+
+		result = flash_load_resource(r->id, r->subid, r->buf, r->len);
+
+		lock(&flash_load_resource_lock);
+		r = list_pop(&flash_load_resource_queue,
+			     struct flash_load_resource_item, link);
+		r->result = result;
+		list_add_tail(&flash_loaded_resources, &r->link);
+		unlock(&flash_load_resource_lock);
+	} while(true);
+}
+
+static void start_flash_load_resource_job(void)
+{
+	if (flash_load_job)
+		cpu_wait_job(flash_load_job, true);
+
+	flash_load_job = cpu_queue_job(NULL, "flash_load_resources",
+				       flash_load_resources, NULL);
+
+	cpu_process_local_jobs();
+}
+
+int flash_start_preload_resource(enum resource_id id, uint32_t subid,
+				 void *buf, size_t *len)
+{
+	struct flash_load_resource_item *r;
+	bool start_thread = false;
+
+	r = malloc(sizeof(struct flash_load_resource_item));
+
+	assert(r != NULL);
+	r->id = id;
+	r->subid = subid;
+	r->buf = buf;
+	r->len = len;
+	r->result = OPAL_EMPTY;
+
+	printf("FLASH: Queueing preload of %x/%x\n", r->id, r->subid);
+
+	lock(&flash_load_resource_lock);
+	if (list_empty(&flash_load_resource_queue)) {
+		start_thread = true;
+	}
+	list_add_tail(&flash_load_resource_queue, &r->link);
+	unlock(&flash_load_resource_lock);
+
+	if (start_thread)
+		start_flash_load_resource_job();
+
+	return OPAL_SUCCESS;
 }
