@@ -454,13 +454,27 @@ static void add_opal_firmware_version(void)
  */
 void fsp_code_update_wait_vpd(bool is_boot)
 {
+	int waited = 0;
+
 	if (!fsp_present())
 		return;
 
 	prlog(PR_NOTICE, "CUPD: Waiting read marker LID"
 	      " and in flight parsm completion...\n");
-	while (flash_state == FLASH_STATE_READING || in_flight_params)
-		time_wait_ms(100);
+
+	lock(&flash_lock);
+	while(true) {
+		if (!(flash_state == FLASH_STATE_READING || in_flight_params))
+			break;
+		unlock(&flash_lock);
+		time_wait_ms(5);
+		waited+=5;
+		lock(&flash_lock);
+	}
+	unlock(&flash_lock);
+
+	if (waited)
+		prlog(PR_DEBUG, "CUPD: fsp_code_update_wait_vpd %d\n", waited);
 
 	if (is_boot)
 		add_opal_firmware_version();

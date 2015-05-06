@@ -415,7 +415,8 @@ static int __hservice_lid_load(uint32_t lid, void **buf, size_t *len)
 	 */
 	*buf = malloc(HBRT_LOAD_LID_SIZE);
 	*len = HBRT_LOAD_LID_SIZE;
-	rc = fsp_load_lid(lid, *buf, len);
+	rc = fsp_preload_lid(lid, *buf, len);
+	rc = fsp_wait_lid_loaded(lid);
 	if (rc != 0)
 		/* Take advantage of realloc corner case here. */
 		*len = 0;
@@ -495,8 +496,8 @@ static int hservice_lid_load(uint32_t lid, void **buf, size_t *len)
 		if (hlid->id == lid) {
 			*buf = hlid->load_addr;
 			*len = hlid->len;
-			prlog(PR_DEBUG, "HBRT: Serviced from cache,"
-					" len=0x%lx\n", hlid->len);
+			prlog(PR_DEBUG, "HBRT: LID Serviced from cache,"
+			      " %x, len=0x%lx\n", hlid->id, hlid->len);
 			return 0;
 		}
 	}

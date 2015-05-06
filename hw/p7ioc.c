@@ -603,6 +603,7 @@ static void p7ioc_create_hub(struct dt_node *np)
 	free(path);
 
 	/* Load VPD LID */
+	vpd_preload(np);
 	vpd_iohub_load(np);
 
 	ioc = zalloc(sizeof(struct p7ioc));

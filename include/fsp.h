@@ -737,7 +737,8 @@ extern int fsp_fetch_data_queue(uint8_t flags, uint16_t id, uint32_t sub_id,
 extern int fsp_start_preload_resource(enum resource_id id, uint32_t idx,
 				      void *buf, size_t *size);
 extern int fsp_resource_loaded(enum resource_id id, uint32_t idx);
-extern int fsp_load_lid(uint32_t lid_no, char *buf, size_t *size);
+extern int fsp_preload_lid(uint32_t lid_no, char *buf, size_t *size);
+extern int fsp_wait_lid_loaded(uint32_t lid_no);
 
 /* FSP console stuff */
 extern void fsp_console_preinit(void);

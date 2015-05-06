@@ -4539,6 +4539,17 @@ end:
 	return ret;
 }
 
+void phb3_preload_vpd(void)
+{
+	const struct dt_property *prop;
+
+	prop = dt_find_property(dt_root, "ibm,io-vpd");
+	if (!prop) {
+		/* LX VPD Lid not already loaded */
+		vpd_preload(dt_root);
+	}
+}
+
 void probe_phb3(void)
 {
 	struct dt_node *np;

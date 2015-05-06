@@ -701,6 +701,7 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	/* Read in NVRAM and set it up */
 	nvram_init();
 
+	phb3_preload_vpd();
 	phb3_preload_capp_ucode();
 	start_preload_kernel();
 

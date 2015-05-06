@@ -38,6 +38,7 @@ const void *vpd_find(const void *vpd, size_t vpd_size,
 void add_dtb_model(void);
 
 void vpd_iohub_load(struct dt_node *hub_node);
+void vpd_preload(struct dt_node *hub_node);
 
 #define VPD_LOAD_LXRN_VINI	0xff
 

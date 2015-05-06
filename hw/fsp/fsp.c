@@ -2467,10 +2467,10 @@ static int fsp_lid_loaded(uint32_t lid_no)
 	return rc;
 }
 
-int fsp_load_lid(uint32_t lid_no, char *buf, size_t *size)
+int fsp_preload_lid(uint32_t lid_no, char *buf, size_t *size)
 {
 	struct fsp_fetch_lid_item *resource;
-	int r;
+	int r = OPAL_SUCCESS;
 
 	resource = malloc(sizeof(struct fsp_fetch_lid_item));
 	assert(resource != NULL);
@@ -2497,17 +2497,27 @@ int fsp_load_lid(uint32_t lid_no, char *buf, size_t *size)
 	fsp_start_fetching_next_lid();
 	unlock(&fsp_fetch_lock);
 
+	return r;
+}
+
+int fsp_wait_lid_loaded(uint32_t lid_no)
+{
+	int r;
+	int waited = 0;
+
 	r = fsp_lid_loaded(lid_no);
 
 	while(r == OPAL_BUSY) {
 		opal_run_pollers();
 		time_wait_nopoll(msecs_to_tb(5));
+		waited+=5;
 		cpu_relax();
 		r = fsp_lid_loaded(lid_no);
 	}
 
-	return r;
+	prlog(PR_DEBUG, "FSP: fsp_wait_lid_loaded %x %u ms\n", lid_no, waited);
 
+	return r;
 }
 
 void fsp_used_by_console(void)

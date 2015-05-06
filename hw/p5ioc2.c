@@ -203,6 +203,7 @@ static void p5ioc2_create_hub(struct dt_node *np)
 	dt_add_property_cells(np, "ibm,opal-hubid", 0, id);
 
 	/* Load VPD LID */
+	vpd_preload(np);
 	vpd_iohub_load(np);
 
 	ioc = zalloc(sizeof(struct p5ioc2));
