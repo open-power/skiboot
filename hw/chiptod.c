@@ -970,7 +970,8 @@ void chiptod_init(void)
 
 	/* Schedule master sync */
 	sres = false;
-	cpu_wait_job(cpu_queue_job(cpu0, chiptod_sync_master, &sres), true);
+	cpu_wait_job(cpu_queue_job(cpu0, "chiptod_sync_master",
+				   chiptod_sync_master, &sres), true);
 	if (!sres) {
 		op_display(OP_FATAL, OP_MOD_CHIPTOD, 2);
 		abort();
@@ -986,7 +987,8 @@ void chiptod_init(void)
 
 		/* Queue job */
 		sres = false;
-		cpu_wait_job(cpu_queue_job(cpu, chiptod_sync_slave, &sres),
+		cpu_wait_job(cpu_queue_job(cpu, "chiptod_sync_slave",
+					   chiptod_sync_slave, &sres),
 			     true);
 		if (!sres) {
 			op_display(OP_WARN, OP_MOD_CHIPTOD, 3|(cpu->pir << 8));
@@ -1002,7 +1004,8 @@ void chiptod_init(void)
 		/* Only do primaries, not threads */
 		if (cpu->is_secondary)
 			continue;
-		cpu_wait_job(cpu_queue_job(cpu, chiptod_print_tb, NULL), true);
+		cpu_wait_job(cpu_queue_job(cpu, "chiptod_print_tb",
+					   chiptod_print_tb, NULL), true);
 	}
 
 	op_display(OP_LOG, OP_MOD_CHIPTOD, 4);

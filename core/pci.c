@@ -1384,7 +1384,6 @@ void pci_reset(void)
 
 static void pci_do_jobs(void (*fn)(void *))
 {
-	struct cpu_thread *cpu = first_available_cpu();
 	void *jobs[ARRAY_SIZE(phbs)];
 	int i;
 
@@ -1394,35 +1393,14 @@ static void pci_do_jobs(void (*fn)(void *))
 			continue;
 		}
 
-		/* Don't queue job to current CPU, which is always
-		 * the poller.
-		 */
-		while (cpu) {
-			if (cpu != this_cpu())
-				break;
-
-			cpu = next_available_cpu(cpu);
-			if (!cpu)
-				cpu = first_available_cpu();
-
-			/* No CPU to run on, just run synchro */
-			if (cpu == this_cpu()) {
-				fn(phbs[i]);
-				jobs[i] = NULL;
-				goto next_phb;
-			}
-		}
-
-		jobs[i] = __cpu_queue_job(cpu, fn, phbs[i], false);
+		jobs[i] = __cpu_queue_job(NULL, phbs[i]->dt_node->name,
+					  fn, phbs[i], false);
 		assert(jobs[i]);
 
-		/* For next CPU */
-		cpu = next_available_cpu(cpu);
-		if (!cpu)
-			cpu = first_available_cpu();
-	next_phb:
-		;
 	}
+
+	/* If no secondary CPUs, do everything sync */
+	cpu_process_local_jobs();
 
 	/* Wait until all tasks are done */
 	for (i = 0; i < ARRAY_SIZE(phbs); i++) {

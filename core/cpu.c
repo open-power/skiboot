@@ -54,9 +54,13 @@ struct cpu_job {
 	struct list_node	link;
 	void			(*func)(void *data);
 	void			*data;
+	const char		*name;
 	bool			complete;
 	bool		        no_return;
 };
+
+static struct lock global_job_queue_lock = LOCK_UNLOCKED;
+static struct list_head	global_job_queue;
 
 /* attribute const as cpu_stacks is constant. */
 unsigned long __attrconst cpu_stack_bottom(unsigned int pir)
@@ -89,12 +93,13 @@ void __nomcount cpu_relax(void)
 }
 
 struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
+				const char *name,
 				void (*func)(void *data), void *data,
 				bool no_return)
 {
 	struct cpu_job *job;
 
-	if (!cpu_is_available(cpu)) {
+	if (cpu && !cpu_is_available(cpu)) {
 		prerror("CPU: Tried to queue job on unavailable CPU 0x%04x\n",
 			cpu->pir);
 		return NULL;
@@ -105,10 +110,15 @@ struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 		return NULL;
 	job->func = func;
 	job->data = data;
+	job->name = name;
 	job->complete = false;
 	job->no_return = no_return;
 
-	if (cpu != this_cpu()) {
+	if (cpu == NULL) {
+		lock(&global_job_queue_lock);
+		list_add_tail(&global_job_queue, &job->link);
+		unlock(&global_job_queue_lock);
+	} else if (cpu != this_cpu()) {
 		lock(&cpu->job_lock);
 		list_add_tail(&cpu->job_queue, &job->link);
 		unlock(&cpu->job_lock);
@@ -158,30 +168,40 @@ void cpu_free_job(struct cpu_job *job)
 void cpu_process_jobs(void)
 {
 	struct cpu_thread *cpu = this_cpu();
-	struct cpu_job *job;
+	struct cpu_job *job = NULL;
 	void (*func)(void *);
 	void *data;
 
 	sync();
-	if (list_empty(&cpu->job_queue))
+	if (list_empty(&cpu->job_queue) && list_empty(&global_job_queue))
 		return;
 
 	lock(&cpu->job_lock);
 	while (true) {
 		bool no_return;
 
-		if (list_empty(&cpu->job_queue))
-			break;
-		smt_medium();
-		job = list_pop(&cpu->job_queue, struct cpu_job, link);
+		if (list_empty(&cpu->job_queue)) {
+			smt_medium();
+			if (list_empty(&global_job_queue))
+				break;
+			lock(&global_job_queue_lock);
+			job = list_pop(&global_job_queue, struct cpu_job, link);
+			unlock(&global_job_queue_lock);
+		} else {
+			smt_medium();
+			job = list_pop(&cpu->job_queue, struct cpu_job, link);
+		}
+
 		if (!job)
 			break;
+
 		func = job->func;
 		data = job->data;
 		no_return = job->no_return;
 		unlock(&cpu->job_lock);
 		if (no_return)
 			free(job);
+		prlog(PR_TRACE, "running job %s on %x\n", job->name, cpu->pir);
 		func(data);
 		lock(&cpu->job_lock);
 		if (!no_return) {
@@ -191,6 +211,27 @@ void cpu_process_jobs(void)
 	}
 	unlock(&cpu->job_lock);
 }
+
+void cpu_process_local_jobs(void)
+{
+	struct cpu_thread *cpu = first_available_cpu();
+
+	while (cpu) {
+		if (cpu != this_cpu())
+			break;
+
+		cpu = next_available_cpu(cpu);
+		if (!cpu)
+			cpu = first_available_cpu();
+
+		/* No CPU to run on, just run synchro */
+		if (cpu == this_cpu()) {
+			printf("Processing jobs synchronously\n");
+			cpu_process_jobs();
+		}
+	}
+}
+
 
 struct dt_node *get_cpu_node(u32 pir)
 {
@@ -413,6 +454,8 @@ void init_boot_cpu(void)
 	init_cpu_thread(boot_cpu, cpu_state_active, pir);
 	init_boot_tracebuf(boot_cpu);
 	assert(this_cpu() == boot_cpu);
+
+	list_head_init(&global_job_queue);
 }
 
 void init_all_cpus(void)
@@ -568,7 +611,8 @@ static int64_t opal_start_cpu_thread(uint64_t server_no, uint64_t start_address)
 		prerror("OPAL: CPU not active in OPAL !\n");
 		return OPAL_WRONG_STATE;
 	}
-	job = __cpu_queue_job(cpu, opal_start_thread_job, (void *)start_address,
+	job = __cpu_queue_job(cpu, "start_thread",
+			      opal_start_thread_job, (void *)start_address,
 			      true);
 	unlock(&reinit_lock);
 	if (!job) {
@@ -648,7 +692,8 @@ static int64_t cpu_change_all_hile(bool hile)
 			cpu_change_hile(&hile);
 			continue;
 		}
-		cpu_wait_job(cpu_queue_job(cpu, cpu_change_hile, &hile), true);
+		cpu_wait_job(cpu_queue_job(cpu, "cpu_change_hile",
+					   cpu_change_hile, &hile), true);
 	}
 	return OPAL_SUCCESS;
 }

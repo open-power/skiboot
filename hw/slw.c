@@ -792,7 +792,8 @@ int64_t slw_reinit(uint64_t flags)
 			has_waker = true;
 			master = this_cpu();
 		}
-		__cpu_queue_job(cpu, slw_do_rvwinkle, master, true);
+		__cpu_queue_job(cpu, "slw_do_rvwinkle",
+				slw_do_rvwinkle, master, true);
 
 		/* Wait for it to claim to be down */
 		while(cpu->state != cpu_state_rvwinkle)

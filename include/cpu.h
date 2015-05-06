@@ -197,14 +197,16 @@ void cpu_disable_all_threads(struct cpu_thread *cpu);
 
 /* Allocate & queue a job on target CPU */
 extern struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
+				       const char *name,
 				       void (*func)(void *data), void *data,
 				       bool no_return);
 
 static inline struct cpu_job *cpu_queue_job(struct cpu_thread *cpu,
+					    const char *name,
 					    void (*func)(void *data),
 					    void *data)
 {
-	return __cpu_queue_job(cpu, func, data, false);
+	return __cpu_queue_job(cpu, name, func, data, false);
 }
 
 
@@ -222,6 +224,8 @@ extern void cpu_free_job(struct cpu_job *job);
 
 /* Called by init to process jobs */
 extern void cpu_process_jobs(void);
+/* Fallback to running jobs synchronously for global jobs */
+extern void cpu_process_local_jobs(void);
 
 static inline void cpu_give_self_os(void)
 {
