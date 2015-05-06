@@ -2181,89 +2181,46 @@ struct lock capi_lock = LOCK_UNLOCKED;
 static struct {
 	uint32_t			ec_level;
 	struct capp_lid_hdr		*lid;
-} capp_ucode_info = { 0, NULL };
+	size_t size;
+	bool loaded;
+} capp_ucode_info = { 0, NULL, 0, false };
 
 #define CAPP_UCODE_MAX_SIZE 0x20000
 
-static int64_t capp_lid_download(struct phb3 *p)
+static int64_t capp_lid_download(void)
 {
-	struct proc_chip *chip = get_chip(p->chip_id);
-
-	size_t size = CAPP_UCODE_MAX_SIZE;
 	int64_t ret;
-	uint32_t index;
-	struct capp_lid_hdr *lid;
-	uint64_t rc;
 	int loaded;
 
-	rc = xscom_read_cfam_chipid(chip->id, &index);
-	if (rc) {
-		prerror("CAPP: Error reading cfam chip-id\n");
-		ret = OPAL_HARDWARE;
-		return ret;
-	}
-	/* Keep ChipID and Major/Minor EC.  Mask out the Location Code. */
-	index = index & 0xf0fff;
+	if (capp_ucode_info.loaded == true)
+		return OPAL_SUCCESS;
 
-	lock(&capi_lock);
-
-	if (capp_ucode_info.lid) {
-		ret = OPAL_SUCCESS;
-		/*
-		 * Check if this ec_level of this chip is the same as the
-		 * currently downloaded ucode. This is a safety incase someone
-		 * builds a system with different ec level chips.
-		 */
-		if (capp_ucode_info.ec_level != index) {
-			prerror("CAPP: Chip EC level mismatch in system\n");
-			ret = OPAL_HARDWARE;
-		}
-		goto end;
-	}
-	capp_ucode_info.ec_level = index;
-
-	/* Is the ucode preloaded like for BML? */
-	if (dt_has_node_property(p->phb.dt_node, "ibm,capp-ucode", NULL)) {
-		capp_ucode_info.lid = (struct capp_lid_hdr *)(u64)
-			dt_prop_get_u32(p->phb.dt_node,	"ibm,capp-ucode");
-		ret = OPAL_SUCCESS;
-		goto end;
-	}
-
-	/* If we successfully download the ucode, we leave it around forever */
-	lid = malloc(CAPP_UCODE_MAX_SIZE);
-	if (!lid) {
-		prerror("CAPP: Can't allocate space for ucode lid\n");
-		ret = OPAL_NO_MEM;
-		goto end;
-	}
-
-	loaded = start_preload_resource(RESOURCE_ID_CAPP, index,
-					    lid, &size);
-	if (loaded == OPAL_SUCCESS)
-		loaded = wait_for_resource_loaded(RESOURCE_ID_CAPP,
-						  index);
+	loaded = wait_for_resource_loaded(RESOURCE_ID_CAPP,
+					  capp_ucode_info.ec_level);
 
 	if (loaded != OPAL_SUCCESS) {
-		prerror("CAPP: Error loading ucode lid. index=%x\n", index);
+		prerror("CAPP: Error loading ucode lid. index=%x\n",
+			capp_ucode_info.ec_level);
 		ret = OPAL_RESOURCE;
-		free(lid);
+		free(capp_ucode_info.lid);
+		capp_ucode_info.lid = NULL;
+		capp_ucode_info.loaded = false;
 		goto end;
 	}
 
-	capp_ucode_info.lid = lid;
+	capp_ucode_info.loaded = true;
+
 	ret = OPAL_SUCCESS;
 end:
-	unlock(&capi_lock);
 	return ret;
 }
 
 static int64_t capp_load_ucode(struct phb3 *p)
 {
 	struct proc_chip *chip = get_chip(p->chip_id);
-	struct capp_lid_hdr *lid;
 	struct capp_ucode_lid *ucode;
 	struct capp_ucode_data *data;
+	struct capp_lid_hdr *lid;
 	uint64_t rc, val, addr;
 	uint32_t chunk_count, offset;
 	int i;
@@ -2271,7 +2228,7 @@ static int64_t capp_load_ucode(struct phb3 *p)
 	if (chip->capp_ucode_loaded)
 		return OPAL_SUCCESS;
 
-	rc = capp_lid_download(p);
+	rc = capp_lid_download();
 	if (rc)
 		return rc;
 
@@ -4519,6 +4476,67 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 			      OPAL_PHB_CAPI_FLAG_SNOOP_CONTROL);
 
 	add_chip_dev_associativity(np);
+}
+
+int phb3_preload_capp_ucode(void)
+{
+	struct dt_node *p;
+	struct proc_chip *chip;
+	uint32_t index;
+	uint64_t rc;
+	int ret;
+
+	p = dt_find_compatible_node(dt_root, NULL, "ibm,power8-pbcq");
+
+	if (!p) {
+		printf("CAPI: WARNING: no compat thing found\n");
+		return OPAL_SUCCESS;
+	}
+
+	chip = get_chip(dt_get_chip_id(p));
+
+	rc = xscom_read_cfam_chipid(chip->id, &index);
+	if (rc) {
+		prerror("CAPP: Error reading cfam chip-id\n");
+		ret = OPAL_HARDWARE;
+		return ret;
+	}
+	/* Keep ChipID and Major/Minor EC.  Mask out the Location Code. */
+	index = index & 0xf0fff;
+
+	/* Assert that we're preloading */
+	assert(capp_ucode_info.lid == NULL);
+	capp_ucode_info.loaded = false;
+
+	capp_ucode_info.ec_level = index;
+
+	/* Is the ucode preloaded like for BML? */
+	if (dt_has_node_property(p, "ibm,capp-ucode", NULL)) {
+		capp_ucode_info.lid = (struct capp_lid_hdr *)(u64)
+			dt_prop_get_u32(p, "ibm,capp-ucode");
+		ret = OPAL_SUCCESS;
+		goto end;
+	}
+	/* If we successfully download the ucode, we leave it around forever */
+	capp_ucode_info.size = CAPP_UCODE_MAX_SIZE;
+	capp_ucode_info.lid = malloc(CAPP_UCODE_MAX_SIZE);
+	if (!capp_ucode_info.lid) {
+		prerror("CAPP: Can't allocate space for ucode lid\n");
+		ret = OPAL_NO_MEM;
+		goto end;
+	}
+
+	printf("CAPI: Preloading ucode %x\n", capp_ucode_info.ec_level);
+
+	ret = start_preload_resource(RESOURCE_ID_CAPP, index,
+				     capp_ucode_info.lid,
+				     &capp_ucode_info.size);
+
+	if (ret != OPAL_SUCCESS)
+		prerror("CAPI: Failed to preload resource %d\n", ret);
+
+end:
+	return ret;
 }
 
 void probe_phb3(void)
