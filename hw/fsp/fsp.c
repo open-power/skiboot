@@ -2433,10 +2433,8 @@ int fsp_resource_loaded(enum resource_id id, uint32_t idx)
 
 	if (resource) {
 		rc = resource->result;
-		if (rc == OPAL_SUCCESS) {
-			list_del(&resource->link);
-			free(resource);
-		}
+		list_del(&resource->link);
+		free(resource);
 	}
 	unlock(&fsp_fetch_lock);
 
