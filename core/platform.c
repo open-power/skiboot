@@ -110,12 +110,16 @@ int resource_loaded(enum resource_id id, uint32_t idx)
 int wait_for_resource_loaded(enum resource_id id, uint32_t idx)
 {
 	int r = resource_loaded(id, idx);
+	int waited = 0;
 
 	while(r == OPAL_BUSY) {
 		opal_run_pollers();
 		time_wait_ms_nopoll(5);
+		waited+=5;
 		r = resource_loaded(id, idx);
 	}
 
+	prlog(PR_TRACE, "PLATFORM: wait_for_resource_loaded %x/%x %u ms\n",
+	      id, idx, waited);
 	return r;
 }
