@@ -2263,6 +2263,7 @@ static void fsp_fetch_lid_complete(struct fsp_msg *msg)
 	if (rc !=0 && rc != 2) {
 		last->result = -EIO;
 		last = list_pop(&fsp_fetch_lid_queue, struct fsp_fetch_lid_item, link);
+		prerror("FSP LID %08x load ERROR %d\n", last->lid_no, rc);
 		list_add_tail(&fsp_fetched_lid, &last->link);
 		fsp_start_fetching_next_lid();
 		unlock(&fsp_fetch_lock);
@@ -2332,9 +2333,9 @@ static void fsp_fetch_lid_next_chunk(struct fsp_fetch_lid_item *last)
 	last->bsize = ((boff + chunk) + TCE_MASK) & ~TCE_MASK;
 	last->chunk_requested = chunk;
 
-	prlog(PR_DEBUG, "FSP: Loading Chunk 0x%08x bytes balign=%llx"
+	prlog(PR_DEBUG, "FSP: LID %08x chunk 0x%08x bytes balign=%llx"
 	      " boff=%llx bsize=%llx\n",
-	      chunk, balign, boff, last->bsize);
+	      last->lid_no, chunk, balign, boff, last->bsize);
 
 	fsp_tce_map(PSI_DMA_FETCH, (void *)balign, last->bsize);
 	taddr = PSI_DMA_FETCH + boff;
@@ -2353,6 +2354,7 @@ static void fsp_fetch_lid_next_chunk(struct fsp_fetch_lid_item *last)
 				struct fsp_fetch_lid_item, link);
 		list_add_tail(&fsp_fetched_lid, &last->link);
 	}
+	last->result = OPAL_BUSY;
 }
 
 static void fsp_start_fetching_next_lid(void)
@@ -2366,7 +2368,9 @@ static void fsp_start_fetching_next_lid(void)
 	if (last == NULL)
 		return;
 
-	fsp_fetch_lid_next_chunk(last);
+	/* If we're not already fetching */
+	if (last->result == OPAL_EMPTY)
+		fsp_fetch_lid_next_chunk(last);
 }
 
 int fsp_start_preload_resource(enum resource_id id, uint32_t idx,
@@ -2387,7 +2391,7 @@ int fsp_start_preload_resource(enum resource_id id, uint32_t idx,
 	resource->remaining = *size;
 	*size = 0;
 	resource->length = size;
-	resource->result = OPAL_BUSY;
+	resource->result = OPAL_EMPTY;
 
 	for (i = 0; i < ARRAY_SIZE(fsp_lid_map); i++) {
 		if (id != fsp_lid_map[i].id)
@@ -2481,7 +2485,7 @@ int fsp_load_lid(uint32_t lid_no, char *buf, size_t *size)
 	resource->remaining = *size;
 	*size = 0;
 	resource->length = size;
-	resource->result = OPAL_BUSY;
+	resource->result = OPAL_EMPTY;
 
 	if (lid_no == 0)
 		return OPAL_PARAMETER;
