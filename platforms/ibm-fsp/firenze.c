@@ -393,10 +393,6 @@ static void firenze_init(void)
 	hservices_init();
 
 	ibm_fsp_init();
-
-	/* Preload hostservices lids */
-	hservices_lid_preload();
-
 }
 
 DECLARE_PLATFORM(firenze) = {
