@@ -56,6 +56,10 @@ enum proc_gen proc_gen;
 static uint64_t kernel_entry;
 static bool kernel_32bit;
 
+#ifdef SKIBOOT_GCOV
+void skiboot_gcov_done(void);
+#endif
+
 struct debug_descriptor debug_descriptor = {
 	.eye_catcher	= "OPALdbug",
 	.version	= DEBUG_DESC_VERSION,
@@ -584,6 +588,10 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	       (debug_descriptor.console_log_levels >> 4),
 	       (debug_descriptor.console_log_levels & 0x0f));
 	prlog(PR_TRACE, "You will not see this\n");
+
+#ifdef SKIBOOT_GCOV
+	skiboot_gcov_done();
+#endif
 
 	/* Initialize boot cpu's cpu_thread struct */
 	init_boot_cpu();
