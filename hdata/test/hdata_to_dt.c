@@ -25,6 +25,8 @@
 
 #include <interrupts.h>
 
+struct dt_node *opal_node;
+
 /* Our actual map. */
 static void *spira_heap;
 static size_t spira_heap_size;
