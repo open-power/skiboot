@@ -119,7 +119,7 @@ include $(SRC)/libc/Makefile.inc
 include $(SRC)/ccan/Makefile.inc
 include $(SRC)/$(DEVSRC)/Makefile.inc
 
-all: $(SUBDIRS) $(TARGET).lid $(TARGET).map
+all: $(SUBDIRS) $(TARGET).lid $(TARGET).map extract-gcov
 
 OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBFLASH)
 ifeq ($(PORE),1)
@@ -170,6 +170,9 @@ version.c: $(SRC)/make_version.sh $(OBJS_NO_VER) .version
 
 .PHONY: coverage
 include $(shell find $(SRC)/* -name Makefile.check)
+
+extract-gcov: extract-gcov.c
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I . -o $@ $<,$<)
 
 coverage-report: skiboot.info
 	genhtml -q -o $@ $<
