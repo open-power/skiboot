@@ -255,7 +255,7 @@ int flash_register(struct flash_chip *chip, bool is_system_flash)
 	uint32_t size, block_size;
 	struct ffs_handle *ffs;
 	struct dt_node *node;
-	struct flash *flash;
+	struct flash *flash = NULL;
 	const char *name;
 	unsigned int i;
 	int rc;
