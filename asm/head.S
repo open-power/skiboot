@@ -438,7 +438,7 @@ call_relocate:
 	mr	%r3,%r30
 	bl	relocate
 	cmpwi	%r3,0
-	beq	1f
+	bne	1f
 	mtlr	%r14
 	blr
 1:	/* Fatal relocate failure */

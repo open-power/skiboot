@@ -45,21 +45,21 @@ int relocate(uint64_t offset, struct elf64_dyn *dyn, struct elf64_rela *rela)
 
 	/* If we miss either rela or relacount, bail */
 	if (!dt_rela || !dt_relacount)
-		return false;
+		return -1;
 
 	/* Check if the offset is consistent */
 	if ((offset + dt_rela) != (uint64_t)rela)
-		return false;
+		return -2;
 
 	/* Perform relocations */
 	for (i = 0; i < dt_relacount; i++, rela++) {
 		uint64_t *t;
 
 		if (ELF64_R_TYPE(rela->r_info) != R_PPC64_RELATIVE)
-			return false;
+			return -3;
 		t = (uint64_t *)(rela->r_offset + offset);
 		*t = rela->r_addend + offset;
 	}
 
-	return true;
+	return 0;
 }
