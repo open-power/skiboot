@@ -379,6 +379,8 @@ static void load_initramfs(void)
 			(uint64_t)INITRAMFS_LOAD_BASE + initramfs_size);
 }
 
+int64_t mem_dump_free(void);
+
 void __noreturn load_and_boot_kernel(bool is_reboot)
 {
 	const struct dt_property *memprop;
@@ -448,6 +450,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	op_panel_clear_src();
 
 	cpu_give_self_os();
+
+	mem_dump_free();
 
 	printf("INIT: Starting kernel at 0x%llx, fdt at %p (size 0x%x)\n",
 	       kernel_entry, fdt, fdt_totalsize(fdt));

@@ -25,6 +25,9 @@
 #include <mem_region.h>
 #include <mem_region-malloc.h>
 
+int64_t mem_dump_free(void);
+void mem_dump_allocs(void);
+
 /* Memory poisoning on free (if POISON_MEM_REGION set to 1) */
 #define POISON_MEM_REGION	0
 #define POISON_MEM_REGION_WITH	0x99
@@ -258,7 +261,7 @@ static bool region_is_reserved(struct mem_region *region)
 	return region->type != REGION_OS;
 }
 
-static void mem_dump_allocs(void)
+void mem_dump_allocs(void)
 {
 	struct mem_region *region;
 	struct alloc_hdr *hdr;
@@ -283,6 +286,39 @@ static void mem_dump_allocs(void)
 			       hdr_location(hdr));
 		}
 	}
+}
+
+int64_t mem_dump_free(void)
+{
+	struct mem_region *region;
+	struct alloc_hdr *hdr;
+	int64_t total_free;
+	int64_t region_free;
+
+	total_free = 0;
+
+	printf("Free space in HEAP memory regions:\n");
+	list_for_each(&regions, region, list) {
+		if (region->type != REGION_SKIBOOT_HEAP)
+			continue;
+		region_free = 0;
+
+		if (region->free_list.n.next == NULL) {
+			continue;
+		}
+		for (hdr = region_start(region); hdr; hdr = next_hdr(region, hdr)) {
+			if (!hdr->free)
+				continue;
+
+			region_free+= hdr->num_longs * sizeof(long);
+		}
+		printf("Region %s free: %llu\n", region->name, region_free);
+		total_free += region_free;
+	}
+
+	printf("Total free: %llu\n", total_free);
+
+	return total_free;
 }
 
 static void *__mem_alloc(struct mem_region *region, size_t size, size_t align,
