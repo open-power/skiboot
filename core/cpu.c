@@ -218,17 +218,18 @@ void cpu_process_local_jobs(void)
 
 	while (cpu) {
 		if (cpu != this_cpu())
-			break;
+			return;
 
 		cpu = next_available_cpu(cpu);
-		if (!cpu)
-			cpu = first_available_cpu();
+	}
 
-		/* No CPU to run on, just run synchro */
-		if (cpu == this_cpu()) {
-			printf("Processing jobs synchronously\n");
-			cpu_process_jobs();
-		}
+	if (!cpu)
+		cpu = first_available_cpu();
+
+	/* No CPU to run on, just run synchro */
+	if (cpu == this_cpu()) {
+		prlog_once(PR_DEBUG, "Processing jobs synchronously\n");
+		cpu_process_jobs();
 	}
 }
 
