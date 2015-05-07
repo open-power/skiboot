@@ -76,6 +76,14 @@ SECTIONS
 		*(.toc1)
 		*(.branch_lt)
 	}
+
+	. = ALIGN(0x10);
+	.init : {
+		__ctors_start = .;
+		*(.ctors)
+		*(.init_array)
+		__ctors_end = .;
+	}
  
 	. = ALIGN(0x10);
 	.opd : {
