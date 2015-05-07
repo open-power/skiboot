@@ -66,8 +66,8 @@
  * As of this writing (2014/4/6), we use approc 512K for skiboot
  * core and 2M of heap on a 1 socket machine.
  */
-#define HEAP_BASE		(SKIBOOT_BASE + 0x00200000)
-#define HEAP_SIZE		0x00c00000
+#define HEAP_BASE		(SKIBOOT_BASE + 0x00300000)
+#define HEAP_SIZE		0x00b00000
 
 /* This is our PSI TCE table. It's 16K entries on P7 and 256K
  * entries on P8

@@ -133,8 +133,8 @@ SECTIONS
 		KEEP(*(.sym_map))
 	}
 
-	/* We locate the BSS at 1M to leave room for the symbol map */
-	. = 0x100000;
+	/* We locate the BSS at 2M to leave room for the symbol map */
+	. = 0x200000;
 
 	_sbss = .;
 	.bss : {
