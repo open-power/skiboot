@@ -66,7 +66,7 @@ endif
 
 CFLAGS += $(CWARNS) $(OPTS) $(DBG)
 
-LDFLAGS := -m64 -static -nostdlib -Wl,--gc-sections -pie
+LDFLAGS := -m64 -static -nostdlib -pie 
 LDFLAGS += -Wl,-Ttext-segment,$(LD_TEXT) -Wl,-N -Wl,--build-id=none
 LDFLAGS += -Wl,--no-multi-toc
 LDRFLAGS=-melf64ppc
