@@ -17,11 +17,12 @@ firmware {
 
 'symbol-map' property describes OPAL symbol start address and size.
 
-'version' property describes OPAL version.
+'version' property describes OPAL version. Replaces 'git-id', so may
+not be present.
 
-'mi-version' property describes Microcode Image.
+'mi-version' property describes Microcode Image. Only on IBM FSP systems.
 
-'ml-version' property describes Microcode Level.
+'ml-version' property describes Microcode Level. Only on IBM FSP systems.
 
 MI/ML format:
  <ML/MI> <T side version> <P side version> <boot side version>
