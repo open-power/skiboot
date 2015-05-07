@@ -8,9 +8,15 @@ CORE_OBJS += device.o exceptions.o trace.o affinity.o vpd.o
 CORE_OBJS += hostservices.o platform.o nvram.o hmi.o
 CORE_OBJS += console-log.o ipmi.o time-utils.o pel.o pool.o errorlog.o
 CORE_OBJS += timer.o i2c.o rtc.o flash.o sensor.o
+
+ifeq ($(SKIBOOT_GCOV),1)
+CORE_OBJS += gcov-profiling.o
+endif
+
 CORE=core/built-in.o
 
 CFLAGS_SKIP_core/relocate.o = -pg -fstack-protector-all
 CFLAGS_SKIP_core/relocate.o += -fstack-protector -fstack-protector-strong
+CFLAGS_SKIP_core/relocate.o += -fprofile-arcs -ftest-coverage
 
 $(CORE): $(CORE_OBJS:%=core/%)

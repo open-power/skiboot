@@ -52,6 +52,10 @@ CPPFLAGS += -ffreestanding
 
 CFLAGS := -fno-strict-aliasing -fstack-protector-all -pie -mbig-endian -m64
 
+ifeq ($(SKIBOOT_GCOV),1)
+CFLAGS += -fprofile-arcs -ftest-coverage
+endif
+
 ifeq ($(STACK_CHECK),1)
 CFLAGS += -fstack-protector-all -pg
 CPPFLAGS += -DSTACK_CHECK_ENABLED
