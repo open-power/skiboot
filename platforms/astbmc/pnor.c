@@ -27,7 +27,7 @@
 int pnor_init(void)
 {
 	struct spi_flash_ctrl *pnor_ctrl;
-	struct flash_chip *pnor_chip;
+	struct flash_chip *pnor_chip = NULL;
 	int rc;
 
 	/* Open controller and flash. If the LPC->AHB doesn't point to
