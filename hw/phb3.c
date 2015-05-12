@@ -2182,7 +2182,7 @@ static struct {
 	uint32_t			ec_level;
 	struct capp_lid_hdr		*lid;
 	size_t size;
-	bool loaded;
+	int load_result;
 } capp_ucode_info = { 0, NULL, 0, false };
 
 #define CAPP_UCODE_MAX_SIZE 0x20000
@@ -2190,25 +2190,22 @@ static struct {
 static int64_t capp_lid_download(void)
 {
 	int64_t ret;
-	int loaded;
 
-	if (capp_ucode_info.loaded == true)
-		return OPAL_SUCCESS;
+	if (capp_ucode_info.load_result != OPAL_EMPTY)
+		return capp_ucode_info.load_result;
 
-	loaded = wait_for_resource_loaded(RESOURCE_ID_CAPP,
-					  capp_ucode_info.ec_level);
+	capp_ucode_info.load_result = wait_for_resource_loaded(
+		RESOURCE_ID_CAPP,
+		capp_ucode_info.ec_level);
 
-	if (loaded != OPAL_SUCCESS) {
+	if (capp_ucode_info.load_result != OPAL_SUCCESS) {
 		prerror("CAPP: Error loading ucode lid. index=%x\n",
 			capp_ucode_info.ec_level);
 		ret = OPAL_RESOURCE;
 		free(capp_ucode_info.lid);
 		capp_ucode_info.lid = NULL;
-		capp_ucode_info.loaded = false;
 		goto end;
 	}
-
-	capp_ucode_info.loaded = true;
 
 	ret = OPAL_SUCCESS;
 end:
@@ -4506,7 +4503,7 @@ int phb3_preload_capp_ucode(void)
 
 	/* Assert that we're preloading */
 	assert(capp_ucode_info.lid == NULL);
-	capp_ucode_info.loaded = false;
+	capp_ucode_info.load_result = OPAL_EMPTY;
 
 	capp_ucode_info.ec_level = index;
 
