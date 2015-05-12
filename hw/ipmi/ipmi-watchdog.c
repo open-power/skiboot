@@ -78,21 +78,34 @@ static void set_wdt(uint8_t action, uint16_t count, uint8_t pretimeout)
 	ipmi_queue_msg(ipmi_msg);
 }
 
-static void reset_wdt(struct timer *t __unused, void *data)
+static struct ipmi_msg *wdt_reset_mkmsg(void)
 {
 	struct ipmi_msg *ipmi_msg;
 
 	ipmi_msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_RESET_WDT,
-			      ipmi_wdt_complete, data, NULL, 0, 0);
+			      ipmi_wdt_complete, NULL, NULL, 0, 0);
 	if (!ipmi_msg) {
 		prerror("Unable to allocate reset wdt message\n");
-		return;
+		return NULL;
 	}
 
-	if (!data)
+	return ipmi_msg;
+}
+
+static void sync_reset_wdt(void)
+{
+	struct ipmi_msg *ipmi_msg;
+
+	if ((ipmi_msg = wdt_reset_mkmsg()))
 		ipmi_queue_msg_sync(ipmi_msg);
-	else
-		ipmi_queue_msg(ipmi_msg);
+}
+
+static void reset_wdt(struct timer *t __unused, void *data __unused)
+{
+	struct ipmi_msg *ipmi_msg;
+
+	if ((ipmi_msg = wdt_reset_mkmsg()))
+		ipmi_queue_msg_head(ipmi_msg);
 }
 
 void ipmi_wdt_stop(void)
@@ -122,12 +135,14 @@ void ipmi_wdt_init(void)
 	init_timer(&wdt_timer, reset_wdt, NULL);
 	set_wdt(WDT_POWER_CYCLE_ACTION, WDT_TIMEOUT, 0);
 
-	/* Start the WDT */
-	reset_wdt(NULL, NULL);
+	/* Start the WDT. We do it synchronously to make sure it has
+	 * started before skiboot continues booting. Otherwise we
+	 * could crash before the wdt has actually been started. */
+	sync_reset_wdt();
 
 	/* For some reason we have to reset it twice to get it to
 	 * actually start the first time. */
-	reset_wdt(NULL, NULL);
+	sync_reset_wdt();
 
 	return;
 }
