@@ -40,7 +40,15 @@ extern FILE stderr_data;
 #define stderr (&stderr_data)
 
 int fileno(FILE *stream);
-int printf(const char *format, ...) __attribute__((format (printf, 1, 2)));
+
+int _printf(const char *format, ...) __attribute__((format (printf, 1, 2)));
+
+#ifndef pr_fmt
+#define prfmt(fmt) fmt
+#endif
+
+#define printf(f, ...) do { _printf(pr_fmt(f), ##__VA_ARGS__); } while(0)
+
 int fprintf(FILE *stream, const char *format, ...) __attribute__((format (printf, 2, 3)));
 int snprintf(char *str, size_t size, const char *format, ...)  __attribute__((format (printf, 3, 4)));
 int vfprintf(FILE *stream, const char *format, va_list);

@@ -92,7 +92,13 @@ extern struct debug_descriptor debug_descriptor;
 #define PR_DEBUG	7
 #define PR_TRACE	8
 #define PR_INSANE	9
-void prlog(int log_level, const char* fmt, ...) __attribute__((format (printf, 2, 3)));
+
+#ifndef pr_fmt
+#define pr_fmt(fmt) fmt
+#endif
+
+void _prlog(int log_level, const char* fmt, ...) __attribute__((format (printf, 2, 3)));
+#define prlog(l, f, ...) do { _prlog(l, pr_fmt(f), ##__VA_ARGS__); } while(0)
 #define prerror(fmt...)	do { prlog(PR_ERR, fmt); } while(0)
 #define prlog_once(arg, ...)	 		\
 ({						\

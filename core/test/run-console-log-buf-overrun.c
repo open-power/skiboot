@@ -43,6 +43,7 @@ static inline unsigned long mftb(void)
 		return 42;
 }
 
+#include "../../libc/include/stdio.h"
 #include "../console-log.c"
 #include "../../libc/stdio/snprintf.c"
 #include "../../libc/stdio/vsnprintf.c"

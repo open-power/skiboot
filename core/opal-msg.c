@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-
+#define pr_fmt(fmt) "opalmsg: " fmt
 #include <skiboot.h>
 #include <opal-msg.h>
 #include <opal-api.h>
 #include <lock.h>
 
 #define OPAL_MAX_MSGS		(OPAL_MSG_TYPE_MAX + OPAL_MAX_ASYNC_COMP - 1)
-#define OPAL_MSG_PREFIX		"opalmsg: "
-
 
 struct opal_msg_entry {
 	struct list_node link;
@@ -46,10 +44,10 @@ int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
 
 	entry = list_pop(&msg_free_list, struct opal_msg_entry, link);
 	if (!entry) {
-		prerror(OPAL_MSG_PREFIX "No available node in the free list, allocating\n");
+		prerror("No available node in the free list, allocating\n");
 		entry = zalloc(sizeof(struct opal_msg_entry));
 		if (!entry) {
-			prerror(OPAL_MSG_PREFIX "Allocation failed\n");
+			prerror("Allocation failed\n");
 			unlock(&opal_msg_lock);
 			return OPAL_RESOURCE;
 		}
@@ -60,7 +58,7 @@ int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
 	entry->msg.msg_type = msg_type;
 
 	if (num_params > ARRAY_SIZE(entry->msg.params)) {
-		prerror(OPAL_MSG_PREFIX "Discarding extra parameters\n");
+		prerror("Discarding extra parameters\n");
 		num_params = ARRAY_SIZE(entry->msg.params);
 	}
 	memcpy(entry->msg.params, params, num_params*sizeof(u64));

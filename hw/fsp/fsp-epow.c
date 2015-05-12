@@ -16,6 +16,7 @@
 /*
  * Handle FSP Environmental and Power Warning (EPOW) events notification
  */
+#define pr_fmt(fmt) "FSPEPOW: " fmt
 #include <skiboot.h>
 #include <console.h>
 #include <fsp.h>
@@ -26,8 +27,6 @@
 #include <opal-msg.h>
 
 #include "fsp-epow.h"
-
-#define PREFIX "FSPEPOW: "
 
 /*
  * System EPOW status
@@ -68,12 +67,12 @@ static void epow_process_base_event(u8 *epow)
 	}
 
 	if (epow[3] & SPCN_POWR_FAIL) {
-		prlog(PR_TRACE, PREFIX "FSP message with SPCN_POWR_FAIL\n");
+		prlog(PR_TRACE, "FSP message with SPCN_POWR_FAIL\n");
 		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_FAIL;
 	}
 
 	if (epow[3] & SPCN_INCL_POWR) {
-		prlog(PR_TRACE, PREFIX "FSP message with SPCN_INCL_POWR\n");
+		prlog(PR_TRACE, "FSP message with SPCN_INCL_POWR\n");
 		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_INCL;
 	}
 }
@@ -85,17 +84,17 @@ static void epow_process_ex1_event(u8 *epow)
 	epow_status[OPAL_SYSEPOW_TEMP] &= ~(OPAL_SYSTEMP_AMB | OPAL_SYSTEMP_INT);
 
 	if (epow[4] == EPOW_ON_UPS) {
-		prlog(PR_TRACE, PREFIX "FSP message with EPOW_ON_UPS\n");
+		prlog(PR_TRACE, "FSP message with EPOW_ON_UPS\n");
 		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_UPS;
 	}
 
 	if (epow[4] == EPOW_TMP_AMB) {
-		prlog(PR_TRACE, PREFIX "FSP message with EPOW_TMP_AMB\n");
+		prlog(PR_TRACE, "FSP message with EPOW_TMP_AMB\n");
 		epow_status[OPAL_SYSEPOW_TEMP] |= OPAL_SYSTEMP_AMB;
 	}
 
 	if (epow[4] == EPOW_TMP_INT) {
-		prlog(PR_TRACE, PREFIX "FSP message with EPOW_TMP_INT\n");
+		prlog(PR_TRACE, "FSP message with EPOW_TMP_INT\n");
 		epow_status[OPAL_SYSEPOW_TEMP] |= OPAL_SYSTEMP_INT;
 	}
 }
@@ -127,7 +126,7 @@ static void fsp_epow_update(u8 *epow, int epow_type)
 		/*FIXME: Key position information present but not used */
 		break;
 	default:
-		prlog(PR_WARNING, PREFIX "Unknown EPOW event notification\n");
+		prlog(PR_WARNING, "Unknown EPOW event notification\n");
 		break;
 	}
 	unlock(&epow_lock);
@@ -139,7 +138,7 @@ static void fsp_epow_update(u8 *epow, int epow_type)
 	if (epow_changed) {
 		rc = opal_queue_msg(OPAL_MSG_EPOW, NULL, NULL);
 		if (rc) {
-			prlog(PR_ERR, PREFIX "OPAL EPOW message queuing failed\n");
+			prlog(PR_ERR, "OPAL EPOW message queuing failed\n");
 			return;
 		}
 	}
@@ -153,7 +152,7 @@ static void fsp_process_epow(struct fsp_msg *msg, int epow_type)
 
 	/* Basic EPOW signature */
 	if (msg->data.bytes[0] != 0xF2) {
-		prlog(PR_ERR, PREFIX "Signature mismatch\n");
+		prlog(PR_ERR, "Signature mismatch\n");
 		return;
 	}
 
@@ -177,13 +176,13 @@ static void fsp_process_epow(struct fsp_msg *msg, int epow_type)
 	case EPOW_NORMAL:
 		resp = fsp_mkmsg(FSP_CMD_STATUS_REQ, 0);
 		if (resp == NULL) {
-			prerror(PREFIX "%s : Message allocation failed\n",
+			prerror("%s : Message allocation failed\n",
 				__func__);
 			break;
 		}
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
 			fsp_freemsg(resp);
-			prerror(PREFIX "%s : Failed to queue response "
+			prerror("%s : Failed to queue response "
 				"message\n", __func__);
 		}
 		break;
@@ -192,31 +191,31 @@ static void fsp_process_epow(struct fsp_msg *msg, int epow_type)
 		epow[4] = msg->data.bytes[4];
 		resp = fsp_mkmsg(FSP_CMD_STATUS_EX1_REQ, 0);
 		if (resp == NULL) {
-			prerror(PREFIX "%s : Message allocation failed\n",
+			prerror("%s : Message allocation failed\n",
 				__func__);
 			break;
 		}
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
 			fsp_freemsg(resp);
-			prerror(PREFIX "%s : Failed to queue response "
+			prerror("%s : Failed to queue response "
 				"message\n", __func__);
 		}
 		break;
 	case EPOW_EX2:
 		resp = fsp_mkmsg(FSP_CMD_STATUS_EX2_REQ, 0);
 		if (resp == NULL) {
-			prerror(PREFIX "%s : Message allocation failed\n",
+			prerror("%s : Message allocation failed\n",
 				__func__);
 			break;
 		}
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
 			fsp_freemsg(resp);
-			prerror(PREFIX "%s : Failed to queue response "
+			prerror("%s : Failed to queue response "
 				"message\n", __func__);
 		}
 		break;
 	default:
-		prlog(PR_WARNING, PREFIX "Unknown EPOW event notification\n");
+		prlog(PR_WARNING, "Unknown EPOW event notification\n");
 		return;
 	}
 	fsp_epow_update(epow, epow_type);
@@ -299,5 +298,5 @@ void fsp_epow_init(void)
 	np = dt_new(opal_node, "epow");
 	dt_add_property_strings(np, "compatible", "ibm,opal-v3-epow");
 	dt_add_property_strings(np, "epow-classes", "power", "temperature", "cooling");
-	prlog(PR_TRACE, PREFIX "FSP EPOW support initialized\n");
+	prlog(PR_TRACE, "FSP EPOW support initialized\n");
 }

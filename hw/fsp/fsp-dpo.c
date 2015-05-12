@@ -16,6 +16,7 @@
 /*
  * Handle FSP DPO (Delayed Power Off) event notification
  */
+#define pr_fmt(fmt) "FSPDPO: " fmt
 #include <skiboot.h>
 #include <console.h>
 #include <fsp.h>
@@ -24,8 +25,6 @@
 #include <timebase.h>
 #include <opal.h>
 #include <opal-msg.h>
-
-#define PREFIX "FSPDPO: "
 
 #define DPO_CMD_SGN_BYTE0	0xf4 /* Byte[0] signature */
 #define DPO_CMD_SGN_BYTE1	0x20 /* Byte[1] signature */
@@ -62,17 +61,16 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 	/* DPO message does not have the correct signatures */
 	if ((msg->data.bytes[0] != DPO_CMD_SGN_BYTE0)
 			|| (msg->data.bytes[1] != DPO_CMD_SGN_BYTE1)) {
-		prlog(PR_ERR, PREFIX "Message signatures did not match\n");
+		prlog(PR_ERR, "Message signatures did not match\n");
 		cmd |= FSP_STATUS_INVALID_CMD;
 		resp = fsp_mkmsg(cmd, 0);
 		if (resp == NULL) {
-			prerror(PREFIX "%s : Message allocation failed\n",
-				__func__);
+			prerror("%s : Message allocation failed\n", __func__);
 			return;
 		}
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
 			fsp_freemsg(resp);
-			prerror(PREFIX "%s : Failed to queue response "
+			prerror("%s : Failed to queue response "
 				"message\n", __func__);
 		}
 		return;
@@ -80,17 +78,17 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 
 	/* Sapphire is already in "DPO pending" state */
 	if (fsp_dpo_pending) {
-		prlog(PR_ERR, PREFIX "OPAL is already in DPO pending state\n");
+		prlog(PR_ERR, "OPAL is already in DPO pending state\n");
 		cmd |= FSP_STATUS_INVALID_DPOSTATE;
 		resp = fsp_mkmsg(cmd, 0);
 		if (resp == NULL) {
-			prerror(PREFIX "%s : Message allocation failed\n",
+			prerror("%s : Message allocation failed\n",
 				__func__);
 			return;
 		}
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
 			fsp_freemsg(resp);
-			prerror(PREFIX "%s : Failed to queue response "
+			prerror("%s : Failed to queue response "
 				"message\n", __func__);
 		}
 		return;
@@ -102,17 +100,17 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 	/* Inform the host about DPO */
 	rc = opal_queue_msg(OPAL_MSG_DPO, NULL, NULL);
 	if (rc) {
-		prlog(PR_ERR, PREFIX "OPAL message queuing failed\n");
+		prlog(PR_ERR, "OPAL message queuing failed\n");
 		cmd |= FSP_STATUS_GENERIC_ERROR;
 		resp = fsp_mkmsg(cmd, 0);
 		if (resp == NULL) {
-			prerror(PREFIX "%s : Message allocation failed\n",
+			prerror("%s : Message allocation failed\n",
 				__func__);
 			return;
 		}
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
 			fsp_freemsg(resp);
-			prerror(PREFIX "%s : Failed to queue response "
+			prerror("%s : Failed to queue response "
 				"message\n", __func__);
 		}
 		return;
@@ -121,12 +119,12 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 	/* Acknowledge the FSP on DPO */
 	resp = fsp_mkmsg(cmd, 0);
 	if (resp == NULL) {
-		prerror(PREFIX "%s : Message allocation failed\n", __func__);
+		prerror("%s : Message allocation failed\n", __func__);
 		return;
 	}
 	if (fsp_queue_msg(resp, fsp_freemsg)) {
 		fsp_freemsg(resp);
-		prerror(PREFIX "%s : Failed to queue response message\n",
+		prerror("%s : Failed to queue response message\n",
 			__func__);
 	}
 
@@ -149,7 +147,7 @@ static void fsp_process_dpo(struct fsp_msg *msg)
 static bool fsp_dpo_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
 	if (cmd_sub_mod == FSP_CMD_INIT_DPO) {
-		prlog(PR_TRACE, PREFIX "SP initiated Delayed Power Off (DPO)\n");
+		prlog(PR_TRACE, "SP initiated Delayed Power Off (DPO)\n");
 		fsp_process_dpo(msg);
 		return true;
 	}
@@ -164,5 +162,5 @@ void fsp_dpo_init(void)
 {
 	fsp_register_client(&fsp_dpo_client, FSP_MCLASS_SERVICE);
 	opal_register(OPAL_GET_DPO_STATUS, fsp_opal_get_dpo_status, 1);
-	prlog(PR_TRACE, PREFIX "FSP DPO support initialized\n");
+	prlog(PR_TRACE, "FSP DPO support initialized\n");
 }

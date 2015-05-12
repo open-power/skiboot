@@ -48,7 +48,7 @@ int ipmi_queue_msg(struct ipmi_msg __unused *msg)
 	return 0;
 }
 
-void prlog(int __unused log_level, const __unused char* fmt, ...)
+void _prlog(int __unused log_level, const __unused char* fmt, ...)
 {
 	return;
 }

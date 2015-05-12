@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
+#define pr_fmt(fmt) "FSPMEMERR: " fmt
 #include <skiboot.h>
 #include <opal.h>
 #include <opal-msg.h>
 #include <lock.h>
 #include <fsp.h>
 #include <errorlog.h>
-
-/* debug message prefix */
-#define PREFIX			"FSPMEMERR: "
 
 /* FSP sends real address of 4K memory page. */
 #define MEM_ERR_PAGE_SIZE_4K	(1UL << 12)
@@ -71,8 +69,7 @@ static bool send_response_to_fsp(u32 cmd_sub_mod)
 		rc = fsp_queue_msg(rsp, fsp_freemsg);
 	if (rc) {
 		/* XXX Generate error logs */
-		prerror(PREFIX "Error %d queueing FSP memory error"
-			" reply\n", rc);
+		prerror("Error %d queueing FSP memory error reply\n", rc);
 		return false;
 	}
 	return true;
@@ -146,7 +143,7 @@ static int queue_mem_err_node(struct OpalMemoryErrorData *merr_evt)
 	lock(&mem_err_lock);
 	entry = list_pop(&merr_free_list, struct fsp_mem_err_node, list);
 	if (!entry) {
-		printf(PREFIX "Failed to queue up memory error event.\n");
+		printf("Failed to queue up memory error event.\n");
 		unlock(&mem_err_lock);
 		return -ENOMEM;
 	}
@@ -202,7 +199,7 @@ static bool handle_memory_resilience(u32 cmd_sub_mod, u64 paddr)
 	memset(&mem_err_evt, 0, sizeof(struct OpalMemoryErrorData));
 	/* Check arguments */
 	if (paddr == 0) {
-		prerror(PREFIX "memory resilience: Invalid real address.\n");
+		prerror("memory resilience: Invalid real address.\n");
 		err = FSP_RESP_STATUS_GENERIC_FAILURE;
 	}
 
@@ -303,7 +300,7 @@ static bool handle_memory_deallocation(u64 paddr_start, u64 paddr_end)
 	memset(&mem_err_evt, 0, sizeof(struct OpalMemoryErrorData));
 	/* Check arguments */
 	if ((paddr_start == 0) || (paddr_end == 0)) {
-		prerror(PREFIX "memory deallocation: Invalid "
+		prerror("memory deallocation: Invalid "
 			"starting/ending real address.\n");
 		err = FSP_RESP_STATUS_GENERIC_FAILURE;
 	}
@@ -349,7 +346,7 @@ static bool fsp_mem_err_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
 	u64 paddr_start, paddr_end;
 
-	printf(PREFIX "Received 0x%08ux command\n", cmd_sub_mod);
+	printf("Received 0x%08ux command\n", cmd_sub_mod);
 	switch (cmd_sub_mod) {
 	case FSP_CMD_MEM_RES_CE:
 	case FSP_CMD_MEM_RES_UE:
@@ -360,13 +357,13 @@ static bool fsp_mem_err_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 		 * address of 4K memory page in which the error occured.
 		 */
 		paddr_start = *((u64 *)&msg->data.words[0]);
-		printf(PREFIX "Got memory resilience error message for "
+		printf("Got memory resilience error message for "
 		       "paddr=0x%016llux\n", paddr_start);
 		return handle_memory_resilience(cmd_sub_mod, paddr_start);
 	case FSP_CMD_MEM_DYN_DEALLOC:
 		paddr_start = *((u64 *)&msg->data.words[0]);
 		paddr_end = *((u64 *)&msg->data.words[2]);
-		printf(PREFIX "Got dynamic memory deallocation message: "
+		printf("Got dynamic memory deallocation message: "
 		       "paddr_start=0x%016llux, paddr_end=0x%016llux\n",
 		       paddr_start, paddr_end);
 		return handle_memory_deallocation(paddr_start, paddr_end);
@@ -401,7 +398,7 @@ void fsp_memory_err_init(void)
 {
 	int rc;
 
-	printf(PREFIX "Intializing fsp memory handling.\n");
+	printf("Intializing fsp memory handling.\n");
 	/* If we have an FSP, register for notifications */
 	if (!fsp_present())
 		return;

@@ -3,6 +3,7 @@ CORE_TEST := core/test/run-device core/test/run-mem_region core/test/run-malloc 
 
 CORE_TEST_NOSTUB := core/test/run-console-log
 CORE_TEST_NOSTUB += core/test/run-console-log-buf-overrun
+CORE_TEST_NOSTUB += core/test/run-console-log-pr_fmt
 
 LCOV_EXCLUDE += $(CORE_TEST:%=%.c) core/test/stubs.c
 LCOV_EXCLUDE += $(CORE_TEST_NOSTUB:%=%.c) /usr/include/*

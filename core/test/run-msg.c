@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <skiboot.h>
 #include <inttypes.h>
+#include <stdbool.h>
+#include <stddef.h>
 #include <assert.h>
+#include <errno.h>
+#include <stdlib.h>
 
 static bool zalloc_should_fail = false;
 static int zalloc_should_fail_after = 0;
@@ -33,6 +36,7 @@ static void *zalloc(size_t size)
 }
 
 #include "../opal-msg.c"
+#include <skiboot.h>
 
 void lock(struct lock *l)
 {

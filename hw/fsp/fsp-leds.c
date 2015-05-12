@@ -18,6 +18,8 @@
 /*
  * LED location code and indicator handling
  */
+
+#define pr_fmt(fmt) "FSPLED: " fmt
 #include <skiboot.h>
 #include <fsp.h>
 #include <device.h>
@@ -28,10 +30,6 @@
 #include <opal-msg.h>
 #include <fsp-leds.h>
 #include <fsp-sysparam.h>
-
-
-/* LED prefix */
-#define PREFIX		"FSPLED: "
 
 #define buf_write(p, type, val)  do { *(type *)(p) = val;\
 					p += sizeof(type); } while(0)
@@ -220,7 +218,7 @@ static void fsp_set_sai_complete(struct fsp_msg *msg)
 	struct led_set_cmd *spcn_cmd = (struct led_set_cmd *)msg->user_data;
 
 	if (rc) {
-		prlog(PR_ERR, PREFIX "Update SAI cmd failed [rc=%d].\n", rc);
+		prlog(PR_ERR, "Update SAI cmd failed [rc=%d].\n", rc);
 		ret = OPAL_INTERNAL_ERROR;
 
 		/* Roll back */
@@ -257,14 +255,12 @@ static int fsp_set_sai(struct led_set_cmd *spcn_cmd)
 	else
 		cmd |= FSP_LED_RESET_REAL_SAI;
 
-	prlog(PR_TRACE, PREFIX
-	      "Update SAI Indicator [cur : 0x%x, new : 0x%x].\n",
+	prlog(PR_TRACE, "Update SAI Indicator [cur : 0x%x, new : 0x%x].\n",
 	      sai_data.state, spcn_cmd->state);
 
 	msg = fsp_mkmsg(cmd, 0);
 	if (!msg) {
-		prlog(PR_ERR, PREFIX
-		      "%s: Memory allocation failed.\n", __func__);
+		prlog(PR_ERR, "%s: Memory allocation failed.\n", __func__);
 		goto sai_fail;
 	}
 
@@ -273,8 +269,7 @@ static int fsp_set_sai(struct led_set_cmd *spcn_cmd)
 	rc = fsp_queue_msg(msg, fsp_set_sai_complete);
 	if (rc) {
 		fsp_freemsg(msg);
-		prlog(PR_ERR, PREFIX
-		      "%s: Failed to queue the message\n", __func__);
+		prlog(PR_ERR, "%s: Failed to queue the message\n", __func__);
 		goto sai_fail;
 	}
 
@@ -297,15 +292,13 @@ static void fsp_get_sai_complete(struct fsp_msg *msg)
 	int rc = msg->resp->word1 & 0xff00;
 
 	if (rc) {
-		prlog(PR_ERR, PREFIX
-		      "Read real SAI cmd failed [rc = 0x%x].\n", rc);
+		prlog(PR_ERR, "Read real SAI cmd failed [rc = 0x%x].\n", rc);
 	} else { /* Update SAI state */
 		lock(&sai_lock);
 		sai_data.state = msg->resp->data.words[0] & 0xff;
 		unlock(&sai_lock);
 
-		prlog(PR_TRACE, PREFIX
-		      "SAI initial state = 0x%x\n", sai_data.state);
+		prlog(PR_TRACE, "SAI initial state = 0x%x\n", sai_data.state);
 	}
 
 	fsp_freemsg(msg);
@@ -320,15 +313,13 @@ static void fsp_get_sai(void)
 
 	msg = fsp_mkmsg(cmd, 0);
 	if (!msg) {
-		prlog(PR_ERR, PREFIX
-		      "%s: Memory allocation failed.\n", __func__);
+		prlog(PR_ERR, "%s: Memory allocation failed.\n", __func__);
 		return;
 	}
 	rc = fsp_queue_msg(msg, fsp_get_sai_complete);
 	if (rc) {
 		fsp_freemsg(msg);
-		prlog(PR_ERR, PREFIX
-		      "%s: Failed to queue the message\n", __func__);
+		prlog(PR_ERR, "%s: Failed to queue the message\n", __func__);
 	}
 }
 
@@ -352,8 +343,7 @@ static bool sai_update_notification(struct fsp_msg *msg)
 	sai_data.state = *state;
 	unlock(&sai_lock);
 
-	prlog(PR_TRACE, PREFIX
-	      "SAI updated. New SAI state = 0x%x\n", *state);
+	prlog(PR_TRACE, "SAI updated. New SAI state = 0x%x\n", *state);
 	return true;
 }
 
@@ -372,7 +362,7 @@ static void update_led_list(char *loc_code, u32 led_state, u32 excl_bit)
 	encl_cec_led = fsp_find_encl_cec_led(loc_code);
 	if (!encl_cec_led) {
 		log_simple_error(&e_info(OPAL_RC_LED_LC),
-			PREFIX "Could not find enclosure LED in CEC LC=%s\n",
+			"Could not find enclosure LED in CEC LC=%s\n",
 			loc_code);
 		return;
 	}
@@ -384,7 +374,7 @@ static void update_led_list(char *loc_code, u32 led_state, u32 excl_bit)
 	} else {	/* Descendant LED in CEC list */
 		led = fsp_find_cec_led(loc_code);
 		if (!led) {
-			log_simple_error(&e_info(OPAL_RC_LED_LC), PREFIX
+			log_simple_error(&e_info(OPAL_RC_LED_LC),
 					 "Could not find descendent LED in \
 					 CEC LC=%s\n", loc_code);
 			return;
@@ -396,7 +386,7 @@ static void update_led_list(char *loc_code, u32 led_state, u32 excl_bit)
 	encl_led = fsp_find_encl_encl_led(loc_code);
 	if (!encl_led) {
 		log_simple_error(&e_info(OPAL_RC_LED_LC),
-			PREFIX "Could not find enclosure LED in ENCL LC=%s\n",
+			"Could not find enclosure LED in ENCL LC=%s\n",
 			loc_code);
 		return;
 	}
@@ -423,15 +413,14 @@ static int fsp_set_led_response(uint32_t cmd)
 
 	msg = fsp_mkmsg(cmd, 0);
 	if (!msg) {
-		prerror(PREFIX
-			"Failed to allocate FSP_RSP_SET_LED_STATE [cmd=%x])\n",
+		prerror("Failed to allocate FSP_RSP_SET_LED_STATE [cmd=%x])\n",
 			cmd);
 	} else {
 		rc = fsp_queue_msg(msg, fsp_freemsg);
 		if (rc != OPAL_SUCCESS) {
 			fsp_freemsg(msg);
-			prerror(PREFIX "Failed to queue "
-				"FSP_RSP_SET_LED_STATE [cmd=%x]\n", cmd);
+			prerror("Failed to queue FSP_RSP_SET_LED_STATE"
+				" [cmd=%x]\n", cmd);
 		}
 	}
 	return rc;
@@ -454,7 +443,7 @@ static void fsp_spcn_set_led_completion(struct fsp_msg *msg)
 	 */
 	if (status != FSP_STATUS_SUCCESS) {
 		log_simple_error(&e_info(OPAL_RC_LED_SPCN),
-			PREFIX "Last SPCN command failed, status=%02x\n",
+			"Last SPCN command failed, status=%02x\n",
 			status);
 		cmd |= FSP_STATUS_GENERIC_ERROR;
 
@@ -614,7 +603,7 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 update_fail:
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_LED_STATE),
-				 PREFIX "Set led state failed at LC=%s\n",
+				 "Set led state failed at LC=%s\n",
 				 spcn_cmd->loc_code);
 
 		if (spcn_cmd->cmd_src == SPCN_SRC_FSP)
@@ -689,8 +678,7 @@ static int queue_led_state_change(char *loc_code, u8 command,
 	/* New request node */
 	cmd = zalloc(sizeof(struct led_set_cmd));
 	if (!cmd) {
-		prlog(PR_ERR, PREFIX
-		      "SPCN set command node allocation failed\n");
+		prlog(PR_ERR, "SPCN set command node allocation failed\n");
 		return -1;
 	}
 
@@ -858,12 +846,11 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 	msg = fsp_mkmsg(FSP_RSP_GET_LED_LIST, 3, 0,
 			PSI_DMA_LOC_COD_BUF, total_size);
 	if (!msg) {
-		prerror(PREFIX "Failed to allocate FSP_RSP_GET_LED_LIST.\n");
+		prerror("Failed to allocate FSP_RSP_GET_LED_LIST.\n");
 	} else {
 		if (fsp_queue_msg(msg, fsp_freemsg)) {
 			fsp_freemsg(msg);
-			prerror(PREFIX
-				"Failed to queue FSP_RSP_GET_LED_LIST\n");
+			prerror("Failed to queue FSP_RSP_GET_LED_LIST\n");
 		}
 	}
 }
@@ -895,12 +882,12 @@ static void fsp_get_led_list(struct fsp_msg *msg)
 		msg = fsp_mkmsg(FSP_RSP_GET_LED_LIST | FSP_STATUS_INVALID_DATA,
 				0);
 		if (!msg) {
-			prerror(PREFIX "Failed to allocate FSP_RSP_GET_LED_LIST"
+			prerror("Failed to allocate FSP_RSP_GET_LED_LIST"
 				" | FSP_STATUS_INVALID_DATA\n");
 		} else {
 			if (fsp_queue_msg(msg, fsp_freemsg)) {
 				fsp_freemsg(msg);
-				prerror(PREFIX "Failed to queue "
+				prerror("Failed to queue "
 					"FSP_RSP_GET_LED_LIST |"
 					" FSP_STATUS_INVALID_DATA\n");
 			}
@@ -909,7 +896,7 @@ static void fsp_get_led_list(struct fsp_msg *msg)
 	}
 	memcpy(&req, buf, sizeof(req));
 
-	prlog(PR_TRACE, PREFIX "Request for loc code list type 0x%04x LC=%s\n",
+	prlog(PR_TRACE, "Request for loc code list type 0x%04x LC=%s\n",
 	       req.req_type, req.loc_code);
 
 	fsp_ret_loc_code_list(req.req_type, req.loc_code);
@@ -932,18 +919,18 @@ static void fsp_free_led_list_buf(struct fsp_msg *msg)
 	/* Token does not point to outbound buffer */
 	if (tce_token != PSI_DMA_LOC_COD_BUF) {
 		log_simple_error(&e_info(OPAL_RC_LED_BUFF),
-			PREFIX "Invalid tce token from FSP\n");
+			"Invalid tce token from FSP\n");
 		cmd |=  FSP_STATUS_GENERIC_ERROR;
 		resp = fsp_mkmsg(cmd, 0);
 		if (!resp) {
-			prerror(PREFIX "Failed to allocate FSP_RSP_RET_LED_BUFFER"
+			prerror("Failed to allocate FSP_RSP_RET_LED_BUFFER"
 				"| FSP_STATUS_GENERIC_ERROR\n");
 			return;
 		}
 
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
 			fsp_freemsg(resp);
-			prerror(PREFIX "Failed to queue "
+			prerror("Failed to queue "
 				"RET_LED_BUFFER|ERROR\n");
 		}
 		return;
@@ -954,12 +941,12 @@ static void fsp_free_led_list_buf(struct fsp_msg *msg)
 
 	resp = fsp_mkmsg(cmd, 0);
 	if (!resp) {
-		prerror(PREFIX "Failed to allocate FSP_RSP_RET_LED_BUFFER\n");
+		prerror("Failed to allocate FSP_RSP_RET_LED_BUFFER\n");
 		return;
 	}
 	if (fsp_queue_msg(resp, fsp_freemsg)) {
 		fsp_freemsg(resp);
-		prerror(PREFIX "Failed to queue FSP_RSP_RET_LED_BUFFER\n");
+		prerror("Failed to queue FSP_RSP_RET_LED_BUFFER\n");
 	}
 }
 
@@ -980,31 +967,29 @@ static void fsp_ret_led_state(char *loc_code)
 			ind_state |= FSP_IND_FAULT_ACTV;
 		msg = fsp_mkmsg(FSP_RSP_GET_LED_STATE, 1, ind_state);
 		if (!msg) {
-			prerror(PREFIX
-				"Couldn't alloc FSP_RSP_GET_LED_STATE\n");
+			prerror("Couldn't alloc FSP_RSP_GET_LED_STATE\n");
 			return;
 		}
 		if (fsp_queue_msg(msg, fsp_freemsg)) {
 			fsp_freemsg(msg);
-			prerror(PREFIX
-				"Couldn't queue FSP_RSP_GET_LED_STATE\n");
+			prerror("Couldn't queue FSP_RSP_GET_LED_STATE\n");
 		}
 		return;
 	}
 
 	/* Location code not found */
 	log_simple_error(&e_info(OPAL_RC_LED_LC),
-		PREFIX "Could not find the location code LC=%s\n", loc_code);
+			 "Could not find the location code LC=%s\n", loc_code);
 
 	msg = fsp_mkmsg(FSP_RSP_GET_LED_STATE | FSP_STATUS_INVALID_LC, 1, 0xff);
 	if (!msg) {
-		prerror(PREFIX "Failed to alloc FSP_RSP_GET_LED_STATE "
+		prerror("Failed to alloc FSP_RSP_GET_LED_STATE "
 			"| FSP_STATUS_INVALID_LC\n");
 		return;
 	}
 	if (fsp_queue_msg(msg, fsp_freemsg)) {
 		fsp_freemsg(msg);
-		prerror(PREFIX "Failed to queue FSP_RSP_GET_LED_STATE "
+		prerror("Failed to queue FSP_RSP_GET_LED_STATE "
 			"| FSP_STATUS_INVALID_LC\n");
 	}
 }
@@ -1027,13 +1012,13 @@ static void fsp_get_led_state(struct fsp_msg *msg)
 		msg = fsp_mkmsg(FSP_RSP_GET_LED_STATE |
 				FSP_STATUS_INVALID_DATA, 0);
 		if (!msg) {
-			prerror(PREFIX "Failed to allocate FSP_RSP_GET_LED_STATE"
+			prerror("Failed to allocate FSP_RSP_GET_LED_STATE"
 				" | FSP_STATUS_INVALID_DATA\n");
 			return;
 		}
 		if (fsp_queue_msg(msg, fsp_freemsg)) {
 			fsp_freemsg(msg);
-			prerror(PREFIX "Failed to queue FSP_RSP_GET_LED_STATE"
+			prerror("Failed to queue FSP_RSP_GET_LED_STATE"
 				" | FSP_STATUS_INVALID_DATA\n");
 		}
 		return;
@@ -1049,8 +1034,8 @@ static void fsp_get_led_state(struct fsp_msg *msg)
 	/* Bound check */
 	if (req.lc_len >= LOC_CODE_SIZE) {
 		log_simple_error(&e_info(OPAL_RC_LED_LC),
-			PREFIX "Loc code too large in %s: %d bytes\n",
-			__func__, req.lc_len);
+				 "Loc code too large in %s: %d bytes\n",
+				 __func__, req.lc_len);
 		req.lc_len = LOC_CODE_SIZE - 1;
 	}
 	/* Ensure NULL termination */
@@ -1093,8 +1078,8 @@ static void fsp_set_led_state(struct fsp_msg *msg)
 	/* Bound check */
 	if (req.lc_len >= LOC_CODE_SIZE) {
 		log_simple_error(&e_info(OPAL_RC_LED_LC),
-			PREFIX "Loc code too large in %s: %d bytes\n",
-			__func__, req.lc_len);
+				 "Loc code too large in %s: %d bytes\n",
+				 __func__, req.lc_len);
 		req.lc_len = LOC_CODE_SIZE - 1;
 	}
 	/* Ensure NULL termination */
@@ -1149,30 +1134,26 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 	/* LED support not available yet */
 	if (led_support != LED_STATE_PRESENT) {
 		log_simple_error(&e_info(OPAL_RC_LED_SUPPORT),
-			PREFIX "Indicator message while LED support not"
+			"Indicator message while LED support not"
 			" available yet\n");
 		return false;
 	}
 
 	switch (cmd_sub_mod) {
 	case FSP_CMD_GET_LED_LIST:
-		prlog(PR_TRACE, PREFIX
-		      "FSP_CMD_GET_LED_LIST command received\n");
+		prlog(PR_TRACE, "FSP_CMD_GET_LED_LIST command received\n");
 		fsp_get_led_list(msg);
 		return true;
 	case FSP_CMD_RET_LED_BUFFER:
-		prlog(PR_TRACE, PREFIX
-		      "FSP_CMD_RET_LED_BUFFER command received\n");
+		prlog(PR_TRACE, "FSP_CMD_RET_LED_BUFFER command received\n");
 		fsp_free_led_list_buf(msg);
 		return true;
 	case FSP_CMD_GET_LED_STATE:
-		prlog(PR_TRACE, PREFIX
-		      "FSP_CMD_GET_LED_STATE command received\n");
+		prlog(PR_TRACE, "FSP_CMD_GET_LED_STATE command received\n");
 		fsp_get_led_state(msg);
 		return true;
 	case FSP_CMD_SET_LED_STATE:
-		prlog(PR_TRACE, PREFIX
-		      "FSP_CMD_SET_LED_STATE command received\n");
+		prlog(PR_TRACE, "FSP_CMD_SET_LED_STATE command received\n");
 		fsp_set_led_state(msg);
 		return true;
 	/*
@@ -1181,54 +1162,44 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 	 * the field service processor with a generic error.
 	 */
 	case FSP_CMD_GET_MTMS_LIST:
-		prlog(PR_TRACE, PREFIX
-		      "FSP_CMD_GET_MTMS_LIST command received\n");
+		prlog(PR_TRACE, "FSP_CMD_GET_MTMS_LIST command received\n");
 		cmd = FSP_RSP_GET_MTMS_LIST;
 		break;
 	case FSP_CMD_RET_MTMS_BUFFER:
-		prlog(PR_TRACE, PREFIX
-		      "FSP_CMD_RET_MTMS_BUFFER command received\n");
+		prlog(PR_TRACE, "FSP_CMD_RET_MTMS_BUFFER command received\n");
 		cmd = FSP_RSP_RET_MTMS_BUFFER;
 		break;
 	case FSP_CMD_SET_ENCL_MTMS:
-		prlog(PR_TRACE, PREFIX
-		      "FSP_CMD_SET_MTMS command received\n");
+		prlog(PR_TRACE, "FSP_CMD_SET_MTMS command received\n");
 		cmd = FSP_RSP_SET_ENCL_MTMS;
 		break;
 	case FSP_CMD_CLR_INCT_ENCL:
-		prlog(PR_TRACE, PREFIX
-		      "FSP_CMD_CLR_INCT_ENCL command received\n");
+		prlog(PR_TRACE, "FSP_CMD_CLR_INCT_ENCL command received\n");
 		cmd = FSP_RSP_CLR_INCT_ENCL;
 		break;
 	case FSP_CMD_ENCL_MCODE_INIT:
-		prlog(PR_TRACE, PREFIX
-		      "FSP_CMD_ENCL_MCODE_INIT command received\n");
+		prlog(PR_TRACE, "FSP_CMD_ENCL_MCODE_INIT command received\n");
 		cmd = FSP_RSP_ENCL_MCODE_INIT;
 		break;
 	case FSP_CMD_ENCL_MCODE_INTR:
-		prlog(PR_TRACE, PREFIX
-		      "FSP_CMD_ENCL_MCODE_INTR command received\n");
+		prlog(PR_TRACE, "FSP_CMD_ENCL_MCODE_INTR command received\n");
 		cmd = FSP_RSP_ENCL_MCODE_INTR;
 		break;
 	case FSP_CMD_ENCL_POWR_TRACE:
-		prlog(PR_TRACE, PREFIX
-		      "FSP_CMD_ENCL_POWR_TRACE command received\n");
+		prlog(PR_TRACE, "FSP_CMD_ENCL_POWR_TRACE command received\n");
 		cmd = FSP_RSP_ENCL_POWR_TRACE;
 		break;
 	case FSP_CMD_RET_ENCL_TRACE_BUFFER:
-		prlog(PR_TRACE, PREFIX "FSP_CMD_RET_ENCL_TRACE_BUFFER \
-		      command received\n");
+		prlog(PR_TRACE, "FSP_CMD_RET_ENCL_TRACE_BUFFER command received\n");
 		cmd = FSP_RSP_RET_ENCL_TRACE_BUFFER;
 		break;
 	case FSP_CMD_GET_SPCN_LOOP_STATUS:
-		prlog(PR_TRACE, PREFIX "FSP_CMD_GET_SPCN_LOOP_STATUS \
-		      command received\n");
+		prlog(PR_TRACE, "FSP_CMD_GET_SPCN_LOOP_STATUS command received\n");
 		cmd = FSP_RSP_GET_SPCN_LOOP_STATUS;
 		break;
 	case FSP_CMD_INITIATE_LAMP_TEST:
 		/* XXX: FSP ACK not required for this sub command */
-		prlog(PR_TRACE, PREFIX "FSP_CMD_INITIATE_LAMP_TEST \
-		      command received\n");
+		prlog(PR_TRACE, "FSP_CMD_INITIATE_LAMP_TEST command received\n");
 		return true;
 	default:
 		return false;
@@ -1236,14 +1207,12 @@ static bool fsp_indicator_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 	cmd |= FSP_STATUS_GENERIC_ERROR;
 	resp = fsp_mkmsg(cmd, 0);
 	if (!resp) {
-		prerror(PREFIX
-			"Failed to allocate FSP_STATUS_GENERIC_ERROR\n");
+		prerror("Failed to allocate FSP_STATUS_GENERIC_ERROR\n");
 		return false;
 	}
 	if (fsp_queue_msg(resp, fsp_freemsg)) {
 		fsp_freemsg(resp);
-		prerror(PREFIX
-			"Failed to queue FSP_STATUS_GENERIC_ERROR\n");
+		prerror("Failed to queue FSP_STATUS_GENERIC_ERROR\n");
 		return false;
 	}
 	return true;
@@ -1487,15 +1456,13 @@ static struct dt_node *dt_get_led_node(void)
 	struct dt_node *pled;
 
 	if (!opal_node) {
-		prlog(PR_WARNING, PREFIX
-		      "OPAL parent device node not available\n");
+		prlog(PR_WARNING, "OPAL parent device node not available\n");
 		return NULL;
 	}
 
 	pled = dt_find_by_path(opal_node, DT_PROPERTY_LED_NODE);
 	if (!pled)
-		prlog(PR_WARNING, PREFIX
-		      "Parent device node not available\n");
+		prlog(PR_WARNING, "Parent device node not available\n");
 
 	return pled;
 }
@@ -1522,8 +1489,7 @@ static void dt_get_sai_loc_code(void)
 
 		memcpy(sai_data.loc_code, child->name, LOC_CODE_SIZE - 1);
 
-		prlog(PR_TRACE, PREFIX "SAI Location code = %s\n",
-		      sai_data.loc_code);
+		prlog(PR_TRACE, "SAI Location code = %s\n", sai_data.loc_code);
 		return;
 	}
 }
@@ -1551,7 +1517,7 @@ void create_led_device_nodes(void)
 		opal_run_pollers();
 
 	if (led_support == LED_STATE_ABSENT) {
-		prlog(PR_WARNING, PREFIX "LED support not available, \
+		prlog(PR_WARNING, "LED support not available, \
 		      hence device tree nodes will not be created\n");
 		return;
 	}
@@ -1565,7 +1531,7 @@ void create_led_device_nodes(void)
 
 	led_mode = dt_prop_get(pled, DT_PROPERTY_LED_MODE);
 	if (!led_mode) {
-		prlog(PR_WARNING, PREFIX "Unknown LED operating mode\n");
+		prlog(PR_WARNING, "Unknown LED operating mode\n");
 		return;
 	}
 
@@ -1573,15 +1539,15 @@ void create_led_device_nodes(void)
 	list_for_each_safe(&cec_ledq, led, next, link) {
 		/* Duplicate LED location code */
 		if (dt_find_by_path(pled, led->loc_code)) {
-			prlog(PR_WARNING, PREFIX "duplicate location code %s",
+			prlog(PR_WARNING, "duplicate location code %s",
 			      led->loc_code);
 			continue;
 		}
 
 		cled = dt_new(pled, led->loc_code);
 		if (!cled) {
-			prlog(PR_WARNING, PREFIX
-			      "Child device node creation failed\n");
+			prlog(PR_WARNING, "Child device node creation "
+			      "failed\n");
 			continue;
 		}
 
@@ -1705,9 +1671,8 @@ static void replay_spcn_cmd(u32 last_spcn_cmd)
 					     PSI_DMA_LED_BUF),
 				   fsp_read_leds_data_complete);
 		if (rc)
-			prlog(PR_ERR, PREFIX
-			       "Replay SPCN_MOD_PRS_LED_DATA_FIRST"
-			       " command could not be queued\n");
+			prlog(PR_ERR, "Replay SPCN_MOD_PRS_LED_DATA_FIRST"
+			      " command could not be queued\n");
 	}
 
 	if (last_spcn_cmd == SPCN_MOD_PRS_LED_DATA_SUB) {
@@ -1717,9 +1682,8 @@ static void replay_spcn_cmd(u32 last_spcn_cmd)
 					     0, PSI_DMA_LED_BUF),
 				   fsp_read_leds_data_complete);
 		if (rc)
-			prlog(PR_ERR, PREFIX
-			       "Replay SPCN_MOD_PRS_LED_DATA_SUB"
-			       " command could not be queued\n");
+			prlog(PR_ERR, "Replay SPCN_MOD_PRS_LED_DATA_SUB"
+			      " command could not be queued\n");
 	}
 
 	/* Failed to queue MBOX message */
@@ -1752,8 +1716,8 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 
 	if (msg_status != FSP_STATUS_SUCCESS) {
 		log_simple_error(&e_info(OPAL_RC_LED_SUPPORT),
-			PREFIX "FSP returned error %x LED not supported\n",
-								 msg_status);
+				 "FSP returned error %x LED not supported\n",
+				 msg_status);
 		/* LED support not available */
 		led_support = LED_STATE_ABSENT;
 
@@ -1765,8 +1729,7 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 	switch (led_status) {
 	/* Last 1KB of LED data */
 	case SPCN_RSP_STATUS_SUCCESS:
-		prlog(PR_DEBUG, PREFIX
-		      "SPCN_RSP_STATUS_SUCCESS: %d bytes received\n",
+		prlog(PR_DEBUG, "SPCN_RSP_STATUS_SUCCESS: %d bytes received\n",
 		      data_len);
 
 		led_support = LED_STATE_PRESENT;
@@ -1775,10 +1738,9 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 		fsp_process_leds_data(data_len);
 
 		/* LEDs captured on the system */
-		prlog(PR_DEBUG, PREFIX
-		      "CEC LEDs captured on the system:\n");
+		prlog(PR_DEBUG, "CEC LEDs captured on the system:\n");
 		list_for_each_safe(&cec_ledq, led, next, link) {
-			prlog(PR_DEBUG, PREFIX
+			prlog(PR_DEBUG,
 			       "rid: %x\t"
 			       "len: %x      "
 			       "lcode: %-30s\t"
@@ -1791,9 +1753,9 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 			       led->status);
 		}
 
-		prlog(PR_DEBUG, PREFIX "ENCL LEDs captured on the system:\n");
+		prlog(PR_DEBUG, "ENCL LEDs captured on the system:\n");
 		list_for_each_safe(&encl_ledq, led, next, link) {
-			prlog(PR_DEBUG, PREFIX
+			prlog(PR_DEBUG,
 			       "rid: %x\t"
 			       "len: %x      "
 			       "lcode: %-30s\t"
@@ -1810,8 +1772,7 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 
 	/* If more 1KB of LED data present */
 	case SPCN_RSP_STATUS_COND_SUCCESS:
-		prlog(PR_DEBUG, PREFIX
-		      "SPCN_RSP_STATUS_COND_SUCCESS: %d bytes "
+		prlog(PR_DEBUG, "SPCN_RSP_STATUS_COND_SUCCESS: %d bytes "
 		      " received\n", data_len);
 
 		/* Copy data to the local list */
@@ -1825,8 +1786,8 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 					     cmd_hdr, 0, PSI_DMA_LED_BUF),
 				   fsp_read_leds_data_complete);
 		if (rc) {
-			prlog(PR_ERR, PREFIX "SPCN_MOD_PRS_LED_DATA_SUB command"
-			       " could not be queued\n");
+			prlog(PR_ERR, "SPCN_MOD_PRS_LED_DATA_SUB command"
+			      " could not be queued\n");
 
 			led_support = LED_STATE_ABSENT;
 		}
@@ -1895,9 +1856,9 @@ static void fsp_leds_query_spcn(void)
 			SPCN_ADDR_MODE_CEC_NODE, cmd_hdr, 0,
 				PSI_DMA_LED_BUF), fsp_read_leds_data_complete);
 	if (rc)
-		prlog(PR_ERR, PREFIX
-		       "SPCN_MOD_PRS_LED_DATA_FIRST command could"
-		       " not be queued\n");
+		prlog(PR_ERR,
+		      "SPCN_MOD_PRS_LED_DATA_FIRST command could"
+		      " not be queued\n");
 	else	/* Initiated LED list fetch MBOX command */
 		led_support = LED_STATE_READING;
 }
@@ -1916,7 +1877,7 @@ void fsp_led_init(void)
 	list_head_init(&spcn_cmdq);
 
 	fsp_leds_query_spcn();
-	prlog(PR_TRACE, PREFIX "Init completed\n");
+	prlog(PR_TRACE, "Init completed\n");
 
 	/* Get System attention indicator state */
 	dt_get_sai_loc_code();
@@ -1924,12 +1885,12 @@ void fsp_led_init(void)
 
 	/* Handle FSP initiated async LED commands */
 	fsp_register_client(&fsp_indicator_client, FSP_MCLASS_INDICATOR);
-	prlog(PR_TRACE, PREFIX "FSP async command client registered\n");
+	prlog(PR_TRACE, "FSP async command client registered\n");
 
 	/* Register for SAI update notification */
 	sysparam_add_update_notifier(sai_update_notification);
 
 	opal_register(OPAL_LEDS_GET_INDICATOR, fsp_opal_leds_get_ind, 4);
 	opal_register(OPAL_LEDS_SET_INDICATOR, fsp_opal_leds_set_ind, 5);
-	prlog(PR_TRACE, PREFIX "LED OPAL interface registered\n");
+	prlog(PR_TRACE, "LED OPAL interface registered\n");
 }

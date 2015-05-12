@@ -22,10 +22,14 @@
 
 #define __TEST__
 
+#define _printf printf
+
 static inline unsigned long mftb(void)
 {
 	return 42;
 }
+
+int _printf(const char* fmt, ...);
 
 #include "../console-log.c"
 
