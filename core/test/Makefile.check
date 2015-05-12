@@ -1,5 +1,5 @@
 # -*-Makefile-*-
-CORE_TEST := core/test/run-device core/test/run-mem_region core/test/run-malloc core/test/run-malloc-speed core/test/run-mem_region_init core/test/run-mem_region_release_unused core/test/run-mem_region_release_unused_noalloc core/test/run-trace core/test/run-msg core/test/run-pel core/test/run-pool core/test/run-timer
+CORE_TEST := core/test/run-device core/test/run-mem_region core/test/run-malloc core/test/run-malloc-speed core/test/run-mem_region_init core/test/run-mem_region_release_unused core/test/run-mem_region_release_unused_noalloc core/test/run-mem_region_reservations core/test/run-trace core/test/run-msg core/test/run-pel core/test/run-pool core/test/run-timer
 
 CORE_TEST_NOSTUB := core/test/run-console-log
 CORE_TEST_NOSTUB += core/test/run-console-log-buf-overrun

@@ -47,6 +47,8 @@ struct lock mem_region_lock = LOCK_UNLOCKED;
 
 static struct list_head regions = LIST_HEAD_INIT(regions);
 
+static bool mem_regions_finalised = false;
+
 unsigned long top_of_ram = SKIBOOT_BASE + SKIBOOT_SIZE;
 
 static struct mem_region skiboot_os_reserve = {
@@ -637,6 +639,12 @@ static bool add_region(struct mem_region *region)
 {
 	struct mem_region *r;
 
+	if (mem_regions_finalised) {
+		prerror("MEM: add_region(%s@0x%llx) called after finalise!\n",
+				region->name, region->start);
+		return false;
+	}
+
 	/* First split any regions which intersect. */
 	list_for_each(&regions, r, list)
 		if (!maybe_split(r, region->start) ||
@@ -876,6 +884,7 @@ void mem_region_release_unused(void)
 	struct mem_region *r;
 
 	lock(&mem_region_lock);
+	assert(!mem_regions_finalised);
 
 	printf("Releasing unused memory:\n");
 	list_for_each(&regions, r, list) {
@@ -929,7 +938,11 @@ void mem_region_add_dt_reserved(void)
 	names_len = 0;
 	ranges_len = 0;
 
+	/* Finalise the region list, so we know that the regions list won't be
+	 * altered after this point. The regions' free lists may change after
+	 * we drop the lock, but we don't access those. */
 	lock(&mem_region_lock);
+	mem_regions_finalised = true;
 
 	/* First pass: calculate length of property data */
 	list_for_each(&regions, region, list) {
