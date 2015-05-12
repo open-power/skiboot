@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if test -d .git;
+if test -e .git;
 then
 	version=`git describe --exact-match 2>/dev/null`
 	if [ -z "$version" ];
