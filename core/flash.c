@@ -680,15 +680,16 @@ static void flash_load_resources(void *data __unused)
 	struct flash_load_resource_item *r;
 	int result;
 
+	lock(&flash_load_resource_lock);
 	do {
-		lock(&flash_load_resource_lock);
 		if (list_empty(&flash_load_resource_queue)) {
-			unlock(&flash_load_resource_lock);
 			break;
 		}
 		r = list_top(&flash_load_resource_queue,
 			     struct flash_load_resource_item, link);
-		assert(r->result == OPAL_EMPTY);
+		if (r->result != OPAL_EMPTY)
+			prerror("flash_load_resources() list_top unexpected "
+				" result %d\n", r->result);
 		r->result = OPAL_BUSY;
 		unlock(&flash_load_resource_lock);
 
@@ -699,8 +700,8 @@ static void flash_load_resources(void *data __unused)
 			     struct flash_load_resource_item, link);
 		r->result = result;
 		list_add_tail(&flash_loaded_resources, &r->link);
-		unlock(&flash_load_resource_lock);
 	} while(true);
+	unlock(&flash_load_resource_lock);
 }
 
 static void start_flash_load_resource_job(void)
