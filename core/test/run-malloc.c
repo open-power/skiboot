@@ -69,6 +69,11 @@ void unlock(struct lock *l)
 	l->lock_val = 0;
 }
 
+bool lock_held_by_me(struct lock *l)
+{
+	return l->lock_val;
+}
+
 static bool heap_empty(void)
 {
 	const struct alloc_hdr *h = region_start(&skiboot_heap);

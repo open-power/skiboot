@@ -376,8 +376,11 @@ found:
 void *mem_alloc(struct mem_region *region, size_t size, size_t align,
 		const char *location)
 {
-	void *r = __mem_alloc(region, size, align, location);
+	void *r;
 
+	assert(lock_held_by_me(&region->free_list_lock));
+
+	r = __mem_alloc(region, size, align, location);
 	if (r)
 		return r;
 
@@ -393,6 +396,8 @@ void mem_free(struct mem_region *region, void *mem, const char *location)
 
 	/* This should be a constant. */
 	assert(is_rodata(location));
+
+	assert(lock_held_by_me(&region->free_list_lock));
 
 	/* Freeing NULL is always a noop. */
 	if (!mem)
@@ -425,6 +430,8 @@ bool mem_resize(struct mem_region *region, void *mem, size_t len,
 
 	/* This should be a constant. */
 	assert(is_rodata(location));
+
+	assert(lock_held_by_me(&region->free_list_lock));
 
 	/* Get header. */
 	hdr = mem - sizeof(*hdr);
