@@ -64,17 +64,19 @@ struct dt_node *dt_root;
 
 void lock(struct lock *l)
 {
+	assert(!l->lock_val);
 	l->lock_val++;
 }
 
 void unlock(struct lock *l)
 {
+	assert(l->lock_val);
 	l->lock_val--;
 }
 
-bool lock_held_by_me(struct lock *l __attribute__((unused)))
+bool lock_held_by_me(struct lock *l)
 {
-	return true;
+	return l->lock_val;
 }
 
 #define TEST_HEAP_ORDER 12
@@ -97,6 +99,8 @@ int main(void)
 	test_heap = __malloc(TEST_HEAP_SIZE, __location__);
 	skiboot_heap.start = (unsigned long)test_heap;
 	skiboot_heap.len = TEST_HEAP_SIZE;
+
+	lock(&skiboot_heap.free_list_lock);
 
 	/* Allocations of various sizes. */
 	for (i = 0; i < TEST_HEAP_ORDER; i++) {
@@ -216,6 +220,10 @@ int main(void)
 	mem_free(&skiboot_heap, p, "freed");
 	assert(mem_check(&skiboot_heap));
 
+	unlock(&skiboot_heap.free_list_lock);
+
+	/* lock the regions list */
+	lock(&mem_region_lock);
 	/* Test splitting of a region. */
 	r = new_region("base", (unsigned long)test_heap,
 		       TEST_HEAP_SIZE, NULL, REGION_SKIBOOT_HEAP);
@@ -247,8 +255,11 @@ int main(void)
 	assert(i == 3);
 	while ((r = list_pop(&regions, struct mem_region, list)) != NULL) {
 		list_del(&r->list);
+		lock(&skiboot_heap.free_list_lock);
 		mem_free(&skiboot_heap, r, __location__);
+		unlock(&skiboot_heap.free_list_lock);
 	}
+	unlock(&mem_region_lock);
 	assert(skiboot_heap.free_list_lock.lock_val == 0);
 	__free(test_heap, "");
 	return 0;
