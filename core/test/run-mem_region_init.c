@@ -75,6 +75,11 @@ void unlock(struct lock *l)
 	l->lock_val = 0;
 }
 
+bool lock_held_by_me(struct lock *l)
+{
+	return l->lock_val;
+}
+
 /* We actually need a lot of room for the bitmaps! */
 #define TEST_HEAP_ORDER 27
 #define TEST_HEAP_SIZE (1ULL << TEST_HEAP_ORDER)

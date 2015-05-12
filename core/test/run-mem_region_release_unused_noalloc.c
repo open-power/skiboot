@@ -70,6 +70,11 @@ void unlock(struct lock *l)
 	l->lock_val--;
 }
 
+bool lock_held_by_me(struct lock *l)
+{
+	return l->lock_val;
+}
+
 #define TEST_HEAP_ORDER 12
 #define TEST_HEAP_SIZE (1ULL << TEST_HEAP_ORDER)
 

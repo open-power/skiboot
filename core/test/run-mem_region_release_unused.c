@@ -70,6 +70,11 @@ void unlock(struct lock *l)
 	l->lock_val--;
 }
 
+bool lock_held_by_me(struct lock *l)
+{
+	return l->lock_val;
+}
+
 #define TEST_HEAP_ORDER 12
 #define TEST_HEAP_SIZE (1ULL << TEST_HEAP_ORDER)
 
@@ -130,7 +135,10 @@ int main(void)
 	assert(mem_check(other));
 
 	/* Allocate 1k from other region. */
+	lock(&other->free_list_lock);
 	mem_alloc(other, 1024, 1, "1k");
+	unlock(&other->free_list_lock);
+
 	mem_region_release_unused();
 
 	assert(mem_check(&skiboot_heap));
