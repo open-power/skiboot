@@ -28,33 +28,26 @@ struct cpu_thread {
 #include <string.h>
 
 /* Use these before we override definitions below. */
-static void *__malloc(size_t size, const char *location __attribute__((unused)))
+static void *real_malloc(size_t size)
 {
 	return malloc(size);
 }
 
-static void *__realloc(void *ptr, size_t size, const char *location __attribute__((unused)))
-{
-	return realloc(ptr, size);
-}
-
-static inline void __free(void *p, const char *location __attribute__((unused)))
+static inline void real_free(void *p)
 {
 	return free(p);
 }
 
-static void *__zalloc(size_t size, const char *location __attribute__((unused)))
-{
-	void *ptr = malloc(size);
-	memset(ptr, 0, size);
-	return ptr;
-}
+#undef malloc
+#undef free
+#undef realloc
 
 #include <skiboot.h>
 
 #define is_rodata(p) true
 
 #include "../mem_region.c"
+#include "../malloc.c"
 #include "../device.c"
 
 #include <assert.h>
@@ -96,7 +89,7 @@ int main(void)
 	struct mem_region *r;
 
 	/* Use malloc for the heap, so valgrind can find issues. */
-	test_heap = __malloc(TEST_HEAP_SIZE, __location__);
+	test_heap = real_malloc(TEST_HEAP_SIZE);
 	skiboot_heap.start = (unsigned long)test_heap;
 	skiboot_heap.len = TEST_HEAP_SIZE;
 
@@ -261,6 +254,6 @@ int main(void)
 	}
 	unlock(&mem_region_lock);
 	assert(skiboot_heap.free_list_lock.lock_val == 0);
-	__free(test_heap, "");
+	real_free(test_heap);
 	return 0;
 }
