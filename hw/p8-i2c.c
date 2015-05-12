@@ -288,6 +288,8 @@ static bool p8_i2c_has_irqs(void)
 		return chip->ec_level >= 0x21;
 	case PROC_CHIP_P8_VENICE:
 		return chip->ec_level >= 0x20;
+	case PROC_CHIP_P8_NAPLES:
+		return true;
 	default:
 		return false;
 	}

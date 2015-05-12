@@ -537,7 +537,8 @@ static void add_cpu_idle_state_properties(void)
 	chip = next_chip(NULL);
 	assert(chip);
 	if (chip->type == PROC_CHIP_P8_MURANO ||
-	    chip->type == PROC_CHIP_P8_VENICE) {
+	    chip->type == PROC_CHIP_P8_VENICE ||
+	    chip->type == PROC_CHIP_P8_NAPLES) {
 		const struct dt_property *p;
 
 		p = dt_find_property(dt_root, "ibm,enabled-idle-states");
