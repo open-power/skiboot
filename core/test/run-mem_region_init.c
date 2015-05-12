@@ -177,7 +177,7 @@ int main(void)
 		}
 		assert(mem_check(&skiboot_heap));
 	}
-	assert(mem_region_lock.lock_val == 0);
+	assert(skiboot_heap.free_list_lock.lock_val == 0);
 	real_free(heap);
 	return 0;
 }

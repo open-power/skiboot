@@ -30,6 +30,19 @@
 #define POISON_MEM_REGION_WITH	0x99
 #define POISON_MEM_REGION_LIMIT 1*1024*1024*1024
 
+/* Locking: The mem_region_lock protects the regions list from concurrent
+ * updates. Additions to, or removals from, the region list must be done
+ * with this lock held. This is typically done when we're establishing
+ * the memory & reserved regions.
+ *
+ * Each region has a lock (region->free_list_lock) to protect the free list
+ * from concurrent modification. This lock is used when we're allocating
+ * memory out of a specific region.
+ *
+ * If both locks are needed (eg, __local_alloc, where we need to find a region,
+ * then allocate from it), the mem_region_lock must be acquired before (and
+ * released after) the per-region lock.
+ */
 struct lock mem_region_lock = LOCK_UNLOCKED;
 
 static struct list_head regions = LIST_HEAD_INIT(regions);
@@ -542,9 +555,7 @@ static struct mem_region *new_region(const char *name,
 {
 	struct mem_region *region;
 
-	/* Avoid lock recursion, call mem_alloc directly. */
-	region = mem_alloc(&skiboot_heap,
-			   sizeof(*region), __alignof__(*region), __location__);
+	region = malloc(sizeof(*region));
 	if (!region)
 		return NULL;
 
@@ -554,6 +565,7 @@ static struct mem_region *new_region(const char *name,
 	region->mem_node = mem_node;
 	region->type = type;
 	region->free_list.n.next = NULL;
+	init_lock(&region->free_list_lock);
 
 	return region;
 }
@@ -629,8 +641,7 @@ static bool add_region(struct mem_region *region)
 		assert(r->start == region->start);
 		assert(r->len == region->len);
 		list_del_from(&regions, &r->list);
-		/* We already hold mem_region lock */
-		mem_free(&skiboot_heap, r, __location__);
+		free(r);
 	}
 
 	/* Finally, add in our own region. */
@@ -695,7 +706,9 @@ restart:
 		}
 
 		/* Second pass, match anything */
+		lock(&region->free_list_lock);
 		p = mem_alloc(region, size, align, location);
+		unlock(&region->free_list_lock);
 		if (p)
 			break;
 	}
@@ -801,10 +814,7 @@ void mem_region_init(void)
 			char *name;
 
 			len = strlen(names->prop + n) + 1;
-
-			name = mem_alloc(&skiboot_heap, len,
-					__alignof__(*name), __location__);
-			memcpy(name, names->prop + n, len);
+			name = strdup(names->prop + n);
 
 			region = new_region(name,
 					dt_get_number(range, 2),
@@ -922,15 +932,8 @@ void mem_region_add_dt_reserved(void)
 		ranges_len += 2 * sizeof(uint64_t);
 	}
 
-	/* Allocate property data with mem_alloc; malloc() acquires
-	 * mem_region_lock */
-	names = mem_alloc(&skiboot_heap, names_len,
-			__alignof__(*names), __location__);
-	ranges = mem_alloc(&skiboot_heap, ranges_len,
-			__alignof__(*ranges), __location__);
-
-	name = names;
-	range = ranges;
+	name = names = malloc(names_len);
+	range = ranges = malloc(ranges_len);
 
 	printf("Reserved regions:\n");
 	/* Second pass: populate property data */

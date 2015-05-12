@@ -19,6 +19,8 @@
 #include <ccan/list/list.h>
 #include <stdint.h>
 
+#include <lock.h>
+
 enum mem_region_type {
 	/* ranges allocatable by mem_alloc: this will be most of memory */
 	REGION_SKIBOOT_HEAP,
@@ -41,6 +43,7 @@ struct mem_region {
 	struct dt_node *mem_node;
 	enum mem_region_type type;
 	struct list_head free_list;
+	struct lock free_list_lock;
 };
 
 extern struct lock mem_region_lock;

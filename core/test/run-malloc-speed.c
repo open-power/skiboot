@@ -90,7 +90,7 @@ int main(void)
 		       + skiboot_heap.len);
 	}
 	assert(mem_check(&skiboot_heap));
-	assert(mem_region_lock.lock_val == 0);
+	assert(skiboot_heap.free_list_lock.lock_val == 0);
 	free(region_start(&skiboot_heap));
 	real_free(p);
 	return 0;
