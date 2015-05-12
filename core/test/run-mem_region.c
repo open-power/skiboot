@@ -244,7 +244,7 @@ int main(void)
 		list_del(&r->list);
 		mem_free(&skiboot_heap, r, __location__);
 	}
-	assert(mem_region_lock.lock_val == 0);
+	assert(skiboot_heap.free_list_lock.lock_val == 0);
 	__free(test_heap, "");
 	return 0;
 }

@@ -92,45 +92,45 @@ int main(void)
 		assert(p);
 		assert(p > (char *)test_heap);
 		assert(p + (1ULL << i) <= (char *)test_heap + TEST_HEAP_SIZE);
-		assert(!mem_region_lock.lock_val);
+		assert(!skiboot_heap.free_list_lock.lock_val);
 		free(p);
-		assert(!mem_region_lock.lock_val);
+		assert(!skiboot_heap.free_list_lock.lock_val);
 		assert(heap_empty());
 	}
 
 	/* Realloc as malloc. */
-	mem_region_lock.lock_val = 0;
+	skiboot_heap.free_list_lock.lock_val = 0;
 	p = realloc(NULL, 100);
 	assert(p);
-	assert(!mem_region_lock.lock_val);
+	assert(!skiboot_heap.free_list_lock.lock_val);
 
 	/* Realloc as free. */
 	p = realloc(p, 0);
 	assert(!p);
-	assert(!mem_region_lock.lock_val);
+	assert(!skiboot_heap.free_list_lock.lock_val);
 	assert(heap_empty());
 
 	/* Realloc longer. */
 	p = realloc(NULL, 100);
 	assert(p);
-	assert(!mem_region_lock.lock_val);
+	assert(!skiboot_heap.free_list_lock.lock_val);
 	p2 = realloc(p, 200);
 	assert(p2 == p);
-	assert(!mem_region_lock.lock_val);
+	assert(!skiboot_heap.free_list_lock.lock_val);
 	free(p);
-	assert(!mem_region_lock.lock_val);
+	assert(!skiboot_heap.free_list_lock.lock_val);
 	assert(heap_empty());
 
 	/* Realloc shorter. */
-	mem_region_lock.lock_val = 0;
+	skiboot_heap.free_list_lock.lock_val = 0;
 	p = realloc(NULL, 100);
-	assert(!mem_region_lock.lock_val);
+	assert(!skiboot_heap.free_list_lock.lock_val);
 	assert(p);
 	p2 = realloc(p, 1);
-	assert(!mem_region_lock.lock_val);
+	assert(!skiboot_heap.free_list_lock.lock_val);
 	assert(p2 == p);
 	free(p);
-	assert(!mem_region_lock.lock_val);
+	assert(!skiboot_heap.free_list_lock.lock_val);
 	assert(heap_empty());
 
 	/* zalloc failure */
@@ -152,7 +152,7 @@ int main(void)
 	assert(p2[63] == 'c');
 	free(p2);
 	assert(heap_empty());
-	assert(!mem_region_lock.lock_val);
+	assert(!skiboot_heap.free_list_lock.lock_val);
 
 	/* Realloc with failure to allocate new size */
 	p2 = malloc(TEST_HEAP_SIZE - sizeof(struct alloc_hdr)*2);
@@ -176,7 +176,7 @@ int main(void)
 	free(p);
 	free(p4);
 	assert(heap_empty());
-	assert(!mem_region_lock.lock_val);
+	assert(!skiboot_heap.free_list_lock.lock_val);
 
 	real_free(test_heap);
 	return 0;

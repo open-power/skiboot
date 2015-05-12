@@ -25,9 +25,9 @@ void *__memalign(size_t blocksize, size_t bytes, const char *location)
 {
 	void *p;
 
-	lock(&mem_region_lock);
+	lock(&skiboot_heap.free_list_lock);
 	p = mem_alloc(&skiboot_heap, bytes, blocksize, location);
-	unlock(&mem_region_lock);
+	unlock(&skiboot_heap.free_list_lock);
 
 	return p;
 }
@@ -39,9 +39,9 @@ void *__malloc(size_t bytes, const char *location)
 
 void __free(void *p, const char *location)
 {
-	lock(&mem_region_lock);
+	lock(&skiboot_heap.free_list_lock);
 	mem_free(&skiboot_heap, p, location);
-	unlock(&mem_region_lock);
+	unlock(&skiboot_heap.free_list_lock);
 }
 
 void *__realloc(void *ptr, size_t size, const char *location)
@@ -56,7 +56,7 @@ void *__realloc(void *ptr, size_t size, const char *location)
 	if (!ptr)
 		return __malloc(size, location);
 
-	lock(&mem_region_lock);
+	lock(&skiboot_heap.free_list_lock);
 	if (mem_resize(&skiboot_heap, ptr, size, location)) {
 		newptr = ptr;
 	} else {
@@ -70,7 +70,7 @@ void *__realloc(void *ptr, size_t size, const char *location)
 			mem_free(&skiboot_heap, ptr, location);
 		}
 	}
-	unlock(&mem_region_lock);
+	unlock(&skiboot_heap.free_list_lock);
 	return newptr;
 }
 
