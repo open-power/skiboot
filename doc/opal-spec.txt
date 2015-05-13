@@ -122,7 +122,7 @@ Operating System via a standard interface.
 An OPAL call is made by calling opal_entry with:
  *       r0: OPAL Token
  *       r2: OPAL Base
- *  r3..r11: Args
+ *  r3..r10: Args (up to 8)
 
 The OPAL API is defined in skiboot/doc/opal-api/
 
@@ -133,7 +133,7 @@ token was called is okay, as compliant host Operating Systems should use
 OPAL_CHECK_TOKEN to test for optional functionality.
 
 All parameters to OPAL calls are big endian. Little endian hosts MUST
-appropriately convert parameters before passing them to OPAL. 
+appropriately convert parameters before passing them to OPAL.
 
 Detecting OPAL Support
 ----------------------

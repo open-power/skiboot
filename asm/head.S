@@ -802,7 +802,7 @@ opal_boot_trampoline:
  *
  *       r0: Token
  *       r2: OPAL Base
- *  r3..r11: Args
+ *  r3..r10: Args
  *      r12: Scratch
  * r13..r31: Preserved
  *
@@ -829,7 +829,6 @@ opal_entry:
 	std	%r8,STACK_GPR8(%r1)
 	std	%r9,STACK_GPR9(%r1)
 	std	%r10,STACK_GPR10(%r1)
-	std	%r11,STACK_GPR11(%r1)
 #endif
 	/* Save Token (r0), LR and r13 */
 	mflr	%r12
@@ -869,7 +868,6 @@ opal_entry:
 	ld	%r8,STACK_GPR8(%r1)
 	ld	%r9,STACK_GPR9(%r1)
 	ld	%r10,STACK_GPR10(%r1)
-	ld	%r11,STACK_GPR11(%r1)
 #endif /* OPAL_TRACE_ENTRY */
 
 	/* Convert our token into a table entry and get the
