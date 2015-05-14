@@ -90,7 +90,7 @@ SECTIONS
 		*(.opd)
 	}
   
-	. = ALIGN(0x10);
+	. = ALIGN(0x100);
 	.got : {
 		__toc_start = . + 0x8000;
 		*(.got)
