@@ -13,126 +13,93 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Handle FSP Environmental and Power Warning (EPOW) events notification
- */
-#define pr_fmt(fmt) "FSPEPOW: " fmt
-#include <skiboot.h>
-#include <console.h>
+
+/* FSP Early Power Off Warning (EPOW) support */
+
+#define pr_fmt(fmt) "FSP-EPOW: " fmt
+
 #include <fsp.h>
 #include <device.h>
-#include <stdio.h>
-#include <spcn.h>
-#include <opal.h>
+#include <lock.h>
 #include <opal-msg.h>
+#include <opal-api.h>
 
 #include "fsp-epow.h"
 
 /*
  * System EPOW status
  *
- * This value is exported to the host. Each individual element in this array
- * [0..(OPAL_SYSEPOW_MAX -1)] contains detailed status (in it's bit positions)
- * corresponding to a particular defined EPOW sub class. For example.
- *
- * epow_status[OPAL_SYSEPOW_POWER] will reflect whether the system has one or
- * more of power subsystem specific EPOW events like OPAL_SYSPOWER_UPS,
- * OPAL_SYSPOWER_CHNG, OPAL_SYSPOWER_FAIL or OPAL_SYSPOWER_INCL.
+ * This value is exported to the host. Each individual element in this
+ * array [0...(OPAL_SYSEPOW_MAX-1)] contains bitwise EPOW event info
+ * corresponding to particular defined EPOW sub class. For example.
+ * opal_epow_status[OPAL_SYSEPOW_POWER] will reflect power related EPOW events.
  */
 static int16_t epow_status[OPAL_SYSEPOW_MAX];
 
 /* EPOW lock */
 static struct lock epow_lock = LOCK_UNLOCKED;
 
-/* Process FSP sent SPCN based information */
-static void epow_process_base_event(u8 *epow)
-{
-
-	epow_status[OPAL_SYSEPOW_POWER] &= ~(OPAL_SYSPOWER_CHNG |
-				OPAL_SYSPOWER_FAIL | OPAL_SYSPOWER_INCL);
-	/*
-	 * FIXME: As of now, SPCN_FAULT_LOG event is not being used
-	 * as it does not map to any generic defined OPAL EPOW event.
-	 */
-	if (epow[3] & SPCN_CNF_CHNG) {
-		/*
-		 * The frequency of the SPCN_CNF_CHNG message is very
-		 * high on POWER7 and POWER8 systems which will fill
-		 * up the Sapphire log buffer. SPCN configuration
-		 * change does not take down the system, hence the
-		 * logging of these type of messages can be avoided to
-		 * save precious log buffer space.
-		 */
-		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_CHNG;
-	}
-
-	if (epow[3] & SPCN_POWR_FAIL) {
-		prlog(PR_TRACE, "FSP message with SPCN_POWR_FAIL\n");
-		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_FAIL;
-	}
-
-	if (epow[3] & SPCN_INCL_POWR) {
-		prlog(PR_TRACE, "FSP message with SPCN_INCL_POWR\n");
-		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_INCL;
-	}
-}
-
 /* Process FSP sent EPOW based information */
 static void epow_process_ex1_event(u8 *epow)
 {
-	epow_status[OPAL_SYSEPOW_POWER] &= ~OPAL_SYSPOWER_UPS;
-	epow_status[OPAL_SYSEPOW_TEMP] &= ~(OPAL_SYSTEMP_AMB | OPAL_SYSTEMP_INT);
-
-	if (epow[4] == EPOW_ON_UPS) {
-		prlog(PR_TRACE, "FSP message with EPOW_ON_UPS\n");
-		epow_status[OPAL_SYSEPOW_POWER] |= OPAL_SYSPOWER_UPS;
-	}
-
-	if (epow[4] == EPOW_TMP_AMB) {
-		prlog(PR_TRACE, "FSP message with EPOW_TMP_AMB\n");
-		epow_status[OPAL_SYSEPOW_TEMP] |= OPAL_SYSTEMP_AMB;
-	}
+	memset(epow_status, 0, sizeof(epow_status));
 
 	if (epow[4] == EPOW_TMP_INT) {
-		prlog(PR_TRACE, "FSP message with EPOW_TMP_INT\n");
-		epow_status[OPAL_SYSEPOW_TEMP] |= OPAL_SYSTEMP_INT;
+		prlog(PR_INFO, "Internal temp above normal\n");
+		epow_status[OPAL_SYSEPOW_TEMP] = OPAL_SYSTEMP_INT;
+
+	} else if (epow[4] == EPOW_TMP_AMB) {
+		prlog(PR_INFO, "Ambient temp above normal\n");
+		epow_status[OPAL_SYSEPOW_TEMP] = OPAL_SYSTEMP_AMB;
+
+	} else if (epow[4] == EPOW_ON_UPS) {
+		prlog(PR_INFO, "System running on UPS power\n");
+		epow_status[OPAL_SYSEPOW_POWER] = OPAL_SYSPOWER_UPS;
+
 	}
 }
 
-/* Update the system EPOW status */
-static void fsp_epow_update(u8 *epow, int epow_type)
+/* Process EPOW event */
+static void fsp_process_epow(struct fsp_msg *msg, int epow_type)
 {
-	int16_t old_epow_status[OPAL_SYSEPOW_MAX];
-	bool epow_changed = false;
 	int rc;
+	u8 epow[8];
+	bool epow_changed = false;
+	int16_t old_epow_status[OPAL_SYSEPOW_MAX];
+
+	/* Basic EPOW signature */
+	if (msg->data.bytes[0] != 0xF2) {
+		prlog(PR_ERR, "Signature mismatch\n");
+		return;
+	}
 
 	lock(&epow_lock);
 
 	/* Copy over and clear system EPOW status */
 	memcpy(old_epow_status, epow_status, sizeof(old_epow_status));
+
 	switch(epow_type) {
 	case EPOW_NORMAL:
-		epow_process_base_event(epow);
-		/* FIXME: IPL mode information present but not used */
+	case EPOW_EX2:
 		break;
 	case EPOW_EX1:
-		epow_process_base_event(epow);
+		epow[0] = msg->data.bytes[0];
+		epow[1] = msg->data.bytes[1];
+		epow[2] = msg->data.bytes[2];
+		epow[3] = msg->data.bytes[3];
+		epow[4] = msg->data.bytes[4];
+
 		epow_process_ex1_event(epow);
-		/* FIXME: IPL mode information present but not used */
-		/* FIXME: Key position information present but not used */
-		break;
-	case EPOW_EX2:
-		/*FIXME: IPL mode information present but not used */
-		/*FIXME: Key position information present but not used */
 		break;
 	default:
 		prlog(PR_WARNING, "Unknown EPOW event notification\n");
 		break;
 	}
-	unlock(&epow_lock);
 
 	if (memcmp(epow_status, old_epow_status, sizeof(epow_status)))
 		epow_changed = true;
+
+	unlock(&epow_lock);
 
 	/* Send OPAL message notification */
 	if (epow_changed) {
@@ -141,84 +108,8 @@ static void fsp_epow_update(u8 *epow, int epow_type)
 			prlog(PR_ERR, "OPAL EPOW message queuing failed\n");
 			return;
 		}
+		prlog(PR_INFO, "Notified host about EPOW event\n");
 	}
-}
-
-/* Process captured EPOW event notification */
-static void fsp_process_epow(struct fsp_msg *msg, int epow_type)
-{
-	struct fsp_msg *resp;
-	u8 epow[8];
-
-	/* Basic EPOW signature */
-	if (msg->data.bytes[0] != 0xF2) {
-		prlog(PR_ERR, "Signature mismatch\n");
-		return;
-	}
-
-	/* Common to all EPOW event types */
-	epow[0] = msg->data.bytes[0];
-	epow[1] = msg->data.bytes[1];
-	epow[2] = msg->data.bytes[2];
-	epow[3] = msg->data.bytes[3];
-
-	/*
-	 * After receiving the FSP async message, HV needs to
-	 * ask for the detailed panel status through corresponding
-	 * mbox command. HV need not use the received details status
-	 * as it does not have any thing more or new than what came
-	 * along with the original FSP async message. But requesting
-	 * for the detailed panel status exclussively is necessary as
-	 * it forms a kind of handshaking with the FSP. Without this
-	 * step, FSP wont be sending any new panel status messages.
-	 */
-	switch(epow_type) {
-	case EPOW_NORMAL:
-		resp = fsp_mkmsg(FSP_CMD_STATUS_REQ, 0);
-		if (resp == NULL) {
-			prerror("%s : Message allocation failed\n",
-				__func__);
-			break;
-		}
-		if (fsp_queue_msg(resp, fsp_freemsg)) {
-			fsp_freemsg(resp);
-			prerror("%s : Failed to queue response "
-				"message\n", __func__);
-		}
-		break;
-	case EPOW_EX1:
-		/* EPOW_EX1 specific extra event data */
-		epow[4] = msg->data.bytes[4];
-		resp = fsp_mkmsg(FSP_CMD_STATUS_EX1_REQ, 0);
-		if (resp == NULL) {
-			prerror("%s : Message allocation failed\n",
-				__func__);
-			break;
-		}
-		if (fsp_queue_msg(resp, fsp_freemsg)) {
-			fsp_freemsg(resp);
-			prerror("%s : Failed to queue response "
-				"message\n", __func__);
-		}
-		break;
-	case EPOW_EX2:
-		resp = fsp_mkmsg(FSP_CMD_STATUS_EX2_REQ, 0);
-		if (resp == NULL) {
-			prerror("%s : Message allocation failed\n",
-				__func__);
-			break;
-		}
-		if (fsp_queue_msg(resp, fsp_freemsg)) {
-			fsp_freemsg(resp);
-			prerror("%s : Failed to queue response "
-				"message\n", __func__);
-		}
-		break;
-	default:
-		prlog(PR_WARNING, "Unknown EPOW event notification\n");
-		return;
-	}
-	fsp_epow_update(epow, epow_type);
 }
 
 /*
@@ -298,5 +189,5 @@ void fsp_epow_init(void)
 	np = dt_new(opal_node, "epow");
 	dt_add_property_strings(np, "compatible", "ibm,opal-v3-epow");
 	dt_add_property_strings(np, "epow-classes", "power", "temperature", "cooling");
-	prlog(PR_TRACE, "FSP EPOW support initialized\n");
+	prlog(PR_INFO, "FSP EPOW support initialized\n");
 }

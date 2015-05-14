@@ -26,12 +26,6 @@
 #define EPOW_EX1	0x01	/* panel status extended 1 */
 #define EPOW_EX2	0x02	/* Panel status extended 2 */
 
-/* SPCN notifications */
-#define SPCN_CNF_CHNG	0x08	/* SPCN configuration change */
-#define SPCN_FAULT_LOG	0x04	/* SPCN fault to log */
-#define SPCN_POWR_FAIL	0x02	/* SPCN impending power failure */
-#define SPCN_INCL_POWR	0x01	/* SPCN incomplete power */
-
 /* EPOW reason code notifications */
 #define EPOW_ON_UPS	1	/* System on UPS */
 #define EPOW_TMP_AMB	2	/* Over ambient temperature */
