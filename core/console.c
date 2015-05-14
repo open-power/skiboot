@@ -349,7 +349,7 @@ static void dummy_console_poll(void *data __unused)
 
 	lock(&con_lock);
 	if (con_driver && con_driver->poll_read)
-		has_data = con_driver->poll_read;
+		has_data = con_driver->poll_read();
 	if (memcons.in_prod != memcons.in_cons)
 		has_data = true;
 	if (has_data)
