@@ -1147,10 +1147,14 @@ static void pci_add_slot_properties(struct phb *phb, struct pci_slot_info *info,
 	dt_add_property_string(np, "ibm,slot-label", info->label);
 }
 
-static void pci_add_loc_code(struct dt_node *np)
+static void pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
 {
 	struct dt_node *p = np->parent;
 	const char *blcode = NULL;
+	char *lcode;
+	uint32_t class_code;
+	uint8_t class, sub;
+	uint8_t pos, len;
 
 	/* Look for a parent with a slot-location-code */
 	while (p && !blcode) {
@@ -1159,7 +1163,31 @@ static void pci_add_loc_code(struct dt_node *np)
 	}
 	if (!blcode)
 		return;
-	dt_add_property_string(np, "ibm,loc-code", blcode);
+
+	/* ethernet devices get port codes */
+	class_code = dt_prop_get_u32(np, "class-code");
+	class = class_code >> 16;
+	sub = (class_code >> 8) & 0xff;
+	if (class == 0x02 && sub == 0x00) {
+		/* There's usually several spaces at the end of the property.
+		   Test for, but don't rely on, that being the case */
+		len = strlen(blcode);
+		for (pos = 0; pos < len; pos++)
+			if (blcode[pos] == ' ') break;
+		if (pos + 3 < len)
+			lcode = strdup(blcode);
+		else {
+			lcode = malloc(pos + 3);
+			memcpy(lcode, blcode, len);
+		}
+		lcode[pos++] = '-';
+		lcode[pos++] = 'T';
+		lcode[pos++] = (char)(pd->bdfn & 0x7) + '1';
+		lcode[pos++] = '\0';
+		dt_add_property_string(np, "ibm,loc-code", lcode);
+		free(lcode);
+	} else
+		dt_add_property_string(np, "ibm,loc-code", blcode);
 }
 
 static void pci_print_summary_line(struct phb *phb, struct pci_device *pd,
@@ -1290,7 +1318,7 @@ static void pci_add_one_node(struct phb *phb, struct pci_device *pd,
 		pci_add_slot_properties(phb, pd->slot_info, np);
 
 	/* Make up location code */
-	pci_add_loc_code(np);
+	pci_add_loc_code(np, pd);
 
 	/* XXX FIXME: We don't look for BARs, we only put the config space
 	 * entry in the "reg" property. That's enough for Linux and we might
