@@ -10,6 +10,8 @@ if [ -z $SSHUSER ] || [ -z $SSHPASS ] ; then
 	exit 1;
 fi
 
+export SSHUSER SSHPASS
+
 #IPMI
 IPMI_AUTH="-P ${IPMI_PASS:-foo}";
 
