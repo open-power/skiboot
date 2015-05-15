@@ -46,7 +46,7 @@ static bool garrison_probe(void)
 	return true;
 }
 
-DECLARE_PLATFORM(firestone) = {
+DECLARE_PLATFORM(garrison) = {
 	.name			= "Garrison",
 	.probe			= garrison_probe,
 	.init			= astbmc_init,
