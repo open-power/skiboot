@@ -121,17 +121,18 @@ static bool add_address_range(struct dt_node *root,
 	size_t namesz = sizeof("memory@") + STR_MAX_CHARS(reg[0]);
 
 	name = (char*)malloc(namesz);
+	assert(name);
+
+	chip_id = pcid_to_chip_id(be32_to_cpu(arange->chip));
 
 	prlog(PR_DEBUG, "  Range: 0x%016llx..0x%016llx "
 	      "on Chip 0x%x mattr: 0x%x\n",
 	      (long long)arange->start, (long long)arange->end,
-	      pcid_to_chip_id(arange->chip), arange->mirror_attr);
+	      chip_id, arange->mirror_attr);
 
 	/* reg contains start and length */
 	reg[0] = cleanup_addr(be64_to_cpu(arange->start));
 	reg[1] = cleanup_addr(be64_to_cpu(arange->end)) - reg[0];
-
-	chip_id = pcid_to_chip_id(be32_to_cpu(arange->chip));
 
 	if (be16_to_cpu(id->flags) & MS_AREA_SHARED) {
 		/* Only enter shared nodes once. */ 
@@ -139,6 +140,7 @@ static bool add_address_range(struct dt_node *root,
 				  reg[0], reg[1]);
 		if (mem) {
 			append_chip_id(mem, chip_id);
+			free(name);
 			return true;
 		}
 	}
