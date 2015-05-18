@@ -191,7 +191,6 @@ bool pcia_parse(void)
 {
 	const void *pcia;
 	struct dt_node *cpus;
-	bool got_pcia = false;
 
 	/* Check PCIA exists... if not, maybe we are getting a PACA ? */
 	pcia = get_hdif(&spira.ntuples.pcia, "SPPCIA");
@@ -199,8 +198,6 @@ bool pcia_parse(void)
 		return false;
 
 	prlog(PR_INFO, "Got PCIA !\n");
-
-	got_pcia = true;
 
 	cpus = dt_new(dt_root, "cpus");
 	dt_add_property_cells(cpus, "#address-cells", 1);
@@ -239,5 +236,5 @@ bool pcia_parse(void)
 		if (!add_core_node(cpus, pcia, id, okay))
 			break;
 	}
-	return got_pcia;
+	return true;
 }
