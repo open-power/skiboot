@@ -834,7 +834,7 @@ void mem_region_init(void)
 			region = new_region(name,
 					dt_get_number(range, 2),
 					dt_get_number(range + 1, 2),
-					NULL, REGION_RESERVED);
+					NULL, REGION_HW_RESERVED);
 			list_add(&regions, &region->list);
 		}
 	} else if (names || ranges) {

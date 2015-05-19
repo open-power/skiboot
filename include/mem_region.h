@@ -28,7 +28,10 @@ enum mem_region_type {
 	/* ranges used explicitly for skiboot, but not allocatable. eg .text */
 	REGION_SKIBOOT_FIRMWARE,
 
-	/* ranges reserved, possibly before skiboot init, eg HW framebuffer */
+	/* ranges reserved before skiboot init, eg HBRT memory */
+	REGION_HW_RESERVED,
+
+	/* ranges reserved, eg HW framebuffer */
 	REGION_RESERVED,
 
 	/* ranges available for the OS, created by mem_region_release_unused */
