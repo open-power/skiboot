@@ -13,6 +13,7 @@ skiboot.lid
 skiboot*.map
 skiboot.info
 coverage-report/
+extract-gcov
 TAGS
 tags
 cscope.out
