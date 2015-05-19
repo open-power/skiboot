@@ -1008,3 +1008,17 @@ void mem_region_add_dt_reserved(void)
 	free(names);
 	free(ranges);
 }
+
+struct mem_region *mem_region_next(struct mem_region *region)
+{
+	struct list_node *node;
+
+	assert(lock_held_by_me(&mem_region_lock));
+
+	node = region ? &region->list : &regions.n;
+
+	if (node->next == &regions.n)
+		return NULL;
+
+	return list_entry(node->next, struct mem_region, list);
+}

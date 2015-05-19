@@ -46,6 +46,9 @@
 /* Readonly section start and end. */
 extern char __rodata_start[], __rodata_end[];
 
+struct mem_region;
+extern struct mem_region *mem_region_next(struct mem_region *region);
+
 static inline bool is_rodata(const void *p)
 {
 	return ((const char *)p >= __rodata_start && (const char *)p < __rodata_end);
