@@ -21,6 +21,7 @@
 #include <chip.h>
 #include <opal-msg.h>
 #include <fsp.h>
+#include <mem_region.h>
 
 enum events {
 	EVENT_ATTN	= 1 << 0,
@@ -32,6 +33,7 @@ static uint8_t events[MAX_CHIPS];
 static uint64_t ipoll_status[MAX_CHIPS];
 static struct opal_prd_msg prd_msg;
 static bool prd_msg_inuse, prd_active;
+struct dt_node *prd_node;
 
 /* Locking:
  *
@@ -358,4 +360,32 @@ void prd_init(void)
 		queue_prd_msg = queue_prd_msg_hbrt;
 		opal_register(OPAL_PRD_MSG, opal_prd_msg, 1);
 	}
+
+	prd_node = dt_new(opal_node, "diagnostics");
+	dt_add_property_strings(prd_node, "compatible", "ibm,opal-prd");
+}
+
+void prd_register_reserved_memory(void)
+{
+	struct mem_region *region;
+
+	if (!prd_node)
+		return;
+
+	lock(&mem_region_lock);
+	for (region = mem_region_next(NULL); region;
+			region = mem_region_next(region)) {
+
+		if (region->type != REGION_HW_RESERVED)
+			continue;
+
+		if (!region->node)
+			continue;
+
+		if (!dt_find_property(region->node, "ibm,prd-label")) {
+			dt_add_property_string(region->node, "ibm,prd-label",
+					region->name);
+		}
+	}
+	unlock(&mem_region_lock);
 }

@@ -25,3 +25,6 @@ The sub-nodes under the /reserved-memory node contain:
     and size values are two cells each, as signified by the top-level
     #{address,size}-cells
 
+ ibm,prd-label = "string"
+  - a string token for use by the prd system. Specific ranges may be
+    used by prd - those will be referenced by this label.

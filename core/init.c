@@ -723,6 +723,8 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	/* ... and add remaining reservations to the DT */
 	mem_region_add_dt_reserved();
 
+	prd_register_reserved_memory();
+
 	load_and_boot_kernel(false);
 }
 
