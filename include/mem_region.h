@@ -40,7 +40,7 @@ struct mem_region {
 	struct list_node list;
 	const char *name;
 	uint64_t start, len;
-	struct dt_node *mem_node;
+	struct dt_node *node;
 	enum mem_region_type type;
 	struct list_head free_list;
 	struct lock free_list_lock;

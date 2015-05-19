@@ -559,7 +559,7 @@ bool mem_check(const struct mem_region *region)
 
 static struct mem_region *new_region(const char *name,
 				     uint64_t start, uint64_t len,
-				     struct dt_node *mem_node,
+				     struct dt_node *node,
 				     enum mem_region_type type)
 {
 	struct mem_region *region;
@@ -571,7 +571,7 @@ static struct mem_region *new_region(const char *name,
 	region->name = name;
 	region->start = start;
 	region->len = len;
-	region->mem_node = mem_node;
+	region->node = node;
 	region->type = type;
 	region->free_list.n.next = NULL;
 	init_lock(&region->free_list_lock);
@@ -588,7 +588,7 @@ static struct mem_region *split_region(struct mem_region *head,
 	uint64_t end = head->start + head->len;
 
 	tail = new_region(head->name, split_at, end - split_at,
-			  head->mem_node, type);
+			  head->node, type);
 	/* Original region becomes head. */
 	if (tail)
 		head->len -= tail->len;
@@ -711,9 +711,9 @@ restart:
 
 		/* First pass, only match node local regions */
 		if (use_local) {
-			if (!region->mem_node)
+			if (!region->node)
 				continue;
-			prop = dt_find_property(region->mem_node, "ibm,chip-id");
+			prop = dt_find_property(region->node, "ibm,chip-id");
 			ids = (const __be32 *)prop->prop;
 			if (!matches_chip_id(ids, prop->len/sizeof(u32),
 					     chip_id))
