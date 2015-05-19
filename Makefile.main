@@ -172,7 +172,7 @@ version.c: $(SRC)/make_version.sh $(OBJS_NO_VER) .version
 include $(shell find $(SRC)/* -name Makefile.check)
 
 extract-gcov: extract-gcov.c
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I . -o $@ $<,$<)
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I$(SRC) -o $@ $<,$<)
 
 coverage-report: skiboot.info
 	genhtml -q -o $@ $<
