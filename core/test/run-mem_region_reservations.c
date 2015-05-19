@@ -112,13 +112,83 @@ static struct {
 	{ "test.3", 0x4000, false },
 };
 
-int main(void)
+static void check_property_reservations(void)
 {
 	const struct dt_property *names, *ranges;
-	struct mem_region *r;
-	unsigned int i, l, c;
-	uint64_t *rangep;
+	unsigned int i, l;
 	const char *name;
+	uint64_t *rangep;
+
+	/* check dt properties */
+	names = dt_find_property(dt_root, "reserved-names");
+	ranges = dt_find_property(dt_root, "reserved-ranges");
+
+	assert(names && ranges);
+
+	/* walk through names & ranges properies, ensuring that the test
+	 * regions are all present */
+	for (name = names->prop, rangep = (uint64_t *)ranges->prop;
+			name < names->prop + names->len;
+			name += l, rangep += 2) {
+		uint64_t addr;
+
+		addr = dt_get_number(rangep, 2);
+		l = strlen(name) + 1;
+
+		for (i = 0; i < ARRAY_SIZE(test_regions); i++) {
+			if (strcmp(test_regions[i].name, name))
+				continue;
+			assert(test_regions[i].addr == addr);
+			assert(!test_regions[i].found);
+			test_regions[i].found = true;
+		}
+	}
+
+	for (i = 0; i < ARRAY_SIZE(test_regions); i++) {
+		assert(test_regions[i].found);
+		test_regions[i].found = false;
+	}
+}
+
+static void check_node_reservations(void)
+{
+	struct dt_node *parent, *node;
+	unsigned int i;
+
+	parent = dt_find_by_name(dt_root, "reserved-memory");
+	assert(parent);
+
+	assert(dt_prop_get_cell(parent, "#address-cells", 0) == 2);
+	assert(dt_prop_get_cell(parent, "#size-cells", 0) == 2);
+	dt_require_property(parent, "ranges", 0);
+
+	dt_for_each_child(parent, node) {
+		uint64_t addr, size;
+
+		addr = dt_get_address(node, 0, &size);
+
+		for (i = 0; i < ARRAY_SIZE(test_regions); i++) {
+			if (strncmp(test_regions[i].name, node->name,
+						strlen(test_regions[i].name)))
+				continue;
+
+			assert(!test_regions[i].found);
+			assert(test_regions[i].addr == addr);
+			assert(size = 0x1000);
+			test_regions[i].found = true;
+		}
+	}
+
+	for (i = 0; i < ARRAY_SIZE(test_regions); i++) {
+		assert(test_regions[i].found);
+		test_regions[i].found = false;
+	}
+}
+
+int main(void)
+{
+	struct mem_region *r;
+	unsigned int i;
 	void *buf;
 
 	/* Use malloc for the heap, so valgrind can find issues. */
@@ -150,33 +220,11 @@ int main(void)
 	r = new_region("test.4", 0x5000, 0x1000, NULL, REGION_RESERVED);
 	assert(!add_region(r));
 
-	/* check dt properties */
-	names = dt_find_property(dt_root, "reserved-names");
-	ranges = dt_find_property(dt_root, "reserved-ranges");
+	/* check old property-style reservations */
+	check_property_reservations();
 
-	assert(names && ranges);
-
-	/* walk through names & ranges properies, ensuring that the test
-	 * regions are all present */
-	for (name = names->prop, rangep = (uint64_t *)ranges->prop, c = 0;
-			name < names->prop + names->len;
-			name += l, rangep += 2) {
-		uint64_t addr;
-
-		addr = dt_get_number(rangep, 2);
-		l = strlen(name) + 1;
-
-		for (i = 0; i < ARRAY_SIZE(test_regions); i++) {
-			if (strcmp(test_regions[i].name, name))
-				continue;
-			assert(test_regions[i].addr == addr);
-			assert(!test_regions[i].found);
-			test_regions[i].found = true;
-			c++;
-		}
-	}
-
-	assert(c == ARRAY_SIZE(test_regions));
+	/* and new node-style reservations */
+	check_node_reservations();
 
 	dt_free(dt_root);
 	real_free(buf);
