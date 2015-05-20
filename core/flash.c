@@ -177,22 +177,9 @@ static int flash_nvram_probe(struct flash *flash, struct ffs_handle *ffs)
 
 /* core flash support */
 
-static void flash_add_dt_partition_node(struct dt_node *flash_node, char *name,
-		uint32_t start, uint32_t size)
-{
-	struct dt_node *part_node;
-
-	part_node = dt_new_addr(flash_node, "partition", start);
-	dt_add_property_cells(part_node, "reg", start, size);
-	if (name && strlen(name))
-		dt_add_property_strings(part_node, "label", name);
-}
-
-static struct dt_node *flash_add_dt_node(struct flash *flash, int id,
-		struct ffs_handle *ffs)
+static struct dt_node *flash_add_dt_node(struct flash *flash, int id)
 {
 	struct dt_node *flash_node;
-	int i;
 
 	flash_node = dt_new_addr(opal_node, "flash", id);
 	dt_add_property_strings(flash_node, "compatible", "ibm,opal-flash");
@@ -204,21 +191,6 @@ static struct dt_node *flash_add_dt_node(struct flash *flash, int id,
 	/* we fix to 32-bits */
 	dt_add_property_cells(flash_node, "#address-cells", 1);
 	dt_add_property_cells(flash_node, "#size-cells", 1);
-
-	if (!ffs)
-		return flash_node;
-
-	for (i = 0; ; i++) {
-		uint32_t start, size;
-		char *name;
-		int rc;
-
-		rc = ffs_part_info(ffs, i, &name, &start, NULL, &size, NULL);
-		if (rc)
-			break;
-
-		flash_add_dt_partition_node(flash_node, name, start, size);
-	}
 
 	return flash_node;
 }
@@ -295,7 +267,7 @@ int flash_register(struct flash_chip *chip, bool is_system_flash)
 		ffs = NULL;
 	}
 
-	node = flash_add_dt_node(flash, i, ffs);
+	node = flash_add_dt_node(flash, i);
 
 	if (is_system_flash)
 		setup_system_flash(flash, node, name, ffs);
