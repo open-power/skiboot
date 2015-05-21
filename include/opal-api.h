@@ -848,16 +848,21 @@ typedef struct oppanel_line {
 
 enum opal_prd_msg_type {
 	OPAL_PRD_MSG_TYPE_INIT = 0,	/* HBRT --> OPAL */
-	OPAL_PRD_MSG_TYPE_FINI,		/* HBRT --> OPAL */
+	OPAL_PRD_MSG_TYPE_FINI,		/* HBRT/kernel --> OPAL */
 	OPAL_PRD_MSG_TYPE_ATTN,		/* HBRT <-- OPAL */
 	OPAL_PRD_MSG_TYPE_ATTN_ACK,	/* HBRT --> OPAL */
 	OPAL_PRD_MSG_TYPE_OCC_ERROR,	/* HBRT <-- OPAL */
 	OPAL_PRD_MSG_TYPE_OCC_RESET,	/* HBRT <-- OPAL */
 };
 
-struct opal_prd_msg {
+struct opal_prd_msg_header {
 	uint8_t		type;
-	uint8_t		pad[3];
+	uint8_t		pad[1];
+	__be16		size;
+};
+
+struct opal_prd_msg {
+	struct opal_prd_msg_header hdr;
 	__be32		token;
 	union {
 		struct {

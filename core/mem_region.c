@@ -595,7 +595,7 @@ bool mem_check(const struct mem_region *region)
 
 static struct mem_region *new_region(const char *name,
 				     uint64_t start, uint64_t len,
-				     struct dt_node *mem_node,
+				     struct dt_node *node,
 				     enum mem_region_type type)
 {
 	struct mem_region *region;
@@ -607,7 +607,7 @@ static struct mem_region *new_region(const char *name,
 	region->name = name;
 	region->start = start;
 	region->len = len;
-	region->mem_node = mem_node;
+	region->node = node;
 	region->type = type;
 	region->free_list.n.next = NULL;
 	init_lock(&region->free_list_lock);
@@ -624,7 +624,7 @@ static struct mem_region *split_region(struct mem_region *head,
 	uint64_t end = head->start + head->len;
 
 	tail = new_region(head->name, split_at, end - split_at,
-			  head->mem_node, type);
+			  head->node, type);
 	/* Original region becomes head. */
 	if (tail)
 		head->len -= tail->len;
@@ -747,9 +747,9 @@ restart:
 
 		/* First pass, only match node local regions */
 		if (use_local) {
-			if (!region->mem_node)
+			if (!region->node)
 				continue;
-			prop = dt_find_property(region->mem_node, "ibm,chip-id");
+			prop = dt_find_property(region->node, "ibm,chip-id");
 			ids = (const __be32 *)prop->prop;
 			if (!matches_chip_id(ids, prop->len/sizeof(u32),
 					     chip_id))
@@ -878,7 +878,7 @@ void mem_region_init(void)
 			region = new_region(name,
 					dt_get_number(range, 2),
 					dt_get_number(range + 1, 2),
-					NULL, REGION_RESERVED);
+					NULL, REGION_HW_RESERVED);
 			list_add(&regions, &region->list);
 		}
 	} else if (names || ranges) {
@@ -971,11 +971,30 @@ void mem_region_release_unused(void)
 	unlock(&mem_region_lock);
 }
 
+static void mem_region_add_dt_reserved_node(struct dt_node *parent,
+		struct mem_region *region)
+{
+	char *name, *p;
+
+	name = strdup(region->name);
+
+	/* remove any cell addresses in the region name; we have our own cell
+	 * addresses here */
+	p = strchr(name, '@');
+	if (p)
+		*p = '\0';
+
+	region->node = dt_new_addr(parent, name, region->start);
+	dt_add_property_u64s(region->node, "reg", region->start, region->len);
+	free(name);
+}
+
 void mem_region_add_dt_reserved(void)
 {
 	int names_len, ranges_len, len;
 	struct mem_region *region;
 	void *names, *ranges;
+	struct dt_node *node;
 	uint64_t *range;
 	char *name;
 
@@ -987,6 +1006,12 @@ void mem_region_add_dt_reserved(void)
 	 * we drop the lock, but we don't access those. */
 	lock(&mem_region_lock);
 	mem_regions_finalised = true;
+
+	/* establish top-level reservation node */
+	node = dt_new(dt_root, "reserved-memory");
+	dt_add_property_cells(node, "#address-cells", 2);
+	dt_add_property_cells(node, "#size-cells", 2);
+	dt_add_property(node, "ranges", NULL, 0);
 
 	/* First pass: calculate length of property data */
 	list_for_each(&regions, region, list) {
@@ -1013,6 +1038,8 @@ void mem_region_add_dt_reserved(void)
 		       (long long)(region->start + region->len - 1),
 		       region->name);
 
+		mem_region_add_dt_reserved_node(node, region);
+
 		range[0] = cpu_to_fdt64(region->start);
 		range[1] = cpu_to_fdt64(region->len);
 		range += 2;
@@ -1024,4 +1051,18 @@ void mem_region_add_dt_reserved(void)
 
 	free(names);
 	free(ranges);
+}
+
+struct mem_region *mem_region_next(struct mem_region *region)
+{
+	struct list_node *node;
+
+	assert(lock_held_by_me(&mem_region_lock));
+
+	node = region ? &region->list : &regions.n;
+
+	if (node->next == &regions.n)
+		return NULL;
+
+	return list_entry(node->next, struct mem_region, list);
 }

@@ -49,6 +49,8 @@ static struct fsp_pcie_inventory *fsp_pcie_inv;
 static unsigned int fsp_pcie_inv_alloc_count;
 #define FSP_PCIE_INV_ALLOC_CHUNK	4
 
+struct lock fsp_pcie_inv_lock = LOCK_UNLOCKED;
+
 static struct dt_node *dt_create_i2c_master(struct dt_node *n, uint32_t eng_id)
 {
 	struct dt_node *i2cm;
@@ -365,7 +367,9 @@ static void firenze_get_slot_info(struct phb *phb, struct pci_device * pd)
 		return;
 	if (!pd->parent->slot_info->pluggable)
 		return;
+	lock(&fsp_pcie_inv_lock);
 	firenze_add_pcidev_to_fsp_inventory(phb, pd);
+	unlock(&fsp_pcie_inv_lock);
 }
 
 static void firenze_setup_phb(struct phb *phb, unsigned int index)

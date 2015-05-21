@@ -21,6 +21,7 @@
 #include <chip.h>
 #include <opal-msg.h>
 #include <fsp.h>
+#include <mem_region.h>
 
 enum events {
 	EVENT_ATTN	= 1 << 0,
@@ -32,6 +33,7 @@ static uint8_t events[MAX_CHIPS];
 static uint64_t ipoll_status[MAX_CHIPS];
 static struct opal_prd_msg prd_msg;
 static bool prd_msg_inuse, prd_active;
+struct dt_node *prd_node;
 
 /* Locking:
  *
@@ -87,7 +89,7 @@ static void prd_msg_consumed(void *data)
 	uint8_t event = 0;
 
 	lock(&events_lock);
-	switch (msg->type) {
+	switch (msg->hdr.type) {
 	case OPAL_PRD_MSG_TYPE_ATTN:
 		proc = msg->attn.proc;
 
@@ -167,19 +169,20 @@ static void send_pending_events(void)
 
 	prd_msg_inuse = true;
 	prd_msg.token = 0;
+	prd_msg.hdr.size = sizeof(prd_msg);
 
 	if (event & EVENT_ATTN) {
-		prd_msg.type = OPAL_PRD_MSG_TYPE_ATTN;
+		prd_msg.hdr.type = OPAL_PRD_MSG_TYPE_ATTN;
 		populate_ipoll_msg(&prd_msg, proc);
 		event = EVENT_ATTN;
 
 	} else if (event & EVENT_OCC_ERROR) {
-		prd_msg.type = OPAL_PRD_MSG_TYPE_OCC_ERROR;
+		prd_msg.hdr.type = OPAL_PRD_MSG_TYPE_OCC_ERROR;
 		prd_msg.occ_error.chip = proc;
 		event = EVENT_OCC_ERROR;
 
 	} else if (event & EVENT_OCC_RESET) {
-		prd_msg.type = OPAL_PRD_MSG_TYPE_OCC_RESET;
+		prd_msg.hdr.type = OPAL_PRD_MSG_TYPE_OCC_RESET;
 		prd_msg.occ_reset.chip = proc;
 		event = EVENT_OCC_RESET;
 
@@ -323,12 +326,19 @@ static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 {
 	int rc;
 
-	switch (msg->type) {
+	/* fini is a little special: the kernel (which may not have the entire
+	 * opal_prd_msg definition) can send a FINI message, so we don't check
+	 * the full size */
+	if (msg->hdr.size >= sizeof(struct opal_prd_msg_header) &&
+			msg->hdr.type == OPAL_PRD_MSG_TYPE_FINI)
+		return prd_msg_handle_fini();
+
+	if (msg->hdr.size != sizeof(*msg))
+		return OPAL_PARAMETER;
+
+	switch (msg->hdr.type) {
 	case OPAL_PRD_MSG_TYPE_INIT:
 		rc = prd_msg_handle_init(msg);
-		break;
-	case OPAL_PRD_MSG_TYPE_FINI:
-		rc = prd_msg_handle_fini();
 		break;
 	case OPAL_PRD_MSG_TYPE_ATTN_ACK:
 		rc = prd_msg_handle_attn_ack(msg);
@@ -358,4 +368,32 @@ void prd_init(void)
 		queue_prd_msg = queue_prd_msg_hbrt;
 		opal_register(OPAL_PRD_MSG, opal_prd_msg, 1);
 	}
+
+	prd_node = dt_new(opal_node, "diagnostics");
+	dt_add_property_strings(prd_node, "compatible", "ibm,opal-prd");
+}
+
+void prd_register_reserved_memory(void)
+{
+	struct mem_region *region;
+
+	if (!prd_node)
+		return;
+
+	lock(&mem_region_lock);
+	for (region = mem_region_next(NULL); region;
+			region = mem_region_next(region)) {
+
+		if (region->type != REGION_HW_RESERVED)
+			continue;
+
+		if (!region->node)
+			continue;
+
+		if (!dt_find_property(region->node, "ibm,prd-label")) {
+			dt_add_property_string(region->node, "ibm,prd-label",
+					region->name);
+		}
+	}
+	unlock(&mem_region_lock);
 }

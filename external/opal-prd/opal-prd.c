@@ -14,6 +14,8 @@
  * imitations under the License.
  */
 
+#define _GNU_SOURCE
+
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -31,6 +33,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <poll.h>
+#include <dirent.h>
 
 #include <endian.h>
 
@@ -43,7 +46,9 @@
 #include <linux/limits.h>
 
 #include <asm/opal-prd.h>
-#include <opal.h>
+
+#include <opal-api.h>
+#include <types.h>
 
 #include "opal-prd.h"
 #include "hostboot-interface.h"
@@ -51,11 +56,18 @@
 #include "pnor.h"
 #include "i2c.h"
 
+struct prd_range {
+	const char		*name;
+	uint64_t		physaddr;
+	uint64_t		size;
+};
 
 struct opal_prd_ctx {
 	int			fd;
 	int			socket;
 	struct opal_prd_info	info;
+	struct prd_range	*ranges;
+	int			n_ranges;
 	long			page_size;
 	void			*code_addr;
 	size_t			code_size;
@@ -89,6 +101,9 @@ static const uint64_t opal_prd_ipoll = 0xf000000000000000;
 static const char *ipmi_devnode = "/dev/ipmi0";
 static const int ipmi_timeout_ms = 2000;
 
+static const char *devicetree_base =
+		"/sys/firmware/devicetree/base";
+
 /* Memory error handling */
 static const char *mem_offline_soft =
 		"/sys/devices/system/memory/soft_offline_page";
@@ -112,15 +127,15 @@ struct func_desc {
 	void *toc;
 } hbrt_entry;
 
-static struct opal_prd_range *find_range(const char *name)
+static struct prd_range *find_range(const char *name)
 {
-	struct opal_prd_range *range;
+	struct prd_range *range;
 	unsigned int i;
 
-	for (i = 0; i < OPAL_PRD_MAX_RANGES; i++) {
-		range = &ctx->info.ranges[i];
+	for (i = 0; i < ctx->n_ranges; i++) {
+		range = &ctx->ranges[i];
 
-		if (!strncmp(range->name, name, sizeof(range->name)))
+		if (!strcmp(range->name, name))
 			return range;
 	}
 
@@ -261,7 +276,7 @@ int hservice_scom_write(uint64_t chip_id, uint64_t addr,
 uint64_t hservice_get_reserved_mem(const char *name)
 {
 	uint64_t align_physaddr, offset;
-	struct opal_prd_range *range;
+	struct prd_range *range;
 	void *addr;
 
 	pr_debug("IMAGE: hservice_get_reserved_mem: %s", name);
@@ -654,7 +669,7 @@ static int map_hbrt_file(struct opal_prd_ctx *ctx, const char *name)
 
 static int map_hbrt_physmem(struct opal_prd_ctx *ctx, const char *name)
 {
-	struct opal_prd_range *range;
+	struct prd_range *range;
 	void *buf;
 
 	range = find_range(name);
@@ -702,6 +717,139 @@ static void dump_hbrt_map(struct opal_prd_ctx *ctx)
 		pr_debug("IMAGE: dumped HBRT binary to %s", dump_name);
 }
 
+static int open_and_read(const char *path, void **bufp, int *lenp)
+{
+	struct stat statbuf;
+	int fd, rc, bytes;
+	void *buf;
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return -1;
+
+	rc = fstat(fd, &statbuf);
+	if (rc) {
+		close(fd);
+		return -1;
+	}
+
+	buf = malloc(statbuf.st_size);
+
+	for (rc = bytes = 0; bytes < statbuf.st_size; bytes += rc) {
+		rc = read(fd, buf + bytes, statbuf.st_size - bytes);
+		if (rc < 0) {
+			if (errno == EINTR)
+				continue;
+			break;
+		} else if (rc == 0)
+			break;
+	}
+
+	if (bytes == statbuf.st_size)
+		rc = 0;
+
+	if (rc == 0) {
+		if (lenp)
+			*lenp = bytes;
+		if (bufp)
+			*bufp = buf;
+	} else {
+		free(buf);
+	}
+
+	close(fd);
+
+	return rc == 0 ? 0 : -1;
+}
+
+static int prd_init_one_range(struct opal_prd_ctx *ctx, const char *path,
+		struct dirent *dirent)
+{
+	char *label_path, *reg_path;
+	struct prd_range *range;
+	int label_len, len, rc;
+	char *label;
+	__be64 *reg;
+	void *buf;
+
+	asprintf(&label_path, "%s/%s/ibm,prd-label", path, dirent->d_name);
+	asprintf(&reg_path, "%s/%s/reg", path, dirent->d_name);
+
+	reg = NULL;
+	label = NULL;
+	rc = -1;
+
+	rc = open_and_read(label_path, &buf, &label_len);
+	if (rc)
+		goto out_free;
+
+	label = buf;
+
+	if (label[label_len-1] != '\0')
+		pr_log(LOG_INFO, "FW: node %s has invalid ibm,prd-label - "
+				"not nul-terminated",
+				dirent->d_name);
+
+	rc = open_and_read(reg_path, &buf, &len);
+	if (rc)
+		goto out_free;
+
+	reg = buf;
+
+	if (len != 2 * sizeof(*reg)) {
+		pr_log(LOG_ERR, "FW: node %s has invalid 'reg' size: %d",
+				dirent->d_name, len);
+		goto out_free;
+	}
+
+
+	ctx->ranges = realloc(ctx->ranges, ++ctx->n_ranges * sizeof(*range));
+	range = &ctx->ranges[ctx->n_ranges - 1];
+	range->name = strndup(label, label_len);
+	range->physaddr = be64toh(reg[0]);
+	range->size = be64toh(reg[1]);
+	rc = 0;
+
+out_free:
+	free(reg);
+	free(label);
+	free(reg_path);
+	free(label_path);
+	return rc;
+}
+
+static int prd_init_ranges(struct opal_prd_ctx *ctx)
+{
+	struct dirent *dirent;
+	char *path;
+	DIR *dir;
+	int rc = -1;
+
+	asprintf(&path, "%s/reserved-memory", devicetree_base);
+
+	dir = opendir(path);
+	if (!dir) {
+		pr_log(LOG_ERR, "FW: can't open reserved-memory device-tree "
+				"node: %m");
+		goto out_free;
+	}
+
+	for (;;) {
+		dirent = readdir(dir);
+		if (!dirent)
+			break;
+
+		prd_init_one_range(ctx, path, dirent);
+	}
+
+	rc = 0;
+
+out_free:
+	free(path);
+	closedir(dir);
+	return rc;
+}
+
 static int prd_init(struct opal_prd_ctx *ctx)
 {
 	int rc;
@@ -719,6 +867,12 @@ static int prd_init(struct opal_prd_ctx *ctx)
 	rc = ioctl(ctx->fd, OPAL_PRD_GET_INFO, &ctx->info);
 	if (rc) {
 		pr_log(LOG_ERR, "FW: Can't query PRD information: %m");
+		return -1;
+	}
+
+	rc = prd_init_ranges(ctx);
+	if (rc) {
+		pr_log(LOG_ERR, "FW: can't parse PRD memory information");
 		return -1;
 	}
 
@@ -747,7 +901,8 @@ static int handle_msg_attn(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 	}
 
 	/* send the response */
-	msg->type = OPAL_PRD_MSG_TYPE_ATTN_ACK;
+	msg->hdr.type = OPAL_PRD_MSG_TYPE_ATTN_ACK;
+	msg->hdr.size = htobe16(sizeof(*msg));
 	msg->attn_ack.proc = htobe64(proc);
 	msg->attn_ack.ipoll_ack = htobe64(ipoll_status);
 	rc = write(ctx->fd, msg, sizeof(*msg));
@@ -795,6 +950,7 @@ static int handle_msg_occ_reset(struct opal_prd_ctx *ctx,
 static int handle_prd_msg(struct opal_prd_ctx *ctx)
 {
 	struct opal_prd_msg msg;
+	int size;
 	int rc;
 
 	rc = read(ctx->fd, &msg, sizeof(msg));
@@ -806,7 +962,16 @@ static int handle_prd_msg(struct opal_prd_ctx *ctx)
 		return -1;
 	}
 
-	switch (msg.type) {
+	size = htobe16(msg.hdr.size);
+	if (size < sizeof(msg)) {
+		pr_log(LOG_ERR, "FW: Mismatched message size "
+				"between opal-prd and firmware "
+				"(%d from FW, %zd expected)",
+				size, sizeof(msg));
+		return -1;
+	}
+
+	switch (msg.hdr.type) {
 	case OPAL_PRD_MSG_TYPE_ATTN:
 		rc = handle_msg_attn(ctx, &msg);
 		break;
@@ -818,7 +983,7 @@ static int handle_prd_msg(struct opal_prd_ctx *ctx)
 		break;
 	default:
 		pr_log(LOG_WARNING, "Invalid incoming message type 0x%x",
-				msg.type);
+				msg.hdr.type);
 		return -1;
 	}
 
@@ -907,7 +1072,8 @@ static int run_attn_loop(struct opal_prd_ctx *ctx)
 	}
 
 	/* send init message, to unmask interrupts */
-	msg.type = OPAL_PRD_MSG_TYPE_INIT;
+	msg.hdr.type = OPAL_PRD_MSG_TYPE_INIT;
+	msg.hdr.size = htobe16(sizeof(msg));
 	msg.init.version = htobe64(opal_prd_version);
 	msg.init.ipoll = htobe64(opal_prd_ipoll);
 
