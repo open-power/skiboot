@@ -100,9 +100,10 @@ static void print_flash_info(void)
 
 	for (i = 0;; i++) {
 		uint32_t start, size, act, end;
+		bool ecc;
 		char *name;
 
-		rc = ffs_part_info(ffsh, i, &name, &start, &size, &act, NULL);
+		rc = ffs_part_info(ffsh, i, &name, &start, &size, &act, &ecc);
 		if (rc == FFS_ERR_PART_NOT_FOUND)
 			break;
 		if (rc) {
@@ -110,8 +111,9 @@ static void print_flash_info(void)
 			break;
 		}
 		end = start + size;
-		printf("ID=%02d %15s %08x..%08x (actual=%08x)\n",
-		       i, name, start, end, act);
+		printf("ID=%02d %15s %08x..%08x (actual=%08x) %s\n",
+		       i, name, start, end, act, ecc ? "[ECC]" : "");
+
 		free(name);
 	}
 }
