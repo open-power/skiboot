@@ -23,7 +23,8 @@
 
 #define __aligned(x)			__attribute__((aligned(x)))
 
-#define PFLASH_VERSION	"0.8.6"
+/* Full pflash version number (possibly includes gitid). */
+extern const char version[];
 
 static bool must_confirm = true;
 static bool dummy_run;
@@ -437,7 +438,7 @@ static void flash_access_setup_pnor(bool use_lpc, bool use_sfc, bool need_write)
 
 static void print_version(void)
 {
-	printf("Palmetto Flash tool " PFLASH_VERSION "\n");
+	printf("Open-Power Flash tool %s\n", version);
 }
 
 static void print_help(const char *pname)
