@@ -70,32 +70,21 @@ static void check_confirm(void)
 	must_confirm = false;
 }
 
-static void print_flash_info(void)
+static void print_ffs_info(uint32_t toc_offset)
 {
-	uint32_t i;
+	struct ffs_handle *ffs_handle;
+	uint32_t other_side_offset = 0;
 	int rc;
+	uint32_t i;
 
-	printf("Flash info:\n");
-	printf("-----------\n");
-	printf("Name          = %s\n", fl_name);
-	printf("Total size    = %dMB \n", fl_total_size >> 20);
-	printf("Erase granule = %dKB \n", fl_erase_granule >> 10);
-
-	if (bmc_flash)
+	rc = ffs_open_flash(fl_chip, toc_offset, 0, &ffs_handle);
+	if (rc) {
+		fprintf(stderr, "Error %d opening ffs !\n", rc);
 		return;
-
-	if (!ffsh) {
-		rc = ffs_open_flash(fl_chip, 0, 0, &ffsh);
-		if (rc) {
-			fprintf(stderr, "Error %d opening ffs !\n", rc);
-			ffsh = NULL;
-		}
 	}
-	if (!ffsh)
-		return;
 
 	printf("\n");
-	printf("Partitions:\n");
+	printf("TOC@0x%08x Partitions:\n", toc_offset);
 	printf("-----------\n");
 
 	for (i = 0;; i++) {
@@ -103,7 +92,7 @@ static void print_flash_info(void)
 		bool ecc;
 		char *name;
 
-		rc = ffs_part_info(ffsh, i, &name, &start, &size, &act, &ecc);
+		rc = ffs_part_info(ffs_handle, i, &name, &start, &size, &act, &ecc);
 		if (rc == FFS_ERR_PART_NOT_FOUND)
 			break;
 		if (rc) {
@@ -114,8 +103,31 @@ static void print_flash_info(void)
 		printf("ID=%02d %15s %08x..%08x (actual=%08x) %s\n",
 		       i, name, start, end, act, ecc ? "[ECC]" : "");
 
+		if (strcmp(name, "OTHER_SIDE") == 0)
+			other_side_offset = start;
+
 		free(name);
 	}
+
+	ffs_close(ffs_handle);
+
+	if (other_side_offset)
+		print_ffs_info(other_side_offset);
+}
+
+
+static void print_flash_info(void)
+{
+	printf("Flash info:\n");
+	printf("-----------\n");
+	printf("Name          = %s\n", fl_name);
+	printf("Total size    = %dMB \n", fl_total_size >> 20);
+	printf("Erase granule = %dKB \n", fl_erase_granule >> 10);
+
+	if (bmc_flash)
+		return;
+
+	print_ffs_info(0);
 }
 
 static void lookup_partition(const char *name)
