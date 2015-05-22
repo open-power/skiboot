@@ -1,11 +1,37 @@
 #!/bin/bash
 
-if test -e .git;
+usage() {
+	echo "$0 git-tag-prefix"
+	echo -e "\tIf inside git dir specify a tag prefix to use."
+	echo -e "\tWhere a prefix is anything before the first dash '-' character."
+	echo
+	if test -d .git || git rev-parse --is-inside-work-tree > /dev/null 2>&1;
+	then
+		echo "Possible tags include:"
+		git tag | cut -d '-' -f 1 | sort | uniq
+	fi
+}
+
+if test -e .git || git rev-parse --is-inside-work-tree > /dev/null 2>&1;
 then
-	version=`git describe --exact-match 2>/dev/null`
+	if [ $# -ne "1" ] ; then
+		usage
+		exit 1;
+	fi
+
+	TAG_PREFIX="$1"
+
+	#Check that there is at least one of such a prefix
+	if ! git tag | grep -q "$TAG_PREFIX" ; then
+		echo -e "There isn't a single gix tag with prefix '$TAG_PREFIX'\n"
+		usage
+		exit 1;
+	fi
+
+	version=`git describe --exact-match --match "$TAG_PREFIX-*" 2>/dev/null`
 	if [ -z "$version" ];
 	then
-		version=`git describe 2>/dev/null`
+		version=`git describe --match "$TAG_PREFIX-*" 2>/dev/null`
 	fi
 	if [ -z "$version" ];
 	then

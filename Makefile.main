@@ -153,7 +153,7 @@ $(SUBDIRS):
 # Set V=1 if you want to see everything.
 include $(SRC)/Makefile.rules
 
-VERSION ?= $(shell cd $(SRC); GIT_DIR=$(SRC)/.git $(SRC)/make_version.sh)
+VERSION ?= $(shell cd $(SRC); GIT_DIR=$(SRC)/.git $(SRC)/make_version.sh skiboot)
 
 .PHONY: VERSION-always
 .version: VERSION-always
