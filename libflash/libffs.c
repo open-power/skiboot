@@ -244,7 +244,7 @@ static struct ffs_entry *ffs_get_part(struct ffs_handle *ffs, uint32_t index,
 	if (index > ffs->hdr.entry_count)
 		return NULL;
 	if (out_offset)
-		*out_offset = offset;
+		*out_offset = ffs->toc_offset + offset;
 	return (struct ffs_entry *)(ffs->cache + offset);
 }
 
