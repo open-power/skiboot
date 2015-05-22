@@ -1,26 +1,4 @@
-ARCH=$(shell ./get_arch.sh $(CROSS_COMPILE))
-
-ifeq ($(ARCH),ARCH_POWERPC)
-ARCH_OBJS = powerpc_io.o sfc-ctrl.o
-else
-ifeq ($(ARCH),ARCH_ARM)
-ARCH_OBJS = arm_io.o
-else
-$(error Unsupported architecture $(ARCH))
-endif
-endif
-
-CFLAGS  = -O2 -Wall -I.
-LDFLAGS	= -lrt
-OBJS    = pflash.o progress.o ast-sf-ctrl.o version.o
-OBJS	+= libflash/libflash.o libflash/libffs.o libflash/ecc.o
-OBJS	+= $(ARCH_OBJS)
-EXE     = pflash
-
-CC	= $(CROSS_COMPILE)gcc
-
-%.o : %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+include rules.mk
 
 all: $(EXE)
 
@@ -32,7 +10,7 @@ links:
 	ln -sf ../../hw/ast-bmc/ast-sf-ctrl.c
 	ln -sf ../../make_version.sh
 
-PFLASH_VERSION ?= $(shell ./make_version.sh $(EXE))
+$(OBJS) : links
 
 .PHONY: VERSION-always
 .version: VERSION-always
@@ -40,17 +18,15 @@ PFLASH_VERSION ?= $(shell ./make_version.sh $(EXE))
 	@cmp -s $@ $@.tmp || cp $@.tmp $@
 	@rm -f $@.tmp
 
-version.c: make_version.sh .version
-	@(if [ "a$(PFLASH_VERSION)" = "a" ]; then \
-	echo "#error You need to set SKIBOOT_VERSION environment variable" > $@ ;\
-	else \
-	echo "const char version[] = \"$(PFLASH_VERSION)\";" ;\
-	fi) > $@
-
-$(OBJS) : links
-
-$(EXE): $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+.PHONY: dist
+#File is named $(PFLASH_VERSION).tar because the expectation is that pflash-
+#is always at the start of the verion. This remains consistent with skiboot
+#version strings
+dist: links .version
+	find -L ../pflash/ -iname '*.[ch]' -print0 | xargs -0 tar -rhf $(PFLASH_VERSION).tar
+	tar --transform 's/Makefile.dist/Makefile/' -rhf $(PFLASH_VERSION).tar \
+		../pflash/get_arch.sh ../pflash/Makefile.dist ../pflash/rules.mk \
+		../pflash/.version ../pflash/make_version.sh
 
 clean:
 	rm -f $(OBJS) $(EXE) *.o *.d libflash/test/test_flash libflash/test/*.o

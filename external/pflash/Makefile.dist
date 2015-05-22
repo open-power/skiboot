@@ -1,0 +1,8 @@
+include rules.mk
+
+all: $(EXE)
+
+clean:
+	rm -f $(OBJS) *.o
+distclean: clean
+	rm -f $(EXE)
