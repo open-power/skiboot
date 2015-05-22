@@ -1,13 +1,12 @@
 ARCH=$(shell ./get_arch.sh $(CROSS_COMPILE))
 
 ifeq ($(ARCH),ARCH_POWERPC)
-	ARCH_OBJS = powerpc_io.o sfc-ctrl.o
+ARCH_OBJS = powerpc_io.o sfc-ctrl.o
 else
 ifeq ($(ARCH),ARCH_ARM)
-	ARCH_OBJS = arm_io.o
+ARCH_OBJS = arm_io.o
 else
-error_arch:
-	$(error Unsupported architecture $(ARCH))
+$(error Unsupported architecture $(ARCH))
 endif
 endif
 
