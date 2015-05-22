@@ -118,7 +118,7 @@ static void print_ffs_info(uint32_t toc_offset)
 }
 
 
-static void print_flash_info(void)
+static void print_flash_info(uint32_t toc)
 {
 	printf("Flash info:\n");
 	printf("-----------\n");
@@ -129,7 +129,7 @@ static void print_flash_info(void)
 	if (bmc_flash)
 		return;
 
-	print_ffs_info(0);
+	print_ffs_info(toc);
 }
 
 static int open_partition(const char *name)
@@ -550,6 +550,9 @@ static void print_help(const char *pname)
 	printf("\t\t(Implicit for all other operations)\n\n");
 	printf("\t-S, --side\n");
 	printf("\t\tSide of the flash on which to operate, 0 (default) or 1\n\n");
+	printf("\t-T, --toc\n");
+	printf("\t\tlibffs TOC on which to operate, defaults to 0.\n");
+	printf("\t\tleading 0x is required for interpretation of a hex value\n\n");
 	printf("\t-i, --info\n");
 	printf("\t\tDisplay some information about the flash.\n\n");
 	printf("\t-h, --help\n");
@@ -568,6 +571,7 @@ int main(int argc, char *argv[])
 	bool has_sfc = false, has_ast = false;
 	bool no_action = false, tune = false;
 	char *write_file = NULL, *read_file = NULL, *part_name = NULL;
+	bool ffs_toc_seen = false;
 	int rc;
 
 	while(1) {
@@ -591,10 +595,11 @@ int main(int argc, char *argv[])
 			{"version",	no_argument,		NULL,	'v'},
 			{"debug",	no_argument,		NULL,	'g'},
 			{"side",	required_argument,	NULL,	'S'},
+			{"toc",		required_argument,	NULL,	'T'},
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "a:s:P:r:43Eep:fdihlvbtgS:",
+		c = getopt_long(argc, argv, "a:s:P:r:43Eep:fdihlvbtgS:T:",
 				long_opts, &oidx);
 		if (c == EOF)
 			break;
@@ -658,6 +663,10 @@ int main(int argc, char *argv[])
 			break;
 		case 'S':
 			flash_side = atoi(optarg);
+			break;
+		case 'T':
+			ffs_toc_seen = true;
+			ffs_toc = strtoul(optarg, NULL, 0);
 			break;
 		default:
 			exit(1);
@@ -729,6 +738,11 @@ int main(int argc, char *argv[])
 	/* Explicitly only support two sides */
 	if (flash_side != 0 && flash_side != 1) {
 		fprintf(stderr, "Unexpected value for --side '%d'\n", flash_side);
+		exit(1);
+	}
+
+	if (ffs_toc_seen && flash_side) {
+		fprintf(stderr, "--toc and --side are exclusive");
 		exit(1);
 	}
 
@@ -842,8 +856,14 @@ int main(int argc, char *argv[])
 		enable_4B_addresses();
 	if (disable_4B)
 		disable_4B_addresses();
-	if (info)
-		print_flash_info();
+	if (info ) {
+		/*
+		 * Don't pass through modfied TOC value if the modification was done
+		 * because of --size, but still respect if it came from --toc (we
+		 * assume the user knows what they're doing in that case)
+		 */
+		print_flash_info(flash_side ? 0 : ffs_toc);
+	}
 	if (do_read)
 		do_read_file(read_file, address, read_size);
 	if (erase_all)
