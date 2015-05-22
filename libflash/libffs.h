@@ -34,13 +34,13 @@ struct ffs_handle;
 #define FFS_ERR_PART_NOT_FOUND	103
 #define FFS_ERR_BAD_ECC		104
 
-int ffs_open_flash(struct flash_chip *chip, uint32_t offset,
+int ffs_open_flash(struct flash_chip *chip, uint32_t toc_offset,
 		   uint32_t max_size, struct ffs_handle **ffs);
 
 /* ffs_open_image is Linux only as it uses lseek, which skiboot does not
  * implement */
 #ifndef __SKIBOOT__
-int ffs_open_image(int fd, uint32_t size, uint32_t offset,
+int ffs_open_image(int fd, uint32_t size, uint32_t toc_offset,
 		   struct ffs_handle **ffs);
 #endif
 

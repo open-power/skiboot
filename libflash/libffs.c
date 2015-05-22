@@ -37,7 +37,7 @@ struct ffs_handle {
 	struct ffs_hdr		hdr;	/* Converted header */
 	enum ffs_type		type;
 	struct flash_chip	*chip;
-	uint32_t		flash_offset;
+	uint32_t		toc_offset;
 	uint32_t		max_size;
 	void			*cache;
 	uint32_t		cached_size;
@@ -71,7 +71,7 @@ static int ffs_check_convert_header(struct ffs_hdr *dst, struct ffs_hdr *src)
 	return 0;
 }
 
-int ffs_open_flash(struct flash_chip *chip, uint32_t offset,
+int ffs_open_flash(struct flash_chip *chip, uint32_t toc_offset,
 		   uint32_t max_size, struct ffs_handle **ffs)
 {
 	struct ffs_hdr hdr;
@@ -89,13 +89,13 @@ int ffs_open_flash(struct flash_chip *chip, uint32_t offset,
 		FL_ERR("FFS: Error %d retrieving flash info\n", rc);
 		return rc;
 	}
-	if ((offset + max_size) < offset)
+	if ((toc_offset + max_size) < toc_offset)
 		return FLASH_ERR_PARM_ERROR;
-	if ((offset + max_size) > fl_size)
+	if ((toc_offset + max_size) > fl_size)
 		return FLASH_ERR_PARM_ERROR;
 
 	/* Read flash header */
-	rc = flash_read(chip, offset, &hdr, sizeof(hdr));
+	rc = flash_read(chip, toc_offset, &hdr, sizeof(hdr));
 	if (rc) {
 		FL_ERR("FFS: Error %d reading flash header\n", rc);
 		return rc;
@@ -107,8 +107,8 @@ int ffs_open_flash(struct flash_chip *chip, uint32_t offset,
 		return FLASH_ERR_MALLOC_FAILED;
 	memset(f, 0, sizeof(*f));
 	f->type = ffs_type_flash;
-	f->flash_offset = offset;
-	f->max_size = max_size ? max_size : (fl_size - offset);
+	f->toc_offset = toc_offset;
+	f->max_size = max_size ? max_size : (fl_size - toc_offset);
 	f->chip = chip;
 
 	/* Convert and check flash header */
@@ -139,7 +139,7 @@ int ffs_open_flash(struct flash_chip *chip, uint32_t offset,
 	}
 
 	/* Read the cached map */
-	rc = flash_read(chip, offset, f->cache, f->cached_size);
+	rc = flash_read(chip, toc_offset, f->cache, f->cached_size);
 	if (rc) {
 		FL_ERR("FFS: Error %d reading flash partition map\n", rc);
 		free(f);
@@ -152,7 +152,7 @@ int ffs_open_flash(struct flash_chip *chip, uint32_t offset,
 /* ffs_open_image is Linux only as it uses lseek, which skiboot does not
  * implement */
 #ifndef __SKIBOOT__
-int ffs_open_image(int fd, uint32_t size, uint32_t offset,
+int ffs_open_image(int fd, uint32_t size, uint32_t toc_offset,
 		   struct ffs_handle **ffsh)
 {
 	struct ffs_hdr hdr;
@@ -166,11 +166,11 @@ int ffs_open_image(int fd, uint32_t size, uint32_t offset,
 	if (fd < 0)
 		return FLASH_ERR_PARM_ERROR;
 
-	if ((offset + size) < offset)
+	if ((toc_offset + size) < toc_offset)
 		return FLASH_ERR_PARM_ERROR;
 
 	/* Read flash header */
-	rc = lseek(fd, offset, SEEK_SET);
+	rc = lseek(fd, toc_offset, SEEK_SET);
 	if (rc < 0)
 		return FLASH_ERR_PARM_ERROR;
 
@@ -184,7 +184,7 @@ int ffs_open_image(int fd, uint32_t size, uint32_t offset,
 		return FLASH_ERR_MALLOC_FAILED;
 	memset(f, 0, sizeof(*f));
 	f->type = ffs_type_image;
-	f->flash_offset = offset;
+	f->toc_offset = toc_offset;
 	f->max_size = size;
 	f->chip = NULL;
 
@@ -211,7 +211,7 @@ int ffs_open_image(int fd, uint32_t size, uint32_t offset,
 	}
 
 	/* Read the cached map */
-	rc = lseek(fd, offset, SEEK_SET);
+	rc = lseek(fd, toc_offset, SEEK_SET);
 	if (rc < 0)
 		return FLASH_ERR_PARM_ERROR;
 
