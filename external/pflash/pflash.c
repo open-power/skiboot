@@ -30,6 +30,8 @@ static bool must_confirm = true;
 static bool dummy_run;
 static bool need_relock;
 static bool bmc_flash;
+static uint32_t ffs_toc = 0;
+static int flash_side = 0;
 #ifdef __powerpc__
 static bool using_sfc;
 #endif
@@ -130,17 +132,20 @@ static void print_flash_info(void)
 	print_ffs_info(0);
 }
 
-static void lookup_partition(const char *name)
+static int open_partition(const char *name)
 {
 	uint32_t index;
 	int rc;
 
 	/* Open libffs if needed */
 	if (!ffsh) {
-		rc = ffs_open_flash(fl_chip, 0, 0, &ffsh);
+		rc = ffs_open_flash(fl_chip, ffs_toc, 0, &ffsh);
 		if (rc) {
 			fprintf(stderr, "Error %d opening ffs !\n", rc);
-			exit(1);
+			if (ffs_toc)
+				fprintf(stderr, "You specified 0x%08x as the libffs TOC"
+						" looks like it doesn't exist\n", ffs_toc);
+			return rc;
 		}
 	}
 
@@ -148,14 +153,46 @@ static void lookup_partition(const char *name)
 	rc = ffs_lookup_part(ffsh, name, &index);
 	if (rc == FFS_ERR_PART_NOT_FOUND) {
 		fprintf(stderr, "Partition '%s' not found !\n", name);
-		exit(1);
+		return rc;
 	}
 	if (rc) {
 		fprintf(stderr, "Error %d looking for partition '%s' !\n",
 			rc, name);
-		exit(1);
+		return rc;
 	}
+
 	ffs_index = index;
+	return 0;
+}
+
+static void lookup_partition(const char *name)
+{
+	int rc;
+
+	if (flash_side == 1) {
+		uint32_t other_side_offset;
+
+		rc = open_partition("OTHER_SIDE");
+		if (rc == FFS_ERR_PART_NOT_FOUND)
+			fprintf(stderr, "side 1 was specified but there doesn't appear"
+					" to be a second side to this flash\n");
+		if (rc)
+			exit(1);
+
+		/* Just need to know where it starts */
+		rc = ffs_part_info(ffsh, ffs_index, NULL, &other_side_offset, NULL, NULL, NULL);
+		if (rc)
+			exit(1);
+
+		ffs_close(ffsh);
+		ffsh = NULL;
+
+		ffs_toc = other_side_offset;
+	}
+
+	rc = open_partition(name);
+	if (rc)
+		exit(1);
 }
 
 static void erase_chip(void)
@@ -511,6 +548,8 @@ static void print_help(const char *pname)
 	printf("\t-t, --tune\n");
 	printf("\t\tJust tune the flash controller & access size\n");
 	printf("\t\t(Implicit for all other operations)\n\n");
+	printf("\t-S, --side\n");
+	printf("\t\tSide of the flash on which to operate, 0 (default) or 1\n\n");
 	printf("\t-i, --info\n");
 	printf("\t\tDisplay some information about the flash.\n\n");
 	printf("\t-h, --help\n");
@@ -551,10 +590,11 @@ int main(int argc, char *argv[])
 			{"help",	no_argument,		NULL,	'h'},
 			{"version",	no_argument,		NULL,	'v'},
 			{"debug",	no_argument,		NULL,	'g'},
+			{"side",	required_argument,	NULL,	'S'},
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "a:s:P:r:43Eep:fdihlvbtg",
+		c = getopt_long(argc, argv, "a:s:P:r:43Eep:fdihlvbtgS:",
 				long_opts, &oidx);
 		if (c == EOF)
 			break;
@@ -615,6 +655,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'g':
 			libflash_debug = true;
+			break;
+		case 'S':
+			flash_side = atoi(optarg);
 			break;
 		default:
 			exit(1);
@@ -680,6 +723,12 @@ int main(int argc, char *argv[])
 	/* If both partition and address specified, error out */
 	if (address && part_name) {
 		fprintf(stderr, "Specify partition or address, not both !\n");
+		exit(1);
+	}
+
+	/* Explicitly only support two sides */
+	if (flash_side != 0 && flash_side != 1) {
+		fprintf(stderr, "Unexpected value for --side '%d'\n", flash_side);
 		exit(1);
 	}
 
