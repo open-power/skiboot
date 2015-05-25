@@ -36,17 +36,16 @@ fi
 OLD_ULIMIT_C=`ulimit -c`
 ulimit -c 0
 
-( cd external/mambo; 
+( cd external/mambo;
 cat <<EOF | expect
 set timeout 600
-spawn $MAMBO_PATH/$MAMBO_BINARY -n -f skiboot.tcl
+spawn $MAMBO_PATH/$MAMBO_BINARY -n -f ../../test/run_boot_test.tcl
 expect {
 timeout { send_user "\nTimeout waiting for petitboot\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
-"Welcome to Petitboot"
+"Execution stopped: Sim Support exit requested stop"
 }
-
-close
+wait
 exit 0
 EOF
 )

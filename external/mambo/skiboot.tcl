@@ -176,5 +176,3 @@ for { set i 0 } { $i < $mconf(threads) } { incr i } {
 
 # Turbo mode & run
 mysim mode turbo
-mysim go
-exit

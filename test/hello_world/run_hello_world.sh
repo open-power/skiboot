@@ -34,14 +34,13 @@ ulimit -c 0
 ( cd external/mambo; 
 cat <<EOF | expect
 set timeout 30
-spawn $MAMBO_PATH/$MAMBO_BINARY -n -f skiboot.tcl
+spawn $MAMBO_PATH/$MAMBO_BINARY -n -f ../../test/hello_world/run_hello_world.tcl
 expect {
 timeout { send_user "\nTimeout waiting for hello world\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
-"Hello World!"
+"ATTN"
 }
-
-close
+wait
 exit 0
 EOF
 )
