@@ -2,3 +2,8 @@ check: boot-check
 
 boot-check: skiboot.lid
 	./test/run_boot_test.sh
+
+boot-tests: boot-check
+
+boot-coverage-report: boot-tests extract-gcov skiboot.map
+	CROSS=$(CROSS) ./test/make-boot-coverage-report.sh

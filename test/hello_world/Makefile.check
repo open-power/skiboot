@@ -2,6 +2,8 @@ HELLO_WORLD_TEST := test/hello_world/hello_kernel/hello_kernel
 
 check: $(HELLO_WORLD_TEST:%=%-check)
 
+boot-tests: $(HELLO_WORLD_TEST:%=%-check)
+
 $(HELLO_WORLD_TEST:%=%-check) : %-check: % skiboot.lid
 	./test/hello_world/run_hello_world.sh
 
