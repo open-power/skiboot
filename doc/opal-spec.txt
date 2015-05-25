@@ -135,6 +135,14 @@ OPAL_CHECK_TOKEN to test for optional functionality.
 All parameters to OPAL calls are big endian. Little endian hosts MUST
 appropriately convert parameters before passing them to OPAL.
 
+Machine state across OPAL calls:
+- r1 is preserved
+- r12 is scratch
+- r13 - 31 preserved
+- 64bit HV real mode
+- big endian
+- external interrupts disabled
+
 Detecting OPAL Support
 ----------------------
 
