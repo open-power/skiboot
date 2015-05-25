@@ -127,7 +127,7 @@ static void write_gcda(char *addr, struct gcov_info* gi)
 	write_u32(fd, be32toh(gi->version));
 	write_u32(fd, be32toh(gi->stamp));
 
-	printf("nfunctions: %d \n", be32toh(gi->n_functions));
+	//printf("nfunctions: %d \n", be32toh(gi->n_functions));
 
 	for(fn = 0; fn < be32toh(gi->n_functions); fn++) {
 		functions = (struct gcov_fn_info**)
@@ -151,13 +151,14 @@ static void write_gcda(char *addr, struct gcov_info* gi)
 
 			write_u32(fd, (GCOV_TAG_FOR_COUNTER(ctr)));
 			write_u32(fd, be32toh(ctr_info->num)*2);
-			printf(" ctr %d gcov_ctr_info->num %u\n",
-			       ctr, be32toh(ctr_info->num));
+			/* printf(" ctr %d gcov_ctr_info->num %u\n",
+			 *    ctr, be32toh(ctr_info->num));
+			 */
 
 			for(cv = 0; cv < be32toh(ctr_info->num); cv++) {
 				gcov_type *ctrv = (gcov_type *)
 					SKIBOOT_ADDR(addr, ctr_info->values);
-				printf("%lx\n", be64toh(ctrv[cv]));
+				//printf("%lx\n", be64toh(ctrv[cv]));
 				write_u64(fd, be64toh(ctrv[cv]));
 			}
 			ctr_info++;
@@ -203,6 +204,8 @@ int main(int argc, char *argv[])
 	       (void*)SKIBOOT_OFFSET, (void*)SKIBOOT_OFFSET+sb.st_size);
 
 	gcov_list_addr = strtoll(argv[2], NULL, 0);
+	gcov_list_addr = (u64)(addr + (gcov_list_addr - SKIBOOT_OFFSET));
+	gcov_list_addr = be64toh(*(u64*)gcov_list_addr);
 
 	printf("Skiboot gcov_info_list at %p\n", (void*)gcov_list_addr);
 

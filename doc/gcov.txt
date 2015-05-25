@@ -40,13 +40,13 @@ FSP:
 linux (e.g. petitboot environment):
   dd if=/proc/kcore skip=1572864 count=6656  of=skiboot.dump
 
-You basically need to dump out the 2MB of skiboot.
+You basically need to dump out the first 3MB of skiboot memory.
 
-You will need to find the following message in the skiboot log:
-[2822590,5] GCOV: gcov_info_list at 0x3010a350
+Then you need to find out where the gcov data structures are:
+perl -e "printf '0x%x', 0x30000000 + 0x`grep gcov_info_list skiboot.map|cut -f 1 -d ' '`"
 
 That address needs to be supplied to the extract-gcov utility:
-./extract-gcov skiboot.dump 0x3010a350
+./extract-gcov skiboot.dump 0x3023ec40
 
 Once you've run extract-gcov, it will have extracted the gcda files
 from the skiboot memory image.
