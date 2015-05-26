@@ -24,12 +24,17 @@ if [ ! `command -v expect` ]; then
     exit 0;
 fi
 
-
-export SKIBOOT_ZIMAGE=`pwd`/zImage.epapr
+if [ -z "$SKIBOOT_ZIMAGE" ]; then
+    export SKIBOOT_ZIMAGE=`pwd`/zImage.epapr
+fi
 
 if [ ! -f "$SKIBOOT_ZIMAGE" ]; then
-    echo 'No zImage.epapr, skipping boot test';
+    echo "No $SKIBOOT_ZIMAGE, skipping boot test";
     exit 0;
+fi
+
+if [ -z "$SKIBOOT_MEM_DUMP" ]; then
+    export SKIBOOT_MEM_DUMP=skiboot-boot_test.dump
 fi
 
 # Currently getting some core dumps from mambo, so disable them!
