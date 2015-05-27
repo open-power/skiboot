@@ -16,11 +16,12 @@ function process_dump {
 
 find .|grep '\.gcda$'|xargs rm -f
 
-BOOT_TESTS="hello_world boot_test op-build-v1.0 op-build-v1.1 op-build-v1.2 op-build-v1.2.1"
-
 for i in $BOOT_TESTS; do
     if [ -f ./external/mambo/skiboot-$i.dump ]; then
 	process_dump ./external/mambo/skiboot-$i.dump skiboot-$i.info
+    fi
+    if [ -f ./skiboot-$i.dump ]; then
+	process_dump ./skiboot-$i.dump skiboot-$i.info
     fi
 done
 

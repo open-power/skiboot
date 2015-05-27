@@ -17,5 +17,11 @@ boot-check-op-build-v1.2.1:
 
 boot-tests: boot-check boot-check-op-build-v1.0 boot-check-op-build-v1.1 boot-check-op-build-v1.2 boot-check-op-build-v1.2.1
 
-boot-coverage-report: boot-tests extract-gcov skiboot.map
-	CROSS=$(CROSS) ./test/make-boot-coverage-report.sh
+boot-coverage-report: boot-tests extract-gcov skiboot.map all-boot-hardware
+	CROSS=$(CROSS) BOOT_TESTS="hello_world boot_test op-build-v1.0 op-build-v1.1 op-build-v1.2 op-build-v1.2.1 ${FSP_GCOV_MACHINES}" ./test/make-boot-coverage-report.sh
+
+boot-hardware-%:
+	./external/boot-tests/boot_test.sh -v -p -t $(@:boot-hardware-%=%) -1 skiboot.lid
+	./external/boot-tests/extract_gcov.sh $(@:boot-hardware-%=%)
+
+all-boot-hardware: $(FSP_GCOV_MACHINES:%=boot-hardware-%)
