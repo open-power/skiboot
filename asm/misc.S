@@ -74,3 +74,11 @@ mambo_sim_exit:
 	li	%r3, 31	/* aka. SimExitCode */
 	.long	0x000eaeb0
 	b	.
+
+.global mambo_get_time
+mambo_get_time:
+#define SIM_GET_TIME_CODE 70
+	li	%r3,SIM_GET_TIME_CODE
+	.long	0x000eaeb0
+	blr
+
