@@ -85,10 +85,10 @@ void __nomcount cpu_relax(void)
 	/* Relax a bit to give sibling threads some breathing space */
 	smt_low();
 	smt_very_low();
-	asm volatile("nop; nop; nop; nop\n");
-	asm volatile("nop; nop; nop; nop\n");
-	asm volatile("nop; nop; nop; nop\n");
-	asm volatile("nop; nop; nop; nop\n");
+	asm volatile("nop; nop; nop; nop;\n"
+		     "nop; nop; nop; nop;\n"
+		     "nop; nop; nop; nop;\n"
+		     "nop; nop; nop; nop;\n");
 	smt_medium();
 }
 
