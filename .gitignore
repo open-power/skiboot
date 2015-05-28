@@ -44,6 +44,7 @@ core/test/run-pool
 core/test/run-trace
 core/test/*-gcov
 external/dump_trace
+external/mambo/skiboot-hello_world.dump
 hdata/test/hdata_to_dt
 hw/ipmi/test/run-fru
 hw/ipmi/test/*-gcov
