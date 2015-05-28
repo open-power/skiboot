@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <asm-utils.h>
-
 /*
 	hello_kernel.S!
 	---------------
@@ -25,26 +23,26 @@
 
 */
 
-	
 	. = 0x0
 	.globl _start
 _start:
-	mr 2, 8
-	li 0, 1 /* OPAL_CONSOLE_WRITE */
-	li 3, 0 /* terminal 0 */
-	LOAD_IMM64(29, 0x20010000)
-	lis 4, len@ha
-	addi 4,4, len@l
-	add 4,4,29
-	lis 5, str@ha
-	addi 5,5, str@l
-	add 5,5,29
-	mtctr 9
+	mr	%r2, %r8 /* r8 is the OPAL base passed in by skiboot */
+
+	bl	here
+here:	mflr	%r8 /* work out where we are running */
+
+	li	%r0, 1 /* OPAL_CONSOLE_WRITE */
+	li	%r3, 0 /* terminal 0 */
+	addi	%r4, %r8, len - here /* ptr to length of string */
+	addi	%r5, %r8, str - here /* ptr to string start */
+
+	mtctr	%r9 /* R9 is the OPAL entry point passed in by skiboot */
 	bctrl
 	attn
 
-len:	
+len:
 	.long 0x00
-	.long 0x0D
-str:	
+	.long (strend - str)
+str:
 	.string "Hello World!\n"
+strend:
