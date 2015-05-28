@@ -13,13 +13,13 @@ fi
 # Utility functions
 function error {
 	unset SSHPASS;
-	echo "$1" >&2;
+	echo "$target: $1" >&2;
 	exit 1;
 }
 
 function msg {
 	if [ $V -ne 0 ] ; then
-		echo $@;
+		echo "$target: $@";
 	fi
 }
 
@@ -90,15 +90,15 @@ function boot_test {
 function sanity_test {
     $SSHCMD true;
     if [ $? -ne 0 ]; then
-	echo "Failed to SSH to $target..."
-        echo "Command was: $SSHCMD true"
+	echo "$target: Failed to SSH to $target..."
+        echo "$target: Command was: $SSHCMD true"
 	error "Try connecting manually to diagnose the issue."
     fi
 
     $IPMI_COMMAND chassis power status > /dev/null;
     if [ $? -ne 0 ]; then
-	echo "Failed to connect to $target with IPMI..."
-        echo "Command was: $IPMI_COMMAND chassis power status"
+	echo "$target: Failed to connect to $target with IPMI..."
+        echo "$target: Command was: $IPMI_COMMAND chassis power status"
 	error "Try connecting manually to diagnose the issue."
     fi
 
@@ -252,8 +252,8 @@ if ! is_off; then
 fi
 
 # run the boot test
-echo "Boot testing $target";
+echo "$target: Boot testing $target";
 begin_t=$(date +%s);
 boot_test
 
-echo "Done in $(expr $(date +%s) - $begin_t ) seconds";
+echo "$target: Done in $(expr $(date +%s) - $begin_t ) seconds";

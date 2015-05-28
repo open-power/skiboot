@@ -125,22 +125,22 @@ function boot_firmware {
 		state=$($SSHCMD "$GET_PROFILE; smgr mfgState");
 		case "$state" in
 			"ipling")
-				echo "$target still hasn't come up but firmware hasn't specifically crashed";
+				echo "$target: still hasn't come up but firmware hasn't specifically crashed";
 				;;
 			"dumping")
-				echo "$target has crashed";
+				echo "$target: has crashed";
 				;;
 			"runtime")
-				echo "Oops, looks like system has managed to come up...";
+				echo "$target: Oops, looks like system has managed to come up...";
 				;;
 			"standby")
-				echo "System is powered off? How can this be?";
+				echo "$target: System is powered off? How can this be?";
 				;;
 			*)
-				echo "$taget is an unknown state '$state'";
+				echo "$target: is an unknown state '$state'";
 				;;
 		esac
-		echo "istep log";
+		echo "$target: istep log";
 		cat $ISTEP_LOG;
 		rm -rf $ISTEP_LOG
 		error "Boot test on $target failed";
@@ -151,13 +151,13 @@ function boot_firmware {
 function machine_sanity_test {
     $SSHCMD "$GET_PROFILE; test -d /nfs/bin"
     if [ $? -ne 0 ]; then
-	echo "Failed to read /nfs/bin"
+	echo "$target: Failed to read /nfs/bin"
 	error "Is /nfs mounted on the FSP?"
     fi
 
     $SSHCMD "$GET_PROFILE; which md5sum > /dev/null && which cupdmfg > /dev/null"
         if [ $? -ne 0 ]; then
-	echo "Missing md5sum or cupdmfg on the FSP?"
+	echo "$target: Missing md5sum or cupdmfg on the FSP?"
 	error "Is /nfs mounted on the FSP?"
     fi
 }
