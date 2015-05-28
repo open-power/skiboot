@@ -21,4 +21,4 @@ clean: hello_world-test-clean
 
 hello_world-test-clean:
 	$(RM) -f test/hello_world/hello_kernel/hello_kernel
-	$(RM) -f test/hello_world/hello_kernel/hello_kernel.o
+	$(RM) -f test/hello_world/hello_kernel/hello_kernel.[od]
