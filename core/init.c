@@ -791,8 +791,15 @@ void __noreturn __secondary_cpu_entry(void)
 
 		/* Relax a bit to give the simulator some breathing space */
 		i = 1000;
-		while (--i)
-			cpu_relax();
+		smt_very_low();
+		asm volatile("mtctr %0;\n"
+			     "1: nop; nop; nop; nop;\n"
+			     "   nop; nop; nop; nop;\n"
+			     "   nop; nop; nop; nop;\n"
+			     "   nop; nop; nop; nop;\n"
+			     "   bdnz 1b"
+			     : : "r" (i) : "memory", "ctr");
+		smt_medium();
 	}
 }
 
