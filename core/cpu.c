@@ -80,18 +80,6 @@ unsigned long __attrconst cpu_stack_top(unsigned int pir)
 		NORMAL_STACK_SIZE - STACK_TOP_GAP;
 }
 
-void __nomcount cpu_relax(void)
-{
-	/* Relax a bit to give sibling threads some breathing space */
-	smt_low();
-	smt_very_low();
-	asm volatile("nop; nop; nop; nop;\n"
-		     "nop; nop; nop; nop;\n"
-		     "nop; nop; nop; nop;\n"
-		     "nop; nop; nop; nop;\n");
-	smt_medium();
-}
-
 struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 				const char *name,
 				void (*func)(void *data), void *data,
