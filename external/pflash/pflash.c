@@ -302,7 +302,7 @@ static void program_file(const char *file, uint32_t start, uint32_t size)
 		exit(1);
 	}
 	printf("About to program \"%s\" at 0x%08x..0x%08x !\n",
-	       file, start, size);
+	       file, start, start + size);
 	check_confirm();
 
 	if (dummy_run) {
@@ -359,7 +359,7 @@ static void do_read_file(const char *file, uint32_t start, uint32_t size)
 		exit(1);
 	}
 	printf("Reading to \"%s\" from 0x%08x..0x%08x !\n",
-	       file, start, size);
+	       file, start, start + size);
 
 	progress_init(size >> 8);
 	while(size) {
