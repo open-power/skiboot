@@ -21,7 +21,24 @@
 #include <string.h>
 #include <stdio.h>
 
+int test_memset(char* buf, int c, size_t s);
+
 int main(void)
 {
+	char* buf;
+
+	buf = malloc(100);
+	assert(test_memset(buf, 0x42, 100) == 0);
+	free(buf);
+
+	buf = malloc(128);
+	assert(test_memset(buf, 0, 128) == 0);
+	assert(test_memset(buf+1, 0, 127) == 0);
+	free(buf);
+
+	buf = malloc(1024);
+	assert(test_memset(buf, 0, 1024) == 0);
+	free(buf);
+
 	return 0;
 }

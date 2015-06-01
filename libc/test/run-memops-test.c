@@ -41,3 +41,19 @@
 #include "../string/strncpy.c"
 #include "../string/strstr.c"
 #include "../string/strtok.c"
+#include <stdlib.h>
+
+int test_memset(char* buf, int c, size_t s);
+
+int test_memset(char* buf, int c, size_t s)
+{
+	int i;
+	int r= 0;
+
+	memset(buf, c, s);
+	for(i=0; i<s; i++)
+		if (buf[i] != c)
+			r = -1;
+
+	return r;
+}
