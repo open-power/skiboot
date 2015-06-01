@@ -35,19 +35,14 @@
 static struct {
 	struct trace_info trace_info;
 	char buf[BOOT_TBUF_SZ + MAX_SIZE];
-} boot_tracebuf __section(".data.boot_trace") = {
-	.trace_info = {
-		.lock = LOCK_UNLOCKED,
-		.tb = {
-		        .mask = BOOT_TBUF_SZ - 1,
-			.max_size = MAX_SIZE
-		},
-	},
-	.buf = { 0 }
-};
+} boot_tracebuf;
 
 void init_boot_tracebuf(struct cpu_thread *boot_cpu)
 {
+	init_lock(&boot_tracebuf.trace_info.lock);
+	boot_tracebuf.trace_info.tb.mask = BOOT_TBUF_SZ - 1;
+	boot_tracebuf.trace_info.tb.max_size = MAX_SIZE;
+
 	boot_cpu->trace = &boot_tracebuf.trace_info;
 }
 
