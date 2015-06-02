@@ -159,7 +159,7 @@ static bool add_address_range(struct dt_node *root,
 	return true;
 }
 
-static void add_chip_id_to_ram_area(const struct HDIF_common_hdr *msarea,
+static u32 add_chip_id_to_ram_area(const struct HDIF_common_hdr *msarea,
 				    struct dt_node *ram_area)
 {
 	const struct HDIF_array_hdr *arr;
@@ -172,6 +172,53 @@ static void add_chip_id_to_ram_area(const struct HDIF_common_hdr *msarea,
 	arange = (void *)arr + be32_to_cpu(arr->offset);
 	chip_id = pcid_to_chip_id(be32_to_cpu(arange->chip));
 	dt_add_property_cells(ram_area, "ibm,chip-id", chip_id);
+
+	return chip_id;
+}
+
+static void add_bus_freq_to_ram_area(struct dt_node *ram_node, u32 chip_id)
+{
+	const struct sppcia_cpu_timebase *timebase;
+	bool got_pcia = false;
+	const void *pcia;
+	u64 freq;
+	u32 size;
+
+	pcia = get_hdif(&spira.ntuples.pcia, SPPCIA_HDIF_SIG);
+	if (!pcia) {
+		prlog(PR_WARNING, "HDAT: Failed to add memory bus frequency "
+		      "as PCIA does not exist\n");
+		return;
+	}
+
+	for_each_pcia(pcia) {
+		const struct sppcia_core_unique *id;
+
+		id = HDIF_get_idata(pcia, SPPCIA_IDATA_CORE_UNIQUE, &size);
+		if (!id || size < sizeof(*id)) {
+			prlog(PR_WARNING, "HDAT: Bad id size %u @ %p\n", size, id);
+			return;
+		}
+
+		if (chip_id == pcid_to_chip_id(be32_to_cpu(id->proc_chip_id))) {
+			got_pcia = true;
+			break;
+		}
+	}
+
+	if (got_pcia == false)
+		return;
+
+	timebase = HDIF_get_idata(pcia, SPPCIA_IDATA_TIMEBASE, &size);
+	if (!timebase || size < sizeof(*timebase)) {
+		prlog(PR_ERR, "HDAT: Bad timebase size %u @ %p\n", size,
+		      timebase);
+		return;
+	}
+
+	freq = ((u64)be32_to_cpu(timebase->memory_bus_frequency)) *1000000ul;
+	dt_add_property_cells(ram_node, "ibm,memory-bus-frequency", hi32(freq),
+			      lo32(freq));
 }
 
 static void add_size_to_ram_area(struct dt_node *ram_node,
@@ -207,6 +254,7 @@ static void vpd_add_ram_area(const struct HDIF_common_hdr *msarea)
 	const struct HDIF_child_ptr *ramptr;
 	const struct HDIF_ram_area_id *ram_id;
 	struct dt_node *ram_node;
+	u32 chip_id;
 
 	ramptr = HDIF_child_arr(msarea, 0);
 	if (!CHECK_SPPTR(ramptr)) {
@@ -227,7 +275,9 @@ static void vpd_add_ram_area(const struct HDIF_common_hdr *msarea)
 		    (be16_to_cpu(ram_id->flags) & RAM_AREA_FUNCTIONAL)) {
 			ram_node = dt_add_vpd_node(ramarea, 0, 1);
 			if (ram_node) {
-				add_chip_id_to_ram_area(msarea, ram_node);
+				chip_id = add_chip_id_to_ram_area(msarea,
+								  ram_node);
+				add_bus_freq_to_ram_area(ram_node, chip_id);
 				add_size_to_ram_area(ram_node, ramarea, 1);
 			}
 		}

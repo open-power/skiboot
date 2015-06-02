@@ -18,6 +18,7 @@ part-number		: Part number
 serial-number		: Serial number
 ibm,chip-id		: Processor Id
 size			: DIMM size (applicable for DIMM VPD only)
+ibm,memory-bus-frequency: DIMM frequency (applicable for DIMM VPD only)
 
 The VPD tree in the device tree depicts the hierarchial structure of the
 FRUs having parent-child relationship.
