@@ -366,7 +366,7 @@ struct spi_flash_ctrl sim_ctrl = {
 
 int main(void)
 {
-	struct flash_chip *fl;
+	struct blocklevel_device *bl;
 	uint32_t total_size, erase_granule;
 	const char *name;
 	uint16_t *test;
@@ -378,12 +378,12 @@ int main(void)
 	memset(sim_image, 0xff, sim_image_sz);
 	test = malloc(0x10000 * 2);
 
-	rc = flash_init(&sim_ctrl, &fl);
+	rc = flash_init(&sim_ctrl, &bl);
 	if (rc) {
 		ERR("flash_init failed with err %d\n", rc);
 		exit(1);
 	}
-	rc = flash_get_info(fl, &name, &total_size, &erase_granule);
+	rc = flash_get_info(bl, &name, &total_size, &erase_granule);
 	if (rc) {
 		ERR("flash_get_info failed with err %d\n", rc);
 		exit(1);
@@ -395,13 +395,13 @@ int main(void)
 
 	/* Write 64k of stuff at 0 and at 128k */
 	printf("Writing test patterns...\n");
-	flash_smart_write(fl, 0, test, 0x10000);
-	flash_smart_write(fl, 0x20000, test, 0x10000);
+	flash_smart_write(bl, 0, test, 0x10000);
+	flash_smart_write(bl, 0x20000, test, 0x10000);
 
 	/* Write "Hello world" straddling the 64k boundary */
 #define HW "Hello World"
 	printf("Writing test string...\n");
-	flash_smart_write(fl, 0xfffc, HW, sizeof(HW));
+	flash_smart_write(bl, 0xfffc, HW, sizeof(HW));
 
 	/* Check result */
 	if (memcmp(sim_image + 0xfffc, HW, sizeof(HW))) {
@@ -416,7 +416,7 @@ int main(void)
 	printf("Test pattern pass\n");
 
 	printf("Test ECC interfaces\n");
-	flash_smart_write_corrected(fl, 0, test, 0x10000, 1);
+	flash_smart_write_corrected(bl, 0, test, 0x10000, 1);
 	ecc_test = (struct ecc64 *)sim_image;
 	test64 = (uint64_t *)test;
 	for (i = 0; i < 0x10000 / sizeof(*ecc_test); i++) {
@@ -433,7 +433,7 @@ int main(void)
 	printf("Test ECC interface pass\n");
 
 	printf("Test ECC erase\n");
-	if (flash_erase(fl, 0, 0x10000) != 0) {
+	if (flash_erase(bl, 0, 0x10000) != 0) {
 		ERR("flash_erase didn't return 0\n");
 		exit(1);
 	}
@@ -444,7 +444,7 @@ int main(void)
 			ERR("Data not properly cleared at %d\n", i);
 			exit(1);
 		}
-		rc = flash_write(fl, i * sizeof(*ecc_test) + 8, &zero, 1, 0);
+		rc = flash_write(bl, i * sizeof(*ecc_test) + 8, &zero, 1, 0);
 		if (rc || ecc_test[i].ecc != 0) {
 			ERR("Cleared data not correctly ECCed: 0x%02x (0x%016lx) expecting 0 at %d\n", ecc_test[i].ecc, ecc_test[i].data, i);
 			exit(1);
@@ -452,7 +452,7 @@ int main(void)
 	}
 	printf("Test ECC erase pass\n");
 
-	flash_exit(fl);
+	flash_exit(bl);
 
 	return 0;
 }

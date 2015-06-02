@@ -16,6 +16,7 @@
 
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
+#include <libflash/blocklevel.h>
 #include "progress.h"
 #include "io.h"
 #include "ast.h"
@@ -39,8 +40,8 @@ static bool using_sfc;
 #define FILE_BUF_SIZE	0x10000
 static uint8_t file_buf[FILE_BUF_SIZE] __aligned(0x1000);
 
+static struct blocklevel_device *bl;
 static struct spi_flash_ctrl	*fl_ctrl;
-static struct flash_chip	*fl_chip;
 static struct ffs_handle	*ffsh;
 static uint32_t			fl_total_size, fl_erase_granule;
 static const char		*fl_name;
@@ -79,7 +80,7 @@ static void print_ffs_info(uint32_t toc_offset)
 	int rc;
 	uint32_t i;
 
-	rc = ffs_open_flash(fl_chip, toc_offset, 0, &ffs_handle);
+	rc = ffs_init(toc_offset, fl_total_size, bl, &ffs_handle);
 	if (rc) {
 		fprintf(stderr, "Error %d opening ffs !\n", rc);
 		return;
@@ -139,7 +140,7 @@ static int open_partition(const char *name)
 
 	/* Open libffs if needed */
 	if (!ffsh) {
-		rc = ffs_open_flash(fl_chip, ffs_toc, 0, &ffsh);
+		rc = ffs_init(ffs_toc, fl_total_size, bl, &ffsh);
 		if (rc) {
 			fprintf(stderr, "Error %d opening ffs !\n", rc);
 			if (ffs_toc)
@@ -210,7 +211,7 @@ static void erase_chip(void)
 		return;
 	}
 
-	rc = flash_erase_chip(fl_chip);
+	rc = flash_erase_chip(bl);
 	if (rc) {
 		fprintf(stderr, "Error %d erasing chip\n", rc);
 		exit(1);
@@ -237,7 +238,7 @@ static void erase_range(uint32_t start, uint32_t size, bool will_program)
 	while(size) {
 		/* If aligned to 64k and at least 64k, use 64k erase */
 		if ((start & 0xffff) == 0 && size >= 0x10000) {
-			rc = flash_erase(fl_chip, start, 0x10000);
+			rc = blocklevel_erase(bl, start, 0x10000);
 			if (rc) {
 				fprintf(stderr, "Error %d erasing 0x%08x\n",
 					rc, start);
@@ -247,7 +248,7 @@ static void erase_range(uint32_t start, uint32_t size, bool will_program)
 			size -= 0x10000;
 			done += 0x10000;
 		} else {
-			rc = flash_erase(fl_chip, start, 0x1000);
+			rc = blocklevel_erase(bl, start, 0x1000);
 			if (rc) {
 				fprintf(stderr, "Error %d erasing 0x%08x\n",
 					rc, start);
@@ -304,7 +305,7 @@ static void program_file(const char *file, uint32_t start, uint32_t size)
 			len = size;
 		size -= len;
 		actual_size += len;
-		rc = flash_write(fl_chip, start, file_buf, len, true);
+		rc = blocklevel_write(bl, start, file_buf, len);
 		if (rc) {
 			if (rc == FLASH_ERR_VERIFY_FAILURE)
 				fprintf(stderr, "Verification failed for"
@@ -344,7 +345,7 @@ static void do_read_file(const char *file, uint32_t start, uint32_t size)
 	progress_init(size >> 8);
 	while(size) {
 		len = size > FILE_BUF_SIZE ? FILE_BUF_SIZE : size;
-		rc = flash_read(fl_chip, start, file_buf, len);
+		rc = blocklevel_read(bl, start, file_buf, len);
 		if (rc) {
 			fprintf(stderr, "Flash read error %d for"
 				" chunk at 0x%08x\n", rc, start);
@@ -370,7 +371,7 @@ static void enable_4B_addresses(void)
 
 	printf("Switching to 4-bytes address mode\n");
 
-	rc = flash_force_4b_mode(fl_chip, true);
+	rc = flash_force_4b_mode(bl, true);
 	if (rc) {
 		fprintf(stderr, "Error %d enabling 4b mode\n", rc);
 		exit(1);
@@ -383,7 +384,7 @@ static void disable_4B_addresses(void)
 
 	printf("Switching to 3-bytes address mode\n");
 
-	rc = flash_force_4b_mode(fl_chip, false);
+	rc = flash_force_4b_mode(bl, false);
 	if (rc) {
 		fprintf(stderr, "Error %d disabling 4b mode\n", rc);
 		exit(1);
@@ -394,7 +395,7 @@ static void flash_access_cleanup_bmc(void)
 {
 	if (ffsh)
 		ffs_close(ffsh);
-	flash_exit(fl_chip);
+	flash_exit(bl);
 	ast_sf_close(fl_ctrl);
 	close_devs();
 }
@@ -414,7 +415,7 @@ static void flash_access_setup_bmc(bool use_lpc, bool need_write)
 	}
 
 	/* Open flash chip */
-	rc = flash_init(fl_ctrl, &fl_chip);
+	rc = flash_init(fl_ctrl, &bl);
 	if (rc) {
 		fprintf(stderr, "Failed to open flash chip\n");
 		exit(1);
@@ -432,7 +433,7 @@ static void flash_access_cleanup_pnor(void)
 
 	if (ffsh)
 		ffs_close(ffsh);
-	flash_exit(fl_chip);
+	flash_exit(bl);
 #ifdef __powerpc__
 	if (using_sfc)
 		sfc_close(fl_ctrl);
@@ -473,7 +474,7 @@ static void flash_access_setup_pnor(bool use_lpc, bool use_sfc, bool need_write)
 #endif
 
 	/* Open flash chip */
-	rc = flash_init(fl_ctrl, &fl_chip);
+	rc = flash_init(fl_ctrl, &bl);
 	if (rc) {
 		fprintf(stderr, "Failed to open flash chip\n");
 		exit(1);
@@ -776,7 +777,7 @@ int main(int argc, char *argv[])
 		flash_access_setup_pnor(use_lpc, has_sfc, erase || program);
 	}
 
-	rc = flash_get_info(fl_chip, &fl_name,
+	rc = blocklevel_get_info(bl, &fl_name,
 			    &fl_total_size, &fl_erase_granule);
 	if (rc) {
 		fprintf(stderr, "Error %d getting flash info\n", rc);

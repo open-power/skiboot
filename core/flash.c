@@ -22,12 +22,13 @@
 #include <device.h>
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
+#include <libflash/blocklevel.h>
 #include <ecc.h>
 
 struct flash {
 	bool			registered;
 	bool			busy;
-	struct flash_chip	*chip;
+	struct blocklevel_device *bl;
 	uint32_t		size;
 	uint32_t		block_size;
 };
@@ -108,7 +109,7 @@ static int flash_nvram_start_read(void *dst, uint32_t src, uint32_t len)
 		goto out;
 	}
 
-	rc = flash_read(nvram_flash->chip, nvram_offset + src, dst, len);
+	rc = blocklevel_read(nvram_flash->bl, nvram_offset + src, dst, len);
 
 out:
 	unlock(&flash_lock);
@@ -137,7 +138,7 @@ static int flash_nvram_write(uint32_t dst, void *src, uint32_t len)
 		rc = OPAL_PARAMETER;
 		goto out;
 	}
-	rc = flash_smart_write(nvram_flash->chip, nvram_offset + dst, src, len);
+	rc = blocklevel_write(nvram_flash->bl, nvram_offset + dst, src, len);
 
 out:
 	unlock(&flash_lock);
@@ -222,7 +223,7 @@ static void setup_system_flash(struct flash *flash, struct dt_node *node,
 	flash_nvram_probe(flash, ffs);
 }
 
-int flash_register(struct flash_chip *chip, bool is_system_flash)
+int flash_register(struct blocklevel_device *bl, bool is_system_flash)
 {
 	uint32_t size, block_size;
 	struct ffs_handle *ffs;
@@ -232,7 +233,7 @@ int flash_register(struct flash_chip *chip, bool is_system_flash)
 	unsigned int i;
 	int rc;
 
-	rc = flash_get_info(chip, &name, &size, &block_size);
+	rc = blocklevel_get_info(bl, &name, &size, &block_size);
 	if (rc)
 		return rc;
 
@@ -248,7 +249,7 @@ int flash_register(struct flash_chip *chip, bool is_system_flash)
 		flash = &flashes[i];
 		flash->registered = true;
 		flash->busy = false;
-		flash->chip = chip;
+		flash->bl = bl;
 		flash->size = size;
 		flash->block_size = block_size;
 		break;
@@ -260,7 +261,7 @@ int flash_register(struct flash_chip *chip, bool is_system_flash)
 		return OPAL_RESOURCE;
 	}
 
-	rc = ffs_open_flash(chip, 0, flash->size, &ffs);
+	rc = ffs_init(0, flash->size, bl, &ffs);
 	if (rc) {
 		prlog(PR_WARNING, "FLASH: No ffs info; "
 				"using raw device only\n");
@@ -318,13 +319,17 @@ static int64_t opal_flash_op(enum flash_op op, uint64_t id, uint64_t offset,
 
 	switch (op) {
 	case FLASH_OP_READ:
-		rc = flash_read(flash->chip, offset, (void *)buf, size);
+		rc = blocklevel_read(flash->bl, offset, (void *)buf, size);
 		break;
 	case FLASH_OP_WRITE:
-		rc = flash_write(flash->chip, offset, (void *)buf, size, false);
+		/*
+		 * Note: blocklevel_write() uses flash_smart_write(), this call used to
+		 * be flash_write()
+		 */
+		rc = blocklevel_write(flash->bl, offset, (void *)buf, size);
 		break;
 	case FLASH_OP_ERASE:
-		rc = flash_erase(flash->chip, offset, size);
+		rc = blocklevel_erase(flash->bl, offset, size);
 		break;
 	default:
 		assert(0);
@@ -397,7 +402,7 @@ struct flash_hostboot_header {
 };
 
 /* start and total size include ECC */
-static int flash_find_subpartition(struct flash_chip *chip, uint32_t subid,
+static int flash_find_subpartition(struct blocklevel_device *bl, uint32_t subid,
 				   uint32_t *start, uint32_t *total_size,
 				   bool *ecc)
 {
@@ -416,7 +421,7 @@ static int flash_find_subpartition(struct flash_chip *chip, uint32_t subid,
 		partsize = BUFFER_SIZE_MINUS_ECC(*total_size);
 
 	/* Get the TOC */
-	rc = flash_read_corrected(chip, *start, header,
+	rc = flash_read_corrected(bl, *start, header,
 			FLASH_SUBPART_HEADER_SIZE, ecc);
 	if (rc) {
 		prerror("FLASH: flash subpartition TOC read failed %i\n", rc);
@@ -536,7 +541,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_unlock;
 	}
 
-	rc = ffs_open_flash(flash->chip, 0, flash->size, &ffs);
+	rc = ffs_init(0, flash->size, flash->bl, &ffs);
 	if (rc) {
 		prerror("FLASH: Can't open ffs handle\n");
 		goto out_unlock;
@@ -563,7 +568,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 
 	/* Find the sub partition if required */
 	if (subid != RESOURCE_SUBID_NONE) {
-		rc = flash_find_subpartition(flash->chip, subid, &part_start,
+		rc = flash_find_subpartition(flash->bl, subid, &part_start,
 					     &part_size, &ecc);
 		if (rc)
 			goto out_free_ffs;
@@ -586,7 +591,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_free_ffs;
 	}
 
-	rc = flash_read_corrected(flash->chip, part_start, buf, size, ecc);
+	rc = flash_read_corrected(flash->bl, part_start, buf, size, ecc);
 	if (rc) {
 		prerror("FLASH: failed to read %s partition\n", name);
 		goto out_free_ffs;

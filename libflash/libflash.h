@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <libflash/blocklevel.h>
 
 #ifdef __SKIBOOT__
 #include <skiboot.h>
@@ -59,18 +60,13 @@ extern bool libflash_debug;
 struct flash_chip;
 struct spi_flash_ctrl;
 
-int flash_init(struct spi_flash_ctrl *ctrl, struct flash_chip **flash);
-void flash_exit(struct flash_chip *chip);
-
-int flash_get_info(struct flash_chip *chip, const char **name,
-		   uint32_t *total_size, uint32_t *erase_granule);
+int flash_init(struct spi_flash_ctrl *ctrl, struct blocklevel_device **bl);
+void flash_exit(struct blocklevel_device *bl);
 
 /* libflash sets the 4b mode automatically based on the flash
  * size and controller capabilities but it can be overriden
  */
-int flash_force_4b_mode(struct flash_chip *chip, bool enable_4b);
-
-int flash_read(struct flash_chip *c, uint32_t pos, void *buf, uint32_t len);
+int flash_force_4b_mode(struct blocklevel_device *bl, bool enable_4b);
 
 /*
  * This provides a wapper around flash_read() on ECCed data. All params are
@@ -80,11 +76,8 @@ int flash_read(struct flash_chip *c, uint32_t pos, void *buf, uint32_t len);
  * len is length of data without ecc attached therefore this will read beyond
  * pos + len.
  */
-int flash_read_corrected(struct flash_chip *c, uint32_t pos, void *buf,
+int flash_read_corrected(struct blocklevel_device *bl, uint32_t pos, void *buf,
 		uint32_t len, bool ecc);
-int flash_erase(struct flash_chip *c, uint32_t dst, uint32_t size);
-int flash_write(struct flash_chip *c, uint32_t dst, const void *src,
-		uint32_t size, bool verify);
 
 /*
  * This provides a wrapper around flash_write() on ECCed data. All params are
@@ -94,10 +87,8 @@ int flash_write(struct flash_chip *c, uint32_t dst, const void *src,
  * size is length of data without ECC attached therefore this will write beyond
  * dst + size.
  */
-int flash_write_corrected(struct flash_chip *c, uint32_t dst, const void *src,
+int flash_write_corrected(struct blocklevel_device *bl, uint32_t dst, const void *src,
 		uint32_t size, bool verify, bool ecc);
-int flash_smart_write(struct flash_chip *c, uint32_t dst, const void *src,
-		      uint32_t size);
 
 /*
  * This provides a wrapper around flash_smart_write() on ECCed data. All
@@ -107,12 +98,12 @@ int flash_smart_write(struct flash_chip *c, uint32_t dst, const void *src,
  * size is length of data without ECC attached therefore this will write beyond
  * dst + size.
  */
-int flash_smart_write_corrected(struct flash_chip *c, uint32_t dst, const void *src,
+int flash_smart_write_corrected(struct blocklevel_device *bl, uint32_t dst, const void *src,
 		      uint32_t size, bool ecc);
 
 /* chip erase may not be supported by all chips/controllers, get ready
  * for FLASH_ERR_CHIP_ER_NOT_SUPPORTED
  */
-int flash_erase_chip(struct flash_chip *c);
+int flash_erase_chip(struct blocklevel_device *bl);
 
 #endif /* __LIBFLASH_H */

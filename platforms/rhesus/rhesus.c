@@ -22,6 +22,7 @@
 #include <opal.h>
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
+#include <libflash/blocklevel.h>
 #include <sfc-ctrl.h>
 #include <ec/config.h>
 #include <ec/gpio.h>
@@ -118,7 +119,7 @@ static int64_t rhesus_power_down(uint64_t request __unused)
 static int rhesus_pnor_init(void)
 {
 	struct spi_flash_ctrl *pnor_ctrl;
-	struct flash_chip *pnor_chip = NULL;
+	struct blocklevel_device *bl;
 	int rc;
 
 	/* Open controller, flash and ffs */
@@ -127,19 +128,19 @@ static int rhesus_pnor_init(void)
 		prerror("PLAT: Failed to open PNOR flash controller\n");
 		goto fail;
 	}
-	rc = flash_init(pnor_ctrl, &pnor_chip);
+	rc = flash_init(pnor_ctrl, &bl);
 	if (rc) {
 		prerror("PLAT: Failed to open init PNOR driver\n");
 		goto fail;
 	}
 
-	rc = flash_register(pnor_chip, true);
+	rc = flash_register(bl, true);
 	if (!rc)
 		return 0;
 
  fail:
-	if (pnor_chip)
-		flash_exit(pnor_chip);
+	if (bl)
+		flash_exit(bl);
 	if (pnor_ctrl)
 		sfc_close(pnor_ctrl);
 

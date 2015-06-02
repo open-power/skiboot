@@ -41,6 +41,7 @@ struct ffs_handle {
 	uint32_t		max_size;
 	void			*cache;
 	uint32_t		cached_size;
+	struct blocklevel_device *bl;
 };
 
 static uint32_t ffs_checksum(void* data, size_t size)
@@ -71,31 +72,31 @@ static int ffs_check_convert_header(struct ffs_hdr *dst, struct ffs_hdr *src)
 	return 0;
 }
 
-int ffs_open_flash(struct flash_chip *chip, uint32_t toc_offset,
-		   uint32_t max_size, struct ffs_handle **ffs)
+int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
+		struct ffs_handle **ffs)
 {
 	struct ffs_hdr hdr;
 	struct ffs_handle *f;
-	uint32_t fl_size, erase_size;
+	uint32_t total_size;
 	int rc;
 
-	if (!ffs)
+	if (!ffs || !bl)
 		return FLASH_ERR_PARM_ERROR;
 	*ffs = NULL;
 
-	/* Grab some info about our flash chip */
-	rc = flash_get_info(chip, NULL, &fl_size, &erase_size);
+	rc = blocklevel_get_info(bl, NULL, &total_size, NULL);
 	if (rc) {
 		FL_ERR("FFS: Error %d retrieving flash info\n", rc);
 		return rc;
 	}
-	if ((toc_offset + max_size) < toc_offset)
+	if ((offset + max_size) < offset)
 		return FLASH_ERR_PARM_ERROR;
-	if ((toc_offset + max_size) > fl_size)
+
+	if ((max_size > total_size))
 		return FLASH_ERR_PARM_ERROR;
 
 	/* Read flash header */
-	rc = flash_read(chip, toc_offset, &hdr, sizeof(hdr));
+	rc = blocklevel_read(bl, offset, &hdr, sizeof(hdr));
 	if (rc) {
 		FL_ERR("FFS: Error %d reading flash header\n", rc);
 		return rc;
@@ -106,17 +107,16 @@ int ffs_open_flash(struct flash_chip *chip, uint32_t toc_offset,
 	if (!f)
 		return FLASH_ERR_MALLOC_FAILED;
 	memset(f, 0, sizeof(*f));
-	f->type = ffs_type_flash;
-	f->toc_offset = toc_offset;
-	f->max_size = max_size ? max_size : (fl_size - toc_offset);
-	f->chip = chip;
+
+	f->toc_offset = offset;
+	f->max_size = max_size;
+	f->bl = bl;
 
 	/* Convert and check flash header */
 	rc = ffs_check_convert_header(&f->hdr, &hdr);
 	if (rc) {
 		FL_ERR("FFS: Error %d checking flash header\n", rc);
-		free(f);
-		return rc;
+		goto out;
 	}
 
 	/*
@@ -126,26 +126,26 @@ int ffs_open_flash(struct flash_chip *chip, uint32_t toc_offset,
 	f->cached_size = f->hdr.block_size * f->hdr.size;
 	FL_DBG("FFS: Partition map size: 0x%x\n", f->cached_size);
 
-	/* Align to erase size */
-	f->cached_size |= (erase_size - 1);
-	f->cached_size &= ~(erase_size - 1);
-	FL_DBG("FFS:         Aligned to: 0x%x\n", f->cached_size);
-
 	/* Allocate cache */
 	f->cache = malloc(f->cached_size);
 	if (!f->cache) {
-		free(f);
-		return FLASH_ERR_MALLOC_FAILED;
+		rc = FLASH_ERR_MALLOC_FAILED;
+		goto out;
 	}
 
 	/* Read the cached map */
-	rc = flash_read(chip, toc_offset, f->cache, f->cached_size);
+	rc = blocklevel_read(bl, offset, f->cache, f->cached_size);
 	if (rc) {
 		FL_ERR("FFS: Error %d reading flash partition map\n", rc);
-		free(f);
+		goto out;
 	}
+
+out:
 	if (rc == 0)
 		*ffs = f;
+	else
+		free(f);
+
 	return rc;
 }
 
@@ -361,6 +361,7 @@ int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 	ent->checksum = ffs_checksum(ent, FFS_ENTRY_SIZE_CSUM);
 	if (!ffs->chip)
 		return 0;
-	return flash_smart_write(ffs->chip, offset, ent, FFS_ENTRY_SIZE);
+
+	return blocklevel_write(ffs->bl, offset, ent, FFS_ENTRY_SIZE);
 }
 

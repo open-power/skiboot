@@ -20,6 +20,7 @@
 #include "libflash.h"
 #include "libflash-priv.h"
 #include "ecc.h"
+#include "blocklevel.h"
 
 #ifndef MIN
 #define MIN(a, b)	((a) < (b) ? (a) : (b))
@@ -45,6 +46,7 @@ struct flash_chip {
 	bool			mode_4b;	/* Flash currently in 4b mode */
 	struct flash_req	*cur_req;	/* Current request */
 	void			*smart_buf;	/* Buffer for smart writes */
+	struct blocklevel_device bl;
 };
 
 #ifndef __SKIBOOT__
@@ -112,8 +114,9 @@ int fl_wren(struct spi_flash_ctrl *ct)
 	return FLASH_ERR_WREN_TIMEOUT;
 }
 
-int flash_read(struct flash_chip *c, uint32_t pos, void *buf, uint32_t len)
+static int flash_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len)
 {
+	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	struct spi_flash_ctrl *ct = c->ctrl;
 
 	/* XXX Add sanity/bound checking */
@@ -138,7 +141,7 @@ int flash_read(struct flash_chip *c, uint32_t pos, void *buf, uint32_t len)
  * This provides a wrapper around flash_read on ECCed data
  * len is length of data without ECC attached
  */
-int flash_read_corrected(struct flash_chip *c, uint32_t pos, void *buf,
+int flash_read_corrected(struct blocklevel_device *bl, uint32_t pos, void *buf,
 		uint32_t len, bool ecc)
 {
 	struct ecc64 *bufecc;
@@ -147,7 +150,7 @@ int flash_read_corrected(struct flash_chip *c, uint32_t pos, void *buf,
 	uint8_t ret;
 
 	if (!ecc)
-		return flash_read(c, pos, buf, len);
+		return flash_read(bl, pos, buf, len);
 
 	/* Copy the buffer in chunks */
 	bufecc = malloc(ECC_BUFFER_SIZE(COPY_BUFFER_LENGTH));
@@ -159,7 +162,7 @@ int flash_read_corrected(struct flash_chip *c, uint32_t pos, void *buf,
 		copylen = MIN(len, COPY_BUFFER_LENGTH);
 
 		/* Read ECCed data from flash */
-		rc = flash_read(c, pos, bufecc, ECC_BUFFER_SIZE(copylen));
+		rc = flash_read(bl, pos, bufecc, ECC_BUFFER_SIZE(copylen));
 		if (rc)
 			goto err;
 
@@ -215,8 +218,9 @@ static void fl_get_best_erase(struct flash_chip *c, uint32_t dst, uint32_t size,
 	*cmd = CMD_BE;
 }
 
-int flash_erase(struct flash_chip *c, uint32_t dst, uint32_t size)
+static int flash_erase(struct blocklevel_device *bl, uint32_t dst, uint32_t size)
 {
+	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	struct spi_flash_ctrl *ct = c->ctrl;
 	uint32_t chunk;
 	uint8_t cmd;
@@ -262,8 +266,9 @@ int flash_erase(struct flash_chip *c, uint32_t dst, uint32_t size)
 	return 0;
 }
 
-int flash_erase_chip(struct flash_chip *c)
+int flash_erase_chip(struct blocklevel_device *bl)
 {
+	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	struct spi_flash_ctrl *ct = c->ctrl;
 	int rc;
 
@@ -311,9 +316,10 @@ static int fl_wpage(struct flash_chip *c, uint32_t dst, const void *src,
 	return fl_sync_wait_idle(ct);
 }
 
-int flash_write(struct flash_chip *c, uint32_t dst, const void *src,
+static int flash_write(struct blocklevel_device *bl, uint32_t dst, const void *src,
 		uint32_t size, bool verify)
 {
+	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	struct spi_flash_ctrl *ct = c->ctrl;
 	uint32_t todo = size;
 	uint32_t d = dst;
@@ -374,7 +380,7 @@ int flash_write(struct flash_chip *c, uint32_t dst, const void *src,
 		chunk = sizeof(vbuf);
 		if (chunk > size)
 			chunk = size;
-		rc = flash_read(c, dst, vbuf, chunk);
+		rc = flash_read(bl, dst, vbuf, chunk);
 		if (rc) return rc;
 		if (memcmp(vbuf, src, chunk)) {
 			FL_ERR("LIBFLASH: Miscompare at 0x%08x\n", dst);
@@ -387,7 +393,7 @@ int flash_write(struct flash_chip *c, uint32_t dst, const void *src,
 	return 0;
 }
 
-int flash_write_corrected(struct flash_chip *c, uint32_t pos, const void *buf,
+int flash_write_corrected(struct blocklevel_device *bl, uint32_t pos, const void *buf,
 		uint32_t len, bool verify, bool ecc)
 {
 	struct ecc64 *bufecc;
@@ -396,7 +402,7 @@ int flash_write_corrected(struct flash_chip *c, uint32_t pos, const void *buf,
 	uint8_t ret;
 
 	if (!ecc)
-		return flash_write(c, pos, buf, len, verify);
+		return flash_write(bl, pos, buf, len, verify);
 
 	/* Copy the buffer in chunks */
 	bufecc = malloc(ECC_BUFFER_SIZE(COPY_BUFFER_LENGTH));
@@ -415,7 +421,7 @@ int flash_write_corrected(struct flash_chip *c, uint32_t pos, const void *buf,
 		}
 
 		/* Write ECCed data to the flash */
-		rc = flash_write(c, pos, bufecc, copylen, verify);
+		rc = flash_write(bl, pos, bufecc, copylen, verify);
 		if (rc)
 			goto err;
 
@@ -463,12 +469,12 @@ static enum sm_comp_res flash_smart_comp(struct flash_chip *c,
 	return is_same ? sm_no_change : sm_need_write;
 }
 
-int flash_smart_write(struct flash_chip *c, uint32_t dst, const void *src,
-		      uint32_t size)
+static int flash_smart_write(struct blocklevel_device *bl, uint32_t dst, const void *src, uint32_t size)
 {
+	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	uint32_t er_size = c->min_erase_mask + 1;
 	uint32_t end = dst + size;
-	int rc;	
+	int rc;
 
 	/* Some sanity checking */
 	if (end <= dst || !size || end > c->tsize) {
@@ -489,7 +495,7 @@ int flash_smart_write(struct flash_chip *c, uint32_t dst, const void *src,
 		off = dst & c->min_erase_mask;
 		FL_DBG("LIBFLASH:   reading page 0x%08x..0x%08x...",
 		       page, page + er_size);
-		rc = flash_read(c, page, c->smart_buf, er_size);
+		rc = flash_read(bl, page, c->smart_buf, er_size);
 		if (rc) {
 			FL_DBG(" error %d!\n", rc);
 			return rc;
@@ -510,7 +516,7 @@ int flash_smart_write(struct flash_chip *c, uint32_t dst, const void *src,
 		case sm_need_write:
 			/* Just needs writing over */
 			FL_DBG(" need write !\n");
-			rc = flash_write(c, dst, src, chunk, true);
+			rc = flash_write(bl, dst, src, chunk, true);
 			if (rc) {
 				FL_DBG("LIBFLASH: Write error %d !\n", rc);
 				return rc;
@@ -518,14 +524,14 @@ int flash_smart_write(struct flash_chip *c, uint32_t dst, const void *src,
 			break;
 		case sm_need_erase:
 			FL_DBG(" need erase !\n");
-			rc = flash_erase(c, page, er_size);
+			rc = flash_erase(bl, page, er_size);
 			if (rc) {
 				FL_DBG("LIBFLASH: erase error %d !\n", rc);
 				return rc;
 			}
 			/* Then update the portion of the buffer and write the block */
 			memcpy(c->smart_buf + off, src, chunk);
-			rc = flash_write(c, page, c->smart_buf, er_size, true);
+			rc = flash_write(bl, page, c->smart_buf, er_size, true);
 			if (rc) {
 				FL_DBG("LIBFLASH: write error %d !\n", rc);
 				return rc;
@@ -539,14 +545,14 @@ int flash_smart_write(struct flash_chip *c, uint32_t dst, const void *src,
 	return 0;
 }
 
-int flash_smart_write_corrected(struct flash_chip *c, uint32_t dst, const void *src,
+int flash_smart_write_corrected(struct blocklevel_device *bl, uint32_t dst, const void *src,
 		      uint32_t size, bool ecc)
 {
 	struct ecc64 *buf;
 	int rc;
 
 	if (!ecc)
-		return flash_smart_write(c, dst, src, size);
+		return flash_smart_write(bl, dst, src, size);
 
 	buf = malloc(ECC_BUFFER_SIZE(size));
 	if (!buf)
@@ -558,7 +564,7 @@ int flash_smart_write_corrected(struct flash_chip *c, uint32_t dst, const void *
 		goto out;
 	}
 
-	rc = flash_smart_write(c, dst, buf, ECC_BUFFER_SIZE(size));
+	rc = flash_smart_write(bl, dst, buf, ECC_BUFFER_SIZE(size));
 
 out:
 	free(buf);
@@ -684,8 +690,9 @@ static int flash_set_4b(struct flash_chip *c, bool enable)
 	return ct->cmd_wr(ct, enable ? CMD_EN4B : CMD_EX4B, false, 0, NULL, 0);
 }
 
-int flash_force_4b_mode(struct flash_chip *c, bool enable_4b)
+int flash_force_4b_mode(struct blocklevel_device *bl, bool enable_4b)
 {
+	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	struct spi_flash_ctrl *ct = c->ctrl;
 	int rc;
 
@@ -776,24 +783,29 @@ static int flash_configure(struct flash_chip *c)
 	return 0;
 }
 
-int flash_get_info(struct flash_chip *chip, const char **name,
+static int flash_get_info(struct blocklevel_device *bl, const char **name,
 		   uint32_t *total_size, uint32_t *erase_granule)
 {
+	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	if (name)
-		*name = chip->info.name;
+		*name = c->info.name;
 	if (total_size)
-		*total_size = chip->tsize;
+		*total_size = c->tsize;
 	if (erase_granule)
-		*erase_granule = chip->min_erase_mask + 1;
+		*erase_granule = c->min_erase_mask + 1;
 	return 0;
 }
 
-int flash_init(struct spi_flash_ctrl *ctrl, struct flash_chip **flash)
+int flash_init(struct spi_flash_ctrl *ctrl, struct blocklevel_device **bl)
 {
 	struct flash_chip *c;
 	int rc;
 
-	*flash = NULL;
+	if (!bl)
+		return FLASH_ERR_PARM_ERROR;
+
+	*bl = NULL;
+
 	c = malloc(sizeof(struct flash_chip));
 	if (!c)
 		return FLASH_ERR_MALLOC_FAILED;
@@ -814,18 +826,25 @@ int flash_init(struct spi_flash_ctrl *ctrl, struct flash_chip **flash)
 	rc = flash_configure(c);
 	if (rc)
 		FL_ERR("LIBFLASH: Flash configuration failed\n");
- bail:
+bail:
 	if (rc) {
 		free(c);
 		return rc;
 	}
-	*flash = c;
+
+	c->bl.read = &flash_read;
+	c->bl.write = &flash_smart_write;
+	c->bl.erase = &flash_erase;
+	c->bl.get_info = &flash_get_info;
+
+	*bl = &(c->bl);
 	return 0;
 }
 
-void flash_exit(struct flash_chip *chip)
+void flash_exit(struct blocklevel_device *bl)
 {
 	/* XXX Make sure we are idle etc... */
-	free(chip);
+	if (bl)
+		free(container_of(bl, struct flash_chip, bl));
 }
 

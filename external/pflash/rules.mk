@@ -15,7 +15,7 @@ endif
 CFLAGS  = -O2 -Wall -I.
 LDFLAGS	= -lrt
 OBJS    = pflash.o progress.o ast-sf-ctrl.o version.o
-OBJS	+= libflash/libflash.o libflash/libffs.o libflash/ecc.o
+OBJS	+= libflash/libflash.o libflash/libffs.o libflash/ecc.o libflash/blocklevel.o
 OBJS	+= $(ARCH_OBJS)
 EXE     = pflash
 
