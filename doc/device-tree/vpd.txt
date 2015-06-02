@@ -2,7 +2,10 @@ VPD (Vital Product Data)
 ------------------------
 
 VPD provides the information about the FRUs (Field Replaceable Unit) present in
-the system. Each vpd node represents a FRU, having properties as below.
+the system and each vpd node in the device tree represents a FRU. These node and
+their properties are specific to the FSP-based systems, passed to the skiboot in
+the form of FSP-defined HDAT structures. skiboot parses these structures and
+add respective nodes in the device tree.
 
 /vpd			: VPD root node
 <fru-name>@<rsrc-id>	: Node name
