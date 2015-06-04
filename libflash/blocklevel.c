@@ -15,6 +15,9 @@
  */
 
 #include <unistd.h>
+#include <stdio.h>
+
+#include <libflash/libflash.h>
 #include "blocklevel.h"
 
 int blocklevel_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len)
@@ -37,6 +40,13 @@ int blocklevel_erase(struct blocklevel_device *bl, uint32_t pos, uint32_t len)
 {
 	if (!bl || !bl->erase)
 		return -1;
+
+	/* Programmer may be making a horrible mistake without knowing it */
+	if (len & bl->erase_mask) {
+		fprintf(stderr, "blocklevel_erase: len (0x%08x) is not erase block (0x%08x) aligned\n",
+				len, bl->erase_mask + 1);
+		return FLASH_ERR_ERASE_BOUNDARY;
+	}
 
 	return bl->erase(bl, pos, len);
 }

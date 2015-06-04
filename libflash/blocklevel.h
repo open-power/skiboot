@@ -29,6 +29,11 @@ struct blocklevel_device {
 	int (*erase)(struct blocklevel_device *bl, uint32_t pos, uint32_t len);
 	int (*get_info)(struct blocklevel_device *bl, const char **name, uint32_t *total_size,
 			uint32_t *erase_granule);
+
+	/*
+	 * Keep the erase mask so that blocklevel_erase() can do sanity checking
+	 */
+	uint32_t erase_mask;
 };
 
 int blocklevel_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len);

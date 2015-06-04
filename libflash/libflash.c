@@ -836,6 +836,7 @@ bail:
 	c->bl.write = &flash_smart_write;
 	c->bl.erase = &flash_erase;
 	c->bl.get_info = &flash_get_info;
+	c->bl.erase_mask = c->min_erase_mask;
 
 	*bl = &(c->bl);
 	return 0;
