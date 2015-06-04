@@ -664,13 +664,13 @@ static bool add_region(struct mem_region *region)
 	return true;
 }
 
-void mem_reserve(const char *name, uint64_t start, uint64_t len)
+void mem_reserve_hw(const char *name, uint64_t start, uint64_t len)
 {
 	struct mem_region *region;
 	bool added;
 
 	lock(&mem_region_lock);
-	region = new_region(name, start, len, NULL, REGION_RESERVED);
+	region = new_region(name, start, len, NULL, REGION_HW_RESERVED);
 	assert(region);
 	added = add_region(region);
 	assert(added);

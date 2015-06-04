@@ -208,7 +208,8 @@ int main(void)
 
 	/* create our reservations */
 	for (i = 0; i < ARRAY_SIZE(test_regions); i++)
-		mem_reserve(test_regions[i].name, test_regions[i].addr, 0x1000);
+		mem_reserve_hw(test_regions[i].name,
+				test_regions[i].addr, 0x1000);
 
 	/* release unused */
 	mem_region_release_unused();
