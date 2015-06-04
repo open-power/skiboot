@@ -54,8 +54,17 @@ int blocklevel_erase(struct blocklevel_device *bl, uint32_t pos, uint32_t len)
 int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_t *total_size,
 		uint32_t *erase_granule)
 {
+	int rc;
+
 	if (!bl || !bl->get_info)
 		return -1;
 
-	return bl->get_info(bl, name, total_size, erase_granule);
+	rc = bl->get_info(bl, name, total_size, erase_granule);
+
+	/* Check the validity of what we are being told */
+	if (erase_granule && *erase_granule != bl->erase_mask + 1)
+		fprintf(stderr, "blocklevel_get_info: WARNING: erase_granule (0x%08x) and erase_mask"
+				" (0x%08x) don't match\n", *erase_granule, bl->erase_mask + 1);
+
+	return rc;
 }
