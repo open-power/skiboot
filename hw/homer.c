@@ -72,7 +72,7 @@ static void homer_init_chip(struct proc_chip *chip)
 	if (read_pba_bar(chip, 0, &hbase, &hsize)) {
 		prlog(PR_DEBUG, "  HOMER Image at 0x%llx size %lldMB\n",
 		      hbase, hsize / 0x100000);
-		mem_reserve("ibm,homer-image", hbase, hsize);
+		mem_reserve_hw("ibm,homer-image", hbase, hsize);
 
 		chip->homer_base = hbase;
 		chip->homer_size = hsize;
@@ -92,7 +92,7 @@ static void homer_init_chip(struct proc_chip *chip)
 		 */
 		if (sbase < hbase || sbase > (hbase + hsize) ||
 			(hbase == 0 && sbase > 0))
-			mem_reserve("ibm,slw-image", sbase, ssize);
+			mem_reserve_hw("ibm,slw-image", sbase, ssize);
 
 		chip->slw_base = sbase;
 		chip->slw_bar_size = ssize;
@@ -133,7 +133,7 @@ void homer_init(void)
 	chip = next_chip(NULL);
 	if (chip->homer_base && chip->occ_common_base) {
 		/* Reserve OCC comman area from BAR */
-		mem_reserve("ibm,occ-common-area", chip->occ_common_base,
+		mem_reserve_hw("ibm,occ-common-area", chip->occ_common_base,
 						chip->occ_common_size);
 	} else {
 		/* Allocate memory for HOMER and OCC common area */
