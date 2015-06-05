@@ -26,6 +26,13 @@
 #include <timebase.h>
 #include <opal-api.h>
 
+/* -- TOD primary/secondary master/slave control register -- */
+#define TOD_PSMS_CTRL			0x00040007
+#define  TOD_PSMSC_PM_TOD_SELECT	PPC_BIT(1)  /* Primary Master TOD */
+#define  TOD_PSMSC_PM_DRAW_SELECT	PPC_BIT(2)  /* Primary Master Drawer */
+#define  TOD_PSMSC_SM_TOD_SELECT	PPC_BIT(9)  /* Secondary Master TOD */
+#define  TOD_PSMSC_SM_DRAW_SELECT	PPC_BIT(10) /* Secondary Master Draw */
+
 /* -- TOD primary/secondary master/slave status register -- */
 #define TOD_STATUS			0x00040008
 #define   TOD_ST_TOPOLOGY_SELECT	PPC_BITMASK(0, 2)
@@ -96,9 +103,30 @@ enum chiptod_topology {
 	chiptod_topo_secondary = 1,
 };
 
+enum chiptod_chip_role {
+	chiptod_chip_role_UNKNOWN = -1,
+	chiptod_chip_role_MDMT = 0,	/* Master Drawer Master TOD */
+	chiptod_chip_role_MDST,		/* Master Drawer Slave TOD */
+	chiptod_chip_role_SDMT,		/* Slave Drawer Master TOD */
+	chiptod_chip_role_SDST,		/* Slave Drawer Slave TOD */
+};
+
+struct chiptod_chip_config_info {
+	int32_t id;				/* chip id */
+	enum chiptod_chip_role role;		/* Chip role */
+};
+
 static int32_t chiptod_primary = -1;
 static int32_t chiptod_secondary = -1;
 static enum chiptod_topology current_topology = chiptod_topo_unknown;
+
+/*
+ * chiptod_topology_info holds primary/secondary chip configuration info.
+ * This info is initialized during chiptod_init(). This is an array of two:
+ *	[0] = [chiptod_topo_primary] = Primary topology config info
+ *	[1] = [chiptod_topo_secondary] = Secondary topology config info
+ */
+static struct chiptod_chip_config_info chiptod_topology_info[2];
 
 /* The base TFMR value is the same for the whole machine
  * for now as far as I can tell
@@ -112,6 +140,15 @@ static uint64_t base_tfmr;
  */
 static struct lock chiptod_lock = LOCK_UNLOCKED;
 
+static void print_topo_info(enum chiptod_topology topo)
+{
+	const char *role[] = { "Unknown", "MDMT", "MDST", "SDMT", "SDST" };
+
+	prlog(PR_DEBUG, "CHIPTOD:    chip id: %d, Role: %s\n",
+				chiptod_topology_info[topo].id,
+				role[chiptod_topology_info[topo].role + 1]);
+}
+
 static void print_topology_info(void)
 {
 	const char *topo[] = { "Unknown", "Primary", "Secondary" };
@@ -121,6 +158,10 @@ static void print_topology_info(void)
 
 	prlog(PR_DEBUG, "CHIPTOD: TOD Topology in Use: %s\n",
 						topo[current_topology+1]);
+	prlog(PR_DEBUG, "CHIPTOD:   Primary configuration:\n");
+	print_topo_info(chiptod_topo_primary);
+	prlog(PR_DEBUG, "CHIPTOD:   Secondary configuration:\n");
+	print_topo_info(chiptod_topo_secondary);
 }
 
 static enum chiptod_topology query_current_topology(void)
@@ -141,6 +182,61 @@ static enum chiptod_topology query_current_topology(void)
 		return chiptod_topo_primary;
 	else
 		return chiptod_topo_secondary;
+}
+
+static enum chiptod_chip_role
+chiptod_get_chip_role(enum chiptod_topology topology, int32_t chip_id)
+{
+	uint64_t tod_ctrl;
+	enum chiptod_chip_role role = chiptod_chip_role_UNKNOWN;
+
+	if (chip_id < 0)
+		return role;
+
+	if (xscom_read(chip_id, TOD_PSMS_CTRL, &tod_ctrl) != 0) {
+		prerror("CHIPTOD: XSCOM error reading TOD_PSMS_CTRL\n");
+		return chiptod_chip_role_UNKNOWN;
+	}
+
+	switch (topology) {
+	case chiptod_topo_primary:
+		if (tod_ctrl & TOD_PSMSC_PM_DRAW_SELECT) {
+			if (tod_ctrl & TOD_PSMSC_PM_TOD_SELECT)
+				role = chiptod_chip_role_MDMT;
+			else
+				role = chiptod_chip_role_MDST;
+		} else {
+			if (tod_ctrl & TOD_PSMSC_PM_TOD_SELECT)
+				role = chiptod_chip_role_SDMT;
+			else
+				role = chiptod_chip_role_SDST;
+		}
+		break;
+	case chiptod_topo_secondary:
+		if (tod_ctrl & TOD_PSMSC_SM_DRAW_SELECT) {
+			if (tod_ctrl & TOD_PSMSC_SM_TOD_SELECT)
+				role = chiptod_chip_role_MDMT;
+			else
+				role = chiptod_chip_role_MDST;
+		} else {
+			if (tod_ctrl & TOD_PSMSC_SM_TOD_SELECT)
+				role = chiptod_chip_role_SDMT;
+			else
+				role = chiptod_chip_role_SDST;
+		}
+		break;
+	case chiptod_topo_unknown:
+	default:
+		break;
+	}
+	return role;
+}
+
+static void chiptod_update_topology(enum chiptod_topology topo)
+{
+	int32_t chip_id = chiptod_topology_info[topo].id;
+
+	chiptod_topology_info[topo].role = chiptod_get_chip_role(topo, chip_id);
 }
 
 static void chiptod_setup_base_tfmr(void)
@@ -991,6 +1087,14 @@ static void chiptod_init_topology_info(void)
 {
 	/* Find and update current topology in use. */
 	current_topology = query_current_topology();
+
+	/* Initialized primary topology chip config info */
+	chiptod_topology_info[chiptod_topo_primary].id = chiptod_primary;
+	chiptod_update_topology(chiptod_topo_primary);
+
+	/* Initialized secondary topology chip config info */
+	chiptod_topology_info[chiptod_topo_secondary].id = chiptod_secondary;
+	chiptod_update_topology(chiptod_topo_secondary);
 
 	print_topology_info();
 }
