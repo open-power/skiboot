@@ -66,6 +66,8 @@
 #define TOD_PIB_MASTER			0x00040027
 #define   TOD_PIBM_ADDR_CFG_MCAST	PPC_BIT(25)
 #define   TOD_PIBM_ADDR_CFG_SLADDR	PPC_BITMASK(26,31)
+#define   TOD_PIBM_TTYPE4_SEND_MODE	PPC_BIT(32)
+#define   TOD_PIBM_TTYPE4_SEND_ENBL	PPC_BIT(33)
 
 /* -- TOD Error interrupt register -- */
 #define TOD_ERROR			0x00040030
@@ -882,6 +884,63 @@ static int chiptod_recover_tod_errors(void)
 	return 0;
 }
 
+static int32_t chiptod_get_active_master(void)
+{
+	if (current_topology < 0)
+		return -1;
+
+	if (chiptod_topology_info[current_topology].status ==
+							chiptod_active_master)
+		return chiptod_topology_info[current_topology].id;
+	return -1;
+}
+
+/* Return true if Active master TOD is running. */
+static bool chiptod_master_running(void)
+{
+	int32_t active_master_chip;
+
+	active_master_chip = chiptod_get_active_master();
+	if (active_master_chip != -1) {
+		if (chiptod_running_check(active_master_chip))
+			return true;
+	}
+	return false;
+}
+
+static bool chiptod_set_ttype4_mode(struct proc_chip *chip, bool enable)
+{
+	uint64_t tval;
+
+	/* Sanity check */
+	if (!chip)
+		return false;
+
+	if (xscom_read(chip->id, TOD_PIB_MASTER, &tval) != 0) {
+		prerror("CHIPTOD: XSCOM error reading PIB_MASTER\n");
+		return false;
+	}
+
+	if (enable) {
+		/*
+		 * Enable TTYPE4 send mode. This allows TOD to respond to
+		 * TTYPE3 request.
+		 */
+		tval |= TOD_PIBM_TTYPE4_SEND_MODE;
+		tval |= TOD_PIBM_TTYPE4_SEND_ENBL;
+	} else {
+		/* Disable TTYPE4 send mode. */
+		tval &= ~TOD_PIBM_TTYPE4_SEND_MODE;
+		tval &= ~TOD_PIBM_TTYPE4_SEND_ENBL;
+	}
+
+	if (xscom_write(chip->id, TOD_PIB_MASTER, tval) != 0) {
+		prerror("CHIPTOD: XSCOM error writing PIB_MASTER\n");
+		return false;
+	}
+	return true;
+}
+
 /*
  * Sync up TOD with other chips and get TOD in running state.
  * For non-master, we request TOD value from another chip.
@@ -889,6 +948,9 @@ static int chiptod_recover_tod_errors(void)
  */
 static int chiptod_start_tod(void)
 {
+	struct proc_chip *chip = NULL;
+	int rc = 1;
+
 	/*  Handle TOD recovery on master chip. */
 	if (this_cpu()->chip_id == chiptod_primary) {
 		/*
@@ -908,6 +970,22 @@ static int chiptod_start_tod(void)
 		chiptod_secondary = this_cpu()->chip_id;
 	}
 
+	if (!chiptod_master_running()) {
+		/*
+		 * Active Master TOD is not running, which means it won't
+		 * respond to TTYPE_3 request.
+		 *
+		 * Find a chip that has TOD in running state and configure
+		 * it to respond to TTYPE_3 request.
+		 */
+		for_each_chip(chip) {
+			if (chiptod_running_check(chip->id)) {
+				if (chiptod_set_ttype4_mode(chip, true))
+					break;
+			}
+		}
+	}
+
 	/* Switch local chiptod to "Not Set" state */
 	if (xscom_writeme(TOD_LOAD_TOD_MOD, (1UL << 63)) != 0) {
 		prerror("CHIPTOD: XSCOM error sending LOAD_TOD_MOD\n");
@@ -925,9 +1003,11 @@ static int chiptod_start_tod(void)
 
 	/* Check if chip TOD is running. */
 	if (!chiptod_poll_running())
-		return 0;
+		rc = 0;
 
-	return 1;
+	/* Restore the ttype4_mode. */
+	chiptod_set_ttype4_mode(chip, false);
+	return rc;
 }
 
 static bool tfmr_recover_tb_errors(uint64_t tfmr)
