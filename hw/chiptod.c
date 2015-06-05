@@ -1028,6 +1028,24 @@ static bool is_topology_switch_required(void)
 	return false;
 }
 
+static bool chiptod_backup_valid(void)
+{
+	enum chiptod_topology backup_topo;
+
+	if (current_topology < 0)
+		return false;
+
+	if (current_topology == chiptod_topo_primary)
+		backup_topo = chiptod_topo_secondary;
+	else
+		backup_topo = chiptod_topo_primary;
+
+	if (chiptod_topology_info[backup_topo].status == chiptod_backup_master)
+		return chiptod_sync_step_check_running(backup_topo);
+
+	return false;
+}
+
 /*
  * Sync up TOD with other chips and get TOD in running state.
  * Check if current topology is active and running. If not, then
@@ -1053,9 +1071,15 @@ static int chiptod_start_tod(void)
 		 * master. But make sure we move local chiptod to Not Set
 		 * before requesting TOD value.
 		 *
-		 * Before triggering a topology switch stop all slave TODs
-		 * in backup topology.
+		 * Before triggering a topology switch, check if backup
+		 * is valid and stop all slave TODs in backup topology.
 		 */
+		if (!chiptod_backup_valid()) {
+			prerror("CHIPTOD: Backup master is not enabled.\n");
+			prerror("CHIPTOD: Can not do a topology switch.\n");
+			return 0;
+		}
+
 		chiptod_stop_slave_tods();
 
 		if (xscom_write(mchip, TOD_TTYPE_1, (1UL << 63)) != 0) {
