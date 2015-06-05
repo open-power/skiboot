@@ -471,11 +471,11 @@ static bool chiptod_interrupt_check(void)
 	return true;
 }
 
-static bool chiptod_running_check(void)
+static bool chiptod_running_check(uint32_t chip_id)
 {
 	uint64_t tval;
 
-	if (xscom_readme(TOD_CHIPTOD_FSM, &tval) != 0) {
+	if (xscom_read(chip_id, TOD_CHIPTOD_FSM, &tval) != 0) {
 		prerror("CHIPTOD: XSCOM error polling run\n");
 		return false;
 	}
@@ -1155,7 +1155,7 @@ int chiptod_recover_tb_errors(void)
 		 * Before we move TOD to core TB check if TOD is running.
 		 * If not, then get TOD in running state.
 		 */
-		if (!chiptod_running_check())
+		if (!chiptod_running_check(this_cpu()->chip_id))
 			if (!chiptod_start_tod())
 				goto error_out;
 
