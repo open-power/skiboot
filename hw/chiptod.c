@@ -26,6 +26,10 @@
 #include <timebase.h>
 #include <opal-api.h>
 
+/* -- TOD primary/secondary master/slave status register -- */
+#define TOD_STATUS			0x00040008
+#define   TOD_ST_TOPOLOGY_SELECT	PPC_BITMASK(0, 2)
+
 /* TOD chip XSCOM addresses */
 #define TOD_TTYPE_0			0x00040011
 #define TOD_TTYPE_1			0x00040012 /* PSS switch */
@@ -73,6 +77,10 @@
 /* Number of iterations for the various timeouts */
 #define TIMEOUT_LOOPS		20000000
 
+/* TOD active Primary/secondary configuration */
+#define TOD_PRI_CONF_IN_USE	0	/* Tod using primary topology*/
+#define TOD_SEC_CONF_IN_USE	7	/* Tod using secondary topo */
+
 /* Timebase State Machine error state */
 #define TBST_STATE_ERROR	9
 
@@ -82,8 +90,15 @@ static enum chiptod_type {
 	chiptod_p8
 } chiptod_type;
 
+enum chiptod_topology {
+	chiptod_topo_unknown = -1,
+	chiptod_topo_primary = 0,
+	chiptod_topo_secondary = 1,
+};
+
 static int32_t chiptod_primary = -1;
 static int32_t chiptod_secondary = -1;
+static enum chiptod_topology current_topology = chiptod_topo_unknown;
 
 /* The base TFMR value is the same for the whole machine
  * for now as far as I can tell
@@ -96,6 +111,37 @@ static uint64_t base_tfmr;
  * take all of them for RAS cases.
  */
 static struct lock chiptod_lock = LOCK_UNLOCKED;
+
+static void print_topology_info(void)
+{
+	const char *topo[] = { "Unknown", "Primary", "Secondary" };
+
+	if (current_topology < 0)
+		return;
+
+	prlog(PR_DEBUG, "CHIPTOD: TOD Topology in Use: %s\n",
+						topo[current_topology+1]);
+}
+
+static enum chiptod_topology query_current_topology(void)
+{
+	uint64_t tod_status;
+
+	if (xscom_readme(TOD_STATUS, &tod_status) != 0) {
+		prerror("CHIPTOD: XSCOM error reading TOD_STATUS reg\n");
+		return chiptod_topo_unknown;
+	}
+
+	/*
+	 * Tod status register bit [0-2] tells configuration in use.
+	 *	000 <= primary configuration in use
+	 *	111 <= secondary configuration in use
+	 */
+	if ((tod_status & TOD_ST_TOPOLOGY_SELECT) == TOD_PRI_CONF_IN_USE)
+		return chiptod_topo_primary;
+	else
+		return chiptod_topo_secondary;
+}
 
 static void chiptod_setup_base_tfmr(void)
 {
@@ -941,6 +987,14 @@ static bool chiptod_probe(void)
 	return true;
 }
 
+static void chiptod_init_topology_info(void)
+{
+	/* Find and update current topology in use. */
+	current_topology = query_current_topology();
+
+	print_topology_info();
+}
+
 void chiptod_init(void)
 {
 	struct cpu_thread *cpu0, *cpu;
@@ -1008,5 +1062,6 @@ void chiptod_init(void)
 					   chiptod_print_tb, NULL), true);
 	}
 
+	chiptod_init_topology_info();
 	op_display(OP_LOG, OP_MOD_CHIPTOD, 4);
 }
