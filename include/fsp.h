@@ -520,6 +520,12 @@
 #define FSP_CMD_VSERIAL_OUT	0x0e10200 /* HV->FSP */
 
 /*
+ * Class E6
+ */
+#define FSP_CMD_TOPO_ENABLE_DISABLE	0x0e60600 /* FSP->HV */
+#define FSP_RSP_TOPO_ENABLE_DISABLE	0x0e68600 /* HV->FSP */
+
+/*
  * Class E8
  */
 #define FSP_CMD_READ_SRC	0x1e84a40 /* HV->FSP */
@@ -811,5 +817,8 @@ extern void fsp_epow_init(void);
 
 /* DPO */
 extern void fsp_dpo_init(void);
+
+/* Chiptod */
+extern void fsp_chiptod_init(void);
 
 #endif /* __FSP_H */

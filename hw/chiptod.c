@@ -120,12 +120,6 @@ static enum chiptod_type {
 	chiptod_p8
 } chiptod_type;
 
-enum chiptod_topology {
-	chiptod_topo_unknown = -1,
-	chiptod_topo_primary = 0,
-	chiptod_topo_secondary = 1,
-};
-
 enum chiptod_chip_role {
 	chiptod_chip_role_UNKNOWN = -1,
 	chiptod_chip_role_MDMT = 0,	/* Master Drawer Master TOD */
@@ -1490,6 +1484,70 @@ static bool chiptod_probe(void)
 	}
 
 	return true;
+}
+
+static void chiptod_discover_new_backup(enum chiptod_topology topo)
+{
+	struct proc_chip *chip = NULL;
+
+	/* Scan through available chips to find new backup master chip */
+	for_each_chip(chip) {
+		if (_chiptod_get_chip_status(chip->id) == chiptod_backup_master)
+			break;
+	}
+
+	/* Found new backup master chip. Update the topology info */
+	if (chip) {
+		prlog(PR_DEBUG, "CHIPTOD: New backup master: CHIP [%d]\n",
+								chip->id);
+
+		if (topo == chiptod_topo_primary)
+			chiptod_primary = chip->id;
+		else
+			chiptod_secondary = chip->id;
+		chiptod_topology_info[topo].id = chip->id;
+		chiptod_update_topology(topo);
+
+		prlog(PR_DEBUG,
+			"CHIPTOD: Backup topology configuration changed.\n");
+		print_topology_info();
+	}
+}
+
+/*
+ * Enable/disable backup topology.
+ * If request is to enable topology, then discover new backup master
+ * chip and update the topology configuration info. If the request is
+ * to disable topology, then mark the current backup topology as disabled.
+ * Return error (-1) if the action is requested on currenlty active
+ * topology.
+ *
+ * Return values:
+ *	0	<= Success
+ *	-1	<= Topology is active and in use.
+ */
+int chiptod_adjust_topology(enum chiptod_topology topo, bool enable)
+{
+	uint8_t rc = 0;
+	/*
+	 * The FSP can only request that the currently inactive topology
+	 * be disabled or enabled. If the requested topology is currently
+	 * the active topology, then fail this request with a -1 (TOD
+	 * topology in use) status as return code.
+	 */
+	lock(&chiptod_lock);
+	if (topo == current_topology) {
+		rc = -1;
+		goto out;
+	}
+
+	if (enable)
+		chiptod_discover_new_backup(topo);
+	else
+		chiptod_topology_info[topo].status = chiptod_backup_disabled;
+out:
+	unlock(&chiptod_lock);
+	return rc;
 }
 
 static void chiptod_init_topology_info(void)

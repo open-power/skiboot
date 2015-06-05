@@ -21,9 +21,16 @@
  * time base across the fabric.
  */
 
+enum chiptod_topology {
+	chiptod_topo_unknown = -1,
+	chiptod_topo_primary = 0,
+	chiptod_topo_secondary = 1,
+};
+
 extern void chiptod_init(void);
 extern bool chiptod_wakeup_resync(void);
 extern int chiptod_recover_tb_errors(void);
 extern void chiptod_reset_tb(void);
+extern int chiptod_adjust_topology(enum chiptod_topology topo, bool enable);
 
 #endif /* __CHIPTOD_H */
