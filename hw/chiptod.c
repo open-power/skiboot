@@ -36,6 +36,16 @@
 /* -- TOD primary/secondary master/slave status register -- */
 #define TOD_STATUS			0x00040008
 #define   TOD_ST_TOPOLOGY_SELECT	PPC_BITMASK(0, 2)
+#define   TOD_ST_MPATH0_STEP_VALID	PPC_BIT(6)  /* MasterPath0 step valid */
+#define   TOD_ST_MPATH1_STEP_VALID	PPC_BIT(7)  /* MasterPath1 step valid */
+#define   TOD_ST_SPATH0_STEP_VALID	PPC_BIT(8)  /* SlavePath0 step valid */
+#define   TOD_ST_SPATH1_STEP_VALID	PPC_BIT(10) /* SlavePath1 step valid */
+/* Primary master/slave path select (0 = PATH_0, 1 = PATH_1) */
+#define   TOD_ST_PRI_MPATH_SELECT	PPC_BIT(12) /* Primary MPath Select */
+#define   TOD_ST_PRI_SPATH_SELECT	PPC_BIT(15) /* Primary SPath Select */
+/* Secondary master/slave path select (0 = PATH_0, 1 = PATH_1) */
+#define   TOD_ST_SEC_MPATH_SELECT	PPC_BIT(16) /* Secondary MPath Select */
+#define   TOD_ST_SEC_SPATH_SELECT	PPC_BIT(19) /* Secondary SPath Select */
 #define   TOD_ST_ACTIVE_MASTER		PPC_BIT(23)
 #define   TOD_ST_BACKUP_MASTER		PPC_BIT(24)
 
@@ -116,6 +126,7 @@ enum chiptod_chip_role {
 enum chiptod_chip_status {
 	chiptod_active_master = 0,	/* Chip TOD is Active master */
 	chiptod_backup_master = 1,	/* Chip TOD is backup master */
+	chiptod_backup_disabled,	/* Chip TOD is backup but disabled */
 };
 
 struct chiptod_chip_config_info {
@@ -243,6 +254,102 @@ chiptod_get_chip_role(enum chiptod_topology topology, int32_t chip_id)
 	return role;
 }
 
+/*
+ * Check and return the status of sync step network for a given
+ * topology configuration.
+ * Return values:
+ *	true:	Sync Step network is running
+ *	false:	Sync Step network is not running
+ */
+static bool chiptod_sync_step_check_running(enum chiptod_topology topology)
+{
+	uint64_t tod_status;
+	enum chiptod_chip_role role;
+	bool running = false;
+	int32_t chip_id = chiptod_topology_info[topology].id;
+
+	/* Sanity check */
+	if (chip_id < 0)
+		return false;
+
+	if (xscom_read(chip_id, TOD_STATUS, &tod_status) != 0) {
+		prerror("CHIPTOD: XSCOM error reading TOD_STATUS reg\n");
+		return false;
+	}
+
+	switch (topology) {
+	case chiptod_topo_primary:
+		/* Primary configuration */
+		role = chiptod_topology_info[topology].role;
+		if (role == chiptod_chip_role_MDMT) {
+			/*
+			 * Chip is using Master path.
+			 * Check if it is using path_0/path_1 and then
+			 * validity of that path.
+			 *
+			 * TOD_STATUS[12]: 0 = PATH_0, 1 = PATH_1
+			 */
+			if (tod_status & TOD_ST_PRI_MPATH_SELECT) {
+				if (tod_status & TOD_ST_MPATH1_STEP_VALID)
+					running = true;
+			} else {
+				if (tod_status & TOD_ST_MPATH0_STEP_VALID)
+					running = true;
+			}
+		} else {
+			/*
+			 * Chip is using Slave path.
+			 *
+			 * TOD_STATUS[15]: 0 = PATH_0, 1 = PATH_1
+			 */
+			if (tod_status & TOD_ST_PRI_SPATH_SELECT) {
+				if (tod_status & TOD_ST_SPATH1_STEP_VALID)
+					running = true;
+			} else {
+				if (tod_status & TOD_ST_SPATH0_STEP_VALID)
+					running = true;
+			}
+		}
+		break;
+	case chiptod_topo_secondary:
+		/* Secondary configuration */
+		role = chiptod_topology_info[topology].role;
+		if (role == chiptod_chip_role_MDMT) {
+			/*
+			 * Chip is using Master path.
+			 * Check if it is using path_0/path_1 and then
+			 * validity of that path.
+			 *
+			 * TOD_STATUS[12]: 0 = PATH_0, 1 = PATH_1
+			 */
+			if (tod_status & TOD_ST_SEC_MPATH_SELECT) {
+				if (tod_status & TOD_ST_MPATH1_STEP_VALID)
+					running = true;
+			} else {
+				if (tod_status & TOD_ST_MPATH0_STEP_VALID)
+					running = true;
+			}
+		} else {
+			/*
+			 * Chip is using Slave path.
+			 *
+			 * TOD_STATUS[15]: 0 = PATH_0, 1 = PATH_1
+			 */
+			if (tod_status & TOD_ST_SEC_SPATH_SELECT) {
+				if (tod_status & TOD_ST_SPATH1_STEP_VALID)
+					running = true;
+			} else {
+				if (tod_status & TOD_ST_SPATH0_STEP_VALID)
+					running = true;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	return running;
+}
+
 static enum chiptod_chip_status _chiptod_get_chip_status(int32_t chip_id)
 {
 	uint64_t tod_status;
@@ -274,6 +381,15 @@ static void chiptod_update_topology(enum chiptod_topology topo)
 
 	chiptod_topology_info[topo].role = chiptod_get_chip_role(topo, chip_id);
 	chiptod_topology_info[topo].status = chiptod_get_chip_status(topo);
+
+	/*
+	 * If chip TOD on this topology is a backup master then check if
+	 * sync/step network is running on this topology. If not,
+	 * then mark status as backup not valid.
+	 */
+	if ((chiptod_topology_info[topo].status == chiptod_backup_master) &&
+			!chiptod_sync_step_check_running(topo))
+		chiptod_topology_info[topo].status = chiptod_backup_disabled;
 }
 
 static void chiptod_setup_base_tfmr(void)
