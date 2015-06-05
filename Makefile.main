@@ -51,6 +51,7 @@ CPPFLAGS += -DBITS_PER_LONG=64 -DHAVE_BIG_ENDIAN
 CPPFLAGS += -ffreestanding
 
 CFLAGS := -fno-strict-aliasing -fstack-protector-all -pie -mbig-endian -m64
+CFLAGS += -Wl,--oformat,elf64-powerpc
 
 ifeq ($(SKIBOOT_GCOV),1)
 CFLAGS += -fprofile-arcs -ftest-coverage -DSKIBOOT_GCOV=1
@@ -69,6 +70,8 @@ CFLAGS += $(CWARNS) $(OPTS) $(DBG)
 LDFLAGS := -m64 -static -nostdlib -pie 
 LDFLAGS += -Wl,-Ttext-segment,$(LD_TEXT) -Wl,-N -Wl,--build-id=none
 LDFLAGS += -Wl,--no-multi-toc
+LDFLAGS += -mbig-endian -Wl,--oformat,elf64-powerpc
+
 LDRFLAGS=-melf64ppc
 # Debug stuff
 #LDFLAGS += -Wl,-v -Wl,-Map,foomap 
