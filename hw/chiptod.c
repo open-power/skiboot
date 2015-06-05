@@ -26,6 +26,15 @@
 #include <timebase.h>
 #include <opal-api.h>
 
+/* TOD chip XSCOM addresses */
+#define TOD_MASTER_PATH_CTRL		0x00040000 /* Master Path ctrl reg */
+#define TOD_PRI_PORT0_CTRL		0x00040001 /* Primary port0 ctrl reg */
+#define TOD_PRI_PORT1_CTRL		0x00040002 /* Primary port1 ctrl reg */
+#define TOD_SEC_PORT0_CTRL		0x00040003 /* Secondary p0 ctrl reg */
+#define TOD_SEC_PORT1_CTRL		0x00040004 /* Secondary p1 ctrl reg */
+#define TOD_SLAVE_PATH_CTRL		0x00040005 /* Slave Path ctrl reg */
+#define TOD_INTERNAL_PATH_CTRL		0x00040006 /* Internal Path ctrl reg */
+
 /* -- TOD primary/secondary master/slave control register -- */
 #define TOD_PSMS_CTRL			0x00040007
 #define  TOD_PSMSC_PM_TOD_SELECT	PPC_BIT(1)  /* Primary Master TOD */
@@ -50,6 +59,7 @@
 #define   TOD_ST_BACKUP_MASTER		PPC_BIT(24)
 
 /* TOD chip XSCOM addresses */
+#define TOD_CHIP_CTRL			0x00040010 /* Chip control register */
 #define TOD_TTYPE_0			0x00040011
 #define TOD_TTYPE_1			0x00040012 /* PSS switch */
 #define TOD_TTYPE_2			0x00040013 /* Enable step checkers */
@@ -75,6 +85,13 @@
 #define   TOD_ERR_CRMO_PARITY		PPC_BIT(0)
 #define   TOD_ERR_OSC0_PARITY		PPC_BIT(1)
 #define   TOD_ERR_OSC1_PARITY		PPC_BIT(2)
+#define   TOD_ERR_PPORT0_CREG_PARITY	PPC_BIT(3)
+#define   TOD_ERR_PPORT1_CREG_PARITY	PPC_BIT(4)
+#define   TOD_ERR_SPORT0_CREG_PARITY	PPC_BIT(5)
+#define   TOD_ERR_SPORT1_CREG_PARITY	PPC_BIT(6)
+#define   TOD_ERR_SPATH_CREG_PARITY	PPC_BIT(7)
+#define   TOD_ERR_IPATH_CREG_PARITY	PPC_BIT(8)
+#define   TOD_ERR_PSMS_CREG_PARITY	PPC_BIT(9)
 #define   TOD_ERR_CRITC_PARITY		PPC_BIT(13)
 #define   TOD_ERR_MP0_STEP_CHECK	PPC_BIT(14)
 #define   TOD_ERR_MP1_STEP_CHECK	PPC_BIT(15)
@@ -152,6 +169,53 @@ static enum chiptod_topology current_topology = chiptod_topo_unknown;
  */
 static struct chiptod_chip_config_info chiptod_topology_info[2];
 
+/*
+ * Array of TOD control registers that holds last known valid values.
+ *
+ * Cache chiptod control register values at following instances:
+ * 1. Chiptod initialization
+ * 2. After topology switch is complete.
+ * 3. Upon receiving enable/disable topology request from FSP.
+ *
+ * Cache following chip TOD control registers:
+ *   - Master Path control register (0x00040000)
+ *   - Primary Port-0 control register (0x00040001)
+ *   - Primary Port-1 control register (0x00040002)
+ *   - Secondary Port-0 control register (0x00040003)
+ *   - Secondary Port-1 control register (0x00040004)
+ *   - Slave Path control register (0x00040005)
+ *   - Internal Path control register (0x00040006)
+ *   - Primary/secondary master/slave control register (0x00040007)
+ *   - Chip control register (0x00040010)
+ *
+ * This data is used for restoring respective TOD registers to sane values
+ * whenever parity errors are reported on these registers (through HMI).
+ * The error_bit maps to corresponding bit from TOD error register that
+ * reports parity error on respective TOD registers.
+ */
+static struct chiptod_tod_regs {
+	/* error bit from TOD Error reg */
+	const uint64_t	error_bit;
+
+	/* xscom address of TOD register to be restored. */
+	const uint64_t	xscom_addr;
+	/* per chip cached value of TOD control registers to be restored. */
+	struct {
+		uint64_t	data;
+		bool		valid;
+	} val[MAX_CHIPS];
+} chiptod_tod_regs[] = {
+	{ TOD_ERR_CRMO_PARITY, TOD_MASTER_PATH_CTRL, { } },
+	{ TOD_ERR_PPORT0_CREG_PARITY, TOD_PRI_PORT0_CTRL,  { } },
+	{ TOD_ERR_PPORT1_CREG_PARITY, TOD_PRI_PORT1_CTRL, { } },
+	{ TOD_ERR_SPORT0_CREG_PARITY, TOD_SEC_PORT0_CTRL, { } },
+	{ TOD_ERR_SPORT1_CREG_PARITY, TOD_SEC_PORT1_CTRL, { } },
+	{ TOD_ERR_SPATH_CREG_PARITY, TOD_SLAVE_PATH_CTRL, { } },
+	{ TOD_ERR_IPATH_CREG_PARITY, TOD_INTERNAL_PATH_CTRL, { } },
+	{ TOD_ERR_PSMS_CREG_PARITY, TOD_PSMS_CTRL, { } },
+	{ TOD_ERR_CTCR_PARITY, TOD_CHIP_CTRL, { } },
+};
+
 /* The base TFMR value is the same for the whole machine
  * for now as far as I can tell
  */
@@ -163,6 +227,31 @@ static uint64_t base_tfmr;
  * take all of them for RAS cases.
  */
 static struct lock chiptod_lock = LOCK_UNLOCKED;
+
+static void _chiptod_cache_tod_regs(int32_t chip_id)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(chiptod_tod_regs); i++) {
+		if (xscom_read(chip_id, chiptod_tod_regs[i].xscom_addr,
+			&(chiptod_tod_regs[i].val[chip_id].data)) != 0) {
+			prerror("CHIPTOD: XSCOM error reading 0x%08llx reg.\n",
+					chiptod_tod_regs[i].xscom_addr);
+			/* Invalidate this record and continue */
+			chiptod_tod_regs[i].val[chip_id].valid = 0;
+			continue;
+		}
+		chiptod_tod_regs[i].val[chip_id].valid = 1;
+	}
+}
+
+static void chiptod_cache_tod_registers(void)
+{
+	struct proc_chip *chip;
+
+	for_each_chip(chip)
+		_chiptod_cache_tod_regs(chip->id);
+}
 
 static void print_topo_info(enum chiptod_topology topo)
 {
@@ -1067,6 +1156,9 @@ static void chiptod_topology_switch_complete(void)
 		return;
 	}
 
+	/* Save TOD control registers values. */
+	chiptod_cache_tod_registers();
+
 	prlog(PR_DEBUG, "CHIPTOD: Topology switch complete\n");
 	print_topology_info();
 }
@@ -1512,6 +1604,12 @@ static void chiptod_discover_new_backup(enum chiptod_topology topo)
 			"CHIPTOD: Backup topology configuration changed.\n");
 		print_topology_info();
 	}
+
+	/*
+	 * Topology configuration has changed. Save TOD control registers
+	 * values.
+	 */
+	chiptod_cache_tod_registers();
 }
 
 /*
@@ -1563,6 +1661,8 @@ static void chiptod_init_topology_info(void)
 	chiptod_topology_info[chiptod_topo_secondary].id = chiptod_secondary;
 	chiptod_update_topology(chiptod_topo_secondary);
 
+	/* Cache TOD control registers values. */
+	chiptod_cache_tod_registers();
 	print_topology_info();
 }
 
