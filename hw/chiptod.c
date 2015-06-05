@@ -36,6 +36,8 @@
 /* -- TOD primary/secondary master/slave status register -- */
 #define TOD_STATUS			0x00040008
 #define   TOD_ST_TOPOLOGY_SELECT	PPC_BITMASK(0, 2)
+#define   TOD_ST_ACTIVE_MASTER		PPC_BIT(23)
+#define   TOD_ST_BACKUP_MASTER		PPC_BIT(24)
 
 /* TOD chip XSCOM addresses */
 #define TOD_TTYPE_0			0x00040011
@@ -111,9 +113,15 @@ enum chiptod_chip_role {
 	chiptod_chip_role_SDST,		/* Slave Drawer Slave TOD */
 };
 
+enum chiptod_chip_status {
+	chiptod_active_master = 0,	/* Chip TOD is Active master */
+	chiptod_backup_master = 1,	/* Chip TOD is backup master */
+};
+
 struct chiptod_chip_config_info {
 	int32_t id;				/* chip id */
 	enum chiptod_chip_role role;		/* Chip role */
+	enum chiptod_chip_status status;	/* active/backup/disabled */
 };
 
 static int32_t chiptod_primary = -1;
@@ -143,10 +151,13 @@ static struct lock chiptod_lock = LOCK_UNLOCKED;
 static void print_topo_info(enum chiptod_topology topo)
 {
 	const char *role[] = { "Unknown", "MDMT", "MDST", "SDMT", "SDST" };
+	const char *status[] = { "Unknown",
+		"Active Master", "Backup Master", "Backup Master Disabled" };
 
-	prlog(PR_DEBUG, "CHIPTOD:    chip id: %d, Role: %s\n",
+	prlog(PR_DEBUG, "CHIPTOD:    chip id: %d, Role: %s, Status: %s\n",
 				chiptod_topology_info[topo].id,
-				role[chiptod_topology_info[topo].role + 1]);
+				role[chiptod_topology_info[topo].role + 1],
+				status[chiptod_topology_info[topo].status + 1]);
 }
 
 static void print_topology_info(void)
@@ -232,11 +243,37 @@ chiptod_get_chip_role(enum chiptod_topology topology, int32_t chip_id)
 	return role;
 }
 
+static enum chiptod_chip_status _chiptod_get_chip_status(int32_t chip_id)
+{
+	uint64_t tod_status;
+	enum chiptod_chip_status status = -1;
+
+	if (xscom_read(chip_id, TOD_STATUS, &tod_status) != 0) {
+		prerror("CHIPTOD: XSCOM error reading TOD_STATUS reg\n");
+		goto out;
+	}
+
+	if (tod_status & TOD_ST_ACTIVE_MASTER)
+		status = chiptod_active_master;
+	else if (tod_status & TOD_ST_BACKUP_MASTER)
+		status = chiptod_backup_master;
+
+out:
+	return status;
+}
+
+static enum chiptod_chip_status
+chiptod_get_chip_status(enum chiptod_topology topology)
+{
+	return _chiptod_get_chip_status(chiptod_topology_info[topology].id);
+}
+
 static void chiptod_update_topology(enum chiptod_topology topo)
 {
 	int32_t chip_id = chiptod_topology_info[topo].id;
 
 	chiptod_topology_info[topo].role = chiptod_get_chip_role(topo, chip_id);
+	chiptod_topology_info[topo].status = chiptod_get_chip_status(topo);
 }
 
 static void chiptod_setup_base_tfmr(void)
