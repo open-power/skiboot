@@ -97,6 +97,10 @@
 /* -- TOD Error interrupt register -- */
 #define TOD_ERROR_INJECT		0x00040031
 
+/* Local FIR EH.TPCHIP.TPC.LOCAL_FIR */
+#define LOCAL_CORE_FIR		0x0104000C
+#define LFIR_SWITCH_COMPLETE	PPC_BIT(18)
+
 /* Magic TB value. One step cycle ahead of sync */
 #define INIT_TB	0x000000000001ff0
 
@@ -1046,6 +1050,33 @@ static bool chiptod_backup_valid(void)
 	return false;
 }
 
+static void chiptod_topology_switch_complete(void)
+{
+	/*
+	 * After the topology switch, we may have a non-functional backup
+	 * topology, and we won't be able to recover from future TOD errors
+	 * that requires topology switch. Someone needs to either fix it OR
+	 * configure new functional backup topology.
+	 *
+	 * Bit 18 of the Pervasive FIR is used to signal that TOD error
+	 * analysis needs to be performed. This allows FSP/PRD to
+	 * investigate and re-configure new backup topology if required.
+	 * Once new backup topology is configured and ready, FSP sends a
+	 * mailbox command xE6, s/c 0x06, mod 0, to enable the backup
+	 * topology.
+	 *
+	 * This isn't documented anywhere. This info is provided by FSP
+	 * folks.
+	 */
+	if (xscom_writeme(LOCAL_CORE_FIR, LFIR_SWITCH_COMPLETE) != 0) {
+		prerror("CHIPTOD: XSCOM error writing LOCAL_CORE_FIR\n");
+		return;
+	}
+
+	prlog(PR_DEBUG, "CHIPTOD: Topology switch complete\n");
+	print_topology_info();
+}
+
 /*
  * Sync up TOD with other chips and get TOD in running state.
  * Check if current topology is active and running. If not, then
@@ -1111,6 +1142,8 @@ static int chiptod_start_tod(void)
 			prerror("CHIPTOD: XSCOM error enabling steppers\n");
 			return 0;
 		}
+
+		chiptod_topology_switch_complete();
 	}
 
 	if (!chiptod_master_running()) {
