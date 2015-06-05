@@ -76,6 +76,8 @@
 #define   TOD_ERR_OSC0_PARITY		PPC_BIT(1)
 #define   TOD_ERR_OSC1_PARITY		PPC_BIT(2)
 #define   TOD_ERR_CRITC_PARITY		PPC_BIT(13)
+#define   TOD_ERR_MP0_STEP_CHECK	PPC_BIT(14)
+#define   TOD_ERR_MP1_STEP_CHECK	PPC_BIT(15)
 #define   TOD_ERR_PSS_HAMMING_DISTANCE	PPC_BIT(18)
 #define	  TOD_ERR_DELAY_COMPL_PARITY	PPC_BIT(22)
 /* CNTR errors */
@@ -91,6 +93,9 @@
 #define   TOD_ERR_TTYPE3_RECVD		PPC_BIT(41)
 #define   TOD_ERR_TTYPE4_RECVD		PPC_BIT(42)
 #define   TOD_ERR_TTYPE5_RECVD		PPC_BIT(43)
+
+/* -- TOD Error interrupt register -- */
+#define TOD_ERROR_INJECT		0x00040031
 
 /* Magic TB value. One step cycle ahead of sync */
 #define INIT_TB	0x000000000001ff0
@@ -941,33 +946,147 @@ static bool chiptod_set_ttype4_mode(struct proc_chip *chip, bool enable)
 	return true;
 }
 
+/* Stop TODs on slave chips in backup topology. */
+static void chiptod_stop_slave_tods(void)
+{
+	struct proc_chip *chip = NULL;
+	enum chiptod_topology backup_topo;
+	uint64_t terr = 0;
+
+	/* Inject TOD sync check error on salve TODs to stop them. */
+	terr |= TOD_ERR_TOD_SYNC_CHECK;
+
+	if (current_topology == chiptod_topo_primary)
+		backup_topo = chiptod_topo_secondary;
+	else
+		backup_topo = chiptod_topo_primary;
+
+	for_each_chip(chip) {
+		enum chiptod_chip_role role;
+
+		/* Current chip TOD is already in stooped state */
+		if (chip->id == this_cpu()->chip_id)
+			continue;
+
+		role = chiptod_get_chip_role(backup_topo, chip->id);
+
+		/* Skip backup master chip TOD. */
+		if (role == chiptod_chip_role_MDMT)
+			continue;
+
+		if (xscom_write(chip->id, TOD_ERROR_INJECT, terr) != 0)
+			prerror("CHIPTOD: XSCOM error writing TOD_ERROR_INJ\n");
+
+		if (chiptod_running_check(chip->id)) {
+			prlog(PR_DEBUG,
+			"CHIPTOD: Failed to stop TOD on slave CHIP [%d]\n",
+								chip->id);
+		}
+	}
+}
+
+static bool is_topology_switch_required(void)
+{
+	int32_t active_master_chip;
+	uint64_t tod_error;
+
+	active_master_chip = chiptod_get_active_master();
+
+	/* Check if TOD is running on Active master. */
+	if (chiptod_master_running())
+		return false;
+
+	/*
+	 * Check if sync/step network is running.
+	 *
+	 * If sync/step network is not running on current active topology
+	 * then we need switch topology to recover from TOD error.
+	 */
+	if (!chiptod_sync_step_check_running(current_topology)) {
+		prlog(PR_DEBUG, "CHIPTOD: Sync/Step network not running\n");
+		return true;
+	}
+
+	/*
+	 * Check if there is a step check error reported on
+	 * Active master.
+	 */
+	if (xscom_read(active_master_chip, TOD_ERROR, &tod_error) != 0) {
+		prerror("CHIPTOD: XSCOM error reading TOD_ERROR reg\n");
+		/*
+		 * Can't do anything here. But we already found that
+		 * sync/step network is running. Hence return false.
+		 */
+		return false;
+	}
+
+	if (tod_error & TOD_ERR_MP0_STEP_CHECK) {
+		prlog(PR_DEBUG, "CHIPTOD: TOD step check error\n");
+		return true;
+	}
+
+	return false;
+}
+
 /*
  * Sync up TOD with other chips and get TOD in running state.
- * For non-master, we request TOD value from another chip.
- * For master chip, Switch the topology to recover.
+ * Check if current topology is active and running. If not, then
+ * trigger a topology switch.
  */
 static int chiptod_start_tod(void)
 {
 	struct proc_chip *chip = NULL;
 	int rc = 1;
 
-	/*  Handle TOD recovery on master chip. */
-	if (this_cpu()->chip_id == chiptod_primary) {
+	/*  Do a topology switch if required. */
+	if (is_topology_switch_required()) {
+		int32_t mchip = chiptod_get_active_master();
+
+		prlog(PR_DEBUG, "CHIPTOD: Need topology switch to recover\n");
 		/*
-		 * TOD is not running on master chip. We need to sync with
-		 * secondary chip TOD. But before we do that we need to
-		 * switch topology to make backup master as the new
-		 * active master. Once we switch the topology we can
-		 * then request TOD value from new master chip TOD.
-		 * But make sure we move local chiptod to Not Set before
-		 * request TOD value.
+		 * There is a failure in StepSync network in current
+		 * active topology. TOD is not running on active master chip.
+		 * We need to sync with backup master chip TOD.
+		 * But before we do that we need to switch topology to make
+		 * backup master as the new active master. Once we switch the
+		 * topology we can then request TOD value from new active
+		 * master. But make sure we move local chiptod to Not Set
+		 * before requesting TOD value.
+		 *
+		 * Before triggering a topology switch stop all slave TODs
+		 * in backup topology.
 		 */
-		if (xscom_writeme(TOD_TTYPE_1, (1UL << 63)) != 0) {
+		chiptod_stop_slave_tods();
+
+		if (xscom_write(mchip, TOD_TTYPE_1, (1UL << 63)) != 0) {
 			prerror("CHIPTOD: XSCOM error switching primary/secondary\n");
 			return 0;
 		}
-		chiptod_primary = chiptod_secondary;
-		chiptod_secondary = this_cpu()->chip_id;
+
+		/* Update topology info. */
+		current_topology = query_current_topology();
+		chiptod_update_topology(chiptod_topo_primary);
+		chiptod_update_topology(chiptod_topo_secondary);
+
+		/*
+		 * We just switched topologies to recover.
+		 * Check if new master TOD is running.
+		 */
+		if (!chiptod_master_running()) {
+			prerror("CHIPTOD: TOD is not running on new master.\n");
+			return 0;
+		}
+
+		/*
+		 * Enable step checkers on all Chip TODs
+		 *
+		 * During topology switch, step checkers are disabled
+		 * on all Chip TODs by default. Enable them.
+		 */
+		if (xscom_writeme(TOD_TTYPE_2, (1UL << 63)) != 0) {
+			prerror("CHIPTOD: XSCOM error enabling steppers\n");
+			return 0;
+		}
 	}
 
 	if (!chiptod_master_running()) {
