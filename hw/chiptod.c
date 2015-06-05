@@ -957,6 +957,9 @@ bool chiptod_wakeup_resync(void)
 static int chiptod_recover_tod_errors(void)
 {
 	uint64_t terr;
+	uint64_t treset = 0;
+	int i;
+	int32_t chip_id = this_cpu()->chip_id;
 
 	/* Read TOD error register */
 	if (xscom_readme(TOD_ERROR, &terr) != 0) {
@@ -971,9 +974,41 @@ static int chiptod_recover_tod_errors(void)
 		(terr & TOD_ERR_DELAY_COMPL_PARITY) ||
 		(terr & TOD_ERR_TOD_REGISTER_PARITY)) {
 		chiptod_reset_tod_errors();
-		return 1;
 	}
-	return 0;
+
+	/*
+	 * Check for TOD control register parity errors and restore those
+	 * registers with last saved valid values.
+	 */
+	for (i = 0; i < ARRAY_SIZE(chiptod_tod_regs); i++) {
+		if (!(terr & chiptod_tod_regs[i].error_bit))
+			continue;
+
+		/* Check if we have valid last saved register value. */
+		if (!chiptod_tod_regs[i].val[chip_id].valid) {
+			prerror("CHIPTOD: Failed to restore TOD register: "
+			"%08llx", chiptod_tod_regs[i].xscom_addr);
+			return 0;
+		}
+
+		prlog(PR_DEBUG, "CHIPTOD: parity error, "
+				"Restoring TOD register: %08llx\n",
+				chiptod_tod_regs[i].xscom_addr);
+		if (xscom_writeme(chiptod_tod_regs[i].xscom_addr,
+			chiptod_tod_regs[i].val[chip_id].data) != 0) {
+			prerror("CHIPTOD: XSCOM error writing 0x%08llx reg.\n",
+					chiptod_tod_regs[i].xscom_addr);
+			return 0;
+		}
+		treset |= chiptod_tod_regs[i].error_bit;
+	}
+
+	if (treset && (xscom_writeme(TOD_ERROR, treset) != 0)) {
+		prerror("CHIPTOD: XSCOM error writing TOD_ERROR !\n");
+		return 0;
+	}
+	/* We have handled all the TOD errors routed to hypervisor */
+	return 1;
 }
 
 static int32_t chiptod_get_active_master(void)
