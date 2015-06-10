@@ -4,8 +4,17 @@ OPAL_RTC_READ
 Read the Real Time Clock.
 
 Parameters:
-	uint32_t* year_month_day
-	uint64_t* hour_minute_second_millisecond
+	uint32_t* year_month_day: the year, month and day formatted as follows:
+		  - bits  0-15 is bcd formatted year (0100-9999)
+		  - bits 16-23 is bcd formatted month (01-12)
+		  - bits 24-31 is bcd formatted day (01-31)
+	uint64_t* hour_minute_second_millisecond: the hour, minute, second
+		  and millisecond formatted as follows:
+		  - bits  0-16 is reserved
+		  - bits 17-24 is bcd formatted hour (00-23)
+		  - bits 25-31 is bcd formatted minute (00-59)
+		  - bits 32-39 is bcd formatted second (00-60)
+		  - bits 40-63 is bcd formatted milliseconds (000000-999999)
 
 Calling:
 
