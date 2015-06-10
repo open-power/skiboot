@@ -112,6 +112,13 @@ Explicitly allowed:
   (weather replacing skiroot with an implementation of Zork would be compliant
    is left as an exercise for the reader)
 
+Payload Environment
+-------------------
+The payload is started with:
+r3 = address of flattened device-tree (fdt)
+r8 = OPAL base
+r9 = OPAL entry
+
 
 Runtime Services
 ----------------
