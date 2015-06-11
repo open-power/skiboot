@@ -433,7 +433,8 @@ int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id)
 		rc = xscom_read(partid, 0xf000f, &val);
 
 	/* Extract CFAM id */
-	*chip_id = (uint32_t)(val >> 44);
+	if (rc == OPAL_SUCCESS)
+		*chip_id = (uint32_t)(val >> 44);
 
 	return rc;
 }
