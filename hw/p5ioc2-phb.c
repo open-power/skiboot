@@ -30,19 +30,6 @@
 #define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB%d: " fmt, \
 				      (p)->phb.opal_id, ## a)
 
-/* Helper to set the state machine timeout */
-static inline uint64_t p5ioc2_set_sm_timeout(struct p5ioc2_phb *p, uint64_t dur)
-{
-	uint64_t target, now = mftb();
-
-	target = now + dur;
-	if (target == 0)
-		target++;
-	p->delay_tgt_tb = target;
-
-	return dur;
-}
-
 /*
  * Lock callbacks. Allows the OPAL API handlers to lock the
  * PHB around calls such as config space, EEH, etc...
