@@ -119,7 +119,7 @@ static int64_t rhesus_power_down(uint64_t request __unused)
 static int rhesus_pnor_init(void)
 {
 	struct spi_flash_ctrl *pnor_ctrl;
-	struct blocklevel_device *bl;
+	struct blocklevel_device *bl = NULL;
 	int rc;
 
 	/* Open controller, flash and ffs */
