@@ -38,8 +38,6 @@ void __noreturn _abort(void)
 		for (;;) ;
 	in_abort = true;
 
-	bust_locks = true;
-
 	op_display(OP_FATAL, OP_MOD_CORE, 0x6666);
 	
 	prlog(PR_EMERG, "Aborting!\n");
