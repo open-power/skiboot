@@ -21,6 +21,9 @@
 #include <pci.h>
 #include <pci-cfg.h>
 #include <chip.h>
+#include <i2c.h>
+#include <opal.h>
+#include <timebase.h>
 
 #include "ibm-fsp.h"
 #include "lxvpd.h"
@@ -50,12 +53,200 @@ struct fsp_pcie_inventory {
 static struct fsp_pcie_inventory *fsp_pcie_inv;
 static unsigned int fsp_pcie_inv_alloc_count;
 #define FSP_PCIE_INV_ALLOC_CHUNK	4
+static uint64_t lx_vpd_id;
 
 struct lock fsp_pcie_inv_lock = LOCK_UNLOCKED;
 
+static struct dt_node *dt_create_i2c_master(struct dt_node *n, uint32_t eng_id)
+{
+	struct dt_node *i2cm;
+
+	/* Each master registers set is of length 0x20 */
+	i2cm = dt_new_addr(n, "i2cm", 0xa0000 + eng_id * 0x20);
+	if (!i2cm)
+		return NULL;
+
+	dt_add_property_string(i2cm, "compatible",
+			       "ibm,power8-i2cm");
+	dt_add_property_cells(i2cm, "reg", 0xa0000 + eng_id * 0x20,
+			      0x20);
+	dt_add_property_cells(i2cm, "clock-frequency", 50000000);
+	dt_add_property_cells(i2cm, "chip-engine#", eng_id);
+	dt_add_property_cells(i2cm, "#address-cells", 1);
+	dt_add_property_cells(i2cm, "#size-cells", 0);
+
+	return i2cm;
+}
+
+static struct dt_node *dt_create_i2c_bus(struct dt_node *i2cm,
+					 const char *port_name, uint32_t port_id)
+{
+	static struct dt_node *port;
+
+	port = dt_new_addr(i2cm, "i2c-bus", port_id);
+	if (!port)
+		return NULL;
+
+	dt_add_property_strings(port, "compatible", "ibm,power8-i2c-port");
+	dt_add_property_string(port, "ibm,port-name", port_name);
+	dt_add_property_cells(port, "reg", port_id);
+	dt_add_property_cells(port, "bus-frequency", 400000);
+	dt_add_property_cells(port, "#address-cells", 1);
+	dt_add_property_cells(port, "#size-cells", 0);
+
+	return port;
+}
+
+static struct dt_node *dt_create_i2c_device(struct dt_node *bus, uint8_t addr,
+					    const char *name, const char *compat,
+					    const char *label)
+{
+	struct dt_node *dev;
+
+	dev = dt_new_addr(bus, name, addr);
+	if (!dev)
+		return NULL;
+
+	dt_add_property_string(dev, "compatible", compat);
+	dt_add_property_string(dev, "label", label);
+	dt_add_property_cells(dev, "reg", addr);
+	dt_add_property_string(dev, "status", "reserved");
+
+	return dev;
+}
+
+static struct i2c_bus *firenze_pci_find_i2c_bus(uint8_t chip, uint8_t eng, uint8_t port)
+{
+       struct dt_node *np, *child;
+       uint32_t reg;
+
+       /* Iterate I2C masters */
+       dt_for_each_compatible(dt_root, np, "ibm,power8-i2cm") {
+               if (!np->parent ||
+                   !dt_node_is_compatible(np->parent, "ibm,power8-xscom"))
+                       continue;
+
+               /* Check chip index */
+               reg = dt_prop_get_u32(np->parent, "ibm,chip-id");
+               if (reg != chip)
+                       continue;
+
+               /* Check I2C master index */
+               reg = dt_prop_get_u32(np, "chip-engine#");
+               if (reg != eng)
+                       continue;
+
+               /* Iterate I2C buses */
+               dt_for_each_child(np, child) {
+                       if (!dt_node_is_compatible(child, "ibm,power8-i2c-port"))
+                               continue;
+
+                       /* Check I2C port index */
+                       reg = dt_prop_get_u32(child, "reg");
+                       if (reg != port)
+                               continue;
+
+                       reg = dt_prop_get_u32(child, "ibm,opal-id");
+                       return i2c_find_bus_by_id(reg);
+               }
+       }
+       return NULL;
+}
+
+static void firenze_dt_fixup_i2cm(void)
+{
+	struct dt_node *master, *bus, *dev;
+	struct proc_chip *c;
+	const uint32_t *p;
+	char name[32];
+	uint64_t lx;
+
+	if (dt_find_compatible_node(dt_root, NULL, "ibm,power8-i2cm"))
+		return;
+
+	p = dt_prop_get_def(dt_root, "ibm,vpd-lx-info", NULL);
+	if (!p)
+		return;
+
+	lx_vpd_id = lx = ((uint64_t)p[1] << 32) | p[2];
+
+	switch (lx) {
+	case LX_VPD_2S4U_BACKPLANE:
+	case LX_VPD_2S2U_BACKPLANE:
+	case LX_VPD_SHARK_BACKPLANE: /* XXX confirm ? */
+		/* i2c nodes on chip 0x10 */
+		c = get_chip(0x10);
+		if (c) {
+			/* Engine 1 */
+			master = dt_create_i2c_master(c->devnode, 1);
+			assert(master);
+			snprintf(name, sizeof(name), "p8_%08x_e%dp%d", c->id, 1, 0);
+			bus = dt_create_i2c_bus(master, name, 0);
+			assert(bus);
+			dev = dt_create_i2c_device(bus, 0x39, "power-control",
+						   "maxim,5961", "pcie-hotplug");
+			assert(dev);
+			dt_add_property_strings(dev, "target-list", "slot-C4",
+						"slot-C5");
+
+			dev = dt_create_i2c_device(bus, 0x3a, "power-control",
+						   "maxim,5961", "pcie-hotplug");
+			assert(dev);
+			dt_add_property_strings(dev, "target-list", "slot-C2",
+						"slot-C3");
+		} else {
+			prlog(PR_INFO, "PLAT: Chip not found for the id 0x10\n");
+		}
+
+	/* Fall through */
+	case LX_VPD_1S4U_BACKPLANE:
+	case LX_VPD_1S2U_BACKPLANE:
+		/* i2c nodes on chip 0 */
+		c = get_chip(0);
+		if (!c) {
+			prlog(PR_INFO, "PLAT: Chip not found for the id 0x0\n");
+			break;
+		}
+
+		/* Engine 1*/
+		master = dt_create_i2c_master(c->devnode, 1);
+		assert(master);
+		snprintf(name, sizeof(name), "p8_%08x_e%dp%d", c->id, 1, 0);
+		bus = dt_create_i2c_bus(master, name, 0);
+		assert(bus);
+		dev = dt_create_i2c_device(bus, 0x32, "power-control",
+					   "maxim,5961", "pcie-hotplug");
+		assert(dev);
+		dt_add_property_strings(dev, "target-list", "slot-C10", "slot-C11");
+
+		dev = dt_create_i2c_device(bus, 0x35, "power-control",
+					   "maxim,5961", "pcie-hotplug");
+		assert(dev);
+		dt_add_property_strings(dev, "target-list", "slot-C6", "slot-C7");
+
+		dev = dt_create_i2c_device(bus, 0x36, "power-control",
+					   "maxim,5961", "pcie-hotplug");
+		assert(dev);
+		dt_add_property_strings(dev, "target-list", "slot-C8", "slot-C9");
+
+		dev = dt_create_i2c_device(bus, 0x39, "power-control", "maxim,5961",
+					   "pcie-hotplug");
+		assert(dev);
+		dt_add_property_strings(dev, "target-list", "slot-C12");
+		break;
+	default:
+		break;
+	}
+}
+
 static bool firenze_probe(void)
 {
-	return dt_node_is_compatible(dt_root, "ibm,firenze");
+	if (!dt_node_is_compatible(dt_root, "ibm,firenze"))
+		return false;
+
+	firenze_dt_fixup_i2cm();
+
+	return true;
 }
 
 static void firenze_send_pci_inventory(void)
@@ -123,6 +314,102 @@ static void firenze_send_pci_inventory(void)
 	 */
 	free(fsp_pcie_inv);
 	fsp_pcie_inv = NULL;
+}
+
+static void firenze_i2c_complete(int rc, struct i2c_request *req)
+{
+	*(int *)req->user_data = rc;
+}
+
+static void firenze_do_i2c_byte(uint8_t chip, uint8_t eng, uint8_t port,
+				uint8_t addr, uint8_t reg, uint8_t data)
+{
+	struct i2c_bus *bus;
+	struct i2c_request *req;
+	uint8_t verif;
+	int rc;
+
+	bus = firenze_pci_find_i2c_bus(chip, eng, port);
+	if (!bus) {
+		prerror("FIRENZE: Failed to find i2c (%d/%d/%d)\n", chip, eng, port);
+		return;
+	}
+	req = i2c_alloc_req(bus);
+	if (!req) {
+		prerror("FIRENZE: Failed to allocate i2c request\n");
+		return;
+	}
+	req->op		     = SMBUS_WRITE;
+	req->dev_addr        = addr >> 1;
+	req->offset_bytes    = 1;
+	req->offset          = reg;
+	req->rw_buf          = &data;
+	req->rw_len          = 1;
+	req->completion      = firenze_i2c_complete;
+	req->user_data	     = &rc;
+	rc = 1;
+	i2c_queue_req(req);
+	while(rc == 1) {
+		time_wait_us(10);
+	}
+	if (rc != 0) {
+		prerror("FIRENZE: I2C error %d writing byte\n", rc);
+		return;
+	}
+	req->op		     = SMBUS_READ;
+	req->dev_addr        = addr >> 1;
+	req->offset_bytes    = 1;
+	req->offset          = reg;
+	req->rw_buf          = &verif;
+	req->rw_len          = 1;
+	req->completion      = firenze_i2c_complete;
+	req->user_data	     = &rc;
+	rc = 1;
+	i2c_queue_req(req);
+	while(rc == 1) {
+		time_wait_us(10);
+	}
+	if (rc != 0) {
+		prerror("FIRENZE: I2C error %d reading byte\n", rc);
+		return;
+	}
+	if (verif != data) {
+		prerror("FIRENZE: I2C miscompare want %02x got %02x\n", data, verif);
+	}
+}
+
+static void firenze_fixup_pcie_slot_power(struct pci_device * pd)
+{
+	const char *label = pd->slot_info->label;
+
+	if (!pd->slot_info->pluggable)
+		return;
+
+	if (lx_vpd_id != LX_VPD_2S4U_BACKPLANE &&
+	    lx_vpd_id != LX_VPD_1S4U_BACKPLANE)
+		return;
+
+	printf("FIRENZE: Checking slot %s for power fixup\n", label);
+
+	/* Note: We apply the settings twice for C6/C7 but that shouldn't
+	 * be a problem
+	 */
+	if (!strncmp(label, "C6 ", 3) || !strncmp(label, "C7 ", 3)) {
+		printf("FIRENZE: Fixing power on %s...\n", label);
+		firenze_do_i2c_byte(0, 1, 0, 0x6a, 0x5e, 0xfa);
+		firenze_do_i2c_byte(0, 1, 0, 0x6a, 0x5a, 0xff);
+		firenze_do_i2c_byte(0, 1, 0, 0x6a, 0x5b, 0xff);
+	}
+	if (!strncmp(label, "C5 ", 3)) {
+		printf("FIRENZE: Fixing power on %s...\n", label);
+		firenze_do_i2c_byte(0, 1, 0, 0x72, 0x5e, 0xfb);
+		firenze_do_i2c_byte(0, 1, 0, 0x72, 0x5b, 0xff);
+	}
+	if (!strncmp(label, "C3 ", 3)) {
+		printf("FIRENZE: Fixing power on %s...\n", label);
+		firenze_do_i2c_byte(0, 1, 0, 0x74, 0x5e, 0xfb);
+		firenze_do_i2c_byte(0, 1, 0, 0x74, 0x5b, 0xff);
+	}
 }
 
 static void firenze_add_pcidev_to_fsp_inventory(struct phb *phb,
@@ -206,17 +493,19 @@ static void firenze_get_slot_info(struct phb *phb, struct pci_device * pd)
 	 *  - Slot entry says pluggable
 	 *  - Aren't an upstream switch that has slot info
 	 */
-	if (!pd || !pd->parent)
-		return;
-	if (pd->bdfn & 7)
+	if (!pd)
 		return;
 	if (pd->dev_type == PCIE_TYPE_ROOT_PORT ||
-	    pd->dev_type == PCIE_TYPE_SWITCH_DNPORT)
+	    pd->dev_type == PCIE_TYPE_SWITCH_DNPORT) {
+		firenze_fixup_pcie_slot_power(pd);
+		return;
+	}
+	if (pd->bdfn & 7)
 		return;
 	if (pd->dev_type == PCIE_TYPE_SWITCH_UPPORT &&
 	    pd->slot_info)
 		return;
-	if (!pd->parent->slot_info)
+	if (!pd->parent || !pd->parent->slot_info)
 		return;
 	if (!pd->parent->slot_info->pluggable)
 		return;
