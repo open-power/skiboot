@@ -33,6 +33,7 @@
 #include <device.h>
 #include <pci.h>
 #include <lpc.h>
+#include <i2c.h>
 #include <chip.h>
 #include <interrupts.h>
 #include <mem_region.h>
@@ -601,6 +602,9 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * all core timebases to the global ChipTOD network
 	 */
 	chiptod_init(master_cpu);
+
+	/* Initialize i2c */
+	p8_i2c_init();
 
 	/*
 	 * We have initialized the basic HW, we can now call into the
