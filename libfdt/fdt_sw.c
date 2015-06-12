@@ -224,7 +224,7 @@ int fdt_property_cells_v(void *fdt, unsigned const char *name, int count,
 	for (i = 0; i < count; i++)
 		buffer[i] = cpu_to_fdt32(va_arg(args, uint32_t));
 
-	return fdt_property(fdt, name, buffer, sizeof(buffer));
+	return fdt_property(fdt, name, buffer, sizeof(uint32_t)*count);
 }
 
 int fdt_property_cells(void *fdt, unsigned const char *name, int count, ...)
