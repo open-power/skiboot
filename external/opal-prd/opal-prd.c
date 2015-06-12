@@ -895,7 +895,7 @@ static int handle_msg_attn(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 
 	rc = call_handle_attns(proc, ipoll_status, ipoll_mask);
 	if (rc) {
-		pr_log(LOG_ERR, "HBRT: enable_attns(%lx,%lx,%lx) failed, rc %d",
+		pr_log(LOG_ERR, "HBRT: handle_attns(%lx,%lx,%lx) failed, rc %d",
 				proc, ipoll_status, ipoll_mask, rc);
 		return -1;
 	}
