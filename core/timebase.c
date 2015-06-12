@@ -23,7 +23,8 @@ void time_wait(unsigned long duration)
 	unsigned long end = mftb() + duration;
 
 	while(tb_compare(mftb(), end) != TB_AAFTERB) {
-		opal_run_pollers();
+		if (this_cpu() == boot_cpu)
+			opal_run_pollers();
 		cpu_relax();
         }
 
