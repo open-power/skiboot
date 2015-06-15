@@ -192,8 +192,10 @@ static bool fsp_surv_msg_rr(u32 cmd_sub_mod, struct fsp_msg *msg)
 	switch (cmd_sub_mod) {
 	case FSP_RESET_START:
 		printf("SURV: Disabling surveillance\n");
+		lock(&surv_lock);
 		fsp_surv_state = false;
 		fsp_surv_ack_pending = false;
+		unlock(&surv_lock);
 		return true;
 	case FSP_RELOAD_COMPLETE:
 		fsp_surv_query();
