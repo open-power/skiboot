@@ -187,9 +187,9 @@ void cpu_process_jobs(void)
 		data = job->data;
 		no_return = job->no_return;
 		unlock(&cpu->job_lock);
+		prlog(PR_TRACE, "running job %s on %x\n", job->name, cpu->pir);
 		if (no_return)
 			free(job);
-		prlog(PR_TRACE, "running job %s on %x\n", job->name, cpu->pir);
 		func(data);
 		lock(&cpu->job_lock);
 		if (!no_return) {
