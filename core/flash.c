@@ -312,7 +312,7 @@ static int64_t opal_flash_op(enum flash_op op, uint64_t id, uint64_t offset,
 	}
 
 	if (size >= flash->size || offset >= flash->size
-			|| offset + size >= flash->size) {
+			|| offset + size > flash->size) {
 		rc = OPAL_PARAMETER;
 		goto err;
 	}
