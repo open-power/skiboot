@@ -38,14 +38,14 @@
  *  These values come from the HW design of the ECC algorithm.
  */
 static uint64_t eccmatrix[] = {
-        0x0000e8423c0f99ff,
-        0x00e8423c0f99ff00,
-        0xe8423c0f99ff0000,
-        0x423c0f99ff0000e8,
-        0x3c0f99ff0000e842,
-        0x0f99ff0000e8423c,
-        0x99ff0000e8423c0f,
-        0xff0000e8423c0f99
+        0x0000e8423c0f99ffull,
+        0x00e8423c0f99ff00ull,
+        0xe8423c0f99ff0000ull,
+        0x423c0f99ff0000e8ull,
+        0x3c0f99ff0000e842ull,
+        0x0f99ff0000e8423cull,
+        0x99ff0000e8423c0full,
+        0xff0000e8423c0f99ull
 };
 
 /**
