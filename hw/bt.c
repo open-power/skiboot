@@ -437,7 +437,7 @@ static int bt_add_ipmi_msg(struct ipmi_msg *ipmi_msg)
 	return 0;
 }
 
-void bt_irq(void)
+static void bt_irq(uint32_t chip_id __unused, uint32_t irq_mask __unused)
 {
 	uint8_t ireg;
 
@@ -504,10 +504,15 @@ static struct ipmi_backend bt_backend = {
 	.dequeue_msg = bt_del_ipmi_msg,
 };
 
+static struct lpc_client bt_lpc_client = {
+	.interrupt = bt_irq,
+};
+
 void bt_init(void)
 {
 	struct dt_node *n;
 	const struct dt_property *prop;
+	uint32_t irq;
 
 	/* We support only one */
 	n = dt_find_compatible_node(dt_root, NULL, "ipmi-bt");
@@ -547,4 +552,9 @@ void bt_init(void)
 	 * point we turn it into a background poller
 	 */
 	schedule_timer(&bt.poller, msecs_to_tb(BT_DEFAULT_POLL_MS));
+
+	irq = dt_prop_get_u32(n, "interrupts");
+	bt_lpc_client.interrupts = LPC_IRQ(irq);
+	lpc_register_client(dt_get_chip_id(n), &bt_lpc_client);
+	prlog(PR_DEBUG, "BT: Using LPC IRQ %d\n", irq);
 }

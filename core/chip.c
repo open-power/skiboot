@@ -95,5 +95,6 @@ void init_chips(void)
 		chip->pcid = dt_prop_get_u32_def(xn, "ibm,proc-chip-id",
 						 0xffffffff);
 		list_head_init(&chip->i2cms);
+		list_head_init(&chip->lpc_clients);
 	};
 }

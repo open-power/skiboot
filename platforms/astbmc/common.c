@@ -25,6 +25,7 @@
 #include <ipmi.h>
 #include <bt.h>
 #include <errorlog.h>
+#include <lpc.h>
 
 #include "astbmc.h"
 
@@ -38,10 +39,9 @@
 #define BT_IO_COUNT	3
 #define BT_LPC_IRQ	10
 
-void astbmc_ext_irq(unsigned int chip_id __unused)
+void astbmc_ext_irq_serirq_cpld(unsigned int chip_id)
 {
-	uart_irq();
-	bt_irq();
+	lpc_all_interrupts(chip_id);
 }
 
 static void astbmc_ipmi_error(struct ipmi_msg *msg)
@@ -180,6 +180,9 @@ static void astbmc_fixup_dt_bt(struct dt_node *lpc)
 
 	/* Mark it as reserved to avoid Linux trying to claim it */
 	dt_add_property_strings(bt, "status", "reserved");
+
+	dt_add_property_cells(bt, "interrupts", BT_LPC_IRQ);
+	dt_add_property_cells(bt, "interrupt-parent", lpc->phandle);
 }
 
 static void astbmc_fixup_dt_uart(struct dt_node *lpc)
@@ -222,14 +225,9 @@ static void astbmc_fixup_dt_uart(struct dt_node *lpc)
 	 */
 	dt_add_property_strings(uart, "device_type", "serial");
 
-	/*
-	 * Add interrupt. This simulates coming from HostBoot which
-	 * does not know our interrupt numbering scheme. Instead, it
-	 * just tells us which chip the interrupt is wired to, it will
-	 * be the PSI "host error" interrupt of that chip. For now we
-	 * assume the same chip as the LPC bus is on.
-	 */
-	dt_add_property_cells(uart, "ibm,irq-chip-id", dt_get_chip_id(lpc));
+	/* Add interrupt */
+	dt_add_property_cells(uart, "interrupts", UART_LPC_IRQ);
+	dt_add_property_cells(uart, "interrupt-parent", lpc->phandle);
 }
 
 static void del_compatible(struct dt_node *node)

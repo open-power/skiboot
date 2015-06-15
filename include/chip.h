@@ -136,6 +136,7 @@ struct proc_chip {
 	struct lock		lpc_lock;
 	uint8_t			lpc_fw_idsel;
 	uint8_t			lpc_fw_rdsz;
+	struct list_head	lpc_clients;
 
 	/* Used by hw/slw.c */
 	uint64_t		slw_base;

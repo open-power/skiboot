@@ -232,7 +232,6 @@ extern void nvram_init(void);
 extern void nvram_read_complete(bool success);
 
 /* UART stuff */
-extern void uart_irq(void);
 extern void uart_setup_linux_passthrough(void);
 extern void uart_setup_opal_console(void);
 

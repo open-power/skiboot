@@ -24,6 +24,9 @@
 #include <errorlog.h>
 #include <opal-api.h>
 
+//#define DBG_IRQ(fmt...) prerror(fmt)
+#define DBG_IRQ(fmt...) do { } while(0)
+
 DEFINE_LOG_ENTRY(OPAL_RC_LPC_READ, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 		 OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,
 		 OPAL_NA, NULL);
@@ -56,14 +59,47 @@ DEFINE_LOG_ENTRY(OPAL_RC_LPC_WRITE, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 
 #define ECCB_TIMEOUT	1000000
 
+/* OPB Master LS registers */
+#define OPB_MASTER_LS_IRQ_STAT	0x50
+#define OPB_MASTER_LS_IRQ_MASK	0x54
+#define OPB_MASTER_LS_IRQ_POL	0x58
+#define   OPB_MASTER_IRQ_LPC	       	0x00000800
+
 /* LPC HC registers */
 #define LPC_HC_FW_SEG_IDSEL	0x24
 #define LPC_HC_FW_RD_ACC_SIZE	0x28
-#define   LPC_HC_FW_RD_1B	0x00000000
-#define   LPC_HC_FW_RD_2B	0x01000000
-#define   LPC_HC_FW_RD_4B	0x02000000
-#define   LPC_HC_FW_RD_16B	0x04000000
-#define   LPC_HC_FW_RD_128B	0x07000000
+#define   LPC_HC_FW_RD_1B		0x00000000
+#define   LPC_HC_FW_RD_2B		0x01000000
+#define   LPC_HC_FW_RD_4B		0x02000000
+#define   LPC_HC_FW_RD_16B		0x04000000
+#define   LPC_HC_FW_RD_128B		0x07000000
+#define LPC_HC_IRQSER_CTRL	0x30
+#define   LPC_HC_IRQSER_EN		0x80000000
+#define   LPC_HC_IRQSER_QMODE		0x40000000
+#define   LPC_HC_IRQSER_START_MASK	0x03000000
+#define   LPC_HC_IRQSER_START_4CLK	0x00000000
+#define   LPC_HC_IRQSER_START_6CLK	0x01000000
+#define   LPC_HC_IRQSER_START_8CLK	0x02000000
+#define LPC_HC_IRQMASK		0x34	/* same bit defs as LPC_HC_IRQSTAT */
+#define LPC_HC_IRQSTAT		0x38
+#define   LPC_HC_IRQ_SERIRQ0		0x80000000 /* all bits down to ... */
+#define   LPC_HC_IRQ_SERIRQ16		0x00008000 /* IRQ16=IOCHK#, IRQ2=SMI# */
+#define   LPC_HC_IRQ_SERIRQ_ALL		0xffff8000
+#define   LPC_HC_IRQ_LRESET		0x00000400
+#define   LPC_HC_IRQ_SYNC_ABNORM_ERR	0x00000080
+#define   LPC_HC_IRQ_SYNC_NORESP_ERR	0x00000040
+#define   LPC_HC_IRQ_SYNC_NORM_ERR	0x00000020
+#define   LPC_HC_IRQ_SYNC_TIMEOUT_ERR	0x00000010
+#define   LPC_HC_IRQ_SYNC_TARG_TAR_ERR	0x00000008
+#define   LPC_HC_IRQ_SYNC_BM_TAR_ERR	0x00000004
+#define   LPC_HC_IRQ_SYNC_BM0_REQ	0x00000002
+#define   LPC_HC_IRQ_SYNC_BM1_REQ	0x00000001
+#define LPC_HC_ERROR_ADDRESS	0x40
+
+struct lpc_client_entry {
+	struct list_node node;
+	const struct lpc_client *clt;
+};
 
 /* Default LPC bus */
 static int32_t lpc_default_chip_id = -1;
@@ -77,6 +113,7 @@ static uint32_t lpc_io_opb_base		= 0xd0010000;
 static uint32_t lpc_mem_opb_base 	= 0xe0000000;
 static uint32_t lpc_fw_opb_base 	= 0xf0000000;
 static uint32_t lpc_reg_opb_base 	= 0xc0012000;
+static uint32_t opb_master_reg_base 	= 0xc0010000;
 
 static int64_t opb_write(struct proc_chip *chip, uint32_t addr, uint32_t data,
 			 uint32_t sz)
@@ -446,9 +483,287 @@ bool lpc_present(void)
 	return lpc_default_chip_id >= 0;
 }
 
-void __attrconst lpc_interrupt(uint32_t chip_id __unused)
+/* OPB Master registers */
+#define OPB_MASTER_LS_IRQ_STAT	0x50
+#define OPB_MASTER_LS_IRQ_MASK	0x54
+#define OPB_MASTER_LS_IRQ_POL	0x58
+#define   OPB_MASTER_IRQ_LPC	       	0x00000800
+
+/* LPC HC registers */
+#define LPC_HC_IRQSER_CTRL	0x30
+#define   LPC_HC_IRQSER_EN		0x80000000
+#define   LPC_HC_IRQSER_QMODE		0x40000000
+#define   LPC_HC_IRQSER_START_MASK	0x03000000
+#define   LPC_HC_IRQSER_START_4CLK	0x00000000
+#define   LPC_HC_IRQSER_START_6CLK	0x01000000
+#define   LPC_HC_IRQSER_START_8CLK	0x02000000
+#define LPC_HC_IRQMASK		0x34	/* same bit defs as LPC_HC_IRQSTAT */
+#define LPC_HC_IRQSTAT		0x38
+#define   LPC_HC_IRQ_SERIRQ0		0x80000000 /* all bits down to ... */
+#define   LPC_HC_IRQ_SERIRQ16		0x00008000 /* IRQ16=IOCHK#, IRQ2=SMI# */
+#define   LPC_HC_IRQ_SERIRQ_ALL		0xffff8000
+#define   LPC_HC_IRQ_LRESET		0x00000400
+#define   LPC_HC_IRQ_SYNC_ABNORM_ERR	0x00000080
+#define   LPC_HC_IRQ_SYNC_NORESP_ERR	0x00000040
+#define   LPC_HC_IRQ_SYNC_NORM_ERR	0x00000020
+#define   LPC_HC_IRQ_SYNC_TIMEOUT_ERR	0x00000010
+#define   LPC_HC_IRQ_SYNC_TARG_TAR_ERR	0x00000008
+#define   LPC_HC_IRQ_SYNC_BM_TAR_ERR	0x00000004
+#define   LPC_HC_IRQ_SYNC_BM0_REQ	0x00000002
+#define   LPC_HC_IRQ_SYNC_BM1_REQ	0x00000001
+#define   LPC_HC_IRQ_BASE_IRQS		(		     \
+	LPC_HC_IRQ_LRESET |				     \
+	LPC_HC_IRQ_SYNC_ABNORM_ERR |			     \
+	LPC_HC_IRQ_SYNC_NORESP_ERR |			     \
+	LPC_HC_IRQ_SYNC_NORM_ERR |			     \
+	LPC_HC_IRQ_SYNC_TIMEOUT_ERR |			     \
+	LPC_HC_IRQ_SYNC_TARG_TAR_ERR |			     \
+	LPC_HC_IRQ_SYNC_BM_TAR_ERR)
+#define LPC_HC_ERROR_ADDRESS	0x40
+
+/* Called with LPC lock held */
+static void lpc_setup_serirq(struct proc_chip *chip)
 {
-	/* Handle the lpc interrupt source (errors etc...) TODO... */
+	struct lpc_client_entry *ent;
+	uint32_t mask = LPC_HC_IRQ_BASE_IRQS;
+	int rc;
+
+	/* Collect serirq enable bits */
+	list_for_each(&chip->lpc_clients, ent, node)
+		mask |= ent->clt->interrupts & LPC_HC_IRQ_SERIRQ_ALL;
+
+	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQMASK, mask, 4);
+	if (rc) {
+		prerror("LPC: Failed to update irq mask\n");
+		return;
+	}
+	DBG_IRQ("LPC: IRQ mask set to 0x%08x\n", mask);
+
+	/* Enable the LPC interrupt in the OPB Master */
+	opb_write(chip, opb_master_reg_base + OPB_MASTER_LS_IRQ_POL, 0, 4);
+	rc = opb_write(chip, opb_master_reg_base + OPB_MASTER_LS_IRQ_MASK,
+		       OPB_MASTER_IRQ_LPC, 4);
+	if (rc)
+		prerror("LPC: Failed to enable IRQs in OPB\n");
+	
+	/* Check whether we should enable serirq */
+	if (mask & LPC_HC_IRQ_SERIRQ_ALL) {
+		rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL,
+			       LPC_HC_IRQSER_EN | LPC_HC_IRQSER_START_4CLK, 4);
+		DBG_IRQ("LPC: SerIRQ enabled\n");
+	} else {
+		rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL,
+			       0, 4);
+		DBG_IRQ("LPC: SerIRQ disabled\n");
+	}
+	if (rc)
+		prerror("LPC: Failed to configure SerIRQ\n");
+	{
+		u32 val;
+		rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_IRQMASK, &val, 4);
+		DBG_IRQ("LPC: MASK READBACK=%x\n", val);
+		rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL, &val, 4);
+		DBG_IRQ("LPC: CTRL READBACK=%x\n", val);
+	}
+}
+
+static void lpc_init_interrupts(struct proc_chip *chip)
+{
+	int rc;
+	
+	/* First mask them all */
+	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
+	if (rc) {
+		prerror("LPC: Failed to init interrutps\n");
+		return;
+	}
+
+	switch(chip->type) {
+	case PROC_CHIP_P8_MURANO:
+	case PROC_CHIP_P8_VENICE:
+		/* On Murano/Venice, there is no SerIRQ, only enable error
+		 * interrupts
+		 */
+		rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQMASK,
+			       LPC_HC_IRQ_BASE_IRQS, 4);
+		if (rc) {
+			prerror("LPC: Failed to set interrupt mask\n");
+			return;
+		}
+		opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL, 0, 4);
+		break;
+	case PROC_CHIP_P8_NAPLES:
+		/* On Naples, we support LPC interrupts, enable them based
+		 * on what clients requests. This will setup the mask and
+		 * enable processing
+		 */
+		lock(&chip->lpc_lock);
+		lpc_setup_serirq(chip);
+		unlock(&chip->lpc_lock);
+		break;
+	default:
+		/* We aren't getting here, are we ? */
+		return;
+	}
+}
+
+static void lpc_dispatch_reset(struct proc_chip *chip)
+{
+	struct lpc_client_entry *ent;
+
+	/* XXX We are going to hit this repeatedly while reset is
+	 * asserted which might be sub-optimal. We should instead
+	 * detect assertion and start a poller that will wait for
+	 * de-assertion. We could notify clients of LPC being
+	 * on/off rather than just reset
+	 */
+
+	prerror("LPC: Got LPC reset !\n");
+
+	/* Collect serirq enable bits */
+	list_for_each(&chip->lpc_clients, ent, node) {
+		if (!ent->clt->reset)
+			continue;
+		unlock(&chip->lpc_lock);
+		ent->clt->reset(chip->id);
+		lock(&chip->lpc_lock);
+	}
+
+	/* Reconfigure serial interrupts */
+	if (chip->type == PROC_CHIP_P8_NAPLES)
+		lpc_setup_serirq(chip);
+}
+
+static void lpc_dispatch_err_irqs(struct proc_chip *chip, uint32_t irqs)
+{
+	int rc;
+	uint32_t err_addr;
+	
+	/* Write back to clear error interrupts, we clear SerIRQ later
+	 * as they are handled as level interrupts
+	 */       
+	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSTAT,
+		       LPC_HC_IRQ_BASE_IRQS, 4);
+	if (rc)
+		prerror("LPC: Failed to clear IRQ error latches !\n");
+
+
+	if (irqs & LPC_HC_IRQ_LRESET)
+		lpc_dispatch_reset(chip);
+	if (irqs & LPC_HC_IRQ_SYNC_ABNORM_ERR)
+		prerror("LPC: Got abnormal SYNC error\n");
+	if (irqs & LPC_HC_IRQ_SYNC_NORESP_ERR)
+		prerror("LPC: Got abnormal SYNC error\n");
+	if (irqs & LPC_HC_IRQ_SYNC_NORM_ERR)
+		prerror("LPC: Got abnormal SYNC error\n");
+	if (irqs & LPC_HC_IRQ_SYNC_TIMEOUT_ERR)
+		prerror("LPC: Got abnormal SYNC error\n");
+	if (irqs & LPC_HC_IRQ_SYNC_TARG_TAR_ERR)
+		prerror("LPC: Got abnormal SYNC error\n");
+	if (irqs & LPC_HC_IRQ_SYNC_BM_TAR_ERR)
+		prerror("LPC: Got abnormal SYNC error\n");
+
+	rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_ERROR_ADDRESS,
+		      &err_addr, 4);
+	if (rc)
+		prerror("LPC: Error reading error address register\n");
+	else
+		prerror("LPC: Error address reg: 0x%08x\n", err_addr);
+}
+
+static void lpc_dispatch_ser_irqs(struct proc_chip *chip, uint32_t irqs,
+				  bool clear_latch)
+{
+	struct lpc_client_entry *ent;
+	uint32_t cirqs;
+	int rc;
+
+	irqs &= LPC_HC_IRQ_SERIRQ_ALL;
+
+	/* Collect serirq enable bits */
+	list_for_each(&chip->lpc_clients, ent, node) {
+		if (!ent->clt->interrupt)
+			continue;
+		cirqs = ent->clt->interrupts & irqs;
+		if (cirqs) {
+			unlock(&chip->lpc_lock);
+			ent->clt->interrupt(chip->id, cirqs);
+			lock(&chip->lpc_lock);
+		}
+	}
+
+	/* Our SerIRQ are level sensitive, we clear the latch after
+	 * we call the handler.
+	 */
+	if (!clear_latch)
+		return;
+
+	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSTAT,
+		       irqs, 4);
+	if (rc)
+		prerror("LPC: Failed to clear SerIRQ latches !\n");
+}
+
+void lpc_interrupt(uint32_t chip_id)
+{
+	struct proc_chip *chip = get_chip(chip_id);
+	uint32_t irqs, opb_irqs;
+	int rc;
+
+	/* No initialized LPC controller on that chip */
+	if (!chip->lpc_xbase)
+		return;
+
+	lock(&chip->lpc_lock);
+
+	/* Grab OPB Master LS interrupt status */
+	rc = opb_read(chip, opb_master_reg_base + OPB_MASTER_LS_IRQ_STAT,
+		      &opb_irqs, 4);
+	if (rc) {
+		prerror("LPC: Failed to read OPB IRQ state\n");
+		goto bail;
+	}
+
+	/* Check if it's an LPC interrupt */
+	if (!(opb_irqs & OPB_MASTER_IRQ_LPC)) {
+		/* Something we don't support ? Ack it anyway... */
+		opb_write(chip, opb_master_reg_base + OPB_MASTER_LS_IRQ_STAT,
+			  opb_irqs, 4);
+		goto bail;
+	}
+
+	/* Handle the lpc interrupt source (errors etc...) */
+	rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_IRQSTAT, &irqs, 4);
+	if (rc) {
+		prerror("LPC: Failed to read LPC IRQ state\n");
+		goto bail;
+	}
+
+	DBG_IRQ("LPC: IRQ on chip 0x%x, irqs=0x%08x\n", chip_id, irqs);
+
+	/* Handle error interrupts */
+	if (irqs & LPC_HC_IRQ_BASE_IRQS)
+		lpc_dispatch_err_irqs(chip, irqs);
+
+	/* Handle SerIRQ interrupts */
+	if (irqs & LPC_HC_IRQ_SERIRQ_ALL)
+		lpc_dispatch_ser_irqs(chip, irqs, true);
+
+	/* Ack it at the OPB level */
+	opb_write(chip, opb_master_reg_base + OPB_MASTER_LS_IRQ_STAT,
+		  opb_irqs, 4);
+ bail:
+	unlock(&chip->lpc_lock);
+}
+
+void lpc_all_interrupts(uint32_t chip_id)
+{
+	struct proc_chip *chip = get_chip(chip_id);
+
+	/* Dispatch all */
+	lock(&chip->lpc_lock);
+	lpc_dispatch_ser_irqs(chip, LPC_HC_IRQ_SERIRQ_ALL, false);
+	unlock(&chip->lpc_lock);
 }
 
 void lpc_init(void)
@@ -476,6 +791,10 @@ void lpc_init(void)
 		printf("LPC: Bus on chip %d PCB_Addr=0x%x\n",
 		       chip->id, chip->lpc_xbase);
 		has_lpc = true;
+
+		lpc_init_interrupts(chip);
+		if (chip->type == PROC_CHIP_P8_NAPLES)
+			dt_add_property(xn, "interrupt-controller", NULL, 0);
 	}
 	if (lpc_default_chip_id >= 0)
 		printf("LPC: Default bus on chip %d\n", lpc_default_chip_id);
@@ -509,4 +828,23 @@ bool lpc_ok(void)
 		return false;
 	chip = get_chip(lpc_default_chip_id);
 	return !lock_held_by_me(&chip->lpc_lock);
+}
+
+void lpc_register_client(uint32_t chip_id,
+			 const struct lpc_client *clt)
+{
+	struct lpc_client_entry *ent;
+	struct proc_chip *chip;
+
+	chip = get_chip(chip_id);
+	assert(chip);
+	ent = malloc(sizeof(*ent));
+	assert(ent);
+	ent->clt = clt;
+	lock(&chip->lpc_lock);
+	list_add(&chip->lpc_clients, &ent->node);
+	/* Re-evaluate ser irqs on Naples */
+	if (chip->type == PROC_CHIP_P8_NAPLES)
+		lpc_setup_serirq(chip);
+	unlock(&chip->lpc_lock);
 }

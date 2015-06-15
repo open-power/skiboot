@@ -20,6 +20,7 @@
 #include <lpc.h>
 #include <console.h>
 #include <opal.h>
+#include <interrupts.h>
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
 #include <libflash/blocklevel.h>
@@ -156,7 +157,7 @@ static void rhesus_init(void)
 	uart_setup_linux_passthrough();
 }
 
-static void rhesus_dt_fixup_uart(struct dt_node *lpc)
+static void rhesus_dt_fixup_uart(struct dt_node *lpc, bool has_irq)
 {
 	/*
 	 * The official OF ISA/LPC binding is a bit odd, it prefixes
@@ -193,14 +194,15 @@ static void rhesus_dt_fixup_uart(struct dt_node *lpc)
 	 */
 	dt_add_property_strings(uart, "device_type", "serial");
 
-	/*
-	 * Add interrupt. This simulates coming from HostBoot which
-	 * does not know our interrupt numbering scheme. Instead, it
-	 * just tells us which chip the interrupt is wired to, it will
-	 * be the PSI "host error" interrupt of that chip. For now we
-	 * assume the same chip as the LPC bus is on.
+	/* Expose the external interrupt if supported
 	 */
-	dt_add_property_cells(uart, "ibm,irq-chip-id", dt_get_chip_id(lpc));
+	if (has_irq) {
+		uint32_t chip_id = dt_get_chip_id(lpc);
+		uint32_t irq = get_psi_interrupt(chip_id) + P8_IRQ_PSI_HOST_ERR;
+		dt_add_property_cells(uart, "interrupts", irq);
+		dt_add_property_cells(uart, "interrupt-parent",
+				      get_ics_phandle());
+	}
 }
 
 /*
@@ -224,7 +226,7 @@ static void rhesus_dt_fixup_rtc(struct dt_node *lpc)
 			      (EC_RTC_BLOCK_SIZE / 128) * 2);
 }
 
-static void rhesus_dt_fixup(void)
+static void rhesus_dt_fixup(bool has_uart_irq)
 {
 	struct dt_node *n, *primary_lpc = NULL;
 
@@ -240,13 +242,14 @@ static void rhesus_dt_fixup(void)
 		return;
 
 	rhesus_dt_fixup_rtc(primary_lpc);
-	rhesus_dt_fixup_uart(primary_lpc);
+	rhesus_dt_fixup_uart(primary_lpc, has_uart_irq);
 }
 
 static bool rhesus_probe(void)
 {
 	const char *model;
 	int rev;
+	bool has_uart_irq = false;
 
 	if (!dt_node_is_compatible(dt_root, "ibm,powernv"))
 		return false;
@@ -264,14 +267,14 @@ static bool rhesus_probe(void)
 		prerror("Rhesus board revision not found !\n");
 
 	/* Add missing bits of device-tree such as the UART */
-	rhesus_dt_fixup();
+	rhesus_dt_fixup(has_uart_irq);
 
 	/*
 	 * Setup UART and use it as console. For now, we
 	 * don't expose the interrupt as we know it's not
 	 * working properly yet
 	 */
-	uart_init(false);
+	uart_init(has_uart_irq);
 
 	return true;
 }

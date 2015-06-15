@@ -25,6 +25,7 @@
 #include <trace.h>
 #include <timebase.h>
 #include <cpu.h>
+#include <chip.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_UART_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_UART,
 		 OPAL_CEC_HARDWARE, OPAL_PREDICTIVE_ERR_GENERAL,
@@ -365,7 +366,7 @@ static void uart_console_poll(void *data __unused)
 	__uart_do_poll(TRACE_UART_CTX_POLL);
 }
 
-void uart_irq(void)
+static void uart_irq(uint32_t chip_id __unused, uint32_t irq_mask __unused)
 {
 	if (!irq_ok) {
 		prlog(PR_DEBUG, "UART: IRQ functional !\n");
@@ -464,12 +465,16 @@ static bool uart_init_hw(unsigned int speed, unsigned int clock)
 	return false;
 }
 
-void uart_init(bool enable_interrupt)
+static struct lpc_client uart_lpc_client = {
+	.interrupt = uart_irq,
+};
+
+void uart_init(bool use_interrupt)
 {
 	const struct dt_property *prop;
 	struct dt_node *n;
 	char *path __unused;
-	uint32_t irqchip, irq;
+	uint32_t chip_id, irq;
 
 	if (!lpc_present())
 		return;
@@ -504,6 +509,7 @@ void uart_init(bool enable_interrupt)
 		dt_add_property_strings(n, "status", "bad");
 		return;
 	}
+	chip_id = dt_get_chip_id(uart_node);
 
 	/*
 	 * Mark LPC used by the console (will mark the relevant
@@ -514,13 +520,16 @@ void uart_init(bool enable_interrupt)
 	/* Install console backend for printf() */
 	set_console(&uart_con_driver);
 
-	/* Setup the interrupts properties since HB couldn't do it */
-	irqchip = dt_prop_get_u32(n, "ibm,irq-chip-id");
-	irq = get_psi_interrupt(irqchip) + P8_IRQ_PSI_HOST_ERR;
-	prlog(PR_DEBUG, "UART: IRQ connected to chip %d, irq# is 0x%x\n", irqchip, irq);
-	has_irq = enable_interrupt;
-	if (has_irq) {
-		dt_add_property_cells(n, "interrupts", irq);
-		dt_add_property_cells(n, "interrupt-parent", get_ics_phandle());
-	}
+	/* On Naples, use the SerIRQ, which Linux will have to share with
+	 * OPAL as we don't really play the cascaded interrupt game at this
+	 * point...
+	 */
+	if (use_interrupt) {
+		irq = dt_prop_get_u32(n, "interrupts");
+		uart_lpc_client.interrupts = LPC_IRQ(irq);
+		lpc_register_client(chip_id, &uart_lpc_client);
+		has_irq = true;
+		prlog(PR_DEBUG, "UART: Using LPC IRQ %d\n", irq);
+	} else
+		has_irq = false;
 }
