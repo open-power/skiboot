@@ -19,11 +19,6 @@ struct tm {
 	int tm_mday;
 	int tm_mon;
 	int tm_year;
-
-	/* unused in skiboot */
-	int tm_wday;
-	int tm_yday;
-	int tm_isdst;
 };
 
 typedef long time_t;
