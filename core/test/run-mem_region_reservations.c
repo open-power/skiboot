@@ -174,7 +174,7 @@ static void check_node_reservations(void)
 
 			assert(!test_regions[i].found);
 			assert(test_regions[i].addr == addr);
-			assert(size = 0x1000);
+			assert(size == 0x1000);
 			test_regions[i].found = true;
 		}
 	}
