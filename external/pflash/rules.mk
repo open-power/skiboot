@@ -1,4 +1,4 @@
-ARCH=$(shell ./get_arch.sh $(CROSS_COMPILE))
+ARCH=$(shell ./get_arch.sh "$(CROSS_COMPILE)")
 
 ifeq ($(ARCH),ARCH_POWERPC)
 ARCH_OBJS = powerpc_io.o sfc-ctrl.o
