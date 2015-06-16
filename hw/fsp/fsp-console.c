@@ -511,7 +511,8 @@ static void fsp_serial_add(int index, u16 rsrc_id, const char *loc_code,
 	}
 
 	ser->rsrc_id = rsrc_id;
-	strncpy(ser->loc_code, loc_code, LOC_CODE_SIZE);
+	memset(ser->loc_code, 0x00, LOC_CODE_SIZE);
+	strncpy(ser->loc_code, loc_code, LOC_CODE_SIZE - 1);
 	ser->available = true;
 	ser->log_port = log_port;
 	unlock(&fsp_con_lock);
