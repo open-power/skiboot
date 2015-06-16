@@ -343,10 +343,9 @@ static int64_t __lpc_write(uint32_t chip_id, enum OpalLPCAddressType addr_type,
 	/* Perform OPB access */
 	rc = opb_write(chip, opb_base + addr, data, sz);
 
-	unlock(&chip->lpc_lock);
-
 	/* XXX Add LPC error handling/recovery */
  bail:
+	unlock(&chip->lpc_lock);
 	return rc;
 }
 
@@ -403,10 +402,9 @@ static int64_t __lpc_read(uint32_t chip_id, enum OpalLPCAddressType addr_type,
 	/* Perform OPB access */
 	rc = opb_read(chip, opb_base + addr, data, sz);
 
-	unlock(&chip->lpc_lock);
-
 	/* XXX Add LPC error handling/recovery */
  bail:
+	unlock(&chip->lpc_lock);
 	return rc;
 }
 
