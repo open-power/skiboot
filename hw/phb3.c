@@ -50,7 +50,7 @@
 /* Enable this to disable error interrupts for debug purposes */
 #undef DISABLE_ERR_INTS
 
-static void phb3_init_hw(struct phb3 *p);
+static void phb3_init_hw(struct phb3 *p, bool first_init);
 
 #define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB%d: " fmt, \
 				      (p)->phb.opal_id, ## a)
@@ -2386,7 +2386,7 @@ static int64_t phb3_sm_complete_reset(struct phb3 *p)
 	case PHB3_STATE_CRESET_REINIT:
 		p->flags &= ~PHB3_AIB_FENCED;
 		p->flags &= ~PHB3_CAPP_RECOVERY;
-		phb3_init_hw(p);
+		phb3_init_hw(p, false);
 
 		p->state = PHB3_STATE_CRESET_FRESET;
 		return phb3_set_sm_timeout(p, msecs_to_tb(100));
@@ -3793,7 +3793,7 @@ static int64_t phb3_fixup_pec_inits(struct phb3 *p)
 	return 0;
 }
 
-static void phb3_init_hw(struct phb3 *p)
+static void phb3_init_hw(struct phb3 *p, bool first_init)
 {
 	uint64_t val;
 
@@ -3905,7 +3905,7 @@ static void phb3_init_hw(struct phb3 *p)
 #endif
 	if (p->rev >= PHB3_REV_MURANO_DD20)
 		val |= 0x0000010000000000;
-	if (p->rev >= PHB3_REV_NAPLES_DD10) {
+	if (first_init && p->rev >= PHB3_REV_NAPLES_DD10) {
 		/* Enable 32-bit bypass support on Naples and tell the OS
 		 * about it
 		 */
@@ -4279,7 +4279,7 @@ static void phb3_create(struct dt_node *np)
 			    p->base_lsi + PHB3_LSI_PCIE_INF, 2);
 #endif
 	/* Get the HW up and running */
-	phb3_init_hw(p);
+	phb3_init_hw(p, true);
 
 	/* Load capp microcode into capp unit */
 	capp_load_ucode(p);
