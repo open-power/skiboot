@@ -695,7 +695,6 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 
 	prerror("OPAL: Trying a CPU re-init with flags: 0x%llx\n", flags);
 
- again:
 	lock(&reinit_lock);
 
 	for (cpu = first_cpu(); cpu; cpu = next_cpu(cpu)) {
@@ -710,7 +709,7 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 				     (cpu->state == cpu_state_os); i++) {
 				unlock(&reinit_lock);
 				time_wait_ms(1);
-				goto again;
+				lock(&reinit_lock);
 			}
 			if (cpu->state == cpu_state_os) {
 				prerror("OPAL: CPU 0x%x not in OPAL !\n", cpu->pir);
