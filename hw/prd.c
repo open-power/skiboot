@@ -113,10 +113,12 @@ static void prd_msg_consumed(void *data)
 		event = EVENT_OCC_RESET;
 		break;
 	default:
-		return;
+		prlog(PR_ERR, "PRD: invalid msg consumed, type: 0x%x\n",
+				msg->hdr.type);
 	}
 
-	events[proc] &= ~event;
+	if (event)
+		events[proc] &= ~event;
 	prd_msg_inuse = false;
 	send_pending_events();
 	unlock(&events_lock);
