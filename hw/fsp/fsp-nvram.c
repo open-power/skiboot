@@ -271,6 +271,8 @@ static bool fsp_nvram_get_size(uint32_t *out_size)
 	int rc, size;
 
 	msg = fsp_mkmsg(FSP_CMD_GET_VNVRAM_SIZE, 0);
+	assert(msg);
+
 	rc = fsp_sync_msg(msg, false);
 	size = msg->resp ? msg->resp->data.words[0] : 0;
 	fsp_freemsg(msg);
