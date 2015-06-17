@@ -348,6 +348,9 @@ struct dt_property *dt_add_property_nstr(struct dt_node *node,
 	struct dt_property *p;
 	char *tmp = zalloc(vlen + 1);
 
+	if (!tmp)
+		return NULL;
+
 	strncpy(tmp, value, vlen);
 	p = dt_add_property(node, name, tmp, strlen(tmp)+1);
 	free(tmp);
