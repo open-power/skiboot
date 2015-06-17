@@ -1799,6 +1799,8 @@ static void fsp_init_links(struct dt_node *fsp_node)
 	struct fsp_iopath *fiop;
 
 	linksprop = dt_find_property(fsp_node, "ibm,psi-links");
+	assert(linksprop);
+
 	index = dt_prop_get_u32(fsp_node, "reg");
 	fsp = fsp_find_by_index(index);
 	if (!fsp) {
