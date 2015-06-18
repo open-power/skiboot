@@ -518,6 +518,11 @@ static void print_help(const char *pname)
 #endif
 	printf("\t-b, --bmc\n");
 	printf("\t\tTarget BMC flash instead of host flash\n\n");
+	printf("\t-S, --side\n");
+	printf("\t\tSide of the flash on which to operate, 0 (default) or 1\n\n");
+	printf("\t-T, --toc\n");
+	printf("\t\tlibffs TOC on which to operate, defaults to 0.\n");
+	printf("\t\tleading 0x is required for interpretation of a hex value\n\n");
 	printf(" Commands:\n");
 	printf("\t-4, --enable-4B\n");
 	printf("\t\tSwitch the flash and controller to 4-bytes address\n");
@@ -549,11 +554,6 @@ static void print_help(const char *pname)
 	printf("\t-t, --tune\n");
 	printf("\t\tJust tune the flash controller & access size\n");
 	printf("\t\t(Implicit for all other operations)\n\n");
-	printf("\t-S, --side\n");
-	printf("\t\tSide of the flash on which to operate, 0 (default) or 1\n\n");
-	printf("\t-T, --toc\n");
-	printf("\t\tlibffs TOC on which to operate, defaults to 0.\n");
-	printf("\t\tleading 0x is required for interpretation of a hex value\n\n");
 	printf("\t-i, --info\n");
 	printf("\t\tDisplay some information about the flash.\n\n");
 	printf("\t-h, --help\n");
