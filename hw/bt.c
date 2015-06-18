@@ -133,12 +133,15 @@ static inline void bt_set_state(enum bt_states next_state)
 	bt.state = next_state;
 }
 
+/* Must be called with bt.lock held */
 static void bt_msg_del(struct bt_msg *bt_msg)
 {
 	list_del(&bt_msg->link);
 	bt.queue_len--;
+	unlock(&bt.lock);
 	ipmi_cmd_done(bt_msg->ipmi_msg.cmd, bt_msg->ipmi_msg.netfn + (1 << 2),
 		      IPMI_TIMEOUT_ERR, &bt_msg->ipmi_msg);
+	lock(&bt.lock);
 }
 
 static void bt_init_interface(void)
@@ -363,10 +366,11 @@ static void bt_poll(struct timer *t __unused, void *data __unused)
 	/* If we can't get the lock assume someone else will notice
 	 * the new message and process it. */
 	lock(&bt.lock);
-	bt_ctrl = bt_inb(BT_CTRL);
 
 	print_debug_queue_info();
 	bt_expire_old_msg();
+
+	bt_ctrl = bt_inb(BT_CTRL);
 
 	/* Is there a response waiting for us? */
 	if (bt.state == BT_STATE_RESP_WAIT &&
