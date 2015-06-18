@@ -207,7 +207,7 @@ static void bt_flush_msg(void)
 static void bt_get_resp(void)
 {
 	int i;
-	struct bt_msg *bt_msg;
+	struct bt_msg *tmp_bt_msg, *bt_msg = NULL;
 	struct ipmi_msg *ipmi_msg;
 	uint8_t resp_len, netfn, seq, cmd;
 	uint8_t cc = IPMI_CC_NO_ERROR;
@@ -236,13 +236,14 @@ static void bt_get_resp(void)
 	cc = bt_inb(BT_HOST2BMC);
 
 	/* Find the corresponding messasge */
-	list_for_each(&bt.msgq, bt_msg, link) {
-		if (bt_msg->seq == seq) {
+	list_for_each(&bt.msgq, tmp_bt_msg, link) {
+		if (tmp_bt_msg->seq == seq) {
+			bt_msg = tmp_bt_msg;
 			break;
 		}
 
 	}
-	if (!bt_msg || (bt_msg->seq != seq)) {
+	if (!bt_msg) {
 		/* A response to a message we no longer care about. */
 		prlog(PR_INFO, "BT: Nobody cared about a response to an BT/IPMI message\n");
 		bt_flush_msg();
