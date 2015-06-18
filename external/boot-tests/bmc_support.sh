@@ -16,7 +16,11 @@ STRIP_CONTROL=0
 
 # How do we SSH/SCP in?
 SSHCMD="sshpass -e ssh -l $SSHUSER -o LogLevel=quiet -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $target";
-REMOTECPCMD="eval rsync -e \"sshpass -e ssh -l $SSHUSER -o LogLevel=quiet -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  \" ";
+
+# remotecp file target target_location
+function remotecp {
+	sshpass -e ssh -o User=$SSHUSER -o LogLevel=quiet -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $2 dd of=$3 < $1;
+}
 
 function is_off {
     return $([ "$($IPMI_COMMAND chassis power status)" = "Chassis Power is off" ]);
@@ -29,7 +33,7 @@ function poweroff {
 }
 
 function flash {
-	$REMOTECPCMD $PNOR $target:/tmp/image.pnor;
+	remotecp $PNOR $target /tmp/image.pnor;
 	if [ "$?" -ne "0" ] ; then
 		error "Couldn't copy firmware image";
 	fi
