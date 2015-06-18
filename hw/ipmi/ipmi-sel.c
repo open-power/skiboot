@@ -69,10 +69,10 @@ static void ipmi_elog_error(struct ipmi_msg *msg)
 	if (msg->cc == IPMI_LOST_ARBITRATION_ERR)
 		/* Retry due to SEL erase */
 		ipmi_queue_msg(msg);
-	else
+	else {
 		opal_elog_complete(msg->user_data, false);
-
-	ipmi_free_msg(msg);
+		ipmi_free_msg(msg);
+	}
 }
 
 /* Goes through the required steps to add a complete eSEL:
