@@ -158,6 +158,9 @@ static void add_icps(void)
 			const struct sppaca_cpu_id *id;
 			id = HDIF_get_idata(paca, SPPACA_IDATA_CPU_ID, &size);
 
+			if (!CHECK_SPPTR(id))
+				continue;
+
 			if (pir != be32_to_cpu(id->pir))
 				continue;
 			ibase = cleanup_addr(be64_to_cpu(id->ibase));
@@ -268,6 +271,9 @@ static bool __paca_parse(void)
 		__be32 *new_prop;
 
 		id = HDIF_get_idata(paca, 2, &size);
+		if (!CHECK_SPPTR(id))
+			continue;
+
 		ve_flags = be32_to_cpu(id->verify_exists_flags);
 		state = (ve_flags & CPU_ID_VERIFY_MASK) >> CPU_ID_VERIFY_SHIFT;
 		switch (state) {
