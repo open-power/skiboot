@@ -52,6 +52,7 @@
 #define SPR_SRR0	0x01a	/* RW: Exception save/restore reg 0 */
 #define SPR_SRR1	0x01b	/* RW: Exception save/restore reg 1 */
 #define SPR_CFAR	0x01c	/* RW: Come From Address Register */
+#define SPR_RPR		0x0ba   /* RW: Relative Priority Register */
 #define SPR_TBRL	0x10c	/* RO: Timebase low */
 #define SPR_TBRU	0x10d	/* RO: Timebase high */
 #define SPR_SPRC	0x114	/* RW: Access to uArch SPRs (ex SCOMC) */

@@ -707,6 +707,9 @@ init_shared_sprs:
 	sync
 	mtspr	SPR_HMEER,%r3
 	isync
+	/* RPR (per-LPAR but let's treat it as replicated for now) */
+	LOAD_IMM64(%r3,0x00000103070F1F3F)
+	mtspr	SPR_RPR,%r3
 9:	blr
 
 .global init_replicated_sprs
