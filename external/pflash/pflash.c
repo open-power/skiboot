@@ -271,6 +271,25 @@ static void erase_range(uint32_t start, uint32_t size, bool will_program)
 	}
 }
 
+static void set_ecc(uint32_t start, uint32_t size)
+{
+	uint32_t i = start + 8;
+	uint8_t ecc = 0;
+
+	printf("About to erase and set ECC bits in region 0x%08x to 0x%08x\n", start, start + size);
+	check_confirm();
+	erase_range(start, size, true);
+
+	printf("Programming ECC bits...\n");
+	progress_init(size);
+	while (i < start + size) {
+		blocklevel_write(bl, i, &ecc, sizeof(ecc));
+		i += 9;
+		progress_tick(i - start);
+	}
+	progress_end();
+}
+
 static void program_file(const char *file, uint32_t start, uint32_t size)
 {
 	int fd, rc;
@@ -554,6 +573,10 @@ static void print_help(const char *pname)
 	printf("\t-t, --tune\n");
 	printf("\t\tJust tune the flash controller & access size\n");
 	printf("\t\t(Implicit for all other operations)\n\n");
+	printf("\t-c --clear\n");
+	printf("\t\tUsed to ECC clear a partition of the flash\n");
+	printf("\t\tMust be used in conjunction with -P. Will erase the\n");
+	printf("\t\tpartition and then set all the ECC bits as they should be\n\n");
 	printf("\t-i, --info\n");
 	printf("\t\tDisplay some information about the flash.\n\n");
 	printf("\t-h, --help\n");
@@ -565,7 +588,7 @@ int main(int argc, char *argv[])
 	const char *pname = argv[0];
 	uint32_t address = 0, read_size = 0, write_size = 0;
 	uint32_t erase_start = 0, erase_size = 0;
-	bool erase = false;
+	bool erase = false, do_clear = false;
 	bool program = false, erase_all = false, info = false, do_read = false;
 	bool enable_4B = false, disable_4B = false, use_lpc = true;
 	bool show_help = false, show_version = false;
@@ -597,10 +620,11 @@ int main(int argc, char *argv[])
 			{"debug",	no_argument,		NULL,	'g'},
 			{"side",	required_argument,	NULL,	'S'},
 			{"toc",		required_argument,	NULL,	'T'},
+			{"clear",   no_argument,        NULL,   'c'}
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "a:s:P:r:43Eep:fdihlvbtgS:T:",
+		c = getopt_long(argc, argv, "a:s:P:r:43Eep:fdihlvbtgS:T:c",
 				long_opts, &oidx);
 		if (c == EOF)
 			break;
@@ -669,6 +693,9 @@ int main(int argc, char *argv[])
 			ffs_toc_seen = true;
 			ffs_toc = strtoul(optarg, NULL, 0);
 			break;
+		case 'c':
+			do_clear = true;
+			break;
 		default:
 			exit(1);
 		}
@@ -678,7 +705,7 @@ int main(int argc, char *argv[])
 	 * also tune them as a side effect
 	 */
 	no_action = !erase && !program && !info && !do_read &&
-		!enable_4B && !disable_4B && !tune;
+		!enable_4B && !disable_4B && !tune && !do_clear;
 
 	/* Nothing to do, if we didn't already, print usage */
 	if (no_action && !show_version)
@@ -733,6 +760,11 @@ int main(int argc, char *argv[])
 	/* If both partition and address specified, error out */
 	if (address && part_name) {
 		fprintf(stderr, "Specify partition or address, not both !\n");
+		exit(1);
+	}
+
+	if (do_clear && !part_name) {
+		fprintf(stderr, "--clear only supported on a partition name\n");
 		exit(1);
 	}
 
@@ -799,13 +831,22 @@ int main(int argc, char *argv[])
 	/* We have a partition, adjust read/write size if needed */
 	if (ffsh && ffs_index >= 0) {
 		uint32_t pstart, pmaxsz, pactsize;
+		bool ecc;
 		int rc;
 
 		rc = ffs_part_info(ffsh, ffs_index, NULL,
-				   &pstart, &pmaxsz, &pactsize, NULL);
+				   &pstart, &pmaxsz, &pactsize, &ecc);
 		if (rc) {
 			fprintf(stderr,"Failed to get partition info\n");
 			exit(1);
+		}
+
+		if (!ecc && do_clear) {
+			fprintf(stderr, "The partition on which to do --clear "
+					"does not have ECC, are you sure?\n");
+			check_confirm();
+			/* Still confirm later on */
+			must_confirm = true;
 		}
 
 		/* Read size is obtained from partition "actual" size */
@@ -873,6 +914,7 @@ int main(int argc, char *argv[])
 		erase_range(erase_start, erase_size, program);
 	if (program)
 		program_file(write_file, address, write_size);
-
+	if (do_clear)
+		set_ecc(address, write_size);
 	return 0;
 }
