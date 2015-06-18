@@ -418,6 +418,7 @@ enum opal_msg_type {
 	OPAL_MSG_HMI_EVT,
 	OPAL_MSG_DPO,
 	OPAL_MSG_PRD,
+	OPAL_MSG_OCC,
 	OPAL_MSG_TYPE_MAX,
 };
 
@@ -885,6 +886,30 @@ struct opal_prd_msg {
 			__be64	chip;
 		} occ_reset;
 	};
+};
+
+#define OCC_RESET			0
+#define OCC_LOAD			1
+#define OCC_THROTTLE			2
+#define OCC_MAX_THROTTLE_STATUS		5
+/*
+ * struct opal_occ_msg:
+ * type: OCC_RESET, OCC_LOAD, OCC_THROTTLE
+ * chip: chip id
+ * throttle status: indicates the reason why OCC may have limited
+ * the max Pstate of the chip.
+ * 0x00 = No throttle
+ * 0x01 = Power Cap
+ * 0x02 = Processor Over Temperature
+ * 0x03 = Power Supply Failure (currently not used)
+ * 0x04 = Over current (currently not used)
+ * 0x05 = OCC Reset (not reliable as some failures will not allow for
+ * OCC to update throttle status)
+ */
+struct opal_occ_msg {
+	__be64 type;
+	__be64 chip;
+	__be64 throttle_status;
 };
 
 /*

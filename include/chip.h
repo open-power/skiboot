@@ -148,6 +148,7 @@ struct proc_chip {
 	uint64_t		homer_size;
 	uint64_t		occ_common_base;
 	uint64_t		occ_common_size;
+	u8			throttle;
 
 	/* Must hold capi_lock to change */
 	u8			capp_phb3_attached_mask;

@@ -168,3 +168,46 @@ struct opal_prd_msg:
 
 Responses from the kernel use the same message format, but are passed
 through the opal_prd_msg call.
+
+OPAL_MSG_OCC
+------------
+
+This is used by OPAL to inform host about OCC events like OCC reset,
+OCC load and throttle status change by OCC which can indicate the
+host the reason for frequency throttling/unthrottling.
+
+#define OCC_RESET			0
+#define OCC_LOAD 			1
+#define OCC_THROTTLE 			2
+#define OCC_MAX_THROTTLE_STATUS		5
+/*
+ * struct opal_occ_msg:
+ * type: OCC_RESET, OCC_LOAD, OCC_THROTTLE
+ * chip: chip id
+ * throttle status: Indicates the reason why OCC may have limited
+ * the max Pstate of the chip.
+ * 0x00 = No throttle
+ * 0x01 = Power Cap
+ * 0x02 = Processor Over Temperature
+ * 0x03 = Power Supply Failure (currently not used)
+ * 0x04 = Over current (currently not used)
+ * 0x05 = OCC Reset (not reliable as some failures will not allow for
+ * OCC to update throttle status)
+ */
+struct opal_occ_msg {
+	__be64 type;
+	__be64 chip;
+	__be64 throttle_status;
+};
+
+Host should read opal_occ_msg.chip and opal_occ_msg.throttle_status
+only when opal_occ_msg.type = OCC_THROTTLE.
+If host receives OCC_THROTTLE after an OCC_RESET then this throttle
+message will have a special meaning which indicates that all the OCCs
+have become active after a reset. In such cases opal_occ_msg.chip and
+opal_occ_msg.throttle_status will be set to 0 and host should not use
+these values.
+
+If opal_occ_msg.type > 2 then host should ignore the message for now,
+new events can be defined for opal_occ_msg.type in the future versions
+of OPAL.

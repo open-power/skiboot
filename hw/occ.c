@@ -24,12 +24,21 @@
 #include <timebase.h>
 #include <hostservices.h>
 #include <errorlog.h>
+#include <opal-api.h>
+#include <opal-msg.h>
 
 /* OCC Communication Area for PStates */
 
 #define P8_HOMER_SAPPHIRE_DATA_OFFSET	0x1F8000
 
 #define MAX_PSTATES 256
+
+#define chip_occ_data(chip) \
+		((struct occ_pstate_table *)(chip->homer_base + \
+				P8_HOMER_SAPPHIRE_DATA_OFFSET))
+
+static bool occ_reset;
+static struct lock occ_lock = LOCK_UNLOCKED;
 
 struct occ_pstate_entry {
 	s8 id;
@@ -302,6 +311,57 @@ static bool cpu_pstates_prepare_core(struct proc_chip *chip, struct cpu_thread *
 	return true;
 }
 
+static void occ_throttle_poll(void *data __unused)
+{
+	struct proc_chip *chip;
+	struct occ_pstate_table *occ_data;
+	struct opal_occ_msg occ_msg;
+	int rc;
+
+	if (!try_lock(&occ_lock))
+		return;
+	if (occ_reset) {
+		int inactive = 0;
+
+		for_each_chip(chip) {
+			occ_data = chip_occ_data(chip);
+			if (occ_data->valid != 1) {
+				inactive = 1;
+				break;
+			}
+		}
+		if (!inactive) {
+			/*
+			 * Queue OCC_THROTTLE with throttle status as 0 to
+			 * indicate all OCCs are active after a reset.
+			 */
+			occ_msg.type = OCC_THROTTLE;
+			occ_msg.chip = 0;
+			occ_msg.throttle_status = 0;
+			rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL, 3,
+					     (uint64_t *)&occ_msg);
+			if (!rc)
+				occ_reset = false;
+		}
+	} else {
+		for_each_chip(chip) {
+			occ_data = chip_occ_data(chip);
+			if ((occ_data->valid == 1) &&
+			    (chip->throttle != occ_data->throttle) &&
+			    (occ_data->throttle <= OCC_MAX_THROTTLE_STATUS)) {
+				occ_msg.type = OCC_THROTTLE;
+				occ_msg.chip = chip->id;
+				occ_msg.throttle_status = occ_data->throttle;
+				rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL,
+						     3, (uint64_t *)&occ_msg);
+				if (!rc)
+					chip->throttle = occ_data->throttle;
+			}
+		}
+	}
+	unlock(&occ_lock);
+}
+
 /* CPU-OCC PState init */
 /* Called after OCC init on P8 */
 void occ_pstates_init(void)
@@ -345,6 +405,11 @@ void occ_pstates_init(void)
 			cpu_pstates_prepare_core(chip, c, pstate_nom);
 		}
 	}
+
+	/* Add opal_poller to poll OCC throttle status of each chip */
+	for_each_chip(chip)
+		chip->throttle = 0;
+	opal_add_poller(occ_throttle_poll, NULL);
 }
 
 struct occ_load_req {
@@ -386,6 +451,14 @@ static void __occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 		prlog(PR_INFO, "OCC: Load: Fallback to preloaded image\n");
 		rc = 0;
 	} else if (!rc) {
+		struct opal_occ_msg occ_msg = { OCC_LOAD, 0, 0 };
+
+		rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL, 3,
+				     (uint64_t *)&occ_msg);
+		if (rc)
+			prlog(PR_INFO, "OCC: Failed to queue message %d\n",
+			      OCC_LOAD);
+
 		/* Success, start OCC */
 		rc = host_services_occ_start();
 	}
@@ -509,6 +582,8 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 		rc = 0;
 	}
 	if (!rc) {
+		struct opal_occ_msg occ_msg = { OCC_RESET, 0, 0 };
+
 		/* Send a single success response for all chips */
 		stat = fsp_mkmsg(FSP_CMD_RESET_OCC_STAT, 2, 0, seq_id);
 		if (stat)
@@ -519,6 +594,27 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 				"OCC: Error %d queueing FSP OCC RESET"
 					" STATUS message\n", rc);
 		}
+		lock(&occ_lock);
+		rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL, 3,
+				     (uint64_t *)&occ_msg);
+		if (rc)
+			prlog(PR_INFO, "OCC: Failed to queue message %d\n",
+			      OCC_RESET);
+		/*
+		 * Set 'valid' byte of chip_occ_data to 0 since OCC
+		 * may not clear this byte on a reset.
+		 * OCC will set the 'valid' byte to 1 when it becomes
+		 * active again.
+		 */
+		for_each_chip(chip) {
+			struct occ_pstate_table *occ_data;
+
+			occ_data = chip_occ_data(chip);
+			occ_data->valid = 0;
+			chip->throttle = 0;
+		}
+		occ_reset = true;
+		unlock(&occ_lock);
 	} else {
 
 		/*
