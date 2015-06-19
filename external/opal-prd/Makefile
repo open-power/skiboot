@@ -16,12 +16,14 @@ ifndef V
         Q_MKDIR=@echo ' MKDIR ' $@;
 endif
 
-OBJS = opal-prd.o thunk.o pnor.o i2c.o module.o \
+OBJS = opal-prd.o thunk.o pnor.o i2c.o module.o version.o \
        blocklevel.o libffs.o libflash.o ecc.o
 
 all: opal-prd
 
 LINKS = ccan
+
+SKIBOOT_VERSION ?= $(shell ../../make_version.sh skiboot)
 
 ifdef KERNEL_DIR
 LINKS += asm/opal-prd.h
@@ -48,6 +50,19 @@ $(OBJS): $(LINKS)
 
 opal-prd: $(OBJS)
 	$(Q_LINK)$(LINK.o) -o $@ $^
+
+version.c: ../../make_version.sh .version
+	@(if [ "a$(SKIBOOT_VERSION)" = "a" ]; then \
+	echo "#error You need to set SKIBOOT_VERSION environment variable" > $@ ;\
+	else \
+	echo "const char version[] = \"$(SKIBOOT_VERSION)\";" ;\
+	fi) > $@
+
+.PHONY: VERSION-always
+.version: VERSION-always
+	@echo $(SKIBOOT_VERSION) > $@.tmp
+	@cmp -s $@ $@.tmp || cp $@.tmp $@
+	@rm -f $@.tmp
 
 test: test/test_pnor
 

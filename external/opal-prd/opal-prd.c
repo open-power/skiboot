@@ -1336,11 +1336,18 @@ static void usage(const char *progname)
 "\t--stdio            log to stdio, instead of syslog\n");
 }
 
+static void print_version(void)
+{
+	extern const char version[];
+	printf("opal-prd %s\n", version);
+}
+
 static struct option opal_diag_options[] = {
 	{"file", required_argument, NULL, 'f'},
 	{"pnor", required_argument, NULL, 'p'},
 	{"debug", no_argument, NULL, 'd'},
 	{"help", no_argument, NULL, 'h'},
+	{"version", no_argument, NULL, 'v'},
 	{"stdio", no_argument, NULL, 's'},
 	{ 0 },
 };
@@ -1400,6 +1407,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'h':
 			usage(argv[0]);
+			return EXIT_SUCCESS;
+		case 'v':
+			print_version();
 			return EXIT_SUCCESS;
 		case '?':
 		default:
