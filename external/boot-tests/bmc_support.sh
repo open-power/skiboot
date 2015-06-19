@@ -33,7 +33,16 @@ function poweroff {
 }
 
 function flash {
-	remotecp $PNOR $target /tmp/image.pnor;
+	if [ ! -z "$PNOR" ]; then
+		remotecp $PNOR $target /tmp/image.pnor;
+	fi
+        if [ "${LID[0]}" != "" ]; then
+		remotecp ${LID[0]} $target /tmp/skiboot.lid;
+	fi
+	if [ "${LID[1]}" != "" ]; then
+		remotecp ${LID[1]} $target /tmp/bootkernel
+	fi
+	
 	if [ "$?" -ne "0" ] ; then
 		error "Couldn't copy firmware image";
 	fi
@@ -49,11 +58,29 @@ function flash {
 	#fi
 
 	# flash it
-	msg "Flashing PNOR"
-	$SSHCMD "/usr/local/bin/pflash -E -f -p /tmp/image.pnor"
-	if [ "$?" -ne "0" ] ; then
-		error "An unexpected pflash error has occured";
+	if [ ! -z "$PNOR" ]; then
+		msg "Flashing full PNOR"
+		$SSHCMD "/usr/local/bin/pflash -E -f -p /tmp/image.pnor"
+		if [ "$?" -ne "0" ] ; then
+			error "An unexpected pflash error has occured";
+		fi
 	fi
+
+	if [ ! -z "${LID[0]}" ] ; then
+		msg "Flashing PAYLOAD PNOR partition"
+		$SSHCMD "/usr/local/bin/pflash -e -f -P PAYLOAD -p /tmp/skiboot.lid"
+		if [ "$?" -ne "0" ] ; then
+                        error "An unexpected pflash error has occured";
+                fi
+	fi
+
+        if [ ! -z "${LID[1]}" ] ; then
+                msg "Flashing BOOTKERNEL PNOR partition"
+                $SSHCMD "/usr/local/bin/pflash -e -f -P BOOTKERNEL -p /tmp/bootkernel"
+                if [ "$?" -ne "0" ] ; then
+                        error "An unexpected pflash error has occured";
+                fi
+        fi
 }
 
 function boot_firmware {

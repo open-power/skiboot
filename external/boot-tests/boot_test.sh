@@ -116,12 +116,12 @@ There are three usage modes.
 1) boot_test.sh -h
      Print this help
 
-2) boot_test.sh [-vdp] -t target -b (fsp|bmc)
+2) boot_test.sh [-vdp] -t target -B -b (fsp|bmc)
      Boot test the target without flashing. Specify the type of machine
      (FSP or BMC) with the -b option.
 
-3) boot_test.sh [-vdp] -t target -P pnor
-   boot_test.sh [-vdp] -t target [-1 lid1] [-2 lid2] [-3 lid3]
+3) boot_test.sh [-vdp] -b bmc -t target -P pnor
+   boot_test.sh [-vdp] -b fsp -t target [-1 lid1] [-2 lid2] [-3 lid3]
 
      Flash the given firmware before boot testing.
 
@@ -141,6 +141,8 @@ Common Options:
   -d makes the script print lots of things (set -vx).
      Only use this for debugging the script: it's highly likely that
      successful booting into Petitboot will not be detected with this option.
+
+  -b BMC type (bmc or fsp).
 EOF
     exit 1;
 }
@@ -165,7 +167,7 @@ PNOR=""
 LID[0]=""
 LID[1]=""
 LID[2]=""
-while getopts "hvdpb:1:2:3:P:t:" OPT; do
+while getopts "hvdpB1:2:3:P:t:b:" OPT; do
     case "$OPT" in
 	v)
 	    V=1;
@@ -176,8 +178,7 @@ while getopts "hvdpb:1:2:3:P:t:" OPT; do
 	d)
 	    set -vx;
 	    ;;
-	b)
-	    method=$OPTARG;
+	B)
 	    bootonly=1;
 	    if [ $firmware_supplied -eq 1 ]; then
 		usage
@@ -186,27 +187,22 @@ while getopts "hvdpb:1:2:3:P:t:" OPT; do
 	p)
 	    powerdown=1;
 	    ;;
+	b)
+	    method=$OPTARG;
+	    ;;
 	1|2|3)
 	    firmware_supplied=1;
-	    if [ \( $bootonly -eq 1 \) -o \( "$method" = "bmc" \) ]; then
-		usage;
-	    fi
 	    if [ ! -e "$OPTARG" ] ; then
 		error "Couldn't stat $OPTARG";
 	    fi
 	    LID[$(expr ${OPT} - 1)]="$OPTARG"
-	    method=fsp
 	    ;;
 	P)
 	    firmware_supplied=1;
-	    if [ \( $bootonly -eq 1 \) -o \( "$method" != "" \) ]; then
-		usage;
-	    fi
 	    if [ ! -e "$OPTARG" ] ; then
 		error "Couldn't stat $OPTARG";
 	    fi
 	    PNOR="$OPTARG"
-	    method=bmc
 	    ;;
 	t)
 	    target=$OPTARG;
