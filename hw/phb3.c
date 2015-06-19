@@ -46,6 +46,7 @@
 #include <capp.h>
 #include <fsp.h>
 #include <chip.h>
+#include <chiptod.h>
 
 /* Enable this to disable error interrupts for debug purposes */
 #undef DISABLE_ERR_INTS
@@ -3350,6 +3351,12 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	phb3_init_capp_errors(p);
 
 	phb3_init_capp_regs(p);
+
+	if (!chiptod_capp_timebase_sync(p->chip_id)) {
+		PHBERR(p, "CAPP: Failed to sync timebase\n");
+		return OPAL_HARDWARE;
+	}
+
 	return OPAL_SUCCESS;
 }
 
@@ -4105,6 +4112,9 @@ static void phb3_add_properties(struct phb3 *p)
 	 * is supported
 	 */
 	dt_add_property_string(np, "ibm,msi-eoi-method", "ioda2");
+
+	/* Indicate to Linux that CAPP timebase sync is supported */
+	dt_add_property_string(np, "ibm,capp-timebase-sync", NULL);
 
 	/* The interrupt maps will be generated in the RC node by the
 	 * PCI code based on the content of this structure:
