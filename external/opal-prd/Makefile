@@ -7,6 +7,8 @@ CPPFLAGS = -I. -I../../include -I../../
 
 prefix = /usr/local/
 sbindir = $(prefix)/sbin
+datadir = $(prefix)/share
+mandir = $(datadir)/man
 
 # Use make V=1 for a verbose build.
 ifndef V
@@ -71,6 +73,7 @@ test/test_pnor: test/test_pnor.o pnor.o libflash/libflash.o libflash/libffs.o
 
 install: all
 	install -D opal-prd $(DESTDIR)$(sbindir)/opal-prd
+	install -D -m 0644 opal-prd.8 $(DESTDIR)$(mandir)/man8/opal-prd.8
 
 clean:
 	$(RM) *.[odsa] opal-prd
