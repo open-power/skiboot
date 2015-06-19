@@ -16,7 +16,8 @@ ifndef V
         Q_MKDIR=@echo ' MKDIR ' $@;
 endif
 
-OBJS = opal-prd.o thunk.o pnor.o i2c.o module.o libffs.o libflash.o ecc.o
+OBJS = opal-prd.o thunk.o pnor.o i2c.o module.o \
+       blocklevel.o libffs.o libflash.o ecc.o
 
 all: opal-prd
 
