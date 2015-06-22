@@ -4,10 +4,10 @@ prefix = /usr/local/
 sbindir = $(prefix)/sbin
 
 CC = $(CROSS_COMPILE)gcc
-CFLAGS = -m64 -Werror -Wall -g2 -ggdb
-LDFLAGS = -m64
+CFLAGS += -m64 -Werror -Wall -g2 -ggdb
+LDFLAGS += -m64
 ASFLAGS = -m64
-CPPFLAGS = -I. -I../../
+CPPFLAGS += -I. -I../../
 
 OBJS = file_flash.o gard.o libflash.o libffs.o ecc.o
 
