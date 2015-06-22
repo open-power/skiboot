@@ -253,39 +253,22 @@ static void sel_occ_reset(uint8_t sensor)
 	prd_occ_reset(chip);
 }
 
-static void dump_sel(struct oem_sel *sel)
-{
-	const int level = PR_DEBUG;
-
-	prlog(level, "\tid %02x%02x\n", sel->id[0], sel->id[1]);
-	prlog(level, "\ttype %02x\n", sel->type);
-	prlog(level, "\tmanuf %02x %02x %02x\n",
-	      sel->manuf_id[0], sel->manuf_id[1], sel->manuf_id[2]);
-	prlog(level, "\ttime %02x %02x %02x %02x\n",
-	      sel->timestamp[0], sel->timestamp[1],
-	      sel->timestamp[2], sel->timestamp[3]);
-	prlog(level, "\tnetfun %02x\n", sel->netfun);
-	prlog(level, "\tcmd %02x\n", sel->cmd);
-	prlog(level, "\tdata %02x %02x %02x %02x\n", sel->data[0],
-	      sel->data[1], sel->data[2], sel->data[3]);
-}
-
 void ipmi_parse_sel(struct ipmi_msg *msg)
 {
 	struct oem_sel sel;
 
-	prlog(PR_INFO, "SEL received (size: %d)\n", msg->resp_size);
 	assert(msg->resp_size <= 16);
 
 	memcpy(&sel, msg->data, msg->resp_size);
-
-	dump_sel(&sel);
 
 	/* We do not process system event records */
 	if (sel.type == SEL_RECORD_TYPE_EVENT) {
 		prlog(PR_INFO, "IPMI: dropping System Event Record SEL\n");
 		return;
 	}
+
+	prlog(PR_DEBUG, "IPMI: SEL received (%d bytes, netfn %d, cmd %d)\n",
+			msg->resp_size, sel.netfun, sel.cmd);
 
 	/* Only accept OEM SEL messages */
 	if (sel.id[0] != SEL_OEM_ID_0 ||
