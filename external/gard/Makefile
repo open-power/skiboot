@@ -2,6 +2,8 @@
 
 prefix = /usr/local/
 sbindir = $(prefix)/sbin
+datadir = $(prefix)/share
+mandir = $(datadir)/man
 
 CC = $(CROSS_COMPILE)gcc
 CFLAGS += -m64 -Werror -Wall -g2 -ggdb
@@ -26,6 +28,7 @@ $(EXE): $(OBJS)
 
 install: all
 	install -D gard $(DESTDIR)$(sbindir)/opal-gard
+	install -D -m 0644 gard.1 $(DESTDIR)$(mandir)/man1/opal-gard.1
 
 clean:
 	rm -f $(OBJS) $(EXE) *.d
