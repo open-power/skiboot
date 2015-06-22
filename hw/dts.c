@@ -272,6 +272,12 @@ enum {
 	SENSOR_DTS_ATTR_TEMP_TRIP
 };
 
+/*
+ * Extract the centaur chip id which was truncated to fit in the
+ * resource identifier field of the sensor handler
+ */
+#define centaur_get_id(rid) (0x80000000 | ((rid) & 0x3ff))
+
 int64_t dts_sensor_read(uint32_t sensor_hndl, uint32_t *sensor_data)
 {
 	uint8_t	attr = sensor_get_attr(sensor_hndl);
@@ -289,12 +295,7 @@ int64_t dts_sensor_read(uint32_t sensor_hndl, uint32_t *sensor_data)
 		rc = dts_read_core_temp(rid, &dts);
 		break;
 	case SENSOR_DTS_MEM_TEMP:
-		/*
-		 * restore centaur chip id which was truncated to fit
-		 * in the sensor handler
-		 */
-		rid |= 0x80000000;
-		rc = dts_read_mem_temp(rid, &dts);
+		rc = dts_read_mem_temp(centaur_get_id(rid), &dts);
 		break;
 	default:
 		rc = OPAL_PARAMETER;
@@ -311,10 +312,29 @@ int64_t dts_sensor_read(uint32_t sensor_hndl, uint32_t *sensor_data)
 	return 0;
 }
 
+/*
+ * We only have two bytes for the resource identifier in the sensor
+ * handler. Let's trunctate the centaur chip id to squeeze it in.
+ *
+ * Centaur chip IDs are using the XSCOM "partID" encoding described in
+ * xscom.h. recap:
+ *
+ *     0b1000.0000.0000.0000.0000.00NN.NCCC.MMMM
+ *     N=Node, C=Chip, M=Memory Channel
+ */
+#define centaur_make_id(cen_id, dimm_id)	\
+	(((chip_id) & 0x3ff) | ((dimm_id) << 10))
+
+#define core_handler(core_id, attr_id)					\
+	sensor_make_handler(SENSOR_DTS_CORE_TEMP | SENSOR_DTS,		\
+			    core_id, attr_id)
+
+#define cen_handler(cen_id, attr_id)					\
+	sensor_make_handler(SENSOR_DTS_MEM_TEMP|SENSOR_DTS,		\
+			    centaur_make_id(chip_id, 0), attr_id)
+
 bool dts_sensor_create_nodes(struct dt_node *sensors)
 {
-	uint8_t sensor_class = SENSOR_DTS_CORE_TEMP|SENSOR_DTS;
-
 	struct proc_chip *chip;
 	struct dt_node *cn;
 	char name[64];
@@ -335,22 +355,18 @@ bool dts_sensor_create_nodes(struct dt_node *sensors)
 
 			snprintf(name, sizeof(name), "core-temp@%x", c->pir);
 
-			handler = sensor_make_handler(sensor_class,
-					c->pir, SENSOR_DTS_ATTR_TEMP_MAX);
+			handler = core_handler(c->pir, SENSOR_DTS_ATTR_TEMP_MAX);
 			node = dt_new(sensors, name);
 			dt_add_property_string(node, "compatible",
 					       "ibm,opal-sensor");
 			dt_add_property_cells(node, "sensor-data", handler);
-			handler = sensor_make_handler(sensor_class,
-					c->pir, SENSOR_DTS_ATTR_TEMP_TRIP);
+			handler = core_handler(c->pir, SENSOR_DTS_ATTR_TEMP_TRIP);
 			dt_add_property_cells(node, "sensor-status", handler);
 			dt_add_property_string(node, "sensor-type", "temp");
 			dt_add_property_cells(node, "ibm,pir", c->pir);
 			dt_add_property_string(node, "label", "Core");
 		}
 	}
-
-	sensor_class = SENSOR_DTS_MEM_TEMP|SENSOR_DTS;
 
 	/*
 	 * sensors/mem-temp@chip for Centaurs
@@ -364,19 +380,13 @@ bool dts_sensor_create_nodes(struct dt_node *sensors)
 
 		snprintf(name, sizeof(name), "mem-temp@%x", chip_id);
 
-		/*
-		 * We only have two bytes for the resource
-		 * identifier. Let's trunctate the centaur chip id
-		 */
-		handler = sensor_make_handler(sensor_class,
-			      chip_id & 0xffff, SENSOR_DTS_ATTR_TEMP_MAX);
+		handler = cen_handler(chip_id, SENSOR_DTS_ATTR_TEMP_MAX);
 		node = dt_new(sensors, name);
 		dt_add_property_string(node, "compatible",
 				       "ibm,opal-sensor");
 		dt_add_property_cells(node, "sensor-data", handler);
 
-		handler = sensor_make_handler(sensor_class,
-				chip_id, SENSOR_DTS_ATTR_TEMP_TRIP);
+		handler = cen_handler(chip_id, SENSOR_DTS_ATTR_TEMP_TRIP);
 		dt_add_property_cells(node, "sensor-status", handler);
 		dt_add_property_string(node, "sensor-type", "temp");
 		dt_add_property_cells(node, "ibm,chip-id", chip_id);
