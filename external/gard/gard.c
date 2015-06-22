@@ -511,7 +511,7 @@ static int do_show(struct gard_ctx *ctx, int argc, char **argv)
 
 static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
 {
-	int largest, rc = 0;
+	int largest = 0, rc = 0;
 	char *buf;
 	struct gard_record null_gard;
 
@@ -533,8 +533,6 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 			return rc;
 		}
 		printf("done\n");
-
-		largest = 0;
 	} else if (be32toh(gard->record_id) == *(uint32_t *)priv) {
 		largest = get_largest_pos(ctx);
 		if (largest < 0 || pos > largest) {

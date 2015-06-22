@@ -707,7 +707,12 @@ static void dump_hbrt_map(struct opal_prd_ctx *ctx)
 		return;
 	}
 
-	ftruncate(fd, 0);
+	rc = ftruncate(fd, 0);
+	if (rc < 0) {
+		pr_log(LOG_NOTICE, "IMAGE: couldn't truncate image %s for writing",
+				dump_name);
+		return;
+	}
 	rc = write(fd, ctx->code_addr, ctx->code_size);
 	close(fd);
 
@@ -772,8 +777,18 @@ static int prd_init_one_range(struct opal_prd_ctx *ctx, const char *path,
 	__be64 *reg;
 	void *buf;
 
-	asprintf(&label_path, "%s/%s/ibm,prd-label", path, dirent->d_name);
-	asprintf(&reg_path, "%s/%s/reg", path, dirent->d_name);
+	rc = asprintf(&label_path, "%s/%s/ibm,prd-label", path, dirent->d_name);
+	if (rc < 0) {
+		pr_log(LOG_ERR, "FW: error creating 'ibm,prd-label' path "
+				"node: %m");
+		return -1;
+	}
+	rc = asprintf(&reg_path, "%s/%s/reg", path, dirent->d_name);
+	if (rc < 0) {
+		pr_log(LOG_ERR, "FW: error creating 'reg' path "
+				" node: %m");
+		return -1;
+	}
 
 	reg = NULL;
 	label = NULL;
@@ -823,9 +838,16 @@ static int prd_init_ranges(struct opal_prd_ctx *ctx)
 	struct dirent *dirent;
 	char *path;
 	DIR *dir;
-	int rc = -1;
+	int rc;
 
-	asprintf(&path, "%s/reserved-memory", devicetree_base);
+	rc = asprintf(&path, "%s/reserved-memory", devicetree_base);
+	if (rc < 0) {
+		pr_log(LOG_ERR, "FW: error creating 'reserved-memory' path "
+				"node: %m");
+		return -1;
+	}
+
+	rc = -1;
 
 	dir = opendir(path);
 	if (!dir) {

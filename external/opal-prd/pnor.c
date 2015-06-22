@@ -139,7 +139,12 @@ static int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
 			goto out;
 		}
 
-		read(fd, buf, pnor->erasesize);
+		rc = read(fd, buf, pnor->erasesize);
+		if (rc < 0) {
+			pr_log(LOG_ERR, "PNOR: read(0x%x bytes) failed: %m",
+					pnor->erasesize);
+			goto out;
+		}
 	}
 
 	if (end_waste)  {
@@ -154,7 +159,12 @@ static int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
 			goto out;
 		}
 
-		read(fd, buf + write_len - pnor->erasesize, pnor->erasesize);
+		rc = read(fd, buf + write_len - pnor->erasesize, pnor->erasesize);
+		if (rc < 0) {
+			pr_log(LOG_ERR, "PNOR: read(0x%x bytes) failed: %m",
+					pnor->erasesize);
+			goto out;
+		}
 	}
 
 	/* Put data in the correct spot */
