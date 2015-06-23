@@ -59,6 +59,8 @@ struct proc_chip *next_chip(struct proc_chip *chip)
 
 struct proc_chip *get_chip(uint32_t chip_id)
 {
+	if (chip_id >= MAX_CHIPS)
+		return NULL;
 	return chips[chip_id];
 }
 
