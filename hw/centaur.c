@@ -34,14 +34,6 @@
  * machine checks happening inside Sapphire which we don't at the
  * moment.
  */
-struct centaur_chip {
-	bool		valid;
-	uint8_t		ec_level;
-	uint32_t	fsi_master_chip_id;
-	uint32_t	fsi_master_port;
-	uint32_t	fsi_master_engine;	
-	struct lock	lock;
-};
 
 /* Is that correct ? */
 #define MAX_CENTAURS_PER_CHIP	8
@@ -120,7 +112,7 @@ static int64_t centaur_fsiscom_read(struct centaur_chip *centaur, uint32_t pcb_a
 	return OPAL_SUCCESS;
 }
 
-static struct centaur_chip *centaur_get(uint32_t part_id)
+struct centaur_chip *get_centaur(uint32_t part_id)
 {
 	uint32_t hchip_id, mchan;
 	struct proc_chip *hchip;
@@ -189,7 +181,7 @@ static int64_t centaur_fsiscom_write(struct centaur_chip *centaur, uint32_t pcb_
 
 int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val)
 {
-	struct centaur_chip *centaur = centaur_get(id);
+	struct centaur_chip *centaur = get_centaur(id);
 	int64_t rc;
 
 	if (!centaur)
@@ -204,7 +196,7 @@ int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val)
 
 int64_t centaur_xscom_write(uint32_t id, uint64_t pcb_addr, uint64_t val)
 {
-	struct centaur_chip *centaur = centaur_get(id);
+	struct centaur_chip *centaur = get_centaur(id);
 	int64_t rc;
 
 	if (!centaur)

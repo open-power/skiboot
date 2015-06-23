@@ -17,8 +17,25 @@
 #ifndef __CENTAUR_H
 #define __CENTAUR_H
 
+#include <stdint.h>
+#include <lock.h>
+
+#include <ccan/list/list.h>
+
+struct centaur_chip {
+	bool			valid;
+	uint8_t			ec_level;
+	uint32_t		fsi_master_chip_id;
+	uint32_t		fsi_master_port;
+	uint32_t		fsi_master_engine;
+	struct lock		lock;
+};
+
+
 extern int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val) __warn_unused_result;
 extern int64_t centaur_xscom_write(uint32_t id, uint64_t pcb_addr, uint64_t val) __warn_unused_result;
 extern void centaur_init(void);
+
+extern struct centaur_chip *get_centaur(uint32_t part_id);
 
 #endif /* __CENTAUR_H */
