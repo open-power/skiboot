@@ -340,6 +340,8 @@ void cpu_remove_node(const struct cpu_thread *t)
 		if (!dt_has_node_property(i, "device_type", "cpu"))
 			continue;
 		p = dt_find_property(i, "ibm,pir");
+		if (!p)
+			continue;
 		if (dt_property_get_cell(p, 0) == t->pir) {
 			dt_free(i);
 			return;
