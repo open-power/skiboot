@@ -29,6 +29,10 @@ struct blocklevel_range {
 	int total_prot;
 };
 
+enum blocklevel_flags {
+	WRITE_NEED_ERASE = 1,
+};
+
 /*
  * libffs may be used with different backends, all should provide these for
  * libflash to get the information it needs
@@ -45,6 +49,7 @@ struct blocklevel_device {
 	 * Keep the erase mask so that blocklevel_erase() can do sanity checking
 	 */
 	uint32_t erase_mask;
+	enum blocklevel_flags flags;
 
 	struct blocklevel_range ecc_prot;
 };
