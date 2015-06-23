@@ -25,6 +25,7 @@
 struct centaur_chip {
 	bool			valid;
 	uint8_t			ec_level;
+	uint32_t		part_id;
 	uint32_t		fsi_master_chip_id;
 	uint32_t		fsi_master_port;
 	uint32_t		fsi_master_engine;

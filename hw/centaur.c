@@ -59,6 +59,9 @@
 #define SCAC_CONFIG_CLR		0x020115d0
 #define SCAC_ENABLE_MSK		PPC_BIT(0)
 
+#define cent_log(__lev, __c, __fmt, ...)				\
+	prlog(__lev, "CENTAUR %x: " __fmt, __c->part_id, ##__VA_ARGS__)
+
 static int64_t centaur_fsiscom_complete(struct centaur_chip *centaur)
 {
 	int64_t rc;
@@ -67,17 +70,49 @@ static int64_t centaur_fsiscom_complete(struct centaur_chip *centaur)
 	rc = mfsi_read(centaur->fsi_master_chip_id, centaur->fsi_master_engine,
 		       centaur->fsi_master_port, FSI_STATUS_REG, &stat);
 	if (rc) {
-		/* XXX Improve logging */
-		prerror("CENTAUR: MFSI read error %lld reading STAT\n", rc);
+		cent_log(PR_ERR, centaur, "MFSI read error %lld reading STAT\n", rc);
 		return rc;
 	}
 	if ((stat & (FSI_STATUS_ABORT | FSI_STATUS_ERRORS)) == 0)
 		return OPAL_SUCCESS;
 
-	prerror("CENTAUR: Remote FSI error, stat=0x%08x\n", stat);
+	cent_log(PR_ERR, centaur, "Remote FSI SCOM error, status=0x%08x\n", stat);
 
-	/* XXX Handle recovery */
+	/* All 1's ? Assume it's gone */
+	if (stat == 0xffffffffu) {
+		cent_log(PR_ERR, centaur, "Chip appears to be dead !\n");
+		centaur->valid = false;
+		
+		/* Here, hostboot grabs a pile of FFDC from the FSI layer,
+		 * we could do that too ...
+		 */
+		return OPAL_HARDWARE;
+	}
 
+	/* Here HB prints the GPx registers which I believe are only
+	 * in the host (FSI master). We skip that for now, we don't have
+	 * a good API to them
+	 */
+
+	/* Recovery sequence from HostBoot fsiscom.C
+	 *  if SCOM fails and FSI Master displays "MasterTimeOut"
+         *     then 7,6  <covered by FSI driver>
+         *  else if SCOM fails and FSI2PIB Status shows PIB abort
+         *     then just perform unit reset (6) and wait 1 ms
+         *  else (PIB_abort='0' but PIB error is unequal 0)
+         *     then just perform unit reset (6) (wait not needed).
+	 *
+	 * Note: Waiting 1ms inside OPAL is a BIG NO NO !!! We have
+	 * no choice but doing it at the moment but that will have
+	 * to be fixed one way or another, possibly by returning some
+	 * kind of busy status until the delay is expired.
+	 */
+	rc = mfsi_write(centaur->fsi_master_chip_id, centaur->fsi_master_engine,
+			centaur->fsi_master_port, FSI_ENG_RESET_REG, 0);
+	if (rc) {
+		cent_log(PR_ERR, centaur, "MFSI write error %lld resetting SCOM engine\n",
+			 rc);
+	}
 	return OPAL_HARDWARE;
 }
 
@@ -90,8 +125,7 @@ static int64_t centaur_fsiscom_read(struct centaur_chip *centaur, uint32_t pcb_a
 	rc = mfsi_write(centaur->fsi_master_chip_id, centaur->fsi_master_engine,
 			centaur->fsi_master_port, FSI_CMD_REG, pcb_addr | FSI_CMD_RD);
 	if (rc) {
-		/* XXX Improve logging */
-		prerror("CENTAUR: MFSI write error %lld writing CMD\n", rc);
+		cent_log(PR_ERR, centaur, "MFSI write error %lld writing CMD\n", rc);
 		return rc;
 	}
 
@@ -102,21 +136,46 @@ static int64_t centaur_fsiscom_read(struct centaur_chip *centaur, uint32_t pcb_a
 	rc = mfsi_read(centaur->fsi_master_chip_id, centaur->fsi_master_engine,
 		       centaur->fsi_master_port, FSI_DATA0_REG, &data0);
 	if (rc) {
-		/* XXX Improve logging */
-		prerror("CENTAUR: MFSI read error %lld reading DATA0\n", rc);
+		cent_log(PR_ERR, centaur, "MFSI read error %lld reading DATA0\n", rc);
 		return rc;
 	}
 	rc = mfsi_read(centaur->fsi_master_chip_id, centaur->fsi_master_engine,
 		       centaur->fsi_master_port, FSI_DATA1_REG, &data1);
 	if (rc) {
-		/* XXX Improve logging */
-		prerror("CENTAUR: MFSI read error %lld readking DATA1\n", rc);
+		cent_log(PR_ERR, centaur, "MFSI read error %lld readking DATA1\n", rc);
 		return rc;
 	}
 
 	*val = (((uint64_t)data0) << 32) | data1;
 
 	return OPAL_SUCCESS;
+}
+
+static int64_t centaur_fsiscom_write(struct centaur_chip *centaur, uint32_t pcb_addr,
+				     uint64_t val)
+{
+	int64_t rc;
+
+	rc = mfsi_write(centaur->fsi_master_chip_id, centaur->fsi_master_engine,
+			centaur->fsi_master_port, FSI_DATA0_REG, hi32(val));
+	if (rc) {
+		cent_log(PR_ERR, centaur, "MFSI write error %lld writing DATA0\n", rc);
+		return rc;
+	}
+	rc = mfsi_write(centaur->fsi_master_chip_id, centaur->fsi_master_engine,
+			centaur->fsi_master_port, FSI_DATA1_REG, lo32(val));
+	if (rc) {
+		cent_log(PR_ERR, centaur, "MFSI write error %lld writing DATA1\n", rc);
+		return rc;
+	}
+	rc = mfsi_write(centaur->fsi_master_chip_id, centaur->fsi_master_engine,
+			centaur->fsi_master_port, FSI_CMD_REG, pcb_addr | FSI_CMD_WR);
+	if (rc) {
+		cent_log(PR_ERR, centaur, "MFSI write error %lld writing CMD\n", rc);
+		return rc;
+	}
+
+	return centaur_fsiscom_complete(centaur);
 }
 
 struct centaur_chip *get_centaur(uint32_t part_id)
@@ -156,36 +215,6 @@ struct centaur_chip *get_centaur(uint32_t part_id)
 	return centaur;
 }
 
-static int64_t centaur_fsiscom_write(struct centaur_chip *centaur, uint32_t pcb_addr,
-				     uint64_t val)
-{
-	int64_t rc;
-
-	rc = mfsi_write(centaur->fsi_master_chip_id, centaur->fsi_master_engine,
-			centaur->fsi_master_port, FSI_DATA0_REG, hi32(val));
-	if (rc) {
-		/* XXX Improve logging */
-		prerror("CENTAUR: MFSI write error %lld writing DATA0\n", rc);
-		return rc;
-	}
-	rc = mfsi_write(centaur->fsi_master_chip_id, centaur->fsi_master_engine,
-			centaur->fsi_master_port, FSI_DATA1_REG, lo32(val));
-	if (rc) {
-		/* XXX Improve logging */
-		prerror("CENTAUR: MFSI write error %lld writing DATA1\n", rc);
-		return rc;
-	}
-	rc = mfsi_write(centaur->fsi_master_chip_id, centaur->fsi_master_engine,
-			centaur->fsi_master_port, FSI_CMD_REG, pcb_addr | FSI_CMD_WR);
-	if (rc) {
-		/* XXX Improve logging */
-		prerror("CENTAUR: MFSI write error %lld writing CMD\n", rc);
-		return rc;
-	}
-
-	return centaur_fsiscom_complete(centaur);
-}
-
 int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val)
 {
 	struct centaur_chip *centaur = get_centaur(id);
@@ -223,8 +252,9 @@ static bool centaur_check_id(struct centaur_chip *centaur)
 
 	rc = centaur_fsiscom_read(centaur, 0xf000f, &val);
 	if (rc) {
-		prerror("CENTAUR:   FSISCOM error %lld reading ID register\n",
-			rc);
+		cent_log(PR_ERR, centaur,
+			 "   FSISCOM error %lld reading ID register\n",
+			 rc);
 		return false;
 	}
 
@@ -233,7 +263,8 @@ static bool centaur_check_id(struct centaur_chip *centaur)
 
 	/* Identify chip */
 	if ((val & 0xff) != 0xe9) {
-		prerror("CENTAUR:   CFAM ID 0x%02x is not a Centaur !\n",
+		cent_log(PR_ERR, centaur,
+			 "   CFAM ID 0x%02x is not a Centaur !\n",
 			(unsigned int)(val & 0xff));
 		return false;
 	}
@@ -287,6 +318,7 @@ static bool centaur_add(uint32_t part_id, uint32_t mchip, uint32_t meng,
 		prerror("CENTAUR:   Duplicate centaur !\n");
 		return false;
 	}
+	centaur->part_id = part_id;
 	centaur->fsi_master_chip_id = mchip;
 	centaur->fsi_master_port = mport;
 	centaur->fsi_master_engine = meng ? MFSI_cMFSI1 : MFSI_cMFSI0;
@@ -295,7 +327,7 @@ static bool centaur_add(uint32_t part_id, uint32_t mchip, uint32_t meng,
 	if (!centaur_check_id(centaur))
 		return false;
 
-	printf("CENTAUR:   ChipID 0x%x [DD%x.%x]\n", part_id,
+	cent_log(PR_INFO, centaur, "Found DD%x.%x chip\n",
 		       centaur->ec_level >> 4,
 		       centaur->ec_level & 0xf);
 
@@ -343,7 +375,7 @@ int64_t centaur_enable_sensor_cache(uint32_t part_id)
 
 	lock(&centaur->lock);
 	if (centaur->scache_disable_count == 0) {
-		prerror("CENTAUR: Cache count going negative !\n");
+		cent_log(PR_ERR, centaur, "Cache count going negative !\n");
 		backtrace();
 		goto bail;
 	}
