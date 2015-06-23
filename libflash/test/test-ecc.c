@@ -389,7 +389,7 @@ int main(void)
 	printf("Testing bitflip recovery\n");
 	for (i = 0; i < 64; i++) {
 		ret_memcpy = memcpy_from_ecc(&dst, &ecc_data[i], 8);
-		if (dst != 0xffffffffffffffff || ret_memcpy != GD) {
+		if (dst != 0xffffffffffffffff || ret_memcpy) {
 			ERR("ECC code didn't correct bad bit %d in 0x%016lx\n", 63 - i, be64toh(ecc_data[i].data));
 			exit(1);
 		}
@@ -412,7 +412,7 @@ int main(void)
 	/* Test a large memcpy */
 	printf("Testing a large(ish) memcpy_from_ecc()\n");
 	ret_memcpy = memcpy_from_ecc(buf, ecc_data, NUM_ECC_ROWS * sizeof(*buf));
-	if (ret_memcpy != GD) {
+	if (ret_memcpy) {
 		ERR("ECC Couldn't memcpy entire buffer\n");
 		exit(1);
 	}
@@ -436,14 +436,14 @@ int main(void)
 
 	/* Test a memcpy to add ecc data */
 	printf("Testing a large(ish) memcpy_to_ecc()\n");
-	ret_buf = malloc(ECC_BUFFER_SIZE(NUM_ECC_ROWS * sizeof(*buf)));
+	ret_buf = malloc(ecc_buffer_size(NUM_ECC_ROWS * sizeof(*buf)));
 	if (!buf) {
 		ERR("malloc #2 failed during ecc test\n");
 		exit(1);
 	}
 
 	ret_memcpy = memcpy_to_ecc(ret_buf, buf, NUM_ECC_ROWS * sizeof(*buf));
-	if (ret_memcpy != GD) {
+	if (ret_memcpy) {
 		ERR("ECC Couldn't memcpy entire buffer\n");
 		exit(1);
 	}
@@ -466,20 +466,20 @@ int main(void)
 	printf("ECC tests pass\n");
 
 	printf("ECC test error conditions\n");
-	if (memcpy_to_ecc(ret_buf, buf, 7) != UE) {
+	if (memcpy_to_ecc(ret_buf, buf, 7) == 0) {
 		ERR("memcpy_to_ecc didn't detect bad size 7\n");
 		exit(1);
 	}
 
-	if (memcpy_to_ecc(ret_buf, buf, 15) != UE) {
+	if (memcpy_to_ecc(ret_buf, buf, 15) == 0) {
 		ERR("memcpy_to_ecc didn't detect bad size 15\n");
 		exit(1);
 	}
-	if (memcpy_from_ecc(buf, ret_buf, 7) != UE) {
+	if (memcpy_from_ecc(buf, ret_buf, 7) == 0) {
 		ERR("memcpy_from_ecc didn't detect bad size 7\n");
 		exit(1);
 	}
-	if (memcpy_from_ecc(buf, ret_buf, 15) != UE) {
+	if (memcpy_from_ecc(buf, ret_buf, 15) == 0) {
 		ERR("memcpy_from_ecc didn't detect bad size 15\n");
 		exit(1);
 	}

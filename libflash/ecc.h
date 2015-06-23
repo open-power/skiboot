@@ -22,29 +22,14 @@
 #include <stdint.h>
 #include <ccan/endian/endian.h>
 
-/* Bit field identifiers for syndrome calculations. */
-enum eccbitfields
-{
-        GD = 0xff,      //< Good, ECC matches.
-        UE = 0xfe,      //< Uncorrectable.
-        E0 = 71,        //< Error in ECC bit 0
-        E1 = 70,        //< Error in ECC bit 1
-        E2 = 69,        //< Error in ECC bit 2
-        E3 = 68,        //< Error in ECC bit 3
-        E4 = 67,        //< Error in ECC bit 4
-        E5 = 66,        //< Error in ECC bit 5
-        E6 = 65,        //< Error in ECC bit 6
-        E7 = 64         //< Error in ECC bit 7
-};
-
 struct ecc64 {
 	beint64_t data;
 	uint8_t ecc;
 } __attribute__((__packed__));
 
-extern uint8_t memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len);
+extern int memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len);
 
-extern uint8_t memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint32_t len);
+extern int memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint32_t len);
 
 /*
  * Calculate the size of a buffer if ECC is added
@@ -56,9 +41,26 @@ extern uint8_t memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint32_t le
 #define ALIGN_UP(_v, _a)	(((_v) + (_a) - 1) & ~((_a) - 1))
 #endif
 
-#define ECC_SIZE(len) (ALIGN_UP((len), 8) >> 3)
-#define ECC_BUFFER_SIZE(len) (ALIGN_UP((len), 8) + ECC_SIZE(len))
-#define ECC_BUFFER_SIZE_CHECK(len) ((len) % 9)
-#define BUFFER_SIZE_MINUS_ECC(len) ((len) * 8 / 9)
+#define BYTES_PER_ECC 8
+
+static inline uint32_t ecc_size(uint32_t len)
+{
+	return ALIGN_UP(len, BYTES_PER_ECC) >> 3;
+}
+
+static inline uint32_t ecc_buffer_size(uint32_t len)
+{
+	return ALIGN_UP(len, BYTES_PER_ECC) + ecc_size(len);
+}
+
+static inline int ecc_buffer_size_check(uint32_t len)
+{
+	return len % (BYTES_PER_ECC + 1);
+}
+
+static inline uint32_t ecc_buffer_size_minus_ecc(uint32_t len)
+{
+	return len * BYTES_PER_ECC / (BYTES_PER_ECC + 1);
+}
 
 #endif

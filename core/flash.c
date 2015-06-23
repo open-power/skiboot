@@ -418,7 +418,7 @@ static int flash_find_subpartition(struct blocklevel_device *bl, uint32_t subid,
 	/* Get raw partition size without ECC */
 	partsize = *total_size;
 	if (ecc)
-		partsize = BUFFER_SIZE_MINUS_ECC(*total_size);
+		partsize = ecc_buffer_size_minus_ecc(*total_size);
 
 	/* Get the TOC */
 	rc = flash_read_corrected(bl, *start, header,
@@ -483,8 +483,8 @@ static int flash_find_subpartition(struct blocklevel_device *bl, uint32_t subid,
 		*start += offset;
 		*total_size = size;
 		if (ecc) {
-			*start += ECC_SIZE(offset);
-			*total_size += ECC_SIZE(size);
+			*start += ecc_size(offset);
+			*total_size += ecc_size(size);
 		}
 		rc = 0;
 		goto end;
@@ -577,12 +577,12 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 	/* Work out what the final size of buffer will be without ECC */
 	size = part_size;
 	if (ecc) {
-		if ECC_BUFFER_SIZE_CHECK(part_size) {
+		if (ecc_buffer_size_check(part_size)) {
 			prerror("FLASH: %s image invalid size for ECC %d\n",
 				name, part_size);
 			goto out_free_ffs;
 		}
-		size = BUFFER_SIZE_MINUS_ECC(part_size);
+		size = ecc_buffer_size_minus_ecc(part_size);
 	}
 
 	if (size > *len) {
