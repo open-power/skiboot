@@ -60,6 +60,9 @@ int blocklevel_erase(struct blocklevel_device *bl, uint32_t pos, uint32_t len);
 int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_t *total_size,
 		uint32_t *erase_granule);
 
+/* Convienience functions */
+int blocklevel_smart_write(struct blocklevel_device *bl, uint32_t pos, const void *buf, uint32_t len);
+
 /* Implemented in software at this level */
 int blocklevel_ecc_protect(struct blocklevel_device *bl, uint32_t start, uint32_t len);
 

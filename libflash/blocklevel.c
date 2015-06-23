@@ -158,6 +158,77 @@ int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_
 	return rc;
 }
 
+int blocklevel_smart_write(struct blocklevel_device *bl, uint32_t pos, const void *buf, uint32_t len)
+{
+	uint32_t erase_size;
+	const void *write_buf = buf;
+	void *write_buf_start = NULL;
+	void *erase_buf;
+	int rc = 0;
+
+	if (!write_buf || !bl) {
+		errno = EINVAL;
+		return FLASH_ERR_PARM_ERROR;
+	}
+
+	if (!(bl->flags & WRITE_NEED_ERASE))
+		return blocklevel_write(bl, pos, buf, len);
+
+	rc = blocklevel_get_info(bl, NULL, NULL, &erase_size);
+	if (rc)
+		return rc;
+
+	if (ecc_protected(bl, pos, len)) {
+		len = ecc_buffer_size(len);
+
+		write_buf_start = malloc(len);
+		if (!write_buf_start) {
+			errno = ENOMEM;
+			return FLASH_ERR_MALLOC_FAILED;
+		}
+
+		if (memcpy_to_ecc(write_buf_start, buf, ecc_buffer_size_minus_ecc(len))) {
+			free(write_buf_start);
+			errno = EBADF;
+			return FLASH_ERR_ECC_INVALID;
+		}
+		write_buf = write_buf_start;
+	}
+
+	erase_buf = malloc(erase_size);
+	if (!erase_buf) {
+		errno = ENOMEM;
+		rc = FLASH_ERR_MALLOC_FAILED;
+		goto out;
+	}
+
+	while (len > 0) {
+		uint32_t erase_block = pos & ~(erase_size - 1);
+		uint32_t block_offset = pos & (erase_size - 1);
+		uint32_t size = erase_size > len ? len : erase_size;
+
+		rc = bl->read(bl, erase_block, erase_buf, erase_size);
+		if (rc)
+			goto out;
+
+		if (memcmp(erase_buf + block_offset, write_buf, size) != 0) {
+			memcpy(erase_buf + block_offset, write_buf, size);
+			rc = bl->write(bl, erase_block, erase_buf + block_offset, size);
+			if (rc)
+				goto out;
+		}
+
+		len -= size;
+		pos += size;
+		write_buf += size;
+	}
+
+out:
+	free(write_buf_start);
+	free(erase_buf);
+	return rc;
+}
+
 static int insert_bl_prot_range(struct blocklevel_range *ranges, struct bl_prot_range range)
 {
 	struct bl_prot_range *new_ranges;
