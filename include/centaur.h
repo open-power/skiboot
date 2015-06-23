@@ -28,9 +28,13 @@ struct centaur_chip {
 	uint32_t		fsi_master_chip_id;
 	uint32_t		fsi_master_port;
 	uint32_t		fsi_master_engine;
+	uint32_t		scache_disable_count;
+	bool			scache_was_enabled;
 	struct lock		lock;
 };
 
+extern int64_t centaur_disable_sensor_cache(uint32_t part_id);
+extern int64_t centaur_enable_sensor_cache(uint32_t part_id);
 
 extern int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val) __warn_unused_result;
 extern int64_t centaur_xscom_write(uint32_t id, uint64_t pcb_addr, uint64_t val) __warn_unused_result;

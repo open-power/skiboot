@@ -21,6 +21,7 @@
 #include <centaur.h>
 #include <lock.h>
 #include <fsi-master.h>
+#include <timebase.h>
 
 /*
  * Centaur chip IDs are using the XSCOM "partID" encoding
@@ -51,6 +52,12 @@
 #define FSI_STATUS_REG		0x101c
 #define   FSI_STATUS_ABORT	0x00100000
 #define   FSI_STATUS_ERRORS	0x00007000
+
+/* Some Centaur XSCOMs we care about */
+#define SCAC_CONFIG_REG		0x020115ce
+#define SCAC_CONFIG_SET		0x020115cf
+#define SCAC_CONFIG_CLR		0x020115d0
+#define SCAC_ENABLE_MSK		PPC_BIT(0)
 
 static int64_t centaur_fsiscom_complete(struct centaur_chip *centaur)
 {
@@ -294,6 +301,58 @@ static bool centaur_add(uint32_t part_id, uint32_t mchip, uint32_t meng,
 
 	centaur->valid = true;
 	return true;
+}
+
+/* Returns how long to wait for logic to stop in TB ticks or a negative
+ * value on error
+ */
+int64_t centaur_disable_sensor_cache(uint32_t part_id)
+{
+	struct centaur_chip *centaur = get_centaur(part_id);
+	int64_t rc = 0;
+	uint64_t ctrl;
+
+	if (!centaur)
+		return false;
+
+	lock(&centaur->lock);
+	centaur->scache_disable_count++;
+	if (centaur->scache_disable_count == 1) {
+		centaur->scache_was_enabled = false;
+		rc = centaur_fsiscom_read(centaur, SCAC_CONFIG_REG, &ctrl);
+		if (rc)
+			goto bail;
+		centaur->scache_was_enabled = !!(ctrl & SCAC_ENABLE_MSK);
+		rc = centaur_fsiscom_write(centaur, SCAC_CONFIG_CLR, SCAC_ENABLE_MSK);
+		if (rc)
+			goto bail;
+		rc = msecs_to_tb(30);
+	}
+ bail:
+	unlock(&centaur->lock);
+	return rc;
+}
+
+int64_t centaur_enable_sensor_cache(uint32_t part_id)
+{
+	struct centaur_chip *centaur = get_centaur(part_id);
+	int64_t rc = 0;
+
+	if (!centaur)
+		return false;
+
+	lock(&centaur->lock);
+	if (centaur->scache_disable_count == 0) {
+		prerror("CENTAUR: Cache count going negative !\n");
+		backtrace();
+		goto bail;
+	}
+	centaur->scache_disable_count--;
+	if (centaur->scache_disable_count == 0 && centaur->scache_was_enabled)
+		rc = centaur_fsiscom_write(centaur, SCAC_CONFIG_SET, SCAC_ENABLE_MSK);
+ bail:
+	unlock(&centaur->lock);
+	return rc;
 }
 
 void centaur_init(void)
