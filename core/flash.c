@@ -261,7 +261,7 @@ int flash_register(struct blocklevel_device *bl, bool is_system_flash)
 		return OPAL_RESOURCE;
 	}
 
-	rc = ffs_init(0, flash->size, bl, &ffs);
+	rc = ffs_init(0, flash->size, bl, &ffs, 0);
 	if (rc) {
 		prlog(PR_WARNING, "FLASH: No ffs info; "
 				"using raw device only\n");
@@ -541,7 +541,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_unlock;
 	}
 
-	rc = ffs_init(0, flash->size, flash->bl, &ffs);
+	rc = ffs_init(0, flash->size, flash->bl, &ffs, 0);
 	if (rc) {
 		prerror("FLASH: Can't open ffs handle\n");
 		goto out_unlock;

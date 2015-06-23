@@ -38,7 +38,7 @@ struct ffs_handle;
 /* Init */
 
 int ffs_init(uint32_t offset, uint32_t max_size,
-		struct blocklevel_device *bl, struct ffs_handle **ffs);
+		struct blocklevel_device *bl, struct ffs_handle **ffs, int mark_ecc);
 
 /* ffs_open_image is Linux only as it uses lseek, which skiboot does not
  * implement */
