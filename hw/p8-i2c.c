@@ -866,7 +866,8 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 		DBG("Disabling OCC cache...\n");
 		rc = centaur_disable_sensor_cache(master->chip_id);
 		if (rc < 0) {
-			log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: Failed "
+			log_simple_error(&e_info(OPAL_RC_I2C_START_REQ),
+					 "I2C: Failed "
 					 "to disable the sensor cache\n");
 			return rc;
 		}
@@ -1225,7 +1226,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	struct list_head *chip_list;
 	uint64_t ex_stat;
 	static bool irq_printed;
-	int rc;
+	int64_t rc;
 
 	master = zalloc(sizeof(*master));
 	if (!master) {
@@ -1254,6 +1255,10 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 		struct centaur_chip *centaur = get_centaur(master->chip_id);
 		assert(centaur);
 		chip_list = &centaur->i2cms;
+
+		/* Detect bad device-tree from HostBoot giving us bogus
+		 * i2c masters
+		 */
 		if (master->engine_id > 0) {
 			prlog(PR_ERR, "I2C: Skipping Centaur Master #1\n");
 			free(master);
@@ -1272,11 +1277,24 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	prlog(PR_INFO, "I2C: Chip %08x Eng. %d\n",
 	      master->chip_id, master->engine_id);
 
+	/* Disable OCC cache during inits */
+	if (master->type == I2C_CENTAUR) {
+		rc = centaur_disable_sensor_cache(master->chip_id);
+		if (rc < 0) {
+			log_simple_error(&e_info(OPAL_RC_I2C_INIT), "I2C: "
+					 "Error %lld disabling sensor cache\n",
+					 rc);
+			/* Ignore error and move on ... */
+		} else
+			time_wait(rc);
+	}
 	rc = xscom_read(master->chip_id, master->xscom_base +
 			I2C_EXTD_STAT_REG, &ex_stat);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_I2C_INIT), "I2C: "
 				 "Failed to read EXTD_STAT_REG\n");
+		if (master->type == I2C_CENTAUR)
+			centaur_enable_sensor_cache(master->chip_id);
 		free(master);
 		return;
 	}
@@ -1294,6 +1312,12 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 
 	/* Program the watermark register */
 	rc = p8_i2c_prog_watermark(master);
+
+	/* Re-enable the sensor cache, we aren't touching HW anymore */
+	if (master->type == I2C_CENTAUR)
+		centaur_enable_sensor_cache(master->chip_id);
+
+	/* Handle errors from p8_i2c_prog_watermark */
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_I2C_INIT),
 				 "I2C: Failed to program the "
