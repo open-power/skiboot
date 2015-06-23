@@ -28,7 +28,7 @@ $(EXE): $(OBJS)
 
 install: all
 	install -D gard $(DESTDIR)$(sbindir)/opal-gard
-	install -D -m 0644 gard.1 $(DESTDIR)$(mandir)/man1/opal-gard.1
+	install -D -m 0644 opal-gard.1 $(DESTDIR)$(mandir)/man1/opal-gard.1
 
 clean:
 	rm -f $(OBJS) $(EXE) *.d
