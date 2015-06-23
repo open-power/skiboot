@@ -79,6 +79,7 @@
 
 struct dt_node;
 struct centaur_chip;
+struct mfsi;
 
 /* Chip type */
 enum proc_chip_type {
@@ -162,6 +163,9 @@ struct proc_chip {
 
 	/* Used by hw/psi.c */
 	struct psi		*psi;
+
+	/* Used by hw/fsi-master.c */
+	struct mfsi		*fsi_masters;
 };
 
 extern uint32_t pir_to_chip_id(uint32_t pir);
