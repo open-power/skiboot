@@ -1850,7 +1850,7 @@ static int64_t p7ioc_map_pe_dma_window(struct phb *phb, uint16_t pe_number,
 	uint64_t dma_window_size;
 	uint64_t *cache_lo, *cache_hi;
 
-	if (pe_number > 127 || window_id > 255 || tce_levels != 1)
+	if (pe_number > 127 || window_id > 127 || tce_levels != 1)
 		return OPAL_PARAMETER;
 	cache_lo = &p->tve_lo_cache[window_id];
         cache_hi = &p->tve_hi_cache[window_id];
