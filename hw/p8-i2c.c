@@ -390,6 +390,7 @@ static void p8_i2c_complete_request(struct p8_i2c_master *master,
 	cancel_timer_async(&master->timeout);
 	list_del(&req->link);
 	master->state = state_idle;
+	req->result = ret;
 
 	/* Schedule re-enabling of sensor cache */
 	if (master->occ_cache_dis)
