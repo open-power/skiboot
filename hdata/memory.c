@@ -69,7 +69,7 @@ static struct dt_node *find_shared(struct dt_node *root, u16 id, u64 start, u64 
 
 	for (i = dt_first(root); i; i = dt_next(root, i)) {
 		__be64 reg[2];
-		const struct dt_property *shared, *type;
+		const struct dt_property *shared, *type, *region;
 
 		type = dt_find_property(i, "device_type");
 		if (!type || strcmp(type->prop, "memory") != 0)
@@ -79,7 +79,10 @@ static struct dt_node *find_shared(struct dt_node *root, u16 id, u64 start, u64 
 		if (!shared || fdt32_to_cpu(*(u32 *)shared->prop) != id)
 			continue;
 
-		memcpy(reg, dt_find_property(i, "reg")->prop, sizeof(reg));
+		region = dt_find_property(i, "reg");
+		if (!region)
+			continue;
+		memcpy(reg, region->prop, sizeof(reg));
 		if (be64_to_cpu(reg[0]) == start && be64_to_cpu(reg[1]) == len)
 			break;
 	}
