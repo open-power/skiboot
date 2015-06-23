@@ -27,6 +27,7 @@
 #include <timer.h>
 #include <opal-msg.h>
 #include <errorlog.h>
+#include <centaur.h>
 /* XXX SRC's will be moved to errorlog.h and then remove fsp-elog.h */
 #include <fsp-elog.h>
 
@@ -51,6 +52,11 @@ DEFINE_LOG_ENTRY(OPAL_RC_I2C_RESET, OPAL_INPUT_OUTPUT_ERR_EVT, OPAL_I2C,
 #define I2C_TIMEOUT_IRQ_MS		1	/* 1ms/byte timeout */
 #define I2C_TIMEOUT_POLL_MS		4000	/* 4s/byte timeout */
 #endif
+
+/* How long to keep the sensor cache disabled after an access
+ * in milliseconds
+ */
+#define SENSOR_CACHE_EN_DELAY 10
 
 #define USEC_PER_SEC		1000000
 #define USEC_PER_MSEC		1000
@@ -183,8 +189,10 @@ struct p8_i2c_master {
 	uint8_t			obuf[4];	/* Offset buffer */
 	uint32_t		bytes_sent;
 	bool			irq_ok;		/* Interrupt working ? */
+	bool			occ_cache_dis;  /* I have disabled the cache */
 	enum request_state {
 		state_idle,
+		state_occache_dis,
 		state_offset,
 		state_data,
 		state_error,
@@ -194,6 +202,7 @@ struct p8_i2c_master {
 	struct timer		poller;
 	struct timer		timeout;
 	struct timer		recovery;
+	struct timer		sensor_cache;
 	uint8_t			recovery_pass;
 	struct list_node	link;
 };
@@ -272,9 +281,15 @@ static void p8_i2c_print_debug_info(struct p8_i2c_master_port *port,
 			 estat, intr);
 }
 
-static bool p8_i2c_has_irqs(void)
+static bool p8_i2c_has_irqs(struct p8_i2c_master *master)
 {
-	struct proc_chip *chip = next_chip(NULL);
+	struct proc_chip *chip;
+
+	/* Centaur I2C doesn't have interrupts */
+	if (master->type == I2C_CENTAUR)
+		return false;
+
+	chip = get_chip(master->chip_id);
 
 	/* The i2c interrurpt was only added to Murano DD2.1 and Venice
 	 * DD2.0. When operating without interrupts, we need to bump the
@@ -375,6 +390,12 @@ static void p8_i2c_complete_request(struct p8_i2c_master *master,
 	cancel_timer_async(&master->timeout);
 	list_del(&req->link);
 	master->state = state_idle;
+
+	/* Schedule re-enabling of sensor cache */
+	if (master->occ_cache_dis)
+		schedule_timer(&master->sensor_cache,
+			       msecs_to_tb(SENSOR_CACHE_EN_DELAY));
+
 	unlock(&master->lock);
 	if (req->completion)
 		req->completion(ret, req);
@@ -831,13 +852,33 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	struct p8_i2c_request *request =
 		container_of(req, struct p8_i2c_request, req);
 	uint64_t cmd, now;
-	int rc, tbytes;
+	int64_t rc, tbytes;
 
 	DBG("Starting req %d len=%d addr=%02x (offset=%x)\n",
 	    req->op, req->rw_len, req->dev_addr, req->offset);
 
 	/* Get port */
 	port = container_of(req->bus, struct p8_i2c_master_port, bus);
+
+	/* Check if we need to disable the OCC cache first */
+	if (master->type == I2C_CENTAUR && !master->occ_cache_dis) {
+		DBG("Disabling OCC cache...\n");
+		rc = centaur_disable_sensor_cache(master->chip_id);
+		if (rc < 0) {
+			log_simple_error(&e_info(OPAL_RC_I2C_START_REQ), "I2C: Failed "
+					 "to disable the sensor cache\n");
+			return rc;
+		}
+		master->occ_cache_dis = true;
+
+		/* Do we need to wait ? */
+		if (rc > 0) {
+			DBG("Waiting %lld\n", rc);
+			master->state = state_occache_dis;
+			schedule_timer(&master->recovery, rc);
+			return 0;
+		}
+	}
 
 	/* Convert the offset if needed */
 	if (req->offset_bytes) {
@@ -1056,9 +1097,36 @@ static void p8_i2c_recover(struct timer *t __unused, void *data)
 	struct p8_i2c_master *master = data;
 
 	lock(&master->lock);
-	assert(master->state == state_recovery);
+	assert(master->state == state_recovery || master->state == state_occache_dis);
 	master->state = state_idle;
+
+	/* We may or may not still have work pending, re-enable the sensor cache
+	 * immediately if we don't (we just waited the recovery time so there is
+	 * little point waiting longer).
+	 */
+	if (master->occ_cache_dis && list_empty(&master->req_list)) {
+		DBG("Re-enabling OCC cache after recovery\n");
+		centaur_enable_sensor_cache(master->chip_id);
+		master->occ_cache_dis = false;
+	}
+
+	/* Re-check for new work */
 	p8_i2c_check_work(master);
+	unlock(&master->lock);
+}
+
+static void p8_i2c_enable_scache(struct timer *t __unused, void *data)
+{
+	struct p8_i2c_master *master = data;
+
+	lock(&master->lock);
+
+	/* Check if we are still idle */
+	if (master->state == state_idle && master->occ_cache_dis) {
+		DBG("Re-enabling OCC cache\n");
+		centaur_enable_sensor_cache(master->chip_id);
+		master->occ_cache_dis = false;
+	}
 	unlock(&master->lock);
 }
 
@@ -1153,15 +1221,10 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	uint32_t lb_freq, count, max_bus_speed;
 	struct dt_node *i2cm_port;
 	struct p8_i2c_master *master;
-	struct proc_chip *chip;
+	struct list_head *chip_list;
 	uint64_t ex_stat;
 	static bool irq_printed;
 	int rc;
-
-	if (type == I2C_CENTAUR) {
-		/* Not supported yet ! No interrupt, possibly diff reg layout... */
-		return;
-	}
 
 	master = zalloc(sizeof(*master));
 	if (!master) {
@@ -1186,11 +1249,24 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	master->chip_id = dt_get_chip_id(i2cm);
 	master->engine_id = dt_prop_get_u32(i2cm, "chip-engine#");
 	master->xscom_base = dt_get_address(i2cm, 0, NULL);
-	chip = get_chip(master->chip_id);
-	assert(chip);
+	if (master->type == I2C_CENTAUR) {
+		struct centaur_chip *centaur = get_centaur(master->chip_id);
+		assert(centaur);
+		chip_list = &centaur->i2cms;
+		if (master->engine_id > 0) {
+			prlog(PR_ERR, "I2C: Skipping Centaur Master #1\n");
+			free(master);
+			return;
+		}
+	} else {
+		struct proc_chip *chip = get_chip(master->chip_id);
+		assert(chip);
+		chip_list = &chip->i2cms;
+	}
 	init_timer(&master->timeout, p8_i2c_timeout, master);
 	init_timer(&master->poller, p8_i2c_poll, master);
 	init_timer(&master->recovery, p8_i2c_recover, master);
+	init_timer(&master->sensor_cache, p8_i2c_enable_scache, master);
 
 	prlog(PR_INFO, "I2C: Chip %08x Eng. %d\n",
 	      master->chip_id, master->engine_id);
@@ -1208,7 +1284,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	list_head_init(&master->req_list);
 
 	/* Check if interrupt is usable */
-	master->irq_ok = p8_i2c_has_irqs();
+	master->irq_ok = p8_i2c_has_irqs(master);
 	if (!irq_printed) {
 		irq_printed = true;
 		prlog(PR_INFO, "I2C: Interrupts %sfunctional\n",
@@ -1239,7 +1315,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	}
 
 	/* Add master to chip's list */
-	list_add_tail(&chip->i2cms, &master->link);
+	list_add_tail(chip_list, &master->link);
 	max_bus_speed = 0;
 
 	dt_for_each_child(i2cm, i2cm_port) {

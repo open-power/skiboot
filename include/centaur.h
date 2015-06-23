@@ -31,6 +31,9 @@ struct centaur_chip {
 	uint32_t		scache_disable_count;
 	bool			scache_was_enabled;
 	struct lock		lock;
+
+	/* Used by hw/p8-i2c.c */
+	struct list_head	i2cms;
 };
 
 extern int64_t centaur_disable_sensor_cache(uint32_t part_id);
