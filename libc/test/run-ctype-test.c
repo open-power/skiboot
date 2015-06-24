@@ -31,3 +31,27 @@
 #include "../ctype/tolower.c"
 #include "../ctype/toupper.c"
 
+int skiboot_isdigit(int ch);
+int skiboot_isprint(int ch);
+int skiboot_isspace(int ch);
+int skiboot_isxdigit(int ch);
+
+int skiboot_isdigit(int ch)
+{
+	return isdigit(ch);
+}
+
+int skiboot_isprint(int ch)
+{
+	return isprint(ch);
+}
+
+int skiboot_isspace(int ch)
+{
+	return isspace(ch);
+}
+
+int skiboot_isxdigit(int ch)
+{
+	return isxdigit(ch);
+}
