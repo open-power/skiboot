@@ -1791,7 +1791,7 @@ static int64_t phb3_set_pe(struct phb *phb,
 			for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++)
 				p->rte_cache[idx] = pe_num;
 		} else {
-			memset(p->rte_cache, 0xff, RTT_TABLE_SIZE);
+			memset(p->rte_cache, 0, RTT_TABLE_SIZE);
 		}
 		memcpy((void *)p->tbl_rtt, p->rte_cache, RTT_TABLE_SIZE);
 		out_be64(p->regs + PHB_RTC_INVALIDATE,
@@ -1801,7 +1801,7 @@ static int64_t phb3_set_pe(struct phb *phb,
 		for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++, rte++) {
 			if ((idx & mask) != val)
 				continue;
-			p->rte_cache[idx] = (action ? pe_num : 0xffff);
+			p->rte_cache[idx] = (action ? pe_num : 0);
 			*rte = p->rte_cache[idx];
 
 			/*
