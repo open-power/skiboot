@@ -20,14 +20,9 @@
 
 int main(void)
 {
-	char *nvram_image = malloc(0x100000);
+	char *nvram_image;
 	size_t sz;
 	struct chrp_nvram_hdr *h;
-
-	assert(nvram_format(nvram_image, 0x100000) == 0);
-	assert(nvram_check(nvram_image, 0x100000) == 0);
-
-	free(nvram_image);
 
 	/* 1024 bytes is too small for our NVRAM */
 	nvram_image = malloc(1024);
@@ -57,6 +52,8 @@ int main(void)
 	assert(nvram_check(nvram_image, sz)==0);
 	assert(nvram_image[sz-13]==0);
 	assert(nvram_image[sz-14]==1);
+	h = (struct chrp_nvram_hdr*)(&nvram_image[NVRAM_SIZE_COMMON + NVRAM_SIZE_FW_PRIV]);
+	assert(memcmp(h->name, "wwwwwwwwwwww", 12)==0);
 	free(nvram_image);
 
 	/* 128k NVRAM check */
