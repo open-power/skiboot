@@ -28,9 +28,6 @@
 /* maximum number of error event to hold until linux consumes it. */
 #define MERR_MAX_RECORD		1024
 
-/* FSP response status */
-#define FSP_RESP_STATUS_GENERIC_FAILURE		0xfe
-
 struct fsp_mem_err_node {
 	struct list_node list;
 	struct OpalMemoryErrorData data;
@@ -68,6 +65,7 @@ static bool send_response_to_fsp(u32 cmd_sub_mod)
 	if (rsp)
 		rc = fsp_queue_msg(rsp, fsp_freemsg);
 	if (rc) {
+		fsp_freemsg(rsp);
 		/* XXX Generate error logs */
 		prerror("Error %d queueing FSP memory error reply\n", rc);
 		return false;
@@ -193,19 +191,15 @@ static bool is_resilience_event_exist(u64 paddr)
 static bool handle_memory_resilience(u32 cmd_sub_mod, u64 paddr)
 {
 	int rc = 0;
-	u8 err = 0;
 	struct OpalMemoryErrorData mem_err_evt;
 
 	memset(&mem_err_evt, 0, sizeof(struct OpalMemoryErrorData));
 	/* Check arguments */
 	if (paddr == 0) {
 		prerror("memory resilience: Invalid real address.\n");
-		err = FSP_RESP_STATUS_GENERIC_FAILURE;
+		return send_response_to_fsp(FSP_RSP_MEM_RES |
+					    FSP_STATUS_GENERIC_ERROR);
 	}
-
-	/* If we had an error, send response to fsp and return */
-	if (err)
-		return send_response_to_fsp(FSP_RSP_MEM_RES | err);
 
 	/* Check if event already exist for same address. */
 	if (is_resilience_event_exist(paddr))
@@ -302,7 +296,7 @@ static bool handle_memory_deallocation(u64 paddr_start, u64 paddr_end)
 	if ((paddr_start == 0) || (paddr_end == 0)) {
 		prerror("memory deallocation: Invalid "
 			"starting/ending real address.\n");
-		err = FSP_RESP_STATUS_GENERIC_FAILURE;
+		err = FSP_STATUS_GENERIC_ERROR;
 	}
 
 	/* If we had an error, send response to fsp and return */
