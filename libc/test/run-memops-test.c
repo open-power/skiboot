@@ -44,6 +44,7 @@
 #include <stdlib.h>
 
 int test_memset(char* buf, int c, size_t s);
+int test_memchr(const void *ptr, int c, size_t n, void* expected);
 
 int test_memset(char* buf, int c, size_t s)
 {
@@ -56,4 +57,9 @@ int test_memset(char* buf, int c, size_t s)
 			r = -1;
 
 	return r;
+}
+
+int test_memchr(const void *ptr, int c, size_t n, void* expected)
+{
+	return(expected == memchr(ptr, c, n));
 }

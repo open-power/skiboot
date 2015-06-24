@@ -22,6 +22,7 @@
 #include <stdio.h>
 
 int test_memset(char* buf, int c, size_t s);
+int test_memchr(const void *ptr, int c, size_t n, void* expected);
 
 int main(void)
 {
@@ -38,6 +39,12 @@ int main(void)
 
 	buf = malloc(1024);
 	assert(test_memset(buf, 0, 1024) == 0);
+	free(buf);
+
+	buf = malloc(20);
+	strncpy(buf, "Hello World!", 20);
+	assert(test_memchr(buf, 'o', strlen(buf), buf+4));
+	assert(test_memchr(buf, 'a', strlen(buf), NULL));
 	free(buf);
 
 	return 0;
