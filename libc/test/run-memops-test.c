@@ -49,6 +49,7 @@ int test_memcmp(const void *ptr1, const void *ptr2, size_t n, int expected);
 int test_strcmp(const void *ptr1, const void *ptr2, int expected);
 int test_strchr(const char *s, int c, char *expected);
 int test_strcasecmp(const char *s1, const char *s2, int expected);
+int test_strncasecmp(const char *s1, const char *s2, size_t n, int expected);
 
 int test_memset(char* buf, int c, size_t s)
 {
@@ -86,4 +87,9 @@ int test_strchr(const char *s, int c, char *expected)
 int test_strcasecmp(const char *s1, const char *s2, int expected)
 {
 	return(expected == strcasecmp(s1, s2));
+}
+
+int test_strncasecmp(const char *s1, const char *s2, size_t n, int expected)
+{
+	return(expected == strncasecmp(s1, s2, n));
 }

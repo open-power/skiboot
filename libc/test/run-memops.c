@@ -27,6 +27,7 @@ int test_memcmp(const void *ptr1, const void *ptr2, size_t n, int expected);
 int test_strcmp(const void *ptr1, const void *ptr2, int expected);
 int test_strchr(const char *s, int c, char *expected);
 int test_strcasecmp(const char *s1, const char *s2, int expected);
+int test_strncasecmp(const char *s1, const char *s2, size_t n, int expected);
 
 int main(void)
 {
@@ -65,6 +66,16 @@ int main(void)
 	assert(test_strcasecmp(buf, "HELLO WORLD!", 0));
 	assert(test_strcasecmp(buf, "IELLO world!", -1));
 	assert(test_strcasecmp(buf, "HeLLo WOrlc!", 1));
+
+	assert(test_strncasecmp(buf, "Hello World!", strlen(buf), 0));
+	assert(test_strncasecmp(buf, "HELLO WORLD!", strlen(buf), 0));
+	assert(test_strncasecmp(buf, "IELLO world!", strlen(buf), -1));
+	assert(test_strncasecmp(buf, "HeLLo WOrlc!", strlen(buf), 1));
+
+	assert(test_strncasecmp(buf, "HeLLo WOrlc!", 0, 0));
+	assert(test_strncasecmp(buf, "HeLLo WOrlc!", 1, 0));
+	assert(test_strncasecmp(buf, "HeLLo WOrlc!", 2, 0));
+	assert(test_strncasecmp(buf, "HeLLp WOrlc!", 5, -1));
 
 
 	free(buf);
