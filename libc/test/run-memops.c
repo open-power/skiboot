@@ -24,6 +24,7 @@
 int test_memset(char* buf, int c, size_t s);
 int test_memchr(const void *ptr, int c, size_t n, void* expected);
 int test_memcmp(const void *ptr1, const void *ptr2, size_t n, int expected);
+int test_strcmp(const void *ptr1, const void *ptr2, int expected);
 
 int main(void)
 {
@@ -49,6 +50,9 @@ int main(void)
 
 	assert(test_memcmp(buf, "Hello World!", strlen(buf), 0));
 	assert(test_memcmp(buf, "Hfllow World", strlen(buf), -1));
+
+	assert(test_strcmp(buf, "Hello World!",  0));
+	assert(test_strcmp(buf, "Hfllow World", -1));
 	free(buf);
 
 	return 0;
