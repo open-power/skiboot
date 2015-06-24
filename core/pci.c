@@ -608,11 +608,11 @@ static int pci_configure_mps(struct phb *phb,
 			     struct pci_device *pd,
 			     void *userdata __unused)
 {
-	uint32_t ecap, mps = phb->mps;
+	uint32_t ecap, mps;
 	uint16_t val;
 
-	if (!phb || !pd)
-		return 0;
+	assert(phb);
+	assert(pd);
 
 	mps = phb->mps;
 	/* If the MPS isn't acceptable one, bail immediately */
@@ -764,7 +764,7 @@ static void pci_scan_phb(void *data)
 	       has_link ? "+downsteam" : " only");
 	pci_scan(phb, 0, 0xff, &phb->devices, NULL, has_link);
 
-	/* Configre MPS (Max Payload Size) for PCIe domain */
+	/* Configure MPS (Max Payload Size) for PCIe domain */
 	pci_walk_dev(phb, pci_get_mps, &mps);
 	phb->mps = mps;
 	pci_walk_dev(phb, pci_configure_mps, NULL);
