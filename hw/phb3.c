@@ -1794,8 +1794,6 @@ static int64_t phb3_set_pe(struct phb *phb,
 			memset(p->rte_cache, 0, RTT_TABLE_SIZE);
 		}
 		memcpy((void *)p->tbl_rtt, p->rte_cache, RTT_TABLE_SIZE);
-		out_be64(p->regs + PHB_RTC_INVALIDATE,
-			 PHB_RTC_INVALIDATE_ALL);
 	} else {
 		rte = (uint16_t *)p->tbl_rtt;
 		for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++, rte++) {
@@ -1803,16 +1801,11 @@ static int64_t phb3_set_pe(struct phb *phb,
 				continue;
 			p->rte_cache[idx] = (action ? pe_num : 0);
 			*rte = p->rte_cache[idx];
-
-			/*
-			 * We might not need invalidate RTC one by one since
-			 * the RTT is expected to be updated in batch mode
-			 * in host kernel.
-			 */
-			out_be64(p->regs + PHB_RTC_INVALIDATE,
-				 SETFIELD(PHB_RTC_INVALIDATE_RID, 0ul, idx));
 		}
 	}
+
+	/* Invalidate the entire RTC */
+	out_be64(p->regs + PHB_RTC_INVALIDATE, PHB_RTC_INVALIDATE_ALL);
 
 	return OPAL_SUCCESS;
 }
