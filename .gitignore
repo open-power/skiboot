@@ -40,6 +40,7 @@ core/test/run-mem_region_init
 core/test/run-mem_region_release_unused
 core/test/run-mem_region_release_unused_noalloc
 core/test/run-msg
+core/test/run-nvram-format
 core/test/run-pel
 core/test/run-pool
 core/test/run-trace

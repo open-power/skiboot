@@ -60,7 +60,7 @@ static uint8_t chrp_nv_cksum(struct chrp_nvram_hdr *hdr)
 	return c_sum;
 }
 
-void nvram_format(void *nvram_image, uint32_t nvram_size)
+int nvram_format(void *nvram_image, uint32_t nvram_size)
 {
 	struct chrp_nvram_hdr *h;
 	unsigned int offset = 0;
@@ -69,6 +69,8 @@ void nvram_format(void *nvram_image, uint32_t nvram_size)
 	memset(nvram_image, 0, nvram_size);
 
 	/* Create private partition */
+	if (nvram_size - offset < NVRAM_SIZE_FW_PRIV)
+		return -1;
 	h = nvram_image + offset;
 	h->sig = NVRAM_SIG_FW_PRIV;
 	h->len = NVRAM_SIZE_FW_PRIV >> 4;
@@ -77,6 +79,8 @@ void nvram_format(void *nvram_image, uint32_t nvram_size)
 	offset += NVRAM_SIZE_FW_PRIV;
 
 	/* Create common partition */
+	if (nvram_size - offset < NVRAM_SIZE_COMMON)
+		return -1;
 	h = nvram_image + offset;
 	h->sig = NVRAM_SIG_SYSTEM;
 	h->len = NVRAM_SIZE_COMMON >> 4;
@@ -85,11 +89,15 @@ void nvram_format(void *nvram_image, uint32_t nvram_size)
 	offset += NVRAM_SIZE_COMMON;
 
 	/* Create free space partition */
+	if (nvram_size - offset < sizeof(struct chrp_nvram_hdr))
+		return -1;
 	h = nvram_image + offset;
 	h->sig = NVRAM_SIG_FREE;
 	h->len = (nvram_size - offset) >> 4;
 	strncpy(h->name, NVRAM_NAME_FREE, 12);
 	h->cksum = chrp_nv_cksum(h);
+
+	return 0;
 }
 
 /*
