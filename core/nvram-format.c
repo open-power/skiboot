@@ -94,7 +94,8 @@ int nvram_format(void *nvram_image, uint32_t nvram_size)
 	h = nvram_image + offset;
 	h->sig = NVRAM_SIG_FREE;
 	h->len = (nvram_size - offset) >> 4;
-	strncpy(h->name, NVRAM_NAME_FREE, 12);
+	/* We have the full 12 bytes here */
+	memcpy(h->name, NVRAM_NAME_FREE, 12);
 	h->cksum = chrp_nv_cksum(h);
 
 	return 0;
