@@ -28,10 +28,12 @@ int test_strcmp(const void *ptr1, const void *ptr2, int expected);
 int test_strchr(const char *s, int c, char *expected);
 int test_strcasecmp(const char *s1, const char *s2, int expected);
 int test_strncasecmp(const char *s1, const char *s2, size_t n, int expected);
+int test_memmove(void *dest, const void *src, size_t n, const void *r, const void *expected, size_t expected_n);
 
 int main(void)
 {
-	char* buf;
+	char *buf;
+	char *buf2;
 
 	buf = malloc(100);
 	assert(test_memset(buf, 0x42, 100) == 0);
@@ -77,9 +79,24 @@ int main(void)
 	assert(test_strncasecmp(buf, "HeLLo WOrlc!", 2, 0));
 	assert(test_strncasecmp(buf, "HeLLp WOrlc!", 5, -1));
 
-
 	free(buf);
 
+	buf  = malloc(20);
+	buf2 = malloc(20);
+	strncpy(buf, "Hello", 20);
+	strncpy(buf2, " World!", 20);
+
+	assert(test_memmove(buf + 5, buf2, strlen(buf2), buf,
+			    "Hello World!", strlen("Hello World!")));
+
+	strncpy(buf, "HHello World!", 20);
+	assert(test_memmove(buf, buf+1, strlen("Hello World!"), buf, "Hello World!", strlen("Hello World!")));
+
+	strncpy(buf, "0123456789", 20);
+	assert(test_memmove(buf+1, buf , strlen("0123456789"), buf, "00123456789", strlen("00123456789")));
+
+	free(buf);
+	free(buf2);
 
 	return 0;
 }
