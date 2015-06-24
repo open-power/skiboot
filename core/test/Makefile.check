@@ -8,6 +8,7 @@ CORE_TEST := core/test/run-device \
 	core/test/run-mem_region_release_unused \
 	core/test/run-mem_region_release_unused_noalloc \
 	core/test/run-mem_region_reservations \
+	core/test/run-nvram-format \
 	core/test/run-trace core/test/run-msg \
 	core/test/run-pel \
 	core/test/run-pool \
