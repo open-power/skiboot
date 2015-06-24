@@ -29,6 +29,7 @@ ccan/list/test/run-single-eval
 ccan/list/test/run-with-debug
 ccan/str/test/run-STR_MAX_CHARS
 core/test/run-console-log
+core/test/run-time-utils
 core/test/run-timer
 ccan/*/test/gmon.out
 core/test/run-device
