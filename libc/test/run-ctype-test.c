@@ -35,6 +35,8 @@ int skiboot_isdigit(int ch);
 int skiboot_isprint(int ch);
 int skiboot_isspace(int ch);
 int skiboot_isxdigit(int ch);
+int skiboot_tolower(int ch);
+int skiboot_toupper(int ch);
 
 int skiboot_isdigit(int ch)
 {
@@ -54,4 +56,14 @@ int skiboot_isspace(int ch)
 int skiboot_isxdigit(int ch)
 {
 	return isxdigit(ch);
+}
+
+int skiboot_tolower(int ch)
+{
+	return tolower(ch);
+}
+
+int skiboot_toupper(int ch)
+{
+	return toupper(ch);
 }

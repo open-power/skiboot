@@ -27,6 +27,8 @@ int skiboot_isdigit(int ch);
 int skiboot_isprint(int ch);
 int skiboot_isspace(int ch);
 int skiboot_isxdigit(int ch);
+int skiboot_tolower(int ch);
+int skiboot_toupper(int ch);
 
 int main(void)
 {
@@ -90,6 +92,14 @@ int main(void)
 			assert(r2);
 		if (!r1)
 			assert(!r2);
+	}
+
+	for (i = 0; i < 257; i++) {
+		assert(skiboot_tolower(i) == tolower(i));
+	}
+
+	for (i = 0; i < 257; i++) {
+		assert(skiboot_toupper(i) == toupper(i));
 	}
 
 	return 0;
