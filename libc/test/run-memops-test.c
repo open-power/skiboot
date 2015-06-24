@@ -45,6 +45,7 @@
 
 int test_memset(char* buf, int c, size_t s);
 int test_memchr(const void *ptr, int c, size_t n, void* expected);
+int test_memcmp(const void *ptr1, const void *ptr2, size_t n, int expected);
 
 int test_memset(char* buf, int c, size_t s)
 {
@@ -62,4 +63,9 @@ int test_memset(char* buf, int c, size_t s)
 int test_memchr(const void *ptr, int c, size_t n, void* expected)
 {
 	return(expected == memchr(ptr, c, n));
+}
+
+int test_memcmp(const void *ptr1, const void *ptr2, size_t n, int expected)
+{
+	return(expected == memcmp(ptr1, ptr2, n));
 }
