@@ -31,6 +31,10 @@ ccan/str/test/run-STR_MAX_CHARS
 core/test/run-console-log
 core/test/run-time-utils
 core/test/run-timer
+core/test/run-console-log-buf-overrun
+core/test/run-console-log-pr_fmt
+core/test/run-mem_region_next
+core/test/run-mem_region_reservations
 ccan/*/test/gmon.out
 core/test/run-device
 core/test/run-malloc
@@ -52,6 +56,7 @@ hw/ipmi/test/run-fru
 hw/ipmi/test/*-gcov
 libc/test/run-time
 libc/test/run-time-gcov
+libflash/test/test-blocklevel
 libflash/test/test-flash
 libflash/test/test-ecc
 libflash/test/test-flash-gcov
