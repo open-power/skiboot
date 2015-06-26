@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #include <ccan/short_types/short_types.h>
 #include <endian.h>
 #include <sys/types.h>
