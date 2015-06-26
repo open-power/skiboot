@@ -27,7 +27,7 @@
 /* Supported FSP response codes */
 #define FSP_IND_NOT_IMPLMNTD		0x00 /* Indicator not implemented */
 #define FSP_IND_IMPLMNTD		0x04 /* Indicator implemented */
-#define FSP_IND_IMPL_UNKNOWN		0x08 /* Implemtation unknown */
+#define FSP_IND_IMPL_UNKNOWN		0x08 /* Implementation unknown */
 #define FSP_IND_INACTIVE		0x00 /* Indicator not active */
 #define FSP_IND_IDENTIFY_ACTV		0x01 /* Identify state active */
 #define FSP_IND_FAULT_ACTV		0x02 /* Fault state active */
@@ -36,7 +36,7 @@
 #define FSP_RSRC_PRESENT		0x40 /* Resource present */
 #define FSP_RSRC_PRSNC_UNKNOWN		0x80 /* Resource presence unknown */
 
-/* LED exclussive bits */
+/* LED exclusive bits */
 #define FSP_LED_EXCL_FAULT	1UL << 0
 #define FSP_LED_EXCL_IDENTIFY	1UL << 1
 
@@ -61,7 +61,7 @@ struct fsp_led_data {
         char			loc_code[LOC_CODE_SIZE];
 	u16			parms;			/* Parameters */
 	u16			status;			/* Status */
-	u16			excl_bit;		/* Exclussive LED bit */
+	u16			excl_bit;		/* Exclusive LED bit */
 	struct list_node	link;
 };
 
