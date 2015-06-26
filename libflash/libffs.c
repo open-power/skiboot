@@ -145,9 +145,15 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 		bool ecc;
 		for (i = 0; i < f->hdr.entry_count; i++) {
 			ffs_part_info(f, i, NULL, &start, &total_size, NULL, &ecc);
-			if (ecc)
-				blocklevel_ecc_protect(bl, start, total_size);
-		}
+			if (ecc) {
+				rc = blocklevel_ecc_protect(bl, start, total_size);
+				if (rc) {
+					FL_ERR("Failed to blocklevel_ecc_protect(0x%08x, 0x%08x)\n",
+					       start, total_size);
+					goto out;
+				}
+			}  /* ecc */
+		} /* for */
 	}
 
 out:
