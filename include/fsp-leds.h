@@ -158,7 +158,7 @@ struct sai_data {
 
 /* LED Device tree property names */
 #define DT_PROPERTY_LED_COMPATIBLE	"ibm,opal-v3-led"
-#define DT_PROPERTY_LED_NODE		"led"
+#define DT_PROPERTY_LED_NODE		"leds"
 #define DT_PROPERTY_LED_MODE		"led-mode"
 #define DT_PROPERTY_LED_TYPES		"led-types"
 #define DT_PROPERTY_LED_LOCATION	"led-loc"
