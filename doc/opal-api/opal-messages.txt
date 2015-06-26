@@ -40,6 +40,17 @@ OPAL_MSG_MEM_ERR
 OPAL_MSG_EPOW
 -------------
 
+Used by OPAL to issue environmental and power warnings to host OS for
+conditions requiring an earlier poweroff. A few examples of these are high
+ambient temperature or system running on UPS power with low UPS battery.
+Host OS can query OPAL via GET_EPOW_STATUS API to obtain information about
+EPOW conditions present. Refer include/opal-api.h for description of
+all supported EPOW events. OPAL_SYSPOWER_CHNG, OPAL_SYSPOWER_FAIL and
+OPAL_SYSPOWER_INC events don't require system poweroff.
+
+Host OS should look for 'ibm,opal-v3-epow' string as compatible property
+for 'epow' node under OPAL device-tree to determine epow support.
+
 OPAL_MSG_SHUTDOWN
 -----------------
 
@@ -108,11 +119,10 @@ struct OpalHMIEvent {
 OPAL_MSG_DPO
 ------------
 
-Used for delayed power off, where OPAL can inform a host OS that it intends to
-perform a shutdown in the future.
-
-The host OS can use the separate API OPAL_GET_DPO_STATUS to query OPAL for the
-number of seconds before a forced shutdown will occur.
+Delayed poweroff where OPAL informs host OS that a poweroff has been
+requested and a forced shutdown will happen in future. Host OS can use
+OPAL_GET_DPO_STATUS API to query OPAL the number of seconds remaining
+before a forced poweroff will occur.
 
 OPAL_MSG_PRD
 ------------

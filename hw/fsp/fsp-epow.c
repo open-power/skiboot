@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* FSP Early Power Off Warning (EPOW) support */
+/* FSP Environmental and Power Warnings (EPOW) support */
 
 #define pr_fmt(fmt) "FSP-EPOW: " fmt
 
