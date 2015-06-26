@@ -178,11 +178,11 @@ extract-gcov: extract-gcov.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I$(SRC) -o $@ $<,$<)
 
 coverage-report: skiboot.info
-	genhtml -q -o $@ $<
+	genhtml --branch-coverage -q -o $@ $<
 
 skiboot.info: coverage
-	lcov -q -c -d . $(LCOV_DIRS) -o $@
-	lcov -q -r $@ $(LCOV_EXCLUDE) -o $@
+	lcov -q -c -d . $(LCOV_DIRS) -o $@ --rc lcov_branch_coverage=1
+	lcov -q -r $@ $(LCOV_EXCLUDE) -o $@ --rc lcov_branch_coverage=1
 
 tags:
 	find . -name '*.[chS]' | xargs ctags
