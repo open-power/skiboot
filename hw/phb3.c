@@ -2818,10 +2818,27 @@ static int64_t phb3_err_inject_mem64(struct phb3 *p, uint32_t pe_no,
 	uint64_t base, len, segstart, segsize;
 	uint64_t cache, a, m;
 	uint64_t ctrl = PHB_PAPR_ERR_INJ_CTL_OUTB;
-	uint32_t index;
+	uint32_t index, s_index, e_index;
+
+	/* By default, the PE is PCI device dependent one */
+	s_index = 0;
+	e_index = ARRAY_SIZE(p->m64b_cache) - 2;
+	for (index = 0; index < RTT_TABLE_ENTRIES; index++) {
+		if (p->rte_cache[index] != pe_no)
+			continue;
+
+		if (index + 8 >= RTT_TABLE_ENTRIES)
+			break;
+
+		/* PCI bus dependent PE */
+		if (p->rte_cache[index + 8] == pe_no) {
+			s_index = e_index = ARRAY_SIZE(p->m64b_cache) - 1;
+			break;
+		}
+	}
 
 	a = base = len = 0x0ull;
-	for (index = 0; index < ARRAY_SIZE(p->m64b_cache); index++) {
+	for (index = s_index; !len && index <= e_index; index++) {
 		cache = p->m64b_cache[index];
 		if (!(cache & IODA2_M64BT_ENABLE))
 			continue;
@@ -2845,16 +2862,11 @@ static int64_t phb3_err_inject_mem64(struct phb3 *p, uint32_t pe_no,
 			segstart = segstart + segsize * pe_no;
 		}
 
-		/* We expect contiguous segments. Otherwise, to
-		 * pick the bigger one, which has more possibility
-		 * to be accessed
+		/* First window always wins based on the ascending
+		 * searching priority the 16 BARs have. We're using
+		 * the feature to assign resource for SRIOV VFs.
 		 */
 		if (!len) {
-			base = segstart;
-			len = segsize;
-		} else if ((base + len) == segstart) {
-			len += segsize;
-		} else if (segsize > len) {
 			base = segstart;
 			len = segsize;
 		}
@@ -2862,7 +2874,6 @@ static int64_t phb3_err_inject_mem64(struct phb3 *p, uint32_t pe_no,
 		/* Specified address is valid one */
 		if (addr >= segstart && addr < (segstart + segsize)) {
 			a = addr;
-			break;
 		}
 	}
 
