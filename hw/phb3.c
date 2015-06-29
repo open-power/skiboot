@@ -2891,25 +2891,42 @@ static int64_t phb3_err_inject_cfg(struct phb3 *p, uint32_t pe_no,
 {
 	uint64_t a, m, prefer;
 	uint64_t ctrl = PHB_PAPR_ERR_INJ_CTL_CFG;
-	int bus_no, bdfn;
+	int bdfn;
+	bool is_bus_pe;
 
 	a = 0xffffull;
 	prefer = 0xffffull;
+	m = PHB_PAPR_ERR_INJ_MASK_CFG_ALL;
 	for (bdfn = 0; bdfn < RTT_TABLE_ENTRIES; bdfn++) {
 		if (p->rte_cache[bdfn] != pe_no)
 			continue;
 
-		/* Select minimal bus number as PE
-		 * primary bus number
-		 */
-		bus_no = (bdfn >> 8);
-		if (prefer == 0xffffull)
-			prefer = SETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, 0x0ull, bus_no);
+		/* The PE can be associated with PCI bus or device */
+		is_bus_pe = false;
+		if ((bdfn + 8) < RTT_TABLE_ENTRIES &&
+		    p->rte_cache[bdfn + 8] == pe_no)
+			is_bus_pe = true;
 
-		/* Address should no greater than max bus
-		 * number within PE
-		 */
-		if ((GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, addr) == bus_no)) {
+		/* Figure out the PCI config address */
+		if (prefer == 0xffffull) {
+			if (is_bus_pe) {
+				m = PHB_PAPR_ERR_INJ_MASK_CFG;
+				prefer = SETFIELD(m, 0x0ull, (bdfn >> 8));
+			} else {
+				m = PHB_PAPR_ERR_INJ_MASK_CFG_ALL;
+				prefer = SETFIELD(m, 0x0ull, bdfn);
+			}
+		}
+
+		/* Check the input address is valid or not */
+		if (!is_bus_pe &&
+		    GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG_ALL, addr) == bdfn) {
+			a = addr;
+			break;
+		}
+
+		if (is_bus_pe &&
+		    GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, addr) == (bdfn >> 8)) {
 			a = addr;
 			break;
 		}
@@ -2920,12 +2937,10 @@ static int64_t phb3_err_inject_cfg(struct phb3 *p, uint32_t pe_no,
 		return OPAL_PARAMETER;
 
 	/* Specified address is out of range */
-	if (a == 0xffffull) {
+	if (a == 0xffffull)
 		a = prefer;
-		m = PHB_PAPR_ERR_INJ_MASK_CFG;
-	} else {
+	else
 		m = mask;
-	}
 
 	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
 }
