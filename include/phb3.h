@@ -251,7 +251,7 @@ struct phb3_err {
 
 /* Link timeouts, increments of 100ms */
 #define PHB3_LINK_WAIT_RETRIES		20
-#define PHB3_LINK_ELECTRICAL_RETRIES	10
+#define PHB3_LINK_ELECTRICAL_RETRIES	20
 
 /* PHB3 flags */
 #define PHB3_AIB_FENCED		0x00000001
