@@ -238,7 +238,7 @@ static void bt_get_resp(void)
 	/* Byte 5 - Completion Code */
 	cc = bt_inb(BT_HOST2BMC);
 
-	/* Find the corresponding messasge */
+	/* Find the corresponding message */
 	list_for_each(&bt.msgq, tmp_bt_msg, link) {
 		if (tmp_bt_msg->seq == seq) {
 			bt_msg = tmp_bt_msg;
@@ -257,7 +257,7 @@ static void bt_get_resp(void)
 	ipmi_msg = &bt_msg->ipmi_msg;
 
 	/*
-	 * Make sure we have enough room to store the resposne. As all values
+	 * Make sure we have enough room to store the response. As all values
 	 * are unsigned we will also trigger this error if
 	 * bt_inb(BT_HOST2BMC) < BT_MIN_RESP_LEN (which should never occur).
 	 */
@@ -543,7 +543,7 @@ void bt_init(void)
 	list_head_init(&bt.msgq);
 	bt.queue_len = 0;
 
-	printf("BT: Interface intialized, IO 0x%04x\n", bt.base_addr);
+	printf("BT: Interface initialized, IO 0x%04x\n", bt.base_addr);
 
 	ipmi_register_backend(&bt_backend);
 
