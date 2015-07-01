@@ -21,6 +21,7 @@ extern int errno;
 #define EPERM		1	/* not permitted */
 #define ENOENT		2	/* file or directory not found */
 #define EIO		5	/* input/output error */
+#define EBADF        9  /* Bad file number */
 #define ENOMEM		12	/* not enough space */
 #define EACCES		13	/* permission denied */
 #define EFAULT		14	/* bad address */
@@ -30,5 +31,6 @@ extern int errno;
 #define EINVAL		22	/* invalid argument */
 #define EDOM		33	/* math argument out of domain of func */
 #define ERANGE		34	/* math result not representable */
+#define ENOSYS      38  /* Function not implemented */
 
 #endif

@@ -18,6 +18,21 @@
 
 #include <stdint.h>
 
+struct bl_prot_range {
+	uint32_t start;
+	uint32_t len;
+};
+
+struct blocklevel_range {
+	struct bl_prot_range *prot;
+	int n_prot;
+	int total_prot;
+};
+
+enum blocklevel_flags {
+	WRITE_NEED_ERASE = 1,
+};
+
 /*
  * libffs may be used with different backends, all should provide these for
  * libflash to get the information it needs
@@ -34,6 +49,9 @@ struct blocklevel_device {
 	 * Keep the erase mask so that blocklevel_erase() can do sanity checking
 	 */
 	uint32_t erase_mask;
+	enum blocklevel_flags flags;
+
+	struct blocklevel_range ecc_prot;
 };
 
 int blocklevel_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len);
@@ -41,5 +59,11 @@ int blocklevel_write(struct blocklevel_device *bl, uint32_t pos, const void *buf
 int blocklevel_erase(struct blocklevel_device *bl, uint32_t pos, uint32_t len);
 int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_t *total_size,
 		uint32_t *erase_granule);
+
+/* Convienience functions */
+int blocklevel_smart_write(struct blocklevel_device *bl, uint32_t pos, const void *buf, uint32_t len);
+
+/* Implemented in software at this level */
+int blocklevel_ecc_protect(struct blocklevel_device *bl, uint32_t start, uint32_t len);
 
 #endif /* __LIBFLASH_BLOCKLEVEL_H */

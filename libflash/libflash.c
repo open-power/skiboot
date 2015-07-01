@@ -153,7 +153,7 @@ int flash_read_corrected(struct blocklevel_device *bl, uint32_t pos, void *buf,
 		return flash_read(bl, pos, buf, len);
 
 	/* Copy the buffer in chunks */
-	bufecc = malloc(ECC_BUFFER_SIZE(COPY_BUFFER_LENGTH));
+	bufecc = malloc(ecc_buffer_size(COPY_BUFFER_LENGTH));
 	if (!bufecc)
 		return FLASH_ERR_MALLOC_FAILED;
 
@@ -162,13 +162,13 @@ int flash_read_corrected(struct blocklevel_device *bl, uint32_t pos, void *buf,
 		copylen = MIN(len, COPY_BUFFER_LENGTH);
 
 		/* Read ECCed data from flash */
-		rc = flash_read(bl, pos, bufecc, ECC_BUFFER_SIZE(copylen));
+		rc = flash_read(bl, pos, bufecc, ecc_buffer_size(copylen));
 		if (rc)
 			goto err;
 
 		/* Extract data from ECCed data */
 		ret = memcpy_from_ecc(buf, bufecc, copylen);
-		if (ret == UE) {
+		if (ret) {
 			rc = FLASH_ERR_ECC_INVALID;
 			goto err;
 		}
@@ -176,7 +176,7 @@ int flash_read_corrected(struct blocklevel_device *bl, uint32_t pos, void *buf,
 		/* Update for next copy */
 		len -= copylen;
 		buf = (uint8_t *)buf + copylen;
-		pos += ECC_BUFFER_SIZE(copylen);
+		pos += ecc_buffer_size(copylen);
 	}
 
 	rc = 0;
@@ -397,7 +397,7 @@ int flash_write_corrected(struct blocklevel_device *bl, uint32_t pos, const void
 		uint32_t len, bool verify, bool ecc)
 {
 	struct ecc64 *bufecc;
-	uint32_t copylen;
+	uint32_t copylen, copylen_minus_ecc;
 	int rc;
 	uint8_t ret;
 
@@ -405,17 +405,18 @@ int flash_write_corrected(struct blocklevel_device *bl, uint32_t pos, const void
 		return flash_write(bl, pos, buf, len, verify);
 
 	/* Copy the buffer in chunks */
-	bufecc = malloc(ECC_BUFFER_SIZE(COPY_BUFFER_LENGTH));
+	bufecc = malloc(ecc_buffer_size(COPY_BUFFER_LENGTH));
 	if (!bufecc)
 		return FLASH_ERR_MALLOC_FAILED;
 
 	while (len > 0) {
 		/* What's left to copy? */
 		copylen = MIN(len, COPY_BUFFER_LENGTH);
+		copylen_minus_ecc = ecc_buffer_size_minus_ecc(copylen);
 
 		/* Add the ecc byte to the data */
-		ret = memcpy_to_ecc(bufecc, buf, BUFFER_SIZE_MINUS_ECC(copylen));
-		if (ret == UE) {
+		ret = memcpy_to_ecc(bufecc, buf, copylen_minus_ecc);
+		if (ret) {
 			rc = FLASH_ERR_ECC_INVALID;
 			goto err;
 		}
@@ -426,8 +427,8 @@ int flash_write_corrected(struct blocklevel_device *bl, uint32_t pos, const void
 			goto err;
 
 		/* Update for next copy */
-		len -= BUFFER_SIZE_MINUS_ECC(copylen);
-		buf = (uint8_t *)buf + BUFFER_SIZE_MINUS_ECC(copylen);
+		len -= copylen_minus_ecc;
+		buf = (uint8_t *)buf + copylen_minus_ecc;
 		pos += copylen;
 	}
 
@@ -554,17 +555,17 @@ int flash_smart_write_corrected(struct blocklevel_device *bl, uint32_t dst, cons
 	if (!ecc)
 		return flash_smart_write(bl, dst, src, size);
 
-	buf = malloc(ECC_BUFFER_SIZE(size));
+	buf = malloc(ecc_buffer_size(size));
 	if (!buf)
 		return FLASH_ERR_MALLOC_FAILED;
 
 	rc = memcpy_to_ecc(buf, src, size);
-	if (rc != GD) {
+	if (rc) {
 		rc = FLASH_ERR_ECC_INVALID;
 		goto out;
 	}
 
-	rc = flash_smart_write(bl, dst, buf, ECC_BUFFER_SIZE(size));
+	rc = flash_smart_write(bl, dst, buf, ecc_buffer_size(size));
 
 out:
 	free(buf);
@@ -837,6 +838,7 @@ bail:
 	c->bl.erase = &flash_erase;
 	c->bl.get_info = &flash_get_info;
 	c->bl.erase_mask = c->min_erase_mask;
+	c->bl.flags = WRITE_NEED_ERASE;
 
 	*bl = &(c->bl);
 	return 0;

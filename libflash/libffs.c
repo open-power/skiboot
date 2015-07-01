@@ -73,12 +73,12 @@ static int ffs_check_convert_header(struct ffs_hdr *dst, struct ffs_hdr *src)
 }
 
 int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
-		struct ffs_handle **ffs)
+		struct ffs_handle **ffs, int mark_ecc)
 {
 	struct ffs_hdr hdr;
 	struct ffs_handle *f;
 	uint32_t total_size;
-	int rc;
+	int rc, i;
 
 	if (!ffs || !bl)
 		return FLASH_ERR_PARM_ERROR;
@@ -138,6 +138,16 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 	if (rc) {
 		FL_ERR("FFS: Error %d reading flash partition map\n", rc);
 		goto out;
+	}
+
+	if (mark_ecc) {
+		uint32_t start, total_size;
+		bool ecc;
+		for (i = 0; i < f->hdr.entry_count; i++) {
+			ffs_part_info(f, i, NULL, &start, &total_size, NULL, &ecc);
+			if (ecc)
+				blocklevel_ecc_protect(bl, start, total_size);
+		}
 	}
 
 out:

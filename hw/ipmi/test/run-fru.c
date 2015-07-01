@@ -65,6 +65,23 @@ int main(void)
 		.serial_no = (char *) "12345",
 		.asset_tag = (char *) "abcd",
 	};
+	struct product_info invalid_info = {
+		.manufacturer = (char *) "I",
+		.product = (char *) "skiboot",
+		.part_no = (char *) "hello",
+		.version = (char *) "12345",
+		.serial_no = (char *) "12345",
+		.asset_tag = (char *) "abcd",
+	};
+	struct product_info invalid_info2 = {
+		.manufacturer = (char *) "IBM",
+		.product = (char *) "skiboot",
+		.part_no = (char *) "this is a really long string that's more"
+		"than 32 characters, because it turns out that's invalid.",
+		.version = (char *) "12345",
+		.serial_no = (char *) "12345",
+		.asset_tag = (char *) "abcd",
+	};
 
 	buf = malloc(256);
 
@@ -78,7 +95,21 @@ int main(void)
 	assert(fru_fill_product_info(buf, &info, 39) < 0);
 
 	memset(buf, 0, 256);
+	len = fru_fill_product_info(buf, &invalid_info, 40);
+	assert(len == OPAL_PARAMETER);
+
+	memset(buf, 0, 256);
+	len = fru_fill_product_info(buf, &invalid_info2, 256);
+	assert(len == OPAL_PARAMETER);
+
+	memset(buf, 0, 256);
 	assert(fru_add(buf, 256) > 0);
+
+	memset(buf, 0, 256);
+	assert(fru_add(buf, 1) == OPAL_PARAMETER);
+
+	memset(buf, 0, 256);
+	assert(fru_add(buf, 65) == OPAL_PARAMETER);
 
 	free(buf);
 

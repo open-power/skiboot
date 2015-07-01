@@ -1,5 +1,5 @@
 # -*-Makefile-*-
-LIBFLASH_TEST := libflash/test/test-flash libflash/test/test-ecc
+LIBFLASH_TEST := libflash/test/test-flash libflash/test/test-ecc libflash/test/test-blocklevel
 
 LCOV_EXCLUDE += $(LIBFLASH_TEST:%=%.c)
 
@@ -16,7 +16,7 @@ $(LIBFLASH_TEST:%=%-check) : %-check: %
 libflash/test/stubs.o: libflash/test/stubs.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -g -c -o $@ $<, $<)
 
-$(LIBFLASH_TEST) : libflash/test/stubs.o libflash/libflash.c libflash/ecc.c
+$(LIBFLASH_TEST) : libflash/test/stubs.o libflash/libflash.c libflash/ecc.c libflash/blocklevel.c
 
 $(LIBFLASH_TEST) : % : %.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o, $<)

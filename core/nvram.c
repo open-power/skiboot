@@ -20,6 +20,7 @@
 #include <lock.h>
 #include <device.h>
 #include <platform.h>
+#include <nvram-format.h>
 
 static void *nvram_image;
 static uint32_t nvram_size;
@@ -50,137 +51,6 @@ static int64_t opal_write_nvram(uint64_t buffer, uint64_t size, uint64_t offset)
 }
 opal_call(OPAL_WRITE_NVRAM, opal_write_nvram, 3);
 
-struct chrp_nvram_hdr {
-	uint8_t		sig;
-	uint8_t		cksum;
-	uint16_t	len;
-	char		name[12];
-};
-
-#define NVRAM_SIG_FW_PRIV	0x51
-#define NVRAM_SIG_SYSTEM	0x70
-#define NVRAM_SIG_FREE		0x7f
-
-#define NVRAM_NAME_COMMON	"common"
-#define NVRAM_NAME_FW_PRIV	"ibm,skiboot"
-#define NVRAM_NAME_FREE		"wwwwwwwwwwww"
-
-/* 64k should be enough, famous last words... */
-#define NVRAM_SIZE_COMMON	0x10000
-
-/* 4k should be enough, famous last words... */
-#define NVRAM_SIZE_FW_PRIV	0x1000
-
-static uint8_t chrp_nv_cksum(struct chrp_nvram_hdr *hdr)
-{
-	struct chrp_nvram_hdr h_copy = *hdr;
-	uint8_t b_data, i_sum, c_sum;
-	uint8_t *p = (uint8_t *)&h_copy;
-	unsigned int nbytes = sizeof(h_copy);
-
-	h_copy.cksum = 0;
-	for (c_sum = 0; nbytes; nbytes--) {
-		b_data = *(p++);
-		i_sum = c_sum + b_data;
-		if (i_sum < c_sum)
-			i_sum++;
-		c_sum = i_sum;
-	}
-	return c_sum;
-}
-
-static void nvram_format(void)
-{
-	struct chrp_nvram_hdr *h;
-	unsigned int offset = 0;
-
-	prerror("NVRAM: Re-initializing\n");
-	memset(nvram_image, 0, nvram_size);
-
-	/* Create private partition */
-	h = nvram_image + offset;
-	h->sig = NVRAM_SIG_FW_PRIV;
-	h->len = NVRAM_SIZE_FW_PRIV >> 4;
-	strcpy(h->name, NVRAM_NAME_FW_PRIV);
-	h->cksum = chrp_nv_cksum(h);
-	offset += NVRAM_SIZE_FW_PRIV;
-
-	/* Create common partition */
-	h = nvram_image + offset;
-	h->sig = NVRAM_SIG_SYSTEM;
-	h->len = NVRAM_SIZE_COMMON >> 4;
-	strcpy(h->name, NVRAM_NAME_COMMON);
-	h->cksum = chrp_nv_cksum(h);
-	offset += NVRAM_SIZE_COMMON;
-
-	/* Create free space partition */
-	h = nvram_image + offset;
-	h->sig = NVRAM_SIG_FREE;
-	h->len = (nvram_size - offset) >> 4;
-	strncpy(h->name, NVRAM_NAME_FREE, 12);
-	h->cksum = chrp_nv_cksum(h);
-
-	/* Write the whole thing back */
-	if (platform.nvram_write)
-		platform.nvram_write(0, nvram_image, nvram_size);
-}
-
-/*
- * Check that the nvram partition layout is sane and that it
- * contains our required partitions. If not, we re-format the
- * lot of it
- */
-static void nvram_check(void)
-{
-	unsigned int offset = 0;
-	bool found_common = false;
-	bool found_skiboot = false;
-
-	while (offset + sizeof(struct chrp_nvram_hdr) < nvram_size) {
-		struct chrp_nvram_hdr *h = nvram_image + offset;
-
-		if (chrp_nv_cksum(h) != h->cksum) {
-			prerror("NVRAM: Partition at offset 0x%x"
-				" has bad checksum\n", offset);
-			goto failed;
-		}
-		if (h->len < 1) {
-			prerror("NVRAM: Partition at offset 0x%x"
-				" has incorrect 0 length\n", offset);
-			goto failed;
-		}
-
-		if (h->sig == NVRAM_SIG_SYSTEM &&
-		    strcmp(h->name, NVRAM_NAME_COMMON) == 0)
-			found_common = true;
-
-		if (h->sig == NVRAM_SIG_FW_PRIV &&
-		    strcmp(h->name, NVRAM_NAME_FW_PRIV) == 0)
-			found_skiboot = true;
-
-		offset += h->len << 4;
-		if (offset > nvram_size) {
-			prerror("NVRAM: Partition at offset 0x%x"
-				" extends beyond end of nvram !\n", offset);
-			goto failed;
-		}
-	}
-	if (!found_common) {
-			prerror("NVRAM: Common partition not found !\n");
-		goto failed;
-	}
-	if (!found_skiboot) {
-			prerror("NVRAM: Skiboot private partition "
-				"not found !\n");
-		goto failed;
-	}
-
-	prerror("NVRAM: Layout appears sane\n");
-	return;
- failed:
-	nvram_format();
-}
-
 void nvram_read_complete(bool success)
 {
 	struct dt_node *np;
@@ -193,7 +63,13 @@ void nvram_read_complete(bool success)
 	}
 
 	/* Check and maybe format nvram */
-	nvram_check();
+	if (nvram_check(nvram_image, nvram_size)) {
+		nvram_format(nvram_image, nvram_size);
+
+		/* Write the whole thing back */
+		if (platform.nvram_write)
+			platform.nvram_write(0, nvram_image, nvram_size);
+	}
 
 	/* Add nvram node */
 	np = dt_new(opal_node, "nvram");

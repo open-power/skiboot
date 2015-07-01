@@ -611,14 +611,15 @@ static int pci_configure_mps(struct phb *phb,
 	uint32_t ecap, mps = phb->mps;
 	uint16_t val;
 
+	if (!phb || !pd)
+		return 0;
+
+	mps = phb->mps;
 	/* If the MPS isn't acceptable one, bail immediately */
 	if (mps < 128 || mps > 4096)
 		return 1;
 
-	if (!phb || !pd)
-		return 0;
-
-	/* PCIe deivce always has MPS capacity */
+	/* PCIe device always has MPS capacity */
 	if (pd->mps) {
 		ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
 		mps = ilog2(mps) - 7;

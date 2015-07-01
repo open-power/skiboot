@@ -3,11 +3,21 @@ include rules.mk
 all: $(EXE)
 
 .PHONY: links
-links:
+links: libflash ccan sfc-ctrl.c ast-sf-ctrl.c make_version.sh
+
+libflash:
 	ln -sf ../../libflash .
+
+ccan:
 	ln -sf ../../ccan .
+
+sfc-ctrl.c:
 	ln -sf ../../hw/sfc-ctrl.c .
+
+ast-sf-ctrl.c:
 	ln -sf ../../hw/ast-bmc/ast-sf-ctrl.c
+
+make_version.sh:
 	ln -sf ../../make_version.sh
 
 $(OBJS) : links

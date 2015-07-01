@@ -683,7 +683,7 @@ static int queue_led_state_change(char *loc_code, u8 command,
 	}
 
 	/* Save the request */
-	strncpy(cmd->loc_code, loc_code, LOC_CODE_SIZE);
+	strncpy(cmd->loc_code, loc_code, LOC_CODE_SIZE - 1);
 	cmd->command = command;
 	cmd->state = state;
 	cmd->cmd_src = cmd_src;

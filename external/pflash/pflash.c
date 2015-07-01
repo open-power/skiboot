@@ -80,7 +80,7 @@ static void print_ffs_info(uint32_t toc_offset)
 	int rc;
 	uint32_t i;
 
-	rc = ffs_init(toc_offset, fl_total_size, bl, &ffs_handle);
+	rc = ffs_init(toc_offset, fl_total_size, bl, &ffs_handle, 0);
 	if (rc) {
 		fprintf(stderr, "Error %d opening ffs !\n", rc);
 		return;
@@ -140,7 +140,7 @@ static int open_partition(const char *name)
 
 	/* Open libffs if needed */
 	if (!ffsh) {
-		rc = ffs_init(ffs_toc, fl_total_size, bl, &ffsh);
+		rc = ffs_init(ffs_toc, fl_total_size, bl, &ffsh, 0);
 		if (rc) {
 			fprintf(stderr, "Error %d opening ffs !\n", rc);
 			if (ffs_toc)

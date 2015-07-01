@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #include <ccan/short_types/short_types.h>
 #include <endian.h>
 #include <sys/types.h>
@@ -27,6 +27,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 typedef unsigned int gcov_unsigned_int;
 
@@ -97,10 +99,12 @@ static size_t write_u64(int fd, u64 v)
 // gcc 4.7/4.8 specific
 #define GCOV_TAG_FUNCTION_LENGTH        3
 
+size_t skiboot_dump_size = 0x240000;
+
 static inline const char* SKIBOOT_ADDR(const char* addr, const void* p)
 {
 	const char* r= (addr + (be64toh((const u64)p) - SKIBOOT_OFFSET));
-	assert(r < (addr + 0x240000));
+	assert(r < (addr + skiboot_dump_size));
 	return r;
 }
 
@@ -192,13 +196,22 @@ int main(int argc, char *argv[])
 
 	/* argv[1] = skiboot.dump */
 	fd = open(argv[1], O_RDONLY);
-	assert(fd > 0);
+	if (fd < 0) {
+		fprintf(stderr, "Cannot open dump: %s (error %d %s)\n",
+			argv[1], errno, strerror(errno));
+		exit(-1);
+	}
 
 	r = fstat(fd, &sb);
-	assert(r != -1);
+	if (r < 0) {
+		fprintf(stderr, "Cannot stat dump, %d %s\n",
+			errno, strerror(errno));
+		exit(-1);
+	}
 
 	addr = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	assert(addr != NULL);
+	skiboot_dump_size = sb.st_size;
 
 	printf("Skiboot memory dump %p - %p\n",
 	       (void*)SKIBOOT_OFFSET, (void*)SKIBOOT_OFFSET+sb.st_size);

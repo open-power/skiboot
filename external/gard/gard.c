@@ -63,7 +63,7 @@ struct gard_ctx {
  */
 static inline size_t sizeof_gard(struct gard_ctx *ctx)
 {
-	return ctx->ecc ? ECC_BUFFER_SIZE(sizeof(struct gard_record)) : sizeof(struct gard_record);
+	return ctx->ecc ? ecc_buffer_size(sizeof(struct gard_record)) : sizeof(struct gard_record);
 }
 
 static void show_flash_err(int rc)

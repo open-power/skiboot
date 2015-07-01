@@ -23,6 +23,22 @@
 #include "libflash.h"
 #include "ecc.h"
 
+/* Bit field identifiers for syndrome calculations. */
+enum eccbitfields
+{
+        GD = 0xff,      //< Good, ECC matches.
+        UE = 0xfe,      //< Uncorrectable.
+        E0 = 71,        //< Error in ECC bit 0
+        E1 = 70,        //< Error in ECC bit 1
+        E2 = 69,        //< Error in ECC bit 2
+        E3 = 68,        //< Error in ECC bit 3
+        E4 = 67,        //< Error in ECC bit 4
+        E5 = 66,        //< Error in ECC bit 5
+        E6 = 65,        //< Error in ECC bit 6
+        E7 = 64         //< Error in ECC bit 7
+        /* 0-63 Correctable bit in byte */
+};
+
 /*
  * Matrix used for ECC calculation.
  *
@@ -73,7 +89,7 @@ static uint64_t eccmatrix[] = {
  *
  *  Bits are in MSB order.
  */
-static uint8_t syndromematrix[] = {
+static enum eccbitfields syndromematrix[] = {
         GD, E7, E6, UE, E5, UE, UE, 47, E4, UE, UE, 37, UE, 35, 39, UE,
         E3, UE, UE, 48, UE, 30, 29, UE, UE, 57, 27, UE, 31, UE, UE, UE,
         E2, UE, UE, 17, UE, 18, 40, UE, UE, 58, 22, UE, 21, UE, UE, UE,
@@ -121,7 +137,7 @@ static uint8_t eccgenerate(uint64_t data)
  * @retval UE - Indicates the data is uncorrectable.
  * @retval all others - Indication of which bit is incorrect.
  */
-static uint8_t eccverify(uint64_t data, uint8_t ecc)
+static enum eccbitfields eccverify(uint64_t data, uint8_t ecc)
 {
 	return syndromematrix[eccgenerate(data) ^ ecc];
 }
@@ -142,15 +158,14 @@ static inline uint64_t eccflipbit(uint64_t data, uint8_t bit)
  * @dst:	destination buffer without ECC
  * @src:	source buffer with ECC
  * @len:	number of bytes of data to copy (without ecc).
-                     Must be 8 byte aligned.
+ *                   Must be 8 byte aligned.
  *
- * @return:	eccBitfield or 0-64.
+ * @return:	Success or error
  *
- * @retval GD - Data is good.
- * @retval UE - Data is uncorrectable.
- * @retval all others - which bit was corrected.
+ * @retval: 0 - success
+ * @retfal: other - fail
  */
-uint8_t memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len)
+int memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len)
 {
 	beint64_t data;
 	uint8_t ecc;
@@ -161,7 +176,7 @@ uint8_t memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len)
 		/* TODO: we could probably handle this */
 		FL_ERR("ECC data length must be 8 byte aligned length:%i\n",
 			len);
-		return UE;
+		return -1;
 	}
 
 	/* Handle in chunks of 8 bytes, so adjust the length */
@@ -184,7 +199,7 @@ uint8_t memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len)
 			*dst = (uint64_t)be64_to_cpu(eccflipbit(be64_to_cpu(data), badbit));
 		dst++;
 	}
-	return GD;
+	return 0;
 }
 
 /**
@@ -194,23 +209,23 @@ uint8_t memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len)
  * @src:	source buffer without ECC
  * @len:	number of bytes of data to copy (without ecc, length of src).
  *       Note: dst must be big enough to hold ecc bytes as well.
-                     Must be 8 byte aligned.
+ *                   Must be 8 byte aligned.
  *
- * @return:	eccBitfield.
+ * @return:	success or failure
  *
- * @retval GD - Success.
- * @retval UE - Length is not 8 byte aligned.
+ * @retval: 0 - success
+ * @retfal: other - fail
  */
-uint8_t memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint32_t len)
+int memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint32_t len)
 {
 	struct ecc64 ecc_word;
 	uint32_t i;
 
 	if (len & 0x7) {
-		/* TODO: we could problably handle this */
+		/* TODO: we could probably handle this */
 		FL_ERR("Data to add ECC bytes to must be 8 byte aligned length: %i\n",
 				len);
-		return UE;
+		return -1;
 	}
 
 	/* Handle in chunks of 8 bytes, so adjust the length */
@@ -223,5 +238,5 @@ uint8_t memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint32_t len)
 		*(dst + i) = ecc_word;
 	}
 
-	return GD;
+	return 0;
 }

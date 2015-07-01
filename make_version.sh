@@ -23,9 +23,7 @@ then
 
 	#Check that there is at least one of such a prefix
 	if ! git tag | grep -q "$TAG_PREFIX" ; then
-		echo -e "There isn't a single gix tag with prefix '$TAG_PREFIX'\n"
-		usage
-		exit 1;
+		echo -e "There isn't a single gix tag with prefix '$TAG_PREFIX'\n" > stderr
 	fi
 
 	version=`git describe --exact-match --match "$TAG_PREFIX-*" 2>/dev/null`
