@@ -23,7 +23,7 @@
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
 #include <libflash/blocklevel.h>
-#include <ecc.h>
+#include <libflash/ecc.h>
 
 struct flash {
 	bool			registered;
