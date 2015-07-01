@@ -119,6 +119,19 @@ int ipmi_queue_msg(struct ipmi_msg *msg)
 	return msg->backend->queue_msg(msg);
 }
 
+int ipmi_dequeue_msg(struct ipmi_msg *msg)
+{
+	if (!ipmi_present())
+		return OPAL_HARDWARE;
+
+	if (!msg) {
+		prerror("%s: Attempting to dequeue NULL message\n", __func__);
+		return OPAL_PARAMETER;
+	}
+
+	return msg->backend->dequeue_msg(msg);
+}
+
 void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 {
 	msg->cc = cc;

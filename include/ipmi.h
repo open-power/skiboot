@@ -207,6 +207,9 @@ int ipmi_queue_msg_head(struct ipmi_msg *msg);
  * messages callback has been called. */
 void ipmi_queue_msg_sync(struct ipmi_msg *msg);
 
+/* Removes the message from the list, queued previously */
+int ipmi_dequeue_msg(struct ipmi_msg *msg);
+
 /* Process a completed message */
 void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg);
 
