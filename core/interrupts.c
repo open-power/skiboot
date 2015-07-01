@@ -191,6 +191,8 @@ void add_opal_interrupts(void)
 	 * handling in Linux can cause problems.
 	 */
 	dt_add_property(opal_node, "opal-interrupts", irqs, count * 4);
+
+	free(irqs);
 }
 
 /*
