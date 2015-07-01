@@ -1409,7 +1409,6 @@ static int64_t p7ioc_err_inject_io32(struct p7ioc_phb *p, uint32_t pe_no,
 	int32_t index;
 
 	a = 0x0ull;
-	addr = 0x0ull;
 	prefer = 0x0ull;
 	for (index = 0; index < 128; index++) {
 		if (GETFIELD(IODA_XXDT_PE, p->iod_cache[index]) != pe_no)
