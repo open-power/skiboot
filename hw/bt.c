@@ -490,7 +490,7 @@ static int bt_del_ipmi_msg(struct ipmi_msg *ipmi_msg)
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
 	lock(&bt.lock);
-	list_del(&bt_msg->link);
+	list_del_from(&bt.msgq, &bt_msg->link);
 	bt.queue_len--;
 	bt_send_and_unlock();
 	return 0;
