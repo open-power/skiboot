@@ -33,12 +33,12 @@
 #ifdef __HAVE_LIBPORE__
 #include <p8_pore_table_gen_api.H>
 #include <sbe_xip_image.h>
-#endif
 
 #define MAX_RESET_PATCH_SIZE	64
 static uint32_t slw_saved_reset[MAX_RESET_PATCH_SIZE];
 
 static bool slw_current_le = false;
+#endif /* __HAVE_LIBPORE__ */
 
 /* Assembly in head.S */
 extern void enter_rvwinkle(void);
@@ -59,6 +59,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_SLW_REG, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
 		 OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
 		 OPAL_NA, NULL);
 
+#ifdef __HAVE_LIBPORE__
 static void slw_do_rvwinkle(void *data)
 {
 	struct cpu_thread *cpu = this_cpu();
@@ -176,6 +177,7 @@ static void slw_unpatch_reset(void)
 	}
 	sync_icache();
 }
+#endif /* __HAVE_LIBPORE__ */
 
 static bool slw_general_init(struct proc_chip *chip, struct cpu_thread *c)
 {
@@ -290,6 +292,7 @@ static bool slw_set_overrides(struct proc_chip *chip, struct cpu_thread *c)
 	return true;
 }
 
+#ifdef __HAVE_LIBPORE__
 static bool slw_unset_overrides(struct proc_chip *chip, struct cpu_thread *c)
 {
 	uint32_t core = pir_to_core_id(c->pir);
@@ -298,6 +301,7 @@ static bool slw_unset_overrides(struct proc_chip *chip, struct cpu_thread *c)
 	prlog(PR_DEBUG, "SLW: slw_unset_overrides %x:%x\n", chip->id, core);
 	return true;
 }
+#endif /* __HAVE_LIBPORE__ */
 
 static bool slw_set_idle_mode(struct proc_chip *chip, struct cpu_thread *c)
 {
@@ -653,6 +657,7 @@ static void add_cpu_idle_state_properties(void)
 	free(pmicr_mask_buf);
 }
 
+#ifdef __HAVE_LIBPORE__
 static void slw_cleanup_core(struct proc_chip *chip, struct cpu_thread *c)
 {
 	uint64_t tmp;
@@ -699,12 +704,11 @@ static void slw_cleanup_core(struct proc_chip *chip, struct cpu_thread *c)
 static void slw_cleanup_chip(struct proc_chip *chip)
 {
 	struct cpu_thread *c;
-	
+
 	for_each_available_core_in_chip(c, chip->id)
 		slw_cleanup_core(chip, c);
 }
 
-#ifdef __HAVE_LIBPORE__
 static void slw_patch_scans(struct proc_chip *chip, bool le_mode)
 {
 	int64_t rc;
@@ -737,16 +741,19 @@ static inline void slw_patch_scans(struct proc_chip *chip __unused,
 				   bool le_mode __unused ) { }
 #endif /* __HAVE_LIBPORE__ */
 
+#ifndef __HAVE_LIBPORE__
+int64_t __attrconst slw_reinit(uint64_t flags)
+{
+	(void)flags;
+	return OPAL_UNSUPPORTED;
+}
+#else
 int64_t slw_reinit(uint64_t flags)
 {
 	struct proc_chip *chip;
 	struct cpu_thread *cpu;
 	bool has_waker = false;
 	bool target_le = slw_current_le;
-
-#ifndef __HAVE_LIBPORE__
-	return OPAL_UNSUPPORTED;
-#endif
 
 	if (proc_gen < proc_gen_p8)
 		return OPAL_UNSUPPORTED;
@@ -855,6 +862,7 @@ int64_t slw_reinit(uint64_t flags)
 
 	return OPAL_SUCCESS;
 }
+#endif /* __HAVE_LIBPORE__ */
 
 #ifdef __HAVE_LIBPORE__
 static void slw_patch_regs(struct proc_chip *chip)
