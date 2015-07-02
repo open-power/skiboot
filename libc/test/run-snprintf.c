@@ -90,6 +90,26 @@ static void test_printf_c(void)
 	free(buf);
 }
 
+static void test_printf_p(void)
+{
+	char *buf= (char*)malloc(32);
+	char buf2[32];
+	skiboot_snprintf(buf, 32, 32, "%p", buf);
+	snprintf(buf2, 32, "%p", buf);
+	assert(0 == strncmp(buf, buf2, 32));
+	free(buf);
+}
+
+static void test_printf_o(void)
+{
+	char *buf= (char*)malloc(32);
+	char buf2[32];
+	skiboot_snprintf(buf, 32, 32, "%o", 0x12345678);
+	snprintf(buf2, 32, "%o", 0x12345678);
+	assert(0 == strncmp(buf, buf2, 32));
+	free(buf);
+}
+
 int main(void)
 {
 	char *buf;
@@ -145,6 +165,8 @@ int main(void)
 	test_printf_x("%x");
 	test_printf_x("%X");
 	test_printf_c();
+	test_printf_p();
+	test_printf_o();
 
 	return 0;
 }
