@@ -1558,13 +1558,6 @@ void create_led_device_nodes(void)
 		else
 			dt_add_property_strings(cled, DT_PROPERTY_LED_TYPES,
 						LED_TYPE_IDENTIFY);
-
-		if (is_enclosure_led(led->loc_code))
-			dt_add_property_strings(cled, DT_PROPERTY_LED_LOCATION,
-						LED_LOC_ENCLOSURE);
-		else
-			dt_add_property_strings(cled, DT_PROPERTY_LED_LOCATION,
-						LED_LOC_DESCENDENT);
 	}
 }
 

@@ -161,7 +161,6 @@ struct sai_data {
 #define DT_PROPERTY_LED_NODE		"leds"
 #define DT_PROPERTY_LED_MODE		"led-mode"
 #define DT_PROPERTY_LED_TYPES		"led-types"
-#define DT_PROPERTY_LED_LOCATION	"led-loc"
 
 /* LED Mode */
 #define LED_MODE_LIGHT_PATH		"lightpath"
@@ -171,9 +170,5 @@ struct sai_data {
 #define LED_TYPE_IDENTIFY		"identify"
 #define LED_TYPE_FAULT			"fault"
 #define LED_TYPE_ATTENTION		"attention"
-
-/* LED location */
-#define LED_LOC_ENCLOSURE		"enclosure"
-#define LED_LOC_DESCENDENT		"descendent"
 
 #endif
