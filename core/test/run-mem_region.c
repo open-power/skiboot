@@ -145,6 +145,7 @@ int main(void)
 		       <= (void *)test_heap + TEST_HEAP_SIZE);
 		assert(mem_check(&skiboot_heap));
 	}
+	mem_dump_free();
 	for (i = 0; i < 100; i++)
 		mem_free(&skiboot_heap, ptrs[100 - 1 - i], "freed");
 
@@ -245,6 +246,7 @@ int main(void)
 		assert(mem_check(r));
 		i++;
 	}
+	mem_dump_free();
 	assert(i == 3);
 	while ((r = list_pop(&regions, struct mem_region, list)) != NULL) {
 		list_del(&r->list);
