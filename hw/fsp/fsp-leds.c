@@ -952,45 +952,50 @@ static void fsp_free_led_list_buf(struct fsp_msg *msg)
 
 static void fsp_ret_led_state(char *loc_code)
 {
-	struct fsp_led_data *led, *next;
+	bool found = false;
 	u8 ind_state = 0;
+	u32 cmd = FSP_RSP_GET_LED_STATE;
+	struct fsp_led_data *led, *next;
 	struct fsp_msg *msg;
 
-	list_for_each_safe(&cec_ledq, led, next, link) {
-		if (strcmp(loc_code, led->loc_code))
-			continue;
+	if (is_sai_loc_code(loc_code)) {
+		if (sai_data.state & OPAL_SLOT_LED_STATE_ON)
+			ind_state = FSP_IND_FAULT_ACTV;
+		found = true;
+	} else {
+		list_for_each_safe(&cec_ledq, led, next, link) {
+			if (strcmp(loc_code, led->loc_code))
+				continue;
 
-		/* Found the location code */
-		if (led->status & SPCN_LED_IDENTIFY_MASK)
-			ind_state |= FSP_IND_IDENTIFY_ACTV;
-		if (led->status & SPCN_LED_FAULT_MASK)
-			ind_state |= FSP_IND_FAULT_ACTV;
-		msg = fsp_mkmsg(FSP_RSP_GET_LED_STATE, 1, ind_state);
-		if (!msg) {
-			prerror("Couldn't alloc FSP_RSP_GET_LED_STATE\n");
-			return;
+			/* Found the location code */
+			if (led->status & SPCN_LED_IDENTIFY_MASK)
+				ind_state |= FSP_IND_IDENTIFY_ACTV;
+			if (led->status & SPCN_LED_FAULT_MASK)
+				ind_state |= FSP_IND_FAULT_ACTV;
+
+			found = true;
+			break;
 		}
-		if (fsp_queue_msg(msg, fsp_freemsg)) {
-			fsp_freemsg(msg);
-			prerror("Couldn't queue FSP_RSP_GET_LED_STATE\n");
-		}
-		return;
 	}
 
 	/* Location code not found */
-	log_simple_error(&e_info(OPAL_RC_LED_LC),
-			 "Could not find the location code LC=%s\n", loc_code);
+	if (!found) {
+		log_simple_error(&e_info(OPAL_RC_LED_LC),
+				 "Could not find the location code LC=%s\n",
+				 loc_code);
+		cmd |= FSP_STATUS_INVALID_LC;
+		ind_state = 0xff;
+	}
 
-	msg = fsp_mkmsg(FSP_RSP_GET_LED_STATE | FSP_STATUS_INVALID_LC, 1, 0xff);
+	msg = fsp_mkmsg(cmd, 1, ind_state);
 	if (!msg) {
-		prerror("Failed to alloc FSP_RSP_GET_LED_STATE "
-			"| FSP_STATUS_INVALID_LC\n");
+		prerror("Couldn't alloc FSP_RSP_GET_LED_STATE\n");
 		return;
 	}
+
 	if (fsp_queue_msg(msg, fsp_freemsg)) {
 		fsp_freemsg(msg);
-		prerror("Failed to queue FSP_RSP_GET_LED_STATE "
-			"| FSP_STATUS_INVALID_LC\n");
+		prerror("Couldn't queue FSP_RSP_GET_LED_STATE\n");
 	}
 }
 
