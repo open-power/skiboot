@@ -75,7 +75,7 @@ void init_chips(void)
 		prlog(PR_NOTICE, "CHIP: Detected Mambo simulator\n");
 	}
 	if (dt_node_is_compatible(dt_root, "qemu,powernv")) {
-		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ;
+		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_NO_PBA;
 		prlog(PR_NOTICE, "CHIP: Detected Qemu simulator\n");
 	}
 
