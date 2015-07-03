@@ -16,23 +16,6 @@
 
 #include <time-utils.h>
 
-/* MSB is byte 3, LSB is byte 0 */
-static unsigned int bcd_byte(uint32_t bcd, int byteno)
-{
-	bcd >>= byteno * 8;
-	return (bcd >> 4 & 0xf) * 10 + (bcd & 0xf);
-}
-
-static uint32_t int_to_bcd2(unsigned int x)
-{
-	return (((x / 10) << 4) & 0xf0) | (x % 10);
-}
-
-static uint32_t int_to_bcd4(unsigned int x)
-{
-	return int_to_bcd2(x / 100) << 8 | int_to_bcd2(x % 100);
-}
-
 /*
  * Converts an OPAL formated datetime into a struct tm. We ignore microseconds
  * as Linux doesn't use them anyway.

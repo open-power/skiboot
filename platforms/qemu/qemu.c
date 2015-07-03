@@ -27,6 +27,11 @@ static void qemu_init(void)
 	/* Setup UART console for use by Linux via OPAL API */
 	if (!dummy_console_enabled())
 		uart_setup_opal_console();
+
+	/* Setup LPC RTC and use it as time source. Call after
+	 * chiptod_init()
+	 */
+	lpc_rtc_init();
 }
 
 static void qemu_dt_fixup_uart(struct dt_node *lpc)

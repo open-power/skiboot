@@ -216,6 +216,7 @@ extern void homer_init(void);
 extern void occ_pstates_init(void);
 extern void slw_init(void);
 extern void occ_fsp_init(void);
+extern void lpc_rtc_init(void);
 
 /* flash support */
 struct flash_chip;
