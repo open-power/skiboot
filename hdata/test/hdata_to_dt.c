@@ -29,7 +29,7 @@ struct dt_node *opal_node;
 
 /* Our actual map. */
 static void *spira_heap;
-static size_t spira_heap_size;
+static off_t spira_heap_size;
 static uint64_t base_addr;
 
 /* Override ntuple_addr. */
@@ -195,6 +195,8 @@ int main(int argc, char *argv[])
 	if (fd < 0)
 		err(1, "opening %s", argv[2]);
 	spira_heap_size = lseek(fd, 0, SEEK_END);
+	if (spira_heap_size < 0)
+		err(1, "lseek on %s", argv[2]);
 	spira_heap = mmap(NULL, spira_heap_size, PROT_READ, MAP_SHARED, fd, 0);
 	if (spira_heap == MAP_FAILED)
 		err(1, "mmaping %s", argv[3]);
