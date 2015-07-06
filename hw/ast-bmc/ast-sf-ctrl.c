@@ -682,6 +682,7 @@ static int ast_sf_setup(struct spi_flash_ctrl *ctrl, uint32_t *tsize)
 	 * flash chips
 	 */
 	switch(info->id) {
+	case 0xc22018: /* MX25L12835F */
 	case 0xc22019: /* MX25L25635F */
 	case 0xc2201a: /* MX66L51235F */
 		return ast_sf_setup_macronix(ct, info);
