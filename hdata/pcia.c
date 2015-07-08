@@ -35,9 +35,11 @@ static unsigned int pcia_index(const void *pcia)
 static const struct sppcia_cpu_thread *find_tada(const void *pcia,
 						 unsigned int thread)
 {
-	unsigned int count = HDIF_get_iarray_size(pcia,
-						  SPPCIA_IDATA_THREAD_ARRAY);
-	unsigned int i;
+	int count = HDIF_get_iarray_size(pcia, SPPCIA_IDATA_THREAD_ARRAY);
+	int i;
+
+	if (count < 0)
+		return NULL;
 
 	for (i = 0; i < count; i++) {
 		const struct sppcia_cpu_thread *t;
