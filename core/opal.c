@@ -141,7 +141,7 @@ void add_opal_node(void)
 	entry = (uint64_t)&opal_entry;
 	base = SKIBOOT_BASE;
 	size = (CPU_STACKS_BASE +
-		(cpu_max_pir + 1) * STACK_SIZE) - SKIBOOT_BASE;
+		(uint64_t)(cpu_max_pir + 1) * STACK_SIZE) - SKIBOOT_BASE;
 
 	if (!opal_node) {
 		opal_node = dt_new(dt_root, "ibm,opal");
