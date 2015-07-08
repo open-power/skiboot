@@ -805,6 +805,10 @@ unsigned int dt_count_addresses(const struct dt_node *node)
 
 	p = dt_require_property(node, "reg", -1);
 	n = (na + ns) * sizeof(u32);
+
+	if (n == 0)
+		return 0;
+
 	return p->len / n;
 }
 
