@@ -20,5 +20,5 @@ rand(void)
 {
 	_rand = _rand * 25364735 + 34563;
 
-	return ((unsigned int) (_rand << 16) & RAND_MAX);
+	return ((unsigned int) (_rand >> 16) & RAND_MAX);
 }
