@@ -154,6 +154,8 @@ static void fsp_create_links(const void *spss, int index,
 	}
 	if (links)
 		dt_add_property(fsp_node, "ibm,psi-links", links, lcount * 4);
+
+	free(links);
 }
 
 void fsp_parse(void)
@@ -177,7 +179,7 @@ void fsp_parse(void)
 	 *
 	 * Each FSP then has a "links" property which is an array of chip IDs
 	 */
-	
+
 	/* Find SPSS in SPIRA */
 	base_spss = get_hdif(&spira.ntuples.sp_subsys, SPSS_HDIF_SIG);
 	if (!base_spss) {
@@ -195,6 +197,6 @@ void fsp_parse(void)
 		fsp_node = fsp_create_node(spss, i, fsp_root);
 		if (fsp_node)
 			fsp_create_links(spss, i, fsp_node);
-	}	
+	}
 }
 
