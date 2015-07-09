@@ -3674,7 +3674,7 @@ static bool phb3_init_rc_cfg(struct phb3 *p)
 	/* Note: When link down, also disable rcvr errors */
 	phb3_pcicfg_write32(&p->phb, 0, aercap + PCIECAP_AER_CE_MASK,
 			    PCIECAP_AER_CE_ADV_NONFATAL |
-			    p->has_link ? 0 : PCIECAP_AER_CE_RECVR_ERR);
+			    (p->has_link ? 0 : PCIECAP_AER_CE_RECVR_ERR));
 	/* Enable ECRC generation & checking */
 	phb3_pcicfg_write32(&p->phb, 0, aercap + PCIECAP_AER_CAPCTL,
 			     PCIECAP_AER_CAPCTL_ECRCG_EN	|
