@@ -139,7 +139,8 @@ static void bt_msg_del(struct bt_msg *bt_msg)
 	list_del(&bt_msg->link);
 	bt.queue_len--;
 	unlock(&bt.lock);
-	ipmi_cmd_done(bt_msg->ipmi_msg.cmd, bt_msg->ipmi_msg.netfn + (1 << 2),
+	ipmi_cmd_done(bt_msg->ipmi_msg.cmd,
+		      IPMI_NETFN_RETURN_CODE(bt_msg->ipmi_msg.netfn),
 		      IPMI_TIMEOUT_ERR, &bt_msg->ipmi_msg);
 	lock(&bt.lock);
 }

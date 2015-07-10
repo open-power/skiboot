@@ -93,6 +93,8 @@
 #define IPMI_CMD(code)			((code) & 0xff)
 #define IPMI_NETFN(code)		((code) >> 8 & 0xff)
 
+#define IPMI_NETFN_RETURN_CODE(netfn)	((netfn) | 0x4)
+
 #define IPMI_NETFN_CHASSIS		0x00
 #define IPMI_NETFN_SE			0x04
 #define IPMI_NETFN_STORAGE		0x0a
