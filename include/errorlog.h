@@ -192,6 +192,7 @@ struct opal_err_info {
 #define OPAL_SLW			0x534C	/* SL */
 #define OPAL_FSP			0x4650	/* FP */
 #define OPAL_I2C			0x4943	/* IC */
+#define OPAL_IPMI			0x4950  /* IP */
 
 /* SAPPHIRE SRC componenet ID*/
 #define OPAL_CU				0x1000
@@ -223,6 +224,7 @@ struct opal_err_info {
 #define OPAL_SL				0x2100
 #define OPAL_FP				0x2200
 #define OPAL_IC				0x2300
+#define OPAL_IP				0x2400
 
 enum opal_reasoncode {
 /* code update */
@@ -317,6 +319,10 @@ enum opal_reasoncode {
 	OPAL_RC_I2C_TIMEOUT	= OPAL_IC | 0x12,
 	OPAL_RC_I2C_TRANSFER	= OPAL_IC | 0x13,
 	OPAL_RC_I2C_RESET	= OPAL_IC | 0x14,
+
+/* IPMI */
+	OPAL_RC_IPMI_REQ	= OPAL_IP | 0x10,
+	OPAL_RC_IPMI_RESP	= OPAL_IP | 0x11,
 };
 
 #define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\

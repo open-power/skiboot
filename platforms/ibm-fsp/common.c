@@ -21,6 +21,7 @@
 #include <opal.h>
 #include <console.h>
 #include <hostservices.h>
+#include <ipmi.h>
 
 #include "ibm-fsp.h"
 
@@ -124,6 +125,10 @@ void ibm_fsp_init(void)
 	/* Start the surveillance process */
 	op_display(OP_LOG, OP_MOD_INIT, 0x0002);
 	fsp_init_surveillance();
+
+	/* IPMI */
+	fsp_ipmi_init();
+	ipmi_opal_init();
 
 	/* Initialize sensor access */
 	op_display(OP_LOG, OP_MOD_INIT, 0x0003);

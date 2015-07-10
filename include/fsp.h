@@ -421,6 +421,9 @@
  */
 #define FSP_CMD_FETCH_SP_DATA	0x1d40101 /* HV->FSP: Fetch & DMA data */
 #define FSP_CMD_WRITE_SP_DATA	0x1d40201 /* HV->FSP: Fetch & DMA data */
+#define FSP_CMD_FETCH_PLAT_DATA	0x1d40500 /* HV->FSP: Platform function data */
+#define FSP_CMD_SEND_PLAT_DATA	0x0d40501 /* FSP->HV */
+#define FSP_RSP_PLAT_DATA	0x0d48500 /* HV->FSP */
 
 /* Data set IDs for SP data commands */
 #define FSP_DATASET_SP_DUMP	0x01
@@ -792,6 +795,9 @@ extern int (*fsp_flash_term_hook)(void);
 /* Surveillance */
 extern void fsp_init_surveillance(void);
 extern void fsp_surv_query(void);
+
+/* IPMI */
+extern void fsp_ipmi_init(void);
 
 /* Reset/Reload */
 extern void fsp_reinit_fsp(void);
