@@ -244,6 +244,10 @@ static void add_size_to_ram_area(struct dt_node *ram_node,
 		return;
 
 	str = zalloc(kwsz + 1);
+	if (!str){
+		prerror("Allocation failed\n");
+		return;
+	}
 	memcpy(str, kw, kwsz);
 	dt_add_property_string(ram_node, "size", str);
 	free(str);
