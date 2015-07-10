@@ -207,7 +207,7 @@ static bool __paca_parse(void)
 
 	paca = get_hdif(&spira.ntuples.paca, PACA_HDIF_SIG);
 	if (!paca) {
-		prerror("Invalid PACA (PCIA = %p)\n", 
+		prerror("Invalid PACA (PCIA = %p)\n",
 			ntuple_addr(&spira.ntuples.pcia));
 		return false;
 	}
@@ -299,6 +299,11 @@ static bool __paca_parse(void)
 
 		/* Add the cpu #. */
 		prop = dt_find_property(cpu, "ibm,ppc-interrupt-server#s");
+		if (!prop) {
+			prerror("CPU[%i]: could not find mapping information\n",
+				paca_index(paca));
+			return false;
+		}
 		num = prop->len / sizeof(u32);
 		new_prop = malloc((num + 1) * sizeof(u32));
 		if (!new_prop) {
@@ -317,7 +322,7 @@ static bool __paca_parse(void)
 	add_icps();
 
 	return true;
-}	
+}
 
 void paca_parse(void)
 {
