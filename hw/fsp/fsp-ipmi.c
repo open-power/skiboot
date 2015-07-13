@@ -87,13 +87,12 @@ static void fsp_ipmi_req_complete(struct fsp_msg *msg)
 {
 	uint8_t status = (msg->resp->word1 >> 8) & 0xff;
 	uint32_t length = msg->resp->data.words[0];
-	struct fsp_ipmi_msg *fsp_ipmi_msg;
+	struct fsp_ipmi_msg *fsp_ipmi_msg = msg->user_data;
 	struct ipmi_msg *ipmi_msg;
 
 	fsp_freemsg(msg);
 
 	if (status != FSP_STATUS_SUCCESS) {
-		fsp_ipmi_msg = msg->user_data;
 		assert(fsp_ipmi_msg == fsp_ipmi.cur_msg);
 
 		ipmi_msg = &fsp_ipmi_msg->ipmi_msg;
