@@ -27,7 +27,7 @@ static bool fsp_chiptod_update_topology(uint32_t cmd_sub_mod,
 	struct fsp_msg *resp;
 	enum chiptod_topology topo;
 	bool action;
-	uint8_t status;
+	uint8_t status = 0;
 
 	switch (cmd_sub_mod) {
 	case FSP_CMD_TOPO_ENABLE_DISABLE:
