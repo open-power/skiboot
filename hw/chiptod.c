@@ -452,7 +452,7 @@ static enum chiptod_chip_status _chiptod_get_chip_status(int32_t chip_id)
 
 	if (xscom_read(chip_id, TOD_STATUS, &tod_status) != 0) {
 		prerror("CHIPTOD: XSCOM error reading TOD_STATUS reg\n");
-		goto out;
+		return status;
 	}
 
 	if (tod_status & TOD_ST_ACTIVE_MASTER)
@@ -460,7 +460,6 @@ static enum chiptod_chip_status _chiptod_get_chip_status(int32_t chip_id)
 	else if (tod_status & TOD_ST_BACKUP_MASTER)
 		status = chiptod_backup_master;
 
-out:
 	return status;
 }
 
