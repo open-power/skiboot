@@ -559,7 +559,8 @@ static void phb3_init_ioda_cache(struct phb3 *p)
 	 * ever let a live FF RTT even temporarily when resetting
 	 * for EEH etc... (HW278969).
 	 */
-	memset(p->rte_cache, 0x00, RTT_TABLE_SIZE);
+	for (i = 0; i < ARRAY_SIZE(p->rte_cache); i++)
+		p->rte_cache[i] = PHB3_RESERVED_PE_NUM;
 	memset(p->peltv_cache, 0x0,  sizeof(p->peltv_cache));
 
 	/* Disable all LSI */
@@ -1792,7 +1793,8 @@ static int64_t phb3_set_pe(struct phb *phb,
 			for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++)
 				p->rte_cache[idx] = pe_num;
 		} else {
-			memset(p->rte_cache, 0, RTT_TABLE_SIZE);
+			for ( idx = 0; idx < ARRAY_SIZE(p->rte_cache); idx++)
+				p->rte_cache[idx] = PHB3_RESERVED_PE_NUM;
 		}
 		memcpy((void *)p->tbl_rtt, p->rte_cache, RTT_TABLE_SIZE);
 	} else {
@@ -1800,7 +1802,10 @@ static int64_t phb3_set_pe(struct phb *phb,
 		for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++, rte++) {
 			if ((idx & mask) != val)
 				continue;
-			p->rte_cache[idx] = (action ? pe_num : 0);
+			if (action == OPAL_MAP_PE)
+				p->rte_cache[idx] = pe_num;
+			else
+				p->rte_cache[idx] = PHB3_RESERVED_PE_NUM;
 			*rte = p->rte_cache[idx];
 		}
 	}
@@ -4026,6 +4031,9 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 
 static void phb3_allocate_tables(struct phb3 *p)
 {
+	uint16_t *rte;
+	uint32_t i;
+
 	/* XXX Our current memalign implementation sucks,
 	 *
 	 * It will do the job, however it doesn't support freeing
@@ -4034,7 +4042,9 @@ static void phb3_allocate_tables(struct phb3 *p)
 	 */
 	p->tbl_rtt = (uint64_t)local_alloc(p->chip_id, RTT_TABLE_SIZE, RTT_TABLE_SIZE);
 	assert(p->tbl_rtt);
-	memset((void *)p->tbl_rtt, 0, RTT_TABLE_SIZE);
+	rte = (uint16_t *)(p->tbl_rtt);
+	for (i = 0; i < RTT_TABLE_ENTRIES; i++, rte++)
+		*rte = PHB3_RESERVED_PE_NUM;
 
 	p->tbl_peltv = (uint64_t)local_alloc(p->chip_id, PELTV_TABLE_SIZE, PELTV_TABLE_SIZE);
 	assert(p->tbl_peltv);
@@ -4100,7 +4110,8 @@ static void phb3_add_properties(struct phb3 *p)
 	dt_add_property(np, "ibm,opal-single-pe", NULL, 0);
 	//dt_add_property_cells(np, "ibm,opal-msi-ports", 2048);
 	dt_add_property_cells(np, "ibm,opal-num-pes", 256);
-	dt_add_property_cells(np, "ibm,opal-reserved-pe", 0);
+	dt_add_property_cells(np, "ibm,opal-reserved-pe",
+			      PHB3_RESERVED_PE_NUM);
 	dt_add_property_cells(np, "ibm,opal-msi-ranges",
 			      p->base_msi, PHB3_MSI_IRQ_COUNT);
 	tkill = reg + PHB_TCE_KILL;

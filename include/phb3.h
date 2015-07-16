@@ -148,6 +148,7 @@ struct rtt_entry {
  * capability register later.
  */
 #define PHB3_MAX_PE_NUM		256
+#define PHB3_RESERVED_PE_NUM	255
 
 /*
  * State structure for a PHB
