@@ -99,10 +99,7 @@
  * Entries are 2 bytes indexed by PCIe RID
  */
 #define RTT_TABLE_ENTRIES	0x10000
-#define RTT_TABLE_SIZE		(RTT_TABLE_ENTRIES * sizeof(struct rtt_entry))
-struct rtt_entry {
-	uint16_t pe_num;
-};
+#define RTT_TABLE_SIZE		0x20000
 
 /* IVT Table : MSI Interrupt vectors * state.
  *
@@ -301,7 +298,7 @@ struct phb3 {
 	const __be64		*lane_eq;
 	unsigned int		max_link_speed;
 
-	uint16_t		rte_cache[RTT_TABLE_SIZE/2];
+	uint16_t		rte_cache[RTT_TABLE_ENTRIES];
 	uint8_t			peltv_cache[PELTV_TABLE_SIZE];
 	uint64_t		lxive_cache[8];
 	uint64_t		ive_cache[IVT_TABLE_ENTRIES];
