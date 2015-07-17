@@ -26,14 +26,17 @@
 #include <dirent.h>
 #include <limits.h>
 
+#include <ccan/array_size/array_size.h>
+
 #include <mtd/mtd-abi.h>
 
 #include <getopt.h>
 
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
-#include <libflash/file_flash.h>
+#include <libflash/file.h>
 #include <libflash/ecc.h>
+#include <libflash/blocklevel.h>
 
 #include "gard.h"
 
@@ -42,8 +45,6 @@
 #define FLASH_GARD_PART "GUARD"
 
 struct gard_ctx {
-	int fd;
-	bool readonly;
 	bool ecc;
 	uint32_t f_size;
 	uint32_t f_pos;
@@ -52,8 +53,7 @@ struct gard_ctx {
 	uint32_t gard_data_pos;
 	uint32_t gard_data_len;
 
-	struct spi_flash_ctrl *fct;
-	struct flash_chip *fch;
+	struct blocklevel_device *bl;
 	struct ffs_handle *ffs;
 };
 
@@ -260,7 +260,7 @@ out:
 	return -1;
 }
 
-static int open_from_dev(struct gard_ctx *ctx, const char *fdt_flash_path)
+static int get_dev_mtd(const char *fdt_flash_path, char **r_path)
 {
 	struct dirent **namelist;
 	char fdt_node_path[PATH_MAX];
@@ -344,17 +344,9 @@ static int open_from_dev(struct gard_ctx *ctx, const char *fdt_flash_path)
 
 			strcpy(dev_path, "/dev/");
 			strncat(dev_path, dirent->d_name, sizeof(dev_path) - strlen(dev_path) - 2);
-			ctx->readonly = !(flags && MTD_WRITEABLE);
-			ctx->f_size = size;
-			ctx->fd = open(dev_path, ctx->readonly ? O_RDONLY : O_RDWR);
-			if (ctx->fd == -1) {
-				fprintf(stderr, "Couldn't open MTD device '%s' for %s as the system flash device\n",
-						dev_path, ctx->readonly ? "reading" : "read/write");
-				rc = -1;
-			}
+			*r_path = strdup(dev_path);
 			done = true;
 		}
-
 		free(namelist[i]);
 	}
 	free(namelist);
@@ -366,28 +358,6 @@ static int open_from_dev(struct gard_ctx *ctx, const char *fdt_flash_path)
 	return done ? rc : -1;
 }
 
-static int open_from_file(struct gard_ctx *ctx, const char *filename)
-{
-	struct stat sbuf;
-	int rc;
-
-	rc = stat(filename, &sbuf);
-	if (rc == -1) {
-		fprintf(stderr, "Couldn't stat '%s' to use as flash data\n", filename);
-		return -1;
-	}
-
-	ctx->fd = open(filename, O_RDWR);
-	if (ctx->fd == -1) {
-		fprintf(stderr, "Couldn't open '%s' to use as flash data\n", filename);
-		return -1;
-	}
-
-	ctx->readonly = 0;
-	ctx->f_size = sbuf.st_size;
-	return 0;
-}
-
 static int do_iterate(struct gard_ctx *ctx,
                       int (*func)(struct gard_ctx *ctx, int pos,
                                   struct gard_record *gard, void *priv),
@@ -397,14 +367,12 @@ static int do_iterate(struct gard_ctx *ctx,
 	unsigned int i;
 	struct gard_record gard, null_gard;
 
-	memset(&null_gard, INT_MAX, sizeof(gard));
+	memset(&null_gard, UINT_MAX, sizeof(gard));
 	for (i = 0; i * sizeof_gard(ctx) < ctx->gard_data_len && rc == 0; i++) {
 		memset(&gard, 0, sizeof(gard));
 
-		rc = flash_read_corrected(ctx->fch, ctx->gard_data_pos +
-		                          (i * sizeof_gard(ctx)), &gard,
-		                          sizeof(gard), ctx->ecc);
-
+		rc = blocklevel_read(ctx->bl, ctx->gard_data_pos +
+				(i * sizeof_gard(ctx)), &gard, sizeof(gard));
 		/* It isn't super clear what constitutes the end, this should do */
 		if (rc || memcmp(&gard, &null_gard, sizeof(gard)) == 0)
 			break;
@@ -526,13 +494,15 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 			return 0;
 
 		printf("Erasing the entire gard partition...");
-		rc = flash_erase(ctx->fch, ctx->gard_data_pos, ctx->gard_data_len);
+		rc = blocklevel_erase(ctx->bl, ctx->gard_data_pos, ctx->gard_data_len);
 		if (rc) {
 			fprintf(stderr, "\nCouldn't erase flash partition at 0x%08x for size %u\n",
 					ctx->gard_data_pos, ctx->gard_data_len);
 			return rc;
 		}
 		printf("done\n");
+
+		ctx->gard_data_len = sizeof_gard(ctx);
 	} else if (be32toh(gard->record_id) == *(uint32_t *)priv) {
 		largest = get_largest_pos(ctx);
 		if (largest < 0 || pos > largest) {
@@ -549,14 +519,14 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 			if (!buf)
 				return -ENOMEM;
 
-			rc = flash_read_corrected(ctx->fch, buf_pos, buf, buf_len, ctx->ecc);
+			rc = blocklevel_read(ctx->bl, buf_pos, buf, buf_len);
 			if (rc) {
 				free(buf);
 				fprintf(stderr, "Couldn't read from flash at 0x%08x for len 0x%08x\n", buf_pos, buf_len);
 				return rc;
 			}
 
-			rc = flash_smart_write_corrected(ctx->fch, buf_pos - sizeof_gard(ctx), buf, buf_len, ctx->ecc);
+			rc = blocklevel_smart_write(ctx->bl, buf_pos - sizeof_gard(ctx), buf, buf_len);
 			free(buf);
 			if (rc) {
 				fprintf(stderr, "Couldn't write to flash at 0x%08lx for len 0x%08x\n",
@@ -565,12 +535,13 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 			}
 		}
 
+		ctx->gard_data_len -= sizeof_gard(ctx);
 		printf("Cleared gard record with id ID 0x%08x\n", be32toh(gard->record_id));
 	}
 
 	/* Now wipe the last record */
-	rc = flash_smart_write_corrected(ctx->fch, ctx->gard_data_pos + (largest * sizeof_gard(ctx)),
-		                            &null_gard, sizeof(null_gard), ctx->ecc);
+	rc = blocklevel_smart_write(ctx->bl, ctx->gard_data_pos + (largest * sizeof_gard(ctx)),
+		                            &null_gard, sizeof(null_gard));
 
 	return rc;
 }
@@ -645,8 +616,9 @@ static const char *global_optstring = "+ef:p";
 
 int main(int argc, char **argv)
 {
-	const char *action, *progname, *filename = NULL;
+	const char *action, *progname;
 	const char *fdt_flash_path = FDT_ACTIVE_FLASH_PATH;
+	char *filename = NULL;
 	struct gard_ctx _ctx, *ctx;
 	int i, rc;
 	bool part = 0;
@@ -670,7 +642,14 @@ int main(int argc, char **argv)
 			ecc = true;
 			break;
 		case 'f':
-			filename = optarg;
+			/* If they specify -f twice */
+			free(filename);
+
+			filename = strdup(optarg);
+			if (!filename) {
+				fprintf(stderr, "Out of memory\n");
+				return EXIT_FAILURE;
+			}
 			break;
 		case 'p':
 			part = true;
@@ -700,36 +679,40 @@ int main(int argc, char **argv)
 	argv += optind;
 	action = argv[0];
 
-	if (!filename)
-		rc = open_from_dev(ctx, fdt_flash_path);
-	else
-		rc = open_from_file(ctx, filename);
+	if (!filename) {
+		rc = get_dev_mtd(fdt_flash_path, &filename);
+		if (rc)
+			return EXIT_FAILURE;
+	}
 
+	rc = file_init_path(filename, NULL, &(ctx->bl));
 	if (rc)
 		return EXIT_FAILURE;
 
-	ctx->fct = build_flash_ctrl(ctx->fd);
-	if (!ctx->fct)
+	rc = blocklevel_get_info(ctx->bl, NULL, &(ctx->f_size), NULL);
+	if (rc)
 		goto out;
 
-	rc = flash_init(ctx->fct, &ctx->fch);
-	if (rc)
-		goto out1;
-
 	if (!part) {
-		rc = ffs_open_flash(ctx->fch, 0, ctx->f_size, &ctx->ffs);
+		rc = ffs_init(0, ctx->f_size, ctx->bl, &ctx->ffs, 1);
 		if (rc)
-			goto out2;
+			goto out;
 
 		rc = ffs_lookup_part(ctx->ffs, FLASH_GARD_PART, &ctx->gard_part_idx);
 		if (rc)
-			goto out3;
+			goto out;
 
 		rc = ffs_part_info(ctx->ffs, ctx->gard_part_idx, NULL, &(ctx->gard_data_pos),
 				&(ctx->gard_data_len), NULL, &(ctx->ecc));
 		if (rc)
-			goto out3;
+			goto out;
 	} else {
+		if (ecc) {
+			rc = blocklevel_ecc_protect(ctx->bl, 0, ctx->f_size);
+			if (rc)
+				goto out;
+		}
+
 		ctx->ecc = ecc;
 		ctx->gard_data_pos = 0;
 		ctx->gard_data_len = ctx->f_size;
@@ -748,23 +731,18 @@ int main(int argc, char **argv)
 		}
 	}
 
+out:
+	free(filename);
+	if (ctx->ffs)
+		ffs_close(ctx->ffs);
+
+	file_exit_close(ctx->bl);
+
 	if (i == ARRAY_SIZE(actions)) {
 		fprintf(stderr, "%s: '%s' isn't a valid command\n", progname, action);
 		usage(progname);
-		rc = EXIT_FAILURE;
+		return EXIT_FAILURE;
 	}
-
-out3:
-	if (ctx->ffs)
-		ffs_close(ctx->ffs);
-out2:
-	if (ctx->fch)
-		flash_exit(ctx->fch);
-out1:
-	if (ctx->fch)
-		free_flash_ctrl(ctx->fct);
-out:
-	close(ctx->fd);
 
 	if (rc > 0) {
 		show_flash_err(rc);

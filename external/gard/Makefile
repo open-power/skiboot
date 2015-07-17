@@ -11,7 +11,7 @@ LDFLAGS += -m64
 ASFLAGS = -m64
 CPPFLAGS += -I. -I../../
 
-OBJS = file_flash.o gard.o libflash.o libffs.o ecc.o
+OBJS = file.o gard.o libflash.o libffs.o ecc.o blocklevel.o
 
 EXE = gard
 
