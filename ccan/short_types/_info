@@ -1,6 +1,6 @@
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
-#include "config.h"
 
 /**
  * short_types - shorter names for standard integer types
@@ -9,8 +9,9 @@
  *	-- Linus Torvalds
  *
  * The short_types header provides for convenient abbreviations for the
- * posixly-damned uint32_t types.  It also provides be32/le32 for explicitly
- * annotating types of specific endian.
+ * posixly-damned uint32_t types.  If ccan/endian/endian.h is included,
+ * it also provides be32/le32 for explicitly annotating types of specific
+ * endian.
  *
  * Include this header, if only to stop people using these identifiers
  * for other things!
@@ -74,6 +75,11 @@ int main(int argc, char *argv[])
 		return 1;
 
 	if (strcmp(argv[1], "depends") == 0) {
+		return 0;
+	}
+
+	if (strcmp(argv[1], "testdepends") == 0) {
+		printf("ccan/endian\n");
 		return 0;
 	}
 
