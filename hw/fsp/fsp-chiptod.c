@@ -22,12 +22,12 @@
 #define FSP_STATUS_TOPO_IN_USE	0xb8		/* topology is in use */
 
 static bool fsp_chiptod_update_topology(uint32_t cmd_sub_mod,
-					       struct fsp_msg *msg __unused)
+					struct fsp_msg *msg)
 {
 	struct fsp_msg *resp;
 	enum chiptod_topology topo;
 	bool action;
-	uint8_t rc;
+	uint8_t status;
 
 	switch (cmd_sub_mod) {
 	case FSP_CMD_TOPO_ENABLE_DISABLE:
@@ -42,10 +42,12 @@ static bool fsp_chiptod_update_topology(uint32_t cmd_sub_mod,
 					action ? "Enable" : "Disable",
 					topo ? "Secondary" : "Primary");
 
-		if (chiptod_adjust_topology(topo, action) < 0)
-			rc = FSP_STATUS_TOPO_IN_USE;
+		if (!chiptod_adjust_topology(topo, action))
+			status = FSP_STATUS_TOPO_IN_USE;
+		else
+			status = 0x00;
 
-		resp = fsp_mkmsg(FSP_RSP_TOPO_ENABLE_DISABLE | rc, 0);
+		resp = fsp_mkmsg(FSP_RSP_TOPO_ENABLE_DISABLE | status, 0);
 		if (!resp) {
 			prerror("CHIPTOD: Response allocation failed\n");
 			return false;

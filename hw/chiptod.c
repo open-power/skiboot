@@ -1657,12 +1657,12 @@ static void chiptod_discover_new_backup(enum chiptod_topology topo)
  * topology.
  *
  * Return values:
- *	0	<= Success
- *	-1	<= Topology is active and in use.
+ *	true	<= Success
+ *	false	<= Topology is active and in use.
  */
-int chiptod_adjust_topology(enum chiptod_topology topo, bool enable)
+bool chiptod_adjust_topology(enum chiptod_topology topo, bool enable)
 {
-	uint8_t rc = 0;
+	uint8_t rc = true;
 	/*
 	 * The FSP can only request that the currently inactive topology
 	 * be disabled or enabled. If the requested topology is currently
@@ -1671,7 +1671,7 @@ int chiptod_adjust_topology(enum chiptod_topology topo, bool enable)
 	 */
 	lock(&chiptod_lock);
 	if (topo == current_topology) {
-		rc = -1;
+		rc = false;
 		goto out;
 	}
 
