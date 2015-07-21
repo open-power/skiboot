@@ -34,6 +34,7 @@ CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 HOSTCC=gcc
 HOSTEND=$(shell uname -m | sed -e 's/^i.*86$$/LITTLE/' -e 's/^x86.*/LITTLE/' -e 's/^ppc64le/LITTLE/' -e 's/^ppc.*/BIG/')
 HOSTCFLAGS=-O1 $(CWARNS) -DHAVE_$(HOSTEND)_ENDIAN -MMD
+HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-std=gnu11)
 HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-Wjump-misses-init) \
 	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=const) \
 	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=noreturn) \
@@ -62,6 +63,7 @@ CPPFLAGS += -ffreestanding
 CFLAGS := -fno-strict-aliasing -fstack-protector-all -pie -mbig-endian -m64
 CFLAGS += -Wl,--oformat,elf64-powerpc
 CFLAGS += $(call try-cflag,$(CC),-mabi=elfv1)
+CFLAGS += $(call try-cflag,$(CC),-std=gnu11)
 
 ifeq ($(SKIBOOT_GCOV),1)
 CFLAGS += -fprofile-arcs -ftest-coverage -DSKIBOOT_GCOV=1
