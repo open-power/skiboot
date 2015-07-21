@@ -28,6 +28,8 @@
 #define OFFSET(sym, str, mem) \
 	DEFINE(sym, offsetof(struct str, mem))
 
+int main(void);
+
 int main(void)
 {
 	OFFSET(SPIRA_ACTUAL_SIZE, spira, reserved);
