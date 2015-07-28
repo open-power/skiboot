@@ -41,20 +41,13 @@ static LIST_HEAD(mem_error_list);
  */
 static struct lock mem_err_lock = LOCK_UNLOCKED;
 
-static void mem_err_info_dump(struct errorlog *buf, void *data, uint16_t size);
-
 DEFINE_LOG_ENTRY(OPAL_RC_MEM_ERR_RES, OPAL_PLATFORM_ERR_EVT, OPAL_MEM_ERR,
 			OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,
-			OPAL_NA, mem_err_info_dump);
+			OPAL_NA, NULL);
 
 DEFINE_LOG_ENTRY(OPAL_RC_MEM_ERR_DEALLOC, OPAL_PLATFORM_ERR_EVT, OPAL_MEM_ERR,
 			OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,
-			OPAL_NA, mem_err_info_dump);
-
-static void mem_err_info_dump(struct errorlog *buf, void *data, uint16_t size)
-{
-	opal_elog_update_user_dump(buf, data, 0x44455350, size);
-}
+			OPAL_NA, NULL);
 
 static bool send_response_to_fsp(u32 cmd_sub_mod)
 {
@@ -192,6 +185,7 @@ static bool handle_memory_resilience(u32 cmd_sub_mod, u64 paddr)
 {
 	int rc = 0;
 	struct OpalMemoryErrorData mem_err_evt;
+	struct errorlog *buf;
 
 	memset(&mem_err_evt, 0, sizeof(struct OpalMemoryErrorData));
 	/* Check arguments */
@@ -243,10 +237,14 @@ send_response:
 	if (!rc)
 		return send_response_to_fsp(FSP_RSP_MEM_RES);
 	else {
-		log_error(&e_info(OPAL_RC_MEM_ERR_RES),
-			&mem_err_evt, sizeof(struct OpalMemoryErrorData),
+		buf = opal_elog_create(&e_info(OPAL_RC_MEM_ERR_RES), 0);
+		log_append_msg(buf,
 			"OPAL_MEM_ERR: Cannot queue up memory "
 			"resilience error event to the OS");
+		log_add_section(buf, 0x44455350);
+		log_append_data(buf, (char *) &mem_err_evt,
+					   sizeof(struct OpalMemoryErrorData));
+		log_commit(buf);
 		return false;
 	}
 }
@@ -290,6 +288,7 @@ static bool handle_memory_deallocation(u64 paddr_start, u64 paddr_end)
 	int rc = 0;
 	u8 err = 0;
 	struct OpalMemoryErrorData mem_err_evt;
+	struct errorlog *buf;
 
 	memset(&mem_err_evt, 0, sizeof(struct OpalMemoryErrorData));
 	/* Check arguments */
@@ -327,10 +326,14 @@ send_response:
 	if (!rc)
 		return send_response_to_fsp(FSP_RSP_MEM_DYN_DEALLOC);
 	else {
-		log_error(&e_info(OPAL_RC_MEM_ERR_DEALLOC),
-			&mem_err_evt, sizeof(struct OpalMemoryErrorData),
+		buf = opal_elog_create(&e_info(OPAL_RC_MEM_ERR_DEALLOC), 0);
+		log_append_msg(buf,
 			"OPAL_MEM_ERR: Cannot queue up memory "
 			"deallocation error event to the OS");
+		log_add_section(buf, 0x44455350);
+		log_append_data(buf, (char *)&mem_err_evt,
+					   sizeof(struct OpalMemoryErrorData));
+		log_commit(buf);
 		return false;
 	}
 }

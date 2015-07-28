@@ -59,35 +59,8 @@ static struct errorlog *get_write_buffer(int opal_event_severity)
 	return buf;
 }
 
-int opal_elog_update_user_dump(struct errorlog *buf, unsigned char *data,
-					      uint32_t tag, uint16_t size)
-{
-	char *buffer;
-	struct elog_user_data_section *tmp;
-
-	if (!buf) {
-		prerror("ELOG: Cannot update user data. Buffer is invalid\n");
-		return -1;
-	}
-
-	buffer = (char *)buf->user_data_dump + buf->user_section_size;
-	if ((buf->user_section_size + size) > OPAL_LOG_MAX_DUMP) {
-		prerror("ELOG: Size of dump data overruns buffer\n");
-		return -1;
-	}
-
-	tmp = (struct elog_user_data_section *)buffer;
-	tmp->tag = tag;
-	tmp->size = size + sizeof(struct elog_user_data_section) - 1;
-	memcpy(tmp->data_dump, data, size);
-
-	buf->user_section_size += tmp->size;
-	buf->user_section_count++;
-	return 0;
-}
-
 /* Reporting of error via struct errorlog */
-struct errorlog *opal_elog_create(struct opal_err_info *e_info)
+struct errorlog *opal_elog_create(struct opal_err_info *e_info, uint32_t tag)
 {
 	struct errorlog *buf;
 
@@ -104,9 +77,39 @@ struct errorlog *opal_elog_create(struct opal_err_info *e_info)
 		lock(&elog_lock);
 		buf->plid = ++sapphire_elog_id;
 		unlock(&elog_lock);
+
+		/* Initialise the first user dump section */
+		log_add_section(buf, tag);
 	}
 
 	return buf;
+}
+
+/* Add a new user data section to an existing error log */
+void log_add_section(struct errorlog *buf, uint32_t tag)
+{
+	size_t size = sizeof(struct elog_user_data_section) - 1;
+	struct elog_user_data_section *tmp;
+
+	if (!buf) {
+		prerror("ELOG: Cannot add user data section. "
+			"Buffer is invalid\n");
+		return;
+	}
+
+	if ((buf->user_section_size + size) > OPAL_LOG_MAX_DUMP) {
+		prerror("ELOG: Size of dump data overruns buffer\n");
+		return;
+	}
+
+	tmp = (struct elog_user_data_section *)(buf->user_data_dump +
+						buf->user_section_size);
+	/* Use DESC if no other tag provided */
+	tmp->tag = tag ? tag : 0x44455343;
+	tmp->size = size;
+
+	buf->user_section_size += tmp->size;
+	buf->user_section_count++;
 }
 
 void opal_elog_complete(struct errorlog *buf, bool success)
@@ -119,9 +122,12 @@ void opal_elog_complete(struct errorlog *buf, bool success)
 	unlock(&elog_lock);
 }
 
-static void elog_commit(struct errorlog *elog)
+void log_commit(struct errorlog *elog)
 {
 	int rc;
+
+	if (!elog)
+		return;
 
 	if (platform.elog_commit) {
 		rc = platform.elog_commit(elog);
@@ -132,13 +138,53 @@ static void elog_commit(struct errorlog *elog)
 	opal_elog_complete(elog, false);
 }
 
-void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
-	       const char *fmt, ...)
+void log_append_data(struct errorlog *buf, unsigned char *data, uint16_t size)
 {
-	struct errorlog *buf;
-	int tag = 0x44455343;  /* ASCII of DESC */
-	va_list list;
+	struct elog_user_data_section *section;
+	uint8_t n_sections;
+	char *buffer;
+
+	if (!buf) {
+		prerror("ELOG: Cannot update user data. Buffer is invalid\n");
+		return;
+	}
+
+	if ((buf->user_section_size + size) > OPAL_LOG_MAX_DUMP) {
+		prerror("ELOG: Size of dump data overruns buffer\n");
+		return;
+	}
+
+	/* Step through user sections to find latest dump section */
+	buffer = buf->user_data_dump;
+	n_sections = buf->user_section_count;
+
+	if (!n_sections) {
+		prerror("ELOG: User section invalid\n");
+		return;
+	}
+
+	while (--n_sections) {
+		section = (struct elog_user_data_section *)buffer;
+		buffer += section->size;
+	}
+
+	section = (struct elog_user_data_section *)buffer;
+	buffer += section->size;
+	memcpy(buffer, data, size);
+
+	section->size += size;
+	buf->user_section_size += size;
+}
+
+void log_append_msg(struct errorlog *buf, const char *fmt, ...)
+{
 	char err_msg[250];
+	va_list list;
+
+	if (!buf) {
+		prerror("Tried to append log to NULL buffer\n");
+		return;
+	}
 
 	va_start(list, fmt);
 	vsnprintf(err_msg, sizeof(err_msg), fmt, list);
@@ -147,22 +193,12 @@ void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
 	/* Log the error on to Sapphire console */
 	prerror("%s", err_msg);
 
-	buf = opal_elog_create(e_info);
-	if (buf == NULL)
-		prerror("ELOG: Error getting buffer to log error\n");
-	else {
-		opal_elog_update_user_dump(buf, err_msg, tag, strlen(err_msg));
-		/* Append any number of call out dumps */
-		if (e_info->call_out)
-			e_info->call_out(buf, data, size);
-		elog_commit(buf);
-	}
+	log_append_data(buf, err_msg, strlen(err_msg));
 }
 
 void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
 {
 	struct errorlog *buf;
-	int tag = 0x44455343;  /* ASCII of DESC */
 	va_list list;
 	char err_msg[250];
 
@@ -173,12 +209,12 @@ void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
 	/* Log the error on to Sapphire console */
 	prerror("%s", err_msg);
 
-	buf = opal_elog_create(e_info);
+	buf = opal_elog_create(e_info, 0);
 	if (buf == NULL)
 		prerror("ELOG: Error getting buffer to log error\n");
 	else {
-		opal_elog_update_user_dump(buf, err_msg, tag, strlen(err_msg));
-		elog_commit(buf);
+		log_append_data(buf, err_msg, strlen(err_msg));
+		log_commit(buf);
 	}
 }
 

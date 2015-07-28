@@ -335,16 +335,18 @@ severity, subtype, callout_func) static struct opal_err_info err_##reason =	\
  * and commits the error to FSP.
  * Used for simple error logging
  */
-void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
-void log_error(struct opal_err_info *e_info, void *data, uint16_t size,
-		const char *fmt, ...) __attribute__ ((format (printf, 4, 5)));
+void log_simple_error(struct opal_err_info *e_info,
+		const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 
 #define e_info(reason_code) err_##reason_code
 
-struct errorlog *opal_elog_create(struct opal_err_info *e_info) __warn_unused_result;
-
-int opal_elog_update_user_dump(struct errorlog *buf, unsigned char *data,
-						uint32_t tag, uint16_t size);
+struct errorlog *opal_elog_create(struct opal_err_info *e_info,
+				  uint32_t tag) __warn_unused_result;
+void log_add_section(struct errorlog *buf, uint32_t tag);
+void log_append_data(struct errorlog *buf, unsigned char *data, uint16_t size);
+void log_append_msg(struct errorlog *buf,
+		const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+void log_commit(struct errorlog *elog);
 
 /* Called by the backend after an error has been logged by the
  * backend. If the error could not be logged successfully success is
