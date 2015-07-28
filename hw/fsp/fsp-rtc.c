@@ -108,12 +108,10 @@ static unsigned long read_req_tb;
 static const int rtc_read_timeout_ms = 1500;
 
 DEFINE_LOG_ENTRY(OPAL_RC_RTC_TOD, OPAL_PLATFORM_ERR_EVT, OPAL_RTC,
-			OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
-			OPAL_NA, NULL);
+			OPAL_PLATFORM_FIRMWARE, OPAL_INFO, OPAL_NA);
 
 DEFINE_LOG_ENTRY(OPAL_RC_RTC_READ, OPAL_PLATFORM_ERR_EVT, OPAL_RTC,
-			OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
-			OPAL_NA, NULL);
+			OPAL_PLATFORM_FIRMWARE, OPAL_INFO, OPAL_NA);
 
 static void fsp_tpo_req_complete(struct fsp_msg *read_resp)
 {

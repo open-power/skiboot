@@ -24,8 +24,7 @@
 #include <errorlog.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_PANEL_WRITE, OPAL_PLATFORM_ERR_EVT, OPAL_OP_PANEL,
-		 OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,
-		 OPAL_NA, NULL);
+		 OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL, OPAL_NA);
 
 /* For OPAL OP_PANEL API we can only have one in flight due to TCEs */
 static struct fsp_msg *op_req;

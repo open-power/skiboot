@@ -149,7 +149,6 @@ struct opal_err_info {
 	uint8_t subsystem;
 	uint8_t sev;
 	uint8_t event_subtype;
-	void (*call_out)(struct errorlog *buf, void *data, uint16_t size);
 };
 
 /* Component IDs */
@@ -326,10 +325,9 @@ enum opal_reasoncode {
 };
 
 #define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\
-severity, subtype, callout_func) static struct opal_err_info err_##reason =	\
+severity, subtype) static struct opal_err_info err_##reason =		\
 { .reason_code = reason, .err_type = type, .cmp_id = id,		\
-.subsystem = subsys, .sev = severity, .event_subtype = subtype,		\
-.call_out = callout_func }
+.subsystem = subsys, .sev = severity, .event_subtype = subtype }
 
 /* This is wrapper around the error log function, which creates
  * and commits the error to FSP.
