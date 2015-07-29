@@ -21,8 +21,14 @@
 #include <timebase.h>
 #include <cpu.h>
 #include <chip.h>
+#include <xscom.h>
+#include <errorlog.h>
 
 struct platform	platform;
+
+DEFINE_LOG_ENTRY(OPAL_RC_ABNORMAL_REBOOT, OPAL_PLATFORM_ERR_EVT, OPAL_CEC,
+		 OPAL_CEC_HARDWARE, OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_REBOOT,
+		 OPAL_ABNORMAL_POWER_OFF);
 
 /*
  * Various wrappers for platform functions
@@ -52,6 +58,39 @@ static int64_t opal_cec_reboot(void)
 	return OPAL_SUCCESS;
 }
 opal_call(OPAL_CEC_REBOOT, opal_cec_reboot, 0);
+
+static int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
+{
+	struct errorlog *buf;
+
+	switch (reboot_type) {
+	case OPAL_REBOOT_NORMAL:
+		return opal_cec_reboot();
+	case OPAL_REBOOT_PLATFORM_ERROR:
+		prlog(PR_EMERG,
+			  "OPAL: Reboot requested due to Platform error.");
+		buf = opal_elog_create(&e_info(OPAL_RC_ABNORMAL_REBOOT), 0);
+		if (buf) {
+			log_append_msg(buf,
+			  "OPAL: Reboot requested due to Platform error.");
+			if (diag) {
+				/* Add user section "DESC" */
+				log_add_section(buf, 0x44455350);
+				log_append_data(buf, diag, strlen(diag));
+				log_commit(buf);
+			}
+		} else {
+			prerror("OPAL: failed to log an error\n");
+		}
+		return xscom_trigger_xstop();
+	default:
+		printf("OPAL: Unsupported reboot request %d\n", reboot_type);
+		return OPAL_UNSUPPORTED;
+		break;
+	}
+	return OPAL_SUCCESS;
+}
+opal_call(OPAL_CEC_REBOOT2, opal_cec_reboot2, 2);
 
 static void generic_platform_init(void)
 {

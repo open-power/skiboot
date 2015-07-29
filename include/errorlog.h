@@ -322,6 +322,9 @@ enum opal_reasoncode {
 /* IPMI */
 	OPAL_RC_IPMI_REQ	= OPAL_IP | 0x10,
 	OPAL_RC_IPMI_RESP	= OPAL_IP | 0x11,
+
+/* Platform error */
+	OPAL_RC_ABNORMAL_REBOOT	= OPAL_CE | 0x10,
 };
 
 #define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\

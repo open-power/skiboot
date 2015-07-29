@@ -179,5 +179,6 @@ extern void xscom_used_by_console(void);
 extern bool xscom_ok(void);
 
 extern int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id);
+extern int64_t xscom_trigger_xstop(void);
 
 #endif /* __XSCOM_H */
