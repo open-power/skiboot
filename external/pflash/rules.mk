@@ -25,7 +25,7 @@ PFLASH_VERSION ?= $(shell ./make_version.sh $(EXE))
 
 version.c: make_version.sh .version
 	@(if [ "a$(PFLASH_VERSION)" = "a" ]; then \
-	echo "#error You need to set SKIBOOT_VERSION environment variable" > $@ ;\
+	echo "#error You need to set PFLASH_VERSION environment variable" > $@ ;\
 	else \
 	echo "const char version[] = \"$(PFLASH_VERSION)\";" ;\
 	fi) > $@
