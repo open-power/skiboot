@@ -25,7 +25,7 @@ all: opal-prd
 
 LINKS = ccan
 
-SKIBOOT_VERSION ?= $(shell ../../make_version.sh skiboot)
+OPAL_PRD_VERSION ?= $(shell ../../make_version.sh opal-prd)
 
 ifdef KERNEL_DIR
 LINKS += asm/opal-prd.h
@@ -54,15 +54,15 @@ opal-prd: $(OBJS)
 	$(Q_LINK)$(LINK.o) -o $@ $^
 
 version.c: ../../make_version.sh .version
-	@(if [ "a$(SKIBOOT_VERSION)" = "a" ]; then \
-	echo "#error You need to set SKIBOOT_VERSION environment variable" > $@ ;\
+	@(if [ "a$(OPAL_PRD_VERSION)" = "a" ]; then \
+	echo "#error You need to set OPAL_PRD_VERSION environment variable" > $@ ;\
 	else \
-	echo "const char version[] = \"$(SKIBOOT_VERSION)\";" ;\
+	echo "const char version[] = \"$(OPAL_PRD_VERSION)\";" ;\
 	fi) > $@
 
 .PHONY: VERSION-always
 .version: VERSION-always
-	@echo $(SKIBOOT_VERSION) > $@.tmp
+	@echo $(OPAL_PRD_VERSION) > $@.tmp
 	@cmp -s $@ $@.tmp || cp $@.tmp $@
 	@rm -f $@.tmp
 
