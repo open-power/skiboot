@@ -131,15 +131,18 @@ There are three usage modes.
      (FSP or BMC) with the -b option.
 
 3) boot_test.sh [-vdp] -b bmc -t target -P pnor
+   boot_test.sh [-vdp] -b bmc -t target [-1 PAYLOAD] [-2 BOOTKERNEL]
    boot_test.sh [-vdp] -b fsp -t target [-1 lid1] [-2 lid2] [-3 lid3]
 
      Flash the given firmware before boot testing.
 
-     If -P is given, the file is assumed to be a PNOR for BMC based
-     flashing.
+     For a BMC target, -P specifies a full PNOR.
 
-     If -1/-2/-3 are given, the files are assumed to be lids for FSP based
-     flashing. Any combination of lids is acceptable.
+     For a BMC target, -1/-2 specify the PAYLOAD and BOOTKERNEL PNOR partitions
+     respectively. Only the given partitions will be flashed.
+
+     For an FSP target, -1/-2/-3 specify lids. Any combination of lids is
+     acceptable.
 
 Common Options:
 
