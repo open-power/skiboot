@@ -5,6 +5,7 @@
 set -uo pipefail
 
 V=0;
+target=""
 
 if [ -f ~/.skiboot_boot_tests ]; then
 	source ~/.skiboot_boot_tests
@@ -12,14 +13,23 @@ fi
 
 # Utility functions
 function error {
-	unset SSHPASS;
-	echo "$target: $1" >&2;
-	exit 1;
+	unset SSHPASS
+	if [ ! -z "$target" ]; then
+		echo "$target: $*" >&2
+	else
+		echo "$0: $*" >&2
+	fi
+	
+	exit 1
 }
 
 function msg {
-	if [ $V -ne 0 ] ; then
-		echo "$target: $@";
+	if [ $V -ne 0 ]; then
+		if [ ! -z "$target" ]; then
+			echo "$target: $*"
+		else
+			echo "$0: $*"
+		fi
 	fi
 }
 
