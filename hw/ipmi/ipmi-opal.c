@@ -82,18 +82,18 @@ static int64_t opal_ipmi_recv(uint64_t interface,
 	if (opal_ipmi_msg->version != OPAL_IPMI_MSG_FORMAT_VERSION_1) {
 		prerror("OPAL IPMI: Incorrect version\n");
 		rc = OPAL_UNSUPPORTED;
-		goto out_unlock;
+		goto out_del_msg;
 	}
 
 	if (interface != IPMI_DEFAULT_INTERFACE) {
 		prerror("IPMI: Invalid interface 0x%llx in opal_ipmi_recv\n", interface);
-		rc = OPAL_EMPTY;
-		goto out_unlock;
+		rc = OPAL_PARAMETER;
+		goto out_del_msg;
 	}
 
 	if (*msg_len - sizeof(struct opal_ipmi_msg) < msg->resp_size + 1) {
 		rc = OPAL_RESOURCE;
-		goto out_unlock;
+		goto out_del_msg;
 	}
 
 	list_del(&msg->link);
@@ -115,6 +115,11 @@ static int64_t opal_ipmi_recv(uint64_t interface,
 
 	return OPAL_SUCCESS;
 
+out_del_msg:
+	list_del(&msg->link);
+	if (list_empty(&msgq))
+		opal_update_pending_evt(ipmi_backend->opal_event_ipmi_recv, 0);
+	ipmi_free_msg(msg);
 out_unlock:
 	unlock(&msgq_lock);
 	return rc;
