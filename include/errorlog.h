@@ -317,6 +317,9 @@ enum opal_reasoncode {
 	OPAL_RC_I2C_TIMEOUT	= OPAL_IC | 0x12,
 	OPAL_RC_I2C_TRANSFER	= OPAL_IC | 0x13,
 	OPAL_RC_I2C_RESET	= OPAL_IC | 0x14,
+
+/* Platform error */
+	OPAL_RC_ABNORMAL_REBOOT	= OPAL_CE | 0x10,
 };
 
 #define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\

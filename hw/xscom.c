@@ -53,6 +53,12 @@ DEFINE_LOG_ENTRY(OPAL_RC_XSCOM_RESET, OPAL_PLATFORM_ERR_EVT, OPAL_XSCOM,
 		OPAL_CEC_HARDWARE, OPAL_PREDICTIVE_ERR_GENERAL,
 		OPAL_NA, NULL);
 
+/* xscom details to trigger xstop */
+static struct {
+	uint64_t addr;
+	uint64_t fir_bit;
+} xstop_xscom;
+
 /*
  * Locking notes:
  *
@@ -478,9 +484,25 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 	chip->ec_level |= (val >> 8) & 0xf;
 }
 
+/*
+* This function triggers xstop by writing to XSCOM.
+* Machine would enter xstop state post completion of this.
+*/
+int64_t xscom_trigger_xstop(void)
+{
+	int rc = OPAL_UNSUPPORTED;
+
+	if (xstop_xscom.addr)
+		rc = xscom_writeme(xstop_xscom.addr,
+				PPC_BIT(xstop_xscom.fir_bit));
+
+	return rc;
+}
+
 void xscom_init(void)
 {
 	struct dt_node *xn;
+	const struct dt_property *p;
 
 	dt_for_each_compatible(dt_root, xn, "ibm,xscom") {
 		uint32_t gcid = dt_get_chip_id(xn);
@@ -513,6 +535,16 @@ void xscom_init(void)
 		       chip->ec_level >> 4,
 		       chip->ec_level & 0xf);
 	}
+
+	/* Collect details to trigger xstop via XSCOM write */
+	p = dt_find_property(dt_root, "ibm,sw-checkstop-fir");
+	if (p) {
+		xstop_xscom.addr = dt_property_get_cell(p, 0);
+		xstop_xscom.fir_bit = dt_property_get_cell(p, 1);
+		prlog(PR_INFO, "XSTOP: XSCOM addr = 0x%llx, FIR bit = %lld\n",
+					xstop_xscom.addr, xstop_xscom.fir_bit);
+	} else
+		prlog(PR_INFO, "XSTOP: ibm,sw-checkstop-fir prop not found\n");
 }
 
 void xscom_used_by_console(void)
