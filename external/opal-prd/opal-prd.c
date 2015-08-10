@@ -60,6 +60,7 @@ struct prd_range {
 	const char		*name;
 	uint64_t		physaddr;
 	uint64_t		size;
+	void			*buf;
 };
 
 struct opal_prd_ctx {
@@ -275,9 +276,7 @@ int hservice_scom_write(uint64_t chip_id, uint64_t addr,
 
 uint64_t hservice_get_reserved_mem(const char *name)
 {
-	uint64_t align_physaddr, offset;
 	struct prd_range *range;
-	void *addr;
 
 	pr_debug("IMAGE: hservice_get_reserved_mem: %s", name);
 
@@ -288,24 +287,35 @@ uint64_t hservice_get_reserved_mem(const char *name)
 		return 0;
 	}
 
-	pr_debug("IMAGE: Mapping 0x%016lx 0x%08lx %s",
-			range->physaddr, range->size, range->name);
+	if (!range->buf) {
+		uint64_t align_physaddr, offset;
 
-	align_physaddr = range->physaddr & ~(ctx->page_size-1);
-	offset = range->physaddr & (ctx->page_size-1);
-	addr = mmap(NULL, range->size, PROT_WRITE | PROT_READ,
-				MAP_SHARED, ctx->fd, align_physaddr);
+		pr_debug("IMAGE: Mapping 0x%016lx 0x%08lx %s",
+				range->physaddr, range->size, range->name);
 
-	if (addr == MAP_FAILED) {
-		pr_log(LOG_ERR, "IMAGE: mmap of %s(0x%016lx) failed: %m",
+		align_physaddr = range->physaddr & ~(ctx->page_size-1);
+		offset = range->physaddr & (ctx->page_size-1);
+		range->buf = mmap(NULL, range->size, PROT_WRITE | PROT_READ,
+					MAP_SHARED, ctx->fd, align_physaddr);
+
+		if (range->buf == MAP_FAILED)
+			pr_log(LOG_ERR,
+				"IMAGE: mmap of %s(0x%016lx) failed: %m",
 				name, range->physaddr);
+		else
+			range->buf += offset;
+	}
+
+	if (range->buf == MAP_FAILED) {
+		pr_log(LOG_WARNING, "IMAGE: get_reserved_mem: %s has no vaddr",
+				name);
 		return 0;
 	}
 
 	pr_debug("IMAGE: hservice_get_reserved_mem: %s(0x%016lx) address %p",
-			name, range->physaddr, addr);
+			name, range->physaddr, range->buf);
 
-	return (uint64_t)addr + offset;
+	return (uint64_t)range->buf;
 }
 
 void hservice_nanosleep(uint64_t i_seconds, uint64_t i_nano_seconds)
@@ -823,6 +833,7 @@ static int prd_init_one_range(struct opal_prd_ctx *ctx, const char *path,
 	range->name = strndup(label, label_len);
 	range->physaddr = be64toh(reg[0]);
 	range->size = be64toh(reg[1]);
+	range->buf = NULL;
 	rc = 0;
 
 out_free:
