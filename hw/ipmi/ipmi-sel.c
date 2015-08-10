@@ -149,6 +149,49 @@ static void ipmi_init_esel_record(void)
 	sel_record.event_data1 = SEL_DATA1_AMI;
 }
 
+/* Update required fields in SEL record */
+static void ipmi_update_sel_record(uint8_t event_severity, uint16_t esel_record_id)
+{
+	sel_record.record_type = SEL_REC_TYPE_SYS_EVENT;
+	sel_record.event_data2 = esel_record_id & 0xff;
+	sel_record.event_data3 = (esel_record_id >> 8) & 0xff;
+
+	switch (event_severity) {
+	case OPAL_ERROR_PANIC:
+		sel_record.event_dir_type = SEL_EVENT_DIR_TYPE_TRANSITION;
+		sel_record.event_data1 = SEL_DATA1_CRITICAL;
+		break;
+	case OPAL_UNRECOVERABLE_ERR_GENERAL:	/* Fall through */
+	case OPAL_UNRECOVERABLE_ERR_DEGRADE_PERF:
+	case OPAL_UNRECOVERABLE_ERR_LOSS_REDUNDANCY:
+	case OPAL_UNRECOVERABLE_ERR_LOSS_REDUNDANCY_PERF:
+	case OPAL_UNRECOVERABLE_ERR_LOSS_OF_FUNCTION:
+		sel_record.event_dir_type = SEL_EVENT_DIR_TYPE_TRANSITION;
+		sel_record.event_data1 = SEL_DATA1_NON_RECOVERABLE;
+		break;
+	case OPAL_PREDICTIVE_ERR_GENERAL:	/* Fall through */
+	case OPAL_PREDICTIVE_ERR_DEGRADED_PERF:
+	case OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_REBOOT:
+	case OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_BOOT_DEGRADE_PERF:
+	case OPAL_PREDICTIVE_ERR_LOSS_OF_REDUNDANCY:
+		sel_record.event_dir_type = SEL_EVENT_DIR_TYPE_PREDICTIVE;
+		sel_record.event_data1 = SEL_DATA1_NON_CRIT_FROM_OK;
+		break;
+	case OPAL_RECOVERED_ERR_GENERAL:
+		sel_record.event_dir_type = SEL_EVENT_DIR_TYPE_TRANSITION;
+		sel_record.event_data1 = SEL_DATA1_OK;
+		break;
+	case OPAL_INFO:
+		sel_record.event_dir_type = SEL_EVENT_DIR_TYPE_TRANSITION;
+		sel_record.event_data1 = SEL_DATA1_INFORMATIONAL;
+		break;
+	default:
+		sel_record.event_dir_type = SEL_EVENT_DIR_TYPE_STATE;
+		sel_record.event_data1 = SEL_DATA1_ASSERTED;
+		break;
+	}
+}
+
 static void ipmi_elog_error(struct ipmi_msg *msg)
 {
 	if (msg->cc == IPMI_LOST_ARBITRATION_ERR)
@@ -158,6 +201,42 @@ static void ipmi_elog_error(struct ipmi_msg *msg)
 		opal_elog_complete(msg->user_data, false);
 		ipmi_free_msg(msg);
 	}
+}
+
+static void ipmi_log_sel_event_error(struct ipmi_msg *msg)
+{
+	if (msg->cc != IPMI_CC_NO_ERROR)
+		prlog(PR_INFO, "SEL: Failed to log SEL event\n");
+
+	ipmi_free_msg(msg);
+}
+
+static void ipmi_log_sel_event_complete(struct ipmi_msg *msg)
+{
+	prlog(PR_INFO, "SEL: New event logged [ID : %x%x]\n",
+	      msg->data[1], msg->data[0]);
+
+	ipmi_free_msg(msg);
+}
+
+/* Log SEL event with eSEL record ID */
+static void ipmi_log_sel_event(uint8_t event_severity, uint16_t esel_record_id)
+{
+	struct ipmi_msg *msg;
+
+	/* Fill required SEL event fields */
+	ipmi_update_sel_record(event_severity, esel_record_id);
+
+	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_ADD_SEL_EVENT,
+			 ipmi_log_sel_event_complete, NULL,
+			 &sel_record, sizeof(struct sel_record), 2);
+	if (!msg) {
+		prlog(PR_ERR, "SEL: Failed to allocated IPMI message\n");
+		return;
+	}
+
+	msg->error = ipmi_log_sel_event_error;
+	ipmi_queue_msg(msg);
 }
 
 /* Goes through the required steps to add a complete eSEL:
@@ -224,6 +303,10 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 		 * message. */
 		reservation_id = 0;
 		esel_index = 0;
+
+		/* Log SEL event */
+		ipmi_log_sel_event(elog_buf->event_severity, record_id);
+
 		opal_elog_complete(elog_buf, true);
 		ipmi_free_msg(msg);
 		return;
