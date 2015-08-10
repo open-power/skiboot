@@ -45,6 +45,74 @@
 #define RELEASE_PNOR		0x00
 #define REQUEST_PNOR		0x01
 
+/* 32.1 SEL Event Records type */
+#define SEL_REC_TYPE_SYS_EVENT	0x02
+#define SEL_REC_TYPE_AMI_ESEL	0xDF
+
+/* OEM SEL generator ID for AMI */
+#define SEL_GENERATOR_ID_AMI	0x2000
+
+/* IPMI SEL version */
+#define SEL_EVM_VER_1		0x03
+#define SEL_EVM_VER_2		0x04
+
+/*
+ * Sensor type for System events
+ *
+ * Sensor information (type, number, etc) is passed to us via
+ * device tree. Currently we are using System Event type to
+ * log OPAL events.
+ */
+#define SENSOR_TYPE_SYS_EVENT	0x12
+
+/*
+ * 42.1 Event/Reading Type Codes
+ *
+ * Note that device hotplug and availability related events
+ * are not defined as we are not using those events type.
+ */
+#define SEL_EVENT_DIR_TYPE_UNSPECIFIED	0x00
+#define SEL_EVENT_DIR_TYPE_THRESHOLD	0x01
+#define SEL_EVENT_DIR_TYPE_STATE	0x03
+#define SEL_EVENT_DIR_TYPE_PREDICTIVE	0x04
+#define SEL_EVENT_DIR_TYPE_LIMIT	0x05
+#define SEL_EVENT_DIR_TYPE_PERFORMANCE	0x06
+#define SEL_EVENT_DIR_TYPE_TRANSITION	0x07
+#define SEL_EVENT_DIR_TYPE_OEM		0x70
+
+/*
+ * 42.1 Event/Reading Type Codes
+ */
+#define SEL_DATA1_AMI			0xAA
+#define SEL_DATA1_DEASSERTED		0x00
+#define SEL_DATA1_ASSERTED		0x01
+#define SEL_DATA1_OK			0x00
+#define SEL_DATA1_NON_CRIT_FROM_OK	0x01
+#define SEL_DATA1_CRIT_FROM_LESS_SEV	0x02
+#define SEL_DATA1_NON_REC_FROM_LESS_SEV	0x03
+#define SEL_DATA1_NON_CRIT		0x04
+#define SEL_DATA1_CRITICAL		0x05
+#define SEL_DATA1_NON_RECOVERABLE	0X06
+#define SEL_DATA1_MONITOR		0x07
+#define SEL_DATA1_INFORMATIONAL		0x08
+
+/* SEL Record Entry */
+struct sel_record {
+	le16		record_id;
+	uint8_t		record_type;
+	le32		timestamp;
+	le16		generator_id;
+	uint8_t		evm_ver;
+	uint8_t		sensor_type;
+	uint8_t		sensor_number;
+	uint8_t		event_dir_type;
+	uint8_t		event_data1;
+	uint8_t		event_data2;
+	uint8_t		event_data3;
+} __packed;
+
+static struct sel_record sel_record;
+
 struct oem_sel {
 	/* SEL header */
 	uint8_t id[2];
@@ -66,6 +134,21 @@ struct oem_sel {
 
 #define ESEL_HDR_SIZE 7
 
+
+/* Initialize eSEL record */
+static void ipmi_init_esel_record(void)
+{
+	memset(&sel_record, 0, sizeof(struct sel_record));
+	sel_record.record_type = SEL_REC_TYPE_AMI_ESEL;
+	sel_record.generator_id = SEL_GENERATOR_ID_AMI;
+	sel_record.evm_ver = SEL_EVM_VER_2;
+	sel_record.sensor_type	= SENSOR_TYPE_SYS_EVENT;
+	sel_record.sensor_number =
+		ipmi_get_sensor_number(SENSOR_TYPE_SYS_EVENT);
+	sel_record.event_dir_type = SEL_EVENT_DIR_TYPE_OEM;
+	sel_record.event_data1 = SEL_DATA1_AMI;
+}
+
 static void ipmi_elog_error(struct ipmi_msg *msg)
 {
 	if (msg->cc == IPMI_LOST_ARBITRATION_ERR)
@@ -80,7 +163,8 @@ static void ipmi_elog_error(struct ipmi_msg *msg)
 /* Goes through the required steps to add a complete eSEL:
  *
  *  1. Get a reservation
- *  2. Partially add data to the SEL
+ *  2. Add eSEL header
+ *  3. Partially add data to the SEL
  *
  * Because a reservation is needed we need to ensure eSEL's are added
  * as a single transaction as concurrent/interleaved adds would cancel
@@ -97,15 +181,21 @@ static void ipmi_elog_error(struct ipmi_msg *msg)
  */
 static void ipmi_elog_poll(struct ipmi_msg *msg)
 {
+	static bool first = false;
 	static char pel_buf[MAX_PEL_SIZE];
 	static size_t pel_size;
-	static int index = 0;
+	static size_t esel_size;
+	static int esel_index = 0;
+	int pel_index;
 	static unsigned int reservation_id = 0;
 	static unsigned int record_id = 0;
 	struct errorlog *elog_buf = (struct errorlog *) msg->user_data;
 	size_t req_size;
 
+	ipmi_init_esel_record();
+
 	if (msg->cmd == IPMI_CMD(IPMI_RESERVE_SEL)) {
+		first = true;
 		reservation_id = msg->data[0];
 		reservation_id |= msg->data[1] << 8;
 		if (!reservation_id) {
@@ -119,7 +209,8 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 		}
 
 		pel_size = create_pel_log(elog_buf, pel_buf, MAX_PEL_SIZE);
-		index = 0;
+		esel_size = pel_size + sizeof(struct sel_record);
+		esel_index = 0;
 		record_id = 0;
 	} else {
 		record_id = msg->data[0];
@@ -127,21 +218,21 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 	}
 
 	/* Start or continue the IPMI_PARTIAL_ADD_SEL */
-	if (index >= pel_size) {
+	if (esel_index >= esel_size) {
 		/* We're all done. Invalidate the resevation id to
 		 * ensure we get an error if we cut in on another eSEL
 		 * message. */
 		reservation_id = 0;
-		index = 0;
+		esel_index = 0;
 		opal_elog_complete(elog_buf, true);
 		ipmi_free_msg(msg);
 		return;
 	}
 
-	if ((pel_size - index) < (IPMI_MAX_REQ_SIZE - ESEL_HDR_SIZE)) {
+	if ((esel_size - esel_index) < (IPMI_MAX_REQ_SIZE - ESEL_HDR_SIZE)) {
 		/* Last data to send */
 		msg->data[6] = 1;
-		req_size = pel_size - index + ESEL_HDR_SIZE;
+		req_size = esel_size - esel_index + ESEL_HDR_SIZE;
 	} else {
 		msg->data[6] = 0;
 		req_size = IPMI_MAX_REQ_SIZE;
@@ -154,11 +245,21 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 	msg->data[1] = (reservation_id >> 8) & 0xff;
 	msg->data[2] = record_id & 0xff;
 	msg->data[3] = (record_id >> 8) & 0xff;
-	msg->data[4] = index & 0xff;
-	msg->data[5] = (index >> 8) & 0xff;
+	msg->data[4] = esel_index & 0xff;
+	msg->data[5] = (esel_index >> 8) & 0xff;
 
-	memcpy(&msg->data[ESEL_HDR_SIZE], &pel_buf[index], msg->req_size - ESEL_HDR_SIZE);
-	index += msg->req_size - ESEL_HDR_SIZE;
+	if (first) {
+		first = false;
+		memcpy(&msg->data[ESEL_HDR_SIZE],
+		       &sel_record, sizeof(struct sel_record));
+		esel_index = sizeof(struct sel_record);
+		msg->req_size = esel_index + ESEL_HDR_SIZE;
+	} else {
+		pel_index = esel_index - sizeof(struct sel_record);
+		memcpy(&msg->data[ESEL_HDR_SIZE],
+		       &pel_buf[pel_index], msg->req_size - ESEL_HDR_SIZE);
+		esel_index += msg->req_size - ESEL_HDR_SIZE;
+	}
 
 	ipmi_queue_msg_head(msg);
 	return;

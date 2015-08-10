@@ -36,6 +36,11 @@ struct set_sensor_req {
 	u8 event_data[3];
 };
 
+uint8_t ipmi_get_sensor_number(uint8_t sensor_type)
+{
+	return sensors[sensor_type];
+}
+
 int ipmi_set_boot_count(void)
 {
 	struct set_sensor_req req;

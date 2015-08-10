@@ -258,6 +258,9 @@ void ipmi_wdt_final_reset(void);
 /* Discover id of settable ipmi sensors */
 void ipmi_sensor_init(void);
 
+/* Get sensor number for given sensor type */
+uint8_t ipmi_get_sensor_number(uint8_t sensor_type);
+
 /* Set the boot count once the OS is up and running */
 int ipmi_set_boot_count(void);
 
