@@ -167,6 +167,13 @@ int ipmi_elog_commit(struct errorlog *elog_buf)
 {
 	struct ipmi_msg *msg;
 
+	/* Only log events that needs attention */
+	if (elog_buf->event_severity < OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_REBOOT ||
+	    elog_buf->elog_origin != ORG_SAPPHIRE) {
+		prlog(PR_INFO, "IPMI: dropping non severe PEL event\n");
+		return 0;
+	}
+
 	/* We pass a large request size in to mkmsg so that we have a
 	 * large enough allocation to reuse the message to pass the
 	 * PEL data via a series of partial add commands.  */
