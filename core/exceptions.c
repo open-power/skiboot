@@ -28,7 +28,7 @@ static void dump_regs(struct stack_frame *stack)
 	unsigned int i;
 
 	prerror("SRR0 : "REG" SRR1 : "REG"\n", stack->srr0, stack->srr1);
-	prerror("HSRR0: "REG" HSRR1: "REG"\n", stack->srr0, stack->srr1);
+	prerror("HSRR0: "REG" HSRR1: "REG"\n", stack->hsrr0, stack->hsrr1);
 	prerror("LR   : "REG" CTR  : "REG"\n", stack->lr, stack->ctr);
 	prerror("CFAR : "REG"\n", stack->cfar);
 	prerror("CR   : %08x  XER: %08x\n", stack->cr, stack->xer);
