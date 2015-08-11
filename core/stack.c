@@ -78,10 +78,12 @@ void __print_backtrace(unsigned int pir,
 			mark = ' ';
 		if (symbols)
 			saddr = get_symbol(entries->pc, &sym, &sym_end);
+		else
+			saddr = 0;
 		l += snprintf(buf + l, max - l,
 			      " S: %016lx R: %016lx %c ",
 			      entries->sp, entries->pc, mark);
-		while(sym < sym_end && l < max)
+		while(saddr && sym < sym_end && l < max)
 			buf[l++] = *(sym++);
 		if (sym && l < max)
 			l += snprintf(buf + l, max - l, "+0x%lx\n",
