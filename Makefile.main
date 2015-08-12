@@ -14,22 +14,31 @@ SIZE=$(CROSS)size
 LD_TEXT=0x0
 NM += --synthetic
 
+try = $(shell set -e; if ($(1)) >/dev/null 2>&1; \
+	then echo "$(2)"; \
+	else echo "$(3)"; fi )
+
+try-cflag = $(call try,$(1) $(2) -c /dev/null -o /dev/null,$(2))
+
 # Base warnings
 CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 	  -Werror-implicit-function-declaration -Wdeclaration-after-statement \
 	  -Wno-pointer-sign -Wextra -Wno-sign-compare \
 	  -Wmissing-prototypes -Wmissing-declarations \
-	  -Wwrite-strings -Wcast-align -Wjump-misses-init \
+	  -Wwrite-strings -Wcast-align \
 	  -Winit-self \
-	  -Wsuggest-attribute=const \
-	  -Wsuggest-attribute=noreturn \
-	  -Wframe-larger-than=1024 -Wstack-usage=1024 \
+	  -Wframe-larger-than=1024 \
 	  -Werror -Wno-error=format
 
 # Host tools and options
 HOSTCC=gcc
 HOSTEND=$(shell uname -m | sed -e 's/^i.*86$$/LITTLE/' -e 's/^x86.*/LITTLE/' -e 's/^ppc64le/LITTLE/' -e 's/^ppc.*/BIG/')
 HOSTCFLAGS=-O1 $(CWARNS) -DHAVE_$(HOSTEND)_ENDIAN -MMD
+HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-Wjump-misses-init) \
+	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=const) \
+	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=noreturn) \
+	  $(call try-cflag,$(HOSTCC),-Wstack-usage=1024)
+
 VALGRIND=valgrind -q --show-reachable=yes --error-exitcode=99
 
 # Target options
@@ -52,6 +61,7 @@ CPPFLAGS += -ffreestanding
 
 CFLAGS := -fno-strict-aliasing -fstack-protector-all -pie -mbig-endian -m64
 CFLAGS += -Wl,--oformat,elf64-powerpc
+CFLAGS += $(call try-cflag,$(CC),-mabi=elfv1)
 
 ifeq ($(SKIBOOT_GCOV),1)
 CFLAGS += -fprofile-arcs -ftest-coverage -DSKIBOOT_GCOV=1
@@ -64,6 +74,11 @@ else
 # XXX Add -fstack-protector-strong on gcc 4.9
 CFLAGS += -fstack-protector
 endif
+
+CFLAGS += $(call try-cflag,$(CC),-Wjump-misses-init) \
+	  $(call try-cflag,$(CC),-Wsuggest-attribute=const) \
+	  $(call try-cflag,$(CC),-Wsuggest-attribute=noreturn) \
+	  $(call try-cflag,$(CC),-Wstack-usage=1024)
 
 CFLAGS += $(CWARNS) $(OPTS) $(DBG)
 
