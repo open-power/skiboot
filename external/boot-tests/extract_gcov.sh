@@ -5,7 +5,7 @@ if [ "$SKIBOOT_GCOV" != 1 ]; then
     exit 0;
 fi
 
-if [ ! -f ~/.skiboot_boot_tests ]; then
+if [ ! -f ~/.skiboot_boot_tests || ( -z $FSPSSHUSER || -z $FSPSSHPASS ) ]; then
     echo "Skipping extract gcov due to missing ~/.skiboot_boot_tests"
     echo "Set FSPSSHUSER and FSPSSHPASS in ~/.skiboot_boot_tests"
     exit 0;
