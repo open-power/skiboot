@@ -3197,7 +3197,6 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	xscom_read(p->chip_id, 0x9013c03, &reg);
 	if (reg & PPC_BIT(0)) {
 		PHBDBG(p, "Already in CAPP mode\n");
-		return OPAL_SUCCESS;
 	}
 
 	if (!p->capp_ucode_loaded) {
