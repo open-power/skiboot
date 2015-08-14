@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define pr_fmt(fmt) "IPMI: " fmt
 #include <skiboot.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,7 +171,7 @@ int ipmi_elog_commit(struct errorlog *elog_buf)
 	/* Only log events that needs attention */
 	if (elog_buf->event_severity < OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_REBOOT ||
 	    elog_buf->elog_origin != ORG_SAPPHIRE) {
-		prlog(PR_INFO, "IPMI: dropping non severe PEL event\n");
+		prlog(PR_INFO, "dropping non severe PEL event\n");
 		return 0;
 	}
 
@@ -201,7 +202,7 @@ static void sel_pnor(uint8_t access)
 
 	switch (access) {
 	case REQUEST_PNOR:
-		prlog(PR_NOTICE, "IPMI: PNOR access requested\n");
+		prlog(PR_NOTICE, "PNOR access requested\n");
 		granted = flash_reserve();
 		if (granted)
 			occ_pnor_set_owner(PNOR_OWNER_EXTERNAL);
@@ -211,12 +212,12 @@ static void sel_pnor(uint8_t access)
 		ipmi_queue_msg(msg);
 		break;
 	case RELEASE_PNOR:
-		prlog(PR_NOTICE, "IPMI: PNOR access released\n");
+		prlog(PR_NOTICE, "PNOR access released\n");
 		flash_release();
 		occ_pnor_set_owner(PNOR_OWNER_HOST);
 		break;
 	default:
-		prlog(PR_ERR, "IPMI: invalid PNOR access requested: %02x\n",
+		prlog(PR_ERR, "invalid PNOR access requested: %02x\n",
 		      access);
 	}
 }
@@ -225,15 +226,15 @@ static void sel_power(uint8_t power)
 {
 	switch (power) {
 	case SOFT_OFF:
-		prlog(PR_NOTICE, "IPMI: soft shutdown requested\n");
+		prlog(PR_NOTICE, "soft shutdown requested\n");
 		opal_queue_msg(OPAL_MSG_SHUTDOWN, NULL, NULL, SOFT_OFF);
 		break;
 	case SOFT_REBOOT:
-		prlog(PR_NOTICE, "IPMI: soft reboot rqeuested\n");
+		prlog(PR_NOTICE, "soft reboot rqeuested\n");
 		opal_queue_msg(OPAL_MSG_SHUTDOWN, NULL, NULL, SOFT_REBOOT);
 		break;
 	default:
-		prlog(PR_WARNING, "IPMI: requested bad power state: %02x\n",
+		prlog(PR_WARNING, "requested bad power state: %02x\n",
 		      power);
 	}
 }
@@ -253,7 +254,7 @@ static void sel_occ_reset(uint8_t sensor)
 
 	rc = occ_sensor_id_to_chip(sensor, &chip);
 	if (rc) {
-		prlog(PR_ERR, "IPMI: SEL message to reset an unknown OCC "
+		prlog(PR_ERR, "SEL message to reset an unknown OCC "
 				"(sensor ID 0x%02x)\n", sensor);
 		return;
 	}
@@ -271,18 +272,18 @@ void ipmi_parse_sel(struct ipmi_msg *msg)
 
 	/* We do not process system event records */
 	if (sel.type == SEL_RECORD_TYPE_EVENT) {
-		prlog(PR_INFO, "IPMI: dropping System Event Record SEL\n");
+		prlog(PR_INFO, "dropping System Event Record SEL\n");
 		return;
 	}
 
-	prlog(PR_DEBUG, "IPMI: SEL received (%d bytes, netfn %d, cmd %d)\n",
+	prlog(PR_DEBUG, "SEL received (%d bytes, netfn %d, cmd %d)\n",
 			msg->resp_size, sel.netfun, sel.cmd);
 
 	/* Only accept OEM SEL messages */
 	if (sel.id[0] != SEL_OEM_ID_0 ||
 	    sel.id[1] != SEL_OEM_ID_1 ||
 	    sel.type != SEL_RECORD_TYPE_OEM) {
-		prlog(PR_WARNING, "IPMI: unknown SEL %02x%02x (type %02x)\n",
+		prlog(PR_WARNING, "unknown SEL %02x%02x (type %02x)\n",
 		      sel.id[0], sel.id[1], sel.type);
 		return;
 	}
@@ -299,7 +300,7 @@ void ipmi_parse_sel(struct ipmi_msg *msg)
 		break;
 	default:
 		prlog(PR_WARNING,
-		      "IPMI: unknown OEM SEL command %02x received\n",
+		      "unknown OEM SEL command %02x received\n",
 		      sel.cmd);
 	}
 }
