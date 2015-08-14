@@ -325,7 +325,7 @@ static bool load_kernel(void)
 	struct elf_hdr *kh;
 	int loaded;
 
-	prlog(PR_NOTICE, "INIT: Loading kernel\n");
+	prlog(PR_NOTICE, "INIT: Waiting for kernel...\n");
 
 	loaded = wait_for_resource_loaded(RESOURCE_ID_KERNEL,
 					  RESOURCE_SUBID_NONE);
