@@ -620,7 +620,7 @@ int main(int argc, char **argv)
 	const char *fdt_flash_path = FDT_ACTIVE_FLASH_PATH;
 	char *filename = NULL;
 	struct gard_ctx _ctx, *ctx;
-	int rc, i = 0;
+	int i, rc;
 	bool part = 0;
 	bool ecc = 0;
 

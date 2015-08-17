@@ -144,13 +144,7 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 		uint32_t start, total_size;
 		bool ecc;
 		for (i = 0; i < f->hdr.entry_count; i++) {
-			rc = ffs_part_info(f, i, NULL, &start, &total_size,
-					NULL, &ecc);
-			if (rc) {
-				FL_ERR("FFS: Failed to read ffs partition %d\n",
-						i);
-				goto out;
-			}
+			ffs_part_info(f, i, NULL, &start, &total_size, NULL, &ecc);
 			if (ecc) {
 				rc = blocklevel_ecc_protect(bl, start, total_size);
 				if (rc) {
