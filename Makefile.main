@@ -18,7 +18,7 @@ try = $(shell set -e; if ($(1)) >/dev/null 2>&1; \
 	then echo "$(2)"; \
 	else echo "$(3)"; fi )
 
-try-cflag = $(call try,$(1) $(2) -c /dev/null -o /dev/null,$(2))
+try-cflag = $(call try,$(1) $(2) -x c -c /dev/null -o /dev/null,$(2))
 
 # Base warnings
 CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
