@@ -152,6 +152,44 @@ struct dt_node *dt_new_2addr(struct dt_node *parent, const char *name,
 	return new;
 }
 
+static struct dt_node *__dt_copy(struct dt_node *node, struct dt_node *parent,
+		bool root)
+{
+	struct dt_property *prop, *new_prop;
+	struct dt_node *new_node, *child;
+
+	new_node = dt_new(parent, node->name);
+	if (!new_node)
+		return NULL;
+
+	list_for_each(&node->properties, prop, list) {
+		new_prop = dt_add_property(new_node, prop->name, prop->prop,
+				prop->len);
+		if (!new_prop)
+			goto fail;
+	}
+
+	list_for_each(&node->children, child, list) {
+		child = __dt_copy(child, new_node, false);
+		if (!child)
+			goto fail;
+	}
+
+	return new_node;
+
+fail:
+	/* dt_free will recurse for us, so only free when we unwind to the
+	 * top-level failure */
+	if (root)
+		dt_free(new_node);
+	return NULL;
+}
+
+struct dt_node *dt_copy(struct dt_node *node, struct dt_node *parent)
+{
+	return __dt_copy(node, parent, true);
+}
+
 char *dt_get_path(const struct dt_node *node)
 {
 	unsigned int len = 0;

@@ -68,6 +68,9 @@ struct dt_node *dt_new_addr(struct dt_node *parent, const char *name,
 struct dt_node *dt_new_2addr(struct dt_node *parent, const char *name,
 			     uint64_t unit_addr0, uint64_t unit_addr1);
 
+/* Copy node to new parent, including properties and subnodes */
+struct dt_node *dt_copy(struct dt_node *node, struct dt_node *parent);
+
 /* Add a property node, various forms. */
 struct dt_property *dt_add_property(struct dt_node *node,
 				    const char *name,
