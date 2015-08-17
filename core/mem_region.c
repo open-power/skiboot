@@ -1011,10 +1011,13 @@ void mem_region_add_dt_reserved(void)
 	mem_regions_finalised = true;
 
 	/* establish top-level reservation node */
-	node = dt_new(dt_root, "reserved-memory");
-	dt_add_property_cells(node, "#address-cells", 2);
-	dt_add_property_cells(node, "#size-cells", 2);
-	dt_add_property(node, "ranges", NULL, 0);
+	node = dt_find_by_path(dt_root, "reserved-memory");
+	if (!node) {
+		node = dt_new(dt_root, "reserved-memory");
+		dt_add_property_cells(node, "#address-cells", 2);
+		dt_add_property_cells(node, "#size-cells", 2);
+		dt_add_property(node, "ranges", NULL, 0);
+	}
 
 	/* First pass: calculate length of property data */
 	list_for_each(&regions, region, list) {
