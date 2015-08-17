@@ -32,7 +32,8 @@
 
 typedef unsigned int gcov_unsigned_int;
 
-#if __GNUC__ == 4 && __GNUC_MINOR__ >= 9
+/* You will need to pass -DTARGET__GNUC__=blah when building */
+#if TARGET__GNUC__ >= 4 && TARGET__GNUC_MINOR__ >= 9
 #define GCOV_COUNTERS                   9
 #else
 #define GCOV_COUNTERS                   8
