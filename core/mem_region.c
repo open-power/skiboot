@@ -803,6 +803,9 @@ static void mem_region_parse_reserved_properties(void)
 	const struct dt_property *names, *ranges;
 	struct mem_region *region;
 
+	prlog(PR_INFO, "MEM: parsing reserved memory from "
+			"reserved-names/-ranges properties\n");
+
 	names = dt_find_property(dt_root, "reserved-names");
 	ranges = dt_find_property(dt_root, "reserved-ranges");
 	if (names && ranges) {
@@ -833,11 +836,45 @@ static void mem_region_parse_reserved_properties(void)
 	}
 }
 
+static bool mem_region_parse_reserved_nodes(const char *path)
+{
+	struct dt_node *parent, *node;
+
+	parent = dt_find_by_path(dt_root, path);
+	if (!parent)
+		return false;
+
+	prlog(PR_INFO, "MEM: parsing reserved memory from node %s\n", path);
+
+	dt_for_each_child(parent, node) {
+		const struct dt_property *reg;
+		struct mem_region *region;
+
+		reg = dt_find_property(node, "reg");
+		if (!reg) {
+			char *nodepath = dt_get_path(node);
+			prerror("node %s has no reg property, ignoring\n",
+					nodepath);
+			free(nodepath);
+			continue;
+		}
+
+		region = new_region(strdup(node->name),
+				dt_get_number(reg->prop, 2),
+				dt_get_number(reg->prop + sizeof(u64), 2),
+				node, REGION_HW_RESERVED);
+		list_add(&regions, &region->list);
+	}
+
+	return true;
+}
+
 /* Trawl through device tree, create memory regions from nodes. */
 void mem_region_init(void)
 {
 	struct mem_region *region;
 	struct dt_node *i;
+	bool rc;
 
 	/* Ensure we have no collision between skiboot core and our heap */
 	extern char _end[];
@@ -895,7 +932,12 @@ void mem_region_init(void)
 	}
 
 	/* Add reserved ranges from the DT */
-	mem_region_parse_reserved_properties();
+	rc = mem_region_parse_reserved_nodes("/reserved-memory");
+	if (!rc)
+		rc = mem_region_parse_reserved_nodes(
+				"/ibm,hostboot/reserved-memory");
+	if (!rc)
+		mem_region_parse_reserved_properties();
 
 	unlock(&mem_region_lock);
 
@@ -977,6 +1019,20 @@ static void mem_region_add_dt_reserved_node(struct dt_node *parent,
 		struct mem_region *region)
 {
 	char *name, *p;
+
+	/* If a reserved region was established before skiboot, it may be
+	 * referenced by a device-tree node with extra data. In that case,
+	 * copy the node to /reserved-memory/, unless it's already there.
+	 *
+	 * We update region->node to the new copy here, as the prd code may
+	 * update regions' device-tree nodes, and we want those updates to
+	 * apply to the nodes in /reserved-memory/.
+	 */
+	if (region->type == REGION_HW_RESERVED && region->node) {
+		if (region->node->parent != parent)
+			region->node = dt_copy(region->node, parent);
+		return;
+	}
 
 	name = strdup(region->name);
 
