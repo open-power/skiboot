@@ -61,6 +61,8 @@ struct prd_range {
 	uint64_t		physaddr;
 	uint64_t		size;
 	void			*buf;
+	bool			multiple;
+	uint32_t		instance;
 };
 
 struct opal_prd_ctx {
@@ -69,6 +71,7 @@ struct opal_prd_ctx {
 	struct opal_prd_info	info;
 	struct prd_range	*ranges;
 	int			n_ranges;
+	bool			fw_range_instances;
 	long			page_size;
 	void			*code_addr;
 	size_t			code_size;
@@ -128,7 +131,7 @@ struct func_desc {
 	void *toc;
 } hbrt_entry;
 
-static struct prd_range *find_range(const char *name)
+static struct prd_range *find_range(const char *name, uint32_t instance)
 {
 	struct prd_range *range;
 	unsigned int i;
@@ -136,8 +139,13 @@ static struct prd_range *find_range(const char *name)
 	for (i = 0; i < ctx->n_ranges; i++) {
 		range = &ctx->ranges[i];
 
-		if (!strcmp(range->name, name))
-			return range;
+		if (strcmp(range->name, name))
+			continue;
+
+		if (range->multiple && range->instance != instance)
+			continue;
+
+		return range;
 	}
 
 	return NULL;
@@ -274,13 +282,13 @@ int hservice_scom_write(uint64_t chip_id, uint64_t addr,
 	return 0;
 }
 
-uint64_t hservice_get_reserved_mem(const char *name)
+uint64_t hservice_get_reserved_mem(const char *name, uint32_t instance)
 {
 	struct prd_range *range;
 
-	pr_debug("IMAGE: hservice_get_reserved_mem: %s", name);
+	pr_debug("IMAGE: hservice_get_reserved_mem: %s, %d", name, instance);
 
-	range = find_range(name);
+	range = find_range(name, instance);
 	if (!range) {
 		pr_log(LOG_WARNING, "IMAGE: get_reserved_mem: "
 				"no such range %s", name);
@@ -290,8 +298,9 @@ uint64_t hservice_get_reserved_mem(const char *name)
 	if (!range->buf) {
 		uint64_t align_physaddr, offset;
 
-		pr_debug("IMAGE: Mapping 0x%016lx 0x%08lx %s",
-				range->physaddr, range->size, range->name);
+		pr_debug("IMAGE: Mapping 0x%016lx 0x%08lx %s[%d]",
+				range->physaddr, range->size,
+				range->name, range->instance);
 
 		align_physaddr = range->physaddr & ~(ctx->page_size-1);
 		offset = range->physaddr & (ctx->page_size-1);
@@ -300,20 +309,23 @@ uint64_t hservice_get_reserved_mem(const char *name)
 
 		if (range->buf == MAP_FAILED)
 			pr_log(LOG_ERR,
-				"IMAGE: mmap of %s(0x%016lx) failed: %m",
-				name, range->physaddr);
+				"IMAGE: mmap of %s[%d](0x%016lx) failed: %m",
+				name, instance, range->physaddr);
 		else
 			range->buf += offset;
 	}
 
 	if (range->buf == MAP_FAILED) {
-		pr_log(LOG_WARNING, "IMAGE: get_reserved_mem: %s has no vaddr",
-				name);
+		pr_log(LOG_WARNING,
+				"IMAGE: get_reserved_mem: %s[%d] has no vaddr",
+				name, instance);
 		return 0;
 	}
 
-	pr_debug("IMAGE: hservice_get_reserved_mem: %s(0x%016lx) address %p",
-			name, range->physaddr, range->buf);
+	pr_debug(
+		"IMAGE: hservice_get_reserved_mem: %s[%d](0x%016lx) address %p",
+			name, range->instance, range->physaddr,
+			range->buf);
 
 	return (uint64_t)range->buf;
 }
@@ -682,7 +694,7 @@ static int map_hbrt_physmem(struct opal_prd_ctx *ctx, const char *name)
 	struct prd_range *range;
 	void *buf;
 
-	range = find_range(name);
+	range = find_range(name, 0);
 	if (!range) {
 		pr_log(LOG_ERR, "IMAGE: can't find code region %s", name);
 		return -1;
@@ -780,16 +792,23 @@ static int open_and_read(const char *path, void **bufp, int *lenp)
 static int prd_init_one_range(struct opal_prd_ctx *ctx, const char *path,
 		struct dirent *dirent)
 {
-	char *label_path, *reg_path;
+	char *label_path, *reg_path, *instance_path;
 	struct prd_range *range;
 	int label_len, len, rc;
-	char *label;
 	__be64 *reg;
+	char *label;
 	void *buf;
 
 	rc = asprintf(&label_path, "%s/%s/ibm,prd-label", path, dirent->d_name);
 	if (rc < 0) {
 		pr_log(LOG_ERR, "FW: error creating 'ibm,prd-label' path "
+				"node: %m");
+		return -1;
+	}
+	rc = asprintf(&instance_path, "%s/%s/ibm,prd-instance",
+			path, dirent->d_name);
+	if (rc < 0) {
+		pr_log(LOG_ERR, "FW: error creating 'ibm,prd-instance' path "
 				"node: %m");
 		return -1;
 	}
@@ -834,14 +853,97 @@ static int prd_init_one_range(struct opal_prd_ctx *ctx, const char *path,
 	range->physaddr = be64toh(reg[0]);
 	range->size = be64toh(reg[1]);
 	range->buf = NULL;
+	range->multiple = false;
+	range->instance = 0;
+
+	/* optional instance */
+	rc = open_and_read(instance_path, &buf, &len);
+	if (!rc && len == sizeof(uint32_t)) {
+		range->multiple = true;
+		range->instance = be32toh(*(uint32_t *)buf);
+		ctx->fw_range_instances = true;
+	}
 	rc = 0;
 
 out_free:
 	free(reg);
 	free(label);
+	free(instance_path);
 	free(reg_path);
 	free(label_path);
 	return rc;
+}
+
+static int compare_ranges(const void *ap, const void *bp)
+{
+	const struct prd_range *a = ap, *b = bp;
+	int rc;
+
+	rc = strcmp(a->name, b->name);
+	if (rc)
+		return rc;
+
+	if (a->physaddr < b->physaddr)
+		return -1;
+	else if (a->physaddr > b->physaddr)
+		return 1;
+
+	return 0;
+}
+
+static void assign_range_instances(struct opal_prd_ctx *ctx)
+{
+	int i;
+
+	if (!ctx->n_ranges)
+		return;
+
+	ctx->ranges[0].multiple = false;
+	ctx->ranges[0].instance = 0;
+
+	for (i = 1; i < ctx->n_ranges; i++) {
+		struct prd_range *cur, *prev;
+
+		cur = &ctx->ranges[i];
+		prev = &ctx->ranges[i-1];
+
+		if (!strcmp(cur->name, prev->name)) {
+			prev->multiple = true;
+			cur->multiple = true;
+			cur->instance = prev->instance + 1;
+		} else {
+			cur->multiple = false;
+			cur->instance = 0;
+		}
+	}
+}
+
+static void print_ranges(struct opal_prd_ctx *ctx)
+{
+	int i;
+
+	if (ctx->n_ranges == 0)
+		pr_log(LOG_INFO, "FW: No PRD ranges");
+
+	pr_log(LOG_DEBUG, "FW: %d PRD ranges, instances assigned by %s",
+			ctx->n_ranges,
+			ctx->fw_range_instances ? "firmware" : "userspace");
+
+	for (i = 0; i < ctx->n_ranges; i++) {
+		struct prd_range *range = &ctx->ranges[i];
+		char instance_str[20];
+
+		if (range->multiple)
+			snprintf(instance_str, sizeof(instance_str),
+					" [%d]", range->instance);
+		else
+			instance_str[0] = '\0';
+
+		pr_log(LOG_DEBUG, "FW:  %016lx-%016lx %s%s", range->physaddr,
+				range->physaddr + range->size - 1,
+				range->name,
+				instance_str);
+	}
 }
 
 static int prd_init_ranges(struct opal_prd_ctx *ctx)
@@ -876,6 +978,15 @@ static int prd_init_ranges(struct opal_prd_ctx *ctx)
 	}
 
 	rc = 0;
+	/* sort ranges and assign instance numbers for duplicates (if the
+	 * firmware doesn't number instances for us) */
+	qsort(ctx->ranges, ctx->n_ranges, sizeof(struct prd_range),
+			compare_ranges);
+
+	if (!ctx->fw_range_instances)
+		assign_range_instances(ctx);
+
+	print_ranges(ctx);
 
 out_free:
 	free(path);
