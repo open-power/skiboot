@@ -74,4 +74,6 @@ void mem_reserve_hw(const char *name, uint64_t start, uint64_t len);
 
 struct mem_region *find_mem_region(const char *name);
 
+bool mem_range_is_reserved(uint64_t start, uint64_t size);
+
 #endif /* __MEMORY_REGION */

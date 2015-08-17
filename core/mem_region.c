@@ -789,6 +789,49 @@ struct mem_region *find_mem_region(const char *name)
 	return NULL;
 }
 
+bool mem_range_is_reserved(uint64_t start, uint64_t size)
+{
+	uint64_t end = start + size;
+	struct mem_region *region;
+
+	/* We may have the range covered by a number of regions, which could
+	 * appear in any order. So, we look for a region that covers the
+	 * start address, and bump start up to the end of that region.
+	 *
+	 * We repeat until we've either bumped past the end of the range,
+	 * or we didn't find a matching region.
+	 *
+	 * This has a worst-case of O(n^2), but n is well bounded by the
+	 * small number of reservations.
+	 */
+	for (;;) {
+		bool found = false;
+
+		list_for_each(&regions, region, list) {
+			if (!region_is_reserved(region))
+				continue;
+
+			/* does this region overlap the start address, and
+			 * have a non-zero size? */
+			if (region->start <= start &&
+					region->start + region->len > start &&
+					region->len) {
+				start = region->start + region->len;
+				found = true;
+			}
+		}
+
+		/* 'end' is the first byte outside of the range */
+		if (start >= end)
+			return true;
+
+		if (!found)
+			break;
+	}
+
+	return false;
+}
+
 void adjust_cpu_stacks_alloc(void)
 {
 	/* CPU stacks start at 0, then when we know max possible PIR,
