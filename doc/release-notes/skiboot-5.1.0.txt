@@ -18,7 +18,6 @@ Below are the changes introduced in previous skiboot-5.1.0 releases over
 the previous stable release, skiboot-5.0:
 
 New features:
-- Centaur i2c support
 - Add Naples chip (CPU, PHB, LPC serial interrupts) support
 - Added qemu platform
 - improvements to FSI error handling
@@ -120,6 +119,8 @@ FSP-specific bugs fixed:
   - compatible change as no FSP based systems shipped with skiboot-5.0
 
 General improvements:
+- Preliminary Centaur i2c support
+  - lays framework for supporting Centaur i2c
 - don't run pollers on non-boot CPUs in time_wait
 - improvements to opal-prd, pflash, libflash
   - including new blocklevel interface in libflash
