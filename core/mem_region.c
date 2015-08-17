@@ -798,10 +798,44 @@ void adjust_cpu_stacks_alloc(void)
 	skiboot_cpu_stacks.len = (cpu_max_pir + 1) * STACK_SIZE;
 }
 
+static void mem_region_parse_reserved_properties(void)
+{
+	const struct dt_property *names, *ranges;
+	struct mem_region *region;
+
+	names = dt_find_property(dt_root, "reserved-names");
+	ranges = dt_find_property(dt_root, "reserved-ranges");
+	if (names && ranges) {
+		const uint64_t *range;
+		int n, len;
+
+		range = (const void *)ranges->prop;
+
+		for (n = 0; n < names->len; n += len, range += 2) {
+			char *name;
+
+			len = strlen(names->prop + n) + 1;
+			name = strdup(names->prop + n);
+
+			region = new_region(name,
+					dt_get_number(range, 2),
+					dt_get_number(range + 1, 2),
+					NULL, REGION_HW_RESERVED);
+			list_add(&regions, &region->list);
+		}
+	} else if (names || ranges) {
+		prerror("Invalid properties: reserved-names=%p "
+				"with reserved-ranges=%p\n",
+				names, ranges);
+		abort();
+	} else {
+		return;
+	}
+}
+
 /* Trawl through device tree, create memory regions from nodes. */
 void mem_region_init(void)
 {
-	const struct dt_property *names, *ranges;
 	struct mem_region *region;
 	struct dt_node *i;
 
@@ -861,42 +895,10 @@ void mem_region_init(void)
 	}
 
 	/* Add reserved ranges from the DT */
-	names = dt_find_property(dt_root, "reserved-names");
-	ranges = dt_find_property(dt_root, "reserved-ranges");
-	if (names && ranges) {
-		const uint64_t *range;
-		int n, len;
-
-		range = (const void *)ranges->prop;
-
-		for (n = 0; n < names->len; n += len, range += 2) {
-			char *name;
-
-			len = strlen(names->prop + n) + 1;
-			name = strdup(names->prop + n);
-
-			region = new_region(name,
-					dt_get_number(range, 2),
-					dt_get_number(range + 1, 2),
-					NULL, REGION_HW_RESERVED);
-			list_add(&regions, &region->list);
-		}
-	} else if (names || ranges) {
-		prerror("Invalid properties: reserved-names=%p "
-				"with reserved-ranges=%p\n",
-				names, ranges);
-		abort();
-	}
+	mem_region_parse_reserved_properties();
 
 	unlock(&mem_region_lock);
 
-	/* We generate the reservation properties from our own region list,
-	 * which now includes the existing data.
-	 */
-	if (names)
-		dt_del_property(dt_root, (struct dt_property *)names);
-	if (ranges)
-		dt_del_property(dt_root, (struct dt_property *)ranges);
 }
 
 static uint64_t allocated_length(const struct mem_region *r)
@@ -992,6 +994,7 @@ static void mem_region_add_dt_reserved_node(struct dt_node *parent,
 void mem_region_add_dt_reserved(void)
 {
 	int names_len, ranges_len, len;
+	const struct dt_property *prop;
 	struct mem_region *region;
 	void *names, *ranges;
 	struct dt_node *node;
@@ -1045,6 +1048,15 @@ void mem_region_add_dt_reserved(void)
 		range += 2;
 	}
 	unlock(&mem_region_lock);
+
+
+	prop = dt_find_property(dt_root, "reserved-names");
+	if (prop)
+		dt_del_property(dt_root, (struct dt_property *)prop);
+
+	prop = dt_find_property(dt_root, "reserved-ranges");
+	if (prop)
+		dt_del_property(dt_root, (struct dt_property *)prop);
 
 	dt_add_property(dt_root, "reserved-names", names, names_len);
 	dt_add_property(dt_root, "reserved-ranges", ranges, ranges_len);
