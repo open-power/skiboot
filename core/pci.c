@@ -1180,7 +1180,11 @@ static void pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
 	class_code = dt_prop_get_u32(np, "class-code");
 	class = class_code >> 16;
 	sub = (class_code >> 8) & 0xff;
-	if (class == 0x02 && sub == 0x00) {
+
+	/* XXX Don't do that on openpower for now, we will need to sort things
+	 * out later, otherwise the mezzanine slot on Habanero gets weird results
+	 */
+	if (class == 0x02 && sub == 0x00 && fsp_present()) {
 		/* There's usually several spaces at the end of the property.
 		   Test for, but don't rely on, that being the case */
 		len = strlen(blcode);
