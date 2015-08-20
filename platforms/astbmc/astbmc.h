@@ -18,11 +18,29 @@
 #ifndef __ASTBMC_H
 #define __ASTBMC_H
 
+#define ST_LOC_PHB(chip_id, phb_idx)    ((chip_id) << 16 | (phb_idx))
+#define ST_LOC_DEVFN(dev, fn)	        ((dev) << 3 | (fn))
+
+struct slot_table_entry {
+	enum slot_table_etype {
+		st_end,		/* End of list */
+		st_phb,
+		st_pluggable_slot,
+		st_builtin_dev,
+	} etype;
+	uint32_t location;
+	const char *name;
+	const struct slot_table_entry *children;
+};
+
 extern void astbmc_early_init(void);
 extern int64_t astbmc_ipmi_reboot(void);
 extern int64_t astbmc_ipmi_power_down(uint64_t request);
 extern void astbmc_init(void);
 extern void astbmc_ext_irq_serirq_cpld(unsigned int chip_id);
 extern int pnor_init(void);
+
+extern void slot_table_init(const struct slot_table_entry *top_table);
+extern void slot_table_get_slot_info(struct phb *phb, struct pci_device * pd);
 
 #endif /* __ASTBMC_H */
