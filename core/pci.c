@@ -20,6 +20,7 @@
 #include <pci-cfg.h>
 #include <timebase.h>
 #include <device.h>
+#include <fsp.h>
 
 /* The eeh event code will need updating if this is ever increased to
  * support more than 64 phbs */
@@ -1122,22 +1123,25 @@ static void pci_add_slot_properties(struct phb *phb, struct pci_slot_info *info,
 				    struct dt_node *np)
 {
 	char loc_code[LOC_CODE_SIZE];
-	size_t base_loc_code_len, slot_label_len;
+	size_t base_loc_code_len = 0, slot_label_len = 0;
 
 	if (phb->base_loc_code) {
 		base_loc_code_len = strlen(phb->base_loc_code);
+		strcpy(loc_code, phb->base_loc_code);
+	}
+	if (info->label) {
 		slot_label_len = strlen(info->label);
-		if ((base_loc_code_len + slot_label_len +1) < LOC_CODE_SIZE) {
-			strcpy(loc_code, phb->base_loc_code);
-			strcat(loc_code, "-");
+		if ((base_loc_code_len + slot_label_len + 1) < LOC_CODE_SIZE) {
+			if (base_loc_code_len)
+				strcat(loc_code, "-");
 			strcat(loc_code, info->label);
 			dt_add_property(np, "ibm,slot-location-code",
 					loc_code, strlen(loc_code) + 1);
-		} else
+		} else {
 			PCIERR(phb, 0, "Loc Code too long - %zu + %zu + 1\n",
 			       base_loc_code_len, slot_label_len);
-	} else
-		PCIERR(phb, 0, "Base Loc code not found...\n");
+		}
+	}
 
 	/* Add other slot information */
 	dt_add_property_cells(np, "ibm,slot-pluggable", info->pluggable);
