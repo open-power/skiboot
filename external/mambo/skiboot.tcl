@@ -171,6 +171,7 @@ mysim memory fread $mconf(payload_addr) $payload_size $mconf(payload)
 for { set i 0 } { $i < $mconf(threads) } { incr i } {
     mysim mcm 0 cpu 0 thread $i set spr pc $mconf(boot_pc) 
     mysim mcm 0 cpu 0 thread $i set gpr 3 $mconf(epapr_dt_addr)
+    mysim mcm 0 cpu 0 thread $i set spr pvr 0x4b0201
     mysim mcm 0 cpu 0 thread $i config_on    
 }
 
