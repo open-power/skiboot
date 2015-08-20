@@ -27,13 +27,20 @@
 
 #include "lxvpd.h"
 
+struct lxvpd_slot_info {
+	uint8_t    switch_id;
+	uint8_t    vswitch_id;
+	uint8_t    dev_id;
+	struct pci_slot_info	ps;
+};
+
 /*
  * XXX TODO: Add 1006 maps to add function loc codes and loc code maps
  * (ie. -Tn part of the location code) 
  */
 struct lxvpd_slot_info_data {
 	uint8_t			num_slots;
-	struct pci_slot_info	info[];
+	struct lxvpd_slot_info	info[];
 };
 
 static bool lxvpd_supported_slot(struct phb *phb, struct pci_device *pd)
@@ -97,7 +104,7 @@ void lxvpd_get_slot_info(struct phb *phb, struct pci_device * pd)
 
 	/* Iterate the slot map */
 	for (idx = 0; idx <= sdata->num_slots; idx++) {
-		struct pci_slot_info *info = &sdata->info[idx];
+		struct lxvpd_slot_info *info = &sdata->info[idx];
 		uint8_t pd_dev = (pd->bdfn >> 3) & 0x1f;
 
 		/* Match PHB with switch_id == 0 */
@@ -114,7 +121,7 @@ void lxvpd_get_slot_info(struct phb *phb, struct pci_device * pd)
 	}
 
 	if (entry_found) {
-		pd->slot_info = &sdata->info[idx];
+		pd->slot_info = &sdata->info[idx].ps;
 		prlog(PR_TRACE, "PCI: PCIE Slot Info: \n"
 		      "       Label       %s\n"
 		      "       Pluggable   0x%x\n"
@@ -135,12 +142,12 @@ void lxvpd_get_slot_info(struct phb *phb, struct pci_device * pd)
 	}
 }
 
-static struct pci_slot_info *lxvpd_alloc_slot_info(struct phb *phb, int count)
+static struct lxvpd_slot_info *lxvpd_alloc_slot_info(struct phb *phb, int count)
 {
 	struct lxvpd_slot_info_data *data;
 
 	data = zalloc(sizeof(struct lxvpd_slot_info_data) *
-		      count * sizeof(struct pci_slot_info));
+		      count * sizeof(struct lxvpd_slot_info));
 	assert(data);
 	data->num_slots = count;
 	phb->platform_data = data;
@@ -151,7 +158,7 @@ static struct pci_slot_info *lxvpd_alloc_slot_info(struct phb *phb, int count)
 static void lxvpd_parse_1004_map(struct phb *phb, const uint8_t *sm, uint8_t sz)
 {
 	const struct pci_slot_entry_1004 *entry = NULL;
-	struct pci_slot_info *slot_info, *info;
+	struct lxvpd_slot_info *slot_info, *info;
 	uint8_t num_slots, slot, idx;
 
 	num_slots = (sz / sizeof(struct pci_slot_entry_1004));
@@ -167,32 +174,32 @@ static void lxvpd_parse_1004_map(struct phb *phb, const uint8_t *sm, uint8_t sz)
 		info->vswitch_id = entry->pba &0xf;
 		info->dev_id = entry->sba;
 		for (idx = 0; idx < 3; idx++)
-			info->label[idx] = entry->label[idx];
-		info->label[3] = 0;
-		info->pluggable = ((entry->p0.byte & 0x20) == 0);
-		info->power_ctl = ((entry->p0.power_ctl & 0x40) == 1);
+			info->ps.label[idx] = entry->label[idx];
+		info->ps.label[3] = 0;
+		info->ps.pluggable = ((entry->p0.byte & 0x20) == 0);
+		info->ps.power_ctl = ((entry->p0.power_ctl & 0x40) == 1);
 		switch(entry->p1.wired_lanes) {
-		case 1: info->wired_lanes = PCI_SLOT_WIRED_LANES_PCIX_32; break;
+		case 1: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIX_32; break;
 		case 2: /* fall through */
-		case 3: info->wired_lanes = PCI_SLOT_WIRED_LANES_PCIX_64; break;
-		case 4: info->wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X1; break;
-		case 5: info->wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X4; break;
-		case 6: info->wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X8; break;
-		case 7: info->wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X16; break;
+		case 3: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIX_64; break;
+		case 4: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X1; break;
+		case 5: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X4; break;
+		case 6: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X8; break;
+		case 7: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X16; break;
 		default:
-			info->wired_lanes = PCI_SLOT_WIRED_LANES_UNKNOWN;
+			info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_UNKNOWN;
 		}
-		info->wired_lanes = (entry->p1.wired_lanes - 3);
-		info->bus_clock = (entry->p2.bus_clock - 4);
-		info->connector_type = (entry->p2.connector_type - 5);
+		info->ps.wired_lanes = (entry->p1.wired_lanes - 3);
+		info->ps.bus_clock = (entry->p2.bus_clock - 4);
+		info->ps.connector_type = (entry->p2.connector_type - 5);
 		if (entry->p3.byte < 0xC0)
-			info->card_desc = ((entry->p3.byte >> 6) - 4) ;
+			info->ps.card_desc = ((entry->p3.byte >> 6) - 4) ;
 		else
-			info->card_desc = (entry->p3.byte >> 6);
-		info->card_mech = ((entry->p3.byte >> 4) & 0x3);
-		info->pwr_led_ctl = ((entry->p3.byte & 0xF) >> 2);
-		info->attn_led_ctl = (entry->p3.byte & 0x3);
-		info->slot_index = entry->slot_index;
+			info->ps.card_desc = (entry->p3.byte >> 6);
+		info->ps.card_mech = ((entry->p3.byte >> 4) & 0x3);
+		info->ps.pwr_led_ctl = ((entry->p3.byte & 0xF) >> 2);
+		info->ps.attn_led_ctl = (entry->p3.byte & 0x3);
+		info->ps.slot_index = entry->slot_index;
 		entry++;
 	}
 }
@@ -200,7 +207,7 @@ static void lxvpd_parse_1004_map(struct phb *phb, const uint8_t *sm, uint8_t sz)
 static void lxvpd_parse_1005_map(struct phb *phb, const uint8_t *sm, uint8_t sz)
 {
 	const struct pci_slot_entry_1005 *entry = NULL;
-	struct pci_slot_info *slot_info, *info;
+	struct lxvpd_slot_info *slot_info, *info;
 	uint8_t num_slots, slot, idx;
 
 	num_slots = (sz / sizeof(struct pci_slot_entry_1005));
@@ -216,20 +223,20 @@ static void lxvpd_parse_1005_map(struct phb *phb, const uint8_t *sm, uint8_t sz)
 		info->vswitch_id = entry->pba &0xf;
 		info->dev_id = entry->switch_device_id;
 		for (idx = 0; idx < 8; idx++)
-			info->label[idx] = entry->label[idx];
-		info->label[8] = 0;
-		info->pluggable = (entry->p0.pluggable == 0);
-		info->power_ctl = entry->p0.power_ctl;
-		info->wired_lanes = entry->p1.wired_lanes;
-		if (info->wired_lanes > PCI_SLOT_WIRED_LANES_PCIE_X32)
-			info->wired_lanes = PCI_SLOT_WIRED_LANES_UNKNOWN;
-		info->bus_clock = entry->p2.bus_clock;
-		info->connector_type = entry->p2.connector_type;
-		info->card_desc = (entry->p3.byte >> 6);
-		info->card_mech = ((entry->p3.byte >> 4) & 0x3);
-		info->pwr_led_ctl = ((entry->p3.byte & 0xF) >> 2);
-		info->attn_led_ctl = (entry->p3.byte & 0x3);
-		info->slot_index = entry->slot_index;
+			info->ps.label[idx] = entry->label[idx];
+		info->ps.label[8] = 0;
+		info->ps.pluggable = (entry->p0.pluggable == 0);
+		info->ps.power_ctl = entry->p0.power_ctl;
+		info->ps.wired_lanes = entry->p1.wired_lanes;
+		if (info->ps.wired_lanes > PCI_SLOT_WIRED_LANES_PCIE_X32)
+			info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_UNKNOWN;
+		info->ps.bus_clock = entry->p2.bus_clock;
+		info->ps.connector_type = entry->p2.connector_type;
+		info->ps.card_desc = (entry->p3.byte >> 6);
+		info->ps.card_mech = ((entry->p3.byte >> 4) & 0x3);
+		info->ps.pwr_led_ctl = ((entry->p3.byte & 0xF) >> 2);
+		info->ps.attn_led_ctl = (entry->p3.byte & 0x3);
+		info->ps.slot_index = entry->slot_index;
 		entry++;
 	}
 }

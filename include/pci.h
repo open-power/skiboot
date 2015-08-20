@@ -77,20 +77,17 @@
 
 /* PCI Slot Entry Information */
 struct pci_slot_info {
-	uint8_t    switch_id;
-	uint8_t    vswitch_id;
-	uint8_t    dev_id;
-	char       label[9];
+	char       label[16];
 	bool       pluggable;
 	bool       power_ctl;
-	uint8_t    wired_lanes;
-	uint8_t    bus_clock;
-	uint8_t    connector_type;
-	uint8_t    card_desc;
-	uint8_t    card_mech;
-	uint8_t    pwr_led_ctl;
-	uint8_t    attn_led_ctl;
-	uint8_t    slot_index;
+	int        wired_lanes;
+	int        bus_clock;
+	int        connector_type;
+	int        card_desc;
+	int        card_mech;
+	int        pwr_led_ctl;
+	int        attn_led_ctl;
+	int	   slot_index;
 };
 
 /*

@@ -1142,14 +1142,21 @@ static void pci_add_slot_properties(struct phb *phb, struct pci_slot_info *info,
 	/* Add other slot information */
 	dt_add_property_cells(np, "ibm,slot-pluggable", info->pluggable);
 	dt_add_property_cells(np, "ibm,slot-power-ctl", info->power_ctl);
-	dt_add_property_cells(np, "ibm,slot-wired-lanes", info->wired_lanes);
+	if (info->wired_lanes >= 0)
+		dt_add_property_cells(np, "ibm,slot-wired-lanes", info->wired_lanes);
 	/*dt_add_property(np, "ibm,slot-bus-clock", &pd->slot_info->bus_clock, sizeof(uint8_t));*/
-	dt_add_property_cells(np, "ibm,slot-connector-type", info->connector_type);
-	dt_add_property_cells(np, "ibm,slot-card-desc", info->card_desc);
-	dt_add_property_cells(np, "ibm,slot-card-mech", info->card_mech);
-	dt_add_property_cells(np, "ibm,slot-pwr-led-ctl", info->pwr_led_ctl);
-	dt_add_property_cells(np, "ibm,slot-attn-led-ctl", info->attn_led_ctl);
-	dt_add_property_string(np, "ibm,slot-label", info->label);
+	if (info->connector_type >= 0)
+		dt_add_property_cells(np, "ibm,slot-connector-type", info->connector_type);
+	if (info->card_desc >= 0)
+		dt_add_property_cells(np, "ibm,slot-card-desc", info->card_desc);
+	if (info->card_mech >= 0)
+		dt_add_property_cells(np, "ibm,slot-card-mech", info->card_mech);
+	if (info->pwr_led_ctl >= 0)
+		dt_add_property_cells(np, "ibm,slot-pwr-led-ctl", info->pwr_led_ctl);
+	if (info->attn_led_ctl >= 0)
+		dt_add_property_cells(np, "ibm,slot-attn-led-ctl", info->attn_led_ctl);
+	if (strlen(info->label) > 0)
+		dt_add_property_string(np, "ibm,slot-label", info->label);
 }
 
 static void pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
