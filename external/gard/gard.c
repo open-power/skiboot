@@ -566,6 +566,56 @@ static int do_clear(struct gard_ctx *ctx, int argc, char **argv)
 	return rc;
 }
 
+int check_gard_partition(struct gard_ctx *ctx)
+{
+	int rc;
+	struct gard_record gard;
+	char msg[2];
+
+	if (ctx->gard_data_len == 0 || ctx->gard_data_len % sizeof(struct gard_record) != 0)
+		/* Just warn for now */
+		fprintf(stderr, "The %s partition doesn't appear to be an exact multiple of"
+				"gard records in size: %lu vs %u (or partition is zero in length)\n",
+				FLASH_GARD_PART, sizeof(struct gard_record), ctx->gard_data_len);
+
+	/*
+	 * Attempt to read the first record, nothing can really operate if the
+	 * first record is dead. There (currently) isn't a way to validate more
+	 * than ECC correctness.
+	 */
+	rc = blocklevel_read(ctx->bl, ctx->gard_data_pos, &gard, sizeof(gard));
+	if (rc == FLASH_ERR_ECC_INVALID) {
+		fprintf(stderr, "The data at the GUARD partition does not appear to be valid gard data\n");
+		fprintf(stderr, "Clear the entire GUARD partition? [y/N]\n");
+		if (fgets(msg, sizeof(msg), stdin) == NULL) {
+			fprintf(stderr, "Couldn't read from standard input\n");
+			return -1;
+		}
+		if (msg[0] == 'y') {
+			rc = blocklevel_erase(ctx->bl, ctx->gard_data_pos, ctx->gard_data_len);
+			if (rc) {
+				fprintf(stderr, "Couldn't erase flash partition. Bailing out\n");
+				return rc;
+			}
+
+			memset(&gard, INT_MAX, sizeof(gard));
+
+			rc = blocklevel_smart_write(ctx->bl, ctx->gard_data_pos, &gard, sizeof(gard));
+			if (rc) {
+				fprintf(stderr, "Couldn't create a sane first gard record. Bailing out\n");
+				return rc;
+			}
+		}
+		/*
+		 * else leave rc as is so that the main bails out, not going to be
+		 * able to do sensible anyway
+		 */
+	}
+	return rc;
+}
+
+
+
 __attribute__ ((unused))
 static int do_nop(struct gard_ctx *ctx, int argc, char **argv)
 {
@@ -718,11 +768,11 @@ int main(int argc, char **argv)
 		ctx->gard_data_len = ctx->f_size;
 	}
 
-	if (ctx->gard_data_len == 0 || ctx->gard_data_len % sizeof(struct gard_record) != 0)
-		/* Just warn for now */
-		fprintf(stderr, "The %s partition doesn't appear to be an exact multiple of"
-				"gard records in size: %lu vs %u (or partition is zero in length)\n",
-				FLASH_GARD_PART, sizeof(struct gard_record), ctx->gard_data_len);
+	rc = check_gard_partition(ctx);
+	if (rc) {
+		fprintf(stderr, "Does not appear to be sane gard data\n");
+		goto out;
+	}
 
 	for (i = 0; i < ARRAY_SIZE(actions); i++) {
 		if (!strcmp(actions[i].name, action)) {
