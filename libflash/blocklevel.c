@@ -82,7 +82,10 @@ int blocklevel_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint3
 	if (rc)
 		goto out;
 
-	rc = memcpy_from_ecc(buf, buffer, len);
+	if (memcpy_from_ecc(buf, buffer, len)) {
+		errno = EBADF;
+		rc = FLASH_ERR_ECC_INVALID;
+	}
 
 out:
 	free(buffer);
