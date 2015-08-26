@@ -856,3 +856,11 @@ void flash_exit(struct blocklevel_device *bl)
 		free(container_of(bl, struct flash_chip, bl));
 }
 
+void flash_exit_close(struct blocklevel_device *bl, void (*close)(struct spi_flash_ctrl *ctrl))
+{
+	if (bl) {
+		struct flash_chip *c = container_of(bl, struct flash_chip, bl);
+		close(c->ctrl);
+		free(c);
+	}
+}

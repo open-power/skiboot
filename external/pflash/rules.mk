@@ -1,21 +1,18 @@
 ARCH=$(shell ./get_arch.sh "$(CROSS_COMPILE)")
 
-ifeq ($(ARCH),ARCH_POWERPC)
-ARCH_OBJS = powerpc_io.o sfc-ctrl.o
-else
 ifeq ($(ARCH),ARCH_ARM)
-ARCH_OBJS = arm_io.o
+arch = arm
+ARCH_OBJS = common/arch_flash_common.o common/arch_flash_arm.o ast-sf-ctrl.o
 else
 $(error Unsupported architecture $(ARCH))
-endif
 endif
 
 .DEFAULT_GOAL := all
 
 CFLAGS  = -O2 -Wall -I.
 LDFLAGS	= -lrt
-OBJS    = pflash.o progress.o ast-sf-ctrl.o version.o
-OBJS	+= libflash/libflash.o libflash/libffs.o libflash/ecc.o libflash/blocklevel.o
+OBJS    = pflash.o progress.o version.o
+OBJS	+= libflash/libflash.o libflash/libffs.o libflash/ecc.o libflash/blocklevel.o libflash/file.o
 OBJS	+= $(ARCH_OBJS)
 EXE     = pflash
 

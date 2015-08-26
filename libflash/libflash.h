@@ -49,6 +49,11 @@ int flash_init(struct spi_flash_ctrl *ctrl, struct blocklevel_device **bl,
 		struct flash_chip **flash_chip);
 void flash_exit(struct blocklevel_device *bl);
 
+/*
+ * Function which till call close on the underlying struct spi_flash_ctrl
+ */
+void flash_exit_close(struct blocklevel_device *bl, void (*close)(struct spi_flash_ctrl *ctrl));
+
 /* libflash sets the 4b mode automatically based on the flash
  * size and controller capabilities but it can be overriden
  */

@@ -17,10 +17,8 @@
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
 #include <libflash/blocklevel.h>
+#include <common/arch_flash.h>
 #include "progress.h"
-#include "io.h"
-#include "ast.h"
-#include "sfc-ctrl.h"
 
 #define __aligned(x)			__attribute__((aligned(x)))
 
@@ -29,19 +27,15 @@ extern const char version[];
 
 static bool must_confirm = true;
 static bool dummy_run;
-static bool need_relock;
+static int need_relock;
 static bool bmc_flash;
 static uint32_t ffs_toc = 0;
 static int flash_side = 0;
-#ifdef __powerpc__
-static bool using_sfc;
-#endif
 
 #define FILE_BUF_SIZE	0x10000
 static uint8_t file_buf[FILE_BUF_SIZE] __aligned(0x1000);
 
 static struct blocklevel_device *bl;
-static struct spi_flash_ctrl	*fl_ctrl;
 static struct ffs_handle	*ffsh;
 static uint32_t			fl_total_size, fl_erase_granule;
 static const char		*fl_name;
@@ -211,7 +205,7 @@ static void erase_chip(void)
 		return;
 	}
 
-	rc = flash_erase_chip(bl);
+	rc = arch_flash_erase_chip(bl);
 	if (rc) {
 		fprintf(stderr, "Error %d erasing chip\n", rc);
 		exit(1);
@@ -390,9 +384,13 @@ static void enable_4B_addresses(void)
 
 	printf("Switching to 4-bytes address mode\n");
 
-	rc = flash_force_4b_mode(bl, true);
+	rc = arch_flash_4b_mode(bl, true);
 	if (rc) {
-		fprintf(stderr, "Error %d enabling 4b mode\n", rc);
+		if (rc == -1) {
+			fprintf(stderr, "Switching address mode not availible on this architecture\n");
+		} else {
+			fprintf(stderr, "Error %d enabling 4b mode\n", rc);
+		}
 		exit(1);
 	}
 }
@@ -403,108 +401,15 @@ static void disable_4B_addresses(void)
 
 	printf("Switching to 3-bytes address mode\n");
 
-	rc = flash_force_4b_mode(bl, false);
+	rc = arch_flash_4b_mode(bl, false);
 	if (rc) {
-		fprintf(stderr, "Error %d disabling 4b mode\n", rc);
-		exit(1);
-	}
-}
-
-static void flash_access_cleanup_bmc(void)
-{
-	if (ffsh)
-		ffs_close(ffsh);
-	flash_exit(bl);
-	ast_sf_close(fl_ctrl);
-	close_devs();
-}
-
-static void flash_access_setup_bmc(bool use_lpc, bool need_write)
-{
-	int rc;
-
-	/* Open and map devices */
-	open_devs(use_lpc, true);
-
-	/* Create the AST flash controller */
-	rc = ast_sf_open(AST_SF_TYPE_BMC, &fl_ctrl);
-	if (rc) {
-		fprintf(stderr, "Failed to open controller\n");
-		exit(1);
-	}
-
-	/* Open flash chip */
-	rc = flash_init(fl_ctrl, &bl, NULL);
-	if (rc) {
-		fprintf(stderr, "Failed to open flash chip\n");
-		exit(1);
-	}
-
-	/* Setup cleanup function */
-	atexit(flash_access_cleanup_bmc);
-}
-
-static void flash_access_cleanup_pnor(void)
-{
-	/* Re-lock flash */
-	if (need_relock)
-		set_wrprotect(true);
-
-	if (ffsh)
-		ffs_close(ffsh);
-	flash_exit(bl);
-#ifdef __powerpc__
-	if (using_sfc)
-		sfc_close(fl_ctrl);
-	else
-		ast_sf_close(fl_ctrl);
-#else
-	ast_sf_close(fl_ctrl);
-#endif
-	close_devs();
-}
-
-static void flash_access_setup_pnor(bool use_lpc, bool use_sfc, bool need_write)
-{
-	int rc;
-
-	/* Open and map devices */
-	open_devs(use_lpc, false);
-
-#ifdef __powerpc__
-	if (use_sfc) {
-		/* Create the SFC flash controller */
-		rc = sfc_open(&fl_ctrl);
-		if (rc) {
-			fprintf(stderr, "Failed to open controller\n");
-			exit(1);
+		if (rc == -1) {
+			fprintf(stderr, "Switching address mode not availible on this architecture\n");
+		} else {
+			fprintf(stderr, "Error %d enabling 4b mode\n", rc);
 		}
-		using_sfc = true;
-	} else {
-#endif			
-		/* Create the AST flash controller */
-		rc = ast_sf_open(AST_SF_TYPE_PNOR, &fl_ctrl);
-		if (rc) {
-			fprintf(stderr, "Failed to open controller\n");
-			exit(1);
-		}
-#ifdef __powerpc__
-	}
-#endif
-
-	/* Open flash chip */
-	rc = flash_init(fl_ctrl, &bl, NULL);
-	if (rc) {
-		fprintf(stderr, "Failed to open flash chip\n");
 		exit(1);
 	}
-
-	/* Unlock flash (PNOR only) */
-	if (need_write)
-		need_relock = set_wrprotect(false);
-
-	/* Setup cleanup function */
-	atexit(flash_access_cleanup_pnor);
 }
 
 static void print_version(void)
@@ -583,6 +488,13 @@ static void print_help(const char *pname)
 	printf("\t\tThis message.\n\n");
 }
 
+void exiting(int d, void *p)
+{
+	if (need_relock)
+		arch_flash_set_wrprotect(bl, 1);
+	arch_flash_close(bl, NULL);
+}
+
 int main(int argc, char *argv[])
 {
 	const char *pname = argv[0];
@@ -590,9 +502,8 @@ int main(int argc, char *argv[])
 	uint32_t erase_start = 0, erase_size = 0;
 	bool erase = false, do_clear = false;
 	bool program = false, erase_all = false, info = false, do_read = false;
-	bool enable_4B = false, disable_4B = false, use_lpc = true;
+	bool enable_4B = false, disable_4B = false;
 	bool show_help = false, show_version = false;
-	bool has_sfc = false, has_ast = false;
 	bool no_action = false, tune = false;
 	char *write_file = NULL, *read_file = NULL, *part_name = NULL;
 	bool ffs_toc_seen = false;
@@ -603,7 +514,6 @@ int main(int argc, char *argv[])
 			{"address",	required_argument,	NULL,	'a'},
 			{"size",	required_argument,	NULL,	's'},
 			{"partition",	required_argument,	NULL,	'P'},
-			{"lpc",		no_argument,		NULL,	'l'},
 			{"bmc",		no_argument,		NULL,	'b'},
 			{"enable-4B",	no_argument,		NULL,	'4'},
 			{"disable-4B",	no_argument,		NULL,	'3'},
@@ -624,7 +534,7 @@ int main(int argc, char *argv[])
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "a:s:P:r:43Eep:fdihlvbtgS:T:c",
+		c = getopt_long(argc, argv, "a:s:P:r:43Eep:fdihvbtgS:T:c",
 				long_opts, &oidx);
 		if (c == EOF)
 			break;
@@ -667,9 +577,6 @@ int main(int argc, char *argv[])
 			break;
 		case 'i':
 			info = true;
-			break;
-		case 'l':
-			use_lpc = true;
 			break;
 		case 'b':
 			bmc_flash = true;
@@ -791,23 +698,18 @@ int main(int argc, char *argv[])
 		write_size = stbuf.st_size;
 	}
 
-	/* Check platform */
-	check_platform(&has_sfc, &has_ast);
-
-	/* Prepare for access */
 	if (bmc_flash) {
-		if (!has_ast) {
-			fprintf(stderr, "No BMC on this platform\n");
+		if (arch_flash_bmc(NULL, 1) == -1) {
+			fprintf(stderr, "Can't switch to BMC flash on this architecture\n");
 			exit(1);
 		}
-		flash_access_setup_bmc(use_lpc, erase || program);
-	} else {
-		if (!has_ast && !has_sfc) {
-			fprintf(stderr, "No BMC nor SFC on this platform\n");
-			exit(1);
-		}
-		flash_access_setup_pnor(use_lpc, has_sfc, erase || program);
 	}
+
+	if (arch_flash_init(&bl, NULL))
+		exit(1);
+
+	on_exit(exiting, NULL);
+
 
 	rc = blocklevel_get_info(bl, &fl_name,
 			    &fl_total_size, &fl_erase_granule);
@@ -898,13 +800,23 @@ int main(int argc, char *argv[])
 		enable_4B_addresses();
 	if (disable_4B)
 		disable_4B_addresses();
-	if (info ) {
+	if (info) {
 		/*
 		 * Don't pass through modfied TOC value if the modification was done
 		 * because of --size, but still respect if it came from --toc (we
 		 * assume the user knows what they're doing in that case)
 		 */
 		print_flash_info(flash_side ? 0 : ffs_toc);
+	}
+
+	/* Unlock flash (PNOR only) */
+	if ((erase || program || do_clear) && !bmc_flash) {
+		need_relock = arch_flash_set_wrprotect(bl, false);
+		if (need_relock == -1) {
+			fprintf(stderr, "Architecture doesn't support write protection on flash\n");
+			need_relock = 0;
+			exit (1);
+		}
 	}
 	if (do_read)
 		do_read_file(read_file, address, read_size);
