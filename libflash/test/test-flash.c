@@ -378,7 +378,7 @@ int main(void)
 	memset(sim_image, 0xff, sim_image_sz);
 	test = malloc(0x10000 * 2);
 
-	rc = flash_init(&sim_ctrl, &bl);
+	rc = flash_init(&sim_ctrl, &bl, NULL);
 	if (rc) {
 		ERR("flash_init failed with err %d\n", rc);
 		exit(1);

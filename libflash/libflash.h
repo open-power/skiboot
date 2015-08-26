@@ -45,7 +45,8 @@ extern bool libflash_debug;
 struct flash_chip;
 struct spi_flash_ctrl;
 
-int flash_init(struct spi_flash_ctrl *ctrl, struct blocklevel_device **bl);
+int flash_init(struct spi_flash_ctrl *ctrl, struct blocklevel_device **bl,
+		struct flash_chip **flash_chip);
 void flash_exit(struct blocklevel_device *bl);
 
 /* libflash sets the 4b mode automatically based on the flash

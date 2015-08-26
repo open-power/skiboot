@@ -434,7 +434,7 @@ static void flash_access_setup_bmc(bool use_lpc, bool need_write)
 	}
 
 	/* Open flash chip */
-	rc = flash_init(fl_ctrl, &bl);
+	rc = flash_init(fl_ctrl, &bl, NULL);
 	if (rc) {
 		fprintf(stderr, "Failed to open flash chip\n");
 		exit(1);
@@ -493,7 +493,7 @@ static void flash_access_setup_pnor(bool use_lpc, bool use_sfc, bool need_write)
 #endif
 
 	/* Open flash chip */
-	rc = flash_init(fl_ctrl, &bl);
+	rc = flash_init(fl_ctrl, &bl, NULL);
 	if (rc) {
 		fprintf(stderr, "Failed to open flash chip\n");
 		exit(1);

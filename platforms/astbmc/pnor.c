@@ -46,7 +46,7 @@ int pnor_init(void)
 		goto fail;
 	}
 
-	rc = flash_init(pnor_ctrl, &bl);
+	rc = flash_init(pnor_ctrl, &bl, NULL);
 	if (rc) {
 		prerror("PLAT: Failed to open init PNOR driver\n");
 		goto fail;

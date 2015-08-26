@@ -798,7 +798,8 @@ static int flash_get_info(struct blocklevel_device *bl, const char **name,
 	return 0;
 }
 
-int flash_init(struct spi_flash_ctrl *ctrl, struct blocklevel_device **bl)
+int flash_init(struct spi_flash_ctrl *ctrl, struct blocklevel_device **bl,
+		struct flash_chip **flash_chip)
 {
 	struct flash_chip *c;
 	int rc;
@@ -842,6 +843,9 @@ bail:
 	c->bl.flags = WRITE_NEED_ERASE;
 
 	*bl = &(c->bl);
+	if (flash_chip)
+		*flash_chip = c;
+
 	return 0;
 }
 

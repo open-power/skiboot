@@ -129,7 +129,7 @@ static int rhesus_pnor_init(void)
 		prerror("PLAT: Failed to open PNOR flash controller\n");
 		goto fail;
 	}
-	rc = flash_init(pnor_ctrl, &bl);
+	rc = flash_init(pnor_ctrl, &bl, NULL);
 	if (rc) {
 		prerror("PLAT: Failed to open init PNOR driver\n");
 		goto fail;
