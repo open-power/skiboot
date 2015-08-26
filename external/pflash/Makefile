@@ -46,4 +46,5 @@ clean:
 	rm -f $(OBJS) $(EXE) *.o *.d libflash/test/test_flash libflash/test/*.o
 distclean: clean
 	rm -f *.c~ *.h~ *.sh~ Makefile~ config.mk~ libflash/*.c~ libflash/*.h~
-	rm -f libflash ccan common sfc-ctrl.c ast-sf-ctrl.c .version .version.tmp
+	rm -f libflash ccan sfc-ctrl.c ast-sf-ctrl.c .version .version.tmp
+	rm -f common io.h make_version.sh
