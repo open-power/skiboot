@@ -235,7 +235,7 @@ int arch_flash_erase_chip(struct blocklevel_device *bl)
 	if (!arch_data.flash_chip)
 		return -1;
 
-	return flash_erase_chip(bl);
+	return flash_erase_chip(arch_data.flash_chip);
 }
 
 int arch_flash_4b_mode(struct blocklevel_device *bl, int set_4b)
@@ -247,7 +247,7 @@ int arch_flash_4b_mode(struct blocklevel_device *bl, int set_4b)
 	if (!arch_data.flash_chip)
 		return -1;
 
-	return flash_force_4b_mode(bl, set_4b);
+	return flash_force_4b_mode(arch_data.flash_chip, set_4b);
 }
 
 int arch_flash_set_wrprotect(struct blocklevel_device *bl, int set)

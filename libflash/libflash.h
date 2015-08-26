@@ -57,7 +57,7 @@ void flash_exit_close(struct blocklevel_device *bl, void (*close)(struct spi_fla
 /* libflash sets the 4b mode automatically based on the flash
  * size and controller capabilities but it can be overriden
  */
-int flash_force_4b_mode(struct blocklevel_device *bl, bool enable_4b);
+int flash_force_4b_mode(struct flash_chip *c, bool enable_4b);
 
 /*
  * This provides a wapper around flash_read() on ECCed data. All params are
@@ -95,6 +95,6 @@ int flash_smart_write_corrected(struct blocklevel_device *bl, uint32_t dst, cons
 /* chip erase may not be supported by all chips/controllers, get ready
  * for FLASH_ERR_CHIP_ER_NOT_SUPPORTED
  */
-int flash_erase_chip(struct blocklevel_device *bl);
+int flash_erase_chip(struct flash_chip *c);
 
 #endif /* __LIBFLASH_H */

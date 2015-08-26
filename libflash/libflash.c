@@ -267,9 +267,8 @@ static int flash_erase(struct blocklevel_device *bl, uint32_t dst, uint32_t size
 	return 0;
 }
 
-int flash_erase_chip(struct blocklevel_device *bl)
+int flash_erase_chip(struct flash_chip *c)
 {
-	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	struct spi_flash_ctrl *ct = c->ctrl;
 	int rc;
 
@@ -692,9 +691,8 @@ static int flash_set_4b(struct flash_chip *c, bool enable)
 	return ct->cmd_wr(ct, enable ? CMD_EN4B : CMD_EX4B, false, 0, NULL, 0);
 }
 
-int flash_force_4b_mode(struct blocklevel_device *bl, bool enable_4b)
+int flash_force_4b_mode(struct flash_chip *c, bool enable_4b)
 {
-	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	struct spi_flash_ctrl *ct = c->ctrl;
 	int rc;
 
