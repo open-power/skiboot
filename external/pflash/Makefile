@@ -1,9 +1,11 @@
 include rules.mk
+GET_ARCH = ../../external/common/get_arch.sh
+include ../../external/common/rules.mk
 
 all: $(EXE)
 
 .PHONY: links
-links: libflash ccan common sfc-ctrl.c ast-sf-ctrl.c make_version.sh
+links: libflash ccan common make_version.sh
 
 libflash:
 	ln -sf ../../libflash .
@@ -11,20 +13,13 @@ libflash:
 ccan:
 	ln -sf ../../ccan .
 
-sfc-ctrl.c:
-	ln -sf ../../hw/sfc-ctrl.c .
-
-ast-sf-ctrl.c:
-	ln -sf ../../hw/ast-bmc/ast-sf-ctrl.c
+common:
+	ln -sf ../common .
 
 make_version.sh:
 	ln -sf ../../make_version.sh
 
-common:
-	ln -sf ../../external/common .
-	ln -sf ../../external/common/arch_flash_$(arch)_io.h io.h
-
-$(OBJS) : links
+$(OBJS): | links arch_links
 
 .PHONY: VERSION-always
 .version: VERSION-always
@@ -39,12 +34,13 @@ $(OBJS) : links
 dist: links .version
 	find -L ../pflash/ -iname '*.[ch]' -print0 | xargs -0 tar -rhf $(PFLASH_VERSION).tar
 	tar --transform 's/Makefile.dist/Makefile/' -rhf $(PFLASH_VERSION).tar \
-		../pflash/get_arch.sh ../pflash/Makefile.dist ../pflash/rules.mk \
-		../pflash/.version ../pflash/make_version.sh
+		../pflash/Makefile.dist ../pflash/rules.mk \
+		../pflash/.version ../pflash/make_version.sh \
+		../pflash/common/*
 
-clean:
+clean: arch_clean
 	rm -f $(OBJS) $(EXE) *.o *.d libflash/test/test_flash libflash/test/*.o
 distclean: clean
 	rm -f *.c~ *.h~ *.sh~ Makefile~ config.mk~ libflash/*.c~ libflash/*.h~
-	rm -f libflash ccan sfc-ctrl.c ast-sf-ctrl.c .version .version.tmp
+	rm -f libflash ccan .version .version.tmp
 	rm -f common io.h make_version.sh

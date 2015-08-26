@@ -32,7 +32,7 @@
  * AHB Accessors
  */
 #ifndef __SKIBOOT__
-#include "io.h"
+#include "common/io.h"
 #else
 
 /*
