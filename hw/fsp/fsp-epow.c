@@ -129,7 +129,7 @@ static int64_t fsp_opal_get_epow_status(int16_t *out_epow,
 
 	/*
 	 * There can be situations where the host and the Sapphire versions
-	 * dont match with eact other and hence the expected system EPOW status
+	 * don't match with eact other and hence the expected system EPOW status
 	 * details. Newer hosts might be expecting status for more number of EPOW
 	 * sub classes which Sapphire may not know about and older hosts might be
 	 * expecting status for EPOW sub classes which is a subset of what

@@ -35,7 +35,7 @@
  *     - Core ID
  *
  *   Here too, we do not use the "cooked" HW processor ID from HDAT but
- *   intead use the real HW core ID which is basically the interrupt
+ *   instead use the real HW core ID which is basically the interrupt
  *   server number of thread 0 on that core.
  *
  *

@@ -248,7 +248,7 @@ static int insert_bl_prot_range(struct blocklevel_range *ranges, struct bl_prot_
 
 		/*
 		 * Check the inserted range isn't wedged between two ranges, if it
-		 * is, merge aswell
+		 * is, merge as well
 		 */
 		i++;
 		if (i < count && range.start + range.len == old_ranges[i].start) {

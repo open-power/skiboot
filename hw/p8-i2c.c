@@ -294,7 +294,7 @@ static bool p8_i2c_has_irqs(struct p8_i2c_master *master)
 	/* The i2c interrurpt was only added to Murano DD2.1 and Venice
 	 * DD2.0. When operating without interrupts, we need to bump the
 	 * timeouts as we rely solely on the polls from Linux which can
-	 * be up to 2s appart !
+	 * be up to 2s apart !
 	 *
 	 * Also we don't have interrupts for the Centaur i2c.
 	 */
@@ -466,7 +466,7 @@ static void p8_i2c_status_error(struct p8_i2c_master_port *port,
 	 */
 	if (!(status & I2C_STAT_NACK_RCVD_ERR)) {
 		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
-				 "I2C: Transfer error occured\n");
+				 "I2C: Transfer error occurred\n");
 		p8_i2c_print_debug_info(port, req);
 	}
 

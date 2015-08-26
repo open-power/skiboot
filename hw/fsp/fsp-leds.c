@@ -175,7 +175,7 @@ static void compute_encl_status_cec(struct fsp_led_data *encl_led)
 		if (!strstr(led->loc_code, encl_led->loc_code))
 			continue;
 
-		/* Dont count the enclsure LED itself */
+		/* Don't count the enclsure LED itself */
 		if (!strcmp(led->loc_code, encl_led->loc_code))
 			continue;
 
@@ -350,7 +350,7 @@ static bool sai_update_notification(struct fsp_msg *msg)
 
 /*
  * Update both the local LED lists to reflect upon led state changes
- * occured with the recent SPCN command. Subsequent LED requests will
+ * occurred with the recent SPCN command. Subsequent LED requests will
  * be served with these updates changed to the list.
  */
 static void update_led_list(char *loc_code, u32 led_state, u32 excl_bit)
@@ -751,7 +751,7 @@ static u32 fsp_push_data_to_tce(struct fsp_led_data *led, u8 *out_data,
 
 	/*
 	 * Check for outbound buffer overflow. If there are still
-	 * more LEDs to be sent across to FSP, dont send, ignore.
+	 * more LEDs to be sent across to FSP, don't send, ignore.
 	 */
 	if ((total_size + lcode.size) > PSI_DMA_LOC_COD_BUF_SZ)
 		return 0;
@@ -1582,7 +1582,7 @@ static void fsp_process_leds_data(u16 len)
 	 * Process the entire captured data from the last command
 	 *
 	 * TCE mapped 'led_buffer' contains the fsp_led_data structure
-	 * one after the other till the total lenght 'len'.
+	 * one after the other till the total length 'len'.
 	 *
 	 */
 	buf = led_buffer;

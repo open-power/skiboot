@@ -20,7 +20,7 @@
 #include <mem-map.h>
 
 #define STACK_ENTRY_OPAL_API	0	/* OPAL call */
-#define STACK_ENTRY_HMI		0x0e60	/* Hypervisor maintainance */
+#define STACK_ENTRY_HMI		0x0e60	/* Hypervisor maintenance */
 #define STACK_ENTRY_RESET	0x0100	/* System reset */
 #define STACK_ENTRY_SOFTPATCH	0x1500	/* Soft patch (denorm emulation) */
 

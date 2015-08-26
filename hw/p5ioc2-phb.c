@@ -906,7 +906,7 @@ static void p5ioc2_phb_hwinit(struct p5ioc2_phb *p)
 	 * wired on the motherboard). I set things up based on
 	 * the values I read on a Juno machine. We setup the BPR
 	 * with the various timeouts etc... as well based one
-	 * similarily captured values
+	 * similarly captured values
 	 */
 	if (p->is_pcie) {
 		out_be32(p->regs + CAP_AER, 0x04000000);

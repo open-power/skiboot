@@ -351,7 +351,7 @@ static bool fsp_mem_err_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 		/*
 		 * We get the memory relilence command from FSP for
 		 * correctable/Uncorrectable/scrub UE errors with real
-		 * address of 4K memory page in which the error occured.
+		 * address of 4K memory page in which the error occurred.
 		 */
 		paddr_start = *((u64 *)&msg->data.words[0]);
 		printf("Got memory resilience error message for "

@@ -157,7 +157,7 @@ static void lxvpd_parse_1004_map(struct phb *phb, const uint8_t *sm, uint8_t sz)
 	num_slots = (sz / sizeof(struct pci_slot_entry_1004));
 	slot_info = lxvpd_alloc_slot_info(phb, num_slots);
 
-	/* Iterate thru the entries in the keyword */
+	/* Iterate through the entries in the keyword */
 	entry = (const struct pci_slot_entry_1004 *)sm;
 	for (slot = 0; slot < num_slots; slot++) {
 		info = &slot_info[slot];
@@ -206,7 +206,7 @@ static void lxvpd_parse_1005_map(struct phb *phb, const uint8_t *sm, uint8_t sz)
 	num_slots = (sz / sizeof(struct pci_slot_entry_1005));
 	slot_info = lxvpd_alloc_slot_info(phb, num_slots);
 
-	/* Iterate thru the entries in the keyword */
+	/* Iterate through the entries in the keyword */
 	entry = (const struct pci_slot_entry_1005 *)sm;
 	for (slot = 0; slot < num_slots; slot++) {
 		info = &slot_info[slot];

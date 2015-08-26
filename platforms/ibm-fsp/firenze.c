@@ -285,7 +285,7 @@ static void firenze_send_pci_inventory(void)
 	aend = (end + 0xffful) & ~0xffful;
 	offset = PSI_DMA_PCIE_INVENTORY + (base & 0xfff);
 
-	/* We can only accomodate so many entries in the PSI map */
+	/* We can only accommodate so many entries in the PSI map */
 	if ((aend - abase) > PSI_DMA_PCIE_INVENTORY_SIZE) {
 		prerror("PLAT: PCIe inventory too large (%lld bytes)\n",
 			aend - abase);

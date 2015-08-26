@@ -60,7 +60,7 @@ struct sp_attn_area {
 
 /* Maximum sapphire version length (approx) */
 #define VERSION_LEN	80
-/* Upto 10 frames each of length 40 bytes + header = 430 bytes */
+/* Up to 10 frames each of length 40 bytes + header = 430 bytes */
 #define BT_FRAME_LEN 430
 /* File info length : Use the rest of the memory for file details */
 #define FILE_INFO_LEN	(TI_MSG_LEN - VERSION_LEN - BT_FRAME_LEN)

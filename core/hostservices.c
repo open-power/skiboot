@@ -553,7 +553,7 @@ static int hservice_set_special_wakeup(struct cpu_thread *cpu)
 	/*
 	 * The original HWp reads the XSCOM first but ignores the result
 	 * and error, let's do the same until I know for sure that is
-	 * not neccessary
+	 * not necessary
 	 */
 	xscom_read(cpu->chip_id,
 		   XSCOM_ADDR_P8_EX_SLAVE(core_id, EX_PM_SPECIAL_WAKEUP_PHYP),
@@ -661,7 +661,7 @@ static int hservice_clr_special_wakeup(struct cpu_thread *cpu)
 	/*
 	 * The original HWp reads the XSCOM first but ignores the result
 	 * and error, let's do the same until I know for sure that is
-	 * not neccessary
+	 * not necessary
 	 */
 	xscom_read(cpu->chip_id,
 		   XSCOM_ADDR_P8_EX_SLAVE(core_id, EX_PM_SPECIAL_WAKEUP_PHYP),
@@ -696,7 +696,7 @@ static int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 
 	/*
 	 * Mask out the top nibble of i_core since it may contain
-	 * 0x4 (which we use for XSCOM targetting)
+	 * 0x4 (which we use for XSCOM targeting)
 	 */
 	i_core &= 0x0fffffff;
 

@@ -18,7 +18,7 @@
 /*
  * Dump support:
  *  We get dump notification from different sources:
- *   - During system intialization via HDAT
+ *   - During system initialization via HDAT
  *   - During FSP reset/reload (FipS dump)
  *   - Dump available notification MBOX command (0xCE, 0x78, 0x00)
  *

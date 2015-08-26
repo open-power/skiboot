@@ -99,7 +99,7 @@
  * Generate a local address from a given ring/satellite/offset
  * combination:
  *
- *     Ring    Satelite     offset
+ *     Ring    Satellite     offset
  *  +---------+---------+-------------+
  *  |    4    |    4    |     6       |
  *  +---------+---------+-------------+

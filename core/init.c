@@ -756,7 +756,7 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * because they rely on various other things having been setup,
 	 * for example, add_opal_interrupts() will add all the interrupt
 	 * sources that are going to the firmware. We can't add a new one
-	 * after that call. Similarily, the mem_region calls will construct
+	 * after that call. Similarly, the mem_region calls will construct
 	 * the reserve maps in the DT so we shouldn't affect the memory
 	 * regions after that
 	 */

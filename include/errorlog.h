@@ -29,7 +29,7 @@
 #define OPAL_INPUT_OUTPUT_ERR_EVT	0x02
 /* RESOURCE_DEALLOC: Hotplug events and errors */
 #define OPAL_RESOURCE_DEALLOC_ERR_EVT	0x03
-/* MISC: Miscellanous error */
+/* MISC: Miscellaneous error */
 #define OPAL_MISC_ERR_EVT		0x04
 
 /* OPAL Subsystem IDs listed for reporting events/errors */

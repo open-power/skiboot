@@ -40,9 +40,9 @@
 #define WDT_TIMEOUT		600
 
 /* How often to reset the timer using schedule_timer(). Too short and
-we risk accidently resetting the system due to opal_run_pollers() not
+we risk accidentally resetting the system due to opal_run_pollers() not
 being called in time, too short and we waste time resetting the wdt
-more frequently than neccessary. */
+more frequently than necessary. */
 #define WDT_MARGIN		300
 
 static struct timer wdt_timer;

@@ -27,7 +27,7 @@
  * using FW space as normal memory space is limited to byte accesses
  * to a fixed 256M window, while FW space allows us to use different
  * access sizes and to control the IDSEL bits which essentially enable
- * a full 4G addres space.
+ * a full 4G address space.
  *
  * The way FW accesses map onto AHB is controlled via two registers
  * in the BMC's LPC host controller:
@@ -79,7 +79,7 @@
  *
  * For the time being, we use the iLPC->AHB for everything except
  * pnor accesses. In the long run, we will reconfigure the LPC->AHB
- * to provide more direct access to all of the BMC addres space but
+ * to provide more direct access to all of the BMC address space but
  * we'll only do that after the boot script/program on the BMC is
  * updated to restore the bridge to a state compatible with the SBE
  * expectations on boot.

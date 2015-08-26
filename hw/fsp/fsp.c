@@ -109,7 +109,7 @@ static u64 fsp_hir_timeout;
 
 /*
  * We keep track on last logged values for some things to print only on
- * value changes, but also to releive pressure on the tracer which
+ * value changes, but also to relieve pressure on the tracer which
  * doesn't do a very good job at detecting repeats when called from
  * many different CPUs
  */

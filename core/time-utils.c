@@ -17,7 +17,7 @@
 #include <time-utils.h>
 
 /*
- * Converts an OPAL formated datetime into a struct tm. We ignore microseconds
+ * Converts an OPAL formatted datetime into a struct tm. We ignore microseconds
  * as Linux doesn't use them anyway.
  *
  *  |      year       | month |   mday   |

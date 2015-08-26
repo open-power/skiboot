@@ -766,7 +766,7 @@ restart:
 
 	/*
 	 * If we can't allocate the memory block from the expected
-	 * node, we bail to any one that can accomodate our request.
+	 * node, we bail to any one that can accommodate our request.
 	 */
 	if (!p && use_local) {
 		use_local = false;
