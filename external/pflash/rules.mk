@@ -8,7 +8,12 @@ ifeq ($(ARCH),ARCH_POWERPC)
 arch = powerpc
 ARCH_OBJS = common/arch_flash_common.o common/arch_flash_powerpc.o
 else
+ifeq ($(ARCH),ARCH_X86)
+arch = x86
+ARCH_OBJS = common/arch_flash_common.o common/arch_flash_x86.o
+else
 $(error Unsupported architecture $(ARCH))
+endif
 endif
 endif
 
