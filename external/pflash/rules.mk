@@ -4,7 +4,12 @@ ifeq ($(ARCH),ARCH_ARM)
 arch = arm
 ARCH_OBJS = common/arch_flash_common.o common/arch_flash_arm.o ast-sf-ctrl.o
 else
+ifeq ($(ARCH),ARCH_POWERPC)
+arch = powerpc
+ARCH_OBJS = common/arch_flash_common.o common/arch_flash_powerpc.o
+else
 $(error Unsupported architecture $(ARCH))
+endif
 endif
 
 .DEFAULT_GOAL := all
