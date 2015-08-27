@@ -704,7 +704,6 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 static int64_t opal_handle_hmi(void)
 {
 	uint64_t hmer;
-	int rc = OPAL_SUCCESS;
 	struct OpalHMIEvent hmi_evt;
 
 	/*
@@ -719,6 +718,6 @@ static int64_t opal_handle_hmi(void)
 	hmer = mfspr(SPR_HMER);		/* Get HMER register value */
 	handle_hmi_exception(hmer, &hmi_evt);
 
-	return rc;
+	return OPAL_SUCCESS;
 }
 opal_call(OPAL_HANDLE_HMI, opal_handle_hmi, 0);
