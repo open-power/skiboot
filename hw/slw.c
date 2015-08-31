@@ -203,6 +203,10 @@ static bool slw_general_init(struct proc_chip *chip, struct cpu_thread *c)
 
 	/* Read back for debug */
 	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_GP0), &tmp);
+	if (rc)
+		log_simple_error(&e_info(OPAL_RC_SLW_INIT),
+				 "SLW: Failed to re-read PM_GP0. Continuing...\n");
+
 	prlog(PR_TRACE, "SLW: PMGP0 read   0x%016llx\n", tmp);
 
 
