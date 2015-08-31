@@ -1134,71 +1134,85 @@ static int handle_prd_msg(struct opal_prd_ctx *ctx)
 	return 0;
 }
 
-static int handle_prd_control(struct opal_prd_ctx *ctx, int fd)
+static void handle_prd_control_occ_error(struct control_msg *msg)
+{
+	if (!hservice_runtime->process_occ_error) {
+		pr_log_nocall("process_occ_error");
+		return;
+	}
+
+	pr_debug("CTRL: calling process_occ_error(0)");
+	call_process_occ_error(0);
+	msg->response = 0;
+}
+
+static void handle_prd_control_occ_reset(struct control_msg *msg)
+{
+	if (!hservice_runtime->process_occ_reset) {
+		pr_log_nocall("process_occ_reset");
+		return;
+	}
+
+	pr_debug("CTRL: calling process_occ_reset(0)");
+	call_process_occ_reset(0);
+	msg->response = 0;
+}
+
+static void handle_prd_control_occ_actuation(struct control_msg *msg,
+					     bool enable)
+{
+	if (!hservice_runtime->enable_occ_actuation) {
+		pr_log_nocall("enable_occ_actuation");
+		return;
+	}
+
+	pr_debug("CTRL: calling enable_occ_actuation(%s)",
+			enable ? "true" : "false");
+	msg->response = call_enable_occ_actuation(enable);
+}
+
+static void handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 {
 	struct control_msg msg;
-	bool enabled;
+	bool enabled = false;
 	int rc;
 
 	rc = recv(fd, &msg, sizeof(msg), MSG_TRUNC);
 	if (rc != sizeof(msg)) {
-		pr_log(LOG_WARNING, "CTRL: failed to receive "
-				"control message: %m");
-		rc = -1;
+		pr_log(LOG_WARNING, "CTRL: failed to receive control "
+				"message: %m");
+		msg.response = -1;
 		goto out_send;
 	}
 
-	enabled = false;
-	rc = -1;
-
+	msg.response = -1;
 	switch (msg.type) {
 	case CONTROL_MSG_ENABLE_OCCS:
 		enabled = true;
 		/* fall through */
 	case CONTROL_MSG_DISABLE_OCCS:
-		if (!hservice_runtime->enable_occ_actuation) {
-			pr_log_nocall("enable_occ_actuation");
-		} else {
-			pr_debug("CTRL: calling enable_occ_actuation(%s)",
-					enabled ? "true" : "false");
-			rc = call_enable_occ_actuation(enabled);
-			pr_debug("CTRL:  -> %d", rc);
-		}
+		handle_prd_control_occ_actuation(&msg, enabled);
 		break;
 	case CONTROL_MSG_TEMP_OCC_RESET:
-		if (hservice_runtime->process_occ_reset) {
-			pr_debug("CTRL: calling process_occ_reset(0)");
-			call_process_occ_reset(0);
-			rc = 0;
-		} else {
-			pr_log_nocall("process_occ_reset");
-		}
+		handle_prd_control_occ_reset(&msg);
 		break;
 	case CONTROL_MSG_TEMP_OCC_ERROR:
-		if (hservice_runtime->process_occ_error) {
-			pr_debug("CTRL: calling process_occ_error(0)");
-			call_process_occ_error(0);
-			rc = 0;
-		} else {
-			pr_log_nocall("process_occ_error");
-		}
+		handle_prd_control_occ_error(&msg);
 		break;
 	default:
 		pr_log(LOG_WARNING, "CTRL: Unknown control message action %d",
 				msg.type);
+		break;
 	}
 
 out_send:
 	/* send a response */
-	msg.response = rc;
 	rc = send(fd, &msg, sizeof(msg), MSG_DONTWAIT | MSG_NOSIGNAL);
 	if (rc && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EPIPE))
 		pr_debug("CTRL: control send() returned %d, ignoring failure",
 				rc);
 	else if (rc != sizeof(msg))
 		pr_log(LOG_NOTICE, "CTRL: Failed to send control response: %m");
-
-	return 0;
 }
 
 static int run_attn_loop(struct opal_prd_ctx *ctx)
