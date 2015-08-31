@@ -1041,6 +1041,9 @@ static int fsp_flash_firmware(void)
 	 */
 	rc = code_update_del_lid(DEL_UPD_SIDE_LIDS);
 
+	if (rc)
+		prlog(PR_TRACE, "CUPD: Failed to delete LIDs (%d). This is okay, continuing..", rc);
+
 	for (i = 0; i < be16_to_cpu(header->number_lids); i++) {
 		if (be32_to_cpu(idx_entry->size) > LID_MAX_SIZE) {
 			log_simple_error(&e_info(OPAL_RC_CU_FLASH), "CUPD: LID"
