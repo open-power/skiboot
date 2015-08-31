@@ -80,7 +80,7 @@ static int queue_prd_msg_nop(struct opal_prd_msg *msg,
 static int (*queue_prd_msg)(struct opal_prd_msg *msg,
 		void (*consumed)(void *data)) = queue_prd_msg_nop;
 
-static void send_pending_events(void);
+static void send_next_pending_event(void);
 
 static void prd_msg_consumed(void *data)
 {
@@ -120,7 +120,7 @@ static void prd_msg_consumed(void *data)
 	if (event)
 		events[proc] &= ~event;
 	prd_msg_inuse = false;
-	send_pending_events();
+	send_next_pending_event();
 	unlock(&events_lock);
 }
 
@@ -145,7 +145,7 @@ static int populate_ipoll_msg(struct opal_prd_msg *msg, uint32_t proc)
 	return 0;
 }
 
-static void send_pending_events(void)
+static void send_next_pending_event(void)
 {
 	struct proc_chip *chip;
 	uint32_t proc;
@@ -191,7 +191,7 @@ static void __prd_event(uint32_t proc, uint8_t event)
 {
 	events[proc] |= event;
 	if (!prd_msg_inuse)
-		send_pending_events();
+		send_next_pending_event();
 }
 
 static void prd_event(uint32_t proc, uint8_t event)
@@ -294,7 +294,7 @@ static int prd_msg_handle_init(struct opal_prd_msg *msg)
 	lock(&events_lock);
 	prd_active = true;
 	if (!prd_msg_inuse)
-		send_pending_events();
+		send_next_pending_event();
 	unlock(&events_lock);
 
 	return OPAL_SUCCESS;
