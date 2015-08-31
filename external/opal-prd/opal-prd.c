@@ -1144,7 +1144,8 @@ static int handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 	if (rc != sizeof(msg)) {
 		pr_log(LOG_WARNING, "CTRL: failed to receive "
 				"control message: %m");
-		return -1;
+		rc = -1;
+		goto out_send;
 	}
 
 	enabled = false;
@@ -1187,6 +1188,7 @@ static int handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 				msg.type);
 	}
 
+out_send:
 	/* send a response */
 	msg.response = rc;
 	rc = send(fd, &msg, sizeof(msg), MSG_DONTWAIT | MSG_NOSIGNAL);
