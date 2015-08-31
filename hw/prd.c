@@ -176,18 +176,12 @@ static void send_pending_events(void)
 	if (event & EVENT_ATTN) {
 		prd_msg.hdr.type = OPAL_PRD_MSG_TYPE_ATTN;
 		populate_ipoll_msg(&prd_msg, proc);
-		event = EVENT_ATTN;
-
 	} else if (event & EVENT_OCC_ERROR) {
 		prd_msg.hdr.type = OPAL_PRD_MSG_TYPE_OCC_ERROR;
 		prd_msg.occ_error.chip = proc;
-		event = EVENT_OCC_ERROR;
-
 	} else if (event & EVENT_OCC_RESET) {
 		prd_msg.hdr.type = OPAL_PRD_MSG_TYPE_OCC_RESET;
 		prd_msg.occ_reset.chip = proc;
-		event = EVENT_OCC_RESET;
-
 	}
 
 	queue_prd_msg(&prd_msg, prd_msg_consumed);
