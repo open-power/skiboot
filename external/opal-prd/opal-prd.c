@@ -1400,26 +1400,10 @@ out_close:
 	return rc;
 }
 
-static int send_occ_control(struct opal_prd_ctx *ctx, const char *str)
+static int send_prd_control(struct control_msg *msg)
 {
 	struct sockaddr_un addr;
-	struct control_msg msg;
 	int sd, rc;
-
-	memset(&msg, 0, sizeof(msg));
-
-	if (!strcmp(str, "enable")) {
-		msg.type = CONTROL_MSG_ENABLE_OCCS;
-	} else if (!strcmp(str, "disable")) {
-		msg.type = CONTROL_MSG_DISABLE_OCCS;
-	} else if (!strcmp(str, "reset")) {
-		msg.type = CONTROL_MSG_TEMP_OCC_RESET;
-	} else if (!strcmp(str, "process-error")) {
-		msg.type = CONTROL_MSG_TEMP_OCC_ERROR;
-	} else {
-		pr_log(LOG_ERR, "OCC: Invalid OCC action '%s'", str);
-		return -1;
-	}
 
 	sd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (!sd) {
@@ -1436,34 +1420,57 @@ static int send_occ_control(struct opal_prd_ctx *ctx, const char *str)
 		goto out_close;
 	}
 
-	rc = send(sd, &msg, sizeof(msg), 0);
-	if (rc != sizeof(msg)) {
+	rc = send(sd, msg, sizeof(*msg), 0);
+	if (rc != sizeof(*msg)) {
 		pr_log(LOG_ERR, "CTRL: Failed to send control message: %m");
 		rc = -1;
 		goto out_close;
 	}
 
 	/* wait for our reply */
-	rc = recv(sd, &msg, sizeof(msg), 0);
+	rc = recv(sd, msg, sizeof(*msg), 0);
 	if (rc < 0) {
 		pr_log(LOG_ERR, "CTRL: Failed to receive control message: %m");
 		goto out_close;
 
-	} else if (rc != sizeof(msg)) {
+	} else if (rc != sizeof(*msg)) {
 		pr_log(LOG_WARNING, "CTRL: Short read from control socket");
 		rc = -1;
 		goto out_close;
 	}
 
-	if (msg.response || ctx->debug) {
-		pr_debug("OCC: OCC action %s returned status %ld",
-				str, msg.response);
-	}
-
-	rc = msg.response;
+	rc = msg->response;
 
 out_close:
 	close(sd);
+	return rc;
+}
+
+static int send_occ_control(struct opal_prd_ctx *ctx, const char *str)
+{
+	struct control_msg msg;
+	int rc;
+
+	memset(&msg, 0, sizeof(msg));
+
+	if (!strcmp(str, "enable")) {
+		msg.type = CONTROL_MSG_ENABLE_OCCS;
+	} else if (!strcmp(str, "disable")) {
+		msg.type = CONTROL_MSG_DISABLE_OCCS;
+	} else if (!strcmp(str, "reset")) {
+		msg.type = CONTROL_MSG_TEMP_OCC_RESET;
+	} else if (!strcmp(str, "process-error")) {
+		msg.type = CONTROL_MSG_TEMP_OCC_ERROR;
+	} else {
+		pr_log(LOG_ERR, "CTRL: Invalid OCC action '%s'", str);
+		return -1;
+	}
+
+	rc = send_prd_control(&msg);
+	if (msg.response || ctx->debug)
+		pr_debug("CTRL: OCC action %s returned status %ld", str,
+				msg.response);
+
 	return rc;
 }
 
