@@ -1047,7 +1047,7 @@ static int64_t phb3_map_pe_dma_window_real(struct phb *phb,
 
 static void phb3_pci_msi_check_q(struct phb3 *p, uint32_t ive_num)
 {
-	uint64_t ive, ivc, ffi;
+	uint64_t ive, ivc, ffi, state;
 	uint8_t *q_byte;
 
 	/* Each IVE has 16-bytes or 128-bytes */
@@ -1071,9 +1071,13 @@ static void phb3_pci_msi_check_q(struct phb3 *p, uint32_t ive_num)
 	}
 
 	/* Lock FFI and send interrupt */
-	while (in_be64(p->regs + PHB_FFI_LOCK))
-		/* XXX Handle fences ! */
-		;
+	while (1) {
+		state = in_be64(p->regs + PHB_FFI_LOCK);
+		if (!state)
+			break;
+		if (state == ~0ULL) /* PHB Fenced */
+			return;
+	}
 
 	/* Clear Q bit and update IVC */
 	*q_byte = 0;
