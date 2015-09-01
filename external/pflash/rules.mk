@@ -22,5 +22,5 @@ version.c: make_version.sh .version
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXE): $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
