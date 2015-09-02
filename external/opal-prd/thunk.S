@@ -92,6 +92,7 @@ call_##name:					;\
 	CALL_THUNK(enable_occ_actuation, 11)
 	CALL_THUNK(apply_attr_override, 12)
 	CALL_THUNK(mfg_htmgt_pass_thru, 13)
+	CALL_THUNK(run_command, 14)
 
 	.globl call_hbrt_init
 call_hbrt_init:

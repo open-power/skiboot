@@ -457,6 +457,17 @@ struct runtime_interfaces {
 	int (*mfg_htmgt_pass_thru)(uint16_t i_cmdLength, uint8_t *i_cmdData,
 				   uint16_t *o_rspLength, uint8_t *o_rspData);
 
+	/**
+	 * @brief	Execute an arbitrary command inside hostboot runtime
+	 * @param[in]	Number of arguments (standard C args)
+	 * @param[in]	Array of argument values (standard C args)
+	 * @param[out]	Response message (NULL terminated), memory allocated
+	 *		by hbrt, if o_outString is NULL then no response will
+	 *		be sent
+	 * @return	0 on success, else error code
+	 */
+	int (*run_command)(int argc, const char **argv, char **o_outString);
+
 	/* Reserve some space for future growth. */
-	void (*reserved[30])(void);
+	void (*reserved[29])(void);
 };

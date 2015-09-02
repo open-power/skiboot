@@ -90,6 +90,7 @@ enum control_msg_type {
 	CONTROL_MSG_TEMP_OCC_ERROR	= 0x03,
 	CONTROL_MSG_ATTR_OVERRIDE	= 0x04,
 	CONTROL_MSG_HTMGT_PASSTHRU	= 0x05,
+	CONTROL_MSG_RUN_CMD		= 0x30,
 };
 
 struct control_msg {
@@ -236,6 +237,7 @@ extern void call_process_occ_reset(uint64_t i_chipId);
 extern int call_mfg_htmgt_pass_thru(uint16_t i_cmdLength, uint8_t *i_cmdData,
 				uint16_t *o_rspLength, uint8_t *o_rspData);
 extern int call_apply_attr_override(uint8_t *i_data, size_t size);
+extern int call_run_command(int argc, const char **argv, char **o_outString);
 
 void hservice_puts(const char *str)
 {
@@ -1237,6 +1239,57 @@ static void handle_prd_control_htmgt_passthru(struct control_msg *send_msg,
 	}
 }
 
+static void handle_prd_control_run_cmd(struct control_msg *send_msg,
+				       struct control_msg *recv_msg)
+{
+	char *runcmd_output, *s;
+	const char **argv;
+	int i, argc;
+	size_t size;
+
+	if (!hservice_runtime->run_command) {
+		pr_log_nocall("run_command");
+		return;
+	}
+
+	argc = recv_msg->argc;
+	pr_debug("CTRL: run_command, argc:%d\n", argc);
+
+	argv = malloc(argc * sizeof(*argv));
+	if (!argv) {
+		pr_log(LOG_ERR, "CTRL: argv buffer malloc failed: %m");
+		return;
+	}
+
+	s = (char *)recv_msg->data;
+	for (i = 0; i < argc; i++) {
+		argv[i] = (char *)htobe64((uint64_t)&s[size]);
+		size += (strlen(&s[size]) + 1);
+	}
+
+	/* Call HBRT */
+	send_msg->response = call_run_command(argc, argv, &runcmd_output);
+	runcmd_output = (char *)be64toh((uint64_t)runcmd_output);
+	free(argv);
+
+	s = (char *)send_msg->data;
+	if (runcmd_output) {
+		size = strlen(runcmd_output);
+		if (size >= MAX_CONTROL_MSG_BUF) {
+			pr_log(LOG_WARNING, "CTRL: output message truncated");
+			runcmd_output[MAX_CONTROL_MSG_BUF] = '\0';
+			size = MAX_CONTROL_MSG_BUF;
+		}
+
+		strcpy(s, runcmd_output);
+		send_msg->data_len = size + 1;
+		free(runcmd_output);
+	} else {
+		strcpy(s, "Null");
+		send_msg->data_len = strlen("Null") + 1;
+	}
+}
+
 static void handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 {
 	struct control_msg msg, *recv_msg, *send_msg;
@@ -1302,6 +1355,9 @@ static void handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 		break;
 	case CONTROL_MSG_HTMGT_PASSTHRU:
 		handle_prd_control_htmgt_passthru(send_msg, recv_msg);
+		break;
+	case CONTROL_MSG_RUN_CMD:
+		handle_prd_control_run_cmd(send_msg, recv_msg);
 		break;
 	default:
 		pr_log(LOG_WARNING, "CTRL: Unknown control message action %d",
@@ -1711,6 +1767,58 @@ static int send_htmgt_passthru(struct opal_prd_ctx *ctx, int argc, char *argv[])
 	return rc;
 }
 
+static int send_run_command(struct opal_prd_ctx *ctx, int argc, char *argv[])
+{
+	struct control_msg *send_msg, *recv_msg = NULL;
+	uint32_t size = 0;
+	int rc, i;
+	char *s;
+
+	if (!ctx->expert_mode) {
+		pr_log(LOG_WARNING, "CTRL: need to be in expert mode");
+		return -1;
+	}
+
+	if (ctx->debug) {
+		pr_debug("CTRL: run command arguments:");
+		for (i=0; i < argc; i++)
+			pr_debug("argv[%d] = %s", i, argv[i]);
+	}
+
+	for (i = 0; i < argc; i++)
+		size += (strlen(argv[i]) + 1);
+
+	send_msg = malloc(sizeof(*send_msg) + size);
+	if (!send_msg) {
+		pr_log(LOG_ERR, "CTRL: msg buffer malloc failed: %m");
+		return -1;
+	}
+
+	/* Setup message */
+	send_msg->type = CONTROL_MSG_RUN_CMD;
+	send_msg->argc = argc;
+	send_msg->data_len = size;
+	s = (char *)send_msg->data;
+	for (i = 0; i < argc; i++) {
+		strcpy(s, argv[i]);
+		s = s + strlen(argv[i]) + 1;
+	}
+
+	rc = send_prd_control(send_msg, &recv_msg);
+	free(send_msg);
+	if (recv_msg) {
+		if (!rc)
+			pr_log(LOG_INFO, "Received: %s", recv_msg->data);
+
+		if (recv_msg->response || ctx->debug)
+			pr_debug("CTRL: run command returned status %d",
+					recv_msg->response);
+		free(recv_msg);
+	}
+
+	return rc;
+}
+
 static void usage(const char *progname)
 {
 	printf("Usage:\n");
@@ -1719,6 +1827,7 @@ static void usage(const char *progname)
 	printf("\t%s occ <enable|disable>\n", progname);
 	printf("\t%s htmgt-passthru <bytes...>\n", progname);
 	printf("\t%s override <FILE>\n", progname);
+	printf("\t%s run [arg 0] [arg 1]..[arg n]\n", progname);
 	printf("\n");
 	printf("Options:\n"
 "\t--debug            verbose logging for debug information\n"
@@ -1750,6 +1859,7 @@ enum action {
 	ACTION_OCC_CONTROL,
 	ACTION_ATTR_OVERRIDE,
 	ACTION_HTMGT_PASSTHRU,
+	ACTION_RUN_COMMAND,
 };
 
 static int parse_action(const char *str, enum action *action)
@@ -1768,6 +1878,9 @@ static int parse_action(const char *str, enum action *action)
 	} else if (!strcmp(str, "htmgt-passthru")) {
 		*action = ACTION_HTMGT_PASSTHRU;
 		rc = 0;
+	} else if (!strcmp(str, "run")) {
+		*action = ACTION_RUN_COMMAND;
+		return 0;
 	} else {
 		pr_log(LOG_ERR, "CTRL: unknown argument '%s'", str);
 		rc = -1;
@@ -1863,6 +1976,15 @@ int main(int argc, char *argv[])
 
 		rc = send_htmgt_passthru(ctx, argc - optind - 1,
 					 &argv[optind + 1]);
+		break;
+	case ACTION_RUN_COMMAND:
+		if (optind + 1 >= argc) {
+			pr_log(LOG_ERR, "CTRL: run command requires "
+					"argument(s)");
+			return EXIT_FAILURE;
+		}
+
+		rc = send_run_command(ctx, argc - optind - 1, &argv[optind + 1]);
 		break;
 	default:
 		break;
