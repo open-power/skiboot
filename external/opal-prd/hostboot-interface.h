@@ -422,6 +422,41 @@ struct runtime_interfaces {
 	 */
 	int (*enable_occ_actuation)(bool i_occActivation);
 
+	/**
+	 * @brief	Apply a set of attribute overrides
+	 *
+	 * @param[in]	pointer to binary override data
+	 * @param[in]	length of override data (bytes)
+	 * @returns	0 on success, or return code if the command failed
+	 *
+	 * @platform	OpenPower
+	 */
+	int (*apply_attr_override)(uint8_t *i_data, size_t size);
+
+	/**
+	 * @brief	Send a pass-through command to HTMGT
+	 *
+	 * @details	This is a blocking call that will send a command to
+	 *		HTMGT.
+	 *
+	 * @note	If o_rspLength is returned with a non-zero value, the
+	 *		data at the o_rspData should be dumped to stdout in a
+	 *		hex dump format.
+	 * @note	The maximum response data returned will be 4096 bytes
+	 *
+	 * @param[in]	i_cmdLength	number of bytes in pass-thru command data
+	 * @param[in]	*i_cmdData	pointer to pass-thru command data
+	 * @param[out]	*o_rspLength	pointer to number of bytes returned in
+	 *				o_rspData
+	 * @param[out]	*o_rspData	pointer to a 4096 byte buffer that will
+	 *				contain the response data from the command
+	 *
+	 * @returns	0 on success, or return code if the command failed
+	 * @platform	OpenPower
+	 */
+	int (*mfg_htmgt_pass_thru)(uint16_t i_cmdLength, uint8_t *i_cmdData,
+				   uint16_t *o_rspLength, uint8_t *o_rspData);
+
 	/* Reserve some space for future growth. */
-	void (*reserved[32])(void);
+	void (*reserved[30])(void);
 };

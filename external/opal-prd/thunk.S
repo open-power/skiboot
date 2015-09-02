@@ -90,6 +90,8 @@ call_##name:					;\
 	CALL_THUNK(handle_attns, 9)
 	CALL_THUNK(process_occ_reset, 10)
 	CALL_THUNK(enable_occ_actuation, 11)
+	CALL_THUNK(apply_attr_override, 12)
+	CALL_THUNK(mfg_htmgt_pass_thru, 13)
 
 	.globl call_hbrt_init
 call_hbrt_init:

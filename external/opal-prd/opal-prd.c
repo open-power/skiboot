@@ -79,6 +79,7 @@ struct opal_prd_ctx {
 	struct pnor		pnor;
 	char			*hbrt_file_name;
 	bool			use_syslog;
+	bool			expert_mode;
 	void			(*vlog)(int, const char *, va_list);
 };
 
@@ -87,12 +88,19 @@ enum control_msg_type {
 	CONTROL_MSG_DISABLE_OCCS	= 0x01,
 	CONTROL_MSG_TEMP_OCC_RESET	= 0x02,
 	CONTROL_MSG_TEMP_OCC_ERROR	= 0x03,
+	CONTROL_MSG_ATTR_OVERRIDE	= 0x04,
+	CONTROL_MSG_HTMGT_PASSTHRU	= 0x05,
 };
 
 struct control_msg {
 	enum control_msg_type	type;
-	uint64_t		response;
+	int			response;
+	uint32_t		argc;
+	uint32_t		data_len;
+	uint8_t			data[];
 };
+
+#define MAX_CONTROL_MSG_BUF	4096
 
 static struct opal_prd_ctx *ctx;
 
@@ -188,6 +196,22 @@ static void pr_log_nocall(const char *name)
 	pr_log(LOG_WARNING, "HBRT: Call %s not provided", name);
 }
 
+static void hexdump(const uint8_t *data, uint32_t len)
+{
+	int i;
+
+	for (i = 0; i < len; i++) {
+		if (i % 16 == 0)
+			printf("\n");
+		else if(i % 4 == 0)
+			printf(" ");
+
+		printf("%02x", data[i]);
+	}
+
+	printf("\n");
+}
+
 static void pr_log_daemon_init(void)
 {
 	if (ctx->use_syslog) {
@@ -209,6 +233,9 @@ extern void call_process_occ_error (uint64_t i_chipId);
 extern int call_enable_attns(void);
 extern int call_enable_occ_actuation(bool i_occActivation);
 extern void call_process_occ_reset(uint64_t i_chipId);
+extern int call_mfg_htmgt_pass_thru(uint16_t i_cmdLength, uint8_t *i_cmdData,
+				uint16_t *o_rspLength, uint8_t *o_rspData);
+extern int call_apply_attr_override(uint8_t *i_data, size_t size);
 
 void hservice_puts(const char *str)
 {
@@ -1143,6 +1170,7 @@ static void handle_prd_control_occ_error(struct control_msg *msg)
 
 	pr_debug("CTRL: calling process_occ_error(0)");
 	call_process_occ_error(0);
+	msg->data_len = 0;
 	msg->response = 0;
 }
 
@@ -1155,6 +1183,7 @@ static void handle_prd_control_occ_reset(struct control_msg *msg)
 
 	pr_debug("CTRL: calling process_occ_reset(0)");
 	call_process_occ_reset(0);
+	msg->data_len = 0;
 	msg->response = 0;
 }
 
@@ -1168,51 +1197,132 @@ static void handle_prd_control_occ_actuation(struct control_msg *msg,
 
 	pr_debug("CTRL: calling enable_occ_actuation(%s)",
 			enable ? "true" : "false");
+	msg->data_len = 0;
 	msg->response = call_enable_occ_actuation(enable);
+}
+
+static void handle_prd_control_attr_override(struct control_msg *send_msg,
+					     struct control_msg *recv_msg)
+{
+	if (!hservice_runtime->apply_attr_override) {
+		pr_log_nocall("apply_attr_override");
+		return;
+	}
+
+	pr_debug("CTRL: calling apply_attr_override");
+	send_msg->response = call_apply_attr_override(
+			recv_msg->data, recv_msg->data_len);
+	send_msg->data_len = 0;
+}
+
+static void handle_prd_control_htmgt_passthru(struct control_msg *send_msg,
+					      struct control_msg *recv_msg)
+{
+	uint16_t rsp_len;
+
+	if (!hservice_runtime->mfg_htmgt_pass_thru) {
+		pr_log_nocall("mfg_htmgt_pass_thru");
+		return;
+	}
+
+	pr_debug("CTRL: calling mfg_htmgt_pass_thru");
+	send_msg->response = call_mfg_htmgt_pass_thru(recv_msg->data_len,
+						      recv_msg->data, &rsp_len,
+						      send_msg->data);
+	send_msg->data_len = be16toh(rsp_len);
+	if (send_msg->data_len > MAX_CONTROL_MSG_BUF) {
+		pr_log(LOG_ERR, "CTRL: response buffer overrun, data len: %d",
+				send_msg->data_len);
+		send_msg->data_len = MAX_CONTROL_MSG_BUF;
+	}
 }
 
 static void handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 {
-	struct control_msg msg;
+	struct control_msg msg, *recv_msg, *send_msg;
 	bool enabled = false;
-	int rc;
+	int rc, size;
 
-	rc = recv(fd, &msg, sizeof(msg), MSG_TRUNC);
+	/* Default reply, in the error path */
+	send_msg = &msg;
+
+	/* Peek into the socket to ascertain the size of the available data */
+	rc = recv(fd, &msg, sizeof(msg), MSG_PEEK);
 	if (rc != sizeof(msg)) {
 		pr_log(LOG_WARNING, "CTRL: failed to receive control "
 				"message: %m");
 		msg.response = -1;
+		msg.data_len = 0;
 		goto out_send;
 	}
 
+	size = sizeof(*recv_msg) + msg.data_len;
+
+	/* Default reply, in the error path */
+	msg.data_len = 0;
 	msg.response = -1;
-	switch (msg.type) {
+
+	recv_msg = malloc(size);
+	if (!recv_msg) {
+		pr_log(LOG_ERR, "CTRL: message buffer malloc failed: %m");
+		goto out_send;
+	}
+
+	rc = recv(fd, recv_msg, size, MSG_TRUNC);
+	if (rc != size) {
+		pr_log(LOG_WARNING, "CTRL: failed to receive control "
+				"message: %m");
+		goto out_free_recv;
+	}
+
+	send_msg = malloc(sizeof(*send_msg) + MAX_CONTROL_MSG_BUF);
+	if (!send_msg) {
+		pr_log(LOG_ERR, "CTRL: message buffer malloc failed: %m");
+		send_msg = &msg;
+		goto out_free_recv;
+	}
+
+	send_msg->type = recv_msg->type;
+	send_msg->response = -1;
+	switch (recv_msg->type) {
 	case CONTROL_MSG_ENABLE_OCCS:
 		enabled = true;
 		/* fall through */
 	case CONTROL_MSG_DISABLE_OCCS:
-		handle_prd_control_occ_actuation(&msg, enabled);
+		handle_prd_control_occ_actuation(send_msg, enabled);
 		break;
 	case CONTROL_MSG_TEMP_OCC_RESET:
-		handle_prd_control_occ_reset(&msg);
+		handle_prd_control_occ_reset(send_msg);
 		break;
 	case CONTROL_MSG_TEMP_OCC_ERROR:
-		handle_prd_control_occ_error(&msg);
+		handle_prd_control_occ_error(send_msg);
+		break;
+	case CONTROL_MSG_ATTR_OVERRIDE:
+		handle_prd_control_attr_override(send_msg, recv_msg);
+		break;
+	case CONTROL_MSG_HTMGT_PASSTHRU:
+		handle_prd_control_htmgt_passthru(send_msg, recv_msg);
 		break;
 	default:
 		pr_log(LOG_WARNING, "CTRL: Unknown control message action %d",
-				msg.type);
+				recv_msg->type);
+		send_msg->data_len = 0;
 		break;
 	}
 
+out_free_recv:
+	free(recv_msg);
 out_send:
-	/* send a response */
-	rc = send(fd, &msg, sizeof(msg), MSG_DONTWAIT | MSG_NOSIGNAL);
+	size = sizeof(*send_msg) + send_msg->data_len;
+	rc = send(fd, send_msg, size, MSG_DONTWAIT | MSG_NOSIGNAL);
 	if (rc && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EPIPE))
 		pr_debug("CTRL: control send() returned %d, ignoring failure",
 				rc);
-	else if (rc != sizeof(msg))
+	else if (rc != size)
 		pr_log(LOG_NOTICE, "CTRL: Failed to send control response: %m");
+
+	if (send_msg != &msg)
+		free(send_msg);
 }
 
 static int run_attn_loop(struct opal_prd_ctx *ctx)
@@ -1414,10 +1524,12 @@ out_close:
 	return rc;
 }
 
-static int send_prd_control(struct control_msg *msg)
+static int send_prd_control(struct control_msg *send_msg,
+			    struct control_msg **recv_msg)
 {
 	struct sockaddr_un addr;
-	int sd, rc;
+	struct control_msg *msg;
+	int sd, rc, size;
 
 	sd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (!sd) {
@@ -1434,20 +1546,31 @@ static int send_prd_control(struct control_msg *msg)
 		goto out_close;
 	}
 
-	rc = send(sd, msg, sizeof(*msg), 0);
-	if (rc != sizeof(*msg)) {
+	size = sizeof(*send_msg) + send_msg->data_len;
+	rc = send(sd, send_msg, size, 0);
+	if (rc != size) {
 		pr_log(LOG_ERR, "CTRL: Failed to send control message: %m");
 		rc = -1;
 		goto out_close;
 	}
 
+	size = sizeof(*msg) + MAX_CONTROL_MSG_BUF;
+	msg = malloc(size);
+	if (!msg) {
+		pr_log(LOG_ERR, "CTRL: msg buffer malloc failed: %m");
+		rc = -1;
+		goto out_close;
+	}
+
+	*recv_msg = msg;
+
 	/* wait for our reply */
-	rc = recv(sd, msg, sizeof(*msg), 0);
+	rc = recv(sd, msg, size, 0);
 	if (rc < 0) {
 		pr_log(LOG_ERR, "CTRL: Failed to receive control message: %m");
 		goto out_close;
 
-	} else if (rc != sizeof(*msg)) {
+	} else if (rc != (sizeof(*msg) + msg->data_len)) {
 		pr_log(LOG_WARNING, "CTRL: Short read from control socket");
 		rc = -1;
 		goto out_close;
@@ -1462,28 +1585,128 @@ out_close:
 
 static int send_occ_control(struct opal_prd_ctx *ctx, const char *str)
 {
-	struct control_msg msg;
+	struct control_msg send_msg, *recv_msg = NULL;
 	int rc;
 
-	memset(&msg, 0, sizeof(msg));
+	memset(&send_msg, 0, sizeof(send_msg));
 
-	if (!strcmp(str, "enable")) {
-		msg.type = CONTROL_MSG_ENABLE_OCCS;
-	} else if (!strcmp(str, "disable")) {
-		msg.type = CONTROL_MSG_DISABLE_OCCS;
-	} else if (!strcmp(str, "reset")) {
-		msg.type = CONTROL_MSG_TEMP_OCC_RESET;
-	} else if (!strcmp(str, "process-error")) {
-		msg.type = CONTROL_MSG_TEMP_OCC_ERROR;
-	} else {
+	if (!strcmp(str, "enable"))
+		send_msg.type = CONTROL_MSG_ENABLE_OCCS;
+	else if (!strcmp(str, "disable"))
+		send_msg.type = CONTROL_MSG_DISABLE_OCCS;
+	else if (!strcmp(str, "reset"))
+		send_msg.type = CONTROL_MSG_TEMP_OCC_RESET;
+	else if (!strcmp(str, "process-error"))
+		send_msg.type = CONTROL_MSG_TEMP_OCC_ERROR;
+	else {
 		pr_log(LOG_ERR, "CTRL: Invalid OCC action '%s'", str);
 		return -1;
 	}
 
-	rc = send_prd_control(&msg);
-	if (msg.response || ctx->debug)
-		pr_debug("CTRL: OCC action %s returned status %ld", str,
-				msg.response);
+	rc = send_prd_control(&send_msg, &recv_msg);
+	if (recv_msg) {
+		if (recv_msg->response || ctx->debug)
+			pr_debug("CTRL: OCC action %s returned status %d", str,
+					recv_msg->response);
+		free(recv_msg);
+	}
+
+	return rc;
+}
+
+static int send_attr_override(struct opal_prd_ctx *ctx, uint32_t argc,
+			      char *argv[])
+{
+	struct control_msg *send_msg, *recv_msg = NULL;
+	struct stat statbuf;
+	size_t sz;
+	FILE *fd;
+	int rc;
+
+	rc = stat(argv[0], &statbuf);
+	if (rc) {
+		pr_log(LOG_ERR, "CTRL: stat() failed on the file: %m");
+		return -1;
+	}
+
+	send_msg = malloc(sizeof(*send_msg) + statbuf.st_size);
+	if (!send_msg) {
+		pr_log(LOG_ERR, "CTRL: msg buffer malloc failed: %m");
+		return -1;
+	}
+
+	send_msg->type = CONTROL_MSG_ATTR_OVERRIDE;
+	send_msg->data_len = statbuf.st_size;
+
+	fd = fopen(argv[0], "r");
+	if (!fd) {
+		pr_log(LOG_NOTICE, "CTRL: can't open %s: %m", argv[0]);
+		rc = -1;
+		goto out_free;
+	}
+
+	sz = fread(send_msg->data, 1, send_msg->data_len, fd);
+	fclose(fd);
+	if (sz != statbuf.st_size) {
+		pr_log(LOG_ERR, "CTRL: short read from the file");
+		rc = -1;
+		goto out_free;
+	}
+
+	rc = send_prd_control(send_msg, &recv_msg);
+	if (recv_msg) {
+		if (recv_msg->response || ctx->debug)
+			pr_debug("CTRL: attribute override returned status %d",
+					recv_msg->response);
+		free(recv_msg);
+	}
+
+out_free:
+	free(send_msg);
+	return rc;
+}
+
+static int send_htmgt_passthru(struct opal_prd_ctx *ctx, int argc, char *argv[])
+{
+	struct control_msg *send_msg, *recv_msg = NULL;
+	int rc, i;
+
+	if (!ctx->expert_mode) {
+		pr_log(LOG_WARNING, "CTRL: need to be in expert mode");
+		return -1;
+	}
+
+	send_msg = malloc(sizeof(*send_msg) + argc);
+	if (!send_msg) {
+		pr_log(LOG_ERR, "CTRL: message buffer malloc failed: %m");
+		return -1;
+	}
+
+	send_msg->type = CONTROL_MSG_HTMGT_PASSTHRU;
+	send_msg->data_len = argc;
+
+	if (ctx->debug)
+		pr_debug("CTRL: HTMGT passthru arguments:");
+
+	for (i = 0; i < argc; i++) {
+		if (ctx->debug)
+			pr_debug("argv[%d] = %s", i, argv[i]);
+
+		sscanf(argv[i], "%hhx", &send_msg->data[i]);
+	}
+
+	rc = send_prd_control(send_msg, &recv_msg);
+	free(send_msg);
+
+	if (recv_msg) {
+		if (recv_msg->response || ctx->debug)
+			pr_debug("CTRL: HTMGT passthru returned status %d",
+					recv_msg->response);
+		if (recv_msg->response == 0 && recv_msg->data_len)
+			hexdump(recv_msg->data, recv_msg->data_len);
+
+		free(recv_msg);
+	}
 
 	return rc;
 }
@@ -1494,6 +1717,8 @@ static void usage(const char *progname)
 	printf("\t%s [--debug] [--file <hbrt-image>] [--pnor <device>]\n",
 			progname);
 	printf("\t%s occ <enable|disable>\n", progname);
+	printf("\t%s htmgt-passthru <bytes...>\n", progname);
+	printf("\t%s override <FILE>\n", progname);
 	printf("\n");
 	printf("Options:\n"
 "\t--debug            verbose logging for debug information\n"
@@ -1516,28 +1741,39 @@ static struct option opal_diag_options[] = {
 	{"help", no_argument, NULL, 'h'},
 	{"version", no_argument, NULL, 'v'},
 	{"stdio", no_argument, NULL, 's'},
+	{"expert-mode", no_argument, NULL, 'e'},
 	{ 0 },
 };
 
 enum action {
 	ACTION_RUN_DAEMON,
 	ACTION_OCC_CONTROL,
+	ACTION_ATTR_OVERRIDE,
+	ACTION_HTMGT_PASSTHRU,
 };
 
 static int parse_action(const char *str, enum action *action)
 {
+	int rc;
+
 	if (!strcmp(str, "occ")) {
 		*action = ACTION_OCC_CONTROL;
-		return 0;
-	}
-
-	if (!strcmp(str, "daemon")) {
+		rc = 0;
+	} else if (!strcmp(str, "daemon")) {
 		*action = ACTION_RUN_DAEMON;
-		return 0;
+		rc = 0;
+	} else if (!strcmp(str, "override")) {
+		*action = ACTION_ATTR_OVERRIDE;
+		rc = 0;
+	} else if (!strcmp(str, "htmgt-passthru")) {
+		*action = ACTION_HTMGT_PASSTHRU;
+		rc = 0;
+	} else {
+		pr_log(LOG_ERR, "CTRL: unknown argument '%s'", str);
+		rc = -1;
 	}
 
-	pr_log(LOG_ERR, "CTRL: unknown argument '%s'", str);
-	return -1;
+	return rc;
 }
 
 int main(int argc, char *argv[])
@@ -1555,7 +1791,7 @@ int main(int argc, char *argv[])
 	for (;;) {
 		int c;
 
-		c = getopt_long(argc, argv, "f:p:dhs", opal_diag_options, NULL);
+		c = getopt_long(argc, argv, "f:p:dhse", opal_diag_options, NULL);
 		if (c == -1)
 			break;
 
@@ -1575,6 +1811,9 @@ int main(int argc, char *argv[])
 		case 'h':
 			usage(argv[0]);
 			return EXIT_SUCCESS;
+		case 'e':
+			ctx->expert_mode = true;
+			break;
 		case 'v':
 			print_version();
 			return EXIT_SUCCESS;
@@ -1593,11 +1832,11 @@ int main(int argc, char *argv[])
 		action = ACTION_RUN_DAEMON;
 	}
 
-	if (action == ACTION_RUN_DAEMON) {
+	switch (action) {
+	case ACTION_RUN_DAEMON:
 		rc = run_prd_daemon(ctx);
-
-	} else if (action == ACTION_OCC_CONTROL) {
-
+		break;
+	case ACTION_OCC_CONTROL:
 		if (optind + 1 >= argc) {
 			pr_log(LOG_ERR, "CTRL: occ command requires "
 					"an argument");
@@ -1605,8 +1844,29 @@ int main(int argc, char *argv[])
 		}
 
 		rc = send_occ_control(ctx, argv[optind + 1]);
+		break;
+	case ACTION_ATTR_OVERRIDE:
+		if (optind + 1 >= argc) {
+			pr_log(LOG_ERR, "CTRL: attribute override command "
+					"requires an argument");
+			return EXIT_FAILURE;
+		}
+
+		rc = send_attr_override(ctx, argc - optind - 1, &argv[optind + 1]);
+		break;
+	case ACTION_HTMGT_PASSTHRU:
+		if (optind + 1 >= argc) {
+			pr_log(LOG_ERR, "CTRL: htmgt passthru requires at least "
+					"one argument");
+			return EXIT_FAILURE;
+		}
+
+		rc = send_htmgt_passthru(ctx, argc - optind - 1,
+					 &argv[optind + 1]);
+		break;
+	default:
+		break;
 	}
 
 	return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
-
