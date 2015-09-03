@@ -605,17 +605,9 @@ int check_gard_partition(struct gard_ctx *ctx)
 			return -1;
 		}
 		if (msg[0] == 'y') {
-			rc = blocklevel_erase(ctx->bl, ctx->gard_data_pos, ctx->gard_data_len);
+			rc = reset_partition(ctx);
 			if (rc) {
-				fprintf(stderr, "Couldn't erase flash partition. Bailing out\n");
-				return rc;
-			}
-
-			memset(&gard, INT_MAX, sizeof(gard));
-
-			rc = blocklevel_smart_write(ctx->bl, ctx->gard_data_pos, &gard, sizeof(gard));
-			if (rc) {
-				fprintf(stderr, "Couldn't create a sane first gard record. Bailing out\n");
+				fprintf(stderr, "Couldn't reset the GUARD partition. Bailing out\n");
 				return rc;
 			}
 		}
@@ -626,8 +618,6 @@ int check_gard_partition(struct gard_ctx *ctx)
 	}
 	return rc;
 }
-
-
 
 __attribute__ ((unused))
 static int do_nop(struct gard_ctx *ctx, int argc, char **argv)
