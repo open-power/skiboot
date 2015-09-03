@@ -99,6 +99,13 @@ static bool wait_for_all_occ_init(void)
 				chip->id);
 			return false;
 		}
+
+		if (!chip->occ_functional) {
+			prlog(PR_WARNING, "OCC: Chip: %x occ not functional\n",
+			      chip->id);
+			continue;
+		}
+
 		/* Get PState table address */
 		occ_data_area = chip->homer_base + P8_HOMER_SAPPHIRE_DATA_OFFSET;
 		occ_data = (struct occ_pstate_table *)occ_data_area;

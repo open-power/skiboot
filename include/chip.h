@@ -129,6 +129,12 @@ struct proc_chip {
 	uint32_t		dbob_id;
 	uint32_t		pcid;
 
+	/* If we expect to have an OCC (i.e. P8) and it is functional,
+	 * set TRUE. If something has told us it is not, set FALSE and
+	 * we can not wait for OCCs to init. This is only going to be
+	 * FALSE in a simulator that doesn't simulate OCCs. */
+	bool			occ_functional;
+
 	/* Used by hw/xscom.c */
 	uint64_t		xscom_base;
 

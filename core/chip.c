@@ -96,6 +96,11 @@ void init_chips(void)
 						    0xffffffff);
 		chip->pcid = dt_prop_get_u32_def(xn, "ibm,proc-chip-id",
 						 0xffffffff);
+		if (dt_prop_get_u32_def(xn, "ibm,occ-functional-state", 1))
+			chip->occ_functional = true;
+		else
+			chip->occ_functional = false;
+
 		list_head_init(&chip->i2cms);
 		list_head_init(&chip->lpc_clients);
 	};
