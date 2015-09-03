@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <string.h>
 
@@ -161,6 +162,34 @@ int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_
 	return rc;
 }
 
+/*
+ * Compare flash and memory to determine if:
+ * a) Erase must happen before write
+ * b) Flash and memory are identical
+ * c) Flash can simply be written to
+ *
+ * returns -1 for a
+ * returns  0 for b
+ * returns  1 for c
+ */
+static int blocklevel_flashcmp(const void *flash_buf, const void *mem_buf, uint32_t len)
+{
+	int i, same = true;
+	const uint8_t *f_buf, *m_buf;
+
+	f_buf = flash_buf;
+	m_buf = mem_buf;
+
+	for (i = 0; i < len; i++) {
+		if (m_buf[i] & ~f_buf[i])
+			return -1;
+		if (same && (m_buf[i] != f_buf[i]))
+			same = false;
+	}
+
+	return same ? 0 : 1;
+}
+
 int blocklevel_smart_write(struct blocklevel_device *bl, uint32_t pos, const void *buf, uint32_t len)
 {
 	uint32_t erase_size;
@@ -209,18 +238,26 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint32_t pos, const voi
 		uint32_t erase_block = pos & ~(erase_size - 1);
 		uint32_t block_offset = pos & (erase_size - 1);
 		uint32_t size = erase_size > len ? len : erase_size;
+		int cmp;
+
+		/* Write crosses an erase boundary, shrink the write to the boundary */
+		if (erase_size < block_offset + size) {
+			size = erase_size - block_offset;
+		}
 
 		rc = bl->read(bl, erase_block, erase_buf, erase_size);
 		if (rc)
 			goto out;
 
-		if (memcmp(erase_buf + block_offset, write_buf, size) != 0) {
+		cmp = blocklevel_flashcmp(erase_buf + block_offset, write_buf, size);
+		if (cmp != 0) {
+			if (cmp == -1)
+				bl->erase(bl, erase_block, erase_size);
 			memcpy(erase_buf + block_offset, write_buf, size);
-			rc = bl->write(bl, erase_block, erase_buf + block_offset, size);
+			rc = bl->write(bl, erase_block, erase_buf, erase_size);
 			if (rc)
 				goto out;
 		}
-
 		len -= size;
 		pos += size;
 		write_buf += size;
