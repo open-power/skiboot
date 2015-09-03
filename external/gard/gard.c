@@ -479,71 +479,81 @@ static int do_show(struct gard_ctx *ctx, int argc, char **argv)
 
 static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
 {
-	int largest = 0, rc = 0;
+	int largest, rc = 0;
 	char *buf;
 	struct gard_record null_gard;
 
-	if (!gard || !ctx)
+	if (!gard || !ctx || !priv)
 		return -1;
+
+	/* Not this one */
+	if (be32toh(gard->record_id) != *(uint32_t *)priv)
+		return 0;
 
 	memset(&null_gard, INT_MAX, sizeof(null_gard));
 
-	if (!priv) {
-		if (pos != 0)
-			/* We erased everything on the first iteration, don't bother */
-			return 0;
+	largest = get_largest_pos(ctx);
 
-		printf("Erasing the entire gard partition...");
-		rc = blocklevel_erase(ctx->bl, ctx->gard_data_pos, ctx->gard_data_len);
+	printf("Clearing gard record 0x%08x...", be32toh(gard->record_id));
+
+	if (largest < 0 || pos > largest) {
+		/* Something went horribly wrong */
+		fprintf(stderr, "largest index out of range %d\n", largest);
+		return -1;
+	}
+
+	if (pos < largest) {
+		/* We're not clearing the last record, shift all the records up */
+		int buf_len = ((largest - pos) * sizeof(struct gard_record));
+		int buf_pos = ctx->gard_data_pos + ((pos + 1) * sizeof_gard(ctx));
+		buf = malloc(buf_len);
+		if (!buf)
+			return -ENOMEM;
+
+		rc = blocklevel_read(ctx->bl, buf_pos, buf, buf_len);
 		if (rc) {
-			fprintf(stderr, "\nCouldn't erase flash partition at 0x%08x for size %u\n",
-					ctx->gard_data_pos, ctx->gard_data_len);
+			free(buf);
+			fprintf(stderr, "Couldn't read from flash at 0x%08x for len 0x%08x\n", buf_pos, buf_len);
 			return rc;
 		}
-		printf("done\n");
 
-		ctx->gard_data_len = sizeof_gard(ctx);
-	} else if (be32toh(gard->record_id) == *(uint32_t *)priv) {
-		largest = get_largest_pos(ctx);
-		if (largest < 0 || pos > largest) {
-			/* Something went horribly wrong */
-			fprintf(stderr, "largest index out of range %d\n", largest);
-			return -1;
+		rc = blocklevel_smart_write(ctx->bl, buf_pos - sizeof_gard(ctx), buf, buf_len);
+		free(buf);
+		if (rc) {
+			fprintf(stderr, "Couldn't write to flash at 0x%08lx for len 0x%08x\n",
+			        buf_pos - sizeof_gard(ctx), buf_len);
+			return rc;
 		}
-
-		if (pos < largest) {
-			/* We're not clearing the last record, shift all the records up */
-			int buf_len = ((largest - pos) * sizeof(struct gard_record));
-			int buf_pos = ctx->gard_data_pos + ((pos + 1) * sizeof_gard(ctx));
-			buf = malloc(buf_len);
-			if (!buf)
-				return -ENOMEM;
-
-			rc = blocklevel_read(ctx->bl, buf_pos, buf, buf_len);
-			if (rc) {
-				free(buf);
-				fprintf(stderr, "Couldn't read from flash at 0x%08x for len 0x%08x\n", buf_pos, buf_len);
-				return rc;
-			}
-
-			rc = blocklevel_smart_write(ctx->bl, buf_pos - sizeof_gard(ctx), buf, buf_len);
-			free(buf);
-			if (rc) {
-				fprintf(stderr, "Couldn't write to flash at 0x%08lx for len 0x%08x\n",
-				        buf_pos - sizeof_gard(ctx), buf_len);
-				return rc;
-			}
-		}
-
-		ctx->gard_data_len -= sizeof_gard(ctx);
-		printf("Cleared gard record with id ID 0x%08x\n", be32toh(gard->record_id));
 	}
 
 	/* Now wipe the last record */
 	rc = blocklevel_smart_write(ctx->bl, ctx->gard_data_pos + (largest * sizeof_gard(ctx)),
-		                            &null_gard, sizeof(null_gard));
+	                            &null_gard, sizeof(null_gard));
+	printf("done\n");
 
 	return rc;
+}
+
+static int reset_partition(struct gard_ctx *ctx)
+{
+	int i, rc;
+	struct gard_record gard;
+	memset(&gard, INT_MAX, sizeof(gard));
+
+	rc = blocklevel_erase(ctx->bl, ctx->gard_data_pos, ctx->gard_data_len);
+	if (rc) {
+		fprintf(stderr, "Couldn't erase the gard partition. Bailing out\n");
+		return rc;
+	}
+	for (i = 0; i + sizeof_gard(ctx) < ctx->gard_data_len; i += sizeof_gard(ctx)) {
+		rc = blocklevel_write(ctx->bl, ctx->gard_data_pos + i, &gard, sizeof(gard));
+		if (rc) {
+			fprintf(stderr, "Couldn't reset the entire gard partition. Bailing out\n");
+			return rc;
+		}
+	}
+
+	return 0;
 }
 
 static int do_clear(struct gard_ctx *ctx, int argc, char **argv)
@@ -557,7 +567,10 @@ static int do_clear(struct gard_ctx *ctx, int argc, char **argv)
 	}
 
 	if (strncmp(argv[1], "all", strlen("all")) == 0) {
-		rc = do_iterate(ctx, do_clear_i, NULL);
+		printf("Clearing the entire gard partition...");
+		fflush(stdout);
+		rc = reset_partition(ctx);
+		printf("done\n");
 	} else {
 		id = strtoul(argv[1], NULL, 16);
 		rc = do_iterate(ctx, do_clear_i, &id);
