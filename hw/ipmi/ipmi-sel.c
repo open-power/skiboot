@@ -312,7 +312,7 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 		return;
 	}
 
-	if ((esel_size - esel_index) < (IPMI_MAX_REQ_SIZE - ESEL_HDR_SIZE)) {
+	if ((esel_size - esel_index) <= (IPMI_MAX_REQ_SIZE - ESEL_HDR_SIZE)) {
 		/* Last data to send */
 		msg->data[6] = 1;
 		req_size = esel_size - esel_index + ESEL_HDR_SIZE;
