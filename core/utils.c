@@ -17,6 +17,7 @@
 #include <skiboot.h>
 #include <lock.h>
 #include <fsp.h>
+#include <platform.h>
 #include <processor.h>
 #include <cpu.h>
 #include <stack.h>
@@ -40,7 +41,8 @@ void __noreturn _abort(const char *msg)
 	prlog(PR_EMERG, "Aborting!\n");
 	backtrace();
 
-	ibm_fsp_terminate(msg);
+	if (platform.terminate)
+		platform.terminate(msg);
 
 	for (;;) ;
 }

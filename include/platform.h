@@ -158,6 +158,11 @@ struct platform {
 	 */
 	int64_t		(*sensor_read)(uint32_t sensor_hndl, int token,
 				       uint32_t *sensor_data);
+
+	/*
+	 * OPAL terminate
+	 */
+	void __attribute__((noreturn)) (*terminate)(const char *msg);
 };
 
 extern struct platform __platforms_start;
