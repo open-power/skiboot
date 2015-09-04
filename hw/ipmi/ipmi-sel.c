@@ -134,6 +134,62 @@ struct oem_sel {
 
 #define ESEL_HDR_SIZE 7
 
+/* Used for sending PANIC events like abort() path */
+struct ipmi_sel_panic_msg {
+	bool		busy;
+	struct ipmi_msg	*msg;
+	struct lock	lock;
+};
+static struct ipmi_sel_panic_msg ipmi_sel_panic_msg;
+
+/* Forward declaration */
+static void ipmi_elog_poll(struct ipmi_msg *msg);
+
+/*
+ * Allocate IPMI message
+ *  For normal event, allocate memory using ipmi_mkmsg and for PANIC
+ *  event, use pre-allocated buffer.
+ */
+static struct ipmi_msg *ipmi_sel_alloc_msg(struct errorlog *elog_buf)
+{
+	struct ipmi_msg *msg = NULL;
+
+	if (elog_buf->event_severity == OPAL_ERROR_PANIC) {
+		/* Called before initialization completes */
+		if (ipmi_sel_panic_msg.msg == NULL)
+			return NULL;
+
+		if (ipmi_sel_panic_msg.busy == true)
+			return NULL;
+
+		lock(&ipmi_sel_panic_msg.lock);
+		msg = ipmi_sel_panic_msg.msg;
+		ipmi_sel_panic_msg.busy = true;
+		unlock(&ipmi_sel_panic_msg.lock);
+
+		ipmi_init_msg(msg, IPMI_DEFAULT_INTERFACE,
+			      IPMI_RESERVE_SEL, ipmi_elog_poll,
+			      elog_buf, IPMI_MAX_REQ_SIZE, 2);
+	} else {
+		msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_RESERVE_SEL,
+				 ipmi_elog_poll, elog_buf,
+				 NULL, IPMI_MAX_REQ_SIZE, 2);
+	}
+
+	return msg;
+}
+
+static void ipmi_sel_free_msg(struct ipmi_msg *msg)
+{
+	if (msg == ipmi_sel_panic_msg.msg) {
+		lock(&ipmi_sel_panic_msg.lock);
+		ipmi_sel_panic_msg.busy = false;
+		unlock(&ipmi_sel_panic_msg.lock);
+	} else {
+		ipmi_free_msg(msg);
+	}
+	msg = NULL;
+}
 
 /* Initialize eSEL record */
 static void ipmi_init_esel_record(void)
@@ -199,7 +255,7 @@ static void ipmi_elog_error(struct ipmi_msg *msg)
 		ipmi_queue_msg(msg);
 	else {
 		opal_elog_complete(msg->user_data, false);
-		ipmi_free_msg(msg);
+		ipmi_sel_free_msg(msg);
 	}
 }
 
@@ -208,7 +264,7 @@ static void ipmi_log_sel_event_error(struct ipmi_msg *msg)
 	if (msg->cc != IPMI_CC_NO_ERROR)
 		prlog(PR_INFO, "SEL: Failed to log SEL event\n");
 
-	ipmi_free_msg(msg);
+	ipmi_sel_free_msg(msg);
 }
 
 static void ipmi_log_sel_event_complete(struct ipmi_msg *msg)
@@ -216,7 +272,7 @@ static void ipmi_log_sel_event_complete(struct ipmi_msg *msg)
 	prlog(PR_INFO, "SEL: New event logged [ID : %x%x]\n",
 	      msg->data[1], msg->data[0]);
 
-	ipmi_free_msg(msg);
+	ipmi_sel_free_msg(msg);
 }
 
 /* Log SEL event with eSEL record ID */
@@ -282,7 +338,7 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 			 * sending the message. */
 			prerror("Invalid reservation id");
 			opal_elog_complete(elog_buf, false);
-			ipmi_free_msg(msg);
+			ipmi_sel_free_msg(msg);
 			return;
 		}
 
@@ -360,8 +416,7 @@ int ipmi_elog_commit(struct errorlog *elog_buf)
 	/* We pass a large request size in to mkmsg so that we have a
 	 * large enough allocation to reuse the message to pass the
 	 * PEL data via a series of partial add commands.  */
-	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_RESERVE_SEL, ipmi_elog_poll,
-			 elog_buf, NULL, IPMI_MAX_REQ_SIZE, 2);
+	msg = ipmi_sel_alloc_msg(elog_buf);
 	if (!msg) {
 		opal_elog_complete(elog_buf, false);
 		return OPAL_RESOURCE;
@@ -485,4 +540,12 @@ void ipmi_parse_sel(struct ipmi_msg *msg)
 		      "unknown OEM SEL command %02x received\n",
 		      sel.cmd);
 	}
+}
+
+void ipmi_sel_init(void)
+{
+	memset(&ipmi_sel_panic_msg, 0, sizeof(struct ipmi_sel_panic_msg));
+	ipmi_sel_panic_msg.msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
+					    IPMI_RESERVE_SEL, ipmi_elog_poll,
+					    NULL, NULL, IPMI_MAX_REQ_SIZE, 2);
 }

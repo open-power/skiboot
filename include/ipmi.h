@@ -230,6 +230,9 @@ int ipmi_set_fw_progress_sensor(uint8_t state);
 /* Register a backend with the ipmi core. Currently we only support one. */
 void ipmi_register_backend(struct ipmi_backend *backend);
 
+/* Allocate IPMI SEL panic message */
+void ipmi_sel_init(void);
+
 /* Register rtc ipmi commands with as opal callbacks. */
 void ipmi_rtc_init(void);
 
