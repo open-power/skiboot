@@ -144,6 +144,14 @@
 #define IPMI_MAX_REQ_SIZE		60
 #define IPMI_MAX_RESP_SIZE		60
 
+/*
+ * As far as I can tell the size of PEL record is unbounded (due to
+ * the possible presence of the user defined section). We chose this
+ * size because it's what hostboot also uses and most of the OPAL logs
+ * are few hundred bytes.
+ */
+#define IPMI_MAX_PEL_SIZE		0x800
+
 struct ipmi_backend;
 struct ipmi_msg {
 	/* Can be used by command implementations to track requests */

@@ -125,13 +125,6 @@ struct oem_sel {
 	uint8_t data[4];
 };
 
-/* As far as I can tell the size of PEL record is unbounded (due to
- * the possible presence of the user defined section). We chose this
- * size because it's what hostboot also uses and most of the OPAL logs
- * are few hundred bytes.
- */
-#define MAX_PEL_SIZE 0x800
-
 #define ESEL_HDR_SIZE 7
 
 /* Used for sending PANIC events like abort() path */
@@ -316,7 +309,7 @@ static void ipmi_log_sel_event(struct ipmi_msg *msg,
 static void ipmi_elog_poll(struct ipmi_msg *msg)
 {
 	static bool first = false;
-	static char pel_buf[MAX_PEL_SIZE];
+	static char pel_buf[IPMI_MAX_PEL_SIZE];
 	static size_t pel_size;
 	static size_t esel_size;
 	static int esel_index = 0;
@@ -342,7 +335,8 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 			return;
 		}
 
-		pel_size = create_pel_log(elog_buf, pel_buf, MAX_PEL_SIZE);
+		pel_size = create_pel_log(elog_buf,
+					  pel_buf, IPMI_MAX_PEL_SIZE);
 		esel_size = pel_size + sizeof(struct sel_record);
 		esel_index = 0;
 		record_id = 0;
