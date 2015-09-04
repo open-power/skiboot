@@ -47,4 +47,5 @@ DECLARE_PLATFORM(firestone) = {
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
 	.exit			= ipmi_wdt_final_reset,
+	.terminate		= ipmi_terminate,
 };

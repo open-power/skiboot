@@ -276,4 +276,7 @@ uint8_t ipmi_get_sensor_number(uint8_t sensor_type);
 /* Set the boot count once the OS is up and running */
 int ipmi_set_boot_count(void);
 
+/* Terminate immediate */
+void __attribute__((noreturn)) ipmi_terminate(const char *msg);
+
 #endif
