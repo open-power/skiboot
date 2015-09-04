@@ -220,20 +220,19 @@ static void ipmi_log_sel_event_complete(struct ipmi_msg *msg)
 }
 
 /* Log SEL event with eSEL record ID */
-static void ipmi_log_sel_event(uint8_t event_severity, uint16_t esel_record_id)
+static void ipmi_log_sel_event(struct ipmi_msg *msg,
+			       uint8_t event_severity, uint16_t esel_record_id)
 {
-	struct ipmi_msg *msg;
-
 	/* Fill required SEL event fields */
 	ipmi_update_sel_record(event_severity, esel_record_id);
 
-	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_ADD_SEL_EVENT,
-			 ipmi_log_sel_event_complete, NULL,
-			 &sel_record, sizeof(struct sel_record), 2);
-	if (!msg) {
-		prlog(PR_ERR, "SEL: Failed to allocated IPMI message\n");
-		return;
-	}
+	/* Fill IPMI message */
+	ipmi_init_msg(msg, IPMI_DEFAULT_INTERFACE, IPMI_ADD_SEL_EVENT,
+		      ipmi_log_sel_event_complete, NULL,
+		      sizeof(struct sel_record), 2);
+
+	/* Copy SEL data */
+	memcpy(msg->data, &sel_record, sizeof(struct sel_record));
 
 	msg->error = ipmi_log_sel_event_error;
 	ipmi_queue_msg_head(msg);
@@ -304,11 +303,10 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 		reservation_id = 0;
 		esel_index = 0;
 
-		/* Log SEL event */
-		ipmi_log_sel_event(elog_buf->event_severity, record_id);
+		/* Log SEL event and free ipmi message */
+		ipmi_log_sel_event(msg, elog_buf->event_severity, record_id);
 
 		opal_elog_complete(elog_buf, true);
-		ipmi_free_msg(msg);
 		return;
 	}
 
