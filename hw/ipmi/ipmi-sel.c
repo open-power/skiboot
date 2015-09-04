@@ -236,7 +236,7 @@ static void ipmi_log_sel_event(uint8_t event_severity, uint16_t esel_record_id)
 	}
 
 	msg->error = ipmi_log_sel_event_error;
-	ipmi_queue_msg(msg);
+	ipmi_queue_msg_head(msg);
 }
 
 /* Goes through the required steps to add a complete eSEL:
