@@ -827,4 +827,7 @@ extern void fsp_dpo_init(void);
 /* Chiptod */
 extern void fsp_chiptod_init(void);
 
+/* Terminate immediate */
+extern void __attribute__((noreturn)) ibm_fsp_terminate(const char *msg);
+
 #endif /* __FSP_H */

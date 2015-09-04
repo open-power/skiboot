@@ -26,34 +26,22 @@ unsigned long __stack_chk_guard = 0xdeadf00dbaad300d;
 void __noreturn assert_fail(const char *msg)
 {
 	prlog(PR_EMERG, "Assert fail: %s\n", msg);
-	_abort();
+	_abort(msg);
 }
 
-void __noreturn _abort(void)
+void __noreturn _abort(const char *msg)
 {
 	static bool in_abort = false;
-	unsigned long hid0;
 
 	if (in_abort)
 		for (;;) ;
 	in_abort = true;
 
-	op_display(OP_FATAL, OP_MOD_CORE, 0x6666);
-	
 	prlog(PR_EMERG, "Aborting!\n");
 	backtrace();
 
-	/* XXX FIXME: We should fsp_poll for a while to ensure any pending
-	 * console writes have made it out, but until we have decent PSI
-	 * link handling we must not do it forever. Polling can prevent the
-	 * FSP from bringing the PSI link up and it can get stuck in a
-	 * reboot loop.
-	 */
+	ibm_fsp_terminate(msg);
 
-	hid0 = mfspr(SPR_HID0);
-	hid0 |= SPR_HID0_ENABLE_ATTN;
-	set_hid0(hid0);
-	trigger_attn();
 	for (;;) ;
 }
 

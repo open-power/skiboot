@@ -45,7 +45,7 @@ void exception_entry(struct stack_frame *stack)
 	prerror("***********************************************\n");
 	prerror("Unexpected exception %llx !\n", stack->type);
 	dump_regs(stack);
-	_abort();
+	abort();
 }
 
 static int64_t opal_register_exc_handler(uint64_t opal_exception __unused,

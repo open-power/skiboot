@@ -88,7 +88,7 @@ static void init_sp_attn_area(void)
 
 /* Updates src in sp attention area
  */
-void update_sp_attn_area(const char *msg)
+static void update_sp_attn_area(const char *msg)
 {
 #define STACK_BUF_ENTRIES	20
 	struct bt_entry bt_buf[STACK_BUF_ENTRIES];
@@ -114,6 +114,30 @@ void update_sp_attn_area(const char *msg)
 
 	ti_attn->msg_len = VERSION_LEN + BT_FRAME_LEN +
                                    strlen(ti_attn->msg.file_info);
+}
+
+void __attribute__((noreturn)) ibm_fsp_terminate(const char *msg)
+{
+	unsigned long hid0;
+
+	/* Update SP attention area */
+	update_sp_attn_area(msg);
+
+	/* Update op panel op_display */
+	op_display(OP_FATAL, OP_MOD_CORE, 0x6666);
+
+	/* XXX FIXME: We should fsp_poll for a while to ensure any pending
+	 * console writes have made it out, but until we have decent PSI
+	 * link handling we must not do it forever. Polling can prevent the
+	 * FSP from bringing the PSI link up and it can get stuck in a
+	 * reboot loop.
+	 */
+
+	hid0 = mfspr(SPR_HID0);
+	hid0 |= SPR_HID0_ENABLE_ATTN;
+	set_hid0(hid0);
+	trigger_attn();
+	for (;;) ;
 }
 
 /* Intialises SP attention area */
