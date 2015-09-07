@@ -1545,10 +1545,6 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 
 	fixup_hinterface_table();
 
-	pr_debug("HBRT: calling hservices_init");
-	hservices_init(ctx, ctx->code_addr);
-	pr_debug("HBRT: hservices_init done");
-
 	if (ctx->pnor.path) {
 		rc = pnor_init(&ctx->pnor);
 		if (rc) {
@@ -1558,6 +1554,10 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	}
 
 	ipmi_init(ctx);
+
+	pr_debug("HBRT: calling hservices_init");
+	hservices_init(ctx, ctx->code_addr);
+	pr_debug("HBRT: hservices_init done");
 
 	/* Test a scom */
 	if (ctx->debug) {
