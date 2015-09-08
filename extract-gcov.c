@@ -128,6 +128,11 @@ static void write_gcda(char *addr, struct gcov_info* gi)
 	printf("Writing %s\n", filename);
 
 	fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
+	if (fd < 0) {
+		fprintf(stderr, "Error opening file %s: %d %s\n",
+			filename, errno, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 	write_u32(fd, GCOV_DATA_MAGIC);
 	write_u32(fd, be32toh(gi->version));
 	write_u32(fd, be32toh(gi->stamp));
