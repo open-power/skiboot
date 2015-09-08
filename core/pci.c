@@ -1129,8 +1129,8 @@ static void pci_add_slot_properties(struct phb *phb, struct pci_slot_info *info,
 		base_loc_code_len = strlen(phb->base_loc_code);
 		strcpy(loc_code, phb->base_loc_code);
 	}
-	if (info->label) {
-		slot_label_len = strlen(info->label);
+	slot_label_len = strlen(info->label);
+	if (slot_label_len) {
 		if ((base_loc_code_len + slot_label_len + 1) < LOC_CODE_SIZE) {
 			if (base_loc_code_len)
 				strcat(loc_code, "-");
