@@ -145,6 +145,10 @@ include $(SRC)/libc/Makefile.inc
 include $(SRC)/ccan/Makefile.inc
 include $(SRC)/$(DEVSRC)/Makefile.inc
 
+# hack for travis-ci and coverity
+gard:
+	(cd external/gard; make)
+
 all: $(SUBDIRS) $(TARGET).lid $(TARGET).map extract-gcov
 
 OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBFLASH)

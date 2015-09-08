@@ -15,13 +15,22 @@ env:
     global:
         - CROSS=/opt/cross/gcc-4.8.0-nolibc/powerpc64-linux/bin/powerpc64-linux-
         - HOSTCC=gcc-4.8
+        # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+        #   via the "travis encrypt" command using the project repo's public key
+        - secure: "MpNEGFa1VrF/vsQq24n5UgfRbz1wVC6B8mubFnyK4gX0IuQ9xhWuTzMLUQF9UJxe5jnC2DTmVUvYTYN/hggw+PpYwbOOAE0QGR5pmPHA4PSRmc5pxt1q18/sv7EPFw66GFyWJq94nWjpigyKQ8KGtA67j1xFqrDoS43OA76WZgo="
 
 script:
-    - make && make check
+    - make -j4 all check ; (make clean; cd external/gard && make) ; (make clean; cd external/pflash && make)
     - make clean && SKIBOOT_GCOV=1 make && SKIBOOT_GCOV=1 make check
     - make clean && rm -rf builddir && mkdir builddir && make SRC=`pwd` -f ../Makefile -C builddir
     - make clean
-    - pushd external/gard && make
-    - popd
-    - pushd external/pflash && make
-    - popd
+
+addons:
+  coverity_scan:
+    project:
+      name: "open-power/skiboot"
+      description: "Build submitted via Travis CI"
+    notification_email: stewart@linux.vnet.ibm.com
+    build_command_prepend: "make clean; cov-configure --comptype gcc --compiler powerpc64-linux-gcc --template"
+    build_command: "make -j4 all check gard"
+    branch_pattern: coverity_scan
