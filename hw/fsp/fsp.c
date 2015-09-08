@@ -1914,7 +1914,9 @@ static void fsp_create_fsp(struct dt_node *fsp_node)
 
 	fsp_init_links(fsp_node);
 	fsp_update_links_states(fsp);
-	psi_enable_fsp_interrupt(fsp->iopath[fsp->active_iopath].psi);
+
+	if (fsp->active_iopath >= 0)
+		psi_enable_fsp_interrupt(fsp->iopath[fsp->active_iopath].psi);
 }
 
 static void fsp_opal_poll(void *data __unused)
