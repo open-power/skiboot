@@ -381,7 +381,7 @@ int main(void)
 	for (i = 64; i < NUM_ECC_ROWS; i++) {
 		if (eccgenerate(be64toh(ecc_data[i].data)) != ecc_data[i].ecc) {
 			ERR("ECC did not generate the correct value, expecting 0x%02x, got 0x%02x\n",
-					ecc_data[i].ecc, eccgenerate(dst));
+					ecc_data[i].ecc, eccgenerate(be64toh(ecc_data[i].data)));
 		}
 	}
 
