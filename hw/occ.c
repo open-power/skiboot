@@ -488,12 +488,12 @@ static void __occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 
 void occ_poke_load_queue(void)
 {
-	struct occ_load_req *occ_req;
+	struct occ_load_req *occ_req, *next;
 
 	if (list_empty(&occ_load_req_list))
 		return;
 
-	list_for_each(&occ_load_req_list, occ_req, link) {
+	list_for_each_safe(&occ_load_req_list, occ_req, next, link) {
 		__occ_do_load(occ_req->scope, occ_req->dbob_id,
 				occ_req->seq_id);
 		list_del(&occ_req->link);
