@@ -539,7 +539,7 @@ static int reset_partition(struct gard_ctx *ctx)
 {
 	int i, rc;
 	struct gard_record gard;
-	memset(&gard, INT_MAX, sizeof(gard));
+	memset(&gard, 0xFF, sizeof(gard));
 
 	rc = blocklevel_erase(ctx->bl, ctx->gard_data_pos, ctx->gard_data_len);
 	if (rc) {
