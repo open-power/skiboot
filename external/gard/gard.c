@@ -491,7 +491,7 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 	if (be32toh(gard->record_id) != *(uint32_t *)priv)
 		return 0;
 
-	memset(&null_gard, INT_MAX, sizeof(null_gard));
+	memset(&null_gard, 0xFF, sizeof(null_gard));
 
 	largest = get_largest_pos(ctx);
 
