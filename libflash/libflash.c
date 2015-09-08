@@ -694,7 +694,7 @@ static int flash_set_4b(struct flash_chip *c, bool enable)
 int flash_force_4b_mode(struct flash_chip *c, bool enable_4b)
 {
 	struct spi_flash_ctrl *ct = c->ctrl;
-	int rc;
+	int rc = FLASH_ERR_4B_NOT_SUPPORTED;
 
 	/*
 	 * We only allow force 4b if both controller and flash do 4b
@@ -702,7 +702,7 @@ int flash_force_4b_mode(struct flash_chip *c, bool enable_4b)
 	 * access a direct mapped read region
 	 */
 	if (enable_4b && !((c->info.flags & FL_CAN_4B) && ct->set_4b))
-		return FLASH_ERR_4B_NOT_SUPPORTED;
+		return rc;
 
 	/* Only send to flash directly on controllers that implement
 	 * the low level callbacks
