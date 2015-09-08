@@ -277,12 +277,13 @@ static int get_dev_mtd(const char *fdt_flash_path, char **r_path)
 		return -1;
 	}
 
-	rc = read(fd, fdt_node_path, sizeof(fdt_node_path));
+	rc = read(fd, fdt_node_path, sizeof(fdt_node_path) - 1);
 	close(fd);
 	if (rc == -1) {
 		fprintf(stderr, "Couldn't read flash FDT node from '%s'\n", fdt_flash_path);
 		return -1;
 	}
+	fdt_node_path[rc] = '\0';
 
 	count = scandir(SYSFS_MTD_PATH, &namelist, NULL, alphasort);
 	if (count == -1) {
