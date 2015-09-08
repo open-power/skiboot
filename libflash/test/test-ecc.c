@@ -388,7 +388,7 @@ int main(void)
 	/* Test that the ecc code can detect and recover bitflips */
 	printf("Testing bitflip recovery\n");
 	for (i = 0; i < 64; i++) {
-		ret_memcpy = memcpy_from_ecc(&dst, &ecc_data[i], 8);
+		ret_memcpy = memcpy_from_ecc(&dst, &ecc_data[i], sizeof(dst));
 		if (dst != 0xffffffffffffffff || ret_memcpy) {
 			ERR("ECC code didn't correct bad bit %d in 0x%016lx\n", 63 - i, be64toh(ecc_data[i].data));
 			exit(1);
