@@ -669,11 +669,11 @@ static void psi_register_interrupts(struct psi *psi)
 		/* On P8 we get a block of 8, set up the base/mask
 		 * and mask all the sources for now
 		 */
-		out_be64(psi->regs + PSIHB_ISRN,
-			 SETFIELD(PSIHB_ISRN_COMP, 0ul, psi->interrupt) |
-			 SETFIELD(PSIHB_ISRN_MASK, 0ul, 0x7fff8ul) |
-			 PSIHB_ISRN_DOWNSTREAM_EN |
-			 PSIHB_ISRN_UPSTREAM_EN);
+		out_be64(psi->regs + PSIHB_IRSN,
+			 SETFIELD(PSIHB_IRSN_COMP, 0ul, psi->interrupt) |
+			 SETFIELD(PSIHB_IRSN_MASK, 0ul, 0x7fff8ul) |
+			 PSIHB_IRSN_DOWNSTREAM_EN |
+			 PSIHB_IRSN_UPSTREAM_EN);
 		out_be64(psi->regs + PSIHB_XIVR_FSP,
 			 (0xffull << 32) | (P8_IRQ_PSI_FSP << 29));
 		out_be64(psi->regs + PSIHB_XIVR_OCC,
@@ -843,7 +843,7 @@ static struct psi *psi_probe_p8(struct proc_chip *chip, u64 base)
 		psi->working = true;
 		psi->regs = (void *)(val & ~PSIHB_XSCOM_P8_HBBAR_EN);
 	} else
-		printf("PSI[0x%03x]: Working link not found\n", chip->id);
+		printf("PSI[0x%03x]: Working chip not found\n", chip->id);
 
 	return psi;
 }
