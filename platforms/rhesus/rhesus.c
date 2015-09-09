@@ -218,6 +218,7 @@ static void rhesus_dt_fixup_rtc(struct dt_node *lpc)
 	 * arch/powerpc/sysdev/rtc_cmos_setup.c
 	 */
 	rtc = dt_new_addr(lpc, "rtc", EC_RTC_PORT_BASE);
+	assert(rtc);
 	dt_add_property_string(rtc, "compatible", "pnpPNP,b00");
 	dt_add_property_cells(rtc, "reg",
 			      1, /* IO space */
