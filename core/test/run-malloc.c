@@ -122,7 +122,7 @@ int main(void)
 	p2 = realloc(p, 200);
 	assert(p2 == p);
 	assert(!skiboot_heap.free_list_lock.lock_val);
-	free(p);
+	free(p2);
 	assert(!skiboot_heap.free_list_lock.lock_val);
 	assert(heap_empty());
 
@@ -178,7 +178,7 @@ int main(void)
 	pr = realloc(p,216);
 	assert(pr);
 	free(p3);
-	free(p);
+	free(pr);
 	free(p4);
 	assert(heap_empty());
 	assert(!skiboot_heap.free_list_lock.lock_val);
