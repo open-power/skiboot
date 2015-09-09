@@ -945,6 +945,7 @@ void mem_region_init(void)
 		if (!dt_has_node_property(i, "device_type", "memory"))
 			continue;
 		rname = zalloc(strlen(i->name) + strlen(NODE_REGION_PREFIX) + 1);
+		assert(rname);
 		strcat(rname, NODE_REGION_PREFIX);
 		strcat(rname, i->name);
 		start = dt_get_address(i, 0, &len);
