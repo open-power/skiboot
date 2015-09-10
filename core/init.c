@@ -45,11 +45,6 @@
 #include <ipmi.h>
 #include <sensor.h>
 
-/*
- * Boot semaphore, incremented by each CPU calling in
- *
- * Forced into data section as it will be used before BSS is initialized
- */
 enum proc_gen proc_gen;
 
 static uint64_t kernel_entry;
