@@ -50,7 +50,6 @@
  *
  * Forced into data section as it will be used before BSS is initialized
  */
-enum ipl_state ipl_state = ipl_initial;
 enum proc_gen proc_gen;
 
 static uint64_t kernel_entry;

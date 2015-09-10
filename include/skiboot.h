@@ -117,16 +117,6 @@ void _prlog(int log_level, const char* fmt, ...) __attribute__((format (printf, 
 /* Location codes  -- at most 80 chars with null termination */
 #define LOC_CODE_SIZE	80
 
-enum ipl_state {
-	ipl_initial		= 0x00000000,
-	ipl_opl_sent		= 0x00000001,
-	ipl_got_continue	= 0x00000002,
-	ipl_got_new_role	= 0x00000004,
-	ipl_got_caps		= 0x00000008,
-	ipl_got_fsp_functional	= 0x00000010
-};
-extern enum ipl_state ipl_state;
-
 /* Processor generation */
 enum proc_gen {
 	proc_gen_unknown,
