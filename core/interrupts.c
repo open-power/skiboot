@@ -296,9 +296,6 @@ static int64_t opal_handle_interrupt(uint32_t isn, uint64_t *outstanding_event_m
 	struct irq_source *is = irq_find_source(isn);
 	int64_t rc = OPAL_SUCCESS;
 
-	/* We run the timers first */
-	check_timers(true);
-
 	/* No source ? return */
 	if (!is || !is->ops->interrupt) {
 		rc = OPAL_PARAMETER;
@@ -307,6 +304,10 @@ static int64_t opal_handle_interrupt(uint32_t isn, uint64_t *outstanding_event_m
 
 	/* Run it */
 	is->ops->interrupt(is->data, isn);
+
+	/* Check timers if SLW timer isn't working */
+	if (!slw_timer_ok())
+		check_timers(true);
 
 	/* Update output events */
  bail:

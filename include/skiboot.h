@@ -253,6 +253,12 @@ extern void *create_dtb(const struct dt_node *root);
 /* SLW reinit function for switching core settings */
 extern int64_t slw_reinit(uint64_t flags);
 
+/* SLW update timer function */
+extern void slw_update_timer_expiry(uint64_t new_target);
+
+/* Is SLW timer available ? */
+extern bool slw_timer_ok(void);
+
 /* Fallback fake RTC */
 extern void fake_rtc_init(void);
 

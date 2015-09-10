@@ -40,6 +40,14 @@ static uint32_t slw_saved_reset[MAX_RESET_PATCH_SIZE];
 static bool slw_current_le = false;
 #endif /* __HAVE_LIBPORE__ */
 
+/* SLW timer related stuff */
+static bool slw_has_timer;
+static uint64_t slw_timer_inc;
+static uint64_t slw_timer_target;
+static uint32_t slw_timer_chip;
+static uint64_t slw_last_gen;
+static uint64_t slw_last_gen_stamp;
+
 /* Assembly in head.S */
 extern void enter_rvwinkle(void);
 
@@ -897,7 +905,7 @@ static void slw_patch_regs(struct proc_chip *chip)
 
 static void slw_init_chip(struct proc_chip *chip)
 {
-	int rc __unused;
+	int64_t rc;
 	struct cpu_thread *c;
 
 	prlog(PR_DEBUG, "SLW: Init chip 0x%x\n", chip->id);
@@ -913,7 +921,7 @@ static void slw_init_chip(struct proc_chip *chip)
 				&chip->slw_image_size);
 	if (rc != 0) {
 		log_simple_error(&e_info(OPAL_RC_SLW_INIT),
-			"SLW: Error %d reading SLW image size\n", rc);
+			"SLW: Error %lld reading SLW image size\n", rc);
 		/* XXX Panic ? */
 		chip->slw_base = 0;
 		chip->slw_bar_size = 0;
@@ -937,19 +945,6 @@ static void slw_init_chip(struct proc_chip *chip)
 	for_each_available_core_in_chip(c, chip->id) {
 		idle_prepare_core(chip, c);
 	}
-}
-
-void slw_init(void)
-{
-	struct proc_chip *chip;
-
-	if (proc_gen != proc_gen_p8)
-		return;
-
-	for_each_chip(chip)
-		slw_init_chip(chip);
-
-	add_cpu_idle_state_properties();
 }
 
 /* Workarounds while entering fast-sleep */
@@ -1085,3 +1080,161 @@ static int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 
 opal_call(OPAL_SLW_SET_REG, opal_slw_set_reg, 3);
 #endif /* __HAVE_LIBPORE__ */
+
+static void slw_dump_timer_ffdc(void)
+{
+	uint64_t i, val;
+	int64_t rc;
+
+	static const uint32_t dump_regs[] = {
+		0xe0000, 0xe0001, 0xe0002, 0xe0003,
+		0xe0004, 0xe0005, 0xe0006, 0xe0007,
+		0xe0008, 0xe0009, 0xe000a, 0xe000b,
+		0xe000c, 0xe000d, 0xe000e, 0xe000f,
+		0xe0010, 0xe0011, 0xe0012, 0xe0013,
+		0xe0014, 0xe0015, 0xe0016, 0xe0017,
+		0xe0018, 0xe0019,
+		0x5001c,
+		0x50038, 0x50039, 0x5003a, 0x5003b
+	};
+
+	prlog(PR_ERR, "SLW: Register state:\n");
+
+	for (i = 0; i < ARRAY_SIZE(dump_regs); i++) {
+		uint32_t reg = dump_regs[i];
+		rc = xscom_read(slw_timer_chip, reg, &val);
+		if (rc) {
+			prlog(PR_ERR, "SLW: XSCOM error %lld reading"
+			      " reg 0x%x\n", rc, reg);
+			break;
+		}
+		prlog(PR_ERR, "SLW:  %5x = %016llx\n", reg, val);
+	}
+}
+
+/* This is called with the timer lock held, so there is no
+ * issue with re-entrancy or concurrence
+ */
+void slw_update_timer_expiry(uint64_t new_target)
+{
+	uint64_t count, gen, gen2, req, now = mftb();
+	int64_t rc;
+
+	if (!slw_has_timer || new_target == slw_timer_target)
+		return;
+
+	slw_timer_target = new_target;
+
+	/* Calculate how many increments from now, rounded up */
+	if (now < new_target)
+		count = (new_target - now + slw_timer_inc - 1) / slw_timer_inc;
+	else
+		count = 1;
+
+	/* Max counter is 24-bit */
+	if (count > 0xffffff)
+		count = 0xffffff;
+	/* Fabricate update request */
+	req = (1ull << 63) | (count << 32);
+
+	prlog(PR_TRACE, "SLW: TMR expiry: 0x%llx, req: %016llx\n", count, req);
+
+	do {
+		/* Grab generation and spin if odd */
+		for (;;) {
+			rc = xscom_read(slw_timer_chip, 0xE0006, &gen);
+			if (rc) {
+				prerror("SLW: Error %lld reading tmr gen "
+					" count\n", rc);
+				return;
+			}
+			if (!(gen & 1))
+				break;
+			if (tb_compare(now + msecs_to_tb(1), mftb()) == TB_ABEFOREB) {
+				prerror("SLW: Stuck with odd generation !\n");
+				slw_has_timer = false;
+				slw_dump_timer_ffdc();
+				return;
+			}
+		}
+
+		rc = xscom_write(slw_timer_chip, 0x5003A, req);
+		if (rc) {
+			prerror("SLW: Error %lld writing tmr request\n", rc);
+			return;
+		}
+
+		/* Re-check gen count */
+		rc = xscom_read(slw_timer_chip, 0xE0006, &gen2);
+		if (rc) {
+			prerror("SLW: Error %lld re-reading tmr gen "
+				" count\n", rc);
+			return;
+		}
+	} while(gen != gen2);
+
+	/* Check if the timer is working. If at least 1ms has elapsed
+	 * since the last call to this function, check that the gen
+	 * count has changed
+	 */
+	if (tb_compare(slw_last_gen_stamp + msecs_to_tb(1), now)
+	    == TB_ABEFOREB) {
+		if (slw_last_gen == gen) {
+			prlog(PR_ERR,
+			      "SLW: Timer appears to not be running !\n");
+			slw_has_timer = false;
+			slw_dump_timer_ffdc();
+		}
+		slw_last_gen = gen;
+		slw_last_gen_stamp = mftb();
+	}
+
+	prlog(PR_TRACE, "SLW: gen: %llx\n", gen);
+}
+
+bool slw_timer_ok(void)
+{
+	return slw_has_timer;
+}
+
+static void slw_init_timer(void)
+{
+	struct dt_node *np;
+	int64_t rc;
+	uint32_t tick_us;
+
+	np = dt_find_compatible_node(dt_root, NULL, "ibm,power8-sbe-timer");
+	if (!np)
+		return;
+
+	slw_timer_chip = dt_get_chip_id(np);
+	tick_us = dt_prop_get_u32(np, "tick-time-us");
+	slw_timer_inc = usecs_to_tb(tick_us);
+	slw_timer_target = ~0ull;
+
+	rc = xscom_read(slw_timer_chip, 0xE0006, &slw_last_gen);
+	if (rc) {
+		prerror("SLW: Error %lld reading tmr gen count\n", rc);
+		return;
+	}
+	slw_last_gen_stamp = mftb();
+
+	prlog(PR_INFO, "SLW: Timer facility on chip %d, resolution %dus\n",
+	      slw_timer_chip, tick_us);
+	slw_has_timer = true;
+}
+
+void slw_init(void)
+{
+	struct proc_chip *chip;
+
+	if (proc_gen != proc_gen_p8)
+		return;
+
+	for_each_chip(chip)
+		slw_init_chip(chip);
+
+	add_cpu_idle_state_properties();
+
+	slw_init_timer();
+}

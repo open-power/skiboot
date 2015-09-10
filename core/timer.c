@@ -12,6 +12,9 @@
 #include <cpu.h>
 #endif
 
+/* Heartbeat requested from Linux */
+#define HEARTBEAT_DEFAULT_MS	2000
+
 static struct lock timer_lock = LOCK_UNLOCKED;
 static LIST_HEAD(timer_list);
 static LIST_HEAD(timer_poll_list);
@@ -72,28 +75,44 @@ void cancel_timer_async(struct timer *t)
 	unlock(&timer_lock);
 }
 
-void schedule_timer_at(struct timer *t, uint64_t when)
+static void __schedule_timer_at(struct timer *t, uint64_t when)
 {
 	struct timer *lt;
 
-	lock(&timer_lock);
+	/* If the timer is already scheduled, take it out */
 	if (t->link.next)
 		__remove_timer(t);
+
+	/* Update target */
 	t->target = when;
+
 	if (when == TIMER_POLL) {
+		/* It's a poller, add it to the poller list */
 		t->gen = timer_poll_gen;
 		list_add_tail(&timer_poll_list, &t->link);
 	} else {
+		/* It's a real timer, add it in the right spot in the
+		 * ordered timer list
+		 */
 		list_for_each(&timer_list, lt, link) {
-			if (when < lt->target) {
-				list_add_before(&timer_list, &t->link,
-						&lt->link);
-				unlock(&timer_lock);
-				return;
-			}
+			if (when >= lt->target)
+				continue;
+			list_add_before(&timer_list, &t->link, &lt->link);
+			goto bail;
 		}
 		list_add_tail(&timer_list, &t->link);
 	}
+ bail:
+	/* Pick up the next timer and upddate the SBE HW timer */
+	lt = list_top(&timer_list, struct timer, link);
+	if (lt)
+		slw_update_timer_expiry(lt->target);
+}
+
+void schedule_timer_at(struct timer *t, uint64_t when)
+{
+	lock(&timer_lock);
+	__schedule_timer_at(t, when);
 	unlock(&timer_lock);
 }
 
@@ -134,18 +153,19 @@ static void __check_poll_timers(uint64_t now)
 		t = list_top(&timer_poll_list, struct timer, link);
 
 		/* Top timer has a different generation than current ? Must
-		 * be older
+		 * be older, we are done.
 		 */
 		if (!t || t->gen == timer_poll_gen)
 			break;
 
-		/* Top of list still running, we have to delay handling
-		 * it. For now just skip until the next poll, when we have
-		 * SLW interrupts, we'll probably want to trip another one
-		 * ASAP
+		/* Top of list still running, we have to delay handling it,
+		 * let's reprogram the SLW with a small delay. We chose
+		 * arbitrarily 1us.
 		 */
-		if (t->running)
+		if (t->running) {
+			slw_update_timer_expiry(now + usecs_to_tb(1));
 			break;
+		}
 
 		/* Allright, first remove it and mark it running */
 		__remove_timer(t);
@@ -222,24 +242,25 @@ void check_timers(bool from_interrupt)
 }
 
 #ifndef __TEST__
+
 void late_init_timers(void)
 {
 	/* Add a property requesting the OS to call opal_poll_event() at
 	 * a specified interval in order for us to run our background
-	 * low priority poller.
+	 * low priority pollers.
 	 *
-	 * When we have a working SLW based HW timer, we'll be able to
-	 * reduce this or even remove it, for now however, we want to be
-	 * called at least every couple of seconds on FSP based machines
-	 * and a bit faster on BMC based machines where the LPC and i2c
-	 * interrupts might not be functional.
+	 * If we have an SLW timer facility, we run this 10 times slower,
+	 * we could possibly completely get rid of it.
 	 *
 	 * We use a value in milliseconds, we don't want this to ever be
 	 * faster than that.
 	 */
-	if (fsp_present())
-		dt_add_property_cells(opal_node, "ibm,heartbeat-ms", 2000);
-	else
-		dt_add_property_cells(opal_node, "ibm,heartbeat-ms", 250);
+	if (slw_timer_ok() || fsp_present()) {
+		dt_add_property_cells(opal_node, "ibm,heartbeat-ms",
+				      HEARTBEAT_DEFAULT_MS);
+	} else {
+		dt_add_property_cells(opal_node, "ibm,heartbeat-ms",
+				      HEARTBEAT_DEFAULT_MS / 10);
+	}
 }
 #endif
