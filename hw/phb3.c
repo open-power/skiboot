@@ -53,11 +53,11 @@
 
 static void phb3_init_hw(struct phb3 *p, bool first_init);
 
-#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB%d: " fmt, \
+#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB#%04x: " fmt, \
 				      (p)->phb.opal_id, ## a)
-#define PHBINF(p, fmt, a...)	prlog(PR_INFO, "PHB%d: " fmt, \
+#define PHBINF(p, fmt, a...)	prlog(PR_INFO, "PHB#%04x: " fmt, \
 				      (p)->phb.opal_id, ## a)
-#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB%d: " fmt, \
+#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB#%04x: " fmt, \
 				      (p)->phb.opal_id, ## a)
 
 /*
@@ -4235,6 +4235,8 @@ static void phb3_create(struct dt_node *np)
 	struct phb3 *p = zalloc(sizeof(struct phb3));
 	size_t lane_eq_len;
 	struct dt_node *iplp;
+	struct proc_chip *chip;
+	int opal_id;
 	char *path;
 
 	assert(p);
@@ -4286,13 +4288,20 @@ static void phb3_create(struct dt_node *np)
 	p->has_link = false;
 
 	/* We register the PHB before we initialize it so we
-	 * get a useful OPAL ID for it
+	 * get a useful OPAL ID for it. We use a different numbering here
+	 * between Naples and Venice/Murano in order to leave room for the
+	 * NPU on Naples.
 	 */
-	pci_register_phb(&p->phb);
+	chip = next_chip(NULL); /* Just need any chip */
+	if (chip && chip->type == PROC_CHIP_P8_NAPLES)
+		opal_id = p->chip_id * 8 + p->index;
+	else
+		opal_id = p->chip_id * 4 + p->index;
+	pci_register_phb(&p->phb, opal_id);
 
 	/* Hello ! */
 	path = dt_get_path(np);
-	PHBINF(p, "Found %s @%p\n", path, p->regs);
+	PHBINF(p, "Found %s @[%d:%d]\n", path, p->chip_id, p->index);
 	PHBINF(p, "  M32 [0x%016llx..0x%016llx]\n",
 	       p->mm1_base, p->mm1_base + p->mm1_size - 1);
 	PHBINF(p, "  M64 [0x%016llx..0x%016llx]\n",

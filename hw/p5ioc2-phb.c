@@ -25,9 +25,9 @@
 #include <interrupts.h>
 #include <ccan/str/str.h>
 
-#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB%d: " fmt, \
+#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB#%04x: " fmt, \
 				      (p)->phb.opal_id, ## a)
-#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB%d: " fmt, \
+#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB#%04x: " fmt, \
 				      (p)->phb.opal_id, ## a)
 
 /*
@@ -1197,7 +1197,7 @@ void p5ioc2_phb_setup(struct p5ioc2 *ioc, struct p5ioc2_phb *p,
 	/* We register the PHB before we initialize it so we
 	 * get a useful OPAL ID for it
 	 */
-	pci_register_phb(&p->phb);
+	pci_register_phb(&p->phb, -1);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)

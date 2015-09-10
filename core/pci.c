@@ -22,27 +22,26 @@
 #include <device.h>
 #include <fsp.h>
 
-/* The eeh event code will need updating if this is ever increased to
- * support more than 64 phbs */
-static struct phb *phbs[64];
+#define MAX_PHB_ID	256
+static struct phb *phbs[MAX_PHB_ID];
 
 #define PCITRACE(_p, _bdfn, fmt, a...) \
-	prlog(PR_TRACE, "PHB%d:%02x:%02x.%x " fmt,	\
+	prlog(PR_TRACE, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
 	      ((_bdfn) >> 8) & 0xff,			\
 	      ((_bdfn) >> 3) & 0x1f, (_bdfn) & 0x7, ## a)
 #define PCIDBG(_p, _bdfn, fmt, a...) \
-	prlog(PR_DEBUG, "PHB%d:%02x:%02x.%x " fmt,	\
+	prlog(PR_DEBUG, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
 	      ((_bdfn) >> 8) & 0xff,			\
 	      ((_bdfn) >> 3) & 0x1f, (_bdfn) & 0x7, ## a)
 #define PCINOTICE(_p, _bdfn, fmt, a...) \
-	prlog(PR_NOTICE, "PHB%d:%02x:%02x.%x " fmt,	\
+	prlog(PR_NOTICE, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
 	      ((_bdfn) >> 8) & 0xff,			\
 	      ((_bdfn) >> 3) & 0x1f, (_bdfn) & 0x7, ## a)
 #define PCIERR(_p, _bdfn, fmt, a...) \
-	prlog(PR_ERR, "PHB%d:%02x:%02x.%x " fmt,	\
+	prlog(PR_ERR, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
 	      ((_bdfn) >> 8) & 0xff,			\
 	      ((_bdfn) >> 3) & 0x1f, (_bdfn) & 0x7, ## a)
@@ -536,7 +535,7 @@ static uint8_t pci_scan(struct phb *phb, uint8_t bus, uint8_t max_bus,
 		 *    bridge (when we need to give aligned powers of two's
 		 *    on P7IOC). If is is set to false, we just adjust the
 		 *    subordinate bus number based on what we probed.
-		 *    
+		 *
 		 */
 		max_bus = save_max;
 		next_bus = phb->ops->choose_bus(phb, pd, next_bus,
@@ -787,28 +786,38 @@ static void pci_scan_phb(void *data)
 	pci_walk_dev(phb, pci_configure_mps, NULL);
 }
 
-int64_t pci_register_phb(struct phb *phb)
+int64_t pci_register_phb(struct phb *phb, int opal_id)
 {
-	int64_t rc = OPAL_SUCCESS;
-	unsigned int i;
-
-	/* This is called at init time in non-concurrent way, so no lock needed */
-	for (i = 0; i < ARRAY_SIZE(phbs); i++)
-		if (!phbs[i])
-			break;
-	if (i >= ARRAY_SIZE(phbs)) {
-		prerror("PHB: Failed to find a free ID slot\n");
-		rc = OPAL_RESOURCE;
+	/* The user didn't specify an opal_id, allocate one */
+	if (opal_id < 0) {
+		/* This is called at init time in non-concurrent way, so no lock needed */
+		for (opal_id = 0; opal_id < ARRAY_SIZE(phbs); opal_id++)
+			if (!phbs[opal_id])
+				break;
+		if (opal_id >= ARRAY_SIZE(phbs)) {
+			prerror("PHB: Failed to find a free ID slot\n");
+			return OPAL_RESOURCE;
+		}
 	} else {
-		phbs[i] = phb;
-		phb->opal_id = i;
-		dt_add_property_cells(phb->dt_node, "ibm,opal-phbid",
-				      0, phb->opal_id);
-		PCIDBG(phb, 0, "PCI: Registered PHB\n");
+		if (opal_id >= ARRAY_SIZE(phbs)) {
+			prerror("PHB: ID %d out of range !\n", opal_id);
+			return OPAL_PARAMETER;
+		}
+		/* The user did specify an opal_id, check it's free */
+		if (phbs[opal_id]) {
+			prerror("PHB: Duplicate registration of ID %d\n", opal_id);
+			return OPAL_PARAMETER;
+		}
 	}
+
+	phbs[opal_id] = phb;
+	phb->opal_id = opal_id;
+	dt_add_property_cells(phb->dt_node, "ibm,opal-phbid", 0, phb->opal_id);
+	PCIDBG(phb, 0, "PCI: Registered PHB\n");
+
 	list_head_init(&phb->devices);
 
-	return rc;
+	return OPAL_SUCCESS;
 }
 
 int64_t pci_unregister_phb(struct phb *phb)
@@ -1188,10 +1197,15 @@ static void pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
 	uint8_t class, sub;
 	uint8_t pos, len;
 
-	/* Look for a parent with a slot-location-code */
-	while (p && !blcode) {
-		blcode = dt_prop_get_def(p, "ibm,slot-location-code", NULL);
-		p = p->parent;
+	/* If there is a label assigned to the function, use it on openpower machines */
+	if (pd->slot_info && strlen(pd->slot_info->label) && !fsp_present()) {
+		blcode = pd->slot_info->label;
+	} else {
+		/* Look for a parent with a slot-location-code */
+		while (p && !blcode) {
+			blcode = dt_prop_get_def(p, "ibm,slot-location-code", NULL);
+			p = p->parent;
+		}
 	}
 	if (!blcode)
 		return;
@@ -1349,8 +1363,8 @@ static void pci_add_one_node(struct phb *phb, struct pci_device *pd,
 	 *  - ...
 	 */
 
-	/* Add slot properties if needed */
-	if (pd->slot_info)
+	/* Add slot properties if needed and iff this is a bridge */
+	if (pd->slot_info && pd->is_bridge)
 		pci_add_slot_properties(phb, pd->slot_info, np);
 
 	/* Make up location code */
@@ -1448,9 +1462,11 @@ void pci_reset(void)
 
 static void pci_do_jobs(void (*fn)(void *))
 {
-	void *jobs[ARRAY_SIZE(phbs)];
+	struct cpu_job **jobs;
 	int i;
 
+	jobs = zalloc(sizeof(struct cpu_job *) * ARRAY_SIZE(phbs));
+	assert(jobs);
 	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
 		if (!phbs[i]) {
 			jobs[i] = NULL;
@@ -1473,6 +1489,7 @@ static void pci_do_jobs(void (*fn)(void *))
 
 		cpu_wait_job(jobs[i], true);
 	}
+	free(jobs);
 }
 
 void pci_init_slots(void)

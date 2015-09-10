@@ -26,9 +26,9 @@
 #include <opal.h>
 #include <ccan/str/str.h>
 
-#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB%d: " fmt, \
+#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB#%04x: " fmt, \
 				      (p)->phb.opal_id, ## a)
-#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB%d: " fmt, \
+#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB#%04x: " fmt, \
 				      (p)->phb.opal_id, ## a)
 
 /* Helper to select an IODA table entry */
@@ -2929,7 +2929,7 @@ void p7ioc_phb_setup(struct p7ioc *ioc, uint8_t index)
 	/* We register the PHB before we initialize it so we
 	 * get a useful OPAL ID for it
 	 */
-	pci_register_phb(&p->phb);
+	pci_register_phb(&p->phb, -1);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)
