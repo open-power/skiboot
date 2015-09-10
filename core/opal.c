@@ -168,7 +168,6 @@ void opal_update_pending_evt(uint64_t evt_mask, uint64_t evt_values)
 {
 	uint64_t new_evts;
 
-	/* XXX FIXME: Use atomics instead ??? Or caller locks (con_lock ?) */
 	lock(&evt_lock);
 	new_evts = (opal_pending_events & ~evt_mask) | evt_values;
 	if (opal_pending_events != new_evts) {
