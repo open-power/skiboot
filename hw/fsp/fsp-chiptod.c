@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define pr_fmt(fmt)	"CHIPTOD: " fmt
+
 #include <skiboot.h>
 #include <chiptod.h>
 #include <fsp.h>
@@ -37,8 +39,8 @@ static bool fsp_chiptod_update_topology(uint32_t cmd_sub_mod,
 		 */
 		action = !!msg->data.bytes[2];
 		topo = msg->data.bytes[3];
-		prlog(PR_DEBUG, "CHIPTOD: Topology update event\n");
-		prlog(PR_DEBUG, "CHIPTOD:  Action = %s, Topology = %s\n",
+		prlog(PR_DEBUG, "Topology update event:\n");
+		prlog(PR_DEBUG, "  Action = %s, Topology = %s\n",
 					action ? "Enable" : "Disable",
 					topo ? "Secondary" : "Primary");
 
@@ -49,17 +51,16 @@ static bool fsp_chiptod_update_topology(uint32_t cmd_sub_mod,
 
 		resp = fsp_mkmsg(FSP_RSP_TOPO_ENABLE_DISABLE | status, 0);
 		if (!resp) {
-			prerror("CHIPTOD: Response allocation failed\n");
+			prerror("Response allocation failed\n");
 			return false;
 		}
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
 			fsp_freemsg(resp);
-			prerror("CHIPTOD: Failed to queue response msg\n");
+			prerror("Failed to queue response msg\n");
 		}
 		return true;
 	default:
-		prlog(PR_DEBUG,
-			"CHIPTOD: Unhandled sub cmd: %06x\n", cmd_sub_mod);
+		prlog(PR_DEBUG, "Unhandled sub cmd: %06x\n", cmd_sub_mod);
 		break;
 	}
 	return false;

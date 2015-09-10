@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * Handle ChipTOD chip & configure core and CAPP timebases
- */
+/* Handle ChipTOD chip & configure core and CAPP timebases */
+
+#define pr_fmt(fmt)	"CHIPTOD: " fmt
+
 #include <skiboot.h>
 #include <chiptod.h>
 #include <chip.h>
@@ -235,8 +236,8 @@ static void _chiptod_cache_tod_regs(int32_t chip_id)
 
 	for (i = 0; i < ARRAY_SIZE(chiptod_tod_regs); i++) {
 		if (xscom_read(chip_id, chiptod_tod_regs[i].xscom_addr,
-			&(chiptod_tod_regs[i].val[chip_id].data)) != 0) {
-			prerror("CHIPTOD: XSCOM error reading 0x%08llx reg.\n",
+			&(chiptod_tod_regs[i].val[chip_id].data))) {
+			prerror("XSCOM error reading 0x%08llx reg.\n",
 					chiptod_tod_regs[i].xscom_addr);
 			/* Invalidate this record and continue */
 			chiptod_tod_regs[i].val[chip_id].valid = 0;
@@ -260,7 +261,7 @@ static void print_topo_info(enum chiptod_topology topo)
 	const char *status[] = { "Unknown",
 		"Active Master", "Backup Master", "Backup Master Disabled" };
 
-	prlog(PR_DEBUG, "CHIPTOD:    chip id: %d, Role: %s, Status: %s\n",
+	prlog(PR_DEBUG, "  Chip id: %d, Role: %s, Status: %s\n",
 				chiptod_topology_info[topo].id,
 				role[chiptod_topology_info[topo].role + 1],
 				status[chiptod_topology_info[topo].status + 1]);
@@ -273,11 +274,11 @@ static void print_topology_info(void)
 	if (current_topology < 0)
 		return;
 
-	prlog(PR_DEBUG, "CHIPTOD: TOD Topology in Use: %s\n",
+	prlog(PR_DEBUG, "TOD Topology in Use: %s\n",
 						topo[current_topology+1]);
-	prlog(PR_DEBUG, "CHIPTOD:   Primary configuration:\n");
+	prlog(PR_DEBUG, "  Primary configuration:\n");
 	print_topo_info(chiptod_topo_primary);
-	prlog(PR_DEBUG, "CHIPTOD:   Secondary configuration:\n");
+	prlog(PR_DEBUG, "  Secondary configuration:\n");
 	print_topo_info(chiptod_topo_secondary);
 }
 
@@ -285,8 +286,8 @@ static enum chiptod_topology query_current_topology(void)
 {
 	uint64_t tod_status;
 
-	if (xscom_readme(TOD_STATUS, &tod_status) != 0) {
-		prerror("CHIPTOD: XSCOM error reading TOD_STATUS reg\n");
+	if (xscom_readme(TOD_STATUS, &tod_status)) {
+		prerror("XSCOM error reading TOD_STATUS reg\n");
 		return chiptod_topo_unknown;
 	}
 
@@ -310,8 +311,8 @@ chiptod_get_chip_role(enum chiptod_topology topology, int32_t chip_id)
 	if (chip_id < 0)
 		return role;
 
-	if (xscom_read(chip_id, TOD_PSMS_CTRL, &tod_ctrl) != 0) {
-		prerror("CHIPTOD: XSCOM error reading TOD_PSMS_CTRL\n");
+	if (xscom_read(chip_id, TOD_PSMS_CTRL, &tod_ctrl)) {
+		prerror("XSCOM error reading TOD_PSMS_CTRL\n");
 		return chiptod_chip_role_UNKNOWN;
 	}
 
@@ -367,8 +368,8 @@ static bool chiptod_sync_step_check_running(enum chiptod_topology topology)
 	if (chip_id < 0)
 		return false;
 
-	if (xscom_read(chip_id, TOD_STATUS, &tod_status) != 0) {
-		prerror("CHIPTOD: XSCOM error reading TOD_STATUS reg\n");
+	if (xscom_read(chip_id, TOD_STATUS, &tod_status)) {
+		prerror("XSCOM error reading TOD_STATUS reg\n");
 		return false;
 	}
 
@@ -450,8 +451,8 @@ static enum chiptod_chip_status _chiptod_get_chip_status(int32_t chip_id)
 	uint64_t tod_status;
 	enum chiptod_chip_status status = -1;
 
-	if (xscom_read(chip_id, TOD_STATUS, &tod_status) != 0) {
-		prerror("CHIPTOD: XSCOM error reading TOD_STATUS reg\n");
+	if (xscom_read(chip_id, TOD_STATUS, &tod_status)) {
+		prerror("XSCOM error reading TOD_STATUS reg\n");
 		return status;
 	}
 
@@ -509,7 +510,7 @@ static void chiptod_setup_base_tfmr(void)
 	 * The max jitter factor is set to 240 based on what pHyp uses.
 	 */
 	mcbs = (core_freq * 240) / (4 * tod_freq) / 100;
-	prlog(PR_INFO, "CHIPTOD: Calculated MCBS is 0x%llx"
+	prlog(PR_INFO, "Calculated MCBS is 0x%llx"
 	      " (Cfreq=%lld Tfreq=%lld)\n",
 	      mcbs, core_freq, tod_freq);
 
@@ -528,16 +529,16 @@ static bool chiptod_mod_tb(void)
 	mtspr(SPR_TFMR, tfmr | SPR_TFMR_LOAD_TOD_MOD);
 	do {
 		if (++timeout >= (TIMEOUT_LOOPS*2)) {
-			prerror("CHIPTOD: TB \"Not Set\" timeout\n");
+			prerror("TB \"Not Set\" timeout\n");
 			return false;
 		}
 		tfmr = mfspr(SPR_TFMR);
 		if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
-			prerror("CHIPTOD: TB \"Not Set\" TFMR corrupt\n");
+			prerror("TB \"Not Set\" TFMR corrupt\n");
 			return false;
 		}
 		if (GETFIELD(SPR_TFMR_TBST_ENCODED, tfmr) == 9) {
-			prerror("CHIPTOD: TB \"Not Set\" TOD in error state\n");
+			prerror("TB \"Not Set\" TOD in error state\n");
 			return false;
 		}
 	} while(tfmr & SPR_TFMR_LOAD_TOD_MOD);
@@ -552,12 +553,12 @@ static bool chiptod_interrupt_check(void)
 
 	do {
 		if (++timeout >= TIMEOUT_LOOPS) {
-			prerror("CHIPTOD: Interrupt check fail\n");
+			prerror("Interrupt check fail\n");
 			return false;
 		}
 		tfmr = mfspr(SPR_TFMR);
 		if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
-			prerror("CHIPTOD: Interrupt check TFMR corrupt !\n");
+			prerror("Interrupt check TFMR corrupt !\n");
 			return false;
 		}
 	} while(tfmr & SPR_TFMR_CHIP_TOD_INTERRUPT);
@@ -569,8 +570,8 @@ static bool chiptod_running_check(uint32_t chip_id)
 {
 	uint64_t tval;
 
-	if (xscom_read(chip_id, TOD_CHIPTOD_FSM, &tval) != 0) {
-		prerror("CHIPTOD: XSCOM error polling run\n");
+	if (xscom_read(chip_id, TOD_CHIPTOD_FSM, &tval)) {
+		prerror("XSCOM error polling run\n");
 		return false;
 	}
 	if (tval & 0x0800000000000000UL)
@@ -587,11 +588,11 @@ static bool chiptod_poll_running(void)
 	/* Chip TOD running check */
 	do {
 		if (++timeout >= TIMEOUT_LOOPS) {
-			prerror("CHIPTOD: Running check fail timeout\n");
+			prerror("Running check fail timeout\n");
 			return false;
 		}
-		if (xscom_readme(TOD_CHIPTOD_FSM, &tval) != 0) {
-			prerror("CHIPTOD: XSCOM error polling run\n");
+		if (xscom_readme(TOD_CHIPTOD_FSM, &tval)) {
+			prerror("XSCOM error polling run\n");
 			return false;
 		}
 	} while(!(tval & 0x0800000000000000UL));
@@ -614,8 +615,8 @@ static bool chiptod_to_tb(void)
 	 * p8: 0b0001 || 4-bit core id
 	 */
 
-	if (xscom_readme(TOD_PIB_MASTER, &tval) != 0) {
-		prerror("CHIPTOD: XSCOM error reading PIB_MASTER\n");
+	if (xscom_readme(TOD_PIB_MASTER, &tval)) {
+		prerror("XSCOM error reading PIB_MASTER\n");
 		return false;
 	}
 	if (chiptod_type == chiptod_p8) {
@@ -627,8 +628,8 @@ static bool chiptod_to_tb(void)
 	}
 	tval &= ~TOD_PIBM_ADDR_CFG_MCAST;
 	tval = SETFIELD(TOD_PIBM_ADDR_CFG_SLADDR, tval, tvbits);
-	if (xscom_writeme(TOD_PIB_MASTER, tval) != 0) {
-		prerror("CHIPTOD: XSCOM error writing PIB_MASTER\n");
+	if (xscom_writeme(TOD_PIB_MASTER, tval)) {
+		prerror("XSCOM error writing PIB_MASTER\n");
 		return false;
 	}
 
@@ -636,8 +637,8 @@ static bool chiptod_to_tb(void)
 	mtspr(SPR_TFMR, base_tfmr | SPR_TFMR_MOVE_CHIP_TOD_TO_TB);
 
 	/* Tell the ChipTOD to send it */
-	if (xscom_writeme(TOD_CHIPTOD_TO_TB, (1ULL << 63)) != 0) {
-		prerror("CHIPTOD: XSCOM error writing CHIPTOD_TO_TB\n");
+	if (xscom_writeme(TOD_CHIPTOD_TO_TB, PPC_BIT(0))) {
+		prerror("XSCOM error writing CHIPTOD_TO_TB\n");
 		return false;
 	}
 
@@ -645,12 +646,12 @@ static bool chiptod_to_tb(void)
 	timeout = 0;
 	do {
 		if (++timeout >= TIMEOUT_LOOPS) {
-			prerror("CHIPTOD: Chip to TB timeout\n");
+			prerror("Chip to TB timeout\n");
 			return false;
 		}
 		tfmr = mfspr(SPR_TFMR);
 		if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
-			prerror("CHIPTOD: MoveToTB: corrupt TFMR !\n");
+			prerror("MoveToTB: corrupt TFMR !\n");
 			return false;
 		}
 	} while(tfmr & SPR_TFMR_MOVE_CHIP_TOD_TO_TB);
@@ -714,12 +715,12 @@ static bool chiptod_reset_tb_errors(void)
 			/* Don't actually do anything on error for
 			 * now ... not much we can do, panic maybe ?
 			 */
-			prerror("CHIPTOD: TB error reset timeout !\n");
+			prerror("TB error reset timeout !\n");
 			return false;
 		}
 		tfmr = mfspr(SPR_TFMR);
 		if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
-			prerror("CHIPTOD: TB error reset: corrupt TFMR !\n");
+			prerror("TB error reset: corrupt TFMR !\n");
 			return false;
 		}
 	} while(tfmr & SPR_TFMR_CLEAR_TB_ERRORS);
@@ -747,7 +748,7 @@ static void chiptod_reset_tod_errors(void)
 	 * At boot, we clear the errors that the firmware is
 	 * supposed to handle. List provided by the pHyp folks.
 	 */
-	
+
 	terr = TOD_ERR_CRITC_PARITY;
 	terr |= TOD_ERR_PSS_HAMMING_DISTANCE;
 	terr |= TOD_ERR_DELAY_COMPL_PARITY;
@@ -756,8 +757,8 @@ static void chiptod_reset_tod_errors(void)
 	terr |= TOD_ERR_TOD_FSM_PARITY;
 	terr |= TOD_ERR_TOD_REGISTER_PARITY;
 
-	if (xscom_writeme(TOD_ERROR, terr) != 0) {
-		prerror("CHIPTOD: XSCOM error writing TOD_ERROR !\n");
+	if (xscom_writeme(TOD_ERROR, terr)) {
+		prerror("XSCOM error writing TOD_ERROR !\n");
 		/* Not much we can do here ... abort ? */
 	}
 }
@@ -766,7 +767,7 @@ static void chiptod_sync_master(void *data)
 {
 	bool *result = data;
 
-	prlog(PR_DEBUG, "CHIPTOD: Master sync on CPU PIR 0x%04x...\n",
+	prlog(PR_DEBUG, "Master sync on CPU PIR 0x%04x...\n",
 	      this_cpu()->pir);
 
 	/* Apply base tfmr */
@@ -789,8 +790,8 @@ static void chiptod_sync_master(void *data)
 	prlog(PR_INSANE, "SYNC MASTER Step 2 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Chip TOD step checkers enable */
-	if (xscom_writeme(TOD_TTYPE_2, (1UL << 63)) != 0) {
-		prerror("CHIPTOD: XSCOM error enabling steppers\n");
+	if (xscom_writeme(TOD_TTYPE_2, PPC_BIT(0))) {
+		prerror("XSCOM error enabling steppers\n");
 		goto error;
 	}
 
@@ -798,24 +799,24 @@ static void chiptod_sync_master(void *data)
 
 	/* Chip TOD interrupt check */
 	if (!chiptod_interrupt_check())
-		goto error;	
+		goto error;
 	prlog(PR_INSANE, "SYNC MASTER Step 4 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Switch local chiptod to "Not Set" state */
-	if (xscom_writeme(TOD_LOAD_TOD_MOD, (1UL << 63)) != 0) {
-		prerror("CHIPTOD: XSCOM error sending LOAD_TOD_MOD\n");
+	if (xscom_writeme(TOD_LOAD_TOD_MOD, PPC_BIT(0))) {
+		prerror("XSCOM error sending LOAD_TOD_MOD\n");
 		goto error;
 	}
 
 	/* Switch all remote chiptod to "Not Set" state */
-	if (xscom_writeme(TOD_TTYPE_5, (1UL << 63)) != 0) {
-		prerror("CHIPTOD: XSCOM error sending TTYPE_5\n");
+	if (xscom_writeme(TOD_TTYPE_5, PPC_BIT(0))) {
+		prerror("XSCOM error sending TTYPE_5\n");
 		goto error;
 	}
 
 	/* Chip TOD load initial value */
-	if (xscom_writeme(TOD_CHIPTOD_LOAD_TB, INIT_TB) != 0) {
-		prerror("CHIPTOD: XSCOM error setting init TB\n");
+	if (xscom_writeme(TOD_CHIPTOD_LOAD_TB, INIT_TB)) {
+		prerror("XSCOM error setting init TB\n");
 		goto error;
 	}
 
@@ -831,8 +832,8 @@ static void chiptod_sync_master(void *data)
 	prlog(PR_INSANE, "SYNC MASTER Step 7 TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 
 	/* Send local chip TOD to all chips TOD */
-	if (xscom_writeme(TOD_TTYPE_4, (1ULL << 63)) != 0) {
-		prerror("CHIPTOD: XSCOM error sending TTYPE_4\n");
+	if (xscom_writeme(TOD_TTYPE_4, PPC_BIT(0))) {
+		prerror("XSCOM error sending TTYPE_4\n");
 		goto error;
 	}
 
@@ -854,8 +855,7 @@ static void chiptod_sync_master(void *data)
 	*result = true;
 	return;
  error:
-	prerror("CHIPTOD: Master sync failed! TFMR=0x%016lx\n",
-		mfspr(SPR_TFMR));
+	prerror("Master sync failed! TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 	*result = false;
 }
 
@@ -871,7 +871,7 @@ static void chiptod_sync_slave(void *data)
 		return;
 	}
 
-	prlog(PR_DEBUG, "CHIPTOD: Slave sync on CPU PIR 0x%04x...\n",
+	prlog(PR_DEBUG, "Slave sync on CPU PIR 0x%04x...\n",
 	      this_cpu()->pir);
 
 	/* Apply base tfmr */
@@ -914,8 +914,7 @@ static void chiptod_sync_slave(void *data)
 	*result = true;
 	return;
  error:
-	prerror("CHIPTOD: Slave sync failed ! TFMR=0x%016lx\n",
-		mfspr(SPR_TFMR));
+	prerror("Slave sync failed ! TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 	*result = false;
 }
 
@@ -949,7 +948,7 @@ bool chiptod_wakeup_resync(void)
 
 	return true;
  error:
-	prerror("CHIPTOD: Resync failed ! TFMR=0x%16lx\n", mfspr(SPR_TFMR));
+	prerror("Resync failed ! TFMR=0x%16lx\n", mfspr(SPR_TFMR));
 	unlock(&chiptod_lock);
 	return false;
 }
@@ -962,8 +961,8 @@ static int chiptod_recover_tod_errors(void)
 	int32_t chip_id = this_cpu()->chip_id;
 
 	/* Read TOD error register */
-	if (xscom_readme(TOD_ERROR, &terr) != 0) {
-		prerror("CHIPTOD: XSCOM error reading TOD_ERROR reg\n");
+	if (xscom_readme(TOD_ERROR, &terr)) {
+		prerror("XSCOM error reading TOD_ERROR reg\n");
 		return 0;
 	}
 	/* Check for sync check error and recover */
@@ -986,25 +985,24 @@ static int chiptod_recover_tod_errors(void)
 
 		/* Check if we have valid last saved register value. */
 		if (!chiptod_tod_regs[i].val[chip_id].valid) {
-			prerror("CHIPTOD: Failed to restore TOD register: "
-			"%08llx", chiptod_tod_regs[i].xscom_addr);
+			prerror("Failed to restore TOD register: %08llx",
+					chiptod_tod_regs[i].xscom_addr);
 			return 0;
 		}
 
-		prlog(PR_DEBUG, "CHIPTOD: parity error, "
-				"Restoring TOD register: %08llx\n",
-				chiptod_tod_regs[i].xscom_addr);
+		prlog(PR_DEBUG, "Parity error, Restoring TOD register: "
+				"%08llx\n", chiptod_tod_regs[i].xscom_addr);
 		if (xscom_writeme(chiptod_tod_regs[i].xscom_addr,
-			chiptod_tod_regs[i].val[chip_id].data) != 0) {
-			prerror("CHIPTOD: XSCOM error writing 0x%08llx reg.\n",
+			chiptod_tod_regs[i].val[chip_id].data)) {
+			prerror("XSCOM error writing 0x%08llx reg.\n",
 					chiptod_tod_regs[i].xscom_addr);
 			return 0;
 		}
 		treset |= chiptod_tod_regs[i].error_bit;
 	}
 
-	if (treset && (xscom_writeme(TOD_ERROR, treset) != 0)) {
-		prerror("CHIPTOD: XSCOM error writing TOD_ERROR !\n");
+	if (treset && (xscom_writeme(TOD_ERROR, treset))) {
+		prerror("XSCOM error writing TOD_ERROR !\n");
 		return 0;
 	}
 	/* We have handled all the TOD errors routed to hypervisor */
@@ -1043,8 +1041,8 @@ static bool chiptod_set_ttype4_mode(struct proc_chip *chip, bool enable)
 	if (!chip)
 		return false;
 
-	if (xscom_read(chip->id, TOD_PIB_MASTER, &tval) != 0) {
-		prerror("CHIPTOD: XSCOM error reading PIB_MASTER\n");
+	if (xscom_read(chip->id, TOD_PIB_MASTER, &tval)) {
+		prerror("XSCOM error reading PIB_MASTER\n");
 		return false;
 	}
 
@@ -1061,8 +1059,8 @@ static bool chiptod_set_ttype4_mode(struct proc_chip *chip, bool enable)
 		tval &= ~TOD_PIBM_TTYPE4_SEND_ENBL;
 	}
 
-	if (xscom_write(chip->id, TOD_PIB_MASTER, tval) != 0) {
-		prerror("CHIPTOD: XSCOM error writing PIB_MASTER\n");
+	if (xscom_write(chip->id, TOD_PIB_MASTER, tval)) {
+		prerror("XSCOM error writing PIB_MASTER\n");
 		return false;
 	}
 	return true;
@@ -1096,12 +1094,12 @@ static void chiptod_stop_slave_tods(void)
 		if (role == chiptod_chip_role_MDMT)
 			continue;
 
-		if (xscom_write(chip->id, TOD_ERROR_INJECT, terr) != 0)
-			prerror("CHIPTOD: XSCOM error writing TOD_ERROR_INJ\n");
+		if (xscom_write(chip->id, TOD_ERROR_INJECT, terr))
+			prerror("XSCOM error writing TOD_ERROR_INJ\n");
 
 		if (chiptod_running_check(chip->id)) {
 			prlog(PR_DEBUG,
-			"CHIPTOD: Failed to stop TOD on slave CHIP [%d]\n",
+			"Failed to stop TOD on slave CHIP [%d]\n",
 								chip->id);
 		}
 	}
@@ -1125,7 +1123,7 @@ static bool is_topology_switch_required(void)
 	 * then we need switch topology to recover from TOD error.
 	 */
 	if (!chiptod_sync_step_check_running(current_topology)) {
-		prlog(PR_DEBUG, "CHIPTOD: Sync/Step network not running\n");
+		prlog(PR_DEBUG, "Sync/Step network not running\n");
 		return true;
 	}
 
@@ -1133,8 +1131,8 @@ static bool is_topology_switch_required(void)
 	 * Check if there is a step check error reported on
 	 * Active master.
 	 */
-	if (xscom_read(active_master_chip, TOD_ERROR, &tod_error) != 0) {
-		prerror("CHIPTOD: XSCOM error reading TOD_ERROR reg\n");
+	if (xscom_read(active_master_chip, TOD_ERROR, &tod_error)) {
+		prerror("XSCOM error reading TOD_ERROR reg\n");
 		/*
 		 * Can't do anything here. But we already found that
 		 * sync/step network is running. Hence return false.
@@ -1143,7 +1141,7 @@ static bool is_topology_switch_required(void)
 	}
 
 	if (tod_error & TOD_ERR_MP0_STEP_CHECK) {
-		prlog(PR_DEBUG, "CHIPTOD: TOD step check error\n");
+		prlog(PR_DEBUG, "TOD step check error\n");
 		return true;
 	}
 
@@ -1186,15 +1184,15 @@ static void chiptod_topology_switch_complete(void)
 	 * This isn't documented anywhere. This info is provided by FSP
 	 * folks.
 	 */
-	if (xscom_writeme(LOCAL_CORE_FIR, LFIR_SWITCH_COMPLETE) != 0) {
-		prerror("CHIPTOD: XSCOM error writing LOCAL_CORE_FIR\n");
+	if (xscom_writeme(LOCAL_CORE_FIR, LFIR_SWITCH_COMPLETE)) {
+		prerror("XSCOM error writing LOCAL_CORE_FIR\n");
 		return;
 	}
 
 	/* Save TOD control registers values. */
 	chiptod_cache_tod_registers();
 
-	prlog(PR_DEBUG, "CHIPTOD: Topology switch complete\n");
+	prlog(PR_DEBUG, "Topology switch complete\n");
 	print_topology_info();
 }
 
@@ -1212,7 +1210,7 @@ static int chiptod_start_tod(void)
 	if (is_topology_switch_required()) {
 		int32_t mchip = chiptod_get_active_master();
 
-		prlog(PR_DEBUG, "CHIPTOD: Need topology switch to recover\n");
+		prlog(PR_DEBUG, "Need topology switch to recover\n");
 		/*
 		 * There is a failure in StepSync network in current
 		 * active topology. TOD is not running on active master chip.
@@ -1227,15 +1225,15 @@ static int chiptod_start_tod(void)
 		 * is valid and stop all slave TODs in backup topology.
 		 */
 		if (!chiptod_backup_valid()) {
-			prerror("CHIPTOD: Backup master is not enabled.\n");
-			prerror("CHIPTOD: Can not do a topology switch.\n");
+			prerror("Backup master is not enabled. "
+				"Can not do a topology switch.\n");
 			return 0;
 		}
 
 		chiptod_stop_slave_tods();
 
-		if (xscom_write(mchip, TOD_TTYPE_1, (1UL << 63)) != 0) {
-			prerror("CHIPTOD: XSCOM error switching primary/secondary\n");
+		if (xscom_write(mchip, TOD_TTYPE_1, PPC_BIT(0))) {
+			prerror("XSCOM error switching primary/secondary\n");
 			return 0;
 		}
 
@@ -1249,7 +1247,7 @@ static int chiptod_start_tod(void)
 		 * Check if new master TOD is running.
 		 */
 		if (!chiptod_master_running()) {
-			prerror("CHIPTOD: TOD is not running on new master.\n");
+			prerror("TOD is not running on new master.\n");
 			return 0;
 		}
 
@@ -1259,8 +1257,8 @@ static int chiptod_start_tod(void)
 		 * During topology switch, step checkers are disabled
 		 * on all Chip TODs by default. Enable them.
 		 */
-		if (xscom_writeme(TOD_TTYPE_2, (1UL << 63)) != 0) {
-			prerror("CHIPTOD: XSCOM error enabling steppers\n");
+		if (xscom_writeme(TOD_TTYPE_2, PPC_BIT(0))) {
+			prerror("XSCOM error enabling steppers\n");
 			return 0;
 		}
 
@@ -1284,8 +1282,8 @@ static int chiptod_start_tod(void)
 	}
 
 	/* Switch local chiptod to "Not Set" state */
-	if (xscom_writeme(TOD_LOAD_TOD_MOD, (1UL << 63)) != 0) {
-		prerror("CHIPTOD: XSCOM error sending LOAD_TOD_MOD\n");
+	if (xscom_writeme(TOD_LOAD_TOD_MOD, PPC_BIT(0))) {
+		prerror("XSCOM error sending LOAD_TOD_MOD\n");
 		return 0;
 	}
 
@@ -1293,8 +1291,8 @@ static int chiptod_start_tod(void)
 	 * Request the current TOD value from another chip.
 	 * This will move TOD in running state
 	 */
-	if (xscom_writeme(TOD_TTYPE_3, (1UL << 63)) != 0) {
-		prerror("CHIPTOD: XSCOM error sending TTYPE_3\n");
+	if (xscom_writeme(TOD_TTYPE_3, PPC_BIT(0))) {
+		prerror("XSCOM error sending TTYPE_3\n");
 		return 0;
 	}
 
@@ -1343,12 +1341,12 @@ static bool tfmr_recover_tb_errors(uint64_t tfmr)
 
 	do {
 		if (++timeout >= TIMEOUT_LOOPS) {
-			prerror("CHIPTOD: TB error reset timeout !\n");
+			prerror("TB error reset timeout !\n");
 			return false;
 		}
 		tfmr = mfspr(SPR_TFMR);
 		if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
-			prerror("CHIPTOD: TB error reset: corrupt TFMR !\n");
+			prerror("TB error reset: corrupt TFMR !\n");
 			return false;
 		}
 	} while (tfmr & SPR_TFMR_CLEAR_TB_ERRORS);
@@ -1405,9 +1403,8 @@ static bool tfmr_recover_non_tb_errors(uint64_t tfmr)
 
 	/* Check if TFMR non-TB errors still present. */
 	if (tfmr & tfmr_reset_errors) {
-		prerror(
-		"CHIPTOD: TFMR non-TB error recovery failed! TFMR=0x%016lx\n",
-							mfspr(SPR_TFMR));
+		prerror("TFMR non-TB error recovery failed! "
+			"TFMR=0x%016lx\n", mfspr(SPR_TFMR));
 		return false;
 	}
 	return true;
@@ -1437,7 +1434,7 @@ static bool chiptod_recover_tfmr_error(void)
 
 	/* Check if TFMR parity error still present. */
 	if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
-		prerror("CHIPTOD: TFMR error recovery: corrupt TFMR !\n");
+		prerror("TFMR error recovery: corrupt TFMR !\n");
 		return false;
 	}
 
@@ -1576,8 +1573,8 @@ opal_call(OPAL_RESYNC_TIMEBASE, opal_resync_timebase, 0);
 
 static void chiptod_print_tb(void *data __unused)
 {
-	prlog(PR_DEBUG, "CHIPTOD: PIR 0x%04x TB=%lx\n",
-	      this_cpu()->pir, mfspr(SPR_TBRL));
+	prlog(PR_DEBUG, "PIR 0x%04x TB=%lx\n", this_cpu()->pir,
+				mfspr(SPR_TBRL));
 }
 
 static bool chiptod_probe(void)
@@ -1606,7 +1603,7 @@ static bool chiptod_probe(void)
 	}
 
 	if (chiptod_type == chiptod_unknown) {
-		prerror("CHIPTOD: Unknown TOD type !\n");
+		prerror("Unknown TOD type !\n");
 		return false;
 	}
 
@@ -1625,7 +1622,7 @@ static void chiptod_discover_new_backup(enum chiptod_topology topo)
 
 	/* Found new backup master chip. Update the topology info */
 	if (chip) {
-		prlog(PR_DEBUG, "CHIPTOD: New backup master: CHIP [%d]\n",
+		prlog(PR_DEBUG, "New backup master: CHIP [%d]\n",
 								chip->id);
 
 		if (topo == chiptod_topo_primary)
@@ -1636,7 +1633,7 @@ static void chiptod_discover_new_backup(enum chiptod_topology topo)
 		chiptod_update_topology(topo);
 
 		prlog(PR_DEBUG,
-			"CHIPTOD: Backup topology configuration changed.\n");
+			"Backup topology configuration changed.\n");
 		print_topology_info();
 	}
 
@@ -1713,7 +1710,7 @@ void chiptod_init(void)
 	op_display(OP_LOG, OP_MOD_CHIPTOD, 0);
 
 	if (!chiptod_probe()) {
-		prerror("CHIPTOD: Failed ChipTOD detection !\n");
+		prerror("Failed ChipTOD detection !\n");
 		op_display(OP_FATAL, OP_MOD_CHIPTOD, 0);
 		abort();
 	}
@@ -1726,7 +1723,7 @@ void chiptod_init(void)
 	/* Calculate the base TFMR value used for everybody */
 	chiptod_setup_base_tfmr();
 
-	prlog(PR_DEBUG, "CHIPTOD: Base TFMR=0x%016llx\n", base_tfmr);
+	prlog(PR_DEBUG, "Base TFMR=0x%016llx\n", base_tfmr);
 
 	/* Schedule master sync */
 	sres = false;
@@ -1852,7 +1849,7 @@ static bool chiptod_wait_for_chip_sync(void)
 	/* Read core TFMR until the TB sync occurred */
 	do {
 		if (++timeout >= TIMEOUT_LOOPS) {
-			prerror("CHIPTOD: No sync pulses\n");
+			prerror("No sync pulses\n");
 			return false;
 		}
 		tfmr = mfspr(SPR_TFMR);
