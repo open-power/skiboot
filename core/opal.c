@@ -78,7 +78,6 @@ long opal_bad_token(uint64_t token)
 /* Called from head.S, thus no prototype */
 void opal_trace_entry(struct stack_frame *eframe);
 
-/* FIXME: Do this in asm */ 
 void opal_trace_entry(struct stack_frame *eframe)
 {
 	union trace t;
