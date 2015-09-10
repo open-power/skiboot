@@ -31,9 +31,10 @@ static void init_rand(void)
 	}
 }
 
-static void expiry(struct timer *t, void *data)
+static void expiry(struct timer *t, void *data, uint64_t now)
 {
 	(void)data;
+	(void)now;
 	assert(t->target >= last);
 	count--;
 }

@@ -1048,7 +1048,7 @@ static inline uint64_t p8_i2c_get_poll_interval(uint32_t bus_speed)
 	return usecs_to_tb(usec);
 }
 
-static void p8_i2c_timeout(struct timer *t __unused, void *data)
+static void p8_i2c_timeout(struct timer *t __unused, void *data, uint64_t now)
 {
 	struct p8_i2c_master_port *port;
 	struct p8_i2c_master *master = data;
@@ -1073,7 +1073,7 @@ static void p8_i2c_timeout(struct timer *t __unused, void *data)
 		goto exit;
 	}
 	request = container_of(req, struct p8_i2c_request, req);
-	if (tb_compare(mftb(), request->timeout) == TB_ABEFOREB) {
+	if (tb_compare(now, request->timeout) == TB_ABEFOREB) {
 		DBG("I2C: Timeout with request not expired\n");
 		goto exit;
 	}
@@ -1094,12 +1094,14 @@ static void p8_i2c_timeout(struct timer *t __unused, void *data)
 	unlock(&master->lock);
 }
 
-static void p8_i2c_recover(struct timer *t __unused, void *data)
+static void p8_i2c_recover(struct timer *t __unused, void *data,
+			   uint64_t now __unused)
 {
 	struct p8_i2c_master *master = data;
 
 	lock(&master->lock);
-	assert(master->state == state_recovery || master->state == state_occache_dis);
+	assert(master->state == state_recovery ||
+	       master->state == state_occache_dis);
 	master->state = state_idle;
 
 	/* We may or may not still have work pending, re-enable the sensor cache
@@ -1117,7 +1119,8 @@ static void p8_i2c_recover(struct timer *t __unused, void *data)
 	unlock(&master->lock);
 }
 
-static void p8_i2c_enable_scache(struct timer *t __unused, void *data)
+static void p8_i2c_enable_scache(struct timer *t __unused, void *data,
+				 uint64_t now __unused)
 {
 	struct p8_i2c_master *master = data;
 
@@ -1132,7 +1135,7 @@ static void p8_i2c_enable_scache(struct timer *t __unused, void *data)
 	unlock(&master->lock);
 }
 
-static void p8_i2c_poll(struct timer *t __unused, void *data)
+static void p8_i2c_poll(struct timer *t __unused, void *data, uint64_t now)
 {
 	struct p8_i2c_master *master = data;
 
@@ -1149,7 +1152,7 @@ static void p8_i2c_poll(struct timer *t __unused, void *data)
 	lock(&master->lock);
 	p8_i2c_check_status(master);
 	if (master->state != state_idle)
-		schedule_timer(&master->poller, master->poll_interval);
+		schedule_timer_at(&master->poller, now + master->poll_interval);
 	p8_i2c_check_work(master);
 	unlock(&master->lock);
 }

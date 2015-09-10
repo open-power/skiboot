@@ -100,7 +100,8 @@ static void sync_reset_wdt(void)
 		ipmi_queue_msg_sync(ipmi_msg);
 }
 
-static void reset_wdt(struct timer *t __unused, void *data __unused)
+static void reset_wdt(struct timer *t __unused, void *data __unused,
+		      uint64_t now __unused)
 {
 	struct ipmi_msg *ipmi_msg;
 

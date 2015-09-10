@@ -6,7 +6,7 @@
 
 struct timer;
 
-typedef void (*timer_func_t)(struct timer *t, void *data);
+typedef void (*timer_func_t)(struct timer *t, void *data, uint64_t now);
 
 /* Structure exposed in order to be able to allocate it
  * statically but otherwise, use accessors, don't access

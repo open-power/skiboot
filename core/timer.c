@@ -109,7 +109,7 @@ uint64_t schedule_timer(struct timer *t, uint64_t how_long)
 	return now;
 }
 
-static void __check_poll_timers(void)
+static void __check_poll_timers(uint64_t now)
 {
 	struct timer *t;
 
@@ -153,7 +153,7 @@ static void __check_poll_timers(void)
 
 		/* Now we can unlock and call it's expiry */
 		unlock(&timer_lock);
-		t->expiry(t, t->user_data);
+		t->expiry(t, t->user_data, now);
 
 		/* Re-lock and mark not running */
 		lock(&timer_lock);
@@ -187,7 +187,7 @@ static void __check_timers(uint64_t now)
 
 		/* Now we can unlock and call it's expiry */
 		unlock(&timer_lock);
-		t->expiry(t, t->user_data);
+		t->expiry(t, t->user_data, now);
 
 		/* Re-lock and mark not running */
 		lock(&timer_lock);
@@ -216,7 +216,7 @@ void check_timers(bool from_interrupt)
 	/* Take lock and try again */
 	lock(&timer_lock);
 	if (!from_interrupt)
-		__check_poll_timers();
+		__check_poll_timers(now);
 	__check_timers(now);
 	unlock(&timer_lock);
 }

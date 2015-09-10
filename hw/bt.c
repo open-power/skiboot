@@ -293,12 +293,10 @@ static void bt_get_resp(void)
 	return;
 }
 
-static void bt_expire_old_msg(void)
+static void bt_expire_old_msg(uint64_t tb)
 {
-	unsigned long tb;
 	struct bt_msg *bt_msg;
 
-	tb = mftb();
 	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
 
 	if (bt_msg && bt_msg->tb > 0 && (bt_msg->tb + BT_MSG_TIMEOUT) < tb) {
@@ -309,7 +307,7 @@ static void bt_expire_old_msg(void)
 			FIFO so just reset the flag.*/
 			BT_ERR(bt_msg, "Retry sending message");
 			bt_msg->retry_count++;
-			bt_msg->tb = mftb();
+			bt_msg->tb = tb;
 			bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
 		} else {
 			BT_ERR(bt_msg, "Timeout sending message");
@@ -356,7 +354,8 @@ static void bt_send_and_unlock(void)
 	return;
 }
 
-static void bt_poll(struct timer *t __unused, void *data __unused)
+static void bt_poll(struct timer *t __unused, void *data __unused,
+		    uint64_t now)
 {
 	uint8_t bt_ctrl;
 
@@ -369,7 +368,7 @@ static void bt_poll(struct timer *t __unused, void *data __unused)
 	lock(&bt.lock);
 
 	print_debug_queue_info();
-	bt_expire_old_msg();
+	bt_expire_old_msg(now);
 
 	bt_ctrl = bt_inb(BT_CTRL);
 
@@ -447,7 +446,7 @@ static void bt_irq(uint32_t chip_id __unused, uint32_t irq_mask __unused)
 	bt.irq_ok = true;
 	if (ireg & BT_INTMASK_B2H_IRQ) {
 		bt_outb(BT_INTMASK_B2H_IRQ | BT_INTMASK_B2H_IRQEN, BT_INTMASK);
-		bt_poll(NULL, NULL);
+		bt_poll(NULL, NULL, mftb());
 	}
 }
 
