@@ -90,10 +90,18 @@ DEFINE_LOG_ENTRY(OPAL_RC_LPC_WRITE, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 #define   LPC_HC_IRQ_SYNC_NORESP_ERR	0x00000040
 #define   LPC_HC_IRQ_SYNC_NORM_ERR	0x00000020
 #define   LPC_HC_IRQ_SYNC_TIMEOUT_ERR	0x00000010
-#define   LPC_HC_IRQ_SYNC_TARG_TAR_ERR	0x00000008
-#define   LPC_HC_IRQ_SYNC_BM_TAR_ERR	0x00000004
-#define   LPC_HC_IRQ_SYNC_BM0_REQ	0x00000002
-#define   LPC_HC_IRQ_SYNC_BM1_REQ	0x00000001
+#define   LPC_HC_IRQ_TARG_TAR_ERR	0x00000008
+#define   LPC_HC_IRQ_BM_TAR_ERR		0x00000004
+#define   LPC_HC_IRQ_BM0_REQ		0x00000002
+#define   LPC_HC_IRQ_BM1_REQ		0x00000001
+#define   LPC_HC_IRQ_BASE_IRQS		(		     \
+	LPC_HC_IRQ_LRESET |				     \
+	LPC_HC_IRQ_SYNC_ABNORM_ERR |			     \
+	LPC_HC_IRQ_SYNC_NORESP_ERR |			     \
+	LPC_HC_IRQ_SYNC_NORM_ERR |			     \
+	LPC_HC_IRQ_SYNC_TIMEOUT_ERR |			     \
+	LPC_HC_IRQ_TARG_TAR_ERR |			     \
+	LPC_HC_IRQ_BM_TAR_ERR)
 #define LPC_HC_ERROR_ADDRESS	0x40
 
 struct lpc_client_entry {
@@ -483,44 +491,6 @@ bool lpc_present(void)
 	return lpc_default_chip_id >= 0;
 }
 
-/* OPB Master registers */
-#define OPB_MASTER_LS_IRQ_STAT	0x50
-#define OPB_MASTER_LS_IRQ_MASK	0x54
-#define OPB_MASTER_LS_IRQ_POL	0x58
-#define   OPB_MASTER_IRQ_LPC	       	0x00000800
-
-/* LPC HC registers */
-#define LPC_HC_IRQSER_CTRL	0x30
-#define   LPC_HC_IRQSER_EN		0x80000000
-#define   LPC_HC_IRQSER_QMODE		0x40000000
-#define   LPC_HC_IRQSER_START_MASK	0x03000000
-#define   LPC_HC_IRQSER_START_4CLK	0x00000000
-#define   LPC_HC_IRQSER_START_6CLK	0x01000000
-#define   LPC_HC_IRQSER_START_8CLK	0x02000000
-#define LPC_HC_IRQMASK		0x34	/* same bit defs as LPC_HC_IRQSTAT */
-#define LPC_HC_IRQSTAT		0x38
-#define   LPC_HC_IRQ_SERIRQ0		0x80000000 /* all bits down to ... */
-#define   LPC_HC_IRQ_SERIRQ16		0x00008000 /* IRQ16=IOCHK#, IRQ2=SMI# */
-#define   LPC_HC_IRQ_SERIRQ_ALL		0xffff8000
-#define   LPC_HC_IRQ_LRESET		0x00000400
-#define   LPC_HC_IRQ_SYNC_ABNORM_ERR	0x00000080
-#define   LPC_HC_IRQ_SYNC_NORESP_ERR	0x00000040
-#define   LPC_HC_IRQ_SYNC_NORM_ERR	0x00000020
-#define   LPC_HC_IRQ_SYNC_TIMEOUT_ERR	0x00000010
-#define   LPC_HC_IRQ_SYNC_TARG_TAR_ERR	0x00000008
-#define   LPC_HC_IRQ_SYNC_BM_TAR_ERR	0x00000004
-#define   LPC_HC_IRQ_SYNC_BM0_REQ	0x00000002
-#define   LPC_HC_IRQ_SYNC_BM1_REQ	0x00000001
-#define   LPC_HC_IRQ_BASE_IRQS		(		     \
-	LPC_HC_IRQ_LRESET |				     \
-	LPC_HC_IRQ_SYNC_ABNORM_ERR |			     \
-	LPC_HC_IRQ_SYNC_NORESP_ERR |			     \
-	LPC_HC_IRQ_SYNC_NORM_ERR |			     \
-	LPC_HC_IRQ_SYNC_TIMEOUT_ERR |			     \
-	LPC_HC_IRQ_SYNC_TARG_TAR_ERR |			     \
-	LPC_HC_IRQ_SYNC_BM_TAR_ERR)
-#define LPC_HC_ERROR_ADDRESS	0x40
-
 /* Called with LPC lock held */
 static void lpc_setup_serirq(struct proc_chip *chip)
 {
@@ -545,7 +515,7 @@ static void lpc_setup_serirq(struct proc_chip *chip)
 		       OPB_MASTER_IRQ_LPC, 4);
 	if (rc)
 		prerror("LPC: Failed to enable IRQs in OPB\n");
-	
+
 	/* Check whether we should enable serirq */
 	if (mask & LPC_HC_IRQ_SERIRQ_ALL) {
 		rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL,
@@ -570,7 +540,7 @@ static void lpc_setup_serirq(struct proc_chip *chip)
 static void lpc_init_interrupts(struct proc_chip *chip)
 {
 	int rc;
-	
+
 	/* First mask them all */
 	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
 	if (rc) {
@@ -638,10 +608,10 @@ static void lpc_dispatch_err_irqs(struct proc_chip *chip, uint32_t irqs)
 {
 	int rc;
 	uint32_t err_addr;
-	
+
 	/* Write back to clear error interrupts, we clear SerIRQ later
 	 * as they are handled as level interrupts
-	 */       
+	 */
 	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSTAT,
 		       LPC_HC_IRQ_BASE_IRQS, 4);
 	if (rc)
@@ -651,17 +621,17 @@ static void lpc_dispatch_err_irqs(struct proc_chip *chip, uint32_t irqs)
 	if (irqs & LPC_HC_IRQ_LRESET)
 		lpc_dispatch_reset(chip);
 	if (irqs & LPC_HC_IRQ_SYNC_ABNORM_ERR)
-		prerror("LPC: Got abnormal SYNC error\n");
+		prerror("LPC: Got SYNC abnormal error\n");
 	if (irqs & LPC_HC_IRQ_SYNC_NORESP_ERR)
-		prerror("LPC: Got abnormal SYNC error\n");
+		prerror("LPC: Got SYNC no-response error\n");
 	if (irqs & LPC_HC_IRQ_SYNC_NORM_ERR)
-		prerror("LPC: Got abnormal SYNC error\n");
+		prerror("LPC: Got SYNC normal error\n");
 	if (irqs & LPC_HC_IRQ_SYNC_TIMEOUT_ERR)
-		prerror("LPC: Got abnormal SYNC error\n");
-	if (irqs & LPC_HC_IRQ_SYNC_TARG_TAR_ERR)
-		prerror("LPC: Got abnormal SYNC error\n");
-	if (irqs & LPC_HC_IRQ_SYNC_BM_TAR_ERR)
-		prerror("LPC: Got abnormal SYNC error\n");
+		prerror("LPC: Got SYNC timeout error\n");
+	if (irqs & LPC_HC_IRQ_TARG_TAR_ERR)
+		prerror("LPC: Got abnormal TAR error\n");
+	if (irqs & LPC_HC_IRQ_BM_TAR_ERR)
+		prerror("LPC: Got bus master TAR error\n");
 
 	rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_ERROR_ADDRESS,
 		      &err_addr, 4);
