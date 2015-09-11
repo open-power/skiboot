@@ -609,26 +609,42 @@ static int pci_configure_mps(struct phb *phb,
 			     struct pci_device *pd,
 			     void *userdata __unused)
 {
-	uint32_t ecap, mps;
+	uint32_t ecap, aercap, mps;
 	uint16_t val;
 
 	assert(phb);
 	assert(pd);
 
-	mps = phb->mps;
 	/* If the MPS isn't acceptable one, bail immediately */
+	mps = phb->mps;
 	if (mps < 128 || mps > 4096)
 		return 1;
 
+	/* Retrieve PCIe and AER capability */
+	ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+	aercap = pci_cap(pd, PCIECAP_ID_AER, true);
+
 	/* PCIe device always has MPS capacity */
 	if (pd->mps) {
-		ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
 		mps = ilog2(mps) - 7;
 
 		pci_cfg_read16(phb, pd->bdfn, ecap + PCICAP_EXP_DEVCTL, &val);
 		val = SETFIELD(PCICAP_EXP_DEVCTL_MPS, val, mps);
 		pci_cfg_write16(phb, pd->bdfn, ecap + PCICAP_EXP_DEVCTL, val);
 	}
+
+	/* Changing MPS on upstream PCI bridge might cause some error
+	 * bits in PCIe and AER capability. To clear them to avoid
+	 * confusion.
+	 */
+	if (aercap) {
+		pci_cfg_write32(phb, pd->bdfn, aercap + PCIECAP_AER_UE_STATUS,
+				0xffffffff);
+		pci_cfg_write32(phb, pd->bdfn, aercap + PCIECAP_AER_CE_STATUS,
+				0xffffffff);
+	}
+	if (ecap)
+		pci_cfg_write16(phb, pd->bdfn, ecap + PCICAP_EXP_DEVSTAT, 0xf);
 
 	return 0;
 }
