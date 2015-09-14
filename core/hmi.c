@@ -616,7 +616,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	 * TB register.
 	 */
 	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
-	printf("HMI: Received HMI interrupt: HMER = 0x%016llx\n", hmer);
+	prlog(PR_DEBUG, "HMI: Received HMI interrupt: HMER = 0x%016llx\n", hmer);
 	if (hmi_evt)
 		hmi_evt->hmer = hmer;
 	if (hmer & SPR_HMER_PROC_RECV_DONE) {
@@ -626,7 +626,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE;
 			queue_hmi_event(hmi_evt, recover);
 		}
-		printf("HMI: Processor recovery Done.\n");
+		prlog(PR_DEBUG, "HMI: Processor recovery Done.\n");
 	}
 	if (hmer & SPR_HMER_PROC_RECV_ERROR_MASKED) {
 		hmer &= ~SPR_HMER_PROC_RECV_ERROR_MASKED;
@@ -635,7 +635,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_MASKED;
 			queue_hmi_event(hmi_evt, recover);
 		}
-		printf("HMI: Processor recovery Done (masked).\n");
+		prlog(PR_DEBUG, "HMI: Processor recovery Done (masked).\n");
 	}
 	if (hmer & SPR_HMER_PROC_RECV_AGAIN) {
 		hmer &= ~SPR_HMER_PROC_RECV_AGAIN;
@@ -644,7 +644,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE_AGAIN;
 			queue_hmi_event(hmi_evt, recover);
 		}
-		printf("HMI: Processor recovery occurred again before"
+		prlog(PR_DEBUG, "HMI: Processor recovery occurred again before"
 			"bit2 was cleared\n");
 	}
 	/* Assert if we see malfunction alert, we can not continue. */
