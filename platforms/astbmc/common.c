@@ -348,4 +348,6 @@ void astbmc_early_init(void)
 
 	/* Setup UART and use it as console with interrupts */
 	uart_init(true);
+
+	prd_init();
 }

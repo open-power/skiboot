@@ -134,8 +134,6 @@ static bool habanero_probe(void)
 	/* Lot of common early inits here */
 	astbmc_early_init();
 
-	prd_init();
-
 	slot_table_init(habanero_phb_table);
 
 	return true;
