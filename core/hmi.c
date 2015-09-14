@@ -610,6 +610,12 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	pre_recovery_cleanup();
 
 	lock(&hmi_lock);
+	/*
+	 * Not all HMIs would move TB into invalid state. Set the TB state
+	 * looking at TFMR register. TFMR will tell us correct state of
+	 * TB register.
+	 */
+	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
 	printf("HMI: Received HMI interrupt: HMER = 0x%016llx\n", hmer);
 	if (hmi_evt)
 		hmi_evt->hmer = hmer;
@@ -697,6 +703,8 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	 */
 	mtspr(SPR_HMER, hmer);
 	hmi_exit();
+	/* Set the TB state looking at TFMR register before we head out. */
+	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
 	unlock(&hmi_lock);
 	return recover;
 }

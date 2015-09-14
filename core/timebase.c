@@ -25,6 +25,11 @@ static void time_wait_poll(unsigned long duration)
 	unsigned long end = mftb() + duration;
 	unsigned long period = msecs_to_tb(5);
 
+	if (this_cpu()->tb_invalid) {
+		cpu_relax();
+		return;
+	}
+
 	while (tb_compare(mftb(), end) != TB_AAFTERB) {
 		/* Call pollers periodically but not continually to avoid
 		 * bouncing cachelines due to lock contention. */
@@ -56,6 +61,11 @@ void time_wait(unsigned long duration)
 void time_wait_nopoll(unsigned long duration)
 {
 	unsigned long end = mftb() + duration;
+
+	if (this_cpu()->tb_invalid) {
+		cpu_relax();
+		return;
+	}
 
 	while(tb_compare(mftb(), end) != TB_AAFTERB)
 		cpu_relax();

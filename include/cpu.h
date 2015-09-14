@@ -85,6 +85,7 @@ struct cpu_thread {
 	uint32_t			*core_hmi_state_ptr;
 	/* Mask to indicate thread id in core. */
 	uint8_t				thread_mask;
+	bool				tb_invalid;
 };
 
 /* This global is set to 1 to allow secondaries to callin,
