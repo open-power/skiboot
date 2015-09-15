@@ -152,19 +152,26 @@
  * are naturally power-of-two aligned
  *
  * Our P8 Interrupt map consits thus of dividing the chip space
- * into 4 "blocks" of 2048 interrupts. Block 0 is for random chip
+ * into "blocks" of 2048 interrupts. Block 0 is for random chip
  * interrupt sources (NX, PSI, OCC, ...) and keeps sources 0..15
- * clear to avoid conflits with IPIs etc.... Block 1..3 are assigned
- * to PHB 0..2 respectively.
+ * clear to avoid conflits with IPIs etc.... Block 1..n are assigned
+ * to PHB 0..n respectively. The number of blocks is determined by the
+ * number of bits assigned to chips.
  *
  * That gives us an interrupt number made of:
- *  18                13 12  11  10                         0
+ *  18               n+1 n   11  10                         0
  *  |                  | |    | |                           |
  * +--------------------+------+-----------------------------+
  * |        Chip#       | PHB# |             IVE#            |
  * +--------------------+------+-----------------------------+
  *
- * We can thus support a max of 2^6 = 64 chips
+ * Where n = 18 - p8_chip_id_bits
+ *
+ * For P8 we have 6 bits for Chip# as defined by p8_chip_id_bits. We
+ * therefore support a max of 2^6 = 64 chips.
+ *
+ * For P8NVL we have an extra PHB and so we assign 5 bits for Chip#
+ * and therefore support a max of 32 chips.
  *
  * Each PHB supports 2K interrupt sources, which is shared by
  * LSI and MSI. With default configuration, MSI would use range
@@ -174,21 +181,20 @@
  *
  */
 
-#define P8_CHIP_IRQ_BASE(chip)			((chip) << 13)
-#define P8_CHIP_IRQ_BLOCK_BASE(chip, block)	(P8_CHIP_IRQ_BASE(chip) \
-						 | ((block) << 11))
+uint32_t p8_chip_irq_block_base(uint32_t chip, uint32_t block);
+uint32_t p8_chip_irq_phb_base(uint32_t chip, uint32_t phb);
+uint32_t p8_irq_to_chip(uint32_t irq);
+uint32_t p8_irq_to_block(uint32_t irq);
+uint32_t p8_irq_to_phb(uint32_t irq);
+
+/* Total number of bits in the P8 interrupt space */
+#define P8_IRQ_BITS		19
+
+/* Number of bits per block */
+#define P8_IVE_BITS		11
+
 #define P8_IRQ_BLOCK_MISC	0
-#define P8_IRQ_BLOCK_PHB0	1
-#define P8_IRQ_BLOCK_PHB1	2
-#define P8_IRQ_BLOCK_PHB2	3
-
-#define P8_CHIP_IRQ_PHB_BASE(chip, phb)		(P8_CHIP_IRQ_BLOCK_BASE(chip,\
-						  (phb) + P8_IRQ_BLOCK_PHB0))
-
-#define P8_IRQ_TO_CHIP(irq)			(((irq) >> 13) & 0x3f)
-#define P8_IRQ_TO_BLOCK(irq)			(((irq) >> 11) & 0x03)
-#define P8_IRQ_TO_PHB(irq)			(P8_IRQ_TO_BLOCK(irq) - \
-						 P8_IRQ_BLOCK_PHB0)
+#define P8_IRQ_BLOCK_PHB_BASE	1
 
 /* Assignment of the "MISC" block:
  * -------------------------------

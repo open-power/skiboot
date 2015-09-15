@@ -15,6 +15,7 @@
  */
 
 #include <skiboot.h>
+#include <chip.h>
 #include <cpu.h>
 #include <fsp.h>
 #include <interrupts.h>
@@ -121,7 +122,7 @@ uint32_t get_psi_interrupt(uint32_t chip_id)
 		irq |= P7_PSI_IRQ_BUID << 4;
 		break;
 	case proc_gen_p8:
-		irq = P8_CHIP_IRQ_BLOCK_BASE(chip_id, P8_IRQ_BLOCK_MISC);
+		irq = p8_chip_irq_block_base(chip_id, P8_IRQ_BLOCK_MISC);
 		irq += P8_IRQ_MISC_PSI_BASE;
 		break;
 	default:
@@ -251,6 +252,89 @@ void icp_kick_cpu(struct cpu_thread *cpu)
 
 	/* Send high priority IPI */
 	out_8(icp + ICP_MFRR, 0);
+}
+
+/* Returns the number of chip ID bits used for interrupt numbers */
+static uint32_t p8_chip_id_bits(uint32_t chip)
+{
+	struct proc_chip *proc_chip = get_chip(chip);
+
+	assert(proc_chip);
+	switch (proc_chip->type) {
+	case PROC_CHIP_P8_MURANO:
+	case PROC_CHIP_P8_VENICE:
+		return 6;
+		break;
+
+	case PROC_CHIP_P8_NAPLES:
+		return 5;
+		break;
+
+	default:
+		/* This shouldn't be called on non-P8 based systems */
+		assert(0);
+		return 0;
+		break;
+	}
+}
+
+/* The chip id mask is the upper p8_chip_id_bits of the irq number */
+static uint32_t chip_id_mask(uint32_t chip)
+{
+	uint32_t chip_id_bits = p8_chip_id_bits(chip);
+	uint32_t chip_id_mask;
+
+	chip_id_mask = ((1 << chip_id_bits) - 1);
+	chip_id_mask <<= P8_IRQ_BITS - chip_id_bits;
+	return chip_id_mask;
+}
+
+/* The block mask is what remains of the 19 bit irq number after
+ * removing the upper 5 or 6 bits for the chip# and the lower 11 bits
+ * for the number of bits per block. */
+static uint32_t block_mask(uint32_t chip)
+{
+	uint32_t chip_id_bits = p8_chip_id_bits(chip);
+	uint32_t irq_block_mask;
+
+	irq_block_mask = P8_IRQ_BITS - chip_id_bits - P8_IVE_BITS;
+	irq_block_mask = ((1 << irq_block_mask) - 1) << P8_IVE_BITS;
+	return irq_block_mask;
+}
+
+uint32_t p8_chip_irq_block_base(uint32_t chip, uint32_t block)
+{
+	uint32_t irq;
+
+	assert(chip < (1 << p8_chip_id_bits(chip)));
+	irq = SETFIELD(chip_id_mask(chip), 0, chip);
+	irq = SETFIELD(block_mask(chip), irq, block);
+
+	return irq;
+}
+
+uint32_t p8_chip_irq_phb_base(uint32_t chip, uint32_t phb)
+{
+	assert(chip < (1 << p8_chip_id_bits(chip)));
+
+	return p8_chip_irq_block_base(chip, phb + P8_IRQ_BLOCK_PHB_BASE);
+}
+
+uint32_t p8_irq_to_chip(uint32_t irq)
+{
+	/* This assumes we only have one type of cpu in a system,
+	 * which should be ok. */
+	return GETFIELD(chip_id_mask(this_cpu()->chip_id), irq);
+}
+
+uint32_t p8_irq_to_block(uint32_t irq)
+{
+	return GETFIELD(block_mask(this_cpu()->chip_id), irq);
+}
+
+uint32_t p8_irq_to_phb(uint32_t irq)
+{
+	return p8_irq_to_block(irq) - P8_IRQ_BLOCK_PHB_BASE;
 }
 
 static struct irq_source *irq_find_source(uint32_t isn)

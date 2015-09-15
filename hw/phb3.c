@@ -1550,8 +1550,8 @@ static int64_t phb3_msi_get_xive(void *data,
 	uint32_t chip, index, irq;
 	uint64_t ive;
 
-	chip = P8_IRQ_TO_CHIP(isn);
-	index = P8_IRQ_TO_PHB(isn);
+	chip = p8_irq_to_chip(isn);
+	index = p8_irq_to_phb(isn);
 	irq = PHB3_IRQ_NUM(isn);
 
 	if (chip != p->chip_id ||
@@ -1580,8 +1580,8 @@ static int64_t phb3_msi_set_xive(void *data,
 	uint64_t *cache, ive_num, data64, m_server, m_prio;
 	uint32_t *ive;
 
-	chip = P8_IRQ_TO_CHIP(isn);
-	index = P8_IRQ_TO_PHB(isn);
+	chip = p8_irq_to_chip(isn);
+	index = p8_irq_to_phb(isn);
 	ive_num = PHB3_IRQ_NUM(isn);
 
 	if (p->state == PHB3_STATE_BROKEN || !p->tbl_rtt)
@@ -1642,8 +1642,8 @@ static int64_t phb3_lsi_get_xive(void *data,
 	uint32_t chip, index, irq;
 	uint64_t lxive;
 
-	chip = P8_IRQ_TO_CHIP(isn);
-	index = P8_IRQ_TO_PHB(isn);
+	chip = p8_irq_to_chip(isn);
+	index = p8_irq_to_phb(isn);
 	irq = PHB3_IRQ_NUM(isn);
 
 	if (chip != p->chip_id	||
@@ -1668,8 +1668,8 @@ static int64_t phb3_lsi_set_xive(void *data,
 	uint32_t chip, index, irq, entry;
 	uint64_t lxive;
 
-	chip = P8_IRQ_TO_CHIP(isn);
-	index = P8_IRQ_TO_PHB(isn);
+	chip = p8_irq_to_chip(isn);
+	index = p8_irq_to_phb(isn);
 	irq = PHB3_IRQ_NUM(isn);
 
 	if (p->state == PHB3_STATE_BROKEN)
@@ -4479,7 +4479,7 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 	/* Set the interrupt routing stuff, 8 relevant bits in mask
 	 * (11 bits per PHB)
 	 */
-	val = P8_CHIP_IRQ_PHB_BASE(gcid, pno);
+	val = p8_chip_irq_phb_base(gcid, pno);
 	val = (val << 45);
 	xscom_write(gcid, pe_xscom + 0x1a, val);
 	xscom_write(gcid, pe_xscom + 0x1b, 0xff00000000000000ul);
