@@ -56,6 +56,7 @@ static inline bool is_rodata(const void *p)
 	return ((const char *)p >= __rodata_start && (const char *)p < __rodata_end);
 }
 
+#define OPAL_BOOT_COMPLETE 0x1
 /* Debug descriptor. This structure is pointed to by the word at offset
  * 0x80 in the sapphire binary
  */
@@ -65,7 +66,7 @@ struct debug_descriptor {
 	u32	version;
 	u8	console_log_levels;	/* high 4 bits in memory,
 					 * low 4 bits driver (e.g. uart). */
-	u8	reserved1;
+	u8	state_flags; /* various state flags - OPAL_BOOT_COMPLETE etc */
 	u16	reserved2;
 	u32	reserved[2];
 

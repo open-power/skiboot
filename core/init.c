@@ -57,6 +57,7 @@ void skiboot_gcov_done(void);
 struct debug_descriptor debug_descriptor = {
 	.eye_catcher	= "OPALdbug",
 	.version	= DEBUG_DESC_VERSION,
+	.state_flags	= 0,
 	.memcons_phys	= (uint64_t)&memcons,
 	.trace_mask	= 0, /* All traces disabled by default */
 	.console_log_levels = (PR_DEBUG << 4) | PR_NOTICE,
@@ -453,6 +454,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	printf("INIT: Starting kernel at 0x%llx, fdt at %p (size 0x%x)\n",
 	       kernel_entry, fdt, fdt_totalsize(fdt));
+
+	debug_descriptor.state_flags |= OPAL_BOOT_COMPLETE;
 
 	fdt_set_boot_cpuid_phys(fdt, this_cpu()->pir);
 	if (kernel_32bit)
