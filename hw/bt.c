@@ -165,14 +165,10 @@ static void bt_reset_interface(void)
 /* Try and send a message from the message queue. Caller must hold
  * bt.bt_lock and bt.lock and ensue the message queue is not
  * empty. */
-static void bt_send_msg(void)
+static void bt_send_msg(struct bt_msg *bt_msg)
 {
 	int i;
-	struct bt_msg *bt_msg;
 	struct ipmi_msg *ipmi_msg;
-
-	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
-	assert(bt_msg);
 
 	ipmi_msg = &bt_msg->ipmi_msg;
 
@@ -195,7 +191,6 @@ static void bt_send_msg(void)
 	for (i = 0; i < ipmi_msg->req_size; i++)
 		bt_outb(ipmi_msg->data[i], BT_HOST2BMC);
 
-	bt_msg->tb = mftb();
 	bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
 	bt_set_state(BT_STATE_RESP_WAIT);
 
@@ -346,9 +341,22 @@ static void print_debug_queue_info(void) {}
 
 static void bt_send_and_unlock(void)
 {
-	if (lpc_ok() && bt_idle() && !list_empty(&bt.msgq)
-	    && bt.state == BT_STATE_IDLE)
-		bt_send_msg();
+	if (lpc_ok() && !list_empty(&bt.msgq)) {
+		struct bt_msg *bt_msg;
+
+		bt_msg = list_top(&bt.msgq, struct bt_msg, link);
+		assert(bt_msg);
+
+		/* Start the message timeout once it gets to the top
+		 * of the queue. This will ensure we timeout messages
+		 * in the case of a broken bt interface as occurs when
+		 * the BMC is not responding to any IPMI messages. */
+		if (bt_msg->tb == 0)
+			bt_msg->tb = mftb();
+
+		if (bt_idle() && bt.state == BT_STATE_IDLE)
+			bt_send_msg(bt_msg);
+	}
 
 	unlock(&bt.lock);
 	return;
