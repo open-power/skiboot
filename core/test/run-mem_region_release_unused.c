@@ -159,7 +159,7 @@ int main(void)
 		if (r == &skiboot_cpu_stacks)
 			continue;
 		if (r == other) {
-			assert(r->type == REGION_SKIBOOT_HEAP);
+			assert(r->type == REGION_MEMORY);
 			assert(r->len < 1024 * 1024);
 		} else {
 			assert(r->type == REGION_OS);

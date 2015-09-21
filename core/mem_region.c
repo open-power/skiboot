@@ -133,7 +133,8 @@ static struct alloc_hdr *next_hdr(const struct mem_region *region,
 static void init_allocatable_region(struct mem_region *region)
 {
 	struct free_hdr *f = region_start(region);
-	assert(region->type == REGION_SKIBOOT_HEAP);
+	assert(region->type == REGION_SKIBOOT_HEAP ||
+	       region->type == REGION_MEMORY);
 	f->hdr.num_longs = region->len / sizeof(long);
 	f->hdr.free = true;
 	f->hdr.prev_free = false;
@@ -256,9 +257,14 @@ static void bad_header(const struct mem_region *region,
 	abort();
 }
 
-static bool region_is_reserved(struct mem_region *region)
+static bool region_is_reservable(struct mem_region *region)
 {
 	return region->type != REGION_OS;
+}
+
+static bool region_is_reserved(struct mem_region *region)
+{
+	return region->type != REGION_OS && region->type != REGION_MEMORY;
 }
 
 void mem_dump_allocs(void)
@@ -269,7 +275,8 @@ void mem_dump_allocs(void)
 	/* Second pass: populate property data */
 	printf("Memory regions:\n");
 	list_for_each(&regions, region, list) {
-		if (region->type != REGION_SKIBOOT_HEAP)
+		if (!(region->type == REGION_SKIBOOT_HEAP ||
+		      region->type == REGION_MEMORY))
 			continue;
 		printf("  0x%012llx..%012llx : %s\n",
 		       (long long)region->start,
@@ -299,7 +306,8 @@ int64_t mem_dump_free(void)
 
 	printf("Free space in HEAP memory regions:\n");
 	list_for_each(&regions, region, list) {
-		if (region->type != REGION_SKIBOOT_HEAP)
+		if (!(region->type == REGION_SKIBOOT_HEAP ||
+		      region->type == REGION_MEMORY))
 			continue;
 		region_free = 0;
 
@@ -335,7 +343,8 @@ static void *__mem_alloc(struct mem_region *region, size_t size, size_t align,
 	assert(is_rodata(location));
 
 	/* Unallocatable region? */
-	if (region->type != REGION_SKIBOOT_HEAP)
+	if (!(region->type == REGION_SKIBOOT_HEAP ||
+	      region->type == REGION_MEMORY))
 		return NULL;
 
 	/* First allocation? */
@@ -535,8 +544,9 @@ bool mem_check(const struct mem_region *region)
 	}
 
 	/* Not ours to play with, or empty?  Don't do anything. */
-	if (region->type != REGION_SKIBOOT_HEAP ||
-			region->free_list.n.next == NULL)
+	if (!(region->type == REGION_MEMORY ||
+	      region->type == REGION_SKIBOOT_HEAP) ||
+	    region->free_list.n.next == NULL)
 		return true;
 
 	/* Walk linearly. */
@@ -738,7 +748,8 @@ restart:
 		const struct dt_property *prop;
 		const __be32 *ids;
 
-		if (region->type != REGION_SKIBOOT_HEAP)
+		if (!(region->type == REGION_SKIBOOT_HEAP ||
+		      region->type == REGION_MEMORY))
 			continue;
 
 		/* Don't allocate from normal heap. */
@@ -950,7 +961,7 @@ void mem_region_init(void)
 		strcat(rname, i->name);
 		start = dt_get_address(i, 0, &len);
 		lock(&mem_region_lock);
-		region = new_region(rname, start, len, i, REGION_SKIBOOT_HEAP);
+		region = new_region(rname, start, len, i, REGION_MEMORY);
 		if (!region) {
 			prerror("MEM: Could not add mem region %s!\n", i->name);
 			abort();
@@ -1023,7 +1034,8 @@ void mem_region_release_unused(void)
 		uint64_t used_len;
 
 		/* If it's not allocatable, ignore it. */
-		if (r->type != REGION_SKIBOOT_HEAP)
+		if (!(r->type == REGION_SKIBOOT_HEAP ||
+		      r->type == REGION_MEMORY))
 			continue;
 
 		used_len = allocated_length(r);
@@ -1123,7 +1135,7 @@ void mem_region_add_dt_reserved(void)
 
 	/* First pass: calculate length of property data */
 	list_for_each(&regions, region, list) {
-		if (!region_is_reserved(region))
+		if (!region_is_reservable(region))
 			continue;
 		names_len += strlen(region->name) + 1;
 		ranges_len += 2 * sizeof(uint64_t);
@@ -1135,7 +1147,7 @@ void mem_region_add_dt_reserved(void)
 	printf("Reserved regions:\n");
 	/* Second pass: populate property data */
 	list_for_each(&regions, region, list) {
-		if (!region_is_reserved(region))
+		if (!region_is_reservable(region))
 			continue;
 		len = strlen(region->name) + 1;
 		memcpy(name, region->name, len);

@@ -164,7 +164,7 @@ int main(void)
 		    r == &skiboot_os_reserve)
 			builtins++;
 		else
-			assert(r->type == REGION_SKIBOOT_HEAP);
+			assert(r->type == REGION_MEMORY);
 		assert(mem_check(r));
 	}
 	assert(builtins == 5);

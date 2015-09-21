@@ -25,6 +25,9 @@ enum mem_region_type {
 	/* ranges allocatable by mem_alloc: this will be most of memory */
 	REGION_SKIBOOT_HEAP,
 
+	/* ranges allocatable by mem_alloc but shrunk (e.g. whole memory) */
+	REGION_MEMORY,
+
 	/* ranges used explicitly for skiboot, but not allocatable. eg .text */
 	REGION_SKIBOOT_FIRMWARE,
 
