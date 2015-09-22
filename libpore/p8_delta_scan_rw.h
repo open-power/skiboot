@@ -156,10 +156,12 @@
 #define MY_DBG(_fmt_, _args_...) printf(_fmt_, ##_args_)
 #else  // End of SLW_COMMAND_LINE
 #ifdef __SKIBOOT__
+#define pr_fmt(fmt) "LIBPORE: " fmt
 #include <skiboot.h>
-//#define MY_INF(_fmt_, _args_...) printf(_fmt_, ##_args_)
+//#define MY_INF(_fmt_, _args_...) prlog(PR_TRACE, _fmt_, ##_args_)
 #define MY_INF(_fmt_, _args_...) do { } while(0)
 #define MY_ERR(_fmt_, _args_...) prerror(_fmt_, ##_args_)
+//#define MY_DBG(_fmt_, _args_...) prlog(PR_INSANE, _fmt_, ##_args_)
 #define MY_DBG(_fmt_, _args_...) do { } while(0)
 #else
 #define MY_INF(_fmt_, _args_...) do { } while(0)
