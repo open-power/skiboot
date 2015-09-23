@@ -3057,8 +3057,8 @@ static int64_t phb3_err_inject(struct phb *phb, uint32_t pe_no,
 	if (!p->tbl_rtt)
 		return OPAL_HARDWARE;
 
-	/* We can't inject error to the reserved PE#0 */
-	if (pe_no == 0x0 || pe_no >= PHB3_MAX_PE_NUM)
+	/* We can't inject error to the reserved PE */
+	if (pe_no == PHB3_RESERVED_PE_NUM || pe_no >= PHB3_MAX_PE_NUM)
 		return OPAL_PARAMETER;
 
 	/* Clear leftover from last time */
