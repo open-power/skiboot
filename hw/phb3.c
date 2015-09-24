@@ -149,6 +149,33 @@ static int64_t phb3_pcicfg_check(struct phb3 *p, uint32_t bdfn,
 	return OPAL_SUCCESS;
 }
 
+static void phb3_pcicfg_filter(struct phb *phb, uint32_t bdfn,
+			       uint32_t offset, uint32_t len,
+			       uint32_t *data, bool write)
+{
+	struct pci_device *pd;
+	struct pci_cfg_reg_filter *pcrf;
+	uint32_t flags;
+
+	/* FIXME: It harms the performance to search the PCI
+	 * device which doesn't have any filters at all. So
+	 * it's worthy to maintain a table in PHB to indicate
+	 * the PCI devices who have filters. However, bitmap
+	 * seems not supported by skiboot yet. To implement
+	 * it after bitmap is supported.
+	 */
+	pd = pci_find_dev(phb, bdfn);
+	pcrf = pd ? pci_find_cfg_reg_filter(pd, offset, len) : NULL;
+	if (!pcrf || !pcrf->func)
+		return;
+
+	flags = write ? PCI_REG_FLAG_WRITE : PCI_REG_FLAG_READ;
+	if ((pcrf->flags & flags) != flags)
+		return;
+
+	pcrf->func(pd, pcrf, offset, len, data, write);
+}
+
 #define PHB3_PCI_CFG_READ(size, type)	\
 static int64_t phb3_pcicfg_read##size(struct phb *phb, uint32_t bdfn,	\
                                       uint32_t offset, type *data)	\
@@ -189,6 +216,9 @@ static int64_t phb3_pcicfg_read##size(struct phb *phb, uint32_t bdfn,	\
 				    (offset & (4 - sizeof(type))));	\
 	}								\
 									\
+	phb3_pcicfg_filter(phb, bdfn, offset, sizeof(type),		\
+			   (uint32_t *)data, false);			\
+									\
 	return OPAL_SUCCESS;						\
 }
 
@@ -213,6 +243,9 @@ static int64_t phb3_pcicfg_write##size(struct phb *phb, uint32_t bdfn,	\
 	} else if ((p->flags & PHB3_CFG_BLOCKED) && bdfn != 0) {	\
 		return OPAL_HARDWARE;					\
 	}								\
+									\
+	phb3_pcicfg_filter(phb, bdfn, offset, sizeof(type),             \
+			   (uint32_t *)&data, true);			\
 									\
 	addr = PHB_CA_ENABLE;						\
 	addr = SETFIELD(PHB_CA_BDFN, addr, bdfn);			\

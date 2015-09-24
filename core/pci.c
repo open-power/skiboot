@@ -162,6 +162,7 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	}
 	pd->bdfn = bdfn;
 	pd->parent = parent;
+	list_head_init(&pd->pcrf);
 	list_head_init(&pd->children);
 	rc = pci_cfg_read8(phb, bdfn, PCI_CFG_HDR_TYPE, &htype);
 	if (rc) {
@@ -1592,4 +1593,56 @@ static int __pci_restore_bridge_buses(struct phb *phb,
 void pci_restore_bridge_buses(struct phb *phb)
 {
 	pci_walk_dev(phb, __pci_restore_bridge_buses, NULL);
+}
+
+struct pci_cfg_reg_filter *pci_find_cfg_reg_filter(struct pci_device *pd,
+						   uint32_t start, uint32_t len)
+{
+	struct pci_cfg_reg_filter *pcrf;
+
+	/* Check on the cached range, which contains holes */
+	if ((start + len) <= pd->pcrf_start ||
+	    pd->pcrf_end <= start)
+		return NULL;
+
+	list_for_each(&pd->pcrf, pcrf, link) {
+		if (start >= pcrf->start &&
+		    (start + len) <= (pcrf->start + pcrf->len))
+			return pcrf;
+	}
+
+	return NULL;
+}
+
+struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(struct pci_device *pd,
+						  uint32_t start, uint32_t len,
+						  uint32_t flags,
+						  pci_cfg_reg_func func)
+{
+	struct pci_cfg_reg_filter *pcrf;
+
+	pcrf = pci_find_cfg_reg_filter(pd, start, len);
+	if (pcrf)
+		return pcrf;
+
+	pcrf = zalloc(sizeof(*pcrf) + ((len + 0x4) & ~0x3));
+	if (!pcrf)
+		return NULL;
+
+	/* Don't validate the flags so that the private flags
+	 * can be supported for debugging purpose.
+	 */
+	pcrf->flags = flags;
+	pcrf->start = start;
+	pcrf->len = len;
+	pcrf->func = func;
+	pcrf->data = (uint8_t *)(pcrf + 1);
+
+	if (start < pd->pcrf_start)
+		pd->pcrf_start = start;
+	if (pd->pcrf_end < (start + len))
+		pd->pcrf_end = start + len;
+	list_add_tail(&pd->pcrf, &pcrf->link);
+
+	return pcrf;
 }

@@ -90,6 +90,25 @@ struct pci_slot_info {
 	int	   slot_index;
 };
 
+struct pci_device;
+struct pci_cfg_reg_filter;
+
+typedef void (*pci_cfg_reg_func)(struct pci_device *pd,
+				 struct pci_cfg_reg_filter *pcrf,
+				 uint32_t offset, uint32_t len,
+				 uint32_t *data, bool write);
+struct pci_cfg_reg_filter {
+	uint32_t		flags;
+#define PCI_REG_FLAG_READ	0x1
+#define PCI_REG_FLAG_WRITE	0x2
+#define PCI_REG_FLAG_MASK	0x3
+	uint32_t		start;
+	uint32_t		len;
+	uint8_t			*data;
+	pci_cfg_reg_func	func;
+	struct list_node	link;
+};
+
 /*
  * While this might not be necessary in the long run, the existing
  * Linux kernels expect us to provide a device-tree that contains
@@ -122,6 +141,10 @@ struct pci_device {
 	uint64_t		cap_list;
 	uint32_t		cap[64];
 	uint32_t		mps;		/* Max payload size capability */
+
+	uint32_t		pcrf_start;
+	uint32_t		pcrf_end;
+	struct list_head	pcrf;
 
 	struct pci_slot_info    *slot_info;
 	struct pci_device	*parent;
@@ -491,6 +514,11 @@ extern struct pci_device *pci_walk_dev(struct phb *phb,
 				       void *userdata);
 extern struct pci_device *pci_find_dev(struct phb *phb, uint16_t bdfn);
 extern void pci_restore_bridge_buses(struct phb *phb);
+extern struct pci_cfg_reg_filter *pci_find_cfg_reg_filter(struct pci_device *pd,
+					uint32_t start, uint32_t len);
+extern struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(struct pci_device *pd,
+					uint32_t start, uint32_t len,
+					uint32_t flags, pci_cfg_reg_func func);
 
 /* Manage PHBs */
 extern int64_t pci_register_phb(struct phb *phb, int opal_id);
