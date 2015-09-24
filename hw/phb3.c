@@ -116,6 +116,36 @@ static bool phb3_fenced(struct phb3 *p)
 	return false;
 }
 
+static void phb3_pcicfg_filter_rc_pref_window(struct pci_device *pd __unused,
+					      struct pci_cfg_reg_filter *pcrf,
+					      uint32_t offset, uint32_t len,
+					      uint32_t *data,  bool write)
+{
+	uint8_t *pdata;
+	uint32_t i;
+
+	/* Cache whatever we received */
+	if (write) {
+		pdata = &pcrf->data[offset - pcrf->start];
+		for (i = 0; i < len; i++, pdata++)
+			*pdata = (uint8_t)(*data >> (8 * i));
+		return;
+	}
+
+	/* Return whatever we cached */
+	*data = 0;
+	pdata = &pcrf->data[offset - pcrf->start + len - 1];
+	for (i = len; i > 0; i--, pdata--) {
+		*data = (*data) << 8;
+		if (offset + i == PCI_CFG_PREF_MEM_BASE) {
+			*data |= ((*pdata & 0xf0) | 0x1);
+			continue;
+		}
+
+		*data |= *pdata;
+	}
+}
+
 /*
  * Configuration space access
  *
@@ -457,30 +487,53 @@ static void phb3_endpoint_init(struct phb *phb,
 static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
 {
 	struct phb3 *p = phb_to_phb3(phb);
-	u64 modectl;
 	u32 vdid;
 	u16 vendor, device;
 
-	/* For these adapters, if they are directly under the PHB, we
-	 * adjust some settings for performances
-	 */
-	xscom_read(p->chip_id, p->pe_xscom + 0x0b, &modectl);
+	if (dev->primary_bus != 0 &&
+	    dev->primary_bus != 1)
+		return;
 
 	pci_cfg_read32(phb, dev->bdfn, 0, &vdid);
 	vendor = vdid & 0xffff;
 	device = vdid >> 16;
-	if (vendor == 0x15b3 &&
-	    (device == 0x1003 ||	/* Travis3-EN (CX3) */
-	     device == 0x1011 ||	/* HydePark (ConnectIB) */
-	     device == 0x1013))	{	/* GlacierPark (CX4) */
-		/* Set disable_wr_scope_group bit */
-		modectl |= PPC_BIT(14);
-	} else {
-		/* Clear disable_wr_scope_group bit */
-		modectl &= ~PPC_BIT(14);
-	}
 
-	xscom_write(p->chip_id, p->pe_xscom + 0x0b, modectl);
+	if (dev->primary_bus == 1) {
+		u64 modectl;
+
+		/* For these adapters, if they are directly under the PHB, we
+		 * adjust some settings for performances
+		 */
+		xscom_read(p->chip_id, p->pe_xscom + 0x0b, &modectl);
+		if (vendor == 0x15b3 &&
+		    (device == 0x1003 ||	/* Travis3-EN (CX3) */
+		     device == 0x1011 ||	/* HydePark (ConnectIB) */
+		     device == 0x1013))	{	/* GlacierPark (CX4) */
+			/* Set disable_wr_scope_group bit */
+			modectl |= PPC_BIT(14);
+		} else {
+			/* Clear disable_wr_scope_group bit */
+			modectl &= ~PPC_BIT(14);
+		}
+
+		xscom_write(p->chip_id, p->pe_xscom + 0x0b, modectl);
+	} else if (dev->primary_bus == 0) {
+		if (vendor == 0x1014 && device == 0x03dc) {
+			uint32_t pref_hi, tmp;
+
+			pci_cfg_read32(phb, dev->bdfn,
+				PCI_CFG_PREF_MEM_BASE_U32, &pref_hi);
+			pci_cfg_write32(phb, dev->bdfn,
+				PCI_CFG_PREF_MEM_BASE_U32, ~pref_hi);
+			pci_cfg_read32(phb, dev->bdfn,
+				PCI_CFG_PREF_MEM_BASE_U32, &tmp);
+			if (tmp == pref_hi)
+				pci_add_cfg_reg_filter(dev,
+					PCI_CFG_PREF_MEM_BASE_U32, 12,
+					PCI_REG_FLAG_READ | PCI_REG_FLAG_WRITE,
+					phb3_pcicfg_filter_rc_pref_window);
+		}
+	}
 }
 
 static void phb3_device_init(struct phb *phb, struct pci_device *dev)
@@ -489,8 +542,7 @@ static void phb3_device_init(struct phb *phb, struct pci_device *dev)
 	int aercap = 0;
 
 	/* Some special adapter tweaks for devices directly under the PHB */
-	if (dev->primary_bus == 1)
-		phb3_check_device_quirks(phb, dev);
+	phb3_check_device_quirks(phb, dev);
 
 	/* Figure out PCIe & AER capability */
 	if (pci_has_cap(dev, PCI_CFG_CAP_ID_EXP, false)) {
