@@ -312,6 +312,14 @@ static bool cpu_pstates_prepare_core(struct proc_chip *chip, struct cpu_thread *
 	return true;
 }
 
+static bool occ_opal_msg_outstanding = false;
+static void occ_msg_consumed(void *data __unused)
+{
+	lock(&occ_lock);
+	occ_opal_msg_outstanding = false;
+	unlock(&occ_lock);
+}
+
 static void occ_throttle_poll(void *data __unused)
 {
 	struct proc_chip *chip;
@@ -345,6 +353,8 @@ static void occ_throttle_poll(void *data __unused)
 				occ_reset = false;
 		}
 	} else {
+		if (occ_opal_msg_outstanding)
+			goto done;
 		for_each_chip(chip) {
 			occ_data = chip_occ_data(chip);
 			if ((occ_data->valid == 1) &&
@@ -353,13 +363,18 @@ static void occ_throttle_poll(void *data __unused)
 				occ_msg.type = OCC_THROTTLE;
 				occ_msg.chip = chip->id;
 				occ_msg.throttle_status = occ_data->throttle;
-				rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL,
+				rc = _opal_queue_msg(OPAL_MSG_OCC, NULL,
+						     occ_msg_consumed,
 						     3, (uint64_t *)&occ_msg);
-				if (!rc)
+				if (!rc) {
 					chip->throttle = occ_data->throttle;
+					occ_opal_msg_outstanding = true;
+					break;
+				}
 			}
 		}
 	}
+done:
 	unlock(&occ_lock);
 }
 
