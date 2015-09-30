@@ -82,7 +82,7 @@ static int64_t centaur_fsiscom_complete(struct centaur_chip *centaur)
 	if (stat == 0xffffffffu) {
 		cent_log(PR_ERR, centaur, "Chip appears to be dead !\n");
 		centaur->valid = false;
-		
+
 		/* Here, hostboot grabs a pile of FFDC from the FSI layer,
 		 * we could do that too ...
 		 */
@@ -215,6 +215,103 @@ struct centaur_chip *get_centaur(uint32_t part_id)
 	return centaur;
 }
 
+/*
+ * Indirect XSCOM access functions. Copied from xscom.c, at a
+ * latter date, we should merge these properly.
+ */
+static void centaur_xscom_handle_ind_error(struct centaur_chip *centaur,
+					   uint64_t data, uint64_t pcb_addr,
+					   bool is_write)
+{
+	unsigned int stat = GETFIELD(XSCOM_DATA_IND_ERR, data);
+	bool timeout = !(data & XSCOM_DATA_IND_COMPLETE);
+
+	/* XXX: Create error log entry ? */
+	if (timeout)
+		cent_log(PR_ERR, centaur,
+			 "inddirect %s timeout, pcb_addr=0x%llx stat=0x%x\n",
+			is_write ? "write" : "read", pcb_addr, stat);
+	else
+		cent_log(PR_ERR, centaur,
+			 "indirect %s error, pcb_addr=0x%llx stat=0x%x\n",
+			is_write ? "write" : "read", pcb_addr, stat);
+}
+
+static int centaur_xscom_ind_read(struct centaur_chip *centaur,
+				  uint64_t pcb_addr, uint64_t *val)
+{
+	uint32_t addr;
+	uint64_t data;
+	int rc, retries;
+
+	/* Write indirect address */
+	addr = pcb_addr & 0x7fffffff;
+	data = XSCOM_DATA_IND_READ |
+		(pcb_addr & XSCOM_ADDR_IND_ADDR);
+	rc = centaur_fsiscom_write(centaur, addr, data);
+	if (rc)
+		goto bail;
+
+	/* Wait for completion */
+	for (retries = 0; retries < XSCOM_IND_MAX_RETRIES; retries++) {
+		rc = centaur_fsiscom_read(centaur, addr, &data);
+		if (rc)
+			goto bail;
+		if ((data & XSCOM_DATA_IND_COMPLETE) &&
+		    ((data & XSCOM_DATA_IND_ERR) == 0)) {
+			*val = data & XSCOM_DATA_IND_DATA;
+			break;
+		}
+		if ((data & XSCOM_DATA_IND_COMPLETE) ||
+		    (retries >= XSCOM_IND_MAX_RETRIES)) {
+			centaur_xscom_handle_ind_error(centaur, data, pcb_addr,
+						       false);
+			rc = OPAL_HARDWARE;
+			goto bail;
+		}
+	}
+ bail:
+	if (rc)
+		*val = (uint64_t)-1;
+	return rc;
+}
+
+static int centaur_xscom_ind_write(struct centaur_chip *centaur,
+				   uint64_t pcb_addr, uint64_t val)
+{
+	uint32_t addr;
+	uint64_t data;
+	int rc, retries;
+
+	/* Write indirect address & data */
+	addr = pcb_addr & 0x7fffffff;
+	data = pcb_addr & XSCOM_ADDR_IND_ADDR;
+	data |= val & XSCOM_ADDR_IND_DATA;
+
+	rc = centaur_fsiscom_write(centaur, addr, data);
+	if (rc)
+		goto bail;
+
+	/* Wait for completion */
+	for (retries = 0; retries < XSCOM_IND_MAX_RETRIES; retries++) {
+		rc = centaur_fsiscom_read(centaur, addr, &data);
+		if (rc)
+			goto bail;
+		if ((data & XSCOM_DATA_IND_COMPLETE) &&
+		    ((data & XSCOM_DATA_IND_ERR) == 0))
+			break;
+		if ((data & XSCOM_DATA_IND_COMPLETE) ||
+		    (retries >= XSCOM_IND_MAX_RETRIES)) {
+			centaur_xscom_handle_ind_error(centaur, data, pcb_addr,
+						       true);
+			rc = OPAL_HARDWARE;
+			goto bail;
+		}
+	}
+ bail:
+	return rc;
+}
+
 int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val)
 {
 	struct centaur_chip *centaur = get_centaur(id);
@@ -224,7 +321,10 @@ int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val)
 		return OPAL_PARAMETER;
 
 	lock(&centaur->lock);
-	rc = centaur_fsiscom_read(centaur, pcb_addr, val);
+	if (pcb_addr & XSCOM_ADDR_IND_FLAG)
+		rc = centaur_xscom_ind_read(centaur, pcb_addr, val);
+	else
+		rc = centaur_fsiscom_read(centaur, pcb_addr, val);
 	unlock(&centaur->lock);
 
 	return rc;
@@ -239,7 +339,10 @@ int64_t centaur_xscom_write(uint32_t id, uint64_t pcb_addr, uint64_t val)
 		return OPAL_PARAMETER;
 
 	lock(&centaur->lock);
-	rc = centaur_fsiscom_write(centaur, pcb_addr, val);
+	if (pcb_addr & XSCOM_ADDR_IND_FLAG)
+		rc = centaur_xscom_ind_write(centaur, pcb_addr, val);
+	else
+		rc = centaur_fsiscom_write(centaur, pcb_addr, val);
 	unlock(&centaur->lock);
 
 	return rc;

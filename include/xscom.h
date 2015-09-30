@@ -154,6 +154,18 @@
 #define EX_PM_IDLE_ST_HIST_PM_STATE_MASK	PPC_BITMASK(0, 2)
 #define EX_PM_IDLE_ST_HIST_PM_STATE_LSH		PPC_BITLSHIFT(2)
 
+/* Definitions relating to indirect XSCOMs shared with centaur */
+#define XSCOM_ADDR_IND_FLAG		PPC_BIT(0)
+#define XSCOM_ADDR_IND_ADDR		PPC_BITMASK(12,31)
+#define XSCOM_ADDR_IND_DATA		PPC_BITMASK(48,63)
+
+#define XSCOM_DATA_IND_READ		PPC_BIT(0)
+#define XSCOM_DATA_IND_COMPLETE		PPC_BIT(32)
+#define XSCOM_DATA_IND_ERR		PPC_BITMASK(33,35)
+#define XSCOM_DATA_IND_DATA		PPC_BITMASK(48,63)
+
+/* HB folks say: try 10 time for now */
+#define XSCOM_IND_MAX_RETRIES		10
 
 /*
  * Error handling:
