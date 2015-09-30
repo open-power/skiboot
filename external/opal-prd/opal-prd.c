@@ -112,7 +112,7 @@ static const int opal_prd_version = 1;
 static const uint64_t opal_prd_ipoll = 0xf000000000000000;
 
 static const char *ipmi_devnode = "/dev/ipmi0";
-static const int ipmi_timeout_ms = 2000;
+static const int ipmi_timeout_ms = 5000;
 
 static const char *devicetree_base =
 		"/sys/firmware/devicetree/base";
