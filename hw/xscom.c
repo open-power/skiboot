@@ -165,12 +165,12 @@ static void xscom_handle_ind_error(uint64_t data, uint32_t gcid,
 	/* XXX: Create error log entry ? */
 	if (timeout)
 		log_simple_error(&e_info(OPAL_RC_XSCOM_INDIRECT_RW),
-			"XSCOM: %s indirect timeout, gcid=0x%x pcb_addr=0x%llx"
+			"XSCOM: indirect %s timeout, gcid=0x%x pcb_addr=0x%llx"
 			" stat=0x%x\n",
 			is_write ? "write" : "read", gcid, pcb_addr, stat);
 	else
 		log_simple_error(&e_info(OPAL_RC_XSCOM_INDIRECT_RW),
-			"XSCOM: %s indirect error, gcid=0x%x pcb_addr=0x%llx"
+			"XSCOM: indirect %s error, gcid=0x%x pcb_addr=0x%llx"
 			" stat=0x%x\n",
 			is_write ? "write" : "read", gcid, pcb_addr, stat);
 }
@@ -323,7 +323,7 @@ static int xscom_indirect_write(uint32_t gcid, uint64_t pcb_addr, uint64_t val)
 		if ((data & XSCOM_DATA_IND_COMPLETE) ||
 		    (retries >= XSCOM_IND_MAX_RETRIES)) {
 			xscom_handle_ind_error(data, gcid, pcb_addr,
-					       false);
+					       true);
 			rc = OPAL_HARDWARE;
 			goto bail;
 		}
