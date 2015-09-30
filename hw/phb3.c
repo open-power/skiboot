@@ -1948,7 +1948,7 @@ static void phb3_setup_for_link_up(struct phb3 *p)
 	out_be64(p->regs + UTL_PCIE_PORT_STATUS, 0xffdfffffffffffff);
 	out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0xad5a800000000000);
 
-	/* Mark link down */
+	/* Mark link up */
 	p->has_link = true;
 
 	/* Don't block PCI-CFG */
