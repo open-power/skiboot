@@ -10,6 +10,8 @@ export SSHPASS=${SSHPASS:-superuser};
 
 #Username/password for IPMI
 IPMI_AUTH="-U ${IPMI_USER:-admin} -P ${IPMI_PASS:-admin}"
+PFLASH_TO_COPY=${PFLASH_TO_COPY:-}
+PFLASH_BINARY=/usr/local/bin/pflash
 
 # Strip control characters from IPMI before grepping?
 STRIP_CONTROL=0
@@ -33,6 +35,10 @@ function poweroff {
 }
 
 function flash {
+	if [ ! -z "$PFLASH_TO_COPY" ]; then
+		remotecp $PFLASH_TO_COPY $target /tmp/pflash
+		PFLASH_BINARY=/tmp/pflash
+	fi
 	if [ ! -z "$PNOR" ]; then
 		remotecp $PNOR $target /tmp/image.pnor;
 	fi
@@ -60,7 +66,7 @@ function flash {
 	# flash it
 	if [ ! -z "$PNOR" ]; then
 		msg "Flashing full PNOR"
-		$SSHCMD "/usr/local/bin/pflash -E -f -p /tmp/image.pnor"
+		$SSHCMD "$PFLASH_BINARY -E -f -p /tmp/image.pnor"
 		if [ "$?" -ne "0" ] ; then
 			error "An unexpected pflash error has occured";
 		fi
@@ -68,7 +74,7 @@ function flash {
 
 	if [ ! -z "${LID[0]}" ] ; then
 		msg "Flashing PAYLOAD PNOR partition"
-		$SSHCMD "/usr/local/bin/pflash -e -f -P PAYLOAD -p /tmp/skiboot.lid"
+		$SSHCMD "$PFLASH_BINARY -e -f -P PAYLOAD -p /tmp/skiboot.lid"
 		if [ "$?" -ne "0" ] ; then
                         error "An unexpected pflash error has occured";
                 fi
@@ -76,7 +82,7 @@ function flash {
 
         if [ ! -z "${LID[1]}" ] ; then
                 msg "Flashing BOOTKERNEL PNOR partition"
-                $SSHCMD "/usr/local/bin/pflash -e -f -P BOOTKERNEL -p /tmp/bootkernel"
+                $SSHCMD "$PFLASH_BINARY -e -f -P BOOTKERNEL -p /tmp/bootkernel"
                 if [ "$?" -ne "0" ] ; then
                         error "An unexpected pflash error has occured";
                 fi
