@@ -368,7 +368,6 @@ static void bt_poll(struct timer *t __unused, void *data __unused,
 	lock(&bt.lock);
 
 	print_debug_queue_info();
-	bt_expire_old_msg(now);
 
 	bt_ctrl = bt_inb(BT_CTRL);
 
@@ -376,6 +375,8 @@ static void bt_poll(struct timer *t __unused, void *data __unused,
 	if (bt.state == BT_STATE_RESP_WAIT &&
 	    (bt_ctrl & BT_CTRL_B2H_ATN))
 		bt_get_resp();
+
+	bt_expire_old_msg(now);
 
 	/* Check for sms_atn */
 	if (bt_inb(BT_CTRL) & BT_CTRL_SMS_ATN) {
