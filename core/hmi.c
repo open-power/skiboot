@@ -164,6 +164,9 @@
  */
 #define NX_HMI_ACTIVE		PPC_BIT(54)
 
+/* Number of iterations for the various timeouts */
+#define TIMEOUT_LOOPS		20000000
+
 static const struct core_xstop_bit_info {
 	uint8_t bit;		/* CORE FIR bit number */
 	enum OpalHMI_CoreXstopReason reason;
@@ -448,8 +451,27 @@ static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
 
 static void wait_for_subcore_threads(void)
 {
-	while (!(*(this_cpu()->core_hmi_state_ptr) & HMI_STATE_CLEANUP_DONE))
+	uint64_t timeout = 0;
+
+	while (!(*(this_cpu()->core_hmi_state_ptr) & HMI_STATE_CLEANUP_DONE)) {
+		/*
+		 * We use a fixed number of TIMEOUT_LOOPS rather
+		 * than using the timebase to do a pseudo-wall time
+		 * timeout due to the fact that timebase may not actually
+		 * work at this point in time.
+		 */
+		if (++timeout >= (TIMEOUT_LOOPS*3)) {
+			/*
+			 * Break out the loop here and fall through
+			 * recovery code. If recovery fails, kernel will get
+			 * informed about the failure. This way we can avoid
+			 * looping here if other threads are stuck.
+			 */
+			prlog(PR_DEBUG, "HMI: TB pre-recovery timeout\n");
+			break;
+		}
 		cpu_relax();
+	}
 }
 
 /*
