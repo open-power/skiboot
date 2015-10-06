@@ -129,16 +129,25 @@ bool cpu_poll_job(struct cpu_job *job)
 void cpu_wait_job(struct cpu_job *job, bool free_it)
 {
 	unsigned long ticks = usecs_to_tb(5);
+	unsigned long period = msecs_to_tb(5);
+	unsigned long time_waited = 0;
 
 	if (!job)
 		return;
 
 	while(!job->complete) {
 		time_wait(ticks);
+		time_waited+=ticks;
+		if (time_waited % period == 0)
+			opal_run_pollers();
 		lwsync();
 	}
 	lwsync();
 	smt_medium();
+
+	if (time_waited > msecs_to_tb(1000))
+		prlog(PR_DEBUG, "cpu_wait_job(%s) for %d\n",
+		      job->name, tb_to_msecs(time_waited));
 
 	if (free_it)
 		free(job);
