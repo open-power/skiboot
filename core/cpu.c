@@ -146,7 +146,7 @@ void cpu_wait_job(struct cpu_job *job, bool free_it)
 	smt_medium();
 
 	if (time_waited > msecs_to_tb(1000))
-		prlog(PR_DEBUG, "cpu_wait_job(%s) for %d\n",
+		prlog(PR_DEBUG, "cpu_wait_job(%s) for %lu\n",
 		      job->name, tb_to_msecs(time_waited));
 
 	if (free_it)
