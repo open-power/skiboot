@@ -14,6 +14,7 @@ CORE_TEST := core/test/run-device \
 	core/test/run-pel \
 	core/test/run-pool \
 	core/test/run-time-utils \
+	core/test/run-timebase \
 	core/test/run-timer
 
 CORE_TEST_NOSTUB := core/test/run-console-log
