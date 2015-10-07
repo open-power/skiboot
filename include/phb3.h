@@ -212,6 +212,7 @@ enum phb3_state {
 	PHB3_STATE_HRESET_DELAY2,
 
 	/* Fundamental reset */
+	PHB3_STATE_FRESET_START,
 	PHB3_STATE_FRESET_ASSERT_DELAY,
 	PHB3_STATE_FRESET_DEASSERT_DELAY,
 
@@ -291,6 +292,7 @@ struct phb3 {
 	bool			skip_perst; /* Skip first perst */
 	bool			has_link;
 	enum phb3_state		state;
+	enum phb3_state		retry_state;
 	uint64_t		delay_tgt_tb;
 	uint64_t		retries;
 	int64_t			ecap;	    /* cached PCI-E cap offset */

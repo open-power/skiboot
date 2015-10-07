@@ -1964,8 +1964,19 @@ static void phb3_setup_for_link_up(struct phb3 *p)
 	}
 }
 
+static int64_t phb3_retry_state(struct phb3 *p)
+{
+	if (p->retry_state <= PHB3_STATE_FUNCTIONAL)
+		return OPAL_WRONG_STATE;
+
+	p->delay_tgt_tb = 0;
+	p->state = p->retry_state;
+	return p->phb.ops->poll(&p->phb);
+}
+
 static int64_t phb3_sm_link_poll(struct phb3 *p)
 {
+	int64_t rc;
 	uint64_t reg;
 
 	/* This is the state machine to wait for the link to come
@@ -1992,6 +2003,10 @@ static int64_t phb3_sm_link_poll(struct phb3 *p)
 		} else if (p->retries-- == 0) {
 			PHBDBG(p, "Timeout waiting for electrical link\n");
 			PHBDBG(p, "DLP train control: 0x%016llx\n", reg);
+			rc = phb3_retry_state(p);
+			if (rc >= OPAL_SUCCESS)
+				return rc;
+
 			/* No link, we still mark the PHB as functional */
 			p->state = PHB3_STATE_FUNCTIONAL;
 			return OPAL_SUCCESS;
@@ -2013,6 +2028,10 @@ static int64_t phb3_sm_link_poll(struct phb3 *p)
 		if (p->retries-- == 0) {
 			PHBDBG(p, "Timeout waiting for link up\n");
 			PHBDBG(p, "DLP train control: 0x%016llx\n", reg);
+			rc = phb3_retry_state(p);
+			if (rc >= OPAL_SUCCESS)
+				return rc;
+
 			/* No link, we still mark the PHB as functional */
 			p->state = PHB3_STATE_FUNCTIONAL;
 			return OPAL_SUCCESS;
@@ -2119,7 +2138,7 @@ static int64_t phb3_sm_fundamental_reset(struct phb3 *p)
 
 	/* Handle boot time skipping of reset */
 	if (p->skip_perst && p->state == PHB3_STATE_FUNCTIONAL) {
-		PHBINF(p, "Cold boot, skipping PERST assertion\n");
+		PHBDBG(p, "Cold boot, skipping PERST assertion\n");
 		p->state = PHB3_STATE_FRESET_ASSERT_DELAY;
 		/* PERST skipping happens only once */
 		p->skip_perst = false;
@@ -2127,10 +2146,14 @@ static int64_t phb3_sm_fundamental_reset(struct phb3 *p)
 
 	switch(p->state) {
 	case PHB3_STATE_FUNCTIONAL:
-		PHBINF(p, "Performing PERST...\n");
-
 		/* Prepare for link going down */
 		phb3_setup_for_link_down(p);
+		/* Fall-through */
+	case PHB3_STATE_FRESET_START:
+		if (p->state == PHB3_STATE_FRESET_START) {
+			PHBDBG(p, "Slot freset: Retrying\n");
+			p->retry_state = 0;
+		}
 
 		/* Assert PERST */
 		reg = in_be64(p->regs + PHB_RESET);
@@ -2176,6 +2199,8 @@ static int64_t phb3_fundamental_reset(struct phb *phb)
 		return OPAL_HARDWARE;
 	}
 
+	/* Allow to retry fundamental reset */
+	p->retry_state = PHB3_STATE_FRESET_START;
 	p->flags |= PHB3_CFG_BLOCKED;
 	return phb3_sm_fundamental_reset(p);
 }
@@ -2456,6 +2481,7 @@ static int64_t phb3_poll(struct phb *phb)
 	case PHB3_STATE_HRESET_DELAY:
 	case PHB3_STATE_HRESET_DELAY2:
 		return phb3_sm_hot_reset(p);
+	case PHB3_STATE_FRESET_START:
 	case PHB3_STATE_FRESET_ASSERT_DELAY:
 	case PHB3_STATE_FRESET_DEASSERT_DELAY:
 		return phb3_sm_fundamental_reset(p);
