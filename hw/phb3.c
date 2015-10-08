@@ -2151,7 +2151,7 @@ static int64_t phb3_sm_fundamental_reset(struct phb3 *p)
 
 	/* Handle boot time skipping of reset */
 	if (p->skip_perst && p->state == PHB3_STATE_FUNCTIONAL) {
-		PHBINF(p, "Cold boot, skipping PERST assertion\n");
+		PHBDBG(p, "Cold boot, skipping PERST assertion\n");
 		p->state = PHB3_STATE_FRESET_ASSERT_DELAY;
 		/* PERST skipping happens only once */
 		p->skip_perst = false;
@@ -2169,7 +2169,6 @@ static int64_t phb3_sm_fundamental_reset(struct phb3 *p)
 		}
 
 		/* Assert PERST */
-		PHBINF(p, "Performing PERST...\n");
 		reg = in_be64(p->regs + PHB_RESET);
 		reg &= ~0x2000000000000000ul;
 		out_be64(p->regs + PHB_RESET, reg);
