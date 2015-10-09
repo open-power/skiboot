@@ -57,6 +57,7 @@ static enum led_support_state led_support = LED_STATE_ABSENT;
  *
  */
 static void *led_buffer;
+static u8 *loc_code_list_buffer = NULL;
 
 /* Maintain list of all LEDs
  *
@@ -777,8 +778,13 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 	u32 bytes_sent = 0, total_size = 0;
 	u16 header_size = 0, flags = 0;
 
+	if (loc_code_list_buffer == NULL) {
+		prerror("No loc_code_list_buffer\n");
+		return;
+	}
+
 	/* Init the addresses */
-	data = (u8 *) PSI_DMA_LOC_COD_BUF;
+	data = loc_code_list_buffer;
 	out_data = NULL;
 
 	/* Unmapping through FSP_CMD_RET_LOC_BUFFER command */
@@ -1875,6 +1881,11 @@ void fsp_led_init(void)
 	list_head_init(&spcn_cmdq);
 
 	fsp_leds_query_spcn();
+
+	loc_code_list_buffer = memalign(TCE_PSIZE, PSI_DMA_LOC_COD_BUF_SZ);
+	if (loc_code_list_buffer == NULL)
+		prerror(PREFIX "ERROR: Unable to allocate loc_code_list_buffer!\n");
+
 	prlog(PR_TRACE, "Init completed\n");
 
 	/* Get System attention indicator state */
