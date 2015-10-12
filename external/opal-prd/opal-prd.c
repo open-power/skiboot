@@ -631,7 +631,7 @@ int hservice_memory_error(uint64_t i_start_addr, uint64_t i_endAddr,
 	return 0;
 }
 
-void hservices_init(struct opal_prd_ctx *ctx, void *code)
+int hservices_init(struct opal_prd_ctx *ctx, void *code)
 {
 	uint64_t *s, *d;
 	int i, sz;
@@ -644,12 +644,19 @@ void hservices_init(struct opal_prd_ctx *ctx, void *code)
 	hbrt_entry.addr = (void *)htobe64((unsigned long)code + 0x100);
 	hbrt_entry.toc = 0; /* No toc for init entry point */
 
-	if (memcmp(code, "HBRTVERS", 8) != 0)
+	if (memcmp(code, "HBRTVERS", 8) != 0) {
 		pr_log(LOG_ERR, "IMAGE: Bad signature for "
 				"ibm,hbrt-code-image! exiting");
+		return -1;
+	}
 
 	pr_debug("IMAGE: calling ibm,hbrt_init()");
 	hservice_runtime = call_hbrt_init(&hinterface);
+	if (!hservice_runtime) {
+		pr_log(LOG_ERR, "IMAGE: hbrt_init failed, exiting");
+		return -1;
+	}
+
 	pr_log(LOG_NOTICE, "IMAGE: hbrt_init complete, version %016lx",
 			hservice_runtime->interface_version);
 
@@ -659,6 +666,8 @@ void hservices_init(struct opal_prd_ctx *ctx, void *code)
 	/* Byte swap the function pointers */
 	for (i = 0; i < sz; i++)
 		d[i] = be64toh(s[i]);
+
+	return 0;
 }
 
 static void fixup_hinterface_table(void)
@@ -1556,7 +1565,11 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	ipmi_init(ctx);
 
 	pr_debug("HBRT: calling hservices_init");
-	hservices_init(ctx, ctx->code_addr);
+	rc = hservices_init(ctx, ctx->code_addr);
+	if (rc) {
+		pr_log(LOG_ERR, "HBRT: Can't initiliase HBRT");
+		goto out_close;
+	}
 	pr_debug("HBRT: hservices_init done");
 
 	/* Test a scom */
