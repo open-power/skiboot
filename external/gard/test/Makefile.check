@@ -1,0 +1,16 @@
+# -*-Makefile-*-
+
+check: check-gard
+
+#Makefile knows to build it before checking
+check-gard:
+	@make CROSS_COMPILE='' -C external/gard/ check
+
+.PHONY: check-gard
+
+clean: gard-test-clean
+
+gard-test-clean:
+	@make -C external/gard clean
+
+.PHONY: gard-test-clean

@@ -26,12 +26,16 @@ all: $(EXE)
 $(EXE): $(OBJS)
 	$(LINK.o) -o $@ $^
 
+check: all
+	@ln -sf ../../test/test.sh test/test.sh
+	@test/test-gard
+
 install: all
 	install -D gard $(DESTDIR)$(sbindir)/opal-gard
 	install -D -m 0644 opal-gard.1 $(DESTDIR)$(mandir)/man1/opal-gard.1
 
 clean:
-	rm -f $(OBJS) $(EXE) *.d
+	rm -f $(OBJS) $(EXE) *.d test/test.sh
 
 distclean: clean
 

@@ -1,0 +1,10 @@
+#! /bin/sh
+
+run_binary "./gard"
+if [ "$?" -ne 1 ] ; then
+	fail_test
+fi
+
+diff_with_result
+
+pass_test
