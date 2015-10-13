@@ -1884,7 +1884,7 @@ void fsp_led_init(void)
 
 	loc_code_list_buffer = memalign(TCE_PSIZE, PSI_DMA_LOC_COD_BUF_SZ);
 	if (loc_code_list_buffer == NULL)
-		prerror(PREFIX "ERROR: Unable to allocate loc_code_list_buffer!\n");
+		prerror("ERROR: Unable to allocate loc_code_list_buffer!\n");
 
 	prlog(PR_TRACE, "Init completed\n");
 
