@@ -54,7 +54,7 @@ static const struct slot_table_entry firestone_plx_slots[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(1,0),
-		.name = "Slot 3",
+		.name = "Slot3",
 	},
 	{
 		.etype = st_builtin_dev,
