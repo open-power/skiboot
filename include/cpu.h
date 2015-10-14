@@ -113,6 +113,7 @@ static inline void __nomcount cpu_relax(void)
 		     "nop; nop; nop; nop;\n"
 		     "nop; nop; nop; nop;\n");
 	smt_medium();
+	barrier();
 }
 
 /* Initialize CPUs */
