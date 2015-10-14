@@ -1151,6 +1151,8 @@ static void pci_add_slot_properties(struct phb *phb, struct pci_slot_info *info,
 	char loc_code[LOC_CODE_SIZE];
 	size_t base_loc_code_len = 0, slot_label_len = 0;
 
+	loc_code[0] = '\0';
+
 	if (phb->base_loc_code) {
 		base_loc_code_len = strlen(phb->base_loc_code);
 		strcpy(loc_code, phb->base_loc_code);
