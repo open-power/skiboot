@@ -3359,15 +3359,6 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 		return OPAL_BUSY;
 	}
 
-	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
-	if ((reg & PPC_BIT(5))) {
-		PHBERR(p, "CAPP: recovery failed (%016llx)\n", reg);
-		return OPAL_HARDWARE;
-	} else if ((reg & PPC_BIT(0)) && (!(reg & PPC_BIT(1)))) {
-		PHBDBG(p, "CAPP: recovery in progress\n");
-		return OPAL_BUSY;
-	}
-
 	if (mode == OPAL_PHB_CAPI_MODE_PCIE)
 		return OPAL_UNSUPPORTED;
 
