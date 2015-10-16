@@ -202,6 +202,7 @@ extern void probe_p7ioc(void);
 extern void probe_phb3(void);
 extern int phb3_preload_capp_ucode(void);
 extern void phb3_preload_vpd(void);
+extern void probe_npu(void);
 extern void uart_init(bool enable_interrupt);
 extern void homer_init(void);
 extern void occ_pstates_init(void);
@@ -264,4 +265,3 @@ extern bool slw_timer_ok(void);
 extern void fake_rtc_init(void);
 
 #endif /* __SKIBOOT_H */
-

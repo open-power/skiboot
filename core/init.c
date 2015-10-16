@@ -740,6 +740,9 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	/* Probe PHB3 on P8 */
 	probe_phb3();
 
+	/* Probe NPUs */
+	probe_npu();
+
 	/* Initialize PCI */
 	pci_init_slots();
 
