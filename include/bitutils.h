@@ -21,14 +21,17 @@
 #ifdef __ASSEMBLY__
 #define PPC_BIT(bit)		(0x8000000000000000 >> (bit))
 #define PPC_BIT32(bit)		(0x80000000 >> (bit))
+#define PPC_BIT16(bit)		(0x8000 >> (bit))
 #define PPC_BIT8(bit)		(0x80 >> (bit))
 #else
 #define PPC_BIT(bit)		(0x8000000000000000UL >> (bit))
 #define PPC_BIT32(bit)		(0x80000000UL >> (bit))
+#define PPC_BIT16(bit)		(0x8000UL >> (bit))
 #define PPC_BIT8(bit)		(0x80UL >> (bit))
 #endif
 #define PPC_BITMASK(bs,be)	((PPC_BIT(bs) - PPC_BIT(be)) | PPC_BIT(bs))
 #define PPC_BITMASK32(bs,be)	((PPC_BIT32(bs) - PPC_BIT32(be))|PPC_BIT32(bs))
+#define PPC_BITMASK16(bs,be)	((PPC_BIT16(bs) - PPC_BIT16(be))|PPC_BIT16(bs))
 #define PPC_BITLSHIFT(be)	(63 - (be))
 #define PPC_BITLSHIFT32(be)	(31 - (be))
 
