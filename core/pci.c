@@ -1342,7 +1342,7 @@ static void pci_add_one_node(struct phb *phb, struct pci_device *pd,
 	else
 		snprintf(name, MAX_NAME - 1, "%s@%x",
 			 cname, (pd->bdfn >> 3) & 0x1f);
-	np = dt_new(parent_node, name);
+	pd->dn = np = dt_new(parent_node, name);
 
 	/* XXX FIXME: make proper "compatible" properties */
 	if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false)) {
@@ -1386,9 +1386,12 @@ static void pci_add_one_node(struct phb *phb, struct pci_device *pd,
 	reg[1] = reg[2] = reg[3] = reg[4] = 0;
 	dt_add_property(np, "reg", reg, sizeof(reg));
 
+	/* Device node fixup */
+	if (phb->ops->device_node_fixup)
+		phb->ops->device_node_fixup(phb, pd);
+
 	/* Print summary info about the device */
 	pci_print_summary_line(phb, pd, np, rev_class, cname);
-
 	if (!pd->is_bridge)
 		return;
 

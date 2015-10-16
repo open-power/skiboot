@@ -149,6 +149,7 @@ struct pci_device {
 	uint32_t		pcrf_end;
 	struct list_head	pcrf;
 
+	struct dt_node		*dn;
 	struct pci_slot_info    *slot_info;
 	struct pci_device	*parent;
 	struct list_head	children;
@@ -198,14 +199,14 @@ struct pci_lsi_state {
 #define MAX_INT_SIZE	2
 	uint32_t int_size;			/* #cells */
 	uint32_t int_val[4][MAX_INT_SIZE];	/* INTA...INTD */
-	uint32_t int_parent[4];	
+	uint32_t int_parent[4];
 };
 
 /*
  * NOTE: All PCI functions return negative OPAL error codes
  *
  * In addition, some functions may return a positive timeout
- * value or some other state information, see the description	
+ * value or some other state information, see the description
  * of individual functions. If nothing is specified, it's
  * just an error code or 0 (success).
  *
@@ -264,6 +265,12 @@ struct phb_ops {
 	 * for bridge ports etc...
 	 */
 	void (*device_init)(struct phb *phb, struct pci_device *device);
+
+	/*
+	 * Device node fixup is called when the PCI device node is being
+	 * populated
+	 */
+	void (*device_node_fixup)(struct phb *phb, struct pci_device *pd);
 
 	/*
 	 * EEH methods
