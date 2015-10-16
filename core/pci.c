@@ -161,6 +161,11 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 		goto fail;
 	}
 	pd->bdfn = bdfn;
+	pd->vdid = vdid;
+	pci_cfg_read32(phb, bdfn, PCI_CFG_SUBSYS_VENDOR_ID, &pd->sub_vdid);
+	pci_cfg_read32(phb, bdfn, PCI_CFG_REV_ID, &pd->class);
+	pd->class >>= 8;
+
 	pd->parent = parent;
 	list_head_init(&pd->pcrf);
 	list_head_init(&pd->children);

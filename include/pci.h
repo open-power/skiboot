@@ -138,6 +138,9 @@ struct pci_device {
 	uint8_t			subordinate_bus;
 	uint32_t		scan_map;
 
+	uint32_t		vdid;
+	uint32_t		sub_vdid;
+	uint32_t		class;
 	uint64_t		cap_list;
 	uint32_t		cap[64];
 	uint32_t		mps;		/* Max payload size capability */
