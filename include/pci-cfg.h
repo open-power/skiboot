@@ -113,6 +113,9 @@
 #define   PCICAP_SUBSYS_VID_VENDOR	4
 #define   PCICAP_SUBSYS_VID_DEVICE	6
 
+/* Vendor specific capability */
+#define PCI_CFG_CAP_ID_VENDOR		9
+
 /* PCI Express capability */
 #define PCI_CFG_CAP_ID_EXP	 	0x10
 /* PCI Express capability fields */
@@ -482,5 +485,15 @@
 #define PCIECAP_AER_TLP_PFX_LOG1	0x3c
 #define PCIECAP_AER_TLP_PFX_LOG2	0x40
 #define PCIECAP_AER_TLP_PFX_LOG3	0x44
+
+/* Vendor specific extend capability */
+#define PCIECAP_ID_VNDR			0x0b
+#define PCIECAP_VNDR_HDR		0x04
+#define   PCIECAP_VNDR_HDR_ID_MASK	0x0000ffff
+#define   PCIECAP_VNDR_HDR_ID_LSH	0
+#define   PCIECAP_VNDR_HDR_REV_MASK	0x000f0000
+#define   PCIECAP_VNDR_HDR_REV_LSH	16
+#define   PCIECAP_VNDR_HDR_LEN_MASK	0xfff00000
+#define   PCIECAP_VNDR_HDR_LEN_LSH	20
 
 #endif /* __PCI_CFG_H */
