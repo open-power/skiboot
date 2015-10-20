@@ -160,6 +160,7 @@ void add_opal_node(void)
 	add_opal_firmware_node();
 	add_associativity_ref_point();
 	memcons_add_properties();
+	add_cpu_idle_state_properties();
 }
 
 static struct lock evt_lock = LOCK_UNLOCKED;

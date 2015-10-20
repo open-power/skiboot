@@ -207,6 +207,7 @@ extern void uart_init(bool enable_interrupt);
 extern void homer_init(void);
 extern void occ_pstates_init(void);
 extern void slw_init(void);
+extern void add_cpu_idle_state_properties(void);
 extern void occ_fsp_init(void);
 extern void lpc_rtc_init(void);
 

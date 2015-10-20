@@ -507,7 +507,7 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 };
 
 /* Add device tree properties to describe idle states */
-static void add_cpu_idle_state_properties(void)
+void add_cpu_idle_state_properties(void)
 {
 	struct dt_node *power_mgt;
 	struct cpu_idle_states *states;
@@ -1233,8 +1233,6 @@ void slw_init(void)
 
 	for_each_chip(chip)
 		slw_init_chip(chip);
-
-	add_cpu_idle_state_properties();
 
 	slw_init_timer();
 }
