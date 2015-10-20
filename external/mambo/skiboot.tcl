@@ -147,6 +147,8 @@ mysim of addprop $cpus_node int "#size-cells" 0
 
 set cpu0_node [mysim of find_device "/cpus/PowerPC@0"]
 mysim of addprop $cpu0_node int "ibm,chip-id" 0
+set reg  [list 0x0000001c00000028 0xffffffffffffffff]
+mysim of addprop $cpu0_node array64 "ibm,processor-segment-sizes" reg
 
 set mem0_node [mysim of find_device "/memory@0"]
 mysim of addprop $mem0_node int "ibm,chip-id" 0
