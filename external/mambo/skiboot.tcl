@@ -164,6 +164,17 @@ lappend compat "ibm,power8-xscom"
 set compat [of::encode_compat $compat]
 mysim of addprop $xscom_node byte_array "compatible" $compat
 
+if { [info exists env(SKIBOOT_INITRD)] } {
+    set cpio_file $env(SKIBOOT_INITRD)
+    set chosen_node [mysim of find_device /chosen]
+    set cpio_size [file size $cpio_file]
+    set cpio_start 0x10000000
+    set cpio_end [expr $cpio_start + $cpio_size]
+    mysim of addprop $chosen_node int "linux,initrd-start" $cpio_start
+    mysim of addprop $chosen_node int "linux,initrd-end"   $cpio_end
+    mysim mcm 0 memory fread $cpio_start $cpio_size $cpio_file
+}
+
 # Flatten it
 
 epapr::of2dtb mysim $mconf(epapr_dt_addr) 
