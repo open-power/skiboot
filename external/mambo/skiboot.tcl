@@ -203,3 +203,7 @@ for { set i 0 } { $i < $mconf(threads) } { incr i } {
 
 # Turbo mode & run
 mysim mode turbo
+
+if { [info exists env(SKIBOOT_AUTORUN)] } {
+    mysim go
+}
