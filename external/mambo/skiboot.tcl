@@ -81,6 +81,10 @@ if { $env(SIMHOST) == "pegasus" } {
     myconf config processor/initial/PVR 0x4b0201
 }
 
+if { [info exists env(SKIBOOT_SIMCONF)] } {
+    source $env(SKIBOOT_SIMCONF)
+}
+
 define machine myconf mysim
 
 #
