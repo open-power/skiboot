@@ -61,8 +61,10 @@ mconfig tap_base MAMBO_NET_TAP_BASE 0
 #
 # Create machine config
 #
-
-define dup pegasus myconf
+if { ! [info exists env(SIMHOST)] } {
+    set env(SIMHOST) "pegasus"
+}
+define dup $env(SIMHOST) myconf
 myconf config processor/number_of_threads $mconf(threads)
 myconf config memory_size $mconf(memory)
 myconf config processor_option/ATTN_STOP true
