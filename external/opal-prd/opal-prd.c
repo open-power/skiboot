@@ -1499,6 +1499,8 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	/* log to syslog */
 	pr_log_daemon_init();
 
+	pr_debug("CTRL: Starting PRD daemon\n");
+
 	ctx->fd = -1;
 	ctx->socket = -1;
 
@@ -1560,6 +1562,8 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 			pr_log(LOG_ERR, "PNOR: Failed to open pnor: %m");
 			goto out_close;
 		}
+	} else {
+		pr_log(LOG_WARNING,"PNOR: No path provided, access will fail\n");
 	}
 
 	ipmi_init(ctx);
@@ -1585,6 +1589,7 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	rc = 0;
 
 out_close:
+	pr_debug("CTRL: stopping PRD daemon\n");
 	pnor_close(&ctx->pnor);
 	if (ctx->fd != -1)
 		close(ctx->fd);
