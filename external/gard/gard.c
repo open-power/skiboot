@@ -741,7 +741,7 @@ int main(int argc, char **argv)
 
 	rc = file_init_path(filename, NULL, &(ctx->bl));
 	if (rc)
-		return EXIT_FAILURE;
+		err(EXIT_FAILURE, "Can't open %s", filename);
 
 	rc = blocklevel_get_info(ctx->bl, NULL, &(ctx->f_size), NULL);
 	if (rc)
