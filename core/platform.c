@@ -37,6 +37,8 @@ static int64_t opal_cec_power_down(uint64_t request)
 {
 	printf("OPAL: Shutdown request type 0x%llx...\n", request);
 
+	flush_console_driver();
+
 	if (platform.cec_power_down)
 		return platform.cec_power_down(request);
 
@@ -47,6 +49,8 @@ opal_call(OPAL_CEC_POWER_DOWN, opal_cec_power_down, 1);
 static int64_t opal_cec_reboot(void)
 {
 	printf("OPAL: Reboot request...\n");
+
+	flush_console_driver();
 
 #ifdef ENABLE_FAST_RESET
 	/* Try a fast reset first */

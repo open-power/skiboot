@@ -51,6 +51,7 @@ struct con_ops {
 	size_t (*write)(const char *buf, size_t len);
 	size_t (*read)(char *buf, size_t len);
 	bool (*poll_read)(void);
+	void (*flush)(void);
 };
 
 extern struct lock con_lock;
@@ -60,6 +61,8 @@ extern void force_dummy_console(void);
 extern bool flush_console(void);
 extern bool __flush_console(bool flush_to_drivers);
 extern void set_console(struct con_ops *driver);
+
+extern void flush_console_driver(void);
 
 extern int mambo_read(void);
 extern void mambo_write(const char *buf, size_t count);

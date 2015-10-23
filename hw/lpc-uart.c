@@ -156,8 +156,11 @@ static size_t uart_con_write(const char *buf, size_t len)
 	return written;
 }
 
+static void uart_con_flush_all(void);
+
 static struct con_ops uart_con_driver = {
-	.write = uart_con_write
+	.write = uart_con_write,
+	.flush = uart_con_flush_all
 };
 
 /*
@@ -373,6 +376,15 @@ static void uart_irq(uint32_t chip_id __unused, uint32_t irq_mask __unused)
 		irq_ok = true;
 	}
 	__uart_do_poll(TRACE_UART_CTX_IRQ);
+}
+
+/*
+ * Flush the entire buffer all at once
+ */
+static void uart_con_flush_all(void)
+{
+	while(out_buf_prod != out_buf_cons)
+		uart_flush_out();
 }
 
 /*
