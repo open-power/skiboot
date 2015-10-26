@@ -1,12 +1,15 @@
-check: boot-check
+check: boot-check qemu-boot-check
 
 boot-check: skiboot.lid
-	./test/run_boot_test.sh
+	./test/run_mambo_boot_test.sh
+
+qemu-boot-check: skiboot.lid
+	./test/run_qemu_boot_test.sh
 
 OP_BUILD_BOOT_CHECK=op-build-v1.0 op-build-v1.1 op-build-v1.2 op-build-v1.2.1
 
 boot-check-%: skiboot.lid skiboot.map
-	SKIBOOT_MEM_DUMP=skiboot-$(@:boot-check-%=%).dump SKIBOOT_ZIMAGE=`pwd`/opal-ci/images/$(@:boot-check-%=%)/zImage.epapr ./test/run_boot_test.sh
+	SKIBOOT_MEM_DUMP=skiboot-$(@:boot-check-%=%).dump SKIBOOT_ZIMAGE=`pwd`/opal-ci/images/$(@:boot-check-%=%)/zImage.epapr ./test/run_mambo_boot_test.sh
 
 boot-tests: boot-check $(OP_BUILD_BOOT_CHECK:%=boot-check-%)
 

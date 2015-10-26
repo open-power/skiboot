@@ -10,6 +10,7 @@ before_install:
     - sudo tar -C /opt/cross -xvf x86_64-gcc-4.8.0-nolibc_powerpc64-linux.tar.xz
     - wget ftp://public.dhe.ibm.com/software/server/powerfuncsim/p8/packages/v1.0-2/systemsim-p8_1.0-2_amd64.deb
     - sudo dpkg -i systemsim-p8_1.0-2_amd64.deb
+    - ./opal-ci/install-deps-qemu-powernv.sh
 
 env:
     global:
@@ -20,6 +21,7 @@ env:
         - secure: "MpNEGFa1VrF/vsQq24n5UgfRbz1wVC6B8mubFnyK4gX0IuQ9xhWuTzMLUQF9UJxe5jnC2DTmVUvYTYN/hggw+PpYwbOOAE0QGR5pmPHA4PSRmc5pxt1q18/sv7EPFw66GFyWJq94nWjpigyKQ8KGtA67j1xFqrDoS43OA76WZgo="
 
 script:
+    - (cd opal-ci; ./build-qemu-powernv.sh)
     - make -j4 all check ; (make clean; cd external/gard && make) ; (make clean; cd external/pflash && make)
     - make clean && SKIBOOT_GCOV=1 make && SKIBOOT_GCOV=1 make check
     - make clean && rm -rf builddir && mkdir builddir && make SRC=`pwd` -f ../Makefile -C builddir
