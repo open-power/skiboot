@@ -277,6 +277,7 @@ void file_exit(struct blocklevel_device *bl)
 {
 	struct file_data *file_data;
 	if (bl) {
+		free(bl->ecc_prot.prot);
 		file_data = container_of(bl, struct file_data, bl);
 		free(file_data->name);
 		free(file_data);
