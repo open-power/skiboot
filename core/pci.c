@@ -1386,10 +1386,6 @@ static void pci_add_one_node(struct phb *phb, struct pci_device *pd,
 	reg[1] = reg[2] = reg[3] = reg[4] = 0;
 	dt_add_property(np, "reg", reg, sizeof(reg));
 
-	/* Device node fixup */
-	if (phb->ops->device_node_fixup)
-		phb->ops->device_node_fixup(phb, pd);
-
 	/* Print summary info about the device */
 	pci_print_summary_line(phb, pd, np, rev_class, cname);
 	if (!pd->is_bridge)
@@ -1441,6 +1437,17 @@ static void pci_add_nodes(struct phb *phb)
 	/* Add all child devices */
 	list_for_each(&phb->devices, pd, link)
 		pci_add_one_node(phb, pd, phb->dt_node, lstate, 0);
+}
+
+static void pci_fixup_nodes(struct phb *phb)
+{
+	struct pci_device *pd;
+
+	if (!phb->ops->device_node_fixup)
+		return;
+
+	list_for_each(&phb->devices, pd, link)
+		phb->ops->device_node_fixup(phb, pd);
 }
 
 static void __pci_reset(struct list_head *list)
@@ -1522,6 +1529,14 @@ void pci_init_slots(void)
 		if (!phbs[i])
 			continue;
 		pci_add_nodes(phbs[i]);
+	}
+
+	/* Do device node fixups now that all the devices have been
+	 * added to the device tree. */
+	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
+		if (!phbs[i])
+			continue;
+		pci_fixup_nodes(phbs[i]);
 	}
 }
 
