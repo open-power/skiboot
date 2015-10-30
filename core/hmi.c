@@ -406,6 +406,17 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 			hmi_evt->u.xstop_error.xstop_reason
 						|= nx_pbi_xstop_bits[i].reason;
 
+	/*
+	 * Set NXDMAENGFIR[38] to signal PRD that service action is required.
+	 * Without this inject, PRD will not be able to do NX unit checkstop
+	 * error analysis. NXDMAENGFIR[38] is a spare bit and used to report
+	 * a software initiated attention.
+	 *
+	 * The behavior of this bit and all FIR bits are documented in
+	 * RAS spreadsheet.
+	 */
+	xscom_write(flat_chip_id, NX_DMA_ENGINE_FIR, PPC_BIT(38));
+
 	/* Send an HMI event. */
 	queue_hmi_event(hmi_evt, 0);
 	*event_generated = 1;
