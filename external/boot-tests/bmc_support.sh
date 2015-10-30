@@ -37,6 +37,7 @@ function poweroff {
 function flash {
 	if [ ! -z "$PFLASH_TO_COPY" ]; then
 		remotecp $PFLASH_TO_COPY $target /tmp/pflash
+		$SSHCMD chmod +x /tmp/pflash
 		PFLASH_BINARY=/tmp/pflash
 	fi
 	if [ ! -z "$PNOR" ]; then
