@@ -217,23 +217,6 @@ static bool slw_general_init(struct proc_chip *chip, struct cpu_thread *c)
 
 	prlog(PR_TRACE, "SLW: PMGP0 read   0x%016llx\n", tmp);
 
-
-	/* Set CORE and ECO PFET Vret to select zero */
-	rc = xscom_write(chip->id,
-			 XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_CORE_PFET_VRET), 0);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_SLW_INIT),
-			"SLW: Failed to write PM_CORE_PFET_VRET\n");
-		return false;
-	}
-	rc = xscom_write(chip->id,
-			 XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_CORE_ECO_VRET), 0);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_SLW_INIT),
-			"SLW: Failed to write PM_CORE_ECO_VRET\n");
-		return false;
-	}
-
 	return true;
 }
 
