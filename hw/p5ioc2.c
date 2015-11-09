@@ -77,14 +77,14 @@ static void p5ioc2_inits(struct p5ioc2 *ioc)
 	 */
 	/* mask off interrupt presentation timeout in FIRMC */
 	out_be64(ioc->regs + (P5IOC2_FIRMC | P5IOC2_REG_OR),
-		 0x0000080000000000);
+		 0x0000080000000000UL);
 
 	/* turn off display alter mode */
 	out_be64(ioc->regs + (P5IOC2_CTL | P5IOC2_REG_AND),
-		 0xffffff7fffffffff);
+		 0xffffff7fffffffffUL);
 
 	/* setup hub and clustering interrupts BUIDs to 1 and 2 */
-	out_be64(ioc->regs + P5IOC2_SBUID, 0x0001000200000000);
+	out_be64(ioc->regs + P5IOC2_SBUID, 0x0001000200000000UL);
 
 	/* setup old style MSI BUID (should be unused but set it up anyway) */
 	out_be32(ioc->regs + P5IOC2_BUCO, 0xf);
@@ -182,7 +182,7 @@ static void p5ioc2_ca_init(struct p5ioc2 *ioc, int ca)
 	 */
 	//out_be64(regs + CA_CCR, 0x5045DDDED2000000);
 	// disable memlimit:
-	out_be64(regs + CA_CCR, 0x5005DDDED2000000);
+	out_be64(regs + CA_CCR, 0x5005DDDED2000000UL);
 
 	/* The system memory base/limit etc... setup will be done when the
 	 * user enables TCE via OPAL calls
