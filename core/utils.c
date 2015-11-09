@@ -22,7 +22,8 @@
 #include <cpu.h>
 #include <stack.h>
 
-unsigned long __stack_chk_guard = 0xdeadf00dbaad300d;
+extern unsigned long __stack_chk_guard;
+unsigned long __stack_chk_guard = 0xdeadf00dbaad300dULL;
 
 void __noreturn assert_fail(const char *msg)
 {
