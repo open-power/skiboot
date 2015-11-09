@@ -556,7 +556,7 @@ struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 		first = false;
 	}
 
-	entry = slca_get_entry(fru_id->slca_index);
+	entry = slca_get_entry(be16_to_cpu(fru_id->slca_index));
 	if (!entry)
 		return NULL;
 
