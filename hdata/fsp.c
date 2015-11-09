@@ -65,8 +65,8 @@ static struct dt_node *fsp_create_node(const void *spss, int i,
 				"ibm,fsp2");
 		dt_add_property_cells(node, "reg-offset", 0xb0011000);
 	}
-	dt_add_property_cells(node, "hw-version", sp_impl->hw_version);
-	dt_add_property_cells(node, "sw-version", sp_impl->sw_version);
+	dt_add_property_cells(node, "hw-version", be16_to_cpu(sp_impl->hw_version));
+	dt_add_property_cells(node, "sw-version", be16_to_cpu(sp_impl->sw_version));
 
 	if (be16_to_cpu(sp_impl->func_flags) & SPSS_SP_IMPL_FLAGS_PRIMARY)
 		dt_add_property(node, "primary", NULL, 0);
@@ -101,7 +101,7 @@ static uint32_t fsp_create_link(const struct spss_iopath *iopath, int index,
 	prlog(PR_DEBUG, "FSP #%d: IO PATH %d is %s PSI Link, GXHB at %llx\n",
 	      fsp_index, index, ststr, (long long)be64_to_cpu(iopath->psi.gxhb_base));
 
-	chip_id = pcid_to_chip_id(iopath->psi.proc_chip_id);
+	chip_id = pcid_to_chip_id(be32_to_cpu(iopath->psi.proc_chip_id));
 	node = dt_find_compatible_node_on_chip(dt_root, NULL, "ibm,psihb-x",
 					       chip_id);
 	if (!node) {
