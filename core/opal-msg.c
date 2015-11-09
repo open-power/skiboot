@@ -55,7 +55,7 @@ int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
 
 	entry->consumed = consumed;
 	entry->data = data;
-	entry->msg.msg_type = msg_type;
+	entry->msg.msg_type = cpu_to_be32(msg_type);
 
 	if (num_params > ARRAY_SIZE(entry->msg.params)) {
 		prerror("Discarding extra parameters\n");
@@ -117,7 +117,7 @@ static int64_t opal_check_completion(uint64_t *buffer, uint64_t size,
 	lock(&opal_msg_lock);
 	list_for_each_safe(&msg_pending_list, entry, next_entry, link) {
 		if (entry->msg.msg_type == OPAL_MSG_ASYNC_COMP &&
-				entry->msg.params[0] == token) {
+		    be64_to_cpu(entry->msg.params[0]) == token) {
 			list_del(&entry->link);
 			callback = entry->consumed;
 			data = entry->data;
