@@ -422,7 +422,7 @@ int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id)
 	 * something up (Murano DD2.1)
 	 */
 	if (chip_quirk(QUIRK_NO_F000F))
-		val = 0x221EF04980000000;
+		val = 0x221EF04980000000UL;
 	else
 		rc = xscom_read(partid, 0xf000f, &val);
 
