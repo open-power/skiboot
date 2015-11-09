@@ -81,7 +81,7 @@ void opal_trace_entry(struct stack_frame *eframe);
 void opal_trace_entry(struct stack_frame *eframe)
 {
 	union trace t;
-	unsigned nargs;
+	unsigned nargs, i;
 
 	if (this_cpu()->pir != mfspr(SPR_PIR)) {
 		printf("CPU MISMATCH ! PIR=%04lx cpu @%p -> pir=%04x\n",
@@ -93,10 +93,11 @@ void opal_trace_entry(struct stack_frame *eframe)
 	else
 		nargs = opal_num_args[eframe->gpr[0]];
 
-	t.opal.token = eframe->gpr[0];
-	t.opal.lr = eframe->lr;
-	t.opal.sp = eframe->gpr[1];
-	memcpy(t.opal.r3_to_11, &eframe->gpr[3], nargs*sizeof(u64));
+	t.opal.token = cpu_to_be64(eframe->gpr[0]);
+	t.opal.lr = cpu_to_be64(eframe->lr);
+	t.opal.sp = cpu_to_be64(eframe->gpr[1]);
+	for(i=0; i<nargs; i++)
+		t.opal.r3_to_11[i] = cpu_to_be64(eframe->gpr[3+i]);
 
 	trace_add(&t, TRACE_OPAL, offsetof(struct trace_opal, r3_to_11[nargs]));
 }
