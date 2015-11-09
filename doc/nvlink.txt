@@ -60,14 +60,20 @@ Vendor Specific Capabilities
 ----------------------------
 
 +-----------------+----------------+----------------+----------------+
-|     Reserved    |   Cap Length   |  Next Cap Ptr  |  Cap ID (0x09) |
+|  Version (0x02) |   Cap Length   |  Next Cap Ptr  |  Cap ID (0x09) |
 +-----------------+----------------+----------------+----------------+
 |                      Procedure Status Register                     |
 +--------------------------------------------------------------------+
 |                      Procedure Control Register                    |
 +---------------------------------------------------+----------------+
-|                      Reserved                     |   Link Number  |
+|             Reserved            |   PCI Dev Flag  |   Link Number  |
 +---------------------------------------------------+----------------+
+
+Version
+
+   This refers to the version of the NPU config space.  Used by device
+   drivers to determine which fields of the config space they can
+   expect to be available.
 
 Procedure Control Register
 
@@ -120,6 +126,11 @@ Procedure Status Register
        2 - Permanent failure. Procedure will never complete successfully.
        3 - Procedure aborted.
        4 - Unsupported procedure.
+
+PCI Device Flag
+
+   Bit 0 is set only if an actual PCI device was bound to this
+   emulated device.
 
 Link Number
 

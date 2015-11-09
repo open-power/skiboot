@@ -111,6 +111,15 @@
 static struct npu_dev_cap *npu_dev_find_capability(struct npu_dev *dev,
 						   uint16_t id);
 
+#define OPAL_NPU_VERSION          0x02
+
+#define PCIE_CAP_START	          0x40
+#define PCIE_CAP_END	          0x80
+#define VENDOR_CAP_START          0x80
+#define VENDOR_CAP_END	          0x90
+
+#define VENDOR_CAP_PCI_DEV_OFFSET 0x0d
+
 /* PCI config raw accessors */
 #define NPU_DEV_CFG_NORMAL_RD(d, o, s, v)	\
 	npu_dev_cfg_read_raw(d, NPU_DEV_CFG_NORMAL, o, s, v)
@@ -546,6 +555,9 @@ static void npu_dev_bind_pci_dev(struct npu_dev *dev)
 		dev->pd = pci_walk_dev(phb, __npu_dev_bind_pci_dev, dev);
 		if (dev->pd) {
 			dev->phb = phb;
+			/* Found the device, set the bit in config space */
+			NPU_DEV_CFG_INIT_RO(dev, VENDOR_CAP_START +
+				VENDOR_CAP_PCI_DEV_OFFSET, 1, 0x01);
 			return;
 		}
 	}
@@ -1194,11 +1206,12 @@ static void npu_dev_populate_vendor_cap(struct npu_dev_cap *cap)
 {
 	struct npu_dev *dev = cap->dev;
 	uint32_t offset = cap->start;
-	uint32_t val;
+	uint8_t val;
 
-	/* Add version and length information */
-	val = (cap->end - cap->start) | 0x1 << 8;
-	NPU_DEV_CFG_INIT_RO(dev, offset + 2, 4, val);
+	/* Add length and version information */
+	val = cap->end - cap->start;
+	NPU_DEV_CFG_INIT_RO(dev, offset + 2, 1, val);
+	NPU_DEV_CFG_INIT_RO(dev, offset + 3, 1, OPAL_NPU_VERSION);
 	offset += 4;
 
 	/* Defaults when the trap can't handle the read/write (eg. due
@@ -1212,7 +1225,7 @@ static void npu_dev_populate_vendor_cap(struct npu_dev_cap *cap)
 			     npu_dev_procedure_write);
 	offset += 8;
 
-	NPU_DEV_CFG_INIT_RO(dev, offset, 4, dev->index);
+	NPU_DEV_CFG_INIT_RO(dev, offset, 1, dev->index);
 }
 
 static void npu_dev_populate_pcie_cap(struct npu_dev_cap *cap)
@@ -1229,7 +1242,7 @@ static void npu_dev_populate_pcie_cap(struct npu_dev_cap *cap)
 	}
 
 	/* Sanity check on spanned registers */
-	if ((cap->end - cap->start) < 0x40) {
+	if ((cap->end - cap->start) < PCIE_CAP_START) {
 		prlog(PR_NOTICE, "%s: Invalid reg region [%x, %x] for cap %d\n",
 		      __func__, cap->start, cap->end, cap->id);
 		return;
@@ -1352,11 +1365,13 @@ static void npu_dev_create_capabilities(struct npu_dev *dev)
 
 	/* PCI express capability */
 	npu_dev_create_capability(dev, npu_dev_populate_pcie_cap,
-				  PCI_CFG_CAP_ID_EXP, 0x40, 0x80);
+				  PCI_CFG_CAP_ID_EXP, PCIE_CAP_START,
+				  PCIE_CAP_END);
 
 	/* Vendor specific capability */
 	npu_dev_create_capability(dev, npu_dev_populate_vendor_cap,
-				  PCI_CFG_CAP_ID_VENDOR, 0x80, 0x90);
+				  PCI_CFG_CAP_ID_VENDOR, VENDOR_CAP_START,
+				  VENDOR_CAP_END);
 }
 
 static void npu_dev_create_cfg(struct npu_dev *dev)
