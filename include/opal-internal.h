@@ -59,7 +59,7 @@ extern void add_opal_node(void);
 #define opal_register(token, func, nargs)				\
 	__opal_register((token) + 0*sizeof(func(__test_args##nargs)),	\
 			(func), (nargs))
-extern void __opal_register(__be64 token, void *func, unsigned num_args);
+extern void __opal_register(uint64_t token, void *func, unsigned num_args);
 
 /* Warning: no locking at the moment, do at init time only
  *
