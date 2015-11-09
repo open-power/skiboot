@@ -32,11 +32,11 @@ static void io_add_common(struct dt_node *hn, const struct cechub_io_hub *hub)
 {
 	dt_add_property_cells(hn, "#address-cells", 2);
 	dt_add_property_cells(hn, "#size-cells", 2);
-	dt_add_property_cells(hn, "ibm,buid-ext", hub->buid_ext);
+	dt_add_property_cells(hn, "ibm,buid-ext", be32_to_cpu(hub->buid_ext));
 	dt_add_property_cells(hn, "ibm,chip-id",
-			      pcid_to_chip_id(hub->proc_chip_id));
-	dt_add_property_cells(hn, "ibm,gx-index", hub->gx_index);
-	dt_add_property_cells(hn, "revision", hub->ec_level);
+			      pcid_to_chip_id(be32_to_cpu(hub->proc_chip_id)));
+	dt_add_property_cells(hn, "ibm,gx-index", be32_to_cpu(hub->gx_index));
+	dt_add_property_cells(hn, "revision", be32_to_cpu(hub->ec_level));
 
 	/* Instead of exposing the GX BARs as separate ranges as we *should*
 	 * do in an ideal world, we just create a pass-through ranges and
@@ -111,7 +111,7 @@ static void io_get_loc_code(const void *sp_iohubs, struct dt_node *hn, const cha
 		memset(loc_code, 0, sizeof(loc_code));
 
 		/* Find LOC Code from SLCA Index */
-		slca_loc_code = slca_get_loc_code_index(fru_id->slca_index);
+		slca_loc_code = slca_get_loc_code_index(be16_to_cpu(fru_id->slca_index));
 		if (slca_loc_code) {
 			strncpy(loc_code, slca_loc_code, LOC_CODE_SIZE);
 			if (!dt_has_node_property(hn, prop_name, NULL)) {
@@ -634,7 +634,7 @@ static void io_parse_fru(const void *sp_iohubs)
 		prlog(PR_DEBUG, "CEC:   PChip: %d HUB ID: %04x [EC=0x%x]"
 		      " Hub#=%d)\n",
 		      be32_to_cpu(hub->proc_chip_id), hub_id,
-		      be32_to_cpu(hub->ec_level), be32_to_cpu(hub->hub_num));
+		      be32_to_cpu(hub->ec_level), be16_to_cpu(hub->hub_num));
 
 		switch(hub_id) {
 		case CECHUB_HUB_P7IOC:
@@ -705,7 +705,7 @@ void io_parse(void)
 			prerror("CEC: IO-HUB FRU %d, bad ID data\n", i);
 			continue;
 		}
-		type = fru_id_data->card_type;
+		type = be32_to_cpu(fru_id_data->card_type);
 
 		prlog(PR_INFO, "CEC: HUB FRU %d is %s\n",
 		      i, type > 4 ? "Unknown" : typestr[type]);
