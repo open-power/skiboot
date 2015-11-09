@@ -103,7 +103,7 @@ static bool handle_repeat(struct tracebuf *tb, const union trace *trace)
 	rpt->type = TRACE_REPEAT;
 	rpt->len_div_8 = sizeof(*rpt) >> 3;
 	rpt->cpu = trace->hdr.cpu;
-	rpt->prev_len = trace->hdr.len_div_8 << 3;
+	rpt->prev_len = cpu_to_be16(trace->hdr.len_div_8 << 3);
 	rpt->num = cpu_to_be16(1);
 	lwsync(); /* write barrier: complete repeat record before exposing */
 	tb->end = cpu_to_be64(be64_to_cpu(tb->end) + sizeof(*rpt));
