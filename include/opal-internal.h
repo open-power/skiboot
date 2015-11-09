@@ -24,8 +24,8 @@
 /* An opal table entry */
 struct opal_table_entry {
 	void	*func;
-	__be32	token;
-	__be32	nargs;
+	u32	token;
+	u32	nargs;
 };
 
 #define opal_call(__tok, __func, __nargs)				\
