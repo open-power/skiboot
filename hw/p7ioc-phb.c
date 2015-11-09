@@ -77,7 +77,7 @@ static bool p7ioc_phb_fenced(struct p7ioc_phb *p)
 	struct p7ioc *ioc = p->ioc;
 	uint64_t fence, fbits;
 
-	fbits = 0x0003000000000000 >> (p->index * 4);
+	fbits = 0x0003000000000000UL >> (p->index * 4);
 	fence = in_be64(ioc->regs + P7IOC_CHIP_FENCE_SHADOW);
 
 	return (fence & fbits) != 0;
@@ -241,7 +241,7 @@ static int64_t p7ioc_sm_freset(struct p7ioc_phb *p)
 		}
 
 		/* Mask PCIE port interrupts and AER receiver error */
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7E00000000000000);
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7E00000000000000UL);
 		p7ioc_pcicfg_read32(&p->phb, 0,
 			p->aercap + PCIECAP_AER_CE_MASK, &cfg32);
 		cfg32 |= PCIECAP_AER_CE_RECVR_ERR;
@@ -311,9 +311,9 @@ static int64_t p7ioc_sm_freset(struct p7ioc_phb *p)
 			 * interrupts
 			 */
 			out_be64(p->regs + UTL_PCIE_PORT_STATUS,
-				 0x00E0000000000000);
+				 0x00E0000000000000UL);
                         out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,
-				 0xFE65000000000000);
+				 0xFE65000000000000UL);
 
 			/* Clear AER receiver error status */
 			p7ioc_pcicfg_write32(&p->phb, 0,
@@ -448,7 +448,7 @@ static int64_t p7ioc_sm_slot_power_off(struct p7ioc_phb *p)
 		 * PHB slot. Otherwise, it won't take effect. That's the
 		 * similar thing as we did for power-on.
 		 */
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7e00000000000000);
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7e00000000000000UL);
 		reg = in_be64(p->regs + PHB_HOTPLUG_OVERRIDE);
 		reg &= ~(0x8c00000000000000ul);
 		reg |= 0x8400000000000000ul;
@@ -530,7 +530,7 @@ static int64_t p7ioc_sm_slot_power_on(struct p7ioc_phb *p)
 		/* Adjust UTL interrupt settings to disable various
 		 * errors that would interfere with the process
 		 */
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7e00000000000000);
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7e00000000000000UL);
 
 		/* If the power is not on, turn it on now */
 		if (!(reg & PHB_PCIE_SLOTCTL2_PWR_EN_STAT)) {
@@ -699,7 +699,7 @@ static int64_t p7ioc_sm_hot_reset(struct p7ioc_phb *p)
 		}
 
 		/* Mask PCIE port interrupts and AER receiver error */
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7E00000000000000);
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7E00000000000000UL);
 		p7ioc_pcicfg_read32(&p->phb, 0,
 			p->aercap + PCIECAP_AER_CE_MASK, &cfg32);
 		cfg32 |= PCIECAP_AER_CE_RECVR_ERR;
@@ -760,8 +760,8 @@ static int64_t p7ioc_sm_hot_reset(struct p7ioc_phb *p)
 			 * Clear spurious errors and enable PCIE port
 			 * interrupts
 			 */
-			out_be64(p->regs + UTL_PCIE_PORT_STATUS, 0x00E0000000000000);
-			out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0xFE65000000000000);
+			out_be64(p->regs + UTL_PCIE_PORT_STATUS, 0x00E0000000000000UL);
+			out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0xFE65000000000000UL);
 
 			/* Clear AER receiver error status */
 			p7ioc_pcicfg_write32(&p->phb, 0,
@@ -1872,7 +1872,7 @@ static int64_t p7ioc_map_pe_dma_window(struct phb *phb, uint16_t pe_number,
 	case 0x1000000:		/* 16M */
 		tvt1 = SETFIELD(IODA_TVT1_IO_PSIZE, 0ul, 13ul);
 		break;
-	case 0x400000000:	/* 16G */
+	case 0x400000000UL:	/* 16G */
 		tvt1 = SETFIELD(IODA_TVT1_IO_PSIZE, 0ul, 23ul);
 		break;
 	default:
@@ -2344,7 +2344,7 @@ static void p7ioc_phb_init_ioda_cache(struct p7ioc_phb *p)
 	 * last entry is to encompass all RIDs.
 	 */
 	for (i = 0; i < 127; i++)
-		p->peltm_cache[i] = 0x0001f80000000000;
+		p->peltm_cache[i] = 0x0001f80000000000UL;
 	p->peltm_cache[127] = 0x0ul;
 
 	for (i = 0; i < 128; i++) {
@@ -3114,83 +3114,83 @@ static void p7ioc_phb_init_utl(struct p7ioc_phb *p)
 	/* Init_82..84: Clear spurious errors and assign errors to the
 	 * right "interrupt" signal
 	 */
-	out_be64(p->regs + UTL_SYS_BUS_AGENT_STATUS,       0xffffffffffffffff);
-	out_be64(p->regs + UTL_SYS_BUS_AGENT_ERR_SEVERITY, 0x0000000000000000);
-	out_be64(p->regs + UTL_SYS_BUS_AGENT_IRQ_EN,       0xac80000000000000);
+	out_be64(p->regs + UTL_SYS_BUS_AGENT_STATUS,       0xffffffffffffffffUL);
+	out_be64(p->regs + UTL_SYS_BUS_AGENT_ERR_SEVERITY, 0x0000000000000000UL);
+	out_be64(p->regs + UTL_SYS_BUS_AGENT_IRQ_EN,       0xac80000000000000UL);
 
 	/* Init_85..89: Setup buffer allocations */
-	out_be64(p->regs + UTL_OUT_POST_DAT_BUF_ALLOC,     0x0400000000000000);
-	out_be64(p->regs + UTL_IN_POST_HDR_BUF_ALLOC,      0x1000000000000000);
-	out_be64(p->regs + UTL_IN_POST_DAT_BUF_ALLOC,      0x4000000000000000);
-	out_be64(p->regs + UTL_PCIE_TAGS_ALLOC,            0x0800000000000000);
-	out_be64(p->regs + UTL_GBIF_READ_TAGS_ALLOC,       0x0800000000000000);
+	out_be64(p->regs + UTL_OUT_POST_DAT_BUF_ALLOC,     0x0400000000000000UL);
+	out_be64(p->regs + UTL_IN_POST_HDR_BUF_ALLOC,      0x1000000000000000UL);
+	out_be64(p->regs + UTL_IN_POST_DAT_BUF_ALLOC,      0x4000000000000000UL);
+	out_be64(p->regs + UTL_PCIE_TAGS_ALLOC,            0x0800000000000000UL);
+	out_be64(p->regs + UTL_GBIF_READ_TAGS_ALLOC,       0x0800000000000000UL);
 
 	/* Init_90: PCI Express port control */
-	out_be64(p->regs + UTL_PCIE_PORT_CONTROL,          0x8480000000000000);
+	out_be64(p->regs + UTL_PCIE_PORT_CONTROL,          0x8480000000000000UL);
 
 	/* Init_91..93: Clean & setup port errors */
-	out_be64(p->regs + UTL_PCIE_PORT_STATUS,           0xff7fffffffffffff);
-	out_be64(p->regs + UTL_PCIE_PORT_ERROR_SEV,        0x00e0000000000000);
-	out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,           0x7e65000000000000);
+	out_be64(p->regs + UTL_PCIE_PORT_STATUS,           0xff7fffffffffffffUL);
+	out_be64(p->regs + UTL_PCIE_PORT_ERROR_SEV,        0x00e0000000000000UL);
+	out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,           0x7e65000000000000UL);
 
 	/* Init_94 : Cleanup RC errors */
-	out_be64(p->regs + UTL_RC_STATUS,                  0xffffffffffffffff);
+	out_be64(p->regs + UTL_RC_STATUS,                  0xffffffffffffffffUL);
 }
 
 static void p7ioc_phb_init_errors(struct p7ioc_phb *p)
 {
 	/* Init_98: LEM Error Mask : Temporarily disable error interrupts */
-	out_be64(p->regs + PHB_LEM_ERROR_MASK,		   0xffffffffffffffff);
+	out_be64(p->regs + PHB_LEM_ERROR_MASK,		   0xffffffffffffffffUL);
 
 	/* Init_99..107: Configure main error traps & clear old state */
-	out_be64(p->regs + PHB_ERR_STATUS,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_ERR1_STATUS,		   0x0000000000000000);
-	out_be64(p->regs + PHB_ERR_LEM_ENABLE,		   0xffffffffefffffff);
-	out_be64(p->regs + PHB_ERR_FREEZE_ENABLE,	   0x0000000061c00000);
-	out_be64(p->regs + PHB_ERR_AIB_FENCE_ENABLE,	   0xffffffc58c000000);
-	out_be64(p->regs + PHB_ERR_LOG_0,		   0x0000000000000000);
-	out_be64(p->regs + PHB_ERR_LOG_1,		   0x0000000000000000);
-	out_be64(p->regs + PHB_ERR_STATUS_MASK,		   0x0000000000000000);
-	out_be64(p->regs + PHB_ERR1_STATUS_MASK,	   0x0000000000000000);
+	out_be64(p->regs + PHB_ERR_STATUS,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_ERR1_STATUS,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_ERR_LEM_ENABLE,		   0xffffffffefffffffUL);
+	out_be64(p->regs + PHB_ERR_FREEZE_ENABLE,	   0x0000000061c00000UL);
+	out_be64(p->regs + PHB_ERR_AIB_FENCE_ENABLE,	   0xffffffc58c000000UL);
+	out_be64(p->regs + PHB_ERR_LOG_0,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_ERR_LOG_1,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_ERR_STATUS_MASK,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_ERR1_STATUS_MASK,	   0x0000000000000000UL);
 
 	/* Init_108_116: Configure MMIO error traps & clear old state */
-	out_be64(p->regs + PHB_OUT_ERR_STATUS,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_OUT_ERR1_STATUS,		   0x0000000000000000);
-	out_be64(p->regs + PHB_OUT_ERR_LEM_ENABLE,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_OUT_ERR_FREEZE_ENABLE,	   0x0000430803000000);
-	out_be64(p->regs + PHB_OUT_ERR_AIB_FENCE_ENABLE,   0x9df3bc00f0f0700f);
-	out_be64(p->regs + PHB_OUT_ERR_LOG_0,		   0x0000000000000000);
-	out_be64(p->regs + PHB_OUT_ERR_LOG_1,		   0x0000000000000000);
-	out_be64(p->regs + PHB_OUT_ERR_STATUS_MASK,	   0x0000000000000000);
-	out_be64(p->regs + PHB_OUT_ERR1_STATUS_MASK,	   0x0000000000000000);
+	out_be64(p->regs + PHB_OUT_ERR_STATUS,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_OUT_ERR1_STATUS,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_OUT_ERR_LEM_ENABLE,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_OUT_ERR_FREEZE_ENABLE,	   0x0000430803000000UL);
+	out_be64(p->regs + PHB_OUT_ERR_AIB_FENCE_ENABLE,   0x9df3bc00f0f0700fUL);
+	out_be64(p->regs + PHB_OUT_ERR_LOG_0,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_OUT_ERR_LOG_1,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_OUT_ERR_STATUS_MASK,	   0x0000000000000000UL);
+	out_be64(p->regs + PHB_OUT_ERR1_STATUS_MASK,	   0x0000000000000000UL);
 
 	/* Init_117_125: Configure DMA_A error traps & clear old state */
-	out_be64(p->regs + PHB_INA_ERR_STATUS,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_INA_ERR1_STATUS,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INA_ERR_LEM_ENABLE,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_INA_ERR_FREEZE_ENABLE,	   0xc00003ff01006000);
-	out_be64(p->regs + PHB_INA_ERR_AIB_FENCE_ENABLE,   0x3fff50007e559fd8);
-	out_be64(p->regs + PHB_INA_ERR_LOG_0,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INA_ERR_LOG_1,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INA_ERR_STATUS_MASK,	   0x0000000000000000);
-	out_be64(p->regs + PHB_INA_ERR1_STATUS_MASK,	   0x0000000000000000);
+	out_be64(p->regs + PHB_INA_ERR_STATUS,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_INA_ERR1_STATUS,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INA_ERR_LEM_ENABLE,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_INA_ERR_FREEZE_ENABLE,	   0xc00003ff01006000UL);
+	out_be64(p->regs + PHB_INA_ERR_AIB_FENCE_ENABLE,   0x3fff50007e559fd8UL);
+	out_be64(p->regs + PHB_INA_ERR_LOG_0,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INA_ERR_LOG_1,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INA_ERR_STATUS_MASK,	   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INA_ERR1_STATUS_MASK,	   0x0000000000000000UL);
 
 	/* Init_126_134: Configure DMA_B error traps & clear old state */
-	out_be64(p->regs + PHB_INB_ERR_STATUS,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_INB_ERR1_STATUS,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INB_ERR_LEM_ENABLE,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_INB_ERR_FREEZE_ENABLE,	   0x0000000000000000);
-	out_be64(p->regs + PHB_INB_ERR_AIB_FENCE_ENABLE,   0x18ff80ffff7f0000);
-	out_be64(p->regs + PHB_INB_ERR_LOG_0,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INB_ERR_LOG_1,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INB_ERR_STATUS_MASK,	   0x0000000000000000);
-	out_be64(p->regs + PHB_INB_ERR1_STATUS_MASK,	   0x0000000000000000);
+	out_be64(p->regs + PHB_INB_ERR_STATUS,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_INB_ERR1_STATUS,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INB_ERR_LEM_ENABLE,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_INB_ERR_FREEZE_ENABLE,	   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INB_ERR_AIB_FENCE_ENABLE,   0x18ff80ffff7f0000UL);
+	out_be64(p->regs + PHB_INB_ERR_LOG_0,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INB_ERR_LOG_1,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INB_ERR_STATUS_MASK,	   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INB_ERR1_STATUS_MASK,	   0x0000000000000000UL);
 
 	/* Init_135..138: Cleanup & configure LEM */
-	out_be64(p->regs + PHB_LEM_FIR_ACCUM,		   0x0000000000000000);
-	out_be64(p->regs + PHB_LEM_ACTION0,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_LEM_ACTION1,		   0x0000000000000000);
-	out_be64(p->regs + PHB_LEM_WOF,			   0x0000000000000000);
+	out_be64(p->regs + PHB_LEM_FIR_ACCUM,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_LEM_ACTION0,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_LEM_ACTION1,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_LEM_WOF,			   0x0000000000000000UL);
 }
 
 /* p7ioc_phb_init - Initialize the PHB hardware
@@ -3223,7 +3223,7 @@ int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 	 * Interrupt Request=1, TCE Read=3.
 	 */
 	/* Init_1: AIB TX Channel Mapping */
-	out_be64(p->regs_asb + PHB_AIB_TX_CHAN_MAPPING,    0x0211300000000000);
+	out_be64(p->regs_asb + PHB_AIB_TX_CHAN_MAPPING,    0x0211300000000000UL);
 
 	/*
 	 * This group of steps initializes the AIB RX credits for
@@ -3241,11 +3241,11 @@ int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 	 */
 
 	/* Init_2: AIB RX Command Credit */
-	out_be64(p->regs_asb + PHB_AIB_RX_CMD_CRED,        0x0020002000200001);
+	out_be64(p->regs_asb + PHB_AIB_RX_CMD_CRED,        0x0020002000200001UL);
 	/* Init_3: AIB RX Data Credit */
-	out_be64(p->regs_asb + PHB_AIB_RX_DATA_CRED,       0x0000002000000001);
+	out_be64(p->regs_asb + PHB_AIB_RX_DATA_CRED,       0x0000002000000001UL);
 	/* Init_4: AXIB RX Credit Init Timer */
-	out_be64(p->regs_asb + PHB_AIB_RX_CRED_INIT_TIMER, 0xFF00000000000000);
+	out_be64(p->regs_asb + PHB_AIB_RX_CRED_INIT_TIMER, 0xFF00000000000000UL);
 
 	/*
 	 * Enable all 32 AIB and TCE tags.
@@ -3256,9 +3256,9 @@ int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 	 */
 
 	/* Init_5:  PHB - AIB Tag Enable Register */
-	out_be64(p->regs_asb + PHB_AIB_TAG_ENABLE,         0xFFFFFFFF00000000);
+	out_be64(p->regs_asb + PHB_AIB_TAG_ENABLE,         0xFFFFFFFF00000000UL);
 	/* Init_6: PHB – TCE Tag Enable Register */
-	out_be64(p->regs_asb + PHB_TCE_TAG_ENABLE,         0xFFFFFFFF00000000);
+	out_be64(p->regs_asb + PHB_TCE_TAG_ENABLE,         0xFFFFFFFF00000000UL);
 
 	/* Init_7: PCIE - System Configuration Register
 	 *
@@ -3275,7 +3275,7 @@ int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 	 *               reduced to the allowed ranges from 128B
 	 *               to 2KB if needed.
 	 */
-	out_be64(p->regs + PHB_PCIE_SYSTEM_CONFIG,         0x422800FC20000000);
+	out_be64(p->regs + PHB_PCIE_SYSTEM_CONFIG,         0x422800FC20000000UL);
 
 	/* Init_8: PHB - PCI-E Reset Register
 	 *
@@ -3291,7 +3291,7 @@ int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 	 * NOTE: We perform a PERST at the end of the init sequence so
 	 * we could probably skip that link training.
 	 */
-	out_be64(p->regs + PHB_RESET,                      0xE800000000000000);
+	out_be64(p->regs + PHB_RESET,                      0xE800000000000000UL);
 
 	/* Init_9: BUID
 	 *
@@ -3331,19 +3331,19 @@ int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 	p7ioc_ioda_reset(&p->phb, false);
 
 	/* Init_42..47: Clear UTL & DLP error log regs */
-	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG1,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG2,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG3,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG4,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_PCIE_DLP_ERRLOG1,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_PCIE_DLP_ERRLOG2,	   0xffffffffffffffff);
+	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG1,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG2,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG3,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG4,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_PCIE_DLP_ERRLOG1,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_PCIE_DLP_ERRLOG2,	   0xffffffffffffffffUL);
 
 	/* Init_48: Wait for DLP core to be out of reset */
 	if (!p7ioc_phb_wait_dlp_reset(p))
 		goto failed;
 
 	/* Init_49 - Clear port status */
-	out_be64(p->regs + UTL_PCIE_PORT_STATUS,	   0xffffffffffffffff);
+	out_be64(p->regs + UTL_PCIE_PORT_STATUS,	   0xffffffffffffffffUL);
 
 	/* Init_50..81: Init root complex config space */
 	if (!p7ioc_phb_init_rc_cfg(p))
@@ -3353,7 +3353,7 @@ int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 	p7ioc_phb_init_utl(p);
 
 	/* Init_95: PCI-E Reset, deassert reset for internal error macros */
-	out_be64(p->regs + PHB_RESET,			   0xe000000000000000);
+	out_be64(p->regs + PHB_RESET,			   0xe000000000000000UL);
 
 	/* Init_96: PHB Control register. Various PHB settings:
 	 *
@@ -3361,7 +3361,7 @@ int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 	 * - Enable all TCAM entries
 	 * - Set failed DMA read requests to return Completer Abort on error
 	 */
-	out_be64(p->regs + PHB_CONTROL, 	       	   0x7f38000000000000);
+	out_be64(p->regs + PHB_CONTROL, 	       	   0x7f38000000000000UL);
 
 	/* Init_97: Legacy Control register
 	 *
@@ -3406,18 +3406,18 @@ int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 	 */
 
 	/* Init_145..149: Enable error interrupts and LEM */
-	out_be64(p->regs + PHB_ERR_IRQ_ENABLE,		   0x0000000061c00000);
-	out_be64(p->regs + PHB_OUT_ERR_IRQ_ENABLE,	   0x0000430803000000);
-	out_be64(p->regs + PHB_INA_ERR_IRQ_ENABLE,	   0xc00003ff01006000);
-	out_be64(p->regs + PHB_INB_ERR_IRQ_ENABLE,	   0x0000000000000000);
-	out_be64(p->regs + PHB_LEM_ERROR_MASK,		   0x1249a1147f500f2c);
+	out_be64(p->regs + PHB_ERR_IRQ_ENABLE,		   0x0000000061c00000UL);
+	out_be64(p->regs + PHB_OUT_ERR_IRQ_ENABLE,	   0x0000430803000000UL);
+	out_be64(p->regs + PHB_INA_ERR_IRQ_ENABLE,	   0xc00003ff01006000UL);
+	out_be64(p->regs + PHB_INB_ERR_IRQ_ENABLE,	   0x0000000000000000UL);
+	out_be64(p->regs + PHB_LEM_ERROR_MASK,		   0x1249a1147f500f2cUL);
 
 	/* Init_150: Enable DMA read/write TLP address speculation */
-	out_be64(p->regs + PHB_TCE_PREFETCH,		   0x0000c00000000000);
+	out_be64(p->regs + PHB_TCE_PREFETCH,		   0x0000c00000000000UL);
 
 	/* Init_151..152: Set various timeouts */
-	out_be64(p->regs + PHB_TIMEOUT_CTRL1,		   0x1611112010200000);
-	out_be64(p->regs + PHB_TIMEOUT_CTRL2,		   0x0000561300000000);
+	out_be64(p->regs + PHB_TIMEOUT_CTRL1,		   0x1611112010200000UL);
+	out_be64(p->regs + PHB_TIMEOUT_CTRL2,		   0x0000561300000000UL);
 
 	/* Mark the PHB as functional which enables all the various sequences */
 	p->state = P7IOC_PHB_STATE_FUNCTIONAL;

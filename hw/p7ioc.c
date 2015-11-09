@@ -235,7 +235,7 @@ static int64_t p7ioc_rgc_set_xive(void *data, uint32_t isn,
 	}
 
 	/* Update the XIVE. Don't care HRT entry on P7IOC */
-	out_be64(ioc->regs + 0x3e1820, (0x0002000000000000 | irq));
+	out_be64(ioc->regs + 0x3e1820, (0x0002000000000000UL | irq));
 	xive = in_be64(ioc->regs + 0x3e1830);
 	xive = SETFIELD(IODA_XIVT_SERVER, xive, m_server);
 	xive = SETFIELD(IODA_XIVT_PRIORITY, xive, m_prio);
@@ -276,26 +276,26 @@ static bool p7ioc_err_bit(struct p7ioc *ioc, uint64_t wof)
 		/* EI won't create interrupt yet */
 		break;
 	case P7IOC_ERR_SRC_RGC:
-		severity[P7IOC_ERR_CLASS_GXE] = 0xF00086E0F4FCFFFF;
-		severity[P7IOC_ERR_CLASS_RGA] = 0x0000010000000000;
-		severity[P7IOC_ERR_CLASS_INF] = 0x0FFF781F0B030000;
+		severity[P7IOC_ERR_CLASS_GXE] = 0xF00086E0F4FCFFFFUL;
+		severity[P7IOC_ERR_CLASS_RGA] = 0x0000010000000000UL;
+		severity[P7IOC_ERR_CLASS_INF] = 0x0FFF781F0B030000UL;
 		break;
 	case P7IOC_ERR_SRC_BI_UP:
-		severity[P7IOC_ERR_CLASS_GXE] = 0xF7FFFFFF7FFFFFFF;
-		severity[P7IOC_ERR_CLASS_INF] = 0x0800000080000000;
+		severity[P7IOC_ERR_CLASS_GXE] = 0xF7FFFFFF7FFFFFFFUL;
+		severity[P7IOC_ERR_CLASS_INF] = 0x0800000080000000UL;
 		break;
 	case P7IOC_ERR_SRC_BI_DOWN:
-		severity[P7IOC_ERR_CLASS_GXE] = 0xDFFFF7F35F8000BF;
-		severity[P7IOC_ERR_CLASS_INF] = 0x2000080CA07FFF40;
+		severity[P7IOC_ERR_CLASS_GXE] = 0xDFFFF7F35F8000BFUL;
+		severity[P7IOC_ERR_CLASS_INF] = 0x2000080CA07FFF40UL;
 		break;
 	case P7IOC_ERR_SRC_CI_P0:
-		severity[P7IOC_ERR_CLASS_GXE] = 0xF5FF000000000000;
-		severity[P7IOC_ERR_CLASS_INF] = 0x0200FFFFFFFFFFFF;
-		severity[P7IOC_ERR_CLASS_MAL] = 0x0800000000000000;
+		severity[P7IOC_ERR_CLASS_GXE] = 0xF5FF000000000000UL;
+		severity[P7IOC_ERR_CLASS_INF] = 0x0200FFFFFFFFFFFFUL;
+		severity[P7IOC_ERR_CLASS_MAL] = 0x0800000000000000UL;
 		break;
 	case P7IOC_ERR_SRC_CI_P1:
-		severity[P7IOC_ERR_CLASS_GXE] = 0xFFFF000000000000;
-		severity[P7IOC_ERR_CLASS_INF] = 0x0000FFFFFFFFFFFF;
+		severity[P7IOC_ERR_CLASS_GXE] = 0xFFFF000000000000UL;
+		severity[P7IOC_ERR_CLASS_INF] = 0x0000FFFFFFFFFFFFUL;
 		break;
 	case P7IOC_ERR_SRC_CI_P2:
 	case P7IOC_ERR_SRC_CI_P3:
@@ -303,19 +303,19 @@ static bool p7ioc_err_bit(struct p7ioc *ioc, uint64_t wof)
 	case P7IOC_ERR_SRC_CI_P5:
 	case P7IOC_ERR_SRC_CI_P6:
 	case P7IOC_ERR_SRC_CI_P7:
-		severity[P7IOC_ERR_CLASS_GXE] = 0x5B0B000000000000;
-		severity[P7IOC_ERR_CLASS_PHB] = 0xA4F4000000000000;
-		severity[P7IOC_ERR_CLASS_INF] = 0x0000FFFFFFFFFFFF;
+		severity[P7IOC_ERR_CLASS_GXE] = 0x5B0B000000000000UL;
+		severity[P7IOC_ERR_CLASS_PHB] = 0xA4F4000000000000UL;
+		severity[P7IOC_ERR_CLASS_INF] = 0x0000FFFFFFFFFFFFUL;
 		break;
 	case P7IOC_ERR_SRC_MISC:
-		severity[P7IOC_ERR_CLASS_GXE] = 0x0000000310000000;
-		severity[P7IOC_ERR_CLASS_PLL] = 0x0000000001C00000;
-		severity[P7IOC_ERR_CLASS_INF] = 0x555FFFF0EE3FFFFF;
-		severity[P7IOC_ERR_CLASS_MAL] = 0xAAA0000C00000000;
+		severity[P7IOC_ERR_CLASS_GXE] = 0x0000000310000000UL;
+		severity[P7IOC_ERR_CLASS_PLL] = 0x0000000001C00000UL;
+		severity[P7IOC_ERR_CLASS_INF] = 0x555FFFF0EE3FFFFFUL;
+		severity[P7IOC_ERR_CLASS_MAL] = 0xAAA0000C00000000UL;
 		break;
 	case P7IOC_ERR_SRC_I2C:
-		severity[P7IOC_ERR_CLASS_GXE] = 0x1100000000000000;
-		severity[P7IOC_ERR_CLASS_INF] = 0xEEFFFFFFFFFFFFFF;
+		severity[P7IOC_ERR_CLASS_GXE] = 0x1100000000000000UL;
+		severity[P7IOC_ERR_CLASS_INF] = 0xEEFFFFFFFFFFFFFFUL;
 		break;
 	case P7IOC_ERR_SRC_PHB0:
 	case P7IOC_ERR_SRC_PHB1:
@@ -323,9 +323,9 @@ static bool p7ioc_err_bit(struct p7ioc *ioc, uint64_t wof)
 	case P7IOC_ERR_SRC_PHB3:
 	case P7IOC_ERR_SRC_PHB4:
 	case P7IOC_ERR_SRC_PHB5:
-		severity[P7IOC_ERR_CLASS_PHB] = 0xADB650CB808DD051;
-		severity[P7IOC_ERR_CLASS_ER]  = 0x0000A0147F50092C;
-		severity[P7IOC_ERR_CLASS_INF] = 0x52490F2000222682;
+		severity[P7IOC_ERR_CLASS_PHB] = 0xADB650CB808DD051UL;
+		severity[P7IOC_ERR_CLASS_ER]  = 0x0000A0147F50092CUL;
+		severity[P7IOC_ERR_CLASS_INF] = 0x52490F2000222682UL;
 		break;
 	}
 
@@ -402,7 +402,7 @@ bool p7ioc_check_LEM(struct p7ioc *ioc,
 
 	/* IOC would be broken upon broken FIR */
 	fir = in_be64(base + P7IOC_LEM_FIR_OFFSET);
-	if (fir == 0xffffffffffffffff) {
+	if (fir == 0xffffffffffffffffUL) {
 		ioc->err.err_src   = P7IOC_ERR_SRC_NONE;
 		ioc->err.err_class = P7IOC_ERR_CLASS_GXE;
 		goto err;
@@ -509,7 +509,7 @@ static bool p7ioc_check_GEM(struct p7ioc *ioc)
 	 * Recov_6: go to GXE recovery?
 	 */
 	xfir = in_be64(ioc->regs + P7IOC_GEM_XFIR);
-	if (xfir == 0xffffffffffffffff) {
+	if (xfir == 0xffffffffffffffffUL) {
 		ioc->err.err_src   = P7IOC_ERR_SRC_NONE;
 		ioc->err.err_class = P7IOC_ERR_CLASS_GXE;
 		p7ioc_set_err_pending(ioc, true);
