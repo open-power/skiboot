@@ -46,12 +46,12 @@ static struct opal_table_entry __e_##__func __used __section(".opal_table") = \
 extern struct opal_table_entry __opal_table_start[];
 extern struct opal_table_entry __opal_table_end[];
 
-extern __be64 opal_pending_events;
+extern uint64_t opal_pending_events;
 
 extern struct dt_node *opal_node;
 
 extern void opal_table_init(void);
-extern void opal_update_pending_evt(__be64 evt_mask, __be64 evt_values);
+extern void opal_update_pending_evt(uint64_t evt_mask, uint64_t evt_values);
 __be64 opal_dynamic_event_alloc(void);
 void opal_dynamic_event_free(__be64 event);
 extern void add_opal_node(void);

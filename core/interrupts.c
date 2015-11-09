@@ -375,7 +375,7 @@ static int64_t opal_get_xive(uint32_t isn, uint16_t *server, uint8_t *priority)
 }
 opal_call(OPAL_GET_XIVE, opal_get_xive, 3);
 
-static int64_t opal_handle_interrupt(uint32_t isn, uint64_t *outstanding_event_mask)
+static int64_t opal_handle_interrupt(uint32_t isn, __be64 *outstanding_event_mask)
 {
 	struct irq_source *is = irq_find_source(isn);
 	int64_t rc = OPAL_SUCCESS;
@@ -396,7 +396,7 @@ static int64_t opal_handle_interrupt(uint32_t isn, uint64_t *outstanding_event_m
 	/* Update output events */
  bail:
 	if (outstanding_event_mask)
-		*outstanding_event_mask = opal_pending_events;
+		*outstanding_event_mask = cpu_to_be64(opal_pending_events);
 
 	return rc;
 }

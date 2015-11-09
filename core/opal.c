@@ -318,7 +318,7 @@ void opal_run_pollers(void)
 	check_stacks();
 }
 
-static int64_t opal_poll_events(uint64_t *outstanding_event_mask)
+static int64_t opal_poll_events(__be64 *outstanding_event_mask)
 {
 	/* Check if we need to trigger an attn for test use */
 	if (attn_trigger == 0xdeadbeef) {
@@ -335,7 +335,7 @@ static int64_t opal_poll_events(uint64_t *outstanding_event_mask)
 	opal_run_pollers();
 
 	if (outstanding_event_mask)
-		*outstanding_event_mask = opal_pending_events;
+		*outstanding_event_mask = cpu_to_be64(opal_pending_events);
 
 	return OPAL_SUCCESS;
 }
