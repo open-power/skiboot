@@ -119,6 +119,7 @@ endif
 
 CHECK		= sparse
 CHECKFLAGS     := $(CF)
+CHECK_CFLAGS_SKIP = -std=gnu11
 
 .SECONDARY:
 

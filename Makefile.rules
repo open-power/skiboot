@@ -35,9 +35,9 @@ endef
 
 ifeq ($(C),1)
   ifeq ($(VERBOSE),1)
-	cmd_check = $(CHECK) $(CHECKFLAGS) $(call cook_cflags,$@) $<
+	cmd_check = $(CHECK) $(CHECKFLAGS) $(filter-out $(CHECK_CFLAGS_SKIP),$(call cook_cflags,$@)) $<
   else
-	cmd_check = @$(CHECK) $(CHECKFLAGS) $(call cook_cflags,$@) $<
+	cmd_check = @$(CHECK) $(CHECKFLAGS) $(filter-out $(CHECK_CFLAGS_SKIP),$(call cook_cflags,$@)) $<
   endif
 endif
 
