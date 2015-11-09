@@ -70,7 +70,7 @@ void nx_create_rng_node(struct dt_node *node)
 	}
 	rng_len = (u64[]){  0x1000,         /* 4K */
 			    0x10000,        /* 64K */
-			    0x400000000,    /* 16G*/
+			    0x400000000UL,    /* 16G*/
 			    0x100000,       /* 1M */
 			    0x1000000       /* 16M */} [len];
 
