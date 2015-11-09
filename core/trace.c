@@ -40,8 +40,8 @@ static struct {
 void init_boot_tracebuf(struct cpu_thread *boot_cpu)
 {
 	init_lock(&boot_tracebuf.trace_info.lock);
-	boot_tracebuf.trace_info.tb.mask = BOOT_TBUF_SZ - 1;
-	boot_tracebuf.trace_info.tb.max_size = MAX_SIZE;
+	boot_tracebuf.trace_info.tb.mask = cpu_to_be64(BOOT_TBUF_SZ - 1);
+	boot_tracebuf.trace_info.tb.max_size = cpu_to_be32(MAX_SIZE);
 
 	boot_cpu->trace = &boot_tracebuf.trace_info;
 }
