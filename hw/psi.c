@@ -523,7 +523,7 @@ void psi_irq_reset(void)
 
 	list_for_each(&psis, psi, list) {
 		/* Mask the interrupt & clean the XIVR */
-		xivr = 0x000000ff00000000;
+		xivr = 0x000000ff00000000UL;
 		xivr |=	P7_IRQ_BUID(psi->interrupt) << 16;
 		out_be64(psi->regs + PSIHB_XIVR, xivr);
 
