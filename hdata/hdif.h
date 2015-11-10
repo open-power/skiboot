@@ -73,7 +73,7 @@ struct HDIF_child_ptr {
 #define HDIF_IDATA_PTR(_offset, _size)			\
 {							\
 	.offset	= CPU_TO_BE32(_offset),			\
-	.size	= _size,				\
+	.size	= CPU_TO_BE32(_size),			\
 }
 
 static inline bool HDIF_check(const void *hdif, const char id[])
