@@ -548,7 +548,7 @@ static bool chiptod_mod_tb(void)
 
 static bool chiptod_interrupt_check(void)
 {
-	uint64_t tfmr = mfspr(SPR_TFMR);
+	uint64_t tfmr;
 	uint64_t timeout = 0;
 
 	do {
