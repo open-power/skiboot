@@ -29,7 +29,7 @@
 static unsigned int pcia_index(const void *pcia)
 {
 	return (pcia - (void *)get_hdif(&spira.ntuples.pcia, "SPPCIA"))
-		/ spira.ntuples.pcia.alloc_len;
+		/ be32_to_cpu(spira.ntuples.pcia.alloc_len);
 }
 
 static const struct sppcia_cpu_thread *find_tada(const void *pcia,
