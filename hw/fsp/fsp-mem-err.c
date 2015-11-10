@@ -212,7 +212,7 @@ static bool handle_memory_resilience(u32 cmd_sub_mod, u64 paddr)
 		 * For now, send corrected errors to linux and let
 		 * linux handle corrected errors thresholding.
 		 */
-		mem_err_evt.flags |= OPAL_MEM_CORRECTED_ERROR;
+		mem_err_evt.flags |= cpu_to_be16(OPAL_MEM_CORRECTED_ERROR);
 		mem_err_evt.u.resilience.resil_err_type =
 					OPAL_MEM_RESILIENCE_CE;
 		break;
@@ -225,9 +225,9 @@ static bool handle_memory_resilience(u32 cmd_sub_mod, u64 paddr)
 					OPAL_MEM_RESILIENCE_UE_SCRUB;
 		break;
 	}
-	mem_err_evt.u.resilience.physical_address_start = paddr;
+	mem_err_evt.u.resilience.physical_address_start = cpu_to_be64(paddr);
 	mem_err_evt.u.resilience.physical_address_end =
-					paddr + MEM_ERR_PAGE_SIZE_4K;
+		cpu_to_be64(paddr + MEM_ERR_PAGE_SIZE_4K);
 
 	/* Queue up the event and inform OS about it. */
 	rc = queue_mem_err_node(&mem_err_evt);
@@ -265,8 +265,8 @@ static bool update_memory_deallocation_event(u64 paddr_start, u64 paddr_end)
 			found = 1;
 			if (be64_to_cpu(merr_evt->u.dyn_dealloc.physical_address_end)
 								< paddr_end)
-				merr_evt->u.dyn_dealloc.physical_address_end
-								= paddr_end;
+				merr_evt->u.dyn_dealloc.physical_address_end =
+					cpu_to_be64(paddr_end);
 			break;
 		}
 	}
@@ -315,8 +315,8 @@ static bool handle_memory_deallocation(u64 paddr_start, u64 paddr_end)
 	mem_err_evt.type = OPAL_MEM_ERR_TYPE_DYN_DALLOC;
 	mem_err_evt.u.dyn_dealloc.dyn_err_type =
 					OPAL_MEM_DYNAMIC_DEALLOC;
-	mem_err_evt.u.dyn_dealloc.physical_address_start = paddr_start;
-	mem_err_evt.u.dyn_dealloc.physical_address_end = paddr_end;
+	mem_err_evt.u.dyn_dealloc.physical_address_start = cpu_to_be64(paddr_start);
+	mem_err_evt.u.dyn_dealloc.physical_address_end = cpu_to_be64(paddr_end);
 
 	/* Queue up the event and inform OS about it. */
 	rc = queue_mem_err_node(&mem_err_evt);
