@@ -419,7 +419,7 @@ static int64_t validate_dump_sglist(struct opal_sg_list *list,
 
 		for (i = 0; i < num_entries; i++) {
 			entry = &sg->entry[i];
-			*size += entry->length;
+			*size += be64_to_cpu(entry->length);
 
 			/* All entries must be aligned */
 			if (((uint64_t)be64_to_cpu(entry->data)) & 0xfff)
