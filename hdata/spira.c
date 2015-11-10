@@ -754,7 +754,7 @@ static void add_iplparams_ipl_params(const void *iplp, struct dt_node *node)
 	 * and the FSP expects the firmware to reset the PCI bus
 	 * numbers and respond with a Power Down (CE,4D,02) message
 	 */
-	if (p->other_attrib & IPLPARAMS_OATTR_RST_PCI_BUSNO)
+	if (be32_to_cpu(p->other_attrib) & IPLPARAMS_OATTR_RST_PCI_BUSNO)
 		dt_add_property_cells(node, "pci-busno-reset-ipl", 1);
 	dt_add_property_strings(node, "cec-ipl-side",
 				(p->ipl_side & IPLPARAMS_CEC_FW_IPL_SIDE_TEMP) ?
@@ -770,7 +770,7 @@ static void add_iplparams_ipl_params(const void *iplp, struct dt_node *node)
 	led_node = dt_find_by_path(opal_node, DT_PROPERTY_LED_NODE);
 	assert(led_node);
 
-	if (p->other_attrib & IPLPARAMS_OATRR_LIGHT_PATH)
+	if (be32_to_cpu(p->other_attrib) & IPLPARAMS_OATRR_LIGHT_PATH)
 		dt_add_property_strings(led_node, DT_PROPERTY_LED_MODE,
 					LED_MODE_LIGHT_PATH);
 	else
