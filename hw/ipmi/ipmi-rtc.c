@@ -34,7 +34,7 @@ static void get_sel_time_error(struct ipmi_msg *msg)
 static void get_sel_time_complete(struct ipmi_msg *msg)
 {
 	struct tm tm;
-	uint32_t result;
+	le32 result;
 	time_t time;
 
 	memcpy(&result, msg->data, 4);
@@ -59,12 +59,12 @@ static int64_t ipmi_get_sel_time(void)
 	return ipmi_queue_msg(msg);
 }
 
-static int64_t ipmi_set_sel_time(uint32_t tv)
+static int64_t ipmi_set_sel_time(uint32_t _tv)
 {
 	struct ipmi_msg *msg;
+	const le32 tv = cpu_to_le32(_tv);
 
-	tv = cpu_to_le32(tv);
-	msg = ipmi_mkmsg_simple(IPMI_SET_SEL_TIME, &tv, sizeof(tv));
+	msg = ipmi_mkmsg_simple(IPMI_SET_SEL_TIME, (void*)&tv, sizeof(tv));
 	if (!msg)
 		return OPAL_HARDWARE;
 
