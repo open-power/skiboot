@@ -103,9 +103,9 @@ static int dump_region_tce_map(void)
 
 	for (i = 0; i < cur_mdst_entry; i++) {
 
-		addr = dump_mem_region[i].addr & ~TCE_MASK;
-		size = get_dump_region_map_size(dump_mem_region[i].addr,
-						dump_mem_region[i].size);
+		addr = be64_to_cpu(dump_mem_region[i].addr) & ~TCE_MASK;
+		size = get_dump_region_map_size(be64_to_cpu(dump_mem_region[i].addr),
+						be32_to_cpu(dump_mem_region[i].size));
 
 		if (t_size + size > max_dump_size)
 			break;
@@ -116,10 +116,11 @@ static int dump_region_tce_map(void)
 		/* Add entry to MDST table */
 		mdst_table[i].type = dump_mem_region[i].type;
 		mdst_table[i].size = dump_mem_region[i].size;
-		mdst_table[i].addr = PSI_DMA_HYP_DUMP + t_size;
+		mdst_table[i].addr = cpu_to_be64(PSI_DMA_HYP_DUMP + t_size);
 
 		/* TCE alignment adjustment */
-		mdst_table[i].addr += dump_mem_region[i].addr & 0xfff;
+		mdst_table[i].addr = cpu_to_be64(be64_to_cpu(mdst_table[i].addr) +
+						 (be64_to_cpu(dump_mem_region[i].addr) & 0xfff));
 
 		t_size += size;
 	}
@@ -193,7 +194,7 @@ static int dump_region_del_entry(uint32_t id)
 	lock(&mdst_lock);
 
 	for (i = 0; i < cur_mdst_entry; i++) {
-		if (dump_mem_region[i].type != id)
+		if (be32_to_cpu(dump_mem_region[i].type) != id)
 			continue;
 
 		found = true;
@@ -206,8 +207,8 @@ static int dump_region_del_entry(uint32_t id)
 	}
 
 	/* Adjust current dump size */
-	size = get_dump_region_map_size(dump_mem_region[i].addr,
-					dump_mem_region[i].size);
+	size = get_dump_region_map_size(be64_to_cpu(dump_mem_region[i].addr),
+					be32_to_cpu(dump_mem_region[i].size));
 	cur_dump_size -= size;
 
 	for ( ; i < cur_mdst_entry - 1; i++)
@@ -250,9 +251,9 @@ static int __dump_region_add_entry(uint32_t id, uint64_t addr, uint32_t size)
 	}
 
 	/* Add entry to dump memory region table */
-	dump_mem_region[cur_mdst_entry].type = id;
-	dump_mem_region[cur_mdst_entry].addr = addr;
-	dump_mem_region[cur_mdst_entry].size = size;
+	dump_mem_region[cur_mdst_entry].type = cpu_to_be32(id);
+	dump_mem_region[cur_mdst_entry].addr = cpu_to_be64(addr);
+	dump_mem_region[cur_mdst_entry].size = cpu_to_be32(size);
 
 	/* Update dump region count and dump size */
 	cur_mdst_entry++;

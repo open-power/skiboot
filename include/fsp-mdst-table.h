@@ -40,9 +40,9 @@
  * defined in HDAT spec.
  */
 struct dump_mdst_table {
-	uint64_t	addr;
-	uint32_t	type; /* DUMP_SECTION_* */
-	uint32_t	size;
+	__be64	addr;
+	__be32	type; /* DUMP_SECTION_* */
+	__be32	size;
 };
 
 #endif	/* __FSPMDST_H */
