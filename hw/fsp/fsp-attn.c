@@ -102,7 +102,7 @@ static void update_sp_attn_area(const char *msg)
 		init_sp_attn_area();
 
 	ti_attn->src_word[0] =
-		(uint32_t)((uint64_t)__builtin_return_address(0) & 0xffffffff);
+		cpu_to_be32((uint32_t)((uint64_t)__builtin_return_address(0) & 0xffffffff));
 
 	snprintf(ti_attn->msg.version, VERSION_LEN, "%s", version);
 	ent_cnt = STACK_BUF_ENTRIES;
