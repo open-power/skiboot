@@ -159,7 +159,7 @@ static bool is_resilience_event_exist(u64 paddr)
 	list_for_each(&mem_error_list, entry, list) {
 		merr_evt = &entry->data;
 		if ((merr_evt->type == OPAL_MEM_ERR_TYPE_RESILIENCE) &&
-		    (merr_evt->u.resilience.physical_address_start
+		    (be64_to_cpu(merr_evt->u.resilience.physical_address_start)
 							    == paddr)) {
 			found = 1;
 			break;
@@ -260,10 +260,10 @@ static bool update_memory_deallocation_event(u64 paddr_start, u64 paddr_end)
 	list_for_each(&mem_error_list, entry, list) {
 		merr_evt = &entry->data;
 		if ((merr_evt->type == OPAL_MEM_ERR_TYPE_DYN_DALLOC) &&
-		    (merr_evt->u.dyn_dealloc.physical_address_start
+		    (be64_to_cpu(merr_evt->u.dyn_dealloc.physical_address_start)
 							    == paddr_start)) {
 			found = 1;
-			if (merr_evt->u.dyn_dealloc.physical_address_end
+			if (be64_to_cpu(merr_evt->u.dyn_dealloc.physical_address_end)
 								< paddr_end)
 				merr_evt->u.dyn_dealloc.physical_address_end
 								= paddr_end;
@@ -353,13 +353,13 @@ static bool fsp_mem_err_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 		 * correctable/Uncorrectable/scrub UE errors with real
 		 * address of 4K memory page in which the error occurred.
 		 */
-		paddr_start = *((u64 *)&msg->data.words[0]);
+		paddr_start = be64_to_cpu(*((__be64 *)&msg->data.words[0]));
 		printf("Got memory resilience error message for "
 		       "paddr=0x%016llux\n", paddr_start);
 		return handle_memory_resilience(cmd_sub_mod, paddr_start);
 	case FSP_CMD_MEM_DYN_DEALLOC:
-		paddr_start = *((u64 *)&msg->data.words[0]);
-		paddr_end = *((u64 *)&msg->data.words[2]);
+		paddr_start = be64_to_cpu(*((__be64 *)&msg->data.words[0]));
+		paddr_end = be64_to_cpu(*((__be64 *)&msg->data.words[2]));
 		printf("Got dynamic memory deallocation message: "
 		       "paddr_start=0x%016llux, paddr_end=0x%016llux\n",
 		       paddr_start, paddr_end);
