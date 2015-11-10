@@ -1036,12 +1036,15 @@ static void p8_i2c_free_request(struct i2c_request *req)
 static inline uint32_t p8_i2c_get_bit_rate_divisor(uint32_t lb_freq,
 						   uint32_t bus_speed)
 {
+	assert(bus_speed > 0);
 	return (((lb_freq / bus_speed) - 1) / 4);
 }
 
 static inline uint64_t p8_i2c_get_poll_interval(uint32_t bus_speed)
 {
 	uint64_t usec;
+
+	assert(bus_speed > 0);
 
 	/* Polling Interval = 8 * (1/bus_speed) * (1/10) -> convert to uSec */
 	usec = ((8 * USEC_PER_SEC) / (10 * bus_speed));
