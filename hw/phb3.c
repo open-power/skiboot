@@ -1064,7 +1064,7 @@ static int64_t phb3_map_pe_dma_window_real(struct phb *phb,
 					   uint64_t pci_mem_size)
 {
 	struct phb3 *p = phb_to_phb3(phb);
-	uint64_t end = pci_start_addr + pci_mem_size;
+	uint64_t end;
 	uint64_t tve;
 
 	if (pe_num >= PHB3_MAX_PE_NUM ||
