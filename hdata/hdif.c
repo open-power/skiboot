@@ -22,7 +22,7 @@ const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif, unsigned int di,
 	const struct HDIF_common_hdr *hdr = hdif;
 	const struct HDIF_idata_ptr *iptr;
 
-	if (hdr->d1f0 != BE16_TO_CPU(0xd1f0)) {
+	if (be16_to_cpu(hdr->d1f0) != 0xd1f0) {
 		prerror("HDIF: Bad header format !\n");
 		return NULL;
 	}
