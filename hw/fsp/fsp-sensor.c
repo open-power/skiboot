@@ -409,7 +409,6 @@ static int64_t fsp_sensor_send_read_request(struct opal_sensor_data *attr)
 {
 	int rc;
 	struct fsp_msg *msg;
-	uint32_t *sensor_buf_ptr;
 	uint32_t align;
 	uint32_t cmd_header;
 
@@ -418,12 +417,9 @@ static int64_t fsp_sensor_send_read_request(struct opal_sensor_data *attr)
 
 	if (spcn_mod_data[attr->mod_index].mod == SPCN_MOD_PROC_JUNC_TEMP) {
 		/* TODO Support this modifier '0x14', if required */
-		align = attr->offset % sizeof(*sensor_buf_ptr);
+		align = attr->offset % sizeof(uint32_t);
 		if (align)
-			attr->offset += (sizeof(*sensor_buf_ptr) - align);
-
-		sensor_buf_ptr = (uint32_t *)((uint8_t *)sensor_buffer +
-				attr->offset);
+			attr->offset += (sizeof(uint32_t) - align);
 
 		/* TODO Add 8 byte command data required for mod 0x14 */
 
