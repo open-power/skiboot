@@ -47,9 +47,9 @@ static void io_add_common(struct dt_node *hn, const struct cechub_io_hub *hub)
 	 */
 	dt_add_property(hn, "ranges", NULL, 0);
 	dt_add_property_cells(hn, "ibm,gx-bar-1",
-			      hi32(hub->gx_ctrl_bar1), lo32(hub->gx_ctrl_bar1));
+			      hi32(be64_to_cpu(hub->gx_ctrl_bar1)), lo32(be64_to_cpu(hub->gx_ctrl_bar1)));
 	dt_add_property_cells(hn, "ibm,gx-bar-2",
-			      hi32(hub->gx_ctrl_bar2), lo32(hub->gx_ctrl_bar2));
+			      hi32(be64_to_cpu(hub->gx_ctrl_bar2)), lo32(be64_to_cpu(hub->gx_ctrl_bar2)));
 
 	/* Add presence detect if valid */
 	if (hub->flags & CECHUB_HUB_FLAG_FAB_BR0_PDT)
@@ -206,8 +206,8 @@ static struct dt_node *io_add_p7ioc(const struct cechub_io_hub *hub,
 	      be64_to_cpu(hub->gx_ctrl_bar4));
 
 	/* We only know about memory map 1 */
-	if (hub->mem_map_vers != 1) {
-		prerror("P7IOC: Unknown memory map %d\n", hub->mem_map_vers);
+	if (be32_to_cpu(hub->mem_map_vers) != 1) {
+		prerror("P7IOC: Unknown memory map %d\n", be32_to_cpu(hub->mem_map_vers));
 		/* We try to continue anyway ... */
 	}
 
@@ -353,7 +353,7 @@ static void io_add_p8_cec_vpd(const struct HDIF_common_hdr *sp_iohubs)
 		prlog(PR_WARNING, "CEC:     IOKID count is 0 !\n");
 		return;
 	}
-	if (iokids->count > 1) {
+	if (be32_to_cpu(iokids->count) > 1) {
 		prlog(PR_WARNING, "CEC:     WARNING ! More than 1 IO KID !!! (%d)\n",
 		      iokids->count);
 		/* Ignoring the additional ones */
@@ -487,7 +487,7 @@ static struct dt_node *io_add_hea(const struct cechub_io_hub *hub,
 		prerror("HEA: IOKID count is 0 !\n");
 		return NULL;
 	}
-	if (iokids->count > 1) {
+	if (be32_to_cpu(iokids->count) > 1) {
 		prlog(PR_WARNING, "HEA: WARNING ! More than 1 IO KID !!! (%d)\n",
 		       iokids->count);
 	}
@@ -533,7 +533,7 @@ static struct dt_node *io_add_hea(const struct cechub_io_hub *hub,
 	}
 
 	/* Assume base address is BAR3 + 0x4000000000 */
-	reg[0] = hub->gx_ctrl_bar3 + 0x4000000000;
+	reg[0] = be64_to_cpu(hub->gx_ctrl_bar3) + 0x4000000000;
 	reg[1] = 0xc0000000;
 
 	prlog(PR_DEBUG, "CEC:    * Adding HEA to P5IOC2, assuming GBA=0x%llx\n",
@@ -552,7 +552,7 @@ static struct dt_node *io_add_hea(const struct cechub_io_hub *hub,
 	/* BUID is base + 0x30 */
 	dt_add_property(np, "interrupt-controller", NULL, 0);
 	dt_add_property_cells(np, "interrupt-base",
-			      ((hub->buid_ext << 9) | 0x30) << 4);
+			      ((be32_to_cpu(hub->buid_ext) << 9) | 0x30) << 4);
 	dt_add_property_cells(np, "interrupt-max-count", 128);
 
 	/* Always 2 port groups */
