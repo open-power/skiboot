@@ -52,14 +52,14 @@ static struct dt_node *fsp_create_node(const void *spss, int i,
 	assert(node);
 	dt_add_property_cells(node, "reg", i);
 
-	if (sp_impl->hw_version == 1) {
+	if (be16_to_cpu(sp_impl->hw_version) == 1) {
 		dt_add_property_strings(node, "compatible", "ibm,fsp",
 				"ibm,fsp1");
 		/* Offset into the FSP MMIO space where the mailbox
 		 * registers are */
 		/* seen in the FSP1 spec */
 		dt_add_property_cells(node, "reg-offset", 0xb0016000);
-	} else if (sp_impl->hw_version == 2) {
+	} else if (be16_to_cpu(sp_impl->hw_version) == 2) {
 		dt_add_property_strings(node, "compatible", "ibm,fsp",
 				"ibm,fsp2");
 		dt_add_property_cells(node, "reg-offset", 0xb0011000);
@@ -82,7 +82,7 @@ static uint32_t fsp_create_link(const struct spss_iopath *iopath, int index,
 	bool working = false;
 	uint32_t chip_id;
 
-	switch(iopath->psi.link_status) {
+	switch(be16_to_cpu(iopath->psi.link_status)) {
 	case SPSS_IO_PATH_PSI_LINK_BAD_FRU:
 		ststr = "Broken";
 		break;
@@ -98,7 +98,7 @@ static uint32_t fsp_create_link(const struct spss_iopath *iopath, int index,
 		ststr = "Unknown";
 	}
 	prlog(PR_DEBUG, "FSP #%d: IO PATH %d is %s PSI Link, GXHB at %llx\n",
-	      fsp_index, index, ststr, (long long)iopath->psi.gxhb_base);
+	      fsp_index, index, ststr, (long long)be64_to_cpu(iopath->psi.gxhb_base));
 
 	chip_id = pcid_to_chip_id(be32_to_cpu(iopath->psi.proc_chip_id));
 	node = dt_find_compatible_node_on_chip(dt_root, NULL, "ibm,psihb-x",
@@ -141,7 +141,7 @@ static void fsp_create_links(const void *spss, int index,
 			prerror("FSP #%d: Can't find IO PATH %d\n", index, i);
 			break;
 		}
-		if (iopath->iopath_type != SPSS_IOPATH_TYPE_PSI) {
+		if (be16_to_cpu(iopath->iopath_type) != SPSS_IOPATH_TYPE_PSI) {
 			prerror("FSP #%d: Unsupported IO PATH %d type 0x%04x\n",
 				index, i, iopath->iopath_type);
 			continue;
