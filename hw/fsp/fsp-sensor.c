@@ -712,7 +712,6 @@ void fsp_init_sensor(void)
 {
 	uint32_t cmd_header, align, size, psi_dma_offset = 0;
 	enum spcn_rsp_status status;
-	uint32_t *sensor_buf_ptr;
 	struct fsp_msg msg, resp;
 	int index, rc;
 
@@ -741,12 +740,9 @@ void fsp_init_sensor(void)
 		      spcn_mod_data[index].mod);
 		if (spcn_mod_data[index].mod == SPCN_MOD_PROC_JUNC_TEMP) {
 			/* TODO Support this modifier 0x14, if required */
-			align = psi_dma_offset % sizeof(*sensor_buf_ptr);
+			align = psi_dma_offset % sizeof(uint32_t);
 			if (align)
-				psi_dma_offset += (sizeof(*sensor_buf_ptr) - align);
-
-			sensor_buf_ptr = (uint32_t *)((uint8_t *)sensor_buffer
-					+ psi_dma_offset);
+				psi_dma_offset += (sizeof(uint32_t) - align);
 
 			/* TODO Add 8 byte command data required for mod 0x14 */
 			psi_dma_offset += 8;
