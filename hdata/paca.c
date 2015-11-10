@@ -112,7 +112,7 @@ static struct dt_node *find_cpu_by_hardware_proc_id(struct dt_node *root,
 		if (!prop)
 			return NULL;
 
-		if (be32_to_cpu(*(u32 *)prop->prop) == hw_proc_id)
+		if (be32_to_cpu(*(be32 *)prop->prop) == hw_proc_id)
 			return i;
 	}
 	return NULL;
