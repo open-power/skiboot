@@ -130,7 +130,8 @@ static bool add_address_range(struct dt_node *root,
 
 	prlog(PR_DEBUG, "  Range: 0x%016llx..0x%016llx "
 	      "on Chip 0x%x mattr: 0x%x\n",
-	      (long long)arange->start, (long long)arange->end,
+	      (long long)be64_to_cpu(arange->start),
+	      (long long)be64_to_cpu(arange->end),
 	      chip_id, arange->mirror_attr);
 
 	/* reg contains start and length */
