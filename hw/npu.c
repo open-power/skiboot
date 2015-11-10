@@ -793,7 +793,7 @@ static int64_t npu_map_pe_dma_window_real(struct phb *phb,
 					   uint64_t pci_mem_size)
 {
 	struct npu *p = phb_to_npu(phb);
-	uint64_t end = pci_start_addr + pci_mem_size;
+	uint64_t end;
 	uint64_t tve;
 
 	/* Sanity check. Each PE has one corresponding TVE */
