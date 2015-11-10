@@ -1023,6 +1023,52 @@ out_free:
 	return rc;
 }
 
+bool find_string(const char *buffer, size_t len, const char *s)
+{
+	const char *c, *end;
+
+	if (!buffer)
+		return false;
+	c = buffer;
+	end = c + len;
+
+	while (c < end) {
+		if (!strcasecmp(s, c))
+			return true;
+		c += strlen(c) + 1;
+	}
+	return false;
+}
+
+static int is_prd_supported(void)
+{
+	char *path;
+	int rc;
+	int len;
+	char *buf;
+
+	rc = asprintf(&path, "%s/ibm,opal/diagnostics/compatible",
+		      devicetree_base);
+	if (rc < 0) {
+		pr_log(LOG_ERR, "FW: error creating 'compatible' node path: %m");
+		return -1;
+	}
+
+	rc = open_and_read(path, (void *) &buf, &len);
+	if (rc)
+		goto out_free;
+
+	if (buf[len - 1] != '\0')
+		pr_log(LOG_INFO, "FW: node %s is not nul-terminated", path);
+
+	rc = find_string(buf, len, "ibm,opal-prd") ? 0 : -1;
+
+	free(buf);
+out_free:
+	free(path);
+	return rc;
+}
+
 static int prd_init(struct opal_prd_ctx *ctx)
 {
 	int rc;
@@ -1943,6 +1989,12 @@ int main(int argc, char *argv[])
 			return EXIT_FAILURE;
 	} else {
 		action = ACTION_RUN_DAEMON;
+	}
+
+	if (is_prd_supported() < 0) {
+		pr_log(LOG_ERR, "CTRL: PowerNV OPAL runtime diagnostic "
+				"is not supported on this system");
+		return -1;
 	}
 
 	switch (action) {
