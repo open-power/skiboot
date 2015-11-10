@@ -531,9 +531,16 @@ static void lpc_setup_serirq(struct proc_chip *chip)
 	{
 		u32 val;
 		rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_IRQMASK, &val, 4);
-		DBG_IRQ("LPC: MASK READBACK=%x\n", val);
+		if (rc)
+			prerror("LPC: failed to readback mask");
+		else
+			DBG_IRQ("LPC: MASK READBACK=%x\n", val);
+
 		rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL, &val, 4);
-		DBG_IRQ("LPC: CTRL READBACK=%x\n", val);
+		if (rc)
+			prerror("LPC: failed to readback ctrl");
+		else
+			DBG_IRQ("LPC: CTRL READBACK=%x\n", val);
 	}
 }
 
