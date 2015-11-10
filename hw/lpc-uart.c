@@ -74,7 +74,7 @@ static void uart_trace(u8 ctx, u8 cnt, u8 irq_state, u8 in_count)
 	t.uart.ctx = ctx;
 	t.uart.cnt = cnt;
 	t.uart.irq_state = irq_state;
-	t.uart.in_count = in_count;
+	t.uart.in_count = cpu_to_be16(in_count);
 	trace_add(&t, TRACE_UART, sizeof(struct trace_uart));
 }
 
