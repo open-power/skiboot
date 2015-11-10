@@ -351,7 +351,7 @@ static void occ_throttle_poll(void *data __unused)
 			 * Queue OCC_THROTTLE with throttle status as 0 to
 			 * indicate all OCCs are active after a reset.
 			 */
-			occ_msg.type = OCC_THROTTLE;
+			occ_msg.type = cpu_to_be64(OCC_THROTTLE);
 			occ_msg.chip = 0;
 			occ_msg.throttle_status = 0;
 			rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL, 3,
@@ -367,9 +367,9 @@ static void occ_throttle_poll(void *data __unused)
 			if ((occ_data->valid == 1) &&
 			    (chip->throttle != occ_data->throttle) &&
 			    (occ_data->throttle <= OCC_MAX_THROTTLE_STATUS)) {
-				occ_msg.type = OCC_THROTTLE;
-				occ_msg.chip = chip->id;
-				occ_msg.throttle_status = occ_data->throttle;
+				occ_msg.type = cpu_to_be64(OCC_THROTTLE);
+				occ_msg.chip = cpu_to_be64(chip->id);
+				occ_msg.throttle_status = cpu_to_be64(occ_data->throttle);
 				rc = _opal_queue_msg(OPAL_MSG_OCC, NULL,
 						     occ_msg_consumed,
 						     3, (uint64_t *)&occ_msg);
@@ -474,7 +474,7 @@ static void __occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 		prlog(PR_INFO, "OCC: Load: Fallback to preloaded image\n");
 		rc = 0;
 	} else if (!rc) {
-		struct opal_occ_msg occ_msg = { OCC_LOAD, 0, 0 };
+		struct opal_occ_msg occ_msg = { CPU_TO_BE64(OCC_LOAD), 0, 0 };
 
 		rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL, 3,
 				     (uint64_t *)&occ_msg);
