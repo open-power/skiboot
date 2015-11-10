@@ -814,7 +814,6 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 		}
 
 		/* Push the data into TCE buffer */
-		bytes_sent = 0;
 		bytes_sent = fsp_push_data_to_tce(led, out_data, total_size);
 
 		/* Advance the TCE pointer */
@@ -827,7 +826,6 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 		list_for_each_safe(&encl_ledq, led, next, link) {
 
 			/* Push the data into TCE buffer */
-			bytes_sent = 0;
 			bytes_sent = fsp_push_data_to_tce(led,
 							  out_data, total_size);
 
