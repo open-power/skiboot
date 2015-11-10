@@ -276,6 +276,11 @@ static bool cpu_pstates_prepare_core(struct proc_chip *chip, struct cpu_thread *
 
 	/* Set new pstate to core */
 	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_PPMCR), &tmp);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_OCC_PSTATE_INIT),
+			"OCC: Failed to read from OCC in pstates init\n");
+		return false;
+	}
 	tmp = tmp & ~0xFFFF000000000000ULL;
 	pstate = ((uint64_t) pstate_nom) & 0xFF;
 	tmp = tmp | (pstate << 56) | (pstate << 48);
@@ -307,6 +312,12 @@ static bool cpu_pstates_prepare_core(struct proc_chip *chip, struct cpu_thread *
 
 	/* Just debug */
 	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_PPMSR), &tmp);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_OCC_PSTATE_INIT),
+			"OCC: Failed to read back setting from OCC"
+				 "in pstates init\n");
+		return false;
+	}
 	prlog(PR_DEBUG, "OCC: Chip %x Core %x PPMSR %016llx\n",
 	      chip->id, core, tmp);
 
