@@ -29,7 +29,8 @@ void _prlog(int log_level __attribute__((unused)), const char* fmt, ...)
         va_list ap;
 
         va_start(ap, fmt);
-        vprintf(fmt, ap);
+        if (log_level < 7)
+		vprintf(fmt, ap);
         va_end(ap);
 }
 

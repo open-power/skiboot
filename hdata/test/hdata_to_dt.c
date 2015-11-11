@@ -119,12 +119,20 @@ static void indent_num(unsigned indent)
 		putc(' ', stdout);
 }
 
-static void dump_val(const void *prop, size_t size)
+static void dump_val(unsigned indent, const void *prop, size_t size)
 {
 	size_t i;
+	int width = 78 - indent;
 
-	for (i = 0; i < size; i++)
-		printf("%02x ", ((unsigned char *)prop)[i]);
+	for (i = 0; i < size; i++) {
+		printf("%02x", ((unsigned char *)prop)[i]);
+		width-=2;
+		if(width < 2) {
+			printf("\n");
+			indent_num(indent);
+			width = 80 - indent;
+		}
+	}
 }
 
 /* Make sure valgrind knows these are undefined bytes. */
@@ -143,7 +151,7 @@ static void dump_dt(const struct dt_node *root, unsigned indent)
 	list_for_each(&root->properties, p, list) {
 		indent_num(indent);
 		printf("prop: %s size: %zu val: ", p->name, p->len);
-		dump_val(p->prop, p->len);
+		dump_val(indent, p->prop, p->len);
 		printf("\n");
 	}
 
