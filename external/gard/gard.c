@@ -710,7 +710,8 @@ int main(int argc, char **argv)
 			break;
 		case '?':
 			usage(progname);
-			return EXIT_FAILURE;
+			rc = EXIT_FAILURE;
+			goto out_free;
 		}
 	}
 
@@ -726,7 +727,8 @@ int main(int argc, char **argv)
 	/* do we have a command? */
 	if (optind == argc) {
 		usage(progname);
-		return EXIT_FAILURE;
+		rc = EXIT_FAILURE;
+		goto out_free;
 	}
 
 	argc -= optind;
@@ -735,8 +737,10 @@ int main(int argc, char **argv)
 
 	if (!filename) {
 		rc = get_dev_mtd(fdt_flash_path, &filename);
-		if (rc)
-			return EXIT_FAILURE;
+		if (rc) {
+			rc = EXIT_FAILURE;
+			goto out_free;
+		}
 	}
 
 	rc = file_init_path(filename, NULL, &(ctx->bl));
@@ -786,7 +790,6 @@ int main(int argc, char **argv)
 	}
 
 out:
-	free(filename);
 	if (ctx->ffs)
 		ffs_close(ctx->ffs);
 
@@ -795,7 +798,8 @@ out:
 	if (i == ARRAY_SIZE(actions)) {
 		fprintf(stderr, "%s: '%s' isn't a valid command\n", progname, action);
 		usage(progname);
-		return EXIT_FAILURE;
+		rc = EXIT_FAILURE;
+		goto out_free;
 	}
 
 	if (rc > 0) {
@@ -803,5 +807,8 @@ out:
 		if (filename && rc == FFS_ERR_BAD_MAGIC)
 			fprintf(stderr, "Maybe you didn't give a full flash image file?\nDid you mean '--part'?\n");
 	}
+
+out_free:
+	free(filename);
 	return rc;
 }
