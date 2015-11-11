@@ -7,5 +7,5 @@ echo -n ARCH_X86
 echo -n ARCH_ARM
 #else
 echo -n ARCH_UNKNOWN
-#endif" | $1cpp | sh
+#endif" | $1cpp | /bin/sh
 
