@@ -192,7 +192,7 @@ static struct blocklevel_device *arch_init_blocklevel(const char *file)
 {
 	int rc;
 	struct blocklevel_device *new_bl = NULL;
-	char *real_file;
+	char *real_file = NULL;
 
 	if (!file) {
 		rc = get_dev_mtd(FDT_FLASH_PATH, &real_file);
@@ -201,6 +201,7 @@ static struct blocklevel_device *arch_init_blocklevel(const char *file)
 	}
 
 	file_init_path(file ? file : real_file, NULL, &new_bl);
+	free(real_file);
 	return new_bl;
 }
 
