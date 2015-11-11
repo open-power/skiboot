@@ -34,6 +34,17 @@ $(OBJS): | links arch_links
 	@cmp -s $@ $@.tmp || cp $@.tmp $@
 	@rm -f $@.tmp
 
+.PHONY: dist
+#File is named $(PFLASH_VERSION).tar because the expectation is that pflash-
+#is always at the start of the verion. This remains consistent with skiboot
+#version strings
+dist: links .version
+	find -L ../pflash/ -iname '*.[ch]' -print0 | xargs -0 tar -rhf $(PFLASH_VERSION).tar
+	tar --transform 's/Makefile.dist/Makefile/' -rhf $(PFLASH_VERSION).tar \
+		../pflash/Makefile.dist ../pflash/rules.mk \
+		../pflash/.version ../pflash/make_version.sh \
+		../pflash/common/*
+
 clean: arch_clean
 	rm -f $(OBJS) $(EXE) *.o *.d .version .version.tmp
 
