@@ -27,6 +27,9 @@
 
 #include <valgrind/memcheck.h>
 
+#include "../../libfdt/fdt.c"
+#include "../../libfdt/fdt_ro.c"
+
 struct dt_node *opal_node;
 
 /* Our actual map. */
