@@ -39,8 +39,9 @@ static struct dt_node *fsp_create_node(const void *spss, int i,
 	}
 
 	prlog(PR_INFO, "FSP #%d: FSP HW version %d, SW version %d,"
-	      " chip DD%d.%d\n",
-	      i, sp_impl->hw_version, sp_impl->sw_version,
+	      " chip DD%d.%d\n", i,
+	      be16_to_cpu(sp_impl->hw_version),
+	      be16_to_cpu(sp_impl->sw_version),
 	      sp_impl->chip_version >> 4, sp_impl->chip_version & 0xf);
 	mask = SPSS_SP_IMPL_FLAGS_INSTALLED | SPSS_SP_IMPL_FLAGS_FUNCTIONAL;
 	if ((be16_to_cpu(sp_impl->func_flags) & mask) != mask) {
