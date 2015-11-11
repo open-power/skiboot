@@ -25,6 +25,8 @@
 
 #include <interrupts.h>
 
+#include <valgrind/memcheck.h>
+
 struct dt_node *opal_node;
 
 /* Our actual map. */
@@ -130,9 +132,7 @@ static void dump_val(const void *prop, size_t size)
 /* Make sure valgrind knows these are undefined bytes. */
 static void undefined_bytes(void *p, size_t len)
 {
-	void *undef = malloc(len);
-	memcpy(p, undef, len);
-	free(undef);
+	VALGRIND_MAKE_MEM_UNDEFINED(p, len);
 }
 
 static void dump_dt(const struct dt_node *root, unsigned indent)
