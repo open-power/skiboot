@@ -1070,8 +1070,11 @@ xipDecodeToc(void* i_image,
         o_item->iv_toc = i_imageToc;
         o_item->iv_type = hostToc.iv_type;
         o_item->iv_elements = hostToc.iv_elements;
-    
-        sbe_xip_get_section(i_image, SBE_XIP_SECTION_STRINGS, &stringsSection);
+
+        rc = sbe_xip_get_section(i_image, SBE_XIP_SECTION_STRINGS,
+				 &stringsSection);
+        if (rc) break;
+
         o_item->iv_id = 
             (char*)i_image + stringsSection.iv_offset + hostToc.iv_id;
         
