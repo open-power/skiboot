@@ -321,8 +321,10 @@ static struct dt_property *new_property(struct dt_node *node,
 	char *path;
 
 	if (!p) {
+		path = dt_get_path(node);
 		prerror("Failed to allocate property \"%s\" for %s of %zu bytes\n",
-			name, dt_get_path(node), size);
+			name, path, size);
+		free(path);
 		abort();
 	}
 	if (dt_find_property(node, name)) {
