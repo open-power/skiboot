@@ -2,9 +2,13 @@
 
 check: check-gard
 
-#Makefile knows to build it before checking
-check-gard:
+#Makefile knows to build it before checking, should also
+#make clean before checking. If not, .o files for different
+#architectures might be lying around and clean once done to
+#avoid the opposite
+check-gard: gard-test-clean
 	@make CROSS_COMPILE='' -C external/gard/ check
+	@make CROSS_COMPILE='' -C external/gard/ clean
 
 .PHONY: check-gard
 
