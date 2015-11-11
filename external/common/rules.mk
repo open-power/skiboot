@@ -32,5 +32,5 @@ common/arch_flash_common.o: common/arch_flash_common.c .FORCE
 	$(CROSS_COMPILE)gcc $(CFLAGS) -c $< -o $@
 
 common/arch_flash.o: $(ARCH_OBJS)
-	$(CROSS_COMPILE)ld -r $(ARCH_OBJS) -o $@
+	$(CROSS_COMPILE)ld $(LDFLAGS) -r $(ARCH_OBJS) -o $@
 

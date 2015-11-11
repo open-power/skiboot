@@ -1,7 +1,6 @@
 .DEFAULT_GOAL := all
 
-CFLAGS  = -O2 -Wall -I.
-LDFLAGS	= -lrt
+override CFLAGS  += -O2 -Wall -I.
 OBJS    = pflash.o progress.o version.o
 OBJS	+= libflash/libflash.o libflash/libffs.o libflash/ecc.o libflash/blocklevel.o libflash/file.o
 OBJS	+= common/arch_flash.o
@@ -22,5 +21,5 @@ version.c: make_version.sh .version
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXE): $(OBJS)
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+	$(CC) $(CFLAGS) $^ -lrt -o $@
 
