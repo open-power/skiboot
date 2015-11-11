@@ -1,41 +1,33 @@
 # This tool is a linux userland tool and should be completely stand alone
-
-prefix = /usr/local/
-sbindir = $(prefix)/sbin
-datadir = $(prefix)/share
-mandir = $(datadir)/man
-
-CC = $(CROSS_COMPILE)gcc
-CFLAGS += -m64 -Werror -Wall -g2 -ggdb
-LDFLAGS += -m64
-ASFLAGS = -m64
-CPPFLAGS += -I. -I../../
-
-OBJS = file.o gard.o libflash.o libffs.o ecc.o blocklevel.o
-
-EXE = gard
+include rules.mk
+GET_ARCH = ../../external/common/get_arch.sh
+include ../../external/common/rules.mk
 
 all: $(EXE)
 
-%.o: %.c
-	$(COMPILE.c) $< -o $@
+.PHONY: links
+links: libflash ccan common
 
-%.o: ../../libflash/%.c
-	$(COMPILE.c) $< -o $@
+libflash:
+	ln -sf ../../libflash .
 
-$(EXE): $(OBJS)
-	$(LINK.o) -o $@ $^
+ccan:
+	ln -sf ../../ccan .
+
+common:
+	ln -sf ../common .
 
 check: all
 	@ln -sf ../../test/test.sh test/test.sh
 	@test/test-gard
 
-install: all
-	install -D gard $(DESTDIR)$(sbindir)/opal-gard
-	install -D -m 0644 opal-gard.1 $(DESTDIR)$(mandir)/man1/opal-gard.1
+$(OBJS): | links arch_links
 
-clean:
-	rm -f $(OBJS) $(EXE) *.d test/test.sh
+clean: arch_clean
+	rm -f $(OBJS) $(EXE) *.o *.d
 
 distclean: clean
+	rm -f *.c~ *.h~ *.sh~ Makefile~ config.mk~ libflash/*.c~ libflash/*.h~
+	rm -f libflash ccan .version .version.tmp
+	rm -f common io.h make_version.sh
 
