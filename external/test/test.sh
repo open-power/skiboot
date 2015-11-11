@@ -36,6 +36,12 @@ pass_test() {
 	/bin/true;
 }
 
+strip_version_from_result() {
+	VERSION=$(./make_version.sh $1)
+	sed -i "s/${VERSION}/VERSION/" $STDERR_OUT
+	sed -i "s/${VERSION}/VERSION/" $STDOUT_OUT
+}
+
 diff_with_result() {
 	# Explicitly diff a file with an arbitary result file
 	if [ "$#" -eq 1 ] ; then
