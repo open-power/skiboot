@@ -37,6 +37,7 @@
 #include <libflash/file.h>
 #include <libflash/ecc.h>
 #include <libflash/blocklevel.h>
+#include <common/arch_flash.h>
 
 #include "gard.h"
 
@@ -84,7 +85,7 @@ static void show_flash_err(int rc)
 		case FFS_ERR_PART_NOT_FOUND:
 			fprintf(stderr, "libffs flash partition not found\n");
 			break;
-		/* ------- */
+			/* ------- */
 		case FLASH_ERR_MALLOC_FAILED:
 			fprintf(stderr, "libflash malloc failed\n");
 			break;
@@ -225,147 +226,10 @@ static const char *path_type_to_str(enum path_type t)
 	return "Unknown";
 }
 
-static bool get_dev_attr(const char *dev, const char *attr_file, uint32_t *attr)
-{
-	char dev_path[PATH_MAX] = SYSFS_MTD_PATH;
-	/*
-	 * Needs to be large enough to hold at most uint32_t represented as a
-	 * string in hex with leading 0x
-	 */
-	char attr_buf[10];
-	int fd, rc;
-
-	/*
-	 * sizeof(dev_path) - (strlen(dev_path) + 1) is the remaining space in
-	 * dev_path, + 1 to account for the '\0'. As strncat could write n+1 bytes
-	 * to dev_path the correct calulcation for n is:
-	 * (sizeof(dev_path) - (strlen(dev_path) + 1) - 1)
-	 */
-	strncat(dev_path, dev, (sizeof(dev_path) - (strlen(dev_path) + 1) - 1));
-	strncat(dev_path, "/", (sizeof(dev_path) - (strlen(dev_path) + 1) - 1));
-	strncat(dev_path, attr_file, (sizeof(dev_path) - (strlen(dev_path) + 1) - 1));
-	fd = open(dev_path, O_RDONLY);
-	if (fd == -1)
-		goto out;
-
-	rc = read(fd, attr_buf, sizeof(attr_buf));
-	close(fd);
-	if (rc == -1)
-		goto out;
-
-	if (attr)
-		*attr = strtol(attr_buf, NULL, 0);
-
-	return 0;
-
-out:
-	fprintf(stderr, "Couldn't get MTD device attribute '%s' from '%s'\n", dev, attr_file);
-	return -1;
-}
-
-static int get_dev_mtd(const char *fdt_flash_path, char **r_path)
-{
-	struct dirent **namelist;
-	char fdt_node_path[PATH_MAX];
-	int count, i, rc, fd;
-	bool done;
-
-	if (!fdt_flash_path)
-		return -1;
-
-	fd = open(fdt_flash_path, O_RDONLY);
-	if (fd == -1) {
-		fprintf(stderr, "Couldn't open '%s' FDT attribute to determine which flash device to use\n",
-				fdt_flash_path);
-		return -1;
-	}
-
-	rc = read(fd, fdt_node_path, sizeof(fdt_node_path) - 1);
-	close(fd);
-	if (rc == -1) {
-		fprintf(stderr, "Couldn't read flash FDT node from '%s'\n", fdt_flash_path);
-		return -1;
-	}
-	fdt_node_path[rc] = '\0';
-
-	count = scandir(SYSFS_MTD_PATH, &namelist, NULL, alphasort);
-	if (count == -1) {
-		fprintf(stderr, "Couldn't scan '%s' for MTD devices\n", SYSFS_MTD_PATH);
-		return -1;
-	}
-
-	rc = 0;
-	done = false;
-	for (i = 0; i < count; i++) {
-		struct dirent *dirent;
-		char dev_path[PATH_MAX] = SYSFS_MTD_PATH;
-		char fdt_node_path_tmp[PATH_MAX];
-
-		dirent = namelist[i];
-		if (dirent->d_name[0] == '.' || rc || done) {
-			free(namelist[i]);
-			continue;
-		}
-
-		strncat(dev_path, dirent->d_name, sizeof(dev_path) - strlen(dev_path) - 2);
-		strncat(dev_path, "/device/of_node", sizeof(dev_path) - strlen(dev_path) - 2);
-
-		rc = readlink(dev_path, fdt_node_path_tmp, sizeof(fdt_node_path_tmp) - 1);
-		if (rc == -1) {
-			/*
-			 * This might fail because it could not exist if the system has flash
-			 * devices that present as mtd but don't have corresponding FDT
-			 * nodes, just continue silently.
-			 */
-			free(namelist[i]);
-			/* Should still try the next dir so reset rc */
-			rc = 0;
-			continue;
-		}
-		fdt_node_path_tmp[rc] = '\0';
-
-		if (strstr(fdt_node_path_tmp, fdt_node_path)) {
-			uint32_t flags, size;
-
-			/*
-			 * size and flags could perhaps have be gotten another way but this
-			 * method is super unlikely to fail so it will do.
-			 */
-
-			/* Check to see if device is writeable */
-			rc = get_dev_attr(dirent->d_name, "flags", &flags);
-			if (rc) {
-				free(namelist[i]);
-				continue;
-			}
-
-			/* Get the size of the mtd device while we're at it */
-			rc = get_dev_attr(dirent->d_name, "size", &size);
-			if (rc) {
-				free(namelist[i]);
-				continue;
-			}
-
-			strcpy(dev_path, "/dev/");
-			strncat(dev_path, dirent->d_name, sizeof(dev_path) - strlen(dev_path) - 2);
-			*r_path = strdup(dev_path);
-			done = true;
-		}
-		free(namelist[i]);
-	}
-	free(namelist);
-
-	if (!done)
-		fprintf(stderr, "Couldn't find '%s' corresponding MTD\n", fdt_flash_path);
-
-	/* explicit negative value so as to not return a libflash code */
-	return done ? rc : -1;
-}
-
 static int do_iterate(struct gard_ctx *ctx,
-                      int (*func)(struct gard_ctx *ctx, int pos,
-                                  struct gard_record *gard, void *priv),
-                      void *priv)
+		int (*func)(struct gard_ctx *ctx, int pos,
+			struct gard_record *gard, void *priv),
+		void *priv)
 {
 	int rc = 0;
 	unsigned int i;
@@ -414,7 +278,7 @@ static int do_list_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, vo
 		return -1;
 
 	printf("| %08x | %08x | %-15s |\n", be32toh(gard->record_id),
-	       be32toh(gard->errlog_eid), path_type_to_str(gard->target_id.type_size >> PATH_TYPE_SHIFT));
+			be32toh(gard->errlog_eid), path_type_to_str(gard->target_id.type_size >> PATH_TYPE_SHIFT));
 
 	return 0;
 }
@@ -680,7 +544,6 @@ static const char *global_optstring = "+ef:p";
 int main(int argc, char **argv)
 {
 	const char *action, *progname;
-	const char *fdt_flash_path = FDT_ACTIVE_FLASH_PATH;
 	char *filename = NULL;
 	struct gard_ctx _ctx, *ctx;
 	int rc, i = 0;
@@ -744,17 +607,12 @@ int main(int argc, char **argv)
 	argv += optind;
 	action = argv[0];
 
-	if (!filename) {
-		rc = get_dev_mtd(fdt_flash_path, &filename);
-		if (rc) {
-			rc = EXIT_FAILURE;
-			goto out_free;
-		}
+	if (arch_flash_init(&(ctx->bl), filename)) {
+		/* Can fail for a few ways, most likely couldn't open MTD device */
+		fprintf(stderr, "Can't open %s\n", filename ? filename : "MTD Device. Are you root?");
+		rc = EXIT_FAILURE;
+		goto out_free;
 	}
-
-	rc = file_init_path(filename, NULL, &(ctx->bl));
-	if (rc)
-		err(EXIT_FAILURE, "Can't open %s", filename);
 
 	rc = blocklevel_get_info(ctx->bl, NULL, &(ctx->f_size), NULL);
 	if (rc)
