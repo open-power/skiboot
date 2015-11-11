@@ -44,6 +44,9 @@
 #define SYSFS_MTD_PATH "/sys/class/mtd/"
 #define FLASH_GARD_PART "GUARD"
 
+/* Full gard version number (possibly includes gitid). */
+extern const char version[];
+
 struct gard_ctx {
 	bool ecc;
 	uint32_t f_size;
@@ -637,10 +640,16 @@ struct {
 	{ "clear", "Clear GARD records", do_clear },
 };
 
+static void print_version(void)
+{
+	printf("Open-Power GARD tool %s\n", version);
+}
+
 static void usage(const char *progname)
 {
 	unsigned int i;
 
+	print_version();
 	fprintf(stderr, "Usage: %s [-a -e -f <file> -p] <command> [<args>]\n\n",
 			progname);
 	fprintf(stderr, "-e --ecc\n\tForce reading/writing with ECC bytes.\n\n");
