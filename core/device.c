@@ -318,14 +318,18 @@ static struct dt_property *new_property(struct dt_node *node,
 					const char *name, size_t size)
 {
 	struct dt_property *p = malloc(sizeof(*p) + size);
+	char *path;
+
 	if (!p) {
 		prerror("Failed to allocate property \"%s\" for %s of %zu bytes\n",
 			name, dt_get_path(node), size);
 		abort();
 	}
 	if (dt_find_property(node, name)) {
+		path = dt_get_path(node);
 		prerror("Duplicate property \"%s\" in node %s\n",
-			name, dt_get_path(node));
+			name, path);
+		free(path);
 		abort();
 
 	}
