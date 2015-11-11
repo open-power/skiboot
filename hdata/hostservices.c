@@ -71,7 +71,8 @@ bool hservices_from_hdat(const void *fdt, size_t size)
 	int err;
 	struct dt_node *hservices;
 
-	printf("HBRT: Found mini-DT at 0x%p size: 0x%08lx\n", fdt, size);
+	prlog(PR_DEBUG, "HBRT: Found mini-DT at 0x%p size: 0x%08lx\n",
+	      fdt, size);
 
 	/* For diagnostic purposes, we copy the whole blob over */
 	dt_add_property(dt_root, "ibm,hbrt-mini-fdt", fdt, size);
