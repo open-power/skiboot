@@ -589,10 +589,15 @@ static void p8_i2c_status_data_request(struct p8_i2c_master *master,
 			rc = p8_i2c_fifo_write(master, master->obuf,
 					       req->offset_bytes);
 		}
+
+		/* For read, wait address phase to complete */
+		if (rc || req->op != SMBUS_WRITE)
+			break;
+
 		/* For writes, transition to data phase now */
-		if (rc == 0 && req->op == SMBUS_WRITE)
-			master->state = state_data;
-		break;
+		master->state = state_data;
+		fifo_free -= req->offset_bytes;
+		/* Fall through */
 	case state_data:
 		/* Sanity check */
 		if (master->bytes_sent >= req->rw_len) {
