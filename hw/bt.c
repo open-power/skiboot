@@ -71,10 +71,29 @@
 
 #define BT_QUEUE_DEBUG 0
 
-#define BT_ERR(msg, fmt, args...) \
-	do { prerror("BT seq 0x%02x netfn 0x%02x cmd 0x%02x: " fmt "\n", \
-	     (msg)->seq, (msg)->ipmi_msg.netfn, (msg)->ipmi_msg.cmd, ##args); \
+#define _BT_Q_LOG(level, msg, fmt, args...) \
+	do { if (msg) \
+			prlog(level, "BT seq 0x%02x netfn 0x%02x cmd 0x%02x: " fmt "\n", \
+			(msg)->seq, (msg)->ipmi_msg.netfn, (msg)->ipmi_msg.cmd, ##args); \
+		else \
+			prlog(level, "BT seq 0x?? netfn 0x?? cmd 0x??: " fmt "\n", ##args); \
 	} while(0)
+
+#define BT_ERR(fmt, args...) prlog(PR_ERR, fmt, ##args)
+#define BT_DBG(fmt, args...) prlog(PR_DEBUG, fmt, ##args)
+#define BT_INF(fmt, args...) prlog(PR_INFO, fmt, ##args)
+
+/*
+ * takes a struct bt_msg *
+ */
+#define BT_Q_ERR(msg, fmt, args...) \
+	_BT_Q_LOG(PR_ERR, msg, fmt, ##args)
+
+#define BT_Q_DBG(msg, fmt, args...) \
+	_BT_Q_LOG(PR_DEBUG, msg, fmt, ##args)
+
+#define BT_Q_INF(msg, fmt, args...) \
+	_BT_Q_LOG(PR_INFO, msg, fmt, ##args)
 
 enum bt_states {
 	BT_STATE_IDLE = 0,
@@ -191,6 +210,8 @@ static void bt_send_msg(struct bt_msg *bt_msg)
 	for (i = 0; i < ipmi_msg->req_size; i++)
 		bt_outb(ipmi_msg->data[i], BT_HOST2BMC);
 
+	BT_Q_DBG(bt_msg, "Message sent to host");
+
 	bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
 	bt_set_state(BT_STATE_RESP_WAIT);
 
@@ -244,7 +265,8 @@ static void bt_get_resp(void)
 	}
 	if (!bt_msg) {
 		/* A response to a message we no longer care about. */
-		prlog(PR_INFO, "BT: Nobody cared about a response to an BT/IPMI message\n");
+		BT_INF("BT: Nobody cared about a response to an BT/IPMI message"
+			"(seq 0x%02x netfn 0x%02x cmd 0x%02x)", seq, netfn, cmd);
 		bt_flush_msg();
 		bt_set_state(BT_STATE_IDLE);
 		return;
@@ -258,7 +280,7 @@ static void bt_get_resp(void)
 	 * bt_inb(BT_HOST2BMC) < BT_MIN_RESP_LEN (which should never occur).
 	 */
 	if (resp_len > ipmi_msg->resp_size) {
-		BT_ERR(bt_msg, "Invalid resp_len %d", resp_len);
+		BT_Q_ERR(bt_msg, "Invalid resp_len %d", resp_len);
 		resp_len = ipmi_msg->resp_size;
 		cc = IPMI_ERR_MSG_TRUNCATED;
 	}
@@ -271,6 +293,8 @@ static void bt_get_resp(void)
 
 	bt_set_state(BT_STATE_IDLE);
 
+	BT_Q_DBG(bt_msg, "IPMI MSG done");
+
 	list_del(&bt_msg->link);
 	bt.queue_len--;
 	unlock(&bt.lock);
@@ -278,10 +302,6 @@ static void bt_get_resp(void)
 	/*
 	 * Call the IPMI layer to finish processing the message.
 	 */
-#if BT_QUEUE_DEBUG
-	prlog(PR_DEBUG, "cmd 0x%02x done\n", seq);
-#endif
-
 	ipmi_cmd_done(cmd, netfn, cc, ipmi_msg);
 	lock(&bt.lock);
 
@@ -300,12 +320,12 @@ static void bt_expire_old_msg(uint64_t tb)
 			clearing the H2B_ATN flag without actually
 			doing anything. The data will still be in the
 			FIFO so just reset the flag.*/
-			BT_ERR(bt_msg, "Retry sending message");
+			BT_Q_ERR(bt_msg, "Retry sending message");
 			bt_msg->retry_count++;
 			bt_msg->tb = tb;
 			bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
 		} else {
-			BT_ERR(bt_msg, "Timeout sending message");
+			BT_Q_ERR(bt_msg, "Timeout sending message");
 			bt_msg_del(bt_msg);
 
 			/* Timing out a message is inherently racy as the BMC
@@ -325,14 +345,14 @@ static void print_debug_queue_info(void)
 
 	if (!list_empty(&bt.msgq)) {
 		printed = false;
-		prlog(PR_DEBUG, "-------- BT Msg Queue --------\n");
+		BT_DBG("-------- BT Msg Queue --------\n");
 		list_for_each(&bt.msgq, msg, link) {
-			prlog(PR_DEBUG, "Seq: 0x%02x Cmd: 0x%02x\n", msg->seq, msg->ipmi_msg.cmd);
+			BT_Q_DBG(msg, "[]");
 		}
 		prlog(PR_DEBUG, "-----------------------------\n");
 	} else if (!printed) {
 		printed = true;
-		prlog(PR_DEBUG, "----- BT Msg Queue Empty -----\n");
+		BT_DBG("----- BT Msg Queue Empty -----\n");
 	}
 }
 #else
@@ -414,10 +434,10 @@ static void bt_add_msg(struct bt_msg *bt_msg)
 	if (bt.queue_len > BT_MAX_QUEUE_LEN) {
 		/* Maximum queue length exceeded - remove the oldest message
 		   from the queue. */
-		BT_ERR(bt_msg, "Maximum queue length exceeded");
+		BT_Q_ERR(bt_msg, "Maximum queue length exceeded");
 		bt_msg = list_tail(&bt.msgq, struct bt_msg, link);
 		assert(bt_msg);
-		BT_ERR(bt_msg, "Removed from queue");
+		BT_Q_ERR(bt_msg, "Removed from queue");
 		bt_msg_del(bt_msg);
 	}
 }
@@ -531,11 +551,11 @@ void bt_init(void)
 	/* Get IO base */
 	prop = dt_find_property(n, "reg");
 	if (!prop) {
-		prerror("BT: Can't find reg property\n");
+		BT_ERR("BT: Can't find reg property\n");
 		return;
 	}
 	if (dt_property_get_cell(prop, 0) != OPAL_LPC_IO) {
-		prerror("BT: Only supports IO addresses\n");
+		BT_ERR("BT: Only supports IO addresses\n");
 		return;
 	}
 	bt.base_addr = dt_property_get_cell(prop, 1);
@@ -565,5 +585,6 @@ void bt_init(void)
 	irq = dt_prop_get_u32(n, "interrupts");
 	bt_lpc_client.interrupts = LPC_IRQ(irq);
 	lpc_register_client(dt_get_chip_id(n), &bt_lpc_client);
-	prlog(PR_DEBUG, "BT: Using LPC IRQ %d\n", irq);
+
+	BT_DBG("BT: Using LPC IRQ %d\n", irq);
 }
