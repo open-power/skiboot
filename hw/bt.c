@@ -39,6 +39,9 @@
 #define   BT_INTMASK_B2H_IRQ		0x02
 #define   BT_INTMASK_BMC_HWRST		0x80
 
+/* Maximum size of the HW FIFO */
+#define BT_FIFO_LEN 64
+
 /* Default poll interval before interrupts are working */
 #define BT_DEFAULT_POLL_MS	200
 
@@ -134,6 +137,13 @@ static inline void bt_set_h_busy(bool value)
 		bt_outb(BT_CTRL_H_BUSY, BT_CTRL);
 }
 
+static inline void bt_assert_h_busy(void)
+{
+	uint8_t rval;
+	rval = bt_inb(BT_CTRL);
+	assert(rval & BT_CTRL_H_BUSY);
+}
+
 static inline bool bt_idle(void)
 {
 	uint8_t bt_ctrl = bt_inb(BT_CTRL);
@@ -205,9 +215,21 @@ static void bt_send_msg(struct bt_msg *bt_msg)
 	return;
 }
 
+static void bt_clear_fifo(void)
+{
+	int i;
+
+	for (i = 0; i < BT_FIFO_LEN; i++)
+		bt_outb(0xff, BT_HOST2BMC);
+}
+
 static void bt_flush_msg(void)
 {
-	bt_outb(BT_CTRL_B2H_ATN | BT_CTRL_CLR_RD_PTR, BT_CTRL);
+	bt_assert_h_busy();
+	bt_outb(BT_CTRL_B2H_ATN | BT_CTRL_CLR_RD_PTR | BT_CTRL_CLR_WR_PTR, BT_CTRL);
+	bt_clear_fifo();
+	/* Can't hurt to clear the write pointer again, just to be sure */
+	bt_outb(BT_CTRL_CLR_WR_PTR, BT_CTRL);
 	bt_set_h_busy(false);
 }
 
