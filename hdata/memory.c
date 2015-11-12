@@ -15,7 +15,6 @@
  */
 
 #include <cpu.h>
-#include <device_tree.h>
 #include <device.h>
 #include <vpd.h>
 #include <ccan/str/str.h>

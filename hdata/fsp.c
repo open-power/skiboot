@@ -19,7 +19,6 @@
 #include <cpu.h>
 #include <vpd.h>
 #include <ccan/str/str.h>
-#include <device_tree.h>
 #include <interrupts.h>
 
 #include "hdata.h"
