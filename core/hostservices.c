@@ -826,9 +826,8 @@ int host_services_occ_start(void)
 
 int host_services_occ_stop(void)
 {
-	struct proc_chip *chip;
-	int i, rc = 0, nr_chips=0;
-	uint64_t chipids[MAX_CHIPS];
+	int i, rc = 0, nr_slaves = 0, nr_masters = 0;
+	uint64_t *master_chipids = NULL, *slave_chipids = NULL;
 
 	prlog(PR_INFO, "HBRT: OCC Stop requested\n");
 
@@ -837,21 +836,38 @@ int host_services_occ_stop(void)
 		return -ENOENT;
 	}
 
-	for_each_chip(chip) {
-		chipids[nr_chips++] = chip->id;
-	}
+	rc = find_master_and_slave_occ(&master_chipids, &slave_chipids,
+				       &nr_masters, &nr_slaves);
+	if (rc)
+		goto out;
 
-	for (i = 0; i < nr_chips; i++)
+	for (i = 0; i < nr_slaves; i++)
 		prlog(PR_TRACE, "HBRT: Calling stopOCC() for %04llx ",
-		      chipids[i]);
+		      slave_chipids[i]);
 
-	/* Lets STOP all OCC */
-	rc = hservice_runtime->stopOCCs(chipids, nr_chips);
+	if (!nr_slaves)
+		goto master;
+
+	/* Lets STOP all the slave OCC */
+	rc = hservice_runtime->stopOCCs(slave_chipids, nr_slaves);
+	prlog(PR_DEBUG, "HBRT: stopOCCs() slave rc  = %d\n", rc);
+
+master:
+	for (i = 0; i < nr_masters; i++)
+		prlog(PR_TRACE, "HBRT: Calling stopOCC() for %04llx ",
+		      master_chipids[i]);
+
+	/* Lets STOP all the master OCC */
+	rc = hservice_runtime->stopOCCs(master_chipids, nr_masters);
+
 	hservice_mark();
-	prlog(PR_DEBUG, "HBRT: stopOCCs() rc  = %d\n", rc);
+	prlog(PR_DEBUG, "HBRT: stopOCCs() master rc  = %d\n", rc);
+
+out:
+	free(master_chipids);
+	free(slave_chipids);
 	return rc;
 }
-
 
 void host_services_occ_base_setup(void)
 {

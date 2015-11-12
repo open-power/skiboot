@@ -454,6 +454,50 @@ struct occ_load_req {
 };
 static LIST_HEAD(occ_load_req_list);
 
+int find_master_and_slave_occ(uint64_t **master, uint64_t **slave,
+			      int *nr_masters, int *nr_slaves)
+{
+	struct proc_chip *chip;
+	int nr_chips = 0, i;
+	uint64_t chipids[MAX_CHIPS];
+
+	for_each_chip(chip) {
+		chipids[nr_chips++] = chip->id;
+	}
+
+	chip = next_chip(NULL);
+	/*
+	 * Proc0 is the master OCC for Tuleta/Alpine boxes.
+	 * Hostboot expects the pair of chips for MURANO, so pass the sibling
+	 * chip id along with proc0 to hostboot.
+	 */
+	*nr_masters = (chip->type == PROC_CHIP_P8_MURANO) ? 2 : 1;
+	*master = (uint64_t *)malloc(*nr_masters * sizeof(uint64_t));
+
+	if (!master) {
+		printf("OCC: master array alloc failure\n");
+		return -ENOMEM;
+	}
+
+	if (nr_chips - *nr_masters > 0) {
+		*nr_slaves = nr_chips - *nr_masters;
+		*slave = (uint64_t *)malloc(*nr_slaves * sizeof(uint64_t));
+		if (!slave) {
+			printf("OCC: slave array alloc failure\n");
+			return -ENOMEM;
+		}
+	}
+
+	for (i = 0; i < nr_chips; i++) {
+		if (i < *nr_masters) {
+			*(*master + i) = chipids[i];
+			continue;
+		}
+		*(*slave + i - *nr_masters) = chipids[i];
+	}
+	return 0;
+}
+
 static void occ_queue_load(u8 scope, u32 dbob_id, u32 seq_id)
 {
 	struct occ_load_req *occ_req;
