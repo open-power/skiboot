@@ -823,6 +823,7 @@ extern void fsp_epow_init(void);
 
 /* DPO */
 extern void fsp_dpo_init(void);
+extern bool fsp_dpo_pending;
 
 /* Chiptod */
 extern void fsp_chiptod_init(void);

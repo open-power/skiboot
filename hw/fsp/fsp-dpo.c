@@ -29,7 +29,7 @@
 #define DPO_CMD_SGN_BYTE1	0x20 /* Byte[1] signature */
 #define DPO_TIMEOUT		2700 /* 45 minutes in seconds */
 
-static bool fsp_dpo_pending;
+bool fsp_dpo_pending;
 static unsigned long fsp_dpo_init_tb;
 
 /*
