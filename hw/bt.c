@@ -95,11 +95,6 @@
 #define BT_Q_INF(msg, fmt, args...) \
 	_BT_Q_LOG(PR_INFO, msg, fmt, ##args)
 
-enum bt_states {
-	BT_STATE_IDLE = 0,
-	BT_STATE_RESP_WAIT,
-};
-
 struct bt_msg {
 	struct list_node link;
 	unsigned long tb;
@@ -110,7 +105,6 @@ struct bt_msg {
 
 struct bt {
 	uint32_t base_addr;
-	enum bt_states state;
 	struct lock lock;
 	struct list_head msgq;
 	struct timer poller;
@@ -147,11 +141,6 @@ static inline bool bt_idle(void)
 	return !(bt_ctrl & BT_CTRL_B_BUSY) && !(bt_ctrl & BT_CTRL_H2B_ATN);
 }
 
-static inline void bt_set_state(enum bt_states next_state)
-{
-	bt.state = next_state;
-}
-
 /* Must be called with bt.lock held */
 static void bt_msg_del(struct bt_msg *bt_msg)
 {
@@ -171,8 +160,6 @@ static void bt_init_interface(void)
 
 	/* Take care of a stable H_BUSY if any */
 	bt_set_h_busy(false);
-
-	bt_set_state(BT_STATE_IDLE);
 }
 
 static void bt_reset_interface(void)
@@ -214,7 +201,6 @@ static void bt_send_msg(struct bt_msg *bt_msg)
 	bt_msg->send_count++;
 
 	bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
-	bt_set_state(BT_STATE_RESP_WAIT);
 
 	return;
 }
@@ -269,7 +255,6 @@ static void bt_get_resp(void)
 		BT_INF("BT: Nobody cared about a response to an BT/IPMI message"
 			"(seq 0x%02x netfn 0x%02x cmd 0x%02x)", seq, netfn, cmd);
 		bt_flush_msg();
-		bt_set_state(BT_STATE_IDLE);
 		return;
 	}
 
@@ -291,8 +276,6 @@ static void bt_get_resp(void)
 	for (i = 0; i < resp_len; i++)
 		ipmi_msg->data[i] = bt_inb(BT_HOST2BMC);
 	bt_set_h_busy(false);
-
-	bt_set_state(BT_STATE_IDLE);
 
 	BT_Q_DBG(bt_msg, "IPMI MSG done");
 
@@ -376,7 +359,12 @@ static void bt_send_and_unlock(void)
 		if (bt_msg->tb == 0)
 			bt_msg->tb = mftb();
 
-		if (bt_idle() && bt.state == BT_STATE_IDLE)
+		/*
+		 * Only send it if we haven't already.
+		 * Timeouts and retries happen in bt_expire_old_msg()
+		 * called from bt_poll()
+		 */
+		if (bt_idle() && bt_msg->send_count == 0)
 			bt_send_msg(bt_msg);
 	}
 
@@ -402,8 +390,7 @@ static void bt_poll(struct timer *t __unused, void *data __unused,
 	bt_ctrl = bt_inb(BT_CTRL);
 
 	/* Is there a response waiting for us? */
-	if (bt.state == BT_STATE_RESP_WAIT &&
-	    (bt_ctrl & BT_CTRL_B2H_ATN))
+	if (bt_ctrl & BT_CTRL_B2H_ATN)
 		bt_get_resp();
 
 	bt_expire_old_msg(now);
@@ -570,7 +557,6 @@ void bt_init(void)
 	 * The iBT interface comes up in the busy state until the daemon has
 	 * initialised it.
 	 */
-	bt_set_state(BT_STATE_IDLE);
 	list_head_init(&bt.msgq);
 	bt.queue_len = 0;
 
