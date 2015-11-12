@@ -22,6 +22,7 @@
 #include <ipmi.h>
 #include <bt.h>
 #include <timer.h>
+#include <ipmi.h>
 
 /* BT registers */
 #define BT_CTRL			0
@@ -106,6 +107,14 @@ struct bt_msg {
 	struct ipmi_msg ipmi_msg;
 };
 
+struct bt_caps {
+	uint8_t num_requests;
+	uint8_t input_buf_len;
+	uint8_t output_buf_len;
+	uint8_t msg_timeout;
+	uint8_t num_retries;
+};
+
 struct bt {
 	uint32_t base_addr;
 	struct lock lock;
@@ -113,7 +122,9 @@ struct bt {
 	struct timer poller;
 	bool irq_ok;
 	int queue_len;
+	struct bt_caps caps;
 };
+
 static struct bt bt;
 
 static int ipmi_seq;
@@ -142,6 +153,66 @@ static inline void bt_assert_h_busy(void)
 	uint8_t rval;
 	rval = bt_inb(BT_CTRL);
 	assert(rval & BT_CTRL_H_BUSY);
+}
+
+static void get_bt_caps_complete(struct ipmi_msg *msg)
+{
+	/* Ignore errors, we'll fallback to using the defaults, no big deal */
+
+	if (msg->data[0] == 0) {
+		BT_DBG("Got illegal BMC BT capability\n");
+		goto out;
+	}
+
+	if (msg->data[3] + 1 != BT_FIFO_LEN) {
+		BT_DBG("Got a input buffer len (%d) cap which differs from the default\n",
+				msg->data[3]);
+		goto out;
+	}
+
+	if (msg->data[4] + 1 != BT_FIFO_LEN) {
+		BT_DBG("Got a output buffer len (%d) cap which differs from the default\n",
+				msg->data[4]);
+		goto out;
+	}
+
+	memcpy(&bt.caps, msg->data, sizeof(struct bt_caps));
+
+	/*
+	 * IPMI Spec says that the value for buffer sizes are:
+	 * "the largest value allowed in first byte"
+	 * Therefore we want to add one to what we get
+	 */
+	bt.caps.input_buf_len++;
+	bt.caps.output_buf_len++;
+	BT_DBG("BMC BT capabilities received:\n");
+	BT_DBG("buffer sizes: %d input %d output\n",
+			bt.caps.input_buf_len, bt.caps.output_buf_len);
+	BT_DBG("number of requests: %d\n", bt.caps.num_requests);
+	BT_DBG( "msg timeout: %d max retries: %d\n",
+			bt.caps.msg_timeout, bt.caps.num_retries);
+
+out:
+	ipmi_free_msg(msg);
+}
+
+static void get_bt_caps(void)
+{
+
+	struct ipmi_msg *bmc_caps;
+	/*
+	 * Didn't sent a message, now is a good time to ask the BMC for its
+	 * capabilities.
+	 */
+	bmc_caps = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_GET_BT_CAPS,
+			get_bt_caps_complete, NULL, NULL, 0, sizeof(struct bt_caps));
+	if (!bmc_caps)
+		BT_ERR("Couldn't create BMC BT capabilities msg\n");
+
+	if (bmc_caps && ipmi_queue_msg(bmc_caps))
+		BT_ERR("Couldn't enqueue request for BMC BT capabilities\n");
+
+	/* Ignore errors, we'll fallback to using the defaults, no big deal */
 }
 
 static inline bool bt_idle(void)
@@ -219,7 +290,7 @@ static void bt_clear_fifo(void)
 {
 	int i;
 
-	for (i = 0; i < BT_FIFO_LEN; i++)
+	for (i = 0; i < bt.caps.input_buf_len; i++)
 		bt_outb(0xff, BT_HOST2BMC);
 }
 
@@ -320,7 +391,7 @@ static void bt_expire_old_msg(uint64_t tb)
 
 	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
 
-	if (bt_msg && bt_msg->tb > 0 && (bt_msg->tb + BT_MSG_TIMEOUT) < tb) {
+	if (bt_msg && bt_msg->tb > 0 && (bt_msg->tb + bt.caps.msg_timeout) < tb) {
 		if (bt_msg->send_count < BT_MAX_SEND_COUNT) {
 			/* A message timeout is usually due to the BMC
 			clearing the H2B_ATN flag without actually
@@ -391,7 +462,6 @@ static void bt_send_and_unlock(void)
 	}
 
 	unlock(&bt.lock);
-	return;
 }
 
 static void bt_poll(struct timer *t __unused, void *data __unused,
@@ -554,6 +624,13 @@ void bt_init(void)
 	const struct dt_property *prop;
 	uint32_t irq;
 
+	/* Set sane capability defaults */
+	bt.caps.num_requests = 1;
+	bt.caps.input_buf_len = BT_FIFO_LEN;
+	bt.caps.output_buf_len = BT_FIFO_LEN;
+	bt.caps.msg_timeout = BT_MSG_TIMEOUT;
+	bt.caps.num_retries = 1;
+
 	/* We support only one */
 	n = dt_find_compatible_node(dt_root, NULL, "ipmi-bt");
 	if (!n)
@@ -595,6 +672,9 @@ void bt_init(void)
 	irq = dt_prop_get_u32(n, "interrupts");
 	bt_lpc_client.interrupts = LPC_IRQ(irq);
 	lpc_register_client(dt_get_chip_id(n), &bt_lpc_client);
+
+	/* Enqueue an IPMI message to ask the BMC about its BT capabilities */
+	get_bt_caps();
 
 	BT_DBG("BT: Using LPC IRQ %d\n", irq);
 }
