@@ -67,7 +67,7 @@
 /*
  * Maximum number of times to attempt sending a message before giving up.
  */
-#define BT_MAX_RETRY_COUNT 1
+#define BT_MAX_SEND_COUNT 2
 
 #define BT_QUEUE_DEBUG 0
 
@@ -104,7 +104,7 @@ struct bt_msg {
 	struct list_node link;
 	unsigned long tb;
 	uint8_t seq;
-	uint8_t retry_count;
+	uint8_t send_count;
 	struct ipmi_msg ipmi_msg;
 };
 
@@ -211,6 +211,7 @@ static void bt_send_msg(struct bt_msg *bt_msg)
 		bt_outb(ipmi_msg->data[i], BT_HOST2BMC);
 
 	BT_Q_DBG(bt_msg, "Message sent to host");
+	bt_msg->send_count++;
 
 	bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
 	bt_set_state(BT_STATE_RESP_WAIT);
@@ -315,13 +316,14 @@ static void bt_expire_old_msg(uint64_t tb)
 	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
 
 	if (bt_msg && bt_msg->tb > 0 && (bt_msg->tb + BT_MSG_TIMEOUT) < tb) {
-		if (bt_msg->retry_count < BT_MAX_RETRY_COUNT) {
+		if (bt_msg->send_count < BT_MAX_SEND_COUNT) {
 			/* A message timeout is usually due to the BMC
 			clearing the H2B_ATN flag without actually
 			doing anything. The data will still be in the
 			FIFO so just reset the flag.*/
 			BT_Q_ERR(bt_msg, "Retry sending message");
-			bt_msg->retry_count++;
+			bt_msg->send_count++;
+
 			bt_msg->tb = tb;
 			bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
 		} else {
@@ -347,7 +349,7 @@ static void print_debug_queue_info(void)
 		printed = false;
 		BT_DBG("-------- BT Msg Queue --------\n");
 		list_for_each(&bt.msgq, msg, link) {
-			BT_Q_DBG(msg, "[]");
+			BT_Q_DBG(msg, "[ sent %d ]", msg->send_count);
 		}
 		prlog(PR_DEBUG, "-----------------------------\n");
 	} else if (!printed) {
@@ -429,7 +431,7 @@ static void bt_add_msg(struct bt_msg *bt_msg)
 {
 	bt_msg->tb = 0;
 	bt_msg->seq = ipmi_seq++;
-	bt_msg->retry_count = 0;
+	bt_msg->send_count = 0;
 	bt.queue_len++;
 	if (bt.queue_len > BT_MAX_QUEUE_LEN) {
 		/* Maximum queue length exceeded - remove the oldest message
