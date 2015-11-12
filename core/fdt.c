@@ -49,21 +49,21 @@ static void dt_property_cell(const char *name, u32 cell)
 	save_err(fdt_property_cell(fdt, name, cell));
 }
 
-static void dt_begin_node(const char *name, uint32_t phandle)
+static void dt_begin_node(const struct dt_node *dn)
 {
-	save_err(fdt_begin_node(fdt, name));
+	save_err(fdt_begin_node(fdt, dn->name));
 
 	/*
 	 * We add both the new style "phandle" and the legacy
 	 * "linux,phandle" properties
 	 */
-	dt_property_cell("linux,phandle", phandle);
-	dt_property_cell("phandle", phandle);
+	dt_property_cell("linux,phandle", dn->phandle);
+	dt_property_cell("phandle", dn->phandle);
 }
 
-static void dt_property(const char *name, const void *val, size_t size)
+static void dt_property(const struct dt_property *p)
 {
-	save_err(fdt_property(fdt, name, val, size));
+	save_err(fdt_property(fdt, p->name, p->prop, p->len));
 }
 
 static void dt_end_node(void)
@@ -128,11 +128,11 @@ static void flatten_dt_node(const struct dt_node *root)
 #ifdef DEBUG_FDT
 		printf("FDT:   prop: %s size: %ld\n", p->name, p->len);
 #endif
-		dt_property(p->name, p->prop, p->len);
+		dt_property(p);
 	}
 
 	list_for_each(&root->children, i, list) {
-		dt_begin_node(i->name, i->phandle);
+		dt_begin_node(i);
 		flatten_dt_node(i);
 		dt_end_node();
 	}
@@ -181,7 +181,7 @@ void *create_dtb(const struct dt_node *root)
 		create_dtb_reservemap(root);
 
 		/* Open root node */
-		dt_begin_node(root->name, root->phandle);
+		dt_begin_node(root);
 
 		/* Unflatten our live tree */
 		flatten_dt_node(root);
