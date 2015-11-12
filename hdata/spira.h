@@ -239,9 +239,13 @@ struct iplparams_sysparams {
 	__be32		sys_attributes;
 	__be32		mem_scrubbing;
 	__be16		cur_spl_value;
-	uint8_t		pump_mode;
+	uint8_t		pump_mode;		/* Reserved */
 	uint8_t		use_pore_sleep;
-	__be32		pore_image_size;
+	__be32		pore_image_size;	/* Reserved */
+	uint8_t		vtpm_enabled;
+	uint8_t		hw_page_table_size;	/* >= 0x59 */
+	__be16		hv_disp_wheel;		/* >= 0x58 */
+	__be32		nest_freq_mhz;		/* >= 0x5b */
 } __packed;
 
 /* Idata index 1: IPL parameters */

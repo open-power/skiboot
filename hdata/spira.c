@@ -182,6 +182,7 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 {
 	struct dt_node *node;
 	uint64_t addr, size;
+	uint64_t freq;
 
 	addr = base | ((uint64_t)hw_id << PPC_BITLSHIFT(28));
 	size = (u64)1 << PPC_BITLSHIFT(28);
@@ -212,6 +213,13 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 		dt_add_property_strings(node, "compatible", "ibm,xscom");
 	}
 	dt_add_property_u64s(node, "reg", addr, size);
+
+	/* Derive bus frquency */
+	freq = dt_prop_get_u64_def(dt_root, "nest-frequency", 0);
+	freq /= 4;
+	if (freq)
+		dt_add_property_cells(node, "bus-frequency",
+				      hi32(freq), lo32(freq));
 
 	return node;
 }
@@ -693,6 +701,8 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 	const struct iplparams_sysparams *p;
 	u32 sys_type;
 	const char *sys_family;
+	const struct HDIF_common_hdr *hdif = iplp;
+	u16 version = be16_to_cpu(hdif->version);
 
 	p = HDIF_get_idata(iplp, IPLPARAMS_SYSPARAMS, NULL);
 	if (!CHECK_SPPTR(p)) {
@@ -732,6 +742,15 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 	}
 	dt_add_property_strings(dt_root, "compatible", "ibm,powernv",
 				sys_family);
+
+	/* Grab nest frequency when available */
+	if (version >= 0x005b) {
+		u64 freq = be32_to_cpu(p->nest_freq_mhz);
+
+		freq *= 1000000;
+		dt_add_property_cells(dt_root, "nest-frquency",
+				      hi32(freq), lo32(freq));
+	}
 }
 
 static void add_iplparams_ipl_params(const void *iplp, struct dt_node *node)

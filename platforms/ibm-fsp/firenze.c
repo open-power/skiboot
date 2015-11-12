@@ -57,6 +57,7 @@ struct lock fsp_pcie_inv_lock = LOCK_UNLOCKED;
 static struct dt_node *dt_create_i2c_master(struct dt_node *n, uint32_t eng_id)
 {
 	struct dt_node *i2cm;
+	uint64_t freq;
 
 	/* Each master registers set is of length 0x20 */
 	i2cm = dt_new_addr(n, "i2cm", 0xa0000 + eng_id * 0x20);
@@ -67,11 +68,19 @@ static struct dt_node *dt_create_i2c_master(struct dt_node *n, uint32_t eng_id)
 			       "ibm,power8-i2cm");
 	dt_add_property_cells(i2cm, "reg", 0xa0000 + eng_id * 0x20,
 			      0x20);
-	dt_add_property_cells(i2cm, "clock-frequency", 50000000);
 	dt_add_property_cells(i2cm, "chip-engine#", eng_id);
 	dt_add_property_cells(i2cm, "#address-cells", 1);
 	dt_add_property_cells(i2cm, "#size-cells", 0);
 
+	/* Derive the clock source frequency */
+	freq = dt_prop_get_u64_def(n, "bus-frequency", 0);
+	freq /= 4;
+	if (freq)
+		dt_add_property_cells(i2cm, "clock-frequency",
+				      hi32(freq), lo32(freq));
+	else
+		dt_add_property_cells(i2cm, "clock-frequency",
+				      125000000);
 	return i2cm;
 }
 
