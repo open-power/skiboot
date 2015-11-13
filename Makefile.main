@@ -73,8 +73,8 @@ ifeq ($(STACK_CHECK),1)
 CFLAGS += -fstack-protector-all -pg
 CPPFLAGS += -DSTACK_CHECK_ENABLED
 else
-# XXX Add -fstack-protector-strong on gcc 4.9
 CFLAGS += -fstack-protector
+CFLAGS += $(call try-cflag,$(CC),-fstack-protector-strong)
 endif
 
 CFLAGS += $(call try-cflag,$(CC),-Wjump-misses-init) \
