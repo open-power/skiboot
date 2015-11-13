@@ -292,7 +292,7 @@ ssize_t read(int fd __unused, void *buf, size_t req_count)
 
 void flush_console_driver(void)
 {
-	if (con_driver->flush != NULL)
+	if (con_driver && con_driver->flush != NULL)
 		con_driver->flush();
 }
 
