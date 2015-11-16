@@ -21,6 +21,7 @@
 #include "hdata.h"
 #include <device.h>
 #include "hdata.h"
+#include <inttypes.h>
 
 struct card_info {
 	const char *ccin; 	/* Customer card identification number */
@@ -502,7 +503,7 @@ static struct dt_node *dt_create_vpd_node(struct dt_node *parent,
 	addr = (uint64_t)be16_to_cpu(entry->rsrc_id);
 	node = dt_new_addr(parent, name, addr);
 	if (!node) {
-		prerror("VPD: Creating node at %s@%llx failed\n", name, addr);
+		prerror("VPD: Creating node at %s@%"PRIx64" failed\n", name, addr);
 		return NULL;
 	}
 

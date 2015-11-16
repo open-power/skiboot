@@ -25,6 +25,7 @@
 #include <p5ioc2.h>
 #include <p7ioc.h>
 #include <vpd.h>
+#include <inttypes.h>
 
 #include "hdata.h"
 
@@ -142,15 +143,15 @@ static struct dt_node *io_add_p5ioc2(const struct cechub_io_hub *hub,
 	prlog(PR_DEBUG, "    GX#%d BUID_Ext = 0x%x\n",
 	      be32_to_cpu(hub->gx_index),
 	      be32_to_cpu(hub->buid_ext));
-	prlog(PR_DEBUG, "    GX BAR 0 = 0x%016llx\n",
+	prlog(PR_DEBUG, "    GX BAR 0 = 0x%016"PRIx64"\n",
 	      be64_to_cpu(hub->gx_ctrl_bar0));
-	prlog(PR_DEBUG, "    GX BAR 1 = 0x%016llx\n",
+	prlog(PR_DEBUG, "    GX BAR 1 = 0x%016"PRIx64"\n",
 	      be64_to_cpu(hub->gx_ctrl_bar1));
-	prlog(PR_DEBUG, "    GX BAR 2 = 0x%016llx\n",
+	prlog(PR_DEBUG, "    GX BAR 2 = 0x%016"PRIx64"\n",
 	      be64_to_cpu(hub->gx_ctrl_bar2));
-	prlog(PR_DEBUG, "    GX BAR 3 = 0x%016llx\n",
+	prlog(PR_DEBUG, "    GX BAR 3 = 0x%016"PRIx64"\n",
 	      be64_to_cpu(hub->gx_ctrl_bar3));
-	prlog(PR_DEBUG, "    GX BAR 4 = 0x%016llx\n",
+	prlog(PR_DEBUG, "    GX BAR 4 = 0x%016"PRIx64"\n",
 	      be64_to_cpu(hub->gx_ctrl_bar4));
 
 	/* We assume SBAR == GX0 + some hard coded offset */
@@ -194,15 +195,15 @@ static struct dt_node *io_add_p7ioc(const struct cechub_io_hub *hub,
 	prlog(PR_DEBUG, "    GX#%d BUID_Ext = 0x%x\n",
 	      be32_to_cpu(hub->gx_index),
 	      be32_to_cpu(hub->buid_ext));
-	prlog(PR_DEBUG, "    GX BAR 0 = 0x%016llx\n",
+	prlog(PR_DEBUG, "    GX BAR 0 = 0x%016"PRIx64"\n",
 	      be64_to_cpu(hub->gx_ctrl_bar0));
-	prlog(PR_DEBUG, "    GX BAR 1 = 0x%016llx\n",
+	prlog(PR_DEBUG, "    GX BAR 1 = 0x%016"PRIx64"\n",
 	      be64_to_cpu(hub->gx_ctrl_bar1));
-	prlog(PR_DEBUG, "    GX BAR 2 = 0x%016llx\n",
+	prlog(PR_DEBUG, "    GX BAR 2 = 0x%016"PRIx64"\n",
 	      be64_to_cpu(hub->gx_ctrl_bar2));
-	prlog(PR_DEBUG, "    GX BAR 3 = 0x%016llx\n",
+	prlog(PR_DEBUG, "    GX BAR 3 = 0x%016"PRIx64"\n",
 	      be64_to_cpu(hub->gx_ctrl_bar3));
-	prlog(PR_DEBUG, "    GX BAR 4 = 0x%016llx\n",
+	prlog(PR_DEBUG, "    GX BAR 4 = 0x%016"PRIx64"\n",
 	      be64_to_cpu(hub->gx_ctrl_bar4));
 
 	/* We only know about memory map 1 */

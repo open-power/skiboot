@@ -178,7 +178,7 @@ static void run_test(struct test *test)
 		fprintf(stderr, "reserved regions:\n");
 
 		list_for_each(&regions, r, list) {
-			fprintf(stderr, "\t: %08x[%08x] %s\n",
+			fprintf(stderr, "\t: %08"PRIx64"[%08"PRIx64"] %s\n",
 					r->start, r->len, r->name);
 		}
 		exit(EXIT_FAILURE);
