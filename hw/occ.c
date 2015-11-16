@@ -474,7 +474,7 @@ int find_master_and_slave_occ(uint64_t **master, uint64_t **slave,
 	*nr_masters = (chip->type == PROC_CHIP_P8_MURANO) ? 2 : 1;
 	*master = (uint64_t *)malloc(*nr_masters * sizeof(uint64_t));
 
-	if (!master) {
+	if (!*master) {
 		printf("OCC: master array alloc failure\n");
 		return -ENOMEM;
 	}
@@ -482,7 +482,7 @@ int find_master_and_slave_occ(uint64_t **master, uint64_t **slave,
 	if (nr_chips - *nr_masters > 0) {
 		*nr_slaves = nr_chips - *nr_masters;
 		*slave = (uint64_t *)malloc(*nr_slaves * sizeof(uint64_t));
-		if (!slave) {
+		if (!*slave) {
 			printf("OCC: slave array alloc failure\n");
 			return -ENOMEM;
 		}
