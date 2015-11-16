@@ -37,6 +37,7 @@ struct io_hub *cec_get_hub_by_id(uint32_t hub_id)
 
 void cec_register(struct io_hub *hub)
 {
+	assert(hub->hub_id < MAX_IO_HUBS);
 	cec_iohubs[hub->hub_id] = hub;
 }
 
