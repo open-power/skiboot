@@ -2,8 +2,9 @@
 
 override CFLAGS += -O2 -Wall -Werror -I.
 OBJS      = version.o gard.o
-OBJS     += libflash/file.o libflash/libflash.o libflash/libffs.o libflash/ecc.o libflash/blocklevel.o
-OBJS     += common/arch_flash.o
+LIBFLASH_OBJS     += libflash-file.o libflash-libflash.o libflash-libffs.o libflash-ecc.o libflash-blocklevel.o
+OBJS     += $(LIBFLASH_OBJS)
+OBJS     += common-arch_flash.o
 EXE       = gard
 
 CC = $(CROSS_COMPILE)gcc
@@ -23,6 +24,9 @@ version.c: make_version.sh .version
 	fi) > $@
 
 %.o : %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(LIBFLASH_OBJS): libflash-%.o : libflash/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXE): $(OBJS)
