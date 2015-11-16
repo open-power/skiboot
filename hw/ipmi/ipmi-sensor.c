@@ -25,7 +25,8 @@
 #define FW_PROGRESS_SENSOR_TYPE	0x0F
 #define BOOT_COUNT_SENSOR_TYPE	0xC3
 
-static int16_t sensors[255];
+#define MAX_IPMI_SENSORS 255
+static int16_t sensors[MAX_IPMI_SENSORS];
 
 struct set_sensor_req {
 	u8 sensor_number;
@@ -38,6 +39,7 @@ struct set_sensor_req {
 
 uint8_t ipmi_get_sensor_number(uint8_t sensor_type)
 {
+	assert(sensor_type < MAX_IPMI_SENSORS);
 	return sensors[sensor_type];
 }
 
@@ -125,6 +127,7 @@ void ipmi_sensor_init(void)
 		}
 		num = (uint8_t)dt_property_get_cell(num_prop, 0);
 		type = (uint8_t)dt_property_get_cell(type_prop, 0);
+		assert(type < MAX_IPMI_SENSORS);
 		sensors[type] = num;
 	}
 }
