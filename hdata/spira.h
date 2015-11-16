@@ -476,7 +476,6 @@ struct cechub_io_hub {
 #define CECHUB_HUB_FAB_BR1_PDT_PHB4	0x08 /* p7ioc only */
 #define CECHUB_HUB_FAB_BR1_PDT_PHB5	0x04 /* p7ioc only */
 	__be16		iohub_id;	/* the type of hub */
-#define CECHUB_HUB_P5IOC2	0x1061	/* from VPL1 */
 #define CECHUB_HUB_P7IOC	0x60e7	/* from VPL3 */
 #define CECHUB_HUB_MURANO	0x20ef	/* Murano from spec */
 #define CECHUB_HUB_MURANO_SEGU	0x0001	/* Murano+Seguso from spec */

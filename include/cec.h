@@ -26,10 +26,6 @@
 struct io_hub;
 
 struct io_hub_ops {
-	/* OPAL_PCI_SET_HUB_TCE_MEMORY (p5ioc2 only) */
-	int64_t (*set_tce_mem)(struct io_hub *hub, uint64_t address,
-				   uint64_t size);
-
 	/* OPAL_PCI_GET_HUB_DIAG_DATA */
 	int64_t (*get_diag_data)(struct io_hub *hub, void *diag_buffer,
 				 uint64_t diag_buffer_len);

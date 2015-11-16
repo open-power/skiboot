@@ -734,7 +734,6 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	opal_init_msg();
 
 	/* Probe IO hubs */
-	probe_p5ioc2();
 	probe_p7ioc();
 
 	/* Probe PHB3 on P8 */

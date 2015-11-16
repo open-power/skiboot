@@ -17,7 +17,6 @@
 #include <skiboot.h>
 #include <cec.h>
 #include <p7ioc.h>
-#include <p5ioc2.h>
 #include <interrupts.h>
 #include <opal-api.h>
 
@@ -53,19 +52,17 @@ void cec_reset(void)
 	}
 }
 
+/* This was only supported by p5ioc, which was dropped */
 static int64_t opal_pci_set_hub_tce_memory(uint64_t hub_id,
-					   uint64_t tce_mem_addr,
-					   uint64_t tce_mem_size)
+					   uint64_t tce_mem_addr __unused,
+					   uint64_t tce_mem_size __unused)
 {
 	struct io_hub *hub = cec_get_hub_by_id(hub_id);
 
 	if (!hub)
 		return OPAL_PARAMETER;
 
-	if (!hub->ops->set_tce_mem)
-		return OPAL_UNSUPPORTED;
-
-	return hub->ops->set_tce_mem(hub, tce_mem_addr, tce_mem_size);
+	return OPAL_UNSUPPORTED;
 }
 opal_call(OPAL_PCI_SET_HUB_TCE_MEMORY, opal_pci_set_hub_tce_memory, 3);
 

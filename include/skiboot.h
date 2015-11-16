@@ -197,7 +197,6 @@ extern void init_shared_sprs(void);
 extern void init_replicated_sprs(void);
 
 /* Various probe routines, to replace with an initcall system */
-extern void probe_p5ioc2(void);
 extern void probe_p7ioc(void);
 extern void probe_phb3(void);
 extern int phb3_preload_capp_ucode(void);

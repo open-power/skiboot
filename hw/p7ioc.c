@@ -186,7 +186,6 @@ static int64_t p7ioc_get_diag_data(struct io_hub *hub,
 }
 
 static const struct io_hub_ops p7ioc_hub_ops = {
-	.set_tce_mem	= NULL, /* No set_tce_mem for p7ioc, we use FMTC */
 	.get_diag_data	= p7ioc_get_diag_data,
 	.reset		= p7ioc_reset,
 };
