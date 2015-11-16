@@ -165,6 +165,7 @@ static bool all_done(const bool done[])
 static void test_parallel(void)
 {
 	void *p;
+	unsigned int cpu;
 	unsigned int i, counts[CPUS] = { 0 }, overflows[CPUS] = { 0 };
 	unsigned int repeats[CPUS] = { 0 }, num_overflows[CPUS] = { 0 };
 	bool done[CPUS] = { false };
@@ -224,9 +225,13 @@ static void test_parallel(void)
 			assert(be16_to_cpu(t.repeat.num) <= be16_to_cpu(t.hdr.cpu));
 			repeats[be16_to_cpu(t.hdr.cpu)] += be16_to_cpu(t.repeat.num);
 		} else if (t.hdr.type == 0x70) {
-			done[be16_to_cpu(t.hdr.cpu)] = true;
+			cpu = be16_to_cpu(t.hdr.cpu);
+			assert(cpu < CPUS);
+			done[cpu] = true;
 		} else {
-			counts[be16_to_cpu(t.hdr.cpu)]++;
+			cpu = be16_to_cpu(t.hdr.cpu);
+			assert(cpu < CPUS);
+			counts[cpu]++;
 		}
 	}
 
