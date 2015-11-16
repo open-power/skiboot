@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <inttypes.h>
 #include <skiboot.h>
 #include <mem-map.h>
 #include <libfdt_env.h>
@@ -320,11 +321,12 @@ int64_t mem_dump_free(void)
 
 			region_free+= hdr->num_longs * sizeof(long);
 		}
-		printf("Region %s free: %llu\n", region->name, region_free);
+		printf("Region %s free: %"PRIx64"\n",
+		       region->name, region_free);
 		total_free += region_free;
 	}
 
-	printf("Total free: %llu\n", total_free);
+	printf("Total free: %"PRIu64"\n", total_free);
 
 	return total_free;
 }
@@ -686,7 +688,7 @@ static bool add_region(struct mem_region *region)
 	struct mem_region *r;
 
 	if (mem_regions_finalised) {
-		prerror("MEM: add_region(%s@0x%llx) called after finalise!\n",
+		prerror("MEM: add_region(%s@0x%"PRIx64") called after finalise!\n",
 				region->name, region->start);
 		return false;
 	}

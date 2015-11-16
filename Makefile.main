@@ -28,7 +28,7 @@ CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 	  -Wwrite-strings -Wcast-align \
 	  -Winit-self \
 	  -Wframe-larger-than=1024 \
-	  -Werror -Wno-error=format
+	  -Werror
 
 # Host tools and options
 HOSTCC=gcc
