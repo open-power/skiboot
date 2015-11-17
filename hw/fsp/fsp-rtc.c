@@ -173,19 +173,16 @@ static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
 				"RTC TOD in invalid state\n");
 		rtc_tod_state = RTC_TOD_INVALID;
-		rtc_read_request_state = RTC_READ_NO_REQUEST;
 		break;
 
 	case FSP_STATUS_TOD_PERMANENT_ERROR:
 		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
 			"RTC TOD in permanent error state\n");
 		rtc_tod_state = RTC_TOD_PERMANENT_ERROR;
-		rtc_read_request_state = RTC_READ_NO_REQUEST;
 		break;
 
 	case FSP_STATUS_SUCCESS:
 		/* Save the read RTC value in our cache */
-		rtc_read_request_state = RTC_READ_REQUEST_AVAILABLE;
 		rtc_tod_state = RTC_TOD_VALID;
 		datetime_to_tm(read_resp->data.words[0],
 			       (u64) read_resp->data.words[1] << 32, &tm);
@@ -199,8 +196,8 @@ static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
 				"RTC TOD read failed: %d\n", val);
 		rtc_tod_state = RTC_TOD_INVALID;
-		rtc_read_request_state = RTC_READ_NO_REQUEST;
 	}
+	rtc_read_request_state = RTC_READ_REQUEST_AVAILABLE;
 }
 
 static void opal_rtc_eval_events(bool read_write)
