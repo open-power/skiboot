@@ -317,6 +317,7 @@ static void program_file(const char *file, uint32_t start, uint32_t size)
 
 	if (dummy_run) {
 		printf("skipped (dummy)\n");
+		close(fd);
 		return;
 	}
 
