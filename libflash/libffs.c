@@ -234,12 +234,16 @@ int ffs_open_image(int fd, uint32_t size, uint32_t toc_offset,
 
 	/* Read the cached map */
 	rc = lseek(fd, toc_offset, SEEK_SET);
-	if (rc < 0)
+	if (rc < 0) {
+		free(f->cache);
+		free(f);
 		return FLASH_ERR_PARM_ERROR;
+	}
 
 	rc = read(fd, f->cache, f->cached_size);
 	if (rc != f->cached_size) {
 		FL_ERR("FFS: Error %d reading flash partition map\n", rc);
+		free(f->cache);
 		free(f);
 		return FLASH_ERR_BAD_READ;
 	}
