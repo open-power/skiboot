@@ -1197,7 +1197,7 @@ void p5ioc2_phb_setup(struct p5ioc2 *ioc, struct p5ioc2_phb *p,
 	/* We register the PHB before we initialize it so we
 	 * get a useful OPAL ID for it
 	 */
-	pci_register_phb(&p->phb, -1);
+	pci_register_phb(&p->phb, OPAL_DYNAMIC_PHB_ID);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)

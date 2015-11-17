@@ -1692,7 +1692,7 @@ static void npu_create_phb(struct dt_node *dn)
 	npu_add_phb_properties(p);
 
 	/* Register PHB */
-	pci_register_phb(&p->phb, -1);
+	pci_register_phb(&p->phb, OPAL_DYNAMIC_PHB_ID);
 
 	/* Initialize IODA cache */
 	npu_ioda_init(p);

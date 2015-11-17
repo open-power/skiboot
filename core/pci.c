@@ -795,7 +795,7 @@ static void pci_scan_phb(void *data)
 int64_t pci_register_phb(struct phb *phb, int opal_id)
 {
 	/* The user didn't specify an opal_id, allocate one */
-	if (opal_id < 0) {
+	if (opal_id == OPAL_DYNAMIC_PHB_ID) {
 		/* This is called at init time in non-concurrent way, so no lock needed */
 		for (opal_id = 0; opal_id < ARRAY_SIZE(phbs); opal_id++)
 			if (!phbs[opal_id])

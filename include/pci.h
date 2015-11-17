@@ -531,6 +531,7 @@ extern struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(struct pci_device *pd,
 					uint32_t flags, pci_cfg_reg_func func);
 
 /* Manage PHBs */
+#define OPAL_DYNAMIC_PHB_ID (~0)
 extern int64_t pci_register_phb(struct phb *phb, int opal_id);
 extern int64_t pci_unregister_phb(struct phb *phb);
 extern struct phb *pci_get_phb(uint64_t phb_id);

@@ -2929,7 +2929,7 @@ void p7ioc_phb_setup(struct p7ioc *ioc, uint8_t index)
 	/* We register the PHB before we initialize it so we
 	 * get a useful OPAL ID for it
 	 */
-	pci_register_phb(&p->phb, -1);
+	pci_register_phb(&p->phb, OPAL_DYNAMIC_PHB_ID);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)
