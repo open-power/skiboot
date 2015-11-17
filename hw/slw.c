@@ -518,7 +518,7 @@ void add_cpu_idle_state_properties(void)
 	u8 i;
 
 	/* Buffers to hold idle state properties */
-	char *name_buf;
+	char *name_buf, *alloced_name_buf;
 	u32 *latency_ns_buf;
 	u32 *residency_ns_buf;
 	u32 *flags_buf;
@@ -595,7 +595,8 @@ void add_cpu_idle_state_properties(void)
 	 */
 
 	/* Allocate memory to idle state property buffers. */
-	name_buf	= (char *) malloc(nr_states * sizeof(char) * MAX_NAME_LEN);
+	alloced_name_buf= (char *) malloc(nr_states * sizeof(char) * MAX_NAME_LEN);
+	name_buf = alloced_name_buf;
 	latency_ns_buf	=  (u32 *) malloc(nr_states * sizeof(u32));
 	residency_ns_buf=  (u32 *) malloc(nr_states * sizeof(u32));
 	flags_buf	=  (u32 *) malloc(nr_states * sizeof(u32));
@@ -661,7 +662,8 @@ void add_cpu_idle_state_properties(void)
 	dt_add_property(power_mgt, "ibm,cpu-idle-state-pmicr-mask",
 			pmicr_mask_buf, num_supported_idle_states * sizeof(u64));
 
-	free(name_buf);
+	assert(alloced_name_buf == name_buf);
+	free(alloced_name_buf);
 	free(latency_ns_buf);
 	free(residency_ns_buf);
 	free(flags_buf);
