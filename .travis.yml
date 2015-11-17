@@ -34,5 +34,5 @@ addons:
       description: "Build submitted via Travis CI"
     notification_email: stewart@linux.vnet.ibm.com
     build_command_prepend: "make clean; cov-configure --comptype gcc --compiler powerpc64-linux-gcc --template"
-    build_command: "make -j4 all check gard"
+    build_command: "make -j4 all check gard pflash"
     branch_pattern: coverity_scan
