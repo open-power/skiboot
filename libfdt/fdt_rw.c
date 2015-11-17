@@ -425,6 +425,10 @@ int fdt_open_into(const void *fdt, void *buf, int bufsize)
 	newsize = FDT_ALIGN(sizeof(struct fdt_header), 8) + mem_rsv_size
 		+ struct_size + fdt_size_dt_strings(fdt);
 
+	/* basic sanity check */
+	if (struct_size > bufsize)
+		return -FDT_ERR_BADSTRUCTURE;
+
 	if (bufsize < newsize)
 		return -FDT_ERR_NOSPACE;
 
