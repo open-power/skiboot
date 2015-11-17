@@ -119,6 +119,8 @@ static void lpc_init_time(void)
 	struct tm tm;
 	bool valid;
 
+	memset(&tm, 0, sizeof(tm));
+
 	lock(&rtc_lock);
 
 	/* If update is in progress, wait a bit */
