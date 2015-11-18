@@ -10,7 +10,7 @@ $(HELLO_WORLD_TEST:%=%-check) : %-check: % skiboot.lid
 test/hello_world/hello_kernel/hello_kernel.o: test/hello_world/hello_kernel/hello_kernel.S test/hello_world/hello_kernel/hello_kernel.ld
 	$(call Q,CC, $(CC) -m64 -c -MMD -o $@ $< ,$@)
 
-hello_kernel_LDFLAGS=-m64 -Wl,--build-id=none -T test/hello_world/hello_kernel/hello_kernel.ld -ffreestanding -nostdlib -Ttext=0x0 -lgcc
+hello_kernel_LDFLAGS=-m64 -Wl,--build-id=none -T test/hello_world/hello_kernel/hello_kernel.ld -ffreestanding -nostdlib -Ttext=0x0
 
 -include $(wildcard test/hello_world/hello_kernel/*.d)
 
