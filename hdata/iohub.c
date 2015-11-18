@@ -130,58 +130,6 @@ static void io_get_loc_code(const void *sp_iohubs, struct dt_node *hn, const cha
 	}
 }
 
-static struct dt_node *io_add_p5ioc2(const struct cechub_io_hub *hub,
-				     const void *sp_iohubs)
-{
-	struct dt_node *hn;
-	uint64_t reg[2];
-
-	const void *kwvpd;
-	unsigned int kwvpd_sz;
-
-	prlog(PR_DEBUG, "    GX#%d BUID_Ext = 0x%x\n",
-	      be32_to_cpu(hub->gx_index),
-	      be32_to_cpu(hub->buid_ext));
-	prlog(PR_DEBUG, "    GX BAR 0 = 0x%016"PRIx64"\n",
-	      be64_to_cpu(hub->gx_ctrl_bar0));
-	prlog(PR_DEBUG, "    GX BAR 1 = 0x%016"PRIx64"\n",
-	      be64_to_cpu(hub->gx_ctrl_bar1));
-	prlog(PR_DEBUG, "    GX BAR 2 = 0x%016"PRIx64"\n",
-	      be64_to_cpu(hub->gx_ctrl_bar2));
-	prlog(PR_DEBUG, "    GX BAR 3 = 0x%016"PRIx64"\n",
-	      be64_to_cpu(hub->gx_ctrl_bar3));
-	prlog(PR_DEBUG, "    GX BAR 4 = 0x%016"PRIx64"\n",
-	      be64_to_cpu(hub->gx_ctrl_bar4));
-
-	/* We assume SBAR == GX0 + some hard coded offset */
-	reg[0] = cleanup_addr(be64_to_cpu(hub->gx_ctrl_bar0) + P5IOC2_REGS_OFFSET);
-	reg[1] = 0x2000000;
-
-	hn = dt_new_addr(dt_root, "io-hub", reg[0]);
-	if (!hn)
-		return NULL;
-
-	dt_add_property(hn, "reg", reg, sizeof(reg));
-	dt_add_property_strings(hn, "compatible", "ibm,p5ioc2");
-
-	kwvpd = HDIF_get_idata(sp_iohubs, CECHUB_ASCII_KEYWORD_VPD, &kwvpd_sz);
-	if (kwvpd && kwvpd != sp_iohubs) {
-		/*
-		 * XX We don't know how to properly find the LXRn
-		 * record so for now we'll just try LXR0 and if not
-		 * found, we try LXR1
-		 */
-		if (!io_get_lx_info(kwvpd, kwvpd_sz, 0, hn))
-			io_get_lx_info(kwvpd, kwvpd_sz, 1, hn);
-	} else
-		prlog(PR_DEBUG, "CEC:     P5IOC2 Keywords not found.\n");
-
-	/* Get slots base loc code */
-	io_get_loc_code(sp_iohubs, hn, "ibm,io-base-loc-code");
-
-	return hn;
-}
-
 static struct dt_node *io_add_p7ioc(const struct cechub_io_hub *hub,
 				    const void *sp_iohubs)
 {
