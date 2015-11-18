@@ -1,3 +1,10 @@
-*.o
+o
 *.d
+ccan
+common
+common-ast-sf-ctrl.c
+common-io.h
 gard
+test/test.sh
+libflash
+make_version.sh
