@@ -749,8 +749,7 @@ static int flash_configure(struct flash_chip *c)
 			FL_DBG("LIBFLASH: Enabling controller 4B mode...\n");
 			rc = ct->set_4b(ct, true);
 			if (rc) {
-				FL_ERR("LIBFLASH: Failed"
-				       " to set controller 4b mode\n");
+				FL_ERR("LIBFLASH: Failed to set controller 4b mode\n");
 				return rc;
 			}
 		}
