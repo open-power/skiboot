@@ -1120,7 +1120,7 @@ static int64_t phb3_map_pe_dma_window_real(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
-static void phb3_pci_msi_check_q(struct phb3 *p, uint32_t ive_num)
+static bool phb3_pci_msi_check_q(struct phb3 *p, uint32_t ive_num)
 {
 	uint64_t ive, ivc, ffi, state;
 	uint8_t *q_byte;
@@ -1142,7 +1142,7 @@ static void phb3_pci_msi_check_q(struct phb3 *p, uint32_t ive_num)
 
 		/* Q still not set, bail out */
 		if (!(*q_byte & 0x1))
-			return;
+			return false;
 	}
 
 	/* Lock FFI and send interrupt */
@@ -1151,7 +1151,7 @@ static void phb3_pci_msi_check_q(struct phb3 *p, uint32_t ive_num)
 		if (!state)
 			break;
 		if (state == ~0ULL) /* PHB Fenced */
-			return;
+			return false;
 	}
 
 	/* Clear Q bit and update IVC */
@@ -1167,6 +1167,16 @@ static void phb3_pci_msi_check_q(struct phb3 *p, uint32_t ive_num)
 	 */
 	ffi = SETFIELD(PHB_FFI_REQUEST_ISN, 0ul, ive_num) | PHB_FFI_LOCK_CLEAR;
 	out_be64(p->regs + PHB_FFI_REQUEST, ffi);
+
+	return true;
+}
+
+static void phb3_pci_msi_flush_ive(struct phb3 *p, uint32_t ive_num)
+{
+	asm volatile("dcbf %0,%1"
+		     :
+		     : "b" (p->tbl_ivt), "r" (ive_num * IVT_TABLE_STRIDE * 8)
+		     : "memory");
 }
 
 static int64_t phb3_pci_msi_eoi(struct phb *phb,
@@ -1201,6 +1211,8 @@ static int64_t phb3_pci_msi_eoi(struct phb *phb,
 
 	/* Handle Q bit */
 	phb3_pci_msi_check_q(p, ive_num);
+
+	phb3_pci_msi_flush_ive(p, ive_num);
 
 	return OPAL_SUCCESS;
 }
@@ -1712,8 +1724,10 @@ static int64_t phb3_msi_set_xive(void *data,
 	 * The OS should make sure the interrupt handler has
 	 * been installed already.
 	 */
-	if (prio != 0xff)
-		phb3_pci_msi_check_q(p, ive_num);
+	if (prio != 0xff) {
+		if (phb3_pci_msi_check_q(p, ive_num))
+			phb3_pci_msi_flush_ive(p, ive_num);
+	}
 
 	return OPAL_SUCCESS;
 }
