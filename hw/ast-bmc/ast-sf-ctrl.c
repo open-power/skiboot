@@ -153,8 +153,10 @@ static int ast_sf_set_4b(struct spi_flash_ctrl *ctrl, bool enable)
 {
 	struct ast_sf_ctrl *ct = container_of(ctrl, struct ast_sf_ctrl, ops);
 
-	if (ct->type != AST_SF_TYPE_PNOR)
-		return enable ? FLASH_ERR_4B_NOT_SUPPORTED : 0;
+	if (ct->type == AST_SF_TYPE_BMC && ct->ops.finfo->size > 0x1000000) {
+		uint32_t ce = ast_ahb_readl(BMC_SPI_FCTL_CE_CTRL);
+		ast_ahb_writel(ce | 0x01, BMC_SPI_FCTL_CE_CTRL);
+	}
 
 	/*
 	 * We update the "old" value as well since when quitting
