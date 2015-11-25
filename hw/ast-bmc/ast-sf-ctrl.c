@@ -152,8 +152,11 @@ static int ast_sf_cmd_wr(struct spi_flash_ctrl *ctrl, uint8_t cmd,
 static int ast_sf_set_4b(struct spi_flash_ctrl *ctrl, bool enable)
 {
 	struct ast_sf_ctrl *ct = container_of(ctrl, struct ast_sf_ctrl, ops);
+	uint32_t ce_ctrl = 0;
 
-	if (ct->type != AST_SF_TYPE_PNOR)
+	if (ct->type == AST_SF_TYPE_BMC && ct->ops.finfo->size > 0x1000000)
+		ce_ctrl = ast_ahb_readl(BMC_SPI_FCTL_CE_CTRL);
+	else if (ct->type != AST_SF_TYPE_PNOR)
 		return enable ? FLASH_ERR_4B_NOT_SUPPORTED : 0;
 
 	/*
@@ -164,14 +167,19 @@ static int ast_sf_set_4b(struct spi_flash_ctrl *ctrl, bool enable)
 	if (enable) {
 		ct->ctl_val |= 0x2000;
 		ct->ctl_read_val |= 0x2000;
+		ce_ctrl |= 0x1;
 	} else {
 		ct->ctl_val &= ~0x2000;
 		ct->ctl_read_val &= ~0x2000;
+		ce_ctrl &= ~0x1;
 	}
 	ct->mode_4b = enable;
 
 	/* Update read mode */
 	ast_ahb_writel(ct->ctl_read_val, ct->ctl_reg);
+
+	if (ce_ctrl)
+		ast_ahb_writel(ce_ctrl, BMC_SPI_FCTL_CE_CTRL);
 
 	return 0;
 }
