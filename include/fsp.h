@@ -741,6 +741,7 @@ extern void fsp_surv_query(void);
 /* Reset/Reload */
 extern void fsp_reinit_fsp(void);
 extern void fsp_trigger_reset(void);
+extern void fsp_reset_links(void);
 
 /* FSP memory errors */
 extern void fsp_memory_err_init(void);
