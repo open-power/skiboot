@@ -20,6 +20,7 @@ endif
 .PHONY: arch_links
 arch_links:
 	ln -sf ../../hw/ast-bmc/ast-sf-ctrl.c common/ast-sf-ctrl.c
+	ln -sf ../../include/ast.h common/ast.h
 	ln -sf arch_flash_$(arch)_io.h common/io.h
 
 .PHONY: arch_clean
