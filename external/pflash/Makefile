@@ -32,6 +32,9 @@ $(OBJS): | links arch_links
 	@cmp -s $@ $@.tmp || cp $@.tmp $@
 	@rm -f $@.tmp
 
+install: all
+	install -D pflash $(DESTDIR)$(sbindir)/pflash
+
 .PHONY: dist
 #File is named $(PFLASH_VERSION).tar because the expectation is that pflash-
 #is always at the start of the verion. This remains consistent with skiboot
