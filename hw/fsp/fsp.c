@@ -569,6 +569,28 @@ static void fsp_start_rr(struct fsp *fsp)
 	 */
 }
 
+/*
+ * Called on normal/quick shutdown to give up the PSI link
+ */
+void fsp_reset_links(void)
+{
+	struct fsp *fsp = fsp_get_active();
+	struct fsp_iopath *iop;
+
+	if (!fsp)
+		return;
+
+	/* Already in one of the error states? */
+	if (fsp_in_hir(fsp) || fsp_in_reset(fsp))
+		return;
+
+	iop = &fsp->iopath[fsp->active_iopath];
+	prlog(PR_NOTICE, "FSP #%d: Host initiated shutdown."
+			" Giving up the PSI link\n", fsp->index);
+	psi_disable_link(iop->psi);
+	return;
+}
+
 static void fsp_trace_event(struct fsp *fsp, u32 evt,
 			    u32 data0, u32 data1, u32 data2, u32 data3)
 {
