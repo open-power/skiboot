@@ -1,3 +1,11 @@
+# Use make V=1 for a verbose build.
+ifndef V
+        Q_CC=	@echo '    CC ' $@;
+        Q_LD=	@echo '    LD ' $@;
+        Q_LN=   @echo '    LN ' $@;
+        Q_MKDIR=@echo ' MKDIR ' $@;
+endif
+
 include rules.mk
 GET_ARCH = ../../external/common/get_arch.sh
 include ../../external/common/rules.mk
@@ -5,19 +13,16 @@ include ../../external/common/rules.mk
 all: $(EXE)
 
 .PHONY: links
-links: libflash ccan common make_version.sh
+links: libflash ccan common
 
 libflash:
-	ln -sf ../../libflash .
+	$(Q_LN)ln -sf ../../libflash .
 
 ccan:
-	ln -sf ../../ccan .
+	$(Q_LN)ln -sf ../../ccan .
 
 common:
-	ln -sf ../common .
-
-make_version.sh:
-	ln -sf ../../make_version.sh
+	$(Q_LN)ln -sf ../common .
 
 $(OBJS): | links arch_links
 
@@ -38,9 +43,11 @@ dist: links .version
 		../pflash/.version ../pflash/make_version.sh \
 		../pflash/common/*
 
+.PHONY: clean
 clean: arch_clean
 	rm -f $(OBJS) $(EXE) *.o *.d libflash/test/test_flash libflash/test/*.o
+.PHONY: distclean
 distclean: clean
 	rm -f *.c~ *.h~ *.sh~ Makefile~ config.mk~ libflash/*.c~ libflash/*.h~
 	rm -f libflash ccan .version .version.tmp
-	rm -f common io.h make_version.sh
+	rm -f common io.h
