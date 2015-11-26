@@ -109,8 +109,8 @@ struct bt_msg {
 
 struct bt_caps {
 	uint8_t num_requests;
-	uint8_t input_buf_len;
-	uint8_t output_buf_len;
+	uint16_t input_buf_len;
+	uint16_t output_buf_len;
 	uint8_t msg_timeout;
 	uint8_t num_retries;
 };
@@ -164,27 +164,28 @@ static void get_bt_caps_complete(struct ipmi_msg *msg)
 		goto out;
 	}
 
-	if (msg->data[3] + 1 != BT_FIFO_LEN) {
-		BT_DBG("Got a input buffer len (%d) cap which differs from the default\n",
-				msg->data[3]);
+	if (msg->data[1] + 1 != BT_FIFO_LEN) {
+		BT_DBG("Got a input buffer len (%u) cap which differs from the default\n",
+				msg->data[1]);
 		goto out;
 	}
 
-	if (msg->data[4] + 1 != BT_FIFO_LEN) {
-		BT_DBG("Got a output buffer len (%d) cap which differs from the default\n",
-				msg->data[4]);
+	if (msg->data[2] + 1 != BT_FIFO_LEN) {
+		BT_DBG("Got a output buffer len (%u) cap which differs from the default\n",
+				msg->data[2]);
 		goto out;
 	}
-
-	memcpy(&bt.caps, msg->data, sizeof(struct bt_caps));
 
 	/*
 	 * IPMI Spec says that the value for buffer sizes are:
 	 * "the largest value allowed in first byte"
 	 * Therefore we want to add one to what we get
 	 */
-	bt.caps.input_buf_len++;
-	bt.caps.output_buf_len++;
+	bt.caps.num_requests = msg->data[0];
+	bt.caps.input_buf_len = msg->data[1] + 1;
+	bt.caps.output_buf_len = msg->data[2] + 1;
+	bt.caps.msg_timeout = msg->data[3];
+	bt.caps.num_retries = msg->data[4];
 	BT_DBG("BMC BT capabilities received:\n");
 	BT_DBG("buffer sizes: %d input %d output\n",
 			bt.caps.input_buf_len, bt.caps.output_buf_len);
