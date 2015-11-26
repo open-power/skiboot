@@ -32,6 +32,7 @@
 #include <libflash/file.h>
 #include "ast.h"
 #include "arch_flash.h"
+#include "arch_flash_arm_io.h"
 
 struct flash_chip;
 
