@@ -1,10 +1,13 @@
-check: boot-check qemu-boot-check
+check: boot-check qemu-boot-check debian-jessie-boot-check
 
 boot-check: skiboot.lid
 	./test/run_mambo_boot_test.sh
 
 qemu-boot-check: skiboot.lid
 	./test/run_qemu_boot_test.sh
+
+debian-jessie-boot-check: skiboot.lid
+	./test/run_qemu-jessie-debian-installer_boot_test.sh
 
 OP_BUILD_BOOT_CHECK=op-build-v1.0 op-build-v1.1 op-build-v1.2 op-build-v1.2.1
 
