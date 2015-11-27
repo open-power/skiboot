@@ -149,8 +149,12 @@ include $(SRC)/$(DEVSRC)/Makefile.inc
 # hack for travis-ci and coverity
 gard:
 	(cd external/gard; make)
+
 pflash:
 	(cd external/pflash; make)
+
+pflash-coverity:
+	(cd external/pflash; ./build-all-arch.sh)
 
 all: $(SUBDIRS) $(TARGET).lid $(TARGET).map extract-gcov
 

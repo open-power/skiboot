@@ -40,5 +40,5 @@ addons:
       description: "Build submitted via Travis CI"
     notification_email: stewart@linux.vnet.ibm.com
     build_command_prepend: "make clean; cov-configure --comptype gcc --compiler powerpc64-linux-gcc --template; cov-configure --comptype gcc --compiler powerpc64le-linux-gnu-gcc; cov-configure --comptype gcc --compiler arm-linux-gnueabi-gcc; cov-configure --comptype gcc --compiler x86_64-linux-gnu-gcc"
-    build_command: "make -j4 all check gard pflash; (cd external/pflash; ./build-all-arch.sh"
+    build_command: "make -j4 all check gard pflash-coverity"
     branch_pattern: coverity_scan
