@@ -45,7 +45,7 @@ dist: links .version
 
 .PHONY: clean
 clean: arch_clean
-	rm -f $(OBJS) $(EXE) *.o *.d libflash/test/test_flash libflash/test/*.o
+	rm -f $(OBJS) $(EXE) *.o *.d
 .PHONY: distclean
 distclean: clean
 	rm -f *.c~ *.h~ *.sh~ Makefile~ config.mk~ libflash/*.c~ libflash/*.h~
