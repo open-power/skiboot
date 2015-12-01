@@ -117,8 +117,8 @@ struct oem_sel {
 	/* SEL header */
 	uint8_t id[2];
 	uint8_t type;
-	uint8_t manuf_id[3];
 	uint8_t timestamp[4];
+	uint8_t manuf_id[3];
 	/* OEM SEL data (6 bytes) follows */
 	uint8_t netfun;
 	uint8_t cmd;
