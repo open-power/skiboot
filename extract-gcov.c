@@ -30,39 +30,48 @@
 #include <errno.h>
 #include <string.h>
 
-typedef unsigned int gcov_unsigned_int;
+typedef u32 gcov_unsigned_int;
 
 /* You will need to pass -DTARGET__GNUC__=blah when building */
+#if TARGET__GNUC__ >= 5 && TARGET__GNUC_MINOR__ >= 1
+#define GCOV_COUNTERS                   10
+#else
 #if TARGET__GNUC__ >= 4 && TARGET__GNUC_MINOR__ >= 9
 #define GCOV_COUNTERS                   9
 #else
 #define GCOV_COUNTERS                   8
-#endif
+#endif /* GCC 4.9 */
+#endif /* GCC 5.1 */
 typedef u64 gcov_type;
 
 struct gcov_info
 {
         gcov_unsigned_int version;
+	u32 _padding;
         struct gcov_info *next;
         gcov_unsigned_int stamp;
+	u32 _padding2;
         const char *filename;
-        void (*merge[GCOV_COUNTERS])(gcov_type *, unsigned int);
+        u64 merge[GCOV_COUNTERS];
         unsigned int n_functions;
+	u32 _padding3;
         struct gcov_fn_info **functions;
 };
 
 struct gcov_ctr_info {
         gcov_unsigned_int num;
+	u32 _padding;
         gcov_type *values;
-};
+}__attribute__((packed));
 
 struct gcov_fn_info {
         const struct gcov_info *key;
         unsigned int ident;
         unsigned int lineno_checksum;
         unsigned int cfg_checksum;
+	u32 _padding;
 //        struct gcov_ctr_info ctrs[0];
-};
+} __attribute__((packed));
 
 
 /* We have a list of all gcov info set up at startup */
@@ -137,7 +146,8 @@ static void write_gcda(char *addr, struct gcov_info* gi)
 	write_u32(fd, be32toh(gi->version));
 	write_u32(fd, be32toh(gi->stamp));
 
-	//printf("nfunctions: %d \n", be32toh(gi->n_functions));
+	printf("version: %x\tstamp: %d\n", be32toh(gi->version), be32toh(gi->stamp));
+	printf("nfunctions: %d \n", be32toh(gi->n_functions));
 
 	for(fn = 0; fn < be32toh(gi->n_functions); fn++) {
 		functions = (struct gcov_fn_info**)
@@ -145,6 +155,8 @@ static void write_gcda(char *addr, struct gcov_info* gi)
 
 		fn_info = (struct gcov_fn_info*)
 			SKIBOOT_ADDR(addr, functions[fn]);
+
+		printf("function: %p\n", (void*)be64toh((u64)functions[fn]));
 
 		write_u32(fd, GCOV_TAG_FUNCTION);
 		write_u32(fd, GCOV_TAG_FUNCTION_LENGTH);
@@ -161,9 +173,8 @@ static void write_gcda(char *addr, struct gcov_info* gi)
 
 			write_u32(fd, (GCOV_TAG_FOR_COUNTER(ctr)));
 			write_u32(fd, be32toh(ctr_info->num)*2);
-			/* printf(" ctr %d gcov_ctr_info->num %u\n",
-			 *    ctr, be32toh(ctr_info->num));
-			 */
+			printf(" ctr %d gcov_ctr_info->num %u\n",
+			    ctr, be32toh(ctr_info->num));
 
 			for(cv = 0; cv < be32toh(ctr_info->num); cv++) {
 				gcov_type *ctrv = (gcov_type *)
@@ -192,6 +203,8 @@ int main(int argc, char *argv[])
 	       sizeof(struct gcov_ctr_info),
 	       sizeof(struct gcov_fn_info),
 	       sizeof(struct gcov_info));
+	printf("TARGET GNUC: %d.%d\n", TARGET__GNUC__, TARGET__GNUC_MINOR__);
+	printf("GCOV_COUNTERS: %d\n", GCOV_COUNTERS);
 
 	if (argc < 3) {
 		fprintf(stderr, "Usage:\n"

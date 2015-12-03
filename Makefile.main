@@ -210,8 +210,8 @@ include $(shell find $(SRC)/* -name Makefile.check)
 extract-gcov: extract-gcov.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) \
 	-DTARGET__GNUC__=`echo '__GNUC__'|$(CC) -E -|grep -v '^#'` \
-	-DTARGET__GNUC_MINOR__=`echo '__GNUC__'|$(CC) -E -|grep -v '^#'` \
-	-O0 -g -I$(SRC) -o $@ $<,$<)
+	-DTARGET__GNUC_MINOR__=`echo '__GNUC_MINOR__'|$(CC) -E -|grep -v '^#'` \
+	-Wpadded -O0 -g -I$(SRC) -o $@ $<,$<)
 
 coverage-report: skiboot.info
 	genhtml --branch-coverage -q -o $@ $<
