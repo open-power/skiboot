@@ -2,8 +2,9 @@
 
 override CFLAGS  += -O2 -Wall -I.
 OBJS    = pflash.o progress.o version.o
-LIBFLASH_OBJS += libflash-libflash.o libflash-libffs.o libflash-ecc.o \
-		 libflash-blocklevel.o libflash-file.o
+LIBFLASH_FILES := libflash.c libffs.c ecc.c blocklevel.c file.c
+LIBFLASH_OBJS := $(addprefix libflash-, $(LIBFLASH_FILES:.c=.o))
+LIBFLASH_SRC := $(addprefix libflash/,$(LIBFLASH_FILES))
 OBJS	+= $(LIBFLASH_OBJS)
 OBJS	+= common-arch_flash.o
 EXE     = pflash
@@ -21,6 +22,8 @@ version.c: .version
 
 %.o : %.c
 	$(Q_CC)$(CC) $(CFLAGS) -c $< -o $@
+
+$(LIBFLASH_SRC): | links
 
 $(LIBFLASH_OBJS): libflash-%.o : libflash/%.c
 	$(Q_CC)$(CC) $(CFLAGS) -c $< -o $@
