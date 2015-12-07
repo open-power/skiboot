@@ -178,7 +178,7 @@ static int ast_sf_set_4b(struct spi_flash_ctrl *ctrl, bool enable)
 	/* Update read mode */
 	ast_ahb_writel(ct->ctl_read_val, ct->ctl_reg);
 
-	if (ce_ctrl)
+	if (ce_ctrl && ct->type == AST_SF_TYPE_BMC)
 		ast_ahb_writel(ce_ctrl, BMC_SPI_FCTL_CE_CTRL);
 
 	return 0;
