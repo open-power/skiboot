@@ -1308,6 +1308,7 @@ static void handle_prd_control_run_cmd(struct control_msg *send_msg,
 	}
 
 	s = (char *)recv_msg->data;
+	size = 0;
 	for (i = 0; i < argc; i++) {
 		argv[i] = (char *)htobe64((uint64_t)&s[size]);
 		size += (strlen(&s[size]) + 1);
