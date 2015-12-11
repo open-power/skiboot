@@ -78,20 +78,9 @@ enum sensor_state {
 };
 
 enum spcn_attr {
-	/* mod 0x01, 0x02 */
-	SENSOR_PRESENT,
-	SENSOR_FAULTED,
-	SENSOR_AC_FAULTED,
-	SENSOR_ON,
-	SENSOR_ON_SUPPORTED,
-	/* mod 0x10, 0x11 */
+	SENSOR_STATUS,
 	SENSOR_THRS,
-	SENSOR_LOCATION,
-	/* mod 0x12, 0x13 */
 	SENSOR_DATA,
-	/* mod 0x1c */
-	SENSOR_POWER,
-
 	SENSOR_MAX,
 };
 
@@ -106,57 +95,23 @@ struct opal_sensor_data {
 	uint32_t	offset;		/* Offset in sensor buffer */
 };
 
-struct spcn_mod_attr {
-	const char *name;
-	enum spcn_attr val;
-};
-
 struct spcn_mod {
 	uint8_t mod;		/* Modifier code */
 	uint8_t entry_size;	/* Size of each entry in response buffer */
 	uint16_t entry_count;	/* Number of entries */
-	struct spcn_mod_attr *mod_attr;
-};
-
-static struct spcn_mod_attr prs_status_attrs[] = {
-		{"present", SENSOR_PRESENT},
-		{"faulted", SENSOR_FAULTED},
-		{"ac-faulted", SENSOR_AC_FAULTED},
-		{"on", SENSOR_ON},
-		{"on-supported", SENSOR_ON_SUPPORTED}
-};
-
-static struct spcn_mod_attr sensor_param_attrs[] = {
-		{"thrs", SENSOR_THRS},
-		{"loc", SENSOR_LOCATION}
-};
-
-static struct spcn_mod_attr sensor_data_attrs[] = {
-		{"data", SENSOR_DATA}
-};
-
-static struct spcn_mod_attr sensor_power_attrs[] = {
-		{"power", SENSOR_POWER}
 };
 
 static struct spcn_mod spcn_mod_data[] = {
-		{SPCN_MOD_PRS_STATUS_FIRST, PRS_STATUS_ENTRY_SZ, 0,
-				prs_status_attrs},
-		{SPCN_MOD_PRS_STATUS_SUBS, PRS_STATUS_ENTRY_SZ, 0,
-				prs_status_attrs},
-		{SPCN_MOD_SENSOR_PARAM_FIRST, SENSOR_PARAM_ENTRY_SZ, 0,
-				sensor_param_attrs},
-		{SPCN_MOD_SENSOR_PARAM_SUBS, SENSOR_PARAM_ENTRY_SZ, 0,
-				sensor_param_attrs},
-		{SPCN_MOD_SENSOR_DATA_FIRST, SENSOR_DATA_ENTRY_SZ, 0,
-				sensor_data_attrs},
-		{SPCN_MOD_SENSOR_DATA_SUBS, SENSOR_DATA_ENTRY_SZ, 0,
-				sensor_data_attrs},
+		{SPCN_MOD_PRS_STATUS_FIRST, PRS_STATUS_ENTRY_SZ, 0 },
+		{SPCN_MOD_PRS_STATUS_SUBS, PRS_STATUS_ENTRY_SZ, 0 },
+		{SPCN_MOD_SENSOR_PARAM_FIRST, SENSOR_PARAM_ENTRY_SZ, 0 },
+		{SPCN_MOD_SENSOR_PARAM_SUBS, SENSOR_PARAM_ENTRY_SZ, 0 },
+		{SPCN_MOD_SENSOR_DATA_FIRST, SENSOR_DATA_ENTRY_SZ, 0 },
+		{SPCN_MOD_SENSOR_DATA_SUBS, SENSOR_DATA_ENTRY_SZ, 0 },
 		/* TODO Support this modifier '0x14', if required */
 		/* {SPCN_MOD_PROC_JUNC_TEMP, PROC_JUNC_ENTRY_SZ, 0, NULL}, */
-		{SPCN_MOD_SENSOR_POWER, SENSOR_DATA_ENTRY_SZ, 0,
-				sensor_power_attrs},
-		{SPCN_MOD_LAST, 0xff, 0xffff, NULL}
+		{SPCN_MOD_SENSOR_POWER, SENSOR_DATA_ENTRY_SZ, 0 },
+		{SPCN_MOD_LAST, 0xff, 0xffff}
 };
 
 /* Frame resource class (FRC) names */
@@ -165,7 +120,7 @@ static const char *frc_names[] = {
 		NULL,
 		NULL,
 		"power-controller",
-		"power-supply",
+		"power",
 		"regulator",
 		"cooling-fan",
 		"cooling-controller",
@@ -230,14 +185,46 @@ static void queue_msg_for_delivery(int rc, struct opal_sensor_data *attr);
  * --------------------------------------------------------------------------
  */
 
+
+/*
+ * When coming from a SENSOR_POWER modifier command, the resource id
+ * of a power supply is on one byte and misses a "subclass" byte
+ * (0x10). This routine adds it to be consistent with the PRS_STATUS
+ * modifier command.
+ */
+#define normalize_power_rid(rid) (0x1000|(rid))
+
+static uint32_t sensor_power_process_data(uint16_t rid,
+					struct sensor_power *power)
+{
+	int i;
+
+	if (!sensor_power_is_valid(power)) {
+		prlog(PR_TRACE, "Power Sensor data not valid\n");
+		return INVALID_DATA;
+	}
+
+	for (i = 0; i < sensor_power_count(power); i++) {
+		prlog(PR_TRACE, "Power[%d]: %d mW\n", i,
+		      power->supplies[i].milliwatts);
+		if (rid == normalize_power_rid(power->supplies[i].rid))
+			return power->supplies[i].milliwatts / 1000;
+	}
+
+	return 0;
+}
+
+static inline uint16_t convert_status_to_fault(uint16_t status)
+{
+	return status & 0x06;
+}
+
 static void fsp_sensor_process_data(struct opal_sensor_data *attr)
 {
 	uint8_t *sensor_buf_ptr = (uint8_t *)sensor_buffer;
 	uint32_t sensor_data = INVALID_DATA;
 	uint16_t sensor_mod_data[8];
-	int count, i;
-	uint8_t valid, nr_power;
-	uint32_t power;
+	int count;
 
 	for (count = 0; count < spcn_mod_data[attr->mod_index].entry_count;
 			count++) {
@@ -247,42 +234,19 @@ static void fsp_sensor_process_data(struct opal_sensor_data *attr)
 			/* TODO Support this modifier '0x14', if required */
 
 		} else if (spcn_mod_data[attr->mod_index].mod == SPCN_MOD_SENSOR_POWER) {
-			valid = sensor_buf_ptr[0];
-			if (valid & 0x80) {
-				nr_power = valid & 0x0f;
-				sensor_data = 0;
-				for (i=0; i < nr_power; i++) {
-					power = *(uint32_t *) &sensor_buf_ptr[2 + i * 5];
-					prlog(PR_TRACE, "Power[%d]: %d mW\n",
-					      i, power);
-					sensor_data += power/1000;
-				}
-			} else {
-				prlog(PR_TRACE, "Power Sensor data not valid\n");
-			}
+			sensor_data = sensor_power_process_data(attr->rid,
+					(struct sensor_power *) sensor_buf_ptr);
+			break;
 		} else if (sensor_mod_data[0] == attr->frc &&
 				sensor_mod_data[1] == attr->rid) {
 			switch (attr->spcn_attr) {
-			/* modifier 0x01, 0x02 */
-			case SENSOR_PRESENT:
-				prlog(PR_TRACE,"Not exported to device tree\n");
+			case SENSOR_STATUS:
+				sensor_data =
+					convert_status_to_fault(sensor_mod_data[3]);
 				break;
-			case SENSOR_FAULTED:
-				sensor_data = sensor_mod_data[3] & 0x02;
-				break;
-			case SENSOR_AC_FAULTED:
-			case SENSOR_ON:
-			case SENSOR_ON_SUPPORTED:
-				prlog(PR_TRACE,"Not exported to device tree\n");
-				break;
-			/* modifier 0x10, 0x11 */
 			case SENSOR_THRS:
 				sensor_data = sensor_mod_data[6];
 				break;
-			case SENSOR_LOCATION:
-				prlog(PR_TRACE,"Not exported to device tree\n");
-				break;
-			/* modifier 0x12, 0x13 */
 			case SENSOR_DATA:
 				sensor_data = sensor_mod_data[2];
 				break;
@@ -412,7 +376,7 @@ static int64_t fsp_sensor_send_read_request(struct opal_sensor_data *attr)
 	uint32_t align;
 	uint32_t cmd_header;
 
-	prlog(PR_INSANE, "Get the data for modifier [%d]\n",
+	prlog(PR_INSANE, "Get the data for modifier [%x]\n",
 	      spcn_mod_data[attr->mod_index].mod);
 
 	if (spcn_mod_data[attr->mod_index].mod == SPCN_MOD_PROC_JUNC_TEMP) {
@@ -455,24 +419,84 @@ static int64_t fsp_sensor_send_read_request(struct opal_sensor_data *attr)
 	return OPAL_ASYNC_COMPLETION;
 }
 
-static int64_t parse_sensor_id(uint32_t id, struct opal_sensor_data *attr)
+/*
+ * These are the resources we know about and for which we provide a
+ * mapping in the device tree to capture data from the OS. Just
+ * discard the other ones for the moment.
+ */
+static inline bool sensor_frc_is_valid(uint16_t frc)
+{
+	switch (frc) {
+	case SENSOR_FRC_POWER_SUPPLY:
+	case SENSOR_FRC_COOLING_FAN:
+	case SENSOR_FRC_AMB_TEMP:
+		return true;
+	default:
+		return false;
+	}
+}
+
+/*
+ * Each attribute of a resource needs a request to the FSP to capture
+ * its data. The routine below provides the mapping between the
+ * attribute and the PRS command modifier to use.
+ *
+ *	resource        | data   |  thrs  | status    |
+ *	----------------+--------+--------+-----------+
+ *	power_supply    | POWER  |        |           |
+ *	                |        |        | PRS       |
+ *	----------------+--------+--------+-----------+
+ *	amb-temp        | DATA   |        | DATA      |
+ *	                |        | PARAM  | PARAM (*) |
+ *	----------------+--------+--------+-----------+
+ *	fan             | DATA   |        | DATA  (*) |
+ *	                |        | PARAM  | PARAM (*) |
+ *	                |        |        | PRS       |
+ *
+ * (*) don't use the attribute given by this command modifier
+ */
+static int64_t parse_sensor_id(uint32_t handler, struct opal_sensor_data *attr)
 {
 	uint32_t mod, index;
 
-	attr->spcn_attr = id >> 24;
-	if (attr->spcn_attr >= SENSOR_MAX)
+	attr->frc = sensor_get_frc(handler);
+	attr->rid = sensor_get_rid(handler);
+	attr->spcn_attr = sensor_get_attr(handler);
+
+	if (!sensor_frc_is_valid(attr->frc))
 		return OPAL_PARAMETER;
 
-	if (attr->spcn_attr <= SENSOR_ON_SUPPORTED)
-		mod = SPCN_MOD_PRS_STATUS_FIRST;
-	else if (attr->spcn_attr <= SENSOR_LOCATION)
+	/* now compute the PRS command modifier which will be used to
+	 * request a resource attribute from the FSP */
+	switch (attr->spcn_attr) {
+	case SENSOR_DATA:
+		if (attr->frc == SENSOR_FRC_POWER_SUPPLY)
+			mod = SPCN_MOD_SENSOR_POWER;
+		else
+			mod = SPCN_MOD_SENSOR_DATA_FIRST;
+		break;
+
+	case SENSOR_THRS:
 		mod = SPCN_MOD_SENSOR_PARAM_FIRST;
-	else if (attr->spcn_attr <= SENSOR_DATA)
-		mod = SPCN_MOD_SENSOR_DATA_FIRST;
-	else if (attr->spcn_attr <= SENSOR_POWER)
-		mod = SPCN_MOD_SENSOR_POWER;
-	else
+		break;
+
+	case SENSOR_STATUS:
+		switch (attr->frc) {
+		case SENSOR_FRC_AMB_TEMP:
+			mod = SPCN_MOD_SENSOR_DATA_FIRST;
+			break;
+		case SENSOR_FRC_POWER_SUPPLY:
+		case SENSOR_FRC_COOLING_FAN:
+			mod = SPCN_MOD_PRS_STATUS_FIRST;
+			break;
+		default:
+			return OPAL_PARAMETER;
+		}
+		break;
+
+	default:
 		return OPAL_PARAMETER;
+	}
 
 	for (index = 0; spcn_mod_data[index].mod != SPCN_MOD_LAST; index++) {
 		if (spcn_mod_data[index].mod == mod)
@@ -480,9 +504,6 @@ static int64_t parse_sensor_id(uint32_t id, struct opal_sensor_data *attr)
 	}
 
 	attr->mod_index = index;
-	attr->frc = (id >> 16) & 0xff;
-	attr->rid = id & 0xffff;
-
 	return 0;
 }
 
@@ -552,141 +573,187 @@ out:
 }
 
 
-#define MAX_RIDS	64
 #define MAX_NAME	64
 
-static int get_index(uint16_t *prids, uint16_t rid)
-{
-	int index;
-
-	for (index = 0; prids[index] && index < MAX_RIDS; index++)
-		if (prids[index] == rid)
-			return index;
-
-	if (index == MAX_RIDS)
-		return -1;
-
-	prids[index] = rid;
-	return index;
-}
-
-static void create_sensor_nodes(int index, uint16_t frc, uint16_t rid,
-		uint16_t *prids, struct dt_node *sensors)
+static struct dt_node *sensor_get_node(struct dt_node *sensors,
+		       struct sensor_header *header, const char* attrname)
 {
 	char name[MAX_NAME];
-	struct dt_node *fs_node;
-	uint32_t value;
-	int rid_index;
+	struct dt_node *node;
 
-	switch (spcn_mod_data[index].mod) {
-	case SPCN_MOD_PRS_STATUS_FIRST:
-	case SPCN_MOD_PRS_STATUS_SUBS:
-		switch (frc) {
-		case SENSOR_FRC_POWER_SUPPLY:
-		case SENSOR_FRC_COOLING_FAN:
-			rid_index = get_index(prids, rid);
-			if (rid_index < 0)
-				break;
-			snprintf(name, MAX_NAME, "%s#%d-%s", frc_names[frc],
-					/* Start enumeration from 1 */
-					rid_index + 1,
-					spcn_mod_data[index].mod_attr[1].name);
-			fs_node = dt_new(sensors, name);
-			snprintf(name, MAX_NAME, "ibm,opal-sensor-%s",
-					frc_names[frc]);
-			dt_add_property_string(fs_node, "compatible", name);
-			value = spcn_mod_data[index].mod_attr[1].val << 24 |
-					(frc & 0xff) << 16 | rid;
-			dt_add_property_cells(fs_node, "sensor-id", value);
-			break;
-		default:
-			break;
-		}
-		break;
-	case SPCN_MOD_SENSOR_PARAM_FIRST:
-	case SPCN_MOD_SENSOR_PARAM_SUBS:
-	case SPCN_MOD_SENSOR_DATA_FIRST:
-	case SPCN_MOD_SENSOR_DATA_SUBS:
-		switch (frc) {
-		case SENSOR_FRC_POWER_SUPPLY:
-		case SENSOR_FRC_COOLING_FAN:
-		case SENSOR_FRC_AMB_TEMP:
-			rid_index = get_index(prids, rid);
-			if (rid_index < 0)
-				break;
-			snprintf(name, MAX_NAME, "%s#%d-%s", frc_names[frc],
-					/* Start enumeration from 1 */
-					rid_index + 1,
-					spcn_mod_data[index].mod_attr[0].name);
-			fs_node = dt_new(sensors, name);
-			snprintf(name, MAX_NAME, "ibm,opal-sensor-%s",
-					frc_names[frc]);
-			dt_add_property_string(fs_node, "compatible", name);
-			value = spcn_mod_data[index].mod_attr[0].val << 24 |
-					(frc & 0xff) << 16 | rid;
-			dt_add_property_cells(fs_node, "sensor-id", value);
-			if (spcn_mod_data[index].mod == SPCN_MOD_SENSOR_DATA_FIRST &&
-			    frc == SENSOR_FRC_AMB_TEMP)
-				dt_add_property_string(fs_node, "label", "Ambient");
+	/*
+	 * Just use the resource class name and resource id. This
+	 * should be obvious enough for a node name.
+	 */
+	snprintf(name, sizeof(name), "%s#%d-%s", frc_names[header->frc],
+		 header->rid, attrname);
 
-			break;
-		default:
-			break;
-		}
-		break;
+	/*
+	 * The same resources are reported by the different PRS
+	 * subcommands (PRS_STATUS, SENSOR_PARAM, SENSOR_DATA). So we
+	 * need to check that we did not already create the device
+	 * node.
+	 */
+	node = dt_find_by_path(sensors, name);
+	if (!node) {
+		prlog(PR_INFO, "SENSOR: creating node %s\n", name);
 
-	case SPCN_MOD_SENSOR_POWER:
-		fs_node = dt_new(sensors, "power#1-data");
-		dt_add_property_string(fs_node, "compatible", "ibm,opal-sensor-power");
-		value = spcn_mod_data[index].mod_attr[0].val << 24;
-		dt_add_property_cells(fs_node, "sensor-id", value);
-		break;
+		node = dt_new(sensors, name);
+
+		snprintf(name, sizeof(name), "ibm,opal-sensor-%s",
+			 frc_names[header->frc]);
+		dt_add_property_string(node, "compatible", name);
+	} else {
+		prlog(PR_ERR, "SENSOR: node %s exists\n", name);
 	}
+	return node;
+}
+
+#define sensor_handler(header, attr_num) \
+	sensor_make_handler((header).frc, (header).rid, attr_num)
+
+static int add_sensor_prs(struct dt_node *sensors, struct sensor_prs *prs)
+{
+	struct dt_node *node;
+
+	node = sensor_get_node(sensors, &prs->header, "faulted");
+	if (!node)
+		return -1;
+
+	dt_add_property_cells(node, "sensor-id",
+			      sensor_handler(prs->header, SENSOR_STATUS));
+	return 0;
+}
+
+static int add_sensor_param(struct dt_node *sensors, struct sensor_param *param)
+{
+	struct dt_node *node;
+
+	node = sensor_get_node(sensors, &param->header, "thrs");
+	if (!node)
+		return -1;
+
+	dt_add_property_string(node, "ibm,loc-code", param->location);
+	dt_add_property_cells(node, "sensor-id",
+			      sensor_handler(param->header, SENSOR_THRS));
+	/* don't use the status coming from the response of the
+	 * SENSOR_PARAM subcommand */
+	return 0;
+}
+
+static int add_sensor_data(struct dt_node *sensors,
+				struct sensor_data *data)
+{
+	struct dt_node *node;
+
+	node = sensor_get_node(sensors, &data->header, "data");
+	if (!node)
+		return -1;
+
+	dt_add_property_cells(node, "sensor-id",
+			      sensor_handler(data->header, SENSOR_DATA));
+
+	/* Let's make sure we are not adding a duplicate device node.
+	 * Some resource, like fans, get their status attribute from
+	 * three different commands ...
+	 */
+	if (data->header.frc == SENSOR_FRC_AMB_TEMP) {
+		node = sensor_get_node(sensors, &data->header, "faulted");
+		if (!node)
+			return -1;
+
+		dt_add_property_cells(node, "sensor-id",
+				      sensor_handler(data->header, SENSOR_STATUS));
+	}
+
+	return 0;
+}
+
+static int add_sensor_power(struct dt_node *sensors, struct sensor_power *power)
+{
+	int i;
+	struct dt_node *node;
+
+	if (!sensor_power_is_valid(power))
+		return -1;
+
+	for (i = 0; i < sensor_power_count(power); i++) {
+		struct sensor_header header = {
+			SENSOR_FRC_POWER_SUPPLY,
+			normalize_power_rid(power->supplies[i].rid)
+		};
+
+		node = sensor_get_node(sensors, &header, "data");
+
+		prlog(PR_TRACE, "SENSOR: Power[%d] : %d mW\n",
+		      power->supplies[i].rid,
+		      power->supplies[i].milliwatts);
+
+		dt_add_property_cells(node, "sensor-id",
+				      sensor_handler(header, SENSOR_DATA));
+	}
+	return 0;
 }
 
 static void add_sensor_ids(struct dt_node *sensors)
 {
-	uint32_t MAX_FRC_NAMES = sizeof(frc_names) / sizeof(*frc_names);
 	uint8_t *sensor_buf_ptr = (uint8_t *)sensor_buffer;
-	uint16_t *prids[MAX_FRC_NAMES];
-	uint16_t sensor_frc, power_rid;
-	uint16_t sensor_mod_data[8];
-	uint32_t index, count;
+	struct spcn_mod *smod;
+	int i;
 
-	for (index = 0; index < MAX_FRC_NAMES; index++)
-		prids[index] = zalloc(MAX_RIDS * sizeof(**prids));
+	for (smod = spcn_mod_data; smod->mod != SPCN_MOD_LAST; smod++) {
+		/*
+		 * SPCN_MOD_SENSOR_POWER (0x1C) has a different layout.
+		 */
+		if (smod->mod == SPCN_MOD_SENSOR_POWER) {
+			add_sensor_power(sensors,
+				      (struct sensor_power *) sensor_buf_ptr);
 
-	for (index = 0; spcn_mod_data[index].mod != SPCN_MOD_LAST; index++) {
-		if (spcn_mod_data[index].mod == SPCN_MOD_SENSOR_POWER) {
-			create_sensor_nodes(index, 0, 0, 0, sensors);
+			sensor_buf_ptr += smod->entry_size * smod->entry_count;
 			continue;
 		}
-		for (count = 0; count < spcn_mod_data[index].entry_count;
-				count++) {
-			if (spcn_mod_data[index].mod ==
-					SPCN_MOD_PROC_JUNC_TEMP) {
-				/* TODO Support this modifier '0x14', if
-				 * required */
-			} else {
-				memcpy((void *)sensor_mod_data, sensor_buf_ptr,
-						spcn_mod_data[index].entry_size);
-				sensor_frc = sensor_mod_data[0];
-				power_rid = sensor_mod_data[1];
 
-				if (sensor_frc < MAX_FRC_NAMES &&
-						frc_names[sensor_frc])
-					create_sensor_nodes(index, sensor_frc,
-							power_rid,
-							prids[sensor_frc],
-							sensors);
+		for (i = 0; i < smod->entry_count; i++) {
+			struct sensor_header *header =
+				(struct sensor_header *) sensor_buf_ptr;
+
+			if (!sensor_frc_is_valid(header->frc))
+				goto out_sensor;
+
+			switch (smod->mod) {
+			case SPCN_MOD_PROC_JUNC_TEMP:
+				/* TODO Support this modifier '0x14',
+				   if required */
+				break;
+
+			case SPCN_MOD_PRS_STATUS_FIRST:
+			case SPCN_MOD_PRS_STATUS_SUBS:
+				add_sensor_prs(sensors,
+					(struct sensor_prs *) header);
+				break;
+
+			case SPCN_MOD_SENSOR_PARAM_FIRST:
+			case SPCN_MOD_SENSOR_PARAM_SUBS:
+				add_sensor_param(sensors,
+					(struct sensor_param *) header);
+				break;
+
+			case SPCN_MOD_SENSOR_DATA_FIRST:
+			case SPCN_MOD_SENSOR_DATA_SUBS:
+				add_sensor_data(sensors,
+					(struct sensor_data *) header);
+
+				break;
+
+			default:
+				prerror("SENSOR: unknown modifier : %x\n",
+					smod->mod);
 			}
 
-			sensor_buf_ptr += spcn_mod_data[index].entry_size;
+out_sensor:
+			sensor_buf_ptr += smod->entry_size;
 		}
 	}
-
-	for (index = 0; index < MAX_FRC_NAMES; index++)
-		free(prids[index]);
 }
 
 static void add_opal_sensor_node(void)
