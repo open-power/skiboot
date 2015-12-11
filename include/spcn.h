@@ -90,4 +90,98 @@ enum {
 	SENSOR_FRC_IO_BP,
 };
 
+/*
+ * Common to all PRS modifiers (subcommands)
+ */
+struct sensor_header {
+	uint16_t frc;	/* Frame resource class */
+	uint16_t rid;	/* Resource ID */
+} __packed;
+
+/*
+ * Data layout for PRS modifier PRS_STATUS 0x01, 0x02
+ */
+struct sensor_prs {
+	struct sensor_header header;
+	uint16_t src;	/* unused */
+	uint16_t status;
+} __packed;
+
+#define PRS_STATUS_ON_SUPPORTED	0x0010
+#define PRS_STATUS_ON		0x0008
+#define PRS_STATUS_AC_FAULTED	0x0004
+#define PRS_STATUS_FAULTED	0x0002
+#define PRS_STATUS_PRESENT	0x0001
+
+/*
+ * Data layout for PRS modifier SENSOR_PARAM 0x10, 0x11
+ */
+struct sensor_param {
+	struct sensor_header header;
+	char location[4];
+	char __reserved[4];
+	uint16_t threshold;
+	uint16_t status;
+} __packed;
+
+/*
+ * Data layout for PRS modifier SENSOR_DATA 0x12, 0x13
+ */
+struct sensor_data {
+	struct sensor_header header;
+	uint16_t data;
+	uint16_t status;
+} __packed;
+
+#define SENSOR_STATUS_EM_ALERT	0x0004
+#define SENSOR_STATUS_FAULTED	0x0002
+#define SENSOR_STATUS_PRESENT	0x0001
+
+/* Power sensor is retrieved thru a new PRS modifier 0x1C, data
+ * response is as follows:
+ *
+ * Byte 0:
+ *
+ *	Bit 7: Data valid
+ *	Bit 4-6: reserved
+ *	Bit 0-3: Number of power supply or data records
+ *
+ * Each data record is 5 Bytes following above byte 0:
+ *
+ * Data Record: Byte 0: Power supply ID {00, 01, 02, 03, ...}
+ *	     Byte 1-4: Power sensor value in milli-watts
+ *
+ * Example Power Sensor data: (Tuleta)
+ * 84 00 00 00 00 00
+ *    01 00 00 00 00
+ *    02 00 02 5d 78
+ *    03 00 02 0f 58
+ *    00 00 00 00 00
+ *
+ * 0x84: Bit 7 is valid bit and there are 4 power supplies
+ * 0x00 00 00 00 00
+ *   |  ^^^^^^^^^^^ Power in milli-watts
+ *   \-- Power supply ID
+ *
+ * Ox03 00 02 0f 58
+ *   |  ^^^^^^^^^^^ Power in milli-watts (135000 mW)
+ *   \-- Power supply ID
+ */
+
+#define POWER_SUPPLY_MAX 8
+
+struct sensor_power_supply {
+	uint8_t	rid;		/* Power supply ID */
+	uint32_t milliwatts;
+} __packed;
+
+struct sensor_power {
+	uint8_t status;
+	struct sensor_power_supply supplies[POWER_SUPPLY_MAX];
+} __packed;
+
+#define sensor_power_is_valid(s)	((s)->status & 0x80)
+#define sensor_power_count(s)		((s)->status & 0x0f)
+
+
 #endif /* __SPCN_H */
