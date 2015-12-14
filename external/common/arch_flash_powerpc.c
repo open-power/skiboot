@@ -90,7 +90,7 @@ static int get_dev_mtd(const char *fdt_flash_path, char **mtd_path)
 	if (fd == -1) {
 		fprintf(stderr, "Couldn't open '%s' FDT attribute to determine which flash device to use\n",
 				fdt_flash_path);
-		fprintf(stderr, "Does your skiboot new enough to expose the flash through the device tree?\n");
+		fprintf(stderr, "Is your skiboot new enough to expose the flash through the device tree?\n");
 		hint_root();
 		return -1;
 	}
