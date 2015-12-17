@@ -33,6 +33,7 @@
 int pnor_init(struct pnor *pnor)
 {
 	int rc, fd;
+	struct blocklevel_device *bl;
 	mtd_info_t mtd_info;
 
 	if (!pnor)
@@ -67,10 +68,17 @@ int pnor_init(struct pnor *pnor)
 	pr_debug("PNOR: Found PNOR: %d bytes (%d blocks)", pnor->size,
 	       pnor->erasesize);
 
-	rc = ffs_open_image(fd, pnor->size, 0, &pnor->ffsh);
+	rc = file_init(fd, &bl);
+	if (rc) {
+		pr_log(LOG_ERR, "PNOR: (libflash) file_init() failed");
+		goto out;
+	}
+
+	rc = ffs_init(0, pnor->size, 0, bl, &pnor->ffsh, 0);
 	if (rc)
 		pr_log(LOG_ERR, "PNOR: Failed to open pnor partition table");
 
+	file_exit(bl);
 out:
 	close(fd);
 
