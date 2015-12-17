@@ -36,7 +36,6 @@ enum ffs_type {
 struct ffs_handle {
 	struct ffs_hdr		hdr;	/* Converted header */
 	enum ffs_type		type;
-	struct flash_chip	*chip;
 	uint32_t		toc_offset;
 	uint32_t		max_size;
 	void			*cache;
@@ -208,7 +207,6 @@ int ffs_open_image(int fd, uint32_t size, uint32_t toc_offset,
 	f->type = ffs_type_image;
 	f->toc_offset = toc_offset;
 	f->max_size = size;
-	f->chip = NULL;
 
 	/* Convert and check flash header */
 	rc = ffs_check_convert_header(&f->hdr, &hdr);
@@ -385,8 +383,6 @@ int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 	}
 	ent->actual = cpu_to_be32(act_size);
 	ent->checksum = ffs_checksum(ent, FFS_ENTRY_SIZE_CSUM);
-	if (!ffs->chip)
-		return 0;
 
 	return blocklevel_write(ffs->bl, offset, ent, FFS_ENTRY_SIZE);
 }
