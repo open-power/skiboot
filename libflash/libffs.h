@@ -40,12 +40,6 @@ struct ffs_handle;
 int ffs_init(uint32_t offset, uint32_t max_size,
 		struct blocklevel_device *bl, struct ffs_handle **ffs, int mark_ecc);
 
-/* ffs_open_image is Linux only as it uses lseek, which skiboot does not
- * implement */
-#ifndef __SKIBOOT__
-int ffs_open_image(int fd, uint32_t size, uint32_t toc_offset,
-		   struct ffs_handle **ffs);
-#endif
 
 void ffs_close(struct ffs_handle *ffs);
 
