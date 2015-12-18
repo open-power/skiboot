@@ -290,10 +290,29 @@ ssize_t read(int fd __unused, void *buf, size_t req_count)
 	return count;
 }
 
-void flush_console_driver(void)
+static int64_t opal_console_flush(int64_t term_number)
 {
-	if (con_driver && con_driver->flush != NULL)
-		con_driver->flush();
+	if (term_number != 0)
+		return OPAL_PARAMETER;
+
+	if (con_driver == NULL || con_driver->flush == NULL)
+		return OPAL_UNSUPPORTED;
+
+	return con_driver->flush();
+}
+opal_call(OPAL_CONSOLE_FLUSH, opal_console_flush, 1);
+
+/* Helper function to perform a full synchronous flush */
+void console_complete_flush(void)
+{
+	int64_t ret = opal_console_flush(0);
+
+	if (ret == OPAL_UNSUPPORTED || ret == OPAL_PARAMETER)
+		return;
+
+	while (ret != OPAL_SUCCESS) {
+		ret = opal_console_flush(0);
+	}
 }
 
 void set_console(struct con_ops *driver)

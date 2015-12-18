@@ -156,11 +156,11 @@ static size_t uart_con_write(const char *buf, size_t len)
 	return written;
 }
 
-static void uart_con_flush_all(void);
+static int64_t uart_con_flush(void);
 
 static struct con_ops uart_con_driver = {
 	.write = uart_con_write,
-	.flush = uart_con_flush_all
+	.flush = uart_con_flush
 };
 
 /*
@@ -193,9 +193,11 @@ static uint8_t *out_buf;
 static uint32_t out_buf_prod;
 static uint32_t out_buf_cons;
 
-static void uart_flush_out(void)
+/* Asynchronous flush */
+static int64_t uart_con_flush(void)
 {
 	bool tx_was_full = tx_full;
+	uint32_t out_buf_cons_initial = out_buf_cons;
 
 	while(out_buf_prod != out_buf_cons) {
 		if (tx_room == 0) {
@@ -220,6 +222,15 @@ static void uart_flush_out(void)
 	}
 	if (tx_full != tx_was_full)
 		uart_update_ier();
+	if (out_buf_prod != out_buf_cons) {
+		/* Return busy if nothing was flushed this call */
+		if (out_buf_cons == out_buf_cons_initial)
+			return OPAL_BUSY;
+		/* Return partial if there's more to flush */
+		return OPAL_PARTIAL;
+	}
+
+	return OPAL_SUCCESS;
 }
 
 static uint32_t uart_tx_buf_space(void)
@@ -246,7 +257,7 @@ static int64_t uart_opal_write(int64_t term_number, int64_t *length,
 	}
 
 	/* Flush out buffer again */
-	uart_flush_out();
+	uart_con_flush();
 
 	unlock(&uart_lock);
 
@@ -357,7 +368,7 @@ static void __uart_do_poll(u8 trace_ctx)
 
 	lock(&uart_lock);
 	uart_read_to_buffer();
-	uart_flush_out();
+	uart_con_flush();
 	uart_trace(trace_ctx, 0, tx_full, in_count);
 	unlock(&uart_lock);
 
@@ -376,15 +387,6 @@ static void uart_irq(uint32_t chip_id __unused, uint32_t irq_mask __unused)
 		irq_ok = true;
 	}
 	__uart_do_poll(TRACE_UART_CTX_IRQ);
-}
-
-/*
- * Flush the entire buffer all at once
- */
-static void uart_con_flush_all(void)
-{
-	while(out_buf_prod != out_buf_cons)
-		uart_flush_out();
 }
 
 /*
