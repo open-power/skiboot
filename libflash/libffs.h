@@ -37,9 +37,28 @@ struct ffs_handle;
 
 /* Init */
 
-int ffs_init(uint32_t offset, uint32_t max_size,
-		struct blocklevel_device *bl, struct ffs_handle **ffs, int mark_ecc);
+int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
+		struct ffs_handle **ffs, bool mark_ecc);
 
+/*
+ * Initialise a new ffs_handle to the "OTHER SIDE".
+ * Reuses the underlying blocklevel_device.
+ */
+int ffs_next_side(struct ffs_handle *ffs, struct ffs_handle **new_ffs,
+		bool mark_ecc);
+
+/*
+ * There are quite a few ways one might consider two ffs_handles to be the
+ * same. For the purposes of this function we are trying to detect a fairly
+ * specific scenario:
+ * Consecutive calls to ffs_next_side() may succeed but have gone circular.
+ * It is possible that the OTHER_SIDE partition in one TOC actually points
+ * back to the TOC of the first ffs_handle.
+ * This function compares for this case, therefore the requirements are
+ * simple, the underlying blocklevel_devices must be the same along with
+ * the toc_offset and the max_size.
+ */
+int ffs_cmp(struct ffs_handle *one, struct ffs_handle *two);
 
 void ffs_close(struct ffs_handle *ffs);
 

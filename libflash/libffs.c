@@ -72,7 +72,7 @@ static int ffs_check_convert_header(struct ffs_hdr *dst, struct ffs_hdr *src)
 }
 
 int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
-		struct ffs_handle **ffs, int mark_ecc)
+		struct ffs_handle **ffs, bool mark_ecc)
 {
 	struct ffs_hdr hdr;
 	struct ffs_handle *f;
@@ -269,6 +269,40 @@ int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 		*name = n;
 	}
 	return 0;
+}
+
+/*
+ * There are quite a few ways one might consider two ffs_handles to be the
+ * same. For the purposes of this function we are trying to detect a fairly
+ * specific scenario:
+ * Consecutive calls to ffs_next_side() may succeed but have gone circular.
+ * It is possible that the OTHER_SIDE partition in one TOC actually points
+ * back to the TOC to first ffs_handle.
+ * This function compares for this case, therefore the requirements are
+ * simple, the underlying blocklevel_devices must be the same along with
+ * the toc_offset and the max_size.
+ */
+int ffs_cmp(struct ffs_handle *one, struct ffs_handle *two)
+{
+	return (!one && !two) || (one && two && one->bl == two->bl
+		&& one->toc_offset == two->toc_offset
+		&& one->max_size == two->max_size);
+}
+
+int ffs_next_side(struct ffs_handle *ffs, struct ffs_handle **new_ffs,
+		bool mark_ecc)
+{
+	int rc;
+	uint32_t index, offset, max_size;
+	rc = ffs_lookup_part(ffs, "OTHER_SIDE", &index);
+	if (rc)
+		return rc;
+
+	rc = ffs_part_info(ffs, index, NULL, &offset, &max_size, NULL, NULL);
+	if (rc)
+		return rc;
+
+	return ffs_init(offset, max_size, ffs->bl, new_ffs, mark_ecc);
 }
 
 int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
