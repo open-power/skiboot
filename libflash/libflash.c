@@ -835,6 +835,10 @@ bail:
 		return rc;
 	}
 
+	/* The flash backend doesn't support reiniting it */
+	c->bl.keep_alive = true;
+	c->bl.reacquire = NULL;
+	c->bl.release = NULL;
 	c->bl.read = &flash_read;
 	c->bl.write = &flash_smart_write;
 	c->bl.erase = &flash_erase;

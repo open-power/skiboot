@@ -188,7 +188,7 @@ static int get_dev_mtd(const char *fdt_flash_path, char **mtd_path)
 	return done ? rc : -1;
 }
 
-static struct blocklevel_device *arch_init_blocklevel(const char *file)
+static struct blocklevel_device *arch_init_blocklevel(const char *file, bool keep_alive)
 {
 	int rc;
 	struct blocklevel_device *new_bl = NULL;
@@ -200,7 +200,7 @@ static struct blocklevel_device *arch_init_blocklevel(const char *file)
 			return NULL;
 	}
 
-	file_init_path(file ? file : real_file, NULL, &new_bl);
+	file_init_path(file ? file : real_file, NULL, keep_alive, &new_bl);
 	free(real_file);
 	return new_bl;
 }
@@ -211,11 +211,11 @@ int arch_flash_set_wrprotect(struct blocklevel_device *bl, int set)
 	return 0;
 }
 
-int arch_flash_init(struct blocklevel_device **r_bl, const char *file)
+int arch_flash_init(struct blocklevel_device **r_bl, const char *file, bool keep_alive)
 {
 	struct blocklevel_device *new_bl;
 
-	new_bl = arch_init_blocklevel(file);
+	new_bl = arch_init_blocklevel(file, keep_alive);
 	if (!new_bl)
 		return -1;
 

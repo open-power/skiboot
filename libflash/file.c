@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 #define _GNU_SOURCE
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -36,14 +35,35 @@
 struct file_data {
 	int fd;
 	char *name;
+	char *path;
 	struct blocklevel_device bl;
 };
+
+static int file_release(struct blocklevel_device *bl)
+{
+	struct file_data *file_data = container_of(bl, struct file_data, bl);
+	close(file_data->fd);
+	file_data->fd = -1;
+	return 0;
+}
+
+static int file_reacquire(struct blocklevel_device *bl)
+{
+	struct file_data *file_data = container_of(bl, struct file_data, bl);
+	int fd;
+
+	fd = open(file_data->path, O_RDWR);
+	if (fd == -1)
+		return FLASH_ERR_PARM_ERROR;
+	file_data->fd = fd;
+	return 0;
+}
 
 static int file_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len)
 {
 	struct file_data *file_data = container_of(bl, struct file_data, bl);
-	int count = 0;
-	int rc;
+	int rc, count = 0;
+
 	rc = lseek(file_data->fd, pos, SEEK_SET);
 	/* errno should remain set */
 	if (rc != pos)
@@ -54,6 +74,7 @@ static int file_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint
 		/* errno should remain set */
 		if (rc == -1)
 			return FLASH_ERR_BAD_READ;
+
 		count += rc;
 	}
 
@@ -64,12 +85,11 @@ static int file_write(struct blocklevel_device *bl, uint32_t dst, const void *sr
 		uint32_t len)
 {
 	struct file_data *file_data = container_of(bl, struct file_data, bl);
-	int count = 0;
-	int rc;
+	int rc, count = 0;
 
 	rc = lseek(file_data->fd, dst, SEEK_SET);
 	/* errno should remain set */
-	if (rc == -1)
+	if (rc != dst)
 		return FLASH_ERR_PARM_ERROR;
 
 	while (count < len) {
@@ -77,6 +97,7 @@ static int file_write(struct blocklevel_device *bl, uint32_t dst, const void *sr
 		/* errno should remain set */
 		if (rc == -1)
 			return FLASH_ERR_VERIFY_FAILURE;
+
 		count += rc;
 	}
 
@@ -94,7 +115,7 @@ static int file_erase(struct blocklevel_device *bl, uint32_t dst, uint32_t len)
 {
 	unsigned long long int d = ULLONG_MAX;
 	int i = 0;
-	int rc = 0;
+	int rc;
 
 	while (len - i > 0) {
 		rc = file_write(bl, dst + i, &d, len - i > sizeof(d) ? sizeof(d) : len - i);
@@ -114,7 +135,10 @@ static int mtd_erase(struct blocklevel_device *bl, uint32_t dst, uint32_t len)
 		.length = len
 	};
 
-	return ioctl(file_data->fd, MEMERASE, &erase_info) == -1 ? -1 : 0;
+	if (ioctl(file_data->fd, MEMERASE, &erase_info) == -1)
+		return FLASH_ERR_PARM_ERROR;
+
+	return 0;
 }
 
 static int get_info_name(struct file_data *file_data, char **name)
@@ -152,15 +176,16 @@ static int get_info_name(struct file_data *file_data, char **name)
 }
 
 
-static int mtd_get_info(struct blocklevel_device *bl, const char **name, uint32_t *total_size,
-		uint32_t *erase_granule)
+static int mtd_get_info(struct blocklevel_device *bl, const char **name,
+		uint32_t *total_size, uint32_t *erase_granule)
 {
 	struct file_data *file_data = container_of(bl, struct file_data, bl);
 	struct mtd_info_user mtd_info;
 	int rc;
 
-	if (ioctl(file_data->fd, MEMGETINFO, &mtd_info) == -1)
-			return FLASH_ERR_BAD_READ;
+	rc = ioctl(file_data->fd, MEMGETINFO, &mtd_info);
+	if (rc == -1)
+		return FLASH_ERR_BAD_READ;
 
 	if (total_size)
 		*total_size = mtd_info.size;
@@ -178,8 +203,8 @@ static int mtd_get_info(struct blocklevel_device *bl, const char **name, uint32_
 	return 0;
 }
 
-static int file_get_info(struct blocklevel_device *bl, const char **name, uint32_t *total_size,
-		uint32_t *erase_granule)
+static int file_get_info(struct blocklevel_device *bl, const char **name,
+		uint32_t *total_size, uint32_t *erase_granule)
 {
 	struct file_data *file_data = container_of(bl, struct file_data, bl);
 	struct stat st;
@@ -214,17 +239,26 @@ int file_init(int fd, struct blocklevel_device **bl)
 
 	*bl = NULL;
 
-	file_data = malloc(sizeof(struct file_data));
+	file_data = calloc(1, sizeof(struct file_data));
 	if (!file_data)
 		return FLASH_ERR_MALLOC_FAILED;
-	memset(file_data, 0, sizeof(*file_data));
 
 	file_data->fd = fd;
+	file_data->bl.reacquire = &file_reacquire;
+	file_data->bl.release = &file_release;
 	file_data->bl.read = &file_read;
 	file_data->bl.write = &file_write;
 	file_data->bl.erase = &file_erase;
 	file_data->bl.get_info = &file_get_info;
 	file_data->bl.erase_mask = 0;
+
+	/*
+	 * If the blocklevel_device is only inited with file_init() then keep
+	 * alive is assumed, as fd will change otherwise and this may break
+	 * callers assumptions.
+	 */
+	file_data->bl.keep_alive = 1;
+
 	/*
 	 * Unfortunately not all file descriptors are created equal...
 	 * Here we check to see if the file descriptor is to an MTD device, in
@@ -252,9 +286,12 @@ out:
 	return FLASH_ERR_PARM_ERROR;
 }
 
-int file_init_path(const char *path, int *r_fd, struct blocklevel_device **bl)
+int file_init_path(const char *path, int *r_fd, bool keep_alive,
+		struct blocklevel_device **bl)
 {
 	int fd, rc;
+	char *path_ptr = NULL;
+	struct file_data *file_data;
 
 	if (!path || !bl)
 		return FLASH_ERR_PARM_ERROR;
@@ -263,13 +300,31 @@ int file_init_path(const char *path, int *r_fd, struct blocklevel_device **bl)
 	if (fd == -1)
 		return FLASH_ERR_PARM_ERROR;
 
+	/*
+	 * strdup() first so don't have to deal with malloc failure after
+	 * file_init()
+	 */
+	path_ptr = strdup(path);
+	if (!path_ptr) {
+		rc = FLASH_ERR_MALLOC_FAILED;
+		goto out;
+	}
+
 	rc = file_init(fd, bl);
 	if (rc)
-		close(fd);
+		goto out;
+
+	file_data = container_of(*bl, struct file_data, bl);
+	file_data->bl.keep_alive = keep_alive;
+	file_data->path = path_ptr;
 
 	if (r_fd)
 		*r_fd = fd;
 
+	return rc;
+out:
+	free(path_ptr);
+	close(fd);
 	return rc;
 }
 
@@ -280,6 +335,7 @@ void file_exit(struct blocklevel_device *bl)
 		free(bl->ecc_prot.prot);
 		file_data = container_of(bl, struct file_data, bl);
 		free(file_data->name);
+		free(file_data->path);
 		free(file_data);
 	}
 }

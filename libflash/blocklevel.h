@@ -17,6 +17,7 @@
 #define __LIBFLASH_BLOCKLEVEL_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 struct bl_prot_range {
 	uint32_t start;
@@ -39,6 +40,8 @@ enum blocklevel_flags {
  */
 struct blocklevel_device {
 	void *priv;
+	int (*reacquire)(struct blocklevel_device *bl);
+	int (*release)(struct blocklevel_device *bl);
 	int (*read)(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len);
 	int (*write)(struct blocklevel_device *bl, uint32_t pos, const void *buf, uint32_t len);
 	int (*erase)(struct blocklevel_device *bl, uint32_t pos, uint32_t len);
@@ -49,6 +52,7 @@ struct blocklevel_device {
 	 * Keep the erase mask so that blocklevel_erase() can do sanity checking
 	 */
 	uint32_t erase_mask;
+	bool keep_alive;
 	enum blocklevel_flags flags;
 
 	struct blocklevel_range ecc_prot;

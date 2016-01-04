@@ -58,6 +58,25 @@ static int ecc_protected(struct blocklevel_device *bl, uint32_t pos, uint32_t le
 	return 0;
 }
 
+static int reacquire(struct blocklevel_device *bl)
+{
+	if (!bl->keep_alive && bl->reacquire)
+		return bl->reacquire(bl);
+	return 0;
+}
+
+static int release(struct blocklevel_device *bl)
+{
+	int rc = 0;
+	if (!bl->keep_alive && bl->release) {
+		/* This is the error return path a lot, preserve errno */
+		int err = errno;
+		rc = bl->release(bl);
+		errno = err;
+	}
+	return rc;
+}
+
 int blocklevel_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len)
 {
 	int rc;
@@ -69,14 +88,21 @@ int blocklevel_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint3
 		return FLASH_ERR_PARM_ERROR;
 	}
 
+	rc = reacquire(bl);
+	if (rc)
+		return rc;
+
 	if (!ecc_protected(bl, pos, len)) {
-		return bl->read(bl, pos, buf, len);
+		rc = bl->read(bl, pos, buf, len);
+		release(bl);
+		return rc;
 	}
 
 	buffer = malloc(ecc_len);
 	if (!buffer) {
 		errno = ENOMEM;
-		return FLASH_ERR_MALLOC_FAILED;
+		rc = FLASH_ERR_MALLOC_FAILED;
+		goto out;
 	}
 
 	rc = bl->read(bl, pos, buffer, ecc_len);
@@ -89,6 +115,7 @@ int blocklevel_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint3
 	}
 
 out:
+	release(bl);
 	free(buffer);
 	return rc;
 }
@@ -104,14 +131,21 @@ int blocklevel_write(struct blocklevel_device *bl, uint32_t pos, const void *buf
 		return FLASH_ERR_PARM_ERROR;
 	}
 
+	rc = reacquire(bl);
+	if (rc)
+		return rc;
+
 	if (!ecc_protected(bl, pos, len)) {
-		return bl->write(bl, pos, buf, len);
+		rc =  bl->write(bl, pos, buf, len);
+		release(bl);
+		return rc;
 	}
 
 	buffer = malloc(ecc_len);
 	if (!buffer) {
 		errno = ENOMEM;
-		return FLASH_ERR_MALLOC_FAILED;
+		rc = FLASH_ERR_MALLOC_FAILED;
+		goto out;
 	}
 
 	if (memcpy_to_ecc(buffer, buf, len)) {
@@ -119,14 +153,18 @@ int blocklevel_write(struct blocklevel_device *bl, uint32_t pos, const void *buf
 		rc = FLASH_ERR_ECC_INVALID;
 		goto out;
 	}
+
 	rc = bl->write(bl, pos, buffer, ecc_len);
+
 out:
+	release(bl);
 	free(buffer);
 	return rc;
 }
 
 int blocklevel_erase(struct blocklevel_device *bl, uint32_t pos, uint32_t len)
 {
+	int rc;
 	if (!bl || !bl->erase) {
 		errno = EINVAL;
 		return FLASH_ERR_PARM_ERROR;
@@ -139,7 +177,15 @@ int blocklevel_erase(struct blocklevel_device *bl, uint32_t pos, uint32_t len)
 		return FLASH_ERR_ERASE_BOUNDARY;
 	}
 
-	return bl->erase(bl, pos, len);
+	rc = reacquire(bl);
+	if (rc)
+		return rc;
+
+	rc = bl->erase(bl, pos, len);
+
+	release(bl);
+
+	return rc;
 }
 
 int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_t *total_size,
@@ -152,12 +198,18 @@ int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_
 		return FLASH_ERR_PARM_ERROR;
 	}
 
+	rc = reacquire(bl);
+	if (rc)
+		return rc;
+
 	rc = bl->get_info(bl, name, total_size, erase_granule);
 
 	/* Check the validity of what we are being told */
 	if (erase_granule && *erase_granule != bl->erase_mask + 1)
 		fprintf(stderr, "blocklevel_get_info: WARNING: erase_granule (0x%08x) and erase_mask"
 				" (0x%08x) don't match\n", *erase_granule, bl->erase_mask + 1);
+
+	release(bl);
 
 	return rc;
 }
@@ -231,8 +283,12 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint32_t pos, const voi
 	if (!erase_buf) {
 		errno = ENOMEM;
 		rc = FLASH_ERR_MALLOC_FAILED;
-		goto out;
+		goto out_free;
 	}
+
+	rc = reacquire(bl);
+	if (rc)
+		goto out_free;
 
 	while (len > 0) {
 		uint32_t erase_block = pos & ~(erase_size - 1);
@@ -264,6 +320,8 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint32_t pos, const voi
 	}
 
 out:
+	release(bl);
+out_free:
 	free(write_buf_start);
 	free(erase_buf);
 	return rc;

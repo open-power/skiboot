@@ -722,7 +722,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (arch_flash_init(&bl, NULL))
+	if (arch_flash_init(&bl, NULL, true))
 		exit(1);
 
 	on_exit(exiting, NULL);

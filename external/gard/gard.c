@@ -637,7 +637,7 @@ int main(int argc, char **argv)
 	argv += optind;
 	action = argv[0];
 
-	if (arch_flash_init(&(ctx->bl), filename)) {
+	if (arch_flash_init(&(ctx->bl), filename, true)) {
 		/* Can fail for a few ways, most likely couldn't open MTD device */
 		fprintf(stderr, "Can't open %s\n", filename ? filename : "MTD Device. Are you root?");
 		rc = EXIT_FAILURE;

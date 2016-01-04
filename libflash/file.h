@@ -17,6 +17,8 @@
 #ifndef __LIBFLASH_FILE_H
 #define __LIBFLASH_FILE_H
 
+#include <stdbool.h>
+
 #include "blocklevel.h"
 
 /*
@@ -34,7 +36,7 @@ void file_exit(struct blocklevel_device *bl);
  * Because file_exit() doesn't close the file descriptor, file_init_path()
  * makes it available.
  */
-int file_init_path(const char *path, int *fd, struct blocklevel_device **bl);
+int file_init_path(const char *path, int *fd, bool keep_alive, struct blocklevel_device **bl);
 
 /*
  * file_exit_close is a convenience wrapper which will close the open

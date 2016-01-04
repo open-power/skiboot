@@ -263,7 +263,7 @@ int arch_flash_set_wrprotect(struct blocklevel_device *bl, int set)
 	return set_wrprotect(set);
 }
 
-int arch_flash_init(struct blocklevel_device **r_bl, const char *file)
+int arch_flash_init(struct blocklevel_device **r_bl, const char *file, bool keep_alive)
 {
 	struct blocklevel_device *new_bl;
 
@@ -272,7 +272,7 @@ int arch_flash_init(struct blocklevel_device **r_bl, const char *file)
 		return -1;
 
 	if (file) {
-		file_init_path(file, NULL, &new_bl);
+		file_init_path(file, NULL, keep_alive, &new_bl);
 	} else {
 		new_bl = flash_setup(arch_data.bmc);
 	}

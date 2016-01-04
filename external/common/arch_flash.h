@@ -20,7 +20,8 @@
 #include <getopt.h>
 #include <libflash/blocklevel.h>
 
-int arch_flash_init(struct blocklevel_device **bl, const char *file);
+int arch_flash_init(struct blocklevel_device **bl, const char *file,
+		bool keep_alive);
 
 void arch_flash_close(struct blocklevel_device *bl, const char *file);
 

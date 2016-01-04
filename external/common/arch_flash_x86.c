@@ -28,7 +28,7 @@
 
 #include "arch_flash.h"
 
-int arch_flash_init(struct blocklevel_device **r_bl, const char *file)
+int arch_flash_init(struct blocklevel_device **r_bl, const char *file, bool keep_alive)
 {
 	struct blocklevel_device *new_bl;
 
@@ -38,7 +38,7 @@ int arch_flash_init(struct blocklevel_device **r_bl, const char *file)
 		return -1;
 	}
 
-	file_init_path(file, NULL, &new_bl);
+	file_init_path(file, NULL, keep_alive, &new_bl);
 	if (!new_bl)
 		return -1;
 
