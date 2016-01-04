@@ -68,7 +68,7 @@ version.c: ../../make_version.sh .version
 
 test: test/test_pnor
 
-test/test_pnor: test/test_pnor.o pnor.o libflash/libflash.o libflash/libffs.o
+test/test_pnor: test/test_pnor.o pnor.o libflash.o libffs.o blocklevel.o file.o ecc.o
 	$(Q_LINK)$(LINK.o) -o $@ $^
 
 install: all

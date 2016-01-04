@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +25,15 @@
 #include <pnor.h>
 
 extern void dump_parts(struct ffs_handle *ffs);
+
+void pr_log(int priority, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
 
 int main(int argc, char **argv)
 {
