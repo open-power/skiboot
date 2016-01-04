@@ -2,12 +2,14 @@
 #define PNOR_H
 
 #include <libflash/libffs.h>
+#include <libflash/blocklevel.h>
 
 struct pnor {
 	char			*path;
 	struct ffs_handle	*ffsh;
 	uint32_t		size;
 	uint32_t		erasesize;
+	struct blocklevel_device *bl;
 };
 
 enum pnor_op {

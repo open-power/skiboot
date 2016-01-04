@@ -10,6 +10,11 @@ sbindir = $(prefix)/sbin
 datadir = $(prefix)/share
 mandir = $(datadir)/man
 
+all: opal-prd
+
+GET_ARCH = ../../external/common/get_arch.sh
+include ../../external/common/rules.mk
+
 # Use make V=1 for a verbose build.
 ifndef V
         Q_CC=	@echo '    CC ' $@;
@@ -18,12 +23,14 @@ ifndef V
         Q_MKDIR=@echo ' MKDIR ' $@;
 endif
 
+LIBFLASH_OBJS = libflash-blocklevel.o libflash-libffs.o \
+                libflash-libflash.o libflash-ecc.o \
+                libflash-file.o
+
 OBJS = opal-prd.o thunk.o pnor.o i2c.o module.o version.o \
-       blocklevel.o libffs.o libflash.o ecc.o
+       $(LIBFLASH_OBJS) common-arch_flash.o
 
-all: opal-prd
-
-LINKS = ccan
+LINKS = ccan common libflash $(ARCH_LINKS)
 
 OPAL_PRD_VERSION ?= $(shell ../../make_version.sh opal-prd)
 
@@ -33,6 +40,12 @@ endif
 
 ccan:
 	$(Q_LN)ln -sfr ../../ccan ./ccan
+
+libflash:
+	$(Q_LN)ln -sfr ../../libflash ./libflash
+
+common:
+	$(Q_LN)ln -sfr ../common ./common
 
 asm/opal-prd.h:
 	$(Q_MKDIR)mkdir -p asm
@@ -44,7 +57,7 @@ $(OBJS): $(LINKS)
 %.o: %.c
 	$(Q_CC)$(COMPILE.c) $< -o $@
 
-%.o: ../../libflash/%.c
+$(LIBFLASH_OBJS): libflash-%.o : libflash/%.c
 	$(Q_CC)$(COMPILE.c) $< -o $@
 
 %.o: %.S
@@ -66,9 +79,9 @@ version.c: ../../make_version.sh .version
 	@cmp -s $@ $@.tmp || cp $@.tmp $@
 	@rm -f $@.tmp
 
-test: test/test_pnor
+test: $(LINKS) test/test_pnor
 
-test/test_pnor: test/test_pnor.o pnor.o libflash.o libffs.o blocklevel.o file.o ecc.o
+test/test_pnor: test/test_pnor.o pnor.o $(LIBFLASH_OBJS) common-arch_flash.o
 	$(Q_LINK)$(LINK.o) -o $@ $^
 
 install: all

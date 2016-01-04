@@ -15,6 +15,8 @@
  */
 
 #include <libflash/libffs.h>
+#include <common/arch_flash.h>
+
 #include <errno.h>
 
 #include <sys/stat.h>
@@ -32,57 +34,34 @@
 
 int pnor_init(struct pnor *pnor)
 {
-	int rc, fd;
-	struct blocklevel_device *bl;
-	mtd_info_t mtd_info;
+	int rc;
 
 	if (!pnor)
 		return -1;
 
-	/* Open device and ffs */
-	fd = open(pnor->path, O_RDWR);
-	if (fd < 0) {
-		perror(pnor->path);
+	rc = arch_flash_init(&(pnor->bl), pnor->path, false);
+	if (rc) {
+		pr_log(LOG_ERR, "PNOR: Flash init failed");
 		return -1;
 	}
 
-	/* Hack so we can test on non-mtd file descriptors */
-#if defined(__powerpc__)
-	rc = ioctl(fd, MEMGETINFO, &mtd_info);
-	if (rc < 0) {
-		pr_log(LOG_ERR, "PNOR: ioctl failed to get pnor info: %m");
-		goto out;
-	}
-	pnor->size = mtd_info.size;
-	pnor->erasesize = mtd_info.erasesize;
-#else
-	pnor->size = lseek(fd, 0, SEEK_END);
-	if (pnor->size < 0) {
-		perror(pnor->path);
-		goto out;
-	}
-	/* Fake it */
-	pnor->erasesize = 1024;
-#endif
-
-	pr_debug("PNOR: Found PNOR: %d bytes (%d blocks)", pnor->size,
-	       pnor->erasesize);
-
-	rc = file_init(fd, &bl);
+	rc = blocklevel_get_info(pnor->bl, NULL, &(pnor->size), &(pnor->erasesize));
 	if (rc) {
-		pr_log(LOG_ERR, "PNOR: (libflash) file_init() failed");
+		pr_log(LOG_ERR, "PNOR: blocklevel_get_info() failed. Can't use PNOR");
 		goto out;
 	}
 
-	rc = ffs_init(0, pnor->size, 0, bl, &pnor->ffsh, 0);
-	if (rc)
+	rc = ffs_init(0, pnor->size, pnor->bl, &pnor->ffsh, 0);
+	if (rc) {
 		pr_log(LOG_ERR, "PNOR: Failed to open pnor partition table");
+		goto out;
+	}
 
-	file_exit(bl);
+	return 0;
 out:
-	close(fd);
-
-	return rc;
+	arch_flash_close(pnor->bl, pnor->path);
+	pnor->bl = NULL;
+	return -1;
 }
 
 void pnor_close(struct pnor *pnor)
@@ -92,6 +71,9 @@ void pnor_close(struct pnor *pnor)
 
 	if (pnor->ffsh)
 		ffs_close(pnor->ffsh);
+
+	if (pnor->bl)
+		arch_flash_close(pnor->bl, pnor->path);
 
 	if (pnor->path)
 		free(pnor->path);
@@ -115,159 +97,36 @@ void dump_parts(struct ffs_handle *ffs) {
 	}
 }
 
-static int mtd_write(struct pnor *pnor, int fd, void *data, uint64_t offset,
+static int mtd_write(struct pnor *pnor, void *data, uint64_t offset,
 		     size_t len)
 {
-	int write_start, write_len, start_waste, rc;
-	bool end_waste = false;
-	uint8_t *buf;
-	struct erase_info_user erase;
+	int rc;
 
 	if (len > pnor->size || offset > pnor->size ||
 	    len + offset > pnor->size)
 		return -ERANGE;
 
-	start_waste = offset % pnor->erasesize;
-	write_start = offset - start_waste;
+	rc = blocklevel_smart_write(pnor->bl, offset, data, len);
+	if (rc)
+		return -errno;
 
-	/* Align size to multiple of block size */
-	write_len = (len + start_waste) & ~(pnor->erasesize - 1);
-	if ((len + start_waste) > write_len) {
-		end_waste = true;
-		write_len += pnor->erasesize;
-	}
-
-	buf = malloc(write_len);
-
-	if (start_waste) {
-		rc = lseek(fd, write_start, SEEK_SET);
-		if (rc < 0) {
-			pr_log(LOG_ERR, "PNOR: lseek write_start(0x%x) "
-					"failed; %m", write_start);
-			goto out;
-		}
-
-		rc = read(fd, buf, pnor->erasesize);
-		if (rc < 0) {
-			pr_log(LOG_ERR, "PNOR: read(0x%x bytes) failed: %m",
-					pnor->erasesize);
-			goto out;
-		}
-	}
-
-	if (end_waste)  {
-		rc = lseek(fd, write_start + write_len - pnor->erasesize,
-			   SEEK_SET);
-		if (rc < 0) {
-			perror("lseek last write block");
-			pr_log(LOG_ERR, "PNOR: lseek last write block(0x%x) "
-					"failed; %m",
-						write_start + write_len -
-						pnor->erasesize);
-			goto out;
-		}
-
-		rc = read(fd, buf + write_len - pnor->erasesize, pnor->erasesize);
-		if (rc < 0) {
-			pr_log(LOG_ERR, "PNOR: read(0x%x bytes) failed: %m",
-					pnor->erasesize);
-			goto out;
-		}
-	}
-
-	/* Put data in the correct spot */
-	memcpy(buf + start_waste, data, len);
-
-	/* Not sure if this is required */
-	rc = lseek(fd, 0, SEEK_SET);
-	if (rc < 0) {
-		pr_log(LOG_NOTICE, "PNOR: lseek(0) failed: %m");
-		goto out;
-	}
-
-	/* Erase */
-	erase.start = write_start;
-	erase.length = write_len;
-
-	rc = ioctl(fd, MEMERASE, &erase);
-	if (rc < 0) {
-		pr_log(LOG_ERR, "PNOR: erase(start 0x%x, len 0x%x) ioctl "
-				"failed: %m", write_start, write_len);
-		goto out;
-	}
-
-	/* Write */
-	rc = lseek(fd, write_start, SEEK_SET);
-	if (rc < 0) {
-		pr_log(LOG_ERR, "PNOR: lseek write_start(0x%x) failed: %m",
-				write_start);
-		goto out;
-	}
-
-	rc = write(fd, buf, write_len);
-	if (rc < 0) {
-		pr_log(LOG_ERR, "PNOR: write(0x%x bytes) failed: %m",
-				write_len);
-		goto out;
-	}
-
-	/* We have succeded, report the requested write size */
-	rc = len;
-
-out:
-	free(buf);
-	return rc;
+	return len;
 }
 
-static int mtd_read(struct pnor *pnor, int fd, void *data, uint64_t offset,
+static int mtd_read(struct pnor *pnor, void *data, uint64_t offset,
 		    size_t len)
 {
-	int read_start, read_len, start_waste, rc;
-	int mask = pnor->erasesize - 1;
-	void *buf;
+	int rc;
 
 	if (len > pnor->size || offset > pnor->size ||
 	    len + offset > pnor->size)
 		return -ERANGE;
 
-	/* Align start to erase block size */
-	start_waste = offset % pnor->erasesize;
-	read_start = offset - start_waste;
+	rc = blocklevel_read(pnor->bl, offset, data, len);
+	if (rc)
+		return -errno;
 
-	/* Align size to multiple of block size */
-	read_len = (len + start_waste) & ~mask;
-	if ((len + start_waste) > read_len)
-		read_len += pnor->erasesize;
-
-	/* Ensure read is not out of bounds */
-	if (read_start + read_len > pnor->size) {
-		pr_log(LOG_ERR, "PNOR: read out of bounds");
-		return -ERANGE;
-	}
-
-	buf = malloc(read_len);
-
-	rc = lseek(fd, read_start, SEEK_SET);
-	if (rc < 0) {
-		pr_log(LOG_ERR, "PNOR: lseek read_start(0x%x) failed: %m",
-				read_start);
-		goto out;
-	}
-
-	rc = read(fd, buf, read_len);
-	if (rc < 0) {
-		pr_log(LOG_ERR, "PNOR: write(offset 0x%x, len 0x%x) "
-				"failed: %m", read_start, read_len);
-		goto out;
-	}
-
-	/* Copy data into destination, carefully avoiding the extra data we
-	 * added to align to block size */
-	memcpy(data, buf + start_waste, len);
-	rc = len;
-out:
-	free(buf);
-	return rc;
+	return len;
 }
 
 /* Similar to read(2), this performs partial operations where the number of
@@ -277,7 +136,7 @@ out:
 int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
 		   void *data, size_t requested_size, enum pnor_op op)
 {
-	int rc, fd;
+	int rc;
 	uint32_t pstart, psize, idx;
 	int size;
 
@@ -323,18 +182,12 @@ int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
 		return -ERANGE;
 	}
 
-	fd = open(pnor->path, O_RDWR);
-	if (fd < 0) {
-		perror(pnor->path);
-		return fd;
-	}
-
 	switch (op) {
 	case PNOR_OP_READ:
-		rc = mtd_read(pnor, fd, data, pstart + offset, size);
+		rc = mtd_read(pnor, data, pstart + offset, size);
 		break;
 	case PNOR_OP_WRITE:
-		rc = mtd_write(pnor, fd, data, pstart + offset, size);
+		rc = mtd_write(pnor, data, pstart + offset, size);
 		break;
 	default:
 		rc  = -EIO;
@@ -350,7 +203,5 @@ int pnor_operation(struct pnor *pnor, const char *name, uint64_t offset,
 				rc, size);
 
 out:
-	close(fd);
-
 	return rc;
 }

@@ -1603,14 +1603,10 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 
 	fixup_hinterface_table();
 
-	if (ctx->pnor.path) {
-		rc = pnor_init(&ctx->pnor);
-		if (rc) {
-			pr_log(LOG_ERR, "PNOR: Failed to open pnor: %m");
-			goto out_close;
-		}
-	} else {
-		pr_log(LOG_WARNING,"PNOR: No path provided, access will fail\n");
+	rc = pnor_init(&ctx->pnor);
+	if (rc) {
+		pr_log(LOG_ERR, "PNOR: Failed to open pnor: %m");
+		goto out_close;
 	}
 
 	ipmi_init(ctx);
