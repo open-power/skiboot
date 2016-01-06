@@ -164,16 +164,14 @@ static void get_bt_caps_complete(struct ipmi_msg *msg)
 		goto out;
 	}
 
-	if (msg->data[1] + 1 != BT_FIFO_LEN) {
+	if (msg->data[1] != BT_FIFO_LEN) {
 		prlog(PR_DEBUG, "Got a input buffer len (%u) cap which differs from the default\n",
 				msg->data[1]);
-		goto out;
 	}
 
-	if (msg->data[2] + 1 != BT_FIFO_LEN) {
+	if (msg->data[2] != BT_FIFO_LEN) {
 		prlog(PR_DEBUG, "Got a output buffer len (%u) cap which differs from the default\n",
 				msg->data[2]);
-		goto out;
 	}
 
 	/*
