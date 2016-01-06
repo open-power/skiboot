@@ -92,6 +92,7 @@ int ipmi_set_fw_progress_sensor(uint8_t state)
 	request.sensor_number = fw_sensor_num;
 	request.operation = 0xa0; /* Set event data bytes, assertion bits */
 	request.assertion_mask[0] = 0x04; /* Firmware progress offset */
+	request.event_data[0] = 0xc2;
 	request.event_data[1] = state;
 
 	prlog(PR_INFO, "IPMI: setting fw progress sensor %02x to %02x\n",
