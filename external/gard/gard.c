@@ -41,6 +41,8 @@
 
 #include "gard.h"
 
+#define CLEARED_RECORD_ID 0xFFFFFFFF
+
 #define FDT_ACTIVE_FLASH_PATH "/proc/device-tree/chosen/ibm,system-flash"
 #define SYSFS_MTD_PATH "/sys/class/mtd/"
 #define FLASH_GARD_PART "GUARD"
@@ -226,6 +228,11 @@ static const char *path_type_to_str(enum path_type t)
 	return "Unknown";
 }
 
+static bool is_valid_id(uint32_t record_id)
+{
+	return record_id != CLEARED_RECORD_ID;
+}
+
 static int do_iterate(struct gard_ctx *ctx,
 		int (*func)(struct gard_ctx *ctx, int pos,
 			struct gard_record *gard, void *priv),
@@ -272,13 +279,36 @@ static int get_largest_pos(struct gard_ctx *ctx)
 	return largest;
 }
 
+static int count_valid_records_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
+{
+	if (!gard || !priv)
+		return -1;
+
+	if (is_valid_id(be32toh(gard->record_id)))
+		(*(int *)priv)++;
+
+	return 0;
+}
+
+static int count_valid_records(struct gard_ctx *ctx)
+{
+	int rc, count = 0;
+
+	rc = do_iterate(ctx, &count_valid_records_i, &count);
+	if (rc)
+		return 0;
+
+	return count;
+}
+
 static int do_list_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
 {
 	if (!gard)
 		return -1;
 
-	printf("| %08x | %08x | %-15s |\n", be32toh(gard->record_id),
-			be32toh(gard->errlog_eid), path_type_to_str(gard->target_id.type_size >> PATH_TYPE_SHIFT));
+	if (is_valid_id(be32toh(gard->record_id)))
+		printf("| %08x | %08x | %-15s |\n", be32toh(gard->record_id), be32toh(gard->errlog_eid),
+		       path_type_to_str(gard->target_id.type_size >> PATH_TYPE_SHIFT));
 
 	return 0;
 }
@@ -288,7 +318,7 @@ static int do_list(struct gard_ctx *ctx, int argc, char **argv)
 	int rc;
 
 	/* No entries */
-	if (get_largest_pos(ctx) == -1) {
+	if (count_valid_records(ctx) == 0) {
 		printf("No GARD entries to display\n");
 		rc = 0;
 	} else {
