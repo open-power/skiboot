@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define pr_fmt(fmt) "BT: " fmt
 #include <skiboot.h>
 #include <lpc.h>
 #include <lock.h>
@@ -77,15 +78,12 @@
 
 #define _BT_Q_LOG(level, msg, fmt, args...) \
 	do { if (msg) \
-			prlog(level, "BT seq 0x%02x netfn 0x%02x cmd 0x%02x: " fmt "\n", \
+			prlog(level, "seq 0x%02x netfn 0x%02x cmd 0x%02x: " fmt "\n", \
 			(msg)->seq, (msg)->ipmi_msg.netfn, (msg)->ipmi_msg.cmd, ##args); \
 		else \
-			prlog(level, "BT seq 0x?? netfn 0x?? cmd 0x??: " fmt "\n", ##args); \
+			prlog(level, "seq 0x?? netfn 0x?? cmd 0x??: " fmt "\n", ##args); \
 	} while(0)
 
-#define BT_ERR(fmt, args...) prlog(PR_ERR, fmt, ##args)
-#define BT_DBG(fmt, args...) prlog(PR_DEBUG, fmt, ##args)
-#define BT_INF(fmt, args...) prlog(PR_INFO, fmt, ##args)
 
 /*
  * takes a struct bt_msg *
@@ -160,18 +158,18 @@ static void get_bt_caps_complete(struct ipmi_msg *msg)
 	/* Ignore errors, we'll fallback to using the defaults, no big deal */
 
 	if (msg->data[0] == 0) {
-		BT_DBG("Got illegal BMC BT capability\n");
+		prlog(PR_DEBUG, "Got illegal BMC BT capability\n");
 		goto out;
 	}
 
 	if (msg->data[1] + 1 != BT_FIFO_LEN) {
-		BT_DBG("Got a input buffer len (%u) cap which differs from the default\n",
+		prlog(PR_DEBUG, "Got a input buffer len (%u) cap which differs from the default\n",
 				msg->data[1]);
 		goto out;
 	}
 
 	if (msg->data[2] + 1 != BT_FIFO_LEN) {
-		BT_DBG("Got a output buffer len (%u) cap which differs from the default\n",
+		prlog(PR_DEBUG, "Got a output buffer len (%u) cap which differs from the default\n",
 				msg->data[2]);
 		goto out;
 	}
@@ -186,11 +184,11 @@ static void get_bt_caps_complete(struct ipmi_msg *msg)
 	bt.caps.output_buf_len = msg->data[2] + 1;
 	bt.caps.msg_timeout = msg->data[3];
 	bt.caps.num_retries = msg->data[4];
-	BT_DBG("BMC BT capabilities received:\n");
-	BT_DBG("buffer sizes: %d input %d output\n",
+	prlog(PR_DEBUG, "BMC BT capabilities received:\n");
+	prlog(PR_DEBUG, "buffer sizes: %d input %d output\n",
 			bt.caps.input_buf_len, bt.caps.output_buf_len);
-	BT_DBG("number of requests: %d\n", bt.caps.num_requests);
-	BT_DBG( "msg timeout: %d max retries: %d\n",
+	prlog(PR_DEBUG, "number of requests: %d\n", bt.caps.num_requests);
+	prlog(PR_DEBUG,  "msg timeout: %d max retries: %d\n",
 			bt.caps.msg_timeout, bt.caps.num_retries);
 
 out:
@@ -208,10 +206,10 @@ static void get_bt_caps(void)
 	bmc_caps = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_GET_BT_CAPS,
 			get_bt_caps_complete, NULL, NULL, 0, sizeof(struct bt_caps));
 	if (!bmc_caps)
-		BT_ERR("Couldn't create BMC BT capabilities msg\n");
+		prerror("Couldn't create BMC BT capabilities msg\n");
 
 	if (bmc_caps && ipmi_queue_msg(bmc_caps))
-		BT_ERR("Couldn't enqueue request for BMC BT capabilities\n");
+		prerror("Couldn't enqueue request for BMC BT capabilities\n");
 
 	/* Ignore errors, we'll fallback to using the defaults, no big deal */
 }
@@ -346,8 +344,8 @@ static void bt_get_resp(void)
 	}
 	if (!bt_msg) {
 		/* A response to a message we no longer care about. */
-		BT_INF("BT: Nobody cared about a response to an BT/IPMI message"
-			"(seq 0x%02x netfn 0x%02x cmd 0x%02x)", seq, netfn, cmd);
+		prlog(PR_INFO, "Nobody cared about a response to an BT/IPMI message"
+		       "(seq 0x%02x netfn 0x%02x cmd 0x%02x)\n", seq, netfn, cmd);
 		bt_flush_msg();
 		return;
 	}
@@ -424,14 +422,14 @@ static void print_debug_queue_info(void)
 
 	if (!list_empty(&bt.msgq)) {
 		printed = false;
-		BT_DBG("-------- BT Msg Queue --------\n");
+		prlog(PR_DEBUG, "-------- BT Msg Queue --------\n");
 		list_for_each(&bt.msgq, msg, link) {
 			BT_Q_DBG(msg, "[ sent %d ]", msg->send_count);
 		}
 		prlog(PR_DEBUG, "-----------------------------\n");
 	} else if (!printed) {
 		printed = true;
-		BT_DBG("----- BT Msg Queue Empty -----\n");
+		prlog(PR_DEBUG, "----- BT Msg Queue Empty -----\n");
 	}
 }
 #else
@@ -640,11 +638,11 @@ void bt_init(void)
 	/* Get IO base */
 	prop = dt_find_property(n, "reg");
 	if (!prop) {
-		BT_ERR("BT: Can't find reg property\n");
+		prerror("Can't find reg property\n");
 		return;
 	}
 	if (dt_property_get_cell(prop, 0) != OPAL_LPC_IO) {
-		BT_ERR("BT: Only supports IO addresses\n");
+		prerror("Only supports IO addresses\n");
 		return;
 	}
 	bt.base_addr = dt_property_get_cell(prop, 1);
@@ -660,7 +658,7 @@ void bt_init(void)
 	list_head_init(&bt.msgq);
 	bt.queue_len = 0;
 
-	printf("BT: Interface initialized, IO 0x%04x\n", bt.base_addr);
+	prlog(PR_NOTICE, "Interface initialized, IO 0x%04x\n", bt.base_addr);
 
 	ipmi_register_backend(&bt_backend);
 
@@ -677,5 +675,5 @@ void bt_init(void)
 	/* Enqueue an IPMI message to ask the BMC about its BT capabilities */
 	get_bt_caps();
 
-	BT_DBG("BT: Using LPC IRQ %d\n", irq);
+	prlog(PR_DEBUG, "Using LPC IRQ %d\n", irq);
 }
