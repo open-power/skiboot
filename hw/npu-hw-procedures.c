@@ -132,13 +132,12 @@ DEFINE_PROCEDURE(nop);
  * incorporates AT reset. */
 static uint32_t reset_npu_dl(struct npu_dev *npu_dev)
 {
-	void *ntl_base = (void *) npu_dev->bar.base;
 	uint64_t val;
 
 	/* Assert NPU reset */
-	val = in_be64(ntl_base + NTL_CONTROL);
+	xscom_read(npu_dev->npu->chip_id, npu_dev->xscom + NX_NTL_CONTROL, &val);
 	val |= NTL_CONTROL_RESET;
-	out_be64(ntl_base + NTL_CONTROL, val);
+	xscom_write(npu_dev->npu->chip_id, npu_dev->xscom + NX_NTL_CONTROL, val);
 
 	/* Put the Nvidia logic in reset */
 	dl_write(npu_dev, NDL_CONTROL, 0xe8000000);
@@ -148,14 +147,13 @@ static uint32_t reset_npu_dl(struct npu_dev *npu_dev)
 
 	/* Release NPU from reset */
 	val &= ~NTL_CONTROL_RESET;
-	out_be64(ntl_base + NTL_CONTROL, val);
+	xscom_write(npu_dev->npu->chip_id, npu_dev->xscom + NX_NTL_CONTROL, val);
 
 	/* Setup up TL credits */
-	out_be64(ntl_base + TL_CMD_CR, PPC_BIT(0));
-	out_be64(ntl_base + TL_CMD_D_CR, PPC_BIT(0));
-	out_be64(ntl_base + TL_RSP_CR, PPC_BIT(15));
-	out_be64(ntl_base + TL_RSP_D_CR, PPC_BIT(15));
-
+	xscom_write(npu_dev->npu->chip_id, npu_dev->xscom + NX_TL_CMD_CR, PPC_BIT(0));
+	xscom_write(npu_dev->npu->chip_id, npu_dev->xscom + NX_TL_CMD_D_CR, PPC_BIT(0));
+	xscom_write(npu_dev->npu->chip_id, npu_dev->xscom + NX_TL_RSP_CR, PPC_BIT(15));
+	xscom_write(npu_dev->npu->chip_id, npu_dev->xscom + NX_TL_RSP_D_CR, PPC_BIT(15));
 	return PROCEDURE_COMPLETE;
 }
 DEFINE_PROCEDURE(reset_npu_dl);
