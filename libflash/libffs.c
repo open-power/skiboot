@@ -294,6 +294,12 @@ int ffs_next_side(struct ffs_handle *ffs, struct ffs_handle **new_ffs,
 {
 	int rc;
 	uint32_t index, offset, max_size;
+
+	if (!ffs || !new_ffs)
+		return FLASH_ERR_PARM_ERROR;
+
+	*new_ffs = NULL;
+
 	rc = ffs_lookup_part(ffs, "OTHER_SIDE", &index);
 	if (rc)
 		return rc;
