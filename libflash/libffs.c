@@ -282,7 +282,7 @@ int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
  * simple, the underlying blocklevel_devices must be the same along with
  * the toc_offset and the max_size.
  */
-int ffs_cmp(struct ffs_handle *one, struct ffs_handle *two)
+bool ffs_equal(struct ffs_handle *one, struct ffs_handle *two)
 {
 	return (!one && !two) || (one && two && one->bl == two->bl
 		&& one->toc_offset == two->toc_offset
