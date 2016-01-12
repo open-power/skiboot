@@ -1,11 +1,12 @@
 OPAL Console calls
 ------------------
 
-There are three OPAL calls relating to the OPAL console:
+There are four OPAL calls relating to the OPAL console:
 
 #define OPAL_CONSOLE_WRITE			1
 #define OPAL_CONSOLE_READ			2
 #define OPAL_CONSOLE_WRITE_BUFFER_SPACE		25
+#define OPAL_CONSOLE_FLUSH			117
 
 The OPAL console calls can support multiple consoles. Each console MUST
 be represented in the device tree.
@@ -64,3 +65,16 @@ Returns:
 	OPAL_CLOSED
 
 Use OPAL_POLL_EVENTS for how to determine
+
+OPAL_CONSOLE_FLUSH
+------------------
+
+Parameters:
+	int64_t term_number
+
+Returns:
+	OPAL_SUCCESS
+	OPAL_UNSUPPORTED - the console does not implement a flush call
+	OPAL_PARAMETER - invalid term_number
+	OPAL_PARTIAL - more to flush, call again
+	OPAL_BUSY - nothing was flushed this call
