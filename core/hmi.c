@@ -256,13 +256,15 @@ static int handle_capp_recoverable(int chip_id)
 	u32 dt_chip_id;
 	struct phb *phb;
 	u32 phb_index;
+	struct proc_chip *chip = get_chip(chip_id);
+	u8 mask = chip->capp_phb3_attached_mask;
 
 	dt_for_each_compatible(dt_root, np, "ibm,power8-pciex") {
 		dt_chip_id = dt_prop_get_u32(np, "ibm,chip-id");
 		phb_index = dt_prop_get_u32(np, "ibm,phb-index");
 		phb_id = dt_prop_get_u64(np, "ibm,opal-phbid");
 
-		if ((phb_index == 0) && (chip_id == dt_chip_id)) {
+		if ((mask & (1 << phb_index)) && (chip_id == dt_chip_id)) {
 			phb = pci_get_phb(phb_id);
 			phb->ops->lock(phb);
 			phb->ops->set_capp_recovery(phb);
