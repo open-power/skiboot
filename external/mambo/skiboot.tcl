@@ -22,10 +22,10 @@ if { [info exists env(SKIBOOT)] } {
 }
 
 # Boot: Memory location to load boot_image, for binary or vmlinux
-mconfig boot_load MAMBO_BOOT_LOAD 0
+mconfig boot_load MAMBO_BOOT_LOAD 0x30000000
 
 # Boot: Value of PC after loading, for binary or vmlinux
-mconfig boot_pc	MAMBO_BOOT_PC 0x10
+mconfig boot_pc	MAMBO_BOOT_PC 0x30000010
 
 # Payload: Allow for a Linux style ramdisk/initrd
 if { ![info exists env(SKIBOOT_ZIMAGE)] } {
