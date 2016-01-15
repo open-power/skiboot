@@ -4,25 +4,25 @@
 #
 proc p { reg { t 0 } { c 0 } } {
     switch -regexp $reg {
-    ^r[0-9]+$ {
-        regexp "r(\[0-9\]*)" $reg dummy num
-        set val [mysim cpu $c thread $t display gpr $num]
-        puts "$val"
-    }
-    ^f[0-9]+$ {
-        regexp "f(\[0-9\]*)" $reg dummy num
-        set val [mysim cpu $c thread $t display fpr $num]
-        puts "$val"
-    }
-    ^v[0-9]+$ {
-        regexp "v(\[0-9\]*)" $reg dummy num
-        set val [mysim cpu $c thread $t display vmxr $num]
-        puts "$val"
-    }
-    default {
-        set val [mysim cpu $c thread $t display spr $reg]
-        puts "$val"
-    }
+        ^r[0-9]+$ {
+            regexp "r(\[0-9\]*)" $reg dummy num
+            set val [mysim cpu $c thread $t display gpr $num]
+            puts "$val"
+        }
+        ^f[0-9]+$ {
+            regexp "f(\[0-9\]*)" $reg dummy num
+            set val [mysim cpu $c thread $t display fpr $num]
+            puts "$val"
+        }
+        ^v[0-9]+$ {
+            regexp "v(\[0-9\]*)" $reg dummy num
+            set val [mysim cpu $c thread $t display vmxr $num]
+            puts "$val"
+        }
+        default {
+            set val [mysim cpu $c thread $t display spr $reg]
+            puts "$val"
+        }
     }
 }
 
@@ -31,21 +31,21 @@ proc p { reg { t 0 } { c 0 } } {
 #
 proc sr { reg val {t 0}} {
     switch -regexp $reg {
-    ^r[0-9]+$ {
-        regexp "r(\[0-9\]*)" $reg dummy num
-        mysim cpu 0:$t set gpr $num $val
-    }
-    ^f[0-9]+$ {
-        regexp "f(\[0-9\]*)" $reg dummy num
-        mysim cpu 0:$t set fpr $num $val
-    }
-    ^v[0-9]+$ {
-        regexp "v(\[0-9\]*)" $reg dummy num
-        mysim cpu 0:$t set vmxr $num $val
-    }
-    default {
-        mysim cpu 0:$t set spr $reg $val
-    }
+        ^r[0-9]+$ {
+            regexp "r(\[0-9\]*)" $reg dummy num
+            mysim cpu 0:$t set gpr $num $val
+        }
+        ^f[0-9]+$ {
+            regexp "f(\[0-9\]*)" $reg dummy num
+            mysim cpu 0:$t set fpr $num $val
+        }
+        ^v[0-9]+$ {
+            regexp "v(\[0-9\]*)" $reg dummy num
+            mysim cpu 0:$t set vmxr $num $val
+        }
+        default {
+            mysim cpu 0:$t set spr $reg $val
+        }
     }
     p $reg $t
 }
@@ -81,9 +81,9 @@ proc ipca { } {
     set threads [myconf query processor/number_of_threads]
 
     for { set i 0 } { $i < $cpus } { incr i 1 } {
-	for { set j 0 } { $j < $threads } { incr j 1 } {
-	    puts [ipc $j $i]
-	}
+        for { set j 0 } { $j < $threads } { incr j 1 } {
+            puts [ipc $j $i]
+        }
     }
 }
 
@@ -92,10 +92,10 @@ proc pa { spr } {
     set threads [myconf query processor/number_of_threads]
 
     for { set i 0 } { $i < $cpus } { incr i 1 } {
-	for { set j 0 } { $j < $threads } { incr j 1 } {
-	    set val [mysim cpu $i thread $j display spr $spr]
-	    puts "CPU: $i THREAD: $j SPR $spr = $val" 
-	}
+        for { set j 0 } { $j < $threads } { incr j 1 } {
+            set val [mysim cpu $i thread $j display spr $spr]
+            puts "CPU: $i THREAD: $j SPR $spr = $val" 
+        }
     }
 }
 
@@ -106,16 +106,16 @@ proc s { } {
 
 proc z { count } {
     while { $count > 0 } {
-    s
-    incr count -1
+        s
+        incr count -1
     }
 }
 
 proc sample_pc { sample count } {
     while { $count > 0 } {
-    mysim cycle $sample
-    ipc
-    incr count -1
+        mysim cycle $sample
+        ipc
+        incr count -1
     }
 }
 
@@ -130,10 +130,10 @@ proc x {  pa { size 8 } } {
 }
 
 proc it { ea } {
-  mysim util itranslate $ea
+    mysim util itranslate $ea
 }
 proc dt { ea } {
-  mysim util dtranslate $ea
+    mysim util dtranslate $ea
 }
 
 proc ex {  ea { size 8 } } {
@@ -146,17 +146,17 @@ proc hexdump { location count }    {
     set addr  [expr $location & 0xfffffffffffffff0]
     set top [expr $addr + ($count * 15)]
     for { set i $addr } { $i < $top } { incr i 16 } {
-    set val [expr $i + (4 * 0)]
-    set val0 [format "%08x" [mysim memory display $val 4]]
-    set val [expr $i + (4 * 1)]
-    set val1 [format "%08x" [mysim memory display $val 4]]
-    set val [expr $i + (4 * 2)]
-    set val2 [format "%08x" [mysim memory display $val 4]]
-    set val [expr $i + (4 * 3)]
-    set val3 [format "%08x" [mysim memory display $val 4]]
-    set ascii "(none)"
-    set loc [format "0x%016x" $i]
-    puts "$loc: $val0 $val1 $val2 $val3 $ascii"
+        set val [expr $i + (4 * 0)]
+        set val0 [format "%08x" [mysim memory display $val 4]]
+        set val [expr $i + (4 * 1)]
+        set val1 [format "%08x" [mysim memory display $val 4]]
+        set val [expr $i + (4 * 2)]
+        set val2 [format "%08x" [mysim memory display $val 4]]
+        set val [expr $i + (4 * 3)]
+        set val3 [format "%08x" [mysim memory display $val 4]]
+        set ascii "(none)"
+        set loc [format "0x%016x" $i]
+        puts "$loc: $val0 $val1 $val2 $val3 $ascii"
     }
 }
 
@@ -186,18 +186,18 @@ proc st { count } {
     set lr [mysim cpu 0 display spr lr]
     i $lr
     while { $count > 0 } {
-    set sp [mysim util itranslate $sp]
-    set lr [mysim memory display [expr $sp++16] 8]
-    i $lr
-    set sp [mysim memory display $sp 8]
+        set sp [mysim util itranslate $sp]
+        set lr [mysim memory display [expr $sp++16] 8]
+        i $lr
+        set sp [mysim memory display $sp 8]
 
-    incr count -1
+        incr count -1
     }
 }
 
 proc mywatch { } {
     while { [mysim memory display 0x700 8] != 0 } {
-    mysim cycle 1
+        mysim cycle 1
     }
     puts "condition occured "
     ipc
@@ -222,23 +222,23 @@ proc egdb { {t 0} } {
 proc bt { {sp 0} } {
     set t 0
     if { $sp < 16 } {
-	set t $sp
-	set sp 0
+        set t $sp
+        set sp 0
     }
     if { $sp == 0 } {
-	set sp [mysim cpu 0:$t display gpr 1]
+        set sp [mysim cpu 0:$t display gpr 1]
     }
     set lr [mysim cpu 0:$t display spr lr]
     puts "backtrace thread $t, stack $sp"
     i $lr
     while { 1 == 1 } {
-	set pa [ mysim util dtranslate $sp ]
-	set bc [ mysim memory display $pa 8 ]
-	set cr [ mysim memory display [expr $pa+8] 8 ]
-	set lr [ mysim memory display [expr $pa+16] 8 ]	
-	i $lr
-	if { $bc == 0 } { return }
-	set sp $bc
+        set pa [ mysim util dtranslate $sp ]
+        set bc [ mysim memory display $pa 8 ]
+        set cr [ mysim memory display [expr $pa+8] 8 ]
+        set lr [ mysim memory display [expr $pa+16] 8 ]
+        i $lr
+        if { $bc == 0 } { return }
+        set sp $bc
     }
 }
 
