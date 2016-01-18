@@ -75,7 +75,7 @@ static const char *get_unitname(const struct dt_node *node)
 	return c + 1;
 }
 
-static int dt_cmp_subnodes(const struct dt_node *a, const struct dt_node *b)
+int dt_cmp_subnodes(const struct dt_node *a, const struct dt_node *b)
 {
 	const char *a_unit = get_unitname(a);
 	const char *b_unit = get_unitname(b);

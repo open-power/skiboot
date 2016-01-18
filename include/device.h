@@ -237,4 +237,9 @@ unsigned int dt_count_addresses(const struct dt_node *node);
 u64 dt_translate_address(const struct dt_node *node, unsigned int index,
 			 u64 *out_size);
 
+/* compare function used to sort child nodes by name when added to the
+ * tree. This is mainly here for testing.
+ */
+int dt_cmp_subnodes(const struct dt_node *a,  const struct dt_node *b);
+
 #endif /* __DEVICE_H */
