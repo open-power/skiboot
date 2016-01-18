@@ -766,7 +766,6 @@ static void npu_err_interrupt(void *data, uint32_t isn)
 		prerror("Invalid NPU error interrupt received\n");
 		break;
 	case 6 ... 7:
-		NPUERR(p, "Error handling not implemented\n");
 		opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
 					OPAL_EVENT_PCI_ERROR);
 	}
@@ -992,6 +991,13 @@ static int64_t npu_power_state(struct phb *phb __unused)
 	return OPAL_SHPC_POWER_ON;
 }
 
+static int64_t npu_hreset(struct phb *phb __unused)
+{
+	prlog(PR_DEBUG, "NPU: driver should call reset procedure here\n");
+
+	return OPAL_SUCCESS;
+}
+
 static int64_t npu_freset(struct phb *phb __unused)
 {
 	/* FIXME: PHB fundamental reset, which need to be
@@ -1020,6 +1026,39 @@ static int64_t npu_freeze_status(struct phb *phb,
 		*freeze_state = OPAL_EEH_STOPPED_NOT_FROZEN;
 	return OPAL_SUCCESS;
 }
+
+static int64_t npu_eeh_next_error(struct phb *phb,
+				  uint64_t *first_frozen_pe,
+				  uint16_t *pci_error_type,
+				  uint16_t *severity)
+{
+	struct npu *p = phb_to_npu(phb);
+	int i;
+	uint64_t result = 0;
+	*first_frozen_pe = -1;
+	*pci_error_type = OPAL_EEH_NO_ERROR;
+	*severity = OPAL_EEH_SEV_NO_ERROR;
+
+	if (p->fenced) {
+		*pci_error_type = OPAL_EEH_PHB_ERROR;
+		*severity = OPAL_EEH_SEV_PHB_FENCED;
+		return OPAL_SUCCESS;
+	}
+
+	npu_ioda_sel(p, NPU_IODA_TBL_PESTB, 0, true);
+	for (i = 0; i < NPU_NUM_OF_PES; i++) {
+		result = in_be64(p->at_regs + NPU_IODA_DATA0);
+		if (result > 0) {
+			*first_frozen_pe = i;
+			*pci_error_type = OPAL_EEH_PE_ERROR;
+			*severity = OPAL_EEH_SEV_PE_ER;
+			break;
+		}
+	}
+
+	return OPAL_SUCCESS;
+}
+
 
 /* Sets the NPU to trigger an error when a DMA occurs */
 static int64_t npu_err_inject(struct phb *phb, uint32_t pe_num,
@@ -1093,14 +1132,14 @@ static const struct phb_ops npu_ops = {
 	.power_state		= npu_power_state,
 	.slot_power_off		= NULL,
 	.slot_power_on		= NULL,
-	.hot_reset		= NULL,
+	.hot_reset		= npu_hreset,
 	.fundamental_reset	= npu_freset,
 	.complete_reset		= NULL,
 	.poll			= NULL,
 	.eeh_freeze_status	= npu_freeze_status,
 	.eeh_freeze_clear	= NULL,
 	.eeh_freeze_set		= NULL,
-	.next_error		= NULL,
+	.next_error		= npu_eeh_next_error,
 	.err_inject		= npu_err_inject,
 	.get_diag_data		= NULL,
 	.get_diag_data2		= NULL,
