@@ -146,26 +146,31 @@ static void undefined_bytes(void *p, size_t len)
 	VALGRIND_MAKE_MEM_UNDEFINED(p, len);
 }
 
-static void dump_dt(const struct dt_node *root, unsigned indent)
+static void dump_dt(const struct dt_node *root, unsigned indent, bool props)
 {
 	const struct dt_node *i;
 	const struct dt_property *p;
+	
+	indent_num(indent);
+	printf("node: %s\n", root->name);
 
-	list_for_each(&root->properties, p, list) {
-		indent_num(indent);
-		printf("prop: %s size: %zu val: ", p->name, p->len);
-		dump_val(indent, p->prop, p->len);
-		printf("\n");
+	if (props) {
+		list_for_each(&root->properties, p, list) {
+			indent_num(indent + 1);
+			printf("prop: %s size: %zu val: ", p->name, p->len);
+			dump_val(indent + 1, p->prop, p->len);
+			printf("\n");
+		}
 	}
 
 	list_for_each(&root->children, i, list)
-		dump_dt(i, indent + 2);
+		dump_dt(i, indent + 2, props);
 }
 
 int main(int argc, char *argv[])
 {
 	int fd, r;
-	bool verbose = false, quiet = false;
+	bool verbose = false, quiet = false, tree_only = false;
 
 	while (argv[1]) {
 		if (strcmp(argv[1], "-v") == 0) {
@@ -176,12 +181,16 @@ int main(int argc, char *argv[])
 			quiet = true;
 			argv++;
 			argc--;
+		} else if (strcmp(argv[1], "-t") == 0) {
+			tree_only = true;
+			argv++;
+			argc--;
 		} else
 			break;
 	}
 
 	if (argc != 3)
-		errx(1, "Usage: hdata [-v|-q] <spira-dump> <heap-dump>");
+		errx(1, "Usage: hdata [-v|-q|-t] <spira-dump> <heap-dump>");
 
 	/* Copy in spira dump (assumes little has changed!). */
 	fd = open(argv[1], O_RDONLY);
@@ -224,7 +233,7 @@ int main(int argc, char *argv[])
 	parse_hdat(false, 0);
 
 	if (!quiet)
-		dump_dt(dt_root, 0);
+		dump_dt(dt_root, 0, !tree_only);
 
 	dt_free(dt_root);
 	return 0;
