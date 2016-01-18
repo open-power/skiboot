@@ -3,9 +3,12 @@ LIBFLASH_TEST := libflash/test/test-flash libflash/test/test-ecc libflash/test/t
 
 LCOV_EXCLUDE += $(LIBFLASH_TEST:%=%.c)
 
-check: $(LIBFLASH_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
+.PHONY : libflash-check libc-coverage
+libflash-check: $(LIBFLASH_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
+libflash-coverage: $(LIBFLASH_TEST:%=%-gcov-run)
 
-coverage: $(LIBFLASH_TEST:%=%-gcov-run)
+check: libflash-check libc-coverage
+coverage: libflash-coverage
 
 $(LIBFLASH_TEST:%=%-gcov-run) : %-run: %
 	$(call Q, TEST-COVERAGE ,$< , $<)

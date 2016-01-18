@@ -2,8 +2,13 @@
 
 HDATA_TEST := hdata/test/hdata_to_dt
 
-check: $(HDATA_TEST:%=%-check) $(HDATA_TEST:%=%-gcov-run)
-coverage: $(HDATA_TEST:%=%-gcov-run)
+.PHONY : hdata-check hdata-coverage
+hdata-check: $(HDATA_TEST:%=%-check)
+hdata-coverage: $(HDATA_TEST:%=%-gcov-run)
+
+check: hdata-check hdata-coverage
+coverage: hdata-coverage
+
 LCOV_EXCLUDE += $(HDATA_TEST:%=%.c) hdata/test/stubs.c
 LCOV_EXCLUDE += /usr/include/valgrind/memcheck.h
 

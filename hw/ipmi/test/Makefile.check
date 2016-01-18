@@ -3,9 +3,12 @@ IPMI_TEST := hw/ipmi/test/run-fru
 
 LCOV_EXCLUDE += $(IPMI_TEST:%=%.c)
 
-check: $(IPMI_TEST:%=%-check) $(IPMI_TEST:%=%-gcov-run)
+.PHONY : hw-ipmp-check hw-ipmp-coverage
+hw-ipmp-check: $(IPMI_TEST:%=%-check) $(IPMI_TEST:%=%-gcov-run)
+hw-ipmp-coverage: $(IPMI_TEST:%=%-gcov-run)
 
-coverage: $(IPMI_TEST:%=%-gcov-run)
+check: hw-ipmp-check
+coverage: hw-ipmi-coverage
 
 $(IPMI_TEST:%=%-gcov-run) : %-run: %
 	$(call Q, TEST-COVERAGE ,$< , $<)

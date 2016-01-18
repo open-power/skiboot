@@ -24,13 +24,16 @@ CORE_TEST_NOSTUB += core/test/run-console-log-pr_fmt
 LCOV_EXCLUDE += $(CORE_TEST:%=%.c) core/test/stubs.c
 LCOV_EXCLUDE += $(CORE_TEST_NOSTUB:%=%.c) /usr/include/*
 
-check: $(CORE_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
+.PHONY : core-check
+core-check: $(CORE_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
+core-check: $(CORE_TEST_NOSTUB:%=%-check) $(CORE_TEST_NOSTUB:%=%-gcov-run)
 
-check: $(CORE_TEST_NOSTUB:%=%-check) $(CORE_TEST_NOSTUB:%=%-gcov-run)
+.PHONY : core-coverage
+core-coverage: $(CORE_TEST:%=%-gcov-run)
+core-coverage: $(CORE_TEST_NOSTUB:%=%-gcov-run)
 
-coverage: $(CORE_TEST:%=%-gcov-run)
-
-coverage: $(CORE_TEST_NOSTUB:%=%-gcov-run)
+check: core-check
+coverage: core-coverage
 
 $(CORE_TEST:%=%-gcov-run) : %-run: %
 	$(call Q, TEST-COVERAGE ,$< , $<)

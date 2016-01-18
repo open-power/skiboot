@@ -11,9 +11,12 @@ LIBC_DUALLIB_TEST := libc/test/run-snprintf \
 
 LCOV_EXCLUDE += $(LIBC_TEST:%=%.c) $(LIBC_DUALLIB_TEST:%=%.c) $(LIBC_DUALLIB_TEST:%=%-test.c)
 
-check: $(LIBC_TEST:%=%-check) $(LIBC_DUALLIB_TEST:%=%-check)
+.PHONY : libc-check libc-coverage
+libc-check: $(LIBC_TEST:%=%-check) $(LIBC_DUALLIB_TEST:%=%-check)
+lib-coverage: $(LIBC_TEST:%=%-gcov-run) $(LIBC_DUALLIB_TEST:%=%-gcov-run)
 
-coverage: $(LIBC_TEST:%=%-gcov-run) $(LIBC_DUALLIB_TEST:%=%-gcov-run)
+check: libc-check
+coverage: libc-coverage
 
 $(LIBC_TEST:%=%-gcov-run) : %-run: %
 	$(call Q, TEST-COVERAGE ,$< , $<)
