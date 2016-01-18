@@ -144,6 +144,8 @@ struct npu_dev {
 	unsigned long		procedure_tb;
 
 	uint32_t		procedure_status;
+
+	uint8_t			pe_num;
 };
 
 /* NPU PHB descriptor */

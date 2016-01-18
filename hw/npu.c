@@ -954,6 +954,7 @@ static int64_t npu_set_pe(struct phb *phb,
 		return OPAL_PARAMETER;
 
 	link_idx = dev->index;
+	dev->pe_num = pe_num;
 
 	/* Separate links will be mapped to different PEs */
 	if (bcompare != OpalPciBusAll ||
@@ -1020,6 +1021,47 @@ static int64_t npu_freeze_status(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
+/* Sets the NPU to trigger an error when a DMA occurs */
+static int64_t npu_err_inject(struct phb *phb, uint32_t pe_num,
+			      uint32_t type, uint32_t func __unused,
+			      uint64_t addr __unused, uint64_t mask __unused)
+{
+	struct npu *p = phb_to_npu(phb);
+	struct npu_dev *dev = NULL;
+	int i;
+
+	if (pe_num > NPU_NUM_OF_PES) {
+		prlog(PR_ERR, "NPU: error injection failed, bad PE given\n");
+		return OPAL_PARAMETER;
+	}
+
+	for (i = 0; i < p->total_devices; i++) {
+		if (p->devices[i].pe_num == pe_num) {
+			dev = &p->devices[i];
+			break;
+		}
+	}
+
+	if (!dev) {
+		prlog(PR_ERR, "NPU: couldn't find device with PE %x\n", pe_num);
+		return OPAL_PARAMETER;
+	}
+
+	/* TODO: extend this to conform to OPAL injection standards */
+	if (type > 1) {
+		prlog(PR_ERR, "NPU: invalid error injection type\n");
+		return OPAL_PARAMETER;
+	} else if (type == 1) {
+		/* Emulate fence mode. */
+		p->fenced = true;
+	} else {
+		/* Cause a freeze with an invalid MMIO write. */
+		in_be64((void *)dev->bar.base);
+	}
+
+	return OPAL_SUCCESS;
+}
+
 static const struct phb_ops npu_ops = {
 	.lock			= npu_lock,
 	.unlock			= npu_unlock,
@@ -1059,7 +1101,7 @@ static const struct phb_ops npu_ops = {
 	.eeh_freeze_clear	= NULL,
 	.eeh_freeze_set		= NULL,
 	.next_error		= NULL,
-	.err_inject		= NULL,
+	.err_inject		= npu_err_inject,
 	.get_diag_data		= NULL,
 	.get_diag_data2		= NULL,
 	.set_capi_mode		= NULL,
