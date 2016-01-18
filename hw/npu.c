@@ -390,6 +390,10 @@ static int64_t _npu_dev_cfg_read(struct phb *phb, uint32_t bdfn,
 	/* Data returned upon errors */
 	*data = 0xffffffff;
 
+	/* If fenced, we want to return all 1s, so we're done. */
+	if (p->fenced)
+		return OPAL_SUCCESS;
+
 	/* Retrieve NPU device */
 	dev = npu_dev_cfg_check(p, bdfn, offset, size);
 	if (!dev)
@@ -996,7 +1000,7 @@ static int64_t npu_freset(struct phb *phb __unused)
 	return OPAL_SUCCESS;
 }
 
-static int64_t npu_freeze_status(struct phb *phb __unused,
+static int64_t npu_freeze_status(struct phb *phb,
 				     uint64_t pe_number __unused,
 				     uint8_t *freeze_state,
 				     uint16_t *pci_error_type __unused,
@@ -1008,7 +1012,11 @@ static int64_t npu_freeze_status(struct phb *phb __unused,
 	 * introduce another PHB callback to translate it. For now,
 	 * it keeps the skiboot PCI enumeration going.
 	 */
-	*freeze_state = OPAL_EEH_STOPPED_NOT_FROZEN;
+	struct npu *p = phb_to_npu(phb);
+	if (p->fenced)
+		*freeze_state = OPAL_EEH_STOPPED_MMIO_DMA_FREEZE;
+	else
+		*freeze_state = OPAL_EEH_STOPPED_NOT_FROZEN;
 	return OPAL_SUCCESS;
 }
 
@@ -1679,6 +1687,9 @@ static void npu_create_phb(struct dt_node *dn)
 	p->chip_id = dt_prop_get_u32(dn, "ibm,chip-id");
 	p->xscom_base = dt_prop_get_u32(dn, "ibm,xscom-base");
 	p->total_devices = links;
+
+	/* TODO: When hardware fences are implemented, detect them here */
+	p->fenced = false;
 
 	/* This is the AT base */
 	p->at_xscom = p->xscom_base + NPU_AT_SCOM_OFFSET;

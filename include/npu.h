@@ -167,6 +167,7 @@ struct npu {
 	uint64_t		tve_cache[NPU_NUM_OF_PES];
 
 	bool			tx_zcal_complete[2];
+	bool			fenced;
 
 	struct phb		phb;
 };
