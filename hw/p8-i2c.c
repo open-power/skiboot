@@ -140,12 +140,16 @@ DEFINE_LOG_ENTRY(OPAL_RC_I2C_RESET, OPAL_INPUT_OUTPUT_ERR_EVT, OPAL_I2C,
 #define I2C_STAT_SDA_INPUT_LEVEL	PPC_BIT(21)
 #define I2C_STAT_PORT_BUSY		PPC_BIT(22)
 #define I2C_STAT_INTERFACE_BUSY         PPC_BIT(23)
-#define I2C_STAT_FIFO_ENTRY_COUNT	  PPC_BITMASK(24, 31)
+#define I2C_STAT_FIFO_ENTRY_COUNT	PPC_BITMASK(24, 31)
 
 #define I2C_STAT_ANY_ERR (I2C_STAT_INVALID_CMD | I2C_STAT_LBUS_PARITY_ERR | \
 			  I2C_STAT_BKEND_OVERRUN_ERR | \
 			  I2C_STAT_BKEND_ACCESS_ERR | I2C_STAT_ARBT_LOST_ERR | \
 			  I2C_STAT_NACK_RCVD_ERR | I2C_STAT_STOP_ERR)
+
+/* Pseudo-status used for timeouts */
+#define I2C_STAT_PSEUDO_TIMEOUT		PPC_BIT(63)
+
 
 /* I2C extended status register */
 #define I2C_EXTD_STAT_REG		0xc
@@ -452,6 +456,8 @@ static void p8_i2c_translate_error(struct i2c_request *req, uint64_t status)
 		req->result = OPAL_I2C_ARBT_LOST;
 	else if (status & I2C_STAT_STOP_ERR)
 		req->result = OPAL_I2C_STOP_ERR;
+	else if (status & I2C_STAT_PSEUDO_TIMEOUT)
+		req->result = OPAL_I2C_TIMEOUT;
 }
 
 static void p8_i2c_status_error(struct p8_i2c_master_port *port,
@@ -461,10 +467,11 @@ static void p8_i2c_status_error(struct p8_i2c_master_port *port,
 	struct p8_i2c_master *master = port->master;
 	int rc;
 
-	/* Display any error other than I2C_INTR_NACK_RCVD_ERR since
-	 * getting NACK's is normal if Linux is probing the bus
+	/* Display any error other than I2C_INTR_NACK_RCVD_ERR or
+	 * timeout since getting NACK's is normal if Linux is probing
+	 * the bus and timeouts will have already logged something.
 	 */
-	if (!(status & I2C_STAT_NACK_RCVD_ERR)) {
+	if (!(status & (I2C_STAT_NACK_RCVD_ERR | I2C_STAT_PSEUDO_TIMEOUT))) {
 		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
 				 "I2C: Transfer error occurred\n");
 		p8_i2c_print_debug_info(port, req);
@@ -761,9 +768,12 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 	/* Handle the status in that order: errors, data requests and
 	 * command completion.
 	 */
-	if (status & I2C_STAT_ANY_ERR)
-		p8_i2c_status_error(port, req, status);
-	else if (status & I2C_STAT_DATA_REQ)
+	if (status & I2C_STAT_ANY_ERR) {
+		/* Mask status to avoid some unrelated bit overwriting
+		 * our pseudo-status "timeout" bit 63
+		 */
+		p8_i2c_status_error(port, req, status & I2C_STAT_ANY_ERR);
+	} else if (status & I2C_STAT_DATA_REQ)
 		p8_i2c_status_data_request(master, req, status);
 	else if (status & I2C_STAT_CMD_COMP)
 		p8_i2c_status_cmd_completion(master, req);
@@ -1087,12 +1097,8 @@ static void p8_i2c_timeout(struct timer *t __unused, void *data, uint64_t now)
 			 "I2C: Request timeout !\n");
 	p8_i2c_print_debug_info(port, req);
 
-	/* Reset the engine */
-	p8_i2c_engine_reset(port);
-
-	/* Should we send a stop ? For now just complete */
-	p8_i2c_complete_request(master, req, OPAL_I2C_TIMEOUT);
-
+	/* Use the standard error path */
+	p8_i2c_status_error(port, req, I2C_STAT_PSEUDO_TIMEOUT);
  exit:
 	unlock(&master->lock);
 }
