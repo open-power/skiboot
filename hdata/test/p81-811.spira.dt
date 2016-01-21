@@ -85,6 +85,7 @@ CEC:     Murano !
 CEC:     HW CHIP=0x11, HW TOPO=0x0110
 VPD: CCIN desc not available for : 2B08
 Parsing HDAT...done
+node: 
 prop: #address-cells size: 4 val: 00000002
 prop: #size-cells size: 4 val: 00000002
 prop: lid-type size: 5 val: 7068797000
@@ -203,254 +204,10 @@ prop: reserved-ranges size: 48 val: 0000001ffd70000000000000001000000000001ffd6b
 prop: reserved-names size: 61 val: 69626d2c686272742d7670642d696d6167650069626d2c686272742d7461726765742d696d6167
 650069626d2c686272742d636f64652d696d61676500
 prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677696e6b6c6500
-  prop: compatible size: 16 val: 69626d2c6f70616c2d76332d76706400
-  prop: ibm,vpd size: 184 val: 84b0005254045653595344520653595354454d42520253305345073130313043384153470720
-  202020202020544d08383234372d32324c544e0820202020202020204d4e072020202020202049
-  440220205355060004ac1a43544e4e1020202020202020202020202020202020524704f0c00000
-  52420433202020574e0c43303530373630373830443246562053563831305f3032390000000000
-  0000000000000000000000000000000000005046030000007800000000
-  prop: ibm,loc-code size: 18 val: 55383234372e32324c2e3130313043384100
-    prop: ibm,loc-code size: 18 val: 55383234372e32324c2e3130313043384100
-    prop: fru-type size: 2 val: 5656
-      prop: ibm,loc-code size: 18 val: 55383234372e32324c2e3130313043384100
-      prop: fru-type size: 2 val: 5656
-      prop: ibm,loc-code size: 18 val: 55383234372e32324c2e3130313043384100
-      prop: fru-type size: 2 val: 5356
-      prop: ibm,loc-code size: 18 val: 55373843422e3030312e575a533030414c00
-      prop: fru-type size: 2 val: 4556
-      prop: ibm,vpd size: 252 val: 848c0052540456494e49445210492f4f204241434b504c414e4520202043450131565a02
-      3032464e0730304532303232504e0730304533393937534e0c594c3130554634324c303133
-      4343043243443650520821000000000000004845043030303243540480f300264857020004
-      4233060000000000014234010042370c000000000000000000000000504602000078841c00
-      5254044c585230565a0230314c580831000401003000425046020000788444005254045643
-      454e445206434543202020534507575a533030414c544d0820202020202020204643083738
-      43422d30303152470400000000524204202020205046030000007800000000
-      prop: fru-number size: 8 val: 3030453230323200
-      prop: serial-number size: 13 val: 594c3130554634324c30313300
-      prop: part-number size: 8 val: 3030453339393700
-      prop: ccin size: 5 val: 3243443600
-      prop: description size: 19 val: 53797374656d20706c616e6172203253325500
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d503100
-        prop: fru-type size: 2 val: 4250
-        prop: ibm,vpd size: 180 val: 848c0052540456494e49445210492f4f204241434b504c414e4520202043450131565a
-        023032464e0730304532303232504e0730304533393937534e0c594c3130554634324c30
-        31334343043243443650520821000000000000004845043030303243540480f300264857
-        0200044233060000000000014234010042370c0000000000000000000000005046020000
-        78841c005254044c585230565a0230314c58083100040100300042504602000078000000
-        00
-        prop: fru-number size: 8 val: 3030453230323200
-        prop: serial-number size: 13 val: 594c3130554634324c30313300
-        prop: part-number size: 8 val: 3030453339393700
-        prop: ccin size: 5 val: 3243443600
-        prop: description size: 19 val: 53797374656d20706c616e6172203253325500
-          prop: ibm,loc-code size: 24 val: 55373843422e3030312e575a533030414c2d50312d433100
-          prop: fru-type size: 2 val: 4258
-          prop: ibm,vpd size: 136 val: 84800052540456494e494452104e415449564520492f4f2043415244204345013156
-          5a023031464e0730304532313634504e0730304533383131534e0c594c313055463432
-          4c303031434304324230424845043030303143540480b5000048570200014233060000
-          000000004234010042370c000000000000000000000000504601007800000000
-          prop: fru-number size: 8 val: 3030453231363400
-          prop: serial-number size: 13 val: 594c3130554634324c30303100
-          prop: part-number size: 8 val: 3030453338313100
-          prop: ccin size: 5 val: 3242304200
-          prop: description size: 16 val: 4e617469766520492f4f204361726400
-            prop: ibm,loc-code size: 27 val: 55373843422e3030312e575a533030414c2d50312d43312d543200
-            prop: fru-type size: 2 val: 4355
-            prop: ibm,loc-code size: 27 val: 55373843422e3030312e575a533030414c2d50312d43312d543300
-            prop: fru-type size: 2 val: 4355
-            prop: ibm,loc-code size: 27 val: 55373843422e3030312e575a533030414c2d50312d43312d543100
-            prop: fru-type size: 2 val: 4353
-          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333200
-          prop: fru-type size: 2 val: 5046
-          prop: ibm,vpd size: 145 val: 848c0052540456494e4944521031302d5741592050524f432043554f44464e073030
-          4658353138504e0730304658373430534e0c5941313933323039363935314343043534
-          4538484504303030314354040000000048570200014233060000000000004234010042
-          370c0000000000000000000000005052083500500122008001565a0230314345013150
-          460200007800
-          prop: fru-number size: 8 val: 3030465835313800
-          prop: serial-number size: 13 val: 59413139333230393639353100
-          prop: part-number size: 8 val: 3030465837343000
-          prop: ccin size: 5 val: 3534453800
-          prop: description size: 8 val: 556e6b6e6f776e00
-          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333200
-          prop: fru-type size: 2 val: 5046
-          prop: ibm,vpd size: 145 val: 848c0052540456494e4944521031302d5741592050524f432043554f44464e073030
-          4658353138504e0730304658373430534e0c5941313933323039363935314343043534
-          4538484504303030314354040000000048570200014233060000000000004234010042
-          370c0000000000000000000000005052083500500122008001565a0230314345013150
-          460200007800
-          prop: fru-number size: 8 val: 3030465835313800
-          prop: serial-number size: 13 val: 59413139333230393639353100
-          prop: part-number size: 8 val: 3030465837343000
-          prop: ccin size: 5 val: 3534453800
-          prop: description size: 8 val: 556e6b6e6f776e00
-          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333300
-          prop: fru-type size: 2 val: 5046
-          prop: ibm,vpd size: 145 val: 848c0052540456494e4944521031302d5741592050524f432043554f44464e073030
-          4658353138504e0730304658373430534e0c5941313933323039363935304343043534
-          4538484504303030314354040000000048570200014233060000000000004234010042
-          370c0000000000000000000000005052083500500122008001565a0230314345013150
-          460200007800
-          prop: fru-number size: 8 val: 3030465835313800
-          prop: serial-number size: 13 val: 59413139333230393639353000
-          prop: part-number size: 8 val: 3030465837343000
-          prop: ccin size: 5 val: 3534453800
-          prop: description size: 8 val: 556e6b6e6f776e00
-          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333300
-          prop: fru-type size: 2 val: 5046
-          prop: ibm,vpd size: 145 val: 848c0052540456494e4944521031302d5741592050524f432043554f44464e073030
-          4658353138504e0730304658373430534e0c5941313933323039363935304343043534
-          4538484504303030314354040000000048570200014233060000000000004234010042
-          370c0000000000000000000000005052083500500122008001565a0230314345013150
-          460200007800
-          prop: fru-number size: 8 val: 3030465835313800
-          prop: serial-number size: 13 val: 59413139333230393639353000
-          prop: part-number size: 8 val: 3030465837343000
-          prop: ccin size: 5 val: 3534453800
-          prop: description size: 8 val: 556e6b6e6f776e00
-          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43313300
-          prop: fru-type size: 2 val: 4156
-          prop: ibm,vpd size: 212 val: 84cc0052540456494e49445210414e43484f52202020202020202020204345013156
-          5a023031464e0730304533343237504e0730304532313438534e0c594c313031313432
-          523030304343043532344450520881003000000000004845043030313043540440b400
-          0048570200014233060000000000014234010042370c00000000000000000000000042
-          393c43534055110351dd6da2535049652f45748f7b044d31c531833edf1e75724d328d
-          48c1b4246b02ee4d3367b454d8489f3a254d340dadc44124b5edd55046030000007800
-          000000
-          prop: fru-number size: 8 val: 3030453334323700
-          prop: serial-number size: 13 val: 594c3130313134325230303000
-          prop: part-number size: 8 val: 3030453231343800
-          prop: ccin size: 5 val: 3532344400
-          prop: description size: 36 val: 53797374656d20416e63686f722043617264202d2049424d20506f77657220383232
-          4c00
-          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d54312000
-          prop: fru-type size: 2 val: 4345
-          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d54322000
-          prop: fru-type size: 2 val: 4345
-          prop: ibm,loc-code size: 24 val: 55373843422e3030312e575a533030414c2d50312d543500
-          prop: fru-type size: 2 val: 4355
-          prop: ibm,loc-code size: 24 val: 55373843422e3030312e575a533030414c2d50312d543600
-          prop: fru-type size: 2 val: 4355
-          prop: ibm,loc-code size: 24 val: 55373843422e3030312e575a533030414c2d50312d543300
-          prop: fru-type size: 2 val: 4355
-          prop: ibm,loc-code size: 24 val: 55373843422e3030312e575a533030414c2d50312d543400
-          prop: fru-type size: 2 val: 4355
-          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43313600
-          prop: fru-type size: 2 val: 4d53
-          prop: ibm,vpd size: 156 val: 84940052540456494e4944521049424d2033324742204d5320202020204345013156
-          5a023132464e0730304a41363634504e0730304a41363634534e0c594831304d553432
-          44314139434304333145395052084900000000010000535a0730303332373638484504
-          303030314354040000000048570201004233060000000000004234010042370c000000
-          0000000000000000005046007800000000
-          prop: fru-number size: 8 val: 30304a4136363400
-          prop: serial-number size: 13 val: 594831304d5534324431413900
-          prop: part-number size: 8 val: 30304a4136363400
-          prop: ccin size: 5 val: 3331453900
-          prop: description size: 11 val: 33324742204344494d4d00
-          prop: ibm,chip-id size: 4 val: 00000000
-          prop: ibm,memory-bus-frequency size: 8 val: 0000000000000000
-          prop: size size: 8 val: 3030333237363800
-          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43313800
-          prop: fru-type size: 2 val: 4d53
-          prop: ibm,vpd size: 156 val: 84940052540456494e4944521049424d2033324742204d5320202020204345013156
-          5a023132464e0730304a41363634504e0730304a41363634534e0c594831304d553432
-          44314136434304333145395052084900000000010000535a0730303332373638484504
-          303030314354040000000048570201004233060000000000004234010042370c000000
-          0000000000000000005046007800000000
-          prop: fru-number size: 8 val: 30304a4136363400
-          prop: serial-number size: 13 val: 594831304d5534324431413600
-          prop: part-number size: 8 val: 30304a4136363400
-          prop: ccin size: 5 val: 3331453900
-          prop: description size: 11 val: 33324742204344494d4d00
-          prop: ibm,chip-id size: 4 val: 00000000
-          prop: ibm,memory-bus-frequency size: 8 val: 0000000000000000
-          prop: size size: 8 val: 3030333237363800
-          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43323400
-          prop: fru-type size: 2 val: 4d53
-          prop: ibm,vpd size: 156 val: 84940052540456494e4944521049424d2033324742204d5320202020204345013156
-          5a023132464e0730304a41363634504e0730304a41363634534e0c594831304d553432
-          43313754434304333145395052084900000000010000535a0730303332373638484504
-          303030314354040000000048570201004233060000000000004234010042370c000000
-          0000000000000000005046007800000000
-          prop: fru-number size: 8 val: 30304a4136363400
-          prop: serial-number size: 13 val: 594831304d5534324331375400
-          prop: part-number size: 8 val: 30304a4136363400
-          prop: ccin size: 5 val: 3331453900
-          prop: description size: 11 val: 33324742204344494d4d00
-          prop: ibm,chip-id size: 4 val: 00000010
-          prop: ibm,memory-bus-frequency size: 8 val: 0000000000000000
-          prop: size size: 8 val: 3030333237363800
-          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43323600
-          prop: fru-type size: 2 val: 4d53
-          prop: ibm,vpd size: 156 val: 84940052540456494e4944521049424d2033324742204d5320202020204345013156
-          5a023132464e0730304a41363634504e0730304a41363634534e0c594831304d553432
-          43314148434304333145395052084900000000010000535a0730303332373638484504
-          303030314354040000000048570201004233060000000000004234010042370c000000
-          0000000000000000005046007800000000
-          prop: fru-number size: 8 val: 30304a4136363400
-          prop: serial-number size: 13 val: 594831304d5534324331414800
-          prop: part-number size: 8 val: 30304a4136363400
-          prop: ccin size: 5 val: 3331453900
-          prop: description size: 11 val: 33324742204344494d4d00
-          prop: ibm,chip-id size: 4 val: 00000010
-          prop: ibm,memory-bus-frequency size: 8 val: 0000000000000000
-          prop: size size: 8 val: 3030333237363800
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d503100
-        prop: fru-type size: 2 val: 5350
-        prop: ibm,vpd size: 332 val: 848c0052540456494e49445210492f4f204241434b504c414e4520202043450131565a
-        023032464e0730304532303232504e0730304533393937534e0c594c3130554634324c30
-        31334343043243443650520821000000000000004845043030303243540480f300264857
-        0200044233060000000000014234010042370c0000000000000000000000005046020000
-        78841c005254044c585230565a0230314c58083100040100300042504602000078845000
-        5254045652313044521046535020202020202020202020202020464704564e535044430f
-        424420323031323038323330383030464c14503120202020202020202020202020202020
-        202050460300000078844000525404565731304452104653502056573130202020202020
-        202047442000000000000000000000000000000000000000000000000000000000000000
-        005046007800000000
-        prop: fru-number size: 8 val: 3030453230323200
-        prop: serial-number size: 13 val: 594c3130554634324c30313300
-        prop: part-number size: 8 val: 3030453339393700
-        prop: ccin size: 5 val: 3243443600
-        prop: description size: 19 val: 53797374656d20706c616e6172203253325500
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d443100
-        prop: fru-type size: 2 val: 4f50
-        prop: ibm,vpd size: 136 val: 84800052540456494e49445210434543204f502050414e454c2020202043450131565a
-        023032464e0730304531393636504e0730304533373730534e0c594c3130554634313830
-        3046434304324230384845043030303143540480b5000048570200034233060000000000
-        004234010042370c000000000000000000000000504601007800000000
-        prop: fru-number size: 8 val: 3030453139363600
-        prop: serial-number size: 13 val: 594c3130554634313830304600
-        prop: part-number size: 8 val: 3030453337373000
-        prop: ccin size: 5 val: 3242303800
-        prop: description size: 8 val: 556e6b6e6f776e00
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d503200
-        prop: fru-type size: 2 val: 4442
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d503200
-        prop: fru-type size: 2 val: 4442
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d453100
-        prop: fru-type size: 2 val: 5053
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d453200
-        prop: fru-type size: 2 val: 5053
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413100
-        prop: fru-type size: 2 val: 414d
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413300
-        prop: fru-type size: 2 val: 414d
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413400
-        prop: fru-type size: 2 val: 414d
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413600
-        prop: fru-type size: 2 val: 414d
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413200
-        prop: fru-type size: 2 val: 414d
-        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413500
-        prop: fru-type size: 2 val: 414d
-      prop: ibm,loc-code size: 18 val: 55373843422e3030312e575a533030414c00
-      prop: fru-type size: 2 val: 4549
-      prop: ibm,loc-code size: 18 val: 55373843422e3030312e575a533030414c00
-      prop: fru-type size: 2 val: 4546
-    prop: led-mode size: 10 val: 6c696768747061746800
-      prop: led-types size: 10 val: 617474656e74696f6e00
+  node: cpus
   prop: #address-cells size: 4 val: 00000001
   prop: #size-cells size: 4 val: 00000000
+    node: PowerPC,POWER7@20
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 00000020
@@ -492,23 +249,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 00000020
     prop: ibm,chip-id size: 4 val: 00000000
     prop: ibm,ppc-interrupt-server#s size: 32 val: 0000002000000021000000220000002300000024000000250000002600000027
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 20000020
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000008
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 30000020
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@30
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 00000030
@@ -550,23 +291,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 00000030
     prop: ibm,chip-id size: 4 val: 00000000
     prop: ibm,ppc-interrupt-server#s size: 32 val: 0000003000000031000000320000003300000034000000350000003600000037
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 20000030
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 0000000c
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 30000030
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@60
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 00000060
@@ -608,23 +333,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 00000060
     prop: ibm,chip-id size: 4 val: 00000000
     prop: ibm,ppc-interrupt-server#s size: 32 val: 0000006000000061000000620000006300000064000000650000006600000067
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 20000060
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000010
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 30000060
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@68
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 00000068
@@ -666,23 +375,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 00000068
     prop: ibm,chip-id size: 4 val: 00000000
     prop: ibm,ppc-interrupt-server#s size: 32 val: 00000068000000690000006a0000006b0000006c0000006d0000006e0000006f
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 20000068
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000014
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 30000068
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@70
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 00000070
@@ -724,23 +417,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 00000070
     prop: ibm,chip-id size: 4 val: 00000000
     prop: ibm,ppc-interrupt-server#s size: 32 val: 0000007000000071000000720000007300000074000000750000007600000077
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 20000070
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000018
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 30000070
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@a8
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 000000a8
@@ -782,23 +459,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 000000a8
     prop: ibm,chip-id size: 4 val: 00000001
     prop: ibm,ppc-interrupt-server#s size: 32 val: 000000a8000000a9000000aa000000ab000000ac000000ad000000ae000000af
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 200000a8
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 0000001c
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 300000a8
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@b0
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 000000b0
@@ -840,23 +501,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 000000b0
     prop: ibm,chip-id size: 4 val: 00000001
     prop: ibm,ppc-interrupt-server#s size: 32 val: 000000b0000000b1000000b2000000b3000000b4000000b5000000b6000000b7
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 200000b0
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000020
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 300000b0
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@e0
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 000000e0
@@ -898,23 +543,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 000000e0
     prop: ibm,chip-id size: 4 val: 00000001
     prop: ibm,ppc-interrupt-server#s size: 32 val: 000000e0000000e1000000e2000000e3000000e4000000e5000000e6000000e7
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 200000e0
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000024
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 300000e0
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@e8
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 000000e8
@@ -956,23 +585,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 000000e8
     prop: ibm,chip-id size: 4 val: 00000001
     prop: ibm,ppc-interrupt-server#s size: 32 val: 000000e8000000e9000000ea000000eb000000ec000000ed000000ee000000ef
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 200000e8
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000028
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 300000e8
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@f0
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 000000f0
@@ -1014,23 +627,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 000000f0
     prop: ibm,chip-id size: 4 val: 00000001
     prop: ibm,ppc-interrupt-server#s size: 32 val: 000000f0000000f1000000f2000000f3000000f4000000f5000000f6000000f7
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 200000f0
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 0000002c
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 300000f0
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@828
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 00000828
@@ -1072,23 +669,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 00000828
     prop: ibm,chip-id size: 4 val: 00000010
     prop: ibm,ppc-interrupt-server#s size: 32 val: 00000828000008290000082a0000082b0000082c0000082d0000082e0000082f
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 20000828
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000030
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 30000828
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@830
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 00000830
@@ -1130,23 +711,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 00000830
     prop: ibm,chip-id size: 4 val: 00000010
     prop: ibm,ppc-interrupt-server#s size: 32 val: 0000083000000831000008320000083300000834000008350000083600000837
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 20000830
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000034
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 30000830
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@860
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 00000860
@@ -1188,23 +753,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 00000860
     prop: ibm,chip-id size: 4 val: 00000010
     prop: ibm,ppc-interrupt-server#s size: 32 val: 0000086000000861000008620000086300000864000008650000086600000867
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 20000860
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000038
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 30000860
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@868
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 00000868
@@ -1246,23 +795,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 00000868
     prop: ibm,chip-id size: 4 val: 00000010
     prop: ibm,ppc-interrupt-server#s size: 32 val: 00000868000008690000086a0000086b0000086c0000086d0000086e0000086f
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 20000868
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 0000003c
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 30000868
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@870
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 00000870
@@ -1304,23 +837,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 00000870
     prop: ibm,chip-id size: 4 val: 00000010
     prop: ibm,ppc-interrupt-server#s size: 32 val: 0000087000000871000008720000087300000874000008750000087600000877
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 20000870
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000040
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 30000870
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@8a0
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 000008a0
@@ -1362,23 +879,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 000008a0
     prop: ibm,chip-id size: 4 val: 00000011
     prop: ibm,ppc-interrupt-server#s size: 32 val: 000008a0000008a1000008a2000008a3000008a4000008a5000008a6000008a7
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 200008a0
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000044
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 300008a0
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@8a8
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 000008a8
@@ -1420,23 +921,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 000008a8
     prop: ibm,chip-id size: 4 val: 00000011
     prop: ibm,ppc-interrupt-server#s size: 32 val: 000008a8000008a9000008aa000008ab000008ac000008ad000008ae000008af
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 200008a8
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000048
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 300008a8
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@8b0
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 000008b0
@@ -1478,23 +963,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 000008b0
     prop: ibm,chip-id size: 4 val: 00000011
     prop: ibm,ppc-interrupt-server#s size: 32 val: 000008b0000008b1000008b2000008b3000008b4000008b5000008b6000008b7
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 200008b0
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 0000004c
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 300008b0
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@8e8
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 000008e8
@@ -1536,23 +1005,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 000008e8
     prop: ibm,chip-id size: 4 val: 00000011
     prop: ibm,ppc-interrupt-server#s size: 32 val: 000008e8000008e9000008ea000008eb000008ec000008ed000008ee000008ef
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 200008e8
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00080000
-    prop: i-cache-size size: 4 val: 00080000
-    prop: l2-cache size: 4 val: 00000050
-    prop: device_type size: 6 val: 636163686500
-    prop: reg size: 4 val: 300008e8
-    prop: status size: 5 val: 6f6b617900
-    prop: cache-unified size: 0 val: 
-    prop: d-cache-sets size: 4 val: 00000008
-    prop: i-cache-sets size: 4 val: 00000008
-    prop: d-cache-size size: 4 val: 00800000
-    prop: i-cache-size size: 4 val: 00800000
+    node: PowerPC,POWER7@8f0
     prop: device_type size: 4 val: 63707500
     prop: status size: 5 val: 6f6b617900
     prop: reg size: 4 val: 000008f0
@@ -1594,6 +1047,197 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,pir size: 4 val: 000008f0
     prop: ibm,chip-id size: 4 val: 00000011
     prop: ibm,ppc-interrupt-server#s size: 32 val: 000008f0000008f1000008f2000008f3000008f4000008f5000008f6000008f7
+    node: l2-cache@20000020
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 20000020
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000008
+    node: l2-cache@20000030
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 20000030
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 0000000c
+    node: l2-cache@20000060
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 20000060
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000010
+    node: l2-cache@20000068
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 20000068
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000014
+    node: l2-cache@20000070
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 20000070
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000018
+    node: l2-cache@200000a8
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 200000a8
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 0000001c
+    node: l2-cache@200000b0
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 200000b0
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000020
+    node: l2-cache@200000e0
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 200000e0
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000024
+    node: l2-cache@200000e8
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 200000e8
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000028
+    node: l2-cache@200000f0
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 200000f0
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 0000002c
+    node: l2-cache@20000828
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 20000828
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000030
+    node: l2-cache@20000830
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 20000830
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000034
+    node: l2-cache@20000860
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 20000860
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000038
+    node: l2-cache@20000868
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 20000868
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 0000003c
+    node: l2-cache@20000870
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 20000870
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000040
+    node: l2-cache@200008a0
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 200008a0
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000044
+    node: l2-cache@200008a8
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 200008a8
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000048
+    node: l2-cache@200008b0
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 200008b0
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 0000004c
+    node: l2-cache@200008e8
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 200008e8
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00080000
+    prop: i-cache-size size: 4 val: 00080000
+    prop: l2-cache size: 4 val: 00000050
+    node: l2-cache@200008f0
     prop: device_type size: 6 val: 636163686500
     prop: reg size: 4 val: 200008f0
     prop: status size: 5 val: 6f6b617900
@@ -1603,6 +1247,178 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: d-cache-size size: 4 val: 00080000
     prop: i-cache-size size: 4 val: 00080000
     prop: l2-cache size: 4 val: 00000054
+    node: l3-cache@30000020
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 30000020
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@30000030
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 30000030
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@30000060
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 30000060
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@30000068
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 30000068
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@30000070
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 30000070
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@300000a8
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 300000a8
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@300000b0
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 300000b0
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@300000e0
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 300000e0
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@300000e8
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 300000e8
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@300000f0
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 300000f0
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@30000828
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 30000828
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@30000830
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 30000830
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@30000860
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 30000860
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@30000868
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 30000868
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@30000870
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 30000870
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@300008a0
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 300008a0
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@300008a8
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 300008a8
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@300008b0
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 300008b0
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@300008e8
+    prop: device_type size: 6 val: 636163686500
+    prop: reg size: 4 val: 300008e8
+    prop: status size: 5 val: 6f6b617900
+    prop: cache-unified size: 0 val: 
+    prop: d-cache-sets size: 4 val: 00000008
+    prop: i-cache-sets size: 4 val: 00000008
+    prop: d-cache-size size: 4 val: 00800000
+    prop: i-cache-size size: 4 val: 00800000
+    node: l3-cache@300008f0
     prop: device_type size: 6 val: 636163686500
     prop: reg size: 4 val: 300008f0
     prop: status size: 5 val: 6f6b617900
@@ -1611,6 +1427,23 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: i-cache-sets size: 4 val: 00000008
     prop: d-cache-size size: 4 val: 00800000
     prop: i-cache-size size: 4 val: 00800000
+  node: fsps
+  prop: #address-cells size: 4 val: 00000001
+  prop: #size-cells size: 4 val: 00000000
+    node: fsp@0
+    prop: reg size: 4 val: 00000000
+    prop: compatible size: 17 val: 69626d2c6673700069626d2c6673703200
+    prop: reg-offset size: 4 val: b0011000
+    prop: hw-version size: 4 val: 00000002
+    prop: sw-version size: 4 val: 00000001
+    prop: primary size: 0 val: 
+    prop: ibm,psi-links size: 8 val: 0000000010000000
+  node: ibm,opal
+    node: leds
+    prop: led-mode size: 10 val: 6c696768747061746800
+      node: U8247.22L.1010C8A
+      prop: led-types size: 10 val: 617474656e74696f6e00
+  node: interrupt-controller@3ffff80020000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 0000002000000008
   prop: interrupt-controller size: 0 val: 
@@ -1622,6 +1455,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80030000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 0000003000000008
   prop: interrupt-controller size: 0 val: 
@@ -1633,6 +1467,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80060000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 0000006000000008
   prop: interrupt-controller size: 0 val: 
@@ -1644,6 +1479,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80068000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 0000006800000008
   prop: interrupt-controller size: 0 val: 
@@ -1655,6 +1491,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80070000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 0000007000000008
   prop: interrupt-controller size: 0 val: 
@@ -1666,6 +1503,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80128000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 000000a800000008
   prop: interrupt-controller size: 0 val: 
@@ -1677,6 +1515,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80130000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 000000b000000008
   prop: interrupt-controller size: 0 val: 
@@ -1688,6 +1527,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80160000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 000000e000000008
   prop: interrupt-controller size: 0 val: 
@@ -1699,6 +1539,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80168000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 000000e800000008
   prop: interrupt-controller size: 0 val: 
@@ -1710,6 +1551,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80170000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 000000f000000008
   prop: interrupt-controller size: 0 val: 
@@ -1721,6 +1563,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80828000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 0000082800000008
   prop: interrupt-controller size: 0 val: 
@@ -1732,6 +1575,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80830000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 0000083000000008
   prop: interrupt-controller size: 0 val: 
@@ -1743,6 +1587,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80860000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 0000086000000008
   prop: interrupt-controller size: 0 val: 
@@ -1754,6 +1599,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80868000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 0000086800000008
   prop: interrupt-controller size: 0 val: 
@@ -1765,6 +1611,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80870000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 0000087000000008
   prop: interrupt-controller size: 0 val: 
@@ -1776,6 +1623,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80920000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 000008a000000008
   prop: interrupt-controller size: 0 val: 
@@ -1787,6 +1635,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80928000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 000008a800000008
   prop: interrupt-controller size: 0 val: 
@@ -1798,6 +1647,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80930000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 000008b000000008
   prop: interrupt-controller size: 0 val: 
@@ -1809,6 +1659,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80968000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 000008e800000008
   prop: interrupt-controller size: 0 val: 
@@ -1820,6 +1671,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: interrupt-controller@3ffff80970000
   prop: compatible size: 28 val: 69626d2c7070632d786963700049424d2c706f776572372d69637000
   prop: ibm,interrupt-server-ranges size: 8 val: 000008f000000008
   prop: interrupt-controller size: 0 val: 
@@ -1831,30 +1683,322 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: #interrupt-cells size: 4 val: 00000001
   prop: device_type size: 40 val: 506f77657250432d45787465726e616c2d496e746572727570742d50726573656e746174696f
   6e00
+  node: ipl-params
   prop: #address-cells size: 4 val: 00000000
   prop: #size-cells size: 4 val: 00000000
-    prop: #address-cells size: 4 val: 00000000
+    node: fsp-serial
+    prop: #address-cells size: 4 val: 00000001
     prop: #size-cells size: 4 val: 00000000
-    prop: ibm,sys-model size: 5 val: 2032324c00
+      node: serial@2a00
+      prop: reg size: 4 val: 00002a00
+      prop: ibm,loc-code size: 27 val: 55373843422e3030312e575a533030414c2d50312d43312d543100
+      prop: compatible size: 15 val: 69626d2c6673702d73657269616c00
+    node: ipl-params
     prop: #address-cells size: 4 val: 00000000
     prop: #size-cells size: 4 val: 00000000
     prop: cec-ipl-side size: 5 val: 7065726d00
     prop: fsp-ipl-side size: 5 val: 7065726d00
     prop: os-ipl-mode size: 4 val: 00000000
     prop: cec-major-type size: 5 val: 636f6c6400
-    prop: #address-cells size: 4 val: 00000001
+    node: platform-dump
+    node: sys-params
+    prop: #address-cells size: 4 val: 00000000
     prop: #size-cells size: 4 val: 00000000
-      prop: reg size: 4 val: 00002a00
-      prop: ibm,loc-code size: 27 val: 55373843422e3030312e575a533030414c2d50312d43312d543100
-      prop: compatible size: 15 val: 69626d2c6673702d73657269616c00
+    prop: ibm,sys-model size: 5 val: 2032324c00
+  node: memory@0
   prop: device_type size: 7 val: 6d656d6f727900
   prop: ibm,chip-id size: 4 val: 00000000
   prop: reg size: 16 val: 00000000000000000000001000000000
   prop: skiboot,share-id size: 4 val: 00000000
+  node: memory@1000000000
   prop: device_type size: 7 val: 6d656d6f727900
   prop: ibm,chip-id size: 4 val: 00000010
   prop: reg size: 16 val: 00000010000000000000001000000000
   prop: skiboot,share-id size: 4 val: 00000001
+  node: vpd
+  prop: compatible size: 16 val: 69626d2c6f70616c2d76332d76706400
+  prop: ibm,vpd size: 184 val: 84b0005254045653595344520653595354454d42520253305345073130313043384153470720
+  202020202020544d08383234372d32324c544e0820202020202020204d4e072020202020202049
+  440220205355060004ac1a43544e4e1020202020202020202020202020202020524704f0c00000
+  52420433202020574e0c43303530373630373830443246562053563831305f3032390000000000
+  0000000000000000000000000000000000005046030000007800000000
+  prop: ibm,loc-code size: 18 val: 55383234372e32324c2e3130313043384100
+    node: root-node-vpd@a000
+    prop: ibm,loc-code size: 18 val: 55383234372e32324c2e3130313043384100
+    prop: fru-type size: 2 val: 5656
+      node: enclosure-fault-led@a300
+      prop: ibm,loc-code size: 18 val: 55373843422e3030312e575a533030414c00
+      prop: fru-type size: 2 val: 4546
+      node: enclosure-led@a200
+      prop: ibm,loc-code size: 18 val: 55373843422e3030312e575a533030414c00
+      prop: fru-type size: 2 val: 4549
+      node: enclosure@1e00
+      prop: ibm,loc-code size: 18 val: 55373843422e3030312e575a533030414c00
+      prop: fru-type size: 2 val: 4556
+      prop: ibm,vpd size: 252 val: 848c0052540456494e49445210492f4f204241434b504c414e4520202043450131565a02
+      3032464e0730304532303232504e0730304533393937534e0c594c3130554634324c303133
+      4343043243443650520821000000000000004845043030303243540480f300264857020004
+      4233060000000000014234010042370c000000000000000000000000504602000078841c00
+      5254044c585230565a0230314c580831000401003000425046020000788444005254045643
+      454e445206434543202020534507575a533030414c544d0820202020202020204643083738
+      43422d30303152470400000000524204202020205046030000007800000000
+      prop: fru-number size: 8 val: 3030453230323200
+      prop: serial-number size: 13 val: 594c3130554634324c30313300
+      prop: part-number size: 8 val: 3030453339393700
+      prop: ccin size: 5 val: 3243443600
+      prop: description size: 19 val: 53797374656d20706c616e6172203253325500
+        node: air-mover@3a00
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413100
+        prop: fru-type size: 2 val: 414d
+        node: air-mover@3a01
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413300
+        prop: fru-type size: 2 val: 414d
+        node: air-mover@3a02
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413400
+        prop: fru-type size: 2 val: 414d
+        node: air-mover@3a03
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413600
+        prop: fru-type size: 2 val: 414d
+        node: air-mover@3a04
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413200
+        prop: fru-type size: 2 val: 414d
+        node: air-mover@3a05
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d413500
+        prop: fru-type size: 2 val: 414d
+        node: backplane@800
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d503100
+        prop: fru-type size: 2 val: 4250
+        prop: ibm,vpd size: 180 val: 848c0052540456494e49445210492f4f204241434b504c414e4520202043450131565a
+        023032464e0730304532303232504e0730304533393937534e0c594c3130554634324c30
+        31334343043243443650520821000000000000004845043030303243540480f300264857
+        0200044233060000000000014234010042370c0000000000000000000000005046020000
+        78841c005254044c585230565a0230314c58083100040100300042504602000078000000
+        00
+        prop: fru-number size: 8 val: 3030453230323200
+        prop: serial-number size: 13 val: 594c3130554634324c30313300
+        prop: part-number size: 8 val: 3030453339393700
+        prop: ccin size: 5 val: 3243443600
+        prop: description size: 19 val: 53797374656d20706c616e6172203253325500
+          node: anchor-card@500
+          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43313300
+          prop: fru-type size: 2 val: 4156
+          prop: ibm,vpd size: 212 val: 84cc0052540456494e49445210414e43484f52202020202020202020204345013156
+          5a023031464e0730304533343237504e0730304532313438534e0c594c313031313432
+          523030304343043532344450520881003000000000004845043030313043540440b400
+          0048570200014233060000000000014234010042370c00000000000000000000000042
+          393c43534055110351dd6da2535049652f45748f7b044d31c531833edf1e75724d328d
+          48c1b4246b02ee4d3367b454d8489f3a254d340dadc44124b5edd55046030000007800
+          000000
+          prop: fru-number size: 8 val: 3030453334323700
+          prop: serial-number size: 13 val: 594c3130313134325230303000
+          prop: part-number size: 8 val: 3030453231343800
+          prop: ccin size: 5 val: 3532344400
+          prop: description size: 36 val: 53797374656d20416e63686f722043617264202d2049424d20506f77657220383232
+          4c00
+          node: backplane-extender@900
+          prop: ibm,loc-code size: 24 val: 55373843422e3030312e575a533030414c2d50312d433100
+          prop: fru-type size: 2 val: 4258
+          prop: ibm,vpd size: 136 val: 84800052540456494e494452104e415449564520492f4f2043415244204345013156
+          5a023031464e0730304532313634504e0730304533383131534e0c594c313055463432
+          4c303031434304324230424845043030303143540480b5000048570200014233060000
+          000000004234010042370c000000000000000000000000504601007800000000
+          prop: fru-number size: 8 val: 3030453231363400
+          prop: serial-number size: 13 val: 594c3130554634324c30303100
+          prop: part-number size: 8 val: 3030453338313100
+          prop: ccin size: 5 val: 3242304200
+          prop: description size: 16 val: 4e617469766520492f4f204361726400
+            node: serial-connector@2a00
+            prop: ibm,loc-code size: 27 val: 55373843422e3030312e575a533030414c2d50312d43312d543100
+            prop: fru-type size: 2 val: 4353
+            node: usb-connector@2901
+            prop: ibm,loc-code size: 27 val: 55373843422e3030312e575a533030414c2d50312d43312d543200
+            prop: fru-type size: 2 val: 4355
+            node: usb-connector@2904
+            prop: ibm,loc-code size: 27 val: 55373843422e3030312e575a533030414c2d50312d43312d543300
+            prop: fru-type size: 2 val: 4355
+          node: ethernet-connector@2800
+          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d54312000
+          prop: fru-type size: 2 val: 4345
+          node: ethernet-connector@2801
+          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d54322000
+          prop: fru-type size: 2 val: 4345
+          node: ms-dimm@d000
+          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43313600
+          prop: fru-type size: 2 val: 4d53
+          prop: ibm,vpd size: 156 val: 84940052540456494e4944521049424d2033324742204d5320202020204345013156
+          5a023132464e0730304a41363634504e0730304a41363634534e0c594831304d553432
+          44314139434304333145395052084900000000010000535a0730303332373638484504
+          303030314354040000000048570201004233060000000000004234010042370c000000
+          0000000000000000005046007800000000
+          prop: fru-number size: 8 val: 30304a4136363400
+          prop: serial-number size: 13 val: 594831304d5534324431413900
+          prop: part-number size: 8 val: 30304a4136363400
+          prop: ccin size: 5 val: 3331453900
+          prop: description size: 11 val: 33324742204344494d4d00
+          prop: ibm,chip-id size: 4 val: 00000000
+          prop: ibm,memory-bus-frequency size: 8 val: 0000000000000000
+          prop: size size: 8 val: 3030333237363800
+          node: ms-dimm@d002
+          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43313800
+          prop: fru-type size: 2 val: 4d53
+          prop: ibm,vpd size: 156 val: 84940052540456494e4944521049424d2033324742204d5320202020204345013156
+          5a023132464e0730304a41363634504e0730304a41363634534e0c594831304d553432
+          44314136434304333145395052084900000000010000535a0730303332373638484504
+          303030314354040000000048570201004233060000000000004234010042370c000000
+          0000000000000000005046007800000000
+          prop: fru-number size: 8 val: 30304a4136363400
+          prop: serial-number size: 13 val: 594831304d5534324431413600
+          prop: part-number size: 8 val: 30304a4136363400
+          prop: ccin size: 5 val: 3331453900
+          prop: description size: 11 val: 33324742204344494d4d00
+          prop: ibm,chip-id size: 4 val: 00000000
+          prop: ibm,memory-bus-frequency size: 8 val: 0000000000000000
+          prop: size size: 8 val: 3030333237363800
+          node: ms-dimm@d008
+          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43323400
+          prop: fru-type size: 2 val: 4d53
+          prop: ibm,vpd size: 156 val: 84940052540456494e4944521049424d2033324742204d5320202020204345013156
+          5a023132464e0730304a41363634504e0730304a41363634534e0c594831304d553432
+          43313754434304333145395052084900000000010000535a0730303332373638484504
+          303030314354040000000048570201004233060000000000004234010042370c000000
+          0000000000000000005046007800000000
+          prop: fru-number size: 8 val: 30304a4136363400
+          prop: serial-number size: 13 val: 594831304d5534324331375400
+          prop: part-number size: 8 val: 30304a4136363400
+          prop: ccin size: 5 val: 3331453900
+          prop: description size: 11 val: 33324742204344494d4d00
+          prop: ibm,chip-id size: 4 val: 00000010
+          prop: ibm,memory-bus-frequency size: 8 val: 0000000000000000
+          prop: size size: 8 val: 3030333237363800
+          node: ms-dimm@d00a
+          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43323600
+          prop: fru-type size: 2 val: 4d53
+          prop: ibm,vpd size: 156 val: 84940052540456494e4944521049424d2033324742204d5320202020204345013156
+          5a023132464e0730304a41363634504e0730304a41363634534e0c594831304d553432
+          43314148434304333145395052084900000000010000535a0730303332373638484504
+          303030314354040000000048570201004233060000000000004234010042370c000000
+          0000000000000000005046007800000000
+          prop: fru-number size: 8 val: 30304a4136363400
+          prop: serial-number size: 13 val: 594831304d5534324331414800
+          prop: part-number size: 8 val: 30304a4136363400
+          prop: ccin size: 5 val: 3331453900
+          prop: description size: 11 val: 33324742204344494d4d00
+          prop: ibm,chip-id size: 4 val: 00000010
+          prop: ibm,memory-bus-frequency size: 8 val: 0000000000000000
+          prop: size size: 8 val: 3030333237363800
+          node: processor@1000
+          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333200
+          prop: fru-type size: 2 val: 5046
+          prop: ibm,vpd size: 145 val: 848c0052540456494e4944521031302d5741592050524f432043554f44464e073030
+          4658353138504e0730304658373430534e0c5941313933323039363935314343043534
+          4538484504303030314354040000000048570200014233060000000000004234010042
+          370c0000000000000000000000005052083500500122008001565a0230314345013150
+          460200007800
+          prop: fru-number size: 8 val: 3030465835313800
+          prop: serial-number size: 13 val: 59413139333230393639353100
+          prop: part-number size: 8 val: 3030465837343000
+          prop: ccin size: 5 val: 3534453800
+          prop: description size: 8 val: 556e6b6e6f776e00
+          node: processor@1001
+          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333200
+          prop: fru-type size: 2 val: 5046
+          prop: ibm,vpd size: 145 val: 848c0052540456494e4944521031302d5741592050524f432043554f44464e073030
+          4658353138504e0730304658373430534e0c5941313933323039363935314343043534
+          4538484504303030314354040000000048570200014233060000000000004234010042
+          370c0000000000000000000000005052083500500122008001565a0230314345013150
+          460200007800
+          prop: fru-number size: 8 val: 3030465835313800
+          prop: serial-number size: 13 val: 59413139333230393639353100
+          prop: part-number size: 8 val: 3030465837343000
+          prop: ccin size: 5 val: 3534453800
+          prop: description size: 8 val: 556e6b6e6f776e00
+          node: processor@1002
+          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333300
+          prop: fru-type size: 2 val: 5046
+          prop: ibm,vpd size: 145 val: 848c0052540456494e4944521031302d5741592050524f432043554f44464e073030
+          4658353138504e0730304658373430534e0c5941313933323039363935304343043534
+          4538484504303030314354040000000048570200014233060000000000004234010042
+          370c0000000000000000000000005052083500500122008001565a0230314345013150
+          460200007800
+          prop: fru-number size: 8 val: 3030465835313800
+          prop: serial-number size: 13 val: 59413139333230393639353000
+          prop: part-number size: 8 val: 3030465837343000
+          prop: ccin size: 5 val: 3534453800
+          prop: description size: 8 val: 556e6b6e6f776e00
+          node: processor@1003
+          prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333300
+          prop: fru-type size: 2 val: 5046
+          prop: ibm,vpd size: 145 val: 848c0052540456494e4944521031302d5741592050524f432043554f44464e073030
+          4658353138504e0730304658373430534e0c5941313933323039363935304343043534
+          4538484504303030314354040000000048570200014233060000000000004234010042
+          370c0000000000000000000000005052083500500122008001565a0230314345013150
+          460200007800
+          prop: fru-number size: 8 val: 3030465835313800
+          prop: serial-number size: 13 val: 59413139333230393639353000
+          prop: part-number size: 8 val: 3030465837343000
+          prop: ccin size: 5 val: 3534453800
+          prop: description size: 8 val: 556e6b6e6f776e00
+          node: usb-connector@2900
+          prop: ibm,loc-code size: 24 val: 55373843422e3030312e575a533030414c2d50312d543500
+          prop: fru-type size: 2 val: 4355
+          node: usb-connector@2902
+          prop: ibm,loc-code size: 24 val: 55373843422e3030312e575a533030414c2d50312d543600
+          prop: fru-type size: 2 val: 4355
+          node: usb-connector@2903
+          prop: ibm,loc-code size: 24 val: 55373843422e3030312e575a533030414c2d50312d543300
+          prop: fru-type size: 2 val: 4355
+          node: usb-connector@2905
+          prop: ibm,loc-code size: 24 val: 55373843422e3030312e575a533030414c2d50312d543400
+          prop: fru-type size: 2 val: 4355
+        node: dasd-backplane@2400
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d503200
+        prop: fru-type size: 2 val: 4442
+        node: dasd-backplane@2401
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d503200
+        prop: fru-type size: 2 val: 4442
+        node: op-panel@300
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d443100
+        prop: fru-type size: 2 val: 4f50
+        prop: ibm,vpd size: 136 val: 84800052540456494e49445210434543204f502050414e454c2020202043450131565a
+        023032464e0730304531393636504e0730304533373730534e0c594c3130554634313830
+        3046434304324230384845043030303143540480b5000048570200034233060000000000
+        004234010042370c000000000000000000000000504601007800000000
+        prop: fru-number size: 8 val: 3030453139363600
+        prop: serial-number size: 13 val: 594c3130554634313830304600
+        prop: part-number size: 8 val: 3030453337373000
+        prop: ccin size: 5 val: 3242303800
+        prop: description size: 8 val: 556e6b6e6f776e00
+        node: power-supply@3100
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d453100
+        prop: fru-type size: 2 val: 5053
+        node: power-supply@3101
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d453200
+        prop: fru-type size: 2 val: 5053
+        node: service-processor@200
+        prop: ibm,loc-code size: 21 val: 55373843422e3030312e575a533030414c2d503100
+        prop: fru-type size: 2 val: 5350
+        prop: ibm,vpd size: 332 val: 848c0052540456494e49445210492f4f204241434b504c414e4520202043450131565a
+        023032464e0730304532303232504e0730304533393937534e0c594c3130554634324c30
+        31334343043243443650520821000000000000004845043030303243540480f300264857
+        0200044233060000000000014234010042370c0000000000000000000000005046020000
+        78841c005254044c585230565a0230314c58083100040100300042504602000078845000
+        5254045652313044521046535020202020202020202020202020464704564e535044430f
+        424420323031323038323330383030464c14503120202020202020202020202020202020
+        202050460300000078844000525404565731304452104653502056573130202020202020
+        202047442000000000000000000000000000000000000000000000000000000000000000
+        005046007800000000
+        prop: fru-number size: 8 val: 3030453230323200
+        prop: serial-number size: 13 val: 594c3130554634324c30313300
+        prop: part-number size: 8 val: 3030453339393700
+        prop: ccin size: 5 val: 3243443600
+        prop: description size: 19 val: 53797374656d20706c616e6172203253325500
+      node: root-node-vpd@a001
+      prop: ibm,loc-code size: 18 val: 55383234372e32324c2e3130313043384100
+      prop: fru-type size: 2 val: 5656
+      node: system-vpd@1c00
+      prop: ibm,loc-code size: 18 val: 55383234372e32324c2e3130313043384100
+      prop: fru-type size: 2 val: 5356
+  node: xscom@3c0000000000
   prop: ibm,chip-id size: 4 val: 00000000
   prop: ibm,proc-chip-id size: 4 val: 00000000
   prop: #address-cells size: 4 val: 00000001
@@ -3549,16 +3693,15 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: ibm,hw-card-id size: 4 val: 00000000
   prop: ibm,hw-module-id size: 4 val: 00000000
   prop: ibm,mem-interleave-scope size: 4 val: 00000000
-    prop: reg size: 8 val: 02010c0000000010
-    prop: compatible size: 31 val: 69626d2c706f776572372d70736968622d780069626d2c70736968622d7800
-    prop: boot-link size: 0 val: 
-    prop: status size: 3 val: 6f6b00
+    node: chiptod@40000
     prop: reg size: 8 val: 0004000000000034
     prop: compatible size: 37 val: 69626d2c706f7765722d63686970746f640069626d2c706f776572372d63686970746f6400
     
     prop: primary size: 0 val: 
+    node: nx@2010000
     prop: reg size: 8 val: 0201000000004000
     prop: compatible size: 27 val: 69626d2c706f7765722d6e780069626d2c706f776572372d6e7800
+    node: pbcq@2012000
     prop: reg size: 24 val: 00200102200000000020010905000000003c010915000000
     prop: compatible size: 16 val: 69626d2c706f776572382d7062637100
     prop: ibm,phb-index size: 4 val: 00000000
@@ -3566,6 +3709,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333200
     prop: ibm,use-ab-detect size: 0 val: 
     prop: ibm,lane-eq size: 32 val: 7777777777777777777777777777777777777777777777777777777777777777
+    node: pbcq@2012400
     prop: reg size: 24 val: 00240102200000000024010905000000403c010915000000
     prop: compatible size: 16 val: 69626d2c706f776572382d7062637100
     prop: ibm,phb-index size: 4 val: 00000001
@@ -3573,6 +3717,12 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333200
     prop: ibm,use-ab-detect size: 0 val: 
     prop: ibm,lane-eq size: 32 val: 7777777777777777777777777777777700000000000000000000000000000000
+    node: psihb@2010c00
+    prop: reg size: 8 val: 02010c0000000010
+    prop: compatible size: 31 val: 69626d2c706f776572372d70736968622d780069626d2c70736968622d7800
+    prop: boot-link size: 0 val: 
+    prop: status size: 3 val: 6f6b00
+  node: xscom@3c0800000000
   prop: ibm,chip-id size: 4 val: 00000001
   prop: ibm,proc-chip-id size: 4 val: 00000001
   prop: #address-cells size: 4 val: 00000001
@@ -5267,13 +5417,14 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: ibm,hw-card-id size: 4 val: 00000000
   prop: ibm,hw-module-id size: 4 val: 00000000
   prop: ibm,mem-interleave-scope size: 4 val: 00000000
-    prop: reg size: 8 val: 02010c0000000010
-    prop: compatible size: 31 val: 69626d2c706f776572372d70736968622d780069626d2c70736968622d7800
+    node: chiptod@40000
     prop: reg size: 8 val: 0004000000000034
     prop: compatible size: 37 val: 69626d2c706f7765722d63686970746f640069626d2c706f776572372d63686970746f6400
     
+    node: nx@2010000
     prop: reg size: 8 val: 0201000000004000
     prop: compatible size: 27 val: 69626d2c706f7765722d6e780069626d2c706f776572372d6e7800
+    node: pbcq@2012000
     prop: reg size: 24 val: 00200102200000000020010905000000003c010915000000
     prop: compatible size: 16 val: 69626d2c706f776572382d7062637100
     prop: ibm,phb-index size: 4 val: 00000000
@@ -5281,6 +5432,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333200
     prop: ibm,use-ab-detect size: 0 val: 
     prop: ibm,lane-eq size: 32 val: 7777777777777777777777777777777777777777777777777777777777777777
+    node: pbcq@2012400
     prop: reg size: 24 val: 00240102200000000024010905000000403c010915000000
     prop: compatible size: 16 val: 69626d2c706f776572382d7062637100
     prop: ibm,phb-index size: 4 val: 00000001
@@ -5288,6 +5440,10 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333200
     prop: ibm,use-ab-detect size: 0 val: 
     prop: ibm,lane-eq size: 32 val: 6868686868686868686868686868686800000000000000000000000000000000
+    node: psihb@2010c00
+    prop: reg size: 8 val: 02010c0000000010
+    prop: compatible size: 31 val: 69626d2c706f776572372d70736968622d780069626d2c70736968622d7800
+  node: xscom@3c8000000000
   prop: ibm,chip-id size: 4 val: 00000010
   prop: ibm,proc-chip-id size: 4 val: 00000002
   prop: #address-cells size: 4 val: 00000001
@@ -6982,15 +7138,15 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: ibm,hw-card-id size: 4 val: 00000000
   prop: ibm,hw-module-id size: 4 val: 00000001
   prop: ibm,mem-interleave-scope size: 4 val: 00000000
-    prop: reg size: 8 val: 02010c0000000010
-    prop: compatible size: 31 val: 69626d2c706f776572372d70736968622d780069626d2c70736968622d7800
-    prop: status size: 3 val: 6f6b00
+    node: chiptod@40000
     prop: reg size: 8 val: 0004000000000034
     prop: compatible size: 37 val: 69626d2c706f7765722d63686970746f640069626d2c706f776572372d63686970746f6400
     
     prop: secondary size: 0 val: 
+    node: nx@2010000
     prop: reg size: 8 val: 0201000000004000
     prop: compatible size: 27 val: 69626d2c706f7765722d6e780069626d2c706f776572372d6e7800
+    node: pbcq@2012000
     prop: reg size: 24 val: 00200102200000000020010905000000003c010915000000
     prop: compatible size: 16 val: 69626d2c706f776572382d7062637100
     prop: ibm,phb-index size: 4 val: 00000000
@@ -6998,6 +7154,11 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333300
     prop: ibm,use-ab-detect size: 0 val: 
     prop: ibm,lane-eq size: 32 val: 7777777777777777777777777777777777777777777777777777777777777777
+    node: psihb@2010c00
+    prop: reg size: 8 val: 02010c0000000010
+    prop: compatible size: 31 val: 69626d2c706f776572372d70736968622d780069626d2c70736968622d7800
+    prop: status size: 3 val: 6f6b00
+  node: xscom@3c8800000000
   prop: ibm,chip-id size: 4 val: 00000011
   prop: ibm,proc-chip-id size: 4 val: 00000003
   prop: #address-cells size: 4 val: 00000001
@@ -8692,13 +8853,14 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: ibm,hw-card-id size: 4 val: 00000000
   prop: ibm,hw-module-id size: 4 val: 00000001
   prop: ibm,mem-interleave-scope size: 4 val: 00000000
-    prop: reg size: 8 val: 02010c0000000010
-    prop: compatible size: 31 val: 69626d2c706f776572372d70736968622d780069626d2c70736968622d7800
+    node: chiptod@40000
     prop: reg size: 8 val: 0004000000000034
     prop: compatible size: 37 val: 69626d2c706f7765722d63686970746f640069626d2c706f776572372d63686970746f6400
     
+    node: nx@2010000
     prop: reg size: 8 val: 0201000000004000
     prop: compatible size: 27 val: 69626d2c706f7765722d6e780069626d2c706f776572372d6e7800
+    node: pbcq@2012000
     prop: reg size: 24 val: 00200102200000000020010905000000003c010915000000
     prop: compatible size: 16 val: 69626d2c706f776572382d7062637100
     prop: ibm,phb-index size: 4 val: 00000000
@@ -8706,6 +8868,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333300
     prop: ibm,use-ab-detect size: 0 val: 
     prop: ibm,lane-eq size: 32 val: 7777777777777777777777777777777777777777777777777777777777777777
+    node: pbcq@2012400
     prop: reg size: 24 val: 00240102200000000024010905000000403c010915000000
     prop: compatible size: 16 val: 69626d2c706f776572382d7062637100
     prop: ibm,phb-index size: 4 val: 00000001
@@ -8713,12 +8876,6 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
     prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333300
     prop: ibm,use-ab-detect size: 0 val: 
     prop: ibm,lane-eq size: 32 val: 7777777777777777777777777777777700000000000000000000000000000000
-  prop: #address-cells size: 4 val: 00000001
-  prop: #size-cells size: 4 val: 00000000
-    prop: reg size: 4 val: 00000000
-    prop: compatible size: 17 val: 69626d2c6673700069626d2c6673703200
-    prop: reg-offset size: 4 val: b0011000
-    prop: hw-version size: 4 val: 00000002
-    prop: sw-version size: 4 val: 00000001
-    prop: primary size: 0 val: 
-    prop: ibm,psi-links size: 8 val: 0000000010000000
+    node: psihb@2010c00
+    prop: reg size: 8 val: 02010c0000000010
+    prop: compatible size: 31 val: 69626d2c706f776572372d70736968622d780069626d2c70736968622d7800

@@ -15,6 +15,7 @@
  */
 
 #include <skiboot.h>
+#include <stdlib.h>
 
 /* Override this for testing. */
 #define is_rodata(p) fake_is_rodata(p)
@@ -32,6 +33,7 @@ static inline bool fake_is_rodata(const void *p)
 #include "../device.c"
 #include "../../ccan/list/list.c" /* For list_check */
 #include <assert.h>
+#include "../../test/dt_common.c"
 
 static void check_path(const struct dt_node *node, const char * expected_path)
 {
@@ -43,6 +45,49 @@ static void check_path(const struct dt_node *node, const char * expected_path)
 	assert(strcmp(path, expected_path) == 0);
 	free(path);
 }
+
+/* constructs a random nodes only device tree */
+static void build_tree(int max_depth, int min_depth, struct dt_node *parent)
+{
+	char name[64];
+	int i;
+
+	for (i = 0; i < max_depth; i++) {
+		struct dt_node *new;
+
+		snprintf(name, sizeof name, "prefix@%.8x", rand());
+
+		new = dt_new(parent, name);
+
+		if(max_depth > min_depth)
+			build_tree(max_depth - 1, min_depth, new);
+	}
+}
+
+static bool is_sorted(const struct dt_node *root)
+{
+	struct dt_node *end = list_tail(&root->children, struct dt_node, list);
+	struct dt_node *node;
+
+	dt_for_each_child(root, node) {
+		struct dt_node *next =
+			list_entry(node->list.next, struct dt_node, list);
+
+		/* current node must be "less than" the next node */
+		if (node != end && dt_cmp_subnodes(node, next) != -1) {
+			printf("nodes '%s' and '%s' out of order\n",
+				node->name, next->name);
+
+			return false;
+		}
+
+		if (!is_sorted(node))
+			return false;
+	}
+
+	return true;
+}
+
 
 int main(void)
 {
@@ -297,5 +342,31 @@ int main(void)
 	assert(dt_find_by_phandle(root, 0xf0f) == NULL);
 
 	dt_free(root);
+
+	/* basic sorting */
+	root = dt_new_root("rewt");
+	dt_new(root, "a@1");
+	dt_new(root, "a@2");
+	dt_new(root, "a@3");
+	dt_new(root, "a@4");
+	dt_new(root, "b@4");
+	dt_new(root, "c@4");
+
+	assert(is_sorted(root));
+
+	dt_free(root);
+
+	/* Test child node sorting */
+	root = dt_new_root("test root");
+	build_tree(5, 3, root);
+
+	if (!is_sorted(root)) {
+		dump_dt(root, 1, false);
+	}
+	assert(is_sorted(root));
+
+	dt_free(root);
+
 	return 0;
 }
+

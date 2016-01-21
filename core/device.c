@@ -65,21 +65,69 @@ struct dt_node *dt_new_root(const char *name)
 	return new_node(name);
 }
 
+static const char *get_unitname(const struct dt_node *node)
+{
+	const char *c = strchr(node->name, '@');
+
+	if (!c)
+		return NULL;
+
+	return c + 1;
+}
+
+int dt_cmp_subnodes(const struct dt_node *a, const struct dt_node *b)
+{
+	const char *a_unit = get_unitname(a);
+	const char *b_unit = get_unitname(b);
+
+	ptrdiff_t basenamelen = a_unit - a->name;
+
+	/* sort hex unit addresses by number */
+	if (a_unit && b_unit && !strncmp(a->name, b->name, basenamelen)) {
+		unsigned long long a_num, b_num;
+		char *a_end, *b_end;
+
+		a_num = strtoul(a_unit, &a_end, 16);
+		b_num = strtoul(b_unit, &b_end, 16);
+
+		/* only compare if the unit addr parsed correctly */
+		if (*a_end == 0 && *b_end == 0)
+			return (a_num > b_num) - (a_num < b_num);
+	}
+
+	return strcmp(a->name, b->name);
+}
+
 bool dt_attach_root(struct dt_node *parent, struct dt_node *root)
 {
 	struct dt_node *node;
 
-	/* Look for duplicates */
-
 	assert(!root->parent);
+
+	if (list_empty(&parent->children)) {
+		list_add(&parent->children, &root->list);
+		root->parent = parent;
+
+		return true;
+	}
+
 	dt_for_each_child(parent, node) {
-		if (!strcmp(node->name, root->name)) {
+		int cmp = dt_cmp_subnodes(node, root);
+
+		/* Look for duplicates */
+		if (cmp == 0) {
 			prerror("DT: %s failed, duplicate %s\n",
 				__func__, root->name);
 			return false;
 		}
+
+		/* insert before the first node that's larger
+		 * the the node we're inserting */
+		if (cmp > 0)
+			break;
 	}
-	list_add_tail(&parent->children, &root->list);
+
+	list_add_before(&parent->children, &root->list, &node->list);
 	root->parent = parent;
 
 	return true;

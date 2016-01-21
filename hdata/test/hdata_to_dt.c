@@ -99,6 +99,7 @@ struct dt_node *add_ics_node(void)
 #include "../../core/vpd.c"
 #include "../../core/device.c"
 #include "../../core/chip.c"
+#include "../../test/dt_common.c"
 
 #include <err.h>
 
@@ -116,56 +117,16 @@ static void *ntuple_addr(const struct spira_ntuple *n)
 	return spira_heap + ((unsigned long)addr - base_addr);
 }
 
-static void indent_num(unsigned indent)
-{
-	unsigned int i;
-
-	for (i = 0; i < indent; i++)
-		putc(' ', stdout);
-}
-
-static void dump_val(unsigned indent, const void *prop, size_t size)
-{
-	size_t i;
-	int width = 78 - indent;
-
-	for (i = 0; i < size; i++) {
-		printf("%02x", ((unsigned char *)prop)[i]);
-		width-=2;
-		if(width < 2) {
-			printf("\n");
-			indent_num(indent);
-			width = 80 - indent;
-		}
-	}
-}
-
 /* Make sure valgrind knows these are undefined bytes. */
 static void undefined_bytes(void *p, size_t len)
 {
 	VALGRIND_MAKE_MEM_UNDEFINED(p, len);
 }
 
-static void dump_dt(const struct dt_node *root, unsigned indent)
-{
-	const struct dt_node *i;
-	const struct dt_property *p;
-
-	list_for_each(&root->properties, p, list) {
-		indent_num(indent);
-		printf("prop: %s size: %zu val: ", p->name, p->len);
-		dump_val(indent, p->prop, p->len);
-		printf("\n");
-	}
-
-	list_for_each(&root->children, i, list)
-		dump_dt(i, indent + 2);
-}
-
 int main(int argc, char *argv[])
 {
 	int fd, r;
-	bool verbose = false, quiet = false;
+	bool verbose = false, quiet = false, tree_only = false;
 
 	while (argv[1]) {
 		if (strcmp(argv[1], "-v") == 0) {
@@ -176,12 +137,16 @@ int main(int argc, char *argv[])
 			quiet = true;
 			argv++;
 			argc--;
+		} else if (strcmp(argv[1], "-t") == 0) {
+			tree_only = true;
+			argv++;
+			argc--;
 		} else
 			break;
 	}
 
 	if (argc != 3)
-		errx(1, "Usage: hdata [-v|-q] <spira-dump> <heap-dump>");
+		errx(1, "Usage: hdata [-v|-q|-t] <spira-dump> <heap-dump>");
 
 	/* Copy in spira dump (assumes little has changed!). */
 	fd = open(argv[1], O_RDONLY);
@@ -224,7 +189,7 @@ int main(int argc, char *argv[])
 	parse_hdat(false, 0);
 
 	if (!quiet)
-		dump_dt(dt_root, 0);
+		dump_dt(dt_root, 0, !tree_only);
 
 	dt_free(dt_root);
 	return 0;
