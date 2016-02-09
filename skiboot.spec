@@ -1,5 +1,5 @@
 Name:		opal-prd
-Version:	5.1.12
+Version:	5.1.13
 Release:	1%{?dist}
 Summary:	OPAL Processor Recovery Diagnostics Daemon
 
@@ -50,10 +50,10 @@ services to the OS (Linux) on IBM Power and OpenPower systems.
 
 %build
 SKIBOOT_VERSION=%version CROSS= make V=1 %{?_smp_mflags}
-OPAL_PRD_VERSION=%version make %{?_smp_mflags} V=1 -C external/opal-prd
-GARD_VERSION=%version make V=1 %{?_smp_mflags} -C external/gard
-PFLASH_VERSION=%version make V=1 %{?_smp_mflags} -C external/pflash
-make V=1 %{?_smp_mflags} -C external/xscom-utils
+OPAL_PRD_VERSION=%version make V=1 -C external/opal-prd
+GARD_VERSION=%version make V=1 -C external/gard
+PFLASH_VERSION=%version make V=1 -C external/pflash
+make V=1 -C external/xscom-utils
 
 %install
 make -C external/opal-prd install DESTDIR=%{buildroot} prefix=/usr
@@ -111,5 +111,8 @@ fi
 %{_datadir}/qemu/
 
 %changelog
+* Tue Feb 09 2016 Vasant Hegde <hegdevasant@linux.vnet.ibm.com> - 5.1.13
+- Update to latest upstream release
+
 * Mon Nov 23 2015 Vasant Hegde <hegdevasant@linux.vnet.ibm.com> - 5.1.12
 - initial upstream spec file
