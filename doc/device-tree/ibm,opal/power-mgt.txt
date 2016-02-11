@@ -55,6 +55,17 @@ These properties list a voltage-identifier of each of the pstates listed in
 ibm,pstate-ids for the Vcs and Vdd values used for that pstate. Each VID is a
 single byte.
 
+ibm,pstate-ultra-turbo ibm,pstate-turbo
+---------------------------------------
+
+These properties are added when ultra-turbo(WOF) is enabled. These properties
+give the max turbo and max ultra-turbo pstate.
+
+ibm,pstate-core-max
+-------------------
+
+This property is added when ultra_turbo(WOF) is enabled. This property gives
+the list of max pstate for each 'n' number of active cores in the chip.
 
 FIXME: document these:
 ibm,cpu-idle-state-flags
