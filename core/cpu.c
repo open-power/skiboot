@@ -317,6 +317,17 @@ struct cpu_thread *first_available_cpu(void)
 	return next_available_cpu(NULL);
 }
 
+u8 get_available_nr_cores_in_chip(u32 chip_id)
+{
+	struct cpu_thread *core;
+	u8 nr_cores = 0;
+
+	for_each_available_core_in_chip(core, chip_id)
+		nr_cores++;
+
+	return nr_cores;
+}
+
 struct cpu_thread *next_available_core_in_chip(struct cpu_thread *core,
 					       u32 chip_id)
 {

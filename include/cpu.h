@@ -166,6 +166,7 @@ extern struct cpu_thread *next_available_cpu(struct cpu_thread *cpu);
 
 extern struct cpu_thread *first_available_core_in_chip(u32 chip_id);
 extern struct cpu_thread *next_available_core_in_chip(struct cpu_thread *cpu, u32 chip_id);
+extern u8 get_available_nr_cores_in_chip(u32 chip_id);
 
 #define for_each_available_core_in_chip(core, chip_id)	\
 	for (core = first_available_core_in_chip(chip_id); core; \
