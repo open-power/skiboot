@@ -207,25 +207,25 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 
 	/* Setup arrays for device-tree */
 	/* Allocate memory */
-	dt_id = (u32 *) malloc(MAX_PSTATES * sizeof(u32));
+	dt_id = malloc(nr_pstates * sizeof(u32));
 	if (!dt_id) {
 		printf("OCC: dt_id array alloc failure\n");
 		goto out;
 	}
 
-	dt_freq = (u32 *) malloc(MAX_PSTATES * sizeof(u32));
+	dt_freq = malloc(nr_pstates * sizeof(u32));
 	if (!dt_freq) {
 		printf("OCC: dt_freq array alloc failure\n");
 		goto out_free_id;
 	}
 
-	dt_vdd = (u8 *) malloc(MAX_PSTATES * sizeof(u8));
+	dt_vdd = malloc(nr_pstates * sizeof(u8));
 	if (!dt_vdd) {
 		printf("OCC: dt_vdd array alloc failure\n");
 		goto out_free_freq;
 	}
 
-	dt_vcs = (u8 *) malloc(MAX_PSTATES * sizeof(u8));
+	dt_vcs = malloc(nr_pstates * sizeof(u8));
 	if (!dt_vcs) {
 		printf("OCC: dt_vcs array alloc failure\n");
 		goto out_free_vdd;
