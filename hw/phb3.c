@@ -1613,7 +1613,7 @@ static int64_t phb3_msi_set_xive(void *data,
 {
 	struct phb3 *p = data;
 	uint32_t chip, index;
-	uint64_t *cache, ive_num, data64, m_server, m_prio;
+	uint64_t *cache, ive_num, data64, m_server, m_prio, ivc;
 	uint32_t *ive;
 
 	chip = P8_IRQ_TO_CHIP(isn);
@@ -1658,14 +1658,34 @@ static int64_t phb3_msi_set_xive(void *data,
 	*ive = (m_server << 8) | m_prio;
 	out_be64(p->regs + PHB_IVC_UPDATE, data64);
 
-	/*
-	 * Handle Q bit if we're going to enable the interrupt.
-	 * The OS should make sure the interrupt handler has
-	 * been installed already.
-	 */
 	if (prio != 0xff) {
+		/*
+		 * Handle Q bit if we're going to enable the
+		 * interrupt.  The OS should make sure the interrupt
+		 * handler has been installed already.
+		 */
 		if (phb3_pci_msi_check_q(p, ive_num))
 			phb3_pci_msi_flush_ive(p, ive_num);
+	} else {
+		/* Read from random PHB reg to force flush */
+		in_be64(p->regs + PHB_IVC_UPDATE);
+
+		/* Order with subsequent read of Q */
+		sync();
+
+		/* Clear P, Q and Gen, preserve PE# */
+		ive[1] &= 0x0000ffff;
+
+		/*
+		 * Update the IVC with a match against the old gen
+		 * count. No need to worry about racing with P being
+		 * set in the cache since IRQ is masked at this point.
+		 */
+		ivc = SETFIELD(PHB_IVC_UPDATE_SID, 0ul, ive_num) |
+			PHB_IVC_UPDATE_ENABLE_P |
+			PHB_IVC_UPDATE_ENABLE_Q |
+			PHB_IVC_UPDATE_ENABLE_GEN;
+		out_be64(p->regs + PHB_IVC_UPDATE, ivc);
 	}
 
 	return OPAL_SUCCESS;
