@@ -76,6 +76,10 @@ void init_chips(void)
 			| QUIRK_DISABLE_NAP;
 		prlog(PR_NOTICE, "CHIP: Detected Mambo simulator\n");
 	}
+	if (dt_find_by_path(dt_root, "/simics")) {
+		proc_chip_quirks |= QUIRK_SIMICS;
+		prlog(PR_NOTICE, "CHIP: Detected Simics simulator\n");
+	}
 	if (dt_node_is_compatible(dt_root, "qemu,powernv")) {
 		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_NO_PBA;
 		prlog(PR_NOTICE, "CHIP: Detected Qemu simulator\n");

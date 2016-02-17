@@ -639,6 +639,8 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	init_chips();
 	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
 		enable_mambo_console();
+	if (chip_quirk(QUIRK_SIMICS))
+		enable_simics_console();
 	xscom_init();
 	mfsi_init();
 

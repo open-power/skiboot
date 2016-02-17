@@ -67,6 +67,7 @@ extern void console_complete_flush(void);
 extern int mambo_read(void);
 extern void mambo_write(const char *buf, size_t count);
 extern void enable_mambo_console(void);
+extern void enable_simics_console(void);
 
 ssize_t console_write(bool flush_to_drivers, const void *buf, size_t count);
 

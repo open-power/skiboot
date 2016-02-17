@@ -26,6 +26,7 @@
 #include <timebase.h>
 #include <cpu.h>
 #include <chip.h>
+#include <io.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_UART_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_UART,
 		 OPAL_CEC_HARDWARE, OPAL_PREDICTIVE_ERR_GENERAL,
@@ -66,6 +67,8 @@ static uint32_t uart_base;
 static bool has_irq, irq_ok, rx_full, tx_full;
 static uint8_t tx_room;
 static uint8_t cached_ier;
+static bool simics_uart;
+static void *simics_uart_base;
 
 static void uart_trace(u8 ctx, u8 cnt, u8 irq_state, u8 in_count)
 {
@@ -80,12 +83,18 @@ static void uart_trace(u8 ctx, u8 cnt, u8 irq_state, u8 in_count)
 
 static inline uint8_t uart_read(unsigned int reg)
 {
-	return lpc_inb(uart_base + reg);
+	if (simics_uart)
+		return in_8(simics_uart_base + reg);
+	else
+		return lpc_inb(uart_base + reg);
 }
 
 static inline void uart_write(unsigned int reg, uint8_t val)
 {
-	lpc_outb(val, uart_base + reg);
+	if (simics_uart)
+		out_8(simics_uart_base + reg, val);
+	else
+		lpc_outb(val, uart_base + reg);
 }
 
 static void uart_check_tx_room(void)
@@ -137,7 +146,7 @@ static size_t uart_con_write(const char *buf, size_t len)
 	size_t written = 0;
 
 	/* If LPC bus is bad, we just swallow data */
-	if (!lpc_ok())
+	if (!lpc_ok() && !simics_uart)
 		return written;
 
 	lock(&uart_lock);
@@ -546,4 +555,52 @@ void uart_init(bool use_interrupt)
 		prlog(PR_DEBUG, "UART: Using LPC IRQ %d\n", irq);
 	} else
 		has_irq = false;
+}
+
+static bool simics_con_poll_read(void) {
+	uint8_t lsr = uart_read(REG_LSR);
+	return ((lsr & LSR_DR) != 0);
+}
+
+static size_t simics_con_read(char *buf, size_t len)
+{
+	size_t count = 0;
+	while (count < len) {
+		if (!simics_con_poll_read())
+			break;
+		*(buf++) = uart_read(REG_RBR);
+		count++;
+	}
+	return count;
+}
+
+static struct con_ops simics_con_driver = {
+	.poll_read = simics_con_poll_read,
+	.read = simics_con_read,
+	.write = uart_con_write,
+};
+
+void enable_simics_console() {
+	struct dt_node *n;
+
+	printf("Enabling Simics console\n");
+
+	n = dt_find_compatible_node(dt_root, NULL, "ns16550");
+	if (!n) {
+		prerror("UART: cannot find ns16550\n");
+		return;
+	}
+
+	simics_uart_base = (void *)dt_prop_get_u64(n, "console-bar");
+	simics_uart = 1;
+	has_irq = false;
+
+	if (!uart_init_hw(dt_prop_get_u32(n, "current-speed"),
+			  dt_prop_get_u32(n, "clock-frequency"))) {
+		prerror("UART: Initialization failed\n");
+		dt_add_property_strings(n, "status", "bad");
+		return;
+	}
+
+	set_console(&simics_con_driver);
 }
