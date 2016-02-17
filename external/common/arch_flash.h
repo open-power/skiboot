@@ -20,6 +20,14 @@
 #include <getopt.h>
 #include <libflash/blocklevel.h>
 
+enum bmc_access {
+	PNOR_DIRECT,
+	PNOR_MTD,
+	BMC_DIRECT,
+	BMC_MTD,
+	ACCESS_INVAL
+};
+
 int arch_flash_init(struct blocklevel_device **bl, const char *file,
 		bool keep_alive);
 
@@ -28,12 +36,12 @@ void arch_flash_close(struct blocklevel_device *bl, const char *file);
 /* Low level functions that an architecture may support */
 
 /*
- * If called BEFORE init, then the behaviour is to set that on init the BMC
- * flash will be opened.
- * If called AFTER init, then the behaviour is to return wether or not BMC
- * flash has been opened
+ * If called BEFORE init, then this dictates how the flash will be
+ * accessed.
+ * If called AFTER init, then this returns how the flash is being accessed.
  */
-int arch_flash_bmc(struct blocklevel_device *bl, int bmc);
+enum bmc_access arch_flash_bmc(struct blocklevel_device *bl,
+		enum bmc_access access);
 
 int arch_flash_erase_chip(struct blocklevel_device *bl);
 int arch_flash_4b_mode(struct blocklevel_device *bl, int set_4b);

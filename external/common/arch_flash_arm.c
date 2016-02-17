@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -43,7 +43,7 @@ static struct arch_arm_data {
 	size_t ahb_flash_base;
 	size_t ahb_flash_size;
 	void *ahb_flash_map;
-	int bmc;
+	enum bmc_access access;
 	struct flash_chip *flash_chip;
 	struct blocklevel_device *init_bl;
 } arch_data;
@@ -156,8 +156,11 @@ static void close_devs(void)
 	 */
 }
 
-static int open_devs(int bmc)
+static int open_devs(enum bmc_access access)
 {
+	if (access != BMC_DIRECT && access != PNOR_DIRECT)
+		return -1;
+
 	arch_data.fd = open("/dev/mem", O_RDWR | O_SYNC);
 	if (arch_data.fd < 0) {
 		perror("can't open /dev/mem");
@@ -176,8 +179,8 @@ static int open_devs(int bmc)
 		perror("can't map GPIO control via /dev/mem");
 		return -1;
 	}
-	arch_data.ahb_flash_base = bmc ? BMC_FLASH_BASE : PNOR_FLASH_BASE;
-	arch_data.ahb_flash_size = bmc ? BMC_FLASH_SIZE : PNOR_FLASH_SIZE;
+	arch_data.ahb_flash_base = access == BMC_DIRECT ? BMC_FLASH_BASE : PNOR_FLASH_BASE;
+	arch_data.ahb_flash_size = access == BMC_DIRECT ? BMC_FLASH_SIZE : PNOR_FLASH_SIZE;
 	arch_data.ahb_flash_map = mmap(0, arch_data.ahb_flash_size, PROT_READ |
 			PROT_WRITE, MAP_SHARED, arch_data.fd, arch_data.ahb_flash_base);
 	if (arch_data.ahb_flash_map == MAP_FAILED) {
@@ -187,17 +190,22 @@ static int open_devs(int bmc)
 	return 0;
 }
 
-static struct blocklevel_device *flash_setup(int bmc)
+static struct blocklevel_device *flash_setup(enum bmc_access access)
 {
 	int rc;
 	struct blocklevel_device *bl;
 	struct spi_flash_ctrl *fl;
 
+	if (access != BMC_DIRECT && access != PNOR_DIRECT)
+		return NULL;
+
 	/* Open and map devices */
-	open_devs(bmc);
+	rc = open_devs(access);
+	if (rc)
+		return NULL;
 
 	/* Create the AST flash controller */
-	rc = ast_sf_open(bmc ? AST_SF_TYPE_BMC : AST_SF_TYPE_PNOR, &fl);
+	rc = ast_sf_open(access == BMC_DIRECT ? AST_SF_TYPE_BMC : AST_SF_TYPE_PNOR, &fl);
 	if (rc) {
 		fprintf(stderr, "Failed to open controller\n");
 		return NULL;
@@ -213,18 +221,77 @@ static struct blocklevel_device *flash_setup(int bmc)
 	return bl;
 }
 
-int arch_flash_bmc(struct blocklevel_device *bl, int bmc)
+static bool is_bmc_part(const char *str) {
+	/*
+	 * On AMI firmmware "fullpart" is what they called the BMC partition
+	 * On OpenBMC "bmc" is what they called the BMC partition
+	 */
+	return strstr(str, "fullpart") || strstr(str, "bmc");
+}
+
+static bool is_pnor_part(const char *str) {
+	/*
+	 * On AMI firmware "PNOR" is what they called the full PNOR
+	 * On OpenBMC "pnor" is what they called the full PNOR
+	 */
+	return strcasestr(str, "pnor");
+}
+
+static char *get_dev_mtd(enum bmc_access access)
 {
+	FILE *f;
+	char *ret = NULL, *pos = NULL;
+	char line[50];
+
+	if (access != BMC_MTD && access != PNOR_MTD)
+		return NULL;
+
+	f = fopen("/proc/mtd", "r");
+	if (!f)
+		return NULL;
+
+	while (!pos && fgets(line, sizeof(line), f) != NULL) {
+		/* Going to have issues if we didn't get the full line */
+		if (line[strlen(line) - 1] != '\n')
+			break;
+
+		if (access == BMC_MTD && is_bmc_part(line)) {
+			pos = strchr(line, ':');
+			if (!pos)
+				break;
+
+		} else if (access == PNOR_MTD && is_pnor_part(line)) {
+			pos = strchr(line, ':');
+			if (!pos)
+				break;
+		}
+	}
+	if (pos) {
+		*pos = '\0';
+		if (asprintf(&ret, "/dev/%s", line) == -1)
+			ret = NULL;
+	}
+
+	fclose(f);
+	return ret;
+}
+
+enum bmc_access arch_flash_bmc(struct blocklevel_device *bl,
+		enum bmc_access access)
+{
+	if (access == ACCESS_INVAL)
+		return ACCESS_INVAL;
+
 	if (!arch_data.init_bl) {
-		arch_data.bmc = bmc;
-		return 0;
+		arch_data.access = access;
+		return access;
 	}
 
 	/* Called with a BL not inited here, bail */
 	if (arch_data.init_bl != bl)
-		return -1;
+		return ACCESS_INVAL;
 
-	return arch_data.flash_chip ? arch_data.bmc : -1;
+	return arch_data.flash_chip ? arch_data.access : ACCESS_INVAL;
 }
 
 int arch_flash_erase_chip(struct blocklevel_device *bl)
@@ -266,18 +333,30 @@ int arch_flash_set_wrprotect(struct blocklevel_device *bl, int set)
 int arch_flash_init(struct blocklevel_device **r_bl, const char *file, bool keep_alive)
 {
 	struct blocklevel_device *new_bl;
+	int rc = 0;
 
 	/* Check we haven't already inited */
 	if (arch_data.init_bl)
 		return -1;
 
 	if (file) {
-		file_init_path(file, NULL, keep_alive, &new_bl);
+		rc = file_init_path(file, NULL, keep_alive, &new_bl);
+	} else if (arch_data.access == BMC_MTD || arch_data.access == PNOR_MTD) {
+		char *mtd_dev;
+
+		mtd_dev = get_dev_mtd(arch_data.access);
+		if (!mtd_dev) {
+			return -1;
+		}
+		rc = file_init_path(mtd_dev, NULL, keep_alive, &new_bl);
+		free(mtd_dev);
 	} else {
-		new_bl = flash_setup(arch_data.bmc);
+		new_bl = flash_setup(arch_data.access);
+		if (!new_bl)
+			rc = -1;
 	}
-	if (!new_bl)
-		return -1;
+	if (rc)
+		return rc;
 
 	arch_data.init_bl = new_bl;
 	*r_bl = new_bl;
@@ -286,7 +365,7 @@ int arch_flash_init(struct blocklevel_device **r_bl, const char *file, bool keep
 
 void arch_flash_close(struct blocklevel_device *bl, const char *file)
 {
-	if (file) {
+	if (file || arch_data.access == BMC_MTD || arch_data.access == PNOR_MTD) {
 		file_exit_close(bl);
 	} else {
 		flash_exit_close(bl, &ast_sf_close);

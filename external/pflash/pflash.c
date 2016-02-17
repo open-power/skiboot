@@ -90,15 +90,15 @@ static void print_ffs_info(uint32_t toc_offset)
 	int rc;
 	uint32_t i;
 
+	printf("\n");
+	printf("TOC@0x%08x Partitions:\n", toc_offset);
+	printf("-----------\n");
+
 	rc = ffs_init(toc_offset, fl_total_size, bl, &ffs_handle, 0);
 	if (rc) {
 		fprintf(stderr, "Error %d opening ffs !\n", rc);
 		return;
 	}
-
-	printf("\n");
-	printf("TOC@0x%08x Partitions:\n", toc_offset);
-	printf("-----------\n");
 
 	for (i = 0;; i++) {
 		uint32_t start, size, act, end;
@@ -453,12 +453,14 @@ static void print_help(const char *pname)
 	printf("\t\tDon't ask for confirmation before erasing or flashing\n\n");
 	printf("\t-d, --dummy\n");
 	printf("\t\tDon't write to flash\n\n");
-#ifdef __powerpc__
-	printf("\t-l, --lpc\n");
-	printf("\t\tUse LPC accesses instead of PCI\n\n");
-#endif
+	printf("\t-m, --mtd\n");
+	printf("\t\tAvoid accessing the flash directly if the BMC supports it.\n");
+	printf("\t\tThis will access the flash through the kernel MTD layer and\n");
+	printf("\t\tnot the flash directly\n");
 	printf("\t-b, --bmc\n");
-	printf("\t\tTarget BMC flash instead of host flash\n\n");
+	printf("\t\tTarget BMC flash instead of host flash.\n");
+	printf("\t\tNote: This carries a high chance of bricking your BMC if you\n");
+	printf("\t\tdon't know what you're doing. Consider --mtd to be safe(r)\n\n");
 	printf("\t-S, --side\n");
 	printf("\t\tSide of the flash on which to operate, 0 (default) or 1\n\n");
 	printf("\t-T, --toc\n");
@@ -523,15 +525,16 @@ int main(int argc, char *argv[])
 	bool show_help = false, show_version = false;
 	bool no_action = false, tune = false;
 	char *write_file = NULL, *read_file = NULL, *part_name = NULL;
-	bool ffs_toc_seen = false;
+	bool ffs_toc_seen = false, mtd = false;
 	int rc;
 
 	while(1) {
-		static struct option long_opts[] = {
+		struct option long_opts[] = {
 			{"address",	required_argument,	NULL,	'a'},
 			{"size",	required_argument,	NULL,	's'},
 			{"partition",	required_argument,	NULL,	'P'},
 			{"bmc",		no_argument,		NULL,	'b'},
+			{"mtd",		no_argument,		NULL,	'm'},
 			{"enable-4B",	no_argument,		NULL,	'4'},
 			{"disable-4B",	no_argument,		NULL,	'3'},
 			{"read",	required_argument,	NULL,	'r'},
@@ -551,7 +554,7 @@ int main(int argc, char *argv[])
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "a:s:P:r:43Eep:fdihvbtgS:T:c",
+		c = getopt_long(argc, argv, "a:s:P:r:43Eemp:fdihvbtgS:T:c",
 				long_opts, &oidx);
 		if (c == EOF)
 			break;
@@ -580,6 +583,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'e':
 			erase = true;
+			break;
+		case 'm':
+			mtd = true;
 			break;
 		case 'p':
 			program = true;
@@ -716,14 +722,30 @@ int main(int argc, char *argv[])
 	}
 
 	if (bmc_flash) {
-		if (arch_flash_bmc(NULL, 1) == -1) {
-			fprintf(stderr, "Can't switch to BMC flash on this architecture\n");
+		/*
+		 * Try to see if we can access BMC flash on this arch at all...
+		 * even if what we really want to do is use MTD.
+		 * This helps give a more meaningful error messages.
+		 */
+
+		if (arch_flash_bmc(NULL, BMC_DIRECT) == ACCESS_INVAL) {
+			fprintf(stderr, "Can't access BMC flash on this architecture\n");
 			exit(1);
 		}
 	}
 
-	if (arch_flash_init(&bl, NULL, true))
+	if (mtd) {
+		if (arch_flash_bmc(NULL, bmc_flash ? BMC_MTD : PNOR_MTD) == ACCESS_INVAL) {
+			fprintf(stderr, "Can't access %s flash through MTD on this architecture\n",
+			        bmc_flash ? "BMC" : "PNOR");
+			exit(1);
+		}
+	}
+
+	if (arch_flash_init(&bl, NULL, true)) {
+		fprintf(stderr, "Couldn't initialise architecture flash structures\n");
 		exit(1);
+	}
 
 	on_exit(exiting, NULL);
 
