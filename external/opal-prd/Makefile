@@ -52,7 +52,7 @@ asm/opal-prd.h:
 	$(Q_LN)ln -sfr $(KERNEL_DIR)/arch/powerpc/include/uapi/asm/opal-prd.h \
 			asm/opal-prd.h
 
-$(OBJS): $(LINKS)
+$(OBJS): | $(LINKS)
 
 %.o: %.c
 	$(Q_CC)$(COMPILE.c) $< -o $@
