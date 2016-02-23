@@ -1321,6 +1321,13 @@ static void pci_add_one_node(struct phb *phb, struct pci_device *pd,
 	uint32_t rev_class, vdid;
 	uint32_t reg[5];
 	uint8_t intpin;
+	const uint32_t ranges_direct[] = {
+				/* 64-bit direct mapping. We know the bridges
+				 * don't cover the entire address space so
+				 * use 0xf00... as a good compromise. */
+				0x02000000, 0x0, 0x0,
+				0x02000000, 0x0, 0x0,
+				0xf0000000, 0x0};
 
 	pci_cfg_read32(phb, pd->bdfn, 0, &vdid);
 	pci_cfg_read32(phb, pd->bdfn, PCI_CFG_REV_ID, &rev_class);
@@ -1414,12 +1421,12 @@ static void pci_add_one_node(struct phb *phb, struct pci_device *pd,
 	 */
 	pci_std_swizzle_irq_map(np, pd, lstate, swizzle);
 
-	/* We do an empty ranges property for now, we haven't setup any
-	 * bridge windows, the kernel will deal with that
-	 *
-	 * XXX The kernel should probably fix that up
+	/* Parts of the OF address translation in the kernel will fail to
+	 * correctly translate a PCI address if translating a 1:1 mapping
+	 * (ie. an empty ranges property).
+	 * Instead add a ranges property that explicitly translates 1:1.
 	 */
-	dt_add_property(np, "ranges", NULL, 0);
+	dt_add_property(np, "ranges", ranges_direct, sizeof(ranges_direct));
 
 	list_for_each(&pd->children, child, link)
 		pci_add_one_node(phb, child, np, lstate, swizzle);
