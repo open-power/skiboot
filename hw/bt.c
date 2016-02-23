@@ -24,6 +24,7 @@
 #include <bt.h>
 #include <timer.h>
 #include <ipmi.h>
+#include <timebase.h>
 
 /* BT registers */
 #define BT_CTRL			0
@@ -65,9 +66,9 @@
 #define BT_MAX_QUEUE_LEN 10
 
 /*
- * How long (in TB ticks) before a message is timed out.
+ * How long (in seconds) before a message is timed out.
  */
-#define BT_MSG_TIMEOUT (secs_to_tb(3))
+#define BT_MSG_TIMEOUT 3
 
 /*
  * Maximum number of times to attempt sending a message before giving up.
@@ -390,7 +391,8 @@ static void bt_expire_old_msg(uint64_t tb)
 
 	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
 
-	if (bt_msg && bt_msg->tb > 0 && (bt_msg->tb + bt.caps.msg_timeout) < tb) {
+	if (bt_msg && bt_msg->tb > 0 &&
+	    (tb_compare(tb, bt_msg->tb + secs_to_tb(bt.caps.msg_timeout)) == TB_AAFTERB)) {
 		if (bt_msg->send_count < BT_MAX_SEND_COUNT) {
 			/* A message timeout is usually due to the BMC
 			clearing the H2B_ATN flag without actually
