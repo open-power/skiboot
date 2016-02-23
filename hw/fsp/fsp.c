@@ -2127,7 +2127,7 @@ void fsp_opl(void)
 	fsp_sync_msg(fsp_mkmsg(FSP_CMD_CONTINUE_ACK, 0), true);
 
 	/* Wait for various FSP messages */
-	prlog(PR_INFO, "INIT: Waiting for FSP to advertize new role...\n");
+	prlog(PR_INFO, "INIT: Waiting for FSP to advertise new role...\n");
 	while(!(ipl_state & ipl_got_new_role)) {
 		cpu_relax();
 		opal_run_pollers();
