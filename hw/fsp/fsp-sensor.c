@@ -784,6 +784,7 @@ void fsp_init_sensor(void)
 			break;
 		case SPCN_MOD_SENSOR_POWER:
 			index++;
+			break;
 		default:
 			break;
 		}

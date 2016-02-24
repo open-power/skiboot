@@ -326,7 +326,7 @@ static bool pci_enable_bridge(struct phb *phb, struct pci_device *pd)
 			PCIDBG(phb, pd->bdfn, "No card in slot\n");
 			return false;
 		}
-		
+
 		/* Read the slot capabilities */
 		pci_cfg_read16(phb, pd->bdfn, ecap+PCICAP_EXP_SLOTCAP, &slcap);
 		PCITRACE(phb, pd->bdfn, "slcap=%04x\n", slcap);
@@ -439,7 +439,7 @@ static void pci_cleanup_bridge(struct phb *phb, struct pci_device *pd)
 	pci_cfg_read16(phb, pd->bdfn, PCI_CFG_CMD, &cmd);
 	cmd |= PCI_CFG_CMD_IO_EN | PCI_CFG_CMD_MEM_EN;
 	cmd |= PCI_CFG_CMD_BUS_MASTER_EN;
-	pci_cfg_write16(phb, pd->bdfn, PCI_CFG_CMD, cmd);	
+	pci_cfg_write16(phb, pd->bdfn, PCI_CFG_CMD, cmd);
 }
 
 
@@ -873,6 +873,7 @@ static const char *pci_class_name(uint32_t class_code)
 		case 0x07: return "sas";
 		default:   return "mass-storage";
 		}
+		break;
 	case 0x02:
 		switch(sub) {
 		case 0x00: return "ethernet";
@@ -884,6 +885,7 @@ static const char *pci_class_name(uint32_t class_code)
 		case 0x06: return "picmg";
 		default:   return "network";
 		}
+		break;
 	case 0x03:
 		switch(sub) {
 		case 0x00: return "vga";
@@ -891,6 +893,7 @@ static const char *pci_class_name(uint32_t class_code)
 		case 0x02: return "3d-controller";
 		default:   return "display";
 		}
+		break;
 	case 0x04:
 		switch(sub) {
 		case 0x00: return "video";
@@ -898,12 +901,14 @@ static const char *pci_class_name(uint32_t class_code)
 		case 0x02: return "telephony";
 		default:   return "multimedia-device";
 		}
+		break;
 	case 0x05:
 		switch(sub) {
 		case 0x00: return "memory";
 		case 0x01: return "flash";
 		default:   return "memory-controller";
 		}
+		break;
 	case 0x06:
 		switch(sub) {
 		case 0x00: return "host";
@@ -919,6 +924,7 @@ static const char *pci_class_name(uint32_t class_code)
 		case 0x0a: return "infiniband";
 		default:   return "unknown-bridge";
 		}
+		break;
 	case 0x07:
 		switch(sub) {
 		case 0x00:
@@ -931,6 +937,7 @@ static const char *pci_class_name(uint32_t class_code)
 			case 0x06: return "16950-serial";
 			default:   return "serial";
 			}
+			break;
 		case 0x01:
 			switch(pif) {
 			case 0x01: return "bi-directional-parallel";
@@ -939,6 +946,7 @@ static const char *pci_class_name(uint32_t class_code)
 			case 0xfe: return "ieee1284-device";
 			default:   return "parallel";
 			}
+			break;
 		case 0x02: return "multiport-serial";
 		case 0x03:
 			switch(pif) {
@@ -948,10 +956,12 @@ static const char *pci_class_name(uint32_t class_code)
 			case 0x04: return "16750-modem";
 			default:   return "modem";
 			}
+			break;
 		case 0x04: return "gpib";
 		case 0x05: return "smart-card";
 		default:   return "communication-controller";
 		}
+		break;
 	case 0x08:
 		switch(sub) {
 		case 0x00:
@@ -962,18 +972,21 @@ static const char *pci_class_name(uint32_t class_code)
 			case 0x20: return "iox-apic";
 			default:   return "interrupt-controller";
 			}
+			break;
 		case 0x01:
 			switch(pif) {
 			case 0x01: return "isa-dma";
 			case 0x02: return "eisa-dma";
 			default:   return "dma-controller";
 			}
+			break;
 		case 0x02:
 			switch(pif) {
 			case 0x01: return "isa-system-timer";
 			case 0x02: return "eisa-system-timer";
 			default:   return "timer";
 			}
+			break;
 		case 0x03:
 			switch(pif) {
 			case 0x01: return "isa-rtc";

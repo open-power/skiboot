@@ -470,6 +470,7 @@ static int64_t p7ioc_sm_slot_power_off(struct p7ioc_phb *p)
 		p->retries = 1000;
 		p->state = P7IOC_PHB_STATE_SPDOWN_SLOT_STATUS;
 		PHBDBG(p, "Slot power off: waiting for power off\n");
+		/* fall through */
 	case P7IOC_PHB_STATE_SPDOWN_SLOT_STATUS:
 		reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
 		if (!(reg & PHB_PCIE_SLOTCTL2_PWR_EN_STAT)) {
@@ -1644,7 +1645,7 @@ static int64_t p7ioc_set_phb_mem_window(struct phb *phb,
 		if (window_num >= 16)
 			return OPAL_PARAMETER;
 		/* The base and size should be 16MB aligned */
-		if (base & 0xFFFFFF || size & 0xFFFFFF)
+		if ((base & 0xFFFFFF) || (size & 0xFFFFFF))
 			return OPAL_PARAMETER;
 		data64 = p->m64b_cache[window_num];
 		data64 = SETFIELD(IODA_M64BT_BASE, data64, base >> 24);
@@ -2005,7 +2006,7 @@ static int64_t p7ioc_set_xive_pe(struct phb *phb, uint32_t pe_number,
 	p->mxive_cache[xive_num] = xive;
 
 	/* Update HW */
-	p7ioc_phb_ioda_sel(p, IODA_TBL_MXIVT, xive_num, false);	
+	p7ioc_phb_ioda_sel(p, IODA_TBL_MXIVT, xive_num, false);
 	xive = in_be64(p->regs + PHB_IODA_DATA0);
 	xive = SETFIELD(IODA_XIVT_PENUM, xive, pe_number);
 	out_be64(p->regs + PHB_IODA_DATA0, xive);
@@ -2252,7 +2253,7 @@ static uint8_t p7ioc_choose_bus(struct phb *phb __unused,
 				bool *use_max)
 {
 	uint8_t m, al;
-	int i;	
+	int i;
 
 	/* Bus number selection is nasty on P7IOC. Our EEH HW can only cope
 	 * with bus ranges that are naturally aligned powers of two. It also
@@ -3197,7 +3198,7 @@ static void p7ioc_phb_init_errors(struct p7ioc_phb *p)
  *
  * This is currently only called at boot time. It will eventually
  * be called at runtime, for example in some cases of error recovery
- * after a PHB reset in which case we might need locks etc... 
+ * after a PHB reset in which case we might need locks etc...
  */
 int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 {

@@ -828,7 +828,7 @@ static int64_t phb3_set_phb_mem_window(struct phb *phb,
 		}
 
 		/* size should be 2^N */
-		if (!size || size & (size-1))
+		if (!size || (size & (size-1)))
 			return OPAL_PARAMETER;
 
 		/* address should be size aligned */
@@ -2034,7 +2034,7 @@ static void phb3_setup_for_link_down(struct phb3 *p)
 static void phb3_setup_for_link_up(struct phb3 *p)
 {
 	uint32_t reg32;
-	
+
 	/* Clear AER receiver error status */
 	phb3_pcicfg_write32(&p->phb, 0, p->aercap + PCIECAP_AER_CE_STATUS,
 			    PCIECAP_AER_CE_RECVR_ERR);
@@ -2247,7 +2247,7 @@ static int64_t phb3_sm_fundamental_reset(struct phb3 *p)
 	case PHB3_STATE_FUNCTIONAL:
 		/* Prepare for link going down */
 		phb3_setup_for_link_down(p);
-		/* Fall-through */
+		/* Fall through */
 	case PHB3_STATE_FRESET_START:
 		if (p->state == PHB3_STATE_FRESET_START) {
 			PHBDBG(p, "Slot freset: Retrying\n");
@@ -3166,7 +3166,7 @@ static int64_t phb3_err_inject_dma64(struct phb3 *p, uint32_t pe_no,
 				     uint64_t addr, uint64_t mask,
 				     bool is_write)
 {
-	return phb3_err_inject_dma(p, pe_no, addr, mask, is_write, true);	
+	return phb3_err_inject_dma(p, pe_no, addr, mask, is_write, true);
 }
 
 static int64_t phb3_err_inject(struct phb *phb, uint32_t pe_no,
@@ -3559,7 +3559,7 @@ static void phb3_setup_aib(struct phb3 *p)
 		phb3_write_reg_asb(p, PHB_AIB_RX_CMD_CRED,	0x0020000100020001);
 	else
 		phb3_write_reg_asb(p, PHB_AIB_RX_CMD_CRED,	0x0020000100010001);
-	
+
 	/* Init_4 - AIB rx data credit register */
 	if (p->rev >= PHB3_REV_VENICE_DD20)
 		phb3_write_reg_asb(p, PHB_AIB_RX_DATA_CRED,	0x0020002000010001);

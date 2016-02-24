@@ -311,7 +311,7 @@ static void handle_extra_interrupt(struct psi *psi)
 		 * the XIVR
 		 */
 		xivr = in_be64(psi->regs + PSIHB_XIVR_HOST_ERR);
-		if (xivr & PPC_BIT(39) && platform.external_irq)
+		if ((xivr & PPC_BIT(39)) && platform.external_irq)
 			platform.external_irq(psi->chip_id);
 	}
 

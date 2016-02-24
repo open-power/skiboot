@@ -48,9 +48,6 @@ static uint32_t slw_timer_chip;
 static uint64_t slw_last_gen;
 static uint64_t slw_last_gen_stamp;
 
-/* Assembly in head.S */
-extern void enter_rvwinkle(void);
-
 DEFINE_LOG_ENTRY(OPAL_RC_SLW_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
 		 OPAL_PLATFORM_FIRMWARE, OPAL_PREDICTIVE_ERR_GENERAL,
 		 OPAL_NA);
@@ -68,6 +65,9 @@ DEFINE_LOG_ENTRY(OPAL_RC_SLW_REG, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
 		 OPAL_NA);
 
 #ifdef __HAVE_LIBPORE__
+/* Assembly in head.S */
+extern void enter_rvwinkle(void);
+
 static void slw_do_rvwinkle(void *data)
 {
 	struct cpu_thread *cpu = this_cpu();
@@ -126,7 +126,7 @@ static void slw_do_rvwinkle(void *data)
 			xscom_read(chip->id,
 				 XSCOM_ADDR_P8_EX_SLAVE(pir_to_core_id(c->pir),
 							EX_PM_IDLE_STATE_HISTORY_PHYP),
-				   &tmp);	
+				   &tmp);
 			prlog(PR_TRACE, "SLW: core %x:%x"
 			      " history: 0x%016llx (mid2)\n",
 			      chip->id, pir_to_core_id(c->pir),
@@ -471,7 +471,7 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 		.name = "winkle",
 		.latency_ns = 10000000,
 		.residency_ns = 1000000000, /* Educated guess (not measured).
-					     * Winkle is not currently used by 
+					     * Winkle is not currently used by
 					     * linux cpuidle subsystem so we
 					     * don't have real world user.
 					     * However, this should be roughly
@@ -802,7 +802,7 @@ int64_t slw_reinit(uint64_t flags)
 
 		/* Wait for it to claim to be down */
 		while(cpu->state != cpu_state_rvwinkle)
-			sync();		
+			sync();
 	}
 
 	/* XXX Wait one second ! (should check xscom state ? ) */
@@ -871,7 +871,7 @@ static void slw_patch_regs(struct proc_chip *chip)
 	for_each_available_cpu(c) {
 		if (c->chip_id != chip->id)
 			continue;
-	
+
 		/* Clear HRMOR */
 		rc =  p8_pore_gen_cpureg_fixed(image, P8_SLW_MODEBUILD_SRAM,
 					       P8_SPR_HRMOR, 0,
@@ -1006,7 +1006,7 @@ static int64_t opal_config_cpu_idle_state(uint64_t state, uint64_t enter)
 {
 	/* Only fast-sleep for now */
 	if (state != 1)
-		return OPAL_PARAMETER;	
+		return OPAL_PARAMETER;
 
 	switch(enter) {
 	case 1:

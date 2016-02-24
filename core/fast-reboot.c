@@ -120,7 +120,7 @@ static void fast_reset_p7(void)
 		 * as ourselves
 		 */
 		if (cpu_get_thread0(cpu) == cpu_get_thread0(this_cpu()) ||
-		    cpu->pir & 0x3)
+		   (cpu->pir & 0x3))
 			continue;
 
 		/* Pick up one of those guys as our "resettor". It will be
@@ -149,7 +149,7 @@ static void fast_reset_p7(void)
 		    cpu->state != cpu_state_active)
 			continue;
 		if (cpu_get_thread0(cpu) == cpu_get_thread0(this_cpu()) ||
-		    cpu->pir & 0x3)
+		    (cpu->pir & 0x3))
 			continue;
 		if (cpu_get_thread0(cpu) == cpu_get_thread0(resettor))
 			continue;

@@ -100,7 +100,7 @@ static int fsp_sysparam_process(struct sysparam_req *r)
 	case 0x00: /* XXX Is that even possible ? */
 	case 0x11: /* Data in request */
 		memcpy(r->ubuf, &r->resp.data.words[2], len);
-		/* pass through */
+		/* fall through */
 	case 0x12: /* Data in TCE */
 		stlen = len;
 		break;
@@ -111,7 +111,7 @@ static int fsp_sysparam_process(struct sysparam_req *r)
 	/* Call completion if any */
 	if (comp)
 		comp(r->msg.data.words[0], stlen, cdata);
-	
+
 	free(r);
 
 	return stlen;

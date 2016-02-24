@@ -127,8 +127,6 @@ static u32 disr_last_print;
 static u32 drcr_last_print;
 static u32 hstate_last_print;
 
-void fsp_handle_resp(struct fsp_msg *msg);
-
 struct fsp_cmdclass {
 	int timeout;
 	bool busy;
@@ -1318,7 +1316,7 @@ static void fsp_handle_command(struct fsp_msg *msg)
 	cmd_sub_mod =  (msg->word0 & 0xff) << 16;
 	cmd_sub_mod |= (msg->word1 & 0xff) << 8;
 	cmd_sub_mod |= (msg->word1 >> 8) & 0xff;
-	
+
 	/* Some commands are handled locally */
 	if (fsp_local_command(cmd_sub_mod, msg))
 		goto free;
@@ -1408,7 +1406,7 @@ static void fsp_handle_incoming(struct fsp *fsp)
 		special_response = true;
 
 	/* Check for response bit */
-	if (w1 & 0x80 && !special_response) {
+	if ((w1 & 0x80) && !special_response) {
 		struct fsp_cmdclass *cmdclass = __fsp_get_cmdclass(w0 & 0xff);
 		struct fsp_msg *req;
 
@@ -1981,7 +1979,7 @@ static bool fsp_init_one(const char *compat)
 	dt_for_each_compatible(dt_root, fsp_node, compat) {
 		if (!inited) {
 			int i;
-	
+
 			/* Initialize the per-class msg queues */
 			for (i = 0;
 			     i <= (FSP_MCLASS_LAST - FSP_MCLASS_FIRST); i++) {
