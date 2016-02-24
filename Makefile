@@ -33,6 +33,10 @@ KERNEL ?=
 STACK_CHECK ?= 0
 
 #
+# Optional static analysis with cppcheck
+CPPCHECK ?= 0
+
+#
 # Where is the source directory, must be a full path (no ~)
 # Example: SRC= /home/me/skiboot
 #

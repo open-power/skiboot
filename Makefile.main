@@ -156,7 +156,7 @@ pflash:
 pflash-coverity:
 	(cd external/pflash; ./build-all-arch.sh)
 
-all: $(SUBDIRS) $(TARGET).lid $(TARGET).map extract-gcov
+all: $(SUBDIRS) $(TARGET).lid $(TARGET).map extract-gcov cppcheck.xml
 
 OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBFLASH)
 ifeq ($(PORE),1)
@@ -230,6 +230,19 @@ TAGS:
 
 cscope:
 	find . -name '*.[chS]' | xargs cscope
+
+.PHONY: cppcheck
+cppcheck:
+	$(RM) cppcheck.xml
+	
+cppcheck.xml: cppcheck
+ifeq ($(CPPCHECK),1)
+ifeq ($(V),1)
+	cppcheck --enable=all --xml-version=2 . 2> cppcheck.xml
+else
+	cppcheck --enable=all --xml-version=2 --quiet . 2> cppcheck.xml
+endif # V==0
+endif # CPPCHECK==1
 
 clean:
 	$(RM) *.[odsa] $(SUBDIRS:%=%/*.[odsa])
