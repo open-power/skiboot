@@ -141,7 +141,7 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 	}
 
 	if ((msg->netfn >> 2) + 1 != (netfn >> 2)) {
-		prerror("IPMI: Incorrect netfn 0x%02x in response\n", netfn);
+		prerror("IPMI: Incorrect netfn 0x%02x in response\n", netfn >> 2);
 		cc = IPMI_ERR_UNSPECIFIED;
 	}
 	msg->netfn = netfn;

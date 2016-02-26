@@ -15,6 +15,7 @@
  */
 
 #define pr_fmt(fmt) "BT: " fmt
+
 #include <skiboot.h>
 #include <lpc.h>
 #include <lock.h>
@@ -80,7 +81,7 @@
 #define _BT_Q_LOG(level, msg, fmt, args...) \
 	do { if (msg) \
 			prlog(level, "seq 0x%02x netfn 0x%02x cmd 0x%02x: " fmt "\n", \
-			(msg)->seq, (msg)->ipmi_msg.netfn, (msg)->ipmi_msg.cmd, ##args); \
+			(msg)->seq, ((msg)->ipmi_msg.netfn >> 2), (msg)->ipmi_msg.cmd, ##args); \
 		else \
 			prlog(level, "seq 0x?? netfn 0x?? cmd 0x??: " fmt "\n", ##args); \
 	} while(0)
@@ -346,7 +347,7 @@ static void bt_get_resp(void)
 	if (!bt_msg) {
 		/* A response to a message we no longer care about. */
 		prlog(PR_INFO, "Nobody cared about a response to an BT/IPMI message"
-		       "(seq 0x%02x netfn 0x%02x cmd 0x%02x)\n", seq, netfn, cmd);
+		       "(seq 0x%02x netfn 0x%02x cmd 0x%02x)\n", seq, (netfn >> 2), cmd);
 		bt_flush_msg();
 		return;
 	}
