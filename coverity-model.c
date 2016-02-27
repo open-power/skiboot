@@ -3,7 +3,7 @@ void __attribute__((noreturn)) _abort(void) {
 }
 
 void *__memalign(size_t blocksize, size_t bytes, const char *location) {
-	__coverity_alloc__(bytes);
+	return __coverity_alloc__(bytes);
 }
 
 void mem_free(struct mem_region *region, void *mem, const char *location) {

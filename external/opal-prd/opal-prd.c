@@ -226,7 +226,6 @@ extern struct runtime_interfaces *call_hbrt_init(struct host_interfaces *);
 
 /* hservice Call wrappers */
 
-extern void call_cxxtestExecute(void *);
 extern int call_handle_attns(uint64_t i_proc,
 			uint64_t i_ipollStatus,
 			uint64_t i_ipollMask);

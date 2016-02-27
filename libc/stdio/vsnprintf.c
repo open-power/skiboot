@@ -164,6 +164,7 @@ print_format(char **buffer, size_t bufsize, const char *format, void *var)
 				break;
 			case 'X':
 				upper = true;
+				/* fall through */
 			case 'x':
 				sizec[i] = '\0';
 				value = (unsigned long) var & convert[length_mod];
@@ -234,7 +235,7 @@ print_format(char **buffer, size_t bufsize, const char *format, void *var)
 		form++;
 	}
 
-	
+
 	return (long int) (*buffer - start);
 }
 
@@ -266,14 +267,14 @@ vsnprintf(char *buffer, size_t bufsize, const char *format, va_list arg)
 		if(*ptr == '%') {
 			char formstr[20];
 			int i=0;
-			
+
 			do {
 				formstr[i] = *ptr;
 				ptr++;
 				i++;
 			} while(!(*ptr == 'd' || *ptr == 'i' || *ptr == 'u' || *ptr == 'x' || *ptr == 'X'
 						|| *ptr == 'p' || *ptr == 'c' || *ptr == 's' || *ptr == '%'
-						|| *ptr == 'O' || *ptr == 'o' )); 
+						|| *ptr == 'O' || *ptr == 'o' ));
 			formstr[i++] = *ptr;
 			formstr[i] = '\0';
 			if(*ptr == '%') {
@@ -292,7 +293,7 @@ vsnprintf(char *buffer, size_t bufsize, const char *format, va_list arg)
 			ptr++;
 		}
 	}
-	
+
 	*buffer = '\0';
 
 	return (buffer - bstart);
