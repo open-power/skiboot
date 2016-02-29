@@ -31,7 +31,7 @@ extern uint32_t _stext, _etext;
 void __nomcount __backtrace(struct bt_entry *entries, unsigned int *count)
 {
 	unsigned int room = *count;
-	unsigned long *fp = __builtin_frame_address(1);
+	unsigned long *fp = __builtin_frame_address(0);
 	unsigned long top_adj = top_of_ram;
 
 	/* Assume one stack for early backtraces */
@@ -40,6 +40,7 @@ void __nomcount __backtrace(struct bt_entry *entries, unsigned int *count)
 
 	*count = 0;
 	while(room) {
+		fp = (unsigned long *)fp[0];
 		if (!fp || (unsigned long)fp > top_adj)
 			break;
 		entries->sp = (unsigned long)fp;
@@ -47,7 +48,6 @@ void __nomcount __backtrace(struct bt_entry *entries, unsigned int *count)
 		entries++;
 		*count = (*count) + 1;
 		room--;
-		fp = (unsigned long *)fp[0];
 	}
 }
 
