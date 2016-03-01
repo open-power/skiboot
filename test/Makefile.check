@@ -1,7 +1,10 @@
-check: boot-check qemu-boot-check debian-jessie-boot-check
+check: boot-check boot-smt-check qemu-boot-check debian-jessie-boot-check
 
 boot-check: skiboot.lid
 	./test/run_mambo_boot_test.sh
+
+boot-smt-check: skiboot.lid
+	THREADS=2 ./test/run_mambo_boot_test.sh
 
 qemu-boot-check: skiboot.lid
 	./test/run_qemu_boot_test.sh
