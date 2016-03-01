@@ -308,6 +308,12 @@ boot_entry:
 	/* Initialize thread SPRs */
 	bl init_replicated_sprs
 
+	/* Save the initial offset. The secondary threads will spin on boot_flag
+	 * before relocation so we need to keep track of its location to wake
+	 * them up.
+	 */
+	mr	%r15,%r30
+
 	/* Check if we need to copy ourselves up and update %r30 to
 	 * be our new offset
 	 */
@@ -317,17 +323,19 @@ boot_entry:
 	srdi	%r3,%r3,3
 	mtctr	%r3
 	mr	%r4,%r30
-	mr	%r15,%r30
 	mr	%r30,%r29
+	/* copy the skiboot image to the new offset */
 1:	ld	%r0,0(%r4)
 	std	%r0,0(%r29)
 	addi	%r29,%r29,8
 	addi	%r4,%r4,8
 	bdnz	1b
+	/* flush caches, etc */
 	sync
 	icbi	0,%r29
 	sync
 	isync
+	/* branch to the new image location and continue */
 	LOAD_IMM32(%r3, 2f - __head)
 	add	%r3,%r3,%r30
 	mtctr	%r3
