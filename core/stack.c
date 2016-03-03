@@ -32,10 +32,15 @@ void __nomcount __backtrace(struct bt_entry *entries, unsigned int *count)
 {
 	unsigned int room = *count;
 	unsigned long *fp = __builtin_frame_address(1);
+	unsigned long top_adj = top_of_ram;
+
+	/* Assume one stack for early backtraces */
+	if (top_of_ram == SKIBOOT_BASE + SKIBOOT_SIZE)
+		top_adj = top_of_ram + STACK_SIZE;
 
 	*count = 0;
 	while(room) {
-		if (!fp || (unsigned long)fp > top_of_ram)
+		if (!fp || (unsigned long)fp > top_adj)
 			break;
 		entries->sp = (unsigned long)fp;
 		entries->pc = fp[2];
