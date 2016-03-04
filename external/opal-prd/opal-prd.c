@@ -1150,6 +1150,8 @@ static int handle_msg_occ_error(struct opal_prd_ctx *ctx,
 
 	proc = be64toh(msg->occ_error.chip);
 
+	pr_debug("FW: firmware signalled OCC error for proc 0x%x", proc);
+
 	if (!hservice_runtime->process_occ_error) {
 		pr_log_nocall("process_occ_error");
 		return -1;
@@ -1165,6 +1167,8 @@ static int handle_msg_occ_reset(struct opal_prd_ctx *ctx,
 	uint32_t proc;
 
 	proc = be64toh(msg->occ_reset.chip);
+
+	pr_debug("FW: firmware requested OCC reset for proc 0x%x", proc);
 
 	if (!hservice_runtime->process_occ_reset) {
 		pr_log_nocall("process_occ_reset");
