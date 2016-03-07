@@ -49,6 +49,7 @@ enum proc_gen proc_gen;
 
 static uint64_t kernel_entry;
 static bool kernel_32bit;
+static char zero_location[16];
 
 #ifdef SKIBOOT_GCOV
 void skiboot_gcov_done(void);
@@ -539,6 +540,7 @@ static void setup_branch_null_catcher(void)
 	 * ABI v1 (ie. big endian).  This will be broken if we ever
 	 * move to ABI v2 (ie little endian)
 	 */
+	memcpy(zero_location, 0, 16); /* Save away in case we need it later */
 	memcpy(0, bn, 16);
 }
 
