@@ -533,6 +533,12 @@ static void branch_null(void)
 static void setup_branch_null_catcher(void)
 {
 	void (*bn)(void) = branch_null;
+
+	/*
+	 * FIXME: This copies the function descriptor (16 bytes) for
+	 * ABI v1 (ie. big endian).  This will be broken if we ever
+	 * move to ABI v2 (ie little endian)
+	 */
 	memcpy(0, bn, 16);
 }
 
