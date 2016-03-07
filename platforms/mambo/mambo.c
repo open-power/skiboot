@@ -73,6 +73,14 @@ static int64_t mambo_cec_power_down(uint64_t request __unused)
 	return OPAL_UNSUPPORTED;
 }
 
+static void __attribute__((noreturn)) mambo_terminate(const char *msg __unused)
+{
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+		mambo_sim_exit();
+
+	for (;;) ;
+}
+
 static int mambo_nvram_info(uint32_t *total_size)
 {
 	*total_size = 0x100000;
@@ -93,6 +101,7 @@ DECLARE_PLATFORM(mambo) = {
 	.probe			= mambo_probe,
 	.init		= mambo_platform_init,
 	.cec_power_down = mambo_cec_power_down,
+	.terminate	= mambo_terminate,
 	.nvram_info		= mambo_nvram_info,
 	.nvram_start_read	= mambo_nvram_start_read,
 };
