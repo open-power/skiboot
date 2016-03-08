@@ -40,6 +40,9 @@ static void print_chip_info(uint32_t chip_id)
 	case 0xea:
 		name = "P8 (Venice) processor";
 		break;
+	case 0xd3:
+		name = "P8NVL (Naples) processor";
+		break;
 	case 0xe9:
 		name = "Centaur memory buffer";
 		break;
