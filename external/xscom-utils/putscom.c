@@ -27,6 +27,7 @@ static void print_usage(void)
 {
 	printf("usage: putscom [-c|--chip chip-id] addr value\n");
 	printf("       putscom -v|--version\n");
+	exit(1);
 }
 
 #define VERSION_STR _str(VERSION)
@@ -37,9 +38,7 @@ int main(int argc, char *argv[])
 {
 	uint64_t val = -1ull, addr = -1ull;
 	uint32_t def_chip, chip_id = 0xffffffff;
-	bool show_help = false, got_addr = false, got_val = false;
-	bool show_version = false;
-	bool no_work = false;
+	bool got_addr = false, got_val = false;
 	int rc;
 
 	while(1) {
@@ -67,29 +66,21 @@ int main(int argc, char *argv[])
 			chip_id = strtoul(optarg, NULL, 0);
 			break;
 		case 'v':
-			show_version = true;
-			break;
+			printf("xscom utils version %s\n", VERSION_STR);
+			exit(1);
 		case 'h':
-			show_help = true;
+			print_usage();
 			break;
 		default:
 			exit(1);
 		}
 	}
 	
-	if (!got_addr || !got_val)
-		no_work = true;
-	if (no_work && !show_version && !show_help) {
+	if (!got_addr || !got_val) {
 		fprintf(stderr, "Invalid or missing address/value\n");
 		print_usage();
-		exit(1);
 	}
-	if (show_version)
-		printf("xscom utils version %s\n", VERSION_STR);
-	if (show_help)
-		print_usage();
-	if (no_work)
-		return 0;
+
 	def_chip = xscom_init();
 	if (def_chip == 0xffffffff) {
 		fprintf(stderr, "No valid XSCOM chip found\n");

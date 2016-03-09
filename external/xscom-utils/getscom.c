@@ -28,6 +28,7 @@ static void print_usage(void)
 	printf("usage: getscom [-c|--chip chip-id] addr\n");
 	printf("       getscom -l|--list-chips\n");
 	printf("       getscom -v|--version\n");
+	exit(1);
 }
 
 static void print_chip_info(uint32_t chip_id)
@@ -81,9 +82,7 @@ int main(int argc, char *argv[])
 {
 	uint64_t val, addr = -1ull;
 	uint32_t def_chip, chip_id = 0xffffffff;
-	bool show_help = false;
 	bool list_chips = false;
-	bool show_version = false;
 	bool no_work = false;
 	int rc;
 
@@ -107,14 +106,14 @@ int main(int argc, char *argv[])
 			chip_id = strtoul(optarg, NULL, 0);
 			break;
 		case 'h':
-			show_help = true;
+			print_usage();
 			break;
 		case 'l':
 			list_chips = true;
 			break;
 		case 'v':
-			show_version = true;
-			break;
+			printf("xscom utils version %s\n", VERSION_STR);
+			exit(1);
 		default:
 			exit(1);
 		}
@@ -122,17 +121,11 @@ int main(int argc, char *argv[])
 	
 	if (addr == -1ull)
 		no_work = true;
-	if (no_work && !list_chips && !show_version && !show_help) {
+	if (no_work && !list_chips) {
 		fprintf(stderr, "Invalid or missing address\n");
 		print_usage();
-		exit(1);
 	}
-	if (show_version)
-		printf("xscom utils version %s\n", VERSION_STR);
-	if (show_help)
-		print_usage();
-	if (no_work && !list_chips)
-		return 0;
+
 	def_chip = xscom_init();
 	if (def_chip == 0xffffffff) {
 		fprintf(stderr, "No valid XSCOM chip found\n");

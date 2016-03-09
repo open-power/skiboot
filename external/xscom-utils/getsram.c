@@ -29,6 +29,7 @@ static void print_usage(void)
 	printf("usage: getsram [-c|--chip chip-id] addr\n");
 	printf("               [--occ-channel|n <chan>]\n");
 	printf("       getsram -v|--version\n");
+	exit(1);
 }
 
 #define VERSION_STR _str(VERSION)
@@ -39,9 +40,6 @@ int main(int argc, char *argv[])
 {
 	uint64_t val, addr = -1ull;
 	uint32_t def_chip, chip_id = 0xffffffff;
-	bool show_help = false;
-	bool show_version = false;
-	bool no_work = false;
 	int rc;
 	int occ_channel = 0;
 
@@ -72,29 +70,21 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 'h':
-			show_help = true;
+			print_usage();
 			break;
 		case 'v':
-			show_version = true;
-			break;
+			printf("xscom utils version %s\n", VERSION_STR);
+			exit(1);
 		default:
 			exit(1);
 		}
 	}
 
-	if (addr == -1ull)
-		no_work = true;
-	if (no_work && !show_version && !show_help) {
+	if (addr == -1ull) {
 		fprintf(stderr, "Invalid or missing address\n");
 		print_usage();
-		exit(1);
 	}
-	if (show_version)
-		printf("xscom utils version %s\n", VERSION_STR);
-	if (show_help)
-		print_usage();
-	if (no_work)
-		return 0;
+
 	def_chip = xscom_init();
 	if (def_chip == 0xffffffff) {
 		fprintf(stderr, "No valid XSCOM chip found\n");
