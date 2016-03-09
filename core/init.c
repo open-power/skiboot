@@ -344,13 +344,32 @@ static bool load_kernel(void)
 		}
 	}
 
-	if (!kernel_size)
-		printf("Assuming kernel at %p\n", KERNEL_LOAD_BASE);
+	if (dt_has_node_property(dt_chosen, "kernel-base-address", NULL)) {
+		kernel_entry = dt_prop_get_u64(dt_chosen,
+					       "kernel-base-address");
+		printf("INIT: Kernel image at 0x%llx\n",kernel_entry);
+		kh = (struct elf_hdr *)kernel_entry;
+		/*
+		 * If the kernel is at 0, copy back what we wrote over
+		 * for the null branch catcher.
+		 */
+		if (kernel_entry == 0)
+			memcpy(0, zero_location, 16);
+	} else {
+		if (!kernel_size)
+			printf("INIT: Assuming kernel at %p\n",
+			       KERNEL_LOAD_BASE);
+		kh = (struct elf_hdr *)KERNEL_LOAD_BASE;
+	}
 
 	printf("INIT: Kernel loaded, size: %zu bytes (0 = unknown preload)\n",
 	       kernel_size);
 
-	kh = (struct elf_hdr *)KERNEL_LOAD_BASE;
+	if (kh->ei_ident != ELF_IDENT) {
+		printf("INIT: ELF header not found. Assuming raw binary.\n");
+		return true;
+	}
+
 	if (kh->ei_class == ELF_CLASS_64)
 		return try_load_elf64(kh);
 	else if (kh->ei_class == ELF_CLASS_32)
