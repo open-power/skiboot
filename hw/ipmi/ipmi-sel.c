@@ -404,6 +404,7 @@ int ipmi_elog_commit(struct errorlog *elog_buf)
 	if (elog_buf->event_severity < OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_REBOOT ||
 	    elog_buf->elog_origin != ORG_SAPPHIRE) {
 		prlog(PR_INFO, "dropping non severe PEL event\n");
+		opal_elog_complete(elog_buf, true);
 		return 0;
 	}
 
