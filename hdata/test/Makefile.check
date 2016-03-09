@@ -39,4 +39,5 @@ $(HDATA_TEST:%=%-gcov): %-gcov : %.c %
 clean: hdata-test-clean
 
 hdata-test-clean:
-	$(RM) hdata/test/*.o hdata/test/hdata_to_dt
+	$(RM) hdata/test/*.[od] hdata/test/hdata_to_dt
+	$(RM) $(HDATA_TEST) $(HDATA_TEST:%=%-gcov)
