@@ -74,10 +74,6 @@ static void print_chip_info(uint32_t chip_id)
 	
 }
 
-#define VERSION_STR _str(VERSION)
-#define _str(s) __str(s)
-#define __str(s) #s
-
 int main(int argc, char *argv[])
 {
 	uint64_t val, addr = -1ull;
@@ -112,7 +108,7 @@ int main(int argc, char *argv[])
 			list_chips = true;
 			break;
 		case 'v':
-			printf("xscom utils version %s\n", VERSION_STR);
+			printf("xscom utils version %s\n", VERSION);
 			exit(1);
 		default:
 			exit(1);

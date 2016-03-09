@@ -1,7 +1,8 @@
 all: getscom putscom getsram
 
-VERSION=0.1
-CFLAGS=-O2 -g -Wall -m64 -DVERSION=$(VERSION)
+XSCOM_VERSION ?= $(shell ../../make_version.sh xscom-utils)
+CFLAGS?=-O2 -g -Wall -m64
+override CFLAGS += -DVERSION=\"$(XSCOM_VERSION)\"
 
 getscom: getscom.c xscom.c
 	$(CC) $(CFLAGS) -o $@ $^

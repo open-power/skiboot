@@ -53,7 +53,7 @@ SKIBOOT_VERSION=%version CROSS= make V=1 %{?_smp_mflags}
 OPAL_PRD_VERSION=%version make V=1 -C external/opal-prd
 GARD_VERSION=%version make V=1 -C external/gard
 PFLASH_VERSION=%version make V=1 -C external/pflash
-make V=1 -C external/xscom-utils
+XSCOM_VERSION=%version make V=1 -C external/xscom-utils
 
 %install
 make -C external/opal-prd install DESTDIR=%{buildroot} prefix=/usr

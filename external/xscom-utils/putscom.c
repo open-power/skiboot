@@ -30,10 +30,6 @@ static void print_usage(void)
 	exit(1);
 }
 
-#define VERSION_STR _str(VERSION)
-#define _str(s) __str(s)
-#define __str(s) #s
-
 int main(int argc, char *argv[])
 {
 	uint64_t val = -1ull, addr = -1ull;
@@ -66,7 +62,7 @@ int main(int argc, char *argv[])
 			chip_id = strtoul(optarg, NULL, 0);
 			break;
 		case 'v':
-			printf("xscom utils version %s\n", VERSION_STR);
+			printf("xscom utils version %s\n", VERSION);
 			exit(1);
 		case 'h':
 			print_usage();
