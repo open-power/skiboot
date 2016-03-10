@@ -138,6 +138,18 @@ static struct ipmi_sel_panic_msg ipmi_sel_panic_msg;
 /* Forward declaration */
 static void ipmi_elog_poll(struct ipmi_msg *msg);
 
+void ipmi_sel_init(void)
+{
+	/* Already done */
+	if (ipmi_sel_panic_msg.msg != NULL)
+		return;
+
+	memset(&ipmi_sel_panic_msg, 0, sizeof(struct ipmi_sel_panic_msg));
+	ipmi_sel_panic_msg.msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
+					    IPMI_RESERVE_SEL, ipmi_elog_poll,
+					    NULL, NULL, IPMI_MAX_REQ_SIZE, 2);
+}
+
 /*
  * Allocate IPMI message
  *  For normal event, allocate memory using ipmi_mkmsg and for PANIC
@@ -149,8 +161,11 @@ static struct ipmi_msg *ipmi_sel_alloc_msg(struct errorlog *elog_buf)
 
 	if (elog_buf->event_severity == OPAL_ERROR_PANIC) {
 		/* Called before initialization completes */
-		if (ipmi_sel_panic_msg.msg == NULL)
-			return NULL;
+		if (ipmi_sel_panic_msg.msg == NULL) {
+			ipmi_sel_init();	/* Try to allocate IPMI message */
+			if (ipmi_sel_panic_msg.msg == NULL)
+				return NULL;
+		}
 
 		if (ipmi_sel_panic_msg.busy == true)
 			return NULL;
@@ -551,12 +566,4 @@ void ipmi_parse_sel(struct ipmi_msg *msg)
 		      "unknown OEM SEL command %02x received\n",
 		      sel.cmd);
 	}
-}
-
-void ipmi_sel_init(void)
-{
-	memset(&ipmi_sel_panic_msg, 0, sizeof(struct ipmi_sel_panic_msg));
-	ipmi_sel_panic_msg.msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
-					    IPMI_RESERVE_SEL, ipmi_elog_poll,
-					    NULL, NULL, IPMI_MAX_REQ_SIZE, 2);
 }

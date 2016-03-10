@@ -115,12 +115,13 @@ void astbmc_init(void)
 
 	/* Register the BT interface with the IPMI layer */
 	bt_init();
+	/* Initialize elog */
+	elog_init();
 	ipmi_sel_init();
 	ipmi_wdt_init();
 	ipmi_rtc_init();
 	ipmi_opal_init();
 	astbmc_fru_init();
-	elog_init();
 	ipmi_sensor_init();
 
 	/* As soon as IPMI is up, inform BMC we are in "S0" */
