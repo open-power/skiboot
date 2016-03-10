@@ -419,7 +419,11 @@ int ipmi_elog_commit(struct errorlog *elog_buf)
 	msg->error = ipmi_elog_error;
 
 	msg->req_size = 0;
-	ipmi_queue_msg(msg);
+
+	if (elog_buf->event_severity == OPAL_ERROR_PANIC)
+		ipmi_queue_msg_sync(msg);
+	else
+		ipmi_queue_msg(msg);
 
 	return 0;
 }
