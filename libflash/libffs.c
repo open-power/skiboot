@@ -15,6 +15,7 @@
  */
 /*
  */
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -75,6 +76,7 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 		struct ffs_handle **ffs, bool mark_ecc)
 {
 	struct ffs_hdr hdr;
+	struct ffs_hdr blank_hdr;
 	struct ffs_handle *f;
 	uint32_t total_size;
 	int rc, i;
@@ -99,6 +101,23 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 	if (rc) {
 		FL_ERR("FFS: Error %d reading flash header\n", rc);
 		return rc;
+	}
+
+	/*
+	 * Flash controllers can get deconfigured or otherwise upset, when this
+	 * happens they return all 0xFF bytes.
+	 * An ffs_hdr consisting of all 0xFF cannot be valid and it would be
+	 * nice to drop a hint to the user to help with debugging. This will
+	 * help quickly differentiate between flash corruption and standard
+	 * type 'reading from the wrong place' errors vs controller errors or
+	 * reading erased data.
+	 */
+	memset(&blank_hdr, UINT_MAX, sizeof(struct ffs_hdr));
+	if (memcmp(&blank_hdr, &hdr, sizeof(struct ffs_hdr)) == 0) {
+		FL_ERR("FFS: Reading the flash has returned all 0xFF.\n");
+		FL_ERR("Are you reading erased flash?\n");
+		FL_ERR("Is something else using the flash controller?\n");
+		return FLASH_ERR_BAD_READ;
 	}
 
 	/* Allocate ffs_handle structure and start populating */
