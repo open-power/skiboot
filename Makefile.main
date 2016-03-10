@@ -235,6 +235,7 @@ clean:
 	$(RM) *.[odsa] $(SUBDIRS:%=%/*.[odsa])
 	$(RM) *.elf $(TARGET).lid *.map $(TARGET).lds
 	$(RM) include/asm-offsets.h version.c
+	$(RM) extract-gcov
 
 distclean: clean
 	$(RM) *~ $(SUBDIRS:%=%/*~) include/*~
