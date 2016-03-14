@@ -74,7 +74,7 @@
 /*
  * Maximum number of times to attempt sending a message before giving up.
  */
-#define BT_MAX_SEND_COUNT 2
+#define BT_MAX_RETRIES 1
 
 #define BT_QUEUE_DEBUG 0
 
@@ -112,7 +112,7 @@ struct bt_caps {
 	uint16_t input_buf_len;
 	uint16_t output_buf_len;
 	uint8_t msg_timeout;
-	uint8_t num_retries;
+	uint8_t max_retries;
 };
 
 struct bt {
@@ -183,13 +183,13 @@ static void get_bt_caps_complete(struct ipmi_msg *msg)
 	bt.caps.input_buf_len = msg->data[1] + 1;
 	bt.caps.output_buf_len = msg->data[2] + 1;
 	bt.caps.msg_timeout = msg->data[3];
-	bt.caps.num_retries = msg->data[4];
+	bt.caps.max_retries = msg->data[4];
 	prlog(PR_DEBUG, "BMC BT capabilities received:\n");
 	prlog(PR_DEBUG, "buffer sizes: %d input %d output\n",
 			bt.caps.input_buf_len, bt.caps.output_buf_len);
 	prlog(PR_DEBUG, "number of requests: %d\n", bt.caps.num_requests);
 	prlog(PR_DEBUG,  "msg timeout: %d max retries: %d\n",
-			bt.caps.msg_timeout, bt.caps.num_retries);
+			bt.caps.msg_timeout, bt.caps.max_retries);
 
 out:
 	ipmi_free_msg(msg);
@@ -392,7 +392,7 @@ static void bt_expire_old_msg(uint64_t tb)
 
 	if (bt_msg && bt_msg->tb > 0 &&
 	    (tb_compare(tb, bt_msg->tb + secs_to_tb(bt.caps.msg_timeout)) == TB_AAFTERB)) {
-		if (bt_msg->send_count < BT_MAX_SEND_COUNT) {
+		if (bt_msg->send_count <= bt.caps.max_retries) {
 			/* A message timeout is usually due to the BMC
 			clearing the H2B_ATN flag without actually
 			doing anything. The data will still be in the
@@ -629,7 +629,7 @@ void bt_init(void)
 	bt.caps.input_buf_len = BT_FIFO_LEN;
 	bt.caps.output_buf_len = BT_FIFO_LEN;
 	bt.caps.msg_timeout = BT_MSG_TIMEOUT;
-	bt.caps.num_retries = 1;
+	bt.caps.max_retries = BT_MAX_RETRIES;
 
 	/* We support only one */
 	n = dt_find_compatible_node(dt_root, NULL, "ipmi-bt");
