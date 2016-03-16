@@ -28,8 +28,6 @@
 #include <opal-msg.h>
 #include <errorlog.h>
 #include <centaur.h>
-/* XXX SRC's will be moved to errorlog.h and then remove fsp-elog.h */
-#include <fsp-elog.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_I2C_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_I2C,
 		 OPAL_IO_SUBSYSTEM, OPAL_PREDICTIVE_ERR_DEGRADED_PERF,

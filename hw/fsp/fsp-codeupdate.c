@@ -23,7 +23,6 @@
 #include <ccan/endian/endian.h>
 #include <errorlog.h>
 #include <opal-api.h>
-#include <fsp-elog.h>
 #include <timebase.h>
 
 #include "fsp-codeupdate.h"
