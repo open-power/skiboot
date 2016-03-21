@@ -393,7 +393,7 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 
 	/* Get PowerBus Interface FIR data register value. */
 	if (xscom_read(flat_chip_id, NX_PBI_FIR, &nx_pbi_fir) != 0) {
-		prerror("HMI: XSCOM error reading NX_DMA_ENGINE_FIR\n");
+		prerror("HMI: XSCOM error reading NX_PBI_FIR\n");
 		return;
 	}
 
