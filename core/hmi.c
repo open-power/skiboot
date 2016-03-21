@@ -299,6 +299,7 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 	uint32_t core_id;
 	int i;
 	bool found = false;
+	int64_t ret;
 
 	/* Sanity check */
 	if (!cpu || !hmi_evt)
@@ -307,9 +308,23 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 	core_id = pir_to_core_id(cpu->pir);
 
 	/* Get CORE FIR register value. */
-	if (xscom_read(cpu->chip_id, XSCOM_ADDR_P8_EX(core_id, CORE_FIR),
-							&core_fir) != 0) {
+	ret = xscom_read(cpu->chip_id, XSCOM_ADDR_P8_EX(core_id, CORE_FIR),
+			 &core_fir);
+
+	if (ret == OPAL_HARDWARE) {
 		prerror("HMI: XSCOM error reading CORE FIR\n");
+		/* If the FIR can't be read, we should checkstop. */
+		return true;
+	} else if (ret == OPAL_WRONG_STATE) {
+		/*
+		 * CPU is asleep, so it probably didn't cause the checkstop.
+		 * If no other HMI cause is found a "catchall" checkstop
+		 * will be raised, so if this CPU should've been awake the
+		 * error will be handled appropriately.
+		 */
+		prlog(PR_DEBUG,
+		      "HMI: FIR read failed, chip %d core %d asleep\n",
+		      cpu->chip_id, core_id);
 		return false;
 	}
 
