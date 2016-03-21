@@ -24,6 +24,8 @@
 #include <pci.h>
 #include <cpu.h>
 #include <chip.h>
+#include <npu-regs.h>
+#include <npu.h>
 
 /*
  * HMER register layout:
@@ -439,6 +441,74 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	*event_generated = 1;
 }
 
+static void find_npu_checkstop_reason(int flat_chip_id,
+				      struct OpalHMIEvent *hmi_evt,
+				      int *event_generated)
+{
+	struct phb *phb;
+	struct npu *p = NULL;
+
+	uint64_t npu_fir;
+	uint64_t npu_fir_mask;
+	uint64_t npu_fir_action0;
+	uint64_t npu_fir_action1;
+	uint64_t fatal_errors;
+
+	/* Only check for NPU errors if the chip has a NPU */
+	if (PVR_TYPE(mfspr(SPR_PVR)) != PVR_TYPE_P8NVL)
+		return;
+
+	/* Find the NPU on the chip associated with the HMI. */
+	for_each_phb(phb) {
+		/* NOTE: if a chip ever has >1 NPU this will need adjusting */
+		if (dt_node_is_compatible(phb->dt_node, "ibm,power8-npu-pciex") &&
+		    (dt_get_chip_id(phb->dt_node) == flat_chip_id)) {
+			p = phb_to_npu(phb);
+			break;
+		}
+	}
+
+	/* If we didn't find a NPU on the chip, it's not our checkstop. */
+	if (p == NULL)
+		return;
+
+	/* Read all the registers necessary to find a checkstop condition. */
+	if (xscom_read(flat_chip_id,
+		       p->at_xscom + NX_FIR, &npu_fir) ||
+	    xscom_read(flat_chip_id,
+		       p->at_xscom + NX_FIR_MASK, &npu_fir_mask) ||
+	    xscom_read(flat_chip_id,
+		       p->at_xscom + NX_FIR_ACTION0, &npu_fir_action0) ||
+	    xscom_read(flat_chip_id,
+		       p->at_xscom + NX_FIR_ACTION1, &npu_fir_action1)) {
+		prerror("HMI: Couldn't read NPU registers with XSCOM\n");
+		return;
+	}
+
+	fatal_errors = npu_fir & ~npu_fir_mask & npu_fir_action0 & npu_fir_action1;
+
+	/* If there's no errors, we don't need to do anything. */
+	if (!fatal_errors)
+		return;
+
+	prlog(PR_DEBUG,
+	      "NPU: FIR %llx FIR mask %llx FIR ACTION0 %llx FIR ACTION1 %llx\n",
+	      npu_fir, npu_fir_mask, npu_fir_action0, npu_fir_action1);
+
+	/* Set the NPU to fenced since it can't recover. */
+	p->fenced = true;
+
+	/* Set up the HMI event */
+	hmi_evt->severity = OpalHMI_SEV_WARNING;
+	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
+	hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_NPU;
+	hmi_evt->u.xstop_error.u.chip_id = flat_chip_id;
+
+	/* The HMI is "recoverable" because it shouldn't crash the system */
+	queue_hmi_event(hmi_evt, 1);
+	*event_generated = 1;
+}
+
 static void decode_malfunction(struct OpalHMIEvent *hmi_evt)
 {
 	int i;
@@ -456,8 +526,8 @@ static void decode_malfunction(struct OpalHMIEvent *hmi_evt)
 				queue_hmi_event(hmi_evt, recover);
 				event_generated = 1;
 			}
-
 			find_nx_checkstop_reason(i, hmi_evt, &event_generated);
+			find_npu_checkstop_reason(i, hmi_evt, &event_generated);
 		}
 
 	if (recover != -1) {
