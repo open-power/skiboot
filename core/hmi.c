@@ -439,7 +439,7 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	*event_generated = 1;
 }
 
-static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
+static void decode_malfunction(struct OpalHMIEvent *hmi_evt)
 {
 	int i;
 	int recover = -1;
@@ -471,10 +471,9 @@ static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
 			hmi_evt->u.xstop_error.xstop_type =
 						CHECKSTOP_TYPE_UNKNOWN;
 			hmi_evt->u.xstop_error.xstop_reason = 0;
+			queue_hmi_event(hmi_evt, recover);
 		}
 	}
-
-	return recover;
 }
 
 static void wait_for_subcore_threads(void)
@@ -700,12 +699,9 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	/* Assert if we see malfunction alert, we can not continue. */
 	if (hmer & SPR_HMER_MALFUNCTION_ALERT) {
 		hmer &= ~SPR_HMER_MALFUNCTION_ALERT;
-		recover = 0;
 
-		if (hmi_evt) {
-			recover = decode_malfunction(hmi_evt);
-			queue_hmi_event(hmi_evt, recover);
-		}
+		if (hmi_evt)
+			decode_malfunction(hmi_evt);
 	}
 
 	/* Assert if we see Hypervisor resource error, we can not continue. */
