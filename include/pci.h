@@ -228,6 +228,7 @@ struct pci_lsi_state {
  */
 
 struct phb;
+extern int last_phb_id;
 
 struct phb_ops {
 	/*
@@ -513,6 +514,7 @@ static inline int64_t pci_cfg_write32(struct phb *phb, uint32_t bdfn,
 }
 
 /* Utilities */
+
 extern int64_t pci_find_cap(struct phb *phb, uint16_t bdfn, uint8_t cap);
 extern int64_t pci_find_ecap(struct phb *phb, uint16_t bdfn, uint16_t cap,
 			     uint8_t *version);
@@ -536,6 +538,18 @@ extern int64_t pci_register_phb(struct phb *phb, int opal_id);
 extern int64_t pci_unregister_phb(struct phb *phb);
 extern struct phb *pci_get_phb(uint64_t phb_id);
 static inline void pci_put_phb(struct phb *phb __unused) { }
+
+static inline struct phb *__pci_next_phb_idx(uint64_t *phb_id) {
+	struct phb *phb = NULL;
+	while (phb == NULL && *phb_id <= last_phb_id) {
+		phb = pci_get_phb((*phb_id)++);
+	}
+	return phb;
+}
+
+#define for_each_phb(phb)					\
+	for (uint64_t __phb_idx = 0;				\
+	     (phb = __pci_next_phb_idx(&__phb_idx)) ; )
 
 /* Device tree */
 extern void pci_std_swizzle_irq_map(struct dt_node *dt_node,

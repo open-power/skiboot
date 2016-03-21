@@ -24,6 +24,7 @@
 
 #define MAX_PHB_ID	256
 static struct phb *phbs[MAX_PHB_ID];
+int last_phb_id = 0;
 
 #define PCITRACE(_p, _bdfn, fmt, a...) \
 	prlog(PR_TRACE, "PHB#%04x:%02x:%02x.%x " fmt,	\
@@ -818,6 +819,8 @@ int64_t pci_register_phb(struct phb *phb, int opal_id)
 
 	phbs[opal_id] = phb;
 	phb->opal_id = opal_id;
+	if (opal_id > last_phb_id)
+		last_phb_id = opal_id;
 	dt_add_property_cells(phb->dt_node, "ibm,opal-phbid", 0, phb->opal_id);
 	PCIDBG(phb, 0, "PCI: Registered PHB\n");
 
