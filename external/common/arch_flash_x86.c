@@ -30,6 +30,7 @@
 
 int arch_flash_init(struct blocklevel_device **r_bl, const char *file, bool keep_alive)
 {
+	int rc;
 	struct blocklevel_device *new_bl;
 
 	/* Must have passed through a file to operate on */
@@ -38,8 +39,8 @@ int arch_flash_init(struct blocklevel_device **r_bl, const char *file, bool keep
 		return -1;
 	}
 
-	file_init_path(file, NULL, keep_alive, &new_bl);
-	if (!new_bl)
+	rc = file_init_path(file, NULL, keep_alive, &new_bl);
+	if (rc)
 		return -1;
 
 	*r_bl = new_bl;

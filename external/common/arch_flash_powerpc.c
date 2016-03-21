@@ -200,7 +200,9 @@ static struct blocklevel_device *arch_init_blocklevel(const char *file, bool kee
 			return NULL;
 	}
 
-	file_init_path(file ? file : real_file, NULL, keep_alive, &new_bl);
+	rc = file_init_path(file ? file : real_file, NULL, keep_alive, &new_bl);
+	if (rc)
+		new_bl = NULL;
 	free(real_file);
 	return new_bl;
 }
