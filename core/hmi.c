@@ -217,7 +217,7 @@ static struct lock hmi_lock = LOCK_UNLOCKED;
 
 static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
 {
-	uint64_t *hmi_data;
+	size_t num_params;
 
 	/* Don't queue up event if recover == -1 */
 	if (recover == -1)
@@ -230,16 +230,17 @@ static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
 		hmi_evt->disposition = OpalHMI_DISPOSITION_NOT_RECOVERED;
 
 	/*
-	 * V2 of struct OpalHMIEvent is of (4 * 64 bits) size and well packed
+	 * V2 of struct OpalHMIEvent is of (5 * 64 bits) size and well packed
 	 * structure. Hence use uint64_t pointer to pass entire structure
-	 * using 4 params in generic message format.
+	 * using 5 params in generic message format. Instead of hard coding
+	 * num_params divide the struct size by 8 bytes to get exact
+	 * num_params value.
 	 */
-	hmi_data = (uint64_t *)hmi_evt;
+	num_params = ALIGN_UP(sizeof(*hmi_evt), sizeof(u64)) / sizeof(u64);
 
 	/* queue up for delivery to host. */
-	return opal_queue_msg(OPAL_MSG_HMI_EVT, NULL, NULL,
-				hmi_data[0], hmi_data[1], hmi_data[2],
-				hmi_data[3]);
+	return _opal_queue_msg(OPAL_MSG_HMI_EVT, NULL, NULL,
+				num_params, (uint64_t *)hmi_evt);
 }
 
 static int is_capp_recoverable(int chip_id)
