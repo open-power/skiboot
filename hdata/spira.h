@@ -152,6 +152,8 @@ struct spiras {
 	u8			reserved[0x1c0];
 } __packed __align(0x100);
 
+extern struct spiras *spiras;
+
 
 /* This macro can be used to check the validity of a pointer returned
  * by one of the HDIF API functions. It returns true if the pointer

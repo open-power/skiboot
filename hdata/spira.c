@@ -193,6 +193,9 @@ __section(".spirah.data") struct spirah spirah = {
 	},
 };
 
+/* The service processor SPIRA-S structure */
+struct spiras *spiras;
+
 /* Overridden for testing. */
 #ifndef spira_check_ptr
 bool spira_check_ptr(const void *ptr, const char *file, unsigned int line)
@@ -1039,11 +1042,56 @@ static void hostservices_parse(void)
 	hservices_from_hdat(dt_blob, size);
 }
 
+/*
+ * Legacy SPIRA is being deprecated and we have new SPIRA-H/S structures.
+ * But on older system (p7?) we will continue to get legacy SPIRA.
+ *
+ * SPIRA-S is initialized and provided by FSP. We use SPIRA-S signature
+ * to identify supported format. Also if required adjust spira pointer.
+ */
+static void fixup_spira(void)
+{
+#if !defined(TEST)
+	spiras = (struct spiras *)CPU_TO_BE64(SPIRA_HEAP_BASE);
+#endif
+
+	/* Validate SPIRA-S signature */
+	if (!spiras)
+		return;
+	if (!HDIF_check(&spiras->hdr, SPIRAS_HDIF_SIG))
+		return;
+
+	prlog(PR_NOTICE, "SPIRA-S found.\n");
+
+	spira.ntuples.sp_subsys = spiras->ntuples.sp_subsys;
+	spira.ntuples.ipl_parms = spiras->ntuples.ipl_parms;
+	spira.ntuples.nt_enclosure_vpd = spiras->ntuples.nt_enclosure_vpd;
+	spira.ntuples.slca = spiras->ntuples.slca;
+	spira.ntuples.backplane_vpd = spiras->ntuples.backplane_vpd;
+	spira.ntuples.system_vpd = spiras->ntuples.system_vpd;
+	spira.ntuples.proc_init = spirah.ntuples.proc_init;
+	spira.ntuples.clock_vpd = spiras->ntuples.clock_vpd;
+	spira.ntuples.anchor_vpd = spiras->ntuples.anchor_vpd;
+	spira.ntuples.op_panel_vpd = spiras->ntuples.op_panel_vpd;
+	spira.ntuples.misc_cec_fru_vpd = spiras->ntuples.misc_cec_fru_vpd;
+	spira.ntuples.ms_vpd = spiras->ntuples.ms_vpd;
+	spira.ntuples.cec_iohub_fru = spiras->ntuples.cec_iohub_fru;
+	spira.ntuples.cpu_ctrl = spirah.ntuples.cpu_ctrl;
+	spira.ntuples.mdump_src = spirah.ntuples.mdump_src;
+	spira.ntuples.mdump_dst = spirah.ntuples.mdump_dst;
+	spira.ntuples.mdump_res  = spirah.ntuples.mdump_res;
+	spira.ntuples.pcia = spiras->ntuples.pcia;
+	spira.ntuples.proc_chip = spiras->ntuples.proc_chip;
+	spira.ntuples.hs_data = spiras->ntuples.hs_data;
+}
+
 void parse_hdat(bool is_opal, uint32_t master_cpu)
 {
 	cpu_type = PVR_TYPE(mfspr(SPR_PVR));
 
 	prlog(PR_DEBUG, "Parsing HDAT...\n");
+
+	fixup_spira();
 
 	dt_root = dt_new_root("");
 

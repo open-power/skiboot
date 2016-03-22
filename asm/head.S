@@ -737,7 +737,7 @@ init_replicated_sprs:
 	. = 0x4000
 .global naca
 naca:
-	.llong	0			/* 0x0000 : Reserved */
+	.llong	spirah			/* 0x0000 : SPIRA-H  */
 	.llong	0			/* 0x0008 : Reserved */
 	.llong	0			/* 0x0010 : Reserved */
 	.llong	hv_release_data		/* 0x0018 : HV release data */
