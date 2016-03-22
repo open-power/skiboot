@@ -31,6 +31,11 @@ SECTIONS
 		KEEP(*(.spira.data))
 	}
 
+	. = SPIRAH_OFF;
+	.spirah : {
+		KEEP(*(.spirah.data))
+	}
+
 	. = PROCIN_OFF;
 	.procin.data : {
 		KEEP(*(.procin.data))

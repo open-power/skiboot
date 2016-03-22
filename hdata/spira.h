@@ -113,6 +113,8 @@ struct spirah {
 	u8			reserved[0x100];
 } __packed __align(0x100);
 
+extern struct spirah spirah;
+
 /* SPIRA-S signature */
 #define SPIRAS_HDIF_SIG		"SPIRAS"
 

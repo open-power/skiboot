@@ -147,6 +147,52 @@ __section(".spira.data") struct spira spira = {
 	},
 };
 
+/* The Hypervisor SPIRA-H Structure */
+__section(".spirah.data") struct spirah spirah = {
+	.hdr = HDIF_SIMPLE_HDR(SPIRAH_HDIF_SIG, SPIRAH_VERSION, struct spirah),
+	.ntuples_ptr = HDIF_IDATA_PTR(offsetof(struct spirah, ntuples),
+				      sizeof(struct spirah_ntuples)),
+	.ntuples = {
+		.array_hdr = {
+			.offset		= CPU_TO_BE32(HDIF_ARRAY_OFFSET),
+			.ecnt		= CPU_TO_BE32(SPIRAH_NTUPLES_COUNT),
+			.esize
+				= CPU_TO_BE32(sizeof(struct spira_ntuple)),
+			.eactsz		= CPU_TO_BE32(0x18),
+		},
+		/* Host Data Areas */
+		.hs_data_area = {
+			.addr		= CPU_TO_BE64(SPIRA_HEAP_BASE),
+			.alloc_cnt	= CPU_TO_BE16(1),
+			.alloc_len	= CPU_TO_BE32(SPIRA_HEAP_SIZE),
+		},
+		/* We only populate some n-tuples */
+		.proc_init = {
+			.addr		= CPU_TO_BE64(PROCIN_OFF),
+			.alloc_cnt	= CPU_TO_BE16(1),
+			.act_cnt	= CPU_TO_BE16(1),
+			.alloc_len
+			= CPU_TO_BE32(sizeof(struct proc_init_data)),
+		},
+#if !defined(TEST)
+		.cpu_ctrl = {
+			.addr		= CPU_TO_BE64((unsigned long)&cpu_ctl_init_data),
+			.alloc_cnt	= CPU_TO_BE16(1),
+			.act_cnt	= CPU_TO_BE16(1),
+			.alloc_len	=
+					CPU_TO_BE32(sizeof(cpu_ctl_init_data)),
+		},
+#endif
+		.mdump_src = {
+			.addr		= CPU_TO_BE64(MDST_TABLE_OFF),
+			.alloc_cnt	= CPU_TO_BE16(ARRAY_SIZE(init_mdst_table)),
+			.act_cnt	= CPU_TO_BE16(ARRAY_SIZE(init_mdst_table)),
+			.alloc_len	=
+				CPU_TO_BE32(sizeof(init_mdst_table)),
+		},
+	},
+};
+
 /* Overridden for testing. */
 #ifndef spira_check_ptr
 bool spira_check_ptr(const void *ptr, const char *file, unsigned int line)

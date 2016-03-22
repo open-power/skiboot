@@ -33,8 +33,11 @@
  * give it 64k before placing the SPIRA and related data.
  */
 #define SPIRA_OFF		0x00010000
+#define SPIRAH_OFF		0x00010400
 
-/* SPIRA is 2k, then follow with for proc_init_data (aka PROCIN).
+/* Actual SPIRA size is lesser than 1K (presently 0x340 bytes).
+ * Use 1K for legacy SPIRA and 1K for SPIRA-H.
+ * Then follow with for proc_init_data (aka PROCIN).
  * These need to be at fixed addresses in case we're ever little
  * endian: linker can't endian reverse a pointer for us.  Text, data
  * et. al. follows this.
