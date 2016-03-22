@@ -125,43 +125,64 @@ static void undefined_bytes(void *p, size_t len)
 
 int main(int argc, char *argv[])
 {
-	int fd, r;
-	bool verbose = false, quiet = false, tree_only = false;
+	int fd, r, i = 0, opt_count = 0;
+	bool verbose = false, quiet = false, tree_only = false, new_spira = false;
 
-	while (argv[1]) {
-		if (strcmp(argv[1], "-v") == 0) {
+	while (argv[++i]) {
+		if (strcmp(argv[i], "-v") == 0) {
 			verbose = true;
-			argv++;
-			argc--;
-		} else if (strcmp(argv[1], "-q") == 0) {
+			opt_count++;
+		} else if (strcmp(argv[i], "-q") == 0) {
 			quiet = true;
-			argv++;
-			argc--;
-		} else if (strcmp(argv[1], "-t") == 0) {
+			opt_count++;
+		} else if (strcmp(argv[i], "-t") == 0) {
 			tree_only = true;
-			argv++;
-			argc--;
-		} else
-			break;
+			opt_count++;
+		} else if (strcmp(argv[i], "-s") == 0) {
+			new_spira = true;
+			opt_count++;
+		}
 	}
 
-	if (argc != 3)
-		errx(1, "Usage: hdata [-v|-q|-t] <spira-dump> <heap-dump>");
+	argc -= opt_count;
+	argv += opt_count;
+	if (argc != 3) {
+		errx(1, "Usage:\n"
+		        "       hdata [-v|-q|-t] <spira-dump> <heap-dump>\n"
+		        "       hdata -s [-v|-q|-t] <spirah-dump> <spiras-dump>\n");
+	}
 
 	/* Copy in spira dump (assumes little has changed!). */
-	fd = open(argv[1], O_RDONLY);
-	if (fd < 0)
-		err(1, "opening %s", argv[1]);
-	r = read(fd, &spira, sizeof(spira));
-	if (r < sizeof(spira.hdr))
-		err(1, "reading %s gave %i", argv[1], r);
-	if (verbose)
-		printf("verbose: read spira %u bytes\n", r);
-	close(fd);
+	if (new_spira) {
+		fd = open(argv[1], O_RDONLY);
+		if (fd < 0)
+			err(1, "opening %s", argv[1]);
+		r = read(fd, &spirah, sizeof(spirah));
+		if (r < sizeof(spirah.hdr))
+			err(1, "reading %s gave %i", argv[1], r);
+		if (verbose)
+			printf("verbose: read spirah %u bytes\n", r);
+		close(fd);
 
-	undefined_bytes((void *)&spira + r, sizeof(spira) - r);
+		undefined_bytes((void *)&spirah + r, sizeof(spirah) - r);
 
-	base_addr = be64_to_cpu(spira.ntuples.heap.addr);
+		base_addr = be64_to_cpu(spirah.ntuples.hs_data_area.addr);
+	} else {
+		fd = open(argv[1], O_RDONLY);
+		if (fd < 0)
+			err(1, "opening %s", argv[1]);
+		r = read(fd, &spira, sizeof(spira));
+		if (r < sizeof(spira.hdr))
+			err(1, "reading %s gave %i", argv[1], r);
+		if (verbose)
+			printf("verbose: read spira %u bytes\n", r);
+		close(fd);
+
+		undefined_bytes((void *)&spira + r, sizeof(spira) - r);
+
+		base_addr = be64_to_cpu(spira.ntuples.heap.addr);
+	}
+
 	if (!base_addr)
 		errx(1, "Invalid base addr");
 	if (verbose)
@@ -180,6 +201,9 @@ int main(int argc, char *argv[])
 		printf("verbose: mapped %zu at %p\n",
 		       spira_heap_size, spira_heap);
 	close(fd);
+
+	if (new_spira)
+		spiras = (struct spiras *)spira_heap;
 
 	if (quiet) {
 		fclose(stdout);
