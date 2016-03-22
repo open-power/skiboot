@@ -75,7 +75,13 @@ struct spira {
 	struct HDIF_idata_ptr	ntuples_ptr;
 	__be64			pad;
 	struct spira_ntuples	ntuples;
-	u8			reserved[0x4c0];
+	/*
+	 * We reserve 0xc0 rather than 0x4c0 so we fit SPIRAH/SPIRAS here
+	 * while preserving compatibility with existing P7/P8 systems.
+	 *
+	 * According to FSP engineers, this is an okay thing to do.
+	 */
+	u8			reserved[0xc0];
 } __packed __align(0x100);
 
 extern struct spira spira;
