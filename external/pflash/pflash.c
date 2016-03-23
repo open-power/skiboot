@@ -550,13 +550,14 @@ int main(int argc, char *argv[])
 			{"debug",	no_argument,		NULL,	'g'},
 			{"side",	required_argument,	NULL,	'S'},
 			{"toc",		required_argument,	NULL,	'T'},
-			{"clear",   no_argument,        NULL,   'c'}
+			{"clear",   no_argument,        NULL,   'c'},
+			{NULL,	    0,                  NULL,    0 }
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "a:s:P:r:43Eemp:fdihvbtgS:T:c",
+		c = getopt_long(argc, argv, "+:a:s:P:r:43Eemp:fdihvbtgS:T:c",
 				long_opts, &oidx);
-		if (c == EOF)
+		if (c == -1)
 			break;
 		switch(c) {
 		case 'a':
@@ -626,16 +627,36 @@ int main(int argc, char *argv[])
 		case 'c':
 			do_clear = true;
 			break;
+		case ':':
+			fprintf(stderr, "Unrecognised option \"%s\" to '%c'\n", optarg, optopt);
+			no_action = true;
+			break;
+		case '?':
+			fprintf(stderr, "Unrecognised option '%c'\n", optopt);
+			no_action = true;
+			break;
 		default:
-			exit(1);
+			fprintf(stderr , "Encountered unknown error parsing options\n");
+			no_action = true;
 		}
+	}
+
+	if (optind < argc) {
+		/*
+		 * It appears not everything passed to pflash was an option, best to
+		 * not continue
+		 */
+		while (optind < argc)
+			fprintf(stderr, "Unrecognised option or argument \"%s\"\n", argv[optind++]);
+
+		no_action = true;
 	}
 
 	/* Check if we need to access the flash at all (which will
 	 * also tune them as a side effect
 	 */
-	no_action = !erase && !program && !info && !do_read &&
-		!enable_4B && !disable_4B && !tune && !do_clear;
+	no_action = no_action || (!erase && !program && !info && !do_read &&
+		!enable_4B && !disable_4B && !tune && !do_clear);
 
 	/* Nothing to do, if we didn't already, print usage */
 	if (no_action && !show_version)
