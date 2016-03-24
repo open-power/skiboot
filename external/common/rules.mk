@@ -17,6 +17,30 @@ endif
 endif
 endif
 
+# Use make V=1 for a verbose build.
+ifndef V
+        Q_CC=	@echo '    CC ' $@;
+        Q_LINK=	@echo '  LINK ' $@;
+        Q_LN=   @echo '    LN ' $@;
+        Q_MKDIR=@echo ' MKDIR ' $@;
+endif
+
+
+.PHONY: links
+links: libflash ccan common
+
+libflash:
+	$(Q_LN)ln -sf ../../libflash ./libflash
+
+ccan:
+	$(Q_LN)ln -sf ../../ccan ./ccan
+
+common:
+	$(Q_LN)ln -sf ../common ./common
+
+make_version.sh:
+	$(Q_LN)ln -sf ../../make_version.sh
+
 ARCH_SRC := $(addprefix common/,$(ARCH_FILES))
 ARCH_OBJS := $(addprefix common-,$(ARCH_FILES:.c=.o))
 
