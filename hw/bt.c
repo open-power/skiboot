@@ -29,22 +29,22 @@
 
 /* BT registers */
 #define BT_CTRL			0
-#define   BT_CTRL_B_BUSY		0x80
-#define   BT_CTRL_H_BUSY		0x40
-#define   BT_CTRL_OEM0			0x20
-#define   BT_CTRL_SMS_ATN		0x10
-#define   BT_CTRL_B2H_ATN		0x08
-#define   BT_CTRL_H2B_ATN		0x04
-#define   BT_CTRL_CLR_RD_PTR		0x02
-#define   BT_CTRL_CLR_WR_PTR		0x01
+#define BT_CTRL_B_BUSY		0x80
+#define BT_CTRL_H_BUSY		0x40
+#define BT_CTRL_OEM0		0x20
+#define BT_CTRL_SMS_ATN		0x10
+#define BT_CTRL_B2H_ATN		0x08
+#define BT_CTRL_H2B_ATN		0x04
+#define BT_CTRL_CLR_RD_PTR	0x02
+#define BT_CTRL_CLR_WR_PTR	0x01
 #define BT_HOST2BMC		1
 #define BT_INTMASK		2
-#define   BT_INTMASK_B2H_IRQEN		0x01
-#define   BT_INTMASK_B2H_IRQ		0x02
-#define   BT_INTMASK_BMC_HWRST		0x80
+#define BT_INTMASK_B2H_IRQEN	0x01
+#define BT_INTMASK_B2H_IRQ	0x02
+#define BT_INTMASK_BMC_HWRST	0x80
 
 /* Maximum size of the HW FIFO */
-#define BT_FIFO_LEN 64
+#define BT_FIFO_LEN		64
 
 /* Default poll interval before interrupts are working */
 #define BT_DEFAULT_POLL_MS	200
@@ -53,31 +53,25 @@
  * Minimum size of an IPMI request/response including
  * mandatory headers.
  */
-#define BT_MIN_REQ_LEN 3
-#define BT_MIN_RESP_LEN 4
+#define BT_MIN_REQ_LEN		3
+#define BT_MIN_RESP_LEN		4
 
-/*
- * How long (in uS) to poll for new ipmi data.
- */
-#define POLL_TIMEOUT 10000
+/* How long (in uS) to poll for new ipmi data. */
+#define POLL_TIMEOUT		10000
 
-/*
- * Maximum number of outstanding messages to allow in the queue.
- */
-#define BT_MAX_QUEUE_LEN 10
+/* Maximum number of outstanding messages to allow in the queue. */
+#define BT_MAX_QUEUE_LEN	10
 
-/*
- * How long (in seconds) before a message is timed out.
- */
-#define BT_MSG_TIMEOUT 3
+/* How long (in seconds) before a message is timed out. */
+#define BT_MSG_TIMEOUT		3
 
-/*
- * Maximum number of times to attempt sending a message before giving up.
- */
-#define BT_MAX_RETRIES 1
+/* Maximum number of times to attempt sending a message before giving up. */
+#define BT_MAX_RETRIES		1
 
-#define BT_QUEUE_DEBUG 0
+/* Macro to enable printing BT message queue for debug */
+#define BT_QUEUE_DEBUG		0
 
+/* BT message logging macros */
 #define _BT_Q_LOG(level, msg, fmt, args...) \
 	do { if (msg) \
 			prlog(level, "seq 0x%02x netfn 0x%02x cmd 0x%02x: " fmt "\n", \
@@ -86,10 +80,6 @@
 			prlog(level, "seq 0x?? netfn 0x?? cmd 0x??: " fmt "\n", ##args); \
 	} while(0)
 
-
-/*
- * takes a struct bt_msg *
- */
 #define BT_Q_ERR(msg, fmt, args...) \
 	_BT_Q_LOG(PR_ERR, msg, fmt, ##args)
 
@@ -158,7 +148,6 @@ static inline void bt_assert_h_busy(void)
 static void get_bt_caps_complete(struct ipmi_msg *msg)
 {
 	/* Ignore errors, we'll fallback to using the defaults, no big deal */
-
 	if (msg->data[0] == 0) {
 		prlog(PR_DEBUG, "Got illegal BMC BT capability\n");
 		goto out;
@@ -248,9 +237,11 @@ static void bt_reset_interface(void)
 	bt_init_interface();
 }
 
-/* Try and send a message from the message queue. Caller must hold
+/*
+ * Try and send a message from the message queue. Caller must hold
  * bt.bt_lock and bt.lock and ensue the message queue is not
- * empty. */
+ * empty.
+ */
 static void bt_send_msg(struct bt_msg *bt_msg)
 {
 	int i;
@@ -375,9 +366,7 @@ static void bt_get_resp(void)
 	bt.queue_len--;
 	unlock(&bt.lock);
 
-	/*
-	 * Call the IPMI layer to finish processing the message.
-	 */
+	/* Call IPMI layer to finish processing the message. */
 	ipmi_cmd_done(cmd, netfn, cc, ipmi_msg);
 	lock(&bt.lock);
 
@@ -394,9 +383,9 @@ static void bt_expire_old_msg(uint64_t tb)
 	    (tb_compare(tb, bt_msg->tb + secs_to_tb(bt.caps.msg_timeout)) == TB_AAFTERB)) {
 		if (bt_msg->send_count <= bt.caps.max_retries) {
 			/* A message timeout is usually due to the BMC
-			clearing the H2B_ATN flag without actually
-			doing anything. The data will still be in the
-			FIFO so just reset the flag.*/
+			 * clearing the H2B_ATN flag without actually
+			 * doing anything. The data will still be in the
+			 * FIFO so just reset the flag.*/
 			BT_Q_ERR(bt_msg, "Retry sending message");
 			bt_msg->send_count++;
 
@@ -406,18 +395,20 @@ static void bt_expire_old_msg(uint64_t tb)
 			BT_Q_ERR(bt_msg, "Timeout sending message");
 			bt_msg_del(bt_msg);
 
-			/* Timing out a message is inherently racy as the BMC
-			   may start writing just as we decide to kill the
-			   message. Hopefully resetting the interface is
-			   sufficient to guard against such things. */
+			/*
+			 * Timing out a message is inherently racy as the BMC
+			 * may start writing just as we decide to kill the
+			 * message. Hopefully resetting the interface is
+			 * sufficient to guard against such things.
+			 */
 			bt_reset_interface();
 		}
 	}
 }
 
-#if BT_QUEUE_DEBUG
 static void print_debug_queue_info(void)
 {
+#if BT_QUEUE_DEBUG
 	struct bt_msg *msg;
 	static bool printed = false;
 
@@ -432,10 +423,8 @@ static void print_debug_queue_info(void)
 		printed = true;
 		prlog(PR_DEBUG, "----- BT Msg Queue Empty -----\n");
 	}
-}
-#else
-static void print_debug_queue_info(void) {}
 #endif
+}
 
 static void bt_send_and_unlock(void)
 {
@@ -445,10 +434,12 @@ static void bt_send_and_unlock(void)
 		bt_msg = list_top(&bt.msgq, struct bt_msg, link);
 		assert(bt_msg);
 
-		/* Start the message timeout once it gets to the top
+		/*
+		 * Start the message timeout once it gets to the top
 		 * of the queue. This will ensure we timeout messages
 		 * in the case of a broken bt interface as occurs when
-		 * the BMC is not responding to any IPMI messages. */
+		 * the BMC is not responding to any IPMI messages.
+		 */
 		if (bt_msg->tb == 0)
 			bt_msg->tb = mftb();
 
@@ -473,8 +464,10 @@ static void bt_poll(struct timer *t __unused, void *data __unused,
 	if (!lpc_ok())
 		return;
 
-	/* If we can't get the lock assume someone else will notice
-	 * the new message and process it. */
+	/*
+	 * If we can't get the lock assume someone else will notice
+	 * the new message and process it.
+	 */
 	lock(&bt.lock);
 
 	print_debug_queue_info();
@@ -495,11 +488,12 @@ static void bt_poll(struct timer *t __unused, void *data __unused,
 		lock(&bt.lock);
 	}
 
-	/* Send messages if we can. If the BMC was really quick we
-	   could loop back to the start and check for a response
-	   instead of unlocking, but testing shows the BMC isn't that
-	   fast so we will wait for the IRQ or a call to the pollers
-	   instead. */
+	/*
+	 * Send messages if we can. If the BMC was really quick we
+	 * could loop back to the start and check for a response
+	 * instead of unlocking, but testing shows the BMC isn't that
+	 * fast so we will wait for the IRQ or a call to the pollers instead.
+	 */
 	bt_send_and_unlock();
 
 	schedule_timer(&bt.poller,
@@ -513,8 +507,7 @@ static void bt_add_msg(struct bt_msg *bt_msg)
 	bt_msg->send_count = 0;
 	bt.queue_len++;
 	if (bt.queue_len > BT_MAX_QUEUE_LEN) {
-		/* Maximum queue length exceeded - remove the oldest message
-		   from the queue. */
+		/* Maximum queue length exceeded, remove oldest messages. */
 		BT_Q_ERR(bt_msg, "Maximum queue length exceeded");
 		bt_msg = list_tail(&bt.msgq, struct bt_msg, link);
 		assert(bt_msg);
@@ -663,7 +656,8 @@ void bt_init(void)
 
 	ipmi_register_backend(&bt_backend);
 
-	/* We initially schedule the poller as a relatively fast timer, at
+	/*
+	 * We initially schedule the poller as a relatively fast timer, at
 	 * least until we have at least one interrupt occurring at which
 	 * point we turn it into a background poller
 	 */
