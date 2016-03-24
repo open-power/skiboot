@@ -55,8 +55,8 @@ Two ways:
 Trees
 -----
 - https://github.com/open-power/skiboot/tree/stable
-  git@github.com:open-power/skiboot.git (stable branch)
+  git@github.com:open-power/skiboot.git (branches are skiboot-X.Y.x - e.g. skiboot-5.1.x)
 
 - Some stable versions may last longer than others
-  - So there may be stable, stable-5.1 and stable-5.0 at any one time being
-    actively maintained.
+  - So there may be skiboot-5.1.x and skiboot-5.2.x actively maintained
+    and skiboot-5.1.x could possibly outlast skiboot-5.2.x
