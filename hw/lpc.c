@@ -35,6 +35,10 @@ DEFINE_LOG_ENTRY(OPAL_RC_LPC_WRITE, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 		 OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,
 		 OPAL_NA);
 
+DEFINE_LOG_ENTRY(OPAL_RC_LPC_SYNC, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
+		 OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,
+		 OPAL_NA);
+
 #define ECCB_CTL	0 /* b0020 -> b00200 */
 #define ECCB_STAT	2 /* b0022 -> b00210 */
 #define ECCB_DATA	3 /* b0023 -> b00218 */
@@ -614,6 +618,7 @@ static void lpc_dispatch_reset(struct proc_chip *chip)
 static void lpc_dispatch_err_irqs(struct proc_chip *chip, uint32_t irqs)
 {
 	int rc;
+	const char *sync_err;
 	uint32_t err_addr;
 
 	/* Write back to clear error interrupts, we clear SerIRQ later
@@ -624,28 +629,30 @@ static void lpc_dispatch_err_irqs(struct proc_chip *chip, uint32_t irqs)
 	if (rc)
 		prerror("LPC: Failed to clear IRQ error latches !\n");
 
-
 	if (irqs & LPC_HC_IRQ_LRESET)
 		lpc_dispatch_reset(chip);
 	if (irqs & LPC_HC_IRQ_SYNC_ABNORM_ERR)
-		prerror("LPC: Got SYNC abnormal error\n");
+		sync_err = "LPC: Got SYNC abnormal error.";
 	if (irqs & LPC_HC_IRQ_SYNC_NORESP_ERR)
-		prerror("LPC: Got SYNC no-response error\n");
+		sync_err = "LPC: Got SYNC no-response error.";
 	if (irqs & LPC_HC_IRQ_SYNC_NORM_ERR)
-		prerror("LPC: Got SYNC normal error\n");
+		sync_err = "LPC: Got SYNC normal error.";
 	if (irqs & LPC_HC_IRQ_SYNC_TIMEOUT_ERR)
-		prerror("LPC: Got SYNC timeout error\n");
+		sync_err = "LPC: Got SYNC timeout error.";
 	if (irqs & LPC_HC_IRQ_TARG_TAR_ERR)
-		prerror("LPC: Got abnormal TAR error\n");
+		sync_err = "LPC: Got abnormal TAR error.";
 	if (irqs & LPC_HC_IRQ_BM_TAR_ERR)
-		prerror("LPC: Got bus master TAR error\n");
+		sync_err = "LPC: Got bus master TAR error.";
 
 	rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_ERROR_ADDRESS,
 		      &err_addr, 4);
 	if (rc)
-		prerror("LPC: Error reading error address register\n");
+		log_simple_error(&e_info(OPAL_RC_LPC_SYNC), "%s "
+			"Error reading error address register\n", sync_err);
 	else
-		prerror("LPC: Error address reg: 0x%08x\n", err_addr);
+		log_simple_error(&e_info(OPAL_RC_LPC_SYNC), "%s "
+			"Error address reg: 0x%08x\n",
+			sync_err, err_addr);
 }
 
 static void lpc_dispatch_ser_irqs(struct proc_chip *chip, uint32_t irqs,

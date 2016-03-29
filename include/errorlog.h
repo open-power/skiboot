@@ -265,6 +265,7 @@ enum opal_reasoncode {
 /* LPC */
 	OPAL_RC_LPC_READ        = OPAL_LP | 0x10,
 	OPAL_RC_LPC_WRITE       = OPAL_LP | 0x11,
+	OPAL_RC_LPC_SYNC        = OPAL_LP | 0x12,
 /* OP_PANEL */
 	OPAL_RC_PANEL_WRITE     = OPAL_OP | 0x10,
 /* PSI */
