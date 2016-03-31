@@ -10,18 +10,10 @@ sbindir = $(prefix)/sbin
 datadir = $(prefix)/share
 mandir = $(datadir)/man
 
-all: opal-prd
+all: links arch_links | opal-prd
 
 GET_ARCH = ../../external/common/get_arch.sh
 include ../../external/common/rules.mk
-
-# Use make V=1 for a verbose build.
-ifndef V
-        Q_CC=	@echo '    CC ' $@;
-        Q_LINK=	@echo '  LINK ' $@;
-        Q_LN=   @echo '    LN ' $@;
-        Q_MKDIR=@echo ' MKDIR ' $@;
-endif
 
 LIBFLASH_OBJS = libflash-blocklevel.o libflash-libffs.o \
                 libflash-libflash.o libflash-ecc.o \
@@ -30,29 +22,16 @@ LIBFLASH_OBJS = libflash-blocklevel.o libflash-libffs.o \
 OBJS = opal-prd.o thunk.o pnor.o i2c.o module.o version.o \
        $(LIBFLASH_OBJS) common-arch_flash.o
 
-LINKS = ccan common libflash $(ARCH_LINKS)
-
 OPAL_PRD_VERSION ?= $(shell ../../make_version.sh opal-prd)
 
 ifdef KERNEL_DIR
-LINKS += asm/opal-prd.h
+links += asm/opal-prd.h
 endif
-
-ccan:
-	$(Q_LN)ln -sfr ../../ccan ./ccan
-
-libflash:
-	$(Q_LN)ln -sfr ../../libflash ./libflash
-
-common:
-	$(Q_LN)ln -sfr ../common ./common
 
 asm/opal-prd.h:
 	$(Q_MKDIR)mkdir -p asm
 	$(Q_LN)ln -sfr $(KERNEL_DIR)/arch/powerpc/include/uapi/asm/opal-prd.h \
 			asm/opal-prd.h
-
-$(OBJS): | $(LINKS)
 
 %.o: %.c
 	$(Q_CC)$(COMPILE.c) $< -o $@
