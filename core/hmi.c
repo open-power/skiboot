@@ -24,6 +24,8 @@
 #include <pci.h>
 #include <cpu.h>
 #include <chip.h>
+#include <npu-regs.h>
+#include <npu.h>
 
 /*
  * HMER register layout:
@@ -299,6 +301,7 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 	uint32_t core_id;
 	int i;
 	bool found = false;
+	int64_t ret;
 
 	/* Sanity check */
 	if (!cpu || !hmi_evt)
@@ -307,9 +310,23 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 	core_id = pir_to_core_id(cpu->pir);
 
 	/* Get CORE FIR register value. */
-	if (xscom_read(cpu->chip_id, XSCOM_ADDR_P8_EX(core_id, CORE_FIR),
-							&core_fir) != 0) {
+	ret = xscom_read(cpu->chip_id, XSCOM_ADDR_P8_EX(core_id, CORE_FIR),
+			 &core_fir);
+
+	if (ret == OPAL_HARDWARE) {
 		prerror("HMI: XSCOM error reading CORE FIR\n");
+		/* If the FIR can't be read, we should checkstop. */
+		return true;
+	} else if (ret == OPAL_WRONG_STATE) {
+		/*
+		 * CPU is asleep, so it probably didn't cause the checkstop.
+		 * If no other HMI cause is found a "catchall" checkstop
+		 * will be raised, so if this CPU should've been awake the
+		 * error will be handled appropriately.
+		 */
+		prlog(PR_DEBUG,
+		      "HMI: FIR read failed, chip %d core %d asleep\n",
+		      cpu->chip_id, core_id);
 		return false;
 	}
 
@@ -393,7 +410,7 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 
 	/* Get PowerBus Interface FIR data register value. */
 	if (xscom_read(flat_chip_id, NX_PBI_FIR, &nx_pbi_fir) != 0) {
-		prerror("HMI: XSCOM error reading NX_DMA_ENGINE_FIR\n");
+		prerror("HMI: XSCOM error reading NX_PBI_FIR\n");
 		return;
 	}
 
@@ -424,7 +441,75 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	*event_generated = 1;
 }
 
-static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
+static void find_npu_checkstop_reason(int flat_chip_id,
+				      struct OpalHMIEvent *hmi_evt,
+				      int *event_generated)
+{
+	struct phb *phb;
+	struct npu *p = NULL;
+
+	uint64_t npu_fir;
+	uint64_t npu_fir_mask;
+	uint64_t npu_fir_action0;
+	uint64_t npu_fir_action1;
+	uint64_t fatal_errors;
+
+	/* Only check for NPU errors if the chip has a NPU */
+	if (PVR_TYPE(mfspr(SPR_PVR)) != PVR_TYPE_P8NVL)
+		return;
+
+	/* Find the NPU on the chip associated with the HMI. */
+	for_each_phb(phb) {
+		/* NOTE: if a chip ever has >1 NPU this will need adjusting */
+		if (dt_node_is_compatible(phb->dt_node, "ibm,power8-npu-pciex") &&
+		    (dt_get_chip_id(phb->dt_node) == flat_chip_id)) {
+			p = phb_to_npu(phb);
+			break;
+		}
+	}
+
+	/* If we didn't find a NPU on the chip, it's not our checkstop. */
+	if (p == NULL)
+		return;
+
+	/* Read all the registers necessary to find a checkstop condition. */
+	if (xscom_read(flat_chip_id,
+		       p->at_xscom + NX_FIR, &npu_fir) ||
+	    xscom_read(flat_chip_id,
+		       p->at_xscom + NX_FIR_MASK, &npu_fir_mask) ||
+	    xscom_read(flat_chip_id,
+		       p->at_xscom + NX_FIR_ACTION0, &npu_fir_action0) ||
+	    xscom_read(flat_chip_id,
+		       p->at_xscom + NX_FIR_ACTION1, &npu_fir_action1)) {
+		prerror("HMI: Couldn't read NPU registers with XSCOM\n");
+		return;
+	}
+
+	fatal_errors = npu_fir & ~npu_fir_mask & npu_fir_action0 & npu_fir_action1;
+
+	/* If there's no errors, we don't need to do anything. */
+	if (!fatal_errors)
+		return;
+
+	prlog(PR_DEBUG,
+	      "NPU: FIR %llx FIR mask %llx FIR ACTION0 %llx FIR ACTION1 %llx\n",
+	      npu_fir, npu_fir_mask, npu_fir_action0, npu_fir_action1);
+
+	/* Set the NPU to fenced since it can't recover. */
+	p->fenced = true;
+
+	/* Set up the HMI event */
+	hmi_evt->severity = OpalHMI_SEV_WARNING;
+	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
+	hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_NPU;
+	hmi_evt->u.xstop_error.u.chip_id = flat_chip_id;
+
+	/* The HMI is "recoverable" because it shouldn't crash the system */
+	queue_hmi_event(hmi_evt, 1);
+	*event_generated = 1;
+}
+
+static void decode_malfunction(struct OpalHMIEvent *hmi_evt)
 {
 	int i;
 	int recover = -1;
@@ -441,8 +526,8 @@ static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
 				queue_hmi_event(hmi_evt, recover);
 				event_generated = 1;
 			}
-
 			find_nx_checkstop_reason(i, hmi_evt, &event_generated);
+			find_npu_checkstop_reason(i, hmi_evt, &event_generated);
 		}
 
 	if (recover != -1) {
@@ -456,10 +541,9 @@ static int decode_malfunction(struct OpalHMIEvent *hmi_evt)
 			hmi_evt->u.xstop_error.xstop_type =
 						CHECKSTOP_TYPE_UNKNOWN;
 			hmi_evt->u.xstop_error.xstop_reason = 0;
+			queue_hmi_event(hmi_evt, recover);
 		}
 	}
-
-	return recover;
 }
 
 static void wait_for_subcore_threads(void)
@@ -685,12 +769,9 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	/* Assert if we see malfunction alert, we can not continue. */
 	if (hmer & SPR_HMER_MALFUNCTION_ALERT) {
 		hmer &= ~SPR_HMER_MALFUNCTION_ALERT;
-		recover = 0;
 
-		if (hmi_evt) {
-			recover = decode_malfunction(hmi_evt);
-			queue_hmi_event(hmi_evt, recover);
-		}
+		if (hmi_evt)
+			decode_malfunction(hmi_evt);
 	}
 
 	/* Assert if we see Hypervisor resource error, we can not continue. */

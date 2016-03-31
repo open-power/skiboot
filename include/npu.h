@@ -17,6 +17,8 @@
 #ifndef __NPU_H
 #define __NPU_H
 
+#include <io.h>
+
 /* Number of PEs supported */
 #define NPU_NUM_OF_PES	4
 
