@@ -58,7 +58,7 @@ version.c: ../../make_version.sh .version
 	@cmp -s $@ $@.tmp || cp $@.tmp $@
 	@rm -f $@.tmp
 
-test: $(LINKS) test/test_pnor
+test: links test/test_pnor
 
 test/test_pnor: test/test_pnor.o pnor.o $(LIBFLASH_OBJS) common-arch_flash.o
 	$(Q_LINK)$(LINK.o) -o $@ $^
