@@ -58,8 +58,7 @@ XSCOM_VERSION=%version make V=1 -C external/xscom-utils
 %install
 make -C external/opal-prd install DESTDIR=%{buildroot} prefix=/usr
 make -C external/gard install DESTDIR=%{buildroot} prefix=/usr
-cp external/xscom-utils/{get,put}scom %{buildroot}%{_sbindir}
-cp external/pflash/pflash %{buildroot}%{_sbindir}
+make -C external/xscom-utils install DESTDIR=%{buildroot} prefix=/usr
 
 mkdir -p %{buildroot}%{_unitdir}
 install -m 644 -p %{SOURCE1} %{buildroot}%{_unitdir}/opal-prd.socket
@@ -102,6 +101,7 @@ fi
 %{_sbindir}/opal-gard
 %{_sbindir}/getscom
 %{_sbindir}/putscom
+%{_sbindir}/getsram
 %{_sbindir}/pflash
 %{_mandir}/man1/*
 

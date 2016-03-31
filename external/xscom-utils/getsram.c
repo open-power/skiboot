@@ -32,6 +32,8 @@ static void print_usage(int code)
 	exit(code);
 }
 
+extern const char version[];
+
 int main(int argc, char *argv[])
 {
 	uint64_t val, addr = -1ull;
@@ -69,7 +71,7 @@ int main(int argc, char *argv[])
 			print_usage(0);
 			break;
 		case 'v':
-			printf("xscom utils version %s\n", VERSION);
+			printf("xscom utils version %s\n", version);
 			exit(0);
 		default:
 			exit(1);
