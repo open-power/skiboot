@@ -23,11 +23,11 @@
 
 #include "xscom.h"
 
-static void print_usage(void)
+static void print_usage(int code)
 {
 	printf("usage: putscom [-c|--chip chip-id] addr value\n");
 	printf("       putscom -v|--version\n");
-	exit(1);
+	exit(code);
 }
 
 int main(int argc, char *argv[])
@@ -63,9 +63,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'v':
 			printf("xscom utils version %s\n", VERSION);
-			exit(1);
+			exit(0);
 		case 'h':
-			print_usage();
+			print_usage(0);
 			break;
 		default:
 			exit(1);
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 	
 	if (!got_addr || !got_val) {
 		fprintf(stderr, "Invalid or missing address/value\n");
-		print_usage();
+		print_usage(1);
 	}
 
 	def_chip = xscom_init();

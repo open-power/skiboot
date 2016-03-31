@@ -24,12 +24,12 @@
 #include "xscom.h"
 #include "sram.h"
 
-static void print_usage(void)
+static void print_usage(int code)
 {
 	printf("usage: getsram [-c|--chip chip-id] addr\n");
 	printf("               [--occ-channel|n <chan>]\n");
 	printf("       getsram -v|--version\n");
-	exit(1);
+	exit(code);
 }
 
 int main(int argc, char *argv[])
@@ -66,11 +66,11 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 'h':
-			print_usage();
+			print_usage(0);
 			break;
 		case 'v':
 			printf("xscom utils version %s\n", VERSION);
-			exit(1);
+			exit(0);
 		default:
 			exit(1);
 		}
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 
 	if (addr == -1ull) {
 		fprintf(stderr, "Invalid or missing address\n");
-		print_usage();
+		print_usage(1);
 	}
 
 	def_chip = xscom_init();

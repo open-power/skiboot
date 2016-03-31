@@ -23,12 +23,12 @@
 
 #include "xscom.h"
 
-static void print_usage(void)
+static void print_usage(int code)
 {
 	printf("usage: getscom [-c|--chip chip-id] addr\n");
 	printf("       getscom -l|--list-chips\n");
 	printf("       getscom -v|--version\n");
-	exit(1);
+	exit(code);
 }
 
 static void print_chip_info(uint32_t chip_id)
@@ -102,14 +102,14 @@ int main(int argc, char *argv[])
 			chip_id = strtoul(optarg, NULL, 0);
 			break;
 		case 'h':
-			print_usage();
+			print_usage(0);
 			break;
 		case 'l':
 			list_chips = true;
 			break;
 		case 'v':
 			printf("xscom utils version %s\n", VERSION);
-			exit(1);
+			exit(0);
 		default:
 			exit(1);
 		}
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 		no_work = true;
 	if (no_work && !list_chips) {
 		fprintf(stderr, "Invalid or missing address\n");
-		print_usage();
+		print_usage(1);
 	}
 
 	def_chip = xscom_init();
