@@ -3405,6 +3405,11 @@ static void phb3_init_capp_errors(struct phb3 *p)
 	out_be64(p->regs + PHB_INB_ERR_AIB_FENCE_ENABLE,   0xfcffe0fbff7ff0ec);
 }
 
+#define PE_CAPP_EN 0x9013c03
+
+#define PE_REG_OFFSET(p) \
+	((PHB3_IS_NAPLES(p) && (p)->index) ? 0x40 : 0x0)
+
 static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 				  uint64_t pe_number)
 {
@@ -3472,7 +3477,7 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	if (mode != OPAL_PHB_CAPI_MODE_CAPI)
 		return OPAL_UNSUPPORTED;
 
-	xscom_read(p->chip_id, 0x9013c03, &reg);
+	xscom_read(p->chip_id, PE_CAPP_EN + PE_REG_OFFSET(p), &reg);
 	if (reg & PPC_BIT(0)) {
 		PHBDBG(p, "Already in CAPP mode\n");
 	}
