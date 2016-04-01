@@ -260,6 +260,8 @@ if ! is_off; then
     fi
 fi
 
+force_primary_side # ensure we're booting from side we flash.
+
 # run the boot test
 echo "$target: Boot testing $target";
 begin_t=$(date +%s);

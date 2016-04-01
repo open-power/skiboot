@@ -34,6 +34,12 @@ function poweroff {
     sleep 10
 }
 
+function force_primary_side {
+    # Now we force booting from primary (not golden) side
+    $IPMI_COMMAND raw 0x04 0x30 0x5c 0x01 0x00 0x00 0 0 0 0 0 0
+    sleep 8
+}
+
 function flash {
 	if [ ! -z "$PFLASH_TO_COPY" ]; then
 		remotecp $PFLASH_TO_COPY $target /tmp/pflash

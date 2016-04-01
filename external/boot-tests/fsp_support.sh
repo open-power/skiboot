@@ -51,6 +51,10 @@ function poweroff {
     msg "Finishing with state '$state'."
 }
 
+function force_primary_side {
+    return 0
+}
+
 function flash {
 	#Make a backup of the current lids
 	$REMOTECPCMD $target:/opt/extucode/80f00100.lid 80f00100.lid.bak &&
