@@ -3336,10 +3336,12 @@ static int64_t phb3_get_diag_data(struct phb *phb,
 static void phb3_init_capp_regs(struct phb3 *p)
 {
 	uint64_t reg;
+	uint32_t offset;
 
-	xscom_read(p->chip_id, APC_MASTER_PB_CTRL, &reg);
+	offset = PHB3_CAPP_REG_OFFSET(p);
+	xscom_read(p->chip_id, APC_MASTER_PB_CTRL + offset, &reg);
 	reg |= PPC_BIT(3);
-	xscom_write(p->chip_id, APC_MASTER_PB_CTRL, reg);
+	xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, reg);
 
 	/* Dynamically workout which PHB to connect to port 0 of the CAPP.
 	 * Here is the table from the CAPP workbook:
@@ -3358,27 +3360,34 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	 *    PHB0 -> APC MASTER(bits 1:3) = 0b100
 	 *    PHB1 -> APC MASTER(bits 1:3) = 0b010
 	 *    PHB2 -> APC MASTER(bits 1:3) = 0b001
+	 *
+	 * Note: Naples has two CAPP units, statically mapped:
+	 *    CAPP0/PHB0 -> APC MASTER(bits 1:3) = 0b100
+	 *    CAPP1/PHB1 -> APC MASTER(bits 1:3) = 0b010
 	 */
 	reg = 0x4000000000000000ULL >> p->index;
 	reg |= 0x0070000000000000;
-	xscom_write(p->chip_id, APC_MASTER_CAPI_CTRL,reg);
+	xscom_write(p->chip_id, APC_MASTER_CAPI_CTRL + offset, reg);
 	PHBINF(p, "CAPP: port attached\n");
 
 	/* tlb and mmio */
-	xscom_write(p->chip_id, TRANSPORT_CONTROL, 	0x4028000104000000);
+	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, 0x4028000104000000);
 
-	xscom_write(p->chip_id, CANNED_PRESP_MAP0, 	0);
-	xscom_write(p->chip_id, CANNED_PRESP_MAP1, 	0xFFFFFFFF00000000);
-	xscom_write(p->chip_id, CANNED_PRESP_MAP2, 	0);
+	xscom_write(p->chip_id, CANNED_PRESP_MAP0 + offset, 0);
+	xscom_write(p->chip_id, CANNED_PRESP_MAP1 + offset, 0xFFFFFFFF00000000);
+	xscom_write(p->chip_id, CANNED_PRESP_MAP2 + offset, 0);
 
 	/* error recovery */
-	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0);
+	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, 0);
 
-	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP,   	0x1DC20B6600000000);
-	xscom_write(p->chip_id, CAPP_EPOCH_TIMER_CTRL, 	0xC0000000FFF0FFE0);
-	xscom_write(p->chip_id, FLUSH_UOP_CONFIG1, 	0xB188280728000000);
-	xscom_write(p->chip_id, FLUSH_UOP_CONFIG2, 	0xB188400F00000000);
-	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xA1F0000000000000);
+	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP + offset,
+		    0x1DC20B6600000000);
+	xscom_write(p->chip_id, CAPP_EPOCH_TIMER_CTRL + offset,
+		    0xC0000000FFF0FFE0);
+	xscom_write(p->chip_id,  FLUSH_UOP_CONFIG1 + offset,
+		    0xB188280728000000);
+	xscom_write(p->chip_id, FLUSH_UOP_CONFIG2 + offset, 0xB188400F00000000);
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0xA1F0000000000000);
 }
 
 /* override some inits with CAPI defaults */
@@ -3396,6 +3405,7 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	struct phb3 *p = phb_to_phb3(phb);
 	struct proc_chip *chip = get_chip(p->chip_id);
 	uint64_t reg;
+	uint32_t offset;
 	int i;
 	u8 mask;
 
@@ -3404,23 +3414,30 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 		return OPAL_RESOURCE;
 	}
 
-	/*
-	 * Check if CAPP port is being used by any another PHB.
-	 * Check and set chip->capp_phb3_attached_mask atomically incase
-	 * two phb3_set_capi_mode() calls race.
-	 */
 	lock(&capi_lock);
-	mask = ~(1 << p->index);
-	if (chip->capp_phb3_attached_mask & mask) {
-		PHBERR(p, "CAPP: port already in use by another PHB:%x\n",
-			chip->capp_phb3_attached_mask);
-		unlock(&capi_lock);
-		return false;
+	if (PHB3_IS_NAPLES(p)) {
+		/* Naples has two CAPP units, statically mapped. */
+		chip->capp_phb3_attached_mask |= 1 << p->index;
+	} else {
+		/*
+		* Check if CAPP port is being used by any another PHB.
+		* Check and set chip->capp_phb3_attached_mask atomically
+		* incase two phb3_set_capi_mode() calls race.
+		*/
+		mask = ~(1 << p->index);
+		if (chip->capp_phb3_attached_mask & mask) {
+			PHBERR(p,
+			       "CAPP: port already in use by another PHB:%x\n",
+			       chip->capp_phb3_attached_mask);
+			       unlock(&capi_lock);
+			return false;
+		}
+		chip->capp_phb3_attached_mask = 1 << p->index;
 	}
-	chip->capp_phb3_attached_mask = 1 << p->index;
 	unlock(&capi_lock);
 
-	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
+	offset = PHB3_CAPP_REG_OFFSET(p);
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &reg);
 	if ((reg & PPC_BIT(5))) {
 		PHBERR(p, "CAPP: recovery failed (%016llx)\n", reg);
 		return OPAL_HARDWARE;
@@ -3433,13 +3450,16 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 		return OPAL_UNSUPPORTED;
 
 	if (mode == OPAL_PHB_CAPI_MODE_SNOOP_OFF) {
-		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0x0000000000000000);
+		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset,
+			    0x0000000000000000);
 		return OPAL_SUCCESS;
 	}
 
 	if (mode == OPAL_PHB_CAPI_MODE_SNOOP_ON) {
-		xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL,  	0x0000000000000000);
-		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 	0xA1F0000000000000);
+		xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset,
+			    0x0000000000000000);
+		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset,
+			    0xA1F0000000000000);
 		return OPAL_SUCCESS;
 	}
 
