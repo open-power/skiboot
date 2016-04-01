@@ -2486,16 +2486,22 @@ static int64_t capp_load_ucode(struct phb3 *p)
 static void do_capp_recovery_scoms(struct phb3 *p)
 {
 	uint64_t reg;
+	uint32_t offset;
+
 	PHBDBG(p, "Doing CAPP recovery scoms\n");
 
-	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG, 0); /* disable snoops */
+	offset = PHB3_CAPP_REG_OFFSET(p);
+	/* disable snoops */
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0);
 	capp_load_ucode(p);
-	xscom_write(p->chip_id, CAPP_ERR_RPT_CLR, 0); /* clear err rpt reg*/
-	xscom_write(p->chip_id, CAPP_FIR, 0); /* clear capp fir */
+	/* clear err rpt reg*/
+	xscom_write(p->chip_id, CAPP_ERR_RPT_CLR + offset, 0);
+	/* clear capp fir */
+	xscom_write(p->chip_id, CAPP_FIR + offset, 0);
 
-	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL, &reg);
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &reg);
 	reg &= ~(PPC_BIT(0) | PPC_BIT(1));
-	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL, reg);
+	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, reg);
 }
 
 /*

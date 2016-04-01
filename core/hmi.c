@@ -245,14 +245,21 @@ static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
 				num_params, (uint64_t *)hmi_evt);
 }
 
-static int is_capp_recoverable(int chip_id)
+static int is_capp_recoverable(int chip_id, int capp_index)
 {
 	uint64_t reg;
-	xscom_read(chip_id, CAPP_ERR_STATUS_CTRL, &reg);
+	uint32_t reg_offset = capp_index ? CAPP1_REG_OFFSET : 0x0;
+
+	xscom_read(chip_id, CAPP_ERR_STATUS_CTRL + reg_offset, &reg);
 	return (reg & PPC_BIT(0)) != 0;
 }
 
-static int handle_capp_recoverable(int chip_id)
+#define CAPP_PHB3_ATTACHED(chip, phb_index) \
+	((chip)->capp_phb3_attached_mask & (1 << (phb_index)))
+
+#define CHIP_IS_NAPLES(chip) ((chip)->type == PROC_CHIP_P8_NAPLES)
+
+static int handle_capp_recoverable(int chip_id, int capp_index)
 {
 	struct dt_node *np;
 	u64 phb_id;
@@ -260,14 +267,26 @@ static int handle_capp_recoverable(int chip_id)
 	struct phb *phb;
 	u32 phb_index;
 	struct proc_chip *chip = get_chip(chip_id);
-	u8 mask = chip->capp_phb3_attached_mask;
 
 	dt_for_each_compatible(dt_root, np, "ibm,power8-pciex") {
 		dt_chip_id = dt_prop_get_u32(np, "ibm,chip-id");
 		phb_index = dt_prop_get_u32(np, "ibm,phb-index");
 		phb_id = dt_prop_get_u64(np, "ibm,opal-phbid");
 
-		if ((mask & (1 << phb_index)) && (chip_id == dt_chip_id)) {
+		/*
+		 * Murano/Venice have a single capp (capp0) per chip,
+		 * that can be attached to phb0, phb1 or phb2.
+		 * The capp is identified as being attached to the chip,
+		 * regardless of the phb index.
+		 *
+		 * Naples has two capps per chip: capp0 attached to phb0,
+		 * and capp1 attached to phb1.
+		 * Once we know that the capp is attached to the chip,
+		 * we must also check that capp/phb indices are equal.
+		 */
+		if ((chip_id == dt_chip_id) &&
+		    CAPP_PHB3_ATTACHED(chip, phb_index) &&
+		    (!CHIP_IS_NAPLES(chip) || phb_index == capp_index)) {
 			phb = pci_get_phb(phb_id);
 			phb->ops->lock(phb);
 			phb->ops->set_capp_recovery(phb);
@@ -280,17 +299,21 @@ static int handle_capp_recoverable(int chip_id)
 
 static int decode_one_malfunction(int flat_chip_id, struct OpalHMIEvent *hmi_evt)
 {
+	int capp_index;
+	struct proc_chip *chip = get_chip(flat_chip_id);
+	int capp_num = CHIP_IS_NAPLES(chip) ? 2 : 1;
+
 	hmi_evt->severity = OpalHMI_SEV_FATAL;
 	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
 
-	if (is_capp_recoverable(flat_chip_id)) {
-		if (handle_capp_recoverable(flat_chip_id) == 0)
-			return 0;
+	for (capp_index = 0; capp_index < capp_num; capp_index++)
+		if (is_capp_recoverable(flat_chip_id, capp_index))
+			if (handle_capp_recoverable(flat_chip_id, capp_index)) {
+				hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
+				hmi_evt->type = OpalHMI_ERROR_CAPP_RECOVERY;
+				return 1;
+			}
 
-		hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
-		hmi_evt->type = OpalHMI_ERROR_CAPP_RECOVERY;
-		return 1;
-	}
 	/* TODO check other FIRs */
 	return 0;
 }
