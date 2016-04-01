@@ -32,6 +32,7 @@ extern bool chiptod_wakeup_resync(void);
 extern int chiptod_recover_tb_errors(void);
 extern void chiptod_reset_tb(void);
 extern bool chiptod_adjust_topology(enum chiptod_topology topo, bool enable);
-extern bool chiptod_capp_timebase_sync(uint32_t chip_id);
+struct phb3;
+extern bool chiptod_capp_timebase_sync(struct phb3 *p);
 
 #endif /* __CHIPTOD_H */
