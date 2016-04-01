@@ -314,6 +314,17 @@ struct phb3 {
 	struct phb		phb;
 };
 
+#define PHB3_IS_NAPLES(p) ((p)->rev == PHB3_REV_NAPLES_DD10)
+
+/*
+ * Venice/Murano have one CAPP unit, that can be attached to PHB0,1 or 2.
+ * Naples has two CAPP units: CAPP0 attached to PHB0, CAPP1 attached to PHB1.
+ */
+#define PHB3_CAPP_MAX_PHB_INDEX(p) (PHB3_IS_NAPLES(p) ? 1 : 2)
+
+#define PHB3_CAPP_REG_OFFSET(p) \
+	((p)->index && PHB3_IS_NAPLES(p) ? CAPP1_REG_OFFSET : 0x0)
+
 static inline struct phb3 *phb_to_phb3(struct phb *phb)
 {
 	return container_of(phb, struct phb3, phb);

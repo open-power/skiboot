@@ -160,7 +160,7 @@ struct proc_chip {
 
 	/* Must hold capi_lock to change */
 	u8			capp_phb3_attached_mask;
-	bool			capp_ucode_loaded;
+	u8			capp_ucode_loaded;
 
 	/* Used by hw/centaur.c */
 	struct centaur_chip	*centaurs;

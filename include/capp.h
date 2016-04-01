@@ -80,3 +80,10 @@ enum capp_reg {
 #define FLUSH_UOP_CONFIG1			0x2013803
 #define FLUSH_UOP_CONFIG2			0x2013804
 #define SNOOP_CAPI_CONFIG			0x201301A
+
+/*
+ * Naples has two CAPP units, statically mapped:
+ * CAPP0 attached to PHB0, and CAPP1 attached to PHB1.
+ * The addresses of CAPP1 XSCOMS registers are 0x180 away.
+ */
+#define CAPP1_REG_OFFSET 0x180
