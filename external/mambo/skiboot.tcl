@@ -9,6 +9,7 @@ proc mconfig { name env_name def } {
     if { ![info exists mconf($name)] } { set mconf($name) $def }
 }
 
+mconfig cpus CPUS 1
 mconfig threads THREADS 1
 mconfig memory MEM_SIZE 1G
 
@@ -65,6 +66,7 @@ if { ! [info exists env(SIMHOST)] } {
     set env(SIMHOST) "pegasus"
 }
 define dup $env(SIMHOST) myconf
+myconf config cpus $mconf(cpus)
 myconf config processor/number_of_threads $mconf(threads)
 myconf config memory_size $mconf(memory)
 myconf config processor_option/ATTN_STOP true
@@ -149,11 +151,6 @@ set cpus_node [mysim of find_device "/cpus"]
 mysim of addprop $cpus_node int "#address-cells" 1
 mysim of addprop $cpus_node int "#size-cells" 0
 
-set cpu0_node [mysim of find_device "/cpus/PowerPC@0"]
-mysim of addprop $cpu0_node int "ibm,chip-id" 0
-set reg  [list 0x0000001c00000028 0xffffffffffffffff]
-mysim of addprop $cpu0_node array64 "ibm,processor-segment-sizes" reg
-
 set mem0_node [mysim of find_device "/memory@0"]
 mysim of addprop $mem0_node int "ibm,chip-id" 0
 
@@ -181,6 +178,27 @@ if { [info exists env(SKIBOOT_INITRD)] } {
     mysim mcm 0 memory fread $cpio_start $cpio_size $cpio_file
 }
 
+# Init CPUs
+set pir 0
+for { set c 0 } { $c < $mconf(cpus) } { incr c } {
+    set cpu_node [mysim of find_device "/cpus/PowerPC@$pir"]
+    mysim of addprop $cpu_node int "ibm,chip-id" $c
+    mysim of addprop $cpu_node int "ibm,pir" $pir
+    set reg  [list 0x0000001c00000028 0xffffffffffffffff]
+    mysim of addprop $cpu_node array64 "ibm,processor-segment-sizes" reg
+
+    set irqreg [list]
+    for { set t 0 } { $t < $mconf(threads) } { incr t } {
+	mysim mcm 0 cpu $c thread $t set spr pc $mconf(boot_pc)
+	mysim mcm 0 cpu $c thread $t set gpr 3 $mconf(epapr_dt_addr)
+	mysim mcm 0 cpu $c thread $t config_on
+	mysim mcm 0 cpu $c thread $t set spr pir $pir
+	lappend irqreg $pir
+	incr pir
+    }
+    mysim of addprop $cpu_node array "ibm,ppc-interrupt-server#s" irqreg
+}
+
 # Flatten it
 
 epapr::of2dtb mysim $mconf(epapr_dt_addr) 
@@ -192,14 +210,6 @@ mysim memory fread $mconf(boot_load) $boot_size $mconf(boot_image)
 
 set payload_size [file size $mconf(payload)]
 mysim memory fread $mconf(payload_addr) $payload_size $mconf(payload)
-
-# Init CPUs
-
-for { set i 0 } { $i < $mconf(threads) } { incr i } {
-    mysim mcm 0 cpu 0 thread $i set spr pc $mconf(boot_pc) 
-    mysim mcm 0 cpu 0 thread $i set gpr 3 $mconf(epapr_dt_addr)
-    mysim mcm 0 cpu 0 thread $i config_on    
-}
 
 # Turbo mode & run
 mysim mode turbo
