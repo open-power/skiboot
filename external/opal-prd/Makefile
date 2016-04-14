@@ -1,5 +1,3 @@
-CC = $(CROSS_COMPILE)gcc
-
 CFLAGS += -m64 -Werror -Wall -g2 -ggdb
 LDFLAGS += -m64
 ASFLAGS = -m64

@@ -9,8 +9,6 @@ OBJS	+= $(LIBFLASH_OBJS)
 OBJS	+= common-arch_flash.o
 EXE     = pflash
 
-CC	= $(CROSS_COMPILE)gcc
-
 PFLASH_VERSION ?= $(shell ../../make_version.sh $(EXE))
 
 version.c: .version

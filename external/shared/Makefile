@@ -1,5 +1,4 @@
 .DEFAULT_GOAL := all
-CC ?= $(CROSS_COMPILE)gcc
 GET_ARCH = ../../external/common/get_arch.sh
 include ../../external/common/rules.mk
 
