@@ -1,3 +1,5 @@
+CC ?= $(CROSS_COMPILE)gcc
+LD ?= $(CROSS_COMPILE)ld
 ARCH := $(shell $(GET_ARCH) "$(CROSS_COMPILE)")
 
 ifeq ($(ARCH),ARCH_ARM)
@@ -42,8 +44,8 @@ arch_clean:
 $(ARCH_SRC): | common
 
 $(ARCH_OBJS): common-%.o: common/%.c
-	$(Q_CC)$(CROSS_COMPILE)gcc $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(Q_CC)$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 common-arch_flash.o: $(ARCH_OBJS)
-	$(Q_LD)$(CROSS_COMPILE)ld -r $(ARCH_OBJS) -o $@
+	$(Q_LD)$(LD) -r $(ARCH_OBJS) -o $@
 

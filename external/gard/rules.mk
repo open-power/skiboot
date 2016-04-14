@@ -7,8 +7,6 @@ OBJS     += $(LIBFLASH_OBJS)
 OBJS     += common-arch_flash.o
 EXE       = gard
 
-CC = $(CROSS_COMPILE)gcc
-
 prefix = /usr/local/
 sbindir = $(prefix)/sbin
 datadir = $(prefix)/share
