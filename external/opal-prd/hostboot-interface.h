@@ -277,7 +277,8 @@ struct host_interfaces {
 	int (*memory_error)( uint64_t i_startAddr, uint64_t i_endAddr,
 					  enum MemoryError_t i_errorType );
 
-
+	/* Reserve some space for future growth. */
+	void (*reserved[32])(void);
 };
 
 struct runtime_interfaces {

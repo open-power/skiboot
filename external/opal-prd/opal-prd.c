@@ -221,6 +221,24 @@ static void pr_log_daemon_init(void)
 	}
 }
 
+/**
+ * ABI check that we can't perform at build-time: we want to ensure that the
+ * layout of struct host_interfaces matches that defined in the thunk.
+ */
+static void check_abi(void)
+{
+	extern unsigned char __hinterface_start, __hinterface_pad,
+	       __hinterface_end;
+
+	/* ensure our struct size matches the thunk definition */
+	assert((&__hinterface_end - &__hinterface_start)
+			== sizeof(struct host_interfaces));
+
+	/* ensure the padding layout is as expected */
+	assert((void *)&__hinterface_start == (void *)&hinterface);
+	assert((void *)&__hinterface_pad == (void *)&hinterface.reserved);
+}
+
 /* HBRT init wrappers */
 extern struct runtime_interfaces *call_hbrt_init(struct host_interfaces *);
 
@@ -1959,6 +1977,8 @@ int main(int argc, char *argv[])
 	struct opal_prd_ctx _ctx;
 	enum action action;
 	int rc;
+
+	check_abi();
 
 	ctx = &_ctx;
 	memset(ctx, 0, sizeof(*ctx));
