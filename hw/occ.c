@@ -155,7 +155,7 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 	u8 *dt_vdd, *dt_vcs;
 	s8 *dt_core_max = NULL;
 	bool rc, ultra_turbo_en;
-	int i;
+	int i, j;
 
 	prlog(PR_DEBUG, "OCC: CPU pstate state device tree init\n");
 
@@ -243,11 +243,15 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 			dt_core_max[i] = occ_data->core_max[i];
 	}
 
-	for( i=0; i < nr_pstates; i++) {
-		dt_id[i] = occ_data->pstates[i].id;
-		dt_freq[i] = occ_data->pstates[i].freq_khz/1000;
-		dt_vdd[i] = occ_data->pstates[i].vdd;
-		dt_vcs[i] = occ_data->pstates[i].vcs;
+	for (i = 0, j = 0; i < MAX_PSTATES && j < nr_pstates; i++) {
+		if (occ_data->pstates[i].id > pmax ||
+		    occ_data->pstates[i].id < occ_data->pstate_min)
+			continue;
+		dt_id[j] = occ_data->pstates[i].id;
+		dt_freq[j] = occ_data->pstates[i].freq_khz / 1000;
+		dt_vdd[j] = occ_data->pstates[i].vdd;
+		dt_vcs[j] = occ_data->pstates[i].vcs;
+		j++;
 	}
 
 	/* Add the device-tree entries */
