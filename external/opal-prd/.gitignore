@@ -2,3 +2,4 @@ opal-prd
 /ccan
 /libflash
 /test/test_pnor
+common
