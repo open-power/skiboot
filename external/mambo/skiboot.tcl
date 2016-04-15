@@ -201,10 +201,6 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
     mysim of addprop $cpu_node array "ibm,ppc-interrupt-server#s" irqreg
 }
 
-# Flatten it
-
-epapr::of2dtb mysim $mconf(epapr_dt_addr) 
-
 # Load images
 
 set boot_size [file size $mconf(boot_image)]
@@ -212,6 +208,9 @@ mysim memory fread $mconf(boot_load) $boot_size $mconf(boot_image)
 
 set payload_size [file size $mconf(payload)]
 mysim memory fread $mconf(payload_addr) $payload_size $mconf(payload)
+
+# Flatten it
+epapr::of2dtb mysim $mconf(epapr_dt_addr)
 
 # Turbo mode & run
 mysim mode turbo
