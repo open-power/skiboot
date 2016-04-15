@@ -11,7 +11,7 @@ proc mconfig { name env_name def } {
 
 mconfig cpus CPUS 1
 mconfig threads THREADS 1
-mconfig memory MEM_SIZE 1G
+mconfig memory MEM_SIZE 4G
 
 # Should we stop on an illeagal instruction
 mconfig stop_on_ill MAMBO_STOP_ON_ILL false
@@ -77,6 +77,8 @@ myconf config enable_rtas_support false
 myconf config processor/cpu_frequency 512M
 myconf config processor/timebase_frequency 1/1
 myconf config enable_pseries_nvram false
+myconf config machine_option/NO_RAM TRUE
+myconf config machine_option/NO_ROM TRUE
 
 # We need to be DD2 or greater on p8 for the HILE HID bit.
 if { $env(SIMHOST) == "pegasus" } {
@@ -171,7 +173,7 @@ if { [info exists env(SKIBOOT_INITRD)] } {
     set cpio_file $env(SKIBOOT_INITRD)
     set chosen_node [mysim of find_device /chosen]
     set cpio_size [file size $cpio_file]
-    set cpio_start 0x10000000
+    set cpio_start 0x80000000
     set cpio_end [expr $cpio_start + $cpio_size]
     mysim of addprop $chosen_node int "linux,initrd-start" $cpio_start
     mysim of addprop $chosen_node int "linux,initrd-end"   $cpio_end
