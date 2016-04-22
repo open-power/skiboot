@@ -25,6 +25,209 @@
 
 #include "astbmc.h"
 
+static const struct slot_table_entry garrison_phb0_0_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Slot3",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_phb0_1_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Slot2",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_phb0_2_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "GPU0",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_phb0_3_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "GPU1",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_npu0_slots[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "GPU1",
+	},
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,1),
+		.name = "GPU1",
+	},
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(1,0),
+		.name = "GPU0",
+	},
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(1,1),
+		.name = "GPU0",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_phb1_0_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Slot1",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_plx_slots[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(1,0),
+		.name = "Backplane USB",
+	},
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(2,0),
+		.name = "Backplane SATA",
+	},
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(3,0),
+		.name = "Backplane BMC",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_plx_up[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.children = garrison_plx_slots,
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_phb1_1_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Backplane PLX",
+		.children = garrison_plx_up,
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_phb1_2_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "GPU2",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_phb1_3_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "GPU3",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_npu1_slots[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "GPU3",
+	},
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,1),
+		.name = "GPU3",
+	},
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(1,0),
+		.name = "GPU2",
+	},
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(1,1),
+		.name = "GPU2",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry garrison_phb_table[] = {
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,0),
+		.children = garrison_phb0_0_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,1),
+		.children = garrison_phb0_1_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,2),
+		.children = garrison_phb0_2_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,3),
+		.children = garrison_phb0_3_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,4),
+		.children = garrison_npu0_slots,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(1,0),
+		.children = garrison_phb1_0_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(1,1),
+		.children = garrison_phb1_1_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(1,2),
+		.children = garrison_phb1_2_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(1,3),
+		.children = garrison_phb1_3_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(1,4),
+		.children = garrison_npu1_slots,
+	},
+	{ .etype = st_end },
+};
+
 #define NPU_BASE 0x8013c00
 #define NPU_SIZE 0x2c
 #define NPU_INDIRECT0	0x8000000008010c3f
@@ -108,6 +311,8 @@ static bool garrison_probe(void)
 	/* Fixups until HB get the NPU bindings */
 	dt_create_npu();
 
+	slot_table_init(garrison_phb_table);
+
 	return true;
 }
 
@@ -115,6 +320,7 @@ DECLARE_PLATFORM(garrison) = {
 	.name			= "Garrison",
 	.probe			= garrison_probe,
 	.init			= astbmc_init,
+	.pci_get_slot_info	= slot_table_get_slot_info,
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
 	.elog_commit		= ipmi_elog_commit,
