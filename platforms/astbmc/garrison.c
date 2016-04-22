@@ -65,6 +65,10 @@ static void dt_create_npu(void)
 		npu = dt_new(xscom, namebuf);
 		dt_add_property_cells(npu, "reg", NPU_BASE, NPU_SIZE);
 		dt_add_property_strings(npu, "compatible", "ibm,power8-npu");
+
+		/* Use the first available PHB index which is 4 given
+		 * there are three normal PHBs. */
+		dt_add_property_cells(npu, "ibm,phb-index", 4);
 		dt_add_property_cells(npu, "ibm,npu-index", 0);
 		dt_add_property_cells(npu, "ibm,npu-links", 4);
 
