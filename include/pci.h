@@ -540,7 +540,6 @@ extern struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(struct pci_device *pd,
 extern int64_t pci_register_phb(struct phb *phb, int opal_id);
 extern int64_t pci_unregister_phb(struct phb *phb);
 extern struct phb *pci_get_phb(uint64_t phb_id);
-static inline void pci_put_phb(struct phb *phb __unused) { }
 
 static inline struct phb *__pci_next_phb_idx(uint64_t *phb_id) {
 	struct phb *phb = NULL;

@@ -33,7 +33,6 @@ static int64_t opal_pci_config_##op(uint64_t phb_id,			\
 	phb_lock(phb);						\
 	rc = phb->ops->cfg_##cb(phb, bus_dev_func, offset, data);	\
 	phb_unlock(phb);						\
-	pci_put_phb(phb);						\
 									\
 	return rc;							\
 }
@@ -88,7 +87,6 @@ static int64_t opal_pci_eeh_freeze_status(uint64_t phb_id, uint64_t pe_number,
 	rc = phb->ops->eeh_freeze_status(phb, pe_number, freeze_state,
 					 pci_error_type, NULL, phb_status);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -107,7 +105,6 @@ static int64_t opal_pci_eeh_freeze_clear(uint64_t phb_id, uint64_t pe_number,
 	phb_lock(phb);
 	rc = phb->ops->eeh_freeze_clear(phb, pe_number, eeh_action_token);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -126,7 +123,6 @@ static int64_t opal_pci_eeh_freeze_set(uint64_t phb_id, uint64_t pe_number,
 	phb_lock(phb);
 	rc = phb->ops->eeh_freeze_set(phb, pe_number, eeh_action_token);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -151,7 +147,6 @@ static int64_t opal_pci_err_inject(uint64_t phb_id, uint32_t pe_no,
 	phb_lock(phb);
 	rc = phb->ops->err_inject(phb, pe_no, type, func, addr, mask);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -170,7 +165,6 @@ static int64_t opal_pci_phb_mmio_enable(uint64_t phb_id, uint16_t window_type,
 	phb_lock(phb);
 	rc = phb->ops->phb_mmio_enable(phb, window_type, window_num, enable);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -194,7 +188,6 @@ static int64_t opal_pci_set_phb_mem_window(uint64_t phb_id,
 	rc = phb->ops->set_phb_mem_window(phb, window_type, window_num,
 					  addr, pci_addr, size);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -216,7 +209,6 @@ static int64_t opal_pci_map_pe_mmio_window(uint64_t phb_id, uint16_t pe_number,
 	rc = phb->ops->map_pe_mmio_window(phb, pe_number, window_type,
 					  window_num, segment_num);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -250,7 +242,6 @@ static int64_t opal_pci_set_pe(uint64_t phb_id, uint64_t pe_number,
 	rc = phb->ops->set_pe(phb, pe_number, bus_dev_func, bus_compare,
 			      dev_compare, func_compare, pe_action);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -269,7 +260,6 @@ static int64_t opal_pci_set_peltv(uint64_t phb_id, uint32_t parent_pe,
 	phb_lock(phb);
 	rc = phb->ops->set_peltv(phb, parent_pe, child_pe, state);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -288,7 +278,6 @@ static int64_t opal_pci_set_mve(uint64_t phb_id, uint32_t mve_number,
 	phb_lock(phb);
 	rc = phb->ops->set_mve(phb, mve_number, pe_number);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -307,7 +296,6 @@ static int64_t opal_pci_set_mve_enable(uint64_t phb_id, uint32_t mve_number,
 	phb_lock(phb);
 	rc = phb->ops->set_mve_enable(phb, mve_number, state);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -346,7 +334,6 @@ static int64_t opal_pci_msi_eoi(uint64_t phb_id,
 	phb_lock(phb);
 	rc = phb->ops->pci_msi_eoi(phb, hwirq);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -365,7 +352,6 @@ static int64_t opal_pci_set_xive_pe(uint64_t phb_id, uint32_t pe_number,
 	phb_lock(phb);
 	rc = phb->ops->set_xive_pe(phb, pe_number, xive_num);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -384,7 +370,6 @@ static int64_t opal_get_xive_source(uint64_t phb_id, uint32_t xive_num,
 	phb_lock(phb);
 	rc = phb->ops->get_xive_source(phb, xive_num, interrupt_source_number);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -405,7 +390,6 @@ static int64_t opal_get_msi_32(uint64_t phb_id, uint32_t mve_number,
 	rc = phb->ops->get_msi_32(phb, mve_number, xive_num, msi_range,
 				  msi_address, message_data);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -426,7 +410,6 @@ static int64_t opal_get_msi_64(uint64_t phb_id, uint32_t mve_number,
 	rc = phb->ops->get_msi_64(phb, mve_number, xive_num, msi_range,
 				  msi_address, message_data);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -451,7 +434,6 @@ static int64_t opal_pci_map_pe_dma_window(uint64_t phb_id, uint16_t pe_number,
 					 tce_levels, tce_table_addr,
 					 tce_table_size, tce_page_size);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -474,7 +456,6 @@ static int64_t opal_pci_map_pe_dma_window_real(uint64_t phb_id,
 	rc = phb->ops->map_pe_dma_window_real(phb, pe_number, window_id,
 					      pci_start_addr, pci_mem_size);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -554,7 +535,6 @@ static int64_t opal_pci_reset(uint64_t phb_id, uint8_t reset_scope,
 		rc = OPAL_UNSUPPORTED;
 	}
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return (rc > 0) ? tb_to_msecs(rc) : rc;
 }
@@ -575,7 +555,6 @@ static int64_t opal_pci_reinit(uint64_t phb_id,
 	phb_lock(phb);
 	rc = phb->ops->pci_reinit(phb, reinit_scope, data);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -594,7 +573,6 @@ static int64_t opal_pci_poll(uint64_t phb_id)
 	phb_lock(phb);
 	rc = phb->ops->poll(phb);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	/* Return milliseconds for caller to sleep: round up */
 	if (rc > 0) {
@@ -621,7 +599,6 @@ static int64_t opal_pci_set_phb_tce_memory(uint64_t phb_id,
 	phb_lock(phb);
 	rc = phb->ops->set_phb_tce_memory(phb, tce_mem_addr, tce_mem_size);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -641,7 +618,6 @@ static int64_t opal_pci_get_phb_diag_data(uint64_t phb_id,
 	phb_lock(phb);
 	rc = phb->ops->get_diag_data(phb, diag_buffer, diag_buffer_len);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -661,7 +637,6 @@ static int64_t opal_pci_get_phb_diag_data2(uint64_t phb_id,
 	phb_lock(phb);
 	rc = phb->ops->get_diag_data2(phb, diag_buffer, diag_buffer_len);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -683,7 +658,6 @@ static int64_t opal_pci_next_error(uint64_t phb_id, uint64_t *first_frozen_pe,
 	rc = phb->ops->next_error(phb, first_frozen_pe, pci_error_type,
 				  severity);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
@@ -706,7 +680,6 @@ static int64_t opal_pci_eeh_freeze_status2(uint64_t phb_id, uint64_t pe_number,
 	rc = phb->ops->eeh_freeze_status(phb, pe_number, freeze_state,
 					 pci_error_type, severity, phb_status);
 	phb_unlock(phb);
-	pci_put_phb(phb);
 
 	return rc;
 }
