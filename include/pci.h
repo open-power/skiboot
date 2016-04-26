@@ -262,11 +262,8 @@ struct phb_ops {
 	 */
 	void (*device_init)(struct phb *phb, struct pci_device *device);
 
-	/*
-	 * Device node fixup is called when the PCI device node is being
-	 * populated
-	 */
-	void (*device_node_fixup)(struct phb *phb, struct pci_device *pd);
+	/* PHB final fixup is called after PCI probing is completed */
+	void (*phb_final_fixup)(struct phb *phb);
 
 	/*
 	 * EEH methods

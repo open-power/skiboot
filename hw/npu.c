@@ -585,7 +585,9 @@ static void npu_append_pci_phandle(struct dt_node *dn, u32 phandle)
 	unlock(&pci_npu_phandle_lock);
 }
 
-static void npu_dn_fixup(struct phb *phb, struct pci_device *pd)
+static int npu_dn_fixup(struct phb *phb,
+			struct pci_device *pd,
+			void *data __unused)
 {
 	struct npu *p = phb_to_npu(phb);
 	struct npu_dev *dev;
@@ -594,7 +596,7 @@ static void npu_dn_fixup(struct phb *phb, struct pci_device *pd)
 	assert(dev);
 
 	if (dev->phb || dev->pd)
-		return;
+		return 0;
 
 	/* Bind the emulated PCI device with the real one, which can't
 	 * be done until the PCI devices are populated. Once the real
@@ -610,6 +612,13 @@ static void npu_dn_fixup(struct phb *phb, struct pci_device *pd)
 
 		dt_add_property_cells(pd->dn, "ibm,gpu", dev->pd->dn->phandle);
 	}
+
+	return 0;
+}
+
+static void npu_phb_final_fixup(struct phb *phb)
+{
+	pci_walk_dev(phb, npu_dn_fixup, NULL);
 }
 
 static void npu_ioda_init(struct npu *p)
@@ -1095,7 +1104,7 @@ static const struct phb_ops npu_ops = {
 	.cfg_write32		= npu_dev_cfg_write32,
 	.choose_bus		= NULL,
 	.device_init		= NULL,
-	.device_node_fixup	= npu_dn_fixup,
+	.phb_final_fixup	= npu_phb_final_fixup,
 	.presence_detect	= NULL,
 	.ioda_reset		= npu_ioda_reset,
 	.papr_errinjct_reset	= NULL,
