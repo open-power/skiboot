@@ -19,6 +19,7 @@
 
 #include <opal.h>
 #include <device.h>
+#include <lock.h>
 #include <ccan/list/list.h>
 
 /* PCI Slot Info: Wired Lane Values
@@ -231,12 +232,6 @@ struct phb;
 extern int last_phb_id;
 
 struct phb_ops {
-	/*
-	 * Locking. This is called around OPAL accesses
-	 */
-	void (*lock)(struct phb *phb);
-	void (*unlock)(struct phb *phb);
-
 	/*
 	 * Config space ops
 	 */
@@ -461,6 +456,7 @@ struct phb {
 	int			opal_id;
 	uint32_t		scan_map;
 	enum phb_type		phb_type;
+	struct lock		lock;
 	struct list_head	devices;
 	const struct phb_ops	*ops;
 	struct pci_lsi_state	lstate;
@@ -475,6 +471,16 @@ struct phb {
 	/* Additional data the platform might need to attach */
 	void			*platform_data;
 };
+
+static inline void phb_lock(struct phb *phb)
+{
+	lock(&phb->lock);
+}
+
+static inline void phb_unlock(struct phb *phb)
+{
+	unlock(&phb->lock);
+}
 
 /* Config space ops wrappers */
 static inline int64_t pci_cfg_read8(struct phb *phb, uint32_t bdfn,

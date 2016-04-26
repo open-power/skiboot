@@ -19,7 +19,6 @@
 
 #include <cec.h>
 #include <pci.h>
-#include <lock.h>
 
 #include <ccan/container_of/container_of.h>
 
@@ -298,7 +297,6 @@ struct p7ioc_phb {
 	uint32_t			rev;	/* Both major and minor have 2 bytes */
 	void				*regs_asb;
 	void				*regs;	/* AIB regs */
-	struct lock			lock;
 	uint32_t			buid_lsi;
 	uint32_t			buid_msi;
 	uint64_t			io_base;

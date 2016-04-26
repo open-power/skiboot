@@ -154,7 +154,6 @@ struct npu_dev {
 struct npu {
 	uint32_t		flags;
 	uint32_t		index;
-	struct lock		lock;
 	uint32_t		chip_id;
 	uint64_t		xscom_base;
 	uint64_t		at_xscom;

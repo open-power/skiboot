@@ -824,6 +824,7 @@ int64_t pci_register_phb(struct phb *phb, int opal_id)
 	dt_add_property_cells(phb->dt_node, "ibm,opal-phbid", 0, phb->opal_id);
 	PCIDBG(phb, 0, "PCI: Registered PHB\n");
 
+	init_lock(&phb->lock);
 	list_head_init(&phb->devices);
 
 	return OPAL_SUCCESS;

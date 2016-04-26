@@ -18,7 +18,6 @@
 #include <opal-msg.h>
 #include <processor.h>
 #include <chiptod.h>
-#include <lock.h>
 #include <xscom.h>
 #include <capp.h>
 #include <pci.h>
@@ -288,9 +287,9 @@ static int handle_capp_recoverable(int chip_id, int capp_index)
 		    CAPP_PHB3_ATTACHED(chip, phb_index) &&
 		    (!CHIP_IS_NAPLES(chip) || phb_index == capp_index)) {
 			phb = pci_get_phb(phb_id);
-			phb->ops->lock(phb);
+			phb_lock(phb);
 			phb->ops->set_capp_recovery(phb);
-			phb->ops->unlock(phb);
+			phb_unlock(phb);
 			return 1;
 		}
 	}

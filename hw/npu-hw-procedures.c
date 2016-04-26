@@ -18,7 +18,6 @@
 #include <timebase.h>
 #include <pci.h>
 #include <interrupts.h>
-#include <lock.h>
 #include <npu-regs.h>
 #include <npu.h>
 #include <xscom.h>

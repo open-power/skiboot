@@ -274,7 +274,6 @@ struct phb3 {
 	uint64_t		pe_xscom;   /* XSCOM bases */
 	uint64_t		pci_xscom;
 	uint64_t		spci_xscom;
-	struct lock		lock;
 	uint64_t		mm0_base;    /* Full MM window to PHB */
 	uint64_t		mm0_size;    /* '' '' '' */
 	uint64_t		mm1_base;    /* Full MM window to PHB */

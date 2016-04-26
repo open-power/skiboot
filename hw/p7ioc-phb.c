@@ -54,24 +54,6 @@ static inline uint64_t p7ioc_set_sm_timeout(struct p7ioc_phb *p, uint64_t dur)
 	return dur;
 }
 
-/*
- * Lock callbacks. Allows the OPAL API handlers to lock the
- * PHB around calls such as config space, EEH, etc...
- */
-static void p7ioc_phb_lock(struct phb *phb)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-
-	lock(&p->lock);
-}
-
-static  void p7ioc_phb_unlock(struct phb *phb)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-
-	unlock(&p->lock);
-}
-
 static bool p7ioc_phb_fenced(struct p7ioc_phb *p)
 {
 	struct p7ioc *ioc = p->ioc;
@@ -2569,8 +2551,6 @@ static int64_t p7ioc_papr_errinjct_reset(struct phb *phb)
 }
 
 static const struct phb_ops p7ioc_phb_ops = {
-	.lock			= p7ioc_phb_lock,
-	.unlock			= p7ioc_phb_unlock,
 	.cfg_read8		= p7ioc_pcicfg_read8,
 	.cfg_read16		= p7ioc_pcicfg_read16,
 	.cfg_read32		= p7ioc_pcicfg_read32,
@@ -2750,11 +2730,11 @@ static void p7ioc_phb_err_interrupt(void *data, uint32_t isn)
 	 * Check if there's an error pending and update PHB fence
 	 * state and return, the ER error is drowned at this point
 	 */
-	lock(&p->lock);
+	phb_lock(&p->phb);
 	if (p7ioc_phb_fenced(p)) {
 		p->state = P7IOC_PHB_STATE_FENCED;
 		PHBERR(p, "ER error ignored, PHB fenced\n");
-		unlock(&p->lock);
+		phb_unlock(&p->phb);
 		return;
 	}
 
@@ -2764,7 +2744,7 @@ static void p7ioc_phb_err_interrupt(void *data, uint32_t isn)
 	 * overwriting the errors from IOC.
 	 */
 	if (!p7ioc_phb_err_pending(p)) {
-		unlock(&p->lock);
+		phb_unlock(&p->phb);
 		return;
 	}
 
@@ -2781,7 +2761,7 @@ static void p7ioc_phb_err_interrupt(void *data, uint32_t isn)
 		p->err.err_bit   = 0;
 		p7ioc_phb_set_err_pending(p, true);
 	}
-	unlock(&p->lock);
+	phb_unlock(&p->phb);
 }
 
 /* MSIs (OS owned) */

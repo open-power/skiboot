@@ -28,7 +28,6 @@
 #include <affinity.h>
 #include <npu-regs.h>
 #include <npu.h>
-#include <lock.h>
 #include <xscom.h>
 
 /*
@@ -195,20 +194,6 @@ static uint64_t npu_link_scom_base(struct dt_node *dn, uint32_t scom_base,
 static uint64_t get_bar_size(uint64_t bar)
 {
 	return (1 << GETFIELD(NX_MMIO_BAR_SIZE, bar)) * 0x10000;
-}
-
-static void npu_lock(struct phb *phb)
-{
-	struct npu *p = phb_to_npu(phb);
-
-	lock(&p->lock);
-}
-
-static void npu_unlock(struct phb *phb)
-{
-	struct npu *p = phb_to_npu(phb);
-
-	unlock(&p->lock);
 }
 
 /* Update the changes of the device BAR to link BARs */
@@ -1102,8 +1087,6 @@ static int64_t npu_err_inject(struct phb *phb, uint32_t pe_num,
 }
 
 static const struct phb_ops npu_ops = {
-	.lock			= npu_lock,
-	.unlock			= npu_unlock,
 	.cfg_read8		= npu_dev_cfg_read8,
 	.cfg_read16		= npu_dev_cfg_read16,
 	.cfg_read32		= npu_dev_cfg_read32,

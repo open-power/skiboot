@@ -60,24 +60,6 @@ static void phb3_init_hw(struct phb3 *p, bool first_init);
 #define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB#%04x: " fmt, \
 				      (p)->phb.opal_id, ## a)
 
-/*
- * Lock callbacks. Allows the OPAL API handlers to lock the
- * PHB around calls such as config space, EEH, etc...
- */
-static void phb3_lock(struct phb *phb)
-{
-	struct phb3 *p = phb_to_phb3(phb);
-
-	lock(&p->lock);
-}
-
-static  void phb3_unlock(struct phb *phb)
-{
-	struct phb3 *p = phb_to_phb3(phb);
-
-	unlock(&p->lock);
-}
-
 /* Helper to select an IODA table entry */
 static inline void phb3_ioda_sel(struct phb3 *p, uint32_t table,
 				 uint32_t addr, bool autoinc)
@@ -3591,8 +3573,6 @@ static int64_t phb3_set_capp_recovery(struct phb *phb)
 }
 
 static const struct phb_ops phb3_ops = {
-	.lock			= phb3_lock,
-	.unlock			= phb3_unlock,
 	.cfg_read8		= phb3_pcicfg_read8,
 	.cfg_read16		= phb3_pcicfg_read16,
 	.cfg_read32		= phb3_pcicfg_read32,
