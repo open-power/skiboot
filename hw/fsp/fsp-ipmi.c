@@ -50,6 +50,10 @@ DEFINE_LOG_ENTRY(OPAL_RC_IPMI_RESP, OPAL_PLATFORM_ERR_EVT, OPAL_IPMI,
 		 OPAL_PLATFORM_FIRMWARE, OPAL_PREDICTIVE_ERR_GENERAL,
 		 OPAL_NA);
 
+DEFINE_LOG_ENTRY(OPAL_RC_IPMI_DMA_ERROR_RESP, OPAL_PLATFORM_ERR_EVT, OPAL_IPMI,
+		 OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
+		 OPAL_NA);
+
 struct fsp_ipmi_msg {
 	struct list_node	link;
 	struct ipmi_msg		ipmi_msg;
@@ -281,13 +285,19 @@ static bool fsp_ipmi_read_response(struct fsp_msg *msg)
 	assert(msg->data.words[1] == PSI_DMA_PLAT_RESP_BUF);
 
 	if (status != FSP_STATUS_SUCCESS) {
-		log_simple_error(&e_info(OPAL_RC_IPMI_RESP), "IPMI: Response "
-				 "with bad status:0x%02x\n", status);
+		if(status == FSP_STATUS_DMA_ERROR)
+			log_simple_error(&e_info(OPAL_RC_IPMI_DMA_ERROR_RESP), "IPMI: Received "
+				"DMA ERROR response from FSP, this may be due to FSP "
+				"is in termination state:0x%02x\n", status);
+		else
+			log_simple_error(&e_info(OPAL_RC_IPMI_RESP), "IPMI: FSP response "
+				 "received with bad status:0x%02x\n", status);
+
 		fsp_ipmi_cmd_done(ipmi_msg->cmd,
 				  IPMI_NETFN_RETURN_CODE(ipmi_msg->netfn),
 				  IPMI_ERR_UNSPECIFIED);
 		return fsp_ipmi_send_response(FSP_RSP_PLAT_DATA |
-					      FSP_STATUS_GENERIC_ERROR);
+					      FSP_STATUS_SUCCESS);
 	}
 
 	/* KCS response message format */
