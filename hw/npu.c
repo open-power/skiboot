@@ -1235,7 +1235,7 @@ static void assign_mmio_bars(uint32_t gcid, uint32_t xscom,
 static void npu_probe_phb(struct dt_node *dn)
 {
 	struct dt_node *np;
-	uint32_t gcid, index, xscom;
+	uint32_t gcid, index, phb_index, xscom;
 	uint64_t at_bar[2], mm_win[2], val;
 	uint32_t links = 0;
 	char *path;
@@ -1244,6 +1244,7 @@ static void npu_probe_phb(struct dt_node *dn)
 	path = dt_get_path(dn);
 	gcid = dt_get_chip_id(dn);
 	index = dt_prop_get_u32(dn, "ibm,npu-index");
+	phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
 	dt_for_each_compatible(dn, np, "ibm,npu-link")
 		links++;
 
@@ -1283,7 +1284,8 @@ static void npu_probe_phb(struct dt_node *dn)
 	dt_add_property_strings(np, "device_type", "pciex");
 	dt_add_property(np, "reg", at_bar, sizeof(at_bar));
 
-	dt_add_property_cells(np, "ibm,phb-index", index);
+	dt_add_property_cells(np, "ibm,phb-index", phb_index);
+	dt_add_property_cells(np, "ibm,npu-index", index);
 	dt_add_property_cells(np, "ibm,chip-id", gcid);
 	dt_add_property_cells(np, "ibm,xscom-base", xscom);
 	dt_add_property_cells(np, "ibm,npcq", dn->phandle);
@@ -1764,7 +1766,7 @@ static void npu_create_phb(struct dt_node *dn)
 
 	/* Populate PHB */
 	p = pmem;
-	p->index = dt_prop_get_u32(dn, "ibm,phb-index");
+	p->index = dt_prop_get_u32(dn, "ibm,npu-index");
 	p->chip_id = dt_prop_get_u32(dn, "ibm,chip-id");
 	p->xscom_base = dt_prop_get_u32(dn, "ibm,xscom-base");
 	p->total_devices = links;
