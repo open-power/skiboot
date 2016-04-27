@@ -161,6 +161,13 @@ static int flash_nvram_probe(struct flash *flash, struct ffs_handle *ffs)
 	rc = ffs_part_info(ffs, part, NULL,
 			   &start, &size, NULL, NULL);
 	if (rc) {
+		/**
+		 * @fwts-label NVRAMNoPartition
+		 * @fwts-advice OPAL could not find an NVRAM partition
+		 *     on the system flash. Check that the system flash
+		 *     has a valid partition table, and that the firmware
+		 *     build process has added a NVRAM partition.
+		 */
 		prlog(PR_ERR, "FLASH: Can't parse ffs info for NVRAM\n");
 		return OPAL_HARDWARE;
 	}
@@ -202,12 +209,25 @@ static void setup_system_flash(struct flash *flash, struct dt_node *node,
 	char *path;
 
 	if (system_flash) {
+		/**
+		 * @fwts-label SystemFlashDuplicate
+		 * @fwts-advice More than one flash device was registered
+		 *  as the system flash device. Check for duplicate calls
+		 *  to flash_register(..., true).
+		 */
 		prlog(PR_WARNING, "FLASH: attempted to register a second "
 				"system flash device %s\n", name);
 		return;
 	}
 
 	if (!ffs) {
+		/**
+		 * @fwts-label SystemFlashNoPartitionTable
+		 * @fwts-advice OPAL Could not read a partition table on
+		 *    system flash. Since we've still booted the machine (which
+		 *    requires flash), check that we're registering the proper
+		 *    system flash device.
+		 */
 		prlog(PR_WARNING, "FLASH: attempted to register system flash "
 				"%s, wwhich has no partition info\n", name);
 		return;
