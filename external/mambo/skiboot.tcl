@@ -62,10 +62,8 @@ mconfig tap_base MAMBO_NET_TAP_BASE 0
 #
 # Create machine config
 #
-if { ! [info exists env(SIMHOST)] } {
-    set env(SIMHOST) "pegasus"
-}
-define dup $env(SIMHOST) myconf
+set default_config [display default_configure]
+define dup $default_config myconf
 myconf config cpus $mconf(cpus)
 myconf config processor/number_of_threads $mconf(threads)
 myconf config memory_size $mconf(memory)
@@ -81,7 +79,7 @@ myconf config machine_option/NO_RAM TRUE
 myconf config machine_option/NO_ROM TRUE
 
 # We need to be DD2 or greater on p8 for the HILE HID bit.
-if { $env(SIMHOST) == "pegasus" } {
+if { $default_config == "PEGASUS" } {
     myconf config processor/initial/PVR 0x4b0201
 }
 
