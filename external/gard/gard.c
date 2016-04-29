@@ -550,7 +550,7 @@ static void usage(const char *progname)
 	fprintf(stderr, "-f --file <file>\n\tDon't search for MTD device,"
 	                " read from <file>.\n\n");
 	fprintf(stderr, "-p --part\n\tUsed in conjunction with -f to specify"
-	                "that just\n");
+	                " that just\n");
 	fprintf(stderr, "\tthe GUARD partition is in <file> and libffs\n");
 	fprintf(stderr, "\tshouldn't be used.\n\n");
 
