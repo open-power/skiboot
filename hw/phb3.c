@@ -527,6 +527,8 @@ static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
 				PCI_CFG_PREF_MEM_BASE_U32, ~pref_hi);
 			pci_cfg_read32(phb, dev->bdfn,
 				PCI_CFG_PREF_MEM_BASE_U32, &tmp);
+			pci_cfg_write32(phb, dev->bdfn,
+				PCI_CFG_PREF_MEM_BASE_U32, pref_hi);
 			if (tmp == pref_hi)
 				pci_add_cfg_reg_filter(dev,
 					PCI_CFG_PREF_MEM_BASE_U32, 12,
