@@ -47,6 +47,8 @@ unsigned int cpu_max_pir;
 struct cpu_thread *boot_cpu;
 static struct lock reinit_lock = LOCK_UNLOCKED;
 static bool hile_supported;
+static unsigned long hid0_hile;
+static unsigned long hid0_attn;
 
 unsigned long cpu_secondary_start __force_data = 0;
 
@@ -404,7 +406,7 @@ static void enable_attn(void)
 	unsigned long hid0;
 
 	hid0 = mfspr(SPR_HID0);
-	hid0 |= SPR_HID0_ENABLE_ATTN;
+	hid0 |= hid0_hile;
 	set_hid0(hid0);
 }
 
@@ -413,7 +415,7 @@ static void disable_attn(void)
 	unsigned long hid0;
 
 	hid0 = mfspr(SPR_HID0);
-	hid0 &= ~SPR_HID0_ENABLE_ATTN;
+	hid0 &= ~hid0_hile;
 	set_hid0(hid0);
 }
 
@@ -454,10 +456,14 @@ void init_boot_cpu(void)
 	case PVR_TYPE_P8:
 		proc_gen = proc_gen_p8;
 		hile_supported = PVR_VERS_MAJ(mfspr(SPR_PVR)) >= 2;
+		hid0_hile = SPR_HID0_POWER8_HILE;
+		hid0_attn = SPR_HID0_POWER8_ENABLE_ATTN;
 		break;
 	case PVR_TYPE_P8NVL:
 		proc_gen = proc_gen_p8;
 		hile_supported = true;
+		hid0_hile = SPR_HID0_POWER8_HILE;
+		hid0_attn = SPR_HID0_POWER8_ENABLE_ATTN;
 		break;
 	default:
 		proc_gen = proc_gen_unknown;
@@ -713,9 +719,9 @@ static void cpu_change_hile(void *hilep)
 
 	hid0 = mfspr(SPR_HID0);
 	if (hile)
-		hid0 |= SPR_HID0_HILE;
+		hid0 |= hid0_hile;
 	else
-		hid0 &= ~SPR_HID0_HILE;
+		hid0 &= ~hid0_hile;
 	prlog(PR_DEBUG, "CPU: [%08x] HID0 set to 0x%016lx\n",
 	      this_cpu()->pir, hid0);
 	set_hid0(hid0);
