@@ -26,7 +26,14 @@
 	. = 0x0
 	.globl _start
 _start:
-	mr	%r2, %r8 /* r8 is the OPAL base passed in by skiboot */
+/*
+ * Save some values passed in from skiboot into registers that are
+ * non-volatile over OPAL calls.
+ *   r8 is the OPAL base
+ *   r9 is the OPAL entry point point
+ */
+	mr	%r13, %r8
+	mr	%r14, %r9
 
 	bl	here
 here:	mflr	%r8 /* work out where we are running */
@@ -35,10 +42,17 @@ here:	mflr	%r8 /* work out where we are running */
 	li	%r3, 0 /* terminal 0 */
 	addi	%r4, %r8, len - here /* ptr to length of string */
 	addi	%r5, %r8, str - here /* ptr to string start */
-
-	mtctr	%r9 /* R9 is the OPAL entry point passed in by skiboot */
+	mr	%r2, %r13
+	mtctr	%r14
 	bctrl
-	attn
+
+	li	%r0, 5 /* OPAL_CEC_POWER_DOWN */
+	mr	%r2, %r13
+	mtctr	%r14
+	bctrl
+
+	/* We shouldn't get here but if we do, just wait here */
+	b	.
 
 len:
 	.long 0x00

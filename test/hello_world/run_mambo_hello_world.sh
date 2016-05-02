@@ -38,7 +38,7 @@ spawn $MAMBO_PATH/$MAMBO_BINARY -n -f ../../test/hello_world/run_hello_world.tcl
 expect {
 timeout { send_user "\nTimeout waiting for hello world\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
-"ATTN"
+"Execution stopped: Sim Support exit requested stop"
 }
 wait
 exit 0
