@@ -399,6 +399,22 @@ static void init_cpu_thread(struct cpu_thread *t,
 	assert(pir == container_of(t, struct cpu_stack, cpu) - cpu_stacks);
 }
 
+static void enable_attn(void)
+{
+	unsigned long hid0;
+
+	hid0 = mfspr(SPR_HID0);
+	hid0 |= SPR_HID0_ENABLE_ATTN;
+	set_hid0(hid0);
+}
+
+extern void __trigger_attn(void);
+void trigger_attn(void)
+{
+	enable_attn();
+	__trigger_attn();
+}
+
 void pre_init_boot_cpu(void)
 {
 	struct cpu_thread *cpu = this_cpu();

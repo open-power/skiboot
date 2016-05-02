@@ -36,8 +36,8 @@ set_hid0:
 	isync
 	blr
 
-.global trigger_attn
-trigger_attn:
+.global __trigger_attn
+__trigger_attn:
 	sync
 	isync
 	attn

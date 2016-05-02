@@ -118,8 +118,6 @@ static void update_sp_attn_area(const char *msg)
 
 void __attribute__((noreturn)) ibm_fsp_terminate(const char *msg)
 {
-	unsigned long hid0;
-
 	/* Update SP attention area */
 	update_sp_attn_area(msg);
 
@@ -133,9 +131,6 @@ void __attribute__((noreturn)) ibm_fsp_terminate(const char *msg)
 	 * reboot loop.
 	 */
 
-	hid0 = mfspr(SPR_HID0);
-	hid0 |= SPR_HID0_ENABLE_ATTN;
-	set_hid0(hid0);
 	trigger_attn();
 	for (;;) ;
 }
