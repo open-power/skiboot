@@ -77,6 +77,24 @@
 
 #define P8_PIR2THREADID(pir) ((pir) & 0x7)
 
+/*
+ * P9 GCID
+ * -------
+ *
+ * Global chip ID is a 7 bit number:
+ *
+ *        NodeID      ChipID
+ * |               |           |
+ * |___|___|___|___|___|___|___|
+ *
+ * Bit 56 is unused according to the manual by we add it to the coreid here.
+ */
+#define P9_PIR2GCID(pir) (((pir) >> 8) & 0x7f)
+
+#define P9_PIR2COREID(pir) (((pir) >> 2) & 0x3f)
+
+#define P9_PIR2THREADID(pir) ((pir) & 0x3)
+
 struct dt_node;
 struct centaur_chip;
 struct mfsi;
@@ -89,6 +107,8 @@ enum proc_chip_type {
 	PROC_CHIP_P8_MURANO,
 	PROC_CHIP_P8_VENICE,
 	PROC_CHIP_P8_NAPLES,
+	PROC_CHIP_P9_NIMBUS,
+	PROC_CHIP_P9_CUMULUS,
 };
 
 /* Simulator quirks */

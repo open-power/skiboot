@@ -465,6 +465,12 @@ void init_boot_cpu(void)
 		hid0_hile = SPR_HID0_POWER8_HILE;
 		hid0_attn = SPR_HID0_POWER8_ENABLE_ATTN;
 		break;
+	case PVR_TYPE_P9:
+		proc_gen = proc_gen_p9;
+		hile_supported = true;
+		hid0_hile = SPR_HID0_POWER9_HILE;
+		hid0_attn = SPR_HID0_POWER9_ENABLE_ATTN;
+		break;
 	default:
 		proc_gen = proc_gen_unknown;
 	}
@@ -481,6 +487,12 @@ void init_boot_cpu(void)
 		cpu_thread_count = 8;
 		cpu_max_pir = SPR_PIR_P8_MASK;
 		prlog(PR_INFO, "CPU: P8 generation processor"
+		      "(max %d threads/core)\n", cpu_thread_count);
+		break;
+	case proc_gen_p9:
+		cpu_thread_count = 4;
+		cpu_max_pir = SPR_PIR_P9_MASK;
+		prlog(PR_INFO, "CPU: P9 generation processor"
 		      "(max %d threads/core)\n", cpu_thread_count);
 		break;
 	default:

@@ -259,6 +259,8 @@ boot_entry:
 	beq	2f
 	cmpwi	cr0,%r3,PVR_TYPE_P8NVL
 	beq	2f
+	cmpwi	cr0,%r3,PVR_TYPE_P9
+	beq 	1f
 	attn		/* Unsupported CPU type... what do we do ? */
 
 	/* P8 -> 8 threads */

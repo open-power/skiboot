@@ -123,6 +123,7 @@ enum proc_gen {
 	proc_gen_unknown,
 	proc_gen_p7,		/* P7 and P7+ */
 	proc_gen_p8,
+	proc_gen_p9,
 };
 extern enum proc_gen proc_gen;
 

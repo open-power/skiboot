@@ -426,11 +426,13 @@ int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id)
 	int64_t rc = OPAL_SUCCESS;
 
 	/* Mambo chip model lacks the f000f register, just make
-	 * something up (Murano DD2.1)
+	 * something up
 	 */
-	if (chip_quirk(QUIRK_NO_F000F))
-		val = 0x221EF04980000000UL;
-	else
+	if (chip_quirk(QUIRK_NO_F000F)) {
+		val = 0x221EF04980000000UL; /* P8 Murano DD2.1 */
+		if (proc_gen == proc_gen_p9)
+			val = 0x100D104980000000UL; /* P9 Nimbus DD1.0 */
+	} else
 		rc = xscom_read(partid, 0xf000f, &val);
 
 	/* Extract CFAM id */
@@ -473,6 +475,14 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 	case 0xd3:
 		chip->type = PROC_CHIP_P8_NAPLES;
 		assert(proc_gen == proc_gen_p8);
+		break;
+	case 0xd1:
+		chip->type = PROC_CHIP_P9_NIMBUS;
+		assert(proc_gen == proc_gen_p9);
+		break;
+	case 0xd4:
+		chip->type = PROC_CHIP_P9_CUMULUS;
+		assert(proc_gen == proc_gen_p9);
 		break;
 	default:
 		printf("CHIP: Unknown chip type 0x%02x !!!\n",

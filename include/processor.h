@@ -39,6 +39,7 @@
 #define MSR_LE		PPC_BIT(63)	/* Little Endian */
 
 /* PIR */
+#define SPR_PIR_P9_MASK		0x07ff	/* Mask of implemented bits */
 #define SPR_PIR_P8_MASK		0x1fff	/* Mask of implemented bits */
 #define SPR_PIR_P7_MASK		0x03ff	/* Mask of implemented bits */
 
@@ -162,7 +163,9 @@
 #define SPR_HID0_POWER8_4LPARMODE	PPC_BIT(2)
 #define SPR_HID0_POWER8_2LPARMODE	PPC_BIT(6)
 #define SPR_HID0_POWER8_HILE		PPC_BIT(19)
+#define SPR_HID0_POWER9_HILE		PPC_BIT(4)
 #define SPR_HID0_POWER8_ENABLE_ATTN	PPC_BIT(31)
+#define SPR_HID0_POWER9_ENABLE_ATTN	PPC_BIT(3)
 
 /* PVR bits */
 #define SPR_PVR_TYPE			0xffff0000
@@ -179,6 +182,7 @@
 #define PVR_TYPE_P8E	0x004b /* Murano */
 #define PVR_TYPE_P8	0x004d /* Venice */
 #define PVR_TYPE_P8NVL	0x004c /* Naples */
+#define PVR_TYPE_P9	0x004e
 
 #ifdef __ASSEMBLY__
 
