@@ -104,9 +104,6 @@ static void generic_platform_init(void)
 
 static int64_t generic_cec_power_down(uint64_t request __unused)
 {
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
-		mambo_sim_exit();
-
 	return OPAL_UNSUPPORTED;
 }
 
