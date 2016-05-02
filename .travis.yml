@@ -24,16 +24,12 @@ env:
         #   via the "travis encrypt" command using the project repo's public key
         - secure: "MpNEGFa1VrF/vsQq24n5UgfRbz1wVC6B8mubFnyK4gX0IuQ9xhWuTzMLUQF9UJxe5jnC2DTmVUvYTYN/hggw+PpYwbOOAE0QGR5pmPHA4PSRmc5pxt1q18/sv7EPFw66GFyWJq94nWjpigyKQ8KGtA67j1xFqrDoS43OA76WZgo="
 
-before_script:
-    - mkdir -p external/opal-prd/asm
-    - wget https://raw.githubusercontent.com/open-power/linux/master/arch/powerpc/include/uapi/asm/opal-prd.h -O external/opal-prd/asm/opal-prd.h
 
 script:
     - (cd opal-ci; ./build-qemu-powernv.sh)
     - ./opal-ci/fetch-debian-jessie-installer.sh
     - make -j4 all check ; (make clean; cd external/gard && make)
     - (cd external/pflash; ./build-all-arch.sh)
-    - (cd external/opal-prd && make clean && make test && make clean && CROSS_COMPILE=powerpc64le-linux-gnu- make)
     - make clean && SKIBOOT_GCOV=1 make && SKIBOOT_GCOV=1 make check
     - make clean && rm -rf builddir && mkdir builddir && make SRC=`pwd` -f ../Makefile -C builddir
     - make clean
