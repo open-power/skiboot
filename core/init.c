@@ -809,6 +809,8 @@ void __noreturn __secondary_cpu_entry(void)
 	/* Secondary CPU called in */
 	cpu_callin(cpu);
 
+	init_hid();
+
 	/* Wait for work to do */
 	while(true) {
 		int i;

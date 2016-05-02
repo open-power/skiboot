@@ -408,11 +408,26 @@ static void enable_attn(void)
 	set_hid0(hid0);
 }
 
+static void disable_attn(void)
+{
+	unsigned long hid0;
+
+	hid0 = mfspr(SPR_HID0);
+	hid0 &= ~SPR_HID0_ENABLE_ATTN;
+	set_hid0(hid0);
+}
+
 extern void __trigger_attn(void);
 void trigger_attn(void)
 {
 	enable_attn();
 	__trigger_attn();
+}
+
+void init_hid(void)
+{
+	/* attn is enabled even when HV=0, so make sure it's off */
+	disable_attn();
 }
 
 void pre_init_boot_cpu(void)
@@ -481,6 +496,7 @@ void init_boot_cpu(void)
 	init_cpu_thread(boot_cpu, cpu_state_active, pir);
 	init_boot_tracebuf(boot_cpu);
 	assert(this_cpu() == boot_cpu);
+	init_hid();
 
 	list_head_init(&global_job_queue);
 }
