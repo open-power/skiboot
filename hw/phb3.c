@@ -505,7 +505,7 @@ static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
 		 * adjust some settings for performances
 		 */
 		xscom_read(p->chip_id, p->pe_xscom + 0x0b, &modectl);
-		if (vendor == 0x15b3 &&
+		if (vendor == 0x15b3 &&		/* Mellanox */
 		    (device == 0x1003 ||	/* Travis3-EN (CX3) */
 		     device == 0x1011 ||	/* HydePark (ConnectIB) */
 		     device == 0x1013))	{	/* GlacierPark (CX4) */
@@ -518,7 +518,8 @@ static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
 
 		xscom_write(p->chip_id, p->pe_xscom + 0x0b, modectl);
 	} else if (dev->primary_bus == 0) {
-		if (vendor == 0x1014 && device == 0x03dc) {
+		if (vendor == 0x1014 &&		/* IBM */
+		    device == 0x03dc) {		/* P8/P8E/P8NVL Root port */
 			uint32_t pref_hi, tmp;
 
 			pci_cfg_read32(phb, dev->bdfn,
