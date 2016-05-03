@@ -28,7 +28,7 @@ env:
 script:
     - (cd opal-ci; ./build-qemu-powernv.sh)
     - ./opal-ci/fetch-debian-jessie-installer.sh
-    - make -j4 all check ; (make clean; cd external/gard && make)
+    - make -j4 all check ; (make clean; cd external/gard && CROSS= make)
     - (cd external/pflash; ./build-all-arch.sh)
     - make clean && SKIBOOT_GCOV=1 make && SKIBOOT_GCOV=1 make check
     - make clean && rm -rf builddir && mkdir builddir && make SRC=`pwd` -f ../Makefile -C builddir
