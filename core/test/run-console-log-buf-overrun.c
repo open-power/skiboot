@@ -21,6 +21,8 @@
 #include <stdarg.h>
 #include <compiler.h>
 
+unsigned long tb_hz = 512000000;
+
 #define __TEST__
 
 #define CHECK_BUF_ASSERT(buf, str)			\
@@ -71,7 +73,7 @@ int main(void)
 	huge_tb = 1;
 
 	prlog(PR_EMERG, "Hello World");
-	CHECK_ASSERT("[1223372515963611388,0] Hello World");
+	CHECK_ASSERT("[2389399445.123611388,0] Hello World");
 
 	memset(console_buffer, 0, sizeof(console_buffer));
 
@@ -79,10 +81,10 @@ int main(void)
 	huge_tb = 0;
 
 	prlog(PR_EMERG, "Hello World %lu", value);
-	CHECK_ASSERT("[42,0] Hello World 18446744073709551615");
+	CHECK_ASSERT("[    0.000042,0] Hello World 18446744073709551615");
 
 	printf("Hello World %lu", value);
-	CHECK_ASSERT("[42,5] Hello World 18446744073709551615");
+	CHECK_ASSERT("[    0.000042,5] Hello World 18446744073709551615");
 
 	/*
 	 * Test string of size > 320
@@ -103,7 +105,7 @@ int main(void)
 	 */
 	memset(console_buffer, 0, sizeof(console_buffer));
 
-	prlog(PR_EMERG, "%313s", "Hello World");
+	prlog(PR_EMERG, "%303s", "Hello World");
 	assert(console_buffer[319] == 0);
 
 	/* compare truncated string */
