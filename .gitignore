@@ -27,12 +27,15 @@ ccan/list/test/run-check-corrupt
 ccan/list/test/run-list_del_from-assert
 ccan/list/test/run-single-eval
 ccan/list/test/run-with-debug
+ccan/short_types/test/run-endian
 ccan/str/test/run-STR_MAX_CHARS
 core/test/run-console-log
 core/test/run-time-utils
+core/test/run-timebase
 core/test/run-timer
 core/test/run-console-log-buf-overrun
 core/test/run-console-log-pr_fmt
+core/test/run-mem_range_is_reserved
 core/test/run-mem_region_next
 core/test/run-mem_region_reservations
 ccan/*/test/gmon.out
@@ -52,6 +55,7 @@ core/test/*-gcov
 external/dump_trace
 external/mambo/skiboot-hello_world.dump
 hdata/test/hdata_to_dt
+hdata/test/hdata_to_dt-gcov
 hw/ipmi/test/run-fru
 hw/ipmi/test/*-gcov
 libc/test/run-time
