@@ -72,7 +72,7 @@ static int file_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint
 	while (count < len) {
 		rc = read(file_data->fd, buf, len);
 		/* errno should remain set */
-		if (rc == -1)
+		if (rc == -1 || rc == 0)
 			return FLASH_ERR_BAD_READ;
 
 		count += rc;
