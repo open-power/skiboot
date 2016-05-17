@@ -461,6 +461,8 @@ static void print_help(const char *pname)
 	printf("\t\tTarget BMC flash instead of host flash.\n");
 	printf("\t\tNote: This carries a high chance of bricking your BMC if you\n");
 	printf("\t\tdon't know what you're doing. Consider --mtd to be safe(r)\n\n");
+	printf("\t-F filename, --flash-file filename\n");
+	printf("\t\tTarget filename instead of actual flash.\n\n");
 	printf("\t-S, --side\n");
 	printf("\t\tSide of the flash on which to operate, 0 (default) or 1\n\n");
 	printf("\t-T, --toc\n");
@@ -527,6 +529,7 @@ int main(int argc, char *argv[])
 	char *write_file = NULL, *read_file = NULL, *part_name = NULL;
 	bool ffs_toc_seen = false, mtd = false;
 	int rc;
+	const char *flashfilename = NULL;
 
 	while(1) {
 		struct option long_opts[] = {
@@ -542,6 +545,7 @@ int main(int argc, char *argv[])
 			{"erase",	no_argument,		NULL,	'e'},
 			{"program",	required_argument,	NULL,	'p'},
 			{"force",	no_argument,		NULL,	'f'},
+			{"flash-file",	required_argument,	NULL,	'F'},
 			{"info",	no_argument,		NULL,	'i'},
 			{"tune",	no_argument,		NULL,	't'},
 			{"dummy",	no_argument,		NULL,	'd'},
@@ -555,7 +559,7 @@ int main(int argc, char *argv[])
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "+:a:s:P:r:43Eemp:fdihvbtgS:T:c",
+		c = getopt_long(argc, argv, "+:a:s:P:r:43Eemp:fdihvbtgS:T:cF:",
 				long_opts, &oidx);
 		if (c == -1)
 			break;
@@ -594,6 +598,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'f':
 			must_confirm = false;
+			break;
+		case 'F':
+			flashfilename = optarg;
 			break;
 		case 'd':
 			must_confirm = false;
@@ -763,7 +770,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (arch_flash_init(&bl, NULL, true)) {
+	if (arch_flash_init(&bl, flashfilename, true)) {
 		fprintf(stderr, "Couldn't initialise architecture flash structures\n");
 		exit(1);
 	}
