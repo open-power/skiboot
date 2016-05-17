@@ -327,10 +327,11 @@ static bool __paca_parse(void)
 	return true;
 }
 
-void paca_parse(void)
+int paca_parse(void)
 {
 	if (!__paca_parse()) {
 		prerror("CPU: Initial CPU parsing failed\n");
-		abort();
+		return -1;
 	}
+	return 0;
 }

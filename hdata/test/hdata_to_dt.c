@@ -83,7 +83,9 @@ struct dt_node *add_ics_node(void)
 #include <bitutils.h>
 
 /* Your pointers won't be correct, that's OK. */
-#define spira_check_ptr(ptr, file, line) ((ptr) != NULL)
+#define spira_check_ptr spira_check_ptr
+
+static bool spira_check_ptr(const void *ptr, const char *file, unsigned int line);
 
 #include "../cpu-common.c"
 #include "../fsp.c"
@@ -108,13 +110,30 @@ char __rodata_start[1], __rodata_end[1];
 
 enum proc_gen proc_gen = proc_gen_p7;
 
+static bool spira_check_ptr(const void *ptr, const char *file, unsigned int line)
+{
+	if (!ptr)
+		return false;
+	/* we fake the SPIRA pointer as it's relative to where it was loaded
+	 * on real hardware */
+	(void)file;
+	(void)line;
+	return true;
+}
+
 static void *ntuple_addr(const struct spira_ntuple *n)
 {
 	uint64_t addr = be64_to_cpu(n->addr);
 	if (n->addr == 0)
 		return NULL;
-	assert(addr >= base_addr);
-	assert(addr < base_addr + spira_heap_size);
+	if (addr < base_addr) {
+		fprintf(stderr, "assert failed: addr >= base_addr (%"PRIu64" >= %"PRIu64")\n", addr, base_addr);
+		exit(EXIT_FAILURE);
+	}
+	if (addr >= base_addr + spira_heap_size) {
+		fprintf(stderr, "assert failed: addr not in spira_heap\n");
+		exit(EXIT_FAILURE);
+	}
 	return spira_heap + ((unsigned long)addr - base_addr);
 }
 
@@ -211,7 +230,10 @@ int main(int argc, char *argv[])
 		fclose(stderr);
 	}
 
-	parse_hdat(false, 0);
+	if(parse_hdat(false, 0) < 0) {
+		fprintf(stderr, "FATAL ERROR parsing HDAT\n");
+		exit(EXIT_FAILURE);
+	}
 
 	if (!quiet)
 		dump_dt(dt_root, 0, !tree_only);

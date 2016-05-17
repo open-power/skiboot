@@ -1085,7 +1085,7 @@ static void fixup_spira(void)
 	spira.ntuples.hs_data = spiras->ntuples.hs_data;
 }
 
-void parse_hdat(bool is_opal, uint32_t master_cpu)
+int parse_hdat(bool is_opal, uint32_t master_cpu)
 {
 	cpu_type = PVR_TYPE(mfspr(SPR_PVR));
 
@@ -1110,7 +1110,8 @@ void parse_hdat(bool is_opal, uint32_t master_cpu)
 
 	/* Parse SPPACA and/or PCIA */
 	if (!pcia_parse())
-		paca_parse();
+		if (paca_parse() < 0)
+			return -1;
 
 	/* IPL params */
 	add_iplparams();
@@ -1144,4 +1145,6 @@ void parse_hdat(bool is_opal, uint32_t master_cpu)
 	slca_dt_add_sai_node();
 
 	prlog(PR_INFO, "Parsing HDAT...done\n");
+
+	return 0;
 }

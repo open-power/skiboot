@@ -20,7 +20,7 @@
 struct dt_node;
 
 extern void memory_parse(void);
-extern void paca_parse(void);
+extern int paca_parse(void);
 extern bool pcia_parse(void);
 extern void fsp_parse(void);
 extern void io_parse(void);

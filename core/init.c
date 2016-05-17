@@ -634,11 +634,13 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * Hack alert: When entering via the OPAL entry point, fdt
 	 * is set to -1, we record that and pass it to parse_hdat
 	 */
-	if (fdt == (void *)-1ul)
-		parse_hdat(true, master_cpu);
-	else if (fdt == NULL)
-		parse_hdat(false, master_cpu);
-	else {
+	if (fdt == (void *)-1ul) {
+		if (parse_hdat(true, master_cpu) < 0)
+			abort();
+	} else if (fdt == NULL) {
+		if (parse_hdat(false, master_cpu) < 0)
+			abort();
+	} else {
 		dt_expand(fdt);
 	}
 
