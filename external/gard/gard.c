@@ -417,8 +417,8 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 		rc = blocklevel_smart_write(ctx->bl, buf_pos - sizeof_gard(ctx), buf, buf_len);
 		free(buf);
 		if (rc) {
-			fprintf(stderr, "Couldn't write to flash at 0x%08lx for len 0x%08x\n",
-			        buf_pos - sizeof_gard(ctx), buf_len);
+			fprintf(stderr, "Couldn't write to flash at 0x%08x for len 0x%08x\n",
+			        buf_pos - (int) sizeof_gard(ctx), buf_len);
 			return rc;
 		}
 	}
@@ -485,7 +485,7 @@ int check_gard_partition(struct gard_ctx *ctx)
 	if (ctx->gard_data_len == 0 || ctx->gard_data_len % sizeof(struct gard_record) != 0)
 		/* Just warn for now */
 		fprintf(stderr, "The %s partition doesn't appear to be an exact multiple of"
-				"gard records in size: %lu vs %u (or partition is zero in length)\n",
+				"gard records in size: %zd vs %u (or partition is zero in length)\n",
 				FLASH_GARD_PART, sizeof(struct gard_record), ctx->gard_data_len);
 
 	/*
