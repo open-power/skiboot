@@ -4178,7 +4178,7 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 	out_be64(p->regs + PHB_OUT_ERR_IRQ_ENABLE, 0x600c42fc042080f0);
 	out_be64(p->regs + PHB_INA_ERR_IRQ_ENABLE, 0xc000a3a901826020);
 	out_be64(p->regs + PHB_INB_ERR_IRQ_ENABLE, 0x0000600000800070);
-	out_be64(p->regs + PHB_LEM_ERROR_MASK,	   0x42498e327f502eae);
+	out_be64(p->regs + PHB_LEM_ERROR_MASK,	   0x42498e367f502eae);
 
 	/*
 	 * Init_141 - Enable DMA address speculation
