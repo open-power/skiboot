@@ -3324,14 +3324,22 @@ static int64_t phb3_get_diag_data(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
-static void phb3_init_capp_regs(struct phb3 *p)
+static void phb3_init_capp_regs(struct phb3 *p, bool dma_mode)
 {
 	uint64_t reg;
 	uint32_t offset;
+	uint64_t read_buffers = 0;
+
+	if (dma_mode) {
+		/* In DMA mode, the CAPP only owns some of the PHB read buffers */
+		read_buffers = 0x1;
+	}
 
 	offset = PHB3_CAPP_REG_OFFSET(p);
 	xscom_read(p->chip_id, APC_MASTER_PB_CTRL + offset, &reg);
+	reg &= ~PPC_BITMASK(10, 11);
 	reg |= PPC_BIT(3);
+	reg |= read_buffers << PPC_BITLSHIFT(11);
 	xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, reg);
 
 	/* Dynamically workout which PHB to connect to port 0 of the CAPP.
@@ -3378,7 +3386,10 @@ static void phb3_init_capp_regs(struct phb3 *p)
 	xscom_write(p->chip_id,  FLUSH_UOP_CONFIG1 + offset,
 		    0xB188280728000000);
 	xscom_write(p->chip_id, FLUSH_UOP_CONFIG2 + offset, 0xB188400F00000000);
-	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0xA1F0000000000000);
+
+	reg = 0xA1F0000000000000;
+	reg |= read_buffers << PPC_BITLSHIFT(39);
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, reg);
 }
 
 /* override some inits with CAPI defaults */
@@ -3395,7 +3406,7 @@ static void phb3_init_capp_errors(struct phb3 *p)
 #define PE_REG_OFFSET(p) \
 	((PHB3_IS_NAPLES(p) && (p)->index) ? 0x40 : 0x0)
 
-static int64_t enable_capi_mode(struct phb3 *p, uint64_t pe_number)
+static int64_t enable_capi_mode(struct phb3 *p, uint64_t pe_number, bool dma_mode)
 {
 	uint64_t reg;
 	int i;
@@ -3417,7 +3428,12 @@ static int64_t enable_capi_mode(struct phb3 *p, uint64_t pe_number)
 		return OPAL_HARDWARE;
 	}
 
-	xscom_write(p->chip_id, p->spci_xscom + 0x3, 0x8000000000000000ull);
+	/* pb aib capp enable */
+	reg = PPC_BIT(0); /* capp enable */
+	if (dma_mode)
+		reg |= PPC_BIT(1); /* capp dma mode */
+	xscom_write(p->chip_id, p->spci_xscom + 0x3, reg);
+
 	/* FIXME security timer bar
 	xscom_write(p->chip_id, p->spci_xscom + 0x4, 0x8000000000000000ull);
 	*/
@@ -3456,8 +3472,16 @@ static int64_t enable_capi_mode(struct phb3 *p, uint64_t pe_number)
 
 	/* set tve no translate mode allow mmio window */
 	memset(p->tve_cache, 0x0, sizeof(p->tve_cache));
-	/* Allow address range 0x0002000000000000: 0x0002FFFFFFFFFFF */
-	p->tve_cache[pe_number * 2] = 0x000000FFFFFF0a00ULL;
+	if (dma_mode) {
+		/*
+		 * CAPP DMA mode needs access to all of memory, set address
+		 * range to 0x0000000000000000: 0x0002FFFFFFFFFFF
+		 */
+		p->tve_cache[pe_number * 2] = 0x000000FFFFFF0200ULL;
+	} else {
+		/* Allow address range 0x0002000000000000: 0x0002FFFFFFFFFFF */
+		p->tve_cache[pe_number * 2] = 0x000000FFFFFF0a00ULL;
+	}
 
 	phb3_ioda_sel(p, IODA2_TBL_TVT, 0, true);
 	for (i = 0; i < ARRAY_SIZE(p->tve_cache); i++)
@@ -3484,7 +3508,7 @@ static int64_t enable_capi_mode(struct phb3 *p, uint64_t pe_number)
 
 	phb3_init_capp_errors(p);
 
-	phb3_init_capp_regs(p);
+	phb3_init_capp_regs(p, dma_mode);
 
 	if (!chiptod_capp_timebase_sync(p)) {
 		PHBERR(p, "CAPP: Failed to sync timebase\n");
@@ -3500,6 +3524,7 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	struct phb3 *p = phb_to_phb3(phb);
 	struct proc_chip *chip = get_chip(p->chip_id);
 	uint64_t reg;
+	uint64_t read_buffers;
 	uint32_t offset;
 	u8 mask;
 
@@ -3545,7 +3570,10 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 		return OPAL_UNSUPPORTED;
 
 	case OPAL_PHB_CAPI_MODE_CAPI:
-		return enable_capi_mode(p, pe_number);
+		return enable_capi_mode(p, pe_number, false);
+
+	case OPAL_PHB_CAPI_MODE_DMA:
+		return enable_capi_mode(p, pe_number, true);
 
 	case OPAL_PHB_CAPI_MODE_SNOOP_OFF:
 		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset,
@@ -3555,8 +3583,16 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	case OPAL_PHB_CAPI_MODE_SNOOP_ON:
 		xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset,
 			    0x0000000000000000);
-		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset,
-			    0xA1F0000000000000);
+		/*
+		 * Make sure the PHB read buffers being snooped match those
+		 * being used so we don't need another mode to set SNOOP+DMA
+		 */
+		xscom_read(p->chip_id, APC_MASTER_PB_CTRL + offset, &reg);
+		read_buffers = (reg >> PPC_BITLSHIFT(11)) & 0x3;
+		reg = 0xA1F0000000000000;
+		reg |= read_buffers << PPC_BITLSHIFT(39);
+		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, reg);
+
 		return OPAL_SUCCESS;
 	}
 
