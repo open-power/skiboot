@@ -3395,72 +3395,10 @@ static void phb3_init_capp_errors(struct phb3 *p)
 #define PE_REG_OFFSET(p) \
 	((PHB3_IS_NAPLES(p) && (p)->index) ? 0x40 : 0x0)
 
-static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
-				  uint64_t pe_number)
+static int64_t enable_capi_mode(struct phb3 *p, uint64_t pe_number)
 {
-	struct phb3 *p = phb_to_phb3(phb);
-	struct proc_chip *chip = get_chip(p->chip_id);
 	uint64_t reg;
-	uint32_t offset;
 	int i;
-	u8 mask;
-
-	if (!CAPP_UCODE_LOADED(chip, p)) {
-		PHBERR(p, "CAPP: ucode not loaded\n");
-		return OPAL_RESOURCE;
-	}
-
-	lock(&capi_lock);
-	if (PHB3_IS_NAPLES(p)) {
-		/* Naples has two CAPP units, statically mapped. */
-		chip->capp_phb3_attached_mask |= 1 << p->index;
-	} else {
-		/*
-		* Check if CAPP port is being used by any another PHB.
-		* Check and set chip->capp_phb3_attached_mask atomically
-		* incase two phb3_set_capi_mode() calls race.
-		*/
-		mask = ~(1 << p->index);
-		if (chip->capp_phb3_attached_mask & mask) {
-			PHBERR(p,
-			       "CAPP: port already in use by another PHB:%x\n",
-			       chip->capp_phb3_attached_mask);
-			       unlock(&capi_lock);
-			return false;
-		}
-		chip->capp_phb3_attached_mask = 1 << p->index;
-	}
-	unlock(&capi_lock);
-
-	offset = PHB3_CAPP_REG_OFFSET(p);
-	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &reg);
-	if ((reg & PPC_BIT(5))) {
-		PHBERR(p, "CAPP: recovery failed (%016llx)\n", reg);
-		return OPAL_HARDWARE;
-	} else if ((reg & PPC_BIT(0)) && (!(reg & PPC_BIT(1)))) {
-		PHBDBG(p, "CAPP: recovery in progress\n");
-		return OPAL_BUSY;
-	}
-
-	if (mode == OPAL_PHB_CAPI_MODE_PCIE)
-		return OPAL_UNSUPPORTED;
-
-	if (mode == OPAL_PHB_CAPI_MODE_SNOOP_OFF) {
-		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset,
-			    0x0000000000000000);
-		return OPAL_SUCCESS;
-	}
-
-	if (mode == OPAL_PHB_CAPI_MODE_SNOOP_ON) {
-		xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset,
-			    0x0000000000000000);
-		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset,
-			    0xA1F0000000000000);
-		return OPAL_SUCCESS;
-	}
-
-	if (mode != OPAL_PHB_CAPI_MODE_CAPI)
-		return OPAL_UNSUPPORTED;
 
 	xscom_read(p->chip_id, PE_CAPP_EN + PE_REG_OFFSET(p), &reg);
 	if (reg & PPC_BIT(0)) {
@@ -3554,6 +3492,75 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	}
 
 	return OPAL_SUCCESS;
+}
+
+static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
+				  uint64_t pe_number)
+{
+	struct phb3 *p = phb_to_phb3(phb);
+	struct proc_chip *chip = get_chip(p->chip_id);
+	uint64_t reg;
+	uint32_t offset;
+	u8 mask;
+
+	if (!CAPP_UCODE_LOADED(chip, p)) {
+		PHBERR(p, "CAPP: ucode not loaded\n");
+		return OPAL_RESOURCE;
+	}
+
+	lock(&capi_lock);
+	if (PHB3_IS_NAPLES(p)) {
+		/* Naples has two CAPP units, statically mapped. */
+		chip->capp_phb3_attached_mask |= 1 << p->index;
+	} else {
+		/*
+		* Check if CAPP port is being used by any another PHB.
+		* Check and set chip->capp_phb3_attached_mask atomically
+		* incase two phb3_set_capi_mode() calls race.
+		*/
+		mask = ~(1 << p->index);
+		if (chip->capp_phb3_attached_mask & mask) {
+			PHBERR(p,
+			       "CAPP: port already in use by another PHB:%x\n",
+			       chip->capp_phb3_attached_mask);
+			       unlock(&capi_lock);
+			return false;
+		}
+		chip->capp_phb3_attached_mask = 1 << p->index;
+	}
+	unlock(&capi_lock);
+
+	offset = PHB3_CAPP_REG_OFFSET(p);
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &reg);
+	if ((reg & PPC_BIT(5))) {
+		PHBERR(p, "CAPP: recovery failed (%016llx)\n", reg);
+		return OPAL_HARDWARE;
+	} else if ((reg & PPC_BIT(0)) && (!(reg & PPC_BIT(1)))) {
+		PHBDBG(p, "CAPP: recovery in progress\n");
+		return OPAL_BUSY;
+	}
+
+	switch (mode) {
+	case OPAL_PHB_CAPI_MODE_PCIE:
+		return OPAL_UNSUPPORTED;
+
+	case OPAL_PHB_CAPI_MODE_CAPI:
+		return enable_capi_mode(p, pe_number);
+
+	case OPAL_PHB_CAPI_MODE_SNOOP_OFF:
+		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset,
+			    0x0000000000000000);
+		return OPAL_SUCCESS;
+
+	case OPAL_PHB_CAPI_MODE_SNOOP_ON:
+		xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset,
+			    0x0000000000000000);
+		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset,
+			    0xA1F0000000000000);
+		return OPAL_SUCCESS;
+	}
+
+	return OPAL_UNSUPPORTED;
 }
 
 static int64_t phb3_set_capp_recovery(struct phb *phb)
