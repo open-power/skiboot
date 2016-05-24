@@ -455,7 +455,7 @@ struct opal_ipmi_msg {
  * with individual elements being 16 bits wide to fetch the system
  * wide EPOW status. Each element in the buffer will contain the
  * EPOW status in it's bit representation for a particular EPOW sub
- * class as defiend here. So multiple detailed EPOW status bits
+ * class as defined here. So multiple detailed EPOW status bits
  * specific for any sub class can be represented in a single buffer
  * element as it's bit representation.
  */
