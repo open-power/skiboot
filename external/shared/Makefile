@@ -8,7 +8,10 @@ INCDIR = $(PREFIX)/include/libflash
 
 VERSION = $(shell ../../make_version.sh)
 
-CFLAGS += -m64 -Werror -Wall -g2 -ggdb -I. -fPIC
+ifneq ($(ARCH), ARCH_ARM)
+CFLAGS += -m64
+endif
+CFLAGS += -Werror -Wall -g2 -ggdb -I. -fPIC
 
 LIBFLASH_OBJS = libflash-file.o libflash-libflash.o libflash-libffs.o libflash-ecc.o libflash-blocklevel.o
 ARCHFLASH_OBJS = common-arch_flash.o
