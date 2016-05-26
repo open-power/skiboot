@@ -10,18 +10,6 @@ VERSION = $(shell ../../make_version.sh)
 
 CFLAGS += -m64 -Werror -Wall -g2 -ggdb -I. -fPIC
 
-.PHONY: links
-links: libflash ccan common
-
-libflash:
-	ln -sf ../../libflash .
-
-common:
-	ln -sf ../common .
-
-ccan:
-	ln -sf ../../ccan .
-
 LIBFLASH_OBJS = libflash-file.o libflash-libflash.o libflash-libffs.o libflash-ecc.o libflash-blocklevel.o
 ARCHFLASH_OBJS = common-arch_flash.o
 OBJS = $(LIBFLASH_OBJS) $(ARCHFLASH_OBJS)
