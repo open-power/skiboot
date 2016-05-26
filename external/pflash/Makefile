@@ -10,7 +10,7 @@ all: links arch_links $(EXE)
 	@cmp -s $@ $@.tmp || cp $@.tmp $@
 	@rm -f $@.tmp
 
-install: all
+install: all $(INSTALLDEPS)
 	install -D pflash $(DESTDIR)$(sbindir)/pflash
 
 .PHONY: dist

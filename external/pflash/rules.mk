@@ -1,16 +1,29 @@
 .DEFAULT_GOAL := all
 
 override CFLAGS  += -O2 -Wall -I.
-OBJS    = pflash.o progress.o version.o
+PFLASH_OBJS    = pflash.o progress.o version.o common-arch_flash.o
 LIBFLASH_FILES := libflash.c libffs.c ecc.c blocklevel.c file.c
 LIBFLASH_OBJS := $(addprefix libflash-, $(LIBFLASH_FILES:.c=.o))
 LIBFLASH_SRC := $(addprefix libflash/,$(LIBFLASH_FILES))
-OBJS	+= $(LIBFLASH_OBJS)
-OBJS	+= common-arch_flash.o
+OBJS	= $(PFLASH_OBJS) $(LIBFLASH_OBJS)
 EXE     = pflash
 sbindir?=/usr/sbin
 
 PFLASH_VERSION ?= $(shell ../../make_version.sh $(EXE))
+LINKAGE?=static
+
+ifeq ($(LINKAGE),dynamic)
+include ../shared/rules.mk
+SHARED=../shared/$(SHARED_NAME)
+OBJS=$(PFLASH_OBJS) $(SHARED)
+INSTALLDEPS+=install-shared
+
+install-shared:
+	$(MAKE) -C ../shared install PREFIX=$(PREFIX)
+
+$(SHARED):
+	$(MAKE) -C ../shared
+endif
 
 version.c: .version
 	@(if [ "a$(PFLASH_VERSION)" = "a" ]; then \
