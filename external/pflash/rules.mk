@@ -8,6 +8,7 @@ LIBFLASH_SRC := $(addprefix libflash/,$(LIBFLASH_FILES))
 OBJS	+= $(LIBFLASH_OBJS)
 OBJS	+= common-arch_flash.o
 EXE     = pflash
+sbindir?=/usr/sbin
 
 PFLASH_VERSION ?= $(shell ../../make_version.sh $(EXE))
 
