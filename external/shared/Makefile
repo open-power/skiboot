@@ -1,12 +1,11 @@
 .DEFAULT_GOAL := all
 GET_ARCH = ../../external/common/get_arch.sh
 include ../../external/common/rules.mk
+include rules.mk
 
 PREFIX ?= /usr/local/
 LIBDIR = $(PREFIX)/lib
 INCDIR = $(PREFIX)/include/libflash
-
-VERSION = $(shell ../../make_version.sh)
 
 ifneq ($(ARCH), ARCH_ARM)
 CFLAGS += -m64
@@ -30,11 +29,11 @@ distclean: clean
 	rm -f ccan libflash common
 
 all: links arch_links $(OBJS)
-	$(CC) -shared -Wl,-soname,libflash.so -o libflash.so.$(VERSION) $(OBJS)
+	$(CC) -shared -Wl,-soname,libflash.so -o $(SHARED_NAME) $(OBJS)
 
 install-lib: all
-	install -D -m 0755 libflash.so.$(VERSION) $(LIBDIR)/libflash.so.$(VERSION)
-	ln -sf libflash.so.$(VERSION) $(LIBDIR)/libflash.so
+	install -D -m 0755 $(SHARED_NAME) $(LIBDIR)/$(SHARED_NAME)
+	ln -sf $(SHARED_NAME) $(LIBDIR)/libflash.so
 
 install-dev: links arch_links
 	mkdir -p $(INCDIR)
