@@ -47,7 +47,7 @@ static const struct slot_table_entry garrison_phb0_2_slot[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "GPU0",
+		.name = "GPU1",
 	},
 	{ .etype = st_end },
 };
@@ -56,7 +56,7 @@ static const struct slot_table_entry garrison_phb0_3_slot[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "GPU1",
+		.name = "GPU2",
 	},
 	{ .etype = st_end },
 };
@@ -65,22 +65,22 @@ static const struct slot_table_entry garrison_npu0_slots[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "GPU1",
+		.name = "GPU2",
 	},
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,1),
-		.name = "GPU1",
+		.name = "GPU2",
 	},
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(1,0),
-		.name = "GPU0",
+		.name = "GPU1",
 	},
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(1,1),
-		.name = "GPU0",
+		.name = "GPU1",
 	},
 	{ .etype = st_end },
 };
@@ -136,7 +136,7 @@ static const struct slot_table_entry garrison_phb1_2_slot[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "GPU2",
+		.name = "GPU3",
 	},
 	{ .etype = st_end },
 };
@@ -145,7 +145,7 @@ static const struct slot_table_entry garrison_phb1_3_slot[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "GPU3",
+		.name = "GPU4",
 	},
 	{ .etype = st_end },
 };
@@ -154,22 +154,22 @@ static const struct slot_table_entry garrison_npu1_slots[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "GPU3",
+		.name = "GPU4",
 	},
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,1),
-		.name = "GPU3",
+		.name = "GPU4",
 	},
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(1,0),
-		.name = "GPU2",
+		.name = "GPU3",
 	},
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(1,1),
-		.name = "GPU2",
+		.name = "GPU3",
 	},
 	{ .etype = st_end },
 };
