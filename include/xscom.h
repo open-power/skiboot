@@ -167,6 +167,12 @@
 /* HB folks say: try 10 time for now */
 #define XSCOM_IND_MAX_RETRIES		10
 
+/* Max number of retries when XSCOM remains busy */
+#define XSCOM_BUSY_MAX_RETRIES		3000
+
+/* Retry count after which to reset XSCOM, if still busy */
+#define XSCOM_BUSY_RESET_THRESHOLD	1000
+
 /*
  * Error handling:
  *
