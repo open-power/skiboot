@@ -3330,15 +3330,25 @@ static void phb3_init_capp_regs(struct phb3 *p, bool dma_mode)
 	uint32_t offset;
 	uint64_t read_buffers = 0;
 
-	if (dma_mode) {
-		/* In DMA mode, the CAPP only owns some of the PHB read buffers */
-		read_buffers = 0x1;
-	}
-
 	offset = PHB3_CAPP_REG_OFFSET(p);
 	xscom_read(p->chip_id, APC_MASTER_PB_CTRL + offset, &reg);
 	reg &= ~PPC_BITMASK(10, 11);
 	reg |= PPC_BIT(3);
+	if (dma_mode) {
+		/* In DMA mode, the CAPP only owns some of the PHB read buffers */
+		read_buffers = 0x1;
+
+		/*
+		 * HW301991 - XSL sends PTE updates with nodal scope instead of
+		 * group scope. The workaround is to force all commands to
+		 * unlimited scope by setting bit 4. This may have a slight
+		 * performance impact, but it would be negligable on the XSL.
+		 * To avoid the possibility it might impact other cards, key it
+		 * off DMA mode since the XSL based Mellanox CX4 is the only
+		 * card to use this mode in P8 timeframe:
+		 */
+		reg |= PPC_BIT(4);
+	}
 	reg |= read_buffers << PPC_BITLSHIFT(11);
 	xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, reg);
 
