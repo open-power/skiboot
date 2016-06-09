@@ -158,10 +158,10 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 		PCIDBG(phb, bdfn, "Probe success after CRS\n");
 
 	/* Perform a dummy write to the device in order for it to
-	 * capture it's own bus number, so any subsequent error
-	 * messages will be properly tagged
-	 */
-	pci_cfg_write32(phb, bdfn, 0, &vdid);
+	 * capture it's own bus number, so any subsequent error
+	 * messages will be properly tagged
+	 */
+	pci_cfg_write32(phb, bdfn, 0, vdid);
 
 	pd = zalloc(sizeof(struct pci_device));
 	if (!pd) {
