@@ -165,15 +165,31 @@ static void create_dtb_reservemap(void *fdt, const struct dt_node *root)
 	save_err(fdt_finish_reservemap(fdt));
 }
 
+static int __create_dtb(void *fdt, size_t len,
+			const struct dt_node *root)
+{
+	fdt_create(fdt, len);
+	create_dtb_reservemap(fdt, root);
+	flatten_dt_node(fdt, root);
+
+	save_err(fdt_finish(fdt));
+	if (fdt_error) {
+		prerror("dtb: error %s\n", fdt_strerror(fdt_error));
+		return fdt_error;
+	}
+
+	dump_fdt(fdt);
+	return 0;
+}
+
 void *create_dtb(const struct dt_node *root)
 {
 	void *fdt = NULL;
 	size_t len = DEVICE_TREE_MAX_SIZE;
 	uint32_t old_last_phandle = last_phandle;
+	int ret;
 
 	do {
-		if (fdt)
-			free(fdt);
 		last_phandle = old_last_phandle;
 		fdt_error = 0;
 		fdt = malloc(len);
@@ -182,26 +198,14 @@ void *create_dtb(const struct dt_node *root)
 			return NULL;
 		}
 
-		fdt_create(fdt, len);
-
-		create_dtb_reservemap(fdt, root);
-
-		/* Unflatten our live tree */
-		flatten_dt_node(fdt, root);
-
-		save_err(fdt_finish(fdt));
-
-		if (!fdt_error)
-			break;
+		ret = __create_dtb(fdt, len, root);
+		if (ret) {
+			free(fdt);
+			fdt = NULL;
+		}
 
 		len *= 2;
-	} while (fdt_error == -FDT_ERR_NOSPACE);
+	} while (ret == -FDT_ERR_NOSPACE);
 
-	dump_fdt(fdt);
-
-	if (fdt_error) {
-		prerror("dtb: error %s\n", fdt_strerror(fdt_error));
-		return NULL;
-	}
 	return fdt;
 }
