@@ -20,8 +20,9 @@
 #include <io.h>
 #include <timebase.h>
 #include <affinity.h>
-#include <pci.h>
 #include <pci-cfg.h>
+#include <pci.h>
+#include <pci-slot.h>
 #include <interrupts.h>
 #include <opal.h>
 #include <ccan/str/str.h>
@@ -39,19 +40,6 @@ static inline void p7ioc_phb_ioda_sel(struct p7ioc_phb *p, uint32_t table,
 		 (autoinc ? PHB_IODA_AD_AUTOINC : 0)	|
 		 SETFIELD(PHB_IODA_AD_TSEL, 0ul, table)	|
 		 SETFIELD(PHB_IODA_AD_TADR, 0ul, addr));
-}
-
-/* Helper to set the state machine timeout */
-static inline uint64_t p7ioc_set_sm_timeout(struct p7ioc_phb *p, uint64_t dur)
-{
-	uint64_t target, now = mftb();
-
-	target = now + dur;
-	if (target == 0)
-		target++;
-	p->delay_tgt_tb = target;
-
-	return dur;
 }
 
 static bool p7ioc_phb_fenced(struct p7ioc_phb *p)
@@ -167,670 +155,6 @@ P7IOC_PCI_CFG_READ(32, uint32_t)
 P7IOC_PCI_CFG_WRITE(8, uint8_t)
 P7IOC_PCI_CFG_WRITE(16, uint16_t)
 P7IOC_PCI_CFG_WRITE(32, uint32_t)
-
-static int64_t p7ioc_presence_detect(struct phb *phb)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-	uint64_t reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
-
-	/* XXX Test for PHB in error state ? */
-
-	if (reg & PHB_PCIE_SLOTCTL2_PRSTN_STAT)
-		return OPAL_SHPC_DEV_PRESENT;
-
-	return OPAL_SHPC_DEV_NOT_PRESENT;
-}
-
-static int64_t p7ioc_link_state(struct phb *phb)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-	uint64_t reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
-	uint16_t lstat;
-	int64_t rc;
-
-	/* XXX Test for PHB in error state ? */
-
-	/* Link is up, let's find the actual speed */
-	if (!(reg & PHB_PCIE_DLP_TC_DL_LINKACT))
-		return OPAL_SHPC_LINK_DOWN;
-
-	rc = p7ioc_pcicfg_read16(&p->phb, 0, p->ecap + PCICAP_EXP_LSTAT,
-				 &lstat);
-	if (rc < 0) {
-		/* Shouldn't happen */
-		PHBERR(p, "Failed to read link status\n");
-		return OPAL_HARDWARE;
-	}
-	if (!(lstat & PCICAP_EXP_LSTAT_DLLL_ACT))
-		return OPAL_SHPC_LINK_DOWN;
-
-	return GETFIELD(PCICAP_EXP_LSTAT_WIDTH, lstat);
-}
-
-static int64_t p7ioc_sm_freset(struct p7ioc_phb *p)
-{
-	uint64_t reg;
-	uint32_t cfg32;
-	uint64_t ci_idx = p->index + 2;
-
-	switch(p->state) {
-	case P7IOC_PHB_STATE_FUNCTIONAL:
-		/* If the slot isn't present, we needn't do it */
-		reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
-		if (!(reg & PHB_PCIE_SLOTCTL2_PRSTN_STAT)) {
-			PHBDBG(p, "Slot freset: no device\n");
-			return OPAL_CLOSED;
-		}
-
-		/* Mask PCIE port interrupts and AER receiver error */
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7E00000000000000UL);
-		p7ioc_pcicfg_read32(&p->phb, 0,
-			p->aercap + PCIECAP_AER_CE_MASK, &cfg32);
-		cfg32 |= PCIECAP_AER_CE_RECVR_ERR;
-		p7ioc_pcicfg_write32(&p->phb, 0,
-			p->aercap + PCIECAP_AER_CE_MASK, cfg32);
-
-		/* Mask CI port error and clear it */
-		out_be64(p->ioc->regs + P7IOC_CIn_LEM_ERR_MASK(ci_idx),
-			 0xa4f4000000000000ul);
-		out_be64(p->regs + PHB_LEM_ERROR_MASK,
-			 0xadb650c9808dd051ul);
-		out_be64(p->ioc->regs + P7IOC_CIn_LEM_FIR(ci_idx),
-			 0x0ul);
-
-		/* Disable link to avoid training issues */
-		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
-		reg |= PHB_PCIE_DLP_TCTX_DISABLE;
-		out_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL, reg);
-		PHBDBG(p, "Slot freset: disable link training\n");
-
-		p->state = P7IOC_PHB_STATE_FRESET_DISABLE_LINK;
-		p->retries = 12;
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(10));
-	case P7IOC_PHB_STATE_FRESET_DISABLE_LINK:
-		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
-		if (reg & PHB_PCIE_DLP_TCRX_DISABLED) {
-			/* Turn on freset */
-			reg = in_be64(p->regs + PHB_RESET);
-			reg &= ~0x2000000000000000ul;
-			out_be64(p->regs + PHB_RESET, reg);
-			PHBDBG(p, "Slot freset: assert\n");
-
-			p->state = P7IOC_PHB_STATE_FRESET_ASSERT_DELAY;
-			return p7ioc_set_sm_timeout(p, secs_to_tb(1));
-		}
-
-		if (p->retries-- == 0) {
-			PHBDBG(p, "Slot freset: timeout to disable link training\n");
-			goto error;
-		}
-
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(10));
-	case P7IOC_PHB_STATE_FRESET_ASSERT_DELAY:
-		/* Turn off freset */
-		reg = in_be64(p->regs + PHB_RESET);
-		reg |= 0x2000000000000000ul;
-		out_be64(p->regs + PHB_RESET, reg);
-		PHBDBG(p, "Slot freset: deassert\n");
-
-		p->state = P7IOC_PHB_STATE_FRESET_DEASSERT_DELAY;
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(200));
-	case P7IOC_PHB_STATE_FRESET_DEASSERT_DELAY:
-		/* Restore link control */
-		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
-		reg &= ~PHB_PCIE_DLP_TCTX_DISABLE;
-		out_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL, reg);
-		PHBDBG(p, "Slot freset: enable link training\n");
-
-		p->state = P7IOC_PHB_STATE_FRESET_WAIT_LINK;
-		p->retries = 100;
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(10));
-	case P7IOC_PHB_STATE_FRESET_WAIT_LINK:
-		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
-		if (reg & PHB_PCIE_DLP_TC_DL_LINKACT) {
-			/*
-			 * Clear spurious errors and enable PCIE port
-			 * interrupts
-			 */
-			out_be64(p->regs + UTL_PCIE_PORT_STATUS,
-				 0x00E0000000000000UL);
-                        out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,
-				 0xFE65000000000000UL);
-
-			/* Clear AER receiver error status */
-			p7ioc_pcicfg_write32(&p->phb, 0,
-				p->aercap + PCIECAP_AER_CE_STATUS,
-				PCIECAP_AER_CE_RECVR_ERR);
-			/* Unmask receiver error status in AER */
-			p7ioc_pcicfg_read32(&p->phb, 0,
-				p->aercap + PCIECAP_AER_CE_MASK, &cfg32);
-			cfg32 &= ~PCIECAP_AER_CE_RECVR_ERR;
-			p7ioc_pcicfg_write32(&p->phb, 0,
-				p->aercap + PCIECAP_AER_CE_MASK, cfg32);
-			/* Clear and Unmask CI port and PHB errors */
-			out_be64(p->ioc->regs + P7IOC_CIn_LEM_FIR(ci_idx),
-				 0x0ul);
-			out_be64(p->regs + PHB_LEM_FIR_ACCUM,
-				 0x0ul);
-			out_be64(p->ioc->regs + P7IOC_CIn_LEM_ERR_MASK_AND(ci_idx),
-				 0x0ul);
-			out_be64(p->regs + PHB_LEM_ERROR_MASK,
-				 0x1249a1147f500f2cul);
-			PHBDBG(p, "Slot freset: link up!\n");
-
-			p->state = P7IOC_PHB_STATE_FUNCTIONAL;
-			p->flags &= ~P7IOC_PHB_CFG_BLOCKED;
-
-			/*
-			 * We might be required to restore bus numbers for PCI bridges
-			 * for complete reset
-			 */
-			if (p->flags & P7IOC_RESTORE_BUS_NUM) {
-				p->flags &= ~P7IOC_RESTORE_BUS_NUM;
-				pci_restore_bridge_buses(&p->phb, NULL);
-			}
-
-			return OPAL_SUCCESS;
-		}
-
-		if (p->retries-- == 0) {
-			uint16_t val;
-
-			if (p->gen == 1) {
-				PHBDBG(p, "Slot freset: timeout for link up in Gen1 mode!\n");
-				goto error;
-			}
-
-			PHBDBG(p, "Slot freset: timeout for link up.\n");
-			PHBDBG(p, "Slot freset: fallback to Gen1.\n");
-			p->gen --;
-
-			/* Limit speed to 2.5G */
-			p7ioc_pcicfg_read16(&p->phb, 0,
-					p->ecap + PCICAP_EXP_LCTL2, &val);
-			val = SETFIELD(PCICAP_EXP_LCTL2_TLSPD, val, 1);
-			p7ioc_pcicfg_write16(&p->phb, 0,
-					p->ecap + PCICAP_EXP_LCTL2,
-					val);
-
-			/* Retrain */
-			p7ioc_pcicfg_read16(&p->phb, 0,
-					p->ecap + PCICAP_EXP_LCTL, &val);
-			p7ioc_pcicfg_write16(&p->phb, 0,
-					p->ecap + PCICAP_EXP_LCTL,
-					val | PCICAP_EXP_LCTL_LINK_RETRAIN);
-
-			/* Enter FRESET_WAIT_LINK, again */
-			p->state = P7IOC_PHB_STATE_FRESET_WAIT_LINK;
-			p->retries = 100;
-			return p7ioc_set_sm_timeout(p, msecs_to_tb(10));
-		}
-
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(10));
-	default:
-		break;
-	}
-
-error:
-	p->state = P7IOC_PHB_STATE_FUNCTIONAL;
-	return OPAL_HARDWARE;
-}
-
-static int64_t p7ioc_freset(struct phb *phb)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-
-	if (p->state != P7IOC_PHB_STATE_FUNCTIONAL)
-		return OPAL_HARDWARE;
-
-	p->flags |= P7IOC_PHB_CFG_BLOCKED;
-	return p7ioc_sm_freset(p);
-}
-
-static int64_t p7ioc_power_state(struct phb *phb)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-	uint64_t reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
-
-	/* XXX Test for PHB in error state ? */
-
-	if (reg & PHB_PCIE_SLOTCTL2_PWR_EN_STAT)
-		return OPAL_SHPC_POWER_ON;
-
-	return OPAL_SHPC_POWER_OFF;
-}
-
-static int64_t p7ioc_sm_slot_power_off(struct p7ioc_phb *p)
-{
-	uint64_t reg;
-
-	switch(p->state) {
-	case P7IOC_PHB_STATE_FUNCTIONAL:
-		/*
-		 * Check the presence and power status. If be not
-		 * be present or power down, we stop here.
-		 */
-		reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
-		if (!(reg & PHB_PCIE_SLOTCTL2_PRSTN_STAT)) {
-			PHBDBG(p, "Slot power off: no device\n");
-			return OPAL_CLOSED;
-		}
-		reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
-		if (!(reg & PHB_PCIE_SLOTCTL2_PWR_EN_STAT)) {
-			PHBDBG(p, "Slot power off: already off\n");
-			p->state = P7IOC_PHB_STATE_FUNCTIONAL;
-			return OPAL_SUCCESS;
-		}
-
-		/*
-		 * Mask PCIE port interrupt and turn power off
-		 *
-		 * We have to set bit 0 and clear it explicitly on PHB
-		 * hotplug override register when doing power-off on the
-		 * PHB slot. Otherwise, it won't take effect. That's the
-		 * similar thing as we did for power-on.
-		 */
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7e00000000000000UL);
-		reg = in_be64(p->regs + PHB_HOTPLUG_OVERRIDE);
-		reg &= ~(0x8c00000000000000ul);
-		reg |= 0x8400000000000000ul;
-		out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg);
-		reg &= ~(0x8c00000000000000ul);
-		reg |= 0x0c00000000000000ul;
-		out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg);
-		PHBDBG(p, "Slot power off: powering off...\n");
-
-		p->state = P7IOC_PHB_STATE_SPDOWN_STABILIZE_DELAY;
-		return p7ioc_set_sm_timeout(p, secs_to_tb(2));
-	case P7IOC_PHB_STATE_SPDOWN_STABILIZE_DELAY:
-		/*
-		 * The link should be stabilized after 2 seconds.
-		 * We still need poll registers to make sure the
-		 * power is really down every 1ms until limited
-		 * 1000 times.
-		 */
-		p->retries = 1000;
-		p->state = P7IOC_PHB_STATE_SPDOWN_SLOT_STATUS;
-		PHBDBG(p, "Slot power off: waiting for power off\n");
-	case P7IOC_PHB_STATE_SPDOWN_SLOT_STATUS:
-		reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
-		if (!(reg & PHB_PCIE_SLOTCTL2_PWR_EN_STAT)) {
-			/*
-			 * We completed the task. Clear link errors
-			 * and restore PCIE port interrupts.
-			 */
-			out_be64(p->regs + UTL_PCIE_PORT_STATUS,
-				0x00E0000000000000ul);
-			out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,
-				0xFE65000000000000ul);
-
-			PHBDBG(p, "Slot power off: power off completely\n");
-			p->state = P7IOC_PHB_STATE_FUNCTIONAL;
-			return OPAL_SUCCESS;
-		}
-
-		if (p->retries-- == 0) {
-			PHBERR(p, "Timeout powering off\n");
-			goto error;
-		}
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(1));
-	default:
-		break;
-	}
-
-error:
-	p->state = P7IOC_PHB_STATE_FUNCTIONAL;
-	return OPAL_HARDWARE;
-}
-
-static int64_t p7ioc_slot_power_off(struct phb *phb)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-
-	if (p->state != P7IOC_PHB_STATE_FUNCTIONAL)
-		return OPAL_BUSY;
-
-	/* run state machine */
-	return p7ioc_sm_slot_power_off(p);
-}
-
-static int64_t p7ioc_sm_slot_power_on(struct p7ioc_phb *p)
-{
-	uint64_t reg;
-	uint32_t reg32;
-	uint64_t ci_idx = p->index + 2;
-
-	switch(p->state) {
-	case P7IOC_PHB_STATE_FUNCTIONAL:
-		/* Check presence */
-		reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
-		if (!(reg & PHB_PCIE_SLOTCTL2_PRSTN_STAT)) {
-			PHBDBG(p, "Slot power on: no device\n");
-			return OPAL_CLOSED;
-		}
-
-		/* Adjust UTL interrupt settings to disable various
-		 * errors that would interfere with the process
-		 */
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7e00000000000000UL);
-
-		/* If the power is not on, turn it on now */
-		if (!(reg & PHB_PCIE_SLOTCTL2_PWR_EN_STAT)) {
-			/*
-			 * The hotplug override register will not properly
-			 * initiate the poweron sequence unless bit 0
-			 * transitions from 0 to 1. Since it can already be
-			 * set to 1 as a result of a previous power-on
-			 * operation (even if the slot power is now off)
-			 * we need to first clear it, then set it to 1 or
-			 * nothing will happen
-			 */
-			reg = in_be64(p->regs + PHB_HOTPLUG_OVERRIDE);
-			reg &= ~(0x8c00000000000000ul);
-			out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg);
-			reg |= 0x8400000000000000ul;
-			out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg);
-			p->state = P7IOC_PHB_STATE_SPUP_STABILIZE_DELAY;
-			PHBDBG(p, "Slot power on: powering on...\n");
-			return p7ioc_set_sm_timeout(p, secs_to_tb(2));
-		}
-		/* Power is already on */
-	power_ok:
-		/* Mask AER receiver error */
-		p7ioc_pcicfg_read32(&p->phb, 0,
-			p->aercap + PCIECAP_AER_CE_MASK, &reg32);
-		reg32 |= PCIECAP_AER_CE_RECVR_ERR;
-		p7ioc_pcicfg_write32(&p->phb, 0,
-			p->aercap + PCIECAP_AER_CE_MASK, reg32);
-
-		/* Mask CI port error and clear it */
-		out_be64(p->ioc->regs + P7IOC_CIn_LEM_ERR_MASK(ci_idx),
-			 0xa4f4000000000000ul);
-		out_be64(p->regs + PHB_LEM_ERROR_MASK,
-			 0xadb650c9808dd051ul);
-		out_be64(p->ioc->regs + P7IOC_CIn_LEM_FIR(ci_idx),
-			 0x0ul);
-
-		/* Disable link to avoid training issues */
-		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
-		reg |= PHB_PCIE_DLP_TCTX_DISABLE;
-		out_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL, reg);
-		PHBDBG(p, "Slot power on: disable link training\n");
-
-		/* Switch to state machine of fundamental reset */
-                p->state = P7IOC_PHB_STATE_FRESET_DISABLE_LINK;
-		p->retries = 12;
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(10));
-	case P7IOC_PHB_STATE_SPUP_STABILIZE_DELAY:
-		/* Come here after the 2s delay after power up */
-		p->retries = 1000;
-		p->state = P7IOC_PHB_STATE_SPUP_SLOT_STATUS;
-		PHBDBG(p, "Slot power on: waiting for power\n");
-		/* Fall through */
-	case P7IOC_PHB_STATE_SPUP_SLOT_STATUS:
-		reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
-
-		/* Doc says to check LED status, but we ignore that, there
-		 * no point really and it's easier that way
-		 */
-		if (reg & PHB_PCIE_SLOTCTL2_PWR_EN_STAT)
-			goto power_ok;
-		if (p->retries-- == 0) {
-			/* XXX Improve error logging */
-			PHBERR(p, "Timeout powering up slot\n");
-			goto error;
-		}
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(10));
-	default:
-		break;
-	}
-
-	/* Unknown state, hardware error ? */
- error:
-	p->state = P7IOC_PHB_STATE_FUNCTIONAL;
-	return OPAL_HARDWARE;
-}
-
-static int64_t p7ioc_slot_power_on(struct phb *phb)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-
-	if (p->state != P7IOC_PHB_STATE_FUNCTIONAL)
-		return OPAL_BUSY;
-
-	/* run state machine */
-	return p7ioc_sm_slot_power_on(p);
-}
-
-/*
- * The OS is expected to do fundamental reset after complete
- * reset to make sure the PHB could be recovered from the
- * fenced state. However, the OS needn't do that explicitly
- * since fundamental reset will be done automatically while
- * powering on the PHB.
- */
-static int64_t p7ioc_complete_reset(struct phb *phb, uint8_t assert)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-	struct p7ioc *ioc = p->ioc;
-	uint64_t val64;
-
-	if (assert == OPAL_ASSERT_RESET) {
-		if (p->state != P7IOC_PHB_STATE_FUNCTIONAL &&
-		    p->state != P7IOC_PHB_STATE_FENCED)
-			return OPAL_HARDWARE;
-
-		p->flags |= P7IOC_PHB_CFG_BLOCKED;
-		p7ioc_phb_reset(phb);
-
-		/*
-		 * According to the experiment, we probably still have
-		 * the fenced state with the corresponding PHB in the Fence
-		 * WOF and we need clear that explicitly. Besides, the RGC
-		 * might already have informational error and we should clear
-		 * that explicitly as well. Otherwise, RGC XIVE#0 won't issue
-		 * interrupt any more.
-		 */
-		val64 = in_be64(ioc->regs + P7IOC_CHIP_FENCE_WOF);
-		val64 &= ~PPC_BIT(15 + p->index * 4);
-		out_be64(ioc->regs + P7IOC_CHIP_FENCE_WOF, val64);
-
-		/* Clear informational error from RGC */
-		val64 = in_be64(ioc->regs + P7IOC_RGC_LEM_BASE + P7IOC_LEM_WOF_OFFSET);
-		val64 &= ~PPC_BIT(18);
-		out_be64(ioc->regs + P7IOC_RGC_LEM_BASE + P7IOC_LEM_WOF_OFFSET, val64);
-		val64 = in_be64(ioc->regs + P7IOC_RGC_LEM_BASE + P7IOC_LEM_FIR_OFFSET);
-		val64 &= ~PPC_BIT(18);
-		out_be64(ioc->regs + P7IOC_RGC_LEM_BASE + P7IOC_LEM_FIR_OFFSET, val64);
-
-		return p7ioc_sm_slot_power_off(p);
-	} else {
-		if (p->state != P7IOC_PHB_STATE_FUNCTIONAL)
-			return OPAL_HARDWARE;
-
-		/* Restore bus numbers for bridges */
-		p->flags |= P7IOC_RESTORE_BUS_NUM;
-
-		return p7ioc_sm_slot_power_on(p);
-	}
-
-	/* We shouldn't run to here */
-	return OPAL_PARAMETER;
-}
-
-/*
- * We have to mask errors prior to disabling link training.
- * Otherwise it would cause infinite frozen PEs. Also, we
- * should have some delay after enabling link training. It's
- * the conclusion from experiment and no document mentioned
- * it.
- */
-static int64_t p7ioc_sm_hot_reset(struct p7ioc_phb *p)
-{
-	uint64_t reg;
-	uint32_t cfg32;
-	uint16_t brctl;
-
-	switch(p->state) {
-	case P7IOC_PHB_STATE_FUNCTIONAL:
-		/* If the slot isn't present, we needn't do it */
-		reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
-		if (!(reg & PHB_PCIE_SLOTCTL2_PRSTN_STAT)) {
-			PHBDBG(p, "Slot hot reset: no device\n");
-			return OPAL_CLOSED;
-		}
-
-		/* Mask PCIE port interrupts and AER receiver error */
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7E00000000000000UL);
-		p7ioc_pcicfg_read32(&p->phb, 0,
-			p->aercap + PCIECAP_AER_CE_MASK, &cfg32);
-		cfg32 |= PCIECAP_AER_CE_RECVR_ERR;
-		p7ioc_pcicfg_write32(&p->phb, 0,
-			p->aercap + PCIECAP_AER_CE_MASK, cfg32);
-
-		/* Disable link to avoid training issues */
-		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
-		reg |= PHB_PCIE_DLP_TCTX_DISABLE;
-		out_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL, reg);
-		PHBDBG(p, "Slot hot reset: disable link training\n");
-
-		p->state = P7IOC_PHB_STATE_HRESET_DISABLE_LINK;
-		p->retries = 12;
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(10));
-	case P7IOC_PHB_STATE_HRESET_DISABLE_LINK:
-		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
-		if (reg & PHB_PCIE_DLP_TCRX_DISABLED) {
-			/* Turn on host reset */
-			p7ioc_pcicfg_read16(&p->phb, 0, PCI_CFG_BRCTL, &brctl);
-			brctl |= PCI_CFG_BRCTL_SECONDARY_RESET;
-			p7ioc_pcicfg_write16(&p->phb, 0, PCI_CFG_BRCTL, brctl);
-			PHBDBG(p, "Slot hot reset: assert reset\n");
-
-			p->state = P7IOC_PHB_STATE_HRESET_DELAY;
-			return p7ioc_set_sm_timeout(p, secs_to_tb(1));
-		}
-
-		if (p->retries-- == 0) {
-			PHBDBG(p, "Slot hot reset: timeout to disable link training\n");
-			return OPAL_HARDWARE;
-		}
-
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(10));
-	case P7IOC_PHB_STATE_HRESET_DELAY:
-		/* Turn off host reset */
-		p7ioc_pcicfg_read16(&p->phb, 0, PCI_CFG_BRCTL, &brctl);
-		brctl &= ~PCI_CFG_BRCTL_SECONDARY_RESET;
-		p7ioc_pcicfg_write16(&p->phb, 0, PCI_CFG_BRCTL, brctl);
-		PHBDBG(p, "Slot hot reset: deassert reset\n");
-
-		p->state = P7IOC_PHB_STATE_HRESET_ENABLE_LINK;
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(200));
-	case P7IOC_PHB_STATE_HRESET_ENABLE_LINK:
-		/* Restore link control */
-		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
-		reg &= ~PHB_PCIE_DLP_TCTX_DISABLE;
-		out_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL, reg);
-		PHBDBG(p, "Slot hot reset: enable link training\n");
-
-		p->state = P7IOC_PHB_STATE_HRESET_WAIT_LINK;
-		p->retries = 100;
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(10));
-	case P7IOC_PHB_STATE_HRESET_WAIT_LINK:
-		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
-                if (reg & PHB_PCIE_DLP_TC_DL_LINKACT) {
-			/*
-			 * Clear spurious errors and enable PCIE port
-			 * interrupts
-			 */
-			out_be64(p->regs + UTL_PCIE_PORT_STATUS, 0x00E0000000000000UL);
-			out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0xFE65000000000000UL);
-
-			/* Clear AER receiver error status */
-			p7ioc_pcicfg_write32(&p->phb, 0,
-				p->aercap + PCIECAP_AER_CE_STATUS,
-				PCIECAP_AER_CE_RECVR_ERR);
-			/* Unmask receiver error status in AER */
-			p7ioc_pcicfg_read32(&p->phb, 0,
-				p->aercap + PCIECAP_AER_CE_MASK, &cfg32);
-			cfg32 &= ~PCIECAP_AER_CE_RECVR_ERR;
-			p7ioc_pcicfg_write32(&p->phb, 0,
-				p->aercap + PCIECAP_AER_CE_MASK, cfg32);
-			PHBDBG(p, "Slot hot reset: link up!\n");
-
-			p->state = P7IOC_PHB_STATE_FUNCTIONAL;
-			p->flags &= ~P7IOC_PHB_CFG_BLOCKED;
-			return OPAL_SUCCESS;
-		}
-
-		if (p->retries-- == 0) {
-			PHBDBG(p, "Slot hot reset: timeout for link up\n");
-			goto error;
-		}
-
-		return p7ioc_set_sm_timeout(p, msecs_to_tb(10));
-	default:
-		break;
-	}
-
-	/* Unknown state, hardware error ? */
-error:
-	p->state = P7IOC_PHB_STATE_FUNCTIONAL;
-	return OPAL_HARDWARE;
-}
-
-static int64_t p7ioc_hot_reset(struct phb *phb)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-
-	if (p->state != P7IOC_PHB_STATE_FUNCTIONAL)
-		return OPAL_HARDWARE;
-
-	p->flags |= P7IOC_PHB_CFG_BLOCKED;
-	return p7ioc_sm_hot_reset(p);
-}
-
-static int64_t p7ioc_poll(struct phb *phb)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-	uint64_t now = mftb();
-
-	if (p->state == P7IOC_PHB_STATE_FUNCTIONAL)
-		return OPAL_SUCCESS;
-
-	/* Check timer */
-	if (p->delay_tgt_tb &&
-	    tb_compare(now, p->delay_tgt_tb) == TB_ABEFOREB)
-		return p->delay_tgt_tb - now;
-
-	/* Expired (or not armed), clear it */
-	p->delay_tgt_tb = 0;
-
-	/* Dispatch to the right state machine */
-	switch(p->state) {
-	case P7IOC_PHB_STATE_SPUP_STABILIZE_DELAY:
-	case P7IOC_PHB_STATE_SPUP_SLOT_STATUS:
-		return p7ioc_sm_slot_power_on(p);
-	case P7IOC_PHB_STATE_SPDOWN_STABILIZE_DELAY:
-	case P7IOC_PHB_STATE_SPDOWN_SLOT_STATUS:
-		return p7ioc_sm_slot_power_off(p);
-	case P7IOC_PHB_STATE_FRESET_DISABLE_LINK:
-	case P7IOC_PHB_STATE_FRESET_ASSERT_DELAY:
-	case P7IOC_PHB_STATE_FRESET_DEASSERT_DELAY:
-	case P7IOC_PHB_STATE_FRESET_WAIT_LINK:
-		return p7ioc_sm_freset(p);
-	case P7IOC_PHB_STATE_HRESET_DISABLE_LINK:
-	case P7IOC_PHB_STATE_HRESET_ASSERT:
-	case P7IOC_PHB_STATE_HRESET_DELAY:
-	case P7IOC_PHB_STATE_HRESET_ENABLE_LINK:
-	case P7IOC_PHB_STATE_HRESET_WAIT_LINK:
-		return p7ioc_sm_hot_reset(p);
-	default:
-		break;
-	}
-
-	/* Unknown state, could be a HW error */
-	return OPAL_HARDWARE;
-}
 
 static void p7ioc_eeh_read_phb_status(struct p7ioc_phb *p,
 				      struct OpalIoP7IOCPhbErrorData *stat)
@@ -2562,6 +1886,446 @@ static int64_t p7ioc_papr_errinjct_reset(struct phb *phb)
 	return OPAL_SUCCESS;
 }
 
+static int64_t p7ioc_get_presence_state(struct pci_slot *slot, uint8_t *val)
+{
+	struct p7ioc_phb *p = phb_to_p7ioc_phb(slot->phb);
+	uint64_t reg;
+
+	reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
+	if (reg & PHB_PCIE_SLOTCTL2_PRSTN_STAT)
+		*val = OPAL_PCI_SLOT_PRESENT;
+	else
+		*val = OPAL_PCI_SLOT_EMPTY;
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t p7ioc_get_link_state(struct pci_slot *slot, uint8_t *val)
+{
+	struct p7ioc_phb *p = phb_to_p7ioc_phb(slot->phb);
+	uint64_t reg64;
+	uint16_t state;
+	int64_t rc;
+
+	/* Check if the link training is completed */
+	reg64 = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+	if (!(reg64 & PHB_PCIE_DLP_TC_DL_LINKACT)) {
+		*val = 0;
+		return OPAL_SUCCESS;
+	}
+
+	/* Grab link width from PCIe capability */
+	rc = p7ioc_pcicfg_read16(&p->phb, 0, p->ecap + PCICAP_EXP_LSTAT,
+				 &state);
+	if (rc < 0) {
+		PHBERR(p, "%s: Error %lld reading link status\n",
+		       __func__, rc);
+		return OPAL_HARDWARE;
+	}
+
+	if (state & PCICAP_EXP_LSTAT_DLLL_ACT)
+		*val = ((state & PCICAP_EXP_LSTAT_WIDTH) >> 4);
+	else
+		*val = 0;
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t p7ioc_get_power_state(struct pci_slot *slot, uint8_t *val)
+{
+	struct p7ioc_phb *p = phb_to_p7ioc_phb(slot->phb);
+	uint64_t reg64;
+
+	reg64 = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
+	if (reg64 & PHB_PCIE_SLOTCTL2_PWR_EN_STAT)
+		*val = PCI_SLOT_POWER_ON;
+	else
+		*val = PCI_SLOT_POWER_OFF;
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t p7ioc_set_power_state(struct pci_slot *slot, uint8_t val)
+{
+	struct p7ioc_phb *p = phb_to_p7ioc_phb(slot->phb);
+	uint64_t reg64;
+	uint8_t state = PCI_SLOT_POWER_OFF;
+
+	if (val != PCI_SLOT_POWER_OFF && val != PCI_SLOT_POWER_ON)
+		return OPAL_PARAMETER;
+
+	/* If the power state has been put into the requested one */
+	reg64 = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
+	if (reg64 & PHB_PCIE_SLOTCTL2_PWR_EN_STAT)
+		state = PCI_SLOT_POWER_ON;
+	if (state == val)
+		return OPAL_SUCCESS;
+
+	/* Power on/off */
+	if (val == PCI_SLOT_POWER_ON) {
+		reg64 &= ~(0x8c00000000000000ul);
+		out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg64);
+		reg64 |= 0x8400000000000000ul;
+		out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg64);
+	} else {
+		reg64 &= ~(0x8c00000000000000ul);
+		reg64 |= 0x8400000000000000ul;
+		out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg64);
+		reg64 &= ~(0x8c00000000000000ul);
+		reg64 |= 0x0c00000000000000ul;
+		out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg64);
+	}
+
+	return OPAL_SUCCESS;
+}
+
+static void p7ioc_prepare_link_change(struct pci_slot *slot, bool up)
+{
+	struct p7ioc_phb *p = phb_to_p7ioc_phb(slot->phb);
+	uint64_t ci_idx = p->index + 2;
+	uint32_t cfg32;
+
+	if (!up) {
+		/* Mask PCIE port interrupts and AER receiver error */
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7E00000000000000);
+		p7ioc_pcicfg_read32(&p->phb, 0,
+				    p->aercap + PCIECAP_AER_CE_MASK, &cfg32);
+		cfg32 |= PCIECAP_AER_CE_RECVR_ERR;
+		p7ioc_pcicfg_write32(&p->phb, 0,
+				     p->aercap + PCIECAP_AER_CE_MASK, cfg32);
+
+		/* Mask CI port error and clear it */
+		out_be64(p->ioc->regs + P7IOC_CIn_LEM_ERR_MASK(ci_idx),
+			 0xa4f4000000000000ul);
+		out_be64(p->regs + PHB_LEM_ERROR_MASK,
+			 0xadb650c9808dd051ul);
+		out_be64(p->ioc->regs + P7IOC_CIn_LEM_FIR(ci_idx),
+			 0x0ul);
+
+		/* Block access to PCI-CFG space */
+		p->flags |= P7IOC_PHB_CFG_BLOCKED;
+	} else {
+		/* Clear spurious errors and enable PCIE port interrupts */
+		out_be64(p->regs + UTL_PCIE_PORT_STATUS, 0x00E0000000000000);
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0xFE65000000000000);
+
+		/* Clear AER receiver error status */
+		p7ioc_pcicfg_write32(&p->phb, 0,
+				     p->aercap + PCIECAP_AER_CE_STATUS,
+				     PCIECAP_AER_CE_RECVR_ERR);
+		/* Unmask receiver error status in AER */
+		p7ioc_pcicfg_read32(&p->phb, 0,
+				    p->aercap + PCIECAP_AER_CE_MASK, &cfg32);
+		cfg32 &= ~PCIECAP_AER_CE_RECVR_ERR;
+		p7ioc_pcicfg_write32(&p->phb, 0,
+				     p->aercap + PCIECAP_AER_CE_MASK, cfg32);
+		/* Clear and Unmask CI port and PHB errors */
+		out_be64(p->ioc->regs + P7IOC_CIn_LEM_FIR(ci_idx), 0x0ul);
+		out_be64(p->regs + PHB_LEM_FIR_ACCUM, 0x0ul);
+		out_be64(p->ioc->regs + P7IOC_CIn_LEM_ERR_MASK_AND(ci_idx),
+			 0x0ul);
+		out_be64(p->regs + PHB_LEM_ERROR_MASK, 0x1249a1147f500f2cul);
+
+		/* Don't block access to PCI-CFG space */
+		p->flags &= ~P7IOC_PHB_CFG_BLOCKED;
+
+		/* Restore slot's state */
+		pci_slot_set_state(slot, P7IOC_SLOT_NORMAL);
+
+		/*
+		 * We might lose the bus numbers in the reset and we need
+		 * restore the bus numbers. Otherwise, some adpaters (e.g.
+		 * IPR) can't be probed properly by kernel. We don't need
+		 * restore bus numbers for all kinds of resets. However,
+		 * it's not harmful to restore the bus numbers, which makes
+		 * the logic simplified
+		 */
+		pci_restore_bridge_buses(slot->phb, slot->pd);
+		if (slot->phb->ops->device_init)
+			pci_walk_dev(slot->phb, slot->pd,
+				     slot->phb->ops->device_init, NULL);
+	}
+}
+
+static int64_t p7ioc_poll_link(struct pci_slot *slot)
+{
+	struct p7ioc_phb *p = phb_to_p7ioc_phb(slot->phb);
+	uint64_t reg64;
+
+	switch (slot->state) {
+	case P7IOC_SLOT_NORMAL:
+	case P7IOC_SLOT_LINK_START:
+		PHBDBG(p, "LINK: Start polling\n");
+		reg64 = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+		reg64 &= ~PHB_PCIE_DLP_TCTX_DISABLE;
+		out_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL, reg64);
+		slot->retries = 100;
+		pci_slot_set_state(slot, P7IOC_SLOT_LINK_WAIT);
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
+	case P7IOC_SLOT_LINK_WAIT:
+		reg64 = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+		if (reg64 & PHB_PCIE_DLP_TC_DL_LINKACT) {
+			PHBDBG(p, "LINK: Up\n");
+			slot->ops.prepare_link_change(slot, true);
+			return OPAL_SUCCESS;
+		}
+
+		if (slot->retries-- == 0) {
+			PHBERR(p, "LINK: Timeout waiting for link up\n");
+			goto out;
+		}
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
+	default:
+		PHBERR(p, "LINK: Unexpected slot state %08x\n",
+		       slot->state);
+	}
+
+out:
+	pci_slot_set_state(slot, P7IOC_SLOT_NORMAL);
+	return OPAL_HARDWARE;
+}
+
+static int64_t p7ioc_hreset(struct pci_slot *slot)
+{
+	struct p7ioc_phb *p = phb_to_p7ioc_phb(slot->phb);
+	uint8_t presence = 1;
+	uint16_t brctl;
+	uint64_t reg64;
+
+	switch (slot->state) {
+	case P7IOC_SLOT_NORMAL:
+		PHBDBG(p, "HRESET: Starts\n");
+		if (slot->ops.get_presence_state)
+			slot->ops.get_presence_state(slot, &presence);
+		if (!presence) {
+			PHBDBG(p, "HRESET: No device\n");
+			return OPAL_SUCCESS;
+		}
+
+		PHBDBG(p, "HRESET: Prepare for link down\n");
+		slot->ops.prepare_link_change(slot, false);
+
+		/* Disable link to avoid training issues */
+		PHBDBG(p, "HRESET: Disable link training\n");
+		reg64 = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+		reg64 |= PHB_PCIE_DLP_TCTX_DISABLE;
+		out_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL, reg64);
+		pci_slot_set_state(slot, P7IOC_SLOT_HRESET_TRAINING);
+		slot->retries = 15;
+		/* fall through */
+	case P7IOC_SLOT_HRESET_TRAINING:
+		reg64 = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+		if (!(reg64 & PHB_PCIE_DLP_TCRX_DISABLED)) {
+			if (slot->retries -- == 0) {
+				PHBERR(p, "HRESET: Timeout disabling link training\n");
+				goto out;
+			}
+
+			return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
+		}
+		/* fall through */
+	case P7IOC_SLOT_HRESET_START:
+		PHBDBG(p, "HRESET: Assert\n");
+		p7ioc_pcicfg_read16(&p->phb, 0, PCI_CFG_BRCTL, &brctl);
+		brctl |= PCI_CFG_BRCTL_SECONDARY_RESET;
+		p7ioc_pcicfg_write16(&p->phb, 0, PCI_CFG_BRCTL, brctl);
+
+		pci_slot_set_state(slot, P7IOC_SLOT_HRESET_DELAY);
+		return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
+	case P7IOC_SLOT_HRESET_DELAY:
+		PHBDBG(p, "HRESET: Deassert\n");
+		p7ioc_pcicfg_read16(&p->phb, 0, PCI_CFG_BRCTL, &brctl);
+		brctl &= ~PCI_CFG_BRCTL_SECONDARY_RESET;
+		p7ioc_pcicfg_write16(&p->phb, 0, PCI_CFG_BRCTL, brctl);
+		pci_slot_set_state(slot, P7IOC_SLOT_HRESET_DELAY2);
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(200));
+	case P7IOC_SLOT_HRESET_DELAY2:
+		pci_slot_set_state(slot, P7IOC_SLOT_LINK_START);
+		return slot->ops.poll_link(slot);
+	default:
+		PHBERR(p, "HRESET: Unexpected slot state %08x\n",
+		       slot->state);
+	}
+
+out:
+	pci_slot_set_state(slot, P7IOC_SLOT_NORMAL);
+	return OPAL_HARDWARE;
+}
+
+static int64_t p7ioc_freset(struct pci_slot *slot)
+{
+	struct p7ioc_phb *p = phb_to_p7ioc_phb(slot->phb);
+	uint8_t presence = 1;
+	uint64_t reg64;
+
+	switch (slot->state) {
+	case P7IOC_SLOT_NORMAL:
+	case P7IOC_SLOT_FRESET_START:
+		PHBDBG(p, "FRESET: Starts\n");
+		if (slot->ops.get_presence_state)
+			slot->ops.get_presence_state(slot, &presence);
+		if (!presence) {
+			PHBDBG(p, "FRESET: No device\n");
+			pci_slot_set_state(slot, P7IOC_SLOT_NORMAL);
+			return OPAL_SUCCESS;
+		}
+
+		PHBDBG(p, "FRESET: Prepare for link down\n");
+		slot->ops.prepare_link_change(slot, false);
+
+		/* Check power state */
+		reg64 = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
+		if (reg64 & PHB_PCIE_SLOTCTL2_PWR_EN_STAT) {
+			PHBDBG(p, "FRESET: Power on, turn off\n");
+			reg64 = in_be64(p->regs + PHB_HOTPLUG_OVERRIDE);
+			reg64 &= ~(0x8c00000000000000ul);
+			reg64 |= 0x8400000000000000ul;
+			out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg64);
+			reg64 &= ~(0x8c00000000000000ul);
+			reg64 |= 0x0c00000000000000ul;
+			out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg64);
+			pci_slot_set_state(slot, P7IOC_SLOT_FRESET_POWER_OFF);
+			return pci_slot_set_sm_timeout(slot, secs_to_tb(2));
+		}
+		/* fall through */
+	case P7IOC_SLOT_FRESET_POWER_OFF:
+		PHBDBG(p, "FRESET: Power off, turn on\n");
+		reg64 = in_be64(p->regs + PHB_HOTPLUG_OVERRIDE);
+		reg64 &= ~(0x8c00000000000000ul);
+		out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg64);
+		reg64 |= 0x8400000000000000ul;
+		out_be64(p->regs + PHB_HOTPLUG_OVERRIDE, reg64);
+		pci_slot_set_state(slot, P7IOC_SLOT_FRESET_POWER_ON);
+		return pci_slot_set_sm_timeout(slot, secs_to_tb(2));
+	case P7IOC_SLOT_FRESET_POWER_ON:
+		PHBDBG(p, "FRESET: Disable link training\n");
+		reg64 = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+		reg64 |= PHB_PCIE_DLP_TCTX_DISABLE;
+		out_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL, reg64);
+		pci_slot_set_state(slot, P7IOC_SLOT_HRESET_TRAINING);
+		slot->retries = 200;
+		/* fall through */
+	case P7IOC_SLOT_HRESET_TRAINING:
+		reg64 = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+		if (!(reg64 & PHB_PCIE_DLP_TCRX_DISABLED)) {
+			if (slot->retries -- == 0) {
+				PHBERR(p, "HRESET: Timeout disabling link training\n");
+				goto out;
+			}
+
+			return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
+		}
+
+		PHBDBG(p, "FRESET: Assert\n");
+		reg64 = in_be64(p->regs + PHB_RESET);
+		reg64 &= ~0x2000000000000000ul;
+		out_be64(p->regs + PHB_RESET, reg64);
+		pci_slot_set_state(slot, P7IOC_SLOT_FRESET_ASSERT);
+		return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
+	case P7IOC_SLOT_FRESET_ASSERT:
+		PHBDBG(p, "FRESET: Deassert\n");
+		reg64 = in_be64(p->regs + PHB_RESET);
+		reg64 |= 0x2000000000000000ul;
+		out_be64(p->regs + PHB_RESET, reg64);
+		if (slot->ops.pfreset) {
+			pci_slot_set_state(slot,
+					   P7IOC_SLOT_PFRESET_START);
+			return slot->ops.pfreset(slot);
+		}
+
+		pci_slot_set_state(slot, P7IOC_SLOT_HRESET_START);
+		return slot->ops.hreset(slot);
+	default:
+		PHBERR(p, "FRESET: Unexpected slot state %08x\n",
+		       slot->state);
+	}
+
+out:
+	pci_slot_set_state(slot, P7IOC_SLOT_NORMAL);
+	return OPAL_HARDWARE;
+}
+
+static int64_t p7ioc_creset(struct pci_slot *slot)
+{
+	struct p7ioc_phb *p = phb_to_p7ioc_phb(slot->phb);
+	struct p7ioc *ioc = p->ioc;
+	uint64_t reg64;
+
+	switch (slot->state) {
+	case P7IOC_SLOT_NORMAL:
+		PHBDBG(p, "CRESET: Starts\n");
+		p->flags |= P7IOC_PHB_CFG_BLOCKED;
+		p7ioc_phb_reset(slot->phb);
+
+		/*
+		 * According to the experiment, we probably still have the
+		 * fenced state with the corresponding PHB in the Fence WOF
+		 * and we need clear that explicitly. Besides, the RGC might
+		 * already have informational error and we should clear that
+		 * explicitly as well. Otherwise, RGC XIVE#0 won't issue
+		 * interrupt any more.
+		 */
+		reg64 = in_be64(ioc->regs + P7IOC_CHIP_FENCE_WOF);
+		reg64 &= ~PPC_BIT(15 + p->index * 4);
+		out_be64(ioc->regs + P7IOC_CHIP_FENCE_WOF, reg64);
+
+		/* Clear informational error from RGC */
+		reg64 = in_be64(ioc->regs + P7IOC_RGC_LEM_BASE +
+				P7IOC_LEM_WOF_OFFSET);
+		reg64 &= ~PPC_BIT(18);
+		out_be64(ioc->regs + P7IOC_RGC_LEM_BASE +
+			 P7IOC_LEM_WOF_OFFSET, reg64);
+		reg64 = in_be64(ioc->regs + P7IOC_RGC_LEM_BASE +
+				P7IOC_LEM_FIR_OFFSET);
+		reg64 &= ~PPC_BIT(18);
+		out_be64(ioc->regs + P7IOC_RGC_LEM_BASE +
+			 P7IOC_LEM_FIR_OFFSET, reg64);
+
+		/* Swith to fundamental reset */
+		pci_slot_set_state(slot, P7IOC_SLOT_FRESET_START);
+		return slot->ops.freset(slot);
+	default:
+		PHBERR(p, "CRESET: Unexpected slot state %08x\n",
+		       slot->state);
+	}
+
+	pci_slot_set_state(slot, P7IOC_SLOT_NORMAL);
+	return OPAL_HARDWARE;
+}
+
+static struct pci_slot *p7ioc_phb_slot_create(struct phb *phb)
+{
+	struct pci_slot *slot;
+
+	slot = pci_slot_alloc(phb, NULL);
+	if (!slot)
+		return NULL;
+
+	/* Elementary functions */
+	slot->ops.get_presence_state   = p7ioc_get_presence_state;
+	slot->ops.get_link_state       = p7ioc_get_link_state;
+	slot->ops.get_power_state      = p7ioc_get_power_state;
+	slot->ops.get_attention_state  = NULL;
+	slot->ops.get_latch_state      = NULL;
+	slot->ops.set_power_state      = p7ioc_set_power_state;
+	slot->ops.set_attention_state  = NULL;
+
+	/*
+	 * For PHB slots, we have to split the fundamental reset
+	 * into 2 steps. We might not have the first step which
+	 * is to power off/on the slot, or it's controlled by
+	 * individual platforms.
+	 */
+	slot->ops.prepare_link_change  = p7ioc_prepare_link_change;
+	slot->ops.poll_link            = p7ioc_poll_link;
+	slot->ops.hreset               = p7ioc_hreset;
+	slot->ops.freset               = p7ioc_freset;
+	slot->ops.pfreset              = NULL;
+	slot->ops.creset               = p7ioc_creset;
+
+	return slot;
+}
+
 static const struct phb_ops p7ioc_phb_ops = {
 	.cfg_read8		= p7ioc_pcicfg_read8,
 	.cfg_read16		= p7ioc_pcicfg_read16,
@@ -2595,15 +2359,6 @@ static const struct phb_ops p7ioc_phb_ops = {
 	.get_msi_64		= p7ioc_get_msi_64,
 	.ioda_reset		= p7ioc_ioda_reset,
 	.papr_errinjct_reset	= p7ioc_papr_errinjct_reset,
-	.presence_detect	= p7ioc_presence_detect,
-	.link_state		= p7ioc_link_state,
-	.power_state		= p7ioc_power_state,
-	.slot_power_off		= p7ioc_slot_power_off,
-	.slot_power_on		= p7ioc_slot_power_on,
-	.complete_reset		= p7ioc_complete_reset,
-	.hot_reset		= p7ioc_hot_reset,
-	.fundamental_reset	= p7ioc_freset,
-	.poll			= p7ioc_poll,
 };
 
 /* p7ioc_phb_get_xive - Interrupt control from OPAL */
@@ -2883,6 +2638,7 @@ void p7ioc_phb_setup(struct p7ioc *ioc, uint8_t index)
 {
 	struct p7ioc_phb *p = &ioc->phbs[index];
 	unsigned int buid_base = ioc->buid_base + PHBn_BUID_BASE(index);
+	struct pci_slot *slot;
 
 	p->index = index;
 	p->ioc = ioc;
@@ -2923,6 +2679,10 @@ void p7ioc_phb_setup(struct p7ioc *ioc, uint8_t index)
 	 * get a useful OPAL ID for it
 	 */
 	pci_register_phb(&p->phb, OPAL_DYNAMIC_PHB_ID);
+	slot = p7ioc_phb_slot_create(&p->phb);
+	if (!slot)
+		prlog(PR_NOTICE, "P7IOC: Cannot create PHB#%d slot\n",
+		      p->phb.opal_id);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)

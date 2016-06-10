@@ -204,30 +204,31 @@ enum p7ioc_phb_state {
 	/* PHB turned off by FSP (no clocks) */
 	P7IOC_PHB_STATE_OFF,
 
-	/* Slot Power up state machine */
-	P7IOC_PHB_STATE_SPUP_STABILIZE_DELAY,		/* Step 3 Delay 2s		*/
-	P7IOC_PHB_STATE_SPUP_SLOT_STATUS,		/* Step 4 waiting for status	*/
-
-	/* Slot Power down state machine */
-	P7IOC_PHB_STATE_SPDOWN_STABILIZE_DELAY,	/* Step 2 Delay 2s		*/
-	P7IOC_PHB_STATE_SPDOWN_SLOT_STATUS,	/* Step 3 waiting for status	*/
-
-	/* Fundamental reset sequence */
-	P7IOC_PHB_STATE_FRESET_DISABLE_LINK,	/* Disable link training		*/
-	P7IOC_PHB_STATE_FRESET_ASSERT_DELAY,	/* Delay on fundamental reset assert	*/
-	P7IOC_PHB_STATE_FRESET_DEASSERT_DELAY,	/* Delay on fundamental reset deassert	*/
-	P7IOC_PHB_STATE_FRESET_WAIT_LINK,	/* Wait for link up			*/
-
-	/* Hot Reset sequence */
-	P7IOC_PHB_STATE_HRESET_DISABLE_LINK,	/* Disable Link training	*/
-	P7IOC_PHB_STATE_HRESET_ASSERT,		/* Hot reset assert		*/
-	P7IOC_PHB_STATE_HRESET_DELAY,		/* Hot reset delay		*/
-	P7IOC_PHB_STATE_HRESET_ENABLE_LINK,	/* Enable Link training		*/
-	P7IOC_PHB_STATE_HRESET_WAIT_LINK,	/* Wait link traing		*/
-
 	/* Normal PHB functional state */
 	P7IOC_PHB_STATE_FUNCTIONAL,
 };
+
+/* P7IOC PHB slot states */
+#define P7IOC_SLOT_NORMAL		0x00000000
+#define P7IOC_SLOT_LINK			0x00000100
+#define   P7IOC_SLOT_LINK_START		0x00000101
+#define   P7IOC_SLOT_LINK_WAIT		0x00000102
+#define P7IOC_SLOT_HRESET		0x00000200
+#define   P7IOC_SLOT_HRESET_START	0x00000201
+#define   P7IOC_SLOT_HRESET_TRAINING	0x00000202
+#define   P7IOC_SLOT_HRESET_DELAY	0x00000203
+#define   P7IOC_SLOT_HRESET_DELAY2	0x00000204
+#define P7IOC_SLOT_FRESET		0x00000300
+#define   P7IOC_SLOT_FRESET_START	0x00000301
+#define   P7IOC_SLOT_FRESET_TRAINING	0x00000302
+#define   P7IOC_SLOT_FRESET_POWER_OFF	0x00000303
+#define   P7IOC_SLOT_FRESET_POWER_ON	0x00000304
+#define   P7IOC_SLOT_FRESET_ASSERT	0x00000305
+#define   P7IOC_SLOT_FRESET_DEASSERT	0x00000306
+#define P7IOC_SLOT_PFRESET		0x00000400
+#define   P7IOC_SLOT_PFRESET_START	0x00000401
+#define P7IOC_SLOT_CRESET		0x00000500
+#define   P7IOC_SLOT_CRESET_START	0x00000501
 
 /*
  * In order to support error detection and recovery on different
@@ -286,12 +287,12 @@ struct p7ioc;
 
 #define P7IOC_PHB_CFG_USE_ASB	0x00000001 /* ASB to access PCI-CFG     */
 #define P7IOC_PHB_CFG_BLOCKED	0x00000002 /* PCI-CFG blocked except 0	*/
-#define P7IOC_RESTORE_BUS_NUM	0x00000004 /* Restore buses after reset */
 
 struct p7ioc_phb {
 	uint8_t				index;	/* 0..5 index inside p7ioc */
 	uint8_t				gen;
 	uint32_t			flags;
+	enum p7ioc_phb_state		state;
 #define P7IOC_REV_DD10	0x00a20001
 #define P7IOC_REV_DD11	0x00a20002
 	uint32_t			rev;	/* Both major and minor have 2 bytes */
@@ -302,9 +303,6 @@ struct p7ioc_phb {
 	uint64_t			io_base;
 	uint64_t			m32_base;
 	uint64_t			m64_base;
-	enum p7ioc_phb_state		state;
-	uint64_t			delay_tgt_tb;
-	uint64_t			retries;
 	int64_t				ecap;	/* cached PCI-E cap offset */
 	int64_t				aercap; /* cached AER ecap offset */
 	uint64_t			lxive_cache[8];
