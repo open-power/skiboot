@@ -26,6 +26,8 @@ struct i2c_bus {
 	int			(*queue_req)(struct i2c_request *req);
 	struct i2c_request	*(*alloc_req)(struct i2c_bus *bus);
 	void			(*free_req)(struct i2c_request *req);
+	void			(*set_req_timeout)(struct i2c_request *req,
+						   uint64_t duration);
 };
 
 /*
@@ -78,6 +80,13 @@ static inline void i2c_free_req(struct i2c_request *req)
 static inline int i2c_queue_req(struct i2c_request *req)
 {
 	return req->bus->queue_req(req);
+}
+
+static inline void i2c_set_req_timeout(struct i2c_request *req,
+				       uint64_t duration)
+{
+	if (req->bus->set_req_timeout)
+		req->bus->set_req_timeout(req, duration);
 }
 
 /* P8 implementation details */

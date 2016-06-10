@@ -386,10 +386,15 @@ static int p8_i2c_prog_mode(struct p8_i2c_master_port *port, bool enhanced_mode)
 static void p8_i2c_complete_request(struct p8_i2c_master *master,
 				    struct i2c_request *req, int ret)
 {
+	struct p8_i2c_request *request =
+		container_of(req, struct p8_i2c_request, req);
+
 	/* We only complete the current top level request */
 	assert(req == list_top(&master->req_list, struct i2c_request, link));
 
 	cancel_timer_async(&master->timeout);
+	request->timeout = 0ul;
+
 	list_del(&req->link);
 	master->state = state_idle;
 	req->result = ret;
@@ -973,8 +978,12 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	now = schedule_timer(&master->poller, master->poll_interval);
 
 	/* Calculate and start timeout */
-	tbytes = req->rw_len + req->offset_bytes + 2;
-	request->timeout = now + tbytes * master->byte_timeout;
+	if (request->timeout) {
+		request->timeout += now;
+	} else {
+		tbytes = req->rw_len + req->offset_bytes + 2;
+		request->timeout = now + tbytes * master->byte_timeout;
+	}
 
 	/* Start the timeout */
 	schedule_timer_at(&master->timeout, request->timeout);
@@ -1046,6 +1055,15 @@ static void p8_i2c_free_request(struct i2c_request *req)
 	free(request);
 }
 
+static void p8_i2c_set_request_timeout(struct i2c_request *req,
+				       uint64_t duration)
+{
+	struct p8_i2c_request *request =
+		container_of(req, struct p8_i2c_request, req);
+
+	request->timeout = msecs_to_tb(duration);
+}
+
 static inline uint32_t p8_i2c_get_bit_rate_divisor(uint32_t lb_freq,
 						   uint32_t bus_speed)
 {
@@ -1093,6 +1111,8 @@ static void p8_i2c_timeout(struct timer *t __unused, void *data, uint64_t now)
 		DBG("I2C: Timeout with request not expired\n");
 		goto exit;
 	}
+
+	request->timeout = 0ul;
 	port = container_of(req->bus, struct p8_i2c_master_port, bus);
 
 	/* Allright, we have a request and it has timed out ... */
@@ -1372,6 +1392,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 		port->bus.queue_req = p8_i2c_queue_request;
 		port->bus.alloc_req = p8_i2c_alloc_request;
 		port->bus.free_req = p8_i2c_free_request;
+		port->bus.set_req_timeout = p8_i2c_set_request_timeout;
 		i2c_add_bus(&port->bus);
 
 		/* Add OPAL properties to the bus node */
