@@ -18,6 +18,7 @@
 #include <timebase.h>
 #include <pci.h>
 #include <pci-cfg.h>
+#include <pci-slot.h>
 #include <interrupts.h>
 #include <opal.h>
 #include <opal-api.h>
@@ -972,33 +973,62 @@ static int64_t npu_set_pe(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
-static int64_t npu_link_state(struct phb *phb __unused)
+static int64_t npu_get_link_state(struct pci_slot *slot __unused, uint8_t *val)
 {
 	/* As we're emulating all PCI stuff, the link bandwidth
 	 * isn't big deal anyway.
 	 */
-	return OPAL_SHPC_LINK_UP_x1;
+	*val = OPAL_SHPC_LINK_UP_x1;
+	return OPAL_SUCCESS;
 }
 
-static int64_t npu_power_state(struct phb *phb __unused)
+static int64_t npu_get_power_state(struct pci_slot *slot __unused, uint8_t *val)
 {
-	return OPAL_SHPC_POWER_ON;
+	*val = PCI_SLOT_POWER_ON;
+	return OPAL_SUCCESS;
 }
 
-static int64_t npu_hreset(struct phb *phb __unused)
+static int64_t npu_hreset(struct pci_slot *slot __unused)
 {
 	prlog(PR_DEBUG, "NPU: driver should call reset procedure here\n");
 
 	return OPAL_SUCCESS;
 }
 
-static int64_t npu_freset(struct phb *phb __unused)
+static int64_t npu_freset(struct pci_slot *slot __unused)
 {
 	/* FIXME: PHB fundamental reset, which need to be
 	 * figured out later. It's used by EEH recovery
 	 * upon fenced AT.
 	 */
 	return OPAL_SUCCESS;
+}
+
+static struct pci_slot *npu_slot_create(struct phb *phb)
+{
+	struct pci_slot *slot;
+
+	slot = pci_slot_alloc(phb, NULL);
+	if (!slot)
+		return slot;
+
+	/* Elementary functions */
+	slot->ops.get_presence_state  = NULL;
+	slot->ops.get_link_state      = npu_get_link_state;
+	slot->ops.get_power_state     = npu_get_power_state;
+	slot->ops.get_attention_state = NULL;
+	slot->ops.get_latch_state     = NULL;
+	slot->ops.set_power_state     = NULL;
+	slot->ops.set_attention_state = NULL;
+
+	slot->ops.prepare_link_change = NULL;
+	slot->ops.poll_link           = NULL;
+	slot->ops.hreset              = npu_hreset;
+	slot->ops.freset              = npu_freset;
+	slot->ops.pfreset             = NULL;
+	slot->ops.creset              = NULL;
+
+	return slot;
 }
 
 static int64_t npu_freeze_status(struct phb *phb,
@@ -1106,7 +1136,6 @@ static const struct phb_ops npu_ops = {
 	.get_reserved_pe_number	= NULL,
 	.device_init		= NULL,
 	.phb_final_fixup	= npu_phb_final_fixup,
-	.presence_detect	= NULL,
 	.ioda_reset		= npu_ioda_reset,
 	.papr_errinjct_reset	= NULL,
 	.pci_reinit		= NULL,
@@ -1121,14 +1150,6 @@ static const struct phb_ops npu_ops = {
 	.get_msi_64		= NULL,
 	.set_pe			= npu_set_pe,
 	.set_peltv		= NULL,
-	.link_state		= npu_link_state,
-	.power_state		= npu_power_state,
-	.slot_power_off		= NULL,
-	.slot_power_on		= NULL,
-	.hot_reset		= npu_hreset,
-	.fundamental_reset	= npu_freset,
-	.complete_reset		= NULL,
-	.poll			= NULL,
 	.eeh_freeze_status	= npu_freeze_status,
 	.eeh_freeze_clear	= NULL,
 	.eeh_freeze_set		= NULL,
@@ -1749,6 +1770,7 @@ static void npu_create_phb(struct dt_node *dn)
 {
 	const struct dt_property *prop;
 	struct npu *p;
+	struct pci_slot *slot;
 	uint32_t links;
 	void *pmem;
 
@@ -1792,6 +1814,11 @@ static void npu_create_phb(struct dt_node *dn)
 
 	/* Populate extra properties */
 	npu_add_phb_properties(p);
+
+	/* Create PHB slot */
+	slot = npu_slot_create(&p->phb);
+	if (!slot)
+		prlog(PR_ERR, "NPU: Cannot create PHB slot\n");
 
 	/* Register PHB */
 	pci_register_phb(&p->phb, OPAL_DYNAMIC_PHB_ID);
