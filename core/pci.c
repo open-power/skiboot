@@ -483,6 +483,54 @@ void pci_remove_bus(struct phb *phb, struct list_head *list)
 	}
 }
 
+/*
+ * Turn off slot's power supply if there are nothing connected for
+ * 2 purposes: power saving obviously and initialize the slot to
+ * to initial power-off state for hotplug.
+ */
+static void pci_slot_power_off(struct phb *phb, struct pci_device *pd)
+{
+	struct pci_slot *slot;
+	int32_t wait = 100;
+	int64_t rc;
+
+	if (!pd || !pd->slot)
+		return;
+
+	slot = pd->slot;
+	if (!slot->pluggable || !slot->ops.set_power_state)
+		return;
+
+	/* Bail if there're something connected */
+	if (!list_empty(&pd->children))
+		return;
+
+	pci_slot_add_flags(slot, PCI_SLOT_FLAG_BOOTUP);
+	rc = slot->ops.set_power_state(slot, PCI_SLOT_POWER_OFF);
+	if (rc == OPAL_SUCCESS) {
+		PCIDBG(phb, pd->bdfn, "Power off hotpluggable slot\n");
+		return;
+	} else if (rc != OPAL_ASYNC_COMPLETION) {
+		pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
+		PCINOTICE(phb, pd->bdfn, "Error %lld powering off slot\n", rc);
+		return;
+	}
+
+	do {
+		if (slot->state == PCI_SLOT_STATE_SPOWER_DONE)
+			break;
+
+		check_timers(false);
+		time_wait(10);
+	} while (--wait >= 0);
+
+	pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
+	if (wait >= 0)
+		PCIDBG(phb, pd->bdfn, "Power off hotpluggable slot\n");
+	else
+		PCINOTICE(phb, pd->bdfn, "Timeout powering off slot\n");
+}
+
 /* Perform a recursive scan of the bus at bus_number populating
  * the list passed as an argument. This also performs the bus
  * numbering, so it returns the largest bus number that was
@@ -546,8 +594,12 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 	 * link is down already, which happens for the top level
 	 * root complex, and avoids a long secondary timeout
 	 */
-	if (!scan_downstream)
+	if (!scan_downstream) {
+		list_for_each(list, pd, link)
+			pci_slot_power_off(phb, pd);
+
 		return bus;
+	}
 
 	next_bus = bus + 1;
 	max_sub = bus;
@@ -633,6 +685,8 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 		pd->subordinate_bus = max_sub;
 		pci_cfg_write8(phb, pd->bdfn, PCI_CFG_SUBORDINATE_BUS, max_sub);
 		next_bus = max_sub + 1;
+
+		pci_slot_power_off(phb, pd);
 	}
 
 	return max_sub;
