@@ -18,6 +18,7 @@
 #include <console.h>
 #include <chip.h>
 #include <pci.h>
+#include <pci-slot.h>
 
 #include "astbmc.h"
 
@@ -50,7 +51,7 @@ static const struct slot_table_entry *match_slot_phb_entry(struct phb *phb)
 }
 
 static const struct slot_table_entry *match_slot_dev_entry(struct phb *phb,
-							 struct pci_device *pd)
+							   struct pci_device *pd)
 {
 	const struct slot_table_entry *parent, *ent;
 
@@ -75,26 +76,53 @@ static const struct slot_table_entry *match_slot_dev_entry(struct phb *phb,
 	return NULL;
 }
 
+static void add_slot_properties(struct pci_slot *slot,
+				struct dt_node *np)
+{
+	struct phb *phb = slot->phb;
+	struct slot_table_entry *ent = slot->data;
+	size_t base_loc_code_len, slot_label_len;
+	char loc_code[LOC_CODE_SIZE];
+
+	if (!np || !ent || !phb->base_loc_code)
+		return;
+
+	base_loc_code_len = strlen(phb->base_loc_code);
+	slot_label_len = strlen(ent->name);
+	if ((base_loc_code_len + slot_label_len + 1) >= LOC_CODE_SIZE)
+		return;
+
+	/* Location code */
+	strcpy(loc_code, phb->base_loc_code);
+	strcat(loc_code, "-");
+	strcat(loc_code, ent->name);
+	dt_add_property(np, "ibm,slot-location-code",
+			loc_code, strlen(loc_code) + 1);
+	dt_add_property_string(np, "ibm,slot-label", ent->name);
+}
+
 void slot_table_get_slot_info(struct phb *phb, struct pci_device * pd)
 {
 	const struct slot_table_entry *ent;
-	struct pci_slot_info *si;
+	struct pci_slot *slot;
 
-	if (!pd || pd->slot_info)
+	if (!pd || pd->slot)
 		return;
 	ent = match_slot_dev_entry(phb, pd);
 	if (!ent || !ent->name)
 		return;
-	pd->slot_info = si = zalloc(sizeof(struct pci_slot_info));
-	assert(pd->slot_info);
-	strncpy(si->label, ent->name, sizeof(si->label) - 1);
-	si->pluggable = ent->etype == st_pluggable_slot;
-	si->power_ctl = false;
-	si->wired_lanes = -1;
-	si->bus_clock = -1;
-	si->connector_type = -1;
-	si->card_desc = -1;
-	si->card_mech = -1;
-	si->pwr_led_ctl = -1;
-	si->attn_led_ctl = -1;
+
+	slot = pcie_slot_create(phb, pd);
+	assert(slot);
+	slot->ops.add_properties = add_slot_properties;
+	slot->data = (void *)ent;
+
+	slot->pluggable      = ent->etype == st_pluggable_slot;
+	slot->power_ctl      = false;
+	slot->wired_lanes    = PCI_SLOT_WIRED_LANES_UNKNOWN;
+	slot->connector_type = PCI_SLOT_CONNECTOR_PCIE_NS;
+	slot->card_desc      = PCI_SLOT_DESC_NON_STANDARD;
+	slot->card_mech      = PCI_SLOT_MECH_NONE;
+	slot->power_led_ctl  = PCI_SLOT_PWR_LED_CTL_NONE;
+	slot->attn_led_ctl   = PCI_SLOT_ATTN_LED_CTL_NONE;
 }
