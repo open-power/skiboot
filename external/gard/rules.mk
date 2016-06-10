@@ -32,7 +32,7 @@ $(LIBFLASH_OBJS): libflash-%.o : libflash/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXE): $(OBJS)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(LDFLAGS) $(CFLAGS) $^ -o $@
 
 install: all
 	install -D gard $(DESTDIR)$(sbindir)/opal-gard

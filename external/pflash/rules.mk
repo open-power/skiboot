@@ -41,5 +41,5 @@ $(LIBFLASH_OBJS): libflash-%.o : libflash/%.c
 	$(Q_CC)$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXE): $(OBJS)
-	$(Q_CC)$(CC) $(CFLAGS) $^ -lrt -o $@
+	$(Q_CC)$(CC) $(LDFLAGS) $(CFLAGS) $^ -lrt -o $@
 
