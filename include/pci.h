@@ -261,7 +261,8 @@ struct phb_ops {
 	 * and before probing further. It can alter things like scan_map
 	 * for bridge ports etc...
 	 */
-	void (*device_init)(struct phb *phb, struct pci_device *device);
+	int (*device_init)(struct phb *phb, struct pci_device *device,
+			   void *data);
 
 	/* PHB final fixup is called after PCI probing is completed */
 	void (*phb_final_fixup)(struct phb *phb);

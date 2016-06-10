@@ -2179,7 +2179,9 @@ static void p7ioc_endpoint_init(struct phb *phb,
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, val32);
 }
 
-static void p7ioc_device_init(struct phb *phb, struct pci_device *dev)
+static int p7ioc_device_init(struct phb *phb,
+			     struct pci_device *dev,
+			     void *data __unused)
 {
 	int ecap = 0;
 	int aercap = 0;
@@ -2208,6 +2210,8 @@ static void p7ioc_device_init(struct phb *phb, struct pci_device *dev)
 		p7ioc_switch_port_init(phb, dev, ecap, aercap);
 	else
 		p7ioc_endpoint_init(phb, dev, ecap, aercap);
+
+	return 0;
 }
 
 static int64_t p7ioc_pci_reinit(struct phb *phb,
@@ -2215,6 +2219,7 @@ static int64_t p7ioc_pci_reinit(struct phb *phb,
 {
 	struct pci_device *pd;
 	uint16_t bdfn = data;
+	int ret;
 
 	if (scope != OPAL_REINIT_PCI_DEV)
 		return OPAL_PARAMETER;
@@ -2223,7 +2228,10 @@ static int64_t p7ioc_pci_reinit(struct phb *phb,
 	if (!pd)
 		return OPAL_PARAMETER;
 
-	p7ioc_device_init(phb, pd);
+	ret = p7ioc_device_init(phb, pd, NULL);
+	if (ret)
+		return OPAL_HARDWARE;
+
 	return OPAL_SUCCESS;
 }
 

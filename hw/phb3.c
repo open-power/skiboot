@@ -526,7 +526,9 @@ static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
 	}
 }
 
-static void phb3_device_init(struct phb *phb, struct pci_device *dev)
+static int phb3_device_init(struct phb *phb,
+			    struct pci_device *dev,
+			    void *data __unused)
 {
 	int ecap = 0;
 	int aercap = 0;
@@ -558,12 +560,15 @@ static void phb3_device_init(struct phb *phb, struct pci_device *dev)
 		phb3_switch_port_init(phb, dev, ecap, aercap);
 	else
 		phb3_endpoint_init(phb, dev, ecap, aercap);
+
+	return 0;
 }
 
 static int64_t phb3_pci_reinit(struct phb *phb, uint64_t scope, uint64_t data)
 {
 	struct pci_device *pd;
 	uint16_t bdfn = data;
+	int ret;
 
 	if (scope != OPAL_REINIT_PCI_DEV)
 		return OPAL_PARAMETER;
@@ -572,7 +577,10 @@ static int64_t phb3_pci_reinit(struct phb *phb, uint64_t scope, uint64_t data)
 	if (!pd)
 		return OPAL_PARAMETER;
 
-	phb3_device_init(phb, pd);
+	ret = phb3_device_init(phb, pd, NULL);
+	if (ret)
+		return OPAL_HARDWARE;
+
 	return OPAL_SUCCESS;
 }
 

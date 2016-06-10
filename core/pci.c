@@ -262,7 +262,7 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	 * Call PHB hook
 	 */
 	if (phb->ops->device_init)
-		phb->ops->device_init(phb, pd);
+		phb->ops->device_init(phb, pd, NULL);
 
 	return pd;
  fail:
