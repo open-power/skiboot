@@ -204,25 +204,33 @@ enum phb3_state {
 
 	/* Normal PHB functional state */
 	PHB3_STATE_FUNCTIONAL,
-
-	/* Hot reset */
-	PHB3_STATE_HRESET_DELAY,
-	PHB3_STATE_HRESET_DELAY2,
-
-	/* Fundamental reset */
-	PHB3_STATE_FRESET_START,
-	PHB3_STATE_FRESET_ASSERT_DELAY,
-	PHB3_STATE_FRESET_DEASSERT_DELAY,
-
-	/* Complete reset */
-	PHB3_STATE_CRESET_WAIT_CQ,
-	PHB3_STATE_CRESET_REINIT,
-	PHB3_STATE_CRESET_FRESET,
-
-	/* Link state machine */
-	PHB3_STATE_WAIT_LINK_ELECTRICAL,
-	PHB3_STATE_WAIT_LINK,
 };
+
+/*
+ * PHB3 PCI slot state. When you're going to apply any
+ * changes here, please make sure the base state isn't
+ * conflicting with those defined in pci-slot.h
+ */
+#define PHB3_SLOT_NORMAL			0x00000000
+#define PHB3_SLOT_LINK				0x00000100
+#define   PHB3_SLOT_LINK_START			0x00000101
+#define   PHB3_SLOT_LINK_WAIT_ELECTRICAL	0x00000102
+#define   PHB3_SLOT_LINK_WAIT			0x00000103
+#define PHB3_SLOT_HRESET			0x00000200
+#define   PHB3_SLOT_HRESET_START		0x00000201
+#define   PHB3_SLOT_HRESET_DELAY		0x00000202
+#define   PHB3_SLOT_HRESET_DELAY2		0x00000203
+#define PHB3_SLOT_FRESET			0x00000300
+#define   PHB3_SLOT_FRESET_START		0x00000301
+#define PHB3_SLOT_PFRESET			0x00000400
+#define   PHB3_SLOT_PFRESET_START		0x00000401
+#define   PHB3_SLOT_PFRESET_ASSERT_DELAY	0x00000402
+#define   PHB3_SLOT_PFRESET_DEASSERT_DELAY	0x00000403
+#define PHB3_SLOT_CRESET			0x00000500
+#define   PHB3_SLOT_CRESET_START		0x00000501
+#define   PHB3_SLOT_CRESET_WAIT_CQ		0x00000502
+#define   PHB3_SLOT_CRESET_REINIT		0x00000503
+#define   PHB3_SLOT_CRESET_FRESET		0x00000504
 
 /*
  * PHB3 error descriptor. Errors from all components (PBCQ, PHB)
@@ -254,13 +262,13 @@ struct phb3_err {
 #define PHB3_AIB_FENCED		0x00000001
 #define PHB3_CFG_USE_ASB	0x00000002
 #define PHB3_CFG_BLOCKED	0x00000004
-#define PHB3_RESTORE_BUS_NUM	0x00000008
-#define PHB3_CAPP_RECOVERY	0x00000010
+#define PHB3_CAPP_RECOVERY	0x00000008
 
 struct phb3 {
 	unsigned int		index;	    /* 0..2 index inside P8 */
 	unsigned int		flags;
 	unsigned int		chip_id;    /* Chip ID (== GCID on P8) */
+	enum phb3_state		state;
 	unsigned int		rev;        /* 00MMmmmm */
 #define PHB3_REV_MURANO_DD10	0xa30001
 #define PHB3_REV_VENICE_DD10	0xa30002
@@ -288,10 +296,6 @@ struct phb3 {
 
 	bool			skip_perst; /* Skip first perst */
 	bool			has_link;
-	enum phb3_state		state;
-	enum phb3_state		retry_state;
-	uint64_t		delay_tgt_tb;
-	uint64_t		retries;
 	int64_t			ecap;	    /* cached PCI-E cap offset */
 	int64_t			aercap;	    /* cached AER ecap offset */
 	const __be64		*lane_eq;
