@@ -20,6 +20,7 @@
 /* Some fwd declarations for types used further down */
 struct phb;
 struct pci_device;
+struct pci_slot;
 struct errorlog;
 
 enum resource_id {

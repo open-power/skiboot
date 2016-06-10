@@ -22,60 +22,6 @@
 #include <lock.h>
 #include <ccan/list/list.h>
 
-/* PCI Slot Info: Wired Lane Values
- *
- * Values 0 to 6 match slot map 1005. In case of *any* change here
- * make sure to keep the lxvpd.c parsing code in sync *and* the
- * corresponding label strings in pci.c
- */
-#define PCI_SLOT_WIRED_LANES_UNKNOWN   0x00
-#define PCI_SLOT_WIRED_LANES_PCIE_X1   0x01
-#define PCI_SLOT_WIRED_LANES_PCIE_X2   0x02
-#define PCI_SLOT_WIRED_LANES_PCIE_X4   0x03
-#define PCI_SLOT_WIRED_LANES_PCIE_X8   0x04
-#define PCI_SLOT_WIRED_LANES_PCIE_X16  0x05
-#define PCI_SLOT_WIRED_LANES_PCIE_X32  0x06
-#define PCI_SLOT_WIRED_LANES_PCIX_32   0x07
-#define PCI_SLOT_WIRED_LANES_PCIX_64   0x08
-
-/* PCI Slot Info: Bus Clock Values */
-#define PCI_SLOT_BUS_CLK_RESERVED      0x00
-#define PCI_SLOT_BUS_CLK_GEN_1         0x01
-#define PCI_SLOT_BUS_CLK_GEN_2         0x02
-#define PCI_SLOT_BUS_CLK_GEN_3         0x03
-
-/* PCI Slot Info: Connector Type Values */
-#define PCI_SLOT_CONNECTOR_PCIE_EMBED  0x00
-#define PCI_SLOT_CONNECTOR_PCIE_X1     0x01
-#define PCI_SLOT_CONNECTOR_PCIE_X2     0x02
-#define PCI_SLOT_CONNECTOR_PCIE_X4     0x03
-#define PCI_SLOT_CONNECTOR_PCIE_X8     0x04
-#define PCI_SLOT_CONNECTOR_PCIE_X16    0x05
-#define PCI_SLOT_CONNECTOR_PCIE_NS     0x0E  /* Non-Standard */
-
-/* PCI Slot Info: Card Description Values */
-#define PCI_SLOT_DESC_NON_STANDARD     0x00 /* Embed/Non-Standard Connector */
-#define PCI_SLOT_DESC_PCIE_FH_FL       0x00 /* Full Height, Full Length */
-#define PCI_SLOT_DESC_PCIE_FH_HL       0x01 /* Full Height, Half Length */
-#define PCI_SLOT_DESC_PCIE_HH_FL       0x02 /* Half Height, Full Length */
-#define PCI_SLOT_DESC_PCIE_HH_HL       0x03 /* Half Height, Half Length */
-
-/* PCI Slot Info: Mechanicals Values */
-#define PCI_SLOT_MECH_NONE             0x00
-#define PCI_SLOT_MECH_RIGHT            0x01
-#define PCI_SLOT_MECH_LEFT             0x02
-#define PCI_SLOT_MECH_RIGHT_LEFT       0x03
-
-/* PCI Slot Info: Power LED Control Values */
-#define PCI_SLOT_PWR_LED_CTL_NONE      0x00 /* No Control        */
-#define PCI_SLOT_PWR_LED_CTL_FSP       0x01 /* FSP Controlled    */
-#define PCI_SLOT_PWR_LED_CTL_KERNEL    0x02 /* Kernel Controlled */
-
-/* PCI Slot Info: ATTN LED Control Values */
-#define PCI_SLOT_ATTN_LED_CTL_NONE     0x00 /* No Control        */
-#define PCI_SLOT_ATTN_LED_CTL_FSP      0x01 /* FSP Controlled    */
-#define PCI_SLOT_ATTN_LED_CTL_KERNEL   0x02 /* Kernel Controlled */
-
 /* PCI Slot Entry Information */
 struct pci_slot_info {
 	char       label[16];
@@ -151,6 +97,7 @@ struct pci_device {
 	struct list_head	pcrf;
 
 	struct dt_node		*dn;
+	struct pci_slot		*slot;
 	struct pci_slot_info    *slot_info;
 	struct pci_device	*parent;
 	struct list_head	children;
@@ -462,6 +409,7 @@ struct phb {
 	uint32_t		mps;
 
 	/* PCI-X only slot info, for PCI-E this is in the RC bridge */
+	struct pci_slot		*slot;
 	struct pci_slot_info    *slot_info;
 
 	/* Base location code used to generate the children one */
@@ -519,7 +467,15 @@ static inline int64_t pci_cfg_write32(struct phb *phb, uint32_t bdfn,
 }
 
 /* Utilities */
-
+extern void pci_remove_bus(struct phb *phb, struct list_head *list);
+extern uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
+			    struct list_head *list, struct pci_device *parent,
+			    bool scan_downstream);
+extern void pci_add_device_nodes(struct phb *phb,
+				 struct list_head *list,
+				 struct dt_node *parent_node,
+				 struct pci_lsi_state *lstate,
+				 uint8_t swizzle);
 extern int64_t pci_find_cap(struct phb *phb, uint16_t bdfn, uint8_t cap);
 extern int64_t pci_find_ecap(struct phb *phb, uint16_t bdfn, uint16_t cap,
 			     uint8_t *version);

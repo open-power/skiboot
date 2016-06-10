@@ -24,6 +24,7 @@
 #include <vpd.h>
 #include <pci.h>
 #include <pci-cfg.h>
+#include <pci-slot.h>
 
 #include "lxvpd.h"
 
