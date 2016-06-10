@@ -30,12 +30,15 @@ static int fdt_error;
 static void *fdt;
 
 #undef DEBUG_FDT
+#ifdef DEBUG_FDT
+#define FDT_DBG(fmt, a...)	prlog(PR_DEBUG, "FDT: " fmt, ##a)
+#else
+#define FDT_DBG(fmt, a...)
+#endif
 
 static void __save_err(int err, const char *str)
 {
-#ifdef DEBUG_FDT
-	printf("FDT: rc: %d from \"%s\"\n", err, str);
-#endif
+	FDT_DBG("rc: %d from \"%s\"\n", err, str);
 	if (err && !fdt_error) {
 		prerror("FDT: Error %d from \"%s\"\n", err, str);
 		fdt_error = err;
@@ -71,30 +74,30 @@ static void dt_end_node(void)
 	save_err(fdt_end_node(fdt));
 }
 
+#ifdef DEBUG_FDT
 static void dump_fdt(void)
 {
-#ifdef DEBUG_FDT
 	int i, off, depth, err;
 
-	printf("Device tree %u@%p\n", fdt_totalsize(fdt), fdt);
-
+	prlog(PR_INFO, "Device tree %u@%p\n", fdt_totalsize(fdt), fdt);
 	err = fdt_check_header(fdt);
 	if (err) {
 		prerror("fdt_check_header: %s\n", fdt_strerror(err));
 		return;
 	}
-	printf("fdt_check_header passed\n");
+	prlog(PR_INFO, "fdt_check_header passed\n");
 
-	printf("fdt_num_mem_rsv = %u\n", fdt_num_mem_rsv(fdt));
+	prlog(PR_INFO, "fdt_num_mem_rsv = %u\n", fdt_num_mem_rsv(fdt));
 	for (i = 0; i < fdt_num_mem_rsv(fdt); i++) {
 		u64 addr, size;
 
 		err = fdt_get_mem_rsv(fdt, i, &addr, &size);
 		if (err) {
-			printf(" ERR %s\n", fdt_strerror(err));
+			prlog(PR_INFO, " ERR %s\n", fdt_strerror(err));
 			return;
 		}
-		printf("  mem_rsv[%i] = %lu@%#lx\n", i, (long)addr, (long)size);
+		prlog(PR_INFO, "  mem_rsv[%i] = %lu@%#lx\n",
+		      i, (long)addr, (long)size);
 	}
 
 	for (off = fdt_next_node(fdt, 0, &depth);
@@ -108,26 +111,24 @@ static void dump_fdt(void)
 			prerror("fdt: offset %i no name!\n", off);
 			return;
 		}
-		printf("name: %s [%u]\n", name, off);
+		prlog(PR_INFO, "name: %s [%u]\n", name, off);
 	}
-#endif
 }
+#else
+static inline void dump_fdt(void) { }
+#endif
 
 static void flatten_dt_node(const struct dt_node *root)
 {
 	const struct dt_node *i;
 	const struct dt_property *p;
 
-#ifdef DEBUG_FDT
-	printf("FDT: node: %s\n", root->name);
-#endif
-
+	FDT_DBG("node: %s\n", root->name);
 	list_for_each(&root->properties, p, list) {
 		if (strstarts(p->name, DT_PRIVATE))
 			continue;
-#ifdef DEBUG_FDT
-		printf("FDT:   prop: %s size: %ld\n", p->name, p->len);
-#endif
+
+		FDT_DBG("  prop: %s size: %ld\n", p->name, p->len);
 		dt_property(p);
 	}
 
