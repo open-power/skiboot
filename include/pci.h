@@ -22,21 +22,6 @@
 #include <lock.h>
 #include <ccan/list/list.h>
 
-/* PCI Slot Entry Information */
-struct pci_slot_info {
-	char       label[16];
-	bool       pluggable;
-	bool       power_ctl;
-	int        wired_lanes;
-	int        bus_clock;
-	int        connector_type;
-	int        card_desc;
-	int        card_mech;
-	int        pwr_led_ctl;
-	int        attn_led_ctl;
-	int	   slot_index;
-};
-
 struct pci_device;
 struct pci_cfg_reg_filter;
 
@@ -98,7 +83,6 @@ struct pci_device {
 
 	struct dt_node		*dn;
 	struct pci_slot		*slot;
-	struct pci_slot_info    *slot_info;
 	struct pci_device	*parent;
 	struct list_head	children;
 	struct list_node	link;
@@ -410,7 +394,6 @@ struct phb {
 
 	/* PCI-X only slot info, for PCI-E this is in the RC bridge */
 	struct pci_slot		*slot;
-	struct pci_slot_info    *slot_info;
 
 	/* Base location code used to generate the children one */
 	const char		*base_loc_code;
