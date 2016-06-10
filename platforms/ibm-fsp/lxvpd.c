@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * LXVPD support
- *
- */
-
 
 #include <skiboot.h>
 #include <device.h>
@@ -28,31 +23,35 @@
 
 #include "lxvpd.h"
 
-struct lxvpd_slot_info {
-	uint8_t    switch_id;
-	uint8_t    vswitch_id;
-	uint8_t    dev_id;
-	struct pci_slot_info	ps;
-};
+/* Debugging options */
+#define LXVPD_DBG(fmt, a...)	prlog(PR_DEBUG, "LXVPD: " fmt, ##a)
+#define LXVPD_INFO(fmt, a...)	prlog(PR_INFO, "LXVPD: " fmt, ##a)
+#define LXVPD_WARN(fmt, a...)	prlog(PR_WARNING, "LXVPD: " fmt, ##a)
+#define LXVPD_ERR(fmt, a...)	prlog(PR_ERR, "LXVPD: " fmt, ##a)
 
 /*
- * XXX TODO: Add 1006 maps to add function loc codes and loc code maps
- * (ie. -Tn part of the location code) 
+ * Currently, the lxvpd PCI slot struct is shared by multiple
+ * platforms (Apollo and Firenze), but each slot still has
+ * platform specific features. In order for unified data structs,
+ * "struct lxvpd_slot" is expected to be embedded in platform
+ * PCI slot struct. "entry_size" indicates the size of platform
+ * specific PCI slot instance.
  */
-struct lxvpd_slot_info_data {
-	uint8_t			num_slots;
-	struct lxvpd_slot_info	info[];
+struct lxvpd_pci_slot_data {
+	uint8_t		num_slots;
+	int32_t		entry_size;	/* Size of platform PCI slot  */
+	void		*slots;		/* Data of platform PCI slots */
 };
 
 static bool lxvpd_supported_slot(struct phb *phb, struct pci_device *pd)
 {
-	/* PCI/PCI-X we only support top level PHB with NULL "pd" */
-	if (phb->phb_type < phb_type_pcie_v1)
-		return pd == NULL;
-
-	/* Now we have PCI Express, we should never have a NULL "pd" */
-	if (!pd)
+	/* PHB should always be valid */
+	if (!phb)
 		return false;
+
+	/* We expect platform slot for root complex */
+	if (!pd)
+		return true;
 
 	/* We support the root complex at the top level */
 	if (pd->dev_type == PCIE_TYPE_ROOT_PORT && !pd->parent)
@@ -78,174 +77,214 @@ static bool lxvpd_supported_slot(struct phb *phb, struct pci_device *pd)
 	return false;
 }
 
-void lxvpd_get_slot_info(struct phb *phb, struct pci_device * pd)
+void *lxvpd_get_slot(struct pci_slot *slot)
 {
-	struct lxvpd_slot_info_data *sdata = phb->platform_data;
+	struct phb *phb = slot->phb;
+	struct pci_device *pd = slot->pd;
+	struct lxvpd_pci_slot_data *sdata = phb->platform_data;
+	struct lxvpd_pci_slot *s = NULL;
+	uint8_t slot_num = pd ? ((pd->bdfn >> 3) & 0x1f) : 0xff;
 	bool is_phb = (pd && pd->parent) ? false : true;
-	bool entry_found = false;
-	uint8_t idx;
+	uint8_t index;
 
 	/* Check if we have slot info */
-	if (!sdata)
-		return;
-
-	prlog(PR_TRACE, "LXVPD: Get Slot Info PHB%d pd=%x\n", phb->opal_id,
-	    pd ? pd->bdfn : 0);
-
-	/*
-	 * This code only handles PHBs and PCIe switches at the top level.
-	 *
-	 * We do not handle any other switch nor any other type of PCI/PCI-X
-	 * bridge.
-	 */
-	if (!lxvpd_supported_slot(phb, pd)) {
-		prlog(PR_TRACE, "LXVPD: Unsupported slot\n");
-		return;
+	if (!sdata) {
+		LXVPD_DBG("PHB%04x not have VPD data\n",
+			  phb->opal_id);
+		return NULL;
 	}
 
-	/* Iterate the slot map */
-	for (idx = 0; idx <= sdata->num_slots; idx++) {
-		struct lxvpd_slot_info *info = &sdata->info[idx];
-		uint8_t pd_dev = (pd->bdfn >> 3) & 0x1f;
+	/* Platform slot attached ? */
+	s = slot->data;
+	if (s) {
+		LXVPD_DBG("Slot %016llx had platform data [%s]\n",
+			  slot->id, s->label);
+		return s;
+	}
+
+	/*
+	 * This code only handles PHBs and PCIe switches at the
+	 * top level. We do not handle any other switch nor any
+	 * other type of PCI/PCI-X bridge. Generally, we have
+	 * more strict rules to support slot than PCI core.
+	 */
+	if (!lxvpd_supported_slot(phb, pd)) {
+		LXVPD_DBG("Slot %016llx not supported\n",
+			  slot->id);
+		return NULL;
+	}
+
+	/* Iterate the platform slot array */
+	for (index = 0; index < sdata->num_slots; index++) {
+		s = sdata->slots + (index * sdata->entry_size);
 
 		/* Match PHB with switch_id == 0 */
-		if (is_phb && info->switch_id == 0) {
-			entry_found = true;
-			break;
+		if (is_phb && s->switch_id == 0) {
+			slot->data = s;
+			s->pci_slot = slot;
+			LXVPD_DBG("Found [%s] for PHB slot %016llx\n",
+				  s->label, slot->id);
+
+			return s;
 		}
 
 		/* Match switch port with switch_id != 0 */
-		if (!is_phb && info->switch_id !=0 && info->dev_id == pd_dev) {
-			entry_found = true;
-			break;
+		if (!is_phb && s->switch_id != 0 && s->dev_id == slot_num) {
+			slot->data = s;
+			s->pci_slot = slot;
+			LXVPD_DBG("Found [%s] for slot %016llx\n",
+				  s->label, slot->id);
+
+			return s;
 		}
 	}
 
-	if (entry_found) {
-		pd->slot_info = &sdata->info[idx].ps;
-		prlog(PR_TRACE, "PCI: PCIE Slot Info: \n"
-		      "       Label       %s\n"
-		      "       Pluggable   0x%x\n"
-		      "       Power Ctl   0x%x\n"
-		      "       Wired Lanes 0x%x\n"
-		      "       Bus Clock   0x%x\n"
-		      "       Connector   0x%x\n"
-		      "       Slot Index  %d\n",
-		      pd->slot_info->label,
-		      pd->slot_info->pluggable?1:0,
-		      pd->slot_info->power_ctl?1:0,
-		      pd->slot_info->wired_lanes,
-		      pd->slot_info->bus_clock,
-		      pd->slot_info->connector_type,
-		      pd->slot_info->slot_index);
-	} else {
-		prlog(PR_TRACE, "PCI: PCIE Slot Info Not Found\n");
+	LXVPD_DBG("No data found for %sslot %016llx\n",
+		  is_phb ? "PHB " : " ", slot->id);
+	return NULL;
+}
+
+void lxvpd_extract_info(struct pci_slot *slot, struct lxvpd_pci_slot *s)
+{
+	slot->pluggable      = s->pluggable ? 1 : 0;
+	slot->power_ctl      = s->power_ctl ? 1 : 0;
+	slot->power_led_ctl  = s->pwr_led_ctl;
+	slot->attn_led_ctl   = s->attn_led_ctl;
+	slot->connector_type = s->connector_type;
+	slot->card_desc      = s->card_desc;
+	slot->card_mech      = s->card_mech;
+	slot->wired_lanes    = s->wired_lanes;
+}
+
+static struct lxvpd_pci_slot_data *lxvpd_alloc_slots(struct phb *phb,
+						     uint8_t count,
+						     uint32_t slot_size)
+{
+	struct lxvpd_pci_slot_data *sdata;
+
+	sdata = zalloc(sizeof(struct lxvpd_pci_slot_data) + count * slot_size);
+	assert(sdata);
+	sdata->num_slots   = count;
+	sdata->entry_size  = slot_size;
+	sdata->slots       = sdata + 1;
+	phb->platform_data = sdata;
+
+	return sdata;
+}
+
+static void lxvpd_format_label(char *dst, const char *src, size_t len)
+{
+	int i;
+
+	memcpy(dst, src, len);
+
+	/* Remove blank suffix */
+	for (i = strlen(dst) - 1; i >= 0; i--) {
+		if (dst[i] != ' ')
+			break;
+
+		dst[i] = 0;
 	}
 }
 
-static struct lxvpd_slot_info *lxvpd_alloc_slot_info(struct phb *phb, int count)
+static void lxvpd_parse_1004_map(struct phb *phb,
+				 const uint8_t *sm,
+				 uint8_t size,
+				 uint32_t slot_size)
 {
-	struct lxvpd_slot_info_data *data;
+	struct lxvpd_pci_slot_data *sdata;
+	struct lxvpd_pci_slot *s;
+	const struct pci_slot_entry_1004 *entry;
+	uint8_t num_slots, slot;
 
-	data = zalloc(sizeof(struct lxvpd_slot_info_data) *
-		      count * sizeof(struct lxvpd_slot_info));
-	assert(data);
-	data->num_slots = count;
-	phb->platform_data = data;
-
-	return data->info;
-}
-
-static void lxvpd_parse_1004_map(struct phb *phb, const uint8_t *sm, uint8_t sz)
-{
-	const struct pci_slot_entry_1004 *entry = NULL;
-	struct lxvpd_slot_info *slot_info, *info;
-	uint8_t num_slots, slot, idx;
-
-	num_slots = (sz / sizeof(struct pci_slot_entry_1004));
-	slot_info = lxvpd_alloc_slot_info(phb, num_slots);
+	num_slots = (size / sizeof(struct pci_slot_entry_1004));
+	sdata = lxvpd_alloc_slots(phb, num_slots, slot_size);
 
 	/* Iterate through the entries in the keyword */
 	entry = (const struct pci_slot_entry_1004 *)sm;
-	for (slot = 0; slot < num_slots; slot++) {
-		info = &slot_info[slot];
+	for (slot = 0; slot < num_slots; slot++, entry++) {
+		s = sdata->slots + slot * sdata->entry_size;
 
-		/* Put slot info into pci device structure */
-		info->switch_id = entry->pba >> 4;
-		info->vswitch_id = entry->pba &0xf;
-		info->dev_id = entry->sba;
-		for (idx = 0; idx < 3; idx++)
-			info->ps.label[idx] = entry->label[idx];
-		info->ps.label[3] = 0;
-		info->ps.pluggable = ((entry->p0.byte & 0x20) == 0);
-		info->ps.power_ctl = ((entry->p0.power_ctl & 0x40) == 1);
+		/* Figure out PCI slot info */
+		lxvpd_format_label(s->label, entry->label, 3);
+		s->slot_index     = entry->slot_index;
+		s->switch_id      = entry->pba >> 4;
+		s->vswitch_id     = entry->pba & 0xf;
+		s->dev_id         = entry->sba;
+		s->pluggable      = ((entry->p0.byte & 0x20) == 0);
+		s->power_ctl      = ((entry->p0.power_ctl & 0x40) == 1);
+		s->bus_clock      = entry->p2.bus_clock - 4;
+		s->connector_type = entry->p2.connector_type - 5;
+		s->card_desc      = entry->p3.byte >> 6;
+		if (entry->p3.byte < 0xc0)
+			s->card_desc -= 4;
+		s->card_mech      = (entry->p3.byte >> 4) & 0x3;
+		s->pwr_led_ctl    = (entry->p3.byte & 0xf) >> 2;
+		s->attn_led_ctl   = entry->p3.byte & 0x3;
+
 		switch(entry->p1.wired_lanes) {
-		case 1: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIX_32; break;
+		case 1: s->wired_lanes = PCI_SLOT_WIRED_LANES_PCIX_32;  break;
 		case 2: /* fall through */
-		case 3: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIX_64; break;
-		case 4: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X1; break;
-		case 5: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X4; break;
-		case 6: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X8; break;
-		case 7: info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X16; break;
+		case 3: s->wired_lanes = PCI_SLOT_WIRED_LANES_PCIX_64;  break;
+		case 4: s->wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X1;  break;
+		case 5: s->wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X4;  break;
+		case 6: s->wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X8;  break;
+		case 7: s->wired_lanes = PCI_SLOT_WIRED_LANES_PCIE_X16; break;
 		default:
-			info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_UNKNOWN;
+			s->wired_lanes = PCI_SLOT_WIRED_LANES_UNKNOWN;
 		}
-		info->ps.wired_lanes = (entry->p1.wired_lanes - 3);
-		info->ps.bus_clock = (entry->p2.bus_clock - 4);
-		info->ps.connector_type = (entry->p2.connector_type - 5);
-		if (entry->p3.byte < 0xC0)
-			info->ps.card_desc = ((entry->p3.byte >> 6) - 4) ;
-		else
-			info->ps.card_desc = (entry->p3.byte >> 6);
-		info->ps.card_mech = ((entry->p3.byte >> 4) & 0x3);
-		info->ps.pwr_led_ctl = ((entry->p3.byte & 0xF) >> 2);
-		info->ps.attn_led_ctl = (entry->p3.byte & 0x3);
-		info->ps.slot_index = entry->slot_index;
-		entry++;
+
+		LXVPD_DBG("1004 Platform data [%s] %02x %02x on PHB%04x\n",
+			  s->label, s->switch_id, s->dev_id, phb->opal_id);
 	}
 }
 
-static void lxvpd_parse_1005_map(struct phb *phb, const uint8_t *sm, uint8_t sz)
+static void lxvpd_parse_1005_map(struct phb *phb,
+				 const uint8_t *sm,
+				 uint8_t size,
+				 uint32_t slot_size)
 {
-	const struct pci_slot_entry_1005 *entry = NULL;
-	struct lxvpd_slot_info *slot_info, *info;
-	uint8_t num_slots, slot, idx;
+	struct lxvpd_pci_slot_data *sdata;
+	struct lxvpd_pci_slot *s;
+	const struct pci_slot_entry_1005 *entry;
+	uint8_t num_slots, slot;
 
-	num_slots = (sz / sizeof(struct pci_slot_entry_1005));
-	slot_info = lxvpd_alloc_slot_info(phb, num_slots);
+	num_slots = (size / sizeof(struct pci_slot_entry_1005));
+	sdata = lxvpd_alloc_slots(phb, num_slots, slot_size);
 
 	/* Iterate through the entries in the keyword */
 	entry = (const struct pci_slot_entry_1005 *)sm;
-	for (slot = 0; slot < num_slots; slot++) {
-		info = &slot_info[slot];
+	for (slot = 0; slot < num_slots; slot++, entry++) {
+		s = sdata->slots + slot * sdata->entry_size;
 
 		/* Put slot info into pci device structure */
-		info->switch_id = entry->pba >> 4;
-		info->vswitch_id = entry->pba &0xf;
-		info->dev_id = entry->switch_device_id;
-		for (idx = 0; idx < 8; idx++)
-			info->ps.label[idx] = entry->label[idx];
-		info->ps.label[8] = 0;
-		info->ps.pluggable = (entry->p0.pluggable == 0);
-		info->ps.power_ctl = entry->p0.power_ctl;
-		info->ps.wired_lanes = entry->p1.wired_lanes;
-		if (info->ps.wired_lanes > PCI_SLOT_WIRED_LANES_PCIE_X32)
-			info->ps.wired_lanes = PCI_SLOT_WIRED_LANES_UNKNOWN;
-		info->ps.bus_clock = entry->p2.bus_clock;
-		info->ps.connector_type = entry->p2.connector_type;
-		info->ps.card_desc = (entry->p3.byte >> 6);
-		info->ps.card_mech = ((entry->p3.byte >> 4) & 0x3);
-		info->ps.pwr_led_ctl = ((entry->p3.byte & 0xF) >> 2);
-		info->ps.attn_led_ctl = (entry->p3.byte & 0x3);
-		info->ps.slot_index = entry->slot_index;
-		entry++;
+		lxvpd_format_label(s->label, entry->label, 8);
+		s->slot_index     = entry->slot_index;
+		s->switch_id      = entry->pba >> 4;
+		s->vswitch_id     = entry->pba & 0xf;
+		s->dev_id         = entry->switch_device_id;
+		s->pluggable      = (entry->p0.pluggable == 0);
+		s->power_ctl      = entry->p0.power_ctl;
+		s->bus_clock      = entry->p2.bus_clock;
+		s->connector_type = entry->p2.connector_type;
+		s->card_desc      = entry->p3.byte >> 6;
+		s->card_mech      = (entry->p3.byte >> 4) & 0x3;
+		s->pwr_led_ctl    = (entry->p3.byte & 0xf) >> 2;
+		s->attn_led_ctl   = entry->p3.byte & 0x3;
+		s->wired_lanes    = entry->p1.wired_lanes;
+		if (s->wired_lanes > PCI_SLOT_WIRED_LANES_PCIE_X32)
+			s->wired_lanes = PCI_SLOT_WIRED_LANES_UNKNOWN;
+
+		LXVPD_DBG("1005 Platform data [%s] %02x %02x on PHB%04x\n",
+			  s->label, s->switch_id, s->dev_id, phb->opal_id);
 	}
 }
 
 void lxvpd_process_slot_entries(struct phb *phb,
 				struct dt_node *node,
 				uint8_t chip_id,
-				uint8_t index)
+				uint8_t index,
+				uint32_t slot_size)
 {
 	const void *lxvpd;
 	const uint8_t *pr_rec, *pr_end, *sm;
@@ -262,24 +301,23 @@ void lxvpd_process_slot_entries(struct phb *phb,
 	/* Get LX VPD pointer */
 	lxvpd = dt_prop_get_def_size(node, "ibm,io-vpd", NULL, &lxvpd_size);
 	if (!lxvpd) {
-		printf("LXVPD: LX VPD not found for %s in %p\n",
-		       record, phb->dt_node);
+		LXVPD_WARN("No data found for PHB%04x %s\n",
+			   phb->opal_id, record);
 		return;
 	}
 
 	pr_rec = vpd_find_record(lxvpd, lxvpd_size, record, &pr_size);
 	if (!pr_rec) {
-		printf("LXVPD: %s record not found in LX VPD in %p\n",
-		       record, phb->dt_node);
+		LXVPD_WARN("Record %s not found on PHB%04x\n",
+			   record, phb->opal_id);
 		return;
 	}
+
+	/* As long as there's still something in the PRxy record */
+	LXVPD_DBG("PHB%04x record %s has %ld bytes\n",
+		  phb->opal_id, record, pr_size);
 	pr_end = pr_rec + pr_size;
-
-	prlog(PR_TRACE, "LXVPD: %s record for PHB%d is %ld bytes\n",
-	      record, phb->opal_id, pr_size);
-
-	/* As long as there's still something in the PRxy record... */
-	while(pr_rec < pr_end) {
+	while (pr_rec < pr_end) {
 		pr_size = pr_end - pr_rec;
 
 		/* Find the next MF keyword */
@@ -288,24 +326,56 @@ void lxvpd_process_slot_entries(struct phb *phb,
 		sm = vpd_find_keyword(pr_rec, pr_size, "SM", &sm_sz);
 		if (!mf || !sm) {
 			if (!found)
-				printf("LXVPD: Slot Map keyword %s not found\n",
-				       record);
+				LXVPD_WARN("Slot Map keyword %s not found\n",
+					   record);
 			return;
 		}
-		prlog(PR_TRACE, "LXVPD: Found 0x%04x map...\n", *mf);
 
+		LXVPD_DBG("Found 0x%04x map...\n", *mf);
 		switch (*mf) {
 		case 0x1004:
-			lxvpd_parse_1004_map(phb, sm + 1, sm_sz - 1);
+			lxvpd_parse_1004_map(phb, sm + 1, sm_sz - 1, slot_size);
 			found = true;
 			break;
 		case 0x1005:
-			lxvpd_parse_1005_map(phb, sm + 1, sm_sz - 1);
+			lxvpd_parse_1005_map(phb, sm + 1, sm_sz - 1, slot_size);
 			found = true;
 			break;
 			/* Add support for 0x1006 maps ... */
 		}
+
 		pr_rec = sm + sm_sz;
 	}
 }
 
+void lxvpd_add_slot_properties(struct pci_slot *slot,
+			       struct dt_node *np)
+{
+	struct phb *phb = slot->phb;
+	struct lxvpd_pci_slot *s = slot->data;
+	char loc_code[LOC_CODE_SIZE];
+	size_t base_loc_code_len, slot_label_len;
+
+	/* Check if we have platform specific slot */
+	if (!s || !np)
+		return;
+
+	/* Check PHB base location code */
+	if (!phb->base_loc_code)
+		return;
+
+	/* Check location length is valid */
+	base_loc_code_len = strlen(phb->base_loc_code);
+	slot_label_len = strlen(s->label);
+	if ((base_loc_code_len + slot_label_len + 1) >= LOC_CODE_SIZE)
+		return;
+
+	/* Location code */
+	strcpy(loc_code, phb->base_loc_code);
+	strcat(loc_code, "-");
+	strcat(loc_code, s->label);
+	dt_add_property(np, "ibm,slot-location-code",
+			loc_code, strlen(loc_code) + 1);
+	dt_add_property_string(np, "ibm,slot-label",
+			       s->label);
+}

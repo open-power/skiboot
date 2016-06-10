@@ -23,8 +23,6 @@
 #define LX_VPD_1S4U_BACKPLANE	0x3100040100300043ull
 #define LX_VPD_2S4U_BACKPLANE	0x3100040100300044ull
 
-/* P8 PCI Slot Entry Definitions -- 1005 */
-
 struct slot_p0 {
 	union {
 		uint8_t     byte;
@@ -83,6 +81,7 @@ struct pci_slot_entry_1004 {
 	uint8_t               max_slot_power;
 };
 
+/* P8 PCI Slot Entry Definitions -- 1005 */
 struct pci_slot_entry_1005 {
 	union {
 		uint8_t    pba;
@@ -106,12 +105,30 @@ struct pci_slot_entry_1005 {
 	uint8_t               rsvd_22[2];
 };
 
-struct phb;
+struct lxvpd_pci_slot {
+	struct pci_slot	*pci_slot;
+	uint8_t		switch_id;
+	uint8_t		vswitch_id;
+	uint8_t		dev_id;
+	char		label[9];
+	bool		pluggable;
+	bool		power_ctl;
+	uint8_t		wired_lanes;
+	uint8_t		bus_clock;
+	uint8_t		connector_type;
+	uint8_t		card_desc;
+	uint8_t		card_mech;
+	uint8_t		pwr_led_ctl;
+	uint8_t		attn_led_ctl;
+	uint8_t		slot_index;
+};
 
-extern void lxvpd_process_slot_entries(struct phb *phb,
-				       struct dt_node *node,
-				       uint8_t chip_id, uint8_t index);
-
-extern void lxvpd_get_slot_info(struct phb *phb, struct pci_device * pd);
-
+extern void lxvpd_process_slot_entries(struct phb *phb, struct dt_node *node,
+				       uint8_t chip_id, uint8_t index,
+				       uint32_t slot_size);
+extern void *lxvpd_get_slot(struct pci_slot *slot);
+extern void lxvpd_extract_info(struct pci_slot *slot,
+			       struct lxvpd_pci_slot *s);
+extern void lxvpd_add_slot_properties(struct pci_slot *slot,
+				      struct dt_node *np);
 #endif /* __LXVPD_H */
