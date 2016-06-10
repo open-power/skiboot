@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-/*
-*/
 #ifndef __PHB3_H
 #define __PHB3_H
 

@@ -13,20 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * PHB3 support
- *
- */
-
-/*
- *
- * FIXME:
- *   More stuff for EEH support:
- *      - PBCQ error reporting interrupt
- *	- I2C-based power management (replacing SHPC)
- *	- Directly detect fenced PHB through one dedicated HW reg
- */
-
 #include <skiboot.h>
 #include <io.h>
 #include <timebase.h>
