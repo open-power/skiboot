@@ -164,7 +164,10 @@
 #define OPAL_CEC_REBOOT2			116
 #define OPAL_CONSOLE_FLUSH			117
 #define OPAL_GET_DEVICE_TREE			118
-#define OPAL_LAST				118
+#define OPAL_PCI_GET_PRESENCE_STATE		119
+#define OPAL_PCI_GET_POWER_STATE		120
+#define OPAL_PCI_SET_POWER_STATE		121
+#define OPAL_LAST				121
 
 /* Device tree flags */
 
@@ -383,7 +386,9 @@ enum OpalPciSlotPresence {
 
 enum OpalPciSlotPower {
 	OPAL_PCI_SLOT_POWER_OFF	= 0,
-	OPAL_PCI_SLOT_POWER_ON	= 1
+	OPAL_PCI_SLOT_POWER_ON	= 1,
+	OPAL_PCI_SLOT_OFFLINE	= 2,
+	OPAL_PCI_SLOT_ONLINE	= 3
 };
 
 enum OpalSlotLedType {

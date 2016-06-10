@@ -18,7 +18,10 @@
 #include <opal-api.h>
 #include <pci.h>
 #include <pci-cfg.h>
+#include <pci-slot.h>
+#include <opal-msg.h>
 #include <timebase.h>
+#include <timer.h>
 
 #define OPAL_PCICFG_ACCESS(op, cb, type)	\
 static int64_t opal_pci_config_##op(uint64_t phb_id,			\
@@ -461,16 +464,15 @@ static int64_t opal_pci_map_pe_dma_window_real(uint64_t phb_id,
 }
 opal_call(OPAL_PCI_MAP_PE_DMA_WINDOW_REAL, opal_pci_map_pe_dma_window_real, 5);
 
-static int64_t opal_pci_reset(uint64_t phb_id, uint8_t reset_scope,
+static int64_t opal_pci_reset(uint64_t id, uint8_t reset_scope,
                               uint8_t assert_state)
 {
-	struct phb *phb = pci_get_phb(phb_id);
+	struct pci_slot *slot = pci_slot_find(id);
+	struct phb *phb = slot ? slot->phb : NULL;
 	int64_t rc = OPAL_SUCCESS;
 
-	if (!phb)
+	if (!slot || !phb)
 		return OPAL_PARAMETER;
-	if (!phb->ops)
-		return OPAL_UNSUPPORTED;
 	if (assert_state != OPAL_ASSERT_RESET &&
 	    assert_state != OPAL_DEASSERT_RESET)
 		return OPAL_PARAMETER;
@@ -479,18 +481,22 @@ static int64_t opal_pci_reset(uint64_t phb_id, uint8_t reset_scope,
 
 	switch(reset_scope) {
 	case OPAL_RESET_PHB_COMPLETE:
-		if (!phb->ops->complete_reset) {
+		/* Complete reset is applicable to PHB slot only */
+		if (!slot->ops.creset || slot->pd) {
 			rc = OPAL_UNSUPPORTED;
 			break;
 		}
 
-		rc = phb->ops->complete_reset(phb, assert_state);
+		if (assert_state != OPAL_ASSERT_RESET)
+			break;
+
+		rc = slot->ops.creset(slot);
 		if (rc < 0)
-			prerror("PHB#%d: Failure on complete reset, rc=%lld\n",
-				phb->opal_id, rc);
+			prlog(PR_ERR, "SLOT-%016llx: Error %lld on complete reset\n",
+			      slot->id, rc);
 		break;
 	case OPAL_RESET_PCI_FUNDAMENTAL:
-		if (!phb->ops->fundamental_reset) {
+		if (!slot->ops.freset) {
 			rc = OPAL_UNSUPPORTED;
 			break;
 		}
@@ -499,13 +505,13 @@ static int64_t opal_pci_reset(uint64_t phb_id, uint8_t reset_scope,
 		if (assert_state != OPAL_ASSERT_RESET)
 			break;
 
-		rc = phb->ops->fundamental_reset(phb);
+		rc = slot->ops.freset(slot);
 		if (rc < 0)
-			prerror("PHB#%d: Failure on fundamental reset, rc=%lld\n",
-				phb->opal_id, rc);
+			prlog(PR_ERR, "SLOT-%016llx: Error %lld on fundamental reset\n",
+			      slot->id, rc);
 		break;
 	case OPAL_RESET_PCI_HOT:
-		if (!phb->ops->hot_reset) {
+		if (!slot->ops.hreset) {
 			rc = OPAL_UNSUPPORTED;
 			break;
 		}
@@ -514,22 +520,34 @@ static int64_t opal_pci_reset(uint64_t phb_id, uint8_t reset_scope,
 		if (assert_state != OPAL_ASSERT_RESET)
 			break;
 
-		rc = phb->ops->hot_reset(phb);
+		rc = slot->ops.hreset(slot);
 		if (rc < 0)
-			prerror("PHB#%d: Failure on hot reset, rc=%lld\n",
-				phb->opal_id, rc);
+			prlog(PR_ERR, "SLOT-%016llx: Error %lld on hot reset\n",
+			      slot->id, rc);
 		break;
 	case OPAL_RESET_PCI_IODA_TABLE:
+		/* It's allowed on PHB slot only */
+		if (slot->pd || !phb->ops || !phb->ops->ioda_reset) {
+			rc = OPAL_UNSUPPORTED;
+			break;
+		}
+
 		if (assert_state != OPAL_ASSERT_RESET)
 			break;
-		if (phb->ops->ioda_reset)
-			phb->ops->ioda_reset(phb, true);
+
+		rc = phb->ops->ioda_reset(phb, true);
 		break;
 	case OPAL_RESET_PHB_ERROR:
+		/* It's allowed on PHB slot only */
+		if (slot->pd || !phb->ops || !phb->ops->papr_errinjct_reset) {
+			rc = OPAL_UNSUPPORTED;
+			break;
+		}
+
 		if (assert_state != OPAL_ASSERT_RESET)
 			break;
-		if (phb->ops->papr_errinjct_reset)
-			phb->ops->papr_errinjct_reset(phb);
+
+		rc = phb->ops->papr_errinjct_reset(phb);
 		break;
 	default:
 		rc = OPAL_UNSUPPORTED;
@@ -560,18 +578,19 @@ static int64_t opal_pci_reinit(uint64_t phb_id,
 }
 opal_call(OPAL_PCI_REINIT, opal_pci_reinit, 3);
 
-static int64_t opal_pci_poll(uint64_t phb_id)
+static int64_t opal_pci_poll(uint64_t id)
 {
-	struct phb *phb = pci_get_phb(phb_id);
+	struct pci_slot *slot = pci_slot_find(id);
+	struct phb *phb = slot ? slot->phb : NULL;
 	int64_t rc;
 
-	if (!phb)
+	if (!slot || !phb)
 		return OPAL_PARAMETER;
-	if (!phb->ops || !phb->ops->poll)
+	if (!slot->ops.poll)
 		return OPAL_UNSUPPORTED;
 
 	phb_lock(phb);
-	rc = phb->ops->poll(phb);
+	rc = slot->ops.poll(slot);
 	phb_unlock(phb);
 
 	/* Return milliseconds for caller to sleep: round up */
@@ -584,6 +603,170 @@ static int64_t opal_pci_poll(uint64_t phb_id)
 	return rc;
 }
 opal_call(OPAL_PCI_POLL, opal_pci_poll, 1);
+
+static int64_t opal_pci_get_presence_state(uint64_t id, uint64_t data)
+{
+	struct pci_slot *slot = pci_slot_find(id);
+	struct phb *phb = slot ? slot->phb : NULL;
+	uint8_t *presence = (uint8_t *)data;
+	int64_t rc;
+
+	if (!slot || !phb)
+		return OPAL_PARAMETER;
+	if (!slot->ops.get_presence_state)
+		return OPAL_UNSUPPORTED;
+
+	phb_lock(phb);
+	rc = slot->ops.get_presence_state(slot, presence);
+	phb_unlock(phb);
+
+	return rc;
+}
+opal_call(OPAL_PCI_GET_PRESENCE_STATE, opal_pci_get_presence_state, 2);
+
+static int64_t opal_pci_get_power_state(uint64_t id, uint64_t data)
+{
+	struct pci_slot *slot = pci_slot_find(id);
+	struct phb *phb = slot ? slot->phb : NULL;
+	uint8_t *power_state = (uint8_t *)data;
+	int64_t rc;
+
+	if (!slot || !phb)
+		return OPAL_PARAMETER;
+	if (!slot->ops.get_power_state)
+		return OPAL_UNSUPPORTED;
+
+	phb_lock(phb);
+	rc = slot->ops.get_power_state(slot, power_state);
+	phb_unlock(phb);
+
+	return rc;
+}
+opal_call(OPAL_PCI_GET_POWER_STATE, opal_pci_get_power_state, 2);
+
+static void set_power_timer(struct timer *t __unused, void *data,
+			    uint64_t now __unused)
+{
+	struct pci_slot *slot = data;
+	struct phb *phb = slot->phb;
+	struct pci_device *pd = slot->pd;
+	struct dt_node *dn = pd->dn;
+	uint8_t link;
+
+	switch (slot->state) {
+	case PCI_SLOT_STATE_SPOWER_START:
+		if (slot->retries-- == 0) {
+			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
+			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+				       slot->async_token, dn->phandle,
+				       slot->power_state, OPAL_BUSY);
+		} else {
+			schedule_timer(&slot->timer, msecs_to_tb(10));
+		}
+
+		break;
+	case PCI_SLOT_STATE_SPOWER_DONE:
+		if (slot->power_state == OPAL_PCI_SLOT_POWER_OFF) {
+			pci_remove_bus(phb, &pd->children);
+			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
+			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+				       slot->async_token, dn->phandle,
+				       OPAL_PCI_SLOT_POWER_OFF, OPAL_SUCCESS);
+			break;
+		}
+
+		/* Power on */
+		if (slot->ops.get_link_state(slot, &link) != OPAL_SUCCESS)
+			link = 0;
+		if (link) {
+			slot->ops.prepare_link_change(slot, true);
+			pci_scan_bus(phb, pd->secondary_bus,
+				     pd->subordinate_bus,
+				     &pd->children, pd, true);
+			pci_add_device_nodes(phb, &pd->children, dn,
+					     &phb->lstate, 0);
+			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
+			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+				       slot->async_token, dn->phandle,
+				       OPAL_PCI_SLOT_POWER_ON, OPAL_SUCCESS);
+		} else if (slot->retries-- == 0) {
+			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
+			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+				       slot->async_token, dn->phandle,
+				       OPAL_PCI_SLOT_POWER_ON, OPAL_BUSY);
+		} else {
+			schedule_timer(&slot->timer, msecs_to_tb(10));
+		}
+
+		break;
+	default:
+		prlog(PR_ERR, "PCI SLOT %016llx: Unexpected state 0x%08x\n",
+		      slot->id, slot->state);
+	}
+}
+
+static int64_t opal_pci_set_power_state(uint64_t async_token,
+					uint64_t id,
+					uint64_t data)
+{
+	struct pci_slot *slot = pci_slot_find(id);
+	struct phb *phb = slot ? slot->phb : NULL;
+	struct pci_device *pd = slot ? slot->pd : NULL;
+	uint8_t *state = (uint8_t *)data;
+	int64_t rc;
+
+	if (!slot || !phb)
+		return OPAL_PARAMETER;
+
+	phb_lock(phb);
+	switch (*state) {
+	case OPAL_PCI_SLOT_POWER_OFF:
+		if (!slot->ops.prepare_link_change ||
+		    !slot->ops.set_power_state)
+			return OPAL_UNSUPPORTED;
+
+		slot->async_token = async_token;
+		slot->ops.prepare_link_change(slot, false);
+		rc = slot->ops.set_power_state(slot, PCI_SLOT_POWER_OFF);
+		break;
+	case OPAL_PCI_SLOT_POWER_ON:
+		if (!slot->ops.set_power_state ||
+		    !slot->ops.get_link_state)
+			return OPAL_UNSUPPORTED;
+
+		slot->async_token = async_token;
+		rc = slot->ops.set_power_state(slot, PCI_SLOT_POWER_ON);
+		break;
+	case OPAL_PCI_SLOT_OFFLINE:
+		if (!pd)
+			return OPAL_PARAMETER;
+
+		pci_remove_bus(phb, &pd->children);
+		rc = OPAL_SUCCESS;
+		break;
+	case OPAL_PCI_SLOT_ONLINE:
+		if (!pd)
+			return OPAL_PARAMETER;
+		pci_scan_bus(phb, pd->secondary_bus, pd->subordinate_bus,
+			     &pd->children, pd, true);
+		pci_add_device_nodes(phb, &pd->children, pd->dn,
+				     &phb->lstate, 0);
+		rc = OPAL_SUCCESS;
+		break;
+	default:
+		rc = OPAL_PARAMETER;
+	}
+
+	phb_unlock(phb);
+	if (rc == OPAL_ASYNC_COMPLETION) {
+		slot->retries = 500;
+		init_timer(&slot->timer, set_power_timer, slot);
+		schedule_timer(&slot->timer, msecs_to_tb(10));
+	}
+
+	return rc;
+}
+opal_call(OPAL_PCI_SET_POWER_STATE, opal_pci_set_power_state, 3);
 
 static int64_t opal_pci_set_phb_tce_memory(uint64_t phb_id,
 					   uint64_t tce_mem_addr,
