@@ -27,7 +27,6 @@
 #include <ccan/str/str.h>
 
 static int fdt_error;
-static void *fdt;
 
 #undef DEBUG_FDT
 #ifdef DEBUG_FDT
@@ -47,12 +46,12 @@ static void __save_err(int err, const char *str)
 
 #define save_err(...) __save_err(__VA_ARGS__, #__VA_ARGS__)
 
-static void dt_property_cell(const char *name, u32 cell)
+static void dt_property_cell(void *fdt, const char *name, u32 cell)
 {
 	save_err(fdt_property_cell(fdt, name, cell));
 }
 
-static void dt_begin_node(const struct dt_node *dn)
+static void dt_begin_node(void *fdt, const struct dt_node *dn)
 {
 	save_err(fdt_begin_node(fdt, dn->name));
 
@@ -60,22 +59,22 @@ static void dt_begin_node(const struct dt_node *dn)
 	 * We add both the new style "phandle" and the legacy
 	 * "linux,phandle" properties
 	 */
-	dt_property_cell("linux,phandle", dn->phandle);
-	dt_property_cell("phandle", dn->phandle);
+	dt_property_cell(fdt, "linux,phandle", dn->phandle);
+	dt_property_cell(fdt, "phandle", dn->phandle);
 }
 
-static void dt_property(const struct dt_property *p)
+static void dt_property(void *fdt, const struct dt_property *p)
 {
 	save_err(fdt_property(fdt, p->name, p->prop, p->len));
 }
 
-static void dt_end_node(void)
+static void dt_end_node(void *fdt)
 {
 	save_err(fdt_end_node(fdt));
 }
 
 #ifdef DEBUG_FDT
-static void dump_fdt(void)
+static void dump_fdt(void *fdt)
 {
 	int i, off, depth, err;
 
@@ -115,10 +114,10 @@ static void dump_fdt(void)
 	}
 }
 #else
-static inline void dump_fdt(void) { }
+static inline void dump_fdt(void *fdt __unused) { }
 #endif
 
-static void flatten_dt_properties(const struct dt_node *dn)
+static void flatten_dt_properties(void *fdt, const struct dt_node *dn)
 {
 	const struct dt_property *p;
 
@@ -127,24 +126,24 @@ static void flatten_dt_properties(const struct dt_node *dn)
 			continue;
 
 		FDT_DBG("  prop: %s size: %ld\n", p->name, p->len);
-		dt_property(p);
+		dt_property(fdt, p);
 	}
 }
 
-static void flatten_dt_node(const struct dt_node *root)
+static void flatten_dt_node(void *fdt, const struct dt_node *root)
 {
 	const struct dt_node *i;
 
 	FDT_DBG("node: %s\n", root->name);
-	dt_begin_node(root);
-	flatten_dt_properties(root);
+	dt_begin_node(fdt, root);
+	flatten_dt_properties(fdt, root);
 	list_for_each(&root->children, i, list)
-		flatten_dt_node(i);
+		flatten_dt_node(fdt, i);
 
-	dt_end_node();
+	dt_end_node(fdt);
 }
 
-static void create_dtb_reservemap(const struct dt_node *root)
+static void create_dtb_reservemap(void *fdt, const struct dt_node *root)
 {
 	uint64_t base, size;
 	const uint64_t *ranges;
@@ -168,6 +167,7 @@ static void create_dtb_reservemap(const struct dt_node *root)
 
 void *create_dtb(const struct dt_node *root)
 {
+	void *fdt = NULL;
 	size_t len = DEVICE_TREE_MAX_SIZE;
 	uint32_t old_last_phandle = last_phandle;
 
@@ -184,10 +184,10 @@ void *create_dtb(const struct dt_node *root)
 
 		fdt_create(fdt, len);
 
-		create_dtb_reservemap(root);
+		create_dtb_reservemap(fdt, root);
 
 		/* Unflatten our live tree */
-		flatten_dt_node(root);
+		flatten_dt_node(fdt, root);
 
 		save_err(fdt_finish(fdt));
 
@@ -197,7 +197,7 @@ void *create_dtb(const struct dt_node *root)
 		len *= 2;
 	} while (fdt_error == -FDT_ERR_NOSPACE);
 
-	dump_fdt();
+	dump_fdt(fdt);
 
 	if (fdt_error) {
 		prerror("dtb: error %s\n", fdt_strerror(fdt_error));
