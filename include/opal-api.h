@@ -163,7 +163,8 @@
 #define OPAL_LEDS_SET_INDICATOR			115
 #define OPAL_CEC_REBOOT2			116
 #define OPAL_CONSOLE_FLUSH			117
-#define OPAL_LAST				117
+#define OPAL_GET_DEVICE_TREE			118
+#define OPAL_LAST				118
 
 /* Device tree flags */
 

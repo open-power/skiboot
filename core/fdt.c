@@ -216,3 +216,43 @@ void *create_dtb(const struct dt_node *root, bool exclusive)
 
 	return fdt;
 }
+
+static int64_t opal_get_device_tree(uint32_t phandle,
+				    uint64_t buf, uint64_t len)
+{
+	struct dt_node *root;
+	void *fdt = (void *)buf;
+	uint32_t old_last_phandle;
+	int64_t totalsize;
+	int ret;
+
+	root = dt_find_by_phandle(dt_root, phandle);
+	if (!root)
+		return OPAL_PARAMETER;
+
+	if (!fdt) {
+		fdt = create_dtb(root, true);
+		if (!fdt)
+			return OPAL_INTERNAL_ERROR;
+		totalsize = fdt_totalsize(fdt);
+		free(fdt);
+		return totalsize;
+	}
+
+	if (!len)
+		return OPAL_PARAMETER;
+
+	fdt_error = 0;
+	old_last_phandle = last_phandle;
+	ret = __create_dtb(fdt, len, root, true);
+	if (ret) {
+		last_phandle = old_last_phandle;
+		if (ret == -FDT_ERR_NOSPACE)
+			return OPAL_NO_MEM;
+
+		return OPAL_EMPTY;
+	}
+
+	return OPAL_SUCCESS;
+}
+opal_call(OPAL_GET_DEVICE_TREE, opal_get_device_tree, 3);
