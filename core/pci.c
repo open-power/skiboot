@@ -1635,9 +1635,9 @@ static int __pci_restore_bridge_buses(struct phb *phb,
 	return 0;
 }
 
-void pci_restore_bridge_buses(struct phb *phb)
+void pci_restore_bridge_buses(struct phb *phb, struct pci_device *pd)
 {
-	pci_walk_dev(phb, NULL, __pci_restore_bridge_buses, NULL);
+	pci_walk_dev(phb, pd, __pci_restore_bridge_buses, NULL);
 }
 
 struct pci_cfg_reg_filter *pci_find_cfg_reg_filter(struct pci_device *pd,

@@ -530,7 +530,7 @@ extern struct pci_device *pci_walk_dev(struct phb *phb,
 						 void *),
 				       void *userdata);
 extern struct pci_device *pci_find_dev(struct phb *phb, uint16_t bdfn);
-extern void pci_restore_bridge_buses(struct phb *phb);
+extern void pci_restore_bridge_buses(struct phb *phb, struct pci_device *pd);
 extern struct pci_cfg_reg_filter *pci_find_cfg_reg_filter(struct pci_device *pd,
 					uint32_t start, uint32_t len);
 extern struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(struct pci_device *pd,

@@ -327,7 +327,7 @@ static int64_t p7ioc_sm_freset(struct p7ioc_phb *p)
 			 */
 			if (p->flags & P7IOC_RESTORE_BUS_NUM) {
 				p->flags &= ~P7IOC_RESTORE_BUS_NUM;
-				pci_restore_bridge_buses(&p->phb);
+				pci_restore_bridge_buses(&p->phb, NULL);
 			}
 
 			return OPAL_SUCCESS;

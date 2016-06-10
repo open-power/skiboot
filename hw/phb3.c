@@ -2093,7 +2093,7 @@ static void phb3_setup_for_link_up(struct phb3 *p)
 	 */
 	if (p->flags & PHB3_RESTORE_BUS_NUM) {
 		p->flags &= ~PHB3_RESTORE_BUS_NUM;
-		pci_restore_bridge_buses(&p->phb);
+		pci_restore_bridge_buses(&p->phb, NULL);
 	}
 }
 
