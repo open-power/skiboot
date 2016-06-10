@@ -251,7 +251,7 @@ extern void prd_init(void);
 extern void prd_register_reserved_memory(void);
 
 /* Flatten device-tree */
-extern void *create_dtb(const struct dt_node *root);
+extern void *create_dtb(const struct dt_node *root, bool exclusive);
 
 /* SLW reinit function for switching core settings */
 extern int64_t slw_reinit(uint64_t flags);

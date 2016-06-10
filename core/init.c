@@ -452,7 +452,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	op_display(OP_LOG, OP_MOD_INIT, 0x000B);
 
 	/* Create the device tree blob to boot OS. */
-	fdt = create_dtb(dt_root);
+	fdt = create_dtb(dt_root, false);
 	if (!fdt) {
 		op_display(OP_FATAL, OP_MOD_INIT, 2);
 		abort();
