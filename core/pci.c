@@ -804,9 +804,9 @@ static void pci_scan_phb(void *data)
 	pci_scan(phb, 0, 0xff, &phb->devices, NULL, has_link);
 
 	/* Configure MPS (Max Payload Size) for PCIe domain */
-	pci_walk_dev(phb, pci_get_mps, &mps);
+	pci_walk_dev(phb, NULL, pci_get_mps, &mps);
 	phb->mps = mps;
-	pci_walk_dev(phb, pci_configure_mps, NULL);
+	pci_walk_dev(phb, NULL, pci_configure_mps, NULL);
 }
 
 int64_t pci_register_phb(struct phb *phb, int opal_id)
@@ -1588,11 +1588,15 @@ static struct pci_device *__pci_walk_dev(struct phb *phb,
 }
 
 struct pci_device *pci_walk_dev(struct phb *phb,
+				struct pci_device *pd,
 				int (*cb)(struct phb *,
 					  struct pci_device *,
 					  void *),
 				void *userdata)
 {
+	if (pd)
+		return __pci_walk_dev(phb, &pd->children, cb, userdata);
+
 	return __pci_walk_dev(phb, &phb->devices, cb, userdata);
 }
 
@@ -1612,7 +1616,7 @@ static int __pci_find_dev(struct phb *phb,
 
 struct pci_device *pci_find_dev(struct phb *phb, uint16_t bdfn)
 {
-	return pci_walk_dev(phb, __pci_find_dev, &bdfn);
+	return pci_walk_dev(phb, NULL, __pci_find_dev, &bdfn);
 }
 
 static int __pci_restore_bridge_buses(struct phb *phb,
@@ -1633,7 +1637,7 @@ static int __pci_restore_bridge_buses(struct phb *phb,
 
 void pci_restore_bridge_buses(struct phb *phb)
 {
-	pci_walk_dev(phb, __pci_restore_bridge_buses, NULL);
+	pci_walk_dev(phb, NULL, __pci_restore_bridge_buses, NULL);
 }
 
 struct pci_cfg_reg_filter *pci_find_cfg_reg_filter(struct pci_device *pd,

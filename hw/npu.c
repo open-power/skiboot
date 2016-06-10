@@ -541,7 +541,7 @@ static void npu_dev_bind_pci_dev(struct npu_dev *dev)
 		if (!phb)
 			continue;
 
-		dev->pd = pci_walk_dev(phb, __npu_dev_bind_pci_dev, dev);
+		dev->pd = pci_walk_dev(phb, NULL, __npu_dev_bind_pci_dev, dev);
 		if (dev->pd) {
 			dev->phb = phb;
 			/* Found the device, set the bit in config space */
@@ -618,7 +618,7 @@ static int npu_dn_fixup(struct phb *phb,
 
 static void npu_phb_final_fixup(struct phb *phb)
 {
-	pci_walk_dev(phb, npu_dn_fixup, NULL);
+	pci_walk_dev(phb, NULL, npu_dn_fixup, NULL);
 }
 
 static void npu_ioda_init(struct npu *p)
