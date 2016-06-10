@@ -2303,6 +2303,11 @@ static uint8_t p7ioc_choose_bus(struct phb *phb __unused,
 	return al;
 }
 
+static int64_t p7ioc_get_reserved_pe_number(void)
+{
+	return 127;
+}
+
 /* p7ioc_phb_init_ioda_cache - Reset the IODA cache values
  */
 static void p7ioc_phb_init_ioda_cache(struct p7ioc_phb *p)
@@ -2557,6 +2562,7 @@ static const struct phb_ops p7ioc_phb_ops = {
 	.cfg_write16		= p7ioc_pcicfg_write16,
 	.cfg_write32		= p7ioc_pcicfg_write32,
 	.choose_bus		= p7ioc_choose_bus,
+	.get_reserved_pe_number	= p7ioc_get_reserved_pe_number,
 	.device_init		= p7ioc_device_init,
 	.pci_reinit		= p7ioc_pci_reinit,
 	.eeh_freeze_status	= p7ioc_eeh_freeze_status,

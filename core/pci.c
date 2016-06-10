@@ -281,11 +281,19 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
  */
 static void pci_check_clear_freeze(struct phb *phb)
 {
-	int64_t rc;
 	uint8_t freeze_state;
 	uint16_t pci_error_type, sev;
+	int64_t pe_number, rc;
 
-	rc = phb->ops->eeh_freeze_status(phb, 0, &freeze_state,
+	/* Retrieve the reserved PE number */
+	pe_number = OPAL_PARAMETER;
+	if (phb->ops->get_reserved_pe_number)
+		pe_number = phb->ops->get_reserved_pe_number();
+	if (pe_number < 0)
+		return;
+
+	/* Retrieve the frozen state */
+	rc = phb->ops->eeh_freeze_status(phb, pe_number, &freeze_state,
 					 &pci_error_type, &sev, NULL);
 	if (rc)
 		return;
@@ -297,7 +305,8 @@ static void pci_check_clear_freeze(struct phb *phb)
 		PCIERR(phb, 0, "Fatal probe in %s error !\n", __func__);
 		return;
 	}
-	phb->ops->eeh_freeze_clear(phb, 0, OPAL_EEH_ACTION_CLEAR_FREEZE_ALL);
+	phb->ops->eeh_freeze_clear(phb, pe_number,
+				   OPAL_EEH_ACTION_CLEAR_FREEZE_ALL);
 }
 
 /* pci_enable_bridge - Called before scanning a bridge

@@ -295,6 +295,11 @@ static uint8_t phb3_choose_bus(struct phb *phb __unused,
 	return candidate;
 }
 
+static int64_t phb3_get_reserved_pe_number(void)
+{
+	return PHB3_RESERVED_PE_NUM;
+}
+
 static void phb3_root_port_init(struct phb *phb, struct pci_device *dev,
 				int ecap, int aercap)
 {
@@ -3633,6 +3638,7 @@ static const struct phb_ops phb3_ops = {
 	.cfg_write16		= phb3_pcicfg_write16,
 	.cfg_write32		= phb3_pcicfg_write32,
 	.choose_bus		= phb3_choose_bus,
+	.get_reserved_pe_number	= phb3_get_reserved_pe_number,
 	.device_init		= phb3_device_init,
 	.presence_detect	= phb3_presence_detect,
 	.ioda_reset		= phb3_ioda_reset,

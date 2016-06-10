@@ -1103,6 +1103,7 @@ static const struct phb_ops npu_ops = {
 	.cfg_write16		= npu_dev_cfg_write16,
 	.cfg_write32		= npu_dev_cfg_write32,
 	.choose_bus		= NULL,
+	.get_reserved_pe_number	= NULL,
 	.device_init		= NULL,
 	.phb_final_fixup	= npu_phb_final_fixup,
 	.presence_detect	= NULL,
