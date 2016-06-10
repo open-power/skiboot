@@ -89,6 +89,11 @@ struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 {
 	struct cpu_job *job;
 
+#ifdef DEBUG_SERIALIZE_CPU_JOBS
+	if (cpu == NULL)
+		cpu = this_cpu();
+#endif
+
 	if (cpu && !cpu_is_available(cpu)) {
 		prerror("CPU: Tried to queue job on unavailable CPU 0x%04x\n",
 			cpu->pir);
