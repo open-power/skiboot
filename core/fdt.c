@@ -118,25 +118,30 @@ static void dump_fdt(void)
 static inline void dump_fdt(void) { }
 #endif
 
-static void flatten_dt_node(const struct dt_node *root)
+static void flatten_dt_properties(const struct dt_node *dn)
 {
-	const struct dt_node *i;
 	const struct dt_property *p;
 
-	FDT_DBG("node: %s\n", root->name);
-	list_for_each(&root->properties, p, list) {
+	list_for_each(&dn->properties, p, list) {
 		if (strstarts(p->name, DT_PRIVATE))
 			continue;
 
 		FDT_DBG("  prop: %s size: %ld\n", p->name, p->len);
 		dt_property(p);
 	}
+}
 
-	list_for_each(&root->children, i, list) {
-		dt_begin_node(i);
+static void flatten_dt_node(const struct dt_node *root)
+{
+	const struct dt_node *i;
+
+	FDT_DBG("node: %s\n", root->name);
+	dt_begin_node(root);
+	flatten_dt_properties(root);
+	list_for_each(&root->children, i, list)
 		flatten_dt_node(i);
-		dt_end_node();
-	}
+
+	dt_end_node();
 }
 
 static void create_dtb_reservemap(const struct dt_node *root)
@@ -181,14 +186,8 @@ void *create_dtb(const struct dt_node *root)
 
 		create_dtb_reservemap(root);
 
-		/* Open root node */
-		dt_begin_node(root);
-
 		/* Unflatten our live tree */
 		flatten_dt_node(root);
-
-		/* Close root node */
-		dt_end_node();
 
 		save_err(fdt_finish(fdt));
 
