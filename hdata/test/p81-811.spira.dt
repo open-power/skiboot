@@ -1880,6 +1880,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
           prop: part-number size: 8 val: 3030465837343000
           prop: ccin size: 5 val: 3534453800
           prop: description size: 8 val: 556e6b6e6f776e00
+          prop: ibm,chip-id size: 4 val: 00000000
           node: processor@1001
           prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333200
           prop: fru-type size: 2 val: 5046
@@ -1893,6 +1894,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
           prop: part-number size: 8 val: 3030465837343000
           prop: ccin size: 5 val: 3534453800
           prop: description size: 8 val: 556e6b6e6f776e00
+          prop: ibm,chip-id size: 4 val: 00000001
           node: processor@1002
           prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333300
           prop: fru-type size: 2 val: 5046
@@ -1906,6 +1908,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
           prop: part-number size: 8 val: 3030465837343000
           prop: ccin size: 5 val: 3534453800
           prop: description size: 8 val: 556e6b6e6f776e00
+          prop: ibm,chip-id size: 4 val: 00000010
           node: processor@1003
           prop: ibm,loc-code size: 25 val: 55373843422e3030312e575a533030414c2d50312d43333300
           prop: fru-type size: 2 val: 5046
@@ -1919,6 +1922,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
           prop: part-number size: 8 val: 3030465837343000
           prop: ccin size: 5 val: 3534453800
           prop: description size: 8 val: 556e6b6e6f776e00
+          prop: ibm,chip-id size: 4 val: 00000011
           node: usb-connector@2900
           prop: ibm,loc-code size: 24 val: 55373843422e3030312e575a533030414c2d50312d543500
           prop: fru-type size: 2 val: 4355

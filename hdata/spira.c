@@ -371,7 +371,7 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 	const struct HDIF_common_hdr *hdif;
 	unsigned int i, vpd_sz;
 	const void *vpd;
-	struct dt_node *np;
+	struct dt_node *np, *vpd_node;
 
 	for_each_ntuple_idx(&spira.ntuples.proc_chip, hdif, i,
 			    SPPCRD_HDIF_SIG) {
@@ -409,7 +409,11 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 		}
 
 		/* Add chip VPD */
-		dt_add_vpd_node(hdif, SPPCRD_IDATA_FRU_ID, SPPCRD_IDATA_KW_VPD);
+		vpd_node = dt_add_vpd_node(hdif, SPPCRD_IDATA_FRU_ID,
+					   SPPCRD_IDATA_KW_VPD);
+		if (vpd_node)
+			dt_add_property_cells(vpd_node, "ibm,chip-id",
+					      be32_to_cpu(cinfo->xscom_id));
 
 		/* Add module VPD on version A and later */
 		if (version >= 0x000a) {
@@ -437,7 +441,7 @@ static void add_xscom_sppaca(uint64_t xscom_base)
 {
 	const struct HDIF_common_hdr *hdif;
 	unsigned int i;
-	struct dt_node *np;
+	struct dt_node *np, *vpd_node;
 
 	for_each_ntuple_idx(&spira.ntuples.paca, hdif, i, PACA_HDIF_SIG) {
 		const struct sppaca_cpu_id *id;
@@ -474,7 +478,10 @@ static void add_xscom_sppaca(uint64_t xscom_base)
 			continue;
 
 		/* Add chip VPD */
-		dt_add_vpd_node(hdif, SPPACA_IDATA_FRU_ID, SPPACA_IDATA_KW_VPD);
+		vpd_node = dt_add_vpd_node(hdif, SPPACA_IDATA_FRU_ID,
+					   SPPACA_IDATA_KW_VPD);
+		if (vpd_node)
+			dt_add_property_cells(vpd_node, "ibm,chip-id", chip_id);
 
 		/* Add chip associativity data */
 		dt_add_property_cells(np, "ibm,ccm-node-id",
