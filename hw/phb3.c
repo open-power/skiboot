@@ -1159,7 +1159,7 @@ static int64_t phb3_pci_msi_eoi(struct phb *phb,
 	 * To avoid this race, we increment the generation count in
 	 * the IVT when we clear P. When software writes the IVC with
 	 * P cleared but with gen=n, the IVC won't actually clear P
-	 * becuase gen doesn't match what it just cached from the IVT.
+	 * because gen doesn't match what it just cached from the IVT.
 	 * Hence we don't lose P being set.
 	 */
 
@@ -3225,7 +3225,7 @@ static void phb3_init_capp_regs(struct phb3 *p, bool dma_mode)
 		 * HW301991 - XSL sends PTE updates with nodal scope instead of
 		 * group scope. The workaround is to force all commands to
 		 * unlimited scope by setting bit 4. This may have a slight
-		 * performance impact, but it would be negligable on the XSL.
+		 * performance impact, but it would be negligible on the XSL.
 		 * To avoid the possibility it might impact other cards, key it
 		 * off DMA mode since the XSL based Mellanox CX4 is the only
 		 * card to use this mode in P8 timeframe:

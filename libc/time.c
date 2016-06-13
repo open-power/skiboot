@@ -57,7 +57,7 @@ struct tm *gmtime_r(const time_t *timep, struct tm *result)
 	 * Work out the year. We subtract one day for every four years
 	 * and every 400 years after 1969. However as leap years don't
 	 * occur every 100 years we add one day back to counteract the
-	 * the substraction for every 4 years.
+	 * the subtraction for every 4 years.
 	 */
 	Y = (D - (1+D/365)/4 + (69+D/365)/100 - (369+D/365)/400)/365;
 

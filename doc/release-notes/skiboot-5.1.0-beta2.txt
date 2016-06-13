@@ -44,7 +44,7 @@ Over skiboot-5.1.0-beta1, the following bugs have been fixed:
      to have shared mode. So we have to cut off the first M64 segment,
      which corresponds to reserved PE#0 in kernel. If the first BAR
      (for example PF's IOV BAR) requires huge alignment in kernel, we
-     have to waste huge M64 space to accomodate the alignment. If we
+     have to waste huge M64 space to accommodate the alignment. If we
      have reserved PE#256, the waste of M64 space will be avoided.
 
 Other changes:

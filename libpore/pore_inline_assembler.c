@@ -108,7 +108,7 @@
 /// 
 /// Since the PORE instruction APIs are effectivly predicates, linear code
 /// sequences are easily assembled using the C-language logical OR construct.
-/// Any non-0 return code will immediatly break the sequence and set the
+/// Any non-0 return code will immediately break the sequence and set the
 /// expression value to 1.  The failure code can then be recovered from the \a
 /// error field of the context.  This coding technique is illustrated in the
 /// following example of assembling a memory-memory copy sequence.
@@ -890,7 +890,7 @@ pore_inline_instruction3(PoreInlineContext *ctx, int opcode, uint32_t operand,
 // Assemble WAIT
 //
 // The cycle count must be an unsigned 24-bit immediate otherwise the error
-// PORE_INLINE_UINT24_REQUIRED is signalled.  PGAS requires that HALT be used
+// PORE_INLINE_UINT24_REQUIRED is signaled.  PGAS requires that HALT be used
 // if the intention is to halt 
 
 int
@@ -914,7 +914,7 @@ pore_WAITS(PoreInlineContext *ctx, uint32_t cycles)
 // Assemble HOOKI
 //
 // The hook index must be an unsigned 24-bit immediate otherwise the error
-// PORE_INLINE_UINT24_REQUIRED is signalled.
+// PORE_INLINE_UINT24_REQUIRED is signaled.
 
 int
 pore_HOOKI(PoreInlineContext *ctx, uint32_t index, uint64_t imm)

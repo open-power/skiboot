@@ -215,7 +215,7 @@
 /// Final alignment constraint for SBE-XIP images.
 ///
 /// PORE images are required to be multiples of 8 bytes in length, to
-/// gaurantee that the PoreVe will be able to complete any 8-byte load/store.
+/// guarantee that the PoreVe will be able to complete any 8-byte load/store.
 #define SBE_XIP_FINAL_ALIGNMENT 8
 
 
@@ -270,7 +270,7 @@ typedef struct {
     /// unaligned instruction or data fetches.  Some sections and subsections
     /// must also be POWER cache-line aligned. The \a iv_alignment applies to
     /// the first byte of the section. PORE images are also required to be
-    /// multiples of 8 bytes in length, to gaurantee that the PoreVe will be
+    /// multiples of 8 bytes in length, to guarantee that the PoreVe will be
     /// able to complete any 8-byte load/store.  These constraints are checked
     /// by sbe_xip_validate() and enforced by sbe_xip_append(). The alignment
     /// constraints may force a section to be padded, which may create "holes"
@@ -811,7 +811,7 @@ sbe_xip_get_string(void *i_image, const char* i_id, char** o_data);
 /// images in terms of their relocatable PORE addresses.  The API checks that
 /// the \a i_poreAddress is properly aligned and contained in the image, then
 /// reads the contents of \a i_poreAddress into \a o_data, performing
-/// image-to-host endianess conversion if required.
+/// image-to-host endianness conversion if required.
 ///
 /// \retval 0 Success
 ///
@@ -926,7 +926,7 @@ sbe_xip_set_string(void *io_image, const char* i_id, const char* i_data);
 /// images in terms of their relocatable PORE addresses.  The API checks that
 /// the \a i_poreAddress is properly aligned and contained in the image, then
 /// updates the contents of \a i_poreAddress with \a i_data, performing
-/// host-to-image endianess conversion if required.
+/// host-to-image endianness conversion if required.
 ///
 /// \retval 0 Success
 ///
@@ -1332,7 +1332,7 @@ sbe_xip_pore2section(const void* i_image,
 /// \param[in] i_hostAddress A host address addressing data within the image.
 ///
 /// \param[out] o_poreAddress The API updates the location pointed to by \a
-/// o_poreAddress with the equivelent relocatable PORE address of the memory
+/// o_poreAddress with the equivalent relocatable PORE address of the memory
 /// addressed by i_hostAddress.  Since valid PORE addresses are always either
 /// 4-byte (code) or 8-byte (data) aligned, this API checks the aligment of
 /// the translated address and returns SBE_XIP_ALIGNMENT_ERROR if the PORE
@@ -1416,7 +1416,7 @@ sbe_xip_host2pore(const void* i_image,
 /// Attempt to grow the image past its defined memory allocation
 #define SBE_XIP_WOULD_OVERFLOW 14
 
-/// Error associated with the disassembler occured.
+/// Error associated with the disassembler occurred.
 #define SBE_XIP_DISASSEMBLER_ERROR 15
 
 /// hash collision creating the .fixed_toc section

@@ -34,7 +34,7 @@
 /// \file pgas.h
 /// \brief Pore GAS
 ///
-/// PGAS is documented in a seperate standalone document entitled <em> PGAS :
+/// PGAS is documented in a separate standalone document entitled <em> PGAS :
 /// PORE GAS (GNU Assembler) User's and Reference Manual </em>.
 ///
 /// This file defines support macros for the GNU PORE assembler, and the PORE
@@ -600,7 +600,7 @@
         // HW274735 documents that BC and BS are broken for the PORE-GPE0/1
         // pair. This bug is unfixed in POWER8, and by default we require BSI
         // and BCI to be implemented as macros on all engines. For
-        // compatability we continue to require that dx == D0.
+        // compatibility we continue to require that dx == D0.
 
         .macro  bsi, dx:req, offset:req, base:req, imm:req
         ..d0    (\dx)

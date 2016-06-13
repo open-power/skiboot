@@ -149,7 +149,7 @@ int i2c_write(uint32_t chip_id, uint8_t engine, uint8_t port,
 
 	/* Not all kernel driver versions support breaking up a write into
 	 * two components (offset, data), so we coalesce them first and
-	 * issue a single write. The offset is layed out in BE format.
+	 * issue a single write. The offset is laid out in BE format.
 	 */
 	size = offset_size + length;
 	buf = malloc(size);

@@ -906,7 +906,7 @@ xipValidateTocEntry(void* io_image, const SbeXipItem* i_item, void* io_arg)
 // "FNV hash algorithms and source code have been released into the public
 // domain. The authors of the FNV algorithmm look deliberate steps to disclose
 // the algorhtm (sic) in a public forum soon after it was invented. More than
-// a year passed after this public disclosure and the authors deliberatly took
+// a year passed after this public disclosure and the authors deliberately took
 // no steps to patent the FNV algorithm. Therefore it is safe to say that the
 // FNV authors have no patent claims on the FNV algorithm as published."
 

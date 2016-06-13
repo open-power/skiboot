@@ -13,7 +13,7 @@ used as a starting point for full documentation.
 
 The host calls this function to enable or disable PHB decode of the PCI IO
 and Memory address spaces below that PHB. Window_num selects an mmio window
-within that addres space. Enable set to '1' enables the PHB to decode and
+within that address space. Enable set to '1' enables the PHB to decode and
 forward system real addresses to PCI memory, while enable set to '0' disables
 PHB decode and forwarding for the address range defined in a particular MMIO
 window.

@@ -134,7 +134,7 @@ PCI Device Flag
 
 Link Number
 
-   Physical link number this emulated PCI device is assoicated
+   Physical link number this emulated PCI device is associated
    with. One of 0, 1, 4 or 5 (links 2 & 3 do not exist on Naples).
 
 Reserved

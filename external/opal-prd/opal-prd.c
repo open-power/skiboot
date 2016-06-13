@@ -1168,7 +1168,7 @@ static int handle_msg_occ_error(struct opal_prd_ctx *ctx,
 
 	proc = be64toh(msg->occ_error.chip);
 
-	pr_debug("FW: firmware signalled OCC error for proc 0x%x", proc);
+	pr_debug("FW: firmware signaled OCC error for proc 0x%x", proc);
 
 	if (!hservice_runtime->process_occ_error) {
 		pr_log_nocall("process_occ_error");
@@ -1636,7 +1636,7 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	pr_debug("HBRT: calling hservices_init");
 	rc = hservices_init(ctx, ctx->code_addr);
 	if (rc) {
-		pr_log(LOG_ERR, "HBRT: Can't initiliase HBRT");
+		pr_log(LOG_ERR, "HBRT: Can't initialise HBRT");
 		goto out_close;
 	}
 	pr_debug("HBRT: hservices_init done");

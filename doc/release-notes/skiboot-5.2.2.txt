@@ -9,7 +9,7 @@ first released August 17th, 2015.
 
 Skiboot 5.2.2 replaces skiboot-5.2.1 as the current stable version, which was
 released on April 27th, 2016. Over skiboot-5.2.1, skiboot 5.2.2 contains
-one bug fix targetted at P8NVL systems, notably the Garrison platform.
+one bug fix targeted at P8NVL systems, notably the Garrison platform.
 
 skiboot-5.2.2 contains all bug fixes as of skiboot-5.1.16.
 

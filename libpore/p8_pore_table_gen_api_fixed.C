@@ -715,7 +715,7 @@ uint32_t p8_pore_gen_scom_fixed(void       *io_image,
   //   except the APPEND command, incl the translated REPLACE->APPEND, which will result 
   //   in the previously mentioned code error being returned.
   // - The table can be full but still include NOOPs. If so, we can still APPEND since
-  //   we append at first occurrance of a NOOP or at the end of the table (at the RET).
+  //   we append at first occurrence of a NOOP or at the end of the table (at the RET).
   switch (i_section)  {
   case P8_SCOM_SECTION_NC:
     if ( ( (operation==P8_PORE_SCOM_APPEND && entriesCount==SLW_MAX_SCOMS_NC) &&

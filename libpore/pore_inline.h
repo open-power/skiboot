@@ -291,7 +291,7 @@ typedef uint32_t PoreInlineLocation;
 /// PORE inline assembler context
 ///
 /// See the documentation page \ref pore_inline_assembler and the function
-/// pore_inline_context_create() for futher details.
+/// pore_inline_context_create() for further details.
 
 typedef struct {
 

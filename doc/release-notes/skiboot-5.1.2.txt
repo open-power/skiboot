@@ -31,7 +31,7 @@ Over skiboot-5.1.1, we have the following changes:
 - build improvements
   - fixes for two compiler warnings were squashed in 5.1.1 commit,
     re-introduce the fixes.
-  - misc complier/static analysis warning fixes
+  - misc compiler/static analysis warning fixes
 
 - gard utility:
   - If gard tool detects the GUARD PNOR partition is corrupted, it will

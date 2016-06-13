@@ -43,7 +43,7 @@ strip_version_from_result() {
 }
 
 diff_with_result() {
-	# Explicitly diff a file with an arbitary result file
+	# Explicitly diff a file with an arbitrary result file
 	if [ "$#" -eq 1 ] ; then
 		if ! diff -u "$RESULT" "$1" ; then
 			fail_test;

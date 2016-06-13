@@ -3,7 +3,7 @@
 		#size-cells = <0x0>;
 		compatible = "ibm,opal-v2", "ibm,opal-v3";
 
-; v2 is maintained for possible compatibilty with very, very old kernels
+; v2 is maintained for possible compatibility with very, very old kernels
 ; it will go away at some point in the future. Detect and rely on ibm,opal-v3
 
 		ibm,associativity-reference-points = <0x4 0x3>;

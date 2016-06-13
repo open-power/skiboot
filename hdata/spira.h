@@ -475,14 +475,14 @@ struct msvpd_pmover_bsr_synchro {
  * Note that slots meant for the addition of GX+ adapters that
  * are currently unpopulated but support hotplug will have a
  * minimum "placeholder" entry, which will be fully populated
- * when the array is rebuild during concurrent maintainance.
+ * when the array is rebuild during concurrent maintenance.
  * This "placeholder" is called a "reservation".
  *
- * WARNING: The array rebuild by concurrent maintainance is not
+ * WARNING: The array rebuild by concurrent maintenance is not
  * guaranteed to be in the same order as the IPL array, not is
- * the order stable between concurrent maintainance operations.
+ * the order stable between concurrent maintenance operations.
  *
- * There's also a child pointer to daugher card structures but
+ * There's also a child pointer to daughter card structures but
  * we aren't going to handle that just yet.
  */
 #define CECHUB_FRU_HDIF_SIG	"IO HUB"
@@ -659,7 +659,7 @@ struct cpu_ctl_init_data {
  * child. A child has a pointer to its parent. Siblings are
  * consecutive entries.
  *
- * Note: If we ever support concurrent maintainance... this is
+ * Note: If we ever support concurrent maintenance... this is
  * completely rebuilt, invalidating all indices, though other
  * structures that may reference SLCA by index will be rebuilt
  * as well.

@@ -137,7 +137,7 @@ struct sensor_data {
 #define SENSOR_STATUS_FAULTED	0x0002
 #define SENSOR_STATUS_PRESENT	0x0001
 
-/* Power sensor is retrieved thru a new PRS modifier 0x1C, data
+/* Power sensor is retrieved through a new PRS modifier 0x1C, data
  * response is as follows:
  *
  * Byte 0:

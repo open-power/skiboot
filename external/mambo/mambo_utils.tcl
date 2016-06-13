@@ -199,7 +199,7 @@ proc mywatch { } {
     while { [mysim memory display 0x700 8] != 0 } {
         mysim cycle 1
     }
-    puts "condition occured "
+    puts "condition occurred "
     ipc
 }
 

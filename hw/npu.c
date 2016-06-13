@@ -1510,7 +1510,7 @@ static void npu_dev_create_cfg(struct npu_dev *dev)
 	/* 0x10 - BARs, always 64-bits non-prefetchable
 	 *
 	 * Each emulated device represents one link and therefore
-	 * there is one BAR for the assocaited DLTL region.
+	 * there is one BAR for the associated DLTL region.
 	 */
 
 	/* Low 32-bits */

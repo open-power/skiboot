@@ -115,7 +115,7 @@
 	 *
 	 * Unless a component (skiboot or Linux) specifically knows about a region (usually
 	 * based on its name) and decides to change or remove it, all these regions are
-	 * passed as-is to Linux and to subsequent kernels accross kexec and are kept
+	 * passed as-is to Linux and to subsequent kernels across kexec and are kept
 	 * preserved.
 	 *
 	 * NOTE: Do *NOT* copy the entries below, they are just an example and are actually
@@ -189,7 +189,7 @@
 			ibm,segment-page-sizes = <0xc 0x0 0x3 0xc 0x0 0x10 0x7 0x18 0x38 0x10 0x110 0x2 0x10 0x1 0x18 0x8 0x18 0x100 0x1 0x18 0x0 0x22 0x120 0x1 0x22 0x3>;
 
 			/*
-			 * Similarily that might need to be reviewed later but will do for now...
+			 * Similarly that might need to be reviewed later but will do for now...
 			 */			
 			ibm,pa-features = [0x6 0x0 0xf6 0x3f 0xc7 0x0 0x80 0xc0];
 
@@ -330,10 +330,10 @@
 	 * do not represent DIMMs, memory controllers or Centaurs, thus will
 	 * be expressed separately.
 	 *
-	 * In order to be able to handle affinity propertly, we require that
+	 * In order to be able to handle affinity properly, we require that
 	 * a memory node is created for each range of memory that has a different
 	 * "affinity", which in practice means for each chip since we don't
-	 * support memory interleaved accross multiple chips on P8.
+	 * support memory interleaved across multiple chips on P8.
 	 *
 	 * Additionally, it is *not* required that one chip = one memory node,
 	 * it is perfectly acceptable to break down the memory of one chip into
@@ -345,7 +345,7 @@
 
 		/*
 		 * We support multiple entries in the ibm,chip-id property for
-		 * memory nodes in case the memory is interleaved accross multiple
+		 * memory nodes in case the memory is interleaved across multiple
 		 * chips but that shouldn't happen on P8
 		 */
 		ibm,chip-id = <0x0>;

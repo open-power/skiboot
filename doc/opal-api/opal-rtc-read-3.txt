@@ -20,10 +20,10 @@ Calling:
 
 Since RTC calls can be pretty slow, OPAL_RTC_READ is likely to first return
 OPAL_BUSY_EVENT, requiring the caller to wait until the OPAL_EVENT_RTC event
-has been signaled. Once the event has been signalled, a subsequent
-OPAL_RTC_READ call will retreive the time. Since the OPAL_EVENT_RTC event is
+has been signaled. Once the event has been signaled, a subsequent
+OPAL_RTC_READ call will retrieve the time. Since the OPAL_EVENT_RTC event is
 used for both reading and writing the RTC, callers must be able to handle
-the event being signalled for a concurrent in flight OPAL_RTC_WRITE rather
+the event being signaled for a concurrent in flight OPAL_RTC_WRITE rather
 than this read request.
 
 The following code is one way to correctly issue and then wait for a response:

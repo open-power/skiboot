@@ -52,7 +52,7 @@ Step 1: To report an error, invoke opal_elog_create() with required argument.
 		#define OPAL_INPUT_OUTPUT_ERR_EVT       0x02
 		/* RESOURCE_DEALLOC: Hotplug events and errors */
 		#define OPAL_RESOURCE_DEALLOC_ERR_EVT   0x03
-		/* MISC: Miscellanous error */
+		/* MISC: Miscellaneous error */
 		#define OPAL_MISC_ERR_EVT               0x04
 
 	uint16_t component_id: Component ID of Sapphire component as

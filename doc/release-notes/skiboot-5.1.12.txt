@@ -25,7 +25,7 @@ POWER8 PHB (PCIe) specific:
 - hw/phb3: Flush cache line after updating P/Q bits
     When doing an MSI EOI, we update the P and Q bits in the IVE. That causes
     the corresponding cache line to be dirty in the L3 which will cause a
-    subsequent update by the PHB (upon recieving the next MSI) to get a few
+    subsequent update by the PHB (upon receiving the next MSI) to get a few
     retries until it gets flushed.
 
     We improve the situation (and thus performance) by doing a dcbf
