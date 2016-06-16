@@ -1730,6 +1730,7 @@ static void npu_add_phb_properties(struct npu *p)
 			   0x800, 0x0, 0x0, 0x1, icsp, base_lsi + 2,
 			   0x800, 0x0, 0x0, 0x2, icsp, base_lsi + 3 };
 	uint32_t mask[] = {0xf800, 0x0, 0x0, 0x7};
+	char slotbuf[32];
 
 	/* Add various properties that HB doesn't have to
 	 * add, some of them simply because they result from
@@ -1784,6 +1785,13 @@ static void npu_add_phb_properties(struct npu *p)
 			      hi32(mm_base), lo32(mm_base),
 			      hi32(mm_base), lo32(mm_base),
 			      hi32(mm_size), lo32(mm_size));
+
+	/* Set the slot location on the NPU PHB.  This PHB can contain
+	 * devices that correlate with multiple physical slots, so
+	 * present the chip ID instead.
+	 */
+	snprintf(slotbuf, sizeof(slotbuf), "NPU Chip %d", p->chip_id);
+	dt_add_property_string(np, "ibm,io-base-loc-code", slotbuf);
 }
 
 static void npu_create_phb(struct dt_node *dn)
