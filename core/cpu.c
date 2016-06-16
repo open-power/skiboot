@@ -411,7 +411,7 @@ static void enable_attn(void)
 	unsigned long hid0;
 
 	hid0 = mfspr(SPR_HID0);
-	hid0 |= hid0_hile;
+	hid0 |= hid0_attn;
 	set_hid0(hid0);
 }
 
@@ -420,7 +420,7 @@ static void disable_attn(void)
 	unsigned long hid0;
 
 	hid0 = mfspr(SPR_HID0);
-	hid0 &= ~hid0_hile;
+	hid0 &= ~hid0_attn;
 	set_hid0(hid0);
 }
 
