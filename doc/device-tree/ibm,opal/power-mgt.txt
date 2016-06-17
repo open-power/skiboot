@@ -26,6 +26,33 @@ ibm,cpu-idle-state-residency-ns = <0x1 0x2 0x3>
 ibm,cpu-idle-state-latencies-ns = <0x1 0x2 0x3>
 
 
+ibm,cpu-idle-state-pmicr ibm,cpu-idle-state-pmicr-mask
+------------------------------------------------------
+In POWER8, idle states sleep and winkle have 2 modes- fast and deep. In fast
+mode, idle state puts the core into threshold voltage whereas deep mode
+completely turns off the core. Choosing fast vs deep mode for an idle state
+can be done either via PM_GP1 scom or by writing to PMICR special register.
+If using the PMICR path to choose fast/deep mode then ibm,cpu-idle-state-pmicr
+and ibm,cpu-idle-state-pmicr-mask properties expose relevant PMICR bits and
+values for corresponding idle states.
+
+
+ibm,cpu-idle-state-psscr ibm,cpu-idle-state-psscr-mask
+------------------------------------------------------
+In POWER ISA v3, there is a common instruction 'stop' to enter any idle state
+and SPR PSSCR is used to specify which idle state needs to be entered upon
+executing stop instruction. Properties ibm,cpu-idle-state-psscr and
+ibm,cpu-idle-state-psscr-mask expose the relevant PSSCR bits and values for
+corresponding idle states.
+
+
+ibm,cpu-idle-state-flags
+------------------------
+These flags are used to describe the characteristics of the idle states like
+the kind of core state loss caused. These flags are used by the kernel to
+save/restore appropriate context while using the idle states.
+
+
 ibm,pstate-ids
 --------------
 
@@ -67,8 +94,3 @@ ibm,pstate-core-max
 This property is added when ultra_turbo(WOF) is enabled. This property gives
 the list of max pstate for each 'n' number of active cores in the chip.
 
-FIXME: document these:
-ibm,cpu-idle-state-flags
-ibm,cpu-idle-state-names
-ibm,cpu-idle-state-pmicr
-ibm,cpu-idle-state-pmicr-mask
