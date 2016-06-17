@@ -179,6 +179,16 @@
 #define OPAL_PM_WINKLE_ENABLED		0x00040000
 #define OPAL_PM_SLEEP_ENABLED_ER1	0x00080000 /* with workaround */
 
+/*
+ * Flags for stop states. Use 2 bits to distinguish between
+ * deep and fast states. Deep states result in full context
+ * loss thereby requiring slw to partially restore state
+ * whereas fast state can function without the presence of
+ * slw.
+ */
+#define OPAL_PM_STOP_INST_FAST		0x00100000
+#define OPAL_PM_STOP_INST_DEEP		0x00200000
+
 #ifndef __ASSEMBLY__
 
 /* Other enums */
