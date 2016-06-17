@@ -35,6 +35,7 @@
 #include <sbe_xip_image.h>
 
 #define MAX_RESET_PATCH_SIZE	64
+
 static uint32_t slw_saved_reset[MAX_RESET_PATCH_SIZE];
 
 static bool slw_current_le = false;
@@ -689,7 +690,7 @@ void add_cpu_idle_state_properties(void)
 		 * If a state is supported add each of its property
 		 * to its corresponding property buffer.
 		 */
-		strcpy(name_buf, states[i].name);
+		strncpy(name_buf, states[i].name, MAX_NAME_LEN);
 		name_buf = name_buf + strlen(states[i].name) + 1;
 
 		*latency_ns_buf = cpu_to_fdt32(states[i].latency_ns);
