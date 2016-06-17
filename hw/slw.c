@@ -497,7 +497,8 @@ void add_cpu_idle_state_properties(void)
 	struct proc_chip *chip;
 	int nr_states;
 
-	bool can_sleep = true, can_winkle = true;
+	bool can_sleep = true;
+	bool has_slw = true;
 	u8 i;
 
 	u32 supported_states_mask;
@@ -569,8 +570,8 @@ void add_cpu_idle_state_properties(void)
 		nr_states = ARRAY_SIZE(power7_cpu_idle_states);
 	}
 
-	/* Enable winkle only if slw image is intact */
-	can_winkle = (chip->slw_base && chip->slw_bar_size &&
+	/* Enable deep idle states only if slw image is intact */
+	has_slw = (chip->slw_base && chip->slw_bar_size &&
 			chip->slw_image_size);
 
 	/*
@@ -600,7 +601,7 @@ void add_cpu_idle_state_properties(void)
 	if (can_sleep)
 		supported_states_mask |= OPAL_PM_SLEEP_ENABLED |
 					OPAL_PM_SLEEP_ENABLED_ER1;
-	if (can_winkle)
+	if (has_slw)
 		supported_states_mask |= OPAL_PM_WINKLE_ENABLED;
 
 	for (i = 0; i < nr_states; i++) {
