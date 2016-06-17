@@ -78,8 +78,7 @@ void init_chips(void)
 	/* Detect mambo chip */
 	if (dt_find_by_path(dt_root, "/mambo")) {
 		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_MAMBO_CALLOUTS
-			| QUIRK_NO_F000F | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ
-			| QUIRK_DISABLE_NAP;
+			| QUIRK_NO_F000F | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ;
 		prlog(PR_NOTICE, "CHIP: Detected Mambo simulator\n");
 	}
 	if (dt_find_by_path(dt_root, "/simics")) {

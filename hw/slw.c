@@ -594,12 +594,6 @@ void add_cpu_idle_state_properties(void)
 		return;
 	}
 
-	/* Mambo currently misbehaves in nap mode vs. timebase, so let's
-	 * disable idle states
-	 */
-	if (chip_quirk(QUIRK_DISABLE_NAP))
-		return;
-
 	/*
 	 * Chose the right state table for the chip
 	 *
