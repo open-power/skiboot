@@ -405,40 +405,20 @@ struct cpu_idle_states {
 	u32 flags;
 };
 
-/* Flag definitions */
-/* Set bits to avoid misinterpretation even if kernel has endian bugs */
-
-#define IDLE_DEC_STOP		0x00000001 /* Decrementer would stop */
-#define IDLE_TB_STOP		0x00000002 /* Timebase would stop */
-#define IDLE_LOSE_USER_CONTEXT	0x00001000 /* Restore GPRs like nap */
-#define IDLE_LOSE_HYP_CONTEXT	0x00002000 /* Restore hypervisor resource
-					      from PACA pointer */
-#define IDLE_LOSE_FULL_CONTEXT	0x00004000 /* Restore hypervisor resource
-					      by searching PACA */
-#define IDLE_USE_PMICR		0x00800000 /* Use SPR PMICR instruction */
-
-#define IDLE_FASTSLEEP_PMICR	0x0000002000000000UL
-#define IDLE_DEEPSLEEP_PMICR	0x0000003000000000UL
-#define IDLE_SLEEP_PMICR_MASK	0x0000003000000000UL
-
-#define IDLE_FASTWINKLE_PMICR	0x0000000000200000UL
-#define IDLE_DEEPWINKLE_PMICR	0x0000000000300000UL
-#define IDLE_WINKLE_PMICR_MASK	0x0000000000300000UL
-
 static struct cpu_idle_states power7_cpu_idle_states[] = {
 	{ /* nap */
 		.name = "nap",
 		.latency_ns = 4000,
 		.residency_ns = 100000,
-		.flags = 0*IDLE_DEC_STOP \
-		       | 0*IDLE_TB_STOP  \
-		       | 1*IDLE_LOSE_USER_CONTEXT \
-		       | 0*IDLE_LOSE_HYP_CONTEXT \
-		       | 0*IDLE_LOSE_FULL_CONTEXT \
+		.flags = 0*OPAL_PM_DEC_STOP \
+		       | 0*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_NAP_ENABLED \
 		       | 0*OPAL_PM_SLEEP_ENABLED \
 		       | 0*OPAL_PM_WINKLE_ENABLED \
-		       | 0*IDLE_USE_PMICR,
+		       | 0*OPAL_USE_PMICR,
 		.pm_ctrl_reg_val = 0,
 		.pm_ctrl_reg_mask = 0 },
 };
@@ -448,29 +428,29 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 		.name = "nap",
 		.latency_ns = 4000,
 		.residency_ns = 100000,
-		.flags = 0*IDLE_DEC_STOP \
-		       | 0*IDLE_TB_STOP  \
-		       | 1*IDLE_LOSE_USER_CONTEXT \
-		       | 0*IDLE_LOSE_HYP_CONTEXT \
-		       | 0*IDLE_LOSE_FULL_CONTEXT \
+		.flags = 0*OPAL_PM_DEC_STOP \
+		       | 0*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_NAP_ENABLED \
-		       | 0*IDLE_USE_PMICR,
+		       | 0*OPAL_USE_PMICR,
 		.pm_ctrl_reg_val = 0,
 		.pm_ctrl_reg_mask = 0 },
 	{ /* fast sleep (with workaround) */
 		.name = "fastsleep_",
 		.latency_ns = 40000,
 		.residency_ns = 300000000,
-		.flags = 1*IDLE_DEC_STOP \
-		       | 1*IDLE_TB_STOP  \
-		       | 1*IDLE_LOSE_USER_CONTEXT \
-		       | 0*IDLE_LOSE_HYP_CONTEXT \
-		       | 0*IDLE_LOSE_FULL_CONTEXT \
+		.flags = 1*OPAL_PM_DEC_STOP \
+		       | 1*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_SLEEP_ENABLED_ER1 \
-		       | 0*IDLE_USE_PMICR, /* Not enabled until deep
+		       | 0*OPAL_USE_PMICR, /* Not enabled until deep
 						states are available */
-		.pm_ctrl_reg_val = IDLE_FASTSLEEP_PMICR,
-		.pm_ctrl_reg_mask = IDLE_SLEEP_PMICR_MASK },
+		.pm_ctrl_reg_val = OPAL_PM_FASTSLEEP_PMICR,
+		.pm_ctrl_reg_mask = OPAL_PM_SLEEP_PMICR_MASK },
 	{ /* Winkle */
 		.name = "winkle",
 		.latency_ns = 10000000,
@@ -481,13 +461,13 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 					     * However, this should be roughly
 					     * accurate for when linux does
 					     * use it. */
-		.flags = 1*IDLE_DEC_STOP \
-		       | 1*IDLE_TB_STOP  \
-		       | 1*IDLE_LOSE_USER_CONTEXT \
-		       | 1*IDLE_LOSE_HYP_CONTEXT \
-		       | 1*IDLE_LOSE_FULL_CONTEXT \
+		.flags = 1*OPAL_PM_DEC_STOP \
+		       | 1*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 1*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 1*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_WINKLE_ENABLED \
-		       | 0*IDLE_USE_PMICR, /* Currently choosing deep vs
+		       | 0*OPAL_USE_PMICR, /* Currently choosing deep vs
 						fast via EX_PM_GP1 reg */
 		.pm_ctrl_reg_val = 0,
 		.pm_ctrl_reg_mask = 0 },
@@ -503,11 +483,11 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		.name = "stop0",
 		.latency_ns = 300,
 		.residency_ns = 3000,
-		.flags = 0*IDLE_DEC_STOP \
-		       | 0*IDLE_TB_STOP  \
-		       | 0*IDLE_LOSE_USER_CONTEXT \
-		       | 0*IDLE_LOSE_HYP_CONTEXT \
-		       | 0*IDLE_LOSE_FULL_CONTEXT \
+		.flags = 0*OPAL_PM_DEC_STOP \
+		       | 0*OPAL_PM_TIMEBASE_STOP  \
+		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_FAST,
 		.pm_ctrl_reg_val = 0,
 		.pm_ctrl_reg_mask = 0xF },
@@ -515,11 +495,11 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		.name = "stop1",
 		.latency_ns = 5000,
 		.residency_ns = 50000,
-		.flags = 0*IDLE_DEC_STOP \
-		       | 0*IDLE_TB_STOP  \
-		       | 1*IDLE_LOSE_USER_CONTEXT \
-		       | 0*IDLE_LOSE_HYP_CONTEXT \
-		       | 0*IDLE_LOSE_FULL_CONTEXT \
+		.flags = 0*OPAL_PM_DEC_STOP \
+		       | 0*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_FAST,
 		.pm_ctrl_reg_val = 1,
 		.pm_ctrl_reg_mask = 0xF },
@@ -527,11 +507,11 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		.name = "stop2",
 		.latency_ns = 10000,
 		.residency_ns = 100000,
-		.flags = 0*IDLE_DEC_STOP \
-		       | 0*IDLE_TB_STOP  \
-		       | 1*IDLE_LOSE_USER_CONTEXT \
-		       | 0*IDLE_LOSE_HYP_CONTEXT \
-		       | 0*IDLE_LOSE_FULL_CONTEXT \
+		.flags = 0*OPAL_PM_DEC_STOP \
+		       | 0*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_FAST,
 		.pm_ctrl_reg_val = 2,
 		.pm_ctrl_reg_mask = 0xF },
@@ -540,11 +520,11 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		.name = "stop4",
 		.latency_ns = 100000,
 		.residency_ns = 1000000,
-		.flags = 1*IDLE_DEC_STOP \
-		       | 1*IDLE_TB_STOP  \
-		       | 1*IDLE_LOSE_USER_CONTEXT \
-		       | 1*IDLE_LOSE_HYP_CONTEXT \
-		       | 1*IDLE_LOSE_FULL_CONTEXT \
+		.flags = 1*OPAL_PM_DEC_STOP \
+		       | 1*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 1*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 1*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_DEEP,
 		.pm_ctrl_reg_val = 4,
 		.pm_ctrl_reg_mask = 0xF },
@@ -553,11 +533,11 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		.name = "stop8",
 		.latency_ns = 2000000,
 		.residency_ns = 20000000,
-		.flags = 1*IDLE_DEC_STOP \
-		       | 1*IDLE_TB_STOP  \
-		       | 1*IDLE_LOSE_USER_CONTEXT \
-		       | 1*IDLE_LOSE_HYP_CONTEXT \
-		       | 1*IDLE_LOSE_FULL_CONTEXT \
+		.flags = 1*OPAL_PM_DEC_STOP \
+		       | 1*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 1*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 1*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_DEEP,
 		.pm_ctrl_reg_val = 0x8,
 		.pm_ctrl_reg_mask = 0xF },
@@ -567,11 +547,11 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		.name = "stop11",
 		.latency_ns = 10000000,
 		.residency_ns = 100000000,
-		.flags = 1*IDLE_DEC_STOP \
-		       | 1*IDLE_TB_STOP  \
-		       | 1*IDLE_LOSE_USER_CONTEXT \
-		       | 1*IDLE_LOSE_HYP_CONTEXT \
-		       | 1*IDLE_LOSE_FULL_CONTEXT \
+		.flags = 1*OPAL_PM_DEC_STOP \
+		       | 1*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 1*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 1*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_DEEP,
 		.pm_ctrl_reg_val = 0xB,
 		.pm_ctrl_reg_mask = 0xF },

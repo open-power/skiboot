@@ -171,13 +171,30 @@
 
 /* Device tree flags */
 
-/* Flags set in power-mgmt nodes in device tree if
- * respective idle states are supported in the platform.
+/*
+ * Flags set in power-mgmt nodes in device tree describing
+ * idle states that are supported in the platform.
  */
+#define OPAL_PM_DEC_STOP		0x00000001 /* Decrementer would stop */
+#define OPAL_PM_TIMEBASE_STOP		0x00000002 /* Needs timebase restore */
+#define OPAL_PM_LOSE_USER_CONTEXT	0x00001000 /* Restore GPRs like nap */
+#define OPAL_PM_LOSE_HYP_CONTEXT	0x00002000 /* Restore hypervisor
+						  resource from PACA pointer */
+#define OPAL_PM_LOSE_FULL_CONTEXT	0x00004000
 #define OPAL_PM_NAP_ENABLED		0x00010000
 #define OPAL_PM_SLEEP_ENABLED		0x00020000
 #define OPAL_PM_WINKLE_ENABLED		0x00040000
 #define OPAL_PM_SLEEP_ENABLED_ER1	0x00080000 /* with workaround */
+#define OPAL_USE_PMICR			0x00800000 /* Use SPR PMICR instruction */
+
+#define OPAL_PM_FASTSLEEP_PMICR		0x0000002000000000UL
+#define OPAL_PM_DEEPSLEEP_PMICR		0x0000003000000000UL
+#define OPAL_PM_SLEEP_PMICR_MASK	0x0000003000000000UL
+
+#define OPAL_PM_FASTWINKLE_PMICR	0x0000000000200000UL
+#define OPAL_PM_DEEPWINKLE_PMICR	0x0000000000300000UL
+#define OPAL_PM_WINKLE_PMICR_MASK	0x0000000000300000UL
+
 
 /*
  * Flags for stop states. Use 2 bits to distinguish between
