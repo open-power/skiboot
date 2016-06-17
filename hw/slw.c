@@ -581,13 +581,13 @@ void add_cpu_idle_state_properties(void)
 	 */
 
 	/* Allocate memory to idle state property buffers. */
-	alloced_name_buf= (char *) malloc(nr_states * sizeof(char) * MAX_NAME_LEN);
+	alloced_name_buf= malloc(nr_states * sizeof(char) * MAX_NAME_LEN);
 	name_buf = alloced_name_buf;
-	latency_ns_buf	=  (u32 *) malloc(nr_states * sizeof(u32));
-	residency_ns_buf=  (u32 *) malloc(nr_states * sizeof(u32));
-	flags_buf	=  (u32 *) malloc(nr_states * sizeof(u32));
-	pmicr_buf	=  (u64 *) malloc(nr_states * sizeof(u64));
-	pmicr_mask_buf	=  (u64 *) malloc(nr_states * sizeof(u64));
+	latency_ns_buf	= malloc(nr_states * sizeof(u32));
+	residency_ns_buf= malloc(nr_states * sizeof(u32));
+	flags_buf	= malloc(nr_states * sizeof(u32));
+	pmicr_buf	= malloc(nr_states * sizeof(u64));
+	pmicr_mask_buf	= malloc(nr_states * sizeof(u64));
 
 	name_buf_len = 0;
 	num_supported_idle_states = 0;
