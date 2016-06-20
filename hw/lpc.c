@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define pr_fmt(fmt)	"LPC: " fmt
+
 #include <skiboot.h>
 #include <xscom.h>
 #include <io.h>
@@ -145,7 +147,7 @@ static int64_t opb_write(struct proc_chip *chip, uint32_t addr, uint32_t data,
 		data_reg = ((uint64_t)data) << 32;
 		break;
 	default:
-		prerror("LPC: Invalid data size %d\n", sz);
+		prerror("Invalid data size %d\n", sz);
 		return OPAL_PARAMETER;
 	}
 
@@ -195,7 +197,7 @@ static int64_t opb_read(struct proc_chip *chip, uint32_t addr, uint32_t *data,
 	int64_t rc, tout;
 
 	if (sz != 1 && sz != 2 && sz != 4) {
-		prerror("LPC: Invalid data size %d\n", sz);
+		prerror("Invalid data size %d\n", sz);
 		return OPAL_PARAMETER;
 	}
 
@@ -256,14 +258,14 @@ static int64_t lpc_set_fw_idsel(struct proc_chip *chip, uint8_t idsel)
 	rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_FW_SEG_IDSEL,
 		      &val, 4);
 	if (rc) {
-		prerror("LPC: Failed to read HC_FW_SEG_IDSEL register !\n");
+		prerror("Failed to read HC_FW_SEG_IDSEL register !\n");
 		return rc;
 	}
 	val = (val & 0xfffffff0) | idsel;
 	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_FW_SEG_IDSEL,
 		       val, 4);
 	if (rc) {
-		prerror("LPC: Failed to write HC_FW_SEG_IDSEL register !\n");
+		prerror("Failed to write HC_FW_SEG_IDSEL register !\n");
 		return rc;
 	}
 	chip->lpc_fw_idsel = idsel;
@@ -299,7 +301,7 @@ static int64_t lpc_set_fw_rdsz(struct proc_chip *chip, uint8_t rdsz)
 	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_FW_RD_ACC_SIZE,
 		       val, 4);
 	if (rc) {
-		prerror("LPC: Failed to write LPC_HC_FW_RD_ACC_SIZE !\n");
+		prerror("Failed to write LPC_HC_FW_RD_ACC_SIZE !\n");
 		return rc;
 	}
 	chip->lpc_fw_rdsz = rdsz;
@@ -508,7 +510,7 @@ static void lpc_setup_serirq(struct proc_chip *chip)
 
 	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQMASK, mask, 4);
 	if (rc) {
-		prerror("LPC: Failed to update irq mask\n");
+		prerror("Failed to update irq mask\n");
 		return;
 	}
 	DBG_IRQ("LPC: IRQ mask set to 0x%08x\n", mask);
@@ -518,7 +520,7 @@ static void lpc_setup_serirq(struct proc_chip *chip)
 	rc = opb_write(chip, opb_master_reg_base + OPB_MASTER_LS_IRQ_MASK,
 		       OPB_MASTER_IRQ_LPC, 4);
 	if (rc)
-		prerror("LPC: Failed to enable IRQs in OPB\n");
+		prerror("Failed to enable IRQs in OPB\n");
 
 	/* Check whether we should enable serirq */
 	if (mask & LPC_HC_IRQ_SERIRQ_ALL) {
@@ -531,18 +533,18 @@ static void lpc_setup_serirq(struct proc_chip *chip)
 		DBG_IRQ("LPC: SerIRQ disabled\n");
 	}
 	if (rc)
-		prerror("LPC: Failed to configure SerIRQ\n");
+		prerror("Failed to configure SerIRQ\n");
 	{
 		u32 val;
 		rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_IRQMASK, &val, 4);
 		if (rc)
-			prerror("LPC: failed to readback mask");
+			prerror("Failed to readback mask");
 		else
 			DBG_IRQ("LPC: MASK READBACK=%x\n", val);
 
 		rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL, &val, 4);
 		if (rc)
-			prerror("LPC: failed to readback ctrl");
+			prerror("Failed to readback ctrl");
 		else
 			DBG_IRQ("LPC: CTRL READBACK=%x\n", val);
 	}
@@ -555,7 +557,7 @@ static void lpc_init_interrupts(struct proc_chip *chip)
 	/* First mask them all */
 	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
 	if (rc) {
-		prerror("LPC: Failed to init interrutps\n");
+		prerror("Failed to init interrutps\n");
 		return;
 	}
 
@@ -568,7 +570,7 @@ static void lpc_init_interrupts(struct proc_chip *chip)
 		rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQMASK,
 			       LPC_HC_IRQ_BASE_IRQS, 4);
 		if (rc) {
-			prerror("LPC: Failed to set interrupt mask\n");
+			prerror("Failed to set interrupt mask\n");
 			return;
 		}
 		opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL, 0, 4);
@@ -599,7 +601,7 @@ static void lpc_dispatch_reset(struct proc_chip *chip)
 	 * on/off rather than just reset
 	 */
 
-	prerror("LPC: Got LPC reset !\n");
+	prerror("Got LPC reset!\n");
 
 	/* Collect serirq enable bits */
 	list_for_each(&chip->lpc_clients, ent, node) {
@@ -627,7 +629,7 @@ static void lpc_dispatch_err_irqs(struct proc_chip *chip, uint32_t irqs)
 	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSTAT,
 		       LPC_HC_IRQ_BASE_IRQS, 4);
 	if (rc)
-		prerror("LPC: Failed to clear IRQ error latches !\n");
+		prerror("Failed to clear IRQ error latches !\n");
 
 	if (irqs & LPC_HC_IRQ_LRESET)
 		lpc_dispatch_reset(chip);
@@ -648,10 +650,10 @@ static void lpc_dispatch_err_irqs(struct proc_chip *chip, uint32_t irqs)
 		      &err_addr, 4);
 	if (rc)
 		log_simple_error(&e_info(OPAL_RC_LPC_SYNC), "%s "
-			"Error reading error address register\n", sync_err);
+			"Error address: Unknown\n", sync_err);
 	else
 		log_simple_error(&e_info(OPAL_RC_LPC_SYNC), "%s "
-			"Error address reg: 0x%08x\n",
+			"Error address: 0x%08x\n",
 			sync_err, err_addr);
 }
 
@@ -685,7 +687,7 @@ static void lpc_dispatch_ser_irqs(struct proc_chip *chip, uint32_t irqs,
 	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSTAT,
 		       irqs, 4);
 	if (rc)
-		prerror("LPC: Failed to clear SerIRQ latches !\n");
+		prerror("Failed to clear SerIRQ latches !\n");
 }
 
 void lpc_interrupt(uint32_t chip_id)
@@ -704,7 +706,7 @@ void lpc_interrupt(uint32_t chip_id)
 	rc = opb_read(chip, opb_master_reg_base + OPB_MASTER_LS_IRQ_STAT,
 		      &opb_irqs, 4);
 	if (rc) {
-		prerror("LPC: Failed to read OPB IRQ state\n");
+		prerror("Failed to read OPB IRQ state\n");
 		goto bail;
 	}
 
@@ -719,7 +721,7 @@ void lpc_interrupt(uint32_t chip_id)
 	/* Handle the lpc interrupt source (errors etc...) */
 	rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_IRQSTAT, &irqs, 4);
 	if (rc) {
-		prerror("LPC: Failed to read LPC IRQ state\n");
+		prerror("Failed to read LPC IRQ state\n");
 		goto bail;
 	}
 
@@ -772,8 +774,8 @@ void lpc_init(void)
 			lpc_default_chip_id = chip->id;
 		}
 
-		printf("LPC: Bus on chip %d PCB_Addr=0x%x\n",
-		       chip->id, chip->lpc_xbase);
+		prlog(PR_NOTICE, "Bus on chip %d PCB_Addr=0x%x\n",
+					chip->id, chip->lpc_xbase);
 		has_lpc = true;
 
 		lpc_init_interrupts(chip);
@@ -781,7 +783,8 @@ void lpc_init(void)
 			dt_add_property(xn, "interrupt-controller", NULL, 0);
 	}
 	if (lpc_default_chip_id >= 0)
-		printf("LPC: Default bus on chip %d\n", lpc_default_chip_id);
+		prlog(PR_NOTICE, "Default bus on chip %d\n",
+					lpc_default_chip_id);
 
 	if (has_lpc) {
 		opal_register(OPAL_LPC_WRITE, opal_lpc_write, 5);
