@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#define pr_fmt(fmt)  "FIRENZE-PCI: " fmt
 #include <skiboot.h>
 #include <device.h>
 #include <fsp.h>
@@ -29,14 +30,6 @@
 
 #include "ibm-fsp.h"
 #include "lxvpd.h"
-
-/* Debugging options */
-#define FIRENZE_PCI_DBG(fmt, a...)	\
-	prlog(PR_DEBUG, "FIRENZE-PCI: " fmt, ##a)
-#define FIRENZE_PCI_INFO(fmt, a...)	\
-	prlog(PR_INFO, "FIRENZE-PCI: " fmt, ##a)
-#define FIRENZE_PCI_ERR(fmt, a...)	\
-	prlog(PR_ERR, "FIRENZE-PCI: " fmt, ##a)
 
 /* Dump PCI slots before sending to FSP */
 #define FIRENZE_PCI_INVENTORY_DUMP
@@ -212,8 +205,15 @@ static void firenze_pci_add_inventory(struct phb *phb,
 	entry = &firenze_inv_data->entries[firenze_inv_data->num_entries++];
 	chip = get_chip(dt_get_chip_id(phb->dt_node));
 	if (!chip) {
-		FIRENZE_PCI_ERR("No chip device node for PHB%04x\n",
-				phb->opal_id);
+		/**
+		 * @fwts-label FirenzePCIInventory
+		 * @fwts-advice Device tree didn't contain enough information
+		 * to correctly report back PCI inventory. Service processor
+		 * is likely to be missing information about what hardware
+		 * is physically present in the machine.
+		 */
+		prlog(PR_ERR, "No chip device node for PHB%04x\n",
+		      phb->opal_id);
                 return;
 	}
 
@@ -259,13 +259,13 @@ static void firenze_dump_pci_inventory(void)
 	if (!firenze_inv_data)
 		return;
 
-	FIRENZE_PCI_INFO("Dumping Firenze PCI inventory\n");
-	FIRENZE_PCI_INFO("HWP SLT VDID DVID SVID SDID\n");
-	FIRENZE_PCI_INFO("---------------------------\n");
+	prlog(PR_INFO, "Dumping Firenze PCI inventory\n");
+	prlog(PR_INFO, "HWP SLT VDID DVID SVID SDID\n");
+	prlog(PR_INFO, "---------------------------\n");
 	for (i = 0; i < firenze_inv_data->num_entries; i++) {
 		e = &firenze_inv_data->entries[i];
 
-		FIRENZE_PCI_INFO("%03d %03d %04x %04x %04x %04x\n",
+		prlog(PR_INFO, "%03d %03d %04x %04x %04x %04x\n",
 				 e->hw_proc_id, e->slot_idx,
 				 e->vendor_id, e->device_id,
 				 e->subsys_vendor_id, e->subsys_device_id);
@@ -282,8 +282,8 @@ void firenze_pci_send_inventory(void)
 		return;
 
 	/* Dump the inventory */
-	FIRENZE_PCI_INFO("Sending %d inventory to FSP\n",
-			 firenze_inv_data->num_entries);
+	prlog(PR_INFO, "Sending %d inventory to FSP\n",
+	      firenze_inv_data->num_entries);
 	firenze_dump_pci_inventory();
 
 	/* Memory location for inventory */
@@ -297,8 +297,14 @@ void firenze_pci_send_inventory(void)
 
 	/* We can only accomodate so many entries in the PSI map */
 	if ((aend - abase) > PSI_DMA_PCIE_INVENTORY_SIZE) {
-		FIRENZE_PCI_ERR("Inventory (%lld bytes) too large\n",
-				aend - abase);
+		/**
+		 * @fwts-label FirenzePCIInventoryTooLarge
+		 * @fwts-advice More PCI inventory than we can send to service
+		 * processor. The service processor will have an incomplete
+		 * view of the world.
+		 */
+		prlog(PR_ERR, "Inventory (%lld bytes) too large\n",
+		      aend - abase);
 		goto bail;
 	}
 
@@ -310,8 +316,14 @@ void firenze_pci_send_inventory(void)
 				    hi32(offset), lo32(offset),
 				    end - base), true);
 	if (rc)
-		FIRENZE_PCI_ERR("Error %lld sending inventory\n",
-				rc);
+	{
+		/**
+		 * @fwts-label FirenzePCIInventoryError
+		 * @fwts-advice Error communicating with service processor
+		 * when sending PCI Inventory.
+		 */
+		prlog(PR_ERR, "Error %lld sending inventory\n", rc);
+	}
 
 	/* Unmap */
 	fsp_tce_unmap(PSI_DMA_PCIE_INVENTORY, aend - abase);
@@ -335,15 +347,25 @@ static void firenze_i2c_req_done(int rc, struct i2c_request *req)
 
 	/* Check if there are errors for the completion */
 	if (rc) {
-		FIRENZE_PCI_ERR("Error %d from I2C request on slot %016llx\n",
-				rc, slot->id);
+		/**
+		 * @fwts-label FirenzePCII2CError
+		 * @fwts-advice On Firenze platforms, I2C is used to control
+		 * power to PCI slots. Errors here mean we may be in trouble
+		 * in regards to PCI slot power on/off.
+		 */
+		prlog(PR_ERR, "Error %d from I2C request on slot %016llx\n",
+		      rc, slot->id);
 		return;
 	}
 
 	/* Check the request type */
 	if (req->op != SMBUS_READ && req->op != SMBUS_WRITE) {
-		FIRENZE_PCI_ERR("Invalid I2C request %d on slot %016llx\n",
-				req->op, slot->id);
+		/**
+		 * @fwts-label FirenzePCII2CInvalid
+		 * @fwts-advice Likely a coding error: invalid I2C request.
+		 */
+		prlog(PR_ERR, "Invalid I2C request %d on slot %016llx\n",
+		      req->op, slot->id);
 		return;
 	}
 
@@ -353,18 +375,24 @@ static void firenze_i2c_req_done(int rc, struct i2c_request *req)
 	 */
 	switch (slot->state) {
 	case FIRENZE_PCI_SLOT_FRESET_WAIT_RSP:
-		FIRENZE_PCI_DBG("%016llx FRESET: I2C request completed\n",
-				slot->id);
+		prlog(PR_DEBUG, "%016llx FRESET: I2C request completed\n",
+		      slot->id);
 		state = FIRENZE_PCI_SLOT_FRESET_DELAY;
 		break;
 	case FIRENZE_PCI_SLOT_SPOWER_START:
-		FIRENZE_PCI_DBG("%016llx SPOWER: I2C request completed\n",
-				slot->id);
+		prlog(PR_DEBUG, "%016llx SPOWER: I2C request completed\n",
+		      slot->id);
 		state = FIRENZE_PCI_SLOT_SPOWER_DONE;
 		break;
 	default:
-		FIRENZE_PCI_ERR("Wrong state %08x on slot %016llx\n",
-				slot->state, slot->id);
+		/**
+		 * @fwts-label FirenzePCISlotI2CStateError
+		 * @fwts-advice The Firenze platform uses I2C to control
+		 * power to PCI slots. Something went wrong in the state
+		 * machine controlling that. Slots may/may not have power.
+		 */
+		prlog(PR_ERR, "Wrong state %08x on slot %016llx\n",
+		      slot->state, slot->id);
 		return;
 	}
 
@@ -386,28 +414,28 @@ static int64_t firenze_pci_slot_freset(struct pci_slot *slot)
 	switch (slot->state) {
 	case FIRENZE_PCI_SLOT_NORMAL:
 	case FIRENZE_PCI_SLOT_FRESET_START:
-		FIRENZE_PCI_DBG("%016llx FRESET: Starts\n",
-				slot->id);
+		prlog(PR_DEBUG, "%016llx FRESET: Starts\n",
+		      slot->id);
 
 		/* Bail if nothing is connected */
 		if (slot->ops.get_presence_state)
 			slot->ops.get_presence_state(slot, &presence);
 		if (!presence) {
-			FIRENZE_PCI_DBG("%016llx FRESET: No device\n",
-					slot->id);
+			prlog(PR_DEBUG, "%016llx FRESET: No device\n",
+			      slot->id);
 			return OPAL_SUCCESS;
 		}
 
 		/* Prepare link down */
 		if (slot->ops.prepare_link_change) {
-			FIRENZE_PCI_DBG("%016llx FRESET: Prepares link down\n",
-					slot->id);
+			prlog(PR_DEBUG, "%016llx FRESET: Prepares link down\n",
+			      slot->id);
 			slot->ops.prepare_link_change(slot, false);
 		}
 
 		/* Send I2C request */
-		FIRENZE_PCI_DBG("%016llx FRESET: Check power state\n",
-				slot->id);
+		prlog(PR_DEBUG, "%016llx FRESET: Check power state\n",
+		      slot->id);
 		plat_slot->next_state =
 			FIRENZE_PCI_SLOT_FRESET_POWER_STATE;
 		plat_slot->req->op = SMBUS_READ;
@@ -424,8 +452,8 @@ static int64_t firenze_pci_slot_freset(struct pci_slot *slot)
 				msecs_to_tb(FIRENZE_PCI_SLOT_DELAY));
 	case FIRENZE_PCI_SLOT_FRESET_WAIT_RSP:
 		if (slot->retries-- == 0) {
-			FIRENZE_PCI_DBG("%016llx FRESET: Timeout waiting for %08x\n",
-					slot->id, plat_slot->next_state);
+			prlog(PR_DEBUG, "%016llx FRESET: Timeout waiting for %08x\n",
+			      slot->id, plat_slot->next_state);
 			goto out;
 		}
 
@@ -433,8 +461,8 @@ static int64_t firenze_pci_slot_freset(struct pci_slot *slot)
 		return pci_slot_set_sm_timeout(slot,
 				msecs_to_tb(FIRENZE_PCI_SLOT_DELAY));
 	case FIRENZE_PCI_SLOT_FRESET_DELAY:
-		FIRENZE_PCI_DBG("%016llx FRESET: Delay %dms on I2C completion\n",
-				slot->id, FIRENZE_PCI_SLOT_DELAY);
+		prlog(PR_DEBUG, "%016llx FRESET: Delay %dms on I2C completion\n",
+		      slot->id, FIRENZE_PCI_SLOT_DELAY);
 		pci_slot_set_state(slot, plat_slot->next_state);
 		return pci_slot_set_sm_timeout(slot,
 				msecs_to_tb(FIRENZE_PCI_SLOT_DELAY));
@@ -445,8 +473,8 @@ static int64_t firenze_pci_slot_freset(struct pci_slot *slot)
 
 		/* Power is on, turn it off */
 		if (((*pval) & plat_slot->power_mask) == plat_slot->power_on) {
-			FIRENZE_PCI_DBG("%016llx FRESET: Power (%02x) on, turn off\n",
-					slot->id, *pval);
+			prlog(PR_DEBUG, "%016llx FRESET: Power (%02x) on, turn off\n",
+			      slot->id, *pval);
 			(*pval) &= ~plat_slot->power_mask;
 			(*pval) |= plat_slot->power_off;
 			plat_slot->req->op = SMBUS_WRITE;
@@ -472,8 +500,8 @@ static int64_t firenze_pci_slot_freset(struct pci_slot *slot)
 		pval = (uint8_t *)(plat_slot->req->rw_buf);
 		*plat_slot->power_status = *pval;
 
-		FIRENZE_PCI_DBG("%016llx FRESET: Power (%02x) off, turn on\n",
-				slot->id, *pval);
+		prlog(PR_DEBUG, "%016llx FRESET: Power (%02x) off, turn on\n",
+		      slot->id, *pval);
 		(*pval) &= ~plat_slot->power_mask;
 		(*pval) |= plat_slot->power_on;
 		plat_slot->req->op = SMBUS_WRITE;
@@ -501,14 +529,14 @@ static int64_t firenze_pci_slot_freset(struct pci_slot *slot)
 		 * instead.
 		 */
 		if (slot->ops.pfreset) {
-			FIRENZE_PCI_DBG("%016llx FRESET: Switch to PFRESET\n",
-					slot->id);
+			prlog(PR_DEBUG, "%016llx FRESET: Switch to PFRESET\n",
+			      slot->id);
 			pci_slot_set_state(slot,
 				FIRENZE_PCI_SLOT_PFRESET_START);
 			return slot->ops.pfreset(slot);
 		} else if (slot->ops.hreset) {
-			FIRENZE_PCI_DBG("%016llx FRESET: Switch to HRESET\n",
-					slot->id);
+			prlog(PR_DEBUG, "%016llx FRESET: Switch to HRESET\n",
+			      slot->id);
 			pci_slot_set_state(slot,
 				FIRENZE_PCI_SLOT_HRESET_START);
 			return slot->ops.hreset(slot);
@@ -517,8 +545,8 @@ static int64_t firenze_pci_slot_freset(struct pci_slot *slot)
 		pci_slot_set_state(slot, FIRENZE_PCI_SLOT_NORMAL);
 		return OPAL_SUCCESS;
 	default:
-		FIRENZE_PCI_DBG("%016llx FRESET: Unexpected state %08x\n",
-				slot->id, slot->state);
+		prlog(PR_DEBUG, "%016llx FRESET: Unexpected state %08x\n",
+		      slot->id, slot->state);
 	}
 
 out:
@@ -535,28 +563,28 @@ static int64_t firenze_pci_slot_perst(struct pci_slot *slot)
 	switch (slot->state) {
 	case FIRENZE_PCI_SLOT_NORMAL:
 	case FIRENZE_PCI_SLOT_FRESET_START:
-		FIRENZE_PCI_DBG("%016llx PERST: Starts\n",
-				slot->id);
+		prlog(PR_DEBUG, "%016llx PERST: Starts\n",
+		      slot->id);
 
 		/* Bail if nothing is connected */
 		if (slot->ops.get_presence_state)
 			slot->ops.get_presence_state(slot, &presence);
 		if (!presence) {
-			FIRENZE_PCI_DBG("%016llx PERST: No device\n",
-					slot->id);
+			prlog(PR_DEBUG, "%016llx PERST: No device\n",
+			      slot->id);
 			return OPAL_SUCCESS;
 		}
 
 		/* Prepare link down */
 		if (slot->ops.prepare_link_change) {
-			FIRENZE_PCI_DBG("%016llx PERST: Prepare link down\n",
-					slot->id);
+			prlog(PR_DEBUG, "%016llx PERST: Prepare link down\n",
+			      slot->id);
 			slot->ops.prepare_link_change(slot, false);
 		}
 
 		/* Assert PERST */
-		FIRENZE_PCI_DBG("%016llx PERST: Assert\n",
-				slot->id);
+		prlog(PR_DEBUG, "%016llx PERST: Assert\n",
+		      slot->id);
 		pci_cfg_read16(slot->phb, slot->pd->bdfn,
 			       plat_slot->perst_reg, &ctrl);
 		ctrl |= plat_slot->perst_bit;
@@ -582,14 +610,14 @@ static int64_t firenze_pci_slot_perst(struct pci_slot *slot)
 		 * the slot.
 		 */
 		if (slot->ops.pfreset) {
-			FIRENZE_PCI_DBG("%016llx PERST: Switch to PFRESET\n",
-					slot->id);
+			prlog(PR_DEBUG, "%016llx PERST: Switch to PFRESET\n",
+			      slot->id);
 			pci_slot_set_state(slot,
 				FIRENZE_PCI_SLOT_PFRESET_START);
 			return slot->ops.pfreset(slot);
 		} else if (slot->ops.hreset) {
-			FIRENZE_PCI_DBG("%016llx PERST: Switch to HRESET\n",
-					slot->id);
+			prlog(PR_DEBUG, "%016llx PERST: Switch to HRESET\n",
+			      slot->id);
 			pci_slot_set_state(slot,
 				FIRENZE_PCI_SLOT_HRESET_START);
 			return slot->ops.hreset(slot);
@@ -598,8 +626,8 @@ static int64_t firenze_pci_slot_perst(struct pci_slot *slot)
 		pci_slot_set_state(slot, FIRENZE_PCI_SLOT_NORMAL);
 		return OPAL_SUCCESS;
 	default:
-		FIRENZE_PCI_DBG("%016llx PERST: Unexpected state %08x\n",
-				slot->id, slot->state);
+		prlog(PR_DEBUG, "%016llx PERST: Unexpected state %08x\n",
+		      slot->id, slot->state);
 	}
 
 	pci_slot_set_state(slot, FIRENZE_PCI_SLOT_NORMAL);
@@ -610,8 +638,16 @@ static int64_t firenze_pci_slot_get_power_state(struct pci_slot *slot,
 						uint8_t *val)
 {
 	if (slot->state != FIRENZE_PCI_SLOT_NORMAL)
-		FIRENZE_PCI_ERR("%016llx GPOWER: Unexpected state %08x\n",
-				slot->id, slot->state);
+	{
+		/**
+		 * @fwts-label FirenzePCISlotGPowerState
+		 * @fwts-advice Unexpected state in the FIRENZE PCI Slot
+		 * state machine. This could mean PCI is not functioning
+		 * correctly.
+		 */
+		prlog(PR_ERR, "%016llx GPOWER: Unexpected state %08x\n",
+		      slot->id, slot->state);
+	}
 
 	*val = slot->power_state;
 	return OPAL_SUCCESS;
@@ -624,8 +660,16 @@ static int64_t firenze_pci_slot_set_power_state(struct pci_slot *slot,
 	uint8_t *pval;
 
 	if (slot->state != FIRENZE_PCI_SLOT_NORMAL)
-		FIRENZE_PCI_ERR("%016llx SPOWER: Unexpected state %08x\n",
-				slot->id, slot->state);
+	{
+		/**
+		 * @fwts-label FirenzePCISlotSPowerState
+		 * @fwts-advice Unexpected state in the FIRENZE PCI Slot
+		 * state machine. This could mean PCI is not functioning
+		 * correctly.
+		 */
+		prlog(PR_ERR, "%016llx SPOWER: Unexpected state %08x\n",
+		      slot->id, slot->state);
+	}
 
 	if (val != PCI_SLOT_POWER_OFF && val != PCI_SLOT_POWER_ON)
 		return OPAL_PARAMETER;
@@ -749,8 +793,8 @@ static void firenze_pci_slot_init(struct pci_slot *slot)
 			plat_slot->power_off  = 0xcc;
 			break;
 		default:
-			FIRENZE_PCI_DBG("%016llx: Invalid channel %d\n",
-					slot->id, info->channel);
+			prlog(PR_DEBUG, "%016llx: Invalid channel %d\n",
+			      slot->id, info->channel);
 			plat_slot->i2c_bus = NULL;
 		}
 	}
@@ -766,8 +810,8 @@ static void firenze_pci_slot_init(struct pci_slot *slot)
 		slot->ops.freset = firenze_pci_slot_freset;
 		slot->ops.get_power_state = firenze_pci_slot_get_power_state;
 		slot->ops.set_power_state = firenze_pci_slot_set_power_state;
-		FIRENZE_PCI_DBG("%016llx: External power mgt initialized\n",
-				slot->id);
+		prlog(PR_DEBUG, "%016llx: External power mgt initialized\n",
+		      slot->id);
 	} else if (info->inband_perst) {
 		/*
 		 * For PLX downstream ports, PCI config register can be
