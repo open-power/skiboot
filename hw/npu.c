@@ -1093,6 +1093,17 @@ static int64_t npu_eeh_next_error(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
+/* For use in error injection and handling. */
+void npu_set_fence_state(struct npu *p, bool fence) {
+	p->fenced = fence;
+
+	if (fence)
+		prlog(PR_ERR, "NPU: Chip %x is fenced, reboot required.\n",
+		      p->chip_id);
+	else
+		prlog(PR_WARNING, "NPU: un-fencing is dangerous and should \
+		      only be used for development purposes.");
+}
 
 /* Sets the NPU to trigger an error when a DMA occurs */
 static int64_t npu_err_inject(struct phb *phb, uint32_t pe_num,
@@ -1126,7 +1137,7 @@ static int64_t npu_err_inject(struct phb *phb, uint32_t pe_num,
 		return OPAL_PARAMETER;
 	} else if (type == 1) {
 		/* Emulate fence mode. */
-		p->fenced = true;
+		npu_set_fence_state(p, true);
 	} else {
 		/* Cause a freeze with an invalid MMIO read.  If the BAR is not
 		 * enabled, this will checkstop the machine.

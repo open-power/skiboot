@@ -201,6 +201,8 @@ int64_t npu_dev_procedure_write(struct npu_dev_trap *trap,
 				uint32_t size,
 				uint32_t data);
 
+void npu_set_fence_state(struct npu *p, bool fence);
+
 #define NPUDBG(p, fmt, a...)	prlog(PR_DEBUG, "NPU%d: " fmt, \
 				      (p)->phb.opal_id, ##a)
 #define NPUINF(p, fmt, a...)	prlog(PR_INFO,  "NPU%d: " fmt, \

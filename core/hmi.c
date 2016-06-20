@@ -519,7 +519,7 @@ static void find_npu_checkstop_reason(int flat_chip_id,
 	      npu_fir, npu_fir_mask, npu_fir_action0, npu_fir_action1);
 
 	/* Set the NPU to fenced since it can't recover. */
-	p->fenced = true;
+	npu_set_fence_state(p, true);
 
 	/* Set up the HMI event */
 	hmi_evt->severity = OpalHMI_SEV_WARNING;
