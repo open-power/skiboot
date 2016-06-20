@@ -404,7 +404,7 @@ static void enable_4B_addresses(void)
 	rc = arch_flash_4b_mode(bl, true);
 	if (rc) {
 		if (rc == -1) {
-			fprintf(stderr, "Switching address mode not availible on this architecture\n");
+			fprintf(stderr, "Switching address mode not available on this architecture\n");
 		} else {
 			fprintf(stderr, "Error %d enabling 4b mode\n", rc);
 		}
@@ -421,7 +421,7 @@ static void disable_4B_addresses(void)
 	rc = arch_flash_4b_mode(bl, false);
 	if (rc) {
 		if (rc == -1) {
-			fprintf(stderr, "Switching address mode not availible on this architecture\n");
+			fprintf(stderr, "Switching address mode not available on this architecture\n");
 		} else {
 			fprintf(stderr, "Error %d enabling 4b mode\n", rc);
 		}
@@ -478,7 +478,7 @@ static void print_help(const char *pname)
 	printf("\t\tto specify the size to read (or it will use the source\n");
 	printf("\t\tfile size if used in conjunction with -p and -s is not\n");
 	printf("\t\tspecified). When using -r together with -e or -p, the\n");
-	printf("\t\tread will be peformed first\n\n");
+	printf("\t\tread will be performed first\n\n");
 	printf("\t-E, --erase-all\n");
 	printf("\t\tErase entire flash chip\n");
 	printf("\t\t(Not supported on all chips/controllers)\n\n");

@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 		perror("mkstemp");
 		return EXIT_FAILURE;
 	}
-	/* So the file dissapears when we exit */
+	/* So the file disappears when we exit */
 	unlink(filename);
 
 	/* E for empty */

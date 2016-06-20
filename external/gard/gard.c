@@ -128,7 +128,7 @@ static void show_flash_err(int rc)
 			fprintf(stderr, "libflash ecc invalid\n");
 			break;
 		default:
-			fprintf(stderr, "A libflash/libffs error has occured %d\n", rc);
+			fprintf(stderr, "A libflash/libffs error has occurred %d\n", rc);
 	}
 }
 
