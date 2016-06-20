@@ -1128,7 +1128,10 @@ static int64_t npu_err_inject(struct phb *phb, uint32_t pe_num,
 		/* Emulate fence mode. */
 		p->fenced = true;
 	} else {
-		/* Cause a freeze with an invalid MMIO write. */
+		/* Cause a freeze with an invalid MMIO read.  If the BAR is not
+		 * enabled, this will checkstop the machine.
+		 */
+		npu_dev_bar_update(p->chip_id, &dev->bar, true);
 		in_be64((void *)dev->bar.base);
 	}
 
