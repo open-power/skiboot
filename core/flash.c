@@ -229,7 +229,7 @@ static void setup_system_flash(struct flash *flash, struct dt_node *node,
 		 *    system flash device.
 		 */
 		prlog(PR_WARNING, "FLASH: attempted to register system flash "
-				"%s, wwhich has no partition info\n", name);
+				"%s, which has no partition info\n", name);
 		return;
 	}
 
