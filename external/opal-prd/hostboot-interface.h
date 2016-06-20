@@ -181,7 +181,7 @@ struct host_interfaces {
 	 * @brief Write to Pnor
 	 * @param[in] i_proc: processor Id
 	 * @param[in] i_partitionName: name of the partition to write
-	 * @param[in] i_offset: offset withing the partition
+	 * @param[in] i_offset: offset within the partition
 	 * @param[in] i_data: pointer to the data to write
 	 * @param[in] i_sizeBytes: size of data to write
 	 * @retval rc - number of bytes written, or non-zero on error

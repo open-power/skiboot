@@ -69,7 +69,7 @@ function flash {
 		msg "Flashing full PNOR"
 		$SSHCMD "$PFLASH_BINARY -E -f -p /tmp/image.pnor"
 		if [ "$?" -ne "0" ] ; then
-			error "An unexpected pflash error has occured";
+			error "An unexpected pflash error has occurred";
 		fi
 	fi
 
@@ -77,7 +77,7 @@ function flash {
 		msg "Flashing PAYLOAD PNOR partition"
 		$SSHCMD "$PFLASH_BINARY -e -f -P PAYLOAD -p /tmp/skiboot.lid"
 		if [ "$?" -ne "0" ] ; then
-                        error "An unexpected pflash error has occured";
+                        error "An unexpected pflash error has occurred";
                 fi
 	fi
 
@@ -85,7 +85,7 @@ function flash {
                 msg "Flashing BOOTKERNEL PNOR partition"
                 $SSHCMD "$PFLASH_BINARY -e -f -P BOOTKERNEL -p /tmp/bootkernel"
                 if [ "$?" -ne "0" ] ; then
-                        error "An unexpected pflash error has occured";
+                        error "An unexpected pflash error has occurred";
                 fi
         fi
 }
