@@ -238,6 +238,10 @@ static void hservice_mark(void)
 
 static void hservice_assert(void)
 {
+	/**
+	 * @fwts-label HBRTassert
+	 * @fwts-advice HBRT triggered assert: you need to debug HBRT
+	 */
 	prlog(PR_EMERG, "HBRT: Assertion from hostservices\n");
 	abort();
 }
@@ -488,6 +492,10 @@ static int hservice_lid_load(uint32_t lid, void **buf, size_t *len)
 	prlog(PR_INFO, "HBRT: Lid load request for 0x%08x\n", lid);
 
 	if (list_empty(&hbrt_lid_list))	{ /* Should not happen */
+		/**
+		 * @fwts-label HBRTlidLoadFail
+		 * @fwts-advice Firmware should have aborted boot
+		 */
 		prlog(PR_CRIT, "HBRT: LID Load failed\n");
 		abort();
 	}

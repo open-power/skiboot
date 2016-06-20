@@ -27,6 +27,13 @@ unsigned long __stack_chk_guard = 0xdeadf00dbaad300dULL;
 
 void __noreturn assert_fail(const char *msg)
 {
+	/**
+	 * @fwts-label FailedAssert
+	 * @fwts-advice OPAL hit an assert(). During normal usage (even
+	 * testing) we should never hit an assert. There are other code
+	 * paths for controlled shutdown/panic in the event of catastrophic
+	 * errors.
+	 */
 	prlog(PR_EMERG, "Assert fail: %s\n", msg);
 	_abort(msg);
 }

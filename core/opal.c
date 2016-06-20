@@ -269,6 +269,11 @@ void opal_del_poller(void (*poller)(void *data))
 	 * if anybody uses it, print a warning and leak the entry, don't
 	 * free it.
 	 */
+	/**
+	 * @fwts-label UnsupportedOPALdelpoller
+	 * @fwts-advice Currently removing a poller is DANGEROUS and
+	 * MUST NOT be done in production firmware.
+	 */
 	prlog(PR_ALERT, "WARNING: Unsupported opal_del_poller."
 	      " Interesting locking issues, don't call this.\n");
 
