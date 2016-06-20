@@ -84,17 +84,22 @@ static void add_slot_properties(struct pci_slot *slot,
 	size_t base_loc_code_len, slot_label_len;
 	char loc_code[LOC_CODE_SIZE];
 
-	if (!np || !ent || !phb->base_loc_code)
+	if (!np || !ent)
 		return;
 
-	base_loc_code_len = strlen(phb->base_loc_code);
+	base_loc_code_len = phb->base_loc_code ? strlen(phb->base_loc_code) : 0;
 	slot_label_len = strlen(ent->name);
 	if ((base_loc_code_len + slot_label_len + 1) >= LOC_CODE_SIZE)
 		return;
 
 	/* Location code */
-	strcpy(loc_code, phb->base_loc_code);
-	strcat(loc_code, "-");
+	if (phb->base_loc_code) {
+		strcpy(loc_code, phb->base_loc_code);
+		strcat(loc_code, "-");
+	} else {
+		loc_code[0] = '\0';
+	}
+
 	strcat(loc_code, ent->name);
 	dt_add_property(np, "ibm,slot-location-code",
 			loc_code, strlen(loc_code) + 1);
