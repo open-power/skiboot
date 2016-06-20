@@ -277,12 +277,24 @@ int flash_register(struct blocklevel_device *bl, bool is_system_flash)
 
 	if (!flash) {
 		unlock(&flash_lock);
+		/**
+		 * @fwts-label NoFlashSlots
+		 * @fwts-advice System has more flash chips than skiboot
+		 * was configured to know about. Your system will not be
+		 * able to access some of the flash it has.
+		 */
 		prlog(PR_ERR, "FLASH: No flash slots available\n");
 		return OPAL_RESOURCE;
 	}
 
 	rc = ffs_init(0, flash->size, bl, &ffs, 0);
 	if (rc) {
+		/**
+		 * @fwts-label NoFFS
+		 * @fwts-advice System flash isn't formatted as expected.
+		 * This could mean several OPAL utilities do not function
+		 * as expected. e.g. gard, pflash.
+		 */
 		prlog(PR_WARNING, "FLASH: No ffs info; "
 				"using raw device only\n");
 		ffs = NULL;
