@@ -516,7 +516,7 @@ int64_t npu_dev_procedure_read(struct npu_dev_trap *trap,
 
 	if (size != 4) {
 		/* Short config reads are not supported */
-		NPUDEVERR(dev, "Short read of procedure register\n");
+		prlog(PR_ERR, "NPU%d: Short read of procedure register\n", dev->npu->phb.opal_id);
 		return OPAL_PARAMETER;
 	}
 
@@ -538,8 +538,8 @@ int64_t npu_dev_procedure_read(struct npu_dev_trap *trap,
 		break;
 
 	default:
-		NPUDEVERR(dev, "Invalid vendor specific offset 0x%08x\n",
-			  offset);
+		prlog(PR_ERR, "NPU%d: Invalid vendor specific offset 0x%08x\n",
+		      dev->npu->phb.opal_id, offset);
 		rc = OPAL_PARAMETER;
 	}
 
@@ -557,7 +557,8 @@ int64_t npu_dev_procedure_write(struct npu_dev_trap *trap,
 
 	if (size != 4) {
 		/* Short config writes are not supported */
-		NPUDEVERR(dev, "Short read of procedure register\n");
+		prlog(PR_ERR, "NPU%d: Short read of procedure register\n",
+		      dev->npu->phb.opal_id);
 		return OPAL_PARAMETER;
 	}
 

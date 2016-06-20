@@ -205,11 +205,8 @@ int64_t npu_dev_procedure_write(struct npu_dev_trap *trap,
 				      (p)->phb.opal_id, ##a)
 #define NPUINF(p, fmt, a...)	prlog(PR_INFO,  "NPU%d: " fmt, \
 				      (p)->phb.opal_id, ##a)
-#define NPUERR(p, fmt, a...)	prlog(PR_ERR,   "NPU%d: " fmt, \
-				      (p)->phb.opal_id, ##a)
 
 #define NPUDEVDBG(p, fmt, a...)	NPUDBG((p)->npu, fmt, ##a)
 #define NPUDEVINF(p, fmt, a...)	NPUINF((p)->npu, fmt, ##a)
-#define NPUDEVERR(p, fmt, a...)	NPUERR((p)->npu, fmt, ##a)
 
 #endif /* __NPU_H */

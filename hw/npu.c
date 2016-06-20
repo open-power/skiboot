@@ -552,6 +552,11 @@ static void npu_dev_bind_pci_dev(struct npu_dev *dev)
 		}
 	}
 
+	/**
+	 * @fwts-label NPUNotBound
+	 * @fwts-advice Start debugging why we didn't find the right device.
+	 * End result is that NVLink will not function properly
+	 */
 	prlog(PR_ERR, "%s: NPU device %04x:00:%02x.0 not binding to PCI device\n",
 	      __func__, dev->npu->phb.opal_id, dev->index);
 }
@@ -683,7 +688,12 @@ static int npu_isn_valid(struct npu *p, uint32_t isn)
 	if (p->chip_id != p8_irq_to_chip(isn) || p->index != 0 ||
 	    NPU_IRQ_NUM(isn) < NPU_LSI_IRQ_MIN ||
 	    NPU_IRQ_NUM(isn) > NPU_LSI_IRQ_MAX) {
-		NPUERR(p, "isn 0x%x not valid for this NPU\n", isn);
+		/**
+		 * @fwts-label NPUisnInvalid
+		 * @fwts-advice NVLink not functional
+		 */
+		prlog(PR_ERR, "NPU%d: isn 0x%x not valid for this NPU\n",
+		      p->phb.opal_id, isn);
 		return false;
 	}
 
@@ -1276,6 +1286,10 @@ static void npu_probe_phb(struct dt_node *dn)
 	xscom_read(gcid, npu_link_scom_base(dn, xscom, 1) + NX_MMIO_BAR_1,
 		   &val);
 	if (!(val & NX_MMIO_BAR_ENABLE)) {
+		/**
+		 * @fwts-label NPUATBARDisabled
+		 * @fwts-advice NVLink not functional
+		 */
 		prlog(PR_ERR, "   AT BAR disabled!\n");
 		return;
 	}
@@ -1288,6 +1302,12 @@ static void npu_probe_phb(struct dt_node *dn)
 	/* Create PCI root device node */
 	np = dt_new_addr(dt_root, "pciex", at_bar[0]);
 	if (!np) {
+		/**
+		 * @fwts-label NPUPHBDeviceNodeFailure
+		 * @fwts-advice Error adding the PHB device node. The
+		 * only real reason for this is that firmware may have
+		 * run out of memory.
+		 */
 		prlog(PR_ERR, "%s: Cannot create PHB device node\n",
 		      __func__);
 		return;
@@ -1818,7 +1838,14 @@ static void npu_create_phb(struct dt_node *dn)
 	/* Create PHB slot */
 	slot = npu_slot_create(&p->phb);
 	if (!slot)
+	{
+		/**
+		 * @fwts-label NPUCannotCreatePHBSlot
+		 * @fwts-advice Firmware probably ran out of memory creating
+		 * NPU slot. NVLink functionality could be broken.
+		 */
 		prlog(PR_ERR, "NPU: Cannot create PHB slot\n");
+	}
 
 	/* Register PHB */
 	pci_register_phb(&p->phb, OPAL_DYNAMIC_PHB_ID);
