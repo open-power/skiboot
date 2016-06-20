@@ -27,13 +27,15 @@ env:
 
 
 script:
-    - (cd opal-ci; ./build-qemu-powernv.sh)
-    - ./opal-ci/fetch-debian-jessie-installer.sh
-    - make -j4 all check ; (make clean; cd external/gard && CROSS= make)
-    - (cd external/pflash; ./build-all-arch.sh)
-    - make clean && SKIBOOT_GCOV=1 make && SKIBOOT_GCOV=1 make check
-    - make clean && rm -rf builddir && mkdir builddir && make SRC=`pwd` -f ../Makefile -C builddir
-    - make clean
+  - if [ ${COVERITY_SCAN_BRANCH} != 1 ]; then
+      (cd opal-ci; ./build-qemu-powernv.sh) &&
+      ./opal-ci/fetch-debian-jessie-installer.sh &&
+      make -j4 all check ; (make clean; cd external/gard && CROSS= make) &&
+      (cd external/pflash; ./build-all-arch.sh) &&
+      make clean && SKIBOOT_GCOV=1 make && SKIBOOT_GCOV=1 make check &&
+      make clean && rm -rf builddir && mkdir builddir && make SRC=`pwd` -f ../Makefile -C builddir &&
+      make clean;
+    fi
 
 addons:
   coverity_scan:
@@ -41,6 +43,6 @@ addons:
       name: "open-power/skiboot"
       description: "Build submitted via Travis CI"
     notification_email: stewart@linux.vnet.ibm.com
-    build_command_prepend: "make clean; cov-configure --comptype gcc --compiler powerpc64-linux-gcc --template; cov-configure --comptype gcc --compiler powerpc64le-linux-gnu-gcc; cov-configure --comptype gcc --compiler arm-linux-gnueabi-gcc; cov-configure --comptype gcc --compiler x86_64-linux-gnu-gcc"
+    build_command_prepend: "cov-configure --comptype gcc --compiler powerpc64-linux-gcc --template; cov-configure --comptype gcc --compiler powerpc64le-linux-gnu-gcc; cov-configure --comptype gcc --compiler arm-linux-gnueabi-gcc; cov-configure --comptype gcc --compiler x86_64-linux-gnu-gcc"
     build_command: "make -j4 all check gard pflash-coverity"
     branch_pattern: coverity_scan
