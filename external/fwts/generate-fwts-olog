@@ -109,9 +109,9 @@ def message_to_pattern(loc, msg):
     # Somewhat-simplified match for a %-template
     template_re = re.compile(
             '%(?P<flag>[-#0 +]*)'
-            '(?P<width>(?:[1-9][0-9]*|\*))?'
+            '(?P<width>(?:[0-9]*|\*))?'
             '(?P<precision>\.*(?:[1-9][0-9]*|\*))?'
-            '(?:hh|h|l|ll|L|j|z|t)?'
+            '(?:hh|h|ll|l|L|j|z|t)?'
             '(?P<conversion>[a-zA-Z%])')
     global is_regex
     is_regex = False
