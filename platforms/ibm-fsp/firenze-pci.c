@@ -937,7 +937,7 @@ static void firenze_pci_slot_fixup(struct pci_slot *slot)
 
 	/* FIXME: support fixup with generic way */
 	id = ((uint64_t)p[1] << 32) | p[2];
-	id = 0;
+
 	if (id != LX_VPD_2S4U_BACKPLANE &&
 	    id != LX_VPD_1S4U_BACKPLANE)
 		return;
