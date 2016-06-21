@@ -767,11 +767,12 @@ static void firenze_pci_slot_init(struct pci_slot *slot)
 	plat_slot->i2c_bus = firenze_pci_find_i2c_bus(info->chip_id,
 						      info->master_id,
 						      info->port_id);
-	if (plat_slot->i2c_bus) {
+	if (plat_slot->i2c_bus)
 		plat_slot->req = i2c_alloc_req(plat_slot->i2c_bus);
-		if (!plat_slot->req)
-			plat_slot->i2c_bus = NULL;
+	else
+		plat_slot->req = NULL;
 
+	if (plat_slot->req) {
 		plat_slot->req->dev_addr	= info->slave_addr;
 		plat_slot->req->offset_bytes	= 1;
 		plat_slot->req->offset		= 0x69;
@@ -806,7 +807,7 @@ static void firenze_pci_slot_init(struct pci_slot *slot)
 	 * be utilized. To figure out power status retrival or
 	 * configuration after we have a blocking API for that.
 	 */
-	if (plat_slot->i2c_bus) {
+	if (plat_slot->req) {
 		slot->ops.freset = firenze_pci_slot_freset;
 		slot->ops.get_power_state = firenze_pci_slot_get_power_state;
 		slot->ops.set_power_state = firenze_pci_slot_set_power_state;
