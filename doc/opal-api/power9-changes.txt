@@ -17,3 +17,7 @@ Things we still have to do for POWER9:
 - remove opal-v2 from compatible string.
 - PCI to use async API rather than returning delays
 - deprecate/remove v1 APIs where there's a V2
+- Fix this FWTS warning:
+  FAILED [MEDIUM] DeviceTreeBaseDTCWarnings: Test 3, dtc reports warnings from
+  device tree: Warning (reg_format): "reg" property in /ibm,opal/flash@0 has
+  invalid length (8 bytes) (#address-cells == 0, #size-cells == 0)
