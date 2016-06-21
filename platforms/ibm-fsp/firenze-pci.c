@@ -98,6 +98,8 @@ struct firenze_pci_slot_info {
 	uint8_t		channel;
 	uint8_t		power_status;
 	uint8_t		buddy;
+	uint8_t		fixup;
+	uint8_t		fixup_num;
 };
 
 struct firenze_pci_inv {
@@ -124,21 +126,30 @@ struct firenze_pci_inv_data {
  */
 static struct firenze_pci_inv_data *firenze_inv_data;
 static uint32_t firenze_inv_cnt;
+static uint8_t firenze_pci_slot_fixup_tbl[] = {
+	0x5e, 0xfa,	/* C6 / C7 */
+	0x5a, 0xff,
+	0x5b, 0xff,
+	0x5e, 0xfb,	/* C5 */
+	0x5b, 0xff,
+	0x5e, 0xfb,	/* C3 */
+	0x5b, 0xff
+};
 static struct firenze_pci_slot_info firenze_pci_slots[] = {
-	{ 0x0B,  "C7", 1, 1,    0, 1, 0, 0x35, 1, 0xAA,  0 },
-	{ 0x11, "C14", 0, 1,    0, 0, 0, 0x00, 0, 0xAA,  1 },
-	{ 0x0F, "C11", 1, 1,    0, 1, 0, 0x32, 1, 0xAA,  2 },
-	{ 0x10, "C12", 1, 1,    0, 1, 0, 0x39, 0, 0xAA,  3 },
-	{ 0x0A,  "C6", 1, 1,    0, 1, 0, 0x35, 0, 0xAA,  0 },
-	{ 0x12, "C15", 0, 1,    0, 0, 0, 0x00, 0, 0xAA,  5 },
-	{ 0x01, "USB", 0, 0,    0, 0, 0, 0x00, 0, 0xAA,  6 },
-	{ 0x0C,  "C8", 1, 1,    0, 1, 0, 0x36, 0, 0xAA,  7 },
-	{ 0x0D,  "C9", 1, 1,    0, 1, 0, 0x36, 1, 0xAA,  7 },
-	{ 0x0E, "C10", 1, 1,    0, 1, 0, 0x32, 0, 0xAA,  2 },
-	{ 0x09,  "C5", 1, 1, 0x10, 1, 0, 0x39, 1, 0xAA, 10 },
-	{ 0x08,  "C4", 1, 1, 0x10, 1, 0, 0x39, 0, 0xAA, 10 },
-	{ 0x07,  "C3", 1, 1, 0x10, 1, 0, 0x3A, 1, 0xAA, 12 },
-	{ 0x06,  "C2", 1, 1, 0x10, 1, 0, 0x3A, 0, 0xAA, 12 }
+	{ 0x0B,  "C7", 1, 1,    0, 1, 0, 0x35, 1, 0xAA,  0, 0, 3 },
+	{ 0x11, "C14", 0, 1,    0, 0, 0, 0x00, 0, 0xAA,  1, 0, 0 },
+	{ 0x0F, "C11", 1, 1,    0, 1, 0, 0x32, 1, 0xAA,  2, 0, 0 },
+	{ 0x10, "C12", 1, 1,    0, 1, 0, 0x39, 0, 0xAA,  3, 0, 0 },
+	{ 0x0A,  "C6", 1, 1,    0, 1, 0, 0x35, 0, 0xAA,  0, 0, 3 },
+	{ 0x12, "C15", 0, 1,    0, 0, 0, 0x00, 0, 0xAA,  5, 0, 0 },
+	{ 0x01, "USB", 0, 0,    0, 0, 0, 0x00, 0, 0xAA,  6, 0, 0 },
+	{ 0x0C,  "C8", 1, 1,    0, 1, 0, 0x36, 0, 0xAA,  7, 0, 0 },
+	{ 0x0D,  "C9", 1, 1,    0, 1, 0, 0x36, 1, 0xAA,  7, 0, 0 },
+	{ 0x0E, "C10", 1, 1,    0, 1, 0, 0x32, 0, 0xAA,  2, 0, 0 },
+	{ 0x09,  "C5", 1, 1, 0x10, 1, 0, 0x39, 1, 0xAA, 10, 3, 2 },
+	{ 0x08,  "C4", 1, 1, 0x10, 1, 0, 0x39, 0, 0xAA, 10, 0, 0 },
+	{ 0x07,  "C3", 1, 1, 0x10, 1, 0, 0x3A, 1, 0xAA, 12, 5, 2 },
+	{ 0x06,  "C2", 1, 1, 0x10, 1, 0, 0x3A, 0, 0xAA, 12, 0, 0 }
 };
 
 static void firenze_pci_add_inventory(struct phb *phb,
@@ -742,6 +753,85 @@ static struct i2c_bus *firenze_pci_find_i2c_bus(uint8_t chip,
 	return NULL;
 }
 
+static int64_t firenze_pci_slot_fixup_one(struct pci_slot *slot,
+					  struct firenze_pci_slot_info *info,
+					  uint8_t *fixup, bool write)
+{
+	struct firenze_pci_slot *plat_slot = slot->data;
+	struct i2c_request *req = plat_slot->req;
+	int32_t retries = FIRENZE_PCI_SLOT_RETRIES;
+	uint8_t rval;
+	int64_t rc = OPAL_SUCCESS;
+
+	req->offset = *fixup;
+	if (write) {
+		req->op = SMBUS_WRITE;
+		*(uint8_t *)(req->rw_buf) = *(fixup + 1);
+	} else {
+		req->op = SMBUS_READ;
+		*(uint8_t *)(req->rw_buf) = 0;
+	}
+	pci_slot_set_state(slot, FIRENZE_PCI_SLOT_FRESET_WAIT_RSP);
+	i2c_set_req_timeout(req, FIRENZE_PCI_I2C_TIMEOUT);
+	i2c_queue_req(plat_slot->req);
+
+	while (retries-- > 0) {
+		check_timers(false);
+		if (slot->state == FIRENZE_PCI_SLOT_FRESET_DELAY)
+			break;
+
+		time_wait_ms(FIRENZE_PCI_SLOT_DELAY);
+	}
+
+	if (slot->state != FIRENZE_PCI_SLOT_FRESET_DELAY) {
+		rc = OPAL_BUSY;
+		prlog(PR_ERR, "Timeout %s PCI slot [%s] - (%02x, %02x)\n",
+		      write ? "writing" : "reading", info->label,
+		      *fixup, *(fixup + 1));
+		goto out;
+	}
+
+	if (!write) {
+		rval = *(uint8_t *)(req->rw_buf);
+		if (rval != *(fixup + 1)) {
+			rc = OPAL_INTERNAL_ERROR;
+			prlog(PR_ERR, "Error fixing PCI slot [%s] - (%02x, %02x, %02x)\n",
+			      info->label, *fixup, *(fixup + 1), rval);
+		}
+	}
+
+out:
+	pci_slot_set_state(slot, FIRENZE_PCI_SLOT_NORMAL);
+	return rc;
+}
+
+static void firenze_pci_slot_fixup(struct pci_slot *slot,
+				   struct firenze_pci_slot_info *info)
+{
+	const uint32_t *p;
+	uint64_t id;
+	uint8_t *fixup, num, i;
+	int64_t rc;
+
+	p = dt_prop_get_def(dt_root, "ibm,vpd-lx-info", NULL);
+	id = p ? (((uint64_t)p[1] << 32) | p[2]) : 0ul;
+	if (id != LX_VPD_2S4U_BACKPLANE &&
+	    id != LX_VPD_1S4U_BACKPLANE)
+		return;
+
+	fixup = &firenze_pci_slot_fixup_tbl[info->fixup * 2];
+	num   = info->fixup_num;
+	for (i = 0; i < num; i++, fixup += 2) {
+		rc = firenze_pci_slot_fixup_one(slot, info, fixup, true);
+		if (rc)
+			return;
+
+		rc = firenze_pci_slot_fixup_one(slot, info, fixup, false);
+		if (rc)
+			return;
+	}
+}
+
 static void firenze_pci_slot_init(struct pci_slot *slot)
 {
 	struct lxvpd_pci_slot *s = slot->data;
@@ -775,11 +865,13 @@ static void firenze_pci_slot_init(struct pci_slot *slot)
 	if (plat_slot->req) {
 		plat_slot->req->dev_addr	= info->slave_addr;
 		plat_slot->req->offset_bytes	= 1;
-		plat_slot->req->offset		= 0x69;
 		plat_slot->req->rw_buf		= plat_slot->i2c_rw_buf;
 		plat_slot->req->rw_len		= 1;
 		plat_slot->req->completion	= firenze_i2c_req_done;
 		plat_slot->req->user_data	= slot;
+		firenze_pci_slot_fixup(slot, info);
+
+		plat_slot->req->offset		= 0x69;
 		switch (info->channel) {
 		case 0:
 			plat_slot->power_status = &firenze_pci_slots[buddy].power_status;
@@ -864,109 +956,6 @@ void firenze_pci_setup_phb(struct phb *phb, unsigned int index)
 	}
 }
 
-static void firenze_pci_i2c_complete(int rc, struct i2c_request *req)
-{
-	*(int *)req->user_data = rc;
-}
-
-static void firenze_pci_do_i2c_byte(uint8_t chip, uint8_t eng, uint8_t port,
-				    uint8_t addr, uint8_t reg, uint8_t data)
-{
-	struct i2c_bus *bus;
-	struct i2c_request *req;
-	uint8_t verif;
-	int rc;
-
-        bus = firenze_pci_find_i2c_bus(chip, eng, port);
-        if (!bus) {
-                prerror("FIRENZE: Failed to find i2c (%d/%d/%d)\n", chip, eng, port);
-                return;
-        }
-        req = i2c_alloc_req(bus);
-        if (!req) {
-                prerror("FIRENZE: Failed to allocate i2c request\n");
-                return;
-        }
-        req->op           = SMBUS_WRITE;
-        req->dev_addr     = addr >> 1;
-        req->offset_bytes = 1;
-        req->offset       = reg;
-        req->rw_buf       = &data;
-        req->rw_len       = 1;
-        req->completion   = firenze_pci_i2c_complete;
-        req->user_data    = &rc;
-        rc = 1;
-        i2c_queue_req(req);
-        while(rc == 1) {
-                time_wait_us(10);
-        }
-        if (rc != 0) {
-                prerror("FIRENZE: I2C error %d writing byte\n", rc);
-                return;
-        }
-        req->op           = SMBUS_READ;
-        req->dev_addr     = addr >> 1;
-        req->offset_bytes = 1;
-        req->offset       = reg;
-        req->rw_buf       = &verif;
-        req->rw_len       = 1;
-        req->completion   = firenze_pci_i2c_complete;
-        req->user_data    = &rc;
-        rc = 1;
-        i2c_queue_req(req);
-        while(rc == 1) {
-                time_wait_us(10);
-        }
-        if (rc != 0) {
-                prerror("FIRENZE: I2C error %d reading byte\n", rc);
-                return;
-        }
-        if (verif != data) {
-                prerror("FIRENZE: I2C miscompare want %02x got %02x\n", data, verif);
-        }
-}
-
-static void firenze_pci_slot_fixup(struct pci_slot *slot)
-{
-	uint64_t id;
-	const uint32_t *p;
-	struct lxvpd_pci_slot *s;
-
-	p = dt_prop_get_def(dt_root, "ibm,vpd-lx-info", NULL);
-	if (!p)
-		return;
-
-	/* FIXME: support fixup with generic way */
-	id = ((uint64_t)p[1] << 32) | p[2];
-
-	if (id != LX_VPD_2S4U_BACKPLANE &&
-	    id != LX_VPD_1S4U_BACKPLANE)
-		return;
-
-	s = slot->data;
-	if (!s || !s->pluggable)
-		return;
-
-	/* Note: We apply the settings twice for C6/C7 but that shouldn't
-	 * be a problem
-	 */
-	if (!strncmp(s->label, "C6 ", 2) ||
-	    !strncmp(s->label, "C7 ", 2)) {
-		printf("FIRENZE: Fixing power on %s...\n", s->label);
-		firenze_pci_do_i2c_byte(0, 1, 0, 0x6a, 0x5e, 0xfa);
-		firenze_pci_do_i2c_byte(0, 1, 0, 0x6a, 0x5a, 0xff);
-		firenze_pci_do_i2c_byte(0, 1, 0, 0x6a, 0x5b, 0xff);
-	} else if (!strncmp(s->label, "C5 ", 2)) {
-                printf("FIRENZE: Fixing power on %s...\n", s->label);
-		firenze_pci_do_i2c_byte(0, 1, 0, 0x72, 0x5e, 0xfb);
-		firenze_pci_do_i2c_byte(0, 1, 0, 0x72, 0x5b, 0xff);
-        } else if (!strncmp(s->label, "C3 ", 2)) {
-		printf("FIRENZE: Fixing power on %s...\n", s->label);
-		firenze_pci_do_i2c_byte(0, 1, 0, 0x74, 0x5e, 0xfb);
-		firenze_pci_do_i2c_byte(0, 1, 0, 0x74, 0x5b, 0xff);
-        }
-}
-
 void firenze_pci_get_slot_info(struct phb *phb, struct pci_device *pd)
 {
 	struct pci_slot *slot;
@@ -996,7 +985,4 @@ void firenze_pci_get_slot_info(struct phb *phb, struct pci_device *pd)
 		lxvpd_extract_info(slot, s);
 		firenze_pci_slot_init(slot);
 	}
-
-	/* Fixup the slot's power status */
-	firenze_pci_slot_fixup(slot);
 }
