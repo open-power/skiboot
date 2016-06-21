@@ -193,7 +193,7 @@ struct opal_err_info {
 #define OPAL_I2C			0x4943	/* IC */
 #define OPAL_IPMI			0x4950  /* IP */
 
-/* SAPPHIRE SRC componenet ID*/
+/* SAPPHIRE SRC component ID*/
 #define OPAL_CU				0x1000
 #define OPAL_XS				0x1100
 #define OPAL_PC				0x1200
