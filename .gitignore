@@ -14,8 +14,12 @@ skiboot*.map
 skiboot.info
 coverage-report/
 extract-gcov
+.tags*
 TAGS
 tags
+GTAGS
+GRTAGS
+GPATH
 cscope.out
 asm/asm-offsets.s
 include/asm-offsets.h
