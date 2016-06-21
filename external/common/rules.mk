@@ -43,7 +43,7 @@ arch_clean:
 
 $(ARCH_SRC): | common
 
-$(ARCH_OBJS): common-%.o: common/%.c
+$(ARCH_OBJS): common-%.o: common/%.c $(ARCH_LINKS)
 	$(Q_CC)$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 common-arch_flash.o: $(ARCH_OBJS)
