@@ -618,7 +618,7 @@ static void lpc_dispatch_reset(struct proc_chip *chip)
 static void lpc_dispatch_err_irqs(struct proc_chip *chip, uint32_t irqs)
 {
 	int rc;
-	const char *sync_err;
+	const char *sync_err = "Unknown LPC error";
 	uint32_t err_addr;
 
 	/* Write back to clear error interrupts, we clear SerIRQ later
