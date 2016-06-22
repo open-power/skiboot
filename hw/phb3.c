@@ -1974,7 +1974,7 @@ static void phb3_prepare_link_change(struct pci_slot *slot,
 		out_be64(p->regs + UTL_PCIE_PORT_STATUS,
 			 0xffdfffffffffffff);
 		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,
-			 0xad5a800000000000);
+			 0xad52800000000000);
 
 		/* Don't block PCI-CFG */
 		p->flags &= ~PHB3_CFG_BLOCKED;
