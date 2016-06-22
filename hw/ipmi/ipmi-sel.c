@@ -468,6 +468,12 @@ static void sel_pnor(uint8_t access)
 		occ_pnor_set_owner(PNOR_OWNER_HOST);
 		break;
 	default:
+		/**
+		 * @fwts-label InvalidPNORAccessRequest
+		 * @fwts-advice In negotiating PNOR access with BMC, we
+		 * got an odd/invalid request from the BMC. Likely a bug
+		 * in OPAL/BMC interaction.
+		 */
 		prlog(PR_ERR, "invalid PNOR access requested: %02x\n",
 		      access);
 	}
@@ -517,6 +523,10 @@ static void sel_occ_reset(uint8_t sensor)
 
 	rc = occ_sensor_id_to_chip(sensor, &chip);
 	if (rc) {
+		/**
+		 * @fwts-label: SELUnknownOCCReset
+		 * @fwts-advice: Likely bug in what sent us the OCC reset.
+		 */
 		prlog(PR_ERR, "SEL message to reset an unknown OCC "
 				"(sensor ID 0x%02x)\n", sensor);
 		return;
