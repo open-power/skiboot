@@ -36,8 +36,6 @@
 void apollo_pci_setup_phb(struct phb *phb, unsigned int index)
 {
 	struct dt_node *ioc_node;
-	struct lxvpd_pci_slot *s = NULL;
-	struct pci_slot *slot = NULL;
 
 	/* Grab the device-tree node of the IOC */
 	ioc_node = phb->dt_node->parent;
@@ -57,12 +55,6 @@ void apollo_pci_setup_phb(struct phb *phb, unsigned int index)
 	 */
 	lxvpd_process_slot_entries(phb, ioc_node, 1,
 				   index, sizeof(struct lxvpd_pci_slot));
-
-	/* Fixup P7IOC PHB slot */
-	slot = phb->slot;
-	s = slot ? lxvpd_get_slot(slot) : NULL;
-	if (s)
-		lxvpd_extract_info(slot, s);
 }
 
 void apollo_pci_get_slot_info(struct phb *phb, struct pci_device *pd)

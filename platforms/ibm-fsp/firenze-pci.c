@@ -937,8 +937,6 @@ static void firenze_pci_slot_init(struct pci_slot *slot)
 void firenze_pci_setup_phb(struct phb *phb, unsigned int index)
 {
 	uint32_t hub_id;
-	struct pci_slot *slot;
-	struct lxvpd_pci_slot *s;
 
 	/* Grab Hub ID used to parse VPDs */
 	hub_id = dt_prop_get_u32_def(phb->dt_node, "ibm,hub-id", 0);
@@ -946,14 +944,6 @@ void firenze_pci_setup_phb(struct phb *phb, unsigned int index)
 	/* Process the pcie slot entries from the lx vpd lid */
 	lxvpd_process_slot_entries(phb, dt_root, hub_id,
 				   index, sizeof(struct firenze_pci_slot));
-
-	/* Fixup PHB3 slot */
-	slot = phb->slot;
-	s = slot ? lxvpd_get_slot(slot) : NULL;
-	if (s) {
-                lxvpd_extract_info(slot, s);
-		firenze_pci_slot_init(slot);
-	}
 }
 
 void firenze_pci_get_slot_info(struct phb *phb, struct pci_device *pd)
