@@ -78,6 +78,11 @@ static void astbmc_ipmi_setenables(void)
 
         msg = ipmi_mkmsg_simple(IPMI_SET_ENABLES, &data, sizeof(data));
         if (!msg) {
+		/**
+		 * @fwts-label ASTBMCFailedSetEnables
+		 * @fwts-advice AST BMC is likely to be non-functional
+		 * when accessed from host.
+		 */
                 prlog(PR_ERR, "ASTBMC: failed to set enables\n");
                 return;
         }
