@@ -69,6 +69,10 @@ static void fsp_process_epow(struct fsp_msg *msg, int epow_type)
 
 	/* Basic EPOW signature */
 	if (msg->data.bytes[0] != 0xF2) {
+		/**
+		 * @fwts-label EPOWSignatureMismatch
+		 * @fwts-advice Bug in skiboot/FSP code for EPOW event handling
+		 */
 		prlog(PR_ERR, "Signature mismatch\n");
 		return;
 	}
@@ -105,6 +109,12 @@ static void fsp_process_epow(struct fsp_msg *msg, int epow_type)
 	if (epow_changed) {
 		rc = opal_queue_msg(OPAL_MSG_EPOW, NULL, NULL);
 		if (rc) {
+			/**
+			 * @fwts-label EPOWMessageQueueFailed
+			 * @fwts-advice Queueing a message from OPAL to FSP
+			 * failed. This is likely due to either an OPAL bug
+			 * or the FSP going away.
+			 */
 			prlog(PR_ERR, "OPAL EPOW message queuing failed\n");
 			return;
 		}
