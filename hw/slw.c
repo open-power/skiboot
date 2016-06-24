@@ -591,6 +591,12 @@ void add_cpu_idle_state_properties(void)
 	/* Create /ibm,opal/power-mgt */
 	power_mgt = dt_new(opal_node, "power-mgt");
 	if (!power_mgt) {
+		/**
+		 * @fwts-label CreateDTPowerMgtNodeFail
+		 * @fwts-advice OPAL failed to add the power-mgt device tree
+		 * node. This coudl mean that firmware ran out of memory,
+		 * or there's a bug somewhere.
+		 */
 		prlog(PR_ERR, "creating dt node /ibm,opal/power-mgt failed\n");
 		return;
 	}
@@ -1184,6 +1190,13 @@ static void slw_dump_timer_ffdc(void)
 		0x50038, 0x50039, 0x5003a, 0x5003b
 	};
 
+	/**
+	 * @fwts-label SLWRegisterDump
+	 * @fwts-advice An error condition occured where the SLeep/Winkle
+	 * engine had to dump out the register state for assisitng in
+	 * debugging. This means that power saving states are likely
+	 * not functioning correctly.
+	 */
 	prlog(PR_ERR, "SLW: Register state:\n");
 
 	for (i = 0; i < ARRAY_SIZE(dump_regs); i++) {
