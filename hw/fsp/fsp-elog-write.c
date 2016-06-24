@@ -97,7 +97,7 @@ static void opal_fsp_write_complete(struct fsp_msg *read_msg)
 	default:
 		if (elog_write_retries++ >= MAX_RETRIES) {
 			remove_elog_head_entry();
-			prerror("ELOG: Error in writing to FSP!\n");
+			prerror("ELOG: Error in writing to FSP (0x%x)!\n", val);
 		}
 		break;
 	}
