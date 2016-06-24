@@ -58,9 +58,16 @@ static void fsp_surv_ack(struct fsp_msg *msg)
 		lock(&surv_lock);
 		fsp_surv_ack_pending = false;
 		unlock(&surv_lock);
-	} else
+	} else {
+		/**
+		 * @fwts-label FSPHeartbeatAckError
+		 * @fwts-advice Error in acknowledging heartbeat to FSP.
+		 * This could mean the FSP has gone away or it may mean
+		 * the FSP may kill us for missing too many heartbeats.
+		 */
 		prlog(PR_ERR,
 		      "SURV: Heartbeat Acknowledgment error from FSP\n");
+	}
 
 	fsp_freemsg(msg);
 }
