@@ -35,4 +35,9 @@ void *memcpy(void *dest, const void *src, size_t n);
 void *memmove(void *dest, const void *src, size_t n);
 int memcmp(const void *s1, const void *s2, size_t n);
 
+static inline int ffs(unsigned long val)
+{
+	return __builtin_ffs(val);
+}
+
 #endif
