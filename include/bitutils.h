@@ -32,6 +32,7 @@
 #define PPC_BITMASK(bs,be)	((PPC_BIT(bs) - PPC_BIT(be)) | PPC_BIT(bs))
 #define PPC_BITMASK32(bs,be)	((PPC_BIT32(bs) - PPC_BIT32(be))|PPC_BIT32(bs))
 #define PPC_BITMASK16(bs,be)	((PPC_BIT16(bs) - PPC_BIT16(be))|PPC_BIT16(bs))
+#define PPC_BITMASK8(bs,be)	((PPC_BIT8(bs) - PPC_BIT8(be))|PPC_BIT8(bs))
 #define PPC_BITLSHIFT(be)	(63 - (be))
 #define PPC_BITLSHIFT32(be)	(31 - (be))
 
