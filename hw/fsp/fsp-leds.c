@@ -219,6 +219,11 @@ static void fsp_set_sai_complete(struct fsp_msg *msg)
 	struct led_set_cmd *spcn_cmd = (struct led_set_cmd *)msg->user_data;
 
 	if (rc) {
+		/**
+		 * @fwts-label FSPSAIFailed
+		 * @fwts-advice Failed to update System Attention Indicator.
+		 * Likely means some bug with OPAL interacting with FSP.
+		 */
 		prlog(PR_ERR, "Update SAI cmd failed [rc=%d].\n", rc);
 		ret = OPAL_INTERNAL_ERROR;
 
@@ -261,6 +266,12 @@ static int fsp_set_sai(struct led_set_cmd *spcn_cmd)
 
 	msg = fsp_mkmsg(cmd, 0);
 	if (!msg) {
+		/**
+		 * @fwts-label SAIMallocFail
+		 * @fwts-advice OPAL ran out of memory while trying to
+		 * allocate an FSP message in SAI code path. This indicates
+		 * an OPAL bug that caused OPAL to run out of memory.
+		 */
 		prlog(PR_ERR, "%s: Memory allocation failed.\n", __func__);
 		goto sai_fail;
 	}
@@ -270,6 +281,11 @@ static int fsp_set_sai(struct led_set_cmd *spcn_cmd)
 	rc = fsp_queue_msg(msg, fsp_set_sai_complete);
 	if (rc) {
 		fsp_freemsg(msg);
+		/**
+		 * @fwts-label SAIQueueFail
+		 * @fwts-advice Error in queueing message to FSP in SAI code
+		 * path. Likely an OPAL bug.
+		 */
 		prlog(PR_ERR, "%s: Failed to queue the message\n", __func__);
 		goto sai_fail;
 	}
@@ -293,6 +309,11 @@ static void fsp_get_sai_complete(struct fsp_msg *msg)
 	int rc = msg->resp->word1 & 0xff00;
 
 	if (rc) {
+		/**
+		 * @fwts-label FSPSAIGetFailed
+		 * @fwts-advice Possibly an error on FSP side, OPAL failed
+		 * to read state from FSP.
+		 */
 		prlog(PR_ERR, "Read real SAI cmd failed [rc = 0x%x].\n", rc);
 	} else { /* Update SAI state */
 		lock(&sai_lock);
@@ -314,12 +335,20 @@ static void fsp_get_sai(void)
 
 	msg = fsp_mkmsg(cmd, 0);
 	if (!msg) {
+		/**
+		 * @fwts-label FSPGetSAIMallocFail
+		 * @fwts-advice OPAL ran out of memory: OPAL bug.
+		 */
 		prlog(PR_ERR, "%s: Memory allocation failed.\n", __func__);
 		return;
 	}
 	rc = fsp_queue_msg(msg, fsp_get_sai_complete);
 	if (rc) {
 		fsp_freemsg(msg);
+		/**
+		 * @fwts-label FSPGetSAIQueueFail
+		 * @fwts-advice Failed to queue message to FSP: OPAL bug
+		 */
 		prlog(PR_ERR, "%s: Failed to queue the message\n", __func__);
 	}
 }
@@ -679,6 +708,11 @@ static int queue_led_state_change(char *loc_code, u8 command,
 	/* New request node */
 	cmd = zalloc(sizeof(struct led_set_cmd));
 	if (!cmd) {
+		/**
+		 * @fwts-label FSPLEDRequestMallocFail
+		 * @fwts-advice OPAL failed to allocate memory for FSP LED
+		 * command. Likely an OPAL bug led to out of memory.
+		 */
 		prlog(PR_ERR, "SPCN set command node allocation failed\n");
 		return -1;
 	}
