@@ -37,8 +37,11 @@
  * appended and flag set
  *     0b1000.0000.0000.0000.0000.00NN.NCCC.MMMM
  *     N=Node, C=Chip, M=Memory Channel
- * Processor EX/Core chiplet = PIR >> 3 with flag set
+ * Processor EX/Core chiplet = PIR >> 3 with flag set.
+ * On P8:
  *     0b0100.0000.0000.0000.0000.00NN.NCCC.PPPP
+ * On P9:
+ *     0b0100.0000.0000.0000.0000.0NNN.CCCP.PPPP
  *     N=Node, C=Chip, P=Processor core
  */
 
@@ -108,7 +111,7 @@
 	(((_r) << 10) | ((_s) << 6) | (_o))
 
 /*
- * Additional useful definitions
+ * Additional useful definitions for P8
  */
 #define P8_EX_PCB_SLAVE_BASE	0x100F0000
 
@@ -117,6 +120,30 @@
 
 #define XSCOM_ADDR_P8_EX(core, addr) \
 		((((core) & 0xF) << 24) | (addr))
+
+/*
+ * Additional useful definitions for P9
+ */
+
+/* An EQ is a quad (also named an EP) */
+#define XSCOM_ADDR_P9_EP(core, addr) \
+	(((((core) & 0x1c) + 0x40) << 22) | (addr))
+#define XSCOM_ADDR_P9_EP_SLAVE(core, addr) \
+	XSCOM_ADDR_P9_EP(core, (addr) | 0xf0000)
+
+/* An EX is a pair of cores. They are accessed via their corresponding EQs
+ * with bit 0x400 indicating which of the 2 EX to address
+ */
+#define XSCOM_ADDR_P9_EX(core, addr) \
+	(XSCOM_ADDR_P9_EP(core, addr | (((core) & 2) << 9)))
+
+/* An EC is an individual core and has its own XSCOM addressing */
+#define XSCOM_ADDR_P9_EC(core, addr) \
+	(((((core) & 0x1F) + 0x20) << 24) | (addr))
+#define XSCOM_ADDR_P9_EC_SLAVE(core, addr) \
+	XSCOM_ADDR_P9_EC(core, (addr) | 0xf0000)
+
+/************* XXXX Move these P8 only registers elswhere !!! ****************/
 
 /* Per core power mgt registers */
 #define PM_OHA_MODE_REG		0x1002000D
@@ -153,6 +180,8 @@
 /* Fields in history regs */
 #define EX_PM_IDLE_ST_HIST_PM_STATE_MASK	PPC_BITMASK(0, 2)
 #define EX_PM_IDLE_ST_HIST_PM_STATE_LSH		PPC_BITLSHIFT(2)
+
+/***************************************************************************/
 
 /* Definitions relating to indirect XSCOMs shared with centaur */
 #define XSCOM_ADDR_IND_FLAG		PPC_BIT(0)
