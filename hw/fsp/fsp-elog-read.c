@@ -175,6 +175,12 @@ static void fsp_elog_fetch_failure(uint8_t fsp_status)
 	/* read top list and delete the node */
 	log_data = list_top(&elog_read_pending, struct fsp_log_entry, link);
 	if (!log_data) {
+		/**
+		 * @fwts-label ElogFetchFailureInconsistent
+		 * @fwts-advice Inconsistent state between OPAL and FSP
+		 * in code path for handling failure of fetching error log
+		 * from FSP. Likely a bug in interaction between FSP and OPAL.
+		 */
 		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
 		      __func__);
 	} else {
@@ -241,6 +247,12 @@ static void fsp_elog_queue_fetch(void)
 
 	entry = list_top(&elog_read_pending, struct fsp_log_entry, link);
 	if (!entry) {
+		/**
+		 * @fwts-label ElogQueueInconsistent
+		 * @fwts-advice Bug in interaction between FSP and OPAL. We
+		 * expected there to be a pending read from FSP but the list
+		 * was empty.
+		 */
 		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
 		      __func__);
 		fsp_elog_set_head_state(ELOG_STATE_NONE);
@@ -279,6 +291,12 @@ static int64_t fsp_opal_elog_info(uint64_t *opal_elog_id,
 	}
 	log_data = list_top(&elog_read_pending, struct fsp_log_entry, link);
 	if (!log_data) {
+		/**
+		 * @fwts-label ElogInfoInconsistentState
+		 * @fwts-advice We expected there to be an entry in the list
+		 * of error logs for the error log we're fetching information
+		 * for. There wasn't. This means there's a bug.
+		 */
 		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
 		      __func__);
 		unlock(&elog_read_lock);
@@ -313,6 +331,11 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 
 	log_data = list_top(&elog_read_pending, struct fsp_log_entry, link);
 	if (!log_data) {
+		/**
+		 * @fwts-label ElogReadInconsistentState
+		 * @fwts-advice Inconsistent state while reading error log
+		 * from FSP. Bug in OPAL and FSP interaction.
+		 */
 		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
 		      __func__);
 		unlock(&elog_read_lock);

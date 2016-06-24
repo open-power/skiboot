@@ -136,6 +136,12 @@ bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size)
 		head = list_top(&elog_write_to_host_pending,
 					struct errorlog, link);
 		if (!head) {
+			/**
+			 * @fwts-label ElogListInconsistent
+			 * @fwts-advice Bug in interaction between FSP and
+			 * OPAL. The state maintained by OPAL didn't match
+			 * what the FSP sent.
+			 */
 			prlog(PR_ERR,
 			      "%s: Inconsistent internal list state !\n",
 			      __func__);
