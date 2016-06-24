@@ -604,6 +604,13 @@ static struct dt_node *sensor_get_node(struct dt_node *sensors,
 			 frc_names[header->frc]);
 		dt_add_property_string(node, "compatible", name);
 	} else {
+		/**
+		 * @fwts-label OPALSensorNodeExists
+		 * @fwts-advice OPAL had trouble creating the sensor
+		 * nodes in the device tree as there was already one there.
+		 * This indicates either the device tree from Hostboot
+		 * already filled in sensors or an OPAL bug.
+		 */
 		prlog(PR_ERR, "SENSOR: node %s exists\n", name);
 	}
 	return node;
