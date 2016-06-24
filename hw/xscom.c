@@ -562,7 +562,7 @@ void xscom_init(void)
 		struct proc_chip *chip;
 		const char *chip_name;
 		static const char *chip_names[] = {
-			"UNKNOWN", "P7", "P7+", "P8E", "P8", "P8NVL",
+			"UNKNOWN", "P7", "P7+", "P8E", "P8", "P8NVL", "P9N", "P9C"
 		};
 
 		chip = get_chip(gcid);
