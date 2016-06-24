@@ -910,3 +910,13 @@ u64 dt_translate_address(const struct dt_node *node, unsigned int index,
 	/* XXX TODO */
 	return dt_get_address(node, index, out_size);
 }
+
+bool dt_node_is_enabled(struct dt_node *node)
+{
+	const struct dt_property *p = dt_find_property(node, "status");
+
+	if (!p)
+		return true;
+
+	return p->len > 1 && p->prop[0] == 'o' && p->prop[1] == 'k';
+}
