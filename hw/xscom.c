@@ -69,9 +69,11 @@ static inline void *xscom_addr(uint32_t gcid, uint32_t pcb_addr)
 
 	assert(chip);
 	addr  = chip->xscom_base;
-	addr |= ((uint64_t)pcb_addr << 4) & ~0xfful;
-	addr |= (pcb_addr << 3) & 0x78;
-
+	if (proc_gen <= proc_gen_p8) {
+		addr |= ((uint64_t)pcb_addr << 4) & ~0xfful;
+		addr |= (pcb_addr << 3) & 0x78;
+	} else
+		addr |= ((uint64_t)pcb_addr << 3);
 	return (void *)addr;
 }
 
