@@ -203,7 +203,7 @@ extern void probe_phb3(void);
 extern int phb3_preload_capp_ucode(void);
 extern void phb3_preload_vpd(void);
 extern void probe_npu(void);
-extern void uart_init(bool enable_interrupt);
+extern void uart_init(void);
 extern void homer_init(void);
 extern void occ_pstates_init(void);
 extern void slw_init(void);
@@ -228,6 +228,7 @@ extern void nvram_read_complete(bool success);
 /* UART stuff */
 extern void uart_setup_linux_passthrough(void);
 extern void uart_setup_opal_console(void);
+extern bool uart_enabled(void);
 
 /* OCC interrupt */
 extern void occ_interrupt(uint32_t chip_id);

@@ -130,12 +130,8 @@ static bool qemu_probe(void)
 
 	psi_set_external_irq_policy(EXTERNAL_IRQ_POLICY_SKIBOOT);
 
-	/*
-	 * Setup UART and use it as console. For now, we
-	 * don't expose the interrupt as we know it's not
-	 * working properly yet
-	 */
-	uart_init(true);
+	/* Setup UART and use it as console */
+	uart_init();
 
 	return true;
 }

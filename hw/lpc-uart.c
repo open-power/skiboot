@@ -64,11 +64,10 @@ DEFINE_LOG_ENTRY(OPAL_RC_UART_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_UART,
 static struct lock uart_lock = LOCK_UNLOCKED;
 static struct dt_node *uart_node;
 static uint32_t uart_base;
-static bool has_irq, irq_ok, rx_full, tx_full;
+static bool has_irq = false, irq_ok, rx_full, tx_full;
 static uint8_t tx_room;
 static uint8_t cached_ier;
-static bool simics_uart;
-static void *simics_uart_base;
+static void *mmio_uart_base;
 
 static void uart_trace(u8 ctx, u8 cnt, u8 irq_state, u8 in_count)
 {
@@ -83,16 +82,16 @@ static void uart_trace(u8 ctx, u8 cnt, u8 irq_state, u8 in_count)
 
 static inline uint8_t uart_read(unsigned int reg)
 {
-	if (simics_uart)
-		return in_8(simics_uart_base + reg);
+	if (mmio_uart_base)
+		return in_8(mmio_uart_base + reg);
 	else
 		return lpc_inb(uart_base + reg);
 }
 
 static inline void uart_write(unsigned int reg, uint8_t val)
 {
-	if (simics_uart)
-		out_8(simics_uart_base + reg, val);
+	if (mmio_uart_base)
+		out_8(mmio_uart_base + reg, val);
 	else
 		lpc_outb(val, uart_base + reg);
 }
@@ -121,6 +120,7 @@ static void uart_update_ier(void)
 
 	if (!has_irq)
 		return;
+
 	/* If we have never got an interrupt, enable them all,
 	 * the first interrupt received will tell us if interrupts
 	 * are functional (some boards are missing an EC or FPGA
@@ -138,6 +138,11 @@ static void uart_update_ier(void)
 	}
 }
 
+bool uart_enabled(void)
+{
+	return mmio_uart_base || uart_base;
+}
+
 /*
  * Internal console driver (output only)
  */
@@ -146,7 +151,7 @@ static size_t uart_con_write(const char *buf, size_t len)
 	size_t written = 0;
 
 	/* If LPC bus is bad, we just swallow data */
-	if (!lpc_ok() && !simics_uart)
+	if (!lpc_ok() && !mmio_uart_base)
 		return written;
 
 	lock(&uart_lock);
@@ -362,7 +367,7 @@ static int64_t uart_opal_read(int64_t term_number, int64_t *length,
 	uart_trace(TRACE_UART_CTX_READ, read_cnt, tx_full, in_count);
 
 	unlock(&uart_lock);
-	
+
 	/* Adjust the OPAL event */
 	uart_adjust_opal_event();
 
@@ -492,15 +497,13 @@ static struct lpc_client uart_lpc_client = {
 	.interrupt = uart_irq,
 };
 
-void uart_init(bool use_interrupt)
+void uart_init(void)
 {
 	const struct dt_property *prop;
 	struct dt_node *n;
 	char *path __unused;
-	uint32_t chip_id, irq;
-
-	if (!lpc_present())
-		return;
+	uint32_t chip_id;
+	const uint32_t *irqp;
 
 	/* UART lock is in the console path and thus must block
 	 * printf re-entrancy
@@ -512,19 +515,55 @@ void uart_init(bool use_interrupt)
 	if (!n)
 		return;
 
-	/* Get IO base */
-	prop = dt_find_property(n, "reg");
-	if (!prop) {
-		log_simple_error(&e_info(OPAL_RC_UART_INIT),
-				"UART: Can't find reg property\n");
-		return;
+	/* Read the interrupts property if any */
+	irqp = dt_prop_get_def(n, "interrupts", NULL);
+
+	/* Now check if the UART is on the root bus. This is the case of
+	 * directly mapped UARTs in simulation environments
+	 */
+	if (n->parent == dt_root) {
+		printf("UART: Found at root !\n");
+		mmio_uart_base = (void *)dt_translate_address(n, 0, NULL);
+		if (!mmio_uart_base) {
+			printf("UART: Failed to translate address !\n");
+			return;
+		}
+
+		/* If it has an interrupt properly, we consider this to be
+		 * a direct XICS/XIVE interrupt
+		 */
+		if (irqp)
+			has_irq = true;
+
+	} else {
+		if (!lpc_present())
+			return;
+
+		/* Get IO base */
+		prop = dt_find_property(n, "reg");
+		if (!prop) {
+			log_simple_error(&e_info(OPAL_RC_UART_INIT),
+					 "UART: Can't find reg property\n");
+			return;
+		}
+		if (dt_property_get_cell(prop, 0) != OPAL_LPC_IO) {
+			log_simple_error(&e_info(OPAL_RC_UART_INIT),
+					 "UART: Only supports IO addresses\n");
+			return;
+		}
+		uart_base = dt_property_get_cell(prop, 1);
+
+		if (irqp) {
+			uint32_t irq = be32_to_cpu(*irqp);
+
+			chip_id = dt_get_chip_id(uart_node);
+			uart_lpc_client.interrupts = LPC_IRQ(irq);
+			lpc_register_client(chip_id, &uart_lpc_client);
+			prlog(PR_DEBUG, "UART: Using LPC IRQ %d\n", irq);
+			has_irq = true;
+		}
 	}
-	if (dt_property_get_cell(prop, 0) != OPAL_LPC_IO) {
-		log_simple_error(&e_info(OPAL_RC_UART_INIT),
-				"UART: Only supports IO addresses\n");
-		return;
-	}
-	uart_base = dt_property_get_cell(prop, 1);
+
 
 	if (!uart_init_hw(dt_prop_get_u32(n, "current-speed"),
 			  dt_prop_get_u32(n, "clock-frequency"))) {
@@ -532,7 +571,6 @@ void uart_init(bool use_interrupt)
 		dt_add_property_strings(n, "status", "bad");
 		return;
 	}
-	chip_id = dt_get_chip_id(uart_node);
 
 	/*
 	 * Mark LPC used by the console (will mark the relevant
@@ -542,65 +580,5 @@ void uart_init(bool use_interrupt)
 
 	/* Install console backend for printf() */
 	set_console(&uart_con_driver);
-
-	/* On Naples, use the SerIRQ, which Linux will have to share with
-	 * OPAL as we don't really play the cascaded interrupt game at this
-	 * point...
-	 */
-	if (use_interrupt) {
-		irq = dt_prop_get_u32(n, "interrupts");
-		uart_lpc_client.interrupts = LPC_IRQ(irq);
-		lpc_register_client(chip_id, &uart_lpc_client);
-		has_irq = true;
-		prlog(PR_DEBUG, "UART: Using LPC IRQ %d\n", irq);
-	} else
-		has_irq = false;
 }
 
-static bool simics_con_poll_read(void) {
-	uint8_t lsr = uart_read(REG_LSR);
-	return ((lsr & LSR_DR) != 0);
-}
-
-static size_t simics_con_read(char *buf, size_t len)
-{
-	size_t count = 0;
-	while (count < len) {
-		if (!simics_con_poll_read())
-			break;
-		*(buf++) = uart_read(REG_RBR);
-		count++;
-	}
-	return count;
-}
-
-static struct con_ops simics_con_driver = {
-	.poll_read = simics_con_poll_read,
-	.read = simics_con_read,
-	.write = uart_con_write,
-};
-
-void enable_simics_console() {
-	struct dt_node *n;
-
-	printf("Enabling Simics console\n");
-
-	n = dt_find_compatible_node(dt_root, NULL, "ns16550");
-	if (!n) {
-		prerror("UART: cannot find ns16550\n");
-		return;
-	}
-
-	simics_uart_base = (void *)dt_prop_get_u64(n, "console-bar");
-	simics_uart = 1;
-	has_irq = false;
-
-	if (!uart_init_hw(dt_prop_get_u32(n, "current-speed"),
-			  dt_prop_get_u32(n, "clock-frequency"))) {
-		prerror("UART: Initialization failed\n");
-		dt_add_property_strings(n, "status", "bad");
-		return;
-	}
-
-	set_console(&simics_con_driver);
-}

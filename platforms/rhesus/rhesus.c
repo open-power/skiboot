@@ -270,12 +270,8 @@ static bool rhesus_probe(void)
 	/* Add missing bits of device-tree such as the UART */
 	rhesus_dt_fixup(has_uart_irq);
 
-	/*
-	 * Setup UART and use it as console. For now, we
-	 * don't expose the interrupt as we know it's not
-	 * working properly yet
-	 */
-	uart_init(has_uart_irq);
+	/* Setup UART and use it as console */
+	uart_init();
 
 	return true;
 }

@@ -352,8 +352,8 @@ void astbmc_early_init(void)
 	/* Similarly, some BMCs don't configure the BT interrupt properly */
 	ast_setup_ibt(BT_IO_BASE, BT_LPC_IRQ);
 
-	/* Setup UART and use it as console with interrupts */
-	uart_init(true);
+	/* Setup UART and use it as console */
+	uart_init();
 
 	prd_init();
 }
