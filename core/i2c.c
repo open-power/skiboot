@@ -64,12 +64,25 @@ static int opal_i2c_request(uint64_t async_token, uint32_t bus_id,
 
 	bus = i2c_find_bus_by_id(bus_id);
 	if (!bus) {
+		/**
+		 * @fwts-label I2CInvalidBusID
+		 * @fwts-advice opal_i2c_request was passed an invalid bus
+		 * ID. This has likely come from the OS rather than OPAL
+		 * and thus could indicate an OS bug rather than an OPAL
+		 * bug.
+		 */
 		prlog(PR_ERR, "I2C: Invalid 'bus_id' passed to the OPAL\n");
 		return OPAL_PARAMETER;
 	}
 
 	req = i2c_alloc_req(bus);
 	if (!req) {
+		/**
+		 * @fwts-label I2CFailedAllocation
+		 * @fwts-advice OPAL failed to allocate memory for an
+		 * i2c_request. This points to an OPAL bug as OPAL ran
+		 * out of memory and this should never happen.
+		 */
 		prlog(PR_ERR, "I2C: Failed to allocate 'i2c_request'\n");
 		return OPAL_NO_MEM;
 	}
