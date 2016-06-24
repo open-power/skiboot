@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr,"Error %d reading XSCOM\n", rc);
 		exit(1);
 	}
-	printf("%" PRIx64 "\n", val);
+	printf("%016" PRIx64 "\n", val);
 	return 0;
 }
 
