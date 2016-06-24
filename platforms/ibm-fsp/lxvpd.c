@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define pr_fmt(fmt) "LXVPD: " fmt
 
 #include <skiboot.h>
 #include <device.h>
@@ -22,12 +23,6 @@
 #include <pci-slot.h>
 
 #include "lxvpd.h"
-
-/* Debugging options */
-#define LXVPD_DBG(fmt, a...)	prlog(PR_DEBUG, "LXVPD: " fmt, ##a)
-#define LXVPD_INFO(fmt, a...)	prlog(PR_INFO, "LXVPD: " fmt, ##a)
-#define LXVPD_WARN(fmt, a...)	prlog(PR_WARNING, "LXVPD: " fmt, ##a)
-#define LXVPD_ERR(fmt, a...)	prlog(PR_ERR, "LXVPD: " fmt, ##a)
 
 /*
  * Currently, the lxvpd PCI slot struct is shared by multiple
@@ -89,7 +84,7 @@ void *lxvpd_get_slot(struct pci_slot *slot)
 
 	/* Check if we have slot info */
 	if (!sdata) {
-		LXVPD_DBG("PHB%04x not have VPD data\n",
+		prlog(PR_DEBUG, "PHB%04x not have VPD data\n",
 			  phb->opal_id);
 		return NULL;
 	}
@@ -97,7 +92,7 @@ void *lxvpd_get_slot(struct pci_slot *slot)
 	/* Platform slot attached ? */
 	s = slot->data;
 	if (s) {
-		LXVPD_DBG("Slot %016llx had platform data [%s]\n",
+		prlog(PR_DEBUG, "Slot %016llx had platform data [%s]\n",
 			  slot->id, s->label);
 		return s;
 	}
@@ -109,7 +104,7 @@ void *lxvpd_get_slot(struct pci_slot *slot)
 	 * more strict rules to support slot than PCI core.
 	 */
 	if (!lxvpd_supported_slot(phb, pd)) {
-		LXVPD_DBG("Slot %016llx not supported\n",
+		prlog(PR_DEBUG, "Slot %016llx not supported\n",
 			  slot->id);
 		return NULL;
 	}
@@ -122,7 +117,7 @@ void *lxvpd_get_slot(struct pci_slot *slot)
 		if (is_phb && s->switch_id == 0) {
 			slot->data = s;
 			s->pci_slot = slot;
-			LXVPD_DBG("Found [%s] for PHB slot %016llx\n",
+			prlog(PR_DEBUG, "Found [%s] for PHB slot %016llx\n",
 				  s->label, slot->id);
 
 			return s;
@@ -132,14 +127,14 @@ void *lxvpd_get_slot(struct pci_slot *slot)
 		if (!is_phb && s->switch_id != 0 && s->dev_id == slot_num) {
 			slot->data = s;
 			s->pci_slot = slot;
-			LXVPD_DBG("Found [%s] for slot %016llx\n",
+			prlog(PR_DEBUG, "Found [%s] for slot %016llx\n",
 				  s->label, slot->id);
 
 			return s;
 		}
 	}
 
-	LXVPD_DBG("No data found for %sslot %016llx\n",
+	prlog(PR_DEBUG, "No data found for %sslot %016llx\n",
 		  is_phb ? "PHB " : " ", slot->id);
 	return NULL;
 }
@@ -234,7 +229,7 @@ static void lxvpd_parse_1004_map(struct phb *phb,
 			s->wired_lanes = PCI_SLOT_WIRED_LANES_UNKNOWN;
 		}
 
-		LXVPD_DBG("1004 Platform data [%s] %02x %02x on PHB%04x\n",
+		prlog(PR_DEBUG, "1004 Platform data [%s] %02x %02x on PHB%04x\n",
 			  s->label, s->switch_id, s->dev_id, phb->opal_id);
 	}
 }
@@ -275,7 +270,7 @@ static void lxvpd_parse_1005_map(struct phb *phb,
 		if (s->wired_lanes > PCI_SLOT_WIRED_LANES_PCIE_X32)
 			s->wired_lanes = PCI_SLOT_WIRED_LANES_UNKNOWN;
 
-		LXVPD_DBG("1005 Platform data [%s] %02x %02x on PHB%04x\n",
+		prlog(PR_DEBUG, "1005 Platform data [%s] %02x %02x on PHB%04x\n",
 			  s->label, s->switch_id, s->dev_id, phb->opal_id);
 	}
 }
@@ -301,20 +296,20 @@ void lxvpd_process_slot_entries(struct phb *phb,
 	/* Get LX VPD pointer */
 	lxvpd = dt_prop_get_def_size(node, "ibm,io-vpd", NULL, &lxvpd_size);
 	if (!lxvpd) {
-		LXVPD_WARN("No data found for PHB%04x %s\n",
+		prlog(PR_WARNING, "No data found for PHB%04x %s\n",
 			   phb->opal_id, record);
 		return;
 	}
 
 	pr_rec = vpd_find_record(lxvpd, lxvpd_size, record, &pr_size);
 	if (!pr_rec) {
-		LXVPD_WARN("Record %s not found on PHB%04x\n",
+		prlog(PR_WARNING, "Record %s not found on PHB%04x\n",
 			   record, phb->opal_id);
 		return;
 	}
 
 	/* As long as there's still something in the PRxy record */
-	LXVPD_DBG("PHB%04x record %s has %ld bytes\n",
+	prlog(PR_DEBUG, "PHB%04x record %s has %ld bytes\n",
 		  phb->opal_id, record, pr_size);
 	pr_end = pr_rec + pr_size;
 	while (pr_rec < pr_end) {
@@ -326,12 +321,12 @@ void lxvpd_process_slot_entries(struct phb *phb,
 		sm = vpd_find_keyword(pr_rec, pr_size, "SM", &sm_sz);
 		if (!mf || !sm) {
 			if (!found)
-				LXVPD_WARN("Slot Map keyword %s not found\n",
+				prlog(PR_WARNING, "Slot Map keyword %s not found\n",
 					   record);
 			return;
 		}
 
-		LXVPD_DBG("Found 0x%04x map...\n", *mf);
+		prlog(PR_DEBUG, "Found 0x%04x map...\n", *mf);
 		switch (*mf) {
 		case 0x1004:
 			lxvpd_parse_1004_map(phb, sm + 1, sm_sz - 1, slot_size);
