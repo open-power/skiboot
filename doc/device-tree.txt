@@ -305,7 +305,6 @@
 		compatible = "IBM,ppc-xicp", "IBM,power8-icp";
 		interrupt-controller;
 		#address-cells = <0x0>;
-		#interrupt-cells = <0x1>;
 		device_type = "PowerPC-External-Interrupt-Presentation";
 
 		/*

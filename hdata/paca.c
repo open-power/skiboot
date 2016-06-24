@@ -190,7 +190,6 @@ static void add_icps(void)
 				irange, sizeof(irange));
 		dt_add_property(icp, "interrupt-controller", NULL, 0);
 		dt_add_property_cells(icp, "#address-cells", 0);
-		dt_add_property_cells(icp, "#interrupt-cells", 1);
 		dt_add_property_string(icp, "device_type",
 				   "PowerPC-External-Interrupt-Presentation");
 		for (i = 0; i < num_threads*2; i += 2) {
