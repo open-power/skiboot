@@ -18,6 +18,7 @@
 #include <skiboot.h>
 #include <chip.h>
 #include <device.h>
+#include <timebase.h>
 
 static struct proc_chip *chips[MAX_CHIPS];
 enum proc_chip_quirks proc_chip_quirks;
@@ -81,11 +82,21 @@ void init_chips(void)
 			| QUIRK_NO_F000F | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ;
 		prlog(PR_NOTICE, "CHIP: Detected Mambo simulator\n");
 	}
+	/* Detect simics */
 	if (dt_find_by_path(dt_root, "/simics")) {
 		proc_chip_quirks |= QUIRK_SIMICS | QUIRK_NO_CHIPTOD
-			| QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ;
+			| QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ | QUIRK_SLOW_SIM;
+		tb_hz = 512000;
 		prlog(PR_NOTICE, "CHIP: Detected Simics simulator\n");
 	}
+	/* Detect Awan emulator */
+	if (dt_find_by_path(dt_root, "/awan")) {
+		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_NO_F000F
+			| QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ | QUIRK_SLOW_SIM;
+		tb_hz = 512000;
+		prlog(PR_NOTICE, "CHIP: Detected Awan emulator\n");
+	}
+	/* Detect Qemu */
 	if (dt_node_is_compatible(dt_root, "qemu,powernv")) {
 		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_NO_PBA;
 		prlog(PR_NOTICE, "CHIP: Detected Qemu simulator\n");

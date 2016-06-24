@@ -52,7 +52,7 @@ static inline enum tb_cmpval tb_compare(unsigned long a,
 }
 
 /* Architected timebase */
-static const unsigned long tb_hz = 512000000;
+extern unsigned long tb_hz;
 
 static inline unsigned long secs_to_tb(unsigned long secs)
 {

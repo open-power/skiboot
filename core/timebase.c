@@ -18,6 +18,9 @@
 #include <timebase.h>
 #include <opal.h>
 #include <cpu.h>
+#include <chip.h>
+
+unsigned long tb_hz = 512000000;
 
 static void time_wait_poll(unsigned long duration)
 {
@@ -108,7 +111,10 @@ unsigned long timespec_to_tb(const struct timespec *ts)
 	 * at the expense of capacity or do 128 bit math which
 	 * I'm not eager to do :-)
 	 */
-	return (ns * (tb_hz >> 24)) / (1000000000ul >> 24);
+	if (chip_quirk(QUIRK_SLOW_SIM))
+		return (ns * (tb_hz >> 16)) / (1000000000ul >> 16);
+	else
+		return (ns * (tb_hz >> 24)) / (1000000000ul >> 24);
 }
 
 int nanosleep(const struct timespec *req, struct timespec *rem)

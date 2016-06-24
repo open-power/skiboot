@@ -46,6 +46,8 @@ static void *ntuple_addr(const struct spira_ntuple *n);
 #define __this_cpu ((struct cpu_thread *)NULL)
 #define zalloc(expr) calloc(1, (expr))
 
+unsigned long tb_hz = 512000000;
+
 /* Don't include processor-specific stuff. */
 #define __PROCESSOR_H
 #define PVR_TYPE(_pvr)	_pvr

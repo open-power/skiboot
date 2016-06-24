@@ -13,6 +13,8 @@ struct lock;
 static inline void lock(struct lock *l) { (void)l; }
 static inline void unlock(struct lock *l) { (void)l; }
 
+unsigned long tb_hz = 512000000;
+
 #include "../timer.c"
 
 #define NUM_TIMERS	100

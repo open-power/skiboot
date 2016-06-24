@@ -22,6 +22,8 @@
 #define __TEST__
 #include <timebase.h>
 
+unsigned long tb_hz = 512000000;
+
 int main(void)
 {
 	/* This is a fairly solid assumption that the math we're doing
