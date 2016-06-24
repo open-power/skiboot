@@ -87,13 +87,21 @@
  * |               |           |
  * |___|___|___|___|___|___|___|
  *
- * Bit 56 is unused according to the manual by we add it to the coreid here.
+ * Bit 56 is unused according to the manual by we add it to the coreid here,
+ * thus we have a 6-bit core number.
+ *
+ * Note: XIVE Only supports 4-bit chip numbers ...
  */
 #define P9_PIR2GCID(pir) (((pir) >> 8) & 0x7f)
 
 #define P9_PIR2COREID(pir) (((pir) >> 2) & 0x3f)
 
 #define P9_PIR2THREADID(pir) ((pir) & 0x3)
+
+/* P9 specific ones mostly used by XIVE */
+#define P9_PIR2LOCALCPU(pir) ((pir) & 0xff)
+#define P9_PIRFROMLOCALCPU(chip, cpu)	(((chip) << 8) | (cpu))
+
 
 struct dt_node;
 struct centaur_chip;
