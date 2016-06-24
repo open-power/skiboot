@@ -239,8 +239,8 @@ mysim memory fread $mconf(payload_addr) $payload_size $mconf(payload)
 # Flatten it
 epapr::of2dtb mysim $mconf(epapr_dt_addr)
 
-# Turbo mode & run
-mysim mode turbo
+# Set run speed
+mysim mode fastest
 
 if { [info exists env(SKIBOOT_AUTORUN)] } {
     mysim go
