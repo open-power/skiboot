@@ -524,10 +524,55 @@ void init_boot_cpu(void)
 	list_head_init(&global_job_queue);
 }
 
+static void enable_large_dec(bool on)
+{
+	u64 lpcr = mfspr(SPR_LPCR);
+
+	if (on)
+		lpcr |= SPR_LPCR_P9_LD;
+	else
+		lpcr &= ~SPR_LPCR_P9_LD;
+
+	mtspr(SPR_LPCR, lpcr);
+}
+
+#define HIGH_BIT (1ull << 63)
+
+static int find_dec_bits(void)
+{
+	int bits = 65; /* we always decrement once */
+	u64 mask = ~0ull;
+
+	if (proc_gen < proc_gen_p9)
+		return 32;
+
+	/* The ISA doesn't specify the width of the decrementer register so we
+	 * need to discover it. When in large mode (LPCR.LD = 1) reads from the
+	 * DEC SPR are sign extended to 64 bits and writes are truncated to the
+	 * physical register width. We can use this behaviour to detect the
+	 * width by starting from an all 1s value and left shifting until we
+	 * read a value from the DEC with it's high bit cleared.
+	 */
+
+	enable_large_dec(true);
+
+	do {
+		bits--;
+		mask = mask >> 1;
+		mtspr(SPR_DEC, mask);
+	} while (mfspr(SPR_DEC) & HIGH_BIT);
+
+	enable_large_dec(false);
+
+	prlog(PR_DEBUG, "CPU: decrementer bits %d\n", bits);
+	return bits;
+}
+
 void init_all_cpus(void)
 {
 	struct dt_node *cpus, *cpu;
 	unsigned int thread, new_max_pir = 0;
+	int dec_bits = find_dec_bits();
 
 	cpus = dt_find_by_path(dt_root, "/cpus");
 	assert(cpus);
@@ -581,6 +626,9 @@ void init_all_cpus(void)
 
 		/* Add associativity properties */
 		add_core_associativity(t);
+
+		/* Add the decrementer width property */
+		dt_add_property_cells(cpu, "ibm,dec-bits", dec_bits);
 
 		/* Adjust max PIR */
 		if (new_max_pir < (pir + cpu_thread_count - 1))

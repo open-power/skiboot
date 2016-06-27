@@ -96,6 +96,7 @@
 #define SPR_LPCR_P8_PECE2	PPC_BIT(49)   /* Wake on external interrupts */
 #define SPR_LPCR_P8_PECE3	PPC_BIT(50)   /* Wake on decrementer */
 #define SPR_LPCR_P8_PECE4	PPC_BIT(51)   /* Wake on MCs, HMIs, etc... */
+#define SPR_LPCR_P9_LD		PPC_BIT(46)   /* Large decrementer mode bit */
 
 
 /* Bits in TFMR - control bits */
