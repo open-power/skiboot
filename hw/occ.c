@@ -101,7 +101,15 @@ static bool wait_for_all_occ_init(void)
 	for_each_chip(chip) {
 		/* Check for valid homer address */
 		if (!chip->homer_base) {
-			prerror("OCC: Chip: %x homer_base is not valid\n",
+			/**
+			 * @fwts-label OCCInvalidHomerBase
+			 * @fwts-advice The HOMER base address for a chip
+			 * was not valid. This means that OCC (On Chip
+			 * Controller) will be non-functional. This means
+			 * that CPU idle states and CPU frequency scaling
+			 * may not be functional.
+			 */
+			prlog(PR_ERR,"OCC: Chip: %x homer_base is not valid\n",
 				chip->id);
 			return false;
 		}
@@ -126,7 +134,15 @@ static bool wait_for_all_occ_init(void)
 			time_wait_ms(100);
 		}
 		if (occ_data->valid != 1) {
-			prerror("OCC: Chip: %x PState table is not valid\n",
+			/**
+			 * @fwts-label OCCInvalidPStateTable
+			 * @fwts-advice The pstate table for a chip
+			 * was not valid. This means that OCC (On Chip
+			 * Controller) will be non-functional. This means
+			 * that CPU idle states and CPU frequency scaling
+			 * may not be functional.
+			 */
+			prlog(PR_ERR, "OCC: Chip: %x PState table is not valid\n",
 				chip->id);
 			return false;
 		}
@@ -175,7 +191,16 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 	occ_data = (struct occ_pstate_table *)occ_data_area;
 
 	if (!occ_data->valid) {
-		prerror("OCC: PState table is not valid\n");
+		/**
+		 * @fwts-label OCCInvalidPStateTableDT
+		 * @fwts-advice The pstate table for the first chip
+		 * was not valid. This means that OCC (On Chip
+		 * Controller) will be non-functional. This means
+		 * that CPU idle states and CPU frequency scaling
+		 * will not be functional as OPAL doesn't populate
+		 * the device tree with pstates in this case.
+		 */
+		prlog(PR_ERR, "OCC: PState table is not valid\n");
 		return false;
 	}
 
@@ -193,13 +218,28 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 	      pmax, nr_pstates);
 
 	if (nr_pstates <= 1 || nr_pstates > 128) {
-		prerror("OCC: OCC range is not valid\n");
+		/**
+		 * @fwts-label OCCInvalidPStateRange
+		 * @fwts-advice The number of pstates is outside the valid
+		 * range (currently <=1 or > 128), so OPAL has not added
+		 * pstates to the device tree. This means that OCC (On Chip
+		 * Controller) will be non-functional. This means
+		 * that CPU idle states and CPU frequency scaling
+		 * will not be functional.
+		 */
+		prlog(PR_ERR, "OCC: OCC range is not valid\n");
 		return false;
 	}
 
 	power_mgt = dt_find_by_path(dt_root, "/ibm,opal/power-mgt");
 	if (!power_mgt) {
-		prerror("OCC: dt node /ibm,opal/power-mgt not found\n");
+		/**
+		 * @fwts-label OCCDTNodeNotFound
+		 * @fwts-advice Device tree node /ibm,opal/power-mgt not
+		 * found. OPAL didn't add pstate information to device tree.
+		 * Probably a firmware bug.
+		 */
+		prlog(PR_ERR, "OCC: dt node /ibm,opal/power-mgt not found\n");
 		return false;
 	}
 
@@ -209,25 +249,45 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 	/* Allocate memory */
 	dt_id = malloc(nr_pstates * sizeof(u32));
 	if (!dt_id) {
-		printf("OCC: dt_id array alloc failure\n");
+		/**
+		 * @fwts-label OCCdt_idENOMEM
+		 * @fwts-advice Out of memory when allocating pstates array.
+		 * No Pstates added to device tree, pstates not functional.
+		 */
+		prlog(PR_ERR, "OCC: dt_id array alloc failure\n");
 		goto out;
 	}
 
 	dt_freq = malloc(nr_pstates * sizeof(u32));
 	if (!dt_freq) {
-		printf("OCC: dt_freq array alloc failure\n");
+		/**
+		 * @fwts-label OCCdt_freqENOMEM
+		 * @fwts-advice Out of memory when allocating pstates array.
+		 * No Pstates added to device tree, pstates not functional.
+		 */
+		prlog(PR_ERR, "OCC: dt_freq array alloc failure\n");
 		goto out_free_id;
 	}
 
 	dt_vdd = malloc(nr_pstates * sizeof(u8));
 	if (!dt_vdd) {
-		printf("OCC: dt_vdd array alloc failure\n");
+		/**
+		 * @fwts-label OCCdt_vddENOMEM
+		 * @fwts-advice Out of memory when allocating pstates array.
+		 * No Pstates added to device tree, pstates not functional.
+		 */
+		prlog(PR_ERR, "OCC: dt_vdd array alloc failure\n");
 		goto out_free_freq;
 	}
 
 	dt_vcs = malloc(nr_pstates * sizeof(u8));
 	if (!dt_vcs) {
-		printf("OCC: dt_vcs array alloc failure\n");
+		/**
+		 * @fwts-label OCCdt_vcsENOMEM
+		 * @fwts-advice Out of memory when allocating pstates array.
+		 * No Pstates added to device tree, pstates not functional.
+		 */
+		prlog(PR_ERR, "OCC: dt_vcs array alloc failure\n");
 		goto out_free_vdd;
 	}
 
@@ -235,7 +295,13 @@ static bool add_cpu_pstate_properties(s8 *pstate_nom)
 		nr_cores = get_available_nr_cores_in_chip(chip->id);
 		dt_core_max = malloc(nr_cores * sizeof(s8));
 		if (!dt_core_max) {
-			prerror("OCC: dt_core_max alloc failure\n");
+			/**
+			 * @fwts-label OCCdt_core_maxENOMEM
+			 * @fwts-advice Out of memory allocating dt_core_max
+			 * array. No PStates in Device Tree: non-functional
+			 * power/frequency management.
+			 */
+			prlog(PR_ERR, "OCC: dt_core_max alloc failure\n");
 			goto out_free_vcs;
 		}
 
@@ -549,7 +615,13 @@ static void occ_queue_load(u8 scope, u32 dbob_id, u32 seq_id)
 
 	occ_req = zalloc(sizeof(struct occ_load_req));
 	if (!occ_req) {
-		prerror("OCC: Could not allocate occ_load_req\n");
+		/**
+		 * @fwts-label OCCload_reqENOMEM
+		 * @fwts-advice ENOMEM while allocating OCC load message.
+		 * OCCs not started, consequently no power/frequency scaling
+		 * will be functional.
+		 */
+		prlog(PR_ERR, "OCC: Could not allocate occ_load_req\n");
 		return;
 	}
 
@@ -631,8 +703,13 @@ static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 	u8 err = 0;
 
 	if (scope != 0x01 && scope != 0x02) {
-		prerror("OCC: Load message with invalid scope 0x%x\n",
-				scope);
+		/**
+		 * @fwts-label OCCLoadInvalidScope
+		 * @fwts-advice Invalid request for loading OCCs. Power and
+		 * frequency management not functional
+		 */
+		prlog(PR_ERR, "OCC: Load message with invalid scope 0x%x\n",
+		      scope);
 		err = 0x22;
 	}
 
@@ -671,8 +748,13 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 
 	/* Check arguments */
 	if (scope != 0x01 && scope != 0x02) {
-		prerror("OCC: Reset message with invalid scope 0x%x\n",
-			scope);
+		/**
+		 * @fwts-label OCCResetInvalidScope
+		 * @fwts-advice Invalid request for resetting OCCs. Power and
+		 * frequency management not functional
+		 */
+		prlog(PR_ERR, "OCC: Reset message with invalid scope 0x%x\n",
+		      scope);
 		err = 0x22;
 	}
 
