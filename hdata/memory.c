@@ -214,6 +214,12 @@ static void add_bus_freq_to_ram_area(struct dt_node *ram_node, u32 chip_id)
 
 	timebase = HDIF_get_idata(pcia, SPPCIA_IDATA_TIMEBASE, &size);
 	if (!timebase || size < sizeof(*timebase)) {
+		/**
+		 * @fwts-label HDATBadTimebaseSize
+		 * @fwts-advice HDAT described an invalid size for timebase,
+		 * which means there's a disagreement between HDAT and OPAL.
+		 * This is most certainly a firmware bug.
+		 */
 		prlog(PR_ERR, "HDAT: Bad timebase size %u @ %p\n", size,
 		      timebase);
 		return;
