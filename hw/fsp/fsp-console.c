@@ -55,6 +55,7 @@ struct fsp_serial {
 	struct fsp_serbuf_hdr	*out_buf;
 	struct fsp_msg		*poke_msg;
 	u8			waiting;
+	u64			irq;
 };
 
 #define SER_BUFFER_SIZE 0x00040000UL
@@ -193,6 +194,7 @@ static size_t fsp_write_vserial(struct fsp_serial *fs, const char *buf,
 #ifndef DISABLE_CON_PENDING_EVT
 	opal_update_pending_evt(OPAL_EVENT_CONSOLE_OUTPUT,
 				OPAL_EVENT_CONSOLE_OUTPUT);
+	opal_update_pending_evt(fs->irq, fs->irq);
 #endif
 	return len;
 }
@@ -465,6 +467,7 @@ static bool fsp_con_msg_vt(u32 cmd_sub_mod, struct fsp_msg *msg)
 		lock(&fsp_con_lock);
 		opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT,
 					OPAL_EVENT_CONSOLE_INPUT);
+		opal_update_pending_evt(fs->irq, fs->irq);
 		unlock(&fsp_con_lock);
 	}
 	return true;
@@ -704,8 +707,10 @@ static int64_t fsp_console_read(int64_t term_number, int64_t *length,
 			}
 		}
 	}
-	if (!pending)
+	if (!pending) {
+		opal_update_pending_evt(fs->irq, 0);
 		opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT, 0);
+	}
 
 	unlock(&fsp_con_lock);
 
@@ -741,11 +746,14 @@ void fsp_console_poll(void *data __unused)
 
 			if (!fs->open)
 				continue;
-			if (sb->next_out == sb->next_in)
+			if (sb->next_out == sb->next_in) {
+				opal_update_pending_evt(fs->irq, 0);
 				continue;
-			if (fs->log_port)
+			}
+			if (fs->log_port) {
 				__flush_console(true);
-			else {
+				opal_update_pending_evt(fs->irq, 0);
+			} else {
 #ifdef OPAL_DEBUG_CONSOLE_POLL
 				if (debug < 5) {
 					prlog(PR_DEBUG,"OPAL: %d still pending"
@@ -907,7 +915,7 @@ void fsp_console_reset(void)
 void fsp_console_add_nodes(void)
 {
 	unsigned int i;
-	struct dt_node *consoles;
+	struct dt_node *consoles, *opal_event;
 
 	consoles = dt_new(opal_node, "consoles");
 	dt_add_property_cells(consoles, "#address-cells", 1);
@@ -932,6 +940,14 @@ void fsp_console_add_nodes(void)
 				     "#write-buffer-size", SER_BUF_DATA_SIZE);
 		dt_add_property_cells(fs_node, "reg", i);
 		dt_add_property_string(fs_node, "device_type", "serial");
+
+		fs->irq = opal_dynamic_event_alloc();
+		dt_add_property_cells(fs_node, "interrupts", ilog2(fs->irq));
+
+		opal_event = dt_find_by_name(opal_node, "event");
+		if (opal_event)
+			dt_add_property_cells(fs_node, "interrupt-parent",
+					      opal_event->phandle);
 	}
 }
 
