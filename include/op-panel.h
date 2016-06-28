@@ -19,6 +19,10 @@
 
 #include <stdint.h>
 
+/* Operator Panel Dimensions */
+#define OP_PANEL_NUM_LINES	2
+#define OP_PANEL_LINE_LEN	16
+
 /* Severity */
 enum op_severity {
 	OP_LOG		= 0x4342,	/* 'CB' - Progress info */

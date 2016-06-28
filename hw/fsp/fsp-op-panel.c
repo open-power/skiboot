@@ -132,8 +132,7 @@ struct op_src {
 	uint32_t word7;
 	uint32_t word8;
 	uint32_t word9;
-#define OP_SRC_ASCII_LEN 32
-	uint8_t	ascii[OP_SRC_ASCII_LEN]; /* Word 11 */
+	uint8_t	ascii[OP_PANEL_NUM_LINES * OP_PANEL_LINE_LEN]; /* Word 11 */
 } __packed __align(4);
 
 /* Page align for the sake of TCE mapping */
@@ -169,7 +168,7 @@ static int64_t __opal_write_oppanel(oppanel_line_t *lines, uint64_t num_lines,
 	int len;
 	int i;
 
-	if (num_lines < 1 || num_lines > 2)
+	if (num_lines < 1 || num_lines > OP_PANEL_NUM_LINES)
 		return OPAL_PARAMETER;
 
 	/* Only one in flight */
@@ -200,18 +199,15 @@ static int64_t __opal_write_oppanel(oppanel_line_t *lines, uint64_t num_lines,
 	op_src.total_size = sizeof(op_src);
 	op_src.word2 = 0; /* should be unneeded */
 
-	len = be64_to_cpu(lines[0].line_len);
-	if (len > 16)
-		len = 16;
+	for (i = 0; i < num_lines; i++) {
+		uint8_t *current_line = op_src.ascii + (i * OP_PANEL_LINE_LEN);
 
-	memset(op_src.ascii + len, ' ', 16-len);
-	memcpy(op_src.ascii, (void*)be64_to_cpu(lines[0].line), len);
-	if (num_lines > 1) {
-		len = be64_to_cpu(lines[1].line_len);
-		if (len > 16)
-			len = 16;
-		memcpy(op_src.ascii + 16, (void*)be64_to_cpu(lines[1].line), len);
-		memset(op_src.ascii + 16 + len, ' ', 16-len);
+		len = be64_to_cpu(lines[i].line_len);
+		if (len < OP_PANEL_LINE_LEN)
+			memset(current_line + len, ' ', OP_PANEL_LINE_LEN-len);
+		else
+			len = OP_PANEL_LINE_LEN;
+		memcpy(current_line, (void *) be64_to_cpu(lines[i].line), len);
 	}
 
 	for (i = 0; i < sizeof(op_src.ascii); i++) {
@@ -265,7 +261,7 @@ void fsp_oppanel_init(void)
 	opal_register(OPAL_WRITE_OPPANEL_ASYNC, opal_write_oppanel_async, 3);
 
 	oppanel = dt_new(opal_node, "oppanel");
-	dt_add_property_cells(oppanel, "#length", 16);
-	dt_add_property_cells(oppanel, "#lines", 2);
+	dt_add_property_cells(oppanel, "#length", OP_PANEL_LINE_LEN);
+	dt_add_property_cells(oppanel, "#lines", OP_PANEL_NUM_LINES);
 	dt_add_property_string(oppanel, "compatible", "ibm,opal-oppanel");
 }
