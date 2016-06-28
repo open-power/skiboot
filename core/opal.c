@@ -138,6 +138,7 @@ void add_opal_node(void)
 {
 	uint64_t base, entry, size;
 	extern uint32_t opal_entry;
+	struct dt_node *opal_event;
 
 	/* XXX TODO: Reorg this. We should create the base OPAL
 	 * node early on, and have the various sub modules populate
@@ -171,6 +172,12 @@ void add_opal_node(void)
 	dt_add_property_u64(opal_node, "opal-base-address", base);
 	dt_add_property_u64(opal_node, "opal-entry-address", entry);
 	dt_add_property_u64(opal_node, "opal-runtime-size", size);
+
+	/* Add irqchip interrupt controller */
+	opal_event = dt_new(opal_node, "event");
+	dt_add_property_strings(opal_event, "compatible", "ibm,opal-event");
+	dt_add_property_cells(opal_event, "#interrupt-cells", 0x1);
+	dt_add_property(opal_event, "interrupt-controller", 0, 0);
 
 	add_opal_firmware_node();
 	add_associativity_ref_point();
