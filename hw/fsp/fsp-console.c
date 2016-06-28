@@ -54,6 +54,7 @@ struct fsp_serial {
 	struct fsp_serbuf_hdr	*in_buf;
 	struct fsp_serbuf_hdr	*out_buf;
 	struct fsp_msg		*poke_msg;
+	u8			waiting;
 };
 
 #define SER_BUFFER_SIZE 0x00040000UL
@@ -653,6 +654,8 @@ static int64_t fsp_console_read(int64_t term_number, int64_t *length,
 		unlock(&fsp_con_lock);
 		return OPAL_CLOSED;
 	}
+	if (fs->waiting)
+		fs->waiting = 0;
 	sb = fs->in_buf;
 	old_nin = sb->next_in;
 	lwsync();
@@ -687,8 +690,19 @@ static int64_t fsp_console_read(int64_t term_number, int64_t *length,
 
 		if (fs->log_port || !fs->open)
 			continue;
-		if (sb->next_out != sb->next_in)
-			pending = true;
+		if (sb->next_out != sb->next_in) {
+			/*
+			 * HACK: Some kernels (4.1+) may fail to properly
+			 * register hvc1 and will never read it. This can lead
+			 * to RCU stalls, so if we notice this console is not
+			 * being read, do not set OPAL_EVENT_CONSOLE_INPUT even
+			 * if it has data
+			 */
+			if (fs->waiting < 5) {
+				pending = true;
+				fs->waiting++;
+			}
+		}
 	}
 	if (!pending)
 		opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT, 0);
