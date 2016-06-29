@@ -1381,6 +1381,7 @@ static void handle_prd_control_run_cmd(struct control_msg *send_msg,
 static void handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 {
 	struct control_msg msg, *recv_msg, *send_msg;
+	struct opal_prd_msg omsg;
 	bool enabled = false;
 	int rc, size;
 
@@ -1433,6 +1434,11 @@ static void handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 		handle_prd_control_occ_actuation(send_msg, enabled);
 		break;
 	case CONTROL_MSG_TEMP_OCC_RESET:
+		omsg.hdr.type = OPAL_PRD_MSG_TYPE_OCC_RESET_NOTIFY;
+		omsg.hdr.size = htobe16(sizeof(omsg));
+		rc = write(ctx->fd, &omsg, sizeof(omsg));
+		if (rc != sizeof(omsg))
+			pr_log(LOG_WARNING, "FW: Failed to send OCC_RESET message: %m");
 		handle_prd_control_occ_reset(send_msg);
 		break;
 	case CONTROL_MSG_TEMP_OCC_ERROR:

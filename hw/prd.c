@@ -182,6 +182,7 @@ static void send_next_pending_event(void)
 	} else if (event & EVENT_OCC_RESET) {
 		prd_msg.hdr.type = OPAL_PRD_MSG_TYPE_OCC_RESET;
 		prd_msg.occ_reset.chip = proc;
+		occ_msg_queue_occ_reset();
 	}
 
 	queue_prd_msg(&prd_msg, prd_msg_consumed);
@@ -338,6 +339,9 @@ static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 		break;
 	case OPAL_PRD_MSG_TYPE_ATTN_ACK:
 		rc = prd_msg_handle_attn_ack(msg);
+		break;
+	case OPAL_PRD_MSG_TYPE_OCC_RESET_NOTIFY:
+		rc = occ_msg_queue_occ_reset();
 		break;
 	default:
 		rc = OPAL_UNSUPPORTED;

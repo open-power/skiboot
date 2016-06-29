@@ -923,6 +923,7 @@ enum opal_prd_msg_type {
 	OPAL_PRD_MSG_TYPE_ATTN_ACK,	/* HBRT --> OPAL */
 	OPAL_PRD_MSG_TYPE_OCC_ERROR,	/* HBRT <-- OPAL */
 	OPAL_PRD_MSG_TYPE_OCC_RESET,	/* HBRT <-- OPAL */
+	OPAL_PRD_MSG_TYPE_OCC_RESET_NOTIFY, /* HBRT --> OPAL */
 };
 
 struct opal_prd_msg_header {
