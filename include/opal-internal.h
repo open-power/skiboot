@@ -81,5 +81,6 @@ extern void opal_del_host_sync_notifier(bool (*notify)(void *data));
  */
 struct OpalHMIEvent;
 extern int handle_hmi_exception(__be64 hmer, struct OpalHMIEvent *hmi_evt);
+extern int occ_msg_queue_occ_reset(void);
 
 #endif /* __OPAL_INTERNAL_H */
