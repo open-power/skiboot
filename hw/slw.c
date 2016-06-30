@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -594,7 +594,7 @@ void add_cpu_idle_state_properties(void)
 		/**
 		 * @fwts-label CreateDTPowerMgtNodeFail
 		 * @fwts-advice OPAL failed to add the power-mgt device tree
-		 * node. This coudl mean that firmware ran out of memory,
+		 * node. This could mean that firmware ran out of memory,
 		 * or there's a bug somewhere.
 		 */
 		prlog(PR_ERR, "creating dt node /ibm,opal/power-mgt failed\n");
