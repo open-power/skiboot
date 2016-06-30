@@ -78,11 +78,14 @@ myconf config enable_pseries_nvram false
 myconf config machine_option/NO_RAM TRUE
 myconf config machine_option/NO_ROM TRUE
 
-# We need to be DD2 or greater on p8 for the HILE HID bit.
 if { $default_config == "PEGASUS" } {
+    # We need to be DD2 or greater on p8 for the HILE HID bit.
     myconf config processor/initial/PVR 0x4b0201
 }
-
+if { $default_config == "P9" } {
+    # make sure we look like a POWER9
+    myconf config processor/initial/SIM_CTRL1 0xc228000000000000
+}
 if { [info exists env(SKIBOOT_SIMCONF)] } {
     source $env(SKIBOOT_SIMCONF)
 }
@@ -186,6 +189,32 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
     mysim of addprop $cpu_node int "ibm,pir" $pir
     set reg  [list 0x0000001c00000028 0xffffffffffffffff]
     mysim of addprop $cpu_node array64 "ibm,processor-segment-sizes" reg
+
+    set reg {}
+    if { $default_config == "P9" } {
+	# POWER9 PAPR defines upto bytes 62-63
+	# header + bytes 0-5
+	lappend reg 0x4000f63fc70080c0
+	# bytes 6-13
+	lappend reg 0x8000000000000000
+	# bytes 14-21
+	lappend reg 0x0000800080008000
+	# bytes 22-29 22/23=TM
+	lappend reg 0x8000800080008000
+	# bytes 30-37
+	lappend reg 0x80008000C0008000
+	# bytes 38-45 40/41=radix
+	lappend reg 0x8000800080008000
+	# bytes 46-55
+	lappend reg 0x8000800080008000
+	# bytes 54-61 58/59=seg tbl
+	lappend reg 0x8000800080008000
+	# bytes 62-69
+	lappend reg 0x8000000000000000
+    } else {
+	lappend reg 0x6000f63fc70080c0
+    }
+    mysim of addprop $cpu_node array64 "ibm,pa-features" reg
 
     set irqreg [list]
     for { set t 0 } { $t < $mconf(threads) } { incr t } {
