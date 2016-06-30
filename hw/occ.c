@@ -47,7 +47,7 @@ struct occ_pstate_entry {
 	u8 vdd;
 	u8 vcs;
 	u32 freq_khz;
-};
+} __packed;
 
 /*
  * OCC-OPAL Shared Memory Region Version 2
