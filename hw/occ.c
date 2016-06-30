@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,9 +105,10 @@ static bool wait_for_all_occ_init(void)
 			 * @fwts-label OCCInvalidHomerBase
 			 * @fwts-advice The HOMER base address for a chip
 			 * was not valid. This means that OCC (On Chip
-			 * Controller) will be non-functional. This means
-			 * that CPU idle states and CPU frequency scaling
-			 * may not be functional.
+			 * Controller) will be non-functional and CPU
+			 * frequency scaling will not be functional. CPU may
+			 * be set to a safe, low frequency. Power savings in
+			 * CPU idle or CPU hotplug may be impacted.
 			 */
 			prlog(PR_ERR,"OCC: Chip: %x homer_base is not valid\n",
 				chip->id);
@@ -138,7 +139,9 @@ static bool wait_for_all_occ_init(void)
 			 * @fwts-label OCCInvalidPStateTable
 			 * @fwts-advice The pstate table for a chip
 			 * was not valid. This means that OCC (On Chip
-			 * Controller) will be non-functional. This means
+			 * Controller) will be non-functional and CPU
+			 * frequency scaling will not be functional. CPU may
+			 * be set to a low, safe frequency. This means
 			 * that CPU idle states and CPU frequency scaling
 			 * may not be functional.
 			 */
