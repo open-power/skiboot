@@ -1192,10 +1192,10 @@ static void slw_dump_timer_ffdc(void)
 
 	/**
 	 * @fwts-label SLWRegisterDump
-	 * @fwts-advice An error condition occured where the SLeep/Winkle
-	 * engine had to dump out the register state for assisitng in
-	 * debugging. This means that power saving states are likely
-	 * not functioning correctly.
+	 * @fwts-advice An error condition occured in sleep/winkle
+	 * engines timer state machine. Dumping debug information to
+	 * root-cause. OPAL/skiboot may be stuck on some operation that
+	 * requires SLW timer state machine (e.g. core powersaving)
 	 */
 	prlog(PR_ERR, "SLW: Register state:\n");
 
