@@ -395,21 +395,33 @@ static int64_t fsp_opal_elog_ack(uint64_t ack_id)
 		return rc;
 	}
 	lock(&elog_read_lock);
-	list_for_each_safe(&elog_read_pending, record, next_record, link) {
-		if (record->log_id != ack_id)
-			continue;
-		list_del(&record->link);
-		list_add(&elog_read_free, &record->link);
-	}
 	list_for_each_safe(&elog_read_processed, record, next_record, link) {
 		if (record->log_id != ack_id)
 			continue;
 		list_del(&record->link);
 		list_add(&elog_read_free, &record->link);
+		unlock(&elog_read_lock);
+		return rc;
+	}
+	list_for_each_safe(&elog_read_pending, record, next_record, link) {
+		if (record->log_id != ack_id)
+			continue;
+		/* It means host has sent ACK without reading actual data.
+		 * Because of this elog_read_from_fsp_head_state may be
+		 * stuck in wrong state (ELOG_STATE_HOST_INFO) and not able
+		 * to send remaining ELOGs to host. Hence reset ELOG state
+		 * and start sending remaining ELOGs.
+		 */
+		list_del(&record->link);
+		list_add(&elog_read_free, &record->link);
+		elog_reject_head();
+		unlock(&elog_read_lock);
+		fsp_elog_check_and_fetch_head();
+		return rc;
 	}
 	unlock(&elog_read_lock);
 
-	return rc;
+	return OPAL_PARAMETER;
 }
 
 /*
