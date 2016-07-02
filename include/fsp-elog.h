@@ -29,7 +29,6 @@
  */
 enum elog_head_state {
 	ELOG_STATE_FETCHING,    /*In the process of reading log from FSP. */
-	ELOG_STATE_FETCHED_INFO,/* Indicates reading log info is completed */
 	ELOG_STATE_FETCHED_DATA,/* Indicates reading log is completed */
 	ELOG_STATE_HOST_INFO,	/* Host read log info */
 	ELOG_STATE_NONE,        /* Indicates to fetch next log */

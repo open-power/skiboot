@@ -156,7 +156,7 @@ bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size)
 		} else {
 			*opal_elog_id = head->plid;
 			*opal_elog_size = head->log_size;
-			fsp_elog_write_set_head_state(ELOG_STATE_FETCHED_INFO);
+			fsp_elog_write_set_head_state(ELOG_STATE_HOST_INFO);
 			rc = true;
 		}
 	}
@@ -190,7 +190,7 @@ bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 	bool rc = false;
 
 	lock(&elog_write_to_host_lock);
-	if (elog_write_to_host_head_state == ELOG_STATE_FETCHED_INFO) {
+	if (elog_write_to_host_head_state == ELOG_STATE_HOST_INFO) {
 		log_data = list_top(&elog_write_to_host_pending,
 					struct errorlog, link);
 		if (!log_data) {
