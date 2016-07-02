@@ -320,6 +320,7 @@ static int64_t fsp_opal_elog_info(uint64_t *opal_elog_id,
 	}
 	*opal_elog_id = log_data->log_id;
 	*opal_elog_size = log_data->log_size;
+	fsp_elog_set_head_state(ELOG_STATE_HOST_INFO);
 	unlock(&elog_read_lock);
 	return OPAL_SUCCESS;
 }
@@ -340,7 +341,7 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 	 * as we know always top record of the list is fetched from FSP
 	 */
 	lock(&elog_read_lock);
-	if (elog_read_from_fsp_head_state != ELOG_STATE_FETCHED_DATA) {
+	if (elog_read_from_fsp_head_state != ELOG_STATE_HOST_INFO) {
 		unlock(&elog_read_lock);
 		return OPAL_WRONG_STATE;
 	}
