@@ -248,6 +248,9 @@ bool opal_elog_ack(uint64_t ack_id)
 			list_del(&record->link);
 			opal_elog_complete(record, true);
 			rc = true;
+			unlock(&elog_write_to_host_lock);
+			opal_commit_elog_in_host();
+			return rc;
 		}
 	}
 	unlock(&elog_write_to_host_lock);
