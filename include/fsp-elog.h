@@ -50,4 +50,6 @@ bool opal_elog_ack(uint64_t ack_id) __warn_unused_result;
 
 void opal_resend_pending_logs(void);
 
+void elog_set_head_state(bool opal_logs, enum elog_head_state state);
+
 #endif /* __ELOG_H */
