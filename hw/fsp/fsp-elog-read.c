@@ -315,6 +315,7 @@ static int64_t fsp_opal_elog_info(uint64_t *opal_elog_id,
 		 */
 		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
 		      __func__);
+		fsp_elog_set_head_state(ELOG_STATE_NONE);
 		unlock(&elog_read_lock);
 		return OPAL_WRONG_STATE;
 	}
@@ -355,6 +356,7 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 		 */
 		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
 		      __func__);
+		fsp_elog_set_head_state(ELOG_STATE_NONE);
 		unlock(&elog_read_lock);
 		return OPAL_WRONG_STATE;
 	}
