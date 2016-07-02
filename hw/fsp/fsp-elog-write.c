@@ -272,6 +272,11 @@ void opal_resend_pending_logs(void)
 	opal_commit_elog_in_host();
 }
 
+static inline u64 get_elog_timeout(void)
+{
+	return (mftb() + secs_to_tb(ERRORLOG_TIMEOUT_INTERVAL));
+}
+
 static int opal_send_elog_to_fsp(void)
 {
 	struct errorlog *head;
@@ -285,6 +290,9 @@ static int opal_send_elog_to_fsp(void)
 	if (!list_empty(&elog_write_to_fsp_pending)) {
 		head = list_top(&elog_write_to_fsp_pending,
 					 struct errorlog, link);
+		/* Error needs to be committed, update the time out value */
+		head->elog_timeout = get_elog_timeout();
+
 		elog_plid_fsp_commit = head->plid;
 		head->log_size = create_pel_log(head,
 						(char *)elog_write_to_fsp_buffer,
@@ -304,6 +312,10 @@ static int opal_push_logs_sync_to_fsp(struct errorlog *buf)
 	int rc = OPAL_SUCCESS;
 
 	lock(&elog_panic_write_lock);
+
+	/* Error needs to be committed, update the time out value */
+	buf->elog_timeout = get_elog_timeout();
+
 	opal_elog_size = create_pel_log(buf,
 					(char *)elog_panic_write_buffer,
 					ELOG_PANIC_WRITE_BUFFER_SIZE);
@@ -334,17 +346,9 @@ static int opal_push_logs_sync_to_fsp(struct errorlog *buf)
 	return rc;
 }
 
-static inline u64 get_elog_timeout(void)
-{
-	return (mftb() + secs_to_tb(ERRORLOG_TIMEOUT_INTERVAL));
-}
-
 int elog_fsp_commit(struct errorlog *buf)
 {
 	int rc = OPAL_SUCCESS;
-
-	/* Error needs to be committed, update the time out value */
-	buf->elog_timeout = get_elog_timeout();
 
 	if (buf->event_severity == OPAL_ERROR_PANIC) {
 		rc = opal_push_logs_sync_to_fsp(buf);
