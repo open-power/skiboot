@@ -262,11 +262,6 @@ void opal_resend_pending_logs(void)
 	struct errorlog *record;
 
 	lock(&elog_write_to_host_lock);
-	if (list_empty(&elog_write_to_host_processed)) {
-		unlock(&elog_write_to_host_lock);
-		return;
-	}
-
 	while (!list_empty(&elog_write_to_host_processed)) {
 		record = list_pop(&elog_write_to_host_processed,
 					struct errorlog, link);
