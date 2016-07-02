@@ -99,8 +99,6 @@ static void fsp_elog_ack_complete(struct fsp_msg *msg)
 {
 	uint8_t val;
 
-	if (!msg->resp)
-		return;
 	val = (msg->resp->word1 >> 8) & 0xff;
 	if (val != 0)
 		prerror("ELOG: Acknowledgment error\n");
