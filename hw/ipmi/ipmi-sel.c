@@ -217,8 +217,8 @@ static void ipmi_init_esel_record(void)
 static void ipmi_update_sel_record(uint8_t event_severity, uint16_t esel_record_id)
 {
 	sel_record.record_type = SEL_REC_TYPE_SYS_EVENT;
-	sel_record.event_data2 = esel_record_id & 0xff;
-	sel_record.event_data3 = (esel_record_id >> 8) & 0xff;
+	sel_record.event_data2 = (esel_record_id >> 8) & 0xff;
+	sel_record.event_data3 = esel_record_id & 0xff;
 
 	switch (event_severity) {
 	case OPAL_ERROR_PANIC:
