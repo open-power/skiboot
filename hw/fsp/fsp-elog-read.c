@@ -148,24 +148,33 @@ static void fsp_elog_check_and_fetch_head(void)
 	unlock(&elog_read_lock);
 }
 
-/* this function should be called with the lock held */
-static void fsp_elog_set_head_state(enum elog_head_state state)
+void elog_set_head_state(bool opal_logs, enum elog_head_state state)
 {
-	enum elog_head_state old_state = elog_read_from_fsp_head_state;
-
-	elog_read_from_fsp_head_state = state;
+	static enum elog_head_state opal_logs_state = ELOG_STATE_NONE;
+	static enum elog_head_state fsp_logs_state = ELOG_STATE_NONE;
 
 	/* ELOG disabled */
 	if (!elog_enabled)
 		return;
 
-	if (state == ELOG_STATE_FETCHED_DATA &&
-			old_state != ELOG_STATE_FETCHED_DATA)
+	if (opal_logs)
+		opal_logs_state = state;
+	else
+		fsp_logs_state = state;
+
+	if (fsp_logs_state == ELOG_STATE_FETCHED_DATA ||
+	    opal_logs_state == ELOG_STATE_FETCHED_DATA)
 		opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL,
 					OPAL_EVENT_ERROR_LOG_AVAIL);
-	if (state != ELOG_STATE_FETCHED_DATA &&
-			old_state == ELOG_STATE_FETCHED_DATA)
+	else
 		opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL, 0);
+}
+
+/* this function should be called with the lock held */
+static inline void fsp_elog_set_head_state(enum elog_head_state state)
+{
+	elog_set_head_state(false, state);
+	elog_read_from_fsp_head_state = state;
 }
 
 /*
