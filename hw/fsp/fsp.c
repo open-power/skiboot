@@ -249,8 +249,14 @@ struct fsp_msg *fsp_allocmsg(bool alloc_response)
 	msg = __fsp_allocmsg();
 	if (!msg)
 		return NULL;
-	if (alloc_response)
+	if (alloc_response) {
 		msg->resp = __fsp_allocmsg();
+		if (!msg->resp) {
+			free(msg);
+			return NULL;
+		}
+	}
+
 	return msg;
 }
 
