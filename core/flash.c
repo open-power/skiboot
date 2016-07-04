@@ -33,7 +33,7 @@ struct flash {
 	uint32_t		block_size;
 };
 
-#define MAX_FLASH 1
+#define MAX_FLASH 8
 static struct flash flashes[MAX_FLASH];
 static struct flash *system_flash;
 
