@@ -59,10 +59,167 @@ static void mambo_rtc_init(void)
 	opal_register(OPAL_RTC_READ, mambo_rtc_read, 2);
 }
 
+static inline int callthru2(int command, unsigned long arg1, unsigned long arg2)
+{
+	register int c asm("r3") = command;
+	register unsigned long a1 asm("r4") = arg1;
+	register unsigned long a2 asm("r5") = arg2;
+	asm volatile (".long 0x000eaeb0":"=r" (c):"r"(c), "r"(a1), "r"(a2));
+	return (c);
+}
+
+static inline int callthru3(int command, unsigned long arg1, unsigned long arg2,
+			    unsigned long arg3)
+{
+	register int c asm("r3") = command;
+	register unsigned long a1 asm("r4") = arg1;
+	register unsigned long a2 asm("r5") = arg2;
+	register unsigned long a3 asm("r6") = arg3;
+	asm volatile (".long 0x000eaeb0":"=r" (c):"r"(c), "r"(a1), "r"(a2),
+		      "r"(a3));
+	return (c);
+}
+
+#define BD_INFO_SYNC		0
+#define BD_INFO_STATUS		1
+#define BD_INFO_BLKSZ		2
+#define BD_INFO_DEVSZ		3
+#define BD_INFO_CHANGE		4
+
+#define BD_SECT_SZ		512
+
+#define BOGUS_DISK_READ		116
+#define BOGUS_DISK_WRITE	117
+#define BOGUS_DISK_INFO		118
+
+static inline int callthru_disk_read(int id, void *buf, unsigned long sect,
+				     unsigned long nrsect)
+{
+	return callthru3(BOGUS_DISK_READ, (unsigned long)buf, sect,
+			 (nrsect << 16) | id);
+}
+
+static inline int callthru_disk_write(int id, void *buf, unsigned long sect,
+				      unsigned long nrsect)
+{
+	return callthru3(BOGUS_DISK_WRITE, (unsigned long)buf, sect,
+			 (nrsect << 16) | id);
+}
+
+static inline unsigned long callthru_disk_info(int op, int id)
+{
+	return callthru2(BOGUS_DISK_INFO, (unsigned long)op,
+			 (unsigned long)id);
+}
+
+struct bogus_disk_info {
+	unsigned long size;
+	int id;
+};
+
+static int bogus_disk_read(struct blocklevel_device *bl, uint32_t pos, void *buf,
+			  uint32_t len)
+{
+	struct bogus_disk_info *bdi = bl->priv;
+	int rc;
+	char b[BD_SECT_SZ];
+
+	if ((len % BD_SECT_SZ) == 0)
+		return callthru_disk_read(bdi->id, buf, pos/BD_SECT_SZ,
+					  len/BD_SECT_SZ);
+
+	/* We don't support block reads > BD_SECT_SZ */
+	if (len > BD_SECT_SZ)
+		return OPAL_PARAMETER;
+
+	/* Skiboot does small reads for system flash header checking */
+	rc =  callthru_disk_read(bdi->id, b, pos/BD_SECT_SZ, 1);
+	if (rc)
+		return rc;
+	memcpy(buf, &b[pos % BD_SECT_SZ], len);
+	return rc;
+}
+
+static int bogus_disk_write(struct blocklevel_device *bl, uint32_t pos,
+			    const void *buf, uint32_t len)
+{
+	struct bogus_disk_info *bdi = bl->priv;
+
+	if ((len % BD_SECT_SZ) != 0)
+		return OPAL_PARAMETER;
+
+	return callthru_disk_write(bdi->id, (void *)buf, pos/BD_SECT_SZ,
+				   len/BD_SECT_SZ);
+
+}
+
+static int bogus_disk_erase(struct blocklevel_device *bl __unused,
+			   uint32_t pos __unused, uint32_t len __unused)
+{
+	return 0; /* NOP */
+}
+
+static int bogus_disk_get_info(struct blocklevel_device *bl, const char **name,
+			      uint32_t *total_size, uint32_t *erase_granule)
+{
+	struct bogus_disk_info *bdi = bl->priv;
+
+	if (total_size)
+		*total_size = bdi->size;
+
+	if (erase_granule)
+		*erase_granule = BD_SECT_SZ;
+
+	if (name)
+		*name = "mambobogus";
+
+	return 0;
+}
+
+static void bogus_disk_flash_init(void)
+{
+	struct blocklevel_device *bl;
+	struct bogus_disk_info *bdi;
+	unsigned long id = 0, size;
+	int rc;
+
+	if (!chip_quirk(QUIRK_MAMBO_CALLOUTS))
+		return;
+
+	while (1) {
+
+		rc = callthru_disk_info(BD_INFO_STATUS, id);
+		if (rc < 0)
+			return;
+
+		size = callthru_disk_info(BD_INFO_DEVSZ, id) * 1024;
+		prlog(PR_NOTICE, "mambo: Found bogus disk size: 0x%lx\n", size);
+
+		bl = zalloc(sizeof(struct blocklevel_device));
+		bdi = zalloc(sizeof(struct bogus_disk_info));
+
+		bl->read = &bogus_disk_read;
+		bl->write = &bogus_disk_write;
+		bl->erase = &bogus_disk_erase;
+		bl->get_info = &bogus_disk_get_info;
+		bdi->id = id;
+		bdi->size = size;
+		bl->priv = bdi;
+		bl->erase_mask = BD_SECT_SZ - 1;
+
+		rc = flash_register(bl, true);
+		if (rc)
+			prerror("mambo: Failed to register bogus disk: %li\n",
+				id);
+		id++;
+	}
+}
+
 static void mambo_platform_init(void)
 {
 	force_dummy_console();
 	mambo_rtc_init();
+	bogus_disk_flash_init();
 }
 
 static int64_t mambo_cec_power_down(uint64_t request __unused)
@@ -104,4 +261,6 @@ DECLARE_PLATFORM(mambo) = {
 	.terminate	= mambo_terminate,
 	.nvram_info		= mambo_nvram_info,
 	.nvram_start_read	= mambo_nvram_start_read,
+	.start_preload_resource	= flash_start_preload_resource,
+	.resource_loaded	= flash_resource_loaded,
 };
