@@ -10,6 +10,7 @@ skiboot-nosection.elf
 skiboot*.elf
 skiboot.lds
 skiboot.lid
+skiboot.lid.xz
 skiboot*.map
 skiboot.info
 coverage-report/
@@ -56,8 +57,12 @@ core/test/run-pel
 core/test/run-pool
 core/test/run-trace
 core/test/*-gcov
+debian-jessie-vmlinux
+debian-jessie-initrd.gz
 external/dump_trace
+external/mambo/skiboot-boot_test.dump
 external/mambo/skiboot-hello_world.dump
+external/memboot/memboot
 hdata/test/hdata_to_dt
 hdata/test/hdata_to_dt-gcov
 hw/ipmi/test/run-fru
@@ -69,3 +74,4 @@ libflash/test/test-flash
 libflash/test/test-ecc
 libflash/test/test-flash-gcov
 test/hello_world/hello_kernel/hello_kernel
+zImage.epapr
