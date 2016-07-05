@@ -137,11 +137,33 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 		goto out;
 	}
 
+	/* Check header is sane */
+	if ((f->hdr.block_size * f->hdr.size) > max_size) {
+		rc = FLASH_ERR_PARM_ERROR;
+		FL_ERR("FFS: Flash header exceeds max flash size\n");
+		goto out;
+	}
+
+	if ((f->hdr.entry_size * f->hdr.entry_count) >
+			(f->hdr.block_size * f->hdr.size)) {
+		rc = FLASH_ERR_PARM_ERROR;
+		FL_ERR("FFS: Flash header entries exceeds available blocks\n");
+		goto out;
+	}
+
 	/*
 	 * Decide how much of the image to grab to get the whole
 	 * partition map.
 	 */
 	f->cached_size = f->hdr.block_size * f->hdr.size;
+	/* Check for overflow or a silly size */
+	if (!f->hdr.size || f->cached_size / f->hdr.size != f->hdr.block_size) {
+		rc= FLASH_ERR_MALLOC_FAILED;
+		FL_ERR("FFS: Cache size overflow (0x%x * 0x%x)\n",
+				f->hdr.block_size, f->hdr.size);
+		goto out;
+	}
+
 	FL_DBG("FFS: Partition map size: 0x%x\n", f->cached_size);
 
 	/* Allocate cache */
