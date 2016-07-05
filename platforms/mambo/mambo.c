@@ -213,7 +213,7 @@ static void bogus_disk_flash_init(void)
 		bl->priv = bdi;
 		bl->erase_mask = BD_SECT_SZ - 1;
 
-		rc = flash_register(bl, true);
+		rc = flash_register(bl);
 		if (rc)
 			prerror("mambo: Failed to register bogus disk: %li\n",
 				id);

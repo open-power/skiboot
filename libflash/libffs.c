@@ -135,7 +135,7 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 	/* Convert and check flash header */
 	rc = ffs_check_convert_header(&f->hdr, &hdr);
 	if (rc) {
-		FL_ERR("FFS: Error %d checking flash header\n", rc);
+		FL_INF("FFS: Flash header not found. Code: %d\n", rc);
 		goto out;
 	}
 

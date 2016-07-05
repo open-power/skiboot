@@ -52,7 +52,7 @@ int pnor_init(void)
 		goto fail;
 	}
 
-	rc = flash_register(bl, true);
+	rc = flash_register(bl);
 	if (!rc)
 		return 0;
 

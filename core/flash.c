@@ -208,30 +208,24 @@ static void setup_system_flash(struct flash *flash, struct dt_node *node,
 {
 	char *path;
 
+	if (!ffs)
+		return;
+
 	if (system_flash) {
 		/**
-		 * @fwts-label SystemFlashDuplicate
-		 * @fwts-advice More than one flash device was registered
-		 *  as the system flash device. Check for duplicate calls
-		 *  to flash_register(..., true).
+		 * @fwts-label SystemFlashMultiple
+		 * @fwts-advice OPAL Found multiple system flash.
+		 *    Since we've already found a system flash we are
+		 *    going to use that one but this ordering is not
+		 *    guaranteed so may change in future.
 		 */
-		prlog(PR_WARNING, "FLASH: attempted to register a second "
-				"system flash device %s\n", name);
+		prlog(PR_WARNING, "FLASH: Attempted to register multiple system "
+		      "flash: %s\n", name);
 		return;
 	}
 
-	if (!ffs) {
-		/**
-		 * @fwts-label SystemFlashNoPartitionTable
-		 * @fwts-advice OPAL Could not read a partition table on
-		 *    system flash. Since we've still booted the machine (which
-		 *    requires flash), check that we're registering the proper
-		 *    system flash device.
-		 */
-		prlog(PR_WARNING, "FLASH: attempted to register system flash "
-				"%s, which has no partition info\n", name);
-		return;
-	}
+	prlog(PR_NOTICE, "FLASH: Found system flash: %s id:%i\n",
+	      name, flash->id);
 
 	system_flash = flash;
 	path = dt_get_path(node);
@@ -254,7 +248,7 @@ static int num_flashes(void)
 	return i;
 }
 
-int flash_register(struct blocklevel_device *bl, bool is_system_flash)
+int flash_register(struct blocklevel_device *bl)
 {
 	uint64_t size;
 	uint32_t block_size;
@@ -304,8 +298,7 @@ int flash_register(struct blocklevel_device *bl, bool is_system_flash)
 
 	node = flash_add_dt_node(flash, flash->id);
 
-	if (is_system_flash)
-		setup_system_flash(flash, node, name, ffs);
+	setup_system_flash(flash, node, name, ffs);
 
 	if (ffs)
 		ffs_close(ffs);
@@ -553,8 +546,16 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 
 	lock(&flash_lock);
 
-	if (!system_flash)
+	if (!system_flash) {
+		/**
+		 * @fwts-label SystemFlashNotFound
+		 * @fwts-advice No system flash was found. Check for missing
+		 * calls flash_register(...).
+		 */
+		prlog(PR_WARNING, "FLASH: Can't load resource id:%i. "
+		      "No system flash found\n", id);
 		goto out_unlock;
+	}
 
 	flash = system_flash;
 

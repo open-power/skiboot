@@ -217,7 +217,7 @@ extern void lpc_rtc_init(void);
 
 /* flash support */
 struct flash_chip;
-extern int flash_register(struct blocklevel_device *bl, bool is_system_flash);
+extern int flash_register(struct blocklevel_device *bl);
 extern int flash_start_preload_resource(enum resource_id id, uint32_t subid,
 					void *buf, size_t *len);
 extern int flash_resource_loaded(enum resource_id id, uint32_t idx);
