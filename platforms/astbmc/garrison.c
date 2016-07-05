@@ -63,23 +63,13 @@ static const struct slot_table_entry garrison_phb0_3_slot[] = {
 
 static const struct slot_table_entry garrison_npu0_slots[] = {
 	{
-		.etype = st_pluggable_slot,
-		.location = ST_LOC_DEVFN(0,0),
+		.etype = st_npu_slot,
+		.location = ST_LOC_NPU_GROUP(0),
 		.name = "GPU2",
 	},
 	{
-		.etype = st_pluggable_slot,
-		.location = ST_LOC_DEVFN(0,1),
-		.name = "GPU2",
-	},
-	{
-		.etype = st_pluggable_slot,
-		.location = ST_LOC_DEVFN(1,0),
-		.name = "GPU1",
-	},
-	{
-		.etype = st_pluggable_slot,
-		.location = ST_LOC_DEVFN(1,1),
+		.etype = st_npu_slot,
+		.location = ST_LOC_NPU_GROUP(1),
 		.name = "GPU1",
 	},
 	{ .etype = st_end },
@@ -152,23 +142,13 @@ static const struct slot_table_entry garrison_phb1_3_slot[] = {
 
 static const struct slot_table_entry garrison_npu1_slots[] = {
 	{
-		.etype = st_pluggable_slot,
-		.location = ST_LOC_DEVFN(0,0),
+		.etype = st_npu_slot,
+		.location = ST_LOC_NPU_GROUP(0),
 		.name = "GPU4",
 	},
 	{
-		.etype = st_pluggable_slot,
-		.location = ST_LOC_DEVFN(0,1),
-		.name = "GPU4",
-	},
-	{
-		.etype = st_pluggable_slot,
-		.location = ST_LOC_DEVFN(1,0),
-		.name = "GPU3",
-	},
-	{
-		.etype = st_pluggable_slot,
-		.location = ST_LOC_DEVFN(1,1),
+		.etype = st_npu_slot,
+		.location = ST_LOC_NPU_GROUP(1),
 		.name = "GPU3",
 	},
 	{ .etype = st_end },
@@ -233,7 +213,7 @@ static const struct slot_table_entry garrison_phb_table[] = {
 #define NPU_INDIRECT0	0x8000000008010c3f
 #define NPU_INDIRECT1	0x8000000008010c7f
 
-static void create_link(struct dt_node *npu, struct dt_node *pbcq, int index)
+static void create_link(struct dt_node *npu, int group, int index)
 {
 	struct dt_node *link;
 	uint32_t lane_mask;
@@ -255,12 +235,12 @@ static void create_link(struct dt_node *npu, struct dt_node *pbcq, int index)
 	}
 	dt_add_property_u64s(link, "ibm,npu-phy", phy);
 	dt_add_property_cells(link, "ibm,npu-lane-mask", lane_mask);
-	dt_add_property_cells(link, "ibm,npu-pbcq", pbcq->phandle);
+	dt_add_property_cells(link, "ibm,npu-group-id", group);
 }
 
 static void dt_create_npu(void)
 {
-        struct dt_node *xscom, *npu, *pbcq;
+        struct dt_node *xscom, *npu;
         char namebuf[32];
 
 	dt_for_each_compatible(dt_root, xscom, "ibm,xscom") {
@@ -275,17 +255,12 @@ static void dt_create_npu(void)
 		dt_add_property_cells(npu, "ibm,npu-index", 0);
 		dt_add_property_cells(npu, "ibm,npu-links", 4);
 
-		/* On Garrison we have 2 links per GPU device. The
-		 * first 2 links go to the GPU connected via
-		 * pbcq@2012c00 the second two via pbcq@2012800. */
-		pbcq = dt_find_by_name(xscom, "pbcq@2012c00");
-		assert(pbcq);
-		create_link(npu, pbcq, 0);
-		create_link(npu, pbcq, 1);
-		pbcq = dt_find_by_name(xscom, "pbcq@2012800");
-		assert(pbcq);
-		create_link(npu, pbcq, 4);
-		create_link(npu, pbcq, 5);
+		/* On Garrison we have 2 links per GPU device.  These are
+		 * grouped together as per the slot tables above. */
+		create_link(npu, 0, 0);
+		create_link(npu, 0, 1);
+		create_link(npu, 1, 4);
+		create_link(npu, 1, 5);
 	}
 }
 

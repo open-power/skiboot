@@ -54,6 +54,7 @@ static const struct slot_table_entry *match_slot_dev_entry(struct phb *phb,
 							   struct pci_device *pd)
 {
 	const struct slot_table_entry *parent, *ent;
+	uint32_t bdfn;
 
 	/* Find a parent recursively */
 	if (pd->parent)
@@ -70,7 +71,14 @@ static const struct slot_table_entry *match_slot_dev_entry(struct phb *phb,
 			prerror("SLOT: Bad PHB entry type in table !\n");
 			continue;
 		}
-		if (ent->location == (pd->bdfn & 0xff))
+
+		/* NPU slots match on device, not function */
+		if (ent->etype == st_npu_slot)
+			bdfn = pd->bdfn & 0xf8;
+		else
+			bdfn = pd->bdfn & 0xff;
+
+		if (ent->location == bdfn)
 			return ent;
 	}
 	return NULL;

@@ -30,6 +30,7 @@
 #include <npu-regs.h>
 #include <npu.h>
 #include <xscom.h>
+#include <string.h>
 
 /*
  * Terminology:
@@ -503,25 +504,27 @@ static int __npu_dev_bind_pci_dev(struct phb *phb __unused,
 {
 	struct npu_dev *dev = data;
 	struct dt_node *pci_dt_node;
-	uint32_t npu_npcq_phandle;
+	char *pcislot;
 
 	/* Ignore non-nvidia PCI devices */
 	if ((pd->vdid & 0xffff) != 0x10de)
 		return 0;
 
-	/* Find the PCI devices pbcq */
-	for (pci_dt_node = pd->dn->parent;
-	     pci_dt_node && !dt_find_property(pci_dt_node, "ibm,pbcq");
+	/* Find the PCI device's slot location */
+	for (pci_dt_node = pd->dn;
+	     pci_dt_node && !dt_find_property(pci_dt_node, "ibm,slot-label");
 	     pci_dt_node = pci_dt_node->parent);
 
 	if (!pci_dt_node)
 		return 0;
 
-	npu_npcq_phandle = dt_prop_get_u32(dev->dt_node, "ibm,npu-pbcq");
+	pcislot = (char *)dt_prop_get(pci_dt_node, "ibm,slot-label");
 
-	if (dt_prop_get_u32(pci_dt_node, "ibm,pbcq") == npu_npcq_phandle &&
-	    (pd->vdid & 0xffff) == 0x10de)
-			return 1;
+	prlog(PR_DEBUG, "NPU: comparing GPU %s and NPU %s\n",
+	      pcislot, dev->slot_label);
+
+	if (streq(pcislot, dev->slot_label))
+		return 1;
 
 	return 0;
 }
@@ -603,6 +606,9 @@ static int npu_dn_fixup(struct phb *phb,
 
 	if (dev->phb || dev->pd)
 		return 0;
+
+	/* NPU devices require a slot location to associate with GPUs */
+	dev->slot_label = dt_prop_get(pd->dn, "ibm,slot-label");
 
 	/* Bind the emulated PCI device with the real one, which can't
 	 * be done until the PCI devices are populated. Once the real
@@ -1615,34 +1621,19 @@ static void npu_dev_create_cfg(struct npu_dev *dev)
 		NPU_DEV_CFG_INIT_RO(dev, PCI_CFG_INT_LINE, 4, 0x00000200);
 }
 
-static uint32_t npu_allocate_bdfn(struct npu *p, uint32_t pbcq)
+static uint32_t npu_allocate_bdfn(struct npu *p, uint32_t group)
 {
 	int i;
-	int dev = -1;
-	int bdfn = -1;
+	int bdfn = (group << 3);
 
-	/* Find the highest function number alloacted to emulated PCI
-	 * devices associated with this GPU. */
-	for(i = 0; i < p->total_devices; i++) {
-		int dev_bdfn = p->devices[i].bdfn;
-		dev = MAX(dev, dev_bdfn & 0xf8);
-
-		if (dt_prop_get_u32(p->devices[i].dt_node,
-				    "ibm,npu-pbcq") == pbcq)
-			bdfn = MAX(bdfn, dev_bdfn);
+	for (i = 0; i < p->total_devices; i++) {
+		if (p->devices[i].bdfn == bdfn) {
+			bdfn++;
+			break;
+		}
 	}
 
-	if (bdfn >= 0)
-		/* Device has already been allocated for this GPU so
-		 * assign the emulated PCI device the next
-		 * function. */
-		return bdfn + 1;
-	else if (dev >= 0)
-		/* Otherwise allocate a new device and allocate
-		 * function 0. */
-		return dev + (1 << 3);
-	else
-		return 0;
+	return bdfn;
 }
 
 static void npu_create_devices(struct dt_node *dn, struct npu *p)
@@ -1670,7 +1661,7 @@ static void npu_create_devices(struct dt_node *dn, struct npu *p)
 	p->phb.scan_map = 0;
 	dt_for_each_compatible(npu_dn, link, "ibm,npu-link") {
 		struct npu_dev_bar *bar;
-		uint32_t pbcq;
+		uint32_t group_id;
 		uint64_t val;
 		uint32_t j;
 
@@ -1685,8 +1676,8 @@ static void npu_create_devices(struct dt_node *dn, struct npu *p)
 		/* We don't support MMIO PHY access yet */
 		dev->pl_base = NULL;
 
-		pbcq = dt_prop_get_u32(link, "ibm,npu-pbcq");
-		dev->bdfn = npu_allocate_bdfn(p, pbcq);
+		group_id = dt_prop_get_u32(link, "ibm,npu-group-id");
+		dev->bdfn = npu_allocate_bdfn(p, group_id);
 
 		/* This must be done after calling
 		 * npu_allocate_bdfn() */

@@ -20,6 +20,13 @@
 
 #define ST_LOC_PHB(chip_id, phb_idx)    ((chip_id) << 16 | (phb_idx))
 #define ST_LOC_DEVFN(dev, fn)	        ((dev) << 3 | (fn))
+/*
+ * NPU groups are used to allocate device numbers.  There is a 1 to 1
+ * correlation between a NPU group and a physical GPU.  Links within a group
+ * are allocated as functions within a device, so groups must be numbered
+ * sequentially starting at 0.
+ */
+#define ST_LOC_NPU_GROUP(group_id)	(group_id << 3)
 
 struct slot_table_entry {
 	enum slot_table_etype {
@@ -27,6 +34,7 @@ struct slot_table_entry {
 		st_phb,
 		st_pluggable_slot,
 		st_builtin_dev,
+		st_npu_slot
 	} etype;
 	uint32_t location;
 	const char *name;
