@@ -26,15 +26,15 @@
 #include <libflash/ecc.h>
 
 struct flash {
-	bool			registered;
+	struct list_node	list;
 	bool			busy;
 	struct blocklevel_device *bl;
 	uint32_t		size;
 	uint32_t		block_size;
+	int			id;
 };
 
-#define MAX_FLASH 8
-static struct flash flashes[MAX_FLASH];
+static LIST_HEAD(flashes);
 static struct flash *system_flash;
 
 /* Using a single lock as we only have one flash at present. */
@@ -243,14 +243,24 @@ static void setup_system_flash(struct flash *flash, struct dt_node *node,
 	flash_nvram_probe(flash, ffs);
 }
 
+static int num_flashes(void)
+{
+	struct flash *flash;
+	int i = 0;
+
+	list_for_each(&flashes, flash, list)
+		i++;
+
+	return i;
+}
+
 int flash_register(struct blocklevel_device *bl, bool is_system_flash)
 {
 	uint32_t size, block_size;
 	struct ffs_handle *ffs;
 	struct dt_node *node;
-	struct flash *flash = NULL;
+	struct flash *flash;
 	const char *name;
-	unsigned int i;
 	int rc;
 
 	rc = blocklevel_get_info(bl, &name, &size, &block_size);
@@ -262,30 +272,21 @@ int flash_register(struct blocklevel_device *bl, bool is_system_flash)
 			name ?: "(unnamed)", size, block_size);
 
 	lock(&flash_lock);
-	for (i = 0; i < ARRAY_SIZE(flashes); i++) {
-		if (flashes[i].registered)
-			continue;
 
-		flash = &flashes[i];
-		flash->registered = true;
-		flash->busy = false;
-		flash->bl = bl;
-		flash->size = size;
-		flash->block_size = block_size;
-		break;
-	}
-
+	flash = malloc(sizeof(struct flash));
 	if (!flash) {
+		prlog(PR_ERR, "FLASH: Error allocating flash structure\n");
 		unlock(&flash_lock);
-		/**
-		 * @fwts-label NoFlashSlots
-		 * @fwts-advice System has more flash chips than skiboot
-		 * was configured to know about. Your system will not be
-		 * able to access some of the flash it has.
-		 */
-		prlog(PR_ERR, "FLASH: No flash slots available\n");
 		return OPAL_RESOURCE;
 	}
+
+	flash->busy = false;
+	flash->bl = bl;
+	flash->size = size;
+	flash->block_size = block_size;
+	flash->id = num_flashes();
+
+	list_add(&flashes, &flash->list);
 
 	rc = ffs_init(0, flash->size, bl, &ffs, 0);
 	if (rc) {
@@ -300,7 +301,7 @@ int flash_register(struct blocklevel_device *bl, bool is_system_flash)
 		ffs = NULL;
 	}
 
-	node = flash_add_dt_node(flash, i);
+	node = flash_add_dt_node(flash, flash->id);
 
 	if (is_system_flash)
 		setup_system_flash(flash, node, name, ffs);
@@ -322,24 +323,24 @@ enum flash_op {
 static int64_t opal_flash_op(enum flash_op op, uint64_t id, uint64_t offset,
 		uint64_t buf, uint64_t size, uint64_t token)
 {
-	struct flash *flash;
+	struct flash *flash = NULL;
 	int rc;
-
-	if (id >= ARRAY_SIZE(flashes))
-		return OPAL_PARAMETER;
 
 	if (!try_lock(&flash_lock))
 		return OPAL_BUSY;
 
-	flash = &flashes[id];
+	list_for_each(&flashes, flash, list)
+		if (flash->id == id)
+			break;
 
-	if (flash->busy) {
-		rc = OPAL_BUSY;
+	if (flash->id != id) {
+		/* Couldn't find the flash */
+		rc = OPAL_PARAMETER;
 		goto err;
 	}
 
-	if (!flash->registered) {
-		rc = OPAL_PARAMETER;
+	if (flash->busy) {
+		rc = OPAL_BUSY;
 		goto err;
 	}
 
