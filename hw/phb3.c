@@ -137,6 +137,80 @@ static int64_t phb3_pcicfg_check(struct phb3 *p, uint32_t bdfn,
 	return OPAL_SUCCESS;
 }
 
+static void phb3_link_update(struct phb *phb, uint16_t data)
+{
+	struct phb3 *p = phb_to_phb3(phb);
+	uint32_t new_spd, new_wid;
+	uint32_t old_spd, old_wid;
+	uint16_t old_data;
+	uint64_t lreg;
+	int i;
+
+	/* Read the old speed and width */
+	pci_cfg_read16(phb, 0, 0x5a, &old_data);
+
+	/* Decode the register values */
+	new_spd = data & PCICAP_EXP_LSTAT_SPEED;
+	new_wid = (data & PCICAP_EXP_LSTAT_WIDTH) >> 4;
+	old_spd = old_data & PCICAP_EXP_LSTAT_SPEED;
+	old_wid = (old_data & PCICAP_EXP_LSTAT_WIDTH) >> 4;
+
+	/* Apply maximums */
+	if (new_wid > 16)
+		new_wid = 16;
+	if (new_wid < 1)
+		new_wid = 1;
+	if (new_spd > 3)
+		new_spd = 3;
+	if (new_spd < 1)
+		new_spd = 1;
+
+	PHBINF(p, "Link change request: speed %d->%d, width %d->%d\n",
+	       old_spd, new_spd, old_wid, new_wid);
+
+	/* Check if width needs to be changed */
+	if (old_wid != new_wid) {
+		PHBINF(p, "Changing width...\n");
+		lreg = in_be64(p->regs + PHB_PCIE_LINK_MANAGEMENT);
+		lreg = SETFIELD(PHB_PCIE_LM_TGT_LINK_WIDTH, lreg, new_wid);
+		lreg |= PHB_PCIE_LM_CHG_LINK_WIDTH;
+		out_be64(p->regs + PHB_PCIE_LINK_MANAGEMENT, lreg);
+		for (i=0; i<10;i++) {
+			lreg = in_be64(p->regs + PHB_PCIE_LINK_MANAGEMENT);
+			if (lreg & PHB_PCIE_LM_DL_WCHG_PENDING)
+				break;
+			time_wait_ms_nopoll(1);
+		}
+		if (!(lreg & PHB_PCIE_LM_DL_WCHG_PENDING))
+			PHBINF(p, "Timeout waiting for speed change start\n");
+		for (i=0; i<100;i++) {
+			lreg = in_be64(p->regs + PHB_PCIE_LINK_MANAGEMENT);
+			if (!(lreg & PHB_PCIE_LM_DL_WCHG_PENDING))
+				break;
+			time_wait_ms_nopoll(1);
+		}
+		if (lreg & PHB_PCIE_LM_DL_WCHG_PENDING)
+			PHBINF(p, "Timeout waiting for speed change end\n");
+	}
+	/* Check if speed needs to be changed */
+	if (old_spd != new_spd) {
+		PHBINF(p, "Changing speed...\n");
+		lreg = in_be64(p->regs + PHB_PCIE_LINK_MANAGEMENT);
+		if (lreg & PPC_BIT(19)) {
+			uint16_t lctl2;
+			PHBINF(p, " Bit19 set ! working around...\n");
+			pci_cfg_read16(phb, 0, 0x78, &lctl2);
+			PHBINF(p, " LCTL2=%04x\n", lctl2);
+			lctl2 &= ~PCICAP_EXP_LCTL2_HWAUTSPDIS;
+			pci_cfg_write16(phb, 0, 0x78, lctl2);
+		}
+		lreg = in_be64(p->regs + PHB_PCIE_LINK_MANAGEMENT);
+		lreg = SETFIELD(PHB_PCIE_LM_TGT_SPEED, lreg, new_spd);
+		lreg |= PHB_PCIE_LM_CHG_SPEED;
+		out_be64(p->regs + PHB_PCIE_LINK_MANAGEMENT, lreg);
+	}
+}
+
 static void phb3_pcicfg_filter(struct phb *phb, uint32_t bdfn,
 			       uint32_t offset, uint32_t len,
 			       uint32_t *data, bool write)
@@ -144,6 +218,18 @@ static void phb3_pcicfg_filter(struct phb *phb, uint32_t bdfn,
 	struct pci_device *pd;
 	struct pci_cfg_reg_filter *pcrf;
 	uint32_t flags;
+
+	/* Hack for link speed changes. We intercept attempts at writing
+	 * the link control/status register
+	 */
+	if (bdfn == 0 && write && len == 4 && offset == 0x58) {
+		phb3_link_update(phb, (*data) >> 16);
+		return;
+	}
+	if (bdfn == 0 && write && len == 2 && offset == 0x5a) {
+		phb3_link_update(phb, *(uint16_t *)data);
+		return;
+	}
 
 	/* FIXME: It harms the performance to search the PCI
 	 * device which doesn't have any filters at all. So
