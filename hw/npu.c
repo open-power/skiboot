@@ -1303,17 +1303,7 @@ static void npu_probe_phb(struct dt_node *dn)
 
 	/* Create PCI root device node */
 	np = dt_new_addr(dt_root, "pciex", at_bar[0]);
-	if (!np) {
-		/**
-		 * @fwts-label NPUPHBDeviceNodeFailure
-		 * @fwts-advice Error adding the PHB device node. The
-		 * only real reason for this is that firmware may have
-		 * run out of memory.
-		 */
-		prlog(PR_ERR, "%s: Cannot create PHB device node\n",
-		      __func__);
-		return;
-	}
+	assert(np);
 
 	dt_add_property_strings(np, "compatible",
 				"ibm,power8-npu-pciex", "ibm,ioda2-npu-phb");
