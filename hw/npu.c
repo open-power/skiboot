@@ -1277,7 +1277,7 @@ static void npu_probe_phb(struct dt_node *dn)
 	struct dt_node *np;
 	uint32_t gcid, index, phb_index, xscom;
 	uint64_t at_bar[2], mm_win[2], val;
-	uint32_t links = 0;
+	uint32_t links;
 	char *path;
 
 	/* Retrieve chip id */
@@ -1285,9 +1285,7 @@ static void npu_probe_phb(struct dt_node *dn)
 	gcid = dt_get_chip_id(dn);
 	index = dt_prop_get_u32(dn, "ibm,npu-index");
 	phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
-	dt_for_each_compatible(dn, np, "ibm,npu-link")
-		links++;
-
+	links = dt_prop_get_u32(dn, "ibm,npu-links");
 	prlog(PR_INFO, "Chip %d Found NPU%d (%d links) at %s\n",
 	      gcid, index, links, path);
 	free(path);
