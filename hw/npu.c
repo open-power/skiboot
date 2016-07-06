@@ -1188,7 +1188,8 @@ static const struct phb_ops npu_ops = {
 };
 
 static void assign_mmio_bars(uint32_t gcid, uint32_t xscom,
-			     struct dt_node *npu_dn, uint64_t mm_win[2])
+			     struct dt_node *npu_dn, uint64_t mm_win[2],
+			     uint64_t at_bar[2])
 {
 	uint64_t mem_start, mem_end;
 	struct npu_dev_bar bar;
@@ -1243,6 +1244,8 @@ static void assign_mmio_bars(uint32_t gcid, uint32_t xscom,
 	bar.xscom = npu_link_scom_base(npu_dn, xscom, 1) + NX_MMIO_BAR_1;
 	bar.base += bar.size;
 	bar.size = NX_MMIO_AT_SIZE;
+	at_bar[0] = bar.base;
+	at_bar[1] = NX_MMIO_AT_SIZE;
 	npu_dev_bar_update(gcid, &bar, true);
 
 	/* Now we configure all the DLTL BARs. These are the ones
@@ -1276,7 +1279,7 @@ static void npu_probe_phb(struct dt_node *dn)
 {
 	struct dt_node *np;
 	uint32_t gcid, index, phb_index, xscom;
-	uint64_t at_bar[2], mm_win[2], val;
+	uint64_t at_bar[2], mm_win[2];
 	uint32_t links;
 	char *path;
 
@@ -1294,22 +1297,7 @@ static void npu_probe_phb(struct dt_node *dn)
 	xscom = dt_get_address(dn, 0, NULL);
 	prlog(PR_INFO, "   XSCOM Base:  %08x\n", xscom);
 
-	assign_mmio_bars(gcid, xscom, dn, mm_win);
-
-	/* Retrieve AT BAR */
-	xscom_read(gcid, npu_link_scom_base(dn, xscom, 1) + NX_MMIO_BAR_1,
-		   &val);
-	if (!(val & NX_MMIO_BAR_ENABLE)) {
-		/**
-		 * @fwts-label NPUATBARDisabled
-		 * @fwts-advice NVLink not functional
-		 */
-		prlog(PR_ERR, "   AT BAR disabled!\n");
-		return;
-	}
-
-	at_bar[0] = GETFIELD(NX_MMIO_BAR_BASE, val) << 12;
-	at_bar[1] = get_bar_size(val);
+	assign_mmio_bars(gcid, xscom, dn, mm_win, at_bar);
 	prlog(PR_INFO, "   AT BAR:      %016llx (%lldKB)\n",
 	      at_bar[0], at_bar[1] / 0x400);
 
