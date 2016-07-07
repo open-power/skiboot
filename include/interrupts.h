@@ -256,6 +256,8 @@ uint32_t p8_irq_to_phb(uint32_t irq);
  * functions in this file (or the corresponding core/interrupts.c).
  */
 
+struct irq_source;
+
 /*
  * IRQ sources register themselves here. If an "interrupts" callback
  * is provided, then all interrupts in that source will appear in
@@ -266,18 +268,27 @@ uint32_t p8_irq_to_phb(uint32_t irq);
  * be used for XIVE interrupts coming from PHBs.
  */
 struct irq_source_ops {
-	int64_t (*set_xive)(void *data, uint32_t isn, uint16_t server,
-			    uint8_t priority);
-	int64_t (*get_xive)(void *data, uint32_t isn, uint16_t *server,
-			    uint8_t *priority);
-	void (*interrupt)(void *data, uint32_t isn);
-
-	void (*eoi)(void *data, uint32_t isn);
+	int64_t (*set_xive)(struct irq_source *is, uint32_t isn,
+			    uint16_t server, uint8_t priority);
+	int64_t (*get_xive)(struct irq_source *is, uint32_t isn,
+			    uint16_t *server, uint8_t *priority);
+	void (*interrupt)(struct irq_source *is, uint32_t isn);
+	void (*eoi)(struct irq_source *is, uint32_t isn);
 };
 
+struct irq_source {
+	uint32_t			start;
+	uint32_t			end;
+	const struct irq_source_ops	*ops;
+	void				*data;
+	struct list_node		link;
+};
+
+extern void __register_irq_source(struct irq_source *is);
 extern void register_irq_source(const struct irq_source_ops *ops, void *data,
 				uint32_t start, uint32_t count);
 extern void unregister_irq_source(uint32_t start, uint32_t count);
+extern void adjust_irq_source(struct irq_source *is, uint32_t new_count);
 
 extern uint32_t get_psi_interrupt(uint32_t chip_id);
 

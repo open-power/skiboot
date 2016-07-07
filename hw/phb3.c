@@ -1602,12 +1602,10 @@ static void phb3_read_phb_status(struct phb3 *p,
 	}
 }
 
-static int64_t phb3_msi_get_xive(void *data,
-				 uint32_t isn,
-				 uint16_t *server,
-				 uint8_t *prio)
+static int64_t phb3_msi_get_xive(struct irq_source *is, uint32_t isn,
+				 uint16_t *server, uint8_t *prio)
 {
-	struct phb3 *p = data;
+	struct phb3 *p = is->data;
 	uint32_t chip, index, irq;
 	uint64_t ive;
 
@@ -1631,12 +1629,10 @@ static int64_t phb3_msi_get_xive(void *data,
 	return OPAL_SUCCESS;
 }
 
-static int64_t phb3_msi_set_xive(void *data,
-				 uint32_t isn,
-				 uint16_t server,
-				 uint8_t prio)
+static int64_t phb3_msi_set_xive(struct irq_source *is, uint32_t isn,
+				 uint16_t server, uint8_t prio)
 {
-	struct phb3 *p = data;
+	struct phb3 *p = is->data;
 	uint32_t chip, index;
 	uint64_t *cache, ive_num, data64, m_server, m_prio, ivc;
 	uint32_t *ive;
@@ -1716,12 +1712,10 @@ static int64_t phb3_msi_set_xive(void *data,
 	return OPAL_SUCCESS;
 }
 
-static int64_t phb3_lsi_get_xive(void *data,
-				 uint32_t isn,
-				 uint16_t *server,
-				 uint8_t *prio)
+static int64_t phb3_lsi_get_xive(struct irq_source *is, uint32_t isn,
+				 uint16_t *server, uint8_t *prio)
 {
-	struct phb3 *p = data;
+	struct phb3 *p = is->data;
 	uint32_t chip, index, irq;
 	uint64_t lxive;
 
@@ -1742,12 +1736,10 @@ static int64_t phb3_lsi_get_xive(void *data,
 	return OPAL_SUCCESS;
 }
 
-static int64_t phb3_lsi_set_xive(void *data,
-				 uint32_t isn,
-				 uint16_t server,
-				 uint8_t prio)
+static int64_t phb3_lsi_set_xive(struct irq_source *is, uint32_t isn,
+				 uint16_t server, uint8_t prio)
 {
-	struct phb3 *p = data;
+	struct phb3 *p = is->data;
 	uint32_t chip, index, irq, entry;
 	uint64_t lxive;
 
@@ -1785,9 +1777,9 @@ static int64_t phb3_lsi_set_xive(void *data,
 	return OPAL_SUCCESS;
 }
 
-static void phb3_err_interrupt(void *data, uint32_t isn)
+static void phb3_err_interrupt(struct irq_source *is, uint32_t isn)
 {
-	struct phb3 *p = data;
+	struct phb3 *p = is->data;
 
 	PHBDBG(p, "Got interrupt 0x%08x\n", isn);
 
@@ -4733,3 +4725,4 @@ void probe_phb3(void)
 	dt_for_each_compatible(dt_root, np, "ibm,power8-pciex")
 		phb3_create(np);
 }
+

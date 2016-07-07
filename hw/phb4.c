@@ -2991,7 +2991,7 @@ static bool phb4_calculate_windows(struct phb4 *p)
 }
 
 
-static int64_t phb4_get_xive(void *data __unused, uint32_t isn,
+static int64_t phb4_get_xive(struct irq_source *is __unused, uint32_t isn,
 			     uint16_t *server, uint8_t *prio)
 {
 	uint32_t target_id;
@@ -3003,10 +3003,10 @@ static int64_t phb4_get_xive(void *data __unused, uint32_t isn,
 		return OPAL_PARAMETER;
 }
 
-static int64_t phb4_set_xive(void *data, uint32_t isn,
+static int64_t phb4_set_xive(struct irq_source *is, uint32_t isn,
 			     uint16_t server, uint8_t prio)
 {
-	struct phb4 *p = data;
+	struct phb4 *p = is->data;
 	uint32_t idx = isn - p->base_msi;
 	void *mmio_base;
 
@@ -3027,9 +3027,9 @@ static int64_t phb4_set_xive(void *data, uint32_t isn,
 	return OPAL_SUCCESS;
 }
 
-static void phb4_eoi(void *data, uint32_t isn)
+static void phb4_eoi(struct irq_source *is, uint32_t isn)
 {
-	struct phb4 *p = data;
+	struct phb4 *p = is->data;
 	uint32_t idx = isn - p->base_msi;
 	void *mmio_base;
 	uint8_t eoi_val;

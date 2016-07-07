@@ -343,9 +343,9 @@ bool psi_poll_fsp_interrupt(struct psi *psi)
 	return !!(in_be64(psi->regs + PSIHB_CR) & PSIHB_CR_FSP_IRQ);
 }
 
-static void psi_interrupt(void *data, uint32_t isn __unused)
+static void psi_interrupt(struct irq_source *is, uint32_t isn __unused)
 {
-	struct psi *psi = data;
+	struct psi *psi = is->data;
 	u64 val;
 
 	val = in_be64(psi->regs + PSIHB_CR);
@@ -395,10 +395,10 @@ static void psi_interrupt(void *data, uint32_t isn __unused)
 	fsp_console_poll(NULL);
 }
 
-static int64_t psi_p7_set_xive(void *data, uint32_t isn __unused,
-				   uint16_t server, uint8_t priority)
+static int64_t psi_p7_set_xive(struct irq_source *is, uint32_t isn __unused,
+			       uint16_t server, uint8_t priority)
 {
-	struct psi *psi = data;
+	struct psi *psi = is->data;
 	uint64_t xivr;
 
 	if (!psi->working)
@@ -414,10 +414,10 @@ static int64_t psi_p7_set_xive(void *data, uint32_t isn __unused,
 	return OPAL_SUCCESS;
 }
 
-static int64_t psi_p7_get_xive(void *data, uint32_t isn __unused,
-				uint16_t *server, uint8_t *priority)
+static int64_t psi_p7_get_xive(struct irq_source *is, uint32_t isn __unused,
+			       uint16_t *server, uint8_t *priority)
 {
-	struct psi *psi = data;
+	struct psi *psi = is->data;
 	uint64_t xivr;
 
 	if (!psi->working)
@@ -432,10 +432,10 @@ static int64_t psi_p7_get_xive(void *data, uint32_t isn __unused,
 	return OPAL_SUCCESS;
 }
 
-static int64_t psi_p8_set_xive(void *data, uint32_t isn,
-				   uint16_t server, uint8_t priority)
+static int64_t psi_p8_set_xive(struct irq_source *is, uint32_t isn,
+			       uint16_t server, uint8_t priority)
 {
-	struct psi *psi = data;
+	struct psi *psi = is->data;
 	uint64_t xivr_p, xivr;
 
 	switch(isn & 7) {
@@ -471,10 +471,10 @@ static int64_t psi_p8_set_xive(void *data, uint32_t isn,
 	return OPAL_SUCCESS;
 }
 
-static int64_t psi_p8_get_xive(void *data, uint32_t isn __unused,
-				   uint16_t *server, uint8_t *priority)
+static int64_t psi_p8_get_xive(struct irq_source *is, uint32_t isn __unused,
+			       uint16_t *server, uint8_t *priority)
 {
-	struct psi *psi = data;
+	struct psi *psi = is->data;
 	uint64_t xivr_p, xivr;
 
 	switch(isn & 7) {
@@ -919,3 +919,4 @@ void psi_init(void)
 	dt_for_each_compatible(dt_root, np, "ibm,psihb-x")
 		psi_init_psihb(np);
 }
+

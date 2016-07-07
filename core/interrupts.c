@@ -31,32 +31,15 @@
 #define ICP_CPPR		0x4	/* 8-bit access */
 #define ICP_MFRR		0xc	/* 8-bit access */
 
-struct irq_source {
-	uint32_t			start;
-	uint32_t			end;
-	const struct irq_source_ops	*ops;
-	void				*data;
-	struct list_node		link;
-};
-
 static LIST_HEAD(irq_sources);
 static struct lock irq_lock = LOCK_UNLOCKED;
 
-void register_irq_source(const struct irq_source_ops *ops, void *data,
-			 uint32_t start, uint32_t count)
+void __register_irq_source(struct irq_source *is)
 {
-	struct irq_source *is, *is1;
+	struct irq_source *is1;
 
-	is = zalloc(sizeof(struct irq_source));
-	assert(is);
-	is->start = start;
-	is->end = start + count;
-	is->ops = ops;
-	is->data = data;
-
-	prlog(PR_DEBUG, "IRQ: Registering %04x..%04x ops @%p (data %p) %s\n",
-	      start, start + count - 1, ops, data,
-	      ops->interrupt ? "[Internal]" : "[OS]");
+	prlog(PR_DEBUG, "IRQ: Registering %04x..%04x ops @%p (data %p)\n",
+	      is->start, is->end - 1, is->ops, is->data);
 
 	lock(&irq_lock);
 	list_for_each(&irq_sources, is1, link) {
@@ -70,6 +53,21 @@ void register_irq_source(const struct irq_source_ops *ops, void *data,
 	}
 	list_add_tail(&irq_sources, &is->link);
 	unlock(&irq_lock);
+}
+
+void register_irq_source(const struct irq_source_ops *ops, void *data,
+			 uint32_t start, uint32_t count)
+{
+	struct irq_source *is;
+
+	is = zalloc(sizeof(struct irq_source));
+	assert(is);
+	is->start = start;
+	is->end = start + count;
+	is->ops = ops;
+	is->data = data;
+
+	__register_irq_source(is);
 }
 
 void unregister_irq_source(uint32_t start, uint32_t count)
@@ -97,6 +95,46 @@ void unregister_irq_source(uint32_t start, uint32_t count)
 	prerror("unregister IRQ source not found !\n");
 	prerror("start:%x, count: %x\n", start, count);
 	assert(0);
+}
+
+static struct irq_source *irq_find_source(uint32_t isn)
+{
+	struct irq_source *is;
+
+	lock(&irq_lock);
+	list_for_each(&irq_sources, is, link) {
+		if (isn >= is->start && isn < is->end) {
+			unlock(&irq_lock);
+			return is;
+		}
+	}
+	unlock(&irq_lock);
+
+	return NULL;
+}
+
+void adjust_irq_source(struct irq_source *is, uint32_t new_count)
+{
+	struct irq_source *is1;
+	uint32_t new_end = is->start + new_count;
+
+	prlog(PR_DEBUG, "IRQ: Adjusting %04x..%04x to %04x..%04x\n",
+	      is->start, is->end - 1, is->start, new_end - 1);
+
+	lock(&irq_lock);
+	list_for_each(&irq_sources, is1, link) {
+		if (is1 == is)
+			continue;
+		if (new_end > is1->start && is->start < is1->end) {
+			prerror("adjust IRQ source overlap !\n");
+			prerror("  new: %x..%x old: %x..%x\n",
+				is->start, new_end - 1,
+				is1->start, is1->end - 1);
+			assert(0);
+		}
+	}
+	is->end = new_end;
+	unlock(&irq_lock);
 }
 
 /*
@@ -341,22 +379,6 @@ uint32_t p8_irq_to_phb(uint32_t irq)
 	return p8_irq_to_block(irq) - P8_IRQ_BLOCK_PHB_BASE;
 }
 
-static struct irq_source *irq_find_source(uint32_t isn)
-{
-	struct irq_source *is;
-
-	lock(&irq_lock);
-	list_for_each(&irq_sources, is, link) {
-		if (isn >= is->start && isn < is->end) {
-			unlock(&irq_lock);
-			return is;
-		}
-	}
-	unlock(&irq_lock);
-
-	return NULL;
-}
-
 bool irq_source_eoi(uint32_t isn)
 {
 	struct irq_source *is = irq_find_source(isn);
@@ -364,7 +386,7 @@ bool irq_source_eoi(uint32_t isn)
 	if (!is || !is->ops->eoi)
 		return false;
 
-	is->ops->eoi(is->data, isn);
+	is->ops->eoi(is, isn);
 	return true;
 }
 
@@ -375,7 +397,7 @@ static int64_t opal_set_xive(uint32_t isn, uint16_t server, uint8_t priority)
 	if (!is || !is->ops->set_xive)
 		return OPAL_PARAMETER;
 
-	return is->ops->set_xive(is->data, isn, server, priority);
+	return is->ops->set_xive(is, isn, server, priority);
 }
 opal_call(OPAL_SET_XIVE, opal_set_xive, 3);
 
@@ -386,7 +408,7 @@ static int64_t opal_get_xive(uint32_t isn, uint16_t *server, uint8_t *priority)
 	if (!is || !is->ops->get_xive)
 		return OPAL_PARAMETER;
 
-	return is->ops->get_xive(is->data, isn, server, priority);
+	return is->ops->get_xive(is, isn, server, priority);
 }
 opal_call(OPAL_GET_XIVE, opal_get_xive, 3);
 
@@ -402,7 +424,7 @@ static int64_t opal_handle_interrupt(uint32_t isn, __be64 *outstanding_event_mas
 	}
 
 	/* Run it */
-	is->ops->interrupt(is->data, isn);
+	is->ops->interrupt(is, isn);
 
 	/* Check timers if SLW timer isn't working */
 	if (!slw_timer_ok())
@@ -439,4 +461,5 @@ void init_interrupts(void)
 		}
 	}
 }
+
 

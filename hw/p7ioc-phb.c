@@ -2362,10 +2362,10 @@ static const struct phb_ops p7ioc_phb_ops = {
 };
 
 /* p7ioc_phb_get_xive - Interrupt control from OPAL */
-static int64_t p7ioc_msi_get_xive(void *data, uint32_t isn,
+static int64_t p7ioc_msi_get_xive(struct irq_source *is, uint32_t isn,
 				  uint16_t *server, uint8_t *prio)
 {
-	struct p7ioc_phb *p = data;
+	struct p7ioc_phb *p = is->data;
 	uint32_t irq, fbuid = P7_IRQ_FBUID(isn);
 	uint64_t xive;
 
@@ -2382,10 +2382,10 @@ static int64_t p7ioc_msi_get_xive(void *data, uint32_t isn,
 }
 
 /* p7ioc_phb_set_xive - Interrupt control from OPAL */
-static int64_t p7ioc_msi_set_xive(void *data, uint32_t isn,
+static int64_t p7ioc_msi_set_xive(struct irq_source *is, uint32_t isn,
 				  uint16_t server, uint8_t prio)
 {
-	struct p7ioc_phb *p = data;
+	struct p7ioc_phb *p = is->data;
 	uint32_t irq, fbuid = P7_IRQ_FBUID(isn);
 	uint64_t xive, m_server, m_prio;
 
@@ -2422,10 +2422,10 @@ static int64_t p7ioc_msi_set_xive(void *data, uint32_t isn,
 }
 
 /* p7ioc_phb_get_xive - Interrupt control from OPAL */
-static int64_t p7ioc_lsi_get_xive(void *data, uint32_t isn,
+static int64_t p7ioc_lsi_get_xive(struct irq_source *is, uint32_t isn,
 				  uint16_t *server, uint8_t *prio)
 {
-	struct p7ioc_phb *p = data;
+	struct p7ioc_phb *p = is->data;
 	uint32_t irq = (isn & 0x7);
 	uint32_t fbuid = P7_IRQ_FBUID(isn);
 	uint64_t xive;
@@ -2441,10 +2441,10 @@ static int64_t p7ioc_lsi_get_xive(void *data, uint32_t isn,
 }
 
 /* p7ioc_phb_set_xive - Interrupt control from OPAL */
-static int64_t p7ioc_lsi_set_xive(void *data, uint32_t isn,
+static int64_t p7ioc_lsi_set_xive(struct irq_source *is, uint32_t isn,
 				  uint16_t server, uint8_t prio)
 {
-	struct p7ioc_phb *p = data;
+	struct p7ioc_phb *p = is->data;
 	uint32_t irq = (isn & 0x7);
 	uint32_t fbuid = P7_IRQ_FBUID(isn);
 	uint64_t xive, m_server, m_prio;
@@ -2481,9 +2481,9 @@ static int64_t p7ioc_lsi_set_xive(void *data, uint32_t isn,
 	return OPAL_SUCCESS;
 }
 
-static void p7ioc_phb_err_interrupt(void *data, uint32_t isn)
+static void p7ioc_phb_err_interrupt(struct irq_source *is, uint32_t isn)
 {
-	struct p7ioc_phb *p = data;
+	struct p7ioc_phb *p = is->data;
 	uint64_t peev0, peev1;
 
 	PHBDBG(p, "Got interrupt 0x%04x\n", isn);
@@ -3263,4 +3263,5 @@ void p7ioc_phb_reset(struct phb *phb)
 	/* Restore the CI error mask */
 	out_be64(ioc->regs + P7IOC_CIn_LEM_ERR_MASK_AND(ci_idx), 0);
 }
+
 

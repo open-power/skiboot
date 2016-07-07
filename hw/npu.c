@@ -700,12 +700,10 @@ static int npu_isn_valid(struct npu *p, uint32_t isn)
 	return true;
 }
 
-static int64_t npu_lsi_get_xive(void *data,
-				    uint32_t isn,
-				    uint16_t *server,
-				    uint8_t *prio)
+static int64_t npu_lsi_get_xive(struct irq_source *is, uint32_t isn,
+				uint16_t *server, uint8_t *prio)
 {
-	struct npu *p = data;
+	struct npu *p = is->data;
 	uint32_t irq = NPU_IRQ_NUM(isn);
 	uint64_t lxive;
 
@@ -724,12 +722,10 @@ static int64_t npu_lsi_get_xive(void *data,
 	return OPAL_SUCCESS;
 }
 
-static int64_t npu_lsi_set_xive(void *data,
-				    uint32_t isn,
-				    uint16_t server,
-				    uint8_t prio)
+static int64_t npu_lsi_set_xive(struct irq_source *is, uint32_t isn,
+				uint16_t server, uint8_t prio)
 {
-	struct npu *p = data;
+	struct npu *p = is->data;
 	uint32_t irq = NPU_IRQ_NUM(isn);
 	uint64_t lxive;
 
@@ -754,9 +750,9 @@ static int64_t npu_lsi_set_xive(void *data,
 	return OPAL_SUCCESS;
 }
 
-static void npu_err_interrupt(void *data, uint32_t isn)
+static void npu_err_interrupt(struct irq_source *is, uint32_t isn)
 {
-	struct npu *p = data;
+	struct npu *p = is->data;
 	uint32_t irq = NPU_IRQ_NUM(isn);
 
 	if (!npu_isn_valid(p, isn))
@@ -1888,3 +1884,4 @@ void probe_npu(void)
 	dt_for_each_compatible(dt_root, np, "ibm,power8-npu-pciex")
 		npu_create_phb(np);
 }
+
