@@ -342,6 +342,27 @@ static int64_t opal_pci_msi_eoi(uint64_t phb_id,
 }
 opal_call(OPAL_PCI_MSI_EOI, opal_pci_msi_eoi, 2);
 
+static int64_t opal_pci_tce_kill(uint64_t phb_id,
+				 uint32_t kill_type,
+				 uint32_t pe_num, uint32_t tce_size,
+				 uint64_t dma_addr, uint32_t npages)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+	int64_t rc;
+
+	if (!phb)
+		return OPAL_PARAMETER;
+	if (!phb->ops->tce_kill)
+		return OPAL_UNSUPPORTED;
+	phb_lock(phb);
+	rc = phb->ops->tce_kill(phb, kill_type, pe_num, tce_size,
+				dma_addr, npages);
+	phb_unlock(phb);
+
+	return rc;
+}
+opal_call(OPAL_PCI_TCE_KILL, opal_pci_tce_kill, 6);
+
 static int64_t opal_pci_set_xive_pe(uint64_t phb_id, uint32_t pe_number,
 				    uint32_t xive_num)
 {

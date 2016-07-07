@@ -200,8 +200,11 @@ extern void init_replicated_sprs(void);
 /* Various probe routines, to replace with an initcall system */
 extern void probe_p7ioc(void);
 extern void probe_phb3(void);
+extern void probe_phb4(void);
 extern int phb3_preload_capp_ucode(void);
 extern void phb3_preload_vpd(void);
+extern int phb4_preload_capp_ucode(void);
+extern void phb4_preload_vpd(void);
 extern void probe_npu(void);
 extern void uart_init(void);
 extern void homer_init(void);

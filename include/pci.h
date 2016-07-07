@@ -294,6 +294,11 @@ struct phb_ops {
 	 */
 	int64_t (*pci_msi_eoi)(struct phb *phb, uint32_t hwirq);
 
+	/* TCE Kill abstraction */
+	int64_t (*tce_kill)(struct phb *phb, uint32_t kill_type,
+			    uint32_t pe_num, uint32_t tce_size,
+			    uint64_t dma_addr, uint32_t npages);
+
 	/* Put phb in capi mode or pcie mode */
 	int64_t (*set_capi_mode)(struct phb *phb, uint64_t mode, uint64_t pe_number);
 
@@ -307,6 +312,7 @@ enum phb_type {
 	phb_type_pcie_v1,
 	phb_type_pcie_v2,
 	phb_type_pcie_v3,
+	phb_type_pcie_v4,
 };
 
 struct phb {

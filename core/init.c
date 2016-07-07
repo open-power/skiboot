@@ -776,6 +776,9 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	/* Probe PHB3 on P8 */
 	probe_phb3();
 
+	/* Probe PHB4 on P9 */
+	probe_phb4();
+
 	/* Probe NPUs */
 	probe_npu();
 
