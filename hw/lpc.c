@@ -816,8 +816,9 @@ static void lpc_init_chip_p8(struct dt_node *xn)
 	      chip->id, chip->lpc_xbase);
 
 	lpc_init_interrupts(chip);
-	if (chip->type == PROC_CHIP_P8_NAPLES)
-		dt_add_property(xn, "interrupt-controller", NULL, 0);
+	dt_add_property(xn, "interrupt-controller", NULL, 0);
+	dt_add_property_cells(xn, "#interrupt-cells", 1);
+	assert(dt_prop_get_u32(xn, "#address-cells") == 2);
 }
 
 static void lpc_init_chip_p9(struct dt_node *opb_node)
