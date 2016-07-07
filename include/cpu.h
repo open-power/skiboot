@@ -60,6 +60,7 @@ struct cpu_thread {
 	bool				con_need_flush;
 	bool				in_mcount;
 	bool				in_poller;
+	bool				in_reinit;
 	uint32_t			hbrt_spec_wakeup; /* primary only */
 	uint64_t			save_l2_fir_action1;
 	uint64_t			current_token;
