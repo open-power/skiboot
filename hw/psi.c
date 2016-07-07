@@ -783,7 +783,7 @@ static void psi_create_mm_dtnode(struct psi *psi)
 		dt_add_property_strings(np, "compatible", "ibm,psi");
 	}
 	dt_add_property_cells(np, "interrupt-parent", get_ics_phandle());
-	dt_add_property_cells(np, "interrupts", psi->interrupt);
+	dt_add_property_cells(np, "interrupts", psi->interrupt, 1);
 	dt_add_property_cells(np, "ibm,chip-id", psi->chip_id);
 }
 

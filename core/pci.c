@@ -1124,11 +1124,17 @@ void pci_std_swizzle_irq_map(struct dt_node *np,
 			     uint8_t swizzle)
 {
 	uint32_t *map, *p;
-	int dev, irq;
-	size_t map_size;
+	int dev, irq, esize, edevcount;
+	size_t map_size, isize;
+
+	/* Some emulated setups don't use standard interrupts
+	 * representation
+	 */
+	if (lstate->int_size == 0)
+		return;
 
 	/* Size in bytes of a target interrupt */
-	size_t isize = lstate->int_size * sizeof(uint32_t);
+	isize = lstate->int_size * sizeof(uint32_t);
 
 	/* Calculate the size of a map entry:
 	 *
@@ -1139,7 +1145,7 @@ void pci_std_swizzle_irq_map(struct dt_node *np,
 	 *
 	 * Assumption: PIC address is 0-size
 	 */
-	int esize = 3 + 1 + 1 + lstate->int_size;
+	esize = 3 + 1 + 1 + lstate->int_size;
 
 	/* Number of map "device" entries
 	 *
@@ -1150,8 +1156,6 @@ void pci_std_swizzle_irq_map(struct dt_node *np,
 	 * If we have been passed a host bridge (pd == NULL) we also
 	 * do a simple per-pin map
 	 */
-	int edevcount;
-
 	if (!pd || (pd->dev_type == PCIE_TYPE_ROOT_PORT ||
 		    pd->dev_type == PCIE_TYPE_SWITCH_DNPORT)) {
 		edevcount = 1;

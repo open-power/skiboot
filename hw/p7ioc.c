@@ -629,7 +629,8 @@ static void p7ioc_create_hub(struct dt_node *np)
 	dt_add_property_cells(np, "ibm,opal-hubid", 0, id);
 
 	/* XXX Fixme: how many RGC interrupts ? */
-	dt_add_property_cells(np, "interrupts", ioc->rgc_buid << 4);
+	dt_add_property_cells(np, "interrupt-parent", get_ics_phandle());
+	dt_add_property_cells(np, "interrupts", ioc->rgc_buid << 4, 1);
 	dt_add_property_cells(np, "interrupt-base", ioc->rgc_buid << 4);
 
 	/* XXX What about ibm,opal-mmio-real ? */

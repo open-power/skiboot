@@ -2617,11 +2617,15 @@ static void p7ioc_pcie_add_node(struct p7ioc_phb *p)
 	 * PCI code based on the content of this structure:
 	 */
 	lsibase = p->buid_lsi << 4;
-	p->phb.lstate.int_size = 1;
+	p->phb.lstate.int_size = 2;
 	p->phb.lstate.int_val[0][0] = lsibase + PHB_LSI_PCIE_INTA;
+	p->phb.lstate.int_val[0][1] = 1;
 	p->phb.lstate.int_val[1][0] = lsibase + PHB_LSI_PCIE_INTB;
+	p->phb.lstate.int_val[1][1] = 1;
 	p->phb.lstate.int_val[2][0] = lsibase + PHB_LSI_PCIE_INTC;
+	p->phb.lstate.int_val[2][1] = 1;
 	p->phb.lstate.int_val[3][0] = lsibase + PHB_LSI_PCIE_INTD;
+	p->phb.lstate.int_val[3][1] = 1;
 	p->phb.lstate.int_parent[0] = icsp;
 	p->phb.lstate.int_parent[1] = icsp;
 	p->phb.lstate.int_parent[2] = icsp;

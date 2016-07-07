@@ -1739,10 +1739,17 @@ static void npu_add_phb_properties(struct npu *p)
 	uint32_t icsp = get_ics_phandle();
 	uint64_t tkill, mm_base, mm_size;
 	uint32_t base_lsi = p->base_lsi;
-	uint32_t map[] = { 0x0, 0x0, 0x0, 0x1, icsp, base_lsi,
-			   0x0, 0x0, 0x0, 0x2, icsp, base_lsi + 1,
-			   0x800, 0x0, 0x0, 0x1, icsp, base_lsi + 2,
-			   0x800, 0x0, 0x0, 0x2, icsp, base_lsi + 3 };
+	uint32_t map[] = {
+		/* Dev 0 INT#A (used by fn0) */
+		0x0000, 0x0, 0x0, 0x1, icsp, base_lsi + NPU_LSI_INT_DL0, 1,
+		/* Dev 0 INT#B (used by fn1) */
+		0x0000, 0x0, 0x0, 0x2, icsp, base_lsi + NPU_LSI_INT_DL1, 1,
+		/* Dev 1 INT#A (used by fn0) */
+		0x0800, 0x0, 0x0, 0x1, icsp, base_lsi + NPU_LSI_INT_DL2, 1,
+		/* Dev 1 INT#B (used by fn1) */
+		0x0800, 0x0, 0x0, 0x2, icsp, base_lsi + NPU_LSI_INT_DL3, 1,
+	};
+	/* Mask is bus, device and INT# */
 	uint32_t mask[] = {0xf800, 0x0, 0x0, 0x7};
 	char slotbuf[32];
 
@@ -1759,21 +1766,8 @@ static void npu_add_phb_properties(struct npu *p)
 	dt_add_property_cells(np, "clock-frequency", 0x200, 0);
         dt_add_property_cells(np, "interrupt-parent", icsp);
 
-        /* DLPL Interrupts */
-        p->phb.lstate.int_size = 1;
-        p->phb.lstate.int_val[0][0] = p->base_lsi + NPU_LSI_INT_DL0;
-        p->phb.lstate.int_val[1][0] = p->base_lsi + NPU_LSI_INT_DL1;
-        p->phb.lstate.int_val[2][0] = p->base_lsi + NPU_LSI_INT_DL2;
-        p->phb.lstate.int_val[3][0] = p->base_lsi + NPU_LSI_INT_DL3;
-        p->phb.lstate.int_parent[0] = icsp;
-        p->phb.lstate.int_parent[1] = icsp;
-        p->phb.lstate.int_parent[2] = icsp;
-        p->phb.lstate.int_parent[3] = icsp;
-
-	/* Due to the way the emulated PCI devices are structured in
-	 * the device tree the core PCI layer doesn't do this for
-	 * us. Besides the swizzling wouldn't suit our needs even if it
-	 * did. */
+        /* DLPL Interrupts, we don't use the standard swizzle */
+	p->phb.lstate.int_size = 0;
 	dt_add_property(np, "interrupt-map", map, sizeof(map));
 	dt_add_property(np, "interrupt-map-mask", mask, sizeof(mask));
 
