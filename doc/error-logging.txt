@@ -208,8 +208,8 @@ Note:
 * For more information regarding error logging and PEL format
   refer to PAPR doc and P7 PEL and SRC PLDD document.
 
-* Refer to include/opal.h for all the error logging
-  interface parameters and include/fsp-pel.h for PEL
+* Refer to include/errorlog.h for all the error logging
+  interface parameters and include/pel.h for PEL
   structures.
 
 Sample error logging:
@@ -235,7 +235,7 @@ void report_error(int index)
 	 * 'struct errorlog' buffer with relevant fields updated.
 	 */
 
-	/* tag -> unqiue ascii tag to identify a particular data dump section */
+	/* tag -> unique ascii tag to identify a particular data dump section */
 	tag = 0x4b4b4b4b;
 	buf = opal_elog_create(&e_info(OPAL_RC_ATTN), tag);
 	if (buf == NULL) {
