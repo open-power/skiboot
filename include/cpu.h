@@ -41,6 +41,7 @@ enum cpu_thread_state {
 };
 
 struct cpu_job;
+struct xive_cpu_state;
 
 struct cpu_thread {
 	uint32_t			pir;
@@ -86,6 +87,9 @@ struct cpu_thread {
 	/* Mask to indicate thread id in core. */
 	uint8_t				thread_mask;
 	bool				tb_invalid;
+
+	/* For use by XICS emulation on XIVE */
+	struct xive_cpu_state		*xstate;
 };
 
 /* This global is set to 1 to allow secondaries to callin,

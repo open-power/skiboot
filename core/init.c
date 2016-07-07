@@ -43,6 +43,7 @@
 #include <timer.h>
 #include <ipmi.h>
 #include <sensor.h>
+#include <xive.h>
 
 enum proc_gen proc_gen;
 
@@ -711,8 +712,11 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	/* Allocate our split trace buffers now. Depends add_opal_node() */
 	init_trace_buffers();
 
-	/* Get the ICPs and make sure they are in a sane state */
+	/* On P7/P8, get the ICPs and make sure they are in a sane state */
 	init_interrupts();
+
+	/* On P9, initialize XIVE */
+	init_xive();
 
 	/* Grab centaurs from device-tree if present (only on FSP-less) */
 	centaur_init();
@@ -815,6 +819,9 @@ void __noreturn __secondary_cpu_entry(void)
 	cpu_callin(cpu);
 
 	init_hid();
+
+	/* Some XIVE setup */
+	xive_cpu_callin(cpu);
 
 	/* Wait for work to do */
 	while(true) {

@@ -167,10 +167,10 @@
 #define OPAL_PCI_GET_PRESENCE_STATE		119
 #define OPAL_PCI_GET_POWER_STATE		120
 #define OPAL_PCI_SET_POWER_STATE		121
-#define OPAL_INT_GET_XIRR			122 /* Not yet implemented */
-#define OPAL_INT_SET_CPPR			123 /* Not yet implemented */
-#define OPAL_INT_EOI				124 /* Not yet implemented */
-#define OPAL_INT_SET_MFRR			125 /* Not yet implemented */
+#define OPAL_INT_GET_XIRR			122
+#define	OPAL_INT_SET_CPPR			123
+#define OPAL_INT_EOI				124
+#define OPAL_INT_SET_MFRR			125
 #define OPAL_LAST				125
 
 /* Device tree flags */
