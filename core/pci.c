@@ -1605,8 +1605,14 @@ static int __pci_restore_bridge_buses(struct phb *phb,
 				      struct pci_device *pd,
 				      void *data __unused)
 {
-	if (!pd->is_bridge)
+	if (!pd->is_bridge) {
+		uint32_t vdid;
+
+		/* Make all devices below a bridge "re-capture" the bdfn */
+		if (pci_cfg_read32(phb, pd->bdfn, 0, &vdid) == 0)
+			pci_cfg_write32(phb, pd->bdfn, 0, vdid);
 		return 0;
+	}
 
 	pci_cfg_write8(phb, pd->bdfn, PCI_CFG_PRIMARY_BUS,
 		       pd->primary_bus);
