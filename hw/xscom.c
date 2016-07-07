@@ -413,6 +413,14 @@ int xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val)
 			return OPAL_UNSUPPORTED;
 		break;
 	default:
+		/**
+		 * @fwts-label XSCOMReadInvalidPartID
+		 * @fwts-advice xscom_read was called with an invalid partid.
+		 * There's likely a bug somewhere in the stack that's causing
+		 * someone to try an xscom_read on something that isn't a
+		 * processor, Centaur or EX chiplet.
+		 */
+		prerror("%s: invalid XSCOM partid 0x%x\n", __func__, partid);
 		return OPAL_PARAMETER;
 	}
 
@@ -448,6 +456,14 @@ int xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val)
 		gcid = xscom_decode_chiplet(partid, &pcb_addr);
 		break;
 	default:
+		/**
+		 * @fwts-label XSCOMWriteInvalidPartID
+		 * @fwts-advice xscom_write was called with an invalid partid.
+		 * There's likely a bug somewhere in the stack that's causing
+		 * someone to try an xscom_write on something that isn't a
+		 * processor, Centaur or EX chiplet.
+		 */
+		prerror("%s: invalid XSCOM partid 0x%x\n", __func__, partid);
 		return OPAL_PARAMETER;
 	}
 
