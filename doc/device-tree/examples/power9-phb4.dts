@@ -153,4 +153,40 @@
 			compatible = "ibm,power9-xive-x";
 		};
 	};
+
+	lpcm-opb@6030000000000 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "ibm,power9-lpcm-opb", "simple-bus";
+		ibm,chip-id = <0x0>;
+		ranges = < 0x00000000 0x60300 0x00000000 0x80000000
+		           0x80000000 0x60300 0x80000000 0x80000000 >;
+		opb-master@c0010000 {
+		    compatible = "ibm,power9-lpcm-opb-master";
+		    reg = < 0xc0010000 0x60 >;
+		};
+		opb-arbiter@c0011000 {
+		    compatible = "ibm,power9-lpcm-opb-arbiter";
+		    reg = < 0xc0011000 0x8 >;
+		};
+		lpc-controller@c0012000 {
+		    compatible = "ibm,power9-lpc-controller";
+		    reg = < 0xc0012000 0x100 >;
+		};
+		lpc@f0000000 {
+		    compatible = "ibm,power9-lpc";
+		    #address-cells = <2>;
+		    #size-cells = <1>;
+		    ranges = < 3 0 0xf0000000 0x10000000 /* FW space */
+		               0 0 0xe0000000 0x10000000 /* MEM space */
+		               1 0 0xd0010000 0x00010000 /* IO space */ >;
+		    serial@i3f8 {
+		        compatible = "ns16550";
+		        reg = < 1 0x3f8 0x10 >;
+			current-speed = < 115200 >;
+			clock-frequency = < 1843200 >;
+		    };
+		};
+	};
+
 };
