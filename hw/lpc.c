@@ -129,12 +129,33 @@ static uint32_t lpc_fw_opb_base 	= 0xf0000000;
 static uint32_t lpc_reg_opb_base 	= 0xc0012000;
 static uint32_t opb_master_reg_base 	= 0xc0010000;
 
+static int64_t opb_mmio_write(struct proc_chip *chip, uint32_t addr, uint32_t data,
+			      uint32_t sz)
+{
+	switch (sz) {
+	case 1:
+		out_8(chip->lpc_mbase + addr, data);
+		return OPAL_SUCCESS;
+	case 2:
+		out_be16(chip->lpc_mbase + addr, data);
+		return OPAL_SUCCESS;
+	case 4:
+		out_be32(chip->lpc_mbase + addr, data);
+		return OPAL_SUCCESS;
+	}
+	prerror("LPC: Invalid data size %d\n", sz);
+	return OPAL_PARAMETER;
+}
+
 static int64_t opb_write(struct proc_chip *chip, uint32_t addr, uint32_t data,
 			 uint32_t sz)
 {
 	uint64_t ctl = ECCB_CTL_MAGIC, stat;
 	int64_t rc, tout;
 	uint64_t data_reg;
+
+	if (chip->lpc_mbase)
+		return opb_mmio_write(chip, addr, data, sz);
 
 	switch(sz) {
 	case 1:
@@ -190,11 +211,32 @@ static int64_t opb_write(struct proc_chip *chip, uint32_t addr, uint32_t data,
 	return OPAL_HARDWARE;
 }
 
+static int64_t opb_mmio_read(struct proc_chip *chip, uint32_t addr, uint32_t *data,
+			     uint32_t sz)
+{
+	switch (sz) {
+	case 1:
+		*data = in_8(chip->lpc_mbase + addr);
+		return OPAL_SUCCESS;
+	case 2:
+		*data = in_be16(chip->lpc_mbase + addr);
+		return OPAL_SUCCESS;
+	case 4:
+		*data = in_be32(chip->lpc_mbase + addr);
+		return OPAL_SUCCESS;
+	}
+	prerror("LPC: Invalid data size %d\n", sz);
+	return OPAL_PARAMETER;
+}
+
 static int64_t opb_read(struct proc_chip *chip, uint32_t addr, uint32_t *data,
 		        uint32_t sz)
 {
 	uint64_t ctl = ECCB_CTL_MAGIC | ECCB_CTL_READ, stat;
 	int64_t rc, tout;
+
+	if (chip->lpc_mbase)
+		return opb_mmio_read(chip, addr, data, sz);
 
 	if (sz != 1 && sz != 2 && sz != 4) {
 		prerror("Invalid data size %d\n", sz);
@@ -378,7 +420,7 @@ static int64_t __lpc_write(uint32_t chip_id, enum OpalLPCAddressType addr_type,
 	uint32_t opb_base;
 	int64_t rc;
 
-	if (!chip || !chip->lpc_xbase)
+	if (!chip || (!chip->lpc_xbase && !chip->lpc_mbase))
 		return OPAL_PARAMETER;
 
 	lock(&chip->lpc_lock);
@@ -437,7 +479,7 @@ static int64_t __lpc_read(uint32_t chip_id, enum OpalLPCAddressType addr_type,
 	uint32_t opb_base;
 	int64_t rc;
 
-	if (!chip || !chip->lpc_xbase)
+	if (!chip || (!chip->lpc_xbase && !chip->lpc_mbase))
 		return OPAL_PARAMETER;
 
 	lock(&chip->lpc_lock);
@@ -697,7 +739,7 @@ void lpc_interrupt(uint32_t chip_id)
 	int rc;
 
 	/* No initialized LPC controller on that chip */
-	if (!chip->lpc_xbase)
+	if (!chip || (!chip->lpc_xbase && !chip->lpc_mbase))
 		return;
 
 	lock(&chip->lpc_lock);
@@ -752,35 +794,75 @@ void lpc_all_interrupts(uint32_t chip_id)
 	unlock(&chip->lpc_lock);
 }
 
+static void lpc_init_chip_p8(struct dt_node *xn)
+ {
+	uint32_t gcid = dt_get_chip_id(xn);
+	struct proc_chip *chip;
+
+	chip = get_chip(gcid);
+	assert(chip);
+
+	chip->lpc_xbase = dt_get_address(xn, 0, NULL);
+	chip->lpc_fw_idsel = 0xff;
+	chip->lpc_fw_rdsz = 0xff;
+	init_lock(&chip->lpc_lock);
+
+	if (lpc_default_chip_id < 0 ||
+	    dt_has_node_property(xn, "primary", NULL)) {
+		lpc_default_chip_id = chip->id;
+	}
+
+	prlog(PR_NOTICE, "Bus on chip %d, access via XSCOM, PCB_Addr=0x%x\n",
+	      chip->id, chip->lpc_xbase);
+
+	lpc_init_interrupts(chip);
+	if (chip->type == PROC_CHIP_P8_NAPLES)
+		dt_add_property(xn, "interrupt-controller", NULL, 0);
+}
+
+static void lpc_init_chip_p9(struct dt_node *opb_node)
+{
+	uint32_t gcid = dt_get_chip_id(opb_node);
+	struct proc_chip *chip;
+	u64 addr;
+
+	chip = get_chip(gcid);
+	assert(chip);
+
+	/* Grab OPB base address */
+	addr = dt_prop_get_cell(opb_node, "ranges", 1);
+	addr <<= 32;
+	addr |= dt_prop_get_cell(opb_node, "ranges", 2);
+
+	chip->lpc_mbase = (void *)addr;
+	chip->lpc_fw_idsel = 0xff;
+	chip->lpc_fw_rdsz = 0xff;
+	init_lock(&chip->lpc_lock);
+
+	if (lpc_default_chip_id < 0 ||
+	    dt_has_node_property(opb_node, "primary", NULL)) {
+		lpc_default_chip_id = chip->id;
+	}
+
+	prlog(PR_NOTICE, "Bus on chip %d, access via MMIO @%p\n",
+	       chip->id, chip->lpc_mbase);
+
+	// XXX TODO
+	//lpc_init_interrupts(chip);
+}
+
 void lpc_init(void)
 {
 	struct dt_node *xn;
 	bool has_lpc = false;
 
 	dt_for_each_compatible(dt_root, xn, "ibm,power8-lpc") {
-		uint32_t gcid = dt_get_chip_id(xn);
-		struct proc_chip *chip;
-
-		chip = get_chip(gcid);
-		assert(chip);
-
-		chip->lpc_xbase = dt_get_address(xn, 0, NULL);
-		chip->lpc_fw_idsel = 0xff;
-		chip->lpc_fw_rdsz = 0xff;
-		init_lock(&chip->lpc_lock);
-
-		if (lpc_default_chip_id < 0 ||
-		    dt_has_node_property(xn, "primary", NULL)) {
-			lpc_default_chip_id = chip->id;
-		}
-
-		prlog(PR_NOTICE, "Bus on chip %d PCB_Addr=0x%x\n",
-					chip->id, chip->lpc_xbase);
+		lpc_init_chip_p8(xn);
 		has_lpc = true;
-
-		lpc_init_interrupts(chip);
-		if (chip->type == PROC_CHIP_P8_NAPLES)
-			dt_add_property(xn, "interrupt-controller", NULL, 0);
+	}
+	dt_for_each_compatible(dt_root, xn, "ibm,power9-lpcm-opb") {
+		lpc_init_chip_p9(xn);
+		has_lpc = true;
 	}
 	if (lpc_default_chip_id >= 0)
 		prlog(PR_NOTICE, "Default bus on chip %d\n",

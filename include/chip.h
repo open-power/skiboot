@@ -170,6 +170,7 @@ struct proc_chip {
 
 	/* Used by hw/lpc.c */
 	uint32_t		lpc_xbase;
+	void			*lpc_mbase;
 	struct lock		lpc_lock;
 	uint8_t			lpc_fw_idsel;
 	uint8_t			lpc_fw_rdsz;
