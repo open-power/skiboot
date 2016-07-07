@@ -205,7 +205,8 @@ void reset_cpu_icp(void)
 {
 	void *icp = this_cpu()->icp_regs;
 
-	assert(icp);
+	if (!icp)
+		return;
 
 	/* Clear pending IPIs */
 	out_8(icp + ICP_MFRR, 0xff);
@@ -221,7 +222,8 @@ void icp_send_eoi(uint32_t interrupt)
 {
 	void *icp = this_cpu()->icp_regs;
 
-	assert(icp);
+	if (!icp)
+		return;
 
 	/* Set priority to max, ignore all incoming interrupts */
 	out_be32(icp + ICP_XIRR, interrupt & 0xffffff);
@@ -234,7 +236,8 @@ void icp_prep_for_rvwinkle(void)
 {
 	void *icp = this_cpu()->icp_regs;
 
-	assert(icp);
+	if (!icp)
+		return;
 
 	/* Clear pending IPIs */
 	out_8(icp + ICP_MFRR, 0xff);
@@ -248,7 +251,8 @@ void icp_kick_cpu(struct cpu_thread *cpu)
 {
 	void *icp = cpu->icp_regs;
 
-	assert(icp);
+	if (!icp)
+		return;
 
 	/* Send high priority IPI */
 	out_8(icp + ICP_MFRR, 0);
@@ -351,6 +355,17 @@ static struct irq_source *irq_find_source(uint32_t isn)
 	unlock(&irq_lock);
 
 	return NULL;
+}
+
+bool irq_source_eoi(uint32_t isn)
+{
+	struct irq_source *is = irq_find_source(isn);
+
+	if (!is || !is->ops->eoi)
+		return false;
+
+	is->ops->eoi(is->data, isn);
+	return true;
 }
 
 static int64_t opal_set_xive(uint32_t isn, uint16_t server, uint8_t priority)
