@@ -289,7 +289,7 @@ static void pci_check_clear_freeze(struct phb *phb)
 	/* Retrieve the reserved PE number */
 	pe_number = OPAL_PARAMETER;
 	if (phb->ops->get_reserved_pe_number)
-		pe_number = phb->ops->get_reserved_pe_number();
+		pe_number = phb->ops->get_reserved_pe_number(phb);
 	if (pe_number < 0)
 		return;
 

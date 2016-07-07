@@ -1635,7 +1635,7 @@ static uint8_t p7ioc_choose_bus(struct phb *phb __unused,
 	return al;
 }
 
-static int64_t p7ioc_get_reserved_pe_number(void)
+static int64_t p7ioc_get_reserved_pe_number(struct phb *phb __unused)
 {
 	return 127;
 }

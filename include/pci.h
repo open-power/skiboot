@@ -185,7 +185,7 @@ struct phb_ops {
 	uint8_t (*choose_bus)(struct phb *phb, struct pci_device *bridge,
 			      uint8_t candidate, uint8_t *max_bus,
 			      bool *use_max);
-	int64_t (*get_reserved_pe_number)(void);
+	int64_t (*get_reserved_pe_number)(struct phb *phb);
 
 	/*
 	 * Device init method is called after a device has been detected

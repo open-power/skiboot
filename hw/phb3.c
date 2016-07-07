@@ -269,7 +269,7 @@ static uint8_t phb3_choose_bus(struct phb *phb __unused,
 	return candidate;
 }
 
-static int64_t phb3_get_reserved_pe_number(void)
+static int64_t phb3_get_reserved_pe_number(struct phb *phb __unused)
 {
 	return PHB3_RESERVED_PE_NUM;
 }
