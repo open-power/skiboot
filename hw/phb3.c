@@ -3344,8 +3344,17 @@ static int64_t enable_capi_mode(struct phb3 *p, uint64_t pe_number, bool dma_mod
 
 	/* aib tx cmd cred */
 	xscom_read(p->chip_id, p->pci_xscom + 0xd, &reg);
-	reg &= ~PPC_BITMASK(42,46);
-	reg |= PPC_BIT(47);
+	if (dma_mode) {
+		/*
+		 * In DMA mode, increase AIB credit value for ch 2 (DMA read)
+		 * for performance reasons
+		 */
+		reg &= ~PPC_BITMASK(42, 47);
+		reg |= PPC_BITMASK(43, 45);
+	} else {
+		reg &= ~PPC_BITMASK(42, 46);
+		reg |= PPC_BIT(47);
+	}
 	xscom_write(p->chip_id, p->pci_xscom + 0xd, reg);
 
 	xscom_write(p->chip_id, p->pci_xscom + 0xc, 0xff00000000000000ull);
