@@ -2328,7 +2328,7 @@ static int64_t capp_load_ucode(struct phb3 *p)
 	if ((be64_to_cpu(ucode->eyecatcher) != 0x43415050554C4944) ||
 	    (ucode->version != 1)) {
 		PHBERR(p, "CAPP: ucode header invalid\n");
-		    return OPAL_HARDWARE;
+		return OPAL_HARDWARE;
 	}
 
 	reg_offset = PHB3_CAPP_REG_OFFSET(p);
@@ -3441,7 +3441,7 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 			PHBERR(p,
 			       "CAPP: port already in use by another PHB:%x\n",
 			       chip->capp_phb3_attached_mask);
-			       unlock(&capi_lock);
+			unlock(&capi_lock);
 			return false;
 		}
 		chip->capp_phb3_attached_mask = 1 << p->index;
