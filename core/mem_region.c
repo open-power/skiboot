@@ -558,15 +558,15 @@ bool mem_check(const struct mem_region *region)
 				region->name, hdr->free ? "free" : "alloc",
 				hdr, hdr_location(hdr),
 				hdr->num_longs * sizeof(long));
-				return false;
-		}			
+			return false;
+		}
 		if ((unsigned long)hdr + hdr->num_longs * sizeof(long) >
 		    region->start + region->len) {
 			prerror("Region '%s' %s %p (%s) oversize %zu\n",
 				region->name, hdr->free ? "free" : "alloc",
 				hdr, hdr_location(hdr),
 				hdr->num_longs * sizeof(long));
-				return false;
+			return false;
 		}
 		if (hdr->free) {
 			if (hdr->prev_free || prev_free) {
