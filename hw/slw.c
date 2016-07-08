@@ -685,7 +685,7 @@ void add_cpu_idle_state_properties(void)
 			supported_states_mask |= OPAL_PM_SLEEP_ENABLED |
 						OPAL_PM_SLEEP_ENABLED_ER1;
 		if (has_slw)
-		supported_states_mask |= OPAL_PM_WINKLE_ENABLED;
+			supported_states_mask |= OPAL_PM_WINKLE_ENABLED;
 	}
 	for (i = 0; i < nr_states; i++) {
 		/* For each state, check if it is one of the supported states. */
