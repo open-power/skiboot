@@ -91,7 +91,7 @@
 			      ibm,phb-index = <0x1>;
 			      compatible = "ibm,power9-phb-stack";
 			      /* ibm,lane-eq = < ????? >; */
-			      status = "disabled";
+			      status = "okay";
 			};
 			stack@1 {
 			      /* Stack number */
@@ -100,7 +100,7 @@
 			      ibm,phb-index = <0x2>;
 			      compatible = "ibm,power9-phb-stack";
 			      /* ibm,lane-eq = < ????? >; */
-			      status = "disabled";
+			      status = "okay";
 			};
 		};
 
