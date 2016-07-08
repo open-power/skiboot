@@ -142,12 +142,12 @@ int nvram_check(void *nvram_image, const uint32_t nvram_size)
 		}
 	}
 	if (!found_common) {
-			prerror("NVRAM: Common partition not found !\n");
+		prerror("NVRAM: Common partition not found !\n");
 		goto failed;
 	}
 	if (!found_skiboot) {
-			prerror("NVRAM: Skiboot private partition "
-				"not found !\n");
+		prerror("NVRAM: Skiboot private partition "
+			"not found !\n");
 		goto failed;
 	}
 
