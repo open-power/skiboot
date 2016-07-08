@@ -37,8 +37,8 @@
 #define FSP_RSRC_PRSNC_UNKNOWN		0x80 /* Resource presence unknown */
 
 /* LED exclusive bits */
-#define FSP_LED_EXCL_FAULT	1UL << 0
-#define FSP_LED_EXCL_IDENTIFY	1UL << 1
+#define FSP_LED_EXCL_FAULT	(1UL << 0)
+#define FSP_LED_EXCL_IDENTIFY	(1UL << 1)
 
 /* LED update message source */
 enum spcn_cmd_src {
