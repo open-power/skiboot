@@ -197,6 +197,12 @@ static void bogus_disk_flash_init(void)
 
 		bl = zalloc(sizeof(struct blocklevel_device));
 		bdi = zalloc(sizeof(struct bogus_disk_info));
+		if (!bl || !bdi) {
+			free(bl);
+			free(bdi);
+			prerror("mambo: Failed to start bogus disk, ENOMEM\n");
+			return;
+		}
 
 		bl->read = &bogus_disk_read;
 		bl->write = &bogus_disk_write;
