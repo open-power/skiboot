@@ -33,7 +33,7 @@
 typedef u32 gcov_unsigned_int;
 
 /* You will need to pass -DTARGET__GNUC__=blah when building */
-#if TARGET__GNUC__ >= 5 && TARGET__GNUC_MINOR__ >= 1
+#if TARGET__GNUC__ >= 6 || (TARGET__GNUC__ >= 5 && TARGET__GNUC_MINOR__ >= 1)
 #define GCOV_COUNTERS                   10
 #else
 #if TARGET__GNUC__ >= 4 && TARGET__GNUC_MINOR__ >= 9
