@@ -166,8 +166,9 @@ static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_add
 				gcid, pcb_addr, stat);
 		return OPAL_BUSY;
 
-	/* CPU is asleep, don't retry */
+	/* CPU is asleep, reset XSCOM engine and return */
 	case 2:
+		xscom_reset(gcid);
 		return OPAL_WRONG_STATE;
 	}
 
