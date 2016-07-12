@@ -52,7 +52,6 @@ if [ $r != 0 ]; then
     exit $r
 fi
 
-echo
 rm -f -- "$t"
 trap - EXIT
 

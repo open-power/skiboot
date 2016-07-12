@@ -67,7 +67,6 @@ fi
 
 ulimit -c $OLD_ULIMIT_C
 
-echo
 rm -f -- "$t"
 trap - EXIT
 exit 0

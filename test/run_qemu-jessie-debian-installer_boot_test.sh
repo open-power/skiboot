@@ -63,5 +63,4 @@ else
     echo "Boot Test FAILED. Results in $T, Disk $D";
 fi
 
-echo
 exit $E;
