@@ -36,16 +36,16 @@ check: core-check
 coverage: core-coverage
 
 $(CORE_TEST:%=%-gcov-run) : %-run: %
-	$(call Q, TEST-COVERAGE ,$< , $<)
+	$(call QTEST, TEST-COVERAGE ,$< , $<)
 
 $(CORE_TEST_NOSTUB:%=%-gcov-run) : %-run: %
-	$(call Q, TEST-COVERAGE ,$< , $<)
+	$(call QTEST, TEST-COVERAGE ,$< , $<)
 
 $(CORE_TEST:%=%-check) : %-check: %
-	$(call Q, RUN-TEST ,$(VALGRIND) $<, $<)
+	$(call QTEST, RUN-TEST ,$(VALGRIND) $<, $<)
 
 $(CORE_TEST_NOSTUB:%=%-check) : %-check: %
-	$(call Q, RUN-TEST ,$(VALGRIND) $<, $<)
+	$(call QTEST, RUN-TEST ,$(VALGRIND) $<, $<)
 
 core/test/stubs.o: core/test/stubs.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -g -c -o $@ $<, $<)

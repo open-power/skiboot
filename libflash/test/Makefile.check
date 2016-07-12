@@ -11,10 +11,10 @@ check: libflash-check libc-coverage
 coverage: libflash-coverage
 
 $(LIBFLASH_TEST:%=%-gcov-run) : %-run: %
-	$(call Q, TEST-COVERAGE ,$< , $<)
+	$(call QTEST, TEST-COVERAGE ,$< , $<)
 
 $(LIBFLASH_TEST:%=%-check) : %-check: %
-	$(call Q, RUN-TEST ,$(VALGRIND) $<, $<)
+	$(call QTEST, RUN-TEST ,$(VALGRIND) $<, $<)
 
 libflash/test/stubs.o: libflash/test/stubs.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -g -c -o $@ $<, $<)

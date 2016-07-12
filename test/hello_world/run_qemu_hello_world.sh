@@ -27,6 +27,9 @@ fi
 
 export SKIBOOT_ZIMAGE=`pwd`/test/hello_world/hello_kernel/hello_kernel
 
+t=$(tempfile) || exit 1
+
+trap "rm -f -- '$t'" EXIT
 
 (
 cat <<EOF | expect
@@ -41,5 +44,16 @@ close
 wait
 exit 0
 EOF
-)
+) 2>&1 > $t
+
+r=$?
+if [ $r != 0 ]; then
+    cat $t
+    exit $r
+fi
+
+echo
+rm -f -- "$t"
+trap - EXIT
+
 exit 0;

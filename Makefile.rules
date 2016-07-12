@@ -25,6 +25,10 @@ endef
 endif
 endif
 
+define QTEST
+	$(call Q,$1, ./test/run.sh $2, $3)
+endef
+
 define cook_aflags
        $(filter-out $(AFLAGS_SKIP_$(1)), $(CPPFLAGS) $(AFLAGS)) $(AFLAGS_$(1))
 endef
