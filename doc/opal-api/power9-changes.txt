@@ -10,6 +10,11 @@ parts of the OPAL API.
 Eventually, when the kernel drops support for POWER8 and before, we can then
 remove the associated kernel code too.
 
+OPAL_REINIT_CPUS
+----------------
+Can now be extended beyond HILE BE/LE bits. If invalid flags are set on
+POWER9, OPAL_UNSUPPORTED will be returned.
+
 
 TODO
 ----

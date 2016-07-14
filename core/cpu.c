@@ -879,8 +879,10 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 	}
 
 	/* Any flags left ? */
-	if (flags != 0)
+	if (flags != 0 && proc_gen == proc_gen_p8)
 		rc = slw_reinit(flags);
+	else if (flags != 0)
+		rc = OPAL_UNSUPPORTED;
 
 	/* And undo the above */
 	lock(&reinit_lock);

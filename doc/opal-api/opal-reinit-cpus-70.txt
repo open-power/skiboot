@@ -22,6 +22,8 @@ flags will return OPAL_UNSUPPORTED.
 On POWER8 CPUs, only OPAL_REINIT_CPUS_HILE_BE and OPAL_REINIT_CPUS_HILE_LE
 are support and other bits *MUST NOT* be set.
 
+On POWER9 CPUs, other flags may be supported in the future.
+
 Returns:
 - OPAL_SUCCESS
 - OPAL_UNSUPPORTED
