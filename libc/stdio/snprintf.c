@@ -18,7 +18,7 @@ int snprintf(char *buff, size_t size, const char *format, ...)
 	va_list ar;
 	int count;
 
-	if ((buff==NULL) || (format==NULL))
+	if (buff==NULL)
 		return(-1);
 
 	va_start(ar, format);
