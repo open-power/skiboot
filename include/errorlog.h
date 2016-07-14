@@ -195,7 +195,6 @@ struct opal_err_info {
 
 /* SAPPHIRE SRC componenet ID*/
 #define OPAL_CU				0x1000
-#define OPAL_VP				0x1000
 #define OPAL_XS				0x1100
 #define OPAL_PC				0x1200
 #define OPAL_MI				0x1300
@@ -205,8 +204,9 @@ struct opal_err_info {
 #define OPAL_MF				0x1700
 #define OPAL_DU				0x1800
 #define OPAL_LE				0x1900
+#define OPAL_VP				0x1a00
+#define OPAL_CN				0x1b00
 #define OPAL_SE				0x2000
-#define OPAL_CN				0x2000
 #define OPAL_SL				0x2100
 #define OPAL_FP				0x2200
 #define OPAL_IC				0x2300
