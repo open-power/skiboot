@@ -195,7 +195,22 @@ struct opal_err_info {
 
 /* SAPPHIRE SRC componenet ID*/
 #define OPAL_CU				0x1000
+#define OPAL_VP				0x1000
+#define OPAL_XS				0x1100
+#define OPAL_PC				0x1200
+#define OPAL_MI				0x1300
+#define OPAL_AT				0x1400
+#define OPAL_ME				0x1500
+#define OPAL_CT				0x1600
+#define OPAL_MF				0x1700
+#define OPAL_DU				0x1800
+#define OPAL_LE				0x1900
+#define OPAL_SE				0x2000
 #define OPAL_CN				0x2000
+#define OPAL_SL				0x2100
+#define OPAL_FP				0x2200
+#define OPAL_IC				0x2300
+#define OPAL_IP				0x2400
 #define OPAL_CE				0x3000
 #define OPAL_CH				0x4000
 #define OPAL_EL				0x5000
@@ -209,21 +224,6 @@ struct opal_err_info {
 #define OPAL_OP				0xd000
 #define OPAL_PH				0xe000
 #define OPAL_PS				0xf000
-#define OPAL_VP				0x1000
-#define OPAL_XS				0x1100
-#define OPAL_PC				0x1200
-#define OPAL_MI				0x1300
-#define OPAL_AT				0x1400
-#define OPAL_ME				0x1500
-#define OPAL_CT				0x1600
-#define OPAL_MF				0x1700
-#define OPAL_DU				0x1800
-#define OPAL_LE				0x1900
-#define OPAL_SE				0x2000
-#define OPAL_SL				0x2100
-#define OPAL_FP				0x2200
-#define OPAL_IC				0x2300
-#define OPAL_IP				0x2400
 
 enum opal_reasoncode {
 /* code update */
