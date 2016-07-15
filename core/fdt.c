@@ -55,11 +55,6 @@ static void dt_begin_node(void *fdt, const struct dt_node *dn)
 {
 	save_err(fdt_begin_node(fdt, dn->name));
 
-	/*
-	 * We add both the new style "phandle" and the legacy
-	 * "linux,phandle" properties
-	 */
-	dt_property_cell(fdt, "linux,phandle", dn->phandle);
 	dt_property_cell(fdt, "phandle", dn->phandle);
 }
 
