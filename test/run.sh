@@ -1,6 +1,6 @@
 #!/bin/bash
 
-t=$(tempfile) || exit 1
+t=$(mktemp) || exit 1
 
 trap "rm -f -- '$t'" EXIT
 
