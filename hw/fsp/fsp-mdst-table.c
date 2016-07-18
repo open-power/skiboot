@@ -90,7 +90,7 @@ static inline uint32_t get_dump_region_map_size(uint64_t addr, uint32_t size)
 
 	start = addr & ~TCE_MASK;
 	end = addr + size;
-	end = (end + (TCE_MASK - 1)) & ~TCE_MASK;
+	end = ALIGN_UP(end, TCE_PSIZE);
 
 	return (end - start);
 }
