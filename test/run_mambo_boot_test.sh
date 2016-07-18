@@ -41,7 +41,7 @@ fi
 OLD_ULIMIT_C=`ulimit -c`
 ulimit -c 0
 
-t=$(tempfile) || exit 1
+t=$(mktemp) || exit 1
 
 trap "rm -f -- '$t'" EXIT
 
