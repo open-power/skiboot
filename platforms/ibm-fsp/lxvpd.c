@@ -207,7 +207,7 @@ static void lxvpd_parse_1004_map(struct phb *phb,
 		s->vswitch_id     = entry->pba & 0xf;
 		s->dev_id         = entry->sba;
 		s->pluggable      = ((entry->p0.byte & 0x20) == 0);
-		s->power_ctl      = ((entry->p0.power_ctl & 0x40) == 1);
+		s->power_ctl      = !!(entry->p0.byte & 0x40);
 		s->bus_clock      = entry->p2.bus_clock - 4;
 		s->connector_type = entry->p2.connector_type - 5;
 		s->card_desc      = entry->p3.byte >> 6;
