@@ -159,8 +159,13 @@ void add_opal_node(void)
 
 	dt_add_property_cells(opal_node, "#address-cells", 0);
 	dt_add_property_cells(opal_node, "#size-cells", 0);
-	dt_add_property_strings(opal_node, "compatible", "ibm,opal-v2",
-				"ibm,opal-v3");
+
+	if (proc_gen < proc_gen_p9)
+		dt_add_property_strings(opal_node, "compatible", "ibm,opal-v2",
+					"ibm,opal-v3");
+	else
+		dt_add_property_strings(opal_node, "compatible", "ibm,opal-v3");
+
 	dt_add_property_cells(opal_node, "opal-msg-async-num", OPAL_MAX_ASYNC_COMP);
 	dt_add_property_cells(opal_node, "opal-msg-size", sizeof(struct opal_msg));
 	dt_add_property_u64(opal_node, "opal-base-address", base);

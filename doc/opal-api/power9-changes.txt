@@ -15,11 +15,15 @@ OPAL_REINIT_CPUS
 Can now be extended beyond HILE BE/LE bits. If invalid flags are set on
 POWER9, OPAL_UNSUPPORTED will be returned.
 
+Device Tree
+-----------
+- /ibm,opal/ compatible property now just lists ibm,opal-v3 and no longer
+  ibm,opal-v2 (power9 and above only)
+
 
 TODO
 ----
 Things we still have to do for POWER9:
-- remove opal-v2 from compatible string.
 - PCI to use async API rather than returning delays
 - deprecate/remove v1 APIs where there's a V2
 - Fix this FWTS warning:
