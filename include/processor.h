@@ -235,7 +235,8 @@ static inline void mtmsrd(unsigned long val, int l)
 	asm volatile("mtmsrd %0,%1" : : "r"(val), "i"(l) : "memory");
 }
 
-static inline unsigned long mfspr(unsigned int spr)
+static inline __attribute__((always_inline))
+unsigned long mfspr(const unsigned int spr)
 {
 	unsigned long val;
 
@@ -243,7 +244,8 @@ static inline unsigned long mfspr(unsigned int spr)
 	return val;
 }
 
-static inline void mtspr(unsigned int spr, unsigned long val)
+static inline __attribute__((always_inline))
+void mtspr(const unsigned int spr, unsigned long val)
 {
 	asm volatile("mtspr %0,%1" : : "i"(spr), "r"(val) : "memory");
 }
