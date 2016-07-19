@@ -18,11 +18,13 @@ firmware {
 'symbol-map' property describes OPAL symbol start address and size.
 
 'version' property describes OPAL version. Replaces 'git-id', so may
-not be present.
+not be present. On POWER9 and above, it is always present.
 
 'mi-version' property describes Microcode Image. Only on IBM FSP systems.
+Will (likely) not be present on POWER9 systems.
 
 'ml-version' property describes Microcode Level. Only on IBM FSP systems.
+Will (likely) not be present on POWER9 systems.
 
 MI/ML format:
  <ML/MI> <T side version> <P side version> <boot side version>

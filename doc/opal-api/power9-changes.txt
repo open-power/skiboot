@@ -30,3 +30,4 @@ Things we still have to do for POWER9:
   FAILED [MEDIUM] DeviceTreeBaseDTCWarnings: Test 3, dtc reports warnings from
   device tree: Warning (reg_format): "reg" property in /ibm,opal/flash@0 has
   invalid length (8 bytes) (#address-cells == 0, #size-cells == 0)
+- Remove mi-version / ml-version from /ibm,opal/firmware and replace with something better and more portable
