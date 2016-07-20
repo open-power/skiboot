@@ -23,6 +23,7 @@
 #include <centaur.h>
 #include <errorlog.h>
 #include <opal-api.h>
+#include <timebase.h>
 
 /* Mask of bits to clear in HMER before an access */
 #define HMER_CLR_MASK	(~(SPR_HMER_XSCOM_FAIL | \
@@ -38,6 +39,10 @@ DEFINE_LOG_ENTRY(OPAL_RC_XSCOM_INDIRECT_RW, OPAL_PLATFORM_ERR_EVT, OPAL_XSCOM,
 		OPAL_NA);
 
 DEFINE_LOG_ENTRY(OPAL_RC_XSCOM_RESET, OPAL_PLATFORM_ERR_EVT, OPAL_XSCOM,
+		OPAL_CEC_HARDWARE, OPAL_PREDICTIVE_ERR_GENERAL,
+		OPAL_NA);
+
+DEFINE_LOG_ENTRY(OPAL_RC_XSCOM_BUSY, OPAL_PLATFORM_ERR_EVT, OPAL_XSCOM,
 		OPAL_CEC_HARDWARE, OPAL_PREDICTIVE_ERR_GENERAL,
 		OPAL_NA);
 
@@ -118,18 +123,49 @@ static void xscom_reset(uint32_t gcid)
 	 */
 }
 
-static int xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_addr,
-			       bool is_write)
+static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_addr,
+			      bool is_write, int64_t retries)
 {
+	struct timespec ts;
 	unsigned int stat = GETFIELD(SPR_HMER_XSCOM_STATUS, hmer);
 
 	/* XXX Figure out error codes from doc and error
 	 * recovery procedures
 	 */
 	switch(stat) {
-	/* XSCOM blocked, just retry */
+	/*
+	 * XSCOM engine is blocked, need to retry. Reset XSCOM engine
+	 * after crossing retry threshold before retrying again.
+	 */
 	case 1:
+		if (retries && !(retries  % XSCOM_BUSY_RESET_THRESHOLD)) {
+			prlog(PR_NOTICE, "XSCOM: Busy even after %d retries, "
+				"resetting XSCOM now. Total retries  = %lld\n",
+				XSCOM_BUSY_RESET_THRESHOLD, retries);
+			xscom_reset(gcid);
+
+			/*
+			 * Its observed that sometimes immediate retry of
+			 * XSCOM operation returns wrong data. Adding a
+			 * delay for XSCOM reset to be effective. Delay of
+			 * 10 ms is found to be working fine experimentally.
+			 * FIXME: Replace 10ms delay by exact delay needed
+			 * or other alternate method to confirm XSCOM reset
+			 * completion, after checking from HW folks.
+			 */
+			ts.tv_sec = 0;
+			ts.tv_nsec = 10 * 1000;
+			nanosleep_nopoll(&ts, NULL);
+		}
+
+		/* Log error if we have retried enough and its still busy */
+		if (retries == XSCOM_BUSY_MAX_RETRIES)
+			log_simple_error(&e_info(OPAL_RC_XSCOM_BUSY),
+				"XSCOM: %s-busy error gcid=0x%x pcb_addr=0x%x "
+				"stat=0x%x\n", is_write ? "write" : "read",
+				gcid, pcb_addr, stat);
 		return OPAL_BUSY;
+
 	/* CPU is asleep, don't retry */
 	case 2:
 		return OPAL_WRONG_STATE;
@@ -178,14 +214,14 @@ static bool xscom_gcid_ok(uint32_t gcid)
 static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val)
 {
 	uint64_t hmer;
-	int64_t ret;
+	int64_t ret, retries;
 
 	if (!xscom_gcid_ok(gcid)) {
 		prerror("%s: invalid XSCOM gcid 0x%x\n", __func__, gcid);
 		return OPAL_PARAMETER;
 	}
 
-	for (;;) {
+	for (retries = 0; retries <= XSCOM_BUSY_MAX_RETRIES; retries++) {
 		/* Clear status bits in HMER (HMER is special
 		 * writing to it *ands* bits
 		 */
@@ -199,27 +235,29 @@ static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val)
 
 		/* Check for error */
 		if (!(hmer & SPR_HMER_XSCOM_FAIL))
-			break;
+			return OPAL_SUCCESS;
 
 		/* Handle error and possibly eventually retry */
-		ret = xscom_handle_error(hmer, gcid, pcb_addr, false);
-		if (ret == OPAL_HARDWARE || ret == OPAL_WRONG_STATE)
-			return ret;
+		ret = xscom_handle_error(hmer, gcid, pcb_addr, false, retries);
+		if (ret != OPAL_BUSY)
+			break;
 	}
-	return OPAL_SUCCESS;
+
+	prerror("XSCOM: Read failed, ret =  %lld\n", ret);
+	return ret;
 }
 
 static int __xscom_write(uint32_t gcid, uint32_t pcb_addr, uint64_t val)
 {
 	uint64_t hmer;
-	int64_t ret;
+	int64_t ret, retries = 0;
 
 	if (!xscom_gcid_ok(gcid)) {
 		prerror("%s: invalid XSCOM gcid 0x%x\n", __func__, gcid);
 		return OPAL_PARAMETER;
 	}
 
-	for (;;) {
+	for (retries = 0; retries <= XSCOM_BUSY_MAX_RETRIES; retries++) {
 		/* Clear status bits in HMER (HMER is special
 		 * writing to it *ands* bits
 		 */
@@ -233,14 +271,16 @@ static int __xscom_write(uint32_t gcid, uint32_t pcb_addr, uint64_t val)
 
 		/* Check for error */
 		if (!(hmer & SPR_HMER_XSCOM_FAIL))
-			break;
+			return OPAL_SUCCESS;
 
 		/* Handle error and possibly eventually retry */
-		ret = xscom_handle_error(hmer, gcid, pcb_addr, true);
-		if (ret == OPAL_HARDWARE || ret == OPAL_WRONG_STATE)
-			return ret;
+		ret = xscom_handle_error(hmer, gcid, pcb_addr, true, retries);
+		if (ret != OPAL_BUSY)
+			break;
 	}
-	return OPAL_SUCCESS;
+
+	prerror("XSCOM: Write failed, ret =  %lld\n", ret);
+	return ret;
 }
 
 /*
