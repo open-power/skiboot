@@ -118,7 +118,7 @@ static void xscom_reset(uint32_t gcid)
 	 */
 }
 
-static bool xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_addr,
+static int xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_addr,
 			       bool is_write)
 {
 	unsigned int stat = GETFIELD(SPR_HMER_XSCOM_STATUS, hmer);
@@ -129,7 +129,10 @@ static bool xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_addr,
 	switch(stat) {
 	/* XSCOM blocked, just retry */
 	case 1:
-		return true;
+		return OPAL_BUSY;
+	/* CPU is asleep, don't retry */
+	case 2:
+		return OPAL_WRONG_STATE;
 	}
 
 	/* XXX: Create error log entry ? */
@@ -141,7 +144,7 @@ static bool xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_addr,
 	xscom_reset(gcid);
 
 	/* Non recovered ... just fail */
-	return false;
+	return OPAL_HARDWARE;
 }
 
 static void xscom_handle_ind_error(uint64_t data, uint32_t gcid,
@@ -175,6 +178,7 @@ static bool xscom_gcid_ok(uint32_t gcid)
 static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val)
 {
 	uint64_t hmer;
+	int64_t ret;
 
 	if (!xscom_gcid_ok(gcid)) {
 		prerror("%s: invalid XSCOM gcid 0x%x\n", __func__, gcid);
@@ -197,16 +201,18 @@ static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val)
 		if (!(hmer & SPR_HMER_XSCOM_FAIL))
 			break;
 
-		/* Handle error and eventually retry */
-		if (!xscom_handle_error(hmer, gcid, pcb_addr, false))
-			return OPAL_HARDWARE;
+		/* Handle error and possibly eventually retry */
+		ret = xscom_handle_error(hmer, gcid, pcb_addr, false);
+		if (ret == OPAL_HARDWARE || ret == OPAL_WRONG_STATE)
+			return ret;
 	}
-	return 0;
+	return OPAL_SUCCESS;
 }
 
 static int __xscom_write(uint32_t gcid, uint32_t pcb_addr, uint64_t val)
 {
 	uint64_t hmer;
+	int64_t ret;
 
 	if (!xscom_gcid_ok(gcid)) {
 		prerror("%s: invalid XSCOM gcid 0x%x\n", __func__, gcid);
@@ -229,11 +235,12 @@ static int __xscom_write(uint32_t gcid, uint32_t pcb_addr, uint64_t val)
 		if (!(hmer & SPR_HMER_XSCOM_FAIL))
 			break;
 
-		/* Handle error and eventually retry */
-		if (!xscom_handle_error(hmer, gcid, pcb_addr, true))
-			return OPAL_HARDWARE;
+		/* Handle error and possibly eventually retry */
+		ret = xscom_handle_error(hmer, gcid, pcb_addr, true);
+		if (ret == OPAL_HARDWARE || ret == OPAL_WRONG_STATE)
+			return ret;
 	}
-	return 0;
+	return OPAL_SUCCESS;
 }
 
 /*
