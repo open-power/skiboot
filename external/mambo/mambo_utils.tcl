@@ -219,27 +219,51 @@ proc egdb { {t 0} } {
     gdb $t
 }
 
+proc mem_display_64_le { addr } {
+    set data 0
+    for {set i 0} {$i < 8} {incr i} {
+	set data [ expr $data << 8 ]
+	set l [ mysim memory display [ expr $addr+7-$i ] 1 ]
+	set data [ expr $data | $l ]
+    }
+    return [format 0x%X $data]
+}
+
+proc mem_display_64 { addr le } {
+    if { $le } {
+	return [ mem_display_64_le $addr ]
+    }
+    # mysim memory display is big endian
+    return [ mysim memory display $addr 8 ]
+}
+
 proc bt { {sp 0} } {
     set t 0
     if { $sp < 16 } {
         set t $sp
         set sp 0
     }
+    set lr [mysim cpu 0:$t display spr pc]
+    puts "pc:\t\t\t\t$lr"
     if { $sp == 0 } {
         set sp [mysim cpu 0:$t display gpr 1]
     }
     set lr [mysim cpu 0:$t display spr lr]
-    puts "backtrace thread $t, stack $sp"
-    i $lr
-    while { 1 == 1 } {
+    puts "lr:\t\t\t\t$lr"
+
+    set msr [mysim cpu 0:$t display spr msr]
+    set le [ expr $msr & 1 ]
+
+    # Limit to 200 in case of an infinite loop
+    for {set i 0} {$i < 200} {incr i} {
         set pa [ mysim util dtranslate $sp ]
-        set bc [ mysim memory display $pa 8 ]
-        set cr [ mysim memory display [expr $pa+8] 8 ]
-        set lr [ mysim memory display [expr $pa+16] 8 ]
-        i $lr
-        if { $bc == 0 } { return }
+        set bc [ mem_display_64 $pa $le ]
+        set lr [ mem_display_64 [ expr $pa + 16 ] $le ]
+        puts "stack:$pa \t$lr"
+        if { $bc == 0 } { break }
         set sp $bc
     }
+    puts ""
 }
 
 proc ton { } {mysim mode turbo }
