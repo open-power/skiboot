@@ -27,6 +27,7 @@ from pyparsing import Regex, Literal, Word, Combine, OneOrMore, QuotedString, \
 json_params = {
     'indent': 1,
     'sort_keys': True,
+    'separators': (',', ': '),
 }
 
 def create_parser():
