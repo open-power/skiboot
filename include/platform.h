@@ -159,6 +159,10 @@ struct platform {
 	 */
 	int64_t		(*sensor_read)(uint32_t sensor_hndl, int token,
 				       uint32_t *sensor_data);
+	/*
+	 * Return the heartbeat time
+	 */
+	int		(*heartbeat_time)(void);
 
 	/*
 	 * OPAL terminate
