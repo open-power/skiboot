@@ -31,6 +31,7 @@ enum elog_head_state {
 	ELOG_STATE_FETCHING,    /*In the process of reading log from FSP. */
 	ELOG_STATE_FETCHED_INFO,/* Indicates reading log info is completed */
 	ELOG_STATE_FETCHED_DATA,/* Indicates reading log is completed */
+	ELOG_STATE_HOST_INFO,	/* Host read log info */
 	ELOG_STATE_NONE,        /* Indicates to fetch next log */
 	ELOG_STATE_REJECTED,    /* resend all pending logs to linux */
 };
@@ -49,5 +50,7 @@ bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 bool opal_elog_ack(uint64_t ack_id) __warn_unused_result;
 
 void opal_resend_pending_logs(void);
+
+void elog_set_head_state(bool opal_logs, enum elog_head_state state);
 
 #endif /* __ELOG_H */

@@ -126,6 +126,13 @@ static int64_t fsp_opal_elog_write(size_t opal_elog_size)
 	return OPAL_SUCCESS;
 }
 
+/* This should be called with elog_write_to_host_lock lock */
+static inline void fsp_elog_write_set_head_state(enum elog_head_state state)
+{
+	elog_set_head_state(true, state);
+	elog_write_to_host_head_state = state;
+}
+
 bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size)
 {
 	struct errorlog *head;
@@ -139,11 +146,11 @@ bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size)
 			prlog(PR_ERR,
 			      "%s: Inconsistent internal list state !\n",
 			      __func__);
-			elog_write_to_host_head_state = ELOG_STATE_NONE;
+			fsp_elog_write_set_head_state(ELOG_STATE_NONE);
 		} else {
 			*opal_elog_id = head->plid;
 			*opal_elog_size = head->log_size;
-			elog_write_to_host_head_state = ELOG_STATE_FETCHED_INFO;
+			fsp_elog_write_set_head_state(ELOG_STATE_FETCHED_INFO);
 			rc = true;
 		}
 	}
@@ -164,9 +171,7 @@ static void opal_commit_elog_in_host(void)
 		buf->log_size = create_pel_log(buf,
 					       (char *)elog_write_to_host_buffer,
 					       ELOG_WRITE_TO_HOST_BUFFER_SIZE);
-		elog_write_to_host_head_state = ELOG_STATE_FETCHED_DATA;
-		opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL,
-					OPAL_EVENT_ERROR_LOG_AVAIL);
+		fsp_elog_write_set_head_state(ELOG_STATE_FETCHED_DATA);
 	}
 	unlock(&elog_write_to_host_lock);
 }
@@ -183,7 +188,7 @@ bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 		log_data = list_top(&elog_write_to_host_pending,
 					struct errorlog, link);
 		if (!log_data) {
-			elog_write_to_host_head_state = ELOG_STATE_NONE;
+			fsp_elog_write_set_head_state(ELOG_STATE_NONE);
 			unlock(&elog_write_to_host_lock);
 			return rc;
 		}
@@ -198,7 +203,7 @@ bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 
 		list_del(&log_data->link);
 		list_add(&elog_write_to_host_processed, &log_data->link);
-		elog_write_to_host_head_state = ELOG_STATE_NONE;
+		fsp_elog_write_set_head_state(ELOG_STATE_NONE);
 		rc = true;
 	}
 	unlock(&elog_write_to_host_lock);
@@ -228,7 +233,7 @@ bool opal_elog_ack(uint64_t ack_id)
 		log_data = list_top(&elog_write_to_host_pending,
 					struct errorlog, link);
 		if (ack_id == log_data->plid)
-			elog_write_to_host_head_state = ELOG_STATE_NONE;
+			fsp_elog_write_set_head_state(ELOG_STATE_NONE);
 
 		list_for_each_safe(&elog_write_to_host_pending, record,
 							next_record, link) {
@@ -237,6 +242,9 @@ bool opal_elog_ack(uint64_t ack_id)
 			list_del(&record->link);
 			opal_elog_complete(record, true);
 			rc = true;
+			unlock(&elog_write_to_host_lock);
+			opal_commit_elog_in_host();
+			return rc;
 		}
 	}
 	unlock(&elog_write_to_host_lock);
@@ -248,17 +256,12 @@ void opal_resend_pending_logs(void)
 	struct errorlog *record;
 
 	lock(&elog_write_to_host_lock);
-	if (list_empty(&elog_write_to_host_processed)) {
-		unlock(&elog_write_to_host_lock);
-		return;
-	}
-
 	while (!list_empty(&elog_write_to_host_processed)) {
 		record = list_pop(&elog_write_to_host_processed,
 					struct errorlog, link);
 		list_add_tail(&elog_write_to_host_pending, &record->link);
 	}
-	elog_write_to_host_head_state = ELOG_STATE_NONE;
+	fsp_elog_write_set_head_state(ELOG_STATE_NONE);
 	unlock(&elog_write_to_host_lock);
 	opal_commit_elog_in_host();
 }

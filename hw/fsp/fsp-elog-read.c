@@ -88,6 +88,8 @@ static uint32_t elog_read_retries;	/* bad response status count */
 /* Initialize the state of the log */
 static enum elog_head_state elog_read_from_fsp_head_state = ELOG_STATE_NONE;
 
+static bool elog_enabled;
+
 /* Need forward declaration because of Circular dependency */
 static void fsp_elog_queue_fetch(void);
 
@@ -130,6 +132,9 @@ static int64_t fsp_send_elog_ack(uint32_t log_id)
 /* retrive error log from FSP with TCE for the data transfer */
 static void fsp_elog_check_and_fetch_head(void)
 {
+	if (!elog_enabled)
+		return;
+
 	lock(&elog_read_lock);
 
 	if (elog_read_from_fsp_head_state != ELOG_STATE_NONE ||
@@ -145,20 +150,33 @@ static void fsp_elog_check_and_fetch_head(void)
 	unlock(&elog_read_lock);
 }
 
-/* this function should be called with the lock held */
-static void fsp_elog_set_head_state(enum elog_head_state state)
+void elog_set_head_state(bool opal_logs, enum elog_head_state state)
 {
-	enum elog_head_state old_state = elog_read_from_fsp_head_state;
+	static enum elog_head_state opal_logs_state = ELOG_STATE_NONE;
+	static enum elog_head_state fsp_logs_state = ELOG_STATE_NONE;
 
-	elog_read_from_fsp_head_state = state;
+	/* ELOG disabled */
+	if (!elog_enabled)
+		return;
 
-	if (state == ELOG_STATE_FETCHED_DATA &&
-			old_state != ELOG_STATE_FETCHED_DATA)
+	if (opal_logs)
+		opal_logs_state = state;
+	else
+		fsp_logs_state = state;
+
+	if (fsp_logs_state == ELOG_STATE_FETCHED_DATA ||
+	    opal_logs_state == ELOG_STATE_FETCHED_DATA)
 		opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL,
 					OPAL_EVENT_ERROR_LOG_AVAIL);
-	if (state != ELOG_STATE_FETCHED_DATA &&
-			old_state == ELOG_STATE_FETCHED_DATA)
+	else
 		opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL, 0);
+}
+
+/* this function should be called with the lock held */
+static inline void fsp_elog_set_head_state(enum elog_head_state state)
+{
+	elog_set_head_state(false, state);
+	elog_read_from_fsp_head_state = state;
 }
 
 /*
@@ -281,11 +299,13 @@ static int64_t fsp_opal_elog_info(uint64_t *opal_elog_id,
 	if (!log_data) {
 		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
 		      __func__);
+		fsp_elog_set_head_state(ELOG_STATE_NONE);
 		unlock(&elog_read_lock);
 		return OPAL_WRONG_STATE;
 	}
 	*opal_elog_id = log_data->log_id;
 	*opal_elog_size = log_data->log_size;
+	fsp_elog_set_head_state(ELOG_STATE_HOST_INFO);
 	unlock(&elog_read_lock);
 	return OPAL_SUCCESS;
 }
@@ -306,7 +326,7 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 	 * as we know always top record of the list is fetched from FSP
 	 */
 	lock(&elog_read_lock);
-	if (elog_read_from_fsp_head_state != ELOG_STATE_FETCHED_DATA) {
+	if (elog_read_from_fsp_head_state != ELOG_STATE_HOST_INFO) {
 		unlock(&elog_read_lock);
 		return OPAL_WRONG_STATE;
 	}
@@ -315,6 +335,7 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 	if (!log_data) {
 		prlog(PR_ERR, "%s: Inconsistent internal list state !\n",
 		      __func__);
+		fsp_elog_set_head_state(ELOG_STATE_NONE);
 		unlock(&elog_read_lock);
 		return OPAL_WRONG_STATE;
 	}
@@ -354,7 +375,7 @@ static void elog_reject_head(void)
 {
 	if (elog_read_from_fsp_head_state == ELOG_STATE_FETCHING)
 		fsp_elog_set_head_state(ELOG_STATE_REJECTED);
-	if (elog_read_from_fsp_head_state == ELOG_STATE_FETCHED_DATA)
+	else
 		fsp_elog_set_head_state(ELOG_STATE_NONE);
 }
 
@@ -374,21 +395,33 @@ static int64_t fsp_opal_elog_ack(uint64_t ack_id)
 		return rc;
 	}
 	lock(&elog_read_lock);
-	list_for_each_safe(&elog_read_pending, record, next_record, link) {
-		if (record->log_id != ack_id)
-			continue;
-		list_del(&record->link);
-		list_add(&elog_read_free, &record->link);
-	}
 	list_for_each_safe(&elog_read_processed, record, next_record, link) {
 		if (record->log_id != ack_id)
 			continue;
 		list_del(&record->link);
 		list_add(&elog_read_free, &record->link);
+		unlock(&elog_read_lock);
+		return rc;
+	}
+	list_for_each_safe(&elog_read_pending, record, next_record, link) {
+		if (record->log_id != ack_id)
+			continue;
+		/* It means host has sent ACK without reading actual data.
+		 * Because of this elog_read_from_fsp_head_state may be
+		 * stuck in wrong state (ELOG_STATE_HOST_INFO) and not able
+		 * to send remaining ELOGs to host. Hence reset ELOG state
+		 * and start sending remaining ELOGs.
+		 */
+		list_del(&record->link);
+		list_add(&elog_read_free, &record->link);
+		elog_reject_head();
+		unlock(&elog_read_lock);
+		fsp_elog_check_and_fetch_head();
+		return rc;
 	}
 	unlock(&elog_read_lock);
 
-	return rc;
+	return OPAL_PARAMETER;
 }
 
 /*
@@ -398,6 +431,10 @@ static int64_t fsp_opal_elog_ack(uint64_t ack_id)
 static void fsp_opal_resend_pending_logs(void)
 {
 	struct fsp_log_entry  *entry;
+
+	lock(&elog_read_lock);
+	elog_enabled = true;
+	unlock(&elog_read_lock);
 
 	/* Check if any Sapphire logs are pending */
 	opal_resend_pending_logs();
@@ -414,21 +451,23 @@ static void fsp_opal_resend_pending_logs(void)
 		list_add(&elog_read_pending, &entry->link);
 	}
 
-	/*
-	 * If the current fetched or fetching log doesn't match our
-	 * new pending list head, then reject it
-	 */
-	if (!list_empty(&elog_read_pending)) {
-		entry = list_top(&elog_read_pending,
-					 struct fsp_log_entry, link);
-		if (entry->log_id != elog_head_id)
-			elog_reject_head();
-	}
-
 	unlock(&elog_read_lock);
 
-	/* Read error log from FSP if needed */
+	/* Read error log from FSP */
+	elog_reject_head();
 	fsp_elog_check_and_fetch_head();
+}
+
+/* Disable ELOG event flag until host is ready to receive event */
+static bool opal_kexec_elog_notify(void *data __unused)
+{
+	lock(&elog_read_lock);
+	elog_reject_head();
+	elog_enabled = false;
+	opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL, 0);
+	unlock(&elog_read_lock);
+
+	return true;
 }
 
 /* fsp elog notify function  */
@@ -552,8 +591,13 @@ void fsp_elog_read_init(void)
 	if (val != 0)
 		return;
 
+	elog_enabled = true;
+
 	/* register Eror log Class D2 */
 	fsp_register_client(&fsp_get_elog_notify, FSP_MCLASS_ERR_LOG);
+
+	/* Register for sync on host reboot call */
+	opal_add_host_sync_notifier(opal_kexec_elog_notify, NULL);
 
 	/* register opal Interface */
 	opal_register(OPAL_ELOG_READ, fsp_opal_elog_read, 3);
