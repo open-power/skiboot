@@ -259,6 +259,15 @@ static int mambo_nvram_start_read(void *dst, uint32_t src, uint32_t len)
 	return OPAL_SUCCESS;
 }
 
+static int mambo_heartbeat_time(void)
+{
+	/*
+	 * Mambo is slow and has no console input interrupt, so faster
+	 * polling is needed to ensure its responsiveness.
+	 */
+	return 100;
+}
+
 DECLARE_PLATFORM(mambo) = {
 	.name			= "Mambo",
 	.probe			= mambo_probe,
@@ -269,4 +278,5 @@ DECLARE_PLATFORM(mambo) = {
 	.nvram_start_read	= mambo_nvram_start_read,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
+	.heartbeat_time		= mambo_heartbeat_time,
 };
