@@ -47,6 +47,7 @@ here:	mflr	%r8 /* work out where we are running */
 	bctrl
 
 	li	%r0, 5 /* OPAL_CEC_POWER_DOWN */
+	li	%r3, 0 /* normal shutdown */
 	mr	%r2, %r13
 	mtctr	%r14
 	bctrl
