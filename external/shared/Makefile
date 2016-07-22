@@ -1,23 +1,30 @@
 .DEFAULT_GOAL := all
-GET_ARCH = ../../external/common/get_arch.sh
+GET_ARCH := ../../external/common/get_arch.sh
 include ../../external/common/rules.mk
 include rules.mk
 
 PREFIX ?= /usr/local/
-LIBDIR = $(PREFIX)/lib
-INCDIR = $(PREFIX)/include/libflash
+LIBDIR := $(PREFIX)/lib
+INCDIR := $(PREFIX)/include/libflash
 
 ifneq ($(ARCH), ARCH_ARM)
 CFLAGS += -m64
 endif
 CFLAGS += -Werror -Wall -g2 -ggdb -I. -fPIC
 
-LIBFLASH_OBJS = libflash-file.o libflash-libflash.o libflash-libffs.o libflash-ecc.o libflash-blocklevel.o
-ARCHFLASH_OBJS = common-arch_flash.o
-OBJS = $(LIBFLASH_OBJS) $(ARCHFLASH_OBJS)
+LIBFLASH_OBJS := libflash-file.o libflash-libflash.o libflash-libffs.o \
+	libflash-ecc.o libflash-blocklevel.o
+ARCHFLASH_OBJS := common-arch_flash.o
+OBJS := $(LIBFLASH_OBJS) $(ARCHFLASH_OBJS)
 
-LIBFLASH_H = libflash/file.h libflash/libflash.h libflash/libffs.h libflash/ffs.h libflash/ecc.h libflash/blocklevel.h libflash/errors.h
-ARCHFLASH_H = common/arch_flash.h
+LIBFLASH_H := libflash/file.h libflash/libflash.h libflash/libffs.h \
+	libflash/ffs.h libflash/ecc.h libflash/blocklevel.h libflash/errors.h
+ARCHFLASH_H := common/arch_flash.h
+
+LIBFLASH_FILES := libflash.c libffs.c ecc.c blocklevel.c file.c
+LIBFLASH_SRC := $(addprefix libflash/,$(LIBFLASH_FILES))
+
+$(LIBFLASH_SRC): | links
 
 $(LIBFLASH_OBJS) : libflash-%.o : libflash/%.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@

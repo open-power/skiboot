@@ -1,5 +1,5 @@
 include rules.mk
-GET_ARCH = ../../external/common/get_arch.sh
+GET_ARCH := ../../external/common/get_arch.sh
 include ../../external/common/rules.mk
 
 all: links arch_links $(EXE)
