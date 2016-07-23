@@ -294,7 +294,7 @@ boot_entry:
 	bne	secondary_wait
 
 	/* Initialize per-core SPRs */
-	bl init_shared_sprs
+	bl	init_shared_sprs
 
 	/* Pick a boot CPU, cpu index in r31 */
 	LOAD_IMM32(%r3, boot_sem - __head)
@@ -311,7 +311,7 @@ boot_entry:
 	smt_medium
 
 	/* Initialize thread SPRs */
-	bl init_replicated_sprs
+	bl	init_replicated_sprs
 
 	/* Save the initial offset. The secondary threads will spin on boot_flag
 	 * before relocation so we need to keep track of its location to wake
@@ -410,11 +410,11 @@ secondary_wait:
 	add	%r3,%r3,%r30
 	mtctr	%r3
 	isync
-	bctr	
+	bctr
 1:
 	/* Now wait for cpu_secondary_start to be set */
 	LOAD_ADDR_FROM_TOC(%r3, cpu_secondary_start)
-1:	smt_very_low	
+1:	smt_very_low
 	ld	%r0,0(%r3)
 	cmpdi	%r0,0
 	beq	1b
@@ -859,7 +859,7 @@ opal_entry:
 	std	%r0,CPUTHREAD_CUR_TOKEN(%r13)
 
 	/* Mark the stack frame */
-	li	%r12,STACK_ENTRY_OPAL_API	
+	li	%r12,STACK_ENTRY_OPAL_API
 	std	%r12,STACK_TYPE(%r1)
 
 	/* Get our TOC */
