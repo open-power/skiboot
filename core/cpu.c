@@ -160,6 +160,11 @@ void cpu_wait_job(struct cpu_job *job, bool free_it)
 		free(job);
 }
 
+bool cpu_check_jobs(struct cpu_thread *cpu)
+{
+	return !list_empty_nocheck(&cpu->job_queue);
+}
+
 void cpu_process_jobs(void)
 {
 	struct cpu_thread *cpu = this_cpu();
@@ -168,8 +173,7 @@ void cpu_process_jobs(void)
 	void *data;
 
 	sync();
-	if (list_empty_nocheck(&cpu->job_queue) &&
-	    list_empty_nocheck(&global_job_queue))
+	if (!cpu_check_jobs(cpu))
 		return;
 
 	lock(&cpu->job_lock);

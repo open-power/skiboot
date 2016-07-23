@@ -242,6 +242,8 @@ extern void cpu_wait_job(struct cpu_job *job, bool free_it);
 extern void cpu_process_jobs(void);
 /* Fallback to running jobs synchronously for global jobs */
 extern void cpu_process_local_jobs(void);
+/* Check if there's any job pending */
+bool cpu_check_jobs(struct cpu_thread *cpu);
 
 static inline void cpu_give_self_os(void)
 {
