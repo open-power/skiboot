@@ -238,9 +238,6 @@ extern bool cpu_poll_job(struct cpu_job *job);
  */
 extern void cpu_wait_job(struct cpu_job *job, bool free_it);
 
-/* Free a CPU job, only call on a completed job */
-extern void cpu_free_job(struct cpu_job *job);
-
 /* Called by init to process jobs */
 extern void cpu_process_jobs(void);
 /* Fallback to running jobs synchronously for global jobs */

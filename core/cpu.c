@@ -160,15 +160,6 @@ void cpu_wait_job(struct cpu_job *job, bool free_it)
 		free(job);
 }
 
-void cpu_free_job(struct cpu_job *job)
-{
-	if (!job)
-		return;
-
-	assert(job->complete);
-	free(job);
-}
-
 void cpu_process_jobs(void)
 {
 	struct cpu_thread *cpu = this_cpu();
