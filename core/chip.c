@@ -79,7 +79,8 @@ void init_chips(void)
 	/* Detect mambo chip */
 	if (dt_find_by_path(dt_root, "/mambo")) {
 		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_MAMBO_CALLOUTS
-			| QUIRK_NO_F000F | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ;
+			| QUIRK_NO_F000F | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ
+			| QUIRK_NO_DIRECT_CTL;
 		prlog(PR_NOTICE, "CHIP: Detected Mambo simulator\n");
 	}
 	/* Detect simics */
@@ -98,7 +99,8 @@ void init_chips(void)
 	}
 	/* Detect Qemu */
 	if (dt_node_is_compatible(dt_root, "qemu,powernv")) {
-		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_NO_PBA;
+		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_NO_PBA
+			| QUIRK_NO_DIRECT_CTL;
 		prlog(PR_NOTICE, "CHIP: Detected Qemu simulator\n");
 	}
 
