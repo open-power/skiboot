@@ -270,10 +270,10 @@ void icp_send_eoi(uint32_t interrupt)
 	out_be32(icp + ICP_XIRR, interrupt & 0xffffff);
 }
 
-/* This is called before winkle, we clear pending IPIs and set our priority
- * to 1 to mask all but the IPI
+/* This is called before winkle or nap, we clear pending IPIs and
+ * set our priority to 1 to mask all but the IPI.
  */
-void icp_prep_for_rvwinkle(void)
+void icp_prep_for_pm(void)
 {
 	void *icp = this_cpu()->icp_regs;
 

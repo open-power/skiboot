@@ -307,7 +307,7 @@ struct cpu_thread;
 
 extern void reset_cpu_icp(void);
 extern void icp_send_eoi(uint32_t interrupt);
-extern void icp_prep_for_rvwinkle(void);
+extern void icp_prep_for_pm(void);
 extern void icp_kick_cpu(struct cpu_thread *cpu);
 
 extern void init_interrupts(void);

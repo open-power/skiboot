@@ -74,7 +74,7 @@ static void slw_do_rvwinkle(void *data)
 	struct proc_chip *chip;
 
 	/* Setup our ICP to receive IPIs */
-	icp_prep_for_rvwinkle();
+	icp_prep_for_pm();
 
 	/* Setup LPCR to wakeup on external interrupts only */
 	mtspr(SPR_LPCR, ((lpcr & ~SPR_LPCR_P8_PECE) | SPR_LPCR_P8_PECE2));
