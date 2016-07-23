@@ -269,4 +269,6 @@ extern bool slw_timer_ok(void);
 /* Fallback fake RTC */
 extern void fake_rtc_init(void);
 
+/* Assembly in head.S */
+extern void enter_pm_state(bool winkle);
 #endif /* __SKIBOOT_H */

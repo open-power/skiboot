@@ -532,9 +532,9 @@ cleanup_tlb:
        .long 0xa6037b7d; /* mtsrr1 r11                         */ \
        .long 0x2400004c  /* rfid                               */
 
-.global enter_rvwinkle
-enter_rvwinkle:
-	/* Before entering rvwinkle, we create a stack frame
+.global enter_pm_state
+enter_pm_state:
+	/* Before entering map or rvwinkle, we create a stack frame
 	 * and save our non-volatile registers.
 	 *
 	 * We also save these SPRs:
@@ -544,6 +544,11 @@ enter_rvwinkle:
 	 *
 	 *  - xxx TODO: HIDs
 	 *  - TODO: Mask MSR:ME during the process
+	 *
+	 * On entry, r3 indicates:
+	 *
+	 *    0 = nap
+	 *    1 = rvwinkle
 	 */
 	mflr	%r0
 	std	%r0,16(%r1)
@@ -567,20 +572,32 @@ enter_rvwinkle:
 	SAVE_GPR(29,%r1)
 	SAVE_GPR(30,%r1)
 	SAVE_GPR(31,%r1)
-	mfcr	%r3
-	mfxer	%r4
-	mfspr	%r5,SPR_HSPRG0
-	mfspr	%r6,SPR_HSPRG1
-	stw	%r3,STACK_CR(%r1)
-	stw	%r4,STACK_XER(%r1)
-	std	%r5,STACK_GPR0(%r1)
-	std	%r6,STACK_GPR1(%r1)
+	mfcr	%r4
+	mfxer	%r5
+	mfspr	%r6,SPR_HSPRG0
+	mfspr	%r7,SPR_HSPRG1
+	stw	%r4,STACK_CR(%r1)
+	stw	%r5,STACK_XER(%r1)
+	std	%r6,STACK_GPR0(%r1)
+	std	%r7,STACK_GPR1(%r1)
 
 	/* Save stack pointer in struct cpu_thread */
 	std	%r1,CPUTHREAD_SAVE_R1(%r13)
 
-	/* rvwinkle sequence */
+	/* Winkle or nap ? */
+	cmpli	%cr0,%r3,0
+	bne	1f
+
+	/* nap sequence */
 	ptesync
+0:	ld	%r0,CPUTHREAD_SAVE_R1(%r13)
+	cmpd	cr0,%r0,%r0
+	bne	0b
+	PPC_INST_NAP
+	b	.
+
+	/* rvwinkle sequence */
+1:	ptesync
 0:	ld	%r0,CPUTHREAD_SAVE_R1(%r13)
 	cmpd	cr0,%r0,%r0
 	bne	0b

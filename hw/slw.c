@@ -49,9 +49,6 @@ static uint32_t slw_timer_chip;
 static uint64_t slw_last_gen;
 static uint64_t slw_last_gen_stamp;
 
-/* Assembly in head.S */
-extern void enter_rvwinkle(void);
-
 DEFINE_LOG_ENTRY(OPAL_RC_SLW_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
 		 OPAL_PLATFORM_FIRMWARE, OPAL_PREDICTIVE_ERR_GENERAL,
 		 OPAL_NA);
@@ -88,7 +85,7 @@ static void slw_do_rvwinkle(void *data)
 	/* Tell that we got it */
 	cpu->state = cpu_state_rvwinkle;
 
-	enter_rvwinkle();
+	enter_pm_state(1);
 
 	/* Ok, it's ours again */
 	cpu->state = cpu_state_active;
