@@ -49,7 +49,9 @@ enum proc_gen proc_gen;
 
 static uint64_t kernel_entry;
 static bool kernel_32bit;
-static char zero_location[16];
+
+/* We backup the previous vectors here before copying our own */
+static uint8_t old_vectors[0x2000];
 
 #ifdef SKIBOOT_GCOV
 void skiboot_gcov_done(void);
@@ -355,11 +357,11 @@ static bool load_kernel(void)
 		printf("INIT: Kernel image at 0x%llx\n",kernel_entry);
 		kh = (struct elf_hdr *)kernel_entry;
 		/*
-		 * If the kernel is at 0, copy back what we wrote over
-		 * for the null branch catcher.
+		 * If the kernel is at 0, restore it as it was overwritten
+		 * by our vectors.
 		 */
-		if (kernel_entry == 0)
-			memcpy(0, zero_location, 16);
+		if (kernel_entry < 0x2000)
+			memcpy(NULL, old_vectors, 0x2000);
 	} else {
 		if (!kernel_size)
 			printf("INIT: Assuming kernel at %p\n",
@@ -554,18 +556,6 @@ static void branch_null(void)
 	assert_fail("Branch to NULL !");
 }
 
-static void setup_branch_null_catcher(void)
-{
-	void (*bn)(void) = branch_null;
-
-	/*
-	 * FIXME: This copies the function descriptor (16 bytes) for
-	 * ABI v1 (ie. big endian).  This will be broken if we ever
-	 * move to ABI v2 (ie little endian)
-	 */
-	memcpy(zero_location, 0, 16); /* Save away in case we need it later */
-	memcpy(0, bn, 16);
-}
 
 typedef void (*ctorcall_t)(void);
 
@@ -578,6 +568,32 @@ static void __nomcount do_ctors(void)
 		(*call)();
 }
 
+static void setup_branch_null_catcher(void)
+{
+       void (*bn)(void) = branch_null;
+
+       /*
+        * FIXME: This copies the function descriptor (16 bytes) for
+        * ABI v1 (ie. big endian).  This will be broken if we ever
+        * move to ABI v2 (ie little endian)
+        */
+       memcpy(0, bn, 16);
+}
+
+static void copy_exception_vectors(void)
+{
+	/* Backup previous vectors as this could contain a kernel
+	 * image.
+	 */
+	memcpy(old_vectors, NULL, 0x2000);
+
+	/* Copy from 0x100 to 0x2000, avoid below 0x100 as this is
+	 * the boot flag used by CPUs still potentially entering
+	 * skiboot.
+	 */
+	memcpy((void *)0x100, (void *)(SKIBOOT_BASE + 0x100), 0x1f00);
+	sync_icache();
+}
 /* Called from head.S, thus no prototype. */
 void main_cpu_entry(const void *fdt, u32 master_cpu);
 
@@ -604,11 +620,13 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt, u32 master_cpu)
 	 */
 	clear_console();
 
-	/* Put at 0 an OPD to a warning function in case we branch through
-	 * a NULL function pointer
-	 */
+	/* Copy all vectors down to 0 */
+	copy_exception_vectors();
+
+	/* Setup a NULL catcher to catch accidental NULL ptr calls */
 	setup_branch_null_catcher();
 
+	/* Call library constructors */
 	do_ctors();
 
 	printf("SkiBoot %s starting...\n", version);

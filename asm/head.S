@@ -95,6 +95,11 @@ attn_trigger:
 hir_trigger:
 	.long	0
 
+	/*
+	 * At 0x100 and 0x180 reside our entry points. Once started,
+	 * we will ovewrite them with our actual 0x100 exception handler
+	 * used for recovering from rvw or nap mode
+	 */
 	. = 0x100
 	/* BML entry, load up r3 with device tree location */
 	li	%r3, 0
