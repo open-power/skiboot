@@ -65,14 +65,27 @@ void time_wait(unsigned long duration)
 void time_wait_nopoll(unsigned long duration)
 {
 	unsigned long end = mftb() + duration;
+	unsigned long min = usecs_to_tb(10);
 
 	if (this_cpu()->tb_invalid) {
 		cpu_relax();
 		return;
 	}
 
-	while(tb_compare(mftb(), end) != TB_AAFTERB)
-		cpu_relax();
+	for (;;) {
+		uint64_t delay, tb = mftb();
+
+		if (tb_compare(tb, end) == TB_AAFTERB)
+			break;
+		delay = end - tb;
+		if (delay >= 0x7fffffff)
+			delay = 0x7fffffff;
+		if (delay >= min) {
+			mtspr(SPR_DEC, delay);
+			cpu_idle(cpu_wake_on_dec);
+		} else
+			cpu_relax();
+	}
 }
 
 void time_wait_ms(unsigned long ms)
