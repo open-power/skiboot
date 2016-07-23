@@ -172,7 +172,6 @@ int main(void)
 	dt_free(dt_root);
 
 	while ((r = list_pop(&regions, struct mem_region, list)) != NULL) {
-		list_del(&r->list);
 		if (r != &skiboot_code_and_text &&
 		    r != &skiboot_heap &&
 		    r != &skiboot_after_heap &&

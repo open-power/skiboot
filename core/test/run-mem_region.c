@@ -249,7 +249,6 @@ int main(void)
 	mem_dump_free();
 	assert(i == 3);
 	while ((r = list_pop(&regions, struct mem_region, list)) != NULL) {
-		list_del(&r->list);
 		lock(&skiboot_heap.free_list_lock);
 		mem_free(&skiboot_heap, r, __location__);
 		unlock(&skiboot_heap.free_list_lock);
