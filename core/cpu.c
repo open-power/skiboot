@@ -61,9 +61,6 @@ struct cpu_job {
 	bool		        no_return;
 };
 
-static struct lock global_job_queue_lock = LOCK_UNLOCKED;
-static struct list_head	global_job_queue;
-
 /* attribute const as cpu_stacks is constant. */
 unsigned long __attrconst cpu_stack_bottom(unsigned int pir)
 {
@@ -80,6 +77,67 @@ unsigned long __attrconst cpu_stack_top(unsigned int pir)
 	 */
 	return ((unsigned long)&cpu_stacks[pir]) +
 		NORMAL_STACK_SIZE - STACK_TOP_GAP;
+}
+
+static struct cpu_thread *cpu_find_job_target(void)
+{
+	struct cpu_thread *cpu, *best, *me = this_cpu();
+	uint32_t best_count;
+
+	/* We try to find a target to run a job. We need to avoid
+	 * a CPU that has a "no return" job on its queue as it might
+	 * never be able to process anything.
+	 *
+	 * Additionally we don't check the list but the job count
+	 * on the target CPUs, since that is decremented *after*
+	 * a job has been completed.
+	 */
+
+
+	/* First we scan all available primary threads
+	 */
+	for_each_available_cpu(cpu) {
+		if (cpu == me || !cpu_is_thread0(cpu) || cpu->job_has_no_return)
+			continue;
+		if (cpu->job_count)
+			continue;
+		lock(&cpu->job_lock);
+		if (!cpu->job_count)
+			return cpu;
+		unlock(&cpu->job_lock);
+	}
+
+	/* Now try again with secondary threads included and keep
+	 * track of the one with the less jobs queued up. This is
+	 * done in a racy way, but it's just an optimization in case
+	 * we are overcommitted on jobs. Could could also just pick
+	 * a random one...
+	 */
+	best = NULL;
+	best_count = -1u;
+	for_each_available_cpu(cpu) {
+		if (cpu == me || cpu->job_has_no_return)
+			continue;
+		if (!best || cpu->job_count < best_count) {
+			best = cpu;
+			best_count = cpu->job_count;
+		}
+		if (cpu->job_count)
+			continue;
+		lock(&cpu->job_lock);
+		if (!cpu->job_count)
+			return cpu;
+		unlock(&cpu->job_lock);
+	}
+
+	/* We haven't found anybody, do we have a bestie ? */
+	if (best) {
+		lock(&best->job_lock);
+		return best;
+	}
+
+	/* Go away */
+	return NULL;
 }
 
 struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
@@ -109,20 +167,34 @@ struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 	job->complete = false;
 	job->no_return = no_return;
 
-	if (cpu == NULL) {
-		lock(&global_job_queue_lock);
-		list_add_tail(&global_job_queue, &job->link);
-		unlock(&global_job_queue_lock);
-	} else if (cpu != this_cpu()) {
+	/* Pick a candidate. Returns with target queue locked */
+	if (cpu == NULL)
+		cpu = cpu_find_job_target();
+	else if (cpu != this_cpu())
 		lock(&cpu->job_lock);
-		list_add_tail(&cpu->job_queue, &job->link);
-		unlock(&cpu->job_lock);
-	} else {
+	else
+		cpu = NULL;
+
+	/* Can't be scheduled, run it now */
+	if (cpu == NULL) {
 		func(data);
 		job->complete = true;
+		return job;
 	}
 
-	/* XXX Add poking of CPU with interrupt */
+	/* That's bad, the job will never run */
+	if (cpu->job_has_no_return) {
+		prlog(PR_WARNING, "WARNING ! Job %s scheduled on CPU 0x%x"
+		      " which has a no-return job on its queue !\n",
+		      job->name, cpu->pir);
+		backtrace();
+	}
+	list_add_tail(&cpu->job_queue, &job->link);
+	if (no_return)
+		cpu->job_has_no_return = true;
+	else
+		cpu->job_count++;
+	unlock(&cpu->job_lock);
 
 	return job;
 }
@@ -180,18 +252,7 @@ void cpu_process_jobs(void)
 	while (true) {
 		bool no_return;
 
-		if (list_empty(&cpu->job_queue)) {
-			smt_medium();
-			if (list_empty(&global_job_queue))
-				break;
-			lock(&global_job_queue_lock);
-			job = list_pop(&global_job_queue, struct cpu_job, link);
-			unlock(&global_job_queue_lock);
-		} else {
-			smt_medium();
-			job = list_pop(&cpu->job_queue, struct cpu_job, link);
-		}
-
+		job = list_pop(&cpu->job_queue, struct cpu_job, link);
 		if (!job)
 			break;
 
@@ -205,6 +266,7 @@ void cpu_process_jobs(void)
 		func(data);
 		lock(&cpu->job_lock);
 		if (!no_return) {
+			cpu->job_count--;
 			lwsync();
 			job->complete = true;
 		}
@@ -541,8 +603,6 @@ void init_boot_cpu(void)
 	init_boot_tracebuf(boot_cpu);
 	assert(this_cpu() == boot_cpu);
 	init_hid();
-
-	list_head_init(&global_job_queue);
 }
 
 static void enable_large_dec(bool on)
@@ -716,6 +776,7 @@ void cpu_bringup(void)
 void cpu_callin(struct cpu_thread *cpu)
 {
 	cpu->state = cpu_state_active;
+	cpu->job_has_no_return = false;
 }
 
 static void opal_start_thread_job(void *data)

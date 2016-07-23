@@ -79,6 +79,8 @@ struct cpu_thread {
 #endif
 	struct lock			job_lock;
 	struct list_head		job_queue;
+	uint32_t			job_count;
+	bool				job_has_no_return;
 	/*
 	 * Per-core mask tracking for threads in HMI handler and
 	 * a cleanup done bit.
