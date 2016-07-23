@@ -426,6 +426,7 @@ static bool centaur_add(uint32_t part_id, uint32_t mchip, uint32_t meng,
 	centaur->fsi_master_port = mport;
 	centaur->fsi_master_engine = meng ? MFSI_cMFSI1 : MFSI_cMFSI0;
 	init_lock(&centaur->lock);
+	list_head_init(&centaur->i2cms);
 
 	if (!centaur_check_id(centaur))
 		return false;
