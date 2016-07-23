@@ -832,12 +832,13 @@ void init_all_cpus(void)
 void cpu_bringup(void)
 {
 	struct cpu_thread *t;
+	uint32_t count = 0;
 
 	prlog(PR_INFO, "CPU: Setting up secondary CPU state\n");
 
 	op_display(OP_LOG, OP_MOD_CPU, 0x0000);
 
-	/* Tell everybody to chime in ! */	
+	/* Tell everybody to chime in ! */
 	prlog(PR_INFO, "CPU: Calling in all processors...\n");
 	cpu_secondary_start = 1;
 	sync();
@@ -855,9 +856,10 @@ void cpu_bringup(void)
 			sync();
 		}
 		smt_medium();
+		count++;
 	}
 
-	prlog(PR_INFO, "CPU: All processors called in...\n");
+	prlog(PR_NOTICE, "CPU: All %d processors called in...\n", count);
 
 	op_display(OP_LOG, OP_MOD_CPU, 0x0003);
 }
