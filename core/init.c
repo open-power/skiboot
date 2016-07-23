@@ -360,8 +360,10 @@ static bool load_kernel(void)
 		 * If the kernel is at 0, restore it as it was overwritten
 		 * by our vectors.
 		 */
-		if (kernel_entry < 0x2000)
+		if (kernel_entry < 0x2000) {
+			cpu_set_pm_enable(false);
 			memcpy(NULL, old_vectors, 0x2000);
+		}
 	} else {
 		if (!kernel_size)
 			printf("INIT: Assuming kernel at %p\n",
@@ -477,6 +479,9 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	cpu_give_self_os();
 
 	mem_dump_free();
+
+	/* Take processours out of nap */
+	cpu_set_pm_enable(false);
 
 	printf("INIT: Starting kernel at 0x%llx, fdt at %p (size 0x%x)\n",
 	       kernel_entry, fdt, fdt_totalsize(fdt));
@@ -770,6 +775,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * entered there.
 	 */
 	setup_reset_vector();
+
+	/* We can now do NAP mode */
+	cpu_set_pm_enable(true);
 
 	/*
 	 * Sycnhronize time bases. Thi resets all the TB values to a small

@@ -66,6 +66,8 @@ struct cpu_thread {
 	bool				in_mcount;
 	bool				in_poller;
 	bool				in_reinit;
+	bool				in_sleep;
+	bool				in_idle;
 	uint32_t			hbrt_spec_wakeup; /* primary only */
 	uint64_t			save_l2_fir_action1;
 	uint64_t			current_token;
@@ -251,6 +253,8 @@ extern void cpu_process_jobs(void);
 extern void cpu_process_local_jobs(void);
 /* Check if there's any job pending */
 bool cpu_check_jobs(struct cpu_thread *cpu);
+/* Enable/disable PM */
+void cpu_set_pm_enable(bool pm_enabled);
 
 static inline void cpu_give_self_os(void)
 {

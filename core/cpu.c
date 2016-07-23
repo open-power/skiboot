@@ -28,6 +28,7 @@
 #include <affinity.h>
 #include <chip.h>
 #include <timebase.h>
+#include <interrupts.h>
 #include <ccan/str/str.h>
 #include <ccan/container_of/container_of.h>
 
@@ -49,6 +50,7 @@ static struct lock reinit_lock = LOCK_UNLOCKED;
 static bool hile_supported;
 static unsigned long hid0_hile;
 static unsigned long hid0_attn;
+static bool pm_enabled;
 
 unsigned long cpu_secondary_start __force_data = 0;
 
@@ -77,6 +79,17 @@ unsigned long __attrconst cpu_stack_top(unsigned int pir)
 	 */
 	return ((unsigned long)&cpu_stacks[pir]) +
 		NORMAL_STACK_SIZE - STACK_TOP_GAP;
+}
+
+static void cpu_wake(struct cpu_thread *cpu)
+{
+	/* Is it idle ? If not, no need to wake */
+	sync();
+	if (!cpu->in_idle)
+		return;
+
+	/* Poke IPI */
+	icp_kick_cpu(cpu);
 }
 
 static struct cpu_thread *cpu_find_job_target(void)
@@ -194,6 +207,8 @@ struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 		cpu->job_has_no_return = true;
 	else
 		cpu->job_count++;
+	if (pm_enabled)
+		cpu_wake(cpu);
 	unlock(&cpu->job_lock);
 
 	return job;
@@ -279,9 +294,87 @@ static void cpu_idle_default(enum cpu_wake_cause wake_on __unused)
 	cpu_relax();
 }
 
+static void cpu_idle_p8(enum cpu_wake_cause wake_on)
+{
+	uint64_t lpcr = mfspr(SPR_LPCR) & ~SPR_LPCR_P8_PECE;
+	struct cpu_thread *cpu = this_cpu();
+
+	if (!pm_enabled) {
+		cpu_idle_default(wake_on);
+		return;
+	}
+
+	/* If we are waking on job, whack DEC to highest value */
+	if (wake_on == cpu_wake_on_job)
+		mtspr(SPR_DEC, 0x7fffffff);
+
+	/* Clean up ICP, be ready for IPIs */
+	icp_prep_for_pm();
+
+	/* Setup wakup cause in LPCR */
+	lpcr |= SPR_LPCR_P8_PECE2 | SPR_LPCR_P8_PECE3;
+	mtspr(SPR_LPCR, lpcr);
+
+	/* Synchronize with wakers */
+	if (wake_on == cpu_wake_on_job) {
+		/* Mark ourselves in idle so other CPUs know to send an IPI */
+		cpu->in_idle = true;
+		sync();
+
+		/* Check for jobs again */
+		if (cpu_check_jobs(cpu) || !pm_enabled)
+			goto skip_sleep;
+	} else {
+		/* Mark outselves sleeping so cpu_set_pm_enable knows to
+		 * send an IPI
+		 */
+		cpu->in_sleep = true;
+		sync();
+
+		/* Check if PM got disabled */
+		if (!pm_enabled)
+			goto skip_sleep;
+	}
+
+	/* Enter nap */
+	enter_pm_state(false);
+
+skip_sleep:
+	/* Restore */
+	sync();
+	cpu->in_idle = false;
+	cpu->in_sleep = false;
+	reset_cpu_icp();
+}
+
+void cpu_set_pm_enable(bool enabled)
+{
+	struct cpu_thread *cpu;
+
+	prlog(PR_INFO, "CPU: %sing power management\n",
+	      enabled ? "enabl" : "disabl");
+
+	pm_enabled = enabled;
+
+	if (enabled)
+		return;
+
+	/* If disabling, take everybody out of PM */
+	sync();
+	for_each_available_cpu(cpu) {
+		while (cpu->in_sleep || cpu->in_idle) {
+			icp_kick_cpu(cpu);
+			cpu_relax();
+		}
+	}
+}
+
 void cpu_idle(enum cpu_wake_cause wake_on)
 {
 	switch(proc_gen) {
+	case proc_gen_p8:
+		cpu_idle_p8(wake_on);
+		break;
 	default:
 		cpu_idle_default(wake_on);
 		break;
