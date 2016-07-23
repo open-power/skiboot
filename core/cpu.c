@@ -438,7 +438,7 @@ void init_hid(void)
 	disable_attn();
 }
 
-void pre_init_boot_cpu(void)
+void __nomcount pre_init_boot_cpu(void)
 {
 	struct cpu_thread *cpu = this_cpu();
 

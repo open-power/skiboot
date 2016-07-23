@@ -563,12 +563,9 @@ static void setup_branch_null_catcher(void)
 	memcpy(0, bn, 16);
 }
 
-/* Called from head.S, thus no prototype. */
-void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu);
-
 typedef void (*ctorcall_t)(void);
 
-static void do_ctors(void)
+static void __nomcount do_ctors(void)
 {
 	extern ctorcall_t __ctors_start[], __ctors_end[];
 	ctorcall_t *call;
@@ -577,7 +574,10 @@ static void do_ctors(void)
 		(*call)();
 }
 
-void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
+/* Called from head.S, thus no prototype. */
+void main_cpu_entry(const void *fdt, u32 master_cpu);
+
+void __noreturn __nomcount main_cpu_entry(const void *fdt, u32 master_cpu)
 {
 	/*
 	 * WARNING: At this point. the timebases have
@@ -854,9 +854,9 @@ void __noreturn __secondary_cpu_entry(void)
 }
 
 /* Called from head.S, thus no prototype. */
-void __noreturn secondary_cpu_entry(void);
+void secondary_cpu_entry(void);
 
-void __noreturn secondary_cpu_entry(void)
+void __noreturn __nomcount secondary_cpu_entry(void)
 {
 	struct cpu_thread *cpu = this_cpu();
 
