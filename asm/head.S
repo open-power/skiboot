@@ -623,15 +623,6 @@ rvwinkle_restore:
 	/* Get PIR */
 	mfspr	%r31,SPR_PIR
 
-	/* Initialize per-core SPRs
-	 *
-	 * XXX We do it on each thread ... oh well, improve that later
-	 */
-	bl init_shared_sprs
-
-	/* Initialize thread SPRs */
-	bl init_replicated_sprs
-
 	/* Get that CPU stack base and use it to restore r13 */
 	GET_STACK(%r1,%r31)
 	GET_CPU()

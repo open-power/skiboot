@@ -87,6 +87,10 @@ static void slw_do_rvwinkle(void *data)
 
 	enter_pm_state(1);
 
+	/* Restore SPRs */
+	init_shared_sprs();
+	init_replicated_sprs();
+
 	/* Ok, it's ours again */
 	cpu->state = cpu_state_active;
 
