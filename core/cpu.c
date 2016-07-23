@@ -212,6 +212,24 @@ void cpu_process_jobs(void)
 	unlock(&cpu->job_lock);
 }
 
+static void cpu_idle_default(enum cpu_wake_cause wake_on __unused)
+{
+	/* Maybe do something better for simulators ? */
+	cpu_relax();
+	cpu_relax();
+	cpu_relax();
+	cpu_relax();
+}
+
+void cpu_idle(enum cpu_wake_cause wake_on)
+{
+	switch(proc_gen) {
+	default:
+		cpu_idle_default(wake_on);
+		break;
+	}
+}
+
 void cpu_process_local_jobs(void)
 {
 	struct cpu_thread *cpu = first_available_cpu();

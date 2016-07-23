@@ -872,22 +872,10 @@ void __noreturn __secondary_cpu_entry(void)
 
 	/* Wait for work to do */
 	while(true) {
-		int i;
-
-		/* Process pending jobs on this processor */
-		cpu_process_jobs();
-
-		/* Relax a bit to give the simulator some breathing space */
-		i = 1000;
-		smt_very_low();
-		asm volatile("mtctr %0;\n"
-			     "1: nop; nop; nop; nop;\n"
-			     "   nop; nop; nop; nop;\n"
-			     "   nop; nop; nop; nop;\n"
-			     "   nop; nop; nop; nop;\n"
-			     "   bdnz 1b"
-			     : : "r" (i) : "memory", "ctr");
-		smt_medium();
+		if (cpu_check_jobs(cpu))
+		    cpu_process_jobs();
+		else
+		    cpu_idle(cpu_wake_on_job);
 	}
 }
 
