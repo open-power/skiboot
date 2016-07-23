@@ -1288,7 +1288,13 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	master->xscom_base = dt_get_address(i2cm, 0, NULL);
 	if (master->type == I2C_CENTAUR) {
 		struct centaur_chip *centaur = get_centaur(master->chip_id);
-		assert(centaur);
+		if (centaur == NULL) {
+			log_simple_error(&e_info(OPAL_RC_I2C_INIT),
+					 "I2C: Failed to get centaur 0x%x ",
+					 master->chip_id);
+			free(master);
+			return;
+		}
 		chip_list = &centaur->i2cms;
 
 		/* Detect bad device-tree from HostBoot giving us bogus
