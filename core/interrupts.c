@@ -240,7 +240,7 @@ void add_opal_interrupts(void)
 /*
  * This is called at init time (and one fast reboot) to sanitize the
  * ICP. We set our priority to 0 to mask all interrupts and make sure
- * no IPI is on the way.
+ * no IPI is on the way. This is also called on wakeup from nap
  */
 void reset_cpu_icp(void)
 {
@@ -248,6 +248,9 @@ void reset_cpu_icp(void)
 
 	if (!icp)
 		return;
+
+	/* Dummy fetch */
+	in_be32(icp + ICP_XIRR);
 
 	/* Clear pending IPIs */
 	out_8(icp + ICP_MFRR, 0xff);
