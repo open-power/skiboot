@@ -177,7 +177,8 @@ void cpu_process_jobs(void)
 	void *data;
 
 	sync();
-	if (list_empty(&cpu->job_queue) && list_empty(&global_job_queue))
+	if (list_empty_nocheck(&cpu->job_queue) &&
+	    list_empty_nocheck(&global_job_queue))
 		return;
 
 	lock(&cpu->job_lock);

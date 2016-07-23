@@ -230,7 +230,7 @@ void check_timers(bool from_interrupt)
 
 	/* Lockless "peek", a bit racy but shouldn't be a problem */
 	t = list_top(&timer_list, struct timer, link);
-	if (list_empty(&timer_poll_list) && (!t || t->target > now))
+	if (list_empty_nocheck(&timer_poll_list) && (!t || t->target > now))
 		return;
 
 	/* Take lock and try again */
