@@ -612,14 +612,14 @@ reset_patch_start:
 	FIXUP_ENDIAN
 	smt_medium
 	LOAD_IMM64(%r30, SKIBOOT_BASE)
-	LOAD_IMM32(%r3, rvwinkle_restore - __head)
+	LOAD_IMM32(%r3, reset_wakeup - __head)
 	add	%r3,%r30,%r3
 	mtctr	%r3
 	bctr
 .global reset_patch_end
 reset_patch_end:
 
-rvwinkle_restore:
+reset_wakeup:
 	/* Get PIR */
 	mfspr	%r31,SPR_PIR
 
