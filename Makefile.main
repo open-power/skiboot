@@ -60,6 +60,10 @@ CPPFLAGS += -DBITS_PER_LONG=64 -DHAVE_BIG_ENDIAN
 # causing all our printf's to warn
 CPPFLAGS += -ffreestanding
 
+ifeq ($(DEBUG),1)
+CPPFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
+endif
+
 CFLAGS := -fno-strict-aliasing -fstack-protector-all -pie -mbig-endian -m64
 CFLAGS += -Wl,--oformat,elf64-powerpc
 CFLAGS += $(call try-cflag,$(CC),-mabi=elfv1)

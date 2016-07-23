@@ -30,7 +30,11 @@ int64_t mem_dump_free(void);
 void mem_dump_allocs(void);
 
 /* Memory poisoning on free (if POISON_MEM_REGION set to 1) */
+#ifdef DEBUG
+#define POISON_MEM_REGION	1
+#else
 #define POISON_MEM_REGION	0
+#endif
 #define POISON_MEM_REGION_WITH	0x99
 #define POISON_MEM_REGION_LIMIT 1*1024*1024*1024
 

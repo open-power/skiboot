@@ -16,6 +16,11 @@ else
 endif
 
 #
+# Main debug switch
+#
+DEBUG ?= 0
+
+#
 # Set to enable SLW bits
 #
 PORE ?= 1
@@ -30,7 +35,7 @@ KERNEL ?=
 #
 # Optional build with advanced stack checking
 #
-STACK_CHECK ?= 0
+STACK_CHECK ?= $(DEBUG)
 
 #
 # Where is the source directory, must be a full path (no ~)
