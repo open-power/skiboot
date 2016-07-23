@@ -892,6 +892,9 @@ static void reopen_all_hvsi(void)
 
 void fsp_console_reset(void)
 {
+	if (!fsp_present())
+		return;
+
 	prlog(PR_NOTICE, "FSP: Console reset !\n");
 
 	/* This is called on a fast-reset. To work around issues with HVSI
@@ -1001,6 +1004,8 @@ void fsp_console_select_stdout(void)
 			 */
 		}
 	}
+	dt_check_del_prop(dt_chosen, "linux,stdout-path");
+
 	if (fsp_serials[1].open && use_serial) {
 		dt_add_property_string(dt_chosen, "linux,stdout-path",
 				       "/ibm,opal/consoles/serial@1");

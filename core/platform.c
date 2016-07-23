@@ -24,6 +24,7 @@
 #include <xscom.h>
 #include <errorlog.h>
 #include <bt.h>
+#include <nvram.h>
 
 bool manufacturing_mode = false;
 struct platform	platform;
@@ -54,10 +55,10 @@ static int64_t opal_cec_reboot(void)
 
 	console_complete_flush();
 
-#ifdef ENABLE_FAST_RESET
-	/* Try a fast reset first */
-	fast_reset();
-#endif
+	/* Try a fast reset first, if enabled */
+	if (nvram_query_eq("experimental-fast-reset","feeling-lucky"))
+		fast_reboot();
+
 	if (platform.cec_reboot)
 		return platform.cec_reboot();
 

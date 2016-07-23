@@ -303,7 +303,7 @@ extern uint64_t boot_offset;
 
 static size_t initramfs_size;
 
-static bool start_preload_kernel(void)
+bool start_preload_kernel(void)
 {
 	int loaded;
 
@@ -434,6 +434,9 @@ static void load_initramfs(void)
 {
 	int loaded;
 
+	dt_check_del_prop(dt_chosen, "linux,initrd-start");
+	dt_check_del_prop(dt_chosen, "linux,initrd-end");
+
 	loaded = wait_for_resource_loaded(RESOURCE_ID_INITRAMFS,
 					  RESOURCE_SUBID_NONE);
 
@@ -499,6 +502,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	occ_pstates_init();
 
 	/* Set kernel command line argument if specified */
+	dt_check_del_prop(dt_chosen, "bootargs");
 	cmdline = nvram_query("bootargs");
 #ifdef KERNEL_COMMAND_LINE
 	if (!cmdline)
@@ -646,7 +650,7 @@ void setup_reset_vector(void)
 		*(dst++) = *(src++);
 }
 
-static void copy_exception_vectors(void)
+void copy_exception_vectors(void)
 {
 	/* Backup previous vectors as this could contain a kernel
 	 * image.

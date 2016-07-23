@@ -72,9 +72,6 @@
  */
 //#define FORCE_DUMMY_CONSOLE 1
 
-/* Enable this to do fast resets. Currently unreliable... */
-//#define ENABLE_FAST_RESET	1
-
 /* Enable this to make fast reboot clear memory */
 //#define FAST_REBOOT_CLEARS_MEMORY	1
 

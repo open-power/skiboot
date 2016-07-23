@@ -92,6 +92,8 @@ static inline int callthru3(int command, unsigned long arg1, unsigned long arg2,
 #define BOGUS_DISK_WRITE	117
 #define BOGUS_DISK_INFO		118
 
+#define CALL_TCL		86
+
 static inline int callthru_disk_read(int id, void *buf, unsigned long sect,
 				     unsigned long nrsect)
 {
@@ -110,6 +112,14 @@ static inline unsigned long callthru_disk_info(int op, int id)
 {
 	return callthru2(BOGUS_DISK_INFO, (unsigned long)op,
 			 (unsigned long)id);
+}
+
+extern unsigned long callthru_tcl(const char *str, int len);
+
+unsigned long callthru_tcl(const char *str, int len)
+{
+	prlog(PR_DEBUG, "Sending TCL to Mambo, cmd: %s\n", str);
+	return callthru2(CALL_TCL, (unsigned long)str, (unsigned long)len);
 }
 
 struct bogus_disk_info {

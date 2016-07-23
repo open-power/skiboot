@@ -1060,6 +1060,8 @@ static void fast_sleep_enter(void)
 	}
 
 	primary_thread->save_l2_fir_action1 = tmp;
+	primary_thread->in_fast_sleep = true;
+
 	tmp = tmp & ~0x0200000000000000ULL;
 	rc = xscom_write(chip_id, XSCOM_ADDR_P8_EX(core, L2_FIR_ACTION1),
 			 tmp);
@@ -1082,7 +1084,7 @@ static void fast_sleep_enter(void)
 
 /* Workarounds while exiting fast-sleep */
 
-static void fast_sleep_exit(void)
+void fast_sleep_exit(void)
 {
 	uint32_t core = pir_to_core_id(this_cpu()->pir);
 	uint32_t chip_id = this_cpu()->chip_id;
@@ -1090,6 +1092,7 @@ static void fast_sleep_exit(void)
 	int rc;
 
 	primary_thread = this_cpu()->primary;
+	primary_thread->in_fast_sleep = false;
 
 	rc = xscom_write(chip_id, XSCOM_ADDR_P8_EX(core, L2_FIR_ACTION1),
 			primary_thread->save_l2_fir_action1);
@@ -1131,7 +1134,7 @@ static int64_t opal_config_cpu_idle_state(uint64_t state, uint64_t enter)
 opal_call(OPAL_CONFIG_CPU_IDLE_STATE, opal_config_cpu_idle_state, 2);
 
 #ifdef __HAVE_LIBPORE__
-static int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
+int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 {
 
 	struct cpu_thread *c = find_cpu_by_pir(cpu_pir);

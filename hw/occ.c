@@ -517,9 +517,13 @@ void occ_pstates_init(void)
 	struct proc_chip *chip;
 	struct cpu_thread *c;
 	s8 pstate_nom;
+	static bool occ_pstates_initialized;
 
 	/* OCC is P8 only */
 	if (proc_gen != proc_gen_p8)
+		return;
+	/* Handle fast reboots */
+	if (occ_pstates_initialized)
 		return;
 
 	chip = next_chip(NULL);
@@ -558,6 +562,7 @@ void occ_pstates_init(void)
 	for_each_chip(chip)
 		chip->throttle = 0;
 	opal_add_poller(occ_throttle_poll, NULL);
+	occ_pstates_initialized = true;
 }
 
 struct occ_load_req {

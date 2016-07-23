@@ -458,64 +458,6 @@ call_relocate:
 1:	/* Fatal relocate failure */
 	attn
 
-/* This is a little piece of code that is copied down to
- * 0x100 when doing a "fast reset"
- */
-.global fast_reset_patch_start
-fast_reset_patch_start:	
-	smt_medium
-	LOAD_IMM64(%r30, SKIBOOT_BASE)
-	LOAD_IMM32(%r3, fast_reset_entry - __head)
-	add	%r3,%r30,%r3
-	mtctr	%r3
-	bctr
-.global fast_reset_patch_end
-fast_reset_patch_end:
-
-/* Fast reset code. We clean up the TLB and a few SPRs and
- * return to C code. All CPUs do that, the CPU triggering the
- * reset does it to itself last. The C code will sort out who
- * the master is. We come from the trampoline above with
- * r30 containing SKIBOOT_BASE
- */
-fast_reset_entry:
-	/* Clear out SLB */
-	li	%r6,0
-	slbmte	%r6,%r6
-	slbia
-	ptesync
-
-	/* Get PIR */
-	mfspr	%r31,SPR_PIR
-
-	/* Get a stack and restore r13 */
-	GET_STACK(%r1,%r31)
-	li	%r3,0
-	std	%r3,0(%r1)
-	std	%r3,8(%r1)
-	std	%r3,16(%r1)
-	GET_CPU()
-
-	/* Get our TOC */
-	addis	%r2,%r30,(__toc_start - __head)@ha
-	addi	%r2,%r2,(__toc_start - __head)@l
-
-	/* Go to C ! */
-	bl	fast_reboot
-	b	.
-
-.global cleanup_tlb
-cleanup_tlb:
-	/* Clean the TLB */
-	li	%r3,128
-	mtctr	%r3
-	li	%r4,0x800		/* IS field = 0b10 */
-	ptesync
-1:	tlbiel	%r4
-	addi	%r4,%r4,0x1000
-	bdnz	1b
-	ptesync
-
 #define FIXUP_ENDIAN                                              \
        tdi   0,0,0x48;   /* Reverse endian of b . + 8          */ \
        b     $+36;       /* Skip trampoline if endian is good  */ \
@@ -624,7 +566,12 @@ reset_wakeup:
 	GET_CPU()
 
 	/* Restore original stack pointer */
-	ld	%r1,CPUTHREAD_SAVE_R1(%r13)
+	ld	%r3,CPUTHREAD_SAVE_R1(%r13)
+
+	/* If it's 0, we are doing a fast reboot */
+	cmpldi	%r3,0
+	beq	fast_reset_entry
+	mr	%r1,%r3
 
 	/* Restore more stuff */
 	lwz	%r3,STACK_CR(%r1)
@@ -659,6 +606,46 @@ reset_wakeup:
 	addi	%r1,%r1,STACK_FRAMESIZE
 	ld	%r0,16(%r1)
 	mtlr	%r0
+	blr
+
+/* Fast reset code. We clean up the TLB and a few SPRs and
+ * return to C code. All CPUs do that, the CPU triggering the
+ * reset does it to itself last. The C code will sort out who
+ * the master is. We come from the trampoline above with
+ * r30 containing SKIBOOT_BASE
+ */
+fast_reset_entry:
+	/* Clear out SLB */
+	li	%r6,0
+	slbmte	%r6,%r6
+	slbia
+	ptesync
+
+	/* Dummy stack frame */
+	li	%r3,0
+	std	%r3,0(%r1)
+	std	%r3,8(%r1)
+	std	%r3,16(%r1)
+
+	/* Get our TOC */
+	addis	%r2,%r30,(__toc_start - __head)@ha
+	addi	%r2,%r2,(__toc_start - __head)@l
+
+	/* Go to C ! */
+	bl	fast_reboot_entry
+	b	.
+
+.global cleanup_tlb
+cleanup_tlb:
+	/* Clean the TLB */
+	li	%r3,512
+	mtctr	%r3
+	li	%r4,0xc00		/* IS field = 0b11 */
+	ptesync
+1:	tlbiel	%r4
+	addi	%r4,%r4,0x1000
+	bdnz	1b
+	ptesync
 	blr
 
 /* Functions to initialize replicated and shared SPRs to sane
@@ -708,10 +695,14 @@ init_shared_sprs:
 	mtspr	SPR_LPCR,%r3
 	sync
 	isync
-	/* HID0: Clear bit 13 (enable core recovery) */
+	/* HID0: Clear bit 13 (enable core recovery)
+	 *       Clear bit 19 (HILE)
+	 */
 	mfspr	%r3,SPR_HID0
 	li	%r0,1
-	sldi	%r0,%r0,(63-13)
+	sldi	%r4,%r0,(63-13)
+	sldi	%r5,%r0,(63-19)
+	or	%r0,%r4,%r5,
 	andc	%r3,%r3,%r0
 	sync
 	mtspr	SPR_HID0,%r3
@@ -743,6 +734,15 @@ init_replicated_sprs:
 	/* XXX TODO: Add more */
 	blr
 
+	.global enter_nap
+enter_nap:
+	std	%r0,0(%r1)
+	ptesync
+	ld	%r0,0(%r1)
+1:	cmp	%cr0,%r0,%r0
+	bne	1b
+	nap
+	b	.
 /*
  *
  * NACA structure, accessed by the FPS to find the SPIRA

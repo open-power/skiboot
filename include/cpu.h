@@ -66,6 +66,7 @@ struct cpu_thread {
 	bool				in_mcount;
 	bool				in_poller;
 	bool				in_reinit;
+	bool				in_fast_sleep;
 	bool				in_sleep;
 	bool				in_idle;
 	uint32_t			hbrt_spec_wakeup; /* primary only */

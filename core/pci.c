@@ -1456,6 +1456,7 @@ static void __pci_reset(struct list_head *list)
 
 	while ((pd = list_pop(list, struct pci_device, link)) != NULL) {
 		__pci_reset(&pd->children);
+		dt_free(pd->dn);
 		free(pd);
 	}
 }
@@ -1472,10 +1473,17 @@ void pci_reset(void)
 	 * state machine could be done in parallel)
 	 */
 	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
-		if (!phbs[i])
+		struct phb *phb = phbs[i];
+		if (!phb)
 			continue;
-		__pci_reset(&phbs[i]->devices);
+		__pci_reset(&phb->devices);
+		if (phb->ops->ioda_reset)
+			phb->ops->ioda_reset(phb, true);
 	}
+
+	/* Re-Initialize all discovered PCI slots */
+	pci_init_slots();
+
 }
 
 static void pci_do_jobs(void (*fn)(void *))

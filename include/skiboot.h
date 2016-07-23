@@ -190,12 +190,14 @@ extern unsigned long get_symbol(unsigned long addr,
 				char **sym, char **sym_end);
 
 /* Fast reboot support */
-extern void fast_reset(void);
+extern void fast_reboot(void);
 extern void __noreturn __secondary_cpu_entry(void);
 extern void __noreturn load_and_boot_kernel(bool is_reboot);
 extern void cleanup_tlb(void);
 extern void init_shared_sprs(void);
 extern void init_replicated_sprs(void);
+extern bool start_preload_kernel(void);
+extern void copy_exception_vectors(void);
 extern void setup_reset_vector(void);
 
 /* Various probe routines, to replace with an initcall system */
@@ -268,6 +270,11 @@ extern void slw_update_timer_expiry(uint64_t new_target);
 
 /* Is SLW timer available ? */
 extern bool slw_timer_ok(void);
+
+/* Patch SPR in SLW image */
+extern int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val);
+
+extern void fast_sleep_exit(void);
 
 /* Fallback fake RTC */
 extern void fake_rtc_init(void);

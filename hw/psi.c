@@ -378,6 +378,36 @@ static uint64_t psi_p7_irq_attributes(struct irq_source *is __unused,
 	return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_FREQUENT;
 }
 
+static const uint32_t psi_p8_irq_to_xivr[P8_IRQ_PSI_IRQ_COUNT] = {
+	[P8_IRQ_PSI_FSP]	= PSIHB_XIVR_FSP,
+	[P8_IRQ_PSI_OCC]	= PSIHB_XIVR_OCC,
+	[P8_IRQ_PSI_FSI]	= PSIHB_XIVR_FSI,
+	[P8_IRQ_PSI_LPC]	= PSIHB_XIVR_LPC,
+	[P8_IRQ_PSI_LOCAL_ERR]	= PSIHB_XIVR_LOCAL_ERR,
+	[P8_IRQ_PSI_EXTERNAL]= PSIHB_XIVR_HOST_ERR,
+};
+
+static void psi_cleanup_irq(struct psi *psi)
+{
+	uint32_t irq;
+	uint64_t xivr, xivr_p;
+
+	for (irq = 0; irq < P8_IRQ_PSI_IRQ_COUNT; irq++) {
+		prlog(PR_DEBUG, "PSI[0x%03x]: Cleaning up IRQ %d\n",
+		      psi->chip_id, irq);
+
+		xivr_p = psi_p8_irq_to_xivr[irq];
+		xivr = in_be64(psi->regs + xivr_p);
+		xivr |= (0xffull << 32);
+		out_be64(psi->regs + xivr_p, xivr);
+		time_wait_ms_nopoll(10);
+		xivr = in_be64(psi->regs + xivr_p);
+		if (xivr & PPC_BIT(39)) {
+			printf(" Need EOI !\n");
+			icp_send_eoi(psi->interrupt + irq);
+		}
+	}
+}
 
 /* Called on a fast reset, make sure we aren't stuck with
  * an accepted and never EOId PSI interrupt
@@ -385,27 +415,13 @@ static uint64_t psi_p7_irq_attributes(struct irq_source *is __unused,
 void psi_irq_reset(void)
 {
 	struct psi *psi;
-	uint64_t xivr;
 
 	printf("PSI: Hot reset!\n");
 
-	assert(proc_gen == proc_gen_p7);
+	assert(proc_gen == proc_gen_p8);
 
 	list_for_each(&psis, psi, list) {
-		/* Mask the interrupt & clean the XIVR */
-		xivr = 0x000000ff00000000UL;
-		xivr |=	P7_IRQ_BUID(psi->interrupt) << 16;
-		out_be64(psi->regs + PSIHB_XIVR, xivr);
-
-#if 0 /* Seems to checkstop ... */
-		/*
-		 * Maybe not anymore; we were just blindly sending
-		 * this on all iopaths, not just the active one;
-		 * We don't even know if those psis are even correct.
-		 */
-		/* Send a dummy EOI to make sure the ICP is clear */
-		icp_send_eoi(psi->interrupt);
-#endif
+		psi_cleanup_irq(psi);
 	}
 }
 
@@ -416,34 +432,17 @@ static const struct irq_source_ops psi_p7_irq_ops = {
 	.attributes = psi_p7_irq_attributes,
 };
 
+
 static int64_t psi_p8_set_xive(struct irq_source *is, uint32_t isn,
 			       uint16_t server, uint8_t priority)
 {
 	struct psi *psi = is->data;
 	uint64_t xivr_p, xivr;
+	uint32_t irq_idx = isn & 7;
 
-	switch(isn & 7) {
-	case P8_IRQ_PSI_FSP:
-		xivr_p = PSIHB_XIVR_FSP;
-		break;
-	case P8_IRQ_PSI_OCC:
-		xivr_p = PSIHB_XIVR_OCC;
-		break;
-	case P8_IRQ_PSI_FSI:
-		xivr_p = PSIHB_XIVR_FSI;
-		break;
-	case P8_IRQ_PSI_LPC:
-		xivr_p = PSIHB_XIVR_LPC;
-		break;
-	case P8_IRQ_PSI_LOCAL_ERR:
-		xivr_p = PSIHB_XIVR_LOCAL_ERR;
-		break;
-	case P8_IRQ_PSI_EXTERNAL:
-		xivr_p = PSIHB_XIVR_HOST_ERR;
-		break;
-	default:
-		return OPAL_PARAMETER;
-	}
+	if (irq_idx >= P8_IRQ_PSI_IRQ_COUNT)
+ 		return OPAL_PARAMETER;
+	xivr_p = psi_p8_irq_to_xivr[irq_idx];
 
 	/* Populate the XIVR */
 	xivr  = (uint64_t)server << 40;
@@ -460,29 +459,12 @@ static int64_t psi_p8_get_xive(struct irq_source *is, uint32_t isn __unused,
 {
 	struct psi *psi = is->data;
 	uint64_t xivr_p, xivr;
+	uint32_t irq_idx = isn & 7;
 
-	switch(isn & 7) {
-	case P8_IRQ_PSI_FSP:
-		xivr_p = PSIHB_XIVR_FSP;
-		break;
-	case P8_IRQ_PSI_OCC:
-		xivr_p = PSIHB_XIVR_OCC;
-		break;
-	case P8_IRQ_PSI_FSI:
-		xivr_p = PSIHB_XIVR_FSI;
-		break;
-	case P8_IRQ_PSI_LPC:
-		xivr_p = PSIHB_XIVR_LPC;
-		break;
-	case P8_IRQ_PSI_LOCAL_ERR:
-		xivr_p = PSIHB_XIVR_LOCAL_ERR;
-		break;
-	case P8_IRQ_PSI_EXTERNAL:
-		xivr_p = PSIHB_XIVR_HOST_ERR;
-		break;
-	default:
-		return OPAL_PARAMETER;
-	}
+	if (irq_idx >= P8_IRQ_PSI_IRQ_COUNT)
+ 		return OPAL_PARAMETER;
+
+	xivr_p = psi_p8_irq_to_xivr[irq_idx];
 
 	/* Read & decode the XIVR */
 	xivr = in_be64(psi->regs + xivr_p);
@@ -1052,4 +1034,5 @@ void psi_init(void)
 	dt_for_each_compatible(dt_root, np, "ibm,psihb-x")
 		psi_init_psihb(np);
 }
+
 
