@@ -1003,7 +1003,12 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 	int64_t rc = OPAL_SUCCESS;
 	int i;
 
-	prlog(PR_INFO, "OPAL: Trying a CPU re-init with flags: 0x%llx\n", flags);
+	prlog(PR_DEBUG, "OPAL: CPU re-init with flags: 0x%llx\n", flags);
+
+	if (flags & OPAL_REINIT_CPUS_HILE_LE)
+		prlog(PR_NOTICE, "OPAL: Switch to little-endian OS\n");
+	else if (flags & OPAL_REINIT_CPUS_HILE_BE)
+		prlog(PR_NOTICE, "OPAL: Switch to big-endian OS\n");
 
  again:
 	lock(&reinit_lock);
