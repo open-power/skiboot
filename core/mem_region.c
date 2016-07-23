@@ -134,6 +134,22 @@ static struct alloc_hdr *next_hdr(const struct mem_region *region,
 	return next;
 }
 
+#if POISON_MEM_REGION == 1
+static void mem_poison(struct free_hdr *f)
+{
+	size_t poison_size = (void*)tailer(f) - (void*)(f+1);
+
+	/* We only poison up to a limit, as otherwise boot is
+	 * kinda slow */
+	if (poison_size > POISON_MEM_REGION_LIMIT)
+		poison_size = POISON_MEM_REGION_LIMIT;
+
+	memset(f+1, POISON_MEM_REGION_WITH, poison_size);
+}
+#else
+static inline void mem_poison(struct free_hdr *f __unused) { }
+#endif
+
 /* Creates free block covering entire region. */
 static void init_allocatable_region(struct mem_region *region)
 {
@@ -146,22 +162,17 @@ static void init_allocatable_region(struct mem_region *region)
 	*tailer(f) = f->hdr.num_longs;
 	list_head_init(&region->free_list);
 	list_add(&region->free_list, &f->list);
+	mem_poison(f);
 }
 
 static void make_free(struct mem_region *region, struct free_hdr *f,
-		      const char *location)
+		      const char *location, bool skip_poison)
 {
 	struct alloc_hdr *next;
-#if POISON_MEM_REGION == 1
-	size_t poison_size= (void*)tailer(f) - (void*)(f+1);
 
-	/* We only poison up to a limit, as otherwise boot is kinda slow */
-	if (poison_size > POISON_MEM_REGION_LIMIT) {
-		poison_size = POISON_MEM_REGION_LIMIT;
-	}
+	if (!skip_poison)
+		mem_poison(f);
 
-	memset(f+1, POISON_MEM_REGION_WITH, poison_size);
-#endif
 	if (f->hdr.prev_free) {
 		struct free_hdr *prev;
 		unsigned long *prev_tailer = (unsigned long *)f - 1;
@@ -191,7 +202,7 @@ static void make_free(struct mem_region *region, struct free_hdr *f,
 			struct free_hdr *next_free = (void *)next;
 			list_del_from(&region->free_list, &next_free->list);
 			/* Maximum of one level of recursion */
-			make_free(region, next_free, location);
+			make_free(region, next_free, location, true);
 		}
 	}
 }
@@ -220,7 +231,7 @@ static bool fits(struct free_hdr *f, size_t longs, size_t align, size_t *offset)
 
 static void discard_excess(struct mem_region *region,
 			   struct alloc_hdr *hdr, size_t alloc_longs,
-			   const char *location)
+			   const char *location, bool skip_poison)
 {
 	/* Do we have excess? */
 	if (hdr->num_longs > alloc_longs + ALLOC_MIN_LONGS) {
@@ -235,7 +246,7 @@ static void discard_excess(struct mem_region *region,
 		hdr->num_longs = alloc_longs;
 
 		/* This coalesces as required. */
-		make_free(region, post, location);
+		make_free(region, post, location, skip_poison);
 	}
 }
 
@@ -413,11 +424,11 @@ found:
 		pre->hdr.prev_free = false;
 
 		/* This coalesces as required. */
-		make_free(region, pre, location);
+		make_free(region, pre, location, true);
 	}
 
 	/* We might be too long; put the rest back. */
-	discard_excess(region, &f->hdr, alloc_longs, location);
+	discard_excess(region, &f->hdr, alloc_longs, location, true);
 
 	/* Clear tailer for debugging */
 	*tailer(f) = 0;
@@ -466,7 +477,7 @@ void mem_free(struct mem_region *region, void *mem, const char *location)
 	if (hdr->free)
 		bad_header(region, hdr, "re-freed", location);
 
-	make_free(region, (struct free_hdr *)hdr, location);
+	make_free(region, (struct free_hdr *)hdr, location, false);
 }
 
 size_t mem_allocated_size(const void *ptr)
@@ -501,7 +512,7 @@ bool mem_resize(struct mem_region *region, void *mem, size_t len,
 	/* Shrinking is simple. */
 	if (len <= hdr->num_longs) {
 		hdr->location = location;
-		discard_excess(region, hdr, len, location);
+		discard_excess(region, hdr, len, location, false);
 		return true;
 	}
 
@@ -527,7 +538,7 @@ bool mem_resize(struct mem_region *region, void *mem, size_t len,
 	*tailer(f) = 0;
 
 	/* Now we might have *too* much. */
-	discard_excess(region, hdr, len, location);
+	discard_excess(region, hdr, len, location, true);
 	return true;
 }
 
