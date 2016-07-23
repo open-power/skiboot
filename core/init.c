@@ -61,7 +61,11 @@ struct debug_descriptor debug_descriptor = {
 	.state_flags	= 0,
 	.memcons_phys	= (uint64_t)&memcons,
 	.trace_mask	= 0, /* All traces disabled by default */
+#ifdef DEBUG
+	.console_log_levels = (PR_DEBUG << 4) | PR_DEBUG,
+#else
 	.console_log_levels = (PR_DEBUG << 4) | PR_NOTICE,
+#endif
 };
 
 static bool try_load_elf64_le(struct elf_hdr *header)
