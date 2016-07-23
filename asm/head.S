@@ -605,10 +605,10 @@ enter_pm_state:
 	b	.
 
 /* This is a little piece of code that is copied down to
- * 0x100 when doing a "rvwinkle reinit"
+ * 0x100 for handling power management wakeups
  */
-.global rvwinkle_patch_start
-rvwinkle_patch_start:
+.global reset_patch_start
+reset_patch_start:
 	FIXUP_ENDIAN
 	smt_medium
 	LOAD_IMM64(%r30, SKIBOOT_BASE)
@@ -616,8 +616,8 @@ rvwinkle_patch_start:
 	add	%r3,%r30,%r3
 	mtctr	%r3
 	bctr
-.global rvwinkle_patch_end
-rvwinkle_patch_end:
+.global reset_patch_end
+reset_patch_end:
 
 rvwinkle_restore:
 	/* Get PIR */

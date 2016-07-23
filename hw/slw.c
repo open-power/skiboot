@@ -151,17 +151,15 @@ static void slw_do_rvwinkle(void *data)
 
 static void slw_patch_reset(void)
 {
-	extern uint32_t rvwinkle_patch_start;
-	extern uint32_t rvwinkle_patch_end;
 	uint32_t *src, *dst, *sav;
 
-	BUILD_ASSERT((&rvwinkle_patch_end - &rvwinkle_patch_start) <=
+	BUILD_ASSERT((&reset_patch_end - &reset_patch_start) <=
 		     MAX_RESET_PATCH_SIZE);
 
-	src = &rvwinkle_patch_start;
+	src = &reset_patch_start;
 	dst = (uint32_t *)0x100;
 	sav = slw_saved_reset;
-	while(src < &rvwinkle_patch_end) {
+	while(src < &reset_patch_end) {
 		*(sav++) = *(dst);
 		*(dst++) = *(src++);
 	}
@@ -170,14 +168,14 @@ static void slw_patch_reset(void)
 
 static void slw_unpatch_reset(void)
 {
-	extern uint32_t rvwinkle_patch_start;
-	extern uint32_t rvwinkle_patch_end;
+	extern uint32_t reset_patch_start;
+	extern uint32_t reset_patch_end;
 	uint32_t *src, *dst, *sav;
 
-	src = &rvwinkle_patch_start;
+	src = &reset_patch_start;
 	dst = (uint32_t *)0x100;
 	sav = slw_saved_reset;
-	while(src < &rvwinkle_patch_end) {
+	while(src < &reset_patch_end) {
 		*(dst++) = *(sav++);
 		src++;
 	}

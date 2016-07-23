@@ -580,6 +580,17 @@ static void setup_branch_null_catcher(void)
        memcpy(0, bn, 16);
 }
 
+void setup_reset_vector(void)
+{
+	uint32_t *src, *dst;
+
+	/* Copy the reset code over the entry point. */
+	src = &reset_patch_start;
+	dst = (uint32_t *)0x100;
+	while(src < &reset_patch_end)
+		*(dst++) = *(src++);
+}
+
 static void copy_exception_vectors(void)
 {
 	/* Backup previous vectors as this could contain a kernel
@@ -754,6 +765,11 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt, u32 master_cpu)
 
 	/* Call in secondary CPUs */
 	cpu_bringup();
+
+	/* We can now overwrite the 0x100 vector as we are no longer being
+	 * entered there.
+	 */
+	setup_reset_vector();
 
 	/*
 	 * Sycnhronize time bases. Thi resets all the TB values to a small

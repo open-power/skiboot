@@ -196,6 +196,7 @@ extern void __noreturn load_and_boot_kernel(bool is_reboot);
 extern void cleanup_tlb(void);
 extern void init_shared_sprs(void);
 extern void init_replicated_sprs(void);
+extern void setup_reset_vector(void);
 
 /* Various probe routines, to replace with an initcall system */
 extern void probe_p7ioc(void);
@@ -271,4 +272,7 @@ extern void fake_rtc_init(void);
 
 /* Assembly in head.S */
 extern void enter_pm_state(bool winkle);
+extern uint32_t reset_patch_start;
+extern uint32_t reset_patch_end;
+
 #endif /* __SKIBOOT_H */
