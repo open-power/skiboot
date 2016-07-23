@@ -17,6 +17,8 @@ CORE_TEST := core/test/run-device \
 	core/test/run-timebase \
 	core/test/run-timer
 
+HOSTCFLAGS+=-I . -I include
+
 CORE_TEST_NOSTUB := core/test/run-console-log
 CORE_TEST_NOSTUB += core/test/run-console-log-buf-overrun
 CORE_TEST_NOSTUB += core/test/run-console-log-pr_fmt

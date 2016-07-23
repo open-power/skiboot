@@ -39,6 +39,7 @@ HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-Wjump-misses-init) \
 	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=const) \
 	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=noreturn) \
 	  $(call try-cflag,$(HOSTCC),-Wstack-usage=1024)
+HOSTCFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
 
 VALGRIND=valgrind -q --show-reachable=yes --error-exitcode=99
 

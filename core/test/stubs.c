@@ -17,6 +17,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "../../ccan/list/list.c"
+
 void _prlog(int log_level __attribute__((unused)), const char* fmt, ...) __attribute__((format (printf, 2, 3)));
 
 #ifndef pr_fmt

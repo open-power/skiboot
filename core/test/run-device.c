@@ -31,7 +31,6 @@ static inline bool fake_is_rodata(const void *p)
 #define zalloc(bytes) calloc((bytes), 1)
 
 #include "../device.c"
-#include "../../ccan/list/list.c" /* For list_check */
 #include <assert.h>
 #include "../../test/dt_common.c"
 
