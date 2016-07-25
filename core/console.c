@@ -258,8 +258,8 @@ ssize_t console_write(bool flush_to_drivers, const void *buf, size_t count)
 
 	while(count--) {
 		char c = *(cbuf++);
-		if (c == 10)
-			write_char(13);
+		if (c == '\n')
+			write_char('\r');
 		write_char(c);
 	}
 
