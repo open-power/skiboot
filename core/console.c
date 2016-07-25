@@ -137,35 +137,36 @@ static bool __flush_console(bool flush_to_drivers)
 	}
 	in_flush = true;
 
+	/*
+	 * NB: this must appear after the in_flush check since it modifies
+	 *     con_out.
+	 */
+	if (!flush_to_drivers) {
+		con_out = con_in;
+		in_flush = false;
+		return false;
+	}
+
 	do {
 		more_flush = false;
+
 		if (con_out > con_in) {
 			req = INMEM_CON_OUT_LEN - con_out;
-			if (!flush_to_drivers) {
-				len = req;
-			} else {
-				unlock(&con_lock);
-				len = con_driver->write(con_buf + con_out,
-							req);
-				lock(&con_lock);
-			}
-			con_out = (con_out + len) % INMEM_CON_OUT_LEN;
-			if (len < req)
-				goto bail;
-		}
-		if (con_out < con_in) {
-			if (!flush_to_drivers) {
-				len = con_in - con_out;
-			} else {
-				unlock(&con_lock);
-				len = con_driver->write(con_buf + con_out,
-							con_in - con_out);
-				lock(&con_lock);
-			}
-			con_out = (con_out + len) % INMEM_CON_OUT_LEN;
-		}
+			more_flush = true;
+		} else
+			req = con_in - con_out;
+
+		unlock(&con_lock);
+		len = con_driver->write(con_buf + con_out, req);
+		lock(&con_lock);
+
+		con_out = (con_out + len) % INMEM_CON_OUT_LEN;
+
+		/* write error? */
+		if (len < req)
+			break;
 	} while(more_flush);
-bail:
+
 	in_flush = false;
 	return con_out != con_in;
 }
