@@ -509,7 +509,7 @@ static void print_help(const char *pname)
 	printf("\t\tThis message.\n\n");
 }
 
-void exiting(int d, void *p)
+void exiting(void)
 {
 	if (need_relock)
 		arch_flash_set_wrprotect(bl, 1);
@@ -775,8 +775,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	on_exit(exiting, NULL);
-
+	atexit(exiting);
 
 	rc = blocklevel_get_info(bl, &fl_name,
 			    &fl_total_size, &fl_erase_granule);
