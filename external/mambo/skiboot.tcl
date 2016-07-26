@@ -84,7 +84,7 @@ if { $default_config == "PEGASUS" } {
 }
 if { $default_config == "P9" } {
     # make sure we look like a POWER9
-    myconf config processor/initial/SIM_CTRL1 0xc228000000000000
+    myconf config processor/initial/SIM_CTRL1 0xc228000400000000
 }
 if { [info exists env(SKIBOOT_SIMCONF)] } {
     source $env(SKIBOOT_SIMCONF)
