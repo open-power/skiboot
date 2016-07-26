@@ -65,7 +65,7 @@ int nvram_format(void *nvram_image, uint32_t nvram_size)
 	struct chrp_nvram_hdr *h;
 	unsigned int offset = 0;
 
-	prerror("NVRAM: Re-initializing\n");
+	prerror("NVRAM: Re-initializing (size: 0x%08x)\n", nvram_size);
 	memset(nvram_image, 0, nvram_size);
 
 	/* Create private partition */
@@ -76,6 +76,8 @@ int nvram_format(void *nvram_image, uint32_t nvram_size)
 	h->len = NVRAM_SIZE_FW_PRIV >> 4;
 	strcpy(h->name, NVRAM_NAME_FW_PRIV);
 	h->cksum = chrp_nv_cksum(h);
+	prlog(PR_DEBUG, "NVRAM: Created '%s' partition at 0x%08x for size 0x%08x"
+			" with cksum 0x%02x\n", NVRAM_NAME_FW_PRIV, offset, h->len, h->cksum);
 	offset += NVRAM_SIZE_FW_PRIV;
 
 	/* Create common partition */
@@ -86,6 +88,8 @@ int nvram_format(void *nvram_image, uint32_t nvram_size)
 	h->len = NVRAM_SIZE_COMMON >> 4;
 	strcpy(h->name, NVRAM_NAME_COMMON);
 	h->cksum = chrp_nv_cksum(h);
+	prlog(PR_DEBUG, "NVRAM: Created '%s' partition at 0x%08x for size 0x%08x"
+			" with cksum 0x%02x\n", NVRAM_NAME_COMMON, offset, h->len, h->cksum);
 	offset += NVRAM_SIZE_COMMON;
 
 	/* Create free space partition */
@@ -97,7 +101,8 @@ int nvram_format(void *nvram_image, uint32_t nvram_size)
 	/* We have the full 12 bytes here */
 	memcpy(h->name, NVRAM_NAME_FREE, 12);
 	h->cksum = chrp_nv_cksum(h);
-
+	prlog(PR_DEBUG, "NVRAM: Created '%s' partition at 0x%08x for size 0x%08x"
+			" with cksum 0x%02x\n", NVRAM_NAME_FREE, offset, h->len, h->cksum);
 	return 0;
 }
 
@@ -117,7 +122,8 @@ int nvram_check(void *nvram_image, const uint32_t nvram_size)
 
 		if (chrp_nv_cksum(h) != h->cksum) {
 			prerror("NVRAM: Partition at offset 0x%x"
-				" has bad checksum\n", offset);
+				" has bad checksum: 0x%02x vs 0x%02x\n",
+				offset, h->cksum, chrp_nv_cksum(h));
 			goto failed;
 		}
 		if (h->len < 1) {

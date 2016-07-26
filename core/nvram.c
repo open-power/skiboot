@@ -64,7 +64,8 @@ void nvram_read_complete(bool success)
 
 	/* Check and maybe format nvram */
 	if (nvram_check(nvram_image, nvram_size)) {
-		nvram_format(nvram_image, nvram_size);
+		if (nvram_format(nvram_image, nvram_size))
+			prerror("NVRAM: Failed to format NVRAM!\n");
 
 		/* Write the whole thing back */
 		if (platform.nvram_write)
