@@ -75,3 +75,4 @@ libflash/test/test-ecc
 libflash/test/test-flash-gcov
 test/hello_world/hello_kernel/hello_kernel
 zImage.epapr
+vgcore.*
