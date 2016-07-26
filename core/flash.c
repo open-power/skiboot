@@ -149,6 +149,7 @@ out:
 static int flash_nvram_probe(struct flash *flash, struct ffs_handle *ffs)
 {
 	uint32_t start, size, part;
+	bool ecc;
 	int rc;
 
 	prlog(PR_INFO, "FLASH: probing for NVRAM\n");
@@ -160,7 +161,7 @@ static int flash_nvram_probe(struct flash *flash, struct ffs_handle *ffs)
 	}
 
 	rc = ffs_part_info(ffs, part, NULL,
-			   &start, &size, NULL, NULL);
+			   &start, &size, NULL, &ecc);
 	if (rc) {
 		/**
 		 * @fwts-label NVRAMNoPartition
@@ -175,7 +176,7 @@ static int flash_nvram_probe(struct flash *flash, struct ffs_handle *ffs)
 
 	nvram_flash = flash;
 	nvram_offset = start;
-	nvram_size = size;
+	nvram_size = ecc ? ecc_buffer_size_minus_ecc(size) : size;
 
 	platform.nvram_info = flash_nvram_info;
 	platform.nvram_start_read = flash_nvram_start_read;
