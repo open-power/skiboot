@@ -302,7 +302,7 @@ int flash_register(struct blocklevel_device *bl)
 
 	list_add(&flashes, &flash->list);
 
-	rc = ffs_init(0, flash->size, bl, &ffs, 0);
+	rc = ffs_init(0, flash->size, bl, &ffs, 1);
 	if (rc) {
 		/**
 		 * @fwts-label NoFFS
@@ -553,7 +553,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_unlock;
 	}
 
-	rc = ffs_init(0, flash->size, flash->bl, &ffs, 0);
+	rc = ffs_init(0, flash->size, flash->bl, &ffs, 1);
 	if (rc) {
 		prerror("FLASH: Can't open ffs handle\n");
 		goto out_unlock;
@@ -603,7 +603,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_free_ffs;
 	}
 
-	rc = flash_read_corrected(flash->bl, part_start, buf, size, ecc);
+	rc = blocklevel_read(flash->bl, part_start, buf, size);
 	if (rc) {
 		prerror("FLASH: failed to read %s partition, rc %d\n", name, rc);
 		goto out_free_ffs;
