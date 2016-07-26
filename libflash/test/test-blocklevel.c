@@ -44,6 +44,10 @@ int main(void)
 		ERR("Failed to blocklevel_ecc_protect(0x3000, 0x1000)\n");
 		return 1;
 	}
+	if (blocklevel_ecc_protect(bl, 0x2f00, 0x1100)) {
+		ERR("Failed to blocklevel_ecc_protect(0x2f00, 0x1100)\n");
+		return 1;
+	}
 
 	/* Zero length protection */
 	if (!blocklevel_ecc_protect(bl, 0x4000, 0)) {
@@ -58,14 +62,20 @@ int main(void)
 	}
 
 	/* Deal with overlapping protections */
-	if (!blocklevel_ecc_protect(bl, 0x100, 0x1000)) {
-		ERR("Shouldn't have succeeded blocklevel_ecc_protect(0x100, 0x1000)\n");
+	if (blocklevel_ecc_protect(bl, 0x100, 0x1000)) {
+		ERR("Failed to protect overlaping region blocklevel_ecc_protect(0x100, 0x1000)\n");
 		return 1;
 	}
 
-	/* Deal with protections greater than max size */
-	if (!blocklevel_ecc_protect(bl, 0, 0xFFFFFFFF)) {
-		ERR("Failed to blocklevel_ecc_protect(0, 0xFFFFFFFF)\n");
+	/* Deal with overflow */
+	if (!blocklevel_ecc_protect(bl, 1, 0xFFFFFFFF)) {
+		ERR("Added an 'overflow' protection blocklevel_ecc_protect(1, 0xFFFFFFFF)\n");
+		return 1;
+	}
+
+	/* Protect everything */
+	if (blocklevel_ecc_protect(bl, 0, 0xFFFFFFFF)) {
+		ERR("Couldn't protect everything blocklevel_ecc_protect(0, 0xFFFFFFFF)\n");
 		return 1;
 	}
 
@@ -84,17 +94,30 @@ int main(void)
 		return 1;
 	}
 
-	if (ecc_protected(bl, 0x1000, 0) != 0) {
+	/* Clear the protections */
+	bl->ecc_prot.n_prot = 0;
+	/* Reprotect */
+	if (blocklevel_ecc_protect(bl, 0x3000, 0x1000)) {
+		ERR("Failed to blocklevel_ecc_protect(0x3000, 0x1000)\n");
+		return 1;
+	}
+	/* Deal with overlapping protections */
+	if (blocklevel_ecc_protect(bl, 0x100, 0x1000)) {
+		ERR("Failed to protect overlaping region blocklevel_ecc_protect(0x100, 0x1000)\n");
+		return 1;
+	}
+
+	if (ecc_protected(bl, 0x1000, 0) != 1) {
 		ERR("Invalid result for ecc_protected(0x1000, 0)\n");
 		return 1;
 	}
 
-	if (ecc_protected(bl, 0x1000, 0x1000) != 0) {
+	if (ecc_protected(bl, 0x1000, 0x1000) != -1) {
 		ERR("Invalid result for ecc_protected(0x1000, 0x1000)\n");
 		return 1;
 	}
 
-	if (ecc_protected(bl, 0x1000, 0x100) != 0) {
+	if (ecc_protected(bl, 0x1000, 0x100) != 1) {
 		ERR("Invalid result for ecc_protected(0x1000, 0x100)\n");
 		return 1;
 	}
@@ -104,7 +127,7 @@ int main(void)
 		return 1;
 	}
 
-	if (ecc_protected(bl, 0x4000, 1) != 1) {
+	if (ecc_protected(bl, 0x4000, 1) != 0) {
 		ERR("Invalid result for ecc_protected(0x4000, 1)\n");
 		return 1;
 	}
@@ -136,6 +159,11 @@ int main(void)
 		return 1;
 	}
 
+	if (blocklevel_ecc_protect(bl, 0x4f00, 0x100)) {
+		ERR("Failed to blocklevel_ecc_protected(0x4900, 0x100)\n");
+		return 1;
+	}
+
 	if (blocklevel_ecc_protect(bl, 0x4900, 0x100)) {
 		ERR("Failed to blocklevel_ecc_protected(0x4900, 0x100)\n");
 		return 1;
@@ -146,8 +174,8 @@ int main(void)
 		return 1;
 	}
 
-	if (!blocklevel_ecc_protect(bl, 0x5290, 0x10)) {
-		ERR("Shouldn't have been able to blocklevel_ecc_protect(0x5290, 0x10)\n");
+	if (blocklevel_ecc_protect(bl, 0x5290, 0x10)) {
+		ERR("Failed to blocklevel_ecc_protect(0x5290, 0x10)\n");
 		return 1;
 	}
 
@@ -166,7 +194,9 @@ int main(void)
 		ERR("Failed to blocklevel_ecc_protect(0x6100, 0x100)\n");
 		return 1;
 	}
-
+	/* Make sure we trigger the merging code */
+	for (i = bl->ecc_prot.n_prot; i < bl->ecc_prot.total_prot; i++)
+		blocklevel_ecc_protect(bl, 0x10000 + i * 0x200, 0x10);
 	/* Check that the region merging works */
 	for (i = 0; i < bl->ecc_prot.n_prot - 1; i++) {
 		if (bl->ecc_prot.prot[i].start + bl->ecc_prot.prot[i].len == bl->ecc_prot.prot[i + 1].start ||

@@ -329,53 +329,95 @@ out_free:
 	return rc;
 }
 
-static int insert_bl_prot_range(struct blocklevel_range *ranges, struct bl_prot_range range)
+static bool insert_bl_prot_range(struct blocklevel_range *ranges, struct bl_prot_range range)
 {
-	struct bl_prot_range *new_ranges;
-	struct bl_prot_range *old_ranges = ranges->prot;
-	int i, count = ranges->n_prot;
+	int i;
+	uint32_t pos, len;
+	struct bl_prot_range *prot = ranges->prot;
 
-	/* Try to merge into an existing range */
-	for (i = 0; i < count; i++) {
-		if (!(range.start + range.len == old_ranges[i].start ||
-			  old_ranges[i].start + old_ranges[i].len == range.start))
-			continue;
+	pos = range.start;
+	len = range.len;
 
-		if (range.start + range.len == old_ranges[i].start)
-			old_ranges[i].start = range.start;
+	if (len == 0)
+		return true;
 
-		old_ranges[i].len += range.len;
+	/* Check for overflow */
+	if (pos + len < len)
+		return false;
 
-		/*
-		 * Check the inserted range isn't wedged between two ranges, if it
-		 * is, merge as well
-		 */
-		i++;
-		if (i < count && range.start + range.len == old_ranges[i].start) {
-			old_ranges[i - 1].len += old_ranges[i].len;
-
-			for (; i + 1 < count; i++)
-				old_ranges[i] = old_ranges[i + 1];
-			ranges->n_prot--;
+	for (i = 0; i < ranges->n_prot && len > 0; i++) {
+		if (prot[i].start <= pos && prot[i].start + prot[i].len >= pos + len) {
+			len = 0;
+			break; /* Might as well, the next two conditions can't be true */
 		}
 
-		return 0;
+		/* Can easily extend this down just by adjusting start */
+		if (pos <= prot[i].start && pos + len >= prot[i].start) {
+			prot[i].len += prot[i].start - pos;
+			prot[i].start = pos;
+			pos += prot[i].len;
+			if (prot[i].len >= len)
+				len = 0;
+			else
+				len -= prot[i].len;
+		}
+
+		/*
+		 * Jump over this range but the new range might be so big that
+		 * theres a chunk after
+		 */
+		if (pos >= prot[i].start && pos < prot[i].start + prot[i].len) {
+			if (prot[i].start + prot[i].len - pos > len) {
+				len -= prot[i].start + prot[i].len - pos;
+				pos = prot[i].start + prot[i].len;
+			} else {
+				len = 0;
+			}
+		}
+		/*
+		 * This condition will be true if the range is smaller than
+		 * the current range, therefore it should go here!
+		 */
+		if (pos < prot[i].start && pos + len <= prot[i].start)
+			break;
 	}
 
-	if (ranges->n_prot == ranges->total_prot) {
-		new_ranges = realloc(ranges->prot, sizeof(range) * ((ranges->n_prot) + PROT_REALLOC_NUM));
-		if (new_ranges)
+	if (len) {
+		int insert_pos = i;
+		struct bl_prot_range *new_ranges = ranges->prot;
+		if (ranges->n_prot == ranges->total_prot) {
+			new_ranges = realloc(ranges->prot,
+					sizeof(range) * ((ranges->n_prot) + PROT_REALLOC_NUM));
+			if (!new_ranges)
+				return false;
 			ranges->total_prot += PROT_REALLOC_NUM;
-	} else {
-		new_ranges = old_ranges;
-	}
-	if (new_ranges) {
-		memcpy(new_ranges + ranges->n_prot, &range, sizeof(range));
+		}
+		if (insert_pos != ranges->n_prot)
+			for (i = ranges->n_prot; i > insert_pos; i--)
+				memcpy(&new_ranges[i], &new_ranges[i - 1], sizeof(range));
+		range.start = pos;
+		range.len = len;
+		memcpy(&new_ranges[insert_pos], &range, sizeof(range));
 		ranges->prot = new_ranges;
 		ranges->n_prot++;
 	}
 
-	return !new_ranges;
+	/* Probably only worth mergeing when we're low on space */
+	if (ranges->n_prot + 1 == ranges->total_prot) {
+		/* Check to see if we can merge ranges */
+		for (i = 0; i < ranges->n_prot - 1; i++) {
+			if (prot[i].start + prot[i].len == prot[i + 1].start) {
+				int j;
+				prot[i].len += prot[i + 1].len;
+				for (j = i + 1; j < ranges->n_prot - 1; j++)
+					memcpy(&prot[j] , &prot[j + 1], sizeof(range));
+				ranges->n_prot--;
+				i--; /* Maybe the next one can merge too */
+			}
+		}
+	}
+
+	return true;
 }
 
 int blocklevel_ecc_protect(struct blocklevel_device *bl, uint32_t start, uint32_t len)
@@ -387,11 +429,7 @@ int blocklevel_ecc_protect(struct blocklevel_device *bl, uint32_t start, uint32_
 	 */
 	struct bl_prot_range range = { .start = start, .len = len };
 
-	/*
-	 * Refuse to add regions that are already protected or are partially
-	 * protected
-	 */
-	if (len < BYTES_PER_ECC || ecc_protected(bl, start, len))
+	if (len < BYTES_PER_ECC)
 		return -1;
-	return insert_bl_prot_range(&bl->ecc_prot, range);
+	return !insert_bl_prot_range(&bl->ecc_prot, range);
 }

@@ -196,7 +196,7 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 			if (ecc) {
 				rc = blocklevel_ecc_protect(bl, start, total_size);
 				if (rc) {
-					FL_ERR("Failed to blocklevel_ecc_protect(0x%08x, 0x%08x)\n",
+					FL_ERR("FFS: Failed to blocklevel_ecc_protect(0x%08x, 0x%08x)\n",
 					       start, total_size);
 					goto out;
 				}
