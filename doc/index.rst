@@ -25,6 +25,7 @@ Contents:
    pci
    pci-slot
    xscom-node-bindings
+   release-notes/index
 
 Indices and tables
 ==================
