@@ -27,6 +27,7 @@ Contents:
    xscom-node-bindings
    release-notes/index
    opal-api/index
+   device-tree/index
 
 Indices and tables
 ==================
