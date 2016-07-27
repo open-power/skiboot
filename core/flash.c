@@ -455,7 +455,7 @@ static int flash_find_subpartition(struct blocklevel_device *bl, uint32_t subid,
 
 	/* Get the TOC */
 	rc = flash_read_corrected(bl, *start, header,
-			FLASH_SUBPART_HEADER_SIZE, ecc);
+			FLASH_SUBPART_HEADER_SIZE, *ecc);
 	if (rc) {
 		prerror("FLASH: flash subpartition TOC read failed %i\n", rc);
 		goto end;
