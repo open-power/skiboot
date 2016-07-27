@@ -1,10 +1,11 @@
 ibm,opal/power-mgt device tree entries
---------------------------------------
+======================================
 
 All available CPU idle states are listed in ibm,cpu-idle-state-names
 
-For example:
-ibm,cpu-idle-state-names = "nap", "fastsleep_", "winkle";
+For example: ::
+
+  ibm,cpu-idle-state-names = "nap", "fastsleep_", "winkle";
 
 The idle states are characterized by latency and residency
 numbers which determine the breakeven point for entry into them. The
@@ -20,10 +21,10 @@ the measured latency numbers for the idle states. The residency numbers have
 been arrived at experimentally after ensuring that the performance of latency
 sensitive workloads do not regress while allowing deeper idle states to be
 entered into during low load situations. The kernel is expected to use these
-values for optimal power efficiency.
- 
-ibm,cpu-idle-state-residency-ns = <0x1 0x2 0x3>
-ibm,cpu-idle-state-latencies-ns = <0x1 0x2 0x3>
+values for optimal power efficiency. ::
+
+  ibm,cpu-idle-state-residency-ns = <0x1 0x2 0x3>
+  ibm,cpu-idle-state-latencies-ns = <0x1 0x2 0x3>
 
 
 ibm,cpu-idle-state-pmicr ibm,cpu-idle-state-pmicr-mask

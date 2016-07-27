@@ -1,11 +1,12 @@
 Operator Panel (oppanel)
-------------------------
+========================
+::
 
-oppanel {
+  oppanel {
         compatible = "ibm,opal-oppanel";
         #lines = <0x2>;
         #length = <0x10>;
-};
+  };
 
 The Operator Panel is a device for displaying small amounts of textual
 data to an administrator. On IBM POWER8 systems with an FSP, this is a

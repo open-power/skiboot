@@ -1,5 +1,13 @@
 ibm,opal
 ========
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   ibm,opal/*
+
+
 ::
 
    ibm,opal {
