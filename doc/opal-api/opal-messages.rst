@@ -5,12 +5,13 @@ The host OS can use OPAL_GET_MSG to retrive messages queued by OPAL. The
 messages are defined by enum opal_msg_type. The host is notified of there
 being messages to be consumed by the OPAL_EVENT_MSG_PENDING bit being set.
 
-An opal_msg is:
-struct opal_msg {
+An opal_msg is: ::
+
+  struct opal_msg {
 	__be32 msg_type;
 	__be32 reserved;
 	__be64 params[8];
-};
+  };
 
 The data structure is ALWAYS at least this size (4+4+8*8 = 72 bytes). Some
 messages define fewer than eight parameters. For messages that do not
@@ -19,7 +20,8 @@ undefined, although can safely be memcpy()d or otherwise moved.
 
 In the device tree, there's an opal-msg-size property of the OPAL node that
 says the size of a struct opal-msg. In the future, OPAL may support larger
-messages. See OPAL_GET_MESSAGE documentation for details.
+messages. See ``OPAL_GET_MESSAGE`` documentation for details.
+::
 
   ibm,opal {
             opal-msg-size = <0x48>;
@@ -28,9 +30,10 @@ messages. See OPAL_GET_MESSAGE documentation for details.
 
 OPAL_MSG_ASYNC_COMP
 -------------------
+::
 
-params[0] = token
-params[1] = rc
+   params[0] = token
+   params[1] = rc
 
 Additional parameters are function-specific.
 
@@ -43,7 +46,7 @@ OPAL_MSG_EPOW
 Used by OPAL to issue environmental and power warnings to host OS for
 conditions requiring an earlier poweroff. A few examples of these are high
 ambient temperature or system running on UPS power with low UPS battery.
-Host OS can query OPAL via GET_EPOW_STATUS API to obtain information about
+Host OS can query OPAL via ``GET_EPOW_STATUS`` API to obtain information about
 EPOW conditions present. Refer include/opal-api.h for description of
 all supported EPOW events. OPAL_SYSPOWER_CHNG, OPAL_SYSPOWER_FAIL and
 OPAL_SYSPOWER_INC events don't require system poweroff.
@@ -56,9 +59,9 @@ OPAL_MSG_SHUTDOWN
 
 Used by OPAL to inform the host OS it must imitate a graceful shutdown. Uses
 the first parameter to indicate weather the system is going down for shutdown
-or a reboot.
+or a reboot. ::
 
-params[0] = 0x01 reboot, 0x00 shutdown
+  params[0] = 0x01 reboot, 0x00 shutdown
 
 OPAL_MSG_HMI_EVT
 ----------------
@@ -81,12 +84,15 @@ The current version of HMI event structure V2 and is backward compatible
 to V1 version.
 
 Notes:
+
 - When adding new structure to the union in future, the version number
   must be bumped.
 - All future versions must be backward compatible to all its older versions.
 - Size of this structure should not exceed that of struct opal_msg.
 
-struct OpalHMIEvent {
+::
+
+   struct OpalHMIEvent {
         uint8_t         version;        /* 0x00 */
         uint8_t         severity;       /* 0x01 */
         uint8_t         type;           /* 0x02 */
@@ -113,7 +119,7 @@ struct OpalHMIEvent {
 			} u;
 		} xstop_error;
 	} u;
-};
+   };
 
 
 OPAL_MSG_DPO
@@ -128,7 +134,7 @@ OPAL_MSG_PRD
 ------------
 
 This message is a OPAL-to-HBRT notification, and contains a
-struct opal_prd_msg:
+struct opal_prd_msg: ::
 
 	enum opal_prd_msg_type {
 		OPAL_PRD_MSG_TYPE_INIT = 0,	/* HBRT --> OPAL */
@@ -174,40 +180,40 @@ OPAL_MSG_OCC
 
 This is used by OPAL to inform host about OCC events like OCC reset,
 OCC load and throttle status change by OCC which can indicate the
-host the reason for frequency throttling/unthrottling.
+host the reason for frequency throttling/unthrottling. ::
 
-#define OCC_RESET			0
-#define OCC_LOAD 			1
-#define OCC_THROTTLE 			2
-#define OCC_MAX_THROTTLE_STATUS		5
-/*
- * struct opal_occ_msg:
- * type: OCC_RESET, OCC_LOAD, OCC_THROTTLE
- * chip: chip id
- * throttle status: Indicates the reason why OCC may have limited
- * the max Pstate of the chip.
- * 0x00 = No throttle
- * 0x01 = Power Cap
- * 0x02 = Processor Over Temperature
- * 0x03 = Power Supply Failure (currently not used)
- * 0x04 = Over current (currently not used)
- * 0x05 = OCC Reset (not reliable as some failures will not allow for
- * OCC to update throttle status)
- */
-struct opal_occ_msg {
+  #define OCC_RESET			0
+  #define OCC_LOAD 			1
+  #define OCC_THROTTLE 			2
+  #define OCC_MAX_THROTTLE_STATUS		5
+  /*
+   * struct opal_occ_msg:
+   * type: OCC_RESET, OCC_LOAD, OCC_THROTTLE
+   * chip: chip id
+   * throttle status: Indicates the reason why OCC may have limited
+   * the max Pstate of the chip.
+   * 0x00 = No throttle
+   * 0x01 = Power Cap
+   * 0x02 = Processor Over Temperature
+   * 0x03 = Power Supply Failure (currently not used)
+   * 0x04 = Over current (currently not used)
+   * 0x05 = OCC Reset (not reliable as some failures will not allow for
+   * OCC to update throttle status)
+   */
+  struct opal_occ_msg {
 	__be64 type;
 	__be64 chip;
 	__be64 throttle_status;
-};
+  };
 
 Host should read opal_occ_msg.chip and opal_occ_msg.throttle_status
-only when opal_occ_msg.type = OCC_THROTTLE.
-If host receives OCC_THROTTLE after an OCC_RESET then this throttle
+only when ``opal_occ_msg.type = OCC_THROTTLE``.
+If host receives ``OCC_THROTTLE`` after an ``OCC_RESET`` then this throttle
 message will have a special meaning which indicates that all the OCCs
-have become active after a reset. In such cases opal_occ_msg.chip and
-opal_occ_msg.throttle_status will be set to 0 and host should not use
+have become active after a reset. In such cases ``opal_occ_msg.chip`` and
+``opal_occ_msg.throttle_status`` will be set to 0 and host should not use
 these values.
 
-If opal_occ_msg.type > 2 then host should ignore the message for now,
-new events can be defined for opal_occ_msg.type in the future versions
+If ``opal_occ_msg.type > 2`` then host should ignore the message for now,
+new events can be defined for ``opal_occ_msg.type`` in the future versions
 of OPAL.

@@ -1,17 +1,25 @@
 OPAL_PCI_SET_POWER_STATE
----------------------------
+========================
 
 Set PCI slot power state
 
-Parameters:
-	uint64_t async_token: Token of asynchronous message to be sent
-                 on completion of OPAL_PCI_SLOT_POWER_{OFF, ON}. It is
-                 ignored when @data is OPAL_PCI_SLOT_{OFFLINE, ONLINE}.
-	uint64_t id: PCI slot ID
-	uint64_t data: memory buffer pointer for the power state which
-                 can be one of OPAL_PCI_SLOT_POWER_{OFF, ON, OFFLINE, ONLINE}.
+Parameters
+----------
 
-Calling:
+``uint64_t async_token``
+  Token of asynchronous message to be sent
+  on completion of OPAL_PCI_SLOT_POWER_{OFF, ON}. It is
+  ignored when @data is OPAL_PCI_SLOT_{OFFLINE, ONLINE}.
+
+``uint64_t id``
+  PCI slot ID
+
+``uint64_t data``
+  memory buffer pointer for the power state which
+  can be one of OPAL_PCI_SLOT_POWER_{OFF, ON, OFFLINE, ONLINE}.
+
+Calling
+-------
 
 Set PCI slot's power state. The power state is stored in buffer pointed
 by @data. The typical use is to hot add or remove adapters behind the
@@ -28,9 +36,17 @@ removed or added accordingly, without actually changing the slot's power state.
 The API call will return OPAL_SUCCESS immediately and no further asynchronous
 message will be sent.
 
-Return Codes:
+Return Codes
+------------
 
-OPAL_SUCCESS - PCI hotplug on the slot is completed successfully
-OPAL_ASYNC_COMPLETION - PCI hotplug needs further message to confirm
-OPAL_PARAMETER - The indicated PCI slot isn't found
-OPAL_UNSUPPORTED - Setting power state not supported on the PCI slot
+OPAL_SUCCESS
+  PCI hotplug on the slot is completed successfully
+
+OPAL_ASYNC_COMPLETION
+  PCI hotplug needs further message to confirm
+
+OPAL_PARAMETER
+  The indicated PCI slot isn't found
+
+OPAL_UNSUPPORTED
+  Setting power state not supported on the PCI slot

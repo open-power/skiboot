@@ -1,10 +1,11 @@
 OPAL_GET_MSI_32 and OPAL_GET_MSI_64
------------------------------------
+===================================
+::
 
-#define OPAL_GET_MSI_32				39
-#define OPAL_GET_MSI_64				40
+   #define OPAL_GET_MSI_32				39
+   #define OPAL_GET_MSI_64				40
 
-WARNING: following documentation is from old sources, and is possibly
+**WARNING:** the following documentation is from old sources, and is possibly
 not representative of OPALv3 as implemented by skiboot. This should be
 used as a starting point for full documentation.
 
@@ -14,22 +15,26 @@ data to program into a PE PCIE function for a particular MVE and XIVE. The
 msi_address parameter returns the MSI DMA address and the msi_data parameter
 returns the MSI DMA message data value the PE uses to signal that interrupt.
 
-    The phb_id parameter is the value from the PHB node ibm,opal-phbid
-    property.
+``phb_id``
+  The ``phb_id`` parameter is the value from the PHB node ``ibm,opal-phbid``
+  property.
 
-    The mve_number is the index of an MVE used to authorize this PE to this
-    MSI. For ibm,opal-ioda2 PHBs, the MVE number argument is ignored.
+``mve_number``
+  The ``mve_number`` is the index of an MVE used to authorize this PE to this
+  MSI. For ``ibm,opal-ioda2`` PHBs, the MVE number argument is ignored.
 
-    The xive_number is the index of an XIVE that corresponds to a particular
-    DMA address and message data value this PE will signal as an MSI ro MSI-X.
+``xive_number``
+  The ``xive_number`` is the index of an XIVE that corresponds to a particular
+  DMA address and message data value this PE will signal as an MSI ro MSI-X.
 
-    The msi_range parameter specifies the number of MSIs associated with the
-    in put MVE and XIVE, primarily for MSI-conventional Multiple Message
-    Enable > 1 MSI. MSI requires consecutive MSIs per MSI address, and each
-    MSI DMA address must be unique for any given consecutive power of 2 set
-    of 32 message data values,. which in turn select particular PHB XIVEs.
-    This value must be a power of 2 value in the range of 0 to 32. OPAL
-    returns opal_parameter for values outside of this range.
+``msi_range``
+  The msi_range parameter specifies the number of MSIs associated with the
+  in put MVE and XIVE, primarily for MSI-conventional Multiple Message
+  Enable > 1 MSI. MSI requires consecutive MSIs per MSI address, and each
+  MSI DMA address must be unique for any given consecutive power of 2 set
+  of 32 message data values,. which in turn select particular PHB XIVEs.
+  This value must be a power of 2 value in the range of 0 to 32. OPAL
+  returns opal_parameter for values outside of this range.
 
 For MSI conventional, the MSI address and message data returned apply to a
 power of 2 sequential set of XIVRs starting from the xive_number for the

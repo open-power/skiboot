@@ -1,5 +1,5 @@
 OPAL_POLL_EVENTS
-----------------
+================
 
 Poll for outstanding events.
 
@@ -19,8 +19,7 @@ Unused
 
 OPAL_EVENT_RTC = 0x4
 --------------------
-
-TODO: clean this up, this is just copied from hw/fsp/fsp-rtc.c:
+**TODO**: clean this up, this is just copied from hw/fsp/fsp-rtc.c: ::
 
  * Because the RTC calls can be pretty slow, these functions will shoot
  * an asynchronous request to the FSP (if none is already pending)
@@ -45,8 +44,6 @@ TODO: clean this up, this is just copied from hw/fsp/fsp-rtc.c:
  * There is two separate set of state for reads and writes. If both are
  * attempted at the same time, the event bit will remain set as long as either
  * of the two has a pending event to signal.
-
-
 
 OPAL_EVENT_CONSOLE_OUTPUT = 0x8
 -------------------------------
@@ -79,6 +76,6 @@ TODO
 OPAL_EVENT_DUMP_AVAIL = 0x400
 -----------------------------
 Signifies that there is a pending system dump available. See OPAL_DUMP suite
-of calls for details.
+of calls for details. ::
 
-OPAL_EVENT_MSG_PENDING = 0x800,
+  OPAL_EVENT_MSG_PENDING = 0x800,

@@ -1,10 +1,10 @@
 OPAL_HANDLE_INTERRUPT
----------------------
+=====================
 
-The host OS must pass all interrupts in "ibm,opal/opal-interrupts" in the
+The host OS must pass all interrupts in ``ibm,opal/opal-interrupts`` in the
 device tree to OPAL.
 
-An example dt snippet is:
+An example dt snippet is: ::
 
   ibm,opal {
             ...
@@ -12,14 +12,15 @@ An example dt snippet is:
   }
 
 When the host OS gets any of these interrupts, it must call
-OPAL_HANDLE_INTERRUPT.
+``OPAL_HANDLE_INTERRUPT``.
 
-The OPAL_HANDLE_INTERRUPT call takes two parameters, one input and one output.
+The ``OPAL_HANDLE_INTERRUPT`` call takes two parameters, one input and one output.
 
-uint32_t isn - the interrupt
+``uint32_t isn``
+  the interrupt
 
-uint64_t *outstanding_event_mask - returns outstanding events for host
-	 			   OS to handle
+``uint64_t *outstanding_event_mask``
+  returns outstanding events for host OS to handle
 
 The host OS should then handle any outstanding events.
 

@@ -1,15 +1,16 @@
 OPAL_GET_MSG
-------------
+============
 
 OPAL_GET_MSG will get the next pending OPAL Message (see
 opal-messages.txt).
 
-Parameters:
+Parameters: ::
+
 	buffer to copy message into
 	sizeof buffer to copy message into
 
 The maximum size of an opal message is specified in the device tree passed
-to the host OS:
+to the host OS: ::
 
   ibm,opal {
             opal-msg-size = <0x48>;
@@ -24,20 +25,24 @@ A host OS *SHOULD* always supply a buffer to OPAL_GET_MSG of either 72
 bytes or opal-msg-size. It MUST NOT supply a buffer of < 72 bytes.
 
 
-Return values:
+Return values
+-------------
 
-OPAL_RESOURCE - no available message.
+OPAL_RESOURCE
+  no available message.
 
-OPAL_PARAMETER - buffer is NULL or size is < 72 bytes.
-	         If buffer size < 72 bytes, the message will NOT be discarded
-		 by OPAL.
+OPAL_PARAMETER
+  buffer is NULL or size is < 72 bytes.
+  If buffer size < 72 bytes, the message will NOT be discarded by OPAL.
 
-OPAL_PARTIAL - If pending opal message is greater than supplied buffer.
-               In this case the message is *DISCARDED* by OPAL.
-	       This is to keep compatibility with host Operating Systems
-	       with a hard coded opal-msg-size of 72 bytes.
-	       NOT CURRENTLY IMPLEMENTED. Specified so that host OS can
-	       prepare for the possible future with either a sensible
-	       error message or by gracefully ignoring such OPAL messages.
+OPAL_PARTIAL
+  If pending opal message is greater than supplied buffer.
+  In this case the message is *DISCARDED* by OPAL.
+  This is to keep compatibility with host Operating Systems
+  with a hard coded opal-msg-size of 72 bytes.
+  **NOT CURRENTLY IMPLEMENTED**. Specified so that host OS can
+  prepare for the possible future with either a sensible
+  error message or by gracefully ignoring such OPAL messages.
 
-OPAL_SUCCESS - message successfully copied to buffer.
+OPAL_SUCCESS
+  message successfully copied to buffer.

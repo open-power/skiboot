@@ -1,5 +1,5 @@
 OPAL_RTC_WRITE
---------------
+==============
 
 OPAL_RTC_WRITE is much like OPAL_RTC_READ in that it can be asynchronous.
 
