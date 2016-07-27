@@ -1,9 +1,9 @@
 OPAL Specification
 ==================
 
-DRAFT - VERSION 0.0.1 AT BEST.
+**DRAFT - VERSION 0.0.1 AT BEST.**
 
-COMMENTS ARE WELCOME - and indeed, needed.
+**COMMENTS ARE WELCOME** - and indeed, needed.
 
 If you are reading this, congratulations: you're now reviewing it!
 
@@ -34,21 +34,27 @@ POWER systems. There are several components to what makes up a firmware
 image for OpenPower machines.
 
 For example, there may be:
-- BMC firmware
-  - Firmware that runs purely on the BMC.
-  - On IBM systems that have an FSP rather than a BMC, there is FSP firmware
-  - While essential to having the machine function, this firmware is not
+
+* BMC firmware
+
+  * Firmware that runs purely on the BMC.
+  * On IBM systems that have an FSP rather than a BMC, there is FSP firmware
+  * While essential to having the machine function, this firmware is not
     part of the OPAL Specification.
-- HostBoot
-  - HostBoot ( https://github.com/open-power/hostboot ) performs all
+* HostBoot
+
+  * HostBoot ( https://github.com/open-power/hostboot ) performs all
     processor, bus and memory initialization within IBM POWER based systems.
-- OCC Firmware
-  - On Chip Controller ( Firmware for OCC - a PPC405 core inside the IBM
+* OCC Firmware
+
+  * On Chip Controller ( Firmware for OCC - a PPC405 core inside the IBM
     POWER8 in charge of keeping the system thermally and power safe ).
-- SkiBoot
-  - Boot and runtime services.
-- A linux kernel and initramfs incorporating petitboot
-  - The bootloader. This is where a user chooses what OS to boot, and
+* SkiBoot
+
+  * Boot and runtime services.
+* A linux kernel and initramfs incorporating petitboot
+
+  * The bootloader. This is where a user chooses what OS to boot, and
     petitboot will use kexec to switch to the host Operating System
     (for example, PowerKVM).
 
@@ -66,15 +72,17 @@ Operating System. It does not dictate that any specific pieces of firmware
 code be used, although re-inventing the wheel is strongly discouraged.
 
 The OPAL Specification explicitly allows for:
-- A conforming implementation to not use any of the reference implementation
+
+* A conforming implementation to not use any of the reference implementation
   code.
-- A conforming implementation to use any 64bit POWER ISA conforming processor,
+* A conforming implementation to use any 64bit POWER ISA conforming processor,
   and not be limited to the IBM POWER8.
-- A conforming implementation to be a simulator, emulator or virtual environment
-- A host OS other than Linux
+* A conforming implementation to be a simulator, emulator or virtual environment
+* A host OS other than Linux
 
 Explicitly not covered in this specification:
-- A 32bit OPAL Specification
+
+* A 32bit OPAL Specification
   There is no reason this couldn't exist but the current specification is for
   64bit POWER systems only.
 
@@ -93,32 +101,38 @@ The OPAL Specification explicitly allows variation in this payload.
 
 A requirement of the payload is that it MUST support loading and booting
 an uncomppressed vmlinux Linux kernel.
-[TODO: expand on what this actually means]
+[**TODO**: expand on what this actually means]
 
 An OPAL system MUST pass a device tree to the host kernel.
-[TODO: expand the details, add device-tree section and spec]
+[**TODO**: expand the details, add device-tree section and spec]
 
 An OPAL system MUST provide the host kernel with enough information to
 know how to call OPAL runtime services.
-[TODO: expand on this. ]
+[**TODO**: expand on this. ]
 
 Explicitly not covered by the OPAL Specification:
-- Kernel module ABI for skiroot kernel
-- Userspace environment of skiroot
-- That skiroot is Linux.
+
+* Kernel module ABI for skiroot kernel
+* Userspace environment of skiroot
+* That skiroot is Linux.
 
 Explicitly allowed:
-- Replacing the payload with something of equal/similar functionality
+
+* Replacing the payload with something of equal/similar functionality
   (weather replacing skiroot with an implementation of Zork would be compliant
-   is left as an exercise for the reader)
+  is left as an exercise for the reader)
 
 Payload Environment
 -------------------
 The payload is started with:
-r3 = address of flattened device-tree (fdt)
-r8 = OPAL base
-r9 = OPAL entry
 
+======== =====
+Register Value
+======== =====
+r3       address of flattened device-tree (fdt)
+r8       OPAL base
+r9       OPAL entry
+======== =====
 
 Runtime Services
 ----------------
@@ -143,12 +157,13 @@ All parameters to OPAL calls are big endian. Little endian hosts MUST
 appropriately convert parameters before passing them to OPAL.
 
 Machine state across OPAL calls:
-- r1 is preserved
-- r12 is scratch
-- r13 - 31 preserved
-- 64bit HV real mode
-- big endian
-- external interrupts disabled
+
+* r1 is preserved
+* r12 is scratch
+* r13 - 31 preserved
+* 64bit HV real mode
+* big endian
+* external interrupts disabled
 
 Detecting OPAL Support
 ----------------------
@@ -165,14 +180,14 @@ The presence of the "/ibm,opal" entry in the device tree signifies running
 under OPAL. Additionally, the "/ibm,opal" node MUST have a compatibile property
 listing "ibm,opal-v3".
 
-The "/ibm,opal" node MUST have the following properties:
+The "/ibm,opal" node MUST have the following properties: ::
 
-ibm,opal {
+ ibm,opal {
 	  compatible = "ibm,opal-v3";
 	  opal-base-address = <>;
 	  opal-entry-address = <>;
 	  opal-runtime-size = <>;
-}
+ }
 
 The compatible property MAY have other strings, such as a future "ibm,opal-v4".
 These are reserved for future use.
@@ -182,11 +197,11 @@ contain "ibm,opal-v2" as well as "ibm,opal-v3". Host operating systems MUST
 NOT rely on "ibm,opal-v2", this is a relic from early OPAL history.
 
 The "ibm,opal" node MUST have a child node named "firmware". It MUST contain
-the following:
+the following: ::
 
-firmware {
+ firmware {
 	 compatible = "ibm,opal-firmware";
-}
+ }
 
 It MUST contain one of the following two properties: git-id, version.
 The git-id property is deprecated, and version SHOULD be used. These

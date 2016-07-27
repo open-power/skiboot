@@ -1,9 +1,8 @@
 OPAL/Skiboot Nvlink Interface Documentation
-----------------------------------------------------------------------
+===========================================
 
-========
 Overview
-========
+--------
 
 NV-Link is a high speed interconnect that is used in conjunction with
 a PCI-E connection to create an interface between chips that provides
@@ -22,9 +21,8 @@ Presently the NV-Link is only capable of data transfers initiated by
 the target, thus the emulated PCI device will only handle registers
 for link initialisation, DMA transfers and error reporting (EEH).
 
-====================
 Emulated PCI Devices
-====================
+--------------------
 
 Each link will be exported as an emulated PCI device with a minimum of
 two emulated PCI devices per GPU. Emulated PCI devices are grouped per
@@ -36,38 +34,42 @@ necessary device parameters. The only functionality available is
 related to the setup of DMA windows.
 
 Configuration Space Parameters
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Vendor ID = 0x1014         (IBM)
-Device ID = 0x04ea
-Revision ID = 0x00
-Class = 0x068000	   (Bridge Device Other, ProgIf = 0x0)
-BAR0/1 = TL/DL Registers
+============ =============== =====
+============ =============== =====
+Vendor ID    0x1014          (IBM)
+Device ID    0x04ea
+Revision ID  0x00
+Class        0x068000        (Bridge Device Other, ProgIf = 0x0)
+BAR0/1       TL/DL Registers
+============ =============== =====
 
 TL/DL Registers
----------------
+^^^^^^^^^^^^^^^
 
 Each link has 128KB of TL/DL registers. These will always be mapped
-to 64-bit BAR#0 of the emulated PCI device configuration space.
+to 64-bit BAR#0 of the emulated PCI device configuration space. ::
 
-BAR#0 + 128K +-----------+
-      	     | NTL (64K) |
-BAR#0 + 64K  +-----------+
+ BAR#0 + 128K +-----------+
+       	     | NTL (64K) |
+ BAR#0 + 64K  +-----------+
       	     | DL (64K)  |
-BAR#0	     +-----------+
+ BAR#0	     +-----------+
 
 Vendor Specific Capabilities
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+::
 
-+-----------------+----------------+----------------+----------------+
-|  Version (0x02) |   Cap Length   |  Next Cap Ptr  |  Cap ID (0x09) |
-+-----------------+----------------+----------------+----------------+
-|                      Procedure Status Register                     |
-+--------------------------------------------------------------------+
-|                      Procedure Control Register                    |
-+---------------------------------------------------+----------------+
-|             Reserved            |   PCI Dev Flag  |   Link Number  |
-+---------------------------------------------------+----------------+
+ +-----------------+----------------+----------------+----------------+
+ |  Version (0x02) |   Cap Length   |  Next Cap Ptr  |  Cap ID (0x09) |
+ +-----------------+----------------+----------------+----------------+
+ |                      Procedure Status Register                     |
+ +--------------------------------------------------------------------+
+ |                      Procedure Control Register                    |
+ +---------------------------------------------------+----------------+
+ |             Reserved            |   PCI Dev Flag  |   Link Number  |
+ +---------------------------------------------------+----------------+
 
 Version
 
@@ -88,19 +90,20 @@ Procedure Control Register
    procedure number depending on the procedure status field.
 
    Procedure Numbers:
-    0  - Abort in-progress procedure
-    1  - NOP
-    2  - Unsupported procedure
-    3  - Unsupported procedure
-    4  - Naples PHY - RESET
-    5  - Naples PHY - TX_ZCAL
-    6  - Naples PHY - RX_DCCAL
-    7  - Naples PHY - TX_RXCAL_ENABLE
-    8  - Naples PHY - TX_RXCAL_DISABLE
-    9  - Naples PHY - RX_TRAINING
-    10 - Naples NPU - RESET
-    11 - Naples PHY - PHY preterminate
-    12 - Naples PHY - PHY terminated
+
+    0. Abort in-progress procedure
+    1. NOP
+    2. Unsupported procedure
+    3. Unsupported procedure
+    4. Naples PHY - RESET
+    5. Naples PHY - TX_ZCAL
+    6. Naples PHY - RX_DCCAL
+    7. Naples PHY - TX_RXCAL_ENABLE
+    8. Naples PHY - TX_RXCAL_DISABLE
+    9. Naples PHY - RX_TRAINING
+    10. Naples NPU - RESET
+    11. Naples PHY - PHY preterminate
+    12. Naples PHY - PHY terminated
 
    Procedure 5 (TX_ZCAL) should only be run once. System firmware will
    ensure this so device drivers may call this procedure mutiple
@@ -142,7 +145,7 @@ Reserved
    These fields must be ignored and no value should be assumed.
 
 Interrupts
-----------
+^^^^^^^^^^
 
 Each link has a single DL/TL interrupt assigned to it. These will be
 exposed as an LSI via the emulated PCI device. There are 4 links
@@ -150,8 +153,7 @@ consuming 4 LSI interrupts. The 4 remaining interrupts supported by the
 corresponding PHB will be routed to OS platform for the purpose of error
 reporting.
 
-====================
 Device Tree Bindings
-====================
+--------------------
 
 See doc/device-tree/nvlink.txt

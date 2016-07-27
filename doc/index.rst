@@ -11,6 +11,21 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   overview
+   opal-spec
+   console-log
+   device-tree
+   error-logging
+   bmc
+   gcov
+   memory
+   nvlink
+   stable-skiboot-rules
+   versioning
+   pci
+   pci-slot
+   xscom-node-bindings
+
 Indices and tables
 ==================
 

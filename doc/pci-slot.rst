@@ -1,5 +1,5 @@
-Overview
-========
+PCI Slots
+=========
 
 The PCI slots are instantiated to represent their associated properties and
 operations. The slot properties are exported to OS through the device tree
@@ -26,11 +26,14 @@ The operation set supplied by the template might be overrided and reimplemented,
 partially. It's usually done according to the VPD figured out by individual platforms.
 
 PCI Slot Operations
-===================
+-------------------
 
 The following operations are supported to one particular PCI slot. More details
 could be found from the definition of struct pci_slot_ops:
 
+===================== ==========
+Operation             Definition
+===================== ==========
 get_presence_state    Check if any adapter connected to slot
 get_link_state        Retrieve PCIE link status: up, down, link width
 get_power_state       Retrieve the power status: on, off
@@ -48,6 +51,7 @@ hreset                Hot reset
 poll                  Interface for OPAL API to drive internal state machine
 
 add_properties        Additional PCI slot properties seen by platform
+===================== ==========
 
 PCI Slot Properties
 ===================
@@ -57,16 +61,19 @@ node for a root port, a PCIE switch port, or a PCIE to PCIx bridge. If the
 individual platforms (e.g. Firenze and Apollo) have VPD for the PCI slot, they
 should extract the PCI slot properties from VPD and export them accordingly.
 
-ibm,reset-by-firmware  Boolean indicating whether the slot reset should be
-                       done in firmware
+====================== ==========
+Property               Definition
+====================== ==========
+ibm,reset-by-firmware  Boolean indicating whether the slot reset should be done in firmware
 ibm,slot-pluggable     Boolean indicating whether the slot is pluggable
 ibm,slot-power-ctl     Boolean indicating whether the slot has power control
 ibm,slot-wired-lanes   The number of hardware lanes that are wired
 ibm,slot-pwr-led-ctl   Presence of slot power led, and controlling entity
 ibm,slot-attn-led-ctl  Presence of slot ATTN led, and controlling entity
+====================== ==========
 
 PCI Hotplug
-===========
+-----------
 
 The implementation of PCI slot hotplug heavily relies on its power state.
 Initially, the slot is powered off if there are no adapters behind it.
@@ -98,7 +105,7 @@ The API call will return OPAL_SUCCESS immediately and no further asynchronous
 message will be sent.
 
 PCI Slot on Apollo and Firenze
-==============================
+------------------------------
 
 On IBM's Apollo and Firenze platform, the PCI VPD is fetched from dedicated LID,
 which is organized in so-called 1004, 1005, or 1006 format. 1006 mapping format
@@ -115,5 +122,9 @@ power management entity doesn't exist.
 For Apollo and Firenze platform, following PCI slot properties are exported through
 PCI device tree node except those generic properties (as above):
 
+======================= ==========
+Property                Definition
+======================= ==========
 ibm,slot-location-code  System location code string for the slot connector
 ibm,slot-label          Slot label, part of "ibm,slot-location-code"
+======================= ==========

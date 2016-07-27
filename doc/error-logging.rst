@@ -1,4 +1,4 @@
-How to log errors on Sapphire and POWERNV:
+How to log errors on Sapphire and POWERNV
 =========================================
 
 Currently the errors reported by POWERNV/Sapphire (OPAL) interfaces
@@ -14,8 +14,8 @@ passed by user using the error-logging interfaces outlined below.
 Following which, PEL structure is generated based on the input and
 then passed on to FSP.
 
-Error logging interfaces in Sapphire:
-====================================
+Error logging interfaces in Sapphire
+------------------------------------
 
 Interfaces are provided for the user to log/report an error in Sapphire.
 Using these interfaces relevant error information is collected and later
@@ -23,29 +23,30 @@ converted to PEL format and then pushed to FSP.
 
 Step 1: To report an error, invoke opal_elog_create() with required argument.
 
-	struct errorlog *opal_elog_create(struct opal_err_info *e_info,
-					  uint32_t tag);
+	``struct errorlog *opal_elog_create(struct opal_err_info *e_info, uint32_t tag);``
 
-	Parameters:
+Parameters:
 
-	struct opal_err_info *e_info: Struct to hold information identifying
-                       error/event source.
-
-	uint32_t tag: Unique value to identify the data.
+	* ``struct opal_err_info *e_info``
+	  Struct to hold information identifying error/event source.
+        * ``uint32_t tag:`` Unique value to identify the data.
                        Ideal to have ASCII value for 4-byte string.
 
 	The opal_err_info struct holds several pieces of information to help
 	identify the error/event. The struct can be obtained via the
-	DEFINE_LOG_ENTRY macro as below - it only needs to be called once.
+	``DEFINE_LOG_ENTRY`` macro as below - it only needs to be called once.
 
-	DEFINE_LOG_ENTRY(OPAL_RC_ATTN, OPAL_PLATFORM_ERR_EVT, OPAL_CHIP,
+        ::
+
+	 DEFINE_LOG_ENTRY(OPAL_RC_ATTN, OPAL_PLATFORM_ERR_EVT, OPAL_CHIP,
 			OPAL_PLATFORM_FIRMWARE, OPAL_PREDICTIVE_ERR_GENERAL,
 			OPAL_NA);
 
 	The various attributes set by this macro are described below.
 
-	uint8_t opal_error_event_type: Classification of error/events
-					type reported on OPAL
+	``uint8_t opal_error_event_type``: Classification of error/events
+	type reported on OPAL::
+
 		/* Platform Events/Errors: Report Machine Check Interrupt */
 		#define OPAL_PLATFORM_ERR_EVT           0x01
 		/* INPUT_OUTPUT: Report all I/O related events/errors */
@@ -55,10 +56,11 @@ Step 1: To report an error, invoke opal_elog_create() with required argument.
 		/* MISC: Miscellaneous error */
 		#define OPAL_MISC_ERR_EVT               0x04
 
-	uint16_t component_id: Component ID of Sapphire component as
+	``uint16_t component_id``: Component ID of Sapphire component as
 				listed in include/errorlog.h
 
-	uint8_t subsystem_id: ID of the sub-system reporting error.
+	  ``uint8_t subsystem_id``: ID of the sub-system reporting error.::
+
 		/* OPAL Subsystem IDs listed for reporting events/errors */
 			#define OPAL_PROCESSOR_SUBSYSTEM        0x10
 			#define OPAL_MEMORY_SUBSYSTEM           0x20
@@ -72,7 +74,8 @@ Step 1: To report an error, invoke opal_elog_create() with required argument.
 			#define OPAL_SOFTWARE                   0x90
 			#define OPAL_EXTERNAL_ENV               0xA0
 
-	uint8_t event_severity: Severity of the event/error to be reported
+	``uint8_t event_severity``: Severity of the event/error to be reported ::
+
 		#define OPAL_INFO                                   0x00
 		#define OPAL_RECOVERED_ERR_GENERAL                  0x10
 
@@ -105,83 +108,84 @@ Step 1: To report an error, invoke opal_elog_create() with required argument.
 
 		#define OPAL_ERROR_PANIC				    0x50
 
-	uint8_t  event_subtype: Event Sub-type
-			#define OPAL_NA                                         0x00
-			#define OPAL_MISCELLANEOUS_INFO_ONLY                    0x01
-			#define OPAL_PREV_REPORTED_ERR_RECTIFIED                0x10
-			#define OPAL_SYS_RESOURCES_DECONFIG_BY_USER             0x20
-			#define OPAL_SYS_RESOURCE_DECONFIG_PRIOR_ERR            0x21
-			#define OPAL_RESOURCE_DEALLOC_EVENT_NOTIFY              0x22
-			#define OPAL_CONCURRENT_MAINTENANCE_EVENT               0x40
-			#define OPAL_CAPACITY_UPGRADE_EVENT                     0x60
-			#define OPAL_RESOURCE_SPARING_EVENT                     0x70
-			#define OPAL_DYNAMIC_RECONFIG_EVENT                     0x80
-			#define OPAL_NORMAL_SYS_PLATFORM_SHUTDOWN               0xD0
-			#define OPAL_ABNORMAL_POWER_OFF                         0xE0
+		``uint8_t  event_subtype``: Event Sub-type ::
 
-	uint8_t opal_srctype: SRC type, value should be OPAL_SRC_TYPE_ERROR.
+		  #define OPAL_NA                                         0x00
+		  #define OPAL_MISCELLANEOUS_INFO_ONLY                    0x01
+		  #define OPAL_PREV_REPORTED_ERR_RECTIFIED                0x10
+		  #define OPAL_SYS_RESOURCES_DECONFIG_BY_USER             0x20
+		  #define OPAL_SYS_RESOURCE_DECONFIG_PRIOR_ERR            0x21
+		  #define OPAL_RESOURCE_DEALLOC_EVENT_NOTIFY              0x22
+		  #define OPAL_CONCURRENT_MAINTENANCE_EVENT               0x40
+		  #define OPAL_CAPACITY_UPGRADE_EVENT                     0x60
+		  #define OPAL_RESOURCE_SPARING_EVENT                     0x70
+		  #define OPAL_DYNAMIC_RECONFIG_EVENT                     0x80
+		  #define OPAL_NORMAL_SYS_PLATFORM_SHUTDOWN               0xD0
+		  #define OPAL_ABNORMAL_POWER_OFF                         0xE0
+
+
+	``uint8_t opal_srctype``: SRC type, value should be OPAL_SRC_TYPE_ERROR.
 			SRC refers to System Reference Code.
 			It is 4 byte hexa-decimal number that reflects the
 			current system state.
 			Eg: BB821010,
-				1st byte -> BB -> SRC Type
-				2nd byte -> 82 -> Subsystem
-				3rd, 4th byte -> Component ID and Reason Code
+
+			* 1st byte -> BB -> SRC Type
+			* 2nd byte -> 82 -> Subsystem
+			* 3rd, 4th byte -> Component ID and Reason Code
+
 			SRC needs to be generated on the fly depending on the state
 			of the system. All the parameters needed to generate a SRC
 			should be provided during reporting of an event/error.
 
 
-	 uint32_t reason_code: Reason for failure as stated in include/errorlog.h
-				for Sapphire
+	``uint32_t reason_code``: Reason for failure as stated in include/errorlog.h for Sapphire.
 			Eg: Reason code for code-update failures can be
-				OPAL_RC_CU_INIT  -> Initialisation failure
-				OPAL_RC_CU_FLASH -> Flash failure
+
+			* ``OPAL_RC_CU_INIT``  -> Initialisation failure
+			* ``OPAL_RC_CU_FLASH`` -> Flash failure
 
 
 Step 2: Data can be appended to the user data section using the either of
-        the below two interfaces:
+        the below two interfaces: ::
 
-	void log_append_data(struct errorlog *buf, unsigned char *data,
+	  void log_append_data(struct errorlog *buf, unsigned char *data,
 			     uint16_t size)
 
 	Parameters:
-	struct opal_errorlog *buf:
-		struct opal_errorlog *buf: struct opal_errorlog pointer returned
-		by opal_elog_create() call.
+	  ``struct opal_errorlog *buf``: ``struct opal_errorlog`` pointer
+	  returned by opal_elog_create() call.
 
-	unsigned char *data: Pointer to the dump data
+	``unsigned char *data``: Pointer to the dump data
 
-	uint16_t size: Size of the dump data.
+	``uint16_t size``: Size of the dump data.
 
-	void log_append_msg(struct errorlog *buf, const char *fmt, ...)
+	``void log_append_msg(struct errorlog *buf, const char *fmt, ...)``
 
 	Parameters:
-	struct opal_errorlog *buf:
-		struct opal_errorlog *buf: struct opal_errorlog pointer returned
-		by opal_elog_create() call.
+	  ``struct opal_errorlog *buf``: pointer returned by opal_elog_create()
+	  call.
 
-	const char *fmt: Formatted error log string.
+	``const char *fmt``: Formatted error log string.
 
 	Additional user data sections can be added to the error log to
 	separate data (eg. readable text vs binary data) by calling
 	log_add_section(). The interfaces in Step 2 operate on the 'last'
 	user data section of the error log.
 
-	void log_add_section(struct errorlog *buf, uint32_t tag);
+	``void log_add_section(struct errorlog *buf, uint32_t tag);``
 
 	Parameters:
-	struct opal_errorlog *buf:
-		struct opal_errorlog *buf: struct opal_errorlog pointer returned
-		by opal_elog_create() call.
+	  ``struct opal_errorlog *buf``: pointer returned by opal_elog_create() call.
 
-	uint32_t tag: Unique value to identify the data.
+	  ``uint32_t tag``: Unique value to identify the data.
                        Ideal to have ASCII value for 4-byte string.
 
 Step 3: Once all the data for an error is logged in, the error needs to be
-	committed in FSP.
+	committed in FSP. ::
 
-	rc = elog_fsp_commit(buf);
+	  rc = elog_fsp_commit(buf);
+
 	Value of 0 is returned on success.
 
 In the process of committing an error to FSP, log info is first internally
@@ -191,11 +195,13 @@ reported by Sapphire and POWERNV are logged in FSP.
 
 If the user does not intend to dump various user data sections, but just
 log the error with some amount of description around that error, they can do
-so using just the simple error logging interface
+so using just the simple error logging interface ::
 
-log_simple_error(uint32_t reason_code, char *fmt, ...);
+  log_simple_error(uint32_t reason_code, char *fmt, ...);
 
-Eg: log_simple_error(OPAL_RC_SURVE_STATUS,
+For example: ::
+
+  log_simple_error(OPAL_RC_SURVE_STATUS,
 			"SURV: Error retreiving surveillance status: %d\n",
                        						err_len);
 
@@ -203,8 +209,8 @@ Using the reason code, an error log is generated with the information derived
 from the look-up table, populated and committed to FSP. All of it
 is done with just one call.
 
-Note:
-====
+Note
+----
 * For more information regarding error logging and PEL format
   refer to PAPR doc and P7 PEL and SRC PLDD document.
 
@@ -212,15 +218,17 @@ Note:
   interface parameters and include/pel.h for PEL
   structures.
 
-Sample error logging:
-===================
+Sample error logging
+--------------------
 
-DEFINE_LOG_ENTRY(OPAL_RC_ATTN, OPAL_PLATFORM_ERR_EVT, OPAL_ATTN,
+::
+
+  DEFINE_LOG_ENTRY(OPAL_RC_ATTN, OPAL_PLATFORM_ERR_EVT, OPAL_ATTN,
 		 OPAL_PLATFORM_FIRMWARE, OPAL_PREDICTIVE_ERR_GENERAL,
 		 OPAL_NA);
 
-void report_error(int index)
-{
+  void report_error(int index)
+  {
 	struct errorlog *buf;
 	char data1[] = "This is a sample user defined data section1";
 	char data2[] = "Error logging sample. These are dummy errors. Section 2";
@@ -258,138 +266,141 @@ void report_error(int index)
 	/* Once all info is updated, ready to be sent to FSP */
 	printf("ELOG:commit to FSP\n");
 	log_commit(buf);
-}
+ }
 
- Sample output PEL dump got from FSP:
- ===================================
+Sample output PEL dump got from FSP
+-----------------------------------
+
+::
+   
  $ errl -d -x 0x533C9B37
-|   00000000     50480030  01004154  20150728  02000500     PH.0..AT ..(....   |
-|   00000010     20150728  02000566  4B000107  00000000      ..(...fK.......   |
-|   00000020     00000000  00000000  B0000002  533C9B37     ............S..7   |
-|   00000030     55480018  01004154  80002000  00000000     UH....AT.. .....   |
-|   00000040     00002000  01005300  50530050  01004154     .. ...S.PS.P..AT   |
-|   00000050     02000008  00000048  00000080  00000000     .......H........   |
-|   00000060     00000000  00000000  00000000  00000000     ................   |
-|   00000070     00000000  00000000  42423832  31343130     ........BB821410   |
-|   00000080     20202020  20202020  20202020  20202020                        |
-|   00000090     20202020  20202020  4548004C  01004154             EH.L..AT   |
-|   000000A0     38323836  2D343241  31303738  34415400     8286-42A10784AT.   |
-|   000000B0     00000000  00000000  00000000  00000000     ................   |
-|   000000C0     00000000  00000000  00000000  00000000     ................   |
-|   000000D0     00000000  00000000  20150728  02000500     ........ ..(....   |
-|   000000E0     00000000  4D54001C  01004154  38323836     ....MT....AT8286   |
-|   000000F0     2D343241  31303738  34415400  00000000     -42A10784AT.....   |
-|   00000100     5544003C  01004154  4B4B4B4B  00340000     UD....ATKKKK.4..   |
-|   00000110     54686973  20697320  61207361  6D706C65     This is a sample   |
-|   00000120     20757365  72206465  66696E65  64206461      user defined da   |
-|   00000130     74612073  65637469  6F6E3100  554400A7     ta section1.UD..   |
-|   00000140     01004154  4C4C4C4C  009F0000  4572726F     ..ATLLLL....Erro   |
-|   00000150     72206C6F  6767696E  67207361  6D706C65     r logging sample   |
-|   00000160     2E205468  65736520  61726520  64756D6D     . These are dumm   |
-|   00000170     79206572  726F7273  2E205365  6374696F     y errors. Sectio   |
-|   00000180     6E203200  53616D70  6C652065  72726F72     n 2.Sample error   |
-|   00000190     2053616D  706C6520  6572726F  72205361      Sample error Sa   |
-|   000001A0     6D706C65  20657272  6F722053  616D706C     mple error Sampl   |
-|   000001B0     65206572  726F7220  09090953  616D706C     e error ...Sampl   |
-|   000001C0     65206572  726F7220  61626364  65666768     e error abcdefgh   |
-|   000001D0     696A6B6C  6D6E6F70  71727374  75767778     ijklmnopqrstuvwx   |
-|   000001E0     797A00                                     yz.                |
-|------------------------------------------------------------------------------|
-|                       Platform Event Log - 0x533C9B37                        |
-|------------------------------------------------------------------------------|
-|                                Private Header                                |
-|------------------------------------------------------------------------------|
-| Section Version          : 1                                                 |
-| Sub-section type         : 0                                                 |
-| Created by               : 4154                                              |
-| Created at               : 07/28/2015 02:00:05                               |
-| Committed at             : 07/28/2015 02:00:05                               |
-| Creator Subsystem        : OPAL                                              |
-| CSSVER                   :                                                   |
-| Platform Log Id          : 0xB0000002                                        |
-| Entry Id                 : 0x533C9B37                                        |
-| Total Log Size           : 483                                               |
-|------------------------------------------------------------------------------|
-|                                 User Header                                  |
-|------------------------------------------------------------------------------|
-| Section Version          : 1                                                 |
-| Sub-section type         : 0                                                 |
-| Log Committed by         : 4154                                              |
-| Subsystem                : Platform Firmware                                 |
-| Event Scope              : Unknown - 0x00000000                              |
-| Event Severity           : Predictive Error                                  |
-| Event Type               : Not Applicable                                    |
-| Return Code              : 0x00000000                                        |
-| Action Flags             : Report Externally                                 |
-| Action Status            : Sent to Hypervisor                                |
-|------------------------------------------------------------------------------|
-|                        Primary System Reference Code                         |
-|------------------------------------------------------------------------------|
-| Section Version          : 1                                                 |
-| Sub-section type         : 0                                                 |
-| Created by               : 4154                                              |
-| SRC Format               : 0x80                                              |
-| SRC Version              : 0x02                                              |
-| Virtual Progress SRC     : False                                             |
-| I5/OS Service Event Bit  : False                                             |
-| Hypervisor Dump Initiated: False                                             |
-| Power Control Net Fault  : False                                             |
-|                                                                              |
-| Valid Word Count         : 0x08                                              |
-| Reference Code           : BB821410                                          |
-| Hex Words 2 - 5          : 00000080 00000000 00000000 00000000               |
-| Hex Words 6 - 9          : 00000000 00000000 00000000 00000000               |
-|                                                                              |
-|------------------------------------------------------------------------------|
-|                             Extended User Header                             |
-|------------------------------------------------------------------------------|
-| Section Version          : 1                                                 |
-| Sub-section type         : 0                                                 |
-| Created by               : 4154                                              |
-| Reporting Machine Type   : 8286-42A                                          |
-| Reporting Serial Number  : 10784AT                                           |
-| FW Released Ver          :                                                   |
-| FW SubSys Version        :                                                   |
-| Common Ref Time          : 07/28/2015 02:00:05                               |
-| Symptom Id Len           : 0                                                 |
-| Symptom Id               :                                                   |
-|------------------------------------------------------------------------------|
-|                      Machine Type/Model & Serial Number                      |
-|------------------------------------------------------------------------------|
-| Section Version          : 1                                                 |
-| Sub-section type         : 0                                                 |
-| Created by               : 4154                                              |
-| Machine Type Model       : 8286-42A                                          |
-| Serial Number            : 10784AT                                           |
-|------------------------------------------------------------------------------|
-|                              User Defined Data                               |
-|------------------------------------------------------------------------------|
-| Section Version          : 1                                                 |
-| Sub-section type         : 0                                                 |
-| Created by               : 4154                                              |
-|                                                                              |
-|   00000000     4B4B4B4B  00340000  54686973  20697320     KKKK.4..This is    |
-|   00000010     61207361  6D706C65  20757365  72206465     a sample user de   |
-|   00000020     66696E65  64206461  74612073  65637469     fined data secti   |
-|   00000030     6F6E3100                                   on1.               |
-|                                                                              |
-|------------------------------------------------------------------------------|
-|                              User Defined Data                               |
-|------------------------------------------------------------------------------|
-| Section Version          : 1                                                 |
-| Sub-section type         : 0                                                 |
-| Created by               : 4154                                              |
-|                                                                              |
-|   00000000     4C4C4C4C  009F0000  4572726F  72206C6F     LLLL....Error lo   |
-|   00000010     6767696E  67207361  6D706C65  2E205468     gging sample. Th   |
-|   00000020     65736520  61726520  64756D6D  79206572     ese are dummy er   |
-|   00000030     726F7273  2E205365  6374696F  6E203200     rors. Section 2.   |
-|   00000040     53616D70  6C652065  72726F72  2053616D     Sample error Sam   |
-|   00000050     706C6520  6572726F  72205361  6D706C65     ple error Sample   |
-|   00000060     20657272  6F722053  616D706C  65206572      error Sample er   |
-|   00000070     726F7220  09090953  616D706C  65206572     ror ...Sample er   |
-|   00000080     726F7220  61626364  65666768  696A6B6C     ror abcdefghijkl   |
-|   00000090     6D6E6F70  71727374  75767778  797A00       mnopqrstuvwxyz.    |
-|                                                                              |
-|------------------------------------------------------------------------------|
+ |   00000000     50480030  01004154  20150728  02000500     PH.0..AT ..(....   |
+ |   00000010     20150728  02000566  4B000107  00000000      ..(...fK.......   |
+ |   00000020     00000000  00000000  B0000002  533C9B37     ............S..7   |
+ |   00000030     55480018  01004154  80002000  00000000     UH....AT.. .....   |
+ |   00000040     00002000  01005300  50530050  01004154     .. ...S.PS.P..AT   |
+ |   00000050     02000008  00000048  00000080  00000000     .......H........   |
+ |   00000060     00000000  00000000  00000000  00000000     ................   |
+ |   00000070     00000000  00000000  42423832  31343130     ........BB821410   |
+ |   00000080     20202020  20202020  20202020  20202020                        |
+ |   00000090     20202020  20202020  4548004C  01004154             EH.L..AT   |
+ |   000000A0     38323836  2D343241  31303738  34415400     8286-42A10784AT.   |
+ |   000000B0     00000000  00000000  00000000  00000000     ................   |
+ |   000000C0     00000000  00000000  00000000  00000000     ................   |
+ |   000000D0     00000000  00000000  20150728  02000500     ........ ..(....   |
+ |   000000E0     00000000  4D54001C  01004154  38323836     ....MT....AT8286   |
+ |   000000F0     2D343241  31303738  34415400  00000000     -42A10784AT.....   |
+ |   00000100     5544003C  01004154  4B4B4B4B  00340000     UD....ATKKKK.4..   |
+ |   00000110     54686973  20697320  61207361  6D706C65     This is a sample   |
+ |   00000120     20757365  72206465  66696E65  64206461      user defined da   |
+ |   00000130     74612073  65637469  6F6E3100  554400A7     ta section1.UD..   |
+ |   00000140     01004154  4C4C4C4C  009F0000  4572726F     ..ATLLLL....Erro   |
+ |   00000150     72206C6F  6767696E  67207361  6D706C65     r logging sample   |
+ |   00000160     2E205468  65736520  61726520  64756D6D     . These are dumm   |
+ |   00000170     79206572  726F7273  2E205365  6374696F     y errors. Sectio   |
+ |   00000180     6E203200  53616D70  6C652065  72726F72     n 2.Sample error   |
+ |   00000190     2053616D  706C6520  6572726F  72205361      Sample error Sa   |
+ |   000001A0     6D706C65  20657272  6F722053  616D706C     mple error Sampl   |
+ |   000001B0     65206572  726F7220  09090953  616D706C     e error ...Sampl   |
+ |   000001C0     65206572  726F7220  61626364  65666768     e error abcdefgh   |
+ |   000001D0     696A6B6C  6D6E6F70  71727374  75767778     ijklmnopqrstuvwx   |
+ |   000001E0     797A00                                     yz.                |
+ |------------------------------------------------------------------------------|
+ |                       Platform Event Log - 0x533C9B37                        |
+ |------------------------------------------------------------------------------|
+ |                                Private Header                                |
+ |------------------------------------------------------------------------------|
+ | Section Version          : 1                                                 |
+ | Sub-section type         : 0                                                 |
+ | Created by               : 4154                                              |
+ | Created at               : 07/28/2015 02:00:05                               |
+ | Committed at             : 07/28/2015 02:00:05                               |
+ | Creator Subsystem        : OPAL                                              |
+ | CSSVER                   :                                                   |
+ | Platform Log Id          : 0xB0000002                                        |
+ | Entry Id                 : 0x533C9B37                                        |
+ | Total Log Size           : 483                                               |
+ |------------------------------------------------------------------------------|
+ |                                 User Header                                  |
+ |------------------------------------------------------------------------------|
+ | Section Version          : 1                                                 |
+ | Sub-section type         : 0                                                 |
+ | Log Committed by         : 4154                                              |
+ | Subsystem                : Platform Firmware                                 |
+ | Event Scope              : Unknown - 0x00000000                              |
+ | Event Severity           : Predictive Error                                  |
+ | Event Type               : Not Applicable                                    |
+ | Return Code              : 0x00000000                                        |
+ | Action Flags             : Report Externally                                 |
+ | Action Status            : Sent to Hypervisor                                |
+ |------------------------------------------------------------------------------|
+ |                        Primary System Reference Code                         |
+ |------------------------------------------------------------------------------|
+ | Section Version          : 1                                                 |
+ | Sub-section type         : 0                                                 |
+ | Created by               : 4154                                              |
+ | SRC Format               : 0x80                                              |
+ | SRC Version              : 0x02                                              |
+ | Virtual Progress SRC     : False                                             |
+ | I5/OS Service Event Bit  : False                                             |
+ | Hypervisor Dump Initiated: False                                             |
+ | Power Control Net Fault  : False                                             |
+ |                                                                              |
+ | Valid Word Count         : 0x08                                              |
+ | Reference Code           : BB821410                                          |
+ | Hex Words 2 - 5          : 00000080 00000000 00000000 00000000               |
+ | Hex Words 6 - 9          : 00000000 00000000 00000000 00000000               |
+ |                                                                              |
+ |------------------------------------------------------------------------------|
+ |                             Extended User Header                             |
+ |------------------------------------------------------------------------------|
+ | Section Version          : 1                                                 |
+ | Sub-section type         : 0                                                 |
+ | Created by               : 4154                                              |
+ | Reporting Machine Type   : 8286-42A                                          |
+ | Reporting Serial Number  : 10784AT                                           |
+ | FW Released Ver          :                                                   |
+ | FW SubSys Version        :                                                   |
+ | Common Ref Time          : 07/28/2015 02:00:05                               |
+ | Symptom Id Len           : 0                                                 |
+ | Symptom Id               :                                                   |
+ |------------------------------------------------------------------------------|
+ |                      Machine Type/Model & Serial Number                      |
+ |------------------------------------------------------------------------------|
+ | Section Version          : 1                                                 |
+ | Sub-section type         : 0                                                 |
+ | Created by               : 4154                                              |
+ | Machine Type Model       : 8286-42A                                          |
+ | Serial Number            : 10784AT                                           |
+ |------------------------------------------------------------------------------|
+ |                              User Defined Data                               |
+ |------------------------------------------------------------------------------|
+ | Section Version          : 1                                                 |
+ | Sub-section type         : 0                                                 |
+ | Created by               : 4154                                              |
+ |                                                                              |
+ |   00000000     4B4B4B4B  00340000  54686973  20697320     KKKK.4..This is    |
+ |   00000010     61207361  6D706C65  20757365  72206465     a sample user de   |
+ |   00000020     66696E65  64206461  74612073  65637469     fined data secti   |
+ |   00000030     6F6E3100                                   on1.               |
+ |                                                                              |
+ |------------------------------------------------------------------------------|
+ |                              User Defined Data                               |
+ |------------------------------------------------------------------------------|
+ | Section Version          : 1                                                 |
+ | Sub-section type         : 0                                                 |
+ | Created by               : 4154                                              |
+ |                                                                              |
+ |   00000000     4C4C4C4C  009F0000  4572726F  72206C6F     LLLL....Error lo   |
+ |   00000010     6767696E  67207361  6D706C65  2E205468     gging sample. Th   |
+ |   00000020     65736520  61726520  64756D6D  79206572     ese are dummy er   |
+ |   00000030     726F7273  2E205365  6374696F  6E203200     rors. Section 2.   |
+ |   00000040     53616D70  6C652065  72726F72  2053616D     Sample error Sam   |
+ |   00000050     706C6520  6572726F  72205361  6D706C65     ple error Sample   |
+ |   00000060     20657272  6F722053  616D706C  65206572      error Sample er   |
+ |   00000070     726F7220  09090953  616D706C  65206572     ror ...Sample er   |
+ |   00000080     726F7220  61626364  65666768  696A6B6C     ror abcdefghijkl   |
+ |   00000090     6D6E6F70  71727374  75767778  797A00       mnopqrstuvwxyz.    |
+ |                                                                              |
+ |------------------------------------------------------------------------------|
 

@@ -6,6 +6,10 @@ it provides some runtime services to the OS (typically Linux).
 
 Source layout
 -------------
+
+========= ===================================
+Directory Content
+========= ===================================
 asm/	  small amount, mainly entry points
 ccan/	  bits from CCAN
 core/	  common code among machines.
@@ -17,6 +21,7 @@ include/  headers!
 libc/ 	  tiny libc, from SLOF
 libfdt/   straight device tree lib
 libpore/  to manipulate PORE engine.
+========= ===================================
 
 We have a spinlock implementation in asm/lock.S
 Entry points are detailed in asm/head.S
@@ -26,9 +31,13 @@ Binaries
 --------
 The following binaries are built:
 
-skiboot.lid: is the actual lid. objdump out
-skiboot.elf: is the elf binary of it, lid comes from this
-skiboot.map: plain map of symbols
+=========== ============================================
+File        Purpose
+=========== ============================================
+skiboot.lid is the actual lid. objdump out
+skiboot.elf is the elf binary of it, lid comes from this
+skiboot.map plain map of symbols
+=========== ============================================
 
 Booting
 -------
@@ -65,7 +74,7 @@ At the bottom of each stack area is a per CPU data structure, which we
 can get to by chopping off the LSBs of the stack pointer.
 
 The OPAL interface is a generic message queue. The Linux side of things
-can be found in linux/arch/powerpc/platform/powernv/opal-*.c
+can be found in linux/arch/powerpc/platform/powernv/
 
 Interrupts
 ----------
@@ -99,11 +108,12 @@ should be used sparingly though.
 
 Important memory locations:
 
-SKIBOOT_BASE - where we sit
-
-HEAP_BASE,
-HEAP_SIZE - the location and size for heap. We reserve 4MB for
-	    initial allocations.
+============= ============================================================
+Location      What's there
+============= ============================================================
+SKIBOOT_BASE  where skiboot lives, of SKIBOOT_SIZE
+HEAP_BASE     Where skiboot heap starts, of HEAP_SIZE
+============= ============================================================
 
 There is also SKIBOOT_SIZE (manually calculated) and DEVICE_TREE_MAX_SIZE,
 which is largely historical.

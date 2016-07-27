@@ -21,13 +21,11 @@ FW Boot Progress: assertion type. During boot, skiboot will update this sensor
 to one of the IPMI-defined progress codes. The codes use by skiboot are:
 
   * PCI Resource configuration (0x01)
-     - asserted as the PCI devices have been probed and resources allocated
-
+     * asserted as the PCI devices have been probed and resources allocated
   * Motherboard init (0x14)
-     - asserted as the platform-specific components have been initialised
-
+     * asserted as the platform-specific components have been initialised
   * OS boot (0x13)
-     - asserted after skiboot has loaded the PAYLOAD image, and is about to
+     * asserted after skiboot has loaded the PAYLOAD image, and is about to
        boot it.
 
 Chassis control messages
