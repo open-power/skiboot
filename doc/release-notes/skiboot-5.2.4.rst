@@ -1,5 +1,5 @@
 skiboot-5.2.4
--------------
+=============
 
 skiboot-5.2.4 was released on Tuesday July 12th, 2016.
 
@@ -18,10 +18,15 @@ stable rules - see doc/stable-skiboot-rules.txt.
 
 Over skiboot-5.2.3, the following fixes are included:
 
-All platforms:
+All platforms
+^^^^^^^^^^^^^
+
 - Make the XSCOM engine code more resilient to errors:
+
   - hw/xscom: Reset XSCOM engine after querying sleeping core FIR
   - hw/xscom: Reset XSCOM engine after finite number of retries when busy
 
-Userspace utilities:
+Userspace utilities
+^^^^^^^^^^^^^^^^^^^
+
 - pflash build improvements

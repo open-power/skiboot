@@ -1,5 +1,5 @@
 skiboot-5.2.0-rc2
------------------
+=================
 
 skiboot-5.2.0-rc2 was released on Wednesday March 9th, 2016.
 
@@ -18,36 +18,55 @@ bug fixing for future 5.2.0-rc releases (if any - I hope this will be the last)
 Over skiboot-5.2.0-rc1, we have the following changes:
 
 New platform!
+^^^^^^^^^^^^^
+
 - Add Barreleye platform
 
-Generic:
+Generic
+^^^^^^^
+
 - hw/p8-i2c: Speed up SMBUS_WRITE
 - Fix early backtraces
 
-FSP Platforms:
+FSP Platforms
+^^^^^^^^^^^^^
+
 - fsp-sensor: rework device tree for sensors
 - platforms/firenze: Fix I2C clock source frequency
 
-Simics simulator:
+Simics simulator
+^^^^^^^^^^^^^^^^
+
 - Enable Simics UART console
 
-Mambo simulator:
+Mambo simulator
+^^^^^^^^^^^^^^^
+
 - platforms/mambo: Add terminate callback
+
   - fix hang in multi-threaded mambo
   - add multithreaded mambo tests
 
-IPMI:
+IPMI
+^^^^
+
 - hw/ipmi: fix event data 1 for System Firmware Progress sensor
 - ipmi: Log exact NetFn value in OPAL logs
 
-AST BMC based platforms:
+AST BMC based platforms
+^^^^^^^^^^^^^^^^^^^^^^^
+
 - hw/bt: allow BT driver to use different buffer size
 
-opal-prd utility:
+opal-prd utility
+^^^^^^^^^^^^^^^^
+
 - opal-prd: Add debug output for firmware-driven OCC events
     We indicate when we have a user-driven event, so add corresponding
     outputs for firmware-driven ones too.
 
-getscom utility:
+getscom utility
+^^^^^^^^^^^^^^^
+
 - Add Naples chip support
 

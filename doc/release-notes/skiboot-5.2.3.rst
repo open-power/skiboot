@@ -1,5 +1,5 @@
 skiboot-5.2.3
--------------
+=============
 
 skiboot-5.2.3 was released on Thursday June 30th, 2016.
 
@@ -19,14 +19,18 @@ stable rules - see doc/stable-skiboot-rules.txt.
 
 Over skiboot-5.2.2, the following fixes are included:
 
-OpenPOWER platforms:
+OpenPOWER platforms
+^^^^^^^^^^^^^^^^^^^
+
 - occ: Filter out entries from Pmin to Pmax in pstate table
   (cherry picked from commit eca02ee2e62cee115d921a01cea061782ce47cc7)
   Without this fix, with newer OCC firmware on some OpenPOWER machines,
   we would fail to parse the table from the OCC, which meant the host OS
   would not get a table of supported CPU frequencies.
 
-General:
+General
+^^^^^^^
+
 - pci: Do a dummy config write to devices to establish bus number
   (cherry picked from commit f46c1e506d199332b0f9741278c8ec35b3e39135)
 
@@ -53,5 +57,7 @@ General:
 - Backport of user visible typo fixes
   partial cherry picked from 4c95b5e04e3c4f72e4005574f67cd6e365d3276f
 
-Utilities:
+Utilities
+^^^^^^^^^
+
 - Fix ARM build failure with parallel make

@@ -1,5 +1,5 @@
 skiboot-5.2.2
--------------
+=============
 
 skiboot-5.2.2 was released on Thursday May 5th, 2016.
 
@@ -18,7 +18,9 @@ stable rules - see doc/stable-skiboot-rules.txt.
 
 Over skiboot-5.2.1, the following fixes are included:
 
-P8NVL/Garrison:
+P8NVL/Garrison
+^^^^^^^^^^^^^^
+
 - PHB3: Fix corruption of pref window register
     On P8+ Garrison platform, the root port's pref window register might
     be not writable and we have to emulate the window because of hardware
