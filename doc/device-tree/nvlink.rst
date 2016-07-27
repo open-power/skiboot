@@ -4,16 +4,16 @@ Nvlink Device Tree Bindings
 
 See doc/nvlink.txt for general Nvlink information.
 
-NPU bindings:
+NPU bindings: ::
 
-xscom@3fc0000000000 {
+  xscom@3fc0000000000 {
         npu@8013c00 {
 			reg = <0x8013c00 0x2c>;
                         compatible = "ibm,power8-npu";
                         ibm,npu-index = <0x0>;
                         ibm,npu-links = <0x4>;
 
-; Number of links wired up to this npu.
+  ; Number of links wired up to this npu.
 
                         phandle = <0x100002bc>;
                         linux,phandle = <0x100002bc>;
@@ -21,22 +21,22 @@ xscom@3fc0000000000 {
                         link@0 {
                                 ibm,npu-pbcq = <0x1000000b>;
 
-; phandle to the pbcq which connects to the GPU.
+  ; phandle to the pbcq which connects to the GPU.
 
 				ibm,npu-phy = <0x80000000 0x8010c3f>;
 
-; SCOM address of the IBM PHY controlling this link.
+  ; SCOM address of the IBM PHY controlling this link.
 
 				compatible = "ibm,npu-link";
                                 ibm,npu-lane-mask = <0xff>;
 
-; Mask specifying which IBM PHY lanes are used for this link.
+  ; Mask specifying which IBM PHY lanes are used for this link.
 
 				phandle = <0x100002bd>;
                                 ibm,npu-link-index = <0x0>;
 
-; Hardware link index. Naples systems contain links at index 0,1,4 & 5.
-; Used to calculate various address offsets.
+  ; Hardware link index. Naples systems contain links at index 0,1,4 & 5.
+  ; Used to calculate various address offsets.
 
 				linux,phandle = <0x100002bd>;
                         };
@@ -71,14 +71,16 @@ xscom@3fc0000000000 {
                                 linux,phandle = <0x100002c0>;
                         };
 	};
-};
+  };
 
-Emulated PCI device bindings:
+Emulated PCI device bindings
+----------------------------
+::
 
        pciex@3fff000400000 {
                 ibm,npcq = <0x100002bc>;
 
-; phandle to the NPU node. Used to find associated PCI GPU devices.
+       ; phandle to the NPU node. Used to find associated PCI GPU devices.
 
                 compatible = "ibm,power8-npu-pciex", "ibm,ioda2-npu-phb";
 
@@ -91,7 +93,7 @@ Emulated PCI device bindings:
                         vendor-id = <0x1014>;
                         ibm,gpu = <0x100002f7>;
 
-; phandle pointing the associated GPU PCI device node
+       ; phandle pointing the associated GPU PCI device node
 
   	  	        phandle = <0x100002fc>;
                 };
