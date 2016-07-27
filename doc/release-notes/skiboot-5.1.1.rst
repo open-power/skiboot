@@ -8,7 +8,10 @@ skiboot-5.1.1 is the send stable release of 5.1, it follows skiboot-5.1.0.
 Skiboot 5.1.1 contains all fixes from skiboot-5.1.0 and is a minor bugfix
 release.
 
+Changes
+^^^^^^^
 Over skiboot-5.1.0, we have the following changes:
+
 - Fix detection of compiler options on ancient GCC (e.g. gcc 4.4, shipped with
   RHEL6)
 - ensure the GNUC version defines for GCOV are coming from target CC rather
@@ -26,10 +29,10 @@ Over skiboot-5.1.0, we have the following changes:
   This is quite easy to verify. PCI config space access errors, for
   example, normally cause a freeze. On a CAPI-mode PHB, they should
   cause a fence. Say we have a CAPI card on PHB 0, and we inject a
-  PCI config space error:
+  PCI config space error: ::
 
-  echo 0x8000000000000000 > /sys/kernel/debug/powerpc/PCI0000/err_injct_inboundA;
-  lspci;
+   echo 0x8000000000000000 > /sys/kernel/debug/powerpc/PCI0000/err_injct_inboundA;
+   lspci;
 
   The first time we inject this, the PHB will fence and recover, but
   won't reset the registers. Therefore, the second time we inject it,

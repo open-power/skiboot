@@ -11,7 +11,9 @@ fix release.
 
 Over skiboot-5.1.9, we have the following change:
 
-IBM FSP machines:
+IBM FSP machines
+^^^^^^^^^^^^^^^^
+
 - FSP: Handle Delayed Power Off initiated CEC shutdown with FSP in Reset/Reload
 
   In a scenario where the DPO has been initiated, but the FSP then went into
@@ -19,7 +21,9 @@ IBM FSP machines:
   it may never see the PSI interrupt. So, if we are in dpo_pending and an FSP
   reset is detected via the DISR, give up the PSI link voluntarily.
 
-Generic:
+Generic
+^^^^^^^
+
 - sensor: add a compatible property
   OPAL needs an extra compatible property "ibm,opal-sensor" to make
   module autoload work smoothly in Linux for ibmpowernv driver.

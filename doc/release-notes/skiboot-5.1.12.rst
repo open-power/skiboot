@@ -8,20 +8,28 @@ skiboot-5.1.12 is the 13th stable release of 5.1, it follows skiboot-5.1.11
 
 Skiboot 5.1.12 contains bug fixes and a performance improvement.
 
-opal-prd:
+opal-prd
+^^^^^^^^
+
 - Display an explict and obvious message if running on a system that does
   not support opal-prd, such as an IBM FSP based POWER system, where the
   FSP takes on the role of opal-prd.
 
-pflash:
+pflash
+^^^^^^
+
 - Fix a missing (C) header
   - cherry-picked from master.
 
-General:
+General
+^^^^^^^
+
 - Don't link with libgcc
   - On some toolchains, we don't have libgcc available.
 
-POWER8 PHB (PCIe) specific:
+POWER8 PHB (PCIe) specific
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 - hw/phb3: Flush cache line after updating P/Q bits
     When doing an MSI EOI, we update the P and Q bits in the IVE. That causes
     the corresponding cache line to be dirty in the L3 which will cause a
@@ -34,7 +42,9 @@ POWER8 PHB (PCIe) specific:
     This improves interrupt performance, reducing latency per interrupt.
     The improvement will vary by workload.
 
-IBM FSP based machines:
+IBM FSP based machines
+^^^^^^^^^^^^^^^^^^^^^^
+
 - FSP: Give up PSI link on shutdown
   This clears up some erroneous SRCs (error logs) in some situations.
 - Correctly report back Real Time Clock errors to host

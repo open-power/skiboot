@@ -12,5 +12,6 @@ skiboot-5.1.11 is the 12th stable release of 5.1, it follows skiboot-5.1.10
 Skiboot 5.1.11 contains one additional bug fix over skiboot-5.1.10.
 
 It is:
+
 - On IBM FSP machines, if IPMI/Serial console is not connected during shutdown
   or reboot, machine would enter termination state rather than shut down.

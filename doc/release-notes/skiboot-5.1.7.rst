@@ -12,6 +12,7 @@ fix release with one important bug fix for FSP systems.
 Over skiboot-5.1.6, we have the following changes:
 
 Generic:
+
 - PHB3: Retry fundamental reset
     This introduces another PHB3 state (PHB3_STATE_FRESET_START)
     allowing to redo fundamental reset if the link doesn't come up
@@ -20,6 +21,7 @@ Generic:
     the 2nd reset won't be issued at all.
 
 FSP based systems:
+
 - hw/fsp/fsp-leds.c: use allocated buffer for FSP_CMD_GET_LED_LIST response
 
   This fixes a bug where we would overwrite roughly 4kb of memory belonging

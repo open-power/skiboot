@@ -8,9 +8,11 @@ skiboot-5.1.17 is the 18th stable release of 5.1, it follows skiboot-5.1.16
 
 This release contains a few minor bug fixes.
 
-Changes are:
+Changes
+^^^^^^^
 
 All platforms:
+
 - Fix a few typos in user visible (OPAL log) strings
 - pci: Do a dummy config write to devices to establish bus number
 - Make the XSCOM engine code more resilient to errors:

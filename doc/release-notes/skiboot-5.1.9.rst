@@ -10,6 +10,7 @@ Skiboot 5.1.9 contains all fixes from skiboot-5.1.8 and is a minor bug
 fix release, with a single fix to help diagnosis after a rare error condition.
 
 Over skiboot-5.1.8, we have the following change:
+
 - opal/hmi: Signal PRD about NX unit checkstop.
   We now signal Processor Recovery & Diagnostics (PRD) correctly following
   an NX unit checkstop

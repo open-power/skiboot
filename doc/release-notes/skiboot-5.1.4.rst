@@ -10,6 +10,8 @@ Skiboot 5.1.4 contains all fixes from skiboot-5.1.3 and is an important bug
 fix release and a strongly recommended update from any prior skiboot-5.1.x
 release.
 
+Changes
+^^^^^^^
 Over skiboot-5.1.3, we have the following changes:
 
 - Rate limit OPAL_MSG_OCC to only one outstanding message to host

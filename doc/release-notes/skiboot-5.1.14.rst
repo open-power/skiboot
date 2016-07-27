@@ -13,6 +13,7 @@ As such, skiboot-5.1.14 has no advantage over skiboot-5.1.13 unless you
 are wanting the neat offb framebuffer trick.
 
 Changes are:
+
 - fsp: fix spelling of "advertise" in log message
   See: https://www.youtube.com/watch?v=8Gv0H-vPoDc
 - Explicit 1:1 mapping in ranges properties have been added to PCI
