@@ -117,8 +117,8 @@ struct bogus_disk_info {
 	int id;
 };
 
-static int bogus_disk_read(struct blocklevel_device *bl, uint32_t pos, void *buf,
-			  uint32_t len)
+static int bogus_disk_read(struct blocklevel_device *bl, uint64_t pos, void *buf,
+			  uint64_t len)
 {
 	struct bogus_disk_info *bdi = bl->priv;
 	int rc;
@@ -140,8 +140,8 @@ static int bogus_disk_read(struct blocklevel_device *bl, uint32_t pos, void *buf
 	return rc;
 }
 
-static int bogus_disk_write(struct blocklevel_device *bl, uint32_t pos,
-			    const void *buf, uint32_t len)
+static int bogus_disk_write(struct blocklevel_device *bl, uint64_t pos,
+			    const void *buf, uint64_t len)
 {
 	struct bogus_disk_info *bdi = bl->priv;
 
@@ -154,13 +154,13 @@ static int bogus_disk_write(struct blocklevel_device *bl, uint32_t pos,
 }
 
 static int bogus_disk_erase(struct blocklevel_device *bl __unused,
-			   uint32_t pos __unused, uint32_t len __unused)
+			   uint64_t pos __unused, uint64_t len __unused)
 {
 	return 0; /* NOP */
 }
 
 static int bogus_disk_get_info(struct blocklevel_device *bl, const char **name,
-			      uint32_t *total_size, uint32_t *erase_granule)
+			      uint64_t *total_size, uint32_t *erase_granule)
 {
 	struct bogus_disk_info *bdi = bl->priv;
 

@@ -17,6 +17,7 @@
 /* This is based on the hostboot ecc code */
 
 #include <stdint.h>
+#include <inttypes.h>
 
 #include <ccan/endian/endian.h>
 
@@ -181,7 +182,7 @@ static inline uint64_t eccflipbit(uint64_t data, uint8_t bit)
  * @retval: 0 - success
  * @retfal: other - fail
  */
-int memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len)
+int memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint64_t len)
 {
 	beint64_t data;
 	uint8_t ecc;
@@ -190,8 +191,8 @@ int memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len)
 
 	if (len & 0x7) {
 		/* TODO: we could probably handle this */
-		FL_ERR("ECC data length must be 8 byte aligned length:%i\n",
-			len);
+		FL_ERR("ECC data length must be 8 byte aligned length:%" PRIx64  "\n",
+		       len);
 		return -1;
 	}
 
@@ -232,15 +233,15 @@ int memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len)
  * @retval: 0 - success
  * @retfal: other - fail
  */
-int memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint32_t len)
+int memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint64_t len)
 {
 	struct ecc64 ecc_word;
-	uint32_t i;
+	uint64_t i;
 
 	if (len & 0x7) {
 		/* TODO: we could probably handle this */
-		FL_ERR("Data to add ECC bytes to must be 8 byte aligned length: %i\n",
-				len);
+		FL_ERR("Data to add ECC bytes to must be 8 byte aligned length: %"
+		       PRIx64 "\n", len);
 		return -1;
 	}
 

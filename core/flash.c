@@ -29,7 +29,7 @@ struct flash {
 	struct list_node	list;
 	bool			busy;
 	struct blocklevel_device *bl;
-	uint32_t		size;
+	uint64_t		size;
 	uint32_t		block_size;
 	int			id;
 };
@@ -192,7 +192,7 @@ static struct dt_node *flash_add_dt_node(struct flash *flash, int id)
 	flash_node = dt_new_addr(opal_node, "flash", id);
 	dt_add_property_strings(flash_node, "compatible", "ibm,opal-flash");
 	dt_add_property_cells(flash_node, "ibm,opal-id", id);
-	dt_add_property_cells(flash_node, "reg", 0, flash->size);
+	dt_add_property_u64(flash_node, "reg", flash->size);
 	dt_add_property_cells(flash_node, "ibm,flash-block-size",
 			flash->block_size);
 
@@ -256,7 +256,8 @@ static int num_flashes(void)
 
 int flash_register(struct blocklevel_device *bl, bool is_system_flash)
 {
-	uint32_t size, block_size;
+	uint64_t size;
+	uint32_t block_size;
 	struct ffs_handle *ffs;
 	struct dt_node *node;
 	struct flash *flash;
@@ -268,7 +269,7 @@ int flash_register(struct blocklevel_device *bl, bool is_system_flash)
 		return rc;
 
 	prlog(PR_INFO, "FLASH: registering flash device %s "
-			"(size 0x%x, blocksize 0x%x)\n",
+			"(size 0x%llx, blocksize 0x%x)\n",
 			name ?: "(unnamed)", size, block_size);
 
 	lock(&flash_lock);

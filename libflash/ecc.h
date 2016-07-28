@@ -27,9 +27,9 @@ struct ecc64 {
 	uint8_t ecc;
 } __attribute__((__packed__));
 
-extern int memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint32_t len);
+extern int memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint64_t len);
 
-extern int memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint32_t len);
+extern int memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint64_t len);
 
 /*
  * Calculate the size of a buffer if ECC is added
@@ -43,22 +43,22 @@ extern int memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint32_t len);
 
 #define BYTES_PER_ECC 8
 
-static inline uint32_t ecc_size(uint32_t len)
+static inline uint64_t ecc_size(uint64_t len)
 {
 	return ALIGN_UP(len, BYTES_PER_ECC) >> 3;
 }
 
-static inline uint32_t ecc_buffer_size(uint32_t len)
+static inline uint64_t ecc_buffer_size(uint64_t len)
 {
 	return ALIGN_UP(len, BYTES_PER_ECC) + ecc_size(len);
 }
 
-static inline int ecc_buffer_size_check(uint32_t len)
+static inline int ecc_buffer_size_check(uint64_t len)
 {
 	return len % (BYTES_PER_ECC + 1);
 }
 
-static inline uint32_t ecc_buffer_size_minus_ecc(uint32_t len)
+static inline uint64_t ecc_buffer_size_minus_ecc(uint64_t len)
 {
 	return len * BYTES_PER_ECC / (BYTES_PER_ECC + 1);
 }

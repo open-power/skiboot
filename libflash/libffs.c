@@ -78,7 +78,7 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 	struct ffs_hdr hdr;
 	struct ffs_hdr blank_hdr;
 	struct ffs_handle *f;
-	uint32_t total_size;
+	uint64_t total_size;
 	int rc, i;
 
 	if (!ffs || !bl)
@@ -90,6 +90,8 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 		FL_ERR("FFS: Error %d retrieving flash info\n", rc);
 		return rc;
 	}
+	if (total_size > UINT_MAX)
+		return FLASH_ERR_VERIFY_FAILURE;
 	if ((offset + max_size) < offset)
 		return FLASH_ERR_PARM_ERROR;
 

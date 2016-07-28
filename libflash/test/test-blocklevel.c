@@ -171,8 +171,8 @@ int main(void)
 	for (i = 0; i < bl->ecc_prot.n_prot - 1; i++) {
 		if (bl->ecc_prot.prot[i].start + bl->ecc_prot.prot[i].len == bl->ecc_prot.prot[i + 1].start ||
 			  bl->ecc_prot.prot[i + 1].start + bl->ecc_prot.prot[i + 1].len == bl->ecc_prot.prot[i].start) {
-			ERR("Problem with protection range merge code, region starting at 0x%08x for 0x%08x appears "
-				"to touch region 0x%08x for 0x%08x\n", bl->ecc_prot.prot[i].start, bl->ecc_prot.prot[i].len,
+			ERR("Problem with protection range merge code, region starting at 0x%08lx for 0x%08lx appears "
+				"to touch region 0x%lx for 0x%lx\n", bl->ecc_prot.prot[i].start, bl->ecc_prot.prot[i].len,
 				bl->ecc_prot.prot[i + 1].start, bl->ecc_prot.prot[i + 1].len);
 			return 1;
 		}

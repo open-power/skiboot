@@ -367,7 +367,8 @@ struct spi_flash_ctrl sim_ctrl = {
 int main(void)
 {
 	struct blocklevel_device *bl;
-	uint32_t total_size, erase_granule;
+	uint64_t total_size;
+	uint32_t erase_granule;
 	const char *name;
 	uint16_t *test;
 	struct ecc64 *ecc_test;

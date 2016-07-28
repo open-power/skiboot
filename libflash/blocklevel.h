@@ -20,8 +20,8 @@
 #include <stdbool.h>
 
 struct bl_prot_range {
-	uint32_t start;
-	uint32_t len;
+	uint64_t start;
+	uint64_t len;
 };
 
 struct blocklevel_range {
@@ -42,10 +42,10 @@ struct blocklevel_device {
 	void *priv;
 	int (*reacquire)(struct blocklevel_device *bl);
 	int (*release)(struct blocklevel_device *bl);
-	int (*read)(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len);
-	int (*write)(struct blocklevel_device *bl, uint32_t pos, const void *buf, uint32_t len);
-	int (*erase)(struct blocklevel_device *bl, uint32_t pos, uint32_t len);
-	int (*get_info)(struct blocklevel_device *bl, const char **name, uint32_t *total_size,
+	int (*read)(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len);
+	int (*write)(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len);
+	int (*erase)(struct blocklevel_device *bl, uint64_t pos, uint64_t len);
+	int (*get_info)(struct blocklevel_device *bl, const char **name, uint64_t *total_size,
 			uint32_t *erase_granule);
 
 	/*
@@ -58,10 +58,10 @@ struct blocklevel_device {
 	struct blocklevel_range ecc_prot;
 };
 
-int blocklevel_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len);
-int blocklevel_write(struct blocklevel_device *bl, uint32_t pos, const void *buf, uint32_t len);
-int blocklevel_erase(struct blocklevel_device *bl, uint32_t pos, uint32_t len);
-int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_t *total_size,
+int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len);
+int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len);
+int blocklevel_erase(struct blocklevel_device *bl, uint64_t pos, uint64_t len);
+int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint64_t *total_size,
 		uint32_t *erase_granule);
 
 /*
@@ -72,7 +72,7 @@ int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_
  * or slower than the just using blocklevel_erase/write calls.
  * directly.
  */
-int blocklevel_smart_write(struct blocklevel_device *bl, uint32_t pos, const void *buf, uint32_t len);
+int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len);
 
 /* Implemented in software at this level */
 int blocklevel_ecc_protect(struct blocklevel_device *bl, uint32_t start, uint32_t len);

@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "libflash.h"
 #include "libflash-priv.h"
@@ -124,7 +125,7 @@ int fl_wren(struct spi_flash_ctrl *ct)
 	return FLASH_ERR_WREN_TIMEOUT;
 }
 
-static int flash_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len)
+static int flash_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len)
 {
 	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	struct spi_flash_ctrl *ct = c->ctrl;
@@ -228,7 +229,7 @@ static void fl_get_best_erase(struct flash_chip *c, uint32_t dst, uint32_t size,
 	*cmd = CMD_BE;
 }
 
-static int flash_erase(struct blocklevel_device *bl, uint32_t dst, uint32_t size)
+static int flash_erase(struct blocklevel_device *bl, uint64_t dst, uint64_t size)
 {
 	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	struct spi_flash_ctrl *ct = c->ctrl;
@@ -244,7 +245,8 @@ static int flash_erase(struct blocklevel_device *bl, uint32_t dst, uint32_t size
 	if ((dst | size) & c->min_erase_mask)
 		return FLASH_ERR_ERASE_BOUNDARY;
 
-	FL_DBG("LIBFLASH: Erasing 0x%08x..0%08x...\n", dst, dst + size);
+	FL_DBG("LIBFLASH: Erasing 0x%" PRIx64"..0%" PRIx64 "...\n",
+	       dst, dst + size);
 
 	/* Use controller erase if supported */
 	if (ct->erase)
@@ -479,7 +481,7 @@ static enum sm_comp_res flash_smart_comp(struct flash_chip *c,
 	return is_same ? sm_no_change : sm_need_write;
 }
 
-static int flash_smart_write(struct blocklevel_device *bl, uint32_t dst, const void *src, uint32_t size)
+static int flash_smart_write(struct blocklevel_device *bl, uint64_t dst, const void *src, uint64_t size)
 {
 	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	uint32_t er_size = c->min_erase_mask + 1;
@@ -492,7 +494,7 @@ static int flash_smart_write(struct blocklevel_device *bl, uint32_t dst, const v
 		return FLASH_ERR_PARM_ERROR;
 	}
 
-	FL_DBG("LIBFLASH: Smart writing to 0x%08x..0%08x...\n",
+	FL_DBG("LIBFLASH: Smart writing to 0x%" PRIx64 "..0%" PRIx64 "...\n",
 	       dst, dst + size);
 
 	/* As long as we have something to write ... */
@@ -792,7 +794,7 @@ static int flash_configure(struct flash_chip *c)
 }
 
 static int flash_get_info(struct blocklevel_device *bl, const char **name,
-		   uint32_t *total_size, uint32_t *erase_granule)
+		   uint64_t *total_size, uint32_t *erase_granule)
 {
 	struct flash_chip *c = container_of(bl, struct flash_chip, bl);
 	if (name)

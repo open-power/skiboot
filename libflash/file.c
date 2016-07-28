@@ -59,7 +59,7 @@ static int file_reacquire(struct blocklevel_device *bl)
 	return 0;
 }
 
-static int file_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len)
+static int file_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len)
 {
 	struct file_data *file_data = container_of(bl, struct file_data, bl);
 	int rc, count = 0;
@@ -81,8 +81,8 @@ static int file_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint
 	return 0;
 }
 
-static int file_write(struct blocklevel_device *bl, uint32_t dst, const void *src,
-		uint32_t len)
+static int file_write(struct blocklevel_device *bl, uint64_t dst, const void *src,
+		uint64_t len)
 {
 	struct file_data *file_data = container_of(bl, struct file_data, bl);
 	int rc, count = 0;
@@ -111,7 +111,7 @@ static int file_write(struct blocklevel_device *bl, uint32_t dst, const void *sr
  * Also, erasing flash leaves all the bits set to 1. This may be expected
  * by higher level functions so this function should also emulate that
  */
-static int file_erase(struct blocklevel_device *bl, uint32_t dst, uint32_t len)
+static int file_erase(struct blocklevel_device *bl, uint64_t dst, uint64_t len)
 {
 	unsigned long long int d = ULLONG_MAX;
 	int i = 0;
@@ -127,7 +127,7 @@ static int file_erase(struct blocklevel_device *bl, uint32_t dst, uint32_t len)
 	return 0;
 }
 
-static int mtd_erase(struct blocklevel_device *bl, uint32_t dst, uint32_t len)
+static int mtd_erase(struct blocklevel_device *bl, uint64_t dst, uint64_t len)
 {
 	struct file_data *file_data = container_of(bl, struct file_data, bl);
 	struct erase_info_user erase_info = {
@@ -177,7 +177,7 @@ static int get_info_name(struct file_data *file_data, char **name)
 
 
 static int mtd_get_info(struct blocklevel_device *bl, const char **name,
-		uint32_t *total_size, uint32_t *erase_granule)
+		uint64_t *total_size, uint32_t *erase_granule)
 {
 	struct file_data *file_data = container_of(bl, struct file_data, bl);
 	struct mtd_info_user mtd_info;
@@ -204,7 +204,7 @@ static int mtd_get_info(struct blocklevel_device *bl, const char **name,
 }
 
 static int file_get_info(struct blocklevel_device *bl, const char **name,
-		uint32_t *total_size, uint32_t *erase_granule)
+		uint64_t *total_size, uint32_t *erase_granule)
 {
 	struct file_data *file_data = container_of(bl, struct file_data, bl);
 	struct stat st;

@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include <libflash/errors.h>
 
@@ -33,7 +34,7 @@
  * 0  - The region is not ECC protected
  * -1 - Partially protected
  */
-static int ecc_protected(struct blocklevel_device *bl, uint32_t pos, uint32_t len)
+static int ecc_protected(struct blocklevel_device *bl, uint64_t pos, uint64_t len)
 {
 	int i;
 
@@ -77,11 +78,11 @@ static int release(struct blocklevel_device *bl)
 	return rc;
 }
 
-int blocklevel_read(struct blocklevel_device *bl, uint32_t pos, void *buf, uint32_t len)
+int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len)
 {
 	int rc;
 	struct ecc64 *buffer;
-	uint32_t ecc_len = ecc_buffer_size(len);
+	uint64_t ecc_len = ecc_buffer_size(len);
 
 	if (!bl || !bl->read || !buf) {
 		errno = EINVAL;
@@ -120,11 +121,11 @@ out:
 	return rc;
 }
 
-int blocklevel_write(struct blocklevel_device *bl, uint32_t pos, const void *buf, uint32_t len)
+int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len)
 {
 	int rc;
 	struct ecc64 *buffer;
-	uint32_t ecc_len = ecc_buffer_size(len);
+	uint64_t ecc_len = ecc_buffer_size(len);
 
 	if (!bl || !bl->write || !buf) {
 		errno = EINVAL;
@@ -162,7 +163,7 @@ out:
 	return rc;
 }
 
-int blocklevel_erase(struct blocklevel_device *bl, uint32_t pos, uint32_t len)
+int blocklevel_erase(struct blocklevel_device *bl, uint64_t pos, uint64_t len)
 {
 	int rc;
 	if (!bl || !bl->erase) {
@@ -172,7 +173,7 @@ int blocklevel_erase(struct blocklevel_device *bl, uint32_t pos, uint32_t len)
 
 	/* Programmer may be making a horrible mistake without knowing it */
 	if (len & bl->erase_mask) {
-		fprintf(stderr, "blocklevel_erase: len (0x%08x) is not erase block (0x%08x) aligned\n",
+		fprintf(stderr, "blocklevel_erase: len (0x%"PRIu64") is not erase block (0x%08x) aligned\n",
 				len, bl->erase_mask + 1);
 		return FLASH_ERR_ERASE_BOUNDARY;
 	}
@@ -188,7 +189,7 @@ int blocklevel_erase(struct blocklevel_device *bl, uint32_t pos, uint32_t len)
 	return rc;
 }
 
-int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_t *total_size,
+int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint64_t *total_size,
 		uint32_t *erase_granule)
 {
 	int rc;
@@ -224,9 +225,10 @@ int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_
  * returns  0 for b
  * returns  1 for c
  */
-static int blocklevel_flashcmp(const void *flash_buf, const void *mem_buf, uint32_t len)
+static int blocklevel_flashcmp(const void *flash_buf, const void *mem_buf, uint64_t len)
 {
-	int i, same = true;
+	uint64_t i;
+	int same = true;
 	const uint8_t *f_buf, *m_buf;
 
 	f_buf = flash_buf;
@@ -242,7 +244,7 @@ static int blocklevel_flashcmp(const void *flash_buf, const void *mem_buf, uint3
 	return same ? 0 : 1;
 }
 
-int blocklevel_smart_write(struct blocklevel_device *bl, uint32_t pos, const void *buf, uint32_t len)
+int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len)
 {
 	uint32_t erase_size;
 	const void *write_buf = buf;

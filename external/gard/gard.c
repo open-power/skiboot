@@ -575,6 +575,7 @@ int main(int argc, char **argv)
 	const char *action, *progname;
 	char *filename = NULL;
 	struct gard_ctx _ctx, *ctx;
+	uint64_t bl_size;
 	int rc, i = 0;
 	bool part = 0;
 	bool ecc = 0;
@@ -643,9 +644,17 @@ int main(int argc, char **argv)
 		goto out_free;
 	}
 
-	rc = blocklevel_get_info(ctx->bl, NULL, &(ctx->f_size), NULL);
+	rc = blocklevel_get_info(ctx->bl, NULL, &bl_size, NULL);
 	if (rc)
 		goto out;
+
+	if (bl_size > UINT_MAX) {
+		fprintf(stderr, "MTD device bigger than %i: size:%lu\n",
+			UINT_MAX, bl_size);
+		rc = EXIT_FAILURE;
+		goto out;
+	}
+	ctx->f_size = bl_size;
 
 	if (!part) {
 		rc = ffs_init(0, ctx->f_size, ctx->bl, &ctx->ffs, 1);
