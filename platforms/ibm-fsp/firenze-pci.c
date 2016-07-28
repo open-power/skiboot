@@ -832,27 +832,12 @@ static void firenze_pci_slot_fixup(struct pci_slot *slot,
 	}
 }
 
-static void firenze_pci_slot_init(struct pci_slot *slot)
+static void firenze_pci_setup_power_mgt(struct pci_slot *slot,
+					struct firenze_pci_slot *plat_slot,
+					struct firenze_pci_slot_info *info)
 {
-	struct lxvpd_pci_slot *s = slot->data;
-	struct firenze_pci_slot *plat_slot = slot->data;
-	struct firenze_pci_slot_info *info = NULL;
-	uint32_t vdid;
 	uint8_t buddy;
-	int i;
 
-	/* Search for PCI slot info */
-	for (i = 0; i < ARRAY_SIZE(firenze_pci_slots); i++) {
-		if (firenze_pci_slots[i].index == s->slot_index &&
-		    !strcmp(firenze_pci_slots[i].label, s->label)) {
-			info = &firenze_pci_slots[i];
-			break;
-		}
-	}
-	if (!info)
-		return;
-
-	/* Search I2C bus for external power mgt */
 	buddy = info->buddy;
 	plat_slot->i2c_bus = firenze_pci_find_i2c_bus(info->chip_id,
 						      info->master_id,
@@ -891,6 +876,30 @@ static void firenze_pci_slot_init(struct pci_slot *slot)
 			plat_slot->i2c_bus = NULL;
 		}
 	}
+}
+
+static void firenze_pci_slot_init(struct pci_slot *slot)
+{
+	struct lxvpd_pci_slot *s = slot->data;
+	struct firenze_pci_slot *plat_slot = slot->data;
+	struct firenze_pci_slot_info *info = NULL;
+	uint32_t vdid;
+	int i;
+
+	/* Search for PCI slot info */
+	for (i = 0; i < ARRAY_SIZE(firenze_pci_slots); i++) {
+		if (firenze_pci_slots[i].index == s->slot_index &&
+		    !strcmp(firenze_pci_slots[i].label, s->label)) {
+			info = &firenze_pci_slots[i];
+			break;
+		}
+	}
+	if (!info)
+		return;
+
+	/* Search I2C bus for external power mgt */
+	if (slot->power_ctl)
+		firenze_pci_setup_power_mgt(slot, plat_slot, info);
 
 	/*
 	 * If the slot has external power logic, to override the
