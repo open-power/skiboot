@@ -64,7 +64,14 @@ int blocklevel_erase(struct blocklevel_device *bl, uint32_t pos, uint32_t len);
 int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint32_t *total_size,
 		uint32_t *erase_granule);
 
-/* Convienience functions */
+/*
+ * blocklevel_smart_write() performs reads on the data to see if it
+ * can skip erase or write calls. This is likely more convenient for
+ * the caller since they don't need to perform these checks
+ * themselves. Depending on the new and old data, this may be faster
+ * or slower than the just using blocklevel_erase/write calls.
+ * directly.
+ */
 int blocklevel_smart_write(struct blocklevel_device *bl, uint32_t pos, const void *buf, uint32_t len);
 
 /* Implemented in software at this level */
