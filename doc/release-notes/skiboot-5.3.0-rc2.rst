@@ -23,8 +23,7 @@ POWER9
 
 - mambo: Update Radix Tree Size as per ISA 3.0
    In Linux we recently changed to this encoding, so we no longer boot.
-   The associated Linux commit is:
-      commit b23d9c5b9c83c05e013aa52460f12a8365062cf4
+   The associated Linux commit is b23d9c5b9c83c05e013aa52460f12a8365062cf4
 
 FSP Platforms
 -------------
