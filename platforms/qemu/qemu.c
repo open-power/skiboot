@@ -21,6 +21,60 @@
 #include <console.h>
 #include <opal.h>
 #include <psi.h>
+#include <bt.h>
+#include <errorlog.h>
+#include <ipmi.h>
+
+/* BT config */
+#define BT_IO_BASE	0xe4
+#define BT_IO_COUNT	3
+#define BT_LPC_IRQ	10
+
+static bool bt_device_present;
+
+static void qemu_ipmi_error(struct ipmi_msg *msg)
+{
+	prlog(PR_DEBUG, "QEMU: error sending msg. cc = %02x\n", msg->cc);
+
+	ipmi_free_msg(msg);
+}
+
+static void qemu_ipmi_setenables(void)
+{
+	struct ipmi_msg *msg;
+
+	struct {
+		uint8_t oem2_en : 1;
+		uint8_t oem1_en : 1;
+		uint8_t oem0_en : 1;
+		uint8_t reserved : 1;
+		uint8_t sel_en : 1;
+		uint8_t msgbuf_en : 1;
+		uint8_t msgbuf_full_int_en : 1;
+		uint8_t rxmsg_queue_int_en : 1;
+	} data;
+
+	memset(&data, 0, sizeof(data));
+
+	/* The spec says we need to read-modify-write to not clobber
+	 * the state of the other flags. These are set on by the bmc */
+	data.rxmsg_queue_int_en = 1;
+	data.sel_en = 1;
+
+	/* These are the ones we want to set on */
+	data.msgbuf_en = 1;
+
+	msg = ipmi_mkmsg_simple(IPMI_SET_ENABLES, &data, sizeof(data));
+	if (!msg) {
+		prlog(PR_ERR, "QEMU: failed to set enables\n");
+		return;
+	}
+
+	msg->error = qemu_ipmi_error;
+
+	ipmi_queue_msg(msg);
+
+}
 
 static void qemu_init(void)
 {
@@ -32,6 +86,27 @@ static void qemu_init(void)
 	 * chiptod_init()
 	 */
 	lpc_rtc_init();
+
+	if (!bt_device_present)
+		return;
+
+	/* Register the BT interface with the IPMI layer */
+	bt_init();
+	/* Initialize elog */
+	elog_init();
+	ipmi_sel_init();
+	ipmi_wdt_init();
+	ipmi_opal_init();
+	ipmi_fru_init(0);
+	ipmi_sensor_init();
+
+	/* As soon as IPMI is up, inform BMC we are in "S0" */
+	ipmi_set_power_state(IPMI_PWR_SYS_S0_WORKING, IPMI_PWR_NOCHANGE);
+
+	/* Enable IPMI OEM message interrupts */
+	qemu_ipmi_setenables();
+
+	ipmi_set_fw_progress_sensor(IPMI_FW_MOTHERBOARD_INIT);
 }
 
 static void qemu_dt_fixup_uart(struct dt_node *lpc)
@@ -52,6 +127,14 @@ static void qemu_dt_fixup_uart(struct dt_node *lpc)
 #define UART_IO_BASE	0x3f8
 #define UART_IO_COUNT	8
 #define UART_LPC_IRQ	4
+
+	/* check if the UART device was defined by qemu */
+	dt_for_each_child(lpc, uart) {
+		if (dt_node_is_compatible(uart, "pnpPNP,501")) {
+			prlog(PR_WARNING, "QEMU: uart device already here\n");
+			return;
+		}
+	}
 
 	snprintf(namebuf, sizeof(namebuf), "serial@i%x", UART_IO_BASE);
 	uart = dt_new(lpc, namebuf);
@@ -84,6 +167,14 @@ static void qemu_dt_fixup_rtc(struct dt_node *lpc)
 	struct dt_node *rtc;
 	char namebuf[32];
 
+	/* check if the RTC device was defined by qemu */
+	dt_for_each_child(lpc, rtc) {
+		if (dt_node_is_compatible(rtc, "pnpPNP,b00")) {
+			prlog(PR_WARNING, "QEMU: rtc device already here\n");
+			return;
+		}
+	}
+
 	/*
 	 * Follows the structure expected by the kernel file
 	 * arch/powerpc/sysdev/rtc_cmos_setup.c
@@ -113,11 +204,32 @@ static void qemu_dt_fixup(void)
 
 	qemu_dt_fixup_rtc(primary_lpc);
 	qemu_dt_fixup_uart(primary_lpc);
+
+	/* check if the BT device was defined by qemu */
+	dt_for_each_child(primary_lpc, n) {
+		if (dt_node_is_compatible(n, "bt"))
+			bt_device_present = true;
+	}
 }
 
 static void qemu_ext_irq_serirq_cpld(unsigned int chip_id)
 {
 	lpc_all_interrupts(chip_id);
+}
+
+static int64_t qemu_ipmi_power_down(uint64_t request)
+{
+	if (request != IPMI_CHASSIS_PWR_DOWN) {
+		prlog(PR_WARNING, "PLAT: unexpected shutdown request %llx\n",
+				   request);
+	}
+
+	return ipmi_chassis_control(request);
+}
+
+static int64_t qemu_ipmi_reboot(void)
+{
+	return ipmi_chassis_control(IPMI_CHASSIS_HARD_RESET);
 }
 
 static bool qemu_probe(void)
@@ -141,4 +253,7 @@ DECLARE_PLATFORM(qemu) = {
 	.probe		= qemu_probe,
 	.init		= qemu_init,
 	.external_irq   = qemu_ext_irq_serirq_cpld,
+	.cec_power_down = qemu_ipmi_power_down,
+	.cec_reboot     = qemu_ipmi_reboot,
+	.terminate	= ipmi_terminate,
 };
