@@ -150,7 +150,6 @@ hir_trigger:
 
 	.= 0x1e00
 _exception:
-	std	%r4,16(%r1)
 	stdu	%r1,-STACK_FRAMESIZE(%r1)
 	std	%r3,STACK_CFAR(%r1)
 	std	%r4,STACK_TYPE(%r1)
