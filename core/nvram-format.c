@@ -157,7 +157,7 @@ int nvram_check(void *nvram_image, const uint32_t nvram_size)
 		goto failed;
 	}
 
-	prerror("NVRAM: Layout appears sane\n");
+	prlog(PR_INFO, "NVRAM: Layout appears sane\n");
 	return 0;
  failed:
 	return -1;

@@ -531,7 +531,7 @@ static uint64_t hservice_get_reserved_mem(const char *name)
 	unlock(&mem_region_lock);
 
 	if (!ret)
-		prerror("HBRT: Mem region '%s' not found !\n", name);
+		prlog(PR_WARNING, "HBRT: Mem region '%s' not found !\n", name);
 
 	return ret;
 }
