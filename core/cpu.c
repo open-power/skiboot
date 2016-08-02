@@ -824,7 +824,7 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 	int64_t rc = OPAL_SUCCESS;
 	int i;
 
-	prerror("OPAL: Trying a CPU re-init with flags: 0x%llx\n", flags);
+	prlog(PR_INFO, "OPAL: Trying a CPU re-init with flags: 0x%llx\n", flags);
 
  again:
 	lock(&reinit_lock);
