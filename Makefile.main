@@ -236,7 +236,7 @@ cscope:
 
 clean:
 	$(RM) *.[odsa] $(SUBDIRS:%=%/*.[odsa])
-	$(RM) *.elf $(TARGET).lid *.map $(TARGET).lds
+	$(RM) *.elf $(TARGET).lid *.map $(TARGET).lds $(TARGET).lid.xz
 	$(RM) include/asm-offsets.h version.c .version
 	$(RM) extract-gcov
 
