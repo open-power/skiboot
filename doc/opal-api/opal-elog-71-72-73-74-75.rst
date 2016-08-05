@@ -1,0 +1,126 @@
+Error logging API's description:
+================================
+
+There are five OPAL calls from host to OPAL on error log: ::
+
+	#define OPAL_ELOG_READ         71
+	#define OPAL_ELOG_WRITE        72
+	#define OPAL_ELOG_ACK          73
+	#define OPAL_ELOG_RESEND       74
+	#define OPAL_ELOG_SIZE         75
+
+Note: ``OPAL_ELOG_WRITE`` (72) Unused for now, can be used in future.
+
+Host kernel define macros for the call with the above tokens.
+e.g. ::
+
+	OPAL_CALL(opal_read_elog,		OPAL_ELOG_READ);
+	OPAL_CALL(opal_send_ack_elog,		OPAL_ELOG_ACK);
+	OPAL_CALL(opal_get_elog_size,		OPAL_ELOG_SIZE);
+	OPAL_CALL(opal_resend_pending_logs,	OPAL_ELOG_RESEND);
+
+And OPAL also register interfaces for the above tokens.
+e.g. ::
+
+	opal_register(OPAL_ELOG_READ, fsp_opal_elog_read, 3);
+	opal_register(OPAL_ELOG_ACK, fsp_opal_elog_ack, 1);
+	opal_register(OPAL_ELOG_RESEND, fsp_opal_resend_pending_logs, 0);
+	opal_register(OPAL_ELOG_SIZE, fsp_opal_elog_info, 3);
+
+Numbers in the above example are the number of parameter(e.g. 3) the callback
+(e.g. ``fsp_opal_elog_read``) accepts.
+
+So, a call to any of the above api's(``opal_read_elog``) in the host kernel will
+call the corresponding interface(``fsp_opal_elog_read``) in the OPAL.
+
+e.g. Below is the example of one of the call from the host kernel. ::
+
+	elog->id = id;
+	elog->size = size;
+	elog->type = type;
+	elog->buffer = kzalloc(elog->size, GFP_KERNEL);
+
+	if (elog->buffer) {
+		rc = opal_read_elog(__pa(elog->buffer),
+				elog->size, elog->id);
+		if (rc != OPAL_SUCCESS) {
+			pr_err("ELOG: log read failed for log-id=%llx\n",
+					elog->id);
+			kfree(elog->buffer);
+			elog->buffer = NULL;
+		}
+	}
+
+
+OPAL_ELOG_READ
+--------------
+
+This token is used to register a call which will copy the error log content to
+the passed buffer with the passed ``elog id`` and ``elog size`` from the host
+kernel.
+
+``OPAL_ELOG_READ`` accepts 3 parameters: ::
+
+	uint64_t elog buffer
+	uint64_t elog size
+	uint64_t elog id
+
+The call registered with this token returns ``OPAL_WRONG_STATE``, when read
+state of state machine is not in ``ELOG_STATE_FETCHED_DATA`` or error log read
+pending list is empty.
+
+It returns ``OPAL_PARAMETER``, when passed log id is not the same as log id of the
+top node in the elog_read_pending list and ``OPAL_SUCCESS`` on successfully copying
+the error log data to the passed buffer.
+
+
+OPAL_ELOG_ACK
+-------------
+
+This token is used to register a call which acknowledges the passed ``ack_id``
+(elog_id) which in turn sends a acknowledgement to the error log source and
+move the acknowledge elog id from processed list to the read free list.
+
+``OPAL_ELOG_ACK`` accepts 1 parameter: ::
+
+	uint64_t ack id
+
+In case of OPAL error logs, for the passed ``ack_id`` the corresponding node is
+returned to the pool of free object.
+
+The call registered with this token returns ``OPAL_INTERNAL_ERROR`` on failure to
+send acknowledgement to the error log creator and ``OPAL_SUCCESS`` on success.
+
+
+OPAL_ELOG_RESEND
+----------------
+
+This token is used to register a call which will resend all the error logs
+again to newly loaded kernel.
+
+The call registered with this token accepts no parameter and returns type is
+void.
+
+
+OPAL_ELOG_SIZE
+--------------
+
+This token is used to register a call which will fill information about the
+error log like id, size and type.
+
+Here, ``type`` specifies error log format. Supported types are : ::
+
+	 0 -> Platform Error Log
+
+``OPAL_ELOG_SIZE`` accepts 3 parameters: ::
+
+	uint64_t elog ID
+	uint64_t elog size
+	uint64_t type
+
+The call registered with this token returns ``OPAL_WRONG_STATE``, when read
+state of state machine is not in ``ELOG_STATE_FETCHED_DATA`` or error log read
+pending list is empty.
+
+It returns ``OPAL_SUCCESS`` on successfully filling up the error log information
+in passed parameters.
