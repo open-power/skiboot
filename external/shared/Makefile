@@ -39,15 +39,15 @@ all: links arch_links $(OBJS)
 	$(CC) -shared -Wl,-soname,libflash.so -o $(SHARED_NAME) $(OBJS)
 
 install-lib: all
-	install -D -m 0755 $(SHARED_NAME) $(LIBDIR)/$(SHARED_NAME)
-	ln -sf $(SHARED_NAME) $(LIBDIR)/libflash.so
+	install -D -m 0755 $(SHARED_NAME) $(DESTDIR)$(LIBDIR)/$(SHARED_NAME)
+	ln -sf $(SHARED_NAME) $(DESTDIR)$(LIBDIR)/libflash.so
 
 install-dev: links arch_links
-	mkdir -p $(INCDIR)
-	install -m 0644 $(LIBFLASH_H) $(ARCHFLASH_H) $(INCDIR)
+	mkdir -p $(DESTDIR)$(INCDIR)
+	install -m 0644 $(LIBFLASH_H) $(ARCHFLASH_H) $(DESTDIR)$(INCDIR)
 
 install: install-lib install-dev
 
 uninstall:
-	rm -f $(LIBDIR)/libflash*
-	rm -rf $(INCDIR)
+	rm -f $(DESTDIR)$(LIBDIR)/libflash*
+	rm -rf $(DESTDIR)$(INCDIR)
