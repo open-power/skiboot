@@ -88,7 +88,7 @@ static uint32_t elog_read_retries;	/* bad response status count */
 /* Initialize the state of the log */
 static enum elog_head_state elog_read_from_fsp_head_state = ELOG_STATE_NONE;
 
-static bool elog_enabled;
+static bool elog_enabled = false;
 
 /* Need forward declaration because of Circular dependency */
 static void fsp_elog_queue_fetch(void);
@@ -611,8 +611,6 @@ void fsp_elog_read_init(void)
 	val = init_elog_read_free_list(ELOG_READ_MAX_RECORD);
 	if (val != 0)
 		return;
-
-	elog_enabled = true;
 
 	/* register Eror log Class D2 */
 	fsp_register_client(&fsp_get_elog_notify, FSP_MCLASS_ERR_LOG);
