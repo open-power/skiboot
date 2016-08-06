@@ -37,7 +37,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_ABNORMAL_REBOOT, OPAL_PLATFORM_ERR_EVT, OPAL_CEC,
  */
 static int64_t opal_cec_power_down(uint64_t request)
 {
-	printf("OPAL: Shutdown request type 0x%llx...\n", request);
+	prlog(PR_NOTICE, "OPAL: Shutdown request type 0x%llx...\n", request);
 
 	console_complete_flush();
 
@@ -50,7 +50,7 @@ opal_call(OPAL_CEC_POWER_DOWN, opal_cec_power_down, 1);
 
 static int64_t opal_cec_reboot(void)
 {
-	printf("OPAL: Reboot request...\n");
+	prlog(PR_NOTICE, "OPAL: Reboot request...\n");
 
 	console_complete_flush();
 
@@ -90,7 +90,7 @@ static int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
 		}
 		return xscom_trigger_xstop();
 	default:
-		printf("OPAL: Unsupported reboot request %d\n", reboot_type);
+		prlog(PR_NOTICE, "OPAL: Unsupported reboot request %d\n", reboot_type);
 		return OPAL_UNSUPPORTED;
 		break;
 	}
@@ -151,7 +151,7 @@ void probe_platform(void)
 		}
 	}
 
-	printf("PLAT: Detected %s platform\n", platform.name);
+	prlog(PR_NOTICE, "PLAT: Detected %s platform\n", platform.name);
 }
 
 int start_preload_resource(enum resource_id id, uint32_t subid,
