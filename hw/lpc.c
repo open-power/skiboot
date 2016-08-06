@@ -25,6 +25,7 @@
 #include <timebase.h>
 #include <errorlog.h>
 #include <opal-api.h>
+#include <platform.h>
 #include <psi.h>
 
 //#define DBG_IRQ(fmt...) prerror(fmt)
@@ -40,6 +41,11 @@ DEFINE_LOG_ENTRY(OPAL_RC_LPC_WRITE, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 
 DEFINE_LOG_ENTRY(OPAL_RC_LPC_SYNC, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 		 OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,
+		 OPAL_NA);
+
+/* Used exclusively in manufacturing mode */
+DEFINE_LOG_ENTRY(OPAL_RC_LPC_SYNC_PERF, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
+		 OPAL_MISC_SUBSYSTEM, OPAL_UNRECOVERABLE_ERR_DEGRADE_PERF,
 		 OPAL_NA);
 
 #define ECCB_CTL	0 /* b0020 -> b00200 */
@@ -125,6 +131,9 @@ struct lpcm {
 	uint8_t			sirq_routes[LPC_NUM_SERIRQ];
 	uint32_t		sirq_rmasks[4];
 };
+
+
+#define	LPC_BUS_DEGRADED_PERF_THRESHOLD		5
 
 struct lpc_client_entry {
 	struct list_node node;
@@ -775,6 +784,8 @@ static void lpc_dispatch_reset(struct lpcm *lpc)
 static void lpc_dispatch_err_irqs(struct lpcm *lpc, uint32_t irqs)
 {
 	const char *sync_err = "Unknown LPC error";
+	static int lpc_bus_err_count;
+	struct opal_err_info *info;
 	uint32_t err_addr;
 	int rc;
 
@@ -803,13 +814,21 @@ static void lpc_dispatch_err_irqs(struct lpcm *lpc, uint32_t irqs)
 
 	rc = opb_read(lpc, lpc_reg_opb_base + LPC_HC_ERROR_ADDRESS,
 		      &err_addr, 4);
+
+	lpc_bus_err_count++;
+	if (manufacturing_mode && (lpc_bus_err_count > LPC_BUS_DEGRADED_PERF_THRESHOLD))
+		info = &e_info(OPAL_RC_LPC_SYNC_PERF);
+	else
+		info = &e_info(OPAL_RC_LPC_SYNC);
+
+
 	if (rc)
-		log_simple_error(&e_info(OPAL_RC_LPC_SYNC), "LPC[%03x]: %s "
+		log_simple_error(info, "LPC[%03x]: %s "
 				 "Error reading error address register\n",
 				 lpc->chip_id, sync_err);
 	else
-		log_simple_error(&e_info(OPAL_RC_LPC_SYNC), "LPC[%03x]: %s "
-			"Error address reg: 0x%08x\n",
+		log_simple_error(info, "LPC[%03x]: %s Error address reg: "
+				 "0x%08x\n",
 				 lpc->chip_id, sync_err, err_addr);
 }
 
