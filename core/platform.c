@@ -24,6 +24,7 @@
 #include <xscom.h>
 #include <errorlog.h>
 
+bool manufacturing_mode = false;
 struct platform	platform;
 
 DEFINE_LOG_ENTRY(OPAL_RC_ABNORMAL_REBOOT, OPAL_PLATFORM_ERR_EVT, OPAL_CEC,
@@ -124,8 +125,13 @@ void probe_platform(void)
 	struct platform *platforms = &__platforms_start;
 	unsigned int i;
 
-	platform = generic_platform;
+	/* Detect Manufacturing mode */
+	if (dt_find_property(dt_root, "ibm,manufacturing-mode")) {
+		prlog(PR_NOTICE, "PLAT: Manufacturing mode ON\n");
+		manufacturing_mode = true;
+	}
 
+	platform = generic_platform;
 	for (i = 0; &platforms[i] < &__platforms_end; i++) {
 		if (platforms[i].probe && platforms[i].probe()) {
 			platform = platforms[i];

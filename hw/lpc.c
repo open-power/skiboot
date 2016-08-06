@@ -25,6 +25,7 @@
 #include <timebase.h>
 #include <errorlog.h>
 #include <opal-api.h>
+#include <platform.h>
 
 //#define DBG_IRQ(fmt...) prerror(fmt)
 #define DBG_IRQ(fmt...) do { } while(0)
@@ -39,6 +40,11 @@ DEFINE_LOG_ENTRY(OPAL_RC_LPC_WRITE, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 
 DEFINE_LOG_ENTRY(OPAL_RC_LPC_SYNC, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 		 OPAL_MISC_SUBSYSTEM, OPAL_PREDICTIVE_ERR_GENERAL,
+		 OPAL_NA);
+
+/* Used exclusively in manufacturing mode */
+DEFINE_LOG_ENTRY(OPAL_RC_LPC_SYNC_PERF, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
+		 OPAL_MISC_SUBSYSTEM, OPAL_UNRECOVERABLE_ERR_DEGRADE_PERF,
 		 OPAL_NA);
 
 #define ECCB_CTL	0 /* b0020 -> b00200 */
@@ -109,6 +115,9 @@ DEFINE_LOG_ENTRY(OPAL_RC_LPC_SYNC, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 	LPC_HC_IRQ_TARG_TAR_ERR |			     \
 	LPC_HC_IRQ_BM_TAR_ERR)
 #define LPC_HC_ERROR_ADDRESS	0x40
+
+
+#define	LPC_BUS_DEGRADED_PERF_THRESHOLD		5
 
 struct lpc_client_entry {
 	struct list_node node;
@@ -662,8 +671,10 @@ static void lpc_dispatch_reset(struct proc_chip *chip)
 static void lpc_dispatch_err_irqs(struct proc_chip *chip, uint32_t irqs)
 {
 	int rc;
+	struct opal_err_info *info;
 	const char *sync_err = "Unknown LPC error";
 	uint32_t err_addr;
+	static int lpc_bus_err_count;
 
 	/* Write back to clear error interrupts, we clear SerIRQ later
 	 * as they are handled as level interrupts
@@ -690,13 +701,19 @@ static void lpc_dispatch_err_irqs(struct proc_chip *chip, uint32_t irqs)
 
 	rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_ERROR_ADDRESS,
 		      &err_addr, 4);
-	if (rc)
-		log_simple_error(&e_info(OPAL_RC_LPC_SYNC), "%s "
-			"Error address: Unknown\n", sync_err);
+
+	lpc_bus_err_count++;
+	if (manufacturing_mode && (lpc_bus_err_count > LPC_BUS_DEGRADED_PERF_THRESHOLD))
+		info = &e_info(OPAL_RC_LPC_SYNC_PERF);
 	else
-		log_simple_error(&e_info(OPAL_RC_LPC_SYNC), "%s "
-			"Error address: 0x%08x\n",
-			sync_err, err_addr);
+		info = &e_info(OPAL_RC_LPC_SYNC);
+
+	if (rc)
+		log_simple_error(info, "%s Error address: Unknown\n",
+					sync_err);
+	else
+		log_simple_error(info, "%s Error address: 0x%08x\n",
+					sync_err, err_addr);
 }
 
 static void lpc_dispatch_ser_irqs(struct proc_chip *chip, uint32_t irqs,

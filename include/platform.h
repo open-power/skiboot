@@ -175,6 +175,8 @@ extern struct platform __platforms_end;
 
 extern struct platform	platform;
 
+extern bool manufacturing_mode;
+
 #define DECLARE_PLATFORM(name)\
 static const struct platform __used __section(".platforms") name ##_platform
 
