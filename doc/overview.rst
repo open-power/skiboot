@@ -1,7 +1,7 @@
-skiboot overview
+Skiboot overview
 ================
 
-skiboot is firmware, loaded by the FSP. Along with loading the bootloader,
+Skiboot is firmware, loaded by the FSP. Along with loading the bootloader,
 it provides some runtime services to the OS (typically Linux).
 
 Source layout
@@ -51,7 +51,7 @@ Essentially, we do this by doing an atomic fetch and inc and whoever gets 0
 gets to be the master.
 
 When we enter skiboot we also get a memory location in a register which
-is the location of a device tree for the system. We fatten out the device
+is the location of a device tree for the system. We flatten out the device
 tree, turning offsets into real pointers and manipulating it where needed.
 We re-flatten the device tree before booting the OS (Linux).
 

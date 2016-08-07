@@ -100,7 +100,7 @@ to as skiroot.
 The OPAL Specification explicitly allows variation in this payload.
 
 A requirement of the payload is that it MUST support loading and booting
-an uncomppressed vmlinux Linux kernel.
+an uncompressed vmlinux Linux kernel.
 [**TODO**: expand on what this actually means]
 
 An OPAL system MUST pass a device tree to the host kernel.
@@ -119,7 +119,7 @@ Explicitly not covered by the OPAL Specification:
 Explicitly allowed:
 
 * Replacing the payload with something of equal/similar functionality
-  (weather replacing skiroot with an implementation of Zork would be compliant
+  (whether replacing skiroot with an implementation of Zork would be compliant
   is left as an exercise for the reader)
 
 Payload Environment
@@ -173,8 +173,8 @@ under other platforms. For example, a single Linux kernel can be built to boot
 under OPAL and under PowerVM or qemu pseries machine type.
 
 The root node of the device tree MUST have compatible = "ibm,powernv".
-See doc/device-tree.txt for more details
-[TODO: make doc/device-tree.txt better]
+See doc/device-tree.rst for more details
+[TODO: make doc/device-tree.rst better]
 
 The presence of the "/ibm,opal" entry in the device tree signifies running
 under OPAL. Additionally, the "/ibm,opal" node MUST have a compatibile property
@@ -210,13 +210,13 @@ about the firmware environment.
 
 The version property is a textual representation of the OPAL version.
 For example, it may be "skiboot-4.1" or other versioning described
-in more detail in doc/versioning.txt
+in more detail in doc/versioning.rst
 
 
 OPAL log
 --------
 
-OPAL implementations SHOULD have an in memory log where informational and
+OPAL implementation SHOULD have an in memory log where informational and
 error messages are stored. If present it MUST be human readable and text based.
 There is a separate facility (Platform Error Logs) for machine readable errors.
 
