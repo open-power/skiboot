@@ -274,8 +274,81 @@ Using the reason code, an error log is generated with the information derived
 from the look-up table, populated and committed to service processor. All of it
 is done with just one call.
 
+
+Error logging retrieval from FSP:
+=================================
+
+FSP sends error log notification to OPAL via mailbox protocol.
+
+OPAL maintains below lists:
+
+* Free list      : List of free nodes.
+* Pending list   : List of nodes which is yet to be read by the POWERNV.
+* Processed list : List of nodes which has been read but still waiting for
+			acknowledgement.
+
+Below is the structure of the node: ::
+
+	struct fsp_log_entry {
+		uint32_t log_id;
+		size_t log_size;
+		struct list_node link;
+	};
+
+OPAL maintains a state machine which has following states. ::
+
+	enum elog_head_state {
+		ELOG_STATE_FETCHING,    /*In the process of reading log from FSP. */
+		ELOG_STATE_FETCHED_INFO,/* Indicates reading log info is completed */
+		ELOG_STATE_FETCHED_DATA,/* Indicates reading log is completed */
+		ELOG_STATE_HOST_INFO,   /* Host read log info */
+		ELOG_STATE_NONE,        /* Indicates to fetch next log */
+		ELOG_STATE_REJECTED,    /* resend all pending logs to linux */
+	};
+
+Initially, state of the state machine is ``ELOG_STATE_NONE``. When OPAL gets
+the notification about the error log, it takes out the node from free list
+and put it into pending list and update the state machine to fetching state
+(``ELOG_STATE_FETCHING``). It also gives response back to FSP about the
+received error log notification.
+
+It then queue mailbox message to get the error log data in OPAL error log
+buffer, once it is done state machine gets into fetched state
+(``ELOG_STATE_FETCHED_DATA``). After that, OPAL notifies POWERNV host to
+fetch new error log.
+
+POWERNV uses the OPAL interface to get the error log info(elogid, elog_size,
+elog_type) first then it reads the error log data in its buffer that moves
+the pending error log to processed list. After reading, the state machine
+moves to ``ELOG_STATE_NONE`` state.
+
+It acknowledges the error log id after reading error log data by sending the
+call to OPAL, which in turn sends the acknowledgement mbox message to FSP and
+moves error log id from processed list to again back to free node list and this
+process goes on every FSP error log.
+
+Design constraints:
+-------------------
+::
+
+#define ELOG_READ_MAX_RECORD            128
+
+Currently, the number of error logs from FSP, OPAL can hold is limited to
+128. If OPAL run out of free node in the list for the new error log, it sends
+'Discarded by OPAL' message to the FSP. At some point in the future, it is
+upto FSP when it notifies again to OPAL about the discarded error log.
+
+::
+
+#define ELOG_WRITE_MAX_RECORD		64
+
+There is also limitation on the number of OPAL error logs OPAL can hold is 64.
+If it is run out of the buffers in the pool, it will log the message saying
+'Failed to get the buffer'.
+
 Note
 ----
+
 * For more information regarding error logging and PEL format
   refer to PAPR doc and P7 PEL and SRC PLDD document.
 
