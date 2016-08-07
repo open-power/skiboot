@@ -1,4 +1,4 @@
-OAPL_MESSAGE
+OPAL_MESSAGE
 ============
 
 The host OS can use OPAL_GET_MSG to retrive messages queued by OPAL. The

@@ -35,7 +35,7 @@ Returns: ::
 term_number is the terminal number as represented in the device tree.
 length is a pointer to the length of buffer.
 
-A conformining implementation SHOULD try to NOT do partial writes, although
+A conforming implementation SHOULD try to NOT do partial writes, although
 partial writes and not writing anything are valid.
 
 OPAL_CONSOLE_WRITE_BUFFER_SPACE

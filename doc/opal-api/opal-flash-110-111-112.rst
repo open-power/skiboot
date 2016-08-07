@@ -25,22 +25,23 @@ All calls share the same return values:
 ``OPAL_ASYNC_COMPLETION``
   operation started, an async completion will be triggered with the ``token`` argument
 
-OPAL_PARAMETER
+``OPAL_PARAMETER``
   invalid flash id
 
-OPAL_PARAMETER
+``OPAL_PARAMETER``
   invalid size or offset (alignment, or access beyond end of device)
 
-OPAL_BUSY
+``OPAL_BUSY``
   flash in use
 
-OPAL_HARDWARE
+``OPAL_HARDWARE``
   error accessing flash device
 
 OPAL_FLASH_READ
 ---------------
 
-Parameters:
+Parameters: ::
+
 	uint64_t id
 	uint64_t offset
 	uint64_t buffer
