@@ -1,27 +1,29 @@
-How to log errors on Sapphire and POWERNV
-=========================================
+How to log errors on OPAL
+=========================
 
-Currently the errors reported by POWERNV/Sapphire (OPAL) interfaces
-are in free form, where as errors reported by FSP is in standard Platform
-Error Log (PEL) format. For out-of band management via IPMI interfaces,
-it is necessary to push down the errors to FSP via mailbox
-(reported by POWERNV/Sapphire) in PEL format.
+Currently the errors reported by OPAL interfaces are in free form, where as
+errors reported by service processor is in standard Platform Error Log (PEL)
+format. For out-of band management via IPMI interfaces, it is necessary to
+push down the errors to service processor via mailbox (reported by OPAL)
+in PEL format.
 
-PEL size can vary from 2K-16K bytes, fields of which needs to populated
-based on the kind of event and error that needs to be reported.
-All the information needed to be reported as part of the error, is
-passed by user using the error-logging interfaces outlined below.
-Following which, PEL structure is generated based on the input and
-then passed on to FSP.
+PEL size can vary from 2K-16K bytes, fields of which needs to populated based
+on the kind of event and error that needs to be reported. All the information
+needed to be reported as part of the error, is passed by user using the
+error-logging interfaces outlined below. Following which, PEL structure is
+generated based on the input and then passed on to service processor.
 
-Error logging interfaces in Sapphire
-------------------------------------
+We do create eSEL error log format for some service processors but it's just
+a wrapper around PEL format. Actual data still stays in PEL format.
 
-Interfaces are provided for the user to log/report an error in Sapphire.
-Using these interfaces relevant error information is collected and later
-converted to PEL format and then pushed to FSP.
+Error logging interfaces in OPAL
+--------------------------------
 
-Step 1: To report an error, invoke opal_elog_create() with required argument.
+Interfaces are provided for the user to log/report an error in OPAL. Using
+these interfaces relevant error information is collected and later converted
+to PEL format and then pushed to service processor.
+
+Step 1: To report an error, invoke ``opal_elog_create()`` with required argument.
 
 	``struct errorlog *opal_elog_create(struct opal_err_info *e_info, uint32_t tag);``
 
@@ -45,7 +47,7 @@ Parameters:
 	The various attributes set by this macro are described below.
 
 	``uint8_t opal_error_event_type``: Classification of error/events
-	type reported on OPAL::
+	type reported on OPAL. ::
 
 		/* Platform Events/Errors: Report Machine Check Interrupt */
 		#define OPAL_PLATFORM_ERR_EVT           0x01
@@ -56,25 +58,25 @@ Parameters:
 		/* MISC: Miscellaneous error */
 		#define OPAL_MISC_ERR_EVT               0x04
 
-	``uint16_t component_id``: Component ID of Sapphire component as
-				listed in include/errorlog.h
+	``uint16_t component_id``: Component ID of OPAL component as
+	listed in ``include/errorlog.h``.
 
-	  ``uint8_t subsystem_id``: ID of the sub-system reporting error.::
+	``uint8_t subsystem_id``: ID of the sub-system reporting error. ::
 
 		/* OPAL Subsystem IDs listed for reporting events/errors */
-			#define OPAL_PROCESSOR_SUBSYSTEM        0x10
-			#define OPAL_MEMORY_SUBSYSTEM           0x20
-			#define OPAL_IO_SUBSYSTEM               0x30
-			#define OPAL_IO_DEVICES                 0x40
-			#define OPAL_CEC_HARDWARE               0x50
-			#define OPAL_POWER_COOLING              0x60
-			#define OPAL_MISC                       0x70
-			#define OPAL_SURVEILLANCE_ERR           0x7A
-			#define OPAL_PLATFORM_FIRMWARE          0x80
-			#define OPAL_SOFTWARE                   0x90
-			#define OPAL_EXTERNAL_ENV               0xA0
+		#define OPAL_PROCESSOR_SUBSYSTEM        0x10
+		#define OPAL_MEMORY_SUBSYSTEM           0x20
+		#define OPAL_IO_SUBSYSTEM               0x30
+		#define OPAL_IO_DEVICES                 0x40
+		#define OPAL_CEC_HARDWARE               0x50
+		#define OPAL_POWER_COOLING              0x60
+		#define OPAL_MISC                       0x70
+		#define OPAL_SURVEILLANCE_ERR           0x7A
+		#define OPAL_PLATFORM_FIRMWARE          0x80
+		#define OPAL_SOFTWARE                   0x90
+		#define OPAL_EXTERNAL_ENV               0xA0
 
-	``uint8_t event_severity``: Severity of the event/error to be reported ::
+	``uint8_t event_severity``: Severity of the event/error to be reported. ::
 
 		#define OPAL_INFO                                   0x00
 		#define OPAL_RECOVERED_ERR_GENERAL                  0x10
@@ -101,14 +103,16 @@ Parameters:
 		#define OPAL_UNRECOVERABLE_ERR_DEGRADE_PERF                 0x41
 		/* 0x44 Unrecoverable error bypassed with loss of redundancy */
 		#define OPAL_UNRECOVERABLE_ERR_LOSS_REDUNDANCY              0x44
-		/* 0x45 Unrecoverable error bypassed with loss of redundancy and performance */
+		/* 0x45 Unrecoverable error bypassed with loss of redundancy
+		 * and performance
+		 */
 		#define OPAL_UNRECOVERABLE_ERR_LOSS_REDUNDANCY_PERF         0x45
 		/* 0x48 Unrecoverable error bypassed with loss of function */
 		#define OPAL_UNRECOVERABLE_ERR_LOSS_OF_FUNCTION             0x48
 
 		#define OPAL_ERROR_PANIC				    0x50
 
-		``uint8_t  event_subtype``: Event Sub-type ::
+	``uint8_t  event_subtype``: Event Sub-type ::
 
 		  #define OPAL_NA                                         0x00
 		  #define OPAL_MISCELLANEOUS_INFO_ONLY                    0x01
@@ -139,7 +143,7 @@ Parameters:
 			should be provided during reporting of an event/error.
 
 
-	``uint32_t reason_code``: Reason for failure as stated in include/errorlog.h for Sapphire.
+	``uint32_t reason_code``: Reason for failure as stated in ``include/errorlog.h`` for OPAL.
 			Eg: Reason code for code-update failures can be
 
 			* ``OPAL_RC_CU_INIT``  -> Initialisation failure
@@ -150,63 +154,124 @@ Step 2: Data can be appended to the user data section using the either of
         the below two interfaces: ::
 
 	  void log_append_data(struct errorlog *buf, unsigned char *data,
-			     uint16_t size)
+				uint16_t size);
 
-	Parameters:
-	  ``struct opal_errorlog *buf``: ``struct opal_errorlog`` pointer
-	  returned by opal_elog_create() call.
+Parameters:
+
+	``struct opal_errorlog *buf``: ``struct opal_errorlog`` pointer
+	returned by ``opal_elog_create()`` call.
 
 	``unsigned char *data``: Pointer to the dump data
 
 	``uint16_t size``: Size of the dump data.
 
-	``void log_append_msg(struct errorlog *buf, const char *fmt, ...)``
+	``void log_append_msg(struct errorlog *buf, const char *fmt, ...);``
 
-	Parameters:
-	  ``struct opal_errorlog *buf``: pointer returned by opal_elog_create()
-	  call.
+Parameters:
+
+	``struct opal_errorlog *buf``: pointer returned by ``opal_elog_create()``
+	call.
 
 	``const char *fmt``: Formatted error log string.
 
 	Additional user data sections can be added to the error log to
 	separate data (eg. readable text vs binary data) by calling
-	log_add_section(). The interfaces in Step 2 operate on the 'last'
+	``log_add_section()``. The interfaces in Step 2 operate on the 'last'
 	user data section of the error log.
 
 	``void log_add_section(struct errorlog *buf, uint32_t tag);``
 
-	Parameters:
-	  ``struct opal_errorlog *buf``: pointer returned by opal_elog_create() call.
+Parameters:
+
+	  ``struct opal_errorlog *buf``: pointer returned by ``opal_elog_create()`` call.
 
 	  ``uint32_t tag``: Unique value to identify the data.
-                       Ideal to have ASCII value for 4-byte string.
+	    Ideal to have ASCII value for 4-byte string.
 
-Step 3: Once all the data for an error is logged in, the error needs to be
-	committed in FSP. ::
+Step 3: There is a platform hook for the OPAL error log to be committed on any
+	service processor(Currently used for FSP and BMC based machines).
 
-	  rc = elog_fsp_commit(buf);
+	Below is snippet of the code of how this hook is called.
+	::
 
-	Value of 0 is returned on success.
+		void log_commit(struct errorlog *elog)
+		{
+			....
+			....
+			if (platform.elog_commit) {
+				rc = platform.elog_commit(elog);
+				if (rc)
+					prerror("ELOG: Platform commit error %d"
+						"\n", rc);
+				return;
+			}
+			....
+			....
+		}
 
-In the process of committing an error to FSP, log info is first internally
-converted to PEL format and then pushed to the FSP. All the errors logged
-in Sapphire are again pushed up to POWERNV platform by the FSP and all the errors
-reported by Sapphire and POWERNV are logged in FSP.
+Step 3.1 FSP:
+	::
+
+		.elog_commit            = elog_fsp_commit
+
+	Once all the data for an error is logged in, the error needs to
+	be committed in FSP.
+
+	In the process of committing an error to FSP, log info is first
+	internally converted to PEL format and then pushed to the FSP.
+	FSP then take cares of sending all logs including its own and
+	OPAL's one to the POWERNV.
+
+	OPAL maintains timeout field for all error logs it is sending to
+	FSP. If it is not logged within allotted time period (e.g if FSP
+	is down), in that case OPAL sends those logs to POWERNV.
+
+Step 3.2 BMC:
+	::
+
+		  .elog_commit            = ipmi_elog_commit
+
+	In case of BMC machines, error logs are first converted to eSEL format.
+	i.e:
+	::
+
+		  eSEL = SEL header + PEL data
+
+	SEL header contains below fields.
+	::
+
+		struct sel_header {
+			uint16_t id;
+			uint8_t record_type;
+			uint32_t timestamp;
+			uint16_t genid;
+			uint8_t evmrev;
+			uint8_t sensor_type;
+			uint8_t sensor_num;
+			uint8_t dir_type;
+			uint8_t signature;
+			uint8_t reserved[2];
+		}
+
+	After filling up the SEL header fields, OPAL copies the error log
+	PEL data after the header section in the error log buffer. Then using
+	IPMI interface, eSEL gets logged in BMC.
+
 
 If the user does not intend to dump various user data sections, but just
 log the error with some amount of description around that error, they can do
-so using just the simple error logging interface ::
+so using just the simple error logging interface. ::
 
-  log_simple_error(uint32_t reason_code, char *fmt, ...);
+	log_simple_error(uint32_t reason_code, char *fmt, ...);
 
 For example: ::
 
-  log_simple_error(OPAL_RC_SURVE_STATUS,
-			"SURV: Error retreiving surveillance status: %d\n",
+	log_simple_error(OPAL_RC_SURVE_STATUS,
+			"SURV: Error retrieving surveillance status: %d\n",
                        						err_len);
 
 Using the reason code, an error log is generated with the information derived
-from the look-up table, populated and committed to FSP. All of it
+from the look-up table, populated and committed to service processor. All of it
 is done with just one call.
 
 Note
@@ -214,8 +279,8 @@ Note
 * For more information regarding error logging and PEL format
   refer to PAPR doc and P7 PEL and SRC PLDD document.
 
-* Refer to include/errorlog.h for all the error logging
-  interface parameters and include/pel.h for PEL
+* Refer to ``include/errorlog.h`` for all the error logging
+  interface parameters and ``include/pel.h`` for PEL
   structures.
 
 Sample error logging
