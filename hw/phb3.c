@@ -3280,10 +3280,11 @@ static void phb3_init_capp_regs(struct phb3 *p, bool dma_mode)
 /* override some inits with CAPI defaults */
 static void phb3_init_capp_errors(struct phb3 *p)
 {
-	out_be64(p->regs + PHB_ERR_AIB_FENCE_ENABLE,       0xffffffdd0c80ffc0);
+	out_be64(p->regs + PHB_ERR_AIB_FENCE_ENABLE,       0xffffffdd8c80ffc0);
 	out_be64(p->regs + PHB_OUT_ERR_AIB_FENCE_ENABLE,   0x9cf3fe08f8dc700f);
 	out_be64(p->regs + PHB_INA_ERR_AIB_FENCE_ENABLE,   0xffff57fbff01ffde);
 	out_be64(p->regs + PHB_INB_ERR_AIB_FENCE_ENABLE,   0xfcffe0fbff7ff0ec);
+	out_be64(p->regs + PHB_LEM_ERROR_MASK,		   0x40018e2400022482);
 }
 
 #define PE_CAPP_EN 0x9013c03
