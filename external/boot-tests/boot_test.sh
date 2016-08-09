@@ -51,7 +51,7 @@ function linux_boot {
 	    msg "IPMI sol deactivate failed; IPMI may have stalled, may just be IPMI. Good luck."
 	fi
 
-	LINUXBOOT_LOG=$(mktemp --tmpdir builder-2.XXXXXX);
+	LINUXBOOT_LOG=$(mktemp --tmpdir boot-test-$target.XXXXXX);
 	cat <<EOF | expect > $LINUXBOOT_LOG
 set timeout 300
 spawn $IPMI_COMMAND sol activate
