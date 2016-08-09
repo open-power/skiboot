@@ -514,9 +514,10 @@ static void find_npu_checkstop_reason(int flat_chip_id,
 	if (!fatal_errors)
 		return;
 
-	prlog(PR_DEBUG,
-	      "NPU: FIR %llx FIR mask %llx FIR ACTION0 %llx FIR ACTION1 %llx\n",
-	      npu_fir, npu_fir_mask, npu_fir_action0, npu_fir_action1);
+	prlog(PR_DEBUG, "NPU: FIR 0x%016llx mask 0x%016llx\n",
+	      npu_fir, npu_fir_mask);
+	prlog(PR_DEBUG, "NPU: ACTION0 0x%016llx, ACTION1 0x%016llx\n",
+	      npu_fir_action0, npu_fir_action1);
 
 	/* Set the NPU to fenced since it can't recover. */
 	npu_set_fence_state(p, true);
