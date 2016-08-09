@@ -724,6 +724,12 @@ void __noreturn main_cpu_entry(const void *fdt, u32 master_cpu)
 	/* Initialize PSI (depends on probe_platform being called) */
 	psi_init();
 
+	/* Initialize/enable LPC interrupts. This must be done after the
+	 * PSI interface has been initialized since it serves as an interrupt
+	 * source for LPC interrupts.
+	 */
+	lpc_init_interrupts();
+
 	/* Call in secondary CPUs */
 	cpu_bringup();
 

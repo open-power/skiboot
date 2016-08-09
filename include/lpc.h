@@ -59,6 +59,7 @@
 /* Routines for accessing the LPC bus on Power8 */
 
 extern void lpc_init(void);
+extern void lpc_init_interrupts(void);
 
 /* Check for a default bus */
 extern bool lpc_present(void);
@@ -71,6 +72,9 @@ extern bool lpc_ok(void);
 
 /* Handle the interrupt from the LPC controller */
 extern void lpc_interrupt(uint32_t chip_id);
+
+/* On P9, we have a different route for SerIRQ */
+extern void lpc_serirq(uint32_t chip_id, uint32_t index);
 
 /* Call all external handlers */
 extern void lpc_all_interrupts(uint32_t chip_id);
@@ -99,6 +103,9 @@ extern int64_t lpc_read(enum OpalLPCAddressType addr_type, uint32_t addr,
 
 /* Mark LPC bus as used by console */
 extern void lpc_used_by_console(void);
+
+/* Route SerIRQs to specific PSI/LPC interrupt sources */
+void lpc_route_serirq(uint32_t chip_id, uint32_t sirq, uint32_t psi_idx);
 
 /*
  * Simplified big endian FW accessors

@@ -598,7 +598,7 @@ static void psihb_p9_interrupt(struct irq_source *is, uint32_t isn)
 	case P9_PSI_IRQ_LPC_SIRQ1:
 	case P9_PSI_IRQ_LPC_SIRQ2:
 	case P9_PSI_IRQ_LPC_SIRQ3:
-		/* XXX TODO */
+		lpc_serirq(psi->chip_id, idx - P9_PSI_IRQ_LPC_SIRQ0);
 		break;
 	case P9_PSI_IRQ_SBE_I2C:
 		p8_i2c_interrupt(psi->chip_id);

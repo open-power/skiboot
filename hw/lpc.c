@@ -117,6 +117,7 @@ struct lpc_client_entry {
 
 /* Default LPC bus */
 static int32_t lpc_default_chip_id = -1;
+static bool lpc_irqs_ready;
 
 /*
  * These are expected to be the same on all chips and should probably
@@ -546,6 +547,9 @@ static void lpc_setup_serirq(struct proc_chip *chip)
 	uint32_t mask = LPC_HC_IRQ_BASE_IRQS;
 	int rc;
 
+	if (!lpc_irqs_ready)
+		return;
+
 	/* Collect serirq enable bits */
 	list_for_each(&chip->lpc_clients, ent, node)
 		mask |= ent->clt->interrupts & LPC_HC_IRQ_SERIRQ_ALL;
@@ -584,7 +588,8 @@ static void lpc_setup_serirq(struct proc_chip *chip)
 		else
 			DBG_IRQ("LPC: MASK READBACK=%x\n", val);
 
-		rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL, &val, 4);
+		rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL,
+			      &val, 4);
 		if (rc)
 			prerror("Failed to readback ctrl");
 		else
@@ -592,9 +597,41 @@ static void lpc_setup_serirq(struct proc_chip *chip)
 	}
 }
 
-static void lpc_init_interrupts(struct proc_chip *chip)
+void lpc_route_serirq(uint32_t chip_id, uint32_t sirq, uint32_t psi_idx)
 {
+	struct proc_chip *chip = get_chip(chip_id);
+	uint32_t reg, shift, val;
+	int64_t rc;
+
+	assert(chip);
+	assert(proc_gen == proc_gen_p9);
+
+	if (sirq < 14) {
+		reg = 0xc;
+		shift = 4 + (sirq << 1);
+	} else {
+		reg = 0x8;
+		shift = 8 + ((sirq - 14) << 1);
+	}
+	shift = 30-shift;
+	rc = opb_read(chip, opb_master_reg_base + reg, &val, 4);
+	if (rc)
+		return;
+	val = val & ~(3 << shift);
+	val |= (psi_idx & 3) << shift;
+	opb_write(chip, opb_master_reg_base + reg, val, 4);
+}
+
+void lpc_init_interrupts(void)
+{
+	struct proc_chip *chip;
 	int rc;
+
+	if (lpc_default_chip_id < 0)
+		return;
+	chip = get_chip(lpc_default_chip_id);
+	if (chip == NULL)
+		return;
 
 	/* First mask them all */
 	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
@@ -602,6 +639,8 @@ static void lpc_init_interrupts(struct proc_chip *chip)
 		prerror("Failed to init interrutps\n");
 		return;
 	}
+
+	lpc_irqs_ready = true;
 
 	switch(chip->type) {
 	case PROC_CHIP_P8_MURANO:
@@ -618,6 +657,8 @@ static void lpc_init_interrupts(struct proc_chip *chip)
 		opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL, 0, 4);
 		break;
 	case PROC_CHIP_P8_NAPLES:
+	case PROC_CHIP_P9_NIMBUS:
+	case PROC_CHIP_P9_CUMULUS:
 		/* On Naples, we support LPC interrupts, enable them based
 		 * on what clients requests. This will setup the mask and
 		 * enable processing
@@ -726,8 +767,7 @@ static void lpc_dispatch_ser_irqs(struct proc_chip *chip, uint32_t irqs,
 	if (!clear_latch)
 		return;
 
-	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSTAT,
-		       irqs, 4);
+	rc = opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQSTAT, irqs, 4);
 	if (rc)
 		prerror("Failed to clear SerIRQ latches !\n");
 }
@@ -749,14 +789,15 @@ void lpc_interrupt(uint32_t chip_id)
 		      &opb_irqs, 4);
 	if (rc) {
 		prerror("Failed to read OPB IRQ state\n");
-		goto bail;
+		unlock(&chip->lpc_lock);
+		return;
 	}
+
+	DBG_IRQ("LPC: OPB IRQ on chip 0x%x, oirqs=0x%08x\n", chip_id, opb_irqs);
 
 	/* Check if it's an LPC interrupt */
 	if (!(opb_irqs & OPB_MASTER_IRQ_LPC)) {
 		/* Something we don't support ? Ack it anyway... */
-		opb_write(chip, opb_master_reg_base + OPB_MASTER_LS_IRQ_STAT,
-			  opb_irqs, 4);
 		goto bail;
 	}
 
@@ -767,7 +808,7 @@ void lpc_interrupt(uint32_t chip_id)
 		goto bail;
 	}
 
-	DBG_IRQ("LPC: IRQ on chip 0x%x, irqs=0x%08x\n", chip_id, irqs);
+	DBG_IRQ("LPC: LPC IRQ on chip 0x%x, irqs=0x%08x\n", chip_id, irqs);
 
 	/* Handle error interrupts */
 	if (irqs & LPC_HC_IRQ_BASE_IRQS)
@@ -776,10 +817,38 @@ void lpc_interrupt(uint32_t chip_id)
 	/* Handle SerIRQ interrupts */
 	if (irqs & LPC_HC_IRQ_SERIRQ_ALL)
 		lpc_dispatch_ser_irqs(chip, irqs, true);
-
+bail:
 	/* Ack it at the OPB level */
 	opb_write(chip, opb_master_reg_base + OPB_MASTER_LS_IRQ_STAT,
 		  opb_irqs, 4);
+	unlock(&chip->lpc_lock);
+}
+
+void lpc_serirq(uint32_t chip_id, uint32_t index __unused)
+{
+	struct proc_chip *chip = get_chip(chip_id);
+	uint32_t irqs;
+	int rc;
+
+	/* No initialized LPC controller on that chip */
+	if (!chip || (!chip->lpc_xbase && !chip->lpc_mbase))
+		return;
+
+	lock(&chip->lpc_lock);
+
+	/* Handle the lpc interrupt source (errors etc...) */
+	rc = opb_read(chip, lpc_reg_opb_base + LPC_HC_IRQSTAT, &irqs, 4);
+	if (rc) {
+		prerror("LPC: Failed to read LPC IRQ state\n");
+		goto bail;
+	}
+
+	DBG_IRQ("LPC: IRQ on chip 0x%x, irqs=0x%08x\n", chip_id, irqs);
+
+	/* Handle SerIRQ interrupts */
+	if (irqs & LPC_HC_IRQ_SERIRQ_ALL)
+		lpc_dispatch_ser_irqs(chip, irqs, true);
+
  bail:
 	unlock(&chip->lpc_lock);
 }
@@ -812,10 +881,12 @@ static void lpc_init_chip_p8(struct dt_node *xn)
 		lpc_default_chip_id = chip->id;
 	}
 
-	prlog(PR_NOTICE, "Bus on chip %d, access via XSCOM, PCB_Addr=0x%x\n",
-	      chip->id, chip->lpc_xbase);
+	/* Mask all interrupts for now */
+	opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
 
-	lpc_init_interrupts(chip);
+	printf("LPC: Bus on chip %d, access via XSCOM, PCB_Addr=0x%x\n",
+	       chip->id, chip->lpc_xbase);
+
 	dt_add_property(xn, "interrupt-controller", NULL, 0);
 	dt_add_property_cells(xn, "#interrupt-cells", 1);
 	assert(dt_prop_get_u32(xn, "#address-cells") == 2);
@@ -826,6 +897,7 @@ static void lpc_init_chip_p9(struct dt_node *opb_node)
 	uint32_t gcid = dt_get_chip_id(opb_node);
 	struct proc_chip *chip;
 	u64 addr;
+	u32 val;
 
 	chip = get_chip(gcid);
 	assert(chip);
@@ -845,11 +917,19 @@ static void lpc_init_chip_p9(struct dt_node *opb_node)
 		lpc_default_chip_id = chip->id;
 	}
 
-	prlog(PR_NOTICE, "Bus on chip %d, access via MMIO @%p\n",
-	       chip->id, chip->lpc_mbase);
+	/* Mask all interrupts for now */
+	opb_write(chip, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
 
-	// XXX TODO
-	//lpc_init_interrupts(chip);
+	/* On P9, setup routing to PSI SerIRQ 0 */
+	opb_read(chip, opb_master_reg_base + 8, &val, 4);
+	val &= 0xff03ffff;
+	opb_write(chip, opb_master_reg_base + 8, val, 4);
+	opb_read(chip, opb_master_reg_base + 0xc, &val, 4);
+	val &= 0xf0000000;
+	opb_write(chip, opb_master_reg_base + 0xc, val, 4);
+
+	printf("LPC: Bus on chip %d, access via MMIO @%p\n",
+	        gcid, chip->lpc_mbase);
 }
 
 void lpc_init(void)
@@ -914,7 +994,9 @@ void lpc_register_client(uint32_t chip_id,
 	lock(&chip->lpc_lock);
 	list_add(&chip->lpc_clients, &ent->node);
 	/* Re-evaluate ser irqs on Naples */
-	if (chip->type == PROC_CHIP_P8_NAPLES)
+	if (chip->type == PROC_CHIP_P8_NAPLES ||
+	    chip->type == PROC_CHIP_P9_NIMBUS ||
+	    chip->type == PROC_CHIP_P9_CUMULUS)
 		lpc_setup_serirq(chip);
 	unlock(&chip->lpc_lock);
 }
