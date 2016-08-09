@@ -112,12 +112,12 @@ DEFINE_LOG_ENTRY(OPAL_RC_LPC_SYNC, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 
 struct lpcm {
 	uint32_t		chip_id;
-	uint32_t		lpc_xbase;
-	void			*lpc_mbase;
-	struct lock		lpc_lock;
-	uint8_t			lpc_fw_idsel;
-	uint8_t			lpc_fw_rdsz;
-	struct list_head	lpc_clients;
+	uint32_t		xbase;
+	void			*mbase;
+	struct lock		lock;
+	uint8_t			fw_idsel;
+	uint8_t			fw_rdsz;
+	struct list_head	clients;
 	bool			has_serirq;
 };
 
@@ -146,13 +146,13 @@ static int64_t opb_mmio_write(struct lpcm *lpc, uint32_t addr, uint32_t data,
 {
 	switch (sz) {
 	case 1:
-		out_8(lpc->lpc_mbase + addr, data);
+		out_8(lpc->mbase + addr, data);
 		return OPAL_SUCCESS;
 	case 2:
-		out_be16(lpc->lpc_mbase + addr, data);
+		out_be16(lpc->mbase + addr, data);
 		return OPAL_SUCCESS;
 	case 4:
-		out_be32(lpc->lpc_mbase + addr, data);
+		out_be32(lpc->mbase + addr, data);
 		return OPAL_SUCCESS;
 	}
 	prerror("LPC: Invalid data size %d\n", sz);
@@ -166,7 +166,7 @@ static int64_t opb_write(struct lpcm *lpc, uint32_t addr, uint32_t data,
 	int64_t rc, tout;
 	uint64_t data_reg;
 
-	if (lpc->lpc_mbase)
+	if (lpc->mbase)
 		return opb_mmio_write(lpc, addr, data, sz);
 
 	switch(sz) {
@@ -184,7 +184,7 @@ static int64_t opb_write(struct lpcm *lpc, uint32_t addr, uint32_t data,
 		return OPAL_PARAMETER;
 	}
 
-	rc = xscom_write(lpc->chip_id, lpc->lpc_xbase + ECCB_DATA, data_reg);
+	rc = xscom_write(lpc->chip_id, lpc->xbase + ECCB_DATA, data_reg);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_LPC_WRITE),
 			"LPC: XSCOM write to ECCB DATA error %lld\n", rc);
@@ -194,7 +194,7 @@ static int64_t opb_write(struct lpcm *lpc, uint32_t addr, uint32_t data,
 	ctl = SETFIELD(ECCB_CTL_DATASZ, ctl, sz);
 	ctl = SETFIELD(ECCB_CTL_ADDRLEN, ctl, ECCB_ADDRLEN_4B);
 	ctl = SETFIELD(ECCB_CTL_ADDR, ctl, addr);
-	rc = xscom_write(lpc->chip_id, lpc->lpc_xbase + ECCB_CTL, ctl);
+	rc = xscom_write(lpc->chip_id, lpc->xbase + ECCB_CTL, ctl);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_LPC_WRITE),
 			"LPC: XSCOM write to ECCB CTL error %lld\n", rc);
@@ -202,7 +202,7 @@ static int64_t opb_write(struct lpcm *lpc, uint32_t addr, uint32_t data,
 	}
 
 	for (tout = 0; tout < ECCB_TIMEOUT; tout++) {
-		rc = xscom_read(lpc->chip_id, lpc->lpc_xbase + ECCB_STAT,
+		rc = xscom_read(lpc->chip_id, lpc->xbase + ECCB_STAT,
 				&stat);
 		if (rc) {
 			log_simple_error(&e_info(OPAL_RC_LPC_WRITE),
@@ -229,13 +229,13 @@ static int64_t opb_mmio_read(struct lpcm *lpc, uint32_t addr, uint32_t *data,
 {
 	switch (sz) {
 	case 1:
-		*data = in_8(lpc->lpc_mbase + addr);
+		*data = in_8(lpc->mbase + addr);
 		return OPAL_SUCCESS;
 	case 2:
-		*data = in_be16(lpc->lpc_mbase + addr);
+		*data = in_be16(lpc->mbase + addr);
 		return OPAL_SUCCESS;
 	case 4:
-		*data = in_be32(lpc->lpc_mbase + addr);
+		*data = in_be32(lpc->mbase + addr);
 		return OPAL_SUCCESS;
 	}
 	prerror("LPC: Invalid data size %d\n", sz);
@@ -248,7 +248,7 @@ static int64_t opb_read(struct lpcm *lpc, uint32_t addr, uint32_t *data,
 	uint64_t ctl = ECCB_CTL_MAGIC | ECCB_CTL_READ, stat;
 	int64_t rc, tout;
 
-	if (lpc->lpc_mbase)
+	if (lpc->mbase)
 		return opb_mmio_read(lpc, addr, data, sz);
 
 	if (sz != 1 && sz != 2 && sz != 4) {
@@ -259,7 +259,7 @@ static int64_t opb_read(struct lpcm *lpc, uint32_t addr, uint32_t *data,
 	ctl = SETFIELD(ECCB_CTL_DATASZ, ctl, sz);
 	ctl = SETFIELD(ECCB_CTL_ADDRLEN, ctl, ECCB_ADDRLEN_4B);
 	ctl = SETFIELD(ECCB_CTL_ADDR, ctl, addr);
-	rc = xscom_write(lpc->chip_id, lpc->lpc_xbase + ECCB_CTL, ctl);
+	rc = xscom_write(lpc->chip_id, lpc->xbase + ECCB_CTL, ctl);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_LPC_READ),
 			"LPC: XSCOM write to ECCB CTL error %lld\n", rc);
@@ -267,7 +267,7 @@ static int64_t opb_read(struct lpcm *lpc, uint32_t addr, uint32_t *data,
 	}
 
 	for (tout = 0; tout < ECCB_TIMEOUT; tout++) {
-		rc = xscom_read(lpc->chip_id, lpc->lpc_xbase + ECCB_STAT,
+		rc = xscom_read(lpc->chip_id, lpc->xbase + ECCB_STAT,
 				&stat);
 		if (rc) {
 			log_simple_error(&e_info(OPAL_RC_LPC_READ),
@@ -306,7 +306,7 @@ static int64_t lpc_set_fw_idsel(struct lpcm *lpc, uint8_t idsel)
 	uint32_t val;
 	int64_t rc;
 
-	if (idsel == lpc->lpc_fw_idsel)
+	if (idsel == lpc->fw_idsel)
 		return OPAL_SUCCESS;
 	if (idsel > 0xf)
 		return OPAL_PARAMETER;
@@ -324,7 +324,7 @@ static int64_t lpc_set_fw_idsel(struct lpcm *lpc, uint8_t idsel)
 		prerror("Failed to write HC_FW_SEG_IDSEL register !\n");
 		return rc;
 	}
-	lpc->lpc_fw_idsel = idsel;
+	lpc->fw_idsel = idsel;
 	return OPAL_SUCCESS;
 }
 
@@ -333,7 +333,7 @@ static int64_t lpc_set_fw_rdsz(struct lpcm *lpc, uint8_t rdsz)
 	uint32_t val;
 	int64_t rc;
 
-	if (rdsz == lpc->lpc_fw_rdsz)
+	if (rdsz == lpc->fw_rdsz)
 		return OPAL_SUCCESS;
 	switch(rdsz) {
 	case 1:
@@ -360,7 +360,7 @@ static int64_t lpc_set_fw_rdsz(struct lpcm *lpc, uint8_t rdsz)
 		prerror("Failed to write LPC_HC_FW_RD_ACC_SIZE !\n");
 		return rc;
 	}
-	lpc->lpc_fw_rdsz = rdsz;
+	lpc->fw_rdsz = rdsz;
 	return OPAL_SUCCESS;
 }
 
@@ -433,7 +433,7 @@ static int64_t __lpc_write(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 	uint32_t opb_base;
 	int64_t rc;
 
-	lock(&lpc->lpc_lock);
+	lock(&lpc->lock);
 
 	/*
 	 * Convert to an OPB access and handle LPC HC configuration
@@ -448,7 +448,7 @@ static int64_t __lpc_write(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 
 	/* XXX Add LPC error handling/recovery */
  bail:
-	unlock(&lpc->lpc_lock);
+	unlock(&lpc->lock);
 	return rc;
 }
 
@@ -498,7 +498,7 @@ static int64_t __lpc_read(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 	uint32_t opb_base;
 	int64_t rc;
 
-	lock(&lpc->lpc_lock);
+	lock(&lpc->lock);
 
 	/*
 	 * Convert to an OPB access and handle LPC HC configuration
@@ -513,7 +513,7 @@ static int64_t __lpc_read(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 
 	/* XXX Add LPC error handling/recovery */
  bail:
-	unlock(&lpc->lpc_lock);
+	unlock(&lpc->lock);
 	return rc;
 }
 
@@ -576,7 +576,7 @@ static void lpc_setup_serirq(struct lpcm *lpc)
 		return;
 
 	/* Collect serirq enable bits */
-	list_for_each(&lpc->lpc_clients, ent, node)
+	list_for_each(&lpc->clients, ent, node)
 		mask |= ent->clt->interrupts & LPC_HC_IRQ_SERIRQ_ALL;
 
 	rc = opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQMASK, mask, 4);
@@ -650,7 +650,7 @@ static void lpc_init_interrupts_one(struct proc_chip *chip)
 	struct lpcm *lpc = chip->lpc;
 	int rc;
 
-	lock(&lpc->lpc_lock);
+	lock(&lpc->lock);
 
 	/* First mask them all */
 	rc = opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
@@ -686,7 +686,7 @@ static void lpc_init_interrupts_one(struct proc_chip *chip)
 		;
 	}
  bail:
-	unlock(&lpc->lpc_lock);
+	unlock(&lpc->lock);
 }
 
 void lpc_init_interrupts(void)
@@ -715,12 +715,12 @@ static void lpc_dispatch_reset(struct lpcm *lpc)
 	prerror("LPC: Got LPC reset on chip 0x%x !\n", lpc->chip_id);
 
 	/* Collect serirq enable bits */
-	list_for_each(&lpc->lpc_clients, ent, node) {
+	list_for_each(&lpc->clients, ent, node) {
 		if (!ent->clt->reset)
 			continue;
-		unlock(&lpc->lpc_lock);
+		unlock(&lpc->lock);
 		ent->clt->reset(lpc->chip_id);
-		lock(&lpc->lpc_lock);
+		lock(&lpc->lock);
 	}
 
 	/* Reconfigure serial interrupts */
@@ -779,14 +779,14 @@ static void lpc_dispatch_ser_irqs(struct lpcm *lpc, uint32_t irqs,
 	irqs &= LPC_HC_IRQ_SERIRQ_ALL;
 
 	/* Collect serirq enable bits */
-	list_for_each(&lpc->lpc_clients, ent, node) {
+	list_for_each(&lpc->clients, ent, node) {
 		if (!ent->clt->interrupt)
 			continue;
 		cirqs = ent->clt->interrupts & irqs;
 		if (cirqs) {
-			unlock(&lpc->lpc_lock);
+			unlock(&lpc->lock);
 			ent->clt->interrupt(lpc->chip_id, cirqs);
-			lock(&lpc->lpc_lock);
+			lock(&lpc->lock);
 		}
 	}
 
@@ -813,14 +813,14 @@ void lpc_interrupt(uint32_t chip_id)
 		return;
 	lpc = chip->lpc;
 
-	lock(&lpc->lpc_lock);
+	lock(&lpc->lock);
 
 	/* Grab OPB Master LS interrupt status */
 	rc = opb_read(lpc, opb_master_reg_base + OPB_MASTER_LS_IRQ_STAT,
 		      &opb_irqs, 4);
 	if (rc) {
 		prerror("Failed to read OPB IRQ state\n");
-		unlock(&lpc->lpc_lock);
+		unlock(&lpc->lock);
 		return;
 	}
 
@@ -848,11 +848,11 @@ void lpc_interrupt(uint32_t chip_id)
 	/* Handle SerIRQ interrupts */
 	if (irqs & LPC_HC_IRQ_SERIRQ_ALL)
 		lpc_dispatch_ser_irqs(lpc, irqs, true);
-bail:
+ bail:
 	/* Ack it at the OPB level */
 	opb_write(lpc, opb_master_reg_base + OPB_MASTER_LS_IRQ_STAT,
 		  opb_irqs, 4);
-	unlock(&lpc->lpc_lock);
+	unlock(&lpc->lock);
 }
 
 void lpc_serirq(uint32_t chip_id, uint32_t index __unused)
@@ -867,7 +867,7 @@ void lpc_serirq(uint32_t chip_id, uint32_t index __unused)
 		return;
 	lpc = chip->lpc;
 
-	lock(&lpc->lpc_lock);
+	lock(&lpc->lock);
 
 	/* Handle the lpc interrupt source (errors etc...) */
 	rc = opb_read(lpc, lpc_reg_opb_base + LPC_HC_IRQSTAT, &irqs, 4);
@@ -883,7 +883,7 @@ void lpc_serirq(uint32_t chip_id, uint32_t index __unused)
 		lpc_dispatch_ser_irqs(lpc, irqs, true);
 
  bail:
-	unlock(&lpc->lpc_lock);
+	unlock(&lpc->lock);
 }
 
 void lpc_all_interrupts(uint32_t chip_id)
@@ -897,9 +897,9 @@ void lpc_all_interrupts(uint32_t chip_id)
 	lpc = chip->lpc;
 
 	/* Dispatch all */
-	lock(&lpc->lpc_lock);
+	lock(&lpc->lock);
 	lpc_dispatch_ser_irqs(lpc, LPC_HC_IRQ_SERIRQ_ALL, false);
-	unlock(&lpc->lpc_lock);
+	unlock(&lpc->lock);
 }
 
 static void lpc_init_chip_p8(struct dt_node *xn)
@@ -914,11 +914,11 @@ static void lpc_init_chip_p8(struct dt_node *xn)
 	lpc = zalloc(sizeof(struct lpcm));
 	assert(lpc);
 	lpc->chip_id = gcid;
-	lpc->lpc_xbase = dt_get_address(xn, 0, NULL);
-	lpc->lpc_fw_idsel = 0xff;
-	lpc->lpc_fw_rdsz = 0xff;
-	list_head_init(&lpc->lpc_clients);
-	init_lock(&lpc->lpc_lock);
+	lpc->xbase = dt_get_address(xn, 0, NULL);
+	lpc->fw_idsel = 0xff;
+	lpc->fw_rdsz = 0xff;
+	list_head_init(&lpc->clients);
+	init_lock(&lpc->lock);
 
 	if (lpc_default_chip_id < 0 ||
 	    dt_has_node_property(xn, "primary", NULL)) {
@@ -929,7 +929,7 @@ static void lpc_init_chip_p8(struct dt_node *xn)
 	opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
 
 	printf("LPC[%03x]: Initialized, access via XSCOM @0x%x\n",
-	       gcid, lpc->lpc_xbase);
+	       gcid, lpc->xbase);
 
 	dt_add_property(xn, "interrupt-controller", NULL, 0);
 	dt_add_property_cells(xn, "#interrupt-cells", 1);
@@ -958,11 +958,11 @@ static void lpc_init_chip_p9(struct dt_node *opb_node)
 	addr <<= 32;
 	addr |= dt_prop_get_cell(opb_node, "ranges", 2);
 
-	lpc->lpc_mbase = (void *)addr;
-	lpc->lpc_fw_idsel = 0xff;
-	lpc->lpc_fw_rdsz = 0xff;
-	list_head_init(&lpc->lpc_clients);
-	init_lock(&lpc->lpc_lock);
+	lpc->mbase = (void *)addr;
+	lpc->fw_idsel = 0xff;
+	lpc->fw_rdsz = 0xff;
+	list_head_init(&lpc->clients);
+	init_lock(&lpc->lock);
 
 	if (lpc_default_chip_id < 0 ||
 	    dt_has_node_property(opb_node, "primary", NULL)) {
@@ -981,7 +981,7 @@ static void lpc_init_chip_p9(struct dt_node *opb_node)
 	opb_write(lpc, opb_master_reg_base + 0xc, val, 4);
 
 	printf("LPC[%03x]: Initialized, access via MMIO @%p\n",
-	       gcid, lpc->lpc_mbase);
+	       gcid, lpc->mbase);
 
 	chip->lpc = lpc;
 }
@@ -1017,9 +1017,9 @@ void lpc_used_by_console(void)
 	for_each_chip(chip) {
 		struct lpcm *lpc = chip->lpc;
 		if (lpc) {
-			lpc->lpc_lock.in_con_path = true;
-			lock(&lpc->lpc_lock);
-			unlock(&lpc->lpc_lock);
+			lpc->lock.in_con_path = true;
+			lock(&lpc->lock);
+			unlock(&lpc->lock);
 		}
 	}
 }
@@ -1035,7 +1035,7 @@ bool lpc_ok(void)
 	chip = get_chip(lpc_default_chip_id);
 	if (!chip->lpc)
 		return false;
-	return !lock_held_by_me(&chip->lpc->lpc_lock);
+	return !lock_held_by_me(&chip->lpc->lock);
 }
 
 void lpc_register_client(uint32_t chip_id,
@@ -1056,9 +1056,9 @@ void lpc_register_client(uint32_t chip_id,
 	ent = malloc(sizeof(*ent));
 	assert(ent);
 	ent->clt = clt;
-	lock(&lpc->lpc_lock);
-	list_add(&lpc->lpc_clients, &ent->node);
+	lock(&lpc->lock);
+	list_add(&lpc->clients, &ent->node);
 	if (lpc->has_serirq)
 		lpc_setup_serirq(lpc);
-	unlock(&lpc->lpc_lock);
+	unlock(&lpc->lock);
 }
