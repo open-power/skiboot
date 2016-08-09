@@ -70,10 +70,14 @@ EOF
 	        msg "Waiting for linux has timed out"
 		msg "Boot log follows:"
 		cat $LINUXBOOT_LOG
-		rm -f $LINUXBOOT_LOG
+		if [ $keep_log_failure -eq 0 ]; then
+		    rm -f $LINUXBOOT_LOG
+		fi
 		return 1
 	else
-	        rm -f $LINUXBOOT_LOG
+	        if [ $keep_log_success -eq 0 ]; then
+	            rm -f $LINUXBOOT_LOG
+	        fi
 	        return 0
 	fi
 }
@@ -156,6 +160,10 @@ Common Options:
      successful booting into Petitboot will not be detected with this option.
 
   -b BMC type (bmc or fsp).
+
+  -k keep logs on failure.
+
+  -K keep logs on success or failure.
 EOF
     exit 1;
 }
@@ -180,7 +188,9 @@ PNOR=""
 LID[0]=""
 LID[1]=""
 LID[2]=""
-while getopts "hvdpB1:2:3:P:t:b:" OPT; do
+keep_log_success=0
+keep_log_failure=0
+while getopts "kKhvdpB1:2:3:P:t:b:" OPT; do
     case "$OPT" in
 	v)
 	    V=1;
@@ -190,6 +200,13 @@ while getopts "hvdpB1:2:3:P:t:b:" OPT; do
 	    ;;
 	d)
 	    set -vx;
+	    ;;
+	k)
+	    keep_log_failure=1;
+	    ;;
+	K)
+	    keep_log_failure=1;
+	    keep_log_success=1;
 	    ;;
 	B)
 	    bootonly=1;
