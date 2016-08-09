@@ -203,8 +203,8 @@
 		    /* Route the LPC interrupts to one of the 4 supported
 		     * PSI interrupt inputs [7...10].
 		     */
-		    interrupt-map = < 0 0  4 &PSI_X0 7
-				      0 0 10 &PSI_X0 7>;
+		    interrupt-map = < 0 0  4 &PSI_X0 8
+				      0 0 10 &PSI_X0 9>;
 		    interrupt-map-mask = < 0 0 0xff >;
 
 		    /*

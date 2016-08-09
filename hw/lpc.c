@@ -25,6 +25,7 @@
 #include <timebase.h>
 #include <errorlog.h>
 #include <opal-api.h>
+#include <psi.h>
 
 //#define DBG_IRQ(fmt...) prerror(fmt)
 #define DBG_IRQ(fmt...) do { } while(0)
@@ -110,6 +111,8 @@ DEFINE_LOG_ENTRY(OPAL_RC_LPC_SYNC, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 	LPC_HC_IRQ_BM_TAR_ERR)
 #define LPC_HC_ERROR_ADDRESS	0x40
 
+#define LPC_NUM_SERIRQ		17
+
 struct lpcm {
 	uint32_t		chip_id;
 	uint32_t		xbase;
@@ -119,6 +122,7 @@ struct lpcm {
 	uint8_t			fw_rdsz;
 	struct list_head	clients;
 	bool			has_serirq;
+	uint8_t			sirq_routes[LPC_NUM_SERIRQ];
 };
 
 struct lpc_client_entry {
@@ -622,12 +626,17 @@ static void lpc_setup_serirq(struct lpcm *lpc)
 	}
 }
 
-static void  __unused lpc_route_serirq(struct lpcm *lpc, uint32_t sirq, uint32_t psi_idx)
+static void __lpc_route_serirq(struct lpcm *lpc, uint32_t sirq,
+			       uint32_t psi_idx)
 {
 	uint32_t reg, shift, val;
 	int64_t rc;
 
-	assert(proc_gen == proc_gen_p9);
+	lpc->sirq_routes[sirq] = psi_idx;
+
+	/* We may not be ready yet ... */
+	if (!lpc->has_serirq)
+		return;
 
 	if (sirq < 14) {
 		reg = 0xc;
@@ -645,10 +654,30 @@ static void  __unused lpc_route_serirq(struct lpcm *lpc, uint32_t sirq, uint32_t
 	opb_write(lpc, opb_master_reg_base + reg, val, 4);
 }
 
+void lpc_route_serirq(uint32_t chip_id, uint32_t sirq, uint32_t psi_idx)
+{
+	struct proc_chip *chip;
+	struct lpcm *lpc;
+
+	if (sirq >= LPC_NUM_SERIRQ) {
+		prerror("LPC[%03x]: Routing request for invalid SerIRQ %d\n",
+			chip_id, sirq);
+		return;
+	}
+
+	chip = get_chip(chip_id);
+	if (!chip || !chip->lpc)
+		return;
+	lpc = chip->lpc;
+	lock(&lpc->lock);
+	__lpc_route_serirq(lpc, sirq, psi_idx);
+	unlock(&lpc->lock);
+}
+
 static void lpc_init_interrupts_one(struct proc_chip *chip)
 {
 	struct lpcm *lpc = chip->lpc;
-	int rc;
+	int i, rc;
 
 	lock(&lpc->lock);
 
@@ -674,14 +703,21 @@ static void lpc_init_interrupts_one(struct proc_chip *chip)
 		opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL, 0, 4);
 		break;
 	case PROC_CHIP_P8_NAPLES:
-	case PROC_CHIP_P9_NIMBUS:
-	case PROC_CHIP_P9_CUMULUS:
 		/* On Naples, we support LPC interrupts, enable them based
 		 * on what clients requests. This will setup the mask and
 		 * enable processing
 		 */
 		lpc->has_serirq = true;
-		lpc_setup_serirq(lpc); 
+		lpc_setup_serirq(lpc);
+		break;
+	case PROC_CHIP_P9_NIMBUS:
+	case PROC_CHIP_P9_CUMULUS:
+		/* On P9, we additionall setup the routing */
+		lpc->has_serirq = true;
+		for (i = 0; i < LPC_NUM_SERIRQ; i++)
+			__lpc_route_serirq(lpc, i, lpc->sirq_routes[i]);
+		lpc_setup_serirq(lpc);
+		break;
 	default:
 		;
 	}
@@ -938,9 +974,47 @@ static void lpc_init_chip_p8(struct dt_node *xn)
 	chip->lpc = lpc;
 }
 
+static void lpc_parse_interrupt_map(struct lpcm *lpc, struct dt_node *lpc_node)
+{
+	const u32 *imap;
+	size_t imap_size;
+
+	imap = dt_prop_get_def_size(lpc_node, "interrupt-map", NULL, &imap_size);
+	if (!imap)
+		return;
+	imap_size >>= 2;
+	if (imap_size % 5) {
+		prerror("LPC[%03x]: Odd format for LPC interrupt-map !\n",
+			lpc->chip_id);
+		return;
+	}
+
+	while(imap_size >= 5) {
+		uint32_t sirq = be32_to_cpu(imap[2]);
+		uint32_t pirq = be32_to_cpu(imap[4]);
+
+		if (sirq >= LPC_NUM_SERIRQ) {
+			prerror("LPC[%03x]: LPC irq %d out of range in"
+				" interrupt-map\n", lpc->chip_id, sirq);
+		} else if (pirq < P9_PSI_IRQ_LPC_SIRQ0 ||
+			   pirq > P9_PSI_IRQ_LPC_SIRQ3) {
+			prerror("LPC[%03x]: PSI irq %d out of range in"
+				" interrupt-map\n", lpc->chip_id, pirq);
+		} else {
+			uint32_t pin = pirq - P9_PSI_IRQ_LPC_SIRQ0;
+			lpc->sirq_routes[sirq] = pin;
+			prlog(PR_INFO, "LPC[%03x]: SerIRQ %d routed to PSI input %d\n",
+			      lpc->chip_id, sirq, pin);
+		}
+		imap += 5;
+		imap_size -= 5;
+	}
+}
+
 static void lpc_init_chip_p9(struct dt_node *opb_node)
 {
 	uint32_t gcid = dt_get_chip_id(opb_node);
+	struct dt_node *lpc_node;
 	struct proc_chip *chip;
 	struct lpcm *lpc;
 	u64 addr;
@@ -949,15 +1023,19 @@ static void lpc_init_chip_p9(struct dt_node *opb_node)
 	chip = get_chip(gcid);
 	assert(chip);
 
-	lpc = zalloc(sizeof(struct lpcm));
-	assert(lpc);
-	lpc->chip_id = gcid;
-
 	/* Grab OPB base address */
 	addr = dt_prop_get_cell(opb_node, "ranges", 1);
 	addr <<= 32;
 	addr |= dt_prop_get_cell(opb_node, "ranges", 2);
 
+	/* Find the "lpc" child node */
+	lpc_node = dt_find_compatible_node(opb_node, NULL, "ibm,power9-lpc");
+	if (!lpc_node)
+		return;
+
+	lpc = zalloc(sizeof(struct lpcm));
+	assert(lpc);
+	lpc->chip_id = gcid;
 	lpc->mbase = (void *)addr;
 	lpc->fw_idsel = 0xff;
 	lpc->fw_rdsz = 0xff;
@@ -969,10 +1047,15 @@ static void lpc_init_chip_p9(struct dt_node *opb_node)
 		lpc_default_chip_id = gcid;
 	}
 
+	/* Parse interrupt map if any to setup initial routing */
+	lpc_parse_interrupt_map(lpc, lpc_node);
+
 	/* Mask all interrupts for now */
 	opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
 
-	/* Default with routing to PSI SerIRQ 0 */
+	/* Default with routing to PSI SerIRQ 0, this will be updated
+	 * later when interrupts are initialized.
+	 */
 	opb_read(lpc, opb_master_reg_base + 8, &val, 4);
 	val &= 0xff03ffff;
 	opb_write(lpc, opb_master_reg_base + 8, val, 4);
