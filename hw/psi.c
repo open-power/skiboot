@@ -848,6 +848,20 @@ static void psi_activate_phb(struct psi *psi)
 #endif
 }
 
+static void psi_create_p9_int_map(struct psi *psi, struct dt_node *np)
+{
+	uint32_t map[P9_PSI_NUM_IRQS][4];
+	int i;
+
+	for (i = 0; i < P9_PSI_NUM_IRQS; i++) {
+		map[i][0] = i;
+		map[i][1] = get_ics_phandle();
+		map[i][2] = psi->interrupt + i;
+		map[i][3] = 1;
+	}
+	dt_add_property(np, "interrupt-map", map, sizeof(map));
+}
+
 static void psi_create_mm_dtnode(struct psi *psi)
 {
 	struct dt_node *np;
@@ -871,6 +885,7 @@ static void psi_create_mm_dtnode(struct psi *psi)
 	case proc_gen_p9:
 		dt_add_property_strings(np, "compatible", "ibm,psi",
 					"ibm,power9-psi");
+		psi_create_p9_int_map(psi, np);
 		break;
 	default:
 		dt_add_property_strings(np, "compatible", "ibm,psi");

@@ -153,9 +153,18 @@
 			compatible = "ibm,power9-xive-x";
 		};
 
-		psihb@5012900 {
+		PSI_X0 : psihb@5012900 {
 			reg = <0x5012900 0x100>;
 			compatible = "ibm,power9-psihb-x", "ibm,psihb-x";
+
+		        /* This acts as an interrupt remapper for the 16
+			 * interrupts coming into the PSI HB.
+			 * OPAL will generate the corresponding interrupt-map
+			 * property with the final XIVE numbers
+			 */
+			 #interrupt-cells = <1>;
+			 #address-cells = <0>;
+			 #interrupt-map-mask = < 0xff >;
 		};
 	};
 
@@ -185,6 +194,23 @@
 		    ranges = < 3 0 0xf0000000 0x10000000 /* FW space */
 		               0 0 0xe0000000 0x10000000 /* MEM space */
 		               1 0 0xd0010000 0x00010000 /* IO space */ >;
+
+		    /* We currently only support level interrupts on the LPC,
+		     * we use 1 cell.
+		     */
+	            #interrupt-cells = <1>;
+
+		    /* Route the LPC interrupts to one of the 4 supported
+		     * PSI interrupt inputs [7...10].
+		     */
+		    interrupt-map = < 0 0  4 &PSI_X0 7
+				      0 0 10 &PSI_X0 7>;
+		    interrupt-map-mask = < 0 0 0xff >;
+
+		    /*
+		     * Devices on the LPC bus go here
+		     */
+
 		    serial@i3f8 {
 		        compatible = "ns16550";
 		        reg = < 1 0x3f8 0x10 >;
