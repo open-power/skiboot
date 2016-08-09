@@ -40,7 +40,8 @@ static void time_wait_poll(unsigned long duration)
 			opal_run_pollers();
 			time_wait_nopoll(period);
 			remaining -= period;
-		}
+		} else
+			time_wait_nopoll(remaining);
 
 		cpu_relax();
 	}
