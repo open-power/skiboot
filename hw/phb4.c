@@ -2407,7 +2407,8 @@ static void phb4_init_ioda3(struct phb4 *p)
 	out_be64(p->regs + PHB_INT_NOTIFY_ADDR, p->irq_port);
 
 	/* Init_18 - Interrupt Notify Base Index */
-	out_be64(p->regs + PHB_INT_NOTIFY_INDEX, p->base_msi);
+	out_be64(p->regs + PHB_INT_NOTIFY_INDEX,
+		 xive_get_notify_base(p->base_msi));
 
 	/* Init_xx - Not in spec: Initialize source ID */
 	PHBDBG(p, "Reset state SRC_ID: %016llx\n",
@@ -2990,69 +2991,28 @@ static bool phb4_calculate_windows(struct phb4 *p)
 	return true;
 }
 
-
-static int64_t phb4_get_xive(struct irq_source *is __unused, uint32_t isn,
-			     uint16_t *server, uint8_t *prio)
-{
-	uint32_t target_id;
-
-	if (xive_get_eq_info(isn, &target_id, prio)) {
-		*server = target_id;
-		return OPAL_SUCCESS;
-	} else
-		return OPAL_PARAMETER;
-}
-
-static int64_t phb4_set_xive(struct irq_source *is, uint32_t isn,
-			     uint16_t server, uint8_t prio)
+static void phb4_err_interrupt(struct irq_source *is, uint32_t isn)
 {
 	struct phb4 *p = is->data;
-	uint32_t idx = isn - p->base_msi;
-	void *mmio_base;
 
-	/* Let XIVE configure the EQ */
-	if (!xive_set_eq_info(isn, server, prio))
-		return OPAL_PARAMETER;
+	PHBDBG(p, "Got interrupt 0x%08x\n", isn);
 
-	/* Ensure it's enabled/disabled in the PHB. This won't do much
-	 * for LSIs but will work for MSIs and will ensure that a stray
-	 * P bit left over won't block further interrupts when enabling
+#if 0
+	/* Update pending event */
+	opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
+				OPAL_EVENT_PCI_ERROR);
+
+	/* If the PHB is broken, go away */
+	if (p->state == PHB3_STATE_BROKEN)
+		return;
+
+	/*
+	 * Mark the PHB has pending error so that the OS
+	 * can handle it at late point.
 	 */
-	mmio_base = p->int_mmio + 0x10000 * idx;
-	if (prio == 0xff)
-		in_8(mmio_base + 0xd00); /* PQ = 01 */
-	else
-		in_8(mmio_base + 0xc00); /* PQ = 00 */
-
-	return OPAL_SUCCESS;
+	phb3_set_err_pending(p, true);
+#endif
 }
-
-static void phb4_eoi(struct irq_source *is, uint32_t isn)
-{
-	struct phb4 *p = is->data;
-	uint32_t idx = isn - p->base_msi;
-	void *mmio_base;
-	uint8_t eoi_val;
-
-	/* For EOI, we use the special MMIO that does a clear of both
-	 * P and Q and returns the old Q.
-	 *
-	 * This allows us to then do a re-trigger if Q was set rather
-	 * than synthetizing an interrupt in software
-	 */
-	mmio_base = p->int_mmio + 0x10000 * idx;
-	eoi_val = in_8(mmio_base + 0xc00);
-	if (eoi_val & 1) {
-		/* PHB doesn't use a separate replay, use the same page */
-		out_8(mmio_base, 0);
-	}
-}
-
-static const struct irq_source_ops phb4_msi_ops = {
-	.get_xive = phb4_get_xive,
-	.set_xive = phb4_set_xive,
-	.eoi = phb4_eoi
-};
 
 static uint64_t phb4_lsi_attributes(struct irq_source *is __unused,
 				uint32_t isn __unused)
@@ -3068,18 +3028,9 @@ static uint64_t phb4_lsi_attributes(struct irq_source *is __unused,
 }
 
 static const struct irq_source_ops phb4_lsi_ops = {
-	.get_xive = phb4_get_xive,
-	.set_xive = phb4_set_xive,
+	.interrupt = phb4_err_interrupt,
 	.attributes = phb4_lsi_attributes,
-	.eoi = phb4_eoi
 };
-
-/* Error LSIs (skiboot owned) */
-//static const struct irq_source_ops phb3_err_lsi_irq_ops = {
-//	.get_xive = phb3_lsi_get_xive,
-//	.set_xive = phb3_lsi_set_xive,
-//	.interrupt = phb3_err_interrupt,
-//};
 
 static void phb4_create(struct dt_node *np)
 {
@@ -3228,12 +3179,15 @@ static void phb4_create(struct dt_node *np)
 	/* Clear IODA3 cache */
 	phb4_init_ioda_cache(p);
 
-	/* Register interrupt sources */
-	register_irq_source(&phb4_msi_ops, p, p->base_msi, p->num_irqs - 8);
-	register_irq_source(&phb4_lsi_ops, p, p->base_lsi, 8);
-
 	/* Get the HW up and running */
 	phb4_init_hw(p, true);
+
+	/* Register all interrupt sources with XIVE */
+	xive_register_source(p->base_msi, p->num_irqs - 8, 16, p->int_mmio, 0,
+			     NULL, NULL);
+	xive_register_source(p->base_lsi, 8, 16,
+			     p->int_mmio + ((p->num_irqs - 8) << 16),
+			     XIVE_SRC_LSI, p, &phb4_lsi_ops);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)
@@ -3478,3 +3432,4 @@ void probe_phb4(void)
 	dt_for_each_compatible(dt_root, np, "ibm,power9-pciex")
 		phb4_create(np);
 }
+

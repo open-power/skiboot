@@ -226,6 +226,19 @@
 
 #endif
 
+/* Each source controller has one of these. There's one embedded
+ * in the XIVE struct for IPIs
+ */
+struct xive_src {
+	struct irq_source		is;
+	const struct irq_source_ops	*orig_ops;
+	struct xive			*xive;
+	void				*esb_mmio;
+	uint32_t			esb_base;
+	uint32_t			esb_shift;
+	uint32_t			flags;
+};
+
 struct xive {
 	uint32_t	chip_id;
 	struct dt_node	*x_node;
@@ -319,6 +332,9 @@ struct xive {
 	 */
 	uint32_t	int_hw_bot;	/* Bottom of HW allocation */
 	uint32_t	int_ipi_top;	/* Highest IPI handed out so far */
+
+	/* Embedded source IPIs */
+	struct xive_src	ipis;
 };
 
 /* Conversion between GIRQ and block/index.
@@ -676,41 +692,6 @@ static int64_t xive_ivc_scrub(struct xive *x, uint64_t block, uint64_t idx)
 	return __xive_cache_scrub(x, xive_cache_ivc, block, idx, false, false);
 }
 
-static void xive_ipi_init(struct xive *x, uint32_t idx)
-{
-	uint8_t *mm = x->esb_mmio + idx * 0x20000;
-
-	/* Clear P and Q */
-	in_8(mm + 0x10c00);
-}
-
-static void xive_ipi_eoi(struct xive *x, uint32_t idx)
-{
-	uint8_t *mm = x->esb_mmio + idx * 0x20000;
-	uint8_t eoi_val;
-
-	/* For EOI, we use the special MMIO that does a clear of both
-	 * P and Q and returns the old Q.
-	 *
-	 * This allows us to then do a re-trigger if Q was set rather
-	 * than synthetizing an interrupt in software
-	 */
-	eoi_val = in_8(mm + 0x10c00);
-	if (eoi_val & 1) {
-		out_8(mm, 0);
-	}
-}
-
-static void xive_ipi_trigger(struct xive *x, uint32_t idx)
-{
-	uint8_t *mm = x->esb_mmio + idx * 0x20000;
-
-	xive_vdbg(x, "Trigger IPI 0x%x\n", idx);
-
-	out_8(mm, 0);
-}
-
-
 static bool xive_set_vsd(struct xive *x, uint32_t tbl, uint32_t idx, uint64_t v)
 {
 	/* Set VC version */
@@ -838,9 +819,7 @@ static bool xive_configure_bars(struct xive *x)
 	mmio_base = 0x006000000000000ull;
 	chip_base = mmio_base | (0x40000000000ull * (uint64_t)x->chip_id);
 
-	/* IC BAR. We use 4K pages here, 64K doesn't seem implemented
-	 * in SIMCIS
-	 */
+	/* IC BAR */
 	x->ic_base = (void *)(chip_base | IC_BAR_DEFAULT);
 	x->ic_size = IC_BAR_SIZE;
 	val = (uint64_t)x->ic_base | CQ_IC_BAR_VALID;
@@ -940,8 +919,10 @@ static bool xive_check_update_bars(struct xive *x)
 	x->eq_mmio = x->vc_base + (x->vc_size / VC_MAX_SETS) * VC_ESB_SETS;
 
 	/* Print things out */
-	xive_dbg(x, "IC: %14p [0x%012llx/%d]\n", x->ic_base, x->ic_size, x->ic_shift);
-	xive_dbg(x, "TM: %14p [0x%012llx/%d]\n", x->tm_base, x->tm_size, x->tm_shift);
+	xive_dbg(x, "IC: %14p [0x%012llx/%d]\n", x->ic_base, x->ic_size,
+		 x->ic_shift);
+	xive_dbg(x, "TM: %14p [0x%012llx/%d]\n", x->tm_base, x->tm_size,
+		 x->tm_shift);
 	xive_dbg(x, "PC: %14p [0x%012llx]\n", x->pc_base, x->pc_size);
 	xive_dbg(x, "VC: %14p [0x%012llx]\n", x->vc_base, x->vc_size);
 
@@ -1227,6 +1208,9 @@ uint32_t xive_alloc_hw_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 	}
 	x->int_hw_bot = base;
 
+	/* Adjust the irq source to avoid overlaps */
+	adjust_irq_source(&x->ipis.is, base - x->int_base);
+
 	/* Initialize the corresponding IVT entries to sane defaults,
 	 * IE entry is valid, not routed and masked, EQ data is set
 	 * to the GIRQ number.
@@ -1269,7 +1253,8 @@ uint32_t xive_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 	for (i = 0; i < count; i++) {
 		struct xive_ive *ive = xive_get_ive(x, base + i);
 
-		ive->w = IVE_VALID | IVE_MASKED | SETFIELD(IVE_EQ_DATA, 0ul, base + i);
+		ive->w = IVE_VALID | IVE_MASKED |
+			SETFIELD(IVE_EQ_DATA, 0ul, base + i);
 	}
 
 	return base;
@@ -1354,192 +1339,14 @@ uint64_t xive_get_notify_port(uint32_t chip_id, uint32_t ent)
 	return ((uint64_t)x->ic_base) + (1ul << x->ic_shift) + offset;
 }
 
-static void init_one_xive(struct dt_node *np)
+/* Manufacture the powerbus packet bits 32:63 */
+__attrconst uint32_t xive_get_notify_base(uint32_t girq)
 {
-	struct xive *x;
-	struct proc_chip *chip;
-
-	x = zalloc(sizeof(struct xive));
-	assert(x);
-	x->xscom_base = dt_get_address(np, 0, NULL);
-	x->chip_id = dt_get_chip_id(np);
-	x->x_node = np;
-	init_lock(&x->lock);
-
-	chip = get_chip(x->chip_id);
-	assert(chip);
-	xive_dbg(x, "Initializing...\n");
-	chip->xive = x;
-
-	/* Base interrupt numbers and allocator init */
-	x->int_base	= BLKIDX_TO_GIRQ(x->chip_id, 0);
-	x->int_max	= x->int_base + MAX_INT_ENTRIES;
-	x->int_hw_bot	= x->int_max;
-	x->int_ipi_top	= x->int_base;
-
-	/* Make sure we never hand out "2" as it's reserved for XICS emulation
-	 * IPI returns. Generally start handing out at 0x10
-	 */
-	if (x->int_ipi_top < 0x10)
-		x->int_ipi_top = 0x10;
-
-	xive_dbg(x, "Handling interrupts [%08x..%08x]\n", x->int_base, x->int_max - 1);
-
-	/* System dependant values that must be set before BARs */
-	//xive_regwx(x, CQ_CFG_PB_GEN, xx);
-	//xive_regwx(x, CQ_MSGSND, xx);
-
-	/* Verify the BARs are initialized and if not, setup a default layout */
-	xive_check_update_bars(x);
-
-	/* Some basic global inits such as page sizes etc... */
-	if (!xive_config_init(x))
-		goto fail;
-
-	/* Configure the set translations for MMIO */
-	if (!xive_setup_set_xlate(x))
-		goto fail;
-
-	/* Dump some MMIO registers for diagnostics */
-	xive_dump_mmio(x);
-
-	/* Pre-allocate a number of tables */
-	if (!xive_prealloc_tables(x))
-		goto fail;
-
-	/* Configure local tables in VSDs (forward ports will be handled later) */
-	if (!xive_set_local_tables(x))
-		goto fail;
-
-	/* Create a device-tree node for Linux use */
-	xive_create_mmio_dt_node(x);
-
-	return;
- fail:
-	xive_err(x, "Initialization failed...\n");
-
-	/* Should this be fatal ? */
-	//assert(false);
+	return (GIRQ_TO_BLK(girq) << 28)  | GIRQ_TO_IDX(girq);
 }
 
-/*
- * XICS emulation
- */
-struct xive_cpu_state {
-	struct xive	*xive;
-	void		*tm_ring1;
-	uint32_t	vp_blk;
-	uint32_t	vp_idx;
-	struct lock	lock;
-	uint8_t		cppr;
-	uint8_t		mfrr;
-	uint8_t		pending;
-	uint8_t		prev_cppr;
-	uint32_t	*eqbuf;
-	uint32_t	eqidx;
-	uint32_t	eqmsk;
-	uint8_t		eqgen;
-	void		*eqmmio;
-	uint32_t	ipi_irq;
-};
-
-void xive_cpu_callin(struct cpu_thread *cpu)
-{
-	struct xive_cpu_state *xs = cpu->xstate;
-	struct proc_chip *chip = get_chip(cpu->chip_id);
-	struct xive *x = chip->xive;
-	uint32_t fc, bit;
-
-	if (!xs)
-		return;
-
-	/* First enable us in PTER. We currently assume that the
-	 * PIR bits can be directly used to index in PTER. That might
-	 * need to be verified
-	 */
-
-	/* Get fused core number */
-	fc = (cpu->pir >> 3) & 0xf;
-	/* Get bit in register */
-	bit = cpu->pir & 0x3f;
-	/* Get which register to access */
-	if (fc < 8)
-		xive_regw(x, PC_THREAD_EN_REG0_SET, PPC_BIT(bit));
-	else
-		xive_regw(x, PC_THREAD_EN_REG1_SET, PPC_BIT(bit));
-
-	/* Set CPPR to 0 */
-	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_CPPR, 0);
-
-	/* Set VT to 1 */
-	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2, 0x80);
-
-	xive_cpu_dbg(cpu, "Initialized interrupt management area\n");
-
-	/* Now unmask the IPI */
-	xive_ipi_init(x, GIRQ_TO_IDX(xs->ipi_irq));
-}
-
-static void xive_init_cpu(struct cpu_thread *c)
-{
-	struct proc_chip *chip = get_chip(c->chip_id);
-	struct xive *x = chip->xive;
-	struct xive_cpu_state *xs;
-
-	if (!x)
-		return;
-
-	/* First, if we are the first CPU of an EX pair, we need to
-	 * setup the special BAR
-	 */
-	/* XXX This is very P9 specific ... */
-	if ((c->pir & 0x7) == 0) {
-		uint64_t xa, val;
-		int64_t rc;
-
-		xive_cpu_dbg(c, "Setting up special BAR\n");
-		xa = XSCOM_ADDR_P9_EX(pir_to_core_id(c->pir), P9X_EX_NCU_SPEC_BAR);
-		printf("NCU_SPEC_BAR_XA=%08llx\n", xa);
-		val = (uint64_t)x->tm_base | P9X_EX_NCU_SPEC_BAR_ENABLE;
-		if (x->tm_shift == 16)
-			val |= P9X_EX_NCU_SPEC_BAR_256K;
-		rc = xscom_write(c->chip_id, xa, val);
-		if (rc) {
-			xive_cpu_err(c, "Failed to setup NCU_SPEC_BAR\n");
-			/* XXXX  what do do now ? */
-		}
-	}
-
-	/* Initialize the state structure */
-	c->xstate = xs = local_alloc(c->chip_id, sizeof(struct xive_cpu_state), 1);
-	assert(xs);
-	xs->xive = x;
-
-	init_lock(&xs->lock);
-
-	xs->vp_blk = PIR2VP_BLK(c->pir);
-	xs->vp_idx = PIR2VP_IDX(c->pir);
-	xs->cppr = 0;
-	xs->mfrr = 0xff;
-
-	/* XXX Find the one eq buffer associated with the VP, for now same BLK/ID */
-	xs->eqbuf = xive_get_eq_buf(x, xs->vp_blk, xs->vp_idx);
-	xs->eqidx = 0;
-	xs->eqmsk = (0x10000/4) - 1;
-	xs->eqgen = false;
-	xs->eqmmio = x->eq_mmio + xs->vp_idx * 0x20000;
-	assert(xs->eqbuf);
-
-	/* Shortcut to TM HV ring */
-	xs->tm_ring1 = x->tm_base + (1u << x->tm_shift);
-
-	/* Allocate an IPI */
-	xs->ipi_irq = xive_alloc_ipi_irqs(c->chip_id, 1, 1);
-	xive_set_eq_info(xs->ipi_irq, c->pir, 0x7);
-	xive_cpu_dbg(c, "CPU IPI is irq %08x\n", xs->ipi_irq);
-}
-
-bool xive_get_eq_info(uint32_t isn, uint32_t *out_target, uint8_t *out_prio)
+static bool xive_get_eq_info(uint32_t isn, uint32_t *out_target,
+			     uint8_t *out_prio)
 {
 	struct xive_ive *ive;
 	struct xive *x, *eq_x;
@@ -1607,7 +1414,7 @@ static inline bool xive_eq_for_target(uint32_t target, uint8_t prio __unused,
 	return true;
 }
 
-bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
+static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 {
 	struct xive *x;
 	struct xive_ive *ive;
@@ -1661,6 +1468,374 @@ bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 	xive_ivc_scrub(x, x->chip_id, GIRQ_TO_IDX(isn));
 
 	return true;
+}
+
+static int64_t xive_source_get_xive(struct irq_source *is __unused,
+				    uint32_t isn, uint16_t *server,
+				    uint8_t *prio)
+{
+	uint32_t target_id;
+
+	if (xive_get_eq_info(isn, &target_id, prio)) {
+		*server = target_id;
+		return OPAL_SUCCESS;
+	} else
+		return OPAL_PARAMETER;
+}
+
+static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
+				    uint16_t server, uint8_t prio)
+{
+	struct xive_src *s = container_of(is, struct xive_src, is);
+	uint32_t idx = isn - s->esb_base;
+ 	void *mmio_base;
+
+	/* Let XIVE configure the EQ */
+	if (!xive_set_eq_info(isn, server, prio))
+		return OPAL_PARAMETER;
+
+	/* Ensure it's enabled/disabled in the source controller.
+	 *
+	 * This won't do much for LSIs but will work for MSIs and will
+	 * ensure that a stray P bit left over won't block further
+	 * interrupts when enabling
+	 */
+	mmio_base = s->esb_mmio + (1ul << s->esb_shift) * idx;
+	if (s->flags & XIVE_SRC_EOI_PAGE1)
+		mmio_base += 1ull << (s->esb_shift - 1);
+	if (prio == 0xff)
+		in_be64(mmio_base + 0xd00); /* PQ = 01 */
+	else
+		in_be64(mmio_base + 0xc00); /* PQ = 00 */
+
+	return OPAL_SUCCESS;
+}
+
+static void xive_source_eoi(struct irq_source *is, uint32_t isn)
+{
+	struct xive_src *s = container_of(is, struct xive_src, is);
+	uint32_t idx = isn - s->esb_base;
+	void *mmio_base;
+	uint64_t eoi_val;
+
+	mmio_base = s->esb_mmio + (1ull << s->esb_shift) * idx;
+
+	/* If the XIVE supports the new "store EOI facility, use it */
+	if (s->flags & XIVE_SRC_STORE_EOI)
+		out_be64(mmio_base, 0);
+	else {
+		/* Otherwise for EOI, we use the special MMIO that does
+		 * a clear of both P and Q and returns the old Q.
+		 *
+		 * This allows us to then do a re-trigger if Q was set
+		 rather than synthetizing an interrupt in software
+		*/
+		if (s->flags & XIVE_SRC_EOI_PAGE1) {
+			uint64_t p1off = 1ull << (s->esb_shift - 1);
+			eoi_val = in_be64(mmio_base + p1off + 0xc00);
+		} else
+			eoi_val = in_be64(mmio_base + 0xc00);
+		xive_vdbg(s->xive, "ISN: %08x EOI=%llx\n", isn, eoi_val);
+		if ((s->flags & XIVE_SRC_LSI) || !(eoi_val & 1))
+			return;
+
+		/* Re-trigger always on page0 or page1 ? */
+		out_be64(mmio_base, 0);
+	}
+}
+
+static void xive_source_interrupt(struct irq_source *is, uint32_t isn)
+{
+	struct xive_src *s = container_of(is, struct xive_src, is);
+
+	if (!s->orig_ops || !s->orig_ops->interrupt)
+		return;
+	s->orig_ops->interrupt(is, isn);
+}
+
+static uint64_t xive_source_attributes(struct irq_source *is, uint32_t isn)
+{
+	struct xive_src *s = container_of(is, struct xive_src, is);
+
+	if (!s->orig_ops || !s->orig_ops->attributes)
+		return IRQ_ATTR_TARGET_LINUX;
+	return s->orig_ops->attributes(is, isn);
+}
+
+static const struct irq_source_ops xive_irq_source_ops = {
+	.get_xive = xive_source_get_xive,
+	.set_xive = xive_source_set_xive,
+	.eoi = xive_source_eoi,
+	.interrupt = xive_source_interrupt,
+	.attributes = xive_source_attributes,
+};
+
+static void __xive_register_source(struct xive_src *s, uint32_t base,
+				   uint32_t count, uint32_t shift,
+				   void *mmio, uint32_t flags, void *data,
+				   const struct irq_source_ops *orig_ops)
+{
+	s->esb_base = base;
+	s->esb_shift = shift;
+	s->esb_mmio = mmio;
+	s->flags = flags;
+	s->orig_ops = orig_ops;
+
+	s->is.start = base;
+	s->is.end = base + count;
+	s->is.ops = &xive_irq_source_ops;
+	s->is.data = data;
+
+	__register_irq_source(&s->is);
+}
+
+void xive_register_source(uint32_t base, uint32_t count, uint32_t shift,
+			  void *mmio, uint32_t flags, void *data,
+			  const struct irq_source_ops *ops)
+{
+	struct xive_src *s;
+
+	s = malloc(sizeof(struct xive_src));
+	assert(s);
+	__xive_register_source(s, base, count, shift, mmio, flags, data, ops);
+}
+
+static void init_one_xive(struct dt_node *np)
+{
+	struct xive *x;
+	struct proc_chip *chip;
+
+	x = zalloc(sizeof(struct xive));
+	assert(x);
+	x->xscom_base = dt_get_address(np, 0, NULL);
+	x->chip_id = dt_get_chip_id(np);
+	x->x_node = np;
+	init_lock(&x->lock);
+
+	chip = get_chip(x->chip_id);
+	assert(chip);
+	xive_dbg(x, "Initializing...\n");
+	chip->xive = x;
+
+	/* Base interrupt numbers and allocator init */
+	/* XXX Consider allocating half as many ESBs than MMIO space
+	 * so that HW sources land outside of ESB space...
+	 */
+	x->int_base	= BLKIDX_TO_GIRQ(x->chip_id, 0);
+	x->int_max	= x->int_base + MAX_INT_ENTRIES;
+	x->int_hw_bot	= x->int_max;
+	x->int_ipi_top	= x->int_base;
+
+	/* Make sure we never hand out "2" as it's reserved for XICS emulation
+	 * IPI returns. Generally start handing out at 0x10
+	 */
+	if (x->int_ipi_top < 0x10)
+		x->int_ipi_top = 0x10;
+
+	xive_dbg(x, "Handling interrupts [%08x..%08x]\n",
+		 x->int_base, x->int_max - 1);
+
+	/* System dependant values that must be set before BARs */
+	//xive_regwx(x, CQ_CFG_PB_GEN, xx);
+	//xive_regwx(x, CQ_MSGSND, xx);
+
+	/* Verify the BARs are initialized and if not, setup a default layout */
+	xive_check_update_bars(x);
+
+	/* Some basic global inits such as page sizes etc... */
+	if (!xive_config_init(x))
+		goto fail;
+
+	/* Configure the set translations for MMIO */
+	if (!xive_setup_set_xlate(x))
+		goto fail;
+
+	/* Dump some MMIO registers for diagnostics */
+	xive_dump_mmio(x);
+
+	/* Pre-allocate a number of tables */
+	if (!xive_prealloc_tables(x))
+		goto fail;
+
+	/* Configure local tables in VSDs (forward ports will be
+	 * handled later)
+	 */
+	if (!xive_set_local_tables(x))
+		goto fail;
+
+	/* Register built-in source controllers (aka IPIs) */
+	/* XXX Add new EOI mode for DD2 */
+	__xive_register_source(&x->ipis, x->int_base,
+			       x->int_hw_bot - x->int_base, 16 + 1,
+			       x->esb_mmio, XIVE_SRC_EOI_PAGE1, NULL, NULL);
+
+	/* Create a device-tree node for Linux use */
+	xive_create_mmio_dt_node(x);
+
+	return;
+ fail:
+	xive_err(x, "Initialization failed...\n");
+
+	/* Should this be fatal ? */
+	//assert(false);
+}
+
+/*
+ * XICS emulation
+ */
+struct xive_cpu_state {
+	struct xive	*xive;
+	void		*tm_ring1;
+	uint32_t	vp_blk;
+	uint32_t	vp_idx;
+	struct lock	lock;
+	uint8_t		cppr;
+	uint8_t		mfrr;
+	uint8_t		pending;
+	uint8_t		prev_cppr;
+	uint32_t	*eqbuf;
+	uint32_t	eqidx;
+	uint32_t	eqmsk;
+	uint8_t		eqgen;
+	void		*eqmmio;
+	uint32_t	ipi_irq;
+};
+
+static void xive_ipi_init(struct xive *x, struct cpu_thread *cpu)
+{
+	struct xive_cpu_state *xs = cpu->xstate;
+	uint32_t idx = GIRQ_TO_IDX(xs->ipi_irq);
+	uint8_t *mm = x->esb_mmio + idx * 0x20000;
+
+	assert(xs);
+
+	xive_source_set_xive(&x->ipis.is, xs->ipi_irq, cpu->pir, 0x7);
+
+	/* Clear P and Q */
+	in_8(mm + 0x10c00);
+}
+
+static void xive_ipi_eoi(struct xive *x, uint32_t idx)
+{
+	uint8_t *mm = x->esb_mmio + idx * 0x20000;
+	uint8_t eoi_val;
+
+	/* For EOI, we use the special MMIO that does a clear of both
+	 * P and Q and returns the old Q.
+	 *
+	 * This allows us to then do a re-trigger if Q was set rather
+	 * than synthetizing an interrupt in software
+	 */
+	eoi_val = in_8(mm + 0x10c00);
+	if (eoi_val & 1) {
+		out_8(mm, 0);
+	}
+}
+
+static void xive_ipi_trigger(struct xive *x, uint32_t idx)
+{
+	uint8_t *mm = x->esb_mmio + idx * 0x20000;
+
+	xive_vdbg(x, "Trigger IPI 0x%x\n", idx);
+
+	out_8(mm, 0);
+}
+
+
+void xive_cpu_callin(struct cpu_thread *cpu)
+{
+	struct xive_cpu_state *xs = cpu->xstate;
+	struct proc_chip *chip = get_chip(cpu->chip_id);
+	struct xive *x = chip->xive;
+	uint32_t fc, bit;
+
+	if (!xs)
+		return;
+
+	/* First enable us in PTER. We currently assume that the
+	 * PIR bits can be directly used to index in PTER. That might
+	 * need to be verified
+	 */
+
+	/* Get fused core number */
+	fc = (cpu->pir >> 3) & 0xf;
+	/* Get bit in register */
+	bit = cpu->pir & 0x3f;
+	/* Get which register to access */
+	if (fc < 8)
+		xive_regw(x, PC_THREAD_EN_REG0_SET, PPC_BIT(bit));
+	else
+		xive_regw(x, PC_THREAD_EN_REG1_SET, PPC_BIT(bit));
+
+	/* Set CPPR to 0 */
+	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_CPPR, 0);
+
+	/* Set VT to 1 */
+	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2, 0x80);
+
+	xive_cpu_dbg(cpu, "Initialized interrupt management area\n");
+
+	/* Now unmask the IPI */
+	xive_ipi_init(x, cpu);
+}
+
+static void xive_init_cpu(struct cpu_thread *c)
+{
+	struct proc_chip *chip = get_chip(c->chip_id);
+	struct xive *x = chip->xive;
+	struct xive_cpu_state *xs;
+
+	if (!x)
+		return;
+
+	/* First, if we are the first CPU of an EX pair, we need to
+	 * setup the special BAR
+	 */
+	/* XXX This is very P9 specific ... */
+	if ((c->pir & 0x7) == 0) {
+		uint64_t xa, val;
+		int64_t rc;
+
+		xive_cpu_dbg(c, "Setting up special BAR\n");
+		xa = XSCOM_ADDR_P9_EX(pir_to_core_id(c->pir), P9X_EX_NCU_SPEC_BAR);
+		printf("NCU_SPEC_BAR_XA=%08llx\n", xa);
+		val = (uint64_t)x->tm_base | P9X_EX_NCU_SPEC_BAR_ENABLE;
+		if (x->tm_shift == 16)
+			val |= P9X_EX_NCU_SPEC_BAR_256K;
+		rc = xscom_write(c->chip_id, xa, val);
+		if (rc) {
+			xive_cpu_err(c, "Failed to setup NCU_SPEC_BAR\n");
+			/* XXXX  what do do now ? */
+		}
+	}
+
+	/* Initialize the state structure */
+	c->xstate = xs = local_alloc(c->chip_id, sizeof(struct xive_cpu_state), 1);
+	assert(xs);
+	xs->xive = x;
+
+	init_lock(&xs->lock);
+
+	xs->vp_blk = PIR2VP_BLK(c->pir);
+	xs->vp_idx = PIR2VP_IDX(c->pir);
+	xs->cppr = 0;
+	xs->mfrr = 0xff;
+
+	/* XXX Find the one eq buffer associated with the VP, for now same BLK/ID */
+	xs->eqbuf = xive_get_eq_buf(x, xs->vp_blk, xs->vp_idx);
+	xs->eqidx = 0;
+	xs->eqmsk = (0x10000/4) - 1;
+	xs->eqgen = false;
+	xs->eqmmio = x->eq_mmio + xs->vp_idx * 0x20000;
+	assert(xs->eqbuf);
+
+	/* Shortcut to TM HV ring */
+	xs->tm_ring1 = x->tm_base + (1u << x->tm_shift);
+
+	/* Allocate an IPI */
+	xs->ipi_irq = xive_alloc_ipi_irqs(c->chip_id, 1, 1);
+
+	xive_cpu_dbg(c, "CPU IPI is irq %08x\n", xs->ipi_irq);
 }
 
 
@@ -2001,3 +2176,4 @@ void init_xive(void)
 	opal_register(OPAL_INT_EOI, opal_xive_eoi, 1);
 	opal_register(OPAL_INT_SET_MFRR, opal_xive_set_mfrr, 2);
 }
+

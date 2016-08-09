@@ -369,9 +369,16 @@ uint32_t xive_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align);
 #define XIVE_HW_SRC_PSI		8
 
 uint64_t xive_get_notify_port(uint32_t chip_id, uint32_t ent);
+uint32_t xive_get_notify_base(uint32_t girq);
 
-bool xive_get_eq_info(uint32_t isn, uint32_t *out_target, uint8_t *out_prio);
-bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio);
+#define XIVE_SRC_EOI_PAGE1	0x00000001	/* EOI and trig. separate */
+#define XIVE_SRC_STORE_EOI	0x00000002	/* Store EOI (auto trigger) */
+#define XIVE_SRC_LSI		0x00000004	/* No Q bit, no retrigger */
+
+struct irq_source_ops;
+void xive_register_source(uint32_t base, uint32_t count, uint32_t shift,
+			  void *mmio, uint32_t flags, void *data,
+			  const struct irq_source_ops *ops);
 
 void xive_cpu_callin(struct cpu_thread *cpu);
 
