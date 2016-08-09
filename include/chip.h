@@ -107,6 +107,7 @@ struct dt_node;
 struct centaur_chip;
 struct mfsi;
 struct xive;
+struct lpcm;
 
 /* Chip type */
 enum proc_chip_type {
@@ -169,12 +170,7 @@ struct proc_chip {
 	uint64_t		xscom_base;
 
 	/* Used by hw/lpc.c */
-	uint32_t		lpc_xbase;
-	void			*lpc_mbase;
-	struct lock		lpc_lock;
-	uint8_t			lpc_fw_idsel;
-	uint8_t			lpc_fw_rdsz;
-	struct list_head	lpc_clients;
+	struct lpcm		*lpc;
 
 	/* Used by hw/slw.c */
 	uint64_t		slw_base;

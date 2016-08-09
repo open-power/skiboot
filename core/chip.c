@@ -123,6 +123,5 @@ void init_chips(void)
 			chip->occ_functional = false;
 
 		list_head_init(&chip->i2cms);
-		list_head_init(&chip->lpc_clients);
 	};
 }

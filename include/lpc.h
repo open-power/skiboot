@@ -104,9 +104,6 @@ extern int64_t lpc_read(enum OpalLPCAddressType addr_type, uint32_t addr,
 /* Mark LPC bus as used by console */
 extern void lpc_used_by_console(void);
 
-/* Route SerIRQs to specific PSI/LPC interrupt sources */
-void lpc_route_serirq(uint32_t chip_id, uint32_t sirq, uint32_t psi_idx);
-
 /*
  * Simplified big endian FW accessors
  */
