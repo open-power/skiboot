@@ -89,7 +89,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_LPC_SYNC, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 #define   LPC_HC_IRQSER_START_8CLK	0x02000000
 #define LPC_HC_IRQMASK		0x34	/* same bit defs as LPC_HC_IRQSTAT */
 #define LPC_HC_IRQSTAT		0x38
-#define   LPC_HC_IRQ_SERIRQ0		0x80000000 /* all bits down to ... */
+#define   LPC_HC_IRQ_SERIRQ0		0x80000000u /* all bits down to ... */
 #define   LPC_HC_IRQ_SERIRQ16		0x00008000 /* IRQ16=IOCHK#, IRQ2=SMI# */
 #define   LPC_HC_IRQ_SERIRQ_ALL		0xffff8000
 #define   LPC_HC_IRQ_LRESET		0x00000400
@@ -123,6 +123,7 @@ struct lpcm {
 	struct list_head	clients;
 	bool			has_serirq;
 	uint8_t			sirq_routes[LPC_NUM_SERIRQ];
+	uint32_t		sirq_rmasks[4];
 };
 
 struct lpc_client_entry {
@@ -658,6 +659,7 @@ void lpc_route_serirq(uint32_t chip_id, uint32_t sirq, uint32_t psi_idx)
 {
 	struct proc_chip *chip;
 	struct lpcm *lpc;
+	uint32_t psi_old;
 
 	if (sirq >= LPC_NUM_SERIRQ) {
 		prerror("LPC[%03x]: Routing request for invalid SerIRQ %d\n",
@@ -670,6 +672,9 @@ void lpc_route_serirq(uint32_t chip_id, uint32_t sirq, uint32_t psi_idx)
 		return;
 	lpc = chip->lpc;
 	lock(&lpc->lock);
+	psi_old = lpc->sirq_routes[sirq];
+	lpc->sirq_rmasks[psi_old] &= ~(LPC_HC_IRQ_SERIRQ0 >> sirq);
+	lpc->sirq_rmasks[psi_idx] |=  (LPC_HC_IRQ_SERIRQ0 >> sirq);
 	__lpc_route_serirq(lpc, sirq, psi_idx);
 	unlock(&lpc->lock);
 }
@@ -714,8 +719,11 @@ static void lpc_init_interrupts_one(struct proc_chip *chip)
 	case PROC_CHIP_P9_CUMULUS:
 		/* On P9, we additionall setup the routing */
 		lpc->has_serirq = true;
-		for (i = 0; i < LPC_NUM_SERIRQ; i++)
-			__lpc_route_serirq(lpc, i, lpc->sirq_routes[i]);
+		for (i = 0; i < LPC_NUM_SERIRQ; i++) {
+			uint32_t pin = lpc->sirq_routes[i];
+			__lpc_route_serirq(lpc, i, pin);
+			lpc->sirq_rmasks[pin] |= LPC_HC_IRQ_SERIRQ0 >> i;
+		}
 		lpc_setup_serirq(lpc);
 		break;
 	default:
@@ -891,11 +899,11 @@ void lpc_interrupt(uint32_t chip_id)
 	unlock(&lpc->lock);
 }
 
-void lpc_serirq(uint32_t chip_id, uint32_t index __unused)
+void lpc_serirq(uint32_t chip_id, uint32_t index)
 {
 	struct proc_chip *chip = get_chip(chip_id);
 	struct lpcm *lpc;
-	uint32_t irqs;
+	uint32_t irqs, rmask;
 	int rc;
 
 	/* No initialized LPC controller on that chip */
@@ -911,11 +919,14 @@ void lpc_serirq(uint32_t chip_id, uint32_t index __unused)
 		prerror("LPC: Failed to read LPC IRQ state\n");
 		goto bail;
 	}
+	rmask = lpc->sirq_rmasks[index];
 
-	DBG_IRQ("LPC: IRQ on chip 0x%x, irqs=0x%08x\n", chip_id, irqs);
+	DBG_IRQ("LPC: IRQ on chip 0x%x, irqs=0x%08x rmask=0x%08x\n",
+		chip_id, irqs, rmask);
+	irqs &= rmask;
 
 	/* Handle SerIRQ interrupts */
-	if (irqs & LPC_HC_IRQ_SERIRQ_ALL)
+	if (irqs)
 		lpc_dispatch_ser_irqs(lpc, irqs, true);
 
  bail:
