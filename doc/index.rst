@@ -25,9 +25,9 @@ Contents:
    pci
    pci-slot
    xscom-node-bindings
-   release-notes/index
    opal-api/index
    device-tree/index
+   release-notes/index
 
 Indices and tables
 ==================
