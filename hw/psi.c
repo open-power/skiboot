@@ -880,7 +880,7 @@ static void psi_create_mm_dtnode(struct psi *psi)
 	dt_add_property_cells(np, "ibm,chip-id", psi->chip_id);
 }
 
-static struct psi *alloc_psi(uint64_t base)
+static struct psi *alloc_psi(struct proc_chip *chip, uint64_t base)
 {
 	struct psi *psi;
 
@@ -890,6 +890,7 @@ static struct psi *alloc_psi(uint64_t base)
 		return NULL;
 	}
 	psi->xscom_base = base;
+	psi->chip_id = chip->id;
 	return psi;
 }
 
@@ -905,16 +906,15 @@ static struct psi *psi_probe_p7(struct proc_chip *chip, u64 base)
 		return NULL;
 	}
 	if (val & PSIHB_XSCOM_P7_HBBAR_EN) {
-		psi = alloc_psi(base);
+		psi = alloc_psi(chip, base);
 		if (!psi)
 			return NULL;
 		rc = val >> 36;	/* Bits 0:1 = 0x00; 2:27 Bridge BAR... */
 		rc <<= 20;	/* ... corresponds to bits 18:43 of base addr */
 		psi->regs = (void *)rc;
+		psi->interrupt = get_psi_interrupt(chip->id);
 	} else
 		printf("PSI[0x%03x]: Working link not found\n", chip->id);
-
-	psi->interrupt = get_psi_interrupt(psi->chip_id);
 
 	return psi;
 }
@@ -931,14 +931,13 @@ static struct psi *psi_probe_p8(struct proc_chip *chip, u64 base)
 		return NULL;
 	}
 	if (val & PSIHB_XSCOM_P8_HBBAR_EN) {
-		psi = alloc_psi(base);
+		psi = alloc_psi(chip, base);
 		if (!psi)
 			return NULL;
 		psi->regs = (void *)(val & ~PSIHB_XSCOM_P8_HBBAR_EN);
+		psi->interrupt = get_psi_interrupt(chip->id);
 	} else
 		printf("PSI[0x%03x]: Working chip not found\n", chip->id);
-
-	psi->interrupt = get_psi_interrupt(psi->chip_id);
 
 	return psi;
 }
@@ -961,12 +960,11 @@ static struct psi *psi_probe_p9(struct proc_chip *chip, u64 base)
 		val = PSIHB_PSI_MMIO_DEFAULT | PSIHB_XSCOM_P9_HBBAR_EN;
 		xscom_write(chip->id, base + PSIHB_XSCOM_P9_BASE, val);
 	}
-	psi = alloc_psi(base);
+	psi = alloc_psi(chip, base);
 	if (!psi)
 		return NULL;
 	psi->regs = (void *)(val & ~PSIHB_XSCOM_P9_HBBAR_EN);
-
-	psi->interrupt = xive_alloc_hw_irqs(psi->chip_id, P9_PSI_NUM_IRQS, 16);
+	psi->interrupt = xive_alloc_hw_irqs(chip->id, P9_PSI_NUM_IRQS, 16);
 	return psi;
 }
 
@@ -1005,16 +1003,14 @@ static bool psi_init_psihb(struct dt_node *psihb)
 		psi->active = true;
 		unlock(&psi_lock);
 	}
-
-	psi->chip_id = chip->id;
 	chip->psi = psi;
 
 	psi_activate_phb(psi);
 	psi_init_interrupts(psi);
 	psi_create_mm_dtnode(psi);
 
-	printf("PSI[0x%03x]: Found PSI bridge [working=%d, active=%d]\n",
-			psi->chip_id, psi->working, psi->active);
+	printf("PSI[0x%03x]: Found PSI bridge [active=%d]\n",
+			psi->chip_id, psi->active);
 	return true;
 }
 
