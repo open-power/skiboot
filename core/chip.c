@@ -84,7 +84,7 @@ void init_chips(void)
 	}
 	/* Detect simics */
 	if (dt_find_by_path(dt_root, "/simics")) {
-		proc_chip_quirks |= QUIRK_SIMICS | QUIRK_NO_CHIPTOD
+		proc_chip_quirks |= QUIRK_SIMICS
 			| QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ | QUIRK_SLOW_SIM;
 		tb_hz = 512000;
 		prlog(PR_NOTICE, "CHIP: Detected Simics simulator\n");
