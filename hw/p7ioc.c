@@ -581,9 +581,16 @@ static void p7ioc_rgc_interrupt(struct irq_source *is, uint32_t isn)
 		opal_pci_eeh_set_evt(ioc->phbs[0].phb.opal_id);
 }
 
+static uint64_t p7ioc_rgc_irq_attributes(struct irq_source *is __unused,
+					 uint32_t isn __unused)
+{
+	return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE;
+}
+
 static const struct irq_source_ops p7ioc_rgc_irq_ops = {
 	.get_xive = p7ioc_rgc_get_xive,
 	.set_xive = p7ioc_rgc_set_xive,
+	.attributes = p7ioc_rgc_irq_attributes,
 	.interrupt = p7ioc_rgc_interrupt,
 };
 
@@ -678,5 +685,6 @@ void probe_p7ioc(void)
 	dt_for_each_compatible(dt_root, np, "ibm,p7ioc")
 		p7ioc_create_hub(np);
 }
+
 
 

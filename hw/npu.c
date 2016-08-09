@@ -773,25 +773,27 @@ static void npu_err_interrupt(struct irq_source *is, uint32_t isn)
 	}
 }
 
-/* LSIs (OS owned) */
+static uint64_t npu_lsi_attributes(struct irq_source *is, uint32_t isn)
+{
+	struct npu *p = is->data;
+	uint32_t idx = isn - p->base_lsi;
+
+	if (idx >= 4)
+		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE;
+	return IRQ_ATTR_TARGET_LINUX;
+}
+
+/* Error LSIs (skiboot owned) */
 static const struct irq_source_ops npu_lsi_irq_ops = {
 	.get_xive	= npu_lsi_get_xive,
 	.set_xive	= npu_lsi_set_xive,
-};
-
-/* Error LSIs (skiboot owned) */
-static const struct irq_source_ops npu_err_lsi_irq_ops = {
-	.get_xive	= npu_lsi_get_xive,
-	.set_xive	= npu_lsi_set_xive,
+	.attributes	= npu_lsi_attributes,
 	.interrupt	= npu_err_interrupt,
 };
 
 static void npu_register_irq(struct npu *p)
 {
-	register_irq_source(&npu_lsi_irq_ops, p,
-			    p->base_lsi, 4);
-	register_irq_source(&npu_err_lsi_irq_ops, p,
-			    p->base_lsi + 4, 4);
+	register_irq_source(&npu_lsi_irq_ops, p, p->base_lsi, 8);
 }
 
 static void npu_hw_init(struct npu *p)
@@ -1846,4 +1848,5 @@ void probe_npu(void)
 	dt_for_each_compatible(dt_root, np, "ibm,power8-npu-pciex")
 		npu_create_phb(np);
 }
+
 

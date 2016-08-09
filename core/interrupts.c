@@ -210,12 +210,15 @@ void add_opal_interrupts(void)
 	lock(&irq_lock);
 	list_for_each(&irq_sources, is, link) {
 		/*
-		 * Add a source to opal-interrupts if it has an
-		 * ->interrupt callback
+		 * Don't even consider sources that don't have an interrupts
+		 * callback or don't have an attributes one.
 		 */
-		if (!is->ops->interrupt)
+		if (!is->ops->interrupt || !is->ops->attributes)
 			continue;
 		for (isn = is->start; isn < is->end; isn++) {
+			uint64_t attr = is->ops->attributes(is, isn);
+			if (attr & IRQ_ATTR_TARGET_LINUX)
+				continue;
 			i = count++;
 			irqs = realloc(irqs, 4 * count);
 			irqs[i] = isn;

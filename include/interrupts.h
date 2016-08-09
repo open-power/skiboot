@@ -208,21 +208,16 @@ uint32_t p8_irq_to_phb(uint32_t irq);
 #define P8_IRQ_MISC_PSI_BASE		0x10	/* 0x10..0x17 */
 
 /* These are handled by skiboot */
-#define P8_IRQ_PSI_SKIBOOT_BASE		0
 #define P8_IRQ_PSI_FSP			0
 #define P8_IRQ_PSI_OCC			1
 #define P8_IRQ_PSI_FSI			2
 #define P8_IRQ_PSI_LPC			3
 #define P8_IRQ_PSI_LOCAL_ERR		4
-#define P8_IRQ_PSI_LOCAL_COUNT		5
-#define P8_IRQ_PSI_ALL_COUNT		6
+#define P8_IRQ_PSI_HOST_ERR		5
+#define P8_IRQ_PSI_IRQ_COUNT		6
 
 /* TBD: NX, AS, ...
  */
-/* These are passed onto Linux */
-#define P8_IRQ_PSI_LINUX_BASE		5
-#define P8_IRQ_PSI_HOST_ERR		5	/* Used for UART */
-#define P8_IRQ_PSI_LINUX_COUNT		1
 
 /* Note about interrupt numbers on P9
  * ==================================
@@ -259,19 +254,31 @@ uint32_t p8_irq_to_phb(uint32_t irq);
 struct irq_source;
 
 /*
- * IRQ sources register themselves here. If an "interrupts" callback
- * is provided, then all interrupts in that source will appear in
- * 'opal-interrupts' and will be handled by us.
+ * IRQ sources register themselves here.
  *
- * The "eoi" callback is optional and can be used for interrupts
- * requiring a special EOI at the source level. Typically will
- * be used for XIVE interrupts coming from PHBs.
+ * The "attributes" callback provides various attributes specific to
+ * a given interrupt, such as whether it's targetted at OPAL or the
+ * OS, or whether it's frequent or infrequent. The latter will be used
+ * later to optimize the lookup of the sources array by providing a small
+ * cache of the frequent interrupts.
+ *
+ * The "eoi" callback is used for XIVE interrupts in XICS emulation
+ * though we might expose it at some point in XIVE native mode for
+ * interrupts that require special EOI operations such as possibly
+ * the LPC interrupts on P9 that need a latch cleared in the LPCHC.
  */
 struct irq_source_ops {
 	int64_t (*set_xive)(struct irq_source *is, uint32_t isn,
 			    uint16_t server, uint8_t priority);
 	int64_t (*get_xive)(struct irq_source *is, uint32_t isn,
 			    uint16_t *server, uint8_t *priority);
+	uint64_t (*attributes)(struct irq_source *is, uint32_t isn);
+/* LSB is the target */
+#define IRQ_ATTR_TARGET_OPAL		0x0
+#define IRQ_ATTR_TARGET_LINUX		0x1
+/* For OPAL interrupts, estimate frequency */
+#define IRQ_ATTR_TARGET_RARE		0x0
+#define IRQ_ATTR_TARGET_FREQUENT	0x2
 	void (*interrupt)(struct irq_source *is, uint32_t isn);
 	void (*eoi)(struct irq_source *is, uint32_t isn);
 };

@@ -2532,6 +2532,17 @@ static void p7ioc_phb_err_interrupt(struct irq_source *is, uint32_t isn)
 	phb_unlock(&p->phb);
 }
 
+static uint64_t p7ioc_lsi_attributes(struct irq_source *is __unused,
+				     uint32_t isn)
+{
+	uint32_t irq = (isn & 0x7);
+
+	if (irq == PHB_LSI_PCIE_ERROR)
+		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE;
+	return IRQ_ATTR_TARGET_LINUX;
+}
+
+
 /* MSIs (OS owned) */
 static const struct irq_source_ops p7ioc_msi_irq_ops = {
 	.get_xive = p7ioc_msi_get_xive,
@@ -2542,12 +2553,7 @@ static const struct irq_source_ops p7ioc_msi_irq_ops = {
 static const struct irq_source_ops p7ioc_lsi_irq_ops = {
 	.get_xive = p7ioc_lsi_get_xive,
 	.set_xive = p7ioc_lsi_set_xive,
-};
-
-/* PHB Errors (Ski owned) */
-static const struct irq_source_ops p7ioc_phb_err_irq_ops = {
-	.get_xive = p7ioc_lsi_get_xive,
-	.set_xive = p7ioc_lsi_set_xive,
+	.attributes = p7ioc_lsi_attributes,
 	.interrupt = p7ioc_phb_err_interrupt,
 };
 
@@ -2670,11 +2676,7 @@ void p7ioc_phb_setup(struct p7ioc *ioc, uint8_t index)
 
 	/* Register OS interrupt sources */
 	register_irq_source(&p7ioc_msi_irq_ops, p, p->buid_msi << 4, 256);
-	register_irq_source(&p7ioc_lsi_irq_ops, p, p->buid_lsi << 4, 4);
-
-	/* Register internal interrupt source (LSI 7) */
-	register_irq_source(&p7ioc_phb_err_irq_ops, p,
-			    (p->buid_lsi << 4) + PHB_LSI_PCIE_ERROR, 1);
+	register_irq_source(&p7ioc_lsi_irq_ops, p, p->buid_lsi << 4, 8);
 
 	/* Initialize IODA table caches */
 	p7ioc_phb_init_ioda_cache(p);
@@ -3263,5 +3265,6 @@ void p7ioc_phb_reset(struct phb *phb)
 	/* Restore the CI error mask */
 	out_be64(ioc->regs + P7IOC_CIn_LEM_ERR_MASK_AND(ci_idx), 0);
 }
+
 
 

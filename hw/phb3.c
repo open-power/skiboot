@@ -1798,6 +1798,18 @@ static void phb3_err_interrupt(struct irq_source *is, uint32_t isn)
 	phb3_set_err_pending(p, true);
 }
 
+static uint64_t phb3_lsi_attributes(struct irq_source *is, uint32_t isn)
+{
+#ifndef DISABLE_ERR_INTS
+	struct phb3 *p = is->data;
+	uint32_t idx = isn - p->base_lsi;
+
+	if (idx == PHB3_LSI_PCIE_INF || idx == PHB3_LSI_PCIE_ER)
+		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE;
+#endif
+	return IRQ_ATTR_TARGET_LINUX;
+}
+
 /* MSIs (OS owned) */
 static const struct irq_source_ops phb3_msi_irq_ops = {
 	.get_xive = phb3_msi_get_xive,
@@ -1808,12 +1820,7 @@ static const struct irq_source_ops phb3_msi_irq_ops = {
 static const struct irq_source_ops phb3_lsi_irq_ops = {
 	.get_xive = phb3_lsi_get_xive,
 	.set_xive = phb3_lsi_set_xive,
-};
-
-/* Error LSIs (skiboot owned) */
-static const struct irq_source_ops phb3_err_lsi_irq_ops = {
-	.get_xive = phb3_lsi_get_xive,
-	.set_xive = phb3_lsi_set_xive,
+	.attributes = phb3_lsi_attributes,
 	.interrupt = phb3_err_interrupt,
 };
 
@@ -4447,12 +4454,8 @@ static void phb3_create(struct dt_node *np)
 	/* Register interrupt sources */
 	register_irq_source(&phb3_msi_irq_ops, p, p->base_msi,
 			    PHB3_MSI_IRQ_COUNT);
-	register_irq_source(&phb3_lsi_irq_ops, p, p->base_lsi, 4);
+	register_irq_source(&phb3_lsi_irq_ops, p, p->base_lsi, 8);
 
-#ifndef DISABLE_ERR_INTS
-	register_irq_source(&phb3_err_lsi_irq_ops, p,
-			    p->base_lsi + PHB3_LSI_PCIE_INF, 2);
-#endif
 	/* Get the HW up and running */
 	phb3_init_hw(p, true);
 
@@ -4734,4 +4737,5 @@ void probe_phb3(void)
 	dt_for_each_compatible(dt_root, np, "ibm,power8-pciex")
 		phb3_create(np);
 }
+
 

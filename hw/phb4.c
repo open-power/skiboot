@@ -55,7 +55,7 @@
 #include <xive.h>
 
 /* Enable this to disable error interrupts for debug purposes */
-#undef DISABLE_ERR_INTS
+#define DISABLE_ERR_INTS
 
 static void phb4_init_hw(struct phb4 *p, bool first_init);
 
@@ -3048,9 +3048,29 @@ static void phb4_eoi(struct irq_source *is, uint32_t isn)
 	}
 }
 
-static const struct irq_source_ops phb4_irq_ops = {
+static const struct irq_source_ops phb4_msi_ops = {
 	.get_xive = phb4_get_xive,
 	.set_xive = phb4_set_xive,
+	.eoi = phb4_eoi
+};
+
+static uint64_t phb4_lsi_attributes(struct irq_source *is __unused,
+				uint32_t isn __unused)
+{
+#ifndef DISABLE_ERR_INTS
+	struct phb3 *p = is->data;
+	uint32_t idx = isn - p->base_lsi;
+
+	if (idx == PHB3_LSI_PCIE_INF || idx == PHB3_LSI_PCIE_ER)
+		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE;
+#endif
+	return IRQ_ATTR_TARGET_LINUX;
+}
+
+static const struct irq_source_ops phb4_lsi_ops = {
+	.get_xive = phb4_get_xive,
+	.set_xive = phb4_set_xive,
+	.attributes = phb4_lsi_attributes,
 	.eoi = phb4_eoi
 };
 
@@ -3209,12 +3229,9 @@ static void phb4_create(struct dt_node *np)
 	phb4_init_ioda_cache(p);
 
 	/* Register interrupt sources */
-	register_irq_source(&phb4_irq_ops, p, p->base_msi, p->num_irqs);
+	register_irq_source(&phb4_msi_ops, p, p->base_msi, p->num_irqs - 8);
+	register_irq_source(&phb4_lsi_ops, p, p->base_lsi, 8);
 
-#ifndef DISABLE_ERR_INTS
-	//	register_irq_source(&phb4_err_lsi_irq_ops, p,
-	//		    p->base_lsi + PHB4_LSI_PCIE_INF, 2);
-#endif
 	/* Get the HW up and running */
 	phb4_init_hw(p, true);
 

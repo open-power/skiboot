@@ -432,6 +432,12 @@ static int64_t psi_p7_get_xive(struct irq_source *is, uint32_t isn __unused,
 	return OPAL_SUCCESS;
 }
 
+static uint64_t psi_p7_irq_attributes(struct irq_source *is __unused,
+				      uint32_t isn __unused)
+{
+	return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_FREQUENT;
+}
+
 static int64_t psi_p8_set_xive(struct irq_source *is, uint32_t isn,
 			       uint16_t server, uint8_t priority)
 {
@@ -509,6 +515,23 @@ static int64_t psi_p8_get_xive(struct irq_source *is, uint32_t isn __unused,
 	return OPAL_SUCCESS;
 }
 
+static uint64_t psi_p8_irq_attributes(struct irq_source *is, uint32_t isn)
+{
+	struct psi *psi = is->data;
+	uint32_t idx = isn - psi->interrupt;
+	uint64_t attr;
+
+	if (idx == P8_IRQ_PSI_HOST_ERR &&
+	    psi_ext_irq_policy == EXTERNAL_IRQ_POLICY_LINUX)
+		return IRQ_ATTR_TARGET_LINUX;
+
+	attr = IRQ_ATTR_TARGET_OPAL;
+	if (idx == P8_IRQ_PSI_HOST_ERR || idx == P8_IRQ_PSI_LPC ||
+	    idx == P8_IRQ_PSI_FSP)
+		attr |= IRQ_ATTR_TARGET_FREQUENT;
+	return attr;
+}
+
 /* Called on a fast reset, make sure we aren't stuck with
  * an accepted and never EOId PSI interrupt
  */
@@ -542,18 +565,15 @@ void psi_irq_reset(void)
 static const struct irq_source_ops psi_p7_irq_ops = {
 	.get_xive = psi_p7_get_xive,
 	.set_xive = psi_p7_set_xive,
+	.attributes = psi_p7_irq_attributes,
 	.interrupt = psi_interrupt,
 };
 
 static const struct irq_source_ops psi_p8_irq_ops = {
 	.get_xive = psi_p8_get_xive,
 	.set_xive = psi_p8_set_xive,
+	.attributes = psi_p8_irq_attributes,
 	.interrupt = psi_interrupt,
-};
-
-static const struct irq_source_ops psi_p8_host_err_ops = {
-	.get_xive = psi_p8_get_xive,
-	.set_xive = psi_p8_set_xive,
 };
 
 static void psi_tce_enable(struct psi *psi, bool enable)
@@ -693,25 +713,8 @@ static void psi_register_interrupts(struct psi *psi)
 		 * external interrupt and the policy for that comes
 		 * from the platform
 		 */
-		if (psi_ext_irq_policy == EXTERNAL_IRQ_POLICY_SKIBOOT) {
-			register_irq_source(&psi_p8_irq_ops,
-					    psi,
-					    psi->interrupt + P8_IRQ_PSI_SKIBOOT_BASE,
-					    P8_IRQ_PSI_ALL_COUNT);
-		} else {
-			register_irq_source(&psi_p8_irq_ops,
-					    psi,
-					    psi->interrupt + P8_IRQ_PSI_SKIBOOT_BASE,
-					    P8_IRQ_PSI_LOCAL_COUNT);
-			/*
-			 * Host Error is handled by powernv; host error
-			 * is at offset 5 from the PSI base.
-			 */
-			register_irq_source(&psi_p8_host_err_ops,
-					    psi,
-					    psi->interrupt + P8_IRQ_PSI_LINUX_BASE,
-					    P8_IRQ_PSI_LINUX_COUNT);
-		}
+		register_irq_source(&psi_p8_irq_ops, psi,
+				    psi->interrupt, P8_IRQ_PSI_IRQ_COUNT);
 		break;
 	default:
 		/* Unknown: just no interrupts */
