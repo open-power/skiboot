@@ -106,9 +106,20 @@
 #define   PSIHB_IRQ_STAT_LOCAL_ERR	PPC_BIT(30)
 #define   PSIHB_IRQ_STAT_HOST_ERR	PPC_BIT(31)
 
-/* Secure version of CR for P8 (TCE enable bit) */
+/* Secure version of CR for P8 and P9 (TCE enable bit) */
 #define PSIHB_PHBSCR			0x90
 
+/* P9 registers */
+
+#define PSIHB_INTERRUPT_CONTROL		0x58
+#define   PSIHB_IRQ_METHOD		PPC_BIT(0)
+#define   PSIHB_IRQ_RESET		PPC_BIT(1)
+#define PSIHB_ESB_CI_BASE		0x60
+#define   PSIHB_ESB_CI_VALID		1
+#define PSIHB_ESB_NOTIF_ADDR		0x68
+#define   PSIHB_ESB_NOTIF_VALID		1
+#define PSIHB_IVT_OFFSET		0x70
+#define   PSIHB_IVT_OFF_SHIFT		32
 /*
  * PSI Host Bridge Registers (XSCOM)
  */
@@ -125,6 +136,31 @@
 #define PSIHB_XSCOM_P8_HBCSR_SET	0x12
 #define PSIHB_XSCOM_P8_HBCSR_CLR	0x13
 #define   PSIHB_XSCOM_P8_HBSCR_FSP_IRQ 	PPC_BIT(17)
+
+#define PSIHB_XSCOM_P9_BASE		0xa
+#define   PSIHB_XSCOM_P9_HBBAR_EN	PPC_BIT(63)
+#define PSIHB_XSCOM_P9_HBCSR		0xe
+#define PSIHB_XSCOM_P9_HBCSR_SET	0x12
+#define PSIHB_XSCOM_P9_HBCSR_CLR	0x13
+#define   PSIHB_XSCOM_P9_HBSCR_FSP_IRQ 	PPC_BIT(17)
+
+/* P9 PSI Interrupts */
+#define P9_PSI_IRQ_PSI			0
+#define P9_PSI_IRQ_OCC			1
+#define P9_PSI_IRQ_FSI			2
+#define P9_PSI_IRQ_LPCHC		3
+#define P9_PSI_IRQ_LOCAL_ERR		4
+#define P9_PSI_IRQ_GLOBAL_ERR		5
+#define P9_PSI_IRQ_EXTERNAL		6
+#define P9_PSI_IRQ_LPC_SIRQ0		7
+#define P9_PSI_IRQ_LPC_SIRQ1		8
+#define P9_PSI_IRQ_LPC_SIRQ2		9
+#define P9_PSI_IRQ_LPC_SIRQ3		10
+#define P9_PSI_IRQ_SBE_I2C		11
+#define P9_PSI_IRQ_DIO			12
+#define P9_PSI_IRQ_PSU			13
+#define P9_PSI_NUM_IRQS			16
+
 
 
 /*
@@ -205,6 +241,7 @@ struct psi {
 	struct list_node	list;
 	uint64_t		xscom_base;
 	void			*regs;
+	void			*esb_mmio;
 	unsigned int		chip_id;
 	unsigned int		interrupt;
 	bool			working;

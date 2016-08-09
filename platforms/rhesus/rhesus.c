@@ -198,8 +198,8 @@ static void rhesus_dt_fixup_uart(struct dt_node *lpc, bool has_irq)
 	 */
 	if (has_irq) {
 		uint32_t chip_id = dt_get_chip_id(lpc);
-		uint32_t irq = get_psi_interrupt(chip_id) + P8_IRQ_PSI_HOST_ERR;
-		dt_add_property_cells(uart, "interrupts", irq);
+		uint32_t irq = get_psi_interrupt(chip_id) + P8_IRQ_PSI_EXTERNAL;
+		dt_add_property_cells(uart, "interrupts", irq, 1);
 		dt_add_property_cells(uart, "interrupt-parent",
 				      get_ics_phandle());
 	}

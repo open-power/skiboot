@@ -213,7 +213,7 @@ uint32_t p8_irq_to_phb(uint32_t irq);
 #define P8_IRQ_PSI_FSI			2
 #define P8_IRQ_PSI_LPC			3
 #define P8_IRQ_PSI_LOCAL_ERR		4
-#define P8_IRQ_PSI_HOST_ERR		5
+#define P8_IRQ_PSI_EXTERNAL		5	/* Used for UART */
 #define P8_IRQ_PSI_IRQ_COUNT		6
 
 /* TBD: NX, AS, ...

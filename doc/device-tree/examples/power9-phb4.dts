@@ -152,6 +152,11 @@
 			reg = <0x5013000 0x300>;
 			compatible = "ibm,power9-xive-x";
 		};
+
+		psihb@5012900 {
+			reg = <0x5012900 0x100>;
+			compatible = "ibm,power9-psihb-x", "ibm,psihb-x";
+		};
 	};
 
 	lpcm-opb@6030000000000 {
