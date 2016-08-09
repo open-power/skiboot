@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to skiboot's documentation!
-===================================
+Overview
+========
 
 Contents:
 
@@ -13,8 +13,14 @@ Contents:
 
    overview
    opal-spec
+
+Developer Guide and Internals
+=============================
+
+.. toctree::
+   :maxdepth: 2
+
    console-log
-   device-tree
    error-logging
    bmc
    gcov
@@ -25,8 +31,24 @@ Contents:
    pci
    pci-slot
    xscom-node-bindings
-   opal-api/index
+
+
+OPAL ABI
+========
+
+.. toctree::
+   :maxdepth: 2
+
+   device-tree
    device-tree/index
+   opal-api/index
+
+skiboot Release Notes
+=====================
+
+.. toctree::
+   :maxdepth: 2
+
    release-notes/index
 
 Indices and tables
