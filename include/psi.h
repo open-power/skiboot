@@ -244,7 +244,6 @@ struct psi {
 	void			*esb_mmio;
 	unsigned int		chip_id;
 	unsigned int		interrupt;
-	bool			working;
 	bool			active;
 };
 

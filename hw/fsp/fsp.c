@@ -1897,8 +1897,6 @@ static void fsp_update_links_states(struct fsp *fsp)
 	for (i = 0; i < fsp->iopath_count; i++) {
 		fiop = &fsp->iopath[i];
 		if (!fiop->psi)
-			continue;
-		if (!fiop->psi->working)
 			fiop->state = fsp_path_bad;
 		else if (fiop->psi->active) {
 			fsp->active_iopath = i;

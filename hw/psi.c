@@ -179,7 +179,7 @@ static void psi_link_poll(void *data __unused)
 		list_for_each(&psis, psi, list) {
 			u64 val;
 
-			if (psi->active || !psi->working)
+			if (psi->active)
 				continue;
 
 			val = in_be64(psi->regs + PSIHB_CR);
@@ -220,9 +220,6 @@ static void psi_link_poll(void *data __unused)
 
 void psi_enable_fsp_interrupt(struct psi *psi)
 {
-	if (!psi->working)
-		return;
-
 	/* Enable FSP interrupts in the GXHB */
 	lock(&psi_lock);
 	out_be64(psi->regs + PSIHB_CR,
@@ -350,9 +347,6 @@ static int64_t psi_p7_set_xive(struct irq_source *is, uint32_t isn __unused,
 	struct psi *psi = is->data;
 	uint64_t xivr;
 
-	if (!psi->working)
-		return OPAL_HARDWARE;
-
 	/* Populate the XIVR */
 	xivr  = (uint64_t)server << 40;
 	xivr |= (uint64_t)priority << 32;
@@ -368,9 +362,6 @@ static int64_t psi_p7_get_xive(struct irq_source *is, uint32_t isn __unused,
 {
 	struct psi *psi = is->data;
 	uint64_t xivr;
-
-	if (!psi->working)
-		return OPAL_HARDWARE;
 
 	/* Read & decode the XIVR */
 	xivr = in_be64(psi->regs + PSIHB_XIVR);
@@ -917,7 +908,6 @@ static struct psi *psi_probe_p7(struct proc_chip *chip, u64 base)
 		psi = alloc_psi(base);
 		if (!psi)
 			return NULL;
-		psi->working = true;
 		rc = val >> 36;	/* Bits 0:1 = 0x00; 2:27 Bridge BAR... */
 		rc <<= 20;	/* ... corresponds to bits 18:43 of base addr */
 		psi->regs = (void *)rc;
@@ -944,7 +934,6 @@ static struct psi *psi_probe_p8(struct proc_chip *chip, u64 base)
 		psi = alloc_psi(base);
 		if (!psi)
 			return NULL;
-		psi->working = true;
 		psi->regs = (void *)(val & ~PSIHB_XSCOM_P8_HBBAR_EN);
 	} else
 		printf("PSI[0x%03x]: Working chip not found\n", chip->id);
@@ -975,7 +964,6 @@ static struct psi *psi_probe_p9(struct proc_chip *chip, u64 base)
 	psi = alloc_psi(base);
 	if (!psi)
 		return NULL;
-	psi->working = true;
 	psi->regs = (void *)(val & ~PSIHB_XSCOM_P9_HBBAR_EN);
 
 	psi->interrupt = xive_alloc_hw_irqs(psi->chip_id, P9_PSI_NUM_IRQS, 16);
