@@ -32,8 +32,8 @@ Returns: ::
   OPAL_CLOSED - console device closed
   OPAL_BUSY_EVENT - unable to write any of buffer
 
-term_number is the terminal number as represented in the device tree.
-length is a pointer to the length of buffer.
+``term_number`` is the terminal number as represented in the device tree.
+``length`` is a pointer to the length of buffer.
 
 A conforming implementation SHOULD try to NOT do partial writes, although
 partial writes and not writing anything are valid.
@@ -51,7 +51,7 @@ Returns: ::
   OPAL_SUCCESS
   OPAL_PARAMETER - invalid term_number
 
-Returns the available buffer length for OPAL_CONSOLE_WRITE in *length.
+Returns the available buffer length for OPAL_CONSOLE_WRITE in ``length``.
 This call can be used to help work out if there is sufficient buffer
 space to write your full message to the console with OPAL_CONSOLE_WRITE.
 
