@@ -23,6 +23,7 @@
 #include <chip.h>
 #include <xscom.h>
 #include <errorlog.h>
+#include <bt.h>
 
 struct platform	platform;
 
@@ -105,6 +106,11 @@ static void generic_platform_init(void)
 		uart_setup_opal_console();
 	else
 		force_dummy_console();
+
+	/* Enable a BT interface if we find one too */
+	bt_init();
+
+	/* Fake a real time clock */
 	fake_rtc_init();
 }
 

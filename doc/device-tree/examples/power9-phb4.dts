@@ -192,6 +192,12 @@
 			clock-frequency = < 1843200 >;
 			interrupts = <4>;
 		    };
+
+		    impi@ie4 {
+			compatible = "ipmi-bt";
+			reg = < 1 0xe4 0x3 >;
+			interrupts = <10>;
+		    };
 		};
 	};
 
