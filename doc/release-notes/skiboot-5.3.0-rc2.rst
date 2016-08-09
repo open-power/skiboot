@@ -1,5 +1,5 @@
 skiboot-5.3.0-rc2
------------------
+=================
 
 skiboot-5.3.0-rc2 was released on Thursday July 28th, 2016.
 
