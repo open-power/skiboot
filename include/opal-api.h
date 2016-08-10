@@ -213,6 +213,9 @@
 
 #ifndef __ASSEMBLY__
 
+#include <stdbool.h>
+#include <types.h>
+
 /* Other enums */
 enum OpalVendorApiTokens {
 	OPAL_START_VENDOR_API_RANGE = 1000, OPAL_END_VENDOR_API_RANGE = 1999

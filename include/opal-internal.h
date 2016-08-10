@@ -82,4 +82,26 @@ extern void opal_del_host_sync_notifier(bool (*notify)(void *data));
 struct OpalHMIEvent;
 extern int handle_hmi_exception(__be64 hmer, struct OpalHMIEvent *hmi_evt);
 
+extern unsigned long top_of_ram;
+
+/*
+ * Returns true if the address is valid, false otherwise
+ *
+ * Checks if the passed address belongs to real address space
+ * or 0xc000... kernel address space. It also checks that
+ * addr <= total physical memory. The magic value 60 comes
+ * from 60 bit real address mentioned in section 5.7 of the
+ * Power ISA (Book 3S).
+ */
+static inline bool opal_addr_valid(const void *addr)
+{
+	unsigned long val = (unsigned long)addr;
+	if ((val >> 60) != 0xc && (val >> 60) != 0x0)
+		return false;
+	val &= ~0xf000000000000000;
+	if (val > top_of_ram)
+		return false;
+	return true;
+}
+
 #endif /* __OPAL_INTERNAL_H */
