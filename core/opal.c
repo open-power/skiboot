@@ -359,6 +359,10 @@ void opal_run_pollers(void)
 
 static int64_t opal_poll_events(__be64 *outstanding_event_mask)
 {
+
+	if (!opal_addr_valid(outstanding_event_mask))
+		return OPAL_PARAMETER;
+
 	/* Check if we need to trigger an attn for test use */
 	if (attn_trigger == 0xdeadbeef) {
 		prlog(PR_EMERG, "Triggering attn\n");

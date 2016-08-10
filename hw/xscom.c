@@ -400,6 +400,9 @@ int xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val)
 	uint32_t gcid;
 	int rc;
 
+	if (!opal_addr_valid(val))
+		return OPAL_PARAMETER;
+
 	/* Handle part ID decoding */
 	switch(partid >> 28) {
 	case 0: /* Normal processor chip */

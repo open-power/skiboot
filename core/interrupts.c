@@ -408,6 +408,9 @@ static int64_t opal_get_xive(uint32_t isn, uint16_t *server, uint8_t *priority)
 {
 	struct irq_source *is = irq_find_source(isn);
 
+	if (!opal_addr_valid(server))
+		return OPAL_PARAMETER;
+
 	if (!is || !is->ops->get_xive)
 		return OPAL_PARAMETER;
 
@@ -419,6 +422,9 @@ static int64_t opal_handle_interrupt(uint32_t isn, __be64 *outstanding_event_mas
 {
 	struct irq_source *is = irq_find_source(isn);
 	int64_t rc = OPAL_SUCCESS;
+
+	if (!opal_addr_valid(outstanding_event_mask))
+		return OPAL_PARAMETER;
 
 	/* No source ? return */
 	if (!is || !is->ops->interrupt) {

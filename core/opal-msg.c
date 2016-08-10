@@ -81,6 +81,9 @@ static int64_t opal_get_msg(uint64_t *buffer, uint64_t size)
 	if (size < sizeof(struct opal_msg) || !buffer)
 		return OPAL_PARAMETER;
 
+	if (!opal_addr_valid(buffer))
+		return OPAL_PARAMETER;
+
 	lock(&opal_msg_lock);
 
 	entry = list_pop(&msg_pending_list, struct opal_msg_entry, link);
@@ -113,6 +116,9 @@ static int64_t opal_check_completion(uint64_t *buffer, uint64_t size,
 	void (*callback)(void *data) = NULL;
 	int rc = OPAL_BUSY;
 	void *data = NULL;
+
+	if (!opal_addr_valid(buffer))
+		return OPAL_PARAMETER;
 
 	lock(&opal_msg_lock);
 	list_for_each_safe(&msg_pending_list, entry, next_entry, link) {

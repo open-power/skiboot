@@ -719,6 +719,9 @@ static int64_t opal_start_cpu_thread(uint64_t server_no, uint64_t start_address)
 	struct cpu_thread *cpu;
 	struct cpu_job *job;
 
+	if (!opal_addr_valid((void *)start_address))
+		return OPAL_PARAMETER;
+
 	cpu = find_cpu_by_server(server_no);
 	if (!cpu) {
 		prerror("OPAL: Start invalid CPU 0x%04llx !\n", server_no);
@@ -753,6 +756,9 @@ opal_call(OPAL_START_CPU, opal_start_cpu_thread, 2);
 static int64_t opal_query_cpu_status(uint64_t server_no, uint8_t *thread_status)
 {
 	struct cpu_thread *cpu;
+
+	if (!opal_addr_valid(thread_status))
+		return OPAL_PARAMETER;
 
 	cpu = find_cpu_by_server(server_no);
 	if (!cpu) {

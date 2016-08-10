@@ -221,6 +221,9 @@ static int64_t opal_get_device_tree(uint32_t phandle,
 	int64_t totalsize;
 	int ret;
 
+	if (!opal_addr_valid(fdt))
+		return OPAL_PARAMETER;
+
 	root = dt_find_by_phandle(dt_root, phandle);
 	if (!root)
 		return OPAL_PARAMETER;

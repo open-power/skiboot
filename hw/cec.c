@@ -72,6 +72,9 @@ static int64_t opal_pci_get_hub_diag_data(uint64_t hub_id,
 {
 	struct io_hub *hub = cec_get_hub_by_id(hub_id);
 
+	if (!opal_addr_valid(diag_buffer))
+		return OPAL_PARAMETER;
+
 	if (!hub)
 		return OPAL_PARAMETER;
 

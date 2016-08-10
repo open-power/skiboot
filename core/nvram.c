@@ -30,6 +30,10 @@ static int64_t opal_read_nvram(uint64_t buffer, uint64_t size, uint64_t offset)
 {
 	if (!nvram_ready)
 		return OPAL_HARDWARE;
+
+	if (!opal_addr_valid((void *)buffer))
+		return OPAL_PARAMETER;
+
 	if (offset >= nvram_size || (offset + size) > nvram_size)
 		return OPAL_PARAMETER;
 
@@ -42,6 +46,10 @@ static int64_t opal_write_nvram(uint64_t buffer, uint64_t size, uint64_t offset)
 {
 	if (!nvram_ready)
 		return OPAL_HARDWARE;
+
+	if (!opal_addr_valid((void *)buffer))
+		return OPAL_PARAMETER;
+
 	if (offset >= nvram_size || (offset + size) > nvram_size)
 		return OPAL_PARAMETER;
 	memcpy(nvram_image + offset, (void *)buffer, size);

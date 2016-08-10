@@ -59,6 +59,9 @@ static int opal_i2c_request(uint64_t async_token, uint32_t bus_id,
 	struct i2c_request *req;
 	int rc;
 
+	if (!opal_addr_valid(oreq))
+		return OPAL_PARAMETER;
+
 	if (oreq->flags & OPAL_I2C_ADDR_10)
 		return OPAL_UNSUPPORTED;
 

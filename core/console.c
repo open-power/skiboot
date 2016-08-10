@@ -338,6 +338,10 @@ static int64_t dummy_console_write(int64_t term_number, int64_t *length,
 {
 	if (term_number != 0)
 		return OPAL_PARAMETER;
+
+	if (!opal_addr_valid(length) || !opal_addr_valid(buffer))
+		return OPAL_PARAMETER;
+
 	write(0, buffer, *length);
 
 	return OPAL_SUCCESS;
@@ -349,6 +353,10 @@ static int64_t dummy_console_write_buffer_space(int64_t term_number,
 {
 	if (term_number != 0)
 		return OPAL_PARAMETER;
+
+	if (!opal_addr_valid(length))
+		return OPAL_PARAMETER;
+
 	if (length)
 		*length = INMEM_CON_OUT_LEN;
 
@@ -361,6 +369,10 @@ static int64_t dummy_console_read(int64_t term_number, int64_t *length,
 {
 	if (term_number != 0)
 		return OPAL_PARAMETER;
+
+	if (!opal_addr_valid(length) || !opal_addr_valid(buffer))
+		return OPAL_PARAMETER;
+
 	*length = read(0, buffer, *length);
 	opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT, 0);
 
