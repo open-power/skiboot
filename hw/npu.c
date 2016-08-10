@@ -555,12 +555,7 @@ static void npu_dev_bind_pci_dev(struct npu_dev *dev)
 		}
 	}
 
-	/**
-	 * @fwts-label NPUNotBound
-	 * @fwts-advice Start debugging why we didn't find the right device.
-	 * End result is that NVLink will not function properly
-	 */
-	prlog(PR_ERR, "%s: NPU device %04x:00:%02x.0 not binding to PCI device\n",
+	prlog(PR_INFO, "%s: No PCI device for NPU device %04x:00:%02x.0 to bind to. If you expect a GPU to be there, this is a problem.\n",
 	      __func__, dev->npu->phb.opal_id, dev->index);
 }
 
