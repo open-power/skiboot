@@ -183,11 +183,11 @@ struct proc_chip {
 	uint64_t		homer_size;
 	uint64_t		occ_common_base;
 	uint64_t		occ_common_size;
-	u8			throttle;
+	uint8_t			throttle;
 
 	/* Must hold capi_lock to change */
-	u8			capp_phb3_attached_mask;
-	u8			capp_ucode_loaded;
+	uint8_t			capp_phb3_attached_mask;
+	uint8_t			capp_ucode_loaded;
 
 	/* Used by hw/centaur.c */
 	struct centaur_chip	*centaurs;
