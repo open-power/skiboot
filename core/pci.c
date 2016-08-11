@@ -140,7 +140,7 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	uint16_t capreg;
 	bool had_crs = false;
 
-	for (retries = 40; retries; retries--) {
+	for (retries = 0; retries < 40; retries++) {
 		rc = pci_cfg_read32(phb, bdfn, 0, &vdid);
 		if (rc)
 			return NULL;
@@ -156,7 +156,7 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 		return NULL;
 	}
 	if (had_crs)
-		PCIDBG(phb, bdfn, "Probe success after CRS\n");
+		PCIDBG(phb, bdfn, "Probe success after %d CRS\n", retries);
 
 	/* Perform a dummy write to the device in order for it to
 	 * capture it's own bus number, so any subsequent error
