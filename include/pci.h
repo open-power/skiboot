@@ -25,10 +25,10 @@
 struct pci_device;
 struct pci_cfg_reg_filter;
 
-typedef void (*pci_cfg_reg_func)(struct pci_device *pd,
-				 struct pci_cfg_reg_filter *pcrf,
-				 uint32_t offset, uint32_t len,
-				 uint32_t *data, bool write);
+typedef int64_t (*pci_cfg_reg_func)(void *dev,
+				    struct pci_cfg_reg_filter *pcrf,
+				    uint32_t offset, uint32_t len,
+				    uint32_t *data, bool write);
 struct pci_cfg_reg_filter {
 	uint32_t		flags;
 #define PCI_REG_FLAG_READ	0x1

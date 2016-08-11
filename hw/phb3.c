@@ -72,10 +72,10 @@ static bool phb3_fenced(struct phb3 *p)
 	return false;
 }
 
-static void phb3_pcicfg_filter_rc_pref_window(struct pci_device *pd __unused,
-					      struct pci_cfg_reg_filter *pcrf,
-					      uint32_t offset, uint32_t len,
-					      uint32_t *data,  bool write)
+static int64_t phb3_pcicfg_rc_pref_window(void *dev __unused,
+					  struct pci_cfg_reg_filter *pcrf,
+					  uint32_t offset, uint32_t len,
+					  uint32_t *data,  bool write)
 {
 	uint8_t *pdata;
 	uint32_t i;
@@ -85,7 +85,7 @@ static void phb3_pcicfg_filter_rc_pref_window(struct pci_device *pd __unused,
 		pdata = &pcrf->data[offset - pcrf->start];
 		for (i = 0; i < len; i++, pdata++)
 			*pdata = (uint8_t)(*data >> (8 * i));
-		return;
+		return OPAL_SUCCESS;
 	}
 
 	/* Return whatever we cached */
@@ -100,6 +100,8 @@ static void phb3_pcicfg_filter_rc_pref_window(struct pci_device *pd __unused,
 
 		*data |= *pdata;
 	}
+
+	return OPAL_SUCCESS;
 }
 
 /*
@@ -495,7 +497,7 @@ static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
 				pci_add_cfg_reg_filter(dev,
 					PCI_CFG_PREF_MEM_BASE_U32, 12,
 					PCI_REG_FLAG_READ | PCI_REG_FLAG_WRITE,
-					phb3_pcicfg_filter_rc_pref_window);
+					phb3_pcicfg_rc_pref_window);
 		}
 	}
 }
