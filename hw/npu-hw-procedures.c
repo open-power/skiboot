@@ -17,6 +17,7 @@
 #include <io.h>
 #include <timebase.h>
 #include <pci.h>
+#include <pci-virt.h>
 #include <interrupts.h>
 #include <npu-regs.h>
 #include <npu.h>
@@ -506,12 +507,9 @@ static uint32_t get_procedure_status(struct npu_dev *dev)
 	return dev->procedure_status;
 }
 
-int64_t npu_dev_procedure_read(struct npu_dev_trap *trap,
-				      uint32_t offset,
-				      uint32_t size,
-				      uint32_t *data)
+static int64_t npu_dev_procedure_read(struct npu_dev *dev, uint32_t offset,
+				      uint32_t size, uint32_t *data)
 {
-	struct npu_dev *dev = trap->dev;
 	int64_t rc = OPAL_SUCCESS;
 
 	if (size != 4) {
@@ -520,7 +518,6 @@ int64_t npu_dev_procedure_read(struct npu_dev_trap *trap,
 		return OPAL_PARAMETER;
 	}
 
-	offset -= trap->start;
 	*data = 0;
 
 	switch (offset) {
@@ -546,12 +543,9 @@ int64_t npu_dev_procedure_read(struct npu_dev_trap *trap,
 	return rc;
 }
 
-int64_t npu_dev_procedure_write(struct npu_dev_trap *trap,
-				      uint32_t offset,
-				      uint32_t size,
-				      uint32_t data)
+static int64_t npu_dev_procedure_write(struct npu_dev *dev, uint32_t offset,
+				       uint32_t size, uint32_t data)
 {
-	struct npu_dev *dev = trap->dev;
 	const char *name;
 	int64_t rc = OPAL_SUCCESS;
 
@@ -561,8 +555,6 @@ int64_t npu_dev_procedure_write(struct npu_dev_trap *trap,
 		      dev->npu->phb.opal_id);
 		return OPAL_PARAMETER;
 	}
-
-	offset -= trap->start;
 
 	switch (offset) {
 	case 0:
@@ -599,4 +591,18 @@ int64_t npu_dev_procedure_write(struct npu_dev_trap *trap,
 	}
 
 	return rc;
+}
+
+int64_t npu_dev_procedure(void *dev, struct pci_cfg_reg_filter *pcrf,
+			  uint32_t offset, uint32_t len, uint32_t *data,
+			  bool write)
+{
+	struct pci_virt_device *pvd = dev;
+	struct npu_dev *ndev = pvd->data;
+
+	if (write)
+		return npu_dev_procedure_write(ndev, offset - pcrf->start,
+					       len, *data);
+
+	return npu_dev_procedure_read(ndev, offset - pcrf->start, len, data);
 }
