@@ -324,6 +324,7 @@ struct phb {
 	enum phb_type		phb_type;
 	struct lock		lock;
 	struct list_head	devices;
+	struct list_head	virt_devices;
 	const struct phb_ops	*ops;
 	struct pci_lsi_state	lstate;
 	uint32_t		mps;
