@@ -114,7 +114,7 @@ static void add_slot_properties(struct pci_slot *slot,
 	dt_add_property_string(np, "ibm,slot-label", ent->name);
 }
 
-void slot_table_get_slot_info(struct phb *phb, struct pci_device * pd)
+void slot_table_get_slot_info(struct phb *phb, struct pci_device *pd)
 {
 	const struct slot_table_entry *ent;
 	struct pci_slot *slot;
