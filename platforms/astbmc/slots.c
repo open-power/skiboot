@@ -95,6 +95,8 @@ static void add_slot_properties(struct pci_slot *slot,
 	if (!np || !ent)
 		return;
 
+	dt_add_property_string(np, "ibm,slot-label", ent->name);
+
 	base_loc_code_len = phb->base_loc_code ? strlen(phb->base_loc_code) : 0;
 	slot_label_len = strlen(ent->name);
 	if ((base_loc_code_len + slot_label_len + 1) >= LOC_CODE_SIZE)
@@ -111,7 +113,6 @@ static void add_slot_properties(struct pci_slot *slot,
 	strcat(loc_code, ent->name);
 	dt_add_property(np, "ibm,slot-location-code",
 			loc_code, strlen(loc_code) + 1);
-	dt_add_property_string(np, "ibm,slot-label", ent->name);
 }
 
 void slot_table_get_slot_info(struct phb *phb, struct pci_device *pd)
