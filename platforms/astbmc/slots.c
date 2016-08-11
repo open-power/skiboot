@@ -115,10 +115,26 @@ static void add_slot_properties(struct pci_slot *slot,
 			loc_code, strlen(loc_code) + 1);
 }
 
+static void init_slot_info(struct pci_slot *slot, bool pluggable, void *data)
+{
+	slot->data = data;
+	slot->ops.add_properties = add_slot_properties;
+
+	slot->pluggable      = pluggable;
+	slot->power_ctl      = false;
+	slot->wired_lanes    = PCI_SLOT_WIRED_LANES_UNKNOWN;
+	slot->connector_type = PCI_SLOT_CONNECTOR_PCIE_NS;
+	slot->card_desc      = PCI_SLOT_DESC_NON_STANDARD;
+	slot->card_mech      = PCI_SLOT_MECH_NONE;
+	slot->power_led_ctl  = PCI_SLOT_PWR_LED_CTL_NONE;
+	slot->attn_led_ctl   = PCI_SLOT_ATTN_LED_CTL_NONE;
+}
+
 void slot_table_get_slot_info(struct phb *phb, struct pci_device *pd)
 {
 	const struct slot_table_entry *ent;
 	struct pci_slot *slot;
+	bool pluggable;
 
 	if (!pd || pd->slot)
 		return;
@@ -128,15 +144,7 @@ void slot_table_get_slot_info(struct phb *phb, struct pci_device *pd)
 
 	slot = pcie_slot_create(phb, pd);
 	assert(slot);
-	slot->ops.add_properties = add_slot_properties;
-	slot->data = (void *)ent;
 
-	slot->pluggable      = ent->etype == st_pluggable_slot;
-	slot->power_ctl      = false;
-	slot->wired_lanes    = PCI_SLOT_WIRED_LANES_UNKNOWN;
-	slot->connector_type = PCI_SLOT_CONNECTOR_PCIE_NS;
-	slot->card_desc      = PCI_SLOT_DESC_NON_STANDARD;
-	slot->card_mech      = PCI_SLOT_MECH_NONE;
-	slot->power_led_ctl  = PCI_SLOT_PWR_LED_CTL_NONE;
-	slot->attn_led_ctl   = PCI_SLOT_ATTN_LED_CTL_NONE;
+	pluggable = !!(ent->etype == st_pluggable_slot);
+	init_slot_info(slot, pluggable, (void *)ent);
 }
