@@ -44,8 +44,9 @@
 	. = 0
 .global __head
 __head:
-	/* When booted as an OPAL LID, this is a pointer to the OPAL
-	 * variant of the NACA
+	/*
+	 * When booting a P7 machine in OPAL mode this pointer is used to
+	 * find the opal variant of the NACA. Unused on other machines.
 	 */
 	.llong	opal_naca
 
@@ -783,7 +784,7 @@ hv_lid_load_table:
 
 /*
  *
- * OPAL variant of NACA
+ * OPAL variant of NACA. This is only used when booting a P7 in OPAL mode.
  *
  */
 .global opal_naca
