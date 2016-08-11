@@ -17,6 +17,7 @@
 #include <device.h>
 #include <console.h>
 #include <chip.h>
+#include <pci-cfg.h>
 #include <pci.h>
 #include <pci-slot.h>
 
@@ -88,17 +89,24 @@ static void add_slot_properties(struct pci_slot *slot,
 				struct dt_node *np)
 {
 	struct phb *phb = slot->phb;
+	struct pci_device *pd = slot->pd;
 	struct slot_table_entry *ent = slot->data;
 	size_t base_loc_code_len, slot_label_len;
-	char loc_code[LOC_CODE_SIZE];
+	char label[8], loc_code[LOC_CODE_SIZE];
 
-	if (!np || !ent)
+	if (!np)
 		return;
 
-	dt_add_property_string(np, "ibm,slot-label", ent->name);
+	if (ent) {
+		dt_add_property_string(np, "ibm,slot-label", ent->name);
+		slot_label_len = strlen(ent->name);
+	} else {
+		snprintf(label, 8, "S%04x%02x", phb->opal_id, pd->secondary_bus);
+		dt_add_property_string(np, "ibm,slot-label", label);
+		slot_label_len = strlen(label);
+	}
 
 	base_loc_code_len = phb->base_loc_code ? strlen(phb->base_loc_code) : 0;
-	slot_label_len = strlen(ent->name);
 	if ((base_loc_code_len + slot_label_len + 1) >= LOC_CODE_SIZE)
 		return;
 
@@ -110,7 +118,10 @@ static void add_slot_properties(struct pci_slot *slot,
 		loc_code[0] = '\0';
 	}
 
-	strcat(loc_code, ent->name);
+	if (ent)
+		strcat(loc_code, ent->name);
+	else
+		strcat(loc_code, label);
 	dt_add_property(np, "ibm,slot-location-code",
 			loc_code, strlen(loc_code) + 1);
 }
@@ -130,6 +141,33 @@ static void init_slot_info(struct pci_slot *slot, bool pluggable, void *data)
 	slot->attn_led_ctl   = PCI_SLOT_ATTN_LED_CTL_NONE;
 }
 
+static void create_dynamic_slot(struct phb *phb, struct pci_device *pd)
+{
+	uint32_t ecap, val;
+	struct pci_slot *slot;
+
+	if (!phb || !pd || pd->slot)
+		return;
+
+	/* Try to create slot whose details aren't provided by platform.
+	 * We only care the downstream ports of PCIe switch that connects
+	 * to root port.
+	 */
+	if (pd->dev_type != PCIE_TYPE_SWITCH_DNPORT ||
+	    !pd->parent || !pd->parent->parent ||
+	    pd->parent->parent->parent)
+		return;
+
+	ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+	pci_cfg_read32(phb, pd->bdfn, ecap + PCICAP_EXP_SLOTCAP, &val);
+	if (!(val & PCICAP_EXP_SLOTCAP_HPLUG_CAP))
+		return;
+
+	slot = pcie_slot_create(phb, pd);
+	assert(slot);
+	init_slot_info(slot, true, NULL);
+}
+
 void slot_table_get_slot_info(struct phb *phb, struct pci_device *pd)
 {
 	const struct slot_table_entry *ent;
@@ -139,8 +177,10 @@ void slot_table_get_slot_info(struct phb *phb, struct pci_device *pd)
 	if (!pd || pd->slot)
 		return;
 	ent = match_slot_dev_entry(phb, pd);
-	if (!ent || !ent->name)
+	if (!ent || !ent->name) {
+		create_dynamic_slot(phb, pd);
 		return;
+	}
 
 	slot = pcie_slot_create(phb, pd);
 	assert(slot);
