@@ -437,7 +437,7 @@ struct flash_hostboot_header {
 /* start and total size include ECC */
 static int flash_find_subpartition(struct blocklevel_device *bl, uint32_t subid,
 				   uint32_t *start, uint32_t *total_size,
-				   bool *ecc)
+				   bool ecc)
 {
 	struct flash_hostboot_header *header;
 	char eyecatcher[5];
@@ -455,7 +455,7 @@ static int flash_find_subpartition(struct blocklevel_device *bl, uint32_t subid,
 
 	/* Get the TOC */
 	rc = flash_read_corrected(bl, *start, header,
-			FLASH_SUBPART_HEADER_SIZE, *ecc);
+			FLASH_SUBPART_HEADER_SIZE, ecc);
 	if (rc) {
 		prerror("FLASH: flash subpartition TOC read failed %i\n", rc);
 		goto end;
@@ -610,7 +610,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 	/* Find the sub partition if required */
 	if (subid != RESOURCE_SUBID_NONE) {
 		rc = flash_find_subpartition(flash->bl, subid, &part_start,
-					     &part_size, &ecc);
+					     &part_size, ecc);
 		if (rc)
 			goto out_free_ffs;
 	}
