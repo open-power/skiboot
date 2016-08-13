@@ -1498,11 +1498,18 @@ int chiptod_recover_tb_errors(void)
 	 * Check for TB errors.
 	 * On Sync check error, bit 44 of TFMR is set. Check for it and
 	 * clear it.
+	 *
+	 * In some rare situations we may have all TB errors already cleared,
+	 * but TB stuck in waiting for new value from TOD with TFMR bit 18
+	 * set to '1'. This uncertain state of TB would fail the process
+	 * of getting TB back into running state. Get TB in clean initial
+	 * state by clearing TB errors if TFMR[18] is set.
 	 */
 	if ((tfmr & SPR_TFMR_TB_MISSING_STEP) ||
 		(tfmr & SPR_TFMR_TB_RESIDUE_ERR) ||
 		(tfmr & SPR_TFMR_FW_CONTROL_ERR) ||
 		(tfmr & SPR_TFMR_TBST_CORRUPT) ||
+		(tfmr & SPR_TFMR_MOVE_CHIP_TOD_TO_TB) ||
 		(tfmr & SPR_TFMR_TB_MISSING_SYNC)) {
 		if (!tfmr_recover_tb_errors(tfmr)) {
 			rc = 0;
