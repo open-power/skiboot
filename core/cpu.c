@@ -510,6 +510,13 @@ void init_boot_cpu(void)
 	      pir, pvr);
 	prlog(PR_DEBUG, "CPU: Initial max PIR set to 0x%x\n", cpu_max_pir);
 
+	/*
+	 * Adjust top of RAM to include CPU stacks. While we *could* have
+	 * less RAM than this... during early boot, it's enough of a check
+	 * until we start parsing device tree / hdat and find out for sure
+	 */
+	top_of_ram += (cpu_max_pir + 1) * STACK_SIZE;
+
 	/* Clear the CPU structs */
 	for (i = 0; i <= cpu_max_pir; i++)
 		memset(&cpu_stacks[i].cpu, 0, sizeof(struct cpu_thread));
