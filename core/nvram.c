@@ -59,6 +59,28 @@ static int64_t opal_write_nvram(uint64_t buffer, uint64_t size, uint64_t offset)
 }
 opal_call(OPAL_WRITE_NVRAM, opal_write_nvram, 3);
 
+static void nvram_validate(void)
+{
+	/* Check and maybe format nvram */
+	if (nvram_check(nvram_image, nvram_size)) {
+		if (nvram_format(nvram_image, nvram_size))
+			prerror("NVRAM: Failed to format NVRAM!\n");
+
+		/* Write the whole thing back */
+		if (platform.nvram_write)
+			platform.nvram_write(0, nvram_image, nvram_size);
+	}
+}
+
+void nvram_reinit(void)
+{
+	/* It's possible we failed to load nvram at boot. */
+	if (!nvram_ready)
+		nvram_init();
+	else
+		nvram_validate();
+}
+
 void nvram_read_complete(bool success)
 {
 	struct dt_node *np;
@@ -70,15 +92,7 @@ void nvram_read_complete(bool success)
 		return;
 	}
 
-	/* Check and maybe format nvram */
-	if (nvram_check(nvram_image, nvram_size)) {
-		if (nvram_format(nvram_image, nvram_size))
-			prerror("NVRAM: Failed to format NVRAM!\n");
-
-		/* Write the whole thing back */
-		if (platform.nvram_write)
-			platform.nvram_write(0, nvram_image, nvram_size);
-	}
+	nvram_validate();
 
 	/* Add nvram node */
 	np = dt_new(opal_node, "nvram");

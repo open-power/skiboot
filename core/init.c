@@ -44,6 +44,7 @@
 #include <ipmi.h>
 #include <sensor.h>
 #include <xive.h>
+#include <nvram.h>
 
 enum proc_gen proc_gen;
 
@@ -444,7 +445,9 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 		/* Wait for FW VPD data read to complete */
 		fsp_code_update_wait_vpd(true);
-	}
+	} else
+		nvram_reinit();
+
 	fsp_console_select_stdout();
 
 	/*
