@@ -18,11 +18,25 @@
 
 #include "../nvram-format.c"
 
+static char *nvram_reset(void *nvram_image, int size)
+{
+	struct chrp_nvram_hdr *h = nvram_image;
+
+	/* entire partition used by one key */
+	assert(nvram_format(nvram_image, size) == 0);
+	memset((char *) h + sizeof(*h), 0, NVRAM_SIZE_FW_PRIV - sizeof(*h));
+	assert(nvram_check(nvram_image, size) == 0);
+
+	return (char *) h + sizeof(*h);
+}
+
 int main(void)
 {
 	char *nvram_image;
 	size_t sz;
 	struct chrp_nvram_hdr *h;
+	char *data;
+	const char *result;
 
 	/* 1024 bytes is too small for our NVRAM */
 	nvram_image = malloc(1024);
@@ -110,6 +124,38 @@ int main(void)
 	h = (struct chrp_nvram_hdr*)(&nvram_image[NVRAM_SIZE_FW_PRIV]);
 	h->cksum = chrp_nv_cksum(h);
 	assert(nvram_check(nvram_image,128*1024) != 0);
+
+	/* test nvram_query() */
+
+	/* does an empty partition break us? */
+	data = nvram_reset(nvram_image, 128*1024);
+	assert(nvram_query("test") == NULL);
+
+	/* does a zero length key break us? */
+	data = nvram_reset(nvram_image, 128*1024);
+	data[0] = '=';
+	assert(nvram_query("test") == NULL);
+
+	/* does a missing = break us? */
+	data = nvram_reset(nvram_image, 128*1024);
+	data[0] = 'a';
+	assert(nvram_query("test") == NULL);
+
+	/* does an empty value break us? */
+	data = nvram_reset(nvram_image, 128*1024);
+	data[0] = 'a';
+	data[1] = '=';
+	result = nvram_query("a");
+	assert(result);
+	assert(strlen(result) == 0);
+
+	/* do we trip over malformed keys? */
+	data = nvram_reset(nvram_image, 128*1024);
+#define TEST_1 "a\0a=\0test=test\0"
+	memcpy(data, TEST_1, sizeof(TEST_1));
+	result = nvram_query("test");
+	assert(result);
+	assert(strcmp(result, "test") == 0);
 
 	free(nvram_image);
 
