@@ -65,6 +65,12 @@ int main(void)
 	nvram_image[0] = 0;
 	assert(nvram_check(nvram_image,128*1024) != 0);
 
+	/* Does our NUL checking work? */
+	assert(nvram_format(nvram_image, 128 * 1024) == 0);
+	h = (struct chrp_nvram_hdr *) nvram_image;
+	memset((char *) h + sizeof(*h), 0xFF, h->len * 16 - sizeof(*h));
+	assert(nvram_check(nvram_image, 128 * 1024) != 0);
+
 	assert(nvram_format(nvram_image, 128*1024)==0);
 	/* corrupt the length of the partition */
 	nvram_image[2] = 0;
