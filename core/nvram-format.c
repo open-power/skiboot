@@ -179,3 +179,71 @@ int nvram_check(void *nvram_image, const uint32_t nvram_size)
  failed:
 	return -1;
 }
+
+static const char *find_next_key(const char *start, const char *end)
+{
+	/*
+	 * Unused parts of the partition are set to NUL. If we hit two
+	 * NULs in a row then we assume that we have hit the end of the
+	 * partition.
+	 */
+	if (*start == 0)
+		return NULL;
+
+	while (start < end) {
+		if (*start == 0)
+			return start + 1;
+
+		start++;
+	}
+
+	return NULL;
+}
+
+/*
+ * nvram_query() - Searches skiboot NVRAM partition for a key=value pair.
+ *
+ * Returns a pointer to a NUL terminated string that contains the value
+ * associated with the given key.
+ */
+const char *nvram_query(const char *key)
+{
+	const char *part_end = (const char *) skiboot_part_hdr +
+		skiboot_part_hdr->len * 16 - 1;
+	const char *start = (const char *) skiboot_part_hdr +
+		sizeof(*skiboot_part_hdr);
+	int key_len = strlen(key);
+
+	if (!key_len) {
+		prlog(PR_WARNING, "NVRAM: search key is empty!\n");
+		return NULL;
+	}
+
+	if (key_len > 32)
+		prlog(PR_WARNING, "NVRAM: search key '%s' is longer than 32 chars\n", key);
+
+	while (start) {
+		int remaining = part_end - start;
+
+		prlog(PR_TRACE, "NVRAM: '%s' (%lu)\n",
+			start, strlen(start));
+
+		if (key_len + 1 > remaining)
+			return NULL;
+
+		if (!strncmp(key, start, key_len) && start[key_len] == '=') {
+			const char *value = &start[key_len + 1];
+
+			prlog(PR_DEBUG, "NVRAM: Searched for '%s' found '%s'\n",
+				key, value);
+
+			return value;
+		}
+
+		start = find_next_key(start, part_end);
+	}
+
+	prlog(PR_DEBUG, "NVRAM: '%s' not found\n", key);
+
+	return NULL;
+}
