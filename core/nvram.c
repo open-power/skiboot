@@ -20,7 +20,7 @@
 #include <lock.h>
 #include <device.h>
 #include <platform.h>
-#include <nvram-format.h>
+#include <nvram.h>
 
 static void *nvram_image;
 static uint32_t nvram_size;

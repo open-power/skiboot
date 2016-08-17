@@ -15,7 +15,7 @@
  */
 
 #include <skiboot.h>
-#include <nvram-format.h>
+#include <nvram.h>
 
 /*
  * NVRAM Format as specified in PAPR

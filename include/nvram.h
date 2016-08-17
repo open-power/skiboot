@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef __NVRAM_FORMAT_H
-#define __NVRAM_FORMAT_H
+#ifndef __NVRAM_H
+#define __NVRAM_H
 
 int nvram_format(void *nvram_image, uint32_t nvram_size);
 int nvram_check(void *nvram_image, uint32_t nvram_size);
 
-#endif /* __NVRAM_FORMAT_H */
+#endif /* __NVRAM_H */
