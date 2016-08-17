@@ -28,6 +28,8 @@ struct chrp_nvram_hdr {
 	char		name[12];
 };
 
+struct chrp_nvram_hdr *skiboot_part_hdr;
+
 #define NVRAM_SIG_FW_PRIV	0x51
 #define NVRAM_SIG_SYSTEM	0x70
 #define NVRAM_SIG_FREE		0x7f
@@ -115,7 +117,8 @@ int nvram_check(void *nvram_image, const uint32_t nvram_size)
 {
 	unsigned int offset = 0;
 	bool found_common = false;
-	bool found_skiboot = false;
+
+	skiboot_part_hdr = NULL;
 
 	while (offset + sizeof(struct chrp_nvram_hdr) < nvram_size) {
 		struct chrp_nvram_hdr *h = nvram_image + offset;
@@ -138,7 +141,7 @@ int nvram_check(void *nvram_image, const uint32_t nvram_size)
 
 		if (h->sig == NVRAM_SIG_FW_PRIV &&
 		    strcmp(h->name, NVRAM_NAME_FW_PRIV) == 0)
-			found_skiboot = true;
+			skiboot_part_hdr = h;
 
 		offset += h->len << 4;
 		if (offset > nvram_size) {
@@ -151,10 +154,24 @@ int nvram_check(void *nvram_image, const uint32_t nvram_size)
 		prerror("NVRAM: Common partition not found !\n");
 		goto failed;
 	}
-	if (!found_skiboot) {
-		prerror("NVRAM: Skiboot private partition "
-			"not found !\n");
+
+	if (!skiboot_part_hdr) {
+		prerror("NVRAM: Skiboot private partition not found !\n");
 		goto failed;
+	} else {
+		/*
+		 * The OF NVRAM format requires config strings to be NUL
+		 * terminated and unused memory to be set to zero. Well behaved
+		 * software should ensure this is done for us, but we should
+		 * always check.
+		 */
+		const char *last_byte = (const char *) skiboot_part_hdr +
+			skiboot_part_hdr->len * 16 - 1;
+
+		if (*last_byte != 0) {
+			prerror("NVRAM: Skiboot private partition is not NUL terminated");
+			goto failed;
+		}
 	}
 
 	prlog(PR_INFO, "NVRAM: Layout appears sane\n");
