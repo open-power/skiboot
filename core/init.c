@@ -412,6 +412,7 @@ int64_t mem_dump_free(void);
 void __noreturn load_and_boot_kernel(bool is_reboot)
 {
 	const struct dt_property *memprop;
+	const char *cmdline;
 	uint64_t mem_top;
 	void *fdt;
 
@@ -457,9 +458,14 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	occ_pstates_init();
 
 	/* Set kernel command line argument if specified */
+	cmdline = nvram_query("bootargs");
 #ifdef KERNEL_COMMAND_LINE
-	dt_add_property_string(dt_chosen, "bootargs", KERNEL_COMMAND_LINE);
+	if (!cmdline)
+		cmdline = KERNEL_COMMAND_LINE;
 #endif
+	/* some platforms always pass bootargs through the fdt */
+	if (cmdline && !dt_find_property(dt_chosen, "bootargs"))
+		dt_add_property_string(dt_chosen, "bootargs", cmdline);
 
 	op_display(OP_LOG, OP_MOD_INIT, 0x000B);
 
