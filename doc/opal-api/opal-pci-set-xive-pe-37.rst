@@ -2,7 +2,7 @@ OPAL_PCI_SET_XIVE_PE
 ====================
 ::
 
-   static int64_t opal_pci_set_xive_pe(uint64_t phb_id, uint32_t pe_number,
+   static int64_t opal_pci_set_xive_pe(uint64_t phb_id, uint64_t pe_number,
 				    uint32_t xive_num)
 
 **WARNING:** following documentation is from old sources, and is possibly

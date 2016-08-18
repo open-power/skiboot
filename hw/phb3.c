@@ -871,7 +871,7 @@ static int64_t phb3_phb_mmio_enable(struct phb *phb,
 }
 
 static int64_t phb3_map_pe_mmio_window(struct phb *phb,
-				       uint16_t pe_num,
+				       uint64_t pe_number,
 				       uint16_t window_type,
 				       uint16_t window_num,
 				       uint16_t segment_num)
@@ -879,7 +879,7 @@ static int64_t phb3_map_pe_mmio_window(struct phb *phb,
 	struct phb3 *p = phb_to_phb3(phb);
 	uint64_t data64, *cache;
 
-	if (pe_num >= PHB3_MAX_PE_NUM)
+	if (pe_number >= PHB3_MAX_PE_NUM)
 		return OPAL_PARAMETER;
 
 	/*
@@ -898,8 +898,8 @@ static int64_t phb3_map_pe_mmio_window(struct phb *phb,
 		cache = &p->m32d_cache[segment_num];
 		phb3_ioda_sel(p, IODA2_TBL_M32DT, segment_num, false);
 		out_be64(p->regs + PHB_IODA_DATA0,
-			 SETFIELD(IODA2_M32DT_PE, 0ull, pe_num));
-		*cache = SETFIELD(IODA2_M32DT_PE, 0ull, pe_num);
+			 SETFIELD(IODA2_M32DT_PE, 0ull, pe_number));
+		*cache = SETFIELD(IODA2_M32DT_PE, 0ull, pe_number);
 
 		break;
 	case OPAL_M64_WINDOW_TYPE:
@@ -913,8 +913,8 @@ static int64_t phb3_map_pe_mmio_window(struct phb *phb,
 			return OPAL_PARTIAL;
 
 		data64 |= IODA2_M64BT_SINGLE_PE;
-		data64 = SETFIELD(IODA2_M64BT_PE_HI, data64, pe_num >> 5);
-		data64 = SETFIELD(IODA2_M64BT_PE_LOW, data64, pe_num);
+		data64 = SETFIELD(IODA2_M64BT_PE_HI, data64, pe_number >> 5);
+		data64 = SETFIELD(IODA2_M64BT_PE_LOW, data64, pe_number);
 		*cache = data64;
 
 		break;
@@ -926,7 +926,7 @@ static int64_t phb3_map_pe_mmio_window(struct phb *phb,
 }
 
 static int64_t phb3_map_pe_dma_window(struct phb *phb,
-				      uint16_t pe_num,
+				      uint64_t pe_number,
 				      uint16_t window_id,
 				      uint16_t tce_levels,
 				      uint64_t tce_table_addr,
@@ -941,8 +941,8 @@ static int64_t phb3_map_pe_dma_window(struct phb *phb,
 	 * Sanity check. We currently only support "2 window per PE" mode
 	 * ie, only bit 59 of the PCI address is used to select the window
 	 */
-	if (pe_num >= PHB3_MAX_PE_NUM ||
-	    (window_id >> 1) != pe_num)
+	if (pe_number >= PHB3_MAX_PE_NUM ||
+	    (window_id >> 1) != pe_number)
 		return OPAL_PARAMETER;
 
 	/*
@@ -998,7 +998,7 @@ static int64_t phb3_map_pe_dma_window(struct phb *phb,
 }
 
 static int64_t phb3_map_pe_dma_window_real(struct phb *phb,
-					   uint16_t pe_num,
+					   uint64_t pe_number,
 					   uint16_t window_id,
 					   uint64_t pci_start_addr,
 					   uint64_t pci_mem_size)
@@ -1007,8 +1007,8 @@ static int64_t phb3_map_pe_dma_window_real(struct phb *phb,
 	uint64_t end;
 	uint64_t tve;
 
-	if (pe_num >= PHB3_MAX_PE_NUM ||
-	    (window_id >> 1) != pe_num)
+	if (pe_number >= PHB3_MAX_PE_NUM ||
+	    (window_id >> 1) != pe_number)
 		return OPAL_PARAMETER;
 
 	if (pci_mem_size) {
@@ -1182,7 +1182,7 @@ static int64_t phb3_pci_msi_eoi(struct phb *phb,
 }
 
 static int64_t phb3_set_ive_pe(struct phb *phb,
-			       uint32_t pe_num,
+			       uint64_t pe_number,
 			       uint32_t ive_num)
 {
 	struct phb3 *p = phb_to_phb3(phb);
@@ -1194,18 +1194,18 @@ static int64_t phb3_set_ive_pe(struct phb *phb,
 		return OPAL_HARDWARE;
 
 	/* Each IVE reserves 128 bytes */
-	if (pe_num >= PHB3_MAX_PE_NUM ||
+	if (pe_number >= PHB3_MAX_PE_NUM ||
 	    ive_num >= IVT_TABLE_ENTRIES)
 		return OPAL_PARAMETER;
 
 	/* Update IVE cache */
 	cache = &p->ive_cache[ive_num];
-	*cache = SETFIELD(IODA2_IVT_PE, *cache, pe_num);
+	*cache = SETFIELD(IODA2_IVT_PE, *cache, pe_number);
 
 	/* Update in-memory IVE without clobbering P and Q */
 	ivep = p->tbl_ivt + (ive_num * IVT_TABLE_STRIDE * 8);
 	pe_word = (uint16_t *)(ivep + 6);
-	*pe_word = pe_num;
+	*pe_word = pe_number;
 
 	/* Invalidate IVC */
 	data64 = SETFIELD(PHB_IVC_INVALIDATE_SID, 0ul, ive_num);
@@ -1215,7 +1215,7 @@ static int64_t phb3_set_ive_pe(struct phb *phb,
 }
 
 static int64_t phb3_get_msi_32(struct phb *phb __unused,
-			       uint32_t pe_num,
+			       uint64_t pe_number,
 			       uint32_t ive_num,
 			       uint8_t msi_range,
 			       uint32_t *msi_address,
@@ -1227,7 +1227,7 @@ static int64_t phb3_get_msi_32(struct phb *phb __unused,
 	 * by its DMA address and data, but the check isn't
 	 * harmful.
 	 */
-	if (pe_num >= PHB3_MAX_PE_NUM ||
+	if (pe_number >= PHB3_MAX_PE_NUM ||
 	    ive_num >= IVT_TABLE_ENTRIES ||
 	    msi_range != 1 || !msi_address|| !message_data)
 		return OPAL_PARAMETER;
@@ -1243,14 +1243,14 @@ static int64_t phb3_get_msi_32(struct phb *phb __unused,
 }
 
 static int64_t phb3_get_msi_64(struct phb *phb __unused,
-			       uint32_t pe_num,
+			       uint64_t pe_number,
 			       uint32_t ive_num,
 			       uint8_t msi_range,
 			       uint64_t *msi_address,
 			       uint32_t *message_data)
 {
 	/* Sanity check */
-	if (pe_num >= PHB3_MAX_PE_NUM ||
+	if (pe_number >= PHB3_MAX_PE_NUM ||
 	    ive_num >= IVT_TABLE_ENTRIES ||
 	    msi_range != 1 || !msi_address || !message_data)
 		return OPAL_PARAMETER;
@@ -1825,8 +1825,8 @@ static const struct irq_source_ops phb3_lsi_irq_ops = {
 };
 
 static int64_t phb3_set_pe(struct phb *phb,
-			   uint64_t pe_num,
-                           uint64_t bdfn,
+			   uint64_t pe_number,
+			   uint64_t bdfn,
 			   uint8_t bcompare,
 			   uint8_t dcompare,
 			   uint8_t fcompare,
@@ -1842,7 +1842,7 @@ static int64_t phb3_set_pe(struct phb *phb,
 		return OPAL_HARDWARE;
 	if (action != OPAL_MAP_PE && action != OPAL_UNMAP_PE)
 		return OPAL_PARAMETER;
-	if (pe_num >= PHB3_MAX_PE_NUM || bdfn > 0xffff ||
+	if (pe_number >= PHB3_MAX_PE_NUM || bdfn > 0xffff ||
 	    bcompare > OpalPciBusAll ||
 	    dcompare > OPAL_COMPARE_RID_DEVICE_NUMBER ||
 	    fcompare > OPAL_COMPARE_RID_FUNCTION_NUMBER)
@@ -1877,7 +1877,7 @@ static int64_t phb3_set_pe(struct phb *phb,
 	if (all == 0x7) {
 		if (action == OPAL_MAP_PE) {
 			for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++)
-				p->rte_cache[idx] = pe_num;
+				p->rte_cache[idx] = pe_number;
 		} else {
 			for ( idx = 0; idx < ARRAY_SIZE(p->rte_cache); idx++)
 				p->rte_cache[idx] = PHB3_RESERVED_PE_NUM;
@@ -1889,7 +1889,7 @@ static int64_t phb3_set_pe(struct phb *phb,
 			if ((idx & mask) != val)
 				continue;
 			if (action == OPAL_MAP_PE)
-				p->rte_cache[idx] = pe_num;
+				p->rte_cache[idx] = pe_number;
 			else
 				p->rte_cache[idx] = PHB3_RESERVED_PE_NUM;
 			*rte = p->rte_cache[idx];
@@ -2821,7 +2821,7 @@ static int64_t phb3_err_inject_finalize(struct phb3 *p, uint64_t addr,
 	return OPAL_SUCCESS;
 }
 
-static int64_t phb3_err_inject_mem32(struct phb3 *p, uint32_t pe_no,
+static int64_t phb3_err_inject_mem32(struct phb3 *p, uint64_t pe_number,
 				     uint64_t addr, uint64_t mask,
 				     bool is_write)
 {
@@ -2834,7 +2834,7 @@ static int64_t phb3_err_inject_mem32(struct phb3 *p, uint32_t pe_no,
 	a = base = len = 0x0ull;
 
 	for (index = 0; index < PHB3_MAX_PE_NUM; index++) {
-		if (GETFIELD(IODA2_M32DT_PE, p->m32d_cache[index]) != pe_no)
+		if (GETFIELD(IODA2_M32DT_PE, p->m32d_cache[index]) != pe_number)
 			continue;
 
 		/* Obviously, we can't support discontiguous segments.
@@ -2875,7 +2875,7 @@ static int64_t phb3_err_inject_mem32(struct phb3 *p, uint32_t pe_no,
 	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
 }
 
-static int64_t phb3_err_inject_mem64(struct phb3 *p, uint32_t pe_no,
+static int64_t phb3_err_inject_mem64(struct phb3 *p, uint64_t pe_number,
 				     uint64_t addr, uint64_t mask,
 				     bool is_write)
 {
@@ -2888,14 +2888,14 @@ static int64_t phb3_err_inject_mem64(struct phb3 *p, uint32_t pe_no,
 	s_index = 0;
 	e_index = ARRAY_SIZE(p->m64b_cache) - 2;
 	for (index = 0; index < RTT_TABLE_ENTRIES; index++) {
-		if (p->rte_cache[index] != pe_no)
+		if (p->rte_cache[index] != pe_number)
 			continue;
 
 		if (index + 8 >= RTT_TABLE_ENTRIES)
 			break;
 
 		/* PCI bus dependent PE */
-		if (p->rte_cache[index + 8] == pe_no) {
+		if (p->rte_cache[index + 8] == pe_number) {
 			s_index = e_index = ARRAY_SIZE(p->m64b_cache) - 1;
 			break;
 		}
@@ -2908,8 +2908,8 @@ static int64_t phb3_err_inject_mem64(struct phb3 *p, uint32_t pe_no,
 			continue;
 
 		if (cache & IODA2_M64BT_SINGLE_PE) {
-			if (GETFIELD(IODA2_M64BT_PE_HI, cache) != (pe_no >> 5) ||
-			    GETFIELD(IODA2_M64BT_PE_LOW, cache) != (pe_no & 0x1f))
+			if (GETFIELD(IODA2_M64BT_PE_HI, cache) != (pe_number >> 5) ||
+			    GETFIELD(IODA2_M64BT_PE_LOW, cache) != (pe_number & 0x1f))
 				continue;
 
 			segstart = GETFIELD(IODA2_M64BT_SINGLE_BASE, cache);
@@ -2923,7 +2923,7 @@ static int64_t phb3_err_inject_mem64(struct phb3 *p, uint32_t pe_no,
 			segsize = (0x40000000ull - segsize) << 20;
 
 			segsize /= PHB3_MAX_PE_NUM;
-			segstart = segstart + segsize * pe_no;
+			segstart = segstart + segsize * pe_number;
 		}
 
 		/* First window always wins based on the ascending
@@ -2960,7 +2960,7 @@ static int64_t phb3_err_inject_mem64(struct phb3 *p, uint32_t pe_no,
 	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
 }
 
-static int64_t phb3_err_inject_cfg(struct phb3 *p, uint32_t pe_no,
+static int64_t phb3_err_inject_cfg(struct phb3 *p, uint64_t pe_number,
 				   uint64_t addr, uint64_t mask,
 				   bool is_write)
 {
@@ -2973,13 +2973,13 @@ static int64_t phb3_err_inject_cfg(struct phb3 *p, uint32_t pe_no,
 	prefer = 0xffffull;
 	m = PHB_PAPR_ERR_INJ_MASK_CFG_ALL;
 	for (bdfn = 0; bdfn < RTT_TABLE_ENTRIES; bdfn++) {
-		if (p->rte_cache[bdfn] != pe_no)
+		if (p->rte_cache[bdfn] != pe_number)
 			continue;
 
 		/* The PE can be associated with PCI bus or device */
 		is_bus_pe = false;
 		if ((bdfn + 8) < RTT_TABLE_ENTRIES &&
-		    p->rte_cache[bdfn + 8] == pe_no)
+		    p->rte_cache[bdfn + 8] == pe_number)
 			is_bus_pe = true;
 
 		/* Figure out the PCI config address */
@@ -3020,7 +3020,7 @@ static int64_t phb3_err_inject_cfg(struct phb3 *p, uint32_t pe_no,
 	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
 }
 
-static int64_t phb3_err_inject_dma(struct phb3 *p, uint32_t pe_no,
+static int64_t phb3_err_inject_dma(struct phb3 *p, uint64_t pe_number,
 				   uint64_t addr, uint64_t mask,
 				   bool is_write, bool is_64bits)
 {
@@ -3031,10 +3031,10 @@ static int64_t phb3_err_inject_dma(struct phb3 *p, uint32_t pe_no,
 
 	/* TVE index and base address */
 	if (!is_64bits) {
-		index = (pe_no << 1);
+		index = (pe_number << 1);
 		base = 0x0ull;
 	} else {
-		index = ((pe_no << 1) + 1);
+		index = ((pe_number << 1) + 1);
 		base = (0x1ull << 59);
 	}
 
@@ -3084,26 +3084,26 @@ static int64_t phb3_err_inject_dma(struct phb3 *p, uint32_t pe_no,
 	return phb3_err_inject_finalize(p, a, m, ctrl, is_write);
 }
 
-static int64_t phb3_err_inject_dma32(struct phb3 *p, uint32_t pe_no,
+static int64_t phb3_err_inject_dma32(struct phb3 *p, uint64_t pe_number,
 				     uint64_t addr, uint64_t mask,
 				     bool is_write)
 {
-	return phb3_err_inject_dma(p, pe_no, addr, mask, is_write, false);
+	return phb3_err_inject_dma(p, pe_number, addr, mask, is_write, false);
 }
 
-static int64_t phb3_err_inject_dma64(struct phb3 *p, uint32_t pe_no,
+static int64_t phb3_err_inject_dma64(struct phb3 *p, uint64_t pe_number,
 				     uint64_t addr, uint64_t mask,
 				     bool is_write)
 {
-	return phb3_err_inject_dma(p, pe_no, addr, mask, is_write, true);	
+	return phb3_err_inject_dma(p, pe_number, addr, mask, is_write, true);
 }
 
-static int64_t phb3_err_inject(struct phb *phb, uint32_t pe_no,
+static int64_t phb3_err_inject(struct phb *phb, uint64_t pe_number,
 			       uint32_t type, uint32_t func,
 			       uint64_t addr, uint64_t mask)
 {
 	struct phb3 *p = phb_to_phb3(phb);
-	int64_t (*handler)(struct phb3 *p, uint32_t pe_no,
+	int64_t (*handler)(struct phb3 *p, uint64_t pe_number,
 			   uint64_t addr, uint64_t mask, bool is_write);
 	bool is_write;
 
@@ -3112,7 +3112,7 @@ static int64_t phb3_err_inject(struct phb *phb, uint32_t pe_no,
 		return OPAL_HARDWARE;
 
 	/* We can't inject error to the reserved PE */
-	if (pe_no == PHB3_RESERVED_PE_NUM || pe_no >= PHB3_MAX_PE_NUM)
+	if (pe_number == PHB3_RESERVED_PE_NUM || pe_number >= PHB3_MAX_PE_NUM)
 		return OPAL_PARAMETER;
 
 	/* Clear leftover from last time */
@@ -3169,7 +3169,7 @@ static int64_t phb3_err_inject(struct phb *phb, uint32_t pe_no,
 		return OPAL_PARAMETER;
 	}
 
-	return handler(p, pe_no, addr, mask, is_write);
+	return handler(p, pe_number, addr, mask, is_write);
 }
 
 static int64_t phb3_get_diag_data(struct phb *phb,

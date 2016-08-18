@@ -4,7 +4,7 @@ OPAL_PCI_TCE_KILL
 
    int64_t opal_pci_tce_kill(uint64_t phb_id,
 			  uint32_t kill_type,
-			  uint32_t pe_num,
+			  uint64_t pe_number,
 			  uint32_t tce_size,
 			  uint64_t dma_addr,
 			  uint32_t npages)

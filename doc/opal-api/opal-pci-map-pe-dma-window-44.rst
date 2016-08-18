@@ -4,12 +4,13 @@ OPAL_PCI_MAP_PE_DMA_WINDOW
 
    #define OPAL_PCI_MAP_PE_DMA_WINDOW		44
 
-   static int64_t opal_pci_map_pe_dma_window(uint64_t phb_id, uint16_t pe_number,
-					  uint16_t window_id,
-					  uint16_t tce_levels,
-					  uint64_t tce_table_addr,
-					  uint64_t tce_table_size,
-					  uint64_t tce_page_size)
+   static int64_t opal_pci_map_pe_dma_window(uint64_t phb_id,
+					     uint64_t pe_number,
+					     uint16_t window_id,
+					     uint16_t tce_levels,
+					     uint64_t tce_table_addr,
+					     uint64_t tce_table_size,
+					     uint64_t tce_page_size)
 
 **WARNING:** following documentation is from old sources, and is possibly
 not representative of OPALv3 as implemented by skiboot. This should be
@@ -99,4 +100,3 @@ Return value: ::
 		return OPAL_PARAMETER;
 	if (!phb->ops->map_pe_dma_window)
 		return OPAL_UNSUPPORTED;
-

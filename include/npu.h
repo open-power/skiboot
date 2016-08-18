@@ -147,7 +147,7 @@ struct npu_dev {
 
 	uint32_t		procedure_status;
 
-	uint8_t			pe_num;
+	uint64_t		pe_number;
 
 	/* Used to associate the NPU device with GPU PCI devices */
 	const char		*slot_label;

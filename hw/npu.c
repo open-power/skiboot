@@ -806,7 +806,7 @@ static void npu_hw_init(struct npu *p)
 }
 
 static int64_t npu_map_pe_dma_window_real(struct phb *phb,
-					   uint16_t pe_num,
+					   uint64_t pe_number,
 					   uint16_t window_id,
 					   uint64_t pci_start_addr,
 					   uint64_t pci_mem_size)
@@ -816,8 +816,8 @@ static int64_t npu_map_pe_dma_window_real(struct phb *phb,
 	uint64_t tve;
 
 	/* Sanity check. Each PE has one corresponding TVE */
-	if (pe_num >= NPU_NUM_OF_PES ||
-	    window_id != pe_num)
+	if (pe_number >= NPU_NUM_OF_PES ||
+	    window_id != pe_number)
 		return OPAL_PARAMETER;
 
 	if (pci_mem_size) {
@@ -862,7 +862,7 @@ static int64_t npu_map_pe_dma_window_real(struct phb *phb,
 }
 
 static int64_t npu_map_pe_dma_window(struct phb *phb,
-					 uint16_t pe_num,
+					 uint64_t pe_number,
 					 uint16_t window_id,
 					 uint16_t tce_levels,
 					 uint64_t tce_table_addr,
@@ -874,8 +874,8 @@ static int64_t npu_map_pe_dma_window(struct phb *phb,
 	uint64_t data64 = 0;
 
 	/* Sanity check. Each PE has one corresponding TVE */
-	if (pe_num >= NPU_NUM_OF_PES ||
-	    window_id != pe_num)
+	if (pe_number >= NPU_NUM_OF_PES ||
+	    window_id != pe_number)
 		return OPAL_PARAMETER;
 
 	/* Special condition, zero TCE table size used to disable
@@ -930,7 +930,7 @@ static int64_t npu_map_pe_dma_window(struct phb *phb,
 }
 
 static int64_t npu_set_pe(struct phb *phb,
-			      uint64_t pe_num,
+			      uint64_t pe_number,
 			      uint64_t bdfn,
 			      uint8_t bcompare,
 			      uint8_t dcompare,
@@ -946,7 +946,7 @@ static int64_t npu_set_pe(struct phb *phb,
 	if (action != OPAL_MAP_PE &&
 	    action != OPAL_UNMAP_PE)
 		return OPAL_PARAMETER;
-	if (pe_num >= NPU_NUM_OF_PES)
+	if (pe_number >= NPU_NUM_OF_PES)
 		return OPAL_PARAMETER;
 
 	/* All emulated PCI devices hooked to root bus, whose
@@ -957,7 +957,7 @@ static int64_t npu_set_pe(struct phb *phb,
 		return OPAL_PARAMETER;
 
 	link_idx = dev->index;
-	dev->pe_num = pe_num;
+	dev->pe_number = pe_number;
 
 	/* Separate links will be mapped to different PEs */
 	if (bcompare != OpalPciBusAll ||
@@ -969,7 +969,7 @@ static int64_t npu_set_pe(struct phb *phb,
 	data64 = &p->pce_cache[link_idx];
 	if (action == OPAL_MAP_PE)
 		*data64 = SETFIELD(NPU_IODA_PCT_PE, *data64,
-				   pe_num);
+				   pe_number);
 	else
 		*data64 = SETFIELD(NPU_IODA_PCT_PE, *data64,
 				   NPU_NUM_OF_PES);
@@ -1105,7 +1105,7 @@ void npu_set_fence_state(struct npu *p, bool fence) {
 }
 
 /* Sets the NPU to trigger an error when a DMA occurs */
-static int64_t npu_err_inject(struct phb *phb, uint32_t pe_num,
+static int64_t npu_err_inject(struct phb *phb, uint64_t pe_number,
 			      uint32_t type, uint32_t func __unused,
 			      uint64_t addr __unused, uint64_t mask __unused)
 {
@@ -1113,20 +1113,20 @@ static int64_t npu_err_inject(struct phb *phb, uint32_t pe_num,
 	struct npu_dev *dev = NULL;
 	int i;
 
-	if (pe_num > NPU_NUM_OF_PES) {
+	if (pe_number > NPU_NUM_OF_PES) {
 		prlog(PR_ERR, "NPU: error injection failed, bad PE given\n");
 		return OPAL_PARAMETER;
 	}
 
 	for (i = 0; i < p->total_devices; i++) {
-		if (p->devices[i].pe_num == pe_num) {
+		if (p->devices[i].pe_number == pe_number) {
 			dev = &p->devices[i];
 			break;
 		}
 	}
 
 	if (!dev) {
-		prlog(PR_ERR, "NPU: couldn't find device with PE %x\n", pe_num);
+		prlog(PR_ERR, "NPU: couldn't find device with PE%llx\n", pe_number);
 		return OPAL_PARAMETER;
 	}
 

@@ -213,8 +213,9 @@ struct phb_ops {
 				    uint64_t eeh_action_token);
 	int64_t (*eeh_freeze_set)(struct phb *phb, uint64_t pe_number,
 				  uint64_t eeh_action_token);
-	int64_t (*err_inject)(struct phb *phb, uint32_t pe_no, uint32_t type,
-			      uint32_t func, uint64_t addr, uint64_t mask);
+	int64_t (*err_inject)(struct phb *phb, uint64_t pe_number,
+			      uint32_t type, uint32_t func, uint64_t addr,
+			      uint64_t mask);
 	int64_t (*get_diag_data)(struct phb *phb, void *diag_buffer,
 				 uint64_t diag_buffer_len);
 	int64_t (*get_diag_data2)(struct phb *phb, void *diag_buffer,
@@ -236,7 +237,7 @@ struct phb_ops {
 				      uint16_t window_num, uint64_t addr,
 				      uint64_t pci_addr, uint64_t size);
 
-	int64_t (*map_pe_mmio_window)(struct phb *phb, uint16_t pe_number,
+	int64_t (*map_pe_mmio_window)(struct phb *phb, uint64_t pe_number,
 				      uint16_t window_type, uint16_t window_num,
 				      uint16_t segment_num);
 
@@ -248,34 +249,34 @@ struct phb_ops {
 	int64_t (*set_peltv)(struct phb *phb, uint32_t parent_pe,
 			     uint32_t child_pe, uint8_t state);
 
-	int64_t (*map_pe_dma_window)(struct phb *phb, uint16_t pe_number,
+	int64_t (*map_pe_dma_window)(struct phb *phb, uint64_t pe_number,
 				     uint16_t window_id, uint16_t tce_levels,
 				     uint64_t tce_table_addr,
 				     uint64_t tce_table_size,
 				     uint64_t tce_page_size);
 
-	int64_t (*map_pe_dma_window_real)(struct phb *phb, uint16_t pe_number,
+	int64_t (*map_pe_dma_window_real)(struct phb *phb, uint64_t pe_number,
 					  uint16_t dma_window_number,
 					  uint64_t pci_start_addr,
 					  uint64_t pci_mem_size);
 
 	int64_t (*set_mve)(struct phb *phb, uint32_t mve_number,
-			   uint32_t pe_number);
+			   uint64_t pe_number);
 
 	int64_t (*set_mve_enable)(struct phb *phb, uint32_t mve_number,
 				  uint32_t state);
 
-	int64_t (*set_xive_pe)(struct phb *phb, uint32_t pe_number,
+	int64_t (*set_xive_pe)(struct phb *phb, uint64_t pe_number,
 			       uint32_t xive_num);
 
 	int64_t (*get_xive_source)(struct phb *phb, uint32_t xive_num,
 				   int32_t *interrupt_source_number);
 
-	int64_t (*get_msi_32)(struct phb *phb, uint32_t mve_number,
+	int64_t (*get_msi_32)(struct phb *phb, uint64_t mve_number,
 			      uint32_t xive_num, uint8_t msi_range,
 			      uint32_t *msi_address, uint32_t *message_data);
 
-	int64_t (*get_msi_64)(struct phb *phb, uint32_t mve_number,
+	int64_t (*get_msi_64)(struct phb *phb, uint64_t mve_number,
 			      uint32_t xive_num, uint8_t msi_range,
 			      uint64_t *msi_address, uint32_t *message_data);
 
@@ -296,11 +297,12 @@ struct phb_ops {
 
 	/* TCE Kill abstraction */
 	int64_t (*tce_kill)(struct phb *phb, uint32_t kill_type,
-			    uint32_t pe_num, uint32_t tce_size,
+			    uint64_t pe_number, uint32_t tce_size,
 			    uint64_t dma_addr, uint32_t npages);
 
 	/* Put phb in capi mode or pcie mode */
-	int64_t (*set_capi_mode)(struct phb *phb, uint64_t mode, uint64_t pe_number);
+	int64_t (*set_capi_mode)(struct phb *phb, uint64_t mode,
+				 uint64_t pe_number);
 
 	int64_t (*set_capp_recovery)(struct phb *phb);
 };

@@ -155,7 +155,7 @@ static int64_t opal_pci_eeh_freeze_set(uint64_t phb_id, uint64_t pe_number,
 }
 opal_call(OPAL_PCI_EEH_FREEZE_SET, opal_pci_eeh_freeze_set, 3);
 
-static int64_t opal_pci_err_inject(uint64_t phb_id, uint32_t pe_no,
+static int64_t opal_pci_err_inject(uint64_t phb_id, uint64_t pe_number,
 				   uint32_t type, uint32_t func,
 				   uint64_t addr, uint64_t mask)
 {
@@ -172,7 +172,7 @@ static int64_t opal_pci_err_inject(uint64_t phb_id, uint32_t pe_no,
 		return OPAL_PARAMETER;
 
 	phb_lock(phb);
-	rc = phb->ops->err_inject(phb, pe_no, type, func, addr, mask);
+	rc = phb->ops->err_inject(phb, pe_number, type, func, addr, mask);
 	phb_unlock(phb);
 
 	return rc;
@@ -220,7 +220,7 @@ static int64_t opal_pci_set_phb_mem_window(uint64_t phb_id,
 }
 opal_call(OPAL_PCI_SET_PHB_MEM_WINDOW, opal_pci_set_phb_mem_window, 6);
 
-static int64_t opal_pci_map_pe_mmio_window(uint64_t phb_id, uint16_t pe_number,
+static int64_t opal_pci_map_pe_mmio_window(uint64_t phb_id, uint64_t pe_number,
 					   uint16_t window_type,
 					   uint16_t window_num,
 					   uint16_t segment_num)
@@ -293,7 +293,7 @@ static int64_t opal_pci_set_peltv(uint64_t phb_id, uint32_t parent_pe,
 opal_call(OPAL_PCI_SET_PELTV, opal_pci_set_peltv, 4);
 
 static int64_t opal_pci_set_mve(uint64_t phb_id, uint32_t mve_number,
-				uint32_t pe_number)
+				uint64_t pe_number)
 {
 	struct phb *phb = pci_get_phb(phb_id);
 	int64_t rc;
@@ -368,7 +368,7 @@ opal_call(OPAL_PCI_MSI_EOI, opal_pci_msi_eoi, 2);
 
 static int64_t opal_pci_tce_kill(uint64_t phb_id,
 				 uint32_t kill_type,
-				 uint32_t pe_num, uint32_t tce_size,
+				 uint64_t pe_number, uint32_t tce_size,
 				 uint64_t dma_addr, uint32_t npages)
 {
 	struct phb *phb = pci_get_phb(phb_id);
@@ -379,7 +379,7 @@ static int64_t opal_pci_tce_kill(uint64_t phb_id,
 	if (!phb->ops->tce_kill)
 		return OPAL_UNSUPPORTED;
 	phb_lock(phb);
-	rc = phb->ops->tce_kill(phb, kill_type, pe_num, tce_size,
+	rc = phb->ops->tce_kill(phb, kill_type, pe_number, tce_size,
 				dma_addr, npages);
 	phb_unlock(phb);
 
@@ -387,7 +387,7 @@ static int64_t opal_pci_tce_kill(uint64_t phb_id,
 }
 opal_call(OPAL_PCI_TCE_KILL, opal_pci_tce_kill, 6);
 
-static int64_t opal_pci_set_xive_pe(uint64_t phb_id, uint32_t pe_number,
+static int64_t opal_pci_set_xive_pe(uint64_t phb_id, uint64_t pe_number,
 				    uint32_t xive_num)
 {
 	struct phb *phb = pci_get_phb(phb_id);
@@ -472,7 +472,7 @@ static int64_t opal_get_msi_64(uint64_t phb_id, uint32_t mve_number,
 }
 opal_call(OPAL_GET_MSI_64, opal_get_msi_64, 6);
 
-static int64_t opal_pci_map_pe_dma_window(uint64_t phb_id, uint16_t pe_number,
+static int64_t opal_pci_map_pe_dma_window(uint64_t phb_id, uint64_t pe_number,
 					  uint16_t window_id,
 					  uint16_t tce_levels,
 					  uint64_t tce_table_addr,
@@ -497,7 +497,7 @@ static int64_t opal_pci_map_pe_dma_window(uint64_t phb_id, uint16_t pe_number,
 opal_call(OPAL_PCI_MAP_PE_DMA_WINDOW, opal_pci_map_pe_dma_window, 7);
 
 static int64_t opal_pci_map_pe_dma_window_real(uint64_t phb_id,
-					       uint16_t pe_number,
+					       uint64_t pe_number,
 					       uint16_t window_id,
 					       uint64_t pci_start_addr,
 					       uint64_t pci_mem_size)

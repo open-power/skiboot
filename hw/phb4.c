@@ -790,7 +790,7 @@ static int64_t phb4_wait_bit(struct phb4 *p, uint32_t reg,
 }
 
 static int64_t phb4_tce_kill(struct phb *phb, uint32_t kill_type,
-			     uint32_t pe_num, uint32_t tce_size,
+			     uint64_t pe_number, uint32_t tce_size,
 			     uint64_t dma_addr, uint32_t npages)
 {
 	struct phb4 *p = phb_to_phb4(phb);
@@ -808,7 +808,7 @@ static int64_t phb4_tce_kill(struct phb *phb, uint32_t kill_type,
 					   PHB_TCE_KILL_ONE, 0);
 			if (rc)
 				return rc;
-			val = SETFIELD(PHB_TCE_KILL_PENUM, dma_addr, pe_num);
+			val = SETFIELD(PHB_TCE_KILL_PENUM, dma_addr, pe_number);
 
 			/* Set appropriate page size */
 			switch(tce_size) {
@@ -850,7 +850,7 @@ static int64_t phb4_tce_kill(struct phb *phb, uint32_t kill_type,
 			return rc;
 		/* Perform kill */
 		out_be64(p->regs + PHB_TCE_KILL, PHB_TCE_KILL_PE |
-			 SETFIELD(PHB_TCE_KILL_PENUM, 0ull, pe_num));
+			 SETFIELD(PHB_TCE_KILL_PENUM, 0ull, pe_number));
 		break;
 	case OPAL_PCI_TCE_KILL_ALL:
 		/* Wait for a slot in the HW kill queue */
@@ -1146,7 +1146,7 @@ static int64_t phb4_phb_mmio_enable(struct phb __unused *phb,
 }
 
 static int64_t phb4_map_pe_mmio_window(struct phb *phb,
-				       uint16_t pe_num,
+				       uint64_t pe_number,
 				       uint16_t window_type,
 				       uint16_t window_num,
 				       uint16_t segment_num)
@@ -1154,7 +1154,7 @@ static int64_t phb4_map_pe_mmio_window(struct phb *phb,
 	struct phb4 *p = phb_to_phb4(phb);
 	uint64_t mbt0, mbt1, mdt;
 
-	if (pe_num >= p->num_pes)
+	if (pe_number >= p->num_pes)
 		return OPAL_PARAMETER;
 
 	/*
@@ -1172,7 +1172,7 @@ static int64_t phb4_map_pe_mmio_window(struct phb *phb,
 			return OPAL_PARAMETER;
 
 		mdt = p->mdt_cache[segment_num];
-		mdt = SETFIELD(IODA3_MDT_PE_A, mdt, pe_num);
+		mdt = SETFIELD(IODA3_MDT_PE_A, mdt, pe_number);
 		p->mdt_cache[segment_num] = mdt;
 		phb4_ioda_sel(p, IODA3_TBL_MDT, segment_num, false);
 		out_be64(p->regs + PHB_IODA_DATA0, mdt);
@@ -1191,7 +1191,7 @@ static int64_t phb4_map_pe_mmio_window(struct phb *phb,
 		/* Set to single PE mode and configure the PE */
 		mbt0 = SETFIELD(IODA3_MBT0_MODE, mbt0,
 				IODA3_MBT0_MODE_SINGLE_PE);
-		mbt1 = SETFIELD(IODA3_MBT1_SINGLE_PE_NUM, mbt1, pe_num);
+		mbt1 = SETFIELD(IODA3_MBT1_SINGLE_PE_NUM, mbt1, pe_number);
 		p->mbt_cache[window_num][0] = mbt0;
 		p->mbt_cache[window_num][1] = mbt1;
 		break;
@@ -1203,7 +1203,7 @@ static int64_t phb4_map_pe_mmio_window(struct phb *phb,
 }
 
 static int64_t phb4_map_pe_dma_window(struct phb *phb,
-				      uint16_t pe_num,
+				      uint64_t pe_number,
 				      uint16_t window_id,
 				      uint16_t tce_levels,
 				      uint64_t tce_table_addr,
@@ -1224,7 +1224,7 @@ static int64_t phb4_map_pe_dma_window(struct phb *phb,
 	 * Sanity check. We currently only support "2 window per PE" mode
 	 * ie, only bit 59 of the PCI address is used to select the window
 	 */
-	if (pe_num >= p->num_pes || (window_id >> 1) != pe_num)
+	if (pe_number >= p->num_pes || (window_id >> 1) != pe_number)
 		return OPAL_PARAMETER;
 
 	/*
@@ -1282,7 +1282,7 @@ static int64_t phb4_map_pe_dma_window(struct phb *phb,
 }
 
 static int64_t phb4_map_pe_dma_window_real(struct phb *phb,
-					   uint16_t pe_num,
+					   uint64_t pe_number,
 					   uint16_t window_id,
 					   uint64_t pci_start_addr,
 					   uint64_t pci_mem_size)
@@ -1291,8 +1291,8 @@ static int64_t phb4_map_pe_dma_window_real(struct phb *phb,
 	uint64_t end = pci_start_addr + pci_mem_size;
 	uint64_t tve;
 
-	if (pe_num >= p->num_pes ||
-	    (window_id >> 1) != pe_num)
+	if (pe_number >= p->num_pes ||
+	    (window_id >> 1) != pe_number)
 		return OPAL_PARAMETER;
 
 	if (pci_mem_size) {
@@ -1346,7 +1346,7 @@ static int64_t phb4_map_pe_dma_window_real(struct phb *phb,
 }
 
 static int64_t phb4_set_ive_pe(struct phb *phb,
-			       uint32_t pe_num,
+			       uint64_t pe_number,
 			       uint32_t ive_num)
 {
 	struct phb4 *p = phb_to_phb4(phb);
@@ -1355,14 +1355,14 @@ static int64_t phb4_set_ive_pe(struct phb *phb,
 	uint32_t mist_shift;
 	uint64_t val;
 
-	if (pe_num >= p->num_pes || ive_num >= (p->num_irqs - 8))
+	if (pe_number >= p->num_pes || ive_num >= (p->num_irqs - 8))
 		return OPAL_PARAMETER;
 
 	mist_idx = ive_num >> 2;
 	mist_quad = ive_num & 3;
 	mist_shift = (3 - mist_quad) << 4;
 	p->mist_cache[mist_idx] &= ~(0x0fffull << mist_shift);
-	p->mist_cache[mist_idx] |=  ((uint64_t)pe_num) << mist_shift;
+	p->mist_cache[mist_idx] |=  ((uint64_t)pe_number) << mist_shift;
 
 	/* Note: This has the side effect of clearing P/Q, so this
 	 * shouldn't be called while the interrupt is "hot"
@@ -1384,7 +1384,7 @@ static int64_t phb4_set_ive_pe(struct phb *phb,
 }
 
 static int64_t phb4_get_msi_32(struct phb *phb,
-			       uint32_t pe_num,
+			       uint64_t pe_number,
 			       uint32_t ive_num,
 			       uint8_t msi_range,
 			       uint32_t *msi_address,
@@ -1398,7 +1398,7 @@ static int64_t phb4_get_msi_32(struct phb *phb,
 	 * by its DMA address and data, but the check isn't
 	 * harmful.
 	 */
-	if (pe_num >= p->num_pes ||
+	if (pe_number >= p->num_pes ||
 	    ive_num >= (p->num_irqs - 8) ||
 	    msi_range != 1 || !msi_address|| !message_data)
 		return OPAL_PARAMETER;
@@ -1414,7 +1414,7 @@ static int64_t phb4_get_msi_32(struct phb *phb,
 }
 
 static int64_t phb4_get_msi_64(struct phb *phb,
-			       uint32_t pe_num,
+			       uint64_t pe_number,
 			       uint32_t ive_num,
 			       uint8_t msi_range,
 			       uint64_t *msi_address,
@@ -1423,7 +1423,7 @@ static int64_t phb4_get_msi_64(struct phb *phb,
 	struct phb4 *p = phb_to_phb4(phb);
 
 	/* Sanity check */
-	if (pe_num >= p->num_pes ||
+	if (pe_number >= p->num_pes ||
 	    ive_num >= (p->num_irqs - 8) ||
 	    msi_range != 1 || !msi_address || !message_data)
 		return OPAL_PARAMETER;
@@ -1533,7 +1533,7 @@ static void phb4_read_phb_status(struct phb4 *p,
 }
 
 static int64_t phb4_set_pe(struct phb *phb,
-			   uint64_t pe_num,
+			   uint64_t pe_number,
 			   uint64_t bdfn,
 			   uint8_t bcompare,
 			   uint8_t dcompare,
@@ -1550,7 +1550,7 @@ static int64_t phb4_set_pe(struct phb *phb,
 		return OPAL_HARDWARE;
 	if (action != OPAL_MAP_PE && action != OPAL_UNMAP_PE)
 		return OPAL_PARAMETER;
-	if (pe_num >= p->num_pes || bdfn > 0xffff ||
+	if (pe_number >= p->num_pes || bdfn > 0xffff ||
 	    bcompare > OpalPciBusAll ||
 	    dcompare > OPAL_COMPARE_RID_DEVICE_NUMBER ||
 	    fcompare > OPAL_COMPARE_RID_FUNCTION_NUMBER)
@@ -1585,7 +1585,7 @@ static int64_t phb4_set_pe(struct phb *phb,
 	if (all == 0x7) {
 		if (action == OPAL_MAP_PE) {
 			for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++)
-				p->rte_cache[idx] = pe_num;
+				p->rte_cache[idx] = pe_number;
 		} else {
 			for ( idx = 0; idx < ARRAY_SIZE(p->rte_cache); idx++)
 				p->rte_cache[idx] = PHB4_RESERVED_PE_NUM(p);
@@ -1597,7 +1597,7 @@ static int64_t phb4_set_pe(struct phb *phb,
 			if ((idx & mask) != val)
 				continue;
 			if (action == OPAL_MAP_PE)
-				p->rte_cache[idx] = pe_num;
+				p->rte_cache[idx] = pe_number;
 			else
 				p->rte_cache[idx] = PHB4_RESERVED_PE_NUM(p);
 			*rte = p->rte_cache[idx];
@@ -2327,7 +2327,7 @@ static int64_t phb4_eeh_next_error(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
-static int64_t phb4_err_inject(struct phb *phb, uint32_t pe_no,
+static int64_t phb4_err_inject(struct phb *phb, uint64_t pe_number,
 			       uint32_t type, uint32_t func,
 			       uint64_t addr, uint64_t mask)
 {
@@ -3432,4 +3432,3 @@ void probe_phb4(void)
 	dt_for_each_compatible(dt_root, np, "ibm,power9-pciex")
 		phb4_create(np);
 }
-
