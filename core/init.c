@@ -453,12 +453,13 @@ static void load_initramfs(void)
 
 int64_t mem_dump_free(void);
 
+void *fdt;
+
 void __noreturn load_and_boot_kernel(bool is_reboot)
 {
 	const struct dt_property *memprop;
 	const char *cmdline;
 	uint64_t mem_top;
-	void *fdt;
 
 	memprop = dt_find_property(dt_root, DT_PRIVATE "maxmem");
 	if (memprop)

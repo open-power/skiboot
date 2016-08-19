@@ -278,9 +278,12 @@ static bool fast_reset_p8(void)
 	return true;
 }
 
+extern void *fdt;
+
 void fast_reboot(void)
 {
 	bool success;
+	static int fast_reboot_count = 0;
 
 	if (proc_gen != proc_gen_p8) {
 		prlog(PR_DEBUG,
@@ -293,7 +296,8 @@ void fast_reboot(void)
 		return;
 	}
 
-	prlog(PR_INFO, "RESET: Initiating fast reboot...\n");
+	prlog(PR_NOTICE, "RESET: Initiating fast reboot %d...\n", ++fast_reboot_count);
+	free(fdt);
 
 	/* XXX We need a way to ensure that no other CPU is in skiboot
 	 * holding locks (via the OPAL APIs) and if they are, we need
