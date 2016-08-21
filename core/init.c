@@ -832,6 +832,13 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Register routine to dispatch and read sensors */
 	sensor_init();
 
+        /*
+	 * Initialize the opal messaging before platform.init as we are
+	 *  getting request to queue occ load opal message when host services
+	 *  got load occ request from FSP
+	 */
+        opal_init_msg();
+
 	/*
 	 * We have initialized the basic HW, we can now call into the
 	 * platform to perform subsequent inits, such as establishing
@@ -858,9 +865,6 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* NX init */
 	nx_init();
-
-	/* Initialize the opal messaging */
-	opal_init_msg();
 
 	/* Probe IO hubs */
 	probe_p7ioc();
