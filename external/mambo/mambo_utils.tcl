@@ -174,6 +174,11 @@ proc tlbv { { c 0 } } {
     puts [mysim cpu $c display tlb valid]
 }
 
+proc exc { { i SystemReset } { c 0 } } {
+    puts "$c:EXCEPTION:$i"
+    puts [mysim cpu $c interrupt $i]
+}
+
 proc just_stop { args } {
     simstop
     ipca
@@ -275,5 +280,34 @@ proc don { opt } {
 
 proc doff { opt } {
     simdebug set $opt 0
+}
+
+proc start_qtrace { { qtfile qtrace.qt } } {
+    global env
+
+    mysim mode simple
+
+    ereader expect 1
+    simemit set "Header_Record" 1
+    simemit set "Footer_Record" 1
+    simemit set "Instructions" 1
+    simemit set "Interrupt" 1
+    simemit set "External_Int" 1
+    simemit set "Config" 1
+    simemit set "MSR" 1
+    simemit set "Pid_Creatd" 1
+    simemit set "Pid_Killed" 1
+    simemit set "TLB_Inst_Miss" 1
+    simemit set "TLB_Data_Miss" 1
+    simemit set "SLB_Inst_Miss" 1
+    simemit set "SLB_Data_Miss" 1
+    simemit set "L1_ICache_Miss" 1
+    simemit set "L1_DCache_Miss" 1
+    simemit set "L2_Cache_Miss" 1
+    simemit set "Memory_Write" 1
+    simemit set "Memory_Read" 1
+    simemit set "Bus_Wait" 1
+
+    ereader start $env(EXEC_DIR)/emitter/qtracer [pid] -outfile $qtfile
 }
 
