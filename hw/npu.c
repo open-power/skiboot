@@ -1418,10 +1418,8 @@ static uint32_t npu_allocate_bdfn(struct npu *p, uint32_t group)
 	int bdfn = (group << 3);
 
 	for (i = 0; i < p->total_devices; i++) {
-		if (p->devices[i].pvd->bdfn == bdfn) {
+		if ((p->devices[i].pvd->bdfn & 0xf8) == (bdfn & 0xf8))
 			bdfn++;
-			break;
-		}
 	}
 
 	return bdfn;
