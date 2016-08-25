@@ -133,6 +133,12 @@ void probe_platform(void)
 
 	/* Detect Manufacturing mode */
 	if (dt_find_property(dt_root, "ibm,manufacturing-mode")) {
+		/**
+		 * @fwts-label ManufacturingMode
+		 * @fwts-advice You are running in manufacturing mode.
+		 * This mode should only be enabled in a factory during
+		 * manufacturing.
+		 */
 		prlog(PR_NOTICE, "PLAT: Manufacturing mode ON\n");
 		manufacturing_mode = true;
 	}
