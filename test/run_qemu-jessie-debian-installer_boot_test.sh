@@ -44,7 +44,7 @@ $QEMU_PATH/../qemu-img  create -f qcow2 $D 128G 2>&1 > $T
 
 ( cat <<EOF | expect
 set timeout 600
-spawn $QEMU_PATH/$QEMU_BINARY -m 2G -M powernv -kernel debian-jessie-vmlinux -initrd debian-jessie-initrd.gz -nographic -hda $D
+spawn $QEMU_PATH/$QEMU_BINARY -m 2G -M powernv -kernel debian-jessie-vmlinux -initrd debian-jessie-initrd.gz -nographic -device ipmi-bmc-sim,id=ipmi0 -device isa-ipmi-bt,bmc=ipmi0 -hda $D
 expect {
 timeout { send_user "\nTimeout waiting for petitboot\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
