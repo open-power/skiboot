@@ -14,6 +14,7 @@ This release follows the Skiboot stable rules, see doc/stable-skiboot-rules.txt.
 Over skiboot-5.3.0, the following fixes are included:
 
 FSP systems:
+
 - FSP/ELOG: elog_enable flag should be false by default
     This issue is one of the corner case, which is related to recent change
     went upstream and only observed in the petitboot prompt, where we see
@@ -21,6 +22,7 @@ FSP systems:
     /sys/firmware/opal/elog.
 
 NVLink systems (i.e. Garrison):
+
 - npu: reword "error" to indicate it's actually a warning
     Without this patch, you get spurious FirmWare Test Suite (FWTS) warnings
     about NVLink not working on machines that aren't fully populated with
@@ -31,6 +33,7 @@ NVLink systems (i.e. Garrison):
     clarify if the numbers were in hex, and didn't show leading zeroes.
 
 General:
+
 - asm: Fix backtrace for unexpected exception
 - correct the log level from PR_ERROR down to PR_INFO for some skiboot
   log messages.
