@@ -11,6 +11,7 @@ This release contains a few minor bug fixes.
 Changes are:
 
 All platforms:
+
 - opal/hmi: Fix a TOD HMI failure during a race condition.
   Rare race condition which meant we wouldn't recover from TOD error
 
@@ -24,6 +25,7 @@ All platforms:
   lead to an AIB fence, so that the CAPP unit can detect the error.
 
 FSP platforms:
+
 - FSP/ELOG: Fix OPAL generated elog resend logic
 - FSP/ELOG: Fix possible event notifier hangs
 - FSP/ELOG: Disable event notification if list is not consistent
