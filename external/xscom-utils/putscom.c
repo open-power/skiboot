@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 			got_val = true;
 			break;
 		case 'c':
-			chip_id = strtoul(optarg, NULL, 0);
+			chip_id = strtoul(optarg, NULL, 16);
 			break;
 		case 'v':
 			printf("xscom utils version %s\n", version);

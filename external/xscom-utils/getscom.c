@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 			addr = strtoull(optarg, NULL, 16);
 			break;
 		case 'c':
-			chip_id = strtoul(optarg, NULL, 0);
+			chip_id = strtoul(optarg, NULL, 16);
 			break;
 		case 'h':
 			print_usage(0);
