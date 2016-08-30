@@ -9,6 +9,8 @@
 static void create_mtms_section(struct errorlog *elog_data,
 					char *pel_buffer, int *pel_offset)
 {
+	const struct dt_property *p;
+
 	struct opal_mtms_section *mtms = (struct opal_mtms_section *)
 				(pel_buffer + *pel_offset);
 
@@ -20,10 +22,14 @@ static void create_mtms_section(struct errorlog *elog_data,
 
 	memset(mtms->model, 0x00, sizeof(mtms->model));
 	memcpy(mtms->model, dt_prop_get(dt_root, "model"), OPAL_SYS_MODEL_LEN);
-	memset(mtms->serial_no, 0x00, sizeof(mtms->serial_no));
 
-	memcpy(mtms->serial_no, dt_prop_get(dt_root, "system-id"),
-						 OPAL_SYS_SERIAL_LEN);
+	memset(mtms->serial_no, 0x00, sizeof(mtms->serial_no));
+	p = dt_find_property(dt_root, "system-id");
+	if (p)
+		memcpy(mtms->serial_no, p->prop, OPAL_SYS_SERIAL_LEN);
+	else
+		memset(mtms->serial_no, 0, OPAL_SYS_SERIAL_LEN);
+
 	*pel_offset += MTMS_SECTION_SIZE;
 }
 
@@ -32,6 +38,7 @@ static void create_extended_header_section(struct errorlog *elog_data,
 					char *pel_buffer, int *pel_offset)
 {
 	const char  *opalmodel = NULL;
+	const struct dt_property *p;
 	uint64_t extd_time;
 
 	struct opal_extended_header_section *extdhdr =
@@ -49,8 +56,11 @@ static void create_extended_header_section(struct errorlog *elog_data,
 	memcpy(extdhdr->model, opalmodel, OPAL_SYS_MODEL_LEN);
 
 	memset(extdhdr->serial_no, 0x00, sizeof(extdhdr->serial_no));
-	memcpy(extdhdr->serial_no, dt_prop_get(dt_root, "system-id"),
-							OPAL_SYS_SERIAL_LEN);
+	p = dt_find_property(dt_root, "system-id");
+	if (p)
+		memcpy(extdhdr->serial_no, p->prop, OPAL_SYS_SERIAL_LEN);
+	else
+		memset(extdhdr->serial_no, 0, OPAL_SYS_SERIAL_LEN);
 
 	memset(extdhdr->opal_release_version, 0x00,
 				sizeof(extdhdr->opal_release_version));

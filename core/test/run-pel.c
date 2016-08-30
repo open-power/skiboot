@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <pel.h>
 #include <errorlog.h>
+#include <device.h>
 
 #define TEST_ERROR 0x1234
 #define TEST_SUBSYS 0x5678
@@ -33,14 +34,24 @@ DEFINE_LOG_ENTRY(TEST_ERROR, OPAL_PLATFORM_ERR_EVT, TEST_SUBSYS,
 			OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
 			OPAL_NA);
 
+/* Override this for testing. */
+#define is_rodata(p) fake_is_rodata(p)
+
+char __rodata_start[16];
+#define __rodata_end (__rodata_start + sizeof(__rodata_start))
+
+static inline bool fake_is_rodata(const void *p)
+{
+	return ((char *)p >= __rodata_start && (char *)p < __rodata_end);
+}
+
+#define zalloc(bytes) calloc((bytes), 1)
+
+#include "../device.c"
 #include "../pel.c"
 
 struct dt_node *dt_root = NULL;
 char dt_prop[] = "DUMMY DT PROP";
-const void *dt_prop_get(const struct dt_node *node __unused, const char *prop __unused)
-{
-	return dt_prop;
-}
 
 int rtc_cache_get_datetime(uint32_t *year_month_day,
 			   uint64_t *hour_minute_second_millisecond)
@@ -59,6 +70,9 @@ int main(void)
 	struct opal_err_info *opal_err_info = &err_TEST_ERROR;
 	char *buffer;
 	struct elog_user_data_section *tmp;
+
+	dt_root = dt_new_root("");
+	dt_add_property_string(dt_root, "model", "run-pel-unittest");
 
 	elog = malloc(sizeof(struct errorlog));
 	pel_buf = malloc(PEL_MIN_SIZE + 4);
@@ -96,7 +110,7 @@ int main(void)
 	size = pel_size(elog);
 	pel_buf = realloc(pel_buf, size);
 	assert(pel_buf);
-	
+
 	buffer = elog->user_data_dump + elog->user_section_size;
 	tmp = (struct elog_user_data_section *)buffer;
 	tmp->tag = 0x44455343;  /* ASCII of DESC */
