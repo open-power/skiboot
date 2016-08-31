@@ -191,6 +191,20 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
     mysim of addprop $cpu_node array64 "ibm,processor-segment-sizes" reg
 
     set reg {}
+    lappend reg 0x0000000c 0x00000010 0x00000018 0x00000022
+    mysim of addprop $cpu_node array "ibm,processor-page-sizes" reg
+
+    set reg {}
+    lappend reg 0x0c 0x000 3 0x0c 0x0000 ;#  4K seg  4k pages
+    lappend reg              0x10 0x0007 ;#  4K seg 64k pages
+    lappend reg              0x18 0x0038 ;#  4K seg 16M pages
+    lappend reg 0x10 0x110 2 0x10 0x0001 ;# 64K seg 64k pages
+    lappend reg              0x18 0x0008 ;# 64K seg 16M pages
+    lappend reg 0x18 0x100 1 0x18 0x0000 ;# 16M seg 16M pages
+    lappend reg 0x22 0x120 1 0x22 0x0003 ;# 16G seg 16G pages
+    mysim of addprop $cpu_node array "ibm,segment-page-sizes" reg
+
+    set reg {}
     if { $default_config == "P9" } {
 	# POWER9 PAPR defines upto bytes 62-63
 	# header + bytes 0-5
