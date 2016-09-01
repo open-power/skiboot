@@ -53,7 +53,8 @@ static uint8_t file_buf[FILE_BUF_SIZE] __aligned(0x1000);
 
 static struct blocklevel_device *bl;
 static struct ffs_handle	*ffsh;
-static uint32_t			fl_total_size, fl_erase_granule;
+static uint64_t			fl_total_size;
+static uint32_t			fl_erase_granule;
 static const char		*fl_name;
 static int32_t			ffs_index = -1;
 
