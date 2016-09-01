@@ -15,7 +15,7 @@
 size_t
 strlen(const char *s)
 {
-	int len = 0;
+	size_t len = 0;
 
 	while (*s != 0) {
 		len += 1;
