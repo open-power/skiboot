@@ -28,7 +28,7 @@ $(CCAN_TEST) : % : %.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I . -Iccan/ -o $@ $<,$<)
 
 $(CCAN_TEST:%=%-gcov): %-gcov : %.c
-	$(call Q, HOSTCC , (cd $(dir $<); $(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -O0 -g -I $(shell pwd) -I$(shell pwd)/./ccan/ -pg -o $(notdir $@) $(notdir $<) ), $<)
+	$(call Q, HOSTCC , (cd $(dir $<); $(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I $(shell pwd) -I$(shell pwd)/./ccan/ -o $(notdir $@) $(notdir $<) ), $<)
 
 -include $(wildcard ccan/*/test/*.d)
 

@@ -41,6 +41,8 @@ HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-Wjump-misses-init) \
 	  $(call try-cflag,$(HOSTCC),-Wstack-usage=1024)
 HOSTCFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
 
+HOSTGCOVCFLAGS = -fprofile-arcs -ftest-coverage -lgcov -O0 -g -pg
+
 VALGRIND=valgrind -q --show-reachable=yes --error-exitcode=99
 
 # Target options

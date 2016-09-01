@@ -40,7 +40,7 @@ $(HDATA_TEST) : % : %.c
 	$(call Q, HOSTCC , $(HOSTCC) $(HOSTCFLAGS) -DTEST -O0 -g -I hdata -I include -I . -I libfdt -o $@ $< hdata/test/stubs.o, $<)
 
 $(HDATA_TEST:%=%-gcov): %-gcov : %.c %
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -DTEST -O0 -g -I include -I . -I data -I libfdt -lgcov -o $@ $< hdata/test/stubs.o, $<)
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -DTEST -I include -I . -I data -I libfdt -lgcov -o $@ $< hdata/test/stubs.o, $<)
 
 -include $(wildcard hdata/test/*.d)
 

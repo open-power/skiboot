@@ -25,7 +25,7 @@ $(LIBFLASH_TEST) : % : %.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o, $<)
 
 $(LIBFLASH_TEST:%=%-gcov): %-gcov : %.c %
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -lgcov -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o, $<)
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I include -I . -o $@ $< libflash/test/stubs.o, $<)
 
 -include $(wildcard libflash/test/*.d)
 

@@ -35,13 +35,13 @@ $(LIBC_TEST) : % : %.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -I libc/include -o $@ $<, $<)
 
 $(LIBC_TEST:%=%-gcov): %-gcov : %.c %
-	$(call Q, HOSTCC ,(cd $(dir $<); $(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -lgcov -O0 -g -I$(shell pwd)/include -I$(shell pwd) -I$(shell pwd)/libfdt -I$(shell pwd)/libc/include -o $(notdir $@) $(notdir $<)), $<)
+	$(call Q, HOSTCC ,(cd $(dir $<); $(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I$(shell pwd)/include -I$(shell pwd) -I$(shell pwd)/libfdt -I$(shell pwd)/libc/include -o $(notdir $@) $(notdir $<)), $<)
 
 $(LIBC_DUALLIB_TEST) : % : %.o %-test.o
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt  -o $@ $@-test.o $<, $<)
 
 $(LIBC_DUALLIB_TEST:%=%-gcov) : %-gcov : %-gcov.o %-gcov-test.o
-	$(call Q, HOSTCC ,(cd $(dir $<); $(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -lgcov -O0 -pg -g -I$(shell pwd)/include -I$(shell pwd)/. -I$(shell pwd)/libfdt  -o $(notdir $@) $(notdir $@)-test.o $(notdir $<)), $<)
+	$(call Q, HOSTCC ,(cd $(dir $<); $(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I$(shell pwd)/include -I$(shell pwd)/. -I$(shell pwd)/libfdt  -o $(notdir $@) $(notdir $@)-test.o $(notdir $<)), $<)
 
 $(LIBC_DUALLIB_TEST:%=%-test.o): %-test.o : %-test.c 
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -I libc/include -ffreestanding -o $@ -c $<, $<)

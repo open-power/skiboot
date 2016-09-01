@@ -20,7 +20,7 @@ $(IPMI_TEST) : % : %.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -o $@ $<, $<)
 
 $(IPMI_TEST:%=%-gcov): %-gcov : %.c %
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -fprofile-arcs -ftest-coverage -O0 -g -I include -I . -I libfdt -lgcov -o $@ $<, $<)
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I include -I . -I libfdt -lgcov -o $@ $<, $<)
 
 $(IPMI_TEST:%=%-gcov): % : $(%.d:-gcov=)
 
