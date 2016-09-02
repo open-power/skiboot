@@ -1614,14 +1614,20 @@ static void npu_create_devices(struct dt_node *dn, struct npu *p)
 	struct npu_dev *dev;
 	struct dt_node *npu_dn, *link;
 	uint32_t npu_phandle, index = 0;
-	uint64_t buid;
+	uint64_t buid_reg;
 	uint64_t lsisrcid;
+	uint64_t buid;
 
-	lsisrcid = GETFIELD(NPU_LSI_SRC_ID_BASE,
-			    in_be64(p->at_regs + NPU_LSI_SOURCE_ID));
-	buid = SETFIELD(NP_BUID_BASE, 0ull,
-			(p8_chip_irq_block_base(p->chip_id, P8_IRQ_BLOCK_MISC) | lsisrcid));
-	buid |= NP_BUID_ENABLE;
+
+	/* The bits in the LSI ID Base register are always compared and
+	 * can be set to 0 in the buid base and mask fields.  The
+	 * buid (bus unit id) is the full irq minus the last 4 bits. */
+	lsisrcid = GETFIELD(NPU_LSI_SRC_ID_BASE, NPU_LSI_SRC_ID_BASE);
+	buid = p8_chip_irq_block_base(p->chip_id, P8_IRQ_BLOCK_MISC) >> 4;
+
+	buid_reg = SETFIELD(NP_IRQ_LEVELS, NP_BUID_ENABLE, ~0);
+	buid_reg = SETFIELD(NP_BUID_MASK, buid_reg, ~lsisrcid);
+	buid_reg = SETFIELD(NP_BUID_BASE, buid_reg, (buid & ~lsisrcid));
 
 	/* Get the npu node which has the links which we expand here
 	 * into pci like devices attached to our emulated phb. */
@@ -1661,7 +1667,7 @@ static void npu_create_devices(struct dt_node *dn, struct npu *p)
 		dev->lane_mask = dt_prop_get_u32(link, "ibm,npu-lane-mask");
 
 		/* Setup BUID/ISRN */
-		xscom_write(p->chip_id, dev->xscom + NX_NP_BUID, buid);
+		xscom_write(p->chip_id, dev->xscom + NX_NP_BUID, buid_reg);
 
 		/* Setup emulated config space */
 		for (j = 0; j < NPU_DEV_CFG_MAX; j++)
