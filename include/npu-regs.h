@@ -52,7 +52,9 @@
 #define NX_AS_CMD_CFG			0x12
 #define NX_NP_BUID			0x13
 #define   NP_BUID_ENABLE		PPC_BIT(0)
-#define   NP_BUID_BASE			PPC_BITMASK(1,23)
+#define   NP_BUID_BASE			PPC_BITMASK(1,15)
+#define   NP_IRQ_LEVELS			PPC_BITMASK(16,23)
+#define   NP_BUID_MASK			PPC_BITMASK(24,32)
 #define NX_TL_CMD_CR			0x20
 #define NX_TL_CMD_D_CR			0x21
 #define NX_TL_RSP_CR			0x22
