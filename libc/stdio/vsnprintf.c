@@ -26,7 +26,7 @@ static int
 print_str_fill(char **buffer, size_t bufsize, char *sizec,
 					const char *str, char c)
 {
-	int i, sizei, len;
+	size_t i, sizei, len;
 	char *bstart = *buffer;
 
 	sizei = strtoul(sizec, NULL, 10);
@@ -46,7 +46,7 @@ static int
 print_str(char **buffer, size_t bufsize, const char *str)
 {
 	char *bstart = *buffer;
-	int i;
+	size_t i;
 
 	for (i = 0; (i < strlen(str)) && ((*buffer - bstart) < bufsize); i++) {
 		**buffer = str[i];

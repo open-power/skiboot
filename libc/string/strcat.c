@@ -15,7 +15,7 @@
 char *
 strcat(char *dst, const char *src)
 {
-	int p;
+	size_t p;
 
 	p = strlen(dst);
 	strcpy(&dst[p], src);

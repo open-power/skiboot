@@ -16,7 +16,7 @@ char *
 strstr(const char *hay, const char *needle)
 {
 	char *pos;
-	int hlen, nlen;
+	size_t hlen, nlen;
 
 	if (hay == NULL || needle == NULL)
 		return NULL;
