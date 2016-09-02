@@ -26,6 +26,7 @@
 #include <device.h>
 #include <ccan/str/str.h>
 #include <ccan/array_size/array_size.h>
+#include <ccan/build_assert/build_assert.h>
 #include <affinity.h>
 #include <npu-regs.h>
 #include <npu.h>
@@ -798,7 +799,8 @@ static void npu_hw_init(struct npu *p)
 {
 	/* 3 MMIO setup for AT */
 	out_be64(p->at_regs + NPU_LSI_SOURCE_ID,
-		 SETFIELD(NPU_LSI_SRC_ID_BASE, 0ul, 0x7f));
+		 SETFIELD(NPU_LSI_SRC_ID_BASE, 0ul, NPU_LSI_IRQ_MIN >> 4));
+	BUILD_ASSERT((NPU_LSI_IRQ_MIN & 0x07F0) == NPU_LSI_IRQ_MIN);
 	out_be64(p->at_regs + NPU_INTREP_TIMER, 0x0ul);
 	npu_ioda_reset(&p->phb, false);
 }
