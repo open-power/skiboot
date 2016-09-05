@@ -67,6 +67,7 @@
 #define SPR_SPURR	0x134	/* RW: Scaled Processor Utilization Resource */
 #define SPR_PURR	0x135	/* RW: Processor Utilization Resource reg */
 #define SPR_HDEC	0x136	/* RW: Hypervisor Decrementer */
+#define SPR_HRMOR	0x139	/* RW: Hypervisor Real Mode Offset reg */
 #define SPR_HSRR0	0x13a	/* RW: HV Exception save/restore reg 0 */
 #define SPR_HSRR1	0x13b	/* RW: HV Exception save/restore reg 1 */
 #define SPR_TFMR	0x13d

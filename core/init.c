@@ -625,6 +625,16 @@ static void per_thread_sanity_checks(void)
 	struct cpu_thread *cpu = this_cpu();
 
 	/**
+	 * @fwts-label NonZeroHRMOR
+	 * @fwts-advice The contents of the hypervisor real mode offset register
+	 * (HRMOR) is bitwise orded with the address of any hypervisor real mode
+	 * (i.e Skiboot) memory accesses. Skiboot does not support operating
+	 * with a non-zero HRMOR and setting it will break some things (e.g
+	 * XSCOMs) in hard-to-debug ways.
+	 */
+	assert(mfspr(SPR_HRMOR) == 0);
+
+	/**
 	 * @fwts-label UnknownSecondary
 	 * @fwts-advice The boot CPU attampted to call in a secondary thread
 	 * without initialising the corresponding cpu_thread structure. This may
