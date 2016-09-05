@@ -619,6 +619,11 @@ static void copy_exception_vectors(void)
 	memcpy((void *)0x100, (void *)(SKIBOOT_BASE + 0x100), 0x1f00);
 	sync_icache();
 }
+
+static void per_thread_sanity_checks(void)
+{
+}
+
 /* Called from head.S, thus no prototype. */
 void main_cpu_entry(const void *fdt, u32 master_cpu);
 
@@ -691,6 +696,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt, u32 master_cpu)
 	} else {
 		dt_expand(fdt);
 	}
+
+	/* Now that we have a full devicetree, verify that we aren't on fire. */
+	per_thread_sanity_checks();
 
 	/*
 	 * From there, we follow a fairly strict initialization order.
@@ -902,6 +910,8 @@ void secondary_cpu_entry(void);
 void __noreturn __nomcount secondary_cpu_entry(void)
 {
 	struct cpu_thread *cpu = this_cpu();
+
+	per_thread_sanity_checks();
 
 	prlog(PR_DEBUG, "INIT: CPU PIR 0x%04x called in\n", cpu->pir);
 
