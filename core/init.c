@@ -622,6 +622,16 @@ static void copy_exception_vectors(void)
 
 static void per_thread_sanity_checks(void)
 {
+	struct cpu_thread *cpu = this_cpu();
+
+	/**
+	 * @fwts-label UnknownSecondary
+	 * @fwts-advice The boot CPU attampted to call in a secondary thread
+	 * without initialising the corresponding cpu_thread structure. This may
+	 * happen if the HDAT or devicetree reports too few threads or cores for
+	 * this processor.
+	 */
+	assert(cpu->state != cpu_state_no_cpu);
 }
 
 /* Called from head.S, thus no prototype. */
