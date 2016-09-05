@@ -61,6 +61,9 @@ const void *vpd_find_record(const void *vpd, size_t vpd_size,
 	uint8_t namesz = 0;
 	const char *rec_name;
 
+	if (!vpd)
+		return NULL;
+
 	while (CHECK_SPACE(p, 4, end)) {
 		/* Get header byte */
 		if (*(p++) != 0x84) {
@@ -186,8 +189,10 @@ void vpd_iohub_load(struct dt_node *hub_node)
 	lxrn = p[0];
         lx = (const char *)&p[1];
 
-	assert(vpd);
-	assert(vpd_lid_no);
+	if (!vpd || !vpd_lid_no) {
+		prlog(PR_WARNING, "VPD: WARNING: Unable to load VPD lid");
+		return;
+	}
 
 	r = fsp_wait_lid_loaded(vpd_lid_no);
 
