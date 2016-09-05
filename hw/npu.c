@@ -1113,7 +1113,7 @@ static int64_t npu_err_inject(struct phb *phb, uint32_t pe_num,
 	struct npu_dev *dev = NULL;
 	int i;
 
-	if (pe_num > NPU_NUM_OF_PES) {
+	if (pe_num >= NPU_NUM_OF_PES) {
 		prlog(PR_ERR, "NPU: error injection failed, bad PE given\n");
 		return OPAL_PARAMETER;
 	}
