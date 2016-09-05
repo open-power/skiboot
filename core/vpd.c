@@ -217,12 +217,6 @@ void vpd_iohub_load(struct dt_node *hub_node)
 
 	printf("VPD: Loaded %zu bytes\n", vpd_size);
 
-	/* Got it ! */
-	vpd = realloc(vpd, vpd_size);
-
-	if (!vpd)
-		goto fail;
-
 	dt_add_property(hub_node, "ibm,io-vpd", vpd, vpd_size);
 	free(vpd);
 	return;
