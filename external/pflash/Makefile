@@ -30,5 +30,5 @@ clean: arch_clean
 .PHONY: distclean
 distclean: clean
 	rm -f *.c~ *.h~ *.sh~ Makefile~ config.mk~ libflash/*.c~ libflash/*.h~
-	rm -f libflash ccan .version .version.tmp
+	rm -f libflash ccan version.c .version .version.tmp
 	rm -f common io.h
