@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@
 /*
  * Maximum number buffers that are pre-allocated
  * to hold elogs that are reported on Sapphire and
- * powernv.
+ * PowerNV.
  */
 #define ELOG_WRITE_MAX_RECORD		64
-
-/* Platform Log ID as per the spec */
+/* Platform log id as per the spec */
 static uint32_t sapphire_elog_id = 0xB0000000;
+
 /* Reserved for future use */
 /* static uint32_t powernv_elog_id = 0xB1000000; */
 
@@ -54,6 +54,7 @@ static struct errorlog *get_write_buffer(int opal_event_severity)
 		buf = pool_get(&elog_pool, POOL_HIGH);
 	else
 		buf = pool_get(&elog_pool, POOL_NORMAL);
+
 	unlock(&elog_lock);
 	return buf;
 }
@@ -132,8 +133,10 @@ void log_commit(struct errorlog *elog)
 		rc = platform.elog_commit(elog);
 		if (rc)
 			prerror("ELOG: Platform commit error %d\n", rc);
+
 		return;
 	}
+
 	opal_elog_complete(elog, false);
 }
 
@@ -156,7 +159,6 @@ void log_append_data(struct errorlog *buf, unsigned char *data, uint16_t size)
 	/* Step through user sections to find latest dump section */
 	buffer = buf->user_data_dump;
 	n_sections = buf->user_section_count;
-
 	if (!n_sections) {
 		prerror("ELOG: User section invalid\n");
 		return;
@@ -170,7 +172,6 @@ void log_append_data(struct errorlog *buf, unsigned char *data, uint16_t size)
 	section = (struct elog_user_data_section *)buffer;
 	buffer += section->size;
 	memcpy(buffer, data, size);
-
 	section->size += size;
 	buf->user_section_size += size;
 }
@@ -209,9 +210,9 @@ void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
 	prerror("%s", err_msg);
 
 	buf = opal_elog_create(e_info, 0);
-	if (buf == NULL)
+	if (buf == NULL) {
 		prerror("ELOG: Error getting buffer to log error\n");
-	else {
+	} else {
 		log_append_data(buf, err_msg, strlen(err_msg));
 		log_commit(buf);
 	}
@@ -219,8 +220,9 @@ void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
 
 int elog_init(void)
 {
-	/* pre-allocate memory for records */
-	if (pool_init(&elog_pool, sizeof(struct errorlog), ELOG_WRITE_MAX_RECORD, 1))
+	/* Pre-allocate memory for records */
+	if (pool_init(&elog_pool, sizeof(struct errorlog),
+					ELOG_WRITE_MAX_RECORD, 1))
 		return OPAL_RESOURCE;
 
 	elog_available = true;

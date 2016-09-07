@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,23 @@
 
 
 /*
- * This code will enable generation and pushing of error log
- * from powernv, sapphire to FSP
- * Critical events from sapphire that needs to be reported
- * will be pushed on to FSP after converting the
- * error log to Platform Error Log (PEL) format.
- * This is termed as WRITE action to FSP.
+ * This code will enable generation and pushing of error log from Sapphire
+ * to FSP.
+ * Critical events from Sapphire that needs to be reported will be pushed
+ * on to FSP after converting the error log to Platform Error Log(PEL) format.
+ * This is termed as write action to FSP.
  */
 
-#include <skiboot.h>
-#include <fsp.h>
 #include <cpu.h>
-#include <lock.h>
 #include <errno.h>
+#include <fsp.h>
 #include <fsp-elog.h>
-#include <timebase.h>
+#include <lock.h>
+#include <opal-api.h>
 #include <pel.h>
 #include <pool.h>
-#include <opal-api.h>
+#include <skiboot.h>
+#include <timebase.h>
 
 static LIST_HEAD(elog_write_to_fsp_pending);
 static LIST_HEAD(elog_write_to_host_pending);
@@ -43,8 +42,8 @@ static struct lock elog_write_lock = LOCK_UNLOCKED;
 static struct lock elog_panic_write_lock = LOCK_UNLOCKED;
 static struct lock elog_write_to_host_lock = LOCK_UNLOCKED;
 
-/* log buffer  to copy FSP log for READ */
 #define ELOG_WRITE_TO_FSP_BUFFER_SIZE	0x00004000
+/* Log buffer to copy OPAL log for write to FSP. */
 static void *elog_write_to_fsp_buffer;
 
 #define ELOG_PANIC_WRITE_BUFFER_SIZE	0x00004000
@@ -59,7 +58,7 @@ static uint32_t elog_write_retries;
 static uint32_t elog_plid_fsp_commit = -1;
 static enum elog_head_state elog_write_to_host_head_state = ELOG_STATE_NONE;
 
-/* Need forward declaration because of Circular dependency */
+/* Need forward declaration because of circular dependency */
 static int opal_send_elog_to_fsp(void);
 
 static void remove_elog_head_entry(void)
@@ -73,11 +72,13 @@ static void remove_elog_head_entry(void)
 		if (head->plid == elog_plid_fsp_commit) {
 			entry = list_pop(&elog_write_to_fsp_pending,
 					struct errorlog, link);
-			opal_elog_complete(entry, elog_write_retries < MAX_RETRIES);
+			opal_elog_complete(entry,
+					elog_write_retries < MAX_RETRIES);
 			/* Reset the counter */
 			elog_plid_fsp_commit = -1;
 		}
 	}
+
 	elog_write_retries = 0;
 	unlock(&elog_write_lock);
 }
@@ -91,14 +92,14 @@ static void opal_fsp_write_complete(struct fsp_msg *read_msg)
 
 	switch (val) {
 	case FSP_STATUS_SUCCESS:
-			remove_elog_head_entry();
-			break;
-
+		remove_elog_head_entry();
+		break;
 	default:
 		if (elog_write_retries++ >= MAX_RETRIES) {
 			remove_elog_head_entry();
 			prerror("ELOG: Error in writing to FSP (0x%x)!\n", val);
 		}
+
 		break;
 	}
 
@@ -106,7 +107,7 @@ static void opal_fsp_write_complete(struct fsp_msg *read_msg)
 		prerror("ELOG: Error sending elog to FSP !\n");
 }
 
-/* write PEL format hex dump of the log to FSP */
+/* Write PEL format hex dump of the log to FSP */
 static int64_t fsp_opal_elog_write(size_t opal_elog_size)
 {
 	struct fsp_msg *elog_msg;
@@ -117,12 +118,14 @@ static int64_t fsp_opal_elog_write(size_t opal_elog_size)
 		prerror("ELOG: Failed to create message for WRITE to FSP\n");
 		return OPAL_INTERNAL_ERROR;
 	}
+
 	if (fsp_queue_msg(elog_msg, opal_fsp_write_complete)) {
 		fsp_freemsg(elog_msg);
 		elog_msg = NULL;
 		prerror("FSP: Error queueing elog update\n");
 		return OPAL_INTERNAL_ERROR;
 	}
+
 	return OPAL_SUCCESS;
 }
 
@@ -160,13 +163,13 @@ bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size)
 			rc = true;
 		}
 	}
+
 	unlock(&elog_write_to_host_lock);
 	return rc;
 }
 
 static void opal_commit_elog_in_host(void)
 {
-
 	struct errorlog *buf;
 
 	lock(&elog_write_to_host_lock);
@@ -175,13 +178,13 @@ static void opal_commit_elog_in_host(void)
 		buf = list_top(&elog_write_to_host_pending,
 				struct errorlog, link);
 		buf->log_size = create_pel_log(buf,
-					       (char *)elog_write_to_host_buffer,
-					       ELOG_WRITE_TO_HOST_BUFFER_SIZE);
+					(char *)elog_write_to_host_buffer,
+					ELOG_WRITE_TO_HOST_BUFFER_SIZE);
 		fsp_elog_write_set_head_state(ELOG_STATE_FETCHED_DATA);
 	}
+
 	unlock(&elog_write_to_host_lock);
 }
-
 
 bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 		    uint64_t opal_elog_id)
@@ -198,6 +201,7 @@ bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 			unlock(&elog_write_to_host_lock);
 			return rc;
 		}
+
 		if ((opal_elog_id != log_data->plid) &&
 		    (opal_elog_size != log_data->log_size)) {
 			unlock(&elog_write_to_host_lock);
@@ -206,12 +210,12 @@ bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 
 		memcpy((void *)buffer, elog_write_to_host_buffer,
 							opal_elog_size);
-
 		list_del(&log_data->link);
 		list_add(&elog_write_to_host_processed, &log_data->link);
 		fsp_elog_write_set_head_state(ELOG_STATE_NONE);
 		rc = true;
 	}
+
 	unlock(&elog_write_to_host_lock);
 	opal_commit_elog_in_host();
 	return rc;
@@ -226,9 +230,10 @@ bool opal_elog_ack(uint64_t ack_id)
 	lock(&elog_write_to_host_lock);
 	if (!list_empty(&elog_write_to_host_processed)) {
 		list_for_each_safe(&elog_write_to_host_processed, record,
-							next_record, link) {
+						next_record, link) {
 			if (record->plid != ack_id)
 				continue;
+
 			list_del(&record->link);
 			opal_elog_complete(record, true);
 			rc = true;
@@ -237,14 +242,15 @@ bool opal_elog_ack(uint64_t ack_id)
 
 	if ((!rc) && (!list_empty(&elog_write_to_host_pending))) {
 		log_data = list_top(&elog_write_to_host_pending,
-					struct errorlog, link);
+						struct errorlog, link);
 		if (ack_id == log_data->plid)
 			fsp_elog_write_set_head_state(ELOG_STATE_NONE);
 
 		list_for_each_safe(&elog_write_to_host_pending, record,
-							next_record, link) {
+						next_record, link) {
 			if (record->plid != ack_id)
 				continue;
+
 			list_del(&record->link);
 			opal_elog_complete(record, true);
 			rc = true;
@@ -253,6 +259,7 @@ bool opal_elog_ack(uint64_t ack_id)
 			return rc;
 		}
 	}
+
 	unlock(&elog_write_to_host_lock);
 	return rc;
 }
@@ -267,6 +274,7 @@ void opal_resend_pending_logs(void)
 					struct errorlog, link);
 		list_add_tail(&elog_write_to_host_pending, &record->link);
 	}
+
 	fsp_elog_write_set_head_state(ELOG_STATE_NONE);
 	unlock(&elog_write_to_host_lock);
 	opal_commit_elog_in_host();
@@ -282,9 +290,9 @@ static int opal_send_elog_to_fsp(void)
 	struct errorlog *head;
 	int rc = OPAL_SUCCESS;
 
-	/* Convert entry to PEL
-	 * and push it down to FSP. We wait for the ack from
-	 * FSP.
+	/*
+	 * Convert entry to PEL and push it down to FSP.
+	 * Then we wait for the ack from FSP.
 	 */
 	lock(&elog_write_lock);
 	if (!list_empty(&elog_write_to_fsp_pending)) {
@@ -295,12 +303,13 @@ static int opal_send_elog_to_fsp(void)
 
 		elog_plid_fsp_commit = head->plid;
 		head->log_size = create_pel_log(head,
-						(char *)elog_write_to_fsp_buffer,
-						ELOG_WRITE_TO_FSP_BUFFER_SIZE);
+					(char *)elog_write_to_fsp_buffer,
+					ELOG_WRITE_TO_FSP_BUFFER_SIZE);
 		rc = fsp_opal_elog_write(head->log_size);
 		unlock(&elog_write_lock);
 		return rc;
 	}
+
 	unlock(&elog_write_lock);
 	return rc;
 }
@@ -337,12 +346,13 @@ static int opal_push_logs_sync_to_fsp(struct errorlog *buf)
 		rc = (elog_msg->resp->word1 >> 8) & 0xff;
 		fsp_freemsg(elog_msg);
 	}
-	unlock(&elog_panic_write_lock);
 
+	unlock(&elog_panic_write_lock);
 	if (rc != OPAL_SUCCESS)
 		opal_elog_complete(buf, false);
 	else
 		opal_elog_complete(buf, true);
+
 	return rc;
 }
 
@@ -362,6 +372,7 @@ int elog_fsp_commit(struct errorlog *buf)
 		rc = opal_send_elog_to_fsp();
 		return rc;
 	}
+
 	list_add_tail(&elog_write_to_fsp_pending, &buf->link);
 	unlock(&elog_write_lock);
 	return rc;
@@ -369,7 +380,6 @@ int elog_fsp_commit(struct errorlog *buf)
 
 static void elog_append_write_to_host(struct errorlog *buf)
 {
-
 	lock(&elog_write_to_host_lock);
 	if (list_empty(&elog_write_to_host_pending)) {
 		list_add(&elog_write_to_host_pending, &buf->link);
@@ -390,36 +400,36 @@ static void elog_timeout_poll(void *data __unused)
 	if (list_empty(&elog_write_to_fsp_pending)) {
 		unlock(&elog_write_lock);
 		return;
-	} else {
-		head = list_top(&elog_write_to_fsp_pending,
-					struct errorlog, link);
-		now = mftb();
-		if ((tb_compare(now, head->elog_timeout) == TB_AAFTERB) ||
+	}
+
+	head = list_top(&elog_write_to_fsp_pending, struct errorlog, link);
+	now = mftb();
+	if ((tb_compare(now, head->elog_timeout) == TB_AAFTERB) ||
 			(tb_compare(now, head->elog_timeout) == TB_AEQUALB)) {
-				entry = list_pop(&elog_write_to_fsp_pending,
-						struct errorlog, link);
-				unlock(&elog_write_lock);
-				elog_append_write_to_host(entry);
-		} else
-			unlock(&elog_write_lock);
+		entry = list_pop(&elog_write_to_fsp_pending,
+				struct errorlog, link);
+		unlock(&elog_write_lock);
+		elog_append_write_to_host(entry);
+	} else {
+		unlock(&elog_write_lock);
 	}
 }
 
-/* fsp elog init function */
+/* FSP elog init function */
 void fsp_elog_write_init(void)
 {
 	if (!fsp_present())
 		return;
 
 	elog_panic_write_buffer = memalign(TCE_PSIZE,
-					   ELOG_PANIC_WRITE_BUFFER_SIZE);
+					ELOG_PANIC_WRITE_BUFFER_SIZE);
 	if (!elog_panic_write_buffer) {
 		prerror("FSP: could not allocate ELOG_PANIC_WRITE_BUFFER!\n");
 		return;
 	}
 
 	elog_write_to_fsp_buffer = memalign(TCE_PSIZE,
-						ELOG_WRITE_TO_FSP_BUFFER_SIZE);
+					ELOG_WRITE_TO_FSP_BUFFER_SIZE);
 	if (!elog_write_to_fsp_buffer) {
 		prerror("FSP: could not allocate ELOG_WRITE_BUFFER!\n");
 		return;

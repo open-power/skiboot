@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,14 +146,14 @@ void ipmi_sel_init(void)
 
 	memset(&ipmi_sel_panic_msg, 0, sizeof(struct ipmi_sel_panic_msg));
 	ipmi_sel_panic_msg.msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
-					    IPMI_RESERVE_SEL, ipmi_elog_poll,
-					    NULL, NULL, IPMI_MAX_REQ_SIZE, 2);
+					IPMI_RESERVE_SEL, ipmi_elog_poll,
+					NULL, NULL, IPMI_MAX_REQ_SIZE, 2);
 }
 
 /*
- * Allocate IPMI message
- *  For normal event, allocate memory using ipmi_mkmsg and for PANIC
- *  event, use pre-allocated buffer.
+ * Allocate IPMI message:
+ * For normal event, allocate memory using ipmi_mkmsg and for PANIC
+ * event, use pre-allocated buffer.
  */
 static struct ipmi_msg *ipmi_sel_alloc_msg(struct errorlog *elog_buf)
 {
@@ -175,13 +175,12 @@ static struct ipmi_msg *ipmi_sel_alloc_msg(struct errorlog *elog_buf)
 		ipmi_sel_panic_msg.busy = true;
 		unlock(&ipmi_sel_panic_msg.lock);
 
-		ipmi_init_msg(msg, IPMI_DEFAULT_INTERFACE,
-			      IPMI_RESERVE_SEL, ipmi_elog_poll,
-			      elog_buf, IPMI_MAX_REQ_SIZE, 2);
+		ipmi_init_msg(msg, IPMI_DEFAULT_INTERFACE, IPMI_RESERVE_SEL,
+				ipmi_elog_poll, elog_buf, IPMI_MAX_REQ_SIZE, 2);
 	} else {
 		msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_RESERVE_SEL,
-				 ipmi_elog_poll, elog_buf,
-				 NULL, IPMI_MAX_REQ_SIZE, 2);
+				ipmi_elog_poll, elog_buf, NULL,
+				IPMI_MAX_REQ_SIZE, 2);
 	}
 
 	return msg;
@@ -196,6 +195,7 @@ static void ipmi_sel_free_msg(struct ipmi_msg *msg)
 	} else {
 		ipmi_free_msg(msg);
 	}
+
 	msg = NULL;
 }
 
@@ -277,15 +277,15 @@ static void ipmi_log_sel_event_error(struct ipmi_msg *msg)
 
 static void ipmi_log_sel_event_complete(struct ipmi_msg *msg)
 {
-	prlog(PR_INFO, "SEL: New event logged [ID : %x%x]\n",
-	      msg->data[1], msg->data[0]);
+	prlog(PR_INFO, "SEL: New event logged [ID : %x%x]\n", msg->data[1],
+		msg->data[0]);
 
 	ipmi_sel_free_msg(msg);
 }
 
 /* Log SEL event with eSEL record ID */
-static void ipmi_log_sel_event(struct ipmi_msg *msg,
-			       uint8_t event_severity, uint16_t esel_record_id)
+static void ipmi_log_sel_event(struct ipmi_msg *msg, uint8_t event_severity,
+				uint16_t esel_record_id)
 {
 	/* Fill required SEL event fields */
 	ipmi_update_sel_record(event_severity, esel_record_id);
@@ -335,23 +335,23 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 	size_t req_size;
 
 	ipmi_init_esel_record();
-
 	if (msg->cmd == IPMI_CMD(IPMI_RESERVE_SEL)) {
 		first = true;
 		reservation_id = msg->data[0];
 		reservation_id |= msg->data[1] << 8;
 		if (!reservation_id) {
-			/* According to specification we should never
+			/*
+			 * According to specification we should never
 			 * get here, but just in case we do we cancel
-			 * sending the message. */
+			 * sending the message.
+			 */
 			prerror("Invalid reservation id");
 			opal_elog_complete(elog_buf, false);
 			ipmi_sel_free_msg(msg);
 			return;
 		}
 
-		pel_size = create_pel_log(elog_buf,
-					  pel_buf, IPMI_MAX_PEL_SIZE);
+		pel_size = create_pel_log(elog_buf, pel_buf, IPMI_MAX_PEL_SIZE);
 		esel_size = pel_size + sizeof(struct sel_record);
 		esel_index = 0;
 		record_id = 0;
@@ -362,9 +362,11 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 
 	/* Start or continue the IPMI_PARTIAL_ADD_SEL */
 	if (esel_index >= esel_size) {
-		/* We're all done. Invalidate the resevation id to
+		/*
+		 * We're all done. Invalidate the resevation id to
 		 * ensure we get an error if we cut in on another eSEL
-		 * message. */
+		 * message.
+		 */
 		reservation_id = 0;
 		esel_index = 0;
 
@@ -396,14 +398,14 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 
 	if (first) {
 		first = false;
-		memcpy(&msg->data[ESEL_HDR_SIZE],
-		       &sel_record, sizeof(struct sel_record));
+		memcpy(&msg->data[ESEL_HDR_SIZE], &sel_record,
+			sizeof(struct sel_record));
 		esel_index = sizeof(struct sel_record);
 		msg->req_size = esel_index + ESEL_HDR_SIZE;
 	} else {
 		pel_index = esel_index - sizeof(struct sel_record);
-		memcpy(&msg->data[ESEL_HDR_SIZE],
-		       &pel_buf[pel_index], msg->req_size - ESEL_HDR_SIZE);
+		memcpy(&msg->data[ESEL_HDR_SIZE], &pel_buf[pel_index],
+			msg->req_size - ESEL_HDR_SIZE);
 		esel_index += msg->req_size - ESEL_HDR_SIZE;
 	}
 
@@ -416,25 +418,27 @@ int ipmi_elog_commit(struct errorlog *elog_buf)
 	struct ipmi_msg *msg;
 
 	/* Only log events that needs attention */
-	if (elog_buf->event_severity < OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_REBOOT ||
-	    elog_buf->elog_origin != ORG_SAPPHIRE) {
+	if (elog_buf->event_severity <
+			OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_REBOOT ||
+			elog_buf->elog_origin != ORG_SAPPHIRE) {
 		prlog(PR_INFO, "dropping non severe PEL event\n");
 		opal_elog_complete(elog_buf, true);
 		return 0;
 	}
 
-	/* We pass a large request size in to mkmsg so that we have a
+	/*
+	 * We pass a large request size in to mkmsg so that we have a
 	 * large enough allocation to reuse the message to pass the
-	 * PEL data via a series of partial add commands.  */
+	 * PEL data via a series of partial add commands.
+	 */
 	msg = ipmi_sel_alloc_msg(elog_buf);
 	if (!msg) {
 		opal_elog_complete(elog_buf, false);
 		return OPAL_RESOURCE;
 	}
+
 	msg->error = ipmi_elog_error;
-
 	msg->req_size = 0;
-
 	if (elog_buf->event_severity == OPAL_ERROR_PANIC)
 		ipmi_queue_msg_sync(msg);
 	else
@@ -491,6 +495,7 @@ static void sel_power(uint8_t power)
 		} else {
 			opal_queue_msg(OPAL_MSG_SHUTDOWN, NULL, NULL, SOFT_OFF);
 		}
+
 		break;
 	case SOFT_REBOOT:
 		prlog(PR_NOTICE, "Soft reboot requested\n");
@@ -501,6 +506,7 @@ static void sel_power(uint8_t power)
 		} else {
 			opal_queue_msg(OPAL_MSG_SHUTDOWN, NULL, NULL, SOFT_REBOOT);
 		}
+
 		break;
 	default:
 		prlog(PR_WARNING, "requested bad power state: %02x\n",
@@ -510,7 +516,7 @@ static void sel_power(uint8_t power)
 
 static uint32_t occ_sensor_id_to_chip(uint8_t sensor, uint32_t *chip)
 {
-	/* todo: lookup sensor ID node in the DT, and map to a chip id */
+	/* TODO: Lookup sensor ID node in the DT, and map to a chip id */
 	(void)sensor;
 	*chip = 0;
 	return 0;
@@ -553,9 +559,8 @@ void ipmi_parse_sel(struct ipmi_msg *msg)
 			msg->resp_size, sel.netfun, sel.cmd);
 
 	/* Only accept OEM SEL messages */
-	if (sel.id[0] != SEL_OEM_ID_0 ||
-	    sel.id[1] != SEL_OEM_ID_1 ||
-	    sel.type != SEL_RECORD_TYPE_OEM) {
+	if (sel.id[0] != SEL_OEM_ID_0 || sel.id[1] != SEL_OEM_ID_1 ||
+		sel.type != SEL_RECORD_TYPE_OEM) {
 		prlog(PR_WARNING, "unknown SEL %02x%02x (type %02x)\n",
 		      sel.id[0], sel.id[1], sel.type);
 		return;
