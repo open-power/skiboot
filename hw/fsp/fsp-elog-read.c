@@ -479,7 +479,6 @@ static void fsp_opal_resend_pending_logs(void)
 static bool opal_kexec_elog_notify(void *data __unused)
 {
 	lock(&elog_read_lock);
-	elog_reject_head();
 	elog_enabled = false;
 	opal_update_pending_evt(OPAL_EVENT_ERROR_LOG_AVAIL, 0);
 	unlock(&elog_read_lock);
