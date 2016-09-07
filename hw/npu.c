@@ -644,7 +644,7 @@ static void npu_ioda_init(struct npu *p)
 	/* PCT - Reset to reserved PE# */
 	for (i = 0; i < ARRAY_SIZE(p->pce_cache); i++) {
 		data64 = &p->pce_cache[i];
-		*data64 = SETFIELD(NPU_IODA_PCT_PE, 0ul, NPU_NUM_OF_PES);
+		*data64 = SETFIELD(NPU_IODA_PCT_PE, 0ul, 0ul);
 		*data64 |= NPU_IODA_PCT_LINK_ENABLED;
 	}
 
@@ -1745,7 +1745,7 @@ static void npu_add_phb_properties(struct npu *p)
 	dt_add_property_cells(np, "ibm,opal-num-pes",
 			      NPU_NUM_OF_PES);
 	dt_add_property_cells(np, "ibm,opal-reserved-pe",
-			      NPU_NUM_OF_PES);
+			      0);
         dt_add_property_cells(np, "ibm,opal-tce-kill",
 			      hi32(tkill), lo32(tkill));
 
@@ -1854,4 +1854,3 @@ void probe_npu(void)
 	dt_for_each_compatible(dt_root, np, "ibm,power8-npu-pciex")
 		npu_create_phb(np);
 }
-
