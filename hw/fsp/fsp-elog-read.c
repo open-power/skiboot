@@ -127,9 +127,6 @@ static int64_t fsp_send_elog_ack(uint32_t log_id)
 /* Retrieve error log from FSP with TCE for the data transfer. */
 static void fsp_elog_check_and_fetch_head(void)
 {
-	if (!elog_enabled)
-		return;
-
 	lock(&elog_read_lock);
 	if (elog_read_from_fsp_head_state != ELOG_STATE_NONE ||
 			list_empty(&elog_read_pending)) {
