@@ -71,3 +71,4 @@ clean:
 
 distclean: clean
 	$(RM) -f $(LINKS) asm
+	$(RM) -f libflash ccan version.c .version common
