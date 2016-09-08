@@ -55,9 +55,14 @@ static struct pci_cfg_reg_filter *pci_virt_find_filter(
 	if (!pvd || !len || start >= pvd->cfg_size)
 		return NULL;
 
+	/* Return filter if there is overlapped region. We don't
+	 * require strict matching for more flexibility. It also
+	 * means the associated handler should validate the register
+	 * offset and length.
+	 */
 	list_for_each(&pvd->pcrf, pcrf, link) {
-		if (start >= pcrf->start &&
-		    (start + len) <= (pcrf->start + len))
+		if (start < (pcrf->start + pcrf->len) &&
+		    (start + len) > pcrf->start)
 			return pcrf;
 	}
 
