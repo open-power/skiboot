@@ -1196,13 +1196,13 @@ static void slw_dump_timer_ffdc(void)
 	 * root-cause. OPAL/skiboot may be stuck on some operation that
 	 * requires SLW timer state machine (e.g. core powersaving)
 	 */
-	prlog(PR_ERR, "SLW: Register state:\n");
+	prlog(PR_DEBUG, "SLW: Register state:\n");
 
 	for (i = 0; i < ARRAY_SIZE(dump_regs); i++) {
 		uint32_t reg = dump_regs[i];
 		rc = xscom_read(slw_timer_chip, reg, &val);
 		if (rc) {
-			prlog(PR_ERR, "SLW: XSCOM error %lld reading"
+			prlog(PR_DEBUG, "SLW: XSCOM error %lld reading"
 			      " reg 0x%x\n", rc, reg);
 			break;
 		}
@@ -1249,7 +1249,25 @@ void slw_update_timer_expiry(uint64_t new_target)
 			if (!(gen & 1))
 				break;
 			if (tb_compare(now + msecs_to_tb(1), mftb()) == TB_ABEFOREB) {
-				prerror("SLW: Stuck with odd generation !\n");
+				/**
+				 * @fwts-label SLWTimerStuck
+				 * @fwts-advice The SLeep/Winkle Engine (SLW)
+				 * failed to increment the generation number
+				 * within our timeout period (it *should* have
+				 * done so within ~10us, not >1ms. OPAL uses
+				 * the SLW timer to schedule some operations,
+				 * but can fall back to the (much less frequent
+				 * OPAL poller, which although does not affect
+				 * functionality, runs *much* less frequently.
+				 * This could have the effect of slow I2C
+				 * operations (for example). It may also mean
+				 * that you *had* an increase in jitter, due
+				 * to slow interactions with SLW.
+				 * This error may also occur if the machine
+				 * is connected to via soft FSI.
+				 */
+				prerror("SLW: timer stuck, falling back to OPAL pollers. You will likely have slower I2C and may have experienced increased jitter.\n");
+				prlog(PR_DEBUG, "SLW: Stuck with odd generation !\n");
 				slw_has_timer = false;
 				slw_dump_timer_ffdc();
 				return;
