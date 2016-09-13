@@ -52,6 +52,7 @@
 #define OPAL_XSCOM_CLOCK_ERROR	-27
 #define OPAL_XSCOM_PARITY_ERROR	-28
 #define OPAL_XSCOM_TIMEOUT	-29
+#define OPAL_XSCOM_CTR_OFFLINED	-30
 
 /* API Tokens (in r0) */
 #define OPAL_INVALID_CALL		       -1

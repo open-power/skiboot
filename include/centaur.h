@@ -24,6 +24,7 @@
 
 struct centaur_chip {
 	bool			valid;
+	bool			online;
 	uint8_t			ec_level;
 	uint32_t		part_id;
 	uint32_t		fsi_master_chip_id;
@@ -31,6 +32,7 @@ struct centaur_chip {
 	uint32_t		fsi_master_engine;
 	uint32_t		scache_disable_count;
 	bool			scache_was_enabled;
+	uint32_t		error_count;
 	struct lock		lock;
 
 	/* Used by hw/p8-i2c.c */
