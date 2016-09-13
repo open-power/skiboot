@@ -323,7 +323,7 @@ static int64_t mfsi_dump_ctrl_regs(struct mfsi *mfsi)
         };
 	for (i = 0; i < ARRAY_SIZE(dump_regs); i++) {
 		uint32_t val;
-	
+
 		opb_stat = mfsi_opb_read(mfsi, mfsi->reg_base + dump_regs[i], &val);
 		if (opb_stat) {
 			/* Error on dump, give up */
@@ -335,7 +335,7 @@ static int64_t mfsi_dump_ctrl_regs(struct mfsi *mfsi)
 	}
 	for (i = 0; i < 8; i++) {
 		uint32_t val;
-	
+
 		opb_stat = mfsi_opb_read(mfsi, mfsi->reg_base + MFSI_REG_MSTAP(i), &val);
 		if (opb_stat) {
 			/* Error on dump, give up */
@@ -456,7 +456,7 @@ static int64_t mfsi_analyse_fsi_error(struct mfsi *mfsi)
 	mfsi_log(PR_ERR, mfsi, " MESRB0=%08x\n", mesrb0);
 
 	/* bits 8:15 are internal parity errors in the master */
-	if (mesrb0 & 0x00FF0000) {	
+	if (mesrb0 & 0x00FF0000) {
 		mfsi_log(PR_ERR, mfsi, " Master parity error !\n");
 	} else {
 		/* bits 0:3 are a specific error code */
@@ -511,7 +511,7 @@ static int64_t mfsi_handle_error(struct mfsi *mfsi, uint32_t port,
 
 	mfsi_log(PR_ERR, mfsi, "Access error on port %d, stat=%012llx\n",
 		 port, opb_stat);
-	
+
 	/* First handle stat codes we synthetized */
 	if (opb_stat & OPB_ERR_XSCOM_ERR)
 		return OPAL_HARDWARE;
@@ -544,7 +544,7 @@ static int64_t mfsi_handle_error(struct mfsi *mfsi, uint32_t port,
 	 * which means an out of bounds control reg
 	 */
 	if ((opb_stat & OPB_STAT_ERRACK) &&
-	    ((fsi_addr & ~0x2ffu) == mfsi->reg_base)) {		
+	    ((fsi_addr & ~0x2ffu) == mfsi->reg_base)) {
 		mfsi_log(PR_ERR, mfsi, " Error appears to be out of bounds reg %08x\n",
 			 fsi_addr);
 		found_root_cause = true;
