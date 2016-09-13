@@ -2478,6 +2478,7 @@ static int64_t phb3_sm_complete_reset(struct phb3 *p)
 		return phb3_set_sm_timeout(p, msecs_to_tb(100));
 	case PHB3_STATE_CRESET_FRESET:
 		p->state = PHB3_STATE_FUNCTIONAL;
+		p->retry_state = PHB3_STATE_FRESET_START;
 		p->flags |= PHB3_CFG_BLOCKED;
 		return phb3_sm_fundamental_reset(p);
 	default:
