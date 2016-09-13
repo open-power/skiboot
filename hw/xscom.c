@@ -130,6 +130,7 @@ static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_add
 {
 	struct timespec ts;
 	unsigned int stat = GETFIELD(SPR_HMER_XSCOM_STATUS, hmer);
+	int64_t rc = OPAL_HARDWARE;
 
 	/* XXX Figure out error codes from doc and error
 	 * recovery procedures
@@ -167,16 +168,25 @@ static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_add
 				"XSCOM: %s-busy error gcid=0x%x pcb_addr=0x%x "
 				"stat=0x%x\n", is_write ? "write" : "read",
 				gcid, pcb_addr, stat);
-		return OPAL_BUSY;
+		return OPAL_XSCOM_BUSY;
 
 	case 2: /* CPU is asleep, reset XSCOM engine and return */
 		xscom_reset(gcid);
-		return OPAL_WRONG_STATE;
+		return OPAL_XSCOM_CHIPLET_OFF;
 	case 3: /* Partial good */
+		rc = OPAL_XSCOM_PARTIAL_GOOD;
+		break;
 	case 4: /* Invalid address / address error */
+		rc = OPAL_XSCOM_ADDR_ERROR;
+		break;
 	case 5: /* Clock error */
+		rc = OPAL_XSCOM_CLOCK_ERROR;
+		break;
 	case 6: /* Parity error  */
+		rc = OPAL_XSCOM_PARITY_ERROR;
+		break;
 	case 7: /* Time out */
+		rc = OPAL_XSCOM_TIMEOUT;
 		break;
 	}
 
@@ -189,7 +199,7 @@ static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_add
 	xscom_reset(gcid);
 
 	/* Non recovered ... just fail */
-	return OPAL_HARDWARE;
+	return rc;
 }
 
 static void xscom_handle_ind_error(uint64_t data, uint32_t gcid,
