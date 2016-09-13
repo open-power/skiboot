@@ -39,6 +39,9 @@
 /* Is that correct ? */
 #define MAX_CENTAURS_PER_CHIP	8
 
+/* Mark the centaur offline after this many consecutive errors */
+#define CENTAUR_ERR_OFFLINE_THRESHOLD	10
+
 /*
  * FSI2PIB register definitions (this could be moved out if we were to
  * support FSI master to other chips.
@@ -319,12 +322,24 @@ int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val)
 
 	if (!centaur)
 		return OPAL_PARAMETER;
+	if (!centaur->online)
+		return OPAL_XSCOM_CTR_OFFLINED;
 
 	lock(&centaur->lock);
 	if (pcb_addr & XSCOM_ADDR_IND_FLAG)
 		rc = centaur_xscom_ind_read(centaur, pcb_addr, val);
 	else
 		rc = centaur_fsiscom_read(centaur, pcb_addr, val);
+
+	/* We mark the centaur offline if we get too many errors on
+	 * consecutive accesses
+	 */
+	if (rc) {
+		centaur->error_count++;
+		if (centaur->error_count > CENTAUR_ERR_OFFLINE_THRESHOLD)
+			centaur->online = false;
+	} else
+		centaur->error_count = 0;
 	unlock(&centaur->lock);
 
 	return rc;
@@ -337,12 +352,24 @@ int64_t centaur_xscom_write(uint32_t id, uint64_t pcb_addr, uint64_t val)
 
 	if (!centaur)
 		return OPAL_PARAMETER;
+	if (!centaur->online)
+		return OPAL_XSCOM_CTR_OFFLINED;
 
 	lock(&centaur->lock);
 	if (pcb_addr & XSCOM_ADDR_IND_FLAG)
 		rc = centaur_xscom_ind_write(centaur, pcb_addr, val);
 	else
 		rc = centaur_fsiscom_write(centaur, pcb_addr, val);
+
+	/* We mark the centaur offline if we get too many errors on
+	 * consecutive accesses
+	 */
+	if (rc) {
+		centaur->error_count++;
+		if (centaur->error_count > CENTAUR_ERR_OFFLINE_THRESHOLD)
+			centaur->online = false;
+	} else
+		centaur->error_count = 0;
 	unlock(&centaur->lock);
 
 	return rc;
@@ -425,6 +452,7 @@ static bool centaur_add(uint32_t part_id, uint32_t mchip, uint32_t meng,
 	centaur->fsi_master_chip_id = mchip;
 	centaur->fsi_master_port = mport;
 	centaur->fsi_master_engine = meng ? MFSI_cMFSI1 : MFSI_cMFSI0;
+	centaur->online = true;
 	init_lock(&centaur->lock);
 	list_head_init(&centaur->i2cms);
 
