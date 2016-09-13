@@ -403,6 +403,13 @@ int xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val)
 	if (!opal_addr_valid(val))
 		return OPAL_PARAMETER;
 
+	/* Due to a bug in some versions of the PRD wrapper app, errors
+	 * might not be properly forwarded to PRD, in which case the data
+	 * set here will be used. Rather than a random value let's thus
+	 * initialize the data to a known clean state.
+	 */
+	*val = 0xdeadbeefdeadbeefull;
+
 	/* Handle part ID decoding */
 	switch(partid >> 28) {
 	case 0: /* Normal processor chip */
