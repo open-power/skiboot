@@ -24,9 +24,12 @@ Each node has a minimum set of properties describing the sensor :
   OPAL_SENSOR_READ call to be used by Linux to get the value of
   a sensor attribute. A sensor handler has the following encoding : ::
 
-		|  Attr. |  Res.  |   Resource     |
-		| Number | Class  |      Id        |
-		|--------|--------|----------------|
+		|  Attr. |Fam|Res. |   Resource     |
+		| Number |ily|Class|      Id        |
+		|--------|---|-----|----------------|
+
+  The sensor family (FSP, DTS, etc) is used to dispatch the call to
+  the appriopriate skiboot component.
 
 - a "sensor-status" property giving the state of the sensor. The
   status bits have the slightly meanings depending on the resource

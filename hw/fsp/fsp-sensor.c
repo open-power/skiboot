@@ -617,7 +617,7 @@ static struct dt_node *sensor_get_node(struct dt_node *sensors,
 }
 
 #define sensor_handler(header, attr_num) \
-	sensor_make_handler((header).frc, (header).rid, attr_num)
+	sensor_make_handler(SENSOR_FSP, (header).frc, (header).rid, attr_num)
 
 static int add_sensor_prs(struct dt_node *sensors, struct sensor_prs *prs)
 {

@@ -22,18 +22,24 @@
  * its resource class (temperature, fans ...), a resource identifier
  * and an attribute number (data, status, ...) :
  *
- *                 Res.
- *     | Attr.  | Class  |   Resource Id  |
- *     |--------|--------|----------------|
+ *                    Res.
+ *     | Attr.  |Fam Class|   Resource Id  |
+ *     |--------|---|-----|----------------|
  *
- *
+ * The last 3bits of the resource class are used to hold the family
+ * number. That leaves 32 differents resource classes. This is enough
+ * for the FSP as it uses 15.
+ */
+
+/*
  * Helper routines to build or use the sensor handler.
  */
-#define sensor_make_handler(sensor_class, sensor_rid, sensor_attr) \
-	(((sensor_attr) << 24) | ((sensor_class) & 0xff) << 16 | \
-	 ((sensor_rid) & 0xffff))
+#define sensor_make_handler(family, class, rid, attr)			\
+	(((attr) << 24) | ((family) & 0x7) << 21 | ((class) & 0x1f) << 16 | \
+	 ((rid) & 0xffff))
 
-#define sensor_get_frc(handler)		(((handler) >> 16) & 0xff)
+#define sensor_get_family(handler)	(((handler) >> 21) & 0x7)
+#define sensor_get_frc(handler)		(((handler) >> 16) & 0x1f)
 #define sensor_get_rid(handler)		((handler) & 0xffff)
 #define sensor_get_attr(handler)	((handler) >> 24)
 
@@ -41,12 +47,14 @@
  * Sensor families
  *
  * This identifier is used to dispatch calls to OPAL_SENSOR_READ to
- * the appropriate component. FSP is the initial family.
+ * the appropriate component. FSP is the initial family and you can
+ * have up to eight, as we are hijacking the last 3bits of the
+ * resource class.
  */
-#define SENSOR_FSP 0x0
-#define SENSOR_DTS 0x80
-
-#define sensor_is_dts(handler)	(sensor_get_frc(handler) & SENSOR_DTS)
+enum {
+	SENSOR_FSP = 0,
+	SENSOR_DTS = 7,
+};
 
 /*
  * root node of all sensors : /ibm,opal/sensors

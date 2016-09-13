@@ -290,7 +290,7 @@ int64_t dts_sensor_read(uint32_t sensor_hndl, uint32_t *sensor_data)
 
 	memset(&dts, 0, sizeof(struct dts));
 
-	switch (sensor_get_frc(sensor_hndl) & ~SENSOR_DTS) {
+	switch (sensor_get_frc(sensor_hndl)) {
 	case SENSOR_DTS_CORE_TEMP:
 		rc = dts_read_core_temp(rid, &dts);
 		break;
@@ -326,11 +326,11 @@ int64_t dts_sensor_read(uint32_t sensor_hndl, uint32_t *sensor_data)
 	(((chip_id) & 0x3ff) | ((dimm_id) << 10))
 
 #define core_handler(core_id, attr_id)					\
-	sensor_make_handler(SENSOR_DTS_CORE_TEMP | SENSOR_DTS,		\
+	sensor_make_handler(SENSOR_DTS, SENSOR_DTS_CORE_TEMP,		\
 			    core_id, attr_id)
 
 #define cen_handler(cen_id, attr_id)					\
-	sensor_make_handler(SENSOR_DTS_MEM_TEMP|SENSOR_DTS,		\
+	sensor_make_handler(SENSOR_DTS, SENSOR_DTS_MEM_TEMP,		\
 			    centaur_make_id(chip_id, 0), attr_id)
 
 bool dts_sensor_create_nodes(struct dt_node *sensors)
