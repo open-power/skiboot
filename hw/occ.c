@@ -154,8 +154,8 @@ static bool wait_for_all_occ_init(void)
 		      *(uint64_t *)occ_data_area);
 	}
 	end_time = mftb();
-	prlog(PR_NOTICE, "OCC: All Chip Rdy after %lld ms\n",
-	      (end_time - start_time) / 512 / 1000);
+	prlog(PR_NOTICE, "OCC: All Chip Rdy after %lu ms\n",
+	      tb_to_msecs(end_time - start_time));
 	return true;
 }
 
