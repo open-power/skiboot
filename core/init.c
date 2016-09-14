@@ -817,7 +817,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt, u32 master_cpu)
 	cpu_set_pm_enable(true);
 
 	/*
-	 * Sycnhronize time bases. Thi resets all the TB values to a small
+	 * Synchronize time bases. Thi resets all the TB values to a small
 	 * value (so they appear to go backward at this point), and synchronize
 	 * all core timebases to the global ChipTOD network
 	 */
