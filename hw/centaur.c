@@ -336,8 +336,20 @@ int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val)
 	 */
 	if (rc) {
 		centaur->error_count++;
-		if (centaur->error_count > CENTAUR_ERR_OFFLINE_THRESHOLD)
+		if (centaur->error_count > CENTAUR_ERR_OFFLINE_THRESHOLD) {
 			centaur->online = false;
+			/**
+			 * @fwts-label CentaurOfflinedTooManyErrors
+			 * @fwts-advice OPAL marked a Centaur (memory buffer)
+			 * as offline due to CENTAUR_ERR_OFFLINE_THRESHOLD (10)
+			 * consecutive errors on XSCOMs to this centaur.
+			 * OPAL will now return OPAL_XSCOM_CTR_OFFLINED and not
+			 * try any further XSCOMs. This is likely caused by
+			 * some hardware issue or PRD recovery issue.
+			 */
+			prlog(PR_ERR, "CENTAUR: Offlined %x due to > %d consecutive XSCOM errors. No more XSCOMs to this centaur.\n",
+			      id, CENTAUR_ERR_OFFLINE_THRESHOLD);
+		}
 	} else
 		centaur->error_count = 0;
 	unlock(&centaur->lock);
