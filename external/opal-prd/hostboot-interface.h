@@ -41,6 +41,11 @@ enum MemoryError_t
 	MEMORY_ERROR_UE = 1,
 };
 
+/* Capability sets, for get_interface_capabilities */
+#define HBRT_CAPS_SET0_COMMON		0
+#define HBRT_CAPS_SET1_OPAL		1
+#define HBRT_CAPS_SET2_PHYP		2
+
 struct host_interfaces {
 	/** Interface version. */
 	uint64_t interface_version;
@@ -277,8 +282,17 @@ struct host_interfaces {
 	int (*memory_error)( uint64_t i_startAddr, uint64_t i_endAddr,
 					  enum MemoryError_t i_errorType );
 
+	/**
+	 * @brief Query the prd infrastructure for interface capabilities.
+	 * @param[in] i_set The set of capabilites to retrieve
+	 *
+	 * @return a bitmask containing the relevant HBRT_CAPS_* for
+	 *	this implementation and the specified set.
+	 */
+	uint64_t (*get_interface_capabilities)(uint64_t i_set);
+
 	/* Reserve some space for future growth. */
-	void (*reserved[32])(void);
+	void (*reserved[31])(void);
 };
 
 struct runtime_interfaces {

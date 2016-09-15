@@ -649,6 +649,11 @@ int hservice_memory_error(uint64_t i_start_addr, uint64_t i_endAddr,
 	return 0;
 }
 
+uint64_t hservice_get_interface_capabilities(uint64_t set)
+{
+	return 0;
+}
+
 int hservices_init(struct opal_prd_ctx *ctx, void *code)
 {
 	uint64_t *s, *d;
