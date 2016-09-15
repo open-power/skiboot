@@ -186,10 +186,11 @@ hinterface:
 	CALLBACK_THUNK(hservice_i2c_write)
 	CALLBACK_THUNK(hservice_ipmi_msg)
 	CALLBACK_THUNK(hservice_memory_error)
+	CALLBACK_THUNK(hservice_get_interface_capabilities)
 .globl __hinterface_pad
 __hinterface_pad:
 	/* Reserved space for future growth */
-	.space 32*8,0
+	.space 31*8,0
 .globl __hinterface_end
 __hinterface_end:
 	/* Eye catcher for debugging */
