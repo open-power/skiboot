@@ -297,13 +297,14 @@ int hservice_scom_read(uint64_t chip_id, uint64_t addr, void *buf)
 				"failed: %m", chip_id, addr);
 		return 0;
 	}
+	rc = (int)scom.rc;
 
-	pr_debug("SCOM: read: chip 0x%lx, addr 0x%lx, val 0x%lx",
-			chip_id, addr, scom.data);
+	pr_debug("SCOM: read: chip 0x%lx, addr 0x%lx, val 0x%lx, rc %d",
+		 chip_id, addr, scom.data, rc);
 
 	*(uint64_t *)buf = htobe64(scom.data);
 
-	return 0;
+	return rc;
 }
 
 int hservice_scom_write(uint64_t chip_id, uint64_t addr,
@@ -322,11 +323,12 @@ int hservice_scom_write(uint64_t chip_id, uint64_t addr,
 				"failed: %m", chip_id, addr);
 		return 0;
 	}
+	rc = (int)scom.rc;
 
-	pr_debug("SCOM: write: chip 0x%lx, addr 0x%lx, val 0x%lx",
-			chip_id, addr, scom.data);
+	pr_debug("SCOM: write: chip 0x%lx, addr 0x%lx, val 0x%lx, rc %d",
+		 chip_id, addr, scom.data, rc);
 
-	return 0;
+	return rc;
 }
 
 uint64_t hservice_get_reserved_mem(const char *name, uint32_t instance)
@@ -651,6 +653,9 @@ int hservice_memory_error(uint64_t i_start_addr, uint64_t i_endAddr,
 
 uint64_t hservice_get_interface_capabilities(uint64_t set)
 {
+	if (set == HBRT_CAPS_SET1_OPAL)
+		return HBRT_CAPS_OPAL_HAS_XSCOM_RC;
+
 	return 0;
 }
 
