@@ -46,6 +46,14 @@ enum MemoryError_t
 #define HBRT_CAPS_SET1_OPAL		1
 #define HBRT_CAPS_SET2_PHYP		2
 
+/* Capability flags */
+
+/**
+ * xscom_read and xscom_write return proper return codes on error.
+ * Previous implementations may have incorrectly ignored failures.
+ */
+#define HBRT_CAPS_OPAL_HAS_XSCOM_RC   (1ul << 0)
+
 struct host_interfaces {
 	/** Interface version. */
 	uint64_t interface_version;
