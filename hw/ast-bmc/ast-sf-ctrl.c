@@ -693,6 +693,7 @@ static int ast_sf_setup(struct spi_flash_ctrl *ctrl, uint32_t *tsize)
 	case 0xc22018: /* MX25L12835F */
 	case 0xc22019: /* MX25L25635F */
 	case 0xc2201a: /* MX66L51235F */
+	case 0xc2201b: /* MX66L1G45G */
 		return ast_sf_setup_macronix(ct, info);
 	case 0xef4018: /* W25Q128BV */
 		return ast_sf_setup_winbond(ct, info);
