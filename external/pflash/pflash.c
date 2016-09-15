@@ -29,6 +29,7 @@
 #include <limits.h>
 #include <arpa/inet.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
@@ -135,7 +136,7 @@ static void print_flash_info(uint32_t toc)
 	printf("Flash info:\n");
 	printf("-----------\n");
 	printf("Name          = %s\n", fl_name);
-	printf("Total size    = %dMB \n", fl_total_size >> 20);
+	printf("Total size    = %"PRIu64"dMB \n", fl_total_size >> 20);
 	printf("Erase granule = %dKB \n", fl_erase_granule >> 10);
 
 	if (bmc_flash)
