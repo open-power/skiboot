@@ -804,7 +804,7 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 		u64 freq = be32_to_cpu(p->nest_freq_mhz);
 
 		freq *= 1000000;
-		dt_add_property_cells(dt_root, "nest-frquency",
+		dt_add_property_cells(dt_root, "nest-frequency",
 				      hi32(freq), lo32(freq));
 	}
 }
