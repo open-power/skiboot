@@ -878,7 +878,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Unlock flash (PNOR only) */
-	if ((erase || program || do_clear) && !bmc_flash) {
+	if ((erase || program || do_clear) && !bmc_flash && !flashfilename) {
 		need_relock = arch_flash_set_wrprotect(bl, false);
 		if (need_relock == -1) {
 			fprintf(stderr, "Architecture doesn't support write protection on flash\n");
