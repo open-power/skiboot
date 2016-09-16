@@ -90,7 +90,7 @@ prop: #address-cells size: 4 val: 00000002
 prop: #size-cells size: 4 val: 00000002
 prop: lid-type size: 5 val: 7068797000
 prop: compatible size: 24 val: 69626d2c706f7765726e760069626d2c666972656e7a6500
-prop: nest-frquency size: 8 val: 0000000077359400
+prop: nest-frequency size: 8 val: 0000000077359400
 prop: skiboot,maxmem size: 8 val: 8000001fffffffff
 prop: model size: 9 val: 383234372d32324c00
 prop: model-name size: 23 val: 49424d20506f7765722053797374656d20533832324c00
@@ -1991,6 +1991,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: scom-controller size: 0 val: 
   prop: compatible size: 27 val: 69626d2c7873636f6d0069626d2c706f776572372d7873636f6d00
   prop: reg size: 16 val: 00003c00000000000000000800000000
+  prop: bus-frequency size: 8 val: 000000001dcd6500
   prop: ibm,dbob-id size: 4 val: 00000000
   prop: ibm,occ-functional-state size: 4 val: 00000001
   prop: ibm,module-vpd size: 65536 val: 000f17ba5598401f3bd42b84280052540456484452564402303150540e56544f43d500370074
@@ -3715,6 +3716,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: scom-controller size: 0 val: 
   prop: compatible size: 27 val: 69626d2c7873636f6d0069626d2c706f776572372d7873636f6d00
   prop: reg size: 16 val: 00003c08000000000000000800000000
+  prop: bus-frequency size: 8 val: 000000001dcd6500
   prop: ibm,dbob-id size: 4 val: 00000000
   prop: ibm,occ-functional-state size: 4 val: 00000001
   prop: ibm,module-vpd size: 65536 val: 000f17ba5598401f3bd42b84280052540456484452564402303150540e56544f43d500370074
@@ -5436,6 +5438,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: scom-controller size: 0 val: 
   prop: compatible size: 27 val: 69626d2c7873636f6d0069626d2c706f776572372d7873636f6d00
   prop: reg size: 16 val: 00003c80000000000000000800000000
+  prop: bus-frequency size: 8 val: 000000001dcd6500
   prop: ibm,dbob-id size: 4 val: 00000000
   prop: ibm,occ-functional-state size: 4 val: 00000001
   prop: ibm,module-vpd size: 65536 val: 000f17ba5598401f3bd42b84280052540456484452564402303150540e56544f43d500370074
@@ -7151,6 +7154,7 @@ prop: ibm,enabled-idle-states size: 24 val: 6e617000666173742d736c65657000727677
   prop: scom-controller size: 0 val: 
   prop: compatible size: 27 val: 69626d2c7873636f6d0069626d2c706f776572372d7873636f6d00
   prop: reg size: 16 val: 00003c88000000000000000800000000
+  prop: bus-frequency size: 8 val: 000000001dcd6500
   prop: ibm,dbob-id size: 4 val: 00000000
   prop: ibm,occ-functional-state size: 4 val: 00000001
   prop: ibm,module-vpd size: 65536 val: 000f17ba5598401f3bd42b84280052540456484452564402303150540e56544f43d500370074
