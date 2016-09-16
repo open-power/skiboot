@@ -1207,7 +1207,7 @@ static void slw_dump_timer_ffdc(void)
 			      " reg 0x%x\n", rc, reg);
 			break;
 		}
-		prlog(PR_ERR, "SLW:  %5x = %016llx\n", reg, val);
+		prlog(PR_DEBUG, "SLW:  %5x = %016llx\n", reg, val);
 	}
 }
 
