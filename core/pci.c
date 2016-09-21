@@ -521,7 +521,7 @@ static void pci_slot_power_off(struct phb *phb, struct pci_device *pd)
 			break;
 
 		check_timers(false);
-		time_wait(10);
+		time_wait_ms(10);
 	} while (--wait >= 0);
 
 	pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
