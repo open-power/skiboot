@@ -707,6 +707,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 * Hack alert: When entering via the OPAL entry point, fdt
 	 * is set to -1, we record that and pass it to parse_hdat
 	 */
+
+	dt_root = dt_new_root("");
+
 	if (fdt == (void *)-1ul) {
 		if (parse_hdat(true) < 0)
 			abort();

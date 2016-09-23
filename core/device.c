@@ -805,8 +805,6 @@ void dt_expand(const void *fdt)
 {
 	printf("FDT: Parsing fdt @%p\n", fdt);
 
-	dt_root = dt_new_root("");
-
 	if (dt_expand_node(dt_root, fdt, 0) < 0)
 		abort();
 }

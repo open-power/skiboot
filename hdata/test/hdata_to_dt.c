@@ -232,6 +232,8 @@ int main(int argc, char *argv[])
 		fclose(stderr);
 	}
 
+	dt_root = dt_new_root("");
+
 	if(parse_hdat(false) < 0) {
 		fprintf(stderr, "FATAL ERROR parsing HDAT\n");
 		exit(EXIT_FAILURE);

@@ -1097,8 +1097,6 @@ int parse_hdat(bool is_opal)
 
 	fixup_spira();
 
-	dt_root = dt_new_root("");
-
 	/*
 	 * Basic DT root stuff
 	 */
