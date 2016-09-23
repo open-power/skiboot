@@ -1,5 +1,8 @@
 [Unit]
 Description=OPAL PRD daemon
+ConditionArchitecture=ppc64-le
+ConditionVirtualization=false
+ConditionPathExists=/sys/firmware/devicetree/base/ibm,opal/diagnostics
 
 [Service]
 ExecStart=/usr/sbin/opal-prd --pnor /dev/mtd0
