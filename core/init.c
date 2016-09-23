@@ -645,9 +645,9 @@ static void per_thread_sanity_checks(void)
 }
 
 /* Called from head.S, thus no prototype. */
-void main_cpu_entry(const void *fdt, u32 master_cpu);
+void main_cpu_entry(const void *fdt);
 
-void __noreturn __nomcount main_cpu_entry(const void *fdt, u32 master_cpu)
+void __noreturn __nomcount main_cpu_entry(const void *fdt)
 {
 	/*
 	 * WARNING: At this point. the timebases have
@@ -708,10 +708,10 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt, u32 master_cpu)
 	 * is set to -1, we record that and pass it to parse_hdat
 	 */
 	if (fdt == (void *)-1ul) {
-		if (parse_hdat(true, master_cpu) < 0)
+		if (parse_hdat(true) < 0)
 			abort();
 	} else if (fdt == NULL) {
-		if (parse_hdat(false, master_cpu) < 0)
+		if (parse_hdat(false) < 0)
 			abort();
 	} else {
 		dt_expand(fdt);
