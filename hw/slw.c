@@ -480,6 +480,20 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
  */
 static struct cpu_idle_states power9_cpu_idle_states[] = {
 	{
+		.name = "stop0_lite", /* Enter stop0 with no state loss */
+		.latency_ns = 200,
+		.residency_ns = 2000,
+		.flags = 0*OPAL_PM_DEC_STOP \
+		       | 0*OPAL_PM_TIMEBASE_STOP  \
+		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
+		       | 1*OPAL_PM_STOP_INST_FAST,
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(0) \
+				 | OPAL_PM_PSSCR_MTL(3) \
+				 | OPAL_PM_PSSCR_TR(3),
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
+	{
 		.name = "stop0",
 		.latency_ns = 300,
 		.residency_ns = 3000,
@@ -489,8 +503,26 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
 		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_FAST,
-		.pm_ctrl_reg_val = 0,
-		.pm_ctrl_reg_mask = 0xF },
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(0) \
+				 | OPAL_PM_PSSCR_MTL(3) \
+				 | OPAL_PM_PSSCR_TR(3) \
+				 | OPAL_PM_PSSCR_ESL \
+				 | OPAL_PM_PSSCR_EC,
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
+	{
+		.name = "stop1_lite", /* Enter stop1 with no state loss */
+		.latency_ns = 4900,
+		.residency_ns = 49000,
+		.flags = 0*OPAL_PM_DEC_STOP \
+		       | 0*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
+		       | 1*OPAL_PM_STOP_INST_FAST,
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(1) \
+				 | OPAL_PM_PSSCR_MTL(3) \
+				 | OPAL_PM_PSSCR_TR(3),
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
 	{
 		.name = "stop1",
 		.latency_ns = 5000,
@@ -501,8 +533,26 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
 		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_FAST,
-		.pm_ctrl_reg_val = 1,
-		.pm_ctrl_reg_mask = 0xF },
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(1) \
+				 | OPAL_PM_PSSCR_MTL(3) \
+				 | OPAL_PM_PSSCR_TR(3) \
+				 | OPAL_PM_PSSCR_ESL \
+				 | OPAL_PM_PSSCR_EC,
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
+	{
+		.name = "stop2_lite", /* Enter stop2 with no state loss */
+		.latency_ns = 9900,
+		.residency_ns = 99000,
+		.flags = 0*OPAL_PM_DEC_STOP \
+		       | 0*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
+		       | 1*OPAL_PM_STOP_INST_FAST,
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(2) \
+				 | OPAL_PM_PSSCR_MTL(3) \
+				 | OPAL_PM_PSSCR_TR(3),
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
 	{
 		.name = "stop2",
 		.latency_ns = 10000,
@@ -513,9 +563,12 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
 		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_FAST,
-		.pm_ctrl_reg_val = 2,
-		.pm_ctrl_reg_mask = 0xF },
-
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(2) \
+				 | OPAL_PM_PSSCR_MTL(3) \
+				 | OPAL_PM_PSSCR_TR(3) \
+				 | OPAL_PM_PSSCR_ESL \
+				 | OPAL_PM_PSSCR_EC,
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
 	{
 		.name = "stop4",
 		.latency_ns = 100000,
@@ -526,8 +579,12 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		       | 1*OPAL_PM_LOSE_HYP_CONTEXT \
 		       | 1*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_DEEP,
-		.pm_ctrl_reg_val = 4,
-		.pm_ctrl_reg_mask = 0xF },
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(4) \
+				 | OPAL_PM_PSSCR_MTL(7) \
+				 | OPAL_PM_PSSCR_TR(3) \
+				 | OPAL_PM_PSSCR_ESL \
+				 | OPAL_PM_PSSCR_EC,
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
 
 	{
 		.name = "stop8",
@@ -539,9 +596,12 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		       | 1*OPAL_PM_LOSE_HYP_CONTEXT \
 		       | 1*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_DEEP,
-		.pm_ctrl_reg_val = 0x8,
-		.pm_ctrl_reg_mask = 0xF },
-
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(8) \
+				 | OPAL_PM_PSSCR_MTL(11) \
+				 | OPAL_PM_PSSCR_TR(3) \
+				 | OPAL_PM_PSSCR_ESL \
+				 | OPAL_PM_PSSCR_EC,
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
 
 	{
 		.name = "stop11",
@@ -553,8 +613,12 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		       | 1*OPAL_PM_LOSE_HYP_CONTEXT \
 		       | 1*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_DEEP,
-		.pm_ctrl_reg_val = 0xB,
-		.pm_ctrl_reg_mask = 0xF },
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(11) \
+				 | OPAL_PM_PSSCR_MTL(11) \
+				 | OPAL_PM_PSSCR_TR(3) \
+				 | OPAL_PM_PSSCR_ESL \
+				 | OPAL_PM_PSSCR_EC,
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
 
 };
 /* Add device tree properties to describe idle states */
