@@ -152,6 +152,7 @@ include $(SRC)/libpore/Makefile.inc
 include $(SRC)/libc/Makefile.inc
 include $(SRC)/ccan/Makefile.inc
 include $(SRC)/$(DEVSRC)/Makefile.inc
+include $(SRC)/libstb/Makefile.inc
 
 # hack for travis-ci and coverity
 gard:
@@ -165,7 +166,7 @@ pflash-coverity:
 
 all: $(SUBDIRS) $(TARGET).lid $(TARGET).lid.xz $(TARGET).map extract-gcov
 
-OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBFLASH)
+OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBFLASH) $(LIBSTB)
 ifeq ($(PORE),1)
 OBJS += $(LIBPORE)
 endif

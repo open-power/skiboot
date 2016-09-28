@@ -73,6 +73,8 @@ libflash/test/test-blocklevel
 libflash/test/test-flash
 libflash/test/test-ecc
 libflash/test/test-flash-gcov
+libstb/test/run-stb-container
+libstb/test/*-gcov
 test/hello_world/hello_kernel/hello_kernel
 zImage.epapr
 vgcore.*
