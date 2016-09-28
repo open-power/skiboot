@@ -45,6 +45,7 @@
 #include <sensor.h>
 #include <xive.h>
 #include <nvram.h>
+#include <libstb/stb.h>
 #include <libstb/container.h>
 
 enum proc_gen proc_gen;
@@ -379,6 +380,11 @@ static bool load_kernel(void)
 
 	printf("INIT: Kernel loaded, size: %zu bytes (0 = unknown preload)\n",
 	       kernel_size);
+	/*
+	 * Verify and measure the retrieved PNOR partition as part of the
+	 * secure boot and trusted boot requirements
+	 */
+	stb_final();
 
 	if (kh->ei_ident != ELF_IDENT) {
 		printf("INIT: ELF header not found. Assuming raw binary.\n");
