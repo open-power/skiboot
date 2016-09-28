@@ -55,7 +55,10 @@ function flash {
 	if [ "${LID[1]}" != "" ]; then
 		remotecp ${LID[1]} $target /tmp/bootkernel
 	fi
-	
+	if [ "${arbitrary_lid[1]}" != "" ]; then
+		remotecp ${arbitrary_lid[1]} $target /tmp/$(basename ${arbitrary_lid[1]})
+	fi
+
 	if [ "$?" -ne "0" ] ; then
 		error "Couldn't copy firmware image";
 	fi
@@ -94,6 +97,15 @@ function flash {
                         error "An unexpected pflash error has occurred";
                 fi
         fi
+
+	if [ ! -z "${arbitrary_lid[0]}" -a ! -z "${arbitrary_lid[1]}" ] ; then
+		msg "Flashing ${arbitrary_lid[0]} PNOR partition"
+		$SSHCMD "$PFLASH_BINARY -e -f -P ${arbitrary_lid[0]} -p /tmp/$(basename ${arbitrary_lid[1]})"
+                if [ "$?" -ne "0" ] ; then
+                        error "An unexpected pflash error has occurred";
+		fi
+	fi
+
 }
 
 function boot_firmware {

@@ -136,6 +136,7 @@ There are three usage modes.
 
 3) boot_test.sh [-vdp] -b bmc -t target -P pnor
    boot_test.sh [-vdp] -b bmc -t target [-1 PAYLOAD] [-2 BOOTKERNEL]
+   boot_test.sh [-vdp] -b bmc -t target [-F eyecatcher:lid ]
    boot_test.sh [-vdp] -b fsp -t target [-1 lid1] [-2 lid2] [-3 lid3]
 
      Flash the given firmware before boot testing.
@@ -143,7 +144,8 @@ There are three usage modes.
      For a BMC target, -P specifies a full PNOR.
 
      For a BMC target, -1/-2 specify the PAYLOAD and BOOTKERNEL PNOR partitions
-     respectively. Only the given partitions will be flashed.
+     respectively; -e specifies the partition name for -3.
+     Only the given partitions will be flashed.
 
      For an FSP target, -1/-2/-3 specify lids. Any combination of lids is
      acceptable.
@@ -185,12 +187,14 @@ firmware_supplied=0;
 target=""
 method=""
 PNOR=""
+arbitrary_lid[0]=""
+arbitrary_lid[1]=""
 LID[0]=""
 LID[1]=""
 LID[2]=""
 keep_log_success=0
 keep_log_failure=0
-while getopts "kKhvdpB1:2:3:P:t:b:" OPT; do
+while getopts "kKhvdpB1:2:3:P:t:b:F:" OPT; do
     case "$OPT" in
 	v)
 	    V=1;
@@ -233,6 +237,14 @@ while getopts "kKhvdpB1:2:3:P:t:b:" OPT; do
 		error "Couldn't stat $OPTARG";
 	    fi
 	    PNOR="$OPTARG"
+	    ;;
+	F)
+	    firmware_supplied=1;
+	    arbitrary_lid[0]=`echo "$OPTARG" | cut -s -f1 -d:`;
+	    arbitrary_lid[1]=`echo "$OPTARG" | cut -s -f2 -d:`;
+	    if [ -z "${arbitrary_lid[0]}" -o -z "${arbitrary_lid[1]}" ] ; then
+		error "-F must be in the format eyecatcher:lid, e.g. GARD:gard.bin";
+	    fi
 	    ;;
 	t)
 	    target=$OPTARG;
