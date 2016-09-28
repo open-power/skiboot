@@ -80,6 +80,8 @@ function flash {
 		if [ "$?" -ne "0" ] ; then
 			error "An unexpected pflash error has occurred";
 		fi
+		msg "Removing /tpm/image.pnor"
+		$SSHCMD "rm /tmp/image.pnor"
 	fi
 
 	if [ ! -z "${LID[0]}" ] ; then
@@ -87,7 +89,9 @@ function flash {
 		$SSHCMD "$PFLASH_BINARY -e -f -P PAYLOAD -p /tmp/skiboot.lid"
 		if [ "$?" -ne "0" ] ; then
                         error "An unexpected pflash error has occurred";
-                fi
+		fi
+		msg "Removing /tpm/skiboot.lid"
+		$SSHCMD "rm /tmp/skiboot.lid"
 	fi
 
         if [ ! -z "${LID[1]}" ] ; then
@@ -95,7 +99,9 @@ function flash {
                 $SSHCMD "$PFLASH_BINARY -e -f -P BOOTKERNEL -p /tmp/bootkernel"
                 if [ "$?" -ne "0" ] ; then
                         error "An unexpected pflash error has occurred";
-                fi
+		fi
+		msg "Removing /tmp/bootkernel"
+		$SSHCMD "rm /tmp/bootkernel"
         fi
 
 	if [ ! -z "${arbitrary_lid[0]}" -a ! -z "${arbitrary_lid[1]}" ] ; then
@@ -104,6 +110,8 @@ function flash {
                 if [ "$?" -ne "0" ] ; then
                         error "An unexpected pflash error has occurred";
 		fi
+		msg "Removing /tmp/$(basename ${arbitrary_lid[1]})"
+		$SSHCMD "rm /tmp/$(basename ${arbitrary_lid[1]})"
 	fi
 
 }
