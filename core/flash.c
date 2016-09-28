@@ -24,6 +24,7 @@
 #include <libflash/libffs.h>
 #include <libflash/blocklevel.h>
 #include <libflash/ecc.h>
+#include <libstb/stb.h>
 
 struct flash {
 	struct list_node	list;
@@ -609,6 +610,13 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 
 	*len = size;
 	status = true;
+
+	/*
+	 * Verify and measure the retrieved PNOR partition as part of the
+	 * secure boot and trusted boot requirements
+	 */
+	sb_verify(id, subid, buf, *len);
+	tb_measure(id, subid, buf, *len);
 
 out_free_ffs:
 	ffs_close(ffs);
