@@ -45,6 +45,7 @@
 #include <sensor.h>
 #include <xive.h>
 #include <nvram.h>
+#include <libstb/container.h>
 
 enum proc_gen proc_gen;
 
@@ -369,7 +370,11 @@ static bool load_kernel(void)
 		if (!kernel_size)
 			printf("INIT: Assuming kernel at %p\n",
 			       KERNEL_LOAD_BASE);
-		kh = (struct elf_hdr *)KERNEL_LOAD_BASE;
+		if (stb_is_container(KERNEL_LOAD_BASE, kernel_size))
+			kh = (struct elf_hdr *) (KERNEL_LOAD_BASE +
+					        SECURE_BOOT_HEADERS_SIZE);
+		else
+			kh = (struct elf_hdr *) (KERNEL_LOAD_BASE);
 	}
 
 	printf("INIT: Kernel loaded, size: %zu bytes (0 = unknown preload)\n",
