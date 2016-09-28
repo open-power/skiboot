@@ -795,6 +795,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 */
 	probe_platform();
 
+	/* Secure/Trusted Boot init. We look for /ibm,secureboot in DT */
+	stb_init();
+
 	/* Initialize the rest of the cpu thread structs */
 	init_all_cpus();
 
