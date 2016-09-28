@@ -611,7 +611,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_free_ffs;
 	}
 	rc = ffs_part_info(ffs, part_num, NULL,
-			   &part_start, &part_size, NULL, &ecc);
+			   &part_start, NULL, &part_size, &ecc);
 	if (rc) {
 		prerror("FLASH: Failed to get %s partition info\n", name);
 		goto out_free_ffs;
