@@ -39,6 +39,9 @@
 // -----------------------------------------------
 #ifdef __HOSTBOOT_MODULE
 #include <secureboot/trustedbootif.H>
+#else
+#include "trustedbootUtils.H"
+#include "../tpm_chip.h"
 #endif
 #include "trustedboot.H"
 #include "trustedTypes.H"
