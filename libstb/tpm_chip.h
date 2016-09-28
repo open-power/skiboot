@@ -58,6 +58,9 @@ struct tpm_chip {
 	struct list_node link;
 };
 
+/* TSS tweak */
+typedef struct tpm_chip TpmTarget;
+
 /*
  * Register a tpm chip by binding the driver to dev.
  */
