@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef __STB_STATUS_CODES_H
-#define __STB_STATUS_CODES_H
+#ifndef __ROMCODE_H
+#define __ROMCODE_H
 
-/*  general return codes */
-#define STB_ERROR		-1
+#include <device.h>
 
-/* secure boot */
-#define STB_VERIFY_FAILED  		-100
+extern void romcode_probe(const struct dt_node *node);
 
-#endif /* __STB_STATUS_CODES_H */
+#endif /* __ROMCODE_H */

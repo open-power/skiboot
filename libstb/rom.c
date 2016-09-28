@@ -16,6 +16,7 @@
 
 #include <skiboot.h>
 #include "rom.h"
+#include "drivers/romcode.h"
 
 static struct rom_driver_ops *rom_driver = NULL;
 
@@ -25,6 +26,7 @@ struct rom_driver_ops* rom_init(const struct dt_node *node __unused)
 		goto end;
 
 	/* ROM drivers supported */
+	romcode_probe(node);
 
 	if (!rom_driver)
 		prlog(PR_NOTICE, "ROM: no rom driver found\n");
