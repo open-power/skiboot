@@ -298,6 +298,7 @@ namespace TRUSTEDBOOT
         return val->logSize;
     }
 
+#ifdef __HOSTBOOT_MODULE
     void TpmLogMgr_dumpLog(TpmLogMgr* val)
     {
 
@@ -305,7 +306,6 @@ namespace TRUSTEDBOOT
         TRACUCOMP(g_trac_trustedboot, "tpmDumpLog Size : %d",
                   (int)val->logSize);
 
-#ifdef __HOSTBOOT_MODULE
         // Debug display of raw data
         if (NULL == val->eventLogInMem)
         {
@@ -314,13 +314,11 @@ namespace TRUSTEDBOOT
         }
         else
         {
-#endif
             TRACUBIN(g_trac_trustedboot, "tpmDumpLog From Memory",
                      val->eventLogInMem, val->logSize);
-#ifdef __HOSTBOOT_MODULE
         }
-#endif
     }
+#endif
 
     uint32_t TpmLogMgr_calcLogSize(TpmLogMgr* val)
     {

@@ -222,12 +222,13 @@ namespace TRUSTEDBOOT
                                                   const uint8_t* i_digest_2,
                                                   size_t i_digestSize_2,
                                                   const char* i_logMsg);
-
+#ifdef __HOSTBOOT_MODULE
     /**
      * @brief Dump contents of log to a trace
      * @param[in] val TpmLogMgr structure
      */
     void TpmLogMgr_dumpLog(TpmLogMgr* val);
+#endif
 
     /**
      * @brief Return a pointer to the start of the log
