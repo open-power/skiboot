@@ -23,5 +23,6 @@ void nvram_reinit(void);
 bool nvram_validate(void);
 
 const char *nvram_query(const char *name);
+bool nvram_query_eq(const char *key, const char *value);
 
 #endif /* __NVRAM_H */
