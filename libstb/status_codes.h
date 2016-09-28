@@ -25,6 +25,10 @@
 /* secure boot */
 #define STB_VERIFY_FAILED  		-100
 
+/* trusted boot */
+#define STB_EVENTLOG_FAILED	-200
+#define STB_PCR_EXTEND_FAILED	-201
+
 /* TPM */
 #define STB_TPM_OVERFLOW	-300
 #define STB_TPM_TIMEOUT	-301

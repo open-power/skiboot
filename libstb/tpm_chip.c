@@ -22,8 +22,47 @@
 #include "container.h"
 #include "tpm_chip.h"
 #include "drivers/tpm_i2c_nuvoton.h"
+#include "tss/trustedbootCmds.H"
+
+/* For debugging only */
+//#define STB_DEBUG
 
 static struct list_head tpm_list = LIST_HEAD_INIT(tpm_list);
+
+#ifdef STB_DEBUG
+static void tpm_print_pcr(struct tpm_chip *tpm, TPM_Pcr pcr, TPM_Alg_Id alg,
+			  size_t size)
+{
+	int rc;
+	uint8_t digest[TPM_ALG_SHA256_SIZE];
+
+	memset(digest, 0, size);
+
+	rc = tpmCmdPcrRead(tpm, pcr, alg, digest, size);
+	if (rc) {
+		/**
+		 * @fwts-label STBPCRReadFailed
+		 * @fwts-advice STB_DEBUG should not be enabled
+		 * in production. PCR read operation failed.
+		 * This TSS implementation is part of hostboot,
+		 * but the source code is shared with skiboot.
+		 * 1) The hostboot TSS may have been updated.
+		 * 2) This may be caused by the short I2C
+		 * timeout and can be fixed by increasing the
+		 * timeout. Otherwise this indicates a bug in
+		 * the TSS or the TPM device driver. Each one
+		 * has local debug macros that can help.
+		 */
+		prlog(PR_ERR, "STB: tpmCmdPcrRead() failed: "
+		      "tpm%d, alg=%x, pcr%d, rc=%d\n",
+		      tpm->id, alg, pcr, rc);
+	} else {
+		prlog(PR_NOTICE,"STB: print pcr-read: tpm%d alg=%x pcr%d\n",
+		      tpm->id, alg, pcr);
+		stb_print_data(digest, size);
+	}
+}
+#endif
 
 int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
 		       struct tpm_driver *driver)
@@ -173,6 +212,83 @@ void tpm_cleanup(void)
 	}
 
 	list_head_init(&tpm_list);
+}
+
+int tpm_extendl(TPM_Pcr pcr,
+		TPM_Alg_Id alg1, uint8_t* digest1, size_t size1,
+		TPM_Alg_Id alg2, uint8_t* digest2, size_t size2,
+		uint32_t event_type, const char* event_msg)
+{
+	int rc;
+	TCG_PCR_EVENT2 event;
+	struct tpm_chip *tpm = NULL;
+
+	rc = 0;
+
+	list_for_each(&tpm_list, tpm, link) {
+		if (!tpm->enabled)
+			continue;
+		event = TpmLogMgr_genLogEventPcrExtend(pcr, alg1, digest1, size1,
+						       alg2, digest2, size2,
+						       event_type, event_msg);
+		/* eventlog recording */
+		rc = TpmLogMgr_addEvent(&tpm->logmgr, &event);
+		if (rc) {
+			/**
+			 * @fwts-label STBAddEventFailed
+			 * @fwts-advice TpmLogMgr failed to add a new event
+			 * to the event log. TpmLogMgr is part of hostboot,
+			 * but the source code is shared with skiboot.
+			 * 1) The hostboot TpmLogMgr code may have
+			 * been updated.
+			 * 2) Check that max event log size was not reached
+			 * and log marshall executed with no error. Enabling the
+			 * trace routines in trustedbootUtils.H may help.
+			 */
+			prlog(PR_ERR, "TPM: %s -> elog%d FAILED: pcr%d et=%x rc=%d\n",
+			      event_msg, tpm->id, pcr, event_type, rc);
+			rc = STB_EVENTLOG_FAILED;
+			goto error;
+		}
+#ifdef STB_DEBUG
+		prlog(PR_NOTICE, "TPM: %s -> elog%d: pcr%d et=%x ls=%d\n",
+		      event_msg, tpm->id, pcr, event_type, tpm->logmgr.logSize);
+		tpm_print_pcr(tpm, pcr, alg1, size1);
+		tpm_print_pcr(tpm, pcr, alg2, size2);
+#endif
+		/* extend pcr of both sha1 and sha256 banks*/
+		rc = tpmCmdPcrExtend2Hash(tpm, pcr,
+					  alg1, digest1, size1,
+					  alg2, digest2, size2);
+		if (rc) {
+			/**
+			 * @fwts-label STBPCRExtendFailed
+			 * @fwts-advice PCR extend operation failed. This TSS
+			 * implementation is part of hostboot, but the source
+			 * code is shared with skiboot.
+			 * 1) The hostboot TSS may have been updated.
+			 * 2) This may be caused by the short I2C timeout and
+			 * can be fixed by increasing the timeout. Otherwise,
+			 * this indicates a bug in the TSS or the TPM
+			 * device driver. Each one has local debug macros that
+			 * can help.
+			 */
+			prlog(PR_ERR, "TPM: %s -> tpm%d FAILED: pcr%d rc=%d\n",
+			      event_msg, tpm->id, pcr, rc);
+			rc = STB_PCR_EXTEND_FAILED;
+			goto error;
+		}
+#ifdef STB_DEBUG
+		prlog(PR_NOTICE, "TPM: %s -> tpm%d: pcr%d\n", event_msg,
+		      tpm->id, pcr);
+		tpm_print_pcr(tpm, pcr, alg1, size1);
+		tpm_print_pcr(tpm, pcr, alg2, size2);
+#endif
+	}
+	return rc;
+error:
+	tpm->enabled = false;
+	return rc;
 }
 
 void tpm_add_status_property(void) {
