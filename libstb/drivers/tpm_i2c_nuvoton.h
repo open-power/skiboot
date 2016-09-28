@@ -14,19 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef __STB_STATUS_CODES_H
-#define __STB_STATUS_CODES_H
+#ifndef __TPM_I2C_NUVOTON_H
+#define __TPM_I2C_NUVOTON_H
 
-/*  general return codes */
-#define STB_ERROR		-1
-#define STB_ARG_ERROR		-2
-#define STB_DRIVER_ERROR	-3
+extern void tpm_i2c_nuvoton_probe(void);
 
-/* secure boot */
-#define STB_VERIFY_FAILED  		-100
-
-/* TPM */
-#define STB_TPM_OVERFLOW	-300
-#define STB_TPM_TIMEOUT	-301
-
-#endif /* __STB_STATUS_CODES_H */
+#endif /* __TPM_I2C_NUVOTON_H */

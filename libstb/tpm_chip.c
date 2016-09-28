@@ -21,6 +21,7 @@
 #include "status_codes.h"
 #include "container.h"
 #include "tpm_chip.h"
+#include "drivers/tpm_i2c_nuvoton.h"
 
 static struct list_head tpm_list = LIST_HEAD_INIT(tpm_list);
 
@@ -78,6 +79,7 @@ void tpm_init(void)
 	list_head_init(&tpm_list);
 
 	/* tpm drivers supported */
+	tpm_i2c_nuvoton_probe();
 
 	if (list_empty(&tpm_list))
 		/**
