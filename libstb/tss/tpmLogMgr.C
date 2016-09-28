@@ -46,7 +46,6 @@
 #endif
 #include "trustedbootUtils.H"
 #include "trustedboot.H"
-#include "trustedTypes.H"
 
 #ifdef __cplusplus
 namespace TRUSTEDBOOT
