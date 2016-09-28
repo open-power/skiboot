@@ -28,7 +28,9 @@ static struct list_head tpm_list = LIST_HEAD_INIT(tpm_list);
 int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
 		       struct tpm_driver *driver)
 {
-	int i;
+	int i, rc;
+	uint64_t sml_base;
+	uint32_t sml_size;
 	struct tpm_chip *tpm;
 
 	i = 0;
@@ -51,6 +53,63 @@ int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
 	assert(tpm);
 	tpm->id = i;
 
+	/*
+	 * Read event log info from the tpm device tree node. Both
+	 * linux,sml-base and linux,sml-size properties are documented in
+	 * 'doc/device-tree/tpm.rst'
+	 */
+
+	sml_base = dt_prop_get_u64_def(node, "linux,sml-base", 0);
+
+	/* Check if sml-base is really 0 or it just doesn't exist */
+	if (!sml_base &&
+	    !dt_find_property(node, "linux,sml-base")) {
+		/**
+		 * @fwts-label TPMSmlBaseNotFound
+		 * @fwts-advice linux,sml-base property not found. This
+		 * indicates a Hostboot bug if the property really
+		 * doesn't exist in the tpm node.
+		 */
+		prlog(PR_ERR, "TPM: linux,sml-base property not found "
+		      "tpm node %p\n", node);
+		goto disable;
+	}
+
+	sml_size = dt_prop_get_u32_def(node, "linux,sml-size", 0);
+
+	if (!sml_size) {
+		/**
+		 * @fwts-label TPMSmlSizeNotFound
+		 * @fwts-advice linux,sml-size property not found. This
+		 * indicates a Hostboot bug if the property really
+		 * doesn't exist in the tpm node.
+		 */
+		prlog(PR_ERR, "TPM: linux,sml-size property not found, "
+		      "tpm node %p\n", node);
+		goto disable;
+	}
+
+	/*
+	 * Initialize the event log manager by walking through the log to identify
+	 * what is the next free position in the log
+	 */
+	rc = TpmLogMgr_initializeUsingExistingLog(&tpm->logmgr,
+					 (uint8_t*) sml_base, sml_size);
+
+	if (rc) {
+		/**
+		 * @fwts-label TPMInitEventLogFailed
+		 * @fwts-advice Hostboot creates and adds entries to the
+		 * event log. The failed init function is part of hostboot,
+		 * but the source code is shared with skiboot. If the hostboot
+		 * TpmLogMgr code (or friends) has been updated, the changes
+		 * need to be applied to skiboot as well.
+		 */
+		prlog(PR_ERR, "TPM: eventlog init failed: tpm%d rc=%d",
+		      tpm->id, rc);
+		goto disable;
+	}
+
 	tpm->enabled = true;
 	tpm->node = node;
 	tpm->dev = dev;
@@ -58,10 +117,16 @@ int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
 
 	list_add_tail(&tpm_list, &tpm->link);
 
-	prlog(PR_NOTICE, "TPM: tpm%d registered: driver=%s\n",
-	      tpm->id, tpm->driver->name);
+	prlog(PR_NOTICE, "TPM: tpm%d registered: driver=%s felsz=%d\n",
+	      tpm->id, tpm->driver->name, tpm->logmgr.logSize);
 
 	return 0;
+
+disable:
+	dt_add_property_string(node, "status", "disabled");
+	prlog(PR_NOTICE, "TPM: tpm node %p disabled\n", node);
+	free(tpm);
+	return STB_ERROR;
 }
 
 void tpm_init(void)

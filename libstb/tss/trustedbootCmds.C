@@ -739,7 +739,7 @@ errlHndl_t tpmCmdPcrExtend2Hash(TpmTarget * io_target,
                                 const uint8_t* i_digest_2,
                                 size_t  i_digestSize_2)
 {
-    errlHndl_t err = NULL;
+    errlHndl_t err = 0;
     uint8_t dataBuf[sizeof(TPM2_ExtendIn)];
     size_t dataSize = sizeof(dataBuf);
     size_t fullDigestSize_1 = 0;
@@ -882,7 +882,7 @@ errlHndl_t tpmCmdPcrRead(TpmTarget* io_target,
                          uint8_t* o_digest,
                          size_t  i_digestSize)
 {
-    errlHndl_t err = NULL;
+    errlHndl_t err = 0;
     uint8_t dataBuf[sizeof(TPM2_PcrReadOut)];
     size_t dataSize = sizeof(dataBuf);
     size_t fullDigestSize = 0;

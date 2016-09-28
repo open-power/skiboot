@@ -9,5 +9,6 @@ LIBSTB_OBJS = $(LIBSTB_SRCS:%.c=%.o)
 LIBSTB = $(LIBSTB_DIR)/built-in.o
 
 include $(SRC)/$(LIBSTB_DIR)/drivers/Makefile.inc
+include $(SRC)/$(LIBSTB_DIR)/tss/Makefile.inc
 
-$(LIBSTB): $(LIBSTB_OBJS:%=$(LIBSTB_DIR)/%) $(DRIVERS)
+$(LIBSTB): $(LIBSTB_OBJS:%=$(LIBSTB_DIR)/%) $(DRIVERS) $(TSS)

@@ -22,7 +22,7 @@
 errlHndl_t tpmTransmit(TpmTarget * io_target, uint8_t* io_buffer,
 		       size_t i_cmdSize, size_t i_bufsize )
 {
-	errlHndl_t err = NULL;
+	errlHndl_t err = 0;
 	err = io_target->driver->transmit(io_target->dev,
                                           io_buffer,
                                           i_cmdSize,

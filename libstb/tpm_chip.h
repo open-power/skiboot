@@ -19,6 +19,8 @@
 
 #include <device.h>
 
+#include "tss/tpmLogMgr.H"
+
 struct tpm_dev {
 
 	/* TPM bus id */
@@ -49,6 +51,9 @@ struct tpm_chip {
 	/* TPM device tree node */
 	struct dt_node *node;
 
+	/* Event log handler */
+	struct _TpmLogMgr logmgr;
+
 	/* TPM device handler */
 	struct tpm_dev    *dev;
 
@@ -63,6 +68,7 @@ typedef struct tpm_chip TpmTarget;
 
 /*
  * Register a tpm chip by binding the driver to dev.
+ * Event log is also registered by this function.
  */
 extern int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
 			     struct tpm_driver *driver);
