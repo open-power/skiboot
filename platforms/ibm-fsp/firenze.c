@@ -34,6 +34,7 @@ static struct dt_node *dt_create_i2c_master(struct dt_node *n, uint32_t eng_id)
 {
 	struct dt_node *i2cm;
 	uint64_t freq;
+	uint32_t clock;
 
 	/* Each master registers set is of length 0x20 */
 	i2cm = dt_new_addr(n, "i2cm", 0xa0000 + eng_id * 0x20);
@@ -50,13 +51,11 @@ static struct dt_node *dt_create_i2c_master(struct dt_node *n, uint32_t eng_id)
 
 	/* Derive the clock source frequency */
 	freq = dt_prop_get_u64_def(n, "bus-frequency", 0);
-	freq /= 4;
-	if (freq)
-		dt_add_property_cells(i2cm, "clock-frequency",
-				      hi32(freq), lo32(freq));
+	clock = (u32)(freq / 4);
+	if (clock)
+		dt_add_property_cells(i2cm, "clock-frequency", clock);
 	else
-		dt_add_property_cells(i2cm, "clock-frequency",
-				      125000000);
+		dt_add_property_cells(i2cm, "clock-frequency", 125000000);
 	return i2cm;
 }
 
