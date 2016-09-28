@@ -458,6 +458,7 @@ namespace TRUSTEDBOOT
                                                   TPM_Alg_Id i_algId_2,
                                                   const uint8_t* i_digest_2,
                                                   size_t i_digestSize_2,
+						  uint32_t i_logType,
                                                   const char* i_logMsg)
     {
         TCG_PCR_EVENT2 eventLog;
@@ -472,7 +473,7 @@ namespace TRUSTEDBOOT
 
         memset(&eventLog, 0, sizeof(eventLog));
         eventLog.pcrIndex = i_pcr;
-        eventLog.eventType = EV_ACTION;
+        eventLog.eventType = i_logType;
 
         // Update digest information
         eventLog.digests.count = 1;

@@ -210,6 +210,7 @@ namespace TRUSTEDBOOT
      * @param[in] i_algId_2 Algorithm to use
      * @param[in] i_digest_2 Digest value to write to PCR, NULL if not used
      * @param[in] i_digestSize_2 Byte size of i_digest array
+     * @param[in] i_logType Event type
      * @param[in] i_logMsg Null terminated Log message
      *
      * @return TCG_PCR_EVENT2   PCR event log
@@ -221,6 +222,7 @@ namespace TRUSTEDBOOT
                                                   TPM_Alg_Id i_algId_2,
                                                   const uint8_t* i_digest_2,
                                                   size_t i_digestSize_2,
+						  uint32_t i_logType,
                                                   const char* i_logMsg);
 #ifdef __HOSTBOOT_MODULE
     /**
