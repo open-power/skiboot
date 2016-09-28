@@ -223,7 +223,9 @@ extern int flash_start_preload_resource(enum resource_id id, uint32_t subid,
 extern int flash_resource_loaded(enum resource_id id, uint32_t idx);
 extern bool flash_reserve(void);
 extern void flash_release(void);
-
+extern int flash_subpart_info(void *part_header, uint32_t part_size,
+			      uint32_t subid, uint32_t *offset,
+			      uint32_t *size);
 
 /* NVRAM support */
 extern void nvram_init(void);

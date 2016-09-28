@@ -457,8 +457,7 @@ static int flash_find_subpartition(struct blocklevel_device *bl, uint32_t subid,
 				   bool ecc)
 {
 	struct flash_hostboot_header *header;
-	char eyecatcher[5];
-	uint32_t i, partsize;
+	uint32_t partsize, offset, size;
 	int rc;
 
 	header = malloc(FLASH_SUBPART_HEADER_SIZE);
@@ -478,66 +477,19 @@ static int flash_find_subpartition(struct blocklevel_device *bl, uint32_t subid,
 		goto end;
 	}
 
-	/* Perform sanity */
-	i = be32_to_cpu(header->version);
-	if (i != 1) {
-		prerror("FLASH: flash subpartition TOC version unknown %i\n", i);
-		rc = OPAL_RESOURCE;
+	rc = flash_subpart_info(header, partsize, subid, &offset, &size);
+	if (rc)
 		goto end;
-	}
-	/* NULL terminate eyecatcher */
-	strncpy(eyecatcher, header->eyecatcher, 4);
-	eyecatcher[4] = 0;
-	prlog(PR_DEBUG, "FLASH: flash subpartition eyecatcher %s\n",
-			eyecatcher);
 
-	rc = OPAL_RESOURCE;
-	for (i = 0; i< FLASH_HOSTBOOT_TOC_MAX_ENTRIES; i++) {
-		uint32_t ec, offset, size;
-
-		ec = be32_to_cpu(header->toc[i].ec);
-		offset = be32_to_cpu(header->toc[i].offset);
-		size = be32_to_cpu(header->toc[i].size);
-		/* Check for null terminating entry */
-		if (!ec && !offset && !size) {
-			prerror("FLASH: flash subpartition not found.\n");
-			goto end;
-		}
-
-		if (ec != subid)
-			continue;
-
-		/* Sanity check the offset and size. */
-		if (offset + size > partsize) {
-			prerror("FLASH: flash subpartition too big: %i\n", i);
-			goto end;
-		}
-		if (!size) {
-			prerror("FLASH: flash subpartition zero size: %i\n", i);
-			goto end;
-		}
-		if (offset < FLASH_SUBPART_HEADER_SIZE) {
-			prerror("FLASH: flash subpartition "
-					"offset too small: %i\n", i);
-			goto end;
-		}
-
-		prlog(PR_DEBUG, "FLASH: flash found subpartition: "
-				"%i size: %i offset %i\n",
-				i, size, offset);
-
-		/*
-		 * Adjust the start and size.  The start location in the needs
-		 * to account for ecc but the size doesn't.
-		 */
-		*start += offset;
-		*total_size = size;
-		if (ecc) {
-			*start += ecc_size(offset);
-			*total_size += ecc_size(size);
-		}
-		rc = 0;
-		goto end;
+	/*
+	 * Adjust the start and size.  The start location in the needs
+	 * to account for ecc but the size doesn't.
+	 */
+	*start += offset;
+	*total_size = size;
+	if (ecc) {
+		*start += ecc_size(offset);
+		*total_size += ecc_size(size);
 	}
 
 end:
@@ -651,7 +603,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 
 	rc = flash_read_corrected(flash->bl, part_start, buf, size, ecc);
 	if (rc) {
-		prerror("FLASH: failed to read %s partition\n", name);
+		prerror("FLASH: failed to read %s partition, rc %d\n", name, rc);
 		goto out_free_ffs;
 	}
 
@@ -778,4 +730,74 @@ int flash_start_preload_resource(enum resource_id id, uint32_t subid,
 		start_flash_load_resource_job();
 
 	return OPAL_SUCCESS;
+}
+
+int flash_subpart_info(void *part_header, uint32_t part_size, uint32_t subid,
+		       uint32_t *offset, uint32_t *size)
+{
+	struct flash_hostboot_header *header;
+	char eyecatcher[5];
+	uint32_t i, ec;
+
+	if (!part_header || !offset || !size) {
+		prlog(PR_ERR, "FLASH: invalid parameters: "
+		      "ph %p of %p sz %p\n", part_header, offset, size);
+		return OPAL_PARAMETER;
+	}
+
+	header = (struct flash_hostboot_header*) part_header;
+
+	/* Perform sanity */
+	i = be32_to_cpu(header->version);
+	if (i != 1) {
+		prerror("FLASH: flash subpartition TOC version unknown %i\n", i);
+		goto end;
+	}
+
+	/* NULL terminate eyecatcher */
+	strncpy(eyecatcher, header->eyecatcher, 4);
+	eyecatcher[4] = '\0';
+	prlog(PR_DEBUG, "FLASH: flash subpartition eyecatcher %s\n",
+			eyecatcher);
+
+	for (i = 0; i < FLASH_HOSTBOOT_TOC_MAX_ENTRIES; i++) {
+
+		ec = be32_to_cpu(header->toc[i].ec);
+		*offset = be32_to_cpu(header->toc[i].offset);
+		*size = be32_to_cpu(header->toc[i].size);
+
+		/* Check for null terminating entry */
+		if (!ec && !*offset && !*size) {
+			prerror("FLASH: flash subpartition not found.\n");
+			goto end;
+		}
+
+		if (ec != subid)
+			continue;
+
+		/* Sanity check the offset and size. */
+		if (*offset + *size > part_size) {
+			prerror("FLASH: flash subpartition too big: %i\n", i);
+			goto end;
+		}
+		if (!*size) {
+			prerror("FLASH: flash subpartition zero size: %i\n", i);
+			goto end;
+		}
+		if (*offset < FLASH_SUBPART_HEADER_SIZE) {
+			prerror("FLASH: flash subpartition "
+					"offset too small: %i\n", i);
+			goto end;
+		}
+
+		prlog(PR_DEBUG, "FLASH: flash found subpartition: "
+				"%i size: %i offset %i\n",
+				i, *size, *offset);
+
+		return OPAL_SUCCESS;
+	}
+end:
+	*size = 0;
+	*offset = 0;
+	return OPAL_RESOURCE;
 }
