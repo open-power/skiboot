@@ -5,7 +5,7 @@
 #
 # OpenPOWER HostBoot Project
 #
-# COPYRIGHT International Business Machines Corp. 2013,2014
+# COPYRIGHT International Business Machines Corp. 2013,2016
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@
 # permissions and limitations under the License.
 #
 # IBM_PROLOG_END_TAG
-.include "kernel/ppcconsts.S"
+
+#.include "kernel/ppcconsts.S"
 
 .section .text
 
@@ -31,21 +32,21 @@ call_rom_verify:
 call_rom_SHA512:
 
 call_rom_entry:
-    std r2, 40(r1)
-    mflr r0
-    std r0, 16(r1)
-    stdu r1, -128(r1)
-    li r2, 0
-    mtctr r3
-    mr r3, r4
-    mr r4, r5
-    mr r5, r6
-    mr r6, r7
-    mr r7, r8
+    std %r2, 40(%r1)
+    mflr %r0
+    std %r0, 16(%r1)
+    stdu %r1, -128(%r1)
+    li %r2, 0
+    mtctr %r3
+    mr %r3, %r4
+    mr %r4, %r5
+    mr %r5, %r6
+    mr %r6, %r7
+    mr %r7, %r8
     bctrl
-    addi r1, r1, 128
-    ld r2, 40(r1)
-    ld r0, 16(r1)
-    mtlr r0
+    addi %r1, %r1, 128
+    ld %r2, 40(%r1)
+    ld %r0, 16(%r1)
+    mtlr %r0
     blr
 
