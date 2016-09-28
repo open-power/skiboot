@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef __CAPP_H
+#define __CAPP_H
 
 struct capp_lid_hdr {
 	be64 eyecatcher;	/* 'CAPPLIDH' in ASCII */
@@ -87,3 +90,5 @@ enum capp_reg {
  * The addresses of CAPP1 XSCOMS registers are 0x180 away.
  */
 #define CAPP1_REG_OFFSET 0x180
+
+#endif /* __CAPP_H */
