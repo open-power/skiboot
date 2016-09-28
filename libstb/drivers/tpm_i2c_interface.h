@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef __STB_STATUS_CODES_H
-#define __STB_STATUS_CODES_H
+#ifndef __TPM_I2C_H
+#define __TPM_I2C_H
 
-/*  general return codes */
-#define STB_ERROR		-1
-#define STB_ARG_ERROR		-2
-#define STB_DRIVER_ERROR	-3
+#include <i2c.h>
+#include <stdlib.h>
 
-/* secure boot */
-#define STB_VERIFY_FAILED  		-100
-
-#endif /* __STB_STATUS_CODES_H */
+extern void tpm_i2c_request_complete(int rc, struct i2c_request *req);
+extern int tpm_i2c_request_send(int tpm_bus_id, int tpm_dev_addr, int read_write,
+				uint32_t offset, uint32_t offset_bytes, void* buf,
+				size_t buflen);
+#endif /* __TPM_I2C_H */
