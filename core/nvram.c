@@ -24,7 +24,9 @@
 
 static void *nvram_image;
 static uint32_t nvram_size;
-static bool nvram_ready;
+
+static bool nvram_ready; /* has the nvram been loaded? */
+static bool nvram_valid; /* is the nvram format ok? */
 
 static int64_t opal_read_nvram(uint64_t buffer, uint64_t size, uint64_t offset)
 {
@@ -55,21 +57,37 @@ static int64_t opal_write_nvram(uint64_t buffer, uint64_t size, uint64_t offset)
 	memcpy(nvram_image + offset, (void *)buffer, size);
 	if (platform.nvram_write)
 		platform.nvram_write(offset, nvram_image + offset, size);
+
+	/* The host OS has written to the NVRAM so we can't be sure that it's
+	 * well formatted.
+	 */
+	nvram_valid = false;
+
 	return OPAL_SUCCESS;
 }
 opal_call(OPAL_WRITE_NVRAM, opal_write_nvram, 3);
 
-static void nvram_validate(void)
+bool nvram_validate(void)
 {
-	/* Check and maybe format nvram */
-	if (nvram_check(nvram_image, nvram_size)) {
-		if (nvram_format(nvram_image, nvram_size))
-			prerror("NVRAM: Failed to format NVRAM!\n");
+	if (!nvram_valid)
+		nvram_valid = !nvram_check(nvram_image, nvram_size);
 
-		/* Write the whole thing back */
-		if (platform.nvram_write)
-			platform.nvram_write(0, nvram_image, nvram_size);
+	return nvram_valid;
+}
+
+static void nvram_reformat(void)
+{
+	if (nvram_format(nvram_image, nvram_size)) {
+		prerror("NVRAM: Failed to format NVRAM!\n");
+		nvram_valid = false;
+		return;
 	}
+
+	/* Write the whole thing back */
+	if (platform.nvram_write)
+		platform.nvram_write(0, nvram_image, nvram_size);
+
+	nvram_valid = true;
 }
 
 void nvram_reinit(void)
@@ -77,8 +95,8 @@ void nvram_reinit(void)
 	/* It's possible we failed to load nvram at boot. */
 	if (!nvram_ready)
 		nvram_init();
-	else
-		nvram_validate();
+	else if (!nvram_validate())
+		nvram_reformat();
 }
 
 void nvram_read_complete(bool success)
@@ -92,7 +110,8 @@ void nvram_read_complete(bool success)
 		return;
 	}
 
-	nvram_validate();
+	if (!nvram_validate())
+		nvram_reformat();
 
 	/* Add nvram node */
 	np = dt_new(opal_node, "nvram");

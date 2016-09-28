@@ -18,6 +18,11 @@
 
 #include "../nvram-format.c"
 
+bool nvram_validate(void)
+{
+	return true;
+}
+
 static char *nvram_reset(void *nvram_image, int size)
 {
 	struct chrp_nvram_hdr *h = nvram_image;

@@ -208,11 +208,26 @@ static const char *find_next_key(const char *start, const char *end)
  */
 const char *nvram_query(const char *key)
 {
-	const char *part_end = (const char *) skiboot_part_hdr +
-		skiboot_part_hdr->len * 16 - 1;
-	const char *start = (const char *) skiboot_part_hdr +
-		sizeof(*skiboot_part_hdr);
+	const char *part_end, *start;
 	int key_len = strlen(key);
+
+	/*
+	 * The running OS can modify the NVRAM as it pleases so we need to be
+	 * a little paranoid and check that it's ok before we try parse it.
+	 *
+	 * NB: nvram_validate() can update skiboot_part_hdr
+	 */
+	if (!nvram_validate()) {
+		prerror("NVRAM: Look up for '%s' failed due to bad format!\n",
+			key);
+		return NULL;
+	}
+
+	part_end = (const char *) skiboot_part_hdr
+		+ skiboot_part_hdr->len * 16 - 1;
+
+	start = (const char *) skiboot_part_hdr
+		+ sizeof(*skiboot_part_hdr);
 
 	if (!key_len) {
 		prlog(PR_WARNING, "NVRAM: search key is empty!\n");

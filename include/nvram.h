@@ -20,6 +20,7 @@
 int nvram_format(void *nvram_image, uint32_t nvram_size);
 int nvram_check(void *nvram_image, uint32_t nvram_size);
 void nvram_reinit(void);
+bool nvram_validate(void);
 
 const char *nvram_query(const char *name);
 
