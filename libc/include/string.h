@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2004, 2008 IBM Corporation
+ * Copyright (c) 2004, 2016 IBM Corporation
  * All rights reserved.
  * This program and the accompanying materials
  * are made available under the terms of the BSD License
@@ -32,6 +32,7 @@ char *strdup(const char *src);
 void *memset(void *s, int c, size_t n);
 void *memchr(const void *s, int c, size_t n);
 void *memcpy(void *dest, const void *src, size_t n);
+void *memcpy_from_ci(void *destpp, const void *srcpp, size_t len);
 void *memmove(void *dest, const void *src, size_t n);
 int memcmp(const void *s1, const void *s2, size_t n);
 
