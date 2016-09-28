@@ -89,15 +89,17 @@ function boot_test {
 	    flash $@;
 	fi
 
-	msg "Booting $target..."
-	boot_firmware;
-	msg "firmware looks good, waiting for linux";
+	if [ $nobooting -ne 1 ] ; then
+	    msg "Booting $target..."
+	    boot_firmware;
+	    msg "firmware looks good, waiting for linux";
 
-	linux_boot;
-	if [ $? -ne 0 ] ; then
+	    linux_boot;
+	    if [ $? -ne 0 ] ; then
 		error "Couldn't reach petitboot on $target";
+	    fi
+	    msg "$target has booted";
 	fi
-	msg "$target has booted";
 	unset SSHPASS;
 }
 
@@ -134,9 +136,9 @@ There are three usage modes.
      Boot test the target without flashing. Specify the type of machine
      (FSP or BMC) with the -b option.
 
-3) boot_test.sh [-vdp] -b bmc -t target -P pnor
-   boot_test.sh [-vdp] -b bmc -t target [-1 PAYLOAD] [-2 BOOTKERNEL]
-   boot_test.sh [-vdp] -b bmc -t target [-F eyecatcher:lid ]
+3) boot_test.sh [-vdp] -b bmc -t target -P pnor [-N]
+   boot_test.sh [-vdp] -b bmc -t target [-1 PAYLOAD] [-2 BOOTKERNEL] [-N]
+   boot_test.sh [-vdp] -b bmc -t target [-F eyecatcher:lid] [-N]
    boot_test.sh [-vdp] -b fsp -t target [-1 lid1] [-2 lid2] [-3 lid3]
 
      Flash the given firmware before boot testing.
@@ -166,6 +168,8 @@ Common Options:
   -k keep logs on failure.
 
   -K keep logs on success or failure.
+
+  -N No booting.
 EOF
     exit 1;
 }
@@ -182,6 +186,7 @@ done
 # Parse options
 V=0;
 bootonly=0;
+nobooting=0;
 powerdown=0;
 firmware_supplied=0;
 target=""
@@ -194,7 +199,7 @@ LID[1]=""
 LID[2]=""
 keep_log_success=0
 keep_log_failure=0
-while getopts "kKhvdpB1:2:3:P:t:b:F:" OPT; do
+while getopts "kKhvdpB1:2:3:P:t:b:F:N" OPT; do
     case "$OPT" in
 	v)
 	    V=1;
@@ -216,6 +221,12 @@ while getopts "kKhvdpB1:2:3:P:t:b:F:" OPT; do
 	    bootonly=1;
 	    if [ $firmware_supplied -eq 1 ]; then
 		usage
+	    fi
+	    ;;
+	N)
+	    nobooting=1;
+	    if [ $firmware_supplied -eq 0 ] ; then
+		    error "Firmware not supplied."
 	    fi
 	    ;;
 	p)
