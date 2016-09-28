@@ -40,6 +40,7 @@
 // Includes
 // -----------------------------------------------
 #include "trustedTypes.H"
+#include "../tpm_chip.h"
 
 #ifdef __cplusplus
 namespace TRUSTEDBOOT
