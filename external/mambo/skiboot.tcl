@@ -205,8 +205,20 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
     lappend reg 0x22 0x120 1 0x22 0x0003 ;# 16G seg 16G pages
     mysim of addprop $cpu_node array "ibm,segment-page-sizes" reg
 
-    set reg {}
     if { $default_config == "P9" } {
+        # Set actual page size encodings
+        set reg {}
+        # 4K pages
+        lappend reg 0x0000000c
+        # 64K pages
+        lappend reg 0xa0000010
+        # 2M pages
+        lappend reg 0x20000015
+        # 1G pages
+        lappend reg 0x4000001e
+        mysim of addprop $cpu_node array "ibm,processor-radix-AP-encodings" reg
+
+        set reg {}
 	# POWER9 PAPR defines upto bytes 62-63
 	# header + bytes 0-5
 	lappend reg 0x4000f63fc70080c0
@@ -226,10 +238,12 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
 	lappend reg 0x8000800080008000
 	# bytes 62-69
 	lappend reg 0x8000000000000000
+	mysim of addprop $cpu_node array64 "ibm,pa-features" reg
     } else {
+        set reg {}
 	lappend reg 0x6000f63fc70080c0
+	mysim of addprop $cpu_node array64 "ibm,pa-features" reg
     }
-    mysim of addprop $cpu_node array64 "ibm,pa-features" reg
 
     set irqreg [list]
     for { set t 0 } { $t < $mconf(threads) } { incr t } {
