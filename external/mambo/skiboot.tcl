@@ -271,6 +271,10 @@ if { [info exists env(SKIBOOT_ENABLE_MAMBO_STB)] } {
     mysim of addprop $stb_node array "hw-key-hash" hw_key_hash
 }
 
+# Kernel command line args, appended to any from the device tree
+# e.g.: of::set_bootargs "xmon"
+of::set_bootargs ""
+
 # Load images
 
 set boot_size [file size $mconf(boot_image)]
