@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@
 enum proc_gen proc_gen;
 
 static uint64_t kernel_entry;
+static size_t kernel_size;
 static bool kernel_32bit;
 
 /* We backup the previous vectors here before copying our own */
@@ -111,7 +112,11 @@ static bool try_load_elf64_le(struct elf_hdr *header)
 	kernel_entry += load_base;
 	kernel_32bit = false;
 
-	printf("INIT: 64-bit kernel entry at 0x%llx\n", kernel_entry);
+	kernel_size = le64_to_cpu(kh->e_shoff) +
+		(le16_to_cpu(kh->e_shentsize) * le16_to_cpu(kh->e_shnum));
+
+	printf("INIT: 64-bit kernel entry at 0x%llx, size 0x%lx\n",
+	       kernel_entry, kernel_size);
 
 	return true;
 }
@@ -185,7 +190,10 @@ static bool try_load_elf64(struct elf_hdr *header)
 	kernel_entry += load_base;
 	kernel_32bit = false;
 
-	printf("INIT: 64-bit kernel entry at 0x%llx\n", kernel_entry);
+	kernel_size = kh->e_shoff + (kh->e_shentsize * kh->e_shnum);
+
+	printf("INIT: 64-bit kernel entry at 0x%llx, size 0x%lx\n",
+	       kernel_entry, kernel_size);
 
 	return true;
 }
@@ -293,7 +301,6 @@ extern char __builtin_kernel_start[];
 extern char __builtin_kernel_end[];
 extern uint64_t boot_offset;
 
-static size_t kernel_size;
 static size_t initramfs_size;
 
 static bool start_preload_kernel(void)
@@ -329,6 +336,7 @@ static bool load_kernel(void)
 {
 	struct elf_hdr *kh;
 	int loaded;
+	bool do_stb = false;
 
 	prlog(PR_NOTICE, "INIT: Waiting for kernel...\n");
 
@@ -351,6 +359,7 @@ static bool load_kernel(void)
 			printf("Using built-in kernel\n");
 			memmove(KERNEL_LOAD_BASE, (void*)builtin_base,
 				kernel_size);
+			do_stb = true;
 		}
 	}
 
@@ -367,6 +376,7 @@ static bool load_kernel(void)
 			cpu_set_pm_enable(false);
 			memcpy(NULL, old_vectors, 0x2000);
 		}
+		do_stb = true;
 	} else {
 		if (!kernel_size)
 			printf("INIT: Assuming kernel at %p\n",
@@ -376,28 +386,43 @@ static bool load_kernel(void)
 					        SECURE_BOOT_HEADERS_SIZE);
 		else
 			kh = (struct elf_hdr *) (KERNEL_LOAD_BASE);
+		do_stb = true;
 	}
 
 	printf("INIT: Kernel loaded, size: %zu bytes (0 = unknown preload)\n",
 	       kernel_size);
-	/*
-	 * Verify and measure the retrieved PNOR partition as part of the
-	 * secure boot and trusted boot requirements
-	 */
-	stb_final();
 
 	if (kh->ei_ident != ELF_IDENT) {
 		printf("INIT: ELF header not found. Assuming raw binary.\n");
 		return true;
 	}
 
-	if (kh->ei_class == ELF_CLASS_64)
-		return try_load_elf64(kh);
-	else if (kh->ei_class == ELF_CLASS_32)
-		return try_load_elf32(kh);
+	if (kh->ei_class == ELF_CLASS_64) {
+		if (!try_load_elf64(kh))
+			return false;
+	} else if (kh->ei_class == ELF_CLASS_32) {
+		if (!try_load_elf32(kh))
+			return false;
+	} else {
+		printf("INIT: Neither ELF32 not ELF64 ?\n");
+		return false;
+	}
 
-	printf("INIT: Neither ELF32 not ELF64 ?\n");
-	return false;
+	if (do_stb)
+	{
+		sb_verify(RESOURCE_ID_KERNEL, RESOURCE_SUBID_NONE,
+			  kh, kernel_size);
+		tb_measure(RESOURCE_ID_KERNEL, RESOURCE_SUBID_NONE,
+			   kh, kernel_size);
+	}
+
+	/*
+	 * Verify and measure the retrieved PNOR partition as part of the
+	 * secure boot and trusted boot requirements
+	 */
+	stb_final();
+
+	return true;
 }
 
 static void load_initramfs(void)
