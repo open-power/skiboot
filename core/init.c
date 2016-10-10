@@ -334,6 +334,7 @@ static bool start_preload_kernel(void)
 
 static bool load_kernel(void)
 {
+	void* stb_container = NULL;
 	struct elf_hdr *kh;
 	int loaded;
 	bool do_stb = false;
@@ -377,16 +378,20 @@ static bool load_kernel(void)
 			memcpy(NULL, old_vectors, 0x2000);
 		}
 		do_stb = true;
+		stb_container = kh; /* probably incorrect */
 	} else {
-		if (!kernel_size)
+		if (!kernel_size) {
 			printf("INIT: Assuming kernel at %p\n",
 			       KERNEL_LOAD_BASE);
-		if (stb_is_container(KERNEL_LOAD_BASE, kernel_size))
-			kh = (struct elf_hdr *) (KERNEL_LOAD_BASE +
-					        SECURE_BOOT_HEADERS_SIZE);
-		else
-			kh = (struct elf_hdr *) (KERNEL_LOAD_BASE);
-		do_stb = true;
+			/* Hack for STB in Mambo, assume at least 4kb in mem */
+			kernel_size = SECURE_BOOT_HEADERS_SIZE;
+			do_stb = true;
+		}
+		kh = (struct elf_hdr *) (KERNEL_LOAD_BASE);
+		if (stb_is_container(KERNEL_LOAD_BASE, kernel_size)) {
+			stb_container = kh;
+			kh = (struct elf_hdr *) (KERNEL_LOAD_BASE + SECURE_BOOT_HEADERS_SIZE);
+		}
 	}
 
 	printf("INIT: Kernel loaded, size: %zu bytes (0 = unknown preload)\n",
@@ -411,9 +416,9 @@ static bool load_kernel(void)
 	if (do_stb)
 	{
 		sb_verify(RESOURCE_ID_KERNEL, RESOURCE_SUBID_NONE,
-			  kh, kernel_size);
+			  stb_container, kernel_size + SECURE_BOOT_HEADERS_SIZE);
 		tb_measure(RESOURCE_ID_KERNEL, RESOURCE_SUBID_NONE,
-			   kh, kernel_size);
+			   stb_container, kernel_size + SECURE_BOOT_HEADERS_SIZE);
 	}
 
 	/*
