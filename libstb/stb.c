@@ -188,7 +188,7 @@ int tb_measure(enum resource_id id, uint32_t subid, void *buf, size_t len)
 {
 	int rc, r;
 	uint8_t digest[SHA512_DIGEST_LENGTH];
-	uint8_t* digestp;
+	const uint8_t *digestp;
 
 	rc = 0;
 	digestp = NULL;
@@ -227,20 +227,35 @@ int tb_measure(enum resource_id id, uint32_t subid, void *buf, size_t len)
 	 * the hash of the container payload (if it's a container) or the image
 	 * (if it's not a container)
 	 */
-	if (secure_mode && stb_is_container(buf, len)) {
-		digestp = (uint8_t*) stb_sw_payload_hash(buf, len);
-		memcpy(digest, digestp, TPM_ALG_SHA256_SIZE);
-	} else if (!secure_mode && stb_is_container(buf, len)) {
+	if (stb_is_container(buf, len)) {
+		digestp = stb_sw_payload_hash(buf, len);
+		if(!digestp) {
+			prlog(PR_EMERG, "STB Container is corrupt, can't find hash\n");
+			abort();
+		}
+
 		rom_driver->sha512(
 			      (void*)((uint8_t*)buf + SECURE_BOOT_HEADERS_SIZE),
 			      len - SECURE_BOOT_HEADERS_SIZE, digest);
+
 		prlog(PR_INFO, "STB: %s sha512 hash re-calculated\n",
 		      resource_map[r].name);
+		if (memcmp(digestp, digest, TPM_ALG_SHA256_SIZE) != 0) {
+			prlog(PR_ALERT, "STB: HASH IN CONTAINER DOESN'T MATCH CONTENT!\n");
+			prlog(PR_ALERT, "STB: Container hash:\n");
+			stb_print_data(digestp, TPM_ALG_SHA256_SIZE);
+			prlog(PR_ALERT, "STB: Computed hash (on %lx bytes):\n", len);
+			stb_print_data(digest, TPM_ALG_SHA256_SIZE);
+
+			if (secure_mode)
+				abort();
+		}
 	} else {
 		rom_driver->sha512(buf, len, digest);
 		prlog(PR_INFO, "STB: %s sha512 hash calculated\n",
 		      resource_map[r].name);
 	}
+
 #ifdef STB_DEBUG
 	/* print the payload/image hash */
 	prlog(PR_NOTICE, "STB: %s hash:\n", resource_map[r].name);
