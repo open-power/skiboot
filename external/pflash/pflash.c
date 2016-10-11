@@ -304,8 +304,7 @@ static void set_ecc(uint32_t start, uint32_t size)
 
 static void program_file(const char *file, uint32_t start, uint32_t size)
 {
-	int fd, rc;
-	ssize_t len;
+	int fd;
 	uint32_t actual_size = 0;
 
 	fd = open(file, O_RDONLY);
@@ -326,6 +325,9 @@ static void program_file(const char *file, uint32_t start, uint32_t size)
 	printf("Programming & Verifying...\n");
 	progress_init(size >> 8);
 	while(size) {
+		ssize_t len;
+		int rc;
+
 		len = read(fd, file_buf, FILE_BUF_SIZE);
 		if (len < 0) {
 			perror("Error reading file");
@@ -362,8 +364,7 @@ static void program_file(const char *file, uint32_t start, uint32_t size)
 
 static void do_read_file(const char *file, uint32_t start, uint32_t size)
 {
-	int fd, rc;
-	ssize_t len;
+	int fd;
 	uint32_t done = 0;
 
 	fd = open(file, O_WRONLY | O_TRUNC | O_CREAT, 00666);
@@ -376,6 +377,9 @@ static void do_read_file(const char *file, uint32_t start, uint32_t size)
 
 	progress_init(size >> 8);
 	while(size) {
+		ssize_t len;
+		int rc;
+
 		len = size > FILE_BUF_SIZE ? FILE_BUF_SIZE : size;
 		rc = blocklevel_read(bl, start, file_buf, len);
 		if (rc) {
