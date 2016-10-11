@@ -46,7 +46,7 @@ void progress_tick(unsigned long cur)
 		printf("=");
 	for (; i < PROGRESS_CHARS; i++)
 		printf(" ");
-	printf("] %d%%", pcent);
+	printf("] %u%%", pcent);
 
 	sec = now.tv_sec - progress_start.tv_sec;
 	if (sec >= 5 && pcent > 0) {
@@ -61,9 +61,9 @@ void progress_tick(unsigned long cur)
 			rem_sec = progress_prevsec;
 		progress_prevsec = rem_sec;
 		if (rem_sec < 60)
-			printf(" ETA:%ds     ", rem_sec);
+			printf(" ETA:%us     ", rem_sec);
 		else {
-			printf(" ETA:%d:%02d:%02d ",
+			printf(" ETA:%u:%02d:%02u ",
 				rem_sec / 3600,
 				(rem_sec / 60) % 60,
 				rem_sec % 60);
