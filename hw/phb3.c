@@ -2273,7 +2273,7 @@ static int64_t capp_lid_download(void)
 
 	capp_ucode_info.load_result = wait_for_resource_loaded(
 		RESOURCE_ID_CAPP,
-		RESOURCE_SUBID_NONE);
+		capp_ucode_info.ec_level);
 
 	if (capp_ucode_info.load_result != OPAL_SUCCESS) {
 		prerror("CAPP: Error loading ucode lid. index=%x\n",
@@ -4726,7 +4726,7 @@ int phb3_preload_capp_ucode(void)
 
 	printf("CAPI: Preloading ucode %x\n", capp_ucode_info.ec_level);
 
-	ret = start_preload_resource(RESOURCE_ID_CAPP, RESOURCE_SUBID_NONE,
+	ret = start_preload_resource(RESOURCE_ID_CAPP, index,
 				     capp_ucode_info.lid,
 				     &capp_ucode_info.size);
 
