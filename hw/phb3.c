@@ -34,7 +34,6 @@
 #include <fsp.h>
 #include <chip.h>
 #include <chiptod.h>
-#include <libstb/container.h>
 
 /* Enable this to disable error interrupts for debug purposes */
 #undef DISABLE_ERR_INTS
@@ -2310,27 +2309,9 @@ static int64_t capp_load_ucode(struct phb3 *p)
 	if (rc)
 		return rc;
 
+	prlog(PR_INFO, "CHIP%i: CAPP ucode lid loaded at %p\n",
+	      p->chip_id, capp_ucode_info.lid);
 	lid = capp_ucode_info.lid;
-
-	/* skip secure boot headers */
-	if (stb_is_container(lid, capp_ucode_info.size))
-		lid = (struct capp_lid_hdr*) ((uint8_t*)lid + SECURE_BOOT_HEADERS_SIZE);
-
-	/*
-	 * CAPP partition header may be present on BMC machines. It will tell
-	 * us what sub-partition should be used
-	 */
-	if (be64_to_cpu(lid->eyecatcher) == 0x4341505000000001) {
-		uint32_t subpart_offset=0, subpart_size=0;
-		flash_subpart_info(lid, CAPP_UCODE_MAX_SIZE,
-				   capp_ucode_info.ec_level,
-				   &subpart_offset, &subpart_size);
-		if (rc)
-			return rc;
-
-		lid = (struct capp_lid_hdr*) ((uint8_t*)lid + subpart_offset);
-	}
-
 	/*
 	 * If lid header is present (on FSP machines), it'll tell us where to
 	 * find the ucode.  Otherwise this is the ucode.
@@ -2401,7 +2382,6 @@ static int64_t capp_load_ucode(struct phb3 *p)
 	}
 
 	chip->capp_ucode_loaded |= (1 << p->index);
-	prlog(PR_INFO, "CHIP%i: CAPP ucode loaded\n", p->chip_id);
 	return OPAL_SUCCESS;
 }
 
