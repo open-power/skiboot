@@ -81,10 +81,10 @@ int main(void)
 	huge_tb = 0;
 
 	prlog(PR_EMERG, "Hello World %lu", value);
-	CHECK_ASSERT("[    0.000042,0] Hello World 18446744073709551615");
+	CHECK_ASSERT("[    0.000000042,0] Hello World 18446744073709551615");
 
 	printf("Hello World %lu", value);
-	CHECK_ASSERT("[    0.000042,5] Hello World 18446744073709551615");
+	CHECK_ASSERT("[    0.000000042,5] Hello World 18446744073709551615");
 
 	/*
 	 * Test string of size > 320
@@ -105,7 +105,7 @@ int main(void)
 	 */
 	memset(console_buffer, 0, sizeof(console_buffer));
 
-	prlog(PR_EMERG, "%303s", "Hello World");
+	prlog(PR_EMERG, "%300s", "Hello World");
 	assert(console_buffer[319] == 0);
 
 	/* compare truncated string */

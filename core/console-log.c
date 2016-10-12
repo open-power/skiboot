@@ -44,7 +44,7 @@ static int vprlog(int log_level, const char *fmt, va_list ap)
 	if (log_level > (debug_descriptor.console_log_levels >> 4))
 		return 0;
 
-	count = snprintf(buffer, sizeof(buffer), "[%5lu.%06lu,%d] ",
+	count = snprintf(buffer, sizeof(buffer), "[%5lu.%09lu,%d] ",
 			 tb_to_secs(tb), tb_remaining_nsecs(tb), log_level);
 	count+= vsnprintf(buffer+count, sizeof(buffer)-count, fmt, ap);
 
