@@ -131,7 +131,9 @@ enum proc_chip_quirks {
 	QUIRK_SIMICS		= 0x00000020,
 	QUIRK_SLOW_SIM		= 0x00000040,
 	QUIRK_NO_DIRECT_CTL	= 0x00000080,
-} proc_chip_quirks;
+};
+
+extern enum proc_chip_quirks proc_chip_quirks;
 
 static inline bool chip_quirk(unsigned int q)
 {
