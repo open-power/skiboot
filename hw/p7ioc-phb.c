@@ -2234,8 +2234,8 @@ static int64_t p7ioc_freset(struct pci_slot *slot)
 			return slot->ops.pfreset(slot);
 		}
 
-		pci_slot_set_state(slot, P7IOC_SLOT_HRESET_START);
-		return slot->ops.hreset(slot);
+		pci_slot_set_state(slot, P7IOC_SLOT_LINK_START);
+		return slot->ops.poll_link(slot);
 	default:
 		PHBERR(p, "FRESET: Unexpected slot state %08x\n",
 		       slot->state);

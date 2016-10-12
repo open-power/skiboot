@@ -40,6 +40,8 @@
  * when you're going to change below values.
  */
 #define FIRENZE_PCI_SLOT_NORMAL			0x00000000
+#define FIRENZE_PCI_SLOT_LINK			0x00000100
+#define   FIRENZE_PCI_SLOT_LINK_START		0x00000101
 #define FIRENZE_PCI_SLOT_HRESET			0x00000200
 #define   FIRENZE_PCI_SLOT_HRESET_START		0x00000201
 #define FIRENZE_PCI_SLOT_FRESET			0x00000300
@@ -535,26 +537,8 @@ static int64_t firenze_pci_slot_freset(struct pci_slot *slot)
 		pval = (uint8_t *)(plat_slot->req->rw_buf);
 		*plat_slot->power_status = *pval;
 
-		/* PHB3 slot supports post fundamental reset, we switch
-		 * to that. For normal PCI slot, we switch to hot reset
-		 * instead.
-		 */
-		if (slot->ops.pfreset) {
-			prlog(PR_DEBUG, "%016llx FRESET: Switch to PFRESET\n",
-			      slot->id);
-			pci_slot_set_state(slot,
-				FIRENZE_PCI_SLOT_PFRESET_START);
-			return slot->ops.pfreset(slot);
-		} else if (slot->ops.hreset) {
-			prlog(PR_DEBUG, "%016llx FRESET: Switch to HRESET\n",
-			      slot->id);
-			pci_slot_set_state(slot,
-				FIRENZE_PCI_SLOT_HRESET_START);
-			return slot->ops.hreset(slot);
-		}
-
-		pci_slot_set_state(slot, FIRENZE_PCI_SLOT_NORMAL);
-		return OPAL_SUCCESS;
+		pci_slot_set_state(slot, FIRENZE_PCI_SLOT_LINK_START);
+		return slot->ops.poll_link(slot);
 	default:
 		prlog(PR_DEBUG, "%016llx FRESET: Unexpected state %08x\n",
 		      slot->id, slot->state);
@@ -615,27 +599,8 @@ static int64_t firenze_pci_slot_perst(struct pci_slot *slot)
 			FIRENZE_PCI_SLOT_PERST_DELAY);
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1500));
 	case FIRENZE_PCI_SLOT_PERST_DELAY:
-		/*
-		 * Switch to post fundamental reset if the slot supports
-		 * that. Otherwise, we issue a proceeding hot reset on
-		 * the slot.
-		 */
-		if (slot->ops.pfreset) {
-			prlog(PR_DEBUG, "%016llx PERST: Switch to PFRESET\n",
-			      slot->id);
-			pci_slot_set_state(slot,
-				FIRENZE_PCI_SLOT_PFRESET_START);
-			return slot->ops.pfreset(slot);
-		} else if (slot->ops.hreset) {
-			prlog(PR_DEBUG, "%016llx PERST: Switch to HRESET\n",
-			      slot->id);
-			pci_slot_set_state(slot,
-				FIRENZE_PCI_SLOT_HRESET_START);
-			return slot->ops.hreset(slot);
-		}
-
-		pci_slot_set_state(slot, FIRENZE_PCI_SLOT_NORMAL);
-		return OPAL_SUCCESS;
+		pci_slot_set_state(slot, FIRENZE_PCI_SLOT_LINK_START);
+		return slot->ops.poll_link(slot);
 	default:
 		prlog(PR_DEBUG, "%016llx PERST: Unexpected state %08x\n",
 		      slot->id, slot->state);

@@ -2262,8 +2262,8 @@ static int64_t phb3_pfreset(struct pci_slot *slot)
 		/* CAPP FPGA requires 1s to flash before polling link */
 		return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
 	case PHB3_SLOT_PFRESET_DEASSERT_DELAY:
-		pci_slot_set_state(slot, PHB3_SLOT_HRESET_START);
-		return slot->ops.hreset(slot);
+		pci_slot_set_state(slot, PHB3_SLOT_LINK_START);
+		return slot->ops.poll_link(slot);
 	default:
 		PHBERR(p, "Unexpected slot state %08x\n", slot->state);
 	}
