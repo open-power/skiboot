@@ -1951,16 +1951,8 @@ static int64_t phb4_pfreset(struct pci_slot *slot)
 		/* CAPP FPGA requires 1s to flash before polling link */
 		return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
 	case PHB4_SLOT_PFRESET_DEASSERT_DELAY:
-#if 0 /* PHB3 does a Hreset here. It's unnecessary I think and it's
-	 causing problems with the simulator croc model so don't do
-	 it until I figure out Gavin's reasons
-       */
-		pci_slot_set_state(slot, PHB4_SLOT_HRESET_START);
-		return slot->ops.hreset(slot);
-#else
 		pci_slot_set_state(slot, PHB4_SLOT_LINK_START);
 		return slot->ops.poll_link(slot);
-#endif
 	default:
 		PHBERR(p, "Unexpected slot state %08x\n", slot->state);
 	}
