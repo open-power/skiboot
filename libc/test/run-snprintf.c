@@ -24,6 +24,57 @@
 int test1(void);
 int skiboot_snprintf(char *buf, size_t bufsz, size_t l, const char* format, ...);
 
+static void test_printf_0u(int n)
+{
+	char *buf, *buf2;
+	int blen;
+	unsigned int i;
+
+	for(i=1; i<10; i++)
+	{
+		blen = i+1;
+		if (n<0)
+			blen++;
+
+		buf = (char*)malloc(blen);
+		buf2 = (char*)malloc(blen);
+		skiboot_snprintf(buf, blen, blen, "%08u", n);
+		snprintf(buf2, blen, "%08u", n);
+		n = n * 10;
+		assert(0 == strncmp(buf, buf2, blen));
+		free(buf);
+		free(buf2);
+	}
+}
+
+static void test_printf_u(int n)
+{
+	char *buf, *buf2;
+	int blen;
+	unsigned int r;
+	unsigned int i;
+
+	for(i=1; i<10; i++)
+	{
+		blen = i+1;
+		if (n<0)
+			blen++;
+
+		buf = (char*)malloc(blen);
+		buf2 = (char*)malloc(blen);
+		r = skiboot_snprintf(buf, blen, blen, "%u", n);
+		snprintf(buf2, blen, "%u", n);
+		n = n * 10;
+		if (n<0)
+			assert(i+1 == r);
+		else
+			assert(i == r);
+		assert(0 == strncmp(buf, buf2, blen));
+		free(buf);
+		free(buf2);
+	}
+}
+
 static void test_printf_d(int n)
 {
 	char *buf, *buf2;
@@ -180,6 +231,8 @@ int main(void)
 	assert(buf[9] == 0);
 	free(buf);
 
+	test_printf_u(1);
+	test_printf_0u(1);
 	test_printf_d(1);
 	test_printf_d(-1);
 	test_printf_x("%x");
