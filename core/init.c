@@ -830,9 +830,6 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 */
 	probe_platform();
 
-	/* Secure/Trusted Boot init. We look for /ibm,secureboot in DT */
-	stb_init();
-
 	/* Initialize the rest of the cpu thread structs */
 	init_all_cpus();
 
@@ -895,6 +892,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 */
 	if (platform.init)
 		platform.init();
+
+	/* Secure/Trusted Boot init. We look for /ibm,secureboot in DT */
+	stb_init();
 
 	/* Setup dummy console nodes if it's enabled */
 	if (dummy_console_enabled())
