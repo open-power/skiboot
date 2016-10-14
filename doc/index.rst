@@ -39,6 +39,7 @@ OPAL ABI
 .. toctree::
    :maxdepth: 2
 
+   stb
    device-tree
    device-tree/index
    opal-api/index
