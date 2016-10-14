@@ -279,9 +279,17 @@ static int64_t phb3_get_reserved_pe_number(struct phb *phb __unused)
 static void phb3_root_port_init(struct phb *phb, struct pci_device *dev,
 				int ecap, int aercap)
 {
+	struct phb3 *p = phb_to_phb3(phb);
 	uint16_t bdfn = dev->bdfn;
 	uint16_t val16;
 	uint32_t val32;
+
+	/* Mask UTL link down event if root slot supports surprise
+	 * hotplug as the event should be handled by hotplug driver
+	 * instead of EEH subsystem.
+	 */
+	if (dev->slot && dev->slot->surprise_pluggable)
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0xad42800000000000);
 
 	/* Enable SERR and parity checking */
 	pci_cfg_read16(phb, bdfn, PCI_CFG_CMD, &val16);
@@ -299,12 +307,18 @@ static void phb3_root_port_init(struct phb *phb, struct pci_device *dev,
 
 	if (!aercap) return;
 
-	/* Mask various unrecoverable errors */
+	/* Mask various unrecoverable errors. The link surprise down
+	 * event should be masked when its PCI slot support surprise
+	 * hotplug. The link surprise down event should be handled by
+	 * PCI hotplug driver instead of EEH subsystem.
+	 */
 	pci_cfg_read32(phb, bdfn, aercap + PCIECAP_AER_UE_MASK, &val32);
 	val32 |= (PCIECAP_AER_UE_MASK_POISON_TLP |
 		  PCIECAP_AER_UE_MASK_COMPL_TIMEOUT |
 		  PCIECAP_AER_UE_MASK_COMPL_ABORT |
 		  PCIECAP_AER_UE_MASK_ECRC);
+	if (dev->slot && dev->slot->surprise_pluggable)
+		val32 |= PCIECAP_AER_UE_MASK_SURPRISE_DOWN;
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_UE_MASK, val32);
 
 	/* Report various unrecoverable errors as fatal errors */
@@ -368,9 +382,18 @@ static void phb3_switch_port_init(struct phb *phb,
 	val16 &= ~PCICAP_EXP_DEVCTL_CE_REPORT;
 	pci_cfg_write16(phb, bdfn, ecap + PCICAP_EXP_DEVCTL, val16);
 
-	/* Unmask all unrecoverable errors */
+	/* Unmask all unrecoverable errors for upstream port. For
+	 * downstream port, the surprise link down is masked because
+	 * it should be handled by hotplug driver instead of EEH
+	 * subsystem.
+	 */
 	if (!aercap) return;
-	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_UE_MASK, 0x0);
+	if (dev->dev_type == PCIE_TYPE_SWITCH_DNPORT &&
+	    dev->slot && dev->slot->surprise_pluggable)
+		pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_UE_MASK,
+				PCIECAP_AER_UE_MASK_SURPRISE_DOWN);
+	else
+		pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_UE_MASK, 0x0);
 
 	/* Severity of unrecoverable errors */
 	if (dev->dev_type == PCIE_TYPE_SWITCH_UPPORT)
@@ -1963,13 +1986,22 @@ static void phb3_prepare_link_change(struct pci_slot *slot,
 				     bool is_up)
 {
 	struct phb3 *p = phb_to_phb3(slot->phb);
+	struct pci_device *pd = slot->pd;
 	uint32_t reg32;
 
 	p->has_link = is_up;
 	if (!is_up) {
-		/* Mask PCIE port interrupts */
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,
-			 0xad42800000000000);
+		if (!pd || !pd->slot || !pd->slot->surprise_pluggable) {
+			/* Mask PCIE port interrupts */
+			out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,
+				 0xad42800000000000);
+
+			pci_cfg_read32(&p->phb, 0,
+				       p->aercap + PCIECAP_AER_UE_MASK, &reg32);
+			reg32 |= PCIECAP_AER_UE_MASK_SURPRISE_DOWN;
+			pci_cfg_write32(&p->phb, 0,
+					p->aercap + PCIECAP_AER_UE_MASK, reg32);
+                }
 
 		/* Mask AER receiver error */
 		phb3_pcicfg_read32(&p->phb, 0,
@@ -1996,8 +2028,17 @@ static void phb3_prepare_link_change(struct pci_slot *slot,
 		/* Clear spurrious errors and enable PCIE port interrupts */
 		out_be64(p->regs + UTL_PCIE_PORT_STATUS,
 			 0xffdfffffffffffff);
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,
-			 0xad52800000000000);
+
+		if (!pd || !pd->slot || !pd->slot->surprise_pluggable) {
+			out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,
+				 0xad52800000000000);
+
+			pci_cfg_read32(&p->phb, 0,
+				       p->aercap + PCIECAP_AER_UE_MASK, &reg32);
+			reg32 &= ~PCIECAP_AER_UE_MASK_SURPRISE_DOWN;
+			pci_cfg_write32(&p->phb, 0,
+					p->aercap + PCIECAP_AER_UE_MASK, reg32);
+		}
 
 		/* Don't block PCI-CFG */
 		p->flags &= ~PHB3_CFG_BLOCKED;

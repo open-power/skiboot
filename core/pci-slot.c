@@ -38,15 +38,21 @@ static void pci_slot_prepare_link_change(struct pci_slot *slot, bool up)
 	if (pci_has_cap(pd, PCIECAP_ID_AER, true)) {
 		aercap = pci_cap(pd, PCIECAP_ID_AER, true);
 
-		/* Link down error */
-		pci_cfg_read32(phb, pd->bdfn, aercap + PCIECAP_AER_UE_MASK,
-			       &mask);
-		if (up)
-			mask &= ~PCIECAP_AER_UE_MASK_SURPRISE_DOWN;
-		else
-			mask |= PCIECAP_AER_UE_MASK_SURPRISE_DOWN;
-		pci_cfg_write32(phb, pd->bdfn, aercap + PCIECAP_AER_UE_MASK,
-				mask);
+		/* Mask link surprise down event. The event is always
+		 * masked when the associated PCI slot supports PCI
+		 * surprise hotplug. We needn't toggle it when the link
+		 * bounces caused by reset and just keep it always masked.
+		 */
+		if (!pd->slot || !pd->slot->surprise_pluggable) {
+			pci_cfg_read32(phb, pd->bdfn,
+				       aercap + PCIECAP_AER_UE_MASK, &mask);
+			if (up)
+				mask &= ~PCIECAP_AER_UE_MASK_SURPRISE_DOWN;
+			else
+				mask |= PCIECAP_AER_UE_MASK_SURPRISE_DOWN;
+			pci_cfg_write32(phb, pd->bdfn,
+					aercap + PCIECAP_AER_UE_MASK, mask);
+		}
 
 		/* Receiver error */
 		pci_cfg_read32(phb, pd->bdfn, aercap + PCIECAP_AER_CE_MASK,
