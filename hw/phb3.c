@@ -281,6 +281,14 @@ static void phb3_root_port_init(struct phb *phb, struct pci_device *dev,
 	uint16_t val16;
 	uint32_t val32;
 
+	/* Use PHB's callback so that the UTL events will be masked
+	 * or unmasked when the link is down or up.
+	 */
+	if (dev->slot && dev->slot->ops.prepare_link_change &&
+	    phb->slot && phb->slot->ops.prepare_link_change)
+		dev->slot->ops.prepare_link_change =
+			phb->slot->ops.prepare_link_change;
+
 	/* Enable SERR and parity checking */
 	pci_cfg_read16(phb, bdfn, PCI_CFG_CMD, &val16);
 	val16 |= (PCI_CFG_CMD_SERR_EN | PCI_CFG_CMD_PERR_RESP);
