@@ -805,8 +805,8 @@ static int64_t opal_pci_set_power_state(uint64_t async_token,
 			return OPAL_PARAMETER;
 
 		pci_remove_bus(phb, &pd->children);
-		rc = OPAL_SUCCESS;
-		break;
+		phb_unlock(phb);
+		return OPAL_SUCCESS;
 	case OPAL_PCI_SLOT_ONLINE:
 		if (!pd)
 			return OPAL_PARAMETER;
@@ -814,19 +814,35 @@ static int64_t opal_pci_set_power_state(uint64_t async_token,
 			     &pd->children, pd, true);
 		pci_add_device_nodes(phb, &pd->children, pd->dn,
 				     &phb->lstate, 0);
-		rc = OPAL_SUCCESS;
-		break;
+		phb_unlock(phb);
+		return OPAL_SUCCESS;
 	default:
 		rc = OPAL_PARAMETER;
 	}
 
-	phb_unlock(phb);
+	/*
+	 * OPAL_ASYNC_COMPLETION is returned when delay is needed to change
+	 * the power state in the backend. When it can be finished without
+	 * delay, OPAL_SUCCESS is returned. The PCI topology needs to be
+	 * updated in both cases.
+	 */
 	if (rc == OPAL_ASYNC_COMPLETION) {
 		slot->retries = 500;
 		init_timer(&slot->timer, set_power_timer, slot);
 		schedule_timer(&slot->timer, msecs_to_tb(10));
+	} else if (rc == OPAL_SUCCESS) {
+		if (*state == OPAL_PCI_SLOT_POWER_OFF) {
+			pci_remove_bus(phb, &pd->children);
+		} else {
+			slot->ops.prepare_link_change(slot, true);
+			pci_scan_bus(phb, pd->secondary_bus,
+				pd->subordinate_bus, &pd->children, pd, true);
+			pci_add_device_nodes(phb, &pd->children, pd->dn,
+				&phb->lstate, 0);
+		}
 	}
 
+	phb_unlock(phb);
 	return rc;
 }
 opal_call(OPAL_PCI_SET_POWER_STATE, opal_pci_set_power_state, 3);
