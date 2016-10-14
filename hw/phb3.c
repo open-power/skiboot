@@ -284,6 +284,14 @@ static void phb3_root_port_init(struct phb *phb, struct pci_device *dev,
 	uint16_t val16;
 	uint32_t val32;
 
+	/* Use PHB's callback so that the UTL events will be masked
+	 * or unmasked when the link is down or up.
+	 */
+	if (dev->slot && dev->slot->ops.prepare_link_change &&
+	    phb->slot && phb->slot->ops.prepare_link_change)
+		dev->slot->ops.prepare_link_change =
+			phb->slot->ops.prepare_link_change;
+
 	/* Mask UTL link down event if root slot supports surprise
 	 * hotplug as the event should be handled by hotplug driver
 	 * instead of EEH subsystem.
