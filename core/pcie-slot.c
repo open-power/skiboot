@@ -199,11 +199,11 @@ static int64_t pcie_slot_set_power_state(struct pci_slot *slot, uint8_t val)
 	uint32_t ecap;
 	uint16_t state;
 
+	if (slot->power_state == val)
+		return OPAL_PARAMETER;
+
 	/* Drop the request if functionality doesn't exist */
 	if (!(slot->slot_cap & PCICAP_EXP_SLOTCAP_PWCTRL))
-		return OPAL_SUCCESS;
-
-	if (slot->power_state == val)
 		return OPAL_SUCCESS;
 
 	pci_slot_set_state(slot, PCI_SLOT_STATE_SPOWER_START);
