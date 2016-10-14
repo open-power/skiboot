@@ -116,6 +116,8 @@ void pci_slot_add_dt_properties(struct pci_slot *slot,
 
 	dt_add_property_cells(np, "ibm,reset-by-firmware", 1);
 	dt_add_property_cells(np, "ibm,slot-pluggable", slot->pluggable);
+	dt_add_property_cells(np, "ibm,slot-surprise-pluggable",
+			      slot->surprise_pluggable);
 	dt_add_property_cells(np, "ibm,slot-power-ctl", slot->power_ctl);
 	dt_add_property_cells(np, "ibm,slot-power-led-ctlled",
 			      slot->power_led_ctl);

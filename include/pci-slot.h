@@ -161,6 +161,7 @@ struct pci_slot {
 
 	/* Slot information */
 	uint8_t			pluggable;
+	uint8_t			surprise_pluggable;
 	uint8_t			power_ctl;
 	uint8_t			power_led_ctl;
 	uint8_t			attn_led_ctl;

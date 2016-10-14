@@ -653,6 +653,16 @@ static int64_t firenze_pci_slot_set_power_state(struct pci_slot *slot,
 	if (slot->power_state == val)
 		return OPAL_SUCCESS;
 
+	/* Update with the requested power state and bail immediately when
+	 * surprise hotplug is supported on the slot. It keeps the power
+	 * supply to the slot on and it guarentees the link state change
+	 * events will be raised properly during surprise hot add/remove.
+	 */
+	if (slot->surprise_pluggable) {
+		slot->power_state = val;
+		return OPAL_SUCCESS;
+	}
+
 	slot->power_state = val;
 	pci_slot_set_state(slot, FIRENZE_PCI_SLOT_SPOWER_START);
 
