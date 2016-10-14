@@ -558,9 +558,10 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 		     struct list_head *list, struct pci_device *parent,
 		     bool scan_downstream)
 {
-	struct pci_device *pd = NULL;
+	struct pci_device *pd = NULL, *rc = NULL;
 	uint8_t dev, fn, next_bus, max_sub, save_max;
 	uint32_t scan_map;
+	bool use_max;
 
 	/* Decide what to scan  */
 	scan_map = parent ? parent->scan_map : phb->scan_map;
@@ -576,6 +577,10 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 		if (!pd)
 			continue;
 
+		/* Record RC when its downstream link is down */
+		if (!scan_downstream && dev == 0 && !rc)
+			rc = pd;
+
 		/* XXX Handle ARI */
 		if (!pd->is_multifunction)
 			continue;
@@ -584,6 +589,20 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 					  ((uint16_t)bus << 8) | (dev << 3) | fn);
 			pci_check_clear_freeze(phb);
 		}
+	}
+
+	/* Reserve all possible buses if RC's downstream link is down
+	 * if PCI hotplug is supported.
+	 */
+	if (rc && rc->slot && rc->slot->pluggable) {
+		next_bus = phb->ops->choose_bus(phb, rc, bus + 1,
+						&max_bus, &use_max);
+		rc->secondary_bus = next_bus;
+		rc->subordinate_bus = max_bus;
+		pci_cfg_write8(phb, rc->bdfn, PCI_CFG_SECONDARY_BUS,
+			       rc->secondary_bus);
+		pci_cfg_write8(phb, rc->bdfn, PCI_CFG_SUBORDINATE_BUS,
+			       rc->subordinate_bus);
 	}
 
 	/*
@@ -605,7 +624,7 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 
 	/* Scan down bridges */
 	list_for_each(list, pd, link) {
-		bool use_max, do_scan;
+		bool do_scan;
 
 		if (!pd->is_bridge)
 			continue;
