@@ -90,11 +90,15 @@ static int64_t pcie_slot_get_link_state(struct pci_slot *slot,
 static int64_t pcie_slot_get_power_state(struct pci_slot *slot __unused,
 					 uint8_t *val)
 {
-	/* The power is always on if no functionality is supported */
-	if (!(slot->slot_cap & PCICAP_EXP_SLOTCAP_PWCTRL))
-		*val = PCI_SLOT_POWER_ON;
-	else
-		*val = slot->power_state;
+	/* We should return the cached power state that is same to
+	 * the PCI slot hotplug state (added/removed). Otherwise,
+	 * the OS will see mismatched states, causing the adapter
+	 * behind the slot can't be probed successfully on request
+	 * of hot add. So we could run into the situation where the
+	 * OS sees power-off but it's on in hardware.
+	 */
+	*val = slot->power_state;
+
 	return OPAL_SUCCESS;
 }
 
