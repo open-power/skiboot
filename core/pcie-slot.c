@@ -202,9 +202,13 @@ static int64_t pcie_slot_set_power_state(struct pci_slot *slot, uint8_t val)
 	if (slot->power_state == val)
 		return OPAL_PARAMETER;
 
-	/* Drop the request if functionality doesn't exist */
-	if (!(slot->slot_cap & PCICAP_EXP_SLOTCAP_PWCTRL))
+	/* Update the power state and return immediately if the power
+	 * control functionality isn't supported on the PCI slot.
+	 */
+	if (!(slot->slot_cap & PCICAP_EXP_SLOTCAP_PWCTRL)) {
+		slot->power_state = val;
 		return OPAL_SUCCESS;
+	}
 
 	pci_slot_set_state(slot, PCI_SLOT_STATE_SPOWER_START);
 	slot->power_state = val;
