@@ -259,6 +259,16 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	       pd->is_bridge ? "+" : "-",
 	       pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false) ? "+" : "-");
 
+	/* Try to get PCI slot behind the device */
+	if (platform.pci_get_slot_info)
+		platform.pci_get_slot_info(phb, pd);
+
+	/* Put it to the child device of list of PHB or parent */
+	if (!parent)
+		list_add_tail(&phb->devices, &pd->link);
+	else
+		list_add_tail(&parent->children, &pd->link);
+
 	/*
 	 * Call PHB hook
 	 */
@@ -566,13 +576,6 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 		if (!pd)
 			continue;
 
-		/* Get slot info if any */
-		if (platform.pci_get_slot_info)
-			platform.pci_get_slot_info(phb, pd);
-
-		/* Link it up */
-		list_add_tail(list, &pd->link);
-
 		/* XXX Handle ARI */
 		if (!pd->is_multifunction)
 			continue;
@@ -580,11 +583,6 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 			pd = pci_scan_one(phb, parent,
 					  ((uint16_t)bus << 8) | (dev << 3) | fn);
 			pci_check_clear_freeze(phb);
-			if (pd) {
-				if (platform.pci_get_slot_info)
-					platform.pci_get_slot_info(phb, pd);
-				list_add_tail(list, &pd->link);
-			}
 		}
 	}
 
