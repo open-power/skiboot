@@ -434,14 +434,14 @@ static void load_initramfs(void)
 {
 	int loaded;
 
-	dt_check_del_prop(dt_chosen, "linux,initrd-start");
-	dt_check_del_prop(dt_chosen, "linux,initrd-end");
-
 	loaded = wait_for_resource_loaded(RESOURCE_ID_INITRAMFS,
 					  RESOURCE_SUBID_NONE);
 
 	if (loaded != OPAL_SUCCESS || !initramfs_size)
 		return;
+
+	dt_check_del_prop(dt_chosen, "linux,initrd-start");
+	dt_check_del_prop(dt_chosen, "linux,initrd-end");
 
 	printf("INIT: Initramfs loaded, size: %zu bytes\n", initramfs_size);
 
