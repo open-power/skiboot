@@ -1,5 +1,8 @@
-Stable Skiboot tree/releases
-============================
+.. _stable-rules:
+
+======================================
+Skiboot stable tree rules and releases
+======================================
 
 If you're at all familiar with the Linux kernel stable trees, this should
 seem fairly familiar.

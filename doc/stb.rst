@@ -1,3 +1,6 @@
+.. _stb-overview:
+
+===============================
 Secure and Truted Boot Overview
 ===============================
 
