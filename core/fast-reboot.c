@@ -279,11 +279,13 @@ static bool fast_reset_p8(void)
 }
 
 extern void *fdt;
+extern struct lock capi_lock;
 
 void fast_reboot(void)
 {
 	bool success;
 	static int fast_reboot_count = 0;
+	struct proc_chip *chip;
 
 	if (proc_gen != proc_gen_p8) {
 		prlog(PR_DEBUG,
@@ -295,6 +297,17 @@ void fast_reboot(void)
 		      "RESET: Fast reboot disabled by quirk\n");
 		return;
 	}
+
+	lock(&capi_lock);
+	for_each_chip(chip) {
+		if (chip->capp_phb3_attached_mask) {
+			prlog(PR_NOTICE,
+			      "RESET: CAPP attached, cannot fast reboot\n");
+			unlock(&capi_lock);
+			return;
+		}
+	}
+	unlock(&capi_lock);
 
 	prlog(PR_NOTICE, "RESET: Initiating fast reboot %d...\n", ++fast_reboot_count);
 	free(fdt);
