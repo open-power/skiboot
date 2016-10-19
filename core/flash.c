@@ -189,35 +189,18 @@ static int flash_nvram_probe(struct flash *flash, struct ffs_handle *ffs)
 
 static struct dt_node *flash_add_dt_node(struct flash *flash, int id)
 {
-	struct dt_node *flash_node, *flash_dir;
+	struct dt_node *flash_node;
 
-	/* Boot ABI on P9+, flash node is in ibm,opal/flash/flash@0 */
-
-	if (proc_gen >= proc_gen_p9) {
-		flash_dir = dt_new(opal_node, "flash");
-		assert(flash_dir);
-
-		dt_add_property_cells(flash_dir, "#address-cells", 0);
-		dt_add_property_cells(flash_dir, "#size-cells", 2);
-
-		flash_node = dt_new_addr(flash_dir, "flash", id);
-		assert(flash_node);
-
-	/* <= P8, flash is ibm,opal/flash@0, with legacy cell settings */
-
-	} else {
-		flash_node = dt_new_addr(opal_node, "flash", id);
-		assert(flash_node);
-
-		dt_add_property_cells(flash_node, "#address-cells", 1);
-		dt_add_property_cells(flash_node, "#size-cells", 1);
-	}
-
-	dt_add_property_string(flash_node, "compatible", "ibm,opal-flash");
+	flash_node = dt_new_addr(opal_node, "flash", id);
+	dt_add_property_strings(flash_node, "compatible", "ibm,opal-flash");
 	dt_add_property_cells(flash_node, "ibm,opal-id", id);
 	dt_add_property_u64(flash_node, "reg", flash->size);
 	dt_add_property_cells(flash_node, "ibm,flash-block-size",
 			flash->block_size);
+
+	/* we fix to 32-bits */
+	dt_add_property_cells(flash_node, "#address-cells", 1);
+	dt_add_property_cells(flash_node, "#size-cells", 1);
 
 	return flash_node;
 }
