@@ -41,6 +41,7 @@ extern int stb_final(void);
  * @id   : resource id
  * @subid: subpartition id
  * @buf  : data to be verified
+ * @len  : buf length
  *
  * This verifies the integrity and authenticity of a resource downloaded from
  * PNOR if secure mode is on. The verification is done by the

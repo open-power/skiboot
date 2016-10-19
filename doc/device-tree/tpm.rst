@@ -17,7 +17,7 @@ linux kernel (tpm and vtpm codes)
     linux,sml-base:    64-bit base address of the reserved memory allocated for firmware event log.
                        sml stands for shared memory log.
 
-    linux,sml-size:    size of the memory allocated for firwmare event log.
+    linux,sml-size:    size of the memory allocated for firmware event log.
 
 
 Optional properties
