@@ -2228,11 +2228,6 @@ static int64_t p7ioc_freset(struct pci_slot *slot)
 		reg64 = in_be64(p->regs + PHB_RESET);
 		reg64 |= 0x2000000000000000ul;
 		out_be64(p->regs + PHB_RESET, reg64);
-		if (slot->ops.pfreset) {
-			pci_slot_set_state(slot,
-					   P7IOC_SLOT_PFRESET_START);
-			return slot->ops.pfreset(slot);
-		}
 
 		pci_slot_set_state(slot, P7IOC_SLOT_LINK_START);
 		return slot->ops.poll_link(slot);
@@ -2321,7 +2316,6 @@ static struct pci_slot *p7ioc_phb_slot_create(struct phb *phb)
 	slot->ops.poll_link            = p7ioc_poll_link;
 	slot->ops.hreset               = p7ioc_hreset;
 	slot->ops.freset               = p7ioc_freset;
-	slot->ops.pfreset              = NULL;
 	slot->ops.creset               = p7ioc_creset;
 
 	return slot;

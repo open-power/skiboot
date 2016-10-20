@@ -97,9 +97,6 @@ static int64_t pci_slot_sm_poll(struct pci_slot *slot)
 	case PCI_SLOT_STATE_FRESET:
 		ret = slot->ops.freset(slot);
 		break;
-	case PCI_SLOT_STATE_PFRESET:
-		ret = slot->ops.pfreset(slot);
-		break;
 	case PCI_SLOT_STATE_CRESET:
 		ret = slot->ops.creset(slot);
 		break;

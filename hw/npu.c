@@ -850,7 +850,6 @@ static struct pci_slot *npu_slot_create(struct phb *phb)
 	slot->ops.poll_link           = NULL;
 	slot->ops.hreset              = npu_hreset;
 	slot->ops.freset              = npu_freset;
-	slot->ops.pfreset             = NULL;
 	slot->ops.creset              = NULL;
 
 	return slot;

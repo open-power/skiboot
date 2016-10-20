@@ -46,7 +46,6 @@ prepare_link_change   Prepare PCIE link status change
 poll_link             Poll PCIE link until it's up or down permanently
 creset                Complete reset, only available to PHB slot
 freset                Fundamental reset
-pfreset               Post fundamental reset
 hreset                Hot reset
 poll                  Interface for OPAL API to drive internal state machine
 

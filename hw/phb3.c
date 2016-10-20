@@ -2261,7 +2261,7 @@ static int64_t phb3_hreset(struct pci_slot *slot)
 	return OPAL_HARDWARE;
 }
 
-static int64_t phb3_pfreset(struct pci_slot *slot)
+static int64_t phb3_freset(struct pci_slot *slot)
 {
 	struct phb3 *p = phb_to_phb3(slot->phb);
 	uint8_t presence = 1;
@@ -2269,48 +2269,48 @@ static int64_t phb3_pfreset(struct pci_slot *slot)
 
 	switch(slot->state) {
 	case PHB3_SLOT_NORMAL:
-		PHBDBG(p, "PFRESET: Starts\n");
+		PHBDBG(p, "FRESET: Starts\n");
 
 		/* Nothing to do without adapter connected */
 		if (slot->ops.get_presence_state)
 			slot->ops.get_presence_state(slot, &presence);
 		if (!presence) {
-			PHBDBG(p, "PFRESET: No device\n");
+			PHBDBG(p, "FRESET: No device\n");
 			return OPAL_SUCCESS;
 		}
 
-		PHBDBG(p, "PFRESET: Prepare for link down\n");
-		slot->retry_state = PHB3_SLOT_PFRESET_START;
+		PHBDBG(p, "FRESET: Prepare for link down\n");
+		slot->retry_state = PHB3_SLOT_FRESET_START;
 		if (slot->ops.prepare_link_change)
 			slot->ops.prepare_link_change(slot, false);
 		/* fall through */
-	case PHB3_SLOT_PFRESET_START:
+	case PHB3_SLOT_FRESET_START:
 		if (!p->skip_perst) {
-			PHBDBG(p, "PFRESET: Assert\n");
+			PHBDBG(p, "FRESET: Assert\n");
 			reg = in_be64(p->regs + PHB_RESET);
 			reg &= ~0x2000000000000000ul;
 			out_be64(p->regs + PHB_RESET, reg);
 			pci_slot_set_state(slot,
-				PHB3_SLOT_PFRESET_ASSERT_DELAY);
+				PHB3_SLOT_FRESET_ASSERT_DELAY);
 			return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
 		}
 
 		/* To skip the assert during boot time */
-		PHBDBG(p, "PFRESET: Assert skipped\n");
-		pci_slot_set_state(slot, PHB3_SLOT_PFRESET_ASSERT_DELAY);
+		PHBDBG(p, "FRESET: Assert skipped\n");
+		pci_slot_set_state(slot, PHB3_SLOT_FRESET_ASSERT_DELAY);
 		p->skip_perst = false;
 		/* fall through */
-	case PHB3_SLOT_PFRESET_ASSERT_DELAY:
-		PHBDBG(p, "PFRESET: Deassert\n");
+	case PHB3_SLOT_FRESET_ASSERT_DELAY:
+		PHBDBG(p, "FRESET: Deassert\n");
 		reg = in_be64(p->regs + PHB_RESET);
 		reg |= 0x2000000000000000ul;
 		out_be64(p->regs + PHB_RESET, reg);
 		pci_slot_set_state(slot,
-			PHB3_SLOT_PFRESET_DEASSERT_DELAY);
+			PHB3_SLOT_FRESET_DEASSERT_DELAY);
 
 		/* CAPP FPGA requires 1s to flash before polling link */
 		return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
-	case PHB3_SLOT_PFRESET_DEASSERT_DELAY:
+	case PHB3_SLOT_FRESET_DEASSERT_DELAY:
 		pci_slot_set_state(slot, PHB3_SLOT_LINK_START);
 		return slot->ops.poll_link(slot);
 	default:
@@ -2595,8 +2595,7 @@ static struct pci_slot *phb3_slot_create(struct phb *phb)
 	slot->ops.prepare_link_change	= phb3_prepare_link_change;
 	slot->ops.poll_link		= phb3_poll_link;
 	slot->ops.hreset		= phb3_hreset;
-	slot->ops.freset		= phb3_pfreset;
-	slot->ops.pfreset		= phb3_pfreset;
+	slot->ops.freset		= phb3_freset;
 	slot->ops.creset		= phb3_creset;
 
 	return slot;

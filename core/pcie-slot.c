@@ -491,7 +491,6 @@ struct pci_slot *pcie_slot_create(struct phb *phb, struct pci_device *pd)
 	slot->ops.poll_link             = pcie_slot_sm_poll_link;
 	slot->ops.hreset                = pcie_slot_sm_hreset;
 	slot->ops.freset                = pcie_slot_sm_freset;
-	slot->ops.pfreset               = NULL;
 
 	return slot;
 }
