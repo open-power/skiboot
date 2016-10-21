@@ -502,16 +502,12 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	 */
 	occ_pstates_init();
 
-	/* Set kernel command line argument if specified */
-	dt_check_del_prop(dt_chosen, "bootargs");
+	/* Use nvram bootargs over device tree */
 	cmdline = nvram_query("bootargs");
-#ifdef KERNEL_COMMAND_LINE
-	if (!cmdline)
-		cmdline = KERNEL_COMMAND_LINE;
-#endif
-	/* some platforms always pass bootargs through the fdt */
-	if (cmdline && !dt_find_property(dt_chosen, "bootargs"))
+	if (cmdline) {
+		dt_check_del_prop(dt_chosen, "bootargs");
 		dt_add_property_string(dt_chosen, "bootargs", cmdline);
+	}
 
 	op_display(OP_LOG, OP_MOD_INIT, 0x000B);
 
