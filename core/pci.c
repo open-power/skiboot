@@ -501,6 +501,7 @@ void pci_remove_bus(struct phb *phb, struct list_head *list)
 static void pci_slot_power_off(struct phb *phb, struct pci_device *pd)
 {
 	struct pci_slot *slot;
+	uint8_t pstate;
 	int32_t wait = 100;
 	int64_t rc;
 
@@ -508,7 +509,9 @@ static void pci_slot_power_off(struct phb *phb, struct pci_device *pd)
 		return;
 
 	slot = pd->slot;
-	if (!slot->pluggable || !slot->ops.set_power_state)
+	if (!slot->pluggable ||
+	    !slot->ops.get_power_state ||
+	    !slot->ops.set_power_state)
 		return;
 
 	/* Bail if there're something connected */
@@ -516,11 +519,23 @@ static void pci_slot_power_off(struct phb *phb, struct pci_device *pd)
 		return;
 
 	pci_slot_add_flags(slot, PCI_SLOT_FLAG_BOOTUP);
+	rc = slot->ops.get_power_state(slot, &pstate);
+	if (rc != OPAL_SUCCESS) {
+		pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
+		PCINOTICE(phb, pd->bdfn, "Error %lld getting slot power state\n", rc);
+		return;
+	} else if (pstate == PCI_SLOT_POWER_OFF) {
+		pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
+		return;
+	}
+
 	rc = slot->ops.set_power_state(slot, PCI_SLOT_POWER_OFF);
 	if (rc == OPAL_SUCCESS) {
+		pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
 		PCIDBG(phb, pd->bdfn, "Power off hotpluggable slot\n");
 		return;
 	} else if (rc != OPAL_ASYNC_COMPLETION) {
+		pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
 		pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
 		PCINOTICE(phb, pd->bdfn, "Error %lld powering off slot\n", rc);
 		return;
@@ -534,6 +549,7 @@ static void pci_slot_power_off(struct phb *phb, struct pci_device *pd)
 		time_wait_ms(10);
 	} while (--wait >= 0);
 
+	pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
 	pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
 	if (wait >= 0)
 		PCIDBG(phb, pd->bdfn, "Power off hotpluggable slot\n");
