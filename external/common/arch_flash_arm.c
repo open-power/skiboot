@@ -324,6 +324,9 @@ int arch_flash_set_wrprotect(struct blocklevel_device *bl, int set)
 	if (!arch_data.init_bl || arch_data.init_bl != bl)
 		return -1;
 
+	if (arch_data.access == PNOR_MTD || arch_data.access == BMC_MTD)
+		return 0; /* Kernel looks after this for us */
+
 	if (!arch_data.flash_chip)
 		return -1;
 
