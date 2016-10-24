@@ -743,6 +743,16 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if (flashfilename && bmc_flash) {
+		fprintf(stderr, "Filename or bmc flash but not both\n");
+		exit(1);
+	}
+
+	if (flashfilename && mtd) {
+		fprintf(stderr, "Filename or mtd access but not both\n");
+		exit(1);
+	}
+
 	/* If file specified but not size, get size from file
 	 */
 	if (write_file && !write_size) {
