@@ -459,10 +459,15 @@ static void print_help(const char *pname)
 	printf("\t\tDon't ask for confirmation before erasing or flashing\n\n");
 	printf("\t-d, --dummy\n");
 	printf("\t\tDon't write to flash\n\n");
-	printf("\t-m, --mtd\n");
-	printf("\t\tAvoid accessing the flash directly if the BMC supports it.\n");
-	printf("\t\tThis will access the flash through the kernel MTD layer and\n");
-	printf("\t\tnot the flash directly\n");
+	printf("\t--direct\n");
+	printf("\t\tBypass all safety provided to you by the kernel driver\n");
+	printf("\t\tand use the flash driver built into pflash.\n");
+	printf("\t\tIf you have mtd devices and you use this command, the\n");
+	printf("\t\tsystem may become unstable.\n");
+	printf("\t\tIf you are reading this sentence then this flag is not\n");
+	printf("\t\twhat you want! Using this feature without knowing\n");
+	printf("\t\twhat it does can and likely will result in a bricked\n");
+	printf("\t\tmachine\n\n");
 	printf("\t-b, --bmc\n");
 	printf("\t\tTarget BMC flash instead of host flash.\n");
 	printf("\t\tNote: This carries a high chance of bricking your BMC if you\n");
@@ -533,7 +538,7 @@ int main(int argc, char *argv[])
 	bool show_help = false, show_version = false;
 	bool no_action = false, tune = false;
 	char *write_file = NULL, *read_file = NULL, *part_name = NULL;
-	bool ffs_toc_seen = false, mtd = false;
+	bool ffs_toc_seen = false, direct = false;
 	int rc;
 	const char *flashfilename = NULL;
 
@@ -543,7 +548,7 @@ int main(int argc, char *argv[])
 			{"size",	required_argument,	NULL,	's'},
 			{"partition",	required_argument,	NULL,	'P'},
 			{"bmc",		no_argument,		NULL,	'b'},
-			{"mtd",		no_argument,		NULL,	'm'},
+			{"direct",	no_argument,		NULL,	'D'},
 			{"enable-4B",	no_argument,		NULL,	'4'},
 			{"disable-4B",	no_argument,		NULL,	'3'},
 			{"read",	required_argument,	NULL,	'r'},
@@ -565,7 +570,7 @@ int main(int argc, char *argv[])
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "+:a:s:P:r:43Eemp:fdihvbtgS:T:cF:",
+		c = getopt_long(argc, argv, "+:a:s:P:r:43Eep:fdihvbtgS:T:cF:",
 				long_opts, &oidx);
 		if (c == -1)
 			break;
@@ -595,8 +600,8 @@ int main(int argc, char *argv[])
 		case 'e':
 			erase = true;
 			break;
-		case 'm':
-			mtd = true;
+		case 'D':
+			direct = true;
 			break;
 		case 'p':
 			program = true;
@@ -748,8 +753,8 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (flashfilename && mtd) {
-		fprintf(stderr, "Filename or mtd access but not both\n");
+	if (flashfilename && direct) {
+		fprintf(stderr, "Filename or direct access but not both\n");
 		exit(1);
 	}
 
@@ -765,22 +770,15 @@ int main(int argc, char *argv[])
 		write_size = stbuf.st_size;
 	}
 
-	if (bmc_flash) {
-		/*
-		 * Try to see if we can access BMC flash on this arch at all...
-		 * even if what we really want to do is use MTD.
-		 * This helps give a more meaningful error messages.
-		 */
-
-		if (arch_flash_access(NULL, BMC_DIRECT) == ACCESS_INVAL) {
-			fprintf(stderr, "Can't access BMC flash on this architecture\n");
+	if (direct) {
+		if (arch_flash_access(NULL, bmc_flash ? BMC_DIRECT : PNOR_DIRECT) == ACCESS_INVAL) {
+			fprintf(stderr, "Can't access %s flash directly on this architecture\n",
+			        bmc_flash ? "BMC" : "PNOR");
 			exit(1);
 		}
-	}
-
-	if (mtd) {
+	} else if (!flashfilename) {
 		if (arch_flash_access(NULL, bmc_flash ? BMC_MTD : PNOR_MTD) == ACCESS_INVAL) {
-			fprintf(stderr, "Can't access %s flash through MTD on this architecture\n",
+			fprintf(stderr, "Can't access %s flash through MTD on this system\n",
 			        bmc_flash ? "BMC" : "PNOR");
 			exit(1);
 		}
