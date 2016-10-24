@@ -19,6 +19,7 @@
 #include <platform.h>
 #include <string.h>
 #include <stdio.h>
+#include <nvram.h>
 #include "stb.h"
 #include "status_codes.h"
 #include "container.h"
@@ -100,7 +101,7 @@ static void sb_enforce(void)
 
 void stb_init(void)
 {
-	const struct dt_node *ibm_secureboot;
+	struct dt_node *ibm_secureboot;
 	/*
 	 * The ibm,secureboot device tree properties are documented in
 	 * 'doc/device-tree/ibm,secureboot.rst'
@@ -117,8 +118,21 @@ void stb_init(void)
 #else
 	secure_mode = dt_has_node_property(ibm_secureboot, "secure-enabled",
 					   NULL);
-	prlog(PR_NOTICE, "STB: secure mode %s\n",
-	      secure_mode ? "on" : "off");
+
+	if (nvram_query_eq("force-secure-mode", "always")) {
+		prlog(PR_NOTICE, "STB: secure mode on (FORCED by nvram)\n");
+		secure_mode = true;
+	} else if (nvram_query_eq("force-secure-mode", "true")) {
+		prlog(PR_NOTICE, "STB: secure mode %s\n",
+		      (secure_mode) ? "on, *not* partial" : "off");
+	} else if (secure_mode) {
+		prlog(PR_NOTICE, "STB: secure mode on (but not enforced, core secure mode only)\n");
+		dt_check_del_prop(ibm_secureboot, "secure-enabled");
+		dt_add_property(ibm_secureboot, "partial-secure-enabled", NULL, 0);
+		secure_mode = false;
+	} else {
+		prlog(PR_NOTICE, "STB: secure mode off\n");
+	}
 #endif
 
 #ifdef STB_FORCE_TRUSTED_MODE
@@ -127,6 +141,10 @@ void stb_init(void)
 #else
 	trusted_mode = dt_has_node_property(ibm_secureboot, "trusted-enabled",
 					    NULL);
+	if (nvram_query_eq("force-trusted-mode", "true")) {
+		prlog(PR_NOTICE, "STB: trusted mode ON (from NVRAM)\n");
+		trusted_mode = true;
+	}
 	prlog(PR_NOTICE, "STB: trusted mode %s\n",
 	      trusted_mode ? "on" : "off");
 #endif

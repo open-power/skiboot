@@ -889,6 +889,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	if (platform.init)
 		platform.init();
 
+	/* Read in NVRAM and set it up */
+	nvram_init();
+
 	/* Secure/Trusted Boot init. We look for /ibm,secureboot in DT */
 	stb_init();
 
@@ -900,9 +903,6 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	slw_init();
 
 	op_display(OP_LOG, OP_MOD_INIT, 0x0002);
-
-	/* Read in NVRAM and set it up */
-	nvram_init();
 
 	phb3_preload_vpd();
 	phb3_preload_capp_ucode();
