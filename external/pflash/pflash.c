@@ -762,14 +762,14 @@ int main(int argc, char *argv[])
 		 * This helps give a more meaningful error messages.
 		 */
 
-		if (arch_flash_bmc(NULL, BMC_DIRECT) == ACCESS_INVAL) {
+		if (arch_flash_access(NULL, BMC_DIRECT) == ACCESS_INVAL) {
 			fprintf(stderr, "Can't access BMC flash on this architecture\n");
 			exit(1);
 		}
 	}
 
 	if (mtd) {
-		if (arch_flash_bmc(NULL, bmc_flash ? BMC_MTD : PNOR_MTD) == ACCESS_INVAL) {
+		if (arch_flash_access(NULL, bmc_flash ? BMC_MTD : PNOR_MTD) == ACCESS_INVAL) {
 			fprintf(stderr, "Can't access %s flash through MTD on this architecture\n",
 			        bmc_flash ? "BMC" : "PNOR");
 			exit(1);

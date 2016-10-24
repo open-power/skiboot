@@ -20,7 +20,7 @@
 #include <getopt.h>
 #include <libflash/blocklevel.h>
 
-enum bmc_access {
+enum flash_access {
 	PNOR_DIRECT,
 	PNOR_MTD,
 	BMC_DIRECT,
@@ -40,8 +40,8 @@ void arch_flash_close(struct blocklevel_device *bl, const char *file);
  * accessed.
  * If called AFTER init, then this returns how the flash is being accessed.
  */
-enum bmc_access arch_flash_bmc(struct blocklevel_device *bl,
-		enum bmc_access access);
+enum flash_access arch_flash_access(struct blocklevel_device *bl,
+		enum flash_access access);
 
 int arch_flash_erase_chip(struct blocklevel_device *bl);
 int arch_flash_4b_mode(struct blocklevel_device *bl, int set_4b);

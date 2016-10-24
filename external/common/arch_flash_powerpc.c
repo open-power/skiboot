@@ -213,10 +213,26 @@ int arch_flash_set_wrprotect(struct blocklevel_device *bl, int set)
 	return 0;
 }
 
+enum flash_access arch_flash_access(struct blocklevel_device *bl,
+		enum flash_access access)
+{
+	if (access != PNOR_MTD)
+		return ACCESS_INVAL;
+
+	return PNOR_MTD;
+}
+
 int arch_flash_init(struct blocklevel_device **r_bl, const char *file, bool keep_alive)
 {
 	struct blocklevel_device *new_bl;
 
+	/*
+	 * In theory here we should check that something crazy wasn't
+	 * passed to arch_flash_access() and refuse to init.
+	 * However, arch_flash_access won't accept anything except
+	 * PNOR_MTD, if they want something different then they should
+	 * have checked with arch_flash_access()
+	 */
 	new_bl = arch_init_blocklevel(file, keep_alive);
 	if (!new_bl)
 		return -1;

@@ -16,6 +16,8 @@
 
 #include <libflash/blocklevel.h>
 
+#include "arch_flash.h"
+
 /* Default implmentations */
 int __attribute__((weak)) arch_flash_erase_chip(struct blocklevel_device *bl)
 {
@@ -27,9 +29,9 @@ int __attribute__((weak)) arch_flash_4b_mode(struct blocklevel_device *bl, int s
 	return -1;
 }
 
-int __attribute__((weak)) arch_flash_bmc(struct blocklevel_device *bl, int bmc)
+enum flash_access __attribute__((weak)) arch_flash_access(struct blocklevel_device *bl, enum flash_access access)
 {
-	return -1;
+	return ACCESS_INVAL;
 }
 
 int __attribute__((weak)) arch_flash_set_wrprotect(struct blocklevel_device *bl, int set)

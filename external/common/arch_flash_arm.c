@@ -43,7 +43,7 @@ static struct arch_arm_data {
 	size_t ahb_flash_base;
 	size_t ahb_flash_size;
 	void *ahb_flash_map;
-	enum bmc_access access;
+	enum flash_access access;
 	struct flash_chip *flash_chip;
 	struct blocklevel_device *init_bl;
 } arch_data;
@@ -156,7 +156,7 @@ static void close_devs(void)
 	 */
 }
 
-static int open_devs(enum bmc_access access)
+static int open_devs(enum flash_access access)
 {
 	if (access != BMC_DIRECT && access != PNOR_DIRECT)
 		return -1;
@@ -190,7 +190,7 @@ static int open_devs(enum bmc_access access)
 	return 0;
 }
 
-static struct blocklevel_device *flash_setup(enum bmc_access access)
+static struct blocklevel_device *flash_setup(enum flash_access access)
 {
 	int rc;
 	struct blocklevel_device *bl;
@@ -237,7 +237,7 @@ static bool is_pnor_part(const char *str) {
 	return strcasestr(str, "pnor");
 }
 
-static char *get_dev_mtd(enum bmc_access access)
+static char *get_dev_mtd(enum flash_access access)
 {
 	FILE *f;
 	char *ret = NULL, *pos = NULL;
@@ -276,8 +276,8 @@ static char *get_dev_mtd(enum bmc_access access)
 	return ret;
 }
 
-enum bmc_access arch_flash_bmc(struct blocklevel_device *bl,
-		enum bmc_access access)
+enum flash_access arch_flash_access(struct blocklevel_device *bl,
+		enum flash_access access)
 {
 	if (access == ACCESS_INVAL)
 		return ACCESS_INVAL;
