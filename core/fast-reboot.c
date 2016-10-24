@@ -281,6 +281,16 @@ static bool fast_reset_p8(void)
 extern void *fdt;
 extern struct lock capi_lock;
 
+static const char *fast_reboot_disabled = NULL;
+static struct lock fast_reboot_disabled_lock = LOCK_UNLOCKED;
+
+void disable_fast_reboot(const char *reason)
+{
+	lock(&fast_reboot_disabled_lock);
+	fast_reboot_disabled = reason;
+	unlock(&fast_reboot_disabled_lock);
+}
+
 void fast_reboot(void)
 {
 	bool success;
@@ -297,6 +307,15 @@ void fast_reboot(void)
 		      "RESET: Fast reboot disabled by quirk\n");
 		return;
 	}
+
+	lock(&fast_reboot_disabled_lock);
+	if (fast_reboot_disabled) {
+		prlog(PR_DEBUG, "RESET: Fast reboot disabled because %s\n",
+		      fast_reboot_disabled);
+		unlock(&fast_reboot_disabled_lock);
+		return;
+	}
+	unlock(&fast_reboot_disabled_lock);
 
 	lock(&capi_lock);
 	for_each_chip(chip) {

@@ -1141,6 +1141,9 @@ static int64_t fsp_opal_update_flash(struct opal_sg_list *list)
 		rc = OPAL_SUCCESS;
 		goto out;
 	}
+
+	disable_fast_reboot("FSP Code Update");
+
 	length = (be64_to_cpu(list->length) & ~(SG_LIST_VERSION << 56)) - 16;
 	num_entries = length / sizeof(struct opal_sg_entry);
 	if (num_entries <= 0)

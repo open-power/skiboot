@@ -190,6 +190,7 @@ extern unsigned long get_symbol(unsigned long addr,
 				char **sym, char **sym_end);
 
 /* Fast reboot support */
+extern void disable_fast_reboot(const char *reason);
 extern void fast_reboot(void);
 extern void __noreturn __secondary_cpu_entry(void);
 extern void __noreturn load_and_boot_kernel(bool is_reboot);

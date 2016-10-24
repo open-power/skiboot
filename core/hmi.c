@@ -836,6 +836,8 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		}
 	}
 
+	if (recover == 0)
+		disable_fast_reboot("Unrecoverable HMI");
 	/*
 	 * HMER bits are sticky, once set to 1 they remain set to 1 until
 	 * they are set to 0. Reset the error source bit to 0, otherwise
