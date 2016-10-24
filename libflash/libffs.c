@@ -385,6 +385,6 @@ int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 	ent->actual = cpu_to_be32(act_size);
 	ent->checksum = ffs_checksum(ent, FFS_ENTRY_SIZE_CSUM);
 
-	return blocklevel_write(ffs->bl, offset, ent, FFS_ENTRY_SIZE);
+	return blocklevel_smart_write(ffs->bl, offset, ent, FFS_ENTRY_SIZE);
 }
 
