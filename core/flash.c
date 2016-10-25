@@ -25,6 +25,8 @@
 #include <libflash/blocklevel.h>
 #include <libflash/ecc.h>
 #include <libstb/stb.h>
+#include <libstb/container.h>
+#include <elf.h>
 
 struct flash {
 	struct list_node	list;
@@ -419,81 +421,59 @@ static struct {
 };
 
 
-struct flash_hostboot_toc {
-	be32 ec;
-	be32 offset; /* From start of header.  4K aligned */
-	be32 size;
-};
-#define FLASH_HOSTBOOT_TOC_MAX_ENTRIES ((FLASH_SUBPART_HEADER_SIZE - 8) \
-		/sizeof(struct flash_hostboot_toc))
-
-struct flash_hostboot_header {
-	char eyecatcher[4];
-	be32 version;
-	struct flash_hostboot_toc toc[FLASH_HOSTBOOT_TOC_MAX_ENTRIES];
-};
-
-/* start and total size include ECC */
-static int flash_find_subpartition(struct blocklevel_device *bl, uint32_t subid,
-				   uint32_t *start, uint32_t *total_size,
-				   bool ecc)
+static size_t sizeof_elf_from_hdr(void *buf)
 {
-	struct flash_hostboot_header *header;
-	uint32_t partsize, offset, size;
-	int rc;
+	struct elf_hdr *elf = (struct elf_hdr*) buf;
+	size_t sz = 0;
 
-	header = malloc(FLASH_SUBPART_HEADER_SIZE);
-	if (!header)
-		return false;
+	BUILD_ASSERT(SECURE_BOOT_HEADERS_SIZE > sizeof(struct elf_hdr));
+	BUILD_ASSERT(SECURE_BOOT_HEADERS_SIZE > sizeof(struct elf64_hdr));
+	BUILD_ASSERT(SECURE_BOOT_HEADERS_SIZE > sizeof(struct elf32_hdr));
 
-	/* Get raw partition size without ECC */
-	partsize = *total_size;
-	if (ecc)
-		partsize = ecc_buffer_size_minus_ecc(*total_size);
-
-	/* Get the TOC */
-	rc = flash_read_corrected(bl, *start, header,
-			FLASH_SUBPART_HEADER_SIZE, ecc);
-	if (rc) {
-		prerror("FLASH: flash subpartition TOC read failed %i\n", rc);
-		goto end;
+	if (elf->ei_ident == ELF_IDENT) {
+		if (elf->ei_class == ELF_CLASS_64) {
+			struct elf64_hdr *elf64 = (struct elf64_hdr*) buf;
+			sz = le64_to_cpu(elf64->e_shoff) +
+				(le16_to_cpu(elf64->e_shentsize) *
+				 le16_to_cpu(elf64->e_shnum));
+		} else if (elf->ei_class == ELF_CLASS_32) {
+			struct elf32_hdr *elf32 = (struct elf32_hdr*) buf;
+			sz = le32_to_cpu(elf32->e_shoff) +
+				(le16_to_cpu(elf32->e_shentsize) *
+				 le16_to_cpu(elf32->e_shnum));
+		}
 	}
 
-	rc = flash_subpart_info(header, partsize, partsize, NULL, subid, &offset, &size);
-	if (rc)
-		goto end;
-
-	/*
-	 * Adjust the start and size.  The start location in the needs
-	 * to account for ecc but the size doesn't.
-	 */
-	*start += offset;
-	*total_size = size;
-	if (ecc) {
-		*start += ecc_size(offset);
-		*total_size += ecc_size(size);
-	}
-
-end:
-	free(header);
-	return rc;
+	return sz;
 }
 
 /*
  * load a resource from FLASH
  * buf and len shouldn't account for ECC even if partition is ECCed.
+ *
+ * The API here is a bit strange.
+ * If resource has a STB container, buf will contain it
+ * If loading subpartition with STB container, buff will *NOT* contain it
+ * For trusted boot, the whole partition containing the subpart is measured.
+ *
+ * Additionally, the logic to work out how much to read from flash is insane.
  */
 static int flash_load_resource(enum resource_id id, uint32_t subid,
 			       void *buf, size_t *len)
 {
-	int i, rc, part_num, part_size, part_start, size;
+	int i;
+	int rc = OPAL_RESOURCE;
 	struct ffs_handle *ffs;
 	struct flash *flash;
 	const char *name;
-	bool status, ecc;
-
-	rc = OPAL_RESOURCE;
-	status = false;
+	bool status = false;
+	bool ecc;
+	bool part_signed = false;
+	void *bufp = buf;
+	size_t bufsz = *len;
+	int ffs_part_num, ffs_part_start, ffs_part_size;
+	int content_size = 0;
+	int offset = 0;
 
 	lock(&flash_lock);
 
@@ -539,13 +519,13 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_unlock;
 	}
 
-	rc = ffs_lookup_part(ffs, name, &part_num);
+	rc = ffs_lookup_part(ffs, name, &ffs_part_num);
 	if (rc) {
 		prerror("FLASH: No %s partition\n", name);
 		goto out_free_ffs;
 	}
-	rc = ffs_part_info(ffs, part_num, NULL,
-			   &part_start, NULL, &part_size, &ecc);
+	rc = ffs_part_info(ffs, ffs_part_num, NULL,
+			   &ffs_part_start, NULL, &ffs_part_size, &ecc);
 	if (rc) {
 		prerror("FLASH: Failed to get %s partition info\n", name);
 		goto out_free_ffs;
@@ -553,51 +533,134 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 	prlog(PR_DEBUG,"FLASH: %s partition %s ECC\n",
 	      name, ecc  ? "has" : "doesn't have");
 
+	if ((ecc ? ecc_buffer_size_minus_ecc(ffs_part_size) : ffs_part_size) < SECURE_BOOT_HEADERS_SIZE) {
+		prerror("FLASH: secboot headers bigger than "
+			"partition size 0x%x\n", ffs_part_size);
+		goto out_free_ffs;
+	}
+
+	rc = flash_read_corrected(flash->bl, ffs_part_start, bufp,
+			SECURE_BOOT_HEADERS_SIZE, ecc);
+	if (rc) {
+		prerror("FLASH: failed to read the first 0x%x from "
+			"%s partition, rc %d\n", SECURE_BOOT_HEADERS_SIZE, name, rc);
+		goto out_free_ffs;
+	}
+
+	part_signed = stb_is_container(bufp, SECURE_BOOT_HEADERS_SIZE);
+
+	prlog(PR_DEBUG, "FLASH: %s partition %s signed\n", name,
+	      part_signed ? "is" : "isn't");
+
 	/*
 	 * part_start/size are raw pointers into the partition.
 	 *  ie. they will account for ECC if included.
 	 */
 
-	/* Find the sub partition if required */
-	if (subid != RESOURCE_SUBID_NONE) {
-		rc = flash_find_subpartition(flash->bl, subid, &part_start,
-					     &part_size, ecc);
-		if (rc)
-			goto out_free_ffs;
-	}
+	if (part_signed) {
+		bufp += SECURE_BOOT_HEADERS_SIZE;
+		bufsz -= SECURE_BOOT_HEADERS_SIZE;
+		content_size = stb_sw_payload_size(buf, SECURE_BOOT_HEADERS_SIZE);
+		*len = content_size + SECURE_BOOT_HEADERS_SIZE;
 
-	/* Work out what the final size of buffer will be without ECC */
-	size = part_size;
-	if (ecc) {
-		if (ecc_buffer_size_check(part_size)) {
-			prerror("FLASH: %s image invalid size for ECC %d\n",
-				name, part_size);
+		if (content_size > bufsz) {
+			prerror("FLASH: content size > buffer size\n");
 			goto out_free_ffs;
 		}
-		size = ecc_buffer_size_minus_ecc(part_size);
+
+		ffs_part_start += SECURE_BOOT_HEADERS_SIZE;
+		if (ecc)
+			ffs_part_start += ecc_size(SECURE_BOOT_HEADERS_SIZE);
+
+		rc = flash_read_corrected(flash->bl, ffs_part_start, bufp,
+					  content_size, ecc);
+		if (rc) {
+			prerror("FLASH: failed to read content size %d"
+				" %s partition, rc %d\n",
+				content_size, name, rc);
+			goto out_free_ffs;
+		}
+
+		if (subid == RESOURCE_SUBID_NONE)
+			goto done_reading;
+
+		rc = flash_subpart_info(bufp, content_size, ffs_part_size,
+					NULL, subid, &offset, &content_size);
+		if (rc) {
+			prerror("FLASH: Failed to parse subpart info for %s\n",
+				name);
+			goto out_free_ffs;
+		}
+		bufp += offset;
+		goto done_reading;
+	} else /* stb_signed */ {
+		/*
+		 * Back to the old way of doing things, no STB header.
+		 */
+		if (subid == RESOURCE_SUBID_NONE) {
+			/*
+			 * Because actualSize is a lie, we compute the size
+			 * of the BOOTKERNEL based on what the ELF headers
+			 * say. Otherwise we end up reading more than we should
+			 */
+			content_size = sizeof_elf_from_hdr(buf);
+			if (!content_size) {
+				prerror("FLASH: Invalid ELF header part %s\n",
+					name);
+				goto out_free_ffs;
+			}
+			prlog(PR_DEBUG, "FLASH: computed %s size %u\n",
+			      name, content_size);
+			rc = flash_read_corrected(flash->bl, ffs_part_start,
+						  buf, content_size, ecc);
+			if (rc) {
+				prerror("FLASH: failed to read content size %d"
+					" %s partition, rc %d\n",
+					content_size, name, rc);
+				goto out_free_ffs;
+			}
+			*len = content_size;
+			goto done_reading;
+		}
+		BUILD_ASSERT(FLASH_SUBPART_HEADER_SIZE <= SECURE_BOOT_HEADERS_SIZE);
+		rc = flash_subpart_info(bufp, SECURE_BOOT_HEADERS_SIZE,
+					ffs_part_size, &ffs_part_size, subid,
+					&offset, &content_size);
+		if (rc) {
+			prerror("FLASH: FAILED reading subpart info. rc=%d\n",
+				rc);
+			goto out_free_ffs;
+		}
+
+		*len = ffs_part_size;
+		prlog(PR_DEBUG, "FLASH: Computed %s partition size: %u (subpart %u size %u offset %u)\n", name, ffs_part_size, subid, content_size, offset);
+		/*
+		 * For a sub partition, we read the whole (computed)
+		 * partition, and then measure that.
+		 * Afterwards, we memmove() things back into place for
+		 * the caller.
+		 */
+		rc = flash_read_corrected(flash->bl, ffs_part_start,
+					  buf, ffs_part_size, ecc);
+
+		bufp += offset;
 	}
 
-	if (size > *len) {
-		prerror("FLASH: %s image too large (%d > %zd)\n", name,
-			part_size, *len);
-		goto out_free_ffs;
-	}
-
-	rc = blocklevel_read(flash->bl, part_start, buf, size);
-	if (rc) {
-		prerror("FLASH: failed to read %s partition, rc %d\n", name, rc);
-		goto out_free_ffs;
-	}
-
-	*len = size;
-	status = true;
-
+done_reading:
 	/*
 	 * Verify and measure the retrieved PNOR partition as part of the
 	 * secure boot and trusted boot requirements
 	 */
 	sb_verify(id, subid, buf, *len);
 	tb_measure(id, subid, buf, *len);
+
+	/* Find subpartition */
+	if (subid != RESOURCE_SUBID_NONE) {
+		memmove(buf, bufp, content_size);
+		*len = content_size;
+	}
+
+	status = true;
 
 out_free_ffs:
 	ffs_close(ffs);
