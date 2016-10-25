@@ -227,7 +227,8 @@ extern bool flash_reserve(void);
 extern void flash_release(void);
 #define FLASH_SUBPART_ALIGNMENT 0x1000
 #define FLASH_SUBPART_HEADER_SIZE FLASH_SUBPART_ALIGNMENT
-extern int flash_subpart_info(void *part_header, uint32_t part_size,
+extern int flash_subpart_info(void *part_header, uint32_t header_len,
+			      uint32_t part_size, uint32_t *part_actual,
 			      uint32_t subid, uint32_t *offset,
 			      uint32_t *size);
 /* NVRAM support */

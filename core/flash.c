@@ -459,7 +459,7 @@ static int flash_find_subpartition(struct blocklevel_device *bl, uint32_t subid,
 		goto end;
 	}
 
-	rc = flash_subpart_info(header, partsize, subid, &offset, &size);
+	rc = flash_subpart_info(header, partsize, partsize, NULL, subid, &offset, &size);
 	if (rc)
 		goto end;
 

@@ -31,16 +31,24 @@ struct flash_hostboot_header {
 	struct flash_hostboot_toc toc[FLASH_HOSTBOOT_TOC_MAX_ENTRIES];
 };
 
-int flash_subpart_info(void *part_header, uint32_t part_size, uint32_t subid,
-		       uint32_t *offset, uint32_t *size)
+int flash_subpart_info(void *part_header, uint32_t header_len,
+		       uint32_t part_size, uint32_t *part_actual,
+		       uint32_t subid, uint32_t *offset, uint32_t *size)
 {
 	struct flash_hostboot_header *header;
 	char eyecatcher[5];
-	uint32_t i, ec;
+	uint32_t i, ec, o, s, toc;
+	bool subpart_found;
 
-	if (!part_header || !offset || !size) {
-		prlog(PR_ERR, "FLASH: invalid parameters: "
-		      "ph %p of %p sz %p\n", part_header, offset, size);
+	if (!part_header || ( !offset && !size && !part_actual)) {
+		prlog(PR_ERR, "FLASH: invalid parameters: ph %p of %p sz %p "
+		      "tsz %p\n", part_header, offset, size, part_actual);
+		return OPAL_PARAMETER;
+	}
+
+	if (header_len < FLASH_SUBPART_HEADER_SIZE) {
+		prlog(PR_ERR, "FLASH: subpartition header too small 0x%x\n",
+		      header_len);
 		return OPAL_PARAMETER;
 	}
 
@@ -50,53 +58,63 @@ int flash_subpart_info(void *part_header, uint32_t part_size, uint32_t subid,
 	i = be32_to_cpu(header->version);
 	if (i != 1) {
 		prerror("FLASH: flash subpartition TOC version unknown %i\n", i);
-		goto end;
+		return OPAL_RESOURCE;
 	}
 
 	/* NULL terminate eyecatcher */
 	strncpy(eyecatcher, header->eyecatcher, 4);
 	eyecatcher[4] = '\0';
 	prlog(PR_DEBUG, "FLASH: flash subpartition eyecatcher %s\n",
-			eyecatcher);
+	      eyecatcher);
 
+	subpart_found = false;
+	*part_actual = 0;
+	toc = sizeof(header->eyecatcher) + sizeof(header->version);
 	for (i = 0; i < FLASH_HOSTBOOT_TOC_MAX_ENTRIES; i++) {
 
 		ec = be32_to_cpu(header->toc[i].ec);
-		*offset = be32_to_cpu(header->toc[i].offset);
-		*size = be32_to_cpu(header->toc[i].size);
+		o = be32_to_cpu(header->toc[i].offset);
+		s = be32_to_cpu(header->toc[i].size);
 
 		/* Check for null terminating entry */
-		if (!ec && !*offset && !*size) {
-			prerror("FLASH: flash subpartition not found.\n");
-			goto end;
-		}
-
-		if (ec != subid)
-			continue;
+		if (!ec && !o && !s)
+			break;
 
 		/* Sanity check the offset and size. */
-		if (*offset + *size > part_size) {
+		if (o + s > part_size) {
 			prerror("FLASH: flash subpartition too big: %i\n", i);
-			goto end;
+			return OPAL_RESOURCE;
 		}
-		if (!*size) {
+		if (!s) {
 			prerror("FLASH: flash subpartition zero size: %i\n", i);
-			goto end;
+			return OPAL_RESOURCE;
 		}
-		if (*offset < FLASH_SUBPART_HEADER_SIZE) {
-			prerror("FLASH: flash subpartition "
-					"offset too small: %i\n", i);
-			goto end;
+		if (o < FLASH_SUBPART_HEADER_SIZE) {
+			prerror("FLASH: flash subpartition offset too small: "
+			        "%i\n", i);
+			return OPAL_RESOURCE;
 		}
+		/*
+		 * Subpartitions content are different, but multiple toc entries
+		 * may point to the same subpartition.
+		 */
+		if (ALIGN_UP(o + s, FLASH_SUBPART_HEADER_SIZE) > *part_actual)
+			*part_actual = ALIGN_UP(o + s, FLASH_SUBPART_HEADER_SIZE);
 
-		prlog(PR_DEBUG, "FLASH: flash found subpartition: "
-				"%i size: %i offset %i\n",
-				i, *size, *offset);
-
-		return OPAL_SUCCESS;
+		if (ec == subid) {
+			if (offset)
+				*offset += o;
+			if (size)
+				*size = s;
+			if (!part_actual)
+				return OPAL_SUCCESS;
+			subpart_found = true;
+		}
+		toc += sizeof(struct flash_hostboot_toc);
 	}
-end:
-	*size = 0;
-	*offset = 0;
-	return OPAL_RESOURCE;
+	if (!subpart_found && (offset || size)) {
+		prerror("FLASH: flash subpartition not found.\n");
+		return OPAL_RESOURCE;
+	}
+	return OPAL_SUCCESS;
 }
