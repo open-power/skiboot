@@ -143,6 +143,7 @@ bool stb_is_container(const void* buf, size_t size);
 
 /* Get the pointer for the sw-payload-hash field of the container header */
 const uint8_t* stb_sw_payload_hash(const void* buf, size_t size);
+uint64_t       stb_sw_payload_size(const void *buf, size_t size);
 
 int parse_stb_container(const void* data, size_t len, struct parsed_stb_container *c);
 

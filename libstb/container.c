@@ -38,6 +38,16 @@ uint32_t stb_payload_magic(const void *buf, size_t size)
 	return be32_to_cpu(*(uint32_t*)(p+SECURE_BOOT_HEADERS_SIZE));
 }
 
+uint64_t stb_sw_payload_size(const void *buf, size_t size)
+{
+	struct parsed_stb_container c;
+	if (!stb_is_container(buf, size))
+		return 0;
+	if (parse_stb_container(buf, size, &c) != 0)
+		return 0;
+	return be64_to_cpu(c.sh->payload_size);
+}
+
 int parse_stb_container(const void* data, size_t len, struct parsed_stb_container *c)
 {
 	const size_t prefix_data_min_size = 3 * (EC_COORDBYTES * 2);
