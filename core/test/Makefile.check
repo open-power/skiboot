@@ -1,5 +1,6 @@
 # -*-Makefile-*-
 CORE_TEST := core/test/run-device \
+	core/test/run-flash-subpartition \
 	core/test/run-mem_region \
 	core/test/run-malloc \
 	core/test/run-malloc-speed \
