@@ -720,6 +720,9 @@ static void psi_init_p7_interrupt(struct psi *psi)
 
 static void psi_init_p8_interrupts(struct psi *psi)
 {
+	uint32_t irq;
+	uint64_t xivr_p;
+
 	/* On P8 we get a block of 8, set up the base/mask
 	 * and mask all the sources for now
 	 */
@@ -728,18 +731,11 @@ static void psi_init_p8_interrupts(struct psi *psi)
 		 SETFIELD(PSIHB_IRSN_MASK, 0ul, 0x7fff8ul) |
 		 PSIHB_IRSN_DOWNSTREAM_EN |
 		 PSIHB_IRSN_UPSTREAM_EN);
-	out_be64(psi->regs + PSIHB_XIVR_FSP,
-		 (0xffull << 32) | (P8_IRQ_PSI_FSP << 29));
-	out_be64(psi->regs + PSIHB_XIVR_OCC,
-		 (0xffull << 32) | (P8_IRQ_PSI_OCC << 29));
-	out_be64(psi->regs + PSIHB_XIVR_FSI,
-		 (0xffull << 32) | (P8_IRQ_PSI_FSI << 29));
-	out_be64(psi->regs + PSIHB_XIVR_LPC,
-		 (0xffull << 32) | (P8_IRQ_PSI_LPC << 29));
-	out_be64(psi->regs + PSIHB_XIVR_LOCAL_ERR,
-		 (0xffull << 32) | (P8_IRQ_PSI_LOCAL_ERR << 29));
-	out_be64(psi->regs + PSIHB_XIVR_HOST_ERR,
-		 (0xffull << 32) | (P8_IRQ_PSI_EXTERNAL << 29));
+
+	for (irq = 0; irq < P8_IRQ_PSI_IRQ_COUNT; irq++) {
+		xivr_p = psi_p8_irq_to_xivr[irq];
+		out_be64(psi->regs  + xivr_p, (0xffull << 32) | (irq << 29));
+	}
 
 	/*
 	 * Register the IRQ sources FSP, OCC, FSI, LPC
