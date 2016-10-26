@@ -1,8 +1,0 @@
-[Unit]
-Description=OPAL PRD Listen Socket
-
-[Socket]
-ListenStream=/run/opal-prd-control
-
-[Install]
-WantedBy=sockets.target

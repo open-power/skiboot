@@ -1,9 +1,10 @@
 [Unit]
 Description=OPAL PRD daemon
-Requires=opal-prd.socket
+ConditionArchitecture=ppc64-le
+ConditionVirtualization=false
+ConditionPathExists=/sys/firmware/devicetree/base/ibm,opal/diagnostics
 
 [Service]
-StandardInput=socket
 ExecStart=/usr/sbin/opal-prd --pnor /dev/mtd0
 
 [Install]
