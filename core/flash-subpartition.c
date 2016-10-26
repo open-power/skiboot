@@ -106,8 +106,6 @@ int flash_subpart_info(void *part_header, uint32_t header_len,
 				*offset += o;
 			if (size)
 				*size = s;
-			if (!part_actual)
-				return OPAL_SUCCESS;
 			subpart_found = true;
 		}
 		toc += sizeof(struct flash_hostboot_toc);
