@@ -24,4 +24,4 @@ The ``OPAL_HANDLE_INTERRUPT`` call takes two parameters, one input and one outpu
 
 The host OS should then handle any outstanding events.
 
-See opal-poll-events.txt for documentation on events.
+See doc/opal-api/opal-poll-events.rst for documentation on events.

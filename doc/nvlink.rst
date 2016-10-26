@@ -156,4 +156,4 @@ reporting.
 Device Tree Bindings
 --------------------
 
-See doc/device-tree/nvlink.txt
+See doc/device-tree/nvlink.rst

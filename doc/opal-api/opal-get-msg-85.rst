@@ -2,7 +2,7 @@ OPAL_GET_MSG
 ============
 
 OPAL_GET_MSG will get the next pending OPAL Message (see
-opal-messages.txt).
+doc/opal-api/opal-messages.rst).
 
 Parameters: ::
 

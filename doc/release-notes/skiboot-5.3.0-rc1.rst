@@ -10,7 +10,7 @@ released March 16th 2016.
 skiboot-5.3.0-rc1 contains all bug fixes as of skiboot-5.1.16
 and skiboot-5.2.4 (the existing stable releases).
 
-For how the skiboot stable releases work, see doc/stable-skiboot-rules.txt
+For how the skiboot stable releases work, see doc/stable-skiboot-rules.rst
 in the skiboot source repository.
 
 The current plan is to release skiboot-5.3.0 August 1st 2016.

@@ -6,7 +6,7 @@ skiboot-5.2.5 was released on Thursday July 28th, 2016.
 skiboot-5.2.5 contains all bug fixes as of skiboot-5.1.17.
 
 This is the second release that will follow the (now documented) Skiboot
-stable rules - see doc/stable-skiboot-rules.txt.
+stable rules - see doc/stable-skiboot-rules.rst.
 
 Over skiboot-5.2.4, the following fixes are included:
 

@@ -2,7 +2,7 @@
 Nvlink Device Tree Bindings
 ===========================
 
-See doc/nvlink.txt for general Nvlink information.
+See doc/nvlink.rst for general Nvlink information.
 
 NPU bindings: ::
 

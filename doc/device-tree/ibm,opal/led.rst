@@ -33,4 +33,4 @@ led-types
   Supported indicators (attention/identify/fault).
 
 These LEDs can be accessed through OPAL_LEDS_{GET/SET}_INDICATOR interfaces.
-Refer to doc/opal-api/opal-led-get-set-114-115.txt for interface details.
+Refer to doc/opal-api/opal-led-get-set-114-115.rst for interface details.

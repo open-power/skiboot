@@ -9,7 +9,7 @@ skiboot (first released with 5.3.0 on August 2nd, 2016).
 Skiboot 5.3.1 replaces skiboot-5.3.0 as the current stable version. It contains
 a few minor bug fixes.
 
-This release follows the Skiboot stable rules, see doc/stable-skiboot-rules.txt.
+This release follows the Skiboot stable rules, see doc/stable-skiboot-rules.rst.
 
 Over skiboot-5.3.0, the following fixes are included:
 
