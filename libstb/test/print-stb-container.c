@@ -191,6 +191,7 @@ static void display_container(char* f)
 	display_sw_sig(c.ssig);
 
 	free(container);
+	close(fd);
 }
 
 int main(int argc, char* argv[])
