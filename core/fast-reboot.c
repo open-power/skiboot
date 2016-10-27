@@ -235,8 +235,12 @@ static bool fast_reset_p8(void)
 	prlog(PR_DEBUG, "RESET: Resetting from cpu: 0x%x (core 0x%x)\n",
 	      this_cpu()->pir, pir_to_core_id(this_cpu()->pir));
 
-	/* Assert special wakup on all cores */
+	/* Assert special wakup on all cores. Only on operational cores. */
 	for_each_cpu(cpu) {
+		/* GARDed CPUs are marked unavailable. Skip them.  */
+		if (cpu->state == cpu_state_unavailable)
+			continue;
+
 		if (cpu->primary == cpu)
 			if (set_special_wakeup(cpu) != OPAL_SUCCESS)
 				return false;
@@ -246,6 +250,10 @@ static bool fast_reset_p8(void)
 
 	/* Put everybody in stop except myself */
 	for_each_cpu(cpu) {
+		/* GARDed CPUs are marked unavailable. Skip them.  */
+		if (cpu->state == cpu_state_unavailable)
+			continue;
+
 		if (cpu != this_cpu())
 			set_direct_ctl(cpu, P8_DIRECT_CTL_STOP);
 
@@ -263,6 +271,10 @@ static bool fast_reset_p8(void)
 
 	/* Put everybody in pre-nap except myself */
 	for_each_cpu(cpu) {
+		/* GARDed CPUs are marked unavailable. Skip them.  */
+		if (cpu->state == cpu_state_unavailable)
+			continue;
+
 		if (cpu != this_cpu())
 			set_direct_ctl(cpu, P8_DIRECT_CTL_PRENAP);
 	}
@@ -271,6 +283,10 @@ static bool fast_reset_p8(void)
 
 	/* Reset everybody except my own core threads */
 	for_each_cpu(cpu) {
+		/* GARDed CPUs are marked unavailable. Skip them.  */
+		if (cpu->state == cpu_state_unavailable)
+			continue;
+
 		if (cpu != this_cpu())
 			set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
 	}
@@ -500,6 +516,10 @@ void __noreturn fast_reboot_entry(void)
 		if (cpu == this_cpu())
 			continue;
 
+		/* GARDed CPUs are marked unavailable. Skip them.  */
+		if (cpu->state == cpu_state_unavailable)
+			continue;
+
 		/* XXX Add a callin timeout ? */
 		while (cpu->state != cpu_state_present) {
 			smt_very_low();
@@ -519,6 +539,10 @@ void __noreturn fast_reboot_entry(void)
 		if (cpu == this_cpu())
 			continue;
 
+		/* GARDed CPUs are marked unavailable. Skip them.  */
+		if (cpu->state == cpu_state_unavailable)
+			continue;
+
 		/* XXX Add a callin timeout ? */
 		while (cpu->state == cpu_state_present) {
 			smt_very_low();
@@ -529,6 +553,10 @@ void __noreturn fast_reboot_entry(void)
 	prlog(PR_DEBUG, "RESET: Releasing special wakeups...\n");
 
 	for_each_cpu(cpu) {
+		/* GARDed CPUs are marked unavailable. Skip them.  */
+		if (cpu->state == cpu_state_unavailable)
+			continue;
+
 		if (cpu->primary == cpu)
 			clr_special_wakeup(cpu);
 	}
