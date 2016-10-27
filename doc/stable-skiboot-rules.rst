@@ -71,7 +71,7 @@ Two ways:
 Trees
 -----
 
-* https://github.com/open-power/skiboot/tree/stable (or via ssh at ``git@github.com:open-power/skiboot.git`` )
+* https://github.com/open-power/skiboot/ (or via ssh at ``git@github.com:open-power/skiboot.git`` )
 
   * (branches are skiboot-X.Y.x - e.g. skiboot-5.1.x)
 
