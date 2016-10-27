@@ -658,6 +658,7 @@ void copy_exception_vectors(void)
 	 * the boot flag used by CPUs still potentially entering
 	 * skiboot.
 	 */
+	BUILD_ASSERT((&reset_patch_end - &reset_patch_start) < 0x1f00);
 	memcpy((void *)0x100, (void *)(SKIBOOT_BASE + 0x100), 0x1f00);
 	sync_icache();
 }
