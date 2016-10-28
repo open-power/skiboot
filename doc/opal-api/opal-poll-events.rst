@@ -1,3 +1,5 @@
+.. _OPAL_POLL_EVENTS:
+
 OPAL_POLL_EVENTS
 ================
 

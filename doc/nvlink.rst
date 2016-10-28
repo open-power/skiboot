@@ -1,3 +1,5 @@
+.. _nvlink:
+
 OPAL/Skiboot Nvlink Interface Documentation
 ===========================================
 
@@ -156,4 +158,4 @@ reporting.
 Device Tree Bindings
 --------------------
 
-See doc/device-tree/nvlink.rst
+See :ref:`device-tree/nvlink`

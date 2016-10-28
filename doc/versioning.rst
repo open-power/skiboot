@@ -1,3 +1,5 @@
+.. _versioning:
+
 Versioning Scheme of skiboot
 ============================
 

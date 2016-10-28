@@ -10,7 +10,7 @@ released August 17th, 2015.
 skiboot-5.2.0-rc1 contains all bug fixes as of skiboot-5.1.13.
 
 This is the second release that will follow the (now documented) Skiboot
-stable rules - see doc/stable-skiboot-rules.rst.
+stable rules - see :ref:`stable-rules`.
 
 The current plan is to release skiboot-5.2.0 mid-March 2016, with a focus on
 bug fixing for future 5.2.0-rc releases.

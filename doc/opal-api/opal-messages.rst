@@ -1,3 +1,5 @@
+.. _opal-messages:
+
 OPAL_MESSAGE
 ============
 

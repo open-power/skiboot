@@ -1,3 +1,5 @@
+.. _opal-api-LEDs:
+
 Service Indicators (LEDS)
 =========================
 
@@ -19,6 +21,7 @@ Different types of indicators handled by LED code:
       Indicates there is a problem with the FRU or resource at the
       location with which the indicator is associated.
 
+All LEDs are defined in the device tree (see :ref:`device-tree/ibm,opal/leds`).
 
 LED Design
 ----------

@@ -1,3 +1,5 @@
+.. _device-tree/ibm,opal/flash:
+
 ibm,opal/flash device tree entries
 ==================================
 

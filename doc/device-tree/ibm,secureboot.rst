@@ -1,3 +1,5 @@
+.. _device-tree/ibm,secureboot:
+
 ibm,secureboot
 ==============
 
@@ -16,7 +18,7 @@ boot to calculate the SHA512 hash of an image only if the image is not a secure 
 container or the system is not booting up in secure mode.
 
 For further information about secure boot and trusted boot please refer to
-``doc/stb.rst``.
+:ref:`stb-overview`.
 
 
 Required properties

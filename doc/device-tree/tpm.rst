@@ -1,3 +1,5 @@
+.. _device-tree/tpm:
+
 Trusted Platform Module (TPM)
 =============================
 

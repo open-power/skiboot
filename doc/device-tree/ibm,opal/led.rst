@@ -1,3 +1,5 @@
+.. _device-tree/ibm,opal/leds:
+
 Service Indicators (LEDS)
 =========================
 
@@ -33,4 +35,4 @@ led-types
   Supported indicators (attention/identify/fault).
 
 These LEDs can be accessed through OPAL_LEDS_{GET/SET}_INDICATOR interfaces.
-Refer to doc/opal-api/opal-led-get-set-114-115.rst for interface details.
+Refer to :ref:`opal-api-LEDs` for interface details.

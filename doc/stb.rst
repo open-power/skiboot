@@ -69,16 +69,16 @@ boot support for a platform:
 
 First, ``stb_init()`` must be called to initialize libstb. Basically, it reads both
 secure mode and trusted mode flags and loads drivers accordingly. In P8, secure
-mode and trusted mode are read from the *ibm,secureboot* device tree node,
-which is documented in ``doc/device-tree/ibm,secureboot.rst``
+mode and trusted mode are read from the *ibm,secureboot* device tree node (see
+:ref:`device-tree/ibm,secureboot`).
 
 If either secure mode or trusted mode is on, ``stb_init()`` loads a driver (romcode
 driver) to access the verification and SHA512 functions provided by the code
 stored in the secure ROM at manufacture time. Both secure boot and trusted boot
 depends on the romcode driver to access the ROM code. If trusted mode is on,
 ``stb_init()`` loads a TPM device driver compatible with the tpm device tree node
-and also initializes the existing event log in skiboot. The tpm device tree
-node is documented in ``doc/device-tree/tpm.rst``.
+and also initializes the existing event log in skiboot. For device tree bindings
+for the TPM, see :ref:`device-tree/tpm`.
 
 Once libstb is initialized in the platform, ``sb_verify()`` and ``tb_measure()`` can
 used as shown in the example above to respectively verify and measure images

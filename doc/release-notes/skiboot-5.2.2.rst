@@ -14,7 +14,7 @@ one bug fix targeted at P8NVL systems, notably the Garrison platform.
 skiboot-5.2.2 contains all bug fixes as of skiboot-5.1.16.
 
 This is the second release that will follow the (now documented) Skiboot
-stable rules - see doc/stable-skiboot-rules.rst.
+stable rules - see :ref:`stable-rules`.
 
 Over skiboot-5.2.1, the following fixes are included:
 

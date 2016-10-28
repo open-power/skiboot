@@ -1,8 +1,10 @@
+.. _device-tree/nvlink:
+
 ===========================
 Nvlink Device Tree Bindings
 ===========================
 
-See doc/nvlink.rst for general Nvlink information.
+See :ref:`nvlink` for general Nvlink information.
 
 NPU bindings: ::
 

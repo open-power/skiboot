@@ -173,8 +173,7 @@ under other platforms. For example, a single Linux kernel can be built to boot
 under OPAL and under PowerVM or qemu pseries machine type.
 
 The root node of the device tree MUST have compatible = "ibm,powernv".
-See doc/device-tree.rst for more details
-[TODO: make doc/device-tree.rst better]
+See :ref:`device-tree` for more details.
 
 The presence of the "/ibm,opal" entry in the device tree signifies running
 under OPAL. Additionally, the "/ibm,opal" node MUST have a compatibile property
@@ -210,7 +209,7 @@ about the firmware environment.
 
 The version property is a textual representation of the OPAL version.
 For example, it may be "skiboot-4.1" or other versioning described
-in more detail in doc/versioning.rst
+in more detail in :ref:`versioning`.
 
 
 OPAL log

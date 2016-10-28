@@ -9,7 +9,7 @@ There are three OPAL calls for interacting with flash devices: ::
 
 Multiple flash devices are supported by OPAL - each of these calls takes an id
 parameter, which much match an ID found in the corresponding ``ibm,opal/flash@n``
-device tree node. See doc/device-tree/ibm,opal/flash.rst for details of
+device tree node. See :ref:`device-tree/ibm,opal/flash` for details of
 the device tree bindings.
 
 All operations on the flash device must be aligned to the block size of the
