@@ -1,8 +1,7 @@
 OPAL_HANDLE_INTERRUPT
 =====================
 
-The host OS must pass all interrupts in ``ibm,opal/opal-interrupts`` in the
-device tree to OPAL.
+The host OS must pass all interrupts in the `opal-interrupts` property of :ref:`device-tree/ibm,opal` in the device tree to OPAL.
 
 An example dt snippet is:
 
