@@ -839,13 +839,19 @@ int main(int argc, char *argv[])
 		if (!write_size)
 			write_size = pmaxsz;
 
-		/* Crop write size to partition size */
-		if (write_size > pmaxsz) {
+		/* Crop write size to partition size if --force was passed */
+		if (write_size > pmaxsz && !must_confirm) {
 			printf("WARNING: Size (%d bytes) larger than partition"
 			       " (%d bytes), cropping to fit\n",
 			       write_size, pmaxsz);
 			write_size = pmaxsz;
+		} else if (write_size > pmaxsz) {
+			printf("ERROR: Size (%d bytes) larger than partition"
+			       " (%d bytes). Use --force to force\n",
+			       write_size, pmaxsz);
+			exit(1);
 		}
+
 
 		/* If erasing, check partition alignment */
 		if (erase && ((pstart | pmaxsz) & 0xfff)) {
