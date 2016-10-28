@@ -1,7 +1,9 @@
 System Firmware
 ===============
 
-The 'firmware' node under 'ibm,opal' lists system and OPAL firmware version. ::
+The 'firmware' node under 'ibm,opal' lists system and OPAL firmware version.
+
+.. code-block:: dts
 
   firmware {
 	symbol-map = <0x0 0x300ac650 0x0 0x1b3f5>;

@@ -33,3 +33,16 @@ flash partitions; the reg parameter contains the offset and size of the
 partition.
 
 
+Example:
+
+.. code-block:: dts
+
+ flash@0 {
+   reg = <0x0 0x4000000>;
+   compatible = "ibm,opal-flash";
+   ibm,opal-id = <0x0>;
+   ibm,flash-block-size = <0x1000>;
+   #address-cells = <0x1>;
+   phandle = <0x100002bf>;
+   #size-cells = <0x1>;
+ };

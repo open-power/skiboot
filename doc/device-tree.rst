@@ -35,8 +35,11 @@ Reserve Map
 
 Here are the reserve map entries. They should exactly match the
 reserved-ranges property of the root node (see documentation
-of that property)::
+of that property)
 
+.. code-block:: dts
+
+  /dts-v1/;
   /memreserve/	0x00000007fe600000 0x0000000000100000;
   /memreserve/	0x00000007fe200000 0x0000000000100000;
   /memreserve/	0x0000000031e00000 0x00000000003e0000;
@@ -48,8 +51,11 @@ of that property)::
 Root Node
 ---------
 
-Root node of device tree::
+Root node of device tree
 
+.. code-block:: dts
+
+ /dts-v1/;
  / {
   	/*
 	 * "compatible" properties are string lists (ASCII strings separated by
@@ -360,7 +366,7 @@ Root node of device tree::
 		 * module VPD eeprom (and thus doesn't have a standard ASCII keyword
 		 * VPD format). We don't currently use it though ...
 		 */
-		ibm,module-vpd = < ... big pile of binary data ... >;
+		ibm,module-vpd = < /* ... big pile of binary data ... */ >;
 
 		/* PSI host bridge XSCOM register set */
 		psihb@2010900 {
@@ -488,7 +494,7 @@ Root node of device tree::
 				 * "TPM interrupt" of that chip).
 				 */
 				 ibm,irq-chip-id = <0x0>;
-			}
+			};
                 };
 	};
  };

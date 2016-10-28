@@ -4,7 +4,9 @@ Service Indicators (LEDS)
 =========================
 
 The 'leds' node under 'ibm,opal' lists service indicators available in the
-system and their capabilities. ::
+system and their capabilities.
+
+.. code-block:: dts
 
   leds {
 	compatible = "ibm,opal-v3-led";
@@ -17,8 +19,7 @@ system and their capabilities. ::
 		phandle = <0x1000006f>;
 		linux,phandle = <0x1000006f>;
 	};
-	...
-	...
+	/* Other LED nodes like the above one */
   };
 
 compatible

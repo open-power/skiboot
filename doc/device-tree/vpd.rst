@@ -6,20 +6,23 @@ the system and each vpd node in the device tree represents a FRU. These node and
 their properties are specific to the FSP-based systems, passed to the skiboot in
 the form of FSP-defined HDAT structures. skiboot parses these structures and
 add respective nodes in the device tree.
-::
 
- /vpd			: VPD root node
- <fru-name>@<rsrc-id>	: Node name
- ibm,vpd			: VPD data binary blob
- ccin			: Customer Card Identification Number
- fru-type		: FRU type label (2 bytes ASCII character)
- fru-number		: FRU stocking part number
- ibm,loc-code		: Location code
- part-number		: Part number
- serial-number		: Serial number
- ibm,chip-id		: Processor Id
- size			: DIMM size (applicable for DIMM VPD only)
- ibm,memory-bus-frequency: DIMM frequency (applicable for DIMM VPD only)
+.. code-block:: dts
+
+ vpd {			   /* VPD root node */
+   fru-name@rsrc-id {	   /* Node name formatted as such */
+   ibm,vpd = <             /* VPD data binary blob */ >;
+     ccin = "524D";        /* Customer Card Identification Number */
+     fru-type = [ 41 56 ]; /* FRU type label (2 bytes ASCII character) */
+     fru-number    =       "FRU stocking part number";
+     ibm,loc-code  =       "Location code";
+     part-number   =       "ABC123456";
+     serial-number =       "ABC123456";
+     ibm,chip-id   = <0x0>; /* If part is a chip, Processor Id */
+     size = "0032768";      /* DIMM size (applicable for DIMM VPD only) */
+     ibm,memory-bus-frequency = <0x0 0x0>; /* DIMM frequency (applicable for DIMM VPD only) */
+   };
+ };
 
 The VPD tree in the device tree depicts the hierarchial structure of the
 FRUs having parent-child relationship. ::
@@ -53,7 +56,9 @@ FRUs having parent-child relationship. ::
     |-- root-node-vpd@a001
     `-- system-vpd@1c00
 
-Example vpd node: ::
+Example vpd node:
+
+.. code-block:: dts
 
  anchor-card@500 {
 	ccin = "52FE";

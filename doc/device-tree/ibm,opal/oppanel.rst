@@ -1,6 +1,7 @@
 Operator Panel (oppanel)
 ========================
-::
+
+.. code-block:: dts
 
   oppanel {
         compatible = "ibm,opal-oppanel";

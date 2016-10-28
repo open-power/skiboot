@@ -4,12 +4,13 @@ OPAL_HANDLE_INTERRUPT
 The host OS must pass all interrupts in ``ibm,opal/opal-interrupts`` in the
 device tree to OPAL.
 
-An example dt snippet is: ::
+An example dt snippet is:
+
+.. code-block:: dts
 
   ibm,opal {
-            ...
             opal-interrupts = <0x10 0x11 0x12 0x13 0x14 0x20010 0x20011 0x20012 0x20013 0x20014 0xffe 0xfff 0x17fe 0x17ff 0x2ffe 0x2fff 0x37fe 0x37ff 0x20ffe 0x20fff 0x217fe 0x217ff 0x22ffe 0x22fff 0x237fe 0x237ff>;
-  }
+  };
 
 When the host OS gets any of these interrupts, it must call
 ``OPAL_HANDLE_INTERRUPT``.

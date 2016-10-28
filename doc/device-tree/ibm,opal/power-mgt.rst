@@ -3,9 +3,15 @@ ibm,opal/power-mgt device tree entries
 
 All available CPU idle states are listed in ibm,cpu-idle-state-names
 
-For example: ::
+For example:
 
-  ibm,cpu-idle-state-names = "nap", "fastsleep_", "winkle";
+.. code-block:: dts
+
+  power-mgt {
+    ibm,cpu-idle-state-names = "nap", "fastsleep_", "winkle";
+    ibm,cpu-idle-state-residency-ns = <0x1 0x2 0x3>;
+    ibm,cpu-idle-state-latencies-ns = <0x1 0x2 0x3>;
+  };
 
 The idle states are characterized by latency and residency
 numbers which determine the breakeven point for entry into them. The
@@ -21,10 +27,33 @@ the measured latency numbers for the idle states. The residency numbers have
 been arrived at experimentally after ensuring that the performance of latency
 sensitive workloads do not regress while allowing deeper idle states to be
 entered into during low load situations. The kernel is expected to use these
-values for optimal power efficiency. ::
+values for optimal power efficiency.
 
-  ibm,cpu-idle-state-residency-ns = <0x1 0x2 0x3>
-  ibm,cpu-idle-state-latencies-ns = <0x1 0x2 0x3>
+Example:
+
+.. code-block:: dts
+
+   / {
+     ibm,opal {
+       power-mgt {
+		ibm,pstate-frequencies-mhz = <0xda3 0xd82 0xd60 0xd3f 0xd1e 0xcfd 0xcdb 0xcba 0xc99 0xc78 0xc56 0xc35 0xc14 0xbf3 0xbd1 0xbb0 0xb8f 0xb6e 0xb4c 0xb2b 0xb0a 0xae9 0xac7 0xaa6 0xa85 0xa64 0xa42 0xa21 0xa00 0x9df 0x9bd 0x99c 0x97b 0x95a 0x938 0x917 0x8f6 0x8d5 0x8b3 0x892 0x871 0x850 0x82e 0x80d>;
+                ibm,cpu-idle-state-latencies-ns = <0xfa0 0x9c40 0x989680>;
+                ibm,cpu-idle-state-flags = <0x11000 0x81003 0x47003>;
+                ibm,cpu-idle-state-names = "nap", "fastsleep_", "winkle";
+                ibm,cpu-idle-state-pmicr = <0x0 0x0 0x20 0x0 0x0 0x0>;
+                ibm,pstate-vdds = <0x5758595a 0x5a5b5c5d 0x5e5e5f60 0x61626263 0x64656566 0x66676768 0x6869696a 0x6a6b6b6c 0x6c6d6d6e 0x6e6f6f70 0x70717272>;
+                ibm,pstate-vcss = <0x4d4e4f4f 0x50505152 0x52535354 0x55555657 0x57585859 0x59595a5a 0x5a5b5b5c 0x5c5c5d5d 0x5d5e5e5f 0x5f5f6060 0x60616162>;
+                ibm,pstate-nominal = <0xffffffef>;
+                ibm,cpu-idle-state-residency-ns = <0x186a0 0x11e1a300 0x3b9aca00>;
+                ibm,cpu-idle-state-pmicr-mask = <0x0 0x0 0x30 0x0 0x0 0x0>;
+                phandle = <0x100002a0>;
+                ibm,pstate-ids = <0x0 0xffffffff 0xfffffffe 0xfffffffd 0xfffffffc 0xfffffffb 0xfffffffa 0xfffffff9 0xfffffff8 0xfffffff7 0xfffffff6 0xfffffff5 0xfffffff4 0xfffffff3 0xfffffff2 0xfffffff1 0xfffffff0 0xffffffef 0xffffffee 0xffffffed 0xffffffec 0xffffffeb 0xffffffea 0xffffffe9 0xffffffe8 0xffffffe7 0xffffffe6 0xffffffe5 0xffffffe4 0xffffffe3 0xffffffe2 0xffffffe1 0xffffffe0 0xffffffdf 0xffffffde 0xffffffdd 0xffffffdc 0xffffffdb 0xffffffda 0xffffffd9 0xffffffd8 0xffffffd7 0xffffffd6 0xffffffd5>;
+                ibm,pstate-max = <0x0>;
+                ibm,pstate-min = <0xffffffd5>;
+       };
+     };
+   };
+
 
 
 ibm,cpu-idle-state-pmicr ibm,cpu-idle-state-pmicr-mask

@@ -33,7 +33,7 @@ Optional properties
 Example
 -------
 
-::
+.. code-block:: dts
 
     tpm@57 {
     	reg = <0x57>;

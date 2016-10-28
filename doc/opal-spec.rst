@@ -179,14 +179,16 @@ The presence of the "/ibm,opal" entry in the device tree signifies running
 under OPAL. Additionally, the "/ibm,opal" node MUST have a compatibile property
 listing "ibm,opal-v3".
 
-The "/ibm,opal" node MUST have the following properties: ::
+The "/ibm,opal" node MUST have the following properties:
+
+.. code-block:: dts
 
  ibm,opal {
 	  compatible = "ibm,opal-v3";
 	  opal-base-address = <>;
 	  opal-entry-address = <>;
 	  opal-runtime-size = <>;
- }
+ };
 
 The compatible property MAY have other strings, such as a future "ibm,opal-v4".
 These are reserved for future use.
@@ -196,11 +198,13 @@ contain "ibm,opal-v2" as well as "ibm,opal-v3". Host operating systems MUST
 NOT rely on "ibm,opal-v2", this is a relic from early OPAL history.
 
 The "ibm,opal" node MUST have a child node named "firmware". It MUST contain
-the following: ::
+the following:
+
+.. code-block:: dts
 
  firmware {
 	 compatible = "ibm,opal-firmware";
- }
+ };
 
 It MUST contain one of the following two properties: git-id, version.
 The git-id property is deprecated, and version SHOULD be used. These

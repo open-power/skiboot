@@ -24,7 +24,7 @@ For further information about secure boot and trusted boot please refer to
 Required properties
 -------------------
 
-::  
+.. code-block:: none
 
     compatible:         ibm,secureboot version. It is related to the ROM code version.
                 
@@ -44,7 +44,7 @@ Example
 For the first version ``ibm,secureboot-v1``, the ROM code expects the *hw-key-hash*
 to be a SHA512 hash.
 
-::
+.. code-block:: dts
 
     ibm,secureboot {
         compatible = "ibm,secureboot-v1";

@@ -35,9 +35,12 @@ Each node has a minimum set of properties describing the sensor :
 - an optional "label" property
 
 Each node can have some extra properties depending on the resource
-they represent. See the tree below for more information. ::
+they represent. See the tree below for more information.
 
-  ibm,opal/sensors/ {
+.. code-block:: dts
+
+  ibm,opal {
+    sensors {
 
 	/*
 	 * Core temperatures (DTS) nodes.
@@ -88,5 +91,5 @@ they represent. See the tree below for more information. ::
 		ibm,chip-id = <0x80000001>;
 		label = "Centaur";
 	};
-
+    };
   };
