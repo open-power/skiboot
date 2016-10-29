@@ -201,6 +201,8 @@ struct proc_init_data {
 	struct {
 		__be64	nia;
 		__be64	msr;
+		__be64	nia_charm_time;
+		__be64	msr_charm_time;
 	} regs;
 } __packed __align(0x10);
 
