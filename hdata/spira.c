@@ -1023,6 +1023,10 @@ static void hostservices_parse(void)
 	unsigned int size;
 	unsigned int ntuples_size;
 
+	/* Deprecated on P9 */
+	if (proc_gen >= proc_gen_p9)
+		return;
+
 	ntuples_size = sizeof(struct HDIF_array_hdr) + 
 		be32_to_cpu(spira.ntuples.array_hdr.ecnt) *
 		sizeof(struct spira_ntuple);
