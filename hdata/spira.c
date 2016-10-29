@@ -857,7 +857,7 @@ static void add_iplparams_serials(const void *iplp, struct dt_node *node)
 	int count, i;
 	
 	count = HDIF_get_iarray_size(iplp, IPLPARMS_IDATA_SERIAL);
-	if (!count) {
+	if (count <= 0) {
 		prerror("IPLPARAMS: No serial ports\n");
 		return;
 	}
