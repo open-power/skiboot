@@ -309,6 +309,11 @@ static void add_psihb_node(struct dt_node *np)
 		psi_slen = 0x20;
 		psi_comp = "ibm,power8-psihb-x";
 		break;
+	case proc_gen_p9:
+		psi_scom = 0x5012900;
+		psi_slen = 0x100;
+		psi_comp = "ibm,power9-psihb-x";
+		break;
 	default:
 		psi_comp = NULL;
 	}
