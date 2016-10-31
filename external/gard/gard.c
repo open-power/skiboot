@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <limits.h>
+#include <inttypes.h>
 
 #include <ccan/array_size/array_size.h>
 
@@ -649,7 +650,7 @@ int main(int argc, char **argv)
 		goto out;
 
 	if (bl_size > UINT_MAX) {
-		fprintf(stderr, "MTD device bigger than %i: size:%lu\n",
+		fprintf(stderr, "MTD device bigger than %i: size: %" PRIu64 "\n",
 			UINT_MAX, bl_size);
 		rc = EXIT_FAILURE;
 		goto out;
