@@ -1,0 +1,6 @@
+FROM fedora:24
+RUN dnf -y install wget xterm gcc git xz make diffutils findutils expect valgrind valgrind-devel
+RUN dnf -y install gcc-powerpc64-linux-gnu 
+COPY . /build/
+WORKDIR /build
+ENTRYPOINT ./opal-ci/build-fedora24.sh

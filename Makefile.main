@@ -193,7 +193,7 @@ $(TARGET).elf: $(ALL_OBJS_2) $(TARGET).lds $(KERNEL)
 	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(ALL_OBJS_2) -o $@, $@)
 
 $(SUBDIRS):
-	$(call Q,MKDIR,mkdir $@, $@)
+	$(call Q,MKDIR,mkdir -p $@, $@)
 
 -include $(wildcard *.d)
 -include $(wildcard $(SUBDIRS:%=%/*.d))
