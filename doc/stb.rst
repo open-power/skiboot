@@ -60,11 +60,11 @@ boot support for a platform:
 
     stb_init();
         start_preload_resource(RESOURCE_ID_CAPP, 0, capp_ucode_info.lid, &capp_ucode_info.size);
-            sb_verify(id, subid, buf);
-            tb_measure(id, subid, buf, *len);
+            sb_verify(id, buf, len);
+            tb_measure(id, buf, len);
         start_preload_resource(RESOURCE_ID_KERNEL, 0, KERNEL_LOAD_BASE, &kernel_size);
-            sb_verify(id, subid, buf);
-            tb_measure(id, subid, buf, *len);
+            sb_verify(id, buf, len);
+            tb_measure(id, buf, len);
     stb_final();
 
 First, ``stb_init()`` must be called to initialize libstb. Basically, it reads both

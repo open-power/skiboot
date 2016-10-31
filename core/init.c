@@ -415,10 +415,10 @@ static bool load_kernel(void)
 
 	if (do_stb)
 	{
-		sb_verify(RESOURCE_ID_KERNEL, RESOURCE_SUBID_NONE,
-			  stb_container, kernel_size + SECURE_BOOT_HEADERS_SIZE);
-		tb_measure(RESOURCE_ID_KERNEL, RESOURCE_SUBID_NONE,
-			   stb_container, kernel_size + SECURE_BOOT_HEADERS_SIZE);
+		sb_verify(RESOURCE_ID_KERNEL, stb_container,
+			  kernel_size + SECURE_BOOT_HEADERS_SIZE);
+		tb_measure(RESOURCE_ID_KERNEL, stb_container,
+			   kernel_size + SECURE_BOOT_HEADERS_SIZE);
 	}
 
 	/*

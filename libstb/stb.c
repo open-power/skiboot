@@ -202,7 +202,7 @@ int stb_final(void)
 	return rc;
 }
 
-int tb_measure(enum resource_id id, uint32_t subid, void *buf, size_t len)
+int tb_measure(enum resource_id id, void *buf, size_t len)
 {
 	int rc, r;
 	uint8_t digest[SHA512_DIGEST_LENGTH];
@@ -234,8 +234,8 @@ int tb_measure(enum resource_id id, uint32_t subid, void *buf, size_t len)
 		 * come from the resource load framework and likely indicates a
 		 * bug in the framework.
 		 */
-		prlog(PR_ERR, "STB: %s failed: resource %s%d, buf null\n",
-		      __func__, resource_map[r].name, subid);
+		prlog(PR_ERR, "STB: %s failed: resource %s, buf null\n",
+		      __func__, resource_map[r].name);
 		return STB_ARG_ERROR;
 	}
 	memset(digest, 0, SHA512_DIGEST_LENGTH);
@@ -290,12 +290,12 @@ int tb_measure(enum resource_id id, uint32_t subid, void *buf, size_t len)
 			 EV_ACTION, resource_map[r].name);
 	if (rc)
 		return rc;
-	prlog(PR_NOTICE, "STB: %s%d measured to pcr%d\n", resource_map[r].name,
-	      subid, resource_map[r].pcr);
+	prlog(PR_NOTICE, "STB: %s measured to pcr%d\n", resource_map[r].name,
+	      resource_map[r].pcr);
 	return 0;
 }
 
-int sb_verify(enum resource_id id, uint32_t subid, void *buf, size_t len)
+int sb_verify(enum resource_id id, void *buf, size_t len)
 {
 	int r;
 	const char *name = NULL;
@@ -315,7 +315,7 @@ int sb_verify(enum resource_id id, uint32_t subid, void *buf, size_t len)
 		 * measured if trusted mode is on.
 		 */
 		prlog(PR_WARNING, "STB: verifying the non-expected "
-		      "resource %d/%d\n", id, subid);
+		      "resource %d\n", id);
 	else
 		name = resource_map[r].name;
 	if (!rom_driver || !rom_driver->verify) {
@@ -323,16 +323,16 @@ int sb_verify(enum resource_id id, uint32_t subid, void *buf, size_t len)
 		sb_enforce();
 	}
 	if (!buf || len < SECURE_BOOT_HEADERS_SIZE) {
-		prlog(PR_EMERG, "STB: %s arg error: id %d/%d, buf %p, len %zd\n",
-		      __func__, id, subid, buf, len);
+		prlog(PR_EMERG, "STB: %s arg error: id %d, buf %p, len %zd\n",
+		      __func__, id, buf, len);
 		sb_enforce();
 	}
 	if (rom_driver->verify(buf)) {
-		prlog(PR_EMERG, "STB: %s failed: resource %s%d, "
-		      "eyecatcher 0x%016llx\n", __func__, name, subid,
+		prlog(PR_EMERG, "STB: %s failed: resource %s, "
+		      "eyecatcher 0x%016llx\n", __func__, name,
 		      *((uint64_t*)buf));
 		sb_enforce();
 	}
-	prlog(PR_NOTICE, "STB: %s%d verified\n", name, subid);
+	prlog(PR_NOTICE, "STB: %s verified\n", name);
 	return 0;
 }

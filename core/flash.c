@@ -655,8 +655,8 @@ done_reading:
 	 * Verify and measure the retrieved PNOR partition as part of the
 	 * secure boot and trusted boot requirements
 	 */
-	sb_verify(id, subid, buf, *len);
-	tb_measure(id, subid, buf, *len);
+	sb_verify(id, buf, *len);
+	tb_measure(id, buf, *len);
 
 	/* Find subpartition */
 	if (subid != RESOURCE_SUBID_NONE) {

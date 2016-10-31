@@ -39,7 +39,6 @@ extern int stb_final(void);
 /**
  * sb_verify - verify a resource
  * @id   : resource id
- * @subid: subpartition id
  * @buf  : data to be verified
  * @len  : buf length
  *
@@ -51,13 +50,12 @@ extern int stb_final(void);
  *
  * returns: 0 otherwise the boot process is aborted
  */
-extern int sb_verify(enum resource_id id, uint32_t subid, void *buf, size_t len);
+extern int sb_verify(enum resource_id id, void *buf, size_t len);
 
 
 /**
  * tb_measure - measure a resource
  * @id    : resource id
- * @subid : subpartition id
  * @buf   : data to be measured
  * @len   : buf length
  *
@@ -69,7 +67,6 @@ extern int sb_verify(enum resource_id id, uint32_t subid, void *buf, size_t len)
  *
  * returns: 0 or an error as defined in status_codes.h
  */
-extern int tb_measure(enum resource_id id, uint32_t subid, void *buf,
-		      size_t len);
+extern int tb_measure(enum resource_id id, void *buf, size_t len);
 
 #endif /* __STB_H */
