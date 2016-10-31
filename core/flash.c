@@ -533,7 +533,8 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 	prlog(PR_DEBUG,"FLASH: %s partition %s ECC\n",
 	      name, ecc  ? "has" : "doesn't have");
 
-	if ((ecc ? ecc_buffer_size_minus_ecc(ffs_part_size) : ffs_part_size) < SECURE_BOOT_HEADERS_SIZE) {
+	if ((ecc ? ecc_buffer_size_minus_ecc(ffs_part_size) : ffs_part_size) <
+	     SECURE_BOOT_HEADERS_SIZE) {
 		prerror("FLASH: secboot headers bigger than "
 			"partition size 0x%x\n", ffs_part_size);
 		goto out_free_ffs;
@@ -543,7 +544,8 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 			SECURE_BOOT_HEADERS_SIZE, ecc);
 	if (rc) {
 		prerror("FLASH: failed to read the first 0x%x from "
-			"%s partition, rc %d\n", SECURE_BOOT_HEADERS_SIZE, name, rc);
+			"%s partition, rc %d\n", SECURE_BOOT_HEADERS_SIZE,
+			name, rc);
 		goto out_free_ffs;
 	}
 
@@ -633,7 +635,9 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		}
 
 		*len = ffs_part_size;
-		prlog(PR_DEBUG, "FLASH: Computed %s partition size: %u (subpart %u size %u offset %u)\n", name, ffs_part_size, subid, content_size, offset);
+		prlog(PR_DEBUG, "FLASH: Computed %s partition size: %u "
+		      "(subpart %u size %u offset %u)\n", name, ffs_part_size,
+		      subid, content_size, offset);
 		/*
 		 * For a sub partition, we read the whole (computed)
 		 * partition, and then measure that.
