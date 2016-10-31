@@ -37,7 +37,7 @@ int flash_subpart_info(void *part_header, uint32_t header_len,
 {
 	struct flash_hostboot_header *header;
 	char eyecatcher[5];
-	uint32_t i, ec, o, s, toc;
+	uint32_t i, ec, o, s;
 	bool subpart_found;
 
 	if (!part_header || ( !offset && !size && !part_actual)) {
@@ -69,7 +69,6 @@ int flash_subpart_info(void *part_header, uint32_t header_len,
 
 	subpart_found = false;
 	*part_actual = 0;
-	toc = sizeof(header->eyecatcher) + sizeof(header->version);
 	for (i = 0; i < FLASH_HOSTBOOT_TOC_MAX_ENTRIES; i++) {
 
 		ec = be32_to_cpu(header->toc[i].ec);
@@ -108,7 +107,6 @@ int flash_subpart_info(void *part_header, uint32_t header_len,
 				*size = s;
 			subpart_found = true;
 		}
-		toc += sizeof(struct flash_hostboot_toc);
 	}
 	if (!subpart_found && (offset || size)) {
 		prerror("FLASH: flash subpartition not found.\n");
