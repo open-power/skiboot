@@ -187,12 +187,12 @@ void tpm_init(void)
 
 	if (list_empty(&tpm_list))
 		/**
-		 * @fwts-label TPMNotInitialized
+		 * @fwts-label NoTPMRegistered
 		 * @fwts-advice No TPM chip has been initialized. We may not
 		 * have a compatible tpm driver or there is no tpm node in the
 		 * device tree with the expected bindings.
 		 */
-		prlog(PR_ERR, "TPM: no tpm chip has been initialized\n");
+		prlog(PR_ERR, "TPM: no tpm chip registered\n");
 
 }
 
@@ -232,6 +232,12 @@ int tpm_extendl(TPM_Pcr pcr,
 
 	measured = 0;
 	failed = 0;
+
+	if (list_empty(&tpm_list)) {
+		prlog(PR_NOTICE, "TPM: %s (pcr%d) not measured. No TPM "
+		      "registered/enabled\n", event_msg, pcr);
+		return STB_NO_TPM_INITIALIZED;
+	}
 
 	list_for_each(&tpm_list, tpm, link) {
 		if (!tpm->enabled)
