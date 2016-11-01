@@ -226,10 +226,11 @@ int tpm_extendl(TPM_Pcr pcr,
 		TPM_Alg_Id alg2, uint8_t* digest2, size_t size2,
 		uint32_t event_type, const char* event_msg)
 {
-	int rc, failed;
+	int rc, measured, failed;
 	TCG_PCR_EVENT2 event;
 	struct tpm_chip *tpm = NULL;
 
+	measured = 0;
 	failed = 0;
 
 	list_for_each(&tpm_list, tpm, link) {
@@ -297,7 +298,12 @@ int tpm_extendl(TPM_Pcr pcr,
 			tpm_print_pcr(tpm, pcr, alg2, size2);
 		}
 #endif
+		measured++;
 	}
+
+	prlog(PR_NOTICE, "TPM: %s (pcr%d) measured on %d tpms and "
+	      "failed on %d tpms\n", event_msg, pcr, measured, failed);
+
 	if (failed > 0)
 		return STB_MEASURE_FAILED;
 	return 0;

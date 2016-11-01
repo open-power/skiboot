@@ -163,7 +163,11 @@ void stb_init(void)
 int stb_final(void)
 {
 	uint32_t pcr;
-	int rc = 0;
+	int rc;
+	bool failed;
+
+	rc = 0;
+	failed = false;
 
 	if (trusted_mode) {
 #ifdef STB_DEBUG
@@ -186,9 +190,7 @@ int stb_final(void)
 					TPM_ALG_SHA1_SIZE, EV_SEPARATOR,
 					"Skiboot Boot");
 			if (rc)
-				return rc;
-			prlog(PR_NOTICE, "STB: 0xFFFFFFFF measured "
-			      "to pcr%d\n", pcr);
+				failed = true;
 		}
 		tpm_add_status_property();
 	}
@@ -199,16 +201,15 @@ int stb_final(void)
 	tpm_cleanup();
 	secure_mode = false;
 	trusted_mode = false;
-	return rc;
+	return (failed) ? STB_MEASURE_FAILED : 0;
 }
 
 int tb_measure(enum resource_id id, void *buf, size_t len)
 {
-	int rc, r;
+	int r;
 	uint8_t digest[SHA512_DIGEST_LENGTH];
 	const uint8_t *digestp;
 
-	rc = 0;
 	digestp = NULL;
 	if (!trusted_mode) {
 		prlog(PR_NOTICE, "STB: %s skipped resource %d, "
@@ -284,15 +285,10 @@ int tb_measure(enum resource_id id, void *buf, size_t len)
 	 * algorithm, the sha512 hash is truncated to match the size required
 	 * by each PCR bank.
 	 */
-	rc = tpm_extendl(resource_map[r].pcr,
-			 TPM_ALG_SHA256, digest, TPM_ALG_SHA256_SIZE,
-			 TPM_ALG_SHA1,   digest, TPM_ALG_SHA1_SIZE,
-			 EV_ACTION, resource_map[r].name);
-	if (rc)
-		return rc;
-	prlog(PR_NOTICE, "STB: %s measured to pcr%d\n", resource_map[r].name,
-	      resource_map[r].pcr);
-	return 0;
+	return tpm_extendl(resource_map[r].pcr,
+			   TPM_ALG_SHA256, digest, TPM_ALG_SHA256_SIZE,
+			   TPM_ALG_SHA1,   digest, TPM_ALG_SHA1_SIZE,
+			   EV_ACTION, resource_map[r].name);
 }
 
 int sb_verify(enum resource_id id, void *buf, size_t len)
