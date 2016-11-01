@@ -28,8 +28,7 @@
 
 /* trusted boot */
 #define STB_TRUSTED_MODE_DISABLED	 200
-#define STB_EVENTLOG_FAILED	-200
-#define STB_PCR_EXTEND_FAILED	-201
+#define STB_MEASURE_FAILED		-200
 
 /* TPM */
 #define STB_TPM_OVERFLOW	-300

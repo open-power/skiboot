@@ -214,16 +214,23 @@ void tpm_cleanup(void)
 	list_head_init(&tpm_list);
 }
 
+static void tpm_disable(struct tpm_chip *tpm)
+{
+	assert(tpm);
+	tpm->enabled = false;
+	prlog(PR_NOTICE, "STB: tpm%d disabled\n", tpm->id);
+}
+
 int tpm_extendl(TPM_Pcr pcr,
 		TPM_Alg_Id alg1, uint8_t* digest1, size_t size1,
 		TPM_Alg_Id alg2, uint8_t* digest2, size_t size2,
 		uint32_t event_type, const char* event_msg)
 {
-	int rc;
+	int rc, failed;
 	TCG_PCR_EVENT2 event;
 	struct tpm_chip *tpm = NULL;
 
-	rc = 0;
+	failed = 0;
 
 	list_for_each(&tpm_list, tpm, link) {
 		if (!tpm->enabled)
@@ -247,12 +254,15 @@ int tpm_extendl(TPM_Pcr pcr,
 			 */
 			prlog(PR_ERR, "TPM: %s -> elog%d FAILED: pcr%d et=%x rc=%d\n",
 			      event_msg, tpm->id, pcr, event_type, rc);
-			rc = STB_EVENTLOG_FAILED;
-			goto error;
+			tpm_disable(tpm);
+			failed++;
+			continue;
 		}
 #ifdef STB_DEBUG
-		prlog(PR_NOTICE, "TPM: %s -> elog%d: pcr%d et=%x ls=%d\n",
-		      event_msg, tpm->id, pcr, event_type, tpm->logmgr.logSize);
+		if (rc == 0)
+			prlog(PR_NOTICE, "TPM: %s -> elog%d: pcr%d et=%x "
+			      "ls=%d\n", event_msg, tpm->id, pcr,
+			      event_type, tpm->logmgr.logSize);
 		tpm_print_pcr(tpm, pcr, alg1, size1);
 		tpm_print_pcr(tpm, pcr, alg2, size2);
 #endif
@@ -275,20 +285,22 @@ int tpm_extendl(TPM_Pcr pcr,
 			 */
 			prlog(PR_ERR, "TPM: %s -> tpm%d FAILED: pcr%d rc=%d\n",
 			      event_msg, tpm->id, pcr, rc);
-			rc = STB_PCR_EXTEND_FAILED;
-			goto error;
+			tpm_disable(tpm);
+			failed++;
+			continue;
 		}
 #ifdef STB_DEBUG
-		prlog(PR_NOTICE, "TPM: %s -> tpm%d: pcr%d\n", event_msg,
-		      tpm->id, pcr);
-		tpm_print_pcr(tpm, pcr, alg1, size1);
-		tpm_print_pcr(tpm, pcr, alg2, size2);
+		if (rc == 0) {
+			prlog(PR_NOTICE, "TPM: %s -> tpm%d: pcr%d\n",
+			      event_msg, tpm->id, pcr);
+			tpm_print_pcr(tpm, pcr, alg1, size1);
+			tpm_print_pcr(tpm, pcr, alg2, size2);
+		}
 #endif
 	}
-	return rc;
-error:
-	tpm->enabled = false;
-	return rc;
+	if (failed > 0)
+		return STB_MEASURE_FAILED;
+	return 0;
 }
 
 void tpm_add_status_property(void) {
