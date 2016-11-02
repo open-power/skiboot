@@ -37,6 +37,8 @@ function poweroff {
 function force_primary_side {
     # Now we force booting from primary (not golden) side
     $IPMI_COMMAND raw 0x04 0x30 0x5c 0x01 0x00 0x00 0 0 0 0 0 0
+    # and from somewhere else we get this raw command. Obvious really.
+    $IPMI_COMMAND raw 0x04 0x30 0xd2 0x01 0x00 0x00 0 0 0 0 0 0
     sleep 8
 }
 
