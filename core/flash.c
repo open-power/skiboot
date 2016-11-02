@@ -540,8 +540,8 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		goto out_free_ffs;
 	}
 
-	rc = flash_read_corrected(flash->bl, ffs_part_start, bufp,
-			SECURE_BOOT_HEADERS_SIZE, ecc);
+	rc = blocklevel_read(flash->bl, ffs_part_start, bufp,
+			SECURE_BOOT_HEADERS_SIZE);
 	if (rc) {
 		prerror("FLASH: failed to read the first 0x%x from "
 			"%s partition, rc %d\n", SECURE_BOOT_HEADERS_SIZE,
@@ -574,8 +574,8 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		if (ecc)
 			ffs_part_start += ecc_size(SECURE_BOOT_HEADERS_SIZE);
 
-		rc = flash_read_corrected(flash->bl, ffs_part_start, bufp,
-					  content_size, ecc);
+		rc = blocklevel_read(flash->bl, ffs_part_start, bufp,
+					  content_size);
 		if (rc) {
 			prerror("FLASH: failed to read content size %d"
 				" %s partition, rc %d\n",
@@ -613,8 +613,8 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 			}
 			prlog(PR_DEBUG, "FLASH: computed %s size %u\n",
 			      name, content_size);
-			rc = flash_read_corrected(flash->bl, ffs_part_start,
-						  buf, content_size, ecc);
+			rc = blocklevel_read(flash->bl, ffs_part_start,
+						  buf, content_size);
 			if (rc) {
 				prerror("FLASH: failed to read content size %d"
 					" %s partition, rc %d\n",
@@ -644,8 +644,8 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		 * Afterwards, we memmove() things back into place for
 		 * the caller.
 		 */
-		rc = flash_read_corrected(flash->bl, ffs_part_start,
-					  buf, ffs_part_size, ecc);
+		rc = blocklevel_read(flash->bl, ffs_part_start,
+					  buf, ffs_part_size);
 
 		bufp += offset;
 	}
