@@ -96,6 +96,7 @@ static inline unsigned long callthru3(int command, unsigned long arg1,
 
 #define BD_SECT_SZ		512
 
+#define SIM_EXIT_CODE		31
 #define BOGUS_DISK_READ		116
 #define BOGUS_DISK_WRITE	117
 #define BOGUS_DISK_INFO		118
@@ -256,7 +257,7 @@ static void mambo_platform_init(void)
 static int64_t mambo_cec_power_down(uint64_t request __unused)
 {
 	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
-		mambo_sim_exit();
+		callthru0(SIM_EXIT_CODE);
 
 	return OPAL_UNSUPPORTED;
 }
@@ -264,7 +265,7 @@ static int64_t mambo_cec_power_down(uint64_t request __unused)
 static void __attribute__((noreturn)) mambo_terminate(const char *msg __unused)
 {
 	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
-		mambo_sim_exit();
+		callthru0(SIM_EXIT_CODE);
 
 	for (;;) ;
 }
