@@ -78,11 +78,9 @@ static int release(struct blocklevel_device *bl)
 	return rc;
 }
 
-int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len)
+int blocklevel_raw_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len)
 {
 	int rc;
-	struct ecc64 *buffer;
-	uint64_t ecc_len = ecc_buffer_size(len);
 
 	if (!bl || !bl->read || !buf) {
 		errno = EINVAL;
@@ -93,11 +91,26 @@ int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint6
 	if (rc)
 		return rc;
 
-	if (!ecc_protected(bl, pos, len)) {
-		rc = bl->read(bl, pos, buf, len);
-		release(bl);
-		return rc;
+	rc = bl->read(bl, pos, buf, len);
+
+	release(bl);
+
+	return rc;
+}
+
+int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len)
+{
+	int rc;
+	struct ecc64 *buffer;
+	uint64_t ecc_len = ecc_buffer_size(len);
+
+	if (!bl || !buf) {
+		errno = EINVAL;
+		return FLASH_ERR_PARM_ERROR;
 	}
+
+	if (!ecc_protected(bl, pos, len))
+		return blocklevel_raw_read(bl, pos, buf, len);
 
 	buffer = malloc(ecc_len);
 	if (!buffer) {
@@ -106,7 +119,7 @@ int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint6
 		goto out;
 	}
 
-	rc = bl->read(bl, pos, buffer, ecc_len);
+	rc = blocklevel_raw_read(bl, pos, buffer, ecc_len);
 	if (rc)
 		goto out;
 
@@ -116,16 +129,14 @@ int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint6
 	}
 
 out:
-	release(bl);
 	free(buffer);
 	return rc;
 }
 
-int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len)
+int blocklevel_raw_write(struct blocklevel_device *bl, uint64_t pos,
+		const void *buf, uint64_t len)
 {
 	int rc;
-	struct ecc64 *buffer;
-	uint64_t ecc_len = ecc_buffer_size(len);
 
 	if (!bl || !bl->write || !buf) {
 		errno = EINVAL;
@@ -136,11 +147,27 @@ int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf
 	if (rc)
 		return rc;
 
-	if (!ecc_protected(bl, pos, len)) {
-		rc =  bl->write(bl, pos, buf, len);
-		release(bl);
-		return rc;
+	rc = bl->write(bl, pos, buf, len);
+
+	release(bl);
+
+	return rc;
+}
+
+int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf,
+		uint64_t len)
+{
+	int rc;
+	struct ecc64 *buffer;
+	uint64_t ecc_len = ecc_buffer_size(len);
+
+	if (!bl || !buf) {
+		errno = EINVAL;
+		return FLASH_ERR_PARM_ERROR;
 	}
+
+	if (!ecc_protected(bl, pos, len))
+		return blocklevel_raw_write(bl, pos, buf, len);
 
 	buffer = malloc(ecc_len);
 	if (!buffer) {
@@ -155,10 +182,9 @@ int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf
 		goto out;
 	}
 
-	rc = bl->write(bl, pos, buffer, ecc_len);
+	rc = blocklevel_raw_write(bl, pos, buffer, ecc_len);
 
 out:
-	release(bl);
 	free(buffer);
 	return rc;
 }

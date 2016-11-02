@@ -348,16 +348,19 @@ static int64_t opal_flash_op(enum flash_op op, uint64_t id, uint64_t offset,
 		goto err;
 	}
 
+	/*
+	 * These ops intentionally have no smarts (ecc correction or erase
+	 * before write) to them.
+	 * Skiboot is simply exposing the PNOR flash to the host.
+	 * The host is expected to understand that this is a raw flash
+	 * device and treat it as such.
+	 */
 	switch (op) {
 	case FLASH_OP_READ:
-		rc = blocklevel_read(flash->bl, offset, (void *)buf, size);
+		rc = blocklevel_raw_read(flash->bl, offset, (void *)buf, size);
 		break;
 	case FLASH_OP_WRITE:
-		/*
-		 * Note: blocklevel_write() uses flash_smart_write(), this call used to
-		 * be flash_write()
-		 */
-		rc = blocklevel_write(flash->bl, offset, (void *)buf, size);
+		rc = blocklevel_raw_write(flash->bl, offset, (void *)buf, size);
 		break;
 	case FLASH_OP_ERASE:
 		rc = blocklevel_erase(flash->bl, offset, size);

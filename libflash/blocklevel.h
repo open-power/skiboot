@@ -57,8 +57,9 @@ struct blocklevel_device {
 
 	struct blocklevel_range ecc_prot;
 };
-
+int blocklevel_raw_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len);
 int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len);
+int blocklevel_raw_write(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len);
 int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len);
 int blocklevel_erase(struct blocklevel_device *bl, uint64_t pos, uint64_t len);
 int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint64_t *total_size,
