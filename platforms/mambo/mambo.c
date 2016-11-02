@@ -69,33 +69,33 @@ static inline unsigned long callthru3(int command, unsigned long arg1,
 
 #define BD_SECT_SZ		512
 
+/* Mambo callthru commands */
 #define SIM_WRITE_CONSOLE_CODE	0
 #define SIM_EXIT_CODE		31
 #define SIM_READ_CONSOLE_CODE	60
 #define SIM_GET_TIME_CODE	70
-#define BOGUS_DISK_READ		116
-#define BOGUS_DISK_WRITE	117
-#define BOGUS_DISK_INFO		118
-
-#define CALL_TCL		86
+#define SIM_CALL_TCL		86
+#define SIM_BOGUS_DISK_READ	116
+#define SIM_BOGUS_DISK_WRITE	117
+#define SIM_BOGUS_DISK_INFO	118
 
 static inline int callthru_disk_read(int id, void *buf, unsigned long sect,
 				     unsigned long nrsect)
 {
-	return callthru3(BOGUS_DISK_READ, (unsigned long)buf, sect,
+	return callthru3(SIM_BOGUS_DISK_READ, (unsigned long)buf, sect,
 			 (nrsect << 16) | id);
 }
 
 static inline int callthru_disk_write(int id, void *buf, unsigned long sect,
 				      unsigned long nrsect)
 {
-	return callthru3(BOGUS_DISK_WRITE, (unsigned long)buf, sect,
+	return callthru3(SIM_BOGUS_DISK_WRITE, (unsigned long)buf, sect,
 			 (nrsect << 16) | id);
 }
 
 static inline unsigned long callthru_disk_info(int op, int id)
 {
-	return callthru2(BOGUS_DISK_INFO, (unsigned long)op,
+	return callthru2(SIM_BOGUS_DISK_INFO, (unsigned long)op,
 			 (unsigned long)id);
 }
 
@@ -104,7 +104,7 @@ extern unsigned long callthru_tcl(const char *str, int len);
 unsigned long callthru_tcl(const char *str, int len)
 {
 	prlog(PR_DEBUG, "Sending TCL to Mambo, cmd: %s\n", str);
-	return callthru2(CALL_TCL, (unsigned long)str, (unsigned long)len);
+	return callthru2(SIM_CALL_TCL, (unsigned long)str, (unsigned long)len);
 }
 
 struct bogus_disk_info {
