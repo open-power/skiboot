@@ -122,14 +122,8 @@ void stb_init(void)
 	if (nvram_query_eq("force-secure-mode", "always")) {
 		prlog(PR_NOTICE, "STB: secure mode on (FORCED by nvram)\n");
 		secure_mode = true;
-	} else if (nvram_query_eq("force-secure-mode", "true")) {
-		prlog(PR_NOTICE, "STB: secure mode %s\n",
-		      (secure_mode) ? "on, *not* partial" : "off");
 	} else if (secure_mode) {
-		prlog(PR_NOTICE, "STB: secure mode on (but not enforced, core secure mode only)\n");
-		dt_check_del_prop(ibm_secureboot, "secure-enabled");
-		dt_add_property(ibm_secureboot, "partial-secure-enabled", NULL, 0);
-		secure_mode = false;
+		prlog(PR_NOTICE, "STB: secure mode on.\n");
 	} else {
 		prlog(PR_NOTICE, "STB: secure mode off\n");
 	}
