@@ -131,22 +131,29 @@ static int bogus_disk_read(struct blocklevel_device *bl, uint64_t pos, void *buf
 			  uint64_t len)
 {
 	struct bogus_disk_info *bdi = bl->priv;
-	int rc;
+	int rc, read_sectors = 0;
 	char b[BD_SECT_SZ];
 
-	if ((len % BD_SECT_SZ) == 0)
-		return callthru_disk_read(bdi->id, buf, pos/BD_SECT_SZ,
+	if (len >= BD_SECT_SZ) {
+		rc = callthru_disk_read(bdi->id, buf, pos/BD_SECT_SZ,
 					  len/BD_SECT_SZ);
+		if (rc)
+			return rc;
+		read_sectors = (len / BD_SECT_SZ);
+	}
 
-	/* We don't support block reads > BD_SECT_SZ */
-	if (len > BD_SECT_SZ)
-		return OPAL_PARAMETER;
+	if ((len % BD_SECT_SZ) == 0)
+		return 0;
 
-	/* Skiboot does small reads for system flash header checking */
-	rc =  callthru_disk_read(bdi->id, b, pos/BD_SECT_SZ, 1);
+	/*
+	 * Read any unaligned data into a temporaty buffer b, then copy
+	 * to buf
+	 */
+	rc =  callthru_disk_read(bdi->id, b, (pos/BD_SECT_SZ) + read_sectors, 1);
 	if (rc)
 		return rc;
-	memcpy(buf, &b[pos % BD_SECT_SZ], len);
+	memcpy(buf + (read_sectors * BD_SECT_SZ) , &b[pos % BD_SECT_SZ],
+			len - (read_sectors * BD_SECT_SZ));
 	return rc;
 }
 
