@@ -24,8 +24,6 @@
 #include <time-utils.h>
 #include <time.h>
 
-extern int64_t mambo_get_time(void);
-
 static bool mambo_probe(void)
 {
 	if (!dt_find_by_path(dt_root, "/mambo"))
@@ -39,31 +37,6 @@ static inline unsigned long callthru0(int command)
 	register uint64_t c asm("r3") = command;
 	asm volatile (".long 0x000eaeb0":"=r" (c):"r"(c));
 	return (c);
-}
-
-static int64_t mambo_rtc_read(uint32_t *ymd, uint64_t *hmsm)
-{
-	int64_t mambo_time;
-	struct tm t;
-	time_t mt;
-
-	if (!ymd || !hmsm)
-		return OPAL_PARAMETER;
-
-	mambo_time = mambo_get_time();
-	mt = mambo_time >> 32;
-	gmtime_r(&mt, &t);
-	tm_to_datetime(&t, ymd, hmsm);
-
-	return OPAL_SUCCESS;
-}
-
-static void mambo_rtc_init(void)
-{
-	struct dt_node *np = dt_new(opal_node, "rtc");
-	dt_add_property_strings(np, "compatible", "ibm,opal-rtc");
-
-	opal_register(OPAL_RTC_READ, mambo_rtc_read, 2);
 }
 
 static inline unsigned long callthru2(int command, unsigned long arg1,
@@ -99,6 +72,7 @@ static inline unsigned long callthru3(int command, unsigned long arg1,
 #define SIM_WRITE_CONSOLE_CODE	0
 #define SIM_EXIT_CODE		31
 #define SIM_READ_CONSOLE_CODE	60
+#define SIM_GET_TIME_CODE	70
 #define BOGUS_DISK_READ		116
 #define BOGUS_DISK_WRITE	117
 #define BOGUS_DISK_INFO		118
@@ -247,6 +221,31 @@ static void bogus_disk_flash_init(void)
 				id);
 		id++;
 	}
+}
+
+static int64_t mambo_rtc_read(uint32_t *ymd, uint64_t *hmsm)
+{
+	int64_t mambo_time;
+	struct tm t;
+	time_t mt;
+
+	if (!ymd || !hmsm)
+		return OPAL_PARAMETER;
+
+	mambo_time = callthru0(SIM_GET_TIME_CODE);
+	mt = mambo_time >> 32;
+	gmtime_r(&mt, &t);
+	tm_to_datetime(&t, ymd, hmsm);
+
+	return OPAL_SUCCESS;
+}
+
+static void mambo_rtc_init(void)
+{
+	struct dt_node *np = dt_new(opal_node, "rtc");
+	dt_add_property_strings(np, "compatible", "ibm,opal-rtc");
+
+	opal_register(OPAL_RTC_READ, mambo_rtc_read, 2);
 }
 
 int mambo_console_read(void)
