@@ -51,24 +51,6 @@ _mcount:
 	b	__mcount_stack_check
 #endif
 
-.global mambo_read
-mambo_read:
-#define SIM_READ_CONSOLE_CODE 60
-	li	%r3,SIM_READ_CONSOLE_CODE
-	.long	0x000eaeb0
-	extsw	%r3,%r3
-	blr
-
-.global mambo_write
-mambo_write:
-#define SIM_WRITE_CONSOLE_CODE 0
-	li	%r6,0
-	mr	%r5,%r4
-	mr	%r4,%r3
-	li	%r3,SIM_WRITE_CONSOLE_CODE
-	.long	0x000eaeb0
-	blr
-
 .global mambo_get_time
 mambo_get_time:
 #define SIM_GET_TIME_CODE 70

@@ -67,7 +67,7 @@ static int mambo_char = -1;
 static bool mambo_con_poll_read(void)
 {
 	if (mambo_char < 0)
-		mambo_char = mambo_read();
+		mambo_char = mambo_console_read();
 	return mambo_char >= 0;
 }
 
@@ -87,7 +87,7 @@ static size_t mambo_con_read(char *buf, size_t len)
 
 static size_t mambo_con_write(const char *buf, size_t len)
 {
-	mambo_write(buf, len);
+	mambo_console_write(buf, len);
 	return len;
 }
 
@@ -243,7 +243,7 @@ static size_t inmem_read(char *buf, size_t req)
 static void write_char(char c)
 {
 #ifdef MAMBO_DEBUG_CONSOLE
-	mambo_write(&c, 1);
+	mambo_console_write(&c, 1);
 #endif
 	inmem_write(c);
 }

@@ -96,7 +96,9 @@ static inline unsigned long callthru3(int command, unsigned long arg1,
 
 #define BD_SECT_SZ		512
 
+#define SIM_WRITE_CONSOLE_CODE	0
 #define SIM_EXIT_CODE		31
+#define SIM_READ_CONSOLE_CODE	60
 #define BOGUS_DISK_READ		116
 #define BOGUS_DISK_WRITE	117
 #define BOGUS_DISK_INFO		118
@@ -245,6 +247,16 @@ static void bogus_disk_flash_init(void)
 				id);
 		id++;
 	}
+}
+
+int mambo_console_read(void)
+{
+	return callthru0(SIM_READ_CONSOLE_CODE);
+}
+
+void mambo_console_write(const char *buf, size_t count)
+{
+	callthru2(SIM_WRITE_CONSOLE_CODE, (unsigned long)buf, count);
 }
 
 static void mambo_platform_init(void)
