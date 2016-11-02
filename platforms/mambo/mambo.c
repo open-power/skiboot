@@ -59,19 +59,20 @@ static void mambo_rtc_init(void)
 	opal_register(OPAL_RTC_READ, mambo_rtc_read, 2);
 }
 
-static inline int callthru2(int command, unsigned long arg1, unsigned long arg2)
+static inline unsigned long callthru2(int command, unsigned long arg1,
+				      unsigned long arg2)
 {
-	register int c asm("r3") = command;
+	register unsigned long c asm("r3") = command;
 	register unsigned long a1 asm("r4") = arg1;
 	register unsigned long a2 asm("r5") = arg2;
 	asm volatile (".long 0x000eaeb0":"=r" (c):"r"(c), "r"(a1), "r"(a2));
 	return (c);
 }
 
-static inline int callthru3(int command, unsigned long arg1, unsigned long arg2,
-			    unsigned long arg3)
+static inline unsigned long callthru3(int command, unsigned long arg1,
+				      unsigned long arg2, unsigned long arg3)
 {
-	register int c asm("r3") = command;
+	register unsigned long c asm("r3") = command;
 	register unsigned long a1 asm("r4") = arg1;
 	register unsigned long a2 asm("r5") = arg2;
 	register unsigned long a3 asm("r6") = arg3;
