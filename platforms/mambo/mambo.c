@@ -34,6 +34,13 @@ static bool mambo_probe(void)
 	return true;
 }
 
+static inline unsigned long callthru0(int command)
+{
+	register uint64_t c asm("r3") = command;
+	asm volatile (".long 0x000eaeb0":"=r" (c):"r"(c));
+	return (c);
+}
+
 static int64_t mambo_rtc_read(uint32_t *ymd, uint64_t *hmsm)
 {
 	int64_t mambo_time;
