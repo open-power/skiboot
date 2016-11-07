@@ -83,10 +83,5 @@
  */
 #define DISABLE_CON_PENDING_EVT	1
 
-/* Configure this to provide some additional kernel command line
- * arguments to the bootloader
- */
-//#define KERNEL_COMMAND_LINE	"debug"
-
 #endif /* __CONFIG_H */
 
