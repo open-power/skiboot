@@ -82,7 +82,7 @@ function flash {
 		if [ "$?" -ne "0" ] ; then
 			error "An unexpected pflash error has occurred";
 		fi
-		msg "Removing /tpm/image.pnor"
+		msg "Removing /tmp/image.pnor"
 		$SSHCMD "rm /tmp/image.pnor"
 	fi
 
@@ -92,7 +92,7 @@ function flash {
 		if [ "$?" -ne "0" ] ; then
                         error "An unexpected pflash error has occurred";
 		fi
-		msg "Removing /tpm/skiboot.lid"
+		msg "Removing /tmp/pskiboot.lid"
 		$SSHCMD "rm /tmp/skiboot.lid"
 	fi
 
