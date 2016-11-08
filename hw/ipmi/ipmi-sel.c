@@ -464,10 +464,6 @@ static void sel_pnor(uint8_t access)
 	switch (access) {
 	case REQUEST_PNOR:
 		prlog(PR_NOTICE, "PNOR access requested\n");
-		granted = flash_reserve();
-		if (granted)
-			occ_pnor_set_owner(PNOR_OWNER_EXTERNAL);
-
 		if (bmc_platform->ipmi_oem_pnor_access_status == 0) {
 			/**
 			 * @fwts-label PNORAccessYeahButNoBut
@@ -479,6 +475,9 @@ static void sel_pnor(uint8_t access)
 			break;
 		}
 
+		granted = flash_reserve();
+		if (granted)
+			occ_pnor_set_owner(PNOR_OWNER_EXTERNAL);
 		/* Ack the request */
 		msg = ipmi_mkmsg_simple(bmc_platform->ipmi_oem_pnor_access_status, &granted, 1);
 		ipmi_queue_msg(msg);
