@@ -130,12 +130,12 @@ static int file_erase(struct blocklevel_device *bl, uint64_t dst, uint64_t len)
 static int mtd_erase(struct blocklevel_device *bl, uint64_t dst, uint64_t len)
 {
 	struct file_data *file_data = container_of(bl, struct file_data, bl);
-	struct erase_info_user erase_info = {
+	struct erase_info_user64 erase_info = {
 		.start = dst,
 		.length = len
 	};
 
-	if (ioctl(file_data->fd, MEMERASE, &erase_info) == -1)
+	if (ioctl(file_data->fd, MEMERASE64, &erase_info) == -1)
 		return FLASH_ERR_PARM_ERROR;
 
 	return 0;
