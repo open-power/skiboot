@@ -13,6 +13,9 @@ env:
         #   via the "travis encrypt" command using the project repo's public key
         secure: "MpNEGFa1VrF/vsQq24n5UgfRbz1wVC6B8mubFnyK4gX0IuQ9xhWuTzMLUQF9UJxe5jnC2DTmVUvYTYN/hggw+PpYwbOOAE0QGR5pmPHA4PSRmc5pxt1q18/sv7EPFw66GFyWJq94nWjpigyKQ8KGtA67j1xFqrDoS43OA76WZgo="
 
+matrix:
+  allow_failures:
+    - env: RUN_ON_CONTAINER=fedora24
 
 sudo: required
 services: docker
