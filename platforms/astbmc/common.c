@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -357,3 +357,9 @@ void astbmc_early_init(void)
 
 	prd_init();
 }
+
+const struct bmc_platform astbmc_ami = {
+	.name = "AMI",
+	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x32, 0xf0),
+	.ipmi_oem_pnor_access_status = IPMI_CODE(0x3a, 0x07),
+};

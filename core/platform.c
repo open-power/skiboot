@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 
 bool manufacturing_mode = false;
 struct platform	platform;
+const struct bmc_platform *bmc_platform = NULL;
 
 DEFINE_LOG_ENTRY(OPAL_RC_ABNORMAL_REBOOT, OPAL_PLATFORM_ERR_EVT, OPAL_CEC,
 		 OPAL_CEC_HARDWARE, OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_REBOOT,
@@ -122,11 +123,23 @@ static int64_t generic_cec_power_down(uint64_t request __unused)
 	return OPAL_UNSUPPORTED;
 }
 
+static struct bmc_platform generic_bmc = {
+	.name = "generic",
+};
+
 static struct platform generic_platform = {
 	.name		= "generic",
+	.bmc		= &generic_bmc,
 	.init		= generic_platform_init,
 	.cec_power_down	= generic_cec_power_down,
 };
+
+void set_bmc_platform(const struct bmc_platform *bmc)
+{
+	if (bmc)
+		prlog(PR_NOTICE, "PLAT: Detected BMC platform %s\n", bmc->name);
+	bmc_platform = bmc;
+}
 
 void probe_platform(void)
 {
@@ -154,7 +167,10 @@ void probe_platform(void)
 	}
 
 	prlog(PR_NOTICE, "PLAT: Detected %s platform\n", platform.name);
+
+	set_bmc_platform(platform.bmc);
 }
+
 
 int start_preload_resource(enum resource_id id, uint32_t subid,
 			   void *buf, size_t *len)

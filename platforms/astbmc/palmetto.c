@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ static bool palmetto_probe(void)
 DECLARE_PLATFORM(palmetto) = {
 	.name			= "Palmetto",
 	.probe			= palmetto_probe,
+	.bmc			= &astbmc_ami,
 	.init			= astbmc_init,
 	.external_irq		= astbmc_ext_irq_serirq_cpld,
 	.cec_power_down         = astbmc_ipmi_power_down,

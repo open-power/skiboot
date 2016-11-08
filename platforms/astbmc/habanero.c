@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,6 +141,7 @@ static bool habanero_probe(void)
 
 DECLARE_PLATFORM(habanero) = {
 	.name			= "Habanero",
+	.bmc			= &astbmc_ami,
 	.probe			= habanero_probe,
 	.init			= astbmc_init,
 	.pci_get_slot_info	= slot_table_get_slot_info,

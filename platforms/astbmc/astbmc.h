@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,8 @@ struct slot_table_entry {
 	const char *name;
 	const struct slot_table_entry *children;
 };
+
+extern const struct bmc_platform astbmc_ami;
 
 extern void astbmc_early_init(void);
 extern int64_t astbmc_ipmi_reboot(void);

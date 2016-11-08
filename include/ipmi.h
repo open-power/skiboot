@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,10 +119,6 @@
 #define IPMI_READ_EVENT			IPMI_CODE(IPMI_NETFN_APP, 0x35)
 #define IPMI_GET_BT_CAPS		IPMI_CODE(IPMI_NETFN_APP, 0x36)
 #define IPMI_SET_SENSOR_READING		IPMI_CODE(IPMI_NETFN_SE, 0x30)
-
-/* AMI OEM comamnds. AMI uses NETFN 0x3a and 0x32 */
-#define IPMI_PARTIAL_ADD_ESEL		IPMI_CODE(0x32, 0xf0)
-#define IPMI_PNOR_ACCESS_STATUS 	IPMI_CODE(0x3a, 0x07)
 
 /*
  * IPMI response codes.

@@ -334,6 +334,11 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 	struct errorlog *elog_buf = (struct errorlog *) msg->user_data;
 	size_t req_size;
 
+	if (bmc_platform->ipmi_oem_partial_add_esel == 0) {
+		prlog(PR_WARNING, "BUG: Dropping ESEL on the floor due to buggy/mising code in OPAL for this BMC");
+		return;
+	}
+
 	ipmi_init_esel_record();
 	if (msg->cmd == IPMI_CMD(IPMI_RESERVE_SEL)) {
 		first = true;
@@ -386,7 +391,8 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 		req_size = IPMI_MAX_REQ_SIZE;
 	}
 
-	ipmi_init_msg(msg, IPMI_DEFAULT_INTERFACE, IPMI_PARTIAL_ADD_ESEL,
+	ipmi_init_msg(msg, IPMI_DEFAULT_INTERFACE,
+		      bmc_platform->ipmi_oem_partial_add_esel,
 		      ipmi_elog_poll, elog_buf, req_size, 2);
 
 	msg->data[0] = reservation_id & 0xff;
@@ -462,8 +468,19 @@ static void sel_pnor(uint8_t access)
 		if (granted)
 			occ_pnor_set_owner(PNOR_OWNER_EXTERNAL);
 
+		if (bmc_platform->ipmi_oem_pnor_access_status == 0) {
+			/**
+			 * @fwts-label PNORAccessYeahButNoBut
+			 * @fwts-advice OPAL doesn't know that the BMC supports
+			 * PNOR access commands. This will be a bug in the OPAL
+			 * support for this BMC.
+			 */
+			prlog(PR_ERR, "PNOR BUG: access requested but BMC doesn't support request\n");
+			break;
+		}
+
 		/* Ack the request */
-		msg = ipmi_mkmsg_simple(IPMI_PNOR_ACCESS_STATUS, &granted, 1);
+		msg = ipmi_mkmsg_simple(bmc_platform->ipmi_oem_pnor_access_status, &granted, 1);
 		ipmi_queue_msg(msg);
 		break;
 	case RELEASE_PNOR:
