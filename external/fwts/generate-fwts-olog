@@ -21,6 +21,7 @@ import sys
 import string
 import json
 import argparse
+import subprocess
 from pyparsing import Regex, Literal, Word, Combine, OneOrMore, QuotedString, \
          lineno
 
@@ -160,7 +161,7 @@ def message_to_pattern(loc, msg):
 
     return (compare_mode, pattern)
 
-def parse_patterns(parser, fname):
+def parse_patterns(parser, fname, tag):
     patterns = []
     data = open(fname).read()
     i = 1
@@ -179,6 +180,7 @@ def parse_patterns(parser, fname):
             'log_level': log_level_to_fwts(level),
             'compare_mode': compare_mode,
             'pattern': pattern_str,
+            'last_tag': tag,
         }
 
         pattern.update(annotations)
@@ -192,7 +194,7 @@ def parse_patterns(parser, fname):
             warn(loc, "missing advice")
 
         allowed_data = ['compare_mode', 'log_level',
-                        'pattern', 'advice', 'label']
+                        'pattern', 'advice', 'label', 'last_tag']
         extras = set(pattern.keys()) - set(allowed_data)
         if extras:
             warn(loc, "unknown pattern annotation: %s" %
@@ -217,12 +219,17 @@ if __name__ == '__main__':
 
     sources = []
     for directory in args.directories:
-        sources.extend(find_sources(directory))
+        try:
+            git_tag = subprocess.check_output(["git","-C", directory, "describe", "--abbrev=0" ])
+        except:
+            git_tag = "???"
+        git_tag = git_tag.replace("\n", "")
+        sources.extend([ (x, git_tag) for x in find_sources(directory)])
 
     parser = create_parser()
     patterns = []
-    for source in sources:
-        patterns.extend(parse_patterns(parser, source))
+    for source, tag in sources:
+        patterns.extend(parse_patterns(parser, source, tag))
 
     data = {'olog_error_warning_patterns': patterns}
 
