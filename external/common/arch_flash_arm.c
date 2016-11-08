@@ -300,8 +300,17 @@ int arch_flash_erase_chip(struct blocklevel_device *bl)
 	if (!arch_data.init_bl || arch_data.init_bl != bl)
 		return -1;
 
-	if (!arch_data.flash_chip)
-		return -1;
+	if (!arch_data.flash_chip) {
+		/* Just assume its a regular erase */
+		int rc;
+		uint64_t total_size;
+
+		rc = blocklevel_get_info(bl, NULL, &total_size, NULL);
+		if (rc)
+			return rc;
+
+		return blocklevel_erase(bl, 0, total_size);
+	}
 
 	return flash_erase_chip(arch_data.flash_chip);
 }
