@@ -42,6 +42,7 @@
 /* Full pflash version number (possibly includes gitid). */
 extern const char version[];
 
+const char *flashfilename = NULL;
 static bool must_confirm = true;
 static bool dummy_run;
 static int need_relock;
@@ -524,7 +525,7 @@ void exiting(void)
 {
 	if (need_relock)
 		arch_flash_set_wrprotect(bl, 1);
-	arch_flash_close(bl, NULL);
+	arch_flash_close(bl, flashfilename);
 }
 
 int main(int argc, char *argv[])
@@ -540,7 +541,6 @@ int main(int argc, char *argv[])
 	char *write_file = NULL, *read_file = NULL, *part_name = NULL;
 	bool ffs_toc_seen = false, direct = false;
 	int rc;
-	const char *flashfilename = NULL;
 
 	while(1) {
 		struct option long_opts[] = {
