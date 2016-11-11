@@ -227,10 +227,17 @@ static bool p8dtu2u_probe(void)
 	return true;
 }
 
+const struct bmc_platform astbmc_smc = {
+	.name = "SMC",
+	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
+	.ipmi_oem_pnor_access_status = IPMI_CODE(0x3a, 0x07),
+};
+
 
 DECLARE_PLATFORM(p8dtu1u) = {
 	.name			= "p8dtu1u",
 	.probe			= p8dtu1u_probe,
+	.bmc			= &astbmc_smc,
 	.init			= astbmc_init,
 	.pci_get_slot_info	= slot_table_get_slot_info,
 	.external_irq		= astbmc_ext_irq_serirq_cpld,
@@ -246,6 +253,7 @@ DECLARE_PLATFORM(p8dtu1u) = {
 DECLARE_PLATFORM(p8dtu2u) = {
 	.name			= "p8dtu2u",
 	.probe			= p8dtu2u_probe,
+	.bmc			= &astbmc_smc,
 	.init			= astbmc_init,
 	.pci_get_slot_info	= slot_table_get_slot_info,
 	.external_irq		= astbmc_ext_irq_serirq_cpld,
