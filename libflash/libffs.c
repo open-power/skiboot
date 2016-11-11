@@ -307,6 +307,8 @@ int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 
 	if (name) {
 		n = malloc(PART_NAME_MAX + 1);
+		if (!n)
+			return FLASH_ERR_MALLOC_FAILED;
 		memset(n, 0, PART_NAME_MAX + 1);
 		strncpy(n, ent.name, PART_NAME_MAX);
 		*name = n;
