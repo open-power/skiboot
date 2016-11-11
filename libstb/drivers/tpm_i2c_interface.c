@@ -25,7 +25,7 @@
 //#define DBG(fmt, ...) prlog(PR_DEBUG, fmt, ##__VA_ARGS__)
 #define DBG(fmt, ...)
 
-#define I2C_BYTE_TIMEOUT_MS		10  /* 10ms/byte timeout */
+#define I2C_BYTE_TIMEOUT_MS		30  /* 30ms/byte timeout */
 #define TPM_MAX_NACK_RETRIES		 2
 #define REQ_COMPLETE_POLLING		 5  /* Check if req is complete
 					       in 5ms interval */
