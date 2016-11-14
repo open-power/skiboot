@@ -26,6 +26,7 @@
 #include <pci.h>
 #include <chip.h>
 #include <chiptod.h>
+#include <ipmi.h>
 
 #define P8_EX_TCTL_DIRECT_CONTROLS(t)	(0x10013000 + (t) * 0x10)
 #define P8_DIRECT_CTL_STOP		PPC_BIT(63)
@@ -587,6 +588,8 @@ void __noreturn fast_reboot_entry(void)
 
 	/* Remove all PCI devices */
 	pci_reset();
+
+	ipmi_set_fw_progress_sensor(IPMI_FW_PCI_INIT);
 
 	/* Load and boot payload */
 	load_and_boot_kernel(true);
