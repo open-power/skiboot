@@ -159,7 +159,7 @@
 #define P9_PSI_IRQ_SBE_I2C		11
 #define P9_PSI_IRQ_DIO			12
 #define P9_PSI_IRQ_PSU			13
-#define P9_PSI_NUM_IRQS			16
+#define P9_PSI_NUM_IRQS			14
 
 
 
