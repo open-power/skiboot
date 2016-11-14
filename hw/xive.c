@@ -1525,6 +1525,21 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 	uint32_t idx = isn - s->esb_base;
  	void *mmio_base;
 
+	/*
+	 * WARNING: There is an inherent race with the use of the
+	 * mask bit in the EAS/IVT. When masked, interrupts are "lost"
+	 * but their P/Q bits are still set. So when unmasking, one has
+	 * to check the P bit and possibly trigger a resend.
+	 *
+	 * We "deal" with it by relying on the fact that the OS will
+	 * lazy disable MSIs. Thus mask will only be called if the
+	 * interrupt occurred while already logically masked. Thus
+	 * losing subsequent occurrences is of no consequences, we just
+	 * need to "cleanup" P and Q when unmasking.
+	 *
+	 * This needs to be documented in the OPAL APIs
+	 */
+
 	/* Unmangle server */
 	server >>= 2;
 
@@ -1532,12 +1547,7 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 	if (!xive_set_eq_info(isn, server, prio))
 		return OPAL_PARAMETER;
 
-	/* Ensure it's enabled/disabled in the source controller.
-	 *
-	 * This won't do much for LSIs but will work for MSIs and will
-	 * ensure that a stray P bit left over won't block further
-	 * interrupts when enabling
-	 */
+	/* Ensure it's enabled/disabled in the source controller */
 	mmio_base = s->esb_mmio + (1ul << s->esb_shift) * idx;
 	if (s->flags & XIVE_SRC_EOI_PAGE1)
 		mmio_base += 1ull << (s->esb_shift - 1);
