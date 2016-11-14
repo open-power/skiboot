@@ -2685,7 +2685,8 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 	}
 
 	/* Init_14 - Clear link training */
-	phb4_pcicfg_write32(&p->phb, 0, 0x78, 0x0400FE07);
+	phb4_pcicfg_write32(&p->phb, 0, 0x78,
+			    0x0000FE07 | (p->max_link_speed << 24));
 
 	/* Init_15 - deassert cores reset */
 	/*
@@ -3054,7 +3055,7 @@ static void phb4_create(struct dt_node *np)
 	p->phb.ops = &phb4_ops;
 	p->phb.phb_type = phb_type_pcie_v4;
 	p->phb.scan_map = 0x1; /* Only device 0 to scan */
-	p->max_link_speed = dt_prop_get_u32_def(np, "ibm,max-link-speed", 3);
+	p->max_link_speed = dt_prop_get_u32_def(np, "ibm,max-link-speed", 4);
 	p->state = PHB4_STATE_UNINITIALIZED;
 
 	if (!phb4_calculate_windows(p))
