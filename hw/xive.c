@@ -1563,9 +1563,21 @@ static void xive_source_eoi(struct irq_source *is, uint32_t isn)
 {
 	struct xive_src *s = container_of(is, struct xive_src, is);
 	uint32_t idx = isn - s->esb_base;
+	struct xive_ive *ive;
 	void *mmio_base;
 	uint64_t eoi_val;
 
+	/* Grab the IVE */
+	ive = s->xive->ivt_base;
+	if (!ive)
+		return;
+	ive += 	GIRQ_TO_IDX(isn);
+
+	/* If it's invalid or masked, don't do anything */
+	if ((ive->w & IVE_MASKED) || !(ive->w & IVE_VALID))
+		return;
+
+	/* Grab MMIO control address for that ESB */
 	mmio_base = s->esb_mmio + (1ull << s->esb_shift) * idx;
 
 	/* If the XIVE supports the new "store EOI facility, use it */
