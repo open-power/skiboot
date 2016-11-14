@@ -1477,7 +1477,7 @@ static int64_t xive_source_get_xive(struct irq_source *is __unused,
 	uint32_t target_id;
 
 	if (xive_get_eq_info(isn, &target_id, prio)) {
-		*server = target_id;
+		*server = target_id << 2;
 		return OPAL_SUCCESS;
 	} else
 		return OPAL_PARAMETER;
@@ -1489,6 +1489,9 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 	struct xive_src *s = container_of(is, struct xive_src, is);
 	uint32_t idx = isn - s->esb_base;
  	void *mmio_base;
+
+	/* Unmangle server */
+	server >>= 2;
 
 	/* Let XIVE configure the EQ */
 	if (!xive_set_eq_info(isn, server, prio))
@@ -1704,15 +1707,10 @@ struct xive_cpu_state {
 static void xive_ipi_init(struct xive *x, struct cpu_thread *cpu)
 {
 	struct xive_cpu_state *xs = cpu->xstate;
-	uint32_t idx = GIRQ_TO_IDX(xs->ipi_irq);
-	uint8_t *mm = x->esb_mmio + idx * 0x20000;
 
 	assert(xs);
 
-	xive_source_set_xive(&x->ipis.is, xs->ipi_irq, cpu->pir, 0x7);
-
-	/* Clear P and Q */
-	in_8(mm + 0x10c00);
+	xive_source_set_xive(&x->ipis.is, xs->ipi_irq, cpu->pir << 2, 0x7);
 }
 
 static void xive_ipi_eoi(struct xive *x, uint32_t idx)
