@@ -490,14 +490,11 @@ static struct xive_ive *xive_get_ive(struct xive *x, unsigned int isn)
 	}
 	assert (idx < MAX_INT_ENTRIES);
 
-	/* XXX If we support >1 block per chip, fix this */
+	/* If we support >1 block per chip, this should still work as
+	 * we are likely to make the table contiguous anyway
+	 */
 	ivt = x->ivt_base;
 	assert(ivt);
-
-	// XXX DBG
-	if (ivt[idx].w != 0)
-		xive_vdbg(x, "xive_get_ive(isn %x), idx=0x%x IVE=%016llx\n",
-			  isn, idx, ivt[idx].w);
 
 	return ivt + idx;
 }
