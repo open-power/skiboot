@@ -331,7 +331,7 @@ struct xive {
 	 * potentially handle more than one block per chip in the future.
 	 */
 	uint32_t	int_hw_bot;	/* Bottom of HW allocation */
-	uint32_t	int_ipi_top;	/* Highest IPI handed out so far */
+	uint32_t	int_ipi_top;	/* Highest IPI handed out so far + 1 */
 
 	/* Embedded source IPIs */
 	struct xive_src	ipis;
@@ -1995,25 +1995,25 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 	}
 #endif
 
-	/* Perform source level EOI if it's a HW interrupt, otherwise,
-	 * EOI ourselves
+	/* Perform source level EOI if it's not our emulated MFRR IPI
+	 * otherwise EOI ourselves
 	 */
 	src_x = xive_from_isn(isn);
 	if (src_x) {
 		uint32_t idx = GIRQ_TO_IDX(isn);
 
 		/* Is it an IPI ? */
-		if (idx < src_x->int_ipi_top) {
-			xive_vdbg(src_x, "EOI of IDX %x in IPI range\n", idx);
+		if (special_ipi) {
 			xive_ipi_eoi(src_x, idx);
 
-			/* It was a special IPI, check mfrr and eventually
-			 * re-trigger. We check against the new CPPR since
-			 * we are about to update the HW.
+			/* Check mfrr and eventually re-trigger. We check
+			 * against the new CPPR since we are about to update
+			 * the HW.
 			 */
-			if (special_ipi && xs->mfrr < cppr)
+			if (xs->mfrr < cppr)
 				xive_ipi_trigger(src_x, idx);
 		} else {
+			/* Otherwise go through the source mechanism */
 			xive_vdbg(src_x, "EOI of IDX %x in EXT range\n", idx);
 			irq_source_eoi(isn);
 		}
