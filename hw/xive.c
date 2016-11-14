@@ -1126,7 +1126,9 @@ static bool xive_prealloc_tables(struct xive *x)
 		}
 		memset(page, 0, 0x10000);
 		x->vp_ind_base[i] = ((uint64_t)page) & VSD_ADDRESS_MASK;
+
 		x->vp_ind_base[i] |= SETFIELD(VSD_TSIZE, 0ull, 4);
+		x->vp_ind_base[i] |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
 
 		page = local_alloc(x->chip_id, 0x10000, 0x10000);
 		if (!page) {
@@ -1136,6 +1138,7 @@ static bool xive_prealloc_tables(struct xive *x)
 		memset(page, 0, 0x10000);
 		x->eq_ind_base[i] = ((uint64_t)page) & VSD_ADDRESS_MASK;
 		x->eq_ind_base[i] |= SETFIELD(VSD_TSIZE, 0ull, 4);
+		x->eq_ind_base[i] |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
 
 #ifdef INDIRECT_IS_LE
 		x->vp_ind_base[i] = cpu_to_le64(x->vp_ind_base[i]);
