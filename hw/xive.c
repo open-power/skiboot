@@ -294,13 +294,10 @@ struct xive {
 
 #ifdef USE_INDIRECT
 	/* Indirect END/EQ table. NULL entries are unallocated, count is
-	 * the numbre of pointers (ie, sub page placeholders). base_count
-	 * is the number of sub-pages that have been pre-allocated (and
-	 * thus whose memory is owned by OPAL).
+	 * the numbre of pointers (ie, sub page placeholders).
 	 */
 	uint64_t	*eq_ind_base;
 	uint32_t	eq_ind_count;
-	uint32_t	eq_alloc_count;
 #else
 	void		*eq_base;
 #endif
