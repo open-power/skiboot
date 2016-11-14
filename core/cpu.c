@@ -355,6 +355,9 @@ void cpu_set_pm_enable(bool enabled)
 	prlog(PR_INFO, "CPU: %sing power management\n",
 	      enabled ? "enabl" : "disabl");
 
+	if (proc_gen != proc_gen_p8)
+		return;
+
 	pm_enabled = enabled;
 
 	if (enabled)
