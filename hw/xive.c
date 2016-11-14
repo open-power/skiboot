@@ -1180,9 +1180,47 @@ static void xive_create_mmio_dt_node(struct xive *x)
 			      MAX_INT_ENTRIES);
 }
 
-static void late_init_one_xive(struct xive *x __unused)
+static void xive_setup_forward_ports(struct xive *x, struct proc_chip *remote_chip)
 {
-	// XXX Setup fwd ports
+	struct xive *remote_xive = remote_chip->xive;
+	uint64_t base = SETFIELD(VSD_MODE, 0ull, VSD_MODE_FORWARD);
+	uint32_t remote_id = remote_chip->id;
+	uint64_t nport;
+
+	/* ESB(SBE), EAS(IVT) and END(EQ) point to the notify port */
+	nport = ((uint64_t)remote_xive->ic_base) + (1ul << remote_xive->ic_shift);
+	if (!xive_set_vsd(x, VST_TSEL_IVT, remote_id, base | nport))
+		goto error;
+	if (!xive_set_vsd(x, VST_TSEL_SBE, remote_id, base | nport))
+		goto error;
+	if (!xive_set_vsd(x, VST_TSEL_EQDT, remote_id, base | nport))
+		goto error;
+
+	/* NVT/VPD points to the remote NVT MMIO sets */
+	if (!xive_set_vsd(x, VST_TSEL_VPDT, remote_id,
+			  base | (uint64_t)remote_xive->pc_base))
+		goto error;
+	return;
+
+ error:
+	xive_err(x, "Failure configuring forwarding ports\n");
+}
+
+static void late_init_one_xive(struct xive *x)
+{
+	struct proc_chip *chip;
+
+	/* We need to setup the cross-chip forward ports. Let's
+	 * iterate all chip and set them up accordingly
+	 */
+	for_each_chip(chip) {
+		/* We skip ourselves or chips without a xive */
+		if (chip->xive == x || !chip->xive)
+			continue;
+
+		/* Setup our forward ports to that chip */
+		xive_setup_forward_ports(x, chip);
+	}
 }
 
 uint32_t xive_alloc_hw_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
