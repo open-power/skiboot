@@ -237,7 +237,7 @@ static int64_t p7ioc_sm_freset(struct p7ioc_phb *p)
 		reg = in_be64(p->regs + PHB_PCIE_SLOTCTL2);
 		if (!(reg & PHB_PCIE_SLOTCTL2_PRSTN_STAT)) {
 			PHBDBG(p, "Slot freset: no device\n");
-			return OPAL_CLOSED;
+			return OPAL_SUCCESS;
 		}
 
 		/* Mask PCIE port interrupts and AER receiver error */

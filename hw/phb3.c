@@ -2191,7 +2191,7 @@ static int64_t phb3_sm_fundamental_reset(struct phb3 *p)
 	if (p->state == PHB3_STATE_FUNCTIONAL &&
 	    phb3_presence_detect(&p->phb) != OPAL_SHPC_DEV_PRESENT) {
 		PHBDBG(p, "Slot freset: no device\n");
-		return OPAL_CLOSED;
+		return OPAL_SUCCESS;
 	}
 
 	/* Handle boot time skipping of reset */
