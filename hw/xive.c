@@ -349,9 +349,9 @@ struct xive {
  * reserved for the CPPR value.
  *
  */
-#define GIRQ_TO_BLK(__g)	(((__g) >> 24) & 0xf)
-#define GIRQ_TO_IDX(__g)	((__g) & 0x00ffffff)
-#define BLKIDX_TO_GIRQ(__b,__i)	(((uint32_t)(__b)) << 24 | (__i))
+#define GIRQ_TO_BLK(__g)	(((__g) >> 20) & 0xf)
+#define GIRQ_TO_IDX(__g)	((__g) & 0x000fffff)
+#define BLKIDX_TO_GIRQ(__b,__i)	(((uint32_t)(__b)) << 20 | (__i))
 
 /* VP IDs are just the concatenation of the BLK and index as found
  * in an EQ target field for example
