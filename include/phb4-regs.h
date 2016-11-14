@@ -183,8 +183,8 @@
 #define PHB_PCIE_LANE_EQ_CNTL3		0x1AE8
 #define PHB_PCIE_LANE_EQ_CNTL20		0x1AF0
 #define PHB_PCIE_LANE_EQ_CNTL21		0x1AF8
-#define PHB_PCIE_LANE_EQ_CNTL22		0x1B00
-#define PHB_PCIE_LANE_EQ_CNTL23		0x1B08
+#define PHB_PCIE_LANE_EQ_CNTL22		0x1B00 /* DD1 only */
+#define PHB_PCIE_LANE_EQ_CNTL23		0x1B08 /* DD1 only */
 
 /*
  * PHB4 xscom address defines

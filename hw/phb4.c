@@ -2569,8 +2569,8 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0d00,	0xffffffffffffffffull);
 	out_be64(p->regs + 0x0d08,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d18,	0xffffffffffffffffull);
-	out_be64(p->regs + 0x0d28,	0x0000420a00000000ull);
-	out_be64(p->regs + 0x0d30,	0xdff7bd01f7ddfff0ull); /* XXX CAPI has diff. value */
+	out_be64(p->regs + 0x0d28,	0x0000400a00000000ull);
+	out_be64(p->regs + 0x0d30,	0xdff7fd01f7ddfff0ull); /* XXX CAPI has diff. value */
 	out_be64(p->regs + 0x0d40,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d48,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d50,	0x0000000000000000ull);
@@ -2580,8 +2580,11 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0d80,	0xffffffffffffffffull);
 	out_be64(p->regs + 0x0d88,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d98,	0xffffffffffffffffull);
-	out_be64(p->regs + 0x0da8,	0xd00000b801000060ull);
-	out_be64(p->regs + 0x0db0,	0x2bffd703fe7fbf8full); /* XXX CAPI has diff. value */
+	if (p->rev == PHB4_REV_NIMBUS_DD10)
+		out_be64(p->regs + 0x0da8,	0xc00000b801000060ull);
+	else
+		out_be64(p->regs + 0x0da8,	0xc00008b801000060ull);
+	out_be64(p->regs + 0x0db0,	0x3bffd703fe7fbf8full); /* XXX CAPI has diff. value */
 	out_be64(p->regs + 0x0dc0,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0dc8,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0dd0,	0x0000000000000000ull);
@@ -2602,8 +2605,11 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0e80,	0xffffffffffffffffull);
 	out_be64(p->regs + 0x0e88,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0e98,	0xffffffffffffffffull);
-	out_be64(p->regs + 0x0ea8,	0x6000000000000000ull);
-	out_be64(p->regs + 0x0eb0,	0x9baeffaf00000000ull); /* XXX CAPI has diff. value */
+	if (p->rev == PHB4_REV_NIMBUS_DD10)
+		out_be64(p->regs + 0x0ea8,	0x6000000000000000ull);
+	else
+		out_be64(p->regs + 0x0ea8,	0x60000000c0000000ull);
+	out_be64(p->regs + 0x0eb0,	0x9faeffaf3fffffffull); /* XXX CAPI has diff. value */
 	out_be64(p->regs + 0x0ec0,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0ec8,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0ed0,	0x0000000000000000ull);
@@ -2670,12 +2676,16 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL3, be64_to_cpu(p->lane_eq[3]));
 		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL20, be64_to_cpu(p->lane_eq[4]));
 		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL21, be64_to_cpu(p->lane_eq[5]));
-		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL22, be64_to_cpu(p->lane_eq[6]));
-		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL23, be64_to_cpu(p->lane_eq[7]));
+		if (p->rev == PHB4_REV_NIMBUS_DD10) {
+			out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL22,
+				 be64_to_cpu(p->lane_eq[6]));
+			out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL23,
+				 be64_to_cpu(p->lane_eq[7]));
+		}
 	}
 
 	/* Init_14 - Clear link training */
-	phb4_pcicfg_write32(&p->phb, 0, 0x78, 0x0000FE07);
+	phb4_pcicfg_write32(&p->phb, 0, 0x78, 0x0400FE07);
 
 	/* Init_15 - deassert cores reset */
 	/*
@@ -3107,25 +3117,6 @@ static void phb4_create(struct dt_node *np)
 	if (!p->phb.base_loc_code)
 		PHBERR(p, "Base location code not found !\n");
 
-	/* Check for lane equalization values from HB or HDAT */
-	p->lane_eq = dt_prop_get_def_size(np, "ibm,lane-eq", NULL, &lane_eq_len);
-	if (p->lane_eq && lane_eq_len != (16 * 4)) {
-		PHBERR(p, "Device-tree has ibm,lane-eq with wrong len %ld\n",
-			lane_eq_len);
-		p->lane_eq = NULL;
-	}
-	if (p->lane_eq) {
-		PHBDBG(p, "Override lane equalization settings:\n");
-		PHBDBG(p, "  0x%016llx 0x%016llx\n",
-		       be64_to_cpu(p->lane_eq[0]), be64_to_cpu(p->lane_eq[1]));
-		PHBDBG(p, "  0x%016llx 0x%016llx\n",
-		       be64_to_cpu(p->lane_eq[2]), be64_to_cpu(p->lane_eq[3]));
-		PHBDBG(p, "  0x%016llx 0x%016llx\n",
-		       be64_to_cpu(p->lane_eq[4]), be64_to_cpu(p->lane_eq[5]));
-		PHBDBG(p, "  0x%016llx 0x%016llx\n",
-		       be64_to_cpu(p->lane_eq[6]), be64_to_cpu(p->lane_eq[7]));
-	}
-
 	/*
 	 * Grab CEC IO VPD load info from the root of the device-tree,
 	 * on P8 there's a single such VPD for the whole machine
@@ -3139,6 +3130,33 @@ static void phb4_create(struct dt_node *np)
 	/* Obtain informatin about the PHB from the hardware directly */
 	if (!phb4_read_capabilities(p))
 		goto failed;
+
+	/* Check for lane equalization values from HB or HDAT */
+	p->lane_eq = dt_prop_get_def_size(np, "ibm,lane-eq", NULL, &lane_eq_len);
+	if (p->lane_eq) {
+		uint32_t want_len;
+
+		if (p->rev == PHB4_REV_NIMBUS_DD10)
+			want_len = 8 * 8;
+		else
+			want_len = 6 * 8;
+		if (lane_eq_len != want_len) {
+			PHBERR(p, "Device-tree has ibm,lane-eq with wrong len %ld"
+			       " (want %d)\n", lane_eq_len, want_len);
+			p->lane_eq = NULL;
+		}
+	}
+	if (p->lane_eq) {
+		PHBDBG(p, "Override lane equalization settings:\n");
+		PHBDBG(p, "  0x%016llx 0x%016llx\n",
+		       be64_to_cpu(p->lane_eq[0]), be64_to_cpu(p->lane_eq[1]));
+		PHBDBG(p, "  0x%016llx 0x%016llx\n",
+		       be64_to_cpu(p->lane_eq[2]), be64_to_cpu(p->lane_eq[3]));
+		PHBDBG(p, "  0x%016llx 0x%016llx\n",
+		       be64_to_cpu(p->lane_eq[4]), be64_to_cpu(p->lane_eq[5]));
+		PHBDBG(p, "  0x%016llx 0x%016llx\n",
+		       be64_to_cpu(p->lane_eq[6]), be64_to_cpu(p->lane_eq[7]));
+	}
 
 	/* Allocate a block of interrupts. We need to know if it needs
 	 * 2K or 4K interrupts ... for now we just use 4K but that
@@ -3328,6 +3346,12 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 		prerror("PHB4[%d:%d] No MMIO windows enabled !\n", gcid, phb_num);
 		return;
 	}
+
+	/* Check ETU reset */
+	xscom_read(gcid, pci_stack + XPEC_PCI_STK_ETU_RESET, &val);
+	prlog(PR_ERR, "ETU reset: %llx\n", val);
+	xscom_write(gcid, pci_stack + XPEC_PCI_STK_ETU_RESET, 0);
+	time_wait_ms(1);
 
 	// show we can read phb mmio space
 	foo = (void *)(phb_bar + 0x800); // phb version register

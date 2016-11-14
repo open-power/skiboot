@@ -229,12 +229,8 @@ struct phb4 {
 	unsigned int		chip_id;    /* Chip ID (== GCID on P8) */
 	enum phb4_state		state;
 	unsigned int		rev;        /* 00MMmmmm */
-#define PHB4_REV_MURANO_DD10	0xa30001
-#define PHB4_REV_VENICE_DD10	0xa30002
-#define PHB4_REV_MURANO_DD20	0xa30003
-#define PHB4_REV_MURANO_DD21	0xa30004
-#define PHB4_REV_VENICE_DD20	0xa30005
-#define PHB4_REV_NAPLES_DD10	0xb30001
+#define PHB4_REV_NIMBUS_DD10	0xa40001
+#define PHB4_REV_NUMBUS_DD20	0xa40002
 	void			*regs;
 	void			*int_mmio;
 	uint64_t		pe_xscom;   /* XSCOM bases */
