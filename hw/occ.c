@@ -88,6 +88,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_OCC_TIMEOUT, OPAL_PLATFORM_ERR_EVT, OPAL_OCC,
 static bool wait_for_all_occ_init(void)
 {
 	struct proc_chip *chip;
+	struct dt_node *xn;
 	uint64_t occ_data_area;
 	struct occ_pstate_table *occ_data;
 	int tries;
@@ -113,12 +114,6 @@ static bool wait_for_all_occ_init(void)
 			prlog(PR_ERR,"OCC: Chip: %x homer_base is not valid\n",
 				chip->id);
 			return false;
-		}
-
-		if (!chip->occ_functional) {
-			prlog(PR_WARNING, "OCC: Chip: %x occ not functional\n",
-			      chip->id);
-			continue;
 		}
 
 		/* Get PState table address */
@@ -149,6 +144,10 @@ static bool wait_for_all_occ_init(void)
 				chip->id);
 			return false;
 		}
+
+		if (!chip->occ_functional)
+			chip->occ_functional = true;
+
 		prlog(PR_DEBUG, "OCC: Chip %02x Data (%016llx) = %016llx\n",
 		      chip->id, occ_data_area,
 		      *(uint64_t *)occ_data_area);
@@ -156,6 +155,14 @@ static bool wait_for_all_occ_init(void)
 	end_time = mftb();
 	prlog(PR_NOTICE, "OCC: All Chip Rdy after %lu ms\n",
 	      tb_to_msecs(end_time - start_time));
+
+        dt_for_each_compatible(dt_root, xn, "ibm,xscom") {
+	        const struct dt_property *p;
+		p = dt_find_property(xn, "ibm,occ-functional-state");
+		if (!p)
+			dt_add_property_cells(xn, "ibm,occ-functional-state",
+					      0x1);
+	}
 	return true;
 }
 
