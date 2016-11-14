@@ -785,9 +785,9 @@ static void psi_init_p9_interrupts(struct psi *psi)
 	out_be64(psi->regs + PSIHB_IVT_OFFSET, val);
 
 	/* Register sources */
-	xive_register_source(psi->interrupt, P9_PSI_NUM_IRQS,
-			     12, psi->esb_mmio, XIVE_SRC_LSI,
-			     psi, &psi_p9_irq_ops);
+	xive_register_hw_source(psi->interrupt, P9_PSI_NUM_IRQS,
+				12, psi->esb_mmio, XIVE_SRC_LSI,
+				psi, &psi_p9_irq_ops);
 }
 
 static void psi_init_interrupts(struct psi *psi)

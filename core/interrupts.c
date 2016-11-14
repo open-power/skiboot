@@ -32,17 +32,20 @@
 #define ICP_MFRR		0xc	/* 8-bit access */
 
 static LIST_HEAD(irq_sources);
+static LIST_HEAD(irq_sources2);
 static struct lock irq_lock = LOCK_UNLOCKED;
 
-void __register_irq_source(struct irq_source *is)
+void __register_irq_source(struct irq_source *is, bool secondary)
 {
 	struct irq_source *is1;
+	struct list_head *list = secondary ? &irq_sources2 : &irq_sources;
 
-	prlog(PR_DEBUG, "IRQ: Registering %04x..%04x ops @%p (data %p)\n",
-	      is->start, is->end - 1, is->ops, is->data);
+	prlog(PR_DEBUG, "IRQ: Registering %04x..%04x ops @%p (data %p)%s\n",
+	      is->start, is->end - 1, is->ops, is->data,
+	      secondary ? " [secondary]" : "");
 
 	lock(&irq_lock);
-	list_for_each(&irq_sources, is1, link) {
+	list_for_each(list, is1, link) {
 		if (is->end > is1->start && is->start < is1->end) {
 			prerror("register IRQ source overlap !\n");
 			prerror("  new: %x..%x old: %x..%x\n",
@@ -51,7 +54,7 @@ void __register_irq_source(struct irq_source *is)
 			assert(0);
 		}
 	}
-	list_add_tail(&irq_sources, &is->link);
+	list_add_tail(list, &is->link);
 	unlock(&irq_lock);
 }
 
@@ -67,13 +70,14 @@ void register_irq_source(const struct irq_source_ops *ops, void *data,
 	is->ops = ops;
 	is->data = data;
 
-	__register_irq_source(is);
+	__register_irq_source(is, false);
 }
 
 void unregister_irq_source(uint32_t start, uint32_t count)
 {
 	struct irq_source *is;
 
+	/* Note: We currently only unregister from the primary sources */
 	lock(&irq_lock);
 	list_for_each(&irq_sources, is, link) {
 		if (start >= is->start && start < is->end) {
@@ -102,7 +106,16 @@ static struct irq_source *irq_find_source(uint32_t isn)
 	struct irq_source *is;
 
 	lock(&irq_lock);
+	/*
+	 * XXX This really needs some kind of caching !
+	 */
 	list_for_each(&irq_sources, is, link) {
+		if (isn >= is->start && isn < is->end) {
+			unlock(&irq_lock);
+			return is;
+		}
+	}
+	list_for_each(&irq_sources2, is, link) {
 		if (isn >= is->start && isn < is->end) {
 			unlock(&irq_lock);
 			return is;
@@ -111,30 +124,6 @@ static struct irq_source *irq_find_source(uint32_t isn)
 	unlock(&irq_lock);
 
 	return NULL;
-}
-
-void adjust_irq_source(struct irq_source *is, uint32_t new_count)
-{
-	struct irq_source *is1;
-	uint32_t new_end = is->start + new_count;
-
-	prlog(PR_DEBUG, "IRQ: Adjusting %04x..%04x to %04x..%04x\n",
-	      is->start, is->end - 1, is->start, new_end - 1);
-
-	lock(&irq_lock);
-	list_for_each(&irq_sources, is1, link) {
-		if (is1 == is)
-			continue;
-		if (new_end > is1->start && is->start < is1->end) {
-			prerror("adjust IRQ source overlap !\n");
-			prerror("  new: %x..%x old: %x..%x\n",
-				is->start, new_end - 1,
-				is1->start, is1->end - 1);
-			assert(0);
-		}
-	}
-	is->end = new_end;
-	unlock(&irq_lock);
 }
 
 /*
@@ -473,5 +462,4 @@ void init_interrupts(void)
 		}
 	}
 }
-
 

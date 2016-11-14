@@ -291,11 +291,10 @@ struct irq_source {
 	struct list_node		link;
 };
 
-extern void __register_irq_source(struct irq_source *is);
+extern void __register_irq_source(struct irq_source *is, bool secondary);
 extern void register_irq_source(const struct irq_source_ops *ops, void *data,
 				uint32_t start, uint32_t count);
 extern void unregister_irq_source(uint32_t start, uint32_t count);
-extern void adjust_irq_source(struct irq_source *is, uint32_t new_count);
 
 extern uint32_t get_psi_interrupt(uint32_t chip_id);
 

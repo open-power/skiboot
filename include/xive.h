@@ -376,9 +376,11 @@ uint32_t xive_get_notify_base(uint32_t girq);
 #define XIVE_SRC_LSI		0x00000004	/* No Q bit, no retrigger */
 
 struct irq_source_ops;
-void xive_register_source(uint32_t base, uint32_t count, uint32_t shift,
-			  void *mmio, uint32_t flags, void *data,
-			  const struct irq_source_ops *ops);
+void xive_register_hw_source(uint32_t base, uint32_t count, uint32_t shift,
+			     void *mmio, uint32_t flags, void *data,
+			     const struct irq_source_ops *ops);
+void xive_register_ipi_source(uint32_t base, uint32_t count, void *data,
+			      const struct irq_source_ops *ops);
 
 void xive_cpu_callin(struct cpu_thread *cpu);
 

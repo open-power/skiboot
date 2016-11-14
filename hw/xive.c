@@ -103,6 +103,7 @@
 /* Use 64K for everything by default */
 #define IC_PAGE_SIZE	0x10000
 #define TM_PAGE_SIZE	0x10000
+#define IPI_ESB_SHIFT	(16 + 1)
 
 #define IC_BAR_DEFAULT	0x30203100000ull
 #define IC_BAR_SIZE	(8 * IC_PAGE_SIZE)
@@ -1243,9 +1244,6 @@ uint32_t xive_alloc_hw_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 	}
 	x->int_hw_bot = base;
 
-	/* Adjust the irq source to avoid overlaps */
-	adjust_irq_source(&x->ipis.is, base - x->int_base);
-
 	/* Initialize the corresponding IVT entries to sane defaults,
 	 * IE entry is valid, not routed and masked, EQ data is set
 	 * to the GIRQ number.
@@ -1590,7 +1588,7 @@ static void xive_source_eoi(struct irq_source *is, uint32_t isn)
 	ive = s->xive->ivt_base;
 	if (!ive)
 		return;
-	ive += 	GIRQ_TO_IDX(isn);
+	ive += GIRQ_TO_IDX(isn);
 
 	/* If it's invalid or masked, don't do anything */
 	if ((ive->w & IVE_MASKED) || !(ive->w & IVE_VALID))
@@ -1649,9 +1647,10 @@ static const struct irq_source_ops xive_irq_source_ops = {
 	.attributes = xive_source_attributes,
 };
 
-static void __xive_register_source(struct xive_src *s, uint32_t base,
-				   uint32_t count, uint32_t shift,
-				   void *mmio, uint32_t flags, void *data,
+static void __xive_register_source(struct xive *x, struct xive_src *s,
+				   uint32_t base, uint32_t count,
+				   uint32_t shift, void *mmio, uint32_t flags,
+				   bool secondary, void *data,
 				   const struct irq_source_ops *orig_ops)
 {
 	s->esb_base = base;
@@ -1659,24 +1658,50 @@ static void __xive_register_source(struct xive_src *s, uint32_t base,
 	s->esb_mmio = mmio;
 	s->flags = flags;
 	s->orig_ops = orig_ops;
-
+	s->xive = x;
 	s->is.start = base;
 	s->is.end = base + count;
 	s->is.ops = &xive_irq_source_ops;
 	s->is.data = data;
 
-	__register_irq_source(&s->is);
+	__register_irq_source(&s->is, secondary);
 }
 
-void xive_register_source(uint32_t base, uint32_t count, uint32_t shift,
-			  void *mmio, uint32_t flags, void *data,
-			  const struct irq_source_ops *ops)
+void xive_register_hw_source(uint32_t base, uint32_t count, uint32_t shift,
+			     void *mmio, uint32_t flags, void *data,
+			     const struct irq_source_ops *ops)
 {
 	struct xive_src *s;
+	struct xive *x = xive_from_isn(base);
+
+	assert(x);
 
 	s = malloc(sizeof(struct xive_src));
 	assert(s);
-	__xive_register_source(s, base, count, shift, mmio, flags, data, ops);
+	__xive_register_source(x, s, base, count, shift, mmio, flags,
+			       false, data, ops);
+}
+
+void xive_register_ipi_source(uint32_t base, uint32_t count, void *data,
+			      const struct irq_source_ops *ops)
+{
+	struct xive_src *s;
+	struct xive *x = xive_from_isn(base);
+	uint32_t base_idx = GIRQ_TO_IDX(base);
+	void *mmio_base;
+
+	assert(x);
+	assert(base >= x->int_base && (base + count) <= x->int_ipi_top);
+
+	s = malloc(sizeof(struct xive_src));
+	assert(s);
+
+	/* Callbacks assume the MMIO base corresponds to the first
+	 * interrupt of that source structure so adjust it
+	 */
+	mmio_base = x->esb_mmio + (1ul << IPI_ESB_SHIFT) * base_idx;
+	__xive_register_source(x, s, base, count, IPI_ESB_SHIFT, mmio_base,
+			       XIVE_SRC_EOI_PAGE1, false, data, ops);
 }
 
 static void init_one_xive(struct dt_node *np)
@@ -1744,9 +1769,12 @@ static void init_one_xive(struct dt_node *np)
 
 	/* Register built-in source controllers (aka IPIs) */
 	/* XXX Add new EOI mode for DD2 */
-	__xive_register_source(&x->ipis, x->int_base,
-			       x->int_hw_bot - x->int_base, 16 + 1,
-			       x->esb_mmio, XIVE_SRC_EOI_PAGE1, NULL, NULL);
+	__xive_register_source(x, &x->ipis, x->int_base,
+			       x->int_hw_bot - x->int_base, IPI_ESB_SHIFT,
+			       x->esb_mmio, XIVE_SRC_EOI_PAGE1,
+			       true, NULL, NULL);
+
+	/* XXX Add registration of escalation sources too */
 
 	/* Create a device-tree node for Linux use */
 	xive_create_mmio_dt_node(x);
