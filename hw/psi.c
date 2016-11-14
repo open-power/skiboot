@@ -764,8 +764,9 @@ static void psi_init_p9_interrupts(struct psi *psi)
 	/* Configure the CI BAR if necessary */
 	val = in_be64(psi->regs + PSIHB_ESB_CI_BASE);
 	if (!(val & PSIHB_ESB_CI_VALID)) {
-		out_be64(psi->regs + PSIHB_ESB_CI_BASE,
-			 PSIHB_ESB_MMIO_DEFAULT | PSIHB_ESB_CI_VALID);
+		val = PSIHB_ESB_MMIO_DEFAULT | PSIHB_ESB_CI_VALID;
+		val |= (0x40000000000ull * (uint64_t)psi->chip_id);
+		out_be64(psi->regs + PSIHB_ESB_CI_BASE, val);
 		printf("PSI[0x%03x]: ESB MMIO invalid, reconfiguring...\n",
 		       psi->chip_id);
 	}
@@ -973,6 +974,7 @@ static struct psi *psi_probe_p9(struct proc_chip *chip, u64 base)
 			chip->id, val);
 #define PSIHB_PSI_MMIO_DEFAULT 0x006030203000000ull
 		val = PSIHB_PSI_MMIO_DEFAULT | PSIHB_XSCOM_P9_HBBAR_EN;
+		val |= (0x40000000000ull * (uint64_t)chip->id);
 		xscom_write(chip->id, base + PSIHB_XSCOM_P9_BASE, val);
 	}
 	psi = alloc_psi(chip, base);
