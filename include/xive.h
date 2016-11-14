@@ -382,4 +382,9 @@ void xive_register_source(uint32_t base, uint32_t count, uint32_t shift,
 
 void xive_cpu_callin(struct cpu_thread *cpu);
 
+/* Get the trigger page address for an interrupt allocated with
+ * xive_alloc_ipi_irqs()
+ */
+void *xive_get_trigger_port(uint32_t girq);
+
 #endif /* __XIVE_H__ */

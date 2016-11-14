@@ -1295,6 +1295,25 @@ uint32_t xive_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 	return base;
 }
 
+void *xive_get_trigger_port(uint32_t girq)
+{
+	struct xive *x;
+	uint32_t idx;
+
+	/* Find XIVE on which the IVE resides */
+	x = xive_from_isn(girq);
+	if (!x)
+		return NULL;
+
+	/* Make sure it's an IPI on that chip */
+	if (girq < x->int_base ||
+	    girq >= x->int_ipi_top)
+		return NULL;
+
+	idx = girq - x->int_base;
+	return x->esb_mmio + idx * 0x20000;
+}
+
 uint64_t xive_get_notify_port(uint32_t chip_id, uint32_t ent)
 {
 	struct proc_chip *chip = get_chip(chip_id);
