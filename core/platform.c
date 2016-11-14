@@ -101,11 +101,15 @@ static int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
 }
 opal_call(OPAL_CEC_REBOOT2, opal_cec_reboot2, 2);
 
-static void generic_platform_init(void)
+static bool generic_platform_probe(void)
 {
-	/* Enable a UART if we find one in the device-tree */
 	uart_init();
 
+	return true;
+}
+
+static void generic_platform_init(void)
+{
 	if (uart_enabled())
 		uart_setup_opal_console();
 	else
@@ -130,6 +134,7 @@ static struct bmc_platform generic_bmc = {
 static struct platform generic_platform = {
 	.name		= "generic",
 	.bmc		= &generic_bmc,
+	.probe          = generic_platform_probe,
 	.init		= generic_platform_init,
 	.cec_power_down	= generic_cec_power_down,
 };
@@ -158,12 +163,16 @@ void probe_platform(void)
 		manufacturing_mode = true;
 	}
 
-	platform = generic_platform;
 	for (i = 0; &platforms[i] < &__platforms_end; i++) {
 		if (platforms[i].probe && platforms[i].probe()) {
 			platform = platforms[i];
 			break;
 		}
+	}
+	if (!platform.name) {
+		platform = generic_platform;
+		if (platform.probe)
+			platform.probe();
 	}
 
 	prlog(PR_NOTICE, "PLAT: Detected %s platform\n", platform.name);
