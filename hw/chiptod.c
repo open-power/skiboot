@@ -454,6 +454,9 @@ static enum chiptod_chip_status _chiptod_get_chip_status(int32_t chip_id)
 	uint64_t tod_status;
 	enum chiptod_chip_status status = -1;
 
+	if (chip_id < 0)
+		return chiptod_backup_disabled;
+
 	if (xscom_read(chip_id, TOD_STATUS, &tod_status)) {
 		prerror("XSCOM error reading TOD_STATUS reg\n");
 		return status;
@@ -476,6 +479,9 @@ chiptod_get_chip_status(enum chiptod_topology topology)
 static void chiptod_update_topology(enum chiptod_topology topo)
 {
 	int32_t chip_id = chiptod_topology_info[topo].id;
+
+	if (chip_id < 0)
+		return;
 
 	chiptod_topology_info[topo].role = chiptod_get_chip_role(topo, chip_id);
 	chiptod_topology_info[topo].status = chiptod_get_chip_status(topo);
