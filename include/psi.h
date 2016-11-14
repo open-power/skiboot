@@ -245,6 +245,7 @@ struct psi {
 	unsigned int		chip_id;
 	unsigned int		interrupt;
 	bool			active;
+	bool			no_lpc_irqs;
 };
 
 extern void psi_set_link_polling(bool active);

@@ -521,6 +521,9 @@ static uint64_t psi_p8_irq_attributes(struct irq_source *is, uint32_t isn)
 	uint32_t idx = isn - psi->interrupt;
 	uint64_t attr;
 
+	if (psi->no_lpc_irqs && idx == P8_IRQ_PSI_LPC)
+		return IRQ_ATTR_TARGET_LINUX;
+
 	if (idx == P8_IRQ_PSI_EXTERNAL &&
 	    psi_ext_irq_policy == EXTERNAL_IRQ_POLICY_LINUX)
 		return IRQ_ATTR_TARGET_LINUX;
@@ -586,8 +589,23 @@ static void psihb_p9_interrupt(struct irq_source *is, uint32_t isn)
 }
 
 static uint64_t psi_p9_irq_attributes(struct irq_source *is __unused,
-				      uint32_t isn __unused)
+				      uint32_t isn)
 {
+	struct psi *psi = is->data;
+	unsigned int idx = isn & 0xf;
+
+	/* If LPC interrupts are disabled, route them to Linux
+	 * (who will not request them since they aren't referenced
+	 * in the device tree)
+	 */
+	if (psi->no_lpc_irqs &&
+	    (idx == P9_PSI_IRQ_LPC_SIRQ0 ||
+	     idx == P9_PSI_IRQ_LPC_SIRQ1 ||
+	     idx == P9_PSI_IRQ_LPC_SIRQ2 ||
+	     idx == P9_PSI_IRQ_LPC_SIRQ3 ||
+	     idx == P9_PSI_IRQ_LPCHC))
+		return IRQ_ATTR_TARGET_LINUX;
+
 	/* XXX For now, all go to OPAL, this will change */
 	return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_FREQUENT;
 }
@@ -1001,6 +1019,9 @@ static bool psi_init_psihb(struct dt_node *psihb)
 		unlock(&psi_lock);
 	}
 	chip->psi = psi;
+
+	if (dt_has_node_property(psihb, "no-lpc-interrupts", NULL))
+		psi->no_lpc_irqs = true;
 
 	psi_activate_phb(psi);
 	psi_init_interrupts(psi);
