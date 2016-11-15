@@ -56,8 +56,8 @@ static int64_t opal_cec_reboot(void)
 
 	console_complete_flush();
 
-	/* Try a fast reset first, if enabled */
-	if (nvram_query_eq("experimental-fast-reset","feeling-lucky"))
+	/* Try fast-reset unless explicitly disabled */
+	if (!nvram_query_eq("fast-reset","0"))
 		fast_reboot();
 
 	if (platform.cec_reboot)
