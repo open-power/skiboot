@@ -1857,7 +1857,7 @@ static int64_t p7ioc_ioda_reset(struct phb *phb, bool purge)
 
 		if ((pesta & IODA_PESTA_MMIO_FROZEN) ||
 		    (pestb & IODA_PESTB_DMA_STOPPED))
-			PHBDBG(p, "Frozen PE#%d (%s - %s)\n",
+			PHBDBG(p, "Frozen PE#%x (%s - %s)\n",
 			       i, (pestb & IODA_PESTB_DMA_STOPPED) ? "DMA" : "",
 			       (pesta & IODA_PESTA_MMIO_FROZEN) ? "MMIO" : "");
 	}
@@ -2682,7 +2682,7 @@ void p7ioc_phb_setup(struct p7ioc *ioc, uint8_t index)
 	pci_register_phb(&p->phb, OPAL_DYNAMIC_PHB_ID);
 	slot = p7ioc_phb_slot_create(&p->phb);
 	if (!slot)
-		prlog(PR_NOTICE, "P7IOC: Cannot create PHB#%d slot\n",
+		prlog(PR_NOTICE, "P7IOC: Cannot create PHB#%x slot\n",
 		      p->phb.opal_id);
 
 	/* Platform additional setup */
@@ -2957,7 +2957,7 @@ int64_t p7ioc_phb_init(struct p7ioc_phb *p)
 {
 	uint64_t val;
 
-	PHBDBG(p, "Initializing PHB %d...\n", p->index);
+	PHBDBG(p, "Initializing PHB %x...\n", p->index);
 
 	p->state = P7IOC_PHB_STATE_INITIALIZING;
 

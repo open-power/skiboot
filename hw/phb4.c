@@ -59,13 +59,13 @@
 
 static void phb4_init_hw(struct phb4 *p, bool first_init);
 
-#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB#%d[%d:%d]: " fmt, \
+#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB#%04x[%d:%d]: " fmt, \
 				      (p)->phb.opal_id, (p)->chip_id, \
 				      (p)->index,  ## a)
-#define PHBINF(p, fmt, a...)	prlog(PR_INFO, "PHB#%d[%d:%d]: " fmt, \
+#define PHBINF(p, fmt, a...)	prlog(PR_INFO, "PHB#%04x[%d:%d]: " fmt, \
 				      (p)->phb.opal_id, (p)->chip_id, \
 				      (p)->index,  ## a)
-#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB#%d[%d:%d]: " fmt, \
+#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB#%04x[%d:%d]: " fmt, \
 				      (p)->phb.opal_id, (p)->chip_id, \
 				      (p)->index,  ## a)
 

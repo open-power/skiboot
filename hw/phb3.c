@@ -769,7 +769,7 @@ static int64_t phb3_ioda_reset(struct phb *phb, bool purge)
 	uint32_t i;
 
 	if (purge) {
-		prlog(PR_DEBUG, "PHB%d: Purging all IODA tables...\n",
+		prlog(PR_DEBUG, "PHB%x: Purging all IODA tables...\n",
 		      p->phb.opal_id);
 		phb3_init_ioda_cache(p);
 	}
@@ -843,7 +843,7 @@ static int64_t phb3_ioda_reset(struct phb *phb, bool purge)
 
 		if ((pesta & IODA2_PESTA_MMIO_FROZEN) ||
 		    (pestb & IODA2_PESTB_DMA_STOPPED))
-			PHBDBG(p, "Frozen PE#%d (%s - %s)\n",
+			PHBDBG(p, "Frozen PE#%x (%s - %s)\n",
 			       i, (pesta & IODA2_PESTA_MMIO_FROZEN) ? "DMA" : "",
 			       (pestb & IODA2_PESTB_DMA_STOPPED) ? "MMIO" : "");
 	}
@@ -4648,18 +4648,18 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 	pe_xscom = dt_get_address(pbcq, 0, NULL);
 	pci_xscom = dt_get_address(pbcq, 1, NULL);
 	spci_xscom = dt_get_address(pbcq, 2, NULL);
-	prlog(PR_DEBUG, "PHB3[%d:%d]: X[PE]=0x%08x X[PCI]=0x%08x"
+	prlog(PR_DEBUG, "PHB3[%x:%x]: X[PE]=0x%08x X[PCI]=0x%08x"
 	      " X[SPCI]=0x%08x\n",
 	      gcid, pno, pe_xscom, pci_xscom, spci_xscom);
 
 	/* Check if CAPP mode */
 	if (xscom_read(gcid, spci_xscom + 0x03, &val)) {
-		prerror("PHB3[%d:%d]: Cannot read AIB CAPP ENABLE\n",
+		prerror("PHB3[%x:%x]: Cannot read AIB CAPP ENABLE\n",
 			gcid, pno);
 		return;
 	}
 	if (val >> 63) {
-		prerror("PHB3[%d:%d]: Ignoring bridge in CAPP mode\n",
+		prerror("PHB3[%x:%x]: Ignoring bridge in CAPP mode\n",
 			gcid, pno);
 		return;
 	}
@@ -4667,10 +4667,10 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 	/* Get PE BARs, assume only 0 and 2 are used for now */
 	xscom_read(gcid, pe_xscom + 0x42, &phb_bar);
 	phb_bar >>= 14;
-	prlog(PR_DEBUG, "PHB3[%d:%d] REGS     = 0x%016llx [4k]\n",
+	prlog(PR_DEBUG, "PHB3[%x:%x] REGS     = 0x%016llx [4k]\n",
 		gcid, pno, phb_bar);
 	if (phb_bar == 0) {
-		prerror("PHB3[%d:%d]: No PHB BAR set !\n", gcid, pno);
+		prerror("PHB3[%x:%x]: No PHB BAR set !\n", gcid, pno);
 		return;
 	}
 
@@ -4678,9 +4678,9 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 	xscom_read(gcid, spci_xscom + 1, &val);/* HW275117 */
 	xscom_read(gcid, pci_xscom + 0x0b, &val);
 	val >>= 14;
-	prlog(PR_DEBUG, "PHB3[%d:%d] PCIBAR   = 0x%016llx\n", gcid, pno, val);
+	prlog(PR_DEBUG, "PHB3[%x:%x] PCIBAR   = 0x%016llx\n", gcid, pno, val);
 	if (phb_bar != val) {
-		prerror("PHB3[%d:%d] PCIBAR invalid, fixing up...\n",
+		prerror("PHB3[%x:%x] PCIBAR invalid, fixing up...\n",
 			gcid, pno);
 		xscom_read(gcid, spci_xscom + 1, &val);/* HW275117 */
 		xscom_write(gcid, pci_xscom + 0x0b, phb_bar << 14);
@@ -4692,14 +4692,14 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 	mmio0_bmask &= 0xffffffffc0000000ull;
 	mmio0_sz = ((~mmio0_bmask) >> 14) + 1;
 	mmio0_bar >>= 14;
-	prlog(PR_DEBUG, "PHB3[%d:%d] MMIO0    = 0x%016llx [0x%016llx]\n",
+	prlog(PR_DEBUG, "PHB3[%x:%x] MMIO0    = 0x%016llx [0x%016llx]\n",
 		gcid, pno, mmio0_bar, mmio0_sz);
 	xscom_read(gcid, pe_xscom + 0x41, &mmio1_bar);
 	xscom_read(gcid, pe_xscom + 0x44, &mmio1_bmask);
 	mmio1_bmask &= 0xffffffffc0000000ull;
 	mmio1_sz = ((~mmio1_bmask) >> 14) + 1;
 	mmio1_bar >>= 14;
-	prlog(PR_DEBUG, "PHB3[%d:%d] MMIO1    = 0x%016llx [0x%016llx]\n",
+	prlog(PR_DEBUG, "PHB3[%x:%x] MMIO1    = 0x%016llx [0x%016llx]\n",
 		gcid, pno, mmio1_bar, mmio1_sz);
 
 	/* Check BAR enable
@@ -4708,7 +4708,7 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 	 * that BARs are valid if they value is non-0
 	 */
 	xscom_read(gcid, pe_xscom + 0x45, &bar_en);
-	prlog(PR_DEBUG, "PHB3[%d:%d] BAREN    = 0x%016llx\n",
+	prlog(PR_DEBUG, "PHB3[%x:%x] BAREN    = 0x%016llx\n",
 		gcid, pno, bar_en);
 
 	/* Always enable PHB BAR */
@@ -4729,7 +4729,7 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 
 	/* No MMIO windows ? Barf ! */
 	if (mmio_win_sz == 0) {
-		prerror("PHB3[%d:%d]: No MMIO windows enabled !\n",
+		prerror("PHB3[%x:%x]: No MMIO windows enabled !\n",
 			gcid, pno);
 		return;
 	}
@@ -4749,16 +4749,16 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 	bar_en |= 0x1800000000000000ul;
 	xscom_write(gcid, pe_xscom + 0x45, bar_en);
 
-	prlog(PR_DEBUG, "PHB3[%d:%d] NEWBAREN = 0x%016llx\n",
+	prlog(PR_DEBUG, "PHB3[%x:%x] NEWBAREN = 0x%016llx\n",
 	      gcid, pno, bar_en);
 
 	xscom_read(gcid, pe_xscom + 0x1a, &val);
-	prlog(PR_DEBUG, "PHB3[%d:%d] IRSNC    = 0x%016llx\n",
+	prlog(PR_DEBUG, "PHB3[%x:%x] IRSNC    = 0x%016llx\n",
 	      gcid, pno, val);
 	xscom_read(gcid, pe_xscom + 0x1b, &val);
-	prlog(PR_DEBUG, "PHB3[%d:%d] IRSNM    = 0x%016llx\n",
+	prlog(PR_DEBUG, "PHB3[%x:%x] IRSNM    = 0x%016llx\n",
 	      gcid, pno, val);
-	prlog(PR_DEBUG, "PHB3[%d:%d] LSI      = 0x%016llx\n",
+	prlog(PR_DEBUG, "PHB3[%x:%x] LSI      = 0x%016llx\n",
 	      gcid, pno, val);
 
 	/* Create PHB node */

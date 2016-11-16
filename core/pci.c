@@ -880,12 +880,12 @@ int64_t pci_register_phb(struct phb *phb, int opal_id)
 		}
 	} else {
 		if (opal_id >= ARRAY_SIZE(phbs)) {
-			prerror("PHB: ID %d out of range !\n", opal_id);
+			prerror("PHB: ID %x out of range !\n", opal_id);
 			return OPAL_PARAMETER;
 		}
 		/* The user did specify an opal_id, check it's free */
 		if (phbs[opal_id]) {
-			prerror("PHB: Duplicate registration of ID %d\n", opal_id);
+			prerror("PHB: Duplicate registration of ID %x\n", opal_id);
 			return OPAL_PARAMETER;
 		}
 	}
