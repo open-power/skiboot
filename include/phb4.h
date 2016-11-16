@@ -224,9 +224,9 @@ struct phb4_err {
 #define PHB4_CAPP_RECOVERY	0x00000008
 
 struct phb4 {
-	unsigned int		index;	    /* 0..2 index inside P8 */
+	unsigned int		index;	    /* 0..5 index inside p9 */
 	unsigned int		flags;
-	unsigned int		chip_id;    /* Chip ID (== GCID on P8) */
+	unsigned int		chip_id;    /* Chip ID (== GCID on p9) */
 	enum phb4_state		state;
 	unsigned int		rev;        /* 00MMmmmm */
 #define PHB4_REV_NIMBUS_DD10	0xa40001

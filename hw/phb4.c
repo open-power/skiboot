@@ -59,12 +59,15 @@
 
 static void phb4_init_hw(struct phb4 *p, bool first_init);
 
-#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB%d: " fmt, \
-				      (p)->phb.opal_id, ## a)
-#define PHBINF(p, fmt, a...)	prlog(PR_INFO, "PHB%d: " fmt, \
-				      (p)->phb.opal_id, ## a)
-#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB%d: " fmt, \
-				      (p)->phb.opal_id, ## a)
+#define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB#%d[%d:%d]: " fmt, \
+				      (p)->phb.opal_id, (p)->chip_id, \
+				      (p)->index,  ## a)
+#define PHBINF(p, fmt, a...)	prlog(PR_INFO, "PHB#%d[%d:%d]: " fmt, \
+				      (p)->phb.opal_id, (p)->chip_id, \
+				      (p)->index,  ## a)
+#define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB#%d[%d:%d]: " fmt, \
+				      (p)->phb.opal_id, (p)->chip_id, \
+				      (p)->index,  ## a)
 
 /* Note: The "ASB" name is historical, practically this means access via
  * the XSCOM backdoor
@@ -901,8 +904,7 @@ static int64_t phb4_ioda_reset(struct phb *phb, bool purge)
 	uint64_t val;
 
 	if (purge) {
-		prlog(PR_DEBUG, "PHB%d: Purging all IODA tables...\n",
-		      p->phb.opal_id);
+		PHBDBG(p, "Purging all IODA tables...\n");
 		phb4_init_ioda_cache(p);
 	}
 
@@ -3252,7 +3254,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	stk_index = dt_prop_get_u32(stk_node, "reg");
 	phb_num = dt_prop_get_u32(stk_node, "ibm,phb-index");
 	path = dt_get_path(stk_node);
-	prlog(PR_NOTICE, "PHB4: Chip %d Found PBCQ%d Stack %d at %s\n",
+	prlog(PR_NOTICE, "PHB: Chip %d Found PHB4 PBCQ%d Stack %d at %s\n",
 	      gcid, pec_index, stk_index, path);
 	free(path);
 
@@ -3263,7 +3265,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	nest_stack = nest_base + 0x40 * (stk_index + 1);
 	etu_base = pci_base + 0x100 + 0x40 * stk_index;
 
-	prlog(PR_DEBUG, "PHB4[%d:%d] X[PE]=0x%08x/0x%08x X[PCI]=0x%08x/0x%08x X[ETU]=0x%08x\n",
+	prlog(PR_DEBUG, "PHB[%d:%d] X[PE]=0x%08x/0x%08x X[PCI]=0x%08x/0x%08x X[ETU]=0x%08x\n",
 	      gcid, phb_num, nest_base, nest_stack, pci_base, pci_stack, etu_base);
 
 	/* Default BAR enables */
@@ -3272,7 +3274,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	/* Get and/or initialize PHB register BAR */
 	xscom_read(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR, &phb_bar);
 	if (phb_bar == 0 || force_assign) {
-		prerror("PHB4[%d:%d] No PHB BAR set ! Overriding\n", gcid, phb_num);
+		prerror("PHB[%d:%d] No PHB BAR set ! Overriding\n", gcid, phb_num);
 		phb_bar = MMIO_CALC(gcid, phb_num, PHB_BAR);
 		xscom_write(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR, phb_bar << 8);
 	}
@@ -3280,12 +3282,12 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 
 	xscom_read(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR, &phb_bar);
 	phb_bar >>= 8;
-	prlog(PR_ERR, "PHB4[%d:%d] REGS     = 0x%016llx [4k]\n", gcid, phb_num, phb_bar);
+	prlog(PR_ERR, "PHB[%d:%d] REGS     = 0x%016llx [4k]\n", gcid, phb_num, phb_bar);
 
 	/* Same with INT BAR (ESB) */
 	xscom_read(gcid, nest_stack + XPEC_NEST_STK_IRQ_BAR, &irq_bar);
 	if (irq_bar == 0 || force_assign) {
-		prerror("PHB4[%d:%d] No IRQ BAR set ! Overriding\n", gcid, phb_num);
+		prerror("PHB[%d:%d] No IRQ BAR set ! Overriding\n", gcid, phb_num);
 		irq_bar = MMIO_CALC(gcid, phb_num, ESB_BAR);
 		xscom_write(gcid, nest_stack + XPEC_NEST_STK_IRQ_BAR, irq_bar << 8);
 	}
@@ -3293,12 +3295,12 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 
 	xscom_read(gcid, nest_stack + XPEC_NEST_STK_IRQ_BAR, &irq_bar);
 	irq_bar >>= 8;
-	prlog(PR_ERR, "PHB4[%d:%d] ESB      = 0x%016llx [...]\n", gcid, phb_num, irq_bar);
+	prlog(PR_ERR, "PHB[%d:%d] ESB      = 0x%016llx [...]\n", gcid, phb_num, irq_bar);
 
 	/* Same with MMIO windows */
 	xscom_read(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0, &mmio0_bar);
 	if (mmio0_bar == 0 || force_assign) {
-		prerror("PHB4[%d:%d] No MMIO BAR set ! Overriding\n", gcid, phb_num);
+		prerror("PHB[%d:%d] No MMIO BAR set ! Overriding\n", gcid, phb_num);
 		mmio0_bar = MMIO_CALC(gcid, phb_num, MMIO0_BAR);
 		mmio0_bmask =  (~(MMIO0_BAR_SIZE - 1)) & 0x00FFFFFFFFFFFFFFULL;
 		xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0, mmio0_bar << 8);
@@ -3316,7 +3318,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	mmio0_bmask &= 0xffffffffff000000ull;
 	mmio0_sz = ((~mmio0_bmask) >> 8) + 1;
 	mmio0_bar >>= 8;
-	prlog(PR_DEBUG, "PHB4[%d:%d] MMIO0    = 0x%016llx [0x%016llx]\n",
+	prlog(PR_DEBUG, "PHB[%d:%d] MMIO0    = 0x%016llx [0x%016llx]\n",
 	      gcid, phb_num, mmio0_bar, mmio0_sz);
 
 	xscom_read(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1, &mmio1_bar);
@@ -3324,7 +3326,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	mmio1_bmask &= 0xffffffffff000000ull;
 	mmio1_sz = ((~mmio1_bmask) >> 8) + 1;
 	mmio1_bar >>= 8;
-	prlog(PR_DEBUG, "PHB4[%d:%d] MMIO1    = 0x%016llx [0x%016llx]\n",
+	prlog(PR_DEBUG, "PHB[%d:%d] MMIO1    = 0x%016llx [0x%016llx]\n",
 	      gcid, phb_num, mmio1_bar, mmio1_sz);
 
 	/* Build MMIO windows list */
@@ -3347,7 +3349,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 
 	/* No MMIO windows ? Barf ! */
 	if (mmio_win_sz == 0) {
-		prerror("PHB4[%d:%d] No MMIO windows enabled !\n", gcid, phb_num);
+		prerror("PHB[%d:%d] No MMIO windows enabled !\n", gcid, phb_num);
 		return;
 	}
 
