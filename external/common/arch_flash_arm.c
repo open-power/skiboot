@@ -241,7 +241,7 @@ static char *get_dev_mtd(enum flash_access access)
 {
 	FILE *f;
 	char *ret = NULL, *pos = NULL;
-	char line[50];
+	char line[255];
 
 	if (access != BMC_MTD && access != PNOR_MTD)
 		return NULL;
