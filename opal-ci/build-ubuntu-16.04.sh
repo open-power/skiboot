@@ -5,7 +5,7 @@ set -e
 
 MAKE_J=`grep -c processor /proc/cpuinfo`
 
-export CROSS=powerpc64le-linux-gnu-
+export CROSS="ccache powerpc64le-linux-gnu-"
 
 make -j${MAKE_J} all
 (cd opal-ci; ./build-qemu-powernv.sh)

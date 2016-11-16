@@ -5,7 +5,7 @@ set -e
 set -x
 
 MAKE_J=`grep -c processor /proc/cpuinfo`
-export CROSS=powerpc64-linux-gnu-
+export CROSS="ccache powerpc64-linux-gnu-"
 
 make -j${MAKE_J} all
 make -j${MAKE_J} check
