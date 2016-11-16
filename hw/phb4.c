@@ -69,6 +69,12 @@ static void phb4_init_hw(struct phb4 *p, bool first_init);
 				      (p)->phb.opal_id, (p)->chip_id, \
 				      (p)->index,  ## a)
 
+#ifdef LOG_CFG
+#define PHBLOGCFG(p, fmt, a...)	PHBDBG(p, fmt, ## a)
+#else
+#define PHBLOGCFG(p, fmt, a...) do {} while (0)
+#endif
+
 /* Note: The "ASB" name is historical, practically this means access via
  * the XSCOM backdoor
  */
@@ -352,13 +358,19 @@ static int64_t phb4_pcicfg_read(struct phb4 *p, uint32_t bdfn,
 		case 1:
 			*((uint8_t *)data) =
 				in_8(p->regs + PHB_CONFIG_DATA + (offset & 3));
+			PHBLOGCFG(p, "CFG8 Rd %02x=%02x\n",
+				  offset, *((uint8_t *)data));
 			break;
 		case 2:
 			*((uint16_t *)data) =
 				in_le16(p->regs + PHB_CONFIG_DATA + (offset & 2));
+			PHBLOGCFG(p, "CFG16 Rd %02x=%04x\n",
+				  offset, *((uint16_t *)data));
 			break;
 		case 4:
 			*((uint32_t *)data) = in_le32(p->regs + PHB_CONFIG_DATA);
+			PHBLOGCFG(p, "CFG32 Rd %02x=%08x\n",
+				  offset, *((uint32_t *)data));
 			break;
 		default:
 			return OPAL_PARAMETER;
@@ -446,6 +458,7 @@ static int64_t phb4_pcicfg_write(struct phb4 *p, uint32_t bdfn,
 		}
 #endif
 	}
+	PHBLOGCFG(p, "CFG%d Wr %02x=%08x\n", 8 * size, offset, data);
 	return OPAL_SUCCESS;
 }
 
