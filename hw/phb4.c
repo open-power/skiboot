@@ -2700,7 +2700,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 	/* Init_16 - PHB Control */
 	out_be64(p->regs + PHB_CTRLR,
 		 PHB_CTRLR_IRQ_PGSZ_64K |
-		 PHB_CTRLR_CFG_EEH_DISABLE | /* EEH disable for now ! */
+		 PHB_CTRLR_MMIO_EEH_DISABLE | /* EEH disable for now ! */
 		 SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_2_PER_PE));
 
 	/* Init_17..40 - Architected IODA3 inits */
