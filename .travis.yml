@@ -10,6 +10,7 @@ env:
     - RUN_ON_CONTAINER=centos6
     - RUN_ON_CONTAINER=centos7
     - RUN_ON_CONTAINER=fedora24
+    - RUN_ON_CONTAINER=fedora-rawhide
     global:
         # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
         #   via the "travis encrypt" command using the project repo's public key
@@ -18,6 +19,7 @@ env:
 matrix:
   allow_failures:
     - env: RUN_ON_CONTAINER=fedora24
+    - env: RUN_ON_CONTAINER=fedora-rawhide
 
 sudo: required
 services: docker
