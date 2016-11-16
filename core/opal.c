@@ -306,9 +306,10 @@ void opal_run_pollers(void)
 {
 	struct opal_poll_entry *poll_ent;
 	static int pollers_with_lock_warnings = 0;
+	static int poller_recursion = 0;
 
 	/* Don't re-enter on this CPU */
-	if (this_cpu()->in_poller) {
+	if (this_cpu()->in_poller && poller_recursion < 16) {
 		/**
 		 * @fwts-label OPALPollerRecursion
 		 * @fwts-advice Recursion detected in opal_run_pollers(). This
@@ -317,6 +318,9 @@ void opal_run_pollers(void)
 		 */
 		prlog(PR_ERR, "OPAL: Poller recursion detected.\n");
 		backtrace();
+		poller_recursion++;
+		if (poller_recursion == 16)
+			prlog(PR_ERR, "OPAL: Squashing future poller recursion warnings (>16).\n");
 		return;
 	}
 	this_cpu()->in_poller = true;
