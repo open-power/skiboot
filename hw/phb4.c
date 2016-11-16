@@ -272,6 +272,9 @@ static int64_t phb4_rc_write(struct phb4 *p, uint32_t offset, uint8_t sz,
 		break;
 	default:
 		/* XXX Add ASB support ? */
+		/* Workaround PHB config space enable */
+		if ((p->rev == PHB4_REV_NIMBUS_DD10) && (reg == PCI_CFG_CMD))
+			val |= PCI_CFG_CMD_MEM_EN | PCI_CFG_CMD_BUS_MASTER_EN;
 		out_le32(p->regs + PHB_RC_CONFIG_BASE + reg, val);
 	}
 	return OPAL_SUCCESS;
