@@ -869,7 +869,7 @@ static void psi_create_mm_dtnode(struct psi *psi)
 		return;
 
 	/* Hard wire size to 4G */
-	dt_add_property_cells(np, "reg", hi32(addr), lo32(addr), 1, 0);
+	dt_add_property_u64s(np, "reg", addr, 0x100000000ull);
 	switch (proc_gen) {
 	case proc_gen_p7:
 		dt_add_property_strings(np, "compatible", "ibm,psi",

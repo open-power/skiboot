@@ -129,9 +129,7 @@ static void add_opal_firmware_node(void)
 	dt_add_property_string(firmware, "compatible", "ibm,opal-firmware");
 	dt_add_property_string(firmware, "name", "firmware");
 	dt_add_property_string(firmware, "version", version);
-	dt_add_property_cells(firmware, "symbol-map",
-			      hi32(sym_start), lo32(sym_start),
-			      hi32(sym_size), lo32(sym_size));
+	dt_add_property_u64s(firmware, "symbol-map", sym_start, sym_size);
 }
 
 void add_opal_node(void)

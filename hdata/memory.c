@@ -225,9 +225,8 @@ static void add_bus_freq_to_ram_area(struct dt_node *ram_node, u32 chip_id)
 		return;
 	}
 
-	freq = ((u64)be32_to_cpu(timebase->memory_bus_frequency)) *1000000ul;
-	dt_add_property_cells(ram_node, "ibm,memory-bus-frequency", hi32(freq),
-			      lo32(freq));
+	freq = ((u64)be32_to_cpu(timebase->memory_bus_frequency)) * 1000000ul;
+	dt_add_property_u64(ram_node, "ibm,memory-bus-frequency", freq);
 }
 
 static void add_size_to_ram_area(struct dt_node *ram_node,

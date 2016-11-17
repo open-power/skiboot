@@ -178,8 +178,7 @@ static void trace_add_dt_props(void)
 	free(prop);
 
 	tmask = (uint64_t)&debug_descriptor.trace_mask;
-	dt_add_property_cells(opal_node, "ibm,opal-trace-mask",
-			      hi32(tmask), lo32(tmask));
+	dt_add_property_u64(opal_node, "ibm,opal-trace-mask", tmask);
 }
 
 static void trace_add_desc(struct trace_info *t, uint64_t size)

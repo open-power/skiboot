@@ -92,7 +92,6 @@ void nx_create_rng_node(struct dt_node *node)
 		return;
 
 	dt_add_property_strings(rng, "compatible", "ibm,power-rng");
-	dt_add_property_cells(rng, "reg", hi32(rng_addr), lo32(rng_addr),
-			      hi32(rng_len), lo32(rng_len));
+	dt_add_property_u64s(rng, "reg", rng_addr, rng_len);
 	dt_add_property_cells(rng, "ibm,chip-id", gcid);
 }

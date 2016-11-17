@@ -2598,10 +2598,8 @@ static void p7ioc_pcie_add_node(struct p7ioc_phb *p)
 
 	/* XXX FIXME: add opal-memwin32, dmawins, etc... */
 	m64b = cleanup_addr(p->m64_base);
-	dt_add_property_cells(np, "ibm,opal-m64-window",
-			      hi32(m64b), lo32(m64b),
-			      hi32(m64b), lo32(m64b),
-			      hi32(PHB_M64_SIZE), lo32(PHB_M64_SIZE));
+	dt_add_property_u64s(np, "ibm,opal-m64-window",
+			      m64b, m64b, PHB_M64_SIZE);
 	dt_add_property_cells(np, "ibm,opal-msi-ports", 256);
 	dt_add_property_cells(np, "ibm,opal-num-pes", 128);
 	dt_add_property_cells(np, "ibm,opal-reserved-pe", 127);

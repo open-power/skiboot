@@ -267,8 +267,7 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 	freq = dt_prop_get_u64_def(dt_root, "nest-frequency", 0);
 	freq /= 4;
 	if (freq)
-		dt_add_property_cells(node, "bus-frequency",
-				      hi32(freq), lo32(freq));
+		dt_add_property_u64(node, "bus-frequency", freq);
 
 	return node;
 }
@@ -806,8 +805,7 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 		u64 freq = be32_to_cpu(p->nest_freq_mhz);
 
 		freq *= 1000000;
-		dt_add_property_cells(dt_root, "nest-frequency",
-				      hi32(freq), lo32(freq));
+		dt_add_property_u64(dt_root, "nest-frequency", freq);
 	}
 }
 

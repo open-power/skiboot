@@ -2902,10 +2902,7 @@ static void phb4_add_properties(struct phb4 *p)
 			      hi32(m32b), lo32(m32b), 0, M32_PCI_SIZE - 0x10000);
 
 	/* XXX FIXME: add opal-memwin32, dmawins, etc... */
-	dt_add_property_cells(np, "ibm,opal-m64-window",
-			      hi32(m64b), lo32(m64b),
-			      hi32(m64b), lo32(m64b),
-			      hi32(m64s), lo32(m64s));
+	dt_add_property_u64s(np, "ibm,opal-m64-window", m64b, m64b, m64s);
 	dt_add_property(np, "ibm,opal-single-pe", NULL, 0);
 	dt_add_property_cells(np, "ibm,opal-num-pes", p->num_pes);
 	dt_add_property_cells(np, "ibm,opal-reserved-pe",

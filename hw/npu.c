@@ -1561,8 +1561,7 @@ static void npu_add_phb_properties(struct npu *p)
 			      NPU_NUM_OF_PES);
 	dt_add_property_cells(np, "ibm,opal-reserved-pe",
 			      0);
-        dt_add_property_cells(np, "ibm,opal-tce-kill",
-			      hi32(tkill), lo32(tkill));
+        dt_add_property_u64(np, "ibm,opal-tce-kill", tkill);
 
 	/* Memory window is exposed as 32-bits non-prefetchable
 	 * one because 64-bits prefetchable one is kind of special

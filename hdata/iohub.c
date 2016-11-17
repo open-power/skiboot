@@ -46,10 +46,8 @@ static void io_add_common(struct dt_node *hn, const struct cechub_io_hub *hub)
 	 * do too complex ranges property parsing
 	 */
 	dt_add_property(hn, "ranges", NULL, 0);
-	dt_add_property_cells(hn, "ibm,gx-bar-1",
-			      hi32(be64_to_cpu(hub->gx_ctrl_bar1)), lo32(be64_to_cpu(hub->gx_ctrl_bar1)));
-	dt_add_property_cells(hn, "ibm,gx-bar-2",
-			      hi32(be64_to_cpu(hub->gx_ctrl_bar2)), lo32(be64_to_cpu(hub->gx_ctrl_bar2)));
+	dt_add_property_u64(hn, "ibm,gx-bar-1", be64_to_cpu(hub->gx_ctrl_bar1));
+	dt_add_property_u64(hn, "ibm,gx-bar-2", be64_to_cpu(hub->gx_ctrl_bar2));
 
 	/* Add presence detect if valid */
 	if (hub->flags & CECHUB_HUB_FLAG_FAB_BR0_PDT)
@@ -240,11 +238,8 @@ static struct dt_node *io_add_phb3(const struct cechub_io_hub *hub,
 		u64 eq1 = be64_to_cpu(hub->phb_lane_eq[index][1]);
 		u64 eq2 = be64_to_cpu(hub->phb_lane_eq[index][2]);
 		u64 eq3 = be64_to_cpu(hub->phb_lane_eq[index][3]);
-		dt_add_property_cells(pbcq, "ibm,lane-eq",
-				      hi32(eq0), lo32(eq0),
-				      hi32(eq1), lo32(eq1),
-				      hi32(eq2), lo32(eq2),
-				      hi32(eq3), lo32(eq3));
+
+		dt_add_property_u64s(pbcq, "ibm,lane-eq", eq0, eq1, eq2, eq3);
 	}
 
 	/* Currently we only create a PBCQ node, the actual PHB nodes

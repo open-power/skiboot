@@ -324,10 +324,7 @@ void set_console(struct con_ops *driver)
 
 void memcons_add_properties(void)
 {
-	uint64_t addr = (u64)&memcons;
-
-	dt_add_property_cells(opal_node, "ibm,opal-memcons",
-			      hi32(addr), lo32(addr));
+	dt_add_property_u64(opal_node, "ibm,opal-memcons", (u64) &memcons);
 }
 
 /*

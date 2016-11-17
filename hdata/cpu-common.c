@@ -104,8 +104,7 @@ struct dt_node * add_core_common(struct dt_node *cpus,
 	freq = ((uint64_t)be32_to_cpu(tb->actual_clock_speed)) * 1000000ul;
 	if (freq <= 0xfffffffful)
 		dt_add_property_cells(cpu, "clock-frequency", freq);
-	dt_add_property_cells(cpu, "ibm,extended-clock-frequency",
-			      hi32(freq), lo32(freq));
+	dt_add_property_u64(cpu, "ibm,extended-clock-frequency", freq);
 
 	/* FIXME: Hardcoding is bad. */
 	dt_add_property_cells(cpu, "timebase-frequency", 512000000);
