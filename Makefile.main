@@ -166,6 +166,7 @@ pflash-coverity:
 	(cd external/pflash; ./build-all-arch.sh)
 
 all: $(SUBDIRS) $(TARGET).lid $(TARGET).lid.xz $(TARGET).map extract-gcov
+all: $(TARGET).lid.stb $(TARGET).lid.xz.stb
 
 OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBFLASH) $(LIBSTB)
 ifeq ($(PORE),1)
@@ -183,6 +184,12 @@ $(TARGET).lid.xz: $(TARGET).lid
 
 $(TARGET).lid: $(TARGET).elf
 	$(call Q,OBJCOPY, $(OBJCOPY) -O binary -S $^ $@, $@)
+
+$(TARGET).lid.stb: $(TARGET).lid libstb/create-container
+	$(call Q,STB-UNSIGNED-CONTAINER,./libstb/create-container $< $@,$@)
+
+$(TARGET).lid.xz.stb: $(TARGET).lid.xz libstb/create-container
+	$(call Q,STB-UNSIGNED-CONTAINER,./libstb/create-container $< $@,$@)
 
 $(TARGET).tmp.elf: $(ALL_OBJS_1) $(TARGET).lds $(KERNEL)
 	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(ALL_OBJS_1) -o $@, $@)

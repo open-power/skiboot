@@ -12,3 +12,7 @@ include $(SRC)/$(LIBSTB_DIR)/drivers/Makefile.inc
 include $(SRC)/$(LIBSTB_DIR)/tss/Makefile.inc
 
 $(LIBSTB): $(LIBSTB_OBJS:%=$(LIBSTB_DIR)/%) $(DRIVERS) $(TSS)
+
+libstb/create-container: libstb/create-container.c
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) \
+	-Wpadded -O0 -g -I$(SRC) -I$(SRC)/include -o $@ $<,$<)
