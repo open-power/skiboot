@@ -40,7 +40,13 @@ static void fsp_op_display_fatal(uint32_t w0, uint32_t w1)
 
 	fsp_fillmsg(&op_msg, FSP_CMD_DISP_SRC_DIRECT, 3, 1, w0, w1);
 
-	fsp_sync_msg(&op_msg, false);
+	/*
+	 * A special way to send a message: it doesn't run pollers.
+	 * This means we can call it while in a poller, which we may
+	 * well be in when we're terminating (and thus displaying a *fatal*
+	 * message on the op-panel).
+	 */
+	fsp_fatal_msg(&op_msg);
 }
 
 void op_display(enum op_severity sev, enum op_module mod, uint16_t code)
