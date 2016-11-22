@@ -799,7 +799,25 @@ int dt_expand_node(struct dt_node *node, const void *fdt, int fdt_node)
 			 * going for now, we may ultimately want to
 			 * assert
 			 */
-			(void)dt_attach_root(node, child);
+			if (!dt_attach_root(node, child))
+	                       /**
+	                         * @fwts-label DTHasDuplicateNodeID
+	                         * @fwts-advice OPAL will parse the Flattened
+				 * Device Tree(FDT), which can be generated
+				 * from different firmware sources. During
+				 * expansion of FDT, OPAL observed a node
+				 * assigned multiple times (a duplicate). This
+				 * indicates either a Hostboot bug *OR*, more
+				 * likely, a bug in the platform XML. Check
+				 * the platform XML for duplicate IDs for
+				 * this type of device. Because of this
+				 * duplicate node, OPAL won't add the hardware
+				 * device found with a duplicate node ID into
+				 * DT, rendering the corresponding device not
+				 * functional.
+	                         */
+				prlog(PR_ERR, "DT: Found duplicate node: %s\n",
+				      child->name);
 			break;
 		case FDT_END:
 			return -1;
