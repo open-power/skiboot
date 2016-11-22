@@ -2485,10 +2485,9 @@ static int64_t phb3_sm_complete_reset(struct phb3 *p)
 		assert(false);
 	}
 
-	/* Mark the PHB as dead and expect it to be removed */
 error:
-	p->state = PHB3_STATE_BROKEN;
-	return OPAL_PARAMETER;
+	p->state = PHB3_STATE_FENCED;
+	return OPAL_HARDWARE;
 }
 
 static int64_t phb3_complete_reset(struct phb *phb, uint8_t assert)
