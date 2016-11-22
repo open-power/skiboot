@@ -1062,6 +1062,7 @@ struct opal_i2c_request {
 enum {
 	OPAL_REBOOT_NORMAL = 0,
 	OPAL_REBOOT_PLATFORM_ERROR,
+	OPAL_REBOOT_FULL_IPL,
 };
 
 /* Argument to OPAL_PCI_TCE_KILL */

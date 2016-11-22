@@ -92,6 +92,9 @@ static int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
 		}
 		disable_fast_reboot("Reboot due to Platform Error");
 		return xscom_trigger_xstop();
+	case OPAL_REBOOT_FULL_IPL:
+		disable_fast_reboot("full IPL reboot requested");
+		return opal_cec_reboot();
 	default:
 		prlog(PR_NOTICE, "OPAL: Unsupported reboot request %d\n", reboot_type);
 		return OPAL_UNSUPPORTED;

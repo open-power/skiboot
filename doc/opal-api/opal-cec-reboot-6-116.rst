@@ -57,6 +57,12 @@ OPAL_REBOOT_PLATFORM_ERROR = 1
 	In absence of 'ibm,sw-checkstop-fir' device property, this function
 	will return with OPAL_UNSUPPORTED and no reboot will be triggered.
 
+OPAL_REBOOT_FULL_IPL = 2
+	Force a full IPL reboot rather than using fast reboot.
+
+	On platforms that don't support fast reboot, this is equivalent to a
+	normal reboot.
+
 Unsupported Reboot type
 	For unsupported reboot type, this function will return with
 	OPAL_UNSUPPORTED and no reboot will be triggered.
