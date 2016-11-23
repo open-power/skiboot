@@ -57,6 +57,7 @@ int tpm_i2c_request_send(int tpm_bus_id, int tpm_dev_addr, int read_write,
 	int rc, waited, retries, timeout;
 	struct i2c_request *req;
 	struct i2c_bus *bus;
+	uint64_t time_to_wait = 0;
 
 	bus = i2c_find_bus_by_id(tpm_bus_id);
 	if (!bus) {
@@ -106,9 +107,12 @@ int tpm_i2c_request_send(int tpm_bus_id, int tpm_dev_addr, int read_write,
 		i2c_queue_req(req);
 
 		do {
-			time_wait_ms(REQ_COMPLETE_POLLING);
-			waited += REQ_COMPLETE_POLLING;
-		} while (waited < timeout && rc == 1);
+			time_to_wait = i2c_run_req(req);
+			if (!time_to_wait)
+				time_to_wait = REQ_COMPLETE_POLLING;
+			time_wait(time_to_wait);
+			waited += time_to_wait;
+		} while (tb_to_msecs(waited) < timeout && rc == 1);
 
 		if (rc == OPAL_I2C_NACK_RCVD)
 			continue;
@@ -117,10 +121,10 @@ int tpm_i2c_request_send(int tpm_bus_id, int tpm_dev_addr, int read_write,
 			break;
 	}
 
-	DBG("%s tpm req op=%x offset=%x buf=%016llx buflen=%d delay=%d/%d,"
+	DBG("%s tpm req op=%x offset=%x buf=%016llx buflen=%d delay=%lu/%d,"
 	    "rc=%d\n",
 	    (rc) ? "!!!!" : "----", req->op, req->offset,
-	    *(uint64_t*) buf, req->rw_len, waited, timeout, rc);
+	    *(uint64_t*) buf, req->rw_len, tb_to_msecs(waited), timeout, rc);
 
 	i2c_free_req(req);
 	if (rc)
