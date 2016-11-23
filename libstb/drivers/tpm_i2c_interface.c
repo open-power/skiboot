@@ -99,11 +99,11 @@ int tpm_i2c_request_send(int tpm_bus_id, int tpm_dev_addr, int read_write,
 	 * since the I2C master's timeout is too short (1ms per byte).
 	 */
 	timeout = (buflen + offset_bytes + 2) * I2C_BYTE_TIMEOUT_MS;
-	i2c_set_req_timeout(req, timeout);
 
 	for (retries = 0; retries <= TPM_MAX_NACK_RETRIES; retries++) {
 		rc = 1;
 		waited = 0;
+		i2c_set_req_timeout(req, timeout);
 		i2c_queue_req(req);
 
 		do {
