@@ -30,9 +30,16 @@
 #define REQ_COMPLETE_POLLING		 5  /* Check if req is complete
 					       in 5ms interval */
 
+struct tpm_i2c_userdata {
+	int rc;
+	bool done;
+};
+
 void tpm_i2c_request_complete(int rc, struct i2c_request *req)
 {
-	*(int*)req->user_data = rc;
+	struct tpm_i2c_userdata *ud = req->user_data;
+	ud->rc = rc;
+	ud->done = true;
 }
 
 /**
@@ -58,6 +65,7 @@ int tpm_i2c_request_send(int tpm_bus_id, int tpm_dev_addr, int read_write,
 	struct i2c_request *req;
 	struct i2c_bus *bus;
 	uint64_t time_to_wait = 0;
+	struct tpm_i2c_userdata ud;
 
 	bus = i2c_find_bus_by_id(tpm_bus_id);
 	if (!bus) {
@@ -91,7 +99,8 @@ int tpm_i2c_request_send(int tpm_bus_id, int tpm_dev_addr, int read_write,
 	req->rw_buf     = (void*) buf;
 	req->rw_len     = buflen;
 	req->completion = tpm_i2c_request_complete;
-	req->user_data = &rc;
+	ud.done = false;
+	req->user_data = &ud;
 
 	/*
 	 * Set the request timeout to 10ms per byte. Otherwise, we get
@@ -101,7 +110,6 @@ int tpm_i2c_request_send(int tpm_bus_id, int tpm_dev_addr, int read_write,
 	timeout = (buflen + offset_bytes + 2) * I2C_BYTE_TIMEOUT_MS;
 
 	for (retries = 0; retries <= TPM_MAX_NACK_RETRIES; retries++) {
-		rc = 1;
 		waited = 0;
 		i2c_set_req_timeout(req, timeout);
 		i2c_queue_req(req);
@@ -112,7 +120,9 @@ int tpm_i2c_request_send(int tpm_bus_id, int tpm_dev_addr, int read_write,
 				time_to_wait = REQ_COMPLETE_POLLING;
 			time_wait(time_to_wait);
 			waited += time_to_wait;
-		} while (tb_to_msecs(waited) < timeout && rc == 1);
+		} while (!ud.done);
+
+		rc = ud.rc;
 
 		if (rc == OPAL_I2C_NACK_RCVD)
 			continue;
