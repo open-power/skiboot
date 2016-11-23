@@ -1064,6 +1064,23 @@ static void p8_i2c_set_request_timeout(struct i2c_request *req,
 	request->timeout = msecs_to_tb(duration);
 }
 
+static uint64_t p8_i2c_run_request(struct i2c_request *req)
+{
+	struct i2c_bus *bus = req->bus;
+	struct p8_i2c_master_port *port =
+		container_of(bus, struct p8_i2c_master_port, bus);
+	struct p8_i2c_master *master = port->master;
+	uint64_t poll_interval = 0;
+
+	lock(&master->lock);
+	p8_i2c_check_status(master);
+	p8_i2c_check_work(master);
+	poll_interval = master->poll_interval;
+	unlock(&master->lock);
+
+	return poll_interval;
+}
+
 static inline uint32_t p8_i2c_get_bit_rate_divisor(uint32_t lb_freq,
 						   uint32_t bus_speed)
 {
@@ -1399,6 +1416,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 		port->bus.alloc_req = p8_i2c_alloc_request;
 		port->bus.free_req = p8_i2c_free_request;
 		port->bus.set_req_timeout = p8_i2c_set_request_timeout;
+		port->bus.run_req = p8_i2c_run_request;
 		i2c_add_bus(&port->bus);
 
 		/* Add OPAL properties to the bus node */
