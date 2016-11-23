@@ -403,6 +403,7 @@ void cpu_process_local_jobs(void)
 	if (cpu == this_cpu()) {
 		prlog_once(PR_DEBUG, "Processing jobs synchronously\n");
 		cpu_process_jobs();
+		opal_run_pollers();
 	}
 }
 
