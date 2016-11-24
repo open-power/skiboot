@@ -86,6 +86,11 @@ struct debug_descriptor {
 };
 extern struct debug_descriptor debug_descriptor;
 
+static inline bool opal_booting(void)
+{
+	return !(debug_descriptor.state_flags & OPAL_BOOT_COMPLETE);
+}
+
 /* Console logging */
 #define PR_EMERG	0
 #define PR_ALERT	1
