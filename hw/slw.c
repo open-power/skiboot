@@ -1242,11 +1242,13 @@ void slw_update_timer_expiry(uint64_t new_target)
 
 	do {
 		/* Grab generation and spin if odd */
+		_xscom_lock();
 		for (;;) {
-			rc = xscom_read(slw_timer_chip, 0xE0006, &gen);
+			rc = _xscom_read(slw_timer_chip, 0xE0006, &gen, false);
 			if (rc) {
 				prerror("SLW: Error %lld reading tmr gen "
 					" count\n", rc);
+				_xscom_unlock();
 				return;
 			}
 			if (!(gen & 1))
@@ -1271,25 +1273,29 @@ void slw_update_timer_expiry(uint64_t new_target)
 				 */
 				prerror("SLW: timer stuck, falling back to OPAL pollers. You will likely have slower I2C and may have experienced increased jitter.\n");
 				prlog(PR_DEBUG, "SLW: Stuck with odd generation !\n");
+				_xscom_unlock();
 				slw_has_timer = false;
 				slw_dump_timer_ffdc();
 				return;
 			}
 		}
 
-		rc = xscom_write(slw_timer_chip, 0x5003A, req);
+		rc = _xscom_write(slw_timer_chip, 0x5003A, req, false);
 		if (rc) {
 			prerror("SLW: Error %lld writing tmr request\n", rc);
+			_xscom_unlock();
 			return;
 		}
 
 		/* Re-check gen count */
-		rc = xscom_read(slw_timer_chip, 0xE0006, &gen2);
+		rc = _xscom_read(slw_timer_chip, 0xE0006, &gen2, false);
 		if (rc) {
 			prerror("SLW: Error %lld re-reading tmr gen "
 				" count\n", rc);
+			_xscom_unlock();
 			return;
 		}
+		_xscom_unlock();
 	} while(gen != gen2);
 
 	/* Check if the timer is working. If at least 1ms has elapsed
