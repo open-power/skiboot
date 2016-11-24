@@ -402,10 +402,20 @@ static uint32_t xscom_decode_chiplet(uint32_t partid, uint64_t *pcb_addr)
 	return gcid;
 }
 
+void _xscom_lock(void)
+{
+	lock(&xscom_lock);
+}
+
+void _xscom_unlock(void)
+{
+	unlock(&xscom_lock);
+}
+
 /*
  * External API
  */
-int xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val)
+int _xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val, bool take_lock)
 {
 	uint32_t gcid;
 	int rc;
@@ -445,7 +455,8 @@ int xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val)
 	}
 
 	/* HW822317 requires us to do global locking */
-	lock(&xscom_lock);
+	if (take_lock)
+		lock(&xscom_lock);
 
 	/* Direct vs indirect access */
 	if (pcb_addr & XSCOM_ADDR_IND_FLAG)
@@ -454,13 +465,14 @@ int xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val)
 		rc = __xscom_read(gcid, pcb_addr & 0x7fffffff, val);
 
 	/* Unlock it */
-	unlock(&xscom_lock);
+	if (take_lock)
+		unlock(&xscom_lock);
 	return rc;
 }
 
 opal_call(OPAL_XSCOM_READ, xscom_read, 3);
 
-int xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val)
+int _xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val, bool take_lock)
 {
 	uint32_t gcid;
 	int rc;
@@ -488,7 +500,8 @@ int xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val)
 	}
 
 	/* HW822317 requires us to do global locking */
-	lock(&xscom_lock);
+	if (take_lock)
+		lock(&xscom_lock);
 
 	/* Direct vs indirect access */
 	if (pcb_addr & XSCOM_ADDR_IND_FLAG)
@@ -497,7 +510,8 @@ int xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val)
 		rc = __xscom_write(gcid, pcb_addr & 0x7fffffff, val);
 
 	/* Unlock it */
-	unlock(&xscom_lock);
+	if (take_lock)
+		unlock(&xscom_lock);
 	return rc;
 }
 opal_call(OPAL_XSCOM_WRITE, xscom_write, 3);
