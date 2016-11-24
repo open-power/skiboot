@@ -870,7 +870,7 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	struct p8_i2c_master_port *port;
 	struct p8_i2c_request *request =
 		container_of(req, struct p8_i2c_request, req);
-	uint64_t cmd, now;
+	uint64_t cmd, now, poll_interval;
 	int64_t rc, tbytes;
 
 	DBG("Starting req %d len=%d addr=%02x (offset=%x)\n",
@@ -975,7 +975,11 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	/* Run a poll timer for boot cases or non-working interrupts
 	 * cases
 	 */
-	now = schedule_timer(&master->poller, master->poll_interval);
+	if (!opal_booting() && master->irq_ok)
+		poll_interval = TIMER_POLL;
+	else
+		poll_interval = master->poll_interval;
+	now = schedule_timer(&master->poller, poll_interval);
 
 	/* Calculate and start timeout */
 	if (request->timeout) {
@@ -1428,15 +1432,14 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 		port++;
 	}
 
-	/* If we have no interrupt, calculate a poll interval,
-	 * otherwise just use a TIMER_POLL timer which will tick
-	 * on OPAL pollers only (which allows us to operate
-	 * during boot before interrupts are functional etc...
+	/* When at runtime and we have the i2c irq, we just use it
+	 * (see p8_i2c_start_request), but in the situation where
+	 * one of those isn't the case (e.g. during boot), we need
+	 * a better poll interval to efficiently crank the i2c machine.
+	 * poll_interval is that interval.
 	 */
-	if (master->irq_ok)
-		master->poll_interval = TIMER_POLL;
-	else
-		master->poll_interval = p8_i2c_get_poll_interval(max_bus_speed);
+	master->poll_interval = (max_bus_speed) ? p8_i2c_get_poll_interval(max_bus_speed) : TIMER_POLL;
+
 	master->byte_timeout = master->irq_ok ?
 		msecs_to_tb(I2C_TIMEOUT_IRQ_MS) :
 		msecs_to_tb(I2C_TIMEOUT_POLL_MS);
