@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-/****************************************************************************
- * THIS DRIVER WAS DEVELOPED BASED ON:
- * https://github.com/open-power/hostboot/blob/master-p8/src/usr/i2c/tpmdd.C
- ****************************************************************************/
-
 #include <timebase.h>
 #include <skiboot.h>
 #include <device.h>
@@ -38,26 +33,26 @@
  * as defined in the TCG PC Client Platform TPM Profile specification, Revision
  * 00.43.
  */
-#define TCG_PTP_TIMEOUT_A	750
-#define TCG_PTP_TIMEOUT_B	2000
-#define TCG_PTP_TIMEOUT_D	30
+#define TPM_TIMEOUT_A	750
+#define TPM_TIMEOUT_B	2000
+#define TPM_TIMEOUT_D	30
 
 /* I2C interface offsets */
-#define NUVOTON_TPM_STS			0x00
-#define NUVOTON_TPM_BURST_COUNT		0x01
-#define NUVOTON_TPM_DATA_FIFO_W		0x20
-#define NUVOTON_TPM_DATA_FIFO_R		0x40
+#define TPM_STS			0x00
+#define TPM_BURST_COUNT		0x01
+#define TPM_DATA_FIFO_W		0x20
+#define TPM_DATA_FIFO_R		0x40
 
 /* Bit masks for the TPM STATUS register */
-#define TCG_PTP_STS_VALID		0x80
-#define TCG_PTP_STS_COMMAND_READY	0x40
-#define TCG_PTP_STS_GO			0x20
-#define TCG_PTP_STS_DATA_AVAIL		0x10
-#define TCG_PTP_STS_EXPECT		0x08
+#define TPM_STS_VALID		0x80
+#define TPM_STS_COMMAND_READY	0x40
+#define TPM_STS_GO		0x20
+#define TPM_STS_DATA_AVAIL	0x10
+#define TPM_STS_EXPECT		0x08
 
 
 /* TPM Driver values */
-#define MAX_STSVALID_POLLS 	5   /* Max poll of 50ms (5*10ms) */
+#define MAX_STSVALID_POLLS 	5
 #define TPM_TIMEOUT_INTERVAL	10
 
 static struct tpm_dev *tpm_device = NULL;
@@ -66,7 +61,7 @@ static int tpm_status_write_byte(uint8_t byte)
 {
 	uint8_t value = byte;
 	return tpm_i2c_request_send(tpm_device->bus_id, tpm_device->xscom_base,
-				    SMBUS_WRITE, NUVOTON_TPM_STS, 1, &value,
+				    SMBUS_WRITE, TPM_STS, 1, &value,
 				    sizeof(value));
 }
 
@@ -77,11 +72,11 @@ static int tpm_read_sts_reg_valid(uint8_t* value)
 	for(polls=0; polls<=MAX_STSVALID_POLLS; polls++) {
 		rc = tpm_i2c_request_send(tpm_device->bus_id,
 					  tpm_device->xscom_base, SMBUS_READ,
-					  NUVOTON_TPM_STS, 1, value, sizeof(uint8_t));
+					  TPM_STS, 1, value, sizeof(uint8_t));
 		if (rc < 0)
 			return rc;
 		if (rc == 0  &&
-		    ((*value & TCG_PTP_STS_VALID) == TCG_PTP_STS_VALID))
+		    ((*value & TPM_STS_VALID) == TPM_STS_VALID))
 			return 0;
 		/* Wait TPM STS register be settled */
 		time_wait_ms(5);
@@ -101,10 +96,10 @@ static bool tpm_is_command_ready(int* rc)
 {
 	uint8_t value = 0;
 	*rc = tpm_i2c_request_send(tpm_device->bus_id, tpm_device->xscom_base,
-				   SMBUS_READ, NUVOTON_TPM_STS, 1, &value,
+				   SMBUS_READ, TPM_STS, 1, &value,
 				   sizeof(value));
 	if (*rc == 0  &&
-	   ((value & TCG_PTP_STS_COMMAND_READY) == TCG_PTP_STS_COMMAND_READY)){
+	   ((value & TPM_STS_COMMAND_READY) == TPM_STS_COMMAND_READY)){
 		DBG("---- TPM is command ready\n");
 		return true;
 	}
@@ -119,18 +114,18 @@ static int tpm_poll_for_command_ready(void)
 	 * outstanding command, so we poll twice
 	 */
 	for (polls=0; polls<2; polls++) {
-		rc = tpm_status_write_byte(TCG_PTP_STS_COMMAND_READY);
+		rc = tpm_status_write_byte(TPM_STS_COMMAND_READY);
 		if (rc < 0) {
 			return rc;
 		}
-		for (delay = 0; delay < TCG_PTP_TIMEOUT_B;
+		for (delay = 0; delay < TPM_TIMEOUT_B;
 		     delay += TPM_TIMEOUT_INTERVAL) {
 			if (tpm_is_command_ready(&rc))
 				return rc;
 			time_wait_ms(TPM_TIMEOUT_INTERVAL);
 		}
 		DBG("--- Command ready polling, delay %d/%d\n",
-		    delay, TCG_PTP_TIMEOUT_B);
+		    delay, TPM_TIMEOUT_B);
 	}
 	/**
 	 * @fwts-label TPMCommandReadyBitTimeout
@@ -147,7 +142,7 @@ static bool tpm_is_expecting(int* rc)
 	uint8_t value = 0;
 	*rc = tpm_read_sts_reg_valid(&value);
 	if (*rc == 0  &&
-	    (( value & TCG_PTP_STS_EXPECT) == TCG_PTP_STS_EXPECT))
+	    (( value & TPM_STS_EXPECT) == TPM_STS_EXPECT))
 		return true;
 	return false;
 }
@@ -159,7 +154,7 @@ static bool tpm_is_data_avail(int* rc)
 	*rc = tpm_read_sts_reg_valid(&value);
 
 	if (*rc == 0 && (( value &
-			   TCG_PTP_STS_DATA_AVAIL) == TCG_PTP_STS_DATA_AVAIL))
+			   TPM_STS_DATA_AVAIL) == TPM_STS_DATA_AVAIL))
 		return true;
 
 	return false;
@@ -169,11 +164,11 @@ static int tpm_poll_for_data_avail(void)
 {
 	int delay, rc;
 
-	for (delay = 0; delay < TCG_PTP_TIMEOUT_A;
+	for (delay = 0; delay < TPM_TIMEOUT_A;
 	     delay += TPM_TIMEOUT_INTERVAL) {
 		if (tpm_is_data_avail(&rc)) {
 			DBG("---- read FIFO. Data available. delay=%d/%d\n",
-			    delay, TCG_PTP_TIMEOUT_A);
+			    delay, TPM_TIMEOUT_A);
 			return rc;
 		}
 		time_wait_ms(TPM_TIMEOUT_INTERVAL);
@@ -185,7 +180,7 @@ static int tpm_poll_for_data_avail(void)
 	 * the TPM device is not functional.
 	 */
 	prlog(PR_ERR, "TPM: read FIFO. Polling timeout, delay=%d/%d\n",
-	      delay, TCG_PTP_TIMEOUT_A);
+	      delay, TPM_TIMEOUT_A);
 	return STB_TPM_TIMEOUT;
 }
 
@@ -194,7 +189,7 @@ static int tpm_read_burst_count(uint8_t* burst_count)
 	int rc = 0;
 	/* In i2C, burstCount is 1 byte */
 	rc = tpm_i2c_request_send(tpm_device->bus_id, tpm_device->xscom_base,
-				  SMBUS_READ, NUVOTON_TPM_BURST_COUNT, 1,
+				  SMBUS_READ, TPM_BURST_COUNT, 1,
 				  burst_count, sizeof(uint8_t));
 	DBG("---- burst_count=%d rc=%d\n", *burst_count, rc);
 	if (rc < 0)
@@ -236,13 +231,13 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 			  (length - curByte) : burst_count);
 		rc = tpm_i2c_request_send(tpm_device->bus_id,
 					  tpm_device->xscom_base,
-					  SMBUS_WRITE, NUVOTON_TPM_DATA_FIFO_W,
+					  SMBUS_WRITE, TPM_DATA_FIFO_W,
 					  1, curBytePtr, tx_len);
 		curByte += tx_len;
 		DBG("%s write FIFO sent %zd bytes."
 		    " burstcount polling delay=%d/%d, rc=%d\n",
 		    (rc) ? "!!!!" : "----", curByte, delay,
-		    TCG_PTP_TIMEOUT_D, rc);
+		    TPM_TIMEOUT_D, rc);
 		delay = 0;
 		if (rc < 0)
 			return rc;
@@ -260,9 +255,9 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 		/* Everything but the last byte sent? */
 		if (curByte >= length)
 			break;
-	} while (delay < TCG_PTP_TIMEOUT_D);
+	} while (delay < TPM_TIMEOUT_D);
 
-	if (delay < TCG_PTP_TIMEOUT_D) {
+	if (delay < TPM_TIMEOUT_D) {
 		/*
 		 *  Send the final byte
 		 */
@@ -281,17 +276,17 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 			rc = tpm_i2c_request_send(tpm_device->bus_id,
 						  tpm_device->xscom_base,
 						  SMBUS_WRITE,
-						  NUVOTON_TPM_DATA_FIFO_W, 1,
+						  TPM_DATA_FIFO_W, 1,
 						  curBytePtr, 1);
 			DBG("%s write FIFO sent last byte, delay=%d/%d,"
 			    " rc=%d\n",
 			    (rc) ? "!!!!" : "----", delay,
-			    TCG_PTP_TIMEOUT_D, rc);
+			    TPM_TIMEOUT_D, rc);
 			break;
-		} while (delay < TCG_PTP_TIMEOUT_D);
+		} while (delay < TPM_TIMEOUT_D);
 	}
 
-	if (delay >= TCG_PTP_TIMEOUT_D) {
+	if (delay >= TPM_TIMEOUT_D) {
 		/**
 		 * @fwts-label TPMWriteBurstcountBitTimeout
 		 * @fwts-advice The burstcount bit of the tpm status register is
@@ -299,7 +294,7 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 		 * increased or the TPM device is not functional.
 		 */
 		prlog(PR_ERR, "TPM: write FIFO, burstcount polling timeout."
-		      " delay=%d/%d\n", delay, TCG_PTP_TIMEOUT_D);
+		      " delay=%d/%d\n", delay, TPM_TIMEOUT_D);
 		return STB_TPM_TIMEOUT;
 	}
 	if (rc == 0) {
@@ -350,7 +345,7 @@ static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 				 * This indicates a bug in the TPM device driver.
 				 */
 				prlog(PR_ERR, "TPM: read FIFO overflow1. delay %d/%d\n",
-				      delay, TCG_PTP_TIMEOUT_D);
+				      delay, TPM_TIMEOUT_D);
 				rc = STB_TPM_OVERFLOW;
 			}
 			/*
@@ -360,22 +355,22 @@ static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 			rc = tpm_i2c_request_send(tpm_device->bus_id,
 						  tpm_device->xscom_base,
 						  SMBUS_READ,
-						  NUVOTON_TPM_DATA_FIFO_R, 1,
+						  TPM_DATA_FIFO_R, 1,
 						  curBytePtr, burst_count);
 			curByte += burst_count;
 			DBG("%s read FIFO. received %zd bytes. burstcount"
 			    " polling delay=%d/%d, rc=%d\n",
 			    (rc) ? "!!!!" : "----", curByte, delay,
-			    TCG_PTP_TIMEOUT_D, rc);
+			    TPM_TIMEOUT_D, rc);
 			delay = 0;
 			if (rc < 0)
 				break;
 			if (!tpm_is_data_avail(&rc))
 				break;
-		} while (delay < TCG_PTP_TIMEOUT_D);
+		} while (delay < TPM_TIMEOUT_D);
 	}
 
-	if (rc == 0 && delay >= TCG_PTP_TIMEOUT_D) {
+	if (rc == 0 && delay >= TPM_TIMEOUT_D) {
 		/**
 		 * @fwts-label TPMReadBurstcountBitTimeout
 		 * @fwts-advice The burstcount bit of the tpm status register is
@@ -384,7 +379,7 @@ static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 		 */
 		prlog(PR_ERR, "TPM: read FIFO, burstcount polling timeout."
 			  " delay=%d/%d\n",
-			  delay, TCG_PTP_TIMEOUT_D);
+			  delay, TPM_TIMEOUT_D);
 		return STB_TPM_TIMEOUT;
 	}
 	if (rc == 0)
@@ -428,7 +423,7 @@ static int tpm_transmit(struct tpm_dev *dev, uint8_t* buf, size_t cmdlen,
 		goto out;
 
 	DBG("step 3/5: write tpmgo\n");
-	rc = tpm_status_write_byte(TCG_PTP_STS_GO);
+	rc = tpm_status_write_byte(TPM_STS_GO);
 	if (rc < 0)
 		goto out;
 
@@ -438,7 +433,7 @@ static int tpm_transmit(struct tpm_dev *dev, uint8_t* buf, size_t cmdlen,
 		goto out;
 
 	DBG("step 5/5: write command ready\n");
-	rc = tpm_status_write_byte(TCG_PTP_STS_COMMAND_READY);
+	rc = tpm_status_write_byte(TPM_STS_COMMAND_READY);
 
 out:
 	DBG("**** tpm_transmit %s, rc=%d ****\n",
