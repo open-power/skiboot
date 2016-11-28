@@ -79,11 +79,15 @@ static bool tpm_check_status(uint8_t status, uint8_t mask, uint8_t expected)
 
 static int tpm_wait_for_command_ready(void)
 {
-	int rc, delay;
+	uint64_t start, stop, now;
+	int rc;
 	uint8_t status;
 
-	for (delay = 0; delay < TPM_TIMEOUT_B;
-	     delay += TPM_TIMEOUT_INTERVAL) {
+	start = mftb();
+	stop = start + msecs_to_tb(TPM_TIMEOUT_B);
+
+	do {
+		now = mftb();
 		rc = tpm_status_read_byte(TPM_STS, &status);
 		if (rc < 0) {
 			/**
@@ -99,12 +103,16 @@ static int tpm_wait_for_command_ready(void)
 		if (tpm_check_status(status,
 				     TPM_STS_COMMAND_READY,
 				     TPM_STS_COMMAND_READY)) {
-			DBG("--- Command ready, delay=%d/%d\n",
-			    delay, TPM_TIMEOUT_B);
+			DBG("--- Command ready, delay=%lu/%d\n",
+			    tb_to_msecs(now-start), TPM_TIMEOUT_B);
 			return 0;
 		}
-		time_wait_ms(TPM_TIMEOUT_INTERVAL);
-	}
+		if (tb_compare(now, stop) == TB_ABEFOREB)
+			time_wait_ms(TPM_TIMEOUT_INTERVAL);
+		else
+			break;
+	} while (1);
+
 	return STB_TPM_TIMEOUT;
 }
 
@@ -173,12 +181,15 @@ static int tpm_wait_for_fifo_status(uint8_t mask, uint8_t expected)
 
 static int tpm_wait_for_data_avail(void)
 {
-	int delay, rc;
+	uint64_t start, stop, now;
 	uint8_t status;
+	int rc;
 
-	for (delay = 0; delay < TPM_TIMEOUT_A;
-	     delay += TPM_TIMEOUT_INTERVAL) {
+	start = mftb();
+	stop = start + msecs_to_tb(TPM_TIMEOUT_A);
 
+	do {
+		now = mftb();
 		rc = tpm_status_read_byte(TPM_STS, &status);
 		if (rc < 0) {
 			/**
@@ -194,36 +205,43 @@ static int tpm_wait_for_data_avail(void)
 		if (tpm_check_status(status,
 				     TPM_STS_VALID | TPM_STS_DATA_AVAIL,
 				     TPM_STS_VALID | TPM_STS_DATA_AVAIL)) {
-			DBG("---- read FIFO. Data available. delay=%d/%d\n",
-			    delay, TPM_TIMEOUT_A);
+			DBG("---- Data available. delay=%lu/%d\n",
+			    tb_to_msecs(now-start), TPM_TIMEOUT_A);
 			return 0;
 		}
-		time_wait_ms(TPM_TIMEOUT_INTERVAL);
-	}
+		if (tb_compare(now, stop) == TB_ABEFOREB)
+			time_wait_ms(TPM_TIMEOUT_INTERVAL);
+		else
+			break;
+	} while (1);
 	/**
 	 * @fwts-label TPMDataAvailBitTimeout
 	 * @fwts-advice The data avail bit of the tpm status register is taking
 	 * longer to be settled. Either the wait time need to be increased or
 	 * the TPM device is not functional.
 	 */
-	prlog(PR_ERR, "NUVOTON: timeout on sts.dataAvail, delay=%d/%d\n",
-	      delay, TPM_TIMEOUT_A);
+	prlog(PR_ERR, "NUVOTON: timeout on sts.dataAvail, delay=%lu/%d\n",
+	      tb_to_msecs(now-start), TPM_TIMEOUT_A);
 	return STB_TPM_TIMEOUT;
 }
 
 static int tpm_read_burst_count(void)
 {
-	int rc, delay;
+	uint64_t start, stop, now;
 	uint8_t burst_count;
+	int rc;
 
+	start = mftb();
+	stop = start + msecs_to_tb(TPM_TIMEOUT_D);
 	burst_count = 0;
-	delay = 0;
+
 	do {
+		now = mftb();
 		/* In i2C, burstCount is 1 byte */
 		rc = tpm_status_read_byte(TPM_BURST_COUNT, &burst_count);
 		if (rc == 0 && burst_count > 0) {
-			DBG("---- burst_count=%d, delay=%d/%d\n", burst_count,
-			    delay, TPM_TIMEOUT_D);
+			DBG("---- burst_count=%d, delay=%lu/%d\n", burst_count,
+			    tb_to_msecs(now-start), TPM_TIMEOUT_D);
 			return (int) burst_count;
 		}
 		if (rc < 0) {
@@ -237,10 +255,11 @@ static int tpm_read_burst_count(void)
 			      "rc=%d\n", rc);
 			return STB_DRIVER_ERROR;
 		}
-		time_wait_ms(TPM_TIMEOUT_INTERVAL);
-		delay += TPM_TIMEOUT_INTERVAL;
-
-	} while (delay < TPM_TIMEOUT_D);
+		if (tb_compare(now, stop) == TB_ABEFOREB)
+			time_wait_ms(TPM_TIMEOUT_INTERVAL);
+		else
+			break;
+	} while (1);
 
 	/**
 	 * @fwts-label TPMBurstCountTimeout
@@ -248,8 +267,8 @@ static int tpm_read_burst_count(void)
 	 * taking longer to be settled. Either the wait time need to be
 	 * increased or the TPM device is not functional.
 	 */
-	prlog(PR_ERR, "NUVOTON: timeout on sts.burstCount, delay=%d/%d\n",
-	      delay, TPM_TIMEOUT_D);
+	prlog(PR_ERR, "NUVOTON: timeout on sts.burstCount, delay=%lu/%d\n",
+	      tb_to_msecs(now-start), TPM_TIMEOUT_D);
 	return STB_TPM_TIMEOUT;
 }
 
