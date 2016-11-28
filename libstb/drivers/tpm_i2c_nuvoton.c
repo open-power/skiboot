@@ -65,6 +65,11 @@ static int tpm_status_write_byte(uint8_t byte)
 				    sizeof(value));
 }
 
+static bool tpm_check_status(uint8_t status, uint8_t mask, uint8_t expected)
+{
+	return ((status & mask) == expected);
+}
+
 static int tpm_read_sts_reg_valid(uint8_t* value)
 {
 	int polls, rc;
@@ -75,8 +80,7 @@ static int tpm_read_sts_reg_valid(uint8_t* value)
 					  TPM_STS, 1, value, sizeof(uint8_t));
 		if (rc < 0)
 			return rc;
-		if (rc == 0  &&
-		    ((*value & TPM_STS_VALID) == TPM_STS_VALID))
+		if (tpm_check_status(*value, TPM_STS_VALID, TPM_STS_VALID))
 			return 0;
 		/* Wait TPM STS register be settled */
 		time_wait_ms(5);
@@ -98,8 +102,10 @@ static bool tpm_is_command_ready(int* rc)
 	*rc = tpm_i2c_request_send(tpm_device->bus_id, tpm_device->xscom_base,
 				   SMBUS_READ, TPM_STS, 1, &value,
 				   sizeof(value));
-	if (*rc == 0  &&
-	   ((value & TPM_STS_COMMAND_READY) == TPM_STS_COMMAND_READY)){
+	if (*rc < 0)
+		false;
+	if (tpm_check_status(value, TPM_STS_COMMAND_READY,
+			     TPM_STS_COMMAND_READY)) {
 		DBG("---- TPM is command ready\n");
 		return true;
 	}
@@ -141,8 +147,9 @@ static bool tpm_is_expecting(int* rc)
 {
 	uint8_t value = 0;
 	*rc = tpm_read_sts_reg_valid(&value);
-	if (*rc == 0  &&
-	    (( value & TPM_STS_EXPECT) == TPM_STS_EXPECT))
+	if (*rc < 0)
+		return false;
+	if (tpm_check_status(value, TPM_STS_EXPECT, TPM_STS_EXPECT))
 		return true;
 	return false;
 }
@@ -152,11 +159,10 @@ static bool tpm_is_data_avail(int* rc)
 	uint8_t value = 0;
 
 	*rc = tpm_read_sts_reg_valid(&value);
-
-	if (*rc == 0 && (( value &
-			   TPM_STS_DATA_AVAIL) == TPM_STS_DATA_AVAIL))
+	if (*rc < 0)
+		return false;
+	if (tpm_check_status(value, TPM_STS_DATA_AVAIL, TPM_STS_DATA_AVAIL))
 		return true;
-
 	return false;
 }
 
