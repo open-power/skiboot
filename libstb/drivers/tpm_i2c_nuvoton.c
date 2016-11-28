@@ -77,30 +77,6 @@ static bool tpm_check_status(uint8_t status, uint8_t mask, uint8_t expected)
 	return ((status & mask) == expected);
 }
 
-static int tpm_read_sts_reg_valid(uint8_t* value)
-{
-	int polls, rc;
-
-	for(polls=0; polls<=MAX_STSVALID_POLLS; polls++) {
-		rc = tpm_status_read_byte(TPM_STS, value);
-		if (rc < 0)
-			return rc;
-		if (tpm_check_status(*value, TPM_STS_VALID, TPM_STS_VALID))
-			return 0;
-		/* Wait TPM STS register be settled */
-		time_wait_ms(5);
-	}
-	value = 0;
-	/**
-	 * @fwts-label TPMValidBitTimeout
-	 * @fwts-advice The valid bit of the tpm status register is taking
-	 * longer to be settled. Either the wait time needs to be increased
-	 * or the TPM device is not functional.
-	 */
-	prlog(PR_ERR, "TPM: valid bit not settled. Timeout.\n");
-	return STB_TPM_TIMEOUT;
-}
-
 static int tpm_wait_for_command_ready(void)
 {
 	int rc, delay;
@@ -168,39 +144,59 @@ static int tpm_set_command_ready(void)
 	return STB_TPM_TIMEOUT;
 }
 
-static bool tpm_is_expecting(int* rc)
+static int tpm_wait_for_fifo_status(uint8_t mask, uint8_t expected)
 {
-	uint8_t value = 0;
-	*rc = tpm_read_sts_reg_valid(&value);
-	if (*rc < 0)
-		return false;
-	if (tpm_check_status(value, TPM_STS_EXPECT, TPM_STS_EXPECT))
-		return true;
-	return false;
+	int retries, rc;
+	uint8_t status;
+
+	for(retries = 0; retries <= MAX_STSVALID_POLLS; retries++) {
+		rc = tpm_status_read_byte(TPM_STS, &status);
+		if (rc < 0) {
+			/**
+			 * @fwts-label TPMReadFifoStatus
+			 * @fwts-advice Either the tpm device or the tpm-i2c
+			 * interface doesn't seem to be working properly. Check
+			 * the return code (rc) for further details.
+			 */
+			prlog(PR_ERR, "NUVOTON: fail to read fifo status: "
+			      "mask %x, expected %x, rc=%d\n", mask, expected,
+			      rc);
+			return STB_DRIVER_ERROR;
+		}
+		if (tpm_check_status(status, mask, expected))
+			return 0;
+		/* Wait TPM STS register be settled */
+		time_wait_ms(5);
+	}
+	return STB_TPM_TIMEOUT;
 }
 
-static bool tpm_is_data_avail(int* rc)
-{
-	uint8_t value = 0;
-
-	*rc = tpm_read_sts_reg_valid(&value);
-	if (*rc < 0)
-		return false;
-	if (tpm_check_status(value, TPM_STS_DATA_AVAIL, TPM_STS_DATA_AVAIL))
-		return true;
-	return false;
-}
-
-static int tpm_poll_for_data_avail(void)
+static int tpm_wait_for_data_avail(void)
 {
 	int delay, rc;
+	uint8_t status;
 
 	for (delay = 0; delay < TPM_TIMEOUT_A;
 	     delay += TPM_TIMEOUT_INTERVAL) {
-		if (tpm_is_data_avail(&rc)) {
+
+		rc = tpm_status_read_byte(TPM_STS, &status);
+		if (rc < 0) {
+			/**
+			 * @fwts-label TPMReadDataAvail
+			 * @fwts-advice Either the tpm device or the tpm-i2c
+			 * interface doesn't seem to be working properly. Check
+			 * the return code (rc) for further details.
+			 */
+			prlog(PR_ERR, "NUVOTON: fail to read sts.dataAvail, "
+			      "rc=%d\n", rc);
+			return STB_DRIVER_ERROR;
+		}
+		if (tpm_check_status(status,
+				     TPM_STS_VALID | TPM_STS_DATA_AVAIL,
+				     TPM_STS_VALID | TPM_STS_DATA_AVAIL)) {
 			DBG("---- read FIFO. Data available. delay=%d/%d\n",
 			    delay, TPM_TIMEOUT_A);
-			return rc;
+			return 0;
 		}
 		time_wait_ms(TPM_TIMEOUT_INTERVAL);
 	}
@@ -210,7 +206,7 @@ static int tpm_poll_for_data_avail(void)
 	 * longer to be settled. Either the wait time need to be increased or
 	 * the TPM device is not functional.
 	 */
-	prlog(PR_ERR, "TPM: read FIFO. Polling timeout, delay=%d/%d\n",
+	prlog(PR_ERR, "NUVOTON: timeout on sts.dataAvail, delay=%d/%d\n",
 	      delay, TPM_TIMEOUT_A);
 	return STB_TPM_TIMEOUT;
 }
@@ -291,14 +287,19 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 		if (rc < 0)
 			return rc;
 
-		if (!tpm_is_expecting(&rc)) {
+		rc = tpm_wait_for_fifo_status(TPM_STS_VALID | TPM_STS_EXPECT,
+					      TPM_STS_VALID | TPM_STS_EXPECT);
+		if (rc == STB_DRIVER_ERROR)
+			return rc;
+		if (rc == STB_TPM_TIMEOUT) {
 			/**
-			 * @fwts-label TPMWriteFifoOverflow1
+			 * @fwts-label TPMWriteFifoNotExpecting
 			 * @fwts-advice The write to the TPM FIFO overflowed,
-			 * the TPM is not expecting more data. This indicates a bug
-			 * in the TPM device driver.
+			 * the TPM is not expecting more data. This indicates a
+			 * bug in the TPM device driver.
 			 */
-			prlog(PR_ERR, "TPM: write FIFO overflow1\n");
+			prlog(PR_ERR, "NUVOTON: write FIFO overflow, not expecting "
+			      "more data\n");
 			return STB_TPM_OVERFLOW;
 		}
 	} while (curByte < length);
@@ -318,20 +319,34 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 	DBG("%s write FIFO sent last byte, rc=%d\n",
 	    (rc) ? "!!!!" : "----", TPM_TIMEOUT_D, rc);
 
-	if (rc == 0) {
-		if (tpm_is_expecting(&rc)) {
-			 /**
-			 * @fwts-label TPMWriteFifoOverflow2
-			 * @fwts-advice The write to the TPM FIFO overflowed.
-			 * It is expecting more data even though we think we
-			 * are done. This indicates a bug in the TPM device
-			 * driver.
-			 */
-			prlog(PR_ERR, "TPM: write FIFO overflow2\n");
-			return STB_TPM_OVERFLOW;
-		}
+	if (rc < 0) {
+		/**
+		 * @fwts-label TPMWriteFifo
+		 * @fwts-advice The tpm-i2c interface doesn't seem to be
+		 * working properly. Check the return code (rc) for
+		 * further details.
+		 */
+		prlog(PR_ERR, "NUVOTON: fail to write fifo (last byte), "
+		      "curByte=%zd, rc=%d\n", curByte, rc);
+		return STB_DRIVER_ERROR;
 	}
-	return rc;
+	rc = tpm_wait_for_fifo_status(TPM_STS_VALID | TPM_STS_EXPECT,
+				      TPM_STS_VALID | TPM_STS_EXPECT);
+	if (rc == STB_DRIVER_ERROR)
+		return rc;
+	if (rc == 0) {
+		 /**
+		 * @fwts-label TPMWriteFifoExpecting
+		 * @fwts-advice The write to the TPM FIFO overflowed.
+		 * It is expecting more data even though we think we
+		 * are done. This indicates a bug in the TPM device
+		 * driver.
+		 */
+		prlog(PR_ERR, "TPM: write FIFO overflow, expecting "
+		      "more data\n");
+		return STB_TPM_OVERFLOW;
+	}
+	return 0;
 }
 
 static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
@@ -341,7 +356,7 @@ static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 	uint8_t* bytePtr = (uint8_t*)buf;
 	uint8_t* curBytePtr = NULL;
 
-	rc = tpm_poll_for_data_avail();
+	rc = tpm_wait_for_data_avail();
 	if (rc < 0)
 		goto error;
 
@@ -377,7 +392,12 @@ static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 		    (rc) ? "!!!!" : "----", curByte, rc);
 		if (rc < 0)
 			goto error;
-	} while (tpm_is_data_avail(&rc));
+		rc = tpm_wait_for_fifo_status(
+					  TPM_STS_VALID | TPM_STS_DATA_AVAIL,
+					  TPM_STS_VALID | TPM_STS_DATA_AVAIL);
+		if (rc == STB_DRIVER_ERROR)
+			goto error;
+	} while (rc == 0);
 
 	*buflen = curByte;
 	return 0;
