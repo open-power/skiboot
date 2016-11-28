@@ -279,8 +279,17 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 		count += bytes;
 		DBG("%s FIFO: %zd bytes written, count=%zd, rc=%d\n",
 		    (rc) ? "!!!!" : "----", bytes, count, rc);
-		if (rc < 0)
-			return rc;
+		if (rc < 0) {
+			/**
+			 * @fwts-label TPMWriteFifo
+			 * @fwts-advice Either the tpm device or the tpm-i2c
+			 * interface doesn't seem to be working properly. Check
+			 * the return code (rc) for further details.
+			 */
+			prlog(PR_ERR, "NUVOTON: fail to write fifo, "
+			      "count=%zd, rc=%d\n", count, rc);
+			return STB_DRIVER_ERROR;
+		}
 
 		rc = tpm_wait_for_fifo_status(TPM_STS_VALID | TPM_STS_EXPECT,
 					      TPM_STS_VALID | TPM_STS_EXPECT);
