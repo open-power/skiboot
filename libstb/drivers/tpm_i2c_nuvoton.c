@@ -357,44 +357,38 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 {
 	int rc, burst_count;
-	size_t curByte = 0;
-	uint8_t* bytePtr = (uint8_t*)buf;
-	uint8_t* curBytePtr = NULL;
+	size_t count;
 
 	rc = tpm_wait_for_data_avail();
 	if (rc < 0)
 		goto error;
 
+	count = 0;
 	do {
 		burst_count = tpm_read_burst_count();
 		if (burst_count < 0) {
 			rc = burst_count;
 			goto error;
 		}
-		/* Buffer overflow check */
-		if (curByte + burst_count > *buflen)
-		{
+		if (count + burst_count > *buflen) {
 			 /**
-			 * @fwts-label TPMReadFifoOverflow1
+			 * @fwts-label TPMReadFifoOverflow
 			 * @fwts-advice The read from TPM FIFO overflowed. It is
 			 * expecting more data even though we think we are done.
 			 * This indicates a bug in the TPM device driver.
 			 */
-			prlog(PR_ERR, "TPM: read FIFO overflow1\n");
+			prlog(PR_ERR, "NUVOTON: overflow on fifo read, c=%zd, "
+			      "bc=%d, bl=%zd\n", count, burst_count, *buflen);
 			rc = STB_TPM_OVERFLOW;
 		}
-		/*
-		 *  Read some data
-		 */
-		curBytePtr = &(bytePtr[curByte]);
 		rc = tpm_i2c_request_send(tpm_device->bus_id,
 					  tpm_device->xscom_base,
 					  SMBUS_READ,
 					  TPM_DATA_FIFO_R, 1,
-					  curBytePtr, burst_count);
-		curByte += burst_count;
-		DBG("%s read FIFO. received %zd bytes, rc=%d\n",
-		    (rc) ? "!!!!" : "----", curByte, rc);
+					  &buf[count], burst_count);
+		count += burst_count;
+		DBG("%s FIFO: %d bytes read, count=%zd, rc=%d\n",
+		    (rc) ? "!!!!" : "----", burst_count, count, rc);
 		if (rc < 0)
 			goto error;
 		rc = tpm_wait_for_fifo_status(
@@ -404,7 +398,7 @@ static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 			goto error;
 	} while (rc == 0);
 
-	*buflen = curByte;
+	*buflen = count;
 	return 0;
 
 error:
