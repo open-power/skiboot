@@ -455,8 +455,18 @@ static int tpm_transmit(struct tpm_dev *dev, uint8_t* buf, size_t cmdlen,
 	if (rc < 0)
 		goto out;
 
-	DBG("step 5/5: write command ready\n");
+	DBG("step 5/5: release tpm\n");
 	rc = tpm_status_write_byte(TPM_STS_COMMAND_READY);
+	if (rc < 0) {
+		/**
+		 * @fwts-label TPMReleaseTpm
+		 * @fwts-advice Either the tpm device or the tpm-i2c interface
+		 * doesn't seem to be working properly. Check the return code
+		 * (rc) for further details.
+		 */
+		prlog(PR_ERR, "NUVOTON: fail to release tpm, rc=%d\n", rc);
+		rc = STB_DRIVER_ERROR;
+	}
 
 out:
 	DBG("**** tpm_transmit %s, rc=%d ****\n",
