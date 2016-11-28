@@ -215,22 +215,20 @@ static int tpm_poll_for_data_avail(void)
 	return STB_TPM_TIMEOUT;
 }
 
-static int tpm_read_burst_count(uint8_t* burst_count)
+static int tpm_read_burst_count(void)
 {
 	int rc, delay;
-	uint8_t bc;
+	uint8_t burst_count;
 
+	burst_count = 0;
 	delay = 0;
-	*burst_count = 0;
-
 	do {
 		/* In i2C, burstCount is 1 byte */
-		rc = tpm_status_read_byte(TPM_BURST_COUNT, &bc);
-		if (rc == 0 && bc > 0) {
-			DBG("---- burst_count=%d, delay=%d/%d\n",
+		rc = tpm_status_read_byte(TPM_BURST_COUNT, &burst_count);
+		if (rc == 0 && burst_count > 0) {
+			DBG("---- burst_count=%d, delay=%d/%d\n", burst_count,
 			    delay, TPM_TIMEOUT_D);
-			*burst_count = bc;
-			return 0;
+			return (int) burst_count;
 		}
 		if (rc < 0) {
 			/**
@@ -261,8 +259,7 @@ static int tpm_read_burst_count(uint8_t* burst_count)
 
 static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 {
-	uint8_t burst_count = 0;
-	int rc;
+	int rc, burst_count;
 	size_t curByte = 0;
 	uint8_t* bytePtr = buf;
 	uint8_t* curBytePtr = NULL;
@@ -275,9 +272,9 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 	size_t tx_len = 0;
 
 	do {
-		rc = tpm_read_burst_count(&burst_count);
-		if (rc < 0)
-			return rc;
+		burst_count = tpm_read_burst_count();
+		if (burst_count < 0)
+			return burst_count;
 		/*
 		 * Send in some data
 		 */
@@ -309,9 +306,9 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 	/*
 	 *  Send the final byte
 	 */
-	rc = tpm_read_burst_count(&burst_count);
-	if (rc < 0)
-		return rc;
+	burst_count = tpm_read_burst_count();
+	if (burst_count < 0)
+		return burst_count;
 	curBytePtr = &(bytePtr[curByte]);
 	rc = tpm_i2c_request_send(tpm_device->bus_id,
 				  tpm_device->xscom_base,
@@ -339,8 +336,7 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 
 static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 {
-	int rc;
-	uint8_t burst_count;
+	int rc, burst_count;
 	size_t curByte = 0;
 	uint8_t* bytePtr = (uint8_t*)buf;
 	uint8_t* curBytePtr = NULL;
@@ -350,9 +346,11 @@ static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 		goto error;
 
 	do {
-		rc = tpm_read_burst_count(&burst_count);
-		if (rc < 0)
+		burst_count = tpm_read_burst_count();
+		if (burst_count < 0) {
+			rc = burst_count;
 			goto error;
+		}
 		/* Buffer overflow check */
 		if (curByte + burst_count > *buflen)
 		{
