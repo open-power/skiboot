@@ -65,6 +65,13 @@ static int tpm_status_write_byte(uint8_t byte)
 				    sizeof(value));
 }
 
+static int tpm_status_read_byte(uint8_t offset, uint8_t *byte)
+{
+	return tpm_i2c_request_send(tpm_device->bus_id, tpm_device->xscom_base,
+				    SMBUS_READ, offset, 1, byte,
+				    sizeof(uint8_t));
+}
+
 static bool tpm_check_status(uint8_t status, uint8_t mask, uint8_t expected)
 {
 	return ((status & mask) == expected);
@@ -75,9 +82,7 @@ static int tpm_read_sts_reg_valid(uint8_t* value)
 	int polls, rc;
 
 	for(polls=0; polls<=MAX_STSVALID_POLLS; polls++) {
-		rc = tpm_i2c_request_send(tpm_device->bus_id,
-					  tpm_device->xscom_base, SMBUS_READ,
-					  TPM_STS, 1, value, sizeof(uint8_t));
+		rc = tpm_status_read_byte(TPM_STS, value);
 		if (rc < 0)
 			return rc;
 		if (tpm_check_status(*value, TPM_STS_VALID, TPM_STS_VALID))
@@ -99,9 +104,7 @@ static int tpm_read_sts_reg_valid(uint8_t* value)
 static bool tpm_is_command_ready(int* rc)
 {
 	uint8_t value = 0;
-	*rc = tpm_i2c_request_send(tpm_device->bus_id, tpm_device->xscom_base,
-				   SMBUS_READ, TPM_STS, 1, &value,
-				   sizeof(value));
+	*rc = tpm_status_read_byte(TPM_STS, &value);
 	if (*rc < 0)
 		false;
 	if (tpm_check_status(value, TPM_STS_COMMAND_READY,
@@ -194,9 +197,7 @@ static int tpm_read_burst_count(uint8_t* burst_count)
 {
 	int rc = 0;
 	/* In i2C, burstCount is 1 byte */
-	rc = tpm_i2c_request_send(tpm_device->bus_id, tpm_device->xscom_base,
-				  SMBUS_READ, TPM_BURST_COUNT, 1,
-				  burst_count, sizeof(uint8_t));
+	rc = tpm_status_read_byte(TPM_BURST_COUNT, burst_count);
 	DBG("---- burst_count=%d rc=%d\n", *burst_count, rc);
 	if (rc < 0)
 		*burst_count = 0;
