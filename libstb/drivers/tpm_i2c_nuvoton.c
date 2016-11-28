@@ -256,34 +256,29 @@ static int tpm_read_burst_count(void)
 static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 {
 	int rc, burst_count;
-	size_t curByte = 0;
-	uint8_t* bytePtr = buf;
-	uint8_t* curBytePtr = NULL;
+	size_t count, bytes;
+
 	/*
 	 * We will transfer the command except for the last byte
 	 * that will be transfered separately to allow for
 	 * overflow checking
 	 */
-	size_t length = buflen - 1;
-	size_t tx_len = 0;
-
+	count = 0;
 	do {
 		burst_count = tpm_read_burst_count();
 		if (burst_count < 0)
 			return burst_count;
-		/*
-		 * Send in some data
-		 */
-		curBytePtr = &(bytePtr[curByte]);
-		tx_len = (curByte + burst_count > length ?
-			  (length - curByte) : burst_count);
+
+		bytes = (count + burst_count > buflen - 1 ?
+			  (buflen - 1 - count) : burst_count);
+
 		rc = tpm_i2c_request_send(tpm_device->bus_id,
 					  tpm_device->xscom_base,
 					  SMBUS_WRITE, TPM_DATA_FIFO_W,
-					  1, curBytePtr, tx_len);
-		curByte += tx_len;
-		DBG("%s write FIFO sent %zd bytes, rc=%d\n",
-		    (rc) ? "!!!!" : "----", curByte, TPM_TIMEOUT_D, rc);
+					  1, &buf[count], bytes);
+		count += bytes;
+		DBG("%s FIFO: %zd bytes written, count=%zd, rc=%d\n",
+		    (rc) ? "!!!!" : "----", bytes, count, rc);
 		if (rc < 0)
 			return rc;
 
@@ -302,32 +297,33 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 			      "more data\n");
 			return STB_TPM_OVERFLOW;
 		}
-	} while (curByte < length);
+	} while (count < buflen - 1);
 
 	/*
-	 *  Send the final byte
+	 *  Write the last byte
 	 */
 	burst_count = tpm_read_burst_count();
 	if (burst_count < 0)
 		return burst_count;
-	curBytePtr = &(bytePtr[curByte]);
+
 	rc = tpm_i2c_request_send(tpm_device->bus_id,
 				  tpm_device->xscom_base,
 				  SMBUS_WRITE,
 				  TPM_DATA_FIFO_W, 1,
-				  curBytePtr, 1);
-	DBG("%s write FIFO sent last byte, rc=%d\n",
-	    (rc) ? "!!!!" : "----", TPM_TIMEOUT_D, rc);
+				  &buf[count], 1);
+	count++;
+	DBG("%s FIFO: last byte written, count=%zd, rc=%d\n",
+	    (rc) ? "!!!!" : "----", count, rc);
 
 	if (rc < 0) {
 		/**
-		 * @fwts-label TPMWriteFifo
-		 * @fwts-advice The tpm-i2c interface doesn't seem to be
-		 * working properly. Check the return code (rc) for
-		 * further details.
+		 * @fwts-label TPMWriteFifoLastByte
+		 * @fwts-advice Either the tpm device or the tpm-i2c interface
+		 * doesn't seem to be working properly. Check the return code
+		 * (rc) for further details.
 		 */
 		prlog(PR_ERR, "NUVOTON: fail to write fifo (last byte), "
-		      "curByte=%zd, rc=%d\n", curByte, rc);
+		      "count=%zd, rc=%d\n", count, rc);
 		return STB_DRIVER_ERROR;
 	}
 	rc = tpm_wait_for_fifo_status(TPM_STS_VALID | TPM_STS_EXPECT,
