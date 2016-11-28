@@ -101,48 +101,70 @@ static int tpm_read_sts_reg_valid(uint8_t* value)
 	return STB_TPM_TIMEOUT;
 }
 
-static bool tpm_is_command_ready(int* rc)
+static int tpm_wait_for_command_ready(void)
 {
-	uint8_t value = 0;
-	*rc = tpm_status_read_byte(TPM_STS, &value);
-	if (*rc < 0)
-		false;
-	if (tpm_check_status(value, TPM_STS_COMMAND_READY,
-			     TPM_STS_COMMAND_READY)) {
-		DBG("---- TPM is command ready\n");
-		return true;
+	int rc, delay;
+	uint8_t status;
+
+	for (delay = 0; delay < TPM_TIMEOUT_B;
+	     delay += TPM_TIMEOUT_INTERVAL) {
+		rc = tpm_status_read_byte(TPM_STS, &status);
+		if (rc < 0) {
+			/**
+			 * @fwts-label TPMReadCmdReady
+			 * @fwts-advice Either the tpm device or the tpm-i2c
+			 * interface doesn't seem to be working properly. Check
+			 * the return code (rc) for further details.
+			 */
+			prlog(PR_ERR, "NUVOTON: fail to read sts.commandReady, "
+			      "rc=%d\n", rc);
+			return STB_DRIVER_ERROR;
+		}
+		if (tpm_check_status(status,
+				     TPM_STS_COMMAND_READY,
+				     TPM_STS_COMMAND_READY)) {
+			DBG("--- Command ready, delay=%d/%d\n",
+			    delay, TPM_TIMEOUT_B);
+			return 0;
+		}
+		time_wait_ms(TPM_TIMEOUT_INTERVAL);
 	}
-	return false;
+	return STB_TPM_TIMEOUT;
 }
 
-static int tpm_poll_for_command_ready(void)
+static int tpm_set_command_ready(void)
 {
-	int rc, polls, delay;
+	int rc, retries;
 	/*
 	 * The first write to command ready may just abort an
 	 * outstanding command, so we poll twice
 	 */
-	for (polls=0; polls<2; polls++) {
+	for (retries = 0; retries < 2; retries++) {
 		rc = tpm_status_write_byte(TPM_STS_COMMAND_READY);
 		if (rc < 0) {
-			return rc;
+			/**
+			 * @fwts-label TPMWriteCmdReady
+			 * @fwts-advice Either the tpm device or the tpm-i2c
+			 * interface doesn't seem to be working properly. Check
+			 * the return code (rc) for further details.
+			 */
+			prlog(PR_ERR, "NUVOTON: fail to write sts.commandReady, "
+			      "rc=%d\n", rc);
+			return STB_DRIVER_ERROR;
 		}
-		for (delay = 0; delay < TPM_TIMEOUT_B;
-		     delay += TPM_TIMEOUT_INTERVAL) {
-			if (tpm_is_command_ready(&rc))
-				return rc;
-			time_wait_ms(TPM_TIMEOUT_INTERVAL);
-		}
-		DBG("--- Command ready polling, delay %d/%d\n",
-		    delay, TPM_TIMEOUT_B);
+		rc = tpm_wait_for_command_ready();
+		if (rc == STB_TPM_TIMEOUT)
+			continue;
+		return rc;
 	}
 	/**
-	 * @fwts-label TPMCommandReadyBitTimeout
+	 * @fwts-label TPMCmdReadyTimeout
 	 * @fwts-advice The command ready bit of the tpm status register is
 	 * taking longer to be settled. Either the wait time need to be
 	 * increased or the TPM device is not functional.
 	 */
-	prlog(PR_ERR, "TPM: command ready polling timeout\n");
+	prlog(PR_ERR, "NUVOTON: timeout on sts.commandReady, delay > %d\n",
+	      2*TPM_TIMEOUT_B);
 	return STB_TPM_TIMEOUT;
 }
 
@@ -415,14 +437,10 @@ static int tpm_transmit(struct tpm_dev *dev, uint8_t* buf, size_t cmdlen,
 	    __func__, dev->bus_id, dev->xscom_base, *(uint64_t*) buf,
 	    cmdlen, *buflen);
 
-	DBG("step 1/5: check command ready\n");
-	if (!tpm_is_command_ready(&rc)) {
-		if (rc < 0)
-			goto out;
-		rc = tpm_poll_for_command_ready();
-		if (rc < 0)
-			goto out;
-	}
+	DBG("step 1/5: set command ready\n");
+	rc = tpm_set_command_ready();
+	if (rc < 0)
+		goto out;
 
 	DBG("step 2/5: write FIFO\n");
 	rc = tpm_write_fifo(buf, cmdlen);
