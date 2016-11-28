@@ -389,8 +389,18 @@ static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 		count += burst_count;
 		DBG("%s FIFO: %d bytes read, count=%zd, rc=%d\n",
 		    (rc) ? "!!!!" : "----", burst_count, count, rc);
-		if (rc < 0)
+		if (rc < 0) {
+			/**
+			 * @fwts-label TPMReadFifo
+			 * @fwts-advice Either the tpm device or the tpm-i2c interface
+			 * doesn't seem to be working properly. Check the return code
+			 * (rc) for further details.
+			 */
+			prlog(PR_ERR, "NUVOTON: fail to read fifo, count=%zd, "
+			      "rc=%d\n", count, rc);
+			rc = STB_DRIVER_ERROR;
 			goto error;
+		}
 		rc = tpm_wait_for_fifo_status(
 					  TPM_STS_VALID | TPM_STS_DATA_AVAIL,
 					  TPM_STS_VALID | TPM_STS_DATA_AVAIL);
