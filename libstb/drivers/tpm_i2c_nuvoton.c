@@ -217,19 +217,51 @@ static int tpm_poll_for_data_avail(void)
 
 static int tpm_read_burst_count(uint8_t* burst_count)
 {
-	int rc = 0;
-	/* In i2C, burstCount is 1 byte */
-	rc = tpm_status_read_byte(TPM_BURST_COUNT, burst_count);
-	DBG("---- burst_count=%d rc=%d\n", *burst_count, rc);
-	if (rc < 0)
-		*burst_count = 0;
-	return rc;
+	int rc, delay;
+	uint8_t bc;
+
+	delay = 0;
+	*burst_count = 0;
+
+	do {
+		/* In i2C, burstCount is 1 byte */
+		rc = tpm_status_read_byte(TPM_BURST_COUNT, &bc);
+		if (rc == 0 && bc > 0) {
+			DBG("---- burst_count=%d, delay=%d/%d\n",
+			    delay, TPM_TIMEOUT_D);
+			*burst_count = bc;
+			return 0;
+		}
+		if (rc < 0) {
+			/**
+			 * @fwts-label TPMReadBurstCount
+			 * @fwts-advice Either the tpm device or the tpm-i2c
+			 * interface doesn't seem to be working properly. Check
+			 * the return code (rc) for further details.
+			 */
+			prlog(PR_ERR, "NUVOTON: fail to read sts.burstCount, "
+			      "rc=%d\n", rc);
+			return STB_DRIVER_ERROR;
+		}
+		time_wait_ms(TPM_TIMEOUT_INTERVAL);
+		delay += TPM_TIMEOUT_INTERVAL;
+
+	} while (delay < TPM_TIMEOUT_D);
+
+	/**
+	 * @fwts-label TPMBurstCountTimeout
+	 * @fwts-advice The burstcount bit of the tpm status register is
+	 * taking longer to be settled. Either the wait time need to be
+	 * increased or the TPM device is not functional.
+	 */
+	prlog(PR_ERR, "NUVOTON: timeout on sts.burstCount, delay=%d/%d\n",
+	      delay, TPM_TIMEOUT_D);
+	return STB_TPM_TIMEOUT;
 }
 
 static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 {
 	uint8_t burst_count = 0;
-	int delay = 0;
 	int rc;
 	size_t curByte = 0;
 	uint8_t* bytePtr = buf;
@@ -244,14 +276,8 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 
 	do {
 		rc = tpm_read_burst_count(&burst_count);
-		if (rc < 0) {
+		if (rc < 0)
 			return rc;
-		} else if (burst_count == 0) {
-			/* Need to delay to allow the TPM time */
-			time_wait_ms(TPM_TIMEOUT_INTERVAL);
-			delay += TPM_TIMEOUT_INTERVAL;
-			continue;
-		}
 		/*
 		 * Send in some data
 		 */
@@ -263,11 +289,8 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 					  SMBUS_WRITE, TPM_DATA_FIFO_W,
 					  1, curBytePtr, tx_len);
 		curByte += tx_len;
-		DBG("%s write FIFO sent %zd bytes."
-		    " burstcount polling delay=%d/%d, rc=%d\n",
-		    (rc) ? "!!!!" : "----", curByte, delay,
-		    TPM_TIMEOUT_D, rc);
-		delay = 0;
+		DBG("%s write FIFO sent %zd bytes, rc=%d\n",
+		    (rc) ? "!!!!" : "----", curByte, TPM_TIMEOUT_D, rc);
 		if (rc < 0)
 			return rc;
 
@@ -281,51 +304,23 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 			prlog(PR_ERR, "TPM: write FIFO overflow1\n");
 			return STB_TPM_OVERFLOW;
 		}
-		/* Everything but the last byte sent? */
-		if (curByte >= length)
-			break;
-	} while (delay < TPM_TIMEOUT_D);
+	} while (curByte < length);
 
-	if (delay < TPM_TIMEOUT_D) {
-		/*
-		 *  Send the final byte
-		 */
-		delay = 0;
-		do {
-			rc = tpm_read_burst_count(&burst_count);
-			if (rc < 0) {
-				return rc;
-			} else if (burst_count == 0) {
-				/* Need to delay to allow the TPM time */
-				time_wait_ms(TPM_TIMEOUT_INTERVAL);
-				delay += TPM_TIMEOUT_INTERVAL;
-				continue;
-			}
-			curBytePtr = &(bytePtr[curByte]);
-			rc = tpm_i2c_request_send(tpm_device->bus_id,
-						  tpm_device->xscom_base,
-						  SMBUS_WRITE,
-						  TPM_DATA_FIFO_W, 1,
-						  curBytePtr, 1);
-			DBG("%s write FIFO sent last byte, delay=%d/%d,"
-			    " rc=%d\n",
-			    (rc) ? "!!!!" : "----", delay,
-			    TPM_TIMEOUT_D, rc);
-			break;
-		} while (delay < TPM_TIMEOUT_D);
-	}
+	/*
+	 *  Send the final byte
+	 */
+	rc = tpm_read_burst_count(&burst_count);
+	if (rc < 0)
+		return rc;
+	curBytePtr = &(bytePtr[curByte]);
+	rc = tpm_i2c_request_send(tpm_device->bus_id,
+				  tpm_device->xscom_base,
+				  SMBUS_WRITE,
+				  TPM_DATA_FIFO_W, 1,
+				  curBytePtr, 1);
+	DBG("%s write FIFO sent last byte, rc=%d\n",
+	    (rc) ? "!!!!" : "----", TPM_TIMEOUT_D, rc);
 
-	if (delay >= TPM_TIMEOUT_D) {
-		/**
-		 * @fwts-label TPMWriteBurstcountBitTimeout
-		 * @fwts-advice The burstcount bit of the tpm status register is
-		 * taking longer to be settled. Either the wait time need to be
-		 * increased or the TPM device is not functional.
-		 */
-		prlog(PR_ERR, "TPM: write FIFO, burstcount polling timeout."
-		      " delay=%d/%d\n", delay, TPM_TIMEOUT_D);
-		return STB_TPM_TIMEOUT;
-	}
 	if (rc == 0) {
 		if (tpm_is_expecting(&rc)) {
 			 /**
@@ -346,75 +341,51 @@ static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 {
 	int rc;
 	uint8_t burst_count;
-	int delay = 0;
 	size_t curByte = 0;
 	uint8_t* bytePtr = (uint8_t*)buf;
 	uint8_t* curBytePtr = NULL;
 
 	rc = tpm_poll_for_data_avail();
+	if (rc < 0)
+		goto error;
 
-	if (rc == 0) {
-		do {
-			rc = tpm_read_burst_count(&burst_count);
-			if (rc < 0) {
-				break;
-			} else if (burst_count == 0) {
-				/* Need to delay to allow the TPM time */
-				time_wait_ms(TPM_TIMEOUT_INTERVAL);
-				delay += TPM_TIMEOUT_INTERVAL;
-				continue;
-			}
-			/* Buffer overflow check */
-			if (curByte + burst_count > *buflen)
-			{
-				 /**
-				 * @fwts-label TPMReadFifoOverflow1
-				 * @fwts-advice The read from TPM FIFO overflowed. It is
-				 * expecting more data even though we think we are done.
-				 * This indicates a bug in the TPM device driver.
-				 */
-				prlog(PR_ERR, "TPM: read FIFO overflow1. delay %d/%d\n",
-				      delay, TPM_TIMEOUT_D);
-				rc = STB_TPM_OVERFLOW;
-			}
-			/*
-			 *  Read some data
+	do {
+		rc = tpm_read_burst_count(&burst_count);
+		if (rc < 0)
+			goto error;
+		/* Buffer overflow check */
+		if (curByte + burst_count > *buflen)
+		{
+			 /**
+			 * @fwts-label TPMReadFifoOverflow1
+			 * @fwts-advice The read from TPM FIFO overflowed. It is
+			 * expecting more data even though we think we are done.
+			 * This indicates a bug in the TPM device driver.
 			 */
-			curBytePtr = &(bytePtr[curByte]);
-			rc = tpm_i2c_request_send(tpm_device->bus_id,
-						  tpm_device->xscom_base,
-						  SMBUS_READ,
-						  TPM_DATA_FIFO_R, 1,
-						  curBytePtr, burst_count);
-			curByte += burst_count;
-			DBG("%s read FIFO. received %zd bytes. burstcount"
-			    " polling delay=%d/%d, rc=%d\n",
-			    (rc) ? "!!!!" : "----", curByte, delay,
-			    TPM_TIMEOUT_D, rc);
-			delay = 0;
-			if (rc < 0)
-				break;
-			if (!tpm_is_data_avail(&rc))
-				break;
-		} while (delay < TPM_TIMEOUT_D);
-	}
-
-	if (rc == 0 && delay >= TPM_TIMEOUT_D) {
-		/**
-		 * @fwts-label TPMReadBurstcountBitTimeout
-		 * @fwts-advice The burstcount bit of the tpm status register is
-		 * taking longer to be settled. Either the wait time needs to be
-		 * increased or the TPM device is not functional.
+			prlog(PR_ERR, "TPM: read FIFO overflow1\n");
+			rc = STB_TPM_OVERFLOW;
+		}
+		/*
+		 *  Read some data
 		 */
-		prlog(PR_ERR, "TPM: read FIFO, burstcount polling timeout."
-			  " delay=%d/%d\n",
-			  delay, TPM_TIMEOUT_D);
-		return STB_TPM_TIMEOUT;
-	}
-	if (rc == 0)
-		*buflen = curByte;
-	else
-		*buflen = 0;
+		curBytePtr = &(bytePtr[curByte]);
+		rc = tpm_i2c_request_send(tpm_device->bus_id,
+					  tpm_device->xscom_base,
+					  SMBUS_READ,
+					  TPM_DATA_FIFO_R, 1,
+					  curBytePtr, burst_count);
+		curByte += burst_count;
+		DBG("%s read FIFO. received %zd bytes, rc=%d\n",
+		    (rc) ? "!!!!" : "----", curByte, rc);
+		if (rc < 0)
+			goto error;
+	} while (tpm_is_data_avail(&rc));
+
+	*buflen = curByte;
+	return 0;
+
+error:
+	*buflen = 0;
 	return rc;
 }
 
