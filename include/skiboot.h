@@ -292,4 +292,9 @@ extern void enter_pm_state(bool winkle);
 extern uint32_t reset_patch_start;
 extern uint32_t reset_patch_end;
 
+/* Fallback fake NVRAM */
+extern int fake_nvram_info(uint32_t *total_size);
+extern int fake_nvram_start_read(void *dst, uint32_t src, uint32_t len);
+extern int fake_nvram_write(uint32_t offset, void *src, uint32_t size);
+
 #endif /* __SKIBOOT_H */

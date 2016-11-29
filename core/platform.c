@@ -136,6 +136,9 @@ static struct platform generic_platform = {
 	.bmc		= &generic_bmc,
 	.probe          = generic_platform_probe,
 	.init		= generic_platform_init,
+	.nvram_info	= fake_nvram_info,
+	.nvram_start_read = fake_nvram_start_read,
+	.nvram_write	= fake_nvram_write,
 	.cec_power_down	= generic_cec_power_down,
 };
 
