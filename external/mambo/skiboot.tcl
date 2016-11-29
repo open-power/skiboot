@@ -171,16 +171,36 @@ lappend compat "ibm,power8-xscom"
 set compat [of::encode_compat $compat]
 mysim of addprop $xscom_node byte_array "compatible" $compat
 
+# Load any initramfs
+set cpio_start 0x80000000
+set cpio_end $cpio_start
 if { [info exists env(SKIBOOT_INITRD)] } {
     set cpio_file $env(SKIBOOT_INITRD)
     set chosen_node [mysim of find_device /chosen]
     set cpio_size [file size $cpio_file]
-    set cpio_start 0x80000000
     set cpio_end [expr $cpio_start + $cpio_size]
     mysim of addprop $chosen_node int "linux,initrd-start" $cpio_start
     mysim of addprop $chosen_node int "linux,initrd-end"   $cpio_end
     mysim mcm 0 memory fread $cpio_start $cpio_size $cpio_file
 }
+
+# Default NVRAM is blank and will be formatted by Skiboot if no file is provided
+set fake_nvram_start $cpio_end
+set fake_nvram_size 0x40000
+# Load any fake NVRAM file if provided
+if { [info exists env(SKIBOOT_NVRAM)] } {
+    # Set up and write NVRAM file
+    set fake_nvram_file $env(SKIBOOT_NVRAM)
+    set fake_nvram_size [file size $fake_nvram_file]
+    mysim mcm 0 memory fread $fake_nvram_start $fake_nvram_size $fake_nvram_file
+}
+
+# Add device tree entry for NVRAM
+set reserved_memory [mysim of addchild $root_node "reserved-memory" ""]
+set fake_nvram_node [mysim of addchild $reserved_memory "ibm,fake-nvram" ""]
+set reg [list $fake_nvram_start $fake_nvram_size ]
+mysim of addprop $fake_nvram_node array64 "reg" reg
+mysim of addprop $fake_nvram_node empty "name" "ibm,fake-nvram"
 
 # Init CPUs
 set pir 0

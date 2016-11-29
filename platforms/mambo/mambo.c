@@ -281,21 +281,6 @@ static void __attribute__((noreturn)) mambo_terminate(const char *msg __unused)
 	for (;;) ;
 }
 
-static int mambo_nvram_info(uint32_t *total_size)
-{
-	*total_size = 0x100000;
-	return OPAL_SUCCESS;
-}
-
-static int mambo_nvram_start_read(void *dst, uint32_t src, uint32_t len)
-{
-	memset(dst+src, 0, len);
-
-	nvram_read_complete(true);
-
-	return OPAL_SUCCESS;
-}
-
 static int mambo_heartbeat_time(void)
 {
 	/*
@@ -311,9 +296,10 @@ DECLARE_PLATFORM(mambo) = {
 	.init		= mambo_platform_init,
 	.cec_power_down = mambo_cec_power_down,
 	.terminate	= mambo_terminate,
-	.nvram_info		= mambo_nvram_info,
-	.nvram_start_read	= mambo_nvram_start_read,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
 	.heartbeat_time		= mambo_heartbeat_time,
+	.nvram_info		= fake_nvram_info,
+	.nvram_start_read	= fake_nvram_start_read,
+	.nvram_write		= fake_nvram_write,
 };
