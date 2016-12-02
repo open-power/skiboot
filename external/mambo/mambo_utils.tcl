@@ -161,6 +161,25 @@ proc hexdump { location count }    {
     }
 }
 
+proc get_char { addr } {
+    return [expr [mysim memory display "$addr" 1]]
+}
+
+proc p_str { addr { limit 0 } } {
+    set addr_limit 0xfffffffffffffffff
+    if { $limit > 0 } { set addr_limit [expr $limit + $addr] }
+    set s ""
+
+    for {} { [get_char "$addr"] != 0} { incr addr 1 } {
+        # memory display returns hex values with a leading 0x
+        set c [format %c [get_char "$addr"]]
+        set s [string cat "$s" "$c"]
+        if { $addr == $addr_limit } { break }
+    }
+
+    puts "$s"
+}
+
 proc slbv {} {
     puts [mysim cpu 0 display slb valid]
 }
