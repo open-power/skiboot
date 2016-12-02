@@ -22,6 +22,7 @@
 #include "../tpm_chip.h"
 #include "tpm_i2c_interface.h"
 #include "tpm_i2c_nuvoton.h"
+#include <opal-api.h>
 
 //#define DBG(fmt, ...) prlog(PR_DEBUG, fmt, ##__VA_ARGS__)
 #define DBG(fmt, ...)
@@ -507,10 +508,33 @@ static struct tpm_driver tpm_i2c_nuvoton_driver = {
 	.transmit = tpm_transmit,
 };
 
+static int nuvoton_tpm_quirk(void *data, struct i2c_request *req, int *rc)
+{
+	struct tpm_dev *tpm_device = data;
+
+	/* If we're doing i2cdetect on the TPM, pretent we just NACKed
+	 * it due to errata in nuvoton firmware where if we let this
+	 * request go through, it would steal the bus and you'd end up
+	 * in a nice world of pain.
+	 */
+	if (tpm_device->bus_id == req->bus->opal_id &&
+	    tpm_device->xscom_base == req->dev_addr &&
+	    ((req->op == I2C_READ && req->rw_len == 1) ||
+	     (req->op == I2C_WRITE && req->rw_len == 0))) {
+		*rc = OPAL_I2C_TIMEOUT;
+		prlog(PR_DEBUG,"NUVOTON: Squashed i2c probe to avoid locking "
+		      "I2C bus\n");
+		return 1;
+	}
+
+	return 0;
+}
+
 void tpm_i2c_nuvoton_probe(void)
 {
 	struct tpm_dev *tpm_device = NULL;
 	struct dt_node *node = NULL;
+	struct i2c_bus *bus;
 
 	dt_for_each_compatible(dt_root, node, "nuvoton,npct650") {
 		if (!dt_node_is_enabled(node))
@@ -551,6 +575,10 @@ void tpm_i2c_nuvoton_probe(void)
 		if (tpm_register_chip(node, tpm_device,
 				      &tpm_i2c_nuvoton_driver))
 			free(tpm_device);
+		bus = i2c_find_bus_by_id(tpm_device->bus_id);
+		assert(bus->check_quirk == NULL);
+		bus->check_quirk = nuvoton_tpm_quirk;
+		bus->check_quirk_data = tpm_device;
 	}
 	return;
 disable:

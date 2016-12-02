@@ -118,6 +118,11 @@ static int opal_i2c_request(uint64_t async_token, uint32_t bus_id,
 	req->user_data = (void *)(unsigned long)async_token;
 	req->bus = bus;
 
+	if (i2c_check_quirk(req, &rc)) {
+		i2c_free_req(req);
+		return rc;
+	}
+
 	/* Finally, queue the OPAL i2c request and return */
 	rc = i2c_queue_req(req);
 	if (rc) {
