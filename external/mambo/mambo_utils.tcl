@@ -6,28 +6,25 @@ proc p { reg { t 0 } { c 0 } } {
     switch -regexp $reg {
 	^r$ {
             set val [mysim cpu $c thread $t display gprs]
-            puts "$val"
 	}
         ^r[0-9]+$ {
             regexp "r(\[0-9\]*)" $reg dummy num
             set val [mysim cpu $c thread $t display gpr $num]
-            puts "$val"
         }
         ^f[0-9]+$ {
             regexp "f(\[0-9\]*)" $reg dummy num
             set val [mysim cpu $c thread $t display fpr $num]
-            puts "$val"
         }
         ^v[0-9]+$ {
             regexp "v(\[0-9\]*)" $reg dummy num
             set val [mysim cpu $c thread $t display vmxr $num]
-            puts "$val"
         }
         default {
             set val [mysim cpu $c thread $t display spr $reg]
-            puts "$val"
         }
     }
+
+    return "$val"
 }
 
 #
