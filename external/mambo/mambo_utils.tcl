@@ -155,7 +155,18 @@ proc hexdump { location count }    {
         set val2 [format "%08x" [mysim memory display $val 4]]
         set val [expr $i + (4 * 3)]
         set val3 [format "%08x" [mysim memory display $val 4]]
-        set ascii "(none)"
+
+        set ascii ""
+	for { set j 0 } { $j < 16 } { incr j } {
+		set byte [get_char [expr $i + $j]]
+		if { $byte < 0x20 || $byte >= 127} {
+			set c "."
+		} else {
+			set c [format %c $byte]
+		}
+	        set ascii [string cat "$ascii" "$c"]
+	}
+
         set loc [format "0x%016x" $i]
         puts "$loc: $val0 $val1 $val2 $val3 $ascii"
     }
