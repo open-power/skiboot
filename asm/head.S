@@ -523,7 +523,7 @@ enter_pm_state:
 	std	%r1,CPUTHREAD_SAVE_R1(%r13)
 
 	/* Winkle or nap ? */
-	cmpli	%cr0,%r3,0
+	cmpli	%cr0,0,%r3,0
 	bne	1f
 
 	/* nap sequence */
@@ -739,7 +739,7 @@ enter_nap:
 	std	%r0,0(%r1)
 	ptesync
 	ld	%r0,0(%r1)
-1:	cmp	%cr0,%r0,%r0
+1:	cmp	%cr0,0,%r0,%r0
 	bne	1b
 	nap
 	b	.
