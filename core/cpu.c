@@ -1084,6 +1084,15 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 }
 opal_call(OPAL_REINIT_CPUS, opal_reinit_cpus, 1);
 
+#define NMMU_XLAT_CTL_PTCR 0xb
+static int64_t nmmu_set_ptcr(uint64_t chip_id, struct dt_node *node, uint64_t ptcr)
+{
+	uint32_t nmmu_base_addr;
+
+	nmmu_base_addr = dt_get_address(node, 0, NULL);
+	return xscom_write(chip_id, nmmu_base_addr + NMMU_XLAT_CTL_PTCR, ptcr);
+}
+
 /*
  * Setup the the Nest MMU PTCR register for all chips in the system or
  * the specified chip id.
@@ -1091,25 +1100,24 @@ opal_call(OPAL_REINIT_CPUS, opal_reinit_cpus, 1);
  * The PTCR value may be overwritten so long as all users have been
  * quiesced. If it is set to an invalid memory address the system will
  * checkstop if anything attempts to use it.
+ *
+ * Returns OPAL_UNSUPPORTED if no nest mmu was found.
  */
-#define NMMU_CFG_XLAT_CTL_PTCR 0x5012c4b
 static int64_t opal_nmmu_set_ptcr(uint64_t chip_id, uint64_t ptcr)
 {
-	struct proc_chip *chip;
-	int64_t rc = OPAL_PARAMETER;
-
-	if (proc_gen != proc_gen_p9)
-		return OPAL_UNSUPPORTED;
+	struct dt_node *node;
+	int64_t rc = OPAL_UNSUPPORTED;
 
 	if (chip_id == -1ULL)
-		for_each_chip(chip)
-			rc = xscom_write(chip->id, NMMU_CFG_XLAT_CTL_PTCR, ptcr);
-	else {
-		if (!(chip = get_chip(chip_id)))
-			return OPAL_PARAMETER;
-
-		rc = xscom_write(chip->id, NMMU_CFG_XLAT_CTL_PTCR, ptcr);
-	}
+		dt_for_each_compatible(dt_root, node, "ibm,power9-nest-mmu") {
+			chip_id = dt_get_chip_id(node);
+			if ((rc = nmmu_set_ptcr(chip_id, node, ptcr)))
+				return rc;
+		}
+	else
+		dt_for_each_compatible_on_chip(dt_root, node, "ibm,power9-nest-mmu", chip_id)
+			if ((rc = nmmu_set_ptcr(chip_id, node, ptcr)))
+				return rc;
 
 	return rc;
 }
