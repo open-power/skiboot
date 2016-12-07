@@ -163,6 +163,7 @@ DECLARE_PLATFORM(barreleye) = {
 	.probe			= barreleye_probe,
 	.init			= astbmc_init,
 	.pci_get_slot_info	= slot_table_get_slot_info,
+	.pci_probe_complete	= check_all_slot_table,
 	.external_irq		= astbmc_ext_irq_serirq_cpld,
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
