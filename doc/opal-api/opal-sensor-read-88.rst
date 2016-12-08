@@ -2,8 +2,9 @@ OPAL_SENSOR_READ
 ================
 
 The OPAL sensor call reads a sensor data using a unique handler to
-identity the targeted sensor.
-
+identity the targeted sensor. The `sensor_handler` is provided
+via the device tree and is opaque to the OS (although we currently
+do use an encoding scheme).
 
 This call can be asynchronous, when a message needs to be sent to a
 service processor for example.  In this case, the call will return
