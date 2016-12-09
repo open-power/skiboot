@@ -2557,9 +2557,8 @@ static int64_t phb3_creset(struct pci_slot *slot)
 		       slot->state);
 	}
 
-	/* Mark the PHB as dead and expect it to be removed */
 error:
-	p->state = PHB3_STATE_BROKEN;
+	p->state = PHB3_STATE_FENCED;
 	return OPAL_HARDWARE;
 }
 
