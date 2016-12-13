@@ -75,23 +75,6 @@ struct npu_dev_cap {
 	struct list_node	link;
 };
 
-/* Config space access trap. */
-struct npu_dev_trap {
-	struct npu_dev		*dev;
-	uint32_t		start;
-	uint32_t		end;
-	void			*data;
-	int64_t			(*read)(struct npu_dev_trap *trap,
-					uint32_t offset,
-					uint32_t size,
-					uint32_t *data);
-	int64_t			(*write)(struct npu_dev_trap *trap,
-					 uint32_t offset,
-					 uint32_t size,
-					 uint32_t data);
-	struct list_node	link;
-};
-
 struct npu_dev_bar {
 	uint32_t		flags;
 	uint32_t		xscom;
