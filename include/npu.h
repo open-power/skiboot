@@ -30,15 +30,6 @@
 #define NPU_BRICK_TL_BAR_SIZE	0x20000
 #define NPU_BRICK_PL_BAR_SIZE	0x200000
 
-/* The config space of NPU device is emulated. We have different
- * bits to represent config register properties: readonly, write-
- * one-to-clear.
- */
-#define NPU_DEV_CFG_NORMAL      0
-#define NPU_DEV_CFG_RDONLY      1
-#define NPU_DEV_CFG_W1CLR       2
-#define NPU_DEV_CFG_MAX         3
-
 /* Bytes of the emulated NPU PCI device config space. We are
  * emulating PCI express device, not legacy one
  */
