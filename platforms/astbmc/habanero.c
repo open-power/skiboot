@@ -39,11 +39,6 @@ static const struct slot_table_entry habanero_plx_slots[] = {
 		.name = "Network Mezz",
 	},
 	{
-		.etype = st_pluggable_slot,
-		.location = ST_LOC_DEVFN(2,0),
-		.name = "Network Mezz",
-	},
-	{
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(8,0),
 		.name = "Storage Mezz",
