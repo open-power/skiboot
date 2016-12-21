@@ -61,48 +61,6 @@ void force_dummy_console(void)
 						NULL, 0);
 }
 
-
-static int mambo_char = -1;
-
-static bool mambo_con_poll_read(void)
-{
-	if (mambo_char < 0)
-		mambo_char = mambo_console_read();
-	return mambo_char >= 0;
-}
-
-static size_t mambo_con_read(char *buf, size_t len)
-{
-	size_t count = 0;
-
-	while(count < len) {
-		if (!mambo_con_poll_read())
-			break;
-		*(buf++) = mambo_char;
-		mambo_char = -1;
-		count++;
-	}
-	return count;
-}
-
-static size_t mambo_con_write(const char *buf, size_t len)
-{
-	mambo_console_write(buf, len);
-	return len;
-}
-
-static struct con_ops mambo_con_driver = {
-	.poll_read = mambo_con_poll_read,
-	.read = mambo_con_read,
-	.write = mambo_con_write,
-};
-
-void enable_mambo_console(void)
-{
-	prlog(PR_NOTICE, "Enabling Mambo console\n");
-	set_console(&mambo_con_driver);
-}
-
 /*
  * Helper function for adding /ibm,opal/consoles/serial@<xyz> nodes
  */

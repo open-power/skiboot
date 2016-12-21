@@ -211,16 +211,6 @@ static void mambo_rtc_init(void)
 	opal_register(OPAL_RTC_READ, mambo_rtc_read, 2);
 }
 
-int mambo_console_read(void)
-{
-	return callthru0(SIM_READ_CONSOLE_CODE);
-}
-
-void mambo_console_write(const char *buf, size_t count)
-{
-	callthru2(SIM_WRITE_CONSOLE_CODE, (unsigned long)buf, count);
-}
-
 static void mambo_platform_init(void)
 {
 	force_dummy_console();
