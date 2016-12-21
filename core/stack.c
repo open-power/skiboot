@@ -112,9 +112,14 @@ void backtrace(void)
 	__print_backtrace(mfspr(SPR_PIR), bt_buf, ents, NULL, NULL, true);
 }
 
-void __noreturn __nomcount __stack_chk_fail(void);
-void __noreturn __nomcount __stack_chk_fail(void)
+void __nomcount __stack_chk_fail(void);
+void __nomcount __stack_chk_fail(void)
 {
+	static bool failed_once;
+
+	if (failed_once)
+		return;
+	failed_once = true;
 	prlog(PR_EMERG, "Stack corruption detected !\n");
 	abort();
 }
