@@ -114,7 +114,7 @@ void clear_console(void)
  * Optionally can skip flushing to drivers, leaving messages
  * just in memory console.
  */
-bool __flush_console(bool flush_to_drivers)
+static bool __flush_console(bool flush_to_drivers)
 {
 	struct cpu_thread *cpu = this_cpu();
 	size_t req, len = 0;

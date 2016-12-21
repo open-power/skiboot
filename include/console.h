@@ -59,7 +59,6 @@ extern struct lock con_lock;
 extern bool dummy_console_enabled(void);
 extern void force_dummy_console(void);
 extern bool flush_console(void);
-extern bool __flush_console(bool flush_to_drivers);
 extern void set_console(struct con_ops *driver);
 
 extern void console_complete_flush(void);

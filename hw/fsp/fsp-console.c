@@ -751,7 +751,7 @@ void fsp_console_poll(void *data __unused)
 				continue;
 			}
 			if (fs->log_port) {
-				__flush_console(true);
+				flush_console();
 				opal_update_pending_evt(fs->irq, 0);
 			} else {
 #ifdef OPAL_DEBUG_CONSOLE_POLL
