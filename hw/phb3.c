@@ -1703,6 +1703,8 @@ static int64_t phb3_msi_set_xive(struct irq_source *is, uint32_t isn,
 	    ive_num > PHB3_MSI_IRQ_MAX)
 		return OPAL_PARAMETER;
 
+	phb_lock(&p->phb);
+
 	/*
 	 * We need strip the link from server. As Milton told
 	 * me, the server is assigned as follows and the left
@@ -1764,6 +1766,8 @@ static int64_t phb3_msi_set_xive(struct irq_source *is, uint32_t isn,
 		out_be64(p->regs + PHB_IVC_UPDATE, ivc);
 	}
 
+	phb_unlock(&p->phb);
+
 	return OPAL_SUCCESS;
 }
 
@@ -1814,6 +1818,8 @@ static int64_t phb3_lsi_set_xive(struct irq_source *is, uint32_t isn,
 	lxive = SETFIELD(IODA2_LXIVT_SERVER, 0ul, server);
 	lxive = SETFIELD(IODA2_LXIVT_PRIORITY, lxive, prio);
 
+	phb_lock(&p->phb);
+
 	/*
 	 * We cache the arguments because we have to mangle
 	 * it in order to hijack 3 bits of priority to extend
@@ -1828,6 +1834,8 @@ static int64_t phb3_lsi_set_xive(struct irq_source *is, uint32_t isn,
 	lxive = SETFIELD(IODA2_LXIVT_SERVER, lxive, server);
 	lxive = SETFIELD(IODA2_LXIVT_PRIORITY, lxive, prio);
 	out_be64(p->regs + PHB_IODA_DATA0, lxive);
+
+	phb_unlock(&p->phb);
 
 	return OPAL_SUCCESS;
 }
