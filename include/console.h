@@ -79,7 +79,10 @@ struct opal_con_ops {
 extern bool dummy_console_enabled(void);
 extern void force_dummy_console(void);
 extern bool flush_console(void);
+
 extern void set_console(struct con_ops *driver);
+extern void set_opal_console(struct opal_con_ops *driver);
+extern void init_opal_console(void);
 
 extern void console_complete_flush(void);
 

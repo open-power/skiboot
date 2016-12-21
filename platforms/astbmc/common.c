@@ -138,8 +138,7 @@ void astbmc_init(void)
 	ipmi_set_fw_progress_sensor(IPMI_FW_MOTHERBOARD_INIT);
 
 	/* Setup UART console for use by Linux via OPAL API */
-	if (!dummy_console_enabled())
-		uart_setup_opal_console();
+	set_opal_console(&uart_opal_con);
 }
 
 int64_t astbmc_ipmi_power_down(uint64_t request)

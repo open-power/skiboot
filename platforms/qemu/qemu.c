@@ -79,8 +79,7 @@ static void qemu_ipmi_setenables(void)
 static void qemu_init(void)
 {
 	/* Setup UART console for use by Linux via OPAL API */
-	if (!dummy_console_enabled())
-		uart_setup_opal_console();
+	set_opal_console(&uart_opal_con);
 
 	/* Setup LPC RTC and use it as time source. Call after
 	 * chiptod_init()

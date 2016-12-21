@@ -896,9 +896,8 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Secure/Trusted Boot init. We look for /ibm,secureboot in DT */
 	stb_init();
 
-	/* Setup dummy console nodes if it's enabled */
-	if (dummy_console_enabled())
-		dummy_console_add_nodes();
+	/* Install the OPAL Console handlers */
+	init_opal_console();
 
 	/* Init SLW related stuff, including fastsleep */
 	slw_init();

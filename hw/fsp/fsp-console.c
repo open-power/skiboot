@@ -384,7 +384,7 @@ static void fsp_close_vserial(struct fsp_msg *msg)
 		set_console(NULL);
 	}
 #endif
-	
+
 	lock(&fsp_con_lock);
 	if (fs->open) {
 		fs->open = false;
@@ -783,11 +783,6 @@ void fsp_console_init(void)
 	if (!fsp_present())
 		return;
 
-	opal_register(OPAL_CONSOLE_READ, fsp_console_read, 3);
-	opal_register(OPAL_CONSOLE_WRITE_BUFFER_SPACE,
-		      fsp_console_write_buffer_space, 2);
-	opal_register(OPAL_CONSOLE_WRITE, fsp_console_write, 3);
-
 	/* Wait until we got the intf query before moving on */
 	while (!got_intf_query)
 		opal_run_pollers();
@@ -816,6 +811,8 @@ void fsp_console_init(void)
 	}
 
 	op_display(OP_LOG, OP_MOD_FSPCON, 0x0005);
+
+	set_opal_console(&fsp_opal_con);
 }
 
 static int64_t fsp_console_flush(int64_t terminal __unused)

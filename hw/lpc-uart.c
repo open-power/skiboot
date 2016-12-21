@@ -450,13 +450,6 @@ void uart_setup_opal_console(void)
 	/* Allocate an input buffer */
 	in_buf = zalloc(IN_BUF_SIZE);
 	out_buf = zalloc(OUT_BUF_SIZE);
-	prlog(PR_DEBUG, "UART: Enabled as OS console\n");
-
-	/* Register OPAL APIs */
-	opal_register(OPAL_CONSOLE_READ, uart_opal_read, 3);
-	opal_register(OPAL_CONSOLE_WRITE_BUFFER_SPACE,
-		      uart_opal_write_buffer_space, 2);
-	opal_register(OPAL_CONSOLE_WRITE, uart_opal_write, 3);
 
 	opal_add_poller(uart_console_poll, NULL);
 }

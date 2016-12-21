@@ -114,9 +114,7 @@ static bool generic_platform_probe(void)
 static void generic_platform_init(void)
 {
 	if (uart_enabled())
-		uart_setup_opal_console();
-	else
-		force_dummy_console();
+		set_opal_console(&uart_opal_con);
 
 	/* Enable a BT interface if we find one too */
 	bt_init();

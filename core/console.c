@@ -31,7 +31,12 @@ static char *con_buf = (char *)INMEM_CON_START;
 static size_t con_in;
 static size_t con_out;
 static bool con_wrapped;
+
+/* Internal console driver ops */
 static struct con_ops *con_driver;
+
+/* External (OPAL) console driver ops */
+static struct opal_con_ops *opal_con_driver = &dummy_opal_con;
 
 static struct lock con_lock = LOCK_UNLOCKED;
 
@@ -303,11 +308,56 @@ void console_complete_flush(void)
 	}
 }
 
+/*
+ * set_console()
+ *
+ * This sets the driver used internally by Skiboot. This is different to the
+ * OPAL console driver.
+ */
 void set_console(struct con_ops *driver)
 {
 	con_driver = driver;
 	if (driver)
 		flush_console();
+}
+
+/*
+ * set_opal_console()
+ *
+ * Configure the console driver to handle the console provided by the OPAL API.
+ * They are different to the above in that they are typically buffered, and used
+ * by the host OS rather than skiboot.
+ */
+static bool opal_cons_init = false;
+
+void set_opal_console(struct opal_con_ops *driver)
+{
+	assert(!opal_cons_init);
+	opal_con_driver = driver;
+}
+
+void init_opal_console(void)
+{
+	assert(!opal_cons_init);
+	opal_cons_init = true;
+
+	if (dummy_console_enabled() && opal_con_driver != &dummy_opal_con) {
+		prlog(PR_WARNING, "OPAL: Dummy console forced, %s ignored\n",
+		      opal_con_driver->name);
+
+		opal_con_driver = &dummy_opal_con;
+	}
+
+	prlog(PR_NOTICE, "OPAL: Using %s\n", opal_con_driver->name);
+
+	if (opal_con_driver->init)
+		opal_con_driver->init();
+
+	opal_register(OPAL_CONSOLE_READ, opal_con_driver->read, 3);
+	opal_register(OPAL_CONSOLE_WRITE, opal_con_driver->write, 3);
+	opal_register(OPAL_CONSOLE_FLUSH, opal_con_driver->flush, 1);
+	opal_register(OPAL_CONSOLE_WRITE_BUFFER_SPACE,
+			opal_con_driver->space, 2);
 }
 
 void memcons_add_properties(void)
@@ -336,7 +386,6 @@ static int64_t dummy_console_write(int64_t term_number, int64_t *length,
 
 	return OPAL_SUCCESS;
 }
-opal_call(OPAL_CONSOLE_WRITE, dummy_console_write, 3);
 
 static int64_t dummy_console_write_buffer_space(int64_t term_number,
 						int64_t *length)
@@ -352,7 +401,6 @@ static int64_t dummy_console_write_buffer_space(int64_t term_number,
 
 	return OPAL_SUCCESS;
 }
-opal_call(OPAL_CONSOLE_WRITE_BUFFER_SPACE, dummy_console_write_buffer_space, 2);
 
 static int64_t dummy_console_read(int64_t term_number, int64_t *length,
 				  uint8_t *buffer)
@@ -368,7 +416,6 @@ static int64_t dummy_console_read(int64_t term_number, int64_t *length,
 
 	return OPAL_SUCCESS;
 }
-opal_call(OPAL_CONSOLE_READ, dummy_console_read, 3);
 
 static int64_t dummy_console_flush(int64_t term_number __unused)
 {
