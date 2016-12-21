@@ -70,6 +70,7 @@ endif
 
 CFLAGS := -fno-strict-aliasing -pie -mbig-endian -m64
 CFLAGS += -Wl,--oformat,elf64-powerpc
+CFLAGS += -ffixed-r13
 CFLAGS += $(call try-cflag,$(CC),-mabi=elfv1)
 CFLAGS += $(call try-cflag,$(CC),-std=gnu11)
 
