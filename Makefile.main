@@ -70,12 +70,18 @@ ifeq ($(SKIBOOT_GCOV),1)
 CFLAGS += -fprofile-arcs -ftest-coverage -DSKIBOOT_GCOV=1
 endif
 
+# Stack protector disabled for now. gcc tends to use the TLS to
+# access the canary (depending on how gcc was built), and this won't
+# work for us.
+#
 ifeq ($(STACK_CHECK),1)
-CFLAGS += -fstack-protector-all -pg
+#CFLAGS += -fstack-protector-all -pg
+CFLAGS += -fno-stack-protector -pg
 CPPFLAGS += -DSTACK_CHECK_ENABLED
 else
 # XXX Add -fstack-protector-strong on gcc 4.9
-CFLAGS += -fstack-protector
+#CFLAGS += -fstack-protector
+CFLAGS += -fno-stack-protector
 endif
 
 CFLAGS += $(call try-cflag,$(CC),-Wjump-misses-init) \
