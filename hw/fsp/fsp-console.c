@@ -917,37 +917,29 @@ void fsp_console_reset(void)
 
 void fsp_console_add_nodes(void)
 {
+	struct dt_node *opal_event;
 	unsigned int i;
-	struct dt_node *consoles, *opal_event;
 
-	consoles = dt_new(opal_node, "consoles");
-	dt_add_property_cells(consoles, "#address-cells", 1);
-	dt_add_property_cells(consoles, "#size-cells", 0);
+	opal_event = dt_find_by_name(opal_node, "event");
+
 	for (i = 0; i < MAX_SERIAL; i++) {
 		struct fsp_serial *fs = &fsp_serials[i];
 		struct dt_node *fs_node;
-		char name[32];
+		const char *type;
 
 		if (fs->log_port || !fs->available)
 			continue;
 
-		snprintf(name, sizeof(name), "serial@%d", i);
-		fs_node = dt_new(consoles, name);
 		if (fs->rsrc_id == 0xffff)
-			dt_add_property_string(fs_node, "compatible",
-					       "ibm,opal-console-raw");
+			type = "raw";
 		else
-			dt_add_property_string(fs_node, "compatible",
-					       "ibm,opal-console-hvsi");
-		dt_add_property_cells(fs_node,
-				     "#write-buffer-size", SER_BUF_DATA_SIZE);
-		dt_add_property_cells(fs_node, "reg", i);
-		dt_add_property_string(fs_node, "device_type", "serial");
+			type = "hvsi";
+
+		fs_node = add_opal_console_node(i, type, SER_BUF_DATA_SIZE);
 
 		fs->irq = opal_dynamic_event_alloc();
 		dt_add_property_cells(fs_node, "interrupts", ilog2(fs->irq));
 
-		opal_event = dt_find_by_name(opal_node, "event");
 		if (opal_event)
 			dt_add_property_cells(fs_node, "interrupt-parent",
 					      opal_event->phandle);

@@ -103,6 +103,36 @@ void enable_mambo_console(void)
 	set_console(&mambo_con_driver);
 }
 
+/*
+ * Helper function for adding /ibm,opal/consoles/serial@<xyz> nodes
+ */
+struct dt_node *add_opal_console_node(int index, const char *type,
+	uint32_t write_buffer_size)
+{
+	struct dt_node *con, *consoles;
+	char buffer[32];
+
+	consoles = dt_find_by_name(opal_node, "consoles");
+	if (!consoles) {
+		consoles = dt_new(opal_node, "consoles");
+		assert(consoles);
+		dt_add_property_cells(consoles, "#address-cells", 1);
+		dt_add_property_cells(consoles, "#size-cells", 0);
+	}
+
+	con = dt_new_addr(consoles, "serial", index);
+	assert(con);
+
+	snprintf(buffer, sizeof(buffer), "ibm,opal-console-%s", type);
+	dt_add_property_string(con, "compatible", buffer);
+
+	dt_add_property_cells(con, "#write-buffer-size", write_buffer_size);
+	dt_add_property_cells(con, "reg", index);
+	dt_add_property_string(con, "device_type", "serial");
+
+	return con;
+}
+
 void clear_console(void)
 {
 	memset(con_buf, 0, INMEM_CON_LEN);
@@ -396,20 +426,9 @@ static void dummy_console_poll(void *data __unused)
 
 void dummy_console_add_nodes(void)
 {
-	struct dt_node *con, *consoles;
 	struct dt_property *p;
 
-	consoles = dt_new(opal_node, "consoles");
-	assert(consoles);
-	dt_add_property_cells(consoles, "#address-cells", 1);
-	dt_add_property_cells(consoles, "#size-cells", 0);
-
-	con = dt_new_addr(consoles, "serial", 0);
-	assert(con);
-	dt_add_property_string(con, "compatible", "ibm,opal-console-raw");
-	dt_add_property_cells(con, "#write-buffer-size", INMEM_CON_OUT_LEN);
-	dt_add_property_cells(con, "reg", 0);
-	dt_add_property_string(con, "device_type", "serial");
+	add_opal_console_node(0, "raw", memcons.obuf_size);
 
 	/* Mambo might have left a crap one, clear it */
 	p = __dt_find_property(dt_chosen, "linux,stdout-path");

@@ -420,20 +420,8 @@ void uart_setup_linux_passthrough(void)
 
 void uart_setup_opal_console(void)
 {
-	struct dt_node *con, *consoles;
-
-	/* Create OPAL console node */
-	consoles = dt_new(opal_node, "consoles");
-	assert(consoles);
-	dt_add_property_cells(consoles, "#address-cells", 1);
-	dt_add_property_cells(consoles, "#size-cells", 0);
-
-	con = dt_new_addr(consoles, "serial", 0);
-	assert(con);
-	dt_add_property_string(con, "compatible", "ibm,opal-console-raw");
-	dt_add_property_cells(con, "#write-buffer-size", INMEM_CON_OUT_LEN);
-	dt_add_property_cells(con, "reg", 0);
-	dt_add_property_string(con, "device_type", "serial");
+	/* Add the opal console node */
+	add_opal_console_node(0, "raw", OUT_BUF_SIZE);
 
 	dt_add_property_string(dt_chosen, "linux,stdout-path",
 			       "/ibm,opal/consoles/serial@0");

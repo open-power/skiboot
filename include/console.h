@@ -71,4 +71,7 @@ extern void clear_console(void);
 extern void memcons_add_properties(void);
 extern void dummy_console_add_nodes(void);
 
+struct dt_node *add_opal_console_node(int index, const char *type,
+	uint32_t write_buffer_size);
+
 #endif /* __CONSOLE_H */
