@@ -316,7 +316,12 @@ void memcons_add_properties(void)
 }
 
 /*
- * Default OPAL console provided if nothing else overrides it
+ * The default OPAL console.
+ *
+ * In the absence of a "real" OPAL console driver we handle the OPAL_CONSOLE_*
+ * calls by writing into the skiboot log buffer. Reads are a little more
+ * complicated since they can come from the in-memory console (BML) or from the
+ * internal skiboot console driver.
  */
 static int64_t dummy_console_write(int64_t term_number, int64_t *length,
 				   const uint8_t *buffer)
