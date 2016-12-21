@@ -818,6 +818,21 @@ void fsp_console_init(void)
 	op_display(OP_LOG, OP_MOD_FSPCON, 0x0005);
 }
 
+static int64_t fsp_console_flush(int64_t terminal __unused)
+{
+	/* FIXME: There's probably something we can do here... */
+	return OPAL_PARAMETER;
+}
+
+struct opal_con_ops fsp_opal_con = {
+	.name = "FSP OPAL console",
+	.init = NULL, /* all the required setup is done in fsp_console_init() */
+	.read = fsp_console_read,
+	.write = fsp_console_write,
+	.space = fsp_console_write_buffer_space,
+	.flush = fsp_console_flush,
+};
+
 static void flush_all_input(void)
 {
 	unsigned int i;

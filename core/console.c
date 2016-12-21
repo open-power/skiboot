@@ -370,6 +370,11 @@ static int64_t dummy_console_read(int64_t term_number, int64_t *length,
 }
 opal_call(OPAL_CONSOLE_READ, dummy_console_read, 3);
 
+static int64_t dummy_console_flush(int64_t term_number __unused)
+{
+	return OPAL_UNSUPPORTED;
+}
+
 static void dummy_console_poll(void *data __unused)
 {
 	bool has_data = false;
@@ -403,3 +408,12 @@ void dummy_console_add_nodes(void)
 
 	opal_add_poller(dummy_console_poll, NULL);
 }
+
+struct opal_con_ops dummy_opal_con = {
+	.name = "Dummy Console",
+	.init = dummy_console_add_nodes,
+	.read = dummy_console_read,
+	.write = dummy_console_write,
+	.space = dummy_console_write_buffer_space,
+	.flush = dummy_console_flush,
+};

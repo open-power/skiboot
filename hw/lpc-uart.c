@@ -375,6 +375,14 @@ static int64_t uart_opal_read(int64_t term_number, int64_t *length,
 	return OPAL_SUCCESS;
 }
 
+static int64_t uart_opal_flush(int64_t term_number)
+{
+	if (term_number != 0)
+		return OPAL_PARAMETER;
+
+	return uart_con_flush();
+}
+
 static void __uart_do_poll(u8 trace_ctx)
 {
 	if (!in_buf)
@@ -452,6 +460,15 @@ void uart_setup_opal_console(void)
 
 	opal_add_poller(uart_console_poll, NULL);
 }
+
+struct opal_con_ops uart_opal_con = {
+	.name = "OPAL UART console",
+	.init = uart_setup_opal_console,
+	.read = uart_opal_read,
+	.write = uart_opal_write,
+	.space = uart_opal_write_buffer_space,
+	.flush = uart_opal_flush,
+};
 
 static bool uart_init_hw(unsigned int speed, unsigned int clock)
 {
