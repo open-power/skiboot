@@ -51,7 +51,6 @@ struct con_ops {
 	size_t (*write)(const char *buf, size_t len);
 	size_t (*read)(char *buf, size_t len);
 	bool (*poll_read)(void);
-	int64_t (*flush)(void);
 };
 
 struct opal_con_ops {

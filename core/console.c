@@ -283,28 +283,20 @@ ssize_t read(int fd __unused, void *buf, size_t req_count)
 	return count;
 }
 
-static int64_t opal_console_flush(int64_t term_number)
-{
-	if (term_number != 0)
-		return OPAL_PARAMETER;
-
-	if (con_driver == NULL || con_driver->flush == NULL)
-		return OPAL_UNSUPPORTED;
-
-	return con_driver->flush();
-}
-opal_call(OPAL_CONSOLE_FLUSH, opal_console_flush, 1);
-
 /* Helper function to perform a full synchronous flush */
 void console_complete_flush(void)
 {
-	int64_t ret = opal_console_flush(0);
+	/*
+	 * Using term 0 here is a dumb hack that works because the UART
+	 * only has term 0 and the FSP doesn't have an explicit flush method.
+	 */
+	int64_t ret = opal_con_driver->flush(0);
 
 	if (ret == OPAL_UNSUPPORTED || ret == OPAL_PARAMETER)
 		return;
 
 	while (ret != OPAL_SUCCESS) {
-		ret = opal_console_flush(0);
+		ret = opal_con_driver->flush(0);
 	}
 }
 

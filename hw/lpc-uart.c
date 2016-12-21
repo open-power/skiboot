@@ -170,11 +170,8 @@ static size_t uart_con_write(const char *buf, size_t len)
 	return written;
 }
 
-static int64_t uart_con_flush(void);
-
 static struct con_ops uart_con_driver = {
 	.write = uart_con_write,
-	.flush = uart_con_flush
 };
 
 /*
