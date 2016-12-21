@@ -213,7 +213,6 @@ static void mambo_rtc_init(void)
 
 static void mambo_platform_init(void)
 {
-	force_dummy_console();
 	mambo_rtc_init();
 	bogus_disk_flash_init();
 }

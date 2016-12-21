@@ -49,7 +49,7 @@ struct memcons memcons __section(".data.memcons") = {
 	.ibuf_size	= INMEM_CON_IN_LEN,
 };
 
-bool dummy_console_enabled(void)
+static bool dummy_console_enabled(void)
 {
 #ifdef FORCE_DUMMY_CONSOLE
 	return true;
@@ -57,13 +57,6 @@ bool dummy_console_enabled(void)
 	return dt_has_node_property(dt_chosen,
 				    "sapphire,enable-dummy-console", NULL);
 #endif
-}
-
-void force_dummy_console(void)
-{
-	if (!dummy_console_enabled())
-		dt_add_property(dt_chosen, "sapphire,enable-dummy-console",
-						NULL, 0);
 }
 
 /*

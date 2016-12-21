@@ -75,8 +75,6 @@ struct opal_con_ops {
 	int64_t (*flush)(int64_t term_number);
 };
 
-extern bool dummy_console_enabled(void);
-extern void force_dummy_console(void);
 extern bool flush_console(void);
 
 extern void set_console(struct con_ops *driver);
