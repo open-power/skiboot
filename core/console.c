@@ -33,7 +33,7 @@ static size_t con_out;
 static bool con_wrapped;
 static struct con_ops *con_driver;
 
-struct lock con_lock = LOCK_UNLOCKED;
+static struct lock con_lock = LOCK_UNLOCKED;
 
 /* This is mapped via TCEs so we keep it alone in a page */
 struct memcons memcons __section(".data.memcons") = {

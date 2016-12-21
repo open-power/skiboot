@@ -54,8 +54,6 @@ struct con_ops {
 	int64_t (*flush)(void);
 };
 
-extern struct lock con_lock;
-
 extern bool dummy_console_enabled(void);
 extern void force_dummy_console(void);
 extern bool flush_console(void);
