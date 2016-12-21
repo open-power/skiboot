@@ -52,7 +52,7 @@ int main(void)
 	debug_descriptor.console_log_levels = 0x75;
 
 	prlog(PR_EMERG, "Hello World");
-	assert(memcmp(console_buffer, "[    0.000000042,0] Hello World", strlen("[    0.000042,0] Hello World")) == 0);
+	assert(strcmp(console_buffer, "[    0.000000042,0] Hello World") == 0);
 	assert(flushed_to_drivers==true);
 
 	memset(console_buffer, 0, sizeof(console_buffer));
@@ -63,11 +63,11 @@ int main(void)
 
 	// Should not be flushed to console
 	prlog(PR_DEBUG, "Hello World");
-	assert(memcmp(console_buffer, "[    0.000000042,7] Hello World", strlen("[    0.000042,7] Hello World")) == 0);
+	assert(strcmp(console_buffer, "[    0.000000042,7] Hello World") == 0);
 	assert(flushed_to_drivers==false);
 
 	printf("Hello World");
-	assert(memcmp(console_buffer, "[    0.000000042,5] Hello World", strlen("[    0.000042,5] Hello World")) == 0);
+	assert(strcmp(console_buffer, "[    0.000000042,5] Hello World") == 0);
 	assert(flushed_to_drivers==true);
 
 	return 0;
