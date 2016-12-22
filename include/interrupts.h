@@ -266,6 +266,9 @@ struct irq_source;
  * though we might expose it at some point in XIVE native mode for
  * interrupts that require special EOI operations such as possibly
  * the LPC interrupts on P9 that need a latch cleared in the LPCHC.
+ *
+ * The "name" callback returns a name for the interrupt in a new
+ * malloc()'ed block. The caller will free() it. NULL is acceptable.
  */
 struct irq_source_ops {
 	int64_t (*set_xive)(struct irq_source *is, uint32_t isn,
@@ -281,6 +284,7 @@ struct irq_source_ops {
 #define IRQ_ATTR_TARGET_FREQUENT	0x2
 	void (*interrupt)(struct irq_source *is, uint32_t isn);
 	void (*eoi)(struct irq_source *is, uint32_t isn);
+	char *(*name)(struct irq_source *is, uint32_t isn);
 };
 
 struct irq_source {

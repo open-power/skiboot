@@ -198,8 +198,9 @@ uint32_t get_ics_phandle(void)
 void add_opal_interrupts(void)
 {
 	struct irq_source *is;
-	unsigned int i, count = 0;
+	unsigned int i, ns, tns = 0, count = 0;
 	uint32_t *irqs = NULL, isn;
+	char *names = NULL;
 
 	lock(&irq_lock);
 	list_for_each(&irq_sources, is, link) {
@@ -211,8 +212,21 @@ void add_opal_interrupts(void)
 			continue;
 		for (isn = is->start; isn < is->end; isn++) {
 			uint64_t attr = is->ops->attributes(is, isn);
+			char *name;
+
 			if (attr & IRQ_ATTR_TARGET_LINUX)
 				continue;
+			name = is->ops->name ? is->ops->name(is, isn) : NULL;
+			ns = name ? strlen(name) : 0;
+			printf("irq %x name: %s (%d/%d)\n",
+			       isn, name ? name : "<null>", ns, tns);
+			names = realloc(names, tns + ns + 1);
+			if (name) {
+				strcpy(names + tns, name);
+				tns += (ns + 1);
+				free(name);
+			} else
+				names[tns++] = 0;
 			i = count++;
 			irqs = realloc(irqs, 4 * count);
 			irqs[i] = isn;
@@ -227,6 +241,7 @@ void add_opal_interrupts(void)
 	 * handling in Linux can cause problems.
 	 */
 	dt_add_property(opal_node, "opal-interrupts", irqs, count * 4);
+	dt_add_property(opal_node, "opal-interrupts-names", names, tns);
 
 	free(irqs);
 }
