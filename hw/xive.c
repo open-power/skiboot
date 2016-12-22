@@ -251,6 +251,7 @@ struct xive_src {
 
 struct xive {
 	uint32_t	chip_id;
+	uint32_t	block_id;
 	struct dt_node	*x_node;
 	struct dt_node	*m_node;
 
@@ -344,6 +345,21 @@ struct xive {
 	struct xive_src	ipis;
 };
 
+
+/* Block <-> Chip conversions.
+ *
+ * As chipIDs may not be within the range of 16 block IDs supported by XIVE,
+ * we have a 2 way conversion scheme.
+ *
+ * From block to chip, use the global table below.
+ *
+ * From chip to block, a field in struct proc_chip contains the first block
+ * of that chip. For now we only support one block per chip but that might
+ * change in the future
+ */
+#define XIVE_INVALID_CHIP	0xffffffff
+static uint32_t xive_block_to_chip[16];
+
 /* Conversion between GIRQ and block/index.
  *
  * ------------------------------------
@@ -370,8 +386,8 @@ struct xive {
  */
 
 /* For now, it's one chip per block for both VC and PC */
-#define PC_BLK_TO_CHIP(__b)	(__b)
-#define VC_BLK_TO_CHIP(__b)	(__b)
+#define PC_BLK_TO_CHIP(__b)	(xive_block_to_chip[__b])
+#define VC_BLK_TO_CHIP(__b)	(xive_block_to_chip[__b])
 #define GIRQ_TO_CHIP(__isn)	(VC_BLK_TO_CHIP(GIRQ_TO_BLK(__isn)))
 
 /* Routing of physical processors to VPs */
@@ -593,7 +609,7 @@ static void xive_init_eq(struct xive *x __unused, uint32_t vp_idx,
 	eq->w3 = ((uint64_t)backing_page) & 0xffffffff;
 	eq->w2 = (((uint64_t)backing_page)) >> 32 & 0x0fffffff;
 	// IS this right ? Are we limited to 2K VPs per block ? */
-	eq->w6 = SETFIELD(EQ_W6_NVT_BLOCK, 0ul, x->chip_id) |
+	eq->w6 = SETFIELD(EQ_W6_NVT_BLOCK, 0ul, x->block_id) |
 		SETFIELD(EQ_W6_NVT_INDEX, 0ul, vp_idx);
 	eq->w7 = SETFIELD(EQ_W7_F0_PRIORITY, 0ul, 0x07);
 	eieio();
@@ -840,38 +856,38 @@ static bool xive_set_local_tables(struct xive *x)
 	base = SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
 
 	/* Set IVT as direct mode */
-	if (!xive_set_vsd(x, VST_TSEL_IVT, x->chip_id, base |
+	if (!xive_set_vsd(x, VST_TSEL_IVT, x->block_id, base |
 			  (((uint64_t)x->ivt_base) & VSD_ADDRESS_MASK) |
 			  SETFIELD(VSD_TSIZE, 0ull, ilog2(IVT_SIZE) - 12)))
 		return false;
 
 	/* Set SBE as direct mode */
-	if (!xive_set_vsd(x, VST_TSEL_SBE, x->chip_id, base |
+	if (!xive_set_vsd(x, VST_TSEL_SBE, x->block_id, base |
 			  (((uint64_t)x->sbe_base) & VSD_ADDRESS_MASK) |
 			  SETFIELD(VSD_TSIZE, 0ull, ilog2(SBE_SIZE) - 12)))
 		return false;
 
 #ifdef USE_INDIRECT
 	/* Set EQDT as indirect mode with 64K subpages */
-	if (!xive_set_vsd(x, VST_TSEL_EQDT, x->chip_id, base |
+	if (!xive_set_vsd(x, VST_TSEL_EQDT, x->block_id, base |
 			  (((uint64_t)x->eq_ind_base) & VSD_ADDRESS_MASK) |
 			  VSD_INDIRECT | SETFIELD(VSD_TSIZE, 0ull, 4)))
 		return false;
 
 	/* Set VPDT as indirect mode with 64K subpages */
-	if (!xive_set_vsd(x, VST_TSEL_VPDT, x->chip_id, base |
+	if (!xive_set_vsd(x, VST_TSEL_VPDT, x->block_id, base |
 			  (((uint64_t)x->vp_ind_base) & VSD_ADDRESS_MASK) |
 			  VSD_INDIRECT | SETFIELD(VSD_TSIZE, 0ull, 4)))
 		return false;
 #else
 	/* Set EQDT as direct mode */
-	if (!xive_set_vsd(x, VST_TSEL_EQDT, x->chip_id, base |
+	if (!xive_set_vsd(x, VST_TSEL_EQDT, x->block_id, base |
 			  (((uint64_t)x->eq_base) & VSD_ADDRESS_MASK) |
 			  SETFIELD(VSD_TSIZE, 0ull, ilog2(EQT_SIZE) - 12)))
 		return false;
 
 	/* Set VPDT as direct mode */
-	if (!xive_set_vsd(x, VST_TSEL_VPDT, x->chip_id, base |
+	if (!xive_set_vsd(x, VST_TSEL_VPDT, x->block_id, base |
 			  (((uint64_t)x->vp_base) & VSD_ADDRESS_MASK) |
 			  SETFIELD(VSD_TSIZE, 0ull, ilog2(VPT_SIZE) - 12)))
 		return false;
@@ -1061,11 +1077,14 @@ static bool xive_config_init(struct xive *x)
 	xive_regw(x, PC_GLOBAL_CONFIG, val);
 #endif
 
-#ifdef USE_BLOCK_GROUP_MODE
 	val = xive_regr(x, PC_TCTXT_CFG);
+#ifdef USE_BLOCK_GROUP_MODE
 	val |= PC_TCTXT_CFG_BLKGRP_EN | PC_TCTXT_CFG_HARD_CHIPID_BLK;
-	xive_regw(x, PC_TCTXT_CFG, val);
 #endif
+	val |= PC_TCTXT_CHIPID_OVERRIDE;
+	val = SETFIELD(PC_TCTXT_CHIPID, val, x->block_id);
+	xive_regw(x, PC_TCTXT_CFG, val);
+
 	return true;
 }
 
@@ -1081,8 +1100,8 @@ static bool xive_setup_set_xlate(struct xive *x)
 		xive_regw(x, CQ_TDR,
 			  /* IPI type */
 			  (1ull << 62) |
-			  /* block is chip_ID */
-			  (((uint64_t)x->chip_id) << 48) |
+			  /* block ID */
+			  (((uint64_t)x->block_id) << 48) |
 			  /* offset */
 			  (((uint64_t)i) << 32));
 		if (x->last_reg_error)
@@ -1094,8 +1113,8 @@ static bool xive_setup_set_xlate(struct xive *x)
 		xive_regw(x, CQ_TDR,
 			  /* EQ type */
 			  (2ull << 62) |
-			  /* block is chip_ID */
-			  (((uint64_t)x->chip_id) << 48) |
+			  /* block ID */
+			  (((uint64_t)x->block_id) << 48) |
 			  /* offset */
 			  (((uint64_t)i) << 32));
 		if (x->last_reg_error)
@@ -1110,8 +1129,8 @@ static bool xive_setup_set_xlate(struct xive *x)
 		xive_regw(x, CQ_TDR,
 			  /* Valid bit */
 			  (1ull << 63) |
-			  /* block is chip_ID */
-			  (((uint64_t)x->chip_id) << 48) |
+			  /* block ID */
+			  (((uint64_t)x->block_id) << 48) |
 			  /* offset */
 			  (((uint64_t)i) << 32));
 		if (x->last_reg_error)
@@ -1219,7 +1238,7 @@ static bool xive_prealloc_tables(struct xive *x)
 	vp_init_count = INITIAL_VP_COUNT;
 	vp_init_base = INITIAL_VP_BASE;
 #else
-	vp_init_count = x->chip_id == 0 ? INITIAL_BLK0_VP_COUNT : 0;
+	vp_init_count = x->block_id == 0 ? INITIAL_BLK0_VP_COUNT : 0;
 	vp_init_base = INITIAL_BLK0_VP_BASE;
 #endif
 
@@ -1296,7 +1315,7 @@ static void xive_setup_forward_ports(struct xive *x, struct proc_chip *remote_ch
 {
 	struct xive *remote_xive = remote_chip->xive;
 	uint64_t base = SETFIELD(VSD_MODE, 0ull, VSD_MODE_FORWARD);
-	uint32_t remote_id = remote_chip->id;
+	uint32_t remote_id = remote_xive->block_id;
 	uint64_t nport;
 
 	/* ESB(SBE), EAS(IVT) and END(EQ) point to the notify port */
@@ -1657,12 +1676,12 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio,
 	 * IVEs inside an EQ
 	 */
 	if (is_escalation) {
-		xive_eqc_cache_update(x, x->chip_id, GIRQ_TO_IDX(isn),
+		xive_eqc_cache_update(x, x->block_id, GIRQ_TO_IDX(isn),
 				      2, 1, &new_ive, true);
 	} else {
 		sync();
 		ive->w = new_ive;
-		xive_ivc_scrub(x, x->chip_id, GIRQ_TO_IDX(isn));
+		xive_ivc_scrub(x, x->block_id, GIRQ_TO_IDX(isn));
 	}
 
 	unlock(&x->lock);
@@ -1871,9 +1890,15 @@ static void init_one_xive(struct dt_node *np)
 
 	x = zalloc(sizeof(struct xive));
 	assert(x);
+	x->x_node = np;
 	x->xscom_base = dt_get_address(np, 0, NULL);
 	x->chip_id = dt_get_chip_id(np);
-	x->x_node = np;
+
+	/* For now, make block ID and chip ID the same, we'll have to change
+	 * that if chip IDs become too sparse
+	 */
+	x->block_id = x->chip_id;
+	xive_block_to_chip[x->block_id] = x->chip_id;
 	init_lock(&x->lock);
 
 	chip = get_chip(x->chip_id);
@@ -1885,7 +1910,7 @@ static void init_one_xive(struct dt_node *np)
 	/* XXX Consider allocating half as many ESBs than MMIO space
 	 * so that HW sources land outside of ESB space...
 	 */
-	x->int_base	= BLKIDX_TO_GIRQ(x->chip_id, 0);
+	x->int_base	= BLKIDX_TO_GIRQ(x->block_id, 0);
 	x->int_max	= x->int_base + MAX_INT_ENTRIES;
 	x->int_hw_bot	= x->int_max;
 	x->int_ipi_top	= x->int_base;
@@ -2524,14 +2549,28 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 	return OPAL_SUCCESS;
 }
 
+static void xive_init_globals(void)
+{
+	uint32_t i;
+
+	for (i = 0; i < 16; i++)
+		xive_block_to_chip[i] = XIVE_INVALID_CHIP;
+}
+
 void init_xive(void)
 {
 	struct dt_node *np;
 	struct proc_chip *chip;
 	struct cpu_thread *cpu;
+	bool first = true;
 
 	/* Look for xive nodes and do basic inits */
 	dt_for_each_compatible(dt_root, np, "ibm,power9-xive-x") {
+		/* Initialize some global stuff */
+		if (first)
+			xive_init_globals();
+		first = false;
+		/* Create/initialize the xive instance */
 		init_one_xive(np);
 	}
 
