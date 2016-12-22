@@ -807,13 +807,15 @@ static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 		sval = __xive_regr(x, sreg, sregx, NULL);
 		if (!(sval & VC_SCRUB_VALID))
 			break;
-		time_wait_us(1);
+		/* Small delay */
+		time_wait(100);
 	}
 	return 0;
 }
 
 static int64_t xive_ivc_scrub(struct xive *x, uint64_t block, uint64_t idx)
 {
+	/* IVC has no "want_inval" bit, it always invalidates */
 	return __xive_cache_scrub(x, xive_cache_ivc, block, idx, false, false);
 }
 
@@ -849,7 +851,7 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 	if (!light_watch)
 		sval |= VC_EQC_CWATCH_FULL;
 
-	do {
+	for (;;) {
 		/* Write the cache watch spec */
 		__xive_regw(x, sreg, sregx, sval, NULL);
 
@@ -871,21 +873,25 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 		if (start_dword > 0)
 			__xive_regw(x, dreg0, dreg0x, dval0, NULL);
 
-		/* This may not be necessary for light updates (it's possible\
+		/* This may not be necessary for light updates (it's possible
 		 * that a sync in sufficient, TBD). Ensure the above is
 		 * complete and check the status of the watch.
 		 */
 		status = __xive_regr(x, sreg, sregx, NULL);
 
-		/* XXX Add timeout ? */
-
 		/* Bits FULL and CONFLICT are in the same position in
 		 * EQC and VPC
 		 */
-	} while((status & VC_EQC_CWATCH_FULL) &&
-		(status & VC_EQC_CWATCH_CONFLICT));
+		if (!(status & VC_EQC_CWATCH_FULL) ||
+		    !(status & VC_EQC_CWATCH_CONFLICT))
+			break;
+		/* XXX Add timeout ? */
+	}
 
-	return 0;
+	/* Perform a scrub with "want_invalidate" set to false to push the
+	 * cache updates to memory as well
+	 */
+	return __xive_cache_scrub(x, ctype, block, idx, false, false);
 }
 
 static int64_t xive_eqc_cache_update(struct xive *x, uint64_t block,
