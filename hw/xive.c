@@ -1221,6 +1221,12 @@ static int64_t xive_ivc_scrub(struct xive *x, uint64_t block, uint64_t idx)
 	return __xive_cache_scrub(x, xive_cache_ivc, block, idx, false, false);
 }
 
+static int64_t xive_vpc_scrub_clean(struct xive *x, uint64_t block, uint64_t idx)
+{
+	/* IVC has no "want_inval" bit, it always invalidates */
+	return __xive_cache_scrub(x, xive_cache_vpc, block, idx, true, false);
+}
+
 static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 				  uint64_t block, uint64_t idx,
 				  uint32_t start_dword, uint32_t dword_count,
@@ -3389,6 +3395,95 @@ static int64_t opal_xive_donate_page(uint32_t chip_id, uint64_t addr)
 	return OPAL_SUCCESS;
 }
 
+static int64_t opal_xive_get_vp_info(uint64_t vp_id,
+				     uint64_t *out_flags,
+				     uint64_t *out_cam_value,
+				     uint64_t *out_report_cl_pair)
+{
+	struct xive *x;
+	struct xive_vp *vp;
+	uint32_t blk, idx;
+	bool group;
+
+	if (!xive_decode_vp(vp_id, &blk, &idx, NULL, &group))
+		return OPAL_PARAMETER;
+	/* We don't do groups yet */
+	if (group)
+		return OPAL_PARAMETER;
+	x = xive_from_pc_blk(blk);
+	if (!x)
+		return OPAL_PARAMETER;
+	vp = xive_get_vp(x, idx);
+	if (!vp)
+		return OPAL_PARAMETER;
+
+	if (out_flags) {
+		*out_flags = 0;
+		if (vp->w0 & VP_W0_VALID)
+			*out_flags |= OPAL_XIVE_VP_ENABLED;
+	}
+
+	if (out_cam_value)
+		*out_cam_value = (blk << 19) | idx;
+
+	if (out_report_cl_pair) {
+		*out_report_cl_pair = ((uint64_t)(vp->w6 & 0x0fffffff)) << 32;
+		*out_report_cl_pair |= vp->w7 & 0xffffff00;
+	}
+	return OPAL_SUCCESS;
+}
+
+static int64_t opal_xive_set_vp_info(uint64_t vp_id,
+				     uint64_t flags,
+				     uint64_t report_cl_pair)
+{
+	struct xive *x;
+	struct xive_vp *vp, vp_new;
+	uint32_t blk, idx;
+	bool group;
+	int64_t rc;
+
+	if (!xive_decode_vp(vp_id, &blk, &idx, NULL, &group))
+		return OPAL_PARAMETER;
+	/* We don't do groups yet */
+	if (group)
+		return OPAL_PARAMETER;
+	if (report_cl_pair & 0xff)
+		return OPAL_PARAMETER;
+	x = xive_from_pc_blk(blk);
+	if (!x)
+		return OPAL_PARAMETER;
+	vp = xive_get_vp(x, idx);
+	if (!vp)
+		return OPAL_PARAMETER;
+
+	vp_new = *vp;
+	if (flags & OPAL_XIVE_VP_ENABLED)
+		vp_new.w0 |= VP_W0_VALID;
+	else
+		vp_new.w0 &= ~VP_W0_VALID;
+
+	vp_new.w7 = report_cl_pair & 0xffffffff;
+	vp_new.w6 = report_cl_pair >> 32;
+
+	lock(&x->lock);
+	rc = xive_vpc_cache_update(x, blk, idx, 0, 8, &vp_new, false, false);
+	if (rc) {
+		unlock(&x->lock);
+		return rc;
+	}
+
+	/* When disabling, we scrub clean (invalidate the entry) so
+	 * we can avoid cache ops in alloc/free
+	 */
+	if (!(flags & OPAL_XIVE_VP_ENABLED))
+		xive_vpc_scrub_clean(x, blk, idx);
+
+	unlock(&x->lock);
+
+	return OPAL_SUCCESS;
+}
+
 static void xive_cleanup_cpu_cam(struct cpu_thread *c)
 {
 	struct xive_cpu_state *xs = c->xstate;
@@ -3843,5 +3938,7 @@ void init_xive(void)
 	opal_register(OPAL_XIVE_FREE_IRQ, opal_xive_free_irq, 1);
 	opal_register(OPAL_XIVE_ALLOCATE_VP_BLOCK, opal_xive_alloc_vp_block, 1);
 	opal_register(OPAL_XIVE_FREE_VP_BLOCK, opal_xive_free_vp_block, 1);
+	opal_register(OPAL_XIVE_GET_VP_INFO, opal_xive_get_vp_info, 4);
+	opal_register(OPAL_XIVE_SET_VP_INFO, opal_xive_set_vp_info, 3);
 }
 
