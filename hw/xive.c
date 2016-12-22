@@ -2476,7 +2476,8 @@ void xive_register_ipi_source(uint32_t base, uint32_t count, void *data,
 	 */
 	mmio_base = x->esb_mmio + (1ul << IPI_ESB_SHIFT) * base_idx;
 	__xive_register_source(x, s, base, count, IPI_ESB_SHIFT, mmio_base,
-			       XIVE_SRC_EOI_PAGE1, false, data, ops);
+			       XIVE_SRC_EOI_PAGE1 | XIVE_SRC_TRIGGER_PAGE,
+			       false, data, ops);
 }
 
 static struct xive *init_one_xive(struct dt_node *np)
@@ -2565,7 +2566,8 @@ static struct xive *init_one_xive(struct dt_node *np)
 	/* XXX Add new EOI mode for DD2 */
 	__xive_register_source(x, &x->ipis, x->int_base,
 			       x->int_hw_bot - x->int_base, IPI_ESB_SHIFT,
-			       x->esb_mmio, XIVE_SRC_EOI_PAGE1,
+			       x->esb_mmio,
+			       XIVE_SRC_EOI_PAGE1 | XIVE_SRC_TRIGGER_PAGE,
 			       true, NULL, NULL);
 
 	/* XXX Add registration of escalation sources too */
@@ -3147,6 +3149,21 @@ static int64_t opal_xive_set_mfrr(uint32_t cpu, uint8_t mfrr)
 	return OPAL_SUCCESS;
 }
 
+static uint64_t xive_convert_irq_flags(uint64_t iflags)
+{
+	uint64_t oflags = 0;
+
+	if (iflags & XIVE_SRC_STORE_EOI)
+		oflags |= OPAL_XIVE_IRQ_STORE_EOI;
+	if (iflags & XIVE_SRC_TRIGGER_PAGE)
+		oflags |= OPAL_XIVE_IRQ_TRIGGER_PAGE;
+	if (iflags & XIVE_SRC_LSI)
+		oflags |= OPAL_XIVE_IRQ_LSI;
+	if (iflags & XIVE_SRC_SHIFT_BUG)
+		oflags |= OPAL_XIVE_IRQ_SHIFT_BUG;
+	return oflags;
+}
+
 static int64_t opal_xive_get_irq_info(uint32_t girq,
 				      uint64_t *out_flags,
 				      uint64_t *out_eoi_page,
@@ -3166,7 +3183,8 @@ static int64_t opal_xive_get_irq_info(uint32_t girq,
 		return OPAL_PARAMETER;
 	assert(is->ops == &xive_irq_source_ops);
 
-	*out_flags = s->flags;
+	*out_flags = xive_convert_irq_flags(s->flags);
+
 	/*
 	 * If the orig source has a set_xive callback, then set
 	 * OPAL_XIVE_IRQ_MASK_VIA_FW as masking/unmasking requires

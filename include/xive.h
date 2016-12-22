@@ -434,11 +434,12 @@ uint32_t xive_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align);
 uint64_t xive_get_notify_port(uint32_t chip_id, uint32_t ent);
 uint32_t xive_get_notify_base(uint32_t girq);
 
-/* Old definitions, superseeded by OPAL_* ones */
-#define XIVE_SRC_EOI_PAGE1	OPAL_XIVE_IRQ_TRIGGER_PAGE
-#define XIVE_SRC_STORE_EOI	OPAL_XIVE_IRQ_STORE_EOI
-#define XIVE_SRC_LSI		OPAL_XIVE_IRQ_LSI
-#define XIVE_SRC_SHIFT_BUG	OPAL_XIVE_IRQ_SHIFT_BUG
+/* Internal IRQ flags */
+#define XIVE_SRC_TRIGGER_PAGE	0x01
+#define XIVE_SRC_EOI_PAGE1	0x02
+#define XIVE_SRC_STORE_EOI	0x04
+#define XIVE_SRC_LSI		0x08
+#define XIVE_SRC_SHIFT_BUG	0x10
 
 struct irq_source_ops;
 void xive_register_hw_source(uint32_t base, uint32_t count, uint32_t shift,
