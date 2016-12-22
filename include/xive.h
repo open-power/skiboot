@@ -355,6 +355,8 @@ struct xive_eq {
 #define EQ_W0_ESCALATE_CTL	PPC_BIT32(5)
 #define EQ_W0_END_OF_INTR	PPC_BIT32(6)
 #define EQ_W0_QSIZE		PPC_BITMASK32(12,15)
+#define EQ_W0_SW0		PPC_BIT32(16)
+#define EQ_W0_FIRMWARE		EQ_W0_SW0 /* Owned by FW */
 #define EQ_QSIZE_4K		0
 #define EQ_QSIZE_64K		4
 #define EQ_W0_HWDEP		PPC_BITMASK32(24,31)

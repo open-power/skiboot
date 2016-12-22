@@ -632,7 +632,8 @@ static void xive_init_eq(uint32_t vp_blk, uint32_t vp_idx,
 	eq->w7 = SETFIELD(EQ_W7_F0_PRIORITY, 0ul, prio);
 	eieio();
 	eq->w0 = EQ_W0_VALID | EQ_W0_ENQUEUE |
-		SETFIELD(EQ_W0_QSIZE, 0ul, EQ_QSIZE_64K);
+		SETFIELD(EQ_W0_QSIZE, 0ul, EQ_QSIZE_64K) |
+		EQ_W0_FIRMWARE;
 #ifdef EQ_ALWAYS_NOTIFY
 	eq->w0 |= EQ_W0_UCOND_NOTIFY;
 #endif
