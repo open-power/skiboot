@@ -1525,7 +1525,7 @@ __attrconst uint32_t xive_get_notify_base(uint32_t girq)
 }
 
 static bool xive_get_eq_info(uint32_t isn, uint32_t *out_target,
-			     uint8_t *out_prio)
+			     uint8_t *out_prio, uint32_t *out_lirq)
 {
 	struct xive_ive *ive;
 	struct xive *x, *eq_x;
@@ -1573,6 +1573,9 @@ static bool xive_get_eq_info(uint32_t isn, uint32_t *out_target,
 
 	if (out_target)
 		*out_target = server;
+	if (out_lirq)
+		*out_lirq = GETFIELD(IVE_EQ_DATA, ive->w);
+
 	xive_vdbg(eq_x, "EQ info for ISN %x: prio=%d, server=0x%x (VP %x/%x)\n",
 		  isn, prio, server, vp_blk, vp_idx);
 	return true;
@@ -1594,7 +1597,8 @@ static inline bool xive_eq_for_target(uint32_t target, uint8_t prio __unused,
 	return true;
 }
 
-static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
+static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio,
+			     uint32_t lirq)
 {
 	struct xive *x;
 	struct xive_ive *ive;
@@ -1644,9 +1648,10 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 	 */
 	new_ive = SETFIELD(IVE_EQ_BLOCK, new_ive, eq_blk);
 	new_ive = SETFIELD(IVE_EQ_INDEX, new_ive, eq_idx);
+	new_ive = SETFIELD(IVE_EQ_DATA, new_ive, lirq);
 
-	xive_vdbg(x,"ISN %x routed to eq %x/%x IVE=%016llx !\n",
-		  isn, eq_blk, eq_idx, new_ive);
+	xive_vdbg(x,"ISN %x routed to eq %x/%x lirq=%08x IVE=%016llx !\n",
+		  isn, eq_blk, eq_idx, lirq, new_ive);
 
 	/* Updating the cache differs between real IVEs and escalation
 	 * IVEs inside an EQ
@@ -1670,19 +1675,29 @@ static int64_t xive_source_get_xive(struct irq_source *is __unused,
 {
 	uint32_t target_id;
 
-	if (xive_get_eq_info(isn, &target_id, prio)) {
+	if (xive_get_eq_info(isn, &target_id, prio, NULL)) {
 		*server = target_id << 2;
 		return OPAL_SUCCESS;
 	} else
 		return OPAL_PARAMETER;
 }
 
+static void xive_update_irq_mask(struct xive_src *s, uint32_t idx, bool masked)
+{
+	void *mmio_base = s->esb_mmio + (1ul << s->esb_shift) * idx;
+
+	if (s->flags & XIVE_SRC_EOI_PAGE1)
+		mmio_base += 1ull << (s->esb_shift - 1);
+	if (masked)
+		in_be64(mmio_base + 0xd00); /* PQ = 01 */
+	else
+		in_be64(mmio_base + 0xc00); /* PQ = 00 */
+}
+
 static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 				    uint16_t server, uint8_t prio)
 {
 	struct xive_src *s = container_of(is, struct xive_src, is);
-	uint32_t idx = isn - s->esb_base;
- 	void *mmio_base;
 
 	/*
 	 * WARNING: There is an inherent race with the use of the
@@ -1703,17 +1718,11 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 	server >>= 2;
 
 	/* Let XIVE configure the EQ */
-	if (!xive_set_eq_info(isn, server, prio))
+	if (!xive_set_eq_info(isn, server, prio, isn))
 		return OPAL_PARAMETER;
 
 	/* Ensure it's enabled/disabled in the source controller */
-	mmio_base = s->esb_mmio + (1ul << s->esb_shift) * idx;
-	if (s->flags & XIVE_SRC_EOI_PAGE1)
-		mmio_base += 1ull << (s->esb_shift - 1);
-	if (prio == 0xff)
-		in_be64(mmio_base + 0xd00); /* PQ = 01 */
-	else
-		in_be64(mmio_base + 0xc00); /* PQ = 00 */
+	xive_update_irq_mask(s, isn - s->esb_base, prio == 0xff);
 
 	return OPAL_SUCCESS;
 }
@@ -2473,6 +2482,39 @@ static int64_t opal_xive_get_irq_info(uint32_t girq,
 	return OPAL_SUCCESS;
 }
 
+static int64_t opal_xive_get_irq_config(uint32_t girq,
+					uint32_t *out_vp,
+					uint8_t *out_prio,
+					uint32_t *out_lirq)
+{
+	if (xive_get_eq_info(girq, out_vp, out_prio, out_lirq))
+		return OPAL_SUCCESS;
+	else
+		return OPAL_PARAMETER;
+}
+
+static int64_t opal_xive_set_irq_config(uint32_t girq,
+					uint32_t vp,
+					uint8_t prio,
+					uint32_t lirq)
+{
+	struct irq_source *is = irq_find_source(girq);
+	struct xive_src *s = container_of(is, struct xive_src, is);
+
+	/*
+	 * WARNING: See comment in set_xive()
+	 */
+
+	/* Let XIVE configure the EQ */
+	if (!xive_set_eq_info(girq, vp, prio, lirq))
+		return OPAL_PARAMETER;
+
+	/* Ensure it's enabled/disabled in the source controller */
+	xive_update_irq_mask(s, girq - s->esb_base, prio == 0xff);
+
+	return OPAL_SUCCESS;
+}
+
 void init_xive(void)
 {
 	struct dt_node *np;
@@ -2514,5 +2556,7 @@ void init_xive(void)
 	/* Register XIVE exploitation calls */
 	opal_register(OPAL_XIVE_RESET, opal_xive_reset, 1);
 	opal_register(OPAL_XIVE_GET_IRQ_INFO, opal_xive_get_irq_info, 6);
+	opal_register(OPAL_XIVE_GET_IRQ_CONFIG, opal_xive_get_irq_config, 4);
+	opal_register(OPAL_XIVE_SET_IRQ_CONFIG, opal_xive_set_irq_config, 4);
 }
 
