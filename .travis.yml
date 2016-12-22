@@ -31,7 +31,7 @@ before_install:
 
 script:
     - if [ ${COVERITY_SCAN_BRANCH} != 1 ]; then
-       docker build -t ${RUN_ON_CONTAINER} -f opal-ci/Dockerfile-${RUN_ON_CONTAINER} . &&
+       docker build --pull -t ${RUN_ON_CONTAINER} -f opal-ci/Dockerfile-${RUN_ON_CONTAINER} . &&
        docker run --volume $HOME/.ccache:/root/.ccache --rm -t $RUN_ON_CONTAINER;
       fi
     - if [ ${COVERITY_SCAN_BRANCH} == 1 ]; then
