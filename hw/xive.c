@@ -21,6 +21,7 @@
 #include <xscom-p9-regs.h>
 #include <interrupts.h>
 #include <timebase.h>
+#include <bitmap.h>
 
 /* Use Block group mode to move chip_id into block .... */
 #define USE_BLOCK_GROUP_MODE
@@ -35,15 +36,6 @@
 
 /* Verbose debug */
 #undef XIVE_VERBOSE_DEBUG
-
-/* Note on interrupt numbering:
- *
- * The way we represent HW interrupt numbers globaly in the system
- * and in the device-tree is documented in include/interrupts.h
- *
- * Basically, the EAS/IVT index is the global interrupt number
- */
-
 
 /*
  *
@@ -183,6 +175,11 @@
 #define EQT_SIZE		(MAX_EQ_COUNT * 32)
 #endif
 
+/* Number of priorities (and thus EQDs) we allocate for each VP */
+#define NUM_INT_PRIORITIES	8
+
+/* Priority used for the one queue in XICS emulation */
+#define XIVE_EMULATION_PRIO	7
 
 /* Max number of VPs. We allocate an indirect table big enough so
  * that when fully populated we can have that many VPs.
@@ -250,9 +247,11 @@ struct xive_cpu_state {
 	struct xive	*xive;
 	void		*tm_ring1;
 
-	/* Base HW VP */
+	/* Base HW VP and associated queues */
 	uint32_t	vp_blk;
 	uint32_t	vp_idx;
+	uint32_t	eq_blk;
+	uint32_t	eq_idx; /* Base eq index of a block of 8 */
 
 	/* Pre-allocated IPI */
 	uint32_t	ipi_irq;
@@ -332,6 +331,8 @@ struct xive {
 #else
 	void		*eq_base;
 #endif
+	/* EQ allocation bitmap. Each bit represent 8 EQs */
+	bitmap_t	*eq_map;
 
 #ifdef USE_INDIRECT
 	/* Indirect NVT/VP table. NULL entries are unallocated, count is
@@ -505,7 +506,6 @@ static struct xive *xive_from_isn(uint32_t isn)
 	return c->xive;
 }
 
-/*
 static struct xive *xive_from_pc_blk(uint32_t blk)
 {
 	uint32_t chip_id = PC_BLK_TO_CHIP(blk);
@@ -515,7 +515,6 @@ static struct xive *xive_from_pc_blk(uint32_t blk)
 		return NULL;
 	return c->xive;
 }
-*/
 
 static struct xive *xive_from_vc_blk(uint32_t blk)
 {
@@ -607,22 +606,30 @@ static struct xive_vp *xive_get_vp(struct xive *x, unsigned int idx)
 #endif
 }
 
-static void xive_init_vp(struct xive *x __unused, struct xive_vp *vp __unused)
+static void xive_init_vp(struct xive *x __unused, struct xive_vp *vp,
+			 uint32_t eq_blk, uint32_t eq_idx)
 {
+	/* Stash the EQ base in the pressure relief interrupt field
+	 * and set the ACK# to 0xff to disable pressure relief interrupts
+	 */
+	vp->w1 = (eq_blk << 28) | eq_idx;
+	vp->w5 = 0xff000000;
+	lwsync();
+
 	/* XXX TODO: Look at the special cache line stuff */
 	vp->w0 = VP_W0_VALID;
 }
 
-static void xive_init_eq(struct xive *x __unused, uint32_t vp_idx,
-			 struct xive_eq *eq, void *backing_page)
+static void xive_init_eq(uint32_t vp_blk, uint32_t vp_idx,
+			 struct xive_eq *eq, void *backing_page,
+			 uint8_t prio)
 {
 	eq->w1 = EQ_W1_GENERATION;
 	eq->w3 = ((uint64_t)backing_page) & 0xffffffff;
 	eq->w2 = (((uint64_t)backing_page)) >> 32 & 0x0fffffff;
-	// IS this right ? Are we limited to 2K VPs per block ? */
-	eq->w6 = SETFIELD(EQ_W6_NVT_BLOCK, 0ul, x->block_id) |
+	eq->w6 = SETFIELD(EQ_W6_NVT_BLOCK, 0ul, vp_blk) |
 		SETFIELD(EQ_W6_NVT_INDEX, 0ul, vp_idx);
-	eq->w7 = SETFIELD(EQ_W7_F0_PRIORITY, 0ul, 0x07);
+	eq->w7 = SETFIELD(EQ_W7_F0_PRIORITY, 0ul, prio);
 	eieio();
 	eq->w0 = EQ_W0_VALID | EQ_W0_ENQUEUE |
 		SETFIELD(EQ_W0_QSIZE, 0ul, EQ_QSIZE_64K);
@@ -631,9 +638,9 @@ static void xive_init_eq(struct xive *x __unused, uint32_t vp_idx,
 #endif
 }
 
-static uint32_t *xive_get_eq_buf(struct xive *x, uint32_t eq_blk __unused,
-				 uint32_t eq_idx)
+static uint32_t *xive_get_eq_buf(uint32_t eq_blk, uint32_t eq_idx)
 {
+	struct xive *x = xive_from_vc_blk(eq_blk);
 	struct xive_eq *eq = xive_get_eq(x, eq_idx);
 	uint64_t addr;
 
@@ -642,6 +649,67 @@ static uint32_t *xive_get_eq_buf(struct xive *x, uint32_t eq_blk __unused,
 	addr = (((uint64_t)eq->w2) & 0x0fffffff) << 32 | eq->w3;
 
 	return (uint32_t *)addr;
+}
+
+#define XIVE_ALLOC_IS_ERR(_idx)	((_idx) >= 0xfffffff0)
+
+#define XIVE_ALLOC_NO_SPACE	0xffffffff /* No possible space */
+#define XIVE_ALLOC_NO_IND	0xfffffffe /* Indirect need provisioning */
+#define XIVE_ALLOC_NO_MEM	0xfffffffd /* Local allocation failed */
+
+static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect __unused)
+{
+	uint32_t ind_idx __unused;
+	int idx;
+
+	xive_vdbg(x, "Allocating EQ set...\n");
+
+	assert(x->eq_map);
+
+	/* Allocate from the EQ bitmap. Each bit is 8 EQs */
+	idx = bitmap_find_zero_bit(*x->eq_map, 0, MAX_EQ_COUNT >> 3);
+	if (idx < 0) {
+		xive_dbg(x, "Allocation from EQ bitmap failed !\n");
+		return XIVE_ALLOC_NO_SPACE;
+	}
+	bitmap_set_bit(*x->eq_map, idx);
+
+	idx <<= 3;
+
+	xive_vdbg(x, "Got EQs 0x%x..0x%x\n", idx, idx + 7);
+
+#ifdef USE_INDIRECT
+	/* Calculate the indirect page where the EQs reside */
+	ind_idx = idx / EQ_PER_PAGE;
+
+	/* Is there an indirect page ? If not, check if we can provision it */
+	if (!x->eq_ind_base[ind_idx]) {
+		/* Default flags */
+		uint64_t vsd_flags = SETFIELD(VSD_TSIZE, 0ull, 4) |
+			SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
+		void *page;
+
+		/* If alloc_indirect is set, allocate the memory from OPAL own,
+		 * otherwise try to provision from the donated pool
+		 */
+		if (alloc_indirect) {
+			/* Allocate/provision indirect page during boot only */
+			xive_dbg(x, "Indirect empty, provisioning from local pool\n");
+			page = local_alloc(x->chip_id, 0x10000, 0x10000);
+			if (!page) {
+				xive_dbg(x, "provisioning failed !\n");
+				return XIVE_ALLOC_NO_MEM;
+			}
+			vsd_flags |= VSD_FIRMWARE;
+		} else {
+			return XIVE_ALLOC_NO_IND;
+		}
+		memset(page, 0, 0x10000);
+		x->eq_ind_base[ind_idx] = vsd_flags | (((uint64_t)page) & VSD_ADDRESS_MASK);
+		/* Any cache scrub needed ? */
+	}
+#endif
+	return idx;
 }
 
 #if 0 /* Not used yet. This will be used to kill the cache
@@ -754,7 +822,8 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 				  void *new_data, bool light_watch)
 {
 	uint64_t sreg, sregx, dreg0, dreg0x;
-	uint64_t dval0, sval, status, i;
+	uint64_t dval0, sval, status;
+	int64_t i;
 
 	switch (ctype) {
 	case xive_cache_eqc:
@@ -1150,27 +1219,6 @@ static bool xive_setup_set_xlate(struct xive *x)
 	return true;
 }
 
-static struct xive_vp *xive_alloc_init_vp(struct xive *x, unsigned int idx)
-{
-	struct xive_vp *vp = xive_get_vp(x, idx);
-	struct xive_eq *eq = xive_get_eq(x, idx);
-	void *p;
-
-	assert(vp);
-	assert(eq);
-
-	xive_init_vp(x, vp);
-
-	p = local_alloc(x->chip_id, 0x10000, 0x10000);
-	if (!p) {
-		xive_err(x, "Failed to allocate EQ backing store\n");
-		return NULL;
-	}
-	xive_init_eq(x, idx, eq, p);
-
-	return vp;
-}
-
 static bool xive_prealloc_tables(struct xive *x)
 {
 	unsigned int i, vp_init_count, vp_init_base;
@@ -1254,7 +1302,7 @@ static bool xive_prealloc_tables(struct xive *x)
 #endif
 
 #ifdef USE_INDIRECT
-	/* Allocate pages for some VPs and EQs in indirect mode */
+	/* Allocate pages for some VPs in indirect mode */
 	pbase = vp_init_base / VP_PER_PAGE;
 	pend  = (vp_init_base + vp_init_count) / VP_PER_PAGE;
 	xive_dbg(x, "Allocating pages %d to %d of VPs (for %d VPs)\n",
@@ -1273,25 +1321,8 @@ static bool xive_prealloc_tables(struct xive *x)
 
 		x->vp_ind_base[i] |= SETFIELD(VSD_TSIZE, 0ull, 4);
 		x->vp_ind_base[i] |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
-
-		page = local_alloc(x->chip_id, 0x10000, 0x10000);
-		if (!page) {
-			xive_err(x, "Failed to allocate EQ page\n");
-			return false;
-		}
-		memset(page, 0, 0x10000);
-		x->eq_ind_base[i] = ((uint64_t)page) & VSD_ADDRESS_MASK;
-		x->eq_ind_base[i] |= SETFIELD(VSD_TSIZE, 0ull, 4);
-		x->eq_ind_base[i] |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
 	}
 #endif /* USE_INDIRECT */
-
-	/* Allocate the initial EQs backing store and initialize EQs and VPs */
-	for (i = vp_init_base; i < (vp_init_base + vp_init_count); i++)
-		if (xive_alloc_init_vp(x, i) == NULL) {
-			xive_err(x, "Base VP initialization failed\n");
-			return false;
-		}
 
 	return true;
 }
@@ -1606,19 +1637,46 @@ static bool xive_get_eq_info(uint32_t isn, uint32_t *out_target,
 	return true;
 }
 
-static inline bool xive_eq_for_target(uint32_t target, uint8_t prio __unused,
-				      uint32_t *eq_blk, uint32_t *eq_idx)
+static inline bool xive_eq_for_target(uint32_t target, uint8_t prio,
+				      uint32_t *out_eq_blk,
+				      uint32_t *out_eq_idx)
 {
-	uint32_t vp_blk = PIR2VP_BLK(target);
-	uint32_t vp_idx = PIR2VP_IDX(target);
+	struct xive *x;
+	struct xive_vp *vp;
+	uint32_t vp_blk, vp_idx;
+	uint32_t eq_blk, eq_idx;
 
-	/* XXX We currently have EQ BLK/IDX == VP BLK/IDX. This will change
-	 * when we support priorities.
+	if (prio > 7)
+		return false;
+
+	/* XXX This will have to change when having VPs that aren't
+	 * the physical processors
 	 */
-	if (eq_blk)
-		*eq_blk = vp_blk;
-	if (eq_idx)
-		*eq_idx = vp_idx;
+	vp_blk = PIR2VP_BLK(target);
+	vp_idx = PIR2VP_IDX(target);
+
+	/* Grab the target VP's XIVE */
+	x = xive_from_pc_blk(vp_blk);
+	if (!x)
+		return false;
+
+	/* Find the VP structrure where we stashed the EQ number */
+	vp = xive_get_vp(x, vp_idx);
+
+	/* Grab it, it's in the pressure relief interrupt field,
+	 * top 4 bits are the block (word 1).
+	 */
+	eq_blk = vp->w1 >> 28;
+	eq_idx = vp->w1 & 0x0fffffff;
+
+	/* Currently the EQ block and VP block should be the same */
+	assert(eq_blk == vp_blk);
+
+	if (out_eq_blk)
+		*out_eq_blk = eq_blk;
+	if (out_eq_idx)
+		*out_eq_idx = eq_idx + prio;
+
 	return true;
 }
 
@@ -1646,6 +1704,10 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio,
 
 	lock(&x->lock);
 
+	/* If using emulation mode, fixup prio to the only supported one */
+	if (xive_mode == XIVE_MODE_EMU && prio != 0xff)
+		prio = XIVE_EMULATION_PRIO;
+
 	/* Read existing IVE */
 	new_ive = ive->w;
 
@@ -1653,11 +1715,15 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio,
 	if (prio == 0xff && !is_escalation) {
 		new_ive |= IVE_MASKED;
 		xive_vdbg(x, "ISN %x masked !\n", isn);
+
+		/* Put prio 7 in the EQ */
+		prio = 7;
 	} else {
 		/* Unmasking */
 		new_ive = ive->w & ~IVE_MASKED;
 		xive_vdbg(x, "ISN %x unmasked !\n", isn);
 	}
+
 	/* Re-target the IVE. First find the EQ
 	 * correponding to the target
 	 */
@@ -1927,6 +1993,9 @@ static void init_one_xive(struct dt_node *np)
 	if (x->int_ipi_top < 0x10)
 		x->int_ipi_top = 0x10;
 
+	x->eq_map = zalloc(BITMAP_BYTES(MAX_EQ_COUNT >> 3));
+	assert(x->eq_map);
+
 	xive_dbg(x, "Handling interrupts [%08x..%08x]\n",
 		 x->int_base, x->int_max - 1);
 
@@ -1987,7 +2056,8 @@ static void xive_ipi_init(struct xive *x, struct cpu_thread *cpu)
 
 	assert(xs);
 
-	xive_source_set_xive(&x->ipis.is, xs->ipi_irq, cpu->pir << 2, 0x7);
+	xive_source_set_xive(&x->ipis.is, xs->ipi_irq, cpu->pir << 2,
+			     XIVE_EMULATION_PRIO);
 }
 
 static void xive_ipi_eoi(struct xive *x, uint32_t idx)
@@ -2054,6 +2124,75 @@ void xive_cpu_callin(struct cpu_thread *cpu)
 	xive_ipi_init(x, cpu);
 }
 
+static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
+{
+	struct xive_vp *vp;
+	struct xive_eq eq;
+	struct xive *x;
+	void *p;
+
+	/* For now VPs are pre-allocated */
+	xs->vp_blk = PIR2VP_BLK(c->pir);
+	xs->vp_idx = PIR2VP_IDX(c->pir);
+
+	/* Grab the XIVE where the VP resides. It could be different from
+	 * the local chip XIVE if not using block group mode
+	 */
+	x = xive_from_pc_blk(xs->vp_blk);
+	assert(x);
+
+	/* Grab VP pointer */
+	vp = xive_get_vp(x, xs->vp_idx);
+	assert(vp);
+
+	/* For now we use identical block IDs for VC and PC but that might
+	 * change. We allocate the EQs on the same XIVE as the VP.
+	 */
+	xs->eq_blk = xs->vp_blk;
+
+	/* Allocate a set of EQs for that VP */
+	xs->eq_idx = xive_alloc_eq_set(x, true);
+	assert(!XIVE_ALLOC_IS_ERR(xs->eq_idx));
+
+	/* Provision one of the queues. Allocate the memory on the
+	 * chip where the CPU resides
+	 */
+	p = local_alloc(c->chip_id, 0x10000, 0x10000);
+	if (!p) {
+		xive_err(x, "Failed to allocate EQ backing store\n");
+		assert(false);
+	}
+
+	/* Initialize the structure */
+	xive_init_eq(xs->vp_blk, xs->vp_idx, &eq, p, XIVE_EMULATION_PRIO);
+
+	/* Use the cache watch to write it out */
+	xive_eqc_cache_update(x, xs->vp_blk, xs->eq_idx + XIVE_EMULATION_PRIO,
+			      0, 4, &eq, false);
+
+	/* Initialize/enable the VP */
+	xive_init_vp(x, vp, xs->eq_blk, xs->eq_idx);
+}
+
+static void xive_init_xics_emulation(struct xive_cpu_state *xs)
+{
+	struct xive *x;
+
+	xs->cppr = 0;
+	xs->mfrr = 0xff;
+
+	xs->eqbuf = xive_get_eq_buf(xs->vp_blk, xs->eq_idx + XIVE_EMULATION_PRIO);
+	assert(xs->eqbuf);
+
+	xs->eqptr = 0;
+	xs->eqmsk = (0x10000/4) - 1;
+	xs->eqgen = false;
+
+	x = xive_from_vc_blk(xs->eq_blk);
+	assert(x);
+	xs->eqmmio = x->eq_mmio + (xs->eq_idx + XIVE_EMULATION_PRIO) * 0x20000;
+}
+
 static void xive_init_cpu(struct cpu_thread *c)
 {
 	struct proc_chip *chip = get_chip(c->chip_id);
@@ -2091,19 +2230,6 @@ static void xive_init_cpu(struct cpu_thread *c)
 
 	init_lock(&xs->lock);
 
-	xs->vp_blk = PIR2VP_BLK(c->pir);
-	xs->vp_idx = PIR2VP_IDX(c->pir);
-	xs->cppr = 0;
-	xs->mfrr = 0xff;
-
-	/* XXX Find the one eq buffer associated with the VP, for now same BLK/ID */
-	xs->eqbuf = xive_get_eq_buf(x, xs->vp_blk, xs->vp_idx);
-	xs->eqptr = 0;
-	xs->eqmsk = (0x10000/4) - 1;
-	xs->eqgen = false;
-	xs->eqmmio = x->eq_mmio + xs->vp_idx * 0x20000;
-	assert(xs->eqbuf);
-
 	/* Shortcut to TM HV ring */
 	xs->tm_ring1 = x->tm_base + (1u << x->tm_shift);
 
@@ -2111,6 +2237,12 @@ static void xive_init_cpu(struct cpu_thread *c)
 	xs->ipi_irq = xive_alloc_ipi_irqs(c->chip_id, 1, 1);
 
 	xive_cpu_dbg(c, "CPU IPI is irq %08x\n", xs->ipi_irq);
+
+	/* Provision a VP and some EQDs for a physical CPU */
+	xive_provision_cpu(xs, c);
+
+	/* Initialize the XICS emulation related fields */
+	xive_init_xics_emulation(xs);
 }
 
 static void xive_init_cpu_properties(struct cpu_thread *cpu)
@@ -2161,7 +2293,7 @@ static uint8_t xive_sanitize_cppr(uint8_t cppr)
 	if (cppr == 0xff || cppr == 0)
 		return cppr;
 	else
-		return 7;
+		return XIVE_EMULATION_PRIO;
 }
 
 static inline uint8_t opal_xive_check_pending(struct xive_cpu_state *xs,

@@ -234,6 +234,9 @@
  *
  * Note: the address is naturally aligned, we don't use a PPC_BITMASK,
  *       but just a mask to apply to the address before OR'ing it in.
+ *
+ * Note: VSD_FIRMWARE is a SW bit ! It hijacks an unused bit in the
+ *       VSD and is only meant to be used in indirect mode !
  */
 #define VSD_MODE		PPC_BITMASK(0,1)
 #define  VSD_MODE_SHARED	1
@@ -243,6 +246,7 @@
 #define VSD_MIGRATION_REG	PPC_BITMASK(52,55)
 #define VSD_INDIRECT		PPC_BIT(56)
 #define VSD_TSIZE		PPC_BITMASK(59,63)
+#define VSD_FIRMWARE		PPC_BIT(2) /* Read warning above */
 
 /*
  * TM registers are special, see below
