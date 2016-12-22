@@ -2,7 +2,9 @@ HELLO_WORLD_TEST := test/hello_world/hello_kernel/hello_kernel
 
 .PHONY: hello_world-tests
 hello_world-tests: $(HELLO_WORLD_TEST:%=%-check-smt-mambo)
+hello_world-tests: $(HELLO_WORLD_TEST:%=%-check-smt-p9-mambo)
 hello_world-tests: $(HELLO_WORLD_TEST:%=%-check-mambo)
+hello_world-tests: $(HELLO_WORLD_TEST:%=%-check-p9-mambo)
 hello_world-tests: $(HELLO_WORLD_TEST:%=%-check-qemu)
 
 boot-tests: hello_world-tests
@@ -11,8 +13,14 @@ check: hello_world-tests
 $(HELLO_WORLD_TEST:%=%-check-smt-mambo): %-check-smt-mambo: % skiboot.lid
 	$(call Q , BOOT TEST , THREADS=2 ./test/hello_world/run_mambo_hello_world.sh , $@)
 
+$(HELLO_WORLD_TEST:%=%-check-smt-p9-mambo): %-check-smt-p9-mambo: % skiboot.lid
+	$(call Q , BOOT TEST , THREADS=2 ./test/hello_world/run_mambo_p9_hello_world.sh , $@)
+
 $(HELLO_WORLD_TEST:%=%-check-mambo): %-check-mambo: % skiboot.lid
 	$(call Q , BOOT TEST , ./test/hello_world/run_mambo_hello_world.sh, $@)
+
+$(HELLO_WORLD_TEST:%=%-check-p9-mambo): %-check-p9-mambo: % skiboot.lid
+	$(call Q , BOOT TEST , ./test/hello_world/run_mambo_p9_hello_world.sh, $@)
 
 $(HELLO_WORLD_TEST:%=%-check-qemu): %-check-qemu: % skiboot.lid
 	$(call Q , BOOT TEST , ./test/hello_world/run_qemu_hello_world.sh, $@)
