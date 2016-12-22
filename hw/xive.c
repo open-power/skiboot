@@ -173,7 +173,7 @@
 #define EQ_PER_PAGE		(0x10000 / 32) // Use sizeof ?
 #define IND_EQ_TABLE_SIZE	((MAX_EQ_COUNT / EQ_PER_PAGE) * 8)
 #else
-#define MAX_EQ_COUNT		(4 * 1024)
+#define MAX_EQ_COUNT		(4 * 1024 * 64)
 #define EQT_SIZE		(MAX_EQ_COUNT * 32)
 #endif
 
@@ -204,7 +204,7 @@
 #define VP_PER_PAGE		(0x10000 / 64) // Use sizeof ?
 #define IND_VP_TABLE_SIZE	((MAX_VP_COUNT / VP_PER_PAGE) * 8)
 #else
-#define MAX_VP_ORDER		12	/* 4k */
+#define MAX_VP_ORDER		13	/* 8k */
 #define MAX_VP_COUNT		(1ul << MAX_VP_ORDER)
 #define VPT_SIZE		(MAX_VP_COUNT * 64)
 #endif
