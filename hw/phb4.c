@@ -1290,8 +1290,6 @@ static int64_t phb4_map_pe_dma_window(struct phb *phb,
 	/* Encode number of levels */
 	data64 = SETFIELD(IODA3_TVT_NUM_LEVELS, data64, tce_levels - 1);
 
-	printf("PHB4: Setting TVE %d to 0x%016llx\n", window_id, data64);
-
 	phb4_ioda_sel(p, IODA3_TBL_TVT, window_id, false);
 	out_be64(p->regs + PHB_IODA_DATA0, data64);
 	p->tve_cache[window_id] = data64;
@@ -1355,7 +1353,6 @@ static int64_t phb4_map_pe_dma_window_real(struct phb *phb,
 		tve = 0;
 	}
 
-	printf("PHB4: Setting TVE %d to 0x%016llx (non-xlate)\n", window_id, tve);
 	phb4_ioda_sel(p, IODA3_TBL_TVT, window_id, false);
 	out_be64(p->regs + PHB_IODA_DATA0, tve);
 	p->tve_cache[window_id] = tve;
