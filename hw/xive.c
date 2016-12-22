@@ -2288,8 +2288,12 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 	if (rc)
 		return rc;
 
-	/* Ensure it's enabled/disabled in the source controller */
-	xive_update_irq_mask(s, isn - s->esb_base, prio == 0xff);
+	/* The source has special variants of masking/unmasking */
+	if (s->orig_ops && s->orig_ops->set_xive)
+		rc = s->orig_ops->set_xive(is, isn, server, prio);
+	else
+		/* Ensure it's enabled/disabled in the source controller */
+		xive_update_irq_mask(s, isn - s->esb_base, prio == 0xff);
 
 	return OPAL_SUCCESS;
 }
@@ -3108,6 +3112,14 @@ static int64_t opal_xive_get_irq_info(uint32_t girq,
 	assert(is->ops == &xive_irq_source_ops);
 
 	*out_flags = s->flags;
+	/*
+	 * If the orig source has a set_xive callback, then set
+	 * OPAL_XIVE_IRQ_MASK_VIA_FW as masking/unmasking requires
+	 * source specific workarounds.
+	 */
+	if (out_flags && s->orig_ops && s->orig_ops->set_xive)
+		*out_flags |= OPAL_XIVE_IRQ_MASK_VIA_FW;
+
 	idx = girq - s->esb_base;
 
 	if (out_esb_shift)
@@ -3170,8 +3182,12 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 	if (rc)
 		return rc;
 
-	/* Ensure it's enabled/disabled in the source controller */
-	xive_update_irq_mask(s, girq - s->esb_base, prio == 0xff);
+	/* The source has special variants of masking/unmasking */
+	if (s->orig_ops && s->orig_ops->set_xive)
+		rc = s->orig_ops->set_xive(is, girq, vp >> 2, prio);
+	else
+		/* Ensure it's enabled/disabled in the source controller */
+		xive_update_irq_mask(s, girq - s->esb_base, prio == 0xff);
 
 	return OPAL_SUCCESS;
 }

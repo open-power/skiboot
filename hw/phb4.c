@@ -3041,6 +3041,45 @@ static uint64_t phb4_lsi_attributes(struct irq_source *is __unused,
 	return IRQ_ATTR_TARGET_LINUX;
 }
 
+static int64_t phb4_dd1_lsi_set_xive(struct irq_source *is, uint32_t isn,
+				     uint16_t server, uint8_t priority)
+{
+	struct phb4 *p = is->data;
+	uint32_t idx = isn - p->base_lsi;
+
+	PHBERR(p, "DD1 LSI set_xive idx %d prio=%d\n", idx, priority);
+
+	if (idx > 8)
+		return OPAL_PARAMETER;
+
+	phb_lock(&p->phb);
+
+	phb4_ioda_sel(p, IODA3_TBL_LIST, idx, false);
+
+	/* Mask using P=0,Q=1, unmask using P=1,Q=0 followed by EOI */
+	/* XXX FIXME: A quick mask/umask can make us shoot an interrupt
+	 * more than once to a queue. We need to keep track better
+	 */
+	PHBERR(p, " LIST before: %016llx\n", in_be64(p->regs + PHB_IODA_DATA0));
+	if (priority == 0xff)
+		out_be64(p->regs + PHB_IODA_DATA0, IODA3_LIST_Q);
+	else {
+		out_be64(p->regs + PHB_IODA_DATA0, IODA3_LIST_P);
+		__irq_source_eoi(is, isn);
+	}
+	PHBERR(p, " LIST after: %016llx\n", in_be64(p->regs + PHB_IODA_DATA0));
+
+	phb_unlock(&p->phb);
+
+	return 0;
+}
+
+static const struct irq_source_ops phb4_dd1_lsi_ops = {
+	.set_xive = phb4_dd1_lsi_set_xive,
+	.interrupt = phb4_err_interrupt,
+	.attributes = phb4_lsi_attributes,
+};
+
 static const struct irq_source_ops phb4_lsi_ops = {
 	.interrupt = phb4_err_interrupt,
 	.attributes = phb4_lsi_attributes,
@@ -3208,10 +3247,13 @@ static void phb4_create(struct dt_node *np)
 	xive_register_hw_source(p->base_msi, p->num_irqs - 8, 16,
 				p->int_mmio, XIVE_SRC_SHIFT_BUG,
 				NULL, NULL);
+
 	xive_register_hw_source(p->base_lsi, 8, 16,
 				p->int_mmio + ((p->num_irqs - 8) << 16),
 				XIVE_SRC_LSI | XIVE_SRC_SHIFT_BUG,
-				p, &phb4_lsi_ops);
+				p,
+				(p->rev == PHB4_REV_NIMBUS_DD10) ?
+				&phb4_dd1_lsi_ops : &phb4_lsi_ops);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)

@@ -317,6 +317,7 @@ extern void icp_kick_cpu(struct cpu_thread *cpu);
 extern void init_interrupts(void);
 
 extern bool irq_source_eoi(uint32_t isn);
+extern bool __irq_source_eoi(struct irq_source *is, uint32_t isn);
 
 
 #endif /* __INTERRUPTS_H */

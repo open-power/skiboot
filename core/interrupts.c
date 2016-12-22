@@ -394,15 +394,23 @@ uint32_t p8_irq_to_phb(uint32_t irq)
 	return p8_irq_to_block(irq) - P8_IRQ_BLOCK_PHB_BASE;
 }
 
-bool irq_source_eoi(uint32_t isn)
+bool __irq_source_eoi(struct irq_source *is, uint32_t isn)
 {
-	struct irq_source *is = irq_find_source(isn);
-
-	if (!is || !is->ops->eoi)
+	if (!is->ops->eoi)
 		return false;
 
 	is->ops->eoi(is, isn);
 	return true;
+}
+
+bool irq_source_eoi(uint32_t isn)
+{
+	struct irq_source *is = irq_find_source(isn);
+
+	if (!is)
+		return false;
+
+	return __irq_source_eoi(is, isn);
 }
 
 static int64_t opal_set_xive(uint32_t isn, uint16_t server, uint8_t priority)
