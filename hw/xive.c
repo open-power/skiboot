@@ -2296,6 +2296,7 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 				    uint16_t server, uint8_t prio)
 {
 	struct xive_src *s = container_of(is, struct xive_src, is);
+	uint8_t old_prio;
 	int64_t rc;
 
 	/*
@@ -2316,18 +2317,24 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 	/* Unmangle server */
 	server >>= 2;
 
+	/* Grab existing prio/mask */
+	if (!xive_get_irq_targetting(isn, NULL, &old_prio, NULL))
+		return OPAL_PARAMETER;
+
 	/* Let XIVE configure the EQ synchronously */
 	rc = xive_set_irq_targetting(isn, server, prio, isn, true);
 	if (rc)
 		return rc;
 
 	/* The source has special variants of masking/unmasking */
-	if (s->orig_ops && s->orig_ops->set_xive)
-		rc = s->orig_ops->set_xive(is, isn, server, prio);
-	else
-		/* Ensure it's enabled/disabled in the source controller */
-		xive_update_irq_mask(s, isn - s->esb_base, prio == 0xff);
-
+	if (old_prio != prio && (old_prio == 0xff || prio == 0xff)) {
+		if (s->orig_ops && s->orig_ops->set_xive)
+			rc = s->orig_ops->set_xive(is, isn, server, prio);
+		else
+			/* Ensure it's enabled/disabled in the source controller */
+			xive_update_irq_mask(s, isn - s->esb_base,
+					     prio == 0xff);
+	}
 	return OPAL_SUCCESS;
 }
 
