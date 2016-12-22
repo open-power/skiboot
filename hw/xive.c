@@ -3051,16 +3051,6 @@ static int64_t opal_xive_set_mfrr(uint32_t cpu, uint8_t mfrr)
 	return OPAL_SUCCESS;
 }
 
-static int64_t opal_xive_reset(uint64_t version)
-{
-	if (version > 1)
-		return OPAL_PARAMETER;
-
-	xive_mode = version;
-
-	return OPAL_SUCCESS;
-}
-
 static int64_t opal_xive_get_irq_info(uint32_t girq,
 				      uint64_t *out_flags,
 				      uint64_t *out_eoi_page,
@@ -3307,6 +3297,155 @@ static int64_t opal_xive_donate_page(uint32_t chip_id, uint64_t addr)
 	list_add(&c->xive->donated_pages, n);
 	unlock(&c->xive->lock);
 #endif
+	return OPAL_SUCCESS;
+}
+
+static void xive_cleanup_cpu_cam(struct cpu_thread *c)
+{
+	struct xive_cpu_state *xs = c->xstate;
+	struct xive *x = xs->xive;
+	void *ind_tm_base = x->ic_base + 4 * IC_PAGE_SIZE;
+
+	/* Setup indirect access to the corresponding thread */
+	xive_regw(x, PC_TCTXT_INDIR0,
+		  PC_TCTXT_INDIR_VALID |
+		  SETFIELD(PC_TCTXT_INDIR_THRDID, 0ull, c->pir & 0xff));
+
+	/* Pull user context, OS context and Pool context if any */
+	in_be32(ind_tm_base + TM_SPC_PULL_USR_CTX);
+	in_be32(ind_tm_base + TM_SPC_PULL_OS_CTX);
+	in_be32(ind_tm_base + TM_SPC_PULL_POOL_CTX);
+
+	/* Set HV CPPR to 0 */
+	out_8(ind_tm_base + TM_QW3_HV_PHYS + TM_CPPR, 0);
+
+	/* Reset indirect access */
+	xive_regw(x, PC_TCTXT_INDIR0, 0);
+}
+
+static void xive_reset_one(struct xive *x)
+{
+	struct cpu_thread *c;
+	int i = 0;
+
+	/* Mask all interrupt sources */
+	while ((i = bitmap_find_one_bit(*x->int_enabled_map,
+					i, MAX_INT_ENTRIES - i)) >= 0) {
+		opal_xive_set_irq_config(x->int_base + i, 0, 0xff,
+					 x->int_base + i);
+		i++;
+	}
+
+	lock(&x->lock);
+	memset(x->int_enabled_map, 0, BITMAP_BYTES(MAX_INT_ENTRIES));
+
+	/* Reset all allocated EQs and free the user ones */
+	bitmap_for_each_one(*x->eq_map, MAX_EQ_COUNT >> 3, i) {
+		struct xive_eq eq0 = {0};
+		struct xive_eq *eq;
+
+		eq = xive_get_eq(x, i);
+		if (!eq)
+			continue;
+		xive_eqc_cache_update(x, x->block_id,
+				      i, 0, 4, &eq0, false, true);
+		if (!(eq->w0 & EQ_W0_FIRMWARE))
+			bitmap_clr_bit(*x->eq_map, i);
+	}
+
+	/* Take out all VPs from HW and reset all CPPRs to 0 */
+	for_each_cpu(c) {
+		if (c->chip_id != x->chip_id)
+			continue;
+		if (!c->xstate)
+			continue;
+		xive_cleanup_cpu_cam(c);
+	}
+
+	/* Reset all user-allocated VPs. This is inefficient, we should
+	 * either keep a bitmap of allocated VPs or add an iterator to
+	 * the buddy which is trickier but doable.
+	 */
+	for (i = 0; i < MAX_VP_COUNT; i++) {
+		struct xive_vp *vp;
+		struct xive_vp vp0 = {0};
+
+		/* Ignore the physical CPU VPs */
+#ifdef USE_BLOCK_GROUP_MODE
+		if (i >= INITIAL_VP_BASE &&
+		    i < (INITIAL_VP_BASE + INITIAL_VP_COUNT))
+			continue;
+#else
+		if (x->block_id == 0 &&
+		    i >= INITIAL_BLK0_VP_BASE &&
+		    i < (INITIAL_BLK0_VP_BASE + INITIAL_BLK0_VP_BASE))
+			continue;
+#endif
+		/* Is the VP valid ? */
+		vp = xive_get_vp(x, i);
+		if (!vp || !(vp->w0 & VP_W0_VALID))
+			continue;
+
+		/* Clear it */
+		xive_vpc_cache_update(x, x->block_id,
+				      i, 0, 8, &vp0, false, true);
+	}
+
+#ifndef USE_BLOCK_GROUP_MODE
+	/* If block group mode isn't enabled, reset VP alloc buddy */
+	buddy_reset(x->vp_buddy);
+#endif
+
+	/* Re-configure the CPUs */
+	for_each_cpu(c) {
+		struct xive_cpu_state *xs = c->xstate;
+
+		if (c->chip_id != x->chip_id || !xs)
+			continue;
+
+		/* Setup default VP and EQ */
+		xive_init_cpu_defaults(xs);
+
+		/* Re-Initialize the XICS emulation related fields
+		 * and re-enable IPI
+		 */
+		if (xive_mode == XIVE_MODE_EMU) {
+			xive_init_xics_emulation(xs);
+			xive_ipi_init(x, c);
+		}
+	}
+
+	unlock(&x->lock);
+}
+
+static int64_t opal_xive_reset(uint64_t version)
+{
+	struct proc_chip *chip;
+
+	if (version > 1)
+		return OPAL_PARAMETER;
+
+	xive_mode = version;
+
+	/* For each XIVE ... */
+	for_each_chip(chip) {
+		if (!chip->xive)
+			continue;
+		xive_reset_one(chip->xive);
+	}
+
+#ifdef USE_BLOCK_GROUP_MODE
+	/* Cleanup global VP allocator */
+	buddy_reset(xive_vp_buddy);
+
+	/* We reserve the whole range of VPs representing HW chips.
+	 *
+	 * These are 0x80..0xff, so order 7 starting at 0x80. This will
+	 * reserve that range on each chip.
+	 */
+	assert(buddy_reserve(xive_vp_buddy, 0x80, 7));
+#endif /* USE_BLOCK_GROUP_MODE */
+
 	return OPAL_SUCCESS;
 }
 
