@@ -380,6 +380,9 @@ struct xive {
 	uint32_t	int_hw_bot;	/* Bottom of HW allocation */
 	uint32_t	int_ipi_top;	/* Highest IPI handed out so far + 1 */
 
+	/* The IPI allocation bitmap */
+	bitmap_t	*ipi_alloc_map;
+
 	/* We keep track of which interrupts were ever enabled to
 	 * speed up xive_reset
 	 */
@@ -1828,6 +1831,16 @@ static void late_init_one_xive(struct xive *x)
 	}
 }
 
+static bool xive_check_ipi_free(struct xive *x, uint32_t irq, uint32_t count)
+{
+	uint32_t i, idx = GIRQ_TO_IDX(irq);
+
+	for (i = 0; i < count; i++)
+		if (bitmap_tst_bit(*x->ipi_alloc_map, idx + i))
+			return false;
+	return true;
+}
+
 uint32_t xive_alloc_hw_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 {
 	struct proc_chip *chip = get_chip(chip_id);
@@ -1852,6 +1865,12 @@ uint32_t xive_alloc_hw_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 		unlock(&x->lock);
 		return XIVE_IRQ_ERROR;
 	}
+	if (!xive_check_ipi_free(x, base, count)) {
+		xive_err(x, "HWIRQ boot allocator request overlaps dynamic allocator\n");
+		unlock(&x->lock);
+		return XIVE_IRQ_ERROR;
+	}
+
 	x->int_hw_bot = base;
 
 	/* Initialize the corresponding IVT entries to sane defaults,
@@ -1892,6 +1911,12 @@ uint32_t xive_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 		unlock(&x->lock);
 		return XIVE_IRQ_ERROR;
 	}
+	if (!xive_check_ipi_free(x, base, count)) {
+		xive_err(x, "IPI boot allocator request overlaps dynamic allocator\n");
+		unlock(&x->lock);
+		return XIVE_IRQ_ERROR;
+	}
+
 	x->int_ipi_top = base + count;
 
 	/* Initialize the corresponding IVT entries to sane defaults,
@@ -2445,6 +2470,8 @@ static struct xive *init_one_xive(struct dt_node *np)
 	assert(x->eq_map);
 	x->int_enabled_map = zalloc(BITMAP_BYTES(MAX_INT_ENTRIES));
 	assert(x->int_enabled_map);
+	x->ipi_alloc_map = zalloc(BITMAP_BYTES(MAX_INT_ENTRIES));
+	assert(x->ipi_alloc_map);
 
 	xive_dbg(x, "Handling interrupts [%08x..%08x]\n",
 		 x->int_base, x->int_max - 1);
@@ -3449,6 +3476,87 @@ static int64_t opal_xive_reset(uint64_t version)
 	return OPAL_SUCCESS;
 }
 
+static int64_t opal_xive_allocate_irq(uint32_t chip_id)
+{
+	struct proc_chip *chip = get_chip(chip_id);
+	int idx, base_idx, max_count, girq;
+	struct xive_ive *ive;
+	struct xive *x;
+
+	if (!chip)
+		return OPAL_PARAMETER;
+	if (!chip->xive)
+		return OPAL_PARAMETER;
+
+	x = chip->xive;
+	lock(&x->lock);
+
+	base_idx = x->int_ipi_top - x->int_base;
+	max_count = x->int_hw_bot - x->int_ipi_top;
+
+	idx = bitmap_find_zero_bit(*x->ipi_alloc_map, base_idx, max_count);
+	if (idx < 0) {
+		unlock(&x->lock);
+		return XIVE_ALLOC_NO_SPACE;
+	}
+	bitmap_set_bit(*x->ipi_alloc_map, idx);
+	girq = x->int_base + idx;
+
+	/* Mark the IVE valid. Don't bother with the HW cache, it's
+	 * still masked anyway, the cache will be updated when unmasked
+	 * and configured.
+	 */
+	ive = xive_get_ive(x, girq);
+	if (!ive) {
+		bitmap_clr_bit(*x->ipi_alloc_map, idx);
+		unlock(&x->lock);
+		return OPAL_PARAMETER;
+	}
+	ive->w = IVE_VALID | IVE_MASKED | SETFIELD(IVE_EQ_DATA, 0ul, girq);
+	unlock(&x->lock);
+
+	return girq;
+}
+
+static int64_t opal_xive_free_irq(uint32_t girq)
+{
+	struct irq_source *is = irq_find_source(girq);
+	struct xive_src *s = container_of(is, struct xive_src, is);
+	struct xive *x = xive_from_isn(girq);
+	struct xive_ive *ive;
+	uint32_t idx;
+
+	if (!x || !is)
+		return OPAL_PARAMETER;
+
+	idx = GIRQ_TO_IDX(girq);
+
+	lock(&x->lock);
+
+	ive = xive_get_ive(x, girq);
+	if (!ive) {
+		unlock(&x->lock);
+		return OPAL_PARAMETER;
+	}
+
+	/* Mask the interrupt source */
+	xive_update_irq_mask(s, girq - s->esb_base, true);
+
+	/* Mark the IVE masked and invalid */
+	ive->w = IVE_MASKED;
+	xive_ivc_scrub(x, x->block_id, idx);
+
+	/* Free it */
+	if (!bitmap_tst_bit(*x->ipi_alloc_map, idx)) {
+		unlock(&x->lock);
+		return OPAL_PARAMETER;
+	}
+	bitmap_clr_bit(*x->ipi_alloc_map, idx);
+	unlock(&x->lock);
+
+	return OPAL_SUCCESS;
+}
+
 static void xive_init_globals(void)
 {
 	uint32_t i;
@@ -3523,5 +3631,7 @@ void init_xive(void)
 	opal_register(OPAL_XIVE_GET_QUEUE_INFO, opal_xive_get_queue_info, 7);
 	opal_register(OPAL_XIVE_SET_QUEUE_INFO, opal_xive_set_queue_info, 5);
 	opal_register(OPAL_XIVE_DONATE_PAGE, opal_xive_donate_page, 2);
+	opal_register(OPAL_XIVE_ALLOCATE_IRQ, opal_xive_allocate_irq, 1);
+	opal_register(OPAL_XIVE_FREE_IRQ, opal_xive_free_irq, 1);
 }
 
