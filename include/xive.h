@@ -374,9 +374,10 @@ uint32_t xive_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align);
 uint64_t xive_get_notify_port(uint32_t chip_id, uint32_t ent);
 uint32_t xive_get_notify_base(uint32_t girq);
 
-#define XIVE_SRC_EOI_PAGE1	0x00000001	/* EOI and trig. separate */
-#define XIVE_SRC_STORE_EOI	0x00000002	/* Store EOI (auto trigger) */
-#define XIVE_SRC_LSI		0x00000004	/* No Q bit, no retrigger */
+/* Old definitions, superseeded by OPAL_* ones */
+#define XIVE_SRC_EOI_PAGE1	OPAL_XIVE_IRQ_TRIGGER_PAGE
+#define XIVE_SRC_STORE_EOI	OPAL_XIVE_IRQ_STORE_EOI
+#define XIVE_SRC_LSI		OPAL_XIVE_IRQ_LSI
 
 struct irq_source_ops;
 void xive_register_hw_source(uint32_t base, uint32_t count, uint32_t shift,

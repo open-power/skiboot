@@ -2323,6 +2323,53 @@ static int64_t opal_xive_reset(uint64_t version)
 	return OPAL_SUCCESS;
 }
 
+static int64_t opal_xive_get_irq_info(uint32_t girq,
+				      uint64_t *out_flags,
+				      uint64_t *out_eoi_page,
+				      uint64_t *out_trig_page,
+				      uint32_t *out_esb_shift,
+				      uint32_t *out_src_chip)
+{
+	struct irq_source *is = irq_find_source(girq);
+	struct xive_src *s = container_of(is, struct xive_src, is);
+	uint32_t idx;
+	uint64_t mm_base;
+	uint64_t eoi_page = 0, trig_page = 0;
+
+	if (xive_mode != XIVE_MODE_EXPL)
+		return OPAL_WRONG_STATE;
+	if (is == NULL || out_flags == NULL)
+		return OPAL_PARAMETER;
+	assert(is->ops == &xive_irq_source_ops);
+
+	*out_flags = s->flags;
+	idx = girq - s->esb_base;
+
+	if (out_esb_shift)
+		*out_esb_shift = s->esb_shift;
+
+	mm_base = (uint64_t)s->esb_mmio + (1ull << s->esb_shift) * idx;
+
+	if (s->flags & XIVE_SRC_EOI_PAGE1) {
+		uint64_t p1off = 1ull << (s->esb_shift - 1);
+		eoi_page = mm_base + p1off;
+		trig_page = mm_base;
+	} else {
+		eoi_page = mm_base;
+		if (!(s->flags & XIVE_SRC_STORE_EOI))
+			trig_page = mm_base;
+	}
+
+	if (out_eoi_page)
+		*out_eoi_page = eoi_page;
+	if (out_trig_page)
+		*out_trig_page = trig_page;
+	if (out_src_chip)
+		*out_src_chip = GIRQ_TO_CHIP(girq);
+
+	return OPAL_SUCCESS;
+}
+
 void init_xive(void)
 {
 	struct dt_node *np;
@@ -2363,5 +2410,6 @@ void init_xive(void)
 
 	/* Register XIVE exploitation calls */
 	opal_register(OPAL_XIVE_RESET, opal_xive_reset, 1);
+	opal_register(OPAL_XIVE_GET_IRQ_INFO, opal_xive_get_irq_info, 6);
 }
 
