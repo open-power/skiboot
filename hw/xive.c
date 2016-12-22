@@ -381,6 +381,11 @@ struct xive {
 	uint32_t	int_hw_bot;	/* Bottom of HW allocation */
 	uint32_t	int_ipi_top;	/* Highest IPI handed out so far + 1 */
 
+	/* We keep track of which interrupts were ever enabled to
+	 * speed up xive_reset
+	 */
+	bitmap_t	*int_enabled_map;
+
 	/* Embedded source IPIs */
 	struct xive_src	ipis;
 };
@@ -2123,6 +2128,12 @@ static int64_t xive_set_irq_targetting(uint32_t isn, uint32_t target,
 		/* Unmasking */
 		new_ive = ive->w & ~IVE_MASKED;
 		xive_vdbg(x, "ISN %x unmasked !\n", isn);
+
+		/* For normal interrupt sources, keep track of which ones
+		 * we ever enabled since the last reset
+		 */
+		if (!is_escalation)
+			bitmap_set_bit(*x->int_enabled_map, GIRQ_TO_IDX(isn));
 	}
 
 	/* Re-target the IVE. First find the EQ
@@ -2399,8 +2410,11 @@ static void init_one_xive(struct dt_node *np)
 	if (x->int_ipi_top < 0x10)
 		x->int_ipi_top = 0x10;
 
+	/* Allocate a few bitmaps */
 	x->eq_map = zalloc(BITMAP_BYTES(MAX_EQ_COUNT >> 3));
 	assert(x->eq_map);
+	x->int_enabled_map = zalloc(BITMAP_BYTES(MAX_INT_ENTRIES));
+	assert(x->int_enabled_map);
 
 	xive_dbg(x, "Handling interrupts [%08x..%08x]\n",
 		 x->int_base, x->int_max - 1);
