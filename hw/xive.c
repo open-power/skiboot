@@ -3046,6 +3046,10 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 	 * something in the queue, we must also raise CPPR back.
 	 */
 
+	xive_cpu_vdbg(c, "get_xirr W01=%016llx W2=%08x\n",
+		      __in_be64(xs->tm_ring1 + TM_QW3_HV_PHYS),
+		      __in_be32(xs->tm_ring1 + TM_QW3_HV_PHYS + 8));
+
 	/* Perform the HV Ack cycle */
 	if (just_poll)
 		ack = __in_be64(xs->tm_ring1 + TM_QW3_HV_PHYS) >> 48;
@@ -3103,23 +3107,23 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 		 */
 		xs->pending &= ~(1 << prio);
 
-		/* There should always be an interrupt here I think, unless
-		 * some race occurred, but let's be safe. If we don't find
-		 * anything, we just return.
-		 */
+		/* Spurrious IPB bit, nothing to fetch, bring CPPR back */
 		if (!val)
-			goto skip;
-
-		xive_cpu_vdbg(c, "  found irq, prio=%d\n", prio);
+			prio = old_cppr;
 
 		/* We could have fetched a pending interrupt left over
 		 * by a previous EOI, so the CPPR might need adjusting
+		 * Also if we had a spurrious one as well.
 		 */
-		if (xs->cppr > prio) {
+		if (xs->cppr != prio) {
 			xs->cppr = prio;
 			out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_CPPR, prio);
-			xive_cpu_vdbg(c, "  adjusted CPPR\n");
+			xive_cpu_vdbg(c, "  adjusted CPPR to %d\n", prio);
 		}
+
+		if (val)
+			xive_cpu_vdbg(c, "  found irq, prio=%d\n", prio);
+
 	}
  skip:
 
