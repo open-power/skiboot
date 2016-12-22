@@ -1621,34 +1621,32 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 	new_ive = ive->w;
 
 	/* Are we masking ? */
-	if (prio == 0xff) {
-		/* Masking, just set the M bit */
-		if (!is_escalation)
-			new_ive |= IVE_MASKED;
-
+	if (prio == 0xff && !is_escalation) {
+		new_ive |= IVE_MASKED;
 		xive_vdbg(x, "ISN %x masked !\n", isn);
 	} else {
-
-		/* Unmasking, re-target the IVE. First find the EQ
-		 * correponding to the target
-		 */
-		if (!xive_eq_for_target(target, prio, &eq_blk, &eq_idx)) {
-			xive_err(x, "Can't find EQ for target/prio 0x%x/%d\n",
-				 target, prio);
-			unlock(&x->lock);
-			return false;
-		}
-
-		/* Try to update it atomically to avoid an intermediary
-		 * stale state
-		 */
+		/* Unmasking */
 		new_ive = ive->w & ~IVE_MASKED;
-		new_ive = SETFIELD(IVE_EQ_BLOCK, new_ive, eq_blk);
-		new_ive = SETFIELD(IVE_EQ_INDEX, new_ive, eq_idx);
-
-		xive_vdbg(x,"ISN %x routed to eq %x/%x IVE=%016llx !\n",
-			  isn, eq_blk, eq_idx, new_ive);
+		xive_vdbg(x, "ISN %x unmasked !\n", isn);
 	}
+	/* Re-target the IVE. First find the EQ
+	 * correponding to the target
+	 */
+	if (!xive_eq_for_target(target, prio, &eq_blk, &eq_idx)) {
+		xive_err(x, "Can't find EQ for target/prio 0x%x/%d\n",
+			 target, prio);
+		unlock(&x->lock);
+		return false;
+	}
+
+	/* Try to update it atomically to avoid an intermediary
+	 * stale state
+	 */
+	new_ive = SETFIELD(IVE_EQ_BLOCK, new_ive, eq_blk);
+	new_ive = SETFIELD(IVE_EQ_INDEX, new_ive, eq_idx);
+
+	xive_vdbg(x,"ISN %x routed to eq %x/%x IVE=%016llx !\n",
+		  isn, eq_blk, eq_idx, new_ive);
 
 	/* Updating the cache differs between real IVEs and escalation
 	 * IVEs inside an EQ
