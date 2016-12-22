@@ -10,5 +10,4 @@ RUN curl -O http://public.dhe.ibm.com/software/server/powerfuncsim/p9/packages/v
 RUN yum install -y systemsim-p9-1.0-0.el7.x86_64.rpm
 COPY . /build/
 WORKDIR /build
-# We don't have a custom centos 7 build, same script for now
-ENTRYPOINT ./opal-ci/build-centos6.sh
+ENTRYPOINT ./opal-ci/build-centos7.sh
