@@ -2285,6 +2285,9 @@ static void xive_update_irq_mask(struct xive_src *s, uint32_t idx, bool masked)
 	void *mmio_base = s->esb_mmio + (1ul << s->esb_shift) * idx;
 	uint32_t offset;
 
+	/* XXX FIXME: A quick mask/umask can make us shoot an interrupt
+	 * more than once to a queue. We need to keep track better
+	 */
 	if (s->flags & XIVE_SRC_EOI_PAGE1)
 		mmio_base += 1ull << (s->esb_shift - 1);
 	if (masked)
@@ -2357,6 +2360,11 @@ static void xive_source_eoi(struct irq_source *is, uint32_t isn)
 	if (!ive)
 		return;
 	ive += GIRQ_TO_IDX(isn);
+
+	/* XXX To fix the races with mask/unmask potentially causing
+	 * multiple queue entries, we need to keep track of EOIs here,
+	 * before the masked test below
+	 */
 
 	/* If it's invalid or masked, don't do anything */
 	if ((ive->w & IVE_MASKED) || !(ive->w & IVE_VALID))
