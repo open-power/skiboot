@@ -764,7 +764,8 @@ static struct xive_vp *xive_get_vp(struct xive *x, unsigned int idx)
 	assert(idx < (x->vp_ind_count * VP_PER_PAGE));
 	p = (struct xive_vp *)(x->vp_ind_base[idx / VP_PER_PAGE] &
 			       VSD_ADDRESS_MASK);
-	assert(p);
+	if (!p)
+		return NULL;
 
 	return &p[idx % VP_PER_PAGE];
 #else
