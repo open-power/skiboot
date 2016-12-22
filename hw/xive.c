@@ -2826,8 +2826,20 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 	struct xive *src_x;
 	bool special_ipi = false;
 
+	/*
+	 * In exploitation mode, this is supported as a way to perform
+	 * an EOI via a FW calls. This can be needed to workaround HW
+	 * implementation bugs for example. In this case interrupts will
+	 * have the OPAL_XIVE_IRQ_EOI_VIA_FW flag set.
+	 *
+	 * In that mode the entire "xirr" argument is interpreterd as
+	 * a global IRQ number (including the escalation bit), ther is
+	 * no split between the top 8 bits for CPPR and bottom 24 for
+	 * the interrupt number.
+	 */
 	if (xive_mode != XIVE_MODE_EMU)
-		return OPAL_WRONG_STATE;
+		return irq_source_eoi(xirr) ? OPAL_SUCCESS : OPAL_PARAMETER;
+
 	if (!xs)
 		return OPAL_INTERNAL_ERROR;
 
