@@ -280,7 +280,6 @@ struct xive {
 	uint32_t	chip_id;
 	uint32_t	block_id;
 	struct dt_node	*x_node;
-	struct dt_node	*m_node;
 
 	uint64_t	xscom_base;
 
@@ -389,6 +388,9 @@ struct xive {
 	/* Embedded source IPIs */
 	struct xive_src	ipis;
 };
+
+/* Global DT node */
+static struct dt_node *xive_dt_node;
 
 
 /* Block <-> Chip conversions.
@@ -1734,25 +1736,52 @@ static bool xive_prealloc_tables(struct xive *x)
 	return true;
 }
 
+#ifdef USE_INDIRECT
+static void xive_add_provisioning_properties(void)
+{
+	uint32_t chips[XIVE_MAX_CHIPS];
+	uint32_t i, count;
+
+	dt_add_property_cells(xive_dt_node,
+			      "ibm,xive-provision-page-size", 0x10000);
+
+#ifdef USE_BLOCK_GROUP_MODE
+	count = 1 << xive_chips_alloc_bits;
+#else
+	count = xive_block_count;
+#endif
+	for (i = 0; i < count; i++)
+		chips[i] = xive_block_to_chip[i];
+	dt_add_property(xive_dt_node, "ibm,xive-provision-chips",
+			chips, 4 * count);
+}
+#else
+static inline void xive_add_provisioning_properties(void) { }
+#endif
+
 static void xive_create_mmio_dt_node(struct xive *x)
 {
-	x->m_node = dt_new_addr(dt_root, "interrupt-controller",
-				(uint64_t)x->ic_base);
-	assert(x->m_node);
+	uint64_t tb = (uint64_t)x->tm_base;
+	uint32_t stride = 1u << x->tm_shift;
 
-	dt_add_property_u64s(x->m_node, "reg",
-			     (uint64_t)x->ic_base, x->ic_size,
-			     (uint64_t)x->tm_base, x->tm_size,
-			     (uint64_t)x->pc_base, x->pc_size,
-			     (uint64_t)x->vc_base, x->vc_size);
+	xive_dt_node = dt_new_addr(dt_root, "interrupt-controller", tb);
+	assert(xive_dt_node);
 
-	/* XXX Only put in "ibm,power9-xive" when we support the exploitation
-	 * related APIs and properties
-	 */
-	dt_add_property_strings(x->m_node, "compatible", /*"ibm,power9-xive",*/ "ibm,opal-intc");
+	dt_add_property_u64s(xive_dt_node, "reg",
+			     tb + 0 * stride, stride,
+			     tb + 1 * stride, stride,
+			     tb + 2 * stride, stride,
+			     tb + 3 * stride, stride);
 
-	dt_add_property_cells(x->m_node, "ibm,xive-max-sources",
-			      MAX_INT_ENTRIES);
+	dt_add_property_strings(xive_dt_node, "compatible",
+				"ibm,opal-xive-pe", "ibm,opal-intc");
+
+	dt_add_property_cells(xive_dt_node, "ibm,xive-eq-sizes",
+			      12, 16, 21, 24);
+
+	dt_add_property_cells(xive_dt_node, "ibm,xive-#priorities", 8);
+
+	xive_add_provisioning_properties();
 }
 
 static void xive_setup_forward_ports(struct xive *x, struct proc_chip *remote_chip)
@@ -2370,7 +2399,7 @@ void xive_register_ipi_source(uint32_t base, uint32_t count, void *data,
 			       XIVE_SRC_EOI_PAGE1, false, data, ops);
 }
 
-static void init_one_xive(struct dt_node *np)
+static struct xive *init_one_xive(struct dt_node *np)
 {
 	struct xive *x;
 	struct proc_chip *chip;
@@ -2456,15 +2485,13 @@ static void init_one_xive(struct dt_node *np)
 
 	/* XXX Add registration of escalation sources too */
 
-	/* Create a device-tree node for Linux use */
-	xive_create_mmio_dt_node(x);
-
-	return;
+	return x;
  fail:
 	xive_err(x, "Initialization failed...\n");
 
 	/* Should this be fatal ? */
 	//assert(false);
+	return NULL;
 }
 
 /*
@@ -3295,20 +3322,31 @@ void init_xive(void)
 	struct dt_node *np;
 	struct proc_chip *chip;
 	struct cpu_thread *cpu;
+	struct xive *one_xive;
 	bool first = true;
 
 	/* Look for xive nodes and do basic inits */
 	dt_for_each_compatible(dt_root, np, "ibm,power9-xive-x") {
+		struct xive *x;
+
 		/* Initialize some global stuff */
 		if (first)
 			xive_init_globals();
-		first = false;
+
 		/* Create/initialize the xive instance */
-		init_one_xive(np);
+		x = init_one_xive(np);
+		if (first)
+			one_xive = x;
+		first = false;
 	}
+	if (first)
+		return;
 
 	/* Init VP allocator */
 	xive_init_vp_allocator();
+
+	/* Create a device-tree node for Linux use */
+	xive_create_mmio_dt_node(one_xive);
 
 	/* Some inits must be done after all xive have been created
 	 * such as setting up the forwarding ports

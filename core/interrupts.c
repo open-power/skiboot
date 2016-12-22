@@ -163,11 +163,16 @@ uint32_t get_psi_interrupt(uint32_t chip_id)
 struct dt_node *add_ics_node(void)
 {
 	struct dt_node *ics = dt_new_addr(dt_root, "interrupt-controller", 0);
+	bool has_xive;
+
 	if (!ics)
 		return NULL;
 
+	has_xive = proc_gen >= proc_gen_p9;
+
 	dt_add_property_cells(ics, "reg", 0, 0, 0, 0);
-	dt_add_property_strings(ics, "compatible", "IBM,ppc-xics",
+	dt_add_property_strings(ics, "compatible",
+				has_xive ? "ibm,opal-xive-vc" : "IBM,ppc-xics",
 				"IBM,opal-xics");
 	dt_add_property_cells(ics, "#address-cells", 0);
 	dt_add_property_cells(ics, "#interrupt-cells", 2);
