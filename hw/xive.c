@@ -1979,6 +1979,26 @@ static void xive_init_cpu(struct cpu_thread *c)
 	xive_cpu_dbg(c, "CPU IPI is irq %08x\n", xs->ipi_irq);
 }
 
+static void xive_init_cpu_properties(struct cpu_thread *cpu)
+{
+	struct cpu_thread *t;
+	uint32_t iprop[8][2] = { };
+	uint32_t i;
+
+	assert(cpu_thread_count <= 8);
+
+	if (!cpu->node)
+		return;
+	for (i = 0; i < cpu_thread_count; i++) {
+		t = (i == 0) ? cpu : find_cpu_by_pir(cpu->pir + i);
+		if (!t)
+			continue;
+		iprop[i][0] = t->xstate->ipi_irq;
+		iprop[i][1] = 0; /* Edge */
+	}
+	dt_add_property(cpu->node, "interrupts", iprop, cpu_thread_count * 8);
+	dt_add_property_cells(cpu->node, "interrupt-parent", get_ics_phandle());
+}
 
 static uint32_t xive_read_eq(struct xive_cpu_state *xs, bool just_peek)
 {
@@ -2325,6 +2345,11 @@ void init_xive(void)
 	/* Initialize XICS emulation per-cpu structures */
 	for_each_cpu(cpu) {
 		xive_init_cpu(cpu);
+	}
+	/* Add interrupts propertie to each CPU node */
+	for_each_cpu(cpu) {
+		if (cpu_is_thread0(cpu))
+			xive_init_cpu_properties(cpu);
 	}
 
 	/* Calling boot CPU */
