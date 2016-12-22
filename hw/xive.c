@@ -782,6 +782,8 @@ static struct xive_vp *xive_get_vp(struct xive *x, unsigned int idx)
 static void xive_init_default_vp(struct xive_vp *vp,
 				 uint32_t eq_blk, uint32_t eq_idx)
 {
+	memset(vp, 0, sizeof(struct xive_vp));
+
 	/* Stash the EQ base in the pressure relief interrupt field
 	 * and set the ACK# to 0xff to disable pressure relief interrupts
 	 */
@@ -795,6 +797,8 @@ static void xive_init_default_eq(uint32_t vp_blk, uint32_t vp_idx,
 				 struct xive_eq *eq, void *backing_page,
 				 uint8_t prio)
 {
+	memset(eq, 0, sizeof(struct xive_eq));
+
 	eq->w1 = EQ_W1_GENERATION;
 	eq->w3 = ((uint64_t)backing_page) & 0xffffffff;
 	eq->w2 = (((uint64_t)backing_page)) >> 32 & 0x0fffffff;
@@ -3846,6 +3850,7 @@ static int64_t opal_xive_alloc_vp_block(uint32_t alloc_order)
 		 * as we have made sure when freeing the entries to scrub
 		 * it out of the cache.
 		 */
+		memset(vp, 0, sizeof(*vp));
 		vp->w1 = (blk << 28) | eqs;
 		vp->w5 = 0xff000000;
 	}
