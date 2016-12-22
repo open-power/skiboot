@@ -18,8 +18,6 @@
 
 #include <stdbool.h>
 #include <types.h>
-#include "../container.h"
-#include "../container.c"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +29,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <assert.h>
+
+#include "../container.h"
+#include "../container.c"
 
 static void display_version_raw(const ROM_version_raw v)
 {
