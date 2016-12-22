@@ -246,6 +246,30 @@ struct xive_src {
 	uint32_t			flags;
 };
 
+struct xive_cpu_state {
+	struct xive	*xive;
+	void		*tm_ring1;
+
+	/* Base HW VP */
+	uint32_t	vp_blk;
+	uint32_t	vp_idx;
+
+	/* Pre-allocated IPI */
+	uint32_t	ipi_irq;
+
+	/* Use for XICS emulation */
+	struct lock	lock;
+	uint8_t		cppr;
+	uint8_t		mfrr;
+	uint8_t		pending;
+	uint8_t		prev_cppr;
+	uint32_t	*eqbuf;
+	uint32_t	eqptr;
+	uint32_t	eqmsk;
+	uint8_t		eqgen;
+	void		*eqmmio;
+};
+
 struct xive {
 	uint32_t	chip_id;
 	uint32_t	block_id;
@@ -1957,24 +1981,6 @@ static void init_one_xive(struct dt_node *np)
 /*
  * XICS emulation
  */
-struct xive_cpu_state {
-	struct xive	*xive;
-	void		*tm_ring1;
-	uint32_t	vp_blk;
-	uint32_t	vp_idx;
-	struct lock	lock;
-	uint8_t		cppr;
-	uint8_t		mfrr;
-	uint8_t		pending;
-	uint8_t		prev_cppr;
-	uint32_t	*eqbuf;
-	uint32_t	eqidx;
-	uint32_t	eqmsk;
-	uint8_t		eqgen;
-	void		*eqmmio;
-	uint32_t	ipi_irq;
-};
-
 static void xive_ipi_init(struct xive *x, struct cpu_thread *cpu)
 {
 	struct xive_cpu_state *xs = cpu->xstate;
@@ -2092,7 +2098,7 @@ static void xive_init_cpu(struct cpu_thread *c)
 
 	/* XXX Find the one eq buffer associated with the VP, for now same BLK/ID */
 	xs->eqbuf = xive_get_eq_buf(x, xs->vp_blk, xs->vp_idx);
-	xs->eqidx = 0;
+	xs->eqptr = 0;
 	xs->eqmsk = (0x10000/4) - 1;
 	xs->eqgen = false;
 	xs->eqmmio = x->eq_mmio + xs->vp_idx * 0x20000;
@@ -2134,17 +2140,17 @@ static uint32_t xive_read_eq(struct xive_cpu_state *xs, bool just_peek)
 
 	xive_cpu_vdbg(this_cpu(), "  EQ %s... IDX=%x MSK=%x G=%d\n",
 		      just_peek ? "peek" : "read",
-		      xs->eqidx, xs->eqmsk, xs->eqgen);
-	cur = xs->eqbuf[xs->eqidx];
+		      xs->eqptr, xs->eqmsk, xs->eqgen);
+	cur = xs->eqbuf[xs->eqptr];
 	xive_cpu_vdbg(this_cpu(), "    cur: %08x [%08x %08x %08x ...]\n", cur,
-		      xs->eqbuf[(xs->eqidx + 1) & xs->eqmsk],
-		      xs->eqbuf[(xs->eqidx + 2) & xs->eqmsk],
-		      xs->eqbuf[(xs->eqidx + 3) & xs->eqmsk]);
+		      xs->eqbuf[(xs->eqptr + 1) & xs->eqmsk],
+		      xs->eqbuf[(xs->eqptr + 2) & xs->eqmsk],
+		      xs->eqbuf[(xs->eqptr + 3) & xs->eqmsk]);
 	if ((cur >> 31) == xs->eqgen)
 		return 0;
 	if (!just_peek) {
-		xs->eqidx = (xs->eqidx + 1) & xs->eqmsk;
-		if (xs->eqidx == 0)
+		xs->eqptr = (xs->eqptr + 1) & xs->eqmsk;
+		if (xs->eqptr == 0)
 			xs->eqgen = !xs->eqgen;
 	}
 	return cur & 0x00ffffff;
