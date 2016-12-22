@@ -40,9 +40,9 @@
 /*------------------------------------------------------------------------------*/
 
 #define __P8_PORE_TABLE_GEN_API_C
+#include <p8_delta_scan_rw.h>
 #include <p8_pore_api_custom.h>
 #include <p8_pore_table_gen_api.H>
-#include <p8_delta_scan_rw.h>
 
 /*
 // io_image -      pointer to SLW image

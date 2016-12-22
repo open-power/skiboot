@@ -44,7 +44,7 @@ int fileno(FILE *stream);
 int _printf(const char *format, ...) __attribute__((format (printf, 1, 2)));
 
 #ifndef pr_fmt
-#define prfmt(fmt) fmt
+#define pr_fmt(fmt) fmt
 #endif
 
 #define printf(f, ...) do { _printf(pr_fmt(f), ##__VA_ARGS__); } while(0)
