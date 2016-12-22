@@ -228,11 +228,11 @@ void xive_free_vps(uint32_t vp);
 #endif
 
 /* The xive operation mode indicates the active "API" and corresponds
- * to the "version" parameter of the opal_xive_reset() call
+ * to the "mode" parameter of the opal_xive_reset() call
  */
 static enum {
-	XIVE_MODE_EMU	= 0,
-	XIVE_MODE_EXPL	= 1,
+	XIVE_MODE_EMU	= OPAL_XIVE_MODE_EMU,
+	XIVE_MODE_EXPL	= OPAL_XIVE_MODE_EXPL,
 } xive_mode;
 
 

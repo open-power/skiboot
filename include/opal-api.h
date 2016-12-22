@@ -1087,6 +1087,15 @@ enum {
 	OPAL_PCI_TCE_KILL_ALL,
 };
 
+/* The xive operation mode indicates the active "API" and
+ * corresponds to the "mode" parameter of the opal_xive_reset()
+ * call
+ */
+enum {
+	OPAL_XIVE_MODE_EMU	= 0,
+	OPAL_XIVE_MODE_EXPL	= 1,
+};
+
 /* Flags for OPAL_XIVE_GET_IRQ_INFO */
 enum {
 	OPAL_XIVE_IRQ_TRIGGER_PAGE	= 0x00000001,
