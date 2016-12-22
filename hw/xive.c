@@ -252,6 +252,7 @@ struct xive_cpu_state {
 	uint32_t	vp_idx;
 	uint32_t	eq_blk;
 	uint32_t	eq_idx; /* Base eq index of a block of 8 */
+	void		*eq_page;
 
 	/* Pre-allocated IPI */
 	uint32_t	ipi_irq;
@@ -900,6 +901,16 @@ static int64_t xive_eqc_cache_update(struct xive *x, uint64_t block,
 				     bool light_watch)
 {
 	return __xive_cache_watch(x, xive_cache_eqc, block, idx,
+				  start_dword, dword_count,
+				  new_data, light_watch);
+}
+
+static int64_t xive_vpc_cache_update(struct xive *x, uint64_t block,
+				     uint64_t idx, uint32_t start_dword,
+				     uint32_t dword_count, void *new_data,
+				     bool light_watch)
+{
+	return __xive_cache_watch(x, xive_cache_vpc, block, idx,
 				  start_dword, dword_count,
 				  new_data, light_watch);
 }
@@ -2131,10 +2142,44 @@ void xive_cpu_callin(struct cpu_thread *cpu)
 	xive_ipi_init(x, cpu);
 }
 
+static void xive_init_cpu_defaults(struct xive_cpu_state *xs)
+{
+	struct xive_eq eq;
+	struct xive_vp vp;
+	struct xive *x_eq, *x_vp;
+
+	/* Grab the XIVE where the VP resides. It could be different from
+	 * the local chip XIVE if not using block group mode
+	 */
+	x_vp = xive_from_pc_blk(xs->vp_blk);
+	assert(x_vp);
+
+	/* Grab the XIVE where the EQ resides. It will be the same as the
+	 * VP one with the current provisioning but I prefer not making
+	 * this code depend on it.
+	 */
+	x_eq = xive_from_vc_blk(xs->eq_blk);
+	assert(x_eq);
+
+	/* Initialize the structure */
+	xive_init_eq(xs->vp_blk, xs->vp_idx, &eq,
+		     xs->eq_page, XIVE_EMULATION_PRIO);
+
+	/* Use the cache watch to write it out */
+	xive_eqc_cache_update(x_eq, xs->eq_blk,
+			      xs->eq_idx + XIVE_EMULATION_PRIO,
+			      0, 4, &eq, false);
+
+	/* Initialize/enable the VP */
+	xive_init_vp(x_vp, &vp, xs->eq_blk, xs->eq_idx);
+
+	/* Use the cache watch to write it out */
+	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx,
+			      0, 8, &vp, false);
+}
+
 static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
 {
-	struct xive_vp *vp;
-	struct xive_eq eq;
 	struct xive *x;
 	void *p;
 
@@ -2142,20 +2187,16 @@ static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
 	xs->vp_blk = PIR2VP_BLK(c->pir);
 	xs->vp_idx = PIR2VP_IDX(c->pir);
 
-	/* Grab the XIVE where the VP resides. It could be different from
-	 * the local chip XIVE if not using block group mode
-	 */
-	x = xive_from_pc_blk(xs->vp_blk);
-	assert(x);
-
-	/* Grab VP pointer */
-	vp = xive_get_vp(x, xs->vp_idx);
-	assert(vp);
-
 	/* For now we use identical block IDs for VC and PC but that might
 	 * change. We allocate the EQs on the same XIVE as the VP.
 	 */
 	xs->eq_blk = xs->vp_blk;
+
+	/* Grab the XIVE where the EQ resides. It could be different from
+	 * the local chip XIVE if not using block group mode
+	 */
+	x = xive_from_vc_blk(xs->eq_blk);
+	assert(x);
 
 	/* Allocate a set of EQs for that VP */
 	xs->eq_idx = xive_alloc_eq_set(x, true);
@@ -2169,16 +2210,7 @@ static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
 		xive_err(x, "Failed to allocate EQ backing store\n");
 		assert(false);
 	}
-
-	/* Initialize the structure */
-	xive_init_eq(xs->vp_blk, xs->vp_idx, &eq, p, XIVE_EMULATION_PRIO);
-
-	/* Use the cache watch to write it out */
-	xive_eqc_cache_update(x, xs->vp_blk, xs->eq_idx + XIVE_EMULATION_PRIO,
-			      0, 4, &eq, false);
-
-	/* Initialize/enable the VP */
-	xive_init_vp(x, vp, xs->eq_blk, xs->eq_idx);
+	xs->eq_page = p;
 }
 
 static void xive_init_xics_emulation(struct xive_cpu_state *xs)
@@ -2247,6 +2279,9 @@ static void xive_init_cpu(struct cpu_thread *c)
 
 	/* Provision a VP and some EQDs for a physical CPU */
 	xive_provision_cpu(xs, c);
+
+	/* Configure the default EQ/VP */
+	xive_init_cpu_defaults(xs);
 
 	/* Initialize the XICS emulation related fields */
 	xive_init_xics_emulation(xs);
