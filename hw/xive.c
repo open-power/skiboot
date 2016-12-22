@@ -1321,7 +1321,11 @@ static bool xive_set_vsd(struct xive *x, uint32_t tbl, uint32_t idx, uint64_t v)
 		  SETFIELD(VST_TABLE_OFFSET, 0ull, idx));
 	if (x->last_reg_error)
 		return false;
-	xive_regw(x, VC_VSD_TABLE_DATA, v);
+	/* Hack to workaround DD1 issue with NVT in VC in DD1 */
+	if (tbl == VST_TSEL_VPDT)
+		xive_regw(x, VC_VSD_TABLE_DATA, v | VSD_TSIZE);
+	else
+		xive_regw(x, VC_VSD_TABLE_DATA, v);
 	if (x->last_reg_error)
 		return false;
 
