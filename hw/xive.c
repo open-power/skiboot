@@ -387,6 +387,7 @@ struct xive {
  */
 #define XIVE_INVALID_CHIP	0xffffffff
 static uint32_t xive_block_to_chip[16];
+static uint32_t xive_block_count;
 
 /* Conversion between GIRQ and block/index.
  *
@@ -409,11 +410,7 @@ static uint32_t xive_block_to_chip[16];
 #define BLKIDX_TO_GIRQ(__b,__i)	(((uint32_t)(__b)) << 20 | (__i))
 #define GIRQ_IS_ESCALATION(__g)	((__g) & 0x01000000)
 
-/* VP IDs are just the concatenation of the BLK and index as found
- * in an EQ target field for example
- */
-
-/* For now, it's one chip per block for both VC and PC */
+/* Block/IRQ to chip# conversions */
 #define PC_BLK_TO_CHIP(__b)	(xive_block_to_chip[__b])
 #define VC_BLK_TO_CHIP(__b)	(xive_block_to_chip[__b])
 #define GIRQ_TO_CHIP(__isn)	(VC_BLK_TO_CHIP(GIRQ_TO_BLK(__isn)))
@@ -2010,10 +2007,10 @@ static void init_one_xive(struct dt_node *np)
 	x->xscom_base = dt_get_address(np, 0, NULL);
 	x->chip_id = dt_get_chip_id(np);
 
-	/* For now, make block ID and chip ID the same, we'll have to change
-	 * that if chip IDs become too sparse
-	 */
-	x->block_id = x->chip_id;
+	/* "Allocate" a new block ID for the chip */
+	x->block_id = xive_block_count++;
+	/* XXX Hard coded limit of 16 chips ! */
+	assert (x->block_id < 16);
 	xive_block_to_chip[x->block_id] = x->chip_id;
 	init_lock(&x->lock);
 
