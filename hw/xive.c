@@ -2383,20 +2383,27 @@ static void xive_source_eoi(struct irq_source *is, uint32_t isn)
 		 * a clear of both P and Q and returns the old Q.
 		 *
 		 * This allows us to then do a re-trigger if Q was set
-		 rather than synthetizing an interrupt in software
-		*/
+		 * rather than synthetizing an interrupt in software
+		 */
 		if (s->flags & XIVE_SRC_EOI_PAGE1)
 			mmio_base += 1ull << (s->esb_shift - 1);
-		offset = 0xc00;
-		if (s->flags & XIVE_SRC_SHIFT_BUG)
-			offset <<= 4;
-		eoi_val = in_be64(mmio_base + offset);
-		xive_vdbg(s->xive, "ISN: %08x EOI=%llx\n", isn, eoi_val);
-		if ((s->flags & XIVE_SRC_LSI) || !(eoi_val & 1))
-			return;
 
-		/* Re-trigger always on page0 or page1 ? */
-		out_be64(mmio_base, 0);
+		/* LSIs don't need anything special, just EOI */
+		if (s->flags & XIVE_SRC_LSI)
+			in_be64(mmio_base);
+		else {
+			offset = 0xc00;
+			if (s->flags & XIVE_SRC_SHIFT_BUG)
+				offset <<= 4;
+			eoi_val = in_be64(mmio_base + offset);
+			xive_vdbg(s->xive, "ISN: %08x EOI=%llx\n",
+				  isn, eoi_val);
+			if (!(eoi_val & 1))
+				return;
+
+			/* Re-trigger always on page0 or page1 ? */
+			out_be64(mmio_base, 0);
+		}
 	}
 }
 
