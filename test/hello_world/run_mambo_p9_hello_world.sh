@@ -10,7 +10,7 @@ if [ -z "$MAMBO_BINARY" ]; then
 fi
 
 if [ ! -x "$MAMBO_PATH/$MAMBO_BINARY" ]; then
-    echo 'Could not find executable MAMBO_BINARY. Skipping hello_world test';
+    echo "Could not find executable MAMBO_BINARY ($MAMBO_PATH/$MAMBO_BINARY). Skipping hello_world test";
     exit 0;
 fi
 
