@@ -2682,7 +2682,7 @@ static void xive_init_xics_emulation(struct xive_cpu_state *xs)
 
 	xs->eqptr = 0;
 	xs->eqmsk = (0x10000/4) - 1;
-	xs->eqgen = false;
+	xs->eqgen = 0;
 
 	x = xive_from_vc_blk(xs->eq_blk);
 	assert(x);
@@ -2782,7 +2782,7 @@ static uint32_t xive_read_eq(struct xive_cpu_state *xs, bool just_peek)
 	if (!just_peek) {
 		xs->eqptr = (xs->eqptr + 1) & xs->eqmsk;
 		if (xs->eqptr == 0)
-			xs->eqgen = !xs->eqgen;
+			xs->eqgen ^= 1;
 	}
 	return cur & 0x00ffffff;
 }
