@@ -1265,6 +1265,8 @@ uint32_t xive_alloc_hw_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 	x = chip->xive;
 	assert(x);
 
+	lock(&x->lock);
+
 	/* Allocate the HW interrupts */
 	base = x->int_hw_bot - count;
 	base &= ~(align - 1);
@@ -1272,6 +1274,7 @@ uint32_t xive_alloc_hw_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 		xive_err(x,
 			 "HW alloc request for %d interrupts aligned to %d failed\n",
 			 count, align);
+		unlock(&x->lock);
 		return XIVE_IRQ_ERROR;
 	}
 	x->int_hw_bot = base;
@@ -1285,6 +1288,8 @@ uint32_t xive_alloc_hw_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 
 		ive->w = IVE_VALID | IVE_MASKED | SETFIELD(IVE_EQ_DATA, 0ul, base + i);
 	}
+
+	unlock(&x->lock);
 	return base;
 }
 
@@ -1300,6 +1305,8 @@ uint32_t xive_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 	x = chip->xive;
 	assert(x);
 
+	lock(&x->lock);
+
 	/* Allocate the IPI interrupts */
 	base = x->int_ipi_top + (align - 1);
 	base &= ~(align - 1);
@@ -1307,6 +1314,7 @@ uint32_t xive_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 		xive_err(x,
 			 "IPI alloc request for %d interrupts aligned to %d failed\n",
 			 count, align);
+		unlock(&x->lock);
 		return XIVE_IRQ_ERROR;
 	}
 	x->int_ipi_top = base + count;
@@ -1322,6 +1330,7 @@ uint32_t xive_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 			SETFIELD(IVE_EQ_DATA, 0ul, base + i);
 	}
 
+	unlock(&x->lock);
 	return base;
 }
 
@@ -1523,6 +1532,8 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 		return false;
 	}
 
+	lock(&x->lock);
+
 	/* Are we masking ? */
 	if (prio == 0xff) {
 		/* Masking, just set the M bit */
@@ -1539,6 +1550,7 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 		if (!xive_eq_for_target(target, prio, &eq_blk, &eq_idx)) {
 			xive_err(x, "Can't find EQ for target/prio 0x%x/%d\n",
 				 target, prio);
+			unlock(&x->lock);
 			return false;
 		}
 
@@ -1558,6 +1570,7 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 	/* Scrub IVE from cache */
 	xive_ivc_scrub(x, x->chip_id, GIRQ_TO_IDX(isn));
 
+	unlock(&x->lock);
 	return true;
 }
 
