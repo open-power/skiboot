@@ -364,7 +364,11 @@ struct xive_eq {
 #define EQ_W0_HWDEP		PPC_BITMASK32(24,31)
 	uint32_t	w1;
 #define EQ_W1_ESn		PPC_BITMASK32(0,1)
+#define EQ_W1_ESn_P		PPC_BIT32(0)
+#define EQ_W1_ESn_Q		PPC_BIT32(1)
 #define EQ_W1_ESe		PPC_BITMASK32(2,3)
+#define EQ_W1_ESe_P		PPC_BIT32(2)
+#define EQ_W1_ESe_Q		PPC_BIT32(3)
 #define EQ_W1_GENERATION	PPC_BIT32(9)
 #define EQ_W1_PAGE_OFF		PPC_BITMASK32(10,31)
 	uint32_t	w2;

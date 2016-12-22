@@ -3357,13 +3357,21 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 	if (qflags & OPAL_XIVE_EQ_ALWAYS_NOTIFY)
 		eq.w0 |= EQ_W0_UCOND_NOTIFY;
 
-	/* Check enable transitionn */
+	/* Escalation flag */
+	if (qflags & OPAL_XIVE_EQ_ESCALATE)
+		eq.w0 |= EQ_W0_ESCALATE_CTL;
+
+	/* Check enable transition. On any transition we clear PQ,
+	 * set the generation bit, clear the offset and mask the
+	 * escalation interrupt
+	 */
 	if ((qflags & OPAL_XIVE_EQ_ENABLED) && !(eq.w0 & EQ_W0_VALID)) {
-		/* Clear PQ bits, set G, clear offset */
-		eq.w1 = EQ_W1_GENERATION;
 		eq.w0 |= EQ_W0_VALID;
-	} else if (!(qflags & OPAL_XIVE_EQ_ENABLED))
+		eq.w1 = EQ_W1_GENERATION | EQ_W1_ESe_Q;
+	} else if (!(qflags & OPAL_XIVE_EQ_ENABLED)) {
 		eq.w0 &= ~EQ_W0_VALID;
+		eq.w1 = EQ_W1_GENERATION | EQ_W1_ESe_Q;
+	}
 
 	/* Update EQ, non-synchronous */
 	lock(&x->lock);
