@@ -338,18 +338,23 @@ struct xive {
 /* Conversion between GIRQ and block/index.
  *
  * ------------------------------------
- * |00000000|BLOC|               INDEX|
+ * |0000000E|BLOC|               INDEX|
  * ------------------------------------
  *      8      4           20
  *
- * The global interrupt number is thus limited to 24 bits which is
- * necessary for our XICS emulation since the top 8 bits are
- * reserved for the CPPR value.
+ * the E bit indicates that this is an escalation interrupt, in
+ * that case, the BLOC/INDEX represents the EQ containig the
+ * corresponding escalation descriptor.
+ *
+ * Global interrupt numbers for non-escalation interrupts are thus
+ * limited to 24 bits which is necessary for our XICS emulation since
+ * the top 8 bits are reserved for the CPPR value.
  *
  */
 #define GIRQ_TO_BLK(__g)	(((__g) >> 20) & 0xf)
 #define GIRQ_TO_IDX(__g)	((__g) & 0x000fffff)
 #define BLKIDX_TO_GIRQ(__b,__i)	(((uint32_t)(__b)) << 20 | (__i))
+#define GIRQ_IS_ESCALATION(__g)	((__g) & 0x01000000)
 
 /* VP IDs are just the concatenation of the BLK and index as found
  * in an EQ target field for example
@@ -476,27 +481,6 @@ static struct xive *xive_from_vc_blk(uint32_t blk)
 	return c->xive;
 }
 
-static struct xive_ive *xive_get_ive(struct xive *x, unsigned int isn)
-{
-	struct xive_ive *ivt;
-	uint32_t idx = GIRQ_TO_IDX(isn);
-
-	/* Check the block matches */
-	if (isn < x->int_base || isn >= x->int_max) {
-		xive_err(x, "xive_get_ive, ISN 0x%x not on chip\n", idx);
-		return NULL;
-	}
-	assert (idx < MAX_INT_ENTRIES);
-
-	/* If we support >1 block per chip, this should still work as
-	 * we are likely to make the table contiguous anyway
-	 */
-	ivt = x->ivt_base;
-	assert(ivt);
-
-	return ivt + idx;
-}
-
 static struct xive_eq *xive_get_eq(struct xive *x, unsigned int idx)
 {
 	struct xive_eq *p;
@@ -523,6 +507,45 @@ static struct xive_eq *xive_get_eq(struct xive *x, unsigned int idx)
 	p = x->eq_base;
 	return p + idx;
 #endif
+}
+
+static struct xive_ive *xive_get_ive(struct xive *x, unsigned int isn)
+{
+	struct xive_ive *ivt;
+	uint32_t idx = GIRQ_TO_IDX(isn);
+
+	if (GIRQ_IS_ESCALATION(isn)) {
+		/* Allright, an escalation IVE is buried inside an EQ, let's
+		 * try to find it
+		 */
+		struct xive_eq *eq;
+
+		if (x->chip_id != VC_BLK_TO_CHIP(GIRQ_TO_BLK(isn))) {
+			xive_err(x, "xive_get_ive, ESC ISN 0x%x not on right chip\n", isn);
+			return NULL;
+		}
+		eq = xive_get_eq(x, idx);
+		if (!eq) {
+			xive_err(x, "xive_get_ive, ESC ISN 0x%x EQ not found\n", isn);
+			return NULL;
+		}
+		return (struct xive_ive *)(char *)&eq->w4;
+	} else {
+		/* Check the block matches */
+		if (isn < x->int_base || isn >= x->int_max) {
+			xive_err(x, "xive_get_ive, ISN 0x%x not on right chip\n", isn);
+			return NULL;
+		}
+		assert (idx < MAX_INT_ENTRIES);
+
+		/* If we support >1 block per chip, this should still work as
+		 * we are likely to make the table contiguous anyway
+		 */
+		ivt = x->ivt_base;
+		assert(ivt);
+
+		return ivt + idx;
+	}
 }
 
 static struct xive_vp *xive_get_vp(struct xive *x, unsigned int idx)
@@ -1295,21 +1318,25 @@ uint32_t xive_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align)
 
 void *xive_get_trigger_port(uint32_t girq)
 {
+	uint32_t idx = GIRQ_TO_IDX(girq);
 	struct xive *x;
-	uint32_t idx;
 
 	/* Find XIVE on which the IVE resides */
 	x = xive_from_isn(girq);
 	if (!x)
 		return NULL;
 
-	/* Make sure it's an IPI on that chip */
-	if (girq < x->int_base ||
-	    girq >= x->int_ipi_top)
-		return NULL;
+	if (GIRQ_IS_ESCALATION(girq)) {
+		/* Page 2 of the EQ MMIO space is the escalate irq */
+		return x->eq_mmio + idx * 0x20000 + 0x10000;
+	} else {
+		/* Make sure it's an IPI on that chip */
+		if (girq < x->int_base ||
+		    girq >= x->int_ipi_top)
+			return NULL;
 
-	idx = girq - x->int_base;
-	return x->esb_mmio + idx * 0x20000;
+		return x->esb_mmio + idx * 0x20000;
+	}
 }
 
 uint64_t xive_get_notify_port(uint32_t chip_id, uint32_t ent)
@@ -1406,6 +1433,7 @@ static bool xive_get_eq_info(uint32_t isn, uint32_t *out_target,
 	uint32_t eq_blk, eq_idx;
 	uint32_t vp_blk, vp_idx;
 	uint32_t prio, server;
+	bool is_escalation = GIRQ_IS_ESCALATION(isn);
 
 	/* Find XIVE on which the IVE resides */
 	x = xive_from_isn(isn);
@@ -1415,7 +1443,7 @@ static bool xive_get_eq_info(uint32_t isn, uint32_t *out_target,
 	ive = xive_get_ive(x, isn);
 	if (!ive)
 		return false;
-	if (!(ive->w & IVE_VALID)) {
+	if (!(ive->w & IVE_VALID) && !is_escalation) {
 		xive_err(x, "ISN %x lead to invalid IVE !\n", isn);
 		return false;
 	}
@@ -1471,6 +1499,7 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 	struct xive *x;
 	struct xive_ive *ive;
 	uint32_t eq_blk, eq_idx;
+	bool is_escalation = GIRQ_IS_ESCALATION(isn);
 
 	/* Find XIVE on which the IVE resides */
 	x = xive_from_isn(isn);
@@ -1480,7 +1509,7 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 	ive = xive_get_ive(x, isn);
 	if (!ive)
 		return false;
-	if (!(ive->w & IVE_VALID)) {
+	if (!(ive->w & IVE_VALID) && !is_escalation) {
 		xive_err(x, "ISN %x lead to invalid IVE !\n", isn);
 		return false;
 	}
@@ -1488,7 +1517,8 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 	/* Are we masking ? */
 	if (prio == 0xff) {
 		/* Masking, just set the M bit */
-		ive->w |= IVE_MASKED;
+		if (!is_escalation)
+			ive->w |= IVE_MASKED;
 
 		xive_vdbg(x, "ISN %x masked !\n", isn);
 	} else {

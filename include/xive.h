@@ -276,6 +276,9 @@
  *
  * One per interrupt source. Targets that interrupt to a given EQ
  * and provides the corresponding logical interrupt number (EQ data)
+ *
+ * We also map this structure to the escalation descriptor inside
+ * an EQ, though in that case the valid and masked bits are not used.
  */
 struct xive_ive {
 	/* Use a single 64-bit definition to make it easier to
