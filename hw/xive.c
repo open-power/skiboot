@@ -22,6 +22,10 @@
 #include <interrupts.h>
 #include <timebase.h>
 #include <bitmap.h>
+#include <buddy.h>
+
+uint32_t xive_alloc_vps(uint32_t order);
+void xive_free_vps(uint32_t vp);
 
 /* Use Block group mode to move chip_id into block .... */
 #define USE_BLOCK_GROUP_MODE
@@ -197,11 +201,13 @@
  * XXX Adjust that based on BAR value ?
  */
 #ifdef USE_INDIRECT
-#define MAX_VP_COUNT		(512 * 1024)
+#define MAX_VP_ORDER		19	/* 512k */
+#define MAX_VP_COUNT		(1ul << MAX_VP_ORDER)
 #define VP_PER_PAGE		(0x10000 / 64) // Use sizeof ?
 #define IND_VP_TABLE_SIZE	((MAX_VP_COUNT / VP_PER_PAGE) * 8)
 #else
-#define MAX_VP_COUNT		(4 * 1024)
+#define MAX_VP_ORDER		12	/* 4k */
+#define MAX_VP_COUNT		(1ul << MAX_VP_ORDER)
 #define VPT_SIZE		(MAX_VP_COUNT * 64)
 #endif
 
@@ -217,7 +223,7 @@
 
 /* Initial number of VPs on block 0 only */
 #define INITIAL_BLK0_VP_BASE	0x800
-#define INITIAL_BLK0_VP_COUNT	(2 * 1024)
+#define INITIAL_BLK0_VP_COUNT  	0x800
 
 #endif
 
@@ -344,6 +350,12 @@ struct xive {
 #else
 	void		*vp_base;
 #endif
+
+#ifndef USE_BLOCK_GROUP_MODE
+	/* VP allocation buddy when not using block group mode */
+	struct buddy	*vp_buddy;
+#endif
+
 #ifdef USE_INDIRECT
 	/* Pool of donated pages for provisioning indirect EQ and VP pages */
 	struct list_head donated_pages;
@@ -464,6 +476,8 @@ static uint32_t xive_block_count;
 
 /* VP allocation */
 static uint32_t xive_chips_alloc_bits = 0;
+struct buddy *xive_vp_buddy;
+struct lock xive_buddy_lock = LOCK_UNLOCKED;
 
 /* VP# decoding/encoding */
 static bool xive_decode_vp(uint32_t vp, uint32_t *blk, uint32_t *idx,
@@ -753,7 +767,7 @@ static struct xive_vp *xive_get_vp(struct xive *x, unsigned int idx)
 }
 
 static void xive_init_vp(struct xive *x __unused, struct xive_vp *vp,
-			 uint32_t eq_blk, uint32_t eq_idx)
+			 uint32_t eq_blk, uint32_t eq_idx, bool valid)
 {
 	/* Stash the EQ base in the pressure relief interrupt field
 	 * and set the ACK# to 0xff to disable pressure relief interrupts
@@ -763,12 +777,13 @@ static void xive_init_vp(struct xive *x __unused, struct xive_vp *vp,
 	lwsync();
 
 	/* XXX TODO: Look at the special cache line stuff */
-	vp->w0 = VP_W0_VALID;
+	if (valid)
+		vp->w0 = VP_W0_VALID;
 }
 
-static void xive_init_eq(uint32_t vp_blk, uint32_t vp_idx,
-			 struct xive_eq *eq, void *backing_page,
-			 uint8_t prio)
+static void xive_init_default_eq(uint32_t vp_blk, uint32_t vp_idx,
+				 struct xive_eq *eq, void *backing_page,
+				 uint8_t prio)
 {
 	eq->w1 = EQ_W1_GENERATION;
 	eq->w3 = ((uint64_t)backing_page) & 0xffffffff;
@@ -871,6 +886,215 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect __unused)
 
 	return idx;
 }
+
+#ifdef USE_INDIRECT
+static bool xive_provision_vp_ind(struct xive *x, uint32_t vp_idx, uint32_t order)
+{
+	uint32_t pbase, pend, i;
+
+	pbase = vp_idx / VP_PER_PAGE;
+	pend  = (vp_idx + (1 << order)) / VP_PER_PAGE;
+
+	for (i = pbase; i <= pend; i++) {
+		void *page;
+
+		/* Already provisioned ? */
+		if (x->vp_ind_base[i])
+			continue;
+
+		/* Try to grab a donated page */
+		page = xive_get_donated_page(x);
+		if (!page)
+			return false;
+
+		/* Install the page */
+		memset(page, 0, 0x10000);
+		x->vp_ind_base[i] = ((uint64_t)page) & VSD_ADDRESS_MASK;
+		x->vp_ind_base[i] |= SETFIELD(VSD_TSIZE, 0ull, 4);
+		x->vp_ind_base[i] |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
+	}
+	return true;
+}
+#else
+static inline bool xive_provision_vp_ind(struct xive *x __unused,
+					 uint32_t vp_idx __unused,
+					 uint32_t order __unused)
+{
+	return true;
+}
+#endif /* USE_INDIRECT */
+
+#ifdef USE_BLOCK_GROUP_MODE
+
+static void xive_init_vp_allocator(void)
+{
+	/* Initialize chip alloc bits */
+	xive_chips_alloc_bits = ilog2(xive_block_count);
+
+	prlog(PR_INFO, "XIVE: %d chips considered for VP allocations\n",
+	      1 << xive_chips_alloc_bits);
+
+	/* Allocate a buddy big enough for MAX_VP_ORDER allocations.
+	 *
+	 * each bit in the buddy represents 1 << xive_chips_alloc_bits
+	 * VPs.
+	 */
+	xive_vp_buddy = buddy_create(MAX_VP_ORDER);
+	assert(xive_vp_buddy);
+
+	/* We reserve the whole range of VPs representing HW chips.
+	 *
+	 * These are 0x80..0xff, so order 7 starting at 0x80. This will
+	 * reserve that range on each chip.
+	 *
+	 * XXX This can go away if we just call xive_reset ..
+	 */
+	assert(buddy_reserve(xive_vp_buddy, 0x80, 7));
+}
+
+uint32_t xive_alloc_vps(uint32_t order)
+{
+	uint32_t local_order, i;
+	int vp;
+
+	/* The minimum order is 2 VPs per chip */
+	if (order < (xive_chips_alloc_bits + 1))
+		order = xive_chips_alloc_bits + 1;
+
+	/* We split the allocation */
+	local_order = order - xive_chips_alloc_bits;
+
+	/* We grab that in the global buddy */
+	assert(xive_vp_buddy);
+	lock(&xive_buddy_lock);
+	vp = buddy_alloc(xive_vp_buddy, local_order);
+	unlock(&xive_buddy_lock);
+	if (vp < 0)
+		return XIVE_ALLOC_NO_SPACE;
+
+	/* Provision on every chip considered for allocation */
+	for (i = 0; i < (1 << xive_chips_alloc_bits); i++) {
+		struct xive *x = xive_from_pc_blk(i);
+		bool success;
+
+		/* Return internal error & log rather than assert ? */
+		assert(x);
+		lock(&x->lock);
+		success = xive_provision_vp_ind(x, vp, local_order);
+		unlock(&x->lock);
+		if (!success) {
+			lock(&xive_buddy_lock);
+			buddy_free(xive_vp_buddy, vp, local_order);
+			unlock(&xive_buddy_lock);
+			return XIVE_ALLOC_NO_IND;
+		}
+	}
+
+	/* Encode the VP number. "blk" is 0 as this represents
+	 * all blocks and the allocation always starts at 0
+	 */
+	return xive_encode_vp(0, vp, order);
+}
+
+void xive_free_vps(uint32_t vp)
+{
+	uint32_t idx;
+	uint8_t order, local_order;
+
+	assert(xive_decode_vp(vp, NULL, &idx, &order, NULL));
+
+	/* We split the allocation */
+	local_order = order - xive_chips_alloc_bits;
+
+	/* Free that in the buddy */
+	lock(&xive_buddy_lock);
+	buddy_free(xive_vp_buddy, idx, local_order);
+	unlock(&xive_buddy_lock);
+}
+
+#else /* USE_BLOCK_GROUP_MODE */
+
+static void xive_init_vp_allocator(void)
+{
+	struct proc_chip *chip;
+
+	for_each_chip(chip) {
+		struct xive *x = chip->xive;
+		if (!x)
+			continue;
+		/* Each chip has a MAX_VP_ORDER buddy */
+		x->vp_buddy = buddy_create(MAX_VP_ORDER);
+		assert(x->vp_buddy);
+
+		/* We reserve the whole range of VPs representing HW chips.
+		 *
+		 * These are 0x800..0xfff on block 0 only, so order 11
+		 * starting at 0x800.
+		 */
+		if (x->block_id == 0)
+			assert(buddy_reserve(x->vp_buddy, 0x800, 11));
+	}
+}
+
+static uint32_t xive_alloc_vps(uint32_t order)
+{
+	struct proc_chip *chip;
+	struct xive *x = NULL;
+	int vp = -1;
+
+	/* Minimum order is 1 */
+	if (order < 1)
+		order = 1;
+
+	/* Try on every chip */
+	for_each_chip(chip) {
+		x = chip->xive;
+		if (!x)
+			continue;
+		assert(x->vp_buddy);
+		lock(&x->lock);
+		vp = buddy_alloc(x->vp_buddy, order);
+		unlock(&x->lock);
+		if (vp >= 0)
+			break;
+	}
+	if (vp < 0)
+		return XIVE_ALLOC_NO_SPACE;
+
+	/* We have VPs, make sure we have backing for the
+	 * NVTs on that block
+	 */
+	if (!xive_provision_vp_ind(x, vp, order)) {
+		lock(&x->lock);
+		buddy_free(x->vp_buddy, vp, order);
+		unlock(&x->lock);
+		return XIVE_ALLOC_NO_IND;
+	}
+
+	/* Encode the VP number */
+	return xive_encode_vp(x->block_id, vp, order);
+}
+
+static void xive_free_vps(uint32_t vp)
+{
+	uint32_t idx, blk;
+	uint8_t order;
+	struct xive *x;
+
+	assert(xive_decode_vp(vp, &blk, &idx, &order, NULL));
+
+	/* Grab appropriate xive */
+	x = xive_from_pc_blk(blk);
+	/* XXX Return error instead ? */
+	assert(x);
+
+	/* Free that in the buddy */
+	lock(&x->lock);
+	buddy_free(x->vp_buddy, idx, order);
+	unlock(&x->lock);
+}
+
+#endif /* ndef USE_BLOCK_GROUP_MODE */
 
 #if 0 /* Not used yet. This will be used to kill the cache
        * of indirect VSDs
@@ -1401,8 +1625,8 @@ static bool xive_setup_set_xlate(struct xive *x)
 
 static bool xive_prealloc_tables(struct xive *x)
 {
-	unsigned int i, vp_init_count, vp_init_base;
-	unsigned int pbase __unused, pend __unused;
+	uint32_t i __unused, vp_init_count __unused, vp_init_base __unused;
+	uint32_t pbase __unused, pend __unused;
 	uint64_t al __unused;
 
 	/* ESB/SBE has 4 entries per byte */
@@ -1450,29 +1674,7 @@ static bool xive_prealloc_tables(struct xive *x)
 	x->vp_ind_count = IND_VP_TABLE_SIZE / 8;
 	memset(x->vp_ind_base, 0, al);
 
-#else /* USE_INDIRECT */
-
-	x->eq_base = local_alloc(x->chip_id, EQT_SIZE, EQT_SIZE);
-	if (!x->eq_base) {
-		xive_err(x, "Failed to allocate EQ table\n");
-		return false;
-	}
-	memset(x->eq_base, 0, EQT_SIZE);
-
-	/* EAS/IVT entries are 8 bytes */
-	x->vp_base = local_alloc(x->chip_id, VPT_SIZE, VPT_SIZE);
-	if (!x->vp_base) {
-		xive_err(x, "Failed to allocate VP table\n");
-		return false;
-	}
-	/* We clear the entries (non-valid). They will be initialized
-	 * when actually used
-	 */
-	memset(x->vp_base, 0, VPT_SIZE);
-
-#endif /* USE_INDIRECT */
-
-	/* Populate/initialize VP/EQs */
+	/* Populate/initialize VP/EQs indirect backing */
 #ifdef USE_BLOCK_GROUP_MODE
 	vp_init_count = INITIAL_VP_COUNT;
 	vp_init_base = INITIAL_VP_BASE;
@@ -1481,12 +1683,12 @@ static bool xive_prealloc_tables(struct xive *x)
 	vp_init_base = INITIAL_BLK0_VP_BASE;
 #endif
 
-#ifdef USE_INDIRECT
 	/* Allocate pages for some VPs in indirect mode */
 	pbase = vp_init_base / VP_PER_PAGE;
 	pend  = (vp_init_base + vp_init_count) / VP_PER_PAGE;
+
 	xive_dbg(x, "Allocating pages %d to %d of VPs (for %d VPs)\n",
-		 pbase, pend, INITIAL_VP_COUNT);
+		 pbase, pend, vp_init_count);
 	for (i = pbase; i <= pend; i++) {
 		void *page;
 
@@ -1502,6 +1704,25 @@ static bool xive_prealloc_tables(struct xive *x)
 		x->vp_ind_base[i] |= SETFIELD(VSD_TSIZE, 0ull, 4);
 		x->vp_ind_base[i] |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
 	}
+
+#else /* USE_INDIRECT */
+
+	/* Allocate direct EQ and VP tables */
+	x->eq_base = local_alloc(x->chip_id, EQT_SIZE, EQT_SIZE);
+	if (!x->eq_base) {
+		xive_err(x, "Failed to allocate EQ table\n");
+		return false;
+	}
+	memset(x->eq_base, 0, EQT_SIZE);
+	x->vp_base = local_alloc(x->chip_id, VPT_SIZE, VPT_SIZE);
+	if (!x->vp_base) {
+		xive_err(x, "Failed to allocate VP table\n");
+		return false;
+	}
+	/* We clear the entries (non-valid). They will be initialized
+	 * when actually used
+	 */
+	memset(x->vp_base, 0, VPT_SIZE);
 #endif /* USE_INDIRECT */
 
 	return true;
@@ -2329,8 +2550,8 @@ static void xive_init_cpu_defaults(struct xive_cpu_state *xs)
 	assert(x_eq);
 
 	/* Initialize the structure */
-	xive_init_eq(xs->vp_blk, xs->vp_idx, &eq,
-		     xs->eq_page, XIVE_EMULATION_PRIO);
+	xive_init_default_eq(xs->vp_blk, xs->vp_idx, &eq,
+			     xs->eq_page, XIVE_EMULATION_PRIO);
 
 	/* Use the cache watch to write it out */
 	xive_eqc_cache_update(x_eq, xs->eq_blk,
@@ -2338,7 +2559,7 @@ static void xive_init_cpu_defaults(struct xive_cpu_state *xs)
 			      0, 4, &eq, false, true);
 
 	/* Initialize/enable the VP */
-	xive_init_vp(x_vp, &vp, xs->eq_blk, xs->eq_idx);
+	xive_init_vp(x_vp, &vp, xs->eq_blk, xs->eq_idx, true);
 
 	/* Use the cache watch to write it out */
 	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx,
@@ -2350,7 +2571,7 @@ static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
 	struct xive *x;
 	void *p;
 
-	/* For now VPs are pre-allocated */
+	/* Physical VPs are pre-allocated */
 	xs->vp_blk = PIR2VP_BLK(c->pir);
 	xs->vp_idx = PIR2VP_IDX(c->pir);
 
@@ -3071,6 +3292,9 @@ void init_xive(void)
 		/* Create/initialize the xive instance */
 		init_one_xive(np);
 	}
+
+	/* Init VP allocator */
+	xive_init_vp_allocator();
 
 	/* Some inits must be done after all xive have been created
 	 * such as setting up the forwarding ports
