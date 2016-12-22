@@ -295,6 +295,7 @@ extern void __register_irq_source(struct irq_source *is, bool secondary);
 extern void register_irq_source(const struct irq_source_ops *ops, void *data,
 				uint32_t start, uint32_t count);
 extern void unregister_irq_source(uint32_t start, uint32_t count);
+extern struct irq_source *irq_find_source(uint32_t isn);
 
 extern uint32_t get_psi_interrupt(uint32_t chip_id);
 

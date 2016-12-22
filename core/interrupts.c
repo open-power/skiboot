@@ -101,7 +101,7 @@ void unregister_irq_source(uint32_t start, uint32_t count)
 	assert(0);
 }
 
-static struct irq_source *irq_find_source(uint32_t isn)
+struct irq_source *irq_find_source(uint32_t isn)
 {
 	struct irq_source *is;
 
