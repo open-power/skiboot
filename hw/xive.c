@@ -409,6 +409,7 @@ static uint32_t xive_block_count;
 #define GIRQ_TO_IDX(__g)	((__g) & 0x000fffff)
 #define BLKIDX_TO_GIRQ(__b,__i)	(((uint32_t)(__b)) << 20 | (__i))
 #define GIRQ_IS_ESCALATION(__g)	((__g) & 0x01000000)
+#define MAKE_ESCALATION_GIRQ(__g)((__g) | 0x01000000)
 
 /* Block/IRQ to chip# conversions */
 #define PC_BLK_TO_CHIP(__b)	(xive_block_to_chip[__b])
@@ -2885,6 +2886,147 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 	return OPAL_SUCCESS;
 }
 
+static int64_t opal_xive_get_queue_info(uint64_t vp, uint32_t prio,
+					uint64_t *out_qpage,
+					uint64_t *out_qsize,
+					uint64_t *out_qeoi_page,
+					uint32_t *out_escalate_irq,
+					uint64_t *out_qflags)
+{
+	uint32_t blk, idx;
+	struct xive *x;
+	struct xive_eq *eq;
+
+	if (xive_mode != XIVE_MODE_EXPL)
+		return OPAL_WRONG_STATE;
+
+	if (!xive_eq_for_target(vp, prio, &blk, &idx))
+		return OPAL_PARAMETER;
+
+	x = xive_from_vc_blk(blk);
+	if (!x)
+		return OPAL_PARAMETER;
+
+	eq = xive_get_eq(x, idx);
+	if (!eq)
+		return OPAL_PARAMETER;
+
+	if (out_escalate_irq) {
+		*out_escalate_irq =
+			MAKE_ESCALATION_GIRQ(BLKIDX_TO_GIRQ(blk, idx));
+	}
+	if (out_qpage) {
+		if (eq->w0 & EQ_W0_ENQUEUE)
+			*out_qpage =
+				(((uint64_t)(eq->w2 & 0x0fffffff)) << 32) | eq->w3;
+		else
+			*out_qpage = 0;
+	}
+	if (out_qsize) {
+		if (eq->w0 & EQ_W0_ENQUEUE)
+			*out_qsize = GETFIELD(EQ_W0_QSIZE, eq->w0) + 12;
+		else
+			*out_qsize = 0;
+	}
+	if (out_qeoi_page) {
+		*out_qeoi_page =
+			(uint64_t)x->eq_mmio + idx * 0x20000;
+	}
+	if (out_qflags) {
+		*out_qflags = 0;
+		if (eq->w0 & EQ_W0_VALID)
+			*out_qflags |= OPAL_XIVE_EQ_ENABLED;
+		if (eq->w0 & EQ_W0_UCOND_NOTIFY)
+			*out_qflags |= OPAL_XIVE_EQ_ALWAYS_NOTIFY;
+		if (eq->w0 & EQ_W0_ESCALATE_CTL)
+			*out_qflags |= OPAL_XIVE_EQ_ESCALATE;
+	}
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
+					uint64_t qpage,
+					uint64_t qsize,
+					uint64_t qflags)
+{
+	uint32_t blk, idx;
+	struct xive *x;
+	struct xive_eq *old_eq;
+	struct xive_eq eq;
+	uint32_t vp_blk, vp_idx;
+	bool group;
+	int64_t rc;
+
+	if (!xive_eq_for_target(vp, prio, &blk, &idx))
+		return OPAL_PARAMETER;
+
+	x = xive_from_vc_blk(blk);
+	if (!x)
+		return OPAL_PARAMETER;
+
+	old_eq = xive_get_eq(x, idx);
+	if (!old_eq)
+		return OPAL_PARAMETER;
+
+	/* This shouldn't fail or xive_eq_for_target would have
+	 * failed already
+	 */
+	if (!xive_decode_vp(vp, &vp_blk, &vp_idx, NULL, &group))
+		return OPAL_PARAMETER;
+
+	/* Make a local copy which we will later try to commit using
+	 * the cache watch facility
+	 */
+	eq = *old_eq;
+
+	switch(qsize) {
+		/* Supported sizes */
+	case 12:
+	case 16:
+	case 21:
+	case 24:
+		eq.w3 = ((uint64_t)qpage) & 0xffffffff;
+		eq.w2 = (((uint64_t)qpage)) >> 32 & 0x0fffffff;
+		eq.w0 |= EQ_W0_ENQUEUE;
+		eq.w0 = SETFIELD(EQ_W0_QSIZE, eq.w0, qsize - 12);
+		break;
+	case 0:
+		eq.w2 = eq.w3 = 0;
+		eq.w0 &= ~EQ_W0_ENQUEUE;
+		break;
+	default:
+		return OPAL_PARAMETER;
+	}
+
+	/* Ensure the priority and target are correctly set (they will
+	 * not be right after allocation
+	 */
+	eq.w6 = SETFIELD(EQ_W6_NVT_BLOCK, 0ul, vp_blk) |
+		SETFIELD(EQ_W6_NVT_INDEX, 0ul, vp_idx);
+	eq.w7 = SETFIELD(EQ_W7_F0_PRIORITY, 0ul, prio);
+	/* XXX Handle group i bit when needed */
+
+	/* Always notify flag */
+	if (qflags & OPAL_XIVE_EQ_ALWAYS_NOTIFY)
+		eq.w0 |= EQ_W0_UCOND_NOTIFY;
+
+	/* Check enable transitionn */
+	if ((qflags & OPAL_XIVE_EQ_ENABLED) && !(eq.w0 & EQ_W0_VALID)) {
+		/* Clear PQ bits, set G, clear offset */
+		eq.w1 = EQ_W1_GENERATION;
+		eq.w0 |= EQ_W0_VALID;
+	} else if (!(qflags & OPAL_XIVE_EQ_ENABLED))
+		eq.w0 &= ~EQ_W0_VALID;
+
+	/* Update EQ, non-synchronous */
+	lock(&x->lock);
+	rc = xive_eqc_cache_update(x, blk, idx, 0, 4, &eq, false, false);
+	unlock(&x->lock);
+
+	return rc;
+}
+
 static int64_t opal_xive_donate_page(uint32_t chip_id, uint64_t addr)
 {
 	struct proc_chip *c = get_chip(chip_id);
@@ -2962,6 +3104,8 @@ void init_xive(void)
 	opal_register(OPAL_XIVE_GET_IRQ_INFO, opal_xive_get_irq_info, 6);
 	opal_register(OPAL_XIVE_GET_IRQ_CONFIG, opal_xive_get_irq_config, 4);
 	opal_register(OPAL_XIVE_SET_IRQ_CONFIG, opal_xive_set_irq_config, 4);
+	opal_register(OPAL_XIVE_GET_QUEUE_INFO, opal_xive_get_queue_info, 7);
+	opal_register(OPAL_XIVE_SET_QUEUE_INFO, opal_xive_set_queue_info, 5);
 	opal_register(OPAL_XIVE_DONATE_PAGE, opal_xive_donate_page, 2);
 }
 
