@@ -3205,11 +3205,13 @@ static void phb4_create(struct dt_node *np)
 	phb4_init_hw(p, true);
 
 	/* Register all interrupt sources with XIVE */
-	xive_register_hw_source(p->base_msi, p->num_irqs - 8, 16, p->int_mmio, 0,
+	xive_register_hw_source(p->base_msi, p->num_irqs - 8, 16,
+				p->int_mmio, XIVE_SRC_SHIFT_BUG,
 				NULL, NULL);
 	xive_register_hw_source(p->base_lsi, 8, 16,
 				p->int_mmio + ((p->num_irqs - 8) << 16),
-				XIVE_SRC_LSI, p, &phb4_lsi_ops);
+				XIVE_SRC_LSI | XIVE_SRC_SHIFT_BUG,
+				p, &phb4_lsi_ops);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)
