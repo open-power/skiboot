@@ -686,6 +686,8 @@ static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 		mreg = PC_VPC_SCRUB_MASK;
 		mregx = X_PC_VPC_SCRUB_MASK;
 		break;
+	default:
+		return OPAL_PARAMETER;
 	}
 	if (ctype == xive_cache_vpc) {
 		mval = PC_SCRUB_BLOCK_ID | PC_SCRUB_OFFSET;
@@ -717,6 +719,86 @@ static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 static int64_t xive_ivc_scrub(struct xive *x, uint64_t block, uint64_t idx)
 {
 	return __xive_cache_scrub(x, xive_cache_ivc, block, idx, false, false);
+}
+
+static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
+				  uint64_t block, uint64_t idx,
+				  uint32_t start_dword, uint32_t dword_count,
+				  void *new_data, bool light_watch)
+{
+	uint64_t sreg, sregx, dreg0, dreg0x;
+	uint64_t dval0, sval, status, i;
+
+	switch (ctype) {
+	case xive_cache_eqc:
+		sreg = VC_EQC_CWATCH_SPEC;
+		sregx = X_VC_EQC_CWATCH_SPEC;
+		dreg0 = VC_EQC_CWATCH_DAT0;
+		dreg0x = X_VC_EQC_CWATCH_DAT0;
+		sval = SETFIELD(VC_EQC_CWATCH_BLOCKID, idx, block);
+		break;
+	case xive_cache_vpc:
+		sreg = PC_VPC_CWATCH_SPEC;
+		sregx = X_PC_VPC_CWATCH_SPEC;
+		dreg0 = PC_VPC_CWATCH_DAT0;
+		dreg0x = X_PC_VPC_CWATCH_DAT0;
+		sval = SETFIELD(PC_VPC_CWATCH_BLOCKID, idx, block);
+		break;
+	default:
+		return OPAL_PARAMETER;
+	}
+
+	/* The full bit is in the same position for EQC and VPC */
+	if (!light_watch)
+		sval |= VC_EQC_CWATCH_FULL;
+
+	do {
+		/* Write the cache watch spec */
+		__xive_regw(x, sreg, sregx, sval, NULL);
+
+		/* Load data0 register to populate the watch */
+		dval0 = __xive_regr(x, dreg0, dreg0x, NULL);
+
+		/* Write the words into the watch facility. We write in reverse
+		 * order in case word 0 is part of it as it must be the last
+		 * one written.
+		 */
+		for (i = start_dword + dword_count - 1; i >= start_dword ;i--) {
+			uint64_t dw = ((uint64_t *)new_data)[i - start_dword];
+			__xive_regw(x, dreg0 + i * 8, dreg0x + i, dw, NULL);
+		}
+
+		/* Write data0 register to trigger the update if word 0 wasn't
+		 * written above
+		 */
+		if (start_dword > 0)
+			__xive_regw(x, dreg0, dreg0x, dval0, NULL);
+
+		/* This may not be necessary for light updates (it's possible\
+		 * that a sync in sufficient, TBD). Ensure the above is
+		 * complete and check the status of the watch.
+		 */
+		status = __xive_regr(x, sreg, sregx, NULL);
+
+		/* XXX Add timeout ? */
+
+		/* Bits FULL and CONFLICT are in the same position in
+		 * EQC and VPC
+		 */
+	} while((status & VC_EQC_CWATCH_FULL) &&
+		(status & VC_EQC_CWATCH_CONFLICT));
+
+	return 0;
+}
+
+static int64_t xive_eqc_cache_update(struct xive *x, uint64_t block,
+				     uint64_t idx, uint32_t start_dword,
+				     uint32_t dword_count, void *new_data,
+				     bool light_watch)
+{
+	return __xive_cache_watch(x, xive_cache_eqc, block, idx,
+				  start_dword, dword_count,
+				  new_data, light_watch);
 }
 
 static bool xive_set_vsd(struct xive *x, uint32_t tbl, uint32_t idx, uint64_t v)
@@ -1518,6 +1600,7 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 	struct xive_ive *ive;
 	uint32_t eq_blk, eq_idx;
 	bool is_escalation = GIRQ_IS_ESCALATION(isn);
+	uint64_t new_ive;
 
 	/* Find XIVE on which the IVE resides */
 	x = xive_from_isn(isn);
@@ -1534,15 +1617,17 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 
 	lock(&x->lock);
 
+	/* Read existing IVE */
+	new_ive = ive->w;
+
 	/* Are we masking ? */
 	if (prio == 0xff) {
 		/* Masking, just set the M bit */
 		if (!is_escalation)
-			ive->w |= IVE_MASKED;
+			new_ive |= IVE_MASKED;
 
 		xive_vdbg(x, "ISN %x masked !\n", isn);
 	} else {
-		uint64_t new_ive;
 
 		/* Unmasking, re-target the IVE. First find the EQ
 		 * correponding to the target
@@ -1560,15 +1645,22 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio)
 		new_ive = ive->w & ~IVE_MASKED;
 		new_ive = SETFIELD(IVE_EQ_BLOCK, new_ive, eq_blk);
 		new_ive = SETFIELD(IVE_EQ_INDEX, new_ive, eq_idx);
-		sync();
-		ive->w = new_ive;
 
 		xive_vdbg(x,"ISN %x routed to eq %x/%x IVE=%016llx !\n",
-		  isn, eq_blk, eq_idx, new_ive);
+			  isn, eq_blk, eq_idx, new_ive);
 	}
 
-	/* Scrub IVE from cache */
-	xive_ivc_scrub(x, x->chip_id, GIRQ_TO_IDX(isn));
+	/* Updating the cache differs between real IVEs and escalation
+	 * IVEs inside an EQ
+	 */
+	if (is_escalation) {
+		xive_eqc_cache_update(x, x->chip_id, GIRQ_TO_IDX(isn),
+				      2, 1, &new_ive, true);
+	} else {
+		sync();
+		ive->w = new_ive;
+		xive_ivc_scrub(x, x->chip_id, GIRQ_TO_IDX(isn));
+	}
 
 	unlock(&x->lock);
 	return true;
