@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 RUN apt-get update -qq
-RUN apt-get install -y gcc-powerpc64le-linux-gnu gcc ccache
+RUN apt-get install -y gcc-powerpc64le-linux-gnu gcc ccache expect
 RUN apt-get install -y wget curl xterm
 RUN apt-get install -y gcc-arm-linux-gnueabi
 RUN curl -O ftp://public.dhe.ibm.com/software/server/powerfuncsim/p8/packages/v1.0-2/systemsim-p8_1.0-2_amd64.deb
