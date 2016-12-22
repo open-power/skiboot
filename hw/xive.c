@@ -3398,7 +3398,8 @@ static int64_t opal_xive_donate_page(uint32_t chip_id, uint64_t addr)
 static int64_t opal_xive_get_vp_info(uint64_t vp_id,
 				     uint64_t *out_flags,
 				     uint64_t *out_cam_value,
-				     uint64_t *out_report_cl_pair)
+				     uint64_t *out_report_cl_pair,
+				     uint32_t *out_chip_id)
 {
 	struct xive *x;
 	struct xive_vp *vp;
@@ -3430,6 +3431,10 @@ static int64_t opal_xive_get_vp_info(uint64_t vp_id,
 		*out_report_cl_pair = ((uint64_t)(vp->w6 & 0x0fffffff)) << 32;
 		*out_report_cl_pair |= vp->w7 & 0xffffff00;
 	}
+
+	if (out_chip_id)
+		*out_chip_id = xive_block_to_chip[blk];
+
 	return OPAL_SUCCESS;
 }
 
@@ -3938,7 +3943,7 @@ void init_xive(void)
 	opal_register(OPAL_XIVE_FREE_IRQ, opal_xive_free_irq, 1);
 	opal_register(OPAL_XIVE_ALLOCATE_VP_BLOCK, opal_xive_alloc_vp_block, 1);
 	opal_register(OPAL_XIVE_FREE_VP_BLOCK, opal_xive_free_vp_block, 1);
-	opal_register(OPAL_XIVE_GET_VP_INFO, opal_xive_get_vp_info, 4);
+	opal_register(OPAL_XIVE_GET_VP_INFO, opal_xive_get_vp_info, 5);
 	opal_register(OPAL_XIVE_SET_VP_INFO, opal_xive_set_vp_info, 3);
 }
 

@@ -621,7 +621,8 @@ OPAL_XIVE_GET_VP_INFO
  int64_t opal_xive_get_vp_info(uint64_t vp,
                                uint64_t *flags,
                                uint64_t *cam_value,
-                               uint64_t *report_cl_pair);
+                               uint64_t *report_cl_pair,
+			       uint32_t *chip_id);
 
 This call returns information about an allocated VP:
 
@@ -636,6 +637,8 @@ This call returns information about an allocated VP:
 
 * report_cl_pair:  This is the real address of the reporting cache line
   pair for that VP (defaults to 0)
+
+* chip_id : The chip that VCPU was allocated on
 
 OPAL_XIVE_SET_VP_INFO
 ^^^^^^^^^^^^^^^^^^^^^
