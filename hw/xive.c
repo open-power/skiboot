@@ -3166,6 +3166,9 @@ static int64_t opal_xive_get_irq_config(uint32_t girq,
 {
 	uint32_t vp;
 
+	if (xive_mode != XIVE_MODE_EXPL)
+		return OPAL_WRONG_STATE;
+
 	if (xive_get_irq_targetting(girq, &vp, out_prio, out_lirq)) {
 		*out_vp = vp;
 		return OPAL_SUCCESS;
@@ -3185,6 +3188,9 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 	/*
 	 * WARNING: See comment in set_xive()
 	 */
+
+	if (xive_mode != XIVE_MODE_EXPL)
+		return OPAL_WRONG_STATE;
 
 	/* Let XIVE configure the EQ. We do the update without the
 	 * synchronous flag, thus a cache update failure will result
@@ -3276,6 +3282,8 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 	bool group;
 	int64_t rc;
 
+	if (xive_mode != XIVE_MODE_EXPL)
+		return OPAL_WRONG_STATE;
 	if (!xive_eq_for_target(vp, prio, &blk, &idx))
 		return OPAL_PARAMETER;
 
@@ -3350,6 +3358,8 @@ static int64_t opal_xive_donate_page(uint32_t chip_id, uint64_t addr)
 	struct proc_chip *c = get_chip(chip_id);
 	struct list_node *n __unused;
 
+	if (xive_mode != XIVE_MODE_EXPL)
+		return OPAL_WRONG_STATE;
 	if (!c)
 		return OPAL_PARAMETER;
 	if (!c->xive)
@@ -3521,6 +3531,8 @@ static int64_t opal_xive_allocate_irq(uint32_t chip_id)
 	struct xive_ive *ive;
 	struct xive *x;
 
+	if (xive_mode != XIVE_MODE_EXPL)
+		return OPAL_WRONG_STATE;
 	if (!chip)
 		return OPAL_PARAMETER;
 	if (!chip->xive)
@@ -3564,6 +3576,8 @@ static int64_t opal_xive_free_irq(uint32_t girq)
 	struct xive_ive *ive;
 	uint32_t idx;
 
+	if (xive_mode != XIVE_MODE_EXPL)
+		return OPAL_WRONG_STATE;
 	if (!x || !is)
 		return OPAL_PARAMETER;
 
