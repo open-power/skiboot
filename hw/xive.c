@@ -94,6 +94,7 @@
 #define IC_PAGE_SIZE	0x10000
 #define TM_PAGE_SIZE	0x10000
 #define IPI_ESB_SHIFT	(16 + 1)
+#define EQ_ESB_SHIFT	(16 + 1)
 
 #define IC_BAR_DEFAULT	0x30203100000ull
 #define IC_BAR_SIZE	(8 * IC_PAGE_SIZE)
@@ -387,6 +388,9 @@ struct xive {
 
 	/* Embedded source IPIs */
 	struct xive_src	ipis;
+
+	/* Embedded escalation interrupts */
+	struct xive_src	esc_irqs;
 };
 
 /* Global DT node */
@@ -429,7 +433,7 @@ static uint32_t xive_block_count;
 #define GIRQ_TO_IDX(__g)	((__g) & 0x000fffff)
 #define BLKIDX_TO_GIRQ(__b,__i)	(((uint32_t)(__b)) << 20 | (__i))
 #define GIRQ_IS_ESCALATION(__g)	((__g) & 0x01000000)
-#define MAKE_ESCALATION_GIRQ(__g)((__g) | 0x01000000)
+#define MAKE_ESCALATION_GIRQ(__b,__i)(BLKIDX_TO_GIRQ(__b,__i) | 0x01000000)
 
 /* Block/IRQ to chip# conversions */
 #define PC_BLK_TO_CHIP(__b)	(xive_block_to_chip[__b])
@@ -2563,14 +2567,19 @@ static struct xive *init_one_xive(struct dt_node *np)
 		goto fail;
 
 	/* Register built-in source controllers (aka IPIs) */
-	/* XXX Add new EOI mode for DD2 */
 	__xive_register_source(x, &x->ipis, x->int_base,
 			       x->int_hw_bot - x->int_base, IPI_ESB_SHIFT,
 			       x->esb_mmio,
 			       XIVE_SRC_EOI_PAGE1 | XIVE_SRC_TRIGGER_PAGE,
 			       true, NULL, NULL);
 
-	/* XXX Add registration of escalation sources too */
+	/* Register escalation sources */
+	__xive_register_source(x, &x->esc_irqs,
+			       MAKE_ESCALATION_GIRQ(x->block_id, 0),
+			       MAX_EQ_COUNT, EQ_ESB_SHIFT,
+			       x->eq_mmio, XIVE_SRC_EOI_PAGE1,
+			       false, NULL, NULL);
+
 
 	return x;
  fail:
@@ -3298,7 +3307,7 @@ static int64_t opal_xive_get_queue_info(uint64_t vp, uint32_t prio,
 
 	if (out_escalate_irq) {
 		*out_escalate_irq =
-			MAKE_ESCALATION_GIRQ(BLKIDX_TO_GIRQ(blk, idx));
+			MAKE_ESCALATION_GIRQ(blk, idx);
 	}
 	if (out_qpage) {
 		if (eq->w0 & EQ_W0_ENQUEUE)
