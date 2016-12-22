@@ -33,9 +33,6 @@
  */
 #define EQ_ALWAYS_NOTIFY
 
-/* Indirect VSDs are little endian (SIMICS bug ?) */
-#undef INDIRECT_IS_LE
-
 /* Verbose debug */
 #undef XIVE_VERBOSE_DEBUG
 
@@ -513,13 +510,8 @@ static struct xive_eq *xive_get_eq(struct xive *x, unsigned int idx)
 #ifdef USE_INDIRECT
 	if (idx >= (x->eq_ind_count * EQ_PER_PAGE))
 		return NULL;
-#ifdef INDIRECT_IS_LE
-	p = (struct xive_eq *)(le64_to_cpu(x->eq_ind_base[idx / EQ_PER_PAGE]) &
-			       VSD_ADDRESS_MASK);
-#else
 	p = (struct xive_eq *)(x->eq_ind_base[idx / EQ_PER_PAGE] &
 			       VSD_ADDRESS_MASK);
-#endif
 	if (!p)
 		return NULL;
 
@@ -579,13 +571,8 @@ static struct xive_vp *xive_get_vp(struct xive *x, unsigned int idx)
 
 #ifdef USE_INDIRECT
 	assert(idx < (x->vp_ind_count * VP_PER_PAGE));
-#ifdef INDIRECT_IS_LE
-	p = (struct xive_vp *)(le64_to_cpu(x->vp_ind_base[idx / VP_PER_PAGE]) &
-			       VSD_ADDRESS_MASK);
-#else
 	p = (struct xive_vp *)(x->vp_ind_base[idx / VP_PER_PAGE] &
 			       VSD_ADDRESS_MASK);
-#endif
 	assert(p);
 
 	return &p[idx % VP_PER_PAGE];
@@ -1272,11 +1259,6 @@ static bool xive_prealloc_tables(struct xive *x)
 		x->eq_ind_base[i] = ((uint64_t)page) & VSD_ADDRESS_MASK;
 		x->eq_ind_base[i] |= SETFIELD(VSD_TSIZE, 0ull, 4);
 		x->eq_ind_base[i] |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
-
-#ifdef INDIRECT_IS_LE
-		x->vp_ind_base[i] = cpu_to_le64(x->vp_ind_base[i]);
-		x->eq_ind_base[i] = cpu_to_le64(x->eq_ind_base[i]);
-#endif
 	}
 #endif /* USE_INDIRECT */
 
