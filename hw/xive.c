@@ -3782,13 +3782,19 @@ static int64_t opal_xive_alloc_vp_block(uint32_t alloc_order)
 
 static int64_t opal_xive_allocate_irq(uint32_t chip_id)
 {
-	struct proc_chip *chip = get_chip(chip_id);
+	struct proc_chip *chip;
 	int idx, base_idx, max_count, girq;
 	struct xive_ive *ive;
 	struct xive *x;
 
 	if (xive_mode != XIVE_MODE_EXPL)
 		return OPAL_WRONG_STATE;
+
+	/* XXX Make this try multiple chips ... */
+	if (chip_id == OPAL_XIVE_ANY_CHIP)
+		chip_id = this_cpu()->chip_id;
+
+	chip = get_chip(chip_id);
 	if (!chip)
 		return OPAL_PARAMETER;
 	if (!chip->xive)

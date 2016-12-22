@@ -1118,6 +1118,11 @@ enum {
 	OPAL_XIVE_VP_ENABLED		= 0x00000001,
 };
 
+/* "Any chip" replacement for chip ID for allocation functions */
+enum {
+	OPAL_XIVE_ANY_CHIP		= 0xffffffff,
+};
+
 #endif /* __ASSEMBLY__ */
 
 #endif /* __OPAL_API_H */
