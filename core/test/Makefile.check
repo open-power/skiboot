@@ -18,7 +18,8 @@ CORE_TEST := \
 	core/test/run-pool \
 	core/test/run-time-utils \
 	core/test/run-timebase \
-	core/test/run-timer
+	core/test/run-timer \
+	core/test/run-buddy
 
 HOSTCFLAGS+=-I . -I include
 
