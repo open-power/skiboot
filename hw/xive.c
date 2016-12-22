@@ -227,6 +227,15 @@
 
 #endif
 
+/* The xive operation mode indicates the active "API" and corresponds
+ * to the "version" parameter of the opal_xive_reset() call
+ */
+static enum {
+	XIVE_MODE_EMU	= 0,
+	XIVE_MODE_EXPL	= 1,
+} xive_mode;
+
+
 /* Each source controller has one of these. There's one embedded
  * in the XIVE struct for IPIs
  */
@@ -2018,6 +2027,8 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 	struct xive *src_x;
 	bool special_ipi = false;
 
+	if (xive_mode != XIVE_MODE_EMU)
+		return OPAL_WRONG_STATE;
 	if (!xs)
 		return OPAL_INTERNAL_ERROR;
 
@@ -2120,6 +2131,8 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 	uint16_t ack;
 	uint8_t active, old_cppr;
 
+	if (xive_mode != XIVE_MODE_EMU)
+		return OPAL_WRONG_STATE;
 	if (!xs)
 		return OPAL_INTERNAL_ERROR;
 	if (!out_xirr)
@@ -2236,6 +2249,9 @@ static int64_t opal_xive_set_cppr(uint8_t cppr)
 	struct cpu_thread *c = this_cpu();
 	struct xive_cpu_state *xs = c->xstate;
 
+	if (xive_mode != XIVE_MODE_EMU)
+		return OPAL_WRONG_STATE;
+
 	/* Limit supported CPPR values */
 	cppr = xive_sanitize_cppr(cppr);
 
@@ -2258,6 +2274,8 @@ static int64_t opal_xive_set_mfrr(uint32_t cpu, uint8_t mfrr)
 	struct xive_cpu_state *xs;
 	uint8_t old_mfrr;
 
+	if (xive_mode != XIVE_MODE_EMU)
+		return OPAL_WRONG_STATE;
 	if (!c)
 		return OPAL_PARAMETER;
 	xs = c->xstate;
@@ -2271,6 +2289,16 @@ static int64_t opal_xive_set_mfrr(uint32_t cpu, uint8_t mfrr)
 	if (old_mfrr > mfrr && mfrr < xs->cppr)
 		xive_ipi_trigger(xs->xive, GIRQ_TO_IDX(xs->ipi_irq));
 	unlock(&xs->lock);
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t opal_xive_reset(uint64_t version)
+{
+	if (version > 1)
+		return OPAL_PARAMETER;
+
+	xive_mode = version;
 
 	return OPAL_SUCCESS;
 }
@@ -2307,5 +2335,8 @@ void init_xive(void)
 	opal_register(OPAL_INT_SET_CPPR, opal_xive_set_cppr, 1);
 	opal_register(OPAL_INT_EOI, opal_xive_eoi, 1);
 	opal_register(OPAL_INT_SET_MFRR, opal_xive_set_mfrr, 2);
+
+	/* Register XIVE exploitation calls */
+	opal_register(OPAL_XIVE_RESET, opal_xive_reset, 1);
 }
 
