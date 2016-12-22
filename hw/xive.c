@@ -403,7 +403,8 @@ struct xive {
  * change in the future
  */
 #define XIVE_INVALID_CHIP	0xffffffff
-static uint32_t xive_block_to_chip[16];
+#define XIVE_MAX_CHIPS		16
+static uint32_t xive_block_to_chip[XIVE_MAX_CHIPS];
 static uint32_t xive_block_count;
 
 /* Conversion between GIRQ and block/index.
@@ -2382,8 +2383,7 @@ static void init_one_xive(struct dt_node *np)
 
 	/* "Allocate" a new block ID for the chip */
 	x->block_id = xive_block_count++;
-	/* XXX Hard coded limit of 16 chips ! */
-	assert (x->block_id < 16);
+	assert (x->block_id < XIVE_MAX_CHIPS);
 	xive_block_to_chip[x->block_id] = x->chip_id;
 	init_lock(&x->lock);
 
@@ -3286,7 +3286,7 @@ static void xive_init_globals(void)
 {
 	uint32_t i;
 
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < XIVE_MAX_CHIPS; i++)
 		xive_block_to_chip[i] = XIVE_INVALID_CHIP;
 }
 
