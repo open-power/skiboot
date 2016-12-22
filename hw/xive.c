@@ -2082,23 +2082,31 @@ static bool xive_get_irq_targetting(uint32_t isn, uint32_t *out_target,
 		xive_err(x, "ISN %x lead to invalid IVE !\n", isn);
 		return false;
 	}
+
+	if (out_lirq)
+		*out_lirq = GETFIELD(IVE_EQ_DATA, ive->w);
+
 	/* Find the EQ and its xive instance */
 	eq_blk = GETFIELD(IVE_EQ_BLOCK, ive->w);
 	eq_idx = GETFIELD(IVE_EQ_INDEX, ive->w);
 	eq_x = xive_from_vc_blk(eq_blk);
-	if (!eq_x) {
-		xive_err(x, "Can't find controller for EQ BLK %d\n", eq_blk);
-		return false;
-	}
+
+	/* This can fail if the interrupt hasn't been initialized yet
+	 * but it should also be masked, so fail silently
+	 */
+	if (!eq_x)
+		goto pick_default;
 	eq = xive_get_eq(eq_x, eq_idx);
-	if (!eq) {
-		xive_err(eq_x, "Can't locate EQ %d\n", eq_idx);
-		return false;
-	}
+	if (!eq)
+		goto pick_default;
+
 	/* XXX Check valid and format 0 */
 
 	/* No priority conversion, return the actual one ! */
-	prio = GETFIELD(EQ_W7_F0_PRIORITY, eq->w7);
+	if (ive->w & IVE_MASKED)
+		prio = 0xff;
+	else
+		prio = GETFIELD(EQ_W7_F0_PRIORITY, eq->w7);
 	if (out_prio)
 		*out_prio = prio;
 
@@ -2108,11 +2116,19 @@ static bool xive_get_irq_targetting(uint32_t isn, uint32_t *out_target,
 
 	if (out_target)
 		*out_target = server;
-	if (out_lirq)
-		*out_lirq = GETFIELD(IVE_EQ_DATA, ive->w);
 
 	xive_vdbg(eq_x, "EQ info for ISN %x: prio=%d, server=0x%x (VP %x/%x)\n",
 		  isn, prio, server, vp_blk, vp_idx);
+	return true;
+
+pick_default:
+	xive_vdbg(eq_x, "EQ info for ISN %x: Using masked defaults\n", isn);
+
+	if (out_prio)
+		*out_prio = 0xff;
+	/* Pick a random default, me will be fine ... */
+	if (out_target)
+		*out_target = mfspr(SPR_PIR);
 	return true;
 }
 
