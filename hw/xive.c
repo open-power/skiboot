@@ -784,7 +784,7 @@ static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 		mregx = X_PC_VPC_SCRUB_MASK;
 		break;
 	default:
-		return OPAL_PARAMETER;
+		return OPAL_INTERNAL_ERROR;
 	}
 	if (ctype == xive_cache_vpc) {
 		mval = PC_SCRUB_BLOCK_ID | PC_SCRUB_OFFSET;
@@ -823,7 +823,8 @@ static int64_t xive_ivc_scrub(struct xive *x, uint64_t block, uint64_t idx)
 static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 				  uint64_t block, uint64_t idx,
 				  uint32_t start_dword, uint32_t dword_count,
-				  void *new_data, bool light_watch)
+				  void *new_data, bool light_watch,
+				  bool synchronous)
 {
 	uint64_t sreg, sregx, dreg0, dreg0x;
 	uint64_t dval0, sval, status;
@@ -845,7 +846,7 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 		sval = SETFIELD(PC_VPC_CWATCH_BLOCKID, idx, block);
 		break;
 	default:
-		return OPAL_PARAMETER;
+		return OPAL_INTERNAL_ERROR;
 	}
 
 	/* The full bit is in the same position for EQC and VPC */
@@ -886,6 +887,9 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 		if (!(status & VC_EQC_CWATCH_FULL) ||
 		    !(status & VC_EQC_CWATCH_CONFLICT))
 			break;
+		if (!synchronous)
+			return OPAL_BUSY;
+
 		/* XXX Add timeout ? */
 	}
 
@@ -898,21 +902,21 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 static int64_t xive_eqc_cache_update(struct xive *x, uint64_t block,
 				     uint64_t idx, uint32_t start_dword,
 				     uint32_t dword_count, void *new_data,
-				     bool light_watch)
+				     bool light_watch, bool synchronous)
 {
 	return __xive_cache_watch(x, xive_cache_eqc, block, idx,
 				  start_dword, dword_count,
-				  new_data, light_watch);
+				  new_data, light_watch, synchronous);
 }
 
 static int64_t xive_vpc_cache_update(struct xive *x, uint64_t block,
 				     uint64_t idx, uint32_t start_dword,
 				     uint32_t dword_count, void *new_data,
-				     bool light_watch)
+				     bool light_watch, bool synchronous)
 {
 	return __xive_cache_watch(x, xive_cache_vpc, block, idx,
 				  start_dword, dword_count,
-				  new_data, light_watch);
+				  new_data, light_watch, synchronous);
 }
 
 static bool xive_set_vsd(struct xive *x, uint32_t tbl, uint32_t idx, uint64_t v)
@@ -1598,14 +1602,14 @@ __attrconst uint32_t xive_get_notify_base(uint32_t girq)
 	return (GIRQ_TO_BLK(girq) << 28)  | GIRQ_TO_IDX(girq);
 }
 
-static bool xive_get_eq_info(uint32_t isn, uint32_t *out_target,
-			     uint8_t *out_prio, uint32_t *out_lirq)
+static bool xive_get_irq_targetting(uint32_t isn, uint32_t *out_target,
+				    uint8_t *out_prio, uint32_t *out_lirq)
 {
 	struct xive_ive *ive;
 	struct xive *x, *eq_x;
 	struct xive_eq *eq;
 	uint32_t eq_blk, eq_idx;
-	uint32_t vp_blk, vp_idx;
+	uint32_t vp_blk __unused, vp_idx;
 	uint32_t prio, server;
 	bool is_escalation = GIRQ_IS_ESCALATION(isn);
 
@@ -1698,26 +1702,28 @@ static inline bool xive_eq_for_target(uint32_t target, uint8_t prio,
 	return true;
 }
 
-static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio,
-			     uint32_t lirq)
+static int64_t xive_set_irq_targetting(uint32_t isn, uint32_t target,
+				       uint8_t prio, uint32_t lirq,
+				       bool synchronous)
 {
 	struct xive *x;
 	struct xive_ive *ive;
 	uint32_t eq_blk, eq_idx;
 	bool is_escalation = GIRQ_IS_ESCALATION(isn);
 	uint64_t new_ive;
+	int64_t rc;
 
 	/* Find XIVE on which the IVE resides */
 	x = xive_from_isn(isn);
 	if (!x)
-		return false;
+		return OPAL_PARAMETER;
 	/* Grab the IVE */
 	ive = xive_get_ive(x, isn);
 	if (!ive)
-		return false;
+		return OPAL_PARAMETER;
 	if (!(ive->w & IVE_VALID) && !is_escalation) {
 		xive_err(x, "ISN %x lead to invalid IVE !\n", isn);
-		return false;
+		return OPAL_PARAMETER;
 	}
 
 	lock(&x->lock);
@@ -1749,7 +1755,7 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio,
 		xive_err(x, "Can't find EQ for target/prio 0x%x/%d\n",
 			 target, prio);
 		unlock(&x->lock);
-		return false;
+		return OPAL_PARAMETER;
 	}
 
 	/* Try to update it atomically to avoid an intermediary
@@ -1766,16 +1772,16 @@ static bool xive_set_eq_info(uint32_t isn, uint32_t target, uint8_t prio,
 	 * IVEs inside an EQ
 	 */
 	if (is_escalation) {
-		xive_eqc_cache_update(x, x->block_id, GIRQ_TO_IDX(isn),
-				      2, 1, &new_ive, true);
+		rc = xive_eqc_cache_update(x, x->block_id, GIRQ_TO_IDX(isn),
+					   2, 1, &new_ive, true, synchronous);
 	} else {
 		sync();
 		ive->w = new_ive;
-		xive_ivc_scrub(x, x->block_id, GIRQ_TO_IDX(isn));
+		rc = xive_ivc_scrub(x, x->block_id, GIRQ_TO_IDX(isn));
 	}
 
 	unlock(&x->lock);
-	return true;
+	return rc;
 }
 
 static int64_t xive_source_get_xive(struct irq_source *is __unused,
@@ -1784,7 +1790,7 @@ static int64_t xive_source_get_xive(struct irq_source *is __unused,
 {
 	uint32_t target_id;
 
-	if (xive_get_eq_info(isn, &target_id, prio, NULL)) {
+	if (xive_get_irq_targetting(isn, &target_id, prio, NULL)) {
 		*server = target_id << 2;
 		return OPAL_SUCCESS;
 	} else
@@ -1813,6 +1819,7 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 				    uint16_t server, uint8_t prio)
 {
 	struct xive_src *s = container_of(is, struct xive_src, is);
+	int64_t rc;
 
 	/*
 	 * WARNING: There is an inherent race with the use of the
@@ -1832,9 +1839,10 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 	/* Unmangle server */
 	server >>= 2;
 
-	/* Let XIVE configure the EQ */
-	if (!xive_set_eq_info(isn, server, prio, isn))
-		return OPAL_PARAMETER;
+	/* Let XIVE configure the EQ synchronously */
+	rc = xive_set_irq_targetting(isn, server, prio, isn, true);
+	if (rc)
+		return rc;
 
 	/* Ensure it's enabled/disabled in the source controller */
 	xive_update_irq_mask(s, isn - s->esb_base, prio == 0xff);
@@ -2168,14 +2176,14 @@ static void xive_init_cpu_defaults(struct xive_cpu_state *xs)
 	/* Use the cache watch to write it out */
 	xive_eqc_cache_update(x_eq, xs->eq_blk,
 			      xs->eq_idx + XIVE_EMULATION_PRIO,
-			      0, 4, &eq, false);
+			      0, 4, &eq, false, true);
 
 	/* Initialize/enable the VP */
 	xive_init_vp(x_vp, &vp, xs->eq_blk, xs->eq_idx);
 
 	/* Use the cache watch to write it out */
 	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx,
-			      0, 8, &vp, false);
+			      0, 8, &vp, false, true);
 }
 
 static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
@@ -2679,31 +2687,39 @@ static int64_t opal_xive_get_irq_info(uint32_t girq,
 }
 
 static int64_t opal_xive_get_irq_config(uint32_t girq,
-					uint32_t *out_vp,
+					uint64_t *out_vp,
 					uint8_t *out_prio,
 					uint32_t *out_lirq)
 {
-	if (xive_get_eq_info(girq, out_vp, out_prio, out_lirq))
+	uint32_t vp;
+
+	if (xive_get_irq_targetting(girq, &vp, out_prio, out_lirq)) {
+		*out_vp = vp;
 		return OPAL_SUCCESS;
-	else
+	} else
 		return OPAL_PARAMETER;
 }
 
 static int64_t opal_xive_set_irq_config(uint32_t girq,
-					uint32_t vp,
+					uint64_t vp,
 					uint8_t prio,
 					uint32_t lirq)
 {
 	struct irq_source *is = irq_find_source(girq);
 	struct xive_src *s = container_of(is, struct xive_src, is);
+	int64_t rc;
 
 	/*
 	 * WARNING: See comment in set_xive()
 	 */
 
-	/* Let XIVE configure the EQ */
-	if (!xive_set_eq_info(girq, vp, prio, lirq))
-		return OPAL_PARAMETER;
+	/* Let XIVE configure the EQ. We do the update without the
+	 * synchronous flag, thus a cache update failure will result
+	 * in us returning OPAL_BUSY
+	 */
+	rc = xive_set_irq_targetting(girq, vp, prio, lirq, false);
+	if (rc)
+		return rc;
 
 	/* Ensure it's enabled/disabled in the source controller */
 	xive_update_irq_mask(s, girq - s->esb_base, prio == 0xff);
