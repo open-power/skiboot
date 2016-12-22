@@ -426,6 +426,148 @@ static uint32_t xive_block_count;
 #define VP2PIR(__blk, __idx)	(P9_PIRFROMLOCALCPU(((__idx) >> 7) & 0xf, (__idx) & 0x7f))
 #endif
 
+/* Decoding of OPAL API VP IDs. The VP IDs are encoded as follow
+ *
+ * Block group mode:
+ *
+ * -----------------------------------
+ * |GVEOOOOO|                   INDEX|
+ * -----------------------------------
+ *  ||   |
+ *  ||  Order
+ *  |Virtual
+ *  Group
+ *
+ * G (Group)   : Set to 1 for a group VP (not currently supported)
+ * V (Virtual) : Set to 1 for an allocated VP (vs. a physical processor ID)
+ * E (Error)   : Should never be 1, used internally for errors
+ * O (Order)   : Allocation order of the VP block
+ *
+ * The conversion is thus done as follow (groups aren't implemented yet)
+ *
+ *  If V=0, O must be 0 and 24-bit INDEX value is the PIR
+ *  If V=1, the order O group is allocated such that if N is the number of
+ *          chip bits considered for allocation (*)
+ *          then the INDEX is constructed as follow (bit numbers such as 0=LSB)
+ *           - bottom O-N bits is the index within the "VP block"
+ *           - next N bits is the XIVE blockID of the VP
+ *           - the remaining bits is the per-chip "base"
+ *          so the conversion consists of "extracting" the block ID and moving
+ *          down the upper bits by N bits.
+ *
+ * In non-block-group mode, the difference is that the blockID is
+ * on the left of the index (the entire VP block is in a single
+ * block ID)
+ */
+#ifdef USE_BLOCK_GROUP_MODE
+
+/* VP allocation */
+static uint32_t xive_chips_alloc_bits = 0;
+
+/* VP# decoding/encoding */
+static bool xive_decode_vp(uint32_t vp, uint32_t *blk, uint32_t *idx,
+			   uint8_t *order, bool *group)
+{
+	uint32_t o = (vp >> 24) & 0x1f;
+	uint32_t n = xive_chips_alloc_bits;
+	uint32_t index = vp & 0x00ffffff;
+	uint32_t imask = (1 << (o - n)) - 1;
+
+	/* Groups not supported yet */
+	if ((vp >> 31) & 1)
+		return false;
+	if (group)
+		*group = false;
+
+	/* PIR case */
+	if (((vp >> 30) & 1) == 0) {
+		if (blk)
+			*blk = PIR2VP_BLK(index);
+		if (idx)
+			*idx = PIR2VP_IDX(index);
+		return true;
+	}
+
+	/* Ensure o > n, we have *at least* 2 VPs per block */
+	if (o <= n)
+		return false;
+
+	/* Combine the index base and index */
+	if (idx)
+		*idx = ((index >> n) & ~imask) | (index & imask);
+	/* Extract block ID */
+	if (blk)
+		*blk = (index >> (o - n)) & ((1 << n) - 1);
+
+	/* Return order as well if asked for */
+	if (order)
+		*order = o;
+
+	return true;
+}
+
+static uint32_t xive_encode_vp(uint32_t blk, uint32_t idx, uint32_t order)
+{
+	uint32_t vp = 0x40000000 | (order << 24);
+	uint32_t n = xive_chips_alloc_bits;
+	uint32_t imask = (1 << (order - n)) - 1;
+
+	vp |= (idx & ~imask) << n;
+	vp |= blk << (order - n);
+	vp |= idx & imask;
+	return  vp;
+}
+
+#else /* USE_BLOCK_GROUP_MODE */
+
+/* VP# decoding/encoding */
+static bool xive_decode_vp(uint32_t vp, uint32_t *blk, uint32_t *idx,
+			   uint8_t *order, bool *group)
+{
+	uint32_t o = (vp >> 24) & 0x1f;
+	uint32_t index = vp & 0x00ffffff;
+	uint32_t imask = (1 << o) - 1;
+
+	/* Groups not supported yet */
+	if ((vp >> 31) & 1)
+		return false;
+	if (group)
+		*group = false;
+
+	/* PIR case */
+	if (((vp >> 30) & 1) == 0) {
+		if (blk)
+			*blk = PIR2VP_BLK(index);
+		if (idx)
+			*idx = PIR2VP_IDX(index);
+		return true;
+	}
+
+	/* Ensure o > 0, we have *at least* 2 VPs per block */
+	if (o == 0)
+		return false;
+
+	/* Extract index */
+	if (idx)
+		*idx = index & imask;
+	/* Extract block ID */
+	if (blk)
+		*blk = index >> o;
+
+	/* Return order as well if asked for */
+	if (order)
+		*order = o;
+
+	return true;
+}
+
+static uint32_t xive_encode_vp(uint32_t blk, uint32_t idx, uint32_t order)
+{
+	return 0x40000000 | (order << 24) | (blk << order) | idx;
+}
+
+#endif /* !USE_BLOCK_GROUP_MODE */
+
 #define xive_regw(__x, __r, __v) \
 	__xive_regw(__x, __r, X_##__r, __v, #__r)
 #define xive_regr(__x, __r) \
@@ -1686,11 +1828,9 @@ static inline bool xive_eq_for_target(uint32_t target, uint8_t prio,
 	if (prio > 7)
 		return false;
 
-	/* XXX This will have to change when having VPs that aren't
-	 * the physical processors
-	 */
-	vp_blk = PIR2VP_BLK(target);
-	vp_idx = PIR2VP_IDX(target);
+	/* Get the VP block/index from the target word */
+	if (!xive_decode_vp(target, &vp_blk, &vp_idx, NULL, NULL))
+		return false;
 
 	/* Grab the target VP's XIVE */
 	x = xive_from_pc_blk(vp_blk);
