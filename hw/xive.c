@@ -24,9 +24,6 @@
 #include <bitmap.h>
 #include <buddy.h>
 
-uint32_t xive_alloc_vps(uint32_t order);
-void xive_free_vps(uint32_t vp);
-
 /* Use Block group mode to move chip_id into block .... */
 #define USE_BLOCK_GROUP_MODE
 
@@ -778,8 +775,8 @@ static struct xive_vp *xive_get_vp(struct xive *x, unsigned int idx)
 #endif
 }
 
-static void xive_init_vp(struct xive *x __unused, struct xive_vp *vp,
-			 uint32_t eq_blk, uint32_t eq_idx, bool valid)
+static void xive_init_default_vp(struct xive_vp *vp,
+				 uint32_t eq_blk, uint32_t eq_idx)
 {
 	/* Stash the EQ base in the pressure relief interrupt field
 	 * and set the ACK# to 0xff to disable pressure relief interrupts
@@ -787,10 +784,7 @@ static void xive_init_vp(struct xive *x __unused, struct xive_vp *vp,
 	vp->w1 = (eq_blk << 28) | eq_idx;
 	vp->w5 = 0xff000000;
 	lwsync();
-
-	/* XXX TODO: Look at the special cache line stuff */
-	if (valid)
-		vp->w0 = VP_W0_VALID;
+	vp->w0 = VP_W0_VALID;
 }
 
 static void xive_init_default_eq(uint32_t vp_blk, uint32_t vp_idx,
@@ -899,6 +893,19 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect __unused)
 	return idx;
 }
 
+static void xive_free_eq_set(struct xive *x, uint32_t eqs)
+{
+	uint32_t idx;
+
+	xive_vdbg(x, "Freeing EQ set...\n");
+
+	assert((eqs & 7) == 0);
+	assert(x->eq_map);
+
+	idx = eqs >> 3;
+	bitmap_clr_bit(*x->eq_map, idx);
+}
+
 #ifdef USE_INDIRECT
 static bool xive_provision_vp_ind(struct xive *x, uint32_t vp_idx, uint32_t order)
 {
@@ -964,7 +971,7 @@ static void xive_init_vp_allocator(void)
 	assert(buddy_reserve(xive_vp_buddy, 0x80, 7));
 }
 
-uint32_t xive_alloc_vps(uint32_t order)
+static uint32_t xive_alloc_vps(uint32_t order)
 {
 	uint32_t local_order, i;
 	int vp;
@@ -1008,7 +1015,7 @@ uint32_t xive_alloc_vps(uint32_t order)
 	return xive_encode_vp(0, vp, order);
 }
 
-void xive_free_vps(uint32_t vp)
+static void xive_free_vps(uint32_t vp)
 {
 	uint32_t idx;
 	uint8_t order, local_order;
@@ -2486,6 +2493,9 @@ static struct xive *init_one_xive(struct dt_node *np)
 	/* Allocate a few bitmaps */
 	x->eq_map = zalloc(BITMAP_BYTES(MAX_EQ_COUNT >> 3));
 	assert(x->eq_map);
+	/* Make sure we don't hand out 0 */
+	bitmap_set_bit(*x->eq_map, 0);
+
 	x->int_enabled_map = zalloc(BITMAP_BYTES(MAX_INT_ENTRIES));
 	assert(x->int_enabled_map);
 	x->ipi_alloc_map = zalloc(BITMAP_BYTES(MAX_INT_ENTRIES));
@@ -2646,7 +2656,7 @@ static void xive_init_cpu_defaults(struct xive_cpu_state *xs)
 			      0, 4, &eq, false, true);
 
 	/* Initialize/enable the VP */
-	xive_init_vp(x_vp, &vp, xs->eq_blk, xs->eq_idx, true);
+	xive_init_default_vp(&vp, xs->eq_blk, xs->eq_idx);
 
 	/* Use the cache watch to write it out */
 	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx,
@@ -3423,6 +3433,8 @@ static void xive_reset_one(struct xive *x)
 		struct xive_eq eq0 = {0};
 		struct xive_eq *eq;
 
+		if (i == 0)
+			continue;
 		eq = xive_get_eq(x, i);
 		if (!eq)
 			continue;
@@ -3526,6 +3538,146 @@ static int64_t opal_xive_reset(uint64_t version)
 #endif /* USE_BLOCK_GROUP_MODE */
 
 	return OPAL_SUCCESS;
+}
+
+static int64_t opal_xive_free_vp_block(uint64_t vp_base)
+{
+	uint32_t blk, idx, i, count;
+	uint8_t order;
+	bool group;
+
+	if (xive_mode != XIVE_MODE_EXPL)
+		return OPAL_WRONG_STATE;
+
+	if (!xive_decode_vp(vp_base, &blk, &idx, &order, &group))
+		return OPAL_PARAMETER;
+	if (group)
+		return OPAL_PARAMETER;
+#ifdef USE_BLOCK_GROUP_MODE
+	if (blk)
+		return OPAL_PARAMETER;
+	if (order < (xive_chips_alloc_bits + 1))
+		return OPAL_PARAMETER;
+#else
+	if (order < 1)
+		return OPAL_PARAMETER;
+#endif
+	if (idx & ((1 << order) - 1))
+		return OPAL_PARAMETER;
+
+	count = 1 << order;
+	for (i = 0; i < count; i++) {
+		uint32_t vp_id = vp_base + i;
+		uint32_t blk, idx, eq_blk, eq_idx;
+		struct xive *x;
+		struct xive_vp *vp;
+
+		xive_decode_vp(vp_id, &blk, &idx, NULL, NULL);
+		x = xive_from_pc_blk(blk);
+		if (!x) {
+			prerror("XIVE: Instance not found for deallocated VP"
+				" block %d\n", blk);
+			return OPAL_INTERNAL_ERROR;
+		}
+		vp = xive_get_vp(x, idx);
+		if (!vp) {
+			prerror("XIVE: VP not found for deallocation !");
+			return OPAL_INTERNAL_ERROR;
+		}
+
+		/* VP must be disabled */
+		if (vp->w0 & VP_W0_VALID) {
+			prerror("XIVE: Freeing enabled VP !\n");
+			// XXX Disable it synchronously
+		}
+
+		/* Not populated */
+		if (vp->w1 == 0)
+			continue;
+		eq_blk = vp->w1 >> 28;
+		eq_idx = vp->w1 & 0x0fffffff;
+		vp->w1 = 0;
+
+		if (eq_blk != blk) {
+			prerror("XIVE: Block mismatch trying to free EQs\n");
+			return OPAL_INTERNAL_ERROR;
+		}
+
+		/* XX Ensure the EQs are disabled */
+		lock(&x->lock);
+		xive_free_eq_set(x, eq_idx);
+		unlock(&x->lock);
+	}
+
+	xive_free_vps(vp_base);
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t opal_xive_alloc_vp_block(uint32_t alloc_order)
+{
+	uint32_t vp_base, eqs, count, i;
+	int64_t rc;
+
+	if (xive_mode != XIVE_MODE_EXPL)
+		return OPAL_WRONG_STATE;
+
+	prlog(PR_DEBUG, "opal_xive_alloc_vp_block(%d)\n", alloc_order);
+
+	vp_base = xive_alloc_vps(alloc_order);
+	if (XIVE_ALLOC_IS_ERR(vp_base)) {
+		if (vp_base == XIVE_ALLOC_NO_IND)
+			return OPAL_XIVE_PROVISIONING;
+		return OPAL_RESOURCE;
+	}
+
+	/* Allocate EQs and initialize VPs */
+	count = 1 << alloc_order;
+	for (i = 0; i < count; i++) {
+		uint32_t vp_id = vp_base + i;
+		uint32_t blk, idx;
+		struct xive *x;
+		struct xive_vp *vp;
+
+		xive_decode_vp(vp_id, &blk, &idx, NULL, NULL);
+		x = xive_from_pc_blk(blk);
+		if (!x) {
+			prerror("XIVE: Instance not found for allocated VP"
+				" block %d\n", blk);
+			rc = OPAL_INTERNAL_ERROR;
+			goto fail;
+		}
+		vp = xive_get_vp(x, idx);
+		if (!vp) {
+			prerror("XIVE: VP not found after allocation !");
+			rc = OPAL_INTERNAL_ERROR;
+			goto fail;
+		}
+
+		/* Allocate EQs, if fails, free the VPs and return */
+		lock(&x->lock);
+		eqs = xive_alloc_eq_set(x, false);
+		unlock(&x->lock);
+		if (XIVE_ALLOC_IS_ERR(eqs)) {
+			if (eqs == XIVE_ALLOC_NO_IND)
+				rc = OPAL_XIVE_PROVISIONING;
+			else
+				rc = OPAL_RESOURCE;
+			goto fail;
+		}
+
+		/* Initialize the VP structure. We don't use a cache watch
+		 * as we have made sure when freeing the entries to scrub
+		 * it out of the cache.
+		 */
+		vp->w1 = (blk << 28) | eqs;
+		vp->w5 = 0xff000000;
+	}
+	return vp_base;
+ fail:
+	opal_xive_free_vp_block(vp_base);
+
+	return rc;
 }
 
 static int64_t opal_xive_allocate_irq(uint32_t chip_id)
@@ -3689,5 +3841,7 @@ void init_xive(void)
 	opal_register(OPAL_XIVE_DONATE_PAGE, opal_xive_donate_page, 2);
 	opal_register(OPAL_XIVE_ALLOCATE_IRQ, opal_xive_allocate_irq, 1);
 	opal_register(OPAL_XIVE_FREE_IRQ, opal_xive_free_irq, 1);
+	opal_register(OPAL_XIVE_ALLOCATE_VP_BLOCK, opal_xive_alloc_vp_block, 1);
+	opal_register(OPAL_XIVE_FREE_VP_BLOCK, opal_xive_free_vp_block, 1);
 }
 
