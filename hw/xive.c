@@ -344,6 +344,11 @@ struct xive {
 #else
 	void		*vp_base;
 #endif
+#ifdef USE_INDIRECT
+	/* Pool of donated pages for provisioning indirect EQ and VP pages */
+	struct list_head donated_pages;
+#endif
+
 	/* To ease a possible change to supporting more than one block of
 	 * interrupts per chip, we store here the "base" global number
 	 * and max number of interrupts for this chip. The global number
@@ -653,6 +658,13 @@ static uint32_t *xive_get_eq_buf(uint32_t eq_blk, uint32_t eq_idx)
 	return (uint32_t *)addr;
 }
 
+#ifdef USE_INDIRECT
+static void *xive_get_donated_page(struct xive *x __unused)
+{
+	return (void *)list_pop_(&x->donated_pages, 0);
+}
+#endif
+
 #define XIVE_ALLOC_IS_ERR(_idx)	((_idx) >= 0xfffffff0)
 
 #define XIVE_ALLOC_NO_SPACE	0xffffffff /* No possible space */
@@ -704,13 +716,19 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect __unused)
 			}
 			vsd_flags |= VSD_FIRMWARE;
 		} else {
-			return XIVE_ALLOC_NO_IND;
+			xive_dbg(x, "Indirect empty, provisioning from donated pages\n");
+			page = xive_get_donated_page(x);
+			if (!page) {
+				xive_dbg(x, "none available !\n");
+				return XIVE_ALLOC_NO_IND;
+			}
 		}
 		memset(page, 0, 0x10000);
 		x->eq_ind_base[ind_idx] = vsd_flags | (((uint64_t)page) & VSD_ADDRESS_MASK);
 		/* Any cache scrub needed ? */
 	}
-#endif
+#endif /* USE_INDIRECT */
+
 	return idx;
 }
 
@@ -2004,6 +2022,9 @@ static void init_one_xive(struct dt_node *np)
 	xive_dbg(x, "Initializing...\n");
 	chip->xive = x;
 
+#ifdef USE_INDIRECT
+	list_head_init(&x->donated_pages);
+#endif
 	/* Base interrupt numbers and allocator init */
 	/* XXX Consider allocating half as many ESBs than MMIO space
 	 * so that HW sources land outside of ESB space...
@@ -2727,6 +2748,26 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 	return OPAL_SUCCESS;
 }
 
+static int64_t opal_xive_donate_page(uint32_t chip_id, uint64_t addr)
+{
+	struct proc_chip *c = get_chip(chip_id);
+	struct list_node *n __unused;
+
+	if (!c)
+		return OPAL_PARAMETER;
+	if (!c->xive)
+		return OPAL_PARAMETER;
+	if (addr & 0xffff)
+		return OPAL_PARAMETER;
+#ifdef USE_INDIRECT
+	n = (struct list_node *)addr;
+	lock(&c->xive->lock);
+	list_add(&c->xive->donated_pages, n);
+	unlock(&c->xive->lock);
+#endif
+	return OPAL_SUCCESS;
+}
+
 static void xive_init_globals(void)
 {
 	uint32_t i;
@@ -2784,5 +2825,6 @@ void init_xive(void)
 	opal_register(OPAL_XIVE_GET_IRQ_INFO, opal_xive_get_irq_info, 6);
 	opal_register(OPAL_XIVE_GET_IRQ_CONFIG, opal_xive_get_irq_config, 4);
 	opal_register(OPAL_XIVE_SET_IRQ_CONFIG, opal_xive_set_irq_config, 4);
+	opal_register(OPAL_XIVE_DONATE_PAGE, opal_xive_donate_page, 2);
 }
 
