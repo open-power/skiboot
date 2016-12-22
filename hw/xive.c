@@ -2229,21 +2229,23 @@ static int64_t xive_set_irq_targetting(uint32_t isn, uint32_t target,
 			bitmap_set_bit(*x->int_enabled_map, GIRQ_TO_IDX(isn));
 	}
 
-	/* Re-target the IVE. First find the EQ
+	/* If prio isn't 0xff, re-target the IVE. First find the EQ
 	 * correponding to the target
 	 */
-	if (!xive_eq_for_target(target, prio, &eq_blk, &eq_idx)) {
-		xive_err(x, "Can't find EQ for target/prio 0x%x/%d\n",
-			 target, prio);
-		unlock(&x->lock);
-		return OPAL_PARAMETER;
-	}
+	if (prio != 0xff) {
+		if (!xive_eq_for_target(target, prio, &eq_blk, &eq_idx)) {
+			xive_err(x, "Can't find EQ for target/prio 0x%x/%d\n",
+				 target, prio);
+			unlock(&x->lock);
+			return OPAL_PARAMETER;
+		}
 
-	/* Try to update it atomically to avoid an intermediary
-	 * stale state
-	 */
-	new_ive = SETFIELD(IVE_EQ_BLOCK, new_ive, eq_blk);
-	new_ive = SETFIELD(IVE_EQ_INDEX, new_ive, eq_idx);
+		/* Try to update it atomically to avoid an intermediary
+		 * stale state
+		 */
+		new_ive = SETFIELD(IVE_EQ_BLOCK, new_ive, eq_blk);
+		new_ive = SETFIELD(IVE_EQ_INDEX, new_ive, eq_idx);
+	}
 	new_ive = SETFIELD(IVE_EQ_DATA, new_ive, lirq);
 
 	xive_vdbg(x,"ISN %x routed to eq %x/%x lirq=%08x IVE=%016llx !\n",
