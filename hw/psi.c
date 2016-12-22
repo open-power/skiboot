@@ -535,11 +535,31 @@ static uint64_t psi_p8_irq_attributes(struct irq_source *is, uint32_t isn)
 	return attr;
 }
 
+static char *psi_p8_irq_name(struct irq_source *is, uint32_t isn)
+{
+	struct psi *psi = is->data;
+	uint32_t idx = isn - psi->interrupt;
+
+	static const char *names[P8_IRQ_PSI_IRQ_COUNT] = {
+		"psi:fsp",
+		"psi:occ",
+		"psi:fsi",
+		"psi:lpchc",
+		"psi:local_err",
+		"psi:external",
+	};
+
+	if (idx >= P8_IRQ_PSI_IRQ_COUNT)
+		return NULL;
+	return strdup(names[idx]);
+}
+
 static const struct irq_source_ops psi_p8_irq_ops = {
 	.get_xive = psi_p8_get_xive,
 	.set_xive = psi_p8_set_xive,
 	.interrupt = psihb_p8_interrupt,
 	.attributes = psi_p8_irq_attributes,
+	.name = psi_p8_irq_name,
 };
 
 static void psihb_p9_interrupt(struct irq_source *is, uint32_t isn)
@@ -610,9 +630,37 @@ static uint64_t psi_p9_irq_attributes(struct irq_source *is __unused,
 	return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_FREQUENT;
 }
 
+static char *psi_p9_irq_name(struct irq_source *is, uint32_t isn)
+{
+	struct psi *psi = is->data;
+	uint32_t idx = isn - psi->interrupt;
+
+	static const char *names[P9_PSI_NUM_IRQS] = {
+		"psi:fsp",
+		"psi:occ",
+		"psi:fsi",
+		"psi:lpchc",
+		"psi:local_err",
+		"psi:global_err",
+		"psi:external",
+		"psi:lpc_serirq_mux0", /* Have a callback to get name ? */
+		"psi:lpc_serirq_mux1", /* Have a callback to get name ? */
+		"psi:lpc_serirq_mux2", /* Have a callback to get name ? */
+		"psi:lpc_serirq_mux3", /* Have a callback to get name ? */
+		"psi:i2c",
+		"psi:dio",
+		"psi:psu"
+	};
+
+	if (idx >= P9_PSI_NUM_IRQS)
+		return NULL;
+	return strdup(names[idx]);
+}
+
 static const struct irq_source_ops psi_p9_irq_ops = {
 	.interrupt = psihb_p9_interrupt,
 	.attributes = psi_p9_irq_attributes,
+	.name = psi_p9_irq_name,
 };
 
 static void psi_tce_enable(struct psi *psi, bool enable)
