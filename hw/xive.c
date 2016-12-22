@@ -2360,12 +2360,22 @@ static uint64_t xive_source_attributes(struct irq_source *is, uint32_t isn)
 	return s->orig_ops->attributes(is, isn);
 }
 
+static char *xive_source_name(struct irq_source *is, uint32_t isn)
+{
+	struct xive_src *s = container_of(is, struct xive_src, is);
+
+	if (!s->orig_ops || !s->orig_ops->name)
+		return NULL;
+	return s->orig_ops->name(is, isn);
+}
+
 static const struct irq_source_ops xive_irq_source_ops = {
 	.get_xive = xive_source_get_xive,
 	.set_xive = xive_source_set_xive,
 	.eoi = xive_source_eoi,
 	.interrupt = xive_source_interrupt,
 	.attributes = xive_source_attributes,
+	.name = xive_source_name,
 };
 
 static void __xive_register_source(struct xive *x, struct xive_src *s,
