@@ -3029,9 +3029,10 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 
 	/* Perform the HV Ack cycle */
 	if (just_poll)
-		ack = in_be64(xs->tm_ring1 + TM_QW3_HV_PHYS) >> 48;
+		ack = __in_be64(xs->tm_ring1 + TM_QW3_HV_PHYS) >> 48;
 	else
-		ack = in_be16(xs->tm_ring1 + TM_SPC_ACK_HV_REG);
+		ack = __in_be16(xs->tm_ring1 + TM_SPC_ACK_HV_REG);
+	sync();
 	xive_cpu_vdbg(c, "get_xirr,%s=%04x\n", just_poll ? "POLL" : "ACK", ack);
 
 	/* Capture the old CPPR which we will return with the interrupt */
