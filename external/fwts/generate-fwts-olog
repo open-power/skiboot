@@ -41,10 +41,10 @@ def create_parser():
                 re.DOTALL)
 
     # Match the following prlog() call
-    log_call = (Literal("prlog") +
-                Literal('(').suppress() +
-                Word(string.letters + string.digits + '_') +
-                Literal(',').suppress() +
+    log_call = (((Literal("prerror") + Literal('(').suppress()) |
+                 (Literal("prlog")   + Literal('(').suppress() +
+                  Word(string.letters + string.digits + '_') +
+                  Literal(',').suppress())) +
                 Combine(OneOrMore(QuotedString('"')), adjacent=False) +
                 (Literal(')') | Literal(',')).suppress()
                )
@@ -167,11 +167,15 @@ def parse_patterns(parser, fname, tag):
     i = 1
     for result in parser.scanString(data):
         (token, loc, _) = result
-        (annotations, logfn, level, msg) = token
+        if token[1] == 'prlog':
+            (annotations, logfn, level, msg) = token
+        else:
+            (annotations, logfn, msg) = token
+            level = 'PR_ERR'
 
         loc = (fname, lineno(loc, data))
 
-        if logfn != 'prlog':
+        if logfn != 'prlog' and logfn != 'prerror':
             warn(loc, "unknown log output function '%s'" % logfn)
 
         compare_mode, pattern_str = message_to_pattern(loc, msg)
