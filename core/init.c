@@ -884,8 +884,8 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
         /*
 	 * Initialize the opal messaging before platform.init as we are
-	 *  getting request to queue occ load opal message when host services
-	 *  got load occ request from FSP
+	 * getting request to queue occ load opal message when host services
+	 * got load occ request from FSP
 	 */
         opal_init_msg();
 
