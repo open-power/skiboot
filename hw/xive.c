@@ -3629,7 +3629,7 @@ static void xive_reset_one(struct xive *x)
 	}
 
 	/* Take out all VPs from HW and reset all CPPRs to 0 */
-	for_each_cpu(c) {
+	for_each_present_cpu(c) {
 		if (c->chip_id != x->chip_id)
 			continue;
 		if (!c->xstate)
@@ -3672,7 +3672,7 @@ static void xive_reset_one(struct xive *x)
 #endif
 
 	/* Re-configure the CPUs */
-	for_each_cpu(c) {
+	for_each_present_cpu(c) {
 		struct xive_cpu_state *xs = c->xstate;
 
 		if (c->chip_id != x->chip_id || !xs)
@@ -4004,11 +4004,11 @@ void init_xive(void)
 	}
 
 	/* Initialize XICS emulation per-cpu structures */
-	for_each_cpu(cpu) {
+	for_each_present_cpu(cpu) {
 		xive_init_cpu(cpu);
 	}
 	/* Add interrupts propertie to each CPU node */
-	for_each_cpu(cpu) {
+	for_each_present_cpu(cpu) {
 		if (cpu_is_thread0(cpu))
 			xive_init_cpu_properties(cpu);
 	}
