@@ -165,6 +165,11 @@ extern struct cpu_thread *next_cpu(struct cpu_thread *cpu);
  *          this API standpoint.
  */
 
+static inline bool cpu_is_present(struct cpu_thread *cpu)
+{
+	return cpu->state >= cpu_state_present;
+}
+
 static inline bool cpu_is_available(struct cpu_thread *cpu)
 {
 	return cpu->state == cpu_state_active ||
@@ -173,12 +178,17 @@ static inline bool cpu_is_available(struct cpu_thread *cpu)
 
 extern struct cpu_thread *first_available_cpu(void);
 extern struct cpu_thread *next_available_cpu(struct cpu_thread *cpu);
+extern struct cpu_thread *first_present_cpu(void);
+extern struct cpu_thread *next_present_cpu(struct cpu_thread *cpu);
 
 #define for_each_cpu(cpu)	\
 	for (cpu = first_cpu(); cpu; cpu = next_cpu(cpu))
 
 #define for_each_available_cpu(cpu)	\
 	for (cpu = first_available_cpu(); cpu; cpu = next_available_cpu(cpu))
+
+#define for_each_present_cpu(cpu)	\
+	for (cpu = first_present_cpu(); cpu; cpu = next_present_cpu(cpu))
 
 extern struct cpu_thread *first_available_core_in_chip(u32 chip_id);
 extern struct cpu_thread *next_available_core_in_chip(struct cpu_thread *cpu, u32 chip_id);

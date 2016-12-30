@@ -494,6 +494,20 @@ struct cpu_thread *first_available_cpu(void)
 	return next_available_cpu(NULL);
 }
 
+struct cpu_thread *next_present_cpu(struct cpu_thread *cpu)
+{
+	do {
+		cpu = next_cpu(cpu);
+	} while(cpu && !cpu_is_present(cpu));
+
+	return cpu;
+}
+
+struct cpu_thread *first_present_cpu(void)
+{
+	return next_present_cpu(NULL);
+}
+
 u8 get_available_nr_cores_in_chip(u32 chip_id)
 {
 	struct cpu_thread *core;
