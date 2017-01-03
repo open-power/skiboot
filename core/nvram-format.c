@@ -28,7 +28,7 @@ struct chrp_nvram_hdr {
 	char		name[12];
 };
 
-struct chrp_nvram_hdr *skiboot_part_hdr;
+static struct chrp_nvram_hdr *skiboot_part_hdr;
 
 #define NVRAM_SIG_FW_PRIV	0x51
 #define NVRAM_SIG_SYSTEM	0x70

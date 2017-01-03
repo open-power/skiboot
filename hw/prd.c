@@ -33,7 +33,7 @@ static uint8_t events[MAX_CHIPS];
 static uint64_t ipoll_status[MAX_CHIPS];
 static struct opal_prd_msg prd_msg;
 static bool prd_msg_inuse, prd_active;
-struct dt_node *prd_node;
+static struct dt_node *prd_node;
 
 /* Locking:
  *

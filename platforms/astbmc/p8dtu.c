@@ -227,7 +227,7 @@ static bool p8dtu2u_probe(void)
 	return true;
 }
 
-const struct bmc_platform astbmc_smc = {
+static const struct bmc_platform astbmc_smc = {
 	.name = "SMC",
 	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
 	.ipmi_oem_pnor_access_status = IPMI_CODE(0x3a, 0x07),

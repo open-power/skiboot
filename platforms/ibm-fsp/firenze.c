@@ -28,8 +28,6 @@
 #include "ibm-fsp.h"
 #include "lxvpd.h"
 
-struct lock fsp_pcie_inv_lock = LOCK_UNLOCKED;
-
 static struct dt_node *dt_create_i2c_master(struct dt_node *n, uint32_t eng_id)
 {
 	struct dt_node *i2cm;

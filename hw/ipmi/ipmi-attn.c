@@ -33,7 +33,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_ATTN, OPAL_PLATFORM_ERR_EVT,
 static char ti_buffer[IPMI_TI_BUFFER_SIZE];
 
 #define STACK_BUF_ENTRIES       20
-struct bt_entry bt_buf[STACK_BUF_ENTRIES];
+static struct bt_entry bt_buf[STACK_BUF_ENTRIES];
 
 /* Log eSEL event with OPAL backtrace */
 static void ipmi_log_terminate_event(const char *msg)
