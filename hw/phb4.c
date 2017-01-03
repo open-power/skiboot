@@ -1330,7 +1330,7 @@ static int64_t phb4_map_pe_dma_window_real(struct phb *phb,
 		 * and end address bits 49:24 into TVE[54:55]||[24:47]
 		 * and set TVE[51]
 		 */
-		tve  = (pci_start_addr << 16) & (0xffffffull << 48);
+		tve  = (pci_start_addr << 16) & (0xffffffull << 40);
 		tve |= (pci_start_addr >> 38) & (3ull << 10);
 		tve |= (end >>  8) & (0xfffffful << 16);
 		tve |= (end >> 40) & (3ull << 8);
