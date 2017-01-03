@@ -3442,7 +3442,7 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 	 * escalation interrupt
 	 */
 	if ((qflags & OPAL_XIVE_EQ_ENABLED) && !(eq.w0 & EQ_W0_VALID)) {
-		eq.w0 |= EQ_W0_VALID;
+		eq.w0 |= EQ_W0_VALID | EQ_W0_BACKLOG;
 		eq.w1 = EQ_W1_GENERATION | EQ_W1_ESe_Q;
 	} else if (!(qflags & OPAL_XIVE_EQ_ENABLED)) {
 		eq.w0 &= ~EQ_W0_VALID;
