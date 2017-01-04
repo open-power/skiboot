@@ -1,4 +1,4 @@
-/* Copyright 2016 IBM Corp.
+/* Copyright 2016-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ int main(void)
 
 	buddy_reserve(b, 127, 0);
 	buddy_reserve(b, 0, 4);
+	assert(buddy_reserve(b, 0, 4) == false);
 
 	a[0] = buddy_alloc(b, 0);
 	assert(a[0] >= 0);
