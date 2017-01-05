@@ -29,6 +29,7 @@
 #include <affinity.h>
 #include <opal-msg.h>
 #include <timer.h>
+#include <elf-abi.h>
 
 /* Pending events to signal via opal_poll_events */
 uint64_t opal_pending_events;
@@ -58,8 +59,7 @@ void opal_table_init(void)
 	printf("OPAL table: %p .. %p, branch table: %p\n",
 	       s, e, opal_branch_table);
 	while(s < e) {
-		uint64_t *func = s->func;
-		opal_branch_table[s->token] = *func;
+		opal_branch_table[s->token] = function_entry_address(s->func);
 		opal_num_args[s->token] = s->nargs;
 		s++;
 	}
@@ -113,11 +113,9 @@ void opal_trace_entry(struct stack_frame *eframe)
 
 void __opal_register(uint64_t token, void *func, unsigned int nargs)
 {
-	uint64_t *opd = func;
-
 	assert(token <= OPAL_LAST);
 
-	opal_branch_table[token] = *opd;
+	opal_branch_table[token] = function_entry_address(func);
 	opal_num_args[token] = nargs;
 }
 

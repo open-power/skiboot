@@ -38,6 +38,14 @@ KERNEL ?=
 STACK_CHECK ?= $(DEBUG)
 
 #
+# Experimental (unsupported) build options
+#
+# Little-endian does not yet build. Include it here to set ELF ABI.
+LITTLE_ENDIAN ?= 0
+# ELF v2 ABI is more efficient and compact
+ELF_ABI_v2 ?= $(LITTLE_ENDIAN)
+
+#
 # Where is the source directory, must be a full path (no ~)
 # Example: SRC= /home/me/skiboot
 #

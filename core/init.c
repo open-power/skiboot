@@ -614,12 +614,6 @@ static void dt_init_misc(void)
 	dt_fixups();
 }
 
-static void branch_null(void)
-{
-	assert_fail("Branch to NULL !");
-}
-
-
 typedef void (*ctorcall_t)(void);
 
 static void __nomcount do_ctors(void)
@@ -630,6 +624,13 @@ static void __nomcount do_ctors(void)
 	for (call = __ctors_start; call < __ctors_end; call++)
 		(*call)();
 }
+
+#ifndef PPC64_ELF_ABI_v2
+static void branch_null(void)
+{
+	assert_fail("Branch to NULL !");
+}
+
 
 static void setup_branch_null_catcher(void)
 {
@@ -642,6 +643,11 @@ static void setup_branch_null_catcher(void)
         */
        memcpy(0, bn, 16);
 }
+#else
+static void setup_branch_null_catcher(void)
+{
+}
+#endif
 
 void setup_reset_vector(void)
 {

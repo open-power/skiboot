@@ -899,6 +899,7 @@ opal_entry:
 
 	/* Convert our token into a table entry and get the
 	 * function pointer. Also check the token.
+	 * For ELFv2 ABI, the local entry point is used so no need for r12.
 	 */
 	cmpldi	%r0,OPAL_LAST
 	bgt-	2f
