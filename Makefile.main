@@ -48,7 +48,7 @@ VALGRIND=valgrind -q --show-reachable=yes --error-exitcode=99
 
 # Target options
 
-OPTS=-Os -ffunction-sections
+OPTS=-Os
 DBG=-g
 
 CPPFLAGS := -I$(SRC)/include -Iinclude -MMD -include $(SRC)/include/config.h
@@ -76,6 +76,10 @@ ifeq ($(ELF_ABI_v2),1)
 CFLAGS += $(call try-cflag,$(CC),-mabi=elfv2)
 else
 CFLAGS += $(call try-cflag,$(CC),-mabi=elfv1)
+endif
+
+ifeq ($(DEAD_CODE_ELIMINATION),1)
+CFLAGS += -ffunction-sections -fdata-sections
 endif
 
 ifeq ($(SKIBOOT_GCOV),1)
@@ -111,6 +115,10 @@ LDFLAGS += -mbig-endian -Wl,--oformat,elf64-powerpc
 LDRFLAGS=-melf64ppc
 # Debug stuff
 #LDFLAGS += -Wl,-v -Wl,-Map,foomap 
+
+ifeq ($(DEAD_CODE_ELIMINATION),1)
+LDFLAGS += -Wl,--gc-sections
+endif
 
 AFLAGS := -D__ASSEMBLY__ -mbig-endian -m64
 ifeq ($(ELF_ABI_v2),1)

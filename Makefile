@@ -44,6 +44,8 @@ STACK_CHECK ?= $(DEBUG)
 LITTLE_ENDIAN ?= 0
 # ELF v2 ABI is more efficient and compact
 ELF_ABI_v2 ?= $(LITTLE_ENDIAN)
+# Discard unreferenced code and data at link-time
+DEAD_CODE_ELIMINATION ?= 0
 
 #
 # Where is the source directory, must be a full path (no ~)

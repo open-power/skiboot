@@ -85,8 +85,8 @@ SECTIONS
 	. = ALIGN(0x10);
 	.init : {
 		__ctors_start = .;
-		*(.ctors)
-		*(.init_array)
+		KEEP(*(.ctors))
+		KEEP(*(.init_array))
 		__ctors_end = .;
 	}
  
@@ -143,7 +143,6 @@ SECTIONS
 		__sym_map_start = . ;
 		KEEP(*(.sym_map))
 		__sym_map_end = . ;
-		KEEP(*(.sym_map))
 	}
 
 	/* We locate the BSS at 2M to leave room for the symbol map */
