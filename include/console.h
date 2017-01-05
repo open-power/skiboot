@@ -100,4 +100,6 @@ extern struct opal_con_ops uart_opal_con;
 extern struct opal_con_ops fsp_opal_con;
 extern struct opal_con_ops dummy_opal_con;
 
+void mprintf(const char *fmt, ...);
+
 #endif /* __CONSOLE_H */

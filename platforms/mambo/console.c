@@ -66,3 +66,22 @@ void enable_mambo_console(void)
 	prlog(PR_NOTICE, "Enabling Mambo console\n");
 	set_console(&mambo_con_driver);
 }
+
+/*
+ * mambo console based printf(), this is useful for debugging the console
+ * since mambo_console_write() can be safely called from anywhere.
+ *
+ * This is a debug hack and you shouldn't use it in real code.
+ */
+void mprintf(const char *fmt, ...)
+{
+	char buf[320];
+	va_list args;
+	int i;
+
+	va_start(args, fmt);
+	i = vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+
+	mambo_console_write(buf, i);
+}
