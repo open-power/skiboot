@@ -131,8 +131,8 @@ struct HDIF_common_hdr *HDIF_child(const struct HDIF_common_hdr *hdif,
 	ret = base + be32_to_cpu(child->offset)
 		+ be32_to_cpu(child->size) * idx;
 	if (!HDIF_check(ret, eyecatcher)) {
-		prerror("HDIF: %s child #%i bad type\n",
-			eyecatcher, idx);
+		prerror("HDIF: #%i bad type (wanted %6s, got %6s)\n",
+			idx, eyecatcher, ret->id);
 		return NULL;
 	}
 
