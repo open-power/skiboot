@@ -199,7 +199,7 @@ int blocklevel_erase(struct blocklevel_device *bl, uint64_t pos, uint64_t len)
 
 	/* Programmer may be making a horrible mistake without knowing it */
 	if (len & bl->erase_mask) {
-		fprintf(stderr, "blocklevel_erase: len (0x%"PRIu64") is not erase block (0x%08x) aligned\n",
+		fprintf(stderr, "blocklevel_erase: len (0x%"PRIx64") is not erase block (0x%08x) aligned\n",
 				len, bl->erase_mask + 1);
 		return FLASH_ERR_ERASE_BOUNDARY;
 	}
