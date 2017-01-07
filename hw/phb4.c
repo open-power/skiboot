@@ -2701,7 +2701,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 
 	/* Init_14 - Clear link training */
 	phb4_pcicfg_write32(&p->phb, 0, 0x78,
-			    0x0000FE07 | (p->max_link_speed << 24));
+			    0x07FE0000 | p->max_link_speed);
 
 	/* Init_15 - deassert cores reset */
 	/*
