@@ -278,7 +278,9 @@ static struct dt_node *add_pec_stack(const struct cechub_io_hub *hub,
 	for (i = 4; i < 8; i++) /* gen 4 eq settings */
 		eq[i] = be64_to_cpu(hub->phb4_lane_eq[phb_index][i]);
 
-	__dt_add_property_u64s(stack, "ibm,lane-eq", 8, eq);
+	/* FIXME: hdat is broken here for now so don't write these */
+	if (0)
+		__dt_add_property_u64s(stack, "ibm,lane-eq", 8, eq);
 
 	return stack;
 }
