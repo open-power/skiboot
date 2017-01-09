@@ -458,7 +458,7 @@ void *fdt;
 void __noreturn load_and_boot_kernel(bool is_reboot)
 {
 	const struct dt_property *memprop;
-	const char *cmdline;
+	const char *cmdline, *stdoutp;
 	uint64_t mem_top;
 
 	memprop = dt_find_property(dt_root, DT_PRIVATE "maxmem");
@@ -507,6 +507,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	if (cmdline) {
 		dt_check_del_prop(dt_chosen, "bootargs");
 		dt_add_property_string(dt_chosen, "bootargs", cmdline);
+		prlog(PR_DEBUG, "INIT: Command line from NVRAM: %s\n",
+		      cmdline);
 	}
 
 	op_display(OP_LOG, OP_MOD_INIT, 0x000B);
@@ -533,6 +535,11 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	/* Take processours out of nap */
 	cpu_set_pm_enable(false);
+
+	/* Dump the selected console */
+	stdoutp = dt_prop_get_def(dt_chosen, "linux,stdout-path", NULL);
+	printf("INIT: stdout-path: %s\n", stdoutp ? stdoutp : "");
+
 
 	printf("INIT: Starting kernel at 0x%llx, fdt at %p (size 0x%x)\n",
 	       kernel_entry, fdt, fdt_totalsize(fdt));
