@@ -541,7 +541,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	printf("INIT: stdout-path: %s\n", stdoutp ? stdoutp : "");
 
 
-	printf("INIT: Starting kernel at 0x%llx, fdt at %p (size 0x%x)\n",
+	printf("INIT: Starting kernel at 0x%llx, fdt at %p %u bytes)\n",
 	       kernel_entry, fdt, fdt_totalsize(fdt));
 
 	debug_descriptor.state_flags |= OPAL_BOOT_COMPLETE;
