@@ -100,7 +100,8 @@ git commit -s
 git format-patch
 ```
 
-You probably want to read the linux Documentation/SubmittingPatches as
+You probably want to read the linux
+https://kernel.org/doc/html/latest/process/submitting-patches.html as
 much of it applies to skiboot.
 
 ## License
