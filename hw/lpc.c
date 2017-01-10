@@ -458,6 +458,14 @@ static int64_t __lpc_write(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 		goto bail;
 
 	/* Perform OPB access */
+	/* Perform OPB access */
+	if ((opb_base + addr) < 0xd0000000) {
+		prerror("LPC: Bad write access, opb_base=0x%08x addr=0x%08x type=%d sz=%d\n",
+			opb_base, addr, addr_type, sz);
+		backtrace();
+		rc = OPAL_PARAMETER;
+		goto bail;
+	}
 	rc = opb_write(lpc, opb_base + addr, data, sz);
 
 	/* XXX Add LPC error handling/recovery */
@@ -523,6 +531,13 @@ static int64_t __lpc_read(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 		goto bail;
 
 	/* Perform OPB access */
+	if ((opb_base + addr) < 0xd0000000) {
+		prerror("LPC: Bad read access, opb_base=0x%08x addr=0x%08x type=%d sz=%d\n",
+			opb_base, addr, addr_type, sz);
+		backtrace();
+		rc = OPAL_PARAMETER;
+		goto bail;
+	}
 	rc = opb_read(lpc, opb_base + addr, data, sz);
 
 	/* XXX Add LPC error handling/recovery */
