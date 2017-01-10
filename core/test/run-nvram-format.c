@@ -69,8 +69,8 @@ int main(void)
 	nvram_image = malloc(sz);
 	assert(nvram_format(nvram_image, sz)==0);
 	assert(nvram_check(nvram_image, sz)==0);
-	assert(nvram_image[sz-13]==0);
-	assert(nvram_image[sz-14]==1);
+	assert(nvram_image[sz-14]==0);
+	assert(nvram_image[sz-13]==1);
 	h = (struct chrp_nvram_hdr*)(&nvram_image[NVRAM_SIZE_COMMON + NVRAM_SIZE_FW_PRIV]);
 	assert(memcmp(h->name, "wwwwwwwwwwww", 12)==0);
 	free(nvram_image);
@@ -87,7 +87,7 @@ int main(void)
 	/* Does our NUL checking work? */
 	assert(nvram_format(nvram_image, 128 * 1024) == 0);
 	h = (struct chrp_nvram_hdr *) nvram_image;
-	memset((char *) h + sizeof(*h), 0xFF, h->len * 16 - sizeof(*h));
+	memset((char *) h + sizeof(*h), 0xFF, be16_to_cpu(h->len) * 16 - sizeof(*h));
 	assert(nvram_check(nvram_image, 128 * 1024) != 0);
 
 	assert(nvram_format(nvram_image, 128*1024)==0);
