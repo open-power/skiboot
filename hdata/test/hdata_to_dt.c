@@ -70,6 +70,9 @@ struct cpu_thread {
 struct cpu_thread __boot_cpu, *boot_cpu = &__boot_cpu;
 static unsigned long fake_pvr_type = PVR_TYPE_P7;
 
+// Fake PVR_VERS_MAJ to 1
+#define PVR_VERS_MAJ(v) (1)
+
 static inline unsigned long mfspr(unsigned int spr)
 {
 	assert(spr == SPR_PVR);
