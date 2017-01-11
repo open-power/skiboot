@@ -155,6 +155,7 @@ struct proc_chip {
 	/* These are only initialized after xcom_init */
 	enum proc_chip_type	type;
 	uint32_t		ec_level;	/* 0xMm (DD1.0 = 0x10) */
+	uint8_t                 ec_rev;		/* sub-revision */
 
 	/* Those two values are only populated on machines with an FSP
 	 * dbob_id = Drawer/Block/Octant/Blade (DBOBID)
