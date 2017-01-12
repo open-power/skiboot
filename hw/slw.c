@@ -648,11 +648,10 @@ void add_cpu_idle_state_properties(void)
 	u32 *residency_ns_buf;
 	u32 *flags_buf;
 
-
 	prlog(PR_DEBUG, "CPU idle state device tree init\n");
 
-	/* Create /ibm,opal/power-mgt */
-	power_mgt = dt_new(opal_node, "power-mgt");
+	/* Create /ibm,opal/power-mgt if it doesn't exist already */
+	power_mgt = dt_new_check(opal_node, "power-mgt");
 	if (!power_mgt) {
 		/**
 		 * @fwts-label CreateDTPowerMgtNodeFail
