@@ -96,6 +96,7 @@
 
 #define BMC_SIO_SCR29 0x29
 #define BMC_SIO_SCR29_MEMBOOT 0x10
+#define BMC_SIO_SCR29_MBOX_FLASH (1 << 2) /* TODO: Actually get a free bit!!! */
 
 enum {
 	BMC_SIO_DEV_NONE	= -1,
@@ -386,6 +387,14 @@ void ast_io_init(void)
 
 	/* Configure all AIO interrupts to level low */
 	ast_setup_sio_irq_polarity();
+}
+
+bool ast_is_mbox_pnor(void)
+{
+	uint8_t boot_flags;
+
+	boot_flags = bmc_sio_inb(BMC_SIO_SCR29);
+	return boot_flags & BMC_SIO_SCR29_MBOX_FLASH;
 }
 
 bool ast_is_ahb_lpc_pnor(void)
