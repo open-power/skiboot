@@ -78,6 +78,10 @@ struct dt_node * add_core_common(struct dt_node *cpus,
 	dt_add_property_cells(cpu, "ibm,processor-page-sizes",
 			      0xc, 0x10, 0x18, 0x22);
 
+	if (proc_gen == proc_gen_p9)
+		dt_add_property_cells(cpu, "ibm,processor-radix-AP-encodings",
+			0x0000000c, 0xa0000010, 0x20000015, 0x4000001e);
+
 	/* Page size encodings appear to be the same for P7 and P8 */
 	dt_add_property_cells(cpu, "ibm,segment-page-sizes",
 		0x0c, 0x000, 3, 0x0c, 0x0000,  /*  4K seg  4k pages */
