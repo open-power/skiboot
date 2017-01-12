@@ -72,7 +72,7 @@ static void add_xics_icp(const void *pcia, u32 tcount, const char *compat)
 		t = find_tada(pcia, i);
 		assert(t);
 		if (i == 0)
-			irange[0] = be32_to_cpu(t->proc_int_line);
+			irange[0] = be32_to_cpu(t->pir);
 		reg[i * 2] = cpu_to_be64(cleanup_addr(be64_to_cpu(t->ibase)));
 		reg[i * 2 + 1] = cpu_to_be64(0x1000);
 	}
@@ -125,8 +125,8 @@ static struct dt_node *add_core_node(struct dt_node *cpus,
 		   >> CPU_ID_NUM_SECONDARY_THREAD_SHIFT) + 1;
 	assert(threads <= PCIA_MAX_THREADS);
 
-	prlog(PR_INFO, "CORE[%i]: PIR=%i RES=%i %s %s(%u threads)\n",
-	      pcia_index(pcia), t->pir, t->proc_int_line,
+	prlog(PR_INFO, "CORE[%i]: PIR=%.8x %s %s(%u threads)\n",
+	      pcia_index(pcia), be32_to_cpu(t->pir),
 	      ve_flags & CPU_ID_PACA_RESERVED
 	      ? "**RESERVED**" : cpu_state(ve_flags),
 	      be32_to_cpu(t->pir) == boot_cpu->pir ? "[boot] " : "", threads);
@@ -146,7 +146,7 @@ static struct dt_node *add_core_node(struct dt_node *cpus,
 	}
 
 	cpu = add_core_common(cpus, cache, timebase,
-			      be32_to_cpu(t->proc_int_line), okay);
+			      be32_to_cpu(t->pir), okay);
 
 	/* Core attributes */
 	attr = HDIF_get_idata(pcia, SPPCIA_IDATA_CPU_ATTR, &size);
@@ -155,7 +155,7 @@ static struct dt_node *add_core_node(struct dt_node *cpus,
 
 	/* Add cache info */
 	l2_phandle = add_core_cache_info(cpus, cache,
-					 be32_to_cpu(t->proc_int_line), okay);
+					 be32_to_cpu(t->pir), okay);
 	dt_add_property_cells(cpu, "l2-cache", l2_phandle);
 
 	if (proc_gen == proc_gen_p7)
@@ -176,8 +176,8 @@ static struct dt_node *add_core_node(struct dt_node *cpus,
 			threads = i;
 			break;
 		}
-		iserv[i] = t->proc_int_line;
-		assert(t->proc_int_line == t->pir);
+
+		iserv[i] = t->pir;
 	}
 
 	dt_add_property(cpu, "ibm,ppc-interrupt-server#s", iserv, 4 * threads);
