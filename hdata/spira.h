@@ -973,6 +973,19 @@ struct sppcrd_chip_info {
 	__be32 reserved;
 	__be32 dbob_id;
 	__be32 occ_state;
+	/* Version 0xC - none of these are used */
+	__be32 processor_fru_id;
+	__be32 chip_ec_level;
+	__be32 hw_module_id;
+	__be32 hw_card_id;
+	__be32 internal_drawer_nid;
+	__be32 ccm_nid;
+	/* Version 0xD */
+	__be32 capp0_func_state;
+	/* Version 0xE */
+	__be32 capp1_func_state;
+	/* *possibly* from Version 0x20 - check spec */
+	__be32 stop_levels;
 } __packed;
 
 /* Idata index 1 : Chip TOD */
