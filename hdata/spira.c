@@ -756,8 +756,6 @@ static void add_nx(void)
 static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 {
 	const struct iplparams_sysparams *p;
-	u32 sys_type;
-	const char *sys_family;
 	const struct HDIF_common_hdr *hdif = iplp;
 	u16 version = be16_to_cpu(hdif->version);
 
@@ -776,29 +774,48 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 
 	dt_add_property_nstr(node, "ibm,sys-model", p->sys_model, 4);
 
-	/* Compatible is 2 entries: ibm,powernv and ibm,<platform>
+	/*
+	 * Compatible has up to three entries:
+	 *	"ibm,powernv", the system family and system type.
+	 *
+	 * On P9 and above the family and type strings come from the HDAT
+	 * directly. On P8 we find it from the system ID numbers.
 	 */
-	sys_type = be32_to_cpu(p->system_type);
-	switch(sys_type >> 28) {
-	case 0:
-		sys_family = "ibm,squadrons";
-		break;
-	case 1:
-		sys_family = "ibm,eclipz";
-		break;
-	case 2:
-		sys_family = "ibm,apollo";
-		break;
-	case 3:
-		sys_family = "ibm,firenze";
-		break;
-	default:
-		sys_family = NULL;
-		prerror("IPLPARAMS: Unknown system family\n");
-		break;
+	if (proc_gen >= proc_gen_p9) {
+		dt_add_property_strings(dt_root, "compatible", "ibm,powernv",
+					p->sys_family_str, p->sys_type_str);
+
+		prlog(PR_INFO, "IPLPARAMS: v0x70 Platform family/type: %s/%s\n",
+		      p->sys_family_str, p->sys_type_str);
+	} else {
+		u32 sys_type = be32_to_cpu(p->system_type);
+		const char *sys_family;
+
+		switch (sys_type >> 28) {
+		case 0:
+			sys_family = "ibm,squadrons";
+			break;
+		case 1:
+			sys_family = "ibm,eclipz";
+			break;
+		case 2:
+			sys_family = "ibm,apollo";
+			break;
+		case 3:
+			sys_family = "ibm,firenze";
+			break;
+		default:
+			sys_family = NULL;
+			prerror("IPLPARAMS: Unknown system family\n");
+			break;
+		}
+
+		dt_add_property_strings(dt_root, "compatible", "ibm,powernv",
+					sys_family);
+		prlog(PR_INFO,
+		      "IPLPARAMS: Legacy platform family: %s"
+		      " (sys_type=0x%08x)\n", sys_family, sys_type);
 	}
-	dt_add_property_strings(dt_root, "compatible", "ibm,powernv",
-				sys_family);
 
 	/* Grab nest frequency when available */
 	if (version >= 0x005b) {

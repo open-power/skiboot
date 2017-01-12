@@ -323,6 +323,17 @@ struct iplparams_sysparams {
 	uint8_t		hw_page_table_size;	/* >= 0x59 */
 	__be16		hv_disp_wheel;		/* >= 0x58 */
 	__be32		nest_freq_mhz;		/* >= 0x5b */
+	uint8_t		split_core_mode;	/* >= 0x5c */
+	uint8_t		reserved[3];
+	uint8_t		sys_vendor[64];		/* >= 0x5f */
+	/* >= 0x60 */
+	__be16		sys_sec_setting;
+	__be16		tpm_config_bit;
+	__be16		tpm_drawer;
+	__be16		reserved2;
+	uint8_t		hw_key_hash[64];
+	uint8_t		sys_family_str[64];	/* vendor,name */
+	uint8_t		sys_type_str[64];	/* vendor,type */
 } __packed;
 
 /* Idata index 1: IPL parameters */
@@ -351,7 +362,11 @@ struct iplparams_iplparams {
 	uint8_t		huge_page_size;
 #define IPLPARAMS_HUGE_PG_SIZE_16G	0
 	uint8_t		num_vlan_switches;
-	__be64		reserved2;
+	__be32		reserved2;
+	__be32		enlarge_io;	/* >= 0x5a */
+	uint8_t		core_config;
+#define IPLPARAMS_CORE_NORMAL	0x00
+#define IPLPARAMS_CORE_FUSE	0x01
 };
 
 /* Idata index 4: Platform Dump Descriptor */
@@ -460,6 +475,17 @@ struct msvpd_pmover_bsr_synchro {
 /* Idata index 3: Memory Trace Array */
 
 /* Idata index 4: UE Address Array */
+
+/* Idata index 5: Hostboot reserved memory address range */
+#define MSVPD_IDATA_HB_RESERVED_MEM	5
+struct msvpd_hb_reserved_mem {
+	__be32		node_instance;
+	__be64		start_addr;
+	__be64		end_addr;
+	__be32		label_size;
+	uint8_t		label[64];
+	__be64		reserved;
+};
 
 /* Child index 0: MS area child structure */
 #define MSVPD_CHILD_MS_AREAS		0

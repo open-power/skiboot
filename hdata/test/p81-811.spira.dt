@@ -59,6 +59,7 @@ CORE[18]: PIR=-402128896 RES=-402128896 OK (8 threads)
 CORE[19]: HW_PROC_ID=23 PROC_CHIP_ID=3 EC=0x21 OK
 CORE[19]: PIR=-267911168 RES=-267911168 OK (8 threads)
     Cache: I=32 D=64/512/8192/0
+IPLPARAMS: Legacy platform family: ibm,firenze (sys_type=0x30110000)
 IPLPARAMS: 1 serial ports in array
 IPLPARAMS: Serial 0 rsrc: 2a00 loc: U78CB.001.WZS00AL-P1-C1-T1
 MS VPD: Total MB of RAM: 0x20000
