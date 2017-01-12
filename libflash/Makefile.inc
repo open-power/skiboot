@@ -1,4 +1,4 @@
-LIBFLASH_SRCS = libflash.c libffs.c ecc.c blocklevel.c
+LIBFLASH_SRCS = libflash.c libffs.c ecc.c blocklevel.c mbox-flash.c
 LIBFLASH_OBJS = $(LIBFLASH_SRCS:%.c=%.o)
 
 SUBDIRS += libflash
