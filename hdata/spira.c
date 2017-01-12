@@ -333,6 +333,17 @@ static void add_psihb_node(struct dt_node *np)
 	}
 }
 
+static void add_xive_node(struct dt_node *np)
+{
+	struct dt_node *xive = dt_new_addr(np, "xive", 0x5013000);
+
+	dt_add_property_cells(xive, "reg", 0x5013000, 0x300);
+	dt_add_property_string(xive, "compatible", "ibm,power9-xive-x");
+
+	/* HACK: required for simics */
+	dt_add_property(xive, "force-assign-bars", NULL, 0);
+}
+
 static void add_xscom_add_pcia_assoc(struct dt_node *np, uint32_t pcid)
 {
 	const struct HDIF_common_hdr *hdr;
@@ -440,6 +451,9 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 
 		/* Add PSI Host bridge */
 		add_psihb_node(np);
+
+		if (proc_gen >= proc_gen_p9)
+			add_xive_node(np);
 	}
 
 	return i > 0;
