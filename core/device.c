@@ -352,6 +352,20 @@ struct dt_node *dt_find_by_name(struct dt_node *root, const char *name)
 	return NULL;
 }
 
+
+struct dt_node *dt_new_check(struct dt_node *parent, const char *name)
+{
+	struct dt_node *node = dt_find_by_name(parent, name);
+
+	if (!node) {
+		node = dt_new(parent, name);
+		assert(node);
+	}
+
+	return node;
+}
+
+
 struct dt_node *dt_find_by_phandle(struct dt_node *root, u32 phandle)
 {
 	struct dt_node *node;
