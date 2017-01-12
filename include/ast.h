@@ -85,6 +85,9 @@ void ast_disable_sio_uart1(void);
 /* BT configuration */
 void ast_setup_ibt(uint16_t io_base, uint8_t irq);
 
+/* MBOX configuration */
+void ast_setup_sio_mbox(uint16_t io_base, uint8_t irq);
+
 #endif /* __SKIBOOT__ */
 
 /*
