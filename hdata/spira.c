@@ -1091,6 +1091,63 @@ static void hostservices_parse(void)
 	hservices_from_hdat(dt_blob, size);
 }
 
+static void add_stop_levels(void)
+{
+	struct spira_ntuple *t = &spira.ntuples.proc_chip;
+	struct HDIF_common_hdr *hdif;
+	u32 stop_levels = ~0;
+	bool valid = false;
+	int i;
+
+	if (proc_gen < proc_gen_p9)
+		return;
+
+	/*
+	 * OPAL only exports a single set of flags to indicate the supported
+	 * STOP modes while the HDAT descibes the support top levels *per chip*
+	 * We parse the list of chips to find a common set of STOP levels to
+	 * export.
+	 */
+	for_each_ntuple_idx(t, hdif, i, SPPCRD_HDIF_SIG) {
+		unsigned int size;
+		const struct sppcrd_chip_info *cinfo =
+			HDIF_get_idata(hdif, SPPCRD_IDATA_CHIP_INFO, &size);
+		u32 ve, chip_levels;
+
+		if (!cinfo)
+			continue;
+
+		/*
+		 * If the chip info field is too small then assume we have no
+		 * STOP level information.
+		 */
+		if (size < 0x44) {
+			stop_levels = 0;
+			break;
+		}
+
+		ve = be32_to_cpu(cinfo->verif_exist_flags) & CPU_ID_VERIFY_MASK;
+		ve >>= CPU_ID_VERIFY_SHIFT;
+		if (ve == CHIP_VERIFY_NOT_INSTALLED ||
+		    ve == CHIP_VERIFY_UNUSABLE)
+			continue;
+
+		chip_levels = be32_to_cpu(cinfo->stop_levels);
+
+		prlog(PR_INSANE, "CHIP[%x] supported STOP mask 0x%.8x\n",
+			be32_to_cpu(cinfo->proc_chip_id), chip_levels);
+
+		stop_levels &= chip_levels;
+		valid = true;
+	}
+
+	if (!valid)
+		stop_levels = 0;
+
+	dt_add_property_cells(dt_new_check(opal_node, "power-mgt"),
+		"ibm,enabled-stop-levels", stop_levels);
+}
+
 /*
  * Legacy SPIRA is being deprecated and we have new SPIRA-H/S structures.
  * But on older system (p7?) we will continue to get legacy SPIRA.
@@ -1190,6 +1247,8 @@ int parse_hdat(bool is_opal)
 
 	/* Parse System Attention Indicator inforamtion */
 	slca_dt_add_sai_node();
+
+	add_stop_levels();
 
 	prlog(PR_INFO, "Parsing HDAT...done\n");
 
