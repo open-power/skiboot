@@ -19,7 +19,9 @@
 #include <vpd.h>
 #include <ccan/str/str.h>
 #include <libfdt/libfdt.h>
+#include <mem_region.h>
 #include <types.h>
+#include <inttypes.h>
 
 #include "spira.h"
 #include "hdata.h"
@@ -382,6 +384,62 @@ static void get_msareas(struct dt_node *root,
 	}
 }
 
+#define HRMOR_BIT (1ul << 63)
+
+static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
+{
+	const struct msvpd_hb_reserved_mem *hb_resv_mem;
+	u64 start_addr, end_addr, label_size;
+	int unnamed = 0, count, i;
+	char *label;
+
+	/*
+	 * XXX: Reservation names only exist on P9 and on P7/8 we get the
+	 *      reserved ranges through the hostboot mini-FDT instead.
+	 */
+	if (proc_gen < proc_gen_p9)
+		return;
+
+	count = HDIF_get_iarray_size(ms_vpd, MSVPD_IDATA_HB_RESERVED_MEM);
+	if (count <= 0) {
+		prerror("MS VPD: No hostboot reserved memory found\n");
+		return;
+	}
+
+	for (i = 0; i < count; i++) {
+		hb_resv_mem = HDIF_get_iarray_item(ms_vpd,
+						   MSVPD_IDATA_HB_RESERVED_MEM,
+						   i, NULL);
+		if (!CHECK_SPPTR(hb_resv_mem))
+			continue;
+
+		label_size = be32_to_cpu(hb_resv_mem->label_size);
+		start_addr = be64_to_cpu(hb_resv_mem->start_addr);
+		end_addr = be64_to_cpu(hb_resv_mem->end_addr);
+
+		/* remove the HRMOR bypass bit */
+		start_addr &= ~HRMOR_BIT;
+		end_addr &= ~HRMOR_BIT;
+
+		if (label_size > 64)
+			label_size = 64;
+
+		label = malloc(label_size+1);
+		assert(label);
+
+		memcpy(label, hb_resv_mem->label, label_size);
+		label[label_size] = '\0';
+
+		if (strlen(label) == 0)
+			snprintf(label, 64, "hostboot-reserve-%d", unnamed++);
+
+		mem_reserve_hw(label, start_addr, end_addr - start_addr);
+
+		prlog(PR_DEBUG, "MEM: Reserve '%s' %#" PRIx64 "-%#" PRIx64 "\n",
+			label, start_addr, end_addr);
+	}
+}
+
 static bool __memory_parse(struct dt_node *root)
 {
 	struct HDIF_common_hdr *ms_vpd;
@@ -429,6 +487,8 @@ static bool __memory_parse(struct dt_node *root)
 	      (long long)be64_to_cpu(msac->max_possible_ms_address));
 
 	get_msareas(root, ms_vpd);
+
+	get_hb_reserved_mem(ms_vpd);
 
 	prlog(PR_INFO, "MS VPD: Total MB of RAM: 0x%llx\n",
 	       (long long)be64_to_cpu(tcms->total_in_mb));
