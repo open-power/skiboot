@@ -637,6 +637,7 @@ void add_cpu_idle_state_properties(void)
 	u64 *pm_ctrl_reg_val_buf;
 	u64 *pm_ctrl_reg_mask_buf;
 	u32 supported_states_mask;
+	u32 stop_levels;
 
 	/* Variables to track buffer length */
 	u8 name_buf_len;
@@ -676,6 +677,12 @@ void add_cpu_idle_state_properties(void)
 		states = power9_cpu_idle_states;
 		nr_states = ARRAY_SIZE(power9_cpu_idle_states);
 		has_stop_inst = true;
+
+		stop_levels = dt_prop_get_u32_def(power_mgt,
+			"ibm,enabled-stop-levels", 0);
+		if (!stop_levels)
+			prerror("SLW: No stop levels available. Power saving is disabled!\n");
+
 	} else if (chip->type == PROC_CHIP_P8_MURANO ||
 	    chip->type == PROC_CHIP_P8_VENICE ||
 	    chip->type == PROC_CHIP_P8_NAPLES) {
@@ -753,6 +760,13 @@ void add_cpu_idle_state_properties(void)
 		/* For each state, check if it is one of the supported states. */
 		if (!(states[i].flags & supported_states_mask))
 			continue;
+
+		/* We can only use the stop levels that HB has made available */
+		if (has_stop_inst) {
+			u32 level = 1ul << states[i].pm_ctrl_reg_val;
+			if (!(stop_levels & level))
+				continue;
+		}
 
 		/*
 		 * If a state is supported add each of its property
