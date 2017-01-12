@@ -134,7 +134,7 @@ static void add_be32_sorted(__be32 arr[], __be32 new, unsigned num)
 	arr[i] = new;
 }
 
-static void add_icps(void)
+static void add_xics_icps(void)
 {
 	struct dt_node *cpu;
 	unsigned int i;
@@ -321,7 +321,12 @@ static bool __paca_parse(void)
 		free(new_prop);
 	}
 
-	add_icps();
+	/*
+	 * P7 and P8 use the XICS interrupt controller which has a per-core
+	 * interrupt controller node.
+	 */
+	if (proc_gen <= proc_gen_p8)
+		add_xics_icps();
 
 	return true;
 }

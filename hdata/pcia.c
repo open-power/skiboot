@@ -55,7 +55,7 @@ static const struct sppcia_cpu_thread *find_tada(const void *pcia,
 	return NULL;
 }
 
-static void add_icp(const void *pcia, u32 tcount, const char *compat)
+static void add_xics_icp(const void *pcia, u32 tcount, const char *compat)
 {
 	const struct sppcia_cpu_thread *t;
 	struct dt_node *icp;
@@ -182,8 +182,9 @@ static struct dt_node *add_core_node(struct dt_node *cpus,
 
 	dt_add_property(cpu, "ibm,ppc-interrupt-server#s", iserv, 4 * threads);
 
-	/* Add the ICP node for this CPU */
-	add_icp(pcia, threads, icp_compat);
+	/* Add the ICP node for this CPU for P7 / P8 */
+	if (proc_gen <= proc_gen_p8)
+		add_xics_icp(pcia, threads, icp_compat);
 
 	return cpu;
 }
