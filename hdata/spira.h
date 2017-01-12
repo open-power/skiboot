@@ -575,6 +575,8 @@ struct cechub_io_hub {
 #define CECHUB_HUB_FAB_BR0_PDT_PHB1	0x40
 #define CECHUB_HUB_FAB_BR0_PDT_PHB2	0x20
 #define CECHUB_HUB_FAB_BR0_PDT_PHB3	0x10
+#define CECHUB_HUB_FAB_BR0_PDT_PHB4	0x08
+#define CECHUB_HUB_FAB_BR0_PDT_PHB5	0x04
 	uint8_t		fab_br1_pdt;	/* p5ioc2 & p7ioc PCI-E */
 #define CECHUB_HUB_FAB_BR1_PDT_PHB0	0x80
 #define CECHUB_HUB_FAB_BR1_PDT_PHB1	0x40
@@ -583,10 +585,14 @@ struct cechub_io_hub {
 #define CECHUB_HUB_FAB_BR1_PDT_PHB4	0x08 /* p7ioc only */
 #define CECHUB_HUB_FAB_BR1_PDT_PHB5	0x04 /* p7ioc only */
 	__be16		iohub_id;	/* the type of hub */
-#define CECHUB_HUB_P7IOC	0x60e7	/* from VPL3 */
-#define CECHUB_HUB_MURANO	0x20ef	/* Murano from spec */
-#define CECHUB_HUB_MURANO_SEGU	0x0001	/* Murano+Seguso from spec */
-#define CECHUB_HUB_VENICE_WYATT	0x0010	/* Venice+Wyatt from spec */
+#define CECHUB_HUB_P7IOC		0x60e7	/* from VPL3 */
+#define CECHUB_HUB_MURANO		0x20ef	/* Murano from spec */
+#define CECHUB_HUB_MURANO_SEGU		0x0001	/* Murano+Seguso from spec */
+#define CECHUB_HUB_VENICE_WYATT		0x0010	/* Venice+Wyatt from spec */
+#define CECHUB_HUB_NIMBUS_SFORAZ	0x0020	/* Nimbus+sforaz from spec */
+#define CECHUB_HUB_NIMBUS_MONZA		0x0021	/* Nimbus+monza from spec */
+#define CECHUB_HUB_NIMBUS_LAGRANGE	0x0022	/* Nimbus+lagrange from spec */
+#define CECHUB_HUB_CUMULUS_DUOMO	0x0031	/* cumulus+duomo from spec */
 	__be32		ec_level;
 	__be32		aff_dom2;	/* HDAT < v9.x only */
 	__be32		aff_dom3;	/* HDAT < v9.x only */
@@ -623,10 +629,18 @@ struct cechub_io_hub {
 			__be16		gx_bus_speed;	/* Version 0x58 */
 		};
 
-		/* HDAT >= v9.x, HDIF version 0x6A or later */
+		/* HDAT >= v9.x, HDIF version 0x6A adds phb_lane_eq with four
+		 *               words per PHB (4 PHBs).
+		 *
+		 * HDAT >= 10.x, HDIF version 0x7A adds space for another two
+		 *               two PHBs (6 total) and the gen4 EQ values.
+		 */
 		struct {
-			/* 4 values per PHB, 4 PHBs */
-			__be64		phb_lane_eq[4][4];
+			/* Gen 3 PHB eq values, 6 PHBs */
+			__be64		phb_lane_eq[6][4];
+
+			/* Gen 4 PHB eq values */
+			__be64		phb4_lane_eq[6][4];
 		};
 	};
 } __packed;

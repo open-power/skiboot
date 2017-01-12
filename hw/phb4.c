@@ -3438,8 +3438,6 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	dt_add_property_cells(np, "ibm,phb-stack", stk_node->phandle);
 	dt_add_property_cells(np, "ibm,phb-stack-index", stk_index);
 	dt_add_property_cells(np, "ibm,chip-id", gcid);
-	if (dt_has_node_property(stk_node, "ibm,use-ab-detect", NULL))
-		dt_add_property(np, "ibm,use-ab-detect", NULL, 0);
 	if (dt_has_node_property(stk_node, "ibm,hub-id", NULL))
 		dt_add_property_cells(np, "ibm,hub-id",
 				      dt_prop_get_u32(stk_node, "ibm,hub-id"));
