@@ -33,7 +33,7 @@ int pnor_init(void)
 	int rc;
 	bool do_mbox;
 
-	do_mbox = ast_is_mbox_pnor();
+	do_mbox = 1;
 	if (do_mbox) {
 		rc = mbox_flash_init(&bl);
 	} else {
