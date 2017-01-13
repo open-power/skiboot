@@ -204,7 +204,7 @@ static int dts_read_core_temp(uint32_t pir, struct dts *dts)
 		rc = dts_read_core_temp_p8(pir, dts);
 		break;
 	default:
-		assert(false);
+		rc = OPAL_UNSUPPORTED;
 	}
 	return rc;
 }
