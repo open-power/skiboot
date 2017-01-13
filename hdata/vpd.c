@@ -599,6 +599,38 @@ struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 	return node;
 }
 
+static void dt_add_model_name(char *model)
+{
+	const char *model_name = NULL;
+	const struct machine_info *mi;
+	const struct iplparams_sysparams *p;
+	const struct HDIF_common_hdr *iplp;
+
+	iplp = get_hdif(&spira.ntuples.ipl_parms, "IPLPMS");
+	if (!iplp)
+		goto def_model;
+
+	p = HDIF_get_idata(iplp, IPLPARAMS_SYSPARAMS, NULL);
+	if (!CHECK_SPPTR(p))
+		goto def_model;
+
+	if (be16_to_cpu(iplp->version) >= 0x60)
+		model_name = p->sys_type_str;
+
+def_model:
+	if (!model_name || model_name[0] == '\0') {
+		mi = machine_info_lookup(model);
+		if (mi) {
+			model_name = mi->name;
+		} else {
+			model_name = "Unknown";
+			prlog(PR_WARNING, "VPD: Model name %s not known\n", model);
+		}
+	}
+
+	dt_add_property_string(dt_root, "model-name", model_name);
+}
+
 static void sysvpd_parse(void)
 {
 	const char *model;
@@ -612,7 +644,6 @@ static void sysvpd_parse(void)
 	struct dt_node *dt_vpd;
 	const struct spira_fru_id *fru_id;
 	struct HDIF_common_hdr *sysvpd_hdr;
-	const struct machine_info *mi;
 
 	sysvpd_hdr = get_hdif(&spira.ntuples.system_vpd, SYSVPD_HDIF_SIG);
 	if (!sysvpd_hdr)
@@ -641,13 +672,8 @@ static void sysvpd_parse(void)
 		goto no_sysvpd;
 	memcpy(str, model, sz);
 	dt_add_property_string(dt_root, "model", str);
-	mi = machine_info_lookup(str);
-	if (mi) {
-		dt_add_property_string(dt_root, "model-name", mi->name);
-	} else {
-		dt_add_property_string(dt_root, "model-name", "Unknown");
-		prlog(PR_WARNING, "VPD: Model name %s not known\n", str);
-	}
+
+	dt_add_model_name(str);
 
 	free(str);
 
