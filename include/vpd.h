@@ -34,6 +34,8 @@ const void *vpd_find(const void *vpd, size_t vpd_size,
 		     const char *record, const char *keyword,
 		     uint8_t *sz);
 
+bool vpd_valid(const void *vvpd, size_t vpd_size);
+
 /* Add model property to dt_root */
 void add_dtb_model(void);
 

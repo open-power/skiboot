@@ -46,6 +46,35 @@ const void *vpd_find_keyword(const void *rec, size_t rec_sz,
 	return NULL;
 }
 
+/* vpd_valid - does some basic sanity checks to ensure a VPD blob is
+ *             actually a VPD blob
+ */
+bool vpd_valid(const void *vvpd, size_t vpd_size)
+{
+	const uint8_t *vpd = vvpd;
+	int size, i = 0;
+
+	/* find the record start byte */
+	while (i < vpd_size)
+		if (vpd[i++] == 0x84)
+			break;
+
+	if (i >= vpd_size)
+		return false;
+
+	/* next two bytes are the record length, little endian */
+	size  = 2;
+	size += vpd[i];
+	size += vpd[i + 1] << 8;
+
+	i += size; /* skip to the end marker */
+
+	if (i >= vpd_size || vpd[i] != 0x78)
+		return false;
+
+	return true;
+}
+
 /* Locate  a record in a VPD blob
  *
  * Note: This works with VPD LIDs. It will scan until it finds
