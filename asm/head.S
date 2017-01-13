@@ -107,6 +107,7 @@ hir_trigger:
 
 	/* Entry point set by the FSP */
 	.= 0x180
+hdat_entry:
 	li	%r27,0
 	b	boot_entry
 
@@ -777,7 +778,9 @@ naca:
 	.byte	0			/* 0x01b5 : default state for SW attn */
 	.space	1
 	.byte	0x01			/* 0x01b7 : PCIA format */
-	.space	0xe48
+	.llong	hdat_entry		/* 0x01b8 : Primary thread entry */
+	.llong	hdat_entry		/* 0x01c0 : Secondary thread entry */
+	.space	0xe38
 
 	.balign	0x10
 hv_release_data:
