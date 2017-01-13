@@ -379,8 +379,10 @@ static void add_xscom_add_pcia_assoc(struct dt_node *np, uint32_t pcid)
 		if (!dt_find_property(np, "ibm,dbob-id"))
 			dt_add_property_cells(np, "ibm,dbob-id",
 				  be32_to_cpu(id->drawer_book_octant_blade_id));
-		dt_add_property_cells(np, "ibm,mem-interleave-scope",
+		if (proc_gen < proc_gen_p9) {
+			dt_add_property_cells(np, "ibm,mem-interleave-scope",
 			          be32_to_cpu(id->memory_interleaving_scope));
+		}
 		return;
 	}
 }
