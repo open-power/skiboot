@@ -269,6 +269,7 @@ static void vpd_add_ram_area(const struct HDIF_common_hdr *msarea)
 	const struct HDIF_ram_area_id *ram_id;
 	struct dt_node *ram_node;
 	u32 chip_id;
+	const void *vpd_blob;
 
 	ramptr = HDIF_child_arr(msarea, 0);
 	if (!CHECK_SPPTR(ramptr)) {
@@ -285,15 +286,33 @@ static void vpd_add_ram_area(const struct HDIF_common_hdr *msarea)
 		if (!CHECK_SPPTR(ram_id))
 			continue;
 
-		if ((be16_to_cpu(ram_id->flags) & RAM_AREA_INSTALLED) &&
-		    (be16_to_cpu(ram_id->flags) & RAM_AREA_FUNCTIONAL)) {
-			ram_node = dt_add_vpd_node(ramarea, 0, 1);
-			if (ram_node) {
-				chip_id = add_chip_id_to_ram_area(msarea,
-								  ram_node);
-				add_bus_freq_to_ram_area(ram_node, chip_id);
-				add_size_to_ram_area(ram_node, ramarea, 1);
-			}
+		/* Don't add VPD for non-existent RAM */
+		if (!(be16_to_cpu(ram_id->flags) & RAM_AREA_INSTALLED))
+			continue;
+
+		ram_node = dt_add_vpd_node(ramarea, 0, 1);
+		if (!ram_node)
+			continue;
+
+		chip_id = add_chip_id_to_ram_area(msarea, ram_node);
+		add_bus_freq_to_ram_area(ram_node, chip_id);
+
+		vpd_blob = HDIF_get_idata(ramarea, 1, &ram_sz);
+
+		/*
+		 * For direct-attached memory we have a DDR "Serial
+		 * Presence Detection" blob rather than an IBM keyword
+		 * blob.
+		 */
+		if (vpd_valid(vpd_blob, ram_sz)) {
+			/* the ibm,vpd blob was added in dt_add_vpd_node() */
+			add_size_to_ram_area(ram_node, ramarea, 1);
+		} else {
+			/*
+			 * FIXME: There's probably a way to calculate the
+			 * size of the DIMM from the SPD info.
+			 */
+			dt_add_property(ram_node, "spd", vpd_blob, ram_sz);
 		}
 	}
 }

@@ -590,7 +590,8 @@ struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 	}
 
 	/* Parse VPD fields, ensure that it has not been added already */
-	if (!dt_find_property(node, "ibm,vpd")) {
+	if (vpd_valid(fruvpd, fruvpd_sz)
+	    && !dt_find_property(node, "ibm,vpd")) {
 		dt_add_property(node, "ibm,vpd", fruvpd, fruvpd_sz);
 		vpd_vini_parse(node, fruvpd, fruvpd_sz);
 	}
