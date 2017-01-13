@@ -28,7 +28,6 @@
 
 bool manufacturing_mode = false;
 struct platform	platform;
-const struct bmc_platform *bmc_platform = NULL;
 
 DEFINE_LOG_ENTRY(OPAL_RC_ABNORMAL_REBOOT, OPAL_PLATFORM_ERR_EVT, OPAL_CEC,
 		 OPAL_CEC_HARDWARE, OPAL_PREDICTIVE_ERR_FAULT_RECTIFY_REBOOT,
@@ -143,10 +142,15 @@ static struct platform generic_platform = {
 	.cec_power_down	= generic_cec_power_down,
 };
 
+const struct bmc_platform *bmc_platform = &generic_bmc;
+
 void set_bmc_platform(const struct bmc_platform *bmc)
 {
 	if (bmc)
 		prlog(PR_NOTICE, "PLAT: Detected BMC platform %s\n", bmc->name);
+	else
+		bmc = &generic_bmc;
+
 	bmc_platform = bmc;
 }
 
