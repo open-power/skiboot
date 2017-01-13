@@ -779,6 +779,7 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 	const struct iplparams_sysparams *p;
 	const struct HDIF_common_hdr *hdif = iplp;
 	u16 version = be16_to_cpu(hdif->version);
+	const char *vendor = NULL;
 
 	p = HDIF_get_idata(iplp, IPLPARAMS_SYSPARAMS, NULL);
 	if (!CHECK_SPPTR(p)) {
@@ -845,6 +846,15 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 		freq *= 1000000;
 		dt_add_property_u64(dt_root, "nest-frequency", freq);
 	}
+
+	if (version >= 0x5f)
+		vendor = p->sys_vendor;
+
+	/* Workaround a bug where we have NULL vendor */
+	if (!vendor || vendor[0] == '\0')
+		vendor = "IBM";
+
+	dt_add_property_string(dt_root, "vendor", vendor);
 }
 
 static void add_iplparams_ipl_params(const void *iplp, struct dt_node *node)

@@ -650,7 +650,6 @@ static void sysvpd_parse(void)
 	}
 
 	free(str);
-	dt_add_property_string(dt_root, "vendor", "IBM");
 
 	system_id = vpd_find(sysvpd, sysvpd_sz, "VSYS", "SE", &sz);
 	if (!system_id)

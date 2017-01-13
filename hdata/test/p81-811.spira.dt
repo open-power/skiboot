@@ -92,10 +92,10 @@ prop: #size-cells size: 4 val: 00000002
 prop: lid-type size: 5 val: 7068797000
 prop: compatible size: 24 val: 69626d2c706f7765726e760069626d2c666972656e7a6500
 prop: nest-frequency size: 8 val: 0000000077359400
+prop: vendor size: 4 val: 49424d00
 prop: skiboot,maxmem size: 8 val: 8000001fffffffff
 prop: model size: 9 val: 383234372d32324c00
 prop: model-name size: 23 val: 49424d20506f7765722053797374656d20533832324c00
-prop: vendor size: 4 val: 49424d00
 prop: system-id size: 8 val: 3130313043384100
 prop: system-brand size: 3 val: 533000
 prop: ibm,hbrt-mini-fdt size: 4096 val: d00dfeed0000026e0000012800000214000000280000001100000010000000000000005a000000
