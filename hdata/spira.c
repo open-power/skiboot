@@ -233,7 +233,21 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 	uint64_t addr, size;
 	uint64_t freq;
 
-	addr = base | ((uint64_t)hw_id << PPC_BITLSHIFT(28));
+	switch (proc_gen) {
+	case proc_gen_p7:
+	case proc_gen_p8:
+		/* On P7 and P8 all the chip SCOMs share single region */
+		addr = base | ((uint64_t)hw_id << PPC_BITLSHIFT(28));
+		break;
+	case proc_gen_p9:
+	default:
+		/* On P9 we need to put the chip ID in the natural powerbus
+		 * position.
+		 */
+		addr = base | (((uint64_t)hw_id) << 42);
+		break;
+	};
+
 	size = (u64)1 << PPC_BITLSHIFT(28);
 
 	prlog(PR_INFO, "XSCOM: Found HW ID 0x%x (PCID 0x%x) @ 0x%llx\n",
@@ -257,6 +271,10 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 	case proc_gen_p8:
 		dt_add_property_strings(node, "compatible",
 					"ibm,xscom", "ibm,power8-xscom");
+		break;
+	case proc_gen_p9:
+		dt_add_property_strings(node, "compatible",
+					"ibm,xscom", "ibm,power9-xscom");
 		break;
 	case proc_gen_p9:
 		dt_add_property_strings(node, "compatible",
