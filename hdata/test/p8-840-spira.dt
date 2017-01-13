@@ -26,7 +26,7 @@ XSCOM: Found HW ID 0x0 (PCID 0x0) @ 0x3c0000000000
 VPD: CCIN desc not available for : 54E1
 XSCOM: Found HW ID 0x1 (PCID 0x1) @ 0x3c0800000000
 VPD: CCIN desc not available for : 54E1
-FSP #0: FSP HW version 2, SW version 1, chip DD1.0
+FSP #0: HW version 2, SW version 1, chip DD1.0
 CEC: HUB FRU 0 is CPU Card
 CEC:   2 chips in FRU
 CEC:     Murano !
