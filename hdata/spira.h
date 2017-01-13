@@ -103,6 +103,7 @@ struct spirah_ntuples {
 	struct spira_ntuple	mdump_src;	/* 0x0a0 */
 	struct spira_ntuple	mdump_dst;	/* 0x0c0 */
 	struct spira_ntuple	mdump_res;	/* 0x0e0 */
+	struct spira_ntuple	proc_dump_area;	/* 0x100 */
 };
 
 struct spirah {
@@ -110,7 +111,7 @@ struct spirah {
 	struct HDIF_idata_ptr	ntuples_ptr;
 	__be64			pad;
 	struct spirah_ntuples	ntuples;
-	u8			reserved[0x100];
+	u8			reserved[0xE0];
 } __packed __align(0x100);
 
 extern struct spirah spirah;
@@ -119,7 +120,8 @@ extern struct spirah spirah;
 #define SPIRAS_HDIF_SIG		"SPIRAS"
 
 /* First version on 810 release */
-#define SPIRAS_VERSION		0x40
+#define SPIRAS_VERSION_P8	0x40
+#define SPIRAS_VERSION_P9	0x50
 
 /* N-tuples in SPIRAS */
 #define SPIRAS_NTUPLES_COUNT	0x10
@@ -141,15 +143,17 @@ struct spiras_ntuples {
 	struct spira_ntuple	pcia;			/* 0x1c0 */
 	struct spira_ntuple	proc_chip;		/* 0x1e0 */
 	struct spira_ntuple	hs_data;		/* 0x200 */
-	struct spira_ntuple	ipmi_sensor;		/* 0x220 */
-} __packed __align(0x100);
+	struct spira_ntuple	hbrt_data;		/* 0x220 */
+	struct spira_ntuple	ipmi_sensor;		/* 0x240 */
+	struct spira_ntuple	node_data;		/* 0x260 */
+};
 
 struct spiras {
 	struct HDIF_common_hdr	hdr;
 	struct HDIF_idata_ptr	ntuples_ptr;
 	__be64			pad;
 	struct spiras_ntuples	ntuples;
-	u8			reserved[0x1c0];
+	u8			reserved[0x180];
 } __packed __align(0x100);
 
 extern struct spiras *spiras;
