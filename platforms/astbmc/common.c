@@ -321,11 +321,17 @@ static void astbmc_fixup_psi_bar(void)
 
 void astbmc_early_init(void)
 {
-	/* Hostboot's device-tree isn't quite right yet */
-	astbmc_fixup_dt();
+	/*
+	 * On P9 we don't have a HB supplied devicetree and we have a
+	 * different PSI BAR hack here is P8 specific.
+	 */
+	if (proc_gen == proc_gen_p8) {
+		/* Hostboot's device-tree isn't quite right yet */
+		astbmc_fixup_dt();
 
-	/* Hostboot forgets to populate the PSI BAR */
-	astbmc_fixup_psi_bar();
+		/* Hostboot forgets to populate the PSI BAR */
+		astbmc_fixup_psi_bar();
+	}
 
 	/* Send external interrupts to me */
 	psi_set_external_irq_policy(EXTERNAL_IRQ_POLICY_SKIBOOT);
