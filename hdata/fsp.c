@@ -223,6 +223,165 @@ static void fsp_create_links(const void *spss, int index,
 	free(links);
 }
 
+static struct dt_node *add_lpc_io_node(struct dt_node *parent,
+	const char *name, u32 offset, u32 size)
+{
+	struct dt_node *n;
+	char buffer[32];
+
+	/*
+	 * LPC bus addresses have strange DT names, they have the
+	 * Bus address space embedded into the unit address e.g.
+	 * serial@i3f8 - refers to offset 0x3f8 in the IO space
+	 */
+
+	snprintf(buffer, sizeof(name), "%s@i%x", name, offset);
+	n = dt_new(parent, buffer);
+	assert(n);
+
+	/* first address cell of 1 indicates the LPC IO space */
+	dt_add_property_cells(n, "reg", 1, offset, size);
+
+	return n;
+}
+
+static void add_uart(const struct spss_iopath *iopath, struct dt_node *lpc)
+{
+	struct dt_node *serial;
+	u64 base;
+
+	/* XXX: The spec says this is supposed to be a MMIO address.
+	 *      However, in practice we get an LPC IO Space offset.
+	 */
+	base = be64_to_cpu(iopath->lpc.uart_base);
+
+	serial = add_lpc_io_node(lpc, "serial", base,
+		be32_to_cpu(iopath->lpc.uart_size));
+
+	dt_add_property_string(serial, "compatible", "ns16550");
+
+	dt_add_property_cells(serial, "current-speed",
+		be32_to_cpu(iopath->lpc.uart_baud));
+	dt_add_property_cells(serial, "clock-frequency",
+		be32_to_cpu(iopath->lpc.uart_clk));
+	dt_add_property_cells(serial, "serirq-interrupt",
+		be32_to_cpu(iopath->lpc.uart_int_number));
+
+	prlog(PR_DEBUG, "LPC UART: base addr = %#" PRIx64" (%#" PRIx64 ") size = %#x clk = %u, baud = %u\n",
+		be64_to_cpu(iopath->lpc.uart_base),
+		base,
+		be32_to_cpu(iopath->lpc.uart_size),
+		be32_to_cpu(iopath->lpc.uart_clk),
+		be32_to_cpu(iopath->lpc.uart_baud));
+}
+
+static void bmc_create_node(const struct HDIF_common_hdr *sp)
+{
+	u32 fw_bar, io_bar, mem_bar, internal_bar;
+	const struct spss_iopath *iopath;
+	struct dt_node *lpcm, *lpc, *n;
+	u64 lpcm_base, lpcm_end;
+	int chip_id;
+
+	iopath = HDIF_get_iarray_item(sp, SPSS_IDATA_SP_IOPATH, 0, NULL);
+
+	if (be16_to_cpu(iopath->iopath_type) != SPSS_IOPATH_TYPE_LPC) {
+		prerror("BMC: Non-LPC IOPATH, this is probably broken\n");
+		return;
+	}
+
+	/*
+	 * For now we only instantiate the LPC node for the LPC that is used
+	 * for Host <-> BMC comms. The secondary LPCs can be skipped.
+	 */
+	if (be16_to_cpu(iopath->lpc.link_status) != LPC_STATUS_ACTIVE)
+		return;
+
+#define GB (1024ul * 1024ul * 1024ul)
+#define MMIO_LPC_BASE_P9 0x6030000000000ul
+#define MMIO_STRIDE_P9     0x40000000000ul
+
+	chip_id = be32_to_cpu(iopath->lpc.chip_id);
+
+	lpcm_base = MMIO_LPC_BASE_P9 + MMIO_STRIDE_P9 * chip_id;
+	lpcm = dt_new_addr(dt_root, "lpcm-opb", lpcm_base);
+	assert(lpcm);
+
+	dt_add_property_cells(lpcm, "#address-cells", 1);
+	dt_add_property_cells(lpcm, "#size-cells", 1);
+	dt_add_property_strings(lpcm, "compatible",
+		"ibm,power9-lpcm-opb", "simple-bus");
+	dt_add_property_u64s(lpcm, "reg", lpcm_base, 0x100000000ul);
+
+	dt_add_property_cells(lpcm, "ibm,chip-id", chip_id);
+
+	/* Setup the ranges for the MMIO LPC */
+	lpcm_end = lpcm_base + 2 * GB;
+	dt_add_property_cells(lpcm, "ranges",
+		0x00000000, hi32(lpcm_base), lo32(lpcm_base), 2 * GB,
+		0x80000000, hi32(lpcm_end),  lo32(lpcm_end),  2 * GB);
+
+	/*
+	 * Despite the name the "BAR" values provided through the HDAT are
+	 * the base addresses themselves rather than the BARs
+	 */
+	fw_bar = be32_to_cpu(iopath->lpc.firmware_bar);
+	mem_bar = be32_to_cpu(iopath->lpc.memory_bar);
+	io_bar = be32_to_cpu(iopath->lpc.io_bar);
+	internal_bar = be32_to_cpu(iopath->lpc.internal_bar);
+
+	prlog(PR_DEBUG, "LPC: IOPATH chip id = %x\n", chip_id);
+	prlog(PR_DEBUG, "LPC: FW BAR       = %#x\n", fw_bar);
+	prlog(PR_DEBUG, "LPC: MEM BAR      = %#x\n", mem_bar);
+	prlog(PR_DEBUG, "LPC: IO BAR       = %#x\n", io_bar);
+	prlog(PR_DEBUG, "LPC: Internal BAR = %#x\n", internal_bar);
+
+	/*
+	 * The internal address space BAR actually points to the LPC master
+	 * registers. So we "fix" it by masking off the low bits.
+	 *
+	 * XXX: we probably need separate base addresses for all these things
+	 */
+	internal_bar &= 0xf0000000;
+
+	/* Add the various internal bus devices */
+	n = dt_new_addr(lpcm, "opb-master", internal_bar + 0x10000);
+	dt_add_property_string(n, "compatible", "ibm,power9-lpcm-opb-master");
+	dt_add_property_cells(n, "reg", internal_bar + 0x10000, 0x60);
+
+	n = dt_new_addr(lpcm, "opb-arbiter", internal_bar + 0x11000);
+	dt_add_property_string(n, "compatible", "ibm,power9-lpcm-opb-arbiter");
+	dt_add_property_cells(n, "reg", internal_bar + 0x11000, 0x8);
+
+	n = dt_new_addr(lpcm, "lpc-controller", internal_bar + 0x12000);
+	dt_add_property_string(n, "compatible", "ibm,power9-lpc-controller");
+	dt_add_property_cells(n, "reg", internal_bar + 0x12000, 0x100);
+
+	/*
+	 * FIXME: lpc@0 might not be accurate, but i'm pretty sure
+	 * lpc@f0000000 isn't right either.
+	 */
+	lpc = dt_new_addr(lpcm, "lpc", 0x0);
+	dt_add_property_cells(lpc, "#address-cells", 2);
+	dt_add_property_cells(lpc, "#size-cells", 1);
+	dt_add_property_strings(lpc, "compatible", "ibm,power9-lpc");
+
+	dt_add_property_cells(lpc, "ranges",
+		0, 0, mem_bar, 0x10000000, /* MEM space */
+		1, 0, io_bar,  0x00010000, /* IO space  */
+		/* we don't expose the internal space */
+		3, 0, fw_bar,  0x10000000  /* FW space  */
+	);
+
+	add_uart(iopath, lpc);
+
+	/* BT device info isn't currently populated */
+	prlog(PR_DEBUG, "LPC: BT [%#"PRIx64", %#x] sms_int: %u, bmc_int: %u\n",
+		iopath->lpc.bt_base, iopath->lpc.bt_size,
+		iopath->lpc.bt_sms_int_num, iopath->lpc.bt_bmc_response_int_num
+	);
+}
+
 void fsp_parse(void)
 {
 	struct dt_node *fsp_root = NULL, *fsp_node;
@@ -253,6 +412,10 @@ void fsp_parse(void)
 			if (fsp_node)
 				fsp_create_links(sp, index, fsp_node);
 
+			break;
+
+		case SP_BMC:
+			bmc_create_node(sp);
 			break;
 
 		case SP_BAD:

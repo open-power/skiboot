@@ -273,6 +273,7 @@ struct spss_iopath {
 	__be16	iopath_type;
 #define SPSS_IOPATH_TYPE_IOHUB_PHB	0x0001
 #define SPSS_IOPATH_TYPE_PSI		0x0002
+#define SPSS_IOPATH_TYPE_LPC		0x0003
 	union {
 		struct {
 			__be16	iohub_chip_inst;
@@ -293,6 +294,40 @@ struct spss_iopath {
 			__be32	reserved2;
 			__be64	gxhb_base;
 		} __packed psi;
+
+		struct { /* only populated after version 0x30 */
+			__be16	link_status;
+#define LPC_STATUS_STUFFED 0x0000
+#define LPC_STATUS_ACTIVE  0x0001
+			uint8_t ml2_version;
+			uint8_t reserved[3];
+			__be32	chip_id;
+
+			__be32	io_bar;
+			__be32	memory_bar;
+			__be32	firmware_bar;
+			__be32	internal_bar;
+
+			__be32	reserved2;
+
+			__be64	uart_base;
+			__be32	uart_size;
+			__be32	uart_clk;  /* UART baud clock in Hz */
+			__be32	uart_baud; /* UART baud rate */
+
+			uint8_t uart_int_number;
+			uint8_t uart_int_type;
+#define			UART_INT_LVL_LOW	0x1
+#define			UART_INT_RISING		0x2
+#define			UART_INT_LVL_HIGH	0x3
+			uint8_t reserved3[2];
+
+			__be64	bt_base;
+			__be32	bt_size;
+			uint8_t	bt_sms_int_num;
+			uint8_t	bt_bmc_response_int_num;
+			uint8_t	reserved4[2];
+		} __packed lpc;
 	};
 } __packed;
 
