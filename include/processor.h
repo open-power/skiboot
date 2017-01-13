@@ -39,7 +39,7 @@
 #define MSR_LE		PPC_BIT(63)	/* Little Endian */
 
 /* PIR */
-#define SPR_PIR_P9_MASK		0x07ff	/* Mask of implemented bits */
+#define SPR_PIR_P9_MASK		0x7fff	/* Mask of implemented bits */
 #define SPR_PIR_P8_MASK		0x1fff	/* Mask of implemented bits */
 #define SPR_PIR_P7_MASK		0x03ff	/* Mask of implemented bits */
 
