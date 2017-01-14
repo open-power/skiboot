@@ -26,7 +26,7 @@
 
 static bool zaius_probe(void)
 {
-	if (!dt_node_is_compatible(dt_root, "ingrasys,zaius"))
+	if (0 && !dt_node_is_compatible(dt_root, "ingrasys,zaius"))
 		return false;
 
 	/* Lot of common early inits here */
