@@ -118,6 +118,11 @@ static void bmc_mbox_send_message(struct bmc_mbox_msg *msg)
 int bmc_mbox_enqueue(struct bmc_mbox_msg *msg)
 {
 	int rc = 0;
+
+	/* Incase where the mbox is not inited */
+	if (!mbox.base)
+		return -1;
+
 	lock(&mbox.lock);
 	if (mbox.queue_len == MBOX_MAX_QUEUE_LEN) {
 		rc = -1;
