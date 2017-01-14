@@ -413,6 +413,15 @@ static struct dt_node *xive_dt_node;
 static uint32_t xive_block_to_chip[XIVE_MAX_CHIPS];
 static uint32_t xive_block_count;
 
+static uint32_t xive_chip_to_block(uint32_t chip_id)
+{
+	struct proc_chip *c = get_chip(chip_id);
+
+	assert(c);
+	assert(c->xive);
+	return c->xive->block_id;
+}
+
 /* Conversion between GIRQ and block/index.
  *
  * ------------------------------------
@@ -443,7 +452,7 @@ static uint32_t xive_block_count;
 /* Routing of physical processors to VPs */
 #ifdef USE_BLOCK_GROUP_MODE
 #define PIR2VP_IDX(__pir)	(0x80 | P9_PIR2LOCALCPU(__pir))
-#define PIR2VP_BLK(__pir)	(P9_PIR2GCID(__pir))
+#define PIR2VP_BLK(__pir)	(xive_chip_to_block(P9_PIR2GCID(__pir)))
 #define VP2PIR(__blk, __idx)	(P9_PIRFROMLOCALCPU(VC_BLK_TO_CHIP(__blk), (__idx) & 0x7f))
 #else
 #define PIR2VP_IDX(__pir)	(0x800 | (P9_PIR2GCID(__pir) << 7) | P9_PIR2LOCALCPU(__pir))
