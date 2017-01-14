@@ -419,6 +419,9 @@ static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 	if (proc_gen < proc_gen_p9)
 		return;
 
+	/* HDAT have these broken for now */
+	return;
+
 	count = HDIF_get_iarray_size(ms_vpd, MSVPD_IDATA_HB_RESERVED_MEM);
 	if (count <= 0) {
 		prerror("MS VPD: No hostboot reserved memory found\n");
