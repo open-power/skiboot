@@ -64,6 +64,7 @@
 #define  CQ_PBI_PC_64K		PPC_BIT(5)
 #define  CQ_PBI_VC_64K		PPC_BIT(6)
 #define  CQ_PBI_LNX_TRIG	PPC_BIT(7)
+#define  CQ_PBI_FORCE_TM_LOCAL	PPC_BIT(22)
 #define CQ_PBO_CTL		0x108
 #define CQ_AIB_CTL		0x110
 #define X_CQ_RST_CTL		0x23
@@ -296,6 +297,10 @@
  *
  * Then we have all these "special" CI ops at these offset that trigger
  * all sorts of side effects:
+ *
+ * We can OR'in these a cache line index from 0...3 (ie, 0, 0x80, 0x100, 0x180)
+ * to select a specific snooper. 0 is pretty busy so 0x80 or 0x100 is recommended
+ * XXX TODO. add that and find way to tell KVM about it.
  */
 #define TM_SPC_ACK_EBB		0x800	/* Load8 ack EBB to reg*/
 #define TM_SPC_ACK_OS_REG	0x810	/* Load16 ack OS irq to reg */
