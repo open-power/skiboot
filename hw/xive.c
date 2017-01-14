@@ -2805,6 +2805,24 @@ static void xive_init_xics_emulation(struct xive_cpu_state *xs)
 	xs->eqmmio = x->eq_mmio + (xs->eq_idx + XIVE_EMULATION_PRIO) * 0x20000;
 }
 
+static void xive_configure_ex_special_bar(struct xive *x, struct cpu_thread *c)
+{
+	uint64_t xa, val;
+	int64_t rc;
+
+	xive_cpu_dbg(c, "Setting up special BAR\n");
+	xa = XSCOM_ADDR_P9_EX(pir_to_core_id(c->pir), P9X_EX_NCU_SPEC_BAR);
+	val = (uint64_t)x->tm_base | P9X_EX_NCU_SPEC_BAR_ENABLE;
+	if (x->tm_shift == 16)
+		val |= P9X_EX_NCU_SPEC_BAR_256K;
+	printf("NCU_SPEC_BAR_XA[%08llx]=%016llx\n", xa, val);
+	rc = xscom_write(c->chip_id, xa, val);
+	if (rc) {
+		xive_cpu_err(c, "Failed to setup NCU_SPEC_BAR\n");
+		/* XXXX  what do do now ? */
+	}
+}
+
 static void xive_init_cpu(struct cpu_thread *c)
 {
 	struct proc_chip *chip = get_chip(c->chip_id);
@@ -2814,26 +2832,17 @@ static void xive_init_cpu(struct cpu_thread *c)
 	if (!x)
 		return;
 
-	/* First, if we are the first CPU of an EX pair, we need to
-	 * setup the special BAR
+	/*
+	 * Each core pair (EX) needs this special BAR setup to have the
+	 * right powerbus cycle for the TM area (as it has the same address
+	 * on all chips so it's somewhat special).
+	 *
+	 * Because we don't want to bother trying to figure out which core
+	 * of a pair is present we just do the setup for each of them, which
+	 * is harmless.
 	 */
-	/* XXX This is very P9 specific ... */
-	if ((c->pir & 0x7) == 0) {
-		uint64_t xa, val;
-		int64_t rc;
-
-		xive_cpu_dbg(c, "Setting up special BAR\n");
-		xa = XSCOM_ADDR_P9_EX(pir_to_core_id(c->pir), P9X_EX_NCU_SPEC_BAR);
-		printf("NCU_SPEC_BAR_XA=%08llx\n", xa);
-		val = (uint64_t)x->tm_base | P9X_EX_NCU_SPEC_BAR_ENABLE;
-		if (x->tm_shift == 16)
-			val |= P9X_EX_NCU_SPEC_BAR_256K;
-		rc = xscom_write(c->chip_id, xa, val);
-		if (rc) {
-			xive_cpu_err(c, "Failed to setup NCU_SPEC_BAR\n");
-			/* XXXX  what do do now ? */
-		}
-	}
+	if (cpu_is_thread0(c))
+		xive_configure_ex_special_bar(x, c);
 
 	/* Initialize the state structure */
 	c->xstate = xs = local_alloc(c->chip_id, sizeof(struct xive_cpu_state), 1);
