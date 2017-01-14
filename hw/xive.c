@@ -1213,7 +1213,10 @@ static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 		sval = SETFIELD(VC_SCRUB_BLOCK_ID, idx, block) |
 			VC_SCRUB_VALID;
 	}
-	if (want_inval)
+	/* HW errata, always invalidate the entry or a conflict can
+	 * happen with a concurrent update.
+	 */
+	if (want_inval || true)
 		sval |= PC_SCRUB_WANT_INVAL;
 	if (want_disable)
 		sval |= PC_SCRUB_WANT_DISABLE;
