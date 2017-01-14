@@ -2543,7 +2543,7 @@ static struct xive *init_one_xive(struct dt_node *np)
 
 	chip = get_chip(x->chip_id);
 	assert(chip);
-	xive_dbg(x, "Initializing...\n");
+	xive_dbg(x, "Initializing, block ID %d...\n", x->block_id);
 	chip->xive = x;
 
 #ifdef USE_INDIRECT
