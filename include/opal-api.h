@@ -196,7 +196,11 @@
 #define OPAL_XIVE_SET_VP_INFO			138
 #define OPAL_XIVE_ALLOCATE_IRQ			139
 #define OPAL_XIVE_FREE_IRQ			140
-#define OPAL_LAST				140
+#define OPAL_XIVE_RESERVED1			141
+#define OPAL_XIVE_RESERVED2			142
+#define OPAL_XIVE_RESERVED3			143
+#define OPAL_XIVE_RESERVED4			144
+#define OPAL_LAST				144
 
 /* Device tree flags */
 
