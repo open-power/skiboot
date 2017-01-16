@@ -1229,6 +1229,7 @@ static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 		/* Small delay */
 		time_wait(100);
 	}
+	sync();
 	return 0;
 }
 
