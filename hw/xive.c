@@ -1562,8 +1562,12 @@ static bool xive_check_update_bars(struct xive *x)
 		return false;
 
 	/* Check if device-tree tells us to force-assign the BARs */
+#if 0
 	force_assign = dt_has_node_property(x->x_node,
 					    "force-assign-bars", NULL);
+#else
+	force_assign = true;
+#endif
 	if ((val & CQ_IC_BAR_VALID) && !force_assign) {
 		xive_dbg(x, "IC BAR valid, using existing values\n");
 		if (!xive_read_bars(x))
