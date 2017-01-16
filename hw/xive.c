@@ -1424,6 +1424,10 @@ static bool xive_set_local_tables(struct xive *x)
 		return false;
 #endif
 
+	/* XXX For the queue overflow, configure VSD VST_TSEL_IRQ
+	 * with block id 0 to 5 (6 queues) with some 64k page
+	 */
+
 	return true;
 }
 
