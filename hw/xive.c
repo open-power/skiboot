@@ -2962,9 +2962,6 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 
 	lock(&xs->lock);
 
-	/* Snapshor current CPPR, it's assumed to be our IRQ priority */
-	irqprio = xs->cppr;
-
 	/* If this was our magic IPI, convert to IRQ number */
 	if (isn == 2) {
 		isn = xs->ipi_irq;
@@ -2981,7 +2978,7 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 	 */
 	if (xive_read_eq(xs, true)) {
 		xive_cpu_vdbg(c, "  isn %08x, skip, queue non empty\n", xirr);
-		xs->pending |= 1 << irqprio;
+		xs->pending |= 1 << XIVE_EMULATION_PRIO;
 	}
 #ifndef EQ_ALWAYS_NOTIFY
 	else {
@@ -3001,7 +2998,7 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 		if (eoi_val & 1) {
 			sync();
 			if (xive_read_eq(xs, true))
-				xs->pending |= 1 << irqprio;
+				xs->pending |= 1 << XIVE_EMULATION_PRIO;
 		}
 	}
 #endif
@@ -3044,7 +3041,7 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 	 * delivery considering the new CPPR value. This can be done
 	 * without lock as these fields are per-cpu.
 	 */
-	return opal_xive_check_pending(xs, cppr);
+	return opal_xive_check_pending(xs, cppr) ? 1 : 0;
 }
 
 static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
