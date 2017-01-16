@@ -2916,7 +2916,7 @@ static uint8_t xive_sanitize_cppr(uint8_t cppr)
 static inline uint8_t opal_xive_check_pending(struct xive_cpu_state *xs,
 					      uint8_t cppr)
 {
-	uint8_t mask = (cppr > 7) ? 0xff : ((1 << cppr) - 1);
+	uint8_t mask = (cppr > 7) ? 0xff : ~((0x100 >> cppr) - 1);
 
 	return xs->pending & mask;
 }
@@ -2926,9 +2926,9 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 	struct cpu_thread *c = this_cpu();
 	struct xive_cpu_state *xs = c->xstate;
 	uint32_t isn = xirr & 0x00ffffff;
-	uint8_t cppr, irqprio;
 	struct xive *src_x;
 	bool special_ipi = false;
+	uint8_t cppr;
 
 	/*
 	 * In exploitation mode, this is supported as a way to perform
