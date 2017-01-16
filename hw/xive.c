@@ -2043,28 +2043,30 @@ uint64_t xive_get_notify_port(uint32_t chip_id, uint32_t ent)
 	 * PH4_2  addr        0x110        (CL 2 DW2)
 	 * etc.
 	 * >>
+	 *
+	 * I'm using snoop1 for PHB0 and snoop2 for everybody else.
 	 */
 	switch(ent) {
 	case XIVE_HW_SRC_PHBn(0):
 		offset = 0x100;
 		break;
 	case XIVE_HW_SRC_PHBn(1):
-		offset = 0x108;
+		offset = 0x208;
 		break;
 	case XIVE_HW_SRC_PHBn(2):
-		offset = 0x110;
+		offset = 0x210;
 		break;
 	case XIVE_HW_SRC_PHBn(3):
-		offset = 0x118;
+		offset = 0x218;
 		break;
 	case XIVE_HW_SRC_PHBn(4):
-		offset = 0x120;
+		offset = 0x220;
 		break;
 	case XIVE_HW_SRC_PHBn(5):
-		offset = 0x128;
+		offset = 0x228;
 		break;
 	case XIVE_HW_SRC_PSI:
-		offset = 0x130;
+		offset = 0x230;
 		break;
 	default:
 		assert(false);
