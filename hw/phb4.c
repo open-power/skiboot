@@ -3296,8 +3296,12 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	      gcid, pec_index, stk_index, path);
 	free(path);
 
+#if 0
 	force_assign = dt_has_node_property(stk_node,
 					    "force-assign-bars", NULL);
+#else
+	force_assign=1;
+#endif
 
 	pci_stack = pci_base + 0x40 * (stk_index + 1);
 	nest_stack = nest_base + 0x40 * (stk_index + 1);
