@@ -3094,7 +3094,7 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 		break;
 	case TM_QW3_NSR_HE_PHYS:
 		/* Mark pending and keep track of the CPPR update */
-		if (!just_poll) {
+		if (!just_poll && (ack & 0xff) != 0xff) {
 			xs->cppr = ack & 0xff;
 			xs->pending |= 1 << xs->cppr;
 		}
@@ -3150,6 +3150,12 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 		if (val)
 			xive_cpu_vdbg(c, "  found irq, prio=%d\n", prio);
 
+	} else {
+		/* Nothing was active, this is a fluke, restore CPPR */
+		xs->cppr = old_cppr;
+		out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_CPPR, old_cppr);
+		xive_cpu_vdbg(c, "  nothing active, restored CPPR to %d\n",
+			      old_cppr);
 	}
  skip:
 
