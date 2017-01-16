@@ -1594,7 +1594,7 @@ static bool xive_config_init(struct xive *x)
 	uint64_t val __unused;
 
 	/* Configure PC and VC page sizes and disable Linux trigger mode */
-	xive_regwx(x, CQ_PBI_CTL, CQ_PBI_PC_64K | CQ_PBI_VC_64K);
+	xive_regwx(x, CQ_PBI_CTL, CQ_PBI_PC_64K | CQ_PBI_VC_64K | CQ_PBI_FORCE_TM_LOCAL);
 	if (x->last_reg_error)
 		return false;
 
