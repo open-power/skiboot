@@ -276,10 +276,6 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 		dt_add_property_strings(node, "compatible",
 					"ibm,xscom", "ibm,power9-xscom");
 		break;
-	case proc_gen_p9:
-		dt_add_property_strings(node, "compatible",
-					"ibm,xscom", "ibm,power9-xscom");
-		break;
 	default:
 		dt_add_property_strings(node, "compatible", "ibm,xscom");
 	}
