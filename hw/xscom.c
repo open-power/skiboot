@@ -599,6 +599,34 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 	/* Get EC level from CFAM ID */
 	chip->ec_level = ((val >> 16) & 0xf) << 4;
 	chip->ec_level |= (val >> 8) & 0xf;
+
+	/*
+	 * On P9 DD1.0, grab the ECID bits to differenciate
+	 * DD1.01, 1.02 etc...
+	 */
+	if (proc_gen == proc_gen_p9 && chip->ec_level == 0x10) {
+		uint64_t ecid2 = 0;
+		uint8_t rev;
+		xscom_read(chip->id, 0x18002, &ecid2);
+		switch((ecid2 >> 45) & 7) {
+		case 0:
+			rev = 0;
+			break;
+		case 1:
+			rev = 1;
+			break;
+		case 3:
+			rev = 2;
+			break;
+		case 7:
+			rev = 3;
+			break;
+		default:
+			rev = 0;
+		}
+		printf("P9 DD1.0%d detected\n", rev);
+		chip->ec_rev = rev;
+	}
 }
 
 /*
