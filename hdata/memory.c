@@ -391,7 +391,7 @@ static void get_msareas(struct dt_node *root,
 			dt_add_vpd_node(msarea, 0, 1);
 
 		/* Add RAM Area VPD */
-		vpd_add_ram_area(msarea);
+		if (0) vpd_add_ram_area(msarea);
 
 		/* This offset is from the arr, not the header! */
 		arange = (void *)arr + be32_to_cpu(arr->offset);
