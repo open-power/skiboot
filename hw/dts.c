@@ -184,6 +184,47 @@ static int dts_read_core_temp_p8(uint32_t pir, struct dts *dts)
 	return 0;
 }
 
+/* Per core Digital Thermal Sensors */
+#define EC_THERM_P9_DTS_RESULT0	0x050000
+
+/* Different sensor locations */
+#define P9_CORE_DTS0	0
+#define P9_CORE_DTS1	1
+#define P9_CORE_ZONES	2
+
+/*
+ * Returns the temperature as the max of all zones and a global trip
+ * attribute.
+ */
+static int dts_read_core_temp_p9(uint32_t pir, struct dts *dts)
+{
+	int32_t chip_id = pir_to_chip_id(pir);
+	int32_t core = pir_to_core_id(pir);
+	uint64_t dts0;
+	struct dts temps[P9_CORE_ZONES];
+	int rc;
+
+	rc = xscom_read(chip_id, XSCOM_ADDR_P9_EC(core, EC_THERM_P9_DTS_RESULT0),
+			&dts0);
+	if (rc)
+		return rc;
+
+	dts_decode_one_dts(dts0 >> 48, &temps[P9_CORE_DTS0]);
+	dts_decode_one_dts(dts0 >> 32, &temps[P9_CORE_DTS1]);
+
+	dts_keep_max(temps, P9_CORE_ZONES, dts);
+
+	prlog(PR_TRACE, "DTS: Chip %x Core %x temp:%dC trip:%x\n",
+	      chip_id, core, dts->temp, dts->trip);
+
+	/*
+	 * FIXME: The trip bits are always set ?! Just discard
+	 * them for the moment until we understand why.
+	 */
+	dts->trip = 0;
+	return 0;
+}
+
 static int dts_read_core_temp(uint32_t pir, struct dts *dts)
 {
 	int rc;
@@ -194,6 +235,9 @@ static int dts_read_core_temp(uint32_t pir, struct dts *dts)
 		break;
 	case proc_gen_p8:
 		rc = dts_read_core_temp_p8(pir, dts);
+		break;
+	case proc_gen_p9:
+		rc = dts_read_core_temp_p9(pir, dts);
 		break;
 	default:
 		rc = OPAL_UNSUPPORTED;
