@@ -115,6 +115,24 @@ static void dts_decode_one_dts(uint16_t raw, struct dts *dts)
 	}
 }
 
+static void dts_keep_max(struct dts *temps, int n, struct dts *dts)
+{
+	int i;
+
+	for (i = 0; i < n; i++) {
+		int16_t t = temps[i].temp;
+
+		if (!temps[i].valid)
+			continue;
+
+		if (t > dts->temp)
+			dts->temp = t;
+
+		dts->valid++;
+		dts->trip |= temps[i].trip;
+	}
+}
+
 /* Per core Digital Thermal Sensors */
 #define EX_THERM_DTS_RESULT0	0x10050000
 #define EX_THERM_DTS_RESULT1	0x10050001
@@ -136,7 +154,6 @@ static int dts_read_core_temp_p8(uint32_t pir, struct dts *dts)
 	int32_t core = pir_to_core_id(pir);
 	uint64_t dts0, dts1;
 	struct dts temps[P8_CT_ZONES];
-	int i;
 	int rc;
 
 	rc = xscom_read(chip_id, XSCOM_ADDR_P8_EX(core, EX_THERM_DTS_RESULT0),
@@ -154,19 +171,7 @@ static int dts_read_core_temp_p8(uint32_t pir, struct dts *dts)
 	dts_decode_one_dts(dts0 >> 16, &temps[P8_CT_ZONE_FXU]);
 	dts_decode_one_dts(dts1 >> 48, &temps[P8_CT_ZONE_L3C]);
 
-	for (i = 0; i < P8_CT_ZONES; i++) {
-		int16_t t = temps[i].temp;
-
-		if (!temps[i].valid)
-			continue;
-
-		/* keep the max temperature of all 4 sensors */
-		if (t > dts->temp)
-			dts->temp = t;
-
-		dts->valid++;
-		dts->trip |= temps[i].trip;
-	}
+	dts_keep_max(temps, P8_CT_ZONES, dts);
 
 	prlog(PR_TRACE, "DTS: Chip %x Core %x temp:%dC trip:%x\n",
 	      chip_id, core, dts->temp, dts->trip);
