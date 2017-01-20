@@ -21,23 +21,6 @@
 #include <skiboot.h>
 #include <opal-api.h>
 
-/* Per core Digital Thermal Sensors */
-#define EX_THERM_DTS_RESULT0	0x10050000
-#define EX_THERM_DTS_RESULT1	0x10050001
-
-/* Per core Digital Thermal Sensors control registers */
-#define EX_THERM_MODE_REG	0x1005000F
-#define EX_THERM_CONTROL_REG	0x10050012
-#define EX_THERM_ERR_STATUS_REG	0x10050013
-
-/* Per memory controller Digital Thermal Sensors */
-#define THERM_MEM_DTS_RESULT0	0x2050000
-
-/* Per memory controller Digital Thermal Sensors control registers */
-#define THERM_MEM_MODE_REG	0x205000F
-#define THERM_MEM_CONTROL_REG	0x2050012
-#define THERM_MEM_ERR_STATUS_REG	0x2050013
-
 struct dts {
 	uint8_t		valid;
 	uint8_t		trip;
@@ -132,6 +115,10 @@ static void dts_decode_one_dts(uint16_t raw, struct dts *dts)
 	}
 }
 
+/* Per core Digital Thermal Sensors */
+#define EX_THERM_DTS_RESULT0	0x10050000
+#define EX_THERM_DTS_RESULT1	0x10050001
+
 /* Different sensor locations */
 #define P8_CT_ZONE_LSU	0
 #define P8_CT_ZONE_ISU	1
@@ -209,6 +196,8 @@ static int dts_read_core_temp(uint32_t pir, struct dts *dts)
 	return rc;
 }
 
+/* Per memory controller Digital Thermal Sensors */
+#define THERM_MEM_DTS_RESULT0	0x2050000
 
 /* Different sensor locations */
 #define P8_MEM_DTS0	0
