@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <mem_region-malloc.h>
 
 #include <interrupts.h>
 
@@ -29,6 +30,8 @@
 
 #include "../../libfdt/fdt.c"
 #include "../../libfdt/fdt_ro.c"
+#include "../../libfdt/fdt_sw.c"
+#include "../../libfdt/fdt_strerror.c"
 
 struct dt_node *opal_node;
 
@@ -44,7 +47,6 @@ static void *ntuple_addr(const struct spira_ntuple *n);
 
 /* Stuff which core expects. */
 #define __this_cpu ((struct cpu_thread *)NULL)
-#define zalloc(expr) calloc(1, (expr))
 
 unsigned long tb_hz = 512000000;
 
@@ -108,6 +110,7 @@ static bool spira_check_ptr(const void *ptr, const char *file, unsigned int line
 #include "../../core/device.c"
 #include "../../core/chip.c"
 #include "../../test/dt_common.c"
+#include "../../core/fdt.c"
 
 #include <err.h>
 
@@ -148,13 +151,42 @@ static void undefined_bytes(void *p, size_t len)
 	VALGRIND_MAKE_MEM_UNDEFINED(p, len);
 }
 
+static void dump_hdata_fdt(struct dt_node *root, const char *filename)
+{
+	void *fdt_blob;
+	FILE *f;
+
+	fdt_blob = create_dtb(root, false);
+
+	if (!fdt_blob) {
+		fprintf(stderr, "Unable to make flattened DT, no FDT written\n");
+		return;
+	}
+
+	f = fopen(filename, "wb");
+	if (!f) {
+		fprintf(stderr, "Unable to open '%s' for writing\n", filename);
+		free(fdt_blob);
+		return;
+	}
+
+	fwrite(fdt_blob, fdt_totalsize(fdt_blob), 1, f);
+	fclose(f);
+
+	free(fdt_blob);
+}
+
 int main(int argc, char *argv[])
 {
 	int fd, r, i = 0, opt_count = 0;
 	bool verbose = false, quiet = false, tree_only = false, new_spira = false;
+	const char *fdt_filename = NULL;
 
 	while (argv[++i]) {
-		if (strcmp(argv[i], "-v") == 0) {
+		if (strcmp(argv[i], "-f") == 0) {
+			fdt_filename = argv[++i];
+			opt_count += 2;
+		} else if (strcmp(argv[i], "-v") == 0) {
 			verbose = true;
 			opt_count++;
 		} else if (strcmp(argv[i], "-q") == 0) {
@@ -173,8 +205,13 @@ int main(int argc, char *argv[])
 	argv += opt_count;
 	if (argc != 3) {
 		errx(1, "Usage:\n"
-		        "       hdata [-v|-q|-t] <spira-dump> <heap-dump>\n"
-		        "       hdata -s [-v|-q|-t] <spirah-dump> <spiras-dump>\n");
+			"	hdata <opts> <spira-dump> <heap-dump>\n"
+			"	hdata <opts> -s <spirah-dump> <spiras-dump>\n"
+			"Options: \n"
+			"	-v Verbose\n"
+			"	-q Quiet mode\n"
+			"	-t Print the DT nodes only, no properties\n"
+			"	-f <filename> File to write the FDT into\n");
 	}
 
 	/* Copy in spira dump (assumes little has changed!). */
@@ -244,6 +281,9 @@ int main(int argc, char *argv[])
 
 	if (!quiet)
 		dump_dt(dt_root, 0, !tree_only);
+
+	if (fdt_filename)
+		dump_hdata_fdt(dt_root, fdt_filename);
 
 	dt_free(dt_root);
 	return 0;

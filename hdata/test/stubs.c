@@ -16,8 +16,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
+#include <malloc.h>
+
+#include <compiler.h>
 
 #include "../../ccan/list/list.c"
+
+unsigned long top_of_ram = 16ULL * 1024 * 1024 * 1024;
 
 void _prlog(int log_level __attribute__((unused)), const char* fmt, ...) __attribute__((format (printf, 2, 3)));
 
@@ -34,6 +40,50 @@ void _prlog(int log_level __attribute__((unused)), const char* fmt, ...)
         if (log_level < 7)
 		vprintf(fmt, ap);
         va_end(ap);
+}
+
+/*
+ * Skiboot malloc stubs
+ *
+ * The actual prototypes for these are defined in mem_region-malloc.h,
+ * but that file also #defines malloc, and friends so we don't pull that in
+ * directly.
+ */
+
+#define DEFAULT_ALIGN __alignof__(long)
+
+void *__memalign(size_t blocksize, size_t bytes, const char *location __unused);
+void *__memalign(size_t blocksize, size_t bytes, const char *location __unused)
+{
+	return memalign(blocksize, bytes);
+}
+
+void *__malloc(size_t bytes, const char *location);
+void *__malloc(size_t bytes, const char *location)
+{
+	return __memalign(DEFAULT_ALIGN, bytes, location);
+}
+
+void __free(void *p, const char *location __unused);
+void __free(void *p, const char *location __unused)
+{
+	free(p);
+}
+
+void *__realloc(void *ptr, size_t size, const char *location __unused);
+void *__realloc(void *ptr, size_t size, const char *location __unused)
+{
+	return realloc(ptr, size);
+}
+
+void *__zalloc(size_t bytes, const char *location);
+void *__zalloc(size_t bytes, const char *location)
+{
+	void *p = __malloc(bytes, location);
+
+	if (p)
+		memset(p, 0, bytes);
+	return p;
 }
 
 /* Add any stub functions required for linking here. */
