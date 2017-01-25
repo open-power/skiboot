@@ -8,3 +8,4 @@ gard
 test/test.sh
 libflash
 make_version.sh
+gard-*.tar

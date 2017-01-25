@@ -14,9 +14,11 @@ sbindir = $(prefix)/sbin
 datadir = $(prefix)/share
 mandir = $(datadir)/man
 
-GARD_VERSION ?= $(shell ./make_version.sh $(EXE))
+#This will only be unset if we're running out of git tree,
+#../../make_version.sh is garanteed to exist that way
+GARD_VERSION ?= $(shell ../../make_version.sh $(EXE))
 
-version.c: make_version.sh .version
+version.c: .version
 	@(if [ "a$(GARD_VERSION)" = "a" ]; then \
 	echo "#error You need to set GARD_VERSION environment variable" > $@ ;\
 	else \

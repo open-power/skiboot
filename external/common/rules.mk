@@ -49,7 +49,7 @@ ARCH_OBJS := $(addprefix common-,$(ARCH_FILES:.c=.o))
 # Arch links are like this so we can have dependencies work (so that we don't
 # run the rule when the links exist), pretty build output (knowing the target
 # name) and a list of the files so we can clean them up.
-ARCH_LINKS := common/ast-sf-ctrl.c common/ast.h common/io.h
+ARCH_LINKS ?= common/ast-sf-ctrl.c common/ast.h common/io.h
 
 arch_links: $(ARCH_LINKS)
 common/ast.h : ../../include/ast.h | common
