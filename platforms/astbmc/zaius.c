@@ -31,7 +31,6 @@ static bool zaius_probe(void)
 
 	/* Lot of common early inits here */
 	astbmc_early_init();
-	psi_set_external_irq_policy(EXTERNAL_IRQ_POLICY_LINUX);
 
 	/* Setup UART for direct use by Linux */
 	uart_set_console_policy(UART_CONSOLE_OS);
