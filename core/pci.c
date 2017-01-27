@@ -1531,8 +1531,6 @@ void pci_reset(void)
 
 	prlog(PR_NOTICE, "PCI: Clearing all devices...\n");
 
-	/* This is a remnant of fast-reboot, not currently used */
-
 	/* XXX Do those in parallel (at least the power up
 	 * state machine could be done in parallel)
 	 */
