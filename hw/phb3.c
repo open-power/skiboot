@@ -47,6 +47,11 @@ static void phb3_init_hw(struct phb3 *p, bool first_init);
 #define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB#%04x: " fmt, \
 				      (p)->phb.opal_id, ## a)
 
+#define PE_CAPP_EN 0x9013c03
+
+#define PE_REG_OFFSET(p) \
+	((PHB3_IS_NAPLES(p) && (p)->index) ? 0x40 : 0x0)
+
 /* Helper to select an IODA table entry */
 static inline void phb3_ioda_sel(struct phb3 *p, uint32_t table,
 				 uint32_t addr, bool autoinc)
@@ -2558,6 +2563,122 @@ static void do_capp_recovery_scoms(struct phb3 *p)
 	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, reg);
 }
 
+/*
+ * Disable CAPI mode on a PHB.
+ *
+ * Must be done while PHB is fenced and in recovery. Leaves CAPP in recovery -
+ * we can't come out of recovery until the PHB has been reinitialised.
+ *
+ * We don't reset generic error registers here - we rely on phb3_init_hw() to
+ * do that.
+ *
+ * Sets PHB3_CAPP_DISABLING flag when complete.
+ */
+static void disable_capi_mode(struct phb3 *p)
+{
+	struct proc_chip *chip = get_chip(p->chip_id);
+	uint64_t reg;
+	uint32_t offset = PHB3_CAPP_REG_OFFSET(p);
+
+	lock(&capi_lock);
+
+	xscom_read(p->chip_id, PE_CAPP_EN + PE_REG_OFFSET(p), &reg);
+	if (!(reg & PPC_BIT(0))) {
+	        /* Not in CAPI mode, no action required */
+	        goto out;
+	}
+
+	PHBDBG(p, "CAPP: Disabling CAPI mode\n");
+	if (!(chip->capp_phb3_attached_mask & (1 << p->index)))
+		PHBERR(p, "CAPP: CAPP attached mask not set!\n");
+
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &reg);
+	if (!(reg & PPC_BIT(0))) {
+		PHBERR(p, "CAPP: not in recovery, can't disable CAPI mode!\n");
+		goto out;
+	}
+
+	/* Snoop CAPI Configuration Register - disable snooping */
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0ull);
+
+	/* APC Master PB Control Register - disable examining cResps */
+	xscom_read(p->chip_id, APC_MASTER_PB_CTRL + offset, &reg);
+	reg &= ~PPC_BIT(3);
+	xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, reg);
+
+	/* APC Master Config Register - de-select PHBs */
+	xscom_read(p->chip_id, APC_MASTER_CAPI_CTRL + offset, &reg);
+	reg &= ~PPC_BITMASK(1, 3);
+	xscom_write(p->chip_id, APC_MASTER_CAPI_CTRL + offset, reg);
+
+	/* PE Bus AIB Mode Bits */
+	xscom_read(p->chip_id, p->pci_xscom + 0xf, &reg);
+	reg |= PPC_BITMASK(7, 8);	/* Ch2 command credit */
+	reg &= ~PPC_BITMASK(40, 42);	/* Disable HOL blocking */
+	xscom_write(p->chip_id, p->pci_xscom + 0xf, reg);
+
+	/* PCI Hardware Configuration 0 Register - all store queues free */
+	xscom_read(p->chip_id, p->pe_xscom + 0x18, &reg);
+	reg &= ~PPC_BIT(14);
+	reg |= PPC_BIT(15);
+	xscom_write(p->chip_id, p->pe_xscom + 0x18, reg);
+
+	/*
+	 * PCI Hardware Configuration 1 Register - enable read response
+	 * arrival/address request ordering
+	 */
+	xscom_read(p->chip_id, p->pe_xscom + 0x19, &reg);
+	reg |= PPC_BITMASK(17,18);
+	xscom_write(p->chip_id, p->pe_xscom + 0x19, reg);
+
+	/*
+	 * AIB TX Command Credit Register - set AIB credit values back to
+	 * normal
+	 */
+	xscom_read(p->chip_id, p->pci_xscom + 0xd, &reg);
+	reg |= PPC_BIT(42);
+	reg &= ~PPC_BITMASK(43, 47);
+	xscom_write(p->chip_id, p->pci_xscom + 0xd, reg);
+
+	/* AIB TX Credit Init Timer - reset timer */
+	xscom_write(p->chip_id, p->pci_xscom + 0xc, 0xff00000000000000);
+
+	/*
+	 * PBCQ Mode Control Register - set dcache handling to normal, not CAPP
+	 * mode
+	 */
+	xscom_read(p->chip_id, p->pe_xscom + 0xb, &reg);
+	reg &= ~PPC_BIT(25);
+	xscom_write(p->chip_id, p->pe_xscom + 0xb, reg);
+
+	/* Registers touched by phb3_init_capp_regs() */
+
+	/* CAPP Transport Control Register */
+	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, 0x0001000000000000);
+
+	/* Canned pResp Map Register 0/1/2 */
+	xscom_write(p->chip_id, CANNED_PRESP_MAP0 + offset, 0);
+	xscom_write(p->chip_id, CANNED_PRESP_MAP1 + offset, 0);
+	xscom_write(p->chip_id, CANNED_PRESP_MAP2 + offset, 0);
+
+	/* Flush SUE State Map Register */
+	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP + offset, 0);
+
+	/* CAPP Epoch and Recovery Timers Control Register */
+	xscom_write(p->chip_id, CAPP_EPOCH_TIMER_CTRL + offset, 0);
+
+	/* PE Secure CAPP Enable Register - we're all done! Disable CAPP mode! */
+	xscom_write(p->chip_id, PE_CAPP_EN + PE_REG_OFFSET(p), 0ull);
+
+	/* Trigger CAPP recovery scoms after reinit */
+	p->flags |= PHB3_CAPP_DISABLING;
+
+	chip->capp_phb3_attached_mask &= ~(1 << p->index);
+
+out:
+	unlock(&capi_lock);
+}
+
 static int64_t phb3_creset(struct pci_slot *slot)
 {
 	struct phb3 *p = phb_to_phb3(slot->phb);
@@ -2588,6 +2709,10 @@ static int64_t phb3_creset(struct pci_slot *slot)
 		 */
 		if (!phb3_fenced(p))
 			xscom_write(p->chip_id, p->pe_xscom + 0x2, 0x000000f000000000ull);
+
+		/* Now that we're guaranteed to be fenced, disable CAPI mode */
+		if (!(p->flags & PHB3_CAPP_RECOVERY))
+			disable_capi_mode(p);
 
 		/* Clear errors in NFIR and raise ETU reset */
 		xscom_read(p->chip_id, p->pe_xscom + 0x0, &p->nfir_cache);
@@ -2627,6 +2752,11 @@ static int64_t phb3_creset(struct pci_slot *slot)
 		p->flags &= ~PHB3_AIB_FENCED;
 		p->flags &= ~PHB3_CAPP_RECOVERY;
 		phb3_init_hw(p, false);
+
+		if (p->flags & PHB3_CAPP_DISABLING) {
+			do_capp_recovery_scoms(p);
+			p->flags &= ~PHB3_CAPP_DISABLING;
+		}
 
 		pci_slot_set_state(slot, PHB3_SLOT_CRESET_FRESET);
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
@@ -3446,11 +3576,11 @@ static void phb3_init_capp_errors(struct phb3 *p)
 	out_be64(p->regs + PHB_LEM_ERROR_MASK,		   0x40018e2400022482);
 }
 
-#define PE_CAPP_EN 0x9013c03
-
-#define PE_REG_OFFSET(p) \
-	((PHB3_IS_NAPLES(p) && (p)->index) ? 0x40 : 0x0)
-
+/*
+ * Enable CAPI mode on a PHB
+ *
+ * Changes to this init sequence may require updating disable_capi_mode().
+ */
 static int64_t enable_capi_mode(struct phb3 *p, uint64_t pe_number, bool dma_mode)
 {
 	uint64_t reg;
@@ -3621,6 +3751,7 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 
 	switch (mode) {
 	case OPAL_PHB_CAPI_MODE_PCIE:
+		/* Switching back to PCIe mode requires a creset */
 		return OPAL_UNSUPPORTED;
 
 	case OPAL_PHB_CAPI_MODE_CAPI:
