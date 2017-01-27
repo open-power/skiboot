@@ -1528,6 +1528,8 @@ static void __pci_reset(struct list_head *list)
 void pci_reset(void)
 {
 	unsigned int i;
+	struct pci_slot *slot;
+	int64_t rc;
 
 	prlog(PR_NOTICE, "PCI: Clearing all devices...\n");
 
@@ -1539,6 +1541,25 @@ void pci_reset(void)
 		if (!phb)
 			continue;
 		__pci_reset(&phb->devices);
+
+		slot = phb->slot;
+		if (!slot || !slot->ops.creset) {
+			PCINOTICE(phb, 0, "Can't do complete reset\n");
+		} else {
+			rc = slot->ops.creset(slot);
+			while (rc > 0) {
+				time_wait(rc);
+				rc = slot->ops.poll(slot);
+			}
+			if (rc < 0) {
+				PCIERR(phb, 0, "Complete reset failed, aborting"
+				               "fast reboot (rc=%lld)\n", rc);
+				if (platform.cec_reboot)
+					platform.cec_reboot();
+				while (true) {}
+			}
+		}
+
 		if (phb->ops->ioda_reset)
 			phb->ops->ioda_reset(phb, true);
 	}
