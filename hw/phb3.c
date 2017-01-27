@@ -4610,6 +4610,44 @@ static bool phb3_calculate_windows(struct phb3 *p)
 	return true;
 }
 
+/*
+ * Trigger a creset to disable CAPI mode on kernel shutdown.
+ *
+ * This helper is called repeatedly by the host sync notifier mechanism, which
+ * relies on the kernel to regularly poll the OPAL_SYNC_HOST_REBOOT call as it
+ * shuts down.
+ *
+ * This is a somewhat hacky abuse of the host sync notifier mechanism, but the
+ * alternatives require a new API call which won't work for older kernels.
+ */
+static bool phb3_host_sync_reset(void *data)
+{
+	struct phb3 *p = (struct phb3 *)data;
+	struct pci_slot *slot = p->phb.slot;
+	struct proc_chip *chip = get_chip(p->chip_id);
+	int64_t rc;
+
+	switch (slot->state) {
+	case PHB3_SLOT_NORMAL:
+		lock(&capi_lock);
+		rc = (chip->capp_phb3_attached_mask & (1 << p->index)) ?
+			OPAL_PHB_CAPI_MODE_CAPI :
+			OPAL_PHB_CAPI_MODE_PCIE;
+		unlock(&capi_lock);
+
+		if (rc == OPAL_PHB_CAPI_MODE_PCIE)
+			return true;
+
+		PHBINF(p, "PHB in CAPI mode, resetting\n");
+		p->flags &= ~PHB3_CAPP_RECOVERY;
+		phb3_creset(slot);
+		return false;
+	default:
+		rc = slot->ops.poll(slot);
+		return rc <= OPAL_SUCCESS;
+	}
+}
+
 static void phb3_create(struct dt_node *np)
 {
 	const struct dt_property *prop;
@@ -4742,6 +4780,8 @@ static void phb3_create(struct dt_node *np)
 
 	/* Load capp microcode into capp unit */
 	capp_load_ucode(p);
+
+	opal_add_host_sync_notifier(phb3_host_sync_reset, p);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)
