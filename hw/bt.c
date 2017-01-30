@@ -27,6 +27,7 @@
 #include <ipmi.h>
 #include <timebase.h>
 #include <chip.h>
+#include <interrupts.h>
 
 /* BT registers */
 #define BT_CTRL			0
@@ -669,7 +670,8 @@ void bt_init(void)
 
 	irq = dt_prop_get_u32(n, "interrupts");
 	bt_lpc_client.interrupts = LPC_IRQ(irq);
-	lpc_register_client(dt_get_chip_id(n), &bt_lpc_client);
+	lpc_register_client(dt_get_chip_id(n), &bt_lpc_client,
+			    IRQ_ATTR_TARGET_OPAL);
 
 	/* Enqueue an IPMI message to ask the BMC about its BT capabilities */
 	get_bt_caps();

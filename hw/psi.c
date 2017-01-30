@@ -613,21 +613,26 @@ static uint64_t psi_p9_irq_attributes(struct irq_source *is __unused,
 {
 	struct psi *psi = is->data;
 	unsigned int idx = isn & 0xf;
+	bool is_lpc_serirq;
+
+	 is_lpc_serirq =
+		 (idx == P9_PSI_IRQ_LPC_SIRQ0 ||
+		  idx == P9_PSI_IRQ_LPC_SIRQ1 ||
+		  idx == P9_PSI_IRQ_LPC_SIRQ2 ||
+		  idx == P9_PSI_IRQ_LPC_SIRQ3);
 
 	/* If LPC interrupts are disabled, route them to Linux
 	 * (who will not request them since they aren't referenced
 	 * in the device tree)
 	 */
-	if (psi->no_lpc_irqs &&
-	    (idx == P9_PSI_IRQ_LPC_SIRQ0 ||
-	     idx == P9_PSI_IRQ_LPC_SIRQ1 ||
-	     idx == P9_PSI_IRQ_LPC_SIRQ2 ||
-	     idx == P9_PSI_IRQ_LPC_SIRQ3 ||
-	     idx == P9_PSI_IRQ_LPCHC))
+	 if (is_lpc_serirq && psi->no_lpc_irqs)
 		return IRQ_ATTR_TARGET_LINUX;
 
-	/* XXX For now, all go to OPAL, this will change */
-	return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_FREQUENT;
+	 /* For serirq, check the LPC layer for policy */
+	 if (is_lpc_serirq)
+		 return lpc_get_irq_policy(psi->chip_id, idx - P9_PSI_IRQ_LPC_SIRQ0);
+
+	return IRQ_ATTR_TARGET_OPAL;
 }
 
 static char *psi_p9_irq_name(struct irq_source *is, uint32_t isn)
@@ -940,6 +945,8 @@ static void psi_create_p9_int_map(struct psi *psi, struct dt_node *np)
 		map[i][3] = 1;
 	}
 	dt_add_property(np, "interrupt-map", map, sizeof(map));
+	dt_add_property_cells(np, "#address-cells", 0);
+	dt_add_property_cells(np, "#interrupt-cells", 1);
 }
 
 static void psi_create_mm_dtnode(struct psi *psi)
@@ -973,6 +980,7 @@ static void psi_create_mm_dtnode(struct psi *psi)
 	dt_add_property_cells(np, "interrupt-parent", get_ics_phandle());
 	dt_add_property_cells(np, "interrupts", psi->interrupt, 1);
 	dt_add_property_cells(np, "ibm,chip-id", psi->chip_id);
+	psi->node = np;
 }
 
 static struct psi *alloc_psi(struct proc_chip *chip, uint64_t base)

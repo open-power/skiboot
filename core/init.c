@@ -948,6 +948,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 * regions after that
 	 */
 
+	/* Create the LPC bus interrupt-map on P9 */
+	lpc_finalize_interrupts();
+
 	/* Add the list of interrupts going to OPAL */
 	add_opal_interrupts();
 

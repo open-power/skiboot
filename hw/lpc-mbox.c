@@ -298,7 +298,7 @@ void mbox_init(void)
 
 	chip_id = dt_get_chip_id(n);
 	mbox_lpc_client.interrupts = LPC_IRQ(irq);
-	lpc_register_client(chip_id, &mbox_lpc_client);
+	lpc_register_client(chip_id, &mbox_lpc_client, IRQ_ATTR_TARGET_OPAL);
 	prlog(PR_DEBUG, "Using %d chipid and %d IRQ at 0x%08x\n", chip_id, irq, mbox.base);
 }
 

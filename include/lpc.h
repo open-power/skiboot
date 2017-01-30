@@ -60,6 +60,7 @@
 
 extern void lpc_init(void);
 extern void lpc_init_interrupts(void);
+extern void lpc_finalize_interrupts(void);
 
 /* Check for a default bus */
 extern bool lpc_present(void);
@@ -93,10 +94,11 @@ struct lpc_client {
 #define LPC_IRQ(n)	(0x80000000 >> (n))
 };
 
-extern void lpc_register_client(uint32_t chip_id, const struct lpc_client *clt);
+extern void lpc_register_client(uint32_t chip_id, const struct lpc_client *clt,
+				uint32_t policy);
 
-/* Manual control of routing on P9 for use by platforms if necessary */
-extern void lpc_route_serirq(uint32_t chip_id, uint32_t sirq, uint32_t psi_idx);
+/* Return the policy for a given serirq */
+extern unsigned int lpc_get_irq_policy(uint32_t chip_id, uint32_t psi_idx);
 
 /* Clear SerIRQ latch on P9 DD1 */
 extern void lpc_p9_sirq_eoi(uint32_t chip_id, uint32_t index);
