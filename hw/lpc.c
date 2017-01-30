@@ -1119,13 +1119,17 @@ void lpc_init(void)
 	struct dt_node *xn;
 	bool has_lpc = false;
 
-	dt_for_each_compatible(dt_root, xn, "ibm,power8-lpc") {
-		lpc_init_chip_p8(xn);
-		has_lpc = true;
-	}
+	/* Look for P9 first as the DT is compatile for both 8 and 9 */
 	dt_for_each_compatible(dt_root, xn, "ibm,power9-lpcm-opb") {
 		lpc_init_chip_p9(xn);
 		has_lpc = true;
+	}
+
+	if (!has_lpc) {
+		dt_for_each_compatible(dt_root, xn, "ibm,power8-lpc") {
+			lpc_init_chip_p8(xn);
+			has_lpc = true;
+		}
 	}
 	if (lpc_default_chip_id >= 0)
 		printf("LPC: Default bus on chip 0x%x\n", lpc_default_chip_id);
