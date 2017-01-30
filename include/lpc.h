@@ -98,6 +98,9 @@ extern void lpc_register_client(uint32_t chip_id, const struct lpc_client *clt);
 /* Manual control of routing on P9 for use by platforms if necessary */
 extern void lpc_route_serirq(uint32_t chip_id, uint32_t sirq, uint32_t psi_idx);
 
+/* Clear SerIRQ latch on P9 DD1 */
+extern void lpc_p9_sirq_eoi(uint32_t chip_id, uint32_t index);
+
 /* Default bus accessors */
 extern int64_t lpc_write(enum OpalLPCAddressType addr_type, uint32_t addr,
 			 uint32_t data, uint32_t sz);

@@ -2371,7 +2371,7 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 	return OPAL_SUCCESS;
 }
 
-static void xive_source_eoi(struct irq_source *is, uint32_t isn)
+void __xive_source_eoi(struct irq_source *is, uint32_t isn)
 {
 	struct xive_src *s = container_of(is, struct xive_src, is);
 	uint32_t idx = isn - s->esb_base;
@@ -2429,6 +2429,16 @@ static void xive_source_eoi(struct irq_source *is, uint32_t isn)
 			out_be64(mmio_base, 0);
 		}
 	}
+}
+
+static void xive_source_eoi(struct irq_source *is, uint32_t isn)
+{
+	struct xive_src *s = container_of(is, struct xive_src, is);
+
+	if (s->orig_ops && s->orig_ops->eoi)
+		s->orig_ops->eoi(is, isn);
+
+	__xive_source_eoi(is, isn);
 }
 
 static void xive_source_interrupt(struct irq_source *is, uint32_t isn)

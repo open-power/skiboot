@@ -460,4 +460,8 @@ void xive_cpu_callin(struct cpu_thread *cpu);
  */
 void *xive_get_trigger_port(uint32_t girq);
 
+/* To be used by special EOI override in PSI */
+struct irq_source;
+void __xive_source_eoi(struct irq_source *is, uint32_t isn);
+
 #endif /* __XIVE_H__ */
