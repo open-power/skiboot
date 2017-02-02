@@ -235,7 +235,7 @@ static struct dt_node *add_lpc_io_node(struct dt_node *parent,
 	 * serial@i3f8 - refers to offset 0x3f8 in the IO space
 	 */
 
-	snprintf(buffer, sizeof(name), "%s@i%x", name, offset);
+	snprintf(buffer, sizeof(buffer), "%s@i%x", name, offset);
 	n = dt_new(parent, buffer);
 	assert(n);
 
