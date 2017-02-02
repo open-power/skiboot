@@ -113,7 +113,8 @@ const void *vpd_find_record(const void *vpd, size_t vpd_size,
 		/* Find record name */
 		rec_name = vpd_find_keyword(p, rec_sz, "RT", &namesz);
 		if (rec_name && strncmp(record, rec_name, namesz) == 0) {
-			*sz = rec_sz;
+			if (sz)
+				*sz = rec_sz;
 			return p;
 		}
 
