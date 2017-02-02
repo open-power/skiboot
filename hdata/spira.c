@@ -922,12 +922,10 @@ static void add_iplparams_serials(const void *iplp, struct dt_node *node)
 	const struct iplparms_serial *ipser;
 	struct dt_node *ser_node;
 	int count, i;
-	
+
 	count = HDIF_get_iarray_size(iplp, IPLPARMS_IDATA_SERIAL);
-	if (count <= 0) {
-		prerror("IPLPARAMS: No serial ports\n");
+	if (count <= 0)
 		return;
-	}
 	prlog(PR_INFO, "IPLPARAMS: %d serial ports in array\n", count);
 
 	node = dt_new(node, "fsp-serial");
