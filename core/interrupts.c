@@ -244,6 +244,7 @@ void add_opal_interrupts(void)
 	dt_add_property(opal_node, "opal-interrupts-names", names, tns);
 
 	free(irqs);
+	free(names);
 }
 
 /*
