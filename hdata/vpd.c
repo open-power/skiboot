@@ -631,13 +631,66 @@ def_model:
 	dt_add_property_string(dt_root, "model-name", model_name);
 }
 
-static void sysvpd_parse(void)
+static void vpd_add_property_string(struct dt_node *n, const char *name,
+				    const void *vpd, unsigned int sz)
+{
+	char *str = zalloc(sz + 1);
+	if (!str)
+		return;
+	memcpy(str, vpd, sz);
+	dt_add_property_string(n, name, str);
+	free(str);
+}
+
+static void sysvpd_parse_opp(const void *sysvpd, unsigned int sysvpd_sz)
+{
+	const char *v;
+	uint8_t sz;
+
+	v = vpd_find(sysvpd, sysvpd_sz, "OSYS", "MM", &sz);
+	if (v)
+		vpd_add_property_string(dt_root, "model", v, sz);
+	v = vpd_find(sysvpd, sysvpd_sz, "OSYS", "SS", &sz);
+	if (v)
+		vpd_add_property_string(dt_root, "system-id", v, sz);
+}
+
+
+static void sysvpd_parse_legacy(const void *sysvpd, unsigned int sysvpd_sz)
 {
 	const char *model;
 	const char *system_id;
 	const char *brand;
 	char *str;
 	uint8_t sz;
+
+	model = vpd_find(sysvpd, sysvpd_sz, "VSYS", "TM", &sz);
+	if (model) {
+		str = zalloc(sz + 1);
+		if (str) {
+			memcpy(str, model, sz);
+			dt_add_property_string(dt_root, "model", str);
+			dt_add_model_name(str);
+			free(str);
+		}
+	} else
+		dt_add_property_string(dt_root, "model", "Unknown");
+
+	system_id = vpd_find(sysvpd, sysvpd_sz, "VSYS", "SE", &sz);
+	if (system_id)
+		vpd_add_property_string(dt_root, "system-id", system_id, sz);
+	else
+		dt_add_property_string(dt_root, "system-id", "Unknown");
+
+	brand = vpd_find(sysvpd, sysvpd_sz, "VSYS", "BR", &sz);
+	if (brand)
+		vpd_add_property_string(dt_root, "system-brand", brand, sz);
+	else
+		dt_add_property_string(dt_root, "brand", "Unknown");
+}
+
+static void sysvpd_parse(void)
+{
 	const void *sysvpd;
 	unsigned int sysvpd_sz;
 	unsigned int fru_id_sz;
@@ -647,15 +700,15 @@ static void sysvpd_parse(void)
 
 	sysvpd_hdr = get_hdif(&spira.ntuples.system_vpd, SYSVPD_HDIF_SIG);
 	if (!sysvpd_hdr)
-		goto no_sysvpd;
+		return;
 
 	fru_id = HDIF_get_idata(sysvpd_hdr, SYSVPD_IDATA_FRU_ID, &fru_id_sz);
 	if (!fru_id)
-		goto no_sysvpd;;
+		return;
 
 	sysvpd = HDIF_get_idata(sysvpd_hdr, SYSVPD_IDATA_KW_VPD, &sysvpd_sz);
 	if (!CHECK_SPPTR(sysvpd))
-		goto no_sysvpd;
+		return;
 
 	/* Add system VPD */
 	dt_vpd = dt_find_by_path(dt_root, "/vpd");
@@ -664,51 +717,11 @@ static void sysvpd_parse(void)
 		slca_vpd_add_loc_code(dt_vpd, be16_to_cpu(fru_id->slca_index));
 	}
 
-	model = vpd_find(sysvpd, sysvpd_sz, "VSYS", "TM", &sz);
-	if (!model)
-		goto no_sysvpd;
-	str = zalloc(sz + 1);
-	if (!str)
-		goto no_sysvpd;
-	memcpy(str, model, sz);
-	dt_add_property_string(dt_root, "model", str);
-
-	dt_add_model_name(str);
-
-	free(str);
-
-	system_id = vpd_find(sysvpd, sysvpd_sz, "VSYS", "SE", &sz);
-	if (!system_id)
-		goto no_sysid;
-	str = zalloc(sz + 1);
-	if (!str)
-		goto no_sysid;
-	memcpy(str, system_id, sz);
-	dt_add_property_string(dt_root, "system-id", str);
-	free(str);
-
-	brand = vpd_find(sysvpd, sysvpd_sz, "VSYS", "BR", &sz);
-	if (!brand)
-		goto no_brand;
-	str = zalloc(sz + 1);
-	if (!str)
-		goto no_brand;
-	memcpy(str, brand, sz);
-	dt_add_property_string(dt_root, "system-brand", str);
-	free(str);
-
-	return;
-
-no_brand:
-	dt_add_property_string(dt_root, "system-brand", "Unknown");
-	return;
-
-no_sysid:
-	dt_add_property_string(dt_root, "system-id", "Unknown");
-	return;
-
- no_sysvpd:
-	dt_add_property_string(dt_root, "model", "Unknown");
+	/* Look for the new OpenPower "OSYS" first */
+	if (vpd_find_record(sysvpd, sysvpd_sz, "OSYS", NULL))
+		sysvpd_parse_opp(sysvpd, sysvpd_sz);
+	else
+		sysvpd_parse_legacy(sysvpd, sysvpd_sz);
 }
 
 static void iokid_vpd_parse(const struct HDIF_common_hdr *iohub_hdr)
