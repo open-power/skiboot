@@ -1271,7 +1271,7 @@ static void slw_dump_timer_ffdc(void)
 
 	/**
 	 * @fwts-label SLWRegisterDump
-	 * @fwts-advice An error condition occured in sleep/winkle
+	 * @fwts-advice An error condition occurred in sleep/winkle
 	 * engines timer state machine. Dumping debug information to
 	 * root-cause. OPAL/skiboot may be stuck on some operation that
 	 * requires SLW timer state machine (e.g. core powersaving)
