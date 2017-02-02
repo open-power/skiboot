@@ -164,6 +164,7 @@ print_format(char **buffer, size_t bufsize, const char *format, void *var)
 				break;
 			case 'X':
 				upper = true;
+				/* fallthrough */
 			case 'x':
 				sizec[i] = '\0';
 				value = (unsigned long) var & convert[length_mod];
