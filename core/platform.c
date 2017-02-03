@@ -75,7 +75,7 @@ static int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
 		return opal_cec_reboot();
 	case OPAL_REBOOT_PLATFORM_ERROR:
 		prlog(PR_EMERG,
-			  "OPAL: Reboot requested due to Platform error.");
+			  "OPAL: Reboot requested due to Platform error.\n");
 		buf = opal_elog_create(&e_info(OPAL_RC_ABNORMAL_REBOOT), 0);
 		if (buf) {
 			log_append_msg(buf,
