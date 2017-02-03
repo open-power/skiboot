@@ -944,11 +944,32 @@ void lpc_serirq(uint32_t chip_id, uint32_t index)
 		chip_id, irqs, rmask);
 	irqs &= rmask;
 
-	/* Handle SerIRQ interrupts */
+	/*
+	 * Handle SerIRQ interrupts. Don't clear the latch,
+	 * it will be done in our special EOI callback if
+	 * necessary on DD1
+	 */
 	if (irqs)
-		lpc_dispatch_ser_irqs(lpc, irqs, true);
+		lpc_dispatch_ser_irqs(lpc, irqs, false);
 
  bail:
+	unlock(&lpc->lock);
+}
+
+void lpc_p9_sirq_eoi(uint32_t chip_id, uint32_t index)
+{
+	struct proc_chip *chip = get_chip(chip_id);
+	struct lpcm *lpc;
+	uint32_t rmask;
+
+	/* No initialized LPC controller on that chip */
+	if (!chip || !chip->lpc)
+		return;
+	lpc = chip->lpc;
+
+	lock(&lpc->lock);
+	rmask = lpc->sirq_rmasks[index];
+	opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQSTAT, rmask, 4);
 	unlock(&lpc->lock);
 }
 
