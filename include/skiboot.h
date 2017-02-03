@@ -242,8 +242,11 @@ extern void nvram_init(void);
 extern void nvram_read_complete(bool success);
 
 /* UART stuff */
-extern void uart_setup_linux_passthrough(void);
-extern void uart_setup_opal_console(void);
+enum {
+	UART_CONSOLE_OPAL,
+	UART_CONSOLE_OS
+};
+extern void uart_set_console_policy(int policy);
 extern bool uart_enabled(void);
 
 /* OCC interrupt */

@@ -27,6 +27,7 @@
 #include <cpu.h>
 #include <chip.h>
 #include <io.h>
+#include <nvram.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_UART_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_UART,
 		 OPAL_CEC_HARDWARE, OPAL_PREDICTIVE_ERR_GENERAL,
@@ -68,6 +69,12 @@ static bool has_irq = false, irq_ok, rx_full, tx_full;
 static uint8_t tx_room;
 static uint8_t cached_ier;
 static void *mmio_uart_base;
+static int uart_console_policy = UART_CONSOLE_OPAL;
+
+void uart_set_console_policy(int policy)
+{
+	uart_console_policy = policy;
+}
 
 static void uart_trace(u8 ctx, u8 cnt, u8 irq_state, u8 in_count)
 {
@@ -412,7 +419,7 @@ static void uart_irq(uint32_t chip_id __unused, uint32_t irq_mask __unused)
  * Common setup/inits
  */
 
-void uart_setup_linux_passthrough(void)
+static void uart_setup_os_passthrough(void)
 {
 	char *path;
 
@@ -423,7 +430,7 @@ void uart_setup_linux_passthrough(void)
 	prlog(PR_DEBUG, "UART: Enabled as OS pass-through\n");
 }
 
-void uart_setup_opal_console(void)
+static void uart_setup_opal_console(void)
 {
 	/* Add the opal console node */
 	add_opal_console_node(0, "raw", OUT_BUF_SIZE);
@@ -451,9 +458,33 @@ void uart_setup_opal_console(void)
 	opal_add_poller(uart_console_poll, NULL);
 }
 
+static void uart_init_opal_console(void)
+{
+	const char *nv_policy;
+
+	/* Update the policy if the corresponding nvram variable
+	 * is present
+	 */
+	nv_policy = nvram_query("uart-con-policy");
+	if (nv_policy) {
+		if (!strcmp(nv_policy, "opal"))
+			uart_console_policy = UART_CONSOLE_OPAL;
+		else if (!strcmp(nv_policy, "os"))
+			uart_console_policy = UART_CONSOLE_OS;
+		else
+			prlog(PR_WARNING,
+			      "UART: Unknown console policy in NVRAM: %s\n",
+			      nv_policy);
+	}
+	if (uart_console_policy == UART_CONSOLE_OPAL)
+		uart_setup_opal_console();
+	else
+		uart_setup_os_passthrough();
+}
+
 struct opal_con_ops uart_opal_con = {
 	.name = "OPAL UART console",
-	.init = uart_setup_opal_console,
+	.init = uart_init_opal_console,
 	.read = uart_opal_read,
 	.write = uart_opal_write,
 	.space = uart_opal_write_buffer_space,

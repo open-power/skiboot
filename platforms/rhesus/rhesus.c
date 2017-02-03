@@ -154,7 +154,7 @@ static void rhesus_init(void)
 	rhesus_pnor_init();
 
 	/* Setup UART for direct use by Linux */
-	uart_setup_linux_passthrough();
+	uart_set_console_policy(UART_CONSOLE_OS);
 }
 
 static void rhesus_dt_fixup_uart(struct dt_node *lpc, bool has_irq)
