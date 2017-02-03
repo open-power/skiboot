@@ -264,8 +264,10 @@ static void add_uart(const struct spss_iopath *iopath, struct dt_node *lpc)
 		be32_to_cpu(iopath->lpc.uart_baud));
 	dt_add_property_cells(serial, "clock-frequency",
 		be32_to_cpu(iopath->lpc.uart_clk));
-	dt_add_property_cells(serial, "serirq-interrupt",
+	dt_add_property_cells(serial, "interrupts",
 		be32_to_cpu(iopath->lpc.uart_int_number));
+	dt_add_property_string(serial, "device_type", "serial");
+
 
 	prlog(PR_DEBUG, "LPC UART: base addr = %#" PRIx64" (%#" PRIx64 ") size = %#x clk = %u, baud = %u\n",
 		be64_to_cpu(iopath->lpc.uart_base),
