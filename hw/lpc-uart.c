@@ -70,6 +70,7 @@ static uint8_t tx_room;
 static uint8_t cached_ier;
 static void *mmio_uart_base;
 static int uart_console_policy = UART_CONSOLE_OPAL;
+static int lpc_irq = -1;
 
 void uart_set_console_policy(int policy)
 {
@@ -423,15 +424,30 @@ static void uart_setup_os_passthrough(void)
 {
 	char *path;
 
+	static struct lpc_client uart_lpc_os_client = {
+	};
+
 	dt_add_property_strings(uart_node, "status", "ok");
 	path = dt_get_path(uart_node);
 	dt_add_property_string(dt_chosen, "linux,stdout-path", path);
 	free(path);
+
+	/* Setup LPC client for OS interrupts */
+	if (lpc_irq >= 0) {
+		uint32_t chip_id = dt_get_chip_id(uart_node);
+		uart_lpc_os_client.interrupts = LPC_IRQ(lpc_irq);
+		lpc_register_client(chip_id, &uart_lpc_os_client,
+				    IRQ_ATTR_TARGET_LINUX);
+	}
 	prlog(PR_DEBUG, "UART: Enabled as OS pass-through\n");
 }
 
 static void uart_setup_opal_console(void)
 {
+	static struct lpc_client uart_lpc_opal_client = {
+		.interrupt = uart_irq,
+	};
+
 	/* Add the opal console node */
 	add_opal_console_node(0, "raw", OUT_BUF_SIZE);
 
@@ -444,6 +460,19 @@ static void uart_setup_opal_console(void)
 	 */
 	dt_add_property_strings(uart_node, "status", "reserved");
 
+	/* Allocate an input buffer */
+	in_buf = zalloc(IN_BUF_SIZE);
+	out_buf = zalloc(OUT_BUF_SIZE);
+
+	/* Setup LPC client for OPAL interrupts */
+	if (lpc_irq >= 0) {
+		uint32_t chip_id = dt_get_chip_id(uart_node);
+		uart_lpc_opal_client.interrupts = LPC_IRQ(lpc_irq);
+		lpc_register_client(chip_id, &uart_lpc_opal_client,
+				    IRQ_ATTR_TARGET_OPAL);
+		has_irq = true;
+	}
+
 	/*
 	 * If the interrupt is enabled, turn on RX interrupts (and
 	 * only these for now
@@ -451,10 +480,7 @@ static void uart_setup_opal_console(void)
 	tx_full = rx_full = false;
 	uart_update_ier();
 
-	/* Allocate an input buffer */
-	in_buf = zalloc(IN_BUF_SIZE);
-	out_buf = zalloc(OUT_BUF_SIZE);
-
+	/* Start console poller */
 	opal_add_poller(uart_console_poll, NULL);
 }
 
@@ -519,16 +545,11 @@ static bool uart_init_hw(unsigned int speed, unsigned int clock)
 	return false;
 }
 
-static struct lpc_client uart_lpc_client = {
-	.interrupt = uart_irq,
-};
-
 void uart_init(void)
 {
 	const struct dt_property *prop;
 	struct dt_node *n;
 	char *path __unused;
-	uint32_t chip_id;
 	const uint32_t *irqp;
 
 	/* UART lock is in the console path and thus must block
@@ -580,13 +601,8 @@ void uart_init(void)
 		uart_base = dt_property_get_cell(prop, 1);
 
 		if (irqp) {
-			uint32_t irq = be32_to_cpu(*irqp);
-
-			chip_id = dt_get_chip_id(uart_node);
-			uart_lpc_client.interrupts = LPC_IRQ(irq);
-			lpc_register_client(chip_id, &uart_lpc_client);
-			prlog(PR_DEBUG, "UART: Using LPC IRQ %d\n", irq);
-			has_irq = true;
+			lpc_irq = be32_to_cpu(*irqp);
+			prlog(PR_DEBUG, "UART: Using LPC IRQ %d\n", lpc_irq);
 		}
 	}
 

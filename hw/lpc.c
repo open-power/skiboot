@@ -27,6 +27,7 @@
 #include <opal-api.h>
 #include <platform.h>
 #include <psi.h>
+#include <interrupts.h>
 
 //#define DBG_IRQ(fmt...) prerror(fmt)
 #define DBG_IRQ(fmt...) do { } while(0)
@@ -119,6 +120,12 @@ DEFINE_LOG_ENTRY(OPAL_RC_LPC_SYNC_PERF, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 
 #define LPC_NUM_SERIRQ		17
 
+enum {
+	LPC_ROUTE_FREE = 0,
+	LPC_ROUTE_OPAL,
+	LPC_ROUTE_LINUX
+};
+
 struct lpcm {
 	uint32_t		chip_id;
 	uint32_t		xbase;
@@ -129,7 +136,10 @@ struct lpcm {
 	struct list_head	clients;
 	bool			has_serirq;
 	uint8_t			sirq_routes[LPC_NUM_SERIRQ];
+	bool			sirq_routed[LPC_NUM_SERIRQ];
 	uint32_t		sirq_rmasks[4];
+	uint8_t			sirq_ralloc[4];
+	struct dt_node		*node;
 };
 
 
@@ -138,6 +148,7 @@ struct lpcm {
 struct lpc_client_entry {
 	struct list_node node;
 	const struct lpc_client *clt;
+	uint32_t policy;
 };
 
 /* Default LPC bus */
@@ -636,13 +647,17 @@ static void lpc_setup_serirq(struct lpcm *lpc)
 	}
 }
 
-static void __lpc_route_serirq(struct lpcm *lpc, uint32_t sirq,
-			       uint32_t psi_idx)
+static void lpc_route_serirq(struct lpcm *lpc, uint32_t sirq,
+			     uint32_t psi_idx)
 {
-	uint32_t reg, shift, val;
+	uint32_t reg, shift, val, psi_old;
 	int64_t rc;
 
+	psi_old = lpc->sirq_routes[sirq];
+	lpc->sirq_rmasks[psi_old] &= ~(LPC_HC_IRQ_SERIRQ0 >> sirq);
+	lpc->sirq_rmasks[psi_idx] |=  (LPC_HC_IRQ_SERIRQ0 >> sirq);
 	lpc->sirq_routes[sirq] = psi_idx;
+	lpc->sirq_routed[sirq] = true;
 
 	/* We may not be ready yet ... */
 	if (!lpc->has_serirq)
@@ -664,28 +679,116 @@ static void __lpc_route_serirq(struct lpcm *lpc, uint32_t sirq,
 	opb_write(lpc, opb_master_reg_base + reg, val, 4);
 }
 
-void lpc_route_serirq(uint32_t chip_id, uint32_t sirq, uint32_t psi_idx)
+static void lpc_alloc_route(struct lpcm *lpc, unsigned int irq,
+			    unsigned int policy)
 {
-	struct proc_chip *chip;
-	struct lpcm *lpc;
-	uint32_t psi_old;
+	unsigned int i, r, c;
+	int route = -1;
 
-	if (sirq >= LPC_NUM_SERIRQ) {
-		prerror("LPC[%03x]: Routing request for invalid SerIRQ %d\n",
-			chip_id, sirq);
+	if (policy == IRQ_ATTR_TARGET_OPAL)
+		r = LPC_ROUTE_OPAL;
+	else
+		r = LPC_ROUTE_LINUX;
+
+	prlog(PR_DEBUG, "LPC: Routing irq %d, policy: %d (r=%d)\n",
+	      irq, policy, r);
+
+	/* Are we already routed ? */
+	if (lpc->sirq_routed[irq] &&
+	    r != lpc->sirq_ralloc[lpc->sirq_routes[irq]]) {
+		prerror("LPC: irq %d has conflicting policies\n", irq);
 		return;
 	}
 
-	chip = get_chip(chip_id);
-	if (!chip || !chip->lpc)
+	/* First try to find a free route. Leave one for another
+	 * policy though
+	 */
+	for (i = 0, c = 0; i < 4; i++) {
+		/* Count routes with identical policy */
+		if (lpc->sirq_ralloc[i] == r)
+			c++;
+
+		/* Use the route if it's free and there is no more
+		 * than 3 existing routes with that policy
+		 */
+		if (lpc->sirq_ralloc[i] == LPC_ROUTE_FREE && c < 4) {
+			lpc->sirq_ralloc[i] = r;
+			route = i;
+			break;
+		}
+	}
+
+	/* If we couldn't get a free one, try to find an existing one
+	 * with a matching policy
+	 */
+	for (i = 0; route < 0 && i < 4; i++) {
+		if (lpc->sirq_ralloc[i] == r)
+			route = i;
+	}
+
+	/* Still no route ? bail. That should never happen */
+	if (route < 0) {
+		prerror("LPC: Can't find a route for irq %d\n", irq);
 		return;
-	lpc = chip->lpc;
-	lock(&lpc->lock);
-	psi_old = lpc->sirq_routes[sirq];
-	lpc->sirq_rmasks[psi_old] &= ~(LPC_HC_IRQ_SERIRQ0 >> sirq);
-	lpc->sirq_rmasks[psi_idx] |=  (LPC_HC_IRQ_SERIRQ0 >> sirq);
-	__lpc_route_serirq(lpc, sirq, psi_idx);
-	unlock(&lpc->lock);
+	}
+
+	/* Program route */
+	lpc_route_serirq(lpc, irq, route);
+
+	prlog(PR_DEBUG, "LPC: SerIRQ %d using route %d targetted at %s\n",
+	      irq, route, r == LPC_ROUTE_LINUX ? "OS" : "OPAL");
+}
+
+unsigned int lpc_get_irq_policy(uint32_t chip_id, uint32_t psi_idx)
+{
+	struct proc_chip *c = get_chip(chip_id);
+
+	if (!c || !c->lpc)
+		return IRQ_ATTR_TARGET_LINUX;
+
+	if (c->lpc->sirq_ralloc[psi_idx] == LPC_ROUTE_LINUX)
+		return IRQ_ATTR_TARGET_LINUX;
+	else
+		return IRQ_ATTR_TARGET_OPAL;
+}
+
+static void lpc_create_int_map(struct lpcm *lpc, struct dt_node *psi_node)
+{
+	uint32_t map[LPC_NUM_SERIRQ * 5], *pmap;
+	uint32_t i;
+
+	if (!psi_node)
+		return;
+	pmap = map;
+	for (i = 0; i < LPC_NUM_SERIRQ; i++) {
+		if (!lpc->sirq_routed[i])
+			continue;
+		*(pmap++) = 0;
+		*(pmap++) = 0;
+		*(pmap++) = i;
+		*(pmap++) = psi_node->phandle;
+		*(pmap++) = lpc->sirq_routes[i] + P9_PSI_IRQ_LPC_SIRQ0;
+	}
+	if (pmap == map)
+		return;
+	dt_add_property(lpc->node, "interrupt-map", map,
+			(pmap - map) * sizeof(uint32_t));
+	dt_add_property_cells(lpc->node, "interrupt-map-mask", 0, 0, 0xff);
+	dt_add_property_cells(lpc->node, "#interrupt-cells", 1);
+}
+
+void lpc_finalize_interrupts(void)
+{
+	struct proc_chip *chip;
+
+	lpc_irqs_ready = true;
+
+	for_each_chip(chip) {
+		if (chip->lpc && chip->psi &&
+		    (chip->type == PROC_CHIP_P9_NIMBUS ||
+		     chip->type == PROC_CHIP_P9_CUMULUS))
+			lpc_create_int_map(chip->lpc, chip->psi->node);
+	}
 }
 
 static void lpc_init_interrupts_one(struct proc_chip *chip)
@@ -726,12 +829,11 @@ static void lpc_init_interrupts_one(struct proc_chip *chip)
 		break;
 	case PROC_CHIP_P9_NIMBUS:
 	case PROC_CHIP_P9_CUMULUS:
-		/* On P9, we additionall setup the routing */
+		/* On P9, we additionally setup the routing. */
 		lpc->has_serirq = true;
 		for (i = 0; i < LPC_NUM_SERIRQ; i++) {
-			uint32_t pin = lpc->sirq_routes[i];
-			__lpc_route_serirq(lpc, i, pin);
-			lpc->sirq_rmasks[pin] |= LPC_HC_IRQ_SERIRQ0 >> i;
+			if (lpc->sirq_routed[i])
+				lpc_route_serirq(lpc, i, lpc->sirq_routes[i]);
 		}
 		lpc_setup_serirq(lpc);
 		break;
@@ -1004,6 +1106,7 @@ static void lpc_init_chip_p8(struct dt_node *xn)
 	lpc->xbase = dt_get_address(xn, 0, NULL);
 	lpc->fw_idsel = 0xff;
 	lpc->fw_rdsz = 0xff;
+	lpc->node = xn;
 	list_head_init(&lpc->clients);
 	init_lock(&lpc->lock);
 
@@ -1023,43 +1126,6 @@ static void lpc_init_chip_p8(struct dt_node *xn)
 	assert(dt_prop_get_u32(xn, "#address-cells") == 2);
 
 	chip->lpc = lpc;
-}
-
-static void lpc_parse_interrupt_map(struct lpcm *lpc, struct dt_node *lpc_node)
-{
-	const u32 *imap;
-	size_t imap_size;
-
-	imap = dt_prop_get_def_size(lpc_node, "interrupt-map", NULL, &imap_size);
-	if (!imap)
-		return;
-	imap_size >>= 2;
-	if (imap_size % 5) {
-		prerror("LPC[%03x]: Odd format for LPC interrupt-map !\n",
-			lpc->chip_id);
-		return;
-	}
-
-	while(imap_size >= 5) {
-		uint32_t sirq = be32_to_cpu(imap[2]);
-		uint32_t pirq = be32_to_cpu(imap[4]);
-
-		if (sirq >= LPC_NUM_SERIRQ) {
-			prerror("LPC[%03x]: LPC irq %d out of range in"
-				" interrupt-map\n", lpc->chip_id, sirq);
-		} else if (pirq < P9_PSI_IRQ_LPC_SIRQ0 ||
-			   pirq > P9_PSI_IRQ_LPC_SIRQ3) {
-			prerror("LPC[%03x]: PSI irq %d out of range in"
-				" interrupt-map\n", lpc->chip_id, pirq);
-		} else {
-			uint32_t pin = pirq - P9_PSI_IRQ_LPC_SIRQ0;
-			lpc->sirq_routes[sirq] = pin;
-			prlog(PR_INFO, "LPC[%03x]: SerIRQ %d routed to PSI input %d\n",
-			      lpc->chip_id, sirq, pin);
-		}
-		imap += 5;
-		imap_size -= 5;
-	}
 }
 
 static void lpc_init_chip_p9(struct dt_node *opb_node)
@@ -1090,6 +1156,7 @@ static void lpc_init_chip_p9(struct dt_node *opb_node)
 	lpc->mbase = (void *)addr;
 	lpc->fw_idsel = 0xff;
 	lpc->fw_rdsz = 0xff;
+	lpc->node = lpc_node;
 	list_head_init(&lpc->clients);
 	init_lock(&lpc->lock);
 
@@ -1097,9 +1164,6 @@ static void lpc_init_chip_p9(struct dt_node *opb_node)
 	    dt_has_node_property(opb_node, "primary", NULL)) {
 		lpc_default_chip_id = gcid;
 	}
-
-	/* Parse interrupt map if any to setup initial routing */
-	lpc_parse_interrupt_map(lpc, lpc_node);
 
 	/* Mask all interrupts for now */
 	opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
@@ -1177,11 +1241,13 @@ bool lpc_ok(void)
 }
 
 void lpc_register_client(uint32_t chip_id,
-			 const struct lpc_client *clt)
+			 const struct lpc_client *clt,
+			 uint32_t policy)
 {
 	struct lpc_client_entry *ent;
 	struct proc_chip *chip;
 	struct lpcm *lpc;
+	bool has_routes;
 
 	chip = get_chip(chip_id);
 	assert(chip);
@@ -1191,11 +1257,30 @@ void lpc_register_client(uint32_t chip_id,
 			chip_id);
 		return;
 	}
+
+	has_routes =
+		chip->type == PROC_CHIP_P9_NIMBUS ||
+		chip->type == PROC_CHIP_P9_CUMULUS;
+
+	if (policy != IRQ_ATTR_TARGET_OPAL && !has_routes) {
+		prerror("LPC: Chip doesn't support OS interrupt policy\n");
+		return;
+	}
+
 	ent = malloc(sizeof(*ent));
 	assert(ent);
 	ent->clt = clt;
+	ent->policy = policy;
 	lock(&lpc->lock);
 	list_add(&lpc->clients, &ent->node);
+
+	if (has_routes) {
+		unsigned int i;
+		for (i = 0; i < LPC_NUM_SERIRQ; i++)
+			if (clt->interrupts & LPC_IRQ(i))
+				lpc_alloc_route(lpc, i, policy);
+	}
+
 	if (lpc->has_serirq)
 		lpc_setup_serirq(lpc);
 	unlock(&lpc->lock);

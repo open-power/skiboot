@@ -246,6 +246,7 @@ struct psi {
 	unsigned int		interrupt;
 	bool			active;
 	bool			no_lpc_irqs;
+	struct dt_node		*node;
 };
 
 extern void psi_set_link_polling(bool active);
