@@ -364,7 +364,8 @@ static void bmc_create_node(const struct HDIF_common_hdr *sp)
 	lpc = dt_new_addr(lpcm, "lpc", 0x0);
 	dt_add_property_cells(lpc, "#address-cells", 2);
 	dt_add_property_cells(lpc, "#size-cells", 1);
-	dt_add_property_strings(lpc, "compatible", "ibm,power9-lpc");
+	dt_add_property_strings(lpc, "compatible",
+				"ibm,power9-lpc", "ibm,power8-lpc");
 
 	dt_add_property_cells(lpc, "ranges",
 		0, 0, mem_bar, 0x10000000, /* MEM space */
