@@ -424,8 +424,7 @@ static void uart_setup_os_passthrough(void)
 {
 	char *path;
 
-	static struct lpc_client uart_lpc_os_client = {
-	};
+	static struct lpc_client uart_lpc_os_client;
 
 	dt_add_property_strings(uart_node, "status", "ok");
 	path = dt_get_path(uart_node);
