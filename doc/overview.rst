@@ -93,7 +93,7 @@ Memory
 We initially occupy a chunk of memory, "heap". We pass to the OS (Linux)
 a reservation of what we occupy (including stacks).
 
-In the source file include/config.h we include a memory map. This is
+In the source file include/mem-map.h we include a memory map. This is
 manually generated, not automatically generated.
 
 We use CCAN for a bunch of helper code, turning on things like DEBUG_LOCKS
@@ -122,5 +122,5 @@ Skiboot log
 -----------
 
 There is a circular log buffer that skiboot maintains. This can be
-accessed either from the FSP or through /dev/mem or through a debugfs
-patch that's currently floating around.
+accessed either from the FSP or through /dev/mem or through the sysfs
+file /sys/firmware/opal/msglog.
