@@ -763,8 +763,10 @@ void add_cpu_idle_state_properties(void)
 
 		/* We can only use the stop levels that HB has made available */
 		if (has_stop_inst) {
-			u32 level = 1ul << states[i].pm_ctrl_reg_val;
-			if (!(stop_levels & level))
+			u32 level = 31 - (states[i].pm_ctrl_reg_val &
+					 OPAL_PM_PSSCR_RL_MASK);
+
+			if (!(stop_levels & (1ul << level)))
 				continue;
 		}
 
