@@ -149,11 +149,7 @@ void add_opal_node(void)
 	size = (CPU_STACKS_BASE +
 		(uint64_t)(cpu_max_pir + 1) * STACK_SIZE) - SKIBOOT_BASE;
 
-	if (!opal_node) {
-		opal_node = dt_new(dt_root, "ibm,opal");
-		assert(opal_node);
-	}
-
+	opal_node = dt_new_check(dt_root, "ibm,opal");
 	dt_add_property_cells(opal_node, "#address-cells", 0);
 	dt_add_property_cells(opal_node, "#size-cells", 0);
 
