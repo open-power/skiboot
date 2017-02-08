@@ -200,7 +200,8 @@
 #define OPAL_XIVE_DUMP				142
 #define OPAL_XIVE_RESERVED3			143
 #define OPAL_XIVE_RESERVED4			144
-#define OPAL_LAST				144
+#define OPAL_SIGNAL_SYSTEM_RESET		145
+#define OPAL_LAST				145
 
 /* Device tree flags */
 

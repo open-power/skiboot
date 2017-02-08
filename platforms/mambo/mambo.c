@@ -19,6 +19,7 @@
 #include <device.h>
 #include <console.h>
 #include <chip.h>
+#include <cpu.h>
 #include <opal-api.h>
 #include <opal-internal.h>
 #include <time-utils.h>
@@ -211,8 +212,59 @@ static void mambo_rtc_init(void)
 	opal_register(OPAL_RTC_READ, mambo_rtc_read, 2);
 }
 
+static void mambo_system_reset_cpu(struct cpu_thread *cpu)
+{
+	uint32_t core_id;
+	uint32_t thread_id;
+	char tcl_cmd[50];
+
+	core_id = pir_to_core_id(cpu->pir);
+	thread_id = pir_to_thread_id(cpu->pir);
+
+	snprintf(tcl_cmd, sizeof(tcl_cmd), "mysim cpu %i:%i interrupt SystemReset", core_id, thread_id);
+	callthru_tcl(tcl_cmd, strlen(tcl_cmd));
+}
+
+#define SYS_RESET_ALL		-1
+#define SYS_RESET_ALL_OTHERS	-2
+
+static int64_t mambo_signal_system_reset(int32_t cpu_nr)
+{
+	struct cpu_thread *cpu;
+
+	if (cpu_nr < 0) {
+		if (cpu_nr < SYS_RESET_ALL_OTHERS)
+			return OPAL_PARAMETER;
+
+		for_each_cpu(cpu) {
+			if (cpu == this_cpu())
+				continue;
+			mambo_system_reset_cpu(cpu);
+
+		}
+		if (cpu_nr == SYS_RESET_ALL)
+			mambo_system_reset_cpu(this_cpu());
+
+		return OPAL_SUCCESS;
+
+	} else {
+		cpu = find_cpu_by_server(cpu_nr);
+		if (!cpu)
+			return OPAL_PARAMETER;
+
+		mambo_system_reset_cpu(cpu);
+		return OPAL_SUCCESS;
+	}
+}
+
+static void mambo_sreset_init(void)
+{
+	opal_register(OPAL_SIGNAL_SYSTEM_RESET, mambo_signal_system_reset, 1);
+}
+
 static void mambo_platform_init(void)
 {
+	mambo_sreset_init();
 	mambo_rtc_init();
 	bogus_disk_flash_init();
 }
