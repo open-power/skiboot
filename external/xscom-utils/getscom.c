@@ -60,6 +60,12 @@ static void print_chip_info(uint32_t chip_id)
 	case 0xd3:
 		name = "P8NVL (Naples) processor";
 		break;
+	case 0xd1:
+		name = "P9 (Nimbus) processor";
+		break;
+	case 0xd4:
+		name = "P9 (Cumulus) processor";
+		break;
 	case 0xe9:
 		name = "Centaur memory buffer";
 		break;
