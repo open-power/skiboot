@@ -3,5 +3,3 @@
 - Use IPMI for lock/unlock on host
 - Timeouts and flashing errors handling
 - Lock handling
-- Support pnor "update" mode which only update selected partitions
-
