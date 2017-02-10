@@ -160,7 +160,7 @@ static void pci_init_pcie_cap(struct phb *phb, struct pci_device *pd)
 		return;
 	}
 
-	pci_set_cap(pd, PCI_CFG_CAP_ID_EXP, ecap, false);
+	pci_set_cap(pd, PCI_CFG_CAP_ID_EXP, ecap, NULL, false);
 
 	/*
 	 * XXX We observe a problem on some PLX switches where one
@@ -197,7 +197,7 @@ static void pci_init_aer_cap(struct phb *phb, struct pci_device *pd)
 
 	pos = pci_find_ecap(phb, pd->bdfn, PCIECAP_ID_AER, NULL);
 	if (pos > 0)
-		pci_set_cap(pd, PCIECAP_ID_AER, pos, true);
+		pci_set_cap(pd, PCIECAP_ID_AER, pos, NULL, true);
 }
 
 void pci_init_capabilities(struct phb *phb, struct pci_device *pd)

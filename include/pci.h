@@ -74,7 +74,10 @@ struct pci_device {
 	uint32_t		sub_vdid;
 	uint32_t		class;
 	uint64_t		cap_list;
-	uint32_t		cap[64];
+	struct {
+		uint32_t	pos;
+		void		*data;
+	} cap[64];
 	uint32_t		mps;		/* Max payload size capability */
 
 	uint32_t		pcrf_start;
@@ -88,15 +91,17 @@ struct pci_device {
 	struct list_node	link;
 };
 
-static inline void pci_set_cap(struct pci_device *pd,
-			       int id, int pos, bool ext)
+static inline void pci_set_cap(struct pci_device *pd, int id,
+			       int pos, void *data, bool ext)
 {
 	if (!ext) {
 		pd->cap_list |= (0x1ul << id);
-		pd->cap[id] = pos;
+		pd->cap[id].pos = pos;
+		pd->cap[id].data = data;
 	} else {
 		pd->cap_list |= (0x1ul << (id + 32));
-		pd->cap[id + 32] = pos;
+		pd->cap[id + 32].pos = pos;
+		pd->cap[id + 32].data = data;
 	}
 }
 
@@ -113,9 +118,17 @@ static inline int pci_cap(struct pci_device *pd,
 			  int id, bool ext)
 {
 	if (!ext)
-		return pd->cap[id];
+		return pd->cap[id].pos;
 	else
-		return pd->cap[id + 32];
+		return pd->cap[id + 32].pos;
+}
+
+static inline void *pci_cap_data(struct pci_device *pd, int id, bool ext)
+{
+	if (!ext)
+		return pd->cap[id].data;
+	else
+		return pd->cap[id + 32].data;
 }
 
 /*
