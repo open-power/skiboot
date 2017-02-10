@@ -197,10 +197,9 @@ static void squash_blobs(struct dt_node *root)
 		squash_blobs(n);
 }
 
-static void dump_hdata_fdt(struct dt_node *root, const char *filename)
+static void dump_hdata_fdt(struct dt_node *root)
 {
 	void *fdt_blob;
-	FILE *f;
 
 	fdt_blob = create_dtb(root, false);
 
@@ -209,15 +208,7 @@ static void dump_hdata_fdt(struct dt_node *root, const char *filename)
 		return;
 	}
 
-	f = fopen(filename, "wb");
-	if (!f) {
-		fprintf(stderr, "Unable to open '%s' for writing\n", filename);
-		free(fdt_blob);
-		return;
-	}
-
-	fwrite(fdt_blob, fdt_totalsize(fdt_blob), 1, f);
-	fclose(f);
+	fwrite(fdt_blob, fdt_totalsize(fdt_blob), 1, stdout);
 
 	free(fdt_blob);
 }
@@ -225,22 +216,14 @@ static void dump_hdata_fdt(struct dt_node *root, const char *filename)
 int main(int argc, char *argv[])
 {
 	int fd, r, i = 0, opt_count = 0;
-	bool verbose = false, quiet = false, tree_only = false;
-	bool new_spira = false, blobs = false;
-	const char *fdt_filename = NULL;
+	bool verbose = false, quiet = false, new_spira = false, blobs = false;
 
 	while (argv[++i]) {
-		if (strcmp(argv[i], "-f") == 0) {
-			fdt_filename = argv[++i];
-			opt_count += 2;
-		} else if (strcmp(argv[i], "-v") == 0) {
+		if (strcmp(argv[i], "-v") == 0) {
 			verbose = true;
 			opt_count++;
 		} else if (strcmp(argv[i], "-q") == 0) {
 			quiet = true;
-			opt_count++;
-		} else if (strcmp(argv[i], "-t") == 0) {
-			tree_only = true;
 			opt_count++;
 		} else if (strcmp(argv[i], "-s") == 0) {
 			new_spira = true;
@@ -254,15 +237,17 @@ int main(int argc, char *argv[])
 	argc -= opt_count;
 	argv += opt_count;
 	if (argc != 3) {
-		errx(1, "Usage:\n"
-			"	hdata <opts> <spira-dump> <heap-dump>\n"
-			"	hdata <opts> -s <spirah-dump> <spiras-dump>\n"
-			"Options: \n"
-			"	-v Verbose\n"
-			"	-q Quiet mode\n"
-			"	-t Print the DT nodes only, no properties\n"
-			"	-f <filename> File to write the FDT into\n"
-			"       -b Keep blobs in the output\n");
+		errx(1, "Converts HDAT dumps to DTB.\n"
+		     "\n"
+		     "Usage:\n"
+		     "	hdata <opts> <spira-dump> <heap-dump>\n"
+		     "	hdata <opts> -s <spirah-dump> <spiras-dump>\n"
+		     "Options: \n"
+		     "	-v Verbose\n"
+		     "	-q Quiet mode\n"
+		     "	-b Keep blobs in the output\n"
+		     "\n"
+		     "Pipe to 'dtc -I dtb -O dts' for human readable\n");
 	}
 
 	/* Copy in spira dump (assumes little has changed!). */
@@ -334,10 +319,7 @@ int main(int argc, char *argv[])
 		squash_blobs(dt_root);
 
 	if (!quiet)
-		dump_dt(dt_root, 0, !tree_only);
-
-	if (fdt_filename)
-		dump_hdata_fdt(dt_root, fdt_filename);
+		dump_hdata_fdt(dt_root);
 
 	dt_free(dt_root);
 	return 0;

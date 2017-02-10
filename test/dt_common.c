@@ -47,7 +47,9 @@ static void dump_val(unsigned indent, const void *prop, size_t size)
 	}
 }
 
-static void dump_dt(const struct dt_node *root, unsigned indent, bool show_props)
+void dump_dt(const struct dt_node *root, unsigned indent, bool show_props);
+
+void dump_dt(const struct dt_node *root, unsigned indent, bool show_props)
 {
 	const struct dt_node *i;
 	const struct dt_property *p;
