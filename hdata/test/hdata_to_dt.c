@@ -151,6 +151,52 @@ static void undefined_bytes(void *p, size_t len)
 	VALGRIND_MAKE_MEM_UNDEFINED(p, len);
 }
 
+static u32 hash_prop(const struct dt_property *p)
+{
+	u32 i, hash = 0;
+
+	/* a stupid checksum */
+	for (i = 0; i < p->len; i++)
+		hash += ((p->prop[i] & ~0x10) + 1) * i;
+
+	return hash;
+}
+
+/*
+ * This filters out VPD blobs and other annoyances from the devicetree output.
+ * We don't actually care about the contents of the blob, we just want to make
+ * sure it's there and that we aren't accidently corrupting the contents.
+ */
+static void squash_blobs(struct dt_node *root)
+{
+	struct dt_node *n;
+	struct dt_property *p;
+
+	list_for_each(&root->properties, p, list) {
+		if (strstarts(p->name, DT_PRIVATE))
+			continue;
+
+		/*
+		 * Consider any property larger than 512 bytes a blob that can
+		 * be removed. This number was picked out of thin in so don't
+		 * feel bad about changing it.
+		 */
+		if (p->len > 512) {
+			u32 hash = hash_prop(p);
+			u32 *val = (u32 *) p->prop;
+
+			/* Add a sentinel so we know it was truncated */
+			val[0] = cpu_to_be32(0xcafebeef);
+			val[1] = cpu_to_be32(p->len);
+			val[2] = cpu_to_be32(hash);
+			p->len = 3 * sizeof(u32);
+		}
+	}
+
+	list_for_each(&root->children, n, list)
+		squash_blobs(n);
+}
+
 static void dump_hdata_fdt(struct dt_node *root, const char *filename)
 {
 	void *fdt_blob;
@@ -179,7 +225,8 @@ static void dump_hdata_fdt(struct dt_node *root, const char *filename)
 int main(int argc, char *argv[])
 {
 	int fd, r, i = 0, opt_count = 0;
-	bool verbose = false, quiet = false, tree_only = false, new_spira = false;
+	bool verbose = false, quiet = false, tree_only = false;
+	bool new_spira = false, blobs = false;
 	const char *fdt_filename = NULL;
 
 	while (argv[++i]) {
@@ -198,6 +245,9 @@ int main(int argc, char *argv[])
 		} else if (strcmp(argv[i], "-s") == 0) {
 			new_spira = true;
 			opt_count++;
+		} else if (strcmp(argv[i], "-b") == 0) {
+			blobs = true;
+			opt_count++;
 		}
 	}
 
@@ -211,7 +261,8 @@ int main(int argc, char *argv[])
 			"	-v Verbose\n"
 			"	-q Quiet mode\n"
 			"	-t Print the DT nodes only, no properties\n"
-			"	-f <filename> File to write the FDT into\n");
+			"	-f <filename> File to write the FDT into\n"
+			"       -b Keep blobs in the output\n");
 	}
 
 	/* Copy in spira dump (assumes little has changed!). */
@@ -278,6 +329,9 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "FATAL ERROR parsing HDAT\n");
 		exit(EXIT_FAILURE);
 	}
+
+	if (!blobs)
+		squash_blobs(dt_root);
 
 	if (!quiet)
 		dump_dt(dt_root, 0, !tree_only);
