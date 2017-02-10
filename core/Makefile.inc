@@ -2,8 +2,8 @@
 
 SUBDIRS += core
 CORE_OBJS = relocate.o console.o stack.o init.o chip.o mem_region.o
-CORE_OBJS += malloc.o lock.o cpu.o utils.o fdt.o opal.o interrupts.o
-CORE_OBJS += timebase.o opal-msg.o pci.o pci-virt.o pci-slot.o pcie-slot.o
+CORE_OBJS += malloc.o lock.o cpu.o utils.o fdt.o opal.o interrupts.o timebase.o
+CORE_OBJS += opal-msg.o pci.o pci-iov.o pci-virt.o pci-slot.o pcie-slot.o
 CORE_OBJS += pci-opal.o fast-reboot.o device.o exceptions.o trace.o affinity.o
 CORE_OBJS += vpd.o hostservices.o platform.o nvram.o nvram-format.o hmi.o
 CORE_OBJS += console-log.o ipmi.o time-utils.o pel.o pool.o errorlog.o
