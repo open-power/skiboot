@@ -1,7 +1,11 @@
 SUBDIRS += $(PLATDIR)/astbmc
 
-ASTBMC_OBJS = palmetto.o habanero.o firestone.o p8dtu.o p8dnu.o \
-	      garrison.o barreleye.o pnor.o common.o slots.o zaius.o
+ASTBMC_OBJS = pnor.o common.o slots.o \
+	      palmetto.o habanero.o firestone.o \
+	      p8dtu.o p8dnu.o \
+	      garrison.o barreleye.o \
+	      witherspoon.o zaius.o
+
 ASTBMC = $(PLATDIR)/astbmc/built-in.o
 $(ASTBMC): $(ASTBMC_OBJS:%=$(PLATDIR)/astbmc/%)
 
