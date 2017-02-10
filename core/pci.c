@@ -130,14 +130,76 @@ int64_t pci_find_ecap(struct phb *phb, uint16_t bdfn, uint16_t want,
 	return OPAL_UNSUPPORTED;
 }
 
+static void pci_init_pcie_cap(struct phb *phb, struct pci_device *pd)
+{
+	int64_t ecap = 0;
+	uint16_t reg;
+	uint32_t val;
+
+	/* On the upstream port of PLX bridge 8724 (rev ba), PCI_STATUS
+	 * register doesn't have capability indicator though it support
+	 * various PCI capabilities. So we need ignore that bit when
+	 * looking for PCI capabilities on the upstream port, which is
+	 * limited to one that seats directly under root port.
+	 */
+	if (pd->vdid == 0x872410b5 && pd->parent && !pd->parent->parent) {
+		uint8_t rev;
+
+		pci_cfg_read8(phb, pd->bdfn, PCI_CFG_REV_ID, &rev);
+		if (rev == 0xba)
+			ecap = __pci_find_cap(phb, pd->bdfn,
+					      PCI_CFG_CAP_ID_EXP, false);
+		else
+			ecap = pci_find_cap(phb, pd->bdfn, PCI_CFG_CAP_ID_EXP);
+	} else {
+		ecap = pci_find_cap(phb, pd->bdfn, PCI_CFG_CAP_ID_EXP);
+	}
+
+	if (ecap <= 0) {
+		pd->dev_type = PCIE_TYPE_LEGACY;
+		return;
+	}
+
+	pci_set_cap(pd, PCI_CFG_CAP_ID_EXP, ecap, false);
+
+	/*
+	 * XXX We observe a problem on some PLX switches where one
+	 * of the downstream ports appears as an upstream port, we
+	 * fix that up here otherwise, other code will misbehave
+	 */
+	pci_cfg_read16(phb, pd->bdfn, ecap + PCICAP_EXP_CAPABILITY_REG, &reg);
+	pd->dev_type = GETFIELD(PCICAP_EXP_CAP_TYPE, reg);
+	if (pd->parent && pd->dev_type == PCIE_TYPE_SWITCH_UPPORT &&
+	    pd->parent->dev_type == PCIE_TYPE_SWITCH_UPPORT &&
+	    pd->vdid == 0x874810b5) {
+		PCIDBG(phb, pd->bdfn, "Fixing up bad PLX downstream port !\n");
+		pd->dev_type = PCIE_TYPE_SWITCH_DNPORT;
+	}
+
+	/* XXX Handle ARI */
+	if (pd->dev_type == PCIE_TYPE_SWITCH_DNPORT ||
+	    pd->dev_type == PCIE_TYPE_ROOT_PORT)
+		pd->scan_map = 0x1;
+
+	/* Read MPS capability, whose maximal size is 4096 */
+	pci_cfg_read32(phb, pd->bdfn, ecap + PCICAP_EXP_DEVCAP, &val);
+	pd->mps = (128 << GETFIELD(PCICAP_EXP_DEVCAP_MPSS, val));
+	if (pd->mps > 4096)
+		pd->mps = 4096;
+}
+
+void pci_init_capabilities(struct phb *phb, struct pci_device *pd)
+{
+	pci_init_pcie_cap(phb, pd);
+}
+
 static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *parent,
 				       uint16_t bdfn)
 {
 	struct pci_device *pd = NULL;
-	uint32_t retries, vdid, val;
-	int64_t rc, ecap;
+	uint32_t retries, vdid;
+	int64_t rc;
 	uint8_t htype;
-	uint16_t capreg;
 	bool had_crs = false;
 
 	for (retries = 0; retries < 40; retries++) {
@@ -188,56 +250,7 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	pd->scan_map = 0xffffffff; /* Default */
 	pd->primary_bus = (bdfn >> 8);
 
-	/* On the upstream port of PLX bridge 8724 (rev ba), PCI_STATUS
-	 * register doesn't have capability indicator though it support
-	 * various PCI capabilities. So we need ignore that bit when
-	 * looking for PCI capabilities on the upstream port, which is
-	 * limited to one that seats directly under root port.
-	 */
-	if (vdid == 0x872410b5 && parent && !parent->parent) {
-		uint8_t rev;
-
-		pci_cfg_read8(phb, bdfn, PCI_CFG_REV_ID, &rev);
-		if (rev == 0xba)
-			ecap = __pci_find_cap(phb, bdfn,
-					      PCI_CFG_CAP_ID_EXP, false);
-		else
-			ecap = pci_find_cap(phb, bdfn, PCI_CFG_CAP_ID_EXP);
-	} else {
-		ecap = pci_find_cap(phb, bdfn, PCI_CFG_CAP_ID_EXP);
-	}
-	if (ecap > 0) {
-		pci_set_cap(pd, PCI_CFG_CAP_ID_EXP, ecap, false);
-		pci_cfg_read16(phb, bdfn, ecap + PCICAP_EXP_CAPABILITY_REG,
-			       &capreg);
-		pd->dev_type = GETFIELD(PCICAP_EXP_CAP_TYPE, capreg);
-
-		/*
-		 * XXX We observe a problem on some PLX switches where one
-		 * of the downstream ports appears as an upstream port, we
-		 * fix that up here otherwise, other code will misbehave
-		 */
-		if (pd->parent && pd->dev_type == PCIE_TYPE_SWITCH_UPPORT &&
-		    pd->parent->dev_type == PCIE_TYPE_SWITCH_UPPORT &&
-		    vdid == 0x874810b5) {
-			PCIDBG(phb, bdfn,
-			       "Fixing up bad PLX downstream port !\n");
-			pd->dev_type = PCIE_TYPE_SWITCH_DNPORT;
-		}
-
-		/* XXX Handle ARI */
-		if (pd->dev_type == PCIE_TYPE_SWITCH_DNPORT ||
-		    pd->dev_type == PCIE_TYPE_ROOT_PORT)
-			pd->scan_map = 0x1;
-
-		/* Read MPS capability, whose maximal size is 4096 */
-		pci_cfg_read32(phb, bdfn, ecap + PCICAP_EXP_DEVCAP, &val);
-		pd->mps = (128 << GETFIELD(PCICAP_EXP_DEVCAP_MPSS, val));
-		if (pd->mps > 4096)
-			pd->mps = 4096;
-	} else {
-		pd->dev_type = PCIE_TYPE_LEGACY;
-	}
+	pci_init_capabilities(phb, pd);
 
 	/* If it's a bridge, sanitize the bus numbers to avoid forwarding
 	 *

@@ -399,6 +399,7 @@ extern void pci_add_device_nodes(struct phb *phb,
 extern int64_t pci_find_cap(struct phb *phb, uint16_t bdfn, uint8_t cap);
 extern int64_t pci_find_ecap(struct phb *phb, uint16_t bdfn, uint16_t cap,
 			     uint8_t *version);
+extern void pci_init_capabilities(struct phb *phb, struct pci_device *pd);
 extern void pci_device_init(struct phb *phb, struct pci_device *pd);
 extern struct pci_device *pci_walk_dev(struct phb *phb,
 				       struct pci_device *pd,
