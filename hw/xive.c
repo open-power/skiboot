@@ -3627,7 +3627,7 @@ static void xive_cleanup_cpu_cam(struct cpu_thread *c)
 {
 	struct xive_cpu_state *xs = c->xstate;
 	struct xive *x = xs->xive;
-	void *ind_tm_base = x->ic_base + 4 * IC_PAGE_SIZE;
+	void *ind_tm_base = x->ic_base + (4 << x->ic_shift);
 
 	/* Setup indirect access to the corresponding thread */
 	xive_regw(x, PC_TCTXT_INDIR0,
@@ -4006,6 +4006,133 @@ static int64_t opal_xive_free_irq(uint32_t girq)
 	return OPAL_SUCCESS;
 }
 
+static int64_t opal_xive_dump_tm(uint32_t offset, const char *n, uint32_t pir)
+{
+	struct cpu_thread *c = find_cpu_by_pir(pir);
+	struct xive_cpu_state *xs;
+	struct xive *x;
+	void *ind_tm_base;
+	uint64_t v0,v1;
+
+	if (!c)
+		return OPAL_PARAMETER;
+	xs = c->xstate;
+	if (!xs || !xs->tm_ring1)
+		return OPAL_INTERNAL_ERROR;
+	x = xs->xive;
+	ind_tm_base = x->ic_base + (4 << x->ic_shift);
+
+	lock(&x->lock);
+
+	/* Setup indirect access to the corresponding thread */
+	xive_regw(x, PC_TCTXT_INDIR0,
+		  PC_TCTXT_INDIR_VALID |
+		  SETFIELD(PC_TCTXT_INDIR_THRDID, 0ull, pir & 0xff));
+
+	v0 = in_be64(ind_tm_base + offset);
+	v1 = in_be64(ind_tm_base + offset + 8);
+	prlog(PR_INFO, "CPU[%04x]: TM state for QW %s\n", pir, n);
+	prlog(PR_INFO, "CPU[%04x]: NSR CPPR IPB LSMFB ACK# INC AGE PIPR"
+	      " W2       W3\n", pir);
+	prlog(PR_INFO, "CPU[%04x]: %02x  %02x   %02x  %02x    %02x   "
+	       "%02x  %02x  %02x   %08x %08x\n", pir,
+	      (uint8_t)(v0 >> 58) & 0xff, (uint8_t)(v0 >> 48) & 0xff,
+	      (uint8_t)(v0 >> 40) & 0xff, (uint8_t)(v0 >> 32) & 0xff,
+	      (uint8_t)(v0 >> 24) & 0xff, (uint8_t)(v0 >> 16) & 0xff,
+	      (uint8_t)(v0 >>  8) & 0xff, (uint8_t)(v0      ) & 0xff,
+	      (uint32_t)(v1 >> 32) & 0xffffffff,
+	      (uint32_t)(v1 & 0xffffffff));
+
+
+	xive_regw(x, PC_TCTXT_INDIR0, 0);
+	unlock(&x->lock);
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t opal_xive_dump_vp(uint32_t vp_id)
+{
+	uint32_t blk, idx;
+	uint8_t order;
+	bool group;
+	struct xive *x;
+	struct xive_vp *vp;
+	uint32_t *vpw;
+
+	if (!xive_decode_vp(vp_id, &blk, &idx, &order, &group))
+		return OPAL_PARAMETER;
+
+	x = xive_from_vc_blk(blk);
+	if (!x)
+		return OPAL_PARAMETER;
+	vp = xive_get_vp(x, idx);
+	if (!vp)
+		return OPAL_PARAMETER;
+	lock(&x->lock);
+
+	xive_vpc_scrub_clean(x, blk, idx);
+
+	vpw = ((uint32_t *)vp) + (group ? 8 : 0);
+	prlog(PR_INFO, "VP[%08x]: 0..3: %08x %08x %08x %08x\n", vp_id,
+	      vpw[0], vpw[1], vpw[2], vpw[3]);
+	prlog(PR_INFO, "VP[%08x]: 4..7: %08x %08x %08x %08x\n", vp_id,
+	      vpw[4], vpw[5], vpw[6], vpw[7]);
+	unlock(&x->lock);
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t opal_xive_dump_emu(uint32_t pir)
+{
+	struct cpu_thread *c = find_cpu_by_pir(pir);
+	struct xive_cpu_state *xs;
+
+	if (!c)
+		return OPAL_PARAMETER;
+
+	prlog(PR_INFO, "CPU[%04x]: XIVE emulation state\n", pir);
+
+	xs = c->xstate;
+	if (!xs) {
+		prlog(PR_INFO, "  <none>\n");
+		return OPAL_SUCCESS;
+	}
+	lock(&xs->lock);
+
+	prlog(PR_INFO, "CPU[%04x]: cppr=%02x mfrr=%02x pend=%02x"
+	      " prev_cppr=%02x\n", pir,
+	      xs->cppr, xs->mfrr, xs->pending, xs->prev_cppr);
+
+	prlog(PR_INFO, "CPU[%04x]: EQ IDX=%x MSK=%x G=%d [%08x %08x ...]\n",
+	      pir,  xs->eqptr, xs->eqmsk, xs->eqgen,
+	      xs->eqbuf[(xs->eqptr + 0) & xs->eqmsk],
+	      xs->eqbuf[(xs->eqptr + 1) & xs->eqmsk]);
+
+	unlock(&xs->lock);
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t opal_xive_dump(uint32_t type, uint32_t id)
+{
+	switch (type) {
+	case XIVE_DUMP_TM_HYP:
+		return opal_xive_dump_tm(TM_QW3_HV_PHYS, "PHYS", id);
+	case XIVE_DUMP_TM_POOL:
+		return opal_xive_dump_tm(TM_QW2_HV_POOL, "POOL", id);
+	case XIVE_DUMP_TM_OS:
+		return opal_xive_dump_tm(TM_QW1_OS, "OS  ", id);
+	case XIVE_DUMP_TM_USER:
+		return opal_xive_dump_tm(TM_QW0_USER, "USER", id);
+	case XIVE_DUMP_VP:
+		return opal_xive_dump_vp(id);
+	case XIVE_DUMP_EMU_STATE:
+		return opal_xive_dump_emu(id);
+	default:
+		return OPAL_PARAMETER;
+	}
+}
+
 static void xive_init_globals(void)
 {
 	uint32_t i;
@@ -4086,5 +4213,6 @@ void init_xive(void)
 	opal_register(OPAL_XIVE_FREE_VP_BLOCK, opal_xive_free_vp_block, 1);
 	opal_register(OPAL_XIVE_GET_VP_INFO, opal_xive_get_vp_info, 5);
 	opal_register(OPAL_XIVE_SET_VP_INFO, opal_xive_set_vp_info, 3);
+	opal_register(OPAL_XIVE_DUMP, opal_xive_dump, 2);
 }
 

@@ -196,8 +196,8 @@
 #define OPAL_XIVE_SET_VP_INFO			138
 #define OPAL_XIVE_ALLOCATE_IRQ			139
 #define OPAL_XIVE_FREE_IRQ			140
-#define OPAL_XIVE_RESERVED1			141
-#define OPAL_XIVE_RESERVED2			142
+#define OPAL_XIVE_SYNC				141
+#define OPAL_XIVE_DUMP				142
 #define OPAL_XIVE_RESERVED3			143
 #define OPAL_XIVE_RESERVED4			144
 #define OPAL_LAST				144
@@ -1125,6 +1125,16 @@ enum {
 /* "Any chip" replacement for chip ID for allocation functions */
 enum {
 	OPAL_XIVE_ANY_CHIP		= 0xffffffff,
+};
+
+/* Dump options */
+enum {
+	XIVE_DUMP_TM_HYP	= 0,
+	XIVE_DUMP_TM_POOL	= 1,
+	XIVE_DUMP_TM_OS		= 2,
+	XIVE_DUMP_TM_USER	= 3,
+	XIVE_DUMP_VP		= 4,
+	XIVE_DUMP_EMU_STATE	= 5,
 };
 
 #endif /* __ASSEMBLY__ */
