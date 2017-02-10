@@ -231,6 +231,18 @@ int main(int argc, char *argv[])
 		} else if (strcmp(argv[i], "-b") == 0) {
 			blobs = true;
 			opt_count++;
+		} else if (strcmp(argv[i], "-7") == 0) {
+			fake_pvr_type = PVR_TYPE_P7;
+			opt_count++;
+		} else if (strcmp(argv[i], "-8E") == 0) {
+			fake_pvr_type = PVR_TYPE_P8;
+			opt_count++;
+		} else if (strcmp(argv[i], "-8") == 0) {
+			fake_pvr_type = PVR_TYPE_P8;
+			opt_count++;
+		} else if (strcmp(argv[i], "-9") == 0) {
+			fake_pvr_type = PVR_TYPE_P9;
+			opt_count++;
 		}
 	}
 
