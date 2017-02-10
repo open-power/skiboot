@@ -318,9 +318,6 @@ static int64_t phb3_pcicfg_write##size(struct phb *phb, uint32_t bdfn,	\
 		return OPAL_HARDWARE;					\
 	}								\
 									\
-	phb3_pcicfg_filter(phb, bdfn, offset, sizeof(type),             \
-			   (uint32_t *)&data, true);			\
-									\
 	addr = PHB_CA_ENABLE;						\
 	addr = SETFIELD(PHB_CA_BDFN, addr, bdfn);			\
 	addr = SETFIELD(PHB_CA_REG, addr, offset);			\
@@ -336,6 +333,9 @@ static int64_t phb3_pcicfg_write##size(struct phb *phb, uint32_t bdfn,	\
 		out_le##size(p->regs + PHB_CONFIG_DATA +		\
 			     (offset & (4 - sizeof(type))), data);	\
 	}								\
+									\
+	phb3_pcicfg_filter(phb, bdfn, offset, sizeof(type),             \
+			   (uint32_t *)&data, true);			\
 									\
         return OPAL_SUCCESS;						\
 }
