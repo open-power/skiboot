@@ -645,29 +645,16 @@ static int phb3_device_init(struct phb *phb,
 			    struct pci_device *dev,
 			    void *data __unused)
 {
-	int ecap = 0;
-	int aercap = 0;
+	int ecap, aercap;
 
 	/* Some special adapter tweaks for devices directly under the PHB */
 	phb3_check_device_quirks(phb, dev);
 
-	/* Figure out PCIe & AER capability */
-	if (pci_has_cap(dev, PCI_CFG_CAP_ID_EXP, false)) {
-		ecap = pci_cap(dev, PCI_CFG_CAP_ID_EXP, false);
-
-		if (!pci_has_cap(dev, PCIECAP_ID_AER, true)) {
-			aercap = pci_find_ecap(phb, dev->bdfn,
-					       PCIECAP_ID_AER, NULL);
-			if (aercap > 0)
-				pci_set_cap(dev, PCIECAP_ID_AER, aercap, true);
-		} else {
-			aercap = pci_cap(dev, PCIECAP_ID_AER, true);
-		}
-	}
-
 	/* Common initialization for the device */
 	pci_device_init(phb, dev);
 
+	ecap = pci_cap(dev, PCI_CFG_CAP_ID_EXP, false);
+	aercap = pci_cap(dev, PCIECAP_ID_AER, true);
 	if (dev->dev_type == PCIE_TYPE_ROOT_PORT)
 		phb3_root_port_init(phb, dev, ecap, aercap);
 	else if (dev->dev_type == PCIE_TYPE_SWITCH_UPPORT ||

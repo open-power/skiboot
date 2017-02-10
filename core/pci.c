@@ -188,9 +188,22 @@ static void pci_init_pcie_cap(struct phb *phb, struct pci_device *pd)
 		pd->mps = 4096;
 }
 
+static void pci_init_aer_cap(struct phb *phb, struct pci_device *pd)
+{
+	int64_t pos;
+
+	if (!pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false))
+		return;
+
+	pos = pci_find_ecap(phb, pd->bdfn, PCIECAP_ID_AER, NULL);
+	if (pos > 0)
+		pci_set_cap(pd, PCIECAP_ID_AER, pos, true);
+}
+
 void pci_init_capabilities(struct phb *phb, struct pci_device *pd)
 {
 	pci_init_pcie_cap(phb, pd);
+	pci_init_aer_cap(phb, pd);
 }
 
 static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *parent,
