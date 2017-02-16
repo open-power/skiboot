@@ -1,16 +1,15 @@
 #!/bin/bash
 
-
-if [ -z "$MAMBO_PATH" ]; then
-    MAMBO_PATH=/opt/ibm/systemsim-p9/
+if [ -z "$P9MAMBO_PATH" ]; then
+    P9MAMBO_PATH=/opt/ibm/systemsim-p9/
 fi
 
-if [ -z "$MAMBO_BINARY" ]; then
-    MAMBO_BINARY="/run/p9/power9"
+if [ -z "$P9MAMBO_BINARY" ]; then
+    P9MAMBO_BINARY="/run/p9/power9"
 fi
 
-if [ ! -x "$MAMBO_PATH/$MAMBO_BINARY" ]; then
-    echo "Could not find executable MAMBO_BINARY ($MAMBO_PATH/$MAMBO_BINARY). Skipping hello_world test";
+if [ ! -x "$P9MAMBO_PATH/$P9MAMBO_BINARY" ]; then
+    echo "Could not find executable P9MAMBO_BINARY ($P9MAMBO_PATH/$MAMBO_BINARY). Skipping hello_world test";
     exit 0;
 fi
 
@@ -38,7 +37,7 @@ trap "rm -f -- '$t'" EXIT
 ( cd external/mambo; 
 cat <<EOF | expect
 set timeout 30
-spawn $MAMBO_PATH/$MAMBO_BINARY -n -f ../../test/hello_world/run_hello_world.tcl
+spawn $P9MAMBO_PATH/$P9MAMBO_BINARY -n -f ../../test/hello_world/run_hello_world.tcl
 expect {
 timeout { send_user "\nTimeout waiting for hello world\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
