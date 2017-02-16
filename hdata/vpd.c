@@ -71,6 +71,146 @@ static const struct card_info card_table[] = {
 	/* Other cards */
 };
 
+struct vpd_key_map {
+	const char *keyword;		/* 2 char keyword  */
+	const char *description;
+};
+
+static const struct vpd_key_map vpd_key_table[] = {
+	{"AA", "ac-power-supply"},
+	{"AM", "air-mover"},
+	{"AV", "anchor-card"},
+
+	{"BA", "bus-adapter-card"},
+	{"BC", "battery-charger"},
+	{"BD", "bus-daughter-card"},
+	{"BE", "bus-expansion-card"},
+	{"BP", "backplane"},
+	{"BR", "backplane-riser"},
+	{"BX", "backplane-extender"},
+
+	{"CA", "calgary-bridge"},
+	{"CB", "infiniband-connector"},
+	{"CC", "clock-card"},
+	{"CD", "card-connector"},
+	{"CE", "ethernet-connector"},
+	{"CL", "calgary-phb"},
+	{"CI", "capacity-card"},
+	{"CO", "sma-connector"},
+	{"CP", "processor-capacity-card"},
+	{"CR", "rio-connector"},
+	{"CS", "serial-connector"},
+	{"CU", "usb-connector"},
+
+	{"DB", "dasd-backplane"},
+	{"DC", "drawer-card"},
+	{"DE", "drawer-extension"},
+	{"DI", "drawer-interposer"},
+	{"DL", "p7ih-dlink-connector"},
+	{"DT", "legacy-pci-card"},
+	{"DV", "media-drawer-led"},
+
+	{"EI", "enclosure-led"},
+	{"EF", "enclosure-fault-led"},
+	{"ES", "embedded-sas"},
+	{"ET", "ethernet-riser"},
+	{"EV", "enclosure"},
+
+	{"FM", "frame"},
+
+	{"HB", "host-rio-pci-card"},
+	{"HD", "high-speed-card"},
+	{"HM", "hmc-connector"},
+
+	{"IB", "io-backplane"},
+	{"IC", "io-card"},
+	{"ID", "ide-connector"},
+	{"II", "io-drawer-led"},
+	{"IP", "interplane-card"},
+	{"IS", "smp-vbus-cable"},
+	{"IT", "enclosure-cable"},
+	{"IV", "io-enclosure"},
+
+	{"KV", "keyboard-led"},
+
+	{"L2", "l2-cache-module"},
+	{"L3", "l3-cache-module"},
+	{"LC", "squadrons-light-connector"},
+	{"LR", "p7ih-connector"},
+	{"LO", "system-locate-led"},
+	{"LT", "squadrons-light-strip"},
+
+	{"MB", "media-backplane"},
+	{"ME", "map-extension"},
+	{"MM", "mip-meter"},
+	{"MS", "ms-dimm"},
+
+	{"NB", "nvram-battery"},
+	{"NC", "sp-node-controller"},
+	{"ND", "numa-dimm"},
+
+	{"OD", "cuod-card"},
+	{"OP", "op-panel"},
+	{"OS", "oscillator"},
+
+	{"P2", "ioc"},
+	{"P5", "ioc-bridge"},
+	{"PB", "io-drawer-backplane"},
+	{"PC", "power-capacitor"},
+	{"PD", "processor-card"},
+	{"PF", "processor"},
+	{"PI", "ioc-phb"},
+	{"PO", "spcn"},
+	{"PN", "spcn-connector"},
+	{"PR", "pci-riser-card"},
+	{"PS", "power-supply"},
+	{"PT", "pass-through-card"},
+	{"PX", "psc-sync-card"},
+	{"PW", "power-connector"},
+
+	{"RG", "regulator"},
+	{"RI", "riser"},
+	{"RK", "rack-indicator"},
+	{"RW", "riscwatch-connector"},
+
+	{"SA", "sys-attn-led"},
+	{"SB", "backup-sysvpd"},
+	{"SC", "scsi-connector"},
+	{"SD", "sas-connector"},
+	{"SI", "scsi-ide-converter"},
+	{"SL", "phb-slot"},
+	{"SP", "service-processor"},
+	{"SR", "service-card"},
+	{"SS", "soft-switch"},
+	{"SV", "system-vpd"},
+	{"SY", "legacy-sysvpd"},
+
+	{"TD", "tod-clock"},
+	{"TI", "torrent-pcie-phb"},
+	{"TL", "torrent-riser"},
+	{"TM", "thermal-sensor"},
+	{"TP", "tpmd-adapter"},
+	{"TR", "torrent-bridge"},
+
+	{"VV", "root-node-vpd"},
+
+	{"WD", "water_device"},
+};
+
+static const char *vpd_map_name(const char *vpd_name)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(vpd_key_table); i++)
+		if (!strcmp(vpd_key_table[i].keyword, vpd_name))
+			return vpd_key_table[i].description;
+
+	prlog(PR_WARNING, "VPD: Could not map FRU ID %s to a known name\n",
+	      vpd_name);
+
+	return "Unknown";
+}
+
 static struct dt_node *dt_create_vpd_node(struct dt_node *parent,
 					  const struct slca_entry *entry);
 
@@ -146,293 +286,6 @@ static void vpd_vini_parse(struct dt_node *node,
 	return;
 no_memory:
 	prerror("VPD: memory allocation failure in VINI parsing\n");
-}
-
-static const char *vpd_map_name(const char *vpd_name)
-{
-	/* vpd_name is a 2 char array */
-	switch (vpd_name[0]) {
-	case 'A':
-		switch (vpd_name[1]) {
-		case 'A':
-			return "ac-power-supply";
-		case 'M':
-			return "air-mover";
-		case 'V':
-			return "anchor-card";
-		}
-		break;
-	case 'B':
-		switch (vpd_name[1]) {
-		case 'A':
-			return "bus-adapter-card";
-		case 'C':
-			return "battery-charger";
-		case 'D':
-			return "bus-daughter-card";
-		case 'E':
-			return "bus-expansion-card";
-		case 'P':
-			return "backplane";
-		case 'R':
-			return "backplane-riser";
-		case 'X':
-			return "backplane-extender";
-		}
-		break;
-	case 'C':
-		switch (vpd_name[1]) {
-		case 'A':
-			return "calgary-bridge";
-		case 'B':
-			return "infiniband-connector";
-		case 'C':
-			return "clock-card";
-		case 'D':
-			return "card-connector";
-		case 'E':
-			return "ethernet-connector";
-		case 'L':
-			return "calgary-phb";
-		case 'I':
-			return "capacity-card";
-		case 'O':
-			return "sma-connector";
-		case 'P':
-			return "processor-capacity-card";
-		case 'R':
-			return "rio-connector";
-		case 'S':
-			return "serial-connector";
-		case 'U':
-			return "usb-connector";
-		}
-		break;
-	case 'D':
-		switch (vpd_name[1]) {
-		case 'B':
-			return "dasd-backplane";
-		case 'C':
-			return "drawer-card";
-		case 'E':
-			return "drawer-extension";
-		case 'I':
-			return "drawer-interposer";
-		case 'L':
-			return "p7ih-dlink-connector";
-		case 'T':
-			return "legacy-pci-card";
-		case 'V':
-			return "media-drawer-led";
-		}
-		break;
-	case 'E':
-		switch (vpd_name[1]) {
-		case 'I':
-			return "enclosure-led";
-		case 'F':
-			return "enclosure-fault-led";
-		case 'S':
-			return "embedded-sas";
-		case 'T':
-			return "ethernet-riser";
-		case 'V':
-			return "enclosure";
-		}
-		break;
-	case 'F':
-		switch (vpd_name[1]) {
-		case 'M':
-			return "frame";
-		}
-		break;
-	case 'H':
-		switch (vpd_name[1]) {
-		case 'B':
-			return "host-rio-pci-card";
-		case 'D':
-			return "high-speed-card";
-		case 'M':
-			return "hmc-connector";
-		}
-		break;
-	case 'I':
-		switch (vpd_name[1]) {
-		case 'B':
-			return "io-backplane";
-		case 'C':
-			return "io-card";
-		case 'D':
-			return "ide-connector";
-		case 'I':
-			return "io-drawer-led";
-		case 'P':
-			return "interplane-card";
-		case 'S':
-			return "smp-vbus-cable";
-		case 'T':
-			return "enclosure-cable";
-		case 'V':
-			return "io-enclosure";
-		}
-		break;
-	case 'K':
-		switch (vpd_name[1]) {
-		case 'V':
-			return "keyboard-led";
-		}
-		break;
-	case 'L':
-		switch (vpd_name[1]) {
-		case '2':
-			return "l2-cache-module";
-		case '3':
-			return "l3-cache-module";
-		case 'C':
-			return "squadrons-light-connector";
-		case 'R':
-			return "p7ih-connector";
-		case 'O':
-			return "system-locate-led";
-		case 'T':
-			return "squadrons-light-strip";
-		}
-		break;
-	case 'M':
-		switch (vpd_name[1]) {
-		case 'B':
-			return "media-backplane";
-		case 'E':
-			return "map-extension";
-		case 'M':
-			return "mip-meter";
-		case 'S':
-			return "ms-dimm";
-		}
-		break;
-	case 'N':
-		switch (vpd_name[1]) {
-		case 'B':
-			return "nvram-battery";
-		case 'C':
-			return "sp-node-controller";
-		case 'D':
-			return "numa-dimm";
-		}
-		break;
-	case 'O':
-		switch (vpd_name[1]) {
-		case 'D':
-			return "cuod-card";
-		case 'P':
-			return "op-panel";
-		case 'S':
-			return "oscillator";
-		}
-		break;
-	case 'P':
-		switch (vpd_name[1]) {
-		case '2':
-			return "ioc";
-		case '5':
-			return "ioc-bridge";
-		case 'B':
-			return "io-drawer-backplane";
-		case 'C':
-			return "power-capacitor";
-		case 'D':
-			return "processor-card";
-		case 'F':
-			return "processor";
-		case 'I':
-			return "ioc-phb";
-		case 'O':
-			return "spcn";
-		case 'N':
-			return "spcn-connector";
-		case 'R':
-			return "pci-riser-card";
-		case 'S':
-			return "power-supply";
-		case 'T':
-			return "pass-through-card";
-		case 'X':
-			return "psc-sync-card";
-		case 'W':
-			return "power-connector";
-		}
-		break;
-	case 'R':
-		switch (vpd_name[1]) {
-		case 'G':
-			return "regulator";
-		case 'I':
-			return "riser";
-		case 'K':
-			return "rack-indicator";
-		case 'W':
-			return "riscwatch-connector";
-		}
-		break;
-	case 'S':
-		switch (vpd_name[1]) {
-		case 'A':
-			return "sys-attn-led";
-		case 'B':
-			return "backup-sysvpd";
-		case 'C':
-			return "scsi-connector";
-		case 'D':
-			return "sas-connector";
-		case 'I':
-			return "scsi-ide-converter";
-		case 'L':
-			return "phb-slot";
-		case 'P':
-			return "service-processor";
-		case 'R':
-			return "service-card";
-		case 'S':
-			return "soft-switch";
-		case 'V':
-			return "system-vpd";
-		case 'Y':
-			return "legacy-sysvpd";
-		}
-		break;
-	case 'T':
-		switch (vpd_name[1]) {
-		case 'D':
-			return "tod-clock";
-		case 'I':
-			return "torrent-pcie-phb";
-		case 'L':
-			return "torrent-riser";
-		case 'M':
-			return "thermal-sensor";
-		case 'P':
-			return "tpmd-adapter";
-		case 'R':
-			return "torrent-bridge";
-		}
-		break;
-	case 'V':
-		switch (vpd_name[1]) {
-		case 'V':
-			return "root-node-vpd";
-		}
-		break;
-	case 'W':
-		switch (vpd_name[1]) {
-		case 'D':
-			return "water_device";
-		}
-		break;
-	}
-
-	prlog(PR_WARNING,
-	      "VPD: Could not map FRU ID %s to a known name\n", vpd_name);
-	return "Unknown";
 }
 
 static bool valid_child_entry(const struct slca_entry *entry)
