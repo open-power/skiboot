@@ -278,6 +278,12 @@ static void astbmc_fixup_dt(void)
 		if (dt_has_node_property(n, "#address-cells", NULL))
 			break;
 	}
+	dt_for_each_compatible(dt_root, n, "ibm,power9-lpc") {
+		if (!primary_lpc || dt_has_node_property(n, "primary", NULL))
+			primary_lpc = n;
+		if (dt_has_node_property(n, "#address-cells", NULL))
+			break;
+	}
 
 	if (!primary_lpc)
 		return;
