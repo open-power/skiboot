@@ -770,6 +770,8 @@ void add_cpu_idle_state_properties(void)
 				continue;
 		}
 
+		prlog(PR_NOTICE, "SLW: Enabling: %s\n", states[i].name);
+
 		/*
 		 * If a state is supported add each of its property
 		 * to its corresponding property buffer.
