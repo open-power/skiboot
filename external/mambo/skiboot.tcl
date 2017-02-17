@@ -202,6 +202,13 @@ set reg [list $fake_nvram_start $fake_nvram_size ]
 mysim of addprop $fake_nvram_node array64 "reg" reg
 mysim of addprop $fake_nvram_node empty "name" "ibm,fake-nvram"
 
+# Allow P9 to use all idle states
+if { $default_config == "P9" } {
+    set opal_node [mysim of addchild $root_node "ibm,opal" ""]
+    set power_mgt_node [mysim of addchild $opal_node "power-mgt" ""]
+    mysim of addprop $power_mgt_node int "ibm,enabled-stop-levels" 0xffffffff
+}
+
 # Init CPUs
 set pir 0
 for { set c 0 } { $c < $mconf(cpus) } { incr c } {
