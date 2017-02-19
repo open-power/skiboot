@@ -218,9 +218,23 @@ static int64_t pcie_slot_set_power_state_ext(struct pci_slot *slot, uint8_t val,
 	/* The power supply to the slot should be always on when surprise
 	 * hotplug is claimed. For this case, update with the requested
 	 * power state and bail immediately.
+	 *
+	 * The PCIe link is likely down if we're powering on the slot upon
+	 * the detected presence. Nothing behind the slot will be probed if
+	 * we do it immediately even we do have PCI devices connected to the
+	 * slot. For this case, we force upper layer to wait for the PCIe
+	 * link to be up before probing the PCI devices behind the slot. It's
+	 * only concerned in surprise hotplug path. In managed hot-add path,
+	 * the PCIe link should have been ready before we power on the slot.
+	 * However, it's not harmful to do so in managed hot-add path.
 	 */
 	if (surprise_check && slot->surprise_pluggable) {
 		slot->power_state = val;
+		if (val == PCI_SLOT_POWER_ON) {
+			pci_slot_set_state(slot, PCI_SLOT_STATE_SPOWER_DONE);
+			return OPAL_ASYNC_COMPLETION;
+		}
+
 		return OPAL_SUCCESS;
 	}
 
