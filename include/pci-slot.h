@@ -176,6 +176,7 @@ struct pci_slot {
 	 */
 	uint32_t		state;
 	uint32_t		retry_state;
+	uint16_t		pcie_cap;
 	uint32_t		link_cap;
 	uint32_t		slot_cap;
 	uint64_t		delay_tgt_tb;
