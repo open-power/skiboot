@@ -166,6 +166,19 @@ static void create_dynamic_slot(struct phb *phb, struct pci_device *pd)
 	slot = pcie_slot_create(phb, pd);
 	assert(slot);
 	init_slot_info(slot, true, NULL);
+
+	/* On superMicro's "p8dnu" platform, we create dynamic PCI slots
+	 * for all downstream ports of PEX9733 that is connected to PHB
+	 * direct slot. The power supply to the PCI slot is lost after
+	 * PCI adapter is removed from it. The power supply can't be
+	 * turned on when the slot is in empty state. The power supply
+	 * isn't turned on automatically when inserting PCI adapter to
+	 * the slot at later point. We set a flag to the slot here, to
+	 * turn on the power supply in (suprise or managed) hot-add path.
+	 */
+	if (dt_node_is_compatible(dt_root, "supermicro,p8dnu") &&
+	    slot->pd && slot->pd->vdid == 0x973310b5)
+		pci_slot_add_flags(slot, PCI_SLOT_FLAG_FORCE_POWERON);
 }
 
 void slot_table_get_slot_info(struct phb *phb, struct pci_device *pd)

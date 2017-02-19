@@ -227,15 +227,22 @@ static int64_t pcie_slot_set_power_state_ext(struct pci_slot *slot, uint8_t val,
 	 * only concerned in surprise hotplug path. In managed hot-add path,
 	 * the PCIe link should have been ready before we power on the slot.
 	 * However, it's not harmful to do so in managed hot-add path.
+	 *
+	 * When flag PCI_SLOT_FLAG_FORCE_POWERON is set for the PCI slot, we
+	 * should turn on the slot's power supply on hardware on user's request
+	 * because that might have been lost. Otherwise, the PCIe link behind
+	 * the slot won't become ready for ever and PCI adapter behind the slot
+	 * can't be probed successfully.
 	 */
 	if (surprise_check && slot->surprise_pluggable) {
 		slot->power_state = val;
-		if (val == PCI_SLOT_POWER_ON) {
+		if (val == PCI_SLOT_POWER_OFF)
+			return OPAL_SUCCESS;
+
+		if (!pci_slot_has_flags(slot, PCI_SLOT_FLAG_FORCE_POWERON)) {
 			pci_slot_set_state(slot, PCI_SLOT_STATE_SPOWER_DONE);
 			return OPAL_ASYNC_COMPLETION;
 		}
-
-		return OPAL_SUCCESS;
 	}
 
 	pci_slot_set_state(slot, PCI_SLOT_STATE_SPOWER_START);
