@@ -490,10 +490,18 @@ struct pci_slot *pcie_slot_create(struct phb *phb, struct pci_device *pd)
 	 * relies on presence or link state change events. In order for the
 	 * link state change event to be properly raised during surprise hot
 	 * add/remove, the power supply to the slot should be always on.
+	 *
+	 * For PCI slots that don't claim surprise hotplug capability explicitly.
+	 * Its PDC (Presence Detection Change) isn't reliable. To mark that as
+	 * broken on them.
 	 */
-	if ((slot->slot_cap & PCICAP_EXP_SLOTCAP_HPLUG_SURP) ||
-	    (slot->link_cap & PCICAP_EXP_LCAP_DL_ACT_REP))
+	if (slot->slot_cap & PCICAP_EXP_SLOTCAP_HPLUG_SURP) {
 		slot->surprise_pluggable = 1;
+	} else if (slot->link_cap & PCICAP_EXP_LCAP_DL_ACT_REP) {
+		slot->surprise_pluggable = 1;
+
+		pci_slot_add_flags(slot, PCI_SLOT_FLAG_BROKEN_PDC);
+	}
 
 	/* Standard slot operations */
 	slot->ops.get_presence_state  = pcie_slot_get_presence_state;

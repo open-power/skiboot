@@ -147,6 +147,7 @@ struct pci_slot {
 	uint32_t		flags;
 #define PCI_SLOT_FLAG_BOOTUP		0x1
 #define PCI_SLOT_FLAG_FORCE_POWERON	0x2
+#define PCI_SLOT_FLAG_BROKEN_PDC	0x4
 
 	struct phb		*phb;
 	struct pci_device	*pd;

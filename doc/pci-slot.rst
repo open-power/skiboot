@@ -60,16 +60,18 @@ node for a root port, a PCIE switch port, or a PCIE to PCIx bridge. If the
 individual platforms (e.g. Firenze and Apollo) have VPD for the PCI slot, they
 should extract the PCI slot properties from VPD and export them accordingly.
 
-====================== ==========
-Property               Definition
-====================== ==========
-ibm,reset-by-firmware  Boolean indicating whether the slot reset should be done in firmware
-ibm,slot-pluggable     Boolean indicating whether the slot is pluggable
-ibm,slot-power-ctl     Boolean indicating whether the slot has power control
-ibm,slot-wired-lanes   The number of hardware lanes that are wired
-ibm,slot-pwr-led-ctl   Presence of slot power led, and controlling entity
-ibm,slot-attn-led-ctl  Presence of slot ATTN led, and controlling entity
-====================== ==========
+=========================== ==========
+Property                    Definition
+=========================== ==========
+ibm,reset-by-firmware       Boolean indicating whether the slot reset should be done in firmware
+ibm,slot-pluggable          Boolean indicating whether the slot is pluggable
+ibm,slot-surprise-pluggable Boolean indicating whether the slot supports surprise hotplug
+ibm,slot-broken-pdc         Boolean indicating whether PDC (Presence Detection Change) is broken
+ibm,slot-power-ctl          Boolean indicating whether the slot has power control
+ibm,slot-wired-lanes        The number of hardware lanes that are wired
+ibm,slot-pwr-led-ctl        Presence of slot power led, and controlling entity
+ibm,slot-attn-led-ctl       Presence of slot ATTN led, and controlling entity
+=========================== ==========
 
 PCI Hotplug
 -----------

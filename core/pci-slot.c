@@ -121,6 +121,9 @@ void pci_slot_add_dt_properties(struct pci_slot *slot,
 	dt_add_property_cells(np, "ibm,slot-pluggable", slot->pluggable);
 	dt_add_property_cells(np, "ibm,slot-surprise-pluggable",
 			      slot->surprise_pluggable);
+	if (pci_slot_has_flags(slot, PCI_SLOT_FLAG_BROKEN_PDC))
+		dt_add_property_cells(np, "ibm,slot-broken-pdc", 1);
+
 	dt_add_property_cells(np, "ibm,slot-power-ctl", slot->power_ctl);
 	dt_add_property_cells(np, "ibm,slot-power-led-ctlled",
 			      slot->power_led_ctl);
