@@ -454,7 +454,7 @@ struct pci_slot *pcie_slot_create(struct phb *phb, struct pci_device *pd)
 		if (pd && ecap) {
 			pci_cfg_read16(phb, pd->bdfn,
 				       ecap + PCICAP_EXP_SLOTCTL, &slot_ctl);
-			if (slot_ctl & PCICAP_EXP_SLOTCTL_PWRCTLR)
+			if (((slot_ctl & PCICAP_EXP_SLOTCTL_PWRI) >> 8) == PCIE_INDIC_OFF)
 				slot->power_state = PCI_SLOT_POWER_OFF;
 		}
 	}
