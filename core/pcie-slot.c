@@ -43,7 +43,7 @@ static int64_t pcie_slot_get_presence_state(struct pci_slot *slot, uint8_t *val)
 	 * doesn't support slot capability according to PCIE spec.
 	 */
 	if (pd->dev_type == PCIE_TYPE_SWITCH_DNPORT &&
-	    !(slot->slot_cap & PCICAP_EXP_CAP_SLOT)) {
+	    !(slot->pcie_cap & PCICAP_EXP_CAP_SLOT)) {
 		*val = OPAL_PCI_SLOT_PRESENT;
 		return OPAL_SUCCESS;
 	}
@@ -437,6 +437,8 @@ struct pci_slot *pcie_slot_create(struct phb *phb, struct pci_device *pd)
 	/* Cache the link and slot capabilities */
 	if (pd) {
 		ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+		pci_cfg_read16(phb, pd->bdfn, ecap + PCICAP_EXP_CAPABILITY_REG,
+			       &slot->pcie_cap);
 		pci_cfg_read32(phb, pd->bdfn, ecap + PCICAP_EXP_LCAP,
 			       &slot->link_cap);
 		pci_cfg_read32(phb, pd->bdfn, ecap + PCICAP_EXP_SLOTCAP,
