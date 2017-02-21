@@ -75,12 +75,18 @@ void nx_create_rng_node(struct dt_node *node)
 	}
 
 	rc = xscom_read(gcid, xbar, &bar); /* Get RNG BAR */
-	if (rc)
-		return;	/* Hope xscom always prints error message */
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM RNG BAR read failure %d\n",
+			 gcid, rc);
+		return;
+	}
 
 	rc = xscom_read(gcid, xcfg, &cfg); /* Get RNG CFG */
-	if (rc)
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM RNG config read failure %d\n",
+			 gcid, rc);
 		return;
+	}
 
 	/*
 	 * We mask in-place rather than using GETFIELD for the base address
@@ -106,13 +112,20 @@ void nx_create_rng_node(struct dt_node *node)
 
 	/* RNG must be enabled before MMIO is enabled */
 	rc = xscom_write(gcid, xcfg, cfg | NX_RNG_CFG_ENABLE);
-	if (rc)
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM RNG config enable failure %d\n",
+			 gcid, rc);
 		return;
+	}
 
 	/* The BAR needs to be enabled too */
 	rc = xscom_write(gcid, xbar, bar | NX_RNG_BAR_ENABLE);
-	if (rc)
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM RNG config enable failure %d\n",
+			 gcid, rc);
 		return;
+	}
+
 	rng = dt_new_addr(dt_root, "hwrng", rng_addr);
 	if (!rng)
 		return;

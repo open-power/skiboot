@@ -40,8 +40,11 @@ static int nx_cfg_842(u32 gcid, u64 xcfg)
 	BUILD_ASSERT(MAX_CHIPS < NX_842_CFG_CI_MAX);
 
 	rc = xscom_read(gcid, xcfg, &cfg);
-	if (rc)
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM 842 config read failure %d\n",
+                 gcid, rc);
 		return rc;
+	}
 
 	ct = GETFIELD(NX_842_CFG_CT, cfg);
 	if (!ct)
@@ -118,8 +121,11 @@ static int nx_cfg_842_dma(u32 gcid, u64 xcfg)
 	int rc;
 
 	rc = xscom_read(gcid, xcfg, &cfg);
-	if (rc)
-		return rc;
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM DMA config read failure %d\n",
+                 gcid, rc);
+                return rc;
+	}
 
 	if (proc_gen >= proc_gen_p8) {
 		cfg = SETFIELD(NX_DMA_CFG_842_COMPRESS_PREFETCH, cfg,
@@ -161,8 +167,11 @@ static int nx_cfg_842_ee(u32 gcid, u64 xcfg)
 	int rc;
 
 	rc = xscom_read(gcid, xcfg, &cfg);
-	if (rc)
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM EE config read failure %d\n",
+                 gcid, rc);
 		return rc;
+	}
 
 	cfg = SETFIELD(NX_EE_CFG_CH1, cfg, EE_1);
 	cfg = SETFIELD(NX_EE_CFG_CH0, cfg, EE_0);

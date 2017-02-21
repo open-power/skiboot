@@ -53,8 +53,11 @@ static int nx_cfg_sym(u32 gcid, u64 xcfg)
 	BUILD_ASSERT(MAX_CHIPS < NX_SYM_CFG_CI_MAX);
 
 	rc = xscom_read(gcid, xcfg, &cfg);
-	if (rc)
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM SYM config read failure %d\n",
+		 gcid, rc);
 		return rc;
+	}
 
 	ct = GETFIELD(NX_SYM_CFG_CT, cfg);
 	if (!ct)
@@ -106,8 +109,11 @@ static int nx_cfg_asym(u32 gcid, u64 xcfg)
 	BUILD_ASSERT(MAX_CHIPS < NX_ASYM_CFG_CI_MAX);
 
 	rc = xscom_read(gcid, xcfg, &cfg);
-	if (rc)
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM ASYM config read failure %d\n",
+		 gcid, rc);
 		return rc;
+	}
 
 	ct = GETFIELD(NX_ASYM_CFG_CT, cfg);
 	if (!ct)
@@ -158,8 +164,11 @@ static int nx_cfg_dma(u32 gcid, u64 xcfg)
 	int rc;
 
 	rc = xscom_read(gcid, xcfg, &cfg);
-	if (rc)
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM DMA config read failure %d\n",
+		 gcid, rc);
 		return rc;
+	}
 
 	cfg = SETFIELD(NX_DMA_CFG_AES_SHA_MAX_RR, cfg,
 		       AES_SHA_MAX_RR);
@@ -199,8 +208,11 @@ static int nx_cfg_iq(u32 gcid, u64 xcfg)
 	int rc;
 
 	rc = xscom_read(gcid, xcfg, &cfg);
-	if (rc)
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM CRB IQ config read failure %d\n",
+		 gcid, rc);
 		return rc;
+	}
 
 	cfg = SETFIELD(NX_CRB_IQ_SYM, cfg, CFG_CRB_IQ_SYM);
 	cfg = SETFIELD(NX_CRB_IQ_ASYM, cfg, CFG_CRB_IQ_ASYM);
@@ -221,8 +233,11 @@ static int nx_cfg_ee(u32 gcid, u64 xcfg)
 	int rc;
 
 	rc = xscom_read(gcid, xcfg, &cfg);
-	if (rc)
+	if (rc) {
+                prerror("NX%d: ERROR: XSCOM EE config read failure %d\n",
+		 gcid, rc);
 		return rc;
+	}
 
 	cfg = SETFIELD(NX_EE_CFG_CH7, cfg, EE_CH7);
 	cfg = SETFIELD(NX_EE_CFG_CH6, cfg, EE_CH6);
