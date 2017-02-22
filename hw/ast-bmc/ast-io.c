@@ -88,6 +88,7 @@
 #include <skiboot.h>
 #include <lpc.h>
 #include <lock.h>
+#include <device.h>
 
 #include "ast.h"
 
@@ -386,6 +387,11 @@ void ast_io_init(void)
 
 	/* Configure all AIO interrupts to level low */
 	ast_setup_sio_irq_polarity();
+}
+
+bool ast_is_mbox_pnor(void)
+{
+	return dt_find_compatible_node(dt_root, NULL, "mbox");
 }
 
 bool ast_is_ahb_lpc_pnor(void)
