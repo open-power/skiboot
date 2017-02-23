@@ -1219,11 +1219,17 @@ int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 {
 
 	struct cpu_thread *c = find_cpu_by_pir(cpu_pir);
-	struct proc_chip *chip = get_chip(c->chip_id);
-	void *image = (void *) chip->slw_base;
+	struct proc_chip *chip;
+	void *image;
 	int rc;
 	int i;
 	int spr_is_supported = 0;
+
+	assert(c);
+	chip = get_chip(c->chip_id);
+	assert(chip);
+	image = (void *) chip->slw_base;
+
 	/* Check of the SPR is supported by libpore */
 	for ( i=0; i < SLW_SPR_REGS_SIZE ; i++)  {
 		if (sprn == SLW_SPR_REGS[i].value)  {
