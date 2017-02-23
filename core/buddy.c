@@ -286,6 +286,8 @@ struct buddy *buddy_create(unsigned int max_order)
 	bsize = BITMAP_BYTES(1u << (max_order + 1));
 
 	b = zalloc(sizeof(struct buddy) + bsize);
+	if (!b)
+		return NULL;
 	b->max_order = max_order;
 
 	BUDDY_NOISE("Map @%p, size: %d bytes\n", b->map, bsize);
