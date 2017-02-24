@@ -20,6 +20,7 @@
 #include <pci-cfg.h>
 #include <pci-iov.h>
 #include <pci-slot.h>
+#include <pci-quirk.h>
 #include <timebase.h>
 #include <device.h>
 #include <fsp.h>
@@ -1429,6 +1430,8 @@ static void pci_add_one_device_node(struct phb *phb,
 	dt_add_property_cells(np, "device-id", vdid >> 16);
 	if (intpin)
 		dt_add_property_cells(np, "interrupts", intpin);
+
+	pci_handle_quirk(phb, pd, vdid & 0xffff, vdid >> 16);
 
 	/* XXX FIXME: Add a few missing ones such as
 	 *

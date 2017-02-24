@@ -8,7 +8,7 @@ CORE_OBJS += pci-opal.o fast-reboot.o device.o exceptions.o trace.o affinity.o
 CORE_OBJS += vpd.o hostservices.o platform.o nvram.o nvram-format.o hmi.o
 CORE_OBJS += console-log.o ipmi.o time-utils.o pel.o pool.o errorlog.o
 CORE_OBJS += timer.o i2c.o rtc.o flash.o sensor.o ipmi-opal.o
-CORE_OBJS += flash-subpartition.o bitmap.o buddy.o
+CORE_OBJS += flash-subpartition.o bitmap.o buddy.o pci-quirk.o
 
 ifeq ($(SKIBOOT_GCOV),1)
 CORE_OBJS += gcov-profiling.o
