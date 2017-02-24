@@ -51,6 +51,13 @@
 /* SCU registers */
 #define SCU_BASE		0x1e6e2000
 #define SCU_HW_STRAPPING	(SCU_BASE + 0x70)
+#define SCU_REVISION_ID		(SCU_BASE + 0x7C)
+
+/* MCR registers */
+#define MCR_BASE		0x1e6e0000
+#define MCR_CONFIGURATION	(MCR_BASE + 0x04)
+#define MCR_SCU_MPLL		(MCR_BASE + 0x120)
+#define MCR_SCU_STRAP		(MCR_BASE + 0x170)
 
 /*
  * AHB Accessors
