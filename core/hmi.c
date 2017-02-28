@@ -296,27 +296,6 @@ static int handle_capp_recoverable(int chip_id, int capp_index)
 	return 0;
 }
 
-static int decode_one_malfunction(int flat_chip_id, struct OpalHMIEvent *hmi_evt)
-{
-	int capp_index;
-	struct proc_chip *chip = get_chip(flat_chip_id);
-	int capp_num = CHIP_IS_NAPLES(chip) ? 2 : 1;
-
-	hmi_evt->severity = OpalHMI_SEV_FATAL;
-	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
-
-	for (capp_index = 0; capp_index < capp_num; capp_index++)
-		if (is_capp_recoverable(flat_chip_id, capp_index))
-			if (handle_capp_recoverable(flat_chip_id, capp_index)) {
-				hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
-				hmi_evt->type = OpalHMI_ERROR_CAPP_RECOVERY;
-				return 1;
-			}
-
-	/* TODO check other FIRs */
-	return 0;
-}
-
 static bool decode_core_fir(struct cpu_thread *cpu,
 				struct OpalHMIEvent *hmi_evt)
 {
@@ -368,7 +347,7 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 }
 
 static void find_core_checkstop_reason(struct OpalHMIEvent *hmi_evt,
-					int *event_generated)
+				       bool *event_generated)
 {
 	struct cpu_thread *cpu;
 
@@ -401,8 +380,30 @@ static void find_core_checkstop_reason(struct OpalHMIEvent *hmi_evt,
 	}
 }
 
+static void find_capp_checkstop_reason(int flat_chip_id,
+				       struct OpalHMIEvent *hmi_evt,
+				       bool *event_generated)
+{
+	int capp_index;
+	struct proc_chip *chip = get_chip(flat_chip_id);
+	int capp_num = CHIP_IS_NAPLES(chip) ? 2 : 1;
+
+	for (capp_index = 0; capp_index < capp_num; capp_index++) {
+		if (is_capp_recoverable(flat_chip_id, capp_index)) {
+			if (handle_capp_recoverable(flat_chip_id, capp_index)) {
+				hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
+				hmi_evt->type = OpalHMI_ERROR_CAPP_RECOVERY;
+				queue_hmi_event(hmi_evt, 1);
+				*event_generated = true;
+				return;
+			}
+		}
+	}
+}
+
 static void find_nx_checkstop_reason(int flat_chip_id,
-			struct OpalHMIEvent *hmi_evt, int *event_generated)
+				     struct OpalHMIEvent *hmi_evt,
+				     bool *event_generated)
 {
 	uint64_t nx_status;
 	uint64_t nx_dma_fir;
@@ -461,12 +462,12 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 
 	/* Send an HMI event. */
 	queue_hmi_event(hmi_evt, 0);
-	*event_generated = 1;
+	*event_generated = true;
 }
 
 static void find_npu_checkstop_reason(int flat_chip_id,
 				      struct OpalHMIEvent *hmi_evt,
-				      int *event_generated)
+				      bool *event_generated)
 {
 	struct phb *phb;
 	struct npu *p = NULL;
@@ -530,43 +531,38 @@ static void find_npu_checkstop_reason(int flat_chip_id,
 
 	/* The HMI is "recoverable" because it shouldn't crash the system */
 	queue_hmi_event(hmi_evt, 1);
-	*event_generated = 1;
+	*event_generated = true;
 }
 
 static void decode_malfunction(struct OpalHMIEvent *hmi_evt)
 {
 	int i;
-	int recover = -1;
 	uint64_t malf_alert;
-	int event_generated = 0;
+	bool event_generated = false;
 
 	xscom_read(this_cpu()->chip_id, 0x2020011, &malf_alert);
 
-	for (i = 0; i < 64; i++)
+	if (!malf_alert)
+		return;
+
+	for (i = 0; i < 64; i++) {
 		if (malf_alert & PPC_BIT(i)) {
-			recover = decode_one_malfunction(i, hmi_evt);
 			xscom_write(this_cpu()->chip_id, 0x02020011, ~PPC_BIT(i));
-			if (recover) {
-				queue_hmi_event(hmi_evt, recover);
-				event_generated = 1;
-			}
+			find_capp_checkstop_reason(i, hmi_evt, &event_generated);
 			find_nx_checkstop_reason(i, hmi_evt, &event_generated);
 			find_npu_checkstop_reason(i, hmi_evt, &event_generated);
 		}
+	}
 
-	if (recover != -1) {
-		find_core_checkstop_reason(hmi_evt, &event_generated);
+	find_core_checkstop_reason(hmi_evt, &event_generated);
 
-		/*
-		 * In case, if we fail to find checkstop reason send an
-		 * unknown HMI event.
-		 */
-		if (!event_generated) {
-			hmi_evt->u.xstop_error.xstop_type =
-						CHECKSTOP_TYPE_UNKNOWN;
-			hmi_evt->u.xstop_error.xstop_reason = 0;
-			queue_hmi_event(hmi_evt, recover);
-		}
+	/*
+	 * If we fail to find checkstop reason, send an unknown HMI event.
+	 */
+	if (!event_generated) {
+		hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_UNKNOWN;
+		hmi_evt->u.xstop_error.xstop_reason = 0;
+		queue_hmi_event(hmi_evt, false);
 	}
 }
 
