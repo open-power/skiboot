@@ -67,8 +67,11 @@ enum capp_reg {
 #define CAPP_SNP_ARRAY_WRITE_REG		0x2013801
 #define CAPP_APC_MASTER_ARRAY_WRITE_REG		0x2013802
 
-#define CAPP_FIR                                0x2013000
-#define CAPP_ERR_RPT_CLR                        0x2013013
+#define CAPP_FIR				0x2013000
+#define CAPP_FIR_MASK				0x2013003
+#define CAPP_FIR_ACTION0			0x2013006
+#define CAPP_FIR_ACTION1			0x2013007
+#define CAPP_ERR_RPT_CLR			0x2013013
 #define APC_MASTER_PB_CTRL			0x2013018
 #define APC_MASTER_CAPI_CTRL			0x2013019
 #define TRANSPORT_CONTROL			0x201301C
