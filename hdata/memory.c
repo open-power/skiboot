@@ -439,7 +439,6 @@ static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 		/* remove the HRMOR bypass bit */
 		start_addr &= ~HRMOR_BIT;
 		end_addr &= ~HRMOR_BIT;
-
 		if (label_size > 64)
 			label_size = 64;
 
@@ -451,6 +450,17 @@ static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 
 		if (strlen(label) == 0)
 			snprintf(label, 64, "hostboot-reserve-%d", unnamed++);
+
+		/*
+		 * Workaround broken HDAT reserve regions which are
+		 * bigger than 512MB
+		 */
+		if ((end_addr - start_addr) > 0x20000000) {
+			prlog(PR_ERR, "MEM: Ignoring Bad HDAT reserve: too big "
+			      "'%s' %#" PRIx64 "-%#" PRIx64 "\n",
+			      label, start_addr, end_addr);
+			continue;
+		}
 
 		mem_reserve_hw(label, start_addr, end_addr - start_addr);
 
