@@ -279,11 +279,26 @@ static void add_uart(const struct spss_iopath *iopath, struct dt_node *lpc)
 
 static void bmc_create_node(const struct HDIF_common_hdr *sp)
 {
+	struct dt_node *bmc_node;
 	u32 fw_bar, io_bar, mem_bar, internal_bar;
 	const struct spss_iopath *iopath;
+	const struct spss_sp_impl *sp_impl;
 	struct dt_node *lpcm, *lpc, *n;
 	u64 lpcm_base, lpcm_end;
-	int chip_id;
+	int chip_id, size;
+
+	bmc_node = dt_new(dt_root, "bmc");
+	assert(bmc_node);
+
+	dt_add_property_cells(bmc_node, "#address-cells", 1);
+	dt_add_property_cells(bmc_node, "#size-cells", 0);
+
+	/* TODO: add sensor info under /bmc */
+	sp_impl = HDIF_get_idata(sp, SPSS_IDATA_SP_IMPL, &size);
+	if (CHECK_SPPTR(sp_impl) && (size > 8)) {
+		dt_add_property_strings(bmc_node, "compatible", sp_impl->sp_family);
+		prlog(PR_INFO, "SP Family is %s\n", sp_impl->sp_family);
+	}
 
 	iopath = HDIF_get_iarray_item(sp, SPSS_IDATA_SP_IOPATH, 0, NULL);
 

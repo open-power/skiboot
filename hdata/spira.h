@@ -262,6 +262,7 @@ struct spss_sp_impl {
 #define SPSS_SP_IMPL_FLAGS_PRIMARY	0x2000
 	u8	chip_version;
 	u8	reserved;
+	u8	sp_family[64];
 };
 
 /* Idata index 3 is deprecated */
