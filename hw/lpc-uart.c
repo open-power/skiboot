@@ -425,6 +425,9 @@ static void uart_setup_os_passthrough(void)
 	char *path;
 
 	static struct lpc_client uart_lpc_os_client = {
+		.reset = NULL,
+		.interrupt = NULL,
+		.interrupts = 0
 	};
 
 	dt_add_property_strings(uart_node, "status", "ok");
