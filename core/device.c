@@ -942,11 +942,72 @@ unsigned int dt_count_addresses(const struct dt_node *node)
 	return p->len / n;
 }
 
+/* Translates an address from the given bus into its parent's address space */
+static u64 dt_translate_one(const struct dt_node *bus, u64 addr)
+{
+	u32 ranges_count, na, ns, parent_na;
+	const struct dt_property *p;
+	const u32 *ranges;
+	int i, stride;
+
+	assert(bus->parent);
+
+	na = dt_prop_get_u32_def(bus, "#address-cells", 2);
+	ns = dt_prop_get_u32_def(bus, "#size-cells", 2);
+	parent_na = dt_n_address_cells(bus);
+
+	stride = na + ns + parent_na;
+
+	/*
+	 * FIXME: We should handle arbitrary length addresses, rather than
+	 *        limiting it to 64bit. If someone wants/needs that they
+	 *        can implement the bignum math for it :)
+	 */
+	assert(na <= 2);
+	assert(parent_na <= 2);
+
+	/* We should never be trying to translate an address without a ranges */
+	p = dt_require_property(bus, "ranges", -1);
+
+	ranges = (u32 *) &p->prop;
+	ranges_count = (p->len / 4) / (na + parent_na + ns);
+
+	/* An empty ranges property implies 1-1 translation */
+	if (ranges_count == 0)
+		return addr;
+
+	for (i = 0; i < ranges_count; i++, ranges += stride) {
+		/* ranges format: <child base> <parent base> <size> */
+		u64 child_base = dt_get_number(ranges, na);
+		u64 parent_base = dt_get_number(ranges + na, parent_na);
+		u64 size = dt_get_number(ranges + na + parent_na, ns);
+
+		if (addr >= child_base && addr < child_base + size)
+			return (addr - child_base) + parent_base;
+	}
+
+	/* input address was outside the any of our mapped ranges */
+	return 0;
+}
+
 u64 dt_translate_address(const struct dt_node *node, unsigned int index,
 			 u64 *out_size)
 {
-	/* XXX TODO */
-	return dt_get_address(node, index, out_size);
+	u64 addr = dt_get_address(node, index, NULL);
+	struct dt_node *bus = node->parent;
+
+	/* FIXME: One day we will probably want to use this, but for now just
+	 * force it it to be zero since we only support returning a u64 or u32
+	 */
+	assert(!out_size);
+
+	/* apply each translation until we hit the root bus */
+	while (bus->parent) {
+		addr = dt_translate_one(bus, addr);
+		bus = bus->parent;
+	}
+
+	return addr;
 }
 
 bool dt_node_is_enabled(struct dt_node *node)

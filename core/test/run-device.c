@@ -90,7 +90,7 @@ static bool is_sorted(const struct dt_node *root)
 
 int main(void)
 {
-	struct dt_node *root, *c1, *c2, *gc1, *gc2, *gc3, *ggc1;
+	struct dt_node *root, *c1, *c2, *gc1, *gc2, *gc3, *ggc1, *ggc2;
 	struct dt_node *addrs, *addr1, *addr2;
 	struct dt_node *i;
 	const struct dt_property *p;
@@ -363,6 +363,51 @@ int main(void)
 		dump_dt(root, 1, false);
 	}
 	assert(is_sorted(root));
+
+	dt_free(root);
+
+	/* check dt_translate_address */
+
+	/* NB: the root bus has two address cells */
+	root = dt_new_root("");
+
+	c1 = dt_new_addr(root, "some-32bit-bus", 0x80000000);
+	dt_add_property_cells(c1, "#address-cells", 1);
+	dt_add_property_cells(c1, "#size-cells", 1);
+	dt_add_property_cells(c1, "ranges", 0x0, 0x8, 0x0, 0x1000);
+
+	gc1 = dt_new_addr(c1, "test", 0x0500);
+	dt_add_property_cells(gc1, "reg", 0x0500, 0x10);
+
+	assert(dt_translate_address(gc1, 0, NULL) == 0x800000500ul);
+
+	/* try three level translation */
+
+	gc2 = dt_new_addr(c1, "another-32bit-bus", 0x40000000);
+	dt_add_property_cells(gc2, "#address-cells", 1);
+	dt_add_property_cells(gc2, "#size-cells", 1);
+	dt_add_property_cells(gc2, "ranges",	0x0, 0x600, 0x100,
+						0x100, 0x800, 0x100);
+
+	ggc1 = dt_new_addr(gc2, "test", 0x50);
+	dt_add_property_cells(ggc1, "reg", 0x50, 0x10);
+	assert(dt_translate_address(ggc1, 0, NULL) == 0x800000650ul);
+
+	/* test multiple ranges work */
+	ggc2 = dt_new_addr(gc2, "test", 0x150);
+	dt_add_property_cells(ggc2, "reg", 0x150, 0x10);
+	assert(dt_translate_address(ggc2, 0, NULL) == 0x800000850ul);
+
+	/* try 64bit -> 64bit */
+
+	c2 = dt_new_addr(root, "some-64bit-bus", 0xe00000000);
+	dt_add_property_cells(c2, "#address-cells", 2);
+	dt_add_property_cells(c2, "#size-cells", 2);
+	dt_add_property_cells(c2, "ranges", 0x0, 0x0, 0xe, 0x0, 0x2, 0x0);
+
+	gc2 = dt_new_addr(c2, "test", 0x100000000ul);
+	dt_add_property_u64s(gc2, "reg", 0x100000000ul, 0x10ul);
+	assert(dt_translate_address(gc2, 0, NULL) == 0xf00000000ul);
 
 	dt_free(root);
 
