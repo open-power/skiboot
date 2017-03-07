@@ -621,6 +621,55 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
 
 };
+
+/* Idle states supported for P9 DD1 */
+static struct cpu_idle_states power9_dd1_cpu_idle_states[] = {
+	{
+		.name = "stop0_lite",
+		.latency_ns = 200,
+		.residency_ns = 2000,
+		.flags = 0*OPAL_PM_DEC_STOP \
+		       | 0*OPAL_PM_TIMEBASE_STOP  \
+		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
+		       | 1*OPAL_PM_STOP_INST_FAST,
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(0) \
+				 | OPAL_PM_PSSCR_MTL(3) \
+				 | OPAL_PM_PSSCR_TR(3),
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
+	{
+		.name = "stop1_lite",
+		.latency_ns = 4900,
+		.residency_ns = 49000,
+		.flags = 0*OPAL_PM_DEC_STOP \
+		       | 0*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
+		       | 1*OPAL_PM_STOP_INST_FAST,
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(1) \
+				 | OPAL_PM_PSSCR_MTL(3) \
+				 | OPAL_PM_PSSCR_TR(3),
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
+	{
+		.name = "stop1",
+		.latency_ns = 2050000,
+		.residency_ns = 50000,
+		.flags = 0*OPAL_PM_DEC_STOP \
+		       | 0*OPAL_PM_TIMEBASE_STOP  \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
+		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
+		       | 1*OPAL_PM_STOP_INST_FAST,
+		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(1) \
+				 | OPAL_PM_PSSCR_MTL(3) \
+				 | OPAL_PM_PSSCR_TR(3) \
+				 | OPAL_PM_PSSCR_ESL \
+				 | OPAL_PM_PSSCR_EC,
+		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK }
+};
+
 /* Add device tree properties to describe idle states */
 void add_cpu_idle_state_properties(void)
 {
@@ -674,15 +723,19 @@ void add_cpu_idle_state_properties(void)
 	assert(chip);
 	if (chip->type == PROC_CHIP_P9_NIMBUS ||
 	    chip->type == PROC_CHIP_P9_CUMULUS) {
-		states = power9_cpu_idle_states;
-		nr_states = ARRAY_SIZE(power9_cpu_idle_states);
-		has_stop_inst = true;
+		if (chip->ec_level == 0x10) {
+			states = power9_dd1_cpu_idle_states;
+			nr_states = ARRAY_SIZE(power9_dd1_cpu_idle_states);
+		} else {
+			states = power9_cpu_idle_states;
+			nr_states = ARRAY_SIZE(power9_cpu_idle_states);
+		}
 
+		has_stop_inst = true;
 		stop_levels = dt_prop_get_u32_def(power_mgt,
 			"ibm,enabled-stop-levels", 0);
 		if (!stop_levels)
 			prerror("SLW: No stop levels available. Power saving is disabled!\n");
-
 	} else if (chip->type == PROC_CHIP_P8_MURANO ||
 	    chip->type == PROC_CHIP_P8_VENICE ||
 	    chip->type == PROC_CHIP_P8_NAPLES) {
