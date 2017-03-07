@@ -26,6 +26,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <valgrind/valgrind.h>
+
 /* Don't include these: PPC-specific */
 #define __CPU_H
 #define __TIME_H
@@ -130,7 +132,7 @@ static struct cpu_thread *this_cpu(void)
 }
 
 #include <sys/mman.h>
-#define PER_CHILD_TRACES (1024*1024)
+#define PER_CHILD_TRACES ((RUNNING_ON_VALGRIND) ? (1024*16) : (1024*1024))
 
 static void write_trace_entries(int id)
 {
