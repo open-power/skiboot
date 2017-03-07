@@ -217,6 +217,7 @@ extern void phb4_preload_vpd(void);
 extern void probe_npu(void);
 extern void uart_init(void);
 extern void mbox_init(void);
+extern void early_uart_init(void);
 extern void homer_init(void);
 extern void occ_pstates_init(void);
 extern void slw_init(void);

@@ -400,6 +400,32 @@ static void bmc_create_node(const struct HDIF_common_hdr *sp)
 	);
 }
 
+/*
+ * Search for and instanciate BMC nodes. This is mostly the same as fsp_parse()
+ * below, but it can be called earlier since BMCs don't depend on the psihb
+ * nodes being added.
+ */
+void bmc_parse(void)
+{
+	bool found = false;
+	const void *sp;
+	int i;
+
+	sp = get_hdif(&spira.ntuples.sp_subsys, SPSS_HDIF_SIG);
+	if (!sp)
+		return;
+
+	for_each_ntuple_idx(&spira.ntuples.sp_subsys, sp, i, SPSS_HDIF_SIG) {
+		if (find_service_proc_type(sp, i) == SP_BMC) {
+			bmc_create_node(sp);
+			found = true;
+		}
+	}
+
+	if (found)
+		early_uart_init();
+}
+
 void fsp_parse(void)
 {
 	struct dt_node *fsp_root = NULL, *fsp_node;
@@ -433,7 +459,7 @@ void fsp_parse(void)
 			break;
 
 		case SP_BMC:
-			bmc_create_node(sp);
+			/* Handled above */
 			break;
 
 		case SP_BAD:

@@ -23,6 +23,7 @@ extern void memory_parse(void);
 extern int paca_parse(void);
 extern bool pcia_parse(void);
 extern void fsp_parse(void);
+extern void bmc_parse(void);
 extern void io_parse(void);
 extern struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 				       int indx_fru, int indx_vpd);

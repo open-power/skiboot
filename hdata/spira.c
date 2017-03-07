@@ -1230,6 +1230,9 @@ int parse_hdat(bool is_opal)
 	dt_add_property_cells(dt_root, "#size-cells", 2);
 	dt_add_property_string(dt_root, "lid-type", is_opal ? "opal" : "phyp");
 
+	/* Add any BMCs and enable the LPC UART */
+	bmc_parse();
+
 	/* Create /vpd node */
 	dt_init_vpd_node();
 
@@ -1247,10 +1250,10 @@ int parse_hdat(bool is_opal)
 	/* Parse MS VPD */
 	memory_parse();
 
-	/* Add XSCOM node (must be before chiptod & IO ) */
+	/* Add XSCOM node (must be before chiptod, IO and FSP) */
 	add_xscom();
 
-	/* Add FSP */
+	/* Add any FSPs */
 	fsp_parse();
 
 	/* Add ChipTOD's */

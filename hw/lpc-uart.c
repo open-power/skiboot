@@ -548,12 +548,46 @@ static bool uart_init_hw(unsigned int speed, unsigned int clock)
 	return false;
 }
 
+/*
+ * early_uart_init() is similar to uart_init() in that it configures skiboot
+ * console log to output via a UART. The main differences are that the early
+ * version only works with MMIO UARTs and will not setup interrupts or locks.
+ */
+void early_uart_init(void)
+{
+	struct dt_node *uart_node;
+	u32 clk, baud;
+
+	uart_node = dt_find_compatible_node(dt_root, NULL, "ns16550");
+	if (!uart_node)
+		return;
+
+	/* Try translate the address, if this fails then it's not a MMIO UART */
+	mmio_uart_base = (void *) dt_translate_address(uart_node, 0, NULL);
+	if (!mmio_uart_base)
+		return;
+
+	clk = dt_prop_get_u32(uart_node, "clock-frequency");
+	baud = dt_prop_get_u32(uart_node, "current-speed");
+
+	if (uart_init_hw(baud, clk)) {
+		set_console(&uart_con_driver);
+		prlog(PR_NOTICE, "UART: Using UART at %p\n", mmio_uart_base);
+	} else {
+		prerror("UART: Early init failed!");
+		mmio_uart_base = NULL;
+	}
+}
+
 void uart_init(void)
 {
 	const struct dt_property *prop;
 	struct dt_node *n;
 	char *path __unused;
 	const uint32_t *irqp;
+
+	/* Clean up after early_uart_init() */
+	mmio_uart_base = NULL;
 
 	/* UART lock is in the console path and thus must block
 	 * printf re-entrancy
