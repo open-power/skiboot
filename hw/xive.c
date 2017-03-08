@@ -3649,6 +3649,7 @@ static void xive_cleanup_cpu_cam(struct cpu_thread *c)
 static void xive_reset_one(struct xive *x)
 {
 	struct cpu_thread *c;
+	bool eq_firmware;
 	int i = 0;
 
 	/* Mask all interrupt sources */
@@ -3666,15 +3667,29 @@ static void xive_reset_one(struct xive *x)
 	bitmap_for_each_one(*x->eq_map, MAX_EQ_COUNT >> 3, i) {
 		struct xive_eq eq0 = {0};
 		struct xive_eq *eq;
+		int j;
 
 		if (i == 0)
 			continue;
-		eq = xive_get_eq(x, i);
-		if (!eq)
-			continue;
-		xive_eqc_cache_update(x, x->block_id,
-				      i, 0, 4, &eq0, false, true);
-		if (!(eq->w0 & EQ_W0_FIRMWARE))
+		eq_firmware = false;
+		for (j = 0; j < 8; j++) {
+			uint32_t idx = (i << 3) | j;
+
+			eq = xive_get_eq(x, idx);
+			if (!eq)
+				continue;
+
+			/* We need to preserve the firmware bit, otherwise
+			 * we will incorrectly free the EQs that are reserved
+			 * for the physical CPUs
+			 */
+			eq0.w0 = eq->w0 & EQ_W0_FIRMWARE;
+			xive_eqc_cache_update(x, x->block_id,
+					      idx, 0, 4, &eq0, false, true);
+			if (eq->w0 & EQ_W0_FIRMWARE)
+				eq_firmware = true;
+		}
+		if (!eq_firmware)
 			bitmap_clr_bit(*x->eq_map, i);
 	}
 
