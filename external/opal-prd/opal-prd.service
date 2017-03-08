@@ -5,6 +5,7 @@ ConditionPathExists=/sys/firmware/devicetree/base/ibm,opal/diagnostics
 
 [Service]
 ExecStart=/usr/sbin/opal-prd --pnor /dev/mtd0
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
