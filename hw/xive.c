@@ -1692,6 +1692,7 @@ static bool xive_prealloc_tables(struct xive *x)
 	}
 	/* SBEs are initialized to 0b01 which corresponds to "ints off" */
 	memset(x->sbe_base, 0x55, SBE_SIZE);
+	xive_dbg(x, "SBE at %p size 0x%x\n", x->sbe_base, IVT_SIZE);
 
 	/* EAS/IVT entries are 8 bytes */
 	x->ivt_base = local_alloc(x->chip_id, IVT_SIZE, IVT_SIZE);
@@ -1703,6 +1704,7 @@ static bool xive_prealloc_tables(struct xive *x)
 	 * when actually used
 	 */
 	memset(x->ivt_base, 0, IVT_SIZE);
+	xive_dbg(x, "IVT at %p size 0x%x\n", x->ivt_base, IVT_SIZE);
 
 #ifdef USE_INDIRECT
 	/* Indirect EQ table. (XXX Align to 64K until I figure out the
@@ -1715,6 +1717,7 @@ static bool xive_prealloc_tables(struct xive *x)
 		return false;
 	}
 	memset(x->eq_ind_base, 0, al);
+	xive_dbg(x, "EQi at %p size 0x%llx\n", x->eq_ind_base, al);
 	x->eq_ind_count = IND_EQ_TABLE_SIZE / 8;
 
 	/* Indirect VP table. (XXX Align to 64K until I figure out the
@@ -1726,6 +1729,7 @@ static bool xive_prealloc_tables(struct xive *x)
 		xive_err(x, "Failed to allocate VP indirect table\n");
 		return false;
 	}
+	xive_dbg(x, "VPi at %p size 0x%llx\n", x->vp_ind_base, al);
 	x->vp_ind_count = IND_VP_TABLE_SIZE / 8;
 	memset(x->vp_ind_base, 0, al);
 
@@ -1753,6 +1757,7 @@ static bool xive_prealloc_tables(struct xive *x)
 			xive_err(x, "Failed to allocate VP page\n");
 			return false;
 		}
+		xive_dbg(x, "VP%d at %p size 0x%x\n", i, page, 0x10000);
 		memset(page, 0, 0x10000);
 		x->vp_ind_base[i] = ((uint64_t)page) & VSD_ADDRESS_MASK;
 
