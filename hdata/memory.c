@@ -31,11 +31,11 @@ struct HDIF_ram_area_id {
 #define RAM_AREA_INSTALLED	0x8000
 #define RAM_AREA_FUNCTIONAL	0x4000
 	__be16 flags;
-};
+} __packed;
 
 struct HDIF_ram_area_size {
 	__be64 mb;
-};
+} __packed;
 
 struct ram_area {
 	const struct HDIF_ram_area_id *raid;
@@ -48,7 +48,7 @@ struct HDIF_ms_area_address_range {
 	__be32 chip;
 	__be32 mirror_attr;
 	__be64 mirror_start;
-};
+} __packed;
 
 struct HDIF_ms_area_id {
 	__be16 id;
@@ -62,7 +62,7 @@ struct HDIF_ms_area_id {
 #define MS_AREA_SHARED		0x2000
 	__be16 flags;
 	__be16 share_id;
-};
+} __packed;
 
 static struct dt_node *find_shared(struct dt_node *root, u16 id, u64 start, u64 len)
 {
@@ -451,21 +451,24 @@ static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 		if (strlen(label) == 0)
 			snprintf(label, 64, "hostboot-reserve-%d", unnamed++);
 
+		prlog(PR_DEBUG, "MEM: Reserve '%s' %#" PRIx64 "-%#" PRIx64 " (type/inst=0x%08x)\n",
+		      label, start_addr, end_addr, be32_to_cpu(hb_resv_mem->type_instance));
+
+		if (start_addr == 0) {
+			prlog(PR_DEBUG, "MEM:   .. skipping\n");
+			continue;
+		}
+
 		/*
 		 * Workaround broken HDAT reserve regions which are
 		 * bigger than 512MB
 		 */
 		if ((end_addr - start_addr) > 0x20000000) {
-			prlog(PR_ERR, "MEM: Ignoring Bad HDAT reserve: too big "
-			      "'%s' %#" PRIx64 "-%#" PRIx64 "\n",
-			      label, start_addr, end_addr);
+			prlog(PR_ERR, "MEM: Ignoring Bad HDAT reserve: too big\n");
 			continue;
 		}
 
 		mem_reserve_hw(label, start_addr, end_addr - start_addr);
-
-		prlog(PR_DEBUG, "MEM: Reserve '%s' %#" PRIx64 "-%#" PRIx64 "\n",
-			label, start_addr, end_addr);
 	}
 }
 

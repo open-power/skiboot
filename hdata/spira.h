@@ -217,7 +217,7 @@ struct proc_init_data {
 struct spira_fru_id {
 	__be16		slca_index;
 	__be16		rsrc_id;	/* formerly VPD port number */
-};
+} __packed;
 
 /*
  * The FRU operational status structure is used in several
@@ -228,7 +228,7 @@ struct spira_fru_op_status {
 #define FRU_OP_STATUS_FLAG_USED		0x02 /* If 0 -> not used (redundant) */
 #define FRU_OP_STATUS_FLAG_FUNCTIONAL	0x01 /* If 0 -> non-functional */
 	uint8_t	reserved[3];
-};
+} __packed;
 
 /*
  * Move VPD related stuff to another file ...
@@ -263,7 +263,7 @@ struct spss_sp_impl {
 	u8	chip_version;
 	u8	reserved;
 	u8	sp_family[64];
-};
+} __packed;
 
 /* Idata index 3 is deprecated */
 
@@ -407,7 +407,7 @@ struct iplparams_iplparams {
 	uint8_t		core_config;
 #define IPLPARAMS_CORE_NORMAL	0x00
 #define IPLPARAMS_CORE_FUSE	0x01
-};
+} __packed;
 
 /* Idata index 4: Platform Dump Descriptor */
 #define IPLPARAMS_PLATFORM_DUMP		4
@@ -424,7 +424,7 @@ struct iplparams_dump {
 	__be32	act_hw_dump_sz;
 	__be32	max_sp_dump_sz;
 	__be32	plid;
-};
+} __packed;
 
 /* Idata index 8: serial ports */
 #define IPLPARMS_IDATA_SERIAL	8
@@ -481,14 +481,14 @@ struct msvpd_ms_addr_config {
 	__be64	 max_possible_ms_address;
 	__be32	 deprecated;
 	__be64	 mirrorable_memory_starting_address;
-} __attribute__((packed));
+} __packed;
 
 /* Idata index 1: Total configured mainstore */
 #define MSVPD_IDATA_TOTAL_CONFIG_MS	1
 
 struct msvpd_total_config_ms {
 	__be64	 total_in_mb;
-};
+} __packed;
 
 /* Idata index 2: Page mover and sync structure */
 #define MSVPD_IDATA_PMOVER_SYNCHRO	2
@@ -509,8 +509,7 @@ struct msvpd_pmover_bsr_synchro {
 	__be64		pmover_addr;
 	__be64		bsr_addr;
 	__be64		xscom_addr;
-
-};
+} __packed;
 
 /* Idata index 3: Memory Trace Array */
 
@@ -519,13 +518,13 @@ struct msvpd_pmover_bsr_synchro {
 /* Idata index 5: Hostboot reserved memory address range */
 #define MSVPD_IDATA_HB_RESERVED_MEM	5
 struct msvpd_hb_reserved_mem {
-	__be32		node_instance;
+	__be32		type_instance;
 	__be64		start_addr;
 	__be64		end_addr;
 	__be32		label_size;
 	uint8_t		label[64];
 	__be64		reserved;
-};
+} __packed;
 
 /* Child index 0: MS area child structure */
 #define MSVPD_CHILD_MS_AREAS		0
@@ -909,7 +908,7 @@ struct sppaca_cpu_cache {
 	__be32 l2_cache_assoc_sets;
 	__be32 l35_dcache_size_kb;
 	__be32 l35_cache_line_size;
-};
+} __packed;
 
 /* Idata index 6 : CPU Attributes */
 #define SPPACA_IDATA_CPU_ATTR	6
