@@ -274,7 +274,9 @@ void mbox_init(void)
 	chip_id = dt_get_chip_id(np);
 	mbox_lpc_client.interrupts = LPC_IRQ(irq);
 	lpc_register_client(chip_id, &mbox_lpc_client, IRQ_ATTR_TARGET_OPAL);
-	prlog(PR_DEBUG, "Using chipid: %d and IRQ: %d at 0x%08x\n", chip_id, irq, mbox.base);
+
+	prlog(PR_DEBUG, "Enabled on chip %d, IO port 0x%x, IRQ %d\n",
+	      chip_id, mbox.base, irq);
 }
 
 
