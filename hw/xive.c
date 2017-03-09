@@ -2325,11 +2325,52 @@ static void xive_update_irq_mask(struct xive_src *s, uint32_t idx, bool masked)
 	in_be64(mmio_base + offset);
 }
 
+static void xive_sync(struct xive *x)
+{
+	uint64_t r;
+	void *p;
+
+	lock(&x->lock);
+
+	/* Second 2K range of second page */
+	p = x->ic_base + (1 << x->ic_shift) + 0x800;
+
+	/* TODO: Make this more fine grained */
+	out_be64(p + (10 << 7), 0); /* Sync OS escalations */
+	out_be64(p + (11 << 7), 0); /* Sync Hyp escalations */
+	out_be64(p + (12 << 7), 0); /* Sync Redistribution */
+	out_be64(p + ( 8 << 7), 0); /* Sync IPI */
+	out_be64(p + ( 9 << 7), 0); /* Sync HW */
+
+#define SYNC_MASK                \
+	(VC_EQC_CONF_SYNC_IPI  | \
+	 VC_EQC_CONF_SYNC_HW   | \
+	 VC_EQC_CONF_SYNC_ESC1 | \
+	 VC_EQC_CONF_SYNC_ESC2 | \
+	 VC_EQC_CONF_SYNC_REDI)
+
+	/* XXX Add timeout */
+	for (;;) {
+		r = xive_regrx(x, VC_EQC_CONFIG);
+		if ((r & SYNC_MASK) == SYNC_MASK)
+			break;
+		cpu_relax();
+	}
+	xive_regw(x, VC_EQC_CONFIG, r & ~SYNC_MASK);
+
+	/* Workaround HW issue, read back before allowing a new sync */
+	xive_regr(x, VC_GLOBAL_CONFIG);
+
+	unlock(&x->lock);
+}
+
 static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 				    uint16_t server, uint8_t prio)
 {
 	struct xive_src *s = container_of(is, struct xive_src, is);
 	uint8_t old_prio;
+	uint32_t old_target;
+	uint32_t vp_blk;
 	int64_t rc;
 
 	/*
@@ -2351,7 +2392,7 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 	server >>= 2;
 
 	/* Grab existing prio/mask */
-	if (!xive_get_irq_targetting(isn, NULL, &old_prio, NULL))
+	if (!xive_get_irq_targetting(isn, &old_target, &old_prio, NULL))
 		return OPAL_PARAMETER;
 
 	/* Let XIVE configure the EQ synchronously */
@@ -2367,6 +2408,21 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 			/* Ensure it's enabled/disabled in the source controller */
 			xive_update_irq_mask(s, isn - s->esb_base,
 					     prio == 0xff);
+	}
+
+	/*
+	 * Synchronize the source and old target XIVEs to ensure that
+	 * all pending interrupts to the old target have reached their
+	 * respective queue.
+	 *
+	 * WARNING: This assumes the VP and it's queues are on the same
+	 *          XIVE instance !
+	 */
+	xive_sync(s->xive);
+	if (xive_decode_vp(old_target, &vp_blk, NULL, NULL, NULL)) {
+		struct xive *x = xive_from_pc_blk(vp_blk);
+		if (x)
+			xive_sync(x);
 	}
 	return OPAL_SUCCESS;
 }
@@ -3334,6 +3390,7 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 {
 	struct irq_source *is = irq_find_source(girq);
 	struct xive_src *s = container_of(is, struct xive_src, is);
+	uint32_t old_target, vp_blk;
 	int64_t rc;
 
 	/*
@@ -3342,6 +3399,10 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 
 	if (xive_mode != XIVE_MODE_EXPL)
 		return OPAL_WRONG_STATE;
+
+	/* Grab existing target */
+	if (!xive_get_irq_targetting(girq, &old_target, NULL, NULL))
+		return OPAL_PARAMETER;
 
 	/* Let XIVE configure the EQ. We do the update without the
 	 * synchronous flag, thus a cache update failure will result
@@ -3357,6 +3418,21 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 	else
 		/* Ensure it's enabled/disabled in the source controller */
 		xive_update_irq_mask(s, girq - s->esb_base, prio == 0xff);
+
+	/*
+	 * Synchronize the source and old target XIVEs to ensure that
+	 * all pending interrupts to the old target have reached their
+	 * respective queue.
+	 *
+	 * WARNING: This assumes the VP and it's queues are on the same
+	 *          XIVE instance !
+	 */
+	xive_sync(s->xive);
+	if (xive_decode_vp(old_target, &vp_blk, NULL, NULL, NULL)) {
+		struct xive *x = xive_from_pc_blk(vp_blk);
+		if (x)
+			xive_sync(x);
+	}
 
 	return OPAL_SUCCESS;
 }
