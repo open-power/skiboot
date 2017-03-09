@@ -2407,12 +2407,16 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 
 	/* The source has special variants of masking/unmasking */
 	if (old_prio != prio && (old_prio == 0xff || prio == 0xff)) {
-		if (s->orig_ops && s->orig_ops->set_xive)
-			rc = s->orig_ops->set_xive(is, isn, server, prio);
-		else
+		if (s->orig_ops && s->orig_ops->set_xive) {
+			/* We don't pass as server on source ops ! Targetting
+			 * is handled by the XIVE
+			 */
+			rc = s->orig_ops->set_xive(is, isn, 0, prio);
+		} else {
 			/* Ensure it's enabled/disabled in the source controller */
 			xive_update_irq_mask(s, isn - s->esb_base,
 					     prio == 0xff);
+		}
 	}
 
 	/*
@@ -3418,11 +3422,15 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 		return rc;
 
 	/* The source has special variants of masking/unmasking */
-	if (s->orig_ops && s->orig_ops->set_xive)
-		rc = s->orig_ops->set_xive(is, girq, vp >> 2, prio);
-	else
+	if (s->orig_ops && s->orig_ops->set_xive) {
+		/* We don't pass as server on source ops ! Targetting
+		 * is handled by the XIVE
+		 */
+		rc = s->orig_ops->set_xive(is, girq, 0, prio);
+	} else {
 		/* Ensure it's enabled/disabled in the source controller */
 		xive_update_irq_mask(s, girq - s->esb_base, prio == 0xff);
+	}
 
 	/*
 	 * Synchronize the source and old target XIVEs to ensure that
