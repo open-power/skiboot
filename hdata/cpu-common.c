@@ -313,24 +313,45 @@ static struct dt_node *l2_cache_node(struct dt_node *cpus,
 	return node;
 }
 
+static struct dt_node *find_l2_node(struct dt_node *cpus, u32 unit_addr)
+{
+	char name[32];
+
+	snprintf(name, sizeof(name), "l2-cache@%.08x", unit_addr);
+	return dt_find_by_name(cpus, name);
+}
+
 uint32_t add_core_cache_info(struct dt_node *cpus,
 			     const struct sppcia_cpu_cache *cache,
-			     uint32_t int_server, int okay)
+			     uint32_t core_pir, int okay)
 {
 	struct dt_node *l2_node, *l3_node, *l35_node;
 	uint32_t unit_addr;
 
-	/* Use Processor Interrupt Line to genarate cache unit address */
-	unit_addr = 0x20 << 24 | int_server;
+	/*
+	 * On P9 the L2 is shared by pairs of SMT=4 cores. We only want
+	 * to create a cache node for the first of these so we mask off
+	 * the low PIR bits to get the unit address of the shared cache.
+	 */
+	if (proc_gen == proc_gen_p9) {
+		core_pir &= ~0x7;
+
+		l2_node = find_l2_node(cpus, 0x20 << 24 | core_pir);
+		if (l2_node)
+			return l2_node->phandle;
+	}
+
+	unit_addr = 0x20 << 24 | core_pir;
 	l2_node = l2_cache_node(cpus, cache, unit_addr, okay);
 
-	unit_addr = 0x30 << 24 | int_server;
+	unit_addr = 0x30 << 24 | core_pir;
 	l3_node = l3_cache_node(cpus, cache, unit_addr, okay);
+
 	/* Represents the next level of cache in the memory hierarchy */
 	dt_add_property_cells(l2_node, "l2-cache", l3_node->phandle);
 
 	if (be32_to_cpu(cache->l35_dcache_size_kb)) {
-		unit_addr = 0x35 << 24 | int_server;
+		unit_addr = 0x35 << 24 | core_pir;
 		l35_node = l35_cache_node(cpus, cache, unit_addr, okay);
 		dt_add_property_cells(l3_node, "l2-cache", l35_node->phandle);
 	}
