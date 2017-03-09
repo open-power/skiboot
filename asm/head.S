@@ -670,6 +670,8 @@ init_shared_sprs:
 	beq	3f
 	cmpwi	cr0,%r3,PVR_TYPE_P8NVL
 	beq	3f
+	cmpwi	cr0,%r3,PVR_TYPE_P9
+	beq	4f
 	/* Unsupported CPU type... what do we do ? */
 	b	9f
 
@@ -718,6 +720,28 @@ init_shared_sprs:
 	/* RPR (per-LPAR but let's treat it as replicated for now) */
 	LOAD_IMM64(%r3,0x00000103070F1F3F)
 	mtspr	SPR_RPR,%r3
+	b	9f
+
+4:	/* P9 */
+	/* HID0: Clear bit 5 (enable core recovery)
+	 *       Clear bit 4 (HILE)
+	 */
+	mfspr	%r3,SPR_HID0
+	li	%r0,1
+	sldi	%r4,%r0,(63-5)
+	sldi	%r5,%r0,(63-4)
+	or	%r0,%r4,%r5,
+	andc	%r3,%r3,%r0
+	sync
+	mtspr	SPR_HID0,%r3
+	isync
+	/* HMEER: Enable HMIs for core recovery and TOD errors. */
+	LOAD_IMM64(%r0,SPR_HMEER_HMI_ENABLE_MASK)
+	mfspr	%r3,SPR_HMEER
+	or	%r3,%r3,%r0
+	sync
+	mtspr	SPR_HMEER,%r3
+	isync
 9:	blr
 
 .global init_replicated_sprs
