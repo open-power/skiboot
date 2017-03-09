@@ -3268,15 +3268,20 @@ static int64_t opal_xive_get_irq_info(uint32_t girq,
 		return OPAL_PARAMETER;
 	assert(is->ops == &xive_irq_source_ops);
 
-	*out_flags = xive_convert_irq_flags(s->flags);
+	if (out_flags)
+		*out_flags = xive_convert_irq_flags(s->flags);
 
 	/*
 	 * If the orig source has a set_xive callback, then set
 	 * OPAL_XIVE_IRQ_MASK_VIA_FW as masking/unmasking requires
-	 * source specific workarounds.
+	 * source specific workarounds. Same with EOI.
 	 */
-	if (out_flags && s->orig_ops && s->orig_ops->set_xive)
-		*out_flags |= OPAL_XIVE_IRQ_MASK_VIA_FW;
+	if (out_flags && s->orig_ops) {
+		if (s->orig_ops->set_xive)
+			*out_flags |= OPAL_XIVE_IRQ_MASK_VIA_FW;
+		if (s->orig_ops->eoi)
+			*out_flags |= OPAL_XIVE_IRQ_EOI_VIA_FW;
+	}
 
 	idx = girq - s->esb_base;
 
