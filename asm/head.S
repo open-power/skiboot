@@ -722,12 +722,38 @@ init_shared_sprs:
 
 .global init_replicated_sprs
 init_replicated_sprs:
+	mfspr	%r3,SPR_PVR
+	srdi	%r3,%r3,16
+	cmpwi	cr0,%r3,PVR_TYPE_P7
+	beq	1f
+	cmpwi	cr0,%r3,PVR_TYPE_P7P
+	beq	1f
+	cmpwi	cr0,%r3,PVR_TYPE_P8E
+	beq	3f
+	cmpwi	cr0,%r3,PVR_TYPE_P8
+	beq	3f
+	cmpwi	cr0,%r3,PVR_TYPE_P8NVL
+	beq	3f
+	cmpwi	cr0,%r3,PVR_TYPE_P9
+	beq	3f
+	/* Unsupported CPU type... what do we do ? */
+	b	9f
+
+1:	/* P7, P7+ */
 	/* LPCR: sane value */
 	LOAD_IMM64(%r3,0x0040000000000004)
 	mtspr	SPR_LPCR, %r3
+	sync
+	isync
+	b 9f
 
-	/* XXX TODO: Add more */
-	blr
+3:	/* P8, P8E, P9 */
+	/* LPCR: sane value */
+	LOAD_IMM64(%r3,0x0040000000000000)
+	mtspr	SPR_LPCR, %r3
+	sync
+	isync
+9:	blr
 
 	.global enter_nap
 enter_nap:
