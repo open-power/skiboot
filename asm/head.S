@@ -689,13 +689,7 @@ init_shared_sprs:
 	/* TSCR: Recommended value by HW folks */
 	LOAD_IMM32(%r3,0x8ACC6880)
 	mtspr	SPR_TSCR, %r3
-	mfspr	%r3,SPR_LPCR
-	rldicr	%r3,%r3,12,60
-	ori	%r3,%r3,4
-	rldicr	%r3,%r3,52,63
-	mtspr	SPR_LPCR,%r3
-	sync
-	isync
+
 	/* HID0: Clear bit 13 (enable core recovery)
 	 *       Clear bit 19 (HILE)
 	 */
@@ -729,7 +723,7 @@ init_shared_sprs:
 .global init_replicated_sprs
 init_replicated_sprs:
 	/* LPCR: sane value */
-	LOAD_IMM64(%r3,0x0070000000000004)
+	LOAD_IMM64(%r3,0x0040000000000004)
 	mtspr	SPR_LPCR, %r3
 
 	/* XXX TODO: Add more */
