@@ -1585,7 +1585,7 @@ void create_led_device_nodes(void)
 	list_for_each_safe(&cec_ledq, led, next, link) {
 		/* Duplicate LED location code */
 		if (dt_find_by_path(pled, led->loc_code)) {
-			prlog(PR_WARNING, "duplicate location code %s",
+			prlog(PR_WARNING, "duplicate location code %s\n",
 			      led->loc_code);
 			continue;
 		}
