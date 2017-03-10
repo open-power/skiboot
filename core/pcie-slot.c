@@ -461,8 +461,13 @@ struct pci_slot *pcie_slot_create(struct phb *phb, struct pci_device *pd)
 		       &slot->pcie_cap);
 	pci_cfg_read32(phb, pd->bdfn, ecap + PCICAP_EXP_LCAP,
 		       &slot->link_cap);
-	pci_cfg_read32(phb, pd->bdfn, ecap + PCICAP_EXP_SLOTCAP,
-		       &slot->slot_cap);
+
+	/* Leave PCI slot capability blank if PCI slot isn't supported */
+	if (slot->pcie_cap & PCICAP_EXP_CAP_SLOT)
+		pci_cfg_read32(phb, pd->bdfn, ecap + PCICAP_EXP_SLOTCAP,
+			       &slot->slot_cap);
+	else
+		slot->slot_cap = 0;
 
 	if (slot->slot_cap & PCICAP_EXP_SLOTCAP_HPLUG_CAP)
 		slot->pluggable = 1;
