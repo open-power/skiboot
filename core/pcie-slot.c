@@ -500,12 +500,14 @@ struct pci_slot *pcie_slot_create(struct phb *phb, struct pci_device *pd)
 	 * Its PDC (Presence Detection Change) isn't reliable. To mark that as
 	 * broken on them.
 	 */
-	if (slot->slot_cap & PCICAP_EXP_SLOTCAP_HPLUG_SURP) {
-		slot->surprise_pluggable = 1;
-	} else if (slot->link_cap & PCICAP_EXP_LCAP_DL_ACT_REP) {
-		slot->surprise_pluggable = 1;
+	if (slot->pcie_cap & PCICAP_EXP_CAP_SLOT) {
+		if (slot->slot_cap & PCICAP_EXP_SLOTCAP_HPLUG_SURP) {
+			slot->surprise_pluggable = 1;
+		} else if (slot->link_cap & PCICAP_EXP_LCAP_DL_ACT_REP) {
+			slot->surprise_pluggable = 1;
 
-		pci_slot_add_flags(slot, PCI_SLOT_FLAG_BROKEN_PDC);
+			pci_slot_add_flags(slot, PCI_SLOT_FLAG_BROKEN_PDC);
+		}
 	}
 
 	/* Standard slot operations */
