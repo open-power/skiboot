@@ -690,14 +690,14 @@ void add_cpu_idle_state_properties(void)
 
 		p = dt_find_property(dt_root, "ibm,enabled-idle-states");
 		if (p)
-			prlog(PR_WARNING,
+			prlog(PR_NOTICE,
 			      "SLW: HB-provided idle states property found\n");
 		states = power8_cpu_idle_states;
 		nr_states = ARRAY_SIZE(power8_cpu_idle_states);
 
 		/* Check if hostboot say we can sleep */
 		if (!p || !dt_prop_find_string(p, "fast-sleep")) {
-			prlog(PR_NOTICE, "SLW: Sleep not enabled by HB"
+			prlog(PR_WARNING, "SLW: Sleep not enabled by HB"
 			      " on this platform\n");
 			can_sleep = false;
 		}
