@@ -230,7 +230,11 @@ void mbox_init(void)
 	prlog(PR_DEBUG, "Attempting mbox init\n");
 	np = dt_find_compatible_node(dt_root, NULL, "mbox");
 	if (!np) {
-		prlog(PR_ERR, "No device tree entry\n");
+		/* Only an ERROR on P9 and above, otherwise just
+		 * a warning for someone doing development
+		 */
+		prlog((proc_gen <= proc_gen_p8) ? PR_DEBUG : PR_ERR,
+		      "No device tree entry\n");
 		return;
 	}
 
