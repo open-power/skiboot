@@ -220,7 +220,8 @@ static const struct card_info *card_info_lookup(char *ccin)
 {
 	int i;
 	for(i = 0; i < ARRAY_SIZE(card_table); i++)
-		if (!strcmp(card_table[i].ccin, ccin))
+		/* CCIN is always 4 bytes in size */
+		if (!strncmp(card_table[i].ccin, ccin, 4))
 			return &card_table[i];
 	return NULL;
 }
@@ -229,65 +230,62 @@ static void vpd_vini_parse(struct dt_node *node,
 			   const void *fruvpd, unsigned int fruvpd_sz)
 {
 	const void *kw;
-	char *str;
-	uint8_t kwsz;
+	uint8_t sz;
 	const struct card_info *cinfo;
 
 	/* FRU Stocking Part Number */
-	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "FN", &kwsz);
-	if (kw) {
-		str = zalloc(kwsz + 1);
-		if (!str)
-			goto no_memory;
-		memcpy(str, kw, kwsz);
-		dt_add_property_string(node, "fru-number", str);
-		free(str);
-	}
+	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "FN", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "fru-number", kw, sz);
 
 	/* Serial Number */
-	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "SN", &kwsz);
-	if (kw) {
-		str = zalloc(kwsz + 1);
-		if (!str)
-			goto no_memory;
-		memcpy(str, kw, kwsz);
-		dt_add_property_string(node, "serial-number", str);
-		free(str);
-	}
+	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "SN", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "serial-number", kw, sz);
 
 	/* Part Number */
-	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "PN", &kwsz);
-	if (kw) {
-		str = zalloc(kwsz + 1);
-		if (!str)
-			goto no_memory;
-		memcpy(str, kw, kwsz);
-		dt_add_property_string(node, "part-number", str);
-		free(str);
-	}
+	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "PN", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "part-number", kw, sz);
+
+	/* CCIN Extension */
+	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "CE", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "ccin-extension", kw, sz);
+
+	/* HW Version info */
+	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "HW", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "hw-version", kw, sz);
+
+	/* Card type info */
+	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "CT", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "card-type", kw, sz);
+
+	/* HW characteristics info */
+	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "B3", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "hw-characteristics", kw, sz);
 
 	/* Customer Card Identification Number (CCIN) */
-	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "CC", &kwsz);
+	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "CC", &sz);
 	if (kw) {
-		str = zalloc(kwsz + 1);
-		if (!str)
-			goto no_memory;
-		memcpy(str, kw, kwsz);
-		dt_add_property_string(node, "ccin", str);
-		cinfo = card_info_lookup(str);
+		dt_add_property_nstr(node, "ccin", kw, sz);
+
+		cinfo = card_info_lookup((char *)kw);
 		if (cinfo) {
 			dt_add_property_string(node,
 				       "description", cinfo->description);
 		} else {
 			dt_add_property_string(node, "description", "Unknown");
 			prlog(PR_WARNING,
-			      "VPD: CCIN desc not available for : %s\n", str);
+				"VPD: CCIN desc not available for: %s\n",
+								(char *)kw);
 		}
-		free(str);
 	}
+
 	return;
-no_memory:
-	prerror("VPD: memory allocation failure in VINI parsing\n");
 }
 
 static bool valid_child_entry(const struct slca_entry *entry)
@@ -486,17 +484,6 @@ def_model:
 	dt_add_property_string(dt_root, "model-name", model_name);
 }
 
-static void vpd_add_property_string(struct dt_node *n, const char *name,
-				    const void *vpd, unsigned int sz)
-{
-	char *str = zalloc(sz + 1);
-	if (!str)
-		return;
-	memcpy(str, vpd, sz);
-	dt_add_property_string(n, name, str);
-	free(str);
-}
-
 static void sysvpd_parse_opp(const void *sysvpd, unsigned int sysvpd_sz)
 {
 	const char *v;
@@ -504,10 +491,10 @@ static void sysvpd_parse_opp(const void *sysvpd, unsigned int sysvpd_sz)
 
 	v = vpd_find(sysvpd, sysvpd_sz, "OSYS", "MM", &sz);
 	if (v)
-		vpd_add_property_string(dt_root, "model", v, sz);
+		dt_add_property_nstr(dt_root, "model", v, sz);
 	v = vpd_find(sysvpd, sysvpd_sz, "OSYS", "SS", &sz);
 	if (v)
-		vpd_add_property_string(dt_root, "system-id", v, sz);
+		dt_add_property_nstr(dt_root, "system-id", v, sz);
 }
 
 
@@ -533,13 +520,13 @@ static void sysvpd_parse_legacy(const void *sysvpd, unsigned int sysvpd_sz)
 
 	system_id = vpd_find(sysvpd, sysvpd_sz, "VSYS", "SE", &sz);
 	if (system_id)
-		vpd_add_property_string(dt_root, "system-id", system_id, sz);
+		dt_add_property_nstr(dt_root, "system-id", system_id, sz);
 	else
 		dt_add_property_string(dt_root, "system-id", "Unknown");
 
 	brand = vpd_find(sysvpd, sysvpd_sz, "VSYS", "BR", &sz);
 	if (brand)
-		vpd_add_property_string(dt_root, "system-brand", brand, sz);
+		dt_add_property_nstr(dt_root, "system-brand", brand, sz);
 	else
 		dt_add_property_string(dt_root, "brand", "Unknown");
 }
