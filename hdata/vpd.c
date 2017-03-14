@@ -23,6 +23,8 @@
 #include "hdata.h"
 #include <inttypes.h>
 
+static bool op_platform;
+
 struct card_info {
 	const char *ccin; 	/* Customer card identification number */
 	const char *description;
@@ -571,9 +573,10 @@ static void sysvpd_parse(void)
 	}
 
 	/* Look for the new OpenPower "OSYS" first */
-	if (vpd_find_record(sysvpd, sysvpd_sz, "OSYS", NULL))
+	if (vpd_find_record(sysvpd, sysvpd_sz, "OSYS", NULL)) {
+		op_platform = true;
 		sysvpd_parse_opp(sysvpd, sysvpd_sz);
-	else
+	} else
 		sysvpd_parse_legacy(sysvpd, sysvpd_sz);
 }
 
@@ -651,14 +654,14 @@ void vpd_parse(void)
 {
 	const struct HDIF_common_hdr *fruvpd_hdr;
 
+	/* System VPD uses the VSYS record, so its special */
+	sysvpd_parse();
+
 	/* Enclosure */
 	_vpd_parse(spira.ntuples.nt_enclosure_vpd);
 
 	/* Backplane */
 	_vpd_parse(spira.ntuples.backplane_vpd);
-
-	/* System VPD uses the VSYS record, so its special */
-	sysvpd_parse();
 
 	/* clock card -- does this use the FRUVPD sig? */
 	_vpd_parse(spira.ntuples.clock_vpd);
