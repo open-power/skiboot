@@ -226,6 +226,45 @@ static const struct card_info *card_info_lookup(char *ccin)
 	return NULL;
 }
 
+/*
+ * For OpenPOWER, we only decipher OPFR records. While OP HDAT have VINI
+ * records too, populating the fields in there is optional. Also, there
+ * is an overlap in the fields contained therein.
+ */
+static void vpd_opfr_parse(struct dt_node *node,
+		const void *fruvpd, unsigned int fruvpd_sz)
+{
+	const void *kw;
+	uint8_t sz;
+
+	/* Vendor Name */
+	kw = vpd_find(fruvpd, fruvpd_sz, "OPFR", "VN", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "vendor", kw, sz);
+
+	/* FRU Description */
+	kw = vpd_find(fruvpd, fruvpd_sz, "OPFR", "DR", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "description", kw, sz);
+
+	/* Part number */
+	kw = vpd_find(fruvpd, fruvpd_sz, "OPFR", "VP", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "part-number", kw, sz);
+
+	/* Serial number */
+	kw = vpd_find(fruvpd, fruvpd_sz, "OPFR", "VS", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "serial-number", kw, sz);
+
+	/* Build date in BCD */
+	kw = vpd_find(fruvpd, fruvpd_sz, "OPFR", "MB", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "build-date", kw, sz);
+
+	return;
+}
+
 static void vpd_vini_parse(struct dt_node *node,
 			   const void *fruvpd, unsigned int fruvpd_sz)
 {
@@ -446,7 +485,11 @@ struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 	if (vpd_valid(fruvpd, fruvpd_sz)
 	    && !dt_find_property(node, "ibm,vpd")) {
 		dt_add_property(node, "ibm,vpd", fruvpd, fruvpd_sz);
-		vpd_vini_parse(node, fruvpd, fruvpd_sz);
+
+		if (op_platform)
+			vpd_opfr_parse(node, fruvpd, fruvpd_sz);
+		else
+			vpd_vini_parse(node, fruvpd, fruvpd_sz);
 	}
 
 	return node;
