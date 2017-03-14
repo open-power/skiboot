@@ -591,6 +591,10 @@
 				fru-number = "74Y4344";
 				serial-number = "YL30UF55N006";
 				part-number = "00E4241";
+				ccin-extension = [31 00];
+				hw-version = [00];
+				card-type = [80 f3 00];
+				hw-characteristics = [00];
 				ccin = "2CD5";
 				description = "System planar 1S4U";
 
@@ -614,6 +618,10 @@
 					fru-number = "74Y4344";
 					serial-number = "YL30UF55N006";
 					part-number = "00E4241";
+					ccin-extension = [31 00];
+					hw-version = [00];
+					card-type = [80 f3 00];
+					hw-characteristics = [00];
 					ccin = "2CD5";
 					description = "System planar 1S4U";
 
@@ -625,6 +633,10 @@
 						fru-number = "00E2152";
 						serial-number = "YL10BG3121NJ";
 						part-number = "00E2148";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [40 b4 00];
+						hw-characteristics = [00];
 						ccin = "52F2";
 						description = "System Anchor Card - IBM Power 814";
 					};
@@ -637,6 +649,10 @@
 						fru-number = "00E1960";
 						serial-number = "YL10UF5570L9";
 						part-number = "00E3809";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [80 b5 00];
+						hw-characteristics = [00];
 						ccin = "2B0B";
 						description = "Native I/O Card";
 
@@ -679,6 +695,10 @@
 						fru-number = "41T9575";
 						serial-number = "YH31MS3A4011";
 						part-number = "41T9575";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "31E0";
 						description = "16GB CDIMM";
 						ibm,chip-id = <0x0>;
@@ -694,6 +714,10 @@
 						fru-number = "41T9575";
 						serial-number = "YH31MU3AC1CP";
 						part-number = "41T9575";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "31E0";
 						description = "16GB CDIMM";
 						ibm,chip-id = <0x0>;
@@ -709,6 +733,10 @@
 						fru-number = "00FX523";
 						serial-number = "YA1932063562";
 						part-number = "00FX748";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "54E1";
 						description = "Unknown";
 						ibm,chip-id = <0x0>;
@@ -722,6 +750,10 @@
 						fru-number = "00FX523";
 						serial-number = "YA1932063562";
 						part-number = "00FX748";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "54E1";
 						description = "Unknown";
 						ibm,chip-id = <0x1>;
@@ -784,6 +816,10 @@
 					fru-number = "00E1966";
 					serial-number = "YL30UF38E03R";
 					part-number = "00E2952";
+					ccin-extension = [31 00];
+					hw-version = [00];
+					card-type = [80 b5 00];
+					hw-characteristics = [00];
 					ccin = "2B08";
 					description = "Unknown";
 				};
@@ -808,6 +844,10 @@
 					fru-number = "74Y4344";
 					serial-number = "YL30UF55N006";
 					part-number = "00E4241";
+					ccin-extension = [31 00];
+					hw-version = [00];
+					card-type = [80 f3 00];
+					hw-characteristics = [00];
 					ccin = "2CD5";
 					description = "System planar 1S4U";
 				};

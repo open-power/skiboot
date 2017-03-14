@@ -1702,6 +1702,10 @@
 				fru-number = "00E2022";
 				serial-number = "YL10UF42L013";
 				part-number = "00E3997";
+				ccin-extension = [31 00];
+				hw-version = [00];
+				card-type = [80 f3 00];
+				hw-characteristics = [00];
 				ccin = "2CD6";
 				description = "System planar 2S2U";
 
@@ -1749,6 +1753,10 @@
 					fru-number = "00E2022";
 					serial-number = "YL10UF42L013";
 					part-number = "00E3997";
+					ccin-extension = [31 00];
+					hw-version = [00];
+					card-type = [80 f3 00];
+					hw-characteristics = [00];
 					ccin = "2CD6";
 					description = "System planar 2S2U";
 
@@ -1760,6 +1768,10 @@
 						fru-number = "00E3427";
 						serial-number = "YL101142R000";
 						part-number = "00E2148";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [40 b4 00];
+						hw-characteristics = [00];
 						ccin = "524D";
 						description = "System Anchor Card - IBM Power 822L";
 					};
@@ -1772,6 +1784,10 @@
 						fru-number = "00E2164";
 						serial-number = "YL10UF42L001";
 						part-number = "00E3811";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [80 b5 00];
+						hw-characteristics = [00];
 						ccin = "2B0B";
 						description = "Native I/O Card";
 
@@ -1814,6 +1830,10 @@
 						fru-number = "00JA664";
 						serial-number = "YH10MU42D1A9";
 						part-number = "00JA664";
+						ccin-extension = [31 00];
+						hw-version = [01 00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "31E9";
 						description = "32GB CDIMM";
 						ibm,chip-id = <0x0>;
@@ -1829,6 +1849,10 @@
 						fru-number = "00JA664";
 						serial-number = "YH10MU42D1A6";
 						part-number = "00JA664";
+						ccin-extension = [31 00];
+						hw-version = [01 00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "31E9";
 						description = "32GB CDIMM";
 						ibm,chip-id = <0x0>;
@@ -1844,6 +1868,10 @@
 						fru-number = "00JA664";
 						serial-number = "YH10MU42C17T";
 						part-number = "00JA664";
+						ccin-extension = [31 00];
+						hw-version = [01 00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "31E9";
 						description = "32GB CDIMM";
 						ibm,chip-id = <0x10>;
@@ -1859,6 +1887,10 @@
 						fru-number = "00JA664";
 						serial-number = "YH10MU42C1AH";
 						part-number = "00JA664";
+						ccin-extension = [31 00];
+						hw-version = [01 00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "31E9";
 						description = "32GB CDIMM";
 						ibm,chip-id = <0x10>;
@@ -1874,6 +1906,10 @@
 						fru-number = "00FX518";
 						serial-number = "YA1932096951";
 						part-number = "00FX740";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "54E8";
 						description = "Unknown";
 						ibm,chip-id = <0x0>;
@@ -1887,6 +1923,10 @@
 						fru-number = "00FX518";
 						serial-number = "YA1932096951";
 						part-number = "00FX740";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "54E8";
 						description = "Unknown";
 						ibm,chip-id = <0x1>;
@@ -1900,6 +1940,10 @@
 						fru-number = "00FX518";
 						serial-number = "YA1932096950";
 						part-number = "00FX740";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "54E8";
 						description = "Unknown";
 						ibm,chip-id = <0x10>;
@@ -1913,6 +1957,10 @@
 						fru-number = "00FX518";
 						serial-number = "YA1932096950";
 						part-number = "00FX740";
+						ccin-extension = [31 00];
+						hw-version = [00];
+						card-type = [00];
+						hw-characteristics = [00];
 						ccin = "54E8";
 						description = "Unknown";
 						ibm,chip-id = <0x11>;
@@ -1963,6 +2011,10 @@
 					fru-number = "00E1966";
 					serial-number = "YL10UF41800F";
 					part-number = "00E3770";
+					ccin-extension = [31 00];
+					hw-version = [00];
+					card-type = [80 b5 00];
+					hw-characteristics = [00];
 					ccin = "2B08";
 					description = "Unknown";
 				};
@@ -1987,6 +2039,10 @@
 					fru-number = "00E2022";
 					serial-number = "YL10UF42L013";
 					part-number = "00E3997";
+					ccin-extension = [31 00];
+					hw-version = [00];
+					card-type = [80 f3 00];
+					hw-characteristics = [00];
 					ccin = "2CD6";
 					description = "System planar 2S2U";
 				};
