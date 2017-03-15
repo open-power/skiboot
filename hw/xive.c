@@ -2848,41 +2848,6 @@ static void xive_setup_hw_for_emu(struct xive_cpu_state *xs)
 			      0, 8, &vp, false, true);
 }
 
-static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
-{
-	struct xive *x;
-	void *p;
-
-	/* Physical VPs are pre-allocated */
-	xs->vp_blk = PIR2VP_BLK(c->pir);
-	xs->vp_idx = PIR2VP_IDX(c->pir);
-
-	/* For now we use identical block IDs for VC and PC but that might
-	 * change. We allocate the EQs on the same XIVE as the VP.
-	 */
-	xs->eq_blk = xs->vp_blk;
-
-	/* Grab the XIVE where the EQ resides. It could be different from
-	 * the local chip XIVE if not using block group mode
-	 */
-	x = xive_from_vc_blk(xs->eq_blk);
-	assert(x);
-
-	/* Allocate a set of EQs for that VP */
-	xs->eq_idx = xive_alloc_eq_set(x, true);
-	assert(!XIVE_ALLOC_IS_ERR(xs->eq_idx));
-
-	/* Provision one of the queues. Allocate the memory on the
-	 * chip where the CPU resides
-	 */
-	p = local_alloc(c->chip_id, 0x10000, 0x10000);
-	if (!p) {
-		xive_err(x, "Failed to allocate EQ backing store\n");
-		assert(false);
-	}
-	xs->eq_page = p;
-}
-
 static void xive_init_cpu_emulation(struct xive_cpu_state *xs,
 				    struct cpu_thread *cpu)
 {
@@ -2953,6 +2918,41 @@ static void xive_configure_ex_special_bar(struct xive *x, struct cpu_thread *c)
 		xive_cpu_err(c, "Failed to setup NCU_SPEC_BAR\n");
 		/* XXXX  what do do now ? */
 	}
+}
+
+static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
+{
+	struct xive *x;
+	void *p;
+
+	/* Physical VPs are pre-allocated */
+	xs->vp_blk = PIR2VP_BLK(c->pir);
+	xs->vp_idx = PIR2VP_IDX(c->pir);
+
+	/* For now we use identical block IDs for VC and PC but that might
+	 * change. We allocate the EQs on the same XIVE as the VP.
+	 */
+	xs->eq_blk = xs->vp_blk;
+
+	/* Grab the XIVE where the EQ resides. It could be different from
+	 * the local chip XIVE if not using block group mode
+	 */
+	x = xive_from_vc_blk(xs->eq_blk);
+	assert(x);
+
+	/* Allocate a set of EQs for that VP */
+	xs->eq_idx = xive_alloc_eq_set(x, true);
+	assert(!XIVE_ALLOC_IS_ERR(xs->eq_idx));
+
+	/* Provision one of the queues. Allocate the memory on the
+	 * chip where the CPU resides
+	 */
+	p = local_alloc(c->chip_id, 0x10000, 0x10000);
+	if (!p) {
+		xive_err(x, "Failed to allocate EQ backing store\n");
+		assert(false);
+	}
+	xs->eq_page = p;
 }
 
 static void xive_init_cpu(struct cpu_thread *c)
