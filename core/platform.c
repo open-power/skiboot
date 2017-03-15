@@ -25,6 +25,7 @@
 #include <errorlog.h>
 #include <bt.h>
 #include <nvram.h>
+#include <platforms/astbmc/astbmc.h>
 
 bool manufacturing_mode = false;
 struct platform	platform;
@@ -105,7 +106,17 @@ opal_call(OPAL_CEC_REBOOT2, opal_cec_reboot2, 2);
 
 static bool generic_platform_probe(void)
 {
-	uart_init();
+	if (dt_find_by_path(dt_root, "bmc")) {
+		/* We appear to have a BMC... so let's cross our fingers
+		 * and see if we can do anything!
+		 */
+		prlog(PR_ERR, "GENERIC BMC PLATFORM: **GUESSING** that there's "
+		      "*maybe* a BMC we can talk to.\n");
+		prlog(PR_ERR, "THIS IS ****UNSUPPORTED****, BRINGUP USE ONLY.\n");
+		astbmc_early_init();
+	} else {
+		uart_init();
+	}
 
 	return true;
 }
@@ -115,8 +126,15 @@ static void generic_platform_init(void)
 	if (uart_enabled())
 		set_opal_console(&uart_opal_con);
 
-	/* Enable a BT interface if we find one too */
-	bt_init();
+	if (dt_find_by_path(dt_root, "bmc")) {
+		prlog(PR_ERR, "BMC-GUESSWORK: Here be dragons with a taste for human flesh\n");
+		astbmc_init();
+	} else {
+		/* Otherwise we go down the ultra-minimal path */
+
+		/* Enable a BT interface if we find one too */
+		bt_init();
+	}
 
 	/* Fake a real time clock */
 	fake_rtc_init();
@@ -125,6 +143,23 @@ static void generic_platform_init(void)
 static int64_t generic_cec_power_down(uint64_t request __unused)
 {
 	return OPAL_UNSUPPORTED;
+}
+
+static int generic_resource_loaded(enum resource_id id, uint32_t subid)
+{
+	if (dt_find_by_path(dt_root, "bmc"))
+		return flash_resource_loaded(id, subid);
+
+	return OPAL_EMPTY;
+}
+
+static int generic_start_preload_resource(enum resource_id id, uint32_t subid,
+				 void *buf, size_t *len)
+{
+	if (dt_find_by_path(dt_root, "bmc"))
+		return flash_start_preload_resource(id, subid, buf, len);
+
+	return OPAL_EMPTY;
 }
 
 static struct bmc_platform generic_bmc = {
@@ -140,6 +175,8 @@ static struct platform generic_platform = {
 	.nvram_start_read = fake_nvram_start_read,
 	.nvram_write	= fake_nvram_write,
 	.cec_power_down	= generic_cec_power_down,
+	.start_preload_resource	= generic_start_preload_resource,
+	.resource_loaded	= generic_resource_loaded,
 };
 
 const struct bmc_platform *bmc_platform = &generic_bmc;
