@@ -3403,7 +3403,16 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 	int64_t rc;
 
 	/*
-	 * WARNING: See comment in set_xive()
+	 * This variant is meant for a XIVE-aware OS, thus it will
+	 * *not* affect the ESB state of the interrupt. If used with
+	 * a prio of FF, the IVT/EAS will be mased. In that case the
+	 * races have to be handled by the OS.
+	 *
+	 * The exception to this rule is interrupts for which masking
+	 * and unmasking is handled by firmware. In that case the ESB
+	 * state isn't under OS control and will be dealt here. This
+	 * is currently only the case of LSIs and on P9 DD1.0 only so
+	 * isn't an issue.
 	 */
 
 	if (xive_mode != XIVE_MODE_EXPL)
@@ -3427,9 +3436,6 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 		 * is handled by the XIVE
 		 */
 		rc = s->orig_ops->set_xive(is, girq, 0, prio);
-	} else {
-		/* Ensure it's enabled/disabled in the source controller */
-		xive_update_irq_mask(s, girq - s->esb_base, prio == 0xff);
 	}
 
 	/*
