@@ -802,9 +802,9 @@ static void xive_init_default_vp(struct xive_vp *vp,
 	vp->w0 = VP_W0_VALID;
 }
 
-static void xive_init_default_eq(uint32_t vp_blk, uint32_t vp_idx,
-				 struct xive_eq *eq, void *backing_page,
-				 uint8_t prio)
+static void xive_init_emu_eq(uint32_t vp_blk, uint32_t vp_idx,
+			     struct xive_eq *eq, void *backing_page,
+			     uint8_t prio)
 {
 	memset(eq, 0, sizeof(struct xive_eq));
 
@@ -2810,12 +2810,9 @@ void xive_cpu_callin(struct cpu_thread *cpu)
 	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2, 0x80);
 
 	xive_cpu_dbg(cpu, "Initialized interrupt management area\n");
-
-	/* Now unmask the IPI */
-	xive_ipi_init(x, cpu);
 }
 
-static void xive_init_cpu_defaults(struct xive_cpu_state *xs)
+static void xive_setup_hw_for_emu(struct xive_cpu_state *xs)
 {
 	struct xive_eq eq;
 	struct xive_vp vp;
@@ -2835,8 +2832,8 @@ static void xive_init_cpu_defaults(struct xive_cpu_state *xs)
 	assert(x_eq);
 
 	/* Initialize the structure */
-	xive_init_default_eq(xs->vp_blk, xs->vp_idx, &eq,
-			     xs->eq_page, XIVE_EMULATION_PRIO);
+	xive_init_emu_eq(xs->vp_blk, xs->vp_idx, &eq,
+			 xs->eq_page, XIVE_EMULATION_PRIO);
 
 	/* Use the cache watch to write it out */
 	xive_eqc_cache_update(x_eq, xs->eq_blk,
@@ -2886,23 +2883,58 @@ static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
 	xs->eq_page = p;
 }
 
-static void xive_init_xics_emulation(struct xive_cpu_state *xs)
+static void xive_init_cpu_emulation(struct xive_cpu_state *xs,
+				    struct cpu_thread *cpu)
 {
 	struct xive *x;
 
+	/* Setup HW EQ and VP */
+	xive_setup_hw_for_emu(xs);
+
+	/* Setup and unmask the IPI */
+	xive_ipi_init(xs->xive, cpu);
+
+	/* Initialize remaining state */
 	xs->cppr = 0;
 	xs->mfrr = 0xff;
-
-	xs->eqbuf = xive_get_eq_buf(xs->vp_blk, xs->eq_idx + XIVE_EMULATION_PRIO);
+	xs->eqbuf = xive_get_eq_buf(xs->vp_blk,
+				    xs->eq_idx + XIVE_EMULATION_PRIO);
 	assert(xs->eqbuf);
 
 	xs->eqptr = 0;
 	xs->eqmsk = (0x10000/4) - 1;
 	xs->eqgen = 0;
-
 	x = xive_from_vc_blk(xs->eq_blk);
 	assert(x);
 	xs->eqmmio = x->eq_mmio + (xs->eq_idx + XIVE_EMULATION_PRIO) * 0x20000;
+}
+
+static void xive_init_cpu_exploitation(struct xive_cpu_state *xs)
+{
+	struct xive_vp vp;
+	struct xive *x_vp;
+
+	/* Grab the XIVE where the VP resides. It could be different from
+	 * the local chip XIVE if not using block group mode
+	 */
+	x_vp = xive_from_pc_blk(xs->vp_blk);
+	assert(x_vp);
+
+	/* Initialize/enable the VP */
+	xive_init_default_vp(&vp, xs->eq_blk, xs->eq_idx);
+
+	/* Use the cache watch to write it out */
+	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx,
+			      0, 8, &vp, false, true);
+
+	/* Clenaup remaining state */
+	xs->cppr = 0;
+	xs->mfrr = 0xff;
+	xs->eqbuf = NULL;
+	xs->eqptr = 0;
+	xs->eqmsk = 0;
+	xs->eqgen = 0;
+	xs->eqmmio = NULL;
 }
 
 static void xive_configure_ex_special_bar(struct xive *x, struct cpu_thread *c)
@@ -2915,7 +2947,7 @@ static void xive_configure_ex_special_bar(struct xive *x, struct cpu_thread *c)
 	val = (uint64_t)x->tm_base | P9X_EX_NCU_SPEC_BAR_ENABLE;
 	if (x->tm_shift == 16)
 		val |= P9X_EX_NCU_SPEC_BAR_256K;
-	printf("NCU_SPEC_BAR_XA[%08llx]=%016llx\n", xa, val);
+	xive_cpu_dbg(c, "NCU_SPEC_BAR_XA[%08llx]=%016llx\n", xa, val);
 	rc = xscom_write(c->chip_id, xa, val);
 	if (rc) {
 		xive_cpu_err(c, "Failed to setup NCU_SPEC_BAR\n");
@@ -2962,11 +2994,8 @@ static void xive_init_cpu(struct cpu_thread *c)
 	/* Provision a VP and some EQDs for a physical CPU */
 	xive_provision_cpu(xs, c);
 
-	/* Configure the default EQ/VP */
-	xive_init_cpu_defaults(xs);
-
 	/* Initialize the XICS emulation related fields */
-	xive_init_xics_emulation(xs);
+	xive_init_cpu_emulation(xs, c);
 }
 
 static void xive_init_cpu_properties(struct cpu_thread *cpu)
@@ -3529,7 +3558,8 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 	if (!xive_decode_vp(vp, &vp_blk, &vp_idx, NULL, &group))
 		return OPAL_PARAMETER;
 
-	/* Make a local copy which we will later try to commit using
+	/*
+	 * Make a local copy which we will later try to commit using
 	 * the cache watch facility
 	 */
 	eq = *old_eq;
@@ -3747,13 +3777,14 @@ static void xive_reset_one(struct xive *x)
 
 	/* Reset all allocated EQs and free the user ones */
 	bitmap_for_each_one(*x->eq_map, MAX_EQ_COUNT >> 3, i) {
-		struct xive_eq eq0 = {0};
+		struct xive_eq eq0;
 		struct xive_eq *eq;
 		int j;
 
 		if (i == 0)
 			continue;
 		eq_firmware = false;
+		memset(&eq0, 0, sizeof(eq0));
 		for (j = 0; j < 8; j++) {
 			uint32_t idx = (i << 3) | j;
 
@@ -3821,23 +3852,17 @@ static void xive_reset_one(struct xive *x)
 	/* The rest must not be called with the lock held */
 	unlock(&x->lock);
 
-	/* Re-configure the CPUs */
+	/* Re-configure VPs and emulation */
 	for_each_present_cpu(c) {
 		struct xive_cpu_state *xs = c->xstate;
 
 		if (c->chip_id != x->chip_id || !xs)
 			continue;
 
-		/* Setup default VP and EQ */
-		xive_init_cpu_defaults(xs);
-
-		/* Re-Initialize the XICS emulation related fields
-		 * and re-enable IPI
-		 */
-		if (xive_mode == XIVE_MODE_EMU) {
-			xive_init_xics_emulation(xs);
-			xive_ipi_init(x, c);
-		}
+		if (xive_mode == XIVE_MODE_EMU)
+			xive_init_cpu_emulation(xs, c);
+		else
+			xive_init_cpu_exploitation(xs);
 	}
 }
 
