@@ -3607,7 +3607,7 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 			       EQ_W1_ESn_P | EQ_W1_ESn_Q));
 
 	/* Enable or disable. We always enable backlog for an
-	 * enable queue otherwise escalations won't work.
+	 * enabled queue otherwise escalations won't work.
 	 */
 	if (qflags & OPAL_XIVE_EQ_ENABLED)
 		eq.w0 |= EQ_W0_VALID | EQ_W0_BACKLOG;
