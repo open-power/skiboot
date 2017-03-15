@@ -2330,7 +2330,7 @@ static void xive_update_irq_mask(struct xive_src *s, uint32_t idx, bool masked)
 	in_be64(mmio_base + offset);
 }
 
-static void xive_sync(struct xive *x)
+static int64_t xive_sync(struct xive *x)
 {
 	uint64_t r;
 	void *p;
@@ -2367,6 +2367,8 @@ static void xive_sync(struct xive *x)
 	xive_regr(x, VC_GLOBAL_CONFIG);
 
 	unlock(&x->lock);
+
+	return 0;
 }
 
 static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
@@ -4228,6 +4230,48 @@ static int64_t opal_xive_dump_emu(uint32_t pir)
 	return OPAL_SUCCESS;
 }
 
+static int64_t opal_xive_sync_irq_src(uint32_t girq)
+{
+	struct xive *x = xive_from_isn(girq);
+
+	if (!x)
+		return OPAL_PARAMETER;
+	return xive_sync(x);
+}
+
+static int64_t opal_xive_sync_irq_target(uint32_t girq)
+{
+	uint32_t target, vp_blk;
+	struct xive *x;
+
+	if (!xive_get_irq_targetting(girq, &target, NULL, NULL))
+		return OPAL_PARAMETER;
+	if (!xive_decode_vp(target, &vp_blk, NULL, NULL, NULL))
+		return OPAL_PARAMETER;
+	x = xive_from_pc_blk(vp_blk);
+	if (!x)
+		return OPAL_PARAMETER;
+	return xive_sync(x);
+}
+
+static int64_t opal_xive_sync(uint32_t type, uint32_t id)
+{
+	int64_t rc = OPAL_SUCCESS;;
+
+	if (type & XIVE_SYNC_EAS)
+		rc = opal_xive_sync_irq_src(id);
+	if (rc)
+		return rc;
+	if (type & XIVE_SYNC_QUEUE)
+		rc = opal_xive_sync_irq_target(id);
+	if (rc)
+		return rc;
+
+	/* Add more ... */
+
+	return rc;
+}
+
 static int64_t opal_xive_dump(uint32_t type, uint32_t id)
 {
 	switch (type) {
@@ -4328,6 +4372,7 @@ void init_xive(void)
 	opal_register(OPAL_XIVE_FREE_VP_BLOCK, opal_xive_free_vp_block, 1);
 	opal_register(OPAL_XIVE_GET_VP_INFO, opal_xive_get_vp_info, 5);
 	opal_register(OPAL_XIVE_SET_VP_INFO, opal_xive_set_vp_info, 3);
+	opal_register(OPAL_XIVE_SYNC, opal_xive_sync, 2);
 	opal_register(OPAL_XIVE_DUMP, opal_xive_dump, 2);
 }
 

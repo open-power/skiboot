@@ -1128,6 +1128,13 @@ enum {
 	OPAL_XIVE_ANY_CHIP		= 0xffffffff,
 };
 
+/* Xive sync options */
+enum {
+	/* This bits are cumulative, arg is a girq */
+	XIVE_SYNC_EAS			= 0x00000001, /* Sync irq source */
+	XIVE_SYNC_QUEUE			= 0x00000002, /* Sync irq target */
+};
+
 /* Dump options */
 enum {
 	XIVE_DUMP_TM_HYP	= 0,
