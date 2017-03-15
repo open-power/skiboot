@@ -3599,16 +3599,22 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 	if (qflags & OPAL_XIVE_EQ_ESCALATE)
 		eq.w0 |= EQ_W0_ESCALATE_CTL;
 
-	/* Check enable transition. On any transition we clear PQ,
-	 * set the generation bit, clear the offset and mask the
-	 * escalation interrupt
+	/* Unconditionally clear the current queue pointer, set
+	 * generation to 1 and disable escalation interrupts.
 	 */
-	if ((qflags & OPAL_XIVE_EQ_ENABLED) && !(eq.w0 & EQ_W0_VALID)) {
+	eq.w1 = EQ_W1_GENERATION |
+		(old_eq->w1 & (EQ_W1_ESe_P | EQ_W1_ESe_Q |
+			       EQ_W1_ESn_P | EQ_W1_ESn_Q));
+
+	/* Enable or disable. We always enable backlog for an
+	 * enable queue otherwise escalations won't work.
+	 */
+	if (qflags & OPAL_XIVE_EQ_ENABLED)
 		eq.w0 |= EQ_W0_VALID | EQ_W0_BACKLOG;
-		eq.w1 = EQ_W1_GENERATION | EQ_W1_ESe_Q;
-	} else if (!(qflags & OPAL_XIVE_EQ_ENABLED)) {
+	else {
 		eq.w0 &= ~EQ_W0_VALID;
-		eq.w1 = EQ_W1_GENERATION | EQ_W1_ESe_Q;
+		eq.w1 &= ~(EQ_W1_ESe_P | EQ_W1_ESn_P);
+		eq.w1 |= EQ_W1_ESe_Q | EQ_W1_ESn_Q;
 	}
 
 	/* Update EQ, non-synchronous */
