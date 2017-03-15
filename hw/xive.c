@@ -3838,6 +3838,9 @@ static void xive_reset_one(struct xive *x)
 	buddy_reset(x->vp_buddy);
 #endif
 
+	/* The rest must not be called with the lock held */
+	unlock(&x->lock);
+
 	/* Re-configure the CPUs */
 	for_each_present_cpu(c) {
 		struct xive_cpu_state *xs = c->xstate;
@@ -3856,8 +3859,6 @@ static void xive_reset_one(struct xive *x)
 			xive_ipi_init(x, c);
 		}
 	}
-
-	unlock(&x->lock);
 }
 
 static int64_t opal_xive_reset(uint64_t version)
