@@ -3360,12 +3360,10 @@ static int64_t opal_xive_get_irq_info(uint32_t girq,
 	if (s->flags & XIVE_SRC_EOI_PAGE1) {
 		uint64_t p1off = 1ull << (s->esb_shift - 1);
 		eoi_page = mm_base + p1off;
-		trig_page = mm_base;
-	} else {
-		eoi_page = mm_base;
-		if (!(s->flags & XIVE_SRC_STORE_EOI))
+		if (s->flags & XIVE_SRC_TRIGGER_PAGE)
 			trig_page = mm_base;
-	}
+	} else
+		eoi_page = mm_base;
 
 	if (out_eoi_page)
 		*out_eoi_page = eoi_page;
