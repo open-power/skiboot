@@ -2371,52 +2371,40 @@ static int64_t xive_sync(struct xive *x)
 	return 0;
 }
 
-static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
-				    uint16_t server, uint8_t prio)
+static int64_t __xive_set_irq_config(struct irq_source *is, uint32_t girq,
+				     uint64_t vp, uint8_t prio, uint32_t lirq,
+				     bool update_esb)
 {
 	struct xive_src *s = container_of(is, struct xive_src, is);
-	uint8_t old_prio;
-	uint32_t old_target;
-	uint32_t vp_blk;
+	uint32_t old_target, vp_blk;
+	u8 old_prio;
 	int64_t rc;
 
-	/*
-	 * WARNING: There is an inherent race with the use of the
-	 * mask bit in the EAS/IVT. When masked, interrupts are "lost"
-	 * but their P/Q bits are still set. So when unmasking, one has
-	 * to check the P bit and possibly trigger a resend.
-	 *
-	 * We "deal" with it by relying on the fact that the OS will
-	 * lazy disable MSIs. Thus mask will only be called if the
-	 * interrupt occurred while already logically masked. Thus
-	 * losing subsequent occurrences is of no consequences, we just
-	 * need to "cleanup" P and Q when unmasking.
-	 *
-	 * This needs to be documented in the OPAL APIs
-	 */
-
-	/* Unmangle server */
-	server >>= 2;
-
-	/* Grab existing prio/mask */
-	if (!xive_get_irq_targetting(isn, &old_target, &old_prio, NULL))
+	/* Grab existing target */
+	if (!xive_get_irq_targetting(girq, &old_target, &old_prio, NULL))
 		return OPAL_PARAMETER;
 
-	/* Let XIVE configure the EQ synchronously */
-	rc = xive_set_irq_targetting(isn, server, prio, isn, true);
+	/* Let XIVE configure the EQ. We do the update without the
+	 * synchronous flag, thus a cache update failure will result
+	 * in us returning OPAL_BUSY
+	 */
+	rc = xive_set_irq_targetting(girq, vp, prio, lirq, false);
 	if (rc)
 		return rc;
 
-	/* The source has special variants of masking/unmasking */
+	/* Do we need to update the mask ? */
 	if (old_prio != prio && (old_prio == 0xff || prio == 0xff)) {
+		/* The source has special variants of masking/unmasking */
 		if (s->orig_ops && s->orig_ops->set_xive) {
 			/* We don't pass as server on source ops ! Targetting
 			 * is handled by the XIVE
 			 */
-			rc = s->orig_ops->set_xive(is, isn, 0, prio);
-		} else {
-			/* Ensure it's enabled/disabled in the source controller */
-			xive_update_irq_mask(s, isn - s->esb_base,
+			rc = s->orig_ops->set_xive(is, girq, 0, prio);
+		} else if (update_esb) {
+			/* Ensure it's enabled/disabled in the source
+			 * controller
+			 */
+			xive_update_irq_mask(s, girq - s->esb_base,
 					     prio == 0xff);
 		}
 	}
@@ -2435,7 +2423,41 @@ static int64_t xive_source_set_xive(struct irq_source *is, uint32_t isn,
 		if (x)
 			xive_sync(x);
 	}
+
 	return OPAL_SUCCESS;
+}
+
+static int64_t xive_set_irq_config(uint32_t girq, uint64_t vp, uint8_t prio,
+				   uint32_t lirq, bool update_esb)
+{
+	struct irq_source *is = irq_find_source(girq);
+
+	return __xive_set_irq_config(is, girq, vp, prio, lirq, update_esb);
+}
+
+static int64_t xive_source_set_xive(struct irq_source *is __unused,
+				    uint32_t isn, uint16_t server, uint8_t prio)
+{
+	/*
+	 * WARNING: There is an inherent race with the use of the
+	 * mask bit in the EAS/IVT. When masked, interrupts are "lost"
+	 * but their P/Q bits are still set. So when unmasking, one has
+	 * to check the P bit and possibly trigger a resend.
+	 *
+	 * We "deal" with it by relying on the fact that the OS will
+	 * lazy disable MSIs. Thus mask will only be called if the
+	 * interrupt occurred while already logically masked. Thus
+	 * losing subsequent occurrences is of no consequences, we just
+	 * need to "cleanup" P and Q when unmasking.
+	 *
+	 * This needs to be documented in the OPAL APIs
+	 */
+
+	/* Unmangle server */
+	server >>= 2;
+
+	/* Set logical irq to match isn */
+	return xive_set_irq_config(isn, server, prio, isn, true);
 }
 
 void __xive_source_eoi(struct irq_source *is, uint32_t isn)
@@ -2717,8 +2739,8 @@ static void xive_ipi_init(struct xive *x, struct cpu_thread *cpu)
 
 	assert(xs);
 
-	xive_source_set_xive(&x->ipis.is, xs->ipi_irq, cpu->pir << 2,
-			     XIVE_EMULATION_PRIO);
+	__xive_set_irq_config(&x->ipis.is, xs->ipi_irq, cpu->pir,
+			      XIVE_EMULATION_PRIO, xs->ipi_irq, true);
 }
 
 static void xive_ipi_eoi(struct xive *x, uint32_t idx)
@@ -3397,11 +3419,6 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 					uint8_t prio,
 					uint32_t lirq)
 {
-	struct irq_source *is = irq_find_source(girq);
-	struct xive_src *s = container_of(is, struct xive_src, is);
-	uint32_t old_target, vp_blk;
-	int64_t rc;
-
 	/*
 	 * This variant is meant for a XIVE-aware OS, thus it will
 	 * *not* affect the ESB state of the interrupt. If used with
@@ -3418,42 +3435,7 @@ static int64_t opal_xive_set_irq_config(uint32_t girq,
 	if (xive_mode != XIVE_MODE_EXPL)
 		return OPAL_WRONG_STATE;
 
-	/* Grab existing target */
-	if (!xive_get_irq_targetting(girq, &old_target, NULL, NULL))
-		return OPAL_PARAMETER;
-
-	/* Let XIVE configure the EQ. We do the update without the
-	 * synchronous flag, thus a cache update failure will result
-	 * in us returning OPAL_BUSY
-	 */
-	rc = xive_set_irq_targetting(girq, vp, prio, lirq, false);
-	if (rc)
-		return rc;
-
-	/* The source has special variants of masking/unmasking */
-	if (s->orig_ops && s->orig_ops->set_xive) {
-		/* We don't pass as server on source ops ! Targetting
-		 * is handled by the XIVE
-		 */
-		rc = s->orig_ops->set_xive(is, girq, 0, prio);
-	}
-
-	/*
-	 * Synchronize the source and old target XIVEs to ensure that
-	 * all pending interrupts to the old target have reached their
-	 * respective queue.
-	 *
-	 * WARNING: This assumes the VP and it's queues are on the same
-	 *          XIVE instance !
-	 */
-	xive_sync(s->xive);
-	if (xive_decode_vp(old_target, &vp_blk, NULL, NULL, NULL)) {
-		struct xive *x = xive_from_pc_blk(vp_blk);
-		if (x)
-			xive_sync(x);
-	}
-
-	return OPAL_SUCCESS;
+	return xive_set_irq_config(girq, vp, prio, lirq, false);
 }
 
 static int64_t opal_xive_get_queue_info(uint64_t vp, uint32_t prio,
@@ -3755,8 +3737,8 @@ static void xive_reset_one(struct xive *x)
 	/* Mask all interrupt sources */
 	while ((i = bitmap_find_one_bit(*x->int_enabled_map,
 					i, MAX_INT_ENTRIES - i)) >= 0) {
-		opal_xive_set_irq_config(x->int_base + i, 0, 0xff,
-					 x->int_base + i);
+		xive_set_irq_config(x->int_base + i, 0, 0xff,
+				    x->int_base + i, true);
 		i++;
 	}
 
