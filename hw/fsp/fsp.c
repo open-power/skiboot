@@ -403,6 +403,22 @@ static bool fsp_in_reset(struct fsp *fsp)
 	}
 }
 
+bool fsp_in_rr(void)
+{
+	struct fsp *fsp = fsp_get_active();
+	struct fsp_iopath *iop;
+
+	if (fsp->active_iopath < 0)
+		return true;
+
+	iop = &fsp->iopath[fsp->active_iopath];
+
+	if (fsp_in_reset(fsp) || fsp_in_hir(fsp) || !(psi_check_link_active(iop->psi)))
+		return true;
+
+	return false;
+}
+
 static bool fsp_hir_state_timeout(void)
 {
 	u64 now = mftb();

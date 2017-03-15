@@ -126,6 +126,9 @@ static int fsp_ipmi_send_request(void)
 	struct fsp_msg *msg;
 	int rc;
 
+	if (fsp_in_rr())
+		return OPAL_BUSY;
+
 	lock(&fsp_ipmi.lock);
 	/* An outstanding request is still pending */
 	if (fsp_ipmi.cur_msg) {
@@ -208,6 +211,9 @@ static int fsp_ipmi_queue_msg(struct ipmi_msg *ipmi_msg)
 	struct fsp_ipmi_msg *fsp_ipmi_msg = container_of(ipmi_msg,
 			struct fsp_ipmi_msg, ipmi_msg);
 
+	if (fsp_in_rr())
+		return OPAL_BUSY;
+
 	lock(&fsp_ipmi.lock);
 	list_add_tail(&fsp_ipmi.msg_queue, &fsp_ipmi_msg->link);
 	unlock(&fsp_ipmi.lock);
@@ -219,6 +225,9 @@ static int fsp_ipmi_queue_msg_head(struct ipmi_msg *ipmi_msg)
 {
 	struct fsp_ipmi_msg *fsp_ipmi_msg = container_of(ipmi_msg,
 			struct fsp_ipmi_msg, ipmi_msg);
+
+	if (fsp_in_rr())
+		return OPAL_BUSY;
 
 	lock(&fsp_ipmi.lock);
 	list_add(&fsp_ipmi.msg_queue, &fsp_ipmi_msg->link);
