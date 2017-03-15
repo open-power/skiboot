@@ -376,6 +376,9 @@ static int64_t fsp_sensor_send_read_request(struct opal_sensor_data *attr)
 	uint32_t align;
 	uint32_t cmd_header;
 
+	if (fsp_in_rr())
+		return OPAL_BUSY;
+
 	prlog(PR_INSANE, "Get the data for modifier [%x]\n",
 	      spcn_mod_data[attr->mod_index].mod);
 
@@ -515,6 +518,9 @@ int64_t fsp_opal_read_sensor(uint32_t sensor_hndl, int token,
 	int64_t rc;
 
 	prlog(PR_INSANE, "fsp_opal_read_sensor [%08x]\n", sensor_hndl);
+
+	if (fsp_in_rr())
+		return OPAL_BUSY;
 
 	if (sensor_state == SENSOR_PERMANENT_ERROR) {
 		rc = OPAL_HARDWARE;
