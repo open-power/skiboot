@@ -3034,8 +3034,6 @@ static int64_t phb4_dd1_lsi_set_xive(struct irq_source *is, uint32_t isn,
 	struct phb4 *p = is->data;
 	uint32_t idx = isn - p->base_lsi;
 
-	PHBERR(p, "DD1 LSI set_xive idx %d prio=%d\n", idx, priority);
-
 	if (idx > 8)
 		return OPAL_PARAMETER;
 
@@ -3045,16 +3043,17 @@ static int64_t phb4_dd1_lsi_set_xive(struct irq_source *is, uint32_t isn,
 
 	/* Mask using P=0,Q=1, unmask using P=1,Q=0 followed by EOI */
 	/* XXX FIXME: A quick mask/umask can make us shoot an interrupt
-	 * more than once to a queue. We need to keep track better
+	 * more than once to a queue. We need to keep track better.
+	 *
+	 * Thankfully, this is only on DD1 and for LSIs, so will go away
+	 * soon enough.
 	 */
-	PHBERR(p, " LIST before: %016llx\n", in_be64(p->regs + PHB_IODA_DATA0));
 	if (priority == 0xff)
 		out_be64(p->regs + PHB_IODA_DATA0, IODA3_LIST_Q);
 	else {
 		out_be64(p->regs + PHB_IODA_DATA0, IODA3_LIST_P);
 		__irq_source_eoi(is, isn);
 	}
-	PHBERR(p, " LIST after: %016llx\n", in_be64(p->regs + PHB_IODA_DATA0));
 
 	phb_unlock(&p->phb);
 
