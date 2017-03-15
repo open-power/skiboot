@@ -4124,6 +4124,7 @@ static int64_t opal_xive_free_irq(uint32_t girq)
 		return OPAL_PARAMETER;
 	}
 	bitmap_clr_bit(*x->ipi_alloc_map, idx);
+	bitmap_clr_bit(*x->int_enabled_map, idx);
 	unlock(&x->lock);
 
 	return OPAL_SUCCESS;
