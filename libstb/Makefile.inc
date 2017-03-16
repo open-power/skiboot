@@ -16,3 +16,8 @@ $(LIBSTB): $(LIBSTB_OBJS:%=$(LIBSTB_DIR)/%) $(DRIVERS) $(TSS)
 libstb/create-container: libstb/create-container.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) \
 	-Wpadded -O0 -g -I$(SRC) -I$(SRC)/include -o $@ $<,$<)
+
+clean: create-container-clean
+
+create-container-clean:
+	$(RM) libstb/create-container
