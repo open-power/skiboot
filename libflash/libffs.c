@@ -23,24 +23,26 @@
 #ifndef __SKIBOOT__
 #include <sys/types.h>
 #include <unistd.h>
+#else
+static void *calloc(size_t num, size_t size)
+{
+	void *ptr = malloc(num * size);
+	if (ptr)
+		memset(ptr, 0, num * size);
+	return ptr;
+}
 #endif
 
-#include <ccan/endian/endian.h>
+#include "ffs.h"
 
-#include "libffs.h"
-
-enum ffs_type {
-	ffs_type_flash,
-	ffs_type_image,
-};
+#define __unused __attribute__((unused))
 
 struct ffs_handle {
 	struct ffs_hdr		hdr;	/* Converted header */
-	enum ffs_type		type;
 	uint32_t		toc_offset;
 	uint32_t		max_size;
-	void			*cache;
-	uint32_t		cached_size;
+	/* The converted header knows how big this is */
+	struct __ffs_hdr *cache;
 	struct blocklevel_device *bl;
 };
 
@@ -53,30 +55,153 @@ static uint32_t ffs_checksum(void* data, size_t size)
 	return csum;
 }
 
-static int ffs_check_convert_header(struct ffs_hdr *dst, struct ffs_hdr *src)
+/* Helper functions for typesafety and size safety */
+static uint32_t ffs_hdr_checksum(struct __ffs_hdr *hdr)
 {
-	dst->magic = be32_to_cpu(src->magic);
-	if (dst->magic != FFS_MAGIC)
+	return ffs_checksum(hdr, sizeof(struct __ffs_hdr));
+}
+
+static uint32_t ffs_entry_checksum(struct __ffs_entry *ent)
+{
+	return ffs_checksum(ent, sizeof(struct __ffs_entry));
+}
+
+__unused static int ffs_num_entries(struct ffs_hdr *hdr)
+{
+	struct ffs_entry *ent;
+	int num_entries = 0;
+	list_for_each(&hdr->entries, ent, list)
+		num_entries++;
+	if (num_entries == 0)
+		FL_DBG("%s returned zero!\n", __func__);
+	return num_entries;
+}
+
+__unused static size_t ffs_hdr_raw_size(int num_entries)
+{
+	return sizeof(struct __ffs_hdr) + num_entries * sizeof(struct __ffs_entry);
+}
+
+static int ffs_check_convert_header(struct ffs_hdr *dst, struct __ffs_hdr *src)
+{
+	if (be32_to_cpu(src->magic) != FFS_MAGIC)
 		return FFS_ERR_BAD_MAGIC;
 	dst->version = be32_to_cpu(src->version);
 	if (dst->version != FFS_VERSION_1)
 		return FFS_ERR_BAD_VERSION;
-	if (ffs_checksum(src, FFS_HDR_SIZE) != 0)
+	if (ffs_hdr_checksum(src) != 0)
 		return FFS_ERR_BAD_CKSUM;
-	dst->size = be32_to_cpu(src->size);
-	dst->entry_size = be32_to_cpu(src->entry_size);
-	dst->entry_count = be32_to_cpu(src->entry_count);
+	if (be32_to_cpu(src->entry_size) != sizeof(struct __ffs_entry))
+		return FFS_ERR_BAD_SIZE;
+	if ((be32_to_cpu(src->entry_size) * be32_to_cpu(src->entry_count)) >
+			(be32_to_cpu(src->block_size) * be32_to_cpu(src->size)))
+		return FLASH_ERR_PARM_ERROR;
+
 	dst->block_size = be32_to_cpu(src->block_size);
+	dst->size = be32_to_cpu(src->size) * dst->block_size;
 	dst->block_count = be32_to_cpu(src->block_count);
 
 	return 0;
 }
 
+static int ffs_entry_user_to_flash(struct __ffs_entry_user *dst,
+		struct ffs_entry_user *src)
+{
+	memset(dst, 0, sizeof(struct __ffs_entry_user));
+	dst->datainteg = cpu_to_be16(src->datainteg);
+	dst->vercheck = src->vercheck;
+	dst->miscflags = src->miscflags;
+
+	return 0;
+}
+
+static int ffs_entry_user_to_cpu(struct ffs_entry_user *dst,
+		struct __ffs_entry_user *src)
+{
+	memset(dst, 0, sizeof(struct ffs_entry_user));
+	dst->datainteg = be16_to_cpu(src->datainteg);
+	dst->vercheck = src->vercheck;
+	dst->miscflags = src->miscflags;
+
+	return 0;
+}
+
+static int ffs_entry_to_flash(struct ffs_hdr *hdr,
+		struct __ffs_entry *dst, struct ffs_entry *src)
+{
+	int rc, index = 1; /* On flash indexes start at 1 */
+	struct ffs_entry *ent = NULL;
+
+	if (!hdr || !dst || !src)
+		return -1;
+
+	list_for_each(&hdr->entries, ent, list) {
+		if (ent == src)
+			break;
+		index++;
+	}
+
+	if (!ent)
+		return FFS_ERR_PART_NOT_FOUND;
+
+	memcpy(dst->name, src->name, sizeof(dst->name));
+	dst->name[FFS_PART_NAME_MAX] = '\0';
+	dst->base = cpu_to_be32(src->base / hdr->block_size);
+	dst->size = cpu_to_be32(src->size / hdr->block_size);
+	dst->pid = cpu_to_be32(src->pid);
+	dst->id = cpu_to_be32(index);
+	dst->type = cpu_to_be32(src->type); /* TODO: Check that it is valid? */
+	dst->flags = cpu_to_be32(src->flags);
+	dst->actual = cpu_to_be32(src->actual);
+	rc = ffs_entry_user_to_flash(&dst->user, &src->user);
+	dst->checksum = ffs_entry_checksum(dst);
+
+	return rc;
+}
+
+static int ffs_entry_to_cpu(struct ffs_hdr *hdr,
+		struct ffs_entry *dst, struct __ffs_entry *src)
+{
+	int rc;
+
+	if (ffs_entry_checksum(src) != 0)
+		return FFS_ERR_BAD_CKSUM;
+
+	memcpy(dst->name, src->name, sizeof(dst->name));
+	dst->name[FFS_PART_NAME_MAX] = '\0';
+	dst->base = be32_to_cpu(src->base) * hdr->block_size;
+	dst->size = be32_to_cpu(src->size) * hdr->block_size;
+	dst->actual = be32_to_cpu(src->actual);
+	dst->pid = be32_to_cpu(src->pid);
+	dst->type = be32_to_cpu(src->type); /* TODO: Check that it is valid? */
+	dst->flags = be32_to_cpu(src->flags);
+	rc = ffs_entry_user_to_cpu(&dst->user, &src->user);
+
+	return rc;
+}
+
+static struct ffs_entry *ffs_get_part(struct ffs_handle *ffs, uint32_t index)
+{
+	int i = 0;
+	struct ffs_entry *ent = NULL;
+
+	list_for_each(&ffs->hdr.entries, ent, list)
+		if (i++ == index)
+			break;
+
+	return ent;
+}
+
+bool has_ecc(struct ffs_entry *ent)
+{
+	return ((ent->user.datainteg & FFS_ENRY_INTEG_ECC) != 0);
+}
+
 int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 		struct ffs_handle **ffs, bool mark_ecc)
 {
-	struct ffs_hdr hdr;
-	struct ffs_hdr blank_hdr;
+	struct __ffs_hdr blank_hdr;
+	struct __ffs_hdr raw_hdr;
 	struct ffs_handle *f;
 	uint64_t total_size;
 	int rc, i;
@@ -99,7 +224,7 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 		return FLASH_ERR_PARM_ERROR;
 
 	/* Read flash header */
-	rc = blocklevel_read(bl, offset, &hdr, sizeof(hdr));
+	rc = blocklevel_read(bl, offset, &raw_hdr, sizeof(raw_hdr));
 	if (rc) {
 		FL_ERR("FFS: Error %d reading flash header\n", rc);
 		return rc;
@@ -108,209 +233,159 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 	/*
 	 * Flash controllers can get deconfigured or otherwise upset, when this
 	 * happens they return all 0xFF bytes.
-	 * An ffs_hdr consisting of all 0xFF cannot be valid and it would be
+	 * An __ffs_hdr consisting of all 0xFF cannot be valid and it would be
 	 * nice to drop a hint to the user to help with debugging. This will
 	 * help quickly differentiate between flash corruption and standard
 	 * type 'reading from the wrong place' errors vs controller errors or
 	 * reading erased data.
 	 */
-	memset(&blank_hdr, UINT_MAX, sizeof(struct ffs_hdr));
-	if (memcmp(&blank_hdr, &hdr, sizeof(struct ffs_hdr)) == 0) {
+	memset(&blank_hdr, UINT_MAX, sizeof(struct __ffs_hdr));
+	if (memcmp(&blank_hdr, &raw_hdr, sizeof(struct __ffs_hdr)) == 0) {
 		FL_ERR("FFS: Reading the flash has returned all 0xFF.\n");
-		FL_ERR("Are you reading erased flash?\n");
-		FL_ERR("Is something else using the flash controller?\n");
+		FL_ERR("     Are you reading erased flash?\n");
+		FL_ERR("     Is something else using the flash controller?\n");
 		return FLASH_ERR_BAD_READ;
 	}
 
 	/* Allocate ffs_handle structure and start populating */
-	f = malloc(sizeof(*f));
+	f = calloc(1, sizeof(*f));
 	if (!f)
 		return FLASH_ERR_MALLOC_FAILED;
-	memset(f, 0, sizeof(*f));
 
 	f->toc_offset = offset;
 	f->max_size = max_size;
 	f->bl = bl;
 
 	/* Convert and check flash header */
-	rc = ffs_check_convert_header(&f->hdr, &hdr);
+	rc = ffs_check_convert_header(&f->hdr, &raw_hdr);
 	if (rc) {
 		FL_INF("FFS: Flash header not found. Code: %d\n", rc);
 		goto out;
 	}
 
 	/* Check header is sane */
-	if ((f->hdr.block_size * f->hdr.size) > max_size) {
+	if ((f->hdr.block_count * f->hdr.block_size) > max_size) {
 		rc = FLASH_ERR_PARM_ERROR;
 		FL_ERR("FFS: Flash header exceeds max flash size\n");
 		goto out;
 	}
 
-	if ((f->hdr.entry_size * f->hdr.entry_count) >
-			(f->hdr.block_size * f->hdr.size)) {
-		rc = FLASH_ERR_PARM_ERROR;
-		FL_ERR("FFS: Flash header entries exceeds available blocks\n");
-		goto out;
-	}
-
 	/*
-	 * Decide how much of the image to grab to get the whole
-	 * partition map.
+	 * Grab the entire partition header
 	 */
-	f->cached_size = f->hdr.block_size * f->hdr.size;
 	/* Check for overflow or a silly size */
-	if (!f->hdr.size || f->cached_size / f->hdr.size != f->hdr.block_size) {
-		rc= FLASH_ERR_MALLOC_FAILED;
+	if (!f->hdr.size || f->hdr.size % f->hdr.block_size != 0) {
+		rc = FLASH_ERR_MALLOC_FAILED;
 		FL_ERR("FFS: Cache size overflow (0x%x * 0x%x)\n",
 				f->hdr.block_size, f->hdr.size);
 		goto out;
 	}
 
-	FL_DBG("FFS: Partition map size: 0x%x\n", f->cached_size);
+	FL_DBG("FFS: Partition map size: 0x%x\n", f->hdr.size);
 
 	/* Allocate cache */
-	f->cache = malloc(f->cached_size);
+	f->cache = malloc(f->hdr.size);
 	if (!f->cache) {
 		rc = FLASH_ERR_MALLOC_FAILED;
 		goto out;
 	}
 
 	/* Read the cached map */
-	rc = blocklevel_read(bl, offset, f->cache, f->cached_size);
+	rc = blocklevel_read(bl, offset, f->cache, f->hdr.size);
 	if (rc) {
 		FL_ERR("FFS: Error %d reading flash partition map\n", rc);
 		goto out;
 	}
 
-	if (mark_ecc) {
-		uint32_t start, total_size;
-		bool ecc;
-		for (i = 0; i < f->hdr.entry_count; i++) {
-			rc = ffs_part_info(f, i, NULL, &start, &total_size,
-					NULL, &ecc);
+	list_head_init(&f->hdr.entries);
+	for (i = 0; i < be32_to_cpu(raw_hdr.entry_count); i++) {
+		struct ffs_entry *ent = calloc(1, sizeof(struct ffs_entry));
+		if (!ent) {
+			rc = FLASH_ERR_MALLOC_FAILED;
+			goto out;
+		}
+
+		list_add_tail(&f->hdr.entries, &ent->list);
+		rc = ffs_entry_to_cpu(&f->hdr, ent, &f->cache->entries[i]);
+		if (rc)
+			goto out;
+
+		if (mark_ecc && has_ecc(ent)) {
+			rc = blocklevel_ecc_protect(bl, ent->base, ent->size);
 			if (rc) {
-				FL_ERR("FFS: Failed to read ffs partition %d\n",
-						i);
+				FL_ERR("Failed to blocklevel_ecc_protect(0x%08x, 0x%08x)\n",
+				       ent->base, ent->size);
 				goto out;
 			}
-			if (ecc) {
-				rc = blocklevel_ecc_protect(bl, start, total_size);
-				if (rc) {
-					FL_ERR("FFS: Failed to blocklevel_ecc_protect(0x%08x, 0x%08x)\n",
-					       start, total_size);
-					goto out;
-				}
-			}  /* ecc */
-		} /* for */
+		}
 	}
 
 out:
 	if (rc == 0)
 		*ffs = f;
 	else
-		free(f);
+		ffs_close(f);
 
 	return rc;
 }
 
 void ffs_close(struct ffs_handle *ffs)
 {
+	struct ffs_entry *ent, *next;
+
+	list_for_each_safe(&ffs->hdr.entries, ent, next, list) {
+		list_del(&ent->list);
+		free(ent);
+	}
+
 	if (ffs->cache)
 		free(ffs->cache);
+
 	free(ffs);
-}
-
-static struct ffs_entry *ffs_get_part(struct ffs_handle *ffs, uint32_t index,
-				      uint32_t *out_offset)
-{
-	uint32_t esize = ffs->hdr.entry_size;
-	uint32_t offset = FFS_HDR_SIZE + index * esize;
-
-	if (index > ffs->hdr.entry_count)
-		return NULL;
-	if (out_offset)
-		*out_offset = ffs->toc_offset + offset;
-	return (struct ffs_entry *)(ffs->cache + offset);
-}
-
-static int ffs_check_convert_entry(struct ffs_entry *dst, struct ffs_entry *src)
-{
-	if (ffs_checksum(src, FFS_ENTRY_SIZE) != 0)
-		return FFS_ERR_BAD_CKSUM;
-	memcpy(dst->name, src->name, sizeof(dst->name));
-	dst->base = be32_to_cpu(src->base);
-	dst->size = be32_to_cpu(src->size);
-	dst->pid = be32_to_cpu(src->pid);
-	dst->id = be32_to_cpu(src->id);
-	dst->type = be32_to_cpu(src->type);
-	dst->flags = be32_to_cpu(src->flags);
-	dst->actual = be32_to_cpu(src->actual);
-	dst->user.datainteg = be16_to_cpu(src->user.datainteg);
-
-	return 0;
 }
 
 int ffs_lookup_part(struct ffs_handle *ffs, const char *name,
 		    uint32_t *part_idx)
 {
-	struct ffs_entry ent;
-	uint32_t i;
-	int rc;
+	int i = 0;
+	struct ffs_entry *ent = NULL;
 
-	/* Lookup the requested partition */
-	for (i = 0; i < ffs->hdr.entry_count; i++) {
-		struct ffs_entry *src_ent  = ffs_get_part(ffs, i, NULL);
-		rc = ffs_check_convert_entry(&ent, src_ent);
-		if (rc) {
-			FL_ERR("FFS: Bad entry %d in partition map\n", i);
-			continue;
-		}
-		if (!strncmp(name, ent.name, sizeof(ent.name)))
+	list_for_each(&ffs->hdr.entries, ent, list) {
+		if (!strncmp(name, ent->name, sizeof(ent->name)))
 			break;
+		i++;
 	}
-	if (i >= ffs->hdr.entry_count)
-		return FFS_ERR_PART_NOT_FOUND;
+
 	if (part_idx)
 		*part_idx = i;
-	return 0;
+	return ent ? 0 : FFS_ERR_PART_NOT_FOUND;
 }
 
 int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 		  char **name, uint32_t *start,
 		  uint32_t *total_size, uint32_t *act_size, bool *ecc)
 {
-	struct ffs_entry *raw_ent;
-	struct ffs_entry ent;
+	struct ffs_entry *ent;
 	char *n;
-	int rc;
 
-	if (part_idx >= ffs->hdr.entry_count)
+	ent = ffs_get_part(ffs, part_idx);
+	if (!ent)
 		return FFS_ERR_PART_NOT_FOUND;
 
-	raw_ent = ffs_get_part(ffs, part_idx, NULL);
-	if (!raw_ent)
-		return FFS_ERR_PART_NOT_FOUND;
-
-	rc = ffs_check_convert_entry(&ent, raw_ent);
-	if (rc) {
-		FL_ERR("FFS: Bad entry %d in partition map\n", part_idx);
-		return rc;
-	}
 	if (start)
-		*start = ent.base * ffs->hdr.block_size;
+		*start = ent->base;
 	if (total_size)
-		*total_size = ent.size * ffs->hdr.block_size;
+		*total_size = ent->size;
 	if (act_size)
-		*act_size = ent.actual;
+		*act_size = ent->actual;
 	if (ecc)
-		*ecc = ((ent.user.datainteg & FFS_ENRY_INTEG_ECC) != 0);
+		*ecc = has_ecc(ent);
 
 	if (name) {
-		n = malloc(PART_NAME_MAX + 1);
+		n = calloc(1, FFS_PART_NAME_MAX + 1);
 		if (!n)
 			return FLASH_ERR_MALLOC_FAILED;
-		memset(n, 0, PART_NAME_MAX + 1);
-		strncpy(n, ent.name, PART_NAME_MAX);
+		strncpy(n, ent->name, FFS_PART_NAME_MAX);
 		*name = n;
 	}
 	return 0;
@@ -360,33 +435,30 @@ int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 			uint32_t act_size)
 {
 	struct ffs_entry *ent;
+	struct __ffs_entry raw_ent;
 	uint32_t offset;
+	int rc;
 
-	if (part_idx >= ffs->hdr.entry_count) {
-		FL_DBG("FFS: Entry out of bound\n");
-		return FFS_ERR_PART_NOT_FOUND;
-	}
-
-	ent = ffs_get_part(ffs, part_idx, &offset);
+	ent = ffs_get_part(ffs, part_idx);
 	if (!ent) {
 		FL_DBG("FFS: Entry not found\n");
 		return FFS_ERR_PART_NOT_FOUND;
 	}
+	offset = ent->base;
 	FL_DBG("FFS: part index %d at offset 0x%08x\n",
 	       part_idx, offset);
 
-	/*
-	 * NOTE: We are accessing the unconverted ffs_entry from the PNOR here
-	 * (since we are going to write it back) so we need to be endian safe.
-	 */
-	if (ent->actual == cpu_to_be32(act_size)) {
+	if (ent->actual == act_size) {
 		FL_DBG("FFS: ent->actual alrady matches: 0x%08x==0x%08x\n",
-		       cpu_to_be32(act_size), ent->actual);
+		       act_size, ent->actual);
 		return 0;
 	}
-	ent->actual = cpu_to_be32(act_size);
-	ent->checksum = ffs_checksum(ent, FFS_ENTRY_SIZE_CSUM);
+	ent->actual = act_size;
 
-	return blocklevel_smart_write(ffs->bl, offset, ent, FFS_ENTRY_SIZE);
+	rc = ffs_entry_to_flash(&ffs->hdr, &raw_ent, ent);
+	if (rc)
+		return rc;
+
+	return blocklevel_smart_write(ffs->bl, offset, &raw_ent, sizeof(struct __ffs_entry));
 }
 

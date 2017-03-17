@@ -17,11 +17,30 @@
 #define __LIBFFS_H
 
 #include <libflash/libflash.h>
-#include <libflash/ffs.h>
 #include <libflash/blocklevel.h>
 
 /* FFS handle, opaque */
 struct ffs_handle;
+struct ffs_entry;
+
+/**
+ * struct ffs_entry_user - User data entries
+ *
+ * Usable in memory representation of a struct __ffs_entry_user
+ *
+ *  @chip:		Chip Select (0,1)
+ *  @compressType:	Compression Indication/alg (0=not compressed)
+ *  @dataInteg:		Indicates Data Integrity mechanism
+ *  @verCheck:		Indicates Version check type
+ *  @miscFlags:		Misc Partition related Flags
+ */
+struct ffs_entry_user {
+	uint8_t chip;
+	uint8_t compresstype;
+	uint16_t datainteg;
+	uint8_t vercheck;
+	uint8_t miscflags;
+};
 
 /* Error codes:
  *
@@ -34,6 +53,42 @@ struct ffs_handle;
 #define FFS_ERR_BAD_CKSUM	102
 #define FFS_ERR_PART_NOT_FOUND	103
 #define FFS_ERR_BAD_ECC		104
+#define FFS_ERR_BAD_SIZE	105
+#define FFS_ERR_BAD_PART_NAME	106
+#define FFS_ERR_BAD_PART_BASE	107
+#define FFS_ERR_BAD_PART_SIZE	108
+#define FFS_ERR_BAD_PART_PID	109
+
+/* The maximum length of the partition name */
+#define FFS_PART_NAME_MAX   15
+/* Old version of the name DEPRECATED */
+#define PART_NAME_MAX   15
+
+/*
+ * Flag bit definitions
+ */
+#define FFS_FLAGS_PROTECTED	0x0001
+#define FFS_FLAGS_U_BOOT_ENV	0x0002
+
+/* Data integrity flags */
+#define FFS_ENRY_INTEG_ECC 0x8000
+
+/*
+ * User verCheck definitions
+ */
+#define FFS_VERCHECK_SHA512V 0x80
+#define FFS_VERCHECK_SHA512EC 0x40
+
+/*
+ * User miscFlags
+ */
+#define FFS_MISCFLAGS_PRESERVED 0x80
+#define FFS_MISCFLAGS_READONLY 0x40
+#define FFS_MISCFLAGS_BACKUP 0x20
+#define FFS_MISCFLAGS_REPROVISION 0x10
+
+
+bool has_ecc(struct ffs_entry *ent);
 
 /* Init */
 
