@@ -5,6 +5,12 @@ include ../../external/common/rules.mk
 
 all: links arch_links $(EXE)
 
+#Rebuild version.o so that the the version always matches
+#what the test suite will get from ./make_version.sh
+check: version.o all
+	@ln -sf ../../test/test.sh test/test.sh
+	@test/test-ffspart
+
 $(OBJS): | links arch_links
 
 .PHONY: VERSION-always

@@ -1,0 +1,20 @@
+# -*-Makefile-*-
+
+check: check-ffspart
+
+#Makefile knows to build it before checking, should also
+#make clean before checking. If not, .o files for different
+#architectures might be lying around and clean once done to
+#avoid the opposite
+check-ffspart: ffspart-test-clean
+	@make CROSS_COMPILE='' -C external/ffspart/ check
+	@make CROSS_COMPILE='' -C external/ffspart/ clean
+
+.PHONY: check-ffspart
+
+clean: ffspart-test-clean
+
+ffspart-test-clean:
+	@make -C external/ffspart clean
+
+.PHONY: ffspart-test-clean
