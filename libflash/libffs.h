@@ -21,7 +21,9 @@
 
 /* FFS handle, opaque */
 struct ffs_handle;
+struct ffs_hdr;
 struct ffs_entry;
+struct ffs_entry_user;
 
 /**
  * struct ffs_entry_user - User data entries
@@ -127,4 +129,20 @@ int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 			uint32_t act_size);
 
+int ffs_hdr_new(uint32_t size, uint32_t block_size, uint32_t block_count,
+		struct ffs_hdr **r);
+
+int ffs_hdr_add_side(struct ffs_hdr *hdr);
+
+int ffs_entry_new(const char *name, uint32_t base, uint32_t size, struct ffs_entry **r);
+
+int ffs_entry_user_set(struct ffs_entry *ent, struct ffs_entry_user *user);
+
+int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry, unsigned int side);
+
+int ffs_hdr_create_backup(struct ffs_hdr *hdr);
+
+int ffs_hdr_finalise(struct blocklevel_device *bl, struct ffs_hdr *hdr);
+
+int ffs_hdr_free(struct ffs_hdr *hdr);
 #endif /* __LIBFFS_H */

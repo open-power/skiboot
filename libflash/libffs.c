@@ -66,7 +66,12 @@ static uint32_t ffs_entry_checksum(struct __ffs_entry *ent)
 	return ffs_checksum(ent, sizeof(struct __ffs_entry));
 }
 
-__unused static int ffs_num_entries(struct ffs_hdr *hdr)
+static size_t ffs_hdr_raw_size(int num_entries)
+{
+	return sizeof(struct __ffs_hdr) + num_entries * sizeof(struct __ffs_entry);
+}
+
+static int ffs_num_entries(struct ffs_hdr *hdr)
 {
 	struct ffs_entry *ent;
 	int num_entries = 0;
@@ -75,11 +80,6 @@ __unused static int ffs_num_entries(struct ffs_hdr *hdr)
 	if (num_entries == 0)
 		FL_DBG("%s returned zero!\n", __func__);
 	return num_entries;
-}
-
-__unused static size_t ffs_hdr_raw_size(int num_entries)
-{
-	return sizeof(struct __ffs_hdr) + num_entries * sizeof(struct __ffs_entry);
 }
 
 static int ffs_check_convert_header(struct ffs_hdr *dst, struct __ffs_hdr *src)
@@ -104,8 +104,8 @@ static int ffs_check_convert_header(struct ffs_hdr *dst, struct __ffs_hdr *src)
 	return 0;
 }
 
-static int ffs_entry_user_to_flash(struct __ffs_entry_user *dst,
-		struct ffs_entry_user *src)
+static int ffs_entry_user_to_flash(struct ffs_hdr *hdr __unused,
+		struct __ffs_entry_user *dst, struct ffs_entry_user *src)
 {
 	memset(dst, 0, sizeof(struct __ffs_entry_user));
 	dst->datainteg = cpu_to_be16(src->datainteg);
@@ -115,8 +115,8 @@ static int ffs_entry_user_to_flash(struct __ffs_entry_user *dst,
 	return 0;
 }
 
-static int ffs_entry_user_to_cpu(struct ffs_entry_user *dst,
-		struct __ffs_entry_user *src)
+static int ffs_entry_user_to_cpu(struct ffs_hdr *hdr __unused,
+		struct ffs_entry_user *dst, struct __ffs_entry_user *src)
 {
 	memset(dst, 0, sizeof(struct ffs_entry_user));
 	dst->datainteg = be16_to_cpu(src->datainteg);
@@ -153,7 +153,7 @@ static int ffs_entry_to_flash(struct ffs_hdr *hdr,
 	dst->type = cpu_to_be32(src->type); /* TODO: Check that it is valid? */
 	dst->flags = cpu_to_be32(src->flags);
 	dst->actual = cpu_to_be32(src->actual);
-	rc = ffs_entry_user_to_flash(&dst->user, &src->user);
+	rc = ffs_entry_user_to_flash(hdr, &dst->user, &src->user);
 	dst->checksum = ffs_entry_checksum(dst);
 
 	return rc;
@@ -175,7 +175,7 @@ static int ffs_entry_to_cpu(struct ffs_hdr *hdr,
 	dst->pid = be32_to_cpu(src->pid);
 	dst->type = be32_to_cpu(src->type); /* TODO: Check that it is valid? */
 	dst->flags = be32_to_cpu(src->flags);
-	rc = ffs_entry_user_to_cpu(&dst->user, &src->user);
+	rc = ffs_entry_user_to_cpu(hdr, &dst->user, &src->user);
 
 	return rc;
 }
@@ -351,7 +351,7 @@ int ffs_lookup_part(struct ffs_handle *ffs, const char *name,
 	struct ffs_entry *ent = NULL;
 
 	list_for_each(&ffs->hdr.entries, ent, list) {
-		if (!strncmp(name, ent->name, sizeof(ent->name)))
+		if (strncmp(name, ent->name, sizeof(ent->name)) == 0)
 			break;
 		i++;
 	}
@@ -431,6 +431,342 @@ int ffs_next_side(struct ffs_handle *ffs, struct ffs_handle **new_ffs,
 	return ffs_init(offset, max_size, ffs->bl, new_ffs, mark_ecc);
 }
 
+static int __ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry)
+{
+	struct ffs_entry *ent;
+	uint32_t smallest_base;
+	const char *smallest_name;
+	int count = 0;
+	assert(!list_empty(&hdr->entries));
+
+	if (entry->base + entry->size > hdr->block_size * hdr->block_count)
+		return FFS_ERR_BAD_PART_SIZE;
+
+	smallest_base = entry->base;
+	smallest_name = entry->name;
+	/* Input validate first to a) fail early b) do it all together */
+	list_for_each(&hdr->entries, ent, list) {
+		/* Don't allow same names to differ only by case */
+		if (strncasecmp(entry->name, ent->name, FFS_PART_NAME_MAX) == 0)
+			return FFS_ERR_BAD_PART_NAME;
+
+		if (entry->base >= ent->base && entry->base < ent->base + ent->size)
+			return FFS_ERR_BAD_PART_BASE;
+
+		if (entry->base + entry->size > ent->base &&
+				entry->base + entry->size < ent->base + ent->size)
+			return FFS_ERR_BAD_PART_SIZE;
+
+		if (entry->actual > entry->size)
+			return FFS_ERR_BAD_PART_SIZE;
+
+		if (entry->pid != FFS_PID_TOPLEVEL)
+			return FFS_ERR_BAD_PART_PID;
+
+		/* Skip the first partition as it IS the partition table */
+		if (ent->base < smallest_base && count > 0) {
+			smallest_base = ent->base;
+			smallest_name = ent->name;
+		}
+		count++;
+	}
+
+	if (count * sizeof(struct __ffs_entry) +
+			sizeof(struct __ffs_hdr) > smallest_base) {
+		fprintf(stderr, "Adding partition '%s' would cause partition '%s' at "
+				"0x%08x to overlap with the header\n", entry->name, smallest_name,
+				smallest_base);
+		return FFS_ERR_BAD_PART_BASE;
+	}
+
+	/*
+	 * A header can't have zero entries. Was asserted.
+	 */
+	list_for_each(&hdr->entries, ent, list)
+		if (entry->base < ent->base)
+			break;
+
+	if (ent == list_top(&hdr->entries, struct ffs_entry, list)) {
+		/*
+		 * This should never happen because the partition entry
+		 * should ALWAYS be here
+		 */
+		fprintf(stderr, "Warning: replacing first entry in FFS header\n");
+		list_add(&hdr->entries, &entry->list);
+	} else if (!ent) {
+		list_add_tail(&hdr->entries, &entry->list);
+	} else {
+		list_add_before(&hdr->entries, &entry->list, &ent->list);
+	}
+
+	return 0;
+}
+
+int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry, unsigned int side)
+{
+	int rc;
+
+	/*
+	 * Refuse to add anything after BACKUP_PART has been added, not
+	 * sure why this is needed anymore
+	 */
+	if (hdr->backup)
+		return FLASH_ERR_PARM_ERROR;
+
+	if (side == 0) { /* Sideless... */
+		rc = __ffs_entry_add(hdr, entry);
+		if (!rc && hdr->side) {
+			struct ffs_entry *other_ent;
+
+			/*
+			 * A rather sneaky copy is hidden here.
+			 * It doesn't make sense for a consumer to be aware that structures
+			 * must be duplicated. The entries list in the header could have
+			 * been an array of pointers and no copy would have been required.
+			 */
+			other_ent = calloc(1, sizeof (struct ffs_entry));
+			if (!other_ent)
+				/* TODO Remove the added entry from side 1 */
+				return FLASH_ERR_PARM_ERROR;
+			memcpy(other_ent, entry, sizeof(struct ffs_entry));
+			rc = __ffs_entry_add(hdr->side, other_ent);
+			if (rc)
+				/* TODO Remove the added entry from side 1 */
+				free(other_ent);
+		}
+	} else if (side == 1) {
+		rc = __ffs_entry_add(hdr, entry);
+	} else if (side == 2 && hdr->side) {
+		rc = __ffs_entry_add(hdr->side, entry);
+	} else {
+		rc = FLASH_ERR_PARM_ERROR;
+	}
+
+	return rc;
+}
+
+/* This should be done last! */
+int ffs_hdr_create_backup(struct ffs_hdr *hdr)
+{
+	struct ffs_entry *ent;
+	struct ffs_entry *backup;
+	int rc = 0;
+	ent = list_tail(&hdr->entries, struct ffs_entry, list);
+	if (!ent) {
+		return FLASH_ERR_PARM_ERROR;
+	}
+
+	rc = ffs_entry_new("BACKUP_PART",
+		hdr->base + (hdr->block_size * (hdr->block_count - 1 )) - hdr->size,
+		hdr->size, &backup);
+	if (rc)
+		return rc;
+
+	rc = __ffs_entry_add(hdr, backup);
+	if (rc) {
+		free(backup);
+		return rc;
+	}
+
+	hdr->backup = backup;
+
+	/* Do we try to roll back completely if that fails or leave what we've added? */
+	if (hdr->side && hdr->base == 0)
+		rc = ffs_hdr_create_backup(hdr->side);
+
+	return rc;
+}
+
+int ffs_hdr_add_side(struct ffs_hdr *hdr)
+{
+	int rc;
+
+	/* Only a second side for now */
+	if (hdr->side)
+		return FLASH_ERR_PARM_ERROR;
+
+	rc = ffs_hdr_new(hdr->size, hdr->block_size, hdr->block_count, &hdr->side);
+	if (rc)
+		return rc;
+
+	hdr->side->base = hdr->block_size * hdr->block_count;
+	/* Sigh */
+	hdr->side->side = hdr;
+
+	return rc;
+}
+
+int ffs_hdr_finalise(struct blocklevel_device *bl, struct ffs_hdr *hdr)
+{
+	int num_entries, i, rc = 0;
+	struct ffs_entry *ent;
+	struct __ffs_hdr *real_hdr;
+
+	num_entries = ffs_num_entries(hdr);
+
+	/* A TOC shouldn't have zero partitions */
+	if (num_entries == 0)
+		return FFS_ERR_BAD_SIZE;
+
+	if (hdr->side) {
+		struct ffs_entry *other_side;
+		/* TODO: Change the hard coded 0x8000 */
+		rc = ffs_entry_new("OTHER_SIDE", hdr->side->base, 0x8000, &other_side);
+		if (rc)
+			return rc;
+		list_add_tail(&hdr->entries, &other_side->list);
+		num_entries++;
+	}
+
+	real_hdr = malloc(ffs_hdr_raw_size(num_entries));
+	if (!real_hdr)
+		return FLASH_ERR_MALLOC_FAILED;
+
+	real_hdr->magic = cpu_to_be32(FFS_MAGIC);
+	real_hdr->version = cpu_to_be32(hdr->version);
+	real_hdr->size = cpu_to_be32(hdr->size / hdr->block_size);
+	real_hdr->entry_size = cpu_to_be32(sizeof(struct __ffs_entry));
+	real_hdr->entry_count = cpu_to_be32(num_entries);
+	real_hdr->block_size = cpu_to_be32(hdr->block_size);
+	real_hdr->block_count = cpu_to_be32(hdr->block_count);
+	real_hdr->checksum = ffs_hdr_checksum(real_hdr);
+
+	i = 0;
+	list_for_each(&hdr->entries, ent, list) {
+		rc = ffs_entry_to_flash(hdr, real_hdr->entries + i, ent);
+		if (rc) {
+			fprintf(stderr, "Couldn't format all entries for new TOC\n");
+			goto out;
+		}
+		i++;
+	}
+
+	/* Don't really care if this fails */
+	blocklevel_erase(bl, hdr->base, hdr->size);
+	rc = blocklevel_write(bl, hdr->base, real_hdr,
+		ffs_hdr_raw_size(num_entries));
+	if (rc)
+		goto out;
+
+	if (hdr->backup) {
+		fprintf(stderr, "Actually writing backup part @ 0x%08x\n", hdr->backup->base);
+		blocklevel_erase(bl, hdr->backup->base, hdr->size);
+		rc = blocklevel_write(bl, hdr->backup->base, real_hdr,
+			ffs_hdr_raw_size(num_entries));
+	}
+	if (rc)
+		goto out;
+
+	if (hdr->side && hdr->base == 0)
+		rc = ffs_hdr_finalise(bl, hdr->side);
+out:
+	free(real_hdr);
+	return rc;
+}
+
+int ffs_entry_user_set(struct ffs_entry *ent, struct ffs_entry_user *user)
+{
+	if (!ent || !user)
+		return -1;
+
+	/*
+	 * Don't allow the user to specify anything we dont't know about.
+	 * Rationale: This is the library providing access to the FFS structures.
+	 *   If the consumer of the library knows more about FFS structures then
+	 *   questions need to be asked.
+	 *   The other possibility is that they've unknowningly supplied invalid
+	 *   flags, we should tell them.
+	 */
+	if (user->chip)
+		return -1;
+	if (user->compresstype)
+		return -1;
+	if (user->datainteg & ~(FFS_ENRY_INTEG_ECC))
+		return -1;
+	if (user->vercheck & ~(FFS_VERCHECK_SHA512V | FFS_VERCHECK_SHA512EC))
+		return -1;
+	if (user->miscflags & ~(FFS_MISCFLAGS_PRESERVED | FFS_MISCFLAGS_BACKUP |
+				FFS_MISCFLAGS_READONLY | FFS_MISCFLAGS_REPROVISION))
+		return -1;
+
+	memcpy(&ent->user, user, sizeof(*user));
+	return 0;
+}
+
+int ffs_entry_new(const char *name, uint32_t base, uint32_t size, struct ffs_entry **r)
+{
+	struct ffs_entry *ret;
+
+	ret = calloc(1, sizeof(*ret));
+	if (!ret)
+		return FLASH_ERR_MALLOC_FAILED;
+
+	strncpy(ret->name, name, FFS_PART_NAME_MAX);
+	ret->name[FFS_PART_NAME_MAX] = '\0';
+	ret->base = base;
+	ret->size = size;
+	ret->actual = size;
+	ret->pid = FFS_PID_TOPLEVEL;
+	ret->type = FFS_TYPE_DATA;
+
+	*r = ret;
+	return 0;
+}
+
+int ffs_hdr_new(uint32_t size, uint32_t block_size, uint32_t block_count, struct ffs_hdr **r)
+{
+	struct ffs_hdr *ret;
+	struct ffs_entry *part_table;
+	int rc;
+
+	if (size % block_size || size > block_size * block_count)
+		return FFS_ERR_BAD_SIZE;
+
+	ret = calloc(1, sizeof(*ret));
+	if (!ret)
+		return FLASH_ERR_MALLOC_FAILED;
+
+	ret->version = FFS_VERSION_1;
+	ret->size = size;
+	ret->block_size = block_size;
+	ret->block_count = block_count;
+	list_head_init(&ret->entries);
+
+	rc = ffs_entry_new("part", 0, size, &part_table);
+	if (rc) {
+		free(ret);
+		return rc;
+	}
+
+	part_table->pid = FFS_PID_TOPLEVEL;
+	part_table->type = FFS_TYPE_PARTITION;
+	part_table->flags = FFS_FLAGS_PROTECTED;
+
+	list_add(&ret->entries, &part_table->list);
+
+	*r = ret;
+
+	return 0;
+}
+
+int ffs_hdr_free(struct ffs_hdr *hdr)
+{
+	struct ffs_entry *ent, *next;
+
+	printf("Freeing hdr\n");
+	list_for_each_safe(&hdr->entries, ent, next, list) {
+		list_del(&ent->list);
+		free(ent);
+	}
+	if (hdr->side) {
+		hdr->side->side = NULL;
+		ffs_hdr_free(hdr->side);
+	}
+	free(hdr);
+
+	return 0;
+}
+
 int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 			uint32_t act_size)
 {
@@ -461,4 +797,3 @@ int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 
 	return blocklevel_smart_write(ffs->bl, offset, &raw_ent, sizeof(struct __ffs_entry));
 }
-

@@ -54,6 +54,29 @@ enum ffs_type {
 	FFS_TYPE_PARTITION = 3,
 };
 
+/*
+ * Flag bit definitions
+ */
+#define FFS_FLAGS_PROTECTED	0x0001
+#define FFS_FLAGS_U_BOOT_ENV	0x0002
+
+/* Data integrity flags */
+#define FFS_ENRY_INTEG_ECC 0x8000
+
+/*
+ * User verCheck definitions
+ */
+#define FFS_VERCHECK_SHA512V 0x80
+#define FFS_VERCHECK_SHA512EC 0x40
+
+/*
+ * User miscFlags
+ */
+#define FFS_MISCFLAGS_PRESERVED 0x80
+#define FFS_MISCFLAGS_READONLY 0x40
+#define FFS_MISCFLAGS_BACKUP 0x20
+#define FFS_MISCFLAGS_REPROVISION 0x10
+
 /**
  * struct __ffs_entry_user - On flash user data entries
  *
@@ -186,9 +209,12 @@ struct __ffs_hdr {
  */
 struct ffs_hdr {
 	uint32_t version;
+	uint32_t base;
 	uint32_t size;
 	uint32_t block_size;
 	uint32_t block_count;
+	struct ffs_entry *backup;
+	struct ffs_hdr *side;
 	struct list_head entries;
 };
 
