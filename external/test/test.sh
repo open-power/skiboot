@@ -26,8 +26,6 @@ run_binary() {
 }
 
 fail_test() {
-	rm -rf "$STDERR_OUT";
-	rm -rf "$STDOUT_OUT";
 	echo "$0 ($CUR_TEST): test failed";
 	exit ${1:-1};
 }
@@ -60,8 +58,8 @@ diff_with_result() {
 }
 
 run_tests() {
-	if [ $# -ne 2 ] ; then
-		echo "Usage run_tests test_dir result_dir";
+	if [ $# -lt 2 ] ; then
+		echo "Usage run_tests test_dir result_dir [data_dir]";
 		exit 1;
 	fi
 
@@ -75,6 +73,10 @@ run_tests() {
 
 	export STDERR_OUT=$(mktemp --tmpdir external-test-stderr.XXXXXX);
 	export STDOUT_OUT=$(mktemp --tmpdir external-test-stdout.XXXXXX);
+	export DATA_DIR=$(mktemp --tmpdir -d external-test-datadir.XXXXXX);
+	if [ $# -eq 3 ] ; then
+		cp -r $3/* "$DATA_DIR"
+	fi
 
 
 	for the_test in $all_tests; do
@@ -93,6 +95,7 @@ run_tests() {
 
 	rm -rf $STDERR_OUT;
 	rm -rf $STDOUT_OUT;
+	rm -rf $DATA_DIR;
 
 	echo "$0 tests passed"
 
