@@ -18,9 +18,6 @@ mconfig stop_on_ill MAMBO_STOP_ON_ILL false
 
 # Location of application binary to load
 mconfig boot_image SKIBOOT ../../skiboot.lid
-if { [info exists env(SKIBOOT)] } {
-    mconfig boot_image SKIBOOT env(SKIBOOT)
-}
 
 # Boot: Memory location to load boot_image, for binary or vmlinux
 mconfig boot_load MAMBO_BOOT_LOAD 0x30000000
