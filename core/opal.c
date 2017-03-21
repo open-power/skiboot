@@ -119,15 +119,44 @@ void __opal_register(uint64_t token, void *func, unsigned int nargs)
 	opal_num_args[token] = nargs;
 }
 
+/*
+ * add_opal_firmware_exports_node: adds properties to the device-tree which
+ * the OS will then change into sysfs nodes.
+ * The properties must be placed under /ibm,opal/firmware/exports.
+ * The new sysfs nodes are created under /opal/exports.
+ * To be correctly exported the properties must contain:
+ * 	name
+ * 	base memory location (u64)
+ * 	size 		     (u64)
+ */
+static void add_opal_firmware_exports_node(struct dt_node *node)
+{
+	struct dt_node *exports = dt_new(node, "exports");
+	uint64_t sym_start = (uint64_t)__sym_map_start;
+	uint64_t sym_size = (uint64_t)__sym_map_end - sym_start;
+
+	dt_add_property_u64s(exports, "symbol-map", sym_start, sym_size);
+	dt_add_property_u64s(exports, "hdat-map", SPIRA_HEAP_BASE,
+				SPIRA_HEAP_SIZE);
+}
+
 static void add_opal_firmware_node(void)
 {
 	struct dt_node *firmware = dt_new(opal_node, "firmware");
 	uint64_t sym_start = (uint64_t)__sym_map_start;
 	uint64_t sym_size = (uint64_t)__sym_map_end - sym_start;
+
 	dt_add_property_string(firmware, "compatible", "ibm,opal-firmware");
 	dt_add_property_string(firmware, "name", "firmware");
 	dt_add_property_string(firmware, "version", version);
+	/*
+	 * As previous OS versions use symbol-map located at
+	 * /ibm,opal/firmware we will keep a copy of symbol-map here
+	 * for backwards compatibility
+	 */
 	dt_add_property_u64s(firmware, "symbol-map", sym_start, sym_size);
+
+	add_opal_firmware_exports_node(firmware);
 }
 
 void add_opal_node(void)
