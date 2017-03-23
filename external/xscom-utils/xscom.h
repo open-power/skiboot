@@ -27,6 +27,8 @@ extern int xscom_write_ex(uint32_t ex_target_id, uint64_t addr, uint64_t val);
 
 extern void xscom_for_each_chip(void (*cb)(uint32_t chip_id));
 
+extern bool xscom_readable(uint64_t addr);
+
 extern uint32_t xscom_init(void);
 
 #endif /* __XSCOM_H */

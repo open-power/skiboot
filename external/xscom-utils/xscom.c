@@ -131,8 +131,17 @@ static struct xscom_chip *xscom_find_chip(uint32_t chip_id)
 
 static uint64_t xscom_mangle_addr(uint64_t addr)
 {
-	if (addr & (1ull << 63))
-		addr |= (1ull << 59);
+	uint64_t tmp;
+
+	/*
+	 * Shift the top 4 bits (indirect mode) down by 4 bits so we
+	 * don't lose going through the debugfs interfaces.
+	 */
+	tmp = (addr & 0xf000000000000000) >> 4;
+	addr &= 0x00ffffffffffffff;
+	addr |= tmp;
+
+	/* Shift up by 3 for debugfs */
 	return addr << 3;
 }
 
@@ -190,6 +199,14 @@ int xscom_write_ex(uint32_t ex_target_id, uint64_t addr, uint64_t val)
 	/* XXX TODO: Special wakeup ? */
 
 	return xscom_write(chip_id, addr, val);
+}
+
+bool xscom_readable(uint64_t addr)
+{
+	/* Top nibble 9 indicates form 1 indirect, which is write only */
+	if (((addr >> 60) & 0xf) == 9)
+		return false;
+	return true;
 }
 
 uint32_t xscom_init(void)
