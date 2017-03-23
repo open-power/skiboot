@@ -369,6 +369,10 @@ static int xscom_indirect_write(uint32_t gcid, uint64_t pcb_addr, uint64_t val)
 	if (proc_gen < proc_gen_p8)
 		return OPAL_UNSUPPORTED;
 
+	/* Only 16 bit data with indirect */
+	if (val & ~(XSCOM_ADDR_IND_DATA))
+		return OPAL_PARAMETER;
+
 	/* Write indirect address & data */
 	addr = pcb_addr & 0x7fffffff;
 	data = pcb_addr & XSCOM_ADDR_IND_ADDR;
