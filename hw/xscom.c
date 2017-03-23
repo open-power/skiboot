@@ -101,9 +101,15 @@ static void xscom_reset(uint32_t gcid)
 	mtspr(SPR_HMER, HMER_CLR_MASK);
 
 	/* Setup local and target scom addresses */
-	recv_status_reg = 0x202000f;
-	log_reg = 0x2020007;
-	err_reg = 0x2020009;
+	if (proc_gen == proc_gen_p9) {
+		recv_status_reg = 0x00090018;
+		log_reg = 0x0090012;
+		err_reg = 0x0090013;
+	} else {
+		recv_status_reg = 0x202000f;
+		log_reg = 0x2020007;
+		err_reg = 0x2020009;
+	}
 
 	/* First we need to write 0 to a register on our chip */
 	out_be64(xscom_addr(this_cpu()->chip_id, recv_status_reg), 0);
