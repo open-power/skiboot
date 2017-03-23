@@ -317,7 +317,8 @@ static int __xscom_write(uint32_t gcid, uint32_t pcb_addr, uint64_t val)
 /*
  * Indirect XSCOM access functions
  */
-static int xscom_indirect_read(uint32_t gcid, uint64_t pcb_addr, uint64_t *val)
+static int xscom_indirect_read_form0(uint32_t gcid, uint64_t pcb_addr,
+				     uint64_t *val)
 {
 	uint32_t addr;
 	uint64_t data;
@@ -360,7 +361,23 @@ static int xscom_indirect_read(uint32_t gcid, uint64_t pcb_addr, uint64_t *val)
 	return rc;
 }
 
-static int xscom_indirect_write(uint32_t gcid, uint64_t pcb_addr, uint64_t val)
+static int xscom_indirect_form(uint64_t pcb_addr)
+{
+	return (pcb_addr >> 60) & 1;
+}
+
+static int xscom_indirect_read(uint32_t gcid, uint64_t pcb_addr, uint64_t *val)
+{
+	uint64_t form = xscom_indirect_form(pcb_addr);
+
+	if ((proc_gen == proc_gen_p9) && (form == 1))
+		return OPAL_UNSUPPORTED;
+
+	return xscom_indirect_read_form0(gcid, pcb_addr, val);
+}
+
+static int xscom_indirect_write_form0(uint32_t gcid, uint64_t pcb_addr,
+				      uint64_t val)
 {
 	uint32_t addr;
 	uint64_t data;
@@ -400,6 +417,34 @@ static int xscom_indirect_write(uint32_t gcid, uint64_t pcb_addr, uint64_t val)
 	}
  bail:
 	return rc;
+}
+
+static int xscom_indirect_write_form1(uint32_t gcid, uint64_t pcb_addr,
+				      uint64_t val)
+{
+	uint32_t addr;
+	uint64_t data;
+
+	if (proc_gen < proc_gen_p9)
+		return OPAL_UNSUPPORTED;
+	if (val & ~(XSCOM_DATA_IND_FORM1_DATA))
+		return OPAL_PARAMETER;
+
+	/* Mangle address and data for form1 */
+	addr = (pcb_addr & 0x000ffffffff);
+	data = (pcb_addr & 0xfff00000000) << 20;
+	data |= val;
+	return __xscom_write(gcid, addr, data);
+}
+
+static int xscom_indirect_write(uint32_t gcid, uint64_t pcb_addr, uint64_t val)
+{
+	uint64_t form = xscom_indirect_form(pcb_addr);
+
+	if ((proc_gen == proc_gen_p9) && (form == 1))
+		return xscom_indirect_write_form1(gcid, pcb_addr, val);
+
+	return xscom_indirect_write_form0(gcid, pcb_addr, val);
 }
 
 static uint32_t xscom_decode_chiplet(uint32_t partid, uint64_t *pcb_addr)
