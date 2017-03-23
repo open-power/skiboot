@@ -95,22 +95,28 @@ static uint64_t xscom_wait_done(void)
 static void xscom_reset(uint32_t gcid)
 {
 	u64 hmer;
+	uint32_t recv_status_reg, log_reg, err_reg;
 
 	/* Clear errors in HMER */
 	mtspr(SPR_HMER, HMER_CLR_MASK);
 
+	/* Setup local and target scom addresses */
+	recv_status_reg = 0x202000f;
+	log_reg = 0x2020007;
+	err_reg = 0x2020009;
+
 	/* First we need to write 0 to a register on our chip */
-	out_be64(xscom_addr(this_cpu()->chip_id, 0x202000f), 0);
+	out_be64(xscom_addr(this_cpu()->chip_id, recv_status_reg), 0);
 	hmer = xscom_wait_done();
 	if (hmer & SPR_HMER_XSCOM_FAIL)
 		goto fail;
 
 	/* Then we need to clear those two other registers on the target */
-	out_be64(xscom_addr(gcid, 0x2020007), 0);
+	out_be64(xscom_addr(gcid, log_reg), 0);
 	hmer = xscom_wait_done();
 	if (hmer & SPR_HMER_XSCOM_FAIL)
 		goto fail;
-	out_be64(xscom_addr(gcid, 0x2020009), 0);
+	out_be64(xscom_addr(gcid, err_reg), 0);
 	hmer = xscom_wait_done();
 	if (hmer & SPR_HMER_XSCOM_FAIL)
 		goto fail;
