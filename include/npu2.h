@@ -25,6 +25,10 @@
 #define NPU2ERR(p, fmt, a...)	prlog(PR_ERR,   "NPU%d: " fmt, \
 				      (p)->phb.opal_id, ##a)
 
+#define NPU2DEVDBG(p, fmt, a...)	NPU2DBG((p)->npu, fmt, ##a)
+#define NPU2DEVINF(p, fmt, a...)	NPU2INF((p)->npu, fmt, ##a)
+#define NPU2DEVERR(p, fmt, a...)	NPU2ERR((p)->npu, fmt, ##a)
+
 /* Number of PEs supported */
 #define NPU2_MAX_PE_NUM		16
 #define NPU2_RESERVED_PE_NUM	15
@@ -78,6 +82,7 @@ struct npu2_dev {
 	uint32_t		index;
 	uint32_t                flags;
 	uint64_t                xscom;
+	uint64_t		pl_xscom_base;
 	void			*regs;
 	struct dt_node		*dt_node;
 	struct npu2_pcie_bar	bars[2];
@@ -94,11 +99,13 @@ struct npu2_dev {
 	struct phb		*phb;
 	struct pci_device	*pd;
 
+	int                     ntl_reset_done;
+
 	/* Vendor specific capability */
 	uint32_t		vendor_cap;
 
 	/* Which PHY lanes this device is associated with */
-	uint16_t		lane_mask;
+	uint32_t		lane_mask;
 
 	/* Track currently running procedure and step number */
 	uint16_t		procedure_number;

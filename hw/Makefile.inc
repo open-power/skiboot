@@ -6,7 +6,7 @@ HW_OBJS += nx.o nx-rng.o nx-crypto.o nx-842.o
 HW_OBJS += p7ioc.o p7ioc-inits.o p7ioc-phb.o
 HW_OBJS += phb3.o sfc-ctrl.o fake-rtc.o bt.o p8-i2c.o prd.o
 HW_OBJS += dts.o lpc-rtc.o npu.o npu-hw-procedures.o xive.o phb4.o
-HW_OBJS += fake-nvram.o lpc-mbox.o npu2.o
+HW_OBJS += fake-nvram.o lpc-mbox.o npu2.o npu2-hw-procedures.o
 HW=hw/built-in.o
 
 # FIXME hack this for now

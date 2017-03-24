@@ -1314,6 +1314,12 @@ static uint32_t npu2_populate_vendor_cap(struct npu2_dev *dev,
 	PCI_VIRT_CFG_INIT_RO(pvd, start + 4, 4, 0);
 	PCI_VIRT_CFG_INIT_RO(pvd, start + 8, 4, 0);
 
+	/* Add NVLink2 PHY procedures trap */
+	pci_virt_add_filter(pvd, start + 4, 8,
+			    PCI_REG_FLAG_READ | PCI_REG_FLAG_WRITE,
+			    npu2_dev_procedure,
+			    NULL);
+
 	/* Link index */
 	PCI_VIRT_CFG_INIT_RO(pvd, start + 0xc, 1, dev->index);
 
@@ -1337,7 +1343,7 @@ static void npu2_populate_cfg(struct npu2_dev *dev)
 			    npu2_cfg_write_cmd, NULL);
 
 	/* 0x08 - Rev/Class/Cache */
-	PCI_VIRT_CFG_INIT_RO(pvd, PCI_CFG_REV_ID, 4, 0x06800001);
+	PCI_VIRT_CFG_INIT_RO(pvd, PCI_CFG_REV_ID, 4, 0x06800101);
 
 	/* 0x0c - CLS/Latency Timer/Header/BIST */
 	PCI_VIRT_CFG_INIT_RO(pvd, PCI_CFG_CACHE_LINE_SIZE, 4, 0x00800000);
@@ -1391,7 +1397,7 @@ static void npu2_populate_cfg(struct npu2_dev *dev)
 
 	/* PCIE and vendor specific capability */
 	pos = npu2_populate_pcie_cap(dev, 0x40, PCI_CFG_CAP);
-	npu2_populate_vendor_cap(dev, pos, 0x41);
+	pos = npu2_populate_vendor_cap(dev, pos, 0x41);
 	PCI_VIRT_CFG_INIT_RO(pvd, pos + 1, 1, 0);
 }
 
@@ -1442,6 +1448,7 @@ static void npu2_populate_devices(struct npu2 *p,
 		p->total_devices++;
 		p->phb.scan_map |= 0x1 << ((dev->bdfn & 0xf8) >> 3);
 
+		dev->pl_xscom_base = dt_prop_get_u64(link, "ibm,npu-phy");
 		dev->lane_mask = dt_prop_get_u32(link, "ibm,npu-lane-mask");
 
 		/* Populate BARs. BAR0/1 is the NTL bar. */

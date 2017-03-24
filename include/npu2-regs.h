@@ -17,6 +17,13 @@
 #ifndef __NPU2_REGS_H
 #define __NPU2_REGS_H
 
+struct npu2;
+uint64_t npu2_read4(struct npu2 *p, uint64_t reg);
+void npu2_write4(struct npu2 *p, uint64_t reg, uint64_t val);
+uint64_t npu2_read(struct npu2 *p, uint64_t reg);
+void npu2_write(struct npu2 *p, uint64_t reg, uint64_t val);
+void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
+
 #define NPU2_REG_OFFSET(stack, block, offset) \
 	(((stack) << 20) | ((block) << 16) | (offset))
 
