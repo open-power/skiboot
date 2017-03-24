@@ -201,7 +201,10 @@
 #define OPAL_XIVE_RESERVED3			143
 #define OPAL_XIVE_RESERVED4			144
 #define OPAL_SIGNAL_SYSTEM_RESET		145
-#define OPAL_LAST				145
+#define OPAL_NPU_INIT_CONTEXT			146
+#define OPAL_NPU_DESTROY_CONTEXT		147
+#define OPAL_NPU_MAP_LPAR			148
+#define OPAL_LAST				148
 
 /* Device tree flags */
 
