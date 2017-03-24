@@ -952,6 +952,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* Probe NPUs */
 	probe_npu();
+	probe_npu2();
 
 	/* Initialize PCI */
 	pci_init_slots();

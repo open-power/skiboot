@@ -66,6 +66,27 @@ NPU bindings:
     };
   };
 
+GPU memory bindings
+-------------------
+
+.. code-block:: dts
+
+        memory@100000000 {
+                device_type = "memory"
+                compatible = "ibm,coherent-device-memory";
+                linux,usable-memory = <0x0 0x100000000 0x0 0x0>;
+
+        ; denotes a region of unplugged system memory
+
+                reg = <0x0 0x100000000 0x0 0x80000000>;
+                ibm,associativity = <0x4 0x0 0x0 0x0 0x64>;
+
+        ; numa associativity for the memory once it is hotplugged
+
+                phandle = <0x10000abc>;
+                linux,phandle = <0x10000abc>;
+        };
+
 Emulated PCI device bindings
 ----------------------------
 
@@ -83,7 +104,8 @@ Emulated PCI device bindings
                         ibm,pci-config-space-type = <0x1>;
                         vendor-id = <0x1014>;
                         ibm,gpu = <0x100002f7>; /* phandle pointing the associated GPU PCI device node */
-  	  	        phandle = <0x100002fc>;
+			memory-region = <0x10000abc>; /* phandle pointing to the GPU memory */
+			phandle = <0x100002fc>;
                 };
 
                 pci@1 {
@@ -94,6 +116,7 @@ Emulated PCI device bindings
                         ibm,pci-config-space-type = <0x1>;
                         vendor-id = <0x1014>;
                         ibm,gpu = <0x100002f5>;
+                        memory-region = <0x10000def>;
                         phandle = <0x100002fe>;
                         class-code = <0x60400>;
                         linux,phandle = <0x100002fe>;
@@ -107,6 +130,7 @@ Emulated PCI device bindings
                         ibm,pci-config-space-type = <0x1>;
                         vendor-id = <0x1014>;
                         ibm,gpu = <0x100002f7>;
+                        memory-region = <0x10000abc>;
                         phandle = <0x100002fd>;
                         class-code = <0x60400>;
                         linux,phandle = <0x100002fd>;
@@ -120,6 +144,7 @@ Emulated PCI device bindings
                         ibm,pci-config-space-type = <0x1>;
                         vendor-id = <0x1014>;
                         ibm,gpu = <0x100002f5>;
+                        memory-region = <0x10000def>;
                         phandle = <0x100002ff>;
                         class-code = <0x60400>;
                         linux,phandle = <0x100002ff>;
