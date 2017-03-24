@@ -48,6 +48,7 @@ spawn $QEMU_PATH/$QEMU_BINARY -m 2G -M powernv -kernel debian-jessie-vmlinux -in
 expect {
 timeout { send_user "\nTimeout waiting for petitboot\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
+"Machine Check Stop" { exit 1;}
 "Starting system log daemon"
 }
 close

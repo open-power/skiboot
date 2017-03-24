@@ -41,6 +41,7 @@ spawn $P9MAMBO_PATH/$P9MAMBO_BINARY -n -f ../../test/hello_world/run_hello_world
 expect {
 timeout { send_user "\nTimeout waiting for hello world\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
+"Machine Check Stop" { exit 1;}
 "Execution stopped: Sim Support exit requested stop"
 }
 wait

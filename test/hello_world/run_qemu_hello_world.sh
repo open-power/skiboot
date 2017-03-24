@@ -38,6 +38,7 @@ spawn $QEMU_PATH/$QEMU_BINARY -m 1G -M powernv -kernel $SKIBOOT_ZIMAGE -nographi
 expect {
 timeout { send_user "\nTimeout waiting for hello world\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
+"Machine Check Stop" { exit 1;}
 "Hello World!"
 }
 close

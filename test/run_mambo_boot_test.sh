@@ -52,6 +52,7 @@ spawn $MAMBO_PATH/$MAMBO_BINARY -n -f ../../test/run_boot_test.tcl
 expect {
 timeout { send_user "\nTimeout waiting for petitboot\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
+"Machine Check Stop" { exit 1; }
 "Execution stopped: Sim Support exit requested stop"
 }
 wait

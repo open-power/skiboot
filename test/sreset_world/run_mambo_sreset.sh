@@ -42,16 +42,19 @@ spawn $MAMBO_PATH/$MAMBO_BINARY -n -f ../../test/sreset_world/run_sreset_world.t
 expect {
 timeout { send_user "\nTimeout waiting for hello world\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n"; exit 1 }
+"Machine Check Stop" { exit 1;}
 "Hello World!"
 }
 expect {
 timeout { send_user "\nTimeout waiting for Hello SRESET\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n"; exit 1 }
+"Machine Check Stop" { exit 1;}
 "Hello SRESET!"
 }
 expect {
 timeout { send_user "\nTimeout waiting for shutdown\n"; exit 1}
 eof { send_user "\nUnexpected EOF\n"; exit 1}
+"Machine Check Stop" { exit 1;}
 "Execution stopped: Sim Support exit requested stop"
 }
 wait
