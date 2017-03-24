@@ -114,9 +114,11 @@ proc pa { spr } {
     }
 }
 
-proc s { } {
-    mysim step 1
-    ipca
+proc s { {nr 1} } {
+    for { set i 0 } { $i < $nr } { incr i 1 } {
+        mysim step 1
+        ipca
+    }
 }
 
 proc z { count } {
@@ -354,5 +356,187 @@ proc start_qtrace { { qtfile qtrace.qt } } {
     simemit set "Bus_Wait" 1
 
     ereader start $env(EXEC_DIR)/emitter/qtracer [pid] -outfile $qtfile
+}
+
+proc current_insn { { t 0 } { c 0 } } {
+    set pc [mysim cpu $c thread $t display spr pc]
+    set pc_laddr [mysim cpu $c util itranslate $pc]
+    set inst [mysim cpu $c memory display $pc_laddr 4]
+    set disasm [mysim cpu $c util ppc_disasm $inst $pc]
+    return $disasm
+}
+
+global SRR1
+global DSISR
+global DAR
+
+proc sreset_trigger { args } {
+    variable SRR1
+
+    mysim trigger clear pc 0x100
+    set s [expr [mysim cpu 0 display spr srr1] & ~0x00000000003c0002]
+    set SRR1 [expr $SRR1 | $s]
+    mysim cpu 0 set spr srr1 $SRR1
+}
+
+proc exc_sreset { } {
+    variable SRR1
+    variable DSISR
+    variable DAR
+
+    # In case of recoverable MCE, idle wakeup always sets RI, others get
+    # RI from current environment. For unrecoverable, RI would always be
+    # clear by hardware.
+    if { [current_insn] in { "stop" "nap" "sleep" "winkle" } } {
+        set msr_ri 0x2
+        set SRR1_powersave [expr (0x2 << (63-47))]
+    } else {
+        set msr_ri [expr [mysim cpu 0 display spr msr] & 0x2]
+        set SRR1_powersave 0
+    }
+
+    # reason system reset
+    set SRR1_reason 0x4
+
+    set SRR1 [expr 0x0 | $msr_ri | $SRR1_powersave]
+    set SRR1 [expr $SRR1 | ((($SRR1_reason >> 3) & 0x1) << (63-42))]
+    set SRR1 [expr $SRR1 | ((($SRR1_reason >> 2) & 0x1) << (63-43))]
+    set SRR1 [expr $SRR1 | ((($SRR1_reason >> 1) & 0x1) << (63-44))]
+    set SRR1 [expr $SRR1 | ((($SRR1_reason >> 0) & 0x1) << (63-45))]
+
+    if { [current_insn] in { "stop" "nap" "sleep" "winkle" } } {
+        # mambo has a quirk that interrupts from idle wake immediately
+        mysim trigger set pc 0x100 "sreset_trigger"
+        mysim cpu 0 interrupt MachineCheck
+	# XXX: only trigger if pc is 0x100
+	sreset_trigger
+    } else {
+        mysim trigger set pc 0x100 "sreset_trigger"
+        mysim cpu 0 interrupt SystemReset
+    }
+}
+
+proc mce_trigger { args } {
+    variable SRR1
+    variable DSISR
+    variable DAR
+
+    mysim trigger clear pc 0x200
+
+    set s [expr [mysim cpu 0 display spr srr1] & ~0x00000000801f0002]
+    set SRR1 [expr $SRR1 | $s]
+    mysim cpu 0 set spr srr1 $SRR1
+    mysim cpu 0 set spr dsisr $DSISR
+    mysim cpu 0 set spr dar $DAR
+}
+
+#
+# Inject a machine check. Recoverable MCE types can be forced to unrecoverable
+# by clearing MSR_RI bit from SRR1 (which hardware may do).
+# If d_side is 0, then cause goes into SRR1. Otherwise it gets put into DSISR.
+# DAR is hardcoded to always 0xdeadbeefdeadbeef
+#
+# Default with no arguments is a recoverable i-side TLB multi-hit
+# Other options:
+# d_side=1 cause=0x80 - recoverable d-side SLB multi-hit
+# d_side=0 cause=0xd  - unrecoverable i-side async store timeout (POWER9 only)
+# d_side=0 cause=0x1  - unrecoverable i-side ifetch
+#
+proc exc_mce { { d_side 0 } { cause 0x5 } { recoverable 1 } } {
+    variable SRR1
+    variable DSISR
+    variable DAR
+
+    # In case of recoverable MCE, idle wakeup always sets RI, others get
+    # RI from current environment. For unrecoverable, RI would always be
+    # clear by hardware.
+    if { [current_insn] in { "stop" "nap" "sleep" "winkle" } } {
+        set msr_ri 0x2
+        set SRR1_powersave [expr (0x2 << (63-47))]
+    } else {
+        set msr_ri [expr [mysim cpu 0 display spr msr] & 0x2]
+        set SRR1_powersave 0
+    }
+
+    if { !$recoverable } {
+        set msr_ri 0x0
+    }
+
+    # recoverable d-side SLB multihit
+    if { $d_side } {
+        set is_dside 1
+        set SRR1_mc_cause 0x0
+        set DSISR $cause
+        set DAR 0xdeadbeefdeadbeef
+    } else {
+        set is_dside 0
+        set SRR1_mc_cause $cause
+        set DSISR 0x0
+        set DAR 0x0
+    }
+
+    set SRR1 [expr 0x0 | $msr_ri | $SRR1_powersave]
+
+    set SRR1 [expr $SRR1 | ($is_dside << (63-42))]
+    set SRR1 [expr $SRR1 | ((($SRR1_mc_cause >> 3) & 0x1) << (63-36))]
+    set SRR1 [expr $SRR1 | ((($SRR1_mc_cause >> 2) & 0x1) << (63-43))]
+    set SRR1 [expr $SRR1 | ((($SRR1_mc_cause >> 1) & 0x1) << (63-44))]
+    set SRR1 [expr $SRR1 | ((($SRR1_mc_cause >> 0) & 0x1) << (63-45))]
+
+    if { [current_insn] in { "stop" "nap" "sleep" "winkle" } } {
+        # mambo has a quirk that interrupts from idle wake immediately
+        mysim trigger set pc 0x200 "mce_trigger"
+        mysim cpu 0 interrupt MachineCheck
+	# XXX: only trigger if pc is 0x200
+	mce_trigger
+    } else {
+        mysim trigger set pc 0x200 "mce_trigger"
+        mysim cpu 0 interrupt MachineCheck
+    }
+}
+
+global R1
+
+# Avoid stopping if we re-enter the same code. Wait until r1 matches.
+# This helps stepping over exceptions or function calls etc.
+proc stop_stack_match { args } {
+    variable R1
+
+    set r1 [mysim cpu 0 display gpr 1]
+    if { $R1 == $r1 } {
+        simstop
+        ipca
+    }
+}
+
+# inject default recoverable MCE and step over it. Useful for testing whether
+# code copes with taking an interleaving MCE.
+proc inject_mce { } {
+    variable R1
+
+    set R1 [mysim cpu 0 display gpr 1]
+    set pc [mysim cpu 0 display spr pc]
+    mysim trigger set pc $pc "stop_stack_match"
+    exc_mce
+    c
+    mysim trigger clear pc $pc ; list
+}
+
+# inject and step over one instruction, and repeat.
+proc inject_mce_step { {nr 1} } {
+    for { set i 0 } { $i < $nr } { incr i 1 } {
+        inject_mce
+        s
+    }
+}
+
+# inject if RI is set and step over one instruction, and repeat.
+proc inject_mce_step_ri { {nr 1} } {
+    for { set i 0 } { $i < $nr } { incr i 1 } {
+        if { [expr [mysim cpu 0 display spr msr] & 0x2] } {
+            inject_mce
+        }
+        s
+    }
 }
 
