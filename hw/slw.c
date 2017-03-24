@@ -287,6 +287,39 @@ static bool slw_set_overrides(struct proc_chip *chip, struct cpu_thread *c)
 	return true;
 }
 
+static bool slw_set_overrides_p9(struct proc_chip *chip, struct cpu_thread *c)
+{
+	uint64_t tmp;
+	int rc;
+	uint32_t core = pir_to_core_id(c->pir);
+
+	/* MAMBO does not require this init */
+	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS) {
+		return true;
+	}
+
+	/* Clear special wakeup bits that could hold power mgt */
+	rc = xscom_write(chip->id,
+			 XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_HYP),
+			 0);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_SLW_SET),
+			"SLW: Failed to write EC_PPM_SPECIAL_WKUP_HYP\n");
+		return false;
+	}
+	/* Read back for debug */
+	rc = xscom_read(chip->id,
+			XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_HYP),
+			&tmp);
+	prlog(PR_NOTICE, "SLW: EC_PPM_SPECIAL_WKUP_HYP read  0x%016llx\n", tmp);
+	rc = xscom_read(chip->id,
+			XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_OTR),
+			&tmp);
+	if (tmp)
+		prlog(PR_WARNING, "SLW: EC_PPM_SPECIAL_WKUP_OTR read  0x%016llx\n", tmp);
+	return true;
+}
+
 #ifdef __HAVE_LIBPORE__
 static bool slw_unset_overrides(struct proc_chip *chip, struct cpu_thread *c)
 {
@@ -1128,6 +1161,16 @@ static void slw_patch_regs(struct proc_chip *chip)
 }
 #endif /* __HAVE_LIBPORE__ */
 
+static void slw_init_chip_p9(struct proc_chip *chip)
+{
+	struct cpu_thread *c;
+
+	prlog(PR_NOTICE, "SLW: Init chip 0x%x\n", chip->id);
+
+	/* At power ON setup inits for power-mgt */
+	for_each_available_core_in_chip(c, chip->id)
+		slw_set_overrides_p9(chip, c);
+}
 static void slw_init_chip(struct proc_chip *chip)
 {
 	int64_t rc;
@@ -1493,11 +1536,12 @@ void slw_init(void)
 {
 	struct proc_chip *chip;
 
-	if (proc_gen != proc_gen_p8)
-		return;
-
-	for_each_chip(chip)
-		slw_init_chip(chip);
-
-	slw_init_timer();
+	if (proc_gen == proc_gen_p8) {
+		for_each_chip(chip)
+			slw_init_chip(chip);
+		slw_init_timer();
+	} else if (proc_gen == proc_gen_p9) {
+		for_each_chip(chip)
+			slw_init_chip_p9(chip);
+	}
 }
