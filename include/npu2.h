@@ -29,6 +29,8 @@
 #define NPU2_MAX_PE_NUM		16
 #define NPU2_RESERVED_PE_NUM	15
 
+#define NPU2_LINKS_PER_CHIP 6
+
 /* Return the stack (0-2) of a device */
 #define NPU2DEV_STACK(ndev) ((ndev)->index / 2)
 
