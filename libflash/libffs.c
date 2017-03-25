@@ -187,9 +187,10 @@ static struct ffs_entry *ffs_get_part(struct ffs_handle *ffs, uint32_t index)
 
 	list_for_each(&ffs->hdr.entries, ent, list)
 		if (i++ == index)
-			break;
+			return ent;
 
-	return ent;
+	/* Didn't find partition */
+	return NULL;
 }
 
 bool has_ecc(struct ffs_entry *ent)
