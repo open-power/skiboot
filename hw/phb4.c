@@ -3092,7 +3092,6 @@ static void phb4_create(struct dt_node *np)
 	p->phb.ops = &phb4_ops;
 	p->phb.phb_type = phb_type_pcie_v4;
 	p->phb.scan_map = 0x1; /* Only device 0 to scan */
-	p->max_link_speed = dt_prop_get_u32_def(np, "ibm,max-link-speed", 4);
 	p->state = PHB4_STATE_UNINITIALIZED;
 
 	if (!phb4_calculate_windows(p))
@@ -3168,6 +3167,16 @@ static void phb4_create(struct dt_node *np)
 	/* Obtain informatin about the PHB from the hardware directly */
 	if (!phb4_read_capabilities(p))
 		goto failed;
+
+	/* Priority order: NVRAM -> dt -> GEN4 */
+	p->max_link_speed = 4;
+	if (dt_has_node_property(np, "ibm,max-link-speed", NULL))
+		p->max_link_speed = dt_prop_get_u32(np, "ibm,max-link-speed");
+	if (pcie_max_link_speed)
+		p->max_link_speed = pcie_max_link_speed;
+	if (p->max_link_speed > 4) /* clamp to 4 */
+		p->max_link_speed = 4;
+	PHBINF(p, "Max link speed: GEN%i\n", p->max_link_speed);
 
 	/* Check for lane equalization values from HB or HDAT */
 	p->lane_eq = dt_prop_get_def_size(np, "ibm,lane-eq", NULL, &lane_eq_len);
@@ -3446,8 +3455,10 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 		capp_ucode_base = dt_prop_get_u32(stk_node, "ibm,capp-ucode");
 		dt_add_property_cells(np, "ibm,capp-ucode", capp_ucode_base);
 	}
-	max_link_speed = dt_prop_get_u32_def(stk_node, "ibm,max-link-speed", 4);
-	dt_add_property_cells(np, "ibm,max-link-speed", max_link_speed);
+	if (dt_has_node_property(stk_node, "ibm,max-link-speed", NULL)) {
+		max_link_speed = dt_prop_get_u32(stk_node, "ibm,max-link-speed");
+		dt_add_property_cells(np, "ibm,max-link-speed", max_link_speed);
+	}
 	dt_add_property_cells(np, "ibm,capi-flags",
 			      OPAL_PHB_CAPI_FLAG_SNOOP_CONTROL);
 

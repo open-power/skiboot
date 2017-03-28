@@ -49,6 +49,7 @@
 #include <libstb/container.h>
 
 enum proc_gen proc_gen;
+unsigned int pcie_max_link_speed;
 
 static uint64_t kernel_entry;
 static size_t kernel_size;
@@ -700,6 +701,20 @@ static void per_thread_sanity_checks(void)
 	assert(cpu->state != cpu_state_no_cpu);
 }
 
+static void pci_nvram_init(void)
+{
+	const char *nvram_speed;
+
+	pcie_max_link_speed = 0;
+
+	nvram_speed = nvram_query("pcie-max-link-speed");
+	if (nvram_speed) {
+		pcie_max_link_speed = atoi(nvram_speed);
+		prlog(PR_NOTICE, "PHB: NVRAM set max link speed to GEN%i\n",
+		      pcie_max_link_speed);
+	}
+}
+
 /* Called from head.S, thus no prototype. */
 void main_cpu_entry(const void *fdt);
 
@@ -916,6 +931,8 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	slw_init();
 
 	op_display(OP_LOG, OP_MOD_INIT, 0x0002);
+
+	pci_nvram_init();
 
 	phb3_preload_vpd();
 	phb3_preload_capp_ucode();

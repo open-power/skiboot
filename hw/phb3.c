@@ -4671,7 +4671,6 @@ static void phb3_create(struct dt_node *np)
 	p->phb.ops = &phb3_ops;
 	p->phb.phb_type = phb_type_pcie_v3;
 	p->phb.scan_map = 0x1; /* Only device 0 to scan */
-	p->max_link_speed = dt_prop_get_u32_def(np, "ibm,max-link-speed", 3);
 	p->state = PHB3_STATE_UNINITIALIZED;
 
 	if (!phb3_calculate_windows(p))
@@ -4736,6 +4735,16 @@ static void phb3_create(struct dt_node *np)
 					       "ibm,io-base-loc-code", NULL);
 	if (!p->phb.base_loc_code)
 		PHBERR(p, "Base location code not found !\n");
+
+	/* Priority order: NVRAM -> dt -> GEN3 */
+	p->max_link_speed = 3;
+	if (dt_has_node_property(np, "ibm,max-link-speed", NULL))
+		p->max_link_speed = dt_prop_get_u32(np, "ibm,max-link-speed");
+	if (pcie_max_link_speed)
+		p->max_link_speed = pcie_max_link_speed;
+	if (p->max_link_speed > 3) /* clamp to 3 */
+		p->max_link_speed = 3;
+	PHBINF(p, "Max link speed: GEN%i\n", p->max_link_speed);
 
 	/* Check for lane equalization values from HB or HDAT */
 	p->lane_eq = dt_prop_get_def_size(np, "ibm,lane-eq", NULL, &lane_eq_len);
@@ -4966,8 +4975,10 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 		capp_ucode_base = dt_prop_get_u32(pbcq, "ibm,capp-ucode");
 		dt_add_property_cells(np, "ibm,capp-ucode", capp_ucode_base);
 	}
-	max_link_speed = dt_prop_get_u32_def(pbcq, "ibm,max-link-speed", 3);
-	dt_add_property_cells(np, "ibm,max-link-speed", max_link_speed);
+	if (dt_has_node_property(pbcq, "ibm,max-link-speed", NULL)) {
+		max_link_speed = dt_prop_get_u32(pbcq, "ibm,max-link-speed");
+		dt_add_property_cells(np, "ibm,max-link-speed", max_link_speed);
+	}
 	dt_add_property_cells(np, "ibm,capi-flags",
 			      OPAL_PHB_CAPI_FLAG_SNOOP_CONTROL);
 
