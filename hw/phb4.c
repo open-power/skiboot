@@ -3168,8 +3168,10 @@ static void phb4_create(struct dt_node *np)
 	if (!phb4_read_capabilities(p))
 		goto failed;
 
-	/* Priority order: NVRAM -> dt -> GEN4 */
+	/* Priority order: NVRAM -> dt -> GEN2 dd1 -> GEN4 */
 	p->max_link_speed = 4;
+	if (p->rev == PHB4_REV_NIMBUS_DD10)
+		p->max_link_speed = 2;
 	if (dt_has_node_property(np, "ibm,max-link-speed", NULL))
 		p->max_link_speed = dt_prop_get_u32(np, "ibm,max-link-speed");
 	if (pcie_max_link_speed)
