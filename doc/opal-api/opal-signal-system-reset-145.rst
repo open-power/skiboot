@@ -1,3 +1,5 @@
+.. _OPAL_SIGNAL_SYSTEM_RESET:
+
 OPAL_SIGNAL_SYSTEM_RESET
 ========================
 ::
