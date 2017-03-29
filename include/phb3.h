@@ -299,6 +299,7 @@ struct phb3 {
 	int64_t			aercap;	    /* cached AER ecap offset */
 	const __be64		*lane_eq;
 	unsigned int		max_link_speed;
+	uint32_t		no_ecrc_devs;
 
 	uint16_t		rte_cache[RTT_TABLE_ENTRIES];
 	uint8_t			peltv_cache[PELTV_TABLE_SIZE];

@@ -367,6 +367,26 @@ static int64_t phb3_get_reserved_pe_number(struct phb *phb __unused)
 	return PHB3_RESERVED_PE_NUM;
 }
 
+static inline void phb3_enable_ecrc(struct phb *phb, bool enable)
+{
+	struct phb3 *p = phb_to_phb3(phb);
+	uint32_t ctl;
+
+	if (p->aercap <= 0)
+		return;
+
+	pci_cfg_read32(phb, 0, p->aercap + PCIECAP_AER_CAPCTL, &ctl);
+	if (enable) {
+		ctl |= (PCIECAP_AER_CAPCTL_ECRCG_EN |
+			PCIECAP_AER_CAPCTL_ECRCC_EN);
+	} else {
+		ctl &= ~(PCIECAP_AER_CAPCTL_ECRCG_EN |
+			 PCIECAP_AER_CAPCTL_ECRCC_EN);
+	}
+
+	pci_cfg_write32(phb, 0, p->aercap + PCIECAP_AER_CAPCTL, ctl);
+}
+
 static void phb3_root_port_init(struct phb *phb, struct pci_device *dev,
 				int ecap, int aercap)
 {
@@ -436,10 +456,7 @@ static void phb3_root_port_init(struct phb *phb, struct pci_device *dev,
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_CE_MASK, val32);
 
 	/* Enable ECRC check */
-	pci_cfg_read32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, &val32);
-	val32 |= (PCIECAP_AER_CAPCTL_ECRCG_EN |
-		  PCIECAP_AER_CAPCTL_ECRCC_EN);
-	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, val32);
+	phb3_enable_ecrc(phb, true);
 
 	/* Enable all error reporting */
 	pci_cfg_read32(phb, bdfn, aercap + PCIECAP_AER_RERR_CMD, &val32);
@@ -646,10 +663,24 @@ static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
 	}
 }
 
+static inline int phb3_should_disable_ecrc(struct pci_device *pd)
+{
+	/*
+	 * When we have PMC PCIe switch, we need disable ECRC on root port.
+	 * Otherwise, the adapters behind the switch downstream ports might
+	 * not probed successfully.
+	 */
+	if (pd->vdid == 0x854611f8)
+		return true;
+
+	return false;
+}
+
 static int phb3_device_init(struct phb *phb,
 			    struct pci_device *dev,
-			    void *data __unused)
+			    void *data)
 {
+	struct phb3 *p = phb_to_phb3(phb);
 	int ecap, aercap;
 
 	/* Some special adapter tweaks for devices directly under the PHB */
@@ -668,7 +699,28 @@ static int phb3_device_init(struct phb *phb,
 	else
 		phb3_endpoint_init(phb, dev, ecap, aercap);
 
+	/*
+	 * Check if we need disable ECRC functionality on root port. It
+	 * only happens when PCI topology changes, meaning it's skipped
+	 * when reinitializing PCI device after EEH reset.
+	 */
+	if (!data && phb3_should_disable_ecrc(dev)) {
+		if (p->no_ecrc_devs++ == 0)
+			phb3_enable_ecrc(phb, false);
+	}
+
 	return 0;
+}
+
+static void phb3_device_remove(struct phb *phb, struct pci_device *pd)
+{
+	struct phb3 *p = phb_to_phb3(phb);
+
+	if (!phb3_should_disable_ecrc(pd) || p->no_ecrc_devs == 0)
+		return;
+
+	if (--p->no_ecrc_devs == 0)
+		phb3_enable_ecrc(phb, true);
 }
 
 static int64_t phb3_pci_reinit(struct phb *phb, uint64_t scope, uint64_t data)
@@ -684,7 +736,7 @@ static int64_t phb3_pci_reinit(struct phb *phb, uint64_t scope, uint64_t data)
 	if (!pd)
 		return OPAL_PARAMETER;
 
-	ret = phb3_device_init(phb, pd, NULL);
+	ret = phb3_device_init(phb, pd, pd);
 	if (ret)
 		return OPAL_HARDWARE;
 
@@ -3810,7 +3862,7 @@ static const struct phb_ops phb3_ops = {
 	.choose_bus		= phb3_choose_bus,
 	.get_reserved_pe_number	= phb3_get_reserved_pe_number,
 	.device_init		= phb3_device_init,
-	.device_remove		= NULL,
+	.device_remove		= phb3_device_remove,
 	.ioda_reset		= phb3_ioda_reset,
 	.papr_errinjct_reset	= phb3_papr_errinjct_reset,
 	.pci_reinit		= phb3_pci_reinit,
@@ -4093,10 +4145,10 @@ static bool phb3_init_rc_cfg(struct phb3 *p)
 	phb3_pcicfg_write32(&p->phb, 0, aercap + PCIECAP_AER_CE_MASK,
 			    PCIECAP_AER_CE_ADV_NONFATAL |
 			    (p->has_link ? 0 : PCIECAP_AER_CE_RECVR_ERR));
-	/* Enable ECRC generation & checking */
-	phb3_pcicfg_write32(&p->phb, 0, aercap + PCIECAP_AER_CAPCTL,
-			     PCIECAP_AER_CAPCTL_ECRCG_EN	|
-			     PCIECAP_AER_CAPCTL_ECRCC_EN);
+
+	/* Enable or disable ECRC generation & checking */
+	phb3_enable_ecrc(&p->phb, !p->no_ecrc_devs);
+
 	/* Enable reporting in root error control */
 	phb3_pcicfg_write32(&p->phb, 0, aercap + PCIECAP_AER_RERR_CMD,
 			     PCIECAP_AER_RERR_CMD_FE		|
