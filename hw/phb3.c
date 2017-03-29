@@ -544,24 +544,6 @@ static void phb3_switch_port_init(struct phb *phb,
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, val32);
 }
 
-static inline bool phb3_endpoint_report_ecrc(struct pci_device *pd)
-{
-	if (!pd || !pd->parent)
-		return true;
-
-	/* No ECRC generation and check on Broadcom ethernet adapter
-	 * when it seats behind a PMC's PCIe switch downstream port.
-	 * Otherwise, the Broadcom ethernet adapter's config space
-	 * can't be accessed because of frozen PE error even after
-	 * the frozen PE error is cleared.
-	 */
-	if (pd->vdid == 0x168a14e4 || // Broadcom bnx2x CHIP_NUM_57800
-	    pd->parent->vdid == 0x854611f8)
-		return false;
-
-	return true;
-}
-
 static void phb3_endpoint_init(struct phb *phb,
 			       struct pci_device *dev,
 			       int ecap, int aercap)
@@ -599,12 +581,8 @@ static void phb3_endpoint_init(struct phb *phb,
 
 	/* Enable ECRC generation and check */
 	pci_cfg_read32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, &val32);
-	if (phb3_endpoint_report_ecrc(dev))
-		val32 |= (PCIECAP_AER_CAPCTL_ECRCG_EN |
-			  PCIECAP_AER_CAPCTL_ECRCC_EN);
-	else
-		val32 &= ~(PCIECAP_AER_CAPCTL_ECRCG_EN |
-			   PCIECAP_AER_CAPCTL_ECRCC_EN);
+	val32 |= (PCIECAP_AER_CAPCTL_ECRCG_EN |
+		  PCIECAP_AER_CAPCTL_ECRCC_EN);
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, val32);
 }
 
