@@ -360,11 +360,18 @@ static bool pci_enable_bridge(struct phb *phb, struct pci_device *pd)
 	uint16_t bctl;
 	bool was_reset = false;
 	int64_t ecap = 0;
+	uint32_t lcap = 0;
+	uint16_t lstat;
 
 	/* Disable master aborts, clear errors */
 	pci_cfg_read16(phb, pd->bdfn, PCI_CFG_BRCTL, &bctl);
 	bctl &= ~PCI_CFG_BRCTL_MABORT_REPORT;
 	pci_cfg_write16(phb, pd->bdfn, PCI_CFG_BRCTL, bctl);
+
+	if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false)) {
+		ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+		pci_cfg_read32(phb, pd->bdfn, ecap+PCICAP_EXP_LCAP, &lcap);
+	}
 
 	/* PCI-E bridge, check the slot state. We don't do that on the
 	 * root complex as this is handled separately and not all our
@@ -374,7 +381,21 @@ static bool pci_enable_bridge(struct phb *phb, struct pci_device *pd)
 	    pd->dev_type == PCIE_TYPE_SWITCH_DNPORT) {
 		uint16_t slctl, slcap, slsta, lctl;
 
-		ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+		/*
+		 * No need to touch the power supply if the PCIe link has
+		 * been up. Further more, the slot presence bit is lost while
+		 * the PCIe link is up on the specific PCI topology. In that
+		 * case, we need ignore the slot presence bit and go ahead for
+		 * probing. Otherwise, the NVMe adapter won't be probed.
+		 *
+		 * PHB3 root port, PLX switch 8748 (10b5:8748), PLX swich 9733
+		 * (10b5:9733), PMC 8546 swtich (11f8:8546), NVMe adapter
+		 * (1c58:0023).
+		 */
+		pci_cfg_read16(phb, pd->bdfn, ecap+PCICAP_EXP_LSTAT, &lstat);
+		if ((lcap & PCICAP_EXP_LCAP_DL_ACT_REP) &&
+		    (lstat & PCICAP_EXP_LSTAT_DLLL_ACT))
+			return true;
 
 		/* Read the slot status & check for presence detect */
 		pci_cfg_read16(phb, pd->bdfn, ecap+PCICAP_EXP_SLOTSTAT, &slsta);
@@ -430,11 +451,6 @@ static bool pci_enable_bridge(struct phb *phb, struct pci_device *pd)
 	/* PCI-E bridge, wait for link */
 	if (pd->dev_type == PCIE_TYPE_ROOT_PORT ||
 	    pd->dev_type == PCIE_TYPE_SWITCH_DNPORT) {
-		uint32_t lcap;
-
-		/* Read link caps */
-		pci_cfg_read32(phb, pd->bdfn, ecap+PCICAP_EXP_LCAP, &lcap);
-
 		/* Did link capability say we got reporting ?
 		 *
 		 * If yes, wait up to 10s, if not, wait 1s if we didn't already
