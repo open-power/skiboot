@@ -2512,13 +2512,16 @@ static bool phb4_init_rc_cfg(struct phb4 *p)
 	 *
 	 * AER inits
 	 */
-	aercap = pci_find_ecap(&p->phb, 0, PCIECAP_ID_AER, NULL);
-	if (aercap < 0) {
-		/* Shouldn't happen */
-		PHBERR(p, "Failed to locate AER Ecapability in bridge\n");
-		return false;
+	if (p->aercap <= 0) {
+		aercap = pci_find_ecap(&p->phb, 0, PCIECAP_ID_AER, NULL);
+		if (aercap < 0) {
+			PHBERR(p, "Can't locate AER capability\n");
+			return false;
+		}
+		p->aercap = aercap;
+	} else {
+		aercap = p->aercap;
 	}
-	p->aercap = aercap;
 
 	/* Clear all UE status */
 	phb4_pcicfg_write32(&p->phb, 0, aercap + PCIECAP_AER_UE_STATUS,
