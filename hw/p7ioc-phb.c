@@ -2318,6 +2318,7 @@ static const struct phb_ops p7ioc_phb_ops = {
 	.choose_bus		= p7ioc_choose_bus,
 	.get_reserved_pe_number	= p7ioc_get_reserved_pe_number,
 	.device_init		= p7ioc_device_init,
+	.device_remove		= NULL,
 	.pci_reinit		= p7ioc_pci_reinit,
 	.eeh_freeze_status	= p7ioc_eeh_freeze_status,
 	.eeh_freeze_clear	= p7ioc_eeh_freeze_clear,

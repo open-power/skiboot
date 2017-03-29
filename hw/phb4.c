@@ -2371,6 +2371,7 @@ static const struct phb_ops phb4_ops = {
 	.choose_bus		= phb4_choose_bus,
 	.get_reserved_pe_number	= phb4_get_reserved_pe_number,
 	.device_init		= phb4_device_init,
+	.device_remove		= NULL,
 	.ioda_reset		= phb4_ioda_reset,
 	.papr_errinjct_reset	= phb4_papr_errinjct_reset,
 	.pci_reinit		= phb4_pci_reinit,

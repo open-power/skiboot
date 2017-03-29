@@ -207,6 +207,7 @@ struct phb_ops {
 	 */
 	int (*device_init)(struct phb *phb, struct pci_device *device,
 			   void *data);
+	void (*device_remove)(struct phb *phb, struct pci_device *pd);
 
 	/* PHB final fixup is called after PCI probing is completed */
 	void (*phb_final_fixup)(struct phb *phb);

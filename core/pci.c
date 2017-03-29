@@ -526,6 +526,9 @@ void pci_remove_bus(struct phb *phb, struct list_head *list)
 	list_for_each_safe(list, pd, tmp, link) {
 		pci_remove_bus(phb, &pd->children);
 
+		if (phb->ops->device_remove)
+			phb->ops->device_remove(phb, pd);
+
 		/* Release device node and PCI slot */
 		if (pd->dn)
 			dt_free(pd->dn);
