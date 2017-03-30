@@ -101,3 +101,4 @@ STUB(fsp_wait_lid_loaded);
 STUB(fsp_adjust_lid_side);
 STUB(mem_reserve_hw);
 STUB(early_uart_init);
+STUB(backtrace);

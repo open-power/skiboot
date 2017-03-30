@@ -15,6 +15,7 @@
  */
 
 #include "hdif.h"
+#include <stack.h>
 
 const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif, unsigned int di,
 			   unsigned int *size)
@@ -24,11 +25,13 @@ const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif, unsigned int di,
 
 	if (be16_to_cpu(hdr->d1f0) != 0xd1f0) {
 		prerror("HDIF: Bad header format !\n");
+		backtrace();
 		return NULL;
 	}
 
 	if (di >= be16_to_cpu(hdr->idptr_count)) {
 		prerror("HDIF: idata index out of range !\n");
+		backtrace();
 		return NULL;
 	}
 
@@ -55,6 +58,7 @@ const void *HDIF_get_iarray_item(const struct HDIF_common_hdr *hdif,
 
 	if (asize < sizeof(struct HDIF_array_hdr)) {
 		prerror("HDIF: idata block too small for array !\n");
+		backtrace();
 		return NULL;
 	}
 
@@ -62,6 +66,7 @@ const void *HDIF_get_iarray_item(const struct HDIF_common_hdr *hdif,
 
 	if (ai >= be32_to_cpu(ahdr->ecnt)) {
 		prerror("HDIF: idata array index out of range !\n");
+		backtrace();
 		return NULL;
 	}
 
@@ -83,6 +88,7 @@ int HDIF_get_iarray_size(const struct HDIF_common_hdr *hdif, unsigned int di)
 
 	if (asize < sizeof(struct HDIF_array_hdr)) {
 		prerror("HDIF: idata block too small for array !\n");
+		backtrace();
 		return -1;
 	}
 
@@ -99,6 +105,7 @@ HDIF_child_arr(const struct HDIF_common_hdr *hdif, unsigned int idx)
 
 	if (idx >= be16_to_cpu(hdif->child_count)) {
 		prerror("HDIF: child array idx out of range!\n");
+		backtrace();
 		return NULL;
 	}
 
@@ -125,6 +132,7 @@ struct HDIF_common_hdr *HDIF_child(const struct HDIF_common_hdr *hdif,
 	if (be32_to_cpu(child->size) < sizeof(struct HDIF_common_hdr)) {
 		prerror("HDIF: %s child #%i too small: %u\n",
 			eyecatcher, idx, be32_to_cpu(child->size));
+		backtrace();
 		return NULL;
 	}
 
@@ -133,6 +141,7 @@ struct HDIF_common_hdr *HDIF_child(const struct HDIF_common_hdr *hdif,
 	if (!HDIF_check(ret, eyecatcher)) {
 		prerror("HDIF: #%i bad type (wanted %6s, got %6s)\n",
 			idx, eyecatcher, ret->id);
+		backtrace();
 		return NULL;
 	}
 
