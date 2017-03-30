@@ -457,6 +457,12 @@ static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 		if (label_size > 64)
 			label_size = 64;
 
+		/* these are broken, just ignore them */
+		if (!strncmp(hb_resv_mem->label, "ibm,homer-image", label_size))
+				continue;
+		if (!strncmp(hb_resv_mem->label, "ibm,occ-common-area", label_size))
+				continue;
+
 		label = malloc(label_size+1);
 		assert(label);
 
