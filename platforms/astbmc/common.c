@@ -348,7 +348,8 @@ static void astbmc_fixup_dt(void)
 	   make sure we have one. */
 	astbmc_fixup_dt_system_id();
 
-	astbmc_fixup_bmc_sensors();
+	if (proc_gen == proc_gen_p8)
+		astbmc_fixup_bmc_sensors();
 }
 
 static void astbmc_fixup_psi_bar(void)
