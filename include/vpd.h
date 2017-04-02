@@ -22,7 +22,7 @@ struct machine_info {
 	const char *name;
 };
 
-const struct machine_info *machine_info_lookup(char *mtm);
+const struct machine_info *machine_info_lookup(const char *mtm);
 
 const void *vpd_find_keyword(const void *rec, size_t rec_sz,
 			     const char *kw, uint8_t *kw_size);

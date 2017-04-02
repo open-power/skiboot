@@ -12,9 +12,9 @@
 	nest-frequency = <0x0 0x77359400>;
 	vendor = "IBM";
 	model = "8247-22L";
-	model-name = "IBM Power System S822L";
 	system-id = "1010C8A";
 	system-brand = "S0";
+	model-name = "IBM Power System S822L";
 	ibm,hbrt-mini-fdt = <0xcafebeef 0x1000 0xfad5bb>;
 	reserved-ranges = <0x1f 0xfd700000 0x0 0x100000 0x1f 0xfd6bd000 0x0 0x43000 0x1f 0xfd586000 0x0 0x137000>;
 	reserved-names = "ibm,hbrt-vpd-image", "ibm,hbrt-target-image", "ibm,hbrt-code-image";

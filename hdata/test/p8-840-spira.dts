@@ -12,9 +12,9 @@
 	nest-frequency = <0x0 0x77359400>;
 	vendor = "IBM";
 	model = "8286-41A";
-	model-name = "IBM Power System S814";
 	system-id = "TU00163";
 	system-brand = "S0";
+	model-name = "IBM Power System S814";
 	ibm,hbrt-mini-fdt = <0xcafebeef 0x1000 0x31ce42d>;
 	reserved-ranges = <0x7 0xfd700000 0x0 0x100000 0x7 0xfd6a0000 0x0 0x60000 0x7 0xfd510000 0x0 0x190000>;
 	reserved-names = "ibm,hbrt-vpd-image", "ibm,hbrt-target-image", "ibm,hbrt-code-image";

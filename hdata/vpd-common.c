@@ -28,7 +28,7 @@ static const struct machine_info machine_table[] = {
 	{"8286-42A", "IBM Power System S824"},
 };
 
-const struct machine_info *machine_info_lookup(char *mtm)
+const struct machine_info *machine_info_lookup(const char *mtm)
 {
 	int i;
 	for(i = 0; i < ARRAY_SIZE(machine_table); i++)
