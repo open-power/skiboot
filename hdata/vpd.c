@@ -535,9 +535,14 @@ static void sysvpd_parse_opp(const void *sysvpd, unsigned int sysvpd_sz)
 	v = vpd_find(sysvpd, sysvpd_sz, "OSYS", "MM", &sz);
 	if (v)
 		dt_add_property_nstr(dt_root, "model", v, sz);
+	else
+		dt_add_property_string(dt_root, "model", "Unknown");
+
 	v = vpd_find(sysvpd, sysvpd_sz, "OSYS", "SS", &sz);
 	if (v)
 		dt_add_property_nstr(dt_root, "system-id", v, sz);
+	else
+		dt_add_property_string(dt_root, "system-id", "Unknown");
 }
 
 
