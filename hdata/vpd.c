@@ -562,18 +562,12 @@ static void sysvpd_parse_legacy(const void *sysvpd, unsigned int sysvpd_sz)
 	const char *model;
 	const char *system_id;
 	const char *brand;
-	char *str;
 	uint8_t sz;
 
 	model = vpd_find(sysvpd, sysvpd_sz, "VSYS", "TM", &sz);
-	if (model) {
-		str = zalloc(sz + 1);
-		if (str) {
-			memcpy(str, model, sz);
-			dt_add_property_string(dt_root, "model", str);
-			free(str);
-		}
-	} else
+	if (model)
+		dt_add_property_nstr(dt_root, "model", model, sz);
+	else
 		dt_add_property_string(dt_root, "model", "Unknown");
 
 	system_id = vpd_find(sysvpd, sysvpd_sz, "VSYS", "SE", &sz);
