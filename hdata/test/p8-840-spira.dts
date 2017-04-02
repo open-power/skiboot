@@ -738,7 +738,7 @@
 						card-type = [00];
 						hw-characteristics = [00];
 						ccin = "54E1";
-						description = "Unknown";
+						description = "06-WAY PROC CUOD";
 						ibm,chip-id = <0x0>;
 					};
 
@@ -755,7 +755,7 @@
 						card-type = [00];
 						hw-characteristics = [00];
 						ccin = "54E1";
-						description = "Unknown";
+						description = "06-WAY PROC CUOD";
 						ibm,chip-id = <0x1>;
 					};
 
@@ -821,7 +821,7 @@
 					card-type = [80 b5 00];
 					hw-characteristics = [00];
 					ccin = "2B08";
-					description = "Unknown";
+					description = "CEC OP PANEL    ";
 				};
 
 				power-supply@3102 {

@@ -317,10 +317,16 @@ static void vpd_vini_parse(struct dt_node *node,
 			dt_add_property_string(node,
 				       "description", cinfo->description);
 		} else {
-			dt_add_property_string(node, "description", "Unknown");
-			prlog(PR_WARNING,
-				"VPD: CCIN desc not available for: %s\n",
-								(char *)kw);
+			kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "DR", &sz);
+			if (kw) {
+				dt_add_property_nstr(node,
+						     "description", kw, sz);
+			} else {
+				dt_add_property_string(node, "description", "Unknown");
+				prlog(PR_WARNING,
+				      "VPD: CCIN desc not available for: %s\n",
+				      (char *)kw);
+			}
 		}
 	}
 
