@@ -105,15 +105,8 @@ static const struct slot_table_entry palmetto_phb_table[] = {
 
 static bool palmetto_probe(void)
 {
-	const char *model;
-
-	if (!dt_node_is_compatible(dt_root, "ibm,powernv"))
-		return false;
-
-	/* Temporary ... eventually we'll get that in compatible */
-	model = dt_prop_get_def(dt_root, "model", NULL);
-	if ((!model || !strstr(model, "palmetto")) &&
-	    (!dt_node_is_compatible(dt_root, "tyan,palmetto")))
+	if (!dt_node_is_compatible(dt_root, "ibm,powernv") ||
+	    !dt_node_is_compatible(dt_root, "tyan,palmetto"))
 		return false;
 
 	/* Lot of common early inits here */
