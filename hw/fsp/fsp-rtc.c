@@ -280,7 +280,7 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 	}
 
 	/* During R/R of FSP, read cached TOD */
-	if (fsp_in_reset) {
+	if (fsp_in_rr()) {
 		if (rtc_tod_state == RTC_TOD_VALID) {
 			rtc_cache_get_datetime(year_month_day,
 					       hour_minute_second_millisecond);
@@ -362,7 +362,7 @@ static int64_t fsp_rtc_send_write_request(uint32_t year_month_day,
 	}
 	prlog(PR_TRACE, " -> req at %p\n", msg);
 
-	if (fsp_in_reset) {
+	if (fsp_in_rr()) {
 		datetime_to_tm(msg->data.words[0],
 			       (u64) msg->data.words[1] << 32,  &tm);
 		rtc_cache_update(&tm);
