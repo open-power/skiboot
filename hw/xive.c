@@ -3779,6 +3779,7 @@ static void xive_reset_one(struct xive *x)
 				    x->int_base + i, true);
 		i++;
 	}
+	xive_sync(x);
 
 	lock(&x->lock);
 	memset(x->int_enabled_map, 0, BITMAP_BYTES(MAX_INT_ENTRIES));
