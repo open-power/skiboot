@@ -1854,8 +1854,10 @@ static void xive_setup_forward_ports(struct xive *x, struct proc_chip *remote_ch
 
 	/* NVT/VPD points to the remote NVT MMIO sets */
 	if (!xive_set_vsd(x, VST_TSEL_VPDT, remote_id,
-			  base | (uint64_t)remote_xive->pc_base))
+			  base | ((uint64_t)remote_xive->pc_base) |
+			  SETFIELD(VSD_TSIZE, 0ull, ilog2(PC_BAR_SIZE) - 12)))
 		goto error;
+
 	return;
 
  error:
