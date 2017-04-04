@@ -796,7 +796,7 @@ static bool cpu_pstates_prepare_core(struct proc_chip *chip,
 	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_PPMCR), &tmp);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_OCC_PSTATE_INIT),
-			"OCC: Failed to read from OCC in pstates init\n");
+			"OCC: Failed to read PM_PPMCR from OCC in pstates init\n");
 		return false;
 	}
 	tmp = tmp & ~0xFFFF000000000000ULL;
@@ -805,7 +805,7 @@ static bool cpu_pstates_prepare_core(struct proc_chip *chip,
 	rc = xscom_write(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_PPMCR), tmp);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_OCC_PSTATE_INIT),
-			"OCC: Failed to write PM_GP1 in pstates init\n");
+			"OCC: Failed to write PM_PPMCR in pstates init\n");
 		return false;
 	}
 	time_wait_ms(1); /* Wait for PState to change */
@@ -832,7 +832,7 @@ static bool cpu_pstates_prepare_core(struct proc_chip *chip,
 	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_PPMSR), &tmp);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_OCC_PSTATE_INIT),
-			"OCC: Failed to read back setting from OCC"
+			"OCC: Failed to read PM_PPMSR from OCC"
 				 "in pstates init\n");
 		return false;
 	}
