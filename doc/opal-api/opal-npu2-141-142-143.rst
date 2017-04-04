@@ -1,3 +1,5 @@
+.. _OPAL_NPU2:
+
 OPAL NPU2 calls
 ================
 
@@ -21,6 +23,8 @@ the PID used on the processor.
 The OPAL calls documented here are used to setup/destroy the
 appropriate context for a given process on a given NVLink2 device.
 
+.. _OPAL_NPU_INIT_CONTEXT:
+
 OPAL_NPU_INIT_CONTEXT
 ---------------------
 
@@ -40,6 +44,8 @@ Returns the context ID on success or ``OPAL_RESOURCE`` if no more
 contexts are available or ``OPAL_UNSUPPORTED`` in the case of
 unsupported MSR bits.
 
+.. _OPAL_NPU_DESTROY_CONTEXT:
+
 OPAL_NPU_DESTROY_CONTEXT
 ------------------------
 
@@ -50,6 +56,8 @@ Parameters: ::
 
 Destroys a previously allocated context ID. This may cause further
 translation requests from the GPU to fail.
+
+.. _OPAL_NPU_MAP_LPAR:
 
 OPAL_NPU_MAP_LPAR
 -----------------
