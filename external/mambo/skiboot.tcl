@@ -31,6 +31,8 @@ if { ![info exists env(SKIBOOT_ZIMAGE)] } {
 }
 mconfig payload PAYLOAD $env(SKIBOOT_ZIMAGE)
 
+mconfig linux_cmdline LINUX_CMDLINE ""
+
 # Paylod: Memory location for a Linux style ramdisk/initrd
 mconfig payload_addr PAYLOAD_ADDR 0x20000000;
 
@@ -311,7 +313,9 @@ if { [info exists env(SKIBOOT_ENABLE_MAMBO_STB)] } {
 
 # Kernel command line args, appended to any from the device tree
 # e.g.: of::set_bootargs "xmon"
-of::set_bootargs ""
+#
+# Can be set from the environment by setting LINUX_CMDLINE.
+of::set_bootargs $mconf(linux_cmdline)
 
 # Load images
 
