@@ -655,7 +655,6 @@ cleanup_tlb:
 .global init_shared_sprs
 init_shared_sprs:
 	li	%r0,0
-	mtspr	SPR_SDR1, %r0
 	mtspr	SPR_AMOR, %r0
 
 	mfspr	%r3,SPR_PVR
@@ -676,18 +675,21 @@ init_shared_sprs:
 	b	9f
 
 1:	/* P7 */
+	mtspr	SPR_SDR1, %r0
 	/* TSCR: Value from pHyp */
 	LOAD_IMM32(%r3,0x880DE880)
 	mtspr	SPR_TSCR, %r3
 	b	9f
 
 2:	/* P7+ */
+	mtspr	SPR_SDR1, %r0
 	/* TSCR: Recommended value by HW folks */
 	LOAD_IMM32(%r3,0x88CDE880)
 	mtspr	SPR_TSCR, %r3
 	b	9f
 
 3:	/* P8E/P8 */
+	mtspr	SPR_SDR1, %r0
 	/* TSCR: Recommended value by HW folks */
 	LOAD_IMM32(%r3,0x8ACC6880)
 	mtspr	SPR_TSCR, %r3
