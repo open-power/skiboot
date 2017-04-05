@@ -210,10 +210,10 @@ $(TARGET).lid: $(TARGET).elf
 	$(call Q,OBJCOPY, $(OBJCOPY) -O binary -S $^ $@, $@)
 
 $(TARGET).lid.stb: $(TARGET).lid libstb/create-container
-	$(call Q,STB-UNSIGNED-CONTAINER,./libstb/create-container $< $@,$@)
+	$(call Q,STB-UNSIGNED-CONTAINER,./libstb/create-container --payload $< --imagefile $@,$@)
 
 $(TARGET).lid.xz.stb: $(TARGET).lid.xz libstb/create-container
-	$(call Q,STB-UNSIGNED-CONTAINER,./libstb/create-container $< $@,$@)
+	$(call Q,STB-UNSIGNED-CONTAINER,./libstb/create-container --payload $< --imagefile $@,$@)
 
 $(TARGET).tmp.elf: $(ALL_OBJS_1) $(TARGET).lds $(KERNEL)
 	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(ALL_OBJS_1) -o $@, $@)

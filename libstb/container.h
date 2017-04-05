@@ -149,4 +149,12 @@ int parse_stb_container(const void* data, size_t len, struct parsed_stb_containe
 
 void stb_print_data(const void *data, size_t len);
 
+void getPublicKeyRaw(ecc_key_t *pubkeyraw, char *inFile);
+
+void getSigRaw(ecc_signature_t *sigraw, char *inFile);
+
+void writeHdr(void *ph, const char *outFile, int hdr_type);
+
+void printBytes(char *lead, unsigned char *buffer, size_t buflen, int wrap);
+
 #endif /* __STB_CONTAINER_H */
