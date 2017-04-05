@@ -57,6 +57,20 @@ proc b { addr } {
     puts "breakpoint set at $at"
 }
 
+# Run until $console_string appears on the Linux console
+#
+# eg.
+# break_on_console "Freeing unused kernel memory:"
+# break_on_console "buildroot login:"
+
+proc break_on_console { console_string } {
+    mysim trigger set console "$console_string" "just_stop"
+}
+
+proc clear_console_break { console_string } {
+    mysim trigger clear console "$console_string"
+}
+
 proc wr { start stop } {
     mysim trigger set memory system w $start $stop 0 "just_stop"
 }
