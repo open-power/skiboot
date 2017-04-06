@@ -150,6 +150,7 @@ int main(void)
 	assert(!list_top(&addr1->properties, struct dt_property, list));
 	check_path(addr1, "/addrs/addr@1337");
 	assert(dt_find_by_name(root, "addr@1337") == addr1);
+	assert(dt_find_by_name_addr(root, "addr", 0x1337) == addr1);
 	assert(dt_find_by_path(root, "/addrs/addr@1337") == addr1);
 
 	addr2 = dt_new_2addr(addrs, "2addr", 0xdead, 0xbeef);

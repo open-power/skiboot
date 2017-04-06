@@ -21,6 +21,7 @@
 #include <libfdt/libfdt_internal.h>
 #include <ccan/str/str.h>
 #include <ccan/endian/endian.h>
+#include <inttypes.h>
 
 /* Used to give unique handles. */
 u32 last_phandle = 0;
@@ -153,6 +154,55 @@ struct dt_node *dt_new(struct dt_node *parent, const char *name)
 		return NULL;
 	}
 	return new;
+}
+
+/*
+ * low level variant, we export this because there are "weird" address
+ * formats, such as LPC/ISA bus addresses which have a letter to identify
+ * which bus space the address is inside of.
+ */
+struct dt_node *__dt_find_by_name_addr(struct dt_node *parent, const char *name,
+	const char *addr)
+{
+	struct dt_node *node;
+
+	if (list_empty(&parent->children))
+		return NULL;
+
+	dt_for_each_child(parent, node) {
+		const char *unit = get_unitname(node);
+		int len;
+
+		if (!unit)
+			continue;
+
+		/* match the name */
+		len = (int) (unit - node->name) - 1;
+		if (strncmp(node->name, name, len))
+			continue;
+
+		/* match the unit */
+		if (strcmp(unit, addr) == 0)
+			return node;
+	}
+
+	dt_for_each_child(parent, node) {
+		struct dt_node *ret = __dt_find_by_name_addr(node, name, addr);
+
+		if (ret)
+			return ret;
+	}
+
+	return NULL;
+}
+
+struct dt_node *dt_find_by_name_addr(struct dt_node *parent, const char *name,
+	uint64_t addr)
+{
+	char addr_str[16 + 1]; /* max size of a 64bit int */
+	snprintf(addr_str, sizeof(addr_str), "%" PRIx64, addr);
+
+	return __dt_find_by_name_addr(parent, name, addr_str);
 }
 
 struct dt_node *dt_new_addr(struct dt_node *parent, const char *name,

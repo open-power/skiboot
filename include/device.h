@@ -247,4 +247,9 @@ u64 dt_translate_address(const struct dt_node *node, unsigned int index,
  */
 int dt_cmp_subnodes(const struct dt_node *a,  const struct dt_node *b);
 
+struct dt_node *__dt_find_by_name_addr(struct dt_node *parent, const char *name,
+				const char *addr);
+struct dt_node *dt_find_by_name_addr(struct dt_node *parent, const char *name,
+				uint64_t addr);
+
 #endif /* __DEVICE_H */
