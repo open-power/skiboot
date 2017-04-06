@@ -438,7 +438,7 @@ static int reset_partition(struct gard_ctx *ctx)
 	struct gard_record gard;
 	memset(&gard, 0xFF, sizeof(gard));
 
-	rc = blocklevel_erase(ctx->bl, ctx->gard_data_pos, ctx->gard_data_len);
+	rc = blocklevel_smart_erase(ctx->bl, ctx->gard_data_pos, ctx->gard_data_len);
 	if (rc) {
 		fprintf(stderr, "Couldn't erase the gard partition. Bailing out\n");
 		return rc;
