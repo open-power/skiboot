@@ -47,6 +47,8 @@ extern void slca_vpd_add_loc_code(struct dt_node *node, uint16_t slca_index);
 extern void slca_dt_add_sai_node(void);
 
 extern bool hservices_from_hdat(const void *fdt, size_t size);
+int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
+	struct dt_node *xscom);
 
 #endif /* __HDATA_H */
 

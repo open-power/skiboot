@@ -106,6 +106,7 @@ static bool spira_check_ptr(const void *ptr, const char *file, unsigned int line
 #include "../vpd-common.c"
 #include "../slca.c"
 #include "../hostservices.c"
+#include "../i2c.c"
 #include "../../core/vpd.c"
 #include "../../core/device.c"
 #include "../../core/chip.c"

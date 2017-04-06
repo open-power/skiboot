@@ -1046,6 +1046,8 @@ struct sppcrd_chip_tod {
 /* Idata index 4 : Module VPD */
 #define SPPCRD_IDATA_MODULE_VPD	4
 
+/* Idata index 5 : Chip attached I2C devices */
+#define SPPCRD_IDATA_HOST_I2C	5
 
 /*
  * Host Services Data.

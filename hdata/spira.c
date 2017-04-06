@@ -468,8 +468,10 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 		/* Add PSI Host bridge */
 		add_psihb_node(np);
 
-		if (proc_gen >= proc_gen_p9)
+		if (proc_gen >= proc_gen_p9) {
 			add_xive_node(np);
+			parse_i2c_devs(hdif, SPPCRD_IDATA_HOST_I2C, np);
+		}
 	}
 
 	return i > 0;
