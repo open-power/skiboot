@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,14 @@ int blocklevel_get_info(struct blocklevel_device *bl, const char **name, uint64_
  */
 int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len);
 
+/*
+ * blocklevel_smart_erase() will handle unaligned erases.
+ * blocklevel_erase() expects a erase_granule aligned buffer and the
+ * erase length to be an exact multiple of erase_granule,
+ * blocklevel_smart_erase() solves this requirement by performing a
+ * read erase write under the hood.
+ */
+int blocklevel_smart_erase(struct blocklevel_device *bl, uint64_t pos, uint64_t len);
 /* Implemented in software at this level */
 int blocklevel_ecc_protect(struct blocklevel_device *bl, uint32_t start, uint32_t len);
 

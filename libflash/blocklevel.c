@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,6 +198,11 @@ int blocklevel_erase(struct blocklevel_device *bl, uint64_t pos, uint64_t len)
 	}
 
 	/* Programmer may be making a horrible mistake without knowing it */
+	if (pos & bl->erase_mask) {
+		fprintf(stderr, "blocklevel_erase: pos (0x%"PRIx64") is not erase block (0x%08x) aligned\n",
+				pos, bl->erase_mask + 1);
+	}
+
 	if (len & bl->erase_mask) {
 		fprintf(stderr, "blocklevel_erase: len (0x%"PRIx64") is not erase block (0x%08x) aligned\n",
 				len, bl->erase_mask + 1);
@@ -268,6 +273,121 @@ static int blocklevel_flashcmp(const void *flash_buf, const void *mem_buf, uint6
 	}
 
 	return same ? 0 : 1;
+}
+
+int blocklevel_smart_erase(struct blocklevel_device *bl, uint64_t pos, uint64_t len)
+{
+	uint64_t block_size;
+	void *erase_buf;
+	int rc;
+
+	if (!bl) {
+		errno = EINVAL;
+		return FLASH_ERR_PARM_ERROR;
+	}
+
+	/* Nothing smart needs to be done, pos and len are aligned */
+	if ((pos & bl->erase_mask) == 0 && (len & bl->erase_mask) == 0)
+		return blocklevel_erase(bl, pos, len);
+
+	block_size = bl->erase_mask + 1;
+	erase_buf = malloc(block_size);
+	if (!erase_buf) {
+		errno = ENOMEM;
+		return FLASH_ERR_MALLOC_FAILED;
+	}
+
+	rc = reacquire(bl);
+	if (rc) {
+		free(erase_buf);
+		return rc;
+	}
+
+	if (pos & bl->erase_mask) {
+		/*
+		 * base_pos and base_len are the values in the first erase
+		 * block that we need to preserve: the region up to pos.
+		 */
+		uint64_t base_pos = pos & ~(bl->erase_mask);
+		uint64_t base_len = pos - base_pos;
+
+		/*
+		 * Read the entire block in case this is the ONLY block we're
+		 * modifying, we may need the end chunk of it later
+		 */
+		rc = bl->read(bl, base_pos, erase_buf, block_size);
+		if (rc)
+			goto out;
+
+		rc = bl->erase(bl, base_pos, block_size);
+		if (rc)
+			goto out;
+
+		rc = bl->write(bl, base_pos, erase_buf, base_len);
+		if (rc)
+			goto out;
+
+		/*
+		 * The requested erase fits entirely into this erase block and
+		 * so we need to write back the chunk at the end of the block
+		 */
+		if (base_pos + base_len + len < base_pos + block_size) {
+			rc = bl->write(bl, pos + len, erase_buf + pos + len,
+					block_size - base_len - len);
+			goto out;
+		}
+
+		pos += block_size - base_len;
+		len -= block_size - base_len;
+	}
+
+	/* Now we should be aligned, best to double check */
+	if (pos & bl->erase_mask) {
+		rc = FLASH_ERR_PARM_ERROR;
+		goto out;
+	}
+
+	if (len & ~(bl->erase_mask)) {
+		rc = bl->erase(bl, pos, len & ~(bl->erase_mask));
+		if (rc)
+			goto out;
+
+		pos += len & ~(bl->erase_mask);
+		len -= len & ~(bl->erase_mask);
+	}
+
+	/* Length should be less than a block now */
+	if (len > block_size) {
+		rc = FLASH_ERR_PARM_ERROR;
+		goto out;
+	}
+
+	if (len & bl->erase_mask) {
+		/*
+		 * top_pos is the first byte that must be preserved and
+		 * top_len is the length from top_pos to the end of the erase
+		 * block: the region that must be preserved
+		 */
+		uint64_t top_pos = pos + len;
+		uint64_t top_len = block_size - len;
+
+		rc = bl->read(bl, top_pos, erase_buf, top_len);
+		if (rc)
+			goto out;
+
+		rc = bl->erase(bl, pos, block_size);
+		if (rc)
+			goto out;
+
+		rc = bl->write(bl, top_pos, erase_buf, top_len);
+		if (rc)
+			goto out;
+	}
+
+out:
+	free(erase_buf);
+	release(bl);
+	return rc;
 }
 
 int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len)
