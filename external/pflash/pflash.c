@@ -235,7 +235,6 @@ static void erase_chip(void)
 
 static void erase_range(uint32_t start, uint32_t size, bool will_program)
 {
-	uint32_t done = 0;
 	int rc;
 
 	printf("About to erase 0x%08x..0x%08x !\n", start, start + size);
@@ -247,33 +246,11 @@ static void erase_range(uint32_t start, uint32_t size, bool will_program)
 	}
 
 	printf("Erasing...\n");
-	progress_init(size >> 8);
-	while(size) {
-		/* If aligned to 64k and at least 64k, use 64k erase */
-		if ((start & 0xffff) == 0 && size >= 0x10000) {
-			rc = blocklevel_erase(bl, start, 0x10000);
-			if (rc) {
-				fprintf(stderr, "Error %d erasing 0x%08x\n",
-					rc, start);
-				exit(1);
-			}
-			start += 0x10000;
-			size -= 0x10000;
-			done += 0x10000;
-		} else {
-			rc = blocklevel_erase(bl, start, 0x1000);
-			if (rc) {
-				fprintf(stderr, "Error %d erasing 0x%08x\n",
-					rc, start);
-				exit(1);
-			}
-			start += 0x1000;
-			size -= 0x1000;
-			done += 0x1000;
-		}
-		progress_tick(done >> 8);
+	rc = blocklevel_smart_erase(bl, start, size);
+	if (rc) {
+		fprintf(stderr, "Failed to blocklevel_smart_erase(): %d\n", rc);
+		return;
 	}
-	progress_end();
 
 	/* If this is a flash partition, mark it empty if we aren't
 	 * going to program over it as well
