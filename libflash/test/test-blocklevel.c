@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,90 @@
 
 #define ERR(fmt...) fprintf(stderr, fmt)
 
-int main(void)
+static int bl_test_bad_read(struct blocklevel_device *bl __unused, uint64_t pos __unused,
+		void *buf __unused, uint64_t len __unused)
+{
+	return FLASH_ERR_PARM_ERROR;
+}
+
+static int bl_test_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len)
+{
+	if (pos + len > 0x1000)
+		return FLASH_ERR_PARM_ERROR;
+
+	memcpy(buf, bl->priv + pos, len);
+
+	return 0;
+}
+
+static int bl_test_bad_write(struct blocklevel_device *bl __unused, uint64_t pos __unused,
+		const void *buf __unused, uint64_t len __unused)
+{
+	return FLASH_ERR_PARM_ERROR;
+}
+
+static int bl_test_write(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len)
+{
+	if (pos + len > 0x1000)
+		return FLASH_ERR_PARM_ERROR;
+
+	memcpy(bl->priv + pos, buf, len);
+
+	return 0;
+}
+
+static int bl_test_erase(struct blocklevel_device *bl, uint64_t pos, uint64_t len)
+{
+	if (pos + len > 0x1000)
+		return FLASH_ERR_PARM_ERROR;
+
+	memset(bl->priv + pos, 0xff, len);
+
+	return 0;
+}
+
+
+static void dump_buf(uint8_t *buf, int start, int end, int miss)
 {
 	int i;
+
+	printf("pos: value\n");
+	for (i = start; i < end; i++)
+		printf("%04x: %c%s\n", i, buf[i] == 0xff ? '-' : buf[i], i == miss ? " <- First missmatch" : "");
+}
+
+/*
+ * Returns zero if the buffer is ok. Otherwise returns the position of
+ * the mismatch. If the mismatch is at zero -1 is returned
+ */
+static int check_buf(uint8_t *buf, int zero_start, int zero_end)
+{
+	int i;
+
+	for (i = 0; i < 0x1000; i++) {
+		if (i >= zero_start && i < zero_end && buf[i] != 0xff)
+			return i == 0 ? -1 : i;
+		if ((i < zero_start || i >= zero_end) && buf[i] != (i % 26) + 'a')
+			return i == 0 ? -1 : i;
+	}
+
+	return 0;
+}
+
+static void reset_buf(uint8_t *buf)
+{
+	int i;
+
+	for (i = 0; i < 0x1000; i++) {
+		/* This gives repeating a - z which will be nice to visualise */
+		buf[i] = (i % 26) + 'a';
+	}
+}
+
+int main(void)
+{
+	int i, miss;
+	char *buf;
 	struct blocklevel_device bl_mem = { 0 };
 	struct blocklevel_device *bl = &bl_mem;
 
@@ -208,6 +289,148 @@ int main(void)
 		}
 	}
 
+	/*
+	 * Test blocklevel_smart_erase()
+	 * Probably safe to zero the blocklevel we've got
+	 */
+	buf = malloc(0x1000);
+	if (!buf) {
+		ERR("Malloc failed\n");
+		return 1;
+	}
+	memset(bl, 0, sizeof(*bl));
+	bl_mem.read = &bl_test_read;
+	bl_mem.write = &bl_test_write;
+	bl_mem.erase = &bl_test_erase;
+	bl_mem.erase_mask = 0xff;
+	bl_mem.priv = buf;
+	reset_buf(buf);
+
+
+	/*
+	 * Test 1: One full and exact erase block, this shouldn't call
+	 * read or write, ensure this fails if it does.
+	 */
+	bl_mem.write = &bl_test_bad_write;
+	bl_mem.read = &bl_test_bad_read;
+	if (blocklevel_smart_erase(bl, 0x100, 0x100)) {
+		ERR("Failed to blocklevel_smart_erase(0x100, 0x100)\n");
+		return 1;
+	}
+	miss = check_buf(buf, 0x100, 0x200);
+	if (miss) {
+		ERR("Buffer mismatch after blocklevel_smart_erase(0x100, 0x100) at 0x%0x\n",
+				miss == -1 ? 0 : miss);
+		dump_buf(buf, 0xfc, 0x105, miss == -1 ? 0 : miss);
+		dump_buf(buf, 0x1fc, 0x205, miss == -1 ? 0 : miss);
+		return 1;
+	}
+	bl_mem.read = &bl_test_read;
+	bl_mem.write = &bl_test_write;
+
+	reset_buf(buf);
+	/* Test 2: Only touch one erase block */
+	if (blocklevel_smart_erase(bl, 0x20, 0x40)) {
+		ERR("Failed to blocklevel_smart_erase(0x20, 0x40)\n");
+		return 1;
+	}
+	miss = check_buf(buf, 0x20, 0x60);
+	if (miss) {
+		ERR("Buffer mismatch after blocklevel_smart_erase(0x20, 0x40) at 0x%x\n",
+				miss == -1 ? 0 : miss);
+		dump_buf(buf, 0x1c, 0x65, miss == -1 ? 0 : miss);
+		return 1;
+	}
+
+	reset_buf(buf);
+	/* Test 3: Start aligned but finish somewhere in it */
+	if (blocklevel_smart_erase(bl, 0x100, 0x50)) {
+		ERR("Failed to blocklevel_smart_erase(0x100, 0x50)\n");
+		return 1;
+	}
+	miss = check_buf(buf, 0x100, 0x150);
+	if (miss) {
+		ERR("Buffer mismatch after blocklevel_smart_erase(0x100, 0x50) at 0x%0x\n",
+				miss == -1 ? 0 : miss);
+		dump_buf(buf, 0xfc, 0x105, miss == -1 ? 0 : miss);
+		dump_buf(buf, 0x14c, 0x155, miss == -1 ? 0 : miss);
+		return 1;
+	}
+
+	reset_buf(buf);
+	/* Test 4: Start somewhere in it, finish aligned */
+	if (blocklevel_smart_erase(bl, 0x50, 0xb0)) {
+		ERR("Failed to blocklevel_smart_erase(0x50, 0xb0)\n");
+		return 1;
+	}
+	miss = check_buf(buf, 0x50, 0x100);
+	if (miss) {
+		ERR("Buffer mismatch after blocklevel_smart_erase(0x50, 0xb0) at 0x%x\n",
+				miss == -1 ? 0 : miss);
+		dump_buf(buf, 0x4c, 0x55, miss == -1 ? 0 : miss);
+		dump_buf(buf, 0x100, 0x105, miss == -1 ? 0 : miss);
+		return 1;
+	}
+
+	reset_buf(buf);
+	/* Test 5: Cover two erase blocks exactly */
+	if (blocklevel_smart_erase(bl, 0x100, 0x200)) {
+		ERR("Failed to blocklevel_smart_erase(0x100, 0x200)\n");
+		return 1;
+	}
+	miss = check_buf(buf, 0x100, 0x300);
+	if (miss) {
+		ERR("Buffer mismatch after blocklevel_smart_erase(0x100, 0x200) at 0x%x\n",
+				miss == -1 ? 0 : miss);
+		dump_buf(buf, 0xfc, 0x105, miss == -1 ? 0 : miss);
+		dump_buf(buf, 0x2fc, 0x305, miss == -1 ? 0 : miss);
+		return 1;
+	}
+
+	reset_buf(buf);
+	/* Test 6: Erase 1.5 blocks (start aligned) */
+	if (blocklevel_smart_erase(bl, 0x100, 0x180)) {
+		ERR("Failed to blocklevel_smart_erase(0x100, 0x180)\n");
+		return 1;
+	}
+	miss = check_buf(buf, 0x100, 0x280);
+	if (miss) {
+		ERR("Buffer mismatch after blocklevel_smart_erase(0x100, 0x180) at 0x%x\n",
+				miss == -1 ? 0 : miss);
+		dump_buf(buf, 0xfc, 0x105, miss == -1 ? 0 : miss);
+		dump_buf(buf, 0x27c, 0x285, miss == -1 ? 0 : miss);
+		return 1;
+	}
+
+	reset_buf(buf);
+	/* Test 7: Erase 1.5 blocks (end aligned) */
+	if (blocklevel_smart_erase(bl, 0x80, 0x180)) {
+		ERR("Failed to blocklevel_smart_erase(0x80, 0x180)\n");
+		return 1;
+	}
+	miss = check_buf(buf, 0x80, 0x200);
+	if (miss) {
+		ERR("Buffer mismatch after blocklevel_smart_erase(0x80, 0x180) at 0x%x\n",
+				miss == -1 ? 0 : miss);
+		dump_buf(buf, 0x7c, 0x85, miss == -1 ? 0 : miss);
+		dump_buf(buf, 0x1fc, 0x205, miss == -1 ? 0 : miss);
+		return 1;
+	}
+
+	reset_buf(buf);
+	/* Test 8: Erase a big section, not aligned */
+	if (blocklevel_smart_erase(bl, 0x120, 0x544)) {
+		ERR("Failed to blocklevel_smart_erase(0x120, 0x544)\n");
+		return 1;
+	}
+	miss = check_buf(buf, 0x120, 0x664);
+	if (miss) {
+		ERR("Buffer mismatch after blocklevel_smart_erase(0x120, 0x544) at 0x%x\n",
+				miss == -1 ? 0 : miss);
+		dump_buf(buf, 0x11c, 0x125, miss == -1 ? 0 : miss);
+		dump_buf(buf, 0x65f, 0x669, miss == -1 ? 0 : miss);
+		return 1;
+	}
 
 	return 0;
 }
