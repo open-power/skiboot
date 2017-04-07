@@ -126,6 +126,18 @@ struct irq_source *irq_find_source(uint32_t isn)
 	return NULL;
 }
 
+void irq_for_each_source(void (*cb)(struct irq_source *, void *), void *data)
+{
+	struct irq_source *is;
+
+	lock(&irq_lock);
+	list_for_each(&irq_sources, is, link)
+		cb(is, data);
+	list_for_each(&irq_sources2, is, link)
+		cb(is, data);
+	unlock(&irq_lock);
+}
+
 /*
  * This takes a 6-bit chip id and returns a 20 bit value representing
  * the PSI interrupt. This includes all the fields above, ie, is a

@@ -301,6 +301,12 @@ extern void register_irq_source(const struct irq_source_ops *ops, void *data,
 extern void unregister_irq_source(uint32_t start, uint32_t count);
 extern struct irq_source *irq_find_source(uint32_t isn);
 
+/* Warning: callback is called with internal source lock held
+ * so don't call back into any of our irq_ APIs from it
+ */
+extern void irq_for_each_source(void (*cb)(struct irq_source *, void *),
+				void *data);
+
 extern uint32_t get_psi_interrupt(uint32_t chip_id);
 
 extern struct dt_node *add_ics_node(void);
