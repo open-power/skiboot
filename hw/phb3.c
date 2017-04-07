@@ -576,39 +576,40 @@ static void phb3_endpoint_init(struct phb *phb,
 static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
 {
 	struct phb3 *p = phb_to_phb3(phb);
-	u32 vdid;
-	u16 vendor, device;
 
 	if (dev->primary_bus != 0 &&
 	    dev->primary_bus != 1)
 		return;
 
-	pci_cfg_read32(phb, dev->bdfn, 0, &vdid);
-	vendor = vdid & 0xffff;
-	device = vdid >> 16;
-
 	if (dev->primary_bus == 1) {
 		u64 modectl;
 
-		/* For these adapters, if they are directly under the PHB, we
-		 * adjust some settings for performances
+		/*
+		 * For these adapters, if they are directly under the PHB, we
+		 * adjust the disable_wr_scope_group bit for performances
+		 *
+		 * 15b3:1003   Mellanox Travis3-EN (CX3)
+		 * 15b3:1011   Mellanox HydePark (ConnectIB)
+		 * 15b3:1013   Mellanox GlacierPark (CX4)
 		 */
 		xscom_read(p->chip_id, p->pe_xscom + 0x0b, &modectl);
-		if (vendor == 0x15b3 &&		/* Mellanox */
-		    (device == 0x1003 ||	/* Travis3-EN (CX3) */
-		     device == 0x1011 ||	/* HydePark (ConnectIB) */
-		     device == 0x1013))	{	/* GlacierPark (CX4) */
-			/* Set disable_wr_scope_group bit */
+		if (PCI_VENDOR_ID(dev->vdid) == 0x15b3 &&
+		    (PCI_DEVICE_ID(dev->vdid) == 0x1003	||
+		     PCI_DEVICE_ID(dev->vdid) == 0x1011 ||
+		     PCI_DEVICE_ID(dev->vdid) == 0x1013))
 			modectl |= PPC_BIT(14);
-		} else {
-			/* Clear disable_wr_scope_group bit */
+		else
 			modectl &= ~PPC_BIT(14);
-		}
-
 		xscom_write(p->chip_id, p->pe_xscom + 0x0b, modectl);
 	} else if (dev->primary_bus == 0) {
-		if (vendor == 0x1014 &&		/* IBM */
-		    device == 0x03dc) {		/* P8/P8E/P8NVL Root port */
+		/*
+		 * Emulate the prefetchable window of the root port
+		 * when the corresponding HW registers are readonly.
+		 *
+		 * 1014:03dc   Root port on P8/P8E/P8NVL
+		 */
+		if (PCI_VENDOR_ID(dev->vdid) == 0x1014 &&
+		    PCI_DEVICE_ID(dev->vdid) == 0x03dc) {
 			uint32_t pref_hi, tmp;
 
 			pci_cfg_read32(phb, dev->bdfn,
