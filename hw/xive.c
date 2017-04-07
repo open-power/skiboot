@@ -2375,7 +2375,7 @@ static int64_t xive_sync(struct xive *x)
 
 static int64_t __xive_set_irq_config(struct irq_source *is, uint32_t girq,
 				     uint64_t vp, uint8_t prio, uint32_t lirq,
-				     bool update_esb)
+				     bool update_esb, bool no_sync)
 {
 	struct xive_src *s = container_of(is, struct xive_src, is);
 	uint32_t old_target, vp_blk;
@@ -2419,6 +2419,8 @@ static int64_t __xive_set_irq_config(struct irq_source *is, uint32_t girq,
 	 * WARNING: This assumes the VP and it's queues are on the same
 	 *          XIVE instance !
 	 */
+	if (no_sync)
+		return OPAL_SUCCESS;
 	xive_sync(s->xive);
 	if (xive_decode_vp(old_target, &vp_blk, NULL, NULL, NULL)) {
 		struct xive *x = xive_from_pc_blk(vp_blk);
@@ -2434,10 +2436,11 @@ static int64_t xive_set_irq_config(uint32_t girq, uint64_t vp, uint8_t prio,
 {
 	struct irq_source *is = irq_find_source(girq);
 
-	return __xive_set_irq_config(is, girq, vp, prio, lirq, update_esb);
+	return __xive_set_irq_config(is, girq, vp, prio, lirq, update_esb,
+				     false);
 }
 
-static int64_t xive_source_set_xive(struct irq_source *is __unused,
+static int64_t xive_source_set_xive(struct irq_source *is,
 				    uint32_t isn, uint16_t server, uint8_t prio)
 {
 	/*
@@ -2459,7 +2462,7 @@ static int64_t xive_source_set_xive(struct irq_source *is __unused,
 	server >>= 2;
 
 	/* Set logical irq to match isn */
-	return xive_set_irq_config(isn, server, prio, isn, true);
+	return __xive_set_irq_config(is, isn, server, prio, isn, true, false);
 }
 
 void __xive_source_eoi(struct irq_source *is, uint32_t isn)
@@ -2742,7 +2745,8 @@ static void xive_ipi_init(struct xive *x, struct cpu_thread *cpu)
 	assert(xs);
 
 	__xive_set_irq_config(&x->ipis.is, xs->ipi_irq, cpu->pir,
-			      XIVE_EMULATION_PRIO, xs->ipi_irq, true);
+			      XIVE_EMULATION_PRIO, xs->ipi_irq,
+			      true, false);
 }
 
 static void xive_ipi_eoi(struct xive *x, uint32_t idx)
@@ -2811,7 +2815,9 @@ void xive_cpu_callin(struct cpu_thread *cpu)
 	/* Set VT to 1 */
 	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2, 0x80);
 
-	xive_cpu_dbg(cpu, "Initialized interrupt management area\n");
+	xive_cpu_dbg(cpu, "Initialized TMA (VP: %x/%x W01=%016llx)\n",
+		     xs->vp_blk, xs->vp_idx,
+		     in_be64(xs->tm_ring1 + TM_QW3_HV_PHYS));
 }
 
 static void xive_setup_hw_for_emu(struct xive_cpu_state *xs)
@@ -3743,7 +3749,7 @@ static int64_t opal_xive_set_vp_info(uint64_t vp_id,
 	return OPAL_SUCCESS;
 }
 
-static void xive_cleanup_cpu_cam(struct cpu_thread *c)
+static void xive_cleanup_cpu_tma(struct cpu_thread *c)
 {
 	struct xive_cpu_state *xs = c->xstate;
 	struct xive *x = xs->xive;
@@ -3762,6 +3768,11 @@ static void xive_cleanup_cpu_cam(struct cpu_thread *c)
 	/* Set HV CPPR to 0 */
 	out_8(ind_tm_base + TM_QW3_HV_PHYS + TM_CPPR, 0);
 
+	/* Dump HV state */
+	xive_cpu_dbg(c, "[reset] VP %x/%x W01 state: %016llx\n",
+		     xs->vp_blk, xs->vp_idx,
+		     in_be64(ind_tm_base + TM_QW3_HV_PHYS));
+
 	/* Reset indirect access */
 	xive_regw(x, PC_TCTXT_INDIR0, 0);
 }
@@ -3770,19 +3781,24 @@ static void xive_reset_one(struct xive *x)
 {
 	struct cpu_thread *c;
 	bool eq_firmware;
-	int i = 0;
+	int i;
 
-	/* Mask all interrupt sources */
-	while ((i = bitmap_find_one_bit(*x->int_enabled_map,
-					i, MAX_INT_ENTRIES - i)) >= 0) {
-		xive_set_irq_config(x->int_base + i, 0, 0xff,
-				    x->int_base + i, true);
-		i++;
-	}
-	xive_sync(x);
+	xive_dbg(x, "Resetting one xive...\n");
 
 	lock(&x->lock);
-	memset(x->int_enabled_map, 0, BITMAP_BYTES(MAX_INT_ENTRIES));
+
+	/* Check all interrupts are disabled */
+	i = bitmap_find_one_bit(*x->int_enabled_map, 0, MAX_INT_ENTRIES);
+	if (i >= 0)
+		xive_warn(x, "Interrupt %d (and maybe more) not disabled"
+			  " at reset !\n", i);
+
+	/* Reset IPI allocation */
+	xive_dbg(x, "freeing alloc map %p/%p\n",
+		 x->ipi_alloc_map, *x->ipi_alloc_map);
+	memset(x->ipi_alloc_map, 0, BITMAP_BYTES(MAX_INT_ENTRIES));
+
+	xive_dbg(x, "Resetting EQs...\n");
 
 	/* Reset all allocated EQs and free the user ones */
 	bitmap_for_each_one(*x->eq_map, MAX_EQ_COUNT >> 3, i) {
@@ -3821,7 +3837,7 @@ static void xive_reset_one(struct xive *x)
 			continue;
 		if (!c->xstate)
 			continue;
-		xive_cleanup_cpu_cam(c);
+		xive_cleanup_cpu_tma(c);
 	}
 
 	/* Reset all user-allocated VPs. This is inefficient, we should
@@ -3875,16 +3891,56 @@ static void xive_reset_one(struct xive *x)
 	}
 }
 
+static void xive_reset_mask_source_cb(struct irq_source *is,
+				      void *data __unused)
+{
+	struct xive_src *s = container_of(is, struct xive_src, is);
+	struct xive *x;
+	uint32_t isn;
+
+	if (is->ops != &xive_irq_source_ops)
+		return;
+
+	/* Skip escalation sources */
+	if (GIRQ_IS_ESCALATION(is->start))
+		return;
+
+	x = s->xive;
+
+	/* Iterate all interrupts */
+	for (isn = is->start; isn < is->end; isn++) {
+		/* Has it ever been enabled ? */
+		if (!bitmap_tst_bit(*x->int_enabled_map, GIRQ_TO_IDX(isn)))
+			continue;
+		/* Mask it and clear the enabled map bit */
+		xive_dbg(x, "[reset] disabling source 0x%x\n", isn);
+		__xive_set_irq_config(is, isn, 0, 0xff, isn, true, true);
+		bitmap_clr_bit(*x->int_enabled_map, GIRQ_TO_IDX(isn));
+	}
+}
+
 static int64_t opal_xive_reset(uint64_t version)
 {
 	struct proc_chip *chip;
+
+	prlog(PR_DEBUG, "XIVE reset, version: %d...\n", (int)version);
 
 	if (version > 1)
 		return OPAL_PARAMETER;
 
 	xive_mode = version;
 
-	/* For each XIVE ... */
+	/* Mask all interrupt sources */
+	irq_for_each_source(xive_reset_mask_source_cb, NULL);
+
+	/* For each XIVE do a sync... */
+	for_each_chip(chip) {
+		if (!chip->xive)
+			continue;
+		xive_sync(chip->xive);
+	}
+
+	/* For each XIVE reset everything else... */
 	for_each_chip(chip) {
 		if (!chip->xive)
 			continue;
