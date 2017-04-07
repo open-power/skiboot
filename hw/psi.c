@@ -485,7 +485,7 @@ static void psihb_p8_interrupt(struct irq_source *is, uint32_t isn)
 		psihb_interrupt(is, isn);
 		break;
 	case P8_IRQ_PSI_OCC:
-		occ_interrupt(psi->chip_id);
+		occ_p8_interrupt(psi->chip_id);
 		break;
 	case P8_IRQ_PSI_FSI:
 		printf("PSI: FSI irq received\n");
@@ -572,7 +572,7 @@ static void psihb_p9_interrupt(struct irq_source *is, uint32_t isn)
 		psihb_interrupt(is, isn);
 		break;
 	case P9_PSI_IRQ_OCC:
-		occ_interrupt(psi->chip_id);
+		occ_p9_interrupt(psi->chip_id);
 		break;
 	case P9_PSI_IRQ_FSI:
 		printf("PSI: FSI irq received\n");

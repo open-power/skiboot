@@ -940,16 +940,29 @@ static struct fsp_client fsp_occ_client = {
 	.message = fsp_occ_msg,
 };
 
-#define OCB_OCI_OCCMISC		0x6a020
-#define OCB_OCI_OCCMISC_AND	0x6a021
-#define OCB_OCI_OCCMISC_OR	0x6a022
+#define P8_OCB_OCI_OCCMISC		0x6a020
+#define P8_OCB_OCI_OCCMISC_AND		0x6a021
+#define P8_OCB_OCI_OCCMISC_OR		0x6a022
+
+#define P9_OCB_OCI_OCCMISC		0x6c080
+#define P9_OCB_OCI_OCCMISC_CLEAR	0x6c081
+#define P9_OCB_OCI_OCCMISC_OR		0x6c082
+
 #define OCB_OCI_OCIMISC_IRQ		PPC_BIT(0)
 #define OCB_OCI_OCIMISC_IRQ_TMGT	PPC_BIT(1)
 #define OCB_OCI_OCIMISC_IRQ_SLW_TMR	PPC_BIT(14)
 #define OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY	PPC_BIT(15)
-#define OCB_OCI_OCIMISC_MASK		(OCB_OCI_OCIMISC_IRQ_TMGT | \
+
+#define P8_OCB_OCI_OCIMISC_MASK		(OCB_OCI_OCIMISC_IRQ_TMGT | \
 					 OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY | \
 					 OCB_OCI_OCIMISC_IRQ_SLW_TMR)
+
+#define OCB_OCI_OCIMISC_IRQ_I2C		PPC_BIT(2)
+#define OCB_OCI_OCIMISC_IRQ_SHMEM	PPC_BIT(3)
+#define P9_OCB_OCI_OCIMISC_MASK		(OCB_OCI_OCIMISC_IRQ_TMGT | \
+					 OCB_OCI_OCIMISC_IRQ_I2C | \
+					 OCB_OCI_OCIMISC_IRQ_SHMEM | \
+					 OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY)
 
 void occ_send_dummy_interrupt(void)
 {
@@ -957,7 +970,7 @@ void occ_send_dummy_interrupt(void)
 	struct proc_chip *chip = get_chip(this_cpu()->chip_id);
 
 	/* Emulators and P7 doesn't do this */
-	if (proc_gen != proc_gen_p8 || chip_quirk(QUIRK_NO_OCC_IRQ))
+	if (proc_gen < proc_gen_p8 || chip_quirk(QUIRK_NO_OCC_IRQ))
 		return;
 
 	/* Find a functional PSI. This ensures an interrupt even if
@@ -973,17 +986,29 @@ void occ_send_dummy_interrupt(void)
 		return;
 	}
 
-	xscom_write(psi->chip_id, OCB_OCI_OCCMISC_OR,
-		    OCB_OCI_OCIMISC_IRQ | OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY);
+	switch (proc_gen) {
+	case proc_gen_p8:
+		xscom_write(psi->chip_id, P8_OCB_OCI_OCCMISC_OR,
+			    OCB_OCI_OCIMISC_IRQ |
+			    OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY);
+		break;
+	case proc_gen_p9:
+		xscom_write(psi->chip_id, P9_OCB_OCI_OCCMISC_OR,
+			    OCB_OCI_OCIMISC_IRQ |
+			    OCB_OCI_OCIMISC_IRQ_OPAL_DUMMY);
+		break;
+	default:
+		break;
+	}
 }
 
-void occ_interrupt(uint32_t chip_id)
+void occ_p8_interrupt(uint32_t chip_id)
 {
 	uint64_t ireg;
 	int64_t rc;
 
 	/* The OCC interrupt is used to mux up to 15 different sources */
-	rc = xscom_read(chip_id, OCB_OCI_OCCMISC, &ireg);
+	rc = xscom_read(chip_id, P8_OCB_OCI_OCCMISC, &ireg);
 	if (rc) {
 		prerror("OCC: Failed to read interrupt status !\n");
 		/* Should we mask it in the XIVR ? */
@@ -992,7 +1017,7 @@ void occ_interrupt(uint32_t chip_id)
 	prlog(PR_TRACE, "OCC: IRQ received: %04llx\n", ireg >> 48);
 
 	/* Clear the bits */
-	xscom_write(chip_id, OCB_OCI_OCCMISC_AND, ~ireg);
+	xscom_write(chip_id, P8_OCB_OCI_OCCMISC_AND, ~ireg);
 
 	/* Dispatch */
 	if (ireg & OCB_OCI_OCIMISC_IRQ_TMGT)
@@ -1004,9 +1029,43 @@ void occ_interrupt(uint32_t chip_id)
 	 * OCCMISC_AND write. Check if there are any new source bits set,
 	 * and trigger another interrupt if so.
 	 */
-	rc = xscom_read(chip_id, OCB_OCI_OCCMISC, &ireg);
-	if (!rc && (ireg & OCB_OCI_OCIMISC_MASK))
-		xscom_write(chip_id, OCB_OCI_OCCMISC_OR, OCB_OCI_OCIMISC_IRQ);
+	rc = xscom_read(chip_id, P8_OCB_OCI_OCCMISC, &ireg);
+	if (!rc && (ireg & P8_OCB_OCI_OCIMISC_MASK))
+		xscom_write(chip_id, P8_OCB_OCI_OCCMISC_OR,
+			    OCB_OCI_OCIMISC_IRQ);
+}
+
+void occ_p9_interrupt(uint32_t chip_id)
+{
+	u64 ireg;
+	s64 rc;
+
+	/* The OCC interrupt is used to mux up to 15 different sources */
+	rc = xscom_read(chip_id, P9_OCB_OCI_OCCMISC, &ireg);
+	if (rc) {
+		prerror("OCC: Failed to read interrupt status !\n");
+		return;
+	}
+	prlog(PR_TRACE, "OCC: IRQ received: %04llx\n", ireg >> 48);
+
+	/* Clear the bits */
+	xscom_write(chip_id, P9_OCB_OCI_OCCMISC_CLEAR, ireg);
+
+	/* Dispatch */
+	if (ireg & OCB_OCI_OCIMISC_IRQ_TMGT)
+		prd_tmgt_interrupt(chip_id);
+
+	if (ireg & OCB_OCI_OCIMISC_IRQ_SHMEM)
+		occ_throttle_poll(NULL);
+
+	/* We may have masked-out OCB_OCI_OCIMISC_IRQ in the previous
+	 * OCCMISC_AND write. Check if there are any new source bits set,
+	 * and trigger another interrupt if so.
+	 */
+	rc = xscom_read(chip_id, P9_OCB_OCI_OCCMISC, &ireg);
+	if (!rc && (ireg & P9_OCB_OCI_OCIMISC_MASK))
+		xscom_write(chip_id, P9_OCB_OCI_OCCMISC_OR,
+			    OCB_OCI_OCIMISC_IRQ);
 }
 
 void occ_fsp_init(void)

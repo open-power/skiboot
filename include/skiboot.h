@@ -254,9 +254,12 @@ enum {
 extern void uart_set_console_policy(int policy);
 extern bool uart_enabled(void);
 
-/* OCC interrupt */
-extern void occ_interrupt(uint32_t chip_id);
+/* OCC interrupt for P8 */
+extern void occ_p8_interrupt(uint32_t chip_id);
 extern void occ_send_dummy_interrupt(void);
+
+/* OCC interrupt for P9 */
+extern void occ_p9_interrupt(uint32_t chip_id);
 
 /* OCC load support */
 extern void occ_poke_load_queue(void);
