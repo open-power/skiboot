@@ -1467,7 +1467,7 @@ static void pci_add_one_device_node(struct phb *phb,
 	if (intpin)
 		dt_add_property_cells(np, "interrupts", intpin);
 
-	pci_handle_quirk(phb, pd, vdid & 0xffff, vdid >> 16);
+	pci_handle_quirk(phb, pd);
 
 	/* XXX FIXME: Add a few missing ones such as
 	 *

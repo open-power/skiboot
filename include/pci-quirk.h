@@ -27,9 +27,6 @@ struct pci_quirk {
 	uint16_t device_id;
 };
 
-void pci_handle_quirk(struct phb *phb,
-		      struct pci_device *pd,
-		      uint16_t vendor_id,
-		      uint16_t device_id);
+void pci_handle_quirk(struct phb *phb, struct pci_device *pd);
 
 #endif /* __PCI_QUIRK_H */
