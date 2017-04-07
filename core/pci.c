@@ -229,7 +229,7 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	bool had_crs = false;
 
 	for (retries = 0; retries < 40; retries++) {
-		rc = pci_cfg_read32(phb, bdfn, 0, &vdid);
+		rc = pci_cfg_read32(phb, bdfn, PCI_CFG_VENDOR_ID, &vdid);
 		if (rc)
 			return NULL;
 		if (vdid == 0xffffffff || vdid == 0x00000000)
@@ -250,7 +250,7 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	 * capture it's own bus number, so any subsequent error
 	 * messages will be properly tagged
 	 */
-	pci_cfg_write32(phb, bdfn, 0, vdid);
+	pci_cfg_write32(phb, bdfn, PCI_CFG_VENDOR_ID, vdid);
 
 	pd = zalloc(sizeof(struct pci_device));
 	if (!pd) {
@@ -1753,8 +1753,8 @@ static int __pci_restore_bridge_buses(struct phb *phb,
 		uint32_t vdid;
 
 		/* Make all devices below a bridge "re-capture" the bdfn */
-		if (pci_cfg_read32(phb, pd->bdfn, 0, &vdid) == 0)
-			pci_cfg_write32(phb, pd->bdfn, 0, vdid);
+		if (pci_cfg_read32(phb, pd->bdfn, PCI_CFG_VENDOR_ID, &vdid) == 0)
+			pci_cfg_write32(phb, pd->bdfn, PCI_CFG_VENDOR_ID, vdid);
 		return 0;
 	}
 
