@@ -271,6 +271,29 @@ static int64_t npu_dev_cfg_bar(void *dev, struct pci_cfg_reg_filter *pcrf,
 	return npu_dev_cfg_bar_read(ndev, pcrf, offset, len, data);
 }
 
+static int64_t npu_dev_cfg_exp_devcap(void *dev,
+		struct pci_cfg_reg_filter *pcrf __unused,
+		uint32_t offset, uint32_t size,
+		uint32_t *data, bool write)
+{
+	struct pci_virt_device *pvd = dev;
+	struct npu_dev *ndev = pvd->data;
+
+	assert(write);
+
+	if ((size != 2) || (offset & 1)) {
+		/* Short config writes are not supported */
+		prlog(PR_ERR, "NPU%d: Unsupported write to pcie control register\n",
+		      ndev->phb->opal_id);
+		return OPAL_PARAMETER;
+	}
+
+	if (*data & PCICAP_EXP_DEVCTL_FUNC_RESET)
+		npu_dev_procedure_reset(ndev);
+
+	return OPAL_PARTIAL;
+}
+
 static struct npu_dev *bdfn_to_npu_dev(struct npu *p, uint32_t bdfn)
 {
 	struct pci_virt_device *pvd;
@@ -1187,7 +1210,7 @@ static void npu_dev_populate_pcie_cap(struct npu_dev_cap *cap)
 
 	/* 0x04 - Device capability
 	 *
-	 * We should support FLR. Oterwhsie, it might have
+	 * We should support FLR. Otherwise, it might have
 	 * problem passing it through to userland via Linux
 	 * VFIO infrastructure
 	 */
@@ -1197,6 +1220,10 @@ static void npu_dev_populate_pcie_cap(struct npu_dev_cap *cap)
 	       (PCIE_L1L_MAX_NO_LIMIT << 9) |
 	       (PCICAP_EXP_DEVCAP_FUNC_RESET));
 	PCI_VIRT_CFG_INIT_RO(pvd, base + PCICAP_EXP_DEVCAP, 4, val);
+
+	pci_virt_add_filter(pvd, base + PCICAP_EXP_DEVCTL, 2,
+			    PCI_REG_FLAG_WRITE,
+			    npu_dev_cfg_exp_devcap, NULL);
 
 	/* 0x08 - Device control and status */
 	PCI_VIRT_CFG_INIT(pvd, base + PCICAP_EXP_DEVCTL, 4, 0x00002810,

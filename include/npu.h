@@ -167,6 +167,7 @@ int64_t npu_dev_procedure(void *dev, struct pci_cfg_reg_filter *pcrf,
 			  bool write);
 
 void npu_set_fence_state(struct npu *p, bool fence);
+void npu_dev_procedure_reset(struct npu_dev *dev);
 
 #define NPUDBG(p, fmt, a...)	prlog(PR_DEBUG, "NPU%d: " fmt, \
 				      (p)->phb.opal_id, ##a)

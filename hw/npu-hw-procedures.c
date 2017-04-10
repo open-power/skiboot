@@ -606,3 +606,11 @@ int64_t npu_dev_procedure(void *dev, struct pci_cfg_reg_filter *pcrf,
 
 	return npu_dev_procedure_read(ndev, offset - pcrf->start, len, data);
 }
+
+void npu_dev_procedure_reset(struct npu_dev *dev)
+{
+	dev->procedure_status = 0;
+	dev->procedure_number = 0;
+	dev->procedure_step = 0;
+	dev->procedure_data = 0;
+}
