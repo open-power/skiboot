@@ -132,6 +132,18 @@ static const char *map_label(uint32_t type)
 	return NULL;
 }
 
+static bool is_zeros(const void *p, size_t size)
+{
+	const char *c = p;
+	size_t i;
+
+	for (i = 0; i < size; i++)
+		if (c[i] != 0)
+			return false;
+
+	return true;
+}
+
 int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 	struct dt_node *xscom)
 {
@@ -140,6 +152,7 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 	const struct i2c_dev *dev;
 	const char *label, *name, *compat;
 	uint32_t i2c_addr;
+	uint32_t size;
 	int i, count;
 
 	/*
@@ -150,7 +163,16 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 
 	count = HDIF_get_iarray_size(hdr, idata_index);
 	for (i = 0; i < count; i++) {
-		dev = HDIF_get_iarray_item(hdr, idata_index, i, NULL);
+		dev = HDIF_get_iarray_item(hdr, idata_index, i, &size);
+
+		/*
+		 * XXX: Some broken hostboots populate i2c devs with zeros.
+		 * Workaround them for now.
+		 */
+		if (is_zeros(dev, size)) {
+			prerror("I2C: Ignoring broken i2c dev %d\n", i);
+			continue;
+		}
 
 		i2cm = get_i2cm_node(xscom, dev->i2cm_engine);
 		bus = get_bus_node(i2cm, dev->i2cm_port,
