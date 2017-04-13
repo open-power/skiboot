@@ -2873,6 +2873,7 @@ static void xive_init_cpu_emulation(struct xive_cpu_state *xs,
 	xs->eqbuf = xive_get_eq_buf(xs->vp_blk,
 				    xs->eq_idx + XIVE_EMULATION_PRIO);
 	assert(xs->eqbuf);
+	memset(xs->eqbuf, 0, 0x10000);
 
 	xs->eqptr = 0;
 	xs->eqmsk = (0x10000/4) - 1;
