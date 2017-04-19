@@ -2547,7 +2547,7 @@ static int64_t xive_sync(struct xive *x)
 
 static int64_t __xive_set_irq_config(struct irq_source *is, uint32_t girq,
 				     uint64_t vp, uint8_t prio, uint32_t lirq,
-				     bool update_esb, bool no_sync)
+				     bool update_esb, bool sync)
 {
 	struct xive_src *s = container_of(is, struct xive_src, is);
 	uint32_t old_target, vp_blk;
@@ -2591,7 +2591,7 @@ static int64_t __xive_set_irq_config(struct irq_source *is, uint32_t girq,
 	 * WARNING: This assumes the VP and it's queues are on the same
 	 *          XIVE instance !
 	 */
-	if (no_sync)
+	if (!sync)
 		return OPAL_SUCCESS;
 	xive_sync(s->xive);
 	if (xive_decode_vp(old_target, &vp_blk, NULL, NULL, NULL)) {
@@ -2609,7 +2609,7 @@ static int64_t xive_set_irq_config(uint32_t girq, uint64_t vp, uint8_t prio,
 	struct irq_source *is = irq_find_source(girq);
 
 	return __xive_set_irq_config(is, girq, vp, prio, lirq, update_esb,
-				     false);
+				     true);
 }
 
 static int64_t xive_source_set_xive(struct irq_source *is,
@@ -2634,7 +2634,7 @@ static int64_t xive_source_set_xive(struct irq_source *is,
 	server >>= 2;
 
 	/* Set logical irq to match isn */
-	return __xive_set_irq_config(is, isn, server, prio, isn, true, false);
+	return __xive_set_irq_config(is, isn, server, prio, isn, true, true);
 }
 
 void __xive_source_eoi(struct irq_source *is, uint32_t isn)
@@ -2934,7 +2934,7 @@ static void xive_ipi_init(struct xive *x, struct cpu_thread *cpu)
 
 	__xive_set_irq_config(&x->ipis.is, xs->ipi_irq, cpu->pir,
 			      XIVE_EMULATION_PRIO, xs->ipi_irq,
-			      true, false);
+			      true, true);
 }
 
 static void xive_ipi_eoi(struct xive *x, uint32_t idx)
@@ -4685,7 +4685,7 @@ static void xive_reset_mask_source_cb(struct irq_source *is,
 			continue;
 		/* Mask it and clear the enabled map bit */
 		xive_vdbg(x, "[reset] disabling source 0x%x\n", isn);
-		__xive_set_irq_config(is, isn, 0, 0xff, isn, true, true);
+		__xive_set_irq_config(is, isn, 0, 0xff, isn, true, false);
 		bitmap_clr_bit(*x->int_enabled_map, GIRQ_TO_IDX(isn));
 	}
 }
