@@ -157,7 +157,14 @@ static inline void phb4_ioda_sel(struct phb4 *p, uint32_t table,
 /* Check if AIB is fenced via PBCQ NFIR */
 static bool phb4_fenced(struct phb4 *p)
 {
-	// FIXME
+	uint64_t nfir;
+
+	xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &nfir);
+	if (nfir & PPC_BIT(16)) {
+		p->flags |= PHB4_AIB_FENCED;
+		p->state = PHB4_STATE_FENCED;
+		return true;
+	}
 	return false;
 }
 
