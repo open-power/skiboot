@@ -1164,7 +1164,7 @@ static int64_t phb4_map_pe_mmio_window(struct phb *phb,
 				       uint16_t segment_num)
 {
 	struct phb4 *p = phb_to_phb4(phb);
-	uint64_t mbt0, mbt1, mdt;
+	uint64_t mbt0, mbt1, mdt0, mdt1;
 
 	if (pe_number >= p->num_pes)
 		return OPAL_PARAMETER;
@@ -1183,11 +1183,15 @@ static int64_t phb4_map_pe_mmio_window(struct phb *phb,
 		if (window_num != 0 || segment_num >= p->max_num_pes)
 			return OPAL_PARAMETER;
 
-		mdt = p->mdt_cache[segment_num];
-		mdt = SETFIELD(IODA3_MDT_PE_A, mdt, pe_number);
-		p->mdt_cache[segment_num] = mdt;
-		phb4_ioda_sel(p, IODA3_TBL_MDT, segment_num, false);
-		out_be64(p->regs + PHB_IODA_DATA0, mdt);
+		mdt0 = p->mdt_cache[segment_num << 1];
+		mdt1 = p->mdt_cache[(segment_num << 1) + 1];
+		mdt0 = SETFIELD(IODA3_MDT_PE_A, mdt0, pe_number);
+		mdt1 = SETFIELD(IODA3_MDT_PE_A, mdt1, pe_number);
+		p->mdt_cache[segment_num << 1] = mdt0;
+		p->mdt_cache[(segment_num << 1) + 1] = mdt1;
+		phb4_ioda_sel(p, IODA3_TBL_MDT, segment_num << 1, true);
+		out_be64(p->regs + PHB_IODA_DATA0, mdt0);
+		out_be64(p->regs + PHB_IODA_DATA0, mdt1);
 		break;
 	case OPAL_M64_WINDOW_TYPE:
 		if (window_num == 0 || window_num >= p->mbt_size)
