@@ -1526,12 +1526,138 @@ static void phb4_err_ER_clear(struct phb4 *p)
 static void phb4_read_phb_status(struct phb4 *p,
 				 struct OpalIoPhb4ErrorData *stat)
 {
+	uint16_t val = 0;
+	uint32_t i;
+	uint64_t val64 = 0;
+	uint64_t *pPEST;
+
 	memset(stat, 0, sizeof(struct OpalIoPhb4ErrorData));
 
 	/* Error data common part */
 	stat->common.version = OPAL_PHB_ERROR_DATA_VERSION_1;
 	stat->common.ioType  = OPAL_PHB_ERROR_DATA_TYPE_PHB4;
 	stat->common.len     = sizeof(struct OpalIoPhb4ErrorData);
+
+	/*
+	 * TODO: investigate reading registers through ASB instead of AIB.
+	 *
+	 * Until this is implemented, some registers may be unreadable through
+	 * a fence.
+	 */
+
+	/* Grab RC bridge control, make it 32-bit */
+	phb4_pcicfg_read16(&p->phb, 0, PCI_CFG_BRCTL, &val);
+	stat->brdgCtl = val;
+
+	/* XXX: No UTL registers on PHB4? */
+
+	/*
+	 * Grab various RC PCIe capability registers. All device, slot
+	 * and link status are 16-bit, so we grab the pair control+status
+	 * for each of them
+	 */
+	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_DEVCTL,
+			   &stat->deviceStatus);
+	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_SLOTCTL,
+			   &stat->slotStatus);
+	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
+			   &stat->linkStatus);
+
+	/*
+	 * I assume those are the standard config space header, cmd & status
+	 * together makes 32-bit. Secondary status is 16-bit so I'll clear
+	 * the top on that one
+	 */
+	phb4_pcicfg_read32(&p->phb, 0, PCI_CFG_CMD, &stat->devCmdStatus);
+	phb4_pcicfg_read16(&p->phb, 0, PCI_CFG_SECONDARY_STATUS, &val);
+	stat->devSecStatus = val;
+
+	/* Grab a bunch of AER regs */
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_RERR_STA,
+			   &stat->rootErrorStatus);
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_UE_STATUS,
+			   &stat->uncorrErrorStatus);
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_CE_STATUS,
+			   &stat->corrErrorStatus);
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG0,
+			   &stat->tlpHdr1);
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG1,
+			   &stat->tlpHdr2);
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG2,
+			   &stat->tlpHdr3);
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG3,
+			   &stat->tlpHdr4);
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_SRCID,
+			   &stat->sourceId);
+
+	/* PEC NFIR, same as P8/PHB3 */
+	xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &stat->nFir);
+	xscom_read(p->chip_id, p->pe_stk_xscom + 0x3, &stat->nFirMask);
+	xscom_read(p->chip_id, p->pe_stk_xscom + 0x8, &stat->nFirWOF);
+
+	/* PHB4 inbound and outbound error Regs */
+	stat->phbPlssr = phb4_read_reg_asb(p, PHB_CPU_LOADSTORE_STATUS);
+	stat->phbCsr = phb4_read_reg_asb(p, PHB_DMA_CHAN_STATUS);
+	stat->lemFir = phb4_read_reg_asb(p, PHB_LEM_FIR_ACCUM);
+	stat->lemErrorMask = phb4_read_reg_asb(p, PHB_LEM_ERROR_MASK);
+	stat->lemWOF = phb4_read_reg_asb(p, PHB_LEM_WOF);
+	stat->phbErrorStatus = phb4_read_reg_asb(p, PHB_ERR_STATUS);
+	stat->phbFirstErrorStatus = phb4_read_reg_asb(p, PHB_ERR1_STATUS);
+	stat->phbErrorLog0 = phb4_read_reg_asb(p, PHB_ERR_LOG_0);
+	stat->phbErrorLog1 = phb4_read_reg_asb(p, PHB_ERR_LOG_1);
+	stat->phbTxeErrorStatus = phb4_read_reg_asb(p, PHB_TXE_ERR_STATUS);
+	stat->phbTxeFirstErrorStatus = phb4_read_reg_asb(p, PHB_TXE_ERR1_STATUS);
+	stat->phbTxeErrorLog0 = phb4_read_reg_asb(p, PHB_TXE_ERR_LOG_0);
+	stat->phbTxeErrorLog1 = phb4_read_reg_asb(p, PHB_TXE_ERR_LOG_1);
+	stat->phbRxeArbErrorStatus = phb4_read_reg_asb(p, PHB_RXE_ARB_ERR_STATUS);
+	stat->phbRxeArbFirstErrorStatus = phb4_read_reg_asb(p, PHB_RXE_ARB_ERR1_STATUS);
+	stat->phbRxeArbErrorLog0 = phb4_read_reg_asb(p, PHB_RXE_ARB_ERR_LOG_0);
+	stat->phbRxeArbErrorLog1 = phb4_read_reg_asb(p, PHB_RXE_ARB_ERR_LOG_1);
+	stat->phbRxeMrgErrorStatus = phb4_read_reg_asb(p, PHB_RXE_MRG_ERR_STATUS);
+	stat->phbRxeMrgFirstErrorStatus = phb4_read_reg_asb(p, PHB_RXE_MRG_ERR1_STATUS);
+	stat->phbRxeMrgErrorLog0 = phb4_read_reg_asb(p, PHB_RXE_MRG_ERR_LOG_0);
+	stat->phbRxeMrgErrorLog1 = phb4_read_reg_asb(p, PHB_RXE_MRG_ERR_LOG_1);
+	stat->phbRxeTceErrorStatus = phb4_read_reg_asb(p, PHB_RXE_TCE_ERR_STATUS);
+	stat->phbRxeTceFirstErrorStatus = phb4_read_reg_asb(p, PHB_RXE_TCE_ERR1_STATUS);
+	stat->phbRxeTceErrorLog0 = phb4_read_reg_asb(p, PHB_RXE_TCE_ERR_LOG_0);
+	stat->phbRxeTceErrorLog1 = phb4_read_reg_asb(p, PHB_RXE_TCE_ERR_LOG_1);
+
+	/* PHB4 REGB error registers */
+	stat->phbPblErrorStatus = phb4_read_reg_asb(p, PHB_PBL_ERR_STATUS);
+	stat->phbPblFirstErrorStatus = phb4_read_reg_asb(p, PHB_PBL_ERR1_STATUS);
+	stat->phbPblErrorLog0 = phb4_read_reg_asb(p, PHB_PBL_ERR_LOG_0);
+	stat->phbPblErrorLog1 = phb4_read_reg_asb(p, PHB_PBL_ERR_LOG_0);
+
+	stat->phbPcieDlpErrorStatus = phb4_read_reg_asb(p, PHB_PCIE_DLP_ERR_STATUS);
+	stat->phbPcieDlpErrorLog1 = phb4_read_reg_asb(p, PHB_PCIE_DLP_ERRLOG1);
+	stat->phbPcieDlpErrorLog2 = phb4_read_reg_asb(p, PHB_PCIE_DLP_ERRLOG2);
+
+	stat->phbRegbErrorStatus = phb4_read_reg_asb(p, PHB_REGB_ERR_STATUS);
+	stat->phbRegbFirstErrorStatus = phb4_read_reg_asb(p, PHB_REGB_ERR1_STATUS);
+	stat->phbRegbErrorLog0 = phb4_read_reg_asb(p, PHB_REGB_ERR_LOG_0);
+	stat->phbRegbErrorLog1 = phb4_read_reg_asb(p, PHB_REGB_ERR_LOG_1);
+
+	/*
+	 * Grab PESTA & B content. The error bit (bit#0) should
+	 * be fetched from IODA and the left content from memory
+	 * resident tables.
+	 */
+	 pPEST = (uint64_t *)p->tbl_pest;
+	 val64 = PHB_IODA_AD_AUTOINC;
+	 val64 = SETFIELD(PHB_IODA_AD_TSEL, val64, IODA3_TBL_PESTA);
+	 phb4_write_reg_asb(p, PHB_IODA_ADDR, val64);
+	 for (i = 0; i < OPAL_PHB4_NUM_PEST_REGS; i++) {
+		 stat->pestA[i] = phb4_read_reg_asb(p, PHB_IODA_DATA0);
+		 stat->pestA[i] |= pPEST[2 * i];
+	 }
+
+	 val64 = PHB_IODA_AD_AUTOINC;
+	 val64 = SETFIELD(PHB_IODA_AD_TSEL, val64, IODA3_TBL_PESTB);
+	 phb4_write_reg_asb(p, PHB_IODA_ADDR, val64);
+	 for (i = 0; i < OPAL_PHB4_NUM_PEST_REGS; i++) {
+		 stat->pestB[i] = phb4_read_reg_asb(p, PHB_IODA_DATA0);
+		 stat->pestB[i] |= pPEST[2 * i + 1];
+	 }
 }
 
 static int64_t phb4_set_pe(struct phb *phb,
