@@ -68,6 +68,8 @@ struct debug_descriptor debug_descriptor = {
 	.state_flags	= 0,
 	.memcons_phys	= (uint64_t)&memcons,
 	.trace_mask	= 0, /* All traces disabled by default */
+	/* console log level:
+	 *   high 4 bits in memory, low 4 bits driver (e.g. uart). */
 #ifdef DEBUG
 	.console_log_levels = (PR_DEBUG << 4) | PR_DEBUG,
 #else
@@ -615,6 +617,61 @@ static void dt_init_misc(void)
 	dt_fixups();
 }
 
+static u8 console_get_level(const char *s)
+{
+	if (strcmp(s, "emerg") == 0)
+		return PR_EMERG;
+	if (strcmp(s, "alert") == 0)
+		return PR_ALERT;
+	if (strcmp(s, "crit") == 0)
+		return PR_CRIT;
+	if (strcmp(s, "err") == 0)
+		return PR_ERR;
+	if (strcmp(s, "warning") == 0)
+		return PR_WARNING;
+	if (strcmp(s, "notice") == 0)
+		return PR_NOTICE;
+	if (strcmp(s, "printf") == 0)
+		return PR_PRINTF;
+	if (strcmp(s, "info") == 0)
+		return PR_INFO;
+	if (strcmp(s, "debug") == 0)
+		return PR_DEBUG;
+	if (strcmp(s, "trace") == 0)
+		return PR_TRACE;
+	if (strcmp(s, "insane") == 0)
+		return PR_INSANE;
+	/* Assume it's a number instead */
+	return atoi(s);
+}
+
+static void console_log_level(void)
+{
+	const char *s;
+	u8 level;
+
+	/* console log level:
+	 *   high 4 bits in memory, low 4 bits driver (e.g. uart). */
+	s = nvram_query("log-level-driver");
+	if (s) {
+		level = console_get_level(s);
+		debug_descriptor.console_log_levels =
+			(debug_descriptor.console_log_levels & 0xf0 ) |
+			(level & 0x0f);
+		prlog(PR_NOTICE, "console: Setting driver log level to %i\n",
+		      level & 0x0f);
+	}
+	s = nvram_query("log-level-memory");
+	if (s) {
+		level = console_get_level(s);
+		debug_descriptor.console_log_levels =
+			(debug_descriptor.console_log_levels & 0x0f ) |
+			((level & 0x0f) << 4);
+		prlog(PR_NOTICE, "console: Setting memory log level to %i\n",
+		      level & 0x0f);
+	}
+}
+
 typedef void (*ctorcall_t)(void);
 
 static void __nomcount do_ctors(void)
@@ -920,6 +977,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* Read in NVRAM and set it up */
 	nvram_init();
+
+	/* Set the console level */
+	console_log_level();
 
 	/* Secure/Trusted Boot init. We look for /ibm,secureboot in DT */
 	stb_init();

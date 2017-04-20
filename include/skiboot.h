@@ -91,7 +91,9 @@ static inline bool opal_booting(void)
 	return !(debug_descriptor.state_flags & OPAL_BOOT_COMPLETE);
 }
 
-/* Console logging */
+/* Console logging
+ * Update console_get_level() if you add here
+ */
 #define PR_EMERG	0
 #define PR_ALERT	1
 #define PR_CRIT		2
