@@ -2531,8 +2531,8 @@ static void xive_source_eoi(struct irq_source *is, uint32_t isn)
 
 	if (s->orig_ops && s->orig_ops->eoi)
 		s->orig_ops->eoi(is, isn);
-
-	__xive_source_eoi(is, isn);
+	else
+		__xive_source_eoi(is, isn);
 }
 
 static void xive_source_interrupt(struct irq_source *is, uint32_t isn)
