@@ -3087,6 +3087,9 @@ static void phb4_add_properties(struct phb4 *p)
 		hi32(p->tbl_peltv), lo32(p->tbl_peltv), p->tbl_peltv_size);
 	dt_add_property_cells(np, "ibm,opal-pest-table",
 		hi32(p->tbl_pest), lo32(p->tbl_pest), p->tbl_pest_size);
+
+	dt_add_property_cells(np, "ibm,phb-diag-data-size",
+			      sizeof(struct OpalIoPhb4ErrorData));
 }
 
 static bool phb4_calculate_windows(struct phb4 *p)

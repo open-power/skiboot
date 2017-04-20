@@ -4598,6 +4598,9 @@ static void phb3_add_properties(struct phb3 *p)
 		IVT_TABLE_STRIDE);
 	dt_add_property_cells(np, "ibm,opal-rba-table",
 		hi32(p->tbl_rba), lo32(p->tbl_rba), RBA_TABLE_SIZE);
+
+	dt_add_property_cells(np, "ibm,phb-diag-data-size",
+			      sizeof(struct OpalIoPhb3ErrorData));
 }
 
 static bool phb3_calculate_windows(struct phb3 *p)

@@ -2597,6 +2597,15 @@ static void p7ioc_pcie_add_node(struct p7ioc_phb *p)
 	dt_add_property_cells(np, "ibm,opal-tce-kill",
 			      hi32(tkill), lo32(tkill));
 
+	/*
+	 * Linux may use this property to allocate the diag data buffer, which
+	 * can be used for either of these structs.  Pass the largest to ensure
+	 * they can both fit in this buffer.
+	 */
+	dt_add_property_cells(np, "ibm,phb-diag-data-size",
+			      MAX(sizeof(struct OpalIoP7IOCPhbErrorData),
+				  sizeof(struct OpalIoP7IOCErrorData)));
+
 	/* Add associativity properties */
 	add_chip_dev_associativity(np);
 
