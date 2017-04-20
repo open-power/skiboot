@@ -200,11 +200,18 @@ static struct lpc_client mbox_lpc_client = {
 
 static bool mbox_init_hw(void)
 {
-	/*
-	 * Turns out there isn't anything to do.
-	 * It might be a good idea to santise the registers though.
-	 * TODO
+	/* Disable all status interrupts except attentions */
+	bmc_mbox_outb(0x00, MBOX_HOST_INT_EN_0);
+	bmc_mbox_outb(MBOX_STATUS_ATTN, MBOX_HOST_INT_EN_1);
+
+	/* Cleanup host interrupt and status */
+	bmc_mbox_outb(MBOX_CTRL_INT_STATUS, MBOX_HOST_CTRL);
+
+	/* Disable host control interrupt for now (will be
+	 * re-enabled when needed). Clear BMC interrupts
 	 */
+	bmc_mbox_outb(MBOX_CTRL_INT_MASK, MBOX_BMC_CTRL);
+
 	return true;
 }
 
