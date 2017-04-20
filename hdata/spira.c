@@ -812,6 +812,7 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 	const struct HDIF_common_hdr *hdif = iplp;
 	u16 version = be16_to_cpu(hdif->version);
 	const char *vendor = NULL;
+	u32 sys_attributes;
 
 	p = HDIF_get_idata(iplp, IPLPARAMS_SYSPARAMS, NULL);
 	if (!CHECK_SPPTR(p)) {
@@ -887,6 +888,10 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 		vendor = "IBM";
 
 	dt_add_property_string(dt_root, "vendor", vendor);
+
+	sys_attributes = be32_to_cpu(p->sys_attributes);
+	if (sys_attributes & SYS_ATTR_RISK_LEVEL)
+		dt_add_property(node, "elevated-risk-level", NULL, 0);
 }
 
 static void add_iplparams_ipl_params(const void *iplp, struct dt_node *node)

@@ -353,6 +353,7 @@ struct iplparams_sysparams {
 	__be32		abc_bus_speed;
 	__be32		wxyz_bus_speed;
 	__be32		sys_eco_mode;
+#define SYS_ATTR_RISK_LEVEL PPC_BIT32(3)
 	__be32		sys_attributes;
 	__be32		mem_scrubbing;
 	__be16		cur_spl_value;
