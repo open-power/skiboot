@@ -3066,6 +3066,22 @@ static inline uint8_t opal_xive_check_pending(struct xive_cpu_state *xs,
 	return xs->pending & mask;
 }
 
+static void opal_xive_update_cppr(struct xive_cpu_state *xs, u8 cppr)
+{
+	/* Peform the update */
+	xs->cppr = cppr;
+	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_CPPR, cppr);
+
+	/* Trigger the IPI if it's still more favored than the CPPR
+	 *
+	 * This can lead to a bunch of spurrious retriggers if the
+	 * IPI is queued up behind other interrupts but that's not
+	 * a big deal and keeps the code simpler
+	 */
+	if (xs->mfrr < cppr)
+		xive_ipi_trigger(xs->xive, GIRQ_TO_IDX(xs->ipi_irq));
+}
+
 static int64_t opal_xive_eoi(uint32_t xirr)
 {
 	struct cpu_thread *c = this_cpu();
@@ -3150,13 +3166,6 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 		/* Is it an IPI ? */
 		if (special_ipi) {
 			xive_ipi_eoi(src_x, idx);
-
-			/* Check mfrr and eventually re-trigger. We check
-			 * against the new CPPR since we are about to update
-			 * the HW.
-			 */
-			if (xs->mfrr < cppr)
-				xive_ipi_trigger(src_x, idx);
 		} else {
 			/* Otherwise go through the source mechanism */
 			xive_vdbg(src_x, "EOI of IDX %x in EXT range\n", idx);
@@ -3167,8 +3176,7 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 	}
 
 	/* Finally restore CPPR */
-	xs->cppr = cppr;
-	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_CPPR, cppr);
+	opal_xive_update_cppr(xs, cppr);
 
 	xive_cpu_vdbg(c, "  pending=0x%x cppr=%d\n", xs->pending, cppr);
 
@@ -3297,8 +3305,7 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 
 	} else {
 		/* Nothing was active, this is a fluke, restore CPPR */
-		xs->cppr = old_cppr;
-		out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_CPPR, old_cppr);
+		opal_xive_update_cppr(xs, old_cppr);
 		xive_cpu_vdbg(c, "  nothing active, restored CPPR to %d\n",
 			      old_cppr);
 	}
@@ -3328,9 +3335,7 @@ static int64_t opal_xive_set_cppr(uint8_t cppr)
 	xive_cpu_vdbg(c, "CPPR setting to %d\n", cppr);
 
 	lock(&xs->lock);
-	c->xstate->cppr = cppr;
-	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_CPPR, cppr);
-
+	opal_xive_update_cppr(xs, cppr);
 	unlock(&xs->lock);
 
 	return OPAL_SUCCESS;
