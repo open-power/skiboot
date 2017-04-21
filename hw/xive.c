@@ -38,6 +38,13 @@
 /* Verbose debug */
 #undef XIVE_VERBOSE_DEBUG
 
+/* Check for duplicate interrupts in queues */
+#ifdef DEBUG
+#define XIVE_DEBUG_DUPLICATES
+#else
+#undef  XIVE_DEBUG_DUPLICATES
+#endif
+
 /*
  *
  * VSDs, blocks, set translation etc...
@@ -3028,9 +3035,37 @@ static void xive_init_cpu_properties(struct cpu_thread *cpu)
 	dt_add_property_cells(cpu->node, "interrupt-parent", get_ics_phandle());
 }
 
+#ifdef XIVE_DEBUG_DUPLICATES
+static uint32_t xive_count_irq_copies(struct xive_cpu_state *xs, uint32_t ref)
+{
+	uint32_t i, irq;
+	uint32_t cnt = 0;
+	uint32_t pos = xs->eqptr;
+	uint32_t gen = xs->eqgen;
+
+	for (i = 0; i < 0x3fff; i++) {
+		irq = xs->eqbuf[pos];
+		if ((irq >> 31) == gen)
+			break;
+		if (irq == ref)
+			cnt++;
+		pos = (pos + 1) & xs->eqmsk;
+		if (!pos)
+			gen ^= 1;
+	}
+	return cnt;
+}
+#else
+static inline uint32_t xive_count_irq_copies(struct xive_cpu_state *xs __unused,
+					     uint32_t ref __unused)
+{
+	return 1;
+}
+#endif
+
 static uint32_t xive_read_eq(struct xive_cpu_state *xs, bool just_peek)
 {
-	uint32_t cur;
+	uint32_t cur, copies;
 
 	xive_cpu_vdbg(this_cpu(), "  EQ %s... IDX=%x MSK=%x G=%d\n",
 		      just_peek ? "peek" : "read",
@@ -3042,6 +3077,28 @@ static uint32_t xive_read_eq(struct xive_cpu_state *xs, bool just_peek)
 		      xs->eqbuf[(xs->eqptr + 3) & xs->eqmsk]);
 	if ((cur >> 31) == xs->eqgen)
 		return 0;
+
+	/* Debug: check for duplicate interrupts in the queue */
+	copies = xive_count_irq_copies(xs, cur);
+	if (copies > 1) {
+		struct xive_eq *eq;
+
+		prerror("Wow ! Dups of irq %x, found %d copies !\n",
+			cur & 0x7fffffff, copies);
+		prerror("[%08x > %08x %08x %08x %08x ...] eqgen=%x eqptr=%x jp=%d\n",
+			xs->eqbuf[(xs->eqptr - 1) & xs->eqmsk],
+			xs->eqbuf[(xs->eqptr + 0) & xs->eqmsk],
+			xs->eqbuf[(xs->eqptr + 1) & xs->eqmsk],
+			xs->eqbuf[(xs->eqptr + 2) & xs->eqmsk],
+			xs->eqbuf[(xs->eqptr + 3) & xs->eqmsk],
+			xs->eqgen, xs->eqptr, just_peek);
+		__xive_cache_scrub(xs->xive, xive_cache_eqc, xs->eq_blk,
+				   xs->eq_idx + XIVE_EMULATION_PRIO,
+				   false, false);
+		eq = xive_get_eq(xs->xive, xs->eq_idx + XIVE_EMULATION_PRIO);
+		prerror("EQ @%p W0=%08x W1=%08x qbuf @%p\n",
+			eq, eq->w0, eq->w1, xs->eqbuf);
+	}
 	if (!just_peek) {
 		xs->eqptr = (xs->eqptr + 1) & xs->eqmsk;
 		if (xs->eqptr == 0)
