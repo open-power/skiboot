@@ -38,11 +38,13 @@
 /* Verbose debug */
 #undef XIVE_VERBOSE_DEBUG
 
-/* Check for duplicate interrupts in queues */
+/* Extra debug options used in debug builds */
 #ifdef DEBUG
 #define XIVE_DEBUG_DUPLICATES
+#define XIVE_PERCPU_LOG
 #else
 #undef  XIVE_DEBUG_DUPLICATES
+#undef  XIVE_PERCPU_LOG
 #endif
 
 /*
@@ -254,10 +256,29 @@ struct xive_src {
 	uint32_t			flags;
 };
 
+#define LOG_TYPE_XIRR	0
+#define LOG_TYPE_XIRR2	1
+#define LOG_TYPE_POPQ	2
+#define LOG_TYPE_EOI	3
+#define LOG_TYPE_EQD	4
+
+struct xive_log_ent {
+	uint8_t type;
+	uint8_t cnt;
+	uint64_t tb;
+#define MAX_LOG_DATA	8
+	uint32_t data[MAX_LOG_DATA];
+};
+#define MAX_LOG_ENT	32
+
 struct xive_cpu_state {
 	struct xive	*xive;
 	void		*tm_ring1;
 
+#ifdef XIVE_PERCPU_LOG
+	struct xive_log_ent log[MAX_LOG_ENT];
+	uint32_t	log_pos;
+#endif
 	/* Base HW VP and associated queues */
 	uint32_t	vp_blk;
 	uint32_t	vp_idx;
@@ -280,6 +301,63 @@ struct xive_cpu_state {
 	uint8_t		eqgen;
 	void		*eqmmio;
 };
+
+#ifdef XIVE_PERCPU_LOG
+
+static void log_add(struct xive_cpu_state *xs, uint8_t type,
+		    uint8_t count, ...)
+{
+	struct xive_log_ent *e = &xs->log[xs->log_pos];
+	va_list args;
+	int i;
+
+	e->type = type;
+	e->cnt = count;
+	e->tb = mftb();
+	va_start(args, count);
+	for (i = 0; i < count; i++)
+		e->data[i] = va_arg(args, u32);
+	va_end(args);
+	xs->log_pos = xs->log_pos + 1;
+	if (xs->log_pos == MAX_LOG_ENT)
+		xs->log_pos = 0;
+}
+
+static void log_print(struct xive_cpu_state *xs)
+{
+	uint32_t pos = xs->log_pos;
+	uint8_t buf[256];
+	int i, j;
+	static const char *lts[] = {
+		">XIRR",
+		"<XIRR",
+		" POPQ",
+		"  EOI",
+		"  EQD"
+	};
+	for (i = 0; i < MAX_LOG_ENT; i++) {
+		struct xive_log_ent *e = &xs->log[pos];
+		uint8_t *b = buf, *eb = &buf[255];
+
+		b += snprintf(b, eb-b, "%08llx %s ", e->tb,
+			      lts[e->type]);
+		for (j = 0; j < e->cnt && b < eb; j++)
+			b += snprintf(b, eb-b, "%08x ", e->data[j]);
+		printf("%s\n", buf);
+		pos = pos + 1;
+		if (pos == MAX_LOG_ENT)
+			pos = 0;
+	}
+}
+
+#else /* XIVE_PERCPU_LOG */
+
+static inline void log_add(struct xive_cpu_state *xs __unused,
+			   uint8_t type __unused,
+			   uint8_t count __unused, ...) { }
+static inline void log_print(struct xive_cpu_state *xs __unused) { }
+
+#endif /* XIVE_PERCPU_LOG */
 
 struct xive {
 	uint32_t	chip_id;
@@ -3099,6 +3177,11 @@ static uint32_t xive_read_eq(struct xive_cpu_state *xs, bool just_peek)
 		prerror("EQ @%p W0=%08x W1=%08x qbuf @%p\n",
 			eq, eq->w0, eq->w1, xs->eqbuf);
 	}
+	log_add(xs, LOG_TYPE_POPQ, 7, cur,
+		xs->eqbuf[(xs->eqptr + 1) & xs->eqmsk],
+		xs->eqbuf[(xs->eqptr + 2) & xs->eqmsk],
+		copies,
+		xs->eqptr, xs->eqgen, just_peek);
 	if (!just_peek) {
 		xs->eqptr = (xs->eqptr + 1) & xs->eqmsk;
 		if (xs->eqptr == 0)
@@ -3171,6 +3254,8 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 	cppr = xive_sanitize_cppr(xirr >> 24);
 
 	lock(&xs->lock);
+
+	log_add(xs, LOG_TYPE_EOI, 3, isn, xs->eqptr, xs->eqgen);
 
 	/* If this was our magic IPI, convert to IRQ number */
 	if (isn == 2) {
@@ -3318,6 +3403,20 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 	 */
 	active = opal_xive_check_pending(xs, old_cppr);
 
+	log_add(xs, LOG_TYPE_XIRR, 6, old_cppr, xs->cppr, xs->pending, active,
+		xs->eqptr, xs->eqgen);
+
+#ifdef XIVE_PERCPU_LOG
+	{
+		struct xive_eq *eq;
+		__xive_cache_scrub(xs->xive, xive_cache_eqc, xs->eq_blk,
+				   xs->eq_idx + XIVE_EMULATION_PRIO,
+				   false, false);
+		eq = xive_get_eq(xs->xive, xs->eq_idx + XIVE_EMULATION_PRIO);
+		log_add(xs, LOG_TYPE_EQD, 2, eq->w0, eq->w1);
+	}
+#endif /* XIVE_PERCPU_LOG */
+
 	xive_cpu_vdbg(c, "  cppr=%d->%d pending=0x%x active=%x\n",
 		      old_cppr, xs->cppr, xs->pending, active);
 	if (active) {
@@ -3368,6 +3467,8 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 	}
  skip:
 
+	log_add(xs, LOG_TYPE_XIRR2, 5, xs->cppr, xs->pending,
+		*out_xirr, xs->eqptr, xs->eqgen);
 	xive_cpu_vdbg(c, "  returning XIRR=%08x, pending=0x%x\n",
 		      *out_xirr, xs->pending);
 
@@ -4368,6 +4469,8 @@ static int64_t opal_xive_dump_emu(uint32_t pir)
 	      pir,  xs->eqptr, xs->eqmsk, xs->eqgen,
 	      xs->eqbuf[(xs->eqptr + 0) & xs->eqmsk],
 	      xs->eqbuf[(xs->eqptr + 1) & xs->eqmsk]);
+
+	log_print(xs);
 
 	unlock(&xs->lock);
 
