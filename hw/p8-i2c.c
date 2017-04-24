@@ -229,10 +229,10 @@ struct p8_i2c_request {
 };
 
 static void p8_i2c_print_debug_info(struct p8_i2c_master_port *port,
-				    struct i2c_request *req)
+				    struct i2c_request *req, uint64_t end_time)
 {
 	struct p8_i2c_master *master = port->master;
-	uint64_t cmd, mode, stat, estat, intr;
+	uint64_t cmd, mode, stat, estat, intm, intc;
 	int rc;
 
 	/* Print master and request structure bits */
@@ -246,6 +246,10 @@ static void p8_i2c_print_debug_info(struct p8_i2c_master_port *port,
 			 " addr=0x%04x\toffset_bytes=%d\toffset=%d\tlen=%d\n",
 			 req->dev_addr, req->offset_bytes, req->offset,
 			 req->rw_len);
+
+	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: "
+			 " start_time=%016llx end_time=%016llx (duration=%016llx)\n",
+			 master->start_time, end_time, end_time - master->start_time);
 
 	/* Dump the current state of i2c registers */
 	rc = xscom_read(master->chip_id, master->xscom_base + I2C_CMD_REG,
@@ -277,16 +281,23 @@ static void p8_i2c_print_debug_info(struct p8_i2c_master_port *port,
 	}
 
 	rc = xscom_read(master->chip_id, master->xscom_base + I2C_INTR_MASK_REG,
-			&intr);
+			&intm);
 	if (rc) {
 		prlog(PR_DEBUG, "I2C: Failed to read INTR_MASK_REG\n");
-		intr = 0ull;
+		intm = 0ull;
+	}
+
+	rc = xscom_read(master->chip_id, master->xscom_base + I2C_INTR_COND_REG,
+			&intc);
+	if (rc) {
+		prlog(PR_DEBUG, "I2C: Failed to read INTR_COND_REG\n");
+		intc = 0ull;
 	}
 
 	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Register dump--\n"
-			 "cmd:0x%016llx\tmode:0x%016llx\tstat:0x%016llx\n"
-			 "estat:0x%016llx\tintr:0x%016llx\n", cmd, mode, stat,
-			 estat, intr);
+			 "    cmd:0x%016llx\tmode:0x%016llx\tstat:0x%016llx\n"
+			 "  estat:0x%016llx\tintm:0x%016llx\tintc:0x%016llx\n",
+			 cmd, mode, stat, estat, intm, intc);
 }
 
 static bool p8_i2c_has_irqs(struct p8_i2c_master *master)
@@ -618,7 +629,7 @@ static int p8_i2c_reset_engine(struct p8_i2c_master *master)
 
 static void p8_i2c_status_error(struct p8_i2c_master_port *port,
 				struct i2c_request *req,
-				uint64_t status)
+				uint64_t status, uint64_t end_time)
 {
 	struct p8_i2c_master *master = port->master;
 	int rc;
@@ -630,7 +641,7 @@ static void p8_i2c_status_error(struct p8_i2c_master_port *port,
 	if (!(status & (I2C_STAT_NACK_RCVD_ERR | I2C_STAT_PSEUDO_TIMEOUT))) {
 		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
 				 "I2C: Transfer error occurred\n");
-		p8_i2c_print_debug_info(port, req);
+		p8_i2c_print_debug_info(port, req, end_time);
 	}
 
 	p8_i2c_translate_error(req, status);
@@ -826,12 +837,15 @@ static void p8_i2c_complete_offset(struct p8_i2c_master *master,
 }
 
 static void p8_i2c_status_cmd_completion(struct p8_i2c_master *master,
-					 struct i2c_request *req)
+					 struct i2c_request *req,
+					 uint64_t end_time __unused)
 {
 	int rc;
 
 	DBG("Command completion, state=%d bytes_sent=%d\n",
 	    master->state, master->bytes_sent);
+	DBG("  start_time=%016llx end_time=%016llx (duration=%016llx)\n",
+	    master->start_time, end_time, end_time - master->start_time);
 
 	/* If we complete an offset, we probably need to transition
 	 * do a data read, check if that all makes sense
@@ -858,7 +872,7 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 {
 	struct p8_i2c_master_port *port;
 	struct i2c_request *req;
-	uint64_t status;
+	uint64_t status, now = mftb();
 	int rc;
 
 	/* If we are idle, just return, we'll catch error conditions
@@ -913,11 +927,11 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 		/* Mask status to avoid some unrelated bit overwriting
 		 * our pseudo-status "timeout" bit 63
 		 */
-		p8_i2c_status_error(port, req, status & I2C_STAT_ANY_ERR);
+		p8_i2c_status_error(port, req, status & I2C_STAT_ANY_ERR, now);
 	} else if (status & I2C_STAT_DATA_REQ)
 		p8_i2c_status_data_request(master, req, status);
 	else if (status & I2C_STAT_CMD_COMP)
-		p8_i2c_status_cmd_completion(master, req);
+		p8_i2c_status_cmd_completion(master, req, now);
 }
 
 static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
@@ -1092,6 +1106,8 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 		return OPAL_PARAMETER;
 	}
 	DBG("Command: %016llx, state: %d\n", cmd, master->state);
+
+	master->start_time = mftb();
 
 	/* Send command */
 	rc = xscom_write(master->chip_id, master->xscom_base + I2C_CMD_REG,
@@ -1272,10 +1288,10 @@ static void p8_i2c_timeout(struct timer *t __unused, void *data, uint64_t now)
 	/* Allright, we have a request and it has timed out ... */
 	log_simple_error(&e_info(OPAL_RC_I2C_TIMEOUT),
 			 "I2C: Request timeout !\n");
-	p8_i2c_print_debug_info(port, req);
+	p8_i2c_print_debug_info(port, req, now);
 
 	/* Use the standard error path */
-	p8_i2c_status_error(port, req, I2C_STAT_PSEUDO_TIMEOUT);
+	p8_i2c_status_error(port, req, I2C_STAT_PSEUDO_TIMEOUT, now);
  exit:
 	unlock(&master->lock);
 }
