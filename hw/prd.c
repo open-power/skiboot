@@ -34,6 +34,7 @@ static uint64_t ipoll_status[MAX_CHIPS];
 static struct opal_prd_msg prd_msg;
 static bool prd_msg_inuse, prd_active;
 static struct dt_node *prd_node;
+static bool prd_enabled = false;
 
 /* Locking:
  *
@@ -70,29 +71,6 @@ static uint64_t prd_ipoll_mask;
 #define PRD_P9_IPOLL_HOST_ATTN		PPC_BIT(4) /* Host attention */
 #define PRD_P9_IPOLL_MASK_INTR		PPC_BIT(5) /* Host interrupt */
 #define PRD_P9_IPOLL_MASK		PPC_BITMASK(0, 5)
-
-static int queue_prd_msg_hbrt(struct opal_prd_msg *msg,
-		void (*consumed)(void *data))
-{
-	uint64_t *buf;
-
-	BUILD_ASSERT(sizeof(*msg) / sizeof(uint64_t) == 4);
-
-	buf = (uint64_t *)msg;
-
-	return _opal_queue_msg(OPAL_MSG_PRD, msg, consumed, 4, buf);
-}
-
-static int queue_prd_msg_nop(struct opal_prd_msg *msg,
-		void (*consumed)(void *data))
-{
-	(void)msg;
-	(void)consumed;
-	return OPAL_UNSUPPORTED;
-}
-
-static int (*queue_prd_msg)(struct opal_prd_msg *msg,
-		void (*consumed)(void *data)) = queue_prd_msg_nop;
 
 static void send_next_pending_event(void);
 
@@ -199,7 +177,13 @@ static void send_next_pending_event(void)
 		occ_msg_queue_occ_reset();
 	}
 
-	queue_prd_msg(&prd_msg, prd_msg_consumed);
+	/*
+	 * We always need to handle PSI interrupts, but if the is PRD is
+	 * disabled then we shouldn't propagate PRD events to the host.
+	 */
+	if (prd_enabled)
+		_opal_queue_msg(OPAL_MSG_PRD, &prd_msg, prd_msg_consumed, 4,
+				(uint64_t *) &prd_msg);
 }
 
 static void __prd_event(uint32_t proc, uint8_t event)
@@ -364,6 +348,11 @@ static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 	return rc;
 }
 
+
+/*
+ * Initialise the Opal backend for the PRD daemon. This must be called from
+ * platform probe or init function.
+ */
 void prd_init(void)
 {
 	struct proc_chip *chip;
@@ -390,13 +379,8 @@ void prd_init(void)
 	}
 	unlock(&ipoll_lock);
 
-	if (fsp_present()) {
-		/* todo: FSP implementation */
-		queue_prd_msg = queue_prd_msg_nop;
-	} else {
-		queue_prd_msg = queue_prd_msg_hbrt;
-		opal_register(OPAL_PRD_MSG, opal_prd_msg, 1);
-	}
+	prd_enabled = true;
+	opal_register(OPAL_PRD_MSG, opal_prd_msg, 1);
 
 	prd_node = dt_new(opal_node, "diagnostics");
 	dt_add_property_strings(prd_node, "compatible", "ibm,opal-prd");
