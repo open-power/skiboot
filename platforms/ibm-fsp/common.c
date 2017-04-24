@@ -165,6 +165,9 @@ void ibm_fsp_init(void)
 	/* Setup console */
 	if (fsp_present())
 		fsp_console_add_nodes();
+
+	if (proc_gen >= proc_gen_p9)
+		prd_init();
 }
 
 void ibm_fsp_exit(void)
