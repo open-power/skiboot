@@ -78,6 +78,9 @@ DEFINE_LOG_ENTRY(OPAL_RC_I2C_RESET, OPAL_INPUT_OUTPUT_ERR_EVT, OPAL_I2C,
 #define I2C_CMD_WITH_ADDR		PPC_BIT(1)
 #define I2C_CMD_READ_CONT		PPC_BIT(2)
 #define I2C_CMD_WITH_STOP		PPC_BIT(3)
+#define I2C_CMD_INTR_STEERING		PPC_BITMASK(6,7) /* P9 */
+#define   I2C_CMD_INTR_STEER_HOST	1
+#define   I2C_CMD_INTR_STEER_OCC	2
 #define I2C_CMD_DEV_ADDR		PPC_BITMASK(8, 14)
 #define I2C_CMD_READ_NOT_WRITE		PPC_BIT(15)
 #define I2C_CMD_LEN_BYTES		PPC_BITMASK(16, 31)
@@ -311,7 +314,7 @@ static bool p8_i2c_has_irqs(struct p8_i2c_master *master)
 
 	chip = get_chip(master->chip_id);
 
-	/* The i2c interrurpt was only added to Murano DD2.1 and Venice
+	/* The i2c interrupts was only added to Murano DD2.1 and Venice
 	 * DD2.0. When operating without interrupts, we need to bump the
 	 * timeouts as we rely solely on the polls from Linux which can
 	 * be up to 2s apart !
@@ -324,6 +327,8 @@ static bool p8_i2c_has_irqs(struct p8_i2c_master *master)
 	case PROC_CHIP_P8_VENICE:
 		return chip->ec_level >= 0x20;
 	case PROC_CHIP_P8_NAPLES:
+	case PROC_CHIP_P9_NIMBUS:
+	case PROC_CHIP_P9_CUMULUS:
 		return true;
 	default:
 		return false;
@@ -817,6 +822,7 @@ static void p8_i2c_complete_offset(struct p8_i2c_master *master,
 		I2C_CMD_WITH_STOP | I2C_CMD_READ_NOT_WRITE;
 	cmd = SETFIELD(I2C_CMD_DEV_ADDR, cmd, req->dev_addr);
 	cmd = SETFIELD(I2C_CMD_LEN_BYTES, cmd, req->rw_len);
+	cmd = SETFIELD(I2C_CMD_INTR_STEERING, cmd, I2C_CMD_INTR_STEER_HOST);
 
 	DBG("Command: %016llx, state: %d\n", cmd, master->state);
 
@@ -1084,6 +1090,7 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	/* Set up the command register */
 	cmd = I2C_CMD_WITH_START | I2C_CMD_WITH_ADDR;
 	cmd = SETFIELD(I2C_CMD_DEV_ADDR, cmd, req->dev_addr);
+	cmd = SETFIELD(I2C_CMD_INTR_STEERING, cmd, I2C_CMD_INTR_STEER_HOST);
 	switch (req->op) {
 	case I2C_READ:
 		cmd |= I2C_CMD_READ_NOT_WRITE;
