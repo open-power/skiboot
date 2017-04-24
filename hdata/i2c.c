@@ -31,6 +31,7 @@ static struct dt_node *get_i2cm_node(struct dt_node *xscom, int engine)
 {
 	uint64_t xscom_base = P9_I2CM_XSCOM_BASE + P9_I2CM_XSCOM_SIZE * engine;
 	struct dt_node *i2cm;
+	uint64_t freq, clock;
 
 	i2cm = dt_find_by_name_addr(xscom, "i2cm", xscom_base);
 	if (!i2cm) {
@@ -45,8 +46,12 @@ static struct dt_node *get_i2cm_node(struct dt_node *xscom, int engine)
 		dt_add_property_cells(i2cm, "#address-cells", 1);
 		dt_add_property_cells(i2cm, "chip-engine#", engine);
 
-		/* XXX: verify this */
-		dt_add_property_cells(i2cm, "clock-frequency", 150000000);
+		freq = dt_prop_get_u64_def(xscom, "bus-frequency", 0);
+		clock = (u32)(freq / 4);
+		if (clock)
+			dt_add_property_cells(i2cm, "clock-frequency", clock);
+		else
+			dt_add_property_cells(i2cm, "clock-frequency", 150000000);
 	}
 
 	return i2cm;
@@ -73,7 +78,7 @@ static struct dt_node *get_bus_node(struct dt_node *i2cm, int port, int freq)
 		 * reduce the frequency to something that all devices
 		 * can tolerate.
 		 */
-		dt_add_property_cells(bus, "bus-frequency", freq);
+		dt_add_property_cells(bus, "bus-frequency", freq * 1000);
 	}
 
 	return bus;
