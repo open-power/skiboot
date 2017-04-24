@@ -186,6 +186,7 @@ enum p8_i2c_master_type {
 struct p8_i2c_master {
 	struct lock		lock;		/* Lock to guard the members */
 	enum p8_i2c_master_type	type;		/* P8 vs. Centaur */
+	uint64_t		start_time;	/* Request start time */
 	uint64_t		poll_interval;	/* Polling interval  */
 	uint64_t		byte_timeout;	/* Timeout per byte */
 	uint64_t		xscom_base;	/* xscom base of i2cm */
@@ -1485,8 +1486,8 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	init_timer(&master->recovery, p8_i2c_recover, master);
 	init_timer(&master->sensor_cache, p8_i2c_enable_scache, master);
 
-	prlog(PR_INFO, "I2C: Chip %08x Eng. %d\n",
-	      master->chip_id, master->engine_id);
+	prlog(PR_INFO, "I2C: Chip %08x Eng. %d Clock %d Mhz\n",
+	      master->chip_id, master->engine_id, lb_freq / 1000000);
 
 	/* Disable OCC cache during inits */
 	if (master->type == I2C_CENTAUR) {
