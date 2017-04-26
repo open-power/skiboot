@@ -53,6 +53,7 @@
 #include <chip.h>
 #include <chiptod.h>
 #include <xive.h>
+#include <xscom-p9-regs.h>
 
 /* Enable this to disable error interrupts for debug purposes */
 #define DISABLE_ERR_INTS
@@ -3408,7 +3409,6 @@ static void phb4_create(struct dt_node *np)
 }
 
 /* Hack for assigning global MMIO space */
-#define MMIO_CHIP_STRIDE 0x0000040000000000ULL
 #define	PHB_BAR_BASE     0x000600c3c0000000ULL
 #define	PHB_BAR_SIZE     0x0000000000100000ULL
 #define	ESB_BAR_BASE     0x000600c300000000ULL

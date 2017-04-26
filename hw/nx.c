@@ -21,10 +21,62 @@
 #include <io.h>
 #include <cpu.h>
 #include <nx.h>
+#include <chip.h>
+#include <xscom-p9-regs.h>
+
+#define MMIO_CALC(__c, __b) \
+	(MMIO_CHIP_STRIDE * (__c) | __b)
+
+extern void nx_p9_rng_init(void);
+
+void nx_p9_rng_init(void)
+{
+	struct proc_chip *chip;
+	struct cpu_thread *c;
+	uint64_t bar, tmp;
+
+	if (proc_gen != proc_gen_p9)
+		return;
+	if (chip_quirk(QUIRK_NO_RNG))
+		return;
+
+	/*
+	 * Two things we need to setup here:
+	 *
+	 * 1) The per chip BAR for the NX RNG region. The location of
+	 *    this is determined by the global MMIO Map.
+
+	 * 2) The per core BAR for the DARN BAR, which points to the
+	 *    per chip RNG region set in 1.
+	 *
+	 */
+	for_each_chip(chip) {
+		/* 1) NX RNG BAR */
+		bar = MMIO_CALC(chip->id, P9X_NX_MMIO_OFFSET);
+		xscom_write(chip->id, P9X_NX_MMIO_BAR,
+			    bar | P9X_NX_MMIO_BAR_EN);
+		/* Read config register for pace info */
+		xscom_read(chip->id, P9X_NX_RNG_CFG, &tmp);
+		prlog(PR_INFO, "%x NX RNG pace:%lli)\n", chip->id,
+		      0xffff & (tmp >> 2));
+
+		/* 2) DARN BAR */
+		for_each_available_core_in_chip(c, chip->id) {
+			uint64_t addr;
+			addr = XSCOM_ADDR_P9_EX(pir_to_core_id(c->pir),
+						P9X_EX_NCU_DARN_BAR);
+			xscom_write(chip->id, addr,
+				    bar | P9X_EX_NCU_DARN_BAR_EN);
+		}
+	}
+}
+
 
 void nx_init(void)
 {
 	struct dt_node *node;
+
+	nx_p9_rng_init();
 
 	dt_for_each_compatible(dt_root, node, "ibm,power-nx") {
 		nx_create_rng_node(node);

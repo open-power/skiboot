@@ -7,6 +7,17 @@
 #define   P9X_EX_NCU_SPEC_BAR_ENABLE		PPC_BIT(0)
 #define   P9X_EX_NCU_SPEC_BAR_256K		PPC_BIT(1)
 #define   P9X_EX_NCU_SPEC_BAR_ADDRMSK		0x0fffffffffffc000ull /* naturally aligned */
+
+#define MMIO_CHIP_STRIDE			0x0000040000000000ull
+
+#define P9X_NX_MMIO_BAR				0x201108d
+#define  P9X_NX_MMIO_BAR_EN			PPC_BIT(52)
+#define  P9X_NX_MMIO_OFFSET			0x00060302031d0000ull
+
+#define P9X_NX_RNG_CFG				0x20110E0
+#define  P9X_NX_RNG_CFG_EN			PPC_BIT(63)
+
 #define P9X_EX_NCU_DARN_BAR			0x11011
+#define  P9X_EX_NCU_DARN_BAR_EN			PPC_BIT(0)
 
 #endif /* __XSCOM_P9_REGS_H__ */
