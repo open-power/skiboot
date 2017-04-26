@@ -48,14 +48,28 @@ static struct dt_node *prd_node;
 static struct lock events_lock = LOCK_UNLOCKED;
 static struct lock ipoll_lock = LOCK_UNLOCKED;
 
+static uint64_t prd_ipoll_mask_reg;
+static uint64_t prd_ipoll_status_reg;
+static uint64_t prd_ipoll_mask;
+
 /* PRD registers */
-#define PRD_IPOLL_REG_MASK	0x01020013
-#define PRD_IPOLL_REG_STATUS	0x01020014
-#define PRD_IPOLL_XSTOP		PPC_BIT(0) /* Xstop for host/core/millicode */
-#define PRD_IPOLL_RECOV		PPC_BIT(1) /* Recoverable */
-#define PRD_IPOLL_SPEC_ATTN	PPC_BIT(2) /* Special attention */
-#define PRD_IPOLL_HOST_ATTN	PPC_BIT(3) /* Host attention */
-#define PRD_IPOLL_MASK		PPC_BITMASK(0, 3)
+#define PRD_P8_IPOLL_REG_MASK		0x01020013
+#define PRD_P8_IPOLL_REG_STATUS		0x01020014
+#define PRD_P8_IPOLL_XSTOP		PPC_BIT(0) /* Xstop for host/core/millicode */
+#define PRD_P8_IPOLL_RECOV		PPC_BIT(1) /* Recoverable */
+#define PRD_P8_IPOLL_SPEC_ATTN		PPC_BIT(2) /* Special attention */
+#define PRD_P8_IPOLL_HOST_ATTN		PPC_BIT(3) /* Host attention */
+#define PRD_P8_IPOLL_MASK		PPC_BITMASK(0, 3)
+
+#define PRD_P9_IPOLL_REG_MASK		0x000F0033
+#define PRD_P9_IPOLL_REG_STATUS		0x000F0034
+#define PRD_P9_IPOLL_XSTOP		PPC_BIT(0) /* Xstop for host/core/millicode */
+#define PRD_P9_IPOLL_RECOV		PPC_BIT(1) /* Recoverable */
+#define PRD_P9_IPOLL_SPEC_ATTN		PPC_BIT(2) /* Special attention */
+#define PRD_P9_IPOLL_UNIT_CS		PPC_BIT(3) /* Unit Xstop */
+#define PRD_P9_IPOLL_HOST_ATTN		PPC_BIT(4) /* Host attention */
+#define PRD_P9_IPOLL_MASK_INTR		PPC_BIT(5) /* Host interrupt */
+#define PRD_P9_IPOLL_MASK		PPC_BITMASK(0, 5)
 
 static int queue_prd_msg_hbrt(struct opal_prd_msg *msg,
 		void (*consumed)(void *data))
@@ -130,7 +144,7 @@ static int populate_ipoll_msg(struct opal_prd_msg *msg, uint32_t proc)
 	int rc;
 
 	lock(&ipoll_lock);
-	rc = xscom_read(proc, PRD_IPOLL_REG_MASK, &ipoll_mask);
+	rc = xscom_read(proc, prd_ipoll_mask_reg, &ipoll_mask);
 	unlock(&ipoll_lock);
 
 	if (rc) {
@@ -207,7 +221,7 @@ static int __ipoll_update_mask(uint32_t proc, bool set, uint64_t bits)
 	uint64_t mask;
 	int rc;
 
-	rc = xscom_read(proc, PRD_IPOLL_REG_MASK, &mask);
+	rc = xscom_read(proc, prd_ipoll_mask_reg, &mask);
 	if (rc)
 		return rc;
 
@@ -216,7 +230,7 @@ static int __ipoll_update_mask(uint32_t proc, bool set, uint64_t bits)
 	else
 		mask &= ~bits;
 
-	return xscom_write(proc, PRD_IPOLL_REG_MASK, mask);
+	return xscom_write(proc, prd_ipoll_mask_reg, mask);
 }
 
 static int ipoll_record_and_mask_pending(uint32_t proc)
@@ -225,8 +239,8 @@ static int ipoll_record_and_mask_pending(uint32_t proc)
 	int rc;
 
 	lock(&ipoll_lock);
-	rc = xscom_read(proc, PRD_IPOLL_REG_STATUS, &status);
-	status &= PRD_IPOLL_MASK;
+	rc = xscom_read(proc, prd_ipoll_status_reg, &status);
+	status &= prd_ipoll_mask;
 	if (!rc)
 		__ipoll_update_mask(proc, true, status);
 	unlock(&ipoll_lock);
@@ -270,7 +284,7 @@ static int prd_msg_handle_attn_ack(struct opal_prd_msg *msg)
 
 	lock(&ipoll_lock);
 	rc = __ipoll_update_mask(msg->attn_ack.proc, false,
-			msg->attn_ack.ipoll_ack & PRD_IPOLL_MASK);
+			msg->attn_ack.ipoll_ack & prd_ipoll_mask);
 	unlock(&ipoll_lock);
 
 	if (rc)
@@ -286,7 +300,7 @@ static int prd_msg_handle_init(struct opal_prd_msg *msg)
 	lock(&ipoll_lock);
 	for_each_chip(chip) {
 		__ipoll_update_mask(chip->id, false,
-			msg->init.ipoll & PRD_IPOLL_MASK);
+			msg->init.ipoll & prd_ipoll_mask);
 	}
 	unlock(&ipoll_lock);
 
@@ -311,7 +325,7 @@ static int prd_msg_handle_fini(void)
 
 	lock(&ipoll_lock);
 	for_each_chip(chip) {
-		__ipoll_update_mask(chip->id, true, PRD_IPOLL_MASK);
+		__ipoll_update_mask(chip->id, true, prd_ipoll_mask);
 	}
 	unlock(&ipoll_lock);
 
@@ -354,10 +368,25 @@ void prd_init(void)
 {
 	struct proc_chip *chip;
 
+	switch (proc_gen) {
+	case proc_gen_p8:
+		prd_ipoll_mask_reg = PRD_P8_IPOLL_REG_MASK;
+		prd_ipoll_status_reg = PRD_P8_IPOLL_REG_STATUS;
+		prd_ipoll_mask = PRD_P8_IPOLL_MASK;
+		break;
+	case proc_gen_p9:
+		prd_ipoll_mask_reg = PRD_P9_IPOLL_REG_MASK;
+		prd_ipoll_status_reg = PRD_P9_IPOLL_REG_STATUS;
+		prd_ipoll_mask = PRD_P9_IPOLL_MASK;
+		break;
+	default:
+		assert(0);
+	}
+
 	/* mask everything */
 	lock(&ipoll_lock);
 	for_each_chip(chip) {
-		__ipoll_update_mask(chip->id, true, PRD_IPOLL_MASK);
+		__ipoll_update_mask(chip->id, true, prd_ipoll_mask);
 	}
 	unlock(&ipoll_lock);
 
