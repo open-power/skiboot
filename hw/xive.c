@@ -3372,8 +3372,14 @@ static uint64_t xive_convert_irq_flags(uint64_t iflags)
 
 	if (iflags & XIVE_SRC_STORE_EOI)
 		oflags |= OPAL_XIVE_IRQ_STORE_EOI;
-	if (iflags & XIVE_SRC_TRIGGER_PAGE)
+
+	/* OPAL_XIVE_IRQ_TRIGGER_PAGE is only meant to be set if
+	 * the interrupt has a *separate* trigger page.
+	 */
+	if ((iflags & XIVE_SRC_EOI_PAGE1) &&
+	    (iflags & XIVE_SRC_TRIGGER_PAGE))
 		oflags |= OPAL_XIVE_IRQ_TRIGGER_PAGE;
+
 	if (iflags & XIVE_SRC_LSI)
 		oflags |= OPAL_XIVE_IRQ_LSI;
 	if (iflags & XIVE_SRC_SHIFT_BUG)
@@ -3422,13 +3428,16 @@ static int64_t opal_xive_get_irq_info(uint32_t girq,
 
 	mm_base = (uint64_t)s->esb_mmio + (1ull << s->esb_shift) * idx;
 
+	/* The EOI page can either be the first or second page */
 	if (s->flags & XIVE_SRC_EOI_PAGE1) {
 		uint64_t p1off = 1ull << (s->esb_shift - 1);
 		eoi_page = mm_base + p1off;
-		if (s->flags & XIVE_SRC_TRIGGER_PAGE)
-			trig_page = mm_base;
 	} else
 		eoi_page = mm_base;
+
+	/* The trigger page, if it exists, is always the first page */
+	if (s->flags & XIVE_SRC_TRIGGER_PAGE)
+		trig_page = mm_base;
 
 	if (out_eoi_page)
 		*out_eoi_page = eoi_page;
