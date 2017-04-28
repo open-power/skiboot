@@ -791,6 +791,20 @@ static void add_nx(void)
 	}
 }
 
+static void add_nmmu(void)
+{
+	struct dt_node *xscom, *nmmu;
+
+	/* Nest MMU only exists on POWER9 */
+	if (proc_gen != proc_gen_p9)
+		return;
+
+	dt_for_each_compatible(dt_root, xscom, "ibm,xscom") {
+		nmmu = dt_new_addr(xscom, "nmmu", 0x5012c40);
+		dt_add_property_strings(nmmu, "compatible", "ibm,power9-nest-mmu");
+		dt_add_property_cells(nmmu, "reg", 0x5012c40, 0x20);
+	}
+}
 
 static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 {
@@ -1264,6 +1278,9 @@ int parse_hdat(bool is_opal)
 
 	/* Add NX */
 	add_nx();
+
+	/* Add nest mmu */
+	add_nmmu();
 
 	/* Add IO HUBs and/or PHBs */
 	io_parse();
