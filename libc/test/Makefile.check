@@ -13,7 +13,7 @@ LCOV_EXCLUDE += $(LIBC_TEST:%=%.c) $(LIBC_DUALLIB_TEST:%=%.c) $(LIBC_DUALLIB_TES
 
 .PHONY : libc-check libc-coverage
 libc-check: $(LIBC_TEST:%=%-check) $(LIBC_DUALLIB_TEST:%=%-check)
-lib-coverage: $(LIBC_TEST:%=%-gcov-run) $(LIBC_DUALLIB_TEST:%=%-gcov-run)
+libc-coverage: $(LIBC_TEST:%=%-gcov-run) $(LIBC_DUALLIB_TEST:%=%-gcov-run)
 
 check: libc-check
 coverage: libc-coverage
