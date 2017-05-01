@@ -10,6 +10,9 @@ ibm,opal
    ibm,opal/*
 
 
+[TODO: Floating code segment needs a home]
+------------------------------------------
+
 .. code-block:: dts
 
    ibm,opal {

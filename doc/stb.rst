@@ -1,8 +1,8 @@
 .. _stb-overview:
 
-===============================
-Secure and Truted Boot Overview
-===============================
+================================
+Secure and Trusted Boot Overview
+================================
 
 Just as a quick reference::
 
