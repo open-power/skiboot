@@ -10,6 +10,9 @@ ibm,opal
    ibm,opal/*
 
 
+Top level ibm,opal node
+-----------------------
+
 .. code-block:: dts
 
    ibm,opal {
@@ -46,3 +49,4 @@ ibm,opal
 		opal-msg-size = <0x48>;
 		opal-runtime-size = <0x0 0x9a00000>;
 		phandle = <0x10000003>;
+    };

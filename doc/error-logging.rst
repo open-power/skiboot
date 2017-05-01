@@ -285,7 +285,7 @@ OPAL maintains below lists:
 * Free list      : List of free nodes.
 * Pending list   : List of nodes which is yet to be read by the POWERNV.
 * Processed list : List of nodes which has been read but still waiting for
-			acknowledgement.
+  acknowledgement.
 
 Below is the structure of the node: ::
 
