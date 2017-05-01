@@ -57,7 +57,7 @@ void nx_p9_rng_init(void)
 			    bar | P9X_NX_MMIO_BAR_EN);
 		/* Read config register for pace info */
 		xscom_read(chip->id, P9X_NX_RNG_CFG, &tmp);
-		prlog(PR_INFO, "%x NX RNG pace:%lli)\n", chip->id,
+		prlog(PR_INFO, "NX RNG[%x] pace:%lli\n", chip->id,
 		      0xffff & (tmp >> 2));
 
 		/* 2) DARN BAR */
