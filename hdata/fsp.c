@@ -55,6 +55,7 @@ static enum sp_type find_service_proc_type(const struct HDIF_common_hdr *spss,
 	flags  = be16_to_cpu(sp_impl->func_flags);
 
 	switch (hw_ver) {
+	case 0x1:
 	case 0x2: /* We only support FSP2 */
 		sp_type = SP_FSP;
 		break;
