@@ -8,8 +8,6 @@
 #define   P9X_EX_NCU_SPEC_BAR_256K		PPC_BIT(1)
 #define   P9X_EX_NCU_SPEC_BAR_ADDRMSK		0x0fffffffffffc000ull /* naturally aligned */
 
-#define MMIO_CHIP_STRIDE			0x0000040000000000ull
-
 #define P9X_NX_MMIO_BAR				0x201108d
 #define  P9X_NX_MMIO_BAR_EN			PPC_BIT(52)
 #define  P9X_NX_MMIO_OFFSET			0x00060302031d0000ull

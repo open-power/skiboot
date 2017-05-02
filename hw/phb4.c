@@ -54,6 +54,7 @@
 #include <chiptod.h>
 #include <xive.h>
 #include <xscom-p9-regs.h>
+#include <phys-map.h>
 
 /* Enable this to disable error interrupts for debug purposes */
 #define DISABLE_ERR_INTS
@@ -3419,19 +3420,6 @@ static void phb4_create(struct dt_node *np)
 	dt_add_property_string(np, "status", "error");
 }
 
-/* Hack for assigning global MMIO space */
-#define	PHB_BAR_BASE     0x000600c3c0000000ULL
-#define	PHB_BAR_SIZE     0x0000000000100000ULL
-#define	ESB_BAR_BASE     0x000600c300000000ULL
-#define	ESB_BAR_SIZE     0x0000000020000000ULL
-#define	MMIO0_BAR_BASE   0x0006000000000000ULL
-#define	MMIO0_BAR_SIZE   0x0000002000000000ULL
-#define	MMIO1_BAR_BASE   0x000600c000000000ULL
-#define	MMIO1_BAR_SIZE   0x0000000080000000ULL
-
-#define MMIO_CALC(__c, __p, __b) \
-	(MMIO_CHIP_STRIDE * (__c) | __b##_SIZE * (__p) | __b##_BASE)
-
 static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 			     uint32_t nest_base, uint32_t pci_base)
 {
@@ -3444,12 +3432,14 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	uint64_t mmio_win[4];
 	unsigned int mmio_win_sz;
 	struct dt_node *np;
+	struct proc_chip *chip;
 	char *path;
 	uint64_t capp_ucode_base;
 	unsigned int max_link_speed;
 	bool force_assign;
 
 	gcid = dt_get_chip_id(stk_node);
+	chip = get_chip(gcid);
 	stk_index = dt_prop_get_u32(stk_node, "reg");
 	phb_num = dt_prop_get_u32(stk_node, "ibm,phb-index");
 	path = dt_get_path(stk_node);
@@ -3478,7 +3468,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	xscom_read(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR, &phb_bar);
 	if (phb_bar == 0 || force_assign) {
 		prerror("PHB[%d:%d] No PHB BAR set ! Overriding\n", gcid, phb_num);
-		phb_bar = MMIO_CALC(gcid, phb_num, PHB_BAR);
+		phys_map_get(chip, PHB4_REG_SPC, phb_num, &phb_bar, NULL);
 		xscom_write(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR, phb_bar << 8);
 	}
 	bar_en |= XPEC_NEST_STK_BAR_EN_PHB;
@@ -3491,7 +3481,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	xscom_read(gcid, nest_stack + XPEC_NEST_STK_IRQ_BAR, &irq_bar);
 	if (irq_bar == 0 || force_assign) {
 		prerror("PHB[%d:%d] No IRQ BAR set ! Overriding\n", gcid, phb_num);
-		irq_bar = MMIO_CALC(gcid, phb_num, ESB_BAR);
+		phys_map_get(chip, PHB4_XIVE_ESB, phb_num, &irq_bar, NULL);
 		xscom_write(gcid, nest_stack + XPEC_NEST_STK_IRQ_BAR, irq_bar << 8);
 	}
 	bar_en |= XPEC_NEST_STK_BAR_EN_INT;
@@ -3504,13 +3494,13 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	xscom_read(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0, &mmio0_bar);
 	if (mmio0_bar == 0 || force_assign) {
 		prerror("PHB[%d:%d] No MMIO BAR set ! Overriding\n", gcid, phb_num);
-		mmio0_bar = MMIO_CALC(gcid, phb_num, MMIO0_BAR);
-		mmio0_bmask =  (~(MMIO0_BAR_SIZE - 1)) & 0x00FFFFFFFFFFFFFFULL;
+		phys_map_get(chip, PHB4_64BIT_MMIO, phb_num, &mmio0_bar, &mmio0_sz);
+		mmio0_bmask =  (~(mmio0_sz - 1)) & 0x00FFFFFFFFFFFFFFULL;
 		xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0, mmio0_bar << 8);
 		xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0_MASK, mmio0_bmask << 8);
 
-		mmio1_bar = MMIO_CALC(gcid, phb_num, MMIO1_BAR);
-		mmio1_bmask =  (~(MMIO1_BAR_SIZE - 1)) & 0x00FFFFFFFFFFFFFFULL;
+		phys_map_get(chip, PHB4_32BIT_MMIO, phb_num, &mmio1_bar, &mmio1_sz);
+		mmio1_bmask =  (~(mmio1_sz - 1)) & 0x00FFFFFFFFFFFFFFULL;
 		xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1, mmio1_bar << 8);
 		xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1_MASK, mmio1_bmask << 8);
 	}
