@@ -3436,7 +3436,6 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	char *path;
 	uint64_t capp_ucode_base;
 	unsigned int max_link_speed;
-	bool force_assign;
 
 	gcid = dt_get_chip_id(stk_node);
 	chip = get_chip(gcid);
@@ -3446,13 +3445,6 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	prlog(PR_NOTICE, "PHB: Chip %d Found PHB4 PBCQ%d Stack %d at %s\n",
 	      gcid, pec_index, stk_index, path);
 	free(path);
-
-#if 0
-	force_assign = dt_has_node_property(stk_node,
-					    "force-assign-bars", NULL);
-#else
-	force_assign=1;
-#endif
 
 	pci_stack = pci_base + 0x40 * (stk_index + 1);
 	nest_stack = nest_base + 0x40 * (stk_index + 1);
@@ -3464,63 +3456,34 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	/* Default BAR enables */
 	bar_en = 0;
 
-	/* Get and/or initialize PHB register BAR */
-	xscom_read(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR, &phb_bar);
-	if (phb_bar == 0 || force_assign) {
-		prerror("PHB[%d:%d] No PHB BAR set ! Overriding\n", gcid, phb_num);
-		phys_map_get(chip, PHB4_REG_SPC, phb_num, &phb_bar, NULL);
-		xscom_write(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR, phb_bar << 8);
-	}
+	/* Initialize PHB register BAR */
+	phys_map_get(chip, PHB4_REG_SPC, phb_num, &phb_bar, NULL);
+	xscom_write(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR, phb_bar << 8);
 	bar_en |= XPEC_NEST_STK_BAR_EN_PHB;
 
-	xscom_read(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR, &phb_bar);
-	phb_bar >>= 8;
-	prlog(PR_ERR, "PHB[%d:%d] REGS     = 0x%016llx [4k]\n", gcid, phb_num, phb_bar);
 
 	/* Same with INT BAR (ESB) */
-	xscom_read(gcid, nest_stack + XPEC_NEST_STK_IRQ_BAR, &irq_bar);
-	if (irq_bar == 0 || force_assign) {
-		prerror("PHB[%d:%d] No IRQ BAR set ! Overriding\n", gcid, phb_num);
-		phys_map_get(chip, PHB4_XIVE_ESB, phb_num, &irq_bar, NULL);
-		xscom_write(gcid, nest_stack + XPEC_NEST_STK_IRQ_BAR, irq_bar << 8);
-	}
+	phys_map_get(chip, PHB4_XIVE_ESB, phb_num, &irq_bar, NULL);
+	xscom_write(gcid, nest_stack + XPEC_NEST_STK_IRQ_BAR, irq_bar << 8);
 	bar_en |= XPEC_NEST_STK_BAR_EN_INT;
 
-	xscom_read(gcid, nest_stack + XPEC_NEST_STK_IRQ_BAR, &irq_bar);
-	irq_bar >>= 8;
-	prlog(PR_ERR, "PHB[%d:%d] ESB      = 0x%016llx [...]\n", gcid, phb_num, irq_bar);
 
 	/* Same with MMIO windows */
-	xscom_read(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0, &mmio0_bar);
-	if (mmio0_bar == 0 || force_assign) {
-		prerror("PHB[%d:%d] No MMIO BAR set ! Overriding\n", gcid, phb_num);
-		phys_map_get(chip, PHB4_64BIT_MMIO, phb_num, &mmio0_bar, &mmio0_sz);
-		mmio0_bmask =  (~(mmio0_sz - 1)) & 0x00FFFFFFFFFFFFFFULL;
-		xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0, mmio0_bar << 8);
-		xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0_MASK, mmio0_bmask << 8);
+	phys_map_get(chip, PHB4_64BIT_MMIO, phb_num, &mmio0_bar, &mmio0_sz);
+	mmio0_bmask =  (~(mmio0_sz - 1)) & 0x00FFFFFFFFFFFFFFULL;
+	xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0, mmio0_bar << 8);
+	xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0_MASK, mmio0_bmask << 8);
 
-		phys_map_get(chip, PHB4_32BIT_MMIO, phb_num, &mmio1_bar, &mmio1_sz);
-		mmio1_bmask =  (~(mmio1_sz - 1)) & 0x00FFFFFFFFFFFFFFULL;
-		xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1, mmio1_bar << 8);
-		xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1_MASK, mmio1_bmask << 8);
-	}
+	phys_map_get(chip, PHB4_32BIT_MMIO, phb_num, &mmio1_bar, &mmio1_sz);
+	mmio1_bmask =  (~(mmio1_sz - 1)) & 0x00FFFFFFFFFFFFFFULL;
+	xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1, mmio1_bar << 8);
+	xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1_MASK, mmio1_bmask << 8);
 	bar_en |= XPEC_NEST_STK_BAR_EN_MMIO0 | XPEC_NEST_STK_BAR_EN_MMIO1;
 
-	xscom_read(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0, &mmio0_bar);
-	xscom_read(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR0_MASK, &mmio0_bmask);
-	mmio0_bmask &= 0xffffffffff000000ull;
-	mmio0_sz = ((~mmio0_bmask) >> 8) + 1;
-	mmio0_bar >>= 8;
-	prlog(PR_DEBUG, "PHB[%d:%d] MMIO0    = 0x%016llx [0x%016llx]\n",
-	      gcid, phb_num, mmio0_bar, mmio0_sz);
-
-	xscom_read(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1, &mmio1_bar);
-	xscom_read(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1_MASK, &mmio1_bmask);
-	mmio1_bmask &= 0xffffffffff000000ull;
-	mmio1_sz = ((~mmio1_bmask) >> 8) + 1;
-	mmio1_bar >>= 8;
-	prlog(PR_DEBUG, "PHB[%d:%d] MMIO1    = 0x%016llx [0x%016llx]\n",
-	      gcid, phb_num, mmio1_bar, mmio1_sz);
+	prlog(PR_ERR, "PHB[%d:%d]   PHB@0x%016llx   IRQ@0x%016llx\n",
+	      gcid, phb_num, phb_bar, irq_bar);
+	prlog(PR_ERR, "PHB[%d:%d] MMIO0@0x%016llx MMIO1@0x%016llx \n",
+	      gcid, phb_num, mmio0_bar, mmio1_bar);
 
 	/* Build MMIO windows list */
 	mmio_win_sz = 0;
@@ -3548,13 +3511,13 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 
 	/* Check ETU reset */
 	xscom_read(gcid, pci_stack + XPEC_PCI_STK_ETU_RESET, &val);
-	prlog(PR_ERR, "ETU reset: %llx\n", val);
+	prlog_once(PR_ERR, "ETU reset: %llx\n", val);
 	xscom_write(gcid, pci_stack + XPEC_PCI_STK_ETU_RESET, 0);
 	time_wait_ms(1);
 
 	// show we can read phb mmio space
 	foo = (void *)(phb_bar + 0x800); // phb version register
-	prlog(PR_ERR, "Version reg: 0x%016llx\n", in_be64(foo));
+	prlog_once(PR_ERR, "Version reg: 0x%016llx\n", in_be64(foo));
 
 	/* Create PHB node */
 	reg[0] = phb_bar;
