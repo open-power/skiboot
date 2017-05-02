@@ -196,6 +196,10 @@ if { [info exists env(SKIBOOT_NVRAM)] } {
 
 # Add device tree entry for NVRAM
 set reserved_memory [mysim of addchild $root_node "reserved-memory" ""]
+mysim of addprop $reserved_memory int "#size-cells" 2
+mysim of addprop $reserved_memory int "#address-cells" 2
+mysim of addprop $reserved_memory empty "ranges" ""
+
 set fake_nvram_node [mysim of addchild $reserved_memory "ibm,fake-nvram" ""]
 set reg [list $fake_nvram_start $fake_nvram_size ]
 mysim of addprop $fake_nvram_node array64 "reg" reg
