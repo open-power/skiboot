@@ -47,6 +47,7 @@
 #include <nvram.h>
 #include <libstb/stb.h>
 #include <libstb/container.h>
+#include <phys-map.h>
 
 enum proc_gen proc_gen;
 unsigned int pcie_max_link_speed;
@@ -827,6 +828,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 * later on (FSP console code for example)
 	 */
 	opal_table_init();
+
+	/* Init the physical map table so we can start mapping things */
+	phys_map_init();
 
 	/*
 	 * If we are coming in with a flat device-tree, we expand it
