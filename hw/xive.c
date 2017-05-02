@@ -23,6 +23,7 @@
 #include <timebase.h>
 #include <bitmap.h>
 #include <buddy.h>
+#include <phys-map.h>
 
 /* Use Block group mode to move chip_id into block .... */
 #define USE_BLOCK_GROUP_MODE
@@ -105,11 +106,6 @@
 #define IPI_ESB_SHIFT	(16 + 1)
 #define EQ_ESB_SHIFT	(16 + 1)
 
-#define IC_BAR_DEFAULT	0x30203100000ull
-#define IC_BAR_SIZE	(8 * IC_PAGE_SIZE)
-#define TM_BAR_DEFAULT	0x30203180000ull
-#define TM_BAR_SIZE	(4 * TM_PAGE_SIZE)
-
 /* VC BAR contains set translations for the ESBs and the EQs.
  *
  * It's divided in 64 sets, each of which can be either ESB pages or EQ pages.
@@ -125,18 +121,11 @@
  * of ENDs (16 sets) for the time being. IE. Each set is thus 8GB
  */
 
-#define VC_BAR_DEFAULT	0x10000000000ull
-#define VC_BAR_SIZE	0x08000000000ull
 #define VC_ESB_SETS	48
 #define VC_END_SETS	16
 #define VC_MAX_SETS	64
 
-/* PC BAR contains the virtual processors
- *
- * The table configuring the set translation (16 sets) is the VDT
- */
-#define PC_BAR_DEFAULT	0x18000000000ull
-#define PC_BAR_SIZE	0x01000000000ull
+/* The table configuring the PC set translation (16 sets) is the VDT */
 #define PC_MAX_SETS	16
 
 /* XXX This is the currently top limit of number of ESB/SBE entries
@@ -1559,15 +1548,12 @@ static bool xive_read_bars(struct xive *x)
 
 static bool xive_configure_bars(struct xive *x)
 {
-	uint64_t mmio_base, chip_base, val;
-
-	/* Calculate MMIO base offset for that chip */
-	mmio_base = 0x006000000000000ull;
-	chip_base = mmio_base | (0x40000000000ull * (uint64_t)x->chip_id);
+	struct proc_chip chip;
+	struct proc_chip *c = get_chip(x->chip_id);
+	uint64_t val;
 
 	/* IC BAR */
-	x->ic_base = (void *)(chip_base | IC_BAR_DEFAULT);
-	x->ic_size = IC_BAR_SIZE;
+	phys_map_get(c, XIVE_IC, 0, (uint64_t *)&x->ic_base, &x->ic_size);
 	val = (uint64_t)x->ic_base | CQ_IC_BAR_VALID;
 	if (IC_PAGE_SIZE == 0x10000) {
 		val |= CQ_IC_BAR_64K;
@@ -1579,10 +1565,11 @@ static bool xive_configure_bars(struct xive *x)
 		return false;
 
 	/* TM BAR, only configure TM1. Note that this has the same address
-	 * for each chip !!!
+	 * for each chip !!!  Hence we create a fake chip 0 and use that for
+	 * all phys_map_get(XIVE_TM) calls.
 	 */
-	x->tm_base = (void *)(mmio_base | TM_BAR_DEFAULT);
-	x->tm_size = TM_BAR_SIZE;
+	chip.id = 0;
+	phys_map_get(&chip, XIVE_TM, 0, (uint64_t *)&x->tm_base, &x->tm_size);
 	val = (uint64_t)x->tm_base | CQ_TM_BAR_VALID;
 	if (TM_PAGE_SIZE == 0x10000) {
 		x->tm_shift = 16;
@@ -1597,12 +1584,11 @@ static bool xive_configure_bars(struct xive *x)
 		return false;
 
 	/* PC BAR. Clear first, write mask, then write value */
-	x->pc_base = (void *)(chip_base | PC_BAR_DEFAULT);
-	x->pc_size = PC_BAR_SIZE;
+	phys_map_get(c, XIVE_PC, 0, (uint64_t *)&x->pc_base, &x->pc_size);
 	xive_regwx(x, CQ_PC_BAR, 0);
 	if (x->last_reg_error)
 		return false;
-	val = ~(PC_BAR_SIZE - 1) & CQ_PC_BARM_MASK;
+	val = ~(x->pc_size - 1) & CQ_PC_BARM_MASK;
 	xive_regwx(x, CQ_PC_BARM, val);
 	if (x->last_reg_error)
 		return false;
@@ -1612,12 +1598,11 @@ static bool xive_configure_bars(struct xive *x)
 		return false;
 
 	/* VC BAR. Clear first, write mask, then write value */
-	x->vc_base = (void *)(chip_base | VC_BAR_DEFAULT);
-	x->vc_size = VC_BAR_SIZE;
+	phys_map_get(c, XIVE_VC, 0, (uint64_t *)&x->vc_base, &x->vc_size);
 	xive_regwx(x, CQ_VC_BAR, 0);
 	if (x->last_reg_error)
 		return false;
-	val = ~(VC_BAR_SIZE - 1) & CQ_VC_BARM_MASK;
+	val = ~(x->vc_size - 1) & CQ_VC_BARM_MASK;
 	xive_regwx(x, CQ_VC_BARM, val);
 	if (x->last_reg_error)
 		return false;
@@ -1941,7 +1926,7 @@ static void xive_setup_forward_ports(struct xive *x, struct proc_chip *remote_ch
 	/* NVT/VPD points to the remote NVT MMIO sets */
 	if (!xive_set_vsd(x, VST_TSEL_VPDT, remote_id,
 			  base | ((uint64_t)remote_xive->pc_base) |
-			  SETFIELD(VSD_TSIZE, 0ull, ilog2(PC_BAR_SIZE) - 12)))
+			  SETFIELD(VSD_TSIZE, 0ull, ilog2(x->pc_size) - 12)))
 		goto error;
 
 	return;
