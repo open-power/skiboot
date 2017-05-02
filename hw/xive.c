@@ -3935,6 +3935,11 @@ static void xive_cleanup_cpu_tma(struct cpu_thread *c)
 		  PC_TCTXT_INDIR_VALID |
 		  SETFIELD(PC_TCTXT_INDIR_THRDID, 0ull, c->pir & 0xff));
 
+	/* Workaround for HW issue: Need to read the above register
+	 * back before doing the subsequent accesses
+	 */
+	xive_regr(x, PC_TCTXT_INDIR0);
+
 	/* Pull user context, OS context and Pool context if any */
 	in_be32(ind_tm_base + TM_SPC_PULL_USR_CTX);
 	in_be32(ind_tm_base + TM_SPC_PULL_OS_CTX);
@@ -4392,6 +4397,11 @@ static int64_t opal_xive_dump_tm(uint32_t offset, const char *n, uint32_t pir)
 	xive_regw(x, PC_TCTXT_INDIR0,
 		  PC_TCTXT_INDIR_VALID |
 		  SETFIELD(PC_TCTXT_INDIR_THRDID, 0ull, pir & 0xff));
+
+	/* Workaround for HW issue: Need to read the above register
+	 * back before doing the subsequent accesses
+	 */
+	xive_regr(x, PC_TCTXT_INDIR0);
 
 	v0 = in_be64(ind_tm_base + offset);
 	v1 = in_be64(ind_tm_base + offset + 8);
