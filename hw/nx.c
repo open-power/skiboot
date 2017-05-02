@@ -23,9 +23,7 @@
 #include <nx.h>
 #include <chip.h>
 #include <xscom-p9-regs.h>
-
-#define MMIO_CALC(__c, __b) \
-	(MMIO_CHIP_STRIDE * (__c) | __b)
+#include <phys-map.h>
 
 extern void nx_p9_rng_init(void);
 
@@ -52,7 +50,7 @@ void nx_p9_rng_init(void)
 	 */
 	for_each_chip(chip) {
 		/* 1) NX RNG BAR */
-		bar = MMIO_CALC(chip->id, P9X_NX_MMIO_OFFSET);
+		phys_map_get(chip, NX_RNG, 0, &bar, NULL);
 		xscom_write(chip->id, P9X_NX_MMIO_BAR,
 			    bar | P9X_NX_MMIO_BAR_EN);
 		/* Read config register for pace info */
