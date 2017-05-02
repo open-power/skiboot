@@ -21,6 +21,8 @@
 #include <ccan/str/str.h>
 #include <interrupts.h>
 #include <inttypes.h>
+#include <phys-map.h>
+#include <chip.h>
 
 #include "hdata.h"
 
@@ -316,12 +318,9 @@ static void bmc_create_node(const struct HDIF_common_hdr *sp)
 		return;
 
 #define GB (1024ul * 1024ul * 1024ul)
-#define MMIO_LPC_BASE_P9 0x6030000000000ul
-#define MMIO_STRIDE_P9     0x40000000000ul
-
 	chip_id = be32_to_cpu(iopath->lpc.chip_id);
 
-	lpcm_base = MMIO_LPC_BASE_P9 + MMIO_STRIDE_P9 * chip_id;
+	phys_map_get(get_chip(chip_id), LPC_BUS, 0, &lpcm_base, NULL);
 	lpcm = dt_new_addr(dt_root, "lpcm-opb", lpcm_base);
 	assert(lpcm);
 
