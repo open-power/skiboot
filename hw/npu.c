@@ -1152,6 +1152,7 @@ static void npu_probe_phb(struct dt_node *dn)
 	dt_add_property_cells(np, "ibm,npcq", dn->phandle);
 	dt_add_property_cells(np, "ibm,links", links);
 	dt_add_property(np, "ibm,mmio-window", mm_win, sizeof(mm_win));
+	dt_add_property_cells(np, "ibm,phb-diag-data-size", 0);
 }
 
 static void npu_dev_populate_vendor_cap(struct npu_dev_cap *cap)
