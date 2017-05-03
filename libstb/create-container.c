@@ -115,6 +115,7 @@ void getSigRaw(ecc_signature_t *sigraw, char *inFile)
 	memcpy(*sigraw, outbuf, 2*EC_COORDBYTES);
 
 	ECDSA_SIG_free(signature);
+	close(fdin);
 
 	return;
 }
@@ -122,7 +123,7 @@ void getSigRaw(ecc_signature_t *sigraw, char *inFile)
 void writeHdr(void *hdr, const char *outFile, int hdr_type)
 {
 	int fdout;
-	int r, hdr_sz;
+	int r, hdr_sz=0;
 	const char *lead;
 	unsigned char md[SHA512_DIGEST_LENGTH];
 
