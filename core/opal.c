@@ -347,6 +347,10 @@ static void add_opal_firmware_exports_node(struct dt_node *node)
 	dt_add_property_u64s(exports, "symbol_map", sym_start, sym_size);
 	dt_add_property_u64s(exports, "hdat_map", SPIRA_HEAP_BASE,
 				SPIRA_HEAP_SIZE);
+#ifdef SKIBOOT_GCOV
+	dt_add_property_u64s(exports, "gcov", SKIBOOT_BASE,
+				HEAP_BASE - SKIBOOT_BASE);
+#endif
 }
 
 static void add_opal_firmware_node(void)

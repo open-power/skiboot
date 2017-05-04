@@ -89,7 +89,6 @@ void skiboot_gcov_done(void)
 	printf("GCOV: gcov_info_list at 0x%p\n", gcov_info_list);
 }
 
-
 void __gcov_merge_add(gcov_type *counters, unsigned int n_counters)
 {
 	(void)counters;
