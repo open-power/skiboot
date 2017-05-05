@@ -53,17 +53,9 @@ struct npu2_bar {
 #define NPU2_BAR_FLAG_ENABLED0	0x0080
 #define NPU2_BAR_FLAG_ENABLED1  0x0100
 	uint32_t		flags;
-
-#define NPU2_BAR_TYPE_GLOBAL	0
-#define NPU2_BAR_TYPE_PHY	1
-#define NPU2_BAR_TYPE_NTL	2
-#define NPU2_BAR_TYPE_GENID	3
-#define NPU2_BAR_TYPE_MAX	4
-	uint32_t		type;
-	uint64_t		reg;
-	uint64_t		stack;
 	uint64_t		base;
 	uint64_t		size;
+	uint64_t		reg;
 };
 
 /* Rpresents a BAR that is exposed via the PCIe emulated
@@ -72,9 +64,7 @@ struct npu2_pcie_bar {
 #define NPU2_PCIE_BAR_FLAG_SIZE_HI	0x0020
 #define NPU2_PCIE_BAR_FLAG_TRAPPED	0x0040
 	uint32_t		flags;
-	struct npu2_bar		*npu2_bar;
-	uint64_t		base;
-	uint64_t		size;
+	struct npu2_bar		npu2_bar;
 };
 
 struct npu2;
