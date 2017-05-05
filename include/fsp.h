@@ -368,6 +368,10 @@
 #define FSP_CMD_DEEP_REBOOT	0x1ce4e04 /* HV->FSP: Deep IPL */
 #define FSP_CMD_INIT_DPO	0x0ce5b00 /* FSP->HV: Initialize Delayed Power Off */
 #define FSP_RSP_INIT_DPO	0x0cedb00 /* HV->FSP: Response for DPO init command */
+#define FSP_CMD_GET_HIR_PLID	0x0ce0900 /* FSP->HV: Get Platform Log ID with
+					   * reason for Host Initiated Reset.
+					   */
+#define FSP_RSP_GET_HIR_PLID	0x0ce8900 /* HV->FSP: Reply with PLID */
 #define FSP_CMD_PANELSTATUS	0x0ce5c00 /* FSP->HV */
 #define FSP_CMD_PANELSTATUS_EX1	0x0ce5c02 /* FSP->HV */
 #define FSP_CMD_PANELSTATUS_EX2	0x0ce5c03 /* FSP->HV */
@@ -808,7 +812,7 @@ extern void fsp_ipmi_init(void);
 
 /* Reset/Reload */
 extern void fsp_reinit_fsp(void);
-extern void fsp_trigger_reset(void);
+extern void fsp_trigger_reset(uint32_t plid);
 extern void fsp_reset_links(void);
 extern bool fsp_in_rr(void);
 

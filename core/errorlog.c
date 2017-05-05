@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,7 +196,7 @@ void log_append_msg(struct errorlog *buf, const char *fmt, ...)
 	log_append_data(buf, err_msg, strlen(err_msg));
 }
 
-void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
+uint32_t log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
 {
 	struct errorlog *buf;
 	va_list list;
@@ -212,10 +212,13 @@ void log_simple_error(struct opal_err_info *e_info, const char *fmt, ...)
 	buf = opal_elog_create(e_info, 0);
 	if (buf == NULL) {
 		prerror("ELOG: Error getting buffer to log error\n");
-	} else {
-		log_append_data(buf, err_msg, strlen(err_msg));
-		log_commit(buf);
+		return -1;
 	}
+
+	log_append_data(buf, err_msg, strlen(err_msg));
+	log_commit(buf);
+
+	return buf->plid;
 }
 
 int elog_init(void)
