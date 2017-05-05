@@ -196,7 +196,7 @@ static void npu2_write_bar(struct npu2 *p,
 		if (p)
 			npu2_write(p, reg, val);
 		else
-			npu2_scom_write(gcid, scom, reg, val, NPU2_MISC_DA_LEN_8B);
+			npu2_scom_write(gcid, scom, reg, NPU2_MISC_DA_LEN_8B, val);
 	}
 }
 
