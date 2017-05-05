@@ -44,29 +44,43 @@ missing parts, patches are welcome!)
 See doc/overview.txt for a more in depth overview of skiboot.
 
 ## Building
-You can build on a linux host. Modern Debian and Ubuntu are well known
-to be suitable. Build and testing on x86 is fine. You do not need a POWER
-host to build and test skiboot.
 
-You will need a C compiler for big endian ppc64. If your distro does
-not provide one, crosstool built compilers work well:
-https://www.kernel.org/pub/tools/crosstool/
+Any host OS can build and test skiboot provided it has a C cross compiler
+for *big endian* powerpc64. All good Linux distributions (and several bad
+ones) provide a packaged compiler that can be installed through the usual
+package management tools.
 
-You should then be able to just (where 4=nr cpu cores of your machine)
-
+To build on Ubuntu:
 ```
-make -j4
-make -j4 check
+apt-get install gcc-powerpc64le-linux-gnu gcc valgrind \
+	expect libssl-dev device-tree-compiler
+CROSS=powerpc64-linux-gnu- make -j`nproc`
 ```
 
-If using crosstool compilers, add /opt/cross/gcc-4.8.0-nolibc/powerpc64-linux/bin/
-to your PATH.
+To build on Fedora:
+```
+dnf install gcc-powerpc64-linux-gnu binutils-powerpc64-linux-gnu gcc make \
+    diffutils findutils expect valgrind-devel dtc openssl-devel
+CROSS=powerpc64-linux-gnu- make -j`nproc`
+```
 
-If using packaged cross compilers on Ubuntu, you may need to set the
-following environment variable:
-CROSS=powerpc-linux-gnu-
+On any POWER system with a bi-endian system compiler:
+```
+CROSS="" make -j`nproc`
+```
+
+Alternatively, pre-built cross compilers for x86 systems can be downloaded
+from here: https://www.kernel.org/pub/tools/crosstool/ When using
+these compilers add /opt/cross/gcc-4.8.0-nolibc/powerpc64-linux/bin/
+to your PATH. Once this is done skiboot can be compiler by just running `make`
 
 ## Testing
+Skiboot comes with a set of unit tests that can be run on your desktop.
+They can can be run with:
+```
+make check
+```
+
 To test in a simulator, install the IBM POWER8 Functional Simulator from:
 http://www-304.ibm.com/support/customercare/sas/f/pwrfs/home.html
 Also see external/mambo/README.md
