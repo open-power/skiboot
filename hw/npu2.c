@@ -1183,6 +1183,7 @@ static void assign_mmio_bars(uint64_t gcid, uint32_t scom, uint64_t reg[2], uint
  */
 static void npu2_probe_phb(struct dt_node *dn)
 {
+	struct proc_chip *proc_chip;
 	struct dt_node *np;
 	uint32_t gcid, scom, index, phb_index, links;
 	uint64_t reg[2], mm_win[2];
@@ -1191,6 +1192,12 @@ static void npu2_probe_phb(struct dt_node *dn)
 	/* Retrieve chip id */
 	path = dt_get_path(dn);
 	gcid = dt_get_chip_id(dn);
+	assert(proc_chip = get_chip(gcid));
+	if ((proc_chip->ec_level & 0xf0) != 0x10) {
+		prerror("NPU2: unsupported ec level on Chip 0x%x!\n", gcid);
+		return;
+	}
+
 	index = dt_prop_get_u32(dn, "ibm,npu-index");
 	phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
 	links = dt_prop_get_u32(dn, "ibm,npu-links");
