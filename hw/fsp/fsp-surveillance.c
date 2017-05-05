@@ -75,15 +75,12 @@ static void fsp_surv_check_timeout(void)
 	 * just go ahead and check timeouts.
 	 */
 	if (tb_compare(now, surv_ack_timer) == TB_AAFTERB) {
-		/* XXX: We should be logging a PEL to the host, assuming
-		 * the FSP is dead, pending a R/R.
-		 */
-		log_simple_error(&e_info(OPAL_RC_SURVE_ACK),
+		uint32_t plid = log_simple_error(&e_info(OPAL_RC_SURVE_ACK),
 			"SURV: Surv ACK timed out; initiating R/R\n");
 
 		/* Reset the pending trigger too */
 		fsp_surv_ack_pending = false;
-		fsp_trigger_reset();
+		fsp_trigger_reset(plid);
 	}
 
 	return;
@@ -142,10 +139,10 @@ static void fsp_surv_got_param(uint32_t param_id __unused, int err_len,
 			       void *data __unused)
 {
 	if (err_len != 4) {
-		log_simple_error(&e_info(OPAL_RC_SURVE_STATUS),
+		uint32_t plid = log_simple_error(&e_info(OPAL_RC_SURVE_STATUS),
 		"SURV: Error (%d) retrieving surv status; initiating R/R\n",
 			err_len);
-		fsp_trigger_reset();
+		fsp_trigger_reset(plid);
 		return;
 	}
 

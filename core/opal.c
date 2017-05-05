@@ -29,6 +29,7 @@
 #include <affinity.h>
 #include <opal-msg.h>
 #include <timer.h>
+#include <errorlog.h>
 
 /* Pending events to signal via opal_poll_events */
 uint64_t opal_pending_events;
@@ -49,6 +50,13 @@ static uint64_t opal_dynamic_events;
 
 extern uint32_t attn_trigger;
 extern uint32_t hir_trigger;
+
+/* We make this look like a Surveillance error, even though it really
+ * isn't one.
+ */
+DEFINE_LOG_ENTRY(OPAL_INJECTED_HIR, OPAL_MISC_ERR_EVT, OPAL_SURVEILLANCE,
+		OPAL_SURVEILLANCE_ERR, OPAL_PREDICTIVE_ERR_GENERAL,
+		OPAL_MISCELLANEOUS_INFO_ONLY);
 
 void opal_table_init(void)
 {
@@ -331,7 +339,9 @@ static int64_t opal_poll_events(uint64_t *outstanding_event_mask)
 
 	/* Test the host initiated reset */
 	if (hir_trigger == 0xdeadbeef) {
-		fsp_trigger_reset();
+		uint32_t plid = log_simple_error(&e_info(OPAL_INJECTED_HIR),
+			"SURV: Injected HIR, initiating FSP R/R\n");
+		fsp_trigger_reset(plid);
 		hir_trigger = 0;
 	}
 

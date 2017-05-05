@@ -259,6 +259,7 @@ enum opal_reasoncode {
 	OPAL_RC_SURVE_INIT      = OPAL_SU | 0x10,
 	OPAL_RC_SURVE_STATUS	= OPAL_SU | 0x11,
 	OPAL_RC_SURVE_ACK	= OPAL_SU | 0x12,
+	OPAL_INJECTED_HIR	= OPAL_SU | 0x13,
 /* SYSPARAM */
 	OPAL_RC_SYSPARM_INIT    = OPAL_SP | 0x10,
 	OPAL_RC_SYSPARM_MSG     = OPAL_SP | 0x11,
@@ -311,8 +312,9 @@ enum opal_reasoncode {
 	OPAL_RC_SLW_GET		= OPAL_SL | 0x12,
 	OPAL_RC_SLW_REG		= OPAL_SL | 0x13,
 /* FSP	*/
-	OPAL_RC_FSP_POLL_TIMEOUT
-				= OPAL_FP | 0x10,
+	OPAL_RC_FSP_POLL_TIMEOUT    = OPAL_FP | 0x10,
+	OPAL_RC_FSP_MBOX_ERR	    = OPAL_FP | 0x11,
+	OPAL_RC_FSP_DISR_HIR_MASK   = OPAL_FP | 0x12,
 /* I2C */
 	OPAL_RC_I2C_INIT	= OPAL_IC | 0X10,
 	OPAL_RC_I2C_START_REQ	= OPAL_IC | 0X11,
@@ -337,9 +339,12 @@ severity, subtype) static struct opal_err_info err_##reason =		\
 
 /* This is wrapper around the error log function, which creates
  * and commits the error to FSP.
- * Used for simple error logging
+ * Used for simple error logging.
+ * Returns a Log ID, if an error involves a service processor needing
+ * to be kicked, this logid can be sent to the service processor explaining
+ * *why* we kicked it. Log Id = -1 on error.
  */
-void log_simple_error(struct opal_err_info *e_info,
+uint32_t log_simple_error(struct opal_err_info *e_info,
 		const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 
 #define e_info(reason_code) err_##reason_code
