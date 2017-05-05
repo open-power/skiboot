@@ -1847,6 +1847,7 @@ static int64_t phb4_get_presence_state(struct pci_slot *slot, uint8_t *val)
 	PHBDBG(p, "hp_status=0x%016llx, dlp_train_ctl=0x%016llx\n",
 	       hps, dtctl);
 
+	*val = OPAL_PCI_SLOT_PRESENT;
 	/* Check presence detect */
 	if (hps & PHB_PCIE_HPSTAT_PRESENCE) {
 		/* If it says not present but link is up, then we assume
@@ -1857,6 +1858,7 @@ static int64_t phb4_get_presence_state(struct pci_slot *slot, uint8_t *val)
 			PHBERR(p, "Presence detect 0 but link set !\n");
 			return OPAL_SHPC_DEV_PRESENT;
 		}
+		*val = OPAL_PCI_SLOT_EMPTY;
 		return OPAL_SHPC_DEV_NOT_PRESENT;
 	}
 
