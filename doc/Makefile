@@ -7,6 +7,22 @@ SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
 
+# Variables for OPF Docbook conversion
+RMDIR         = rm -rf
+DBEXT         = rst2db-opf
+GIT           = git
+CP            = cp
+MAVEN         = mvn
+OPFMASTER     = https://github.com/OpenPOWERFoundation/Docs-Master.git
+OPFTEMPLATE   = https://github.com/OpenPOWERFoundation/Docs-Template.git
+DBDIR         = $(BUILDDIR)/docbook
+MASTERDIR     = $(BUILDDIR)/Docs-Master
+TEMPLATEDIR   = $(BUILDDIR)/Docs-Template
+OPFBLDDIR     = $(TEMPLATEDIR)/rst_template
+OPFDOCDIR     = $(OPFBLDDIR)/target/docbkx/webhelp
+OPFDBDIR      = $(DBDIR)/opf_docbook
+PROCXML       = opf_docbook.py
+
 # User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
 $(error The '$(SPHINXBUILD)' command was not found. Make sure you have Sphinx installed, then set the SPHINXBUILD environment variable to point to the full path of the '$(SPHINXBUILD)' executable. Alternatively you can add the directory with the executable to your PATH. If you don't have Sphinx installed, grab it from http://sphinx-doc.org/)
@@ -19,7 +35,7 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext
+.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext docbook
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -45,9 +61,11 @@ help:
 	@echo "  pseudoxml  to make pseudoxml-XML files for display purposes"
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
+	@echo "  docbook    to make Docbook files"
 
 clean:
-	rm -rf $(BUILDDIR)/*
+	$(RMDIR) $(BUILDDIR)/*
+	#rm $(PROCXML) >/dev/null 2>&1
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
@@ -142,7 +160,7 @@ texinfo:
 info:
 	$(SPHINXBUILD) -b texinfo $(ALLSPHINXOPTS) $(BUILDDIR)/texinfo
 	@echo "Running Texinfo files through makeinfo..."
-	make -C $(BUILDDIR)/texinfo info
+	$(MAKE) -C $(BUILDDIR)/texinfo info
 	@echo "makeinfo finished; the Info files are in $(BUILDDIR)/texinfo."
 
 gettext:
@@ -175,3 +193,36 @@ pseudoxml:
 	$(SPHINXBUILD) -b pseudoxml $(ALLSPHINXOPTS) $(BUILDDIR)/pseudoxml
 	@echo
 	@echo "Build finished. The pseudo-XML files are in $(BUILDDIR)/pseudoxml."
+
+docbook:
+  # User-friendly check for docbook extension (opf_rst2db)
+  ifeq ($(shell which $(DBEXT) >/dev/null 2>&1; echo $$?), 1)
+  $(error The '$(DBEXT)' command was not found. Make sure you have Sphinx extension rst2db-opf installed. Grab it from https://pypi.python.org/pypi/rst2db-opf or pip install rst2db-opf.)
+  endif
+
+  # User-friend check for git
+  ifeq ($(shell which $(GIT) >/dev/null 2>&1; echo $$?), 1)
+  $(error The '$(GIT)' command was not found. Make sure you have git installed.)
+  endif
+
+	$(RMDIR) $(DBDIR)/doctrees/
+	$(SPHINXBUILD) -v -b docbook $(ALLSPHINXOPTS) $(DBDIR)
+	$(RMDIR) $(DBDIR)/doctrees/
+	@echo
+	@echo "Build finished. The XML files are in $(DBDIR)."
+	@echo "Cloning OpenPOWER Docbook template information"
+	if [ -d $(MASTERDIR) ]; then $(RMDIR) $(MASTERDIR);	fi;
+	$(GIT) clone $(OPFMASTER) $(MASTERDIR)
+	if [ -d $(TEMPLATEDIR) ];  then $(RMDIR) $(TEMPLATEDIR); fi;
+	$(GIT) clone $(OPFTEMPLATE) $(TEMPLATEDIR)
+	@echo "Retrieving conversion program from $(OPFBLDDIR)"
+	$(CP) $(OPFBLDDIR)/$(PROCXML) .
+	@echo "Starting conversion code"
+	python $(PROCXML) -b $(BUILDDIR) -d $(DBDIR) -m $(MASTERDIR) -t $(TEMPLATEDIR)
+	@echo
+	@echo "Conversion done, building OPF documents"
+	cd $(OPFBLDDIR); \
+	$(MAVEN) generate-sources
+	if [ -d $(OPFDOCDIR) ]; then cp -a $(OPFDOCDIR)/ $(OPFDBDIR); fi;
+	@echo
+	@echo "If build was successful, PDF and HTML will be found in $(OPFDBDIR)"

@@ -34,7 +34,7 @@ def setup(app):
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = ['openpowerfoundation.sphinx_ext.docbook_builder']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -50,7 +50,9 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'skiboot'
-copyright = u'2016, Stewart Smith, IBM, others'
+copyright_year = u'2016'
+copyright_holder = u'Stewart Smith, IBM, others'
+copyright = copyright_year + ', ' + copyright_holder
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -263,3 +265,46 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+# -- Options for Docbook output -------------------------------------------
+# docbook_template_file = 'opf_template.xml'
+docbook_default_root_element = 'section'
+docbook_standalone = 'False'
+
+# -- Settings for OpenPOWER Foundation Docbook output ---------------------
+# The following structure defines which files and tags in the OpenPOWER
+# Foundation Docs-Template/rst_template directory get updated.  The
+# opf_docbook.py file imports conf.py (this file) and uses the
+# opf_docbook_settings structure to replace tags in the respected files.
+#
+# The structure of the following hash is:
+#
+#   { file_name : { tag_name : tag_value, ... }, ... }
+#
+# The GitHub project containing the template and the tool can be
+# located at https://github.com/OpenPOWERFoundation/Docs-Template
+#
+opf_docbook_settings = {
+    u'pom.xml' :    { u'artifactId' : u'skiboot',
+                      u'name' : u'skiboot Documentation',
+                      u'disqusShortname' : u'skiboot',
+                      u'webhelpDirname' : u'skiboot',
+                      u'pdfFilenameBase' : u'skiboot',
+                      u'workProduct' : u'workgroupNotes',
+                      u'security' : u'public',
+                      u'documentStatus' : u'published' },
+
+    u'bk_main.xml': { u'title' : u'skiboot Documentation',
+                      u'subtitle' : u'',
+                      u'personname' : u'Stewart Smith, IBM, others',
+                      u'email' : u'TBD',
+                      u'year' : copyright_year,
+                      u'holder' : copyright_holder,
+                      u'releaseinfo' : version,
+                      u'abstract' : u'<para>The purpose of this document is ...</para>'+
+                                     '<para>This document is a Non-standard Track, Work Group Note work product owned by the '+
+                                     'System Software Workgroup and handled in compliance with the requirements outlined in the '+
+                                     '<citetitle>OpenPOWER Foundation Work Group (WG) Process</citetitle> document. '+
+                                     'Comments, questions, etc. can be submitted to the public mailing list  for this document at '+
+                                     '<email>TDB@mailinglist.openpowerfoundation.org</email>.</para>' }
+    }
