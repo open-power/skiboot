@@ -11,6 +11,8 @@
 	compatible = "ibm,powernv", "ibm,firenze";
 	nest-frequency = <0x0 0x77359400>;
 	vendor = "IBM";
+	ibm,io-base-loc-code = "U78C9.001.WZS0CWX-P1";
+	ibm,vpd-lx-info = <0x0 0x1040031 0x43003000>;
 	model = "8286-41A";
 	system-id = "TU00163";
 	system-brand = "S0";
@@ -467,7 +469,7 @@
 
 	interrupt-controller@3ffff80028000 {
 		phandle = <0x9>;
-		compatible = "ibm,ppc-xicp", "IBM,power7-icp";
+		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x28 0x8>;
 		interrupt-controller;
 		reg = <0x3ffff 0x80028000 0x0 0x1000 0x3ffff 0x80029000 0x0 0x1000 0x3ffff 0x8002a000 0x0 0x1000 0x3ffff 0x8002b000 0x0 0x1000 0x3ffff 0x8002c000 0x0 0x1000 0x3ffff 0x8002d000 0x0 0x1000 0x3ffff 0x8002e000 0x0 0x1000 0x3ffff 0x8002f000 0x0 0x1000>;
@@ -477,7 +479,7 @@
 
 	interrupt-controller@3ffff80060000 {
 		phandle = <0xd>;
-		compatible = "ibm,ppc-xicp", "IBM,power7-icp";
+		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x60 0x8>;
 		interrupt-controller;
 		reg = <0x3ffff 0x80060000 0x0 0x1000 0x3ffff 0x80061000 0x0 0x1000 0x3ffff 0x80062000 0x0 0x1000 0x3ffff 0x80063000 0x0 0x1000 0x3ffff 0x80064000 0x0 0x1000 0x3ffff 0x80065000 0x0 0x1000 0x3ffff 0x80066000 0x0 0x1000 0x3ffff 0x80067000 0x0 0x1000>;
@@ -487,7 +489,7 @@
 
 	interrupt-controller@3ffff80068000 {
 		phandle = <0x11>;
-		compatible = "ibm,ppc-xicp", "IBM,power7-icp";
+		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x68 0x8>;
 		interrupt-controller;
 		reg = <0x3ffff 0x80068000 0x0 0x1000 0x3ffff 0x80069000 0x0 0x1000 0x3ffff 0x8006a000 0x0 0x1000 0x3ffff 0x8006b000 0x0 0x1000 0x3ffff 0x8006c000 0x0 0x1000 0x3ffff 0x8006d000 0x0 0x1000 0x3ffff 0x8006e000 0x0 0x1000 0x3ffff 0x8006f000 0x0 0x1000>;
@@ -497,7 +499,7 @@
 
 	interrupt-controller@3ffff80130000 {
 		phandle = <0x15>;
-		compatible = "ibm,ppc-xicp", "IBM,power7-icp";
+		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0xb0 0x8>;
 		interrupt-controller;
 		reg = <0x3ffff 0x80130000 0x0 0x1000 0x3ffff 0x80131000 0x0 0x1000 0x3ffff 0x80132000 0x0 0x1000 0x3ffff 0x80133000 0x0 0x1000 0x3ffff 0x80134000 0x0 0x1000 0x3ffff 0x80135000 0x0 0x1000 0x3ffff 0x80136000 0x0 0x1000 0x3ffff 0x80137000 0x0 0x1000>;
@@ -507,7 +509,7 @@
 
 	interrupt-controller@3ffff80168000 {
 		phandle = <0x19>;
-		compatible = "ibm,ppc-xicp", "IBM,power7-icp";
+		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0xe8 0x8>;
 		interrupt-controller;
 		reg = <0x3ffff 0x80168000 0x0 0x1000 0x3ffff 0x80169000 0x0 0x1000 0x3ffff 0x8016a000 0x0 0x1000 0x3ffff 0x8016b000 0x0 0x1000 0x3ffff 0x8016c000 0x0 0x1000 0x3ffff 0x8016d000 0x0 0x1000 0x3ffff 0x8016e000 0x0 0x1000 0x3ffff 0x8016f000 0x0 0x1000>;
@@ -517,7 +519,7 @@
 
 	interrupt-controller@3ffff80170000 {
 		phandle = <0x1d>;
-		compatible = "ibm,ppc-xicp", "IBM,power7-icp";
+		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0xf0 0x8>;
 		interrupt-controller;
 		reg = <0x3ffff 0x80170000 0x0 0x1000 0x3ffff 0x80171000 0x0 0x1000 0x3ffff 0x80172000 0x0 0x1000 0x3ffff 0x80173000 0x0 0x1000 0x3ffff 0x80174000 0x0 0x1000 0x3ffff 0x80175000 0x0 0x1000 0x3ffff 0x80176000 0x0 0x1000 0x3ffff 0x80177000 0x0 0x1000>;
@@ -874,7 +876,7 @@
 		#address-cells = <0x1>;
 		#size-cells = <0x1>;
 		scom-controller;
-		compatible = "ibm,xscom", "ibm,power7-xscom";
+		compatible = "ibm,xscom", "ibm,power8-xscom";
 		reg = <0x3fc00 0x0 0x8 0x0>;
 		bus-frequency = <0x0 0x1dcd6500>;
 		ibm,dbob-id = <0x0>;
@@ -888,14 +890,14 @@
 		chiptod@40000 {
 			phandle = <0x49>;
 			reg = <0x40000 0x34>;
-			compatible = "ibm,power-chiptod", "ibm,power7-chiptod";
+			compatible = "ibm,power-chiptod", "ibm,power8-chiptod";
 			primary;
 		};
 
 		nx@2010000 {
 			phandle = <0x4b>;
 			reg = <0x2010000 0x4000>;
-			compatible = "ibm,power-nx", "ibm,power7-nx";
+			compatible = "ibm,power-nx", "ibm,power8-nx";
 		};
 
 		pbcq@2012000 {
@@ -920,10 +922,10 @@
 			ibm,lane-eq = <0x77777777 0x77777777 0x77777777 0x77777777 0x0 0x0 0x0 0x0>;
 		};
 
-		psihb@2010c00 {
+		psihb@2010900 {
 			phandle = <0x44>;
-			reg = <0x2010c00 0x10>;
-			compatible = "ibm,power7-psihb-x", "ibm,psihb-x";
+			reg = <0x2010900 0x20>;
+			compatible = "ibm,power8-psihb-x", "ibm,psihb-x";
 			boot-link;
 			status = "ok";
 		};
@@ -936,7 +938,7 @@
 		#address-cells = <0x1>;
 		#size-cells = <0x1>;
 		scom-controller;
-		compatible = "ibm,xscom", "ibm,power7-xscom";
+		compatible = "ibm,xscom", "ibm,power8-xscom";
 		reg = <0x3fc08 0x0 0x8 0x0>;
 		bus-frequency = <0x0 0x1dcd6500>;
 		ibm,dbob-id = <0x0>;
@@ -950,14 +952,14 @@
 		chiptod@40000 {
 			phandle = <0x4a>;
 			reg = <0x40000 0x34>;
-			compatible = "ibm,power-chiptod", "ibm,power7-chiptod";
+			compatible = "ibm,power-chiptod", "ibm,power8-chiptod";
 			secondary;
 		};
 
 		nx@2010000 {
 			phandle = <0x4c>;
 			reg = <0x2010000 0x4000>;
-			compatible = "ibm,power-nx", "ibm,power7-nx";
+			compatible = "ibm,power-nx", "ibm,power8-nx";
 		};
 
 		pbcq@2012000 {
@@ -982,10 +984,10 @@
 			ibm,lane-eq = <0x68686868 0x68686868 0x68686868 0x68686868 0x0 0x0 0x0 0x0>;
 		};
 
-		psihb@2010c00 {
+		psihb@2010900 {
 			phandle = <0x46>;
-			reg = <0x2010c00 0x10>;
-			compatible = "ibm,power7-psihb-x", "ibm,psihb-x";
+			reg = <0x2010900 0x20>;
+			compatible = "ibm,power8-psihb-x", "ibm,psihb-x";
 		};
 	};
 };

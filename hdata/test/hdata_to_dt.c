@@ -234,15 +234,19 @@ int main(int argc, char *argv[])
 			opt_count++;
 		} else if (strcmp(argv[i], "-7") == 0) {
 			fake_pvr_type = PVR_TYPE_P7;
+			proc_gen = proc_gen_p7;
 			opt_count++;
 		} else if (strcmp(argv[i], "-8E") == 0) {
 			fake_pvr_type = PVR_TYPE_P8;
+			proc_gen = proc_gen_p8;
 			opt_count++;
 		} else if (strcmp(argv[i], "-8") == 0) {
 			fake_pvr_type = PVR_TYPE_P8;
+			proc_gen = proc_gen_p8;
 			opt_count++;
 		} else if (strcmp(argv[i], "-9") == 0) {
 			fake_pvr_type = PVR_TYPE_P9;
+			proc_gen = proc_gen_p9;
 			opt_count++;
 		}
 	}
