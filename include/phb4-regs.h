@@ -235,6 +235,7 @@
 
 // FIXME add more here
 #define PHB_RC_CONFIG_BASE			0x1000
+#define   PHB_RC_CONFIG_SIZE			0x800
 
 /* PHB4 REGB registers */
 #define PHB_PBL_CONTROL				0x1800

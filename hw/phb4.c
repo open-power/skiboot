@@ -229,8 +229,10 @@ static int64_t phb4_rc_read(struct phb4 *p, uint32_t offset, uint8_t sz,
 		oval = p->rc_cache[(reg - 0x20) >> 2];
 		break;
 	default:
-		/* XXX Add ASB support ? */
-		oval = in_le32(p->regs + PHB_RC_CONFIG_BASE + reg);
+		oval = 0xffffffff; /* default if offset too big */
+		if (reg < PHB_RC_CONFIG_SIZE)
+			/* XXX Add ASB support ? */
+			oval = in_le32(p->regs + PHB_RC_CONFIG_BASE + reg);
 	}
 	switch (sz) {
 	case 1:
@@ -256,6 +258,9 @@ static int64_t phb4_rc_write(struct phb4 *p, uint32_t offset, uint8_t sz,
 	uint32_t reg = offset & ~3;
 	uint32_t old, mask, shift;
 	int64_t rc;
+
+	if (reg > PHB_RC_CONFIG_SIZE)
+		return OPAL_SUCCESS;
 
 	/* If size isn't 4-bytes, do a RMW cycle
 	 *
