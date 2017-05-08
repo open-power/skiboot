@@ -30,7 +30,6 @@
 #include <libfdt/libfdt.h>
 #include <opal-api.h>
 
-#ifdef __HAVE_LIBPORE__
 #include <p8_pore_table_gen_api.H>
 #include <sbe_xip_image.h>
 
@@ -39,7 +38,6 @@
 static uint32_t slw_saved_reset[MAX_RESET_PATCH_SIZE];
 
 static bool slw_current_le = false;
-#endif /* __HAVE_LIBPORE__ */
 
 /* SLW timer related stuff */
 static bool slw_has_timer;
@@ -65,7 +63,6 @@ DEFINE_LOG_ENTRY(OPAL_RC_SLW_REG, OPAL_PLATFORM_ERR_EVT, OPAL_SLW,
 		 OPAL_PLATFORM_FIRMWARE, OPAL_INFO,
 		 OPAL_NA);
 
-#ifdef __HAVE_LIBPORE__
 static void slw_do_rvwinkle(void *data)
 {
 	struct cpu_thread *cpu = this_cpu();
@@ -185,7 +182,6 @@ static void slw_unpatch_reset(void)
 	}
 	sync_icache();
 }
-#endif /* __HAVE_LIBPORE__ */
 
 static bool slw_general_init(struct proc_chip *chip, struct cpu_thread *c)
 {
@@ -320,7 +316,6 @@ static bool slw_set_overrides_p9(struct proc_chip *chip, struct cpu_thread *c)
 	return true;
 }
 
-#ifdef __HAVE_LIBPORE__
 static bool slw_unset_overrides(struct proc_chip *chip, struct cpu_thread *c)
 {
 	uint32_t core = pir_to_core_id(c->pir);
@@ -329,7 +324,6 @@ static bool slw_unset_overrides(struct proc_chip *chip, struct cpu_thread *c)
 	prlog(PR_DEBUG, "SLW: slw_unset_overrides %x:%x\n", chip->id, core);
 	return true;
 }
-#endif /* __HAVE_LIBPORE__ */
 
 static bool slw_set_idle_mode(struct proc_chip *chip, struct cpu_thread *c)
 {
@@ -927,7 +921,6 @@ void add_cpu_idle_state_properties(void)
 	free(pm_ctrl_reg_mask_buf);
 }
 
-#ifdef __HAVE_LIBPORE__
 static void slw_cleanup_core(struct proc_chip *chip, struct cpu_thread *c)
 {
 	uint64_t tmp;
@@ -1006,18 +999,7 @@ static void slw_patch_scans(struct proc_chip *chip, bool le_mode)
 		return;
 	}
 }
-#else
-static inline void slw_patch_scans(struct proc_chip *chip __unused,
-				   bool le_mode __unused ) { }
-#endif /* __HAVE_LIBPORE__ */
 
-#ifndef __HAVE_LIBPORE__
-int64_t __attrconst slw_reinit(uint64_t flags)
-{
-	(void)flags;
-	return OPAL_UNSUPPORTED;
-}
-#else
 int64_t slw_reinit(uint64_t flags)
 {
 	struct proc_chip *chip;
@@ -1132,9 +1114,7 @@ int64_t slw_reinit(uint64_t flags)
 
 	return OPAL_SUCCESS;
 }
-#endif /* __HAVE_LIBPORE__ */
 
-#ifdef __HAVE_LIBPORE__
 static void slw_patch_regs(struct proc_chip *chip)
 {
 	struct cpu_thread *c;
@@ -1159,7 +1139,6 @@ static void slw_patch_regs(struct proc_chip *chip)
 		/* XXX Add HIDs etc... */
 	}
 }
-#endif /* __HAVE_LIBPORE__ */
 
 static void slw_init_chip_p9(struct proc_chip *chip)
 {
@@ -1183,7 +1162,6 @@ static void slw_init_chip(struct proc_chip *chip)
 		return;
 	}
 
-#ifdef __HAVE_LIBPORE__
 	/* Check actual image size */
 	rc = sbe_xip_get_scalar((void *)chip->slw_base, "image_size",
 				&chip->slw_image_size);
@@ -1207,7 +1185,6 @@ static void slw_init_chip(struct proc_chip *chip)
 
 	/* Patch SLW image */
         slw_patch_regs(chip);
-#endif /* __HAVE_LIBPORE__ */
 
 	/* At power ON setup inits for fast-sleep */
 	for_each_available_core_in_chip(c, chip->id) {
@@ -1310,7 +1287,6 @@ static int64_t opal_config_cpu_idle_state(uint64_t state, uint64_t enter)
 
 opal_call(OPAL_CONFIG_CPU_IDLE_STATE, opal_config_cpu_idle_state, 2);
 
-#ifdef __HAVE_LIBPORE__
 int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 {
 
@@ -1356,7 +1332,6 @@ int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 }
 
 opal_call(OPAL_SLW_SET_REG, opal_slw_set_reg, 3);
-#endif /* __HAVE_LIBPORE__ */
 
 static void slw_dump_timer_ffdc(void)
 {

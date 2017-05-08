@@ -21,11 +21,6 @@ endif
 DEBUG ?= 0
 
 #
-# Set to enable SLW bits
-#
-PORE ?= 1
-
-#
 # Optional location of embedded linux kernel file
 # This can be a raw vmlinux, stripped vmlinux or
 # zImage.epapr

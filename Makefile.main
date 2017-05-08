@@ -53,9 +53,7 @@ DBG=-g
 
 CPPFLAGS := -I$(SRC)/include -Iinclude -MMD -include $(SRC)/include/config.h
 CPPFLAGS += -I$(SRC)/libfdt -I$(SRC)/libflash -I$(SRC)/libc/include -I$(SRC)
-ifeq ($(PORE),1)
-CPPFLAGS += -I$(SRC)/libpore -D__HAVE_LIBPORE__
-endif
+CPPFLAGS += -I$(SRC)/libpore
 CPPFLAGS += -D__SKIBOOT__ -nostdinc
 CPPFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 CPPFLAGS += -DBITS_PER_LONG=64 -DHAVE_BIG_ENDIAN
@@ -193,10 +191,7 @@ all: $(SUBDIRS) $(TARGET).lid $(TARGET).lid.xz $(TARGET).map extract-gcov
 all: $(TARGET).lid.stb $(TARGET).lid.xz.stb
 
 OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBFLASH) $(LIBSTB)
-ifeq ($(PORE),1)
-OBJS += $(LIBPORE)
-endif
-OBJS += $(LIBC) $(CCAN) $(DEVSRC_OBJ)
+OBJS += $(LIBC) $(CCAN) $(DEVSRC_OBJ) $(LIBPORE)
 OBJS_NO_VER = $(OBJS)
 ALL_OBJS = $(OBJS) version.o
 
