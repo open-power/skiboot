@@ -192,7 +192,7 @@ _exception:
 	stw	%r3,STACK_CR(%r1)
 	stw	%r4,STACK_XER(%r1)
 	std	%r5,STACK_CTR(%r1)
-	std	%r5,STACK_LR(%r1)
+	std	%r6,STACK_LR(%r1)
 	mfspr	%r3,SPR_SRR0
 	mfspr	%r4,SPR_SRR1
 	mfspr	%r5,SPR_HSRR0
