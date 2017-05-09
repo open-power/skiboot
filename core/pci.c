@@ -751,13 +751,16 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 			max_sub = pci_scan_bus(phb, next_bus, max_bus,
 					       &pd->children, pd, true);
 		} else if (!use_max) {
-			/* XXX Empty bridge... we leave room for hotplug
-			 * slots etc.. but we should be smarter at figuring
-			 * out if this is actually a hotpluggable one
+			/* Empty bridge. We leave room for hotplug
+			 * slots if the downstream port is pluggable.
 			 */
-			max_sub = next_bus + 4;
-			if (max_sub > max_bus)
-				max_sub = max_bus;
+			if (pd->slot && !pd->slot->pluggable)
+				max_sub = next_bus;
+			else {
+				max_sub = next_bus + 4;
+				if (max_sub > max_bus)
+					max_sub = max_bus;
+			}
 		}
 
 		/* Update the max subordinate as described previously */
