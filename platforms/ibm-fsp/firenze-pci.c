@@ -505,7 +505,8 @@ static int64_t firenze_pci_slot_freset(struct pci_slot *slot)
 					msecs_to_tb(FIRENZE_PCI_SLOT_DELAY));
 		}
 
-		/* Fall through: Power is off, turn it on */
+		/* Power is off, turn it on */
+		/* Fallthrough */
 	case FIRENZE_PCI_SLOT_FRESET_POWER_OFF:
 		/* Update last power status */
 		pval = (uint8_t *)(plat_slot->req->rw_buf);

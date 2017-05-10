@@ -406,7 +406,8 @@ static int64_t pcie_slot_sm_freset(struct pci_slot *slot)
 				PCI_SLOT_STATE_FRESET_POWER_OFF);
 			return pci_slot_set_sm_timeout(slot, msecs_to_tb(50));
 		}
-		/* No power state change, fall through */
+		/* No power state change, */
+		/* fallthrough */
 	case PCI_SLOT_STATE_FRESET_POWER_OFF:
 		PCIE_SLOT_DBG(slot, "FRESET: Power is off, turn on\n");
 		pcie_slot_set_power_state_ext(slot, PCI_SLOT_POWER_ON, false);
