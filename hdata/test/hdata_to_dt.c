@@ -112,6 +112,7 @@ static bool spira_check_ptr(const void *ptr, const char *file, unsigned int line
 #include "../../core/chip.c"
 #include "../../test/dt_common.c"
 #include "../../core/fdt.c"
+#include "../../hw/phys-map.c"
 
 #include <err.h>
 
@@ -266,6 +267,8 @@ int main(int argc, char *argv[])
 		     "\n"
 		     "Pipe to 'dtc -I dtb -O dts' for human readable\n");
 	}
+
+	phys_map_init();
 
 	/* Copy in spira dump (assumes little has changed!). */
 	if (new_spira) {
