@@ -573,8 +573,10 @@ void tpm_i2c_nuvoton_probe(void)
 			goto disable;
 		}
 		if (tpm_register_chip(node, tpm_device,
-				      &tpm_i2c_nuvoton_driver))
+				      &tpm_i2c_nuvoton_driver)) {
 			free(tpm_device);
+			continue;
+		}
 		bus = i2c_find_bus_by_id(tpm_device->bus_id);
 		assert(bus->check_quirk == NULL);
 		bus->check_quirk = nuvoton_tpm_quirk;
