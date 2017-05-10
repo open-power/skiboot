@@ -55,6 +55,7 @@
 #include <xive.h>
 #include <xscom-p9-regs.h>
 #include <phys-map.h>
+#include <nvram.h>
 
 /* Enable this to disable error interrupts for debug purposes */
 #define DISABLE_ERR_INTS
@@ -2850,9 +2851,13 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 	out_be64(p->regs + PHB_PCIE_CRESET,			   creset);
 
 	/* Init_16 - PHB Control */
-	out_be64(p->regs + PHB_CTRLR,
-		 PHB_CTRLR_IRQ_PGSZ_64K |
-		 SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_2_PER_PE));
+	val = PHB_CTRLR_IRQ_PGSZ_64K |
+		SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_2_PER_PE);
+
+	if (nvram_query_eq("pci-eeh-mmio", "disabled"))
+		val |= PHB_CTRLR_MMIO_EEH_DISABLE;
+
+	out_be64(p->regs + PHB_CTRLR, val);
 
 	/* Init_17..40 - Architected IODA3 inits */
 	phb4_init_ioda3(p);
