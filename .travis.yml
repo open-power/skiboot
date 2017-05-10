@@ -19,8 +19,6 @@ env:
 
 matrix:
   allow_failures:
-    - env: RUN_ON_CONTAINER=fedora24
-    - env: RUN_ON_CONTAINER=fedora25
     - env: RUN_ON_CONTAINER=fedora-rawhide
 
 sudo: required
