@@ -29,7 +29,7 @@ struct i2c_dev {
 
 static struct dt_node *get_i2cm_node(struct dt_node *xscom, int engine)
 {
-	uint64_t xscom_base = P9_I2CM_XSCOM_BASE + P9_I2CM_XSCOM_SIZE * engine;
+	uint64_t xscom_base = P9_I2CM_XSCOM_BASE + P9_I2CM_XSCOM_SIZE * (uint64_t)engine;
 	struct dt_node *i2cm;
 	uint64_t freq, clock;
 
