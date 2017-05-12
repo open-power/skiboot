@@ -150,7 +150,6 @@ static bool fsp_dpo_message(u32 cmd_sub_mod, struct fsp_msg *msg)
 		return true;
 	}
 
-	prerror("Unknown command 0x%x\n", cmd_sub_mod);
 	return false;
 }
 
