@@ -89,13 +89,14 @@ static void check_map_call(void)
 	struct proc_chip c;
 	uint64_t start, size, end;
 	const struct phys_map_entry *e;
-	struct map_call_entry *tbl, *t;
+	struct map_call_entry *tbl, *t, *tnext;
 	int tbl_size = 0;
 	bool passed;
 
 	for (e = phys_map->table; !phys_map_entry_null(e); e++)
 		tbl_size++;
 
+	tbl_size++; /* allow for null entry at end */
 	tbl_size *= sizeof(struct map_call_entry);
 	tbl = malloc(tbl_size);
 	assert(tbl != NULL);
@@ -141,6 +142,31 @@ static void check_map_call(void)
 		/* Insert entry at end of table */
 		t->start = start;
 		t->end = end;
+	}
+
+	for (t = tbl; !map_call_entry_null(t + 1); t++) {
+		tnext = t + 1;
+		/* Make sure the table is sorted */
+		if (t->start > tnext->start) {
+			printf("Phys map test FAILED: Entry not sorted\n");
+			printf("First:  addr:%016lx size:%016lx\n",
+			       t->start, t->end - t->start);
+			printf("Second:  addr:%016lx size:%016lx\n",
+			       tnext->start, tnext->end - tnext->start);
+			assert(0);
+		}
+
+		/* Look for holes in the table in MMIO region */
+		/* We assume over 1PB is MMIO. */
+		if ((t->end != tnext->start) &&
+		    (t->start > 0x0004000000000000)) {
+			printf("Phys map test FAILED: Hole in map\n");
+			printf("First:  addr:%016lx size:%016lx\n",
+			       t->start, t->end - t->start);
+			printf("Second:  addr:%016lx size:%016lx\n",
+			       tnext->start, tnext->end - tnext->start);
+			assert(0);
+		}
 	}
 
 	free(tbl);
