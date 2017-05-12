@@ -40,6 +40,7 @@ enum phys_map_type {
 	LPC_BUS,
 	FSP_MMIO,
 	NPU_REGS,
+	NPU_USR,
 	NPU_PHY,
 	NPU_NTL,
 	NPU_GENID,
