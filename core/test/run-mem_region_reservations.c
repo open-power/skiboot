@@ -74,7 +74,7 @@ bool lock_held_by_me(struct lock *l)
 	return l->lock_val;
 }
 
-#define TEST_HEAP_ORDER 12
+#define TEST_HEAP_ORDER 14
 #define TEST_HEAP_SIZE (1ULL << TEST_HEAP_ORDER)
 
 static void add_mem_node(uint64_t start, uint64_t len)
@@ -203,13 +203,16 @@ int main(void)
 	buf = real_malloc(1024*1024);
 	add_mem_node((unsigned long)buf, 1024*1024);
 
-	/* Now convert. */
-	mem_region_init();
-
-	/* create our reservations */
+	/* add pre-init reservations */
 	for (i = 0; i < ARRAY_SIZE(test_regions); i++)
 		mem_reserve_hw(test_regions[i].name,
 				test_regions[i].addr, 0x1000);
+
+	/* Now convert. */
+	mem_region_init();
+
+	/* add a post-init reservation */
+	mem_reserve_hw("test.4", 0x5000, 0x1000);
 
 	/* release unused */
 	mem_region_release_unused();
@@ -218,7 +221,7 @@ int main(void)
 	mem_region_add_dt_reserved();
 
 	/* ensure we can't create further reservations */
-	r = new_region("test.4", 0x5000, 0x1000, NULL, REGION_RESERVED);
+	r = new_region("test.5", 0x5000, 0x1000, NULL, REGION_RESERVED);
 	assert(!add_region(r));
 
 	/* check old property-style reservations */
