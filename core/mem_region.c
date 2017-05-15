@@ -689,6 +689,14 @@ static bool overlaps(const struct mem_region *r1, const struct mem_region *r2)
 		&& r1->start < r2->start + r2->len);
 }
 
+static bool contains(const struct mem_region *r1, const struct mem_region *r2)
+{
+	u64 r1_end = r1->start + r1->len;
+	u64 r2_end = r2->start + r2->len;
+
+	return (r1->start <= r2->start && r2_end <= r1_end);
+}
+
 static struct mem_region *get_overlap(const struct mem_region *region)
 {
 	struct mem_region *i;
@@ -711,10 +719,29 @@ static bool add_region(struct mem_region *region)
 	}
 
 	/* First split any regions which intersect. */
-	list_for_each(&regions, r, list)
+	list_for_each(&regions, r, list) {
+		/*
+		 * The new region should be fully contained by an existing one.
+		 * If it's not then we have a problem where reservations
+		 * partially overlap which is probably broken.
+		 *
+		 * NB: There *might* be situations where this is legitimate,
+		 * but the region handling does not currently support this.
+		 */
+		if (overlaps(r, region) && !contains(r, region)) {
+			prerror("MEM: Partial overlap detected between regions:\n");
+			prerror("MEM: %s [0x%"PRIx64"-0x%"PRIx64"] (new)\n",
+				region->name, region->start,
+				region->start + region->len);
+			prerror("MEM: %s [0x%"PRIx64"-0x%"PRIx64"]\n",
+				r->name, r->start, r->start + r->len);
+			return false;
+		}
+
 		if (!maybe_split(r, region->start) ||
 		    !maybe_split(r, region->start + region->len))
 			return false;
+	}
 
 	/* Now we have only whole overlaps, if any. */
 	while ((r = get_overlap(region)) != NULL) {
