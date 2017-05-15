@@ -54,7 +54,9 @@ void mem_dump_allocs(void);
 struct lock mem_region_lock = LOCK_UNLOCKED;
 
 static struct list_head regions = LIST_HEAD_INIT(regions);
+static struct list_head early_reserves = LIST_HEAD_INIT(early_reserves);
 
+static bool mem_region_init_done = false;
 static bool mem_regions_finalised = false;
 
 unsigned long top_of_ram = SKIBOOT_BASE + SKIBOOT_SIZE;
@@ -730,12 +732,17 @@ static bool add_region(struct mem_region *region)
 void mem_reserve_hw(const char *name, uint64_t start, uint64_t len)
 {
 	struct mem_region *region;
-	bool added;
+	bool added = true;
 
 	lock(&mem_region_lock);
 	region = new_region(name, start, len, NULL, REGION_HW_RESERVED);
 	assert(region);
-	added = add_region(region);
+
+	if (!mem_region_init_done)
+		list_add(&early_reserves, &region->list);
+	else
+		added = add_region(region);
+
 	assert(added);
 	unlock(&mem_region_lock);
 }
@@ -821,6 +828,7 @@ bool mem_range_is_reserved(uint64_t start, uint64_t size)
 {
 	uint64_t end = start + size;
 	struct mem_region *region;
+	struct list_head *search;
 
 	/* We may have the range covered by a number of regions, which could
 	 * appear in any order. So, we look for a region that covers the
@@ -832,10 +840,16 @@ bool mem_range_is_reserved(uint64_t start, uint64_t size)
 	 * This has a worst-case of O(n^2), but n is well bounded by the
 	 * small number of reservations.
 	 */
+
+	if (!mem_region_init_done)
+		search = &early_reserves;
+	else
+		search = &regions;
+
 	for (;;) {
 		bool found = false;
 
-		list_for_each(&regions, region, list) {
+		list_for_each(search, region, list) {
 			if (!region_is_reserved(region))
 				continue;
 
@@ -895,7 +909,7 @@ static void mem_region_parse_reserved_properties(void)
 					dt_get_number(range, 2),
 					dt_get_number(range + 1, 2),
 					NULL, REGION_HW_RESERVED);
-			list_add(&regions, &region->list);
+			add_region(region);
 		}
 	} else if (names || ranges) {
 		prerror("Invalid properties: reserved-names=%p "
@@ -934,7 +948,7 @@ static bool mem_region_parse_reserved_nodes(const char *path)
 				dt_get_number(reg->prop, 2),
 				dt_get_number(reg->prop + sizeof(u64), 2),
 				node, REGION_HW_RESERVED);
-		list_add(&regions, &region->list);
+		add_region(region);
 	}
 
 	return true;
@@ -943,7 +957,7 @@ static bool mem_region_parse_reserved_nodes(const char *path)
 /* Trawl through device tree, create memory regions from nodes. */
 void mem_region_init(void)
 {
-	struct mem_region *region;
+	struct mem_region *region, *next;
 	struct dt_node *i;
 	bool rc;
 
@@ -1003,6 +1017,15 @@ void mem_region_init(void)
 		abort();
 	}
 
+	/* Add reserved reanges from HDAT */
+	list_for_each_safe(&early_reserves, region, next, list) {
+		bool added;
+
+		list_del(&region->list);
+		added = add_region(region);
+		assert(added);
+	}
+
 	/* Add reserved ranges from the DT */
 	rc = mem_region_parse_reserved_nodes("/reserved-memory");
 	if (!rc)
@@ -1011,8 +1034,8 @@ void mem_region_init(void)
 	if (!rc)
 		mem_region_parse_reserved_properties();
 
+	mem_region_init_done = true;
 	unlock(&mem_region_lock);
-
 }
 
 static uint64_t allocated_length(const struct mem_region *r)
