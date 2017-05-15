@@ -34,12 +34,12 @@ void _prlog(int log_level __attribute__((unused)), const char* fmt, ...) __attri
 
 void _prlog(int log_level __attribute__((unused)), const char* fmt, ...)
 {
-        va_list ap;
+	va_list ap;
 
-        va_start(ap, fmt);
-        if (log_level < 7)
+	va_start(ap, fmt);
+	if (log_level <= 7)
 		vfprintf(stderr, fmt, ap);
-        va_end(ap);
+	va_end(ap);
 }
 
 /*
