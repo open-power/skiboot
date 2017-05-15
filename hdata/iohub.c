@@ -380,7 +380,8 @@ static struct dt_node *io_add_p9(const struct cechub_io_hub *hub,
 		return NULL;
 	}
 
-	printf("IOHUB: PHB4 active bridge mask %x\n", (u32) hub->fab_br0_pdt);
+	prlog(PR_DEBUG, "IOHUB: PHB4 active bridge mask %x\n",
+		(u32) hub->fab_br0_pdt);
 
 	/* Create PBCQs */
 	io_add_phb4(hub, sp_iohubs, xscom, 0, 1, 0);
