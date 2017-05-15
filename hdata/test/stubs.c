@@ -99,6 +99,12 @@ STUB(op_display);
 STUB(fsp_preload_lid);
 STUB(fsp_wait_lid_loaded);
 STUB(fsp_adjust_lid_side);
-STUB(mem_reserve_hw);
-STUB(early_uart_init);
 STUB(backtrace);
+
+/* Add HW specific stubs here */
+static void noop_function(void) {}
+#define NOOP_STUB(fnname) \
+	void fnname(void) __attribute__((weak, alias ("noop_function")))
+
+NOOP_STUB(early_uart_init);
+NOOP_STUB(mem_reserve_hw);
