@@ -105,6 +105,22 @@ if {![info exists of::encode_compat]} {
 # allows running mambo in another directory to the one skiboot.tcl is in.
 if { [file exists mambo_utils.tcl] } then {
 	source mambo_utils.tcl
+
+	if { [info exists env(VMLINUX_MAP)] } {
+		global linux_symbol_map
+
+		set fp [open $env(VMLINUX_MAP) r]
+		set linux_symbol_map [read $fp]
+		close $fp
+	}
+
+	if { [info exists env(SKIBOOT_MAP)] } {
+		global skiboot_symbol_map
+
+		set fp [open $env(SKIBOOT_MAP) r]
+		set skiboot_symbol_map [read $fp]
+		close $fp
+	}
 }
 
 #

@@ -329,6 +329,40 @@ proc doff { opt } {
     simdebug set $opt 0
 }
 
+# skisym and linsym return the address of a symbol, looked up from
+# the relevant System.map or skiboot.map file.
+proc linsym { name } {
+    global linux_symbol_map
+
+    # create a regexp that matches the symbol name
+    set base {([[:xdigit:]]*) (.)}
+    set exp [concat $base " $name"]
+    set ret ""
+
+    foreach {line addr type} [regexp -line -inline $exp $linux_symbol_map] {
+        set ret "0x$addr"
+    }
+
+    return $ret
+}
+
+# skisym factors in skiboot's load address
+proc skisym { name } {
+    global skiboot_symbol_map
+    global mconf
+
+    set base {([[:xdigit:]]*) (.)}
+    set exp [concat $base " $name"]
+    set ret ""
+
+    foreach {line addr type} [regexp -line -inline $exp $skiboot_symbol_map] {
+        set actual_addr [expr "0x$addr" + $mconf(boot_load)]
+	set ret [format "0x%.16x" $actual_addr]
+    }
+
+    return $ret
+}
+
 proc start_qtrace { { qtfile qtrace.qt } } {
     global env
 
