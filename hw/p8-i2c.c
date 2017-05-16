@@ -969,7 +969,6 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
 
 		/* Delay 5ms for bus to settle */
 		schedule_timer(&master->recovery, msecs_to_tb(5));
-		unlock(&master->lock);
 		return OPAL_BUSY;
 	}
 
@@ -989,7 +988,6 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
 
 		/* Delay 5ms for bus to settle */
 		schedule_timer(&master->recovery, msecs_to_tb(5));
-		unlock(&master->lock);
 		return OPAL_BUSY;
 	}
 
