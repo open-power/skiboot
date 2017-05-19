@@ -350,6 +350,7 @@
 #define FSP_CMD_HYP_MDST_TABLE	0x1ce2600 /* HV->FSP: Sapphire MDST table */
 #define FSP_CMD_TPO_READ	0x1ce4201 /* FSP->HV */
 #define FSP_CMD_TPO_WRITE	0x1ce4301 /* HV->FSP */
+#define FSP_CMD_TPO_DISABLE	0x1ce4400 /* HV->FSP */
 #define FSP_CMD_STATUS_REQ	0x1ce4800 /* HV->FSP: Request normal panel status */
 #define FSP_CMD_STATUS_EX1_REQ	0x1ce4802 /* HV->FSP: Request extended 1 panel status */
 #define FSP_CMD_STATUS_EX2_REQ	0x1ce4803 /* HV->FSP: Request extended 2 panel status */

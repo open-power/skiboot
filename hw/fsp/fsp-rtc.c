@@ -427,9 +427,15 @@ static int64_t fsp_opal_tpo_write(uint64_t async_token, uint32_t y_m_d,
 	/* Create a request and send it.*/
 	attr->tpo_async_token = async_token;
 
-	prlog(PR_TRACE, "Sending TPO write request...\n");
+	/* check if this is a disable tpo request */
+	if (y_m_d == 0 && hr_min == 0) {
+		prlog(PR_TRACE, "Sending TPO disable request...\n");
+		msg = fsp_mkmsg(FSP_CMD_TPO_DISABLE, 0);
+	} else {
+		prlog(PR_TRACE, "Sending TPO write request...\n");
+		msg = fsp_mkmsg(FSP_CMD_TPO_WRITE, 2, y_m_d, hr_min);
+	}
 
-	msg = fsp_mkmsg(FSP_CMD_TPO_WRITE, 2, y_m_d, hr_min);
 	if (!msg) {
 		prerror("TPO: Failed to create message for WRITE to FSP\n");
 		free(attr);
