@@ -871,7 +871,7 @@ void cpu_bringup(void)
 
 		/* Add a callin timeout ?  If so, call cpu_remove_node(t). */
 		while (t->state != cpu_state_active) {
-			smt_very_low();
+			smt_lowest();
 			sync();
 		}
 		smt_medium();

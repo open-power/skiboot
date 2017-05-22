@@ -488,7 +488,7 @@ void __noreturn fast_reboot_entry(void)
 	if (this_cpu() != boot_cpu) {
 		this_cpu()->state = cpu_state_present;
 		while (!fast_boot_release) {
-			smt_very_low();
+			smt_lowest();
 			sync();
 		}
 		smt_medium();
@@ -511,7 +511,7 @@ void __noreturn fast_reboot_entry(void)
 
 		/* XXX Add a callin timeout ? */
 		while (cpu->state != cpu_state_present) {
-			smt_very_low();
+			smt_lowest();
 			sync();
 		}
 		smt_medium();
@@ -534,7 +534,7 @@ void __noreturn fast_reboot_entry(void)
 
 		/* XXX Add a callin timeout ? */
 		while (cpu->state == cpu_state_present) {
-			smt_very_low();
+			smt_lowest();
 			sync();
 		}
 	}

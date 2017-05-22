@@ -121,8 +121,7 @@ extern struct cpu_thread *boot_cpu;
 static inline void __nomcount cpu_relax(void)
 {
 	/* Relax a bit to give sibling threads some breathing space */
-	smt_low();
-	smt_very_low();
+	smt_lowest();
 	asm volatile("nop; nop; nop; nop;\n"
 		     "nop; nop; nop; nop;\n"
 		     "nop; nop; nop; nop;\n"

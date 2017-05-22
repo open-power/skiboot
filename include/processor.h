@@ -197,6 +197,7 @@
 #define smt_medium_low	or 6,6,6
 #define smt_extra_high	or 7,7,7
 #define smt_very_low	or 31,31,31
+#define smt_lowest	smt_low ; smt_very_low
 
 #else /* __ASSEMBLY__ */
 
@@ -214,6 +215,7 @@ static inline void smt_medium_high(void){ asm volatile("or 5,5,5");	}
 static inline void smt_medium_low(void)	{ asm volatile("or 6,6,6");	}
 static inline void smt_extra_high(void)	{ asm volatile("or 7,7,7");	}
 static inline void smt_very_low(void)	{ asm volatile("or 31,31,31");	}
+static inline void smt_lowest(void)	{ smt_low(); smt_very_low();	}
 
 /*
  * SPR access functions

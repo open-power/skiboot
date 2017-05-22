@@ -398,7 +398,7 @@ secondary_wait:
 	 */
 	LOAD_IMM32(%r3, boot_flag - __head)
 	add	%r3,%r3,%r30
-1:	smt_very_low
+1:	smt_lowest
 	lwz	%r0,0(%r3)
 	cmpdi	%r0,0
 	beq	1b
@@ -416,7 +416,7 @@ secondary_wait:
 1:
 	/* Now wait for cpu_secondary_start to be set */
 	LOAD_ADDR_FROM_TOC(%r3, cpu_secondary_start)
-1:	smt_very_low
+1:	smt_lowest
 	ld	%r0,0(%r3)
 	cmpdi	%r0,0
 	beq	1b
@@ -441,7 +441,7 @@ secondary_wait:
 
 	/* Not found... what to do ? set some global error ? */
 secondary_not_found:
-	smt_very_low
+	smt_lowest
 	b	.
 
 call_relocate:
