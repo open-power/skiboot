@@ -286,14 +286,10 @@ void cpu_process_jobs(void)
 	unlock(&cpu->job_lock);
 }
 
-static void cpu_idle_default(enum cpu_wake_cause wake_on __unused)
-{
-	/* Maybe do something better for simulators ? */
-	cpu_relax();
-	cpu_relax();
-	cpu_relax();
-	cpu_relax();
-}
+enum cpu_wake_cause {
+	cpu_wake_on_job,
+	cpu_wake_on_dec,
+};
 
 static void cpu_idle_p8(enum cpu_wake_cause wake_on)
 {
@@ -301,7 +297,7 @@ static void cpu_idle_p8(enum cpu_wake_cause wake_on)
 	struct cpu_thread *cpu = this_cpu();
 
 	if (!pm_enabled) {
-		cpu_idle_default(wake_on);
+		prlog_once(PR_DEBUG, "cpu_idle_p8 called pm disabled\n");
 		return;
 	}
 
@@ -373,15 +369,57 @@ void cpu_set_pm_enable(bool enabled)
 	}
 }
 
-void cpu_idle(enum cpu_wake_cause wake_on)
+static void cpu_idle_pm(enum cpu_wake_cause wake_on)
 {
 	switch(proc_gen) {
 	case proc_gen_p8:
 		cpu_idle_p8(wake_on);
 		break;
 	default:
-		cpu_idle_default(wake_on);
+		prlog_once(PR_DEBUG, "cpu_idle_pm called with bad processor type\n");
 		break;
+	}
+}
+
+void cpu_idle_job(void)
+{
+	if (pm_enabled) {
+		cpu_idle_pm(cpu_wake_on_job);
+	} else {
+		struct cpu_thread *cpu = this_cpu();
+
+		smt_lowest();
+		/* Check for jobs again */
+		while (!cpu_check_jobs(cpu))
+			barrier();
+		smt_medium();
+	}
+}
+
+void cpu_idle_delay(unsigned long delay, unsigned long min_pm)
+{
+	unsigned long now = mftb();
+	unsigned long end = now + delay;
+
+	if (pm_enabled && delay > min_pm) {
+		for (;;) {
+			if (delay >= 0x7fffffff)
+				delay = 0x7fffffff;
+			mtspr(SPR_DEC, delay);
+
+			cpu_idle_pm(cpu_wake_on_dec);
+
+			now = mftb();
+			if (tb_compare(now, end) == TB_AAFTERB)
+				break;
+
+			delay = end - now;
+		}
+	} else {
+		smt_lowest();
+		while (tb_compare(mftb(), end) != TB_AAFTERB)
+			barrier();
+		smt_medium();
 	}
 }
 

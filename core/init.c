@@ -1068,9 +1068,9 @@ void __noreturn __secondary_cpu_entry(void)
 	/* Wait for work to do */
 	while(true) {
 		if (cpu_check_jobs(cpu))
-		    cpu_process_jobs();
+			cpu_process_jobs();
 		else
-		    cpu_idle(cpu_wake_on_job);
+			cpu_idle_job();
 	}
 }
 
