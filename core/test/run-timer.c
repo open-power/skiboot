@@ -7,6 +7,8 @@
 
 #define mftb()	(stamp)
 #define sync()
+#define smt_lowest()
+#define smt_medium()
 
 static uint64_t stamp, last;
 struct lock;

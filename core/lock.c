@@ -93,7 +93,10 @@ void lock(struct lock *l)
 	for (;;) {
 		if (try_lock(l))
 			break;
-		cpu_relax();
+		smt_lowest();
+		while (l->lock_val)
+			barrier();
+		smt_medium();
 	}
 }
 

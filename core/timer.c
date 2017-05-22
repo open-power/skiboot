@@ -45,7 +45,10 @@ static void __sync_timer(struct timer *t)
 
 	while (t->running) {
 		unlock(&timer_lock);
-		cpu_relax();
+		smt_lowest();
+		while (t->running)
+			barrier();
+		smt_medium();
 		/* Should we call the pollers here ? */
 		lock(&timer_lock);
 	}

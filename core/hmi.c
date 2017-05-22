@@ -599,6 +599,7 @@ static void wait_for_subcore_threads(void)
 {
 	uint64_t timeout = 0;
 
+	smt_lowest();
 	while (!(*(this_cpu()->core_hmi_state_ptr) & HMI_STATE_CLEANUP_DONE)) {
 		/*
 		 * We use a fixed number of TIMEOUT_LOOPS rather
@@ -616,8 +617,9 @@ static void wait_for_subcore_threads(void)
 			prlog(PR_DEBUG, "HMI: TB pre-recovery timeout\n");
 			break;
 		}
-		cpu_relax();
+		barrier();
 	}
+	smt_medium();
 }
 
 /*

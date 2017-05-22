@@ -115,10 +115,16 @@ static void uart_check_tx_room(void)
 
 static void uart_wait_tx_room(void)
 {
-	while(!tx_room) {
+	while (!tx_room) {
 		uart_check_tx_room();
-		if (!tx_room)
-			cpu_relax();
+		if (!tx_room) {
+			smt_lowest();
+			do {
+				barrier();
+				uart_check_tx_room();
+			} while (!tx_room);
+			smt_medium();
+		}
 	}
 }
 
