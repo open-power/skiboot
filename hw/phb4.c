@@ -1845,36 +1845,26 @@ static int64_t phb4_get_presence_state(struct pci_slot *slot, uint8_t *val)
 	if (p->state == PHB4_STATE_BROKEN)
 		return OPAL_HARDWARE;
 
-	/* Read hotplug status */
+	/* Check hotplug status */
 	hps = in_be64(p->regs + PHB_PCIE_HOTPLUG_STATUS);
-
-	/* Read link status */
-	dtctl = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
-
-	PHBDBG(p, "hp_status=0x%016llx, dlp_train_ctl=0x%016llx\n",
-	       hps, dtctl);
-
-	*val = OPAL_PCI_SLOT_PRESENT;
-	/* Check presence detect */
-	if (hps & PHB_PCIE_HPSTAT_PRESENCE) {
-		/* If it says not present but link is up, then we assume
+	if (!(hps & PHB_PCIE_HPSTAT_PRESENCE)) {
+		*val = OPAL_PCI_SLOT_PRESENT;
+	} else {
+		/*
+		 * If it says not present but link is up, then we assume
 		 * we are on a broken simulation environment and still
 		 * return a valid presence. Otherwise, not present.
 		 */
+		dtctl = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
 		if (dtctl & PHB_PCIE_DLP_TL_LINKACT) {
 			PHBERR(p, "Presence detect 0 but link set !\n");
-			return OPAL_SHPC_DEV_PRESENT;
+			*val = OPAL_PCI_SLOT_PRESENT;
+		} else {
+			*val = OPAL_PCI_SLOT_EMPTY;
 		}
-		*val = OPAL_PCI_SLOT_EMPTY;
-		return OPAL_SHPC_DEV_NOT_PRESENT;
 	}
 
-	/*
-	 * Anything else, we assume device present, the link state
-	 * machine will perform an early bail out if no electrical
-	 * signaling is established after a second.
-	 */
-	return OPAL_SHPC_DEV_PRESENT;
+	return OPAL_SUCCESS;
 }
 
 static int64_t phb4_get_link_state(struct pci_slot *slot, uint8_t *val)
