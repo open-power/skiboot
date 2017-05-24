@@ -149,6 +149,11 @@ static bool is_zeros(const void *p, size_t size)
 	return true;
 }
 
+struct host_i2c_hdr {
+	const struct HDIF_array_hdr hdr;
+	__be32 version;
+};
+
 int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 	struct dt_node *xscom)
 {
@@ -156,7 +161,9 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 	const struct hdat_i2c_type *type;
 	const struct i2c_dev *dev;
 	const char *label, *name, *compat;
+	const struct host_i2c_hdr *ahdr;
 	uint32_t i2c_addr;
+	uint32_t version;
 	uint32_t size;
 	int i, count;
 
@@ -165,6 +172,32 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 	 * and will need updating for new processors
 	 */
 	assert(proc_gen == proc_gen_p9);
+
+	/*
+	 * Emit an error if we get a newer version. This is an interim measure
+	 * until the new version format is finalised.
+	 */
+	ahdr = HDIF_get_idata(hdr, idata_index, &size);
+	if (!ahdr || !size)
+		return -1;
+
+	/*
+	 * Some hostboots don't correctly fill the version field. On these
+	 * the offset from the start of the header to the start of the array
+	 * is 16 bytes.
+	 */
+	if (be32_to_cpu(ahdr->hdr.offset) == 16) {
+		version = 1;
+		prerror("I2C: HDAT device array has no version! Assuming v1\n");
+	} else {
+		version = be32_to_cpu(hdr->version);
+	}
+
+	if (version != 1) {
+		prerror("I2C: HDAT version %d not supported! THIS IS A BUG\n",
+			version);
+		return -1;
+	}
 
 	count = HDIF_get_iarray_size(hdr, idata_index);
 	for (i = 0; i < count; i++) {
