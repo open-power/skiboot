@@ -35,12 +35,14 @@
 
 #define MBOX_FLAG_REG 0x0f
 #define MBOX_STATUS_0 0x10
-#define   MBOX_STATUS_ATTN (1 << 7)
 #define MBOX_STATUS_1 0x11
+#define   MBOX_STATUS_1_ATTN (1 << 7)
+#define   MBOX_STATUS_1_RESP (1 << 5)
 #define MBOX_BMC_CTRL 0x12
 #define   MBOX_CTRL_INT_STATUS (1 << 7)
 #define   MBOX_CTRL_INT_MASK (1 << 1)
-#define   MBOX_CTRL_INT_SEND (1 << 0)
+#define   MBOX_CTRL_INT_PING (1 << 0)
+#define   MBOX_CTRL_INT_SEND (MBOX_CTRL_INT_PING | MBOX_CTRL_INT_MASK)
 #define MBOX_HOST_CTRL 0x13
 #define MBOX_BMC_INT_EN_0 0x14
 #define MBOX_BMC_INT_EN_1 0x15
@@ -85,7 +87,7 @@ static void bmc_mbox_recv_message(struct bmc_mbox_msg *msg)
 	uint8_t *msg_data = (uint8_t *)msg;
 	int i;
 
-	for (i = 0; i < BMC_MBOX_DATA_REGS; i++)
+	for (i = 0; i < BMC_MBOX_READ_REGS; i++)
 		msg_data[i] = bmc_mbox_inb(i);
 }
 
@@ -98,8 +100,15 @@ static void bmc_mbox_send_message(struct bmc_mbox_msg *msg)
 	if (!lpc_ok())
 		/* We're going to have to handle this better */
 		prlog(PR_ERR, "LPC isn't ok\n");
-	for (i = 0; i < BMC_MBOX_DATA_REGS; i++)
+
+	for (i = 0; i < BMC_MBOX_WRITE_REGS; i++)
 		bmc_mbox_outb(msg_data[i], i);
+
+	/*
+	 * Don't touch the response byte - it's setup to generate an interrupt
+	 * to the host (us) when written to, or the host status reg - we don't
+	 * currently use it, or the BMC status reg - we're not allowed to.
+	 */
 
 	/* Ping */
 	prlog(PR_DEBUG, "Sending BMC interrupt\n");
@@ -136,10 +145,14 @@ static void mbox_poll(struct timer *t __unused, void *data __unused,
 {
 	struct bmc_mbox_msg *msg;
 
-	/* This is a 'registered' the message you just sent me */
-	if (bmc_mbox_inb(MBOX_HOST_CTRL) & MBOX_CTRL_INT_STATUS) {
+	/*
+	 * This status bit being high means that someone touched the
+	 * response byte (byte 13).
+	 * There is probably a response for the previously sent commant
+	 */
+	if (bmc_mbox_inb(MBOX_STATUS_1) & MBOX_STATUS_1_RESP) {
 		/* W1C on that reg */
-		bmc_mbox_outb(MBOX_CTRL_INT_STATUS, MBOX_HOST_CTRL);
+		bmc_mbox_outb(MBOX_STATUS_1_RESP, MBOX_STATUS_1);
 
 		prlog(PR_INSANE, "Got a regular interrupt\n");
 		/*
@@ -148,7 +161,7 @@ static void mbox_poll(struct timer *t __unused, void *data __unused,
 		msg = mbox.in_flight;
 		if (msg == NULL) {
 			prlog(PR_CRIT, "Couldn't find the message!!\n");
-			return;
+			goto out_response;
 		}
 		bmc_mbox_recv_message(msg);
 		if (mbox.callback)
@@ -162,19 +175,29 @@ static void mbox_poll(struct timer *t __unused, void *data __unused,
 		unlock(&mbox.lock);
 	}
 
-	/* This is to indicate that the BMC has information to tell us */
-	if (bmc_mbox_inb(MBOX_STATUS_1) & MBOX_STATUS_ATTN) {
+out_response:
+
+	/*
+	 * The BMC has touched byte 15 to get our attention as it has
+	 * something to tell us.
+	 */
+	if (bmc_mbox_inb(MBOX_STATUS_1) & MBOX_STATUS_1_ATTN) {
 		uint8_t action;
 
 		/* W1C on that reg */
-		bmc_mbox_outb(MBOX_STATUS_ATTN, MBOX_STATUS_1);
+		bmc_mbox_outb(MBOX_STATUS_1_ATTN, MBOX_STATUS_1);
 
 		action = bmc_mbox_inb(MBOX_FLAG_REG);
-		prlog(PR_INSANE, "Got a status register interrupt with action 0x%02x\n",
+		prlog(PR_TRACE, "Got a status register interrupt with action 0x%02x\n",
 				action);
 
 		if (action & BMC_RESET) {
-			/* TODO Freak */
+			/*
+			 * It's unlikely that something needs to be done at the
+			 * driver level. Let libflash deal with it.
+			 * Print something just in case, it is quite a signficant
+			 * event.
+			 */
 			prlog(PR_WARNING, "BMC reset detected\n");
 			action &= ~BMC_RESET;
 		}
@@ -202,7 +225,7 @@ static bool mbox_init_hw(void)
 {
 	/* Disable all status interrupts except attentions */
 	bmc_mbox_outb(0x00, MBOX_HOST_INT_EN_0);
-	bmc_mbox_outb(MBOX_STATUS_ATTN, MBOX_HOST_INT_EN_1);
+	bmc_mbox_outb(MBOX_STATUS_1_ATTN, MBOX_HOST_INT_EN_1);
 
 	/* Cleanup host interrupt and status */
 	bmc_mbox_outb(MBOX_CTRL_INT_STATUS, MBOX_HOST_CTRL);
@@ -274,6 +297,13 @@ void mbox_init(void)
 		return;
 	}
 
+	/* Disable the standard interrupt we don't care */
+	bmc_mbox_outb(MBOX_CTRL_INT_MASK, MBOX_HOST_CTRL);
+
+	/* Clear the status reg bits that we intend to use for interrupts */
+	/* W1C */
+	bmc_mbox_outb(MBOX_STATUS_1_RESP | MBOX_STATUS_1_ATTN, MBOX_STATUS_1);
+
 	mbox.queue_len = 0;
 	mbox.in_flight = NULL;
 	mbox.callback = NULL;
@@ -285,6 +315,9 @@ void mbox_init(void)
 	chip_id = dt_get_chip_id(np);
 	mbox_lpc_client.interrupts = LPC_IRQ(irq);
 	lpc_register_client(chip_id, &mbox_lpc_client, IRQ_ATTR_TARGET_OPAL);
+
+	/* Enable interrupts */
+	bmc_mbox_outb(MBOX_STATUS_1_ATTN | MBOX_STATUS_1_RESP, MBOX_HOST_INT_EN_1);
 
 	prlog(PR_DEBUG, "Enabled on chip %d, IO port 0x%x, IRQ %d\n",
 	      chip_id, mbox.base, irq);

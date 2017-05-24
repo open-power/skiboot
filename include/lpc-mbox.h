@@ -20,9 +20,9 @@
 #include <opal.h>
 #include <ccan/endian/endian.h>
 
-/* Not 16 because the last two are interrupt based status regs */
-#define BMC_MBOX_DATA_REGS 14
 #define BMC_MBOX_ARGS_REGS 11
+#define BMC_MBOX_READ_REGS 16
+#define BMC_MBOX_WRITE_REGS 13
 
 #define MBOX_C_RESET_STATE 0x01
 #define MBOX_C_GET_MBOX_INFO 0x02
