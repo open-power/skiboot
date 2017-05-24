@@ -51,9 +51,6 @@
 
 #define MBOX_MAX_QUEUE_LEN 5
 
-#define BMC_RESET 1
-#define BMC_COMPLETE 2
-
 struct mbox {
 	uint32_t base;
 	int queue_len;
@@ -62,6 +59,8 @@ struct mbox {
 	struct timer poller;
 	void (*callback)(struct bmc_mbox_msg *msg, void *priv);
 	void *drv_data;
+	void (*attn)(uint8_t bits, void *priv);
+	void *attn_data;
 	struct lock lock; /* Protect in_flight */
 	struct bmc_mbox_msg *in_flight;
 };
@@ -182,16 +181,15 @@ out_response:
 	 * something to tell us.
 	 */
 	if (bmc_mbox_inb(MBOX_STATUS_1) & MBOX_STATUS_1_ATTN) {
-		uint8_t action;
+		uint8_t action, all;
 
 		/* W1C on that reg */
 		bmc_mbox_outb(MBOX_STATUS_1_ATTN, MBOX_STATUS_1);
 
-		action = bmc_mbox_inb(MBOX_FLAG_REG);
+		all = action = bmc_mbox_inb(MBOX_FLAG_REG);
 		prlog(PR_TRACE, "Got a status register interrupt with action 0x%02x\n",
 				action);
-
-		if (action & BMC_RESET) {
+		if (action & MBOX_ATTN_BMC_REBOOT) {
 			/*
 			 * It's unlikely that something needs to be done at the
 			 * driver level. Let libflash deal with it.
@@ -199,12 +197,23 @@ out_response:
 			 * event.
 			 */
 			prlog(PR_WARNING, "BMC reset detected\n");
-			action &= ~BMC_RESET;
+			action &= ~MBOX_ATTN_BMC_REBOOT;
 		}
+
+		if (action & MBOX_ATTN_BMC_WINDOW_RESET)
+			action &= ~MBOX_ATTN_BMC_WINDOW_RESET;
+
+		if (action & MBOX_ATTN_BMC_FLASH_LOST)
+			action &= ~MBOX_ATTN_BMC_FLASH_LOST;
+
+		if (action & MBOX_ATTN_BMC_DAEMON_READY)
+			action &= ~MBOX_ATTN_BMC_DAEMON_READY;
 
 		if (action)
 			prlog(PR_ERR, "Got a status bit set that don't know about: 0x%02x\n",
 					action);
+
+		mbox.attn(all, mbox.attn_data);
 	}
 
 	schedule_timer(&mbox.poller,
@@ -244,6 +253,19 @@ int bmc_mbox_register_callback(void (*callback)(struct bmc_mbox_msg *msg, void *
 	mbox.callback = callback;
 	mbox.drv_data = drv_data;
 	return 0;
+}
+
+int bmc_mbox_register_attn(void (*callback)(uint8_t bits, void *priv),
+		void *drv_data)
+{
+	mbox.attn = callback;
+	mbox.attn_data = drv_data;
+	return 0;
+}
+
+uint8_t bmc_mbox_get_attn_reg(void)
+{
+	return bmc_mbox_inb(MBOX_FLAG_REG);
 }
 
 void mbox_init(void)
