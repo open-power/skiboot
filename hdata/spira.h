@@ -513,6 +513,11 @@ struct msvpd_pmover_bsr_synchro {
 } __packed;
 
 /* Idata index 3: Memory Trace Array */
+#define MSVPD_IDATA_TRACE_AREAS		3
+struct msvpd_trace {
+	__be64 start, end;
+	char reserved[16];
+};
 
 /* Idata index 4: UE Address Array */
 

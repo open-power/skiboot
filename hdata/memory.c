@@ -474,6 +474,51 @@ static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 	}
 }
 
+static void parse_trace_reservations(struct HDIF_common_hdr *ms_vpd)
+{
+	unsigned int size;
+	int count, i;
+
+	/*
+	 * The trace arrays are only setup when hostboot is explicitly
+	 * configured to enable them. We need to check and gracefully handle
+	 * when they're not present.
+	 */
+
+	if (!HDIF_get_idata(ms_vpd, MSVPD_IDATA_TRACE_AREAS, &size) || !size) {
+		prlog(PR_DEBUG, "MS VPD: No trace areas found.");
+		return;
+	}
+
+	count = HDIF_get_iarray_size(ms_vpd, MSVPD_IDATA_TRACE_AREAS);
+	if (count <= 0) {
+		prlog(PR_DEBUG, "MS VPD: No trace areas found.");
+		return;
+	}
+
+	prlog(PR_INFO, "MS VPD: Found %d trace areas\n", count);
+
+	for (i = 0; i < count; i++) {
+		const struct msvpd_trace *trace_area;
+		u64 start, end;
+
+		trace_area = HDIF_get_iarray_item(ms_vpd,
+				MSVPD_IDATA_TRACE_AREAS, i, &size);
+
+		if (!trace_area)
+			return; /* shouldn't happen */
+
+		start = be64_to_cpu(trace_area->start) & ~HRMOR_BIT;
+		end = be64_to_cpu(trace_area->end) & ~HRMOR_BIT;
+
+		prlog(PR_INFO,
+			"MSVPD: Trace area: 0x%.16"PRIx64"-0x%.16"PRIx64"\n",
+			start, end);
+
+		mem_reserve_hwbuf("trace-area", start, end - start);
+	}
+}
+
 static bool __memory_parse(struct dt_node *root)
 {
 	struct HDIF_common_hdr *ms_vpd;
@@ -523,6 +568,8 @@ static bool __memory_parse(struct dt_node *root)
 	get_msareas(root, ms_vpd);
 
 	get_hb_reserved_mem(ms_vpd);
+
+	parse_trace_reservations(ms_vpd);
 
 	prlog(PR_INFO, "MS VPD: Total MB of RAM: 0x%llx\n",
 	       (long long)be64_to_cpu(tcms->total_in_mb));
