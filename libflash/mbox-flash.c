@@ -530,6 +530,18 @@ static int mbox_flash_dirty(struct mbox_flash_data *mbox_flash, uint64_t pos,
 				     MBOX_C_MARK_WRITE_DIRTY);
 }
 
+static int mbox_flash_erase(struct mbox_flash_data *mbox_flash, uint64_t pos,
+			    uint64_t len)
+{
+	if (!mbox_flash->write.open) {
+		prlog(PR_ERR, "Attempting to erase without an open write window\n");
+		return FLASH_ERR_DEVICE_GONE;
+	}
+
+	return mbox_flash_mark_write(mbox_flash, pos, len,
+				     MBOX_C_MARK_WRITE_ERASED);
+}
+
 static int mbox_flash_flush(struct mbox_flash_data *mbox_flash)
 {
 	struct bmc_mbox_msg *msg;
@@ -782,8 +794,50 @@ out:
 	return rc;
 }
 
-static int mbox_flash_erase(struct blocklevel_device *bl __unused,
-		uint64_t pos __unused, uint64_t len __unused)
+static int mbox_flash_erase_v2(struct blocklevel_device *bl, uint64_t pos,
+			       uint64_t len)
+{
+	struct mbox_flash_data *mbox_flash;
+
+	/* LPC is only 32bit */
+	if (pos > UINT_MAX || len > UINT_MAX)
+		return FLASH_ERR_PARM_ERROR;
+
+	mbox_flash = container_of(bl, struct mbox_flash_data, bl);
+
+	prlog(PR_TRACE, "Flash erase at 0x%08x for 0x%08x\n", (u32) pos, (u32) len);
+	while (len > 0) {
+		uint64_t size;
+		int rc;
+
+		/* Move window and get a new size to erase */
+		rc = mbox_window_move(mbox_flash, &mbox_flash->write,
+				      MBOX_C_CREATE_WRITE_WINDOW, pos, len, &size);
+		if (rc)
+			return rc;
+
+		rc = mbox_flash_erase(mbox_flash, pos, size);
+		if (rc)
+			return rc;
+
+		/*
+		* Flush directly, don't mark that region dirty otherwise it
+		* isn't clear if a write happened there or not
+		*/
+
+		rc = mbox_flash_flush(mbox_flash);
+		if (rc)
+			return rc;
+
+		len -= size;
+		pos += size;
+	}
+
+	return 0;
+}
+
+static int mbox_flash_erase_v1(struct blocklevel_device *bl __unused,
+			       uint64_t pos __unused, uint64_t len __unused)
 {
 	/*
 	* We can probably get away with doing nothing.
@@ -880,7 +934,7 @@ static int protocol_init(struct mbox_flash_data *mbox_flash)
 	/* Assume V2 */
 	mbox_flash->bl.read = &mbox_flash_read;
 	mbox_flash->bl.write = &mbox_flash_write;
-	mbox_flash->bl.erase = &mbox_flash_erase;
+	mbox_flash->bl.erase = &mbox_flash_erase_v2;
 	mbox_flash->bl.get_info = &mbox_flash_get_info;
 
 	/* Assume V2 */
@@ -934,6 +988,7 @@ static int protocol_init(struct mbox_flash_data *mbox_flash)
 
 	prlog(PR_INFO, "Detected mbox protocol version %d\n", mbox_flash->version);
 	if (mbox_flash->version == 1) {
+		mbox_flash->bl.erase = &mbox_flash_erase_v1;
 		/* Not all handlers differ, update those which do */
 		mbox_flash->handlers[MBOX_C_GET_FLASH_INFO] = &mbox_flash_do_get_flash_info_v1;
 		mbox_flash->handlers[MBOX_C_CREATE_READ_WINDOW] =
@@ -976,7 +1031,7 @@ int mbox_flash_init(struct blocklevel_device **bl)
 	/* Assume V2 */
 	mbox_flash->bl.read = &mbox_flash_read;
 	mbox_flash->bl.write = &mbox_flash_write;
-	mbox_flash->bl.erase = &mbox_flash_erase;
+	mbox_flash->bl.erase = &mbox_flash_erase_v2;
 	mbox_flash->bl.get_info = &mbox_flash_get_info;
 
 	if (bmc_mbox_get_attn_reg() & MBOX_ATTN_BMC_REBOOT)
