@@ -74,6 +74,7 @@ void mem_region_add_dt_reserved(void);
 
 /* Mark memory as reserved */
 void mem_reserve_fw(const char *name, uint64_t start, uint64_t len);
+void mem_reserve_hwbuf(const char *name, uint64_t start, uint64_t len);
 
 struct mem_region *find_mem_region(const char *name);
 

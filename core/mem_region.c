@@ -756,13 +756,14 @@ static bool add_region(struct mem_region *region)
 	return true;
 }
 
-void mem_reserve_fw(const char *name, uint64_t start, uint64_t len)
+static void mem_reserve(enum mem_region_type type, const char *name,
+		uint64_t start, uint64_t len)
 {
 	struct mem_region *region;
 	bool added = true;
 
 	lock(&mem_region_lock);
-	region = new_region(name, start, len, NULL, REGION_FW_RESERVED);
+	region = new_region(name, start, len, NULL, type);
 	assert(region);
 
 	if (!mem_region_init_done)
@@ -772,6 +773,16 @@ void mem_reserve_fw(const char *name, uint64_t start, uint64_t len)
 
 	assert(added);
 	unlock(&mem_region_lock);
+}
+
+void mem_reserve_fw(const char *name, uint64_t start, uint64_t len)
+{
+	mem_reserve(REGION_FW_RESERVED, name, start, len);
+}
+
+void mem_reserve_hwbuf(const char *name, uint64_t start, uint64_t len)
+{
+	mem_reserve(REGION_RESERVED, name, start, len);
 }
 
 static bool matches_chip_id(const __be32 ids[], size_t num, u32 chip_id)
@@ -1169,6 +1180,14 @@ static void mem_region_add_dt_reserved_node(struct dt_node *parent,
 	region->node = dt_new_addr(parent, name, region->start);
 	assert(region->node);
 	dt_add_property_u64s(region->node, "reg", region->start, region->len);
+
+	/*
+	 * This memory is used by hardware and may need special handling. Ask
+	 * the host kernel not to map it by default.
+	 */
+	if (region->type == REGION_RESERVED)
+		dt_add_property(region->node, "no-map", NULL, 0);
+
 	free(name);
 }
 

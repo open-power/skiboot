@@ -107,3 +107,4 @@ static void noop_function(void) {}
 
 NOOP_STUB(early_uart_init);
 NOOP_STUB(mem_reserve_fw);
+NOOP_STUB(mem_reserve_hwbuf);
