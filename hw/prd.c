@@ -397,7 +397,7 @@ void prd_register_reserved_memory(void)
 	for (region = mem_region_next(NULL); region;
 			region = mem_region_next(region)) {
 
-		if (region->type != REGION_HW_RESERVED)
+		if (region->type != REGION_FW_RESERVED)
 			continue;
 
 		if (!region->node)

@@ -756,13 +756,13 @@ static bool add_region(struct mem_region *region)
 	return true;
 }
 
-void mem_reserve_hw(const char *name, uint64_t start, uint64_t len)
+void mem_reserve_fw(const char *name, uint64_t start, uint64_t len)
 {
 	struct mem_region *region;
 	bool added = true;
 
 	lock(&mem_region_lock);
-	region = new_region(name, start, len, NULL, REGION_HW_RESERVED);
+	region = new_region(name, start, len, NULL, REGION_FW_RESERVED);
 	assert(region);
 
 	if (!mem_region_init_done)
@@ -935,7 +935,7 @@ static void mem_region_parse_reserved_properties(void)
 			region = new_region(name,
 					dt_get_number(range, 2),
 					dt_get_number(range + 1, 2),
-					NULL, REGION_HW_RESERVED);
+					NULL, REGION_FW_RESERVED);
 			add_region(region);
 		}
 	} else if (names || ranges) {
@@ -974,7 +974,7 @@ static bool mem_region_parse_reserved_nodes(const char *path)
 		region = new_region(strdup(node->name),
 				dt_get_number(reg->prop, 2),
 				dt_get_number(reg->prop + sizeof(u64), 2),
-				node, REGION_HW_RESERVED);
+				node, REGION_FW_RESERVED);
 		add_region(region);
 	}
 
@@ -1151,7 +1151,7 @@ static void mem_region_add_dt_reserved_node(struct dt_node *parent,
 	 * update regions' device-tree nodes, and we want those updates to
 	 * apply to the nodes in /reserved-memory/.
 	 */
-	if (region->type == REGION_HW_RESERVED && region->node) {
+	if (region->type == REGION_FW_RESERVED && region->node) {
 		if (region->node->parent != parent)
 			region->node = dt_copy(region->node, parent);
 		return;

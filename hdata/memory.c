@@ -470,7 +470,7 @@ static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 		prlog(PR_DEBUG, "MEM: Reserve '%s' %#" PRIx64 "-%#" PRIx64 " (type/inst=0x%08x)\n",
 		      label, start_addr, end_addr, be32_to_cpu(hb_resv_mem->type_instance));
 
-		mem_reserve_hw(label, start_addr, end_addr - start_addr + 1);
+		mem_reserve_fw(label, start_addr, end_addr - start_addr + 1);
 	}
 }
 

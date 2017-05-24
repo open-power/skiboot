@@ -116,7 +116,7 @@ static void homer_init_chip(struct proc_chip *chip)
 		if (!mem_range_is_reserved(hbase, hsize)) {
 			prlog(PR_WARNING,
 				"HOMER image is not reserved! Reserving\n");
-			mem_reserve_hw("ibm,homer-image", hbase, hsize);
+			mem_reserve_fw("ibm,homer-image", hbase, hsize);
 		}
 
 		chip->homer_base = hbase;
@@ -141,7 +141,7 @@ static void homer_init_chip(struct proc_chip *chip)
 				!mem_range_is_reserved(sbase, ssize)) {
 			prlog(PR_WARNING,
 				"SLW image is not reserved! Reserving\n");
-			mem_reserve_hw("ibm,slw-image", sbase, ssize);
+			mem_reserve_fw("ibm,slw-image", sbase, ssize);
 		}
 
 		chip->slw_base = sbase;
@@ -206,7 +206,7 @@ void homer_init(void)
 					chip->occ_common_size)) {
 			prlog(PR_WARNING,
 				"OCC common area is not reserved! Reserving\n");
-			mem_reserve_hw("ibm,occ-common-area",
+			mem_reserve_fw("ibm,occ-common-area",
 						chip->occ_common_base,
 						chip->occ_common_size);
 		}
