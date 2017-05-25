@@ -112,6 +112,7 @@ struct centaur_chip;
 struct mfsi;
 struct xive;
 struct lpcm;
+struct vas;
 
 /* Chip type */
 enum proc_chip_type {
@@ -212,6 +213,8 @@ struct proc_chip {
 
 	/* Used by hw/xive.c */
 	struct xive		*xive;
+
+	struct vas		*vas;
 };
 
 extern uint32_t pir_to_chip_id(uint32_t pir);

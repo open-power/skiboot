@@ -45,6 +45,7 @@
 #include <sensor.h>
 #include <xive.h>
 #include <nvram.h>
+#include <vas.h>
 #include <libstb/stb.h>
 #include <libstb/container.h>
 #include <phys-map.h>
@@ -1001,6 +1002,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	preload_io_vpd();
 	preload_capp_ucode();
 	start_preload_kernel();
+
+	/* Virtual Accelerator Switchboard */
+	vas_init();
 
 	/* NX init */
 	nx_init();
