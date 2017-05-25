@@ -69,6 +69,19 @@ static int vas_scom_write(struct proc_chip *chip, uint64_t reg, uint64_t val)
 	return rc;
 }
 
+/* Interface for NX - make sure VAS is fully initialized first */
+__attrconst inline uint64_t vas_get_hvwc_mmio_bar(const int chipid)
+{
+	uint64_t addr;
+
+	if (!vas_initialized)
+		return 0ULL;
+
+	get_hvwc_mmio_bar(chipid, &addr, NULL);
+
+	return addr;
+}
+
 static int init_north_ctl(struct proc_chip *chip)
 {
 	uint64_t val = 0ULL;
