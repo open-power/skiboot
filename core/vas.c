@@ -82,6 +82,21 @@ __attrconst inline uint64_t vas_get_hvwc_mmio_bar(const int chipid)
 	return addr;
 }
 
+/* Interface for NX - make sure VAS is fully initialized first */
+__attrconst uint64_t vas_get_wcbs_bar(int chipid)
+{
+	struct proc_chip *chip;
+
+	if (!vas_initialized)
+		return 0ULL;
+
+	chip = get_chip(chipid);
+	if (!chip)
+		return 0ULL;
+
+	return chip->vas->wcbs;
+}
+
 static int init_north_ctl(struct proc_chip *chip)
 {
 	uint64_t val = 0ULL;

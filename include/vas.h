@@ -38,6 +38,7 @@
 
 extern void vas_init(void);
 extern __attrconst uint64_t vas_get_hvwc_mmio_bar(const int chipid);
+extern __attrconst uint64_t vas_get_wcbs_bar(int chipid);
 
 /*
  * HVWC and UWC BAR.
