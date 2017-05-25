@@ -768,6 +768,9 @@ static void add_nx_node(u32 gcid)
 	case proc_gen_p8:
 		cp_str = "ibm,power8-nx";
 		break;
+	case proc_gen_p9:
+		cp_str = "ibm,power9-nx";
+		break;
 	default:
 		return;
 	}
