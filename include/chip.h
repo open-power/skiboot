@@ -98,6 +98,10 @@
 
 #define P9_PIR2THREADID(pir) ((pir) & 0x3)
 
+#define P9_GCID2NODEID(gcid)	(((gcid) >> 3) & 0xf)
+
+#define P9_GCID2CHIPID(gcid) ((gcid) & 0x7)
+
 /* P9 specific ones mostly used by XIVE */
 #define P9_PIR2LOCALCPU(pir) ((pir) & 0xff)
 #define P9_PIRFROMLOCALCPU(chip, cpu)	(((chip) << 8) | (cpu))
