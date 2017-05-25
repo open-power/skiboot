@@ -358,6 +358,20 @@ static void add_xive_node(struct dt_node *np)
 	dt_add_property(xive, "force-assign-bars", NULL, 0);
 }
 
+/*
+ * SCOM Base Address from P9 SCOM Assignment spreadsheet
+ */
+#define VAS_SCOM_BASE_ADDR		0x03011800
+
+static void add_vas_node(struct dt_node *np, int idx)
+{
+	struct  dt_node *vas = dt_new_addr(np, "vas", VAS_SCOM_BASE_ADDR);
+
+	dt_add_property_cells(vas, "reg", VAS_SCOM_BASE_ADDR, 0x300);
+	dt_add_property_string(vas, "compatible", "ibm,power9-vas-x");
+	dt_add_property_cells(vas, "ibm,vas-id", idx);
+}
+
 static void add_xscom_add_pcia_assoc(struct dt_node *np, uint32_t pcid)
 {
 	const struct HDIF_common_hdr *hdr;
@@ -471,6 +485,7 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 		if (proc_gen >= proc_gen_p9) {
 			add_xive_node(np);
 			parse_i2c_devs(hdif, SPPCRD_IDATA_HOST_I2C, np);
+			add_vas_node(np, i);
 		}
 	}
 
