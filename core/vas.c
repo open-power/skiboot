@@ -102,6 +102,8 @@ static void reset_fir(struct proc_chip *chip)
 #define	RMA_LSMP_64K_SYS_ID		PPC_BITMASK(8, 12)
 #define	RMA_LSMP_64K_NODE_ID		PPC_BITMASK(15, 18)
 #define	RMA_LSMP_64K_CHIP_ID		PPC_BITMASK(19, 21)
+#define	RMA_LSMP_WINID_START_BIT	32
+#define	RMA_LSMP_WINID_NUM_BITS		16
 
 /*
  * Initialize RMA BAR on this chip to correspond to its node/chip id.
@@ -125,6 +127,103 @@ static int init_rma(struct proc_chip *chip)
 	val = SETFIELD(VAS_RMA_BAMR_ADDR_MASK, 0ULL, 0xFFFC0000000ULL);
 
 	return vas_scom_write(chip, VAS_RMA_BAMR, val);
+}
+
+/*
+ * get_paste_bar():
+ *
+ * Compute and return the "paste base address region" for @chipid. This
+ * BAR contains the "paste" addreses for all windows on the chip. Linux
+ * uses this paste BAR to compute the hardware paste address of a (send)
+ * window using:
+ *
+ * 	paste_addr = base + (winid << shift)
+ *
+ * where winid is the window index and shift is computed as:
+ *
+ *     start = RMA_LSMP_WINID_START_BIT;
+ *     nbits = RMA_LSMP_WINID_NUM_BITS;
+ *     shift = 63 - (start + nbits - 1);
+ *
+ * See also get_paste_bitfield() below, which is used to export the 'start'
+ * and 'nbits' to Linux through the DT.
+ *
+ * Each chip supports VAS_WINDOWS_PER_CHIP (64K on Power9) windows. To
+ * provide proper isolation, the paste address for each window is on a
+ * separate page. Thus with a page size of 64K, the length of the paste
+ * BAR for a chip is VAS_WINDOWS_PER_CHIP times 64K (or 4GB for Power9).
+ *
+ * The start/base of the paste BAR is computed using the tables 1.1 through
+ * 1.4 in Section 1.3.3.1 (Send Message w/Paste Commands (cl_rma_w)) of VAS
+ * P9 Workbook.
+ *
+ * With 64K mode and Large SMP Mode the bits are used as follows:
+ *
+ *      Bits    Values          Comments
+ *      --------------------------------------
+ *      0:7     0b 0000_0000    Reserved
+ *      8:12    0b 0000_1       System id/Foreign Index 0:4
+ *      13:14   0b 00           Foreign Index 5:6
+ *
+ *      15:18   0 throuh 15     Node id (0 through 15)
+ *      19:21   0 through 7     Chip id (0 throuh 7)
+ *      22:23   0b 00           Unused, Foreign index 7:8
+ *
+ *      24:31   0b 0000_0000    RPN 0:7, Reserved
+ *      32:47   0 through 64K   Send Window Id
+ *      48:51   0b 0000         Spare
+ *
+ *      52      0b 0            Reserved
+ *      53      0b 1            Report Enable (Set to 1 for NX).
+ *      54      0b 0            Reserved
+ *
+ *      55:56   0b 00           Snoop Bus
+ *      57:63   0b 0000_000     Reserved
+ *
+ * Except for a few bits, the small SMP mode computation is similar.
+ *
+ * TODO: Detect and compute address for small SMP mode.
+ *
+ * Example: For Node 0, Chip 0, Window id 4, Report Enable 1:
+ *
+ *    Byte0    Byte1    Byte2    Byte3    Byte4    Byte5    Byte6    Byte7
+ *    00000000 00001000 00000000 00000000 00000000 00000100 00000100 00000000
+ *                    |   || |            |               |      |
+ *                    +-+-++++            +-------+-------+      v
+ *                      |   |                      |          Report Enable
+ *                      v   v                      v
+ *                   Node   Chip               Window id 4
+ *
+ *    Thus the paste address for window id 4 is 0x00080000_00040400 and
+ *    the _base_ paste address for Node 0 Chip 0 is 0x00080000_00000000.
+ */
+#define        VAS_PASTE_BAR_LEN       (1ULL << 32)    /* 4GB - see above */
+
+static inline void get_paste_bar(int chipid, uint64_t *start, uint64_t *len)
+{
+	uint64_t val;
+
+	val = 0ULL;
+	val = SETFIELD(RMA_LSMP_64K_SYS_ID, val, 1);
+	val = SETFIELD(RMA_LSMP_64K_NODE_ID, val, P9_GCID2NODEID(chipid));
+	val = SETFIELD(RMA_LSMP_64K_CHIP_ID, val, P9_GCID2CHIPID(chipid));
+
+	*start = val;
+	*len = VAS_PASTE_BAR_LEN;
+}
+
+/*
+ * get_paste_bitfield():
+ *
+ * As explained in the function header for get_paste_bar(), the window
+ * id is encoded in bits 32:47 of the paste address. Export this bitfield
+ * to Linux via the device tree as a reg property (with start bit and
+ * number of bits).
+ */
+static inline void get_paste_bitfield(uint64_t *start, uint64_t *n_bits)
+{
+	*start = (uint64_t)RMA_LSMP_WINID_START_BIT;
+	*n_bits = (uint64_t)RMA_LSMP_WINID_NUM_BITS;
 }
 
 /*
