@@ -18,7 +18,7 @@
 /* Hostboot runtime interface */
 /* Derived from src/include/runtime/interface.h in Hostboot */
 
-#define HOSTBOOT_RUNTIME_INTERFACE_VERSION 1
+#define HOSTBOOT_RUNTIME_INTERFACE_VERSION 0x9002
 
 /** Memory error types defined for memory_error() interface. */
 enum MemoryError_t
@@ -39,6 +39,12 @@ enum MemoryError_t
 	 * attentions so that the hypervisor will know all areas of
 	 * memory that are impacted by the failure. */
 	MEMORY_ERROR_UE = 1,
+
+	/** Firmware has predictively requested service on a part in the memory
+	 * subsystem. The partitions may not have been affected, but it is
+	 * advised to migrate off of the address range as soon as possible to
+	 * avoid potential partition outages. */
+	MEMORY_ERROR_PREDICTIVE = 2,
 };
 
 /* Capability sets, for get_interface_capabilities */
@@ -53,6 +59,16 @@ enum MemoryError_t
  * Previous implementations may have incorrectly ignored failures.
  */
 #define HBRT_CAPS_OPAL_HAS_XSCOM_RC   (1ul << 0)
+
+/**
+ *  Load types for the load_pm_complex() interface
+ *      HBRT_PM_LOAD: initial load of all lids/sections from scratch,
+ *                    preserve nothing
+ *      HBRT_PM_RELOAD: concurrent reload of all lids/sections,
+ *                      but preserve runtime updates
+ */
+#define HBRT_PM_LOAD    0
+#define HBRT_PM_RELOAD  1
 
 struct host_interfaces {
 	/** Interface version. */
@@ -299,8 +315,77 @@ struct host_interfaces {
 	 */
 	uint64_t (*get_interface_capabilities)(uint64_t i_set);
 
+	/**
+	 *  @brief Map a physical address space into usable memory
+	 *  @note Repeated calls to map the same memory should not return an
+	 *        error
+	 *  @param[in]  i_physMem  Physical address
+	 *  @param[in]  i_bytes    Number of bytes to map in
+	 *  @return NULL on error, else pointer to usable memory
+	 *  @platform FSP, OpenPOWER
+	 */
+	void* (*map_phys_mem)(uint64_t i_physMem, size_t i_bytes);
+
+	/**
+	 *  @brief Unmap a physical address space from usable memory
+	 *  @param[in]  i_ptr  Previously mapped pointer
+	 *  @return 0 on success, else RC
+	 *  @platform FSP, OpenPOWER
+	 */
+	int (*unmap_phys_mem)(void* i_ptr);
+
+	/**
+	 *  @brief Modify the SCOM restore section of the HCODE image with the
+	 *         given register data
+	 *
+	 *  @note The Hypervisor should perform the following actions:
+	 *        - insert the data into the HCODE image (p9_stop_api)
+	 *
+	 *  @pre HBRT is responsible for enabling special wakeup on the
+	 *       associated core(s) before calling this interface
+	 *
+	 *  @param  i_chipId    processor chip ID
+	 *                       plus ID type, always proc (0x0)
+	 *  @param  i_section   runtime section to update
+	 *                      (passthru to pore_gen_scom)
+	 *  @param  i_operation type of operation to perform
+	 *                      (passthru to pore_gen_scom)
+	 *  @param  i_scomAddr  fully qualified scom address
+	 *  @param  i_scomData  data for operation
+	 *
+	 *  @return 0 if the request is successfully received.
+	 *          Any value other than 0 on failure.
+	 *  @platform FSP, OpenPOWER
+	 */
+	int (*hcode_scom_update)(uint64_t i_chipId,
+			uint32_t i_section,
+			uint32_t i_operation,
+			uint64_t i_scomAddr,
+			uint64_t i_scomData);
+
+	/**
+	 * @brief Send a request to firmware, and receive a response
+	 * @details
+	 *   req_len bytes are sent to runtime firmware, and resp_len
+	 *   bytes received in response.
+	 *
+	 *   Both req and resp are allocated by the caller. If resp_len
+	 *   is not large enough to contain the full response, an error
+	 *   is returned.
+	 *
+	 * @param[in]  i_reqLen       length of request data
+	 * @param[in]  i_req          request data
+	 * @param[inout] o_respLen    in: size of request data buffer
+	 *                            out: length of request data
+	 * @param[in]  o_resp         response data
+	 * @return 0 on success, else RC
+	 * @platform FSP, OpenPOWER
+	 */
+	int (*firmware_request)(uint64_t i_reqLen, void *i_req,
+			uint64_t *o_respLen, void *o_resp);
+
 	/* Reserve some space for future growth. */
-	void (*reserved[31])(void);
+	void (*reserved[27])(void);
 };
 
 struct runtime_interfaces {
@@ -491,6 +576,109 @@ struct runtime_interfaces {
 	 */
 	int (*run_command)(int argc, const char **argv, char **o_outString);
 
+	/**
+	 *  @brief Verify integrity of a secure container
+	 *  @param[in] i_pContainer Pointer to a valid secure container,
+	 *      Must not be NULL.  Container is assumed to be stripped of any
+	 *      ECC and must start with a valid secure header (which contains
+	 *      the container size information)
+	 *  @param[in] i_pHwKeyHash Pointer to a valid hardware keys' hash.
+	 *      Must not be NULL.
+	 *  @param[in] i_hwKeyHashSize Size of the hardware keys' hash.
+	 *      A value which incorrectly states the size of the hardware keys'
+	 *      hash will be detected as a verification error or worse, an
+	 *      illegal memory access.  Must not be 0.
+	 *  @note If secureboot is compiled out, the function pointer will be
+	 *      set to NULL.  If caller's secureboot support is compiled in and
+	 *      secureboot is enabled by policy, then caller should treat a NULL
+	 *      pointer as a verification failure.
+	 *  @return Integer error code indicating success or failure
+	 *  @retval 0 Container verified correctly
+	 *  @retval !0 API error or otherwise failed to verify container
+	 *  @platform FSP, OpenPOWER
+	 */
+	int (*verify_container)(const void *i_pContainer,
+			const void *i_pHwKeyHash,
+			size_t i_hwKeyHashSize);
+
+	/**
+	 *  @brief SBE message passing
+	 *
+	 *  @details
+	 *      This is a blocking call that will pass an SBE message
+	 *      with a pass-through command through HBRT to code that
+	 *      will process the command and provide a response.
+	 *
+	 *  @param[in] i_procChipId Chip ID of the processor whose SBE is
+	 *      passing the message and sent the interrupt
+	 *
+	 *  @return 0 on success, or return code if the command failed
+	 *  @platform FSP, OpenPOWER
+	 */
+	int (*sbe_message_passing)(uint32_t i_procChipId);
+
+	/**
+	 *  @brief Load OCC/HCODE images into mainstore
+	 *
+	 *  @param[in] i_chip            the HW chip id (XSCOM chip ID)
+	 *  @param[in] i_homer_addr      the physical mainstore address of the
+	 *                               start of the HOMER image,
+	 *  @param[in] i_occ_common_addr the physical mainstore address of the
+	 *                               OCC common area, 8MB, used for
+	 *                               OCC-OCC communication (1 per node)
+	 *  @param[in] i_mode            selects initial load vs concurrent
+	 *                               reloads
+	 *                               HBRT_PM_LOAD:
+	 *                                  load all lids/sections from scratch,
+	 *                                  preserve nothing
+	 *                               HBRT_PM_RELOAD:
+	 *                                  reload all lids/sections,
+	 *                                  but preserve runtime updates
+	 *  @return 0 on success else return code
+	 *  @platform FSP, OpenPOWER
+	 */
+	int (*load_pm_complex)(uint64_t i_chip,
+			uint64_t i_homer_addr,
+			uint64_t i_occ_common_addr,
+			uint32_t i_mode);
+
+	/**
+	 *  @brief Start OCC/HCODE on the specified chip
+	 *  @param[in] i_chip the HW chip id
+	 *  @return 0 on success else return code
+	 *  @platform FSP, OpenPOWER
+	 */
+	int (*start_pm_complex)(uint64_t i_chip);
+
+	/**
+	 *  @brief Reset OCC/HCODE on the specified chip
+	 *  @param[in] i_chip the HW chip id
+	 *  @return 0 on success else return code
+	 *  @platform FSP, OpenPOWER
+	 */
+	int (*reset_pm_complex)(uint64_t i_chip);
+
+	/**
+	 * @brief Query the IPOLL event mask supported by HBRT
+	 *
+	 * @details  This call allows the wrapper application to query
+	 * the ipoll event mask to set when the HBRT instance is running. Bits
+	 * that are *set* in this bitmask represent events that will be
+	 * forwarded to the handle_attn() callback.
+	 *
+	 * @return        The IPOLL event bits to enable during HBRT execution
+	 * @platform FSP, OpenPOWER
+	 */
+	uint64_t (*get_ipoll_events)(void);
+
+	/**
+	 * @brief Receive an async notification from firmware
+	 * @param[in] i_len   length of notification data
+	 * @param[in] i_data  notification data
+	 * @platform FSP, OpenPOWER
+	 */
+	void (*firmware_notify)(uint64_t len, void *data);
+
 	/* Reserve some space for future growth. */
-	void (*reserved[29])(void);
+	void (*reserved[22])(void);
 };
