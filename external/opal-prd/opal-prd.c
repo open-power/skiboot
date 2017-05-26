@@ -1239,7 +1239,29 @@ static int handle_msg_occ_reset(struct opal_prd_ctx *ctx,
 	return 0;
 }
 
-static int handle_prd_msg(struct opal_prd_ctx *ctx)
+static int handle_prd_msg(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
+{
+	int rc = -1;
+
+	switch (msg->hdr.type) {
+	case OPAL_PRD_MSG_TYPE_ATTN:
+		rc = handle_msg_attn(ctx, msg);
+		break;
+	case OPAL_PRD_MSG_TYPE_OCC_RESET:
+		rc = handle_msg_occ_reset(ctx, msg);
+		break;
+	case OPAL_PRD_MSG_TYPE_OCC_ERROR:
+		rc = handle_msg_occ_error(ctx, msg);
+		break;
+	default:
+		pr_log(LOG_WARNING, "Invalid incoming message type 0x%x",
+				msg->hdr.type);
+	}
+
+	return rc;
+}
+
+static int read_prd_msg(struct opal_prd_ctx *ctx)
 {
 	struct opal_prd_msg *msg;
 	int size;
@@ -1302,22 +1324,6 @@ static int handle_prd_msg(struct opal_prd_ctx *ctx)
 
 			pos += rc;
 		}
-	}
-
-	switch (msg->hdr.type) {
-	case OPAL_PRD_MSG_TYPE_ATTN:
-		rc = handle_msg_attn(ctx, msg);
-		break;
-	case OPAL_PRD_MSG_TYPE_OCC_RESET:
-		rc = handle_msg_occ_reset(ctx, msg);
-		break;
-	case OPAL_PRD_MSG_TYPE_OCC_ERROR:
-		rc = handle_msg_occ_error(ctx, msg);
-		break;
-	default:
-		pr_log(LOG_WARNING, "Invalid incoming message type 0x%x",
-				msg->hdr.type);
-		return -1;
 	}
 
 	return 0;
@@ -1614,8 +1620,11 @@ static int run_attn_loop(struct opal_prd_ctx *ctx)
 		if (!rc)
 			continue;
 
-		if (pollfds[0].revents & POLLIN)
-			handle_prd_msg(ctx);
+		if (pollfds[0].revents & POLLIN) {
+			rc = read_prd_msg(ctx);
+			if (!rc)
+				handle_prd_msg(ctx, ctx->msg);
+		}
 
 		if (pollfds[1].revents & POLLIN) {
 			fd = accept(ctx->socket, NULL, NULL);
