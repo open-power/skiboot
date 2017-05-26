@@ -190,13 +190,19 @@ mysim of addprop $xscom_node byte_array "compatible" $compat
 set cpio_start 0x80000000
 set cpio_end $cpio_start
 if { [info exists env(SKIBOOT_INITRD)] } {
-    set cpio_file $env(SKIBOOT_INITRD)
+
+    set cpios [split $env(SKIBOOT_INITRD) ","]
+
+    foreach cpio_file $cpios {
+	    set cpio_file [string trim $cpio_file]
+	    set cpio_size [file size $cpio_file]
+	    mysim mcm 0 memory fread $cpio_end $cpio_size $cpio_file
+	    set cpio_end [expr $cpio_end + $cpio_size]
+    }
+
     set chosen_node [mysim of find_device /chosen]
-    set cpio_size [file size $cpio_file]
-    set cpio_end [expr $cpio_start + $cpio_size]
     mysim of addprop $chosen_node int "linux,initrd-start" $cpio_start
     mysim of addprop $chosen_node int "linux,initrd-end"   $cpio_end
-    mysim mcm 0 memory fread $cpio_start $cpio_size $cpio_file
 }
 
 # Default NVRAM is blank and will be formatted by Skiboot if no file is provided
