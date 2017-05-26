@@ -256,6 +256,7 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 	f->toc_offset = offset;
 	f->max_size = max_size;
 	f->bl = bl;
+	list_head_init(&f->hdr.entries);
 
 	/* Convert and check flash header */
 	rc = ffs_check_convert_header(&f->hdr, &raw_hdr);
@@ -298,7 +299,6 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 		goto out;
 	}
 
-	list_head_init(&f->hdr.entries);
 	for (i = 0; i < be32_to_cpu(raw_hdr.entry_count); i++) {
 		struct ffs_entry *ent = calloc(1, sizeof(struct ffs_entry));
 		if (!ent) {
