@@ -67,6 +67,7 @@ unsigned long tb_hz = 512000000;
 #define __CPU_H
 struct cpu_thread {
 	uint32_t			pir;
+	uint32_t			chip_id;
 };
 
 struct cpu_thread __boot_cpu, *boot_cpu = &__boot_cpu;
@@ -94,6 +95,11 @@ struct dt_node *add_ics_node(void)
 
 static bool spira_check_ptr(const void *ptr, const char *file, unsigned int line);
 
+/* should probably check this */
+#define BITS_PER_LONG 64
+/* not used, just needs to exist */
+#define cpu_max_pir 0x7
+
 #include "../cpu-common.c"
 #include "../fsp.c"
 #include "../hdif.c"
@@ -113,6 +119,7 @@ static bool spira_check_ptr(const void *ptr, const char *file, unsigned int line
 #include "../../test/dt_common.c"
 #include "../../core/fdt.c"
 #include "../../hw/phys-map.c"
+#include "../../core/mem_region.c"
 
 #include <err.h>
 
@@ -334,6 +341,9 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "FATAL ERROR parsing HDAT\n");
 		exit(EXIT_FAILURE);
 	}
+
+	mem_region_init();
+	mem_region_release_unused();
 
 	if (!blobs)
 		squash_blobs(dt_root);

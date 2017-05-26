@@ -291,23 +291,23 @@ void mem_dump_allocs(void)
 	struct alloc_hdr *hdr;
 
 	/* Second pass: populate property data */
-	printf("Memory regions:\n");
+	prlog(PR_INFO, "Memory regions:\n");
 	list_for_each(&regions, region, list) {
 		if (!(region->type == REGION_SKIBOOT_HEAP ||
 		      region->type == REGION_MEMORY))
 			continue;
-		printf("  0x%012llx..%012llx : %s\n",
+		prlog(PR_INFO, "  0x%012llx..%012llx : %s\n",
 		       (long long)region->start,
 		       (long long)(region->start + region->len - 1),
 		       region->name);
 		if (region->free_list.n.next == NULL) {
-			printf("    no allocs\n");
+			prlog(PR_INFO, "    no allocs\n");
 			continue;
 		}
 		for (hdr = region_start(region); hdr; hdr = next_hdr(region, hdr)) {
 			if (hdr->free)
 				continue;
-			printf("    0x%.8lx %s\n", hdr->num_longs * sizeof(long),
+			prlog(PR_INFO, "    0x%.8lx %s\n", hdr->num_longs * sizeof(long),
 			       hdr_location(hdr));
 		}
 	}
@@ -322,7 +322,7 @@ int64_t mem_dump_free(void)
 
 	total_free = 0;
 
-	printf("Free space in HEAP memory regions:\n");
+	prlog(PR_INFO, "Free space in HEAP memory regions:\n");
 	list_for_each(&regions, region, list) {
 		if (!(region->type == REGION_SKIBOOT_HEAP ||
 		      region->type == REGION_MEMORY))
@@ -338,12 +338,12 @@ int64_t mem_dump_free(void)
 
 			region_free+= hdr->num_longs * sizeof(long);
 		}
-		printf("Region %s free: %"PRIx64"\n",
+		prlog(PR_INFO, "Region %s free: %"PRIx64"\n",
 		       region->name, region_free);
 		total_free += region_free;
 	}
 
-	printf("Total free: %"PRIu64"\n", total_free);
+	prlog(PR_INFO, "Total free: %"PRIu64"\n", total_free);
 
 	return total_free;
 }
@@ -1107,7 +1107,7 @@ void mem_region_release_unused(void)
 	lock(&mem_region_lock);
 	assert(!mem_regions_finalised);
 
-	printf("Releasing unused memory:\n");
+	prlog(PR_INFO, "Releasing unused memory:\n");
 	list_for_each(&regions, r, list) {
 		uint64_t used_len;
 
@@ -1118,7 +1118,7 @@ void mem_region_release_unused(void)
 
 		used_len = allocated_length(r);
 
-		printf("    %s: %llu/%llu used\n",
+		prlog(PR_INFO, "    %s: %llu/%llu used\n",
 		       r->name, (long long)used_len, (long long)r->len);
 
 		/* We keep the skiboot heap. */
@@ -1230,7 +1230,7 @@ void mem_region_add_dt_reserved(void)
 	name = names = malloc(names_len);
 	range = ranges = malloc(ranges_len);
 
-	printf("Reserved regions:\n");
+	prlog(PR_INFO, "Reserved regions:\n");
 	/* Second pass: populate property data */
 	list_for_each(&regions, region, list) {
 		if (!region_is_reservable(region))
@@ -1239,7 +1239,7 @@ void mem_region_add_dt_reserved(void)
 		memcpy(name, region->name, len);
 		name += len;
 
-		printf("  0x%012llx..%012llx : %s\n",
+		prlog(PR_INFO, "  0x%012llx..%012llx : %s\n",
 		       (long long)region->start,
 		       (long long)(region->start + region->len - 1),
 		       region->name);
