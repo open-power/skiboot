@@ -120,7 +120,7 @@ static const char *opal_prd_devnode = "/dev/opal-prd";
 static const char *opal_prd_socket = "/run/opal-prd-control";
 static const char *hbrt_code_region_name = "ibm,hbrt-code-image";
 static const int opal_prd_version = 1;
-static const uint64_t opal_prd_ipoll = 0xf000000000000000;
+static uint64_t opal_prd_ipoll = 0xf000000000000000;
 
 static const char *ipmi_devnode = "/dev/ipmi0";
 static const int ipmi_timeout_ms = 5000;
@@ -267,6 +267,7 @@ extern int call_mfg_htmgt_pass_thru(uint16_t i_cmdLength, uint8_t *i_cmdData,
 				uint16_t *o_rspLength, uint8_t *o_rspData);
 extern int call_apply_attr_override(uint8_t *i_data, size_t size);
 extern int call_run_command(int argc, const char **argv, char **o_outString);
+extern uint64_t call_get_ipoll_events(void);
 
 void hservice_puts(const char *str)
 {
@@ -1534,6 +1535,13 @@ static int run_attn_loop(struct opal_prd_ctx *ctx)
 			return -1;
 		}
 	}
+
+	if (hservice_runtime->get_ipoll_events) {
+		pr_debug("HBRT: calling get_ipoll_events");
+		opal_prd_ipoll = call_get_ipoll_events();
+	}
+
+	pr_debug("HBRT: enabling IPOLL events 0x%016lx", opal_prd_ipoll);
 
 	/* send init message, to unmask interrupts */
 	msg.hdr.type = OPAL_PRD_MSG_TYPE_INIT;
