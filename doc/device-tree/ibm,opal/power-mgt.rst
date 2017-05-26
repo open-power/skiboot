@@ -41,8 +41,6 @@ Example:
                 ibm,cpu-idle-state-flags = <0x11000 0x81003 0x47003>;
                 ibm,cpu-idle-state-names = "nap", "fastsleep_", "winkle";
                 ibm,cpu-idle-state-pmicr = <0x0 0x0 0x20 0x0 0x0 0x0>;
-                ibm,pstate-vdds = <0x5758595a 0x5a5b5c5d 0x5e5e5f60 0x61626263 0x64656566 0x66676768 0x6869696a 0x6a6b6b6c 0x6c6d6d6e 0x6e6f6f70 0x70717272>;
-                ibm,pstate-vcss = <0x4d4e4f4f 0x50505152 0x52535354 0x55555657 0x57585859 0x59595a5a 0x5a5b5b5c 0x5c5c5d5d 0x5d5e5e5f 0x5f5f6060 0x60616162>;
                 ibm,pstate-nominal = <0xffffffef>;
                 ibm,cpu-idle-state-residency-ns = <0x186a0 0x11e1a300 0x3b9aca00>;
                 ibm,cpu-idle-state-pmicr-mask = <0x0 0x0 0x30 0x0 0x0 0x0>;
@@ -104,19 +102,21 @@ ibm,pstate-max ibm,pstate-min ibm,pstate-nominal
 These properties give the maximum, minimum and nominal pstate values, as an id
 specified in the ibm,pstate-ids file.
 
-
-ibm,pstate-vcss ibm,pstate-vdds
--------------------------------
-
-These properties list a voltage-identifier of each of the pstates listed in
-ibm,pstate-ids for the Vcs and Vdd values used for that pstate. Each VID is a
-single byte.
-
 ibm,pstate-ultra-turbo ibm,pstate-turbo
 ---------------------------------------
 
 These properties are added when ultra-turbo(WOF) is enabled. These properties
 give the max turbo and max ultra-turbo pstate.
+
+Example:
+
+.. code-block:: dts
+
+  power-mgt {
+        ibm,pstate-core-max = <0x0 0x0 0x0 0x0 0x0 0x0 0x0>;
+        ibm,pstate-turbo = <0xfffffffb>
+        ibm,pstate-ultra-turbo = <0x0>;
+  };
 
 ibm,pstate-core-max
 -------------------
