@@ -277,6 +277,7 @@ extern void occ_pnor_set_owner(enum pnor_owner owner);
 extern void prd_psi_interrupt(uint32_t proc);
 extern void prd_tmgt_interrupt(uint32_t proc);
 extern void prd_occ_reset(uint32_t proc);
+extern void prd_sbe_passthrough(uint32_t proc);
 extern void prd_init(void);
 extern void prd_register_reserved_memory(void);
 

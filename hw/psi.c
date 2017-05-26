@@ -33,6 +33,7 @@
 #include <platform.h>
 #include <errorlog.h>
 #include <xive.h>
+#include <sbe-p9.h>
 
 static LIST_HEAD(psis);
 static u64 psi_link_timer;
@@ -603,7 +604,7 @@ static void psihb_p9_interrupt(struct irq_source *is, uint32_t isn)
 		printf("PSI: DIO irq received\n");
 		break;
 	case P9_PSI_IRQ_PSU:
-		printf("PSI: PSU irq received\n");
+		sbe_interrupt(psi->chip_id);
 		break;
 	}
 }

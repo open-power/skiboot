@@ -28,6 +28,7 @@ enum events {
 	EVENT_ATTN	= 1 << 0,
 	EVENT_OCC_ERROR	= 1 << 1,
 	EVENT_OCC_RESET	= 1 << 2,
+	EVENT_SBE_PASSTHROUGH = 1 << 3,
 };
 
 static uint8_t events[MAX_CHIPS];
@@ -109,6 +110,10 @@ static void prd_msg_consumed(void *data)
 		break;
 	case OPAL_PRD_MSG_TYPE_FIRMWARE_RESPONSE:
 		break;
+	case OPAL_PRD_MSG_TYPE_SBE_PASSTHROUGH:
+		proc = msg->sbe_passthrough.chip;
+		event = EVENT_SBE_PASSTHROUGH;
+		break;
 	default:
 		prlog(PR_ERR, "PRD: invalid msg consumed, type: 0x%x\n",
 				msg->hdr.type);
@@ -180,6 +185,9 @@ static void send_next_pending_event(void)
 		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_OCC_RESET;
 		prd_msg->occ_reset.chip = proc;
 		occ_msg_queue_occ_reset();
+	} else if (event & EVENT_SBE_PASSTHROUGH) {
+		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_SBE_PASSTHROUGH;
+		prd_msg->sbe_passthrough.chip = proc;
 	}
 
 	/*
@@ -264,6 +272,11 @@ void prd_tmgt_interrupt(uint32_t proc)
 void prd_occ_reset(uint32_t proc)
 {
 	prd_event(proc, EVENT_OCC_RESET);
+}
+
+void prd_sbe_passthrough(uint32_t proc)
+{
+	prd_event(proc, EVENT_SBE_PASSTHROUGH);
 }
 
 /* incoming message handlers */

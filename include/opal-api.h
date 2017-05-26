@@ -1032,6 +1032,7 @@ enum opal_prd_msg_type {
 	OPAL_PRD_MSG_TYPE_FIRMWARE_REQUEST, /* HBRT --> OPAL */
 	OPAL_PRD_MSG_TYPE_FIRMWARE_RESPONSE, /* HBRT <-- OPAL */
 	OPAL_PRD_MSG_TYPE_FIRMWARE_NOTIFY, /* HBRT <-- OPAL */
+	OPAL_PRD_MSG_TYPE_SBE_PASSTHROUGH, /* HBRT <-- OPAL */
 };
 
 struct opal_prd_msg_header {
@@ -1076,6 +1077,9 @@ struct opal_prd_msg {
 			__be64	len;
 			char	data[];
 		} fw_notify;
+		struct {
+			__be64	chip;
+		} sbe_passthrough;
 	};
 };
 
