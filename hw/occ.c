@@ -894,11 +894,14 @@ void occ_pstates_init(void)
 		return;
 	}
 
-	/* Setup host based pstates and set nominal frequency */
-	for_each_chip(chip) {
-		for_each_available_core_in_chip(c, chip->id) {
-			cpu_pstates_prepare_core(chip, c, pstate_nom);
-		}
+	/*
+	 * Setup host based pstates and set nominal frequency only in
+	 * P8.
+	 */
+	if (proc_gen == proc_gen_p8) {
+		for_each_chip(chip)
+			for_each_available_core_in_chip(c, chip->id)
+				cpu_pstates_prepare_core(chip, c, pstate_nom);
 	}
 
 	/* Add opal_poller to poll OCC throttle status of each chip */
