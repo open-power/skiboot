@@ -1969,7 +1969,7 @@ static void usage(const char *progname)
 	printf("Usage:\n");
 	printf("\t%s [--debug] [--file <hbrt-image>] [--pnor <device>]\n",
 			progname);
-	printf("\t%s occ <enable|disable>\n", progname);
+	printf("\t%s occ <enable|disable|reset [chip]>\n", progname);
 	printf("\t%s htmgt-passthru <bytes...>\n", progname);
 	printf("\t%s override <FILE>\n", progname);
 	printf("\t%s run [arg 0] [arg 1]..[arg n]\n", progname);
