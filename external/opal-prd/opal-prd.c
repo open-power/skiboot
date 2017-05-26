@@ -100,6 +100,12 @@ struct control_msg {
 		struct {
 			unsigned int	argc;
 		} run_cmd;
+		struct {
+			uint64_t	chip;
+		} occ_reset;
+		struct {
+			uint64_t	chip;
+		} occ_error;
 	};
 	unsigned int		data_len;
 	unsigned char		data[];
@@ -1255,30 +1261,51 @@ static int handle_prd_msg(struct opal_prd_ctx *ctx)
 	return 0;
 }
 
-static void handle_prd_control_occ_error(struct control_msg *msg)
+static void handle_prd_control_occ_error(struct control_msg *send_msg,
+		struct control_msg *recv_msg)
 {
+	uint64_t chip;
+
 	if (!hservice_runtime->process_occ_error) {
 		pr_log_nocall("process_occ_error");
 		return;
 	}
 
-	pr_debug("CTRL: calling process_occ_error(0)");
-	call_process_occ_error(0);
-	msg->data_len = 0;
-	msg->response = 0;
+	chip = recv_msg->occ_error.chip;
+
+	pr_debug("CTRL: calling process_occ_error(%lu)", chip);
+	call_process_occ_error(chip);
+
+	send_msg->data_len = 0;
+	send_msg->response = 0;
 }
 
-static void handle_prd_control_occ_reset(struct control_msg *msg)
+static void handle_prd_control_occ_reset(struct control_msg *send_msg,
+		struct control_msg *msg)
 {
+	struct opal_prd_msg omsg;
+	uint64_t chip;
+	int rc;
+
+	/* notify OPAL of the impending reset */
+	memset(&omsg, 0, sizeof(omsg));
+	omsg.hdr.type = OPAL_PRD_MSG_TYPE_OCC_RESET_NOTIFY;
+	omsg.hdr.size = htobe16(sizeof(omsg));
+	rc = write(ctx->fd, &omsg, sizeof(omsg));
+	if (rc != sizeof(omsg))
+		pr_log(LOG_WARNING, "FW: Failed to send OCC_RESET message: %m");
+
 	if (!hservice_runtime->process_occ_reset) {
 		pr_log_nocall("process_occ_reset");
 		return;
 	}
 
-	pr_debug("CTRL: calling process_occ_reset(0)");
-	call_process_occ_reset(0);
-	msg->data_len = 0;
-	msg->response = 0;
+	chip = msg->occ_reset.chip;
+
+	pr_debug("CTRL: calling process_occ_reset(%ld)", chip);
+	call_process_occ_reset(chip);
+	send_msg->data_len = 0;
+	send_msg->response = 0;
 }
 
 static void handle_prd_control_occ_actuation(struct control_msg *msg,
@@ -1386,7 +1413,6 @@ static void handle_prd_control_run_cmd(struct control_msg *send_msg,
 static void handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 {
 	struct control_msg msg, *recv_msg, *send_msg;
-	struct opal_prd_msg omsg;
 	bool enabled = false;
 	int rc, size;
 
@@ -1439,15 +1465,10 @@ static void handle_prd_control(struct opal_prd_ctx *ctx, int fd)
 		handle_prd_control_occ_actuation(send_msg, enabled);
 		break;
 	case CONTROL_MSG_TEMP_OCC_RESET:
-		omsg.hdr.type = OPAL_PRD_MSG_TYPE_OCC_RESET_NOTIFY;
-		omsg.hdr.size = htobe16(sizeof(omsg));
-		rc = write(ctx->fd, &omsg, sizeof(omsg));
-		if (rc != sizeof(omsg))
-			pr_log(LOG_WARNING, "FW: Failed to send OCC_RESET message: %m");
-		handle_prd_control_occ_reset(send_msg);
+		handle_prd_control_occ_reset(send_msg, recv_msg);
 		break;
 	case CONTROL_MSG_TEMP_OCC_ERROR:
-		handle_prd_control_occ_error(send_msg);
+		handle_prd_control_occ_error(send_msg, recv_msg);
 		break;
 	case CONTROL_MSG_ATTR_OVERRIDE:
 		handle_prd_control_attr_override(send_msg, recv_msg);
@@ -1743,30 +1764,50 @@ out_close:
 	return rc;
 }
 
-static int send_occ_control(struct opal_prd_ctx *ctx, const char *str)
+static int send_occ_control(struct opal_prd_ctx *ctx, int argc, char *argv[])
 {
 	struct control_msg send_msg, *recv_msg = NULL;
+	unsigned long chip = 0;
+	const char *op;
 	int rc;
+
+	assert(argc >= 1);
+	op = argv[0];
+
+	/* some commands accept a 'chip' argument, so parse it here */
+	if (argc > 1) {
+		char *arg, *end;
+		arg = argv[1];
+		chip = strtoul(arg, &end, 0);
+		if (end == arg) {
+			pr_log(LOG_ERR, "CTRL: invalid argument %s", arg);
+			return -1;
+		}
+	}
 
 	memset(&send_msg, 0, sizeof(send_msg));
 
-	if (!strcmp(str, "enable"))
+	if (!strcmp(op, "enable"))
 		send_msg.type = CONTROL_MSG_ENABLE_OCCS;
-	else if (!strcmp(str, "disable"))
+	else if (!strcmp(op, "disable"))
 		send_msg.type = CONTROL_MSG_DISABLE_OCCS;
-	else if (!strcmp(str, "reset"))
+
+	else if (!strcmp(op, "reset")) {
 		send_msg.type = CONTROL_MSG_TEMP_OCC_RESET;
-	else if (!strcmp(str, "process-error"))
+		send_msg.occ_reset.chip = (uint64_t)chip;
+
+	} else if (!strcmp(op, "process-error")) {
 		send_msg.type = CONTROL_MSG_TEMP_OCC_ERROR;
-	else {
-		pr_log(LOG_ERR, "CTRL: Invalid OCC action '%s'", str);
+		send_msg.occ_error.chip = (uint64_t)chip;
+	} else {
+		pr_log(LOG_ERR, "CTRL: Invalid OCC action '%s'", op);
 		return -1;
 	}
 
 	rc = send_prd_control(&send_msg, &recv_msg);
 	if (recv_msg) {
 		if (recv_msg->response || ctx->debug)
-			pr_debug("CTRL: OCC action %s returned status %d", str,
+			pr_debug("CTRL: OCC action %s returned status %d", op,
 					recv_msg->response);
 		free(recv_msg);
 	}
@@ -2069,7 +2110,7 @@ int main(int argc, char *argv[])
 			return EXIT_FAILURE;
 		}
 
-		rc = send_occ_control(ctx, argv[optind]);
+		rc = send_occ_control(ctx, argc - optind, &argv[optind]);
 		break;
 	case ACTION_ATTR_OVERRIDE:
 		if (optind >= argc) {
