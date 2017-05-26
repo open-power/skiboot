@@ -203,7 +203,7 @@ static void pr_log_stdio(int priority, const char *fmt, va_list ap)
  * IPMI:  IPMI interface
  * PNOR:  PNOR interface
  * I2C:   i2c interface
- * OCC:   OCC interface
+ * PM:    PM/OCC interface
  * CTRL:  User-triggered control events
  * KMOD:   Kernel module functions
  */
@@ -283,6 +283,7 @@ extern int call_apply_attr_override(uint8_t *i_data, size_t size);
 extern int call_run_command(int argc, const char **argv, char **o_outString);
 extern uint64_t call_get_ipoll_events(void);
 extern int call_firmware_notify(uint64_t len, void *data);
+extern int call_reset_pm_complex(uint64_t chip);
 
 void hservice_puts(const char *str)
 {
@@ -1330,22 +1331,40 @@ static int handle_msg_occ_error(struct opal_prd_ctx *ctx,
 	return 0;
 }
 
+static int pm_complex_reset(uint64_t chip)
+{
+	int rc;
+
+	if (hservice_runtime->reset_pm_complex) {
+		pr_debug("PM: calling pm_complex_reset(%ld)", chip);
+		rc = call_reset_pm_complex(chip);
+
+	} else if (hservice_runtime->process_occ_reset) {
+		pr_debug("PM: calling process_occ_reset(%ld)", chip);
+		call_process_occ_reset(chip);
+		rc = 0;
+
+	} else {
+		pr_log_nocall("reset_pm_complex/process_occ_reset");
+		rc = -1;
+	}
+
+	return rc;
+}
+
 static int handle_msg_occ_reset(struct opal_prd_ctx *ctx,
 		struct opal_prd_msg *msg)
 {
 	uint32_t proc;
+	int rc;
 
 	proc = be64toh(msg->occ_reset.chip);
 
 	pr_debug("FW: firmware requested OCC reset for proc 0x%x", proc);
 
-	if (!hservice_runtime->process_occ_reset) {
-		pr_log_nocall("process_occ_reset");
-		return -1;
-	}
+	rc = pm_complex_reset(proc);
 
-	call_process_occ_reset(proc);
-	return 0;
+	return rc;
 }
 
 static int handle_msg_firmware_notify(struct opal_prd_ctx *ctx,
@@ -1514,15 +1533,12 @@ static void handle_prd_control_occ_reset(struct control_msg *send_msg,
 	if (rc != sizeof(omsg))
 		pr_log(LOG_WARNING, "FW: Failed to send OCC_RESET message: %m");
 
-	if (!hservice_runtime->process_occ_reset) {
-		pr_log_nocall("process_occ_reset");
-		return;
-	}
-
 	chip = msg->occ_reset.chip;
 
-	pr_debug("CTRL: calling process_occ_reset(%ld)", chip);
-	call_process_occ_reset(chip);
+	/* do reset */
+	pr_debug("CTRL: resetting PM complex on chip %ld", chip);
+	pm_complex_reset(chip);
+
 	send_msg->data_len = 0;
 	send_msg->response = 0;
 }
@@ -2214,6 +2230,7 @@ static void usage(const char *progname)
 	printf("\t%s [--debug] [--file <hbrt-image>] [--pnor <device>]\n",
 			progname);
 	printf("\t%s occ <enable|disable|reset [chip]>\n", progname);
+	printf("\t%s pm-complex reset [chip]>\n", progname);
 	printf("\t%s htmgt-passthru <bytes...>\n", progname);
 	printf("\t%s override <FILE>\n", progname);
 	printf("\t%s run [arg 0] [arg 1]..[arg n]\n", progname);
@@ -2255,7 +2272,7 @@ static int parse_action(const char *str, enum action *action)
 {
 	int rc;
 
-	if (!strcmp(str, "occ")) {
+	if (!strcmp(str, "occ") || !strcmp(str, "pm-complex")) {
 		*action = ACTION_OCC_CONTROL;
 		rc = 0;
 	} else if (!strcmp(str, "daemon")) {
