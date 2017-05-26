@@ -22,6 +22,7 @@
 #include <opal-msg.h>
 #include <fsp.h>
 #include <mem_region.h>
+#include <prd-fw-msg.h>
 
 enum events {
 	EVENT_ATTN	= 1 << 0,
@@ -31,7 +32,9 @@ enum events {
 
 static uint8_t events[MAX_CHIPS];
 static uint64_t ipoll_status[MAX_CHIPS];
-static struct opal_prd_msg prd_msg;
+static uint8_t _prd_msg_buf[sizeof(struct opal_prd_msg) +
+			    sizeof(struct prd_fw_msg)];
+static struct opal_prd_msg *prd_msg = (struct opal_prd_msg *)&_prd_msg_buf;
 static bool prd_msg_inuse, prd_active;
 static struct dt_node *prd_node;
 static bool prd_enabled = false;
@@ -104,6 +107,8 @@ static void prd_msg_consumed(void *data)
 		proc = msg->occ_reset.chip;
 		event = EVENT_OCC_RESET;
 		break;
+	case OPAL_PRD_MSG_TYPE_FIRMWARE_RESPONSE:
+		break;
 	default:
 		prlog(PR_ERR, "PRD: invalid msg consumed, type: 0x%x\n",
 				msg->hdr.type);
@@ -162,18 +167,18 @@ static void send_next_pending_event(void)
 		return;
 
 	prd_msg_inuse = true;
-	prd_msg.token = 0;
-	prd_msg.hdr.size = sizeof(prd_msg);
+	prd_msg->token = 0;
+	prd_msg->hdr.size = sizeof(*prd_msg);
 
 	if (event & EVENT_ATTN) {
-		prd_msg.hdr.type = OPAL_PRD_MSG_TYPE_ATTN;
-		populate_ipoll_msg(&prd_msg, proc);
+		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_ATTN;
+		populate_ipoll_msg(prd_msg, proc);
 	} else if (event & EVENT_OCC_ERROR) {
-		prd_msg.hdr.type = OPAL_PRD_MSG_TYPE_OCC_ERROR;
-		prd_msg.occ_error.chip = proc;
+		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_OCC_ERROR;
+		prd_msg->occ_error.chip = proc;
 	} else if (event & EVENT_OCC_RESET) {
-		prd_msg.hdr.type = OPAL_PRD_MSG_TYPE_OCC_RESET;
-		prd_msg.occ_reset.chip = proc;
+		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_OCC_RESET;
+		prd_msg->occ_reset.chip = proc;
 		occ_msg_queue_occ_reset();
 	}
 
@@ -182,8 +187,8 @@ static void send_next_pending_event(void)
 	 * disabled then we shouldn't propagate PRD events to the host.
 	 */
 	if (prd_enabled)
-		_opal_queue_msg(OPAL_MSG_PRD, &prd_msg, prd_msg_consumed, 4,
-				(uint64_t *) &prd_msg);
+		_opal_queue_msg(OPAL_MSG_PRD, prd_msg, prd_msg_consumed, 4,
+				(uint64_t *)prd_msg);
 }
 
 static void __prd_event(uint32_t proc, uint8_t event)
@@ -316,6 +321,62 @@ static int prd_msg_handle_fini(void)
 	return OPAL_SUCCESS;
 }
 
+static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
+{
+	unsigned long fw_req_len, fw_resp_len;
+	struct prd_fw_msg *fw_req, *fw_resp;
+	int rc;
+
+	fw_req_len = be64_to_cpu(msg->fw_req.req_len);
+	fw_resp_len = be64_to_cpu(msg->fw_req.resp_len);
+	fw_req = (struct prd_fw_msg *)msg->fw_req.data;
+
+	/* do we have a full firmware message? */
+	if (fw_req_len < sizeof(struct prd_fw_msg))
+		return -EINVAL;
+
+	/* does the total (outer) PRD message len provide enough data for the
+	 * claimed (inner) FW message?
+	 */
+	if (msg->hdr.size < fw_req_len +
+			offsetof(struct opal_prd_msg, fw_req.data))
+		return -EINVAL;
+
+	/* is there enough response buffer for a base response? Type-specific
+	 * responses may be larger, but anything less than BASE_SIZE is
+	 * invalid. */
+	if (fw_resp_len < PRD_FW_MSG_BASE_SIZE)
+		return -EINVAL;
+
+	/* prepare a response message. */
+	lock(&events_lock);
+	prd_msg_inuse = true;
+	prd_msg->token = 0;
+	prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_FIRMWARE_RESPONSE;
+	fw_resp = (void *)prd_msg->fw_resp.data;
+
+	switch (be64_to_cpu(fw_req->type)) {
+	case PRD_FW_MSG_TYPE_REQ_NOP:
+		fw_resp->type = cpu_to_be64(PRD_FW_MSG_TYPE_RESP_NOP);
+		prd_msg->fw_resp.len = cpu_to_be64(PRD_FW_MSG_BASE_SIZE);
+		prd_msg->hdr.size = cpu_to_be16(sizeof(*prd_msg));
+		rc = 0;
+		break;
+	default:
+		rc = -ENOSYS;
+	}
+
+	if (!rc)
+		rc = _opal_queue_msg(OPAL_MSG_PRD, prd_msg, prd_msg_consumed, 4,
+				(uint64_t *) prd_msg);
+	else
+		prd_msg_inuse = false;
+
+	unlock(&events_lock);
+
+	return rc;
+}
+
 /* Entry from the host above */
 static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 {
@@ -328,7 +389,7 @@ static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 			msg->hdr.type == OPAL_PRD_MSG_TYPE_FINI)
 		return prd_msg_handle_fini();
 
-	if (msg->hdr.size != sizeof(*msg))
+	if (msg->hdr.size < sizeof(*msg))
 		return OPAL_PARAMETER;
 
 	switch (msg->hdr.type) {
@@ -340,6 +401,9 @@ static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 		break;
 	case OPAL_PRD_MSG_TYPE_OCC_RESET_NOTIFY:
 		rc = occ_msg_queue_occ_reset();
+		break;
+	case OPAL_PRD_MSG_TYPE_FIRMWARE_REQUEST:
+		rc = prd_msg_handle_firmware_req(msg);
 		break;
 	default:
 		rc = OPAL_UNSUPPORTED;
