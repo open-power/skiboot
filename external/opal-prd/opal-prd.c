@@ -281,6 +281,7 @@ extern int call_mfg_htmgt_pass_thru(uint16_t i_cmdLength, uint8_t *i_cmdData,
 				uint16_t *o_rspLength, uint8_t *o_rspData);
 extern int call_apply_attr_override(uint8_t *i_data, size_t size);
 extern int call_run_command(int argc, const char **argv, char **o_outString);
+extern int call_sbe_message_passing(uint32_t i_chipId);
 extern uint64_t call_get_ipoll_events(void);
 extern int call_firmware_notify(uint64_t len, void *data);
 extern int call_reset_pm_complex(uint64_t chip);
@@ -1388,6 +1389,26 @@ static int handle_msg_firmware_notify(struct opal_prd_ctx *ctx,
 	return 0;
 }
 
+static int handle_msg_sbe_passthrough(struct opal_prd_ctx *ctx,
+				      struct opal_prd_msg *msg)
+{
+	uint32_t proc;
+	int rc;
+
+	proc = be64toh(msg->sbe_passthrough.chip);
+
+	pr_debug("FW: firmware sent SBE pass through command for proc 0x%x\n",
+		 proc);
+
+	if (!hservice_runtime->sbe_message_passing) {
+		pr_log_nocall("sbe_message_passing");
+		return -1;
+	}
+
+	rc = call_sbe_message_passing(proc);
+	return rc;
+}
+
 static int handle_prd_msg(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 {
 	int rc = -1;
@@ -1404,6 +1425,9 @@ static int handle_prd_msg(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 		break;
 	case OPAL_PRD_MSG_TYPE_FIRMWARE_NOTIFY:
 		rc = handle_msg_firmware_notify(ctx, msg);
+		break;
+	case OPAL_PRD_MSG_TYPE_SBE_PASSTHROUGH:
+		rc = handle_msg_sbe_passthrough(ctx, msg);
 		break;
 	default:
 		pr_log(LOG_WARNING, "Invalid incoming message type 0x%x",
