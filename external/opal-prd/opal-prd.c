@@ -80,6 +80,8 @@ struct opal_prd_ctx {
 	char			*hbrt_file_name;
 	bool			use_syslog;
 	bool			expert_mode;
+	struct opal_prd_msg	*msg;
+	size_t			msg_alloc_len;
 	void			(*vlog)(int, const char *, va_list);
 };
 
@@ -1239,41 +1241,82 @@ static int handle_msg_occ_reset(struct opal_prd_ctx *ctx,
 
 static int handle_prd_msg(struct opal_prd_ctx *ctx)
 {
-	struct opal_prd_msg msg;
+	struct opal_prd_msg *msg;
 	int size;
 	int rc;
 
-	rc = read(ctx->fd, &msg, sizeof(msg));
+	msg = ctx->msg;
+
+	rc = read(ctx->fd, msg, ctx->msg_alloc_len);
 	if (rc < 0 && errno == EAGAIN)
 		return -1;
 
-	if (rc != sizeof(msg)) {
-		pr_log(LOG_WARNING, "FW: Error reading events from OPAL: %m");
+	/* we need at least enough for the message header... */
+	if (rc < 0) {
+		pr_log(LOG_WARNING, "FW: error reading from firmware: %m");
 		return -1;
 	}
 
-	size = htobe16(msg.hdr.size);
-	if (size < sizeof(msg)) {
+	if (rc < sizeof(msg->hdr)) {
+		pr_log(LOG_WARNING, "FW: short message read from firmware");
+		return -1;
+	}
+
+	/* ... and for the reported message size to be sane */
+	size = htobe16(msg->hdr.size);
+	if (size < sizeof(msg->hdr)) {
 		pr_log(LOG_ERR, "FW: Mismatched message size "
 				"between opal-prd and firmware "
 				"(%d from FW, %zd expected)",
-				size, sizeof(msg));
+				size, sizeof(msg->hdr));
 		return -1;
 	}
 
-	switch (msg.hdr.type) {
+	/* expand our message buffer if necessary... */
+	if (size > ctx->msg_alloc_len) {
+		msg = realloc(ctx->msg, size);
+		if (!msg) {
+			pr_log(LOG_ERR,
+				"FW: Can't expand PRD message buffer: %m");
+			return -1;
+		}
+		ctx->msg = msg;
+		ctx->msg_alloc_len = size;
+	}
+
+	/* ... and complete the read */
+	if (size > rc) {
+		size_t pos;
+
+		for (pos = rc; pos < size;) {
+			rc = read(ctx->fd, msg + pos, size - pos);
+
+			if (rc < 0 && errno == EAGAIN)
+				continue;
+
+			if (rc <= 0) {
+				pr_log(LOG_WARNING,
+					"FW: error reading from firmware: %m");
+				return -1;
+			}
+
+			pos += rc;
+		}
+	}
+
+	switch (msg->hdr.type) {
 	case OPAL_PRD_MSG_TYPE_ATTN:
-		rc = handle_msg_attn(ctx, &msg);
+		rc = handle_msg_attn(ctx, msg);
 		break;
 	case OPAL_PRD_MSG_TYPE_OCC_RESET:
-		rc = handle_msg_occ_reset(ctx, &msg);
+		rc = handle_msg_occ_reset(ctx, msg);
 		break;
 	case OPAL_PRD_MSG_TYPE_OCC_ERROR:
-		rc = handle_msg_occ_error(ctx, &msg);
+		rc = handle_msg_occ_error(ctx, msg);
 		break;
 	default:
 		pr_log(LOG_WARNING, "Invalid incoming message type 0x%x",
-				msg.hdr.type);
+				msg->hdr.type);
 		return -1;
 	}
 
@@ -1641,6 +1684,15 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	ctx->fd = -1;
 	ctx->socket = -1;
 
+	/* set up our message buffer */
+	ctx->msg_alloc_len = sizeof(*ctx->msg);
+	ctx->msg = malloc(ctx->msg_alloc_len);
+	if (!ctx->msg) {
+		pr_log(LOG_ERR, "FW: Can't allocate PRD message buffer: %m");
+		return -1;
+	}
+
+
 	i2c_init();
 
 #ifdef DEBUG_I2C
@@ -1728,6 +1780,8 @@ out_close:
 		close(ctx->fd);
 	if (ctx->socket != -1)
 		close(ctx->socket);
+	if (ctx->msg)
+		free(ctx->msg);
 	return rc;
 }
 
