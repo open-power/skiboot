@@ -30,8 +30,8 @@ const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif, unsigned int di,
 	}
 
 	if (di >= be16_to_cpu(hdr->idptr_count)) {
-		prerror("HDIF: idata index out of range !\n");
-		backtrace();
+		prlog(PR_DEBUG, "HDIF: idata %d out of range for %.6s!\n",
+			di, hdr->id);
 		return NULL;
 	}
 
