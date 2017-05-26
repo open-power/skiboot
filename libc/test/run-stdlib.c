@@ -85,5 +85,12 @@ int main(void)
 	assert(strtoul("z", NULL, 36) == 35);
 	assert(strtoul("Y", NULL, 36) == 34);
 
+	/* labs - ensure it returns absolute value */
+	assert(labs(0) == 0);
+	assert(labs(2147483647) == 2147483647);
+	assert(labs(-2147483647) == 2147483647);
+	assert(labs(9223372036854775807) == 9223372036854775807);
+	assert(labs(-9223372036854775807) == 9223372036854775807);
+
 	return 0;
 }
