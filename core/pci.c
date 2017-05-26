@@ -171,9 +171,8 @@ static void pci_init_pcie_cap(struct phb *phb, struct pci_device *pd)
 	 */
 	pci_cfg_read16(phb, pd->bdfn, ecap + PCICAP_EXP_CAPABILITY_REG, &reg);
 	pd->dev_type = GETFIELD(PCICAP_EXP_CAP_TYPE, reg);
-	if (pd->parent && pd->dev_type == PCIE_TYPE_SWITCH_UPPORT &&
-	    pd->parent->dev_type == PCIE_TYPE_SWITCH_UPPORT &&
-	    pd->vdid == 0x874810b5) {
+	if (pd->parent && pd->parent->dev_type == PCIE_TYPE_SWITCH_UPPORT &&
+	    pd->vdid == 0x874810b5 && pd->dev_type == PCIE_TYPE_SWITCH_UPPORT) {
 		PCIDBG(phb, pd->bdfn, "Fixing up bad PLX downstream port !\n");
 		pd->dev_type = PCIE_TYPE_SWITCH_DNPORT;
 	}
