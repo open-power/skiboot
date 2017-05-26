@@ -2042,6 +2042,7 @@ int main(int argc, char *argv[])
 		rc = parse_action(argv[optind], &action);
 		if (rc)
 			return EXIT_FAILURE;
+		optind++;
 	} else {
 		action = ACTION_RUN_DAEMON;
 	}
@@ -2057,41 +2058,40 @@ int main(int argc, char *argv[])
 		rc = run_prd_daemon(ctx);
 		break;
 	case ACTION_OCC_CONTROL:
-		if (optind + 1 >= argc) {
+		if (optind >= argc) {
 			pr_log(LOG_ERR, "CTRL: occ command requires "
 					"an argument");
 			return EXIT_FAILURE;
 		}
 
-		rc = send_occ_control(ctx, argv[optind + 1]);
+		rc = send_occ_control(ctx, argv[optind]);
 		break;
 	case ACTION_ATTR_OVERRIDE:
-		if (optind + 1 >= argc) {
+		if (optind >= argc) {
 			pr_log(LOG_ERR, "CTRL: attribute override command "
 					"requires an argument");
 			return EXIT_FAILURE;
 		}
 
-		rc = send_attr_override(ctx, argc - optind - 1, &argv[optind + 1]);
+		rc = send_attr_override(ctx, argc - optind, &argv[optind]);
 		break;
 	case ACTION_HTMGT_PASSTHRU:
-		if (optind + 1 >= argc) {
+		if (optind >= argc) {
 			pr_log(LOG_ERR, "CTRL: htmgt passthru requires at least "
 					"one argument");
 			return EXIT_FAILURE;
 		}
 
-		rc = send_htmgt_passthru(ctx, argc - optind - 1,
-					 &argv[optind + 1]);
+		rc = send_htmgt_passthru(ctx, argc - optind, &argv[optind]);
 		break;
 	case ACTION_RUN_COMMAND:
-		if (optind + 1 >= argc) {
+		if (optind >= argc) {
 			pr_log(LOG_ERR, "CTRL: run command requires "
 					"argument(s)");
 			return EXIT_FAILURE;
 		}
 
-		rc = send_run_command(ctx, argc - optind - 1, &argv[optind + 1]);
+		rc = send_run_command(ctx, argc - optind, &argv[optind]);
 		break;
 	default:
 		break;
