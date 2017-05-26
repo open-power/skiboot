@@ -96,9 +96,14 @@ enum control_msg_type {
 struct control_msg {
 	enum control_msg_type	type;
 	int			response;
-	uint32_t		argc;
-	uint32_t		data_len;
-	uint8_t			data[];
+	union {
+		struct {
+			unsigned int	argc;
+		} run_cmd;
+	};
+	unsigned int		data_len;
+	unsigned char		data[];
+
 };
 
 #define MAX_CONTROL_MSG_BUF	4096
@@ -1339,7 +1344,7 @@ static void handle_prd_control_run_cmd(struct control_msg *send_msg,
 		return;
 	}
 
-	argc = recv_msg->argc;
+	argc = recv_msg->run_cmd.argc;
 	pr_debug("CTRL: run_command, argc:%d\n", argc);
 
 	argv = malloc(argc * sizeof(*argv));
@@ -1895,7 +1900,7 @@ static int send_run_command(struct opal_prd_ctx *ctx, int argc, char *argv[])
 
 	/* Setup message */
 	send_msg->type = CONTROL_MSG_RUN_CMD;
-	send_msg->argc = argc;
+	send_msg->run_cmd.argc = argc;
 	send_msg->data_len = size;
 	s = (char *)send_msg->data;
 	for (i = 0; i < argc; i++) {
