@@ -1029,6 +1029,9 @@ enum opal_prd_msg_type {
 	OPAL_PRD_MSG_TYPE_OCC_ERROR,	/* HBRT <-- OPAL */
 	OPAL_PRD_MSG_TYPE_OCC_RESET,	/* HBRT <-- OPAL */
 	OPAL_PRD_MSG_TYPE_OCC_RESET_NOTIFY, /* HBRT --> OPAL */
+	OPAL_PRD_MSG_TYPE_FIRMWARE_REQUEST, /* HBRT --> OPAL */
+	OPAL_PRD_MSG_TYPE_FIRMWARE_RESPONSE, /* HBRT <-- OPAL */
+	OPAL_PRD_MSG_TYPE_FIRMWARE_NOTIFY, /* HBRT <-- OPAL */
 };
 
 struct opal_prd_msg_header {
@@ -1060,6 +1063,19 @@ struct opal_prd_msg {
 		struct {
 			__be64	chip;
 		} occ_reset;
+		struct {
+			__be64	req_len;
+			__be64	resp_len;
+			char	data[];
+		} fw_req;
+		struct {
+			__be64	len;
+			char	data[];
+		} fw_resp;
+		struct {
+			__be64	len;
+			char	data[];
+		} fw_notify;
 	};
 };
 

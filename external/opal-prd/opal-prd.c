@@ -50,6 +50,8 @@
 #include <opal-api.h>
 #include <types.h>
 
+#include <ccan/list/list.h>
+
 #include "opal-prd.h"
 #include "hostboot-interface.h"
 #include "module.h"
@@ -63,6 +65,11 @@ struct prd_range {
 	void			*buf;
 	bool			multiple;
 	uint32_t		instance;
+};
+
+struct prd_msgq_item {
+	struct list_node	list;
+	struct opal_prd_msg	msg;
 };
 
 struct opal_prd_ctx {
@@ -80,6 +87,7 @@ struct opal_prd_ctx {
 	char			*hbrt_file_name;
 	bool			use_syslog;
 	bool			expert_mode;
+	struct list_head	msgq;
 	struct opal_prd_msg	*msg;
 	size_t			msg_alloc_len;
 	void			(*vlog)(int, const char *, va_list);
@@ -124,6 +132,8 @@ static const char *hbrt_code_region_name = "ibm,hbrt-code-image";
 static const int opal_prd_version = 1;
 static uint64_t opal_prd_ipoll = 0xf000000000000000;
 
+static const int max_msgq_len = 16;
+
 static const char *ipmi_devnode = "/dev/ipmi0";
 static const int ipmi_timeout_ms = 5000;
 
@@ -152,6 +162,8 @@ struct func_desc {
 	void *addr;
 	void *toc;
 } hbrt_entry;
+
+static int read_prd_msg(struct opal_prd_ctx *ctx);
 
 static struct prd_range *find_range(const char *name, uint32_t instance)
 {
@@ -270,6 +282,7 @@ extern int call_mfg_htmgt_pass_thru(uint16_t i_cmdLength, uint8_t *i_cmdData,
 extern int call_apply_attr_override(uint8_t *i_data, size_t size);
 extern int call_run_command(int argc, const char **argv, char **o_outString);
 extern uint64_t call_get_ipoll_events(void);
+extern int call_firmware_notify(uint64_t len, void *data);
 
 void hservice_puts(const char *str)
 {
@@ -689,6 +702,102 @@ uint64_t hservice_get_interface_capabilities(uint64_t set)
 		return HBRT_CAPS_OPAL_HAS_XSCOM_RC;
 
 	return 0;
+}
+
+uint64_t hservice_firmware_request(uint64_t req_len, void *req,
+		uint64_t *resp_lenp, void *resp)
+{
+	struct opal_prd_msg *msg = ctx->msg;
+	uint64_t resp_len;
+	size_t size;
+	int rc, n;
+
+	resp_len = be64_to_cpu(*resp_lenp);
+
+	pr_log(LOG_DEBUG,
+			"HBRT: firmware request: %lu bytes req, %lu bytes resp",
+			req_len, resp_len);
+
+	/* sanity check for potential overflows */
+	if (req_len > 0xffff || resp_len > 0xffff)
+		return -1;
+
+	size = sizeof(msg->hdr) + sizeof(msg->token) +
+		sizeof(msg->fw_req) + req_len;
+
+	/* we need the entire message to fit within the 2-byte size field */
+	if (size > 0xffff)
+		return -1;
+
+	/* variable sized message, so we may need to expand our buffer */
+	if (size > ctx->msg_alloc_len) {
+		msg = realloc(ctx->msg, size);
+		if (!msg) {
+			pr_log(LOG_ERR,
+				"FW: failed to expand message buffer: %m");
+			return -1;
+		}
+		ctx->msg = msg;
+		ctx->msg_alloc_len = size;
+	}
+
+	memset(msg, 0, size);
+
+	/* construct request message... */
+	msg->hdr.type = OPAL_PRD_MSG_TYPE_FIRMWARE_REQUEST;
+	msg->hdr.size = htobe16(size);
+	msg->fw_req.req_len = htobe64(req_len);
+	msg->fw_req.resp_len = htobe64(resp_len);
+	memcpy(msg->fw_req.data, req, req_len);
+
+	hexdump((void *)msg, size);
+
+	/* ... and send to firmware */
+	rc = write(ctx->fd, msg, size);
+	if (rc != size) {
+		pr_log(LOG_WARNING,
+			"FW: Failed to send FIRMWARE_REQUEST message: %m");
+		return -1;
+	}
+
+	/* We have an "inner" poll loop here, as we want to ensure that the
+	 * next entry into HBRT is the return from this function. So, only
+	 * read from the prd fd, and queue anything that isn't a response
+	 * to this request
+	 */
+	n = 0;
+	for (;;) {
+		struct prd_msgq_item *item;
+
+		rc = read_prd_msg(ctx);
+		if (rc)
+			return -1;
+
+		msg = ctx->msg;
+		if (msg->hdr.type == OPAL_PRD_MSG_TYPE_FIRMWARE_RESPONSE) {
+			size = be64toh(msg->fw_resp.len);
+			if (size > resp_len)
+				return -1;
+
+			/* success! a valid response that fits into HBRT's
+			 * resp buffer */
+			memcpy(resp, msg->fw_resp.data, size);
+			*resp_lenp = htobe64(size);
+			return 0;
+		}
+
+		/* not a response? queue up for later consumption */
+		if (++n > max_msgq_len) {
+			pr_log(LOG_ERR,
+				"FW: too many messages queued (%d) while "
+				"waiting for FIRMWARE_RESPONSE", n);
+			return -1;
+		}
+		size = be16toh(msg->hdr.size);
+		item = malloc(sizeof(*item) + size);
+		memcpy(&item->msg, msg, size);
+		list_add_tail(&ctx->msgq, &item->list);
+	}
 }
 
 int hservices_init(struct opal_prd_ctx *ctx, void *code)
@@ -1239,6 +1348,27 @@ static int handle_msg_occ_reset(struct opal_prd_ctx *ctx,
 	return 0;
 }
 
+static int handle_msg_firmware_notify(struct opal_prd_ctx *ctx,
+		struct opal_prd_msg *msg)
+{
+	uint64_t len;
+	void *buf;
+
+	len = be64toh(msg->fw_notify.len);
+	buf = msg->fw_notify.data;
+
+	pr_debug("FW: firmware notification, %ld bytes", len);
+
+	if (!hservice_runtime->firmware_notify) {
+		pr_log_nocall("firmware_notify");
+		return -1;
+	}
+
+	call_firmware_notify(len, buf);
+
+	return 0;
+}
+
 static int handle_prd_msg(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 {
 	int rc = -1;
@@ -1253,12 +1383,33 @@ static int handle_prd_msg(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 	case OPAL_PRD_MSG_TYPE_OCC_ERROR:
 		rc = handle_msg_occ_error(ctx, msg);
 		break;
+	case OPAL_PRD_MSG_TYPE_FIRMWARE_NOTIFY:
+		rc = handle_msg_firmware_notify(ctx, msg);
+		break;
 	default:
 		pr_log(LOG_WARNING, "Invalid incoming message type 0x%x",
 				msg->hdr.type);
 	}
 
 	return rc;
+}
+
+#define list_for_each_pop(h, i, type, member) \
+	for (i = list_pop((h), type, member); \
+		i; \
+		i = list_pop((h), type, member))
+
+
+static int process_msgq(struct opal_prd_ctx *ctx)
+{
+	struct prd_msgq_item *item;
+
+	list_for_each_pop(&ctx->msgq, item, struct prd_msgq_item, list) {
+		handle_prd_msg(ctx, &item->msg);
+		free(item);
+	}
+
+	return 0;
 }
 
 static int read_prd_msg(struct opal_prd_ctx *ctx)
@@ -1611,6 +1762,9 @@ static int run_attn_loop(struct opal_prd_ctx *ctx)
 	pollfds[1].events = POLLIN | POLLERR;
 
 	for (;;) {
+		/* run through any pending messages */
+		process_msgq(ctx);
+
 		rc = poll(pollfds, 2, -1);
 		if (rc < 0) {
 			pr_log(LOG_ERR, "FW: event poll failed: %m");
@@ -1702,6 +1856,8 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	}
 
 
+	list_head_init(&ctx->msgq);
+
 	i2c_init();
 
 #ifdef DEBUG_I2C
@@ -1730,7 +1886,6 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 		pr_log(LOG_ERR, "FW: Error initialising PRD channel");
 		goto out_close;
 	}
-
 
 	if (ctx->hbrt_file_name) {
 		rc = map_hbrt_file(ctx, ctx->hbrt_file_name);

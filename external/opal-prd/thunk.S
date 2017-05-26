@@ -197,7 +197,7 @@ hinterface:
 	DISABLED_THUNK(hservice_map_phys_mem)
 	DISABLED_THUNK(hservice_unmap_phys_mem)
 	DISABLED_THUNK(hservice_hcode_scom_update)
-	DISABLED_THUNK(hservice_firmware_request)
+	CALLBACK_THUNK(hservice_firmware_request)
 .globl __hinterface_pad
 __hinterface_pad:
 	/* Reserved space for future growth */
