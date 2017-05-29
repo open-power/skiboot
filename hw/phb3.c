@@ -2244,7 +2244,7 @@ static int64_t phb3_retry_state(struct pci_slot *slot)
 	slot->delay_tgt_tb = 0;
 	pci_slot_set_state(slot, slot->retry_state);
 	slot->retry_state = PCI_SLOT_STATE_NORMAL;
-	return slot->ops.poll(slot);
+	return slot->ops.run_sm(slot);
 }
 
 static int64_t phb3_poll_link(struct pci_slot *slot)
@@ -4680,7 +4680,7 @@ static bool phb3_host_sync_reset(void *data)
 		phb3_creset(slot);
 		return false;
 	default:
-		rc = slot->ops.poll(slot);
+		rc = slot->ops.run_sm(slot);
 		return rc <= OPAL_SUCCESS;
 	}
 }

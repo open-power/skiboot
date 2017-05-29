@@ -76,7 +76,7 @@ static void pci_slot_prepare_link_change(struct pci_slot *slot, bool up)
 	}
 }
 
-static int64_t pci_slot_sm_poll(struct pci_slot *slot)
+static int64_t pci_slot_run_sm(struct pci_slot *slot)
 {
 	uint64_t now = mftb();
 	int64_t ret;
@@ -176,7 +176,7 @@ struct pci_slot *pci_slot_alloc(struct phb *phb,
 	slot->pd = pd;
 	pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
 	slot->power_state = PCI_SLOT_POWER_ON;
-	slot->ops.poll = pci_slot_sm_poll;
+	slot->ops.run_sm = pci_slot_run_sm;
 	slot->ops.prepare_link_change = pci_slot_prepare_link_change;
 	if (!pd) {
 		slot->id = PCI_PHB_SLOT_ID(phb);

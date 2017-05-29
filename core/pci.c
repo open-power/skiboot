@@ -874,7 +874,7 @@ static void pci_reset_phb(void *data)
 	rc = slot->ops.freset(slot);
 	while (rc > 0) {
 		time_wait(rc);
-		rc = slot->ops.poll(slot);
+		rc = slot->ops.run_sm(slot);
 	}
 	pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
 	if (rc < 0)
@@ -1571,7 +1571,7 @@ void pci_reset(void)
 			rc = slot->ops.creset(slot);
 			while (rc > 0) {
 				time_wait(rc);
-				rc = slot->ops.poll(slot);
+				rc = slot->ops.run_sm(slot);
 			}
 			if (rc < 0) {
 				PCIERR(phb, 0, "Complete reset failed, aborting"

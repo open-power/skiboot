@@ -640,11 +640,11 @@ static int64_t opal_pci_poll(uint64_t id)
 
 	if (!slot || !phb)
 		return OPAL_PARAMETER;
-	if (!slot->ops.poll)
+	if (!slot->ops.run_sm)
 		return OPAL_UNSUPPORTED;
 
 	phb_lock(phb);
-	rc = slot->ops.poll(slot);
+	rc = slot->ops.run_sm(slot);
 	phb_unlock(phb);
 
 	/* Return milliseconds for caller to sleep: round up */
