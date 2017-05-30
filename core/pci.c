@@ -359,6 +359,213 @@ static void pci_check_clear_freeze(struct phb *phb)
 				   OPAL_EEH_ACTION_CLEAR_FREEZE_ALL);
 }
 
+/*
+ * Turn off slot's power supply if there are nothing connected for
+ * 2 purposes: power saving obviously and initialize the slot to
+ * to initial power-off state for hotplug.
+ *
+ * The power should be turned on if the downstream link of the slot
+ * isn't up.
+ */
+static void pci_slot_set_power_state(struct phb *phb,
+				     struct pci_device *pd,
+				     uint8_t state)
+{
+	struct pci_slot *slot;
+	uint8_t cur_state;
+	int32_t wait = 100;
+	int64_t rc;
+
+	if (!pd || !pd->slot)
+		return;
+
+	slot = pd->slot;
+	if (!slot->pluggable ||
+	    !slot->ops.get_power_state ||
+	    !slot->ops.set_power_state)
+		return;
+
+	if (state == PCI_SLOT_POWER_OFF) {
+		/* Bail if there're something connected */
+		if (!list_empty(&pd->children))
+			return;
+
+		pci_slot_add_flags(slot, PCI_SLOT_FLAG_BOOTUP);
+		rc = slot->ops.get_power_state(slot, &cur_state);
+		if (rc != OPAL_SUCCESS) {
+			PCINOTICE(phb, pd->bdfn, "Error %lld getting slot power state\n", rc);
+			cur_state = PCI_SLOT_POWER_OFF;
+		}
+
+		pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
+		if (cur_state == PCI_SLOT_POWER_OFF)
+			return;
+	}
+
+	pci_slot_add_flags(slot,
+		(PCI_SLOT_FLAG_BOOTUP | PCI_SLOT_FLAG_ENFORCE));
+	rc = slot->ops.set_power_state(slot, state);
+	if (rc == OPAL_SUCCESS)
+		goto success;
+	if (rc != OPAL_ASYNC_COMPLETION) {
+		PCINOTICE(phb, pd->bdfn, "Error %lld powering %s slot\n",
+			  rc, state == PCI_SLOT_POWER_ON ? "on" : "off");
+		goto error;
+	}
+
+	/* Wait until the operation is completed */
+	do {
+		if (slot->state == PCI_SLOT_STATE_SPOWER_DONE)
+			break;
+
+		check_timers(false);
+		time_wait_ms(10);
+	} while (--wait >= 0);
+
+	if (wait < 0) {
+		PCINOTICE(phb, pd->bdfn, "Timeout powering %s slot\n",
+			  state == PCI_SLOT_POWER_ON ? "on" : "off");
+		goto error;
+	}
+
+success:
+	PCIDBG(phb, pd->bdfn, "Powering %s hotpluggable slot\n",
+	       state == PCI_SLOT_POWER_ON ? "on" : "off");
+error:
+	pci_slot_remove_flags(slot,
+		(PCI_SLOT_FLAG_BOOTUP | PCI_SLOT_FLAG_ENFORCE));
+	pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
+}
+
+static bool pci_bridge_power_on(struct phb *phb, struct pci_device *pd)
+{
+	int32_t ecap;
+	uint16_t pcie_cap, slot_sts, slot_ctl, link_ctl;
+	uint32_t slot_cap;
+	int64_t rc;
+
+	/*
+	 * If there is a PCI slot associated with the bridge, to use
+	 * the PCI slot's facality to power it on.
+	 */
+	if (pd->slot) {
+		struct pci_slot *slot = pd->slot;
+		uint8_t presence;
+
+		/*
+		 * We assume the presence state is OPAL_PCI_SLOT_PRESENT
+		 * by default. In this way, we won't miss anything when
+		 * the operation isn't supported or hitting error upon
+		 * retrieving it.
+		 */
+		if (slot->ops.get_presence_state) {
+			rc = slot->ops.get_presence_state(slot, &presence);
+			if (rc == OPAL_SUCCESS &&
+			    presence == OPAL_PCI_SLOT_EMPTY)
+				return false;
+		}
+
+		/* To power it on */
+		pci_slot_set_power_state(phb, pd, PCI_SLOT_POWER_ON);
+		return true;
+	}
+
+	if (!pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false))
+		return true;
+
+	/* Check if slot is supported */
+	ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+	pci_cfg_read16(phb, pd->bdfn,
+		       ecap + PCICAP_EXP_CAPABILITY_REG, &pcie_cap);
+	if (!(pcie_cap & PCICAP_EXP_CAP_SLOT))
+		return true;
+
+	/* Check presence */
+	pci_cfg_read16(phb, pd->bdfn,
+		       ecap + PCICAP_EXP_SLOTSTAT, &slot_sts);
+        if (!(slot_sts & PCICAP_EXP_SLOTSTAT_PDETECTST))
+		return false;
+
+	/* Ensure that power control is supported */
+	pci_cfg_read32(phb, pd->bdfn,
+		       ecap + PCICAP_EXP_SLOTCAP, &slot_cap);
+	if (!(slot_cap & PCICAP_EXP_SLOTCAP_PWCTRL))
+		return true;
+
+
+	/* Read the slot control register, check if the slot is off */
+	pci_cfg_read16(phb, pd->bdfn, ecap + PCICAP_EXP_SLOTCTL, &slot_ctl);
+	PCITRACE(phb, pd->bdfn, " SLOT_CTL=%04x\n", slot_ctl);
+	if (slot_ctl & PCICAP_EXP_SLOTCTL_PWRCTLR) {
+		PCIDBG(phb, pd->bdfn, "Bridge power is off, turning on ...\n");
+		slot_ctl &= ~PCICAP_EXP_SLOTCTL_PWRCTLR;
+		slot_ctl |= SETFIELD(PCICAP_EXP_SLOTCTL_PWRI, 0, PCIE_INDIC_ON);
+		pci_cfg_write16(phb, pd->bdfn,
+				ecap + PCICAP_EXP_SLOTCTL, slot_ctl);
+
+		/* Wait a couple of seconds */
+		time_wait_ms(2000);
+	}
+
+	/* Enable link */
+	pci_cfg_read16(phb, pd->bdfn, ecap + PCICAP_EXP_LCTL, &link_ctl);
+	PCITRACE(phb, pd->bdfn, " LINK_CTL=%04x\n", link_ctl);
+	link_ctl &= ~PCICAP_EXP_LCTL_LINK_DIS;
+	pci_cfg_write16(phb, pd->bdfn, ecap + PCICAP_EXP_LCTL, link_ctl);
+
+	return true;
+}
+
+static bool pci_bridge_wait_link(struct phb *phb,
+				 struct pci_device *pd,
+				 bool was_reset)
+{
+	int32_t ecap = 0;
+	uint32_t link_cap = 0, retries = 100;
+	uint16_t link_sts;
+
+	if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false)) {
+		ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+		pci_cfg_read32(phb, pd->bdfn, ecap + PCICAP_EXP_LCAP, &link_cap);
+	}
+
+	/*
+	 * If link state reporting isn't supported, wait 10 seconds
+	 * if the downstream link was ever resetted.
+	 */
+	if (!(link_cap & PCICAP_EXP_LCAP_DL_ACT_REP)) {
+		if (was_reset)
+			time_wait_ms(1000);
+
+		return true;
+	}
+
+	/*
+	 * Link state reporting is supported, wait for the link to
+	 * come up until timeout.
+	 */
+	PCIDBG(phb, pd->bdfn, "waiting for link... \n");
+	while (retries--) {
+		pci_cfg_read16(phb, pd->bdfn,
+			       ecap + PCICAP_EXP_LSTAT, &link_sts);
+		if (link_sts & PCICAP_EXP_LSTAT_DLLL_ACT)
+			break;
+
+		time_wait_ms(100);
+	}
+
+	if (!(link_sts & PCICAP_EXP_LSTAT_DLLL_ACT)) {
+		PCIERR(phb, pd->bdfn, "Timeout waitingfor downstream link\n");
+		return false;
+	}
+
+	/* Need another 100ms before touching the config space */
+	time_wait_ms(100);
+	PCIDBG(phb, pd->bdfn, "link is up\n");
+
+	return true;
+}
+
 /* pci_enable_bridge - Called before scanning a bridge
  *
  * Ensures error flags are clean, disable master abort, and
@@ -369,19 +576,12 @@ static bool pci_enable_bridge(struct phb *phb, struct pci_device *pd)
 {
 	uint16_t bctl;
 	bool was_reset = false;
-	int64_t ecap = 0;
-	uint32_t lcap = 0;
-	uint16_t lstat;
 
 	/* Disable master aborts, clear errors */
 	pci_cfg_read16(phb, pd->bdfn, PCI_CFG_BRCTL, &bctl);
 	bctl &= ~PCI_CFG_BRCTL_MABORT_REPORT;
 	pci_cfg_write16(phb, pd->bdfn, PCI_CFG_BRCTL, bctl);
 
-	if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false)) {
-		ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
-		pci_cfg_read32(phb, pd->bdfn, ecap+PCICAP_EXP_LCAP, &lcap);
-	}
 
 	/* PCI-E bridge, check the slot state. We don't do that on the
 	 * root complex as this is handled separately and not all our
@@ -389,63 +589,39 @@ static bool pci_enable_bridge(struct phb *phb, struct pci_device *pd)
 	 */
 	if ((pd->dev_type == PCIE_TYPE_ROOT_PORT && pd->primary_bus > 0) ||
 	    pd->dev_type == PCIE_TYPE_SWITCH_DNPORT) {
-		uint16_t slctl, slcap, slsta, lctl;
+		if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false)) {
+			int32_t ecap;
+			uint32_t link_cap = 0;
+			uint16_t link_sts = 0;
 
-		/*
-		 * No need to touch the power supply if the PCIe link has
-		 * been up. Further more, the slot presence bit is lost while
-		 * the PCIe link is up on the specific PCI topology. In that
-		 * case, we need ignore the slot presence bit and go ahead for
-		 * probing. Otherwise, the NVMe adapter won't be probed.
-		 *
-		 * PHB3 root port, PLX switch 8748 (10b5:8748), PLX swich 9733
-		 * (10b5:9733), PMC 8546 swtich (11f8:8546), NVMe adapter
-		 * (1c58:0023).
-		 */
-		pci_cfg_read16(phb, pd->bdfn, ecap+PCICAP_EXP_LSTAT, &lstat);
-		if ((lcap & PCICAP_EXP_LCAP_DL_ACT_REP) &&
-		    (lstat & PCICAP_EXP_LSTAT_DLLL_ACT))
-			return true;
+			ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+			pci_cfg_read32(phb, pd->bdfn,
+				       ecap + PCICAP_EXP_LCAP, &link_cap);
 
-		/* Read the slot status & check for presence detect */
-		pci_cfg_read16(phb, pd->bdfn, ecap+PCICAP_EXP_SLOTSTAT, &slsta);
-		PCITRACE(phb, pd->bdfn, "slstat=%04x\n", slsta);
-		if (!(slsta & PCICAP_EXP_SLOTSTAT_PDETECTST)) {
-			PCIDBG(phb, pd->bdfn, "No card in slot\n");
-			return false;
+			/*
+			 * No need to touch the power supply if the PCIe link has
+			 * been up. Further more, the slot presence bit is lost while
+			 * the PCIe link is up on the specific PCI topology. In that
+			 * case, we need ignore the slot presence bit and go ahead for
+			 * probing. Otherwise, the NVMe adapter won't be probed.
+			 *
+			 * PHB3 root port, PLX switch 8748 (10b5:8748), PLX swich 9733
+			 * (10b5:9733), PMC 8546 swtich (11f8:8546), NVMe adapter
+			 * (1c58:0023).
+			 */
+			ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+			pci_cfg_read32(phb, pd->bdfn,
+				       ecap + PCICAP_EXP_LCAP, &link_cap);
+			pci_cfg_read16(phb, pd->bdfn,
+				       ecap + PCICAP_EXP_LSTAT, &link_sts);
+			if ((link_cap & PCICAP_EXP_LCAP_DL_ACT_REP) &&
+			    (link_sts & PCICAP_EXP_LSTAT_DLLL_ACT))
+				return true;
 		}
-		
-		/* Read the slot capabilities */
-		pci_cfg_read16(phb, pd->bdfn, ecap+PCICAP_EXP_SLOTCAP, &slcap);
-		PCITRACE(phb, pd->bdfn, "slcap=%04x\n", slcap);
-		if (!(slcap & PCICAP_EXP_SLOTCAP_PWCTRL))
-			goto power_is_on;
 
-		/* Read the slot control register, check if the slot is off */
-		pci_cfg_read16(phb, pd->bdfn, ecap+PCICAP_EXP_SLOTCTL, &slctl);
-		PCITRACE(phb, pd->bdfn, "slctl=%04x\n", slctl);
-		if (!(slctl & PCICAP_EXP_SLOTCTL_PWRCTLR))
-			goto power_is_on;
-
-		/* Turn power on
-		 *
-		 * XXX This is a "command", we should wait for it to complete
-		 * etc... but just waiting 2s will do for now
-		 */
-		PCIDBG(phb, pd->bdfn, "Bridge power is off, turning on ...\n");
-		slctl &= ~PCICAP_EXP_SLOTCTL_PWRCTLR;
-		slctl |= SETFIELD(PCICAP_EXP_SLOTCTL_PWRI, 0, PCIE_INDIC_ON);
-		pci_cfg_write16(phb, pd->bdfn, ecap+PCICAP_EXP_SLOTCTL, slctl);
-
-		/* Wait a couple of seconds */
-		time_wait_ms(2000);
-
- power_is_on:
-		/* Enable link */
-		pci_cfg_read16(phb, pd->bdfn, ecap+PCICAP_EXP_LCTL, &lctl);
-		PCITRACE(phb, pd->bdfn, " lctl=%04x\n", lctl);
-		lctl &= ~PCICAP_EXP_LCTL_LINK_DIS;
-		pci_cfg_write16(phb, pd->bdfn, ecap+PCICAP_EXP_LCTL, lctl);
+		/* Power on the downstream slot or link */
+		if (!pci_bridge_power_on(phb, pd))
+			return false;
 	}
 
 	/* Clear secondary reset */
@@ -461,40 +637,12 @@ static bool pci_enable_bridge(struct phb *phb, struct pci_device *pd)
 	/* PCI-E bridge, wait for link */
 	if (pd->dev_type == PCIE_TYPE_ROOT_PORT ||
 	    pd->dev_type == PCIE_TYPE_SWITCH_DNPORT) {
-		/* Did link capability say we got reporting ?
-		 *
-		 * If yes, wait up to 10s, if not, wait 1s if we didn't already
-		 */
-		if (lcap & PCICAP_EXP_LCAP_DL_ACT_REP) {
-			uint32_t retries = 100;
-			uint16_t lstat;
-
-			PCIDBG(phb, pd->bdfn, "waiting for link... \n");
-
-			while(retries--) {
-				pci_cfg_read16(phb, pd->bdfn,
-					       ecap+PCICAP_EXP_LSTAT, &lstat);
-				if (lstat & PCICAP_EXP_LSTAT_DLLL_ACT)
-					break;
-				time_wait_ms(100);
-			}
-			PCIDBG(phb, pd->bdfn, "end wait for link...\n");
-			if (!(lstat & PCICAP_EXP_LSTAT_DLLL_ACT)) {
-				PCIERR(phb, pd->bdfn, "Timeout waiting"
-					" for downstream link\n");
-				return false;
-			}
-			/* Need to wait another 100ms before touching
-			 * the config space
-			 */
-			time_wait_ms(100);
-		} else if (!was_reset)
-			time_wait_ms(1000);
+		if (!pci_bridge_wait_link(phb, pd, was_reset))
+			return false;
 	}
 
 	/* Clear error status */
 	pci_cfg_write16(phb, pd->bdfn, PCI_CFG_STAT, 0xffff);
-
 	return true;
 }
 
@@ -549,70 +697,6 @@ void pci_remove_bus(struct phb *phb, struct list_head *list)
 		list_del(&pd->link);
 		free(pd);
 	}
-}
-
-/*
- * Turn off slot's power supply if there are nothing connected for
- * 2 purposes: power saving obviously and initialize the slot to
- * to initial power-off state for hotplug.
- */
-static void pci_slot_power_off(struct phb *phb, struct pci_device *pd)
-{
-	struct pci_slot *slot;
-	uint8_t pstate;
-	int32_t wait = 100;
-	int64_t rc;
-
-	if (!pd || !pd->slot)
-		return;
-
-	slot = pd->slot;
-	if (!slot->pluggable ||
-	    !slot->ops.get_power_state ||
-	    !slot->ops.set_power_state)
-		return;
-
-	/* Bail if there're something connected */
-	if (!list_empty(&pd->children))
-		return;
-
-	pci_slot_add_flags(slot, PCI_SLOT_FLAG_BOOTUP);
-	rc = slot->ops.get_power_state(slot, &pstate);
-	if (rc != OPAL_SUCCESS) {
-		pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
-		PCINOTICE(phb, pd->bdfn, "Error %lld getting slot power state\n", rc);
-		return;
-	} else if (pstate == PCI_SLOT_POWER_OFF) {
-		pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
-		return;
-	}
-
-	rc = slot->ops.set_power_state(slot, PCI_SLOT_POWER_OFF);
-	if (rc == OPAL_SUCCESS) {
-		pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
-		PCIDBG(phb, pd->bdfn, "Power off hotpluggable slot\n");
-		return;
-	} else if (rc != OPAL_ASYNC_COMPLETION) {
-		pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
-		pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
-		PCINOTICE(phb, pd->bdfn, "Error %lld powering off slot\n", rc);
-		return;
-	}
-
-	do {
-		if (slot->state == PCI_SLOT_STATE_SPOWER_DONE)
-			break;
-
-		check_timers(false);
-		time_wait_ms(10);
-	} while (--wait >= 0);
-
-	pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
-	pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
-	if (wait >= 0)
-		PCIDBG(phb, pd->bdfn, "Power off hotpluggable slot\n");
-	else
-		PCINOTICE(phb, pd->bdfn, "Timeout powering off slot\n");
 }
 
 /* Perform a recursive scan of the bus at bus_number populating
@@ -687,7 +771,7 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 	 */
 	if (!scan_downstream) {
 		list_for_each(list, pd, link)
-			pci_slot_power_off(phb, pd);
+			pci_slot_set_power_state(phb, pd, PCI_SLOT_POWER_OFF);
 
 		return bus;
 	}
@@ -780,7 +864,7 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 		pci_cfg_write8(phb, pd->bdfn, PCI_CFG_SUBORDINATE_BUS, max_sub);
 		next_bus = max_sub + 1;
 
-		pci_slot_power_off(phb, pd);
+		pci_slot_set_power_state(phb, pd, PCI_SLOT_POWER_OFF);
 	}
 
 	return max_sub;
