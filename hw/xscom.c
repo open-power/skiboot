@@ -597,7 +597,7 @@ int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id)
 	 */
 	if (chip_quirk(QUIRK_NO_F000F)) {
 		if (proc_gen == proc_gen_p9)
-			val = 0x100D104980000000UL; /* P9 Nimbus DD1.0 */
+			val = 0x200D104980000000UL; /* P9 Nimbus DD2.0 */
 		else
 			val = 0x221EF04980000000UL; /* P8 Murano DD2.1 */
 	} else
