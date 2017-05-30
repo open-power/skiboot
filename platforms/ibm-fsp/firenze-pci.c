@@ -98,8 +98,12 @@ struct firenze_pci_slot_info {
 	uint8_t		channel;
 	uint8_t		power_status;
 	uint8_t		buddy;
-	uint8_t		fixup;
-	uint8_t		fixup_num;
+};
+
+struct firenze_pci_slot_fixup_info {
+	const char	*label;
+	uint8_t		reg;
+	uint8_t		val;
 };
 
 struct firenze_pci_inv {
@@ -126,30 +130,33 @@ struct firenze_pci_inv_data {
  */
 static struct firenze_pci_inv_data *firenze_inv_data;
 static uint32_t firenze_inv_cnt;
-static uint8_t firenze_pci_slot_fixup_tbl[] = {
-	0x5e, 0xfa,	/* C6 / C7 */
-	0x5a, 0xff,
-	0x5b, 0xff,
-	0x5e, 0xfb,	/* C5 */
-	0x5b, 0xff,
-	0x5e, 0xfb,	/* C3 */
-	0x5b, 0xff
-};
 static struct firenze_pci_slot_info firenze_pci_slots[] = {
-	{ 0x0B,  "C7", 1, 1,    0, 1, 0, 0x35, 1, 0xAA,  0, 0, 3 },
-	{ 0x11, "C14", 0, 1,    0, 0, 0, 0x00, 0, 0xAA,  1, 0, 0 },
-	{ 0x0F, "C11", 1, 1,    0, 1, 0, 0x32, 1, 0xAA,  2, 0, 0 },
-	{ 0x10, "C12", 1, 1,    0, 1, 0, 0x39, 0, 0xAA,  3, 0, 0 },
-	{ 0x0A,  "C6", 1, 1,    0, 1, 0, 0x35, 0, 0xAA,  0, 0, 3 },
-	{ 0x12, "C15", 0, 1,    0, 0, 0, 0x00, 0, 0xAA,  5, 0, 0 },
-	{ 0x01, "USB", 0, 0,    0, 0, 0, 0x00, 0, 0xAA,  6, 0, 0 },
-	{ 0x0C,  "C8", 1, 1,    0, 1, 0, 0x36, 0, 0xAA,  7, 0, 0 },
-	{ 0x0D,  "C9", 1, 1,    0, 1, 0, 0x36, 1, 0xAA,  7, 0, 0 },
-	{ 0x0E, "C10", 1, 1,    0, 1, 0, 0x32, 0, 0xAA,  2, 0, 0 },
-	{ 0x09,  "C5", 1, 1, 0x10, 1, 0, 0x39, 1, 0xAA, 10, 3, 2 },
-	{ 0x08,  "C4", 1, 1, 0x10, 1, 0, 0x39, 0, 0xAA, 10, 0, 0 },
-	{ 0x07,  "C3", 1, 1, 0x10, 1, 0, 0x3A, 1, 0xAA, 12, 5, 2 },
-	{ 0x06,  "C2", 1, 1, 0x10, 1, 0, 0x3A, 0, 0xAA, 12, 0, 0 }
+	{ 0x0B,  "C7", 1, 1,    0, 1, 0, 0x35, 1, 0xAA,  0 },
+	{ 0x11, "C14", 0, 1,    0, 0, 0, 0x00, 0, 0xAA,  1 },
+	{ 0x0F, "C11", 1, 1,    0, 1, 0, 0x32, 1, 0xAA,  2 },
+	{ 0x10, "C12", 1, 1,    0, 1, 0, 0x39, 0, 0xAA,  3 },
+	{ 0x0A,  "C6", 1, 1,    0, 1, 0, 0x35, 0, 0xAA,  0 },
+	{ 0x12, "C15", 0, 1,    0, 0, 0, 0x00, 0, 0xAA,  5 },
+	{ 0x01, "USB", 0, 0,    0, 0, 0, 0x00, 0, 0xAA,  6 },
+	{ 0x0C,  "C8", 1, 1,    0, 1, 0, 0x36, 0, 0xAA,  7 },
+	{ 0x0D,  "C9", 1, 1,    0, 1, 0, 0x36, 1, 0xAA,  7 },
+	{ 0x0E, "C10", 1, 1,    0, 1, 0, 0x32, 0, 0xAA,  2 },
+	{ 0x09,  "C5", 1, 1, 0x10, 1, 0, 0x39, 1, 0xAA, 10 },
+	{ 0x08,  "C4", 1, 1, 0x10, 1, 0, 0x39, 0, 0xAA, 10 },
+	{ 0x07,  "C3", 1, 1, 0x10, 1, 0, 0x3A, 1, 0xAA, 12 },
+	{ 0x06,  "C2", 1, 1, 0x10, 1, 0, 0x3A, 0, 0xAA, 12 }
+};
+static struct firenze_pci_slot_fixup_info firenze_pci_slot_fixup_tbl[] = {
+	{ "C3",  0x5e, 0xfb },
+	{ "C3",  0x5b, 0xff },
+	{ "C5",  0x5e, 0xfb },
+	{ "C5",  0x5b, 0xff },
+	{ "C6",  0x5e, 0xfa },
+	{ "C6",  0x5a, 0xff },
+	{ "C6",  0x5b, 0xff },
+	{ "C7",  0x5e, 0xfa },
+	{ "C7",  0x5a, 0xff },
+	{ "C7",  0x5b, 0xff }
 };
 
 static void firenze_pci_add_inventory(struct phb *phb,
@@ -727,20 +734,19 @@ static struct i2c_bus *firenze_pci_find_i2c_bus(uint8_t chip,
 	return NULL;
 }
 
-static int64_t firenze_pci_slot_fixup_one(struct pci_slot *slot,
-					  struct firenze_pci_slot_info *info,
-					  uint8_t *fixup, bool write)
+static int64_t firenze_pci_slot_fixup_one_reg(struct pci_slot *slot,
+			struct firenze_pci_slot_fixup_info *fixup,
+			bool write)
 {
 	struct firenze_pci_slot *plat_slot = slot->data;
 	struct i2c_request *req = plat_slot->req;
 	int32_t retries = FIRENZE_PCI_SLOT_RETRIES;
-	uint8_t rval;
 	int64_t rc = OPAL_SUCCESS;
 
-	req->offset = *fixup;
+	req->offset = fixup->reg;
 	if (write) {
 		req->op = SMBUS_WRITE;
-		*(uint8_t *)(req->rw_buf) = *(fixup + 1);
+		*(uint8_t *)(req->rw_buf) = fixup->val;
 	} else {
 		req->op = SMBUS_READ;
 		*(uint8_t *)(req->rw_buf) = 0;
@@ -760,18 +766,16 @@ static int64_t firenze_pci_slot_fixup_one(struct pci_slot *slot,
 	if (slot->state != FIRENZE_PCI_SLOT_FRESET_DELAY) {
 		rc = OPAL_BUSY;
 		prlog(PR_ERR, "Timeout %s PCI slot [%s] - (%02x, %02x)\n",
-		      write ? "writing" : "reading", info->label,
-		      *fixup, *(fixup + 1));
+		      write ? "writing" : "reading", fixup->label,
+		      fixup->reg, fixup->val);
 		goto out;
 	}
 
-	if (!write) {
-		rval = *(uint8_t *)(req->rw_buf);
-		if (rval != *(fixup + 1)) {
-			rc = OPAL_INTERNAL_ERROR;
-			prlog(PR_ERR, "Error fixing PCI slot [%s] - (%02x, %02x, %02x)\n",
-			      info->label, *fixup, *(fixup + 1), rval);
-		}
+	if (!write && (*(uint8_t *)(req->rw_buf)) != fixup->val) {
+		rc = OPAL_INTERNAL_ERROR;
+		prlog(PR_ERR, "Error fixing PCI slot [%s] - (%02x, %02x, %02x)\n",
+		      fixup->label, fixup->reg, fixup->val,
+		      (*(uint8_t *)(req->rw_buf)));
 	}
 
 out:
@@ -782,9 +786,10 @@ out:
 static void firenze_pci_slot_fixup(struct pci_slot *slot,
 				   struct firenze_pci_slot_info *info)
 {
+	struct firenze_pci_slot_fixup_info *fixup;
 	const uint32_t *p;
 	uint64_t id;
-	uint8_t *fixup, num, i;
+	uint32_t i;
 	int64_t rc;
 
 	p = dt_prop_get_def(dt_root, "ibm,vpd-lx-info", NULL);
@@ -793,14 +798,16 @@ static void firenze_pci_slot_fixup(struct pci_slot *slot,
 	    id != LX_VPD_1S4U_BACKPLANE)
 		return;
 
-	fixup = &firenze_pci_slot_fixup_tbl[info->fixup * 2];
-	num   = info->fixup_num;
-	for (i = 0; i < num; i++, fixup += 2) {
-		rc = firenze_pci_slot_fixup_one(slot, info, fixup, true);
+	fixup = firenze_pci_slot_fixup_tbl;
+	for (i = 0; i < ARRAY_SIZE(firenze_pci_slot_fixup_tbl); i++, fixup++) {
+		if (strcmp(info->label, fixup->label))
+			continue;
+
+		rc = firenze_pci_slot_fixup_one_reg(slot, fixup, true);
 		if (rc)
 			return;
 
-		rc = firenze_pci_slot_fixup_one(slot, info, fixup, false);
+		rc = firenze_pci_slot_fixup_one_reg(slot, fixup, false);
 		if (rc)
 			return;
 	}
