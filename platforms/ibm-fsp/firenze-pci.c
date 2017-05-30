@@ -835,13 +835,13 @@ static void firenze_pci_setup_power_mgt(struct pci_slot *slot,
 			plat_slot->power_status = &firenze_pci_slots[buddy].power_status;
 			plat_slot->power_mask = 0x33;
 			plat_slot->power_on   = 0x22;
-			plat_slot->power_off  = 0x33;
+			plat_slot->power_off  = 0;
 			break;
 		case 1:
 			plat_slot->power_status = &firenze_pci_slots[buddy].power_status;
 			plat_slot->power_mask = 0xcc;
 			plat_slot->power_on   = 0x88;
-			plat_slot->power_off  = 0xcc;
+			plat_slot->power_off  = 0;
 			break;
 		default:
 			prlog(PR_DEBUG, "%016llx: Invalid channel %d\n",
