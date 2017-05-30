@@ -817,45 +817,54 @@ static void firenze_pci_setup_power_mgt(struct pci_slot *slot,
 					struct firenze_pci_slot *plat_slot,
 					struct firenze_pci_slot_info *info)
 {
-	uint8_t buddy;
-
-	buddy = info->buddy;
 	plat_slot->i2c_bus = firenze_pci_find_i2c_bus(info->chip_id,
 						      info->master_id,
 						      info->port_id);
-	if (plat_slot->i2c_bus)
-		plat_slot->req = i2c_alloc_req(plat_slot->i2c_bus);
-	else
-		plat_slot->req = NULL;
+	if (!plat_slot->i2c_bus)
+		return;
 
-	if (plat_slot->req) {
-		plat_slot->req->dev_addr	= info->slave_addr;
-		plat_slot->req->offset_bytes	= 1;
-		plat_slot->req->rw_buf		= plat_slot->i2c_rw_buf;
-		plat_slot->req->rw_len		= 1;
-		plat_slot->req->completion	= firenze_i2c_req_done;
-		plat_slot->req->user_data	= slot;
-		firenze_pci_slot_fixup(slot, info);
+	plat_slot->req = i2c_alloc_req(plat_slot->i2c_bus);
+	if (!plat_slot->req)
+		return;
 
-		plat_slot->req->offset		= 0x69;
-		switch (info->channel) {
-		case 0:
-			plat_slot->power_status = &firenze_pci_slots[buddy].power_status;
-			plat_slot->power_mask = 0x33;
-			plat_slot->power_on   = 0x22;
-			plat_slot->power_off  = 0;
-			break;
-		case 1:
-			plat_slot->power_status = &firenze_pci_slots[buddy].power_status;
-			plat_slot->power_mask = 0xcc;
-			plat_slot->power_on   = 0x88;
-			plat_slot->power_off  = 0;
-			break;
-		default:
-			prlog(PR_DEBUG, "%016llx: Invalid channel %d\n",
-			      slot->id, info->channel);
-			plat_slot->i2c_bus = NULL;
-		}
+	plat_slot->req->dev_addr	= info->slave_addr;
+	plat_slot->req->offset_bytes	= 1;
+	plat_slot->req->rw_buf		= plat_slot->i2c_rw_buf;
+	plat_slot->req->rw_len		= 1;
+	plat_slot->req->completion	= firenze_i2c_req_done;
+	plat_slot->req->user_data	= slot;
+
+	firenze_pci_slot_fixup(slot, info);
+
+	/*
+	 * For all slots, the register used to change the power state is
+	 * always 0x69. It could have been set to something else in the
+	 * above fixup. Lets fix it to 0x69 here.
+	 *
+	 * The power states of two slots are controlled by one register.
+	 * This means two slots have to share data buffer for power states,
+	 * which are tracked by struct firenze_pci_slot_info::power_status.
+	 * With it, we can avoid affecting slot#B's power state when trying
+	 * to adjust that on slot#A. Also, the initial power states for all
+	 * slots are assumed to be PCI_SLOT_POWER_ON.
+	 */
+	plat_slot->req->offset  = 0x69;
+	plat_slot->power_status = &firenze_pci_slots[info->buddy].power_status;
+	switch (info->channel) {
+	case 0:
+		plat_slot->power_mask = 0x33;
+		plat_slot->power_on   = 0x22;
+		plat_slot->power_off  = 0;
+		break;
+	case 1:
+		plat_slot->power_status = &firenze_pci_slots[info->buddy].power_status;
+		plat_slot->power_mask = 0xcc;
+		plat_slot->power_on   = 0x88;
+		plat_slot->power_off  = 0;
+		break;
+	default:
+		prlog(PR_ERR, "%016llx: Invalid channel %d\n",
+		      slot->id, info->channel);
 	}
 }
 
