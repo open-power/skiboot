@@ -336,7 +336,7 @@ proc linsym { name } {
 
     # create a regexp that matches the symbol name
     set base {([[:xdigit:]]*) (.)}
-    set exp [concat $base " $name"]
+    set exp [concat $base " $name\$"]
     set ret ""
 
     foreach {line addr type} [regexp -line -inline $exp $linux_symbol_map] {
@@ -352,7 +352,7 @@ proc skisym { name } {
     global mconf
 
     set base {([[:xdigit:]]*) (.)}
-    set exp [concat $base " $name"]
+    set exp [concat $base " $name\$"]
     set ret ""
 
     foreach {line addr type} [regexp -line -inline $exp $skiboot_symbol_map] {
