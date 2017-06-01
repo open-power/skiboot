@@ -24,6 +24,11 @@ uint64_t npu2_read(struct npu2 *p, uint64_t reg);
 void npu2_write(struct npu2 *p, uint64_t reg, uint64_t val);
 void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
 
+/* These aren't really NPU specific registers but we initialise them in NPU
+ * code */
+#define MCD0_BANK0_CN3 0x301100d
+#define MCD1_BANK0_CN3 0x301140d
+
 #define NPU2_REG_OFFSET(stack, block, offset) \
 	(((stack) << 20) | ((block) << 16) | (offset))
 

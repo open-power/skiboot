@@ -728,13 +728,50 @@ static int64_t npu2_ioda_reset(struct phb *phb, bool purge)
 
 static void npu2_hw_init(struct npu2 *p)
 {
-	uint64_t val;
+	int i;
+	uint64_t val, size, addr, gpu_min_addr, gpu_max_addr, total_size;
+	struct proc_chip *chip = get_chip(p->chip_id);
 
 	npu2_ioda_reset(&p->phb, false);
 
 	/* Enable XTS retry mode */
 	val = npu2_read(p, NPU2_XTS_CFG);
 	npu2_write(p, NPU2_XTS_CFG, val | NPU2_XTS_CFG_MMIOSD | NPU2_XTS_CFG_TRY_ATR_RO);
+
+	/* Init memory cache directory (MCD) registers. */
+	phys_map_get(chip, GPU_MEM, NPU2_LINKS_PER_CHIP - 1, &gpu_min_addr, NULL);
+	phys_map_get(chip, GPU_MEM, 0, &gpu_max_addr, &size);
+	gpu_max_addr += size;
+
+	/* We assume GPU memory is contiguous from the first possible GPU to the
+	 * last and that the size is the same so best to check that. */
+	for (i = 0; i < NPU2_LINKS_PER_CHIP; i++) {
+		uint64_t tmp;
+		phys_map_get(chip, GPU_MEM, i, &addr, &tmp);
+		assert((addr >= gpu_min_addr) && (addr + tmp <= gpu_max_addr));
+		assert(tmp == size);
+	}
+
+	/* We have two MCDs, so if neccessary we can split the region covered
+	 * across both if total_size is not a power of two. */
+	total_size = gpu_max_addr - gpu_min_addr;
+	size = 1ull << ilog2(total_size);
+	val = PPC_BIT(0);
+	val = SETFIELD(PPC_BITMASK(13, 29), val, (size >> 25) - 1);
+	val = SETFIELD(PPC_BITMASK(33, 63), val, gpu_min_addr >> 25);
+	xscom_write(p->chip_id, MCD0_BANK0_CN3, val);
+	total_size -= size;
+	if (total_size) {
+	/* total_size was not a power of two, but the remainder should
+	 * be if all GPUs were assigned the same size. */
+		assert(is_pow2(total_size));
+		addr += size;
+		size = 1ull << ilog2(total_size);
+		val = PPC_BIT(0);
+		val = SETFIELD(PPC_BITMASK(13, 29), val, (size >> 25) - 1);
+		val = SETFIELD(PPC_BITMASK(33, 63), val, addr >> 25);
+		xscom_write(p->chip_id, MCD1_BANK0_CN3, val);
+	}
 }
 
 static int64_t npu2_map_pe_dma_window_real(struct phb *phb,
