@@ -198,7 +198,6 @@ static size_t fsp_write_vserial(struct fsp_serial *fs, const char *buf,
 #ifndef DISABLE_CON_PENDING_EVT
 	opal_update_pending_evt(OPAL_EVENT_CONSOLE_OUTPUT,
 				OPAL_EVENT_CONSOLE_OUTPUT);
-	opal_update_pending_evt(fs->irq, fs->irq);
 #endif
 	return len;
 }
@@ -767,12 +766,10 @@ void fsp_console_poll(void *data __unused)
 			if (!fs->open)
 				continue;
 			if (sb->next_out == sb->next_in) {
-				opal_update_pending_evt(fs->irq, 0);
 				continue;
 			}
 			if (fs->log_port) {
 				flush_console();
-				opal_update_pending_evt(fs->irq, 0);
 			} else {
 #ifdef OPAL_DEBUG_CONSOLE_POLL
 				if (debug < 5) {
