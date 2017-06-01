@@ -297,9 +297,8 @@ DEFINE_PROCEDURE(phy_reset, phy_reset_wait, phy_reset_complete);
 
 static uint32_t phy_tx_zcal(struct npu2_dev *ndev)
 {
-	if (ndev->npu->tx_zcal_complete[ndev->index % 3])
+	if (ndev->npu->tx_zcal_complete[ndev->index > 2])
 		return PROCEDURE_COMPLETE;
-	ndev->npu->tx_zcal_complete[ndev->index % 3] = 1;
 
 	/* Turn off SW enable and enable zcal state machine */
 	phy_write(ndev, &NPU2_PHY_TX_ZCAL_SWO_EN, 0);
@@ -330,10 +329,9 @@ static uint32_t phy_tx_zcal_wait(struct npu2_dev *ndev)
 	return PROCEDURE_NEXT;
 }
 
-/* FIXME: What are the right values? I just chose the middle ones... */
-#define MARGIN_RATIO		(32)
-#define FFE_PRE_COEFF		(7)
-#define FFE_POST_COEFF		(12)
+#define MARGIN_RATIO		(0)
+#define FFE_PRE_COEFF		(0)
+#define FFE_POST_COEFF		(0)
 
 #define PRE_WIDTH		(5)
 #define POST_WIDTH		(7)
@@ -381,14 +379,6 @@ static uint32_t phy_tx_zcal_calculate(struct npu2_dev *ndev)
 	uint32_t n_postcursor_select;
 	uint32_t margin_pd_select;
 	uint32_t margin_select;
-
-	if (ndev->index < 3) {
-		if (ndev->npu->tx_zcal_complete[0])
-			return PROCEDURE_COMPLETE;
-	} else {
-		if (ndev->npu->tx_zcal_complete[1])
-			return PROCEDURE_COMPLETE;
-	}
 
 	/* Convert the value from 8R to 2R by / 4 */
 	zcal_n = phy_read(ndev, &NPU2_PHY_TX_ZCAL_N) / 4;
@@ -470,11 +460,7 @@ static uint32_t phy_tx_zcal_calculate(struct npu2_dev *ndev)
 	phy_write(ndev, &NPU2_PHY_TX_MARGINPU_SELECT, therm(margin_select + 1)/2);
 	phy_write(ndev, &NPU2_PHY_TX_MARGINPD_SELECT, therm(margin_select + 1)/2);
 
-	if (ndev->index < 3)
-		ndev->npu->tx_zcal_complete[0] = true;
-	else
-		ndev->npu->tx_zcal_complete[1] = true;
-
+	ndev->npu->tx_zcal_complete[ndev->index > 2] = 1;
 	return PROCEDURE_COMPLETE;
 }
 DEFINE_PROCEDURE(phy_tx_zcal, phy_tx_zcal_wait, phy_tx_zcal_calculate);
