@@ -640,7 +640,7 @@ static int64_t fsp_console_write_buffer_space(int64_t term_number,
 }
 
 static int64_t fsp_console_read(int64_t term_number, int64_t *length,
-				uint8_t *buffer __unused)
+				uint8_t *buffer)
 {
 	struct fsp_serial *fs;
 	struct fsp_serbuf_hdr *sb;
