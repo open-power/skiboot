@@ -34,6 +34,7 @@
 #include <xscom.h>
 #include <bitutils.h>
 #include <chip.h>
+#include <phys-map.h>
 
 /*
  * NPU2 BAR layout definition. We have 3 stacks and each of them
@@ -511,35 +512,22 @@ static struct dt_node *npu2_create_memory_dn(uint64_t addr, uint64_t size)
 	return mem;
 }
 
-static void npu2_dn_fixup_gmb(struct dt_node *pd_dn, uint64_t gmb)
+/* There are potentially multiple links per GPU, so lookup the GPU memory based
+ * on bdfn. */
+static void npu2_get_gpu_base(struct npu2_dev *ndev, uint64_t *addr, uint64_t *size)
 {
-	uint64_t sel, gpu_base, gpu_size, gta;
+	int group;
+
+	group = (ndev->bdfn >> 3) & 0x1f;
+	phys_map_get(get_chip(ndev->npu->chip_id), GPU_MEM, group, addr, size);
+}
+
+static void npu2_dn_fixup_gmb(struct dt_node *pd_dn, struct npu2_dev *ndev)
+{
+	uint64_t gpu_base, gpu_size, gta;
 	struct dt_node *mem_dn;
 
-	sel = GETFIELD(NPU2_MEM_BAR_SEL_MEM, gmb);
-	switch (sel) {
-	case 0:
-		/* BAR disabled */
-		return;
-	case 4:
-		gpu_base = 0;
-		break;
-	case 5:
-		gpu_base = 1UL << 49;
-		break;
-	case 6:
-		gpu_base = 2UL << 49;
-		break;
-	default:
-		prlog(PR_ERR, "unhandled NPU2_MEM_BAR_SEL_MEM 0x%llx\n", sel);
-		return;
-	}
-
-	gpu_base |= GETFIELD(NPU2_MEM_BAR_GROUP, gmb) << 43;
-	gpu_base |= GETFIELD(NPU2_MEM_BAR_CHIP, gmb) << 41;
-	gpu_base |= GETFIELD(NPU2_MEM_BAR_NODE_ADDR, gmb) << 30;
-	gpu_size = GETFIELD(NPU2_MEM_BAR_BAR_SIZE, gmb) << 32;
-
+	npu2_get_gpu_base(ndev, &gpu_base, &gpu_size);
 	mem_dn = npu2_create_memory_dn(gpu_base, gpu_size);
 	assert(mem_dn);
 	dt_add_property_cells(pd_dn, "memory-region", mem_dn->phandle);
@@ -552,27 +540,12 @@ static void npu2_dn_fixup_gmb(struct dt_node *pd_dn, uint64_t gmb)
 	dt_add_property_u64s(pd_dn, "ibm,device-tgt-addr", gta);
 }
 
-/* Used by the below function to assign GPU base addresses */
-static uint64_t npu2_group_addr[NPU2_LINKS_PER_CHIP] = {0};
-static uint64_t npu2_base_addr;
-static int npu2_assign_gmb(struct phb *phb, struct pci_device *pd,
-			 void *data __unused)
+static int npu2_assign_gmb(struct npu2_dev *ndev)
 {
-	struct npu2 *p = phb_to_npu2(phb);
-	struct npu2_dev *ndev;
-	int group, peers, mode;
+	struct npu2 *p = ndev->npu;
+	int peers, mode;
 	uint32_t bdfn;
-	uint64_t reg, gmb, old_val;
-
-	ndev = npu2_bdf_to_dev(p, pd->bdfn);
-	assert(ndev);
-
-	/* Assign GPU memory base addresses. The current strategy is
-	 * to work backwards from maximum memory assigning 128GB per
-	 * GPU as that is the minimum alignment requirements. So we
-	 * need to count the number of GPUs and give each a base
-	 * address then configure the hashing based on the number of
-	 * links */
+	uint64_t base, size, reg, gmb, old_val;
 
 	/* Need to work out number of link peers. This amount to
 	 * working out the maximum function number. So work start at
@@ -582,32 +555,21 @@ static int npu2_assign_gmb(struct phb *phb, struct pci_device *pd,
 	     (bdfn & 0x7) != 0x7; bdfn = (bdfn & ~0x7) | ((bdfn & 0x7) - 1))
 		if (npu2_bdf_to_dev(p, bdfn))
 			break;
-
 	peers = bdfn & 0x7;
-	group = (bdfn >> 3) & 0x1f;
 
-	/* These should never happen but would lead to memory
-	 * corruption if they do so best to check. */
-	assert(peers != 0x7);
-	assert(group < NPU2_LINKS_PER_CHIP);
+	npu2_get_gpu_base(ndev, &base, &size);
 
-	if (!npu2_group_addr[group]) {
-		/* Assign new base address */
-		npu2_base_addr -= 128;
-		npu2_group_addr[group] = npu2_base_addr;
-	}
-
+	/* Base address is in GB */
+	base >>= 30;
 	gmb = SETFIELD(NPU2_MEM_BAR_SEL_MEM, 0ULL, 4);
-	gmb = SETFIELD(NPU2_MEM_BAR_NODE_ADDR, gmb, npu2_group_addr[group]);
+	gmb = SETFIELD(NPU2_MEM_BAR_NODE_ADDR, gmb, base);
 	gmb = SETFIELD(NPU2_MEM_BAR_GROUP | NPU2_MEM_BAR_CHIP, gmb, p->chip_id);
 	gmb = SETFIELD(NPU2_MEM_BAR_POISON, gmb, 1);
 	gmb = SETFIELD(NPU2_MEM_BAR_GRANULE, gmb, 0);
 
-	/* We don't know how much memory the GPU has but if we
-	 * have to align it to 128GB boundaries we may as well
-	 * just pass the whole aperture through at this
-	 * point. */
-	gmb = SETFIELD(NPU2_MEM_BAR_BAR_SIZE, gmb, 7);
+	/* We don't know how much memory the GPU has, so we may as well just
+	 * pass the whole aperture through at this point. */
+	gmb = SETFIELD(NPU2_MEM_BAR_BAR_SIZE, gmb, ilog2(size >> 30));
 
 	switch (peers) {
 	case 0:
@@ -664,23 +626,14 @@ static int npu2_dn_fixup(struct phb *phb,
 {
 	struct npu2 *p = phb_to_npu2(phb);
 	struct npu2_dev *dev;
-	uint64_t reg, gmb;
 
 	dev = npu2_bdf_to_dev(p, pd->bdfn);
 	assert(dev);
 	if (dev->phb || dev->pd)
 		return 0;
 
-	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(dev),
-			      NPU2_BLOCK_SM_0,
-			      NPU2_GPU0_MEM_BAR);
-	gmb = npu2_read(p, reg);
-	if (NPU2DEV_BRICK(dev))
-		gmb <<= 32;
-	else
-		gmb &= 0xffffffff00000000;
-
-	npu2_dn_fixup_gmb(pd->dn, gmb);
+	npu2_assign_gmb(dev);
+	npu2_dn_fixup_gmb(pd->dn, dev);
 	dt_add_property_cells(pd->dn, "ibm,nvlink", dev->dt_node->phandle);
 
 	/* NPU devices require a slot location to associate with GPUs */
@@ -717,9 +670,6 @@ static int npu2_dn_fixup(struct phb *phb,
 
 static void npu2_phb_final_fixup(struct phb *phb)
 {
-	/* Start allocating GPU memory from 4TB down. */
-	npu2_base_addr = 4*1024;
-	pci_walk_dev(phb, NULL, npu2_assign_gmb, NULL);
 	pci_walk_dev(phb, NULL, npu2_dn_fixup, NULL);
 }
 
