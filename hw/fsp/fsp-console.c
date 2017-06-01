@@ -145,7 +145,6 @@ static void fsp_pokemsg_reclaim(struct fsp_msg *msg)
 		if (fs->out_poke) {
 			if (fsp_queue_msg(fs->poke_msg, fsp_pokemsg_reclaim)) {
 				prerror("FSPCON: failed to queue poke msg\n");
-				fsp_freemsg(msg);
 			} else {
 				fs->out_poke = false;
 			}
