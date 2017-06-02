@@ -204,11 +204,11 @@ static uint32_t reset_ndl(struct npu2_dev *ndev)
 
 	npu2_write_mask(ndev->npu, NPU2_NTL_PRI_CFG(ndev), val, -1ULL);
 
-	val = PPC_BIT(0) | PPC_BIT(1);
+	val = PPC_BIT32(0) | PPC_BIT32(1);
 
 	npu2_write_4b(ndev->npu, NPU2_NTL_DL_CONTROL(ndev), val);
 	npu2_write_4b(ndev->npu, NPU2_NTL_DL_CONTROL(ndev), 0);
-	npu2_write_4b(ndev->npu, NPU2_NTL_DL_CONFIG(ndev), PPC_BIT(0));
+	npu2_write_4b(ndev->npu, NPU2_NTL_DL_CONFIG(ndev), PPC_BIT32(0));
 
 	/* NTL Reset */
 	val = PPC_BIT(8) | PPC_BIT(9);

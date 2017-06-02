@@ -139,8 +139,8 @@ static inline struct npu2 *phb_to_npu2(struct phb *phb)
 	return container_of(phb, struct npu2, phb);
 }
 
-void npu2_write_4b(struct npu2 *p, uint64_t reg, uint64_t val);
-uint64_t npu2_read_4b(struct npu2 *p, uint64_t reg);
+void npu2_write_4b(struct npu2 *p, uint64_t reg, uint32_t val);
+uint32_t npu2_read_4b(struct npu2 *p, uint64_t reg);
 void npu2_write(struct npu2 *p, uint64_t reg, uint64_t val);
 uint64_t npu2_read(struct npu2 *p, uint64_t reg);
 void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);

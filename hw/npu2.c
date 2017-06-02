@@ -88,14 +88,16 @@ static uint64_t npu2_scom_read(uint64_t gcid, uint64_t scom_base,
 	return val;
 }
 
-void npu2_write_4b(struct npu2 *p, uint64_t reg, uint64_t val)
+void npu2_write_4b(struct npu2 *p, uint64_t reg, uint32_t val)
 {
-	npu2_scom_write(p->chip_id, p->xscom_base, reg, NPU2_MISC_DA_LEN_4B, val);
+	npu2_scom_write(p->chip_id, p->xscom_base, reg, NPU2_MISC_DA_LEN_4B,
+			(uint64_t)val << 32);
 }
 
-uint64_t npu2_read_4b(struct npu2 *p, uint64_t reg)
+uint32_t npu2_read_4b(struct npu2 *p, uint64_t reg)
 {
-	return npu2_scom_read(p->chip_id, p->xscom_base, reg, NPU2_MISC_DA_LEN_4B);
+	return npu2_scom_read(p->chip_id, p->xscom_base, reg,
+			      NPU2_MISC_DA_LEN_4B) >> 32;
 }
 
 void npu2_write(struct npu2 *p, uint64_t reg, uint64_t val)
