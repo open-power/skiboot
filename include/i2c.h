@@ -110,4 +110,7 @@ static inline int i2c_check_quirk(struct i2c_request *req, int *rc)
 extern void p8_i2c_init(void);
 extern void p8_i2c_interrupt(uint32_t chip_id);
 
+/* P9 I2C Ownership Change OCC interrupt handler */
+extern void p9_i2c_bus_owner_change(u32 chip_id);
+
 #endif /* __I2C_H */

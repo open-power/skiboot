@@ -27,6 +27,7 @@
 #include <opal-api.h>
 #include <opal-msg.h>
 #include <timer.h>
+#include <i2c.h>
 
 /* OCC Communication Area for PStates */
 
@@ -1396,6 +1397,9 @@ void occ_p9_interrupt(uint32_t chip_id)
 
 	if (ireg & OCB_OCI_OCIMISC_IRQ_SHMEM)
 		occ_throttle_poll(NULL);
+
+	if (ireg & OCB_OCI_OCIMISC_IRQ_I2C)
+		p9_i2c_bus_owner_change(chip_id);
 
 	/* We may have masked-out OCB_OCI_OCIMISC_IRQ in the previous
 	 * OCCMISC_AND write. Check if there are any new source bits set,

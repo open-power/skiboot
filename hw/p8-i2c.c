@@ -200,6 +200,7 @@ struct p8_i2c_master {
 	uint32_t		bytes_sent;
 	bool			irq_ok;		/* Interrupt working ? */
 	bool			occ_cache_dis;  /* I have disabled the cache */
+	bool			occ_lock_acquired; /* Acquired lock from OCC */
 	enum request_state {
 		state_idle,
 		state_occache_dis,
@@ -231,6 +232,8 @@ struct p8_i2c_request {
 	uint32_t		port_num;
 	uint64_t		timeout;
 };
+
+static int occ_i2c_unlock(struct p8_i2c_master *master);
 
 static void p8_i2c_print_debug_info(struct p8_i2c_master_port *port,
 				    struct i2c_request *req, uint64_t end_time)
@@ -426,6 +429,10 @@ static void p8_i2c_complete_request(struct p8_i2c_master *master,
 	if (master->occ_cache_dis)
 		schedule_timer(&master->sensor_cache,
 			       msecs_to_tb(SENSOR_CACHE_EN_DELAY));
+
+	/* If we're done with i2c master, allow OCC to use it */
+	if (master->occ_lock_acquired && list_empty(&master->req_list))
+		occ_i2c_unlock(master);
 
 	unlock(&master->lock);
 	if (req->completion)
@@ -1016,6 +1023,94 @@ static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
 	return 0;
 }
 
+/*
+ * On POWER9, the I2C may also wish to use some of the i2cm engines,
+ * to do things like read sensor data. There's a couple of shared
+ * registers with the OCC to negotiate locking of the i2cm engines.
+ * See occ/src/occ_405/lock/lock.c
+ */
+static bool occ_uses_master(struct p8_i2c_master *master)
+{
+	/* OCC uses I2CM Engines 1,2 and 3, only on POWER9 */
+	if (master->type == I2C_POWER8 && proc_gen == proc_gen_p9)
+		return master->engine_id >= 1;
+
+	return false;
+}
+
+#define OCCFLG_BASE  0x00000000006C08A
+#define OCCFLG_CLEAR 0x00000000006C08B
+#define OCCFLG_SET   0x00000000006C08C
+
+static int occ_i2c_lock(struct p8_i2c_master *master)
+{
+	u64 occflags, busflag;
+	int rc;
+
+	if (!occ_uses_master(master))
+		return 0;
+
+	if (master->occ_lock_acquired)
+		return 0;
+
+	rc = xscom_read(master->chip_id, OCCFLG_BASE, &occflags);
+	if (rc) {
+		prerror("I2C: Failed to read OCC FLAG register\n");
+		return rc;
+	}
+
+	assert(master->engine_id > 0);
+
+	busflag = PPC_BIT(16 + (master->engine_id - 1) * 2);
+
+	DBG("occflags = %llx (locks = %.6llx)\n", (u64)occflags,
+	    GETFIELD(PPC_BITMASK(16, 22), occflags));
+
+	rc = xscom_write(master->chip_id, OCCFLG_SET, busflag);
+	if (rc) {
+		prerror("I2C: Failed to write OCC FLAG register\n");
+		return rc;
+	}
+
+	/* If the OCC also has this bus locked then wait for IRQ */
+	if (occflags & (busflag << 1))
+		return 1;
+
+	master->occ_lock_acquired = true;
+
+	return 0;
+}
+
+static int occ_i2c_unlock(struct p8_i2c_master *master)
+{
+	u64 busflag, occflags;
+	int rc;
+
+	if (!occ_uses_master(master))
+		return 0;
+
+	rc = xscom_read(master->chip_id, OCCFLG_BASE, &occflags);
+	if (rc) {
+		prerror("I2C: Failed to read OCC Flag register\n");
+		return rc;
+	}
+
+	busflag = PPC_BIT(16 + (master->engine_id - 1) * 2);
+
+	if (!(occflags & busflag)) {
+		prerror("I2C: busflag for %d already cleared (flags = %.16llx)",
+			master->engine_id, occflags);
+	}
+
+	rc = xscom_write(master->chip_id, OCCFLG_CLEAR, busflag);
+	if (rc)
+		prerror("I2C: Failed to write OCC Flag register\n");
+
+	master->occ_lock_acquired = false;
+
+	return rc;
+}
+
 static int p8_i2c_start_request(struct p8_i2c_master *master,
 				struct i2c_request *req)
 {
@@ -1035,6 +1130,7 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	if (master->type == I2C_CENTAUR && !master->occ_cache_dis) {
 		DBG("Disabling OCC cache...\n");
 		rc = centaur_disable_sensor_cache(master->chip_id);
+
 		if (rc < 0) {
 			log_simple_error(&e_info(OPAL_RC_I2C_START_REQ),
 					 "I2C: Failed "
@@ -1050,6 +1146,23 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 			schedule_timer(&master->recovery, rc);
 			return 0;
 		}
+	}
+
+	/*
+	 * on P9 we need to set the "I2C master using bit" so we don't
+	 * conflict with the OCC's use of the i2c master.
+	 */
+	rc = occ_i2c_lock(master);
+	if (rc < 0) {
+		log_simple_error(&e_info(OPAL_RC_I2C_START_REQ),
+				 "I2C: Failed to get I2CM lock from OCC\n");
+		return rc;
+	}
+	if (rc > 0) {
+		/* Wait for OCC IRQ */
+		master->state = state_occache_dis;
+		schedule_timer(&master->recovery, rc);
+		return 0;
 	}
 
 	/* Convert the offset if needed */
@@ -1160,6 +1273,36 @@ static void p8_i2c_check_work(struct p8_i2c_master *master)
 		rc = p8_i2c_start_request(master, req);
 		if (rc && rc != OPAL_BUSY)
 			p8_i2c_complete_request(master, req, rc);
+	}
+}
+
+/* OCC IRQ Handler for I2C Ownership Change*/
+void p9_i2c_bus_owner_change(u32 chip_id)
+{
+	struct proc_chip *chip = get_chip(chip_id);
+	struct p8_i2c_master *master = NULL;
+	int rc;
+
+	assert(chip);
+	list_for_each(&chip->i2cms, master, link) {
+		if (master->state == state_idle  ||
+		    master->state != state_occache_dis)
+			continue;
+
+		lock(&master->lock);
+
+		/* Can we now lock this master? */
+		rc = occ_i2c_lock(master);
+		if (rc)
+			continue;
+
+		/* Run the state machine */
+		p8_i2c_check_status(master);
+
+		/* Check for new work */
+		p8_i2c_check_work(master);
+
+		unlock(&master->lock);
 	}
 }
 
@@ -1321,6 +1464,9 @@ static void p8_i2c_recover(struct timer *t __unused, void *data,
 		centaur_enable_sensor_cache(master->chip_id);
 		master->occ_cache_dis = false;
 	}
+
+	if (master->occ_lock_acquired && list_empty(&master->req_list))
+		occ_i2c_unlock(master);
 
 	/* Re-check for new work */
 	p8_i2c_check_work(master);
@@ -1506,6 +1652,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 				 "Failed to read EXTD_STAT_REG\n");
 		if (master->type == I2C_CENTAUR)
 			centaur_enable_sensor_cache(master->chip_id);
+
 		free(master);
 		return;
 	}
