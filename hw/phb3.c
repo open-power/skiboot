@@ -216,6 +216,28 @@ static void phb3_link_update(struct phb *phb, uint16_t data)
 	}
 }
 
+static int64_t phb3_pcicfg_rc_link_speed(void *dev,
+					 struct pci_cfg_reg_filter *pcrf __unused,
+					 uint32_t offset, uint32_t len,
+					 uint32_t *data,  bool write)
+{
+	struct pci_device *pd = dev;
+
+	/* Hack for link speed changes. We intercept attempts at writing
+	 * the link control/status register
+	 */
+	if (write && len == 4 && offset == 0x58) {
+		phb3_link_update(pd->phb, (*data) >> 16);
+		return OPAL_SUCCESS;
+	}
+	if (write && len == 2 && offset == 0x5a) {
+		phb3_link_update(pd->phb, *(uint16_t *)data);
+		return OPAL_SUCCESS;
+	}
+
+	return OPAL_PARTIAL;
+}
+
 static int64_t phb3_pcicfg_filter(struct phb *phb, uint32_t bdfn,
 				  uint32_t offset, uint32_t len,
 				  uint32_t *data, bool write)
@@ -223,18 +245,6 @@ static int64_t phb3_pcicfg_filter(struct phb *phb, uint32_t bdfn,
 	struct pci_device *pd;
 	struct pci_cfg_reg_filter *pcrf;
 	uint32_t flags;
-
-	/* Hack for link speed changes. We intercept attempts at writing
-	 * the link control/status register
-	 */
-	if (bdfn == 0 && write && len == 4 && offset == 0x58) {
-		phb3_link_update(phb, (*data) >> 16);
-		return OPAL_SUCCESS;
-	}
-	if (bdfn == 0 && write && len == 2 && offset == 0x5a) {
-		phb3_link_update(phb, *(uint16_t *)data);
-		return OPAL_SUCCESS;
-	}
 
 	if (!pci_device_has_cfg_reg_filters(phb, bdfn))
 		return OPAL_PARTIAL;
@@ -636,6 +646,11 @@ static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
 					PCI_CFG_PREF_MEM_BASE_U32, 12,
 					PCI_REG_FLAG_READ | PCI_REG_FLAG_WRITE,
 					phb3_pcicfg_rc_pref_window);
+			/* Add filter to control link speed */
+			pci_add_cfg_reg_filter(dev,
+					       0x58, 4,
+					       PCI_REG_FLAG_WRITE,
+					       phb3_pcicfg_rc_link_speed);
 		}
 	}
 }
