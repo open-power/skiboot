@@ -325,6 +325,12 @@ static int64_t phb4_pcicfg_read(struct phb4 *p, uint32_t bdfn,
 		return OPAL_HARDWARE;
 	}
 
+	/* Handle per-device filters */
+	rc = pci_handle_cfg_filters(&p->phb, bdfn, offset, size,
+				    (uint32_t *)data, false);
+	if (rc != OPAL_PARTIAL)
+		return rc;
+
 	/* Handle root complex MMIO based config space */
 	if (bdfn == 0)
 		return phb4_rc_read(p, offset, size, data);
@@ -427,6 +433,12 @@ static int64_t phb4_pcicfg_write(struct phb4 *p, uint32_t bdfn,
 	} else if ((p->flags & PHB4_CFG_BLOCKED) && bdfn != 0) {
 		return OPAL_HARDWARE;
 	}
+
+	/* Handle per-device filters */
+	rc = pci_handle_cfg_filters(&p->phb, bdfn, offset, size,
+				    (uint32_t *)&data, true);
+	if (rc != OPAL_PARTIAL)
+		return rc;
 
 	/* Handle root complex MMIO based config space */
 	if (bdfn == 0)
