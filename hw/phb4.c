@@ -29,7 +29,6 @@
 
 #undef NO_ASB
 #undef LOG_CFG
-#undef CFG_4B_WORKAROUND
 
 #include <skiboot.h>
 #include <io.h>
@@ -358,23 +357,6 @@ static int64_t phb4_pcicfg_read(struct phb4 *p, uint32_t bdfn,
 		}
 	} else {
 		out_be64(p->regs + PHB_CONFIG_ADDRESS, addr);
-#ifdef CFG_4B_WORKAROUND
-		switch(size) {
-		case 1:
-			*((uint8_t *)data) =
-				in_le32(p->regs + PHB_CONFIG_DATA) >> (8 * (offset & 3));
-			break;
-		case 2:
-			*((uint16_t *)data) =
-				in_le32(p->regs + PHB_CONFIG_DATA) >> (8 * (offset & 2));
-			break;
-		case 4:
-			*((uint32_t *)data) = in_le32(p->regs + PHB_CONFIG_DATA);
-			break;
-		default:
-			return OPAL_PARAMETER;
-		}
-#else
 		switch(size) {
 		case 1:
 			*((uint8_t *)data) =
@@ -396,7 +378,6 @@ static int64_t phb4_pcicfg_read(struct phb4 *p, uint32_t bdfn,
 		default:
 			return OPAL_PARAMETER;
 		}
-#endif
 	}
 	return OPAL_SUCCESS;
 }
@@ -453,23 +434,6 @@ static int64_t phb4_pcicfg_write(struct phb4 *p, uint32_t bdfn,
 		return OPAL_UNSUPPORTED;
 	} else {
 		out_be64(p->regs + PHB_CONFIG_ADDRESS, addr);
-#ifdef CFG_4B_WORKAROUND
-		if (size < 4) {
-			uint32_t old = in_le32(p->regs + PHB_CONFIG_DATA);
-			uint32_t shift, mask;
-			if (size == 1) {
-				shift = (offset & 3) << 3;
-				mask = 0xff << shift;
-				data = (old & ~mask) | ((data & 0xff) << shift);
-			} else {
-				shift = (offset & 2) << 3;
-				mask = 0xffff << shift;
-				data = (old & ~mask) | ((data & 0xffff) << shift);
-			}
-		}
-		out_le32(p->regs + PHB_CONFIG_DATA, data);
-
-#else
 		switch(size) {
 		case 1:
 			out_8(p->regs + PHB_CONFIG_DATA + (offset & 3), data);
@@ -483,7 +447,6 @@ static int64_t phb4_pcicfg_write(struct phb4 *p, uint32_t bdfn,
 		default:
 			return OPAL_PARAMETER;
 		}
-#endif
 	}
 	PHBLOGCFG(p, "CFG%d Wr %02x=%08x\n", 8 * size, offset, data);
 	return OPAL_SUCCESS;
