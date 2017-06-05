@@ -108,6 +108,9 @@
 #define PCI_CFG_CAP_ID			0
 #define PCI_CFG_CAP_NEXT		1
 
+/* PCI Power Management capability */
+#define PCI_CFG_CAP_ID_PM		1
+
 /* PCI bridge subsystem ID capability */
 #define PCI_CFG_CAP_ID_SUBSYS_VID	0x0d
 #define   PCICAP_SUBSYS_VID_VENDOR	4

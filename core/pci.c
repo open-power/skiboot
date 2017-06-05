@@ -202,11 +202,21 @@ static void pci_init_aer_cap(struct phb *phb, struct pci_device *pd)
 		pci_set_cap(pd, PCIECAP_ID_AER, pos, NULL, true);
 }
 
+static void pci_init_pm_cap(struct phb *phb, struct pci_device *pd)
+{
+	int64_t pos;
+
+	pos = pci_find_cap(phb, pd->bdfn, PCI_CFG_CAP_ID_PM);
+	if (pos > 0)
+		pci_set_cap(pd, PCI_CFG_CAP_ID_PM, pos, NULL, false);
+}
+
 void pci_init_capabilities(struct phb *phb, struct pci_device *pd)
 {
 	pci_init_pcie_cap(phb, pd);
 	pci_init_aer_cap(phb, pd);
 	pci_init_iov_cap(phb, pd);
+	pci_init_pm_cap(phb, pd);
 }
 
 static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *parent,

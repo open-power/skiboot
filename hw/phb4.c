@@ -644,9 +644,36 @@ static void phb4_endpoint_init(struct phb *phb,
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, val32);
 }
 
+static int64_t phb4_pcicfg_no_dstate(void *dev,
+				     struct pci_cfg_reg_filter *pcrf,
+				     uint32_t offset, uint32_t len,
+				     uint32_t *data,  bool write)
+{
+	uint32_t loff = offset - pcrf->start;
+
+	/* Disable D-state change on children of the PHB. For now we
+	 * simply block all writes to the PM control/status
+	 */
+	if (write && loff >= 4 && loff < 6)
+		return OPAL_SUCCESS;
+
+	return OPAL_PARTIAL;
+}
+
 static void phb4_check_device_quirks(struct phb *phb, struct pci_device *dev)
 {
-	// FIXME: add quirks later if necessary
+	/* Some special adapter tweaks for devices directly under the PHB */
+	if (dev->primary_bus != 1)
+		return;
+
+	/* PM quirk */
+	if (!pci_has_cap(dev, PCI_CFG_CAP_ID_PM, false))
+		return;
+
+	pci_add_cfg_reg_filter(dev,
+			       pci_cap(dev, PCI_CFG_CAP_ID_PM, false), 8,
+			       PCI_REG_FLAG_WRITE,
+			       phb4_pcicfg_no_dstate);
 }
 
 static int phb4_device_init(struct phb *phb, struct pci_device *dev,
@@ -654,9 +681,8 @@ static int phb4_device_init(struct phb *phb, struct pci_device *dev,
 {
 	int ecap, aercap;
 
-	/* Some special adapter tweaks for devices directly under the PHB */
-	if (dev->primary_bus == 1)
-		phb4_check_device_quirks(phb, dev);
+	/* Setup special device quirks */
+	phb4_check_device_quirks(phb, dev);
 
 	/* Common initialization for the device */
 	pci_device_init(phb, dev);
