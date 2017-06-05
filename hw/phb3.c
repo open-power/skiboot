@@ -216,9 +216,9 @@ static void phb3_link_update(struct phb *phb, uint16_t data)
 	}
 }
 
-static void phb3_pcicfg_filter(struct phb *phb, uint32_t bdfn,
-			       uint32_t offset, uint32_t len,
-			       uint32_t *data, bool write)
+static int64_t phb3_pcicfg_filter(struct phb *phb, uint32_t bdfn,
+				  uint32_t offset, uint32_t len,
+				  uint32_t *data, bool write)
 {
 	struct pci_device *pd;
 	struct pci_cfg_reg_filter *pcrf;
@@ -229,25 +229,25 @@ static void phb3_pcicfg_filter(struct phb *phb, uint32_t bdfn,
 	 */
 	if (bdfn == 0 && write && len == 4 && offset == 0x58) {
 		phb3_link_update(phb, (*data) >> 16);
-		return;
+		return OPAL_SUCCESS;
 	}
 	if (bdfn == 0 && write && len == 2 && offset == 0x5a) {
 		phb3_link_update(phb, *(uint16_t *)data);
-		return;
+		return OPAL_SUCCESS;
 	}
 
 	if (!pci_device_has_cfg_reg_filters(phb, bdfn))
-		return;
+		return OPAL_PARTIAL;
 	pd = pci_find_dev(phb, bdfn);
 	pcrf = pd ? pci_find_cfg_reg_filter(pd, offset, len) : NULL;
 	if (!pcrf || !pcrf->func)
-		return;
+		return OPAL_PARTIAL;
 
 	flags = write ? PCI_REG_FLAG_WRITE : PCI_REG_FLAG_READ;
 	if ((pcrf->flags & flags) != flags)
-		return;
+		return OPAL_PARTIAL;
 
-	pcrf->func(pd, pcrf, offset, len, data, write);
+	return pcrf->func(pd, pcrf, offset, len, data, write);
 }
 
 #define PHB3_PCI_CFG_READ(size, type)	\
@@ -275,6 +275,11 @@ static int64_t phb3_pcicfg_read##size(struct phb *phb, uint32_t bdfn,	\
 		return OPAL_HARDWARE;					\
 	}								\
 									\
+	rc = phb3_pcicfg_filter(phb, bdfn, offset, sizeof(type),	\
+			   (uint32_t *)data, false);			\
+	if (rc != OPAL_PARTIAL)						\
+		return rc;						\
+									\
 	addr = PHB_CA_ENABLE;						\
 	addr = SETFIELD(PHB_CA_BDFN, addr, bdfn);			\
 	addr = SETFIELD(PHB_CA_REG, addr, offset);			\
@@ -289,9 +294,6 @@ static int64_t phb3_pcicfg_read##size(struct phb *phb, uint32_t bdfn,	\
 		*data = in_le##size(p->regs + PHB_CONFIG_DATA +		\
 				    (offset & (4 - sizeof(type))));	\
 	}								\
-									\
-	phb3_pcicfg_filter(phb, bdfn, offset, sizeof(type),		\
-			   (uint32_t *)data, false);			\
 									\
 	return OPAL_SUCCESS;						\
 }
@@ -318,6 +320,11 @@ static int64_t phb3_pcicfg_write##size(struct phb *phb, uint32_t bdfn,	\
 		return OPAL_HARDWARE;					\
 	}								\
 									\
+	rc = phb3_pcicfg_filter(phb, bdfn, offset, sizeof(type),	\
+			   (uint32_t *)&data, true);			\
+	if (rc != OPAL_PARTIAL)						\
+		return rc;						\
+									\
 	addr = PHB_CA_ENABLE;						\
 	addr = SETFIELD(PHB_CA_BDFN, addr, bdfn);			\
 	addr = SETFIELD(PHB_CA_REG, addr, offset);			\
@@ -333,9 +340,6 @@ static int64_t phb3_pcicfg_write##size(struct phb *phb, uint32_t bdfn,	\
 		out_le##size(p->regs + PHB_CONFIG_DATA +		\
 			     (offset & (4 - sizeof(type))), data);	\
 	}								\
-									\
-	phb3_pcicfg_filter(phb, bdfn, offset, sizeof(type),             \
-			   (uint32_t *)&data, true);			\
 									\
         return OPAL_SUCCESS;						\
 }

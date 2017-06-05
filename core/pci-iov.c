@@ -33,9 +33,8 @@ static int64_t pci_iov_vf_devctl(void *dev, struct pci_cfg_reg_filter *pcrf,
 	uint32_t pos = pci_cap(vf, PCI_CFG_CAP_ID_EXP, false);
 	uint8_t *pcache;
 
-	if (offset != pcrf->start ||
-	    offset != (pos + PCICAP_EXP_DEVCTL))
-		return OPAL_SUCCESS;
+	if (offset != (pos + PCICAP_EXP_DEVCTL))
+		return OPAL_PARTIAL;
 
 	pcache = &pcrf->data[0];
 	if (write) {
@@ -130,13 +129,13 @@ static int64_t pci_iov_change(void *dev __unused,
 	/* Update SRIOV variable parameters */
 	changed = pci_iov_update_parameters(iov);
 	if (!changed)
-		return OPAL_SUCCESS;
+		return OPAL_PARTIAL;
 
 	/* Remove all VFs that have been attached to the parent */
 	if (!iov->enabled) {
 		list_for_each_safe(&pd->children, vf, tmp, link)
 			list_del(&vf->link);
-		return OPAL_SUCCESS;
+		return OPAL_PARTIAL;
 	}
 
 	/* Initialize the VFs and attach them to parent */
@@ -165,7 +164,7 @@ static int64_t pci_iov_change(void *dev __unused,
 			phb->ops->device_init(phb, pd, NULL);
 	}
 
-	return OPAL_SUCCESS;
+	return OPAL_PARTIAL;
 }
 
 /*
