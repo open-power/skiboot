@@ -1799,11 +1799,11 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 
 	/* Find any existing entries and update them */
 	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_VALID, 0UL, 1);
-	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_LPARID, xts_bdf_lpar, lparid);
+	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_BDF, xts_bdf_lpar, bdf);
 	id = npu_table_search(p, NPU2_XTS_BDF_MAP, 8, NPU2_XTS_BDF_MAP_SIZE,
 			      &xts_bdf_lpar,
 			      NPU2_XTS_BDF_MAP_VALID |
-			      NPU2_XTS_BDF_MAP_LPARID);
+			      NPU2_XTS_BDF_MAP_BDF);
 	if (id < 0) {
 		/* No existing mapping found, find space for a new one */
 		xts_bdf_lpar = 0;
