@@ -1768,9 +1768,31 @@ struct pci_cfg_reg_filter *pci_find_cfg_reg_filter(struct pci_device *pd,
 	return NULL;
 }
 
-bool pci_device_has_cfg_reg_filters(struct phb *phb, uint16_t bdfn)
+static bool pci_device_has_cfg_reg_filters(struct phb *phb, uint16_t bdfn)
 {
        return bitmap_tst_bit(*phb->filter_map, bdfn);
+}
+
+int64_t pci_handle_cfg_filters(struct phb *phb, uint32_t bdfn,
+			       uint32_t offset, uint32_t len,
+			       uint32_t *data, bool write)
+{
+	struct pci_device *pd;
+	struct pci_cfg_reg_filter *pcrf;
+	uint32_t flags;
+
+	if (!pci_device_has_cfg_reg_filters(phb, bdfn))
+		return OPAL_PARTIAL;
+	pd = pci_find_dev(phb, bdfn);
+	pcrf = pd ? pci_find_cfg_reg_filter(pd, offset, len) : NULL;
+	if (!pcrf || !pcrf->func)
+		return OPAL_PARTIAL;
+
+	flags = write ? PCI_REG_FLAG_WRITE : PCI_REG_FLAG_READ;
+	if ((pcrf->flags & flags) != flags)
+		return OPAL_PARTIAL;
+
+	return pcrf->func(pd, pcrf, offset, len, data, write);
 }
 
 struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(struct pci_device *pd,

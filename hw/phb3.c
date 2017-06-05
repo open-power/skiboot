@@ -238,28 +238,6 @@ static int64_t phb3_pcicfg_rc_link_speed(void *dev,
 	return OPAL_PARTIAL;
 }
 
-static int64_t phb3_pcicfg_filter(struct phb *phb, uint32_t bdfn,
-				  uint32_t offset, uint32_t len,
-				  uint32_t *data, bool write)
-{
-	struct pci_device *pd;
-	struct pci_cfg_reg_filter *pcrf;
-	uint32_t flags;
-
-	if (!pci_device_has_cfg_reg_filters(phb, bdfn))
-		return OPAL_PARTIAL;
-	pd = pci_find_dev(phb, bdfn);
-	pcrf = pd ? pci_find_cfg_reg_filter(pd, offset, len) : NULL;
-	if (!pcrf || !pcrf->func)
-		return OPAL_PARTIAL;
-
-	flags = write ? PCI_REG_FLAG_WRITE : PCI_REG_FLAG_READ;
-	if ((pcrf->flags & flags) != flags)
-		return OPAL_PARTIAL;
-
-	return pcrf->func(pd, pcrf, offset, len, data, write);
-}
-
 #define PHB3_PCI_CFG_READ(size, type)	\
 static int64_t phb3_pcicfg_read##size(struct phb *phb, uint32_t bdfn,	\
                                       uint32_t offset, type *data)	\
@@ -285,8 +263,8 @@ static int64_t phb3_pcicfg_read##size(struct phb *phb, uint32_t bdfn,	\
 		return OPAL_HARDWARE;					\
 	}								\
 									\
-	rc = phb3_pcicfg_filter(phb, bdfn, offset, sizeof(type),	\
-			   (uint32_t *)data, false);			\
+	rc = pci_handle_cfg_filters(phb, bdfn, offset, sizeof(type),	\
+				    (uint32_t *)data, false);		\
 	if (rc != OPAL_PARTIAL)						\
 		return rc;						\
 									\
@@ -330,8 +308,8 @@ static int64_t phb3_pcicfg_write##size(struct phb *phb, uint32_t bdfn,	\
 		return OPAL_HARDWARE;					\
 	}								\
 									\
-	rc = phb3_pcicfg_filter(phb, bdfn, offset, sizeof(type),	\
-			   (uint32_t *)&data, true);			\
+	rc = pci_handle_cfg_filters(phb, bdfn, offset, sizeof(type),	\
+				    (uint32_t *)&data, true);		\
 	if (rc != OPAL_PARTIAL)						\
 		return rc;						\
 									\
