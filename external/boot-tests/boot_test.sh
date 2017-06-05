@@ -104,13 +104,6 @@ function boot_test {
 }
 
 function sanity_test {
-    $SSHCMD true;
-    if [ $? -ne 0 ]; then
-	echo "$target: Failed to SSH to $target..."
-        echo "$target: Command was: $SSHCMD true"
-	error "Try connecting manually to diagnose the issue."
-    fi
-
     $IPMI_COMMAND chassis power status > /dev/null;
     if [ $? -ne 0 ]; then
 	echo "$target: Failed to connect to $target with IPMI..."

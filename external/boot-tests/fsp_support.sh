@@ -24,6 +24,10 @@ REMOTECPCMD="sshpass -e scp -o User=$SSHUSER -o LogLevel=quiet -o UserKnownHosts
 
 GET_PROFILE='. /etc/profile; test -e /home/dev/.profile && . /home/dev/.profile';
 
+function sshcmd {
+	$SSHCMD $*;
+}
+
 function is_off {
     state=$($SSHCMD "$GET_PROFILE; smgr mfgState");
     return $([ "$state" = "standby" ]);
@@ -153,6 +157,13 @@ function boot_firmware {
 }
 
 function machine_sanity_test {
+    sshcmd true;
+    if [ $? -ne 0 ]; then
+	echo "$target: Failed to SSH to $target..."
+        echo "$target: Command was: $SSHCMD true"
+	error "Try connecting manually to diagnose the issue."
+    fi
+
     $SSHCMD "$GET_PROFILE; test -d /nfs/bin"
     if [ $? -ne 0 ]; then
 	echo "$target: Failed to read /nfs/bin"

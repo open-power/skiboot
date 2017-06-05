@@ -1,17 +1,14 @@
 #Number of times to sleep
 BOOT_TIMEOUT="5";
 
-#Path to memboot binary
-#MEMBOOT=${MEMBOOT:-memboot};
-
 #Username/password for ssh to BMC machines
-SSHUSER=${SSHUSER:-sysadmin};
-export SSHPASS=${SSHPASS:-superuser};
+SSHUSER=${SSHUSER:-ADMIN};
+export SSHPASS=${SSHPASS:-ADMIN};
 
 #Username/password for IPMI
-IPMI_AUTH="-U ${IPMI_USER:-admin} -P ${IPMI_PASS:-admin}"
+IPMI_AUTH="-U ${IPMI_USER:-ADMIN} -P ${IPMI_PASS:-ADMIN}"
 PFLASH_TO_COPY=${PFLASH_TO_COPY:-}
-PFLASH_BINARY=/usr/local/bin/pflash
+PFLASH_BINARY=/tmp/pflash
 
 # Strip control characters from IPMI before grepping?
 STRIP_CONTROL=0
@@ -20,12 +17,14 @@ STRIP_CONTROL=0
 SSHCMD="sshpass -e ssh -l $SSHUSER -o LogLevel=quiet -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $target";
 
 function sshcmd {
-	$SSHCMD $*;
+    # because BMC:
+    $IPMI_COMMAND $SMC_PRESSHIPMICMD;
+    expect -c "spawn $SSHCMD" -c "set timeout 600" -c "expect \"#\" { send \"$*\\r\" }" -c 'expect "#" { send "exit\r" }' -c 'wait';
 }
 
 # remotecp file target target_location
 function remotecp {
-	sshpass -e ssh -o User=$SSHUSER -o LogLevel=quiet -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $2 dd of=$3 < $1;
+    rsync -av $1 rsync://$2/files/$3
 }
 
 function is_off {
@@ -39,87 +38,75 @@ function poweroff {
 }
 
 function force_primary_side {
-    # Now we force booting from primary (not golden) side
-    $IPMI_COMMAND raw 0x04 0x30 0x5c 0x01 0x00 0x00 0 0 0 0 0 0
-    # and from somewhere else we get this raw command. Obvious really.
-    $IPMI_COMMAND raw 0x04 0x30 0xd2 0x01 0x00 0x00 0 0 0 0 0 0
-    sleep 8
+    true
 }
 
 function flash {
 	if [ ! -z "$PFLASH_TO_COPY" ]; then
-		remotecp $PFLASH_TO_COPY $target /tmp/pflash
-		$SSHCMD chmod +x /tmp/pflash
-		PFLASH_BINARY=/tmp/pflash
+		remotecp $PFLASH_TO_COPY $target pflash
+		sshcmd chmod +x /tmp/rsync_file/pflash
+		PFLASH_BINARY=/tmp/rsync_file/pflash
 	fi
 	if [ ! -z "$PNOR" ]; then
-		remotecp $PNOR $target /tmp/image.pnor;
+		remotecp $PNOR $target image.pnor;
 	fi
         if [ "${LID[0]}" != "" ]; then
-		remotecp ${LID[0]} $target /tmp/skiboot.lid;
+		remotecp ${LID[0]} $target skiboot.lid;
 	fi
 	if [ "${LID[1]}" != "" ]; then
-		remotecp ${LID[1]} $target /tmp/bootkernel
+		remotecp ${LID[1]} $target bootkernel
 	fi
 	if [ "${arbitrary_lid[1]}" != "" ]; then
-		remotecp ${arbitrary_lid[1]} $target /tmp/$(basename ${arbitrary_lid[1]})
+		remotecp ${arbitrary_lid[1]} $target $(basename ${arbitrary_lid[1]})
 	fi
 
 	if [ "$?" -ne "0" ] ; then
 		error "Couldn't copy firmware image";
 	fi
 
-	# Habenaro doesn't have md5sum
-	#flash_md5=$(md5sum "$1" | cut -f 1 -d ' ');
-	#$SSHCMD "flash_md5r=\$(md5sum /tmp/image.pnor | cut -f 1 -d ' ');
-	#	if [ \"$flash_md5\" != \"\$flash_md5r\" ] ; then
-	#		exit 1;
-	#	fi";
-	#if [ "$?" -ne "0" ] ; then
-	#	error "Firmware MD5s don't match";
-	#fi
-
 	# flash it
 	if [ ! -z "$PNOR" ]; then
 		msg "Flashing full PNOR"
-		$SSHCMD "$PFLASH_BINARY -E -f -p /tmp/image.pnor"
+		sshcmd "$PFLASH_BINARY -E -f -p /tmp/rsync_file/image.pnor"
 		if [ "$?" -ne "0" ] ; then
 			error "An unexpected pflash error has occurred";
 		fi
-		msg "Removing /tmp/image.pnor"
-		$SSHCMD "rm /tmp/image.pnor"
+		msg "Removing /tmp/rsync_file/image.pnor"
+		sshcmd "rm /tmp/rsync_file/image.pnor"
 	fi
 
 	if [ ! -z "${LID[0]}" ] ; then
 		msg "Flashing PAYLOAD PNOR partition"
-		$SSHCMD "$PFLASH_BINARY -e -f -P PAYLOAD -p /tmp/skiboot.lid"
+		sshcmd "$PFLASH_BINARY -e -f -P PAYLOAD -p /tmp/rsync_file/skiboot.lid"
 		if [ "$?" -ne "0" ] ; then
                         error "An unexpected pflash error has occurred";
 		fi
-		msg "Removing /tmp/pskiboot.lid"
-		$SSHCMD "rm /tmp/skiboot.lid"
+		msg "Removing /tmp/rsync_file/skiboot.lid"
+		sshcmd "rm /tmp/skiboot.lid"
 	fi
 
         if [ ! -z "${LID[1]}" ] ; then
                 msg "Flashing BOOTKERNEL PNOR partition"
-                $SSHCMD "$PFLASH_BINARY -e -f -P BOOTKERNEL -p /tmp/bootkernel"
+                sshcmd "$PFLASH_BINARY -e -f -P BOOTKERNEL -p /tmp/rsync_file/bootkernel"
                 if [ "$?" -ne "0" ] ; then
                         error "An unexpected pflash error has occurred";
 		fi
-		msg "Removing /tmp/bootkernel"
-		$SSHCMD "rm /tmp/bootkernel"
+		msg "Removing /tmp/rsync_file/bootkernel"
+		sshcmd "rm /tmp/rsync_file/bootkernel"
         fi
 
 	if [ ! -z "${arbitrary_lid[0]}" -a ! -z "${arbitrary_lid[1]}" ] ; then
 		msg "Flashing ${arbitrary_lid[0]} PNOR partition"
-		$SSHCMD "$PFLASH_BINARY -e -f -P ${arbitrary_lid[0]} -p /tmp/$(basename ${arbitrary_lid[1]})"
+		sshcmd "$PFLASH_BINARY -e -f -P ${arbitrary_lid[0]} -p /tmp/rsync_file/$(basename ${arbitrary_lid[1]})"
                 if [ "$?" -ne "0" ] ; then
                         error "An unexpected pflash error has occurred";
 		fi
-		msg "Removing /tmp/$(basename ${arbitrary_lid[1]})"
-		$SSHCMD "rm /tmp/$(basename ${arbitrary_lid[1]})"
+		msg "Removing /tmp/rsync_file/$(basename ${arbitrary_lid[1]})"
+		sshcmd "rm /tmp/rsync_file/$(basename ${arbitrary_lid[1]})"
 	fi
 
+	msg "Clearing mboxd caches..."
+	sshcmd "/bin/mboxctl --clear-cache"
 }
 
 function boot_firmware {
@@ -136,12 +123,6 @@ function boot_firmware {
 }
 
 function machine_sanity_test {
-    sshcmd true;
-    if [ $? -ne 0 ]; then
-	echo "$target: Failed to SSH to $target..."
-        echo "$target: Command was: $SSHCMD true"
-	error "Try connecting manually to diagnose the issue."
-    fi
     # No further sanity tests for BMC machines.
     true
 }
