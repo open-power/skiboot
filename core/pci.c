@@ -1641,6 +1641,11 @@ void pci_init_slots(void)
 {
 	unsigned int i;
 
+	/* Some PHBs may need that long to debounce the presence detect
+	 * after HW initialization.
+	 */
+	time_wait_ms(20);
+
 	prlog(PR_NOTICE, "PCI: Resetting PHBs...\n");
 	pci_do_jobs(pci_reset_phb);
 
