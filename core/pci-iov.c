@@ -184,6 +184,7 @@ static void pci_iov_init_VF(struct pci_device *pd, struct pci_device *vf)
 	vf->dn			= NULL;
 	vf->slot		= NULL;
 	vf->parent		= pd;
+	vf->phb			= pd->phb;
 	list_head_init(&vf->pcrf);
 	list_head_init(&vf->children);
 }

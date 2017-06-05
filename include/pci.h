@@ -20,6 +20,7 @@
 #include <opal.h>
 #include <device.h>
 #include <lock.h>
+#include <bitmap.h>
 #include <ccan/list/list.h>
 
 struct pci_device;
@@ -87,6 +88,7 @@ struct pci_device {
 	struct dt_node		*dn;
 	struct pci_slot		*slot;
 	struct pci_device	*parent;
+	struct phb		*phb;
 	struct list_head	children;
 	struct list_node	link;
 };
@@ -343,6 +345,7 @@ struct phb {
 	const struct phb_ops	*ops;
 	struct pci_lsi_state	lstate;
 	uint32_t		mps;
+	bitmap_t		*filter_map;
 
 	/* PCI-X only slot info, for PCI-E this is in the RC bridge */
 	struct pci_slot		*slot;
@@ -424,6 +427,7 @@ extern struct pci_device *pci_walk_dev(struct phb *phb,
 				       void *userdata);
 extern struct pci_device *pci_find_dev(struct phb *phb, uint16_t bdfn);
 extern void pci_restore_bridge_buses(struct phb *phb, struct pci_device *pd);
+extern bool pci_device_has_cfg_reg_filters(struct phb *phb, uint16_t bdfn);
 extern struct pci_cfg_reg_filter *pci_find_cfg_reg_filter(struct pci_device *pd,
 					uint32_t start, uint32_t len);
 extern struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(struct pci_device *pd,

@@ -236,13 +236,8 @@ static void phb3_pcicfg_filter(struct phb *phb, uint32_t bdfn,
 		return;
 	}
 
-	/* FIXME: It harms the performance to search the PCI
-	 * device which doesn't have any filters at all. So
-	 * it's worthy to maintain a table in PHB to indicate
-	 * the PCI devices who have filters. However, bitmap
-	 * seems not supported by skiboot yet. To implement
-	 * it after bitmap is supported.
-	 */
+	if (!pci_device_has_cfg_reg_filters(phb, bdfn))
+		return;
 	pd = pci_find_dev(phb, bdfn);
 	pcrf = pd ? pci_find_cfg_reg_filter(pd, offset, len) : NULL;
 	if (!pcrf || !pcrf->func)

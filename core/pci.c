@@ -247,6 +247,7 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 		PCIERR(phb, bdfn,"Failed to allocate structure pci_device !\n");
 		goto fail;
 	}
+	pd->phb = phb;
 	pd->bdfn = bdfn;
 	pd->vdid = vdid;
 	pci_cfg_read32(phb, bdfn, PCI_CFG_SUBSYS_VENDOR_ID, &pd->sub_vdid);
@@ -950,6 +951,9 @@ int64_t pci_register_phb(struct phb *phb, int opal_id)
 
 	init_lock(&phb->lock);
 	list_head_init(&phb->devices);
+
+	phb->filter_map = zalloc(BITMAP_BYTES(0x10000));
+	assert(phb->filter_map);
 
 	return OPAL_SUCCESS;
 }
@@ -1764,6 +1768,11 @@ struct pci_cfg_reg_filter *pci_find_cfg_reg_filter(struct pci_device *pd,
 	return NULL;
 }
 
+bool pci_device_has_cfg_reg_filters(struct phb *phb, uint16_t bdfn)
+{
+       return bitmap_tst_bit(*phb->filter_map, bdfn);
+}
+
 struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(struct pci_device *pd,
 						  uint32_t start, uint32_t len,
 						  uint32_t flags,
@@ -1793,6 +1802,7 @@ struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(struct pci_device *pd,
 	if (pd->pcrf_end < (start + len))
 		pd->pcrf_end = start + len;
 	list_add_tail(&pd->pcrf, &pcrf->link);
+	bitmap_set_bit(*pd->phb->filter_map, pd->bdfn);
 
 	return pcrf;
 }
