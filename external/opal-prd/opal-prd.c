@@ -270,7 +270,25 @@ extern int call_run_command(int argc, const char **argv, char **o_outString);
 
 void hservice_puts(const char *str)
 {
-	pr_log(LOG_INFO, "HBRT: %s", str);
+	int priority = LOG_INFO;
+
+	/* Interpret the 2-character ERR_MRK/FAIL_MRK/WARN_MRK prefixes that
+	 * may be present on HBRT log messages, and bump the log priority as
+	 * appropriate.
+	 */
+	if (strlen(str) >= 2 && str[1] == '>') {
+		switch (str[0]) {
+		case 'E':
+		case 'F':
+			priority = LOG_ERR;
+			break;
+		case 'W':
+			priority = LOG_WARNING;
+			break;
+		}
+	}
+
+	pr_log(priority, "HBRT: %s", str);
 }
 
 void hservice_assert(void)
