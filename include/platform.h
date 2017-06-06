@@ -101,6 +101,11 @@ struct platform {
 	void		(*pci_setup_phb)(struct phb *phb, unsigned int index);
 
 	/*
+	 * This is called before resetting the PHBs (lift PERST) and
+	 * probing the devices. The PHBs have already been initialized.
+	 */
+	void		(*pre_pci_fixup)(void);
+	/*
 	 * Called during PCI scan for each device. For bridges, this is
 	 * called before its children are probed. This is called for
 	 * every device and for the PHB itself with a NULL pd though

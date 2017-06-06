@@ -306,4 +306,11 @@ static inline void phb4_set_err_pending(struct phb4 *p, bool pending)
 	p->err_pending = pending;
 }
 
+#define PHB4_PER_CHIP                        6 /* Max 6 PHBs per chip on p9 */
+
+static inline int phb4_get_opal_id(unsigned int chip_id, unsigned int index)
+{
+	return chip_id * PHB4_PER_CHIP + index;
+}
+
 #endif /* __PHB4_H */

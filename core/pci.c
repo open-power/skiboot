@@ -1651,6 +1651,9 @@ void pci_init_slots(void)
 		}
 	}
 
+	if (platform.pre_pci_fixup)
+		platform.pre_pci_fixup();
+
 	prlog(PR_NOTICE, "PCI: Resetting PHBs...\n");
 	pci_do_jobs(pci_reset_phb);
 

@@ -3290,7 +3290,7 @@ static void phb4_create(struct dt_node *np)
 	/* We register the PHB before we initialize it so we
 	 * get a useful OPAL ID for it
 	 */
-	pci_register_phb(&p->phb, p->chip_id * 6 + p->index); //6 PHBs per chip?
+	pci_register_phb(&p->phb, phb4_get_opal_id(p->chip_id, p->index));
 
 	/* Create slot structure */
 	slot = phb4_slot_create(&p->phb);
