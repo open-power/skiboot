@@ -134,7 +134,7 @@ static void fsp_tpo_req_complete(struct fsp_msg *read_resp)
 		break;
 	case FSP_STATUS_INVALID_DATA:
 		log_simple_error(&e_info(OPAL_RC_RTC_TOD),
-			"RTC TPO in permanent error state\n");
+			"RTC TPO: Invalid data\n");
 		rc = OPAL_PARAMETER;
 		break;
 	case FSP_STATUS_SUCCESS:
