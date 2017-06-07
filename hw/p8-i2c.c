@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1293,8 +1293,10 @@ void p9_i2c_bus_owner_change(u32 chip_id)
 
 		/* Can we now lock this master? */
 		rc = occ_i2c_lock(master);
-		if (rc)
+		if (rc) {
+			unlock(&master->lock);
 			continue;
+		}
 
 		/* Run the state machine */
 		p8_i2c_check_status(master);
