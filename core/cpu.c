@@ -354,6 +354,10 @@ void cpu_set_pm_enable(bool enabled)
 	if (proc_gen != proc_gen_p8)
 		return;
 
+	/* Public P8 Mambo has broken NAP */
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+		return;
+
 	pm_enabled = enabled;
 
 	if (enabled)
