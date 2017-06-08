@@ -1,5 +1,5 @@
 Name:		opal-prd
-Version:	5.1.13
+Version:	5.6.0
 Release:	1%{?dist}
 Summary:	OPAL Processor Recovery Diagnostics Daemon
 
@@ -13,8 +13,6 @@ BuildRequires:	systemd
 Requires:	systemd
 
 Source0:	https://github.com/open-power/skiboot/archive/skiboot-%{version}.tar.gz
-Source1:	opal-prd.socket
-Source2:	opal-prd.service
 
 %description
 This package provides a daemon to load and run the OpenPower firmware's
@@ -59,10 +57,10 @@ XSCOM_VERSION=%version make V=1 -C external/xscom-utils
 make -C external/opal-prd install DESTDIR=%{buildroot} prefix=/usr
 make -C external/gard install DESTDIR=%{buildroot} prefix=/usr
 make -C external/xscom-utils install DESTDIR=%{buildroot} prefix=/usr
+make -C external/pflash install DESTDIR=%{buildroot} prefix=/usr
 
 mkdir -p %{buildroot}%{_unitdir}
-install -m 644 -p %{SOURCE1} %{buildroot}%{_unitdir}/opal-prd.socket
-install -m 644 -p %{SOURCE2} %{buildroot}%{_unitdir}/opal-prd.service
+install -m 644 -p external/opal-prd/opal-prd.service %{buildroot}%{_unitdir}/opal-prd.service
 
 mkdir -p %{buildroot}%{_datadir}/qemu
 install -m 644 -p skiboot.lid %{buildroot}%{_datadir}/qemu/skiboot.lid
@@ -88,15 +86,14 @@ if [ "$1" -ge 1 ] ; then
 fi
 
 %files
-%doc README
+%doc README.md
 %license LICENCE
 %{_sbindir}/opal-prd
-%{_unitdir}/opal-prd.socket
 %{_unitdir}/opal-prd.service
 %{_mandir}/man8/*
 
 %files -n opal-utils
-%doc README
+%doc README.md
 %license LICENCE
 %{_sbindir}/opal-gard
 %{_sbindir}/getscom
@@ -106,7 +103,7 @@ fi
 %{_mandir}/man1/*
 
 %files -n opal-firmware
-%doc README
+%doc README.md
 %license LICENCE
 %{_datadir}/qemu/
 
