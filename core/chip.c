@@ -78,6 +78,7 @@ static void init_chip(struct dt_node *dn)
 
 	id = dt_get_chip_id(dn);
 	assert(id < MAX_CHIPS);
+	assert(chips[id] == NULL);
 
 	chip = zalloc(sizeof(struct proc_chip));
 	assert(chip);
@@ -108,7 +109,11 @@ void init_chips(void)
 			| QUIRK_NO_F000F | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ
 			| QUIRK_NO_DIRECT_CTL | QUIRK_NO_RNG;
 		prlog(PR_NOTICE, "CHIP: Detected Mambo simulator\n");
+
+		dt_for_each_compatible(dt_root, xn, "ibm,mambo-chip")
+			init_chip(xn);
 	}
+
 	/* Detect simics */
 	if (dt_find_by_path(dt_root, "/simics")) {
 		proc_chip_quirks |= QUIRK_SIMICS
