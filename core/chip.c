@@ -71,9 +71,35 @@ struct proc_chip *get_chip(uint32_t chip_id)
 	return chips[chip_id];
 }
 
-void init_chips(void)
+static void init_chip(struct dt_node *dn)
 {
 	struct proc_chip *chip;
+	uint32_t id;
+
+	id = dt_get_chip_id(dn);
+	assert(id < MAX_CHIPS);
+
+	chip = zalloc(sizeof(struct proc_chip));
+	assert(chip);
+
+	chip->id = id;
+	chip->devnode = dn;
+
+	chip->dbob_id = dt_prop_get_u32_def(dn, "ibm,dbob-id", 0xffffffff);
+	chip->pcid = dt_prop_get_u32_def(dn, "ibm,proc-chip-id", 0xffffffff);
+
+	if (dt_prop_get_u32_def(dn, "ibm,occ-functional-state", 0))
+		chip->occ_functional = true;
+	else
+		chip->occ_functional = false;
+
+	list_head_init(&chip->i2cms);
+
+	chips[id] = chip;
+}
+
+void init_chips(void)
+{
 	struct dt_node *xn;
 
 	/* Detect mambo chip */
@@ -106,24 +132,6 @@ void init_chips(void)
 
 	/* We walk the chips based on xscom nodes in the tree */
 	dt_for_each_compatible(dt_root, xn, "ibm,xscom") {
-		uint32_t id = dt_get_chip_id(xn);
-
-		assert(id < MAX_CHIPS);
-
-		chip = zalloc(sizeof(struct proc_chip));
-		assert(chip);
-		chip->id = id;
-		chip->devnode = xn;
-		chips[id] = chip;
-		chip->dbob_id = dt_prop_get_u32_def(xn, "ibm,dbob-id",
-						    0xffffffff);
-		chip->pcid = dt_prop_get_u32_def(xn, "ibm,proc-chip-id",
-						 0xffffffff);
-		if (dt_prop_get_u32_def(xn, "ibm,occ-functional-state", 0))
-			chip->occ_functional = true;
-		else
-			chip->occ_functional = false;
-
-		list_head_init(&chip->i2cms);
-	};
+		init_chip(xn);
+	}
 }
