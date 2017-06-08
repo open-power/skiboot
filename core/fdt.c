@@ -172,6 +172,9 @@ static int __create_dtb(void *fdt, size_t len,
 	fdt_create(fdt, len);
 	if (root == dt_root && !exclusive)
 		create_dtb_reservemap(fdt, root);
+	else
+		fdt_finish_reservemap(fdt);
+
 	flatten_dt_node(fdt, root, exclusive);
 
 	save_err(fdt_finish(fdt));
