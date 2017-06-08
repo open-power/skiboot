@@ -97,6 +97,7 @@ static void init_chip(struct dt_node *dn)
 
 	list_head_init(&chip->i2cms);
 
+	prlog(PR_INFO, "CHIP: Initialised chip %d from %s\n", id, dn->name);
 	chips[id] = chip;
 }
 
