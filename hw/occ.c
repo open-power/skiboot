@@ -1083,6 +1083,7 @@ static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 		return;
 
 	if (proc_gen == proc_gen_p9) {
+		rc = -ENOMEM;
 		/* OCC is pre-loaded in P9, so send SUCCESS to FSP */
 		rsp = fsp_mkmsg(FSP_CMD_LOAD_OCC_STAT, 2, 0, seq_id);
 		if (rsp)
