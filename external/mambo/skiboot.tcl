@@ -189,6 +189,7 @@ mysim of addprop $xscom_node byte_array "compatible" $compat
 # Load any initramfs
 set cpio_start 0x80000000
 set cpio_end $cpio_start
+set cpio_size 0
 if { [info exists env(SKIBOOT_INITRD)] } {
 
     set cpios [split $env(SKIBOOT_INITRD) ","]
