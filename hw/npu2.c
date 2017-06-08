@@ -1724,8 +1724,10 @@ static int64_t opal_npu_init_context(uint64_t phb_id, int pasid, uint64_t msr,
 			       !!(msr & MSR_HV));
 	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_MSR_PR, xts_bdf_pid,
 			       !!(msr & MSR_PR));
-	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_MSR_SF, xts_bdf_pid,
-			       !!(msr & MSR_SF));
+
+	/* We don't support anything other than 64-bit so we can safely hardcode
+	 * it here */
+	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_MSR_SF, xts_bdf_pid, 1);
 
 	/* Finally set the PID/PASID */
 	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_PASID, xts_bdf_pid, pasid);
