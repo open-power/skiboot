@@ -23,6 +23,10 @@
 #include <npu2-regs.h>
 #include <xscom.h>
 
+/* Set in npu2.c if there is an nvram override for the zcal settings on this
+ * machine */
+int nv_zcal_nominal = -1;
+
 /* PHY Registers. The documentation for the PHY training is written in
  * terms of bits within an actual register so we use that
  * representation here. */
@@ -316,12 +320,15 @@ static uint32_t phy_tx_zcal_wait(struct npu2_dev *ndev)
 	done = phy_read(ndev, &NPU2_PHY_TX_ZCAL_DONE);
 	error = phy_read(ndev, &NPU2_PHY_TX_ZCAL_ERROR);
 
-	/* We have never seen this in the field and it is not
-	 * expected. Therefore it's best to error out which will
-	 * complain loudly in the logs than to continue with nominal
-	 * values which wont work well. */
-	if (error)
+	/* We have never seen this in the field and it is not expected.
+	 * Therefore it's best to error out which will complain loudly. Nominal
+	 * vaules may be set in nvram to ignore this error. */
+	if (error && nv_zcal_nominal < 0) {
+		NPU2DEVERR(ndev, "ZCAL failed. Nominal values may be used by"
+			   " setting nvram variable nv_zcal_override = 50\n");
+		NPU2DEVERR(ndev, "However this may impact link performance\n");
 		return PROCEDURE_COMPLETE | PROCEDURE_FAILED;
+	}
 
 	if (!done)
 		return PROCEDURE_INPROGRESS;
@@ -380,9 +387,14 @@ static uint32_t phy_tx_zcal_calculate(struct npu2_dev *ndev)
 	uint32_t margin_pd_select;
 	uint32_t margin_select;
 
-	/* Convert the value from 8R to 2R by / 4 */
-	zcal_n = phy_read(ndev, &NPU2_PHY_TX_ZCAL_N) / 4;
-	zcal_p = phy_read(ndev, &NPU2_PHY_TX_ZCAL_P) / 4;
+	if (nv_zcal_nominal < 0) {
+		/* Convert the value from 8R to 2R by / 4 */
+		zcal_n = phy_read(ndev, &NPU2_PHY_TX_ZCAL_N) / 4;
+		zcal_p = phy_read(ndev, &NPU2_PHY_TX_ZCAL_P) / 4;
+	} else {
+		zcal_n = zcal_p = nv_zcal_nominal;
+		NPU2DEVINF(ndev, "Using nominal values for zcal, performance may be impacted\n");
+	}
 
 	/* Again, if the hardware detects an unexpected condition it's
 	 * better just to fail loudly. */

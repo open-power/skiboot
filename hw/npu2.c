@@ -35,6 +35,7 @@
 #include <bitutils.h>
 #include <chip.h>
 #include <phys-map.h>
+#include <nvram.h>
 
 /*
  * NPU2 BAR layout definition. We have 3 stacks and each of them
@@ -1615,6 +1616,14 @@ static void npu2_create_phb(struct dt_node *dn)
 void probe_npu2(void)
 {
 	struct dt_node *np;
+	const char *zcal;
+
+	/* Check for a zcal override */
+	zcal = nvram_query("nv_zcal_override");
+	if (zcal) {
+		nv_zcal_nominal = atoi(zcal);
+		prlog(PR_WARNING, "NPU2: Using ZCAL impedance override = %d\n", nv_zcal_nominal);
+	}
 
 	/* Scan NPU XSCOM nodes */
 	dt_for_each_compatible(dt_root, np, "ibm,power9-npu")
