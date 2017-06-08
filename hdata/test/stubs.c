@@ -116,4 +116,5 @@ NOOP_STUB(early_uart_init);
 NOOP_STUB(mem_reserve_fw);
 NOOP_STUB(mem_reserve_hwbuf);
 NOOP_STUB(add_chip_dev_associativity);
+NOOP_STUB(enable_mambo_console);
 

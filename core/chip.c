@@ -17,6 +17,7 @@
 
 #include <skiboot.h>
 #include <chip.h>
+#include <console.h>
 #include <device.h>
 #include <timebase.h>
 
@@ -108,6 +109,9 @@ void init_chips(void)
 		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_MAMBO_CALLOUTS
 			| QUIRK_NO_F000F | QUIRK_NO_PBA | QUIRK_NO_OCC_IRQ
 			| QUIRK_NO_DIRECT_CTL | QUIRK_NO_RNG;
+
+		enable_mambo_console();
+
 		prlog(PR_NOTICE, "CHIP: Detected Mambo simulator\n");
 
 		dt_for_each_compatible(dt_root, xn, "ibm,mambo-chip")
