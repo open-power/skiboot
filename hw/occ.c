@@ -1082,6 +1082,19 @@ static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 	if (err)
 		return;
 
+	if (proc_gen == proc_gen_p9) {
+		/* OCC is pre-loaded in P9, so send SUCCESS to FSP */
+		rsp = fsp_mkmsg(FSP_CMD_LOAD_OCC_STAT, 2, 0, seq_id);
+		if (rsp)
+			rc = fsp_queue_msg(rsp, fsp_freemsg);
+		if (rc) {
+			log_simple_error(&e_info(OPAL_RC_OCC_LOAD),
+				"OCC: Error %d queueing FSP OCC LOAD STATUS msg", rc);
+			fsp_freemsg(rsp);
+		}
+		return;
+	}
+
 	/*
 	 * Check if hostservices lid caching is complete. If not, queue
 	 * the load request.
@@ -1413,8 +1426,8 @@ void occ_p9_interrupt(uint32_t chip_id)
 
 void occ_fsp_init(void)
 {
-	/* OCC is P8 only */
-	if (proc_gen != proc_gen_p8)
+	/* OCC is  supported in P8 and P9 */
+	if (proc_gen < proc_gen_p8)
 		return;
 
 	/* If we have an FSP, register for notifications */

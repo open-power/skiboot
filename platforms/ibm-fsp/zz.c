@@ -44,10 +44,16 @@ static uint32_t ibm_fsp_occ_timeout(void)
 	return 60;
 }
 
+static void zz_init(void)
+{
+	hservices_init();
+	ibm_fsp_init();
+}
+
 DECLARE_PLATFORM(zz) = {
 	.name			= "ZZ",
 	.probe			= zz_probe,
-	.init			= ibm_fsp_init,
+	.init			= zz_init,
 	.exit			= ibm_fsp_exit,
 	.cec_power_down		= ibm_fsp_cec_power_down,
 	.cec_reboot		= ibm_fsp_cec_reboot,
