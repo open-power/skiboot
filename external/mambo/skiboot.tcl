@@ -244,10 +244,20 @@ if { $default_config == "P9" } {
 set pir 0
 for { set c 0 } { $c < $mconf(cpus) } { incr c } {
     set cpu_node [mysim of find_device "/cpus/PowerPC@$pir"]
-    mysim of addprop $cpu_node int "ibm,chip-id" $c
     mysim of addprop $cpu_node int "ibm,pir" $pir
     set reg  [list 0x0000001c00000028 0xffffffffffffffff]
     mysim of addprop $cpu_node array64 "ibm,processor-segment-sizes" reg
+
+    mysim of addprop $cpu_node int "ibm,chip-id" $c
+
+    # Create a chip node to tell skiboot to create another chip for this CPU.
+    # This bubbles up to Linux which will then see a new chip (aka nid).
+    # For chip 0 the xscom node above has already definied chip 0, so skip it.
+    if { $c > 0 } {
+        set node [mysim of addchild $root_node "mambo-chip" [format %x $c]]
+        mysim of addprop $node int "ibm,chip-id" $c
+        mysim of addprop $node string "compatible" "ibm,mambo-chip"
+    }
 
     set reg {}
     lappend reg 0x0000000c 0x00000010 0x00000018 0x00000022
