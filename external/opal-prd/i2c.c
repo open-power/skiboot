@@ -193,6 +193,7 @@ static void i2c_add_bus(uint32_t chip, uint32_t engine, uint32_t port,
 	if (asprintf(&dn, "/dev/%s", devname) < 0) {
 		pr_log(LOG_ERR, "I2C: Error creating devpath for %s: %m",
 			devname);
+		free(b);
 		return;
 	}
 
