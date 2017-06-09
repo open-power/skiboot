@@ -60,6 +60,7 @@
 #define DISABLE_ERR_INTS
 
 static void phb4_init_hw(struct phb4 *p, bool first_init);
+static bool phb4_init_rc_cfg(struct phb4 *p);
 
 #define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB#%04x[%d:%d]: " fmt, \
 				      (p)->phb.opal_id, (p)->chip_id, \
@@ -1466,86 +1467,71 @@ static int64_t phb4_get_msi_64(struct phb *phb,
 }
 
 /*
- * The function can be called during error recovery for INF
- * and ER class. For INF case, it's expected to be called
- * when grabbing the error log. We will call it explicitly
- * when clearing frozen PE state for ER case.
+ * The function can be called during error recovery for all classes of
+ * errors.  This is new to PHB4; previous revisions had separate
+ * sequences for INF/ER/Fatal errors.
+ *
+ * "Rec #" in this function refer to "Recov_#" steps in the
+ * PHB4 INF recovery sequence.
  */
-static void phb4_err_ER_clear(struct phb4 *p)
+static void phb4_err_clear(struct phb4 *p)
 {
-#if 0
-	uint32_t val32;
 	uint64_t val64;
 	uint64_t fir = in_be64(p->regs + PHB_LEM_FIR_ACCUM);
 
-	/* Rec 1: Grab the PCI config lock */
-	/* Removed... unnecessary. We have our own lock here */
+	/* Rec 1: Acquire the PCI config lock (we don't need to do this) */
 
-	/* Rec 2/3/4: Take all inbound transactions */
-	out_be64(p->regs + PHB_CONFIG_ADDRESS, 0x8000001c00000000ul);
-	out_be32(p->regs + PHB_CONFIG_DATA, 0x10000000);
+	/* Rec 2...15: Clear error status in RC config space */
+	/* Reset steps are the same as the init sequence */
+	phb4_init_rc_cfg(p);
 
-	/* Rec 5/6/7: Clear pending non-fatal errors */
-	out_be64(p->regs + PHB_CONFIG_ADDRESS, 0x8000005000000000ul);
-	val32 = in_be32(p->regs + PHB_CONFIG_DATA);
-	out_be32(p->regs + PHB_CONFIG_DATA, (val32 & 0xe0700000) | 0x0f000f00);
+	/* Rec 16/17: Clear PBL errors */
+	val64 = in_be64(p->regs + PHB_PBL_ERR_STATUS);
+	out_be64(p->regs + PHB_PBL_ERR_STATUS, val64);
 
-	/* Rec 8/9/10: Clear pending fatal errors for AER */
-	out_be64(p->regs + PHB_CONFIG_ADDRESS, 0x8000010400000000ul);
-	out_be32(p->regs + PHB_CONFIG_DATA, 0xffffffff);
+	/* Rec 18/19: Clear REGB errors */
+	val64 = in_be64(p->regs + PHB_REGB_ERR_STATUS);
+	out_be64(p->regs + PHB_REGB_ERR_STATUS, val64);
 
-	/* Rec 11/12/13: Clear pending non-fatal errors for AER */
-	out_be64(p->regs + PHB_CONFIG_ADDRESS, 0x8000011000000000ul);
-	out_be32(p->regs + PHB_CONFIG_DATA, 0xffffffff);
+	/* Rec 20...59: Clear PHB error trap */
+	val64 = in_be64(p->regs + PHB_TXE_ERR_STATUS);
+	out_be64(p->regs + PHB_TXE_ERR_STATUS, val64);
+	out_be64(p->regs + PHB_TXE_ERR1_STATUS, 0x0ul);
+	out_be64(p->regs + PHB_TXE_ERR_LOG_0, 0x0ul);
+	out_be64(p->regs + PHB_TXE_ERR_LOG_1, 0x0ul);
 
-	/* Rec 22/23/24: Clear root port errors */
-	out_be64(p->regs + PHB_CONFIG_ADDRESS, 0x8000013000000000ul);
-	out_be32(p->regs + PHB_CONFIG_DATA, 0xffffffff);
+	val64 = in_be64(p->regs + PHB_RXE_ARB_ERR_STATUS);
+	out_be64(p->regs + PHB_RXE_ARB_ERR_STATUS, val64);
+	out_be64(p->regs + PHB_RXE_ARB_ERR1_STATUS, 0x0ul);
+	out_be64(p->regs + PHB_RXE_ARB_ERR_LOG_0, 0x0ul);
+	out_be64(p->regs + PHB_RXE_ARB_ERR_LOG_1, 0x0ul);
 
-	/* Rec 25/26/27: Enable IO and MMIO bar */
-	out_be64(p->regs + PHB_CONFIG_ADDRESS, 0x8000004000000000ul);
-	out_be32(p->regs + PHB_CONFIG_DATA, 0x470100f8);
+	val64 = in_be64(p->regs + PHB_RXE_MRG_ERR_STATUS);
+	out_be64(p->regs + PHB_RXE_MRG_ERR_STATUS, val64);
+	out_be64(p->regs + PHB_RXE_MRG_ERR1_STATUS, 0x0ul);
+	out_be64(p->regs + PHB_RXE_MRG_ERR_LOG_0, 0x0ul);
+	out_be64(p->regs + PHB_RXE_MRG_ERR_LOG_1, 0x0ul);
 
-	/* Rec 28: Release the PCI config lock */
-	/* Removed... unnecessary. We have our own lock here */
+	val64 = in_be64(p->regs + PHB_RXE_TCE_ERR_STATUS);
+	out_be64(p->regs + PHB_RXE_TCE_ERR_STATUS, val64);
+	out_be64(p->regs + PHB_RXE_TCE_ERR1_STATUS, 0x0ul);
+	out_be64(p->regs + PHB_RXE_TCE_ERR_LOG_0, 0x0ul);
+	out_be64(p->regs + PHB_RXE_TCE_ERR_LOG_1, 0x0ul);
 
-	/* Rec 29...34: Clear UTL errors */
-	val64 = in_be64(p->regs + UTL_SYS_BUS_AGENT_STATUS);
-	out_be64(p->regs + UTL_SYS_BUS_AGENT_STATUS, val64);
-	val64 = in_be64(p->regs + UTL_PCIE_PORT_STATUS);
-	out_be64(p->regs + UTL_PCIE_PORT_STATUS, val64);
-	val64 = in_be64(p->regs + UTL_RC_STATUS);
-	out_be64(p->regs + UTL_RC_STATUS, val64);
-
-	/* Rec 39...66: Clear PHB error trap */
 	val64 = in_be64(p->regs + PHB_ERR_STATUS);
 	out_be64(p->regs + PHB_ERR_STATUS, val64);
 	out_be64(p->regs + PHB_ERR1_STATUS, 0x0ul);
 	out_be64(p->regs + PHB_ERR_LOG_0, 0x0ul);
 	out_be64(p->regs + PHB_ERR_LOG_1, 0x0ul);
 
-	val64 = in_be64(p->regs + PHB_OUT_ERR_STATUS);
-	out_be64(p->regs + PHB_OUT_ERR_STATUS, val64);
-	out_be64(p->regs + PHB_OUT_ERR1_STATUS, 0x0ul);
-	out_be64(p->regs + PHB_OUT_ERR_LOG_0, 0x0ul);
-	out_be64(p->regs + PHB_OUT_ERR_LOG_1, 0x0ul);
-
-	val64 = in_be64(p->regs + PHB_INA_ERR_STATUS);
-	out_be64(p->regs + PHB_INA_ERR_STATUS, val64);
-	out_be64(p->regs + PHB_INA_ERR1_STATUS, 0x0ul);
-	out_be64(p->regs + PHB_INA_ERR_LOG_0, 0x0ul);
-	out_be64(p->regs + PHB_INA_ERR_LOG_1, 0x0ul);
-
-	val64 = in_be64(p->regs + PHB_INB_ERR_STATUS);
-	out_be64(p->regs + PHB_INB_ERR_STATUS, val64);
-	out_be64(p->regs + PHB_INB_ERR1_STATUS, 0x0ul);
-	out_be64(p->regs + PHB_INB_ERR_LOG_0, 0x0ul);
-	out_be64(p->regs + PHB_INB_ERR_LOG_1, 0x0ul);
-
-	/* Rec 67/68: Clear FIR/WOF */
+	/* Rec 61/62: Clear FIR/WOF */
 	out_be64(p->regs + PHB_LEM_FIR_AND_MASK, ~fir);
 	out_be64(p->regs + PHB_LEM_WOF, 0x0ul);
-#endif
+
+	/* Rec 63: Update LEM mask to its initial value */
+	out_be64(p->regs + PHB_LEM_ERROR_MASK, 0x0ul);
+
+	/* Rec 64: Clear the PCI config lock (we don't need to do this) */
 }
 
 static void phb4_read_phb_status(struct phb4 *p,
@@ -2148,6 +2134,9 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			xscom_write(p->chip_id, p->pe_stk_xscom + 0x2,
 				    0x000000f000000000);
 
+		/* Clear errors, following the proper sequence */
+		phb4_err_clear(p);
+
 		/* Clear errors in NFIR and raise ETU reset */
 		xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &p->nfir_cache);
 		xscom_read(p->chip_id, p->pci_stk_xscom + 0x0, &p->pfir_cache);
@@ -2330,7 +2319,7 @@ static int64_t phb4_eeh_freeze_clear(struct phb *phb, uint64_t pe_number,
 		}
 	}
 	if (err != 0)
-		phb4_err_ER_clear(p);
+		phb4_err_clear(p);
 
 	/*
 	 * We have PEEV in system memory. It would give more performance
@@ -2556,7 +2545,7 @@ static int64_t phb4_get_diag_data(struct phb *phb,
 	if (phb4_err_pending(p) &&
 	    p->err.err_class == PHB4_ERR_CLASS_INF &&
 	    p->err.err_src == PHB4_ERR_SRC_PHB) {
-		phb4_err_ER_clear(p);
+		phb4_err_clear(p);
 		phb4_set_err_pending(p, false);
 	}
 
