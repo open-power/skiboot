@@ -332,6 +332,9 @@ enum opal_reasoncode {
 
 /* Platform error */
 	OPAL_RC_ABNORMAL_REBOOT	    = OPAL_SRC_COMPONENT_CEC | 0x10,
+
+/* FSP console */
+	OPAL_RC_CONSOLE_HANG	    = OPAL_SRC_COMPONENT_CONSOLE | 0x10,
 };
 
 #define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\
