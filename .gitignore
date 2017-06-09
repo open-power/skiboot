@@ -23,6 +23,7 @@ GTAGS
 GRTAGS
 GPATH
 cscope.out
+compile_commands.json
 asm/asm-offsets.s
 include/asm-offsets.h
 version.c
