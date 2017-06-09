@@ -2114,6 +2114,7 @@ static int64_t phb4_freset(struct pci_slot *slot)
 static int64_t phb4_creset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
+	uint64_t pbcq_status;
 
 	switch (slot->state) {
 	case PHB4_SLOT_NORMAL:
@@ -2125,16 +2126,55 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		if (p->flags & PHB4_CAPP_RECOVERY)
 			do_capp_recovery_scoms(p);
 #endif
-		/* XXX TODO XXX */
+
+		/* Clear error inject register, preventing recursive errors */
+		xscom_write(p->chip_id, p->pe_xscom + 0x2, 0x0);
+
+		/* Force fence on the PHB to work around a non-existent PE */
+		if (!phb4_fenced(p))
+			xscom_write(p->chip_id, p->pe_stk_xscom + 0x2,
+				    0x000000f000000000);
+
+		/* Clear errors in NFIR and raise ETU reset */
+		xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &p->nfir_cache);
+		xscom_read(p->chip_id, p->pci_stk_xscom + 0x0, &p->pfir_cache);
+
+		xscom_write(p->chip_id, p->pci_stk_xscom + 0x0,
+			    0x8000000000000000);
+
+		/* DD1 errata: write to PEST to force update */
+		phb4_ioda_sel(p, IODA3_TBL_PESTA, PHB4_RESERVED_PE_NUM(p), false);
+		out_be64(p->regs + PHB_IODA_DATA0, 0);
 
 		pci_slot_set_state(slot, PHB4_SLOT_CRESET_WAIT_CQ);
 		slot->retries = 500;
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
 	case PHB4_SLOT_CRESET_WAIT_CQ:
-		/* XXX TODO XXX */
+		// Wait until operations are complete
+		xscom_read(p->chip_id, p->pe_stk_xscom + 0xc, &pbcq_status);
+		if (!(pbcq_status & 0xC000000000000000)) {
+			PHBDBG(p, "CRESET: No pending transactions\n");
+
+			xscom_write(p->chip_id, p->pe_stk_xscom + 0x1,
+				    ~p->nfir_cache);
+			xscom_write(p->chip_id, p->pci_stk_xscom + 0x1,
+				    ~p->pfir_cache);
+
+			// Clear PHB from reset
+			xscom_write(p->chip_id, p->pci_stk_xscom + 0x0, 0x0);
+
+			pci_slot_set_state(slot, PHB4_SLOT_CRESET_REINIT);
+			return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
+		}
+
+		if (slot->retries-- == 0) {
+			PHBERR(p, "Timeout waiting for pending transaction\n");
+			goto error;
+		}
 		pci_slot_set_state(slot, PHB4_SLOT_CRESET_REINIT);
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
 	case PHB4_SLOT_CRESET_REINIT:
+		PHBDBG(p, "CRESET: Reinitialization\n");
 		p->flags &= ~PHB4_AIB_FENCED;
 		p->flags &= ~PHB4_CAPP_RECOVERY;
 		phb4_init_hw(p, false);
@@ -2148,6 +2188,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		       slot->state);
 	}
 
+error:
 	/* Mark the PHB as dead and expect it to be removed */
 	p->state = PHB4_STATE_BROKEN;
 	return OPAL_HARDWARE;

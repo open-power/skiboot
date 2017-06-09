@@ -275,6 +275,7 @@ struct phb4 {
 	uint64_t		mbt_cache[32][2];
 	uint64_t		mdt_cache[512]; /* max num of PEs */
 	uint64_t		mist_cache[4096/4];/* max num of MSIs */
+	uint64_t		pfir_cache;	/* Used by complete reset */
 	uint64_t		nfir_cache;	/* Used by complete reset */
 	bool			err_pending;
 	struct phb4_err		err;
