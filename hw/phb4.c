@@ -2511,11 +2511,191 @@ static int64_t phb4_eeh_next_error(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
+static int64_t phb4_err_inject_finalize(struct phb4 *phb, uint64_t addr,
+					uint64_t mask, uint64_t ctrl,
+					bool is_write)
+{
+	if (is_write)
+		ctrl |= PHB_PAPR_ERR_INJ_CTL_WR;
+	else
+		ctrl |= PHB_PAPR_ERR_INJ_CTL_RD;
+
+	out_be64(phb->regs + PHB_PAPR_ERR_INJ_ADDR, addr);
+	out_be64(phb->regs + PHB_PAPR_ERR_INJ_MASK, mask);
+	out_be64(phb->regs + PHB_PAPR_ERR_INJ_CTL, ctrl);
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t phb4_err_inject_mem32(struct phb4 *phb, uint64_t pe_number,
+				     uint64_t addr, uint64_t mask,
+				     bool is_write)
+{
+	return OPAL_UNSUPPORTED;
+}
+
+static int64_t phb4_err_inject_mem64(struct phb4 *phb, uint64_t pe_number,
+				     uint64_t addr, uint64_t mask,
+				     bool is_write)
+{
+	return OPAL_UNSUPPORTED;
+}
+
+static int64_t phb4_err_inject_cfg(struct phb4 *phb, uint64_t pe_number,
+				   uint64_t addr, uint64_t mask,
+				   bool is_write)
+{
+	uint64_t a, m, prefer, ctrl;
+	int bdfn;
+	bool is_bus_pe = false;
+
+	a = 0xffffull;
+	prefer = 0xffffull;
+	m = PHB_PAPR_ERR_INJ_MASK_CFG_ALL;
+	ctrl = PHB_PAPR_ERR_INJ_CTL_CFG;
+
+	for (bdfn = 0; bdfn < RTT_TABLE_ENTRIES; bdfn++) {
+		if (phb->rte_cache[bdfn] != pe_number)
+			continue;
+
+		/* The PE can be associated with PCI bus or device */
+		is_bus_pe = false;
+		if ((bdfn + 8) < RTT_TABLE_ENTRIES &&
+		    phb->rte_cache[bdfn + 8] == pe_number)
+			is_bus_pe = true;
+
+		/* Figure out the PCI config address */
+		if (prefer == 0xffffull) {
+			if (is_bus_pe) {
+				m = PHB_PAPR_ERR_INJ_MASK_CFG;
+				prefer = SETFIELD(m, 0x0ull, (bdfn >> 8));
+			} else {
+				m = PHB_PAPR_ERR_INJ_MASK_CFG_ALL;
+				prefer = SETFIELD(m, 0x0ull, bdfn);
+			}
+		}
+
+		/* Check the input address is valid or not */
+		if (!is_bus_pe &&
+		    GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG_ALL, addr) == bdfn) {
+			a = addr;
+			break;
+		}
+
+		if (is_bus_pe &&
+		    GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, addr) == (bdfn >> 8)) {
+			a = addr;
+			break;
+		}
+	}
+
+	/* Invalid PE number */
+	if (prefer == 0xffffull)
+		return OPAL_PARAMETER;
+
+	/* Specified address is out of range */
+	if (a == 0xffffull)
+		a = prefer;
+	else
+		m = mask;
+
+	return phb4_err_inject_finalize(phb, a, m, ctrl, is_write);
+}
+
+static int64_t phb4_err_inject_dma(struct phb4 *phb, uint64_t pe_number,
+				   uint64_t addr, uint64_t mask,
+				   bool is_write, bool is_64bits)
+{
+	return OPAL_UNSUPPORTED;
+}
+
+static int64_t phb4_err_inject_dma32(struct phb4 *phb, uint64_t pe_number,
+				     uint64_t addr, uint64_t mask,
+				     bool is_write)
+{
+	return phb4_err_inject_dma(phb, pe_number, addr, mask, is_write, false);
+}
+
+static int64_t phb4_err_inject_dma64(struct phb4 *phb, uint64_t pe_number,
+				     uint64_t addr, uint64_t mask,
+				     bool is_write)
+{
+	return phb4_err_inject_dma(phb, pe_number, addr, mask, is_write, true);
+}
+
+
 static int64_t phb4_err_inject(struct phb *phb, uint64_t pe_number,
 			       uint32_t type, uint32_t func,
 			       uint64_t addr, uint64_t mask)
 {
-	return OPAL_UNSUPPORTED;
+	struct phb4 *p = phb_to_phb4(phb);
+	int64_t (*handler)(struct phb4 *p, uint64_t pe_number,
+			   uint64_t addr, uint64_t mask, bool is_write);
+	bool is_write;
+
+	/* How could we get here without valid RTT? */
+	if (!p->tbl_rtt)
+		return OPAL_HARDWARE;
+
+	/* We can't inject error to the reserved PE */
+	if (pe_number == PHB4_RESERVED_PE_NUM(p) || pe_number >= p->num_pes)
+		return OPAL_PARAMETER;
+
+	/* Clear leftover from last time */
+	out_be64(p->regs + PHB_PAPR_ERR_INJ_CTL, 0x0ul);
+
+	switch (func) {
+	case OPAL_ERR_INJECT_FUNC_IOA_LD_MEM_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_LD_MEM_DATA:
+		is_write = false;
+		if (type == OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64)
+			handler = phb4_err_inject_mem64;
+		else
+			handler = phb4_err_inject_mem32;
+		break;
+	case OPAL_ERR_INJECT_FUNC_IOA_ST_MEM_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_ST_MEM_DATA:
+		is_write = true;
+		if (type == OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64)
+			handler = phb4_err_inject_mem64;
+		else
+			handler = phb4_err_inject_mem32;
+		break;
+	case OPAL_ERR_INJECT_FUNC_IOA_LD_CFG_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_LD_CFG_DATA:
+		is_write = false;
+		handler = phb4_err_inject_cfg;
+		break;
+	case OPAL_ERR_INJECT_FUNC_IOA_ST_CFG_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_ST_CFG_DATA:
+		is_write = true;
+		handler = phb4_err_inject_cfg;
+		break;
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_DATA:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_MASTER:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_RD_TARGET:
+		is_write = false;
+		if (type == OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64)
+			handler = phb4_err_inject_dma64;
+		else
+			handler = phb4_err_inject_dma32;
+		break;
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_ADDR:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_DATA:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_MASTER:
+	case OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_TARGET:
+		is_write = true;
+		if (type == OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64)
+			handler = phb4_err_inject_dma64;
+		else
+			handler = phb4_err_inject_dma32;
+		break;
+	default:
+		return OPAL_PARAMETER;
+	}
+
+	return handler(p, pe_number, addr, mask, is_write);
 }
 
 static int64_t phb4_get_diag_data(struct phb *phb,
