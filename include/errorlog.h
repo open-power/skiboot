@@ -219,6 +219,7 @@ struct opal_err_info {
 #define OPAL_MF				0x1700
 #define OPAL_DU				0x1800
 #define OPAL_LE				0x1900
+#define OPAL_SRC_COMPONENT_CONSOLE      0x1b00
 #define OPAL_SE				0x2000
 #define OPAL_SL				0x2100
 #define OPAL_FP				0x2200
@@ -330,6 +331,9 @@ enum opal_reasoncode {
 
 /* Platform error */
 	OPAL_RC_ABNORMAL_REBOOT	= OPAL_CE | 0x10,
+
+/* FSP console */
+	OPAL_RC_CONSOLE_HANG	    = OPAL_SRC_COMPONENT_CONSOLE | 0x10,
 };
 
 #define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\

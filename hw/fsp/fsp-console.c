@@ -26,6 +26,11 @@
 #include <timebase.h>
 #include <device.h>
 #include <fsp-sysparam.h>
+#include <errorlog.h>
+
+DEFINE_LOG_ENTRY(OPAL_RC_CONSOLE_HANG, OPAL_PLATFORM_ERR_EVT, OPAL_CONSOLE,
+		 OPAL_PLATFORM_FIRMWARE,
+		 OPAL_PREDICTIVE_ERR_GENERAL, OPAL_NA);
 
 struct fsp_serbuf_hdr {
 	u16	partition_id;
@@ -608,7 +613,18 @@ static int64_t fsp_console_write(int64_t term_number, int64_t *length,
 	*length = written;
 	unlock(&fsp_con_lock);
 
-	return written ? OPAL_SUCCESS : OPAL_BUSY_EVENT;
+	if (written)
+		return OPAL_SUCCESS;
+
+	/*
+	 * FSP is still active but not reading console data. Hence
+	 * our console buffer became full. Most likely IPMI daemon
+	 * on FSP is buggy. Lets log error and return OPAL_HARDWARE
+	 * to payload (Linux).
+	 */
+	log_simple_error(&e_info(OPAL_RC_CONSOLE_HANG), "FSPCON: Console "
+			 "buffer is full, dropping console data\n");
+	return OPAL_HARDWARE;
 }
 
 static int64_t fsp_console_write_buffer_space(int64_t term_number,
