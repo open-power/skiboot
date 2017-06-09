@@ -486,15 +486,21 @@ static int64_t phb4_get_reserved_pe_number(struct phb *phb)
 }
 
 
-static void phb4_root_port_init(struct phb *phb __unused,
-				struct pci_device *dev __unused,
-				int ecap __unused,
-				int aercap __unused)
+static void phb4_root_port_init(struct phb *phb, struct pci_device *dev,
+				int ecap, int aercap)
 {
-#if 0
 	uint16_t bdfn = dev->bdfn;
 	uint16_t val16;
 	uint32_t val32;
+
+	/*
+	 * Use the PHB's callback so that UTL events will be masked or
+	 * unmasked when the link is down or up.
+	 */
+	if (dev->slot && dev->slot->ops.prepare_link_change &&
+	    phb->slot && phb->slot->ops.prepare_link_change)
+		dev->slot->ops.prepare_link_change =
+			phb->slot->ops.prepare_link_change;
 
 	// FIXME: check recommended init values for phb4
 
@@ -549,7 +555,6 @@ static void phb4_root_port_init(struct phb *phb __unused,
 		  PCIECAP_AER_RERR_CMD_NFE |
 		  PCIECAP_AER_RERR_CMD_CE);
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_RERR_CMD, val32);
-#endif
 }
 
 static void phb4_switch_port_init(struct phb *phb,
