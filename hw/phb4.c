@@ -1818,6 +1818,14 @@ static void phb4_prepare_link_change(struct pci_slot *slot, bool is_up)
 		/* Don't block PCI-CFG */
 		p->flags &= ~PHB4_CFG_BLOCKED;
 
+		/* Clear error link enable & error link down kill enable */
+		out_be64(p->regs + PHB_PCIE_MISC_STRAP, 0);
+
+		/* Disable all error status indicators that trigger irqs */
+		out_be64(p->regs + PHB_REGB_ERR_INF_ENABLE, 0);
+		out_be64(p->regs + PHB_REGB_ERR_ERC_ENABLE, 0);
+		out_be64(p->regs + PHB_REGB_ERR_FAT_ENABLE, 0);
+
 		/*
 		 * We might lose the bus numbers during the reset operation
 		 * and we need to restore them. Otherwise, some adapters (e.g.
