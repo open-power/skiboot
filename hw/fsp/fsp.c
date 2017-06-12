@@ -2169,8 +2169,11 @@ static void fsp_timeout_poll(void *data __unused)
 			fsp_reg_dump();
 			fsp_cmdclass_resp_bitmask &= ~(1ull << index);
 			cmdclass->timesent = 0;
-			if (req->resp)
+			if (req->resp) {
 				req->resp->state = fsp_msg_timeout;
+				req->resp->word1 = (FSP_STATUS_BUSY << 8) |
+					(req->resp->word1 & 0xff);
+			}
 			fsp_complete_msg(req);
 			__fsp_trigger_reset();
 			unlock(&fsp_lock);
