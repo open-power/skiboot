@@ -342,7 +342,6 @@ static int64_t fsp_rtc_send_write_request(uint32_t year_month_day,
 {
 	struct fsp_msg *msg;
 	uint32_t w0, w1, w2;
-	struct tm tm;
 
 	assert(lock_held_by_me(&rtc_lock));
 	assert(rtc_write_request_state == RTC_WRITE_NO_REQUEST);
@@ -362,14 +361,7 @@ static int64_t fsp_rtc_send_write_request(uint32_t year_month_day,
 	}
 	prlog(PR_TRACE, " -> req at %p\n", msg);
 
-	if (fsp_in_rr()) {
-		datetime_to_tm(msg->data.words[0],
-			       (u64) msg->data.words[1] << 32,  &tm);
-		rtc_cache_update(&tm);
-		rtc_tod_cache_dirty = true;
-		fsp_freemsg(msg);
-		return OPAL_SUCCESS;
-	} else if (fsp_queue_msg(msg, fsp_rtc_req_complete)) {
+	if (fsp_queue_msg(msg, fsp_rtc_req_complete)) {
 		prlog(PR_TRACE, " -> queueing failed !\n");
 		fsp_freemsg(msg);
 		return OPAL_INTERNAL_ERROR;
@@ -384,10 +376,20 @@ static int64_t fsp_opal_rtc_write(uint32_t year_month_day,
 				  uint64_t hour_minute_second_millisecond)
 {
 	int rc;
+	struct tm tm;
 
 	lock(&rtc_lock);
 	if (rtc_tod_state == RTC_TOD_PERMANENT_ERROR) {
 		rc = OPAL_HARDWARE;
+		goto out;
+	}
+
+	if (fsp_in_rr()) {
+		datetime_to_tm(year_month_day,
+			       hour_minute_second_millisecond, &tm);
+		rtc_cache_update(&tm);
+		rtc_tod_cache_dirty = true;
+		rc = OPAL_SUCCESS;
 		goto out;
 	}
 
