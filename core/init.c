@@ -993,7 +993,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	pci_nvram_init();
 
 	phb3_preload_vpd();
-	phb3_preload_capp_ucode();
+	preload_capp_ucode();
 	start_preload_kernel();
 
 	/* NX init */

@@ -48,6 +48,7 @@
 #include <phb4.h>
 #include <phb4-regs.h>
 #include <phb4-capp.h>
+#include <capp.h>
 #include <fsp.h>
 #include <chip.h>
 #include <chiptod.h>
@@ -2105,7 +2106,22 @@ static int64_t phb4_freset(struct pci_slot *slot)
 	return OPAL_HARDWARE;
 }
 
-extern struct lock capi_lock;
+static int64_t load_capp_ucode(struct phb4 *p)
+{
+	int64_t rc;
+
+	if (p->index != CAPP0_PHB_INDEX && p->index != CAPP1_PHB_INDEX)
+		return OPAL_HARDWARE;
+
+	/* 0x4341505050534C4C = 'CAPPPSLL' in ASCII */
+	rc = capp_load_ucode(p->chip_id, p->phb.opal_id, p->index,
+			0x4341505050534C4C, PHB4_CAPP_REG_OFFSET(p),
+			CAPP_APC_MASTER_ARRAY_ADDR_REG,
+			CAPP_APC_MASTER_ARRAY_WRITE_REG,
+			CAPP_SNP_ARRAY_ADDR_REG,
+			CAPP_SNP_ARRAY_WRITE_REG);
+	return rc;
+}
 
 static int64_t phb4_creset(struct pci_slot *slot)
 {
@@ -3026,6 +3042,11 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 	uint64_t reg;
 	uint32_t offset;
 
+
+	if (!capp_ucode_loaded(chip, p->index)) {
+		PHBERR(p, "CAPP: ucode not loaded\n");
+		return OPAL_RESOURCE;
+	}
 
 	lock(&capi_lock);
 	chip->capp_phb4_attached_mask |= 1 << p->index;
@@ -3959,6 +3980,9 @@ static void phb4_create(struct dt_node *np)
 
 	/* Get the HW up and running */
 	phb4_init_hw(p, true);
+
+	/* Load capp microcode into capp unit */
+	load_capp_ucode(p);
 
 	/* Register all interrupt sources with XIVE */
 	xive_register_hw_source(p->base_msi, p->num_irqs - 8, 16,

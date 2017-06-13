@@ -2431,139 +2431,21 @@ static int64_t phb3_freset(struct pci_slot *slot)
 	return OPAL_HARDWARE;
 }
 
-struct lock capi_lock = LOCK_UNLOCKED;
-static struct {
-	uint32_t			ec_level;
-	struct capp_lid_hdr		*lid;
-	size_t size;
-	int load_result;
-} capp_ucode_info = { 0, NULL, 0, false };
-
-#define CAPP_UCODE_MAX_SIZE 0x20000
-
-#define CAPP_UCODE_LOADED(chip, p) \
-	 ((chip)->capp_ucode_loaded & (1 << (p)->index))
-
-static int64_t capp_lid_download(void)
+static int64_t load_capp_ucode(struct phb3 *p)
 {
-	int64_t ret;
+	int64_t rc;
 
-	if (capp_ucode_info.load_result != OPAL_EMPTY)
-		return capp_ucode_info.load_result;
-
-	capp_ucode_info.load_result = wait_for_resource_loaded(
-		RESOURCE_ID_CAPP,
-		capp_ucode_info.ec_level);
-
-	if (capp_ucode_info.load_result != OPAL_SUCCESS) {
-		prerror("CAPP: Error loading ucode lid. index=%x\n",
-			capp_ucode_info.ec_level);
-		ret = OPAL_RESOURCE;
-		free(capp_ucode_info.lid);
-		capp_ucode_info.lid = NULL;
-		goto end;
-	}
-
-	ret = OPAL_SUCCESS;
-end:
-	return ret;
-}
-
-static int64_t capp_load_ucode(struct phb3 *p)
-{
-	struct proc_chip *chip = get_chip(p->chip_id);
-	struct capp_ucode_lid *ucode;
-	struct capp_ucode_data *data;
-	struct capp_lid_hdr *lid;
-	uint64_t rc, val, addr;
-	uint32_t chunk_count, offset, reg_offset;
-	int i;
-
-	if (CAPP_UCODE_LOADED(chip, p))
-		return OPAL_SUCCESS;
-
-	/* Return if PHB not attached to a CAPP unit */
 	if (p->index > PHB3_CAPP_MAX_PHB_INDEX(p))
 		return OPAL_HARDWARE;
 
-	rc = capp_lid_download();
-	if (rc)
-		return rc;
-
-	prlog(PR_INFO, "CHIP%i: CAPP ucode lid loaded at %p\n",
-	      p->chip_id, capp_ucode_info.lid);
-	lid = capp_ucode_info.lid;
-	/*
-	 * If lid header is present (on FSP machines), it'll tell us where to
-	 * find the ucode.  Otherwise this is the ucode.
-	 */
-	ucode = (struct capp_ucode_lid *)lid;
-	if (be64_to_cpu(lid->eyecatcher) == 0x434150504c494448) {
-		if (be64_to_cpu(lid->version) != 0x1) {
-			PHBERR(p, "capi ucode lid header invalid\n");
-			return OPAL_HARDWARE;
-		}
-		ucode = (struct capp_ucode_lid *)
-			((char *)ucode + be64_to_cpu(lid->ucode_offset));
-	}
-
-	if ((be64_to_cpu(ucode->eyecatcher) != 0x43415050554C4944) ||
-	    (ucode->version != 1)) {
-		PHBERR(p, "CAPP: ucode header invalid\n");
-		return OPAL_HARDWARE;
-	}
-
-	reg_offset = PHB3_CAPP_REG_OFFSET(p);
-	offset = 0;
-	while (offset < be64_to_cpu(ucode->data_size)) {
-		data = (struct capp_ucode_data *)
-			((char *)&ucode->data + offset);
-		chunk_count = be32_to_cpu(data->hdr.chunk_count);
-		offset += sizeof(struct capp_ucode_data_hdr) + chunk_count * 8;
-
-		if (be64_to_cpu(data->hdr.eyecatcher) != 0x4341505055434F44) {
-			PHBERR(p, "CAPP: ucode data header invalid:%i\n",
-			       offset);
-			return OPAL_HARDWARE;
-		}
-
-		switch (data->hdr.reg) {
-		case apc_master_cresp:
-			xscom_write(p->chip_id,
-				    CAPP_APC_MASTER_ARRAY_ADDR_REG + reg_offset,
-				    0);
-			addr = CAPP_APC_MASTER_ARRAY_WRITE_REG;
-			break;
-		case apc_master_uop_table:
-			xscom_write(p->chip_id,
-				    CAPP_APC_MASTER_ARRAY_ADDR_REG + reg_offset,
-				    0x180ULL << 52);
-			addr = CAPP_APC_MASTER_ARRAY_WRITE_REG;
-			break;
-		case snp_ttype:
-			xscom_write(p->chip_id,
-				    CAPP_SNP_ARRAY_ADDR_REG + reg_offset,
-				    0x5000ULL << 48);
-			addr = CAPP_SNP_ARRAY_WRITE_REG;
-			break;
-		case snp_uop_table:
-			xscom_write(p->chip_id,
-				    CAPP_SNP_ARRAY_ADDR_REG + reg_offset,
-				    0x4000ULL << 48);
-			addr = CAPP_SNP_ARRAY_WRITE_REG;
-			break;
-		default:
-			continue;
-		}
-
-		for (i = 0; i < chunk_count; i++) {
-			val = be64_to_cpu(data->data[i]);
-			xscom_write(p->chip_id, addr + reg_offset, val);
-		}
-	}
-
-	chip->capp_ucode_loaded |= (1 << p->index);
-	return OPAL_SUCCESS;
+	/* 0x434150504c494448 = 'CAPPLIDH' in ASCII */
+	rc = capp_load_ucode(p->chip_id, p->phb.opal_id, p->index,
+			0x434150504c494448, PHB3_CAPP_REG_OFFSET(p),
+			CAPP_APC_MASTER_ARRAY_ADDR_REG,
+			CAPP_APC_MASTER_ARRAY_WRITE_REG,
+			CAPP_SNP_ARRAY_ADDR_REG,
+			CAPP_SNP_ARRAY_WRITE_REG);
+	return rc;
 }
 
 static void do_capp_recovery_scoms(struct phb3 *p)
@@ -2576,7 +2458,7 @@ static void do_capp_recovery_scoms(struct phb3 *p)
 	offset = PHB3_CAPP_REG_OFFSET(p);
 	/* disable snoops */
 	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0);
-	capp_load_ucode(p);
+	load_capp_ucode(p);
 	/* clear err rpt reg*/
 	xscom_write(p->chip_id, CAPP_ERR_RPT_CLR + offset, 0);
 	/* clear capp fir */
@@ -3737,7 +3619,7 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 	uint32_t offset;
 	u8 mask;
 
-	if (!CAPP_UCODE_LOADED(chip, p)) {
+	if (!capp_ucode_loaded(chip, p->index)) {
 		PHBERR(p, "CAPP: ucode not loaded\n");
 		return OPAL_RESOURCE;
 	}
@@ -4820,7 +4702,7 @@ static void phb3_create(struct dt_node *np)
 	phb3_init_hw(p, true);
 
 	/* Load capp microcode into capp unit */
-	capp_load_ucode(p);
+	load_capp_ucode(p);
 
 	opal_add_host_sync_notifier(phb3_host_sync_reset, p);
 
@@ -5015,67 +4897,6 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 			      OPAL_PHB_CAPI_FLAG_SNOOP_CONTROL);
 
 	add_chip_dev_associativity(np);
-}
-
-int phb3_preload_capp_ucode(void)
-{
-	struct dt_node *p;
-	struct proc_chip *chip;
-	uint32_t index;
-	uint64_t rc;
-	int ret;
-
-	p = dt_find_compatible_node(dt_root, NULL, "ibm,power8-pbcq");
-
-	if (!p) {
-		printf("CAPI: WARNING: no compat thing found\n");
-		return OPAL_SUCCESS;
-	}
-
-	chip = get_chip(dt_get_chip_id(p));
-
-	rc = xscom_read_cfam_chipid(chip->id, &index);
-	if (rc) {
-		prerror("CAPP: Error reading cfam chip-id\n");
-		ret = OPAL_HARDWARE;
-		return ret;
-	}
-	/* Keep ChipID and Major/Minor EC.  Mask out the Location Code. */
-	index = index & 0xf0fff;
-
-	/* Assert that we're preloading */
-	assert(capp_ucode_info.lid == NULL);
-	capp_ucode_info.load_result = OPAL_EMPTY;
-
-	capp_ucode_info.ec_level = index;
-
-	/* Is the ucode preloaded like for BML? */
-	if (dt_has_node_property(p, "ibm,capp-ucode", NULL)) {
-		capp_ucode_info.lid = (struct capp_lid_hdr *)(u64)
-			dt_prop_get_u32(p, "ibm,capp-ucode");
-		ret = OPAL_SUCCESS;
-		goto end;
-	}
-	/* If we successfully download the ucode, we leave it around forever */
-	capp_ucode_info.size = CAPP_UCODE_MAX_SIZE;
-	capp_ucode_info.lid = malloc(CAPP_UCODE_MAX_SIZE);
-	if (!capp_ucode_info.lid) {
-		prerror("CAPP: Can't allocate space for ucode lid\n");
-		ret = OPAL_NO_MEM;
-		goto end;
-	}
-
-	printf("CAPI: Preloading ucode %x\n", capp_ucode_info.ec_level);
-
-	ret = start_preload_resource(RESOURCE_ID_CAPP, index,
-				     capp_ucode_info.lid,
-				     &capp_ucode_info.size);
-
-	if (ret != OPAL_SUCCESS)
-		prerror("CAPI: Failed to preload resource %d\n", ret);
-
-end:
-	return ret;
 }
 
 void phb3_preload_vpd(void)

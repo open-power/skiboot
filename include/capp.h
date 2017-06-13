@@ -17,8 +17,12 @@
 #ifndef __CAPP_H
 #define __CAPP_H
 
+/*
+ * eyecatcher PHB3:  'CAPPLIDH' in ASCII
+ * eyecatcher PHB4:  'CAPPPSLL' in ASCII
+ */
 struct capp_lid_hdr {
-	be64 eyecatcher;	/* 'CAPPLIDH' in ASCII */
+	be64 eyecatcher;
 	be64 version;
 	be64 lid_no;
 	be64 pad;
@@ -27,7 +31,7 @@ struct capp_lid_hdr {
 };
 
 struct capp_ucode_data_hdr {
-	be64 eyecatcher;  	/* 'CAPPUCOD' in ASCII */
+	be64 eyecatcher;	/* 'CAPPUCOD' in ASCII */
 	u8 version;
 	u8 reg;
 	u8 reserved[2];
@@ -47,7 +51,6 @@ struct capp_ucode_lid {
 	struct capp_ucode_data data; /* This repeats */
 };
 
-
 enum capp_reg {
 	apc_master_cresp		= 0x1,
 	apc_master_uop_table		= 0x2,
@@ -61,5 +64,17 @@ enum capp_reg {
 	flush_sue_state_map		= 0xA,
 	apc_master_powerbus_ctrl	= 0xB
 };
+
+struct proc_chip;
+extern struct lock capi_lock;
+extern bool capp_ucode_loaded(struct proc_chip *chip, unsigned int index);
+
+extern int64_t capp_load_ucode(unsigned int chip_id, uint32_t opal_id,
+			       unsigned int index, u64 lid_eyecatcher,
+			       uint32_t reg_offset,
+			       uint64_t apc_master_addr,
+			       uint64_t apc_master_write,
+			       uint64_t snp_array_addr,
+			       uint64_t snp_array_write);
 
 #endif /* __CAPP_H */
