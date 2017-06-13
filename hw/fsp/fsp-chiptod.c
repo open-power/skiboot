@@ -57,6 +57,7 @@ static bool fsp_chiptod_update_topology(uint32_t cmd_sub_mod,
 		if (fsp_queue_msg(resp, fsp_freemsg)) {
 			fsp_freemsg(resp);
 			prerror("Failed to queue response msg\n");
+			return false;
 		}
 		return true;
 	default:
