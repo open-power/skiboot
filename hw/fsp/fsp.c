@@ -2168,8 +2168,8 @@ static void fsp_timeout_poll(void *data __unused)
 			w1 = req->word1;
 			mstate = req->state;
 			prlog(PR_WARNING, "FSP: Response from FSP timed out,"
-			      " word0 = %x, word1 = %x state: %d\n",
-			      w0, w1, mstate);
+			      " cmd = %x subcmd = %x mod = %x state: %d\n",
+			      w0 & 0xff, w1 & 0xff, (w1 >> 8) & 0xff, mstate);
 			fsp_reg_dump();
 			fsp_cmdclass_resp_bitmask &= ~(1ull << index);
 			cmdclass->timesent = 0;
@@ -2180,8 +2180,9 @@ static void fsp_timeout_poll(void *data __unused)
 			unlock(&fsp_lock);
 			fsp_hir_reason_plid = log_simple_error(
 				&e_info(OPAL_RC_FSP_POLL_TIMEOUT),
-				"FSP: Response from FSP timed out, word0 = %x,"
-				"word1 = %x state: %d\n", w0, w1, mstate);
+				"FSP: Response from FSP timed out,"
+				" cmd = %x subcmd = %x mod = %x state: %d\n",
+				w0 & 0xff, w1 & 0xff, (w1 >> 8) & 0xff, mstate);
 		}
 	next_bit:
 		cmdclass_resp_bitmask = cmdclass_resp_bitmask >> 1;
