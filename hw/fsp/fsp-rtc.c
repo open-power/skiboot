@@ -88,12 +88,6 @@ static enum {
 
 static bool rtc_tod_cache_dirty = false;
 
-/* TODO We'd probably want to export and use this variable declared in fsp.c,
- * instead of each component individually maintaining the state.. may be for
- * later optimization
- */
-static bool fsp_in_reset = false;
-
 struct opal_tpo_data {
 	uint64_t tpo_async_token;
 	uint32_t *year_month_day;
@@ -520,14 +514,10 @@ static bool fsp_rtc_msg_rr(u32 cmd_sub_mod, struct fsp_msg *msg)
 
 	switch (cmd_sub_mod) {
 	case FSP_RESET_START:
-		lock(&rtc_lock);
-		fsp_in_reset = true;
-		unlock(&rtc_lock);
 		rc = true;
 		break;
 	case FSP_RELOAD_COMPLETE:
 		lock(&rtc_lock);
-		fsp_in_reset = false;
 		if (rtc_tod_cache_dirty) {
 			rtc_flush_cached_tod();
 			rtc_tod_cache_dirty = false;
