@@ -3717,7 +3717,8 @@ static int64_t enable_capi_mode(struct phb3 *p, uint64_t pe_number, bool dma_mod
 
 	phb3_init_capp_regs(p, dma_mode);
 
-	if (!chiptod_capp_timebase_sync(p)) {
+	if (!chiptod_capp_timebase_sync(p->chip_id, CAPP_TFMR, CAPP_TB,
+					PHB3_CAPP_REG_OFFSET(p))) {
 		PHBERR(p, "CAPP: Failed to sync timebase\n");
 		return OPAL_HARDWARE;
 	}

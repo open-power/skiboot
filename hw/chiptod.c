@@ -21,10 +21,8 @@
 #include <skiboot.h>
 #include <xscom.h>
 #include <pci.h>
-#include <phb3.h>
 #include <chiptod.h>
 #include <chip.h>
-#include <capp.h>
 #include <io.h>
 #include <cpu.h>
 #include <timebase.h>
@@ -1792,7 +1790,9 @@ void chiptod_init(void)
 
 /* CAPP timebase sync */
 
-static bool chiptod_capp_reset_tb_errors(uint32_t chip_id, uint32_t offset)
+static bool chiptod_capp_reset_tb_errors(uint32_t chip_id,
+					 uint32_t tfmr_addr,
+					 uint32_t offset)
 {
 	uint64_t tfmr;
 	unsigned long timeout = 0;
@@ -1808,12 +1808,12 @@ static bool chiptod_capp_reset_tb_errors(uint32_t chip_id, uint32_t offset)
 	tfmr |= SPR_TFMR_TFMR_CORRUPT;
 
 	/* Write CAPP TFMR */
-	xscom_write(chip_id, CAPP_TFMR + offset, tfmr);
+	xscom_write(chip_id, tfmr_addr + offset, tfmr);
 
 	/* We have to write "Clear TB Errors" again */
 	tfmr = base_tfmr | SPR_TFMR_CLEAR_TB_ERRORS;
 	/* Write CAPP TFMR */
-	xscom_write(chip_id, CAPP_TFMR + offset, tfmr);
+	xscom_write(chip_id, tfmr_addr + offset, tfmr);
 
 	do {
 		if (++timeout >= TIMEOUT_LOOPS) {
@@ -1821,7 +1821,7 @@ static bool chiptod_capp_reset_tb_errors(uint32_t chip_id, uint32_t offset)
 			return false;
 		}
 		/* Read CAPP TFMR */
-		xscom_read(chip_id, CAPP_TFMR + offset, &tfmr);
+		xscom_read(chip_id, tfmr_addr + offset, &tfmr);
 		if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
 			prerror("CAPP: TB error reset: corrupt TFMR!\n");
 			return false;
@@ -1830,20 +1830,21 @@ static bool chiptod_capp_reset_tb_errors(uint32_t chip_id, uint32_t offset)
 	return true;
 }
 
-static bool chiptod_capp_mod_tb(uint32_t chip_id, uint32_t offset)
+static bool chiptod_capp_mod_tb(uint32_t chip_id, uint32_t tfmr_addr,
+				uint32_t offset)
 {
 	uint64_t timeout = 0;
 	uint64_t tfmr;
 
 	/* Switch CAPP timebase to "Not Set" state */
 	tfmr = base_tfmr | SPR_TFMR_LOAD_TOD_MOD;
-	xscom_write(chip_id, CAPP_TFMR + offset, tfmr);
+	xscom_write(chip_id, tfmr_addr + offset, tfmr);
 	do {
 		if (++timeout >= (TIMEOUT_LOOPS*2)) {
 			prerror("CAPP: TB \"Not Set\" timeout\n");
 			return false;
 		}
-		xscom_read(chip_id, CAPP_TFMR + offset, &tfmr);
+		xscom_read(chip_id, tfmr_addr + offset, &tfmr);
 		if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
 			prerror("CAPP: TB \"Not Set\" TFMR corrupt\n");
 			return false;
@@ -1878,7 +1879,9 @@ static bool chiptod_wait_for_chip_sync(void)
 	return true;
 }
 
-static bool chiptod_capp_check_tb_running(uint32_t chip_id, uint32_t offset)
+static bool chiptod_capp_check_tb_running(uint32_t chip_id,
+					  uint32_t tfmr_addr,
+					  uint32_t offset)
 {
 	uint64_t tfmr;
 	uint64_t timeout = 0;
@@ -1889,7 +1892,7 @@ static bool chiptod_capp_check_tb_running(uint32_t chip_id, uint32_t offset)
 			prerror("CAPP: TB Invalid!\n");
 			return false;
 		}
-		xscom_read(chip_id, CAPP_TFMR + offset, &tfmr);
+		xscom_read(chip_id, tfmr_addr + offset, &tfmr);
 		if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
 			prerror("CAPP: TFMR corrupt!\n");
 			return false;
@@ -1898,25 +1901,23 @@ static bool chiptod_capp_check_tb_running(uint32_t chip_id, uint32_t offset)
 	return true;
 }
 
-bool chiptod_capp_timebase_sync(struct phb3 *p)
+bool chiptod_capp_timebase_sync(unsigned int chip_id, uint32_t tfmr_addr,
+				uint32_t tb_addr, uint32_t offset)
 {
 	uint64_t tfmr;
 	uint64_t capp_tb;
 	int64_t delta;
-	uint32_t offset;
 	unsigned int retry = 0;
 
-	offset = PHB3_CAPP_REG_OFFSET(p);
-
 	/* Set CAPP TFMR to base tfmr value */
-	xscom_write(p->chip_id, CAPP_TFMR + offset, base_tfmr);
+	xscom_write(chip_id, tfmr_addr + offset, base_tfmr);
 
 	/* Reset CAPP TB errors before attempting the sync */
-	if (!chiptod_capp_reset_tb_errors(p->chip_id, offset))
+	if (!chiptod_capp_reset_tb_errors(chip_id, tfmr_addr, offset))
 		return false;
 
 	/* Switch CAPP TB to "Not Set" state */
-	if (!chiptod_capp_mod_tb(p->chip_id, offset))
+	if (!chiptod_capp_mod_tb(chip_id, tfmr_addr, offset))
 		return false;
 
 	/* Sync CAPP TB with core TB, retry while difference > 16usecs */
@@ -1928,19 +1929,19 @@ bool chiptod_capp_timebase_sync(struct phb3 *p)
 
 		/* Make CAPP ready to get the TB, wait for chip sync */
 		tfmr = base_tfmr | SPR_TFMR_MOVE_CHIP_TOD_TO_TB;
-		xscom_write(p->chip_id, CAPP_TFMR + offset, tfmr);
+		xscom_write(chip_id, tfmr_addr + offset, tfmr);
 		if (!chiptod_wait_for_chip_sync())
 			return false;
 
 		/* Set CAPP TB from core TB */
-		xscom_write(p->chip_id, CAPP_TB + offset, mftb());
+		xscom_write(chip_id, tb_addr + offset, mftb());
 
 		/* Wait for CAPP TFMR tb_valid bit */
-		if (!chiptod_capp_check_tb_running(p->chip_id, offset))
+		if (!chiptod_capp_check_tb_running(chip_id, tfmr_addr, offset))
 			return false;
 
 		/* Read CAPP TB, read core TB, compare */
-		xscom_read(p->chip_id, CAPP_TB + offset, &capp_tb);
+		xscom_read(chip_id, tb_addr + offset, &capp_tb);
 		delta = mftb() - capp_tb;
 		if (delta < 0)
 			delta = -delta;
