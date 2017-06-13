@@ -19,7 +19,6 @@
 #include <processor.h>
 #include <chiptod.h>
 #include <xscom.h>
-#include <phb3-capp.h>
 #include <pci.h>
 #include <cpu.h>
 #include <chip.h>
@@ -245,58 +244,6 @@ static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
 				num_params, (uint64_t *)hmi_evt);
 }
 
-static int is_capp_recoverable(int chip_id, int capp_index)
-{
-	uint64_t reg;
-	uint32_t reg_offset = capp_index ? CAPP1_REG_OFFSET : 0x0;
-
-	xscom_read(chip_id, CAPP_ERR_STATUS_CTRL + reg_offset, &reg);
-	return (reg & PPC_BIT(0)) != 0;
-}
-
-#define CAPP_PHB3_ATTACHED(chip, phb_index) \
-	((chip)->capp_phb3_attached_mask & (1 << (phb_index)))
-
-#define CHIP_IS_NAPLES(chip) ((chip)->type == PROC_CHIP_P8_NAPLES)
-
-static int handle_capp_recoverable(int chip_id, int capp_index)
-{
-	struct dt_node *np;
-	u64 phb_id;
-	u32 dt_chip_id;
-	struct phb *phb;
-	u32 phb_index;
-	struct proc_chip *chip = get_chip(chip_id);
-
-	dt_for_each_compatible(dt_root, np, "ibm,power8-pciex") {
-		dt_chip_id = dt_prop_get_u32(np, "ibm,chip-id");
-		phb_index = dt_prop_get_u32(np, "ibm,phb-index");
-		phb_id = dt_prop_get_u64(np, "ibm,opal-phbid");
-
-		/*
-		 * Murano/Venice have a single capp (capp0) per chip,
-		 * that can be attached to phb0, phb1 or phb2.
-		 * The capp is identified as being attached to the chip,
-		 * regardless of the phb index.
-		 *
-		 * Naples has two capps per chip: capp0 attached to phb0,
-		 * and capp1 attached to phb1.
-		 * Once we know that the capp is attached to the chip,
-		 * we must also check that capp/phb indices are equal.
-		 */
-		if ((chip_id == dt_chip_id) &&
-		    CAPP_PHB3_ATTACHED(chip, phb_index) &&
-		    (!CHIP_IS_NAPLES(chip) || phb_index == capp_index)) {
-			phb = pci_get_phb(phb_id);
-			phb_lock(phb);
-			phb->ops->set_capp_recovery(phb);
-			phb_unlock(phb);
-			return 1;
-		}
-	}
-	return 0;
-}
-
 static bool decode_core_fir(struct cpu_thread *cpu,
 				struct OpalHMIEvent *hmi_evt)
 {
@@ -385,47 +332,60 @@ static void find_capp_checkstop_reason(int flat_chip_id,
 				       struct OpalHMIEvent *hmi_evt,
 				       bool *event_generated)
 {
-	int capp_index;
-	struct proc_chip *chip = get_chip(flat_chip_id);
-	int capp_num = CHIP_IS_NAPLES(chip) ? 2 : 1;
-	uint32_t reg_offset;
+	struct capp_info info;
+	struct phb *phb;
 	uint64_t capp_fir;
 	uint64_t capp_fir_mask;
 	uint64_t capp_fir_action0;
 	uint64_t capp_fir_action1;
+	uint64_t reg;
+	int64_t rc;
 
-	for (capp_index = 0; capp_index < capp_num; capp_index++) {
-		reg_offset = capp_index ? CAPP1_REG_OFFSET : 0x0;
+	/* Find the CAPP on the chip associated with the HMI. */
+	for_each_phb(phb) {
+		/* get the CAPP info */
+		rc = capp_get_info(flat_chip_id, phb, &info);
+		if (rc == OPAL_PARAMETER)
+			continue;
 
-		if (xscom_read(flat_chip_id,
-			       CAPP_FIR + reg_offset, &capp_fir) ||
-		    xscom_read(flat_chip_id,
-			       CAPP_FIR_MASK + reg_offset, &capp_fir_mask) ||
-		    xscom_read(flat_chip_id,
-			       CAPP_FIR_ACTION0 + reg_offset, &capp_fir_action0) ||
-		    xscom_read(flat_chip_id,
-			       CAPP_FIR_ACTION1 + reg_offset, &capp_fir_action1)) {
-			prerror("CAPP: Couldn't read CAPP#%d FIR registers by XSCOM!\n",
-				capp_index);
+		if (xscom_read(flat_chip_id, info.capp_fir_reg, &capp_fir) ||
+		    xscom_read(flat_chip_id, info.capp_fir_mask_reg,
+			       &capp_fir_mask) ||
+		    xscom_read(flat_chip_id, info.capp_fir_action0_reg,
+			       &capp_fir_action0) ||
+		    xscom_read(flat_chip_id, info.capp_fir_action1_reg,
+			       &capp_fir_action1)) {
+			prerror("CAPP: Couldn't read CAPP#%d (PHB:#%x) FIR registers by XSCOM!\n",
+				info.capp_index, info.phb_index);
 			continue;
 		}
 
 		if (!(capp_fir & ~capp_fir_mask))
 			continue;
 
-		prlog(PR_DEBUG, "HMI: CAPP#%d: FIR 0x%016llx mask 0x%016llx\n",
-		      capp_index, capp_fir, capp_fir_mask);
-		prlog(PR_DEBUG, "HMI: CAPP#%d: ACTION0 0x%016llx, ACTION1 0x%016llx\n",
-		      capp_index, capp_fir_action0, capp_fir_action1);
+		prlog(PR_DEBUG, "HMI: CAPP#%d (PHB:#%x): FIR 0x%016llx mask 0x%016llx\n",
+		      info.capp_index, info.phb_index, capp_fir,
+		      capp_fir_mask);
+		prlog(PR_DEBUG, "HMI: CAPP#%d (PHB:#%x): ACTION0 0x%016llx, ACTION1 0x%016llx\n",
+		      info.capp_index, info.phb_index, capp_fir_action0,
+		      capp_fir_action1);
 
-		if (is_capp_recoverable(flat_chip_id, capp_index)) {
-			if (handle_capp_recoverable(flat_chip_id, capp_index)) {
-				hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
-				hmi_evt->type = OpalHMI_ERROR_CAPP_RECOVERY;
-				queue_hmi_event(hmi_evt, 1);
-				*event_generated = true;
-				return;
-			}
+		/*
+		 * If this bit is set (=1) a Recoverable Error has been
+		 * detected
+		 */
+		xscom_read(flat_chip_id, info.capp_err_status_ctrl_reg, &reg);
+		if ((reg & PPC_BIT(0)) != 0) {
+			phb_lock(phb);
+			phb->ops->set_capp_recovery(phb);
+			phb_unlock(phb);
+
+			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
+			hmi_evt->type = OpalHMI_ERROR_CAPP_RECOVERY;
+			queue_hmi_event(hmi_evt, 1);
+			*event_generated = true;
+
+			return;
 		}
 	}
 }

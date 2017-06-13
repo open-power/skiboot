@@ -65,8 +65,24 @@ enum capp_reg {
 	apc_master_powerbus_ctrl	= 0xB
 };
 
+struct capp_info {
+	unsigned int capp_index;
+	unsigned int phb_index;
+	uint64_t capp_fir_reg;
+	uint64_t capp_fir_mask_reg;
+	uint64_t capp_fir_action0_reg;
+	uint64_t capp_fir_action1_reg;
+	uint64_t capp_err_status_ctrl_reg;
+};
+
+struct capp_ops {
+	int64_t (*get_capp_info)(int, struct phb *, struct capp_info *);
+};
+
 struct proc_chip;
 extern struct lock capi_lock;
+extern struct capp_ops capi_ops;
+
 extern bool capp_ucode_loaded(struct proc_chip *chip, unsigned int index);
 
 extern int64_t capp_load_ucode(unsigned int chip_id, uint32_t opal_id,
@@ -76,5 +92,8 @@ extern int64_t capp_load_ucode(unsigned int chip_id, uint32_t opal_id,
 			       uint64_t apc_master_write,
 			       uint64_t snp_array_addr,
 			       uint64_t snp_array_write);
+
+extern int64_t capp_get_info(int chip_id, struct phb *phb,
+			     struct capp_info *info);
 
 #endif /* __CAPP_H */

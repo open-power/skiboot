@@ -3394,6 +3394,38 @@ static int64_t phb3_get_diag_data(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
+static int64_t phb3_get_capp_info(int chip_id, struct phb *phb,
+				  struct capp_info *info)
+{
+	struct phb3 *p = phb_to_phb3(phb);
+	struct proc_chip *chip = get_chip(p->chip_id);
+	uint32_t offset;
+
+	if (chip_id != p->chip_id)
+		return OPAL_PARAMETER;
+
+	if (!((1 << p->index) & chip->capp_phb3_attached_mask))
+		return OPAL_PARAMETER;
+
+	offset = PHB3_CAPP_REG_OFFSET(p);
+
+	if (PHB3_IS_NAPLES(p)) {
+		if (p->index == 0)
+			info->capp_index = 0;
+		else
+			info->capp_index = 1;
+	} else
+		info->capp_index = 0;
+	info->phb_index = p->index;
+	info->capp_fir_reg = CAPP_FIR + offset;
+	info->capp_fir_mask_reg = CAPP_FIR_MASK + offset;
+	info->capp_fir_action0_reg = CAPP_FIR_ACTION0 + offset;
+	info->capp_fir_action1_reg = CAPP_FIR_ACTION1 + offset;
+	info->capp_err_status_ctrl_reg = CAPP_ERR_STATUS_CTRL + offset;
+
+	return OPAL_SUCCESS;
+}
+
 static void phb3_init_capp_regs(struct phb3 *p, bool dma_mode)
 {
 	uint64_t reg;
@@ -3605,6 +3637,9 @@ static int64_t enable_capi_mode(struct phb3 *p, uint64_t pe_number, bool dma_mod
 		PHBERR(p, "CAPP: Failed to sync timebase\n");
 		return OPAL_HARDWARE;
 	}
+
+	/* set callbacks to handle HMI events */
+	capi_ops.get_capp_info = &phb3_get_capp_info;
 
 	return OPAL_SUCCESS;
 }

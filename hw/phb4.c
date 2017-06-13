@@ -2762,6 +2762,35 @@ static uint64_t tve_encode_50b_noxlate(uint64_t start_addr, uint64_t end_addr)
 	return tve;
 }
 
+static int64_t phb4_get_capp_info(int chip_id, struct phb *phb,
+				  struct capp_info *info)
+{
+	struct phb4 *p = phb_to_phb4(phb);
+	struct proc_chip *chip = get_chip(p->chip_id);
+	uint32_t offset;
+
+	if (chip_id != p->chip_id)
+		return OPAL_PARAMETER;
+
+	if (!((1 << p->index) & chip->capp_phb4_attached_mask))
+		return OPAL_PARAMETER;
+
+	offset = PHB4_CAPP_REG_OFFSET(p);
+
+	if (p->index == CAPP0_PHB_INDEX)
+		info->capp_index = 0;
+	if (p->index == CAPP1_PHB_INDEX)
+		info->capp_index = 1;
+	info->phb_index = p->index;
+	info->capp_fir_reg = CAPP_FIR + offset;
+	info->capp_fir_mask_reg = CAPP_FIR_MASK + offset;
+	info->capp_fir_action0_reg = CAPP_FIR_ACTION0 + offset;
+	info->capp_fir_action1_reg = CAPP_FIR_ACTION1 + offset;
+	info->capp_err_status_ctrl_reg = CAPP_ERR_STATUS_CTRL + offset;
+
+	return OPAL_SUCCESS;
+}
+
 static void phb4_init_capp_regs(struct phb4 *p)
 {
 	uint64_t reg;
@@ -3031,6 +3060,10 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 		PHBERR(p, "CAPP: Failed to sync timebase\n");
 		return OPAL_HARDWARE;
 	}
+
+	/* set callbacks to handle HMI events */
+	capi_ops.get_capp_info = &phb4_get_capp_info;
+
 	return OPAL_SUCCESS;
 }
 

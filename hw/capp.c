@@ -35,6 +35,7 @@ static struct {
 #define CAPP_UCODE_MAX_SIZE 0x20000
 
 struct lock capi_lock = LOCK_UNLOCKED;
+struct capp_ops capi_ops = { NULL };
 
 bool capp_ucode_loaded(struct proc_chip *chip, unsigned int index)
 {
@@ -228,4 +229,12 @@ int64_t capp_load_ucode(unsigned int chip_id, uint32_t opal_id,
 	chip->capp_ucode_loaded |= (1 << index);
 
 	return OPAL_SUCCESS;
+}
+
+int64_t capp_get_info(int chip_id, struct phb *phb, struct capp_info *info)
+{
+	if (capi_ops.get_capp_info)
+		return capi_ops.get_capp_info(chip_id, phb, info);
+
+	return OPAL_PARAMETER;
 }
