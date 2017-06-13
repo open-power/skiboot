@@ -30,6 +30,7 @@
 #include <affinity.h>
 #include <phb3.h>
 #include <phb3-regs.h>
+#include <phb3-capp.h>
 #include <capp.h>
 #include <fsp.h>
 #include <chip.h>

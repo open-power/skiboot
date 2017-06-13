@@ -19,7 +19,7 @@
 #include <processor.h>
 #include <chiptod.h>
 #include <xscom.h>
-#include <capp.h>
+#include <phb3-capp.h>
 #include <pci.h>
 #include <cpu.h>
 #include <chip.h>
