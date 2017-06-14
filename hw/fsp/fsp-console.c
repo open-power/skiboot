@@ -292,11 +292,16 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 		goto already_open;
 	}
 
-	fs->open = true;
-
 	fs->poke_msg = fsp_mkmsg(FSP_CMD_VSERIAL_OUT, 2,
 				 msg->data.words[0],
 				 msg->data.words[1] & 0xffff);
+	if (fs->poke_msg == NULL) {
+		prerror("FSPCON: Failed to allocate poke_msg\n");
+		unlock(&fsp_con_lock);
+		return;
+	}
+
+	fs->open = true;
 	fs->poke_msg->user_data = fs;
 
 	fs->in_buf->partition_id = fs->out_buf->partition_id = part_id;
