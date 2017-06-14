@@ -82,8 +82,8 @@ if { $default_config == "PEGASUS" } {
     myconf config processor/initial/PVR 0x4b0201
 }
 if { $default_config == "P9" } {
-    # make sure we look like a POWER9 DD2
-    myconf config processor/initial/PVR 0x4e0200
+    # PVR configured for POWER9 DD2.0 Scale out 24 Core (ie SMT4)
+    myconf config processor/initial/PVR 0x4e1200
     myconf config processor/initial/SIM_CTRL1 0xc228000400000000
 }
 if { [info exists env(SKIBOOT_SIMCONF)] } {
