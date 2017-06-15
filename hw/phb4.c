@@ -3399,7 +3399,7 @@ static uint64_t phb4_lsi_attributes(struct irq_source *is __unused,
 	return IRQ_ATTR_TARGET_LINUX;
 }
 
-static int64_t phb4_dd1_lsi_set_xive(struct irq_source *is, uint32_t isn,
+static int64_t phb4_ndd1_lsi_set_xive(struct irq_source *is, uint32_t isn,
 				     uint16_t server, uint8_t priority)
 {
 	struct phb4 *p = is->data;
@@ -3416,8 +3416,8 @@ static int64_t phb4_dd1_lsi_set_xive(struct irq_source *is, uint32_t isn,
 	/* XXX FIXME: A quick mask/umask can make us shoot an interrupt
 	 * more than once to a queue. We need to keep track better.
 	 *
-	 * Thankfully, this is only on DD1 and for LSIs, so will go away
-	 * soon enough.
+	 * Thankfully, this is only on Nimubs DD1 and for LSIs, so
+	 * will go away soon enough.
 	 */
 	if (priority == 0xff)
 		out_be64(p->regs + PHB_IODA_DATA0, IODA3_LIST_Q);
@@ -3431,8 +3431,8 @@ static int64_t phb4_dd1_lsi_set_xive(struct irq_source *is, uint32_t isn,
 	return 0;
 }
 
-static const struct irq_source_ops phb4_dd1_lsi_ops = {
-	.set_xive = phb4_dd1_lsi_set_xive,
+static const struct irq_source_ops phb4_ndd1_lsi_ops = {
+	.set_xive = phb4_ndd1_lsi_set_xive,
 	.interrupt = phb4_err_interrupt,
 	.attributes = phb4_lsi_attributes,
 };
@@ -3622,7 +3622,7 @@ static void phb4_create(struct dt_node *np)
 				XIVE_SRC_LSI | XIVE_SRC_SHIFT_BUG,
 				p,
 				(p->rev == PHB4_REV_NIMBUS_DD10) ?
-				&phb4_dd1_lsi_ops : &phb4_lsi_ops);
+				&phb4_ndd1_lsi_ops : &phb4_lsi_ops);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)

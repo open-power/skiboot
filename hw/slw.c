@@ -650,7 +650,7 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 };
 
 /* Idle states supported for P9 DD1 */
-static struct cpu_idle_states power9_dd1_cpu_idle_states[] = {
+static struct cpu_idle_states power9_ndd1_cpu_idle_states[] = {
 	{
 		.name = "stop0_lite",
 		.latency_ns = 200,
@@ -750,9 +750,10 @@ void add_cpu_idle_state_properties(void)
 	assert(chip);
 	if (chip->type == PROC_CHIP_P9_NIMBUS ||
 	    chip->type == PROC_CHIP_P9_CUMULUS) {
-		if (chip->ec_level == 0x10) {
-			states = power9_dd1_cpu_idle_states;
-			nr_states = ARRAY_SIZE(power9_dd1_cpu_idle_states);
+		if ((chip->ec_level == 0x10) &&
+		    (chip->type == PROC_CHIP_P9_NIMBUS)) {
+			states = power9_ndd1_cpu_idle_states;
+			nr_states = ARRAY_SIZE(power9_ndd1_cpu_idle_states);
 		} else {
 			states = power9_cpu_idle_states;
 			nr_states = ARRAY_SIZE(power9_cpu_idle_states);

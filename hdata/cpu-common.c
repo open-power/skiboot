@@ -21,6 +21,18 @@
 
 #include "hdata.h"
 
+static bool is_power9n(uint32_t version)
+{
+	/*
+	 * Bit 13 tells us:
+	 *   0 = Scale out (aka Nimbus)
+	 *   1 = Scale up  (aka Cumulus)
+	 */
+	if ((version >> 13) & 1)
+		return false;
+	return true;
+}
+
 struct dt_node * add_core_common(struct dt_node *cpus,
 				 const struct sppcia_cpu_cache *cache,
 				 const struct sppaca_cpu_timebase *tb,
@@ -42,7 +54,7 @@ struct dt_node * add_core_common(struct dt_node *cpus,
 	       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	       0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00,
 	};
-	const uint8_t pa_features_p9_dd1[] = {
+	const uint8_t pa_features_p9n_dd1[] = {
 	       64, 0,
 	       0xf6, 0x3f, 0xc7, 0xc0, 0x80, 0xd0, 0x80, 0x00, /*  0 ..  7 */
 	       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /*  8 .. 15 */
@@ -53,7 +65,7 @@ struct dt_node * add_core_common(struct dt_node *cpus,
 	       0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, /* 48 .. 55 */
 	       0x80, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, /* 56 .. 63 */
 	};
-	const uint8_t pa_features_p9_dd2[] = {
+	const uint8_t pa_features_p9[] = {
 	       64, 0,
 	       0xf6, 0x3f, 0xc7, 0xc0, 0x80, 0xd0, 0x80, 0x00, /*  0 ..  7 */
 	       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /*  8 .. 15 */
@@ -99,12 +111,12 @@ struct dt_node * add_core_common(struct dt_node *cpus,
 		break;
 	case PVR_TYPE_P9:
 		name = "PowerPC,POWER9";
-		if (PVR_VERS_MAJ(version) == 1) {
-			pa_features = pa_features_p9_dd1;
-			pa_features_size = sizeof(pa_features_p9_dd1);
+		if ((PVR_VERS_MAJ(version) == 1) && is_power9n(version)) {
+			pa_features = pa_features_p9n_dd1;
+			pa_features_size = sizeof(pa_features_p9n_dd1);
 		} else {
-			pa_features = pa_features_p9_dd2;
-			pa_features_size = sizeof(pa_features_p9_dd2);
+			pa_features = pa_features_p9;
+			pa_features_size = sizeof(pa_features_p9);
 		}
 		break;
 	default:
