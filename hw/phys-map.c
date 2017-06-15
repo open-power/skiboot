@@ -135,10 +135,11 @@ static inline bool phys_map_entry_null(const struct phys_map_entry *e)
 	return false;
 }
 
+
 /* This crashes skiboot on error as any bad calls here are almost
  *  certainly a developer error
  */
-void phys_map_get(struct proc_chip *chip, enum phys_map_type type,
+void phys_map_get(uint64_t gcid, enum phys_map_type type,
 		  int index, uint64_t *addr, uint64_t *size) {
 	const struct phys_map_entry *e;
 	uint64_t a;
@@ -163,16 +164,16 @@ void phys_map_get(struct proc_chip *chip, enum phys_map_type type,
 		break;
 	}
 	a = e->addr;
-	a += (uint64_t)chip->id << phys_map->chip_select_shift;
+	a += gcid << phys_map->chip_select_shift;
 
 	if (addr)
 		*addr = a;
 	if (size)
 		*size = e->size;
 
-	prlog(PR_TRACE, "Assigning BAR [%x] type:%02i index:%x "
+	prlog(PR_TRACE, "Assigning BAR [%"PRIx64"] type:%02i index:%x "
 	      "0x%016"PRIx64" for 0x%016"PRIx64"\n",
-	      chip->id, type, index, a, e->size);
+	      gcid, type, index, a, e->size);
 
 	return;
 

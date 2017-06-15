@@ -84,9 +84,12 @@ static inline bool map_call_entry_null(const struct map_call_entry *t)
 /* Check calls to map to see if they overlap.
  * Creates a new table for each of the entries it gets to check against
  */
+
+/* Pick a chip ID, any ID. */
+#define FAKE_CHIP_ID 8
+
 static void check_map_call(void)
 {
-	struct proc_chip c;
 	uint64_t start, size, end;
 	const struct phys_map_entry *e;
 	struct map_call_entry *tbl, *t, *tnext;
@@ -102,12 +105,9 @@ static void check_map_call(void)
 	assert(tbl != NULL);
 	memset(tbl, 0, tbl_size);
 
-	/* Fake we are chip id 8. Any id will do */
-	c.id = 8;
-
 	/* Loop over table entries ...  */
 	for (e = phys_map->table; !phys_map_entry_null(e); e++) {
-		phys_map_get(&c, e->type, e->index, &start, &size);
+		phys_map_get(FAKE_CHIP_ID, e->type, e->index, &start, &size);
 
 		/* Check for alignment */
 		if ((e->type != SYSTEM_MEM) && (e->type != RESV)) {

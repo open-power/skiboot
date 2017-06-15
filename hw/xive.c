@@ -1548,12 +1548,11 @@ static bool xive_read_bars(struct xive *x)
 
 static bool xive_configure_bars(struct xive *x)
 {
-	struct proc_chip chip;
-	struct proc_chip *c = get_chip(x->chip_id);
+	uint64_t chip_id = x->chip_id;
 	uint64_t val;
 
 	/* IC BAR */
-	phys_map_get(c, XIVE_IC, 0, (uint64_t *)&x->ic_base, &x->ic_size);
+	phys_map_get(chip_id, XIVE_IC, 0, (uint64_t *)&x->ic_base, &x->ic_size);
 	val = (uint64_t)x->ic_base | CQ_IC_BAR_VALID;
 	if (IC_PAGE_SIZE == 0x10000) {
 		val |= CQ_IC_BAR_64K;
@@ -1568,8 +1567,7 @@ static bool xive_configure_bars(struct xive *x)
 	 * for each chip !!!  Hence we create a fake chip 0 and use that for
 	 * all phys_map_get(XIVE_TM) calls.
 	 */
-	chip.id = 0;
-	phys_map_get(&chip, XIVE_TM, 0, (uint64_t *)&x->tm_base, &x->tm_size);
+	phys_map_get(0, XIVE_TM, 0, (uint64_t *)&x->tm_base, &x->tm_size);
 	val = (uint64_t)x->tm_base | CQ_TM_BAR_VALID;
 	if (TM_PAGE_SIZE == 0x10000) {
 		x->tm_shift = 16;
@@ -1584,7 +1582,7 @@ static bool xive_configure_bars(struct xive *x)
 		return false;
 
 	/* PC BAR. Clear first, write mask, then write value */
-	phys_map_get(c, XIVE_PC, 0, (uint64_t *)&x->pc_base, &x->pc_size);
+	phys_map_get(chip_id, XIVE_PC, 0, (uint64_t *)&x->pc_base, &x->pc_size);
 	xive_regwx(x, CQ_PC_BAR, 0);
 	if (x->last_reg_error)
 		return false;
@@ -1598,7 +1596,7 @@ static bool xive_configure_bars(struct xive *x)
 		return false;
 
 	/* VC BAR. Clear first, write mask, then write value */
-	phys_map_get(c, XIVE_VC, 0, (uint64_t *)&x->vc_base, &x->vc_size);
+	phys_map_get(chip_id, XIVE_VC, 0, (uint64_t *)&x->vc_base, &x->vc_size);
 	xive_regwx(x, CQ_VC_BAR, 0);
 	if (x->last_reg_error)
 		return false;

@@ -325,7 +325,7 @@ static void bmc_create_node(const struct HDIF_common_hdr *sp)
 	 */
 	chip_id = pcid_to_chip_id(be32_to_cpu(iopath->lpc.chip_id));
 
-	phys_map_get(get_chip(chip_id), LPC_BUS, 0, &lpcm_base, NULL);
+	phys_map_get(chip_id, LPC_BUS, 0, &lpcm_base, NULL);
 	lpcm = dt_new_addr(dt_root, "lpcm-opb", lpcm_base);
 	assert(lpcm);
 

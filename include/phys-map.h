@@ -54,7 +54,7 @@ enum phys_map_type {
 	RESV
 };
 
-extern void phys_map_get(struct proc_chip *chip, enum phys_map_type type,
+extern void phys_map_get(uint64_t gcid, enum phys_map_type type,
 			 int index, uint64_t *addr, uint64_t *size);
 
 extern void phys_map_init(void);

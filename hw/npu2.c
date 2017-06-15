@@ -521,7 +521,7 @@ static void npu2_get_gpu_base(struct npu2_dev *ndev, uint64_t *addr, uint64_t *s
 	int group;
 
 	group = (ndev->bdfn >> 3) & 0x1f;
-	phys_map_get(get_chip(ndev->npu->chip_id), GPU_MEM, group, addr, size);
+	phys_map_get(ndev->npu->chip_id, GPU_MEM, group, addr, size);
 }
 
 static void npu2_dn_fixup_gmb(struct dt_node *pd_dn, struct npu2_dev *ndev)
@@ -732,7 +732,6 @@ static void npu2_hw_init(struct npu2 *p)
 {
 	int i;
 	uint64_t val, size, addr, gpu_min_addr, gpu_max_addr, total_size;
-	struct proc_chip *chip = get_chip(p->chip_id);
 
 	npu2_ioda_reset(&p->phb, false);
 
@@ -741,15 +740,16 @@ static void npu2_hw_init(struct npu2 *p)
 	npu2_write(p, NPU2_XTS_CFG, val | NPU2_XTS_CFG_MMIOSD | NPU2_XTS_CFG_TRY_ATR_RO);
 
 	/* Init memory cache directory (MCD) registers. */
-	phys_map_get(chip, GPU_MEM, NPU2_LINKS_PER_CHIP - 1, &gpu_min_addr, NULL);
-	phys_map_get(chip, GPU_MEM, 0, &gpu_max_addr, &size);
+	phys_map_get(p->chip_id, GPU_MEM, NPU2_LINKS_PER_CHIP - 1,
+			&gpu_min_addr, NULL);
+	phys_map_get(p->chip_id, GPU_MEM, 0, &gpu_max_addr, &size);
 	gpu_max_addr += size;
 
 	/* We assume GPU memory is contiguous from the first possible GPU to the
 	 * last and that the size is the same so best to check that. */
 	for (i = 0; i < NPU2_LINKS_PER_CHIP; i++) {
 		uint64_t tmp;
-		phys_map_get(chip, GPU_MEM, i, &addr, &tmp);
+		phys_map_get(p->chip_id, GPU_MEM, i, &addr, &tmp);
 		assert((addr >= gpu_min_addr) && (addr + tmp <= gpu_max_addr));
 		assert(tmp == size);
 	}

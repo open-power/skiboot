@@ -50,7 +50,7 @@ void nx_p9_rng_init(void)
 	 */
 	for_each_chip(chip) {
 		/* 1) NX RNG BAR */
-		phys_map_get(chip, NX_RNG, 0, &bar, NULL);
+		phys_map_get(chip->id, NX_RNG, 0, &bar, NULL);
 		xscom_write(chip->id, P9X_NX_MMIO_BAR,
 			    bar | P9X_NX_MMIO_BAR_EN);
 		/* Read config register for pace info */
