@@ -272,7 +272,14 @@ int main(int argc, char *argv[])
 		     "	-q Quiet mode\n"
 		     "	-b Keep blobs in the output\n"
 		     "\n"
-		     "Pipe to 'dtc -I dtb -O dts' for human readable\n");
+		     "  -7 Force PVR to POWER7\n"
+		     "  -8 Force PVR to POWER8\n"
+		     "  -8E Force PVR to POWER8E\n"
+		     "  -9 Force PVR to POWER9 (nimbus)\n"
+		     "\n"
+		     "When no PVR is specified -7 is assumed"
+		     "\n"
+		     "Pipe to 'dtc -I dtb -O dts' for human readable output\n");
 	}
 
 	phys_map_init();
