@@ -335,7 +335,7 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 	size_t req_size;
 
 	if (bmc_platform->ipmi_oem_partial_add_esel == 0) {
-		prlog(PR_WARNING, "BUG: Dropping ESEL on the floor due to buggy/mising code in OPAL for this BMC");
+		prlog(PR_WARNING, "BUG: Dropping ESEL on the floor due to buggy/mising code in OPAL for this BMC\n");
 		return;
 	}
 
