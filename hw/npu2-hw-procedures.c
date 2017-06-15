@@ -241,6 +241,8 @@ static uint32_t reset_ntl_release(struct npu2_dev *ndev)
 	npu2_write(ndev->npu, NPU2_NTL_CRED_DATA_CREDIT_RX(ndev), 0x0001000000000000);
 	npu2_write(ndev->npu, NPU2_NTL_RSP_DATA_CREDIT_RX(ndev), 0x0001000000000000);
 
+	npu2_set_link_flag(ndev, NPU2_DEV_DL_RESET);
+
 	return PROCEDURE_COMPLETE;
 }
 DEFINE_PROCEDURE(reset_ntl, reset_ndl, reset_ntl_release);

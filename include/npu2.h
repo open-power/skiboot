@@ -35,6 +35,10 @@
 
 #define NPU2_LINKS_PER_CHIP 6
 
+/* Link flags */
+#define NPU2_DEV_PCI_LINKED	0x1
+#define NPU2_DEV_DL_RESET	0x2
+
 /* Return the stack (0-2) of a device */
 #define NPU2DEV_STACK(ndev) ((ndev)->index / 2)
 
@@ -89,7 +93,7 @@ struct npu2_dev {
 	struct phb		*phb;
 	struct pci_device	*pd;
 
-	int                     ntl_reset_done;
+	uint8_t			link_flags;
 
 	/* Vendor specific capability */
 	uint32_t		vendor_cap;
@@ -147,5 +151,6 @@ void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
 int64_t npu2_dev_procedure(void *dev, struct pci_cfg_reg_filter *pcrf,
 			   uint32_t offset, uint32_t len, uint32_t *data,
 			   bool write);
+void npu2_set_link_flag(struct npu2_dev *ndev, uint8_t flag);
 extern int nv_zcal_nominal;
 #endif /* __NPU2_H */

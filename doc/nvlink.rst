@@ -146,8 +146,8 @@ Procedure Status Register
 
 PCI Device Flag
 
-   Bit 0 is set only if an actual PCI device was bound to this
-   emulated device.
+   Bit 0 - set if the GPU PCIe device associated with this nvlink was found.
+   bit 1 - set if the DL has been taken out of reset.
 
 Link Number
 

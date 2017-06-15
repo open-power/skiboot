@@ -121,6 +121,14 @@ void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask)
 	npu2_scom_write(p->chip_id, p->xscom_base, reg, NPU2_MISC_DA_LEN_8B, new_val);
 }
 
+/* Set a specific flag in the vendor config space */
+void npu2_set_link_flag(struct npu2_dev *ndev, uint8_t flag)
+{
+	ndev->link_flags |= flag;
+	PCI_VIRT_CFG_INIT_RO(ndev->pvd, VENDOR_CAP_START +
+			     VENDOR_CAP_PCI_DEV_OFFSET, 1, ndev->link_flags);
+}
+
 static inline void npu2_ioda_sel(struct npu2 *p, uint32_t table,
 				uint32_t index, bool autoinc)
 {
@@ -442,8 +450,7 @@ static void npu2_dev_bind_pci_dev(struct npu2_dev *dev)
 		if (dev->pd) {
 			dev->phb = phb;
 			/* Found the device, set the bit in config space */
-			PCI_VIRT_CFG_INIT_RO(dev->pvd, VENDOR_CAP_START +
-				VENDOR_CAP_PCI_DEV_OFFSET, 1, 0x01);
+			npu2_set_link_flag(dev, NPU2_DEV_PCI_LINKED);
 			return;
 		}
 	}
