@@ -927,15 +927,21 @@ static int pci_configure_mps(struct phb *phb,
 
 static void pci_disable_completion_timeout(struct phb *phb, struct pci_device *pd)
 {
-	uint32_t ecap;
-	uint32_t val;
+	uint32_t ecap, val;
+	uint16_t pcie_cap;
 
 	/* PCIE capability required */
 	if (!pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false))
 		return;
 
-	/* Check if it has capability to disable completion timeout */
+	/* Check PCIe capability version */
 	ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+	pci_cfg_read16(phb, pd->bdfn,
+		       ecap + PCICAP_EXP_CAPABILITY_REG, &pcie_cap);
+	if ((pcie_cap & PCICAP_EXP_CAP_VERSION) <= 1)
+		return;
+
+	/* Check if it has capability to disable completion timeout */
 	pci_cfg_read32(phb, pd->bdfn, ecap + PCIECAP_EXP_DCAP2, &val);
 	if (!(val & PCICAP_EXP_DCAP2_CMPTOUT_DIS))
 		return;
