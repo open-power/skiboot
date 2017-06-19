@@ -1455,11 +1455,8 @@ static void pci_print_summary_line(struct phb *phb, struct pci_device *pd,
 				   const char *cname)
 {
 	const char *label, *dtype, *s;
-	u32 vdid;
 #define MAX_SLOTSTR 80
 	char slotstr[MAX_SLOTSTR  + 1] = { 0, };
-
-	pci_cfg_read32(phb, pd->bdfn, 0, &vdid);
 
 	/* If it's a slot, it has a slot-label */
 	label = dt_prop_get_def(np, "ibm,slot-label", NULL);
@@ -1499,13 +1496,15 @@ static void pci_print_summary_line(struct phb *phb, struct pci_device *pd,
 	if (pd->is_bridge)
 		PCINOTICE(phb, pd->bdfn,
 			  "[%s] %04x %04x R:%02x C:%06x B:%02x..%02x %s\n",
-			  dtype, vdid & 0xffff, vdid >> 16,
+			  dtype, PCI_VENDOR_ID(pd->vdid),
+			  PCI_DEVICE_ID(pd->vdid),
 			  rev_class & 0xff, rev_class >> 8, pd->secondary_bus,
 			  pd->subordinate_bus, slotstr);
 	else
 		PCINOTICE(phb, pd->bdfn,
 			  "[%s] %04x %04x R:%02x C:%06x (%14s) %s\n",
-			  dtype, vdid & 0xffff, vdid >> 16,
+			  dtype, PCI_VENDOR_ID(pd->vdid),
+			  PCI_DEVICE_ID(pd->vdid),
 			  rev_class & 0xff, rev_class >> 8, cname, slotstr);
 }
 
@@ -1520,7 +1519,7 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 #define MAX_NAME 256
 	char name[MAX_NAME];
 	char compat[MAX_NAME];
-	uint32_t rev_class, vdid;
+	uint32_t rev_class;
 	uint32_t reg[5];
 	uint8_t intpin;
 	bool is_pcie;
@@ -1532,7 +1531,6 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 				0x02000000, 0x0, 0x0,
 				0xf0000000, 0x0};
 
-	pci_cfg_read32(phb, pd->bdfn, 0, &vdid);
 	pci_cfg_read32(phb, pd->bdfn, PCI_CFG_REV_ID, &rev_class);
 	pci_cfg_read8(phb, pd->bdfn, PCI_CFG_INT_PIN, &intpin);
 	is_pcie = pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false);
@@ -1561,17 +1559,17 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 	 */
 	if (is_pcie || phb->phb_type == phb_type_npu_v2_opencapi) {
 		snprintf(compat, MAX_NAME, "pciex%x,%x",
-			 vdid & 0xffff, vdid >> 16);
+			 PCI_VENDOR_ID(pd->vdid), PCI_DEVICE_ID(pd->vdid));
 		dt_add_property_cells(np, "ibm,pci-config-space-type", 1);
 	} else {
 		snprintf(compat, MAX_NAME, "pci%x,%x",
-			 vdid & 0xffff, vdid >> 16);
+			 PCI_VENDOR_ID(pd->vdid), PCI_DEVICE_ID(pd->vdid));
 		dt_add_property_cells(np, "ibm,pci-config-space-type", 0);
 	}
 	dt_add_property_cells(np, "class-code", rev_class >> 8);
 	dt_add_property_cells(np, "revision-id", rev_class & 0xff);
-	dt_add_property_cells(np, "vendor-id", vdid & 0xffff);
-	dt_add_property_cells(np, "device-id", vdid >> 16);
+	dt_add_property_cells(np, "vendor-id", PCI_VENDOR_ID(pd->vdid));
+	dt_add_property_cells(np, "device-id", PCI_DEVICE_ID(pd->vdid));
 	if (intpin)
 		dt_add_property_cells(np, "interrupts", intpin);
 
