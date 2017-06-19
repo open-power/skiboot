@@ -725,6 +725,9 @@ init_shared_sprs:
 	b	9f
 
 4:	/* P9 */
+	/* TSCR: Recommended value by HW folks */
+	LOAD_IMM32(%r3,0x80287880)
+	mtspr	SPR_TSCR, %r3
 	/* HID0: Clear bit 5 (enable core recovery)
 	 *       Clear bit 4 (HILE)
 	 */
