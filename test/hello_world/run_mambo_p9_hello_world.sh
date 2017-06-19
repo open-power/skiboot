@@ -9,7 +9,7 @@ if [ -z "$P9MAMBO_BINARY" ]; then
 fi
 
 if [ ! -x "$P9MAMBO_PATH/$P9MAMBO_BINARY" ]; then
-    echo "Could not find executable P9MAMBO_BINARY ($P9MAMBO_PATH/$MAMBO_BINARY). Skipping hello_world test";
+    echo "Could not find executable P9MAMBO_BINARY ($P9MAMBO_PATH/$P9MAMBO_BINARY). Skipping hello_world test";
     exit 0;
 fi
 
