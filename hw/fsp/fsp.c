@@ -282,9 +282,8 @@ void fsp_cancelmsg(struct fsp_msg *msg)
 {
 	bool need_unlock = false;
 	struct fsp_cmdclass* cmdclass = fsp_get_cmdclass(msg);
-	struct fsp *fsp = fsp_get_active();
 
-	if (fsp->state != fsp_mbx_rr) {
+	if (!fsp_in_rr()) {
 		prerror("FSP: Message cancel allowed only when"
 						"FSP is in reset\n");
 		return;
@@ -1745,6 +1744,11 @@ int fsp_sync_msg(struct fsp_msg *msg, bool autofree)
 		goto bail;
 
 	while(fsp_msg_busy(msg)) {
+		if (fsp_in_rr()) {
+			fsp_cancelmsg(msg);
+			rc = -1;
+			goto bail;
+		}
 		cpu_relax();
 		opal_run_pollers();
 	}
@@ -2033,6 +2037,11 @@ int fsp_fatal_msg(struct fsp_msg *msg)
 		return rc;
 
 	while(fsp_msg_busy(msg)) {
+		if (fsp_in_rr()) {
+			fsp_cancelmsg(msg);
+			return -1;
+		}
+
 		cpu_relax();
 		fsp_opal_poll(NULL);
 	}
