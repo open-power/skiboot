@@ -125,9 +125,9 @@ There are three usage modes.
 1) boot_test.sh -h
      Print this help
 
-2) boot_test.sh [-vdp] -t target -B -b (fsp|bmc)
+2) boot_test.sh [-vdp] -t target -B -b (fsp|bmc|smc|openbmc)
      Boot test the target without flashing. Specify the type of machine
-     (FSP or BMC) with the -b option.
+     (FSP, BMC, SMC, OpenBMC) with the -b option.
 
 3) boot_test.sh [-vdp] -b bmc -t target -P pnor [-N]
    boot_test.sh [-vdp] -b bmc -t target [-1 PAYLOAD] [-2 BOOTKERNEL] [-N]
