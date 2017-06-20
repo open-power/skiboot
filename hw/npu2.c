@@ -766,17 +766,22 @@ static void npu2_hw_init(struct npu2 *p)
 	 * across both if total_size is not a power of two. */
 	total_size = gpu_max_addr - gpu_min_addr;
 	size = 1ull << ilog2(total_size);
+
+	/* Allocate the biggest chunk first as we assume gpu_max_addr has the
+	 * highest alignment. */
+	addr = gpu_max_addr - size;
 	val = PPC_BIT(0);
 	val = SETFIELD(PPC_BITMASK(13, 29), val, (size >> 25) - 1);
-	val = SETFIELD(PPC_BITMASK(33, 63), val, gpu_min_addr >> 25);
+	val = SETFIELD(PPC_BITMASK(33, 63), val, addr >> 25);
 	xscom_write(p->chip_id, MCD0_BANK0_CN3, val);
 	total_size -= size;
 	if (total_size) {
 	/* total_size was not a power of two, but the remainder should
 	 * be if all GPUs were assigned the same size. */
 		assert(is_pow2(total_size));
-		addr += size;
 		size = 1ull << ilog2(total_size);
+		addr -= size;
+		assert(addr <= gpu_min_addr);
 		val = PPC_BIT(0);
 		val = SETFIELD(PPC_BITMASK(13, 29), val, (size >> 25) - 1);
 		val = SETFIELD(PPC_BITMASK(33, 63), val, addr >> 25);
