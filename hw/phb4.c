@@ -3563,6 +3563,10 @@ static bool phb4_read_capabilities(struct phb4 *p)
 
 	/* Read EEH capabilities */
 	val = in_be64(p->regs + PHB_PHB4_EEH_CAP);
+	if (val == 0xffffffffffffffff) {
+		PHBERR(p, "Failed to read EEH cap, PHB appears broken\n");
+		return false;
+	}
 	p->max_num_pes = val >> 52;
 	if (p->max_num_pes >= 512) {
 		p->mrt_size = 16;
@@ -3575,6 +3579,10 @@ static bool phb4_read_capabilities(struct phb4 *p)
 	}
 
 	val = in_be64(p->regs + PHB_PHB4_IRQ_CAP);
+	if (val == 0xffffffffffffffff) {
+		PHBERR(p, "Failed to read IRQ cap, PHB appears broken\n");
+		return false;
+	}
 	p->num_irqs = val & 0xffff;
 
 	/* This works for 512 PEs.  FIXME calculate for any hardware
