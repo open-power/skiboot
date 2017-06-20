@@ -3057,6 +3057,7 @@ static void xive_init_cpu(struct cpu_thread *c)
 	/* Initialize the state structure */
 	c->xstate = xs = local_alloc(c->chip_id, sizeof(struct xive_cpu_state), 1);
 	assert(xs);
+	memset(xs, 0, sizeof(struct xive_cpu_state));
 	xs->xive = x;
 
 	init_lock(&xs->lock);
