@@ -77,7 +77,7 @@ static const struct slot_table_entry *match_slot_dev_entry(struct phb *phb,
 		if (ent->etype == st_npu_slot)
 			bdfn = pd->bdfn & 0xf8;
 		else
-			bdfn = pd->bdfn & 0xff;
+			bdfn = pd->bdfn & 0xffff;
 
 		if (ent->location == bdfn)
 			return ent;
