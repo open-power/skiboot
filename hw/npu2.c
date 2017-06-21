@@ -542,8 +542,10 @@ static void npu2_dn_fixup_gmb(struct dt_node *pd_dn, struct npu2_dev *ndev)
 	assert(mem_dn);
 	dt_add_property_cells(pd_dn, "memory-region", mem_dn->phandle);
 
-	gta  = ((gpu_base >> 42) & 0x1) << 41;
-	gta |= ((gpu_base >> 45) & 0x3) << 42;
+	/* Coral mode address compression. This is documented in Figure 3.5
+	 * "P9->GPU RA Compression (Coral) of the NPU2 workbook". */
+	gta  = ((gpu_base >> 42) & 0x1) << 42;
+	gta |= ((gpu_base >> 45) & 0x3) << 43;
 	gta |= ((gpu_base >> 49) & 0x3) << 45;
 	gta |= gpu_base & ((1UL << 43) - 1);
 
