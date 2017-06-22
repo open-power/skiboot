@@ -48,6 +48,7 @@
 #include <libstb/stb.h>
 #include <libstb/container.h>
 #include <phys-map.h>
+#include <imc.h>
 
 enum proc_gen proc_gen;
 unsigned int pcie_max_link_speed;
@@ -977,6 +978,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Read in NVRAM and set it up */
 	nvram_init();
 
+	/* preload the IMC catalog dtb */
+	imc_catalog_preload();
+
 	/* Set the console level */
 	console_log_level();
 
@@ -999,6 +1003,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* NX init */
 	nx_init();
+
+	/* Init In-Memory Collection related stuff (load the IMC dtb into memory) */
+	imc_init();
 
 	/* Probe IO hubs */
 	probe_p7ioc();

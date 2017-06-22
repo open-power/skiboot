@@ -108,6 +108,11 @@ struct imc_chip_cb
 #define MAX_DECOMPRESSED_IMC_DTB_SIZE		0x40000
 #define MAX_COMPRESSED_IMC_DTB_SIZE		0x40000
 
+/* IMC device types */
+#define IMC_COUNTER_CHIP		0x10
+#define IMC_COUNTER_CORE		0x4
+#define IMC_COUNTER_THREAD		0x1
+
 /*
  * Nest IMC operations
  */
@@ -116,4 +121,6 @@ struct imc_chip_cb
 
 #define MAX_NEST_UNITS			48
 
+void imc_init(void);
+void imc_catalog_preload(void);
 #endif /* __IMC_H */

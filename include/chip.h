@@ -222,6 +222,17 @@ extern struct proc_chip *get_chip(uint32_t chip_id);
 
 extern void init_chips(void);
 
+/* helper to get number of chips in the system */
+static inline int nr_chips(void)
+{
+	struct proc_chip *chip;
+	int nr_chips = 0;
+
+	for_each_chip(chip)
+		nr_chips++;
+
+	return nr_chips;
+}
 
 #endif /* __CHIP_H */
 
