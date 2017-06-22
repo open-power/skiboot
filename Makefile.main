@@ -52,7 +52,7 @@ OPTS=-Os
 DBG=-g
 
 CPPFLAGS := -I$(SRC)/include -Iinclude -MMD -include $(SRC)/include/config.h
-CPPFLAGS += -I$(SRC)/libfdt -I$(SRC)/libflash -I$(SRC)/libc/include -I$(SRC)
+CPPFLAGS += -I$(SRC)/libfdt -I$(SRC)/libflash -I$(SRC)/libxz -I$(SRC)/libc/include -I$(SRC)
 CPPFLAGS += -I$(SRC)/libpore
 CPPFLAGS += -D__SKIBOOT__ -nostdinc
 CPPFLAGS += -isystem $(shell $(CC) -print-file-name=include)
@@ -171,6 +171,7 @@ include $(SRC)/hw/Makefile.inc
 include $(SRC)/platforms/Makefile.inc
 include $(SRC)/libfdt/Makefile.inc
 include $(SRC)/libflash/Makefile.inc
+include $(SRC)/libxz/Makefile.inc
 include $(SRC)/libpore/Makefile.inc
 include $(SRC)/libc/Makefile.inc
 include $(SRC)/ccan/Makefile.inc
@@ -190,7 +191,7 @@ pflash-coverity:
 all: $(SUBDIRS) $(TARGET).lid $(TARGET).lid.xz $(TARGET).map extract-gcov
 all: $(TARGET).lid.stb $(TARGET).lid.xz.stb
 
-OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBFLASH) $(LIBSTB)
+OBJS := $(ASM) $(CORE) $(HW) $(PLATFORMS) $(LIBFDT) $(LIBXZ) $(LIBFLASH) $(LIBSTB)
 OBJS += $(LIBC) $(CCAN) $(DEVSRC_OBJ) $(LIBPORE)
 OBJS_NO_VER = $(OBJS)
 ALL_OBJS = $(OBJS) version.o
