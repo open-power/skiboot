@@ -78,6 +78,37 @@ char const *nest_pmus[] = {
 	/* reserved bits : 48 - 64 */
 };
 
+/*
+ * Due to Nest HW/OCC restriction, microcode will not support individual unit
+ * events for these nest units mcs0, mcs1 ... mcs7 in the accumulation mode.
+ * And events to monitor each mcs units individually will be supported only
+ * in the debug mode (which will be supported by microcode in the future).
+ * These will be advertised only when OPAL provides interface for the it.
+ */
+char const *debug_mode_units[] = {
+	"mcs0",
+	"mcs1",
+	"mcs2",
+	"mcs3",
+	"mcs4",
+	"mcs5",
+	"mcs6",
+	"mcs7",
+};
+
+/*
+ * Combined unit node events are counted when any of the individual
+ * unit is enabled in the availability vector. That is,
+ * ex, mcs01 unit node should be enabled only when mcs0 or mcs1 enabled.
+ * mcs23 unit node should be enabled only when mcs2 or mcs3 is enabled
+ */
+static struct combined_units_node cu_node[] = {
+	{ .name = "mcs01", .unit1 = PPC_BIT(1), .unit2 = PPC_BIT(2) },
+	{ .name = "mcs23", .unit1 = PPC_BIT(3), .unit2 = PPC_BIT(4) },
+	{ .name = "mcs45", .unit1 = PPC_BIT(5), .unit2 = PPC_BIT(6) },
+	{ .name = "mcs67", .unit1 = PPC_BIT(7), .unit2 = PPC_BIT(8) },
+};
+
 static char *compress_buf;
 static size_t compress_buf_size;
 const char **prop_to_fix(struct dt_node *node);
@@ -288,6 +319,34 @@ static void disable_unavailable_units(struct dt_node *dev)
 			target = dt_find_by_name(dev, nest_pmus[i]);
 			if (!target)
 				continue;
+			/* Remove the device node */
+			dt_free(target);
+		}
+	}
+
+	/*
+	 * Loop to detect debug mode units and remove them
+	 * since the microcode does not support debug mode function yet.
+	 */
+	for (i = 0; i < ARRAY_SIZE(debug_mode_units); i++) {
+		target = dt_find_by_name(dev, debug_mode_units[i]);
+		if (!target)
+			continue;
+		/* Remove the device node */
+		dt_free(target);
+	}
+
+	/*
+	 * Based on availability unit vector from control block,
+	 * check and enable combined unit nodes in the device tree.
+	 */
+	for (i = 0; i < MAX_NEST_COMBINED_UNITS ; i++ ) {
+		if (!(cu_node[i].unit1 & avl_vec) &&
+				!(cu_node[i].unit2 & avl_vec)) {
+			target = dt_find_by_name(dev, cu_node[i].name);
+			if (!target)
+				continue;
+
 			/* Remove the device node */
 			dt_free(target);
 		}

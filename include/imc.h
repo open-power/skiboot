@@ -132,4 +132,11 @@ struct imc_chip_cb
 
 void imc_init(void);
 void imc_catalog_preload(void);
+
+#define MAX_NEST_COMBINED_UNITS		4
+struct combined_units_node {
+	const char *name;
+	u64 unit1;
+	u64 unit2;
+};
 #endif /* __IMC_H */
