@@ -33,6 +33,8 @@ static inline bool fake_is_rodata(const void *p)
 #include "../device.c"
 #include <assert.h>
 #include "../../test/dt_common.c"
+const char *prop_to_fix[] = {"something", NULL};
+const char **props_to_fix(struct dt_node *node);
 
 static void check_path(const struct dt_node *node, const char * expected_path)
 {
@@ -87,18 +89,29 @@ static bool is_sorted(const struct dt_node *root)
 	return true;
 }
 
+/*handler for phandle fixup test */
+const char **props_to_fix(struct dt_node *node)
+{
+	const struct dt_property *prop;
+
+	prop = dt_find_property(node, "something");
+	if (prop)
+		return prop_to_fix;
+
+	return NULL;
+}
 
 int main(void)
 {
 	struct dt_node *root, *c1, *c2, *gc1, *gc2, *gc3, *ggc1, *ggc2;
 	struct dt_node *addrs, *addr1, *addr2;
-	struct dt_node *i;
+	struct dt_node *i, *subtree, *ev1, *ut1, *ut2;
 	const struct dt_property *p;
 	struct dt_property *p2;
 	unsigned int n;
 	char *s;
 	size_t sz;
-	u32 phandle;
+	u32 phandle, ev1_ph, new_prop_ph;
 
 	root = dt_new_root("");
 	assert(!list_top(&root->properties, struct dt_property, list));
@@ -412,6 +425,24 @@ int main(void)
 
 	dt_free(root);
 
+	/* phandle fixup test */
+	subtree = dt_new_root("subtree");
+	ev1 = dt_new(subtree, "ev@1");
+	ev1_ph = ev1->phandle;
+	dt_new(ev1,"a@1");
+	dt_new(ev1,"a@2");
+	dt_new(ev1,"a@3");
+	ut1 = dt_new(subtree, "ut@1");
+	dt_add_property(ut1, "something", (const void *)&ev1->phandle, 4);
+	ut2 = dt_new(subtree, "ut@2");
+	dt_add_property(ut2, "something", (const void *)&ev1->phandle, 4);
+
+	dt_adjust_subtree_phandle(subtree, props_to_fix);
+	assert(!(ev1->phandle == ev1_ph));
+	new_prop_ph = dt_prop_get_u32(ut1, "something");
+	assert(!(new_prop_ph == ev1_ph));
+	new_prop_ph = dt_prop_get_u32(ut2, "something");
+	assert(!(new_prop_ph == ev1_ph));
 	return 0;
 }
 

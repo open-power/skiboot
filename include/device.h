@@ -268,4 +268,8 @@ struct dt_node *__dt_find_by_name_addr(struct dt_node *parent, const char *name,
 struct dt_node *dt_find_by_name_addr(struct dt_node *parent, const char *name,
 				uint64_t addr);
 
+/* phandle fixup helper */
+void dt_adjust_subtree_phandle(struct dt_node *subtree,
+				const char** (get_properties_to_fix)(struct dt_node *n));
+
 #endif /* __DEVICE_H */

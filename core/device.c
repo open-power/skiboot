@@ -1069,3 +1069,41 @@ bool dt_node_is_enabled(struct dt_node *node)
 
 	return p->len > 1 && p->prop[0] == 'o' && p->prop[1] == 'k';
 }
+
+/*
+ * Function to fixup the phandle in the subtree.
+ */
+void dt_adjust_subtree_phandle(struct dt_node *dev,
+			const char** (get_properties_to_fix)(struct dt_node *n))
+{
+	struct dt_node *node;
+	struct dt_property *prop;
+	u32 phandle, max_phandle = 0, import_phandle = new_phandle();
+	const char **name;
+
+	dt_for_each_node(dev, node) {
+		const char **props_to_update;
+		node->phandle += import_phandle;
+
+		/*
+		 * calculate max_phandle(new_tree), needed to update
+		 * last_phandle.
+		 */
+		if (node->phandle >= max_phandle)
+			max_phandle = node->phandle;
+
+		props_to_update = get_properties_to_fix(node);
+		if (!props_to_update)
+			continue;
+		for (name = props_to_update; *name != NULL; name++) {
+			prop = __dt_find_property(node, *name);
+			if (!prop)
+				continue;
+			phandle = dt_prop_get_u32(node, *name);
+			phandle += import_phandle;
+			memcpy((char *)&prop->prop, &phandle, prop->len);
+		}
+       }
+
+       set_last_phandle(max_phandle);
+}
