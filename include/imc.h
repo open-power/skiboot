@@ -121,6 +121,15 @@ struct imc_chip_cb
 
 #define MAX_NEST_UNITS			48
 
+/*
+ * Core IMC SCOMs
+ */
+#define CORE_IMC_EVENT_MASK_ADDR	0x20010AA8ull
+#define CORE_IMC_EVENT_MASK		0x0001020000000000ull
+#define CORE_IMC_PDBAR_MASK		0x0003ffffffffe000ull
+#define CORE_IMC_HTM_MODE_ENABLE	0xE800000000000000ull
+#define CORE_IMC_HTM_MODE_DISABLE	0xE000000000000000ull
+
 void imc_init(void);
 void imc_catalog_preload(void);
 #endif /* __IMC_H */

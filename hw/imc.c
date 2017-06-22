@@ -94,6 +94,26 @@ static bool is_nest_mem_initialized(struct imc_chip_cb *ptr)
 	return true;
 }
 
+/*
+ * A Quad contains 4 cores in Power 9, and there are 4 addresses for
+ * the Core Hardware Trace Macro (CHTM) attached to each core.
+ * So, for core index 0 to core index 3, we have a sequential range of
+ * SCOM port addresses in the arrays below, each for Hardware Trace Macro (HTM)
+ * mode and PDBAR.
+ */
+unsigned int pdbar_scom_index[] = {
+	0x1001220B,
+	0x1001230B,
+	0x1001260B,
+	0x1001270B
+};
+unsigned int htm_scom_index[] = {
+	0x10012200,
+	0x10012300,
+	0x10012600,
+	0x10012700
+};
+
 static struct imc_chip_cb *get_imc_cb(uint32_t chip_id)
 {
 	struct proc_chip *chip = get_chip(chip_id);
@@ -434,3 +454,176 @@ err:
 	free(decompress_buf);
 	free(compress_buf);
 }
+
+/*
+ * opal_imc_counters_init : This call initialize the IMC engine.
+ *
+ * For Nest IMC, this is no-op and returns OPAL_SUCCESS at this point.
+ * For Core IMC, this initializes core IMC Engine, by initializing
+ * these scoms "PDBAR", "HTM_MODE" and the "EVENT_MASK" in a given cpu.
+ */
+static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu_pir)
+{
+	struct cpu_thread *c = find_cpu_by_pir(cpu_pir);
+	int port_id, phys_core_id;
+
+	switch (type) {
+	case OPAL_IMC_COUNTERS_NEST:
+		return OPAL_SUCCESS;
+	case OPAL_IMC_COUNTERS_CORE:
+		if (!c)
+			return OPAL_PARAMETER;
+
+		/*
+		 * Core IMC hardware mandates setting of htm_mode and
+		 * pdbar in specific scom ports. port_id are in
+		 * pdbar_scom_index[] and htm_scom_index[].
+		 */
+		phys_core_id = cpu_get_core_index(c);
+		port_id = phys_core_id % 4;
+
+		/*
+		 * Core IMC hardware mandate initing of three scoms
+		 * to enbale or disable of the Core IMC engine.
+		 *
+		 * PDBAR: Scom contains the real address to store per-core
+		 *        counter data in memory along with other bits.
+		 *
+		 * EventMask: Scom contain bits to denote event to multiplex
+		 *            at different MSR[HV PR] values, along with bits for
+		 *            sampling duration.
+		 *
+		 * HTM Scom: scom to enable counter data movement to memory.
+		 */
+		 if (xscom_write(c->chip_id,
+				XSCOM_ADDR_P9_EP(phys_core_id,
+						pdbar_scom_index[port_id]),
+				(u64)(CORE_IMC_PDBAR_MASK & addr))) {
+			prerror("error in xscom_write for pdbar\n");
+			return OPAL_HARDWARE;
+		}
+
+		if (xscom_write(c->chip_id,
+				XSCOM_ADDR_P9_EC(phys_core_id,
+					 CORE_IMC_EVENT_MASK_ADDR),
+				(u64)CORE_IMC_EVENT_MASK)) {
+			prerror("error in xscom_write for event mask\n");
+			return OPAL_HARDWARE;
+		}
+
+		if (xscom_write(c->chip_id,
+				XSCOM_ADDR_P9_EP(phys_core_id,
+						htm_scom_index[port_id]),
+				(u64)CORE_IMC_HTM_MODE_DISABLE)) {
+			prerror("error in xscom_write for htm mode\n");
+			return OPAL_HARDWARE;
+		}
+		return OPAL_SUCCESS;
+	}
+
+	return OPAL_SUCCESS;
+}
+opal_call(OPAL_IMC_COUNTERS_INIT, opal_imc_counters_init, 3);
+
+/* opal_imc_counters_control_start: This call starts the nest/core imc engine. */
+static int64_t opal_imc_counters_start(uint32_t type, uint64_t cpu_pir)
+{
+	u64 op;
+	struct cpu_thread *c = find_cpu_by_pir(cpu_pir);
+	struct imc_chip_cb *cb;
+	int port_id, phys_core_id;
+
+	if (!c)
+		return OPAL_PARAMETER;
+
+	switch (type) {
+	case OPAL_IMC_COUNTERS_NEST:
+		/* Fetch the IMC control block structure */
+		cb = get_imc_cb(c->chip_id);
+
+		/* Set the run command */
+		op = NEST_IMC_ENABLE;
+
+		/* Write the command to the control block now */
+		cb->imc_chip_command = cpu_to_be64(op);
+
+		return OPAL_SUCCESS;
+	case OPAL_IMC_COUNTERS_CORE:
+		/*
+		 * Core IMC hardware mandates setting of htm_mode in specific
+		 * scom ports (port_id are in htm_scom_index[])
+		 */
+		phys_core_id = cpu_get_core_index(c);
+		port_id = phys_core_id % 4;
+
+		/*
+		 * Enables the core imc engine by appropriately setting
+		 * bits 4-9 of the HTM_MODE scom port. No initialization
+		 * is done in this call. This just enables the the counters
+		 * to count with the previous initialization.
+		 */
+		if (xscom_write(c->chip_id,
+				XSCOM_ADDR_P9_EP(phys_core_id,
+						htm_scom_index[port_id]),
+				(u64)CORE_IMC_HTM_MODE_ENABLE)) {
+			prerror("IMC OPAL_start: error in xscom_write for htm_mode\n");
+			return OPAL_HARDWARE;
+		}
+
+		return OPAL_SUCCESS;
+	}
+
+	return OPAL_SUCCESS;
+}
+opal_call(OPAL_IMC_COUNTERS_START, opal_imc_counters_start, 2);
+
+/* opal_imc_counters_control_stop: This call stops the nest imc engine. */
+static int64_t opal_imc_counters_stop(uint32_t type, uint64_t cpu_pir)
+{
+	u64 op;
+	struct imc_chip_cb *cb;
+	struct cpu_thread *c = find_cpu_by_pir(cpu_pir);
+	int port_id, phys_core_id;
+
+	if (!c)
+		return OPAL_PARAMETER;
+
+	switch (type) {
+	case OPAL_IMC_COUNTERS_NEST:
+		/* Fetch the IMC control block structure */
+		cb = get_imc_cb(c->chip_id);
+
+		/* Set the run command */
+		op = NEST_IMC_DISABLE;
+
+		/* Write the command to the control block */
+		cb->imc_chip_command = cpu_to_be64(op);
+
+		return OPAL_SUCCESS;
+
+	case OPAL_IMC_COUNTERS_CORE:
+		/*
+		 * Core IMC hardware mandates setting of htm_mode in specific
+		 * scom ports (port_id are in htm_scom_index[])
+		 */
+		phys_core_id = cpu_get_core_index(c);
+		port_id = phys_core_id % 4;
+
+		/*
+		 * Disables the core imc engine by clearing
+		 * bits 4-9 of the HTM_MODE scom port.
+		 */
+		if (xscom_write(c->chip_id,
+				XSCOM_ADDR_P9_EP(phys_core_id,
+						htm_scom_index[port_id]),
+				(u64) CORE_IMC_HTM_MODE_DISABLE)) {
+			prerror("error in xscom_write for htm_mode\n");
+			return OPAL_HARDWARE;
+		}
+
+		return OPAL_SUCCESS;
+	}
+
+	return OPAL_SUCCESS;
+}
+opal_call(OPAL_IMC_COUNTERS_STOP, opal_imc_counters_stop, 2);

@@ -204,7 +204,10 @@
 #define OPAL_NPU_INIT_CONTEXT			146
 #define OPAL_NPU_DESTROY_CONTEXT		147
 #define OPAL_NPU_MAP_LPAR			148
-#define OPAL_LAST				148
+#define OPAL_IMC_COUNTERS_INIT			149
+#define OPAL_IMC_COUNTERS_START			150
+#define OPAL_IMC_COUNTERS_STOP			151
+#define OPAL_LAST				151
 
 /* Device tree flags */
 
@@ -1244,6 +1247,13 @@ enum {
 	XIVE_DUMP_VP		= 4,
 	XIVE_DUMP_EMU_STATE	= 5,
 };
+
+/* Operation argument to IMC Microcode */
+enum {
+	OPAL_IMC_COUNTERS_NEST = 1,
+	OPAL_IMC_COUNTERS_CORE = 2,
+};
+
 
 #endif /* __ASSEMBLY__ */
 
