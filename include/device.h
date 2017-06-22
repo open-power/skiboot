@@ -61,6 +61,22 @@ struct dt_node *dt_new_root(const char *name);
 /* Graft a root node into this tree. */
 bool dt_attach_root(struct dt_node *parent, struct dt_node *root);
 
+/* Wrappers for last_phandle operations */
+static inline u32 get_last_phandle(void)
+{
+	return last_phandle;
+}
+
+static inline void set_last_phandle(u32 phandle)
+{
+	last_phandle = phandle;
+}
+
+static inline u32 new_phandle(void)
+{
+	return ++last_phandle;
+}
+
 /* Add a child node. */
 struct dt_node *dt_new(struct dt_node *parent, const char *name);
 struct dt_node *dt_new_addr(struct dt_node *parent, const char *name,
