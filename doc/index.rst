@@ -34,6 +34,7 @@ Developer Guide and Internals
    pci-slot
    xscom-node-bindings
    xive
+   imc
 
 
 OPAL ABI
