@@ -64,8 +64,8 @@ void opal_table_init(void)
 	struct opal_table_entry *s = __opal_table_start;
 	struct opal_table_entry *e = __opal_table_end;
 
-	printf("OPAL table: %p .. %p, branch table: %p\n",
-	       s, e, opal_branch_table);
+	prlog(PR_DEBUG, "OPAL table: %p .. %p, branch table: %p\n",
+	      s, e, opal_branch_table);
 	while(s < e) {
 		opal_branch_table[s->token] = function_entry_address(s->func);
 		opal_num_args[s->token] = s->nargs;

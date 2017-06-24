@@ -308,9 +308,10 @@ static int64_t phb4_rc_write(struct phb4 *p, uint32_t offset, uint8_t sz,
 			break;
 		}
 
-		if (old != oldold)
-			PHBDBG(p, "Rewrote %x to %x for reg %x for W1C\n",
-			       oldold, old, reg);
+		if (old != oldold) {
+			PHBLOGCFG(p, "Rewrote %x to %x for reg %x for W1C\n",
+				  oldold, old, reg);
+		}
 
 		if (sz == 1) {
 			shift = (offset & 3) << 3;
@@ -4259,7 +4260,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	stk_index = dt_prop_get_u32(stk_node, "reg");
 	phb_num = dt_prop_get_u32(stk_node, "ibm,phb-index");
 	path = dt_get_path(stk_node);
-	prlog(PR_NOTICE, "PHB: Chip %d Found PHB4 PBCQ%d Stack %d at %s\n",
+	prlog(PR_INFO, "PHB: Chip %d Found PHB4 PBCQ%d Stack %d at %s\n",
 	      gcid, pec_index, stk_index, path);
 	free(path);
 
@@ -4297,11 +4298,6 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1_MASK, mmio1_bmask << 8);
 	bar_en |= XPEC_NEST_STK_BAR_EN_MMIO0 | XPEC_NEST_STK_BAR_EN_MMIO1;
 
-	prlog(PR_ERR, "PHB[%d:%d]   PHB@0x%016llx   IRQ@0x%016llx\n",
-	      gcid, phb_num, phb_bar, irq_bar);
-	prlog(PR_ERR, "PHB[%d:%d] MMIO0@0x%016llx MMIO1@0x%016llx \n",
-	      gcid, phb_num, mmio0_bar, mmio1_bar);
-
 	/* Build MMIO windows list */
 	mmio_win_sz = 0;
 	if (mmio0_bar) {
@@ -4328,13 +4324,13 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 
 	/* Check ETU reset */
 	xscom_read(gcid, pci_stack + XPEC_PCI_STK_ETU_RESET, &val);
-	prlog_once(PR_ERR, "ETU reset: %llx\n", val);
+	prlog_once(PR_DEBUG, "ETU reset: %llx\n", val);
 	xscom_write(gcid, pci_stack + XPEC_PCI_STK_ETU_RESET, 0);
 	time_wait_ms(1);
 
 	// show we can read phb mmio space
 	foo = (void *)(phb_bar + 0x800); // phb version register
-	prlog_once(PR_ERR, "Version reg: 0x%016llx\n", in_be64(foo));
+	prlog_once(PR_DEBUG, "Version reg: 0x%016llx\n", in_be64(foo));
 
 	/* Create PHB node */
 	reg[0] = phb_bar;

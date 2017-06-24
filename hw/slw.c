@@ -307,7 +307,7 @@ static bool slw_set_overrides_p9(struct proc_chip *chip, struct cpu_thread *c)
 	rc = xscom_read(chip->id,
 			XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_HYP),
 			&tmp);
-	prlog(PR_NOTICE, "SLW: EC_PPM_SPECIAL_WKUP_HYP read  0x%016llx\n", tmp);
+	prlog(PR_DEBUG, "SLW: EC_PPM_SPECIAL_WKUP_HYP read  0x%016llx\n", tmp);
 	rc = xscom_read(chip->id,
 			XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_OTR),
 			&tmp);
@@ -1145,7 +1145,7 @@ static void slw_init_chip_p9(struct proc_chip *chip)
 {
 	struct cpu_thread *c;
 
-	prlog(PR_NOTICE, "SLW: Init chip 0x%x\n", chip->id);
+	prlog(PR_DEBUG, "SLW: Init chip 0x%x\n", chip->id);
 
 	/* At power ON setup inits for power-mgt */
 	for_each_available_core_in_chip(c, chip->id)

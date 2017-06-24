@@ -740,11 +740,11 @@ void xscom_init(void)
 		else
 			chip_name = chip_names[chip->type];
 
-		printf("XSCOM: chip 0x%x at 0x%llx [%s DD%x.%x]\n",
-		       gcid, chip->xscom_base,
-		       chip_name,
-		       chip->ec_level >> 4,
-		       chip->ec_level & 0xf);
+		/* We keep a "CHIP" prefix to make the log more user-friendly */
+		prlog(PR_NOTICE, "CHIP: Chip ID %04x type: %s DD%x.%x\n",
+		      gcid, chip_name, chip->ec_level >> 4,
+		      chip->ec_level & 0xf);
+		prlog(PR_DEBUG, "XSCOM: Base address: 0x%llx\n", chip->xscom_base);
 	}
 
 	/* Collect details to trigger xstop via XSCOM write */
@@ -752,10 +752,10 @@ void xscom_init(void)
 	if (p) {
 		xstop_xscom.addr = dt_property_get_cell(p, 0);
 		xstop_xscom.fir_bit = dt_property_get_cell(p, 1);
-		prlog(PR_INFO, "XSTOP: XSCOM addr = 0x%llx, FIR bit = %lld\n",
-					xstop_xscom.addr, xstop_xscom.fir_bit);
+		prlog(PR_DEBUG, "XSTOP: XSCOM addr = 0x%llx, FIR bit = %lld\n",
+		      xstop_xscom.addr, xstop_xscom.fir_bit);
 	} else
-		prlog(PR_INFO, "XSTOP: ibm,sw-checkstop-fir prop not found\n");
+		prlog(PR_DEBUG, "XSTOP: ibm,sw-checkstop-fir prop not found\n");
 }
 
 void xscom_used_by_console(void)

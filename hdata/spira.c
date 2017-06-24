@@ -1301,7 +1301,7 @@ int parse_hdat(bool is_opal)
 
 	add_stop_levels();
 
-	prlog(PR_INFO, "Parsing HDAT...done\n");
+	prlog(PR_DEBUG, "Parsing HDAT...done\n");
 
 	return 0;
 }

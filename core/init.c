@@ -119,8 +119,8 @@ static bool try_load_elf64_le(struct elf_hdr *header)
 	kernel_size = le64_to_cpu(kh->e_shoff) +
 		(le16_to_cpu(kh->e_shentsize) * le16_to_cpu(kh->e_shnum));
 
-	printf("INIT: 64-bit kernel entry at 0x%llx, size 0x%lx\n",
-	       kernel_entry, kernel_size);
+	prlog(PR_DEBUG, "INIT: 64-bit kernel entry at 0x%llx, size 0x%lx\n",
+	      kernel_entry, kernel_size);
 
 	return true;
 }
@@ -371,7 +371,7 @@ static bool load_kernel(void)
 	if (dt_has_node_property(dt_chosen, "kernel-base-address", NULL)) {
 		kernel_entry = dt_prop_get_u64(dt_chosen,
 					       "kernel-base-address");
-		printf("INIT: Kernel image at 0x%llx\n",kernel_entry);
+		prlog(PR_DEBUG, "INIT: Kernel image at 0x%llx\n", kernel_entry);
 		kh = (struct elf_hdr *)kernel_entry;
 		/*
 		 * If the kernel is at 0, restore it as it was overwritten
@@ -398,11 +398,12 @@ static bool load_kernel(void)
 		}
 	}
 
-	printf("INIT: Kernel loaded, size: %zu bytes (0 = unknown preload)\n",
-	       kernel_size);
+	prlog(PR_DEBUG,
+	      "INIT: Kernel loaded, size: %zu bytes (0 = unknown preload)\n",
+	      kernel_size);
 
 	if (kh->ei_ident != ELF_IDENT) {
-		printf("INIT: ELF header not found. Assuming raw binary.\n");
+		prerror("INIT: ELF header not found. Assuming raw binary.\n");
 		return true;
 	}
 
@@ -413,7 +414,7 @@ static bool load_kernel(void)
 		if (!try_load_elf32(kh))
 			return false;
 	} else {
-		printf("INIT: Neither ELF32 not ELF64 ?\n");
+		prerror("INIT: Neither ELF32 not ELF64 ?\n");
 		return false;
 	}
 
@@ -542,7 +543,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	/* Dump the selected console */
 	stdoutp = dt_prop_get_def(dt_chosen, "linux,stdout-path", NULL);
-	printf("INIT: stdout-path: %s\n", stdoutp ? stdoutp : "");
+	prlog(PR_DEBUG, "INIT: stdout-path: %s\n", stdoutp ? stdoutp : "");
 
 
 	printf("INIT: Starting kernel at 0x%llx, fdt at %p %u bytes)\n",

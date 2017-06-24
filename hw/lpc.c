@@ -1186,8 +1186,8 @@ static void lpc_init_chip_p9(struct dt_node *opb_node)
 	val &= 0xf0000000;
 	opb_write(lpc, opb_master_reg_base + 0xc, val, 4);
 
-	printf("LPC[%03x]: Initialized, access via MMIO @%p\n",
-	       gcid, lpc->mbase);
+	prlog(PR_INFO, "LPC[%03x]: Initialized\n", gcid);
+	prlog(PR_DEBUG,"access via MMIO @%p\n", lpc->mbase);
 
 	chip->lpc = lpc;
 }
@@ -1210,7 +1210,8 @@ void lpc_init(void)
 		}
 	}
 	if (lpc_default_chip_id >= 0)
-		printf("LPC: Default bus on chip 0x%x\n", lpc_default_chip_id);
+		prlog(PR_DEBUG, "Default bus on chip 0x%x\n",
+		      lpc_default_chip_id);
 
 	if (has_lpc) {
 		opal_register(OPAL_LPC_WRITE, opal_lpc_write, 5);

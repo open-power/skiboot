@@ -926,7 +926,7 @@ static void mem_region_parse_reserved_properties(void)
 	const struct dt_property *names, *ranges;
 	struct mem_region *region;
 
-	prlog(PR_INFO, "MEM: parsing reserved memory from "
+	prlog(PR_DEBUG, "MEM: parsing reserved memory from "
 			"reserved-names/-ranges properties\n");
 
 	names = dt_find_property(dt_root, "reserved-names");

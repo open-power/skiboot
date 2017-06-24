@@ -195,7 +195,7 @@ void phys_map_init(void)
 		phys_map = &phys_map_nimbus;
 	}
 
-	prlog(PR_NOTICE, "Assigning physical memory map table for %s\n", name);
+	prlog(PR_DEBUG, "Assigning physical memory map table for %s\n", name);
 
 }
 

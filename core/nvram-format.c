@@ -156,12 +156,12 @@ int nvram_check(void *nvram_image, const uint32_t nvram_size)
 		}
 	}
 	if (!found_common) {
-		prerror("NVRAM: Common partition not found !\n");
+		prlog_once(PR_ERR, "NVRAM: Common partition not found !\n");
 		goto failed;
 	}
 
 	if (!skiboot_part_hdr) {
-		prerror("NVRAM: Skiboot private partition not found !\n");
+		prlog_once(PR_ERR, "NVRAM: Skiboot private partition not found !\n");
 		goto failed;
 	} else {
 		/*
@@ -222,11 +222,8 @@ const char *nvram_query(const char *key)
 	 *
 	 * NB: nvram_validate() can update skiboot_part_hdr
 	 */
-	if (!nvram_validate()) {
-		prerror("NVRAM: Look up for '%s' failed due to bad format!\n",
-			key);
+	if (!nvram_validate())
 		return NULL;
-	}
 
 	part_end = (const char *) skiboot_part_hdr
 		+ be16_to_cpu(skiboot_part_hdr->len) * 16 - 1;

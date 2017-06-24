@@ -893,7 +893,7 @@ int dt_expand_node(struct dt_node *node, const void *fdt, int fdt_node)
 
 void dt_expand(const void *fdt)
 {
-	printf("FDT: Parsing fdt @%p\n", fdt);
+	prlog(PR_DEBUG, "FDT: Parsing fdt @%p\n", fdt);
 
 	if (dt_expand_node(dt_root, fdt, 0) < 0)
 		abort();

@@ -206,7 +206,7 @@ int tb_measure(enum resource_id id, void *buf, size_t len)
 
 	digestp = NULL;
 	if (!trusted_mode) {
-		prlog(PR_NOTICE, "STB: %s skipped resource %d, "
+		prlog(PR_INFO, "STB: %s skipped resource %d, "
 		      "trusted_mode=0\n", __func__, id);
 		return STB_TRUSTED_MODE_DISABLED;
 	}
@@ -291,7 +291,7 @@ int sb_verify(enum resource_id id, void *buf, size_t len)
 	const char *name = NULL;
 
 	if (!secure_mode) {
-		prlog(PR_NOTICE, "STB: %s skipped resource %d, "
+		prlog(PR_INFO, "STB: %s skipped resource %d, "
 		      "secure_mode=0\n", __func__, id);
 		return STB_SECURE_MODE_DISABLED;
 	}

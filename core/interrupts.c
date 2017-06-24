@@ -230,8 +230,8 @@ void add_opal_interrupts(void)
 				continue;
 			name = is->ops->name ? is->ops->name(is, isn) : NULL;
 			ns = name ? strlen(name) : 0;
-			printf("irq %x name: %s (%d/%d)\n",
-			       isn, name ? name : "<null>", ns, tns);
+			prlog(PR_DEBUG, "irq %x name: %s (%d/%d)\n",
+			      isn, name ? name : "<null>", ns, tns);
 			names = realloc(names, tns + ns + 1);
 			if (name) {
 				strcpy(names + tns, name);

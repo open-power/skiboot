@@ -1108,8 +1108,8 @@ static bool psi_init_psihb(struct dt_node *psihb)
 	psi_init_interrupts(psi);
 	psi_create_mm_dtnode(psi);
 
-	printf("PSI[0x%03x]: Found PSI bridge [active=%d]\n",
-			psi->chip_id, psi->active);
+	prlog(PR_INFO, "PSI[0x%03x]: Found PSI bridge [active=%d]\n",
+	      psi->chip_id, psi->active);
 	return true;
 }
 
