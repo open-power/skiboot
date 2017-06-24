@@ -230,7 +230,7 @@ struct phb4 {
 	enum phb4_state		state;
 	unsigned int		rev;        /* 00MMmmmm */
 #define PHB4_REV_NIMBUS_DD10	0xa40001
-#define PHB4_REV_NUMBUS_DD20	0xa40002
+#define PHB4_REV_NIMBUS_DD20	0xa40002
 	void			*regs;
 	void			*int_mmio;
 	uint64_t		pe_xscom;   /* XSCOM bases */

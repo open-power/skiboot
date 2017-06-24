@@ -129,16 +129,21 @@
 #define PHB_VERSION			0x800
 #define PHB_CTRLR			0x810
 #define   PHB_CTRLR_IRQ_PGSZ_64K	PPC_BIT(11)
+#define   PHB_CTRLR_IRQ_STORE_EOI	PPC_BIT(12)
 #define   PHB_CTRLR_MMIO_RD_STRICT	PPC_BIT(13)
 #define   PHB_CTRLR_MMIO_EEH_DISABLE	PPC_BIT(14)
 #define   PHB_CTRLR_CFG_EEH_BLOCK	PPC_BIT(15)
 #define   PHB_CTRLR_FENCE_LNKILL_DIS	PPC_BIT(16)
 #define   PHB_CTRLR_TVT_ADDR_SEL	PPC_BITMASK(17,19)
-#define     TVT_1_PER_PE		0
-#define     TVT_2_PER_PE		1
-#define     TVT_4_PER_PE		2
-#define     TVT_8_PER_PE		3
-#define     TVT_16_PER_PE		4
+#define     TVT_DD1_1_PER_PE		0
+#define     TVT_DD1_2_PER_PE		1
+#define     TVT_DD1_4_PER_PE		2
+#define     TVT_DD1_8_PER_PE		3
+#define     TVT_DD1_16_PER_PE		4
+#define     TVT_2_PER_PE		0
+#define     TVT_4_PER_PE		1
+#define     TVT_8_PER_PE		2
+#define     TVT_16_PER_PE		3
 #define   PHB_CTRLR_DMA_RD_SPACING	PPC_BITMASK(28,31)
 #define PHB_AIB_FENCE_CTRL		0x860
 #define PHB_TCE_TAG_ENABLE		0x868
@@ -278,6 +283,7 @@
 
 #define PHB_PCIE_DLP_TRAIN_CTL		0x1A40
 #define	  PHB_PCIE_DLP_TL_LINKACT	PPC_BIT(23)
+#define   PHB_PCIE_DLP_DL_PGRESET	PPC_BIT(22)
 #define   PHB_PCIE_DLP_INBAND_PRESENCE  PPC_BIT(19)
 
 #define PHB_PCIE_DLP_ERRLOG1		0x1AA0
