@@ -44,7 +44,7 @@ enum phys_map_type {
 	NPU_PHY,
 	NPU_NTL,
 	NPU_GENID,
-	PSI_LINK,
+	PSIHB_REG,
 	XIVE_IC,
 	XIVE_TM,
 	PSIHB_ESB,

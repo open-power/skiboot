@@ -34,6 +34,7 @@
 #include <errorlog.h>
 #include <xive.h>
 #include <sbe-p9.h>
+#include <phys-map.h>
 
 static LIST_HEAD(psis);
 static u64 psi_link_timer;
@@ -821,7 +822,7 @@ static void psi_init_p8_interrupts(struct psi *psi)
 
 static void psi_init_p9_interrupts(struct psi *psi)
 {
-	struct proc_chip *c;
+	struct proc_chip *chip;
 	bool is_p9ndd1;
 	u64 val;
 
@@ -829,20 +830,20 @@ static void psi_init_p9_interrupts(struct psi *psi)
 	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, PSIHB_IRQ_RESET);
 	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, 0);
 
-#define PSIHB_ESB_MMIO_DEFAULT 0x0060302031c0000ull
+	/* Grab chip */
+	chip = get_chip(psi->chip_id);
+	if (!chip)
+		return;
 
-	/* Configure the CI BAR if necessary */
-	val = in_be64(psi->regs + PSIHB_ESB_CI_BASE);
-	if (!(val & PSIHB_ESB_CI_VALID)) {
-		val = PSIHB_ESB_MMIO_DEFAULT | PSIHB_ESB_CI_VALID;
-		val |= (0x40000000000ull * (uint64_t)psi->chip_id);
-		out_be64(psi->regs + PSIHB_ESB_CI_BASE, val);
-		printf("PSI[0x%03x]: ESB MMIO invalid, reconfiguring...\n",
-		       psi->chip_id);
-	}
+	/* Configure the CI BAR */
+	phys_map_get(chip->id, PSIHB_ESB, 0, &val, NULL);
+	val |= PSIHB_ESB_CI_VALID;
+	out_be64(psi->regs + PSIHB_ESB_CI_BASE, val);
+
 	val = in_be64(psi->regs + PSIHB_ESB_CI_BASE);
 	psi->esb_mmio = (void *)(val & ~PSIHB_ESB_CI_VALID);
-	printf("PSI[0x%03x]: ESB MMIO at @%p\n", psi->chip_id, psi->esb_mmio);
+	prlog(PR_DEBUG, "PSI[0x%03x]: ESB MMIO at @%p\n",
+	       psi->chip_id, psi->esb_mmio);
 
 	/* Grab and configure the notification port */
 	val = xive_get_notify_port(psi->chip_id, XIVE_HW_SRC_PSI);
@@ -855,9 +856,8 @@ static void psi_init_p9_interrupts(struct psi *psi)
 	out_be64(psi->regs + PSIHB_IVT_OFFSET, val);
 
 	/* Register sources */
-	c = next_chip(NULL);
-	is_p9ndd1 = (c && c->ec_level >= 0x10 &&
-		     c->type == PROC_CHIP_P9_NIMBUS);
+	is_p9ndd1 = (chip->ec_level < 0x20 &&
+		     chip->type == PROC_CHIP_P9_NIMBUS);
 
 	if (is_p9ndd1) {
 		prlog(PR_DEBUG,
@@ -1050,26 +1050,16 @@ static struct psi *psi_probe_p8(struct proc_chip *chip, u64 base)
 static struct psi *psi_probe_p9(struct proc_chip *chip, u64 base)
 {
 	struct psi *psi = NULL;
-	uint64_t rc, val;
+	uint64_t addr;
 
-	rc = xscom_read(chip->id, base + PSIHB_XSCOM_P9_BASE, &val);
-	if (rc) {
-		prerror("PSI[0x%03x]: Error %llx reading PSIHB BAR\n",
-			chip->id, rc);
-		return NULL;
-	}
-	if (!val & PSIHB_XSCOM_P9_HBBAR_EN) {
-		prerror("PSI[0x%03x]: PSIHB BAR Disabled,fixing up (%016llx)\n",
-			chip->id, val);
-#define PSIHB_PSI_MMIO_DEFAULT 0x006030203000000ull
-		val = PSIHB_PSI_MMIO_DEFAULT | PSIHB_XSCOM_P9_HBBAR_EN;
-		val |= (0x40000000000ull * (uint64_t)chip->id);
-		xscom_write(chip->id, base + PSIHB_XSCOM_P9_BASE, val);
-	}
+	phys_map_get(chip->id, PSIHB_REG, 0, &addr, NULL);
+	xscom_write(chip->id, base + PSIHB_XSCOM_P9_BASE,
+		    addr | PSIHB_XSCOM_P9_HBBAR_EN);
+
 	psi = alloc_psi(chip, base);
 	if (!psi)
 		return NULL;
-	psi->regs = (void *)(val & ~PSIHB_XSCOM_P9_HBBAR_EN);
+	psi->regs = (void *)addr;
 	psi->interrupt = xive_alloc_hw_irqs(chip->id, P9_PSI_NUM_IRQS, 16);
 	return psi;
 }
