@@ -49,10 +49,12 @@ unsigned int cpu_max_pir;
 struct cpu_thread *boot_cpu;
 static struct lock reinit_lock = LOCK_UNLOCKED;
 static bool hile_supported;
+static bool radix_supported;
 static unsigned long hid0_hile;
 static unsigned long hid0_attn;
 static bool pm_enabled;
 static bool current_hile_mode;
+static bool current_radix_mode;
 
 unsigned long cpu_secondary_start __force_data = 0;
 
@@ -700,6 +702,7 @@ void init_boot_cpu(void)
 	case PVR_TYPE_P9:
 		proc_gen = proc_gen_p9;
 		hile_supported = true;
+		radix_supported = true;
 		hid0_hile = SPR_HID0_POWER9_HILE;
 		hid0_attn = SPR_HID0_POWER9_ENABLE_ATTN;
 		break;
@@ -1060,11 +1063,27 @@ static int64_t cpu_change_all_hid0(struct hid0_change_req *req)
 	return OPAL_SUCCESS;
 }
 
+void cpu_set_radix_mode(void)
+{
+	struct hid0_change_req req;
+
+	if (!radix_supported)
+		return;
+
+	req.clr_bits = 0;
+	req.set_bits = SPR_HID0_POWER9_RADIX;
+	cleanup_global_tlb();
+	current_radix_mode = true;
+	cpu_change_all_hid0(&req);
+}
+
 void cpu_fast_reboot_complete(void)
 {
 	/* Fast reboot will have cleared HID0:HILE */
 	current_hile_mode = false;
 
+	/* On P9, restore radix mode */
+	cpu_set_radix_mode();
 }
 
 static int64_t opal_reinit_cpus(uint64_t flags)
@@ -1126,6 +1145,25 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 			else
 				req.clr_bits |= hid0_hile;
 			current_hile_mode = hile;
+		}
+	}
+
+	/* If MMU mode change is supported */
+	if (radix_supported &&
+	    (flags & (OPAL_REINIT_CPUS_MMU_HASH |
+		      OPAL_REINIT_CPUS_MMU_RADIX))) {
+		bool radix = !!(flags & OPAL_REINIT_CPUS_MMU_RADIX);
+
+		flags &= ~(OPAL_REINIT_CPUS_MMU_HASH |
+			   OPAL_REINIT_CPUS_MMU_RADIX);
+		if (radix != current_radix_mode) {
+			if (radix)
+				req.set_bits |= SPR_HID0_POWER9_RADIX;
+			else
+				req.clr_bits |= SPR_HID0_POWER9_RADIX;
+
+			cleanup_global_tlb();
+			current_radix_mode = radix;
 		}
 	}
 
