@@ -826,10 +826,6 @@ static void psi_init_p9_interrupts(struct psi *psi)
 	bool is_p9ndd1;
 	u64 val;
 
-	/* Reset irq handling and switch to ESB mode */
-	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, PSIHB_IRQ_RESET);
-	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, 0);
-
 	/* Grab chip */
 	chip = get_chip(psi->chip_id);
 	if (!chip)
@@ -874,6 +870,10 @@ static void psi_init_p9_interrupts(struct psi *psi)
 					12, psi->esb_mmio, XIVE_SRC_LSI,
 					psi, &psi_p9_irq_ops);
 	}
+
+	/* Reset irq handling and switch to ESB mode */
+	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, PSIHB_IRQ_RESET);
+	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, 0);
 }
 
 static void psi_init_interrupts(struct psi *psi)
