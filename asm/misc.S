@@ -51,8 +51,8 @@ _mcount:
 	b	__mcount_stack_check
 #endif
 
-	.global cleanup_tlb
-cleanup_tlb:
+	.global cleanup_local_tlb
+cleanup_local_tlb:
 	/* Clean the TLB */
 	li	%r3,512
 	mtctr	%r3

@@ -392,7 +392,7 @@ static void cleanup_cpu_state(void)
 		chiptod_wakeup_resync();
 
 		/* The TLB surely contains garbage */
-		cleanup_tlb();
+		cleanup_local_tlb();
 	}
 
 	/* Per-thread additional cleanup */

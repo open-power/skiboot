@@ -203,7 +203,7 @@ extern void disable_fast_reboot(const char *reason);
 extern void fast_reboot(void);
 extern void __noreturn __secondary_cpu_entry(void);
 extern void __noreturn load_and_boot_kernel(bool is_reboot);
-extern void cleanup_tlb(void);
+extern void cleanup_local_tlb(void);
 extern void init_shared_sprs(void);
 extern void init_replicated_sprs(void);
 extern bool start_preload_kernel(void);
