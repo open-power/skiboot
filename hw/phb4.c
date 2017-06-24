@@ -3544,8 +3544,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 	       in_be64(p->regs + PHB_PCIE_SCR));
 
 	/* Init_5 - Wait for DLP PGRESET to clear */
-	if (!phb4_wait_dlp_reset(p))
-		goto failed;
+	/* This is broken in spec 053, moving that step to after Init_16 */
 
 	/* Init_6 - deassert CFG reset */
 	creset = in_be64(p->regs + PHB_PCIE_CRESET);
@@ -3581,6 +3580,10 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 	creset &= ~(PHB_PCIE_CRESET_TLDLP | PHB_PCIE_CRESET_PBL);
 	creset |= PHB_PCIE_CRESET_PIPE_N;
 	out_be64(p->regs + PHB_PCIE_CRESET,			   creset);
+
+	/* (Moved from Init_5) */
+	if (!phb4_wait_dlp_reset(p))
+		goto failed;
 
 	/* Init_17 - PHB Control */
 	val = PHB_CTRLR_IRQ_PGSZ_64K;
