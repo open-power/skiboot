@@ -100,8 +100,10 @@ int preload_capp_ucode(void)
 				     capp_ucode_info.lid,
 				     &capp_ucode_info.size);
 
-	if (ret != OPAL_SUCCESS)
+	if (ret != OPAL_SUCCESS) {
 		prerror("CAPI: Failed to preload resource %d\n", ret);
+		capp_ucode_info.load_result = ret;
+	}
 
 end:
 	return ret;
