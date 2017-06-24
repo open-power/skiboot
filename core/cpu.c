@@ -712,19 +712,19 @@ void init_boot_cpu(void)
 		cpu_thread_count = 4;
 		cpu_max_pir = SPR_PIR_P7_MASK;
 		prlog(PR_INFO, "CPU: P7 generation processor"
-		      "(max %d threads/core)\n", cpu_thread_count);
+		      " (max %d threads/core)\n", cpu_thread_count);
 		break;
 	case proc_gen_p8:
 		cpu_thread_count = 8;
 		cpu_max_pir = SPR_PIR_P8_MASK;
 		prlog(PR_INFO, "CPU: P8 generation processor"
-		      "(max %d threads/core)\n", cpu_thread_count);
+		      " (max %d threads/core)\n", cpu_thread_count);
 		break;
 	case proc_gen_p9:
 		cpu_thread_count = 4;
 		cpu_max_pir = SPR_PIR_P9_MASK;
 		prlog(PR_INFO, "CPU: P9 generation processor"
-		      "(max %d threads/core)\n", cpu_thread_count);
+		      " (max %d threads/core)\n", cpu_thread_count);
 		break;
 	default:
 		prerror("CPU: Unknown PVR, assuming 1 thread\n");
