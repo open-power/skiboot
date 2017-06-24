@@ -1512,46 +1512,6 @@ static bool xive_set_local_tables(struct xive *x)
 	return true;
 }
 
-static bool xive_read_bars(struct xive *x)
-{
-	uint64_t bar, msk;
-
-	/* Read IC BAR */
-	bar = xive_regrx(x, CQ_IC_BAR);
-	if (bar & CQ_IC_BAR_64K)
-		x->ic_shift = 16;
-	else
-		x->ic_shift = 12;
-	x->ic_size = 8ul << x->ic_shift;
-	x->ic_base = (void *)(bar & 0x00ffffffffffffffull);
-
-	/* Read TM BAR */
-	bar = xive_regrx(x, CQ_TM1_BAR);
-	assert(bar & CQ_TM_BAR_VALID);
-	if (bar & CQ_TM_BAR_64K)
-		x->tm_shift = 16;
-	else
-		x->tm_shift = 12;
-	x->tm_size = 4ul << x->tm_shift;
-	x->tm_base = (void *)(bar & 0x00ffffffffffffffull);
-
-	/* Read PC BAR */
-	bar = xive_regr(x, CQ_PC_BAR);
-	msk = xive_regr(x, CQ_PC_BARM) | 0xffffffc000000000ul;
-	assert(bar & CQ_PC_BAR_VALID);
-	x->pc_size = (~msk) + 1;
-	x->pc_base = (void *)(bar & 0x00ffffffffffffffull);
-
-	/* Read VC BAR */
-	bar = xive_regr(x, CQ_VC_BAR);
-	msk = xive_regr(x, CQ_VC_BARM) | 0xfffff80000000000ul;
-	assert(bar & CQ_VC_BAR_VALID);
-	x->vc_size = (~msk) + 1;
-	x->vc_base = (void *)(bar & 0x00ffffffffffffffull);
-
-	return true;
-}
-
 static bool xive_configure_bars(struct xive *x)
 {
 	uint64_t chip_id = x->chip_id;
@@ -1615,44 +1575,6 @@ static bool xive_configure_bars(struct xive *x)
 	if (x->last_reg_error)
 		return false;
 
-	return true;
-}
-
-static void xive_dump_mmio(struct xive *x)
-{
-	prlog(PR_DEBUG, " CQ_CFG_PB_GEN = %016llx\n",
-	      in_be64(x->ic_base + CQ_CFG_PB_GEN));
-	prlog(PR_DEBUG, " CQ_MSGSND     = %016llx\n",
-	      in_be64(x->ic_base + CQ_MSGSND));
-}
-
-static bool xive_check_update_bars(struct xive *x)
-{
-	uint64_t val;
-	bool force_assign;
-
-	/* Check if IC BAR is enabled */
-	val = xive_regrx(x, CQ_IC_BAR);
-	if (x->last_reg_error)
-		return false;
-
-	/* Check if device-tree tells us to force-assign the BARs */
-#if 0
-	force_assign = dt_has_node_property(x->x_node,
-					    "force-assign-bars", NULL);
-#else
-	force_assign = true;
-#endif
-	if ((val & CQ_IC_BAR_VALID) && !force_assign) {
-		xive_dbg(x, "IC BAR valid, using existing values\n");
-		if (!xive_read_bars(x))
-			return false;
-	} else {
-		xive_warn(x, "IC BAR invalid, reconfiguring\n");
-		if (!xive_configure_bars(x))
-			return false;
-	}
-
 	/* Calculate some MMIO bases in the VC BAR */
 	x->esb_mmio = x->vc_base;
 	x->eq_mmio = x->vc_base + (x->vc_size / VC_MAX_SETS) * VC_ESB_SETS;
@@ -1666,6 +1588,14 @@ static bool xive_check_update_bars(struct xive *x)
 	xive_dbg(x, "VC: %14p [0x%012llx]\n", x->vc_base, x->vc_size);
 
 	return true;
+}
+
+static void xive_dump_mmio(struct xive *x)
+{
+	prlog(PR_DEBUG, " CQ_CFG_PB_GEN = %016llx\n",
+	      in_be64(x->ic_base + CQ_CFG_PB_GEN));
+	prlog(PR_DEBUG, " CQ_MSGSND     = %016llx\n",
+	      in_be64(x->ic_base + CQ_MSGSND));
 }
 
 static bool xive_config_init(struct xive *x)
@@ -2795,8 +2725,9 @@ static struct xive *init_one_xive(struct dt_node *np)
 	//xive_regwx(x, CQ_CFG_PB_GEN, xx);
 	//xive_regwx(x, CQ_MSGSND, xx);
 
-	/* Verify the BARs are initialized and if not, setup a default layout */
-	xive_check_update_bars(x);
+	/* Setup the BARs */
+	if (!xive_configure_bars(x))
+		goto fail;
 
 	/* Some basic global inits such as page sizes etc... */
 	if (!xive_config_init(x))
