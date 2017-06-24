@@ -348,18 +348,20 @@ void ffs_close(struct ffs_handle *ffs)
 int ffs_lookup_part(struct ffs_handle *ffs, const char *name,
 		    uint32_t *part_idx)
 {
-	int i = 0;
 	struct ffs_entry *ent = NULL;
+	int i = 0, rc = FFS_ERR_PART_NOT_FOUND;
 
 	list_for_each(&ffs->hdr.entries, ent, list) {
-		if (strncmp(name, ent->name, sizeof(ent->name)) == 0)
+		if (strncmp(name, ent->name, sizeof(ent->name)) == 0) {
+			rc = 0;
 			break;
+		}
 		i++;
 	}
 
-	if (part_idx)
+	if (rc == 0 && part_idx)
 		*part_idx = i;
-	return ent ? 0 : FFS_ERR_PART_NOT_FOUND;
+	return rc;
 }
 
 int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
