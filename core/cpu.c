@@ -657,7 +657,7 @@ void trigger_attn(void)
 	__trigger_attn();
 }
 
-void init_hid(void)
+static void init_hid(void)
 {
 	/* attn is enabled even when HV=0, so make sure it's off */
 	disable_attn();
@@ -929,6 +929,8 @@ void cpu_callin(struct cpu_thread *cpu)
 {
 	cpu->state = cpu_state_active;
 	cpu->job_has_no_return = false;
+
+	init_hid();
 }
 
 static void opal_start_thread_job(void *data)

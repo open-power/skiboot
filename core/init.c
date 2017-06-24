@@ -1055,8 +1055,6 @@ void __noreturn __secondary_cpu_entry(void)
 	/* Secondary CPU called in */
 	cpu_callin(cpu);
 
-	init_hid();
-
 	/* Some XIVE setup */
 	xive_cpu_callin(cpu);
 

@@ -129,7 +129,6 @@ static inline void __nomcount cpu_relax(void)
 void pre_init_boot_cpu(void);
 void init_boot_cpu(void);
 void init_all_cpus(void);
-void init_hid(void);
 
 /* This brings up our secondaries */
 extern void cpu_bringup(void);
