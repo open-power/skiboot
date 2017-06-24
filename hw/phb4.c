@@ -1892,13 +1892,17 @@ static void phb4_prepare_link_change(struct pci_slot *slot, bool is_up)
 		/* Don't block PCI-CFG */
 		p->flags &= ~PHB4_CFG_BLOCKED;
 
-		/* Clear error link enable & error link down kill enable */
-		out_be64(p->regs + PHB_PCIE_MISC_STRAP, 0);
+		/* Re-enable link down errors */
+		out_be64(p->regs + PHB_PCIE_MISC_STRAP,
+			 0x0000060000000000ull);
 
-		/* Disable all error status indicators that trigger irqs */
-		out_be64(p->regs + PHB_REGB_ERR_INF_ENABLE, 0);
-		out_be64(p->regs + PHB_REGB_ERR_ERC_ENABLE, 0);
-		out_be64(p->regs + PHB_REGB_ERR_FAT_ENABLE, 0);
+		/* Re-enable error status indicators that trigger irqs */
+		out_be64(p->regs + PHB_REGB_ERR_INF_ENABLE,
+			 0x2130006efca8bc00ull);
+		out_be64(p->regs + PHB_REGB_ERR_ERC_ENABLE,
+			 0x0000000000000000ull);
+		out_be64(p->regs + PHB_REGB_ERR_FAT_ENABLE,
+			 0xde8fff91035743ffull);
 
 		/*
 		 * We might lose the bus numbers during the reset operation
@@ -1919,6 +1923,15 @@ static void phb4_prepare_link_change(struct pci_slot *slot, bool is_up)
 		reg32 |= PCIECAP_AER_CE_RECVR_ERR;
 		phb4_pcicfg_write32(&p->phb, 0, p->aercap +
 				    PCIECAP_AER_CE_MASK, reg32);
+
+		/* Clear error link enable & error link down kill enable */
+		out_be64(p->regs + PHB_PCIE_MISC_STRAP, 0);
+
+		/* Disable all error status indicators that trigger irqs */
+		out_be64(p->regs + PHB_REGB_ERR_INF_ENABLE, 0);
+		out_be64(p->regs + PHB_REGB_ERR_ERC_ENABLE, 0);
+		out_be64(p->regs + PHB_REGB_ERR_FAT_ENABLE, 0);
+
 		/* Block PCI-CFG access */
 		p->flags |= PHB4_CFG_BLOCKED;
 	}
