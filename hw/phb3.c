@@ -4934,16 +4934,6 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 	add_chip_dev_associativity(np);
 }
 
-void phb3_preload_vpd(void)
-{
-	const struct dt_property *prop;
-
-	prop = dt_find_property(dt_root, "ibm,io-vpd");
-	if (!prop) {
-		/* LX VPD Lid not already loaded */
-		vpd_preload(dt_root);
-	}
-}
 
 void probe_phb3(void)
 {

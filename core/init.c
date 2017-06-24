@@ -992,7 +992,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	pci_nvram_init();
 
-	phb3_preload_vpd();
+	preload_io_vpd();
 	preload_capp_ucode();
 	start_preload_kernel();
 

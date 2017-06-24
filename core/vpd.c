@@ -272,3 +272,14 @@ void vpd_preload(struct dt_node *hub_node)
 
 	vpd_lid = vpd_lid_preload(lxr);
 }
+
+void preload_io_vpd(void)
+{
+	const struct dt_property *prop;
+
+	prop = dt_find_property(dt_root, "ibm,io-vpd");
+	if (!prop) {
+		/* LX VPD Lid not already loaded */
+		vpd_preload(dt_root);
+	}
+}
