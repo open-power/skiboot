@@ -4074,7 +4074,7 @@ static void phb4_create(struct dt_node *np)
 	p->phb.base_loc_code = dt_prop_get_def(dt_root,
 					       "ibm,io-base-loc-code", NULL);
 	if (!p->phb.base_loc_code)
-		PHBERR(p, "Base location code not found !\n");
+		PHBDBG(p, "Base location code not found !\n");
 
 	/*
 	 * Grab CEC IO VPD load info from the root of the device-tree,
