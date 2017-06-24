@@ -524,7 +524,10 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 
 	rc = ffs_lookup_part(ffs, name, &ffs_part_num);
 	if (rc) {
-		prerror("FLASH: No %s partition\n", name);
+		/* This is not an error per-se, some partitions
+		 * are purposefully absent, don't spam the logs
+		 */
+	        prlog(PR_DEBUG, "FLASH: No %s partition\n", name);
 		goto out_free_ffs;
 	}
 	rc = ffs_part_info(ffs, ffs_part_num, NULL,
@@ -776,7 +779,8 @@ int flash_start_preload_resource(enum resource_id id, uint32_t subid,
 	r->len = len;
 	r->result = OPAL_EMPTY;
 
-	printf("FLASH: Queueing preload of %x/%x\n", r->id, r->subid);
+	prlog(PR_DEBUG, "FLASH: Queueing preload of %x/%x\n",
+	      r->id, r->subid);
 
 	lock(&flash_load_resource_lock);
 	if (list_empty(&flash_load_resource_queue)) {
