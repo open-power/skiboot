@@ -264,20 +264,54 @@ static int64_t phb4_rc_write(struct phb4 *p, uint32_t offset, uint8_t sz,
 			     uint32_t val)
 {
 	uint32_t reg = offset & ~3;
-	uint32_t old, mask, shift;
+	uint32_t old, mask, shift, oldold;
 	int64_t rc;
 
 	if (reg > PHB_RC_CONFIG_SIZE)
 		return OPAL_SUCCESS;
 
-	/* If size isn't 4-bytes, do a RMW cycle
-	 *
-	 * XXX TODO: Filter out registers that do write-1-to-clear !!!
-	 */
+	/* If size isn't 4-bytes, do a RMW cycle */
 	if (sz < 4) {
 		rc = phb4_rc_read(p, reg, 4, &old);
 		if (rc != OPAL_SUCCESS)
 			return rc;
+
+		/*
+		 * Since we have to Read-Modify-Write here, we need to filter
+		 * out registers that have write-1-to-clear bits to prevent
+		 * clearing stuff we shouldn't be.  So for any register this
+		 * applies to, mask out those bits.
+		 */
+		oldold = old;
+		switch(reg) {
+		case 0x1C: /* Secondary status */
+			old &= 0x00ffffff; /* mask out 24-31 */
+			break;
+		case 0x50: /* EC - Device status */
+			old &= 0xfff0ffff; /* mask out 16-19 */
+			break;
+		case 0x58: /* EC - Link status */
+			old &= 0x3fffffff; /* mask out 30-31 */
+			break;
+		case 0x78: /* EC - Link status 2 */
+			old &= 0xf000ffff; /* mask out 16-27 */
+			break;
+		/* These registers *only* have write-1-to-clear bits */
+		case 0x104: /* AER - Uncorr. error status */
+		case 0x110: /* AER - Corr. error status */
+		case 0x130: /* AER - Root error status */
+		case 0x180: /* P16 - status */
+		case 0x184: /* P16 - LDPM status */
+		case 0x188: /* P16 - FRDPM status */
+		case 0x18C: /* P16 - SRDPM status */
+			old &= 0x00000000;
+			break;
+		}
+
+		if (old != oldold)
+			PHBDBG(p, "Rewrote %x to %x for reg %x for W1C\n",
+			       oldold, old, reg);
+
 		if (sz == 1) {
 			shift = (offset & 3) << 3;
 			mask = 0xff << shift;
