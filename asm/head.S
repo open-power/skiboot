@@ -636,19 +636,6 @@ fast_reset_entry:
 	bl	fast_reboot_entry
 	b	.
 
-.global cleanup_tlb
-cleanup_tlb:
-	/* Clean the TLB */
-	li	%r3,512
-	mtctr	%r3
-	li	%r4,0xc00		/* IS field = 0b11 */
-	ptesync
-1:	tlbiel	%r4
-	addi	%r4,%r4,0x1000
-	bdnz	1b
-	ptesync
-	blr
-
 /* Functions to initialize replicated and shared SPRs to sane
  * values. This is called at boot and on soft-reset
  */
