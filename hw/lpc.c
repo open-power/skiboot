@@ -94,6 +94,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_LPC_SYNC_PERF, OPAL_PLATFORM_ERR_EVT, OPAL_LPC,
 #define   LPC_HC_IRQSER_START_4CLK	0x00000000
 #define   LPC_HC_IRQSER_START_6CLK	0x01000000
 #define   LPC_HC_IRQSER_START_8CLK	0x02000000
+#define   LPC_HC_IRQSER_AUTO_CLEAR	0x00800000
 #define LPC_HC_IRQMASK		0x34	/* same bit defs as LPC_HC_IRQSTAT */
 #define LPC_HC_IRQSTAT		0x38
 #define   LPC_HC_IRQ_SERIRQ0		0x80000000u /* all bits down to ... */
@@ -621,7 +622,14 @@ static void lpc_setup_serirq(struct lpcm *lpc)
 	/* Check whether we should enable serirq */
 	if (mask & LPC_HC_IRQ_SERIRQ_ALL) {
 		rc = opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL,
-			       LPC_HC_IRQSER_EN | LPC_HC_IRQSER_START_4CLK, 4);
+			       LPC_HC_IRQSER_EN |
+			       LPC_HC_IRQSER_START_4CLK |
+			       /*
+				* New mode bit for P9N DD2.0 (ignored otherwise)
+				* when set we no longer have to manually clear
+				* the SerIRQs on EOI.
+				*/
+			       LPC_HC_IRQSER_AUTO_CLEAR, 4);
 		DBG_IRQ("LPC: SerIRQ enabled\n");
 	} else {
 		rc = opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL,
