@@ -529,9 +529,6 @@ def_model:
 		mi = machine_info_lookup(model->prop);
 		if (mi) {
 			model_name = mi->name;
-		} else {
-			model_name = "Unknown";
-			prlog(PR_WARNING, "VPD: Model name %s not known\n", model->prop);
 		}
 	}
 
