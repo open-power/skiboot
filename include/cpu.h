@@ -48,7 +48,6 @@ struct cpu_thread {
 	uint32_t			server_no;
 	uint32_t			chip_id;
 	bool				is_secondary;
-	bool				current_hile;
 	struct cpu_thread		*primary;
 	enum cpu_thread_state		state;
 	struct dt_node			*node;
@@ -270,5 +269,7 @@ extern unsigned long __attrconst cpu_stack_top(unsigned int pir);
 
 extern void cpu_idle_job(void);
 extern void cpu_idle_delay(unsigned long delay, unsigned long min_pm);
+
+extern void cpu_fast_reboot_complete(void);
 
 #endif /* __CPU_H */

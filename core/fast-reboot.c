@@ -370,8 +370,6 @@ static void cleanup_cpu_state(void)
 {
 	struct cpu_thread *cpu = this_cpu();
 
-	cpu->current_hile = false;
-
 	/* Per core cleanup */
 	if (cpu_is_thread0(cpu)) {
 		/* Shared SPRs whacked back to normal */
@@ -561,6 +559,9 @@ void __noreturn fast_reboot_entry(void)
 
 	/* Set our state to active */
 	this_cpu()->state = cpu_state_active;
+
+	/* Let the CPU layer do some last minute global cleanups */
+	cpu_fast_reboot_complete();
 
 	/* We can now do NAP mode */
 	cpu_set_pm_enable(true);

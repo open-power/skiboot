@@ -52,6 +52,7 @@ static bool hile_supported;
 static unsigned long hid0_hile;
 static unsigned long hid0_attn;
 static bool pm_enabled;
+static bool current_hile_mode;
 
 unsigned long cpu_secondary_start __force_data = 0;
 
@@ -1024,44 +1025,51 @@ static int64_t opal_return_cpu(void)
 }
 opal_call(OPAL_RETURN_CPU, opal_return_cpu, 0);
 
-static void cpu_change_hile(void *hilep)
+struct hid0_change_req {
+	uint64_t clr_bits;
+	uint64_t set_bits;
+};
+
+static void cpu_change_hid0(void *__req)
 {
-	bool hile = *(bool *)hilep;
-	unsigned long hid0;
+	struct hid0_change_req *req = __req;
+	unsigned long hid0, new_hid0;
 
-	hid0 = mfspr(SPR_HID0);
-	if (hile)
-		hid0 |= hid0_hile;
-	else
-		hid0 &= ~hid0_hile;
-	prlog(PR_DEBUG, "CPU: [%08x] HID0 set to 0x%016lx\n",
-	      this_cpu()->pir, hid0);
-	set_hid0(hid0);
-
-	this_cpu()->current_hile = hile;
+	hid0 = new_hid0 = mfspr(SPR_HID0);
+	new_hid0 &= ~req->clr_bits;
+	new_hid0 |= req->set_bits;
+	prlog(PR_DEBUG, "CPU: [%08x] HID0 change 0x%016lx -> 0x%016lx\n",
+		this_cpu()->pir, hid0, new_hid0);
+	set_hid0(new_hid0);
 }
 
-static int64_t cpu_change_all_hile(bool hile)
+static int64_t cpu_change_all_hid0(struct hid0_change_req *req)
 {
 	struct cpu_thread *cpu;
 
-	prlog(PR_INFO, "CPU: Switching HILE on all CPUs to %d\n", hile);
-
 	for_each_available_cpu(cpu) {
-		if (cpu->current_hile == hile)
+		if (!cpu_is_thread0(cpu))
 			continue;
 		if (cpu == this_cpu()) {
-			cpu_change_hile(&hile);
+			cpu_change_hid0(req);
 			continue;
 		}
-		cpu_wait_job(cpu_queue_job(cpu, "cpu_change_hile",
-					   cpu_change_hile, &hile), true);
+		cpu_wait_job(cpu_queue_job(cpu, "cpu_change_hid0",
+			cpu_change_hid0, req), true);
 	}
 	return OPAL_SUCCESS;
 }
 
+void cpu_fast_reboot_complete(void)
+{
+	/* Fast reboot will have cleared HID0:HILE */
+	current_hile_mode = false;
+
+}
+
 static int64_t opal_reinit_cpus(uint64_t flags)
 {
+	struct hid0_change_req req = { 0, 0 };
 	struct cpu_thread *cpu;
 	int64_t rc = OPAL_SUCCESS;
 	int i;
@@ -1105,18 +1113,25 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 	this_cpu()->in_reinit = true;
 	unlock(&reinit_lock);
 
-	/*
-	 * If the flags affect endianness and we are on P8 DD2 or later, then
-	 * use the HID bit. We use the PVR (we could use the EC level in
-	 * the chip but the PVR is more readily available).
-	 */
+	/* If HILE change via HID0 is supported ... */
 	if (hile_supported &&
-	    (flags & (OPAL_REINIT_CPUS_HILE_BE | OPAL_REINIT_CPUS_HILE_LE))) {
+	    (flags & (OPAL_REINIT_CPUS_HILE_BE |
+		      OPAL_REINIT_CPUS_HILE_LE))) {
 		bool hile = !!(flags & OPAL_REINIT_CPUS_HILE_LE);
 
 		flags &= ~(OPAL_REINIT_CPUS_HILE_BE | OPAL_REINIT_CPUS_HILE_LE);
-		rc = cpu_change_all_hile(hile);
+		if (hile != current_hile_mode) {
+			if (hile)
+				req.set_bits |= hid0_hile;
+			else
+				req.clr_bits |= hid0_hile;
+			current_hile_mode = hile;
+		}
 	}
+
+	/* Apply HID bits changes if any */
+	if (req.set_bits || req.clr_bits)
+		cpu_change_all_hid0(&req);
 
 	/* If we have a P7, error out for LE switch, do nothing for BE */
 	if (proc_gen < proc_gen_p8) {
