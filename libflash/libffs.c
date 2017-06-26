@@ -144,6 +144,14 @@ static int ffs_entry_to_flash(struct ffs_hdr *hdr,
 	if (!ent)
 		return FFS_ERR_PART_NOT_FOUND;
 
+	/*
+	 * So that the checksum gets calculated correctly at least the
+	 * dst->checksum must be zero before calling ffs_entry_checksum()
+	 * memset()ting the entire struct to zero is probably wise as it
+	 * appears the reserved fields are always zero.
+	 */
+	memset(dst, 0, sizeof(*dst));
+
 	memcpy(dst->name, src->name, sizeof(dst->name));
 	dst->name[FFS_PART_NAME_MAX] = '\0';
 	dst->base = cpu_to_be32(src->base / hdr->block_size);
@@ -624,6 +632,14 @@ int ffs_hdr_finalise(struct blocklevel_device *bl, struct ffs_hdr *hdr)
 	real_hdr = malloc(ffs_hdr_raw_size(num_entries));
 	if (!real_hdr)
 		return FLASH_ERR_MALLOC_FAILED;
+
+	/*
+	 * So that the checksum gets calculated correctly at least the
+	 * real_hdr->checksum must be zero before calling ffs_hdr_checksum()
+	 * memset()ting the entire struct to zero is probably wise as it
+	 * appears the reserved fields are always zero.
+	 */
+	memset(real_hdr, 0, sizeof(*real_hdr));
 
 	real_hdr->magic = cpu_to_be32(FFS_MAGIC);
 	real_hdr->version = cpu_to_be32(hdr->version);
