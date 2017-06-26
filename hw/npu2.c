@@ -154,6 +154,11 @@ static struct npu2_dev *npu2_bdf_to_dev(struct npu2 *p,
 	return NULL;
 }
 
+static inline void npu2_get_bar(uint32_t gcid, struct npu2_bar *bar)
+{
+	phys_map_get(gcid, bar->type, bar->index, &bar->base, &bar->size);
+}
+
 static void npu2_read_bar(struct npu2 *p, struct npu2_bar *bar)
 {
 	uint64_t reg, val;
@@ -1116,55 +1121,45 @@ static const struct phb_ops npu_ops = {
 
 static void assign_mmio_bars(uint64_t gcid, uint32_t scom, uint64_t reg[2], uint64_t mm_win[2])
 {
-	uint64_t mem_start;
 	uint32_t i;
 	struct npu2_bar *bar;
 	struct npu2_bar npu2_bars[] = {
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0,   NPU2_PHY_BAR), .size = 0x1000000,
+		/*
+		 * NPU_REGS must be first in this list, at least on DD1.
+		 * On DD2, stack 0 will be used for NPU_REGS, stack 1/2 for NPU_PHY.
+		 */
+		{ .type = NPU_REGS, .index = 0,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0, NPU2_PHY_BAR),
 		  .flags = NPU2_BAR_FLAG_ENABLED },
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0,   NPU2_PHY_BAR), .size =  0x200000,
+		{ .type = NPU_PHY, .index = 0,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0, NPU2_PHY_BAR),
 		  .flags = NPU2_BAR_FLAG_ENABLED },
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_1, 0,   NPU2_PHY_BAR), .size =  0x200000,
+		{ .type = NPU_PHY, .index = 1,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_1, 0, NPU2_PHY_BAR),
 		  .flags = NPU2_BAR_FLAG_ENABLED },
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0,  NPU2_NTL0_BAR), .size =   0x20000 },
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0,  NPU2_NTL1_BAR), .size =   0x20000 },
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_1, 0,  NPU2_NTL0_BAR), .size =   0x20000 },
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_1, 0,  NPU2_NTL1_BAR), .size =   0x20000 },
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0,  NPU2_NTL0_BAR), .size =   0x20000 },
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0,  NPU2_NTL1_BAR), .size =   0x20000 },
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0, NPU2_GENID_BAR), .size =   0x20000 },
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_1, 0, NPU2_GENID_BAR), .size =   0x20000 },
-		{ .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0, NPU2_GENID_BAR), .size =   0x20000 },
+		{ .type = NPU_NTL, .index = 0,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0, NPU2_NTL0_BAR) },
+		{ .type = NPU_NTL, .index = 1,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0, NPU2_NTL1_BAR) },
+		{ .type = NPU_NTL, .index = 2,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_1, 0, NPU2_NTL0_BAR) },
+		{ .type = NPU_NTL, .index = 3,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_1, 0, NPU2_NTL1_BAR) },
+		{ .type = NPU_NTL, .index = 4,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0, NPU2_NTL0_BAR) },
+		{ .type = NPU_NTL, .index = 5,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0, NPU2_NTL1_BAR) },
+		{ .type = NPU_GENID, .index = 0,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0, NPU2_GENID_BAR) },
+		{ .type = NPU_GENID, .index = 1,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_1, 0, NPU2_GENID_BAR) },
+		{ .type = NPU_GENID, .index = 2,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0, NPU2_GENID_BAR) },
 	};
 
-	mem_start = 0x6030200000000;
-	mem_start |= gcid << PPC_BITLSHIFT(21);
-
-	/*
-	 * We're going to assign the BARs in reversed order according
-	 * to their sizes, just like the order we have in npu_bars[].
-	 * In that way, all BARs will be aligned perfectly without
-	 * wasting resources. Also, the Linux kernel won't change
-	 * anything though it attempts to reassign the BARs that
-	 * it can see, which are NTL and GENID BARs.
-	 *
-	 * GLOBAL MMIO (16MB)
-	 *        PHY0 (2MB)
-	 *        PHB1 (2MB)
-	 *        NTL0 (128KB)
-	 *        NTL1 (128KB)
-	 *        NTL2 (128KB)
-	 *        NTL3 (128KB)
-	 *        NTL4 (128KB)
-	 *        NTL5 (128KB)
-	 *      GENID0 (128KB)
-	 *      GENID1 (128KB)
-	 *      GENID2 (128KB)
-	 */
 	for (i = 0; i < ARRAY_SIZE(npu2_bars); i++) {
 		bar = &npu2_bars[i];
-		bar->base = mem_start;
-		mem_start += bar->size;
+		npu2_get_bar(gcid, bar);
 		npu2_write_bar(NULL, bar, gcid, scom);
 	}
 
@@ -1457,6 +1452,7 @@ static void npu2_populate_devices(struct npu2 *p,
 	struct npu2_dev *dev;
 	struct dt_node *npu2_dn, *link;
 	uint32_t npu_phandle, index = 0;
+	int stack;
 
 	/*
 	 * Get the npu node which has the links which we expand here
@@ -1489,23 +1485,23 @@ static void npu2_populate_devices(struct npu2 *p,
 		dev->pl_xscom_base = dt_prop_get_u64(link, "ibm,npu-phy");
 		dev->lane_mask = dt_prop_get_u32(link, "ibm,npu-lane-mask");
 
-		/* Populate BARs. BAR0/1 is the NTL bar. We initialise
-		 * it from the HW. */
+		/* Populate BARs. BAR0/1 is the NTL bar. */
+		stack = NPU2_STACK_STCK_0 + NPU2DEV_STACK(dev);
 		npu2_bar = &dev->bars[0].npu2_bar;
-		if (NPU2DEV_BRICK(dev) == 0)
-			/* Leave the block as 0 - the read/write bar
-			 * functions fill it in */
-			npu2_bar->reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(dev), 0, NPU2_NTL0_BAR);
-		else
-			npu2_bar->reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(dev), 0, NPU2_NTL1_BAR);
+		npu2_bar->type = NPU_NTL;
+		npu2_bar->index = dev->index;
+		npu2_bar->reg = NPU2_REG_OFFSET(stack, 0, NPU2DEV_BRICK(dev) == 0 ?
+						NPU2_NTL0_BAR : NPU2_NTL1_BAR);
+	        npu2_get_bar(p->chip_id, npu2_bar);
 
-		npu2_read_bar(p, npu2_bar);
 		dev->bars[0].flags = PCI_CFG_BAR_TYPE_MEM | PCI_CFG_BAR_MEM64;
 
 		/* BAR2/3 is the GENID bar. */
 		npu2_bar = &dev->bars[1].npu2_bar;
-		npu2_bar->reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(dev), 0, NPU2_GENID_BAR);
-		npu2_read_bar(p, npu2_bar);
+		npu2_bar->type = NPU_GENID;
+		npu2_bar->index = NPU2DEV_STACK(dev);
+		npu2_bar->reg = NPU2_REG_OFFSET(stack, 0, NPU2_GENID_BAR);
+	        npu2_get_bar(p->chip_id, npu2_bar);
 
 		/* The GENID is a single physical BAR that we split
 		 * for each emulated device */

@@ -17,6 +17,8 @@
 #ifndef __NPU2_H
 #define __NPU2_H
 
+#include <phys-map.h>
+
 /* Debugging options */
 #define NPU2DBG(p, fmt, a...)	prlog(PR_DEBUG, "NPU%d: " fmt, \
 				      (p)->phb.opal_id, ##a)
@@ -49,6 +51,8 @@
  * emulated PCIe BARs. The is a subtle difference between the two as
  * not all BARs are exposed outside of skiboot. */
 struct npu2_bar {
+	enum phys_map_type	type;
+	int			index;
 #define NPU2_BAR_FLAG_ENABLED	0x0010
 
 /* Generation ID's are a single space in the hardware but we split
