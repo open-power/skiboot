@@ -1077,6 +1077,27 @@ void cpu_set_radix_mode(void)
 	cpu_change_all_hid0(&req);
 }
 
+static void cpu_cleanup_one(void *param __unused)
+{
+	mtspr(SPR_AMR, 0);
+	mtspr(SPR_IAMR, 0);
+}
+
+static int64_t cpu_cleanup_all(void)
+{
+	struct cpu_thread *cpu;
+
+	for_each_available_cpu(cpu) {
+		if (cpu == this_cpu()) {
+			cpu_cleanup_one(NULL);
+			continue;
+		}
+		cpu_wait_job(cpu_queue_job(cpu, "cpu_cleanup",
+					   cpu_cleanup_one, NULL), true);
+	}
+	return OPAL_SUCCESS;
+}
+
 void cpu_fast_reboot_complete(void)
 {
 	/* Fast reboot will have cleared HID0:HILE */
@@ -1131,6 +1152,14 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 	this_cpu()->state = cpu_state_active;
 	this_cpu()->in_reinit = true;
 	unlock(&reinit_lock);
+
+	/*
+	 * This cleans up a few things left over by Linux
+	 * that can cause problems in cases such as radix->hash
+	 * transitions. Ideally Linux should do it but doing it
+	 * here works around existing broken kernels.
+	 */
+	cpu_cleanup_all();
 
 	/* If HILE change via HID0 is supported ... */
 	if (hile_supported &&
