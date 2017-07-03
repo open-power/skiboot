@@ -154,7 +154,13 @@
 		((((1UL) << (t_count)) - 1) << ((s_id) * (t_count)))
 
 /* xscom addresses for core FIR (Fault Isolation Register) */
-#define CORE_FIR		0x10013100
+#define P8_CORE_FIR		0x10013100
+#define P9_CORE_FIR		0x20010A40
+
+/* xscom addresses for pMisc Receive Malfunction Alert Register */
+#define P8_MALFUNC_ALERT	0x02020011
+#define P9_MALFUNC_ALERT	0x00090022
+
 #define NX_STATUS_REG		0x02013040 /* NX status register */
 #define NX_DMA_ENGINE_FIR	0x02013100 /* DMA & Engine FIR Data Register */
 #define NX_PBI_FIR		0x02013080 /* PowerBus Interface FIR Register */
@@ -215,6 +221,23 @@ static const struct nx_xstop_bit_info nx_pbi_xstop_bits[] = {
 };
 
 static struct lock hmi_lock = LOCK_UNLOCKED;
+static uint32_t malf_alert_scom;
+
+static int setup_scom_addresses(void)
+{
+	switch (proc_gen) {
+	case proc_gen_p8:
+		malf_alert_scom = P8_MALFUNC_ALERT;
+		return 1;
+	case proc_gen_p9:
+		malf_alert_scom = P9_MALFUNC_ALERT;
+		return 1;
+	default:
+		prerror("HMI: %s: Unknown CPU type\n", __func__);
+		break;
+	}
+	return 0;
+}
 
 static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
 {
@@ -244,6 +267,25 @@ static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
 				num_params, (uint64_t *)hmi_evt);
 }
 
+static int read_core_fir(uint32_t chip_id, uint32_t core_id, uint64_t *core_fir)
+{
+	int rc;
+
+	switch (proc_gen) {
+	case proc_gen_p8:
+		rc = xscom_read(chip_id,
+			XSCOM_ADDR_P8_EX(core_id, P8_CORE_FIR), core_fir);
+		break;
+	case proc_gen_p9:
+		rc = xscom_read(chip_id,
+			XSCOM_ADDR_P9_EC(core_id, P9_CORE_FIR), core_fir);
+		break;
+	default:
+		rc = OPAL_HARDWARE;
+	}
+	return rc;
+}
+
 static bool decode_core_fir(struct cpu_thread *cpu,
 				struct OpalHMIEvent *hmi_evt)
 {
@@ -260,8 +302,7 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 	core_id = pir_to_core_id(cpu->pir);
 
 	/* Get CORE FIR register value. */
-	ret = xscom_read(cpu->chip_id, XSCOM_ADDR_P8_EX(core_id, CORE_FIR),
-			 &core_fir);
+	ret = read_core_fir(cpu->chip_id, core_id, &core_fir);
 
 	if (ret == OPAL_HARDWARE) {
 		prerror("HMI: XSCOM error reading CORE FIR\n");
@@ -529,14 +570,24 @@ static void decode_malfunction(struct OpalHMIEvent *hmi_evt)
 	uint64_t malf_alert;
 	bool event_generated = false;
 
-	xscom_read(this_cpu()->chip_id, 0x2020011, &malf_alert);
+	if (!setup_scom_addresses()) {
+		prerror("HMI: Failed to setup scom addresses\n");
+		/* Send an unknown HMI event. */
+		hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_UNKNOWN;
+		hmi_evt->u.xstop_error.xstop_reason = 0;
+		queue_hmi_event(hmi_evt, false);
+		return;
+	}
+
+	xscom_read(this_cpu()->chip_id, malf_alert_scom, &malf_alert);
 
 	if (!malf_alert)
 		return;
 
 	for (i = 0; i < 64; i++) {
 		if (malf_alert & PPC_BIT(i)) {
-			xscom_write(this_cpu()->chip_id, 0x02020011, ~PPC_BIT(i));
+			xscom_write(this_cpu()->chip_id, malf_alert_scom,
+								~PPC_BIT(i));
 			find_capp_checkstop_reason(i, hmi_evt, &event_generated);
 			find_nx_checkstop_reason(i, hmi_evt, &event_generated);
 			find_npu_checkstop_reason(i, hmi_evt, &event_generated);
