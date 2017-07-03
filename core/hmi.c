@@ -161,9 +161,13 @@
 #define P8_MALFUNC_ALERT	0x02020011
 #define P9_MALFUNC_ALERT	0x00090022
 
-#define NX_STATUS_REG		0x02013040 /* NX status register */
-#define NX_DMA_ENGINE_FIR	0x02013100 /* DMA & Engine FIR Data Register */
-#define NX_PBI_FIR		0x02013080 /* PowerBus Interface FIR Register */
+#define P8_NX_STATUS_REG	0x02013040 /* NX status register */
+#define P8_NX_DMA_ENGINE_FIR	0x02013100 /* DMA & Engine FIR Data Register */
+#define P8_NX_PBI_FIR		0x02013080 /* PowerBus Interface FIR Register */
+
+#define P9_NX_STATUS_REG	0x02011040 /* NX status register */
+#define P9_NX_DMA_ENGINE_FIR	0x02011100 /* DMA & Engine FIR Data Register */
+#define P9_NX_PBI_FIR		0x02011080 /* PowerBus Interface FIR Register */
 
 /*
  * Bit 54 from NX status register is set to 1 when HMI interrupt is triggered
@@ -222,15 +226,24 @@ static const struct nx_xstop_bit_info nx_pbi_xstop_bits[] = {
 
 static struct lock hmi_lock = LOCK_UNLOCKED;
 static uint32_t malf_alert_scom;
+static uint32_t nx_status_reg;
+static uint32_t nx_dma_engine_fir;
+static uint32_t nx_pbi_fir;
 
 static int setup_scom_addresses(void)
 {
 	switch (proc_gen) {
 	case proc_gen_p8:
 		malf_alert_scom = P8_MALFUNC_ALERT;
+		nx_status_reg = P8_NX_STATUS_REG;
+		nx_dma_engine_fir = P8_NX_DMA_ENGINE_FIR;
+		nx_pbi_fir = P8_NX_PBI_FIR;
 		return 1;
 	case proc_gen_p9:
 		malf_alert_scom = P9_MALFUNC_ALERT;
+		nx_status_reg = P9_NX_STATUS_REG;
+		nx_dma_engine_fir = P9_NX_DMA_ENGINE_FIR;
+		nx_pbi_fir = P9_NX_PBI_FIR;
 		return 1;
 	default:
 		prerror("HMI: %s: Unknown CPU type\n", __func__);
@@ -441,7 +454,7 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	int i;
 
 	/* Get NX status register value. */
-	if (xscom_read(flat_chip_id, NX_STATUS_REG, &nx_status) != 0) {
+	if (xscom_read(flat_chip_id, nx_status_reg, &nx_status) != 0) {
 		prerror("HMI: XSCOM error reading NX_STATUS_REG\n");
 		return;
 	}
@@ -457,13 +470,13 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	hmi_evt->u.xstop_error.u.chip_id = flat_chip_id;
 
 	/* Get DMA & Engine FIR data register value. */
-	if (xscom_read(flat_chip_id, NX_DMA_ENGINE_FIR, &nx_dma_fir) != 0) {
+	if (xscom_read(flat_chip_id, nx_dma_engine_fir, &nx_dma_fir) != 0) {
 		prerror("HMI: XSCOM error reading NX_DMA_ENGINE_FIR\n");
 		return;
 	}
 
 	/* Get PowerBus Interface FIR data register value. */
-	if (xscom_read(flat_chip_id, NX_PBI_FIR, &nx_pbi_fir) != 0) {
+	if (xscom_read(flat_chip_id, nx_pbi_fir, &nx_pbi_fir) != 0) {
 		prerror("HMI: XSCOM error reading NX_PBI_FIR\n");
 		return;
 	}
@@ -488,7 +501,7 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	 * The behavior of this bit and all FIR bits are documented in
 	 * RAS spreadsheet.
 	 */
-	xscom_write(flat_chip_id, NX_DMA_ENGINE_FIR, PPC_BIT(38));
+	xscom_write(flat_chip_id, nx_dma_engine_fir, PPC_BIT(38));
 
 	/* Send an HMI event. */
 	queue_hmi_event(hmi_evt, 0);
