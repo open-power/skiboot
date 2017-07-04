@@ -68,6 +68,7 @@ struct spira_ntuples {
 	struct spira_ntuple	pcia;			/* 0x2e0 */
 	struct spira_ntuple	proc_chip;		/* 0x300 */
 	struct spira_ntuple	hs_data;		/* 0x320 */
+	struct spira_ntuple	ipmi_sensor;		/* 0x360 */
 };
 
 struct spira {
@@ -81,7 +82,7 @@ struct spira {
 	 *
 	 * According to FSP engineers, this is an okay thing to do.
 	 */
-	u8			reserved[0xc0];
+	u8			reserved[0xa0];
 } __packed __align(0x100);
 
 extern struct spira spira;
@@ -1062,6 +1063,27 @@ struct sppcrd_chip_tod {
 
 /* Idata index 0 : System attribute data */
 #define HSERV_IDATA_SYS_ATTR	0
+
+/* IPMI sensors mapping data */
+#define IPMI_SENSORS_HDIF_SIG	"FRUSE "
+
+/* Idata index 0 : Sensor mapping data */
+#define IPMI_SENSORS_IDATA_SENSORS	0
+
+struct ipmi_sensors_data {
+	__be32	slca_index;
+	uint8_t	type;
+	uint8_t	id;
+	__be16	reserved;
+} __packed;
+
+struct ipmi_sensors {
+	__be32	count;
+	struct ipmi_sensors_data data[];
+} __packed;
+
+/* Idata index 1 : LED - sensors ID mapping data */
+#define IPMI_SENSORS_IDATA_LED		1
 
 static inline const char *cpu_state(u32 flags)
 {

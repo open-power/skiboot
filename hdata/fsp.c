@@ -23,6 +23,7 @@
 #include <inttypes.h>
 #include <phys-map.h>
 #include <chip.h>
+#include <ipmi.h>
 
 #include "hdata.h"
 
@@ -280,6 +281,53 @@ static void add_uart(const struct spss_iopath *iopath, struct dt_node *lpc)
 		be32_to_cpu(iopath->lpc.uart_baud));
 }
 
+static void add_ipmi_sensors(struct dt_node *bmc_node)
+{
+	int i;
+	const struct HDIF_common_hdr *hdif_sensor;
+	const struct ipmi_sensors *ipmi_sensors;
+	struct dt_node *sensors_node, *sensor_node;
+
+	hdif_sensor = get_hdif(&spira.ntuples.ipmi_sensor, IPMI_SENSORS_HDIF_SIG);
+	if (!hdif_sensor) {
+		prlog(PR_DEBUG, "SENSORS: Missing IPMI sensors mappings tuple\n");
+		return;
+	}
+
+	ipmi_sensors = HDIF_get_idata(hdif_sensor, IPMI_SENSORS_IDATA_SENSORS, NULL);
+	if (!ipmi_sensors) {
+		prlog(PR_DEBUG, "SENSORS: bad data\n");
+		return;
+	}
+
+	sensors_node = dt_new(bmc_node, "sensors");
+	assert(sensors_node);
+
+	dt_add_property_cells(sensors_node, "#address-cells", 1);
+	dt_add_property_cells(sensors_node, "#size-cells", 0);
+
+	for (i = 0; i < be32_to_cpu(ipmi_sensors->count); i++) {
+		if(dt_find_by_name_addr(sensors_node, "sensor",
+					ipmi_sensors->data[i].id)) {
+			prlog(PR_WARNING, "SENSORS: Duplicate sensor ID : %x\n",
+			      ipmi_sensors->data[i].id);
+			continue;
+		}
+
+		/* We support only < MAX_IPMI_SENSORS sensors */
+		if (!(ipmi_sensors->data[i].type < MAX_IPMI_SENSORS))
+			continue;
+
+		sensor_node = dt_new_addr(sensors_node, "sensor",
+					  ipmi_sensors->data[i].id);
+		assert(sensor_node);
+		dt_add_property_string(sensor_node, "compatible", "ibm,ipmi-sensor");
+		dt_add_property_cells(sensor_node, "reg", ipmi_sensors->data[i].id);
+		dt_add_property_cells(sensor_node, "ipmi-sensor-type",
+				      ipmi_sensors->data[i].type);
+	}
+}
+
 static void bmc_create_node(const struct HDIF_common_hdr *sp)
 {
 	struct dt_node *bmc_node;
@@ -297,7 +345,9 @@ static void bmc_create_node(const struct HDIF_common_hdr *sp)
 	dt_add_property_cells(bmc_node, "#address-cells", 1);
 	dt_add_property_cells(bmc_node, "#size-cells", 0);
 
-	/* TODO: add sensor info under /bmc */
+	/* Add sensor info under /bmc */
+	add_ipmi_sensors(bmc_node);
+
 	sp_impl = HDIF_get_idata(sp, SPSS_IDATA_SP_IMPL, &size);
 	if (CHECK_SPPTR(sp_impl) && (size > 8)) {
 		dt_add_property_strings(bmc_node, "compatible", sp_impl->sp_family);
