@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -677,6 +677,7 @@ void mfsi_init(void)
 
 	for_each_chip(chip) {
 		chip->fsi_masters = zalloc(sizeof(struct mfsi) * 3);
+		assert(chip->fsi_masters);
 		mfsi_add(chip, &chip->fsi_masters[MFSI_cMFSI0], MFSI_cMFSI0);
 		mfsi_add(chip, &chip->fsi_masters[MFSI_hMFSI0], MFSI_hMFSI0);
 		mfsi_add(chip, &chip->fsi_masters[MFSI_cMFSI1], MFSI_cMFSI1);
