@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -474,10 +474,7 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 		}
 		pmin = occ_data->v9.pstate_min;
 		pnom = occ_data->v9.pstate_nom;
-		if (ultra_turbo_supported)
-			pmax = occ_data->v9.pstate_ultra_turbo;
-		else
-			pmax = occ_data->v9.pstate_turbo;
+		pmax = occ_data->v9.pstate_ultra_turbo;
 		break;
 	default:
 		/**
