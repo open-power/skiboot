@@ -51,31 +51,40 @@ of that property)
 Root Node
 ---------
 
-Root node of device tree
+Root node of device tree. There are a few required and a few optional properties
+that sit in the root node. They're described here.
+
+compatible
+^^^^^^^^^^
+
+The "compatible" properties are string lists indicating the overall
+compatibility from the more specific to the least specific.
+
+The root node compatible property *must* contain "ibm,powernv" for
+Linux to have the powernv platform match the machine.
+
+Each distinct platform *MUST* also add a more precise property (first
+in order) indicating the board type.
+
+The standard naming is "vendor,name". For example: `compatible = "goog,rhesus","ibm,powernv";`
+would work. Or even better: `compatible = "goog,rhesus-v1","goog,rhesus","ibm,powernv";`.
+
+The bare `ibm,powernv` should be reserved for bringup/testing:
 
 .. code-block:: dts
 
  /dts-v1/;
  / {
-  	/*
-	 * "compatible" properties are string lists (ASCII strings separated by
-	 * \0 characters) indicating the overall compatibility from the more
-	 * specific to the least specific.
-	 *
-	 * The root node compatible property *must* contain "ibm,powernv" for
-	 * Linux to have the powernv platform match the machine. It is recommended
-	 * to add a slightly more precise property (first in order) indicating more
-	 * precisely the board type. We don't currently do that in HDAT based
-	 * setups but will.
-	 *
-	 * The standard naming is "vendor,name" so in your case, something like
-	 *
-	 * compatible = "goog,rhesus","ibm,powernv";
-	 *
-	 * would work. Or even better:
-         *
-	 * compatible = "goog,rhesus-v1","goog,rhesus","ibm,powernv";
-	 */
+	compatible = "ibm,powernv";
+   };
+
+Example
+^^^^^^^
+
+.. code-block:: dts
+
+ /dts-v1/;
+ / {
 	compatible = "ibm,powernv";
 
 	/* mandatory */
