@@ -26,7 +26,6 @@
 #define FW_PROGRESS_SENSOR_TYPE	0x0F
 #define BOOT_COUNT_SENSOR_TYPE	0xC3
 
-#define MAX_IPMI_SENSORS 255
 static int16_t sensors[MAX_IPMI_SENSORS];
 
 static bool sensors_present = false;

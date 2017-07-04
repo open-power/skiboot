@@ -21,6 +21,8 @@
 #include <ccan/list/list.h>
 #include <stdbool.h>
 
+#define MAX_IPMI_SENSORS 255
+
 /*
  * IPMI codes as defined by the standard.
  */
