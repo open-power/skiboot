@@ -438,6 +438,7 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 	switch (occ_data->version) {
 	case 0x01:
 		ultra_turbo_supported = false;
+		/* fallthrough */
 	case 0x02:
 		if (proc_gen == proc_gen_p9) {
 			/**
