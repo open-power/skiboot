@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -527,12 +527,12 @@ static void dt_add_model_name(void)
 def_model:
 	if (!model_name || model_name[0] == '\0') {
 		mi = machine_info_lookup(model->prop);
-		if (mi) {
+		if (mi)
 			model_name = mi->name;
-		}
 	}
 
-	dt_add_property_string(dt_root, "model-name", model_name);
+	if(model_name)
+		dt_add_property_string(dt_root, "model-name", model_name);
 }
 
 static void sysvpd_parse_opp(const void *sysvpd, unsigned int sysvpd_sz)
