@@ -72,10 +72,10 @@ void add_associativity_ref_point(void)
 	/*
 	 * Note about our use of reference points:
 	 *
-	 * Linux currently supports two levels of NUMA. We use the first
-	 * reference point for the node ID and the second reference point
-	 * for a second level of affinity. We always use the chip ID (4)
-	 * for the first reference point.
+	 * Linux currently supports up to three levels of NUMA. We use the
+	 * first reference point for the node ID and the second reference
+	 * point for a second level of affinity. We always use the chip ID
+	 * (4) for the first reference point.
 	 *
 	 * Choosing the second level of affinity is model specific
 	 * unfortunately. Current POWER8E models should use the DCM
@@ -83,12 +83,16 @@ void add_associativity_ref_point(void)
 	 *
 	 * If there is a way to obtain this information from the FSP
 	 * that would be ideal, but for now hardwire our POWER8E setting.
+	 *
+	 * For GPU nodes we add a third level of NUMA, such that the
+	 * distance of the GPU node from all other nodes is uniformly
+	 * the highest.
 	 */
 	if (PVR_TYPE(mfspr(SPR_PVR)) == PVR_TYPE_P8E)
 		ref2 = 0x3;
 
 	dt_add_property_cells(opal_node, "ibm,associativity-reference-points",
-			      0x4, ref2);
+			      0x4, ref2, 0x2);
 }
 
 void add_chip_dev_associativity(struct dt_node *dev)
