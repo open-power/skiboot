@@ -422,7 +422,7 @@ struct xive {
 	 * the numbre of pointers (ie, sub page placeholders).
 	 */
 	uint64_t	*vp_ind_base;
-	uint64_t	vp_ind_count;
+	uint32_t	vp_ind_count;
 #else
 	void		*vp_base;
 #endif
@@ -983,7 +983,8 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect __unused)
 			}
 		}
 		memset(page, 0, 0x10000);
-		x->eq_ind_base[ind_idx] = vsd_flags | (((uint64_t)page) & VSD_ADDRESS_MASK);
+		x->eq_ind_base[ind_idx] = vsd_flags |
+			(((uint64_t)page) & VSD_ADDRESS_MASK);
 		/* Any cache scrub needed ? */
 	}
 #endif /* USE_INDIRECT */
@@ -1014,6 +1015,7 @@ static bool xive_provision_vp_ind(struct xive *x, uint32_t vp_idx, uint32_t orde
 
 	for (i = pbase; i <= pend; i++) {
 		void *page;
+		u64 vsd;
 
 		/* Already provisioned ? */
 		if (x->vp_ind_base[i])
@@ -1026,9 +1028,10 @@ static bool xive_provision_vp_ind(struct xive *x, uint32_t vp_idx, uint32_t orde
 
 		/* Install the page */
 		memset(page, 0, 0x10000);
-		x->vp_ind_base[i] = ((uint64_t)page) & VSD_ADDRESS_MASK;
-		x->vp_ind_base[i] |= SETFIELD(VSD_TSIZE, 0ull, 4);
-		x->vp_ind_base[i] |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
+		vsd = ((uint64_t)page) & VSD_ADDRESS_MASK;
+		vsd |= SETFIELD(VSD_TSIZE, 0ull, 4);
+		vsd |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
+		x->vp_ind_base[i] = vsd;
 	}
 	return true;
 }
@@ -1212,36 +1215,6 @@ static void xive_free_vps(uint32_t vp)
 }
 
 #endif /* ndef USE_BLOCK_GROUP_MODE */
-
-#if 0 /* Not used yet. This will be used to kill the cache
-       * of indirect VSDs
-       */
-static int64_t xive_vc_ind_cache_kill(struct xive *x, uint64_t type,
-				      uint64_t block, uint64_t idx)
-{
-	uint64_t val;
-
-	xive_regw(x, VC_AT_MACRO_KILL_MASK,
-		  SETFIELD(VC_KILL_BLOCK_ID, 0ull, -1ull) |
-		  SETFIELD(VC_KILL_OFFSET, 0ull, -1ull));
-	xive_regw(x, VC_AT_MACRO_KILL, VC_KILL_VALID |
-		  SETFIELD(VC_KILL_TYPE, 0ull, type) |
-		  SETFIELD(VC_KILL_BLOCK_ID, 0ull, block) |
-		  SETFIELD(VC_KILL_OFFSET, 0ull, idx));
-
-	/* XXX SIMICS problem ? */
-	if (chip_quirk(QUIRK_SIMICS))
-		return 0;
-
-	/* XXX Add timeout */
-	for (;;) {
-		val = xive_regr(x, VC_AT_MACRO_KILL);
-		if (!(val & VC_KILL_VALID))
-			break;
-	}
-	return 0;
-}
-#endif
 
 enum xive_cache_type {
 	xive_cache_ivc,
@@ -1772,6 +1745,7 @@ static bool xive_prealloc_tables(struct xive *x)
 		 pbase, pend, vp_init_count);
 	for (i = pbase; i <= pend; i++) {
 		void *page;
+		u64 vsd;
 
 		/* Indirect entries have a VSD format */
 		page = local_alloc(x->chip_id, 0x10000, 0x10000);
@@ -1781,10 +1755,12 @@ static bool xive_prealloc_tables(struct xive *x)
 		}
 		xive_dbg(x, "VP%d at %p size 0x%x\n", i, page, 0x10000);
 		memset(page, 0, 0x10000);
-		x->vp_ind_base[i] = ((uint64_t)page) & VSD_ADDRESS_MASK;
+		vsd = ((uint64_t)page) & VSD_ADDRESS_MASK;
 
-		x->vp_ind_base[i] |= SETFIELD(VSD_TSIZE, 0ull, 4);
-		x->vp_ind_base[i] |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
+		vsd |= SETFIELD(VSD_TSIZE, 0ull, 4);
+		vsd |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
+		vsd |= VSD_FIRMWARE;
+		x->vp_ind_base[i] = vsd;
 	}
 
 #else /* USE_INDIRECT */
@@ -3912,6 +3888,81 @@ static void xive_cleanup_cpu_tma(struct cpu_thread *c)
 	xive_regw(x, PC_TCTXT_INDIR0, 0);
 }
 
+#ifdef USE_INDIRECT
+static int64_t xive_vc_ind_cache_kill(struct xive *x, uint64_t type)
+{
+	uint64_t val;
+
+	/* We clear the whole thing */
+	xive_regw(x, VC_AT_MACRO_KILL_MASK, 0);
+	xive_regw(x, VC_AT_MACRO_KILL, VC_KILL_VALID |
+		  SETFIELD(VC_KILL_TYPE, 0ull, type));
+
+	/* XXX SIMICS problem ? */
+	if (chip_quirk(QUIRK_SIMICS))
+		return 0;
+
+	/* XXX Add timeout */
+	for (;;) {
+		val = xive_regr(x, VC_AT_MACRO_KILL);
+		if (!(val & VC_KILL_VALID))
+			break;
+	}
+	return 0;
+}
+
+static int64_t xive_pc_ind_cache_kill(struct xive *x)
+{
+	uint64_t val;
+
+	/* We clear the whole thing */
+	xive_regw(x, PC_AT_KILL_MASK, 0);
+	xive_regw(x, PC_AT_KILL, PC_AT_KILL_VALID);
+
+	/* XXX SIMICS problem ? */
+	if (chip_quirk(QUIRK_SIMICS))
+		return 0;
+
+	/* XXX Add timeout */
+	for (;;) {
+		val = xive_regr(x, PC_AT_KILL);
+		if (!(val & PC_AT_KILL_VALID))
+			break;
+	}
+	return 0;
+}
+
+static void xive_cleanup_vp_ind(struct xive *x)
+{
+	int i;
+
+	xive_dbg(x, "Cleaning up %d VP ind entries...\n", x->vp_ind_count);
+	for (i = 0; i < x->vp_ind_count; i++) {
+		if (x->vp_ind_base[i] & VSD_FIRMWARE) {
+			xive_dbg(x, " %04x ... skip (firmware)\n", i);
+			continue;
+		}
+		x->vp_ind_base[i] = 0;
+	}
+	xive_pc_ind_cache_kill(x);
+}
+
+static void xive_cleanup_eq_ind(struct xive *x)
+{
+	int i;
+
+	xive_dbg(x, "Cleaning up %d EQ ind entries...\n", x->eq_ind_count);
+	for (i = 0; i < x->eq_ind_count; i++) {
+		if (x->eq_ind_base[i] & VSD_FIRMWARE) {
+			xive_dbg(x, " %04x ... skip (firmware)\n", i);
+			continue;
+		}
+		x->eq_ind_base[i] = 0;
+	}
+	xive_vc_ind_cache_kill(x, VC_KILL_EQD);
+}
+#endif /* USE_INDIRECT */
+
 static void xive_reset_one(struct xive *x)
 {
 	struct cpu_thread *c;
@@ -4007,6 +4058,15 @@ static void xive_reset_one(struct xive *x)
 #ifndef USE_BLOCK_GROUP_MODE
 	/* If block group mode isn't enabled, reset VP alloc buddy */
 	buddy_reset(x->vp_buddy);
+#endif
+
+#ifdef USE_INDIRECT
+	/* Forget about remaining donated pages */
+	list_head_init(&x->donated_pages);
+
+	/* And cleanup donated indirect VP and EQ pages */
+	xive_cleanup_vp_ind(x);
+	xive_cleanup_eq_ind(x);
 #endif
 
 	/* The rest must not be called with the lock held */

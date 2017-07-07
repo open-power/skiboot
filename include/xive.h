@@ -109,6 +109,13 @@
 #define PC_VSD_TABLE_ADDR	0x488
 #define X_PC_VSD_TABLE_DATA	0x112
 #define PC_VSD_TABLE_DATA	0x490
+#define X_PC_AT_KILL		0x116
+#define PC_AT_KILL		0x4b0
+#define  PC_AT_KILL_VALID	PPC_BIT(0)
+#define  PC_AT_KILL_BLOCK_ID	PPC_BITMASK(27,31)
+#define  PC_AT_KILL_OFFSET	PPC_BITMASK(48,60)
+#define X_PC_AT_KILL_MASK	0x117
+#define PC_AT_KILL_MASK		0x4b8
 
 /* PC LBS2 register offsets */
 #define X_PC_VPC_CACHE_ENABLE	0x161
