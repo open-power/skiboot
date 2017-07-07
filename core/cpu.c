@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1216,8 +1216,8 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 		flags &= ~(OPAL_REINIT_CPUS_HILE_BE | OPAL_REINIT_CPUS_HILE_LE);
 	}
 
-	/* Any flags left ? */
-	if (flags != 0 && proc_gen == proc_gen_p8)
+	/* Handle P8 DD1 SLW reinit */
+	if (flags != 0 && proc_gen == proc_gen_p8 && !hile_supported)
 		rc = slw_reinit(flags);
 	else if (flags != 0)
 		rc = OPAL_UNSUPPORTED;
