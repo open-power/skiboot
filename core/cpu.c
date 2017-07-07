@@ -1082,6 +1082,9 @@ void init_all_cpus(void)
 		t->node = cpu;
 		t->chip_id = chip_id;
 		t->icp_regs = NULL; /* Will be set later */
+#ifdef DEBUG_LOCKS
+		t->requested_lock = NULL;
+#endif
 		t->core_hmi_state = 0;
 		t->core_hmi_state_ptr = &t->core_hmi_state;
 		t->thread_mask = 1;

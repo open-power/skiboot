@@ -120,6 +120,11 @@ struct cpu_thread {
 	u32				sensor_attr;
 	u32				token;
 	bool				dts_read_in_progress;
+
+#ifdef DEBUG_LOCKS
+	/* The lock requested by this cpu, used for deadlock detection */
+	struct lock			*requested_lock;
+#endif
 };
 
 /* This global is set to 1 to allow secondaries to callin,
