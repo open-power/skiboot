@@ -164,7 +164,10 @@
 #define VC_IVE_ISB_BLOCK_MODE	0x818
 #define VC_EQD_BLOCK_MODE	0x820
 #define VC_VPS_BLOCK_MODE	0x828
+#define X_VC_IRQ_CONFIG_IPI	0x208
 #define VC_IRQ_CONFIG_IPI	0x840
+#define  VC_IRQ_CONFIG_MEMB_EN	PPC_BIT(45)
+#define  VC_IRQ_CONFIG_MEMB_SZ	PPC_BITMASK(46,51)
 #define VC_IRQ_CONFIG_HW	0x848
 #define VC_IRQ_CONFIG_CASCADE1	0x850
 #define VC_IRQ_CONFIG_CASCADE2	0x858
@@ -251,6 +254,9 @@
 #define  VST_TSEL_VPDT	3
 #define  VST_TSEL_IRQ	4	/* VC only */
 #define VST_TABLE_OFFSET	PPC_BITMASK(27,31)
+
+/* Number of queue overflow pages */
+#define VC_QUEUE_OVF_COUNT	6
 
 /* Bits in a VSD entry.
  *

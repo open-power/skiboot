@@ -470,6 +470,9 @@ struct xive {
 
 	/* Embedded escalation interrupts */
 	struct xive_src	esc_irqs;
+
+	/* In memory queue overflow */
+	void		*q_ovf;
 };
 
 /* Global DT node */
@@ -742,6 +745,7 @@ static uint64_t __xive_regr(struct xive *x, uint32_t m_reg, uint32_t x_reg,
 	x->last_reg_error = false;
 
 	if (use_xscom) {
+		assert(x_reg != 0);
 		rc = xscom_read(x->chip_id, x->xscom_base + x_reg, &val);
 		if (rc) {
 			if (!rname)
@@ -1431,7 +1435,7 @@ static bool xive_set_vsd(struct xive *x, uint32_t tbl, uint32_t idx, uint64_t v)
 
 static bool xive_set_local_tables(struct xive *x)
 {
-	uint64_t base;
+	uint64_t base, i;
 
 	/* These have to be power of 2 sized */
 	assert(is_pow2(SBE_SIZE));
@@ -1478,9 +1482,22 @@ static bool xive_set_local_tables(struct xive *x)
 		return false;
 #endif
 
-	/* XXX For the queue overflow, configure VSD VST_TSEL_IRQ
-	 * with block id 0 to 5 (6 queues) with some 64k page
-	 */
+	/* Setup quue overflows */
+	for (i = 0; i < VC_QUEUE_OVF_COUNT; i++) {
+		u64 addr = ((uint64_t)x->q_ovf) + i * 0x10000;
+		u64 cfg, sreg, sregx;
+
+		if (!xive_set_vsd(x, VST_TSEL_IRQ, i, base |
+				  (addr & VSD_ADDRESS_MASK) |
+			  SETFIELD(VSD_TSIZE, 0ull, 4)))
+			return false;
+		sreg = VC_IRQ_CONFIG_IPI +  i * 8;
+		sregx = X_VC_IRQ_CONFIG_IPI + i;
+		cfg = __xive_regr(x, sreg, sregx, NULL);
+		cfg |= VC_IRQ_CONFIG_MEMB_EN;
+		cfg = SETFIELD(VC_IRQ_CONFIG_MEMB_SZ, cfg, 4);
+		__xive_regw(x, sreg, sregx, cfg, NULL);
+	}
 
 	return true;
 }
@@ -1783,6 +1800,12 @@ static bool xive_prealloc_tables(struct xive *x)
 	memset(x->vp_base, 0, VPT_SIZE);
 #endif /* USE_INDIRECT */
 
+	/* Allocate the queue overflow pages */
+	x->q_ovf = local_alloc(x->chip_id, VC_QUEUE_OVF_COUNT * 0x10000, 0x10000);
+	if (!x->q_ovf) {
+		xive_err(x, "Failed to allocate queue overflow\n");
+		return false;
+	}
 	return true;
 }
 
@@ -3942,7 +3965,10 @@ static void xive_cleanup_vp_ind(struct xive *x)
 			xive_dbg(x, " %04x ... skip (firmware)\n", i);
 			continue;
 		}
-		x->vp_ind_base[i] = 0;
+		if (x->vp_ind_base[i] != 0) {
+			x->vp_ind_base[i] = 0;
+			xive_dbg(x, " %04x ... cleaned\n", i);
+		}
 	}
 	xive_pc_ind_cache_kill(x);
 }
@@ -3957,7 +3983,10 @@ static void xive_cleanup_eq_ind(struct xive *x)
 			xive_dbg(x, " %04x ... skip (firmware)\n", i);
 			continue;
 		}
-		x->eq_ind_base[i] = 0;
+		if (x->eq_ind_base[i] != 0) {
+			x->eq_ind_base[i] = 0;
+			xive_dbg(x, " %04x ... cleaned\n", i);
+		}
 	}
 	xive_vc_ind_cache_kill(x, VC_KILL_EQD);
 }
