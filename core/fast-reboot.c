@@ -429,7 +429,7 @@ static void check_split_core(void)
 
 	/* Trigger unsplit operation and update SLW image */
 	hid0 &= ~SPR_HID0_POWER8_DYNLPARDIS;
-	set_hid0(hid0);
+	mtspr(SPR_HID0, hid0);
 	opal_slw_set_reg(this_cpu()->pir, SPR_HID0, hid0);
 
 	/* Wait for unsplit */

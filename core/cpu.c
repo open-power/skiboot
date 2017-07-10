@@ -641,7 +641,7 @@ static void enable_attn(void)
 
 	hid0 = mfspr(SPR_HID0);
 	hid0 |= hid0_attn;
-	set_hid0(hid0);
+	mtspr(SPR_HID0, hid0);
 }
 
 static void disable_attn(void)
@@ -650,7 +650,7 @@ static void disable_attn(void)
 
 	hid0 = mfspr(SPR_HID0);
 	hid0 &= ~hid0_attn;
-	set_hid0(hid0);
+	mtspr(SPR_HID0, hid0);
 }
 
 extern void __trigger_attn(void);
@@ -1043,7 +1043,7 @@ static void cpu_change_hid0(void *__req)
 	new_hid0 |= req->set_bits;
 	prlog(PR_DEBUG, "CPU: [%08x] HID0 change 0x%016lx -> 0x%016lx\n",
 		this_cpu()->pir, hid0, new_hid0);
-	set_hid0(new_hid0);
+	mtspr(SPR_HID0, new_hid0);
 }
 
 static int64_t cpu_change_all_hid0(struct hid0_change_req *req)
