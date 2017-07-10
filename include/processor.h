@@ -258,7 +258,6 @@ void mtspr(const unsigned int spr, unsigned long val)
 }
 
 /* Helpers for special sequences needed by some registers */
-extern void set_hid0(unsigned long hid0);
 extern void trigger_attn(void);
 
 /*

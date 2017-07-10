@@ -24,20 +24,6 @@
 	.section ".text","ax"
 	.balign	0x10
 
-	/* void set_hid0(unsigned long hid0) */
-.global set_hid0
-set_hid0:
-	sync
-	mtspr	SPR_HID0,%r3
-	mfspr	%r3,SPR_HID0
-	mfspr	%r3,SPR_HID0
-	mfspr	%r3,SPR_HID0
-	mfspr	%r3,SPR_HID0
-	mfspr	%r3,SPR_HID0
-	mfspr	%r3,SPR_HID0
-	isync
-	blr
-
 .global __trigger_attn
 __trigger_attn:
 	sync
