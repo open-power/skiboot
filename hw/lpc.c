@@ -181,7 +181,7 @@ static int64_t opb_mmio_write(struct lpcm *lpc, uint32_t addr, uint32_t data,
 		out_be32(lpc->mbase + addr, data);
 		return OPAL_SUCCESS;
 	}
-	prerror("LPC: Invalid data size %d\n", sz);
+	prerror("Invalid data size %d\n", sz);
 	return OPAL_PARAMETER;
 }
 
@@ -264,7 +264,7 @@ static int64_t opb_mmio_read(struct lpcm *lpc, uint32_t addr, uint32_t *data,
 		*data = in_be32(lpc->mbase + addr);
 		return OPAL_SUCCESS;
 	}
-	prerror("LPC: Invalid data size %d\n", sz);
+	prerror("Invalid data size %d\n", sz);
 	return OPAL_PARAMETER;
 }
 
@@ -610,7 +610,7 @@ static void lpc_setup_serirq(struct lpcm *lpc)
 		prerror("Failed to update irq mask\n");
 		return;
 	}
-	DBG_IRQ("LPC: IRQ mask set to 0x%08x\n", mask);
+	DBG_IRQ("IRQ mask set to 0x%08x\n", mask);
 
 	/* Enable the LPC interrupt in the OPB Master */
 	opb_write(lpc, opb_master_reg_base + OPB_MASTER_LS_IRQ_POL, 0, 4);
@@ -630,11 +630,11 @@ static void lpc_setup_serirq(struct lpcm *lpc)
 				* the SerIRQs on EOI.
 				*/
 			       LPC_HC_IRQSER_AUTO_CLEAR, 4);
-		DBG_IRQ("LPC: SerIRQ enabled\n");
+		DBG_IRQ("SerIRQ enabled\n");
 	} else {
 		rc = opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL,
 			       0, 4);
-		DBG_IRQ("LPC: SerIRQ disabled\n");
+		DBG_IRQ("SerIRQ disabled\n");
 	}
 	if (rc)
 		prerror("Failed to configure SerIRQ\n");
@@ -644,14 +644,14 @@ static void lpc_setup_serirq(struct lpcm *lpc)
 		if (rc)
 			prerror("Failed to readback mask");
 		else
-			DBG_IRQ("LPC: MASK READBACK=%x\n", val);
+			DBG_IRQ("MASK READBACK=%x\n", val);
 
 		rc = opb_read(lpc, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL,
 			      &val, 4);
 		if (rc)
 			prerror("Failed to readback ctrl");
 		else
-			DBG_IRQ("LPC: CTRL READBACK=%x\n", val);
+			DBG_IRQ("CTRL READBACK=%x\n", val);
 	}
 }
 
@@ -698,13 +698,13 @@ static void lpc_alloc_route(struct lpcm *lpc, unsigned int irq,
 	else
 		r = LPC_ROUTE_LINUX;
 
-	prlog(PR_DEBUG, "LPC: Routing irq %d, policy: %d (r=%d)\n",
+	prlog(PR_DEBUG, "Routing irq %d, policy: %d (r=%d)\n",
 	      irq, policy, r);
 
 	/* Are we already routed ? */
 	if (lpc->sirq_routed[irq] &&
 	    r != lpc->sirq_ralloc[lpc->sirq_routes[irq]]) {
-		prerror("LPC: irq %d has conflicting policies\n", irq);
+		prerror("irq %d has conflicting policies\n", irq);
 		return;
 	}
 
@@ -736,14 +736,14 @@ static void lpc_alloc_route(struct lpcm *lpc, unsigned int irq,
 
 	/* Still no route ? bail. That should never happen */
 	if (route < 0) {
-		prerror("LPC: Can't find a route for irq %d\n", irq);
+		prerror("Can't find a route for irq %d\n", irq);
 		return;
 	}
 
 	/* Program route */
 	lpc_route_serirq(lpc, irq, route);
 
-	prlog(PR_DEBUG, "LPC: SerIRQ %d using route %d targetted at %s\n",
+	prlog(PR_DEBUG, "SerIRQ %d using route %d targetted at %s\n",
 	      irq, route, r == LPC_ROUTE_LINUX ? "OS" : "OPAL");
 }
 
@@ -809,7 +809,7 @@ static void lpc_init_interrupts_one(struct proc_chip *chip)
 	/* First mask them all */
 	rc = opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
 	if (rc) {
-		prerror("LPC: Failed to init interrutps\n");
+		prerror("Failed to init interrutps\n");
 		goto bail;
 	}
 
@@ -822,7 +822,7 @@ static void lpc_init_interrupts_one(struct proc_chip *chip)
 		rc = opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQMASK,
 			       LPC_HC_IRQ_BASE_IRQS, 4);
 		if (rc) {
-			prerror("LPC: Failed to set interrupt mask\n");
+			prerror("Failed to set interrupt mask\n");
 			goto bail;
 		}
 		opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQSER_CTRL, 0, 4);
@@ -875,7 +875,7 @@ static void lpc_dispatch_reset(struct lpcm *lpc)
 	 * on/off rather than just reset
 	 */
 
-	prerror("LPC: Got LPC reset on chip 0x%x !\n", lpc->chip_id);
+	prerror("Got LPC reset on chip 0x%x !\n", lpc->chip_id);
 
 	/* Collect serirq enable bits */
 	list_for_each(&lpc->clients, ent, node) {
@@ -997,7 +997,7 @@ void lpc_interrupt(uint32_t chip_id)
 		return;
 	}
 
-	DBG_IRQ("LPC: OPB IRQ on chip 0x%x, oirqs=0x%08x\n", chip_id, opb_irqs);
+	DBG_IRQ("OPB IRQ on chip 0x%x, oirqs=0x%08x\n", chip_id, opb_irqs);
 
 	/* Check if it's an LPC interrupt */
 	if (!(opb_irqs & OPB_MASTER_IRQ_LPC)) {
@@ -1012,7 +1012,7 @@ void lpc_interrupt(uint32_t chip_id)
 		goto bail;
 	}
 
-	DBG_IRQ("LPC: LPC IRQ on chip 0x%x, irqs=0x%08x\n", chip_id, irqs);
+	DBG_IRQ("LPC IRQ on chip 0x%x, irqs=0x%08x\n", chip_id, irqs);
 
 	/* Handle error interrupts */
 	if (irqs & LPC_HC_IRQ_BASE_IRQS)
@@ -1045,12 +1045,12 @@ void lpc_serirq(uint32_t chip_id, uint32_t index)
 	/* Handle the lpc interrupt source (errors etc...) */
 	rc = opb_read(lpc, lpc_reg_opb_base + LPC_HC_IRQSTAT, &irqs, 4);
 	if (rc) {
-		prerror("LPC: Failed to read LPC IRQ state\n");
+		prerror("Failed to read LPC IRQ state\n");
 		goto bail;
 	}
 	rmask = lpc->sirq_rmasks[index];
 
-	DBG_IRQ("LPC: IRQ on chip 0x%x, irqs=0x%08x rmask=0x%08x\n",
+	DBG_IRQ("IRQ on chip 0x%x, irqs=0x%08x rmask=0x%08x\n",
 		chip_id, irqs, rmask);
 	irqs &= rmask;
 
@@ -1262,7 +1262,7 @@ void lpc_register_client(uint32_t chip_id,
 	assert(chip);
 	lpc = chip->lpc;
 	if (!lpc) {
-		prerror("LPC: Attempt to register client on bad chip 0x%x\n",
+		prerror("Attempt to register client on bad chip 0x%x\n",
 			chip_id);
 		return;
 	}
@@ -1272,7 +1272,7 @@ void lpc_register_client(uint32_t chip_id,
 		chip->type == PROC_CHIP_P9_CUMULUS;
 
 	if (policy != IRQ_ATTR_TARGET_OPAL && !has_routes) {
-		prerror("LPC: Chip doesn't support OS interrupt policy\n");
+		prerror("Chip doesn't support OS interrupt policy\n");
 		return;
 	}
 
