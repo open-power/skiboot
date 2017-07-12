@@ -2173,7 +2173,7 @@ static int64_t phb4_retry_state(struct pci_slot *slot)
 	slot->delay_tgt_tb = 0;
 	pci_slot_set_state(slot, slot->retry_state);
 	slot->retry_state = PCI_SLOT_STATE_NORMAL;
-	return slot->ops.run_sm(slot);
+	return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 }
 
 static int64_t phb4_poll_link(struct pci_slot *slot)
