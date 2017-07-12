@@ -61,6 +61,7 @@ E=$?
 if [ $E -eq 0 ]; then
     rm $T $D
 else
+    cat $T
     echo "Boot Test FAILED. Results in $T, Disk $D";
 fi
 
