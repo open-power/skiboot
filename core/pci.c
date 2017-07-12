@@ -1737,7 +1737,7 @@ void pci_init_slots(void)
 	if (platform.pre_pci_fixup)
 		platform.pre_pci_fixup();
 
-	prlog(PR_INFO, "PCI: Resetting PHBs...\n");
+	prlog(PR_NOTICE, "PCI: Resetting PHBs and training links...\n");
 	pci_do_jobs(pci_reset_phb);
 
 	prlog(PR_NOTICE, "PCI: Probing slots...\n");
