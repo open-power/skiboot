@@ -2420,7 +2420,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		xscom_write(p->chip_id, p->pci_stk_xscom + XPEC_PCI_STK_ETU_RESET,
 			    0x8000000000000000);
 
-		/* Clear errors in PFIR and NFIR */
+		/* Read errors in PFIR and NFIR */
 		xscom_read(p->chip_id, p->pci_stk_xscom + 0x0, &p->pfir_cache);
 		xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &p->nfir_cache);
 
@@ -2433,10 +2433,11 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		if (!(pbcq_status & 0xC000000000000000)) {
 			PHBDBG(p, "CRESET: No pending transactions\n");
 
-			xscom_write(p->chip_id, p->pe_stk_xscom + 0x1,
-				    ~p->nfir_cache);
+			/* Clear errors in PFIR and NFIR */
 			xscom_write(p->chip_id, p->pci_stk_xscom + 0x1,
 				    ~p->pfir_cache);
+			xscom_write(p->chip_id, p->pe_stk_xscom + 0x1,
+				    ~p->nfir_cache);
 
 			/* Clear PHB from reset */
 			xscom_write(p->chip_id,
