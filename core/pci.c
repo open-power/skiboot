@@ -967,6 +967,7 @@ static void pci_reset_phb(void *data)
 	pci_slot_add_flags(slot, PCI_SLOT_FLAG_BOOTUP);
 	rc = slot->ops.freset(slot);
 	while (rc > 0) {
+		PCITRACE(phb, 0, "Waiting %ld ms\n", tb_to_msecs(rc));
 		time_wait(rc);
 		rc = slot->ops.run_sm(slot);
 	}
