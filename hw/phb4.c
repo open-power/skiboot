@@ -155,7 +155,7 @@ static inline void phb4_write_reg_asb(struct phb4 *p,
 #endif
 }
 
-static __unused uint64_t phb4_read_reg(struct phb4 *p, uint32_t offset)
+static uint64_t phb4_read_reg(struct phb4 *p, uint32_t offset)
 {
 	if (p->flags & PHB4_CFG_USE_ASB)
 		return phb4_read_reg_asb(p, offset);
@@ -163,7 +163,7 @@ static __unused uint64_t phb4_read_reg(struct phb4 *p, uint32_t offset)
 		return in_be64(p->regs + offset);
 }
 
-static __unused void phb4_write_reg(struct phb4 *p, uint32_t offset, uint64_t val)
+static void phb4_write_reg(struct phb4 *p, uint32_t offset, uint64_t val)
 {
 	if (p->flags & PHB4_CFG_USE_ASB)
 		phb4_write_reg_asb(p, offset, val);
@@ -175,10 +175,10 @@ static __unused void phb4_write_reg(struct phb4 *p, uint32_t offset, uint64_t va
 static inline void phb4_ioda_sel(struct phb4 *p, uint32_t table,
 				 uint32_t addr, bool autoinc)
 {
-	out_be64(p->regs + PHB_IODA_ADDR,
-		 (autoinc ? PHB_IODA_AD_AUTOINC : 0)	|
-		 SETFIELD(PHB_IODA_AD_TSEL, 0ul, table)	|
-		 SETFIELD(PHB_IODA_AD_TADR, 0ul, addr));
+	phb4_write_reg(p, PHB_IODA_ADDR,
+		       (autoinc ? PHB_IODA_AD_AUTOINC : 0)	|
+		       SETFIELD(PHB_IODA_AD_TSEL, 0ul, table)	|
+		       SETFIELD(PHB_IODA_AD_TADR, 0ul, addr));
 }
 
 static void phb4_read_phb_status(struct phb4 *p,
@@ -1735,7 +1735,7 @@ static int64_t phb4_get_msi_64(struct phb *phb,
 static void phb4_err_clear(struct phb4 *p)
 {
 	uint64_t val64;
-	uint64_t fir = in_be64(p->regs + PHB_LEM_FIR_ACCUM);
+	uint64_t fir = phb4_read_reg(p, PHB_LEM_FIR_ACCUM);
 
 	/* Rec 1: Acquire the PCI config lock (we don't need to do this) */
 
@@ -1744,50 +1744,50 @@ static void phb4_err_clear(struct phb4 *p)
 	phb4_init_rc_cfg(p);
 
 	/* Rec 16/17: Clear PBL errors */
-	val64 = in_be64(p->regs + PHB_PBL_ERR_STATUS);
-	out_be64(p->regs + PHB_PBL_ERR_STATUS, val64);
+	val64 = phb4_read_reg(p, PHB_PBL_ERR_STATUS);
+	phb4_write_reg(p, PHB_PBL_ERR_STATUS, val64);
 
 	/* Rec 18/19: Clear REGB errors */
-	val64 = in_be64(p->regs + PHB_REGB_ERR_STATUS);
-	out_be64(p->regs + PHB_REGB_ERR_STATUS, val64);
+	val64 = phb4_read_reg(p, PHB_REGB_ERR_STATUS);
+	phb4_write_reg(p, PHB_REGB_ERR_STATUS, val64);
 
 	/* Rec 20...59: Clear PHB error trap */
-	val64 = in_be64(p->regs + PHB_TXE_ERR_STATUS);
-	out_be64(p->regs + PHB_TXE_ERR_STATUS, val64);
-	out_be64(p->regs + PHB_TXE_ERR1_STATUS, 0x0ul);
-	out_be64(p->regs + PHB_TXE_ERR_LOG_0, 0x0ul);
-	out_be64(p->regs + PHB_TXE_ERR_LOG_1, 0x0ul);
+	val64 = phb4_read_reg(p, PHB_TXE_ERR_STATUS);
+	phb4_write_reg(p, PHB_TXE_ERR_STATUS, val64);
+	phb4_write_reg(p, PHB_TXE_ERR1_STATUS, 0x0ul);
+	phb4_write_reg(p, PHB_TXE_ERR_LOG_0, 0x0ul);
+	phb4_write_reg(p, PHB_TXE_ERR_LOG_1, 0x0ul);
 
-	val64 = in_be64(p->regs + PHB_RXE_ARB_ERR_STATUS);
-	out_be64(p->regs + PHB_RXE_ARB_ERR_STATUS, val64);
-	out_be64(p->regs + PHB_RXE_ARB_ERR1_STATUS, 0x0ul);
-	out_be64(p->regs + PHB_RXE_ARB_ERR_LOG_0, 0x0ul);
-	out_be64(p->regs + PHB_RXE_ARB_ERR_LOG_1, 0x0ul);
+	val64 = phb4_read_reg(p, PHB_RXE_ARB_ERR_STATUS);
+	phb4_write_reg(p, PHB_RXE_ARB_ERR_STATUS, val64);
+	phb4_write_reg(p, PHB_RXE_ARB_ERR1_STATUS, 0x0ul);
+	phb4_write_reg(p, PHB_RXE_ARB_ERR_LOG_0, 0x0ul);
+	phb4_write_reg(p, PHB_RXE_ARB_ERR_LOG_1, 0x0ul);
 
-	val64 = in_be64(p->regs + PHB_RXE_MRG_ERR_STATUS);
-	out_be64(p->regs + PHB_RXE_MRG_ERR_STATUS, val64);
-	out_be64(p->regs + PHB_RXE_MRG_ERR1_STATUS, 0x0ul);
-	out_be64(p->regs + PHB_RXE_MRG_ERR_LOG_0, 0x0ul);
-	out_be64(p->regs + PHB_RXE_MRG_ERR_LOG_1, 0x0ul);
+	val64 = phb4_read_reg(p, PHB_RXE_MRG_ERR_STATUS);
+	phb4_write_reg(p, PHB_RXE_MRG_ERR_STATUS, val64);
+	phb4_write_reg(p, PHB_RXE_MRG_ERR1_STATUS, 0x0ul);
+	phb4_write_reg(p, PHB_RXE_MRG_ERR_LOG_0, 0x0ul);
+	phb4_write_reg(p, PHB_RXE_MRG_ERR_LOG_1, 0x0ul);
 
-	val64 = in_be64(p->regs + PHB_RXE_TCE_ERR_STATUS);
-	out_be64(p->regs + PHB_RXE_TCE_ERR_STATUS, val64);
-	out_be64(p->regs + PHB_RXE_TCE_ERR1_STATUS, 0x0ul);
-	out_be64(p->regs + PHB_RXE_TCE_ERR_LOG_0, 0x0ul);
-	out_be64(p->regs + PHB_RXE_TCE_ERR_LOG_1, 0x0ul);
+	val64 = phb4_read_reg(p, PHB_RXE_TCE_ERR_STATUS);
+	phb4_write_reg(p, PHB_RXE_TCE_ERR_STATUS, val64);
+	phb4_write_reg(p, PHB_RXE_TCE_ERR1_STATUS, 0x0ul);
+	phb4_write_reg(p, PHB_RXE_TCE_ERR_LOG_0, 0x0ul);
+	phb4_write_reg(p, PHB_RXE_TCE_ERR_LOG_1, 0x0ul);
 
-	val64 = in_be64(p->regs + PHB_ERR_STATUS);
-	out_be64(p->regs + PHB_ERR_STATUS, val64);
-	out_be64(p->regs + PHB_ERR1_STATUS, 0x0ul);
-	out_be64(p->regs + PHB_ERR_LOG_0, 0x0ul);
-	out_be64(p->regs + PHB_ERR_LOG_1, 0x0ul);
+	val64 = phb4_read_reg(p, PHB_ERR_STATUS);
+	phb4_write_reg(p, PHB_ERR_STATUS, val64);
+	phb4_write_reg(p, PHB_ERR1_STATUS, 0x0ul);
+	phb4_write_reg(p, PHB_ERR_LOG_0, 0x0ul);
+	phb4_write_reg(p, PHB_ERR_LOG_1, 0x0ul);
 
 	/* Rec 61/62: Clear FIR/WOF */
-	out_be64(p->regs + PHB_LEM_FIR_AND_MASK, ~fir);
-	out_be64(p->regs + PHB_LEM_WOF, 0x0ul);
+	phb4_write_reg(p, PHB_LEM_FIR_AND_MASK, ~fir);
+	phb4_write_reg(p, PHB_LEM_WOF, 0x0ul);
 
 	/* Rec 63: Update LEM mask to its initial value */
-	out_be64(p->regs + PHB_LEM_ERROR_MASK, 0x0ul);
+	phb4_write_reg(p, PHB_LEM_ERROR_MASK, 0x0ul);
 
 	/* Rec 64: Clear the PCI config lock (we don't need to do this) */
 }
