@@ -273,12 +273,13 @@ static struct dt_node *add_pec_stack(const struct cechub_io_hub *hub,
 		dt_add_property_string(stack, "status", "disabled");
 
 	for (i = 0; i < 4; i++) /* gen 3 eq settings */
-		eq[i] = be64_to_cpu(hub->phb4_lane_eq[phb_index][i]);
+		eq[i] = be64_to_cpu(hub->phb_lane_eq[phb_index][i]);
 
-	for (i = 4; i < 8; i++) /* gen 4 eq settings */
-		eq[i] = be64_to_cpu(hub->phb4_lane_eq[phb_index][i]);
+	for (i = 0; i < 4; i++) /* gen 4 eq settings */
+		eq[i+4] = be64_to_cpu(hub->phb4_lane_eq[phb_index][i]);
 
-	__dt_add_property_u64s(stack, "ibm,lane-eq", 8, eq);
+	dt_add_property_u64s(stack, "ibm,lane-eq", eq[0], eq[1], eq[2], eq[3],
+			     eq[4], eq[5], eq[6], eq[7]);
 
 	return stack;
 }
