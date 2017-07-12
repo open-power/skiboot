@@ -2325,7 +2325,7 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		}
 
 		PHBDBG(p, "FRESET: Prepare for link down\n");
-		slot->retry_state = PHB4_SLOT_FRESET_START;
+		slot->retry_state = PHB4_SLOT_CRESET_START;
 		if (slot->ops.prepare_link_change)
 			slot->ops.prepare_link_change(slot, false);
 		/* fall through */
