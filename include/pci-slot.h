@@ -184,6 +184,7 @@ struct pci_slot {
 	uint32_t		slot_cap;
 	uint64_t		delay_tgt_tb;
 	uint64_t		retries;
+	uint64_t		link_retries;
 	struct pci_slot_ops	ops;
 	void			*data;
 };

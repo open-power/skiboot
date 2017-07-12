@@ -2166,13 +2166,12 @@ static int64_t phb4_retry_state(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
 
-	if (slot->retry_state == PCI_SLOT_STATE_NORMAL)
-		return OPAL_WRONG_STATE;
+	if (!slot->link_retries--) {
+		PHBERR(p, "Link detected but won't train\n");
+		return OPAL_HARDWARE;
+	}
 
-	PHBDBG(p, "Retry state %08x\n", slot->retry_state);
-	slot->delay_tgt_tb = 0;
-	pci_slot_set_state(slot, slot->retry_state);
-	slot->retry_state = PCI_SLOT_STATE_NORMAL;
+	pci_slot_set_state(slot, PHB4_SLOT_CRESET_START);
 	return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 }
 
@@ -2325,7 +2324,7 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		}
 
 		PHBDBG(p, "FRESET: Prepare for link down\n");
-		slot->retry_state = PHB4_SLOT_CRESET_START;
+
 		if (slot->ops.prepare_link_change)
 			slot->ops.prepare_link_change(slot, false);
 		/* fall through */
@@ -2513,6 +2512,7 @@ static struct pci_slot *phb4_slot_create(struct phb *phb)
 	slot->ops.hreset		= phb4_hreset;
 	slot->ops.freset		= phb4_freset;
 	slot->ops.creset		= phb4_creset;
+	slot->link_retries		= 1;
 
 	return slot;
 }
