@@ -79,6 +79,8 @@ static bool phb4_init_rc_cfg(struct phb4 *p);
 #define PHBLOGCFG(p, fmt, a...) do {} while (0)
 #endif
 
+static bool verbose_eeh;
+
 enum capi_dma_tvt {
 	CAPI_DMA_TVT0,
 	CAPI_DMA_TVT1,
@@ -99,12 +101,12 @@ static inline uint64_t phb4_read_reg_asb(struct phb4 *p, uint32_t offset)
 	 *
 	 * This path isn't usable for outbound configuration space
 	 */
-	if ((offset & 0xfffffffc) == PHB_CONFIG_DATA) {
-		PHBERR(p, "XSCOM access to CONFIG_DATA unsupported\n");
+	if (((offset & 0xfffffffc) == PHB_CONFIG_DATA) && (offset & 3)) {
+		PHBERR(p, "XSCOM unaligned access to CONFIG_DATA unsupported\n");
 		return -1ull;
 	}
 	addr = XETU_HV_IND_ADDR_VALID | offset;
-	if (offset >= 0x1000 && offset < 0x1800)
+	if ((offset >= 0x1000 && offset < 0x1800) || (offset == PHB_CONFIG_DATA))
 		addr |= XETU_HV_IND_ADDR_4B;
  	rc = xscom_write(p->chip_id, p->etu_xscom + XETU_HV_IND_ADDRESS, addr);
 	if (rc != 0) {
@@ -133,12 +135,12 @@ static inline void phb4_write_reg_asb(struct phb4 *p,
 	 *
 	 * This path isn't usable for outbound configuration space
 	 */
-	if ((offset & 0xfffffffc) == PHB_CONFIG_DATA) {
+	if (((offset & 0xfffffffc) == PHB_CONFIG_DATA) && (offset & 3)) {
 		PHBERR(p, "XSCOM access to CONFIG_DATA unsupported\n");
 		return;
 	}
 	addr = XETU_HV_IND_ADDR_VALID | offset;
-	if (offset >= 0x1000 && offset < 0x1800)
+	if ((offset >= 0x1000 && offset < 0x1800) || (offset == PHB_CONFIG_DATA))
 		addr |= XETU_HV_IND_ADDR_4B;
  	rc = xscom_write(p->chip_id, p->etu_xscom + XETU_HV_IND_ADDRESS, addr);
 	if (rc != 0) {
@@ -161,6 +163,84 @@ static inline void phb4_ioda_sel(struct phb4 *p, uint32_t table,
 		 (autoinc ? PHB_IODA_AD_AUTOINC : 0)	|
 		 SETFIELD(PHB_IODA_AD_TSEL, 0ul, table)	|
 		 SETFIELD(PHB_IODA_AD_TADR, 0ul, addr));
+}
+
+static void phb4_read_phb_status(struct phb4 *p,
+				 struct OpalIoPhb4ErrorData *stat);
+static void phb4_eeh_dump_regs(struct phb4 *p)
+{
+	struct OpalIoPhb4ErrorData *s;
+	unsigned int i;
+
+	s = zalloc(sizeof(struct OpalIoPhb4ErrorData));
+	phb4_read_phb_status(p, s);
+
+	PHBERR(p, "brdgCtl        = %08x\n", s->brdgCtl);
+
+	/* PHB4 cfg regs */
+	PHBERR(p, "            deviceStatus = %08x\n", s->deviceStatus);
+	PHBERR(p, "              slotStatus = %08x\n", s->slotStatus);
+	PHBERR(p, "              linkStatus = %08x\n", s->linkStatus);
+	PHBERR(p, "            devCmdStatus = %08x\n", s->devCmdStatus);
+	PHBERR(p, "            devSecStatus = %08x\n", s->devSecStatus);
+	PHBERR(p, "         rootErrorStatus = %08x\n", s->rootErrorStatus);
+	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
+	PHBERR(p, "         corrErrorStatus = %08x\n", s->corrErrorStatus);
+	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
+	PHBERR(p, "                 tlpHdr1 = %08x\n", s->tlpHdr1);
+	PHBERR(p, "                 tlpHdr2 = %08x\n", s->tlpHdr2);
+	PHBERR(p, "                 tlpHdr3 = %08x\n", s->tlpHdr3);
+	PHBERR(p, "                 tlpHdr4 = %08x\n", s->tlpHdr4);
+	PHBERR(p, "                sourceId = %08x\n", s->sourceId);
+	PHBERR(p, "                 tlpHdr1 = %08x\n", s->tlpHdr1);
+	PHBERR(p, "                    nFir = %016llx\n", s->nFir);
+	PHBERR(p, "                nFirMask = %016llx\n", s->nFirMask);
+	PHBERR(p, "                 nFirWOF = %016llx\n", s->nFirWOF);
+	PHBERR(p, "                phbPlssr = %016llx\n", s->phbPlssr);
+	PHBERR(p, "                  phbCsr = %016llx\n", s->phbCsr);
+	PHBERR(p, "                  lemFir = %016llx\n", s->lemFir);
+	PHBERR(p, "            lemErrorMask = %016llx\n", s->lemErrorMask);
+	PHBERR(p, "                  lemWOF = %016llx\n", s->lemWOF);
+	PHBERR(p, "          phbErrorStatus = %016llx\n", s->phbErrorStatus);
+	PHBERR(p, "     phbFirstErrorStatus = %016llx\n", s->phbFirstErrorStatus);
+	PHBERR(p, "            phbErrorLog0 = %016llx\n", s->phbErrorLog0);
+	PHBERR(p, "            phbErrorLog1 = %016llx\n", s->phbErrorLog1);
+	PHBERR(p, "       phbTxeErrorStatus = %016llx\n", s->phbTxeErrorStatus);
+	PHBERR(p, "  phbTxeFirstErrorStatus = %016llx\n", s->phbTxeFirstErrorStatus);
+	PHBERR(p, "         phbTxeErrorLog0 = %016llx\n", s->phbTxeErrorLog0);
+	PHBERR(p, "         phbTxeErrorLog1 = %016llx\n", s->phbTxeErrorLog1);
+	PHBERR(p, "    phbRxeArbErrorStatus = %016llx\n", s->phbRxeArbErrorStatus);
+	PHBERR(p, "phbRxeArbFrstErrorStatus = %016llx\n", s->phbRxeArbFirstErrorStatus);
+	PHBERR(p, "      phbRxeArbErrorLog0 = %016llx\n", s->phbRxeArbErrorLog0);
+	PHBERR(p, "      phbRxeArbErrorLog1 = %016llx\n", s->phbRxeArbErrorLog1);
+	PHBERR(p, "    phbRxeMrgErrorStatus = %016llx\n", s->phbRxeMrgErrorStatus);
+	PHBERR(p, "phbRxeMrgFrstErrorStatus = %016llx\n", s->phbRxeMrgFirstErrorStatus);
+	PHBERR(p, "      phbRxeMrgErrorLog0 = %016llx\n", s->phbRxeMrgErrorLog0);
+	PHBERR(p, "      phbRxeMrgErrorLog1 = %016llx\n", s->phbRxeMrgErrorLog1);
+	PHBERR(p, "    phbRxeTceErrorStatus = %016llx\n", s->phbRxeTceErrorStatus);
+	PHBERR(p, "phbRxeTceFrstErrorStatus = %016llx\n", s->phbRxeTceFirstErrorStatus);
+	PHBERR(p, "      phbRxeTceErrorLog0 = %016llx\n", s->phbRxeTceErrorLog0);
+	PHBERR(p, "      phbRxeTceErrorLog1 = %016llx\n", s->phbRxeTceErrorLog1);
+	PHBERR(p, "       phbPblErrorStatus = %016llx\n", s->phbPblErrorStatus);
+	PHBERR(p, "  phbPblFirstErrorStatus = %016llx\n", s->phbPblFirstErrorStatus);
+	PHBERR(p, "         phbPblErrorLog0 = %016llx\n", s->phbPblErrorLog0);
+	PHBERR(p, "         phbPblErrorLog1 = %016llx\n", s->phbPblErrorLog1);
+	PHBERR(p, "     phbPcieDlpErrorLog1 = %016llx\n", s->phbPcieDlpErrorLog1);
+	PHBERR(p, "     phbPcieDlpErrorLog2 = %016llx\n", s->phbPcieDlpErrorLog2);
+	PHBERR(p, "   phbPcieDlpErrorStatus = %016llx\n", s->phbPcieDlpErrorStatus);
+
+	PHBERR(p, "      phbRegbErrorStatus = %016llx\n", s->phbRegbErrorStatus);
+	PHBERR(p, " phbRegbFirstErrorStatus = %016llx\n", s->phbRegbFirstErrorStatus);
+	PHBERR(p, "        phbRegbErrorLog0 = %016llx\n", s->phbRegbErrorLog0);
+	PHBERR(p, "        phbRegbErrorLog1 = %016llx\n", s->phbRegbErrorLog1);
+
+	for (i = 0; i < OPAL_PHB4_NUM_PEST_REGS; i++) {
+		if (!s->pestA[i] && !s->pestB[i])
+			continue;
+		PHBERR(p, "               PEST[%03d] = %016llx %016llx\n",
+		       i, s->pestA[i], s->pestB[i]);
+	}
+	free(s);
 }
 
 /* Check if AIB is fenced via PBCQ NFIR */
@@ -204,6 +284,9 @@ static bool phb4_fenced(struct phb4 *p)
 	p->flags |= PHB4_AIB_FENCED;
 	p->state = PHB4_STATE_FENCED;
 
+	if (verbose_eeh)
+		phb4_eeh_dump_regs(p);
+
 	return true;
 }
 
@@ -241,7 +324,7 @@ static int64_t phb4_pcicfg_check(struct phb4 *p, uint32_t bdfn,
 }
 
 static int64_t phb4_rc_read(struct phb4 *p, uint32_t offset, uint8_t sz,
-			    void *data)
+			    void *data, bool use_asb)
 {
 	uint32_t reg = offset & ~3;
 	uint32_t oval;
@@ -268,9 +351,13 @@ static int64_t phb4_rc_read(struct phb4 *p, uint32_t offset, uint8_t sz,
 		break;
 	default:
 		oval = 0xffffffff; /* default if offset too big */
-		if (reg < PHB_RC_CONFIG_SIZE)
-			/* XXX Add ASB support ? */
-			oval = in_le32(p->regs + PHB_RC_CONFIG_BASE + reg);
+		if (reg < PHB_RC_CONFIG_SIZE) {
+			if (use_asb)
+				oval = bswap_32(phb4_read_reg_asb(p, PHB_RC_CONFIG_BASE
+								  + reg));
+			else
+				oval = in_le32(p->regs + PHB_RC_CONFIG_BASE + reg);
+		}
 	}
 	switch (sz) {
 	case 1:
@@ -291,7 +378,7 @@ static int64_t phb4_rc_read(struct phb4 *p, uint32_t offset, uint8_t sz,
 }
 
 static int64_t phb4_rc_write(struct phb4 *p, uint32_t offset, uint8_t sz,
-			     uint32_t val)
+			     uint32_t val, bool use_asb)
 {
 	uint32_t reg = offset & ~3;
 	uint32_t old, mask, shift, oldold;
@@ -302,7 +389,7 @@ static int64_t phb4_rc_write(struct phb4 *p, uint32_t offset, uint8_t sz,
 
 	/* If size isn't 4-bytes, do a RMW cycle */
 	if (sz < 4) {
-		rc = phb4_rc_read(p, reg, 4, &old);
+		rc = phb4_rc_read(p, reg, 4, &old, use_asb);
 		if (rc != OPAL_SUCCESS)
 			return rc;
 
@@ -366,11 +453,13 @@ static int64_t phb4_rc_write(struct phb4 *p, uint32_t offset, uint8_t sz,
 	case PCI_CFG_IO_BASE_U16:	/* Includes PCI_CFG_IO_LIMIT_U16 */
 		break;
 	default:
-		/* XXX Add ASB support ? */
 		/* Workaround PHB config space enable */
 		if ((p->rev == PHB4_REV_NIMBUS_DD10) && (reg == PCI_CFG_CMD))
 			val |= PCI_CFG_CMD_MEM_EN | PCI_CFG_CMD_BUS_MASTER_EN;
-		out_le32(p->regs + PHB_RC_CONFIG_BASE + reg, val);
+		if (use_asb)
+			phb4_write_reg_asb(p, PHB_RC_CONFIG_BASE + reg, val);
+		else
+			out_le32(p->regs + PHB_RC_CONFIG_BASE + reg, val);
 	}
 	return OPAL_SUCCESS;
 }
@@ -404,7 +493,7 @@ static int64_t phb4_pcicfg_read(struct phb4 *p, uint32_t bdfn,
 
 	/* Handle root complex MMIO based config space */
 	if (bdfn == 0)
-		return phb4_rc_read(p, offset, size, data);
+		return phb4_rc_read(p, offset, size, data, use_asb);
 
 	addr = PHB_CA_ENABLE;
 	addr = SETFIELD(PHB_CA_BDFN, addr, bdfn);
@@ -495,7 +584,7 @@ static int64_t phb4_pcicfg_write(struct phb4 *p, uint32_t bdfn,
 
 	/* Handle root complex MMIO based config space */
 	if (bdfn == 0)
-		return phb4_rc_write(p, offset, size, data);
+		return phb4_rc_write(p, offset, size, data, use_asb);
 
 	addr = PHB_CA_ENABLE;
 	addr = SETFIELD(PHB_CA_BDFN, addr, bdfn);
@@ -1702,18 +1791,13 @@ static void phb4_read_phb_status(struct phb4 *p,
 	stat->common.ioType  = OPAL_PHB_ERROR_DATA_TYPE_PHB4;
 	stat->common.len     = sizeof(struct OpalIoPhb4ErrorData);
 
-	/*
-	 * TODO: investigate reading registers through ASB instead of AIB.
-	 *
-	 * Until this is implemented, some registers may be unreadable through
-	 * a fence.
-	 */
+	/* Use ASB for config space if the PHB is fenced */
+	if (p->flags & PHB4_AIB_FENCED)
+		p->flags |= PHB4_CFG_USE_ASB;
 
 	/* Grab RC bridge control, make it 32-bit */
 	phb4_pcicfg_read16(&p->phb, 0, PCI_CFG_BRCTL, &val);
 	stat->brdgCtl = val;
-
-	/* XXX: No UTL registers on PHB4? */
 
 	/*
 	 * Grab various RC PCIe capability registers. All device, slot
@@ -1727,7 +1811,7 @@ static void phb4_read_phb_status(struct phb4 *p,
 	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
 			   &stat->linkStatus);
 
-	/*
+	 /*
 	 * I assume those are the standard config space header, cmd & status
 	 * together makes 32-bit. Secondary status is 16-bit so I'll clear
 	 * the top on that one
@@ -1753,6 +1837,9 @@ static void phb4_read_phb_status(struct phb4 *p,
 			   &stat->tlpHdr4);
 	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_SRCID,
 			   &stat->sourceId);
+
+	/* Restore config space to MMIO instead of ASB */
+	p->flags &= ~PHB4_CFG_USE_ASB;
 
 	/* PEC NFIR, same as P8/PHB3 */
 	xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &stat->nFir);
@@ -2889,6 +2976,9 @@ static int64_t phb4_get_diag_data(struct phb *phb,
 	 */
 	phb4_fenced(p);
 	phb4_read_phb_status(p, data);
+
+	if (verbose_eeh && !(p->flags & PHB4_AIB_FENCED))
+		phb4_eeh_dump_regs(p);
 
 	/*
 	 * We're running to here probably because of errors
@@ -4432,6 +4522,10 @@ static void phb4_probe_pbcq(struct dt_node *pbcq)
 void probe_phb4(void)
 {
 	struct dt_node *np;
+
+	verbose_eeh = nvram_query_eq("pci-eeh-verbose", "true");
+	if (verbose_eeh)
+		prlog(PR_INFO, "PHB4: Verbose EEH enabled\n");
 
 	/* Look for PBCQ XSCOM nodes */
 	dt_for_each_compatible(dt_root, np, "ibm,power9-pbcq")
