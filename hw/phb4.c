@@ -2455,7 +2455,6 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			PHBERR(p, "Timeout waiting for pending transaction\n");
 			goto error;
 		}
-		pci_slot_set_state(slot, PHB4_SLOT_CRESET_REINIT);
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
 	case PHB4_SLOT_CRESET_REINIT:
 		PHBDBG(p, "CRESET: Reinitialization\n");
