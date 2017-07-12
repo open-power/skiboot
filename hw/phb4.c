@@ -166,15 +166,45 @@ static inline void phb4_ioda_sel(struct phb4 *p, uint32_t table,
 /* Check if AIB is fenced via PBCQ NFIR */
 static bool phb4_fenced(struct phb4 *p)
 {
-	uint64_t nfir;
+	uint64_t nfir_p, nfir_n, err_aib;
+	uint64_t err_rpt0, err_rpt1;
 
-	xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &nfir);
-	if (nfir & PPC_BIT(16)) {
-		p->flags |= PHB4_AIB_FENCED;
-		p->state = PHB4_STATE_FENCED;
+	/* Already fenced ? */
+	if (p->flags & PHB4_AIB_FENCED)
 		return true;
-	}
-	return false;
+
+	/*
+	 * An all 1's from the PHB indicates a PHB freeze/fence. We
+	 * don't really differenciate them at this point.
+	 */
+	if (in_be64(p->regs + PHB_CPU_LOADSTORE_STATUS)!= 0xfffffffffffffffful)
+		return false;
+
+	PHBERR(p, "PHB Freeze/Fence detected !\n");
+
+	/* We read the PCI and NEST FIRs and dump them */
+	xscom_read(p->chip_id,
+		   p->pci_stk_xscom + XPEC_PCI_STK_PCI_FIR, &nfir_p);
+	xscom_read(p->chip_id,
+		   p->pe_stk_xscom + XPEC_NEST_STK_PCI_NFIR, &nfir_n);
+	xscom_read(p->chip_id,
+		   p->pe_stk_xscom + XPEC_NEST_STK_ERR_RPT0, &err_rpt0);
+	xscom_read(p->chip_id,
+		   p->pe_stk_xscom + XPEC_NEST_STK_ERR_RPT1, &err_rpt1);
+	xscom_read(p->chip_id,
+		   p->pci_stk_xscom + XPEC_PCI_STK_PBAIB_ERR_REPORT, &err_aib);
+
+	PHBERR(p, " PCI FIR=%016llx\n", nfir_p);
+	PHBERR(p, "NEST FIR=%016llx\n", nfir_n);
+	PHBERR(p, "ERR RPT0=%016llx\n", err_rpt0);
+	PHBERR(p, "ERR RPT1=%016llx\n", err_rpt1);
+	PHBERR(p, " AIB ERR=%016llx\n", err_aib);
+
+	/* Mark ourselves fenced */
+	p->flags |= PHB4_AIB_FENCED;
+	p->state = PHB4_STATE_FENCED;
+
+	return true;
 }
 
 /*
