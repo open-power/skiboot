@@ -1042,7 +1042,7 @@ XZ_EXTERN enum xz_ret xz_dec_lzma2_run(struct xz_dec_lzma2 *s,
                 return XZ_DATA_ERROR;
 
             s->lzma2.sequence = SEQ_LZMA_PREPARE;
-
+	    /* fallthrough */
         case SEQ_LZMA_PREPARE:
             if (s->lzma2.compressed < RC_INIT_BYTES)
                 return XZ_DATA_ERROR;
@@ -1052,7 +1052,7 @@ XZ_EXTERN enum xz_ret xz_dec_lzma2_run(struct xz_dec_lzma2 *s,
 
             s->lzma2.compressed -= RC_INIT_BYTES;
             s->lzma2.sequence = SEQ_LZMA_RUN;
-
+	    /* fallthrough */
         case SEQ_LZMA_RUN:
             /*
              * Set dictionary limit to indicate how much we want
