@@ -1854,9 +1854,6 @@ static void phb4_read_phb_status(struct phb4 *p,
 	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_SRCID,
 			   &stat->sourceId);
 
-	/* Restore config space to MMIO instead of ASB */
-	p->flags &= ~PHB4_CFG_USE_ASB;
-
 	/* PEC NFIR, same as P8/PHB3 */
 	xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &stat->nFir);
 	xscom_read(p->chip_id, p->pe_stk_xscom + 0x3, &stat->nFirMask);
@@ -2410,19 +2407,22 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			xscom_write(p->chip_id, p->pe_stk_xscom + 0x2,
 				    0x000000f000000000);
 
+		/*
+		 * Force use of ASB for register access until the PHB has
+		 * been fully reset.
+		 */
+		p->flags |= PHB4_CFG_USE_ASB;
+
 		/* Clear errors, following the proper sequence */
 		phb4_err_clear(p);
 
-		/* Clear errors in NFIR and raise ETU reset */
-		xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &p->nfir_cache);
-		xscom_read(p->chip_id, p->pci_stk_xscom + 0x0, &p->pfir_cache);
-
-		xscom_write(p->chip_id, p->pci_stk_xscom + 0x0,
+		/* Actual reset */
+		xscom_write(p->chip_id, p->pci_stk_xscom + XPEC_PCI_STK_ETU_RESET,
 			    0x8000000000000000);
 
-		/* DD1 errata: write to PEST to force update */
-		phb4_ioda_sel(p, IODA3_TBL_PESTA, PHB4_RESERVED_PE_NUM(p), false);
-		out_be64(p->regs + PHB_IODA_DATA0, 0);
+		/* Clear errors in PFIR and NFIR */
+		xscom_read(p->chip_id, p->pci_stk_xscom + 0x0, &p->pfir_cache);
+		xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &p->nfir_cache);
 
 		pci_slot_set_state(slot, PHB4_SLOT_CRESET_WAIT_CQ);
 		slot->retries = 500;
@@ -2438,8 +2438,14 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			xscom_write(p->chip_id, p->pci_stk_xscom + 0x1,
 				    ~p->pfir_cache);
 
-			// Clear PHB from reset
-			xscom_write(p->chip_id, p->pci_stk_xscom + 0x0, 0x0);
+			/* Clear PHB from reset */
+			xscom_write(p->chip_id,
+				    p->pci_stk_xscom + XPEC_PCI_STK_ETU_RESET, 0x0);
+
+			/* DD1 errata: write to PEST to force update */
+			phb4_ioda_sel(p, IODA3_TBL_PESTA, PHB4_RESERVED_PE_NUM(p),
+				      false);
+			phb4_write_reg(p, PHB_IODA_DATA0, 0);
 
 			pci_slot_set_state(slot, PHB4_SLOT_CRESET_REINIT);
 			return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
@@ -2455,6 +2461,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		PHBDBG(p, "CRESET: Reinitialization\n");
 		p->flags &= ~PHB4_AIB_FENCED;
 		p->flags &= ~PHB4_CAPP_RECOVERY;
+		p->flags &= ~PHB4_CFG_USE_ASB;
 		phb4_init_hw(p, false);
 		pci_slot_set_state(slot, PHB4_SLOT_CRESET_FRESET);
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
