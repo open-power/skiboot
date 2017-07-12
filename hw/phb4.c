@@ -155,6 +155,22 @@ static inline void phb4_write_reg_asb(struct phb4 *p,
 #endif
 }
 
+static __unused uint64_t phb4_read_reg(struct phb4 *p, uint32_t offset)
+{
+	if (p->flags & PHB4_CFG_USE_ASB)
+		return phb4_read_reg_asb(p, offset);
+	else
+		return in_be64(p->regs + offset);
+}
+
+static __unused void phb4_write_reg(struct phb4 *p, uint32_t offset, uint64_t val)
+{
+	if (p->flags & PHB4_CFG_USE_ASB)
+		phb4_write_reg_asb(p, offset, val);
+	else
+		return out_be64(p->regs + offset, val);
+}
+
 /* Helper to select an IODA table entry */
 static inline void phb4_ioda_sel(struct phb4 *p, uint32_t table,
 				 uint32_t addr, bool autoinc)
