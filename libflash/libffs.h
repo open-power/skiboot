@@ -92,6 +92,8 @@ struct ffs_entry_user {
 
 bool has_ecc(struct ffs_entry *ent);
 
+bool has_flag(struct ffs_entry *ent, uint16_t flag);
+
 /* Init */
 
 int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
@@ -125,6 +127,8 @@ int ffs_lookup_part(struct ffs_handle *ffs, const char *name,
 int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 		  char **name, uint32_t *start,
 		  uint32_t *total_size, uint32_t *act_size, bool *ecc);
+
+struct ffs_entry *ffs_entry_get(struct ffs_handle *ffs, uint32_t index);
 
 int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 			uint32_t act_size);

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,6 +92,7 @@ static void print_ffs_info(uint32_t toc_offset)
 {
 	struct ffs_handle *ffs_handle;
 	uint32_t other_side_offset = 0;
+	struct ffs_entry *ent;
 	int rc;
 	uint32_t i;
 
@@ -103,25 +106,40 @@ static void print_ffs_info(uint32_t toc_offset)
 		return;
 	}
 
-	for (i = 0;; i++) {
+	for (i = 0; rc == 0; i++) {
 		uint32_t start, size, act, end;
-		bool ecc;
-		char *name;
+		char *name = NULL, *flags;
+		int l;
 
-		rc = ffs_part_info(ffs_handle, i, &name, &start, &size, &act, &ecc);
+		rc = ffs_part_info(ffs_handle, i, &name, &start, &size, &act, NULL);
 		if (rc == FFS_ERR_PART_NOT_FOUND)
 			break;
-		if (rc) {
-			fprintf(stderr, "Error %d scanning partitions\n", rc);
-			break;
+
+		ent = ffs_entry_get(ffs_handle, i);
+		if (rc || !ent) {
+			fprintf(stderr, "Error %d scanning partitions\n",
+					!ent ? FFS_ERR_PART_NOT_FOUND : rc);
+		    goto out;
 		}
+
+		l = asprintf(&flags, "[%c%c%c%c%c]",
+				has_ecc(ent) ? 'E' : '-',
+				has_flag(ent, FFS_MISCFLAGS_PRESERVED) ? 'P' : '-',
+				has_flag(ent, FFS_MISCFLAGS_READONLY) ? 'R' : '-',
+				has_flag(ent, FFS_MISCFLAGS_BACKUP) ? 'B' : '-',
+				has_flag(ent, FFS_MISCFLAGS_REPROVISION) ? 'F' : '-');
+		if (l < 0)
+			goto out;
+
 		end = start + size;
 		printf("ID=%02d %15s %08x..%08x (actual=%08x) %s\n",
-		       i, name, start, end, act, ecc ? "[ECC]" : "");
+				i, name, start, end, act, flags);
 
 		if (strcmp(name, "OTHER_SIDE") == 0)
 			other_side_offset = start;
 
+		free(flags);
+out:
 		free(name);
 	}
 
@@ -413,6 +431,81 @@ static void disable_4B_addresses(void)
 	}
 }
 
+static void print_partition_detail(uint32_t toc_offset, uint32_t part_id, char *name)
+{
+	uint32_t start, size, act, end;
+	struct ffs_handle *ffs_handle;
+	char *ent_name = NULL, *flags;
+	struct ffs_entry *ent;
+	int rc, l;
+
+	rc = ffs_init(toc_offset, fl_total_size, bl, &ffs_handle, 0);
+	if (rc) {
+		fprintf(stderr, "Error %d opening ffs !\n", rc);
+		return;
+	}
+
+	if (name) {
+		uint32_t i;
+
+		for (i = 0;;i++) {
+			rc = ffs_part_info(ffs_handle, i, &ent_name, &start, &size, &act,
+					NULL);
+			if (rc == FFS_ERR_PART_NOT_FOUND) {
+				fprintf(stderr, "Partition with name %s doesn't exist within TOC at 0x%08x\n", name, toc_offset);
+				goto out;
+			}
+			if (rc || strncmp(ent_name, name, FFS_PART_NAME_MAX) == 0) {
+				part_id = i;
+				break;
+			}
+			free(ent_name);
+			ent_name = NULL;
+		}
+	} else {
+		rc = ffs_part_info(ffs_handle, part_id, &ent_name, &start, &size, &act,
+				NULL);
+		if (rc == FFS_ERR_PART_NOT_FOUND) {
+			fprintf(stderr, "Partition with ID %d doesn't exist within TOC at 0x%08x\n",
+			part_id, toc_offset);
+			goto out;
+		}
+	}
+	ent = ffs_entry_get(ffs_handle, part_id);
+	if (rc || !ent) {
+		fprintf(stderr, "Error %d scanning partitions\n", !ent ?
+				FFS_ERR_PART_NOT_FOUND : rc);
+		goto out;
+	}
+
+	printf("Detailed partition information\n");
+	end = start + size;
+	printf("Name:\n");
+	printf("%s (ID=%02d)\n\n", ent_name, part_id);
+	printf("%-10s  %-10s  %-10s\n", "Start", "End", "Actual");
+	printf("0x%08x  0x%08x  0x%08x\n\n", start, end, act);
+
+	printf("Flags:\n");
+
+	l = asprintf(&flags, "%s%s%s%s%s", has_ecc(ent) ? "ECC [E]\n" : "",
+			has_flag(ent, FFS_MISCFLAGS_PRESERVED) ? "PRESERVED [P]\n" : "",
+			has_flag(ent, FFS_MISCFLAGS_READONLY) ? "READONLY [R]\n" : "",
+			has_flag(ent, FFS_MISCFLAGS_BACKUP) ? "BACKUP [B]\n" : "",
+			has_flag(ent, FFS_MISCFLAGS_REPROVISION) ?
+					"REPROVISION [F]\n" : "");
+	if (l < 0) {
+		fprintf(stderr, "Memory allocation failure printing flags!\n");
+		goto out;
+	}
+
+	printf("%s", flags);
+	free(flags);
+
+out:
+	ffs_close(ffs_handle);
+	free(ent_name);
+}
+
 static void print_version(void)
 {
 	printf("Open-Power Flash tool %s\n", version);
@@ -494,6 +587,10 @@ static void print_help(const char *pname)
 	printf("\t\tpartition and then set all the ECC bits as they should be\n\n");
 	printf("\t-i, --info\n");
 	printf("\t\tDisplay some information about the flash.\n\n");
+	printf("\t--detail\n");
+	printf("\t\tDisplays detailed info about a particular partition.\n");
+	printf("\t\tAccepts a numeric partition or can be used in conjuction\n");
+	printf("\t\twith the -P flag.\n\n");
 	printf("\t-h, --help\n");
 	printf("\t\tThis message.\n\n");
 }
@@ -508,7 +605,7 @@ void exiting(void)
 int main(int argc, char *argv[])
 {
 	const char *pname = argv[0];
-	uint32_t address = 0, read_size = 0, write_size = 0;
+	uint32_t address = 0, read_size = 0, write_size = 0, detail_id = UINT_MAX;
 	uint32_t erase_start = 0, erase_size = 0;
 	bool erase = false, do_clear = false;
 	bool program = false, erase_all = false, info = false, do_read = false;
@@ -516,7 +613,7 @@ int main(int argc, char *argv[])
 	bool show_help = false, show_version = false;
 	bool no_action = false, tune = false;
 	char *write_file = NULL, *read_file = NULL, *part_name = NULL;
-	bool ffs_toc_seen = false, direct = false;
+	bool ffs_toc_seen = false, direct = false, print_detail = false;
 	int rc;
 
 	while(1) {
@@ -535,6 +632,7 @@ int main(int argc, char *argv[])
 			{"force",	no_argument,		NULL,	'f'},
 			{"flash-file",	required_argument,	NULL,	'F'},
 			{"info",	no_argument,		NULL,	'i'},
+			{"detail",  optional_argument,  NULL,   'm'},
 			{"tune",	no_argument,		NULL,	't'},
 			{"dummy",	no_argument,		NULL,	'd'},
 			{"help",	no_argument,		NULL,	'h'},
@@ -622,6 +720,11 @@ int main(int argc, char *argv[])
 		case 'c':
 			do_clear = true;
 			break;
+		case 'm':
+			print_detail = true;
+			if (optarg)
+				detail_id = strtoul(optarg, NULL, 0);
+			break;
 		case ':':
 			fprintf(stderr, "Unrecognised option \"%s\" to '%c'\n", optarg, optopt);
 			no_action = true;
@@ -651,7 +754,7 @@ int main(int argc, char *argv[])
 	 * also tune them as a side effect
 	 */
 	no_action = no_action || (!erase && !program && !info && !do_read &&
-		!enable_4B && !disable_4B && !tune && !do_clear);
+		!enable_4B && !disable_4B && !tune && !do_clear && !print_detail);
 
 	/* Nothing to do, if we didn't already, print usage */
 	if (no_action && !show_version)
@@ -682,6 +785,12 @@ int main(int argc, char *argv[])
 	if (part_name && bmc_flash) {
 		fprintf(stderr, "--partition not supported on BMC flash !\n");
 		exit(1);
+	}
+
+	if (print_detail && ((detail_id == UINT_MAX && !part_name)
+			|| (detail_id != UINT_MAX && part_name))) {
+		fprintf(stderr, "--detail requires either a partition id or\n");
+		fprintf(stderr, "a partition name with -P\n");
 	}
 
 	/* part-name and erase-all make no sense together */
@@ -871,6 +980,9 @@ int main(int argc, char *argv[])
 		 */
 		print_flash_info(flash_side ? 0 : ffs_toc);
 	}
+
+	if (print_detail)
+		print_partition_detail(flash_side ? 0 : ffs_toc, detail_id, part_name);
 
 	/* Unlock flash (PNOR only) */
 	if ((erase || program || do_clear) && !bmc_flash && !flashfilename) {

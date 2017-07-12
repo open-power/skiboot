@@ -188,7 +188,12 @@ static int ffs_entry_to_cpu(struct ffs_hdr *hdr,
 	return rc;
 }
 
-static struct ffs_entry *ffs_get_part(struct ffs_handle *ffs, uint32_t index)
+bool has_flag(struct ffs_entry *ent, uint16_t flag)
+{
+	return ((ent->user.miscflags & flag) != 0);
+}
+
+struct ffs_entry *ffs_entry_get(struct ffs_handle *ffs, uint32_t index)
 {
 	int i = 0;
 	struct ffs_entry *ent = NULL;
@@ -379,7 +384,7 @@ int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 	struct ffs_entry *ent;
 	char *n;
 
-	ent = ffs_get_part(ffs, part_idx);
+	ent = ffs_entry_get(ffs, part_idx);
 	if (!ent)
 		return FFS_ERR_PART_NOT_FOUND;
 
@@ -794,7 +799,7 @@ int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 	uint32_t offset;
 	int rc;
 
-	ent = ffs_get_part(ffs, part_idx);
+	ent = ffs_entry_get(ffs, part_idx);
 	if (!ent) {
 		FL_DBG("FFS: Entry not found\n");
 		return FFS_ERR_PART_NOT_FOUND;
