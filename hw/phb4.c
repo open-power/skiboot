@@ -4184,15 +4184,27 @@ static const struct irq_source_ops phb4_lsi_ops = {
 	.attributes = phb4_lsi_attributes,
 };
 
+#ifdef HAVE_BIG_ENDIAN
+static u64 lane_eq_default[8] = {
+	0x7777777777777777, 0x7777777777777777,
+	0x7777777777777777, 0x7777777777777777,
+	0x7777777777777777, 0x7777777777777777,
+	0x7777777777777777, 0x7777777777777777
+};
+#else
+#error lane_eq_default needs to be big endian (device tree property)
+#endif
+
 static void phb4_create(struct dt_node *np)
 {
 	const struct dt_property *prop;
 	struct phb4 *p = zalloc(sizeof(struct phb4));
 	struct pci_slot *slot;
-	size_t lane_eq_len;
+	size_t lane_eq_len, lane_eq_len_req;
 	struct dt_node *iplp;
 	char *path;
 	uint32_t irq_base, irq_flags;
+	int i;
 
 	assert(p);
 
@@ -4295,29 +4307,26 @@ static void phb4_create(struct dt_node *np)
 
 	/* Check for lane equalization values from HB or HDAT */
 	p->lane_eq = dt_prop_get_def_size(np, "ibm,lane-eq", NULL, &lane_eq_len);
+	if (p->rev == PHB4_REV_NIMBUS_DD10)
+		lane_eq_len_req = 8 * 8;
+	else
+		lane_eq_len_req = 6 * 8;
 	if (p->lane_eq) {
-		uint32_t want_len;
-
-		if (p->rev == PHB4_REV_NIMBUS_DD10)
-			want_len = 8 * 8;
-		else
-			want_len = 6 * 8;
-		if (lane_eq_len != want_len) {
-			PHBERR(p, "Device-tree has ibm,lane-eq with wrong len %ld"
-			       " (want %d)\n", lane_eq_len, want_len);
+		if (lane_eq_len < lane_eq_len_req) {
+			PHBERR(p, "Device-tree has ibm,lane-eq too short: %ld"
+			       " (want %ld)\n", lane_eq_len, lane_eq_len_req);
 			p->lane_eq = NULL;
 		}
+	} else {
+		PHBDBG(p, "Using default lane equalization settings\n");
+		p->lane_eq = lane_eq_default;
 	}
 	if (p->lane_eq) {
 		PHBDBG(p, "Override lane equalization settings:\n");
-		PHBDBG(p, "  0x%016llx 0x%016llx\n",
-		       be64_to_cpu(p->lane_eq[0]), be64_to_cpu(p->lane_eq[1]));
-		PHBDBG(p, "  0x%016llx 0x%016llx\n",
-		       be64_to_cpu(p->lane_eq[2]), be64_to_cpu(p->lane_eq[3]));
-		PHBDBG(p, "  0x%016llx 0x%016llx\n",
-		       be64_to_cpu(p->lane_eq[4]), be64_to_cpu(p->lane_eq[5]));
-		PHBDBG(p, "  0x%016llx 0x%016llx\n",
-		       be64_to_cpu(p->lane_eq[6]), be64_to_cpu(p->lane_eq[7]));
+		for (i = 0 ; i < lane_eq_len_req/(8 * 2) ; i++)
+			PHBDBG(p, "  0x%016llx 0x%016llx\n",
+			       be64_to_cpu(p->lane_eq[2 * i]),
+			       be64_to_cpu(p->lane_eq[2 * i + 1]));
 	}
 
 	/* Allocate a block of interrupts. We need to know if it needs
