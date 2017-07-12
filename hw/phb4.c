@@ -2405,7 +2405,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		/* Force fence on the PHB to work around a non-existent PE */
 		if (!phb4_fenced(p))
 			xscom_write(p->chip_id, p->pe_stk_xscom + 0x2,
-				    0x000000f000000000);
+				    0x0000002000000000);
 
 		/*
 		 * Force use of ASB for register access until the PHB has
