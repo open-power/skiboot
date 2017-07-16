@@ -1248,7 +1248,7 @@ enum {
 	XIVE_DUMP_EMU_STATE	= 5,
 };
 
-/* Operation argument to IMC Microcode */
+/* "type" argument options for OPAL_IMC_COUNTERS_* calls */
 enum {
 	OPAL_IMC_COUNTERS_NEST = 1,
 	OPAL_IMC_COUNTERS_CORE = 2,
