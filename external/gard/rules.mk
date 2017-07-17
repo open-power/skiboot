@@ -5,7 +5,10 @@ OBJS      = version.o gard.o
 LIBFLASH_FILES    := libflash.c libffs.c ecc.c blocklevel.c file.c
 LIBFLASH_OBJS     := $(addprefix libflash-, $(LIBFLASH_FILES:.c=.o))
 LIBFLASH_SRC      := $(addprefix libflash/,$(LIBFLASH_FILES))
-OBJS     += $(LIBFLASH_OBJS)
+CCAN_FILES	:= list.c
+CCAN_OBJS	:= $(addprefix ccan-list-, $(CCAN_FILES:.c=.o))
+CCAN_SRC	:= $(addprefix ccan/list/,$(CCAN_FILES))
+OBJS     += $(LIBFLASH_OBJS) $(CCAN_OBJS)
 OBJS     += common-arch_flash.o
 EXE       = gard
 
@@ -29,9 +32,13 @@ version.c: .version
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(LIBFLASH_SRC): | links
+$(CCAN_SRC): | links
 
 $(LIBFLASH_OBJS): libflash-%.o : libflash/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+$(CCAN_OBJS): ccan-list-%.o: ccan/list/%.c
+	$(Q_CC)$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXE): $(OBJS)
 	$(CC) $(LDFLAGS) $(CFLAGS) $^ -o $@
