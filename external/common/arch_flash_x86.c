@@ -49,5 +49,6 @@ int arch_flash_init(struct blocklevel_device **r_bl, const char *file, bool keep
 
 void arch_flash_close(struct blocklevel_device *bl, const char *file)
 {
+	(void)file;
 	file_exit_close(bl);
 }

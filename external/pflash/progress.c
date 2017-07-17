@@ -3,6 +3,7 @@
 #include <string.h>
 #include <limits.h>
 #include <time.h>
+#include "progress.h"
 
 static unsigned long progress_max;
 static unsigned int progress_pcent;

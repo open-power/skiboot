@@ -595,7 +595,7 @@ static void print_help(const char *pname)
 	printf("\t\tThis message.\n\n");
 }
 
-void exiting(void)
+static void exiting(void)
 {
 	if (need_relock)
 		arch_flash_set_wrprotect(bl, 1);

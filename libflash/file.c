@@ -31,6 +31,7 @@
 #include <mtd/mtd-abi.h>
 
 #include "libflash.h"
+#include "libflash/file.h"
 #include "blocklevel.h"
 
 struct file_data {

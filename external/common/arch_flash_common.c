@@ -40,17 +40,23 @@ int __attribute__((weak)) arch_flash_erase_chip(struct blocklevel_device *bl)
 	return blocklevel_erase(bl, 0, total_size);
 }
 
-int __attribute__((weak)) arch_flash_4b_mode(struct blocklevel_device *bl, int set_4b)
+int __attribute__((weak,const)) arch_flash_4b_mode(struct blocklevel_device *bl, int set_4b)
 {
+	(void)bl;
+	(void)set_4b;
 	return -1;
 }
 
-enum flash_access __attribute__((weak)) arch_flash_access(struct blocklevel_device *bl, enum flash_access access)
+enum flash_access __attribute__((weak,const)) arch_flash_access(struct blocklevel_device *bl, enum flash_access access)
 {
+	(void)bl;
+	(void)access;
 	return ACCESS_INVAL;
 }
 
-int __attribute__((weak)) arch_flash_set_wrprotect(struct blocklevel_device *bl, int set)
+int __attribute__((weak,const)) arch_flash_set_wrprotect(struct blocklevel_device *bl, int set)
 {
+	(void)bl;
+	(void)set;
 	return -1;
 }
