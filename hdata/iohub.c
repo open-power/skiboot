@@ -474,7 +474,7 @@ static void io_parse_fru(const void *sp_iohubs)
 			      " Not installed\n", i);
 			continue;
 		case CECHUB_HUB_FLAG_STATE_UNUSABLE:
-			prlog(PR_DEBUG, "CEC:   IO Hub Chip #%d Unusable", i);
+			prlog(PR_DEBUG, "CEC:   IO Hub Chip #%d Unusable\n", i);
 			continue;
 		}
 
