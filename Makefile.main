@@ -180,10 +180,10 @@ include $(SRC)/libstb/Makefile.inc
 
 # hack for travis-ci and coverity
 gard:
-	(cd external/gard; make)
+	(cd external/gard; CFLAGS="$(HOSTCFLAGS) $(HOSTGCOVCFLAGS)" make)
 
 pflash:
-	(cd external/pflash; make)
+	(cd external/pflash; CFLAGS="$(HOSTCFLAGS) $(HOSTGCOVCFLAGS)" make)
 
 pflash-coverity:
 	(cd external/pflash; ./build-all-arch.sh)
