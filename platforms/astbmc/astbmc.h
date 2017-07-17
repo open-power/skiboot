@@ -42,6 +42,7 @@ struct slot_table_entry {
 };
 
 extern const struct bmc_platform astbmc_ami;
+extern const struct bmc_platform astbmc_openbmc;
 
 extern void astbmc_early_init(void);
 extern int64_t astbmc_ipmi_reboot(void);
