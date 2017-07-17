@@ -255,8 +255,18 @@ extract-gcov: extract-gcov.c
 coverage-report: skiboot.info
 	genhtml --branch-coverage -q -o $@ $<
 
-skiboot.info: coverage
+# A rather nasty hack here that relies on the lcov file format
+external/pflash/pflash.info: coverage
+	(cd external/pflash; lcov -q -c -d . -o pflash.info --rc lcov_branch_coverage=1; sed -i -e 's%external/pflash/libflash%libflash%; s%external/pflash/ccan%ccan%' pflash.info)
+external/gard/gard.info: coverage
+	(cd external/gard; lcov -q -c -d . -o gard.info --rc lcov_branch_coverage=1; sed -i -e 's%external/gard/libflash%libflash%; s%external/gard/ccan%ccan%' gard.info)
+
+skiboot.info: coverage external/pflash/pflash.info external/gard/gard.info
 	lcov -q -c -d . $(LCOV_DIRS) -o $@ --rc lcov_branch_coverage=1
+	lcov -q -r $@ 'external/pflash/*' -o $@
+	lcov -q -r $@ 'external/gard/*' -o $@
+	lcov -q -a $@ -a external/pflash/pflash.info -o $@
+	lcov -q -a $@ -a external/gard/gard.info -o $@
 	lcov -q -r $@ $(LCOV_EXCLUDE) -o $@ --rc lcov_branch_coverage=1
 
 tags:
@@ -274,6 +284,7 @@ clean:
 	$(RM) *.[odsa] $(SUBDIRS:%=%/*.[odsa])
 	$(RM) *.elf $(TARGET).lid *.map $(TARGET).lds $(TARGET).lid.xz
 	$(RM) include/asm-offsets.h version.c .version
+	$(RM) skiboot.info external/gard/gard.info external/pflash/pflash.info
 	$(RM) extract-gcov $(TARGET).lid.stb $(TARGET).lid.xz.stb
 
 distclean: clean

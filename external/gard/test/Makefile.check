@@ -6,13 +6,19 @@ check: check-gard
 #make clean before checking. If not, .o files for different
 #architectures might be lying around and clean once done to
 #avoid the opposite
-check-gard: gard-test-clean
+check-gard: gard-test-clean gard
 	$(call QTEST, RUN-TEST , make CC=$(HOSTCC) CROSS='' CROSS_COMPILE='' -C external/gard/ check, $@)
 	$(call QTEST, CLEANUP , make CC=$(HOSTCC) CROSS='' CROSS_COMPILE='' -C external/gard/ clean, $@)
 
 .PHONY: check-gard
 
 clean: gard-test-clean
+
+.PHONY: gard-coverage
+
+coverage: gard-coverage
+
+gard-coverage: check-gard
 
 gard-test-clean:
 	$(call QTEST, CLEANUP , make -C external/gard clean, $@)
