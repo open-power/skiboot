@@ -260,6 +260,9 @@ static int do_iterate(struct gard_ctx *ctx,
 
 static int get_largest_pos_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
 {
+	(void)ctx;
+	(void)gard;
+
 	if (!priv)
 		return -1;
 
@@ -272,6 +275,8 @@ static int get_largest_pos(struct gard_ctx *ctx)
 {
 	int rc, largest = -1;
 
+	(void)ctx;
+
 	rc = do_iterate(ctx, &get_largest_pos_i, &largest);
 	if (rc)
 		return -1;
@@ -281,6 +286,9 @@ static int get_largest_pos(struct gard_ctx *ctx)
 
 static int count_valid_records_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
 {
+	(void)ctx;
+	(void)pos;
+
 	if (!gard || !priv)
 		return -1;
 
@@ -303,6 +311,10 @@ static int count_valid_records(struct gard_ctx *ctx)
 
 static int do_list_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
 {
+	(void)ctx;
+	(void)pos;
+	(void)priv;
+
 	if (!gard)
 		return -1;
 
@@ -316,6 +328,9 @@ static int do_list_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, vo
 static int do_list(struct gard_ctx *ctx, int argc, char **argv)
 {
 	int rc;
+
+	(void)argc;
+	(void)argv;
 
 	/* No entries */
 	if (count_valid_records(ctx) == 0) {
@@ -334,6 +349,9 @@ static int do_list(struct gard_ctx *ctx, int argc, char **argv)
 static int do_show_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
 {
 	uint32_t id;
+
+	(void)ctx;
+	(void)pos;
 
 	if (!priv || !gard)
 		return -1;
@@ -477,7 +495,7 @@ static int do_clear(struct gard_ctx *ctx, int argc, char **argv)
 	return rc;
 }
 
-int check_gard_partition(struct gard_ctx *ctx)
+static int check_gard_partition(struct gard_ctx *ctx)
 {
 	int rc;
 	struct gard_record gard;
@@ -520,6 +538,8 @@ int check_gard_partition(struct gard_ctx *ctx)
 __attribute__ ((unused))
 static int do_nop(struct gard_ctx *ctx, int argc, char **argv)
 {
+	(void)ctx;
+	(void)argc;
 	fprintf(stderr, "Unimplemented action '%s'\n", argv[0]);
 	return EXIT_SUCCESS;
 }
