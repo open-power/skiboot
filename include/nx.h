@@ -395,6 +395,7 @@ extern void nx_create_compress_node(struct dt_node *);
 
 extern void nx_enable_842(struct dt_node *node, u32 gcid, u32 pb_base);
 extern void p9_nx_enable_842(struct dt_node *node, u32 gcid, u32 pb_base);
+extern void p9_nx_enable_gzip(struct dt_node *node, u32 gcid, u32 pb_base);
 
 extern int nx_cfg_rx_fifo(struct dt_node *node, const char *compat,
 			const char *priority, u32 gcid, u32 pid, u32 tid,

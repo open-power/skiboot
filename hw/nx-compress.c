@@ -242,6 +242,7 @@ void nx_create_compress_node(struct dt_node *node)
 			return;
 
 		p9_nx_enable_842(node, gcid, pb_base);
+		p9_nx_enable_gzip(node, gcid, pb_base);
 	} else
 		nx_enable_842(node, gcid, pb_base);
 }
