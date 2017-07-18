@@ -23,12 +23,24 @@
 
 #define NX_P7_SAT(sat, offset)	XSCOM_SAT(0x1, sat, offset)
 #define NX_P8_SAT(sat, offset)	XSCOM_SAT(0xc, sat, offset)
+#define NX_P9_SAT(sat, offset)	XSCOM_SAT(0x4, sat, offset)
 
 /* Random Number Generator */
 #define NX_P7_RNG_BAR		NX_P7_SAT(0x2, 0x0c)
 #define NX_P8_RNG_BAR		NX_P8_SAT(0x2, 0x0d)
+#define NX_P9_RNG_BAR		NX_P9_SAT(0x2, 0x0d)
 #define   NX_P7_RNG_BAR_ADDR		PPC_BITMASK(18, 51)
 #define   NX_P8_RNG_BAR_ADDR		PPC_BITMASK(14, 51)
+/*
+ * Section 5.30 of P9 NX Workbook Version 2.42 shows RNG BAR as:
+ *	0:7	unused
+ *	8:51	RNG BAR Base Address for RNG reads
+ *	52	Enable bit for RNG BAR
+ *	53:63	Unused
+ *
+ * Following macros encode that info.
+ */
+#define   NX_P9_RNG_BAR_ADDR		PPC_BITMASK(8, 51)
 #define   NX_RNG_BAR_SIZE		PPC_BITMASK(53, 55)
 #define   NX_RNG_BAR_ENABLE		PPC_BIT(52)
 
@@ -52,7 +64,7 @@
 #define   NX_ASYM_CFG_FC_ENABLE		PPC_BITMASK(32, 52)
 #define   NX_ASYM_CFG_ENABLE		PPC_BIT(63)
 
-/* 842 Compression */
+/* 842 Compression. CFG is used only on P7+ and P8 */
 #define NX_P7_842_CFG		NX_P7_SAT(0x2, 0x0b)
 #define NX_P8_842_CFG		NX_P8_SAT(0x2, 0x0c)
 #define   NX_842_CFG_CI			PPC_BITMASK(2, 14)
@@ -65,6 +77,11 @@
 #define NX_P8_DMA_CFG		NX_P8_SAT(0x1, 0x02)
 #define   NX_P8_DMA_CFG_842_COMPRESS_PREFETCH	PPC_BIT(23)
 #define   NX_P8_DMA_CFG_842_DECOMPRESS_PREFETCH	PPC_BIT(24)
+#define NX_P9_DMA_CFG		NX_P9_SAT(0x1, 0x02)
+#define   NX_DMA_CFG_GZIP_COMPRESS_MAX_RR	PPC_BITMASK(8, 11)
+#define   NX_DMA_CFG_GZIP_DECOMPRESS_MAX_RR	PPC_BITMASK(12, 15)
+#define   NX_DMA_CFG_GZIP_COMPRESS_PREFETCH	PPC_BIT(16)
+#define   NX_DMA_CFG_GZIP_DECOMPRESS_PREFETCH	PPC_BIT(17)
 #define   NX_DMA_CFG_AES_SHA_MAX_RR		PPC_BITMASK(25, 28)
 #define   NX_DMA_CFG_AMF_MAX_RR			PPC_BITMASK(29, 32)
 #define   NX_DMA_CFG_842_COMPRESS_MAX_RR	PPC_BITMASK(33, 36)
@@ -86,6 +103,7 @@
 /* Engine Enable Register */
 #define NX_P7_EE_CFG		NX_P7_SAT(0x1, 0x01)
 #define NX_P8_EE_CFG		NX_P8_SAT(0x1, 0x01)
+#define NX_P9_EE_CFG		NX_P9_SAT(0x1, 0x01)
 #define   NX_EE_CFG_EFUSE		PPC_BIT(0)
 #define   NX_EE_CFG_CH7			PPC_BIT(53) /* AMF */
 #define   NX_EE_CFG_CH6			PPC_BIT(54) /* AMF */
@@ -93,8 +111,16 @@
 #define   NX_EE_CFG_CH4			PPC_BIT(56) /* P7: SYM, P8: AMF */
 #define   NX_EE_CFG_CH3			PPC_BIT(57) /* SYM */
 #define   NX_EE_CFG_CH2			PPC_BIT(58) /* SYM */
+#define   NX_P9_EE_CFG_CH4		PPC_BIT(61) /* gzip */
 #define   NX_EE_CFG_CH1			PPC_BIT(62) /* 842 */
 #define   NX_EE_CFG_CH0			PPC_BIT(63) /* 842 */
+
+/* Max byte count register - P9 and later */
+#define NX_P9_842_MAX_BYTE_COUNT	NX_P9_SAT(0x1, 0x19)
+#define NX_P9_GZIP_MAX_BYTE_COUNT	NX_P9_SAT(0x1, 0x1b)
+
+#define NX_P9_DMA_VAS_MMIO_BAR		NX_P9_SAT(0x1, 0x1e)
+#define   NX_P9_DMA_VAS_MMIO_ADDR		PPC_BITMASK(8, 38)
 
 /* PowerBus Registers */
 #define NX_P7_CRB_IQ		NX_P7_SAT(0x2, 0x0e)
@@ -102,9 +128,45 @@
 #define   NX_CRB_IQ_SYM			PPC_BITMASK(0, 2)
 #define   NX_CRB_IQ_ASYM		PPC_BITMASK(3, 5)
 
+/* UMAC registers - P9 and later */
+#define NX_P9_842_HIGH_PRI_RX_FIFO_BAR		NX_P9_SAT(0x3, 0x00)
+#define NX_P9_GZIP_HIGH_PRI_RX_FIFO_BAR		NX_P9_SAT(0x3, 0x02)
+#define NX_P9_842_NORMAL_PRI_RX_FIFO_BAR	NX_P9_SAT(0x3, 0x09)
+#define NX_P9_GZIP_NORMAL_PRI_RX_FIFO_BAR	NX_P9_SAT(0x3, 0x0b)
+#define   NX_P9_RX_FIFO_BAR_ADDR			PPC_BITMASK(8, 53)
+#define   NX_P9_RX_FIFO_BAR_SIZE			PPC_BITMASK(54, 56)
+
+#define NX_P9_842_HIGH_PRI_RX_FIFO_NOTIFY_MATCH     NX_P9_SAT(0x3, 0x06)
+#define NX_P9_GZIP_HIGH_PRI_RX_FIFO_NOTIFY_MATCH    NX_P9_SAT(0x3, 0x08)
+#define NX_P9_842_NORMAL_PRI_RX_FIFO_NOTIFY_MATCH   NX_P9_SAT(0x3, 0x0f)
+#define NX_P9_GZIP_NORMAL_PRI_RX_FIFO_NOTIFY_MATCH  NX_P9_SAT(0x3, 0x11)
+#define   NX_P9_RX_FIFO_NOTIFY_MATCH_LPID		PPC_BITMASK(4, 15)
+#define   NX_P9_RX_FIFO_NOTIFY_MATCH_PID		PPC_BITMASK(20, 39)
+#define   NX_P9_RX_FIFO_NOTIFY_MATCH_TID		PPC_BITMASK(44, 59)
+#define   NX_P9_RX_FIFO_NOTIFY_MATCH_MATCH_ENABLE	PPC_BIT(63)
+
+#define NX_P9_842_HIGH_PRI_RX_FIFO_CTRL		NX_P9_SAT(0x3, 0x03)
+#define NX_P9_GZIP_HIGH_PRI_RX_FIFO_CTRL	NX_P9_SAT(0x3, 0x05)
+#define NX_P9_842_NORMAL_PRI_RX_FIFO_CTRL	NX_P9_SAT(0x3, 0x0c)
+#define NX_P9_GZIP_NORMAL_PRI_RX_FIFO_CTRL	NX_P9_SAT(0x3, 0x0e)
+#define   NX_P9_RX_FIFO_CTRL_QUEUED			PPC_BITMASK(15, 23)
+#define   NX_P9_RX_FIFO_CTRL_HPRI_MAX_READ		PPC_BITMASK(27, 35)
+
+#define NX_P9_UMAC_TX_WINDOW_CONTEXT_BAR	NX_P9_SAT(0x3, 0x12)
+#define   NX_P9_UMAC_TX_WINDOW_CONTEXT_ADDR		PPC_BITMASK(8, 40)
+
+#define NX_P9_UMAC_VAS_MMIO_BAR			NX_P9_SAT(0x3, 0x14)
+#define   NX_P9_UMAC_VAS_MMIO_ADDR			PPC_BITMASK(8, 38)
+
+#define NX_P9_UMAC_STATUS_CTRL			NX_P9_SAT(0x3, 0x15)
+#define   NX_P9_UMAC_STATUS_CTRL_CRB_ENABLE		PPC_BIT(1)
+
+#define NX_P9_ERAT_STATUS_CTRL			NX_P9_SAT(0x3, 0x16)
+
 /* NX Status Register */
 #define NX_P7_STATUS		NX_P7_SAT(0x1, 0x00)
 #define NX_P8_STATUS		NX_P8_SAT(0x1, 0x00)
+#define NX_P9_STATUS		NX_P9_SAT(0x1, 0x00) /* DMA Status register */
 #define   NX_STATUS_HMI_ACTIVE		PPC_BIT(54)
 #define   NX_STATUS_PBI_IDLE		PPC_BIT(55)
 #define   NX_STATUS_DMA_CH0_IDLE	PPC_BIT(56)
@@ -119,6 +181,7 @@
 /* Channel Status Registers */
 #define NX_P7_CH_CRB(ch)	NX_P7_SAT(0x1, 0x03 + ((ch) * 2))
 #define NX_P8_CH_CRB(ch)	NX_P8_SAT(0x1, 0x03 + ((ch) * 2))
+#define NX_P9_CH_CRB(ch)	NX_P9_SAT(0x1, 0x03 + ((ch) * 2))
 #define NX_P7_CH_STATUS(ch)	NX_P7_SAT(0x1, 0x04 + ((ch) * 2))
 #define NX_P8_CH_STATUS(ch)	NX_P8_SAT(0x1, 0x04 + ((ch) * 2))
 #define   NX_CH_STATUS_ABORT		PPC_BIT(0)
@@ -134,6 +197,7 @@
 /* Kill Register */
 #define NX_P7_CRB_KILL		NX_P7_SAT(0x1, 0x13)
 #define NX_P8_CRB_KILL		NX_P8_SAT(0x1, 0x13)
+#define NX_P9_CRB_KILL		NX_P9_SAT(0x1, 0x13)
 #define   NX_CRB_KILL_LPID_KILL		PPC_BIT(0)
 #define   NX_CRB_KILL_LPID		PPC_BITMASK(6, 15)
 #define   NX_CRB_KILL_ISN_KILL		PPC_BIT(16)
@@ -148,38 +212,54 @@
 /* Fault Isolation Registers (FIR) */
 #define NX_P7_DE_FIR_DATA	NX_P7_SAT(0x4, 0x00)
 #define NX_P8_DE_FIR_DATA	NX_P8_SAT(0x4, 0x00)
+#define NX_P9_DE_FIR_DATA	NX_P9_SAT(0x4, 0x00)
 #define NX_P7_DE_FIR_DATA_CLR	NX_P7_SAT(0x4, 0x01)
 #define NX_P8_DE_FIR_DATA_CLR	NX_P8_SAT(0x4, 0x01)
+#define NX_P9_DE_FIR_DATA_CLR	NX_P9_SAT(0x4, 0x01)
 #define NX_P7_DE_FIR_DATA_SET	NX_P7_SAT(0x4, 0x02)
 #define NX_P8_DE_FIR_DATA_SET	NX_P8_SAT(0x4, 0x02)
+#define NX_P9_DE_FIR_DATA_SET	NX_P9_SAT(0x4, 0x02)
 #define NX_P7_DE_FIR_MASK	NX_P7_SAT(0x4, 0x06)
 #define NX_P8_DE_FIR_MASK	NX_P8_SAT(0x4, 0x03)
+#define NX_P9_DE_FIR_MASK	NX_P9_SAT(0x4, 0x03)
 #define NX_P7_DE_FIR_MASK_CLR	NX_P7_SAT(0x4, 0x07)
 #define NX_P8_DE_FIR_MASK_CLR	NX_P8_SAT(0x4, 0x04)
+#define NX_P9_DE_FIR_MASK_CLR	NX_P9_SAT(0x4, 0x04)
 #define NX_P7_DE_FIR_MASK_SET	NX_P7_SAT(0x4, 0x08)
 #define NX_P8_DE_FIR_MASK_SET	NX_P8_SAT(0x4, 0x05)
+#define NX_P9_DE_FIR_MASK_SET	NX_P9_SAT(0x4, 0x05)
 #define NX_P7_DE_FIR_ACTION0	NX_P7_SAT(0x4, 0x03)
 #define NX_P8_DE_FIR_ACTION0	NX_P8_SAT(0x4, 0x06)
+#define NX_P9_DE_FIR_ACTION0	NX_P9_SAT(0x4, 0x06)
 #define NX_P7_DE_FIR_ACTION1	NX_P7_SAT(0x4, 0x04)
 #define NX_P8_DE_FIR_ACTION1	NX_P8_SAT(0x4, 0x07)
+#define NX_P9_DE_FIR_ACTION1	NX_P9_SAT(0x4, 0x07)
 #define NX_P7_DE_FIR_WOF	NX_P7_SAT(0x4, 0x05)
 #define NX_P8_DE_FIR_WOF	NX_P8_SAT(0x4, 0x08)
 #define NX_P7_PB_FIR_DATA	NX_P7_SAT(0x2, 0x00)
+#define NX_P9_PB_FIR_DATA	NX_P9_SAT(0x2, 0x00)
 #define NX_P8_PB_FIR_DATA	NX_P8_SAT(0x2, 0x00)
 #define NX_P7_PB_FIR_DATA_CLR	NX_P7_SAT(0x2, 0x01)
 #define NX_P8_PB_FIR_DATA_CLR	NX_P8_SAT(0x2, 0x01)
+#define NX_P9_PB_FIR_DATA_CLR	NX_P9_SAT(0x2, 0x01)
 #define NX_P7_PB_FIR_DATA_SET	NX_P7_SAT(0x2, 0x02)
 #define NX_P8_PB_FIR_DATA_SET	NX_P8_SAT(0x2, 0x02)
+#define NX_P9_PB_FIR_DATA_SET	NX_P9_SAT(0x2, 0x02)
 #define NX_P7_PB_FIR_MASK	NX_P7_SAT(0x2, 0x06)
 #define NX_P8_PB_FIR_MASK	NX_P8_SAT(0x2, 0x03)
+#define NX_P9_PB_FIR_MASK	NX_P9_SAT(0x2, 0x03)
 #define NX_P7_PB_FIR_MASK_CLR	NX_P7_SAT(0x2, 0x07)
 #define NX_P8_PB_FIR_MASK_CLR	NX_P8_SAT(0x2, 0x04)
+#define NX_P9_PB_FIR_MASK_CLR	NX_P9_SAT(0x2, 0x04)
 #define NX_P7_PB_FIR_MASK_SET	NX_P7_SAT(0x2, 0x08)
 #define NX_P8_PB_FIR_MASK_SET	NX_P8_SAT(0x2, 0x05)
+#define NX_P9_PB_FIR_MASK_SET	NX_P9_SAT(0x2, 0x05)
 #define NX_P7_PB_FIR_ACTION0	NX_P7_SAT(0x2, 0x03)
 #define NX_P8_PB_FIR_ACTION0	NX_P8_SAT(0x2, 0x06)
+#define NX_P9_PB_FIR_ACTION0	NX_P9_SAT(0x2, 0x06)
 #define NX_P7_PB_FIR_ACTION1	NX_P7_SAT(0x2, 0x04)
 #define NX_P8_PB_FIR_ACTION1	NX_P8_SAT(0x2, 0x07)
+#define NX_P9_PB_FIR_ACTION1	NX_P9_SAT(0x2, 0x07)
 #define NX_P7_PB_FIR_WOF	NX_P7_SAT(0x2, 0x05)
 #define NX_P8_PB_FIR_WOF	NX_P8_SAT(0x2, 0x08)
 #define   NX_FIR_MCD_PB_CMD_HANG	PPC_BIT(0) /* P7 only */
@@ -222,6 +302,8 @@
 #define   NX_FIR_CH5_ECC_UE_2		PPC_BIT(37) /* P8 only */
 #define   NX_FIR_P8_PARITY		PPC_BITMASK(48, 49)
 
+/* Rx FIFO is needed for VAS which is available on P9 or later */
+#define RX_FIFO_SIZE	0x8000
 
 /**************************************/
 /* Register field values/restrictions */
@@ -229,12 +311,14 @@
 
 /* Arbitrary Coprocessor Type values */
 #define NX_CT_SYM	(1)
-#define NX_CT_ASYM	(2)
+#define NX_CT_ASYM	(2) /* on P7+ and P8 */
+#define NX_CT_GZIP	(2) /* on P9 and later */
 #define NX_CT_842	(3)
 
 /* Coprocessor Instance counter
  * NX workbook, section 5.5.1
  * "Assigning <CT,CI> Values"
+ * Only on P7+ and P8
  */
 #define NX_SYM_CFG_CI_MAX	(511)
 #define NX_SYM_CFG_CI_LSHIFT	(2)
