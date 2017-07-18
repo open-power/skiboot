@@ -65,7 +65,7 @@ ifeq ($(DEBUG),1)
 CPPFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
 endif
 
-CFLAGS := -fno-strict-aliasing -pie -mbig-endian -m64
+CFLAGS := -fno-strict-aliasing -pie -fpie -fno-pic -mbig-endian -m64
 CFLAGS += -Wl,--oformat,elf64-powerpc
 CFLAGS += -ffixed-r13
 CFLAGS += $(call try-cflag,$(CC),-std=gnu11)
