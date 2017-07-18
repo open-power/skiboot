@@ -1,7 +1,7 @@
 #include <ccan/check_type/check_type.h>
 #include <ccan/tap/tap.h>
 
-int main(int argc, char *argv[])
+int __attribute__((const)) main(int argc, char *argv[])
 {
 	int x = 0, y = 0;
 

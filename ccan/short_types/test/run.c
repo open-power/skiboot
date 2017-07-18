@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <err.h>
 
-int main(void)
+int __attribute__((const)) main(void)
 {
 	plan_tests(16);
 

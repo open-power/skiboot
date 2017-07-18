@@ -1,7 +1,7 @@
 #include <ccan/build_assert/build_assert.h>
 #include <ccan/tap/tap.h>
 
-int main(int argc, char *argv[])
+int __attribute__((const)) main(int argc, char *argv[])
 {
 	(void)argc;
 	(void)argv;
