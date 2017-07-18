@@ -66,6 +66,7 @@ CPPFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
 endif
 
 CFLAGS := -fno-strict-aliasing -pie -fpie -fno-pic -mbig-endian -m64
+CFLAGS += -mcpu=power7
 CFLAGS += -Wl,--oformat,elf64-powerpc
 CFLAGS += -ffixed-r13
 CFLAGS += $(call try-cflag,$(CC),-std=gnu11)
@@ -108,7 +109,7 @@ LDFLAGS := -m64 -static -nostdlib -pie
 LDFLAGS += -Wl,-pie
 LDFLAGS += -Wl,-Ttext-segment,$(LD_TEXT) -Wl,-N -Wl,--build-id=none
 LDFLAGS += -Wl,--no-multi-toc
-LDFLAGS += -mbig-endian -Wl,--oformat,elf64-powerpc
+LDFLAGS += -mcpu=power7 -mbig-endian -Wl,--oformat,elf64-powerpc
 
 LDRFLAGS=-melf64ppc
 # Debug stuff
