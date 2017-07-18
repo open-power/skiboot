@@ -24,11 +24,6 @@
 /* Configuration settings */
 #define CFG_842_FC_ENABLE	(0x1f) /* enable all 842 functions */
 #define CFG_842_ENABLE		(1) /* enable 842 engines */
-#define DMA_COMPRESS_PREFETCH	(1) /* enable prefetching (on P8) */
-#define DMA_DECOMPRESS_PREFETCH	(1) /* enable prefetching (on P8) */
-#define DMA_COMPRESS_MAX_RR	(15) /* range 1-15 */
-#define DMA_DECOMPRESS_MAX_RR	(15) /* range 1-15 */
-#define DMA_SPBC		(1) /* write SPBC in CPB */
 #define DMA_CSB_WR		NX_DMA_CSB_WR_CI
 #define DMA_COMPLETION_MODE	NX_DMA_COMPLETION_MODE_CI
 #define DMA_CPB_WR		NX_DMA_CPB_WR_CI_PAD
@@ -90,7 +85,7 @@ static int nx_cfg_842(u32 gcid, u64 xcfg)
 	return rc;
 }
 
-static int nx_cfg_dma(u32 gcid, u64 xcfg)
+static int nx_cfg_842_dma(u32 gcid, u64 xcfg)
 {
 	u64 cfg;
 	int rc;
@@ -100,9 +95,9 @@ static int nx_cfg_dma(u32 gcid, u64 xcfg)
 		return rc;
 
 	if (proc_gen == proc_gen_p8) {
-		cfg = SETFIELD(NX_P8_DMA_CFG_842_COMPRESS_PREFETCH, cfg,
+		cfg = SETFIELD(NX_DMA_CFG_842_COMPRESS_PREFETCH, cfg,
 			       DMA_COMPRESS_PREFETCH);
-		cfg = SETFIELD(NX_P8_DMA_CFG_842_DECOMPRESS_PREFETCH, cfg,
+		cfg = SETFIELD(NX_DMA_CFG_842_DECOMPRESS_PREFETCH, cfg,
 			       DMA_DECOMPRESS_PREFETCH);
 	}
 
@@ -131,7 +126,7 @@ static int nx_cfg_dma(u32 gcid, u64 xcfg)
 	return rc;
 }
 
-static int nx_cfg_ee(u32 gcid, u64 xcfg)
+static int nx_cfg_842_ee(u32 gcid, u64 xcfg)
 {
 	u64 cfg;
 	int rc;
@@ -153,17 +148,10 @@ static int nx_cfg_ee(u32 gcid, u64 xcfg)
 	return rc;
 }
 
-void nx_create_842_node(struct dt_node *node)
+void nx_enable_842(struct dt_node *node, u32 gcid, u32 pb_base)
 {
-	u32 gcid;
-	u32 pb_base;
 	u64 cfg_dma, cfg_842, cfg_ee;
 	int rc;
-
-	gcid = dt_get_chip_id(node);
-	pb_base = dt_get_address(node, 0, NULL);
-
-	prlog(PR_INFO, "NX%d: 842 at 0x%x\n", gcid, pb_base);
 
 	if (dt_node_is_compatible(node, "ibm,power7-nx")) {
 		cfg_dma = pb_base + NX_P7_DMA_CFG;
@@ -178,7 +166,7 @@ void nx_create_842_node(struct dt_node *node)
 		return;
 	}
 
-	rc = nx_cfg_dma(gcid, cfg_dma);
+	rc = nx_cfg_842_dma(gcid, cfg_dma);
 	if (rc)
 		return;
 
@@ -186,7 +174,7 @@ void nx_create_842_node(struct dt_node *node)
 	if (rc)
 		return;
 
-	rc = nx_cfg_ee(gcid, cfg_ee);
+	rc = nx_cfg_842_ee(gcid, cfg_ee);
 	if (rc)
 		return;
 

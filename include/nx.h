@@ -75,13 +75,13 @@
 /* DMA */
 #define NX_P7_DMA_CFG		NX_P7_SAT(0x1, 0x02)
 #define NX_P8_DMA_CFG		NX_P8_SAT(0x1, 0x02)
-#define   NX_P8_DMA_CFG_842_COMPRESS_PREFETCH	PPC_BIT(23)
-#define   NX_P8_DMA_CFG_842_DECOMPRESS_PREFETCH	PPC_BIT(24)
 #define NX_P9_DMA_CFG		NX_P9_SAT(0x1, 0x02)
 #define   NX_DMA_CFG_GZIP_COMPRESS_MAX_RR	PPC_BITMASK(8, 11)
 #define   NX_DMA_CFG_GZIP_DECOMPRESS_MAX_RR	PPC_BITMASK(12, 15)
 #define   NX_DMA_CFG_GZIP_COMPRESS_PREFETCH	PPC_BIT(16)
 #define   NX_DMA_CFG_GZIP_DECOMPRESS_PREFETCH	PPC_BIT(17)
+#define   NX_DMA_CFG_842_COMPRESS_PREFETCH	PPC_BIT(23)
+#define   NX_DMA_CFG_842_DECOMPRESS_PREFETCH	PPC_BIT(24)
 #define   NX_DMA_CFG_AES_SHA_MAX_RR		PPC_BITMASK(25, 28)
 #define   NX_DMA_CFG_AMF_MAX_RR			PPC_BITMASK(29, 32)
 #define   NX_DMA_CFG_842_COMPRESS_MAX_RR	PPC_BITMASK(33, 36)
@@ -375,13 +375,25 @@
 #define NX_DMA_OUTPUT_DATA_WR_CI	(1)
 
 
+/*
+ * NX compression configuration settings for 842 (on p8 and later)
+ * and gzip (p9 and later) engines
+ */
+#define DMA_COMPRESS_PREFETCH	(1) /* enable prefetching */
+#define DMA_DECOMPRESS_PREFETCH	(1) /* enable prefetching */
+#define DMA_COMPRESS_MAX_RR	(15) /* range 1-15 */
+#define DMA_DECOMPRESS_MAX_RR	(15) /* range 1-15 */
+#define DMA_SPBC		(1) /* write SPBC in CPB */
+
 /******************************/
 /* NX node creation functions */
 /******************************/
 
 extern void nx_create_rng_node(struct dt_node *);
 extern void nx_create_crypto_node(struct dt_node *);
-extern void nx_create_842_node(struct dt_node *);
+extern void nx_create_compress_node(struct dt_node *);
+
+extern void nx_enable_842(struct dt_node *node, u32 gcid, u32 pb_base);
 
 extern void nx_init(void);
 

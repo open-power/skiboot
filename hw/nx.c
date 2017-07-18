@@ -79,6 +79,6 @@ void nx_init(void)
 	dt_for_each_compatible(dt_root, node, "ibm,power-nx") {
 		nx_create_rng_node(node);
 		nx_create_crypto_node(node);
-		nx_create_842_node(node);
+		nx_create_compress_node(node);
 	}
 }
