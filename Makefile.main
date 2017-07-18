@@ -105,6 +105,7 @@ CFLAGS += $(call try-cflag,$(CC),-Wjump-misses-init) \
 CFLAGS += $(CWARNS) $(OPTS) $(DBG)
 
 LDFLAGS := -m64 -static -nostdlib -pie 
+LDFLAGS += -Wl,-pie
 LDFLAGS += -Wl,-Ttext-segment,$(LD_TEXT) -Wl,-N -Wl,--build-id=none
 LDFLAGS += -Wl,--no-multi-toc
 LDFLAGS += -mbig-endian -Wl,--oformat,elf64-powerpc
