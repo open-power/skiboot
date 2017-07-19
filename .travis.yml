@@ -13,6 +13,8 @@ env:
     - RUN_ON_CONTAINER=fedora25
     - RUN_ON_CONTAINER=fedora26
     - RUN_ON_CONTAINER=fedora-rawhide
+    - RUN_ON_CONTAINER=debian-stretch
+    - RUN_ON_CONTAINER=debian-unstable
     global:
         # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
         #   via the "travis encrypt" command using the project repo's public key
@@ -21,6 +23,8 @@ env:
 matrix:
   allow_failures:
     - env: RUN_ON_CONTAINER=fedora-rawhide
+    - env: RUN_ON_CONTAINER=debian-stretch
+    - env: RUN_ON_CONTAINER=debian-unstable
 
 sudo: required
 services: docker
