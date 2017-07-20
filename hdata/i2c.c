@@ -190,7 +190,7 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		version = 1;
 		prerror("I2C: HDAT device array has no version! Assuming v1\n");
 	} else {
-		version = be32_to_cpu(hdr->version);
+		version = be32_to_cpu(ahdr->version);
 	}
 
 	if (version != 1) {
