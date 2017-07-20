@@ -3588,7 +3588,10 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x1908,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1920,	0x000000004d1780f8ull);
 	out_be64(p->regs + 0x1928,	0x0000000000000000ull);
-	out_be64(p->regs + 0x1930,	0xffffffffb2e87f07ull);
+	if (p->rev == PHB4_REV_NIMBUS_DD10)
+		out_be64(p->regs + 0x1930,	0xffffffffb2e87f07ull);
+	else
+		out_be64(p->regs + 0x1930,	0xffffffffb2f87f07ull);
 	out_be64(p->regs + 0x1940,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1948,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1950,	0x0000000000000000ull);
@@ -3603,12 +3606,12 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x1c40,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1c48,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1c50,	0x0000000000000000ull);
-	out_be64(p->regs + 0x1c58,	0x0000000000000000ull);
+	out_be64(p->regs + 0x1c58,	0x0040000000000000ull);
 
 	/* Init_73..81 - TXE errors */
 	out_be64(p->regs + 0x0d00,	0xffffffffffffffffull);
 	out_be64(p->regs + 0x0d08,	0x0000000000000000ull);
-	out_be64(p->regs + 0x0d18,	0xffffffffffffffffull);
+	out_be64(p->regs + 0x0d18,	0xffffff0fffffffffull);
 	out_be64(p->regs + 0x0d28,	0x0000400a00000000ull);
 	out_be64(p->regs + 0x0d30,	0xdff7fd01f7ddfff0ull); /* XXX CAPI has diff. value */
 	out_be64(p->regs + 0x0d40,	0x0000000000000000ull);
@@ -3624,6 +3627,12 @@ static void phb4_init_errors(struct phb4 *p)
 		out_be64(p->regs + 0x0da8,	0xc00000b801000060ull);
 	else
 		out_be64(p->regs + 0x0da8,	0xc00008b801000060ull);
+	/*
+	 * Errata ER20161123 says we should set the top two bits in
+	 * 0x0db0 but this causes config space accesses which don't
+	 * get a response to fence the PHB. This breaks probing,
+	 * hence we don't set them here.
+	 */
 	out_be64(p->regs + 0x0db0,	0x3bffd703fe7fbf8full); /* XXX CAPI has diff. value */
 	out_be64(p->regs + 0x0dc0,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0dc8,	0x0000000000000000ull);
@@ -3635,7 +3644,10 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0e08,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0e18,	0xffffffffffffffffull);
 	out_be64(p->regs + 0x0e28,	0x0000600000000000ull);
-	out_be64(p->regs + 0x0e30,	0xffff9effff7fff57ull); /* XXX CAPI has diff. value */
+	if (p->rev == PHB4_REV_NIMBUS_DD10) /* XXX CAPI has diff. value */
+		out_be64(p->regs + 0x0e30,	0xffff9effff7fff57ull);
+	else
+		out_be64(p->regs + 0x0e30,	0xfffffeffff7fff57ull);
 	out_be64(p->regs + 0x0e40,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0e48,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0e50,	0x0000000000000000ull);
@@ -3734,16 +3746,13 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 	PHBDBG(p, "New system config    : 0x%016llx\n",
 	       in_be64(p->regs + PHB_PCIE_SCR));
 
-	/* Init_5 - Wait for DLP PGRESET to clear */
-	/* This is broken in spec 053, moving that step to after Init_16 */
-
-	/* Init_6 - deassert CFG reset */
+	/* Init_5 - deassert CFG reset */
 	creset = in_be64(p->regs + PHB_PCIE_CRESET);
 	PHBDBG(p, "Initial PHB CRESET is 0x%016llx\n", creset);
 	creset &= ~PHB_PCIE_CRESET_CFG_CORE;
 	out_be64(p->regs + PHB_PCIE_CRESET,			creset);
 
-	/* Init_7..14 - PCIE DLP Lane EQ control */
+	/* Init_6..13 - PCIE DLP Lane EQ control */
 	if (p->lane_eq) {
 		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL0, be64_to_cpu(p->lane_eq[0]));
 		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL1, be64_to_cpu(p->lane_eq[1]));
@@ -3759,11 +3768,11 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 		}
 	}
 
-	/* Init_15 - Clear link training */
+	/* Init_14 - Clear link training */
 	phb4_pcicfg_write32(&p->phb, 0, 0x78,
 			    0x07FE0000 | p->max_link_speed);
 
-	/* Init_16 - deassert cores reset */
+	/* Init_15 - deassert cores reset */
 	/*
 	 * Lift the PHB resets but not PERST, this will be lifted
 	 * later by the initial PERST state machine
@@ -3772,7 +3781,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 	creset |= PHB_PCIE_CRESET_PIPE_N;
 	out_be64(p->regs + PHB_PCIE_CRESET,			   creset);
 
-	/* (Moved from Init_5) */
+	/* Init_16 - Wait for DLP PGRESET to clear */
 	if (!phb4_wait_dlp_reset(p))
 		goto failed;
 
@@ -3836,7 +3845,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 
 	/* Init_126..130 - Re-enable error interrupts */
 	out_be64(p->regs + PHB_ERR_IRQ_ENABLE,			0xca8880cc00000000ull);
-	out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE,		0x200840fe08200000ull);
+	out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE,		0x2008400e08200000ull);
 	out_be64(p->regs + PHB_RXE_ARB_ERR_IRQ_ENABLE,		0xc40028fc01804070ull);
 	out_be64(p->regs + PHB_RXE_MRG_ERR_IRQ_ENABLE,		0x00006100008000a8ull);
 	if (p->rev == PHB4_REV_NIMBUS_DD10)
