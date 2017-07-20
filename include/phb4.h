@@ -177,6 +177,7 @@ enum phb4_state {
 #define   PHB4_SLOT_LINK_START			(PHB4_SLOT_LINK + 1)
 #define   PHB4_SLOT_LINK_WAIT_ELECTRICAL	(PHB4_SLOT_LINK + 2)
 #define   PHB4_SLOT_LINK_WAIT			(PHB4_SLOT_LINK + 3)
+#define   PHB4_SLOT_LINK_STABLE			(PHB4_SLOT_LINK + 4)
 #define PHB4_SLOT_HRESET			PCI_SLOT_STATE_HRESET
 #define   PHB4_SLOT_HRESET_START		(PHB4_SLOT_HRESET + 1)
 #define   PHB4_SLOT_HRESET_DELAY		(PHB4_SLOT_HRESET + 2)
@@ -213,9 +214,10 @@ struct phb4_err {
 	uint32_t err_bit;
 };
 
-/* Link timeouts, increments of 100ms */
-#define PHB4_LINK_WAIT_RETRIES		20
+/* Link timeouts, increments of 10ms */
 #define PHB4_LINK_ELECTRICAL_RETRIES	20
+#define PHB4_LINK_WAIT_RETRIES		200
+#define PHB4_LINK_STABLE_RETRIES	0
 
 /* PHB4 flags */
 #define PHB4_AIB_FENCED		0x00000001

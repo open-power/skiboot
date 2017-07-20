@@ -27,6 +27,65 @@
  *	- Directly detect fenced PHB through one dedicated HW reg
  */
 
+/*
+ * This is a simplified view of the PHB4 reset and link training steps
+ *
+ * Step 1:
+ * - Check for hotplug status:
+ *  o PHB_PCIE_HOTPLUG_STATUS bit PHB_PCIE_HPSTAT_PRESENCE
+ *  o If not set -> Bail out (Slot is empty)
+ *
+ * Step 2:
+ * - Do complete PHB reset:
+ *   o PHB/ETU reset procedure
+ *
+ * Step 3:
+ * - Drive PERST active (skip if already asserted. ie. after cold reboot)
+ * - Wait 250ms (for cards to reset)
+ *   o powervm have used 250ms for a long time without any problems
+ *
+ * Step 4:
+ * - Drive PERST inactive
+ *
+ * Step 5:
+ * - Look for inband presence:
+ *   o From PERST we have two stages to get inband presence detected
+ *     1) Devices must enter Detect state within 20 ms of the end of
+ *          Fundamental Reset
+ *     2) Receiver detect pulse are every 12ms
+ *      - Hence minimum wait time 20 + 12 = 32ms
+ *   o Hence we are conservative and poll here for 100ms (> 32ms)
+ * - If no inband presence after 100ms -> Bail out (Slot is broken)
+ *   o PHB_PCIE_DLP_TRAIN_CTL bit PHB_PCIE_DLP_INBAND_PRESENCE
+ *
+ * Step 6:
+ * - Look for link training done:
+ *   o PHB_PCIE_DLP_TRAIN_CTL bit PHB_PCIE_DLP_TL_LINKACT
+ * - If not set after 2000ms, Retry (3 times) -> Goto Step 2
+ *   o phy lockup could link training failure, hence going back to a
+ *     complete PHB reset on retry
+ *   o not expect to happen very often
+ *
+ * Step 7:
+ * - Wait for 1 sec (before touching device config space):
+ * -  From PCIe spec:
+ *     Root Complex and/or system software must allow at least 1.0 s after
+ *     a Conventional Reset of a device, before it may determine that a
+ *     device which fails to return a Successful Completion status for a
+ *     valid Configuration Request is a broken device.
+ *
+ * Step 8:
+ * - Sanity check for fence and link still up:
+ *   o If fenced or link down, Retry (3 times) -> Goto Step 2
+ *   o This is not nessary but takes no time and can be useful
+ *   o Once we leave here, much harder to recover from errors
+ *
+ * Step 9:
+ *  - PHB good, start probing config space.
+ *    o core/pci.c: pci_reset_phb() -> pci_scan_phb()
+ */
+
+
 #undef NO_ASB
 #undef LOG_CFG
 
@@ -2174,6 +2233,10 @@ static int64_t phb4_retry_state(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
 
+	/* Mark link as down */
+	if (slot->ops.prepare_link_change)
+		slot->ops.prepare_link_change(slot, false);
+
 	if (!slot->link_retries--) {
 		switch (slot->state) {
 		case PHB4_SLOT_LINK_WAIT_ELECTRICAL:
@@ -2181,6 +2244,9 @@ static int64_t phb4_retry_state(struct pci_slot *slot)
 			break;
 		case PHB4_SLOT_LINK_WAIT:
 			PHBERR(p, "Electrical link detected but won't train\n");
+			break;
+		case PHB4_SLOT_LINK_STABLE:
+			PHBERR(p, "Linked trained but wasn't stable\n");
 			break;
 		default:
 			PHBERR(p, "Unknown link issue\n");
@@ -2203,7 +2269,8 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 		PHBDBG(p, "LINK: Start polling\n");
 		slot->retries = PHB4_LINK_ELECTRICAL_RETRIES;
 		pci_slot_set_state(slot, PHB4_SLOT_LINK_WAIT_ELECTRICAL);
-		return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
+		/* Polling early here has no chance of a false positive */
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 	case PHB4_SLOT_LINK_WAIT_ELECTRICAL:
 		/*
 		 * Wait for the link electrical connection to be
@@ -2226,7 +2293,8 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 			PHBDBG(p, "LINK: Electrical link detected\n");
 			pci_slot_set_state(slot, PHB4_SLOT_LINK_WAIT);
 			slot->retries = PHB4_LINK_WAIT_RETRIES;
-			return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
+			/* No wait here since already have an elec link */
+			return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 		}
 
 		if (slot->retries-- == 0) {
@@ -2234,7 +2302,8 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 			PHBDBG(p, "LINK: DLP train control: 0x%016llx\n", reg);
 			return OPAL_HARDWARE;
 		}
-		return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
+		/* Retry */
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
 	case PHB4_SLOT_LINK_WAIT:
 		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
 		if (!phb4_check_reg(p, reg)) {
@@ -2245,19 +2314,43 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 			PHBDBG(p, "LINK: Link is up\n");
 			if (slot->ops.prepare_link_change)
 				slot->ops.prepare_link_change(slot, true);
-			pci_slot_set_state(slot, PHB4_SLOT_NORMAL);
-			return OPAL_SUCCESS;
+			pci_slot_set_state(slot, PHB4_SLOT_LINK_STABLE);
+			slot->stable_retries = PHB4_LINK_STABLE_RETRIES;
+			return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
 		}
 
 		if (slot->retries-- == 0) {
 			PHBERR(p, "LINK: Timeout waiting for link up\n");
 			PHBDBG(p, "LINK: DLP train control: 0x%016llx\n", reg);
 			return phb4_retry_state(slot);
+		}
+		/* Retry */
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
+	case PHB4_SLOT_LINK_STABLE:
+		/* Sanity check link */
+		if (phb4_fenced(p)) {
+			PHBERR(p, "LINK: PHB fenced waiting for stabilty\n");
+			return phb4_retry_state(slot);
+		}
+		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+		if (!phb4_check_reg(p, reg)) {
+			PHBERR(p, "LINK: PHB fence reading training control\n");
+			return phb4_retry_state(slot);
+		}
+		if (reg & PHB_PCIE_DLP_TL_LINKACT) {
+			PHBDBG(p, "LINK: Link is stable\n");
+			if (slot->stable_retries--) {
+				PHBDBG(p, "LINK: Doing retry: %lli\n",
+				       slot->stable_retries);
+				return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
+			}
 
 			pci_slot_set_state(slot, PHB4_SLOT_NORMAL);
 			return OPAL_SUCCESS;
 		}
-		return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
+		PHBERR(p, "LINK: Went down waiting for stabilty\n");
+		PHBDBG(p, "LINK: DLP train control: 0x%016llx\n", reg);
+		return phb4_retry_state(slot);
 	default:
 		PHBERR(p, "LINK: Unexpected slot state %08x\n",
 		       slot->state);
@@ -2354,7 +2447,8 @@ static int64_t phb4_freset(struct pci_slot *slot)
 			out_be64(p->regs + PHB_PCIE_CRESET, reg);
 			pci_slot_set_state(slot,
 				PHB4_SLOT_FRESET_ASSERT_DELAY);
-			return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
+			/* 250ms assert time aligns with powernv */
+			return pci_slot_set_sm_timeout(slot, msecs_to_tb(250));
 		}
 
 		/* To skip perst assert if already asserted (ie. boot time) */
@@ -2370,8 +2464,8 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		pci_slot_set_state(slot,
 			PHB4_SLOT_FRESET_DEASSERT_DELAY);
 
-		/* CAPP FPGA requires 1s to flash before polling link */
-		return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
+		/* Move on to link poll right away */
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 	case PHB4_SLOT_FRESET_DEASSERT_DELAY:
 		pci_slot_set_state(slot, PHB4_SLOT_LINK_START);
 		return slot->ops.poll_link(slot);
@@ -2466,7 +2560,8 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			phb4_write_reg(p, PHB_IODA_DATA0, 0);
 
 			pci_slot_set_state(slot, PHB4_SLOT_CRESET_REINIT);
-			return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
+			/* After lifting PHB reset, wait while logic settles */
+			return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
 		}
 
 		if (slot->retries-- == 0) {
