@@ -1641,6 +1641,7 @@ static void __pci_reset(struct list_head *list)
 	while ((pd = list_pop(list, struct pci_device, link)) != NULL) {
 		__pci_reset(&pd->children);
 		dt_free(pd->dn);
+		free(pd->slot);
 		free(pd);
 	}
 }
