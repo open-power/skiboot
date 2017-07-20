@@ -528,13 +528,13 @@ static void parse_trace_reservations(struct HDIF_common_hdr *ms_vpd)
 	 */
 
 	if (!HDIF_get_idata(ms_vpd, MSVPD_IDATA_TRACE_AREAS, &size) || !size) {
-		prlog(PR_DEBUG, "MS VPD: No trace areas found.");
+		prlog(PR_DEBUG, "MS VPD: No trace areas found\n");
 		return;
 	}
 
 	count = HDIF_get_iarray_size(ms_vpd, MSVPD_IDATA_TRACE_AREAS);
 	if (count <= 0) {
-		prlog(PR_DEBUG, "MS VPD: No trace areas found.");
+		prlog(PR_DEBUG, "MS VPD: No trace areas found\n");
 		return;
 	}
 
