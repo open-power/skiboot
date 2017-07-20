@@ -975,6 +975,7 @@ static bool mem_region_parse_reserved_nodes(const char *path)
 	dt_for_each_child(parent, node) {
 		const struct dt_property *reg;
 		struct mem_region *region;
+		int type;
 
 		reg = dt_find_property(node, "reg");
 		if (!reg) {
@@ -985,10 +986,15 @@ static bool mem_region_parse_reserved_nodes(const char *path)
 			continue;
 		}
 
+		if (dt_has_node_property(node, "no-map", NULL))
+			type = REGION_RESERVED;
+		else
+			type = REGION_FW_RESERVED;
+
 		region = new_region(strdup(node->name),
 				dt_get_number(reg->prop, 2),
 				dt_get_number(reg->prop + sizeof(u64), 2),
-				node, REGION_FW_RESERVED);
+				node, type);
 		add_region(region);
 	}
 
