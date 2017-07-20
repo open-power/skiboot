@@ -306,6 +306,14 @@ static bool phb4_fenced(struct phb4 *p)
 	return true;
 }
 
+static bool phb4_check_reg(struct phb4 *p, uint64_t reg)
+{
+	if (reg == 0xffffffffffffffffUL)
+		return !phb4_fenced(p);
+	return true;
+}
+
+
 /*
  * Configuration space access
  *
@@ -2208,6 +2216,11 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 		 * link bit at all
 		 */
 		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+		if (!phb4_check_reg(p, reg)) {
+			PHBERR(p, "PHB fence waiting for electrical link\n");
+			return phb4_retry_state(slot);
+		}
+
 		if (reg & (PHB_PCIE_DLP_INBAND_PRESENCE |
 			   PHB_PCIE_DLP_TL_LINKACT)) {
 			PHBDBG(p, "LINK: Electrical link detected\n");
@@ -2224,6 +2237,10 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
 	case PHB4_SLOT_LINK_WAIT:
 		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+		if (!phb4_check_reg(p, reg)) {
+			PHBERR(p, "LINK: PHB fence waiting for link training\n");
+			return phb4_retry_state(slot);
+		}
 		if (reg & PHB_PCIE_DLP_TL_LINKACT) {
 			PHBDBG(p, "LINK: Link is up\n");
 			if (slot->ops.prepare_link_change)
