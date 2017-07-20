@@ -5,6 +5,7 @@ BOOT_TIMEOUT="5";
 SSHUSER=${SSHUSER:-root};
 export SSHPASS=${SSHPASS:-0penBmc};
 
+PFLASH_TO_COPY=${PFLASH_TO_COPY:-}
 PFLASH_BINARY=/usr/sbin/pflash
 
 # How do we SSH/SCP in?
@@ -39,6 +40,11 @@ function force_primary_side {
 }
 
 function flash {
+	if [ ! -z "$PFLASH_TO_COPY" ]; then
+		remotecp $PFLASH_TO_COPY $target /tmp/pflash
+		$SSHCMD chmod +x /tmp/pflash
+		PFLASH_BINARY=/tmp/pflash
+	fi
 	if [ ! -z "$PNOR" ]; then
 		remotecp $PNOR $target /tmp/image.pnor;
 	fi
