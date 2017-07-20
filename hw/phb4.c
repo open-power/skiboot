@@ -4565,6 +4565,8 @@ void probe_phb4(void)
 	struct dt_node *np;
 
 	verbose_eeh = nvram_query_eq("pci-eeh-verbose", "true");
+	/* REMOVEME: force this for now until we stabalise PCIe */
+	verbose_eeh = 1;
 	if (verbose_eeh)
 		prlog(PR_INFO, "PHB4: Verbose EEH enabled\n");
 
