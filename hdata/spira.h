@@ -530,7 +530,10 @@ struct msvpd_hb_reserved_mem {
 	__be64		end_addr;
 	__be32		label_size;
 	uint8_t		label[64];
-	__be64		reserved;
+	uint8_t		rw_perms;
+#define HB_RESERVE_READABLE 0x80
+#define HB_RESERVE_WRITEABLE 0x40
+	uint8_t		reserved[7];
 } __packed;
 
 /* Child index 0: MS area child structure */

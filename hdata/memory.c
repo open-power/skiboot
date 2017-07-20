@@ -403,12 +403,42 @@ static void get_msareas(struct dt_node *root,
 	}
 }
 
+static struct dt_node *dt_hb_reserves;
+
+static struct dt_node *add_hb_reserve_node(const char *name, u64 start, u64 end)
+{
+	struct dt_node *node, *hb;
+
+	if (!dt_hb_reserves) {
+		hb = dt_new_check(dt_root, "ibm,hostboot");
+		dt_add_property_cells(hb, "#size-cells", 2);
+		dt_add_property_cells(hb, "#address-cells", 2);
+
+		dt_hb_reserves = dt_new_check(hb, "reserved-memory");
+		dt_add_property(dt_hb_reserves, "ranges", NULL, 0);
+		dt_add_property_cells(dt_hb_reserves, "#size-cells", 2);
+		dt_add_property_cells(dt_hb_reserves, "#address-cells", 2);
+	}
+
+	node = dt_new_addr(dt_hb_reserves, name, start);
+	if (!node) {
+		prerror("Unable to create node for %s@%llx\n",
+			name, (unsigned long long) start);
+		return NULL;
+	}
+
+	dt_add_property_u64s(node, "reg", start, end - start + 1);
+
+	return node;
+}
+
 #define HRMOR_BIT (1ul << 63)
 
 static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 {
 	const struct msvpd_hb_reserved_mem *hb_resv_mem;
 	u64 start_addr, end_addr, label_size;
+	struct dt_node *node;
 	int count, i;
 	char *label;
 
@@ -472,7 +502,17 @@ static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 		prlog(PR_DEBUG, "MEM: Reserve '%s' %#" PRIx64 "-%#" PRIx64 " (type/inst=0x%08x)\n",
 		      label, start_addr, end_addr, be32_to_cpu(hb_resv_mem->type_instance));
 
-		mem_reserve_fw(label, start_addr, end_addr - start_addr + 1);
+		node = add_hb_reserve_node(label, start_addr, end_addr);
+		if (!node) {
+			prerror("unable to add node?\n");
+			continue;
+		}
+
+		/* the three low bytes of type_instance is the instance data */
+		dt_add_property_cells(node, "ibm,prd-instance",
+			(be32_to_cpu(hb_resv_mem->type_instance) & 0xffffff));
+
+		dt_add_property_string(node, "ibm,prd-label", label);
 	}
 }
 
@@ -502,6 +542,7 @@ static void parse_trace_reservations(struct HDIF_common_hdr *ms_vpd)
 
 	for (i = 0; i < count; i++) {
 		const struct msvpd_trace *trace_area;
+		struct dt_node *node;
 		u64 start, end;
 
 		trace_area = HDIF_get_iarray_item(ms_vpd,
@@ -514,10 +555,17 @@ static void parse_trace_reservations(struct HDIF_common_hdr *ms_vpd)
 		end = be64_to_cpu(trace_area->end) & ~HRMOR_BIT;
 
 		prlog(PR_INFO,
-			"MSVPD: Trace area: 0x%.16"PRIx64"-0x%.16"PRIx64"\n",
+			"MS VPD: Trace area: 0x%.16"PRIx64"-0x%.16"PRIx64"\n",
 			start, end);
 
-		mem_reserve_hwbuf("trace-area", start, end - start);
+		node = add_hb_reserve_node("trace-area", start, end);
+		if (!node) {
+			prerror("MEM: Unable to reserve trace area %p-%p\n",
+				(void *) start, (void *) end);
+			continue;
+		}
+
+		dt_add_property(node, "no-map", NULL, 0);
 	}
 }
 
