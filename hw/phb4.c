@@ -2338,9 +2338,9 @@ static int64_t phb4_freset(struct pci_slot *slot)
 			slot->ops.prepare_link_change(slot, false);
 		/* fall through */
 	case PHB4_SLOT_FRESET_START:
-		if (!p->skip_perst) {
+		reg = in_be64(p->regs + PHB_PCIE_CRESET);
+		if ((reg & PHB_PCIE_CRESET_PERST_N) != 0) {
 			PHBDBG(p, "FRESET: Assert\n");
-			reg = in_be64(p->regs + PHB_PCIE_CRESET);
 			reg &= ~PHB_PCIE_CRESET_PERST_N;
 			out_be64(p->regs + PHB_PCIE_CRESET, reg);
 			pci_slot_set_state(slot,
@@ -2348,7 +2348,7 @@ static int64_t phb4_freset(struct pci_slot *slot)
 			return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
 		}
 
-		/* To skip the assert during boot time */
+		/* To skip perst assert if already asserted (ie. boot time) */
 		PHBDBG(p, "FRESET: Assert skipped\n");
 		pci_slot_set_state(slot, PHB4_SLOT_FRESET_ASSERT_DELAY);
 		p->skip_perst = false;
