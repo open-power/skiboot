@@ -2188,7 +2188,6 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
 	uint64_t reg;
-	int64_t rc;
 
 	switch (slot->state) {
 	case PHB4_SLOT_NORMAL:
@@ -2220,12 +2219,7 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 		if (slot->retries-- == 0) {
 			PHBERR(p, "LINK: Timeout waiting for electrical link\n");
 			PHBDBG(p, "LINK: DLP train control: 0x%016llx\n", reg);
-			rc = phb4_retry_state(slot);
-			if (rc >= OPAL_SUCCESS)
-				return rc;
-
-			pci_slot_set_state(slot, PHB4_SLOT_NORMAL);
-			return OPAL_SUCCESS;
+			return phb4_retry_state(slot);
 		}
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
 	case PHB4_SLOT_LINK_WAIT:
@@ -2241,9 +2235,7 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 		if (slot->retries-- == 0) {
 			PHBERR(p, "LINK: Timeout waiting for link up\n");
 			PHBDBG(p, "LINK: DLP train control: 0x%016llx\n", reg);
-			rc = phb4_retry_state(slot);
-			if (rc >= OPAL_SUCCESS)
-				return rc;
+			return phb4_retry_state(slot);
 
 			pci_slot_set_state(slot, PHB4_SLOT_NORMAL);
 			return OPAL_SUCCESS;
