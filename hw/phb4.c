@@ -2167,7 +2167,16 @@ static int64_t phb4_retry_state(struct pci_slot *slot)
 	struct phb4 *p = phb_to_phb4(slot->phb);
 
 	if (!slot->link_retries--) {
-		PHBERR(p, "Link detected but won't train\n");
+		switch (slot->state) {
+		case PHB4_SLOT_LINK_WAIT_ELECTRICAL:
+			PHBERR(p, "Presence detected but no electrical link\n");
+			break;
+		case PHB4_SLOT_LINK_WAIT:
+			PHBERR(p, "Electrical link detected but won't train\n");
+			break;
+		default:
+			PHBERR(p, "Unknown link issue\n");
+		}
 		return OPAL_HARDWARE;
 	}
 
