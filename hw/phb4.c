@@ -203,12 +203,12 @@ static void phb4_eeh_dump_regs(struct phb4 *p)
 	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
 	PHBERR(p, "         corrErrorStatus = %08x\n", s->corrErrorStatus);
 	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
-	PHBERR(p, "                 tlpHdr1 = %08x\n", s->tlpHdr1);
-	PHBERR(p, "                 tlpHdr2 = %08x\n", s->tlpHdr2);
-	PHBERR(p, "                 tlpHdr3 = %08x\n", s->tlpHdr3);
-	PHBERR(p, "                 tlpHdr4 = %08x\n", s->tlpHdr4);
+	/* Byte swap TLP headers so they are the same as the PCIe spec */
+	PHBERR(p, "                 tlpHdr1 = %08x\n", bswap_32(s->tlpHdr1));
+	PHBERR(p, "                 tlpHdr2 = %08x\n", bswap_32(s->tlpHdr2));
+	PHBERR(p, "                 tlpHdr3 = %08x\n", bswap_32(s->tlpHdr3));
+	PHBERR(p, "                 tlpHdr4 = %08x\n", bswap_32(s->tlpHdr4));
 	PHBERR(p, "                sourceId = %08x\n", s->sourceId);
-	PHBERR(p, "                 tlpHdr1 = %08x\n", s->tlpHdr1);
 	PHBERR(p, "                    nFir = %016llx\n", s->nFir);
 	PHBERR(p, "                nFirMask = %016llx\n", s->nFirMask);
 	PHBERR(p, "                 nFirWOF = %016llx\n", s->nFirWOF);
