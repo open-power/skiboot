@@ -139,6 +139,7 @@ static bool phb4_init_rc_cfg(struct phb4 *p);
 #endif
 
 static bool verbose_eeh;
+static bool pci_tracing;
 
 enum capi_dma_tvt {
 	CAPI_DMA_TVT0,
@@ -2258,6 +2259,58 @@ static int64_t phb4_retry_state(struct pci_slot *slot)
 	return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 }
 
+static void phb4_train_info(struct phb4 *p, uint64_t reg, unsigned long time)
+{
+	char s[80];
+
+	snprintf(s, sizeof(s), "TRACE: 0x%016llx % 2lims",
+		 reg, tb_to_msecs(time));
+
+	if (reg & PHB_PCIE_DLP_TL_LINKACT)
+		snprintf(s, sizeof(s), "%s trained", s);
+	else if (reg & PHB_PCIE_DLP_TRAINING)
+		snprintf(s, sizeof(s), "%s training", s);
+	else if (reg & PHB_PCIE_DLP_INBAND_PRESENCE)
+		snprintf(s, sizeof(s), "%s presence", s);
+
+	PHBERR(p, "%s\n", s);
+}
+
+/*
+ * This is a trace function to watch what's happening duing pcie link
+ * training.  If any errors are detected it simply returns so the
+ * normal code can deal with it.
+ */
+static void phb4_training_trace(struct phb4 *p)
+{
+	uint64_t reg, reglast = -1;
+	unsigned long now, start = mftb();
+
+	if (!pci_tracing)
+		return;
+
+	while(1) {
+		now = mftb();
+		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
+		if (reg != reglast)
+			phb4_train_info(p, reg, now - start);
+		reglast = reg;
+
+		if (!phb4_check_reg(p, reg)) {
+			PHBERR(p, "TRACE: PHB fence waiting link.\n");
+			break;
+		}
+		if (reg & PHB_PCIE_DLP_TL_LINKACT) {
+			PHBERR(p, "TRACE: Link trained.\n");
+			break;
+		}
+		if ((now - start) > secs_to_tb(3)) {
+			PHBERR(p, "TRACE: Timeout waiting for link up.\n");
+			break;
+		}
+	}
+}
+
 static int64_t phb4_poll_link(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
@@ -2463,6 +2516,8 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		out_be64(p->regs + PHB_PCIE_CRESET, reg);
 		pci_slot_set_state(slot,
 			PHB4_SLOT_FRESET_DEASSERT_DELAY);
+
+		phb4_training_trace(p);
 
 		/* Move on to link poll right away */
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
@@ -4683,6 +4738,7 @@ void probe_phb4(void)
 	if (verbose_eeh)
 		prlog(PR_INFO, "PHB4: Verbose EEH enabled\n");
 
+	pci_tracing = nvram_query_eq("pci-tracing", "true");
 	/* Look for PBCQ XSCOM nodes */
 	dt_for_each_compatible(dt_root, np, "ibm,power9-pbcq")
 		phb4_probe_pbcq(np);
