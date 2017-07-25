@@ -104,12 +104,24 @@ void __print_backtrace(unsigned int pir,
 		*len = l;
 }
 
+/*
+ * To ensure that we always get backtrace output we bypass the usual console
+ * locking paths. The downside is that when multiple threads need to print
+ * a backtrace they garble each other. To prevent this we use a seperate
+ * lock to serialise printing of the dumps.
+ */
+struct lock bt_lock = LOCK_UNLOCKED;
+
 void backtrace(void)
 {
 	unsigned int ents = STACK_BUF_ENTRIES;
 
+	lock(&bt_lock);
+
 	__backtrace(bt_buf, &ents);
 	__print_backtrace(mfspr(SPR_PIR), bt_buf, ents, NULL, NULL, true);
+
+	unlock(&bt_lock);
 }
 
 void __nomcount __stack_chk_fail(void);
