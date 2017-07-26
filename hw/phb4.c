@@ -2494,6 +2494,9 @@ static int64_t phb4_hreset(struct pci_slot *slot)
 	case PHB4_SLOT_HRESET_DELAY:
 		PHBDBG(p, "HRESET: Deassert\n");
 
+		/* Clear link errors before we deassert reset */
+		phb4_err_clear_regb(p);
+
 		phb4_pcicfg_read16(&p->phb, 0, PCI_CFG_BRCTL, &brctl);
 		brctl &= ~PCI_CFG_BRCTL_SECONDARY_RESET;
 		phb4_pcicfg_write16(&p->phb, 0, PCI_CFG_BRCTL, brctl);
@@ -2558,6 +2561,9 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		p->skip_perst = false;
 		/* fall through */
 	case PHB4_SLOT_FRESET_ASSERT_DELAY:
+		/* Clear link errors before we deassert PERST */
+		phb4_err_clear_regb(p);
+
 		PHBDBG(p, "FRESET: Deassert\n");
 		reg = in_be64(p->regs + PHB_PCIE_CRESET);
 		reg |= PHB_PCIE_CRESET_PERST_N;
