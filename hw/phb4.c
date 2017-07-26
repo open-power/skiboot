@@ -1690,6 +1690,17 @@ static void phb4_rc_err_clear(struct phb4 *p)
 			     0xffffffff);
 }
 
+static void phb4_err_clear_regb(struct phb4 *p)
+{
+	uint64_t val64;
+
+	val64 = phb4_read_reg(p, PHB_REGB_ERR_STATUS);
+	phb4_write_reg(p, PHB_REGB_ERR_STATUS, val64);
+	phb4_write_reg(p, PHB_REGB_ERR1_STATUS, 0x0ul);
+	phb4_write_reg(p, PHB_REGB_ERR_LOG_0, 0x0ul);
+	phb4_write_reg(p, PHB_REGB_ERR_LOG_1, 0x0ul);
+}
+
 /*
  * The function can be called during error recovery for all classes of
  * errors.  This is new to PHB4; previous revisions had separate
@@ -1716,11 +1727,7 @@ static void phb4_err_clear(struct phb4 *p)
 	phb4_write_reg(p, PHB_PBL_ERR_LOG_1, 0x0ul);
 
 	/* Rec 24...31: Clear REGB errors */
-	val64 = phb4_read_reg(p, PHB_REGB_ERR_STATUS);
-	phb4_write_reg(p, PHB_REGB_ERR_STATUS, val64);
-	phb4_write_reg(p, PHB_REGB_ERR1_STATUS, 0x0ul);
-	phb4_write_reg(p, PHB_REGB_ERR_LOG_0, 0x0ul);
-	phb4_write_reg(p, PHB_REGB_ERR_LOG_1, 0x0ul);
+	phb4_err_clear_regb(p);
 
 	/* Rec 32...59: Clear PHB error trap */
 	val64 = phb4_read_reg(p, PHB_TXE_ERR_STATUS);
