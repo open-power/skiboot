@@ -240,139 +240,6 @@ static inline void phb4_ioda_sel(struct phb4 *p, uint32_t table,
 		       SETFIELD(PHB_IODA_AD_TADR, 0ul, addr));
 }
 
-static void phb4_read_phb_status(struct phb4 *p,
-				 struct OpalIoPhb4ErrorData *stat);
-static void phb4_eeh_dump_regs(struct phb4 *p)
-{
-	struct OpalIoPhb4ErrorData *s;
-	unsigned int i;
-
-	s = zalloc(sizeof(struct OpalIoPhb4ErrorData));
-	phb4_read_phb_status(p, s);
-
-	PHBERR(p, "brdgCtl        = %08x\n", s->brdgCtl);
-
-	/* PHB4 cfg regs */
-	PHBERR(p, "            deviceStatus = %08x\n", s->deviceStatus);
-	PHBERR(p, "              slotStatus = %08x\n", s->slotStatus);
-	PHBERR(p, "              linkStatus = %08x\n", s->linkStatus);
-	PHBERR(p, "            devCmdStatus = %08x\n", s->devCmdStatus);
-	PHBERR(p, "            devSecStatus = %08x\n", s->devSecStatus);
-	PHBERR(p, "         rootErrorStatus = %08x\n", s->rootErrorStatus);
-	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
-	PHBERR(p, "         corrErrorStatus = %08x\n", s->corrErrorStatus);
-	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
-	/* Byte swap TLP headers so they are the same as the PCIe spec */
-	PHBERR(p, "                 tlpHdr1 = %08x\n", bswap_32(s->tlpHdr1));
-	PHBERR(p, "                 tlpHdr2 = %08x\n", bswap_32(s->tlpHdr2));
-	PHBERR(p, "                 tlpHdr3 = %08x\n", bswap_32(s->tlpHdr3));
-	PHBERR(p, "                 tlpHdr4 = %08x\n", bswap_32(s->tlpHdr4));
-	PHBERR(p, "                sourceId = %08x\n", s->sourceId);
-	PHBERR(p, "                    nFir = %016llx\n", s->nFir);
-	PHBERR(p, "                nFirMask = %016llx\n", s->nFirMask);
-	PHBERR(p, "                 nFirWOF = %016llx\n", s->nFirWOF);
-	PHBERR(p, "                phbPlssr = %016llx\n", s->phbPlssr);
-	PHBERR(p, "                  phbCsr = %016llx\n", s->phbCsr);
-	PHBERR(p, "                  lemFir = %016llx\n", s->lemFir);
-	PHBERR(p, "            lemErrorMask = %016llx\n", s->lemErrorMask);
-	PHBERR(p, "                  lemWOF = %016llx\n", s->lemWOF);
-	PHBERR(p, "          phbErrorStatus = %016llx\n", s->phbErrorStatus);
-	PHBERR(p, "     phbFirstErrorStatus = %016llx\n", s->phbFirstErrorStatus);
-	PHBERR(p, "            phbErrorLog0 = %016llx\n", s->phbErrorLog0);
-	PHBERR(p, "            phbErrorLog1 = %016llx\n", s->phbErrorLog1);
-	PHBERR(p, "       phbTxeErrorStatus = %016llx\n", s->phbTxeErrorStatus);
-	PHBERR(p, "  phbTxeFirstErrorStatus = %016llx\n", s->phbTxeFirstErrorStatus);
-	PHBERR(p, "         phbTxeErrorLog0 = %016llx\n", s->phbTxeErrorLog0);
-	PHBERR(p, "         phbTxeErrorLog1 = %016llx\n", s->phbTxeErrorLog1);
-	PHBERR(p, "    phbRxeArbErrorStatus = %016llx\n", s->phbRxeArbErrorStatus);
-	PHBERR(p, "phbRxeArbFrstErrorStatus = %016llx\n", s->phbRxeArbFirstErrorStatus);
-	PHBERR(p, "      phbRxeArbErrorLog0 = %016llx\n", s->phbRxeArbErrorLog0);
-	PHBERR(p, "      phbRxeArbErrorLog1 = %016llx\n", s->phbRxeArbErrorLog1);
-	PHBERR(p, "    phbRxeMrgErrorStatus = %016llx\n", s->phbRxeMrgErrorStatus);
-	PHBERR(p, "phbRxeMrgFrstErrorStatus = %016llx\n", s->phbRxeMrgFirstErrorStatus);
-	PHBERR(p, "      phbRxeMrgErrorLog0 = %016llx\n", s->phbRxeMrgErrorLog0);
-	PHBERR(p, "      phbRxeMrgErrorLog1 = %016llx\n", s->phbRxeMrgErrorLog1);
-	PHBERR(p, "    phbRxeTceErrorStatus = %016llx\n", s->phbRxeTceErrorStatus);
-	PHBERR(p, "phbRxeTceFrstErrorStatus = %016llx\n", s->phbRxeTceFirstErrorStatus);
-	PHBERR(p, "      phbRxeTceErrorLog0 = %016llx\n", s->phbRxeTceErrorLog0);
-	PHBERR(p, "      phbRxeTceErrorLog1 = %016llx\n", s->phbRxeTceErrorLog1);
-	PHBERR(p, "       phbPblErrorStatus = %016llx\n", s->phbPblErrorStatus);
-	PHBERR(p, "  phbPblFirstErrorStatus = %016llx\n", s->phbPblFirstErrorStatus);
-	PHBERR(p, "         phbPblErrorLog0 = %016llx\n", s->phbPblErrorLog0);
-	PHBERR(p, "         phbPblErrorLog1 = %016llx\n", s->phbPblErrorLog1);
-	PHBERR(p, "     phbPcieDlpErrorLog1 = %016llx\n", s->phbPcieDlpErrorLog1);
-	PHBERR(p, "     phbPcieDlpErrorLog2 = %016llx\n", s->phbPcieDlpErrorLog2);
-	PHBERR(p, "   phbPcieDlpErrorStatus = %016llx\n", s->phbPcieDlpErrorStatus);
-
-	PHBERR(p, "      phbRegbErrorStatus = %016llx\n", s->phbRegbErrorStatus);
-	PHBERR(p, " phbRegbFirstErrorStatus = %016llx\n", s->phbRegbFirstErrorStatus);
-	PHBERR(p, "        phbRegbErrorLog0 = %016llx\n", s->phbRegbErrorLog0);
-	PHBERR(p, "        phbRegbErrorLog1 = %016llx\n", s->phbRegbErrorLog1);
-
-	for (i = 0; i < OPAL_PHB4_NUM_PEST_REGS; i++) {
-		if (!s->pestA[i] && !s->pestB[i])
-			continue;
-		PHBERR(p, "               PEST[%03d] = %016llx %016llx\n",
-		       i, s->pestA[i], s->pestB[i]);
-	}
-	free(s);
-}
-
-/* Check if AIB is fenced via PBCQ NFIR */
-static bool phb4_fenced(struct phb4 *p)
-{
-	uint64_t nfir_p, nfir_n, err_aib;
-	uint64_t err_rpt0, err_rpt1;
-
-	/* Already fenced ? */
-	if (p->flags & PHB4_AIB_FENCED)
-		return true;
-
-	/*
-	 * An all 1's from the PHB indicates a PHB freeze/fence. We
-	 * don't really differenciate them at this point.
-	 */
-	if (in_be64(p->regs + PHB_CPU_LOADSTORE_STATUS)!= 0xfffffffffffffffful)
-		return false;
-
-	PHBERR(p, "PHB Freeze/Fence detected !\n");
-
-	/* We read the PCI and NEST FIRs and dump them */
-	xscom_read(p->chip_id,
-		   p->pci_stk_xscom + XPEC_PCI_STK_PCI_FIR, &nfir_p);
-	xscom_read(p->chip_id,
-		   p->pe_stk_xscom + XPEC_NEST_STK_PCI_NFIR, &nfir_n);
-	xscom_read(p->chip_id,
-		   p->pe_stk_xscom + XPEC_NEST_STK_ERR_RPT0, &err_rpt0);
-	xscom_read(p->chip_id,
-		   p->pe_stk_xscom + XPEC_NEST_STK_ERR_RPT1, &err_rpt1);
-	xscom_read(p->chip_id,
-		   p->pci_stk_xscom + XPEC_PCI_STK_PBAIB_ERR_REPORT, &err_aib);
-
-	PHBERR(p, " PCI FIR=%016llx\n", nfir_p);
-	PHBERR(p, "NEST FIR=%016llx\n", nfir_n);
-	PHBERR(p, "ERR RPT0=%016llx\n", err_rpt0);
-	PHBERR(p, "ERR RPT1=%016llx\n", err_rpt1);
-	PHBERR(p, " AIB ERR=%016llx\n", err_aib);
-
-	/* Mark ourselves fenced */
-	p->flags |= PHB4_AIB_FENCED;
-	p->state = PHB4_STATE_FENCED;
-
-	if (verbose_eeh)
-		phb4_eeh_dump_regs(p);
-
-	return true;
-}
-
-static bool phb4_check_reg(struct phb4 *p, uint64_t reg)
-{
-	if (reg == 0xffffffffffffffffUL)
-		return !phb4_fenced(p);
-	return true;
-}
-
-
 /*
  * Configuration space access
  *
@@ -2018,6 +1885,84 @@ static void phb4_read_phb_status(struct phb4 *p,
 	 }
 }
 
+static void phb4_eeh_dump_regs(struct phb4 *p)
+{
+	struct OpalIoPhb4ErrorData *s;
+	unsigned int i;
+
+	s = zalloc(sizeof(struct OpalIoPhb4ErrorData));
+	phb4_read_phb_status(p, s);
+
+
+	PHBERR(p, "brdgCtl        = %08x\n", s->brdgCtl);
+
+	/* PHB4 cfg regs */
+	PHBERR(p, "            deviceStatus = %08x\n", s->deviceStatus);
+	PHBERR(p, "              slotStatus = %08x\n", s->slotStatus);
+	PHBERR(p, "              linkStatus = %08x\n", s->linkStatus);
+	PHBERR(p, "            devCmdStatus = %08x\n", s->devCmdStatus);
+	PHBERR(p, "            devSecStatus = %08x\n", s->devSecStatus);
+	PHBERR(p, "         rootErrorStatus = %08x\n", s->rootErrorStatus);
+	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
+	PHBERR(p, "         corrErrorStatus = %08x\n", s->corrErrorStatus);
+	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
+
+	/* Byte swap TLP headers so they are the same as the PCIe spec */
+	PHBERR(p, "                 tlpHdr1 = %08x\n", bswap_32(s->tlpHdr1));
+	PHBERR(p, "                 tlpHdr2 = %08x\n", bswap_32(s->tlpHdr2));
+	PHBERR(p, "                 tlpHdr3 = %08x\n", bswap_32(s->tlpHdr3));
+	PHBERR(p, "                 tlpHdr4 = %08x\n", bswap_32(s->tlpHdr4));
+	PHBERR(p, "                sourceId = %08x\n", s->sourceId);
+	PHBERR(p, "                    nFir = %016llx\n", s->nFir);
+	PHBERR(p, "                nFirMask = %016llx\n", s->nFirMask);
+	PHBERR(p, "                 nFirWOF = %016llx\n", s->nFirWOF);
+	PHBERR(p, "                phbPlssr = %016llx\n", s->phbPlssr);
+	PHBERR(p, "                  phbCsr = %016llx\n", s->phbCsr);
+	PHBERR(p, "                  lemFir = %016llx\n", s->lemFir);
+	PHBERR(p, "            lemErrorMask = %016llx\n", s->lemErrorMask);
+	PHBERR(p, "                  lemWOF = %016llx\n", s->lemWOF);
+	PHBERR(p, "          phbErrorStatus = %016llx\n", s->phbErrorStatus);
+	PHBERR(p, "     phbFirstErrorStatus = %016llx\n", s->phbFirstErrorStatus);
+	PHBERR(p, "            phbErrorLog0 = %016llx\n", s->phbErrorLog0);
+	PHBERR(p, "            phbErrorLog1 = %016llx\n", s->phbErrorLog1);
+	PHBERR(p, "       phbTxeErrorStatus = %016llx\n", s->phbTxeErrorStatus);
+	PHBERR(p, "  phbTxeFirstErrorStatus = %016llx\n", s->phbTxeFirstErrorStatus);
+	PHBERR(p, "         phbTxeErrorLog0 = %016llx\n", s->phbTxeErrorLog0);
+	PHBERR(p, "         phbTxeErrorLog1 = %016llx\n", s->phbTxeErrorLog1);
+	PHBERR(p, "    phbRxeArbErrorStatus = %016llx\n", s->phbRxeArbErrorStatus);
+	PHBERR(p, "phbRxeArbFrstErrorStatus = %016llx\n", s->phbRxeArbFirstErrorStatus);
+	PHBERR(p, "      phbRxeArbErrorLog0 = %016llx\n", s->phbRxeArbErrorLog0);
+	PHBERR(p, "      phbRxeArbErrorLog1 = %016llx\n", s->phbRxeArbErrorLog1);
+	PHBERR(p, "    phbRxeMrgErrorStatus = %016llx\n", s->phbRxeMrgErrorStatus);
+	PHBERR(p, "phbRxeMrgFrstErrorStatus = %016llx\n", s->phbRxeMrgFirstErrorStatus);
+	PHBERR(p, "      phbRxeMrgErrorLog0 = %016llx\n", s->phbRxeMrgErrorLog0);
+	PHBERR(p, "      phbRxeMrgErrorLog1 = %016llx\n", s->phbRxeMrgErrorLog1);
+	PHBERR(p, "    phbRxeTceErrorStatus = %016llx\n", s->phbRxeTceErrorStatus);
+	PHBERR(p, "phbRxeTceFrstErrorStatus = %016llx\n", s->phbRxeTceFirstErrorStatus);
+	PHBERR(p, "      phbRxeTceErrorLog0 = %016llx\n", s->phbRxeTceErrorLog0);
+	PHBERR(p, "      phbRxeTceErrorLog1 = %016llx\n", s->phbRxeTceErrorLog1);
+	PHBERR(p, "       phbPblErrorStatus = %016llx\n", s->phbPblErrorStatus);
+	PHBERR(p, "  phbPblFirstErrorStatus = %016llx\n", s->phbPblFirstErrorStatus);
+	PHBERR(p, "         phbPblErrorLog0 = %016llx\n", s->phbPblErrorLog0);
+	PHBERR(p, "         phbPblErrorLog1 = %016llx\n", s->phbPblErrorLog1);
+	PHBERR(p, "     phbPcieDlpErrorLog1 = %016llx\n", s->phbPcieDlpErrorLog1);
+	PHBERR(p, "     phbPcieDlpErrorLog2 = %016llx\n", s->phbPcieDlpErrorLog2);
+	PHBERR(p, "   phbPcieDlpErrorStatus = %016llx\n", s->phbPcieDlpErrorStatus);
+
+	PHBERR(p, "      phbRegbErrorStatus = %016llx\n", s->phbRegbErrorStatus);
+	PHBERR(p, " phbRegbFirstErrorStatus = %016llx\n", s->phbRegbFirstErrorStatus);
+	PHBERR(p, "        phbRegbErrorLog0 = %016llx\n", s->phbRegbErrorLog0);
+	PHBERR(p, "        phbRegbErrorLog1 = %016llx\n", s->phbRegbErrorLog1);
+
+	for (i = 0; i < OPAL_PHB4_NUM_PEST_REGS; i++) {
+		if (!s->pestA[i] && !s->pestB[i])
+			continue;
+		PHBERR(p, "               PEST[%03d] = %016llx %016llx\n",
+		       i, s->pestA[i], s->pestB[i]);
+	}
+	free(s);
+}
+
 static int64_t phb4_set_pe(struct phb *phb,
 			   uint64_t pe_number,
 			   uint64_t bdfn,
@@ -2300,6 +2245,60 @@ static void phb4_train_info(struct phb4 *p, uint64_t reg, unsigned long time)
 		snprintf(s, sizeof(s), "%s presence", s);
 
 	PHBERR(p, "%s\n", s);
+}
+
+/* Check if AIB is fenced via PBCQ NFIR */
+static bool phb4_fenced(struct phb4 *p)
+{
+	uint64_t nfir_p, nfir_n, err_aib;
+	uint64_t err_rpt0, err_rpt1;
+
+	/* Already fenced ? */
+	if (p->flags & PHB4_AIB_FENCED)
+		return true;
+
+	/*
+	 * An all 1's from the PHB indicates a PHB freeze/fence. We
+	 * don't really differenciate them at this point.
+	 */
+	if (in_be64(p->regs + PHB_CPU_LOADSTORE_STATUS)!= 0xfffffffffffffffful)
+		return false;
+
+	PHBERR(p, "PHB Freeze/Fence detected !\n");
+
+	/* We read the PCI and NEST FIRs and dump them */
+	xscom_read(p->chip_id,
+		   p->pci_stk_xscom + XPEC_PCI_STK_PCI_FIR, &nfir_p);
+	xscom_read(p->chip_id,
+		   p->pe_stk_xscom + XPEC_NEST_STK_PCI_NFIR, &nfir_n);
+	xscom_read(p->chip_id,
+		   p->pe_stk_xscom + XPEC_NEST_STK_ERR_RPT0, &err_rpt0);
+	xscom_read(p->chip_id,
+		   p->pe_stk_xscom + XPEC_NEST_STK_ERR_RPT1, &err_rpt1);
+	xscom_read(p->chip_id,
+		   p->pci_stk_xscom + XPEC_PCI_STK_PBAIB_ERR_REPORT, &err_aib);
+
+	PHBERR(p, " PCI FIR=%016llx\n", nfir_p);
+	PHBERR(p, "NEST FIR=%016llx\n", nfir_n);
+	PHBERR(p, "ERR RPT0=%016llx\n", err_rpt0);
+	PHBERR(p, "ERR RPT1=%016llx\n", err_rpt1);
+	PHBERR(p, " AIB ERR=%016llx\n", err_aib);
+
+	/* Mark ourselves fenced */
+	p->flags |= PHB4_AIB_FENCED;
+	p->state = PHB4_STATE_FENCED;
+
+	if (verbose_eeh)
+		phb4_eeh_dump_regs(p);
+
+	return true;
+}
+
+static bool phb4_check_reg(struct phb4 *p, uint64_t reg)
+{
+	if (reg == 0xffffffffffffffffUL)
+		return !phb4_fenced(p);
+	return true;
 }
 
 /*
