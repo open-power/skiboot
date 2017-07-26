@@ -2224,8 +2224,7 @@ static int64_t phb4_retry_state(struct pci_slot *slot)
 	struct phb4 *p = phb_to_phb4(slot->phb);
 
 	/* Mark link as down */
-	if (slot->ops.prepare_link_change)
-		slot->ops.prepare_link_change(slot, false);
+	phb4_prepare_link_change(slot, false);
 
 	if (!slot->link_retries--) {
 		switch (slot->state) {
@@ -2408,8 +2407,7 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 		}
 		if (reg & PHB_PCIE_DLP_TL_LINKACT) {
 			PHBDBG(p, "LINK: Link is up\n");
-			if (slot->ops.prepare_link_change)
-				slot->ops.prepare_link_change(slot, true);
+			phb4_prepare_link_change(slot, true);
 			pci_slot_set_state(slot, PHB4_SLOT_LINK_STABLE);
 			slot->stable_retries = PHB4_LINK_STABLE_RETRIES;
 			return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
@@ -2473,8 +2471,7 @@ static int64_t phb4_hreset(struct pci_slot *slot)
 		}
 
 		PHBDBG(p, "HRESET: Prepare for link down\n");
-		if (slot->ops.prepare_link_change)
-			slot->ops.prepare_link_change(slot, false);
+		phb4_prepare_link_change(slot, false);
 		/* fall through */
 	case PHB4_SLOT_HRESET_START:
 		PHBDBG(p, "HRESET: Assert\n");
@@ -2532,8 +2529,7 @@ static int64_t phb4_freset(struct pci_slot *slot)
 
 		PHBDBG(p, "FRESET: Prepare for link down\n");
 
-		if (slot->ops.prepare_link_change)
-			slot->ops.prepare_link_change(slot, false);
+		phb4_prepare_link_change(slot, false);
 		/* fall through */
 	case PHB4_SLOT_FRESET_START:
 		reg = in_be64(p->regs + PHB_PCIE_CRESET);
