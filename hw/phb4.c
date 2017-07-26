@@ -120,7 +120,6 @@
 #define DISABLE_ERR_INTS
 
 static void phb4_init_hw(struct phb4 *p, bool first_init);
-static bool phb4_init_rc_cfg(struct phb4 *p);
 
 #define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB#%04x[%d:%d]: " fmt, \
 				      (p)->phb.opal_id, (p)->chip_id, \
@@ -1792,6 +1791,34 @@ static int64_t phb4_get_msi_64(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
+static void phb4_rc_err_clear(struct phb4 *p)
+{
+	/* Init_47 - Clear errors */
+	phb4_pcicfg_write16(&p->phb, 0, PCI_CFG_SECONDARY_STATUS, 0xffff);
+
+	if (p->ecap <= 0)
+		return;
+
+	phb4_pcicfg_write16(&p->phb, 0, p->ecap + PCICAP_EXP_DEVSTAT,
+			     PCICAP_EXP_DEVSTAT_CE	|
+			     PCICAP_EXP_DEVSTAT_NFE	|
+			     PCICAP_EXP_DEVSTAT_FE	|
+			     PCICAP_EXP_DEVSTAT_UE);
+
+	if (p->aercap <= 0)
+		return;
+
+	/* Clear all UE status */
+	phb4_pcicfg_write32(&p->phb, 0, p->aercap + PCIECAP_AER_UE_STATUS,
+			     0xffffffff);
+	/* Clear all CE status */
+	phb4_pcicfg_write32(&p->phb, 0, p->aercap + PCIECAP_AER_CE_STATUS,
+			     0xffffffff);
+	/* Clear root error status */
+	phb4_pcicfg_write32(&p->phb, 0, p->aercap + PCIECAP_AER_RERR_STA,
+			     0xffffffff);
+}
+
 /*
  * The function can be called during error recovery for all classes of
  * errors.  This is new to PHB4; previous revisions had separate
@@ -1808,8 +1835,7 @@ static void phb4_err_clear(struct phb4 *p)
 	/* Rec 1: Acquire the PCI config lock (we don't need to do this) */
 
 	/* Rec 2...15: Clear error status in RC config space */
-	/* Reset steps are the same as the init sequence */
-	phb4_init_rc_cfg(p);
+	phb4_rc_err_clear(p);
 
 	/* Rec 16/17: Clear PBL errors */
 	val64 = phb4_read_reg(p, PHB_PBL_ERR_STATUS);
@@ -3667,7 +3693,7 @@ static bool phb4_init_rc_cfg(struct phb4 *p)
 	phb4_pcicfg_write32(&p->phb, 0, PCI_CFG_PRIMARY_BUS, 0x00ff0100);
 
 	/* Init_47 - Clear errors */
-	phb4_pcicfg_write16(&p->phb, 0, PCI_CFG_SECONDARY_STATUS, 0xffff);
+	/* see phb4_rc_err_clear() called below */
 
 	/* Init_48
 	 *
@@ -3692,12 +3718,6 @@ static bool phb4_init_rc_cfg(struct phb4 *p)
 	} else {
 		ecap = p->ecap;
 	}
-
-	phb4_pcicfg_write16(&p->phb, 0, ecap + PCICAP_EXP_DEVSTAT,
-			     PCICAP_EXP_DEVSTAT_CE	|
-			     PCICAP_EXP_DEVSTAT_NFE	|
-			     PCICAP_EXP_DEVSTAT_FE	|
-			     PCICAP_EXP_DEVSTAT_UE);
 
 	phb4_pcicfg_write16(&p->phb, 0, ecap + PCICAP_EXP_DEVCTL,
 			     PCICAP_EXP_DEVCTL_CE_REPORT	|
@@ -3726,25 +3746,18 @@ static bool phb4_init_rc_cfg(struct phb4 *p)
 		aercap = p->aercap;
 	}
 
-	/* Clear all UE status */
-	phb4_pcicfg_write32(&p->phb, 0, aercap + PCIECAP_AER_UE_STATUS,
-			     0xffffffff);
 	/* Disable some error reporting as per the PHB4 spec */
 	phb4_pcicfg_write32(&p->phb, 0, aercap + PCIECAP_AER_UE_MASK,
 			     PCIECAP_AER_UE_POISON_TLP		|
 			     PCIECAP_AER_UE_COMPL_TIMEOUT	|
 			     PCIECAP_AER_UE_COMPL_ABORT);
 
-	/* Clear all CE status */
-	phb4_pcicfg_write32(&p->phb, 0, aercap + PCIECAP_AER_CE_STATUS,
-			     0xffffffff);
 	/* Enable ECRC generation & checking */
 	phb4_pcicfg_write32(&p->phb, 0, aercap + PCIECAP_AER_CAPCTL,
 			     PCIECAP_AER_CAPCTL_ECRCG_EN	|
 			     PCIECAP_AER_CAPCTL_ECRCC_EN);
-	/* Clear root error status */
-	phb4_pcicfg_write32(&p->phb, 0, aercap + PCIECAP_AER_RERR_STA,
-			     0xffffffff);
+
+	phb4_rc_err_clear(p);
 
 	return true;
 }
