@@ -1901,6 +1901,9 @@ static void phb4_eeh_dump_regs(struct phb4 *p)
 	uint32_t reg;
 	unsigned int i;
 
+	if (!verbose_eeh)
+		return;
+
 	s = zalloc(sizeof(struct OpalIoPhb4ErrorData));
 	phb4_read_phb_status(p, s);
 
@@ -2305,8 +2308,7 @@ static bool phb4_fenced(struct phb4 *p)
 	p->flags |= PHB4_AIB_FENCED;
 	p->state = PHB4_STATE_FENCED;
 
-	if (verbose_eeh)
-		phb4_eeh_dump_regs(p);
+	phb4_eeh_dump_regs(p);
 
 	return true;
 }
@@ -3207,7 +3209,7 @@ static int64_t phb4_get_diag_data(struct phb *phb,
 	phb4_fenced(p);
 	phb4_read_phb_status(p, data);
 
-	if (verbose_eeh && !(p->flags & PHB4_AIB_FENCED))
+	if (!(p->flags & PHB4_AIB_FENCED))
 		phb4_eeh_dump_regs(p);
 
 	/*
