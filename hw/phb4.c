@@ -2631,7 +2631,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		 * Force use of ASB for register access until the PHB has
 		 * been fully reset.
 		 */
-		p->flags |= PHB4_CFG_USE_ASB;
+		p->flags |= PHB4_CFG_USE_ASB | PHB4_AIB_FENCED;
 
 		/* Clear errors, following the proper sequence */
 		phb4_err_clear(p);
