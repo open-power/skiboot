@@ -3809,9 +3809,15 @@ static void phb4_init_errors(struct phb4 *p)
 	/* Init_64..72 - REGB errors */
 	out_be64(p->regs + 0x1c00,	0xffffffffffffffffull);
 	out_be64(p->regs + 0x1c08,	0x0000000000000000ull);
-	out_be64(p->regs + 0x1c20,	0x2130006efca8bc00ull);
+	/* Enable/disable error status indicators that trigger irqs */
+	if (p->has_link) {
+		out_be64(p->regs + 0x1c20,	0x2130006efca8bc00ull);
+		out_be64(p->regs + 0x1c30,	0xde8fff91035743ffull);
+	} else {
+		out_be64(p->regs + 0x1c20,	0x0000000000000000ull);
+		out_be64(p->regs + 0x1c30,	0x0000000000000000ull);
+	}
 	out_be64(p->regs + 0x1c28,	0x0000000000000000ull);
-	out_be64(p->regs + 0x1c30,	0xde8fff91035743ffull);
 	out_be64(p->regs + 0x1c40,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1c48,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1c50,	0x0000000000000000ull);
