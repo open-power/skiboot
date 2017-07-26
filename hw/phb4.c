@@ -2606,7 +2606,7 @@ static int64_t load_capp_ucode(struct phb4 *p)
 static int64_t phb4_creset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
-	uint64_t pbcq_status;
+	uint64_t pbcq_status, reg;
 
 	switch (slot->state) {
 	case PHB4_SLOT_NORMAL:
@@ -2632,6 +2632,11 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		 * been fully reset.
 		 */
 		p->flags |= PHB4_CFG_USE_ASB | PHB4_AIB_FENCED;
+
+		/* Assert PREST before clearing errors */
+		reg = phb4_read_reg(p, PHB_PCIE_CRESET);
+		reg &= ~PHB_PCIE_CRESET_PERST_N;
+		phb4_write_reg(p, PHB_PCIE_CRESET, reg);
 
 		/* Clear errors, following the proper sequence */
 		phb4_err_clear(p);
