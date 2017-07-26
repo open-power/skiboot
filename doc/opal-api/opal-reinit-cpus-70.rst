@@ -15,6 +15,8 @@ Currently, possible flags are: ::
   enum {
 	OPAL_REINIT_CPUS_HILE_BE	= (1 << 0),
 	OPAL_REINIT_CPUS_HILE_LE	= (1 << 1),
+	OPAL_REINIT_CPUS_MMU_HASH	= (1 << 2),
+	OPAL_REINIT_CPUS_MMU_RADIX	= (1 << 3),
   };
 
 Extra flags may be added in the future, so other bits *must* be 0.
@@ -25,7 +27,8 @@ flags will return OPAL_UNSUPPORTED.
 On POWER8 CPUs, only OPAL_REINIT_CPUS_HILE_BE and OPAL_REINIT_CPUS_HILE_LE
 are support and other bits *MUST NOT* be set.
 
-On POWER9 CPUs, other flags may be supported in the future.
+On POWER9 CPUs, all options including OPAL_REINIT_CPUS_MMU_HASH and
+OPAL_REINIT_CPUS_MMU_RADIX.
 
 Returns
 -------
