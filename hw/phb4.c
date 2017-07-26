@@ -1704,15 +1704,21 @@ static void phb4_err_clear(struct phb4 *p)
 	/* Rec 2...15: Clear error status in RC config space */
 	phb4_rc_err_clear(p);
 
-	/* Rec 16/17: Clear PBL errors */
+	/* Rec 16...23: Clear PBL errors */
 	val64 = phb4_read_reg(p, PHB_PBL_ERR_STATUS);
 	phb4_write_reg(p, PHB_PBL_ERR_STATUS, val64);
+	phb4_write_reg(p, PHB_PBL_ERR1_STATUS, 0x0ul);
+	phb4_write_reg(p, PHB_PBL_ERR_LOG_0, 0x0ul);
+	phb4_write_reg(p, PHB_PBL_ERR_LOG_1, 0x0ul);
 
-	/* Rec 18/19: Clear REGB errors */
+	/* Rec 24...31: Clear REGB errors */
 	val64 = phb4_read_reg(p, PHB_REGB_ERR_STATUS);
 	phb4_write_reg(p, PHB_REGB_ERR_STATUS, val64);
+	phb4_write_reg(p, PHB_REGB_ERR1_STATUS, 0x0ul);
+	phb4_write_reg(p, PHB_REGB_ERR_LOG_0, 0x0ul);
+	phb4_write_reg(p, PHB_REGB_ERR_LOG_1, 0x0ul);
 
-	/* Rec 20...59: Clear PHB error trap */
+	/* Rec 32...59: Clear PHB error trap */
 	val64 = phb4_read_reg(p, PHB_TXE_ERR_STATUS);
 	phb4_write_reg(p, PHB_TXE_ERR_STATUS, val64);
 	phb4_write_reg(p, PHB_TXE_ERR1_STATUS, 0x0ul);
