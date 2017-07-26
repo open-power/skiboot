@@ -1888,6 +1888,7 @@ static void phb4_read_phb_status(struct phb4 *p,
 static void phb4_eeh_dump_regs(struct phb4 *p)
 {
 	struct OpalIoPhb4ErrorData *s;
+	uint32_t reg;
 	unsigned int i;
 
 	s = zalloc(sizeof(struct OpalIoPhb4ErrorData));
@@ -1906,6 +1907,13 @@ static void phb4_eeh_dump_regs(struct phb4 *p)
 	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
 	PHBERR(p, "         corrErrorStatus = %08x\n", s->corrErrorStatus);
 	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
+
+	/* Two non OPAL API registers that are useful */
+	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_DEVCTL, &reg);
+	PHBERR(p, "                  devctl = %08x\n", reg);
+	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_DEVSTAT,
+			   &reg);
+	PHBERR(p, "                 devStat = %08x\n", reg);
 
 	/* Byte swap TLP headers so they are the same as the PCIe spec */
 	PHBERR(p, "                 tlpHdr1 = %08x\n", bswap_32(s->tlpHdr1));
