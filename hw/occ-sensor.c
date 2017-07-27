@@ -203,9 +203,9 @@ struct occ_sensor_name {
  * @sample:				Latest sample of this sensor
  * @sample_min:				Minimum value since last OCC reset
  * @sample_max:				Maximum value since last OCC reset
- * @CSM_min:				Minimum value since last reset request
+ * @csm_min:				Minimum value since last reset request
  *					by CSM (CORAL)
- * @CSM_max:				Maximum value since last reset request
+ * @csm_max:				Maximum value since last reset request
  *					by CSM (CORAL)
  * @profiler_min:			Minimum value since last reset request
  *					by profiler (CORAL)
@@ -226,8 +226,8 @@ struct occ_sensor_record {
 	u16 sample;
 	u16 sample_min;
 	u16 sample_max;
-	u16 CSM_min;
-	u16 CSM_max;
+	u16 csm_min;
+	u16 csm_max;
 	u16 profiler_min;
 	u16 profiler_max;
 	u16 job_scheduler_min;
@@ -256,8 +256,10 @@ struct occ_sensor_counter {
 
 enum sensor_attr {
 	SENSOR_SAMPLE,
-	SENSOR_MAX,
-	SENSOR_MIN,
+	SENSOR_SAMPLE_MIN,	/* OCC's min/max */
+	SENSOR_SAMPLE_MAX,
+	SENSOR_CSM_MIN,		/* CSM's min/max */
+	SENSOR_CSM_MAX,
 	MAX_SENSOR_ATTR,
 };
 
@@ -371,11 +373,17 @@ int occ_sensor_read(u32 handle, u32 *data)
 	case SENSOR_SAMPLE:
 		*data = sensor->sample;
 		break;
-	case SENSOR_MAX:
+	case SENSOR_SAMPLE_MIN:
+		*data = sensor->sample_min;
+		break;
+	case SENSOR_SAMPLE_MAX:
 		*data = sensor->sample_max;
 		break;
-	case SENSOR_MIN:
-		*data = sensor->sample_min;
+	case SENSOR_CSM_MIN:
+		*data = sensor->csm_min;
+		break;
+	case SENSOR_CSM_MAX:
+		*data = sensor->csm_max;
 		break;
 	default:
 		*data = 0;
@@ -580,10 +588,10 @@ void occ_sensors_init(void)
 			dt_add_property_string(node, "sensor-type", type);
 			dt_add_property_cells(node, "sensor-data", handler);
 
-			handler = sensor_handler(occ_num, i, SENSOR_MAX);
+			handler = sensor_handler(occ_num, i, SENSOR_CSM_MAX);
 			dt_add_property_cells(node, "sensor-data-max", handler);
 
-			handler = sensor_handler(occ_num, i, SENSOR_MIN);
+			handler = sensor_handler(occ_num, i, SENSOR_CSM_MIN);
 			dt_add_property_cells(node, "sensor-data-min", handler);
 
 			dt_add_property_string(node, "compatible",
