@@ -19,6 +19,7 @@
 #include <chip.h>
 #include <sensor.h>
 #include <device.h>
+#include <cpu.h>
 
 /*
  * OCC Sensor Data
@@ -474,9 +475,11 @@ static void add_sensor_label(struct dt_node *node, struct occ_sensor_name *md,
 		if (!strncmp(str_maps[i].occ_str, md->name,
 			     strlen(str_maps[i].occ_str))) {
 			char *end;
-			int num;
+			int num = -1;
 
-			num = parse_entity(md->name, &end);
+			if (md->location != OCC_SENSOR_LOC_CORE)
+				num = parse_entity(md->name, &end);
+
 			if (num != -1) {
 				snprintf(sname, sizeof(sname), "%s%s %d %s",
 					 prefix, str_maps[i].opal_str, num,
@@ -573,10 +576,21 @@ void occ_sensors_init(void)
 			char name[30];
 			const char *type, *loc;
 			struct dt_node *node;
+			struct cpu_thread *c = NULL;
 			u32 handler;
 
 			if (!(md[i].type & HWMON_SENSORS_MASK))
 				continue;
+
+			if (md[i].location == OCC_SENSOR_LOC_CORE) {
+				int num = parse_entity(md[i].name, NULL);
+
+				for_each_available_core_in_chip(c, chip->id)
+					if (pir_to_core_id(c->pir) == num)
+						break;
+				if (!c)
+					continue;
+			}
 
 			type = get_sensor_type_string(md[i].type);
 			loc = get_sensor_loc_string(md[i].location);
@@ -598,6 +612,9 @@ void occ_sensors_init(void)
 					       "ibm,opal-sensor");
 			dt_add_property_string(node, "occ_label", md[i].name);
 			add_sensor_label(node, &md[i], chip->id);
+
+			if (md[i].location == OCC_SENSOR_LOC_CORE)
+				dt_add_property_cells(node, "ibm,pir", c->pir);
 		}
 		occ_num++;
 	}
