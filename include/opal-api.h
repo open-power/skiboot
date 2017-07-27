@@ -55,6 +55,7 @@
 #define OPAL_XSCOM_CTR_OFFLINED	-30
 #define OPAL_XIVE_PROVISIONING	-31
 #define OPAL_XIVE_FREE_ACTIVE	-32
+#define OPAL_TIMEOUT		-33
 
 /* API Tokens (in r0) */
 #define OPAL_INVALID_CALL		       -1

@@ -41,6 +41,9 @@
 #define MAX_P8_CORES			12
 #define MAX_P9_CORES			24
 
+#define MAX_OPAL_CMD_DATA_LENGTH	4090
+#define MAX_OCC_RSP_DATA_LENGTH		8698
+
 /**
  * OCC-OPAL Shared Memory Region
  *
@@ -120,6 +123,87 @@ struct occ_pstate_table {
 } __packed;
 
 /**
+ * OPAL-OCC Command Response Interface
+ *
+ * OPAL-OCC Command Buffer
+ *
+ * ---------------------------------------------------------------------
+ * | OPAL  |  Cmd    | OPAL |	       | Cmd Data | Cmd Data | OPAL    |
+ * | Cmd   | Request | OCC  | Reserved | Length   | Length   | Cmd     |
+ * | Flags |   ID    | Cmd  |	       | (MSB)    | (LSB)    | Data... |
+ * ---------------------------------------------------------------------
+ * |  ….OPAL Command Data up to max of Cmd Data Length 4090 bytes      |
+ * |								       |
+ * ---------------------------------------------------------------------
+ *
+ * OPAL Command Flag
+ *
+ * -----------------------------------------------------------------
+ * | Bit 7 | Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 | Bit 0 |
+ * | (msb) |	   |	   |	   |	   |	   |	   | (lsb) |
+ * -----------------------------------------------------------------
+ * |Cmd    |       |       |       |       |       |       |       |
+ * |Ready  |	   |	   |	   |	   |	   |	   |	   |
+ * -----------------------------------------------------------------
+ *
+ * struct opal_command_buffer -	Defines the layout of OPAL command buffer
+ * @flag:			Provides general status of the command
+ * @request_id:			Token to identify request
+ * @cmd:			Command sent
+ * @data_size:			Command data length
+ * @data:			Command specific data
+ * @spare:			Unused byte
+ */
+struct opal_command_buffer {
+	u8 flag;
+	u8 request_id;
+	u8 cmd;
+	u8 spare;
+	u16 data_size;
+	u8 data[MAX_OPAL_CMD_DATA_LENGTH];
+} __packed;
+
+/**
+ * OPAL-OCC Response Buffer
+ *
+ * ---------------------------------------------------------------------
+ * | OCC   |  Cmd    | OPAL | Response | Rsp Data | Rsp Data | OPAL    |
+ * | Rsp   | Request | OCC  |  Status  | Length   | Length   | Rsp     |
+ * | Flags |   ID    | Cmd  |	       | (MSB)    | (LSB)    | Data... |
+ * ---------------------------------------------------------------------
+ * |  ….OPAL Response Data up to max of Rsp Data Length 8698 bytes     |
+ * |								       |
+ * ---------------------------------------------------------------------
+ *
+ * OCC Response Flag
+ *
+ * -----------------------------------------------------------------
+ * | Bit 7 | Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 | Bit 0 |
+ * | (msb) |	   |	   |	   |	   |	   |	   | (lsb) |
+ * -----------------------------------------------------------------
+ * |       |       |       |       |       |       |OCC in  | Rsp  |
+ * |       |	   |	   |	   |	   |	   |progress|Ready |
+ * -----------------------------------------------------------------
+ *
+ * struct occ_response_buffer -	Defines the layout of OCC response buffer
+ * @flag:			Provides general status of the response
+ * @request_id:			Token to identify request
+ * @cmd:			Command requested
+ * @status:			Indicates success/failure status of
+ *				the command
+ * @data_size:			Response data length
+ * @data:			Response specific data
+ */
+struct occ_response_buffer {
+	u8 flag;
+	u8 request_id;
+	u8 cmd;
+	u8 status;
+	u16 data_size;
+	u8 data[MAX_OCC_RSP_DATA_LENGTH];
+} __packed;
+
+/**
  * OCC-OPAL Shared Memory Interface Dynamic Data Vx90
  *
  * struct occ_dynamic_data -	Contains runtime attributes
@@ -136,6 +220,8 @@ struct occ_pstate_table {
  * @max_pwr_cap:		Maximum allowed system power cap in Watts
  * @cur_pwr_cap:		Current system power cap
  * @spare/reserved:		Unused data
+ * @cmd:			Opal Command Buffer
+ * @rsp:			OCC Response Buffer
  */
 struct occ_dynamic_data {
 	u8 occ_state;
@@ -151,7 +237,9 @@ struct occ_dynamic_data {
 	u16 min_pwr_cap;
 	u16 max_pwr_cap;
 	u16 cur_pwr_cap;
-	u64 reserved;
+	u8 pad[112];
+	struct opal_command_buffer cmd;
+	struct occ_response_buffer rsp;
 } __packed;
 
 static bool occ_reset;
@@ -841,6 +929,326 @@ done:
 	unlock(&occ_lock);
 }
 
+/* OPAL-OCC Command/Response Interface */
+
+enum occ_state {
+	OCC_STATE_NOT_RUNNING		= 0x00,
+	OCC_STATE_STANDBY		= 0x01,
+	OCC_STATE_OBSERVATION		= 0x02,
+	OCC_STATE_ACTIVE		= 0x03,
+	OCC_STATE_SAFE			= 0x04,
+	OCC_STATE_CHARACTERIZATION	= 0x05,
+};
+
+enum occ_role {
+	OCC_ROLE_SLAVE		= 0x0,
+	OCC_ROLE_MASTER		= 0x1,
+};
+
+enum occ_cmd {
+	OCC_CMD_CLEAR_SENSOR_DATA,
+	OCC_CMD_SET_POWER_CAP,
+	OCC_CMD_SET_POWER_SHIFTING_RATIO,
+	OCC_CMD_LAST
+};
+
+struct opal_occ_cmd_info {
+	enum	occ_cmd cmd;
+	u8	cmd_value;
+	u16	cmd_size;
+	u16	rsp_size;
+	int	timeout_ms;
+	u16	state_mask;
+	u8	role_mask;
+};
+
+static struct opal_occ_cmd_info occ_cmds[] = {
+	{	OCC_CMD_CLEAR_SENSOR_DATA,
+		0xD0, 4, 4, 1000,
+		PPC_BIT16(OCC_STATE_OBSERVATION) |
+		PPC_BIT16(OCC_STATE_ACTIVE) |
+		PPC_BIT16(OCC_STATE_CHARACTERIZATION),
+		PPC_BIT8(OCC_ROLE_MASTER) | PPC_BIT8(OCC_ROLE_SLAVE)
+	},
+	{	OCC_CMD_SET_POWER_CAP,
+		0xD1, 2, 2, 1000,
+		PPC_BIT16(OCC_STATE_OBSERVATION) |
+		PPC_BIT16(OCC_STATE_ACTIVE) |
+		PPC_BIT16(OCC_STATE_CHARACTERIZATION),
+		PPC_BIT8(OCC_ROLE_MASTER)
+	},
+	{	OCC_CMD_SET_POWER_SHIFTING_RATIO,
+		0xD2, 1, 1, 1000,
+		PPC_BIT16(OCC_STATE_OBSERVATION) |
+		PPC_BIT16(OCC_STATE_ACTIVE) |
+		PPC_BIT16(OCC_STATE_CHARACTERIZATION),
+		PPC_BIT8(OCC_ROLE_MASTER) | PPC_BIT8(OCC_ROLE_SLAVE)
+	},
+};
+
+enum occ_response_status {
+	OCC_RSP_SUCCESS			= 0x00,
+	OCC_RSP_INVALID_COMMAND		= 0x11,
+	OCC_RSP_INVALID_CMD_DATA_LENGTH	= 0x12,
+	OCC_RSP_INVALID_DATA		= 0x13,
+	OCC_RSP_INTERNAL_ERROR		= 0x15,
+};
+
+#define OCC_FLAG_RSP_READY		0x01
+#define OCC_FLAG_CMD_IN_PROGRESS	0x02
+#define OPAL_FLAG_CMD_READY		0x80
+
+struct opal_occ_cmd_data {
+	u8 *data;
+	enum occ_cmd cmd;
+};
+
+static struct cmd_interface {
+	struct lock queue_lock;
+	struct timer timeout;
+	struct opal_occ_cmd_data *cdata;
+	struct opal_command_buffer *cmd;
+	struct occ_response_buffer *rsp;
+	u8 *occ_state;
+	u8 *valid;
+	u32 chip_id;
+	u32 token;
+	u8 occ_role;
+	u8 request_id;
+	bool cmd_in_progress;
+	bool retry;
+} *chips;
+
+static int nr_occs;
+
+static inline struct cmd_interface *get_chip_cmd_interface(int chip_id)
+{
+	int i;
+
+	for (i = 0; i < nr_occs; i++)
+		if (chips[i].chip_id == chip_id)
+			return &chips[i];
+
+	return NULL;
+}
+
+static inline bool occ_in_progress(struct cmd_interface *chip)
+{
+	return (chip->rsp->flag == OCC_FLAG_CMD_IN_PROGRESS);
+}
+
+static int write_occ_cmd(struct cmd_interface *chip)
+{
+	struct opal_command_buffer *cmd = chip->cmd;
+	enum occ_cmd ocmd = chip->cdata->cmd;
+
+	if (!chip->retry && occ_in_progress(chip)) {
+		chip->cmd_in_progress = false;
+		return OPAL_BUSY;
+	}
+
+	cmd->flag = chip->rsp->flag = 0;
+	cmd->cmd = occ_cmds[ocmd].cmd_value;
+	cmd->request_id = chip->request_id++;
+	cmd->data_size = occ_cmds[ocmd].cmd_size;
+	memcpy(&cmd->data, chip->cdata->data, cmd->data_size);
+	cmd->flag = OPAL_FLAG_CMD_READY;
+
+	schedule_timer(&chip->timeout,
+		       msecs_to_tb(occ_cmds[ocmd].timeout_ms));
+
+	return OPAL_ASYNC_COMPLETION;
+}
+
+static int64_t __unused opal_occ_command(struct cmd_interface *chip, int token,
+					 struct opal_occ_cmd_data *cdata)
+{
+	int rc;
+
+	if (!(*chip->valid) ||
+	    (!(PPC_BIT16(*chip->occ_state) & occ_cmds[cdata->cmd].state_mask)))
+		return OPAL_HARDWARE;
+
+	if (!(PPC_BIT8(chip->occ_role) & occ_cmds[cdata->cmd].role_mask))
+		return OPAL_PERMISSION;
+
+	lock(&chip->queue_lock);
+	if (chip->cmd_in_progress) {
+		rc = OPAL_BUSY;
+		goto out;
+	}
+
+	chip->cdata = cdata;
+	chip->token = token;
+	chip->cmd_in_progress = true;
+	chip->retry = false;
+	rc = write_occ_cmd(chip);
+out:
+	unlock(&chip->queue_lock);
+	return rc;
+}
+
+static inline bool sanity_check_opal_cmd(struct opal_command_buffer *cmd,
+					 struct cmd_interface *chip)
+{
+	return ((cmd->cmd == occ_cmds[chip->cdata->cmd].cmd_value) &&
+		(cmd->request_id == chip->request_id - 1) &&
+		(cmd->data_size == occ_cmds[chip->cdata->cmd].cmd_size));
+}
+
+static inline bool check_occ_rsp(struct opal_command_buffer *cmd,
+				 struct occ_response_buffer *rsp)
+{
+	if (cmd->cmd != rsp->cmd) {
+		prlog(PR_DEBUG, "OCC: Command value mismatch in OCC response"
+		      "rsp->cmd = %d cmd->cmd = %d\n", rsp->cmd, cmd->cmd);
+		return false;
+	}
+
+	if (cmd->request_id != rsp->request_id) {
+		prlog(PR_DEBUG, "OCC: Request ID mismatch in OCC response"
+		      "rsp->request_id = %d cmd->request_id = %d\n",
+		      rsp->request_id, cmd->request_id);
+		return false;
+	}
+
+	return true;
+}
+
+static inline void queue_occ_rsp_msg(int token, int rc)
+{
+	int ret;
+
+	ret = opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL, token, rc);
+	if (ret)
+		prerror("OCC: Failed to queue OCC response status message\n");
+}
+
+static void occ_cmd_timeout_handler(struct timer *t __unused, void *data,
+				    uint64_t now __unused)
+{
+	struct cmd_interface *chip = data;
+
+	lock(&chip->queue_lock);
+	if (!chip->cmd_in_progress)
+		goto exit;
+
+	if (!chip->retry) {
+		prlog(PR_DEBUG, "OCC: Command timeout, retrying\n");
+		chip->retry = true;
+		write_occ_cmd(chip);
+	} else {
+		chip->cmd_in_progress = false;
+		queue_occ_rsp_msg(chip->token, OPAL_TIMEOUT);
+		prlog(PR_DEBUG, "OCC: Command timeout after retry\n");
+	}
+exit:
+	unlock(&chip->queue_lock);
+}
+
+static int read_occ_rsp(struct occ_response_buffer *rsp)
+{
+	switch (rsp->status) {
+	case OCC_RSP_SUCCESS:
+		return OPAL_SUCCESS;
+	case OCC_RSP_INVALID_COMMAND:
+		prlog(PR_DEBUG, "OCC: Rsp status: Invalid command\n");
+		break;
+	case OCC_RSP_INVALID_CMD_DATA_LENGTH:
+		prlog(PR_DEBUG, "OCC: Rsp status: Invalid command data length\n");
+		break;
+	case OCC_RSP_INVALID_DATA:
+		prlog(PR_DEBUG, "OCC: Rsp status: Invalid command data\n");
+		break;
+	case OCC_RSP_INTERNAL_ERROR:
+		prlog(PR_DEBUG, "OCC: Rsp status: OCC internal error\n");
+		break;
+	default:
+		break;
+	}
+
+	/* Clear the OCC response flag */
+	rsp->flag = 0;
+	return OPAL_INTERNAL_ERROR;
+}
+
+static void handle_occ_rsp(uint32_t chip_id)
+{
+	struct cmd_interface *chip;
+	struct opal_command_buffer *cmd;
+	struct occ_response_buffer *rsp;
+
+	chip = get_chip_cmd_interface(chip_id);
+	if (!chip)
+		return;
+
+	cmd = chip->cmd;
+	rsp = chip->rsp;
+
+	/*Read rsp*/
+	if (rsp->flag != OCC_FLAG_RSP_READY)
+		return;
+	lock(&chip->queue_lock);
+	if (!chip->cmd_in_progress)
+		goto exit;
+
+	cancel_timer(&chip->timeout);
+	if (!sanity_check_opal_cmd(cmd, chip) ||
+	    !check_occ_rsp(cmd, rsp)) {
+		if (!chip->retry) {
+			prlog(PR_DEBUG, "OCC: Command-response mismatch, retrying\n");
+			chip->retry = true;
+			write_occ_cmd(chip);
+		} else {
+			chip->cmd_in_progress = false;
+			queue_occ_rsp_msg(chip->token, OPAL_INTERNAL_ERROR);
+			prlog(PR_DEBUG, "OCC: Command-response mismatch\n");
+		}
+		goto exit;
+	}
+
+	chip->cmd_in_progress = false;
+	queue_occ_rsp_msg(chip->token, read_occ_rsp(chip->rsp));
+exit:
+	unlock(&chip->queue_lock);
+}
+
+static void occ_cmd_interface_init(void)
+{
+	struct occ_dynamic_data *data;
+	struct occ_pstate_table *pdata;
+	struct proc_chip *chip;
+	int i = 0;
+
+	chip = next_chip(NULL);
+	pdata = get_occ_pstate_table(chip);
+	if (pdata->version != 0x90)
+		return;
+
+	for_each_chip(chip)
+		nr_occs++;
+
+	chips = malloc(sizeof(*chips) * nr_occs);
+	assert(chips);
+
+	for_each_chip(chip) {
+		pdata = get_occ_pstate_table(chip);
+		data = get_occ_dynamic_data(chip);
+		chips[i].chip_id = chip->id;
+		chips[i].occ_role = pdata->v9.occ_role;
+		chips[i].occ_state = &data->occ_state;
+		chips[i].valid = &pdata->valid;
+		chips[i].cmd = &data->cmd;
+		chips[i].rsp = &data->rsp;
+		init_lock(&chips[i].queue_lock);
+		chips[i].cmd_in_progress = false;
+		chips[i].request_id = 0;
+		init_timer(&chips[i].timeout, occ_cmd_timeout_handler,
+			   &chips[i]);
+		i++;
+	}
+}
+
 /* CPU-OCC PState init */
 /* Called after OCC init on P8 and P9 */
 void occ_pstates_init(void)
@@ -908,6 +1316,9 @@ void occ_pstates_init(void)
 		chip->throttle = 0;
 	opal_add_poller(occ_throttle_poll, NULL);
 	occ_pstates_initialized = true;
+
+	/* Init OPAL-OCC command-response interface */
+	occ_cmd_interface_init();
 }
 
 struct occ_load_req {
@@ -1407,8 +1818,10 @@ void occ_p9_interrupt(uint32_t chip_id)
 	if (ireg & OCB_OCI_OCIMISC_IRQ_TMGT)
 		prd_tmgt_interrupt(chip_id);
 
-	if (ireg & OCB_OCI_OCIMISC_IRQ_SHMEM)
+	if (ireg & OCB_OCI_OCIMISC_IRQ_SHMEM) {
 		occ_throttle_poll(NULL);
+		handle_occ_rsp(chip_id);
+	}
 
 	if (ireg & OCB_OCI_OCIMISC_IRQ_I2C)
 		p9_i2c_bus_owner_change(chip_id);
@@ -1433,5 +1846,3 @@ void occ_fsp_init(void)
 	if (fsp_present())
 		fsp_register_client(&fsp_occ_client, FSP_MCLASS_OCC);
 }
-
-
