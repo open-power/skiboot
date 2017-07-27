@@ -532,9 +532,33 @@ static void sel_power(uint8_t power)
 
 static uint32_t occ_sensor_id_to_chip(uint8_t sensor, uint32_t *chip)
 {
-	/* TODO: Lookup sensor ID node in the DT, and map to a chip id */
-	(void)sensor;
+	struct dt_node *node, *bmc_node, *sensors_node;
+
+	/* Default chip id */
 	*chip = 0;
+
+	bmc_node = dt_find_by_name(dt_root, "bmc");
+	if (!bmc_node)
+		return 0;
+
+	sensors_node = dt_find_by_name(bmc_node, "sensors");
+	if (!sensors_node)
+		return 0;
+
+	node = dt_find_by_name_addr(sensors_node, "sensor", sensor);
+	if (!node) {
+		prlog(PR_DEBUG, "Could not find OCC sensor node. Id : %d\n",
+		      (u32)sensor);
+		return 0;
+	}
+
+	if (!dt_has_node_property(node, "ibm,chip-id", NULL)) {
+		prlog(PR_DEBUG, "Could not find chip-id for OCC sensor : %d\n",
+		      (u32)sensor);
+		return 0;
+	}
+
+	*chip = dt_get_chip_id(node);
 	return 0;
 }
 
