@@ -29,6 +29,10 @@ static int64_t opal_sensor_read(uint32_t sensor_hndl, int token,
 	switch (sensor_get_family(sensor_hndl)) {
 	case SENSOR_DTS:
 		return dts_sensor_read(sensor_hndl, sensor_data);
+	case SENSOR_OCC:
+		return occ_sensor_read(sensor_hndl, sensor_data);
+	default:
+		break;
 	}
 
 	if (platform.sensor_read)

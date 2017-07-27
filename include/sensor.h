@@ -53,6 +53,7 @@
  */
 enum {
 	SENSOR_FSP = 0,
+	SENSOR_OCC = 6,
 	SENSOR_DTS = 7,
 };
 

@@ -310,4 +310,8 @@ extern int fake_nvram_info(uint32_t *total_size);
 extern int fake_nvram_start_read(void *dst, uint32_t src, uint32_t len);
 extern int fake_nvram_write(uint32_t offset, void *src, uint32_t size);
 
+/* OCC Inband Sensors */
+extern void occ_sensors_init(void);
+extern int occ_sensor_read(u32 handle, u32 *data);
+
 #endif /* __SKIBOOT_H */
