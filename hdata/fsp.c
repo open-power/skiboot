@@ -281,6 +281,40 @@ static void add_uart(const struct spss_iopath *iopath, struct dt_node *lpc)
 		be32_to_cpu(iopath->lpc.uart_baud));
 }
 
+static void add_chip_id_to_sensors(struct dt_node *sensor_node, __be32 slca_index)
+{
+	unsigned int i;
+	const void *hdif;
+	const struct slca_entry *slca;
+	const struct spira_fru_id *fru_id;
+	const struct sppcrd_chip_info *cinfo;
+
+	slca = slca_get_entry(slca_index);
+	if (slca == NULL) {
+		prlog(PR_WARNING, "SENSORS: Invalid slca index\n");
+		return;
+	}
+
+	for_each_ntuple_idx(&spira.ntuples.proc_chip, hdif, i, SPPCRD_HDIF_SIG) {
+		fru_id = HDIF_get_idata(hdif, SPPCRD_IDATA_FRU_ID, NULL);
+		if (!fru_id)
+			return;
+
+		if (fru_id->rsrc_id != slca->rsrc_id)
+			continue;
+
+		cinfo = HDIF_get_idata(hdif, SPPCRD_IDATA_CHIP_INFO, NULL);
+		if (!CHECK_SPPTR(cinfo)) {
+			prlog(PR_ERR, "SENSORS: Bad ChipID data %d\n", i);
+			return;
+		}
+
+		dt_add_property_cells(sensor_node,
+				      "ibm,chip-id", be32_to_cpu(cinfo->xscom_id));
+		return;
+	}
+}
+
 static void add_ipmi_sensors(struct dt_node *bmc_node)
 {
 	int i;
@@ -325,6 +359,8 @@ static void add_ipmi_sensors(struct dt_node *bmc_node)
 		dt_add_property_cells(sensor_node, "reg", ipmi_sensors->data[i].id);
 		dt_add_property_cells(sensor_node, "ipmi-sensor-type",
 				      ipmi_sensors->data[i].type);
+
+		add_chip_id_to_sensors(sensor_node, ipmi_sensors->data[i].slca_index);
 	}
 }
 
