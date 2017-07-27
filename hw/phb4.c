@@ -54,7 +54,8 @@
  *          Fundamental Reset
  *     2) Receiver detect pulse are every 12ms
  *      - Hence minimum wait time 20 + 12 = 32ms
- *   o Hence we are conservative and poll here for 100ms (> 32ms)
+ *   o Unfortunatey, we've seen cards take 440ms
+ *   o Hence we are conservative and poll here for 1000ms (> 440ms)
  * - If no inband presence after 100ms -> Bail out (Slot is broken)
  *   o PHB_PCIE_DLP_TRAIN_CTL bit PHB_PCIE_DLP_INBAND_PRESENCE
  *
