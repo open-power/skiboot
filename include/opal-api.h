@@ -210,7 +210,9 @@
 #define OPAL_IMC_COUNTERS_STOP			151
 #define OPAL_GET_POWERCAP			152
 #define OPAL_SET_POWERCAP			153
-#define OPAL_LAST				153
+#define OPAL_GET_POWER_SHIFT_RATIO		154
+#define OPAL_SET_POWER_SHIFT_RATIO		155
+#define OPAL_LAST				155
 
 /* Device tree flags */
 

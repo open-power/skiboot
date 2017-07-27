@@ -29,6 +29,7 @@
 #include <timer.h>
 #include <i2c.h>
 #include <powercap.h>
+#include <psr.h>
 
 /* OCC Communication Area for PStates */
 
@@ -1215,6 +1216,7 @@ exit:
 }
 
 static void occ_add_powercap_sensors(struct dt_node *power_mgt);
+static void occ_add_psr_sensors(struct dt_node *power_mgt);
 
 static void occ_cmd_interface_init(void)
 {
@@ -1260,6 +1262,9 @@ static void occ_cmd_interface_init(void)
 
 	/* Add powercap sensors to DT */
 	occ_add_powercap_sensors(power_mgt);
+
+	/* Add power-shifting-ratio CPU-GPU sensors to DT */
+	occ_add_psr_sensors(power_mgt);
 }
 
 /* Powercap interface */
@@ -1363,6 +1368,96 @@ int occ_set_powercap(u32 handle, int token, u32 pcap)
 	pcap_cdata = pcap;
 	return opal_occ_command(&chips[i], token, &pcap_data);
 };
+
+/* Power-Shifting Ratio */
+enum psr_type {
+	PSR_TYPE_CPU_TO_GPU, /* 0% Cap GPU first, 100% Cap CPU first */
+};
+
+int occ_get_psr(u32 handle, u32 *ratio)
+{
+	struct occ_dynamic_data *ddata;
+	struct proc_chip *chip;
+	u8 i = psr_get_rid(handle);
+
+	if (psr_get_type(handle) != PSR_TYPE_CPU_TO_GPU)
+		return OPAL_UNSUPPORTED;
+
+	if (i > nr_occs)
+		return OPAL_UNSUPPORTED;
+
+	if (!(*chips[i].valid))
+		return OPAL_HARDWARE;
+
+	chip = get_chip(chips[i].chip_id);
+	ddata = get_occ_dynamic_data(chip);
+	*ratio = ddata->pwr_shifting_ratio;
+	return OPAL_SUCCESS;
+}
+
+static u8 psr_cdata;
+static struct opal_occ_cmd_data psr_data = {
+	.data		= &psr_cdata,
+	.cmd		= OCC_CMD_SET_POWER_SHIFTING_RATIO,
+};
+
+int occ_set_psr(u32 handle, int token, u32 ratio)
+{
+	struct occ_dynamic_data *ddata;
+	struct proc_chip *chip;
+	u8 i = psr_get_rid(handle);
+
+	if (psr_get_type(handle) != PSR_TYPE_CPU_TO_GPU)
+		return OPAL_UNSUPPORTED;
+
+	if (ratio > 100)
+		return OPAL_PARAMETER;
+
+	if (i > nr_occs)
+		return OPAL_UNSUPPORTED;
+
+	if (!(*chips[i].valid))
+		return OPAL_HARDWARE;
+
+	chip = get_chip(chips[i].chip_id);
+	ddata = get_occ_dynamic_data(chip);
+	if (ratio == ddata->pwr_shifting_ratio)
+		return OPAL_SUCCESS;
+
+	psr_cdata = ratio;
+	return opal_occ_command(&chips[i], token, &psr_data);
+}
+
+static void occ_add_psr_sensors(struct dt_node *power_mgt)
+{
+	struct dt_node *node;
+	int i;
+
+	node = dt_new(power_mgt, "psr");
+	if (!node) {
+		prerror("OCC: Failed to create power-shifting-ratio node\n");
+		return;
+	}
+
+	dt_add_property_string(node, "compatible",
+			       "ibm,opal-power-shift-ratio");
+	for (i = 0; i < nr_occs; i++) {
+		struct dt_node *cnode;
+		char name[20];
+		u32 handle = psr_make_handle(PSR_CLASS_OCC, i,
+					     PSR_TYPE_CPU_TO_GPU);
+
+		cnode = dt_new_addr(node, "cpu-to-gpu", handle);
+		if (!cnode) {
+			prerror("OCC: Failed to create power-shifting-ratio node\n");
+			return;
+		}
+
+		snprintf(name, 20, "cpu_to_gpu_%d", chips[i].chip_id);
+		dt_add_property_string(cnode, "label", name);
+		dt_add_property_cells(cnode, "handle", handle);
+	}
+}
 
 /* CPU-OCC PState init */
 /* Called after OCC init on P8 and P9 */
