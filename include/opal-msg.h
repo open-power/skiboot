@@ -25,7 +25,7 @@
  * ideally the value matches to the number of modules using async
  * infrastructure, but not necessarily the same..
  */
-#define OPAL_MAX_ASYNC_COMP	8
+#define OPAL_MAX_ASYNC_COMP	16
 
 int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
 		    void (*consumed)(void *data), size_t num_params,
