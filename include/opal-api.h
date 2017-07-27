@@ -208,7 +208,9 @@
 #define OPAL_IMC_COUNTERS_INIT			149
 #define OPAL_IMC_COUNTERS_START			150
 #define OPAL_IMC_COUNTERS_STOP			151
-#define OPAL_LAST				151
+#define OPAL_GET_POWERCAP			152
+#define OPAL_SET_POWERCAP			153
+#define OPAL_LAST				153
 
 /* Device tree flags */
 

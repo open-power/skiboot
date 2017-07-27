@@ -28,6 +28,7 @@
 #include <opal-msg.h>
 #include <timer.h>
 #include <i2c.h>
+#include <powercap.h>
 
 /* OCC Communication Area for PStates */
 
@@ -1060,8 +1061,8 @@ static int write_occ_cmd(struct cmd_interface *chip)
 	return OPAL_ASYNC_COMPLETION;
 }
 
-static int64_t __unused opal_occ_command(struct cmd_interface *chip, int token,
-					 struct opal_occ_cmd_data *cdata)
+static int64_t opal_occ_command(struct cmd_interface *chip, int token,
+				struct opal_occ_cmd_data *cdata)
 {
 	int rc;
 
@@ -1213,10 +1214,13 @@ exit:
 	unlock(&chip->queue_lock);
 }
 
+static void occ_add_powercap_sensors(struct dt_node *power_mgt);
+
 static void occ_cmd_interface_init(void)
 {
 	struct occ_dynamic_data *data;
 	struct occ_pstate_table *pdata;
+	struct dt_node *power_mgt;
 	struct proc_chip *chip;
 	int i = 0;
 
@@ -1247,7 +1251,118 @@ static void occ_cmd_interface_init(void)
 			   &chips[i]);
 		i++;
 	}
+
+	power_mgt = dt_find_by_path(dt_root, "/ibm,opal/power-mgt");
+	if (!power_mgt) {
+		prerror("OCC: dt node /ibm,opal/power-mgt not found\n");
+		return;
+	}
+
+	/* Add powercap sensors to DT */
+	occ_add_powercap_sensors(power_mgt);
 }
+
+/* Powercap interface */
+enum sensor_powercap_occ_attr {
+	POWERCAP_OCC_MIN,
+	POWERCAP_OCC_MAX,
+	POWERCAP_OCC_CUR,
+};
+
+static void occ_add_powercap_sensors(struct dt_node *power_mgt)
+{
+	struct dt_node *pcap, *node;
+	u32 handle;
+
+	pcap = dt_new(power_mgt, "powercap");
+	if (!pcap) {
+		prerror("OCC: Failed to create powercap node\n");
+		return;
+	}
+
+	dt_add_property_string(pcap, "compatible", "ibm,opal-powercap");
+	node = dt_new(pcap, "system-powercap");
+	if (!node) {
+		prerror("OCC: Failed to create system powercap node\n");
+		return;
+	}
+
+	handle = powercap_make_handle(POWERCAP_CLASS_OCC, POWERCAP_OCC_CUR);
+	dt_add_property_cells(node, "powercap-current", handle);
+
+	handle = powercap_make_handle(POWERCAP_CLASS_OCC, POWERCAP_OCC_MIN);
+	dt_add_property_cells(node, "powercap-min", handle);
+
+	handle = powercap_make_handle(POWERCAP_CLASS_OCC, POWERCAP_OCC_MAX);
+	dt_add_property_cells(node, "powercap-max", handle);
+}
+
+int occ_get_powercap(u32 handle, u32 *pcap)
+{
+	struct occ_pstate_table *pdata;
+	struct occ_dynamic_data *ddata;
+	struct proc_chip *chip;
+
+	chip = next_chip(NULL);
+	pdata = get_occ_pstate_table(chip);
+	ddata = get_occ_dynamic_data(chip);
+
+	if (!pdata->valid)
+		return OPAL_HARDWARE;
+
+	switch (powercap_get_attr(handle)) {
+	case POWERCAP_OCC_MIN:
+		*pcap = ddata->min_pwr_cap;
+		break;
+	case POWERCAP_OCC_MAX:
+		*pcap = ddata->max_pwr_cap;
+		break;
+	case POWERCAP_OCC_CUR:
+		*pcap = ddata->cur_pwr_cap;
+		break;
+	default:
+		*pcap = 0;
+		return OPAL_UNSUPPORTED;
+	}
+
+	return OPAL_SUCCESS;
+}
+
+static u16 pcap_cdata;
+static struct opal_occ_cmd_data pcap_data = {
+	.data		= (u8 *)&pcap_cdata,
+	.cmd		= OCC_CMD_SET_POWER_CAP,
+};
+
+int occ_set_powercap(u32 handle, int token, u32 pcap)
+{
+	struct occ_dynamic_data *ddata;
+	struct proc_chip *chip;
+	int i;
+
+	if (powercap_get_attr(handle) != POWERCAP_OCC_CUR)
+		return OPAL_PERMISSION;
+
+	for (i = 0; i < nr_occs; i++)
+		if (chips[i].occ_role == OCC_ROLE_MASTER)
+			break;
+
+	if (!(*chips[i].valid))
+		return OPAL_HARDWARE;
+
+	chip = get_chip(chips[i].chip_id);
+	ddata = get_occ_dynamic_data(chip);
+
+	if (pcap == ddata->cur_pwr_cap)
+		return OPAL_SUCCESS;
+
+	if (pcap && (pcap > ddata->max_pwr_cap ||
+	    pcap < ddata->min_pwr_cap))
+		return OPAL_PARAMETER;
+
+	pcap_cdata = pcap;
+	return opal_occ_command(&chips[i], token, &pcap_data);
+};
 
 /* CPU-OCC PState init */
 /* Called after OCC init on P8 and P9 */
