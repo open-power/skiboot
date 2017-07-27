@@ -546,6 +546,7 @@ static const char *get_sensor_loc_string(enum occ_sensor_location loc)
 void occ_sensors_init(void)
 {
 	struct proc_chip *chip;
+	struct dt_node *sg;
 	int occ_num = 0, i;
 
 	/* OCC inband sensors is only supported in P9 */
@@ -561,9 +562,17 @@ void occ_sensors_init(void)
 
 	occ_sensor_base = chip->occ_common_base + OCC_SENSOR_DATA_BLOCK_OFFSET;
 
+	sg = dt_new(opal_node, "sensor-groups");
+	if (!sg) {
+		prerror("OCC: Failed to create sensor groups node\n");
+		return;
+	}
+	dt_add_property_string(sg, "compatible", "ibm,opal-occ-sensor-group");
+
 	for_each_chip(chip) {
 		struct occ_sensor_data_header *hb;
 		struct occ_sensor_name *md;
+		u32 *phandles, phcount = 0;
 
 		hb = get_sensor_header_block(occ_num);
 		md = get_names_block(hb);
@@ -571,6 +580,9 @@ void occ_sensors_init(void)
 		/* Sanity check of the Sensor Data Header Block */
 		if (!occ_sensor_sanity(hb, chip->id))
 			continue;
+
+		phandles = malloc(hb->nr_sensors * sizeof(u32));
+		assert(phandles);
 
 		for (i = 0; i < hb->nr_sensors; i++) {
 			char name[30];
@@ -615,7 +627,10 @@ void occ_sensors_init(void)
 
 			if (md[i].location == OCC_SENSOR_LOC_CORE)
 				dt_add_property_cells(node, "ibm,pir", c->pir);
+			phandles[phcount++] = node->phandle;
 		}
 		occ_num++;
+		occ_add_sensor_groups(sg, phandles, phcount, chip->id);
+		free(phandles);
 	}
 }

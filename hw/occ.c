@@ -30,6 +30,7 @@
 #include <i2c.h>
 #include <powercap.h>
 #include <psr.h>
+#include <sensor.h>
 
 /* OCC Communication Area for PStates */
 
@@ -1456,6 +1457,82 @@ static void occ_add_psr_sensors(struct dt_node *power_mgt)
 		snprintf(name, 20, "cpu_to_gpu_%d", chips[i].chip_id);
 		dt_add_property_string(cnode, "label", name);
 		dt_add_property_cells(cnode, "handle", handle);
+	}
+}
+
+/* OCC clear sensor limits CSM/Profiler/Job-scheduler */
+
+enum occ_sensor_limit_group {
+	OCC_SENSOR_LIMIT_GROUP_CSM		= 0x10,
+	OCC_SENSOR_LIMIT_GROUP_PROFILER		= 0x20,
+	OCC_SENSOR_LIMIT_GROUP_JOB_SCHED	= 0x40,
+};
+
+static u32 sensor_limit;
+static struct opal_occ_cmd_data slimit_data = {
+	.data		= (u8 *)&sensor_limit,
+	.cmd		= OCC_CMD_CLEAR_SENSOR_DATA,
+};
+
+int occ_sensor_group_clear(u32 group_hndl, int token)
+{
+	u32 limit = sensor_get_rid(group_hndl);
+	u8 i = sensor_get_attr(group_hndl);
+
+	if (i > nr_occs)
+		return OPAL_UNSUPPORTED;
+
+	switch (limit) {
+	case OCC_SENSOR_LIMIT_GROUP_CSM:
+	case OCC_SENSOR_LIMIT_GROUP_PROFILER:
+	case OCC_SENSOR_LIMIT_GROUP_JOB_SCHED:
+		break;
+	default:
+		return OPAL_UNSUPPORTED;
+	}
+
+	if (!(*chips[i].valid))
+		return OPAL_HARDWARE;
+
+	sensor_limit = limit << 24;
+	return opal_occ_command(&chips[i], token, &slimit_data);
+}
+
+void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, int nr_phandles,
+			   int chipid)
+{
+	struct limit_group_info {
+		int limit;
+		const char *str;
+	} limits[] = {
+		{ OCC_SENSOR_LIMIT_GROUP_CSM, "csm" },
+		{ OCC_SENSOR_LIMIT_GROUP_PROFILER, "profiler" },
+		{ OCC_SENSOR_LIMIT_GROUP_JOB_SCHED, "js" },
+	};
+	int i, j;
+
+	for (i = 0; i < nr_occs; i++)
+		if (chips[i].chip_id == chipid)
+			break;
+
+	for (j = 0; j < ARRAY_SIZE(limits); j++) {
+		struct dt_node *node;
+		char name[20];
+		u32 handle;
+
+		snprintf(name, 20, "occ-%s", limits[j].str);
+		handle = sensor_make_handler(SENSOR_OCC, 0,
+					     limits[j].limit, i);
+		node = dt_new_addr(sg, name, handle);
+		if (!node) {
+			prerror("Failed to create sensor group nodes\n");
+			return;
+		}
+
+		dt_add_property_cells(node, "sensor-group-id", handle);
+		dt_add_property_string(node, "type", limits[j].str);
+		dt_add_property_cells(node, "ibm,chip-id", chipid);
+		dt_add_property(node, "sensors", phandles, nr_phandles);
 	}
 }
 
