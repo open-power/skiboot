@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright 2013-2014 IBM Corp.
+# Copyright 2013-2017 IBM Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,10 +48,15 @@ diff_with_result() {
 		fi
 	# Otherwise just diff result.out with stdout and result.err with stderr
 	else
-		if ! diff -u "${RESULT}.out" "$STDOUT_OUT" ; then
+		#Strip carriage returns, useful for pflash which does fancy
+		#'progress bars'. The main reason for this is is that email
+		#doesn't barf at really really long lines
+		if ! cat "$STDOUT_OUT" | tr '\r' '\n' | \
+			diff -u	"${RESULT}.out" - ; then
 			fail_test;
 		fi
-		if ! diff -u "${RESULT}.err" "$STDERR_OUT" ; then
+		if ! cat "$STDERR_OUT" | tr '\r' '\n' | \
+			diff -u "${RESULT}.err" - ; then
 			fail_test;
 		fi
 	fi

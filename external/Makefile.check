@@ -1,6 +1,6 @@
 # -*-Makefile-*-
 
-TOOL=gard ffspart
+TOOL=gard ffspart pflash
 CHECK_TOOL=$(patsubst %,check-%,$(TOOL))
 TOOL_COVERAGE=$(patsubst %,%-coverage,$(TOOL))
 TOOL_TEST_CLEAN=$(patsubst %,%-test-clean,$(TOOL))
