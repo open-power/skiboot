@@ -884,19 +884,6 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
-	/* If file specified but not size, get size from file
-	 */
-	if (write_file && !write_size) {
-		struct stat stbuf;
-
-		if (stat(write_file, &stbuf)) {
-			perror("Failed to get file size");
-			rc = 1;
-			goto out;
-		}
-		write_size = stbuf.st_size;
-	}
-
 	if (tune && !direct) {
 		fprintf(stderr, "It doesn't make sense to --tune without --direct\n");
 		rc = 1;
@@ -937,6 +924,17 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
+	/* If file specified but not size, get size from file */
+	if (write_file && !write_size) {
+		struct stat stbuf;
+
+		if (stat(write_file, &stbuf)) {
+			perror("Failed to get file size");
+			rc = 1;
+			goto out;
+		}
+		write_size = stbuf.st_size;
+	}
 
 	/* If read specified and no read_size, use flash size */
 	if (do_read && !read_size && !part_name)
