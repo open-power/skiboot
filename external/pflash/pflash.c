@@ -610,7 +610,6 @@ int main(int argc, char *argv[])
 {
 	const char *pname = argv[0];
 	uint32_t address = 0, read_size = 0, write_size = 0, detail_id = UINT_MAX;
-	uint32_t erase_start = 0, erase_size = 0;
 	bool erase = false, do_clear = false;
 	bool program = false, erase_all = false, info = false, do_read = false;
 	bool enable_4B = false, disable_4B = false;
@@ -981,33 +980,20 @@ int main(int argc, char *argv[])
 			goto out;
 		}
 
-
-		/* If erasing, check partition alignment */
-		if (erase && ((pstart | pmaxsz) & 0xfff)) {
-			fprintf(stderr,"Partition not aligned properly\n");
-			goto out;
-		}
-
 		/* Set address */
 		address = pstart;
-	}
-
-	/* Align erase boundaries */
-	if (erase && !erase_all) {
-		uint32_t mask = 0xfff;
-		uint32_t erase_end;
-
-		/* Dummy size for erase, will be adjusted later */
-		if (!write_size)
-			write_size = 1;
-		erase_start = address & ~mask;
-		erase_end = ((address + write_size) + mask) & ~mask;
-		erase_size = erase_end - erase_start;
-
-		if (erase_start != address || erase_size != write_size)
-			fprintf(stderr, "WARNING: Erase region adjusted"
-				" to 0x%08x..0x%08x\n",
-				erase_start, erase_end);
+	} else if (erase) {
+		if ((address | write_size) & (fl_erase_granule - 1)) {
+			if (must_confirm) {
+				printf("ERROR: Erase at 0x%08x for 0x%08x isn't erase block aligned\n",
+						address, write_size);
+				printf("Use --force to force\n");
+				goto out;
+			} else {
+				printf("WARNING: Erase at 0x%08x for 0x%08x isn't erase block aligned\n",
+						address, write_size);
+			}
+		}
 	}
 
 	/* Process commands */
@@ -1041,7 +1027,7 @@ int main(int argc, char *argv[])
 	if (erase_all)
 		erase_chip();
 	else if (erase)
-		erase_range(erase_start, erase_size, program);
+		erase_range(address, write_size, program);
 	if (program)
 		program_file(write_file, address, write_size);
 	if (do_clear)
