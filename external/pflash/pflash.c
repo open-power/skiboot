@@ -132,7 +132,7 @@ static void print_ffs_info(uint32_t toc_offset)
 			goto out;
 
 		end = start + size;
-		printf("ID=%02d %15s %08x..%08x (actual=%08x) %s\n",
+		printf("ID=%02d %15s 0x%08x..0x%08x (actual=0x%08x) %s\n",
 				i, name, start, end, act, flags);
 
 		if (strcmp(name, "OTHER_SIDE") == 0)
@@ -618,7 +618,7 @@ int main(int argc, char *argv[])
 	bool no_action = false, tune = false;
 	char *write_file = NULL, *read_file = NULL, *part_name = NULL;
 	bool ffs_toc_seen = false, direct = false, print_detail = false;
-	int rc;
+	int rc = 0;
 
 	while(1) {
 		struct option long_opts[] = {
@@ -654,11 +654,21 @@ int main(int argc, char *argv[])
 		if (c == -1)
 			break;
 		switch(c) {
+			char *endptr;
+
 		case 'a':
-			address = strtoul(optarg, NULL, 0);
+			address = strtoul(optarg, &endptr, 0);
+			if (*endptr != '\0') {
+				rc = 1;
+				no_action = true;
+			}
 			break;
 		case 's':
-			read_size = write_size = strtoul(optarg, NULL, 0);
+			read_size = write_size = strtoul(optarg, &endptr, 0);
+			if (*endptr != '\0') {
+				rc = 1;
+				no_action = true;
+			}
 			break;
 		case 'P':
 			part_name = strdup(optarg);
@@ -719,15 +729,24 @@ int main(int argc, char *argv[])
 			break;
 		case 'T':
 			ffs_toc_seen = true;
-			ffs_toc = strtoul(optarg, NULL, 0);
+			ffs_toc = strtoul(optarg, &endptr, 0);
+			if (*endptr != '\0') {
+				rc = 1;
+				no_action = true;
+			}
 			break;
 		case 'c':
 			do_clear = true;
 			break;
 		case 'm':
 			print_detail = true;
-			if (optarg)
-				detail_id = strtoul(optarg, NULL, 0);
+			if (optarg) {
+				detail_id = strtoul(optarg, &endptr, 0);
+				if (*endptr != '\0') {
+					rc = 1;
+					no_action = true;
+				}
+			}
 			break;
 		case ':':
 			fprintf(stderr, "Unrecognised option \"%s\" to '%c'\n", optarg, optopt);
@@ -770,7 +789,7 @@ int main(int argc, char *argv[])
 		print_help(pname);
 
 	if (no_action)
-		return 0;
+		return rc;
 
 	/* --enable-4B and --disable-4B are mutually exclusive */
 	if (enable_4B && disable_4B) {
