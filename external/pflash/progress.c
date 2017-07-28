@@ -1,26 +1,29 @@
+#include <inttypes.h>
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 #include <time.h>
+
 #include "progress.h"
 
-static unsigned long progress_max;
-static unsigned int progress_pcent;
-static unsigned long progress_n_upd;
-static unsigned int progress_prevsec;
+static uint64_t progress_max;
+static uint64_t progress_pcent;
+static uint64_t progress_n_upd;
+static time_t progress_prevsec;
 static struct timespec progress_start;
 
 #define PROGRESS_CHARS	50
 
-void progress_init(unsigned long count)
+void progress_init(uint64_t count)
 {
 	unsigned int i;
 
 	progress_max = count;
 	progress_pcent = 0;
 	progress_n_upd = ULONG_MAX;
-	progress_prevsec = UINT_MAX;
+	progress_prevsec = ULONG_MAX;
 
 	printf("\r[");
 	for (i = 0; i < PROGRESS_CHARS; i++)
@@ -29,10 +32,12 @@ void progress_init(unsigned long count)
 	fflush(stdout);
 	clock_gettime(CLOCK_MONOTONIC, &progress_start);}
 
-void progress_tick(unsigned long cur)
+void progress_tick(uint64_t cur)
 {
-	unsigned int pcent, i, pos, sec;
+	unsigned int i, pos;
 	struct timespec now;
+	uint64_t pcent;
+	double sec;
 
 	pcent = (cur * 100) / progress_max;
 	if (progress_pcent == pcent && cur < progress_n_upd &&
@@ -47,12 +52,12 @@ void progress_tick(unsigned long cur)
 		printf("=");
 	for (; i < PROGRESS_CHARS; i++)
 		printf(" ");
-	printf("] %u%%", pcent);
+	printf("] %" PRIu64 "%%", pcent);
 
-	sec = now.tv_sec - progress_start.tv_sec;
+	sec = difftime(now.tv_sec, progress_start.tv_sec);
 	if (sec >= 5 && pcent > 0) {
-		unsigned int persec = cur / sec;
-		unsigned int rem_sec;
+		uint64_t persec = cur / sec;
+		uint64_t rem_sec;
 
 		if (!persec)
 			persec = 1;
@@ -62,9 +67,9 @@ void progress_tick(unsigned long cur)
 			rem_sec = progress_prevsec;
 		progress_prevsec = rem_sec;
 		if (rem_sec < 60)
-			printf(" ETA:%us     ", rem_sec);
+			printf(" ETA:%" PRIu64 "s     ", rem_sec);
 		else {
-			printf(" ETA:%u:%02d:%02u ",
+			printf(" ETA:%" PRIu64 ":%02" PRIu64 ":%02" PRIu64 " ",
 				rem_sec / 3600,
 				(rem_sec / 60) % 60,
 				rem_sec % 60);

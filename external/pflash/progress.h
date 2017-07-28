@@ -1,8 +1,10 @@
 #ifndef __PROGRESS_H
 #define __PROGRESS_H
 
-void progress_init(unsigned long count);
-void progress_tick(unsigned long cur);
+#include <inttypes.h>
+
+void progress_init(uint64_t count);
+void progress_tick(uint64_t cur);
 void progress_end(void);
 
 #endif /* __PROGRESS_H */
