@@ -155,8 +155,10 @@ static void print_flash_info(uint32_t toc)
 	printf("Flash info:\n");
 	printf("-----------\n");
 	printf("Name          = %s\n", fl_name);
-	printf("Total size    = %"PRIu64"MB \n", fl_total_size >> 20);
-	printf("Erase granule = %dKB \n", fl_erase_granule >> 10);
+	printf("Total size    = %" PRIu64 "MB\t Flags E:ECC, P:PRESERVED, R:READONLY\n",
+			fl_total_size >> 20);
+	printf("Erase granule = %2d%-13sB:BACKUP, F:REPROVISION\n",
+			fl_erase_granule >> 10, "KB");
 
 	if (bmc_flash)
 		return;
