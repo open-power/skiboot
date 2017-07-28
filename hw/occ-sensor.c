@@ -322,7 +322,7 @@ int occ_sensor_read(u32 handle, u32 *data)
 	struct occ_sensor_data_header *hb;
 	struct occ_sensor_name *md;
 	struct occ_sensor_record *sping, *spong;
-	struct occ_sensor_record *sensor;
+	struct occ_sensor_record *sensor = NULL;
 	u8 *ping, *pong;
 	u16 id = sensor_get_rid(handle);
 	u8 occ_num = sensor_get_frc(handle);
