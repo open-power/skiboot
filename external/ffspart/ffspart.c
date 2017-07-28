@@ -174,17 +174,11 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
-	/*
-	 * TODO: Rethink, is ffspart providing a variable TOC size useful?
-	 * Use 1 block for the size of the partition table...
-	 */
-	rc = ffs_hdr_new(block_size, block_size, block_count / sides, &new_hdr);
+	rc = ffs_hdr_new(block_size, block_count / sides, &new_hdr);
 	if (rc) {
 		if (rc == FFS_ERR_BAD_SIZE) {
 			/* Well this check is a tad redudant now */
-			fprintf(stderr, "Bad size parametres passed to libffs: "
-					"size must be a multiple of block_size\n"
-					"size (%u), block_size (%u) \n", block_size, block_size);
+			fprintf(stderr, "Bad parametres passed to libffs\n");
 		} else {
 			fprintf(stderr, "Error %d initialising new TOC\n", rc);
 		}

@@ -490,7 +490,7 @@ static int __ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry)
 		count++;
 	}
 
-	if (count * sizeof(struct __ffs_entry) +
+	if ((count + 1) * sizeof(struct __ffs_entry) +
 			sizeof(struct __ffs_hdr) > smallest_base) {
 		fprintf(stderr, "Adding partition '%s' would cause partition '%s' at "
 				"0x%08x to overlap with the header\n", entry->name, smallest_name,
@@ -569,15 +569,19 @@ int ffs_hdr_create_backup(struct ffs_hdr *hdr)
 {
 	struct ffs_entry *ent;
 	struct ffs_entry *backup;
+	uint32_t hdr_size, flash_end;
 	int rc = 0;
+
 	ent = list_tail(&hdr->entries, struct ffs_entry, list);
 	if (!ent) {
 		return FLASH_ERR_PARM_ERROR;
 	}
 
-	rc = ffs_entry_new("BACKUP_PART",
-		hdr->base + (hdr->block_size * (hdr->block_count - 1 )) - hdr->size,
-		hdr->size, &backup);
+	hdr_size = ffs_hdr_raw_size(ffs_num_entries(hdr) + 1);
+	/* Whole number of blocks BACKUP_PART needs to be */
+	hdr_size = ((hdr_size + hdr->block_size) / hdr->block_size) * hdr->block_size;
+	flash_end = hdr->base + (hdr->block_size * hdr->block_count);
+	rc = ffs_entry_new("BACKUP_PART", flash_end - hdr_size, hdr_size, &backup);
 	if (rc)
 		return rc;
 
@@ -604,7 +608,7 @@ int ffs_hdr_add_side(struct ffs_hdr *hdr)
 	if (hdr->side)
 		return FLASH_ERR_PARM_ERROR;
 
-	rc = ffs_hdr_new(hdr->size, hdr->block_size, hdr->block_count, &hdr->side);
+	rc = ffs_hdr_new(hdr->block_size, hdr->block_count, &hdr->side);
 	if (rc)
 		return rc;
 
@@ -649,9 +653,15 @@ int ffs_hdr_finalise(struct blocklevel_device *bl, struct ffs_hdr *hdr)
 	 */
 	memset(real_hdr, 0, sizeof(*real_hdr));
 
+	hdr->part->size = ffs_hdr_raw_size(num_entries) + hdr->block_size;
+	/*
+	 * So actual is in bytes. ffs_entry_to_flash() don't do the
+	 * block_size division that we're relying on
+	 */
+	hdr->part->actual = (hdr->part->size / hdr->block_size) * hdr->block_size;
 	real_hdr->magic = cpu_to_be32(FFS_MAGIC);
 	real_hdr->version = cpu_to_be32(hdr->version);
-	real_hdr->size = cpu_to_be32(hdr->size / hdr->block_size);
+	real_hdr->size = cpu_to_be32(hdr->part->size / hdr->block_size);
 	real_hdr->entry_size = cpu_to_be32(sizeof(struct __ffs_entry));
 	real_hdr->entry_count = cpu_to_be32(num_entries);
 	real_hdr->block_size = cpu_to_be32(hdr->block_size);
@@ -740,30 +750,28 @@ int ffs_entry_new(const char *name, uint32_t base, uint32_t size, struct ffs_ent
 	return 0;
 }
 
-int ffs_hdr_new(uint32_t size, uint32_t block_size, uint32_t block_count, struct ffs_hdr **r)
+int ffs_hdr_new(uint32_t block_size, uint32_t block_count, struct ffs_hdr **r)
 {
 	struct ffs_hdr *ret;
 	struct ffs_entry *part_table;
 	int rc;
-
-	if (size % block_size || size > block_size * block_count)
-		return FFS_ERR_BAD_SIZE;
 
 	ret = calloc(1, sizeof(*ret));
 	if (!ret)
 		return FLASH_ERR_MALLOC_FAILED;
 
 	ret->version = FFS_VERSION_1;
-	ret->size = size;
 	ret->block_size = block_size;
 	ret->block_count = block_count;
 	list_head_init(&ret->entries);
 
-	rc = ffs_entry_new("part", 0, size, &part_table);
+	/* Don't know how big it will be, ffs_hdr_finalise() will fix */
+	rc = ffs_entry_new("part", 0, 0, &part_table);
 	if (rc) {
 		free(ret);
 		return rc;
 	}
+	ret->part = part_table;
 
 	part_table->pid = FFS_PID_TOPLEVEL;
 	part_table->type = FFS_TYPE_PARTITION;

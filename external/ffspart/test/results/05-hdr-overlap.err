@@ -1,2 +1,2 @@
-Adding partition 'FOUR' would cause partition 'ONE' at 0x00000200 to overlap with the header
-Couldn't add entry 'FOUR' 0x00000500 for 0x00000100
+Adding partition 'THREE' would cause partition 'ONE' at 0x00000200 to overlap with the header
+Couldn't add entry 'THREE' 0x00000400 for 0x00000100
