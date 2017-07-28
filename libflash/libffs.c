@@ -321,8 +321,11 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 
 		list_add_tail(&f->hdr.entries, &ent->list);
 		rc = ffs_entry_to_cpu(&f->hdr, ent, &f->cache->entries[i]);
-		if (rc)
+		if (rc) {
+			FL_DBG("FFS: Failed checksum for partition %s\n",
+					f->cache->entries[i].name);
 			goto out;
+		}
 
 		if (mark_ecc && has_ecc(ent)) {
 			rc = blocklevel_ecc_protect(bl, ent->base, ent->size);

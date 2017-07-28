@@ -550,6 +550,8 @@ static void print_help(const char *pname)
 	printf("\t-T, --toc\n");
 	printf("\t\tlibffs TOC on which to operate, defaults to 0.\n");
 	printf("\t\tleading 0x is required for interpretation of a hex value\n\n");
+	printf("\t-g\n");
+	printf("\t\tEnable verbose libflash debugging\n\n");
 	printf(" Commands:\n");
 	printf("\t-4, --enable-4B\n");
 	printf("\t\tSwitch the flash and controller to 4-bytes address\n");

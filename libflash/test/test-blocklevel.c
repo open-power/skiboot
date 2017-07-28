@@ -27,6 +27,8 @@
 
 #define ERR(fmt...) fprintf(stderr, fmt)
 
+bool libflash_debug;
+
 static int bl_test_bad_read(struct blocklevel_device *bl __unused, uint64_t pos __unused,
 		void *buf __unused, uint64_t len __unused)
 {
