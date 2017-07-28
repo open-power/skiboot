@@ -592,6 +592,7 @@ static void print_help(const char *pname)
 	printf("\t\ttake place first.\n\n");
 	printf("\t-t, --tune\n");
 	printf("\t\tJust tune the flash controller & access size\n");
+	printf("\t\tMust be used in conjuction with --direct\n");
 	printf("\t\t(Implicit for all other operations)\n\n");
 	printf("\t-c --clear\n");
 	printf("\t\tUsed to ECC clear a partition of the flash\n");
@@ -896,7 +897,17 @@ int main(int argc, char *argv[])
 		write_size = stbuf.st_size;
 	}
 
+	if (tune && !direct) {
+		fprintf(stderr, "It doesn't make sense to --tune without --direct\n");
+		rc = 1;
+		goto out;
+	}
+
 	if (direct) {
+		/* If -t is passed, then print a nice message */
+		if (tune)
+			printf("Flash and controller tuned\n");
+
 		if (arch_flash_access(NULL, bmc_flash ? BMC_DIRECT : PNOR_DIRECT) == ACCESS_INVAL) {
 			fprintf(stderr, "Can't access %s flash directly on this architecture\n",
 			        bmc_flash ? "BMC" : "PNOR");
@@ -926,9 +937,6 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
-	/* If -t is passed, then print a nice message */
-	if (tune)
-		printf("Flash and controller tuned\n");
 
 	/* If read specified and no read_size, use flash size */
 	if (do_read && !read_size && !part_name)
