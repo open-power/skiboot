@@ -38,8 +38,7 @@ HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-std=gnu11)
 HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-m64)
 HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-Wjump-misses-init) \
 	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=const) \
-	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=noreturn) \
-	  $(call try-cflag,$(HOSTCC),-Wstack-usage=1024)
+	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=noreturn)
 HOSTCFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
 
 HOSTGCOVCFLAGS = -fprofile-arcs -ftest-coverage -lgcov -O0 -g -pg
@@ -180,10 +179,10 @@ include $(SRC)/libstb/Makefile.inc
 
 # hack for travis-ci and coverity
 gard:
-	(cd external/gard; CFLAGS="$(HOSTCFLAGS) $(HOSTGCOVCFLAGS)" make)
+	(cd external/gard; CROSS_COMPILE="" CFLAGS="$(HOSTCFLAGS) $(HOSTGCOVCFLAGS)" make)
 
 pflash:
-	(cd external/pflash; CFLAGS="$(HOSTCFLAGS) $(HOSTGCOVCFLAGS)" make)
+	(cd external/pflash; CROSS_COMPILE="" CFLAGS="$(HOSTCFLAGS) $(HOSTGCOVCFLAGS)" make)
 
 pflash-coverity:
 	(cd external/pflash; ./build-all-arch.sh)

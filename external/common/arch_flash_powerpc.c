@@ -208,14 +208,19 @@ static struct blocklevel_device *arch_init_blocklevel(const char *file, bool kee
 }
 
 /* Skiboot will worry about this for us */
-int arch_flash_set_wrprotect(struct blocklevel_device *bl, int set)
+int __attribute__((const)) arch_flash_set_wrprotect(struct blocklevel_device *bl, int set)
 {
+	(void)bl;
+	(void)set;
+
 	return 0;
 }
 
-enum flash_access arch_flash_access(struct blocklevel_device *bl,
+enum flash_access __attribute__((const)) arch_flash_access(struct blocklevel_device *bl,
 		enum flash_access access)
 {
+	(void)bl;
+
 	if (access != PNOR_MTD)
 		return ACCESS_INVAL;
 
@@ -243,5 +248,7 @@ int arch_flash_init(struct blocklevel_device **r_bl, const char *file, bool keep
 
 void arch_flash_close(struct blocklevel_device *bl, const char *file)
 {
+	(void)file;
+
 	file_exit_close(bl);
 }
