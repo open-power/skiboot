@@ -41,13 +41,21 @@
 
 #define __aligned(x)			__attribute__((aligned(x)))
 
+struct flash_details {
+	struct blocklevel_device *bl;
+	int need_relock;
+	const char *name;
+	uint64_t toc;
+	uint64_t total_size;
+	uint32_t erase_granule;
+};
+
 /* Full pflash version number (possibly includes gitid). */
 extern const char version[];
 
 const char *flashfilename = NULL;
 static bool must_confirm = true;
 static bool dummy_run;
-static int need_relock;
 static bool bmc_flash;
 static uint32_t ffs_toc = 0;
 static int flash_side = 0;
@@ -55,11 +63,7 @@ static int flash_side = 0;
 #define FILE_BUF_SIZE	0x10000
 static uint8_t file_buf[FILE_BUF_SIZE] __aligned(0x1000);
 
-static struct blocklevel_device *bl;
 static struct ffs_handle	*ffsh;
-static uint64_t			fl_total_size;
-static uint32_t			fl_erase_granule;
-static const char		*fl_name;
 static int32_t			ffs_index = -1;
 
 static void check_confirm(void)
@@ -88,7 +92,7 @@ static void check_confirm(void)
 	must_confirm = false;
 }
 
-static void print_ffs_info(uint32_t toc_offset)
+static void print_ffs_info(struct flash_details *flash, uint32_t toc_offset)
 {
 	struct ffs_handle *ffs_handle;
 	uint32_t other_side_offset = 0;
@@ -100,7 +104,8 @@ static void print_ffs_info(uint32_t toc_offset)
 	printf("TOC@0x%08x Partitions:\n", toc_offset);
 	printf("-----------\n");
 
-	rc = ffs_init(toc_offset, fl_total_size, bl, &ffs_handle, 0);
+	rc = ffs_init(toc_offset, flash->total_size, flash->bl,
+			&ffs_handle, 0);
 	if (rc) {
 		fprintf(stderr, "Error %d opening ffs !\n", rc);
 		return;
@@ -146,39 +151,39 @@ out:
 	ffs_close(ffs_handle);
 
 	if (other_side_offset)
-		print_ffs_info(other_side_offset);
+		print_ffs_info(flash, other_side_offset);
 }
 
 
-static void print_flash_info(uint32_t toc)
+static void print_flash_info(struct flash_details *flash, uint32_t toc)
 {
 	printf("Flash info:\n");
 	printf("-----------\n");
-	printf("Name          = %s\n", fl_name);
+	printf("Name          = %s\n", flash->name);
 	printf("Total size    = %" PRIu64 "MB\t Flags E:ECC, P:PRESERVED, R:READONLY\n",
-			fl_total_size >> 20);
+			flash->total_size >> 20);
 	printf("Erase granule = %2d%-13sB:BACKUP, F:REPROVISION\n",
-			fl_erase_granule >> 10, "KB");
+			flash->erase_granule >> 10, "KB");
 
 	if (bmc_flash)
 		return;
 
-	print_ffs_info(toc);
+	print_ffs_info(flash, toc);
 }
 
-static int open_partition(const char *name)
+static int open_partition(struct flash_details *flash, const char *name)
 {
 	uint32_t index;
 	int rc;
 
 	/* Open libffs if needed */
 	if (!ffsh) {
-		rc = ffs_init(ffs_toc, fl_total_size, bl, &ffsh, 0);
+		rc = ffs_init(flash->toc, flash->total_size, flash->bl, &ffsh, 0);
 		if (rc) {
 			fprintf(stderr, "Error %d opening ffs !\n", rc);
-			if (ffs_toc)
-				fprintf(stderr, "You specified 0x%08x as the libffs TOC"
-						" looks like it doesn't exist\n", ffs_toc);
+			if (flash->toc)
+				fprintf(stderr, "You specified 0x%08lx as the libffs TOC"
+						" looks like it doesn't exist\n", flash->toc);
 			return rc;
 		}
 	}
@@ -199,14 +204,14 @@ static int open_partition(const char *name)
 	return 0;
 }
 
-static void lookup_partition(const char *name)
+static void lookup_partition(struct flash_details *flash, const char *name)
 {
 	int rc;
 
 	if (flash_side == 1) {
 		uint32_t other_side_offset;
 
-		rc = open_partition("OTHER_SIDE");
+		rc = open_partition(flash, "OTHER_SIDE");
 		if (rc == FFS_ERR_PART_NOT_FOUND)
 			fprintf(stderr, "side 1 was specified but there doesn't appear"
 					" to be a second side to this flash\n");
@@ -224,12 +229,12 @@ static void lookup_partition(const char *name)
 		ffs_toc = other_side_offset;
 	}
 
-	rc = open_partition(name);
+	rc = open_partition(flash, name);
 	if (rc)
 		exit(1);
 }
 
-static void erase_chip(void)
+static void erase_chip(struct blocklevel_device *bl)
 {
 	int rc;
 
@@ -253,7 +258,8 @@ static void erase_chip(void)
 	printf("done !\n");
 }
 
-static void erase_range(uint32_t start, uint32_t size, bool will_program)
+static void erase_range(struct blocklevel_device *bl,
+		uint32_t start, uint32_t size, bool will_program)
 {
 	int rc;
 
@@ -280,15 +286,14 @@ static void erase_range(uint32_t start, uint32_t size, bool will_program)
 		ffs_update_act_size(ffsh, ffs_index, 0);
 	}
 }
-
-static void set_ecc(uint32_t start, uint32_t size)
+static void set_ecc(struct blocklevel_device *bl, uint32_t start, uint32_t size)
 {
 	uint32_t i = start + 8;
 	uint8_t ecc = 0;
 
 	printf("About to erase and set ECC bits in region 0x%08x to 0x%08x\n", start, start + size);
 	check_confirm();
-	erase_range(start, size, true);
+	erase_range(bl, start, size, true);
 
 	printf("Programming ECC bits...\n");
 	progress_init(size);
@@ -300,7 +305,8 @@ static void set_ecc(uint32_t start, uint32_t size)
 	progress_end();
 }
 
-static void program_file(const char *file, uint32_t start, uint32_t size)
+static void program_file(struct blocklevel_device *bl,
+		const char *file, uint32_t start, uint32_t size)
 {
 	int fd;
 	uint32_t actual_size = 0;
@@ -360,7 +366,8 @@ static void program_file(const char *file, uint32_t start, uint32_t size)
 	}
 }
 
-static void do_read_file(const char *file, uint32_t start, uint32_t size)
+static void do_read_file(struct blocklevel_device *bl, const char *file,
+		uint32_t start, uint32_t size)
 {
 	int fd;
 	uint32_t done = 0;
@@ -399,7 +406,7 @@ static void do_read_file(const char *file, uint32_t start, uint32_t size)
 	close(fd);
 }
 
-static void enable_4B_addresses(void)
+static void enable_4B_addresses(struct blocklevel_device *bl)
 {
 	int rc;
 
@@ -416,7 +423,7 @@ static void enable_4B_addresses(void)
 	}
 }
 
-static void disable_4B_addresses(void)
+static void disable_4B_addresses(struct blocklevel_device *bl)
 {
 	int rc;
 
@@ -433,7 +440,8 @@ static void disable_4B_addresses(void)
 	}
 }
 
-static void print_partition_detail(uint32_t toc_offset, uint32_t part_id, char *name)
+static void print_partition_detail(struct flash_details *flash,
+		uint32_t toc_offset, uint32_t part_id, char *name)
 {
 	uint32_t start, size, act, end;
 	struct ffs_handle *ffs_handle;
@@ -441,7 +449,7 @@ static void print_partition_detail(uint32_t toc_offset, uint32_t part_id, char *
 	struct ffs_entry *ent;
 	int rc, l;
 
-	rc = ffs_init(toc_offset, fl_total_size, bl, &ffs_handle, 0);
+	rc = ffs_init(toc_offset, flash->total_size, flash->bl, &ffs_handle, 0);
 	if (rc) {
 		fprintf(stderr, "Error %d opening ffs !\n", rc);
 		return;
@@ -599,15 +607,9 @@ static void print_help(const char *pname)
 	printf("\t\tThis message.\n\n");
 }
 
-static void exiting(void)
-{
-	if (need_relock)
-		arch_flash_set_wrprotect(bl, 1);
-	arch_flash_close(bl, flashfilename);
-}
-
 int main(int argc, char *argv[])
 {
+	struct flash_details flash = { 0 };
 	const char *pname = argv[0];
 	uint32_t address = 0, read_size = 0, write_size = 0, detail_id = UINT_MAX;
 	bool erase = false, do_clear = false;
@@ -910,16 +912,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (arch_flash_init(&bl, flashfilename, true)) {
+	if (arch_flash_init(&flash.bl, flashfilename, true)) {
 		fprintf(stderr, "Couldn't initialise architecture flash structures\n");
 		rc = 1;
 		goto out;
 	}
 
-	atexit(exiting);
-
-	rc = blocklevel_get_info(bl, &fl_name,
-			    &fl_total_size, &fl_erase_granule);
+	rc = blocklevel_get_info(flash.bl, &flash.name,
+			    &flash.total_size, &flash.erase_granule);
 	if (rc) {
 		fprintf(stderr, "Error %d getting flash info\n", rc);
 		rc = 1;
@@ -932,11 +932,11 @@ int main(int argc, char *argv[])
 
 	/* If read specified and no read_size, use flash size */
 	if (do_read && !read_size && !part_name)
-		read_size = fl_total_size;
+		read_size = flash.total_size;
 
 	/* We have a partition specified, grab the details */
 	if (part_name)
-		lookup_partition(part_name);
+		lookup_partition(&flash, part_name);
 
 	/* We have a partition, adjust read/write size if needed */
 	if (ffsh && ffs_index >= 0) {
@@ -983,7 +983,7 @@ int main(int argc, char *argv[])
 		/* Set address */
 		address = pstart;
 	} else if (erase) {
-		if ((address | write_size) & (fl_erase_granule - 1)) {
+		if ((address | write_size) & (flash.erase_granule - 1)) {
 			if (must_confirm) {
 				printf("ERROR: Erase at 0x%08x for 0x%08x isn't erase block aligned\n",
 						address, write_size);
@@ -998,41 +998,45 @@ int main(int argc, char *argv[])
 
 	/* Process commands */
 	if (enable_4B)
-		enable_4B_addresses();
+		enable_4B_addresses(flash.bl);
 	if (disable_4B)
-		disable_4B_addresses();
+		disable_4B_addresses(flash.bl);
 	if (info) {
 		/*
 		 * Don't pass through modfied TOC value if the modification was done
 		 * because of --size, but still respect if it came from --toc (we
 		 * assume the user knows what they're doing in that case)
 		 */
-		print_flash_info(flash_side ? 0 : ffs_toc);
+		print_flash_info(&flash, flash_side ? 0 : ffs_toc);
 	}
 
 	if (print_detail)
-		print_partition_detail(flash_side ? 0 : ffs_toc, detail_id, part_name);
+		print_partition_detail(&flash, flash_side ? 0 : ffs_toc, detail_id, part_name);
 
 	/* Unlock flash (PNOR only) */
 	if ((erase || program || do_clear) && !bmc_flash && !flashfilename) {
-		need_relock = arch_flash_set_wrprotect(bl, false);
-		if (need_relock == -1) {
+		flash.need_relock = arch_flash_set_wrprotect(flash.bl, false);
+		if (flash.need_relock == -1) {
 			fprintf(stderr, "Architecture doesn't support write protection on flash\n");
-			need_relock = 0;
+			flash.need_relock = 0;
 			goto out;
 		}
 	}
 	if (do_read)
-		do_read_file(read_file, address, read_size);
+		do_read_file(flash.bl, read_file, address, read_size);
 	if (erase_all)
-		erase_chip();
+		erase_chip(flash.bl);
 	else if (erase)
-		erase_range(address, write_size, program);
+		erase_range(flash.bl, address, write_size, program);
 	if (program)
-		program_file(write_file, address, write_size);
+		program_file(flash.bl, write_file, address, write_size);
 	if (do_clear)
-		set_ecc(address, write_size);
+		set_ecc(flash.bl, address, write_size);
 	rc = 0;
+
+	if (flash.need_relock)
+		arch_flash_set_wrprotect(flash.bl, 1);
+	arch_flash_close(flash.bl, flashfilename);
 out:
 	free(part_name);
 	free(read_file);
