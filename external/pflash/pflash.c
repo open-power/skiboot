@@ -671,6 +671,7 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 'P':
+			free(part_name);
 			part_name = strdup(optarg);
 			break;
 		case '4':
@@ -681,6 +682,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'r':
 			do_read = true;
+			free(read_file);
 			read_file = strdup(optarg);
 			break;
 		case 'E':
@@ -694,6 +696,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'p':
 			program = true;
+			free(write_file);
 			write_file = strdup(optarg);
 			break;
 		case 'f':
@@ -789,25 +792,28 @@ int main(int argc, char *argv[])
 		print_help(pname);
 
 	if (no_action)
-		return rc;
+		goto out;
 
 	/* --enable-4B and --disable-4B are mutually exclusive */
 	if (enable_4B && disable_4B) {
 		fprintf(stderr, "--enable-4B and --disable-4B are mutually"
 			" exclusive !\n");
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	/* 4B not supported on BMC flash */
 	if (enable_4B && bmc_flash) {
 		fprintf(stderr, "--enable-4B not supported on BMC flash !\n");
-		exit(1);
+		rc = 1;
+		goto out;;
 	}
 
 	/* partitions not supported on BMC flash */
 	if (part_name && bmc_flash) {
 		fprintf(stderr, "--partition not supported on BMC flash !\n");
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	if (print_detail && ((detail_id == UINT_MAX && !part_name)
@@ -820,51 +826,60 @@ int main(int argc, char *argv[])
 	if (part_name && erase_all) {
 		fprintf(stderr, "--partition and --erase-all are mutually"
 			" exclusive !\n");
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	/* Read command should always come with a file */
 	if (do_read && !read_file) {
 		fprintf(stderr, "Read with no file specified !\n");
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	/* Program command should always come with a file */
 	if (program && !write_file) {
 		fprintf(stderr, "Program with no file specified !\n");
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	/* If both partition and address specified, error out */
 	if (address && part_name) {
 		fprintf(stderr, "Specify partition or address, not both !\n");
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	if (do_clear && !part_name) {
 		fprintf(stderr, "--clear only supported on a partition name\n");
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	/* Explicitly only support two sides */
 	if (flash_side != 0 && flash_side != 1) {
 		fprintf(stderr, "Unexpected value for --side '%d'\n", flash_side);
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	if (ffs_toc_seen && flash_side) {
 		fprintf(stderr, "--toc and --side are exclusive");
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	if (flashfilename && bmc_flash) {
 		fprintf(stderr, "Filename or bmc flash but not both\n");
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	if (flashfilename && direct) {
 		fprintf(stderr, "Filename or direct access but not both\n");
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	/* If file specified but not size, get size from file
@@ -874,7 +889,8 @@ int main(int argc, char *argv[])
 
 		if (stat(write_file, &stbuf)) {
 			perror("Failed to get file size");
-			exit(1);
+			rc = 1;
+			goto out;
 		}
 		write_size = stbuf.st_size;
 	}
@@ -883,19 +899,22 @@ int main(int argc, char *argv[])
 		if (arch_flash_access(NULL, bmc_flash ? BMC_DIRECT : PNOR_DIRECT) == ACCESS_INVAL) {
 			fprintf(stderr, "Can't access %s flash directly on this architecture\n",
 			        bmc_flash ? "BMC" : "PNOR");
-			exit(1);
+			rc = 1;
+			goto out;
 		}
 	} else if (!flashfilename) {
 		if (arch_flash_access(NULL, bmc_flash ? BMC_MTD : PNOR_MTD) == ACCESS_INVAL) {
 			fprintf(stderr, "Can't access %s flash through MTD on this system\n",
 			        bmc_flash ? "BMC" : "PNOR");
-			exit(1);
+			rc = 1;
+			goto out;
 		}
 	}
 
 	if (arch_flash_init(&bl, flashfilename, true)) {
 		fprintf(stderr, "Couldn't initialise architecture flash structures\n");
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	atexit(exiting);
@@ -904,7 +923,8 @@ int main(int argc, char *argv[])
 			    &fl_total_size, &fl_erase_granule);
 	if (rc) {
 		fprintf(stderr, "Error %d getting flash info\n", rc);
-		exit(1);
+		rc = 1;
+		goto out;
 	}
 
 	/* If -t is passed, then print a nice message */
@@ -929,7 +949,7 @@ int main(int argc, char *argv[])
 				   &pstart, &pmaxsz, &pactsize, &ecc);
 		if (rc) {
 			fprintf(stderr,"Failed to get partition info\n");
-			exit(1);
+			goto out;
 		}
 
 		if (!ecc && do_clear) {
@@ -958,14 +978,14 @@ int main(int argc, char *argv[])
 			printf("ERROR: Size (%d bytes) larger than partition"
 			       " (%d bytes). Use --force to force\n",
 			       write_size, pmaxsz);
-			exit(1);
+			goto out;
 		}
 
 
 		/* If erasing, check partition alignment */
 		if (erase && ((pstart | pmaxsz) & 0xfff)) {
 			fprintf(stderr,"Partition not aligned properly\n");
-			exit(1);
+			goto out;
 		}
 
 		/* Set address */
@@ -1013,7 +1033,7 @@ int main(int argc, char *argv[])
 		if (need_relock == -1) {
 			fprintf(stderr, "Architecture doesn't support write protection on flash\n");
 			need_relock = 0;
-			exit (1);
+			goto out;
 		}
 	}
 	if (do_read)
@@ -1026,5 +1046,11 @@ int main(int argc, char *argv[])
 		program_file(write_file, address, write_size);
 	if (do_clear)
 		set_ecc(address, write_size);
-	return 0;
+	rc = 0;
+out:
+	free(part_name);
+	free(read_file);
+	free(write_file);
+
+	return rc;
 }
