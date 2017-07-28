@@ -123,7 +123,7 @@ static int file_erase(struct blocklevel_device *bl, uint64_t dst, uint64_t len)
 		rc = file_write(bl, dst + i, &d, len - i > sizeof(d) ? sizeof(d) : len - i);
 		if (rc)
 			return rc;
-		i += sizeof(d);
+		i += len - i > sizeof(d) ? sizeof(d) : len - i;
 	}
 
 	return 0;
