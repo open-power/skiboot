@@ -1178,7 +1178,7 @@ static void assign_mmio_bars(uint64_t gcid, uint32_t scom, uint64_t reg[2], uint
 
 /*
  *Probe NPU device node and create PCI root device node
- * accordingly. The NPU deivce node should specify number
+ * accordingly. The NPU device node should specify number
  * of links and xscom base address to access links.
  */
 static void npu2_probe_phb(struct dt_node *dn)
