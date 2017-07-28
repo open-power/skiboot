@@ -143,34 +143,44 @@ static int mtd_erase(struct blocklevel_device *bl, uint64_t dst, uint64_t len)
 	 * then lets just hope the kernel knows how to deal with it. If it
 	 * is unsupported the ioctl() will fail and we'll report that -
 	 * there is no other option.
+	 *
+	 * Furthermore, even very recent MTD layers and drivers aren't
+	 * particularly good at not blocking in the kernel. This creates
+	 * unexpected behaviour in userspace tools using these functions.
+	 * In the absence of significant work inside the kernel, we'll just
+	 * split stuff up here for convenience.
+	 * We can assume everything is aligned here.
 	 */
-	if (dst > UINT_MAX || len > UINT_MAX) {
-		struct erase_info_user64 erase_info = {
-			.start = dst,
-			.length = len
-		};
+	while (len) {
+		if (dst > UINT_MAX || len > UINT_MAX) {
+			struct erase_info_user64 erase_info = {
+				.start = dst,
+				.length = file_data->bl.erase_mask + 1
+			};
 
-		if (ioctl(file_data->fd, MEMERASE64, &erase_info) == -1) {
-			err = errno;
-			if (err == 25) /* Kernel doesn't do 64bit MTD erase ioctl() */
-				FL_DBG("Attempted a 64bit erase on a kernel which doesn't support it\n");
-			FL_ERR("%s: IOCTL to kernel failed! %s\n", __func__, strerror(err));
-			errno = err;
-			return FLASH_ERR_PARM_ERROR;
+			if (ioctl(file_data->fd, MEMERASE64, &erase_info) == -1) {
+				err = errno;
+				if (err == 25) /* Kernel doesn't do 64bit MTD erase ioctl() */
+					FL_DBG("Attempted a 64bit erase on a kernel which doesn't support it\n");
+				FL_ERR("%s: IOCTL to kernel failed! %s\n", __func__, strerror(err));
+				errno = err;
+				return FLASH_ERR_PARM_ERROR;
+			}
+		} else {
+			struct erase_info_user erase_info = {
+				.start = dst,
+				.length = file_data->bl.erase_mask + 1
+			};
+			if (ioctl(file_data->fd, MEMERASE, &erase_info) == -1) {
+				err = errno;
+				FL_ERR("%s: IOCTL to kernel failed! %s\n", __func__, strerror(err));
+				errno = err;
+				return FLASH_ERR_PARM_ERROR;
+			}
 		}
-	} else {
-		struct erase_info_user erase_info = {
-			.start = dst,
-			.length = len
-		};
-		if (ioctl(file_data->fd, MEMERASE, &erase_info) == -1) {
-			err = errno;
-			FL_ERR("%s: IOCTL to kernel failed! %s\n", __func__, strerror(err));
-			errno = err;
-			return FLASH_ERR_PARM_ERROR;
-		}
+		dst += file_data->bl.erase_mask + 1;
+		len -= file_data->bl.erase_mask + 1;
 	}
-
 	return 0;
 }
 
