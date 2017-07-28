@@ -4,8 +4,8 @@ LIBFLASH_TEST := libflash/test/test-flash libflash/test/test-ecc libflash/test/t
 LCOV_EXCLUDE += $(LIBFLASH_TEST:%=%.c)
 
 .PHONY : libflash-check libc-coverage
-libflash-check: $(LIBFLASH_TEST:%=%-check) libflash/test/test-miscprint $(CORE_TEST:%=%-gcov-run)
-libflash-coverage: $(LIBFLASH_TEST:%=%-gcov-run) libflash/test/test-miscprint
+libflash-check: $(LIBFLASH_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
+libflash-coverage: $(LIBFLASH_TEST:%=%-gcov-run)
 
 check: libflash-check libc-coverage
 coverage: libflash-coverage
@@ -15,9 +15,6 @@ $(LIBFLASH_TEST:%=%-gcov-run) : %-run: %
 
 $(LIBFLASH_TEST:%=%-check) : %-check: %
 	$(call QTEST, RUN-TEST ,$(VALGRIND) $<, $<)
-
-libflash/test/test-miscprint: pflash
-	$(call Q, RUN-TEST , ./libflash/test/test-miscprint.sh,  $@)
 
 libflash/test/stubs.o: libflash/test/stubs.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -g -c -o $@ $<, $<)
