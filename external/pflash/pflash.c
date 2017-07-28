@@ -256,17 +256,18 @@ static struct ffs_handle *lookup_partition_at_side(struct flash_details *flash,
 	return lookup_partition_at_toc(flash, name, index);
 }
 
-static int erase_chip(struct blocklevel_device *bl)
+static int erase_chip(struct flash_details *flash)
 {
 	bool confirm;
 	int rc;
+	uint64_t pos;
 
 	printf("About to erase chip !\n");
 	confirm = check_confirm();
 	if (!confirm)
 		return 1;
 
-	printf("Erasing... (may take a while !) ");
+	printf("Erasing... (may take a while)\n");
 	fflush(stdout);
 
 	if (dummy_run) {
@@ -274,20 +275,33 @@ static int erase_chip(struct blocklevel_device *bl)
 		return 1;
 	}
 
-	rc = arch_flash_erase_chip(bl);
+	/*
+	 * We could use arch_flash_erase_chip() here BUT everyone really
+	 * likes the progress bars.
+	 * Lets do an erase block at a time erase then...
+	 */
+	progress_init(flash->total_size);
+	for (pos = 0; pos < flash->total_size; pos += flash->erase_granule) {
+		rc = blocklevel_erase(flash->bl, pos, flash->erase_granule);
+		if (rc)
+			break;
+		progress_tick(pos);
+	}
+	progress_end();
 	if (rc) {
 		fprintf(stderr, "Error %d erasing chip\n", rc);
-		return 1;
+		return rc;
 	}
 
 	printf("done !\n");
 	return 0;
 }
 
-static int erase_range(struct blocklevel_device *bl,
+static int erase_range(struct flash_details *flash,
 		uint32_t start, uint32_t size, bool will_program,
 		struct ffs_handle *ffsh, int ffs_index)
 {
+	uint32_t done = 0, erase_mask = flash->erase_granule - 1;
 	bool confirm;
 	int rc;
 
@@ -302,12 +316,45 @@ static int erase_range(struct blocklevel_device *bl,
 	}
 
 	printf("Erasing...\n");
-	rc = blocklevel_smart_erase(bl, start, size);
-	if (rc) {
-		fprintf(stderr, "Failed to blocklevel_smart_erase(): %d\n", rc);
-		return 1;
+	/*
+	 * blocklevel_smart_erase() can do the entire thing in one call
+	 * BUT everyone really likes progress bars so break stuff up
+	 */
+	progress_init(size);
+	if (start & erase_mask) {
+		/* Align to next erase block */
+		rc = blocklevel_smart_erase(flash->bl, start,
+				flash->erase_granule - (start & erase_mask));
+		if (rc) {
+			fprintf(stderr, "Failed to blocklevel_smart_erase(): %d\n", rc);
+			return 1;
+		}
+		start += flash->erase_granule - (start & erase_mask);
+		size -= flash->erase_granule - (start & erase_mask);
+		done = flash->erase_granule - (start & erase_mask);
 	}
-
+	progress_tick(done);
+	while (size & ~(erase_mask)) {
+		rc = blocklevel_smart_erase(flash->bl, start, flash->erase_granule);
+		if (rc) {
+			fprintf(stderr, "Failed to blocklevel_smart_erase(): %d\n", rc);
+			return 1;
+		}
+		start += flash->erase_granule;
+		size -= flash->erase_granule;
+		done += flash->erase_granule;
+		progress_tick(done);
+	}
+	if (size) {
+		rc = blocklevel_smart_erase(flash->bl, start, size);
+		if (rc) {
+			fprintf(stderr, "Failed to blocklevel_smart_erase(): %d\n", rc);
+			return 1;
+		}
+		done += size;
+		progress_tick(done);
+	}
+	progress_end();
 	/* If this is a flash partition, mark it empty if we aren't
 	 * going to program over it as well
 	 */
@@ -318,7 +365,7 @@ static int erase_range(struct blocklevel_device *bl,
 	return 0;
 }
 
-static int set_ecc(struct blocklevel_device *bl, uint32_t start, uint32_t size)
+static int set_ecc(struct flash_details *flash, uint32_t start, uint32_t size)
 {
 	uint32_t i = start + 8;
 	uint8_t ecc = 0;
@@ -329,12 +376,12 @@ static int set_ecc(struct blocklevel_device *bl, uint32_t start, uint32_t size)
 	if (!confirm)
 		return 1;
 
-	erase_range(bl, start, size, true, NULL, 0);
+	erase_range(flash, start, size, true, NULL, 0);
 
 	printf("Programming ECC bits...\n");
 	progress_init(size);
 	while (i < start + size) {
-		blocklevel_write(bl, i, &ecc, sizeof(ecc));
+		blocklevel_write(flash->bl, i, &ecc, sizeof(ecc));
 		i += 9;
 		progress_tick(i - start);
 	}
@@ -1071,15 +1118,15 @@ int main(int argc, char *argv[])
 	if (do_read)
 		rc = do_read_file(flash.bl, read_file, address, read_size);
 	if (!rc && erase_all)
-		rc = erase_chip(flash.bl);
+		rc = erase_chip(&flash);
 	else if (!rc && erase)
-		rc = erase_range(flash.bl, address, write_size,
+		rc = erase_range(&flash, address, write_size,
 				program, ffsh, ffs_index);
 	if (!rc && program)
 		rc = program_file(flash.bl, write_file, address, write_size,
 				ffsh, ffs_index);
 	if (!rc && do_clear)
-		rc = set_ecc(flash.bl, address, write_size);
+		rc = set_ecc(&flash, address, write_size);
 
 close:
 	if (flash.need_relock)
