@@ -58,6 +58,16 @@
 
 #define VENDOR_CAP_PCI_DEV_OFFSET 0x0d
 
+static bool is_p9dd1(void)
+{
+	struct proc_chip *chip = next_chip(NULL);
+
+	return chip &&
+	       (chip->type == PROC_CHIP_P9_NIMBUS ||
+		chip->type == PROC_CHIP_P9_CUMULUS) &&
+	       (chip->ec_level & 0xf0) == 0x10;
+}
+
 /*
  * We use the indirect method because it uses the same addresses as
  * the MMIO offsets (NPU RING)
