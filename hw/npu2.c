@@ -784,6 +784,11 @@ static void npu2_hw_init(struct npu2 *p)
 	val = npu2_read(p, NPU2_XTS_CFG);
 	npu2_write(p, NPU2_XTS_CFG, val | NPU2_XTS_CFG_MMIOSD | NPU2_XTS_CFG_TRY_ATR_RO);
 
+	if (!is_p9dd1()) {
+		val = npu2_read(p, NPU2_XTS_CFG2);
+		npu2_write(p, NPU2_XTS_CFG2, val | NPU2_XTS_CFG2_NO_FLUSH_ENA);
+	}
+
 	/* Init memory cache directory (MCD) registers. */
 	phys_map_get(p->chip_id, GPU_MEM, NPU2_LINKS_PER_CHIP - 1,
 			&gpu_min_addr, NULL);
