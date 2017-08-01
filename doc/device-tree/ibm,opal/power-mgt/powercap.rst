@@ -5,6 +5,7 @@ The powercap sensors are populated in this node. Each child node in
 the "powercap" node represents a power-cappable component.
 
 For example : ::
+
         system-powercap/
 
 The OPAL_GET_POWERCAP and OPAL_SET_POWERCAP calls take a handle for
@@ -39,10 +40,10 @@ the future.
         compatible = "ibm,opal-powercap";
 
         system-powercap {
-                name = "system-powercap"
-                powercap-current = <0x00000002>
-                powercap-min = <0x00000000>
-                powercap-max = <0x00000001>
+                name = "system-powercap";
+                powercap-current = <0x00000002>;
+                powercap-min = <0x00000000>;
+                powercap-max = <0x00000001>;
         };
      };
-    }
+    };

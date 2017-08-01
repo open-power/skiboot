@@ -36,18 +36,18 @@ currently it uses the following encoding ::
 
    power-mgt {
      psr {
-        compatible = "ibm,opal-power-shift-ratio"
+        compatible = "ibm,opal-power-shift-ratio";
 
         cpu-to-gpu@0 {
-                name = "cpu-to-gpu"
-                handle = <0x00000000>
-                label = "cpu_to_gpu_0"
+                name = "cpu-to-gpu";
+                handle = <0x00000000>;
+                label = "cpu_to_gpu_0";
         };
 
         cpu-to-gpu@1 {
-                name = "cpu-to-gpu"
-                handle = <0x00000100>
-                label = "cpu_to_gpu_1"
+                name = "cpu-to-gpu";
+                handle = <0x00000100>;
+                label = "cpu_to_gpu_1";
         };
      };
     };

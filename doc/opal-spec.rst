@@ -22,9 +22,12 @@ Stewart Smith <stewart@linux.vnet.ibm.com> : OPAL Architect, IBM
 Definitions
 -----------
 
-Host processor - the main POWER CPU (e.g. the POWER8 CPU)
-Host OS - the operating system running on the host processor.
-OPAL - OpenPOWER Abstraction Layer.
+Host processor
+  the main POWER CPU (e.g. the POWER8 CPU)
+Host OS
+  the operating system running on the host processor.
+OPAL
+  OpenPOWER Abstraction Layer.
 
 What is OPAL?
 -------------

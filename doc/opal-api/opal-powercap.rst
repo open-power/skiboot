@@ -19,13 +19,17 @@ for the completion.
 
 Parameters
 ----------
-::
-        u32 handle
-        int token
-        u32 *pcap
+
+=== ======
+=== ======
+u32 handle
+int token
+u32 \*pcap
+=== ======
 
 Returns
 -------
+
 OPAL_SUCCESS
   Success
 

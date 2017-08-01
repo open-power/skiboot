@@ -1,6 +1,14 @@
 ibm,opal/power-mgt device tree entries
 ======================================
 
+.. toctree::
+   :maxdepth: 2
+
+   power-mgt/occ
+   power-mgt/powercap
+   power-mgt/psr
+
+
 All available CPU idle states are listed in ibm,cpu-idle-state-names
 
 For example:

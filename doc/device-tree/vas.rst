@@ -1,10 +1,9 @@
 Virtual Accelerator Switchboard (VAS)
-====================================
+=====================================
 
 VAS is present in P9 or later processors. In P9, each chip has one
 instance of VAS. Each instance of VAS is represented as a "platform
-device" i.e as a node in root of the device tree:
-::
+device" i.e as a node in root of the device tree: ::
 
   /vas@<vas_addr>
 

@@ -15,8 +15,7 @@ NX Compression Coprocessor
 --------------------------
 
 This is the memory compression coprocessor. which uses the IBM proprietary
-842 compression algorithm and format. Each NX node contains an 842 engine.
-::
+842 compression algorithm and format. Each NX node contains an 842 engine.  ::
 
    ibm,842-coprocessor-type	: CT value common to all 842 coprocessors
    ibm,842-coprocessor-instance	: CI value unique to all 842 coprocessors
@@ -38,14 +37,15 @@ coprocessor types (842 and gzip).
 VAS distinguishes NX requests for the target engines based on logical
 partition ID (lpid), process ID (pid) and Thread ID (tid). So (lpid, pid, tid)
 combination has to be unique in the system. Each NX node contains high and
-normal FIFOs for each  842 and GZIP engines.
-::
+normal FIFOs for each  842 and GZIP engines.  ::
+
   /ibm,842-high-fifo		: High priority 842 RxFIFO
   /ibm,842-normal-fifo		: Normal priority 842 RxFIFO
   /ibm,gzip-high-fifo		: High priority gzip RxFIFO
   /ibm,gzip-normal-fifo		: Normal priority gzip RxFIFO
 
 Each RxFIFO node contains: ::
+
 	compatible		: ibm,p9-nx-842 or ibm,p9-nx-gzip
 	priority		: High or Normal
 	rx-fifo-address		: RxFIFO buffer address
