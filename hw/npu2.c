@@ -581,7 +581,7 @@ static int npu2_assign_gmb(struct npu2_dev *ndev)
 	struct npu2 *p = ndev->npu;
 	int peers, mode;
 	uint32_t bdfn;
-	uint64_t base, size, reg, val, old_val;
+	uint64_t base, size, reg, val, old_val, gmb;
 
 	/* Need to work out number of link peers. This amount to
 	 * working out the maximum function number. So work start at
@@ -631,28 +631,30 @@ static int npu2_assign_gmb(struct npu2_dev *ndev)
 	mode += ndev->bdfn & 0x7;
 	val = SETFIELD(NPU2_MEM_BAR_MODE, val, mode);
 
-	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
-			      NPU2_BLOCK_SM_0,
-			      NPU2_GPU0_MEM_BAR);
+	gmb = NPU2_GPU0_MEM_BAR;
+	if (NPU2DEV_BRICK(ndev) && !is_p9dd1())
+		gmb = NPU2_GPU1_MEM_BAR;
 
-	old_val = npu2_read(p, reg);
-	if (NPU2DEV_BRICK(ndev))
-		val = SETFIELD(PPC_BITMASK(32, 63), old_val, val >> 32);
-	else
-		val = SETFIELD(PPC_BITMASK(0, 31), old_val, val >> 32);
+	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
+			      NPU2_BLOCK_SM_0, gmb);
+
+	if (is_p9dd1()) {
+		old_val = npu2_read(p, reg);
+		if (NPU2DEV_BRICK(ndev))
+			val = SETFIELD(PPC_BITMASK(32, 63), old_val, val >> 32);
+		else
+			val = SETFIELD(PPC_BITMASK(0, 31), old_val, val >> 32);
+	}
 
 	npu2_write(p, reg, val);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
-			      NPU2_BLOCK_SM_1,
-			      NPU2_GPU0_MEM_BAR);
+			      NPU2_BLOCK_SM_1, gmb);
 	npu2_write(p, reg, val);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
-			      NPU2_BLOCK_SM_2,
-			      NPU2_GPU0_MEM_BAR);
+			      NPU2_BLOCK_SM_2, gmb);
 	npu2_write(p, reg, val);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
-			      NPU2_BLOCK_SM_3,
-			      NPU2_GPU0_MEM_BAR);
+			      NPU2_BLOCK_SM_3, gmb);
 	npu2_write(p, reg, val);
 
 	return 0;

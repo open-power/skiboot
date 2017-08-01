@@ -101,6 +101,7 @@ void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
 #define NPU2_PB_EPSILON				0x010
 #define NPU2_TIMER_CFG				0x018
 #define NPU2_GPU0_MEM_BAR			0x020
+#define NPU2_GPU1_MEM_BAR			0x028
 #define   NPU2_MEM_BAR_SEL_MEM			PPC_BITMASK(0,2)
 #define   NPU2_MEM_BAR_GROUP			PPC_BITMASK(3,6)
 #define   NPU2_MEM_BAR_CHIP			PPC_BITMASK(7,9)
