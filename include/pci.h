@@ -323,6 +323,10 @@ struct phb_ops {
 				 uint64_t pe_number);
 
 	int64_t (*set_capp_recovery)(struct phb *phb);
+
+	/* PCI peer-to-peer setup */
+	void (*set_p2p)(struct phb *phb, uint64_t mode, uint64_t flags,
+			uint16_t pe_number);
 };
 
 enum phb_type {

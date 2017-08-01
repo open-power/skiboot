@@ -213,7 +213,8 @@
 #define OPAL_GET_POWER_SHIFT_RATIO		154
 #define OPAL_SET_POWER_SHIFT_RATIO		155
 #define OPAL_SENSOR_GROUP_CLEAR			156
-#define OPAL_LAST				156
+#define OPAL_PCI_SET_P2P			157
+#define OPAL_LAST				157
 
 /* Device tree flags */
 
@@ -1260,6 +1261,16 @@ enum {
 	OPAL_IMC_COUNTERS_CORE = 2,
 };
 
+
+/* PCI p2p descriptor */
+#define OPAL_PCI_P2P_ENABLE		0x1
+#define OPAL_PCI_P2P_LOAD		0x2
+#define OPAL_PCI_P2P_STORE		0x4
+
+enum {
+	OPAL_PCI_P2P_INITIATOR	= 0,
+	OPAL_PCI_P2P_TARGET	= 1,
+};
 
 #endif /* __ASSEMBLY__ */
 

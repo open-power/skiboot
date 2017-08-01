@@ -977,3 +977,42 @@ static int64_t opal_pci_set_phb_capi_mode(uint64_t phb_id, uint64_t mode, uint64
 	return rc;
 }
 opal_call(OPAL_PCI_SET_PHB_CAPI_MODE, opal_pci_set_phb_capi_mode, 3);
+
+static int64_t opal_pci_set_p2p(uint64_t phbid_init, uint64_t phbid_target,
+				uint64_t desc, uint16_t pe_number)
+{
+	struct phb *phb_init = pci_get_phb(phbid_init);
+	struct phb *phb_target = pci_get_phb(phbid_target);
+
+	if (!phb_init || !phb_target)
+		return OPAL_PARAMETER;
+	/*
+	 * Having the 2 devices under the same PHB may require tuning
+	 * the configuration of intermediate switch(es), more easily
+	 * done from linux. And it shouldn't require a PHB config
+	 * change.
+	 * Return an error for the time being.
+	 */
+	if (phb_init == phb_target)
+		return OPAL_UNSUPPORTED;
+	if (!phb_init->ops->set_p2p || !phb_target->ops->set_p2p)
+		return OPAL_UNSUPPORTED;
+	/*
+	 * Loads would be supported on p9 if the 2 devices are under
+	 * the same PHB, but we ruled it out above.
+	 */
+	if (desc & OPAL_PCI_P2P_LOAD)
+		return OPAL_UNSUPPORTED;
+
+	phb_lock(phb_init);
+	phb_init->ops->set_p2p(phb_init, OPAL_PCI_P2P_INITIATOR, desc,
+			pe_number);
+	phb_unlock(phb_init);
+
+	phb_lock(phb_target);
+	phb_target->ops->set_p2p(phb_target, OPAL_PCI_P2P_TARGET, desc,
+				pe_number);
+	phb_unlock(phb_target);
+	return OPAL_SUCCESS;
+}
+opal_call(OPAL_PCI_SET_P2P, opal_pci_set_p2p, 4);

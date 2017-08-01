@@ -3622,6 +3622,67 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 	return OPAL_UNSUPPORTED;
 }
 
+static void phb4_p2p_set_initiator(struct phb4 *p, uint16_t pe_number)
+{
+	uint64_t tve;
+	uint16_t window_id = (pe_number << 1) + 1;
+
+	/*
+	 * Initiator needs access to the MMIO space of the target,
+	 * which is well beyond the 'normal' memory area. Set its TVE
+	 * with no range checking.
+	 */
+	PHBDBG(p, "Setting TVE#1 for peer-to-peer for pe %d\n", pe_number);
+	tve = PPC_BIT(51);
+	phb4_ioda_sel(p, IODA3_TBL_TVT, window_id, false);
+	out_be64(p->regs + PHB_IODA_DATA0, tve);
+	p->tve_cache[window_id] = tve;
+}
+
+static void phb4_p2p_set_target(struct phb4 *p, bool enable)
+{
+	uint64_t val;
+
+	/*
+	 * Enabling p2p on a target PHB reserves an outbound (as seen
+	 * from the CPU) store queue for p2p
+	 */
+	PHBDBG(p, "%s peer-to-peer\n", (enable ? "Enabling" : "Disabling"));
+	xscom_read(p->chip_id,
+		p->pe_stk_xscom + XPEC_NEST_STK_PBCQ_MODE, &val);
+	if (enable)
+		val |= XPEC_NEST_STK_PBCQ_MODE_P2P;
+	else
+		val &= ~XPEC_NEST_STK_PBCQ_MODE_P2P;
+	xscom_write(p->chip_id,
+		p->pe_stk_xscom + XPEC_NEST_STK_PBCQ_MODE, val);
+}
+
+static void phb4_set_p2p(struct phb *phb, uint64_t mode, uint64_t flags,
+			uint16_t pe_number)
+{
+	struct phb4 *p = phb_to_phb4(phb);
+
+	switch (mode) {
+	case OPAL_PCI_P2P_INITIATOR:
+		if (flags & OPAL_PCI_P2P_ENABLE)
+			phb4_p2p_set_initiator(p, pe_number);
+		/*
+		 * When disabling p2p on the initiator, we should
+		 * reset the TVE to its default bypass setting, but it
+		 * is more easily done from the OS, as it knows the
+		 * the start and end address and there's already an
+		 * opal call for it, so let linux handle it.
+		 */
+		break;
+	case OPAL_PCI_P2P_TARGET:
+		phb4_p2p_set_target(p, !!(flags & OPAL_PCI_P2P_ENABLE));
+		break;
+	default:
+		assert(0);
+	}
+}
+
 static const struct phb_ops phb4_ops = {
 	.cfg_read8		= phb4_pcicfg_read8,
 	.cfg_read16		= phb4_pcicfg_read16,
@@ -3655,6 +3716,7 @@ static const struct phb_ops phb4_ops = {
 	.get_diag_data2		= phb4_get_diag_data,
 	.tce_kill		= phb4_tce_kill,
 	.set_capi_mode		= phb4_set_capi_mode,
+	.set_p2p		= phb4_set_p2p,
 };
 
 static void phb4_init_ioda3(struct phb4 *p)
