@@ -1231,7 +1231,7 @@ static void npu2_probe_phb(struct dt_node *dn)
 	path = dt_get_path(dn);
 	gcid = dt_get_chip_id(dn);
 	assert(proc_chip = get_chip(gcid));
-	if ((proc_chip->ec_level & 0xf0) != 0x10) {
+	if ((proc_chip->ec_level & 0xf0) > 0x20) {
 		prerror("NPU2: unsupported ec level on Chip 0x%x!\n", gcid);
 		return;
 	}
