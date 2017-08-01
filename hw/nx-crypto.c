@@ -265,6 +265,10 @@ void nx_create_crypto_node(struct dt_node *node)
 		cfg_asym = pb_base + NX_P8_ASYM_CFG;
 		cfg_iq = pb_base + NX_P8_CRB_IQ;
 		cfg_ee = pb_base + NX_P8_EE_CFG;
+	} else if (dt_node_is_compatible(node, "ibm, power9-nx")) {
+		prlog(PR_INFO, "NX%d: POWER9 nx-crypto not yet supported\n",
+		      gcid);
+		return;
 	} else {
 		prerror("NX%d: ERROR: Unknown NX type!\n", gcid);
 		return;
