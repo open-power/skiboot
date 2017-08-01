@@ -198,9 +198,13 @@ static void npu2_read_bar(struct npu2 *p, struct npu2_bar *bar)
 		break;
 	case NPU2_NTL0_BAR:
 	case NPU2_NTL1_BAR:
-		bar->base = GETFIELD(NPU2_NTL_BAR_ADDR, val) << 17;
+		bar->base = GETFIELD(NPU2_NTL_BAR_ADDR, val) << 16;
 		enabled = GETFIELD(NPU2_NTL_BAR_ENABLE, val);
-		bar->size = 0x20000;
+
+		if (is_p9dd1())
+			bar->size = 0x20000;
+		else
+			bar->size = 0x10000 << GETFIELD(NPU2_NTL_BAR_SIZE, val);
 		break;
 	case NPU2_GENID_BAR:
 		bar->base = GETFIELD(NPU2_GENID_BAR_ADDR, val) << 16;
@@ -232,8 +236,11 @@ static void npu2_write_bar(struct npu2 *p,
 		break;
 	case NPU2_NTL0_BAR:
 	case NPU2_NTL1_BAR:
-		val = SETFIELD(NPU2_NTL_BAR_ADDR, 0ul, bar->base >> 17);
+		val = SETFIELD(NPU2_NTL_BAR_ADDR, 0ul, bar->base >> 16);
 		val = SETFIELD(NPU2_NTL_BAR_ENABLE, val, enable);
+
+		if (!is_p9dd1())
+			val = SETFIELD(NPU2_NTL_BAR_SIZE, val, 1);
 		break;
 	case NPU2_GENID_BAR:
 		val = SETFIELD(NPU2_GENID_BAR_ADDR, 0ul, bar->base >> 16);

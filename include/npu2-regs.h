@@ -135,8 +135,10 @@ void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
 #define   NPU2_NTL_BAR_ENABLE			PPC_BIT(0)
 #define   NPU2_NTL_BAR_GROUP			PPC_BITMASK(3,6)
 #define   NPU2_NTL_BAR_CHIP			PPC_BITMASK(7,9)
-#define   NPU2_NTL_BAR_NODE_ADDR		PPC_BITMASK(10,34)
-#define   NPU2_NTL_BAR_ADDR			PPC_BITMASK(3,34)
+#define   NPU2_NTL_BAR_NODE_ADDR		PPC_BITMASK(10,35)
+#define   NPU2_NTL_BAR_ADDR			PPC_BITMASK(3,35)
+#define   NPU2_NTL_BAR_POISON			PPC_BIT(36)
+#define   NPU2_NTL_BAR_SIZE			PPC_BITMASK(39,43)
 #define NPU2_PERF_CFG				0x078
 #define NPU2_INHIBIT_CFG			0x080
 #define NPU2_C_ERR_RPT_MSG0			0x088
