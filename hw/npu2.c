@@ -581,7 +581,7 @@ static int npu2_assign_gmb(struct npu2_dev *ndev)
 	struct npu2 *p = ndev->npu;
 	int peers, mode;
 	uint32_t bdfn;
-	uint64_t base, size, reg, gmb, old_val;
+	uint64_t base, size, reg, val, old_val;
 
 	/* Need to work out number of link peers. This amount to
 	 * working out the maximum function number. So work start at
@@ -597,15 +597,15 @@ static int npu2_assign_gmb(struct npu2_dev *ndev)
 
 	/* Base address is in GB */
 	base >>= 30;
-	gmb = SETFIELD(NPU2_MEM_BAR_SEL_MEM, 0ULL, 4);
-	gmb = SETFIELD(NPU2_MEM_BAR_NODE_ADDR, gmb, base);
-	gmb = SETFIELD(NPU2_MEM_BAR_GROUP | NPU2_MEM_BAR_CHIP, gmb, p->chip_id);
-	gmb = SETFIELD(NPU2_MEM_BAR_POISON, gmb, 1);
-	gmb = SETFIELD(NPU2_MEM_BAR_GRANULE, gmb, 0);
+	val = SETFIELD(NPU2_MEM_BAR_SEL_MEM, 0ULL, 4);
+	val = SETFIELD(NPU2_MEM_BAR_NODE_ADDR, val, base);
+	val = SETFIELD(NPU2_MEM_BAR_GROUP | NPU2_MEM_BAR_CHIP, val, p->chip_id);
+	val = SETFIELD(NPU2_MEM_BAR_POISON, val, 1);
+	val = SETFIELD(NPU2_MEM_BAR_GRANULE, val, 0);
 
 	/* We don't know how much memory the GPU has, so we may as well just
 	 * pass the whole aperture through at this point. */
-	gmb = SETFIELD(NPU2_MEM_BAR_BAR_SIZE, gmb, ilog2(size >> 30));
+	val = SETFIELD(NPU2_MEM_BAR_BAR_SIZE, val, ilog2(size >> 30));
 
 	switch (peers) {
 	case 0:
@@ -629,29 +629,29 @@ static int npu2_assign_gmb(struct npu2_dev *ndev)
 	}
 
 	mode += ndev->bdfn & 0x7;
-	gmb = SETFIELD(NPU2_MEM_BAR_MODE, gmb, mode);
+	val = SETFIELD(NPU2_MEM_BAR_MODE, val, mode);
 	if (NPU2DEV_BRICK(ndev))
-		gmb >>= 32;
+		val >>= 32;
 	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
 			      NPU2_BLOCK_SM_0,
 			      NPU2_GPU0_MEM_BAR);
 
 	old_val = npu2_read(p, reg);
-	gmb |= old_val;
+	val |= old_val;
 
-	npu2_write(p, reg, gmb);
+	npu2_write(p, reg, val);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
 			      NPU2_BLOCK_SM_1,
 			      NPU2_GPU0_MEM_BAR);
-	npu2_write(p, reg, gmb);
+	npu2_write(p, reg, val);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
 			      NPU2_BLOCK_SM_2,
 			      NPU2_GPU0_MEM_BAR);
-	npu2_write(p, reg, gmb);
+	npu2_write(p, reg, val);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
 			      NPU2_BLOCK_SM_3,
 			      NPU2_GPU0_MEM_BAR);
-	npu2_write(p, reg, gmb);
+	npu2_write(p, reg, val);
 
 	return 0;
 }
