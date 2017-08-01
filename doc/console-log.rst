@@ -9,7 +9,19 @@ of the memory console, we're pretty keen on keeping its location
 static.
 
 Events are logged in the following format:
-[timebase,log_level] message
+``[S.T,L] message`` where:
+
+:S: Seconds, which is the timebase divided by 512,000,000.
+    **NOTE**: The timebase is reset during boot, so zero is a few dozen
+    messages into skiboot booting.
+:T: Remaining Timebase. It is *NOT* a fraction of a second, but rather
+    timebase%512000000
+:L: Log level (see below)
+
+Example: ::
+
+  [    2.223466021,5] FLASH: Found system flash: Macronix MXxxL51235F id:0
+  [    3.494892796,7] FLASH: flash subpartition eyecatcher CAPP
 
 You should use the new prlog() call for any log message and set the
 log level/priority appropriately.
@@ -19,7 +31,8 @@ with prlog() calls.
 
 See timebase.h for full timebase explanation.
 
-Log level from skiboot.h:
+Log levels
+----------
 
 =============== ==========
 Define          Value
@@ -60,6 +73,4 @@ well as in memory. If you write 0x95 you get PR_INSANE in memory but
 still only PR_NOTICE through drivers.
 
 People who write something like 0x1f will get a very quiet boot indeed.
-
-
 
