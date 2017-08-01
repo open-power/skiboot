@@ -630,14 +630,16 @@ static int npu2_assign_gmb(struct npu2_dev *ndev)
 
 	mode += ndev->bdfn & 0x7;
 	val = SETFIELD(NPU2_MEM_BAR_MODE, val, mode);
-	if (NPU2DEV_BRICK(ndev))
-		val >>= 32;
+
 	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
 			      NPU2_BLOCK_SM_0,
 			      NPU2_GPU0_MEM_BAR);
 
 	old_val = npu2_read(p, reg);
-	val |= old_val;
+	if (NPU2DEV_BRICK(ndev))
+		val = SETFIELD(PPC_BITMASK(32, 63), old_val, val >> 32);
+	else
+		val = SETFIELD(PPC_BITMASK(0, 31), old_val, val >> 32);
 
 	npu2_write(p, reg, val);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
