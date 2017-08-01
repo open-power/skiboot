@@ -1143,18 +1143,15 @@ static void assign_mmio_bars(uint64_t gcid, uint32_t scom, uint64_t reg[2], uint
 	uint32_t i;
 	struct npu2_bar *bar;
 	struct npu2_bar npu2_bars[] = {
-		/*
-		 * NPU_REGS must be first in this list, at least on DD1.
-		 * On DD2, stack 0 will be used for NPU_REGS, stack 1/2 for NPU_PHY.
-		 */
+		/* NPU_REGS must be first in this list */
 		{ .type = NPU_REGS, .index = 0,
-		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0, NPU2_PHY_BAR),
-		  .flags = NPU2_BAR_FLAG_ENABLED },
-		{ .type = NPU_PHY, .index = 0,
 		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0, NPU2_PHY_BAR),
 		  .flags = NPU2_BAR_FLAG_ENABLED },
-		{ .type = NPU_PHY, .index = 1,
+		{ .type = NPU_PHY, .index = 0,
 		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_1, 0, NPU2_PHY_BAR),
+		  .flags = NPU2_BAR_FLAG_ENABLED },
+		{ .type = NPU_PHY, .index = 1,
+		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0, NPU2_PHY_BAR),
 		  .flags = NPU2_BAR_FLAG_ENABLED },
 		{ .type = NPU_NTL, .index = 0,
 		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0, NPU2_NTL0_BAR) },
@@ -1175,6 +1172,13 @@ static void assign_mmio_bars(uint64_t gcid, uint32_t scom, uint64_t reg[2], uint
 		{ .type = NPU_GENID, .index = 2,
 		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0, NPU2_GENID_BAR) },
 	};
+
+	/* On DD1, stack 2 was used for NPU_REGS, stack 0/1 for NPU_PHY */
+	if (is_p9dd1()) {
+		npu2_bars[0].reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0, NPU2_PHY_BAR);
+		npu2_bars[1].reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0, NPU2_PHY_BAR);
+		npu2_bars[2].reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_1, 0, NPU2_PHY_BAR);
+	}
 
 	for (i = 0; i < ARRAY_SIZE(npu2_bars); i++) {
 		bar = &npu2_bars[i];
