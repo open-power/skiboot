@@ -50,7 +50,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'skiboot'
-copyright = u'2016, Stewart Smith, IBM, others'
+copyright = u'2016-2017, IBM, others'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -234,7 +234,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'skiboot', u'skiboot Documentation',
-     [u'Stewart Smith, IBM, others'], 1)
+     [u'IBM, others'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -248,7 +248,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'skiboot', u'skiboot Documentation',
-   u'Stewart Smith, IBM, others', 'skiboot', 'OPAL (OpenPower Abstraction Layer): boot and runtime firmware for POWER.',
+   u'IBM, others', 'skiboot', 'OPAL (OpenPower Abstraction Layer): boot and runtime firmware for POWER.',
    'Miscellaneous'),
 ]
 
