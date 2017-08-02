@@ -193,8 +193,11 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		version = be32_to_cpu(ahdr->version);
 	}
 
-	if (version != 1) {
-		prerror("I2C: HDAT version %d not supported! THIS IS A BUG\n",
+	if (version == 2) {
+		prerror("I2C: v%d found, but not supported. Parsing as v1\n",
+			version);
+	} else if (version > 2) {
+		prerror("I2C: v%d found, but not supported! THIS IS A BUG\n",
 			version);
 		return -1;
 	}
@@ -237,6 +240,9 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		}
 
 		node = dt_new_addr(bus, name, i2c_addr);
+		if (!node)
+			continue;
+
 		dt_add_property_cells(node, "reg", i2c_addr);
 		dt_add_property_cells(node, "link-id",
 			be32_to_cpu(dev->i2c_link));
