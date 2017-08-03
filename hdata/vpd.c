@@ -510,8 +510,6 @@ static void dt_add_model_name(void)
 	const struct dt_property *model;
 
 	model = dt_find_property(dt_root, "model");
-	if (!model)
-		goto def_model;
 
 	iplp = get_hdif(&spira.ntuples.ipl_parms, "IPLPMS");
 	if (!iplp)
@@ -525,7 +523,7 @@ static void dt_add_model_name(void)
 		model_name = p->sys_type_str;
 
 def_model:
-	if (!model_name || model_name[0] == '\0') {
+	if ((!model_name || model_name[0] == '\0') && model) {
 		mi = machine_info_lookup(model->prop);
 		if (mi)
 			model_name = mi->name;
