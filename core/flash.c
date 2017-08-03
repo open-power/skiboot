@@ -438,8 +438,8 @@ static size_t sizeof_elf_from_hdr(void *buf)
 		if (elf->ei_class == ELF_CLASS_64) {
 			struct elf64_hdr *elf64 = (struct elf64_hdr*) buf;
 			sz = le64_to_cpu(elf64->e_shoff) +
-				(le16_to_cpu(elf64->e_shentsize) *
-				 le16_to_cpu(elf64->e_shnum));
+				((uint32_t)le16_to_cpu(elf64->e_shentsize) *
+				 (uint32_t)le16_to_cpu(elf64->e_shnum));
 		} else if (elf->ei_class == ELF_CLASS_32) {
 			struct elf32_hdr *elf32 = (struct elf32_hdr*) buf;
 			sz = le32_to_cpu(elf32->e_shoff) +

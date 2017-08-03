@@ -119,7 +119,8 @@ static bool try_load_elf64_le(struct elf_hdr *header)
 	kernel_32bit = false;
 
 	kernel_size = le64_to_cpu(kh->e_shoff) +
-		(le16_to_cpu(kh->e_shentsize) * le16_to_cpu(kh->e_shnum));
+		((uint32_t)le16_to_cpu(kh->e_shentsize) *
+		 (uint32_t)le16_to_cpu(kh->e_shnum));
 
 	prlog(PR_DEBUG, "INIT: 64-bit kernel entry at 0x%llx, size 0x%lx\n",
 	      kernel_entry, kernel_size);
@@ -196,7 +197,8 @@ static bool try_load_elf64(struct elf_hdr *header)
 	kernel_entry += load_base;
 	kernel_32bit = false;
 
-	kernel_size = kh->e_shoff + (kh->e_shentsize * kh->e_shnum);
+	kernel_size = kh->e_shoff +
+		((uint32_t)kh->e_shentsize * (uint32_t)kh->e_shnum);
 
 	printf("INIT: 64-bit kernel entry at 0x%llx, size 0x%lx\n",
 	       kernel_entry, kernel_size);
