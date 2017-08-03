@@ -141,9 +141,9 @@ static int lpc_window_write(struct mbox_flash_data *mbox_flash, uint32_t pos,
 	return 0;
 }
 
-__unused static uint64_t mbox_flash_mask(struct mbox_flash_data *mbox_flash)
+static uint64_t mbox_flash_mask(struct mbox_flash_data *mbox_flash)
 {
-	return (1 << mbox_flash->shift) - 1;
+	return (1ULL << mbox_flash->shift) - 1;
 }
 
 __unused static uint8_t msg_get_u8(struct bmc_mbox_msg *msg, int i)
