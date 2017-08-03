@@ -995,7 +995,11 @@ static bool mem_region_parse_reserved_nodes(const char *path)
 				dt_get_number(reg->prop, 2),
 				dt_get_number(reg->prop + sizeof(u64), 2),
 				node, type);
-		add_region(region);
+		if (!add_region(region)) {
+			char *nodepath = dt_get_path(node);
+			prerror("node %s failed to add_region()\n", nodepath);
+			free(nodepath);
+		}
 	}
 
 	return true;
