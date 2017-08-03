@@ -153,6 +153,9 @@ static void add_xics_icps(void)
 			continue;
 
 		intsrv = dt_find_property(cpu, "ibm,ppc-interrupt-server#s");
+		if (!intsrv)
+			continue;
+
 		pir = dt_prop_get_u32(cpu, "ibm,pir");
 
 		/* Get ibase address */
