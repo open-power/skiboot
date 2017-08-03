@@ -4226,7 +4226,10 @@ static int64_t opal_xive_free_vp_block(uint64_t vp_base)
 		struct xive *x;
 		struct xive_vp *vp;
 
-		xive_decode_vp(vp_id, &blk, &idx, NULL, NULL);
+		if (!xive_decode_vp(vp_id, &blk, &idx, NULL, NULL)) {
+			prerror("XIVE: Couldn't decode VP id %u\n", vp_id);
+			return OPAL_INTERNAL_ERROR;
+		}
 		x = xive_from_pc_blk(blk);
 		if (!x) {
 			prerror("XIVE: Instance not found for deallocated VP"
@@ -4293,7 +4296,10 @@ static int64_t opal_xive_alloc_vp_block(uint32_t alloc_order)
 		struct xive *x;
 		struct xive_vp *vp;
 
-		xive_decode_vp(vp_id, &blk, &idx, NULL, NULL);
+		if (!xive_decode_vp(vp_id, &blk, &idx, NULL, NULL)) {
+			prerror("XIVE: Couldn't decode VP id %u\n", vp_id);
+			return OPAL_INTERNAL_ERROR;
+		}
 		x = xive_from_pc_blk(blk);
 		if (!x) {
 			prerror("XIVE: Instance not found for allocated VP"
