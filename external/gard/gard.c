@@ -43,7 +43,9 @@
 
 #define CLEARED_RECORD_ID 0xFFFFFFFF
 
-#define FDT_ACTIVE_FLASH_PATH "/proc/device-tree/chosen/ibm,system-flash"
+#define FDT_PATH "/proc/device-tree"
+#define FDT_FSP_NODE FDT_PATH"/fsps"
+#define FDT_ACTIVE_FLASH_PATH FDT_PATH"/chosen/ibm,system-flash"
 #define SYSFS_MTD_PATH "/sys/class/mtd/"
 #define FLASH_GARD_PART "GUARD"
 
@@ -583,6 +585,11 @@ static void usage(const char *progname)
 	}
 }
 
+static bool is_fsp(void)
+{
+	return access(FDT_FSP_NODE, F_OK) == 0;
+}
+
 static struct option global_options[] = {
 	{ "file", required_argument, 0, 'f' },
 	{ "part", no_argument, 0, 'p' },
@@ -605,6 +612,12 @@ int main(int argc, char **argv)
 
 	ctx = &_ctx;
 	memset(ctx, 0, sizeof(*ctx));
+
+	if (is_fsp()) {
+		fprintf(stderr, "This is the OpenPower gard tool which does "
+				"not support FSP systems\n");
+		return EXIT_FAILURE;
+	}
 
 	/* process global options */
 	for (;;) {
