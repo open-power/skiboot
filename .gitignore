@@ -23,6 +23,7 @@ GTAGS
 GRTAGS
 GPATH
 cscope.out
+gmon.out
 compile_commands.json
 asm/asm-offsets.s
 include/asm-offsets.h
@@ -58,6 +59,10 @@ core/test/run-nvram-format
 core/test/run-pel
 core/test/run-pool
 core/test/run-trace
+core/test/run-api-test
+core/test/run-bitmap
+core/test/run-buddy
+core/test/run-flash-subpartition
 core/test/*-gcov
 debian-jessie-vmlinux
 debian-jessie-initrd.gz
@@ -78,7 +83,9 @@ libflash/test/test-ecc
 libflash/test/test-flash-gcov
 libstb/create-container
 libstb/test/run-stb-container
+libstb/test/print-stb-container
 libstb/test/*-gcov
 test/hello_world/hello_kernel/hello_kernel
+test/sreset_world/sreset_kernel/sreset_kernel
 zImage.epapr
 vgcore.*
