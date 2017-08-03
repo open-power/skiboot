@@ -367,8 +367,6 @@ static int flash_write(struct blocklevel_device *bl, uint32_t dst, const void *s
 
 		/* Handle misaligned start */
 		chunk = 0x100 - (d & 0xff);
-		if (chunk > 0x100)
-			chunk = 0x100;
 		if (chunk > todo)
 			chunk = todo;
 
