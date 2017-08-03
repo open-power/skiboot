@@ -4519,7 +4519,7 @@ static int64_t opal_xive_dump_emu(uint32_t pir)
 	struct cpu_thread *c = find_cpu_by_pir(pir);
 	struct xive_cpu_state *xs;
 	struct xive_eq *eq;
-	uint32_t ipi_target = -1u;
+	uint32_t ipi_target;
 	uint8_t *mm, pq;
 
 	if (!c)
@@ -4550,9 +4550,14 @@ static int64_t opal_xive_dump_emu(uint32_t pir)
 
 	mm = xs->xive->esb_mmio + GIRQ_TO_IDX(xs->ipi_irq) * 0x20000;
 	pq = in_8(mm + 0x10800);
-	xive_get_irq_targetting(xs->ipi_irq, &ipi_target, NULL, NULL);
-	prlog(PR_INFO, "CPU[%04x]: IPI #%08x PQ=%x target=%08x\n",
-	      pir, xs->ipi_irq, pq, ipi_target);
+	if (xive_get_irq_targetting(xs->ipi_irq, &ipi_target, NULL, NULL))
+		prlog(PR_INFO, "CPU[%04x]: IPI #%08x PQ=%x target=%08x\n",
+				pir, xs->ipi_irq, pq, ipi_target);
+	else
+		prlog(PR_INFO, "CPU[%04x]: IPI #%08x PQ=%x target=??\n",
+				pir, xs->ipi_irq, pq);
+
+
 
 	__xive_cache_scrub(xs->xive, xive_cache_eqc, xs->eq_blk,
 			   xs->eq_idx + XIVE_EMULATION_PRIO,
