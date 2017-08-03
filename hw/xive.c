@@ -915,9 +915,11 @@ static void xive_init_emu_eq(uint32_t vp_blk, uint32_t vp_idx,
 static uint32_t *xive_get_eq_buf(uint32_t eq_blk, uint32_t eq_idx)
 {
 	struct xive *x = xive_from_vc_blk(eq_blk);
-	struct xive_eq *eq = xive_get_eq(x, eq_idx);
+	struct xive_eq *eq;
 	uint64_t addr;
 
+	assert(x);
+	eq = xive_get_eq(x, eq_idx);
 	assert(eq);
 	assert(eq->w0 & EQ_W0_VALID);
 	addr = (((uint64_t)eq->w2) & 0x0fffffff) << 32 | eq->w3;
@@ -2215,6 +2217,8 @@ static inline bool xive_eq_for_target(uint32_t target, uint8_t prio,
 
 	/* Find the VP structrure where we stashed the EQ number */
 	vp = xive_get_vp(x, vp_idx);
+	if (!vp)
+		return false;
 
 	/* Grab it, it's in the pressure relief interrupt field,
 	 * top 4 bits are the block (word 1).
