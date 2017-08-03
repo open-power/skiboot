@@ -450,7 +450,7 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 {
 	uint64_t nx_status;
 	uint64_t nx_dma_fir;
-	uint64_t nx_pbi_fir;
+	uint64_t nx_pbi_fir_val;
 	int i;
 
 	/* Get NX status register value. */
@@ -476,7 +476,7 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	}
 
 	/* Get PowerBus Interface FIR data register value. */
-	if (xscom_read(flat_chip_id, nx_pbi_fir, &nx_pbi_fir) != 0) {
+	if (xscom_read(flat_chip_id, nx_pbi_fir, &nx_pbi_fir_val) != 0) {
 		prerror("HMI: XSCOM error reading NX_PBI_FIR\n");
 		return;
 	}
@@ -488,7 +488,7 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 						|= nx_dma_xstop_bits[i].reason;
 
 	for (i = 0; i < ARRAY_SIZE(nx_pbi_xstop_bits); i++)
-		if (nx_pbi_fir & PPC_BIT(nx_pbi_xstop_bits[i].bit))
+		if (nx_pbi_fir_val & PPC_BIT(nx_pbi_xstop_bits[i].bit))
 			hmi_evt->u.xstop_error.xstop_reason
 						|= nx_pbi_xstop_bits[i].reason;
 
