@@ -591,6 +591,7 @@ static bool insert_bl_prot_range(struct blocklevel_range *ranges, struct bl_prot
 		memcpy(&new_ranges[insert_pos], &range, sizeof(range));
 		ranges->prot = new_ranges;
 		ranges->n_prot++;
+		prot = new_ranges;
 	}
 
 	/* Probably only worth mergeing when we're low on space */
