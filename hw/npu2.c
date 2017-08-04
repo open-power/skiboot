@@ -1236,6 +1236,42 @@ static void npu2_probe_phb(struct dt_node *dn)
 		return;
 	}
 
+	if (!is_p9dd1()) {
+		/* TODO: Clean this up with register names, etc. when we get
+		 * time. This just turns NVLink mode on in each brick and should
+		 * get replaced with a patch from ajd once we've worked out how
+		 * things are going to work there.
+		 *
+		 * Obviously if the year is now 2020 that didn't happen and you
+		 * should fix this :-) */
+		xscom_write_mask(gcid, 0x5011000, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+		xscom_write_mask(gcid, 0x5011030, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+		xscom_write_mask(gcid, 0x5011060, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+		xscom_write_mask(gcid, 0x5011090, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+		xscom_write_mask(gcid, 0x5011200, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+		xscom_write_mask(gcid, 0x5011230, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+		xscom_write_mask(gcid, 0x5011260, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+		xscom_write_mask(gcid, 0x5011290, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+		xscom_write_mask(gcid, 0x5011400, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+		xscom_write_mask(gcid, 0x5011430, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+		xscom_write_mask(gcid, 0x5011460, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+		xscom_write_mask(gcid, 0x5011490, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+
+		xscom_write_mask(gcid, 0x50110c0, PPC_BIT(53), PPC_BIT(53));
+		xscom_write_mask(gcid, 0x50112c0, PPC_BIT(53), PPC_BIT(53));
+		xscom_write_mask(gcid, 0x50114c0, PPC_BIT(53), PPC_BIT(53));
+		xscom_write_mask(gcid, 0x50110f1, PPC_BIT(41), PPC_BIT(41));
+		xscom_write_mask(gcid, 0x50112f1, PPC_BIT(41), PPC_BIT(41));
+		xscom_write_mask(gcid, 0x50114f1, PPC_BIT(41), PPC_BIT(41));
+
+		xscom_write_mask(gcid, 0x5011110, PPC_BIT(0), PPC_BIT(0));
+		xscom_write_mask(gcid, 0x5011130, PPC_BIT(0), PPC_BIT(0));
+		xscom_write_mask(gcid, 0x5011310, PPC_BIT(0), PPC_BIT(0));
+		xscom_write_mask(gcid, 0x5011330, PPC_BIT(0), PPC_BIT(0));
+		xscom_write_mask(gcid, 0x5011510, PPC_BIT(0), PPC_BIT(0));
+		xscom_write_mask(gcid, 0x5011530, PPC_BIT(0), PPC_BIT(0));
+	}
+
 	index = dt_prop_get_u32(dn, "ibm,npu-index");
 	phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
 	links = dt_prop_get_u32(dn, "ibm,npu-links");
