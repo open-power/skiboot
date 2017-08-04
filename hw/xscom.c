@@ -577,6 +577,21 @@ int _xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val, bool take_loc
 }
 opal_call(OPAL_XSCOM_WRITE, xscom_write, 3);
 
+/*
+ * Perform a xscom read-modify-write.
+ */
+int xscom_write_mask(uint32_t partid, uint64_t pcb_addr, uint64_t val, uint64_t mask)
+{
+	int rc;
+	uint64_t old_val;
+
+	rc = xscom_read(partid, pcb_addr, &old_val);
+	if (rc)
+		return rc;
+	val = (old_val & ~mask) | (val & mask);
+	return xscom_write(partid, pcb_addr, val);
+}
+
 int xscom_readme(uint64_t pcb_addr, uint64_t *val)
 {
 	return xscom_read(this_cpu()->chip_id, pcb_addr, val);

@@ -230,7 +230,7 @@ static inline int xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val)
 static inline int xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val) {
 	return _xscom_write(partid, pcb_addr, val, true);
 }
-
+extern int xscom_write_mask(uint32_t partid, uint64_t pcb_addr, uint64_t val, uint64_t mask);
 
 /* This chip SCOM access */
 extern int xscom_readme(uint64_t pcb_addr, uint64_t *val);
