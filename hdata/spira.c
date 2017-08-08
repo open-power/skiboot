@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1270,7 +1270,9 @@ int parse_hdat(bool is_opal)
 	 */
 	dt_add_property_cells(dt_root, "#address-cells", 2);
 	dt_add_property_cells(dt_root, "#size-cells", 2);
-	dt_add_property_string(dt_root, "lid-type", is_opal ? "opal" : "phyp");
+
+	if (proc_gen < proc_gen_p9)
+		dt_add_property_string(dt_root, "lid-type", is_opal ? "opal" : "phyp");
 
 	/* Add any BMCs and enable the LPC UART */
 	bmc_parse();
