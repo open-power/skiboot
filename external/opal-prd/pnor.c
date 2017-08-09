@@ -32,6 +32,25 @@
 #include "pnor.h"
 #include "opal-prd.h"
 
+#define FDT_FLASH_PATH "/proc/device-tree/chosen/ibm,system-flash"
+
+bool pnor_available(struct pnor *pnor)
+{
+	/* --pnor is specified */
+	if (pnor->path) {
+		if (access(pnor->path, R_OK | W_OK) == 0)
+			return true;
+
+		pr_log(LOG_ERR, "PNOR: Does not have permission to read pnor: %m");
+		return false;
+	}
+
+	if (access(FDT_FLASH_PATH, R_OK) == 0)
+		return true;
+
+	return false;
+}
+
 int pnor_init(struct pnor *pnor)
 {
 	int rc;

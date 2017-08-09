@@ -23,5 +23,6 @@ extern int pnor_operation(struct pnor *pnor, const char *name,
 
 extern int pnor_init(struct pnor *pnor);
 extern void pnor_close(struct pnor *pnor);
+extern bool pnor_available(struct pnor *pnor);
 
 #endif /*PNOR_H*/

@@ -1949,10 +1949,16 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 
 	fixup_hinterface_table();
 
-	rc = pnor_init(&ctx->pnor);
-	if (rc) {
-		pr_log(LOG_ERR, "PNOR: Failed to open pnor: %m");
-		goto out_close;
+	if (pnor_available(&ctx->pnor)) {
+		rc = pnor_init(&ctx->pnor);
+		if (rc) {
+			pr_log(LOG_ERR, "PNOR: Failed to open pnor: %m");
+			goto out_close;
+		}
+	} else {
+		/* Disable PNOR function pointers */
+		hinterface.pnor_read = NULL;
+		hinterface.pnor_write = NULL;
 	}
 
 	ipmi_init(ctx);
