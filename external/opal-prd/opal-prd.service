@@ -4,7 +4,7 @@ ConditionVirtualization=false
 ConditionPathExists=/sys/firmware/devicetree/base/ibm,opal/diagnostics
 
 [Service]
-ExecStart=/usr/sbin/opal-prd --pnor /dev/mtd0
+ExecStart=/usr/sbin/opal-prd
 Restart=always
 
 [Install]
