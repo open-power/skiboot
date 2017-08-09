@@ -740,3 +740,8 @@ int64_t npu2_dev_procedure(void *dev, struct pci_cfg_reg_filter *pcrf,
 
 	return npu_dev_procedure_read(ndev, offset - pcrf->start, len, data);
 }
+
+void npu2_dev_procedure_reset(struct npu2_dev *dev)
+{
+	npu2_clear_link_flag(dev, NPU2_DEV_DL_RESET);
+}
