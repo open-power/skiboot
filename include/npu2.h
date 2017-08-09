@@ -156,5 +156,6 @@ int64_t npu2_dev_procedure(void *dev, struct pci_cfg_reg_filter *pcrf,
 			   uint32_t offset, uint32_t len, uint32_t *data,
 			   bool write);
 void npu2_set_link_flag(struct npu2_dev *ndev, uint8_t flag);
+void npu2_clear_link_flag(struct npu2_dev *ndev, uint8_t flag);
 extern int nv_zcal_nominal;
 #endif /* __NPU2_H */

@@ -147,6 +147,13 @@ void npu2_set_link_flag(struct npu2_dev *ndev, uint8_t flag)
 			     VENDOR_CAP_PCI_DEV_OFFSET, 1, ndev->link_flags);
 }
 
+void npu2_clear_link_flag(struct npu2_dev *ndev, uint8_t flag)
+{
+	ndev->link_flags &= ~flag;
+	PCI_VIRT_CFG_INIT_RO(ndev->pvd, VENDOR_CAP_START +
+			     VENDOR_CAP_PCI_DEV_OFFSET, 1, ndev->link_flags);
+}
+
 static inline void npu2_ioda_sel(struct npu2 *p, uint32_t table,
 				uint32_t index, bool autoinc)
 {
