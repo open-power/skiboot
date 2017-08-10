@@ -254,6 +254,8 @@ static struct dt_node *add_pec_stack(const struct cechub_io_hub *hub,
 {
 	struct dt_node *stack;
 	u64 eq[8];
+	uint32_t version;
+	u8 *gen4;
 	int i;
 
 	stack = dt_new_addr(pbcq, "stack", stack_index);
@@ -275,12 +277,25 @@ static struct dt_node *add_pec_stack(const struct cechub_io_hub *hub,
 	for (i = 0; i < 4; i++) /* gen 3 eq settings */
 		eq[i] = be64_to_cpu(hub->phb_lane_eq[phb_index][i]);
 
-	for (i = 0; i < 4; i++) /* gen 4 eq settings */
-		eq[i+4] = be64_to_cpu(hub->phb4_lane_eq[phb_index][i]);
+	/* Lane-eq settings are packed 2 bytes per lane for 16 lanes
+	 * On P9 DD1, 2 bytes per lane are used in the hardware
+	 * On P9 DD2, 1 byte  per lane is  used in the hardware
+	 */
+	version = mfspr(SPR_PVR);
+	if (is_power9n(version) &&
+	    (PVR_VERS_MAJ(version) == 1)) {
+		dt_add_property_u64s(stack, "ibm,lane-eq", eq[0], eq[1],
+				     eq[2], eq[3], eq[4], eq[5], eq[6], eq[7]);
+		return stack;
+	}
 
-	dt_add_property_u64s(stack, "ibm,lane-eq", eq[0], eq[1], eq[2], eq[3],
-			     eq[4], eq[5], eq[6], eq[7]);
+	/* Repack 2 byte lane settings into 1 byte */
+	gen4 = (u8 *)&eq[4];
+	for (i = 0; i < 16; i++)
+		gen4[i] = gen4[2*i];
 
+	dt_add_property_u64s(stack, "ibm,lane-eq", eq[0], eq[1],
+			     eq[2], eq[3], eq[4], eq[5]);
 	return stack;
 }
 
