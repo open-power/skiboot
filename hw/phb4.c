@@ -2700,8 +2700,11 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		pci_slot_set_state(slot, PHB4_SLOT_NORMAL);
 		return slot->ops.freset(slot);
 	default:
-		PHBERR(p, "CRESET: Unexpected slot state %08x\n",
+		PHBERR(p, "CRESET: Unexpected slot state %08x, resetting...\n",
 		       slot->state);
+		pci_slot_set_state(slot, PHB4_SLOT_NORMAL);
+		return slot->ops.creset(slot);
+
 	}
 
 error:
