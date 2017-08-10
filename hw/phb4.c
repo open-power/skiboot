@@ -1925,7 +1925,6 @@ static void phb4_eeh_dump_regs(struct phb4 *p)
 	PHBERR(p, "            devCmdStatus = %08x\n", s->devCmdStatus);
 	PHBERR(p, "            devSecStatus = %08x\n", s->devSecStatus);
 	PHBERR(p, "         rootErrorStatus = %08x\n", s->rootErrorStatus);
-	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
 	PHBERR(p, "         corrErrorStatus = %08x\n", s->corrErrorStatus);
 	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
 
