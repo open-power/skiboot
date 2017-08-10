@@ -21,18 +21,6 @@
 
 #include "hdata.h"
 
-static bool is_power9n(uint32_t version)
-{
-	/*
-	 * Bit 13 tells us:
-	 *   0 = Scale out (aka Nimbus)
-	 *   1 = Scale up  (aka Cumulus)
-	 */
-	if ((version >> 13) & 1)
-		return false;
-	return true;
-}
-
 struct dt_node * add_core_common(struct dt_node *cpus,
 				 const struct sppcia_cpu_cache *cache,
 				 const struct sppaca_cpu_timebase *tb,

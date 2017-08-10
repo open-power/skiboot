@@ -17,6 +17,8 @@
 #ifndef __HDATA_H
 #define __HDATA_H
 
+#include <processor.h>
+
 struct dt_node;
 
 extern void memory_parse(void);
@@ -31,6 +33,20 @@ extern void vpd_parse(void);
 
 extern struct dt_node *find_xscom_for_chip(uint32_t chip_id);
 extern uint32_t pcid_to_chip_id(uint32_t proc_chip_id);
+
+static __unused bool is_power9n(uint32_t version)
+{
+	if (PVR_TYPE(version) != PVR_TYPE_P9)
+		return false;
+	/*
+	 * Bit 13 tells us:
+	 *   0 = Scale out (aka Nimbus)
+	 *   1 = Scale up  (aka Cumulus)
+	 */
+	if ((version >> 13) & 1)
+		return false;
+	return true;
+}
 
 extern struct dt_node *add_core_common(struct dt_node *cpus,
 				       const struct sppaca_cpu_cache *cache,
