@@ -2608,6 +2608,10 @@ static int64_t phb4_creset(struct pci_slot *slot)
 	struct phb4 *p = phb_to_phb4(slot->phb);
 	uint64_t pbcq_status, reg;
 
+	/* Don't even try fixing a broken PHB */
+	if (p->state == PHB4_STATE_BROKEN)
+		return OPAL_HARDWARE;
+
 	switch (slot->state) {
 	case PHB4_SLOT_NORMAL:
 	case PHB4_SLOT_CRESET_START:
