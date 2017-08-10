@@ -69,6 +69,12 @@ void nx_p9_rng_init(void)
 	}
 }
 
+static void nx_init_one(struct dt_node *node)
+{
+	nx_create_rng_node(node);
+	nx_create_crypto_node(node);
+	nx_create_compress_node(node);
+}
 
 void nx_init(void)
 {
@@ -77,8 +83,10 @@ void nx_init(void)
 	nx_p9_rng_init();
 
 	dt_for_each_compatible(dt_root, node, "ibm,power-nx") {
-		nx_create_rng_node(node);
-		nx_create_crypto_node(node);
-		nx_create_compress_node(node);
+		nx_init_one(node);
+	}
+
+	dt_for_each_compatible(dt_root, node, "ibm,power9-nx") {
+		nx_init_one(node);
 	}
 }

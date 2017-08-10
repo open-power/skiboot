@@ -741,7 +741,6 @@ static bool add_chiptod_new(void)
 static void add_nx_node(u32 gcid)
 {
 	struct dt_node *nx;
-	const char *cp_str;
 	u32 addr;
 	u32 size;
 	struct dt_node *xscom;
@@ -761,25 +760,28 @@ static void add_nx_node(u32 gcid)
 	addr = 0x2010000;
 	size = 0x0004000;
 
-	switch (proc_gen) {
-	case proc_gen_p7:
-		cp_str = "ibm,power7-nx";
-		break;
-	case proc_gen_p8:
-		cp_str = "ibm,power8-nx";
-		break;
-	case proc_gen_p9:
-		cp_str = "ibm,power9-nx";
-		break;
-	default:
-		return;
-	}
 	nx = dt_new_addr(xscom, "nx", addr);
 	if (!nx)
 		return;
 
+	switch (proc_gen) {
+	case proc_gen_p7:
+		dt_add_property_strings(nx, "compatible", "ibm,power-nx",
+					"ibm,power7-nx");
+		break;
+	case proc_gen_p8:
+		dt_add_property_strings(nx, "compatible", "ibm,power-nx",
+					"ibm,power8-nx");
+		break;
+	case proc_gen_p9:
+		/* POWER9 NX is not software compatible with P7/P8 NX */
+		dt_add_property_strings(nx, "compatible", "ibm,power9-nx");
+		break;
+	default:
+		return;
+	}
+
 	dt_add_property_cells(nx, "reg", addr, size);
-	dt_add_property_strings(nx, "compatible", "ibm,power-nx", cp_str);
 }
 
 static void add_nx(void)
