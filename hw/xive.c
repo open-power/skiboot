@@ -601,6 +601,8 @@ static bool xive_decode_vp(uint32_t vp, uint32_t *blk, uint32_t *idx,
 
 	/* PIR case */
 	if (((vp >> 30) & 1) == 0) {
+		if (find_cpu_by_pir(index) == NULL)
+			return false;
 		if (blk)
 			*blk = PIR2VP_BLK(index);
 		if (idx)
@@ -656,6 +658,8 @@ static bool xive_decode_vp(uint32_t vp, uint32_t *blk, uint32_t *idx,
 
 	/* PIR case */
 	if (((vp >> 30) & 1) == 0) {
+		if (find_cpu_by_pir(index) == NULL)
+			return false;
 		if (blk)
 			*blk = PIR2VP_BLK(index);
 		if (idx)
