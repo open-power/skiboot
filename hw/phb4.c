@@ -2261,16 +2261,53 @@ static void phb4_train_info(struct phb4 *p, uint64_t reg, unsigned long time)
 {
 	char s[80];
 
-	snprintf(s, sizeof(s), "TRACE: 0x%016llx % 2lims",
+	snprintf(s, sizeof(s), "TRACE:0x%016llx % 2lims",
 		 reg, tb_to_msecs(time));
 
 	if (reg & PHB_PCIE_DLP_TL_LINKACT)
-		snprintf(s, sizeof(s), "%s trained", s);
+		snprintf(s, sizeof(s), "%s trained ", s);
 	else if (reg & PHB_PCIE_DLP_TRAINING)
 		snprintf(s, sizeof(s), "%s training", s);
 	else if (reg & PHB_PCIE_DLP_INBAND_PRESENCE)
 		snprintf(s, sizeof(s), "%s presence", s);
+	else
+		snprintf(s, sizeof(s), "%s         ", s);
 
+	snprintf(s, sizeof(s), "%s GEN%lli:x%02lli:", s,
+		 GETFIELD(PHB_PCIE_DLP_LINK_SPEED, reg),
+		 GETFIELD(PHB_PCIE_DLP_LINK_WIDTH, reg));
+
+	switch (GETFIELD(PHB_PCIE_DLP_LTSSM_TRC, reg)) {
+	case PHB_PCIE_DLP_LTSSM_RESET:
+		snprintf(s, sizeof(s), "%sreset", s);
+		break;
+	case PHB_PCIE_DLP_LTSSM_DETECT:
+		snprintf(s, sizeof(s), "%sdetect", s);
+		break;
+	case PHB_PCIE_DLP_LTSSM_POLLING:
+		snprintf(s, sizeof(s), "%spolling", s);
+		break;
+	case PHB_PCIE_DLP_LTSSM_CONFIG:
+		snprintf(s, sizeof(s), "%sconfig", s);
+		break;
+	case PHB_PCIE_DLP_LTSSM_L0:
+		snprintf(s, sizeof(s), "%sL0", s);
+		break;
+	case PHB_PCIE_DLP_LTSSM_REC:
+		snprintf(s, sizeof(s), "%srecovery", s);
+		break;
+	case PHB_PCIE_DLP_LTSSM_L1:
+		snprintf(s, sizeof(s), "%sL1", s);
+		break;
+	case PHB_PCIE_DLP_LTSSM_L2:
+		snprintf(s, sizeof(s), "%sL2", s);
+		break;
+	case PHB_PCIE_DLP_LTSSM_HOTRESET:
+		snprintf(s, sizeof(s), "%shotreset", s);
+		break;
+	default:
+		snprintf(s, sizeof(s), "%sunvalid", s);
+	}
 	PHBERR(p, "%s\n", s);
 }
 
@@ -2563,6 +2600,13 @@ static int64_t phb4_freset(struct pci_slot *slot)
 	case PHB4_SLOT_FRESET_ASSERT_DELAY:
 		/* Clear link errors before we deassert PERST */
 		phb4_err_clear_regb(p);
+
+		if (pci_tracing) {
+			/* Enable tracing */
+			reg = in_be64(p->regs + PHB_PCIE_DLP_TRWCTL);
+			out_be64(p->regs + PHB_PCIE_DLP_TRWCTL,
+				 reg | PHB_PCIE_DLP_TRWCTL_EN);
+		}
 
 		PHBDBG(p, "FRESET: Deassert\n");
 		reg = in_be64(p->regs + PHB_PCIE_CRESET);
