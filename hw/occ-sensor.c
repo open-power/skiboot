@@ -567,7 +567,7 @@ void occ_sensors_init(void)
 		prerror("OCC: Failed to create sensor groups node\n");
 		return;
 	}
-	dt_add_property_string(sg, "compatible", "ibm,opal-occ-sensor-group");
+	dt_add_property_string(sg, "compatible", "ibm,opal-sensor-group");
 
 	for_each_chip(chip) {
 		struct occ_sensor_data_header *hb;

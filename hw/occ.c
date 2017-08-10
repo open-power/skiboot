@@ -1533,6 +1533,7 @@ void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, int nr_phandles,
 		dt_add_property_string(node, "type", limits[j].str);
 		dt_add_property_cells(node, "ibm,chip-id", chipid);
 		dt_add_property(node, "sensors", phandles, nr_phandles);
+		dt_add_property_cells(node, "ops", OPAL_SENSOR_GROUP_CLEAR);
 	}
 }
 
