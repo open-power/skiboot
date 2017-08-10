@@ -2623,6 +2623,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			do_capp_recovery_scoms(p);
 #endif
 
+		phb4_prepare_link_change(slot, false);
 		/* Clear error inject register, preventing recursive errors */
 		xscom_write(p->chip_id, p->pe_xscom + 0x2, 0x0);
 
