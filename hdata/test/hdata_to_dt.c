@@ -25,6 +25,7 @@
 #include <mem_region-malloc.h>
 
 #include <interrupts.h>
+#include <bitutils.h>
 
 #include <valgrind/memcheck.h>
 
@@ -52,7 +53,14 @@ unsigned long tb_hz = 512000000;
 
 /* Don't include processor-specific stuff. */
 #define __PROCESSOR_H
-#define PVR_TYPE(_pvr)	_pvr
+/* PVR bits */
+#define SPR_PVR_TYPE			0xffff0000
+#define SPR_PVR_VERS_MAJ		0x00000f00
+#define SPR_PVR_VERS_MIN		0x000000ff
+
+#define PVR_TYPE(_pvr)		GETFIELD(SPR_PVR_TYPE, _pvr)
+#define PVR_VERS_MAJ(_pvr)	GETFIELD(SPR_PVR_VERS_MAJ, _pvr)
+#define PVR_VERS_MIN(_pvr)	GETFIELD(SPR_PVR_VERS_MIN, _pvr)
 
 /* PVR definitions - copied from skiboot include/processor.h */
 #define PVR_TYPE_P7	0x003f
@@ -61,6 +69,12 @@ unsigned long tb_hz = 512000000;
 #define PVR_TYPE_P8	0x004d
 #define PVR_TYPE_P8NVL	0x004c
 #define PVR_TYPE_P9	0x004e
+#define PVR_P7		0x003f0201
+#define PVR_P7P		0x004a0201
+#define PVR_P8E		0x004b0201
+#define PVR_P8		0x004d0200
+#define PVR_P8NVL	0x004c0100
+#define PVR_P9		0x004e0200
 
 #define SPR_PVR		0x11f	/* RO: Processor version register */
 
@@ -71,15 +85,12 @@ struct cpu_thread {
 };
 
 struct cpu_thread __boot_cpu, *boot_cpu = &__boot_cpu;
-static unsigned long fake_pvr_type = PVR_TYPE_P7;
-
-// Fake PVR_VERS_MAJ to 1
-#define PVR_VERS_MAJ(v) (1)
+static unsigned long fake_pvr = PVR_P7;
 
 static inline unsigned long mfspr(unsigned int spr)
 {
 	assert(spr == SPR_PVR);
-	return fake_pvr_type;
+	return fake_pvr;
 }
 
 struct dt_node *add_ics_node(void)
@@ -241,19 +252,19 @@ int main(int argc, char *argv[])
 			blobs = true;
 			opt_count++;
 		} else if (strcmp(argv[i], "-7") == 0) {
-			fake_pvr_type = PVR_TYPE_P7;
+			fake_pvr = PVR_P7;
 			proc_gen = proc_gen_p7;
 			opt_count++;
 		} else if (strcmp(argv[i], "-8E") == 0) {
-			fake_pvr_type = PVR_TYPE_P8;
+			fake_pvr = PVR_P8;
 			proc_gen = proc_gen_p8;
 			opt_count++;
 		} else if (strcmp(argv[i], "-8") == 0) {
-			fake_pvr_type = PVR_TYPE_P8;
+			fake_pvr = PVR_P8;
 			proc_gen = proc_gen_p8;
 			opt_count++;
 		} else if (strcmp(argv[i], "-9") == 0) {
-			fake_pvr_type = PVR_TYPE_P9;
+			fake_pvr = PVR_P9;
 			proc_gen = proc_gen_p9;
 			opt_count++;
 		}

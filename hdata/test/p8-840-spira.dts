@@ -32,7 +32,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x28>;
-			cpu-version = <0x4d>;
+			cpu-version = <0x4d0200>;
 			64-bit;
 			32-64-bridge;
 			graphics;
@@ -75,7 +75,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x60>;
-			cpu-version = <0x4d>;
+			cpu-version = <0x4d0200>;
 			64-bit;
 			32-64-bridge;
 			graphics;
@@ -118,7 +118,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x68>;
-			cpu-version = <0x4d>;
+			cpu-version = <0x4d0200>;
 			64-bit;
 			32-64-bridge;
 			graphics;
@@ -161,7 +161,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0xb0>;
-			cpu-version = <0x4d>;
+			cpu-version = <0x4d0200>;
 			64-bit;
 			32-64-bridge;
 			graphics;
@@ -204,7 +204,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0xe8>;
-			cpu-version = <0x4d>;
+			cpu-version = <0x4d0200>;
 			64-bit;
 			32-64-bridge;
 			graphics;
@@ -247,7 +247,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0xf0>;
-			cpu-version = <0x4d>;
+			cpu-version = <0x4d0200>;
 			64-bit;
 			32-64-bridge;
 			graphics;
@@ -896,8 +896,8 @@
 
 		nx@2010000 {
 			phandle = <0x4b>;
-			reg = <0x2010000 0x4000>;
 			compatible = "ibm,power-nx", "ibm,power8-nx";
+			reg = <0x2010000 0x4000>;
 		};
 
 		pbcq@2012000 {
@@ -958,8 +958,8 @@
 
 		nx@2010000 {
 			phandle = <0x4c>;
-			reg = <0x2010000 0x4000>;
 			compatible = "ibm,power-nx", "ibm,power8-nx";
+			reg = <0x2010000 0x4000>;
 		};
 
 		pbcq@2012000 {
