@@ -687,7 +687,7 @@ static int64_t npu_dev_procedure_write(struct npu2_dev *dev, uint32_t offset,
 		name = npu_procedures[data]->name;
 		if (dev->procedure_number == data
 		    && !(dev->procedure_status & PROCEDURE_COMPLETE))
-			NPU2DEVINF(dev, "Restarting procuedure %s\n", name);
+			NPU2DEVINF(dev, "Restarting procedure %s\n", name);
 		else
 			NPU2DEVINF(dev, "Starting procedure %s\n", name);
 
