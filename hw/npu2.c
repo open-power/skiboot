@@ -1865,8 +1865,8 @@ static int opal_npu_destroy_context(uint64_t phb_id, uint64_t pid, uint64_t bdf)
 
 	/* And zero the entry */
 	npu2_write(p, NPU2_XTS_PID_MAP + id*0x20, 0);
-	unlock(&p->lock);
 out:
+	unlock(&p->lock);
 	return rc;
 }
 opal_call(OPAL_NPU_DESTROY_CONTEXT, opal_npu_destroy_context, 3);
