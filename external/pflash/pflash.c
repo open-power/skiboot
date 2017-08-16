@@ -753,6 +753,8 @@ int main(int argc, char *argv[])
 			disable_4B = true;
 			break;
 		case 'r':
+			if (!optarg)
+				break;
 			do_read = true;
 			free(read_file);
 			read_file = strdup(optarg);
@@ -767,6 +769,8 @@ int main(int argc, char *argv[])
 			direct = true;
 			break;
 		case 'p':
+			if (!optarg)
+				break;
 			program = true;
 			free(write_file);
 			write_file = strdup(optarg);
@@ -803,6 +807,8 @@ int main(int argc, char *argv[])
 			flash_side = atoi(optarg);
 			break;
 		case 'T':
+			if (!optarg)
+				break;
 			ffs_toc_seen = true;
 			flash.toc = strtoul(optarg, &endptr, 0);
 			if (*endptr != '\0') {
