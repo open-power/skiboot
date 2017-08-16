@@ -182,6 +182,7 @@ static void print_flash_info(struct flash_details *flash)
 		return;
 
 	next_toc = print_ffs_info(ffsh, toc);
+	ffs_close(ffsh);
 	while(next_toc != toc) {
 		struct ffs_handle *next_ffsh;
 
