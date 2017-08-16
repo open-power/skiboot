@@ -191,6 +191,7 @@ static void print_flash_info(struct flash_details *flash)
 		if (!next_ffsh)
 			break;
 		next_toc = print_ffs_info(next_ffsh, next_toc);
+		ffs_close(next_ffsh);
 	}
 	flash->toc = toc;
 }
