@@ -372,18 +372,27 @@ static int set_ecc(struct flash_details *flash, uint32_t start, uint32_t size)
 	uint32_t i = start + 8;
 	uint8_t ecc = 0;
 	bool confirm;
+	int rc;
 
 	printf("About to erase and set ECC bits in region 0x%08x to 0x%08x\n", start, start + size);
 	confirm = check_confirm();
 	if (!confirm)
 		return 1;
 
-	erase_range(flash, start, size, true, NULL, 0);
+	rc = erase_range(flash, start, size, true, NULL, 0);
+	if (rc) {
+		fprintf(stderr, "Couldn't erase region to mark with ECC\n");
+		return rc;
+	}
 
 	printf("Programming ECC bits...\n");
 	progress_init(size);
 	while (i < start + size) {
-		blocklevel_write(flash->bl, i, &ecc, sizeof(ecc));
+		rc = blocklevel_write(flash->bl, i, &ecc, sizeof(ecc));
+		if (rc) {
+			fprintf(stderr, "\nError setting ECC byte at 0x%08x\n", i);
+			return rc;
+		}
 		i += 9;
 		progress_tick(i - start);
 	}
