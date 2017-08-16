@@ -53,16 +53,21 @@ package management tools.
 To build on Ubuntu:
 ```
 apt-get install gcc-powerpc64le-linux-gnu gcc valgrind \
-	expect libssl-dev device-tree-compiler
-CROSS=powerpc64-linux-gnu- make -j`nproc`
+	expect libssl-dev device-tree-compiler make \
+	xz-utils
+CROSS=powerpc64le-linux-gnu- make -j`nproc`
 ```
 
 To build on Fedora:
 ```
-dnf install gcc-powerpc64-linux-gnu binutils-powerpc64-linux-gnu gcc make \
-    diffutils findutils expect valgrind-devel dtc openssl-devel
-CROSS=powerpc64-linux-gnu- make -j`nproc`
+dnf install gcc-powerpc64le-linux-gnu binutils-powerpc64-linux-gnu gcc make \
+    diffutils findutils expect valgrind-devel dtc openssl-devel xz
+CROSS=powerpc64le-linux-gnu- make -j`nproc`
 ```
+
+(The little-endian powerpc64le compilers in Ubuntu and Fedora are actually
+bi-endian and can compile skiboot even though it's big-endian. We recommend
+installing a little-endian toolchain if you plan on building other projects.)
 
 On any POWER system with a bi-endian system compiler:
 ```
