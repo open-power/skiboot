@@ -677,12 +677,12 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 	chip->ec_level |= (val >> 8) & 0xf;
 
 	/*
-	 * On P9 DD1.0, grab the ECID bits to differenciate
-	 * DD1.01, 1.02 etc...
+	 * On P9, grab the ECID bits to differenciate
+	 * DD1.01, 1.02, 2.00, etc...
 	 */
 	if (chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
 		chip->ec_rev = 0;
-	} else if (proc_gen == proc_gen_p9 && chip->ec_level == 0x10) {
+	} else if (proc_gen == proc_gen_p9) {
 		uint64_t ecid2 = 0;
 		uint8_t rev;
 		xscom_read(chip->id, 0x18002, &ecid2);
@@ -702,7 +702,8 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 		default:
 			rev = 0;
 		}
-		printf("P9 DD1.0%d detected\n", rev);
+		printf("P9 DD%i.%i%d detected\n", 0xf & (chip->ec_level >> 4),
+		       chip->ec_level & 0xf, rev);
 		chip->ec_rev = rev;
 	}
 }
