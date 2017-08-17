@@ -43,7 +43,7 @@ void nx_create_rng_node(struct dt_node *node)
 		xbar = pb_base + NX_P8_RNG_BAR;
 		xcfg = pb_base + NX_P8_RNG_CFG;
 		addr_mask = NX_P8_RNG_BAR_ADDR;
-	} else if (dt_node_is_compatible(node, "ibm, power9-nx")) {
+	} else if (dt_node_is_compatible(node, "ibm,power9-nx")) {
 		prlog(PR_INFO, "NX%d: POWER9 nx-rng not yet supported\n",
 		      gcid);
 		return;
