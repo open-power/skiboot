@@ -175,6 +175,7 @@ static void pci_iov_init_VF(struct pci_device *pd, struct pci_device *vf)
 {
 	vf->is_bridge		= false;
 	vf->is_multifunction	= false;
+	vf->is_vf		= true;
 	vf->dev_type		= PCIE_TYPE_ENDPOINT;
 	vf->scan_map		= -1;
 	vf->vdid		= pd->vdid;

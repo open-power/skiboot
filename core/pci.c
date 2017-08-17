@@ -273,6 +273,7 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	}
 	pd->is_multifunction = !!(htype & 0x80);
 	pd->is_bridge = (htype & 0x7f) != 0;
+	pd->is_vf = false;
 	pd->scan_map = 0xffffffff; /* Default */
 	pd->primary_bus = (bdfn >> 8);
 

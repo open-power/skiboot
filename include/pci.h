@@ -65,6 +65,7 @@ struct pci_device {
 	uint16_t		bdfn;
 	bool			is_bridge;
 	bool			is_multifunction;
+	bool			is_vf;
 	uint8_t			dev_type; /* PCIE */
 	uint8_t			primary_bus;
 	uint8_t			secondary_bus;
