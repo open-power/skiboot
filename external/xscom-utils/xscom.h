@@ -31,4 +31,8 @@ extern bool xscom_readable(uint64_t addr);
 
 extern uint32_t xscom_init(void);
 
+#ifndef PPC_BIT
+#define PPC_BIT(bit)		(0x8000000000000000UL >> (bit))
+#endif
+
 #endif /* __XSCOM_H */

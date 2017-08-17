@@ -25,9 +25,11 @@
 
 static void print_usage(int code)
 {
-	printf("usage: getscom [-c|--chip chip-id] addr\n");
+	printf("usage: getscom [-c|--chip chip-id] [-b|--list-bits] addr\n");
 	printf("       getscom -l|--list-chips\n");
 	printf("       getscom -v|--version\n");
+	printf("\n");
+	printf("       NB: --list-bits shows which PPC bits are set\n");
 	exit(code);
 }
 
@@ -88,6 +90,7 @@ int main(int argc, char *argv[])
 	uint32_t def_chip, chip_id = 0xffffffff;
 	bool list_chips = false;
 	bool no_work = false;
+	bool list_bits = false;
 	int rc;
 
 	while(1) {
@@ -96,10 +99,11 @@ int main(int argc, char *argv[])
 			{"list-chips",	no_argument,		NULL,	'l'},
 			{"help",	no_argument,		NULL,	'h'},
 			{"version",	no_argument,		NULL,	'v'},
+			{"list-bits",	no_argument,		NULL,	'b'},
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "-c:hlv", long_opts, &oidx);
+		c = getopt_long(argc, argv, "-c:bhlv", long_opts, &oidx);
 		if (c == EOF)
 			break;
 		switch(c) {
@@ -114,6 +118,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'l':
 			list_chips = true;
+			break;
+		case 'b':
+			list_bits = true;
 			break;
 		case 'v':
 			printf("xscom utils version %s\n", version);
@@ -150,7 +157,21 @@ int main(int argc, char *argv[])
 		fprintf(stderr,"Error %d reading XSCOM\n", rc);
 		exit(1);
 	}
-	printf("%016" PRIx64 "\n", val);
+
+	printf("%016" PRIx64, val);
+
+	if (list_bits) {
+		int i;
+
+		printf(" - set: ");
+
+		for (i = 0; i < 64; i++)
+			if (val & PPC_BIT(i))
+				printf("%d ", i);
+	}
+
+	putchar('\n');
+
 	return 0;
 }
 

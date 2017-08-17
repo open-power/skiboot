@@ -24,9 +24,6 @@
 #define DBG(fmt...)	do { if (verbose) printf(fmt); } while(0)
 #define ERR(fmt...)	do { fprintf(stderr, fmt); } while(0)
 
-#define PPC_BIT(bit)		(0x8000000000000000UL >> (bit))
-
-
 #define OCB_PIB_OCBCSR0_0x0006B011	0x0006B011
 #define OCB_PIB_OCBCSR0_ANDx0006B012	0x0006B012
 #define OCB_PIB_OCBCSR0_ORx0006B013	0x0006B013
