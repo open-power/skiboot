@@ -218,21 +218,18 @@ void pci_init_capabilities(struct phb *phb, struct pci_device *pd)
 	pci_init_pm_cap(phb, pd);
 }
 
-static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *parent,
-				       uint16_t bdfn)
+static bool pci_wait_crs(struct phb *phb, uint16_t bdfn, uint32_t *out_vdid)
 {
-	struct pci_device *pd = NULL;
 	uint32_t retries, vdid;
 	int64_t rc;
-	uint8_t htype;
 	bool had_crs = false;
 
 	for (retries = 0; retries < 40; retries++) {
 		rc = pci_cfg_read32(phb, bdfn, PCI_CFG_VENDOR_ID, &vdid);
 		if (rc)
-			return NULL;
+			return false;
 		if (vdid == 0xffffffff || vdid == 0x00000000)
-			return NULL;
+			return false;
 		if (vdid != 0xffff0001)
 			break;
 		had_crs = true;
@@ -240,10 +237,26 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
 	}
 	if (vdid == 0xffff0001) {
 		PCIERR(phb, bdfn, "CRS timeout !\n");
-		return NULL;
+		return false;
 	}
 	if (had_crs)
 		PCIDBG(phb, bdfn, "Probe success after %d CRS\n", retries);
+
+	if (out_vdid)
+		*out_vdid = vdid;
+	return true;
+}
+
+static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *parent,
+				       uint16_t bdfn)
+{
+	struct pci_device *pd = NULL;
+	uint32_t vdid;
+	int64_t rc;
+	uint8_t htype;
+
+	if (!pci_wait_crs(phb, bdfn, &vdid))
+		return NULL;
 
 	/* Perform a dummy write to the device in order for it to
 	 * capture it's own bus number, so any subsequent error
@@ -1835,14 +1848,26 @@ static int __pci_restore_bridge_buses(struct phb *phb,
 				      struct pci_device *pd,
 				      void *data __unused)
 {
-	if (!pd->is_bridge) {
-		uint32_t vdid;
+	uint32_t vdid;
 
-		/* Make all devices below a bridge "re-capture" the bdfn */
-		if (pci_cfg_read32(phb, pd->bdfn, PCI_CFG_VENDOR_ID, &vdid) == 0)
-			pci_cfg_write32(phb, pd->bdfn, PCI_CFG_VENDOR_ID, vdid);
-		return 0;
+	/* If the device is behind a switch, wait for the switch */
+	if (!pd->is_vf && !(pd->bdfn & 7) && pd->parent != NULL &&
+	    pd->parent->dev_type == PCIE_TYPE_SWITCH_DNPORT) {
+		if (!pci_bridge_wait_link(phb, pd->parent, true)) {
+			PCIERR(phb, pd->bdfn, "Timeout waiting for switch\n");
+			return -1;
+		}
 	}
+
+	/* Wait for config space to stop returning CRS */
+	if (!pci_wait_crs(phb, pd->bdfn, &vdid))
+		return -1;
+
+	/* Make all devices below a bridge "re-capture" the bdfn */
+	pci_cfg_write32(phb, pd->bdfn, PCI_CFG_VENDOR_ID, vdid);
+
+	if (!pd->is_bridge)
+		return 0;
 
 	pci_cfg_write8(phb, pd->bdfn, PCI_CFG_PRIMARY_BUS,
 		       pd->primary_bus);
