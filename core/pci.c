@@ -531,7 +531,7 @@ static bool pci_bridge_wait_link(struct phb *phb,
 	}
 
 	/*
-	 * If link state reporting isn't supported, wait 10 seconds
+	 * If link state reporting isn't supported, wait 1 second
 	 * if the downstream link was ever resetted.
 	 */
 	if (!(link_cap & PCICAP_EXP_LCAP_DL_ACT_REP)) {
@@ -556,7 +556,7 @@ static bool pci_bridge_wait_link(struct phb *phb,
 	}
 
 	if (!(link_sts & PCICAP_EXP_LSTAT_DLLL_ACT)) {
-		PCIERR(phb, pd->bdfn, "Timeout waitingfor downstream link\n");
+		PCIERR(phb, pd->bdfn, "Timeout waiting for downstream link\n");
 		return false;
 	}
 
