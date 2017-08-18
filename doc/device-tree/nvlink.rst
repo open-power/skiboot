@@ -105,7 +105,12 @@ Emulated PCI device bindings
                         vendor-id = <0x1014>;
                         ibm,gpu = <0x100002f7>; /* phandle pointing the associated GPU PCI device node */
 			memory-region = <0x10000abc>; /* phandle pointing to the GPU memory */
-			phandle = <0x100002fc>;
+                        ibm,nvlink-speed = <0x1>;
+
+                ; Denotes the speed the link is running at:
+                ; 0x3 == 20 Gbps, 0x8 = 25.78125 Gbps, 0x9 == 25.00000 Gbps
+
+                        phandle = <0x100002fc>;
                 };
 
                 pci@1 {

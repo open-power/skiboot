@@ -683,6 +683,14 @@ static int npu2_dn_fixup(struct phb *phb,
 	npu2_dn_fixup_gmb(pd->dn, dev);
 	dt_add_property_cells(pd->dn, "ibm,nvlink", dev->dt_node->phandle);
 
+	/* NVLink supports multiple speeds and device drivers need to know what
+	 * speed has been set by firmware. The speed is actually controlled by
+	 * Hostboot, so until we get a HDAT entry telling us what speed they
+	 * programmed we will just hard code it here and hope it matches. If it
+	 * doesn't it is always possible to manually override it when installing
+	 * the device driver. */
+	dt_add_property_cells(pd->dn, "ibm,nvlink-speed", 0x9);
+
 	/* NPU devices require a slot location to associate with GPUs */
 	dev->slot_label = dt_prop_get_def(pd->dn, "ibm,slot-label", NULL);
 	if (!dev->slot_label) {
