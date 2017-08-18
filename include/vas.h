@@ -131,6 +131,9 @@ extern __attrconst uint64_t vas_get_wcbs_bar(int chipid);
 #define VAS_64K_MODE_MASK		PPC_BIT(0)
 #define VAS_ACCEPT_PASTE_MASK		PPC_BIT(1)
 #define VAS_QUIESCE_REQ_MASK		PPC_BIT(4)
+#define VAS_ENABLE_WC_MMIO_BAR		PPC_BIT(6)
+#define VAS_ENABLE_UWC_MMIO_BAR		PPC_BIT(7)
+#define VAS_ENABLE_RMA_MMIO_BAR		PPC_BIT(8)
 #define VAS_HMI_ACTIVE_MASK		PPC_BIT(58)
 #define VAS_RG_IDLE_MASK		PPC_BIT(59)
 

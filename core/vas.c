@@ -103,6 +103,9 @@ static int init_north_ctl(struct proc_chip *chip)
 
 	val = SETFIELD(VAS_64K_MODE_MASK, val, true);
 	val = SETFIELD(VAS_ACCEPT_PASTE_MASK, val, true);
+	val = SETFIELD(VAS_ENABLE_WC_MMIO_BAR, val, true);
+	val = SETFIELD(VAS_ENABLE_UWC_MMIO_BAR, val, true);
+	val = SETFIELD(VAS_ENABLE_RMA_MMIO_BAR, val, true);
 
 	return vas_scom_write(chip, VAS_MISC_N_CTL, val);
 }
