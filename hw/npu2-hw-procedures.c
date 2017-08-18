@@ -87,6 +87,11 @@ struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH	= {0x24e, 54, 8};
 struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH_LANE	= {0x24e, 49, 5};
 struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH_VALID= {0x24e, 48, 1};
 
+struct npu2_phy_reg NPU2_PHY_RX_CLKDIST_PDWN		= {0x204, 48, 3};
+struct npu2_phy_reg NPU2_PHY_RX_IREF_PDWN		= {0x230, 54, 1};
+struct npu2_phy_reg NPU2_PHY_TX_CLKDIST_PDWN		= {0x305, 48, 3};
+struct npu2_phy_reg NPU2_PHY_RX_CTL_DATASM_CLKDIST_PDWN = {0x2e0, 60, 1};
+
 #define NPU2_PHY_REG(scom_base, reg, lane)					\
 	SETFIELD(PPC_BITMASK(27, 31), ((reg)->offset << 42) | scom_base, lane)
 
@@ -251,6 +256,12 @@ DEFINE_PROCEDURE(reset_ntl, reset_ndl, reset_ntl_release);
 static uint32_t phy_reset(struct npu2_dev *ndev)
 {
 	int lane;
+
+	/* Power on clocks */
+	phy_write(ndev, &NPU2_PHY_RX_CLKDIST_PDWN, 0);
+	phy_write(ndev, &NPU2_PHY_RX_IREF_PDWN, 1);
+	phy_write(ndev, &NPU2_PHY_TX_CLKDIST_PDWN, 0);
+	phy_write(ndev, &NPU2_PHY_RX_CTL_DATASM_CLKDIST_PDWN, 0);
 
 	FOR_EACH_LANE(ndev, lane)
 		phy_write_lane(ndev, &NPU2_PHY_RX_RUN_LANE, lane, 0);
