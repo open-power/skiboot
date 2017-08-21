@@ -308,7 +308,7 @@ static int64_t npu2_cfg_write_cmd(void *dev,
 		genid_npu_bar->flags = SETFIELD(NPU2_BAR_FLAG_ENABLED0, genid_npu_bar->flags,
 						enabled);
 
-	/* Enable the BAR if either deivce requests it enabled, otherwise disable it */
+	/* Enable the BAR if either device requests it enabled, otherwise disable it */
 	genid_npu_bar->flags = SETFIELD(NPU2_BAR_FLAG_ENABLED, genid_npu_bar->flags,
 					!!(genid_npu_bar->flags & (NPU2_BAR_FLAG_ENABLED0 |
 								   NPU2_BAR_FLAG_ENABLED1)));
@@ -481,7 +481,7 @@ static int __npu2_dev_bind_pci_dev(struct phb *phb __unused,
 
 	pcislot = (char *)dt_prop_get(pci_dt_node, "ibm,slot-label");
 
-	prlog(PR_DEBUG, "NPU: comparing GPU %s and NPU %s\n",
+	prlog(PR_DEBUG, "NPU2: comparing GPU '%s' and NPU2 '%s'\n",
 	      pcislot, dev->slot_label);
 
 	if (streq(pcislot, dev->slot_label))
@@ -515,7 +515,7 @@ static void npu2_dev_bind_pci_dev(struct npu2_dev *dev)
 		}
 	}
 
-	prlog(PR_INFO, "%s: No PCI device for NPU device %04x:00:%02x.0 to bind to. If you expect a GPU to be there, this is a problem.\n",
+	prlog(PR_INFO, "%s: No PCI device for NPU2 device %04x:00:%02x.0 to bind to. If you expect a GPU to be there, this is a problem.\n",
 	      __func__, dev->npu->phb.opal_id, dev->index);
 }
 
@@ -721,15 +721,15 @@ static int npu2_dn_fixup(struct phb *phb,
 	 * the device driver. */
 	dt_add_property_cells(pd->dn, "ibm,nvlink-speed", 0x9);
 
-	/* NPU devices require a slot location to associate with GPUs */
+	/* NPU2 devices require a slot location to associate with GPUs */
 	dev->slot_label = dt_prop_get_def(pd->dn, "ibm,slot-label", NULL);
 	if (!dev->slot_label) {
 		/**
 		 * @fwts-label NPUNoPHBSlotLabel
-		 * @fwts-advice No GPU/NPU slot information was found.
+		 * @fwts-advice No GPU/NPU2 slot information was found.
 		 * NVLink2 functionality will not work.
 		 */
-		prlog(PR_ERR, "NPU: Cannot find GPU slot information\n");
+		prlog(PR_ERR, "NPU2: Cannot find GPU slot information\n");
 		return 0;
 	}
 
@@ -1253,8 +1253,8 @@ static void assign_mmio_bars(uint64_t gcid, uint32_t scom, uint64_t reg[2], uint
 }
 
 /*
- *Probe NPU device node and create PCI root device node
- * accordingly. The NPU device node should specify number
+ * Probe NPU2 device node and create PCI root device node
+ * accordingly. The NPU2 device node should specify number
  * of links and xscom base address to access links.
  */
 static void npu2_probe_phb(struct dt_node *dn)
@@ -1313,7 +1313,7 @@ static void npu2_probe_phb(struct dt_node *dn)
 	index = dt_prop_get_u32(dn, "ibm,npu-index");
 	phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
 	links = dt_prop_get_u32(dn, "ibm,npu-links");
-	prlog(PR_INFO, "Chip %d Found NPU%d (%d links) at %s\n",
+	prlog(PR_INFO, "NPU2: Chip %d Found NPU2#%d (%d links) at %s\n",
 	      gcid, index, links, path);
 	free(path);
 
@@ -1659,7 +1659,7 @@ static void npu2_add_phb_properties(struct npu2 *p)
 	dt_add_property_cells(np, "clock-frequency", 0x200, 0);
         dt_add_property_cells(np, "interrupt-parent", icsp);
 
-	/* NPU PHB properties */
+	/* NPU2 PHB properties */
 	dt_add_property_cells(np, "ibm,opal-num-pes",
 			      NPU2_MAX_PE_NUM);
 	dt_add_property_cells(np, "ibm,opal-reserved-pe",
@@ -1729,9 +1729,9 @@ static void npu2_create_phb(struct dt_node *dn)
 		/**
 		 * @fwts-label NPUCannotCreatePHBSlot
 		 * @fwts-advice Firmware probably ran out of memory creating
-		 * NPU slot. NVLink functionality could be broken.
+		 * NPU2 slot. NVLink functionality could be broken.
 		 */
-		prlog(PR_ERR, "NPU: Cannot create PHB slot\n");
+		prlog(PR_ERR, "NPU2: Cannot create PHB slot\n");
 	}
 
 	pci_register_phb(&p->phb, OPAL_DYNAMIC_PHB_ID);
@@ -1752,7 +1752,7 @@ void probe_npu2(void)
 		prlog(PR_WARNING, "NPU2: Using ZCAL impedance override = %d\n", nv_zcal_nominal);
 	}
 
-	/* Scan NPU XSCOM nodes */
+	/* Scan NPU2 XSCOM nodes */
 	dt_for_each_compatible(dt_root, np, "ibm,power9-npu")
 		npu2_probe_phb(np);
 
