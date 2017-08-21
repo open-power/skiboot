@@ -117,17 +117,11 @@ static inline int reset_north_ctl(struct proc_chip *chip)
 
 static void reset_fir(struct proc_chip *chip)
 {
-	uint64_t val;
-
-	val = 0x0ULL;
-	vas_scom_write(chip, VAS_FIR0, val);
-	vas_scom_write(chip, VAS_FIR1, val);
-	vas_scom_write(chip, VAS_FIR2, val);
-	vas_scom_write(chip, VAS_FIR3, val);
-	vas_scom_write(chip, VAS_FIR4, val);
-	vas_scom_write(chip, VAS_FIR5, val);
-	vas_scom_write(chip, VAS_FIR6, val);
-	vas_scom_write(chip, VAS_FIR7, val);
+	vas_scom_write(chip, VAS_FIR0,		0x0000000000000000ULL);
+	/* From VAS workbook */
+	vas_scom_write(chip, VAS_FIR_MASK,	0x000001000001ffffULL);
+	vas_scom_write(chip, VAS_FIR_ACTION0,	0xf800fdfc0001ffffull);
+	vas_scom_write(chip, VAS_FIR_ACTION1,	0xf8fffefffffc8000ull);
 }
 
 #define	RMA_LSMP_64K_SYS_ID		PPC_BITMASK(8, 12)

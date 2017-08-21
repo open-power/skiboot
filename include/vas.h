@@ -93,13 +93,9 @@ extern __attrconst uint64_t vas_get_wcbs_bar(int chipid);
 #define VAS_P9_SAT(sat, offset)		XSCOM_SAT(0x0, sat, offset)
 
 #define VAS_FIR0			VAS_P9_SAT(0x0, 0x0)
-#define VAS_FIR1			VAS_P9_SAT(0x0, 0x1)
-#define VAS_FIR2			VAS_P9_SAT(0x0, 0x2)
-#define VAS_FIR3			VAS_P9_SAT(0x0, 0x3)
-#define VAS_FIR4			VAS_P9_SAT(0x0, 0x4)
-#define VAS_FIR5			VAS_P9_SAT(0x0, 0x5)
-#define VAS_FIR6			VAS_P9_SAT(0x0, 0x6)
-#define VAS_FIR7			VAS_P9_SAT(0x0, 0x7)
+#define VAS_FIR_MASK			VAS_P9_SAT(0x0, 0x3)
+#define VAS_FIR_ACTION0			VAS_P9_SAT(0x0, 0x6)
+#define VAS_FIR_ACTION1			VAS_P9_SAT(0x0, 0x7)
 
 #define VAS_WCM_BAR			VAS_P9_SAT(0x0, 0xA)
 #define VAS_UWCM_BAR			VAS_P9_SAT(0x0, 0xB)
