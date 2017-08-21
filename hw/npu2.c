@@ -36,6 +36,17 @@
 #include <chip.h>
 #include <phys-map.h>
 #include <nvram.h>
+#include <xive.h>
+
+#define NPU2_IRQ_BASE_SHIFT 13
+#define NPU2_N_DL_IRQS 23
+#define NPU2_N_DL_IRQS_ALIGN 32
+
+#define VENDOR_CAP_START    0x80
+#define VENDOR_CAP_END      0x90
+#define VENDOR_CAP_LEN      0x10
+#define VENDOR_CAP_VERSION  0x01
+#define VENDOR_CAP_PCI_DEV_OFFSET 0x0d
 
 /*
  * NPU2 BAR layout definition. We have 3 stacks and each of them
@@ -52,11 +63,6 @@
  * We need to access 4 SM registers in the same stack in order to
  * configure one particular BAR.
  */
-
-#define VENDOR_CAP_START          0x80
-#define VENDOR_CAP_END	          0x90
-
-#define VENDOR_CAP_PCI_DEV_OFFSET 0x0d
 
 static bool is_p9dd1(void)
 {
@@ -1437,17 +1443,14 @@ static uint32_t npu2_populate_vendor_cap(struct npu2_dev *dev,
 {
 	struct pci_virt_device *pvd = dev->pvd;
 
-#define NPU2_VENDOR_CAP_VERSION	0x00
-#define NPU2_VENDOR_CAP_LEN	0x10
-
 	/* Capbility list */
 	PCI_VIRT_CFG_INIT_RO(pvd, prev_cap, 1, start);
 	PCI_VIRT_CFG_INIT_RO(pvd, start, 1, PCI_CFG_CAP_ID_VENDOR);
 	dev->vendor_cap = start;
 
 	/* Length and version */
-	PCI_VIRT_CFG_INIT_RO(pvd, start + 2, 1, NPU2_VENDOR_CAP_LEN);
-	PCI_VIRT_CFG_INIT_RO(pvd, start + 3, 1, NPU2_VENDOR_CAP_VERSION);
+	PCI_VIRT_CFG_INIT_RO(pvd, start + 2, 1, VENDOR_CAP_LEN);
+	PCI_VIRT_CFG_INIT_RO(pvd, start + 3, 1, VENDOR_CAP_VERSION);
 
 	/*
 	 * Defaults when the trap can't handle the read/write (eg. due
@@ -1465,7 +1468,7 @@ static uint32_t npu2_populate_vendor_cap(struct npu2_dev *dev,
 	/* Link index */
 	PCI_VIRT_CFG_INIT_RO(pvd, start + 0xc, 1, dev->index);
 
-	return start + NPU2_VENDOR_CAP_LEN;
+	return start + VENDOR_CAP_LEN;
 }
 
 static void npu2_populate_cfg(struct npu2_dev *dev)
@@ -1539,10 +1542,7 @@ static void npu2_populate_cfg(struct npu2_dev *dev)
 	PCI_VIRT_CFG_INIT_RO(pvd, 0x38, 4, 0x00000000);
 
 	/* 0x3c - INT line/pin/Minimal grant/Maximal latency */
-	if (!NPU2DEV_BRICK(dev))
-		PCI_VIRT_CFG_INIT_RO(pvd, PCI_CFG_INT_LINE, 4, 0x00000100);
-	else
-		PCI_VIRT_CFG_INIT_RO(pvd, PCI_CFG_INT_LINE, 4, 0x00000200);
+	PCI_VIRT_CFG_INIT_RO(pvd, PCI_CFG_INT_LINE, 4, 0x00000100); /* INT A */
 
 	/* PCIE and vendor specific capability */
 	pos = npu2_populate_pcie_cap(dev, 0x40, PCI_CFG_CAP);
@@ -1639,6 +1639,39 @@ static void npu2_populate_devices(struct npu2 *p,
 	}
 }
 
+static void npu2_add_interrupt_map(struct npu2 *p,
+				  struct dt_node *dn)
+{
+	struct dt_node *npu2_dn, *link, *phb_dn;
+	uint32_t npu2_phandle, index = 0, i;
+	uint32_t icsp = get_ics_phandle();
+	uint32_t *map;
+	size_t map_size;
+	uint32_t mask[] = {0xff00, 0x0, 0x0, 0x7};
+
+	npu2_phandle = dt_prop_get_u32(dn, "ibm,npcq");
+	assert((npu2_dn = dt_find_by_phandle(dt_root, npu2_phandle)));
+	assert((phb_dn = p->phb.dt_node));
+	map_size = 7 * sizeof(*map) * p->total_devices;
+	map = malloc(map_size);
+	index = 0;
+	dt_for_each_compatible(npu2_dn, link, "ibm,npu-link") {
+		i = index * 7;
+		map[i + 0] = (p->devices[index].bdfn << 8);
+		map[i + 1] = 0;
+		map[i + 2] = 0;
+
+		map[i + 3] = 1; /* INT A */
+		map[i + 4] = icsp; /* interrupt-parent */
+		map[i + 5] = p->base_lsi + (index * 2) + 1; /* NDL No-Stall Event */
+		map[i + 6] = 0; /* 0 = EDGE, 1 = LEVEL. */
+		index++;
+	}
+	dt_add_property(phb_dn, "interrupt-map", map, map_size);
+	free(map);
+	dt_add_property(phb_dn, "interrupt-map-mask", mask, sizeof(mask));
+}
+
 static void npu2_add_phb_properties(struct npu2 *p)
 {
 	struct dt_node *np = p->phb.dt_node;
@@ -1683,6 +1716,77 @@ static void npu2_add_phb_properties(struct npu2 *p)
 			      hi32(mm_size), lo32(mm_size));
 }
 
+static uint64_t npu2_ipi_attributes(struct irq_source *is __unused, uint32_t isn __unused)
+{
+	return IRQ_ATTR_TARGET_LINUX;
+}
+
+static char *npu2_ipi_name(struct irq_source *is, uint32_t isn)
+{
+	struct npu2 *p = is->data;
+	uint32_t idx = isn - p->base_lsi;
+	const char *name;
+
+	switch (idx) {
+	case 0: name = "NDL 0 Stall Event (brick 0)"; break;
+	case 1: name = "NDL 0 No-Stall Event (brick 0)"; break;
+	case 2: name = "NDL 1 Stall Event (brick 1)"; break;
+	case 3: name = "NDL 1 No-Stall Event (brick 1)"; break;
+	case 4: name = "NDL 2 Stall Event (brick 2)"; break;
+	case 5: name = "NDL 2 No-Stall Event (brick 2)"; break;
+	case 6: name = "NDL 5 Stall Event (brick 3)"; break;
+	case 7: name = "NDL 5 No-Stall Event (brick 3)"; break;
+	case 8: name = "NDL 4 Stall Event (brick 4)"; break;
+	case 9: name = "NDL 4 No-Stall Event (brick 4)"; break;
+	case 10: name = "NDL 3 Stall Event (brick 5)"; break;
+	case 11: name = "NDL 3 No-Stall Event (brick 5)"; break;
+	case 12: name = "NTL 0 Event"; break;
+	case 13: name = "NTL 1 Event"; break;
+	case 14: name = "NTL 2 Event"; break;
+	case 15: name = "NTL 3 Event"; break;
+	case 16: name = "NTL 4 Event"; break;
+	case 17: name = "NTL 5 Event"; break;
+	case 18: name = "TCE Event"; break;
+	case 19: name = "ATS Event"; break;
+	case 20: name = "CQ Event"; break;
+	case 21: name = "MISC Event"; break;
+	case 22: name = "NMMU Local Xstop"; break;
+	default: name = "Unknown";
+	}
+	return strdup(name);
+}
+
+static const struct irq_source_ops npu2_ipi_ops = {
+	.attributes	= npu2_ipi_attributes,
+	.name = npu2_ipi_name,
+};
+
+static void npu2_setup_irqs(struct npu2 *p)
+{
+	uint64_t reg, val;
+	void *tp;
+
+	p->base_lsi = xive_alloc_ipi_irqs(p->chip_id, NPU2_N_DL_IRQS, NPU2_N_DL_IRQS_ALIGN);
+	if (p->base_lsi == XIVE_IRQ_ERROR) {
+		prlog(PR_ERR, "NPU2: Failed to allocate interrupt sources, IRQs for NDL No-stall events will not be available.\n");
+		return;
+	}
+	xive_register_ipi_source(p->base_lsi, NPU2_N_DL_IRQS, p, &npu2_ipi_ops );
+
+	/* Set IPI configuration */
+	reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC, NPU2_MISC_CFG);
+	val = npu2_read(p, reg);
+	val = SETFIELD(NPU2_MISC_CFG_IPI_PS, val, NPU2_MISC_CFG_IPI_PS_64K);
+	val = SETFIELD(NPU2_MISC_CFG_IPI_OS, val, NPU2_MISC_CFG_IPI_OS_AIX);
+	npu2_write(p, reg, val);
+
+	/* Set IRQ base */
+	reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC, NPU2_MISC_IRQ_BASE);
+	tp = xive_get_trigger_port(p->base_lsi);
+	val = ((uint64_t)tp) << NPU2_IRQ_BASE_SHIFT;
+	npu2_write(p, reg, val);
+}
+
 static void npu2_create_phb(struct dt_node *dn)
 {
 	const struct dt_property *prop;
@@ -1720,7 +1824,9 @@ static void npu2_create_phb(struct dt_node *dn)
 	list_head_init(&p->phb.devices);
 	list_head_init(&p->phb.virt_devices);
 
+	npu2_setup_irqs(p);
 	npu2_populate_devices(p, dn);
+	npu2_add_interrupt_map(p, dn);
 	npu2_add_phb_properties(p);
 
 	slot = npu2_slot_create(&p->phb);
