@@ -3,7 +3,7 @@
 skiboot-5.8-rc1
 ===============
 
-skiboot v5.8-rc1 was released on Monday August 21st 2017. It is the first
+skiboot v5.8-rc1 was released on Tuesday August 22nd 2017. It is the first
 release candidate of skiboot 5.8, which will become the new stable release
 of skiboot following the 5.7 release, first released 25th July 2017.
 
