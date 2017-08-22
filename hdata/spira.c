@@ -425,9 +425,10 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 	for_each_ntuple_idx(&spira.ntuples.proc_chip, hdif, i,
 			    SPPCRD_HDIF_SIG) {
 		const struct sppcrd_chip_info *cinfo;
+		unsigned int csize;
 		u32 ve, version;
 
-		cinfo = HDIF_get_idata(hdif, SPPCRD_IDATA_CHIP_INFO, NULL);
+		cinfo = HDIF_get_idata(hdif, SPPCRD_IDATA_CHIP_INFO, &csize);
 		if (!CHECK_SPPTR(cinfo)) {
 			prerror("XSCOM: Bad ChipID data %d\n", i);
 			continue;
@@ -486,6 +487,28 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 			add_xive_node(np);
 			parse_i2c_devs(hdif, SPPCRD_IDATA_HOST_I2C, np);
 			add_vas_node(np, i);
+		}
+
+		/*
+		 * Add sw checkstop scom address (ibm,sw-checkstop-fir)
+		 *
+		 * The latest HDAT versions have sw checkstop scom address
+		 * info.  But not sure from which version onwards (at least
+		 * HDAT spec do not mention that explicitly). Hence use the
+		 * sppcrd struct size returned by HDIF_get_idata to figure out
+		 * whether it contains sw checkstop scom address info. Also
+		 * check if sw_xstop_fir_scom address is non-zero.
+		 */
+		if ((csize >= (offsetof(struct sppcrd_chip_info,
+					sw_xstop_fir_bitpos) + 1)) &&
+						cinfo->sw_xstop_fir_scom) {
+			__be32 fir_bit = cinfo->sw_xstop_fir_bitpos;
+
+			if (!dt_find_property(dt_root, "ibm,sw-checkstop-fir"))
+				dt_add_property_cells(dt_root,
+					"ibm,sw-checkstop-fir",
+					be32_to_cpu(cinfo->sw_xstop_fir_scom),
+					be32_to_cpu(fir_bit));
 		}
 	}
 

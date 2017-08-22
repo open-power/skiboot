@@ -1035,6 +1035,10 @@ struct sppcrd_chip_info {
 	__be32 capp1_func_state;
 	/* *possibly* from Version 0x20 - check spec */
 	__be32 stop_levels;
+	/* From latest version (possibly 0x21 and later) */
+	__be32 sw_xstop_fir_scom;
+	uint8_t sw_xstop_fir_bitpos;
+	uint8_t	reserved_1[3];
 } __packed;
 
 /* Idata index 1 : Chip TOD */
