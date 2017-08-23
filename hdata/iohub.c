@@ -63,6 +63,7 @@ static bool io_get_lx_info(const void *kwvpd, unsigned int kwvpd_sz,
 {
 	const void *lxr;
 	char recname[5];
+	uint32_t lxrbuf[2] = { 0, 0 };
 
 	/* Find LXRn, where n is the index passed in*/
 	strcpy(recname, "LXR0");
@@ -80,16 +81,18 @@ static bool io_get_lx_info(const void *kwvpd, unsigned int kwvpd_sz,
 		return false;
 	}
 
-	prlog(PR_DEBUG, "CEC:     LXRn=%d LXR=%016lx\n", lx_idx,
-	      lxr ? *(unsigned long *)lxr : 0);
+	if (lxr)
+		memcpy(lxrbuf, lxr, sizeof(uint32_t)*2);
+
+	prlog(PR_DEBUG, "CEC:     LXRn=%d LXR=%08x%08x\n", lx_idx, lxrbuf[0], lxrbuf[1]);
 	prlog(PR_DEBUG, "CEC:     LX Info added to %llx\n", (long long)hn);
 
 	/* Add the LX info */
 	if (!dt_has_node_property(hn, "ibm,vpd-lx-info", NULL)) {
 		dt_add_property_cells(hn, "ibm,vpd-lx-info",
 				      lx_idx,
-				      ((uint32_t *)lxr)[0],
-				      ((uint32_t *)lxr)[1]);
+				      lxrbuf[0],
+				      lxrbuf[1]);
 	}
 
 	return true;
