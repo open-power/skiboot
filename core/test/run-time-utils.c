@@ -55,6 +55,9 @@ int main(void)
 	assert(t->tm_min == 42);
 	assert(t->tm_sec == 24);
 
+	free(t);
+	free(ymd);
+	free(hms);
 	return 0;
 }
 
