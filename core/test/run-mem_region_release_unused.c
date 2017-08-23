@@ -113,7 +113,7 @@ int main(void)
 	/* Use malloc for the heap, so valgrind can find issues. */
 	skiboot_heap.start = (unsigned long)malloc(TEST_HEAP_SIZE);
 	skiboot_heap.len = TEST_HEAP_SIZE;
-	skiboot_os_reserve.len = skiboot_heap.start;
+	skiboot_os_reserve.len = 0;
 
 	dt_root = dt_new_root("");
 	dt_add_property_cells(dt_root, "#address-cells", 2);
