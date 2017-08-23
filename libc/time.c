@@ -121,7 +121,7 @@ time_t mktime(struct tm *tm)
 	for (d = days_in_month(month, year); mday > d;
 			d = days_in_month(month, year)) {
 		month++;
-		if (month > 12) {
+		if (month > 11) {
 			month = 0;
 			year++;
 		}
