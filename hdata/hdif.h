@@ -44,7 +44,7 @@ struct HDIF_array_hdr {
 	__be32	ecnt;
 	__be32	esize;
 	__be32	eactsz;
-} __packed __align(0x10);
+} __packed __align(0x4);
 
 struct HDIF_child_ptr {
 	__be32	offset;
