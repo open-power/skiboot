@@ -508,8 +508,8 @@ static struct cpu_idle_states power8_cpu_idle_states[] = {
 static struct cpu_idle_states power9_cpu_idle_states[] = {
 	{
 		.name = "stop0_lite", /* Enter stop0 with no state loss */
-		.latency_ns = 200,
-		.residency_ns = 2000,
+		.latency_ns = 1000,
+		.residency_ns = 10000,
 		.flags = 0*OPAL_PM_DEC_STOP \
 		       | 0*OPAL_PM_TIMEBASE_STOP  \
 		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
@@ -522,8 +522,8 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
 	{
 		.name = "stop0",
-		.latency_ns = 300,
-		.residency_ns = 3000,
+		.latency_ns = 2000,
+		.residency_ns = 20000,
 		.flags = 0*OPAL_PM_DEC_STOP \
 		       | 0*OPAL_PM_TIMEBASE_STOP  \
 		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
@@ -653,8 +653,8 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 static struct cpu_idle_states power9_ndd1_cpu_idle_states[] = {
 	{
 		.name = "stop0_lite",
-		.latency_ns = 200,
-		.residency_ns = 2000,
+		.latency_ns = 1000,
+		.residency_ns = 10000,
 		.flags = 0*OPAL_PM_DEC_STOP \
 		       | 0*OPAL_PM_TIMEBASE_STOP  \
 		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
