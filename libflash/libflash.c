@@ -863,8 +863,11 @@ bail:
 void flash_exit(struct blocklevel_device *bl)
 {
 	/* XXX Make sure we are idle etc... */
-	if (bl)
-		free(container_of(bl, struct flash_chip, bl));
+	if (bl) {
+		struct flash_chip *c = container_of(bl, struct flash_chip, bl);
+		free(c->smart_buf);
+		free(c);
+	}
 }
 
 void flash_exit_close(struct blocklevel_device *bl, void (*close)(struct spi_flash_ctrl *ctrl))
