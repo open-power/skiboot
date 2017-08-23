@@ -92,6 +92,7 @@ bool hservices_from_hdat(const void *fdt, size_t size)
 	}
 
 	hservice_parse_dt_tree(hservices);
+	dt_free(hservices);
 	return true;
 }
 
