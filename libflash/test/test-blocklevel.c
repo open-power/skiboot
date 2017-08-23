@@ -434,5 +434,7 @@ int main(void)
 		return 1;
 	}
 
+	free(buf);
+
 	return 0;
 }
