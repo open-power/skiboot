@@ -454,6 +454,7 @@ int main(void)
 	printf("Test ECC erase pass\n");
 
 	flash_exit(bl);
+	free(test);
 
 	return 0;
 }
