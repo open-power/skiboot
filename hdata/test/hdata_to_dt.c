@@ -357,6 +357,7 @@ int main(int argc, char *argv[])
 
 	if(parse_hdat(false) < 0) {
 		fprintf(stderr, "FATAL ERROR parsing HDAT\n");
+		dt_free(dt_root);
 		exit(EXIT_FAILURE);
 	}
 
