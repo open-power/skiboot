@@ -107,7 +107,8 @@ static void test_printf_x(const char* f)
 {
 	char *buf, *buf2;
 	int blen;
-	int i, r, n=0x1;
+	int i, r;
+	unsigned int n=0x1;
 
 	for (i=0; i<8; i++)
 	{
