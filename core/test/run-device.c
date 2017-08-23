@@ -443,6 +443,7 @@ int main(void)
 	assert(!(new_prop_ph == ev1_ph));
 	new_prop_ph = dt_prop_get_u32(ut2, "something");
 	assert(!(new_prop_ph == ev1_ph));
+	dt_free(subtree);
 	return 0;
 }
 
