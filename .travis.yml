@@ -23,7 +23,6 @@ env:
 matrix:
   allow_failures:
     - env: RUN_ON_CONTAINER=fedora-rawhide
-    - env: RUN_ON_CONTAINER=debian-stretch
     - env: RUN_ON_CONTAINER=debian-unstable
 
 sudo: required
