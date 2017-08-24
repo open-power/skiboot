@@ -2,6 +2,7 @@
 
 set -uo pipefail
 set -e
+set -vx
 
 # We're fairly limited as to what we want to bother to run on CentOS6
 # It's fairly old and some of the things (e.g. build+run qemu) we don't

@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -vx
 
 git clone --depth=1 -b qemu-powernv-for-skiboot-3 git://github.com/open-power/qemu.git
 cd qemu

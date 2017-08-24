@@ -2,6 +2,7 @@
 
 set -uo pipefail
 set -e
+set -vx
 
 export CROSS="ccache /opt/cross/gcc-4.8.0-nolibc/powerpc64-linux/bin/powerpc64-linux-"
 export HOSTCC="ccache gcc-4.8"

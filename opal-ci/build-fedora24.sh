@@ -2,7 +2,7 @@
 
 set -uo pipefail
 set -e
-set -x
+set -vx
 
 MAKE_J=`grep -c processor /proc/cpuinfo`
 export CROSS="ccache powerpc64-linux-gnu-"
