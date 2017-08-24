@@ -57,6 +57,7 @@ void __gcov_merge_single(gcov_type *counters, unsigned int n_counters) __attrcon
 void __gcov_merge_delta(gcov_type *counters, unsigned int n_counters) __attrconst;
 void __gcov_merge_ior(gcov_type *counters, unsigned int n_counters) __attrconst;
 void __gcov_merge_time_profile(gcov_type *counters, unsigned int n_counters) __attrconst;
+void __gcov_exit(void) __attrconst;
 
 void __gcov_init(struct gcov_info* f)
 {
@@ -129,4 +130,8 @@ void __gcov_merge_time_profile(gcov_type *counters, unsigned int n_counters)
 {
 	(void)counters;
 	(void)n_counters;
+}
+
+void __gcov_exit(void)
+{
 }
