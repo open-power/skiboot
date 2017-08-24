@@ -24,7 +24,7 @@ $(SRESET_WORLD_TEST:%=%-check-p9-mambo): %-check-p9-mambo: % skiboot.lid
 test/sreset_world/sreset_kernel/sreset_kernel.o: test/sreset_world/sreset_kernel/sreset_kernel.S test/sreset_world/sreset_kernel/sreset_kernel.ld
 	$(call Q,CC, $(CC) -mbig-endian -m64 -c -MMD -o $@ $< ,$@)
 
-sreset_kernel_LDFLAGS=-m64 -Wl,--build-id=none -T test/sreset_world/sreset_kernel/sreset_kernel.ld -ffreestanding -nostdlib -Ttext=0x0 -mbig-endian
+sreset_kernel_LDFLAGS=-m64 -Wl,--build-id=none -T test/sreset_world/sreset_kernel/sreset_kernel.ld -ffreestanding -nostdlib -Ttext=0x0 -mbig-endian -N
 
 -include $(wildcard test/sreset_world/sreset_kernel/*.d)
 
