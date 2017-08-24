@@ -1063,8 +1063,11 @@ static int occ_i2c_lock(struct p8_i2c_master *master)
 
 	busflag = PPC_BIT(16 + (master->engine_id - 1) * 2);
 
-	DBG("occflags = %llx (locks = %.6llx)\n", (u64)occflags,
-	    GETFIELD(PPC_BITMASK(16, 22), occflags));
+	DBG("I2C: c%de%d: occflags = %llx (locks = %x:%x:%x)\n",
+		master->chip_id, master->engine_id, (u64) occflags,
+		(u32) GETFIELD(PPC_BITMASK(16, 17), occflags),
+		(u32) GETFIELD(PPC_BITMASK(18, 19), occflags),
+		(u32) GETFIELD(PPC_BITMASK(20, 21), occflags));
 
 	rc = xscom_write(master->chip_id, OCCFLG_SET, busflag);
 	if (rc) {
@@ -1073,8 +1076,11 @@ static int occ_i2c_lock(struct p8_i2c_master *master)
 	}
 
 	/* If the OCC also has this bus locked then wait for IRQ */
-	if (occflags & (busflag << 1))
+	if (occflags & (busflag >> 1)) {
+		DBG("I2C: c%de%d: Master in use by OCC\n",
+			master->chip_id, master->engine_id);
 		return 1;
+	}
 
 	master->occ_lock_acquired = true;
 
@@ -1098,8 +1104,8 @@ static int occ_i2c_unlock(struct p8_i2c_master *master)
 	busflag = PPC_BIT(16 + (master->engine_id - 1) * 2);
 
 	if (!(occflags & busflag)) {
-		prerror("I2C: busflag for %d already cleared (flags = %.16llx)",
-			master->engine_id, occflags);
+		DBG("I2C: spurious unlock for c%de%d already cleared (flags = %.16llx)",
+			master->chip_id, master->engine_id, occflags);
 	}
 
 	rc = xscom_write(master->chip_id, OCCFLG_CLEAR, busflag);
@@ -1161,7 +1167,7 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	if (rc > 0) {
 		/* Wait for OCC IRQ */
 		master->state = state_occache_dis;
-		schedule_timer(&master->recovery, rc);
+		schedule_timer(&master->recovery, msecs_to_tb(10));
 		return 0;
 	}
 
@@ -1281,29 +1287,29 @@ void p9_i2c_bus_owner_change(u32 chip_id)
 {
 	struct proc_chip *chip = get_chip(chip_id);
 	struct p8_i2c_master *master = NULL;
-	int rc;
 
 	assert(chip);
 	list_for_each(&chip->i2cms, master, link) {
-		if (master->state == state_idle  ||
-		    master->state != state_occache_dis)
-			continue;
-
 		lock(&master->lock);
 
-		/* Can we now lock this master? */
-		rc = occ_i2c_lock(master);
-		if (rc) {
-			unlock(&master->lock);
-			continue;
-		}
+		/* spurious */
+		if (master->state != state_occache_dis)
+			goto done;
 
-		/* Run the state machine */
+		/* Can we now lock this master? */
+		if (occ_i2c_lock(master))
+			goto done;
+
+		/* clear the existing wait timer */
+		cancel_timer(&master->recovery);
+
+		/* re-start the request now that we own the master */
+		master->state = state_idle;
+
+		p8_i2c_check_work(master);
 		p8_i2c_check_status(master);
 
-		/* Check for new work */
-		p8_i2c_check_work(master);
-
+done:
 		unlock(&master->lock);
 	}
 }
@@ -1453,8 +1459,18 @@ static void p8_i2c_recover(struct timer *t __unused, void *data,
 	struct p8_i2c_master *master = data;
 
 	lock(&master->lock);
-	assert(master->state == state_recovery ||
-	       master->state == state_occache_dis);
+
+	/*
+	 * The recovery timer can race with the OCC interrupt. If the interrupt
+	 * comes in just before this is called, then we'll get a spurious
+	 * timeout which we need to ignore.
+	 */
+	if (master->state != state_recovery &&
+		master->state != state_occache_dis) {
+		unlock(&master->lock);
+		return;
+	}
+
 	master->state = state_idle;
 
 	/* We may or may not still have work pending, re-enable the sensor cache
