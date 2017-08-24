@@ -145,8 +145,8 @@ SECTIONS
 		__sym_map_end = . ;
 	}
 
-	/* We locate the BSS at 2M to leave room for the symbol map */
-	. = 0x200000;
+	/* We locate the BSS at 3M to leave room for the symbol map */
+	. = 0x300000;
 
 	_sbss = .;
 	.bss : {

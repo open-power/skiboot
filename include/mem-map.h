@@ -72,8 +72,8 @@
  * As of 2015/5/7 we use approx 800k for skiboot, 500k HEAP for
  * mambo boot.
  */
-#define HEAP_BASE		(SKIBOOT_BASE + 0x00300000)
-#define HEAP_SIZE		0x00d00000
+#define HEAP_BASE		(SKIBOOT_BASE + 0x00400000)
+#define HEAP_SIZE		0x00c00000
 
 /* This is the location of our console buffer at base + 16M */
 #define INMEM_CON_START		(SKIBOOT_BASE + 0x01000000)
