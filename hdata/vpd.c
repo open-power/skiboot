@@ -23,8 +23,6 @@
 #include "hdata.h"
 #include <inttypes.h>
 
-static bool op_platform;
-
 struct card_info {
 	const char *ccin; 	/* Customer card identification number */
 	const char *description;
@@ -492,7 +490,7 @@ struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 	    && !dt_find_property(node, "ibm,vpd")) {
 		dt_add_property(node, "ibm,vpd", fruvpd, fruvpd_sz);
 
-		if (op_platform)
+		if (vpd_find_record(fruvpd, fruvpd_sz, "OPFR", NULL))
 			vpd_opfr_parse(node, fruvpd, fruvpd_sz);
 		else
 			vpd_vini_parse(node, fruvpd, fruvpd_sz);
@@ -607,10 +605,9 @@ static void sysvpd_parse(void)
 	}
 
 	/* Look for the new OpenPower "OSYS" first */
-	if (vpd_find_record(sysvpd, sysvpd_sz, "OSYS", NULL)) {
-		op_platform = true;
+	if (vpd_find_record(sysvpd, sysvpd_sz, "OSYS", NULL))
 		sysvpd_parse_opp(sysvpd, sysvpd_sz);
-	} else
+	else
 		sysvpd_parse_legacy(sysvpd, sysvpd_sz);
 
 	dt_add_model_name();
