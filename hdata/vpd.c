@@ -413,6 +413,14 @@ static struct dt_node *dt_create_vpd_node(struct dt_node *parent,
 	return node;
 }
 
+void vpd_data_parse(struct dt_node *node, const void *fruvpd, u32 fruvpd_sz)
+{
+	if (vpd_find_record(fruvpd, fruvpd_sz, "OPFR", NULL))
+		vpd_opfr_parse(node, fruvpd, fruvpd_sz);
+	else
+		vpd_vini_parse(node, fruvpd, fruvpd_sz);
+}
+
 struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 				int indx_fru, int indx_vpd)
 {
@@ -489,11 +497,7 @@ struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 	if (vpd_valid(fruvpd, fruvpd_sz)
 	    && !dt_find_property(node, "ibm,vpd")) {
 		dt_add_property(node, "ibm,vpd", fruvpd, fruvpd_sz);
-
-		if (vpd_find_record(fruvpd, fruvpd_sz, "OPFR", NULL))
-			vpd_opfr_parse(node, fruvpd, fruvpd_sz);
-		else
-			vpd_vini_parse(node, fruvpd, fruvpd_sz);
+		vpd_data_parse(node, fruvpd, fruvpd_sz);
 	}
 
 	return node;

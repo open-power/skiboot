@@ -30,6 +30,8 @@ extern void io_parse(void);
 extern struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 				       int indx_fru, int indx_vpd);
 extern void vpd_parse(void);
+extern void vpd_data_parse(struct dt_node *node,
+			   const void *fruvpd, u32 fruvpd_sz);
 
 extern struct dt_node *find_xscom_for_chip(uint32_t chip_id);
 extern uint32_t pcid_to_chip_id(uint32_t proc_chip_id);
