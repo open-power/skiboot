@@ -34,13 +34,9 @@ struct HDIF_ram_area_id {
 } __packed;
 
 struct HDIF_ram_area_size {
-	__be64 mb;
+	__be32 reserved1;
+	__be32 mb;
 } __packed;
-
-struct ram_area {
-	const struct HDIF_ram_area_id *raid;
-	const struct HDIF_ram_area_size *rasize;
-};
 
 struct HDIF_ms_area_address_range {
 	__be64 start;
