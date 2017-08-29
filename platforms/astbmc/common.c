@@ -134,6 +134,9 @@ void astbmc_init(void)
 	astbmc_fru_init();
 	ipmi_sensor_init();
 
+	/* Preload PNOR VERSION section */
+	flash_fw_version_preload();
+
 	/* As soon as IPMI is up, inform BMC we are in "S0" */
 	ipmi_set_power_state(IPMI_PWR_SYS_S0_WORKING, IPMI_PWR_NOCHANGE);
 
@@ -144,6 +147,9 @@ void astbmc_init(void)
 
 	/* Setup UART console for use by Linux via OPAL API */
 	set_opal_console(&uart_opal_con);
+
+	/* Add ibm,firmware-versions node */
+	flash_dt_add_fw_version();
 }
 
 int64_t astbmc_ipmi_power_down(uint64_t request)

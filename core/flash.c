@@ -19,6 +19,7 @@
 #include <lock.h>
 #include <opal.h>
 #include <opal-msg.h>
+#include <platform.h>
 #include <device.h>
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
@@ -46,6 +47,10 @@ static struct lock flash_lock;
 /* nvram-on-flash support */
 static struct flash *nvram_flash;
 static u32 nvram_offset, nvram_size;
+
+/* ibm,firmware-versions support */
+static char *version_buf;
+static size_t version_buf_size = 0x1000;
 
 bool flash_reserve(void)
 {
@@ -146,6 +151,109 @@ static int flash_nvram_write(uint32_t dst, void *src, uint32_t len)
 out:
 	unlock(&flash_lock);
 	return rc;
+}
+
+static void __flash_dt_add_fw_version(struct dt_node *fw_version, char* data)
+{
+	char *prop;
+	int version_len, i;
+	int len = strlen(data);
+	const char * version_str[] = {"open-power", "buildroot", "skiboot",
+				      "hostboot-binaries", "hostboot", "linux",
+				      "petitboot", "occ", "capp-ucode", "sbe",
+				      "machine-xml"};
+
+	/*
+	 * PNOR version strings are not easily consumable. Split them into
+	 * property, value.
+	 *
+	 * Example input from PNOR :
+	 *   "open-power-firestone-v1.8"
+	 *   "linux-4.4.6-openpower1-8420e0f"
+	 *
+	 * Desired output in device tree:
+	 *   open-power = "firestone-v1.8";
+	 *   linux = "4.4.6-openpower1-8420e0f";
+	 */
+	for(i = 0; i < ARRAY_SIZE(version_str); i++)
+	{
+		version_len = strlen(version_str[i]);
+		if (len < version_len)
+			continue;
+
+		if (memcmp(data, version_str[i], version_len) != 0)
+			continue;
+
+		/* Found a match, add property */
+		if (dt_find_property(fw_version, version_str[i]))
+			continue;
+
+		/* Increment past "key-" */
+		prop = data + version_len + 1;
+		dt_add_property_string(fw_version, version_str[i], prop);
+	}
+}
+
+void flash_dt_add_fw_version(void)
+{
+	uint8_t version_data[80];
+	int rc;
+	int numbytes = 0, i = 0;
+	struct dt_node *fw_version;
+
+	if (version_buf == NULL)
+		return;
+
+	rc = wait_for_resource_loaded(RESOURCE_ID_VERSION, RESOURCE_SUBID_NONE);
+	if (rc != OPAL_SUCCESS) {
+		prlog(PR_WARNING, "FLASH: Failed to load VERSION data\n");
+		free(version_buf);
+		return;
+	}
+
+	fw_version = dt_new(dt_root, "ibm,firmware-versions");
+	assert(fw_version);
+
+	for ( ; (numbytes < version_buf_size) && version_buf[numbytes]; numbytes++) {
+		if (version_buf[numbytes] == '\n') {
+			version_data[i] = '\0';
+			__flash_dt_add_fw_version(fw_version, version_data);
+			memset(version_data, 0, sizeof(version_data));
+			i = 0;
+			continue;
+		} else if (version_buf[numbytes] == '\t') {
+			continue; /* skip tabs */
+		}
+
+		version_data[i++] = version_buf[numbytes];
+	}
+
+	free(version_buf);
+}
+
+void flash_fw_version_preload(void)
+{
+	int rc;
+
+	if (proc_gen < proc_gen_p9)
+		return;
+
+	prlog(PR_INFO, "FLASH: Loading VERSION section\n");
+
+	version_buf = malloc(version_buf_size);
+	if (!version_buf) {
+		prlog(PR_WARNING, "FLASH: Failed to allocate memory\n");
+		return;
+	}
+
+	rc = start_preload_resource(RESOURCE_ID_VERSION, RESOURCE_SUBID_NONE,
+				    version_buf, &version_buf_size);
+	if (rc != OPAL_SUCCESS) {
+		prlog(PR_WARNING,
+		      "FLASH: Failed to start loading VERSION data\n");
+		free(version_buf);
+		version_buf = NULL;
+	}
 }
 
 static int flash_nvram_probe(struct flash *flash, struct ffs_handle *ffs)
@@ -422,6 +530,7 @@ static struct {
 	{ RESOURCE_ID_INITRAMFS,RESOURCE_SUBID_NONE,		"ROOTFS" },
 	{ RESOURCE_ID_CAPP,	RESOURCE_SUBID_SUPPORTED,	"CAPP" },
 	{ RESOURCE_ID_IMA_CATALOG,  RESOURCE_SUBID_SUPPORTED,	"IMA_CATALOG" },
+	{ RESOURCE_ID_VERSION,	RESOURCE_SUBID_NONE,		"VERSION" },
 };
 
 
