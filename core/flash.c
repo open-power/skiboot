@@ -32,6 +32,7 @@
 struct flash {
 	struct list_node	list;
 	bool			busy;
+	bool			no_erase;
 	struct blocklevel_device *bl;
 	uint64_t		size;
 	uint32_t		block_size;
@@ -307,6 +308,8 @@ static struct dt_node *flash_add_dt_node(struct flash *flash, int id)
 	dt_add_property_u64(flash_node, "reg", flash->size);
 	dt_add_property_cells(flash_node, "ibm,flash-block-size",
 			flash->block_size);
+	if (flash->no_erase)
+		dt_add_property(flash_node, "no-erase", NULL, 0);
 
 	/* we fix to 32-bits */
 	dt_add_property_cells(flash_node, "#address-cells", 1);
@@ -389,6 +392,7 @@ int flash_register(struct blocklevel_device *bl)
 
 	flash->busy = false;
 	flash->bl = bl;
+	flash->no_erase = !(bl->flags & WRITE_NEED_ERASE);
 	flash->size = size;
 	flash->block_size = block_size;
 	flash->id = num_flashes();
