@@ -348,6 +348,7 @@ static struct vas *alloc_vas(uint32_t chip_id, uint32_t vas_id, uint64_t base)
 
 static void create_mm_dt_node(struct proc_chip *chip)
 {
+	int gcid;
 	struct dt_node *dn;
 	struct vas *vas;
 	uint64_t hvwc_start, hvwc_len;
@@ -356,6 +357,7 @@ static void create_mm_dt_node(struct proc_chip *chip)
 	uint64_t pbf_start, pbf_nbits;
 
 	vas = chip->vas;
+	gcid = chip->id;
 	get_hvwc_mmio_bar(chip->id, &hvwc_start, &hvwc_len);
 	get_uwc_mmio_bar(chip->id, &uwc_start, &uwc_len);
 	get_paste_bar(chip->id, &pbar_start, &pbar_len);
@@ -372,6 +374,7 @@ static void create_mm_dt_node(struct proc_chip *chip)
 					pbf_start, pbf_nbits);
 
 	dt_add_property(dn, "ibm,vas-id", &vas->vas_id, sizeof(vas->vas_id));
+	dt_add_property(dn, "ibm,chip-id", &gcid, sizeof(gcid));
 }
 
 /*
