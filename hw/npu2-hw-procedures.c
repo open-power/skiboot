@@ -304,7 +304,7 @@ static uint32_t phy_reset_complete(struct npu2_dev *ndev)
 		phy_write_lane(ndev, &NPU2_PHY_RX_LANE_ANA_PDWN, lane, 0);
 		phy_write_lane(ndev, &NPU2_PHY_RX_LANE_DIG_PDWN, lane, 0);
 		phy_write_lane(ndev, &NPU2_PHY_RX_PR_IQ_RES_SEL, lane, 0x7);
-		phy_write_lane(ndev, &NPU2_PHY_RX_PR_PHASE_STEP, lane, 0x8);
+		phy_write_lane(ndev, &NPU2_PHY_RX_PR_PHASE_STEP, lane, 0xc);
 		phy_write_lane(ndev, &NPU2_PHY_TX_LANE_PDWN, lane, 0);
 	}
 
