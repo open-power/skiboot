@@ -59,6 +59,8 @@ struct npu2_phy_reg NPU2_PHY_TX_UNLOAD_CLK_DISABLE	= {0x103, 56, 1};
 struct npu2_phy_reg NPU2_PHY_TX_FIFO_INIT		= {0x105, 53, 1};
 struct npu2_phy_reg NPU2_PHY_TX_RXCAL			= {0x103, 57, 1};
 struct npu2_phy_reg NPU2_PHY_RX_INIT_DONE		= {0x0ca, 48, 1};
+struct npu2_phy_reg NPU2_PHY_RX_PR_EDGE_TRACK_CNTL	= {0x092, 48, 2};
+struct npu2_phy_reg NPU2_PHY_RX_PR_FW_OFF		= {0x08a, 56, 1};
 
 /* These registers are per-PHY, not per lane */
 struct npu2_phy_reg NPU2_PHY_TX_ZCAL_SWO_EN		= {0x3c9, 48, 1};
@@ -521,6 +523,9 @@ static uint32_t phy_rx_dccal(struct npu2_dev *ndev)
 	int lane;
 
 	FOR_EACH_LANE(ndev, lane)
+		phy_write_lane(ndev, &NPU2_PHY_RX_PR_FW_OFF, lane, 1);
+
+	FOR_EACH_LANE(ndev, lane)
 		phy_write_lane(ndev, &NPU2_PHY_RX_RUN_DCCAL, lane, 1);
 
 	return PROCEDURE_NEXT;
@@ -537,8 +542,11 @@ static uint32_t phy_rx_dccal_complete(struct npu2_dev *ndev)
 	FOR_EACH_LANE(ndev, lane)
 		phy_write_lane(ndev, &NPU2_PHY_RX_RUN_DCCAL, lane, 0);
 
-	FOR_EACH_LANE(ndev, lane)
+	FOR_EACH_LANE(ndev, lane) {
 		phy_write_lane(ndev, &NPU2_PHY_RX_B_BANK_CONTROLS, lane, 0);
+		phy_write_lane(ndev, &NPU2_PHY_RX_PR_EDGE_TRACK_CNTL, lane, 0);
+		phy_write_lane(ndev, &NPU2_PHY_RX_PR_FW_OFF, lane, 0);
+	}
 
 	return PROCEDURE_NEXT;
 }
