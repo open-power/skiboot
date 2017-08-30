@@ -312,6 +312,7 @@ static uint32_t phy_reset_complete(struct npu2_dev *ndev)
 }
 DEFINE_PROCEDURE(phy_reset, phy_reset_wait, phy_reset_complete);
 
+/* Procedure 1.2.6 - I/O PHY Tx Impedance Calibration */
 static uint32_t phy_tx_zcal(struct npu2_dev *ndev)
 {
 	if (ndev->npu->tx_zcal_complete[ndev->index > 2])
@@ -502,6 +503,7 @@ static uint32_t phy_enable_tx_rxcal(struct npu2_dev *ndev)
 }
 DEFINE_PROCEDURE(phy_enable_tx_rxcal);
 
+/* Procedure 1.2.9 - Disable Downstream Link Training */
 static uint32_t phy_disable_tx_rxcal(struct npu2_dev *ndev)
 {
 	int lane;
