@@ -892,7 +892,7 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 	/* If we are idle, just return, we'll catch error conditions
 	 * when we next try to enqueue a request
 	 */
-	if (master->state == state_idle)
+	if (master->state == state_idle || master->state == state_occache_dis)
 		return;
 
 	/* Read status register */
