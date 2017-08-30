@@ -384,6 +384,7 @@ static bool load_kernel(void)
 		if (kernel_entry < 0x2000) {
 			cpu_set_pm_enable(false);
 			memcpy(NULL, old_vectors, 0x2000);
+			sync_icache();
 		}
 		do_stb = true;
 		stb_container = kh; /* probably incorrect */
@@ -723,6 +724,7 @@ void setup_reset_vector(void)
 	dst = (uint32_t *)0x100;
 	while(src < &reset_patch_end)
 		*(dst++) = *(src++);
+	sync_icache();
 }
 
 void copy_exception_vectors(void)
