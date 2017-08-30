@@ -526,7 +526,7 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		.residency_ns = 20000,
 		.flags = 0*OPAL_PM_DEC_STOP \
 		       | 0*OPAL_PM_TIMEBASE_STOP  \
-		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
 		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
 		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_FAST,
@@ -542,7 +542,7 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		.residency_ns = 49000,
 		.flags = 0*OPAL_PM_DEC_STOP \
 		       | 0*OPAL_PM_TIMEBASE_STOP  \
-		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
 		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
 		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_FAST,
@@ -572,7 +572,7 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 		.residency_ns = 99000,
 		.flags = 0*OPAL_PM_DEC_STOP \
 		       | 0*OPAL_PM_TIMEBASE_STOP  \
-		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
 		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
 		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_FAST,
@@ -671,7 +671,7 @@ static struct cpu_idle_states power9_ndd1_cpu_idle_states[] = {
 		.residency_ns = 49000,
 		.flags = 0*OPAL_PM_DEC_STOP \
 		       | 0*OPAL_PM_TIMEBASE_STOP  \
-		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
+		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
 		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
 		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
 		       | 1*OPAL_PM_STOP_INST_FAST,
