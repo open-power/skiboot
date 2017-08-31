@@ -3,7 +3,7 @@
 skiboot-5.8
 ===========
 
-skiboot v5.8 was released on Tuesday August 31st 2017. It is the first
+skiboot v5.8 was released on Thursday August 31st 2017. It is the first
 release of skiboot 5.8, which becomes the new stable release.
 It follows the 5.7 release, first released 25th July 2017.
 
