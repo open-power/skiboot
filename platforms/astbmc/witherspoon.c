@@ -297,8 +297,6 @@ static void dt_create_npu2(void)
 	}
 }
 
-#define PHB4_SHARED_SLOT_IDX_WITHERSPOON     3
-
 static bool witherspoon_probe(void)
 {
 	if (!dt_node_is_compatible(dt_root, "ibm,witherspoon"))
@@ -384,10 +382,10 @@ static void phb4_pre_pci_fixup_witherspoon(void)
 			"Unexpected number of chips, skipping shared slot detection\n");
 		return;
 	}
-	slot0 = pci_slot_find(phb4_get_opal_id(chip0->id,
-					PHB4_SHARED_SLOT_IDX_WITHERSPOON));
-	slot1 = pci_slot_find(phb4_get_opal_id(chip1->id,
-					PHB4_SHARED_SLOT_IDX_WITHERSPOON));
+
+	/* the shared slot is connected to PHB3 on both chips */
+	slot0 = pci_slot_find(phb4_get_opal_id(chip0->id, 3));
+	slot1 = pci_slot_find(phb4_get_opal_id(chip1->id, 3));
 	if (slot0 && slot1) {
 		if (slot0->ops.get_presence_state)
 			slot0->ops.get_presence_state(slot0, &p0);
