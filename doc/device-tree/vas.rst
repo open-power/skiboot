@@ -13,10 +13,12 @@ context address for the instance of VAS.
 Each VAS node contains: ::
 
   compatible: "ibm,power9-vas", "ibm,vas"
-  
+
+  ibm,chip-id: Chip-id of the chip containing this instance of VAS.
+
   ibm,vas-id: unique identifier for each instance of VAS in the system.
 
-  reg: contains 8 64-bit fields. 
+  reg: contains 8 64-bit fields.
 
         Fields [0] and [1] represent the Hypervisor window context BAR
         (start and length). Fields [2] and [3] represent the OS/User
