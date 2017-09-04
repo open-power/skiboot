@@ -69,6 +69,7 @@ debian-jessie-initrd.gz
 external/dump_trace
 external/mambo/skiboot-boot_test.dump
 external/mambo/skiboot-hello_world.dump
+external/mambo/mambo-socket-proxy
 external/memboot/memboot
 hdata/test/hdata_to_dt
 hdata/test/hdata_to_dt-gcov
