@@ -3350,13 +3350,17 @@ static void phb4_init_capp_regs(struct phb4 *p)
 
 	offset = PHB4_CAPP_REG_OFFSET(p);
 
-	/* Enable cresp examination by CAPP */
+	/* APC Master PowerBus Control Register */
 	xscom_read(p->chip_id, APC_MASTER_PB_CTRL + offset, &reg);
-	reg |= PPC_BIT(0);
+	reg |= PPC_BIT(0); /* enable cResp exam */
+	reg |= PPC_BIT(3); /* disable vg not sys */
 	if (p->rev == PHB4_REV_NIMBUS_DD10) {
 		reg |= PPC_BIT(1);
-		/* disable vg not sys */
-		reg |= PPC_BIT(3);
+	}
+	if (p->rev == PHB4_REV_NIMBUS_DD20) {
+		reg |= PPC_BIT(2); /* disable nn rn */
+		reg |= PPC_BIT(4); /* disable g */
+		reg |= PPC_BIT(5); /* disable ln */
 	}
 	xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, reg);
 
@@ -3368,37 +3372,49 @@ static void phb4_init_capp_regs(struct phb4 *p)
 	/* Set snoop ttype decoding , dir size to 256k */
 	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0xA000000000000000);
 
-	/* Use Read Epsilon Tier2 for all scopes, Address Pipeline Master
-	 * Wait Count to highest(1023) and Number of rpt_hang.data to 3
+	/* Use Read Epsilon Tier2 for all scopes.
+	 * Set Tier2 Read Epsilon.
 	 */
-	xscom_write(p->chip_id, SNOOP_CONTROL + offset, 0x8000000010072000);
+	xscom_read(p->chip_id, SNOOP_CONTROL + offset, &reg);
+	reg |= PPC_BIT(0);
+	reg |= PPC_BIT(35);
+	xscom_write(p->chip_id, SNOOP_CONTROL + offset, reg);
 
-	/* TLBI Hang Divider = 16.  CI Store Buffer Threshold initialized
-	 * to b’0101’ = use 6 buffers. X16 PCIe(14 buffers)
-	 */
+	/* Transport Control Register */
 	xscom_read(p->chip_id, TRANSPORT_CONTROL + offset, &reg);
-	if (!(reg & PPC_BIT(4))) {
-		if (p->index == CAPP0_PHB_INDEX)
-			xscom_write(p->chip_id, TRANSPORT_CONTROL + offset,
-				    0x081400000000000A);
-
-		if (p->index == CAPP1_PHB_INDEX)
-			xscom_write(p->chip_id, TRANSPORT_CONTROL + offset,
-				    0x0814000000000008);
-
-		/* Initialize CI Store Buffers */
-		xscom_read(p->chip_id, TRANSPORT_CONTROL + offset, &reg);
-		reg |= PPC_BIT(63);
-		xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, reg);
+	if (p->index == CAPP0_PHB_INDEX) {
+		reg |= PPC_BIT(1); /* Send Packet Timer Value */
+		reg |= PPC_BITMASK(10, 13); /* Send Packet Timer Value */
+		reg &= ~PPC_BITMASK(18, 21); /* Set Max tlbi divider */
+		reg |= PPC_BIT(62);
 	}
+	if (p->index == CAPP1_PHB_INDEX) {
+		reg |= PPC_BIT(4); /* Send Packet Timer Value */
+		reg |= PPC_BIT(11); /* Set CI Store Buffer Threshold=5 */
+		reg |= PPC_BIT(13); /* Set CI Store Buffer Threshold=5 */
+	}
+	reg &= ~PPC_BITMASK(14, 17); /* Set Max LPC CI store buffer to zeros */
+	reg |= PPC_BIT(60); /* Set lowest CI Store buffer used bits */
+	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, reg);
+
+	/* Initialize CI Store Buffers */
+	xscom_read(p->chip_id, TRANSPORT_CONTROL + offset, &reg);
+	reg |= PPC_BIT(63);
+	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, reg);
 
 	/* Enable epoch timer */
 	xscom_write(p->chip_id, EPOCH_RECOVERY_TIMERS_CTRL + offset,
-		    0xC0000000FFF0FFFE);
+		    0xC0000000FFF8FFE0);
 
+	/* Flush SUE State Map Register */
 	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP + offset,
 		    0x1DCF5F6600000000);
-	xscom_write(p->chip_id, FLUSH_SUE_UOP1 + offset, 0xE310280428000000);
+
+	if (p->rev == PHB4_REV_NIMBUS_DD20) {
+		/* Flush SUE uOP1 Register */
+		xscom_write(p->chip_id, FLUSH_SUE_UOP1 + offset,
+			    0xE310280428000000);
+	}
 
 	/* capp owns PHB read buffers */
 	if (p->index == CAPP0_PHB_INDEX) {
@@ -3408,10 +3424,11 @@ static void phb4_init_capp_regs(struct phb4 *p)
 			    0xFFFFFFFFFFFF0000);
 	}
 	if (p->index == CAPP1_PHB_INDEX) {
+		/* Set 30 Read machines for CAPP Minus 20-27 for DMA */
 		xscom_write(p->chip_id, APC_FSM_READ_MASK + offset,
-			    0xFFFFFFFE00000000);
+			    0xFFFFF00E00000000);
 		xscom_write(p->chip_id, XPT_FSM_RMM + offset,
-			    0xFFFFFFFE00000000);
+			    0xFFFFF00E00000000);
 	}
 
 	/* Deassert TLBI_FENCED and tlbi_psl_is_dead */
@@ -3442,6 +3459,9 @@ static void phb4_init_capp_errors(struct phb4 *p)
  * NestBase = 4010C00 for PEC0
  *            4011000 for PEC1
  *            4011400 for PEC2
+ * PCIBase  = D010800 for PE0
+ *            E010800 for PE1
+ *            F010800 for PE2
  *
  * Some registers are shared amongst all of the stacks and will only
  * have 1 copy. Other registers are implemented one per stack.
@@ -3455,31 +3475,19 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 				enum capi_dma_tvt dma_tvt)
 {
 	uint64_t reg, start_addr, end_addr;
-	uint32_t offset;
 	int i;
 
-	xscom_read(p->chip_id, p->pe_xscom + 0x7, &reg);
-	if (reg & PPC_BIT(0))
+	/* CAPP Control Register */
+	xscom_read(p->chip_id, p->pe_xscom + XPEC_NEST_CAPP_CNTL, &reg);
+	if (reg & PPC_BIT(0)) {
 		PHBDBG(p, "Already in CAPP mode\n");
-
-	/* PEC Phase 3 (PBCQ) registers Init */
-	/* poll cqstat
-	 * CAPP0 attached to PHB0(PEC0)
-	 * CAPP1 attached to PHB3(PEC2)
-	 */
-	if (p->index == 0) {
-		/* PEC 0 */
-		offset = 0x40;
-	} else if (p->index == 1 || p->index == 2) {
-		/* PEC 1 */
-		offset = 0x80;
-	} else {
-		/* PEC 2 */
-		offset = 0xC0;
 	}
 
 	for (i = 0; i < 500000; i++) {
-		xscom_read(p->chip_id, p->pe_xscom + offset + 0xC, &reg);
+		/* PBCQ General Status Register */
+		xscom_read(p->chip_id,
+			   p->pe_stk_xscom + XPEC_NEST_STK_PBCQ_STAT,
+			   &reg);
 		if (!(reg & 0xC000000000000000))
 			break;
 		time_wait_us(10);
@@ -3489,24 +3497,48 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 		return OPAL_HARDWARE;
 	}
 
-	/* Enable CAPP Mode , Set 14 CI Store buffers for CAPP,
-	 * Set 48 Read machines for CAPP.
-	 */
-	if (p->index == CAPP0_PHB_INDEX)
-		reg = 0x800EFFFFFFFFFFFF;
-
-	if (p->index == CAPP1_PHB_INDEX)
-		reg = 0x8006FFFFFFFE0000;
-	xscom_write(p->chip_id, p->pe_xscom + 0x7, reg);
-
-	if (p->rev == PHB4_REV_NIMBUS_DD10) {
-		/* Ignores the PB init signal */
-		xscom_read(p->chip_id, p->pe_xscom + 0x0, &reg);
-		reg |= PPC_BIT(12);
-		xscom_write(p->chip_id, p->pe_xscom + 0x0, reg);
+	/* CAPP Control Register. Enable CAPP Mode */
+	if (p->index == CAPP0_PHB_INDEX) {
+		/* PBCQ is operating as a x16 stack the maximum number
+		 * of engines give to CAPP will be 14 and will be
+		 * assigned in the order of STQ 15 to 2
+		 */
+		/* PBCQ is operating as a x16 stack engines 0-47 are
+		 * available for capp use.
+		 * Set 48 Read machines for CAPP
+		 */
+		reg = 0x800EFFFFFFFFFFFFULL;
 	}
+	if (p->index == CAPP1_PHB_INDEX) {
+		/* PBCQ is operating as a x8 stack the maximum number of
+		 * engines given to CAPP should be 6 and will be
+		 * assigned in the order of 7 to 2.
+		 */
+		/* PBCQ is operating as a x8 stack the only engines
+		 * 0-30 are available for capp use.
+		 * Set 30 Read machines, minus 20-27 for DMA
+		 */
+		reg = 0x8006FFFFF00E0000ULL;
+	}
+	xscom_write(p->chip_id, p->pe_xscom + XPEC_NEST_CAPP_CNTL, reg);
+
+	/* PCI to PB data movement ignores the PB init signal.
+	 * Disable streaming.
+	 */
+	xscom_read(p->chip_id, p->pe_xscom + XPEC_NEST_PBCQ_HW_CONFIG, &reg);
+	reg |= XPEC_NEST_PBCQ_HW_CONFIG_PBINIT;
+	if (p->index == CAPP0_PHB_INDEX)
+		reg &= ~XPEC_NEST_PBCQ_HW_CONFIG_CH_STR;
+	xscom_write(p->chip_id, p->pe_xscom + XPEC_NEST_PBCQ_HW_CONFIG, reg);
 
 	/* PEC Phase 4 (PHB) registers adjustment
+	 * Inbound CAPP traffic: The CAPI can send both CAPP packets and
+	 * I/O packets. A PCIe packet is indentified as a CAPP packet in
+	 * the PHB if the PCIe address matches either the CAPI
+	 * Compare/Mask register or its NBW Compare/Mask register.
+	 */
+
+	/*
 	 * Bit [0:7] XSL_DSNCTL[capiind]
 	 * Init_25 - CAPI Compare/Mask
 	 */
@@ -3514,13 +3546,29 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 		 0x0200FE0000000000Ull | PHB_CAPI_CMPM_ENABLE);
 
 	if (!(p->rev == PHB4_REV_NIMBUS_DD10)) {
-		/* Init_123 :  NBW Compare/Mask Register */
-		out_be64(p->regs + PHB_PBL_NBW_CMP_MASK,
-			 0x0300FF0000000000Ull | PHB_PBL_NBW_MASK_ENABLE);
-
 		/* Init_24 - ASN Compare/Mask */
 		out_be64(p->regs + PHB_PBL_ASN_CMPM,
 			 0x0400FF0000000000Ull | PHB_PBL_ASN_ENABLE);
+
+		/* PBCQ Tunnel Bar Register
+		 * Write Tunnel register to match PSL TNR register
+		 */
+		xscom_write(p->chip_id,
+			    p->pe_stk_xscom + XPEC_NEST_STK_TUNNEL_BAR,
+			    0x020000E000000000);
+
+		/* PB AIB Hardware Control Register
+		 * Wait 32 PCI clocks for a credit to become available
+		 * before rejecting.
+		 */
+		xscom_read(p->chip_id,
+			   p->pci_xscom + XPEC_PCI_PBAIB_HW_CONFIG, &reg);
+		reg |= PPC_BITMASK(40, 42);
+		if (p->index == CAPP1_PHB_INDEX)
+			reg |= PPC_BIT(30);
+		xscom_write(p->chip_id,
+			    p->pci_xscom + XPEC_PCI_PBAIB_HW_CONFIG,
+			    reg);
 	}
 
 	/* non-translate/50-bit mode */
