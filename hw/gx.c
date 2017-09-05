@@ -84,8 +84,8 @@ int gx_configure_psi_buid(uint32_t chip, uint32_t buid)
 
 	printf("GX: PSI BUID for PVR %x (type %x) chip %d BUID 0x%x\n",
 	       pvr, PVR_TYPE(pvr), chip, buid);
-	       
-	switch(PVR_TYPE(pvr)) {
+
+	switch (PVR_TYPE(pvr)) {
 	case PVR_TYPE_P7:
 		return gx_p7_configure_psi_buid(chip, buid);
 	case PVR_TYPE_P7P:
@@ -148,7 +148,7 @@ int gx_configure_tce_bar(uint32_t chip, uint32_t gx, uint64_t addr,
 	       pvr, PVR_TYPE(pvr), chip, gx);
 
 	/* We only support P7... is there a P7+ with P5IOC2 ? */
-	switch(PVR_TYPE(pvr)) {
+	switch (PVR_TYPE(pvr)) {
 	case PVR_TYPE_P7:
 		return gx_p7_configure_tce_bar(chip, gx, addr, size);
 	}
