@@ -413,7 +413,7 @@ static void print_debug_queue_info(void)
 {
 #if BT_QUEUE_DEBUG
 	struct bt_msg *msg;
-	static bool printed = false;
+	static bool printed;
 
 	if (!list_empty(&bt.msgq)) {
 		printed = false;
