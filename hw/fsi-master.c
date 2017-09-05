@@ -89,7 +89,7 @@
 /* FSI Slave registers */
 #define FSI_SLAVE_REGS		0x000800	/**< FSI Slave Register */
 #define FSI_SMODE		(FSI_SLAVE_REGS | 0x00)
-#define FSI_SLBUS         	(FSI_SLAVE_REGS | 0x30)
+#define FSI_SLBUS		(FSI_SLAVE_REGS | 0x30)
 #define FSI_SLRES		(FSI_SLAVE_REGS | 0x34)
 
 #define FSI2PIB_ENGINE		0x001000	/**< FSI2PIB Engine (SCOM) */
@@ -313,14 +313,14 @@ static int64_t mfsi_dump_ctrl_regs(struct mfsi *mfsi)
 		MFSI_REG_MAEB,
 		MFSI_REG_MSCSB0,
 	};
-	static const char * dump_regs_names[] = {
+	static const char *dump_regs_names[] = {
 		"MFSI_REG_MATRB0",
 		"MFSI_REG_MDTRB0",
 		"MFSI_REG_MESRB0",
 		"MFSI_REG_MAESP0",
 		"MFSI_REG_MAEB  ",
 		"MFSI_REG_MSCSB0",
-        };
+	};
 	for (i = 0; i < ARRAY_SIZE(dump_regs); i++) {
 		uint32_t val;
 
@@ -460,7 +460,7 @@ static int64_t mfsi_analyse_fsi_error(struct mfsi *mfsi)
 		mfsi_log(PR_ERR, mfsi, " Master parity error !\n");
 	} else {
 		/* bits 0:3 are a specific error code */
-		switch ((mesrb0 & 0xF0000000) >> 28 ) {
+		switch ((mesrb0 & 0xF0000000) >> 28) {
 		case 0x1: /* OPB error	*/
 		case 0x2: /* Invalid state of OPB state machine */
 			/* error is inside the OPB logic */
@@ -630,7 +630,7 @@ static void mfsi_add(struct proc_chip *chip, struct mfsi *mfsi, uint32_t unit)
 	mfsi->unit = unit;
 
 	/* We hard code everything for now */
-	switch(unit) {
+	switch (unit) {
 	case MFSI_cMFSI0:
 		mfsi->xscom_base = PIB2OPB_MFSI0_ADDR;
 		mfsi->ports_base = cMFSI_OPB_PORTS_BASE;
