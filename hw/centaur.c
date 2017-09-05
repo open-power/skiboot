@@ -99,11 +99,11 @@ static int64_t centaur_fsiscom_complete(struct centaur_chip *centaur)
 
 	/* Recovery sequence from HostBoot fsiscom.C
 	 *  if SCOM fails and FSI Master displays "MasterTimeOut"
-         *     then 7,6  <covered by FSI driver>
-         *  else if SCOM fails and FSI2PIB Status shows PIB abort
-         *     then just perform unit reset (6) and wait 1 ms
-         *  else (PIB_abort='0' but PIB error is unequal 0)
-         *     then just perform unit reset (6) (wait not needed).
+	 *     then 7,6  <covered by FSI driver>
+	 *  else if SCOM fails and FSI2PIB Status shows PIB abort
+	 *     then just perform unit reset (6) and wait 1 ms
+	 *  else (PIB_abort='0' but PIB error is unequal 0)
+	 *     then just perform unit reset (6) (wait not needed).
 	 *
 	 * Note: Waiting 1ms inside OPAL is a BIG NO NO !!! We have
 	 * no choice but doing it at the moment but that will have
