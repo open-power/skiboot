@@ -26,7 +26,7 @@ int fake_nvram_info(uint32_t *total_size)
 {
 	nvram_region = find_mem_region("ibm,fake-nvram");
 
-	if(!nvram_region)
+	if (!nvram_region)
 		return OPAL_HARDWARE;
 
 	*total_size = nvram_region->len;
@@ -36,7 +36,7 @@ int fake_nvram_info(uint32_t *total_size)
 
 int fake_nvram_start_read(void *dst, uint32_t src, uint32_t len)
 {
-	if(!nvram_region)
+	if (!nvram_region)
 		return -ENODEV;
 
 	lock(&fake_nvram_lock);
@@ -50,7 +50,7 @@ int fake_nvram_start_read(void *dst, uint32_t src, uint32_t len)
 
 int fake_nvram_write(uint32_t offset, void *src, uint32_t size)
 {
-	if(!nvram_region)
+	if (!nvram_region)
 		return OPAL_HARDWARE;
 
 	lock(&fake_nvram_lock);
