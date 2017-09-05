@@ -80,7 +80,7 @@
 			(msg)->seq, ((msg)->ipmi_msg.netfn >> 2), (msg)->ipmi_msg.cmd, ##args); \
 		else \
 			prlog(level, "seq 0x?? netfn 0x?? cmd 0x??: " fmt "\n", ##args); \
-	} while(0)
+	} while (0)
 
 #define BT_Q_ERR(msg, fmt, args...) \
 	_BT_Q_LOG(PR_ERR, msg, fmt, ##args)
