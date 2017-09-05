@@ -19,7 +19,7 @@
 #include <mem_region.h>
 #include <lock.h>
 
-static struct mem_region *nvram_region = NULL;
+static struct mem_region *nvram_region;
 static struct lock fake_nvram_lock = LOCK_UNLOCKED;
 
 int fake_nvram_info(uint32_t *total_size)
