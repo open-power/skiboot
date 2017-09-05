@@ -503,8 +503,8 @@ static void chiptod_setup_base_tfmr(void)
 	base_tfmr = SPR_TFMR_TB_ECLIPZ;
 
 	/* Get CPU and TOD freqs in Hz */
-	if (dt_has_node_property(cpu,"ibm,extended-clock-frequency", NULL))
-		core_freq = dt_prop_get_u64(cpu,"ibm,extended-clock-frequency");
+	if (dt_has_node_property(cpu, "ibm,extended-clock-frequency", NULL))
+		core_freq = dt_prop_get_u64(cpu, "ibm,extended-clock-frequency");
 	else
 		core_freq = dt_prop_get_u32(cpu, "clock-frequency");
 	tod_freq = 32000000;
@@ -1608,11 +1608,11 @@ static bool chiptod_probe(void)
 
 		if (dt_has_node_property(np, "primary", NULL)) {
 		    chiptod_primary = chip;
-		    if (dt_node_is_compatible(np,"ibm,power7-chiptod"))
+		    if (dt_node_is_compatible(np, "ibm,power7-chiptod"))
 			    chiptod_type = chiptod_p7;
-		    if (dt_node_is_compatible(np,"ibm,power8-chiptod"))
+		    if (dt_node_is_compatible(np, "ibm,power8-chiptod"))
 			    chiptod_type = chiptod_p8;
-		    if (dt_node_is_compatible(np,"ibm,power9-chiptod"))
+		    if (dt_node_is_compatible(np, "ibm,power9-chiptod"))
 			    chiptod_type = chiptod_p9;
 		}
 
