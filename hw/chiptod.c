@@ -1607,17 +1607,17 @@ static bool chiptod_probe(void)
 		chip = dt_get_chip_id(np);
 
 		if (dt_has_node_property(np, "primary", NULL)) {
-		    chiptod_primary = chip;
-		    if (dt_node_is_compatible(np, "ibm,power7-chiptod"))
-			    chiptod_type = chiptod_p7;
-		    if (dt_node_is_compatible(np, "ibm,power8-chiptod"))
-			    chiptod_type = chiptod_p8;
-		    if (dt_node_is_compatible(np, "ibm,power9-chiptod"))
-			    chiptod_type = chiptod_p9;
+			chiptod_primary = chip;
+			if (dt_node_is_compatible(np, "ibm,power7-chiptod"))
+				chiptod_type = chiptod_p7;
+			if (dt_node_is_compatible(np, "ibm,power8-chiptod"))
+				chiptod_type = chiptod_p8;
+			if (dt_node_is_compatible(np, "ibm,power9-chiptod"))
+				chiptod_type = chiptod_p9;
 		}
 
 		if (dt_has_node_property(np, "secondary", NULL))
-		    chiptod_secondary = chip;
+			chiptod_secondary = chip;
 
 	}
 
