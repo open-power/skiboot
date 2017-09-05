@@ -2046,7 +2046,7 @@ static int64_t phb4_set_pe(struct phb *phb,
 			for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++)
 				p->rte_cache[idx] = pe_number;
 		} else {
-			for ( idx = 0; idx < ARRAY_SIZE(p->rte_cache); idx++)
+			for (idx = 0; idx < ARRAY_SIZE(p->rte_cache); idx++)
 				p->rte_cache[idx] = PHB4_RESERVED_PE_NUM(p);
 		}
 		memcpy((void *)p->tbl_rtt, p->rte_cache, RTT_TABLE_SIZE);
