@@ -368,7 +368,7 @@ static int64_t mfsi_master_cleanup(struct mfsi *mfsi, uint32_t port)
 
 	/* Perform error reset on Centaur fsi slave: */
 	/*  write 0x4000000 to addr=834 */
-  	opb_stat = mfsi_opb_write(mfsi, port_base + FSI_SLRES, 0x04000000);
+	opb_stat = mfsi_opb_write(mfsi, port_base + FSI_SLRES, 0x04000000);
 	if (opb_stat) {
 		mfsi_log(PR_ERR, mfsi,
 			 " OPB stat 0x%016llx writing reset to FSI slave\n",
@@ -383,7 +383,7 @@ static int64_t mfsi_master_cleanup(struct mfsi *mfsi, uint32_t port)
 	 *
 	 * XXX BenH: Should that be done by the upper FSI XSCOM layer ?
 	 */
-  	opb_stat = mfsi_opb_write(mfsi, port_base + FSI2PIB_STATUS, 0xFFFFFFFF);
+	opb_stat = mfsi_opb_write(mfsi, port_base + FSI2PIB_STATUS, 0xFFFFFFFF);
 	if (opb_stat) {
 		mfsi_log(PR_ERR, mfsi,
 			 " OPB stat 0x%016llx clearing FSI2PIB_STATUS\n",
@@ -394,14 +394,14 @@ static int64_t mfsi_master_cleanup(struct mfsi *mfsi, uint32_t port)
 	/* Need to save/restore the true/comp masks or the FSP (PRD ?) will
 	 * get annoyed
 	 */
-     	opb_stat = mfsi_opb_read(mfsi, port_base + FSI2PIB_COMPMASK, &compmask);
+	opb_stat = mfsi_opb_read(mfsi, port_base + FSI2PIB_COMPMASK, &compmask);
 	if (opb_stat) {
 		mfsi_log(PR_ERR, mfsi,
 			 " OPB stat 0x%016llx reading FSI2PIB_COMPMASK\n",
 			 opb_stat);
 		return OPAL_HARDWARE;
 	}
-     	opb_stat = mfsi_opb_read(mfsi, port_base + FSI2PIB_TRUEMASK, &truemask);
+	opb_stat = mfsi_opb_read(mfsi, port_base + FSI2PIB_TRUEMASK, &truemask);
 	if (opb_stat) {
 		mfsi_log(PR_ERR, mfsi,
 			 " OPB stat 0x%016llx reading FSI2PIB_TRUEMASK\n",
@@ -412,7 +412,7 @@ static int64_t mfsi_master_cleanup(struct mfsi *mfsi, uint32_t port)
 	/* Then, write arbitrary data to 1018  (putcfam 1006) to
          * reset any pending FSI2PIB errors.
 	 */
-  	opb_stat = mfsi_opb_write(mfsi, port_base + FSI2PIB_RESET, 0xFFFFFFFF);
+	opb_stat = mfsi_opb_write(mfsi, port_base + FSI2PIB_RESET, 0xFFFFFFFF);
 	if (opb_stat) {
 		mfsi_log(PR_ERR, mfsi,
 			 " OPB stat 0x%016llx writing FSI2PIB_RESET\n",
@@ -421,14 +421,14 @@ static int64_t mfsi_master_cleanup(struct mfsi *mfsi, uint32_t port)
 	}
 
 	/* Restore the true/comp masks */
-  	opb_stat = mfsi_opb_write(mfsi, port_base + FSI2PIB_COMPMASK, compmask);
+	opb_stat = mfsi_opb_write(mfsi, port_base + FSI2PIB_COMPMASK, compmask);
 	if (opb_stat) {
 		mfsi_log(PR_ERR, mfsi,
 			 " OPB stat 0x%016llx writing FSI2PIB_COMPMASK\n",
 			 opb_stat);
 		return OPAL_HARDWARE;
 	}
-  	opb_stat = mfsi_opb_write(mfsi, port_base + FSI2PIB_TRUEMASK, truemask);
+	opb_stat = mfsi_opb_write(mfsi, port_base + FSI2PIB_TRUEMASK, truemask);
 	if (opb_stat) {
 		mfsi_log(PR_ERR, mfsi,
 			 " OPB stat 0x%016llx writing FSI2PIB_TRUEMASK\n",
