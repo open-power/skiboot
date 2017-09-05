@@ -1580,9 +1580,9 @@ error_out:
 static int64_t opal_resync_timebase(void)
 {
        if (!chiptod_wakeup_resync()) {
-               prerror("OPAL: Resync timebase failed on CPU 0x%04x\n",
+	       prerror("OPAL: Resync timebase failed on CPU 0x%04x\n",
 		      this_cpu()->pir);
-               return OPAL_HARDWARE;
+	       return OPAL_HARDWARE;
        }
        return OPAL_SUCCESS;
 }
