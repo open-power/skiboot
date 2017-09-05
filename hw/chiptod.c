@@ -548,7 +548,7 @@ static bool chiptod_mod_tb(void)
 			prerror("TB \"Not Set\" TOD in error state\n");
 			return false;
 		}
-	} while(tfmr & SPR_TFMR_LOAD_TOD_MOD);
+	} while (tfmr & SPR_TFMR_LOAD_TOD_MOD);
 
 	return true;
 }
@@ -568,7 +568,7 @@ static bool chiptod_interrupt_check(void)
 			prerror("Interrupt check TFMR corrupt !\n");
 			return false;
 		}
-	} while(tfmr & SPR_TFMR_CHIP_TOD_INTERRUPT);
+	} while (tfmr & SPR_TFMR_CHIP_TOD_INTERRUPT);
 
 	return true;
 }
@@ -602,7 +602,7 @@ static bool chiptod_poll_running(void)
 			prerror("XSCOM error polling run\n");
 			return false;
 		}
-	} while(!(tval & 0x0800000000000000UL));
+	} while (!(tval & 0x0800000000000000UL));
 
 	return true;
 }
@@ -664,7 +664,7 @@ static bool chiptod_to_tb(void)
 			prerror("MoveToTB: corrupt TFMR !\n");
 			return false;
 		}
-	} while(tfmr & SPR_TFMR_MOVE_CHIP_TOD_TO_TB);
+	} while (tfmr & SPR_TFMR_MOVE_CHIP_TOD_TO_TB);
 
 	return true;
 }
@@ -691,7 +691,7 @@ static bool chiptod_check_tb_running(void)
 				return false;
 			}
 			tfmr = mfspr(SPR_TFMR);
-		} while(!(tfmr & SPR_TFMR_TB_SYNC_OCCURED));
+		} while (!(tfmr & SPR_TFMR_TB_SYNC_OCCURED));
 	}
 #else
 	uint64_t tfmr = mfspr(SPR_TFMR);
@@ -733,7 +733,7 @@ static bool chiptod_reset_tb_errors(void)
 			prerror("TB error reset: corrupt TFMR !\n");
 			return false;
 		}
-	} while(tfmr & SPR_TFMR_CLEAR_TB_ERRORS);
+	} while (tfmr & SPR_TFMR_CLEAR_TB_ERRORS);
 	return true;
 }
 
