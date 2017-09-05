@@ -378,8 +378,8 @@ static int64_t mfsi_master_cleanup(struct mfsi *mfsi, uint32_t port)
 
 	/* Further step is to issue a PIB reset to the FSI2PIB engine
 	 * in busy state, i.e. write arbitrary data to 101c
-         * (putcfam 1007) register of the previously failed FSI2PIB
-         * engine on Centaur.
+	 * (putcfam 1007) register of the previously failed FSI2PIB
+	 * engine on Centaur.
 	 *
 	 * XXX BenH: Should that be done by the upper FSI XSCOM layer ?
 	 */
@@ -410,7 +410,7 @@ static int64_t mfsi_master_cleanup(struct mfsi *mfsi, uint32_t port)
 	}
 
 	/* Then, write arbitrary data to 1018  (putcfam 1006) to
-         * reset any pending FSI2PIB errors.
+	 * reset any pending FSI2PIB errors.
 	 */
 	opb_stat = mfsi_opb_write(mfsi, port_base + FSI2PIB_RESET, 0xFFFFFFFF);
 	if (opb_stat) {
