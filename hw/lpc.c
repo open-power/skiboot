@@ -162,10 +162,10 @@ static bool lpc_irqs_ready;
  * today on Tuletta.
  */
 static uint32_t lpc_io_opb_base		= 0xd0010000;
-static uint32_t lpc_mem_opb_base 	= 0xe0000000;
-static uint32_t lpc_fw_opb_base 	= 0xf0000000;
-static uint32_t lpc_reg_opb_base 	= 0xc0012000;
-static uint32_t opb_master_reg_base 	= 0xc0010000;
+static uint32_t lpc_mem_opb_base	= 0xe0000000;
+static uint32_t lpc_fw_opb_base		= 0xf0000000;
+static uint32_t lpc_reg_opb_base	= 0xc0012000;
+static uint32_t opb_master_reg_base	= 0xc0010000;
 
 static int64_t opb_mmio_write(struct lpcm *lpc, uint32_t addr, uint32_t data,
 			      uint32_t sz)
