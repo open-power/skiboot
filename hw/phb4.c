@@ -3616,6 +3616,10 @@ static void phb4_init_capp_regs(struct phb4 *p)
 	/* CAPP FIR MASK */
 	xscom_write(p->chip_id, CAPP_FIR_MASK + offset, 0x80031f98d8717000);
 
+	/* Mask the CAPP PSL Credit Timeout Register error */
+	xscom_write_mask(p->chip_id, CAPP_FIR_MASK + offset,
+			 PPC_BIT(46), PPC_BIT(46));
+
 	/* Deassert TLBI_FENCED and tlbi_psl_is_dead */
 	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, 0);
 }
