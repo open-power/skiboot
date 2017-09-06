@@ -20,7 +20,6 @@
 #include <i2c.h>
 #include <stdlib.h>
 
-extern void tpm_i2c_request_complete(int rc, struct i2c_request *req);
 extern int tpm_i2c_request_send(int tpm_bus_id, int tpm_dev_addr, int read_write,
 				uint32_t offset, uint32_t offset_bytes, void* buf,
 				size_t buflen);
