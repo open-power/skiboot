@@ -887,7 +887,6 @@ static void xive_init_default_vp(struct xive_vp *vp,
 	 */
 	vp->w1 = (eq_blk << 28) | eq_idx;
 	vp->w5 = 0xff000000;
-	lwsync();
 	vp->w0 = VP_W0_VALID;
 }
 
@@ -903,7 +902,6 @@ static void xive_init_emu_eq(uint32_t vp_blk, uint32_t vp_idx,
 	eq->w6 = SETFIELD(EQ_W6_NVT_BLOCK, 0ul, vp_blk) |
 		SETFIELD(EQ_W6_NVT_INDEX, 0ul, vp_idx);
 	eq->w7 = SETFIELD(EQ_W7_F0_PRIORITY, 0ul, prio);
-	eieio();
 	eq->w0 = EQ_W0_VALID | EQ_W0_ENQUEUE |
 		SETFIELD(EQ_W0_QSIZE, 0ul, EQ_QSIZE_64K) |
 		EQ_W0_FIRMWARE;
