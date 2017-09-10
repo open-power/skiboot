@@ -2226,7 +2226,11 @@ static inline bool xive_eq_for_target(uint32_t target, uint8_t prio,
 	eq_idx = vp->w1 & 0x0fffffff;
 
 	/* Currently the EQ block and VP block should be the same */
-	assert(eq_blk == vp_blk);
+	if (eq_blk != vp_blk) {
+		xive_err(x, "eq_blk != vp_blk (%d vs. %d) for target 0x%08x/%d\n",
+			 eq_blk, vp_blk, target, prio);
+		assert(false);
+	}
 
 	if (out_eq_blk)
 		*out_eq_blk = eq_blk;
