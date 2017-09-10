@@ -2893,7 +2893,7 @@ void xive_cpu_callin(struct cpu_thread *cpu)
 	in_be32(xs->tm_ring1 + TM_SPC_PULL_POOL_CTX);
 
 	/* Clear VT and LSI bit */
-	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + 8, 0);
+	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2, 0);
 
 	/* Set VT to 1 */
 	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2, 0x80);
