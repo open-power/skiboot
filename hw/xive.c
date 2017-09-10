@@ -44,10 +44,12 @@
 #define XIVE_DEBUG_DUPLICATES
 #define XIVE_PERCPU_LOG
 #define XIVE_DEBUG_INIT_CACHE_UPDATES
+#define XIVE_EXTRA_CHECK_INIT_CACHE
 #else
 #undef  XIVE_DEBUG_DUPLICATES
 #undef  XIVE_PERCPU_LOG
 #undef  XIVE_DEBUG_INIT_CACHE_UPDATES
+#undef  XIVE_EXTRA_CHECK_INIT_CACHE
 #endif
 
 /*
@@ -2870,6 +2872,95 @@ void xive_cpu_callin(struct cpu_thread *cpu)
 		     in_be64(xs->tm_ring1 + TM_QW3_HV_PHYS));
 }
 
+#ifdef XIVE_DEBUG_INIT_CACHE_UPDATES
+static bool xive_check_eq_update(struct xive *x, uint32_t idx, struct xive_eq *eq)
+{
+	struct xive_eq *eq_p = xive_get_eq(x, idx);
+	struct xive_eq eq2;
+
+	assert(eq_p);
+	eq2 = *eq_p;
+	if (memcmp(eq, &eq2, sizeof(eq)) != 0) {
+		xive_err(x, "EQ update mismatch idx %d\n", idx);
+		xive_err(x, "want: %08x %08x %08x %08x\n",
+			 eq->w0, eq->w1, eq->w2, eq->w3);
+		xive_err(x, "      %08x %08x %08x %08x\n",
+			 eq->w4, eq->w5, eq->w6, eq->w7);
+		xive_err(x, "got : %08x %08x %08x %08x\n",
+			 eq2.w0, eq2.w1, eq2.w2, eq2.w3);
+		xive_err(x, "      %08x %08x %08x %08x\n",
+			 eq2.w4, eq2.w5, eq2.w6, eq2.w7);
+		return false;
+	}
+	return true;
+}
+
+static bool xive_check_vpc_update(struct xive *x, uint32_t idx, struct xive_vp *vp)
+{
+	struct xive_vp *vp_p = xive_get_vp(x, idx);
+	struct xive_vp vp2;
+
+	assert(vp_p);
+	vp2 = *vp_p;
+	if (memcmp(vp, &vp2, sizeof(vp)) != 0) {
+		xive_err(x, "VP update mismatch idx %d\n", idx);
+		xive_err(x, "want: %08x %08x %08x %08x\n",
+			 vp->w0, vp->w1, vp->w2, vp->w3);
+		xive_err(x, "      %08x %08x %08x %08x\n",
+			 vp->w4, vp->w5, vp->w6, vp->w7);
+		xive_err(x, "got : %08x %08x %08x %08x\n",
+			 vp2.w0, vp2.w1, vp2.w2, vp2.w3);
+		xive_err(x, "      %08x %08x %08x %08x\n",
+			 vp2.w4, vp2.w5, vp2.w6, vp2.w7);
+		return false;
+	}
+	return true;
+}
+#else
+static inline bool xive_check_eq_update(struct xive *x __unused,
+					uint32_t idx __unused,
+					struct xive_eq *eq __unused)
+{
+	return true;
+}
+
+static inline bool xive_check_vpc_update(struct xive *x __unused,
+					 uint32_t idx __unused,
+					 struct xive_vp *vp __unused)
+{
+	return true;
+}
+#endif
+
+#ifdef XIVE_EXTRA_CHECK_INIT_CACHE
+static void xive_special_cache_check(struct xive *x, uint32_t blk, uint32_t idx)
+{
+	struct xive_vp vp = {};
+	uint32_t i;
+
+	for (i = 0; i < 1000; i++) {
+		struct xive_vp *vp_m = xive_get_vp(x, idx);
+
+		memset(vp_m, (~i) & 0xff, sizeof(*vp_m));
+		sync();
+		vp.w1 = (i << 16) | i;
+		xive_vpc_cache_update(x, blk, idx,
+				      0, 8, &vp, false, true);
+		if (!xive_check_vpc_update(x, idx, &vp)) {
+			xive_dbg(x, "Test failed at %d iterations\n", i);
+			return;
+		}
+	}
+	xive_dbg(x, "1000 iterations test success at %d/0x%x\n", blk, idx);
+}
+#else
+static inline void xive_special_cache_check(struct xive *x __unused,
+					    uint32_t blk __unused,
+					    uint32_t idx __unused)
+{
+}
+#endif
+
 static void xive_setup_hw_for_emu(struct xive_cpu_state *xs)
 {
 	struct xive_eq eq;
@@ -2897,58 +2988,18 @@ static void xive_setup_hw_for_emu(struct xive_cpu_state *xs)
 	xive_eqc_cache_update(x_eq, xs->eq_blk,
 			      xs->eq_idx + XIVE_EMULATION_PRIO,
 			      0, 4, &eq, false, true);
+	xive_check_eq_update(x_eq, xs->eq_idx + XIVE_EMULATION_PRIO, &eq);
 
-#ifdef XIVE_DEBUG_INIT_CACHE_UPDATES
-	if (1) {
-		struct xive_eq *eq_p = xive_get_eq(x_eq,
-						   xs->eq_idx +
-						   XIVE_EMULATION_PRIO);
-		struct xive_eq eq2;
+	/* Extra testing of cache watch & scrub facilities */
+	xive_special_cache_check(x_vp, xs->vp_blk, xs->vp_idx);
 
-		assert(eq_p);
-		eq2 = *eq_p;
-		if (memcmp(&eq, &eq2, sizeof(eq)) != 0) {
-			xive_err(x_eq, "EQ update mismatch idx %d\n",
-				 xs->eq_idx);
-			xive_err(x_eq, "want: %08x %08x %08x %08x\n",
-				 eq.w0, eq.w1, eq.w2, eq.w3);
-			xive_err(x_eq, "      %08x %08x %08x %08x\n",
-				 eq.w4, eq.w5, eq.w6, eq.w7);
-			xive_err(x_eq, "got : %08x %08x %08x %08x\n",
-				 eq2.w0, eq2.w1, eq2.w2, eq2.w3);
-			xive_err(x_eq, "      %08x %08x %08x %08x\n",
-				 eq2.w4, eq2.w5, eq2.w6, eq2.w7);
-		}
-	}
-#endif
 	/* Initialize/enable the VP */
 	xive_init_default_vp(&vp, xs->eq_blk, xs->eq_idx);
 
 	/* Use the cache watch to write it out */
 	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx,
 			      0, 8, &vp, false, true);
-
-	/* Debug code */
-#ifdef XIVE_DEBUG_INIT_CACHE_UPDATES
-	if (1) {
-		struct xive_vp *vp_p = xive_get_vp(x_vp, xs->vp_idx);
-		struct xive_vp vp2;
-
-		assert(vp_p);
-		vp2 = *vp_p;
-		if (memcmp(&vp, &vp2, sizeof(vp)) != 0) {
-			xive_err(x_vp, "VP update mismatch idx %d\n", xs->vp_idx);
-			xive_err(x_vp, "want: %08x %08x %08x %08x\n",
-				 vp.w0, vp.w1, vp.w2, vp.w3);
-			xive_err(x_vp, "      %08x %08x %08x %08x\n",
-				 vp.w4, vp.w5, vp.w6, vp.w7);
-			xive_err(x_vp, "got : %08x %08x %08x %08x\n",
-				 vp2.w0, vp2.w1, vp2.w2, vp2.w3);
-			xive_err(x_vp, "      %08x %08x %08x %08x\n",
-				 vp2.w4, vp2.w5, vp2.w6, vp2.w7);
-		}
-	}
-#endif
+	xive_check_vpc_update(x_vp, xs->vp_idx, &vp);
 }
 
 static void xive_init_cpu_emulation(struct xive_cpu_state *xs,
