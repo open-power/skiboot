@@ -2872,48 +2872,48 @@ static void xive_ipi_trigger(struct xive *x, uint32_t idx)
 }
 
 
+static void xive_reset_enable_thread(struct cpu_thread *c)
+{
+	struct proc_chip *chip = get_chip(c->chip_id);
+	struct xive *x = chip->xive;
+	uint32_t fc, bit;
+
+	/* Get fused core number */
+	fc = (c->pir >> 3) & 0xf;
+
+	/* Get bit in register */
+	bit = c->pir & 0x3f;
+
+	/* Get which register to access */
+	if (fc < 8) {
+		xive_regw(x, PC_THREAD_EN_REG0_CLR, PPC_BIT(bit));
+		xive_regw(x, PC_THREAD_EN_REG0_SET, PPC_BIT(bit));
+	} else {
+		xive_regw(x, PC_THREAD_EN_REG1_CLR, PPC_BIT(bit));
+		xive_regw(x, PC_THREAD_EN_REG1_SET, PPC_BIT(bit));
+	}
+}
+
 void xive_cpu_callin(struct cpu_thread *cpu)
 {
 	struct xive_cpu_state *xs = cpu->xstate;
-	struct proc_chip *chip = get_chip(cpu->chip_id);
-	struct xive *x = chip->xive;
-	uint32_t fc, bit;
+	uint8_t old_w2, w2;
 
 	if (!xs)
 		return;
 
-	/* First enable us in PTER. We currently assume that the
-	 * PIR bits can be directly used to index in PTER. That might
-	 * need to be verified
-	 */
-
-	/* Get fused core number */
-	fc = (cpu->pir >> 3) & 0xf;
-	/* Get bit in register */
-	bit = cpu->pir & 0x3f;
-	/* Get which register to access */
-	if (fc < 8)
-		xive_regw(x, PC_THREAD_EN_REG0_SET, PPC_BIT(bit));
-	else
-		xive_regw(x, PC_THREAD_EN_REG1_SET, PPC_BIT(bit));
-
-	/* Set CPPR to 0 */
-	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_CPPR, 0);
-
-	/* Pull everything */
-	in_be32(xs->tm_ring1 + TM_SPC_PULL_USR_CTX);
-	in_be32(xs->tm_ring1 + TM_SPC_PULL_OS_CTX);
-	in_be32(xs->tm_ring1 + TM_SPC_PULL_POOL_CTX);
-
-	/* Clear VT and LSI bit */
-	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2, 0);
+	/* Reset the HW thread context and enable it */
+	xive_reset_enable_thread(cpu);
 
 	/* Set VT to 1 */
+	old_w2 = in_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2);
 	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2, 0x80);
+	w2 = in_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2);
 
-	xive_cpu_dbg(cpu, "Initialized TMA (VP: %x/%x W01=%016llx)\n",
+	xive_cpu_dbg(cpu, "Initialized TIMA VP=%x/%x W01=%016llx W2=%02x->%02x\n",
 		     xs->vp_blk, xs->vp_idx,
-		     in_be64(xs->tm_ring1 + TM_QW3_HV_PHYS));
+		     in_be64(xs->tm_ring1 + TM_QW3_HV_PHYS),
+		     old_w2, w2);
 }
 
 #ifdef XIVE_DEBUG_INIT_CACHE_UPDATES
@@ -4135,11 +4135,15 @@ static int64_t opal_xive_set_vp_info(uint64_t vp_id,
 	return OPAL_SUCCESS;
 }
 
-static void xive_cleanup_cpu_tma(struct cpu_thread *c)
+static void xive_cleanup_cpu_tima(struct cpu_thread *c)
 {
 	struct xive_cpu_state *xs = c->xstate;
 	struct xive *x = xs->xive;
 	void *ind_tm_base = x->ic_base + (4 << x->ic_shift);
+	uint8_t old_w2, w2;
+
+	/* Reset the HW context */
+	xive_reset_enable_thread(c);
 
 	/* Setup indirect access to the corresponding thread */
 	xive_regw(x, PC_TCTXT_INDIR0,
@@ -4151,18 +4155,16 @@ static void xive_cleanup_cpu_tma(struct cpu_thread *c)
 	 */
 	xive_regr(x, PC_TCTXT_INDIR0);
 
-	/* Pull user context, OS context and Pool context if any */
-	in_be32(ind_tm_base + TM_SPC_PULL_USR_CTX);
-	in_be32(ind_tm_base + TM_SPC_PULL_OS_CTX);
-	in_be32(ind_tm_base + TM_SPC_PULL_POOL_CTX);
-
-	/* Set HV CPPR to 0 */
-	out_8(ind_tm_base + TM_QW3_HV_PHYS + TM_CPPR, 0);
+	/* Set VT to 1 */
+	old_w2 = in_8(ind_tm_base + TM_QW3_HV_PHYS + TM_WORD2);
+	out_8(ind_tm_base + TM_QW3_HV_PHYS + TM_WORD2, 0x80);
+	w2 = in_8(ind_tm_base + TM_QW3_HV_PHYS + TM_WORD2);
 
 	/* Dump HV state */
-	xive_cpu_dbg(c, "[reset] VP %x/%x W01 state: %016llx\n",
+	xive_cpu_dbg(c, "[reset] VP TIMA VP=%x/%x W01=%016llx W2=%02x->%02x\n",
 		     xs->vp_blk, xs->vp_idx,
-		     in_be64(ind_tm_base + TM_QW3_HV_PHYS));
+		     in_be64(ind_tm_base + TM_QW3_HV_PHYS),
+		     old_w2, w2);
 
 	/* Reset indirect access */
 	xive_regw(x, PC_TCTXT_INDIR0, 0);
@@ -4309,7 +4311,7 @@ static void xive_reset_one(struct xive *x)
 			continue;
 		if (!c->xstate)
 			continue;
-		xive_cleanup_cpu_tma(c);
+		xive_cleanup_cpu_tima(c);
 	}
 
 	/* Reset all user-allocated VPs. This is inefficient, we should
