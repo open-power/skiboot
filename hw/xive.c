@@ -1623,6 +1623,8 @@ static bool xive_config_init(struct xive *x)
 #endif
 	val |= PC_TCTXT_CHIPID_OVERRIDE;
 	val |= PC_TCTXT_CFG_TARGET_EN;
+	/* Disable pressure relief as we hijack the field in the VPs */
+	val &= ~PC_TCTXT_CFG_STORE_ACK;
 	val = SETFIELD(PC_TCTXT_CHIPID, val, x->block_id);
 	xive_regw(x, PC_TCTXT_CFG, val);
 	xive_dbg(x, "PC_TCTXT_CFG=%016llx\n", val);
