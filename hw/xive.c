@@ -45,11 +45,13 @@
 #define XIVE_PERCPU_LOG
 #define XIVE_DEBUG_INIT_CACHE_UPDATES
 #define XIVE_EXTRA_CHECK_INIT_CACHE
+#define XIVE_CHECK_LOCKS
 #else
 #undef  XIVE_DEBUG_DUPLICATES
 #undef  XIVE_PERCPU_LOG
 #undef  XIVE_DEBUG_INIT_CACHE_UPDATES
 #undef  XIVE_EXTRA_CHECK_INIT_CACHE
+#undef  XIVE_CHECK_LOCKS
 #endif
 
 /*
@@ -1245,6 +1247,10 @@ static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 	uint64_t sreg, sregx, mreg, mregx;
 	uint64_t mval, sval;
 
+#ifdef XIVE_CHECK_LOCKS
+	assert(lock_held_by_me(&x->lock));
+#endif
+
 	/* Workaround a HW bug in XIVE where the scrub completion
 	 * isn't ordered by loads, thus the data might still be
 	 * in a queue and may not have reached coherency.
@@ -1341,6 +1347,9 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 	uint64_t dval0, sval, status;
 	int64_t i;
 
+#ifdef XIVE_CHECK_LOCKS
+	assert(lock_held_by_me(&x->lock));
+#endif
 	switch (ctype) {
 	case xive_cache_eqc:
 		sreg = VC_EQC_CWATCH_SPEC;
@@ -3016,6 +3025,7 @@ static void xive_setup_hw_for_emu(struct xive_cpu_state *xs)
 			 xs->eq_page, XIVE_EMULATION_PRIO);
 
 	/* Use the cache watch to write it out */
+	lock(&x_eq->lock);
 	xive_eqc_cache_update(x_eq, xs->eq_blk,
 			      xs->eq_idx + XIVE_EMULATION_PRIO,
 			      0, 4, &eq, false, true);
@@ -3023,14 +3033,17 @@ static void xive_setup_hw_for_emu(struct xive_cpu_state *xs)
 
 	/* Extra testing of cache watch & scrub facilities */
 	xive_special_cache_check(x_vp, xs->vp_blk, xs->vp_idx);
+	unlock(&x_eq->lock);
 
 	/* Initialize/enable the VP */
 	xive_init_default_vp(&vp, xs->eq_blk, xs->eq_idx);
 
 	/* Use the cache watch to write it out */
+	lock(&x_vp->lock);
 	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx,
 			      0, 8, &vp, false, true);
 	xive_check_vpc_update(x_vp, xs->vp_idx, &vp);
+	unlock(&x_vp->lock);
 }
 
 static void xive_init_cpu_emulation(struct xive_cpu_state *xs,
@@ -3075,8 +3088,10 @@ static void xive_init_cpu_exploitation(struct xive_cpu_state *xs)
 	xive_init_default_vp(&vp, xs->eq_blk, xs->eq_idx);
 
 	/* Use the cache watch to write it out */
+	lock(&x_vp->lock);
 	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx,
 			      0, 8, &vp, false, true);
+	unlock(&x_vp->lock);
 
 	/* Clenaup remaining state */
 	xs->cppr = 0;
@@ -3263,9 +3278,11 @@ static uint32_t xive_read_eq(struct xive_cpu_state *xs, bool just_peek)
 			xs->eqbuf[(xs->eqptr + 2) & xs->eqmsk],
 			xs->eqbuf[(xs->eqptr + 3) & xs->eqmsk],
 			xs->eqgen, xs->eqptr, just_peek);
+		lock(&xs->xive->lock);
 		__xive_cache_scrub(xs->xive, xive_cache_eqc, xs->eq_blk,
 				   xs->eq_idx + XIVE_EMULATION_PRIO,
 				   false, false);
+		unlock(&xs->xive->lock);
 		eq = xive_get_eq(xs->xive, xs->eq_idx + XIVE_EMULATION_PRIO);
 		prerror("EQ @%p W0=%08x W1=%08x qbuf @%p\n",
 			eq, eq->w0, eq->w1, xs->eqbuf);
@@ -3503,9 +3520,11 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 #ifdef XIVE_PERCPU_LOG
 	{
 		struct xive_eq *eq;
+		lock(&xs->xive->lock);
 		__xive_cache_scrub(xs->xive, xive_cache_eqc, xs->eq_blk,
 				   xs->eq_idx + XIVE_EMULATION_PRIO,
 				   false, false);
+		unlock(&xs->xive->lock);
 		eq = xive_get_eq(xs->xive, xs->eq_idx + XIVE_EMULATION_PRIO);
 		log_add(xs, LOG_TYPE_EQD, 2, eq->w0, eq->w1);
 	}
