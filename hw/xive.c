@@ -882,11 +882,8 @@ static void xive_init_default_vp(struct xive_vp *vp,
 {
 	memset(vp, 0, sizeof(struct xive_vp));
 
-	/* Stash the EQ base in the pressure relief interrupt field
-	 * and set the ACK# to 0xff to disable pressure relief interrupts
-	 */
+	/* Stash the EQ base in the pressure relief interrupt field */
 	vp->w1 = (eq_blk << 28) | eq_idx;
-	vp->w5 = 0xff000000;
 	vp->w0 = VP_W0_VALID;
 }
 
