@@ -1232,12 +1232,29 @@ enum xive_cache_type {
 	xive_cache_vpc,
 };
 
+static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
+				  uint64_t block, uint64_t idx,
+				  uint32_t start_dword, uint32_t dword_count,
+				  void *new_data, bool light_watch,
+				  bool synchronous);
+
 static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 				  uint64_t block, uint64_t idx,
 				  bool want_inval, bool want_disable)
 {
 	uint64_t sreg, sregx, mreg, mregx;
 	uint64_t mval, sval;
+
+	/* Workaround a HW bug in XIVE where the scrub completion
+	 * isn't ordered by loads, thus the data might still be
+	 * in a queue and may not have reached coherency.
+	 *
+	 * The workaround is two folds: We force the scrub to also
+	 * invalidate, then after the scrub, we do a dummy cache
+	 * watch which will make the HW read the data back, which
+	 * should be ordered behind all the preceding stores.
+	 */
+	want_inval = true;
 
 	switch (ctype) {
 	case xive_cache_ivc:
@@ -1293,6 +1310,13 @@ static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 		time_wait(100);
 	}
 	sync();
+
+	/* Workaround for HW bug described above (only applies to
+	 * EQC and VPC
+	 */
+	if (ctype == xive_cache_eqc || ctype == xive_cache_vpc)
+		__xive_cache_watch(x, ctype, block, idx, 0, 0, NULL,
+				   true, false);
 	return 0;
 }
 
@@ -1304,7 +1328,6 @@ static int64_t xive_ivc_scrub(struct xive *x, uint64_t block, uint64_t idx)
 
 static int64_t xive_vpc_scrub_clean(struct xive *x, uint64_t block, uint64_t idx)
 {
-	/* IVC has no "want_inval" bit, it always invalidates */
 	return __xive_cache_scrub(x, xive_cache_vpc, block, idx, true, false);
 }
 
@@ -1347,6 +1370,14 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 
 		/* Load data0 register to populate the watch */
 		dval0 = __xive_regr(x, dreg0, dreg0x, NULL);
+
+		/* If new_data is NULL, this is a dummy watch used as a
+		 * workaround for a HW bug
+		 */
+		if (!new_data) {
+			__xive_regw(x, dreg0, dreg0x, dval0, NULL);
+			return 0;
+		}
 
 		/* Write the words into the watch facility. We write in reverse
 		 * order in case word 0 is part of it as it must be the last
