@@ -4592,27 +4592,11 @@ static int64_t opal_xive_alloc_vp_block(uint32_t alloc_order)
 	return rc;
 }
 
-static int64_t opal_xive_allocate_irq(uint32_t chip_id)
+static int64_t xive_try_allocate_irq(struct xive *x)
 {
-	struct proc_chip *chip;
 	int idx, base_idx, max_count, girq;
 	struct xive_ive *ive;
-	struct xive *x;
 
-	if (xive_mode != XIVE_MODE_EXPL)
-		return OPAL_WRONG_STATE;
-
-	/* XXX Make this try multiple chips ... */
-	if (chip_id == OPAL_XIVE_ANY_CHIP)
-		chip_id = this_cpu()->chip_id;
-
-	chip = get_chip(chip_id);
-	if (!chip)
-		return OPAL_PARAMETER;
-	if (!chip->xive)
-		return OPAL_PARAMETER;
-
-	x = chip->xive;
 	lock(&x->lock);
 
 	base_idx = x->int_ipi_top - x->int_base;
@@ -4640,6 +4624,42 @@ static int64_t opal_xive_allocate_irq(uint32_t chip_id)
 	unlock(&x->lock);
 
 	return girq;
+}
+
+static int64_t opal_xive_allocate_irq(uint32_t chip_id)
+{
+	struct proc_chip *chip;
+	bool try_all = false;
+	int64_t rc;
+
+	if (xive_mode != XIVE_MODE_EXPL)
+		return OPAL_WRONG_STATE;
+
+	if (chip_id == OPAL_XIVE_ANY_CHIP) {
+		try_all = true;
+		chip_id = this_cpu()->chip_id;
+	}
+	chip = get_chip(chip_id);
+	if (!chip)
+		return OPAL_PARAMETER;
+
+	/* Try initial target chip */
+	if (!chip->xive)
+		rc = OPAL_PARAMETER;
+	else
+		rc = xive_try_allocate_irq(chip->xive);
+	if (rc >= 0 || !try_all)
+		return rc;
+
+	/* Failed and we try all... do so */
+	for_each_chip(chip) {
+		if (!chip->xive)
+			continue;
+		rc = xive_try_allocate_irq(chip->xive);
+		if (rc >= 0)
+			break;
+	}
+	return rc;
 }
 
 static int64_t opal_xive_free_irq(uint32_t girq)
