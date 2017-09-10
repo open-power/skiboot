@@ -46,12 +46,14 @@
 #define XIVE_DEBUG_INIT_CACHE_UPDATES
 #define XIVE_EXTRA_CHECK_INIT_CACHE
 #define XIVE_CHECK_LOCKS
+#define XIVE_INT_SAFETY_GAP 0x1000
 #else
 #undef  XIVE_DEBUG_DUPLICATES
 #undef  XIVE_PERCPU_LOG
 #undef  XIVE_DEBUG_INIT_CACHE_UPDATES
 #undef  XIVE_EXTRA_CHECK_INIT_CACHE
 #undef  XIVE_CHECK_LOCKS
+#define XIVE_INT_SAFETY_GAP 0x10
 #endif
 
 /*
@@ -2756,8 +2758,8 @@ static struct xive *init_one_xive(struct dt_node *np)
 	/* Make sure we never hand out "2" as it's reserved for XICS emulation
 	 * IPI returns. Generally start handing out at 0x10
 	 */
-	if (x->int_ipi_top < 0x10)
-		x->int_ipi_top = 0x10;
+	if (x->int_ipi_top < XIVE_INT_SAFETY_GAP)
+		x->int_ipi_top = XIVE_INT_SAFETY_GAP;
 
 	/* Allocate a few bitmaps */
 	x->eq_map = zalloc(BITMAP_BYTES(MAX_EQ_COUNT >> 3));
@@ -3539,6 +3541,9 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 
 		/* XXX Use "p" to select queue */
 		val = xive_read_eq(xs, just_poll);
+
+		if (val && val < XIVE_INT_SAFETY_GAP)
+			xive_cpu_err(c, "Bogus interrupt 0x%x received !\n", val);
 
 		/* Convert to magic IPI if needed */
 		if (val == xs->ipi_irq)
