@@ -43,9 +43,11 @@
 #ifdef DEBUG
 #define XIVE_DEBUG_DUPLICATES
 #define XIVE_PERCPU_LOG
+#define XIVE_DEBUG_INIT_CACHE_UPDATES
 #else
 #undef  XIVE_DEBUG_DUPLICATES
 #undef  XIVE_PERCPU_LOG
+#undef  XIVE_DEBUG_INIT_CACHE_UPDATES
 #endif
 
 /*
@@ -2892,12 +2894,57 @@ static void xive_setup_hw_for_emu(struct xive_cpu_state *xs)
 			      xs->eq_idx + XIVE_EMULATION_PRIO,
 			      0, 4, &eq, false, true);
 
+#ifdef XIVE_DEBUG_INIT_CACHE_UPDATES
+	if (1) {
+		struct xive_eq *eq_p = xive_get_eq(x_eq,
+						   xs->eq_idx +
+						   XIVE_EMULATION_PRIO);
+		struct xive_eq eq2;
+
+		assert(eq_p);
+		eq2 = *eq_p;
+		if (memcmp(&eq, &eq2, sizeof(eq)) != 0) {
+			xive_err(x_eq, "EQ update mismatch idx %d\n",
+				 xs->eq_idx);
+			xive_err(x_eq, "want: %08x %08x %08x %08x\n",
+				 eq.w0, eq.w1, eq.w2, eq.w3);
+			xive_err(x_eq, "      %08x %08x %08x %08x\n",
+				 eq.w4, eq.w5, eq.w6, eq.w7);
+			xive_err(x_eq, "got : %08x %08x %08x %08x\n",
+				 eq2.w0, eq2.w1, eq2.w2, eq2.w3);
+			xive_err(x_eq, "      %08x %08x %08x %08x\n",
+				 eq2.w4, eq2.w5, eq2.w6, eq2.w7);
+		}
+	}
+#endif
 	/* Initialize/enable the VP */
 	xive_init_default_vp(&vp, xs->eq_blk, xs->eq_idx);
 
 	/* Use the cache watch to write it out */
 	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx,
 			      0, 8, &vp, false, true);
+
+	/* Debug code */
+#ifdef XIVE_DEBUG_INIT_CACHE_UPDATES
+	if (1) {
+		struct xive_vp *vp_p = xive_get_vp(x_vp, xs->vp_idx);
+		struct xive_vp vp2;
+
+		assert(vp_p);
+		vp2 = *vp_p;
+		if (memcmp(&vp, &vp2, sizeof(vp)) != 0) {
+			xive_err(x_vp, "VP update mismatch idx %d\n", xs->vp_idx);
+			xive_err(x_vp, "want: %08x %08x %08x %08x\n",
+				 vp.w0, vp.w1, vp.w2, vp.w3);
+			xive_err(x_vp, "      %08x %08x %08x %08x\n",
+				 vp.w4, vp.w5, vp.w6, vp.w7);
+			xive_err(x_vp, "got : %08x %08x %08x %08x\n",
+				 vp2.w0, vp2.w1, vp2.w2, vp2.w3);
+			xive_err(x_vp, "      %08x %08x %08x %08x\n",
+				 vp2.w4, vp2.w5, vp2.w6, vp2.w7);
+		}
+	}
+#endif
 }
 
 static void xive_init_cpu_emulation(struct xive_cpu_state *xs,
