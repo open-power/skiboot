@@ -45,6 +45,7 @@
 #define XIVE_PERCPU_LOG
 #define XIVE_DEBUG_INIT_CACHE_UPDATES
 #define XIVE_EXTRA_CHECK_INIT_CACHE
+#undef XIVE_CHECK_MISROUTED_IPI
 #define XIVE_CHECK_LOCKS
 #define XIVE_INT_SAFETY_GAP 0x1000
 #else
@@ -52,6 +53,7 @@
 #undef  XIVE_PERCPU_LOG
 #undef  XIVE_DEBUG_INIT_CACHE_UPDATES
 #undef  XIVE_EXTRA_CHECK_INIT_CACHE
+#undef  XIVE_CHECK_MISROUTED_IPI
 #undef  XIVE_CHECK_LOCKS
 #define XIVE_INT_SAFETY_GAP 0x10
 #endif
@@ -3444,6 +3446,97 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 	return opal_xive_check_pending(xs, cppr) ? 1 : 0;
 }
 
+#ifdef XIVE_CHECK_MISROUTED_IPI
+static void xive_dump_eq(uint32_t eq_blk, uint32_t eq_idx)
+{
+	struct cpu_thread *me = this_cpu();
+	struct xive *x;
+	struct xive_eq *eq;
+
+	x = xive_from_vc_blk(eq_blk);
+	if (!x)
+		return;
+	eq = xive_get_eq(x, eq_idx);
+	if (!eq)
+		return;
+	xive_cpu_err(me, "EQ: %08x %08x %08x %08x (@%p)\n",
+		     eq->w0, eq->w1, eq->w2, eq->w3, eq);
+	xive_cpu_err(me, "    %08x %08x %08x %08x\n",
+		     eq->w4, eq->w5, eq->w6, eq->w7);
+}
+static int64_t __opal_xive_dump_emu(struct xive_cpu_state *xs, uint32_t pir);
+
+static bool check_misrouted_ipi(struct cpu_thread *me, uint32_t irq)
+{
+	struct cpu_thread *c;
+
+	for_each_present_cpu(c) {
+		struct xive_cpu_state *xs = c->xstate;
+		struct xive_ive *ive;
+		uint32_t ipi_target, i, eq_blk, eq_idx;
+		struct proc_chip *chip;
+		struct xive *x;
+
+		if (!xs)
+			continue;
+		if (irq == xs->ipi_irq) {
+			xive_cpu_err(me, "misrouted IPI 0x%x, should"
+				     " be aimed at CPU 0x%x\n",
+				     irq, c->pir);
+			xive_cpu_err(me, " my eq_page=%p eqbuff=%p eq=0x%x/%x\n",
+				     me->xstate->eq_page, me->xstate->eqbuf,
+				     me->xstate->eq_blk, me->xstate->eq_idx + XIVE_EMULATION_PRIO);
+			xive_cpu_err(me, "tgt eq_page=%p eqbuff=%p eq=0x%x/%x\n",
+				     c->xstate->eq_page, c->xstate->eqbuf,
+				     c->xstate->eq_blk, c->xstate->eq_idx + XIVE_EMULATION_PRIO);
+			__opal_xive_dump_emu(me->xstate, me->pir);
+			__opal_xive_dump_emu(c->xstate, c->pir);
+			if (xive_get_irq_targetting(xs->ipi_irq, &ipi_target, NULL, NULL))
+				xive_cpu_err(me, "target=%08x\n", ipi_target);
+			else
+				xive_cpu_err(me, "target=???\n");
+				/* Find XIVE on which the IVE resides */
+			x = xive_from_isn(irq);
+			if (!x) {
+				xive_cpu_err(me, "no xive attached\n");
+				return true;
+			}
+			ive = xive_get_ive(x, irq);
+			if (!ive) {
+				xive_cpu_err(me, "no ive attached\n");
+				return true;
+			}
+			xive_cpu_err(me, "ive=%016llx\n", ive->w);
+			for_each_chip(chip) {
+				x = chip->xive;
+				if (!x)
+					continue;
+				ive = x->ivt_base;
+				for (i = 0; i < MAX_INT_ENTRIES; i++) {
+					if ((ive[i].w & IVE_EQ_DATA) == irq) {
+						eq_blk = GETFIELD(IVE_EQ_BLOCK, ive[i].w);
+						eq_idx = GETFIELD(IVE_EQ_INDEX, ive[i].w);
+						xive_cpu_err(me, "Found source: 0x%x ive=%016llx\n"
+							     " eq 0x%x/%x",
+							     BLKIDX_TO_GIRQ(x->block_id, i),
+							     ive[i].w, eq_blk, eq_idx);
+						xive_dump_eq(eq_blk, eq_idx);
+					}
+				}
+			}
+			return true;
+		}
+	}
+	return false;
+}
+#else
+static inline bool check_misrouted_ipi(struct cpu_thread  *c __unused,
+				       uint32_t irq __unused)
+{
+	return false;
+}
+#endif
+
 static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 {
 	struct cpu_thread *c = this_cpu();
@@ -3547,6 +3640,8 @@ static int64_t opal_xive_get_xirr(uint32_t *out_xirr, bool just_poll)
 
 		/* Convert to magic IPI if needed */
 		if (val == xs->ipi_irq)
+			val = 2;
+		if (check_misrouted_ipi(c, val))
 			val = 2;
 
 		*out_xirr = (old_cppr << 24) | val;
@@ -4668,25 +4763,13 @@ static int64_t opal_xive_dump_vp(uint32_t vp_id)
 	return OPAL_SUCCESS;
 }
 
-static int64_t opal_xive_dump_emu(uint32_t pir)
+static int64_t __opal_xive_dump_emu(struct xive_cpu_state *xs, uint32_t pir)
 {
-	struct cpu_thread *c = find_cpu_by_pir(pir);
-	struct xive_cpu_state *xs;
 	struct xive_eq *eq;
 	uint32_t ipi_target;
 	uint8_t *mm, pq;
 
-	if (!c)
-		return OPAL_PARAMETER;
-
 	prlog(PR_INFO, "CPU[%04x]: XIVE emulation state\n", pir);
-
-	xs = c->xstate;
-	if (!xs) {
-		prlog(PR_INFO, "  <none>\n");
-		return OPAL_SUCCESS;
-	}
-	lock(&xs->lock);
 
 	prlog(PR_INFO, "CPU[%04x]: cppr=%02x mfrr=%02x pend=%02x"
 	      " prev_cppr=%02x total_irqs=%llx\n", pir,
@@ -4720,11 +4803,29 @@ static int64_t opal_xive_dump_emu(uint32_t pir)
 	prlog(PR_INFO, "CPU[%04x]: EQ @%p W0=%08x W1=%08x qbuf @%p\n",
 	      pir, eq, eq->w0, eq->w1, xs->eqbuf);
 
-	log_print(xs);
+	return OPAL_SUCCESS;
+}
 
+static int64_t opal_xive_dump_emu(uint32_t pir)
+{
+	struct cpu_thread *c = find_cpu_by_pir(pir);
+	struct xive_cpu_state *xs;
+	int64_t rc;
+
+	if (!c)
+		return OPAL_PARAMETER;
+
+	xs = c->xstate;
+	if (!xs) {
+		prlog(PR_INFO, "  <none>\n");
+		return OPAL_SUCCESS;
+	}
+	lock(&xs->lock);
+	rc = __opal_xive_dump_emu(xs, pir);
+	log_print(xs);
 	unlock(&xs->lock);
 
-	return OPAL_SUCCESS;
+	return rc;
 }
 
 static int64_t opal_xive_sync_irq_src(uint32_t girq)
