@@ -310,8 +310,13 @@ static void disable_unavailable_units(struct dt_node *dev)
 	cb = get_imc_cb(this_cpu()->chip_id);
 	if (cb)
 		avl_vec = be64_to_cpu(cb->imc_chip_avl_vector);
-	else
+	else {
 		avl_vec = 0; /* Remove only nest imc device nodes */
+
+		/* Incase of mambo, just fake it */
+		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+			avl_vec = (0xffULL) << 56;
+	}
 
 	for (i = 0; i < MAX_NEST_UNITS; i++) {
 		if (!(PPC_BITMASK(i, i) & avl_vec)) {
@@ -364,6 +369,9 @@ void imc_catalog_preload(void)
 	uint32_t pvr = (mfspr(SPR_PVR) & ~(0xf000));
 	int ret = OPAL_SUCCESS;
 	compress_buf_size = MAX_COMPRESSED_IMC_DTB_SIZE;
+
+	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+		return;
 
 	/* Enable only for power 9 */
 	if (proc_gen != proc_gen_p9)
@@ -421,10 +429,19 @@ static void imc_dt_update_nest_node(struct dt_node *dev)
  */
 void imc_init(void)
 {
-	void *decompress_buf;
+	void *decompress_buf = NULL;
 	uint32_t pvr = (mfspr(SPR_PVR) & ~(0xf000));
 	struct dt_node *dev;
 	int ret;
+
+	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS) {
+		dev = dt_find_compatible_node(dt_root, NULL,
+					"ibm,opal-in-memory-counters");
+		if (!dev)
+			return;
+
+		goto imc_mambo;
+	}
 
 	/* Enable only for power 9 */
 	if (proc_gen != proc_gen_p9)
@@ -481,6 +498,7 @@ void imc_init(void)
 		goto err;
 	}
 
+imc_mambo:
 	/* Check and remove unsupported imc device types */
 	check_imc_device_type(dev);
 
@@ -495,6 +513,9 @@ void imc_init(void)
 
 	/* Update the base_addr and chip-id for nest nodes */
 	imc_dt_update_nest_node(dev);
+
+	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+		return;
 
 	/*
 	 * If the dt_attach_root() fails, "imc-counters" node will not be
@@ -540,6 +561,9 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 		 */
 		phys_core_id = cpu_get_core_index(c);
 		port_id = phys_core_id % 4;
+
+		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+			return OPAL_SUCCESS;
 
 		/*
 		 * Core IMC hardware mandate initing of three scoms
@@ -605,6 +629,9 @@ static int64_t opal_imc_counters_start(uint32_t type, uint64_t cpu_pir)
 		/* Set the run command */
 		op = NEST_IMC_ENABLE;
 
+		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+			return OPAL_SUCCESS;
+
 		/* Write the command to the control block now */
 		cb->imc_chip_command = cpu_to_be64(op);
 
@@ -616,6 +643,9 @@ static int64_t opal_imc_counters_start(uint32_t type, uint64_t cpu_pir)
 		 */
 		phys_core_id = cpu_get_core_index(c);
 		port_id = phys_core_id % 4;
+
+		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+			return OPAL_SUCCESS;
 
 		/*
 		 * Enables the core imc engine by appropriately setting
@@ -659,6 +689,9 @@ static int64_t opal_imc_counters_stop(uint32_t type, uint64_t cpu_pir)
 		/* Set the run command */
 		op = NEST_IMC_DISABLE;
 
+		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+			return OPAL_SUCCESS;
+
 		/* Write the command to the control block */
 		cb->imc_chip_command = cpu_to_be64(op);
 
@@ -671,6 +704,9 @@ static int64_t opal_imc_counters_stop(uint32_t type, uint64_t cpu_pir)
 		 */
 		phys_core_id = cpu_get_core_index(c);
 		port_id = phys_core_id % 4;
+
+		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+			return OPAL_SUCCESS;
 
 		/*
 		 * Disables the core imc engine by clearing

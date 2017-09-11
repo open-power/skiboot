@@ -325,6 +325,88 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
     mysim of addprop $cpu_node array "ibm,ppc-interrupt-server#s" irqreg
 }
 
+#Add In-Memory Collection Counter nodes
+if { $default_config == "P9" } {
+   #Add the base node "imc-counters"
+   set imc_c [mysim of addchild $root_node "imc-counters" ""]
+   mysim of addprop $imc_c string "compatible" "ibm,opal-in-memory-counters"
+   mysim of addprop $imc_c int "#address-cells" 1
+   mysim of addprop $imc_c int "#size-cells" 1
+   mysim of addprop $imc_c int "version-id" 1
+
+      #Add a common mcs event node
+      set mcs_et [mysim of addchild $imc_c "nest-mcs-events" ""]
+      mysim of addprop $mcs_et int "#address-cells" 1
+      mysim of addprop $mcs_et int "#size-cells" 1
+
+         #Add a event
+         set et [mysim of addchild $mcs_et event [format %x 0]]
+         mysim of addprop  $et string "event-name" "64B_RD_OR_WR_DISP_PORT01"
+         mysim of addprop  $et string "unit" "MiB/s"
+         mysim of addprop  $et string "scale" "4"
+         mysim of addprop  $et int "reg" 0
+
+        #Add a event
+        set et [mysim of addchild $mcs_et event [format %x 1]]
+        mysim of addprop  $et string "event-name" "64B_WR_DISP_PORT01"
+        mysim of addprop  $et string "unit" "MiB/s"
+        mysim of addprop  $et int "reg" 40
+
+        #Add a event
+        set et [mysim of addchild $mcs_et event [format %x 2]]
+        mysim of addprop  $et string "event-name" "64B_RD_DISP_PORT01"
+        mysim of addprop  $et string "scale" "100"
+        mysim of addprop  $et int "reg" 64
+
+        #Add a event
+        set et [mysim of addchild $mcs_et event [format %x 3]]
+        mysim of addprop  $et string "event-name" "64B_XX_DISP_PORT01"
+        mysim of addprop  $et int "reg" 32
+
+     #Add a mcs device node
+     set mcs_01 [mysim of addchild $imc_c "mcs01" ""]
+     mysim of addprop $mcs_01 string "compatible" "ibm,imc-counters"
+     mysim of addprop  $mcs_01 string "events-prefix" "PM_MCS01_"
+     mysim of addprop  $mcs_01 int "reg" 65536
+     mysim of addprop  $mcs_01 int "size" 262144
+     mysim of addprop  $mcs_01 int "offset" 1572864
+     mysim of addprop  $mcs_01 int "events" $mcs_et
+     mysim of addprop  $mcs_01 int "type" 16
+     mysim of addprop $mcs_01 string "unit" "KiB/s"
+     mysim of addprop $mcs_01 string "scale" "8"
+
+      #Add a common core event node
+      set ct_et [mysim of addchild $imc_c "core-thread-events" ""]
+      mysim of addprop $ct_et int "#address-cells" 1
+      mysim of addprop $ct_et int "#size-cells" 1
+
+         #Add a event
+         set cet [mysim of addchild $ct_et event [format %x 200]]
+         mysim of addprop  $cet string "event-name" "0THRD_NON_IDLE_PCYC"
+         mysim of addprop  $cet string "desc" "The number of processor cycles when all threads are idle"
+         mysim of addprop  $cet int "reg" 200
+
+     #Add a core device node
+     set core [mysim of addchild $imc_c "core" ""]
+     mysim of addprop $core string "compatible" "ibm,imc-counters"
+     mysim of addprop  $core string "events-prefix" "CPM_"
+     mysim of addprop  $core int "reg" 24
+     mysim of addprop  $core int "size" 8192
+     mysim of addprop  $core string "scale" "512"
+     mysim of addprop  $core int "events" $ct_et
+     mysim of addprop  $core int "type" 4
+
+     #Add a thread device node
+     set thread [mysim of addchild $imc_c "thread" ""]
+     mysim of addprop $thread string "compatible" "ibm,imc-counters"
+     mysim of addprop  $thread string "events-prefix" "CPM_"
+     mysim of addprop  $thread int "reg" 24
+     mysim of addprop  $thread int "size" 8192
+     mysim of addprop  $thread string "scale" "512"
+     mysim of addprop  $thread int "events" $ct_et
+     mysim of addprop  $thread int "type" 1
+}
+
 mconfig enable_stb SKIBOOT_ENABLE_MAMBO_STB 0
 
 if { [info exists env(SKIBOOT_ENABLE_MAMBO_STB)] } {
