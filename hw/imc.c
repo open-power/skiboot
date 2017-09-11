@@ -599,6 +599,8 @@ static int64_t opal_imc_counters_start(uint32_t type, uint64_t cpu_pir)
 	case OPAL_IMC_COUNTERS_NEST:
 		/* Fetch the IMC control block structure */
 		cb = get_imc_cb(c->chip_id);
+		if (!cb)
+			return OPAL_HARDWARE;
 
 		/* Set the run command */
 		op = NEST_IMC_ENABLE;
@@ -651,6 +653,8 @@ static int64_t opal_imc_counters_stop(uint32_t type, uint64_t cpu_pir)
 	case OPAL_IMC_COUNTERS_NEST:
 		/* Fetch the IMC control block structure */
 		cb = get_imc_cb(c->chip_id);
+		if (!cb)
+			return OPAL_HARDWARE;
 
 		/* Set the run command */
 		op = NEST_IMC_DISABLE;
