@@ -218,7 +218,7 @@ void pci_init_capabilities(struct phb *phb, struct pci_device *pd)
 	pci_init_pm_cap(phb, pd);
 }
 
-static bool pci_wait_crs(struct phb *phb, uint16_t bdfn, uint32_t *out_vdid)
+bool pci_wait_crs(struct phb *phb, uint16_t bdfn, uint32_t *out_vdid)
 {
 	uint32_t retries, vdid;
 	int64_t rc;
