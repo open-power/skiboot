@@ -140,6 +140,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init);
 
 static bool verbose_eeh;
 static bool pci_tracing;
+static bool pci_eeh_mmio;
 
 enum capi_dma_tvt {
 	CAPI_DMA_TVT0,
@@ -4169,7 +4170,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 		val |= PHB_CTRLR_IRQ_STORE_EOI;
 	}
 
-	if (nvram_query_eq("pci-eeh-mmio", "disabled"))
+	if (!pci_eeh_mmio)
 		val |= PHB_CTRLR_MMIO_EEH_DISABLE;
 
 	out_be64(p->regs + PHB_CTRLR, val);
@@ -4946,6 +4947,7 @@ void probe_phb4(void)
 		prlog(PR_INFO, "PHB4: Verbose EEH enabled\n");
 
 	pci_tracing = nvram_query_eq("pci-tracing", "true");
+	pci_eeh_mmio = !nvram_query_eq("pci-eeh-mmio", "disabled");
 	/* Look for PBCQ XSCOM nodes */
 	dt_for_each_compatible(dt_root, np, "ibm,power9-pbcq")
 		phb4_probe_pbcq(np);
