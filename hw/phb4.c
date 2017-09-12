@@ -141,6 +141,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init);
 static bool verbose_eeh;
 static bool pci_tracing;
 static bool pci_eeh_mmio;
+static bool pci_retry_all;
 
 enum capi_dma_tvt {
 	CAPI_DMA_TVT0,
@@ -2261,7 +2262,7 @@ static int64_t phb4_retry_state(struct pci_slot *slot)
 			PHBERR(p, "Electrical link detected but won't train\n");
 			break;
 		case PHB4_SLOT_LINK_STABLE:
-			PHBERR(p, "Linked trained but wasn't stable\n");
+			PHBERR(p, "Linked trained but was degraded or unstable\n");
 			break;
 		default:
 			PHBERR(p, "Unknown link issue\n");
@@ -2380,6 +2381,131 @@ static bool phb4_check_reg(struct phb4 *p, uint64_t reg)
 	return true;
 }
 
+static void phb4_get_info(struct phb *phb, uint16_t bdfn, uint8_t *speed,
+			  uint8_t *width)
+{
+	int32_t ecap;
+	uint32_t cap;
+
+	ecap = pci_find_cap(phb, bdfn, PCI_CFG_CAP_ID_EXP);
+	pci_cfg_read32(phb, bdfn, ecap + PCICAP_EXP_LCAP, &cap);
+	*width = (cap & PCICAP_EXP_LCAP_MAXWDTH) >> 4;
+	*speed = cap & PCICAP_EXP_LCAP_MAXSPD;
+}
+
+#define PVR_POWER9_CUMULUS		0x00002000
+
+static bool phb4_chip_retry_workaround(void)
+{
+	unsigned int pvr;
+
+	if (pci_retry_all)
+		return true;
+
+	/* Chips that need this retry are:
+	 *  - CUMULUS DD1.0
+	 *  - NIMBUS DD2.0 and below
+	 */
+	pvr = mfspr(SPR_PVR);
+	if (pvr & PVR_POWER9_CUMULUS) {
+		if ((PVR_VERS_MAJ(pvr) == 1) && (PVR_VERS_MIN(pvr) == 0))
+			return true;
+	} else { /* NIMBUS */
+		if (PVR_VERS_MAJ(pvr) == 1)
+			return true;
+		if ((PVR_VERS_MAJ(pvr) == 2) && (PVR_VERS_MIN(pvr) == 0))
+			return true;
+	}
+	return false;
+}
+
+struct pci_card_id {
+	uint16_t vendor;
+	uint16_t device;
+};
+
+struct pci_card_id retry_whitelist[] = {
+	{ 0x1000, 0x005d }, /* LSI Logic MegaRAID SAS-3 3108 */
+	{ 0x1000, 0x00c9 }, /* LSI MPT SAS-3 */
+	{ 0x104c, 0x8241 }, /* TI xHCI USB */
+	{ 0x1077, 0x2261 }, /* QLogic ISP2722-based 16/32Gb FC */
+	{ 0x10b5, 0x8725 }, /* PLX Switch: p9dsu, witherspoon */
+	{ 0x10b5, 0x8748 }, /* PLX Switch: ZZ */
+	{ 0x11f8, 0xf117 }, /* PMC-Sierra/MicroSemi NV1604 */
+	{ 0x15b3, 0x1013 }, /* Mellanox CX-4 */
+	{ 0x15b3, 0x1019 }, /* Mellanox CX-5 */
+	{ 0x1a03, 0x1150 }, /* ASPEED AST2500 Switch */
+	{ 0x8086, 0x10fb }, /* Intel x520 10G Eth */
+	{ 0x9005, 0x028d }, /* MicroSemi PM8069 */
+};
+
+#define VENDOR(vdid) ((vdid) & 0xffff)
+#define DEVICE(vdid) (((vdid) >> 16) & 0xffff)
+
+static bool phb4_adapter_in_whitelist(uint32_t vdid)
+{
+	int i;
+
+	if (pci_retry_all)
+		return true;
+
+	for (i = 0; i < ARRAY_SIZE(retry_whitelist); i++)
+		if ((retry_whitelist[i].vendor == VENDOR(vdid)) &&
+		    (retry_whitelist[i].device == DEVICE(vdid)))
+			return true;
+
+	return false;
+}
+
+#define min(x,y) ((x) < (y) ? x : y)
+
+static bool phb4_link_optimal(struct pci_slot *slot)
+{
+	struct phb4 *p = phb_to_phb4(slot->phb);
+	uint32_t vdid;
+	uint16_t bdfn;
+	uint8_t trained_speed, phb_speed, dev_speed, target_speed;
+	uint8_t trained_width, phb_width, dev_width, target_width;
+	bool optimal_speed, optimal_width, optimal, retry_enabled;
+
+
+	/* Current trained state */
+	phb4_get_link_info(slot, &trained_speed, &trained_width);
+
+	/* Get PHB capability */
+	/* NOTE: phb_speed will account for the software speed limit */
+	phb4_get_info(slot->phb, 0, &phb_speed, &phb_width);
+
+	/* Get device capability */
+	bdfn = 0x0100; /* bus=1 dev=0 device=0 */
+	/* Since this is the first access, we need to wait for CRS */
+	if (!pci_wait_crs(slot->phb, bdfn , &vdid))
+		return true;
+	phb4_get_info(slot->phb, bdfn, &dev_speed, &dev_width);
+
+	/* Work out if we are optimally trained */
+	target_speed = min(phb_speed, dev_speed);
+	optimal_speed = (trained_speed >= target_speed);
+	target_width = min(phb_width, dev_width);
+	optimal_width = (trained_width >= target_width);
+	optimal = optimal_width && optimal_speed;
+	retry_enabled = phb4_chip_retry_workaround() &&
+		phb4_adapter_in_whitelist(vdid);
+
+	PHBDBG(p, "LINK: Card [%04x:%04x] %s Retry:%s\n", VENDOR(vdid),
+	       DEVICE(vdid), optimal ? "Optimal" : "Degraded",
+	       retry_enabled ? "enabled" : "disabled");
+	PHBDBG(p, "LINK: Speed Train:GEN%i PHB:GEN%i DEV:GEN%i%s\n",
+	       trained_speed, phb_speed, dev_speed, optimal_speed ? "" : " *");
+	PHBDBG(p, "LINK: Width Train:x%02i PHB:x%02i DEV:x%02i%s\n",
+	       trained_width, phb_width, dev_width, optimal_width ? "" : " *");
+
+	if (!retry_enabled)
+		return true;
+
+	return optimal;
+}
+
 /*
  * This is a trace function to watch what's happening duing pcie link
  * training.  If any errors are detected it simply returns so the
@@ -2494,6 +2620,10 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 		}
 		if (reg & PHB_PCIE_DLP_TL_LINKACT) {
 			PHBDBG(p, "LINK: Link is stable\n");
+			if (!phb4_link_optimal(slot)) {
+				PHBERR(p, "LINK: Link degraded\n");
+				return phb4_retry_state(slot);
+			}
 			pci_slot_set_state(slot, PHB4_SLOT_NORMAL);
 			return OPAL_SUCCESS;
 		}
@@ -4963,6 +5093,8 @@ void probe_phb4(void)
 
 	pci_tracing = nvram_query_eq("pci-tracing", "true");
 	pci_eeh_mmio = !nvram_query_eq("pci-eeh-mmio", "disabled");
+	pci_retry_all = nvram_query_eq("pci-retry-all", "true");
+
 	/* Look for PBCQ XSCOM nodes */
 	dt_for_each_compatible(dt_root, np, "ibm,power9-pbcq")
 		phb4_probe_pbcq(np);
