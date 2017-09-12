@@ -2201,17 +2201,21 @@ static int64_t phb4_get_presence_state(struct pci_slot *slot, uint8_t *val)
 	return OPAL_SUCCESS;
 }
 
-static int64_t phb4_get_link_state(struct pci_slot *slot, uint8_t *val)
+static int64_t phb4_get_link_info(struct pci_slot *slot, uint8_t *speed,
+				   uint8_t *width)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
 	uint64_t reg;
 	uint16_t state;
 	int64_t rc;
+	uint8_t s;
 
 	/* Link is up, let's find the actual speed */
 	reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
 	if (!(reg & PHB_PCIE_DLP_TL_LINKACT)) {
-		*val = 0;
+		*width = 0;
+		if (speed)
+			*speed = 0;
 		return OPAL_SUCCESS;
 	}
 
@@ -2222,12 +2226,23 @@ static int64_t phb4_get_link_state(struct pci_slot *slot, uint8_t *val)
 		return OPAL_HARDWARE;
 	}
 
-	if (state & PCICAP_EXP_LSTAT_DLLL_ACT)
-		*val = ((state & PCICAP_EXP_LSTAT_WIDTH) >> 4);
-	else
-		*val = 0;
+	if (state & PCICAP_EXP_LSTAT_DLLL_ACT) {
+		*width = ((state & PCICAP_EXP_LSTAT_WIDTH) >> 4);
+		s =  state & PCICAP_EXP_LSTAT_SPEED;
+	} else {
+		*width = 0;
+		s = 0;
+	}
+
+	if (speed)
+		*speed = s;
 
 	return OPAL_SUCCESS;
+}
+
+static int64_t phb4_get_link_state(struct pci_slot *slot, uint8_t *val)
+{
+	return phb4_get_link_info(slot, NULL, val);
 }
 
 static int64_t phb4_retry_state(struct pci_slot *slot)
