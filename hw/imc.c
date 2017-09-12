@@ -402,6 +402,9 @@ static void imc_dt_update_nest_node(struct dt_node *dev)
 	int i=0, nr_chip = nr_chips();
 	struct dt_node *node;
 	const struct dt_property *type;
+	uint32_t offset = 0, size = 0;
+	uint64_t baddr;
+	char namebuf[32];
 
 	/* Add the base_addr and chip-id properties for the nest node */
 	base_addr = malloc(sizeof(uint64_t) * nr_chip);
@@ -417,7 +420,26 @@ static void imc_dt_update_nest_node(struct dt_node *dev)
 		if (type && is_nest_node(node)) {
 			dt_add_property(node, "base-addr", base_addr, (i * sizeof(u64)));
 			dt_add_property(node, "chip-id", chipids, (i * sizeof(u32)));
+			offset = dt_prop_get_u32(node, "offset");
+			size = dt_prop_get_u32(node, "size");
 		}
+	}
+
+	/*
+	 * Enable only if we have active nest pmus.
+	 */
+	if (!size)
+		return;
+
+	node = dt_find_by_name(opal_node, "exports");
+	if (!node)
+		return;
+
+	for_each_chip(chip) {
+		snprintf(namebuf, sizeof(namebuf), "imc_nest_chip_%x", chip->id);
+		baddr = chip->homer_base;
+		baddr += offset;
+		dt_add_property_u64s(node, namebuf, baddr, size);
 	}
 }
 
