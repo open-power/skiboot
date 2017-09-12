@@ -2455,7 +2455,6 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 			PHBDBG(p, "LINK: Link is up\n");
 			phb4_prepare_link_change(slot, true);
 			pci_slot_set_state(slot, PHB4_SLOT_LINK_STABLE);
-			slot->stable_retries = PHB4_LINK_STABLE_RETRIES;
 			return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
 		}
 
@@ -2479,12 +2478,6 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 		}
 		if (reg & PHB_PCIE_DLP_TL_LINKACT) {
 			PHBDBG(p, "LINK: Link is stable\n");
-			if (slot->stable_retries--) {
-				PHBDBG(p, "LINK: Doing retry: %lli\n",
-				       slot->stable_retries);
-				return pci_slot_set_sm_timeout(slot, secs_to_tb(1));
-			}
-
 			pci_slot_set_state(slot, PHB4_SLOT_NORMAL);
 			return OPAL_SUCCESS;
 		}

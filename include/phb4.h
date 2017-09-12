@@ -217,7 +217,6 @@ struct phb4_err {
 /* Link timeouts, increments of 10ms */
 #define PHB4_LINK_ELECTRICAL_RETRIES	100
 #define PHB4_LINK_WAIT_RETRIES		200
-#define PHB4_LINK_STABLE_RETRIES	0
 
 /* PHB4 flags */
 #define PHB4_AIB_FENCED		0x00000001
