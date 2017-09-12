@@ -214,6 +214,7 @@ struct phb4_err {
 	uint32_t err_bit;
 };
 
+#define PHB4_LINK_LINK_RETRIES		3
 /* Link timeouts, increments of 10ms */
 #define PHB4_LINK_ELECTRICAL_RETRIES	100
 #define PHB4_LINK_WAIT_RETRIES		200

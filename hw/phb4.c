@@ -2800,7 +2800,7 @@ static struct pci_slot *phb4_slot_create(struct phb *phb)
 	slot->ops.hreset		= phb4_hreset;
 	slot->ops.freset		= phb4_freset;
 	slot->ops.creset		= phb4_creset;
-	slot->link_retries		= 3;
+	slot->link_retries		= PHB4_LINK_LINK_RETRIES;
 
 	return slot;
 }
