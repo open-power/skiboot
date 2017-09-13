@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1181,6 +1181,16 @@ struct sppcrd_smp_link {
 	uint8_t link_speed;
 	uint8_t occ_flag_bit;
 	__be16 gpu_slca;
+} __packed;
+
+/* Idata index 8 : chip EC Level array */
+#define SPPCRD_IDATA_EC_LEVEL	8
+
+struct sppcrd_ecid {
+	__be32	chip_id;
+	__be32	ec_level;
+	__be64	low;	/* Processor ECID bit 0-63 */
+	__be64	high;	/* Processor ECID bit 64-127 */
 } __packed;
 
 /*

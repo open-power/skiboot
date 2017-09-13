@@ -408,6 +408,22 @@ static void add_vas_node(struct dt_node *np, int idx)
 	dt_add_property_cells(vas, "ibm,vas-id", idx);
 }
 
+static void add_ecid_data(const struct HDIF_common_hdr *hdr,
+			  struct dt_node *xscom)
+{
+	uint32_t size = 0;
+	struct sppcrd_ecid *ecid;
+	const struct HDIF_array_hdr *ec_hdr;
+
+	ec_hdr = HDIF_get_idata(hdr, SPPCRD_IDATA_EC_LEVEL, &size);
+	if (!ec_hdr || !size)
+		return;
+
+	ecid = (void *)ec_hdr + be32_to_cpu(ec_hdr->offset);
+	dt_add_property_u64s(xscom, "ecid", be64_to_cpu(ecid->low),
+			     be64_to_cpu(ecid->high));
+}
+
 static void add_xscom_add_pcia_assoc(struct dt_node *np, uint32_t pcid)
 {
 	const struct HDIF_common_hdr *hdr;
@@ -526,6 +542,7 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 			add_xive_node(np);
 			parse_i2c_devs(hdif, SPPCRD_IDATA_HOST_I2C, np);
 			add_vas_node(np, i);
+			add_ecid_data(hdif, np);
 		}
 
 		/*
