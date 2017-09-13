@@ -411,6 +411,9 @@ static void add_vas_node(struct dt_node *np, int idx)
 static void add_ecid_data(const struct HDIF_common_hdr *hdr,
 			  struct dt_node *xscom)
 {
+	char wafer_id[11];
+	uint8_t tmp;
+	int i;
 	uint32_t size = 0;
 	struct sppcrd_ecid *ecid;
 	const struct HDIF_array_hdr *ec_hdr;
@@ -422,6 +425,28 @@ static void add_ecid_data(const struct HDIF_common_hdr *hdr,
 	ecid = (void *)ec_hdr + be32_to_cpu(ec_hdr->offset);
 	dt_add_property_u64s(xscom, "ecid", be64_to_cpu(ecid->low),
 			     be64_to_cpu(ecid->high));
+
+	/*
+	 * bits 4:63 of ECID data contains wafter ID data (ten 6 bit fields
+	 * each containing a code).
+	 */
+	for (i = 0; i < 10; i++) {
+		tmp = (u8)((ecid->low >> (i * 6)) & 0x3f);
+		if (tmp <= 9)
+			wafer_id[9 - i] = tmp + '0';
+		else if (tmp >= 0xA && tmp <= 0x23)
+			wafer_id[9 - i] = tmp + '0' + 7;
+		else if (tmp == 0x3D)
+			wafer_id[9 - i] = '-';
+		else if (tmp == 0x3E)
+			wafer_id[9 - i] = '.';
+		else if (tmp == 0x3F)
+			wafer_id[9 - i] = ' ';
+		else /* Unknown code */
+			wafer_id[9 - i] = tmp + '0';
+	}
+	wafer_id[10] = '\0';
+	dt_add_property_nstr(xscom, "wafer-id", wafer_id, 10);
 }
 
 static void add_xscom_add_pcia_assoc(struct dt_node *np, uint32_t pcid)
