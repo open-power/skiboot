@@ -447,6 +447,10 @@ static void add_ecid_data(const struct HDIF_common_hdr *hdr,
 	}
 	wafer_id[10] = '\0';
 	dt_add_property_nstr(xscom, "wafer-id", wafer_id, 10);
+
+	dt_add_property_cells(xscom, "wafer-location",
+			      (u32)((be64_to_cpu(ecid->high) >> 56) & 0xff),
+			      (u32)((be64_to_cpu(ecid->high) >> 48) & 0xff));
 }
 
 static void add_xscom_add_pcia_assoc(struct dt_node *np, uint32_t pcid)
