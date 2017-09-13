@@ -367,6 +367,7 @@ OPAL_BUSY.
       (if it exists).
       The trigger page may exist even if OPAL_XIVE_IRQ_TRIGGER_PAGE
       is not set. In that case out_trig_page is equal to out_eoi_page.
+      If the trigger page doesn't exist, out_trig_page is set to 0.
 
     * out_esb_shift contains the size (as an order, ie 2^n) of the
       EOI and trigger pages. Current supported values are 12 (4k)
@@ -446,13 +447,23 @@ in the target queue).
 
   .. note:: Note about masking:
 
-	    If the prio is set to 0xff, this call will cause the interrupt to be
-	    masked.
+	    If the prio is set to 0xff, this call will cause the interrupt to
+	    be masked (*). This function will not clobber the source P/Q bits (**).
+	    It will however set the IVT/EAS "mask" bit if the prio passed
+	    is 0xff which means that interrupt events from the ESB will be
+	    discarded, potentially leaving the ESB in a stale state. Thus
+	    care must be taken by the caller to "cleanup" the ESB state
+	    appropriately before enabling an interrupt with this.
 
-  .. note:: This function might clobber the source P/Q bits. An interrupt
-	    masked this way will be in a state where the events will be lost
-	    while masked and not replayed while unmasked. Unkasking *will* clear
-	    the state of the source P/Q bits unconditionally.
+	    (*) Escalation interrupts cannot be masked via this function
+
+	    (**) The exception to this rule is interrupt sources that have
+	    the OPAL_XIVE_IRQ_MASK_VIA_FW flag set. For such sources, the OS
+	    should make no assumption as to the state of the ESB and this
+	    function *will* perform all the necessary masking and unmasking.
+
+  .. note:: This call contains an implicit opal_xive_sync() of the interrupt
+	    source (see OPAL_XIVE_SYNC below)
 
   It is recommended for an OS exploiting the XIVE directly to not use
   this function for temporary driver-initiated masking of interrupts
@@ -461,8 +472,7 @@ in the target queue).
   Masking using this function is intended for the case where the OS has
   no handler registered for a given interrupt anymore or when registering
   a new handler for an interrupt that had none. In these case, losing
-  interrupts happening while no handler was attached is considered fine
-  and the source comes up in a "clean state" when used for the first time.
+  interrupts happening while no handler was attached is considered fine.
 
 OPAL_XIVE_GET_QUEUE_INFO
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -479,7 +489,8 @@ This returns informations about a given interrupt queue associated
 with a virtual processor and a priority.
 
 * out_qpage: will contain the physical address of the page where the
-  interrupt events will be posted.
+  interrupt events will be posted or 0 if none has been configured
+  yet.
 
 * out_qsize: will contain the log2 of the size of the queue buffer
   or 0 if the queue hasn't been populated. Example: 12 for a 4k page.
@@ -492,11 +503,8 @@ with a virtual processor and a priority.
 
   .. warning:: The "escalate_irq" is a special interrupt number, depending
 	       on the implementation it may or may not correspond to a normal
-	       XIVE source.  Masking of escalation IRQs is only supported
-	       using the PQ bits, passing a priority of 0xff to opal_set_xive or
-	       opal_xive_set_irq_configuration() will in effect only affect
-	       the PQ bits. Being MSIs though, they do support the special
-	       "01" combination for 'interrupt off'.
+	       XIVE source. Those interrupts have no triggers, and will not
+	       be masked by opal_set_irq_config() with a prio of 0xff.
 
 * out_qflags: will contain flags defined as follow:
 
@@ -544,7 +552,12 @@ and priority and adjust the behaviour of the queue via flags.
 
 * qflags: Flags (see definitions in opal_xive_get_queue_info)
 
-  .. note:: Should this have the side effect of resetting the toggle/generation ?
+  .. note:: This call will reset the generation bit to 1 and the queue
+	    production pointer to 0.
+
+  .. note:: The PQ bits of the escalation interrupts will be set to 00
+	    when OPAL_XIVE_EQ_ENABLED is set, and to 01 (masked) when
+	    disabling it.
 
   .. note:: This must be called at least once on a queue with the flag
 	    OPAL_XIVE_EQ_ENABLED in order to enable it after it has been
@@ -573,8 +586,8 @@ for each chip in the system and hand it to OPAL before trying again.
 	  one page per chip. OPAL will keep returning the above error until
 	  enough pages have been provided.
 
-OPAL_XIVE_ALLOC_VP_BLOCK
-^^^^^^^^^^^^^^^^^^^^^^^^
+OPAL_XIVE_ALLOCATE_VP_BLOCK
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: c
 
  int64_t opal_xive_alloc_vp_block(uint32_t alloc_order);
@@ -624,21 +637,21 @@ OPAL_XIVE_GET_VP_INFO
                                uint64_t *report_cl_pair,
 			       uint32_t *chip_id);
 
-This call returns information about an allocated VP:
+This call returns information about a VP:
 
-* flags  :
+* flags:
 
   - OPAL_XIVE_VP_ENABLED
 
     This must be set for the VP to be usable and cleared before freeing it
 
-* cam_value : This is the value to program into the thread management
+* cam_value: This is the value to program into the thread management
   area to dispatch that VP (ie, an encoding of the block + index).
 
 * report_cl_pair:  This is the real address of the reporting cache line
-  pair for that VP (defaults to 0)
+  pair for that VP (defaults to 0, ie disabled)
 
-* chip_id : The chip that VCPU was allocated on
+* chip_id: The chip that VCPU was allocated on
 
 OPAL_XIVE_SET_VP_INFO
 ^^^^^^^^^^^^^^^^^^^^^
@@ -648,6 +661,21 @@ OPAL_XIVE_SET_VP_INFO
                                uint64_t flags,
                                uint64_t report_cl_pair);
 
+This call configures a VP:
+
+* flags:
+
+  - OPAL_XIVE_VP_ENABLED
+
+    This must be set for the VP to be usable and cleared before freeing it.
+
+    .. note:: This can be used to disable the boot time VPs though this
+	      isn't recommended. This must be used to enable allocated VPs.
+
+* report_cl_pair: This is the real address of the reporting cache line
+  pair for that VP or 0 to disable.
+
+
 OPAL_XIVE_ALLOCATE_IRQ
 ^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: c
@@ -655,7 +683,7 @@ OPAL_XIVE_ALLOCATE_IRQ
  int64_t opal_xive_allocate_irq(uint32_t chip_id);
 
 This call allocates a software IRQ on a given chip. It returns the
-interrupt number or an error.
+interrupt number or a negative error code.
 
 OPAL_XIVE_FREE_IRQ
 ^^^^^^^^^^^^^^^^^^
@@ -666,4 +694,60 @@ OPAL_XIVE_FREE_IRQ
 This call frees a software IRQ that was allocated by
 opal_xive_allocate_irq. Passing any other interrupt number
 will result in an OPAL_PARAMETER error.
+
+OPAL_XIVE_SYNC
+^^^^^^^^^^^^^^
+.. code-block:: c
+
+ int64_t opal_xive_sync(uint32_t type, uint32_t id);
+
+This call is uses to synchronize some HW queues to ensure various changes
+have taken effect to the point where their effects are visible to the
+processor.
+
+* type: Type of synchronization:
+
+  - XIVE_SYNC_EAS: Synchronize a source. "id" is the girq number of the
+    interrupt. This will ensure that any change to the PQ bits or the
+    interrupt targetting has taken effect.
+
+  - XIVE_SYNC_QUEUE: Synchronize a target queue. "id" is the girq number
+    of the interrupt. This will ensure that any previous occurrence of the
+    interrupt has reached the in-memory queue and is visible to the processor.
+
+    .. note:: XIVE_SYNC_EAS and XIVE_SYNC_QUEUE can be used together
+	      (ie. XIVE_SYNC_EAS | XIVE_SYNC_QUEUE) to completely synchronize
+	      the path of an interrupt to its queue.
+
+* id: Depends on the synchronization type, see above
+
+
+OPAL_XIVE_DUMP
+^^^^^^^^^^^^^^
+.. code-block:: c
+
+  int64_t opal_xive_dump(uint32_t type, uint32_t id);
+
+This is a debugging call that will dump in the OPAL console various
+state information about the XIVE.
+
+* type: Type of info to dump:
+
+  - XIVE_DUMP_TM_HYP:  Dump the TIMA area for hypervisor physical thread
+                       "id" is the PIR value of the thread
+
+  - XIVE_DUMP_TM_POOL: Dump the TIMA area for the hypervisor pool
+		       "id" is the PIR value of the thread
+
+  - XIVE_DUMP_TM_OS:   Dump the TIMA area for the OS
+		       "id" is the PIR value of the thread
+
+  - XIVE_DUMP_TM_USER: Dump the TIMA area for the "user" area (unsupported)
+		       "id" is the PIR value of the thread
+
+  - XIVE_DUMP_VP:      Dump the state of a VP structure
+                       "id" is the VP id
+
+  - XIVE_DUMP_EMU:     Dump the state of the XICS emulation for a thread
+		       "id" is the PIR value of the thread
 
