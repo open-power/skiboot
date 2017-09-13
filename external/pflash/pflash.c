@@ -331,9 +331,9 @@ static int erase_range(struct flash_details *flash,
 			fprintf(stderr, "Failed to blocklevel_smart_erase(): %d\n", rc);
 			return 1;
 		}
-		start += flash->erase_granule - (start & erase_mask);
 		size -= flash->erase_granule - (start & erase_mask);
 		done = flash->erase_granule - (start & erase_mask);
+		start += flash->erase_granule - (start & erase_mask);
 	}
 	progress_tick(done);
 	while (size & ~(erase_mask)) {
