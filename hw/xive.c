@@ -4733,7 +4733,13 @@ static int64_t opal_xive_dump_tm(uint32_t offset, const char *n, uint32_t pir)
 	xive_regr(x, PC_TCTXT_INDIR0);
 
 	v0 = in_be64(ind_tm_base + offset);
-	v1 = in_be64(ind_tm_base + offset + 8);
+	if (offset == TM_QW3_HV_PHYS) {
+		v1 = in_8(ind_tm_base + offset + 8);
+		v1 <<= 56;
+	} else {
+		v1 = in_be32(ind_tm_base + offset + 8);
+		v1 <<= 32;
+	}
 	prlog(PR_INFO, "CPU[%04x]: TM state for QW %s\n", pir, n);
 	prlog(PR_INFO, "CPU[%04x]: NSR CPPR IPB LSMFB ACK# INC AGE PIPR"
 	      " W2       W3\n", pir);
