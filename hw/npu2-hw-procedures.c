@@ -61,6 +61,11 @@ struct npu2_phy_reg NPU2_PHY_TX_RXCAL			= {0x103, 57, 1};
 struct npu2_phy_reg NPU2_PHY_RX_INIT_DONE		= {0x0ca, 48, 1};
 struct npu2_phy_reg NPU2_PHY_RX_PR_EDGE_TRACK_CNTL	= {0x092, 48, 2};
 struct npu2_phy_reg NPU2_PHY_RX_PR_FW_OFF		= {0x08a, 56, 1};
+struct npu2_phy_reg NPU2_PHY_RX_PR_FW_INERTIA_AMT	= {0x08a, 57, 3};
+struct npu2_phy_reg NPU2_PHY_RX_CFG_LTE_MC		= {0x000, 60, 4};
+struct npu2_phy_reg NPU2_PHY_RX_A_INTEG_COARSE_GAIN	= {0x00a, 48, 4};
+struct npu2_phy_reg NPU2_PHY_RX_B_INTEG_COARSE_GAIN	= {0x026, 48, 4};
+struct npu2_phy_reg NPU2_PHY_RX_E_INTEG_COARSE_GAIN	= {0x030, 48, 4};
 
 /* These registers are per-PHY, not per lane */
 struct npu2_phy_reg NPU2_PHY_TX_ZCAL_SWO_EN		= {0x3c9, 48, 1};
@@ -308,6 +313,11 @@ static uint32_t phy_reset_complete(struct npu2_dev *ndev)
 		phy_write_lane(ndev, &NPU2_PHY_RX_PR_IQ_RES_SEL, lane, 0x7);
 		phy_write_lane(ndev, &NPU2_PHY_RX_PR_PHASE_STEP, lane, 0xc);
 		phy_write_lane(ndev, &NPU2_PHY_TX_LANE_PDWN, lane, 0);
+		phy_write_lane(ndev, &NPU2_PHY_RX_PR_FW_INERTIA_AMT, lane, 4);
+		phy_write_lane(ndev, &NPU2_PHY_RX_CFG_LTE_MC, lane, 3);
+		phy_write_lane(ndev, &NPU2_PHY_RX_A_INTEG_COARSE_GAIN, lane, 11);
+		phy_write_lane(ndev, &NPU2_PHY_RX_B_INTEG_COARSE_GAIN, lane, 11);
+		phy_write_lane(ndev, &NPU2_PHY_RX_E_INTEG_COARSE_GAIN, lane, 11);
 	}
 
 	return PROCEDURE_COMPLETE;
