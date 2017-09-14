@@ -315,7 +315,9 @@ extern void fast_sleep_exit(void);
 extern void fake_rtc_init(void);
 
 /* Assembly in head.S */
-extern void enter_pm_state(bool winkle);
+extern void enter_p8_pm_state(bool winkle);
+extern void enter_p9_pm_state(uint64_t psscr);
+extern void enter_p9_pm_lite_state(uint64_t psscr);
 extern uint32_t reset_patch_start;
 extern uint32_t reset_patch_end;
 

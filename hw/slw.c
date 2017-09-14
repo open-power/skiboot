@@ -83,7 +83,7 @@ static void slw_do_rvwinkle(void *data)
 	/* Tell that we got it */
 	cpu->state = cpu_state_rvwinkle;
 
-	enter_pm_state(1);
+	enter_p8_pm_state(1);
 
 	/* Restore SPRs */
 	init_shared_sprs();

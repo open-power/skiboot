@@ -28,6 +28,8 @@
 #define PPC_INST_SLEEP		.long 0x4c0003a4
 #define PPC_INST_RVWINKLE	.long 0x4c0003e4
 
+#define PPC_INST_STOP		.long 0x4c0002e4
+
 #define GET_STACK(stack_reg,pir_reg)				\
 	sldi	stack_reg,pir_reg,STACK_SHIFT;			\
 	addis	stack_reg,stack_reg,CPU_STACKS_OFFSET@ha;	\
@@ -471,27 +473,7 @@ call_relocate:
        .long 0xa6037b7d; /* mtsrr1 r11                         */ \
        .long 0x2400004c  /* rfid                               */
 
-.global enter_pm_state
-enter_pm_state:
-	/* Before entering map or rvwinkle, we create a stack frame
-	 * and save our non-volatile registers.
-	 *
-	 * We also save these SPRs:
-	 *
-	 *  - HSPRG0	in GPR0 slot
-	 *  - HSPRG1	in GPR1 slot
-	 *
-	 *  - xxx TODO: HIDs
-	 *  - TODO: Mask MSR:ME during the process
-	 *
-	 * On entry, r3 indicates:
-	 *
-	 *    0 = nap
-	 *    1 = rvwinkle
-	 */
-	mflr	%r0
-	std	%r0,16(%r1)
-	stdu	%r1,-STACK_FRAMESIZE(%r1)
+pm_save_regs:
 	SAVE_GPR(2,%r1)
 	SAVE_GPR(14,%r1)
 	SAVE_GPR(15,%r1)
@@ -519,6 +501,31 @@ enter_pm_state:
 	stw	%r5,STACK_XER(%r1)
 	std	%r6,STACK_GPR0(%r1)
 	std	%r7,STACK_GPR1(%r1)
+	blr
+
+.global enter_p8_pm_state
+enter_p8_pm_state:
+	/* Before entering map or rvwinkle, we create a stack frame
+	 * and save our non-volatile registers.
+	 *
+	 * We also save these SPRs:
+	 *
+	 *  - HSPRG0	in GPR0 slot
+	 *  - HSPRG1	in GPR1 slot
+	 *
+	 *  - xxx TODO: HIDs
+	 *  - TODO: Mask MSR:ME during the process
+	 *
+	 * On entry, r3 indicates:
+	 *
+	 *    0 = nap
+	 *    1 = rvwinkle
+	 */
+	mflr	%r0
+	std	%r0,16(%r1)
+	stdu	%r1,-STACK_FRAMESIZE(%r1)
+
+	bl	pm_save_regs
 
 	/* Save stack pointer in struct cpu_thread */
 	std	%r1,CPUTHREAD_SAVE_R1(%r13)
@@ -541,6 +548,27 @@ enter_pm_state:
 	cmpd	cr0,%r0,%r0
 	bne	0b
 	PPC_INST_RVWINKLE
+	b	.
+
+.global enter_p9_pm_lite_state
+enter_p9_pm_lite_state:
+	mtspr	SPR_PSSCR,%r3
+	PPC_INST_STOP
+	blr
+
+.global enter_p9_pm_state
+enter_p9_pm_state:
+	mflr	%r0
+	std	%r0,16(%r1)
+	stdu	%r1,-STACK_FRAMESIZE(%r1)
+
+	bl	pm_save_regs
+
+	/* Save stack pointer in struct cpu_thread */
+	std	%r1,CPUTHREAD_SAVE_R1(%r13)
+
+	mtspr	SPR_PSSCR,%r3
+	PPC_INST_STOP
 	b	.
 
 /* This is a little piece of code that is copied down to

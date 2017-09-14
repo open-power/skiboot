@@ -94,8 +94,12 @@ static void cpu_wake(struct cpu_thread *cpu)
 	if (!cpu->in_idle)
 		return;
 
-	/* Poke IPI */
-	icp_kick_cpu(cpu);
+	if (proc_gen == proc_gen_p8 || proc_gen == proc_gen_p7) {
+		/* Poke IPI */
+		icp_kick_cpu(cpu);
+	} else if (proc_gen == proc_gen_p9) {
+		p9_dbell_send(cpu->pir);
+	}
 }
 
 static struct cpu_thread *cpu_find_job_target(void)
@@ -319,11 +323,14 @@ static void cpu_idle_p8(enum cpu_wake_cause wake_on)
 		if (cpu_check_jobs(cpu) || !pm_enabled)
 			goto skip_sleep;
 
+		/* Setup wakup cause in LPCR: EE (for IPI) */
 		lpcr |= SPR_LPCR_P8_PECE2;
 		mtspr(SPR_LPCR, lpcr);
 
 	} else {
-		/* Mark outselves sleeping so wakeup knows to send an IPI */
+		/* Mark outselves sleeping so cpu_set_pm_enable knows to
+		 * send an IPI
+		 */
 		cpu->in_sleep = true;
 		sync();
 
@@ -331,12 +338,13 @@ static void cpu_idle_p8(enum cpu_wake_cause wake_on)
 		if (!pm_enabled)
 			goto skip_sleep;
 
+		/* EE and DEC */
 		lpcr |= SPR_LPCR_P8_PECE2 | SPR_LPCR_P8_PECE3;
 		mtspr(SPR_LPCR, lpcr);
 	}
 
 	/* Enter nap */
-	enter_pm_state(false);
+	enter_p8_pm_state(false);
 
 skip_sleep:
 	/* Restore */
@@ -346,11 +354,77 @@ skip_sleep:
 	reset_cpu_icp();
 }
 
+static void cpu_idle_p9(enum cpu_wake_cause wake_on)
+{
+	uint64_t lpcr = mfspr(SPR_LPCR) & ~SPR_LPCR_P9_PECE;
+	uint64_t psscr;
+	struct cpu_thread *cpu = this_cpu();
+
+	if (!pm_enabled) {
+		prlog_once(PR_DEBUG, "cpu_idle_p9 called pm disabled\n");
+		return;
+	}
+
+	msgclr(); /* flush pending messages */
+
+	/* Synchronize with wakers */
+	if (wake_on == cpu_wake_on_job) {
+		/* Mark ourselves in idle so other CPUs know to send an IPI */
+		cpu->in_idle = true;
+		sync();
+
+		/* Check for jobs again */
+		if (cpu_check_jobs(cpu) || !pm_enabled)
+			goto skip_sleep;
+
+		/* HV DBELL for IPI */
+		lpcr |= SPR_LPCR_P9_PECEL1;
+	} else {
+		/* Mark outselves sleeping so cpu_set_pm_enable knows to
+		 * send an IPI
+		 */
+		cpu->in_sleep = true;
+		sync();
+
+		/* Check if PM got disabled */
+		if (!pm_enabled)
+			goto skip_sleep;
+
+		/* HV DBELL and DEC */
+		lpcr |= SPR_LPCR_P9_PECEL1 | SPR_LPCR_P9_PECEL3;
+		mtspr(SPR_LPCR, lpcr);
+	}
+
+	mtspr(SPR_LPCR, lpcr);
+
+	if (sreset_enabled) {
+		/* stop with EC=1 (sreset) and ESL=1 (enable thread switch). */
+		/* PSSCR SD=0 ESL=1 EC=1 PSSL=0 TR=3 MTL=0 RL=3 */
+		psscr = PPC_BIT(42) | PPC_BIT(43) |
+			PPC_BITMASK(54, 55) | PPC_BITMASK(62,63);
+		enter_p9_pm_state(psscr);
+	} else {
+		/* stop with EC=0 (resumes) which does not require sreset. */
+		/* PSSCR SD=0 ESL=0 EC=0 PSSL=0 TR=3 MTL=0 RL=3 */
+		psscr = PPC_BITMASK(54, 55) | PPC_BITMASK(62,63);
+		enter_p9_pm_lite_state(psscr);
+	}
+
+skip_sleep:
+	/* Restore */
+	cpu->in_idle = false;
+	cpu->in_sleep = false;
+	p9_dbell_receive();
+}
+
 static void cpu_idle_pm(enum cpu_wake_cause wake_on)
 {
 	switch(proc_gen) {
 	case proc_gen_p8:
 		cpu_idle_p8(wake_on);
+		break;
+	case proc_gen_p9:
+		cpu_idle_p9(wake_on);
 		break;
 	default:
 		prlog_once(PR_DEBUG, "cpu_idle_pm called with bad processor type\n");
@@ -429,6 +503,18 @@ static void cpu_pm_disable(void)
 				cpu_relax();
 			}
 		}
+	} else if (proc_gen == proc_gen_p9) {
+		for_each_available_cpu(cpu) {
+			if (cpu->in_sleep || cpu->in_idle)
+				p9_dbell_send(cpu->pir);
+		}
+
+		smt_lowest();
+		for_each_available_cpu(cpu) {
+			while (cpu->in_sleep || cpu->in_idle)
+				barrier();
+		}
+		smt_medium();
 	}
 }
 
@@ -451,6 +537,22 @@ void cpu_set_sreset_enable(bool enabled)
 			if (ipi_enabled)
 				pm_enabled = true;
 		}
+
+	} else if (proc_gen == proc_gen_p9) {
+		/* Don't use sreset idle on DD1 (has a number of bugs) */
+		uint32_t version = mfspr(SPR_PVR);
+		if (is_power9n(version) && (PVR_VERS_MAJ(version) == 1))
+			return;
+
+		sreset_enabled = enabled;
+		sync();
+		/*
+		 * Kick everybody out of PM so they can adjust the PM
+		 * mode they are using (EC=0/1).
+		 */
+		cpu_pm_disable();
+		if (ipi_enabled)
+			pm_enabled = true;
 	}
 }
 
@@ -468,6 +570,19 @@ void cpu_set_ipi_enable(bool enabled)
 			if (sreset_enabled)
 				pm_enabled = true;
 		}
+
+	} else if (proc_gen == proc_gen_p9) {
+		/* Don't use doorbell on DD1 (requires darn for msgsync) */
+		uint32_t version = mfspr(SPR_PVR);
+		if (is_power9n(version) && (PVR_VERS_MAJ(version) == 1))
+			return;
+
+		ipi_enabled = enabled;
+		sync();
+		if (!enabled)
+			cpu_pm_disable();
+		else
+			pm_enabled = true;
 	}
 }
 

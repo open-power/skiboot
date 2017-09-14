@@ -77,6 +77,7 @@
 #define SPR_HMER	0x150	/* Hypervisor Maintenance Exception */
 #define SPR_HMEER	0x151	/* HMER interrupt enable mask */
 #define SPR_AMOR	0x15d
+#define SPR_PSSCR	0x357   /* RW: Stop status and control (ISA 3) */
 #define SPR_TSCR	0x399
 #define SPR_HID0	0x3f0
 #define SPR_HID1	0x3f1
@@ -84,6 +85,7 @@
 #define SPR_HID4	0x3f4
 #define SPR_HID5	0x3f6
 #define SPR_PIR		0x3ff	/* RO: Processor Identification */
+
 
 /* Bits in LPCR */
 
@@ -99,6 +101,14 @@
 #define SPR_LPCR_P8_PECE2	PPC_BIT(49)   /* Wake on external interrupts */
 #define SPR_LPCR_P8_PECE3	PPC_BIT(50)   /* Wake on decrementer */
 #define SPR_LPCR_P8_PECE4	PPC_BIT(51)   /* Wake on MCs, HMIs, etc... */
+
+#define SPR_LPCR_P9_PECE	(PPC_BITMASK(47,51) | PPC_BITMASK(17,17))
+#define SPR_LPCR_P9_PECEU0	PPC_BIT(17)   /* Wake on HVI */
+#define SPR_LPCR_P9_PECEL0	PPC_BIT(47)   /* Wake on priv doorbell */
+#define SPR_LPCR_P9_PECEL1	PPC_BIT(48)   /* Wake on hv doorbell */
+#define SPR_LPCR_P9_PECEL2	PPC_BIT(49)   /* Wake on external interrupts */
+#define SPR_LPCR_P9_PECEL3	PPC_BIT(50)   /* Wake on decrementer */
+#define SPR_LPCR_P9_PECEL4	PPC_BIT(51)   /* Wake on MCs, HMIs, etc... */
 #define SPR_LPCR_P9_LD		PPC_BIT(46)   /* Large decrementer mode bit */
 
 
@@ -309,6 +319,27 @@ static inline void sync_icache(void)
 	asm volatile("sync; icbi 0,%0; sync; isync" : : "r" (0) : "memory");
 }
 
+/*
+ * Doorbells
+ */
+static inline void msgclr(void)
+{
+	uint64_t rb = (0x05 << (63-36));
+	asm volatile("msgclr %0" : : "r"(rb));
+}
+
+static inline void p9_dbell_receive(void)
+{
+	uint64_t rb = (0x05 << (63-36));
+	/* msgclr ; msgsync ; lwsync */
+	asm volatile("msgclr %0 ; .long 0x7c0006ec ; lwsync" : : "r"(rb));
+}
+
+static inline void p9_dbell_send(uint32_t pir)
+{
+	uint64_t rb = (0x05 << (63-36)) | pir;
+	asm volatile("sync ; msgsnd %0" : : "r"(rb));
+}
 
 /*
  * Byteswap load/stores
