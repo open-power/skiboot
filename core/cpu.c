@@ -402,10 +402,11 @@ void cpu_idle_job(void)
 	}
 }
 
-void cpu_idle_delay(unsigned long delay, unsigned long min_pm)
+void cpu_idle_delay(unsigned long delay)
 {
 	unsigned long now = mftb();
 	unsigned long end = now + delay;
+	unsigned long min_pm = usecs_to_tb(10);
 
 	if (pm_enabled && delay > min_pm) {
 		for (;;) {

@@ -66,14 +66,12 @@ void time_wait(unsigned long duration)
 
 void time_wait_nopoll(unsigned long duration)
 {
-	unsigned long min_sleep = usecs_to_tb(10);
-
 	if (this_cpu()->tb_invalid) {
 		cpu_relax();
 		return;
 	}
 
-	cpu_idle_delay(duration, min_sleep);
+	cpu_idle_delay(duration);
 }
 
 void time_wait_ms(unsigned long ms)
