@@ -396,8 +396,11 @@ void cpu_idle_job(void)
 
 		smt_lowest();
 		/* Check for jobs again */
-		while (!cpu_check_jobs(cpu))
+		while (!cpu_check_jobs(cpu)) {
+			if (pm_enabled)
+				break;
 			barrier();
+		}
 		smt_medium();
 	}
 }
@@ -409,6 +412,7 @@ void cpu_idle_delay(unsigned long delay)
 	unsigned long min_pm = usecs_to_tb(10);
 
 	if (pm_enabled && delay > min_pm) {
+pm:
 		for (;;) {
 			if (delay >= 0x7fffffff)
 				delay = 0x7fffffff;
@@ -419,13 +423,23 @@ void cpu_idle_delay(unsigned long delay)
 			now = mftb();
 			if (tb_compare(now, end) == TB_AAFTERB)
 				break;
-
 			delay = end - now;
+			if (!(pm_enabled && delay > min_pm))
+				goto no_pm;
 		}
 	} else {
+no_pm:
 		smt_lowest();
-		while (tb_compare(mftb(), end) != TB_AAFTERB)
-			barrier();
+		for (;;) {
+			now = mftb();
+			if (tb_compare(now, end) == TB_AAFTERB)
+				break;
+			delay = end - now;
+			if (pm_enabled && delay > min_pm) {
+				smt_medium();
+				goto pm;
+			}
+		}
 		smt_medium();
 	}
 }
