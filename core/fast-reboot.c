@@ -564,7 +564,8 @@ void __noreturn fast_reboot_entry(void)
 	cpu_fast_reboot_complete();
 
 	/* We can now do NAP mode */
-	cpu_set_pm_enable(true);
+	cpu_set_sreset_enable(true);
+	cpu_set_ipi_enable(true);
 
 	/* Start preloading kernel and ramdisk */
 	start_preload_kernel();

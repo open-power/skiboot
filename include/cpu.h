@@ -263,8 +263,12 @@ extern void cpu_process_jobs(void);
 extern void cpu_process_local_jobs(void);
 /* Check if there's any job pending */
 bool cpu_check_jobs(struct cpu_thread *cpu);
-/* Enable/disable PM */
-void cpu_set_pm_enable(bool pm_enabled);
+
+/* OPAL sreset vector in place at 0x100 */
+void cpu_set_sreset_enable(bool sreset_enabled);
+
+/* IPI for PM modes is enabled */
+void cpu_set_ipi_enable(bool sreset_enabled);
 
 static inline void cpu_give_self_os(void)
 {

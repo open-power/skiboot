@@ -52,6 +52,8 @@ static bool hile_supported;
 static bool radix_supported;
 static unsigned long hid0_hile;
 static unsigned long hid0_attn;
+static bool sreset_enabled;
+static bool ipi_enabled;
 static bool pm_enabled;
 static bool current_hile_mode;
 static bool current_radix_mode;
@@ -321,9 +323,7 @@ static void cpu_idle_p8(enum cpu_wake_cause wake_on)
 		mtspr(SPR_LPCR, lpcr);
 
 	} else {
-		/* Mark outselves sleeping so cpu_set_pm_enable knows to
-		 * send an IPI
-		 */
+		/* Mark outselves sleeping so wakeup knows to send an IPI */
 		cpu->in_sleep = true;
 		sync();
 
@@ -344,35 +344,6 @@ skip_sleep:
 	cpu->in_idle = false;
 	cpu->in_sleep = false;
 	reset_cpu_icp();
-}
-
-void cpu_set_pm_enable(bool enabled)
-{
-	struct cpu_thread *cpu;
-
-	prlog(PR_INFO, "CPU: %sing power management\n",
-	      enabled ? "enabl" : "disabl");
-
-	if (proc_gen != proc_gen_p8)
-		return;
-
-	/* Public P8 Mambo has broken NAP */
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
-		return;
-
-	pm_enabled = enabled;
-
-	if (enabled)
-		return;
-
-	/* If disabling, take everybody out of PM */
-	sync();
-	for_each_available_cpu(cpu) {
-		while (cpu->in_sleep || cpu->in_idle) {
-			icp_kick_cpu(cpu);
-			cpu_relax();
-		}
-	}
 }
 
 static void cpu_idle_pm(enum cpu_wake_cause wake_on)
@@ -441,6 +412,62 @@ no_pm:
 			}
 		}
 		smt_medium();
+	}
+}
+
+static void cpu_pm_disable(void)
+{
+	struct cpu_thread *cpu;
+
+	pm_enabled = false;
+	sync();
+
+	if (proc_gen == proc_gen_p8) {
+		for_each_available_cpu(cpu) {
+			while (cpu->in_sleep || cpu->in_idle) {
+				icp_kick_cpu(cpu);
+				cpu_relax();
+			}
+		}
+	}
+}
+
+void cpu_set_sreset_enable(bool enabled)
+{
+	if (sreset_enabled == enabled)
+		return;
+
+	if (proc_gen == proc_gen_p8) {
+		/* Public P8 Mambo has broken NAP */
+		if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+			return;
+
+		sreset_enabled = enabled;
+		sync();
+
+		if (!enabled) {
+			cpu_pm_disable();
+		} else {
+			if (ipi_enabled)
+				pm_enabled = true;
+		}
+	}
+}
+
+void cpu_set_ipi_enable(bool enabled)
+{
+	if (ipi_enabled == enabled)
+		return;
+
+	if (proc_gen == proc_gen_p8) {
+		ipi_enabled = enabled;
+		sync();
+		if (!enabled) {
+			cpu_pm_disable();
+		} else {
+			if (sreset_enabled)
+				pm_enabled = true;
+		}
 	}
 }
 

@@ -382,7 +382,7 @@ static bool load_kernel(void)
 		 * by our vectors.
 		 */
 		if (kernel_entry < 0x2000) {
-			cpu_set_pm_enable(false);
+			cpu_set_sreset_enable(false);
 			memcpy(NULL, old_vectors, 0x2000);
 			sync_icache();
 		}
@@ -545,7 +545,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	mem_dump_free();
 
 	/* Take processours out of nap */
-	cpu_set_pm_enable(false);
+	cpu_set_sreset_enable(false);
+	cpu_set_ipi_enable(false);
 
 	/* Dump the selected console */
 	stdoutp = dt_prop_get_def(dt_chosen, "linux,stdout-path", NULL);
@@ -725,6 +726,7 @@ void setup_reset_vector(void)
 	while(src < &reset_patch_end)
 		*(dst++) = *(src++);
 	sync_icache();
+	cpu_set_sreset_enable(true);
 }
 
 void copy_exception_vectors(void)
@@ -932,6 +934,8 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* On P7/P8, get the ICPs and make sure they are in a sane state */
 	init_interrupts();
+	if (proc_gen == proc_gen_p7 || proc_gen == proc_gen_p8)
+		cpu_set_ipi_enable(true);
 
 	/* On P9, initialize XIVE */
 	init_xive();
@@ -957,7 +961,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	setup_reset_vector();
 
 	/* We can now do NAP mode */
-	cpu_set_pm_enable(true);
+	cpu_set_sreset_enable(true);
 
 	/*
 	 * Synchronize time bases. Thi resets all the TB values to a small
