@@ -304,16 +304,8 @@ static void cpu_idle_p8(enum cpu_wake_cause wake_on)
 		return;
 	}
 
-	/* If we are waking on job, whack DEC to highest value */
-	if (wake_on == cpu_wake_on_job)
-		mtspr(SPR_DEC, 0x7fffffff);
-
 	/* Clean up ICP, be ready for IPIs */
 	icp_prep_for_pm();
-
-	/* Setup wakup cause in LPCR */
-	lpcr |= SPR_LPCR_P8_PECE2 | SPR_LPCR_P8_PECE3;
-	mtspr(SPR_LPCR, lpcr);
 
 	/* Synchronize with wakers */
 	if (wake_on == cpu_wake_on_job) {
@@ -324,6 +316,10 @@ static void cpu_idle_p8(enum cpu_wake_cause wake_on)
 		/* Check for jobs again */
 		if (cpu_check_jobs(cpu) || !pm_enabled)
 			goto skip_sleep;
+
+		lpcr |= SPR_LPCR_P8_PECE2;
+		mtspr(SPR_LPCR, lpcr);
+
 	} else {
 		/* Mark outselves sleeping so cpu_set_pm_enable knows to
 		 * send an IPI
@@ -334,6 +330,9 @@ static void cpu_idle_p8(enum cpu_wake_cause wake_on)
 		/* Check if PM got disabled */
 		if (!pm_enabled)
 			goto skip_sleep;
+
+		lpcr |= SPR_LPCR_P8_PECE2 | SPR_LPCR_P8_PECE3;
+		mtspr(SPR_LPCR, lpcr);
 	}
 
 	/* Enter nap */
