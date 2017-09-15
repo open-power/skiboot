@@ -35,7 +35,7 @@
 #ifndef __STOP_DATA_STRUCT_
 #define __STOP_DATA_STRUCT_
 
-#ifndef  _AIX
+#if !(defined  _AIX) && !(defined __SKIBOOT__)
     #include <endian.h>
 #endif
 

@@ -50,6 +50,7 @@ namespace stopImageSection
  */
 static StopReturnCode_t  isFusedMode( void* const i_pImage, bool* o_fusedMode )
 {
+    uint64_t cpmrCheckWord;
     StopReturnCode_t l_rc = STOP_SAVE_SUCCESS;
     *o_fusedMode = false;
 
@@ -66,7 +67,7 @@ static StopReturnCode_t  isFusedMode( void* const i_pImage, bool* o_fusedMode )
         }
 
 
-        uint64_t cpmrCheckWord = SWIZZLE_8_BYTE(pHomer->cpmrMagicWord);
+        cpmrCheckWord = SWIZZLE_8_BYTE(pHomer->cpmrMagicWord);
         cpmrCheckWord = cpmrCheckWord >> 32;
 
         if( CPMR_REGION_CHECK_WORD != cpmrCheckWord )
