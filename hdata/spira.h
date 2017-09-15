@@ -564,6 +564,7 @@ struct msvpd_hb_reserved_mem {
  */
 #define CECHUB_FRU_HDIF_SIG	"IO HUB"
 #define IOKID_FRU_HDIF_SIG	"IO KID"
+#define IOSLOT_FRU_HDIF_SIG	"IOSLOT"
 
 /* Idata index 0: FRU ID data
  *
@@ -699,6 +700,93 @@ struct cechub_io_hub {
 
 /* Child index 0: IO Daugther Card */
 #define CECHUB_CHILD_IO_KIDS		0
+
+/* Child index 1: PCIe Slot Mapping Information */
+#define CECHUB_CHILD_IOSLOTS		1
+
+#define IOSLOT_IDATA_SLOTMAP 0
+
+struct slot_map_entry {
+	__be16 entry_id;
+	__be16 parent_id;
+	uint8_t phb_index; /* only valid for ROOT and SWITCH_UP */
+
+	uint8_t type;
+#define SLOT_TYPE_ROOT_COMPLEX 0x0
+#define SLOT_TYPE_SWITCH_UP    0x1
+#define SLOT_TYPE_SWITCH_DOWN  0x2
+#define SLOT_TYPE_BUILTIN      0x3
+
+	uint8_t lane_swapped;
+	uint8_t reserved;
+	__be16	lane_mask;
+	__be16  lane_reverse;
+
+	/* what can I do with this? reference something under/vpd/ ? */
+	__be16 slca_idx;
+
+	__be16 mrw_slot_id;
+
+	__be32 features;
+#define SLOT_FEAT_SLOT 0x1
+
+	uint8_t up_port;
+	uint8_t down_port; /* the switch port this device is attached to */
+
+	__be32 vendor_id;
+	__be32 device_id;
+	__be32 sub_vendor_id;
+	__be32 sub_device_id;
+	char name[8];
+} __packed;
+
+#define IOSLOT_IDATA_DETAILS 1
+
+struct slot_map_details {
+	__be16 entry;
+
+	/* Phyp junk, ignore */
+	uint8_t mgc_load_source;
+	uint8_t hddw_order;
+	__be16 mmio_size_32; /* In MB */
+	__be16 mmio_size_64;
+	__be16 dma_size_32;
+	__be16 dma_size_64;
+
+	uint8_t power_ctrl_type; /* slot power control source */
+#define SLOT_PWR_NONE 0x0
+#define SLOT_PWR_I2C  0x1
+
+	uint8_t presence_det_type; /* slot presence detect source */
+#define SLOT_PRESENCE_NONE 0x0
+#define SLOT_PRESENCE_PCI  0x1
+#define SLOT_PRESENCE_I2C  0x2
+
+	uint8_t perst_ctl_type; /* slot PERST source */
+#define SLOT_PERST_NONE      0x0
+#define SLOT_PERST_PHB_OR_SW 0x1
+#define SLOT_PERST_SW_GPIO   0x2
+	uint8_t perst_gpio;
+
+	__be16 max_power; /* in W? */
+
+	__be32 slot_caps;
+#define SLOT_CAP_LSI      0x01 /* phyp junk? */
+#define SLOT_CAP_CAPI     0x02
+#define SLOT_CAP_CCARD    0x04
+#define SLOT_CAP_HOTPLUG  0x08
+#define SLOT_CAP_SRIOV    0x10 /* phyp junk */
+#define SLOT_CAP_ELLOCO   0x20 /* why is this seperate from the nvlink cap? */
+#define SLOT_CAP_NVLINK   0x30
+
+	__be16 reserved1;
+
+	/* I2C Link IDs */
+	__be32 i2c_power_ctl;
+	__be32 i2c_pgood;
+	__be32 i2c_cable_card; /* opencapi presence detect? */
+	__be32 i2c_mex_fpga;
+};
 
 /*
  * IO KID is a dauther card structure
