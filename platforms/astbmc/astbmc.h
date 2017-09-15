@@ -54,5 +54,6 @@ extern void check_all_slot_table(void);
 
 extern void slot_table_init(const struct slot_table_entry *top_table);
 extern void slot_table_get_slot_info(struct phb *phb, struct pci_device * pd);
+void dt_slot_get_slot_info(struct phb *phb, struct pci_device *pd);
 
 #endif /* __ASTBMC_H */

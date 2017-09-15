@@ -124,6 +124,54 @@ void slot_table_get_slot_info(struct phb *phb, struct pci_device *pd)
 	slot->data = (void *)ent;
 }
 
+static void dt_slot_add_properties(struct pci_slot *slot,
+				struct dt_node *np)
+{
+	struct dt_node *slot_np = slot->data;
+	const char *label = NULL;
+
+	if (slot_np)
+		label = dt_prop_get_def(slot_np, "ibm,slot-label", NULL);
+
+	pci_slot_add_loc(slot, np, label);
+}
+
+void dt_slot_get_slot_info(struct phb *phb, struct pci_device *pd)
+{
+	struct dt_node *slot_np;
+	struct pci_slot *slot;
+	const char *name = NULL;
+	bool pluggable = false;
+
+	if (!pd || pd->slot)
+		return;
+
+	slot_np = map_pci_dev_to_slot(phb, pd);
+	if (slot_np) {
+		pluggable = dt_has_node_property(slot_np,
+					"ibm,pluggable", NULL);
+		name = dt_prop_get_def(slot_np, "ibm,slot-label", NULL);
+	}
+
+	if (!slot_np || !name) {
+		slot = pcie_slot_create_dynamic(phb, pd);
+		if (slot) {
+			slot->ops.add_properties = dt_slot_add_properties;
+			slot->pluggable = true;
+			slot->data = (void *)slot_np;
+		}
+
+		return;
+	}
+
+	slot = pcie_slot_create(phb, pd);
+	assert(slot);
+
+	slot->ops.add_properties = dt_slot_add_properties;
+	slot->pluggable = pluggable;
+	slot->data = (void *)slot_np;
+}
+
 static int __pci_find_dev_by_location(struct phb *phb,
 				      struct pci_device *pd, void *userdata)
 {
