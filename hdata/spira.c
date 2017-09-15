@@ -290,6 +290,42 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 	return node;
 }
 
+/*
+ * Given a xscom@ node this will return a pointer into the SPPCRD
+ * structure corresponding to that node
+ */
+#define GET_HDIF_HDR -1
+static const void *xscom_to_pcrd(struct dt_node *xscom, int idata_index)
+{
+	struct spira_ntuple *t = &spira.ntuples.proc_chip;
+	const struct HDIF_common_hdr *hdif;
+	const void *idata;
+	unsigned int size;
+	uint32_t i;
+	void *base;
+
+	i = dt_prop_get_u32_def(xscom, DT_PRIVATE "sppcrd-index", 0xffffffff);
+	if (i == 0xffffffff)
+		return NULL;
+
+	base = get_hdif(t, "SPPCRD");
+	assert(base);
+	assert(i < be16_to_cpu(t->act_cnt));
+
+	hdif = base + i * be32_to_cpu(t->alloc_len);
+	if (!hdif)
+		return NULL;
+
+	if (idata_index == GET_HDIF_HDR)
+		return hdif;
+
+	idata = HDIF_get_idata(hdif, idata_index, &size);
+	if (!idata || !size)
+		return NULL;
+
+	return idata;
+}
+
 struct dt_node *find_xscom_for_chip(uint32_t chip_id)
 {
 	struct dt_node *node;
@@ -446,6 +482,9 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 				    be32_to_cpu(cinfo->proc_chip_id));
 		if (!np)
 			continue;
+
+
+		dt_add_property_cells(np, DT_PRIVATE "sppcrd-index", i);
 
 		version = be16_to_cpu(hdif->version);
 
