@@ -30,6 +30,42 @@
 
 #include "astbmc.h"
 
+static const struct slot_table_entry witherspoon_slot1[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "SLOT0"
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry witherspoon_slot2_shared[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "SLOT1"
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry witherspoon_slot3[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "SLOT2"
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry witherspoon_slot4[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "SLOT3"
+	},
+	{ .etype = st_end },
+};
+
 static const struct slot_table_entry witherspoon_gpu0[] = {
 	{
 		.etype = st_pluggable_slot,
@@ -146,7 +182,7 @@ static const struct slot_table_entry witherspoon_plx1_up[] = {
 	{ .etype = st_end },
 };
 
-static const struct slot_table_entry witherspoon_phb0_4_slot[] = {
+static const struct slot_table_entry witherspoon_plx0_phb[] = {
 	{
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0,0),
@@ -155,7 +191,7 @@ static const struct slot_table_entry witherspoon_phb0_4_slot[] = {
 	{ .etype = st_end },
 };
 
-static const struct slot_table_entry witherspoon_phb8_5_slot[] = {
+static const struct slot_table_entry witherspoon_plx1_phb[] = {
 	{
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0,0),
@@ -202,27 +238,27 @@ static const struct slot_table_entry witherspoon_npu8_slots[] = {
 	{ .etype = st_end },
 };
 
+/*
+ * Slot numbering:
+ *
+ * slot 1 - x4 slot
+ * slot 2 - shared slot, 8x to each chip's PHB3
+ * slot 3 - 16x \w CAPI, second chip
+ * slot 4 - 16x \w CAPI, first chip
+ */
+
 static const struct slot_table_entry witherspoon_phb_table[] = {
-	{
-		.etype = st_phb,
-		.location = ST_LOC_PHB(0,4),
-		.children = witherspoon_phb0_4_slot,
-	},
-	{
-		.etype = st_phb,
-		.location = ST_LOC_PHB(0,7),
-		.children = witherspoon_npu0_slots,
-	},
-	{
-		.etype = st_phb,
-		.location = ST_LOC_PHB(8,5),
-		.children = witherspoon_phb8_5_slot,
-	},
-	{
-		.etype = st_phb,
-		.location = ST_LOC_PHB(8,8),
-		.children = witherspoon_npu8_slots,
-	},
+	ST_PHB_ENTRY(0, 0, witherspoon_slot4),
+	ST_PHB_ENTRY(0, 3, witherspoon_slot2_shared),
+	ST_PHB_ENTRY(0, 4, witherspoon_plx0_phb),
+	ST_PHB_ENTRY(0, 7, witherspoon_npu0_slots),
+
+	ST_PHB_ENTRY(8, 0, witherspoon_slot3),
+	ST_PHB_ENTRY(8, 3, witherspoon_slot2_shared),
+	ST_PHB_ENTRY(8, 4, witherspoon_slot1),
+	ST_PHB_ENTRY(8, 5, witherspoon_plx1_phb),
+	ST_PHB_ENTRY(8, 8, witherspoon_npu8_slots),
+
 	{ .etype = st_end },
 };
 

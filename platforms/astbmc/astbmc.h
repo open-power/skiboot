@@ -41,6 +41,16 @@ struct slot_table_entry {
 	const struct slot_table_entry *children;
 };
 
+/*
+ * Helper to reduce the noise in the PHB table
+ */
+#define ST_PHB_ENTRY(chip_id, phb_id, child_table) \
+{ \
+	.etype = st_phb, \
+	.location = ST_LOC_PHB(chip_id, phb_id), \
+	.children = child_table \
+}
+
 extern const struct bmc_platform astbmc_ami;
 extern const struct bmc_platform astbmc_openbmc;
 
