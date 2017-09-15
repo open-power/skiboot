@@ -483,7 +483,7 @@ DECLARE_PLATFORM(witherspoon) = {
 	.exit			= ipmi_wdt_final_reset,
 	.terminate		= ipmi_terminate,
 
-	.pci_get_slot_info	= map_pci_dev_to_slot,
+	.pci_get_slot_info	= dt_slot_get_slot_info,
 };
 
 DECLARE_PLATFORM(old_witherspoon) = {
