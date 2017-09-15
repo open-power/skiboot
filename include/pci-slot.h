@@ -252,6 +252,9 @@ extern struct pci_slot *pci_slot_alloc(struct phb *phb,
 				       struct pci_device *pd);
 extern struct pci_slot *pcie_slot_create(struct phb *phb,
 					 struct pci_device *pd);
+extern struct pci_slot *pcie_slot_create_dynamic(struct phb *phb,
+		struct pci_device *pd);
+
 extern void pci_slot_add_dt_properties(struct pci_slot *slot,
 				       struct dt_node *np);
 extern struct pci_slot *pci_slot_find(uint64_t id);

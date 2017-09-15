@@ -85,7 +85,7 @@ static const struct slot_table_entry *match_slot_dev_entry(struct phb *phb,
 	return NULL;
 }
 
-static void add_slot_properties(struct pci_slot *slot,
+static void slot_table_add_properties(struct pci_slot *slot,
 				struct dt_node *np)
 {
 	struct phb *phb = slot->phb;
@@ -126,82 +126,32 @@ static void add_slot_properties(struct pci_slot *slot,
 			loc_code, strlen(loc_code) + 1);
 }
 
-static void init_slot_info(struct pci_slot *slot, bool pluggable, void *data)
-{
-	slot->data = data;
-	slot->ops.add_properties = add_slot_properties;
-
-	slot->pluggable      = pluggable;
-	slot->power_ctl      = false;
-	slot->wired_lanes    = PCI_SLOT_WIRED_LANES_UNKNOWN;
-	slot->connector_type = PCI_SLOT_CONNECTOR_PCIE_NS;
-	slot->card_desc      = PCI_SLOT_DESC_NON_STANDARD;
-	slot->card_mech      = PCI_SLOT_MECH_NONE;
-	slot->power_led_ctl  = PCI_SLOT_PWR_LED_CTL_NONE;
-	slot->attn_led_ctl   = PCI_SLOT_ATTN_LED_CTL_NONE;
-}
-
-static void create_dynamic_slot(struct phb *phb, struct pci_device *pd)
-{
-	uint32_t ecap, val;
-	struct pci_slot *slot;
-
-	if (!phb || !pd || pd->slot)
-		return;
-
-	/* Try to create slot whose details aren't provided by platform.
-	 * We only care the downstream ports of PCIe switch that connects
-	 * to root port.
-	 */
-	if (pd->dev_type != PCIE_TYPE_SWITCH_DNPORT ||
-	    !pd->parent || !pd->parent->parent ||
-	    pd->parent->parent->parent)
-		return;
-
-	ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
-	pci_cfg_read32(phb, pd->bdfn, ecap + PCICAP_EXP_SLOTCAP, &val);
-	if (!(val & PCICAP_EXP_SLOTCAP_HPLUG_CAP))
-		return;
-
-	slot = pcie_slot_create(phb, pd);
-	assert(slot);
-	init_slot_info(slot, true, NULL);
-
-	/* On superMicro's "p8dnu" platform, we create dynamic PCI slots
-	 * for all downstream ports of PEX9733 that is connected to PHB
-	 * direct slot. The power supply to the PCI slot is lost after
-	 * PCI adapter is removed from it. The power supply can't be
-	 * turned on when the slot is in empty state. The power supply
-	 * isn't turned on automatically when inserting PCI adapter to
-	 * the slot at later point. We set a flag to the slot here, to
-	 * turn on the power supply in (suprise or managed) hot-add path.
-	 *
-	 * We have same issue with PEX8718 as above on "p8dnu" platform.
-	 */
-	if (dt_node_is_compatible(dt_root, "supermicro,p8dnu") && slot->pd &&
-	    (slot->pd->vdid == 0x973310b5 || slot->pd->vdid == 0x871810b5))
-		pci_slot_add_flags(slot, PCI_SLOT_FLAG_FORCE_POWERON);
-}
-
 void slot_table_get_slot_info(struct phb *phb, struct pci_device *pd)
 {
 	const struct slot_table_entry *ent;
 	struct pci_slot *slot;
-	bool pluggable;
 
 	if (!pd || pd->slot)
 		return;
+
 	ent = match_slot_dev_entry(phb, pd);
+
 	if (!ent || !ent->name) {
-		create_dynamic_slot(phb, pd);
+		slot = pcie_slot_create_dynamic(phb, pd);
+		if (slot) {
+			slot->ops.add_properties = slot_table_add_properties;
+			slot->pluggable = true;
+		}
+
 		return;
 	}
 
 	slot = pcie_slot_create(phb, pd);
 	assert(slot);
 
-	pluggable = !!(ent->etype == st_pluggable_slot);
-	init_slot_info(slot, pluggable, (void *)ent);
+	slot->pluggable = !!(ent->etype == st_pluggable_slot);
+	slot->ops.add_properties = slot_table_add_properties;
+	slot->data = (void *)ent;
 }
 
 static int __pci_find_dev_by_location(struct phb *phb,
