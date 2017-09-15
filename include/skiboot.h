@@ -45,16 +45,23 @@
 /* Special ELF sections */
 #define __force_data		__section(".force.data")
 
-/* Readonly section start and end. */
-extern char __rodata_start[], __rodata_end[];
-
 struct mem_region;
 extern struct mem_region *mem_region_next(struct mem_region *region);
+
+#ifndef __TESTING__
+/* Readonly section start and end. */
+extern char __rodata_start[], __rodata_end[];
 
 static inline bool is_rodata(const void *p)
 {
 	return ((const char *)p >= __rodata_start && (const char *)p < __rodata_end);
 }
+#else
+static inline bool is_rodata(const void *p)
+{
+	return false;
+}
+#endif
 
 #define OPAL_BOOT_COMPLETE 0x1
 /* Debug descriptor. This structure is pointed to by the word at offset
