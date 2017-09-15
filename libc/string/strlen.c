@@ -25,3 +25,16 @@ strlen(const char *s)
 	return len;
 }
 
+size_t
+strnlen(const char *s, size_t n)
+{
+	size_t len = 0;
+
+	while (*s != 0 && n) {
+		len += 1;
+		s += 1;
+		n--;
+	}
+
+	return len;
+}
