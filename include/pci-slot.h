@@ -255,4 +255,11 @@ extern struct pci_slot *pcie_slot_create(struct phb *phb,
 extern void pci_slot_add_dt_properties(struct pci_slot *slot,
 				       struct dt_node *np);
 extern struct pci_slot *pci_slot_find(uint64_t id);
+
+/* DT based slot map */
+
+extern struct dt_node *dt_slots;
+extern struct dt_node *map_pci_dev_to_slot(struct phb *phb,
+		struct pci_device *pd);
+
 #endif /* __PCI_SLOT_H */
