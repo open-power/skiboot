@@ -105,6 +105,24 @@ extern const void *HDIF_get_iarray_item(const struct HDIF_common_hdr *hdif,
 					unsigned int di,
 					unsigned int ai, unsigned int *size);
 
+/* HDIF_get_iarray - Get a pointer to an internal array header
+ *
+ * @hdif  : HDIF structure pointer
+ * @di    : Index of the idata pointer
+ * @ai    : Index in the resulting array
+ * @size  : Return the entry actual size (or NULL if ignored)
+ */
+extern const struct HDIF_array_hdr *HDIF_get_iarray(
+		const struct HDIF_common_hdr *hdif, unsigned int di,
+		unsigned int *items);
+
+extern const void *HDIF_iarray_item(const struct HDIF_array_hdr *hdif,
+				unsigned int index);
+
+#define HDIF_iarray_for_each(arr, idx, ptr) \
+	for (idx = 0, ptr = HDIF_iarray_item(arr, idx); \
+		ptr; idx++, ptr = HDIF_iarray_item(arr, idx))
+
 /* HDIF_get_iarray_size - Get the number of elements of an internal data array
  *
  * @hdif  : HDIF structure pointer

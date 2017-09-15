@@ -96,6 +96,75 @@ int HDIF_get_iarray_size(const struct HDIF_common_hdr *hdif, unsigned int di)
 	return be32_to_cpu(ahdr->ecnt);
 }
 
+/*
+ * Returns NULL and sets *items to zero when:
+ *
+ * a) Array extends beyond bounds (hard error)
+ * b) The array is empty (soft error)
+ * c) The item size is zero (soft error)
+ * d) The array is missing (soft error)
+ *
+ * b, c) are bugs in the input data so they generate backtraces.
+ *
+ * If you care about the soft error cases, retrive the array header manually
+ * with HDIF_get_idata().
+ */
+const struct HDIF_array_hdr *HDIF_get_iarray(const struct HDIF_common_hdr *hdif,
+				unsigned int di, unsigned int *items)
+{
+	const struct HDIF_array_hdr *arr;
+	unsigned int req_size, size, elements;
+	unsigned int actual_sz, alloc_sz, offset;
+
+	arr = HDIF_get_idata(hdif, di, &size);
+
+	if(items)
+		*items = 0;
+
+	if (!arr || !size)
+		return NULL;
+
+	/* base size of an Idata array header */
+	offset = be32_to_cpu(arr->offset);
+	actual_sz = be32_to_cpu(arr->eactsz);
+	alloc_sz = be32_to_cpu(arr->esize);
+	elements = be32_to_cpu(arr->ecnt);
+
+	/* actual size should always be smaller than allocated */
+	if (alloc_sz < actual_sz) {
+		prerror("HDIF %.6s iarray %u has actsz (%u) < alloc_sz (%u)\n)",
+			hdif->id, di, actual_sz, alloc_sz);
+		backtrace();
+		return NULL;
+	}
+
+	req_size = elements * alloc_sz + offset;
+	if (req_size > size) {
+		prerror("HDIF: %.6s iarray %u requires %#x bytes, but only %#x are allocated!\n",
+			hdif->id, di, req_size, size);
+		backtrace();
+		return NULL;
+	}
+
+	if (!elements || !actual_sz)
+		return NULL;
+
+	if (items)
+		*items = elements;
+
+	return arr;
+}
+
+const void *HDIF_iarray_item(const struct HDIF_array_hdr *ahdr,
+				unsigned int index)
+{
+	if (!ahdr || index >= be32_to_cpu(ahdr->ecnt))
+		return NULL;
+
+	return (const void * )ahdr + be32_to_cpu(ahdr->offset) +
+			index * be32_to_cpu(ahdr->esize);
+}
+
 struct HDIF_child_ptr *
 HDIF_child_arr(const struct HDIF_common_hdr *hdif, unsigned int idx)
 {
