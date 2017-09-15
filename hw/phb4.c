@@ -2622,7 +2622,13 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 			PHBDBG(p, "LINK: Link is stable\n");
 			if (!phb4_link_optimal(slot)) {
 				PHBERR(p, "LINK: Link degraded\n");
-				return phb4_retry_state(slot);
+				if (slot->link_retries)
+					return phb4_retry_state(slot);
+				/*
+				 * Link is degraded but no more retries, so
+				 * settle for what we have :-(
+				 */
+				PHBERR(p, "LINK: Degraded but no more retries\n");
 			}
 			pci_slot_set_state(slot, PHB4_SLOT_NORMAL);
 			return OPAL_SUCCESS;
