@@ -556,7 +556,7 @@ static void parse_slot_details(struct dt_node *slot,
 		dt_add_property(slot, "nvlink", NULL, 0);
 }
 
-static struct dt_node *find_slot_entry_node(struct dt_node *root, u32 entry_id)
+struct dt_node *find_slot_entry_node(struct dt_node *root, u32 entry_id)
 {
 	struct dt_node *node;
 
@@ -756,7 +756,7 @@ static void parse_one_slot(const struct slot_map_entry *entry,
 				be16_to_cpu(entry->lane_reverse));
 
 	if (strnlen(entry->name, sizeof(entry->name)))
-		dt_add_property_nstr(node, "slot-name",
+		dt_add_property_nstr(node, "ibm,slot-label",
 				entry->name, sizeof(entry->name));
 	if (entry->type == st_slot || entry->type == st_rc_slot)
 		dt_add_property(node, "ibm,pluggable", NULL, 0);

@@ -1275,6 +1275,170 @@ static void add_stop_levels(void)
 		"ibm,enabled-stop-levels", stop_levels);
 }
 
+#define NPU_BASE 0x5011000
+#define NPU_SIZE 0x2c
+#define NPU_INDIRECT0	0x8000000009010c3f
+#define NPU_INDIRECT1	0x800000000c010c3f
+
+static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
+			int npu_index, int phb_index)
+{
+	const struct sppcrd_smp_link *link;
+	struct dt_node *npu;
+	int group_target[6]; /* Tracks the PCI slot targeted each link group */
+	int group_count = 0;
+	int link_count = 0;
+	uint32_t chip_id;
+	int i;
+
+	chip_id = dt_get_chip_id(xscom);
+
+	memset(group_target, 0, sizeof(group_target));
+
+	npu = dt_new_addr(xscom, "npu", NPU_BASE);
+	dt_add_property_cells(npu, "reg", NPU_BASE, NPU_SIZE);
+	dt_add_property_cells(npu, "#size-cells", 0);
+	dt_add_property_cells(npu, "#address-cells", 1);
+
+	dt_add_property_strings(npu, "compatible", "ibm,power9-npu");
+	dt_add_property_cells(npu, "ibm,phb-index", phb_index);
+	dt_add_property_cells(npu, "ibm,npu-index", npu_index);
+
+	HDIF_iarray_for_each(links, i, link) {
+		uint16_t slot_id = be16_to_cpu(link->pci_slot_idx);
+		uint32_t link_id = be32_to_cpu(link->link_id);
+		struct dt_node *node;
+
+		/* only add a link node if this link is targeted at at device */
+		if (be32_to_cpu(link->usage) != SMP_LINK_USE_DEVICE)
+			continue;
+
+		/*
+		 * XXX: The link_id that we get from HDAT is essentially an
+		 * arbitrary ID number so we can't use it as the reg for the
+		 * link node.
+		 *
+		 * a) There's a 1-1 mapping between entries in the SMP link
+		 *    structure and the NPU links.
+		 *
+		 * b) The SMP link array contains them in ascending order.
+		 *
+		 * We have some assurances that b) is correct, but if we get
+		 * broken link numbering it's something to watch for.
+		 *
+		 * If we every have actual A-Bus (SMP) link info in here
+		 * this is going to break.
+		 */
+
+		prlog(PR_DEBUG, "NPU: %04x:%d: Link (%d) targets slot %u",
+			chip_id, link_count, link_count, slot_id);
+
+		if (link_count >= 6) {
+			prerror("NPU: %04x:%d: Ignoring extra link (max 6)\n",
+				chip_id, link_count);
+			break;
+		}
+
+		node = dt_new_addr(npu, "link", link_count);
+		if (!node) {
+			prerror("NPU: %04x:%d: Creating link node failed\n",
+				chip_id, link_count);
+			continue;
+		}
+
+		dt_add_property_string(node, "compatible", "ibm,npu-link");
+		dt_add_property_cells(node, "reg", link_count);
+		dt_add_property_cells(node, "ibm,npu-link-index", link_count);
+		dt_add_property_cells(node, "ibm,workbook-link-id", link_id);
+
+		dt_add_property_u64s(node, "ibm,npu-phy",
+				link_count < 3 ? NPU_INDIRECT0 : NPU_INDIRECT1);
+		dt_add_property_cells(node, "ibm,npu-lane-mask",
+				be32_to_cpu(link->lane_mask));
+		dt_add_property_cells(node, "ibm,npu-brick-id",
+				be32_to_cpu(link->brick_id));
+
+		link_count++;
+
+		/*
+		 * Add the group details if this is an NVlink.
+		 *
+		 * TODO: Cable card stuff.
+		 */
+		if (slot_id) {
+			struct dt_node *slot;
+			const char *name;
+			int group;
+
+			/*
+			 * Search the existing groups for one targeting
+			 * this PCI slot
+			 */
+			for (group = 0; group < group_count; group++)
+				if (group_target[group] == slot_id)
+					break;
+
+			/* no group, make a new one */
+			if (group == group_count) {
+				group_target[group] = slot_id;
+				group_count++;
+			}
+
+			dt_add_property_cells(node, "ibm,npu-group-id", group);
+
+			slot = find_slot_entry_node(dt_root, slot_id);
+			if (!slot) {
+				prerror("NPU: %04x:%d: Unable find node for targeted PCIe slot\n",
+					chip_id, link_count - 1);
+				continue;
+			}
+
+			name = dt_prop_get_def(slot, "ibm,slot-label",
+						(char *)"<SLOT NAME MISSING>");
+
+			prlog(PR_DEBUG, "NPU: %04x:%d: Target slot %s\n",
+				chip_id, link_count - 1, name);
+
+			dt_add_property_string(node, "ibm,slot-label", name);
+			dt_add_property_cells(node, "ibm,pcie-slot",
+					slot->phandle);
+		}
+	}
+
+	dt_add_property_cells(npu, "ibm,npu-links", link_count);
+}
+
+static void add_npus(void)
+{
+	struct dt_node *xscom;
+	int phb_index = 7; /* Start counting from 7, for no reason */
+	int npu_index = 0;
+
+	if (proc_gen < proc_gen_p9)
+		return;
+
+	dt_for_each_compatible(dt_root, xscom, "ibm,xscom") {
+		const struct HDIF_array_hdr *links;
+
+		links = xscom_to_pcrd(xscom, SPPCRD_IDATA_SMP_LINK);
+		if (!links) {
+			prerror("NPU: Unable to find matching SPPCRD for %s\n",
+				xscom->name);
+			continue;
+		}
+
+		/* should never happen, but stranger things have */
+		if (!dt_find_by_name(dt_root, "ibm,pcie-slots")) {
+			prerror("PCIe slot information missing, can't add npu");
+			continue;
+		}
+
+		/* some hostboots will give us an empty array */
+		if (be32_to_cpu(links->ecnt))
+			add_npu(xscom, links, npu_index, phb_index);
+	}
+}
+
 /*
  * Legacy SPIRA is being deprecated and we have new SPIRA-H/S structures.
  * But on older system (p7?) we will continue to get legacy SPIRA.
@@ -1374,6 +1538,10 @@ int parse_hdat(bool is_opal)
 
 	/* Add IO HUBs and/or PHBs */
 	io_parse();
+
+	/* Add NPU nodes */
+	if (proc_gen >= proc_gen_p9)
+		add_npus();
 
 	/* Parse VPD */
 	vpd_parse();
