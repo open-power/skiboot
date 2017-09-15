@@ -88,42 +88,12 @@ static const struct slot_table_entry *match_slot_dev_entry(struct phb *phb,
 static void slot_table_add_properties(struct pci_slot *slot,
 				struct dt_node *np)
 {
-	struct phb *phb = slot->phb;
-	struct pci_device *pd = slot->pd;
 	struct slot_table_entry *ent = slot->data;
-	size_t base_loc_code_len, slot_label_len;
-	char label[8], loc_code[LOC_CODE_SIZE];
-
-	if (!np)
-		return;
-
-	if (ent) {
-		dt_add_property_string(np, "ibm,slot-label", ent->name);
-		slot_label_len = strlen(ent->name);
-	} else {
-		snprintf(label, 8, "S%04x%02x", phb->opal_id, pd->secondary_bus);
-		dt_add_property_string(np, "ibm,slot-label", label);
-		slot_label_len = strlen(label);
-	}
-
-	base_loc_code_len = phb->base_loc_code ? strlen(phb->base_loc_code) : 0;
-	if ((base_loc_code_len + slot_label_len + 1) >= LOC_CODE_SIZE)
-		return;
-
-	/* Location code */
-	if (phb->base_loc_code) {
-		strcpy(loc_code, phb->base_loc_code);
-		strcat(loc_code, "-");
-	} else {
-		loc_code[0] = '\0';
-	}
 
 	if (ent)
-		strcat(loc_code, ent->name);
+		pci_slot_add_loc(slot, np, ent->name);
 	else
-		strcat(loc_code, label);
-	dt_add_property(np, "ibm,slot-location-code",
-			loc_code, strlen(loc_code) + 1);
+		pci_slot_add_loc(slot, np, NULL);
 }
 
 void slot_table_get_slot_info(struct phb *phb, struct pci_device *pd)

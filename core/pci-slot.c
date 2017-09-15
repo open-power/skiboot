@@ -212,3 +212,33 @@ struct pci_slot *pci_slot_find(uint64_t id)
 	slot = pd ? pd->slot : NULL;
 	return slot;
 }
+
+void pci_slot_add_loc(struct pci_slot *slot,
+			struct dt_node *np, const char *label)
+{
+	char tmp[8], loc_code[LOC_CODE_SIZE];
+	struct pci_device *pd = slot->pd;
+	struct phb *phb = slot->phb;
+
+	if (!np)
+		return;
+
+	/* didn't get a real slot label? generate one! */
+	if (!label) {
+		snprintf(tmp, sizeof(tmp), "S%04x%02x", phb->opal_id,
+			pd->secondary_bus);
+		label = tmp;
+	}
+
+	/* Make a <PHB_LOC_CODE>-<LABEL> pair if we have a PHB loc code */
+	if (phb->base_loc_code) {
+		snprintf(loc_code, sizeof(loc_code), "%s-%s",
+			phb->base_loc_code, label);
+	} else {
+		strncpy(loc_code, label, sizeof(loc_code));
+	}
+
+	dt_add_property_string(np, "ibm,slot-label", label);
+	dt_add_property_nstr(np, "ibm,slot-location-code", loc_code,
+				sizeof(loc_code));
+}

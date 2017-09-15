@@ -259,6 +259,9 @@ extern void pci_slot_add_dt_properties(struct pci_slot *slot,
 				       struct dt_node *np);
 extern struct pci_slot *pci_slot_find(uint64_t id);
 
+extern void pci_slot_add_loc(struct pci_slot *slot,
+			struct dt_node *np, const char *label);
+
 /* DT based slot map */
 
 extern struct dt_node *dt_slots;
