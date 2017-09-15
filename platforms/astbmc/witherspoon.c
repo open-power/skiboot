@@ -337,6 +337,10 @@ static bool witherspoon_probe(void)
 {
 	if (!dt_node_is_compatible(dt_root, "ibm,witherspoon"))
 		return false;
+	if (!dt_find_by_name(dt_root, "ibm,pcie-slots"))
+		return false;
+	if (!dt_find_compatible_node(dt_root, NULL, "ibm,power9-npu"))
+		return false;
 
 	/* Lot of common early inits here */
 	astbmc_early_init();
@@ -344,10 +348,36 @@ static bool witherspoon_probe(void)
 	/* Setup UART for use by OPAL (Linux hvc) */
 	uart_set_console_policy(UART_CONSOLE_OPAL);
 
+	return true;
+}
+
+static bool old_witherspoon_probe(void)
+{
+	struct dt_node *slots, *npu;
+
+	if (!dt_node_is_compatible(dt_root, "ibm,witherspoon"))
+		return false;
+
+	slots = dt_find_by_name(dt_root, "ibm,pcie-slots");
+	npu  = dt_find_compatible_node(dt_root, NULL, "ibm,power9-npu");
+
+	if (slots && npu)
+		return false;
+
+	/* Lot of common early inits here */
+	astbmc_early_init();
+
+	/* Setup UART for use by OPAL (Linux hvc) */
+	uart_set_console_policy(UART_CONSOLE_OPAL);
+
+
 	/* Add NPU2 bindings */
-	dt_create_npu2();
+	if (!npu)
+		dt_create_npu2();
 
 	slot_table_init(witherspoon_phb_table);
+
+	prerror("!!! Old witherspoon firmware detected. Update hostboot and fix the Planar VPD !!!\n");
 
 	return true;
 }
@@ -437,7 +467,9 @@ static void witherspoon_pre_pci_fixup(void)
 	phb4_pre_pci_fixup_witherspoon();
 }
 
-DECLARE_PLATFORM(witherspoon_platform) = {
+/* The only difference between these is the PCI slot handling */
+
+DECLARE_PLATFORM(witherspoon) = {
 	.name			= "Witherspoon",
 	.probe			= witherspoon_probe,
 	.init			= astbmc_init,
@@ -445,11 +477,29 @@ DECLARE_PLATFORM(witherspoon_platform) = {
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
 	.bmc			= &astbmc_openbmc,
-	.pci_get_slot_info	= slot_table_get_slot_info,
-	.pci_probe_complete	= check_all_slot_table,
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
 	.elog_commit		= ipmi_elog_commit,
 	.exit			= ipmi_wdt_final_reset,
 	.terminate		= ipmi_terminate,
+
+	.pci_get_slot_info	= map_pci_dev_to_slot,
+};
+
+DECLARE_PLATFORM(old_witherspoon) = {
+	.name			= "Witherspoon (old)",
+	.probe			= old_witherspoon_probe,
+	.init			= astbmc_init,
+	.pre_pci_fixup		= witherspoon_pre_pci_fixup,
+	.start_preload_resource	= flash_start_preload_resource,
+	.resource_loaded	= flash_resource_loaded,
+	.bmc			= &astbmc_openbmc,
+	.cec_power_down         = astbmc_ipmi_power_down,
+	.cec_reboot             = astbmc_ipmi_reboot,
+	.elog_commit		= ipmi_elog_commit,
+	.exit			= ipmi_wdt_final_reset,
+	.terminate		= ipmi_terminate,
+
+	.pci_get_slot_info	= slot_table_get_slot_info,
+	.pci_probe_complete	= check_all_slot_table,
 };
