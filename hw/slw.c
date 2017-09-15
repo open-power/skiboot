@@ -1254,12 +1254,41 @@ static void slw_patch_regs(struct proc_chip *chip)
 static void slw_init_chip_p9(struct proc_chip *chip)
 {
 	struct cpu_thread *c;
+	int rc;
 
 	prlog(PR_DEBUG, "SLW: Init chip 0x%x\n", chip->id);
 
 	/* At power ON setup inits for power-mgt */
 	for_each_available_core_in_chip(c, chip->id)
 		slw_set_overrides_p9(chip, c);
+
+	if (!chip->homer_base) {
+		log_simple_error(&e_info(OPAL_RC_SLW_REG),
+				 "SLW: HOMER base not set %x\n",
+				 chip->id);
+		return;
+	}
+
+	prlog(PR_NOTICE, "SLW: Configuring self-restore for HRMOR\n");
+
+	/* Should this be for_each_present_cpu() ? */
+	for_each_available_cpu(c) {
+		if (c->chip_id != chip->id)
+			continue;
+
+		/*
+		 * Clear HRMOR. Need to update only for thread
+		 * 0 of each core. Doing it anyway for all threads
+		 */
+		rc =  p9_stop_save_cpureg((void *)chip->homer_base,
+						P9_STOP_SPR_HRMOR, 0,
+					       c->pir);
+		if (rc) {
+			log_simple_error(&e_info(OPAL_RC_SLW_REG),
+				 "SLW: Failed to set HRMOR for CPU %x,RC=0x%x\n",
+				 c->pir, rc);
+		}
+	}
 }
 static void slw_init_chip(struct proc_chip *chip)
 {
