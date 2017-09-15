@@ -1288,9 +1288,10 @@ static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 	int group_target[6]; /* Tracks the PCI slot targeted each link group */
 	int group_count = 0;
 	int link_count = 0;
-	uint32_t chip_id;
+	uint32_t size, chip_id;
 	int i;
 
+	size = be32_to_cpu(links->esize);
 	chip_id = dt_get_chip_id(xscom);
 
 	memset(group_target, 0, sizeof(group_target));
@@ -1307,6 +1308,7 @@ static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 	HDIF_iarray_for_each(links, i, link) {
 		uint16_t slot_id = be16_to_cpu(link->pci_slot_idx);
 		uint32_t link_id = be32_to_cpu(link->link_id);
+		uint64_t speed = 0, nvlink_speed = 0;
 		struct dt_node *node;
 
 		/* only add a link node if this link is targeted at at device */
@@ -1403,6 +1405,32 @@ static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 			dt_add_property_cells(node, "ibm,pcie-slot",
 					slot->phandle);
 		}
+
+		/* Newer fields which might not be populated */
+		if (size <= 0x24)
+			continue;
+
+		switch (be32_to_cpu(link->link_speed)) {
+			case 0: /* 20Gbps */
+				speed = 20000000000ul;
+				nvlink_speed = 0x3;
+				break;
+			case 1: /* 25Gbps */
+				speed = 25000000000ul;
+				nvlink_speed = 0x9;
+				break;
+			case 2: /* 25.78125 Gbps */
+				nvlink_speed =  0x8;
+				speed = 25781250000ul;
+				break;
+		}
+
+		/* ibm,link-speed is in bps and nvidia,link-speed is ~magic~ */
+		dt_add_property_u64s(node, "ibm,link-speed", speed);
+		dt_add_property_cells(node, "nvidia,link-speed", nvlink_speed);
+
+		dt_add_property_cells(node, DT_PRIVATE "occ-flag-pos",
+				PPC_BIT(link->occ_flag_bit));
 	}
 
 	dt_add_property_cells(npu, "ibm,npu-links", link_count);

@@ -1178,6 +1178,9 @@ struct sppcrd_smp_link {
 	__be32 i2c_link_cable;
 	__be32 i2c_presence;
 	__be32 i2c_micro;
+	uint8_t link_speed;
+	uint8_t occ_flag_bit;
+	__be16 gpu_slca;
 } __packed;
 
 /*
