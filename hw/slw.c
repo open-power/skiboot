@@ -813,7 +813,7 @@ void add_cpu_idle_state_properties(void)
 	int nr_states;
 
 	bool can_sleep = true;
-	bool has_slw = true;
+	bool has_wakeup_engine = true;
 	bool has_stop_inst = false;
 	u8 i;
 
@@ -906,9 +906,20 @@ void add_cpu_idle_state_properties(void)
 		nr_states = ARRAY_SIZE(power7_cpu_idle_states);
 	}
 
-	/* Enable deep idle states only if slw image is intact */
-	has_slw = (chip->slw_base && chip->slw_bar_size &&
-			chip->slw_image_size);
+	/*
+	 * Enable deep idle states only if :
+	 * P8 : slw image is intact
+	 * P9 : homer_base is set
+	 */
+	if (!(proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)) {
+		if (proc_gen == proc_gen_p9)
+			has_wakeup_engine = !!(chip->homer_base);
+		else /* (proc_gen == proc_gen_p8) */
+			has_wakeup_engine = (chip->slw_base && chip->slw_bar_size &&
+					chip->slw_image_size);
+	} else {
+		has_wakeup_engine = false;
+	}
 
 	/*
 	 * Currently we can't append strings and cells to dt properties.
@@ -936,7 +947,7 @@ void add_cpu_idle_state_properties(void)
 	if (has_stop_inst) {
 		/* Power 9 / POWER ISA 3.0 */
 		supported_states_mask = OPAL_PM_STOP_INST_FAST;
-		if (has_slw)
+		if (has_wakeup_engine)
 			supported_states_mask |= OPAL_PM_STOP_INST_DEEP;
 	} else {
 		/* Power 7 and Power 8 */
@@ -944,7 +955,7 @@ void add_cpu_idle_state_properties(void)
 		if (can_sleep)
 			supported_states_mask |= OPAL_PM_SLEEP_ENABLED |
 						OPAL_PM_SLEEP_ENABLED_ER1;
-		if (has_slw)
+		if (has_wakeup_engine)
 			supported_states_mask |= OPAL_PM_WINKLE_ENABLED;
 	}
 	for (i = 0; i < nr_states; i++) {
