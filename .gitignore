@@ -90,3 +90,4 @@ test/hello_world/hello_kernel/hello_kernel
 test/sreset_world/sreset_kernel/sreset_kernel
 zImage.epapr
 vgcore.*
+doc/_build
