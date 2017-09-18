@@ -4741,12 +4741,14 @@ static void phb4_create(struct dt_node *np)
 	char *path;
 	uint32_t irq_base, irq_flags;
 	int i;
+	struct proc_chip *chip;
 
 	assert(p);
 
 	/* Populate base stuff */
 	p->index = dt_prop_get_u32(np, "ibm,phb-index");
 	p->chip_id = dt_prop_get_u32(np, "ibm,chip-id");
+	chip = get_chip(p->chip_id);
 	p->regs = (void *)dt_get_address(np, 0, NULL);
 	p->int_mmio = (void *)dt_get_address(np, 1, NULL);
 	p->phb.dt_node = np;
@@ -4833,6 +4835,10 @@ static void phb4_create(struct dt_node *np)
 	p->max_link_speed = 4;
 	if (p->rev == PHB4_REV_NIMBUS_DD10)
 		p->max_link_speed = 2;
+	if (p->rev == PHB4_REV_NIMBUS_DD20 && chip->ec_rev == 0) {
+		p->max_link_speed = 3;
+		PHBINF(p, "Default max link speed for P9 DD2.00 is GEN3\n");
+	}
 	if (dt_has_node_property(np, "ibm,max-link-speed", NULL))
 		p->max_link_speed = dt_prop_get_u32(np, "ibm,max-link-speed");
 	if (pcie_max_link_speed)
