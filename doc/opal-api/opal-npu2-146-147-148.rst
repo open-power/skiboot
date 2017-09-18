@@ -5,9 +5,9 @@ OPAL NPU2 calls
 
 There are three OPAL calls for interacting with NPU2 devices: ::
 
-#define OPAL_NPU_INIT_CONTEXT			141
-#define OPAL_NPU_DESTROY_CONTEXT		142
-#define OPAL_NPU_MAP_LPAR			143
+#define OPAL_NPU_INIT_CONTEXT			146
+#define OPAL_NPU_DESTROY_CONTEXT		147
+#define OPAL_NPU_MAP_LPAR			148
 
 These are used to setup and configure address translation services
 (ATS) for a given NVLink2 device. Note that in some documentation this
