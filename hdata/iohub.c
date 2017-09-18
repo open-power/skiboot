@@ -798,8 +798,6 @@ static void io_parse_slots(const void *sp_iohubs, int hub_id)
 	const struct slot_map_entry *entry;
 	unsigned int i, count;
 
-	dt_slots = get_slot_node();
-
 	ioslot_arr = HDIF_child_arr(sp_iohubs, CECHUB_CHILD_IOSLOTS);
 	if (!ioslot_arr)
 		return;
@@ -807,6 +805,8 @@ static void io_parse_slots(const void *sp_iohubs, int hub_id)
 	count = be32_to_cpu(ioslot_arr->count); /* should only be 1 */
 	if (!count)
 		return;
+
+	dt_slots = get_slot_node();
 
 	prlog(PR_DEBUG, "CEC: Found slot map for IOHUB %d\n", hub_id);
 	if (count > 1)
@@ -845,9 +845,6 @@ static void io_parse_fru(const void *sp_iohubs)
 		const struct cechub_io_hub *hub;
 		unsigned int size, hub_id;
 		uint32_t chip_id;
-
-		if(i > 0)
-			break;
 
 		hub = HDIF_get_iarray_item(sp_iohubs, CECHUB_FRU_IO_HUBS,
 					   i, &size);

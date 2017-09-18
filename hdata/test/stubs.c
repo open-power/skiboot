@@ -97,7 +97,6 @@ STUB(op_display);
 STUB(fsp_preload_lid);
 STUB(fsp_wait_lid_loaded);
 STUB(fsp_adjust_lid_side);
-STUB(backtrace);
 
 /* Add HW specific stubs here */
 static bool true_stub(void) { return true; }
@@ -117,4 +116,5 @@ NOOP_STUB(mem_reserve_fw);
 NOOP_STUB(mem_reserve_hwbuf);
 NOOP_STUB(add_chip_dev_associativity);
 NOOP_STUB(enable_mambo_console);
+NOOP_STUB(backtrace);
 
