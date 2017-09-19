@@ -1407,9 +1407,6 @@ int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 	int i;
 	int spr_is_supported = 0;
 
-	if (proc_gen == proc_gen_p9)
-		return OPAL_UNSUPPORTED;
-
 	assert(c);
 	chip = get_chip(c->chip_id);
 	assert(chip);
