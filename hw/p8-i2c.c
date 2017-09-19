@@ -655,6 +655,10 @@ static void p8_i2c_status_error(struct p8_i2c_master_port *port,
 		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
 				 "I2C: Transfer error occurred\n");
 		p8_i2c_print_debug_info(port, req, end_time);
+	} else if (status == I2C_STAT_PSEUDO_TIMEOUT) {
+		log_simple_error(&e_info(OPAL_RC_I2C_TIMEOUT),
+				 "I2C: request timed out!\n");
+		p8_i2c_print_debug_info(port, req, end_time);
 	}
 
 	p8_i2c_translate_error(req, status);
@@ -882,7 +886,7 @@ static void p8_i2c_status_cmd_completion(struct p8_i2c_master *master,
 	p8_i2c_complete_request(master, req, rc);
 }
 
-static void  p8_i2c_check_status(struct p8_i2c_master *master)
+static void  p8_i2c_check_status(struct p8_i2c_master *master, bool timeout)
 {
 	struct p8_i2c_master_port *port;
 	struct i2c_request *req;
@@ -905,7 +909,7 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 	}
 
 	/* Nothing happened ? Go back */
-	if (!(status & (I2C_STAT_ANY_ERR | I2C_STAT_DATA_REQ |
+	if (!timeout && !(status & (I2C_STAT_ANY_ERR | I2C_STAT_DATA_REQ |
 			I2C_STAT_CMD_COMP)))
 		return;
 
@@ -946,6 +950,8 @@ static void  p8_i2c_check_status(struct p8_i2c_master *master)
 		p8_i2c_status_data_request(master, req, status);
 	else if (status & I2C_STAT_CMD_COMP)
 		p8_i2c_status_cmd_completion(master, req, now);
+	else if (timeout)
+		p8_i2c_status_error(port, req, I2C_STAT_PSEUDO_TIMEOUT, now);
 }
 
 static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
@@ -1307,8 +1313,7 @@ void p9_i2c_bus_owner_change(u32 chip_id)
 		master->state = state_idle;
 
 		p8_i2c_check_work(master);
-		p8_i2c_check_status(master);
-
+		p8_i2c_check_status(master, false);
 done:
 		unlock(&master->lock);
 	}
@@ -1383,7 +1388,7 @@ static uint64_t p8_i2c_run_request(struct i2c_request *req)
 	uint64_t poll_interval = 0;
 
 	lock(&master->lock);
-	p8_i2c_check_status(master);
+	p8_i2c_check_status(master, false);
 	p8_i2c_check_work(master);
 	poll_interval = master->poll_interval;
 	unlock(&master->lock);
@@ -1442,13 +1447,17 @@ static void p8_i2c_timeout(struct timer *t __unused, void *data, uint64_t now)
 	request->timeout = 0ul;
 	port = container_of(req->bus, struct p8_i2c_master_port, bus);
 
-	/* Allright, we have a request and it has timed out ... */
-	log_simple_error(&e_info(OPAL_RC_I2C_TIMEOUT),
-			 "I2C: Request timeout !\n");
-	p8_i2c_print_debug_info(port, req, now);
+	DBG("timeout on c%de%d\n",
+		master->chip_id, master->engine_id);
 
-	/* Use the standard error path */
-	p8_i2c_status_error(port, req, I2C_STAT_PSEUDO_TIMEOUT, now);
+	/*
+	 * Run through the usual path with timeout checking. The command might
+	 * have been completed successfully and we just lost an interrupt
+	 * somewhere.
+	 */
+	p8_i2c_check_status(port->master, true);
+	p8_i2c_check_work(port->master);
+
  exit:
 	unlock(&master->lock);
 }
@@ -1522,7 +1531,7 @@ static void p8_i2c_poll(struct timer *t __unused, void *data, uint64_t now)
 		return;
 
 	lock(&master->lock);
-	p8_i2c_check_status(master);
+	p8_i2c_check_status(master, false);
 	if (master->state != state_idle)
 		schedule_timer_at(&master->poller, now + master->poll_interval);
 	p8_i2c_check_work(master);
@@ -1544,7 +1553,7 @@ void p8_i2c_interrupt(uint32_t chip_id)
 		lock(&master->lock);
 
 		/* Run the state machine */
-		p8_i2c_check_status(master);
+		p8_i2c_check_status(master, false);
 
 		/* Check for new work */
 		p8_i2c_check_work(master);
