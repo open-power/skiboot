@@ -8,7 +8,7 @@ There are three OPAL calls for interacting with flash devices: ::
  #define OPAL_FLASH_ERASE	112
 
 Multiple flash devices are supported by OPAL - each of these calls takes an id
-parameter, which much match an ID found in the corresponding ``ibm,opal/flash@n``
+parameter, which must match an ID found in the corresponding ``ibm,opal/flash@n``
 device tree node. See :ref:`device-tree/ibm,opal/flash` for details of
 the device tree bindings.
 
