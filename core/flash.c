@@ -687,6 +687,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 
 		if (content_size > bufsz) {
 			prerror("FLASH: content size > buffer size\n");
+			rc = OPAL_PARAMETER;
 			goto out_free_ffs;
 		}
 
@@ -720,15 +721,28 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		 * Back to the old way of doing things, no STB header.
 		 */
 		if (subid == RESOURCE_SUBID_NONE) {
-			/*
-			 * Because actualSize is a lie, we compute the size
-			 * of the BOOTKERNEL based on what the ELF headers
-			 * say. Otherwise we end up reading more than we should
-			 */
-			content_size = sizeof_elf_from_hdr(buf);
-			if (!content_size) {
-				prerror("FLASH: Invalid ELF header part %s\n",
-					name);
+			if (id == RESOURCE_ID_KERNEL) {
+				/*
+				 * Because actualSize is a lie, we compute the
+				 * size of the BOOTKERNEL based on what the ELF
+				 * headers say. Otherwise we end up reading more
+				 * than we should
+				 */
+				content_size = sizeof_elf_from_hdr(buf);
+				if (!content_size) {
+					prerror("FLASH: Invalid ELF header part"
+						" %s\n", name);
+					rc = OPAL_RESOURCE;
+					goto out_free_ffs;
+				}
+			} else {
+				content_size = ffs_part_size;
+			}
+			if (content_size > bufsz) {
+				prerror("FLASH: %s content size %d > "
+					" buffer size %lu\n", name,
+					content_size, bufsz);
+				rc = OPAL_PARAMETER;
 				goto out_free_ffs;
 			}
 			prlog(PR_DEBUG, "FLASH: computed %s size %u\n",
