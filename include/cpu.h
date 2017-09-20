@@ -95,6 +95,13 @@ struct cpu_thread {
 
 	/* For use by XICS emulation on XIVE */
 	struct xive_cpu_state		*xstate;
+
+	/*
+	 * For direct controls scoms, including special wakeup.
+	 */
+	struct lock			dctl_lock; /* primary only */
+	bool				dctl_stopped; /* per thread */
+	uint32_t			special_wakeup_count; /* primary */
 };
 
 /* This global is set to 1 to allow secondaries to callin,

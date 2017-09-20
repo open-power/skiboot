@@ -206,6 +206,21 @@
 
 #include <compiler.h>
 #include <stdint.h>
+#include <stdbool.h>
+
+static inline bool is_power9n(uint32_t version)
+{
+	if (PVR_TYPE(version) != PVR_TYPE_P9)
+		return false;
+	/*
+	 * Bit 13 tells us:
+	 *   0 = Scale out (aka Nimbus)
+	 *   1 = Scale up  (aka Cumulus)
+	 */
+	if ((version >> 13) & 1)
+		return false;
+	return true;
+}
 
 /*
  * SMT priority

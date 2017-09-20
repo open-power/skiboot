@@ -205,6 +205,10 @@ extern char __sym_map_end[];
 extern unsigned long get_symbol(unsigned long addr,
 				char **sym, char **sym_end);
 
+/* Direct controls */
+extern void direct_controls_init(void);
+extern int64_t opal_signal_system_reset(int cpu_nr);
+
 /* Fast reboot support */
 extern void disable_fast_reboot(const char *reason);
 extern void fast_reboot(void);

@@ -625,6 +625,7 @@ static void init_cpu_thread(struct cpu_thread *t,
 			    enum cpu_thread_state state,
 			    unsigned int pir)
 {
+	init_lock(&t->dctl_lock);
 	init_lock(&t->job_lock);
 	list_head_init(&t->job_queue);
 	t->state = state;

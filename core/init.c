@@ -881,6 +881,12 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	mfsi_init();
 
 	/*
+	 * Direct controls facilities provides some controls over CPUs
+	 * using scoms.
+	 */
+	direct_controls_init();
+
+	/*
 	 * Put various bits & pieces in device-tree that might not
 	 * already be there such as the /chosen node if not there yet,
 	 * the ICS node, etc... This can potentially use XSCOM
