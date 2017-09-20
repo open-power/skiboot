@@ -709,6 +709,7 @@ static int npu2_dn_fixup(struct phb *phb,
 {
 	struct npu2 *p = phb_to_npu2(phb);
 	struct npu2_dev *dev;
+	uint32_t speed;
 
 	dev = npu2_bdf_to_dev(p, pd->bdfn);
 	assert(dev);
@@ -719,13 +720,15 @@ static int npu2_dn_fixup(struct phb *phb,
 	npu2_dn_fixup_gmb(pd->dn, dev);
 	dt_add_property_cells(pd->dn, "ibm,nvlink", dev->dt_node->phandle);
 
-	/* NVLink supports multiple speeds and device drivers need to know what
-	 * speed has been set by firmware. The speed is actually controlled by
-	 * Hostboot, so until we get a HDAT entry telling us what speed they
-	 * programmed we will just hard code it here and hope it matches. If it
-	 * doesn't it is always possible to manually override it when installing
-	 * the device driver. */
-	dt_add_property_cells(pd->dn, "ibm,nvlink-speed", 0x9);
+	/*
+	 * NVLink supports multiple speeds and device drivers need to know what
+	 * speed has been set by firmware. Hostboot does the inits that set the
+	 * link speed and tell us via HDAT and we need to copy that from the
+	 * link node.
+	 */
+	speed = dt_prop_get_u32_def(dev->dt_node, "nvidia,link-speed", 0xff);
+	if (speed != 0xff)
+		dt_add_property_cells(pd->dn, "ibm,nvlink-speed", speed);
 
 	/* NPU2 devices require a slot location to associate with GPUs */
 	dev->slot_label = dt_prop_get_def(pd->dn, "ibm,slot-label", NULL);
