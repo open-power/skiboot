@@ -313,8 +313,7 @@ static const void *xscom_to_pcrd(struct dt_node *xscom, int idata_index)
 	assert(i < be16_to_cpu(t->act_cnt));
 
 	hdif = base + i * be32_to_cpu(t->alloc_len);
-	if (!hdif)
-		return NULL;
+	assert(hdif);
 
 	if (idata_index == GET_HDIF_HDR)
 		return hdif;
