@@ -2792,6 +2792,27 @@ static int64_t load_capp_ucode(struct phb4 *p)
 	return rc;
 }
 
+static void do_capp_recovery_scoms(struct phb4 *p)
+{
+	uint64_t reg;
+	uint32_t offset;
+
+	PHBDBG(p, "Doing CAPP recovery scoms\n");
+
+	offset = PHB4_CAPP_REG_OFFSET(p);
+	/* disable snoops */
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0);
+	load_capp_ucode(p);
+	/* clear err rpt reg*/
+	xscom_write(p->chip_id, CAPP_ERR_RPT_CLR + offset, 0);
+	/* clear capp fir */
+	xscom_write(p->chip_id, CAPP_FIR + offset, 0);
+
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &reg);
+	reg &= ~(PPC_BIT(0) | PPC_BIT(1));
+	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, reg);
+}
+
 static int64_t phb4_creset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
@@ -2806,11 +2827,9 @@ static int64_t phb4_creset(struct pci_slot *slot)
 	case PHB4_SLOT_CRESET_START:
 		PHBDBG(p, "CRESET: Starts\n");
 
-		/* do steps 3-5 of capp recovery procedure */
-#if 0
+		/* capp recovery */
 		if (p->flags & PHB4_CAPP_RECOVERY)
 			do_capp_recovery_scoms(p);
-#endif
 
 		phb4_prepare_link_change(slot, false);
 		/* Clear error inject register, preventing recursive errors */
@@ -3523,6 +3542,10 @@ static void phb4_init_capp_regs(struct phb4 *p)
 	xscom_read(p->chip_id, SNOOP_CONTROL + offset, &reg);
 	reg |= PPC_BIT(0);
 	reg |= PPC_BIT(35);
+	reg |= PPC_BIT(45);
+	reg |= PPC_BIT(46);
+	reg |= PPC_BIT(47);
+	reg |= PPC_BIT(50);
 	xscom_write(p->chip_id, SNOOP_CONTROL + offset, reg);
 
 	/* Transport Control Register */
@@ -3553,12 +3576,12 @@ static void phb4_init_capp_regs(struct phb4 *p)
 
 	/* Flush SUE State Map Register */
 	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP + offset,
-		    0x1DCF5F6600000000);
+		    0x08020A0000000000);
 
 	if (p->rev == PHB4_REV_NIMBUS_DD20) {
 		/* Flush SUE uOP1 Register */
 		xscom_write(p->chip_id, FLUSH_SUE_UOP1 + offset,
-			    0xE310280428000000);
+			    0xDCE0280428000000);
 	}
 
 	/* capp owns PHB read buffers */
@@ -3575,6 +3598,15 @@ static void phb4_init_capp_regs(struct phb4 *p)
 		xscom_write(p->chip_id, XPT_FSM_RMM + offset,
 			    0xFFFFF00E00000000);
 	}
+
+	/* CAPP FIR Action 0 */
+	xscom_write(p->chip_id, CAPP_FIR_ACTION0 + offset, 0x0b1c000104060000);
+
+	/* CAPP FIR Action 1 */
+	xscom_write(p->chip_id, CAPP_FIR_ACTION1 + offset, 0x2b9c0001240E0000);
+
+	/* CAPP FIR MASK */
+	xscom_write(p->chip_id, CAPP_FIR_MASK + offset, 0x80031f98d8717000);
 
 	/* Deassert TLBI_FENCED and tlbi_psl_is_dead */
 	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, 0);
@@ -3927,6 +3959,22 @@ static void phb4_set_p2p(struct phb *phb, uint64_t mode, uint64_t flags,
 	}
 }
 
+static int64_t phb4_set_capp_recovery(struct phb *phb)
+{
+	struct phb4 *p = phb_to_phb4(phb);
+
+	if (p->flags & PHB4_CAPP_RECOVERY)
+		return 0;
+
+	/* set opal event flag to indicate eeh condition */
+	opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
+				OPAL_EVENT_PCI_ERROR);
+
+	p->flags |= PHB4_CAPP_RECOVERY;
+
+	return 0;
+}
+
 static const struct phb_ops phb4_ops = {
 	.cfg_read8		= phb4_pcicfg_read8,
 	.cfg_read16		= phb4_pcicfg_read16,
@@ -3961,6 +4009,7 @@ static const struct phb_ops phb4_ops = {
 	.tce_kill		= phb4_tce_kill,
 	.set_capi_mode		= phb4_set_capi_mode,
 	.set_p2p		= phb4_set_p2p,
+	.set_capp_recovery	= phb4_set_capp_recovery,
 };
 
 static void phb4_init_ioda3(struct phb4 *p)
