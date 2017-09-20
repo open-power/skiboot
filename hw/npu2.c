@@ -710,6 +710,7 @@ static int npu2_dn_fixup(struct phb *phb,
 	struct npu2 *p = phb_to_npu2(phb);
 	struct npu2_dev *dev;
 	uint32_t speed;
+	const char *label;
 
 	dev = npu2_bdf_to_dev(p, pd->bdfn);
 	assert(dev);
@@ -730,9 +731,20 @@ static int npu2_dn_fixup(struct phb *phb,
 	if (speed != 0xff)
 		dt_add_property_cells(pd->dn, "ibm,nvlink-speed", speed);
 
-	/* NPU2 devices require a slot location to associate with GPUs */
-	dev->slot_label = dt_prop_get_def(pd->dn, "ibm,slot-label", NULL);
-	if (!dev->slot_label) {
+	/*
+	 * NPU2 devices require a slot location to associate with GPUs.
+	 * This can be added via the slot table matching, otherwise we
+	 * read it from the link node.
+	 */
+	label = dt_prop_get_def(pd->dn, "ibm,slot-label", NULL);
+
+	if (!label) {
+		label = dt_prop_get_def(dev->dt_node, "ibm,slot-label", NULL);
+		if (label)
+			dt_add_property_string(pd->dn, "ibm,slot-label", label);
+	}
+
+	if (!label) {
 		/**
 		 * @fwts-label NPUNoPHBSlotLabel
 		 * @fwts-advice No GPU/NPU2 slot information was found.
@@ -741,6 +753,8 @@ static int npu2_dn_fixup(struct phb *phb,
 		prlog(PR_ERR, "NPU2: Cannot find GPU slot information\n");
 		return 0;
 	}
+
+	dev->slot_label = label;
 
 	/*
 	 * Bind the emulated PCI device with the real one, which can't
