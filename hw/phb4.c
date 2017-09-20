@@ -3587,7 +3587,7 @@ static void phb4_init_capp_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0d30,	0xdff7ff0bf7ddfff0ull);
 
 	/* Init_86: RXE_ARB Error AIB Fence Enable Register */
-	out_be64(p->regs + 0x0db0,	0xfbffd7bbff7fbfefull);
+	out_be64(p->regs + 0x0db0,	0xfbffd7bbfb7fbfefull);
 
 	/* Init_95: RXE_MRG Error AIB Fence Enable Register */
 	out_be64(p->regs + 0x0e30,	0xfffffeffff7fff57ull);
@@ -4160,7 +4160,7 @@ static void phb4_init_errors(struct phb4 *p)
 	 * get a response to fence the PHB. This breaks probing,
 	 * hence we don't set them here.
 	 */
-	out_be64(p->regs + 0x0db0,	0x3bffd703fe7fbf8full); /* XXX CAPI has diff. value */
+	out_be64(p->regs + 0x0db0,	0x3bffd703fa7fbf8full); /* XXX CAPI has diff. value */
 	out_be64(p->regs + 0x0dc0,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0dc8,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0dd0,	0x0000000000000000ull);
