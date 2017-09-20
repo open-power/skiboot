@@ -1508,7 +1508,7 @@ static void add_npus(void)
 
 		/* some hostboots will give us an empty array */
 		if (be32_to_cpu(links->ecnt))
-			add_npu(xscom, links, npu_index, phb_index);
+			add_npu(xscom, links, npu_index++, phb_index++);
 	}
 }
 
