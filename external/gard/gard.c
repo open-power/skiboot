@@ -454,24 +454,31 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 
 static int reset_partition(struct gard_ctx *ctx)
 {
-	int i, rc;
-	struct gard_record gard;
-	memset(&gard, 0xFF, sizeof(gard));
+	int len, num_entries, rc = 0;
+	struct gard_record *gard;
+
+	num_entries = ctx->gard_data_len / sizeof_gard(ctx);
+	len = num_entries * sizeof(*gard);
+	gard = malloc(len);
+	if (!gard) {
+		return FLASH_ERR_MALLOC_FAILED;
+	}
+	memset(gard, 0xFF, len);
 
 	rc = blocklevel_smart_erase(ctx->bl, ctx->gard_data_pos, ctx->gard_data_len);
 	if (rc) {
 		fprintf(stderr, "Couldn't erase the gard partition. Bailing out\n");
-		return rc;
+		goto out;
 	}
-	for (i = 0; i + sizeof_gard(ctx) < ctx->gard_data_len; i += sizeof_gard(ctx)) {
-		rc = blocklevel_write(ctx->bl, ctx->gard_data_pos + i, &gard, sizeof(gard));
-		if (rc) {
-			fprintf(stderr, "Couldn't reset the entire gard partition. Bailing out\n");
-			return rc;
-		}
+	rc = blocklevel_write(ctx->bl, ctx->gard_data_pos, gard, len);
+	if (rc) {
+		fprintf(stderr, "Couldn't reset the entire gard partition. Bailing out\n");
+		goto out;
 	}
 
-	return 0;
+out:
+	free(gard);
+	return rc;
 }
 
 static int do_clear(struct gard_ctx *ctx, int argc, char **argv)
