@@ -1584,7 +1584,7 @@ static void handle_prd_control_occ_reset(struct control_msg *send_msg,
 	chip = msg->occ_reset.chip;
 
 	/* do reset */
-	pr_debug("CTRL: resetting PM complex on chip %ld", chip);
+	pr_debug("CTRL: Calling OCC reset on chip %ld", chip);
 	pm_complex_reset(chip);
 
 	send_msg->data_len = 0;
@@ -2326,9 +2326,24 @@ static int parse_action(const char *str, enum action *action)
 {
 	int rc;
 
-	if (!strcmp(str, "occ") || !strcmp(str, "pm-complex")) {
+	if (!strcmp(str, "occ")) {
 		*action = ACTION_OCC_CONTROL;
 		rc = 0;
+
+		if (is_fsp_system()) {
+			pr_log(LOG_ERR, "CTRL: occ commands are not "
+			       "supported on this system");
+			rc = -1;
+		}
+	} else if (!strcmp(str, "pm-complex")) {
+		*action = ACTION_OCC_CONTROL;
+		rc = 0;
+
+		if (!is_fsp_system()) {
+			pr_log(LOG_ERR, "CTRL: pm-complex commands are not "
+			       "supported on this system");
+			rc = -1;
+		}
 	} else if (!strcmp(str, "daemon")) {
 		*action = ACTION_RUN_DAEMON;
 		rc = 0;
