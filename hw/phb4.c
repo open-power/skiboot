@@ -82,6 +82,14 @@
  *   o Once we leave here, much harder to recover from errors
  *
  * Step 9:
+ * - Check for optimised link for directly attached devices:
+ *   o Wait for CRS (so we can read device config space)
+ *   o Check chip and device are in whitelist. if not, Goto Step 10
+ *   o If trained link speed is degraded, retry ->  Goto Step 2
+ *   o If trained link width is degraded, retry -> Goto Step 2
+ *   o If still degraded after 3 retries. Give up, Goto Step 10.
+ *
+ * Step 10:
  *  - PHB good, start probing config space.
  *    o core/pci.c: pci_reset_phb() -> pci_scan_phb()
  */
