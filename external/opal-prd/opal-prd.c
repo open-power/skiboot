@@ -246,6 +246,21 @@ static void pr_log_daemon_init(void)
 	}
 }
 
+/* Check service processor type */
+static bool is_fsp_system(void)
+{
+	char *path;
+	int rc;
+
+	rc = asprintf(&path, "%s/fsps", devicetree_base);
+	if (rc < 0) {
+		pr_log(LOG_ERR, "FW: error creating '/fsps' path %m");
+		return false;
+	}
+
+	return access(path, F_OK) ? false : true;
+}
+
 /**
  * ABI check that we can't perform at build-time: we want to ensure that the
  * layout of struct host_interfaces matches that defined in the thunk.
@@ -1336,18 +1351,27 @@ static int pm_complex_reset(uint64_t chip)
 {
 	int rc;
 
-	if (hservice_runtime->reset_pm_complex) {
+	/*
+	 * FSP system -> reset_pm_complex
+	 * BMC system -> process_occ_reset
+	 */
+	if (is_fsp_system()) {
+		if (!hservice_runtime->reset_pm_complex) {
+			pr_log_nocall("reset_pm_complex");
+			return -1;
+		}
+
 		pr_debug("PM: calling pm_complex_reset(%ld)", chip);
 		rc = call_reset_pm_complex(chip);
+	} else {
+		if (!hservice_runtime->process_occ_reset) {
+			pr_log_nocall("process_occ_reset");
+			return -1;
+		}
 
-	} else if (hservice_runtime->process_occ_reset) {
 		pr_debug("PM: calling process_occ_reset(%ld)", chip);
 		call_process_occ_reset(chip);
 		rc = 0;
-
-	} else {
-		pr_log_nocall("reset_pm_complex/process_occ_reset");
-		rc = -1;
 	}
 
 	return rc;
