@@ -60,7 +60,9 @@ char const *nest_pmus[] = {
 	"phb0",
 	"phb1",
 	"phb2",
-	"resvd",
+	"phb3",
+	"phb4",
+	"phb5",
 	"nx",
 	"capp0",
 	"capp1",
@@ -69,13 +71,14 @@ char const *nest_pmus[] = {
 	"alink0",
 	"alink1",
 	"alink2",
+	"alink3",
 	"nvlink0",
 	"nvlink1",
 	"nvlink2",
 	"nvlink3",
 	"nvlink4",
 	"nvlink5",
-	/* reserved bits : 48 - 64 */
+	/* reserved bits : 51 - 63 */
 };
 
 /*
