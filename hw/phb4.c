@@ -4198,7 +4198,7 @@ static void phb4_init_errors(struct phb4 *p)
 	/* Init_82..90 - RXE_ARB errors */
 	out_be64(p->regs + 0x0d80,	0xffffffffffffffffull);
 	out_be64(p->regs + 0x0d88,	0x0000000000000000ull);
-	out_be64(p->regs + 0x0d98,	0xffffffffffffffffull);
+	out_be64(p->regs + 0x0d98,	0xfffffffffbffffffull);
 	if (p->rev == PHB4_REV_NIMBUS_DD10)
 		out_be64(p->regs + 0x0da8,	0xc00000b801000060ull);
 	else
@@ -4213,7 +4213,7 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0dc0,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0dc8,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0dd0,	0x0000000000000000ull);
-	out_be64(p->regs + 0x0dd8,	0x0000000000000000ull);
+	out_be64(p->regs + 0x0dd8,	0x0000000004000000ull);
 
 	/* Init_91..99 - RXE_MRG errors */
 	out_be64(p->regs + 0x0e00,	0xffffffffffffffffull);
@@ -4434,7 +4434,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 
 
 	/* Init_132 - Enable DMA address speculation */
-	out_be64(p->regs + PHB_TCE_SPEC_CTL,			0xf000000000000000ull);
+	out_be64(p->regs + PHB_TCE_SPEC_CTL,			0x0000000000000000ull);
 
 	/* Init_133 - Timeout Control Register 1 */
 	out_be64(p->regs + PHB_TIMEOUT_CTRL1,			0x0018150000200000ull);
