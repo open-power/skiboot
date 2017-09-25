@@ -7,37 +7,75 @@ it provides some runtime services to the OS (typically Linux).
 Source layout
 -------------
 
-========= ===================================
-Directory Content
-========= ===================================
-asm/	  small amount, mainly entry points
-ccan/	  bits from CCAN
-core/	  common code among machines.
-doc/	  not enough here
-external/ tools to run external of sapphire.
-hdata/	  all stuff going to/from FSP
-hw/ 	  drivers for things & fsp things.
-include/  headers!
-libc/ 	  tiny libc, from SLOF
-libfdt/   straight device tree lib
-libpore/  to manipulate PORE engine.
-========= ===================================
+========== ===================================================
+Directory  Content
+========== ===================================================
+asm/	   small amount, mainly entry points
+ccan/	   bits from CCAN_
+core/	   common code among machines.
+doc/	   not enough here
+external/  tools and userspace components
+hdata/	   Parses HDAT from Hostboot/FSP into Device Tree
+hw/ 	   drivers for things & fsp things.
+include/   headers!
+libc/ 	   tiny libc, originally from SLOF_
+libfdt/    Manipulate flattened device trees
+libflash/  Lib for talking to flash and parsing FFS structs
+libpore/   to manipulate PORE [#]_ engine.
+libstb/    See :ref:`stb-overview`
+libxz/     The xz_embedded_ library
+opal-ci/   Some scripts to help Continuous Integration testing
+platforms/ Platform (machine/BMC) specific code
+test/      Test scripts and binaries
+========== ===================================================
 
-We have a spinlock implementation in asm/lock.S
-Entry points are detailed in asm/head.S
-The main C entry point is in core/init.c: main_cpu_entry()
+.. _CCAN: https://ccodearchive.net/
+.. _SLOF: https://github.com/aik/SLOF/
+.. _xz_embedded: https://tukaani.org/xz/embedded.html
+
+.. [#] Power On Reset Engine. Used to bring cores out of deep sleep states.
+       For POWER9, this also includes the `p9_stop_api` which manipulates
+       the low level microcode to-reinit certain SPRs on transition out of
+       a state losing STOP state.
+
+We have a spinlock implementation in `asm/lock.S`__
+Entry points are detailed in `asm/head.S`__
+The main C entry point is in `core/init.c`__: `main_cpu_entry()`__
+
+.. _lock_S: https://github.com/open-power/skiboot/blob/v5.8/asm/lock.S
+.. _head_S: https://github.com/open-power/skiboot/blob/v5.8/asm/head.S
+.. _core_init_c: https://github.com/open-power/skiboot/blob/v5.8/core/init.c
+.. _main_cpu_entry: https://github.com/open-power/skiboot/blob/v5.8/core/init.c#L785
+
+__ lock_S_
+__ head_S_
+__ core_init_c_
+__ main_cpu_entry_
 
 Binaries
 --------
 The following binaries are built:
 
-=========== ============================================
-File        Purpose
-=========== ============================================
-skiboot.lid is the actual lid. objdump out
-skiboot.elf is the elf binary of it, lid comes from this
-skiboot.map plain map of symbols
-=========== ============================================
+==================== =================================================
+File                 Purpose
+==================== =================================================
+skiboot.lid          Binary for flashing onto systems [#]_
+skiboot.lid.stb      Secure and Trusted Boot container wrapped skiboot
+*skiboot.lid.xz*     XZ compressed binary [#]_
+*skiboot.lid.xz.stb* STB container wrapped XZ compressed skiboot [#]_
+skiboot.elf          is the elf binary of it, lid comes from this
+skiboot.map          plain map of symbols
+==================== =================================================
+
+.. [#] Practically speaking, this is just IBM FSP based systems now. Since
+       the `skiboot.lid` size is now greater than 1MB, which is the size of
+       the default `PAYLOAD` PNOR partition size on OpenPOWER systems, you
+       will want the `skiboot.lid.xz` or `skiboot.lid.xz.stb` instead.
+.. [#] On OpenPOWER systems, hostboot will read and decompress XZ
+       compressed payloads. This shortens boot time (less data to read),
+       adds a checksum over the `PAYLOAD` and saves valuable PNOR space.
+       If in doubt, use this payload.
+.. [#] If a secure boot system, use this payload.
 
 Booting
 -------
@@ -48,12 +86,22 @@ on each other. We choose a master thread, putting everybody else into a
 spinloop.
 
 Essentially, we do this by doing an atomic fetch and inc and whoever gets 0
-gets to be the master.
+gets to be the main thread. The main thread will then distribute tasks to
+secondary threads as needed. We do not (currently) do anything fancy like
+context switching or scheduling.
 
-When we enter skiboot we also get a memory location in a register which
-is the location of a device tree for the system. We flatten out the device
-tree, turning offsets into real pointers and manipulating it where needed.
-We re-flatten the device tree before booting the OS (Linux).
+When entering skiboot, we enter with one of two data structures describing
+the system as initialized by Hostboot. There may be a flattened device tree
+(see https://devicetree.org/ ), or a HDAT structure. While Device Tree
+is an industry standard, HDAT comes from IBM POWER. On POWER8, skiboot would
+get HDAT and a mini-devicetree from an FSP or purely a Device Tree on OpenPOWER
+systems. On POWER9, it's just HDAT everywhere (that isn't a simulator).
+The HDAT specification is currently not public. It is purely an interface
+between Hostboot and skiboot, and is only exposed anywhere else for debugging
+purposes.
+
+During boot, skiboot will add a lot to the device tree, manipulating what
+may already be there before exporting this new device tree out to the OS.
 
 The main entry point is main_cpu_entry() in core/init.c, this is a carefully
 ordered init of things. The sequence is relatively well documented there.
@@ -61,31 +109,22 @@ ordered init of things. The sequence is relatively well documented there.
 OS interface
 ------------
 
-Skiboot maintains its own stack for each CPU. We do not have an ABI like
-"may use X stack on OS stack", we entirely keep to our own stack space.
-The OS (Linux) calling skiboot will never use any OS stack space and the OS
-does not need to call skiboot with a valid stack.
+OPAL (skiboot) is exclusively called through OPAL calls. The OS has complete
+controll of *when* OPAL code is executed. The design of all OPAL APIs is that
+we do not block in OPAL, so as not to introduce jitter.
 
-We define an array of stacks, one for each CPU. On entry to skiboot,
-we can find out stack by multiplying our CPU number by the stack size and
-adding that to the address of the stack area.
+Skiboot maintains its own stack for each CPU, the running OS does not need
+to donate or reserve any of its stack space.
 
-At the bottom of each stack area is a per CPU data structure, which we
-can get to by chopping off the LSBs of the stack pointer.
-
-The OPAL interface is a generic message queue. The Linux side of things
-can be found in linux/arch/powerpc/platform/powernv/
+With the OPAL API calls and device tree bindings we have the OPAL ABI.
 
 Interrupts
 ----------
 
-We don't handle interrupts in skiboot.
-
-In the future we may have to change to process machine check interrupts
-during boot.
-
-We do not have timer interrupts.
-
+We don't directly handle interrupts in skiboot. The OS is in complete control,
+and any interrupts we need to process are first received by the OS. The
+:ref:`opal-handle-interrupt` call is made by the OS for OPAL to do what's
+needed.
 
 Memory
 ------

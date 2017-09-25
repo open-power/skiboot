@@ -1,3 +1,5 @@
+.. _opal-handle-interrupt:
+
 OPAL_HANDLE_INTERRUPT
 =====================
 
