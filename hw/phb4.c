@@ -2432,7 +2432,7 @@ struct pci_card_id {
 	uint16_t device;
 };
 
-struct pci_card_id retry_whitelist[] = {
+static struct pci_card_id retry_whitelist[] = {
 	{ 0x1000, 0x005d }, /* LSI Logic MegaRAID SAS-3 3108 */
 	{ 0x1000, 0x00c9 }, /* LSI MPT SAS-3 */
 	{ 0x104c, 0x8241 }, /* TI xHCI USB */
