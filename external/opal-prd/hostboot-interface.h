@@ -165,6 +165,10 @@ struct host_interfaces {
 
 	/**
 	 * @brief Delay/sleep for at least the time given
+	 *
+	 * The sleep time must be normalised; i_nano_seconds should be between
+	 * 0 and 999999999.
+	 *
 	 * @param[in] seconds
 	 * @param[in] nano seconds
 	 * @platform FSP,OpenPOWER
