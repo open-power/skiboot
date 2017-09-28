@@ -90,7 +90,7 @@ struct hdat_i2c_type {
 	const char *compat;
 };
 
-struct hdat_i2c_type hdat_i2c_devs[] = {
+static struct hdat_i2c_type hdat_i2c_devs[] = {
 	/* XXX: Please verify that all VPD EEPROMs are of this type */
 	{ 0x2, "eeprom", "atmel,24c128" }
 };
@@ -100,7 +100,7 @@ struct hdat_i2c_label {
 	const char *label;
 };
 
-struct hdat_i2c_label hdat_i2c_labels[] = {
+static struct hdat_i2c_label hdat_i2c_labels[] = {
 	{ 0x1, "9551-led-controller" },
 	{ 0x2, "seeprom" },
 	{ 0x5, "module-vpd" },
