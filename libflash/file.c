@@ -72,11 +72,12 @@ static int file_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint
 		return FLASH_ERR_PARM_ERROR;
 
 	while (count < len) {
-		rc = read(file_data->fd, buf, len);
+		rc = read(file_data->fd, buf, len - count);
 		/* errno should remain set */
 		if (rc == -1 || rc == 0)
 			return FLASH_ERR_BAD_READ;
 
+		buf += rc;
 		count += rc;
 	}
 
@@ -95,11 +96,12 @@ static int file_write(struct blocklevel_device *bl, uint64_t dst, const void *sr
 		return FLASH_ERR_PARM_ERROR;
 
 	while (count < len) {
-		rc = write(file_data->fd, src, len);
+		rc = write(file_data->fd, src, len - count);
 		/* errno should remain set */
 		if (rc == -1)
 			return FLASH_ERR_VERIFY_FAILURE;
 
+		src += rc;
 		count += rc;
 	}
 
