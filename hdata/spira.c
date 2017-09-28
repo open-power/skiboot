@@ -430,7 +430,7 @@ static void add_ecid_data(const struct HDIF_common_hdr *hdr,
 	 * each containing a code).
 	 */
 	for (i = 0; i < 10; i++) {
-		tmp = (u8)((ecid->low >> (i * 6)) & 0x3f);
+		tmp = (u8)((be64_to_cpu(ecid->low) >> (i * 6)) & 0x3f);
 		if (tmp <= 9)
 			wafer_id[9 - i] = tmp + '0';
 		else if (tmp >= 0xA && tmp <= 0x23)
