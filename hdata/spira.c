@@ -1322,8 +1322,8 @@ static void add_stop_levels(void)
 
 #define NPU_BASE 0x5011000
 #define NPU_SIZE 0x2c
-#define NPU_INDIRECT0	0x8000000009010c3f
-#define NPU_INDIRECT1	0x800000000c010c3f
+#define NPU_INDIRECT0	0x8000000009010c3fULL
+#define NPU_INDIRECT1	0x800000000c010c3fULL
 
 static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 			int npu_index, int phb_index)
