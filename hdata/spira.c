@@ -1455,7 +1455,7 @@ static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 		if (size <= 0x24)
 			continue;
 
-		switch (be32_to_cpu(link->link_speed)) {
+		switch (link->link_speed) {
 			case 0: /* 20Gbps */
 				speed = 20000000000ul;
 				nvlink_speed = 0x3;
