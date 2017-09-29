@@ -2440,8 +2440,9 @@ static struct pci_card_id retry_whitelist[] = {
 	{ 0x10b5, 0x8725 }, /* PLX Switch: p9dsu, witherspoon */
 	{ 0x10b5, 0x8748 }, /* PLX Switch: ZZ */
 	{ 0x11f8, 0xf117 }, /* PMC-Sierra/MicroSemi NV1604 */
-	{ 0x15b3, 0x1013 }, /* Mellanox CX-4 */
-	{ 0x15b3, 0x1019 }, /* Mellanox CX-5 */
+	{ 0x15b3, 0x1013 }, /* Mellanox ConnectX-4 */
+	{ 0x15b3, 0x1017 }, /* Mellanox ConnectX-5 */
+	{ 0x15b3, 0x1019 }, /* Mellanox ConnectX-5 Ex */
 	{ 0x1a03, 0x1150 }, /* ASPEED AST2500 Switch */
 	{ 0x8086, 0x10fb }, /* Intel x520 10G Eth */
 	{ 0x9005, 0x028d }, /* MicroSemi PM8069 */
