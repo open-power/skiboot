@@ -1099,6 +1099,8 @@ static int64_t phb4_ioda_reset(struct phb *phb, bool purge)
 
 	if (purge) {
 		PHBDBG(p, "Purging all IODA tables...\n");
+		if (phb->slot)
+			phb->slot->link_retries = PHB4_LINK_LINK_RETRIES;
 		phb4_init_ioda_cache(p);
 	}
 
