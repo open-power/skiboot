@@ -40,7 +40,8 @@ OPAL_BUSY
 
    #define OPAL_BUSY		-2
 
-Try again later.
+Try again later. Related to `OPAL_BUSY_EVENT`, but `OPAL_BUSY` indicates that the
+caller need not call `OPAL_POLL_EVENTS` itself. **TODO** Clarify current situation.
 
 OPAL_PARTIAL
 ------------
@@ -125,6 +126,9 @@ OPAL_BUSY_EVENT
 ::
 
    #define OPAL_BUSY_EVENT		-12
+
+The same as `OPAL_BUSY` but signals that the OS should call `OPAL_POLL_EVENTS` as
+that may be required to get into a state where the call will succeed.
 
 OPAL_HARDWARE_FROZEN
 --------------------

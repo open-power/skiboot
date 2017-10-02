@@ -24,16 +24,28 @@ Return Values
 -------------
 
 ``OPAL_SUCCESS``
-  the power down was updated successful
+  the power down request was successful.
+  This may/may not result in immediate power down. An OS should
+  spin in a loop after getting `OPAL_SUCCESS` as it is likely that there
+  will be a delay before instructions stop being executed.
 
 ``OPAL_BUSY``
-  unable to power down, try again later
+  unable to power down, try again later.
+
+``OPAL_BUSY_EVENT``
+  Unable to power down, call `opal_run_pollers` and try again.
 
 ``OPAL_PARAMETER``
   a parameter was incorrect
 
 ``OPAL_INTERNAL_ERROR``
-  hal code sent incorrect data to hardware device
+  Something went wrong, and waiting and trying again is unlikely to be
+  successful. Although, considering that in a shutdown code path, there's
+  unlikely to be any other valid option to take, retrying is perfectly valid.
+
+  In older OPAL versions (prior to skiboot v5.9), on IBM FSP systems, this
+  return code was returned erroneously instead of OPAL_BUSY_EVENT during an
+  FSP Reset/Reload.
 
 ``OPAL_UNSUPPORTED``
   this platform does not support being powered off.
