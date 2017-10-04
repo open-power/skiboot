@@ -2357,6 +2357,8 @@ int fsp_fetch_data_queue(uint8_t flags, uint16_t id, uint32_t sub_id,
 #define CAPP_IDX_MURANO_DD21 0x201ef
 #define CAPP_IDX_NAPLES_DD10 0x100d3
 #define CAPP_IDX_NIMBUS_DD10 0x100d1
+#define CAPP_IDX_NIMBUS_DD20 0x200d1
+#define CAPP_IDX_NIMBUS_DD21 0x201d1
 
 static struct {
 	enum resource_id	id;
@@ -2371,6 +2373,8 @@ static struct {
 	{ RESOURCE_ID_CAPP,	CAPP_IDX_VENICE_DD20,	0x80a02004 },
 	{ RESOURCE_ID_CAPP,	CAPP_IDX_NAPLES_DD10,	0x80a02005 },
 	{ RESOURCE_ID_CAPP,	CAPP_IDX_NIMBUS_DD10,	0x80a02006 },
+	{ RESOURCE_ID_CAPP,	CAPP_IDX_NIMBUS_DD20,	0x80a02007 },
+	{ RESOURCE_ID_CAPP,	CAPP_IDX_NIMBUS_DD21,	0x80a02007 },
 };
 
 static void fsp_start_fetching_next_lid(void);
