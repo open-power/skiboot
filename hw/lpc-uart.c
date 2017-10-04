@@ -547,6 +547,27 @@ static bool uart_init_hw(unsigned int speed, unsigned int clock)
 	uart_write(REG_LCR, 0x03); /* 8N1 */
 	uart_write(REG_MCR, 0x03); /* RTS/DTR */
 	uart_write(REG_FCR, 0x07); /* clear & en. fifos */
+
+	/*
+	 * On some UART implementations[1], we have observed that characters
+	 * written to the UART during early boot (where no RX path is used,
+	 * so we don't read from RBR) can cause a character timeout interrupt
+	 * once we eventually enable interrupts through the IER. This
+	 * interrupt can only be cleared by reading from RBR (even though we've
+	 * cleared the RX FIFO!).
+	 *
+	 * Unfortunately though, the LCR[DR] bit does *not* indicate that there
+	 * are characters to be read from RBR, so we may never read it, so the
+	 * interrupt continuously fires.
+	 *
+	 * So, manually clear the timeout interrupt by reading the RBR here.
+	 * We discard the read data, but that shouldn't matter as we've just
+	 * reset the FIFO anyway.
+	 *
+	 * 1: seen on the AST2500 SUART. I assume this applies to 2400 too.
+	 */
+	uart_read(REG_RBR);
+
 	return true;
 
  detect_fail:
