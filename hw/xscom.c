@@ -238,6 +238,12 @@ static bool xscom_gcid_ok(uint32_t gcid)
 	return get_chip(gcid) != NULL;
 }
 
+/* Determine if SCOM address is multicast */
+static inline bool xscom_is_multicast_addr(uint32_t addr)
+{
+	return (((addr >> 30) & 0x1) == 0x1);
+}
+
 /*
  * Low level XSCOM access functions, perform a single direct xscom
  * access via MMIO
@@ -274,6 +280,10 @@ static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val)
 			break;
 	}
 
+	/* Do not print error message for multicast SCOMS */
+	if (xscom_is_multicast_addr(pcb_addr) && ret == OPAL_XSCOM_CHIPLET_OFF)
+		return ret;
+
 	prerror("XSCOM: Read failed, ret =  %lld\n", ret);
 	return ret;
 }
@@ -309,6 +319,10 @@ static int __xscom_write(uint32_t gcid, uint32_t pcb_addr, uint64_t val)
 		if (ret != OPAL_BUSY)
 			break;
 	}
+
+	/* Do not print error message for multicast SCOMS */
+	if (xscom_is_multicast_addr(pcb_addr) && ret == OPAL_XSCOM_CHIPLET_OFF)
+		return ret;
 
 	prerror("XSCOM: Write failed, ret =  %lld\n", ret);
 	return ret;
