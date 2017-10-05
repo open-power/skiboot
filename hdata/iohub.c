@@ -790,13 +790,16 @@ static struct dt_node *get_slot_node(void)
 	return slots;
 }
 
-static void io_parse_slots(const void *sp_iohubs, int hub_id)
+static void io_parse_slots(const struct HDIF_common_hdr *sp_iohubs, int hub_id)
 {
 	const struct HDIF_child_ptr *ioslot_arr;
 	const struct HDIF_array_hdr *entry_arr;
 	const struct HDIF_common_hdr *ioslot;
 	const struct slot_map_entry *entry;
 	unsigned int i, count;
+
+	if (sp_iohubs->child_count <= CECHUB_CHILD_IOSLOTS)
+		return;
 
 	ioslot_arr = HDIF_child_arr(sp_iohubs, CECHUB_CHILD_IOSLOTS);
 	if (!ioslot_arr)
