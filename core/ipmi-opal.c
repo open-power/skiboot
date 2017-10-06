@@ -50,7 +50,7 @@ static int64_t opal_ipmi_send(uint64_t interface,
 		return OPAL_PARAMETER;
 	}
 
-	prlog(PR_DEBUG, "opal_ipmi_send(cmd: 0x%02x netfn: 0x%02x len: 0x%02llx)\n",
+	prlog(PR_TRACE, "opal_ipmi_send(cmd: 0x%02x netfn: 0x%02x len: 0x%02llx)\n",
 	       opal_ipmi_msg->cmd, opal_ipmi_msg->netfn >> 2, msg_len);
 
 	msg = ipmi_mkmsg(interface,
@@ -106,7 +106,7 @@ static int64_t opal_ipmi_recv(uint64_t interface,
 	opal_ipmi_msg->data[0] = msg->cc;
 	memcpy(&opal_ipmi_msg->data[1], msg->data, msg->resp_size);
 
-	prlog(PR_DEBUG, "opal_ipmi_recv(cmd: 0x%02x netfn: 0x%02x resp_size: 0x%02x)\n",
+	prlog(PR_TRACE, "opal_ipmi_recv(cmd: 0x%02x netfn: 0x%02x resp_size: 0x%02x)\n",
 	      msg->cmd, msg->netfn >> 2, msg->resp_size);
 
 	/* Add one as the completion code is returned in the message data */
