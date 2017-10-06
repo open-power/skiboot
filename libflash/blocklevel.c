@@ -531,7 +531,6 @@ static bool insert_bl_prot_range(struct blocklevel_range *ranges, struct bl_prot
 	for (i = 0; i < ranges->n_prot && len > 0; i++) {
 		if (prot[i].start <= pos && prot[i].start + prot[i].len >= pos + len) {
 			len = 0;
-			FL_DBG("%s: breaking early\n", __func__);
 			break; /* Might as well, the next two conditions can't be true */
 		}
 
