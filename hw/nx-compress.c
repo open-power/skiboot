@@ -70,7 +70,7 @@ static int nx_cfg_dma_vas_mmio(u32 gcid, u64 xcfg)
 	if (rc)
 		prerror("NX%d: ERROR: DMA VAS MMIO BAR, %d\n", gcid, rc);
 	else
-		prerror("NX%d: DMA VAS MMIO BAR, 0x%016lx, xcfg 0x%llx\n",
+		prlog(PR_DEBUG, "NX%d: DMA VAS MMIO BAR, 0x%016lx, xcfg 0x%llx\n",
 			gcid, (unsigned long)cfg, xcfg);
 
 	return rc;
