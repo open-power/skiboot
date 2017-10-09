@@ -189,6 +189,13 @@ static void pci_iov_init_VF(struct pci_device *pd, struct pci_device *vf)
 	list_head_init(&vf->children);
 }
 
+static void pci_free_iov_cap(void *data)
+{
+	struct pci_iov *iov = data;
+	free(iov->VFs);
+	free(iov);
+}
+
 void pci_init_iov_cap(struct phb *phb, struct pci_device *pd)
 {
 	int64_t pos;
@@ -254,5 +261,5 @@ void pci_init_iov_cap(struct phb *phb, struct pci_device *pd)
 	iov->pos = pos;
 	iov->enabled = false;
 	pci_iov_update_parameters(iov);
-	pci_set_cap(pd, PCIECAP_ID_SRIOV, pos, iov, true);
+	pci_set_cap(pd, PCIECAP_ID_SRIOV, pos, iov, pci_free_iov_cap, true);
 }

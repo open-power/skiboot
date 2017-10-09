@@ -30,6 +30,7 @@ typedef int64_t (*pci_cfg_reg_func)(void *dev,
 				    struct pci_cfg_reg_filter *pcrf,
 				    uint32_t offset, uint32_t len,
 				    uint32_t *data, bool write);
+typedef void (*pci_cap_free_data_func)(void *data);
 struct pci_cfg_reg_filter {
 	uint32_t		flags;
 #define PCI_REG_FLAG_READ	0x1
@@ -81,6 +82,7 @@ struct pci_device {
 	struct {
 		uint32_t	pos;
 		void		*data;
+		pci_cap_free_data_func free_func;
 	} cap[64];
 	uint32_t		mps;		/* Max payload size capability */
 
@@ -96,17 +98,20 @@ struct pci_device {
 	struct list_node	link;
 };
 
-static inline void pci_set_cap(struct pci_device *pd, int id,
-			       int pos, void *data, bool ext)
+static inline void pci_set_cap(struct pci_device *pd, int id, int pos,
+			       void *data, pci_cap_free_data_func free_func,
+			       bool ext)
 {
 	if (!ext) {
 		pd->cap_list |= (0x1ul << id);
 		pd->cap[id].pos = pos;
 		pd->cap[id].data = data;
+		pd->cap[id].free_func = free_func;
 	} else {
 		pd->cap_list |= (0x1ul << (id + 32));
 		pd->cap[id + 32].pos = pos;
 		pd->cap[id + 32].data = data;
+		pd->cap[id + 32].free_func = free_func;
 	}
 }
 

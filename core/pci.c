@@ -162,7 +162,7 @@ static void pci_init_pcie_cap(struct phb *phb, struct pci_device *pd)
 		return;
 	}
 
-	pci_set_cap(pd, PCI_CFG_CAP_ID_EXP, ecap, NULL, false);
+	pci_set_cap(pd, PCI_CFG_CAP_ID_EXP, ecap, NULL, NULL, false);
 
 	/*
 	 * XXX We observe a problem on some PLX switches where one
@@ -198,7 +198,7 @@ static void pci_init_aer_cap(struct phb *phb, struct pci_device *pd)
 
 	pos = pci_find_ecap(phb, pd->bdfn, PCIECAP_ID_AER, NULL);
 	if (pos > 0)
-		pci_set_cap(pd, PCIECAP_ID_AER, pos, NULL, true);
+		pci_set_cap(pd, PCIECAP_ID_AER, pos, NULL, NULL, true);
 }
 
 static void pci_init_pm_cap(struct phb *phb, struct pci_device *pd)
@@ -207,7 +207,7 @@ static void pci_init_pm_cap(struct phb *phb, struct pci_device *pd)
 
 	pos = pci_find_cap(phb, pd->bdfn, PCI_CFG_CAP_ID_PM);
 	if (pos > 0)
-		pci_set_cap(pd, PCI_CFG_CAP_ID_PM, pos, NULL, false);
+		pci_set_cap(pd, PCI_CFG_CAP_ID_PM, pos, NULL, NULL, false);
 }
 
 void pci_init_capabilities(struct phb *phb, struct pci_device *pd)
@@ -1651,11 +1651,19 @@ void pci_add_device_nodes(struct phb *phb,
 static void __pci_reset(struct list_head *list)
 {
 	struct pci_device *pd;
+	struct pci_cfg_reg_filter *pcrf;
+	int i;
 
 	while ((pd = list_pop(list, struct pci_device, link)) != NULL) {
 		__pci_reset(&pd->children);
 		dt_free(pd->dn);
 		free(pd->slot);
+		while((pcrf = list_pop(&pd->pcrf, struct pci_cfg_reg_filter, link)) != NULL) {
+			free(pcrf);
+		}
+		for(i=0; i < 64; i++)
+			if (pd->cap[i].free_func)
+				pd->cap[i].free_func(pd->cap[i].data);
 		free(pd);
 	}
 }
