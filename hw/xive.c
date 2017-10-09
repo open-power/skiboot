@@ -4463,12 +4463,14 @@ static int64_t opal_xive_free_vp_block(uint64_t vp_base)
 		return OPAL_PARAMETER;
 	if (order < (xive_chips_alloc_bits + 1))
 		return OPAL_PARAMETER;
+	if (idx & ((1 << (order - xive_chips_alloc_bits)) - 1))
+		return OPAL_PARAMETER;
 #else
 	if (order < 1)
 		return OPAL_PARAMETER;
-#endif
 	if (idx & ((1 << order) - 1))
 		return OPAL_PARAMETER;
+#endif
 
 	count = 1 << order;
 	for (i = 0; i < count; i++) {
