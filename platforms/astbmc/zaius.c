@@ -38,7 +38,7 @@ static bool zaius_probe(void)
 	return true;
 }
 
-DECLARE_PLATFORM(zaius_platform) = {
+DECLARE_PLATFORM(zaius) = {
 	.name			= "Zaius",
 	.probe			= zaius_probe,
 	.init			= astbmc_init,

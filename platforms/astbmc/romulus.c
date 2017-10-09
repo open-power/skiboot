@@ -38,7 +38,7 @@ static bool romulus_probe(void)
 	return true;
 }
 
-DECLARE_PLATFORM(romulus_platform) = {
+DECLARE_PLATFORM(romulus) = {
 	.name			= "Romulus",
 	.probe			= romulus_probe,
 	.init			= astbmc_init,
