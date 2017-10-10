@@ -122,9 +122,6 @@ static void fsp_close_consoles(void)
 		if (!fs->available)
 			continue;
 
-		if (fs->rsrc_id == 0xffff)	/* Get clarity from benh */
-			continue;
-
 		lock(&fsp_con_lock);
 		if (fs->open) {
 			fs->open = false;
