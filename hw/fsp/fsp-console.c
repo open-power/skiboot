@@ -61,10 +61,14 @@ struct fsp_serial {
 	struct fsp_msg		*poke_msg;
 	u8			waiting;
 	u64			irq;
+	u16			out_buf_prev_len;
+	u64			out_buf_timeout;
 };
 
 #define SER_BUFFER_SIZE 0x00040000UL
 #define MAX_SERIAL	4
+
+#define SER_BUFFER_OUT_TIMEOUT	10
 
 static struct fsp_serial fsp_serials[MAX_SERIAL];
 static bool got_intf_query;
@@ -315,6 +319,8 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 	fs->in_buf->flags        = fs->out_buf->flags        = 0;
 	fs->in_buf->reserved     = fs->out_buf->reserved     = 0;
 	fs->in_buf->next_out     = fs->out_buf->next_out     = 0;
+	fs->out_buf_prev_len     = 0;
+	fs->out_buf_timeout      = 0;
 	unlock(&fsp_con_lock);
 
  already_open:
@@ -606,6 +612,12 @@ static int64_t fsp_console_write(int64_t term_number, int64_t *length,
 		requested = 0x1000;
 	written = fsp_write_vserial(fs, buffer, requested);
 
+	if (written) {
+		/* If we wrote anything, reset timeout */
+		fs->out_buf_prev_len = 0;
+		fs->out_buf_timeout = 0;
+	}
+
 #ifdef OPAL_DEBUG_CONSOLE_IO
 	prlog(PR_TRACE, "OPAL: console write req=%ld written=%ld"
 	      " ni=%d no=%d\n",
@@ -655,7 +667,29 @@ static int64_t fsp_console_write_buffer_space(int64_t term_number,
 		% SER_BUF_DATA_SIZE;
 	unlock(&fsp_con_lock);
 
-	return OPAL_SUCCESS;
+	/* Console buffer has enough space to write incoming data */
+	if (*length != fs->out_buf_prev_len) {
+		fs->out_buf_prev_len = *length;
+		fs->out_buf_timeout = 0;
+
+		return OPAL_SUCCESS;
+	}
+
+	/*
+	 * Buffer is full, start internal timer. We will continue returning
+	 * SUCCESS until timeout happens, hoping FSP will consume data within
+	 * timeout period.
+	 */
+	if (fs->out_buf_timeout == 0) {
+		fs->out_buf_timeout = mftb() +
+			secs_to_tb(SER_BUFFER_OUT_TIMEOUT);
+	}
+
+	if (tb_compare(mftb(), fs->out_buf_timeout) != TB_AAFTERB)
+		return OPAL_SUCCESS;
+
+	/* Timeout happened. Lets drop incoming data */
+	return OPAL_RESOURCE;
 }
 
 static int64_t fsp_console_read(int64_t term_number, int64_t *length,
