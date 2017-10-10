@@ -92,6 +92,9 @@ static void fsp_console_reinit(void)
 	for (i = 0; i < MAX_SERIAL; i++) {
 		struct fsp_serial *fs = &fsp_serials[i];
 
+		if (!fs->available)
+			continue;
+
 		if (fs->rsrc_id == 0xffff)
 			continue;
 		prlog(PR_DEBUG, "FSP: Reassociating HVSI console %d\n", i);
@@ -890,6 +893,10 @@ static void reopen_all_hvsi(void)
 
  	for (i = 0; i < MAX_SERIAL; i++) {
 		struct fsp_serial *fs = &fsp_serials[i];
+
+		if (!fs->available)
+			continue;
+
 		if (fs->rsrc_id == 0xffff)
 			continue;
 		prlog(PR_NOTICE, "FSP: Deassociating HVSI console %d\n", i);
@@ -898,6 +905,10 @@ static void reopen_all_hvsi(void)
 	}
  	for (i = 0; i < MAX_SERIAL; i++) {
 		struct fsp_serial *fs = &fsp_serials[i];
+
+		if (!fs->available)
+			continue;
+
 		if (fs->rsrc_id == 0xffff)
 			continue;
 		prlog(PR_NOTICE, "FSP: Reassociating HVSI console %d\n", i);
