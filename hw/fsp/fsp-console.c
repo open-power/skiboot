@@ -632,20 +632,13 @@ static int64_t fsp_console_write(int64_t term_number, int64_t *length,
 	if (written)
 		return OPAL_SUCCESS;
 
-	/*
-	 * FSP is still active but not reading console data. Hence
-	 * our console buffer became full. Most likely IPMI daemon
-	 * on FSP is buggy. Lets log error and return OPAL_HARDWARE
-	 * to payload (Linux).
-	 */
-	log_simple_error(&e_info(OPAL_RC_CONSOLE_HANG), "FSPCON: Console "
-			 "buffer is full, dropping console data\n");
 	return OPAL_HARDWARE;
 }
 
 static int64_t fsp_console_write_buffer_space(int64_t term_number,
 					      int64_t *length)
 {
+	static bool elog_generated = false;
 	struct fsp_serial *fs;
 	struct fsp_serbuf_hdr *sb;
 
@@ -684,6 +677,18 @@ static int64_t fsp_console_write_buffer_space(int64_t term_number,
 
 	if (tb_compare(mftb(), fs->out_buf_timeout) != TB_AAFTERB)
 		return OPAL_SUCCESS;
+
+	/*
+	 * FSP is still active but not reading console data. Hence
+	 * our console buffer became full. Most likely IPMI daemon
+	 * on FSP is buggy. Lets log error and return OPAL_RESOURCE
+	 * to payload (Linux).
+	 */
+	if (!elog_generated) {
+		elog_generated = true;
+		log_simple_error(&e_info(OPAL_RC_CONSOLE_HANG), "FSPCON: Console "
+				 "buffer is full, dropping console data\n");
+	}
 
 	/* Timeout happened. Lets drop incoming data */
 	return OPAL_RESOURCE;
