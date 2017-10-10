@@ -720,23 +720,14 @@ static void fsp_handle_errors(struct fsp *fsp)
 		if (fsp->state == fsp_mbx_rr)
 			return;
 
-		if (fsp_dpo_pending) {
-			/*
-			 * If we are about to process a reset when DPO
-			 * is pending, its possible that the host has
-			 * gone down, and OPAL is on its way down and
-			 * hence will not see the subsequent PSI interrupt.
-			 * So, just give up the link here.
-			 */
-			prlog(PR_NOTICE, "FSP #%d: FSP reset with DPO pending."
-					" Giving up PSI link\n",
-					fsp->index);
-			psi_disable_link(psi);
-		} else {
-			prlog(PR_NOTICE, "FSP #%d: FSP in Reset."
-				" Waiting for PSI interrupt\n",
-				fsp->index);
-		}
+		/*
+		 * Its possible that the host has gone down, and OPAL is on
+		 * its way down and hence will not see the subsequent PSI
+		 * interrupt. So, just give up the link here.
+		 */
+		psi_disable_link(psi);
+		prlog(PR_NOTICE, "FSP #%d: FSP in reset."
+		      " Giving up PSI link\n", fsp->index);
 		fsp_start_rr(fsp);
 	}
 
