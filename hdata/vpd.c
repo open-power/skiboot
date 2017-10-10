@@ -211,9 +211,6 @@ static const char *vpd_map_name(const char *vpd_name)
 	return "Unknown";
 }
 
-static struct dt_node *dt_create_vpd_node(struct dt_node *parent,
-					  const struct slca_entry *entry);
-
 static const struct card_info *card_info_lookup(char *ccin)
 {
 	int i;
@@ -340,85 +337,92 @@ static bool valid_child_entry(const struct slca_entry *entry)
 	return false;
 }
 
-static void vpd_add_children(struct dt_node *parent, uint16_t slca_index)
-{
-	const struct slca_entry *s_entry, *child;
-	uint16_t current_child_index, max_index;
-
-	s_entry = slca_get_entry(slca_index);
-	if (!s_entry || (s_entry->nr_child == 0))
-		return;
-
-	/*
-	 * This slca_entry has children. Parse the children array
-	 * and add nodes for valid entries.
-	 *
-	 * A child entry is valid if all of the following criteria is met
-	 *	a. SLCA_INSTALL_INSTALLED is set in s_entry->install_indic
-	 *	b. SLCA_VPD_COLLECTED is set in s_entry->vpd_collected
-	 *	c. The SLCA is not a duplicate entry.
-	 */
-
-	/* current_index tracks where we are right now in the array */
-	current_child_index = be16_to_cpu(s_entry->child_index);
-
-	/* max_index tracks how far down the array we must traverse */
-	max_index = be16_to_cpu(s_entry->child_index)
-				+ be16_to_cpu(s_entry->nr_child);
-
-	while (current_child_index < max_index) {
-		child = slca_get_entry(current_child_index);
-		if (!child)
-			return;
-
-		if (valid_child_entry(child)) {
-			struct dt_node *node;
-
-			node = dt_create_vpd_node(parent, child);
-			if (!node)
-				return;
-		}
-
-		/* Skip dups -- currently we presume dups are contiguous */
-		if (child->nr_dups > 0)
-			current_child_index += child->nr_dups;
-		current_child_index++;
-	}
-	return;
-}
-
-/* Create the vpd node and add its children */
-static struct dt_node *dt_create_vpd_node(struct dt_node *parent,
-					  const struct slca_entry *entry)
-{
-	struct dt_node *node;
-	const char *name;
-	uint64_t addr;
-
-	name = vpd_map_name(entry->fru_id);
-	addr = (uint64_t)be16_to_cpu(entry->rsrc_id);
-	node = dt_new_addr(parent, name, addr);
-	if (!node) {
-		prerror("VPD: Creating node at %s@%"PRIx64" failed\n", name, addr);
-		return NULL;
-	}
-
-	/* Add location code */
-	slca_vpd_add_loc_code(node, be16_to_cpu(entry->my_index));
-	/* Add FRU label */
-	dt_add_property(node, "fru-type", entry->fru_id, 2);
-	/* Recursively add children */
-	vpd_add_children(node, be16_to_cpu(entry->my_index));
-
-	return node;
-}
-
 void vpd_data_parse(struct dt_node *node, const void *fruvpd, u32 fruvpd_sz)
 {
 	if (vpd_find_record(fruvpd, fruvpd_sz, "OPFR", NULL))
 		vpd_opfr_parse(node, fruvpd, fruvpd_sz);
 	else
 		vpd_vini_parse(node, fruvpd, fruvpd_sz);
+}
+
+/* Create the /vpd node and add its children */
+void dt_init_vpd_node(void)
+{
+	const char *name, *p_name;
+	int count, index;
+	uint64_t addr, p_addr;
+	struct dt_node *dt_vpd;
+	struct HDIF_common_hdr *slca_hdr;
+	struct dt_node *parent, *node;
+	const struct slca_entry *entry, *p_entry;
+
+	dt_vpd = dt_new(dt_root, "vpd");
+	assert(dt_vpd);
+	dt_add_property_string(dt_vpd, "compatible", "ibm,opal-v3-vpd");
+
+	slca_hdr = get_hdif(&spira.ntuples.slca, SLCA_HDIF_SIG);
+	if (!slca_hdr) {
+		prerror("SLCA Invalid\n");
+		return;
+	}
+
+	count = HDIF_get_iarray_size(slca_hdr, SLCA_IDATA_ARRAY);
+	if (count < 0) {
+		prerror("SLCA: Can't find SLCA array size!\n");
+		return;
+	}
+
+	for (index = 0; index < count; index++) {
+		/* Get SLCA entry */
+		entry = slca_get_entry(index);
+		if (!entry)
+			goto next_entry;
+
+		/*
+		 * A child entry is valid if all of the following criteria is met
+		 *   a. SLCA_INSTALL_INSTALLED is set in s_entry->install_indic
+		 *   b. SLCA_VPD_COLLECTED is set in s_entry->vpd_collected
+		 *   c. The SLCA is not a duplicate entry.
+		 */
+		if (!valid_child_entry(entry))
+			goto next_entry;
+
+		name = vpd_map_name(entry->fru_id);
+		addr = be16_to_cpu(entry->rsrc_id);
+		/* Check node is already created or not */
+		if (dt_find_by_name_addr(dt_vpd, name, addr))
+			goto next_entry;
+
+		/* Get parent node */
+		if (index == SLCA_ROOT_INDEX) {
+			parent = dt_vpd;
+		} else {
+			p_entry = slca_get_entry(be16_to_cpu(entry->parent_index));
+			if (!p_entry)
+				goto next_entry;
+			p_name = vpd_map_name(p_entry->fru_id);
+			p_addr = be16_to_cpu(p_entry->rsrc_id);
+			parent = dt_find_by_name_addr(dt_vpd, p_name, p_addr);
+		}
+		if (!parent)
+			goto next_entry;
+
+		node = dt_new_addr(parent, name, addr);
+		if (!node) {
+			prerror("VPD: Creating node at %s@%"PRIx64" failed\n",
+				name, addr);
+			goto next_entry;
+		}
+
+		/* Add location code */
+		slca_vpd_add_loc_code(node, be16_to_cpu(entry->my_index));
+		/* Add FRU label */
+		dt_add_property(node, "fru-type", entry->fru_id, 2);
+
+next_entry:
+		/* Skip dups -- dups are contiguous */
+		index += entry->nr_dups;
+	}
 }
 
 struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
@@ -428,7 +432,6 @@ struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 	unsigned int fruvpd_sz, fru_id_sz;
 	const struct slca_entry *entry;
 	struct dt_node *dt_vpd, *node;
-	static bool first = true;
 	const void *fruvpd;
 	const char *name;
 	uint64_t addr;
@@ -446,20 +449,6 @@ struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 	dt_vpd = dt_find_by_path(dt_root, "/vpd");
 	if (!dt_vpd)
 		return NULL;
-
-	if (first) {
-		entry = slca_get_entry(SLCA_ROOT_INDEX);
-		if (!entry) {
-			prerror("VPD: Could not find the slca root entry\n");
-			return NULL;
-		}
-
-		node = dt_create_vpd_node(dt_vpd, entry);
-		if (!node)
-			return NULL;
-
-		first = false;
-	}
 
 	entry = slca_get_entry(be16_to_cpu(fru_id->slca_index));
 	if (!entry)
@@ -484,14 +473,9 @@ struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 	 * corresponding slca entry which we would have used to populate the vpd
 	 * tree during the 'first' pass above so that we just need to perform
 	 * VINI parse and add the vpd data..
-	 * Still, we consider this case and create fresh node under '/vpd' if
-	 * 'node' not found.
 	 */
-	if (!node) {
-		node = dt_create_vpd_node(dt_vpd, entry);
-		if (!node)
-			return NULL;
-	}
+	if (!node)
+		return NULL;
 
 	/* Parse VPD fields, ensure that it has not been added already */
 	if (vpd_valid(fruvpd, fruvpd_sz)

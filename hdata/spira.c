@@ -1220,15 +1220,6 @@ static void dt_init_led_node(void)
 	assert(led_node);
 }
 
-static void dt_init_vpd_node(void)
-{
-	struct dt_node *dt_vpd;
-
-	dt_vpd = dt_new(dt_root, "vpd");
-	assert(dt_vpd);
-	dt_add_property_string(dt_vpd, "compatible", "ibm,opal-v3-vpd");
-}
-
 static void hostservices_parse(void)
 {
 	struct HDIF_common_hdr *hs_hdr;
@@ -1576,7 +1567,7 @@ int parse_hdat(bool is_opal)
 	/* Add any BMCs and enable the LPC UART */
 	bmc_parse();
 
-	/* Create /vpd node */
+	/* Create and populate /vpd node */
 	dt_init_vpd_node();
 
 	/* Create /ibm,opal/led node */

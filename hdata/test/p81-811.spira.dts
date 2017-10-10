@@ -23,12 +23,12 @@
 	ibm,enabled-idle-states = "nap", "fast-sleep", "rvwinkle";
 
 	cpus {
-		phandle = <0x5>;
+		phandle = <0x2a>;
 		#address-cells = <0x1>;
 		#size-cells = <0x0>;
 
 		PowerPC,POWER8@20 {
-			phandle = <0x6>;
+			phandle = <0x2b>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x20>;
@@ -64,14 +64,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x7>;
+			l2-cache = <0x2c>;
 			ibm,pir = <0x20>;
 			ibm,chip-id = <0x0>;
 			ibm,ppc-interrupt-server#s = <0x20 0x21 0x22 0x23 0x24 0x25 0x26 0x27>;
 		};
 
 		PowerPC,POWER8@30 {
-			phandle = <0xa>;
+			phandle = <0x2f>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x30>;
@@ -107,14 +107,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0xb>;
+			l2-cache = <0x30>;
 			ibm,pir = <0x30>;
 			ibm,chip-id = <0x0>;
 			ibm,ppc-interrupt-server#s = <0x30 0x31 0x32 0x33 0x34 0x35 0x36 0x37>;
 		};
 
 		PowerPC,POWER8@60 {
-			phandle = <0xe>;
+			phandle = <0x33>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x60>;
@@ -150,14 +150,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0xf>;
+			l2-cache = <0x34>;
 			ibm,pir = <0x60>;
 			ibm,chip-id = <0x0>;
 			ibm,ppc-interrupt-server#s = <0x60 0x61 0x62 0x63 0x64 0x65 0x66 0x67>;
 		};
 
 		PowerPC,POWER8@68 {
-			phandle = <0x12>;
+			phandle = <0x37>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x68>;
@@ -193,14 +193,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x13>;
+			l2-cache = <0x38>;
 			ibm,pir = <0x68>;
 			ibm,chip-id = <0x0>;
 			ibm,ppc-interrupt-server#s = <0x68 0x69 0x6a 0x6b 0x6c 0x6d 0x6e 0x6f>;
 		};
 
 		PowerPC,POWER8@70 {
-			phandle = <0x16>;
+			phandle = <0x3b>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x70>;
@@ -236,14 +236,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x17>;
+			l2-cache = <0x3c>;
 			ibm,pir = <0x70>;
 			ibm,chip-id = <0x0>;
 			ibm,ppc-interrupt-server#s = <0x70 0x71 0x72 0x73 0x74 0x75 0x76 0x77>;
 		};
 
 		PowerPC,POWER8@a8 {
-			phandle = <0x1a>;
+			phandle = <0x3f>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0xa8>;
@@ -279,14 +279,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x1b>;
+			l2-cache = <0x40>;
 			ibm,pir = <0xa8>;
 			ibm,chip-id = <0x1>;
 			ibm,ppc-interrupt-server#s = <0xa8 0xa9 0xaa 0xab 0xac 0xad 0xae 0xaf>;
 		};
 
 		PowerPC,POWER8@b0 {
-			phandle = <0x1e>;
+			phandle = <0x43>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0xb0>;
@@ -322,14 +322,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x1f>;
+			l2-cache = <0x44>;
 			ibm,pir = <0xb0>;
 			ibm,chip-id = <0x1>;
 			ibm,ppc-interrupt-server#s = <0xb0 0xb1 0xb2 0xb3 0xb4 0xb5 0xb6 0xb7>;
 		};
 
 		PowerPC,POWER8@e0 {
-			phandle = <0x22>;
+			phandle = <0x47>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0xe0>;
@@ -365,14 +365,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x23>;
+			l2-cache = <0x48>;
 			ibm,pir = <0xe0>;
 			ibm,chip-id = <0x1>;
 			ibm,ppc-interrupt-server#s = <0xe0 0xe1 0xe2 0xe3 0xe4 0xe5 0xe6 0xe7>;
 		};
 
 		PowerPC,POWER8@e8 {
-			phandle = <0x26>;
+			phandle = <0x4b>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0xe8>;
@@ -408,14 +408,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x27>;
+			l2-cache = <0x4c>;
 			ibm,pir = <0xe8>;
 			ibm,chip-id = <0x1>;
 			ibm,ppc-interrupt-server#s = <0xe8 0xe9 0xea 0xeb 0xec 0xed 0xee 0xef>;
 		};
 
 		PowerPC,POWER8@f0 {
-			phandle = <0x2a>;
+			phandle = <0x4f>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0xf0>;
@@ -451,14 +451,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x2b>;
+			l2-cache = <0x50>;
 			ibm,pir = <0xf0>;
 			ibm,chip-id = <0x1>;
 			ibm,ppc-interrupt-server#s = <0xf0 0xf1 0xf2 0xf3 0xf4 0xf5 0xf6 0xf7>;
 		};
 
 		PowerPC,POWER8@828 {
-			phandle = <0x2e>;
+			phandle = <0x53>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x828>;
@@ -494,14 +494,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x2f>;
+			l2-cache = <0x54>;
 			ibm,pir = <0x828>;
 			ibm,chip-id = <0x10>;
 			ibm,ppc-interrupt-server#s = <0x828 0x829 0x82a 0x82b 0x82c 0x82d 0x82e 0x82f>;
 		};
 
 		PowerPC,POWER8@830 {
-			phandle = <0x32>;
+			phandle = <0x57>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x830>;
@@ -537,14 +537,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x33>;
+			l2-cache = <0x58>;
 			ibm,pir = <0x830>;
 			ibm,chip-id = <0x10>;
 			ibm,ppc-interrupt-server#s = <0x830 0x831 0x832 0x833 0x834 0x835 0x836 0x837>;
 		};
 
 		PowerPC,POWER8@860 {
-			phandle = <0x36>;
+			phandle = <0x5b>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x860>;
@@ -580,14 +580,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x37>;
+			l2-cache = <0x5c>;
 			ibm,pir = <0x860>;
 			ibm,chip-id = <0x10>;
 			ibm,ppc-interrupt-server#s = <0x860 0x861 0x862 0x863 0x864 0x865 0x866 0x867>;
 		};
 
 		PowerPC,POWER8@868 {
-			phandle = <0x3a>;
+			phandle = <0x5f>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x868>;
@@ -623,14 +623,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x3b>;
+			l2-cache = <0x60>;
 			ibm,pir = <0x868>;
 			ibm,chip-id = <0x10>;
 			ibm,ppc-interrupt-server#s = <0x868 0x869 0x86a 0x86b 0x86c 0x86d 0x86e 0x86f>;
 		};
 
 		PowerPC,POWER8@870 {
-			phandle = <0x3e>;
+			phandle = <0x63>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x870>;
@@ -666,14 +666,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x3f>;
+			l2-cache = <0x64>;
 			ibm,pir = <0x870>;
 			ibm,chip-id = <0x10>;
 			ibm,ppc-interrupt-server#s = <0x870 0x871 0x872 0x873 0x874 0x875 0x876 0x877>;
 		};
 
 		PowerPC,POWER8@8a0 {
-			phandle = <0x42>;
+			phandle = <0x67>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x8a0>;
@@ -709,14 +709,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x43>;
+			l2-cache = <0x68>;
 			ibm,pir = <0x8a0>;
 			ibm,chip-id = <0x11>;
 			ibm,ppc-interrupt-server#s = <0x8a0 0x8a1 0x8a2 0x8a3 0x8a4 0x8a5 0x8a6 0x8a7>;
 		};
 
 		PowerPC,POWER8@8a8 {
-			phandle = <0x46>;
+			phandle = <0x6b>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x8a8>;
@@ -752,14 +752,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x47>;
+			l2-cache = <0x6c>;
 			ibm,pir = <0x8a8>;
 			ibm,chip-id = <0x11>;
 			ibm,ppc-interrupt-server#s = <0x8a8 0x8a9 0x8aa 0x8ab 0x8ac 0x8ad 0x8ae 0x8af>;
 		};
 
 		PowerPC,POWER8@8b0 {
-			phandle = <0x4a>;
+			phandle = <0x6f>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x8b0>;
@@ -795,14 +795,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x4b>;
+			l2-cache = <0x70>;
 			ibm,pir = <0x8b0>;
 			ibm,chip-id = <0x11>;
 			ibm,ppc-interrupt-server#s = <0x8b0 0x8b1 0x8b2 0x8b3 0x8b4 0x8b5 0x8b6 0x8b7>;
 		};
 
 		PowerPC,POWER8@8e8 {
-			phandle = <0x4e>;
+			phandle = <0x73>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x8e8>;
@@ -838,14 +838,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x4f>;
+			l2-cache = <0x74>;
 			ibm,pir = <0x8e8>;
 			ibm,chip-id = <0x11>;
 			ibm,ppc-interrupt-server#s = <0x8e8 0x8e9 0x8ea 0x8eb 0x8ec 0x8ed 0x8ee 0x8ef>;
 		};
 
 		PowerPC,POWER8@8f0 {
-			phandle = <0x52>;
+			phandle = <0x77>;
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x8f0>;
@@ -881,14 +881,14 @@
 			i-cache-sets = <0x4>;
 			d-cache-sets = <0x8>;
 			performance-monitor = <0x0 0x1>;
-			l2-cache = <0x53>;
+			l2-cache = <0x78>;
 			ibm,pir = <0x8f0>;
 			ibm,chip-id = <0x11>;
 			ibm,ppc-interrupt-server#s = <0x8f0 0x8f1 0x8f2 0x8f3 0x8f4 0x8f5 0x8f6 0x8f7>;
 		};
 
 		l2-cache@20000020 {
-			phandle = <0x7>;
+			phandle = <0x2c>;
 			device_type = "cache";
 			reg = <0x20000020>;
 			status = "okay";
@@ -897,11 +897,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x8>;
+			l2-cache = <0x2d>;
 		};
 
 		l2-cache@20000030 {
-			phandle = <0xb>;
+			phandle = <0x30>;
 			device_type = "cache";
 			reg = <0x20000030>;
 			status = "okay";
@@ -910,11 +910,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0xc>;
+			l2-cache = <0x31>;
 		};
 
 		l2-cache@20000060 {
-			phandle = <0xf>;
+			phandle = <0x34>;
 			device_type = "cache";
 			reg = <0x20000060>;
 			status = "okay";
@@ -923,11 +923,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x10>;
+			l2-cache = <0x35>;
 		};
 
 		l2-cache@20000068 {
-			phandle = <0x13>;
+			phandle = <0x38>;
 			device_type = "cache";
 			reg = <0x20000068>;
 			status = "okay";
@@ -936,11 +936,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x14>;
+			l2-cache = <0x39>;
 		};
 
 		l2-cache@20000070 {
-			phandle = <0x17>;
+			phandle = <0x3c>;
 			device_type = "cache";
 			reg = <0x20000070>;
 			status = "okay";
@@ -949,11 +949,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x18>;
+			l2-cache = <0x3d>;
 		};
 
 		l2-cache@200000a8 {
-			phandle = <0x1b>;
+			phandle = <0x40>;
 			device_type = "cache";
 			reg = <0x200000a8>;
 			status = "okay";
@@ -962,11 +962,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x1c>;
+			l2-cache = <0x41>;
 		};
 
 		l2-cache@200000b0 {
-			phandle = <0x1f>;
+			phandle = <0x44>;
 			device_type = "cache";
 			reg = <0x200000b0>;
 			status = "okay";
@@ -975,11 +975,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x20>;
+			l2-cache = <0x45>;
 		};
 
 		l2-cache@200000e0 {
-			phandle = <0x23>;
+			phandle = <0x48>;
 			device_type = "cache";
 			reg = <0x200000e0>;
 			status = "okay";
@@ -988,11 +988,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x24>;
+			l2-cache = <0x49>;
 		};
 
 		l2-cache@200000e8 {
-			phandle = <0x27>;
+			phandle = <0x4c>;
 			device_type = "cache";
 			reg = <0x200000e8>;
 			status = "okay";
@@ -1001,11 +1001,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x28>;
+			l2-cache = <0x4d>;
 		};
 
 		l2-cache@200000f0 {
-			phandle = <0x2b>;
+			phandle = <0x50>;
 			device_type = "cache";
 			reg = <0x200000f0>;
 			status = "okay";
@@ -1014,11 +1014,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x2c>;
+			l2-cache = <0x51>;
 		};
 
 		l2-cache@20000828 {
-			phandle = <0x2f>;
+			phandle = <0x54>;
 			device_type = "cache";
 			reg = <0x20000828>;
 			status = "okay";
@@ -1027,11 +1027,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x30>;
+			l2-cache = <0x55>;
 		};
 
 		l2-cache@20000830 {
-			phandle = <0x33>;
+			phandle = <0x58>;
 			device_type = "cache";
 			reg = <0x20000830>;
 			status = "okay";
@@ -1040,11 +1040,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x34>;
+			l2-cache = <0x59>;
 		};
 
 		l2-cache@20000860 {
-			phandle = <0x37>;
+			phandle = <0x5c>;
 			device_type = "cache";
 			reg = <0x20000860>;
 			status = "okay";
@@ -1053,11 +1053,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x38>;
+			l2-cache = <0x5d>;
 		};
 
 		l2-cache@20000868 {
-			phandle = <0x3b>;
+			phandle = <0x60>;
 			device_type = "cache";
 			reg = <0x20000868>;
 			status = "okay";
@@ -1066,11 +1066,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x3c>;
+			l2-cache = <0x61>;
 		};
 
 		l2-cache@20000870 {
-			phandle = <0x3f>;
+			phandle = <0x64>;
 			device_type = "cache";
 			reg = <0x20000870>;
 			status = "okay";
@@ -1079,11 +1079,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x40>;
+			l2-cache = <0x65>;
 		};
 
 		l2-cache@200008a0 {
-			phandle = <0x43>;
+			phandle = <0x68>;
 			device_type = "cache";
 			reg = <0x200008a0>;
 			status = "okay";
@@ -1092,11 +1092,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x44>;
+			l2-cache = <0x69>;
 		};
 
 		l2-cache@200008a8 {
-			phandle = <0x47>;
+			phandle = <0x6c>;
 			device_type = "cache";
 			reg = <0x200008a8>;
 			status = "okay";
@@ -1105,11 +1105,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x48>;
+			l2-cache = <0x6d>;
 		};
 
 		l2-cache@200008b0 {
-			phandle = <0x4b>;
+			phandle = <0x70>;
 			device_type = "cache";
 			reg = <0x200008b0>;
 			status = "okay";
@@ -1118,11 +1118,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x4c>;
+			l2-cache = <0x71>;
 		};
 
 		l2-cache@200008e8 {
-			phandle = <0x4f>;
+			phandle = <0x74>;
 			device_type = "cache";
 			reg = <0x200008e8>;
 			status = "okay";
@@ -1131,11 +1131,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x50>;
+			l2-cache = <0x75>;
 		};
 
 		l2-cache@200008f0 {
-			phandle = <0x53>;
+			phandle = <0x78>;
 			device_type = "cache";
 			reg = <0x200008f0>;
 			status = "okay";
@@ -1144,11 +1144,11 @@
 			i-cache-sets = <0x8>;
 			d-cache-size = <0x80000>;
 			i-cache-size = <0x80000>;
-			l2-cache = <0x54>;
+			l2-cache = <0x79>;
 		};
 
 		l3-cache@30000020 {
-			phandle = <0x8>;
+			phandle = <0x2d>;
 			device_type = "cache";
 			reg = <0x30000020>;
 			status = "okay";
@@ -1160,7 +1160,7 @@
 		};
 
 		l3-cache@30000030 {
-			phandle = <0xc>;
+			phandle = <0x31>;
 			device_type = "cache";
 			reg = <0x30000030>;
 			status = "okay";
@@ -1172,7 +1172,7 @@
 		};
 
 		l3-cache@30000060 {
-			phandle = <0x10>;
+			phandle = <0x35>;
 			device_type = "cache";
 			reg = <0x30000060>;
 			status = "okay";
@@ -1184,7 +1184,7 @@
 		};
 
 		l3-cache@30000068 {
-			phandle = <0x14>;
+			phandle = <0x39>;
 			device_type = "cache";
 			reg = <0x30000068>;
 			status = "okay";
@@ -1196,7 +1196,7 @@
 		};
 
 		l3-cache@30000070 {
-			phandle = <0x18>;
+			phandle = <0x3d>;
 			device_type = "cache";
 			reg = <0x30000070>;
 			status = "okay";
@@ -1208,7 +1208,7 @@
 		};
 
 		l3-cache@300000a8 {
-			phandle = <0x1c>;
+			phandle = <0x41>;
 			device_type = "cache";
 			reg = <0x300000a8>;
 			status = "okay";
@@ -1220,7 +1220,7 @@
 		};
 
 		l3-cache@300000b0 {
-			phandle = <0x20>;
+			phandle = <0x45>;
 			device_type = "cache";
 			reg = <0x300000b0>;
 			status = "okay";
@@ -1232,7 +1232,7 @@
 		};
 
 		l3-cache@300000e0 {
-			phandle = <0x24>;
+			phandle = <0x49>;
 			device_type = "cache";
 			reg = <0x300000e0>;
 			status = "okay";
@@ -1244,7 +1244,7 @@
 		};
 
 		l3-cache@300000e8 {
-			phandle = <0x28>;
+			phandle = <0x4d>;
 			device_type = "cache";
 			reg = <0x300000e8>;
 			status = "okay";
@@ -1256,7 +1256,7 @@
 		};
 
 		l3-cache@300000f0 {
-			phandle = <0x2c>;
+			phandle = <0x51>;
 			device_type = "cache";
 			reg = <0x300000f0>;
 			status = "okay";
@@ -1268,7 +1268,7 @@
 		};
 
 		l3-cache@30000828 {
-			phandle = <0x30>;
+			phandle = <0x55>;
 			device_type = "cache";
 			reg = <0x30000828>;
 			status = "okay";
@@ -1280,7 +1280,7 @@
 		};
 
 		l3-cache@30000830 {
-			phandle = <0x34>;
+			phandle = <0x59>;
 			device_type = "cache";
 			reg = <0x30000830>;
 			status = "okay";
@@ -1292,7 +1292,7 @@
 		};
 
 		l3-cache@30000860 {
-			phandle = <0x38>;
+			phandle = <0x5d>;
 			device_type = "cache";
 			reg = <0x30000860>;
 			status = "okay";
@@ -1304,7 +1304,7 @@
 		};
 
 		l3-cache@30000868 {
-			phandle = <0x3c>;
+			phandle = <0x61>;
 			device_type = "cache";
 			reg = <0x30000868>;
 			status = "okay";
@@ -1316,7 +1316,7 @@
 		};
 
 		l3-cache@30000870 {
-			phandle = <0x40>;
+			phandle = <0x65>;
 			device_type = "cache";
 			reg = <0x30000870>;
 			status = "okay";
@@ -1328,7 +1328,7 @@
 		};
 
 		l3-cache@300008a0 {
-			phandle = <0x44>;
+			phandle = <0x69>;
 			device_type = "cache";
 			reg = <0x300008a0>;
 			status = "okay";
@@ -1340,7 +1340,7 @@
 		};
 
 		l3-cache@300008a8 {
-			phandle = <0x48>;
+			phandle = <0x6d>;
 			device_type = "cache";
 			reg = <0x300008a8>;
 			status = "okay";
@@ -1352,7 +1352,7 @@
 		};
 
 		l3-cache@300008b0 {
-			phandle = <0x4c>;
+			phandle = <0x71>;
 			device_type = "cache";
 			reg = <0x300008b0>;
 			status = "okay";
@@ -1364,7 +1364,7 @@
 		};
 
 		l3-cache@300008e8 {
-			phandle = <0x50>;
+			phandle = <0x75>;
 			device_type = "cache";
 			reg = <0x300008e8>;
 			status = "okay";
@@ -1376,7 +1376,7 @@
 		};
 
 		l3-cache@300008f0 {
-			phandle = <0x54>;
+			phandle = <0x79>;
 			device_type = "cache";
 			reg = <0x300008f0>;
 			status = "okay";
@@ -1389,12 +1389,12 @@
 	};
 
 	fsps {
-		phandle = <0x8c>;
+		phandle = <0x8b>;
 		#address-cells = <0x1>;
 		#size-cells = <0x0>;
 
 		fsp@0 {
-			phandle = <0x8d>;
+			phandle = <0x8c>;
 			reg = <0x0>;
 			compatible = "ibm,fsp", "ibm,fsp2";
 			reg-offset = <0xb0011000>;
@@ -1406,21 +1406,21 @@
 	};
 
 	ibm,opal {
-		phandle = <0x3>;
+		phandle = <0x28>;
 
 		leds {
-			phandle = <0x4>;
+			phandle = <0x29>;
 			led-mode = "lightpath";
 
 			U8247.22L.1010C8A {
-				phandle = <0x9e>;
+				phandle = <0x9d>;
 				led-types = "attention";
 			};
 		};
 	};
 
 	interrupt-controller@3ffff80020000 {
-		phandle = <0x9>;
+		phandle = <0x2e>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x20 0x8>;
 		interrupt-controller;
@@ -1430,7 +1430,7 @@
 	};
 
 	interrupt-controller@3ffff80030000 {
-		phandle = <0xd>;
+		phandle = <0x32>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x30 0x8>;
 		interrupt-controller;
@@ -1440,7 +1440,7 @@
 	};
 
 	interrupt-controller@3ffff80060000 {
-		phandle = <0x11>;
+		phandle = <0x36>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x60 0x8>;
 		interrupt-controller;
@@ -1450,7 +1450,7 @@
 	};
 
 	interrupt-controller@3ffff80068000 {
-		phandle = <0x15>;
+		phandle = <0x3a>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x68 0x8>;
 		interrupt-controller;
@@ -1460,7 +1460,7 @@
 	};
 
 	interrupt-controller@3ffff80070000 {
-		phandle = <0x19>;
+		phandle = <0x3e>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x70 0x8>;
 		interrupt-controller;
@@ -1470,7 +1470,7 @@
 	};
 
 	interrupt-controller@3ffff80128000 {
-		phandle = <0x1d>;
+		phandle = <0x42>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0xa8 0x8>;
 		interrupt-controller;
@@ -1480,7 +1480,7 @@
 	};
 
 	interrupt-controller@3ffff80130000 {
-		phandle = <0x21>;
+		phandle = <0x46>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0xb0 0x8>;
 		interrupt-controller;
@@ -1490,7 +1490,7 @@
 	};
 
 	interrupt-controller@3ffff80160000 {
-		phandle = <0x25>;
+		phandle = <0x4a>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0xe0 0x8>;
 		interrupt-controller;
@@ -1500,7 +1500,7 @@
 	};
 
 	interrupt-controller@3ffff80168000 {
-		phandle = <0x29>;
+		phandle = <0x4e>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0xe8 0x8>;
 		interrupt-controller;
@@ -1510,7 +1510,7 @@
 	};
 
 	interrupt-controller@3ffff80170000 {
-		phandle = <0x2d>;
+		phandle = <0x52>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0xf0 0x8>;
 		interrupt-controller;
@@ -1520,7 +1520,7 @@
 	};
 
 	interrupt-controller@3ffff80828000 {
-		phandle = <0x31>;
+		phandle = <0x56>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x828 0x8>;
 		interrupt-controller;
@@ -1530,7 +1530,7 @@
 	};
 
 	interrupt-controller@3ffff80830000 {
-		phandle = <0x35>;
+		phandle = <0x5a>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x830 0x8>;
 		interrupt-controller;
@@ -1540,7 +1540,7 @@
 	};
 
 	interrupt-controller@3ffff80860000 {
-		phandle = <0x39>;
+		phandle = <0x5e>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x860 0x8>;
 		interrupt-controller;
@@ -1550,7 +1550,7 @@
 	};
 
 	interrupt-controller@3ffff80868000 {
-		phandle = <0x3d>;
+		phandle = <0x62>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x868 0x8>;
 		interrupt-controller;
@@ -1560,7 +1560,7 @@
 	};
 
 	interrupt-controller@3ffff80870000 {
-		phandle = <0x41>;
+		phandle = <0x66>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x870 0x8>;
 		interrupt-controller;
@@ -1570,7 +1570,7 @@
 	};
 
 	interrupt-controller@3ffff80920000 {
-		phandle = <0x45>;
+		phandle = <0x6a>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x8a0 0x8>;
 		interrupt-controller;
@@ -1580,7 +1580,7 @@
 	};
 
 	interrupt-controller@3ffff80928000 {
-		phandle = <0x49>;
+		phandle = <0x6e>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x8a8 0x8>;
 		interrupt-controller;
@@ -1590,7 +1590,7 @@
 	};
 
 	interrupt-controller@3ffff80930000 {
-		phandle = <0x4d>;
+		phandle = <0x72>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x8b0 0x8>;
 		interrupt-controller;
@@ -1600,7 +1600,7 @@
 	};
 
 	interrupt-controller@3ffff80968000 {
-		phandle = <0x51>;
+		phandle = <0x76>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x8e8 0x8>;
 		interrupt-controller;
@@ -1610,7 +1610,7 @@
 	};
 
 	interrupt-controller@3ffff80970000 {
-		phandle = <0x55>;
+		phandle = <0x7a>;
 		compatible = "ibm,ppc-xicp", "IBM,power8-icp";
 		ibm,interrupt-server-ranges = <0x8f0 0x8>;
 		interrupt-controller;
@@ -1620,17 +1620,17 @@
 	};
 
 	ipl-params {
-		phandle = <0x56>;
+		phandle = <0x7b>;
 		#address-cells = <0x0>;
 		#size-cells = <0x0>;
 
 		fsp-serial {
-			phandle = <0x59>;
+			phandle = <0x7e>;
 			#address-cells = <0x1>;
 			#size-cells = <0x0>;
 
 			serial@2a00 {
-				phandle = <0x5a>;
+				phandle = <0x7f>;
 				reg = <0x2a00>;
 				ibm,loc-code = "U78CB.001.WZS00AL-P1-C1-T1";
 				compatible = "ibm,fsp-serial";
@@ -1638,7 +1638,7 @@
 		};
 
 		ipl-params {
-			phandle = <0x58>;
+			phandle = <0x7d>;
 			#address-cells = <0x0>;
 			#size-cells = <0x0>;
 			cec-ipl-side = "perm";
@@ -1648,11 +1648,11 @@
 		};
 
 		platform-dump {
-			phandle = <0x5b>;
+			phandle = <0x80>;
 		};
 
 		sys-params {
-			phandle = <0x57>;
+			phandle = <0x7c>;
 			#address-cells = <0x0>;
 			#size-cells = <0x0>;
 			ibm,sys-model = " 22L";
@@ -1660,14 +1660,14 @@
 	};
 
 	memory@0 {
-		phandle = <0x82>;
+		phandle = <0x81>;
 		device_type = "memory";
 		ibm,chip-id = <0x0>;
 		reg = <0x0 0x0 0x10 0x0>;
 	};
 
 	memory@1000000000 {
-		phandle = <0x83>;
+		phandle = <0x82>;
 		device_type = "memory";
 		ibm,chip-id = <0x10>;
 		reg = <0x10 0x0 0x10 0x0>;
@@ -1680,24 +1680,24 @@
 		ibm,loc-code = "U8247.22L.1010C8A";
 
 		root-node-vpd@a000 {
-			phandle = <0x5c>;
+			phandle = <0x3>;
 			ibm,loc-code = "U8247.22L.1010C8A";
 			fru-type = [56 56];
 
 			enclosure-fault-led@a300 {
-				phandle = <0x81>;
+				phandle = <0x7>;
 				ibm,loc-code = "U78CB.001.WZS00AL";
 				fru-type = [45 46];
 			};
 
 			enclosure-led@a200 {
-				phandle = <0x80>;
+				phandle = <0x6>;
 				ibm,loc-code = "U78CB.001.WZS00AL";
 				fru-type = [45 49];
 			};
 
 			enclosure@1e00 {
-				phandle = <0x5f>;
+				phandle = <0x5>;
 				ibm,loc-code = "U78CB.001.WZS00AL";
 				fru-type = [45 56];
 				ibm,vpd = <0x848c0052 0x54045649 0x4e494452 0x10492f4f 0x20424143 0x4b504c41 0x4e452020 0x20434501 0x31565a02 0x3032464e 0x7303045 0x32303232 0x504e0730 0x30453339 0x3937534e 0xc594c31 0x30554634 0x324c3031 0x33434304 0x32434436 0x50520821 0x0 0x48 0x45043030 0x30324354 0x480f300 0x26485702 0x44233 0x6000000 0x142 0x34010042 0x370c0000 0x0 0x0 0x5046 0x2000078 0x841c0052 0x54044c58 0x5230565a 0x230314c 0x58083100 0x4010030 0x425046 0x2000078 0x84440052 0x54045643 0x454e4452 0x6434543 0x20202053 0x4507575a 0x53303041 0x4c544d08 0x20202020 0x20202020 0x46430837 0x3843422d 0x30303152 0x47040000 0x5242 0x4202020 0x20504603 0x78 0x0>;
@@ -1712,43 +1712,43 @@
 				description = "System planar 2S2U";
 
 				air-mover@3a00 {
-					phandle = <0x7a>;
+					phandle = <0xf>;
 					ibm,loc-code = "U78CB.001.WZS00AL-A1";
 					fru-type = [41 4d];
 				};
 
 				air-mover@3a01 {
-					phandle = <0x7b>;
+					phandle = <0x10>;
 					ibm,loc-code = "U78CB.001.WZS00AL-A3";
 					fru-type = [41 4d];
 				};
 
 				air-mover@3a02 {
-					phandle = <0x7c>;
+					phandle = <0x11>;
 					ibm,loc-code = "U78CB.001.WZS00AL-A4";
 					fru-type = [41 4d];
 				};
 
 				air-mover@3a03 {
-					phandle = <0x7d>;
+					phandle = <0x12>;
 					ibm,loc-code = "U78CB.001.WZS00AL-A6";
 					fru-type = [41 4d];
 				};
 
 				air-mover@3a04 {
-					phandle = <0x7e>;
+					phandle = <0x13>;
 					ibm,loc-code = "U78CB.001.WZS00AL-A2";
 					fru-type = [41 4d];
 				};
 
 				air-mover@3a05 {
-					phandle = <0x7f>;
+					phandle = <0x14>;
 					ibm,loc-code = "U78CB.001.WZS00AL-A5";
 					fru-type = [41 4d];
 				};
 
 				backplane@800 {
-					phandle = <0x60>;
+					phandle = <0x8>;
 					ibm,loc-code = "U78CB.001.WZS00AL-P1";
 					fru-type = [42 50];
 					ibm,vpd = <0x848c0052 0x54045649 0x4e494452 0x10492f4f 0x20424143 0x4b504c41 0x4e452020 0x20434501 0x31565a02 0x3032464e 0x7303045 0x32303232 0x504e0730 0x30453339 0x3937534e 0xc594c31 0x30554634 0x324c3031 0x33434304 0x32434436 0x50520821 0x0 0x48 0x45043030 0x30324354 0x480f300 0x26485702 0x44233 0x6000000 0x142 0x34010042 0x370c0000 0x0 0x0 0x5046 0x2000078 0x841c0052 0x54044c58 0x5230565a 0x230314c 0x58083100 0x4010030 0x425046 0x2000078 0x0>;
@@ -1763,7 +1763,7 @@
 					description = "System planar 2S2U";
 
 					anchor-card@500 {
-						phandle = <0x69>;
+						phandle = <0x1a>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-C13";
 						fru-type = [41 56];
 						ibm,vpd = <0x84cc0052 0x54045649 0x4e494452 0x10414e43 0x484f5220 0x20202020 0x20202020 0x20434501 0x31565a02 0x3031464e 0x7303045 0x33343237 0x504e0730 0x30453231 0x3438534e 0xc594c31 0x30313134 0x32523030 0x30434304 0x35323444 0x50520881 0x300000 0x48 0x45043030 0x31304354 0x440b400 0x485702 0x14233 0x6000000 0x142 0x34010042 0x370c0000 0x0 0x0 0x4239 0x3c435340 0x55110351 0xdd6da253 0x5049652f 0x45748f7b 0x44d31c5 0x31833edf 0x1e75724d 0x328d48c1 0xb4246b02 0xee4d3367 0xb454d848 0x9f3a254d 0x340dadc4 0x4124b5ed 0xd5504603 0x78 0x0>;
@@ -1779,7 +1779,7 @@
 					};
 
 					backplane-extender@900 {
-						phandle = <0x61>;
+						phandle = <0x15>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-C1";
 						fru-type = [42 58];
 						ibm,vpd = <0x84800052 0x54045649 0x4e494452 0x104e4154 0x49564520 0x492f4f20 0x43415244 0x20434501 0x31565a02 0x3031464e 0x7303045 0x32313634 0x504e0730 0x30453338 0x3131534e 0xc594c31 0x30554634 0x324c3030 0x31434304 0x32423042 0x48450430 0x30303143 0x540480b5 0x4857 0x2000142 0x33060000 0x0 0x42340100 0x42370c00 0x0 0x0 0x50 0x46010078 0x0>;
@@ -1794,38 +1794,38 @@
 						description = "Native I/O Card";
 
 						serial-connector@2a00 {
-							phandle = <0x64>;
+							phandle = <0x27>;
 							ibm,loc-code = "U78CB.001.WZS00AL-P1-C1-T1";
 							fru-type = [43 53];
 						};
 
 						usb-connector@2901 {
-							phandle = <0x62>;
+							phandle = <0x25>;
 							ibm,loc-code = "U78CB.001.WZS00AL-P1-C1-T2";
 							fru-type = [43 55];
 						};
 
 						usb-connector@2904 {
-							phandle = <0x63>;
+							phandle = <0x26>;
 							ibm,loc-code = "U78CB.001.WZS00AL-P1-C1-T3";
 							fru-type = [43 55];
 						};
 					};
 
 					ethernet-connector@2800 {
-						phandle = <0x6a>;
+						phandle = <0x1b>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-T1 ";
 						fru-type = [43 45];
 					};
 
 					ethernet-connector@2801 {
-						phandle = <0x6b>;
+						phandle = <0x1c>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-T2 ";
 						fru-type = [43 45];
 					};
 
 					ms-dimm@d000 {
-						phandle = <0x70>;
+						phandle = <0x21>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-C16";
 						fru-type = [4d 53];
 						ibm,vpd = <0x84940052 0x54045649 0x4e494452 0x1049424d 0x20333247 0x42204d53 0x20202020 0x20434501 0x31565a02 0x3132464e 0x730304a 0x41363634 0x504e0730 0x304a4136 0x3634534e 0xc594831 0x304d5534 0x32443141 0x39434304 0x33314539 0x50520849 0x0 0x1000053 0x5a073030 0x33323736 0x38484504 0x30303031 0x43540400 0x48 0x57020100 0x42330600 0x0 0x423401 0x42370c 0x0 0x0 0x0 0x50460078 0x0>;
@@ -1844,7 +1844,7 @@
 					};
 
 					ms-dimm@d002 {
-						phandle = <0x71>;
+						phandle = <0x22>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-C18";
 						fru-type = [4d 53];
 						ibm,vpd = <0x84940052 0x54045649 0x4e494452 0x1049424d 0x20333247 0x42204d53 0x20202020 0x20434501 0x31565a02 0x3132464e 0x730304a 0x41363634 0x504e0730 0x304a4136 0x3634534e 0xc594831 0x304d5534 0x32443141 0x36434304 0x33314539 0x50520849 0x0 0x1000053 0x5a073030 0x33323736 0x38484504 0x30303031 0x43540400 0x48 0x57020100 0x42330600 0x0 0x423401 0x42370c 0x0 0x0 0x0 0x50460078 0x0>;
@@ -1863,7 +1863,7 @@
 					};
 
 					ms-dimm@d008 {
-						phandle = <0x72>;
+						phandle = <0x23>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-C24";
 						fru-type = [4d 53];
 						ibm,vpd = <0x84940052 0x54045649 0x4e494452 0x1049424d 0x20333247 0x42204d53 0x20202020 0x20434501 0x31565a02 0x3132464e 0x730304a 0x41363634 0x504e0730 0x304a4136 0x3634534e 0xc594831 0x304d5534 0x32433137 0x54434304 0x33314539 0x50520849 0x0 0x1000053 0x5a073030 0x33323736 0x38484504 0x30303031 0x43540400 0x48 0x57020100 0x42330600 0x0 0x423401 0x42370c 0x0 0x0 0x0 0x50460078 0x0>;
@@ -1882,7 +1882,7 @@
 					};
 
 					ms-dimm@d00a {
-						phandle = <0x73>;
+						phandle = <0x24>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-C26";
 						fru-type = [4d 53];
 						ibm,vpd = <0x84940052 0x54045649 0x4e494452 0x1049424d 0x20333247 0x42204d53 0x20202020 0x20434501 0x31565a02 0x3132464e 0x730304a 0x41363634 0x504e0730 0x304a4136 0x3634534e 0xc594831 0x304d5534 0x32433141 0x48434304 0x33314539 0x50520849 0x0 0x1000053 0x5a073030 0x33323736 0x38484504 0x30303031 0x43540400 0x48 0x57020100 0x42330600 0x0 0x423401 0x42370c 0x0 0x0 0x0 0x50460078 0x0>;
@@ -1901,7 +1901,7 @@
 					};
 
 					processor@1000 {
-						phandle = <0x65>;
+						phandle = <0x16>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-C32";
 						fru-type = [50 46];
 						ibm,vpd = [84 8c 00 52 54 04 56 49 4e 49 44 52 10 31 30 2d 57 41 59 20 50 52 4f 43 20 43 55 4f 44 46 4e 07 30 30 46 58 35 31 38 50 4e 07 30 30 46 58 37 34 30 53 4e 0c 59 41 31 39 33 32 30 39 36 39 35 31 43 43 04 35 34 45 38 48 45 04 30 30 30 31 43 54 04 00 00 00 00 48 57 02 00 01 42 33 06 00 00 00 00 00 00 42 34 01 00 42 37 0c 00 00 00 00 00 00 00 00 00 00 00 00 50 52 08 35 00 50 01 22 00 80 01 56 5a 02 30 31 43 45 01 31 50 46 02 00 00 78 00];
@@ -1918,7 +1918,7 @@
 					};
 
 					processor@1001 {
-						phandle = <0x66>;
+						phandle = <0x17>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-C32";
 						fru-type = [50 46];
 						ibm,vpd = [84 8c 00 52 54 04 56 49 4e 49 44 52 10 31 30 2d 57 41 59 20 50 52 4f 43 20 43 55 4f 44 46 4e 07 30 30 46 58 35 31 38 50 4e 07 30 30 46 58 37 34 30 53 4e 0c 59 41 31 39 33 32 30 39 36 39 35 31 43 43 04 35 34 45 38 48 45 04 30 30 30 31 43 54 04 00 00 00 00 48 57 02 00 01 42 33 06 00 00 00 00 00 00 42 34 01 00 42 37 0c 00 00 00 00 00 00 00 00 00 00 00 00 50 52 08 35 00 50 01 22 00 80 01 56 5a 02 30 31 43 45 01 31 50 46 02 00 00 78 00];
@@ -1935,7 +1935,7 @@
 					};
 
 					processor@1002 {
-						phandle = <0x67>;
+						phandle = <0x18>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-C33";
 						fru-type = [50 46];
 						ibm,vpd = [84 8c 00 52 54 04 56 49 4e 49 44 52 10 31 30 2d 57 41 59 20 50 52 4f 43 20 43 55 4f 44 46 4e 07 30 30 46 58 35 31 38 50 4e 07 30 30 46 58 37 34 30 53 4e 0c 59 41 31 39 33 32 30 39 36 39 35 30 43 43 04 35 34 45 38 48 45 04 30 30 30 31 43 54 04 00 00 00 00 48 57 02 00 01 42 33 06 00 00 00 00 00 00 42 34 01 00 42 37 0c 00 00 00 00 00 00 00 00 00 00 00 00 50 52 08 35 00 50 01 22 00 80 01 56 5a 02 30 31 43 45 01 31 50 46 02 00 00 78 00];
@@ -1952,7 +1952,7 @@
 					};
 
 					processor@1003 {
-						phandle = <0x68>;
+						phandle = <0x19>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-C33";
 						fru-type = [50 46];
 						ibm,vpd = [84 8c 00 52 54 04 56 49 4e 49 44 52 10 31 30 2d 57 41 59 20 50 52 4f 43 20 43 55 4f 44 46 4e 07 30 30 46 58 35 31 38 50 4e 07 30 30 46 58 37 34 30 53 4e 0c 59 41 31 39 33 32 30 39 36 39 35 30 43 43 04 35 34 45 38 48 45 04 30 30 30 31 43 54 04 00 00 00 00 48 57 02 00 01 42 33 06 00 00 00 00 00 00 42 34 01 00 42 37 0c 00 00 00 00 00 00 00 00 00 00 00 00 50 52 08 35 00 50 01 22 00 80 01 56 5a 02 30 31 43 45 01 31 50 46 02 00 00 78 00];
@@ -1969,44 +1969,44 @@
 					};
 
 					usb-connector@2900 {
-						phandle = <0x6c>;
+						phandle = <0x1d>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-T5";
 						fru-type = [43 55];
 					};
 
 					usb-connector@2902 {
-						phandle = <0x6d>;
+						phandle = <0x1e>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-T6";
 						fru-type = [43 55];
 					};
 
 					usb-connector@2903 {
-						phandle = <0x6e>;
+						phandle = <0x1f>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-T3";
 						fru-type = [43 55];
 					};
 
 					usb-connector@2905 {
-						phandle = <0x6f>;
+						phandle = <0x20>;
 						ibm,loc-code = "U78CB.001.WZS00AL-P1-T4";
 						fru-type = [43 55];
 					};
 				};
 
 				dasd-backplane@2400 {
-					phandle = <0x76>;
+					phandle = <0xb>;
 					ibm,loc-code = "U78CB.001.WZS00AL-P2";
 					fru-type = [44 42];
 				};
 
 				dasd-backplane@2401 {
-					phandle = <0x77>;
+					phandle = <0xc>;
 					ibm,loc-code = "U78CB.001.WZS00AL-P2";
 					fru-type = [44 42];
 				};
 
 				op-panel@300 {
-					phandle = <0x75>;
+					phandle = <0xa>;
 					ibm,loc-code = "U78CB.001.WZS00AL-D1";
 					fru-type = [4f 50];
 					ibm,vpd = <0x84800052 0x54045649 0x4e494452 0x10434543 0x204f5020 0x50414e45 0x4c202020 0x20434501 0x31565a02 0x3032464e 0x7303045 0x31393636 0x504e0730 0x30453337 0x3730534e 0xc594c31 0x30554634 0x31383030 0x46434304 0x32423038 0x48450430 0x30303143 0x540480b5 0x4857 0x2000342 0x33060000 0x0 0x42340100 0x42370c00 0x0 0x0 0x50 0x46010078 0x0>;
@@ -2022,19 +2022,19 @@
 				};
 
 				power-supply@3100 {
-					phandle = <0x78>;
+					phandle = <0xd>;
 					ibm,loc-code = "U78CB.001.WZS00AL-E1";
 					fru-type = [50 53];
 				};
 
 				power-supply@3101 {
-					phandle = <0x79>;
+					phandle = <0xe>;
 					ibm,loc-code = "U78CB.001.WZS00AL-E2";
 					fru-type = [50 53];
 				};
 
 				service-processor@200 {
-					phandle = <0x74>;
+					phandle = <0x9>;
 					ibm,loc-code = "U78CB.001.WZS00AL-P1";
 					fru-type = [53 50];
 					ibm,vpd = <0x848c0052 0x54045649 0x4e494452 0x10492f4f 0x20424143 0x4b504c41 0x4e452020 0x20434501 0x31565a02 0x3032464e 0x7303045 0x32303232 0x504e0730 0x30453339 0x3937534e 0xc594c31 0x30554634 0x324c3031 0x33434304 0x32434436 0x50520821 0x0 0x48 0x45043030 0x30324354 0x480f300 0x26485702 0x44233 0x6000000 0x142 0x34010042 0x370c0000 0x0 0x0 0x5046 0x2000078 0x841c0052 0x54044c58 0x5230565a 0x230314c 0x58083100 0x4010030 0x425046 0x2000078 0x84500052 0x54045652 0x31304452 0x10465350 0x20202020 0x20202020 0x20202020 0x20464704 0x564e5350 0x44430f42 0x44203230 0x31323038 0x32333038 0x3030464c 0x14503120 0x20202020 0x20202020 0x20202020 0x20202020 0x20504603 0x78 0x84400052 0x54045657 0x31304452 0x10465350 0x20565731 0x30202020 0x20202020 0x20474420 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x50460078 0x0>;
@@ -2050,14 +2050,8 @@
 				};
 			};
 
-			root-node-vpd@a001 {
-				phandle = <0x5d>;
-				ibm,loc-code = "U8247.22L.1010C8A";
-				fru-type = [56 56];
-			};
-
 			system-vpd@1c00 {
-				phandle = <0x5e>;
+				phandle = <0x4>;
 				ibm,loc-code = "U8247.22L.1010C8A";
 				fru-type = [53 56];
 			};
@@ -2065,7 +2059,7 @@
 	};
 
 	xscom@3fc0000000000 {
-		phandle = <0x84>;
+		phandle = <0x83>;
 		ibm,chip-id = <0x0>;
 		ibm,proc-chip-id = <0x0>;
 		#address-cells = <0x1>;
@@ -2083,20 +2077,20 @@
 		ibm,mem-interleave-scope = <0x0>;
 
 		chiptod@40000 {
-			phandle = <0x8e>;
+			phandle = <0x8d>;
 			reg = <0x40000 0x34>;
 			compatible = "ibm,power-chiptod", "ibm,power8-chiptod";
 			primary;
 		};
 
 		nx@2010000 {
-			phandle = <0x92>;
+			phandle = <0x91>;
 			compatible = "ibm,power-nx", "ibm,power8-nx";
 			reg = <0x2010000 0x4000>;
 		};
 
 		pbcq@2012000 {
-			phandle = <0x96>;
+			phandle = <0x95>;
 			reg = <0x200102 0x20000000 0x200109 0x5000000 0x3c0109 0x15000000>;
 			compatible = "ibm,power8-pbcq";
 			ibm,phb-index = <0x0>;
@@ -2107,7 +2101,7 @@
 		};
 
 		pbcq@2012400 {
-			phandle = <0x97>;
+			phandle = <0x96>;
 			reg = <0x240102 0x20000000 0x240109 0x5000000 0x403c0109 0x15000000>;
 			compatible = "ibm,power8-pbcq";
 			ibm,phb-index = <0x1>;
@@ -2118,7 +2112,7 @@
 		};
 
 		psihb@2010900 {
-			phandle = <0x85>;
+			phandle = <0x84>;
 			reg = <0x2010900 0x20>;
 			compatible = "ibm,power8-psihb-x", "ibm,psihb-x";
 			boot-link;
@@ -2127,7 +2121,7 @@
 	};
 
 	xscom@3fc0800000000 {
-		phandle = <0x86>;
+		phandle = <0x85>;
 		ibm,chip-id = <0x1>;
 		ibm,proc-chip-id = <0x1>;
 		#address-cells = <0x1>;
@@ -2145,19 +2139,19 @@
 		ibm,mem-interleave-scope = <0x0>;
 
 		chiptod@40000 {
-			phandle = <0x8f>;
+			phandle = <0x8e>;
 			reg = <0x40000 0x34>;
 			compatible = "ibm,power-chiptod", "ibm,power8-chiptod";
 		};
 
 		nx@2010000 {
-			phandle = <0x93>;
+			phandle = <0x92>;
 			compatible = "ibm,power-nx", "ibm,power8-nx";
 			reg = <0x2010000 0x4000>;
 		};
 
 		pbcq@2012000 {
-			phandle = <0x98>;
+			phandle = <0x97>;
 			reg = <0x200102 0x20000000 0x200109 0x5000000 0x3c0109 0x15000000>;
 			compatible = "ibm,power8-pbcq";
 			ibm,phb-index = <0x0>;
@@ -2168,7 +2162,7 @@
 		};
 
 		pbcq@2012400 {
-			phandle = <0x99>;
+			phandle = <0x98>;
 			reg = <0x240102 0x20000000 0x240109 0x5000000 0x403c0109 0x15000000>;
 			compatible = "ibm,power8-pbcq";
 			ibm,phb-index = <0x1>;
@@ -2179,14 +2173,14 @@
 		};
 
 		psihb@2010900 {
-			phandle = <0x87>;
+			phandle = <0x86>;
 			reg = <0x2010900 0x20>;
 			compatible = "ibm,power8-psihb-x", "ibm,psihb-x";
 		};
 	};
 
 	xscom@3fc8000000000 {
-		phandle = <0x88>;
+		phandle = <0x87>;
 		ibm,chip-id = <0x10>;
 		ibm,proc-chip-id = <0x2>;
 		#address-cells = <0x1>;
@@ -2204,20 +2198,20 @@
 		ibm,mem-interleave-scope = <0x0>;
 
 		chiptod@40000 {
-			phandle = <0x90>;
+			phandle = <0x8f>;
 			reg = <0x40000 0x34>;
 			compatible = "ibm,power-chiptod", "ibm,power8-chiptod";
 			secondary;
 		};
 
 		nx@2010000 {
-			phandle = <0x94>;
+			phandle = <0x93>;
 			compatible = "ibm,power-nx", "ibm,power8-nx";
 			reg = <0x2010000 0x4000>;
 		};
 
 		pbcq@2012000 {
-			phandle = <0x9a>;
+			phandle = <0x99>;
 			reg = <0x200102 0x20000000 0x200109 0x5000000 0x3c0109 0x15000000>;
 			compatible = "ibm,power8-pbcq";
 			ibm,phb-index = <0x0>;
@@ -2228,7 +2222,7 @@
 		};
 
 		psihb@2010900 {
-			phandle = <0x89>;
+			phandle = <0x88>;
 			reg = <0x2010900 0x20>;
 			compatible = "ibm,power8-psihb-x", "ibm,psihb-x";
 			status = "ok";
@@ -2236,7 +2230,7 @@
 	};
 
 	xscom@3fc8800000000 {
-		phandle = <0x8a>;
+		phandle = <0x89>;
 		ibm,chip-id = <0x11>;
 		ibm,proc-chip-id = <0x3>;
 		#address-cells = <0x1>;
@@ -2254,19 +2248,19 @@
 		ibm,mem-interleave-scope = <0x0>;
 
 		chiptod@40000 {
-			phandle = <0x91>;
+			phandle = <0x90>;
 			reg = <0x40000 0x34>;
 			compatible = "ibm,power-chiptod", "ibm,power8-chiptod";
 		};
 
 		nx@2010000 {
-			phandle = <0x95>;
+			phandle = <0x94>;
 			compatible = "ibm,power-nx", "ibm,power8-nx";
 			reg = <0x2010000 0x4000>;
 		};
 
 		pbcq@2012000 {
-			phandle = <0x9b>;
+			phandle = <0x9a>;
 			reg = <0x200102 0x20000000 0x200109 0x5000000 0x3c0109 0x15000000>;
 			compatible = "ibm,power8-pbcq";
 			ibm,phb-index = <0x0>;
@@ -2277,7 +2271,7 @@
 		};
 
 		pbcq@2012400 {
-			phandle = <0x9c>;
+			phandle = <0x9b>;
 			reg = <0x240102 0x20000000 0x240109 0x5000000 0x403c0109 0x15000000>;
 			compatible = "ibm,power8-pbcq";
 			ibm,phb-index = <0x1>;
@@ -2288,7 +2282,7 @@
 		};
 
 		psihb@2010900 {
-			phandle = <0x8b>;
+			phandle = <0x8a>;
 			reg = <0x2010900 0x20>;
 			compatible = "ibm,power8-psihb-x", "ibm,psihb-x";
 		};
