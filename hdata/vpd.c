@@ -435,8 +435,6 @@ struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 	const void *fruvpd;
 	const char *name;
 	uint64_t addr;
-	char *lname;
-	int len;
 
 	fru_id = HDIF_get_idata(hdr, indx_fru, &fru_id_sz);
 	if (!fru_id)
@@ -455,19 +453,9 @@ struct dt_node *dt_add_vpd_node(const struct HDIF_common_hdr *hdr,
 		return NULL;
 
 	name = vpd_map_name(entry->fru_id);
-	addr = (uint64_t)be16_to_cpu(entry->rsrc_id);
-	len = strlen(name) + STR_MAX_CHARS(addr) + 2;
-	lname = zalloc(len);
-	if (!lname) {
-		prerror("VPD: Failed to allocate memory\n");
-		return NULL;
-	}
-
-	snprintf(lname, len, "%s@%llx", name, (long long)addr);
-
+	addr = be16_to_cpu(entry->rsrc_id);
 	/* Get the node already created */
-	node = dt_find_by_name(dt_vpd, lname);
-	free(lname);
+	node = dt_find_by_name_addr(dt_vpd, name, addr);
 	/*
 	 * It is unlikely that node not found because vpd nodes have the
 	 * corresponding slca entry which we would have used to populate the vpd
