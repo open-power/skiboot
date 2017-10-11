@@ -119,8 +119,6 @@ struct imc_chip_cb
 #define NEST_IMC_ENABLE			0x1
 #define NEST_IMC_DISABLE		0x2
 
-#define MAX_NEST_UNITS			48
-
 /*
  * Core IMC SCOMs
  */
