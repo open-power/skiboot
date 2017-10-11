@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,7 +196,7 @@ int64_t ibm_fsp_cec_reboot(void)
 
 	/* If that failed, talk to the FSP */
 	if (fsp_sync_msg(fsp_mkmsg(cmd, 0), true))
-		return OPAL_INTERNAL_ERROR;
+		return OPAL_BUSY_EVENT;
 
 	return OPAL_SUCCESS;
 }
