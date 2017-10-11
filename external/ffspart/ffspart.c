@@ -295,6 +295,9 @@ int main(int argc, char *argv[])
 			case 'F':
 				user.miscflags |= FFS_MISCFLAGS_REPROVISION;
 				break;
+			case 'L':
+				user.miscflags |= FFS_MISCFLAGS_VOLATILE;
+				break;
 			/* Not sure these are valid */
 			case 'B':
 				user.miscflags |= FFS_MISCFLAGS_BACKUP;

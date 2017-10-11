@@ -34,3 +34,12 @@ Start       End         Actual
 
 Flags:
 BACKUP [B]
+Detailed partition information
+Name:
+VOLATILE (ID=05)
+
+Start       End         Actual    
+0x00000700  0x00000800  0x00000100
+
+Flags:
+VOLATILE [V]

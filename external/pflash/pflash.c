@@ -115,12 +115,13 @@ static uint32_t print_ffs_info(struct ffs_handle *ffsh, uint32_t toc)
 		    goto out;
 		}
 
-		l = asprintf(&flags, "[%c%c%c%c%c]",
+		l = asprintf(&flags, "[%c%c%c%c%c%c]",
 				has_ecc(ent) ? 'E' : '-',
 				has_flag(ent, FFS_MISCFLAGS_PRESERVED) ? 'P' : '-',
 				has_flag(ent, FFS_MISCFLAGS_READONLY) ? 'R' : '-',
 				has_flag(ent, FFS_MISCFLAGS_BACKUP) ? 'B' : '-',
-				has_flag(ent, FFS_MISCFLAGS_REPROVISION) ? 'F' : '-');
+				has_flag(ent, FFS_MISCFLAGS_REPROVISION) ? 'F' : '-',
+				has_flag(ent, FFS_MISCFLAGS_VOLATILE) ? 'V' : '-');
 		if (l < 0)
 			goto out;
 
@@ -169,7 +170,7 @@ static void print_flash_info(struct flash_details *flash)
 	printf("Name          = %s\n", flash->name);
 	printf("Total size    = %" PRIu64 "MB\t Flags E:ECC, P:PRESERVED, R:READONLY\n",
 			flash->total_size >> 20);
-	printf("Erase granule = %2d%-13sB:BACKUP, F:REPROVISION\n",
+	printf("Erase granule = %2d%-13sB:BACKUP, F:REPROVISION, V:VOLATILE\n",
 			flash->erase_granule >> 10, "KB");
 
 	if (bmc_flash)
@@ -576,12 +577,13 @@ static void print_partition_detail(struct ffs_handle *ffsh, uint32_t part_id)
 
 	printf("Flags:\n");
 
-	l = asprintf(&flags, "%s%s%s%s%s", has_ecc(ent) ? "ECC [E]\n" : "",
+	l = asprintf(&flags, "%s%s%s%s%s%s", has_ecc(ent) ? "ECC [E]\n" : "",
 			has_flag(ent, FFS_MISCFLAGS_PRESERVED) ? "PRESERVED [P]\n" : "",
 			has_flag(ent, FFS_MISCFLAGS_READONLY) ? "READONLY [R]\n" : "",
 			has_flag(ent, FFS_MISCFLAGS_BACKUP) ? "BACKUP [B]\n" : "",
 			has_flag(ent, FFS_MISCFLAGS_REPROVISION) ?
-					"REPROVISION [F]\n" : "");
+					"REPROVISION [F]\n" : "",
+			has_flag(ent, FFS_MISCFLAGS_VOLATILE) ? "VOLATILE [V]\n" : "");
 	if (l < 0) {
 		fprintf(stderr, "Memory allocation failure printing flags!\n");
 		goto out;
