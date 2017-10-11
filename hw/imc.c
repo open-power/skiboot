@@ -160,6 +160,18 @@ static struct imc_chip_cb *get_imc_cb(uint32_t chip_id)
 	return cb;
 }
 
+static void pause_microcode_at_boot(void)
+{
+	struct proc_chip *chip;
+	struct imc_chip_cb *cb;
+
+	for_each_chip(chip) {
+		cb = get_imc_cb(chip->id);
+		if (cb)
+			cb->imc_chip_command =  cpu_to_be64(NEST_IMC_DISABLE);
+	}
+}
+
 /*
  * Decompresses the blob obtained from the IMC pnor sub-partition
  * in "src" of size "src_size", assigns the uncompressed device tree
@@ -541,6 +553,18 @@ imc_mambo:
 
 	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
 		return;
+
+	/*
+	 * IMC nest counters has both in-band (ucode access) and out of band
+	 * access to it. Since not all nest counter configurations are supported
+	 * by ucode, out of band tools are used to characterize other
+	 * configuration.
+	 *
+	 * If the ucode not paused and OS does not have IMC driver support,
+	 * then out to band tools will race with ucode and end up getting
+	 * undesirable values. Hence pause the ucode if it is already running.
+	 */
+	pause_microcode_at_boot();
 
 	/*
 	 * If the dt_attach_root() fails, "imc-counters" node will not be
