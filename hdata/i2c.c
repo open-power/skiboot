@@ -152,7 +152,7 @@ static bool is_zeros(const void *p, size_t size)
 struct host_i2c_hdr {
 	const struct HDIF_array_hdr hdr;
 	__be32 version;
-};
+} __packed;
 
 int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 	struct dt_node *xscom)
