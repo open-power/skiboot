@@ -1383,6 +1383,16 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 		flags &= ~(OPAL_REINIT_CPUS_HILE_BE | OPAL_REINIT_CPUS_HILE_LE);
 	}
 
+	if (flags & OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED) {
+		flags &= ~OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED;
+
+		/*
+		 * Pending a hostboot change we can't determine the status of
+		 * this, so it always fails.
+		 */
+		rc = OPAL_UNSUPPORTED;
+	}
+
 	/* Handle P8 DD1 SLW reinit */
 	if (flags != 0 && proc_gen == proc_gen_p8 && !hile_supported)
 		rc = slw_reinit(flags);
