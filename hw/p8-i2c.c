@@ -1307,7 +1307,7 @@ void p9_i2c_bus_owner_change(u32 chip_id)
 			goto done;
 
 		/* clear the existing wait timer */
-		cancel_timer(&master->recovery);
+		cancel_timer_async(&master->recovery);
 
 		/* re-start the request now that we own the master */
 		master->state = state_idle;
