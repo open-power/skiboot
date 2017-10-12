@@ -91,8 +91,26 @@ struct hdat_i2c_type {
 };
 
 static struct hdat_i2c_type hdat_i2c_devs[] = {
+	{ 0x1, "gpio", "nxp,pca9551" },
 	/* XXX: Please verify that all VPD EEPROMs are of this type */
-	{ 0x2, "eeprom", "atmel,24c128" }
+	{ 0x2, "eeprom", "atmel,24c128" },
+	{ 0x3, "tpm", "nuvoton,npct650" },
+	{ 0x4, "i2c", NULL },   /* MEX-FPGA */
+	{ 0x5, "i2c", NULL },   /* UCX90xx devs for PCI Hotplug */
+	{ 0x6, "gpio", "nxp,pca9552" },
+	{ 0x7, "gpio", "nxp,pca9553" },
+	{ 0x8, "gpio", "nxp,pca9554" },
+	{ 0x9, "gpio", "nxp,pca9555" },
+	{ 0xa, "i2c", NULL },   /* SMP/OpenCAPI Cable */
+	{ 0xb, "eeprom", "atmel,24c256" },
+	{ 0xc, "i2c", NULL },   /* Thermal Sensor */
+	{ 0xd, "eeprom", "atmel,24c04" },
+	{ 0xe, "eeprom", "atmel,24c412" },
+	{ 0xf, "eeprom", "atmel,24c32" },
+	{ 0x10, "eeprom", "atmel,24c64" },
+	{ 0x11, "eeprom", "atmel,24c16" },
+	{ 0x12, "i2c", NULL },   /* NVDIA GPU */
+	{ 0x13, "i2c", "nxp,lpc11u35" },
 };
 
 struct hdat_i2c_label {
@@ -101,13 +119,24 @@ struct hdat_i2c_label {
 };
 
 static struct hdat_i2c_label hdat_i2c_labels[] = {
-	{ 0x1, "9551-led-controller" },
-	{ 0x2, "seeprom" },
+	{ 0x1, "led-controller" },
+	{ 0x2, "eeprom-pgood" },
+	{ 0x3, "eeprom-control" },
+	{ 0x4, "tpm" },
 	{ 0x5, "module-vpd" },
 	{ 0x6, "dimm SPD" },
 	{ 0x7, "proc-vpd" },
 	{ 0x8, "sbe-eeprom" },
-	{ 0x9, "planar-vpd" }
+	{ 0x9, "planar-vpd" },
+	{ 0xa, "opencapi-topology" },
+	{ 0xb, "opencapi-micro-reset" },
+	{ 0xc, "nvlink-cable" },
+	{ 0xd, "secure-window-open" },
+	{ 0xe, "physical-presence" },
+	{ 0xf, "mex-fpga" },
+	{ 0x10, "thermal-sensor" },
+	{ 0x11, "host-i2c-enable" },
+	{ 0x12, "gpu-config" },
 };
 
 /*
