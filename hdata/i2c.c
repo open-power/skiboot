@@ -165,6 +165,7 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 	uint32_t i2c_addr;
 	uint32_t version;
 	uint32_t size;
+	uint32_t purpose;
 	int i, count;
 
 	/*
@@ -226,11 +227,9 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		 */
 		i2c_addr = dev->i2c_addr >> 1;
 
-		prlog(PR_TRACE, "HDAT I2C: found e%dp%d - %x\n",
-			dev->i2cm_engine, dev->i2cm_port, i2c_addr);
-
+		purpose = be32_to_cpu(dev->purpose);
 		type = map_type(dev->type);
-		label = map_label(be32_to_cpu(dev->purpose));
+		label = map_label(purpose);
 		if (type) {
 			compat = type->compat;
 			name = type->name;
@@ -238,6 +237,20 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 			name = "unknown";
 			compat = NULL;
 		}
+
+		/*
+		 * An i2c device is unknown if either the i2c device list is
+		 * outdated or the device is marked as unknown (0xFF) in the
+		 * hdat. Log both cases to see what/where/why.
+		 */
+		if (!type || dev->type == 0xFF)
+			prlog(PR_WARNING, "HDAT I2C: found e%dp%d - %s@%x (%#x:%s)\n",
+			      dev->i2cm_engine, dev->i2cm_port, name, i2c_addr,
+			      purpose, label);
+		else
+			prlog(PR_TRACE, "HDAT I2C: found e%dp%d - %s@%x (%#x:%s)\n",
+			      dev->i2cm_engine, dev->i2cm_port, name, i2c_addr,
+			      purpose, label);
 
 		node = dt_new_addr(bus, name, i2c_addr);
 		if (!node)
