@@ -13,6 +13,10 @@ mconfig cpus CPUS 1
 mconfig threads THREADS 1
 mconfig memory MEM_SIZE 4G
 
+# Create multiple memory nodes? This will create a MEM_SIZE region
+# on each chip (CPUS above).
+mconfig numa MAMBO_NUMA 0
+
 # Should we stop on an illeagal instruction
 mconfig stop_on_ill MAMBO_STOP_ON_ILL false
 
@@ -80,12 +84,26 @@ myconf config machine_option/NO_ROM TRUE
 if { $default_config == "PEGASUS" } {
     # We need to be DD2 or greater on p8 for the HILE HID bit.
     myconf config processor/initial/PVR 0x4b0201
+
+    if { $mconf(numa) } {
+        myconf config memory_region_id_shift 35
+    }
 }
+
 if { $default_config == "P9" } {
     # PVR configured for POWER9 DD2.0 Scale out 24 Core (ie SMT4)
     myconf config processor/initial/PVR 0x4e1200
     myconf config processor/initial/SIM_CTRL1 0xc228000400000000
+
+    if { $mconf(numa) } {
+        myconf config memory_region_id_shift 45
+    }
 }
+
+if { $mconf(numa) } {
+    myconf config memory_regions $mconf(cpus)
+}
+
 if { [info exists env(SKIBOOT_SIMCONF)] } {
     source $env(SKIBOOT_SIMCONF)
 }
@@ -257,6 +275,13 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
         set node [mysim of addchild $root_node "mambo-chip" [format %x $c]]
         mysim of addprop $node int "ibm,chip-id" $c
         mysim of addprop $node string "compatible" "ibm,mambo-chip"
+
+        if { $mconf(numa) } {
+            set shift [myconf query memory_region_id_shift]
+            set addr [format %lx [expr (1 << $shift) * $c]]
+            set node [mysim of find_device "/memory@$addr"]
+            mysim of addprop $node int "ibm,chip-id" $c
+        }
     }
 
     set reg {}
