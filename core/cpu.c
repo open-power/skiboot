@@ -766,13 +766,23 @@ void cpu_remove_node(const struct cpu_thread *t)
 void cpu_disable_all_threads(struct cpu_thread *cpu)
 {
 	unsigned int i;
+	struct dt_property *p;
 
 	for (i = 0; i <= cpu_max_pir; i++) {
 		struct cpu_thread *t = &cpu_stacks[i].cpu;
 
 		if (t->primary == cpu->primary)
 			t->state = cpu_state_disabled;
+
 	}
+
+	/* Mark this core as bad so that Linux kernel don't use this CPU. */
+	prlog(PR_DEBUG, "CPU: Mark CPU bad (PIR 0x%04x)...\n", cpu->pir);
+	p = __dt_find_property(cpu->node, "status");
+	if (p)
+		dt_del_property(cpu->node, p);
+
+	dt_add_property_string(cpu->node, "status", "bad");
 
 	/* XXX Do something to actually stop the core */
 }
