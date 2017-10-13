@@ -568,7 +568,7 @@
 	};
 
 	memory@0 {
-		phandle = <0x41>;
+		phandle = <0x45>;
 		device_type = "memory";
 		ibm,chip-id = <0x0>;
 		reg = <0x0 0x0 0x8 0x0>;
@@ -864,7 +864,7 @@
 	};
 
 	xscom@3fc0000000000 {
-		phandle = <0x42>;
+		phandle = <0x41>;
 		ibm,chip-id = <0x0>;
 		ibm,proc-chip-id = <0x0>;
 		#address-cells = <0x1>;
@@ -918,7 +918,7 @@
 		};
 
 		psihb@2010900 {
-			phandle = <0x43>;
+			phandle = <0x42>;
 			reg = <0x2010900 0x20>;
 			compatible = "ibm,power8-psihb-x", "ibm,psihb-x";
 			boot-link;
@@ -927,7 +927,7 @@
 	};
 
 	xscom@3fc0800000000 {
-		phandle = <0x44>;
+		phandle = <0x43>;
 		ibm,chip-id = <0x1>;
 		ibm,proc-chip-id = <0x1>;
 		#address-cells = <0x1>;
@@ -981,7 +981,7 @@
 		};
 
 		psihb@2010900 {
-			phandle = <0x45>;
+			phandle = <0x44>;
 			reg = <0x2010900 0x20>;
 			compatible = "ibm,power8-psihb-x", "ibm,psihb-x";
 		};

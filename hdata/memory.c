@@ -22,6 +22,7 @@
 #include <mem_region.h>
 #include <types.h>
 #include <inttypes.h>
+#include <processor.h>
 
 #include "spira.h"
 #include "hdata.h"
@@ -44,7 +45,12 @@ struct HDIF_ms_area_address_range {
 	__be32 chip;
 	__be32 mirror_attr;
 	__be64 mirror_start;
+	__be32 controller_id;
 } __packed;
+
+#define MS_CONTROLLER_MCBIST_ID(id)	GETFIELD(PPC_BITMASK32(0, 1), id)
+#define MS_CONTROLLER_MCS_ID(id)	GETFIELD(PPC_BITMASK32(4, 7), id)
+#define MS_CONTROLLER_MCA_ID(id)	GETFIELD(PPC_BITMASK32(8, 15), id)
 
 struct HDIF_ms_area_id {
 	__be16 id;
@@ -313,6 +319,121 @@ static void vpd_add_ram_area(const struct HDIF_common_hdr *msarea)
 	}
 }
 
+static void add_mca_dimm_info(struct dt_node *mca,
+			      const struct HDIF_common_hdr *msarea)
+{
+	unsigned int i;
+	const struct HDIF_child_ptr *ramptr;
+	const struct HDIF_common_hdr *ramarea;
+	const struct spira_fru_id *fru_id;
+	const struct HDIF_ram_area_id *ram_id;
+	const struct HDIF_ram_area_size *ram_area_sz;
+	struct dt_node *dimm;
+
+	ramptr = HDIF_child_arr(msarea, 0);
+	if (!CHECK_SPPTR(ramptr)) {
+		prerror("MS AREA: No RAM area at %p\n", msarea);
+		return;
+	}
+
+	for (i = 0; i < be32_to_cpu(ramptr->count); i++) {
+		ramarea = HDIF_child(msarea, ramptr, i, "RAM   ");
+		if (!CHECK_SPPTR(ramarea))
+			continue;
+
+		fru_id = HDIF_get_idata(ramarea, 0, NULL);
+		if (!fru_id)
+			continue;
+
+		/* Use Resource ID to add dimm node */
+		dimm = dt_find_by_name_addr(mca, "dimm",
+					    be16_to_cpu(fru_id->rsrc_id));
+		if (dimm)
+			continue;
+		dimm= dt_new_addr(mca, "dimm", be16_to_cpu(fru_id->rsrc_id));
+		assert(dimm);
+		dt_add_property_cells(dimm, "reg", be16_to_cpu(fru_id->rsrc_id));
+
+		/* Add location code */
+		slca_vpd_add_loc_code(dimm, be16_to_cpu(fru_id->slca_index));
+
+		/* DIMM size */
+		ram_area_sz = HDIF_get_idata(ramarea, 3, NULL);
+		if (!CHECK_SPPTR(ram_area_sz))
+			continue;
+		dt_add_property_cells(dimm, "size", be32_to_cpu(ram_area_sz->mb));
+
+		/* DIMM state */
+		ram_id = HDIF_get_idata(ramarea, 2, NULL);
+		if (!CHECK_SPPTR(ram_id))
+			continue;
+
+		if ((be16_to_cpu(ram_id->flags) & RAM_AREA_INSTALLED) &&
+		    (be16_to_cpu(ram_id->flags) & RAM_AREA_FUNCTIONAL))
+			dt_add_property_string(dimm, "status", "okay");
+		else
+			dt_add_property_string(dimm, "status", "disabled");
+	}
+}
+
+static inline void dt_add_mem_reg_property(struct dt_node *node, u64 addr)
+{
+	dt_add_property_cells(node, "#address-cells", 1);
+	dt_add_property_cells(node, "#size-cells", 0);
+	dt_add_property_cells(node, "reg", addr);
+}
+
+static void add_memory_controller(const struct HDIF_common_hdr *msarea,
+				  const struct HDIF_ms_area_address_range *arange)
+{
+	uint32_t chip_id, version;
+	uint32_t controller_id, mcbist_id, mcs_id, mca_id;
+	struct dt_node *xscom, *mcbist, *mcs, *mca;
+
+	/*
+	 * Memory hierarchy may change between processor version. Presently
+	 * its creating memory hierarchy for P9 (Nimbus) only.
+	 */
+	version = PVR_TYPE(mfspr(SPR_PVR));
+	if (version != PVR_TYPE_P9)
+		return;
+
+	chip_id = pcid_to_chip_id(be32_to_cpu(arange->chip));
+	controller_id = be32_to_cpu(arange->controller_id);
+	xscom = find_xscom_for_chip(chip_id);
+	if (!xscom) {
+		prlog(PR_WARNING,
+		      "MS AREA: Can't find XSCOM for chip %d\n", chip_id);
+		return;
+	}
+
+	mcbist_id = MS_CONTROLLER_MCBIST_ID(controller_id);
+	mcbist = dt_find_by_name_addr(xscom, "mcbist", mcbist_id);
+	if (!mcbist) {
+		mcbist = dt_new_addr(xscom, "mcbist", mcbist_id);
+		assert(mcbist);
+		dt_add_mem_reg_property(mcbist, mcbist_id);
+	}
+
+	mcs_id = MS_CONTROLLER_MCS_ID(controller_id);
+	mcs = dt_find_by_name_addr(mcbist, "mcs", mcs_id);
+	if (!mcs) {
+		mcs = dt_new_addr(mcbist, "mcs", mcs_id);
+		assert(mcs);
+		dt_add_mem_reg_property(mcs, mcs_id);
+	}
+
+	mca_id = MS_CONTROLLER_MCA_ID(controller_id);
+	mca = dt_find_by_name_addr(mcs, "mca", mca_id);
+	if (!mca) {
+		mca = dt_new_addr(mcs, "mca", mca_id);
+		assert(mca);
+		dt_add_mem_reg_property(mca, mca_id);
+	}
+
+	add_mca_dimm_info(mca, msarea);
+}
+
 static void get_msareas(struct dt_node *root,
 			const struct HDIF_common_hdr *ms_vpd)
 {
@@ -332,7 +453,7 @@ static void get_msareas(struct dt_node *root,
 		const struct HDIF_ms_area_address_range *arange;
 		const struct HDIF_ms_area_id *id;
 		const void *fruid;
-		unsigned int size, j;
+		unsigned int size, j, offset;
 		u16 flags;
 
 		msarea = HDIF_child(ms_vpd, msptr, i, "MSAREA");
@@ -372,7 +493,8 @@ static void get_msareas(struct dt_node *root,
 			return;
 		}
 
-		if (be32_to_cpu(arr->eactsz) < sizeof(*arange)) {
+		offset = offsetof(struct HDIF_ms_area_address_range, mirror_start);
+		if (be32_to_cpu(arr->eactsz) < offset) {
 			prerror("MS VPD: %p msarea #%i arange size too small!\n",
 				ms_vpd, i);
 			return;
@@ -392,6 +514,10 @@ static void get_msareas(struct dt_node *root,
 		/* This offset is from the arr, not the header! */
 		arange = (void *)arr + be32_to_cpu(arr->offset);
 		for (j = 0; j < be32_to_cpu(arr->ecnt); j++) {
+			offset = offsetof(struct HDIF_ms_area_address_range, controller_id);
+			if (be32_to_cpu(arr->eactsz) >= offset)
+				add_memory_controller(msarea, arange);
+
 			if (!add_address_range(root, id, arange))
 				return;
 			arange = (void *)arange + be32_to_cpu(arr->esize);

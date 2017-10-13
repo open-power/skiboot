@@ -1592,11 +1592,11 @@ int parse_hdat(bool is_opal)
 	/* IPL params */
 	add_iplparams();
 
-	/* Parse MS VPD */
-	memory_parse();
-
 	/* Add XSCOM node (must be before chiptod, IO and FSP) */
 	add_xscom();
+
+	/* Parse MS VPD */
+	memory_parse();
 
 	/* Add any FSPs */
 	fsp_parse();
