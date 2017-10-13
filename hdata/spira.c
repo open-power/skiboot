@@ -1046,9 +1046,15 @@ static void add_iplparams_ipl_params(const void *iplp, struct dt_node *node)
 	dt_add_property_strings(node, "cec-ipl-side",
 				(p->ipl_side & IPLPARAMS_CEC_FW_IPL_SIDE_TEMP) ?
 				"temp" : "perm");
-	dt_add_property_strings(node, "fsp-ipl-side",
-				(p->ipl_side & IPLPARAMS_FSP_FW_IPL_SIDE_TEMP) ?
-				"temp" : "perm");
+	if (proc_gen >= proc_gen_p9) {
+		dt_add_property_strings(node, "sp-ipl-side",
+					(p->ipl_side & IPLPARAMS_FSP_FW_IPL_SIDE_TEMP) ?
+					"temp" : "perm");
+	} else {
+		dt_add_property_strings(node, "fsp-ipl-side",
+					(p->ipl_side & IPLPARAMS_FSP_FW_IPL_SIDE_TEMP) ?
+					"temp" : "perm");
+	}
 	dt_add_property_cells(node, "os-ipl-mode", p->os_ipl_mode);
 	dt_add_property_strings(node, "cec-major-type",
 				p->cec_ipl_maj_type ? "hot" : "cold");
