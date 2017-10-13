@@ -319,16 +319,56 @@ static void vpd_add_ram_area(const struct HDIF_common_hdr *msarea)
 	}
 }
 
+static void vpd_parse_spd(struct dt_node *dimm, const char *spd, u32 size)
+{
+	u16 *vendor;
+	u32 *sn;
+
+	/* SPD is too small */
+	if (size < 512) {
+		prlog(PR_WARNING, "MSVPD: Invalid SPD size. "
+		      "Expected 512 bytes, got %d\n", size);
+		return;
+	}
+
+	/* Supports DDR4 format pasing only */
+	if (spd[0x2] < 0xc) {
+		prlog(PR_WARNING,
+		      "MSVPD: SPD format (%x) not supported\n", spd[0x2]);
+		return;
+	}
+
+	dt_add_property_string(dimm, "device_type", "memory-dimm-ddr4");
+
+	/* DRAM device type */
+	dt_add_property_cells(dimm, "memory-id", spd[0x2]);
+
+	/* Module revision code */
+	dt_add_property_cells(dimm, "product-version", spd[0x15d]);
+
+	/* Serial number */
+	sn = (u32 *)&spd[0x145];
+	dt_add_property_cells(dimm, "serial-number", be32_to_cpu(*sn));
+
+	/* Part number */
+	dt_add_property_nstr(dimm, "part-number", &spd[0x149], 20);
+
+	/* Module manufacturer ID */
+	vendor = (u16 *)&spd[0x140];
+	dt_add_property_cells(dimm, "manufacturer-id", be16_to_cpu(*vendor));
+}
+
 static void add_mca_dimm_info(struct dt_node *mca,
 			      const struct HDIF_common_hdr *msarea)
 {
-	unsigned int i;
+	unsigned int i, size;
 	const struct HDIF_child_ptr *ramptr;
 	const struct HDIF_common_hdr *ramarea;
 	const struct spira_fru_id *fru_id;
 	const struct HDIF_ram_area_id *ram_id;
 	const struct HDIF_ram_area_size *ram_area_sz;
 	struct dt_node *dimm;
+	const void *vpd_blob;
 
 	ramptr = HDIF_child_arr(msarea, 0);
 	if (!CHECK_SPPTR(ramptr)) {
@@ -373,6 +413,14 @@ static void add_mca_dimm_info(struct dt_node *mca,
 			dt_add_property_string(dimm, "status", "okay");
 		else
 			dt_add_property_string(dimm, "status", "disabled");
+
+		vpd_blob = HDIF_get_idata(ramarea, 1, &size);
+		if (!CHECK_SPPTR(vpd_blob))
+			continue;
+		if (vpd_valid(vpd_blob, size))
+			vpd_data_parse(dimm, vpd_blob, size);
+		else
+			vpd_parse_spd(dimm, vpd_blob, size);
 	}
 }
 
