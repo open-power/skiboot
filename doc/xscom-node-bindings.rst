@@ -26,6 +26,16 @@ Each xscom node has the following properties:
  * reg = <base-address[#parent-address-cells] size[#parent-size-cells]>
  * ibm,chip-id = gcid
  * compatible = "ibm,xscom", "ibm,power8-scom" / "ibm,power7-xscom" 
+ * ecid = <Electronic Chip ID, applicable for POWER9 onwards>
+ * wafer-id = <wafer ID, applicable for POWER9 onwards>
+ * wafer-location = <wafer location, applicable for POWER9 onwards>
+
+ECID
+----
+Electronic Chip ID (ECID) is a process by which the wafer number, chip location
+(i.e. X,Y) and other optional data items are electrically encoded directly on
+the chip. wafer-id property represents wafer number and wafer-location property
+represents chip location (both X and Y location).
 
 
 Chiplet endpoints

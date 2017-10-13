@@ -2,10 +2,10 @@ VPD (Vital Product Data)
 ========================
 
 VPD provides the information about the FRUs (Field Replaceable Unit) present in
-the system and each vpd node in the device tree represents a FRU. These node and
-their properties are specific to the FSP-based systems, passed to the skiboot in
-the form of FSP-defined HDAT structures. skiboot parses these structures and
-add respective nodes in the device tree.
+the system and each vpd node in the device tree represents a FRU. These
+properties are passed to skiboot in the form of HDAT structure. Skiboot parses
+these structures and adds respective nodes in the device tree. These properties
+are available in all system except POWER8 BMC based system.
 
 .. code-block:: dts
 
@@ -21,6 +21,8 @@ add respective nodes in the device tree.
      ibm,chip-id   = <0x0>; /* If part is a chip, Processor Id */
      size = "0032768";      /* DIMM size (applicable for DIMM VPD only) */
      ibm,memory-bus-frequency = <0x0 0x0>; /* DIMM frequency (applicable for DIMM VPD only) */
+     vendor = <vendor name> /* Vendor name */
+     build-date = <build date> /* Manufacturing build date (applicate for P9 BMC systems only) */
    };
  };
 
