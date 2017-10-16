@@ -1454,25 +1454,6 @@ static uint32_t npu2_populate_pcie_cap(struct npu2_dev *dev,
 	return start + PCICAP_EXP_SCTL2 + 8;
 }
 
-static int64_t npu2_misc_irq_request(void *dev, struct pci_cfg_reg_filter *pcrf __unused,
-			   uint32_t offset __unused, uint32_t len __unused, uint32_t *data,
-			   bool write)
-{
-	struct pci_virt_device *pvd = dev;
-	struct npu2_dev *ndev = pvd->data;
-	struct npu2 *npu2 = ndev->npu;
-
-	uint32_t idx = (ndev->index * 2) + 1;
-	uint64_t irq_bit = 1ULL << (63 - idx);
-	uint64_t reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC, NPU2_MISC_IRQ_REQUEST);
-
-	if (write)
-		npu2_write(npu2, reg, (*data ? irq_bit : 0));
-	else
-		*data = !!(npu2_read(npu2, reg) & irq_bit);
-	return OPAL_SUCCESS;
-}
-
 static uint32_t npu2_populate_vendor_cap(struct npu2_dev *dev,
 					 uint32_t start,
 					 uint32_t prev_cap)
@@ -1503,15 +1484,6 @@ static uint32_t npu2_populate_vendor_cap(struct npu2_dev *dev,
 
 	/* Link index */
 	PCI_VIRT_CFG_INIT_RO(pvd, start + 0xc, 1, dev->index);
-
-	/* Note: VENDOR_CAP_PCI_DEV_OFFSET is next at 0x0d
-	 * but it is setup later. */
-
-	/* Allow triggering of interrupts (MISC_IRQ_REQUEST) by a write to config
-	 * space: */
-	pci_virt_add_filter(pvd, start + 0xe, 1,
-	                    PCI_REG_FLAG_READ | PCI_REG_FLAG_WRITE,
-	                    npu2_misc_irq_request, NULL);
 
 	return start + VENDOR_CAP_LEN;
 }
