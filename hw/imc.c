@@ -381,7 +381,7 @@ static void disable_unavailable_units(struct dt_node *dev)
  */
 void imc_catalog_preload(void)
 {
-	uint32_t pvr = (mfspr(SPR_PVR) & ~(0xf000));
+	uint32_t pvr = (mfspr(SPR_PVR) & ~(0xf0ff));
 	int ret = OPAL_SUCCESS;
 	compress_buf_size = MAX_COMPRESSED_IMC_DTB_SIZE;
 
@@ -467,7 +467,7 @@ static void imc_dt_update_nest_node(struct dt_node *dev)
 void imc_init(void)
 {
 	void *decompress_buf = NULL;
-	uint32_t pvr = (mfspr(SPR_PVR) & ~(0xf000));
+	uint32_t pvr = (mfspr(SPR_PVR) & ~(0xf0ff));
 	struct dt_node *dev;
 	int ret;
 
