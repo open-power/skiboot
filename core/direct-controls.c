@@ -36,7 +36,10 @@
 
 #define P9_EC_PPM_SSHHYP		0x0114
 #define P9_SPECIAL_WKUP_DONE		PPC_BIT(1)
-#define P9_SPWKUP_TIMEOUT		10
+
+/* Waking may take up to 5ms for deepest sleep states. Set timeout to 100ms */
+#define P9_SPWKUP_POLL_INTERVAL		100
+#define P9_SPWKUP_TIMEOUT		100000
 
 /*
  * This implements direct control facilities of processor cores and threads
@@ -62,7 +65,7 @@ static int p9_core_set_special_wakeup(struct cpu_thread *cpu)
 		return OPAL_HARDWARE;
 	}
 
-	for (i = 0; i < P9_SPWKUP_TIMEOUT; i++) {
+	for (i = 0; i < P9_SPWKUP_TIMEOUT/P9_SPWKUP_POLL_INTERVAL; i++) {
 		if (xscom_read(chip_id, sshhyp_addr, &val)) {
 			prlog(PR_ERR, "Could not set special wakeup on %u:%u:"
 					" Unable to read PPM_SSHHYP.\n",
@@ -72,7 +75,7 @@ static int p9_core_set_special_wakeup(struct cpu_thread *cpu)
 		if (val & P9_SPECIAL_WKUP_DONE)
 			return 0;
 
-		time_wait_us(1);
+		time_wait_us(P9_SPWKUP_POLL_INTERVAL);
 	}
 
 	prlog(PR_ERR, "Could not set special wakeup on %u:%u:"
