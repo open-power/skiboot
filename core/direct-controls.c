@@ -247,10 +247,13 @@ static int dctl_clear_special_wakeup(struct cpu_thread *t)
 		return OPAL_UNSUPPORTED;
 
 	lock(&c->dctl_lock);
-	if (c->special_wakeup_count == 0)
+	if (!c->special_wakeup_count)
+		goto out;
+	if (c->special_wakeup_count == 1)
 		rc = p9_core_clear_special_wakeup(c);
 	if (!rc)
 		c->special_wakeup_count--;
+out:
 	unlock(&c->dctl_lock);
 
 	return rc;
