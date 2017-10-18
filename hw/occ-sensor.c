@@ -546,7 +546,7 @@ static const char *get_sensor_loc_string(enum occ_sensor_location loc)
 void occ_sensors_init(void)
 {
 	struct proc_chip *chip;
-	struct dt_node *sg;
+	struct dt_node *sg, *exports;
 	int occ_num = 0, i;
 
 	/* OCC inband sensors is only supported in P9 */
@@ -633,4 +633,16 @@ void occ_sensors_init(void)
 		occ_add_sensor_groups(sg, phandles, phcount, chip->id);
 		free(phandles);
 	}
+
+	if (!occ_num)
+		return;
+
+	exports = dt_find_by_path(dt_root, "/ibm,opal/firmware/exports");
+	if (!exports) {
+		prerror("OCC: dt node /ibm,opal/firmware/exports not found\n");
+		return;
+	}
+
+	dt_add_property_u64s(exports, "occ_inband_sensors", occ_sensor_base,
+			     OCC_SENSOR_DATA_BLOCK_SIZE * occ_num);
 }
