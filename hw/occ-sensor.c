@@ -598,6 +598,9 @@ void occ_sensors_init(void)
 			struct cpu_thread *c = NULL;
 			u32 handler;
 
+			if (md[i].structure_type != OCC_SENSOR_READING_FULL)
+				continue;
+
 			if (!(md[i].type & HWMON_SENSORS_MASK))
 				continue;
 
