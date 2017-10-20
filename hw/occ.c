@@ -1444,6 +1444,8 @@ static void occ_add_psr_sensors(struct dt_node *power_mgt)
 
 	dt_add_property_string(node, "compatible",
 			       "ibm,opal-power-shift-ratio");
+	dt_add_property_cells(node, "#address-cells", 1);
+	dt_add_property_cells(node, "#size-cells", 0);
 	for (i = 0; i < nr_occs; i++) {
 		struct dt_node *cnode;
 		char name[20];
@@ -1459,6 +1461,7 @@ static void occ_add_psr_sensors(struct dt_node *power_mgt)
 		snprintf(name, 20, "cpu_to_gpu_%d", chips[i].chip_id);
 		dt_add_property_string(cnode, "label", name);
 		dt_add_property_cells(cnode, "handle", handle);
+		dt_add_property_cells(cnode, "reg", chips[i].chip_id);
 	}
 }
 
