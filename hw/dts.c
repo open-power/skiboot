@@ -476,6 +476,7 @@ bool dts_sensor_create_nodes(struct dt_node *sensors)
 			dt_add_property_cells(node, "sensor-status", handler);
 			dt_add_property_string(node, "sensor-type", "temp");
 			dt_add_property_cells(node, "ibm,pir", c->pir);
+			dt_add_property_cells(node, "reg", handler);
 			dt_add_property_string(node, "label", "Core");
 			init_timer(&c->dts_timer, dts_async_read_temp, c);
 			c->dts_read_in_progress = false;
@@ -504,6 +505,7 @@ bool dts_sensor_create_nodes(struct dt_node *sensors)
 		dt_add_property_cells(node, "sensor-status", handler);
 		dt_add_property_string(node, "sensor-type", "temp");
 		dt_add_property_cells(node, "ibm,chip-id", chip_id);
+		dt_add_property_cells(node, "reg", handler);
 		dt_add_property_string(node, "label", "Centaur");
 	}
 

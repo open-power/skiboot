@@ -58,6 +58,8 @@ void sensor_init(void)
 	sensor_node = dt_new(opal_node, "sensors");
 
 	dt_add_property_string(sensor_node, "compatible", "ibm,opal-sensor");
+	dt_add_property_cells(sensor_node, "#address-cells", 1);
+	dt_add_property_cells(sensor_node, "#size-cells", 0);
 	dts_sensor_create_nodes(sensor_node);
 
 	/* Register OPAL interface */
