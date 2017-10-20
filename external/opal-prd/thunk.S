@@ -100,6 +100,7 @@ call_##name:					;\
 	CALL_THUNK(reset_pm_complex, 19)
 	CALL_THUNK(get_ipoll_events, 20)
 	CALL_THUNK(firmware_notify, 21)
+	CALL_THUNK(prepare_hbrt_update, 22)
 
 	.globl call_hbrt_init
 call_hbrt_init:
