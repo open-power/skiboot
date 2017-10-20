@@ -573,6 +573,8 @@ void occ_sensors_init(void)
 		return;
 	}
 	dt_add_property_string(sg, "compatible", "ibm,opal-sensor-group");
+	dt_add_property_cells(sg, "#address-cells", 1);
+	dt_add_property_cells(sg, "#size-cells", 0);
 
 	for_each_chip(chip) {
 		struct occ_sensor_data_header *hb;
@@ -618,6 +620,7 @@ void occ_sensors_init(void)
 
 			dt_add_property_string(node, "sensor-type", type);
 			dt_add_property_cells(node, "sensor-data", handler);
+			dt_add_property_cells(node, "reg", handler);
 
 			handler = sensor_handler(occ_num, i, SENSOR_CSM_MAX);
 			dt_add_property_cells(node, "sensor-data-max", handler);
