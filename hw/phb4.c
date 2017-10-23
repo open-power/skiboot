@@ -1795,7 +1795,6 @@ static void phb4_read_phb_status(struct phb4 *p,
 {
 	uint16_t val = 0;
 	uint32_t i;
-	uint64_t val64 = 0;
 	uint64_t *pPEST;
 
 	memset(stat, 0, sizeof(struct OpalIoPhb4ErrorData));
@@ -1905,17 +1904,13 @@ static void phb4_read_phb_status(struct phb4 *p,
 	 * resident tables.
 	 */
 	 pPEST = (uint64_t *)p->tbl_pest;
-	 val64 = PHB_IODA_AD_AUTOINC;
-	 val64 = SETFIELD(PHB_IODA_AD_TSEL, val64, IODA3_TBL_PESTA);
-	 phb4_write_reg_asb(p, PHB_IODA_ADDR, val64);
+	 phb4_ioda_sel(p, IODA3_TBL_PESTA, 0, true);
 	 for (i = 0; i < OPAL_PHB4_NUM_PEST_REGS; i++) {
 		 stat->pestA[i] = phb4_read_reg_asb(p, PHB_IODA_DATA0);
 		 stat->pestA[i] |= pPEST[2 * i];
 	 }
 
-	 val64 = PHB_IODA_AD_AUTOINC;
-	 val64 = SETFIELD(PHB_IODA_AD_TSEL, val64, IODA3_TBL_PESTB);
-	 phb4_write_reg_asb(p, PHB_IODA_ADDR, val64);
+	 phb4_ioda_sel(p, IODA3_TBL_PESTB, 0, true);
 	 for (i = 0; i < OPAL_PHB4_NUM_PEST_REGS; i++) {
 		 stat->pestB[i] = phb4_read_reg_asb(p, PHB_IODA_DATA0);
 		 stat->pestB[i] |= pPEST[2 * i + 1];
