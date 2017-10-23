@@ -2973,6 +2973,29 @@ static struct pci_slot *phb4_slot_create(struct phb *phb)
 	return slot;
 }
 
+static uint64_t phb4_get_pesta(struct phb4 *p, uint64_t pe_number)
+{
+	uint64_t pesta, *pPEST;
+
+	pPEST = (uint64_t *)p->tbl_pest;
+
+	phb4_ioda_sel(p, IODA3_TBL_PESTA, pe_number, false);
+	pesta = phb4_read_reg(p, PHB_IODA_DATA0);
+	if (pesta & IODA3_PESTA_MMIO_FROZEN)
+		pesta |= pPEST[2*pe_number];
+
+	return pesta;
+}
+
+static bool phb4_freeze_escalate(uint64_t pesta)
+{
+	if ((GETFIELD(IODA3_PESTA_TRANS_TYPE, pesta) ==
+	     IODA3_PESTA_TRANS_TYPE_MMIOLOAD) &&
+	    (pesta & (IODA3_PESTA_CA_CMPLT_TMT | IODA3_PESTA_UR)))
+		return true;
+	return false;
+}
+
 static int64_t phb4_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 				      uint8_t *freeze_state,
 				      uint16_t *pci_error_type,
@@ -3016,13 +3039,21 @@ static int64_t phb4_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 	if (severity)
 		*severity = OPAL_EEH_SEV_PE_ER;
 
-	/* Read the PESTA & PESTB */
-	phb4_ioda_sel(p, IODA3_TBL_PESTA, pe_number, false);
-	pesta = in_be64(p->regs + PHB_IODA_DATA0);
-	phb4_ioda_sel(p, IODA3_TBL_PESTB, pe_number, false);
-	pestb = in_be64(p->regs + PHB_IODA_DATA0);
+	/* Read the full PESTA */
+	pesta = phb4_get_pesta(p, pe_number);
+	/* Check if we need to escalate to fence */
+	if (phb4_freeze_escalate(pesta)) {
+		PHBERR(p, "Escalating freeze to fence PESTA[%lli]=%016llx\n",
+		       pe_number, pesta);
+		*severity = OPAL_EEH_SEV_PHB_FENCED;
+		*pci_error_type = OPAL_EEH_PHB_ERROR;
+	}
 
-	/* Convert them */
+	/* Read the PESTB in the PHB */
+	phb4_ioda_sel(p, IODA3_TBL_PESTB, pe_number, false);
+	pestb = phb4_read_reg(p, PHB_IODA_DATA0);
+
+	/* Convert PESTA/B to freeze_state */
 	if (pesta & IODA3_PESTA_MMIO_FROZEN)
 		*freeze_state |= OPAL_EEH_STOPPED_MMIO_FREEZE;
 	if (pestb & IODA3_PESTB_DMA_STOPPED)
@@ -3134,7 +3165,7 @@ static int64_t phb4_eeh_next_error(struct phb *phb,
 				   uint16_t *severity)
 {
 	struct phb4 *p = phb_to_phb4(phb);
-	uint64_t peev;
+	uint64_t peev, pesta;
 	uint32_t peev_size = p->num_pes/64;
 	int32_t i, j;
 
@@ -3201,7 +3232,15 @@ static int64_t phb4_eeh_next_error(struct phb *phb,
 			if (*first_frozen_pe != (uint64_t)(-1))
 				break;
 		}
+	}
 
+	if (*first_frozen_pe != (uint64_t)(-1)) {
+		pesta = phb4_get_pesta(p, *first_frozen_pe);
+		if (phb4_freeze_escalate(pesta)) {
+			PHBINF(p, "Escalating freeze to fence. PESTA[%lli]=%016llx\n",
+			       *first_frozen_pe, pesta);
+			p->err.err_class = PHB4_ERR_CLASS_FENCED;
+		}
 	}
 
 	switch (p->err.err_class) {
