@@ -1140,7 +1140,7 @@ static int64_t phb4_ioda_reset(struct phb *phb, bool purge)
 
 	/* Additional OPAL specific inits */
 
-	/* Clear RTT and PELTV */
+	/* Clear RTT and PELTV and PEST */
 	if (p->tbl_rtt)
 		memcpy((void *)p->tbl_rtt, p->rte_cache, RTT_TABLE_SIZE);
 	if (p->tbl_peltv)
