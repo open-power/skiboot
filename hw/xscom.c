@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,6 +284,16 @@ static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val)
 	if (xscom_is_multicast_addr(pcb_addr) && ret == OPAL_XSCOM_CHIPLET_OFF)
 		return ret;
 
+	/*
+	 * Workaround on P9: PRD does operations it *knows* will fail with this
+	 * error to work around a hardware issue where accesses via the PIB
+	 * (FSI or OCC) work as expected, accesses via the ADU (what xscom goes
+	 * through) do not. The chip logic will always return all FFs if there
+	 * is any error on the scom.
+	 */
+	if (proc_gen == proc_gen_p9 && ret == OPAL_XSCOM_CHIPLET_OFF)
+		return ret;
+
 	prerror("XSCOM: Read failed, ret =  %lld\n", ret);
 	return ret;
 }
@@ -322,6 +332,16 @@ static int __xscom_write(uint32_t gcid, uint32_t pcb_addr, uint64_t val)
 
 	/* Do not print error message for multicast SCOMS */
 	if (xscom_is_multicast_addr(pcb_addr) && ret == OPAL_XSCOM_CHIPLET_OFF)
+		return ret;
+
+	/*
+	 * Workaround on P9: PRD does operations it *knows* will fail with this
+	 * error to work around a hardware issue where accesses via the PIB
+	 * (FSI or OCC) work as expected, accesses via the ADU (what xscom goes
+	 * through) do not. The chip logic will always return all FFs if there
+	 * is any error on the scom.
+	 */
+	if (proc_gen == proc_gen_p9 && ret == OPAL_XSCOM_CHIPLET_OFF)
 		return ret;
 
 	prerror("XSCOM: Write failed, ret =  %lld\n", ret);
