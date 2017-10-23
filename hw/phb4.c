@@ -2632,7 +2632,7 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 		if (reg & PHB_PCIE_DLP_TL_LINKACT) {
 			PHBDBG(p, "LINK: Link is stable\n");
 			if (!phb4_link_optimal(slot)) {
-				PHBERR(p, "LINK: Link degraded\n");
+				PHBDBG(p, "LINK: Link degraded\n");
 				if (slot->link_retries)
 					return phb4_retry_state(slot);
 				/*
