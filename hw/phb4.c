@@ -139,7 +139,6 @@ static void phb4_init_hw(struct phb4 *p, bool first_init);
 #define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB#%04x[%d:%d]: " fmt, \
 				      (p)->phb.opal_id, (p)->chip_id, \
 				      (p)->index,  ## a)
-
 #ifdef LOG_CFG
 #define PHBLOGCFG(p, fmt, a...)	PHBDBG(p, fmt, ## a)
 #else
@@ -639,7 +638,8 @@ static void phb4_root_port_init(struct phb *phb, struct pci_device *dev,
 
 	/* Enable SERR and parity checking */
 	pci_cfg_read16(phb, bdfn, PCI_CFG_CMD, &val16);
-	val16 |= (PCI_CFG_CMD_SERR_EN | PCI_CFG_CMD_PERR_RESP);
+	val16 |= (PCI_CFG_CMD_SERR_EN | PCI_CFG_CMD_PERR_RESP |
+		  PCI_CFG_CMD_MEM_EN);
 	pci_cfg_write16(phb, bdfn, PCI_CFG_CMD, val16);
 
 	/* Enable reporting various errors */
