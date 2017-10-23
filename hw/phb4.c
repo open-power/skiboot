@@ -4900,7 +4900,7 @@ static void phb4_create(struct dt_node *np)
 	if (p->rev == PHB4_REV_NIMBUS_DD10)
 		p->max_link_speed = 2;
 	if (p->rev == PHB4_REV_NIMBUS_DD20 &&
-	    chip->ec_level == 0 && chip->ec_rev == 0)
+	    ((0xf & chip->ec_level) == 0) && chip->ec_rev == 0)
 		p->max_link_speed = 3;
 	if (dt_has_node_property(np, "ibm,max-link-speed", NULL))
 		p->max_link_speed = dt_prop_get_u32(np, "ibm,max-link-speed");
