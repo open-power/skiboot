@@ -324,13 +324,19 @@ static int64_t phb4_rc_read(struct phb4 *p, uint32_t offset, uint8_t sz,
 	case 1:
 		offset &= 3;
 		*((uint8_t *)data) = (oval >> (offset << 3)) & 0xff;
+		PHBLOGCFG(p, "000 CFG08 Rd %02x=%02x\n",
+			  offset, *((uint8_t *)data));
 		break;
 	case 2:
 		offset &= 2;
 		*((uint16_t *)data) = (oval >> (offset << 3)) & 0xffff;
+		PHBLOGCFG(p, "000 CFG16 Rd %02x=%04x\n",
+			  offset, *((uint16_t *)data));
 		break;
 	case 4:
 		*((uint32_t *)data) = oval;
+		PHBLOGCFG(p, "000 CFG32 Rd %02x=%08x\n",
+			  offset, *((uint32_t *)data));
 		break;
 	default:
 		assert(false);
@@ -417,6 +423,7 @@ static int64_t phb4_rc_write(struct phb4 *p, uint32_t offset, uint8_t sz,
 		/* Workaround PHB config space enable */
 		if ((p->rev == PHB4_REV_NIMBUS_DD10) && (reg == PCI_CFG_CMD))
 			val |= PCI_CFG_CMD_MEM_EN | PCI_CFG_CMD_BUS_MASTER_EN;
+		PHBLOGCFG(p, "000 CFG%02d Wr %02x=%08x\n", 8 * sz, reg, val);
 		if (use_asb)
 			phb4_write_reg_asb(p, PHB_RC_CONFIG_BASE + reg, val);
 		else
@@ -485,19 +492,19 @@ static int64_t phb4_pcicfg_read(struct phb4 *p, uint32_t bdfn,
 		case 1:
 			*((uint8_t *)data) =
 				in_8(p->regs + PHB_CONFIG_DATA + (offset & 3));
-			PHBLOGCFG(p, "CFG8 Rd %02x=%02x\n",
-				  offset, *((uint8_t *)data));
+			PHBLOGCFG(p, "%03x CFG08 Rd %02x=%02x\n",
+				  bdfn, offset, *((uint8_t *)data));
 			break;
 		case 2:
 			*((uint16_t *)data) =
 				in_le16(p->regs + PHB_CONFIG_DATA + (offset & 2));
-			PHBLOGCFG(p, "CFG16 Rd %02x=%04x\n",
-				  offset, *((uint16_t *)data));
+			PHBLOGCFG(p, "%03x CFG16 Rd %02x=%04x\n",
+				  bdfn, offset, *((uint16_t *)data));
 			break;
 		case 4:
 			*((uint32_t *)data) = in_le32(p->regs + PHB_CONFIG_DATA);
-			PHBLOGCFG(p, "CFG32 Rd %02x=%08x\n",
-				  offset, *((uint32_t *)data));
+			PHBLOGCFG(p, "%03x CFG32 Rd %02x=%08x\n",
+				  bdfn, offset, *((uint32_t *)data));
 			break;
 		default:
 			return OPAL_PARAMETER;
@@ -574,7 +581,7 @@ static int64_t phb4_pcicfg_write(struct phb4 *p, uint32_t bdfn,
 			return OPAL_PARAMETER;
 		}
 	}
-	PHBLOGCFG(p, "CFG%d Wr %02x=%08x\n", 8 * size, offset, data);
+	PHBLOGCFG(p, "%03x CFG%d Wr %02x=%08x\n", bdfn, 8 * size, offset, data);
 	return OPAL_SUCCESS;
 }
 
