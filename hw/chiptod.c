@@ -1478,6 +1478,7 @@ int chiptod_recover_tb_errors(void)
 {
 	uint64_t tfmr;
 	int rc = -1;
+	int thread_id;
 
 	if (chiptod_primary < 0)
 		return 0;
@@ -1503,6 +1504,17 @@ int chiptod_recover_tb_errors(void)
 	tfmr = mfspr(SPR_TFMR);
 
 	/*
+	 * Workaround for HW logic bug in Power9
+	 * Even after clearing TB residue error by one thread it does not
+	 * get reflected to other threads on same core.
+	 * Check if TB is already valid and skip the checking of TB errors.
+	 */
+
+	if ((proc_gen == proc_gen_p9) && (tfmr & SPR_TFMR_TB_RESIDUE_ERR)
+						&& (tfmr & SPR_TFMR_TB_VALID))
+		goto skip_tb_error_clear;
+
+	/*
 	 * Check for TB errors.
 	 * On Sync check error, bit 44 of TFMR is set. Check for it and
 	 * clear it.
@@ -1525,6 +1537,7 @@ int chiptod_recover_tb_errors(void)
 		}
 	}
 
+skip_tb_error_clear:
 	/*
 	 * Check for TOD sync check error.
 	 * On TOD errors, bit 51 of TFMR is set. If this bit is on then we
@@ -1557,6 +1570,20 @@ int chiptod_recover_tb_errors(void)
 		/* We have successfully able to get TB running. */
 		rc = 1;
 	}
+
+	/*
+	 * Workaround for HW logic bug in power9.
+	 * In idea case (without the HW bug) only one thread from the core
+	 * would have fallen through tfmr_recover_non_tb_errors() to clear
+	 * HDEC parity error on TFMR.
+	 *
+	 * Hence to achieve same behavior, allow only thread 0 to clear the
+	 * HDEC parity error. And for rest of the threads just reset the bit
+	 * to avoid other threads to fall through tfmr_recover_non_tb_errors().
+	 */
+	thread_id = cpu_get_thread_index(this_cpu());
+	if ((proc_gen == proc_gen_p9) && thread_id)
+		tfmr &= ~SPR_TFMR_HDEC_PARITY_ERROR;
 
 	/*
 	 * Now that TB is running, check for TFMR non-TB errors.

@@ -179,6 +179,14 @@
 /* Number of iterations for the various timeouts */
 #define TIMEOUT_LOOPS		20000000
 
+/* TFMR other errors. (other than bit 26 and 45) */
+#define SPR_TFMR_OTHER_ERRORS	\
+	(SPR_TFMR_TBST_CORRUPT | SPR_TFMR_TB_MISSING_SYNC |	\
+	 SPR_TFMR_TB_MISSING_STEP | SPR_TFMR_FW_CONTROL_ERR |	\
+	 SPR_TFMR_PURR_PARITY_ERR | SPR_TFMR_SPURR_PARITY_ERR |	\
+	 SPR_TFMR_DEC_PARITY_ERR | SPR_TFMR_TFMR_CORRUPT |	\
+	 SPR_TFMR_CHIP_TOD_INTERRUPT)
+
 static const struct core_xstop_bit_info {
 	uint8_t bit;		/* CORE FIR bit number */
 	enum OpalHMI_CoreXstopReason reason;
@@ -654,7 +662,12 @@ static void wait_for_cleanup_complete(void)
  */
 static void timer_facility_do_cleanup(uint64_t tfmr)
 {
-	if (tfmr & SPR_TFMR_TB_RESIDUE_ERR) {
+	/*
+	 * Workaround for HW logic bug in Power9. Do not reset the
+	 * TB register if TB is valid and running.
+	 */
+	if ((tfmr & SPR_TFMR_TB_RESIDUE_ERR) && !(tfmr & SPR_TFMR_TB_VALID)) {
+
 		/* Reset the TB register to clear the dirty data. */
 		mtspr(SPR_TBWU, 0);
 		mtspr(SPR_TBWL, 0);
@@ -836,6 +849,19 @@ static void pre_recovery_cleanup_p9(void)
 	lock(&hmi_lock);
 	tfmr = mfspr(SPR_TFMR);
 	if (!(tfmr & (SPR_TFMR_TB_RESIDUE_ERR | SPR_TFMR_HDEC_PARITY_ERROR))) {
+		unlock(&hmi_lock);
+		return;
+	}
+
+	/*
+	 * Due to a HW logic bug in p9, TFMR bit 26 and 45 always set
+	 * once TB residue or HDEC errors occurs at first time. Hence for HMI
+	 * on subsequent TB errors add additional check as workaround to
+	 * identify validity of the errors and decide whether pre-recovery
+	 * is required or not. Exit pre-recovery if there are other TB
+	 * errors also present on TFMR.
+	 */
+	if (tfmr & SPR_TFMR_OTHER_ERRORS) {
 		unlock(&hmi_lock);
 		return;
 	}
