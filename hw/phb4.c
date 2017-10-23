@@ -3621,7 +3621,7 @@ static void phb4_init_capp_regs(struct phb4 *p)
 static void phb4_init_capp_errors(struct phb4 *p)
 {
 	/* Init_77: TXE Error AIB Fence Enable Register */
-	out_be64(p->regs + 0x0d30,	0xdff7ff0bf7ddfff0ull);
+	out_be64(p->regs + 0x0d30,	0xdff7bf0bf7ddfff0ull);
 
 	/* Init_86: RXE_ARB Error AIB Fence Enable Register */
 	out_be64(p->regs + 0x0db0,	0xfbffd7bbfb7fbfefull);
@@ -4194,7 +4194,7 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0d08,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d18,	0xffffff0fffffffffull);
 	out_be64(p->regs + 0x0d28,	0x0000400a00000000ull);
-	out_be64(p->regs + 0x0d30,	0xdff7fd01f7ddfff0ull); /* XXX CAPI has diff. value */
+	out_be64(p->regs + 0x0d30,	0xdff7fb01f7ddfff0ull); /* XXX CAPI has diff. value */
 	out_be64(p->regs + 0x0d40,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d48,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d50,	0x0000000000000000ull);
@@ -4442,7 +4442,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 	out_be64(p->regs + PHB_TCE_SPEC_CTL,			0x0000000000000000ull);
 
 	/* Init_133 - Timeout Control Register 1 */
-	out_be64(p->regs + PHB_TIMEOUT_CTRL1,			0x0018150000200000ull);
+	out_be64(p->regs + PHB_TIMEOUT_CTRL1,			0x0018150000160000ull);
 
 	/* Init_134 - Timeout Control Register 2 */
 	out_be64(p->regs + PHB_TIMEOUT_CTRL2,			0x0000181700000000ull);
