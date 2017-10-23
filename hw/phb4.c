@@ -3187,16 +3187,6 @@ static int64_t phb4_eeh_next_error(struct phb *phb,
 	 * for the case.
 	 */
 	if (p->err.err_class == PHB4_ERR_CLASS_ER) {
-#if 0
-		// FIXME XXXXX
-		fir = phb4_read_reg_asb(p, PHB_LEM_FIR_ACCUM);
-		if (fir & PPC_BIT(60)) {
-			phb4_pcicfg_read32(&p->phb, 0,
-					   p->aercap + PCIECAP_AER_UE_STATUS, &cfg32);
-			if (cfg32 & PCIECAP_AER_UE_MALFORMED_TLP)
-				p->err.err_class = PHB4_ERR_CLASS_FENCED;
-		}
-#endif
 	}
 
 	switch (p->err.err_class) {
