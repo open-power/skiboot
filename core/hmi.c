@@ -152,6 +152,7 @@
 #define CORE_THREAD_MASK	0x0ff
 #define SUBCORE_THREAD_MASK(s_id, t_count) \
 		((((1UL) << (t_count)) - 1) << ((s_id) * (t_count)))
+#define SINGLE_THREAD_MASK(t_id)	((1UL) << (t_id))
 
 /* xscom addresses for core FIR (Fault Isolation Register) */
 #define P8_CORE_FIR		0x10013100
@@ -619,7 +620,7 @@ static void decode_malfunction(struct OpalHMIEvent *hmi_evt)
 	}
 }
 
-static void wait_for_subcore_threads(void)
+static void wait_for_cleanup_complete(void)
 {
 	uint64_t timeout = 0;
 
@@ -696,7 +697,7 @@ static int get_split_core_mode(void)
  *	- SPR_TFMR_TB_RESIDUE_ERR
  *	- SPR_TFMR_HDEC_PARITY_ERROR
  */
-static void pre_recovery_cleanup(void)
+static void pre_recovery_cleanup_p8(void)
 {
 	uint64_t hmer;
 	uint64_t tfmr;
@@ -783,7 +784,105 @@ static void pre_recovery_cleanup(void)
 	unlock(&hmi_lock);
 
 	/* Wait for other subcore to complete the cleanup. */
-	wait_for_subcore_threads();
+	wait_for_cleanup_complete();
+}
+
+/*
+ * Certain TB/HDEC errors leaves dirty data in timebase and hdec register
+ * which need to cleared before we initiate clear_tb_errors through TFMR[24].
+ * The cleanup has to be done by all the threads from core in p9.
+ *
+ * On TB/HDEC errors, all 4 threads on the affected receives HMI. On power9,
+ * every thread on the core has its own copy of TB and hence every thread
+ * has to clear the dirty data from its own TB register before we clear tb
+ * errors through TFMR[24]. The HMI recovery would fail even if one thread
+ * do not cleanup the respective TB/HDEC register.
+ *
+ * There is no split core mode in power9.
+ *
+ * Errors that required pre-recovery cleanup:
+ *	- SPR_TFMR_TB_RESIDUE_ERR
+ *	- SPR_TFMR_HDEC_PARITY_ERROR
+ */
+static void pre_recovery_cleanup_p9(void)
+{
+	uint64_t hmer;
+	uint64_t tfmr;
+	int threads_per_core = cpu_thread_count;
+	int i;
+
+	hmer = mfspr(SPR_HMER);
+
+	/* exit if it is not Time facility error. */
+	if (!(hmer & SPR_HMER_TFAC_ERROR))
+		return;
+
+	/*
+	 * Exit if it is not the error that leaves dirty data in timebase
+	 * or HDEC register. OR this may be the thread which came in very
+	 * late and recovery is been already done.
+	 *
+	 * TFMR is per core register. Ideally if any one thread on the core
+	 * does the recovery it should reflect in TFMR register and
+	 * applicable to all threads in that core. Hence take a lock before
+	 * checking TFMR errors. Once a thread from a core completes the
+	 * recovery, all other threads on that core will return from
+	 * here.
+	 *
+	 * If TFMR does not show error that we are looking for, return
+	 * from here. We would just fall through recovery code which would
+	 * check for other errors on TFMR and fix them.
+	 */
+	lock(&hmi_lock);
+	tfmr = mfspr(SPR_TFMR);
+	if (!(tfmr & (SPR_TFMR_TB_RESIDUE_ERR | SPR_TFMR_HDEC_PARITY_ERROR))) {
+		unlock(&hmi_lock);
+		return;
+	}
+
+	/*
+	 * First thread on the core ?
+	 * if yes, setup the hmi cleanup state to !DONE
+	 */
+	if ((*(this_cpu()->core_hmi_state_ptr) & CORE_THREAD_MASK) == 0)
+		*(this_cpu()->core_hmi_state_ptr) &= ~HMI_STATE_CLEANUP_DONE;
+
+	/*
+	 * Clear TB and wait for other threads to finish its cleanup work.
+	 */
+	timer_facility_do_cleanup(tfmr);
+
+	/*
+	 * Mark this thread bit. This bit will stay on until this thread
+	 * exit from handle_hmi_exception().
+	 */
+	*(this_cpu()->core_hmi_state_ptr) |= this_cpu()->thread_mask;
+
+	/*
+	 * Check if each thread has completed the cleanup work.
+	 * if yes, then notify all the threads that we are done with cleanup.
+	 */
+	for (i = 0; i < threads_per_core; i++) {
+		uint32_t thread_mask = SINGLE_THREAD_MASK(i);
+		if (!(*(this_cpu()->core_hmi_state_ptr) & thread_mask))
+			break;
+	}
+
+	if (i == threads_per_core)
+		*(this_cpu()->core_hmi_state_ptr) |= HMI_STATE_CLEANUP_DONE;
+
+	unlock(&hmi_lock);
+
+	/* Wait for other threads to complete the cleanup. */
+	wait_for_cleanup_complete();
+}
+
+static void pre_recovery_cleanup(void)
+{
+	if (proc_gen == proc_gen_p9)
+		return pre_recovery_cleanup_p9();
+	else
+		return pre_recovery_cleanup_p8();
 }
 
 static void hmi_exit(void)
