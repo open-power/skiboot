@@ -3189,6 +3189,19 @@ static int64_t phb4_eeh_next_error(struct phb *phb,
 	 * for the case.
 	 */
 	if (p->err.err_class == PHB4_ERR_CLASS_ER) {
+		for (i = peev_size - 1; i >= 0; i--) {
+			phb4_ioda_sel(p, IODA3_TBL_PEEV, i, false);
+			peev = in_be64(p->regs + PHB_IODA_DATA0);
+			for (j = 0; j < 64; j++) {
+				if (peev & PPC_BIT(j)) {
+					*first_frozen_pe = i * 64 + j;
+					break;
+				}
+			}
+			if (*first_frozen_pe != (uint64_t)(-1))
+				break;
+		}
+
 	}
 
 	switch (p->err.err_class) {
@@ -3203,20 +3216,6 @@ static int64_t phb4_eeh_next_error(struct phb *phb,
 	case PHB4_ERR_CLASS_ER:
 		*pci_error_type = OPAL_EEH_PE_ERROR;
 		*severity = OPAL_EEH_SEV_PE_ER;
-
-		for (i = peev_size - 1; i >= 0; i--) {
-			phb4_ioda_sel(p, IODA3_TBL_PEEV, i, false);
-			peev = in_be64(p->regs + PHB_IODA_DATA0);
-			for (j = 0; j < 64; j++) {
-				if (peev & PPC_BIT(j)) {
-					*first_frozen_pe = i * 64 + j;
-					break;
-				}
-			}
-
-			if (*first_frozen_pe != (uint64_t)(-1))
-				break;
-		}
 
 		/* No frozen PE ? */
 		if (*first_frozen_pe == (uint64_t)-1) {
