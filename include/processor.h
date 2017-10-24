@@ -44,6 +44,7 @@
 #define SPR_PIR_P7_MASK		0x03ff	/* Mask of implemented bits */
 
 /* SPR register definitions */
+#define SPR_DSCR	0x011	/* RW: Data stream control reg */
 #define SPR_DSISR	0x012	/* RW: Data storage interrupt status reg */
 #define SPR_DAR		0x013	/* RW: Data address reg */
 #define SPR_DEC		0x016	/* RW: Decrement Register */

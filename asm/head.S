@@ -782,7 +782,7 @@ init_replicated_sprs:
 	cmpwi	cr0,%r3,PVR_TYPE_P8NVL
 	beq	3f
 	cmpwi	cr0,%r3,PVR_TYPE_P9
-	beq	3f
+	beq	4f
 	/* Unsupported CPU type... what do we do ? */
 	b	9f
 
@@ -792,14 +792,30 @@ init_replicated_sprs:
 	mtspr	SPR_LPCR, %r3
 	sync
 	isync
-	b 9f
+	LOAD_IMM64(%r3,0x0)
+	mtspr	SPR_DSCR,%r3
+	b	9f
 
-3:	/* P8, P8E, P9 */
+3:	/* P8, P8E */
 	/* LPCR: sane value */
 	LOAD_IMM64(%r3,0x0040000000000000)
 	mtspr	SPR_LPCR, %r3
 	sync
 	isync
+	LOAD_IMM64(%r3,0x0)
+	mtspr	SPR_DSCR,%r3
+	b	9f
+
+4:	/* P9 */
+	/* LPCR: sane value */
+	LOAD_IMM64(%r3,0x0040000000000000)
+	mtspr	SPR_LPCR, %r3
+	sync
+	isync
+	/* DSCR: Stride-N Stream Enable */
+	LOAD_IMM64(%r3,0x0000000000000010)
+	mtspr	SPR_DSCR,%r3
+
 9:	blr
 
 	.global enter_nap
