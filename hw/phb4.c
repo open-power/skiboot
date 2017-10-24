@@ -3546,7 +3546,7 @@ static int64_t phb4_get_capp_info(int chip_id, struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
-static void phb4_init_capp_regs(struct phb4 *p)
+static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 {
 	uint64_t reg;
 	uint32_t offset;
@@ -3559,8 +3559,7 @@ static void phb4_init_capp_regs(struct phb4 *p)
 	reg |= PPC_BIT(3); /* disable vg not sys */
 	if (p->rev == PHB4_REV_NIMBUS_DD10) {
 		reg |= PPC_BIT(1);
-	}
-	if (p->rev == PHB4_REV_NIMBUS_DD20) {
+	} else {
 		reg |= PPC_BIT(2); /* disable nn rn */
 		reg |= PPC_BIT(4); /* disable g */
 		reg |= PPC_BIT(5); /* disable ln */
@@ -3592,16 +3591,37 @@ static void phb4_init_capp_regs(struct phb4 *p)
 	if (p->index == CAPP0_PHB_INDEX) {
 		reg |= PPC_BIT(1); /* Send Packet Timer Value */
 		reg |= PPC_BITMASK(10, 13); /* Send Packet Timer Value */
+		reg &= ~PPC_BITMASK(14, 17); /* Set Max LPC CI store buffer to zeros */
 		reg &= ~PPC_BITMASK(18, 21); /* Set Max tlbi divider */
+		if (capp_eng & CAPP_MIN_STQ_ENGINES) {
+			/* 2 CAPP msg engines */
+			reg |= PPC_BIT(58);
+			reg |= PPC_BIT(59);
+			reg |= PPC_BIT(60);
+		}
+		if (capp_eng & CAPP_MAX_STQ_ENGINES) {
+			/* 14 CAPP msg engines */
+			reg |= PPC_BIT(60);
+		}
 		reg |= PPC_BIT(62);
 	}
 	if (p->index == CAPP1_PHB_INDEX) {
 		reg |= PPC_BIT(4); /* Send Packet Timer Value */
-		reg |= PPC_BIT(11); /* Set CI Store Buffer Threshold=5 */
-		reg |= PPC_BIT(13); /* Set CI Store Buffer Threshold=5 */
+		reg &= ~PPC_BIT(10); /* Set CI Store Buffer Threshold=5 */
+		reg |= PPC_BIT(11);  /* Set CI Store Buffer Threshold=5 */
+		reg &= ~PPC_BIT(12); /* Set CI Store Buffer Threshold=5 */
+		reg |= PPC_BIT(13);  /* Set CI Store Buffer Threshold=5 */
+		reg &= ~PPC_BITMASK(14, 17); /* Set Max LPC CI store buffer to zeros */
+		if (capp_eng & CAPP_MIN_STQ_ENGINES) {
+			/* 2 CAPP msg engines */
+			reg |= PPC_BIT(59);
+			reg |= PPC_BIT(60);
+		}
+		if (capp_eng & CAPP_MAX_STQ_ENGINES) {
+			/* 6 CAPP msg engines */
+			reg |= PPC_BIT(60);
+		}
 	}
-	reg &= ~PPC_BITMASK(14, 17); /* Set Max LPC CI store buffer to zeros */
-	reg |= PPC_BIT(60); /* Set lowest CI Store buffer used bits */
 	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, reg);
 
 	/* Initialize CI Store Buffers */
@@ -3617,7 +3637,7 @@ static void phb4_init_capp_regs(struct phb4 *p)
 	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP + offset,
 		    0x08020A0000000000);
 
-	if (p->rev == PHB4_REV_NIMBUS_DD20) {
+	if (!(p->rev == PHB4_REV_NIMBUS_DD10)) {
 		/* Flush SUE uOP1 Register */
 		xscom_write(p->chip_id, FLUSH_SUE_UOP1 + offset,
 			    0xDCE0280428000000);
@@ -3625,17 +3645,20 @@ static void phb4_init_capp_regs(struct phb4 *p)
 
 	/* capp owns PHB read buffers */
 	if (p->index == CAPP0_PHB_INDEX) {
-		xscom_write(p->chip_id, APC_FSM_READ_MASK + offset,
-			    0xFFFFFFFFFFFF0000);
-		xscom_write(p->chip_id, XPT_FSM_RMM + offset,
-			    0xFFFFFFFFFFFF0000);
+		/* max PHB read buffers 0-47 */
+		reg = 0xFFFFFFFFFFFF0000;
+		if (capp_eng & CAPP_MAX_DMA_READ_ENGINES)
+			reg = 0xFF00000000000000;
+		xscom_write(p->chip_id, APC_FSM_READ_MASK + offset, reg);
+		xscom_write(p->chip_id, XPT_FSM_RMM + offset, reg);
 	}
 	if (p->index == CAPP1_PHB_INDEX) {
 		/* Set 30 Read machines for CAPP Minus 20-27 for DMA */
-		xscom_write(p->chip_id, APC_FSM_READ_MASK + offset,
-			    0xFFFFF00E00000000);
-		xscom_write(p->chip_id, XPT_FSM_RMM + offset,
-			    0xFFFFF00E00000000);
+		reg = 0xFFFFF00E00000000;
+		if (capp_eng & CAPP_MAX_DMA_READ_ENGINES)
+			reg = 0xFF00000000000000;
+		xscom_write(p->chip_id, APC_FSM_READ_MASK + offset, reg);
+		xscom_write(p->chip_id, XPT_FSM_RMM + offset, reg);
 	}
 
 	/* CAPP FIR Action 0 */
@@ -3692,9 +3715,10 @@ static void phb4_init_capp_errors(struct phb4 *p)
  *             = 000000C0 for Stack2
  */
 static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
-				enum capi_dma_tvt dma_tvt)
+				enum capi_dma_tvt dma_tvt,
+				uint32_t capp_eng)
 {
-	uint64_t reg, start_addr, end_addr;
+	uint64_t reg, start_addr, end_addr, stq_eng, dma_eng;
 	int i;
 
 	/* CAPP Control Register */
@@ -3718,28 +3742,31 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 	}
 
 	/* CAPP Control Register. Enable CAPP Mode */
+	reg = 0x8000000000000000ULL; /* PEC works in CAPP Mode */
 	if (p->index == CAPP0_PHB_INDEX) {
-		/* PBCQ is operating as a x16 stack the maximum number
-		 * of engines give to CAPP will be 14 and will be
-		 * assigned in the order of STQ 15 to 2
+		/* PBCQ is operating as a x16 stack
+		 * - The maximum number of engines give to CAPP will be
+		 * 14 and will be assigned in the order of STQ 15 to 2.
+		 * - 0-47 (Read machines) are available for capp use.
 		 */
-		/* PBCQ is operating as a x16 stack engines 0-47 are
-		 * available for capp use.
-		 * Set 48 Read machines for CAPP
-		 */
-		reg = 0x800EFFFFFFFFFFFFULL;
+		stq_eng = 0x000E000000000000ULL; /* 14 CAPP msg engines */
+		dma_eng = 0x0000FFFFFFFFFFFFULL; /* 48 CAPP Read machines */
 	}
 	if (p->index == CAPP1_PHB_INDEX) {
-		/* PBCQ is operating as a x8 stack the maximum number of
-		 * engines given to CAPP should be 6 and will be
-		 * assigned in the order of 7 to 2.
+		/* PBCQ is operating as a x8 stack
+		 * - The maximum number of engines given to CAPP should
+		 * be 6 and will be assigned in the order of 7 to 2.
+		 * - 0-30 (Read machines) are available for capp use.
 		 */
-		/* PBCQ is operating as a x8 stack the only engines
-		 * 0-30 are available for capp use.
-		 * Set 30 Read machines, minus 20-27 for DMA
-		 */
-		reg = 0x8006FFFFF00E0000ULL;
+		stq_eng = 0x0006000000000000ULL; /* 6 CAPP msg engines */
+		dma_eng = 0x0000FFFFF00E0000ULL; /* 30 Read machines for CAPP Minus 20-27 for DMA */
 	}
+	if (capp_eng & CAPP_MIN_STQ_ENGINES)
+		stq_eng = 0x0002000000000000ULL; /* 2 capp msg engines */
+	reg |= stq_eng;
+	if (capp_eng & CAPP_MAX_DMA_READ_ENGINES)
+		dma_eng = 0x0000FF0000000000ULL; /* 16 CAPP Read machines */
+	reg |= dma_eng;
 	xscom_write(p->chip_id, p->pe_xscom + XPEC_NEST_CAPP_CNTL, reg);
 
 	/* PCI to PB data movement ignores the PB init signal.
@@ -3872,7 +3899,7 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 
 	phb4_init_capp_errors(p);
 
-	phb4_init_capp_regs(p);
+	phb4_init_capp_regs(p, capp_eng);
 
 	if (!chiptod_capp_timebase_sync(p->chip_id, CAPP_TFMR,
 					CAPP_TB,
@@ -3920,14 +3947,18 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 		return OPAL_UNSUPPORTED;
 
 	case OPAL_PHB_CAPI_MODE_CAPI:
-		return enable_capi_mode(p, pe_number, CAPI_DMA_TVT0);
+		return enable_capi_mode(p, pe_number, CAPI_DMA_TVT0,
+					CAPP_MAX_STQ_ENGINES |
+					CAPP_MIN_DMA_READ_ENGINES);
 
 	case OPAL_PHB_CAPI_MODE_DMA:
 		/* shouldn't be called, enabled by default on p9 */
 		return OPAL_UNSUPPORTED;
 
 	case OPAL_PHB_CAPI_MODE_DMA_TVT1:
-		return enable_capi_mode(p, pe_number, CAPI_DMA_TVT1);
+		return enable_capi_mode(p, pe_number, CAPI_DMA_TVT1,
+					CAPP_MIN_STQ_ENGINES |
+					CAPP_MAX_DMA_READ_ENGINES);
 
 	case OPAL_PHB_CAPI_MODE_SNOOP_OFF:
 		/* shouldn't be called */
