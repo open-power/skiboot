@@ -2840,10 +2840,6 @@ static int64_t phb4_creset(struct pci_slot *slot)
 	case PHB4_SLOT_CRESET_START:
 		PHBDBG(p, "CRESET: Starts\n");
 
-		/* capp recovery */
-		if (p->flags & PHB4_CAPP_RECOVERY)
-			do_capp_recovery_scoms(p);
-
 		phb4_prepare_link_change(slot, false);
 		/* Clear error inject register, preventing recursive errors */
 		xscom_write(p->chip_id, p->pe_xscom + 0x2, 0x0);
@@ -2879,6 +2875,10 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		slot->retries = 500;
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
 	case PHB4_SLOT_CRESET_WAIT_CQ:
+		/* capp recovery */
+		if (p->flags & PHB4_CAPP_RECOVERY)
+			do_capp_recovery_scoms(p);
+
 		// Wait until operations are complete
 		xscom_read(p->chip_id, p->pe_stk_xscom + 0xc, &pbcq_status);
 		if (!(pbcq_status & 0xC000000000000000)) {
