@@ -190,6 +190,7 @@ struct p8_i2c_master {
 	struct lock		lock;		/* Lock to guard the members */
 	enum p8_i2c_master_type	type;		/* P8 vs. Centaur */
 	uint64_t		start_time;	/* Request start time */
+	uint64_t		last_update;
 	uint64_t		poll_interval;	/* Polling interval  */
 	uint64_t		byte_timeout;	/* Timeout per byte */
 	uint64_t		xscom_base;	/* xscom base of i2cm */
@@ -234,6 +235,17 @@ struct p8_i2c_request {
 };
 
 static int occ_i2c_unlock(struct p8_i2c_master *master);
+
+
+static int64_t i2cm_read_reg(struct p8_i2c_master *m, int reg, uint64_t *val)
+{
+	return xscom_read(m->chip_id, m->xscom_base + reg, val);
+}
+
+static int64_t i2cm_write_reg(struct p8_i2c_master *m, int reg, uint64_t val)
+{
+	return xscom_write(m->chip_id, m->xscom_base + reg, val);
+}
 
 static void p8_i2c_print_debug_info(struct p8_i2c_master_port *port,
 				    struct i2c_request *req, uint64_t end_time)
@@ -350,6 +362,17 @@ static int p8_i2c_enable_irqs(struct p8_i2c_master *master)
 		prlog(PR_ERR, "I2C: Failed to enable the interrupts\n");
 
 	return rc;
+}
+
+static void p8_i2c_reset_timeout(struct p8_i2c_master *master,
+		struct i2c_request *req)
+{
+	struct p8_i2c_request *request;
+	uint64_t now = mftb();
+
+	master->last_update = now;
+	request = container_of(req, struct p8_i2c_request, req);
+	schedule_timer_at(&master->timeout, now + request->timeout);
 }
 
 static int p8_i2c_prog_watermark(struct p8_i2c_master *master)
@@ -795,10 +818,13 @@ static void p8_i2c_status_data_request(struct p8_i2c_master *master,
 				 "state %d in data req !\n", master->state);
 		rc = OPAL_WRONG_STATE;
 	}
-	if (rc)
+
+	if (rc) {
 		p8_i2c_complete_request(master, req, rc);
-	else
+	} else {
 		p8_i2c_enable_irqs(master);
+		p8_i2c_reset_timeout(master, req);
+	}
 }
 
 static void p8_i2c_complete_offset(struct p8_i2c_master *master,
@@ -848,6 +874,7 @@ static void p8_i2c_complete_offset(struct p8_i2c_master *master,
 
 	/* Enable the interrupts */
 	p8_i2c_enable_irqs(master);
+	p8_i2c_reset_timeout(master, req);
 	return;
 
  complete:
@@ -886,72 +913,61 @@ static void p8_i2c_status_cmd_completion(struct p8_i2c_master *master,
 	p8_i2c_complete_request(master, req, rc);
 }
 
-static void  p8_i2c_check_status(struct p8_i2c_master *master, bool timeout)
+static void p8_i2c_check_status(struct p8_i2c_master *master)
 {
 	struct p8_i2c_master_port *port;
+	struct p8_i2c_request *request;
+	uint64_t status, deadline, now;
 	struct i2c_request *req;
-	uint64_t status, now = mftb();
 	int rc;
 
-	/* If we are idle, just return, we'll catch error conditions
-	 * when we next try to enqueue a request
+	/*
+	 * When idle or waiting for the occ to release the bus there's
+	 * nothing to check. Error states are handled when starting
+	 * a new request.
 	 */
 	if (master->state == state_idle || master->state == state_occache_dis)
 		return;
 
-	/* Read status register */
-	rc = xscom_read(master->chip_id, master->xscom_base + I2C_STAT_REG,
-			&status);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Failed "
-				 "to read the STAT_REG\n");
+	/* A non-idle master should always have a pending request */
+	req = list_top(&master->req_list, struct i2c_request, link);
+	if (!req) {
+		prerror("I2C: Master is not idle and has no pending request\n");
 		return;
 	}
 
-	/* Nothing happened ? Go back */
-	if (!timeout && !(status & (I2C_STAT_ANY_ERR | I2C_STAT_DATA_REQ |
-			I2C_STAT_CMD_COMP)))
+	rc = i2cm_read_reg(master, I2C_STAT_REG, &status);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
+			"I2C: Failed to read the STAT_REG\n");
 		return;
-
-	DBG("Non-0 status: %016llx\n", status);
+	}
 
 	/* Mask the interrupts for this engine */
-	rc = xscom_write(master->chip_id, master->xscom_base + I2C_INTR_REG,
-			 ~I2C_INTR_ALL);
+	rc = i2cm_write_reg(master, I2C_INTR_REG, ~I2C_INTR_ALL);
 	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Failed "
-				 "to disable the interrupts\n");
-		return;
-	}
-
-	/* No request ? That's not normal ! Bail out without re-enabling
-	 * the interrupt
-	 */
-	req = list_top(&master->req_list, struct i2c_request, link);
-	if (req == NULL) {
 		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
-				 "I2C: Interrupt with no request"
-				 ", status=0x%016llx\n", status);
+			"I2C: Failed to disable the interrupts\n");
 		return;
 	}
 
 	/* Get port for current request */
 	port = container_of(req->bus, struct p8_i2c_master_port, bus);
+	now = mftb();
 
-	/* Handle the status in that order: errors, data requests and
-	 * command completion.
-	 */
-	if (status & I2C_STAT_ANY_ERR) {
-		/* Mask status to avoid some unrelated bit overwriting
-		 * our pseudo-status "timeout" bit 63
-		 */
+	request = container_of(req, struct p8_i2c_request, req);
+	deadline = master->last_update + request->timeout;
+
+	if (status & I2C_STAT_ANY_ERR)
 		p8_i2c_status_error(port, req, status & I2C_STAT_ANY_ERR, now);
-	} else if (status & I2C_STAT_DATA_REQ)
+	else if (status & I2C_STAT_DATA_REQ)
 		p8_i2c_status_data_request(master, req, status);
 	else if (status & I2C_STAT_CMD_COMP)
 		p8_i2c_status_cmd_completion(master, req, now);
-	else if (timeout)
+	else if (tb_compare(now, deadline) == TB_AAFTERB)
 		p8_i2c_status_error(port, req, I2C_STAT_PSEUDO_TIMEOUT, now);
+	else
+		p8_i2c_enable_irqs(master);
 }
 
 static int p8_i2c_check_initial_status(struct p8_i2c_master_port *port)
@@ -1129,8 +1145,8 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	struct p8_i2c_master_port *port;
 	struct p8_i2c_request *request =
 		container_of(req, struct p8_i2c_request, req);
-	uint64_t cmd, now, poll_interval;
-	int64_t rc, tbytes;
+	uint64_t cmd, poll_interval;
+	int64_t rc;
 
 	DBG("Starting req %d len=%d addr=%02x (offset=%x)\n",
 	    req->op, req->rw_len, req->dev_addr, req->offset);
@@ -1259,18 +1275,14 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 		poll_interval = TIMER_POLL;
 	else
 		poll_interval = master->poll_interval;
-	now = schedule_timer(&master->poller, poll_interval);
+	schedule_timer(&master->poller, poll_interval);
 
-	/* Calculate and start timeout */
-	if (request->timeout) {
-		request->timeout += now;
-	} else {
-		tbytes = req->rw_len + req->offset_bytes + 2;
-		request->timeout = now + tbytes * master->byte_timeout;
-	}
+	/* If we don't have a user-set timeout then use the master's default */
+	if (!request->timeout)
+		request->timeout = master->byte_timeout;
 
 	/* Start the timeout */
-	schedule_timer_at(&master->timeout, request->timeout);
+	p8_i2c_reset_timeout(master, req);
 
 	return OPAL_SUCCESS;
 }
@@ -1313,7 +1325,7 @@ void p9_i2c_bus_owner_change(u32 chip_id)
 		master->state = state_idle;
 
 		p8_i2c_check_work(master);
-		p8_i2c_check_status(master, false);
+		p8_i2c_check_status(master);
 done:
 		unlock(&master->lock);
 	}
@@ -1388,7 +1400,7 @@ static uint64_t p8_i2c_run_request(struct i2c_request *req)
 	uint64_t poll_interval = 0;
 
 	lock(&master->lock);
-	p8_i2c_check_status(master, false);
+	p8_i2c_check_status(master);
 	p8_i2c_check_work(master);
 	poll_interval = master->poll_interval;
 	unlock(&master->lock);
@@ -1414,51 +1426,23 @@ static inline uint64_t p8_i2c_get_poll_interval(uint32_t bus_speed)
 	return usecs_to_tb(usec);
 }
 
-static void p8_i2c_timeout(struct timer *t __unused, void *data, uint64_t now)
+static void p8_i2c_timeout(struct timer *t __unused, void *data,
+		uint64_t __unused now)
 {
-	struct p8_i2c_master_port *port;
 	struct p8_i2c_master *master = data;
-	struct p8_i2c_request *request;
-	struct i2c_request *req;
 
 	lock(&master->lock);
 
-	/* This could be spurrious ... */
-	if (master->state == state_idle) {
-		DBG("I2C: Timeout in idle state\n");
-		goto exit;
-	}
-
-	/* We might still be spurrious timer, we need to ensure that the
-	 * head request is indeed old enough to be the one timing out
-	 */
-	req = list_top(&master->req_list, struct i2c_request, link);
-	if (req == NULL) {
-		DBG("I2C: Timeout with no"
-		    " pending request state=%d\n", master->state);
-		goto exit;
-	}
-	request = container_of(req, struct p8_i2c_request, req);
-	if (tb_compare(now, request->timeout) == TB_ABEFOREB) {
-		DBG("I2C: Timeout with request not expired\n");
-		goto exit;
-	}
-
-	request->timeout = 0ul;
-	port = container_of(req->bus, struct p8_i2c_master_port, bus);
-
-	DBG("timeout on c%de%d\n",
-		master->chip_id, master->engine_id);
+	DBG("timeout on c%de%d\n", master->chip_id, master->engine_id);
 
 	/*
-	 * Run through the usual path with timeout checking. The command might
-	 * have been completed successfully and we just lost an interrupt
-	 * somewhere.
+	 * Run through the usual status checks. It's possible to get spurious
+	 * timeouts due to races between the interrupt/poller paths and the
+	 * timeout handler. So we do all the checking, all the time.
 	 */
-	p8_i2c_check_status(port->master, true);
-	p8_i2c_check_work(port->master);
+	p8_i2c_check_status(master);
+	p8_i2c_check_work(master);
 
- exit:
 	unlock(&master->lock);
 }
 
@@ -1531,7 +1515,7 @@ static void p8_i2c_poll(struct timer *t __unused, void *data, uint64_t now)
 		return;
 
 	lock(&master->lock);
-	p8_i2c_check_status(master, false);
+	p8_i2c_check_status(master);
 	if (master->state != state_idle)
 		schedule_timer_at(&master->poller, now + master->poll_interval);
 	p8_i2c_check_work(master);
@@ -1553,7 +1537,7 @@ void p8_i2c_interrupt(uint32_t chip_id)
 		lock(&master->lock);
 
 		/* Run the state machine */
-		p8_i2c_check_status(master, false);
+		p8_i2c_check_status(master);
 
 		/* Check for new work */
 		p8_i2c_check_work(master);
