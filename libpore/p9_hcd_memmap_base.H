@@ -56,7 +56,7 @@ HCD_CONST64(PPMR_MAGIC_NUMBER,                  ULL(0x50504d525f312e30))  // PPM
 HCD_CONST64(PGPE_MAGIC_NUMBER,                  ULL(0x504750455F312E30))  // PGPE_1.0
 
 HCD_CONST(CME_BUILD_VERSION,                    0x001) // CME__1.0
-HCD_CONST(SGPE_BUILD_VERSION,                   0x001) // SGPE_1.0
+HCD_CONST(SGPE_BUILD_VERSION,                   0x002) // SGPE_1.0
 HCD_CONST(PGPE_BUILD_VERSION,                   0x001) // PGPE_1.0
 
 HCD_CONST64(CPMR_MAGIC_NUMBER_BASE,                  ULL(0x43504d525f302e30))  // CPMR_0.0
@@ -414,7 +414,6 @@ HCD_CONST(CME_TRACE_REGION_SIZE,                (16 * ONE_KB))
 HCD_CONST(CPMR_TRACE_REGION_SIZE,               (CME_TRACE_REGION_SIZE* MAX_CMES_PER_CHIP)) // 192K
 HCD_CONST(CPMR_DEBUG_REGION_OFFSET,             CPMR_TRACE_REGION_OFFSET + CPMR_TRACE_REGION_SIZE)
 HCD_CONST(CPMR_DEBUG_REGION_SIZE,               (64 * ONE_KB)) // 192K + 64K = 256K
-
 
 
 //---------------------------------------------------------------------------------------
