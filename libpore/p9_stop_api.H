@@ -117,6 +117,15 @@ typedef enum
     P9_STOP_SECTION_MAX         = 5
 } ScomSection_t;
 
+/**
+ * @brief   versions pertaining relvant to STOP API.
+ */
+typedef enum
+{
+    STOP_API_VER            =   0x00,
+    STOP_API_VER_CONTROL    =   0x02,
+} VersionList_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -751,6 +751,41 @@ static StopReturnCode_t updateScomEntry( uint32_t i_scomAddr, uint64_t i_scomDat
 }
 
 //-----------------------------------------------------------------------------
+/**
+ * @brief populates SCOM restore entry header with version and layout info.
+ * @param[in]   i_scomEntry     points to SCOM restore entry
+ * @param[in]   i_section       section of SCOM restore area
+ * @param[in]   i_imageVer      SGPE image version
+ */
+
+static void updateEntryHeader( ScomEntry_t* i_scomEntry ,
+                               const ScomSection_t i_section,
+                               uint32_t i_imageVer )
+{
+    uint32_t l_temp = 0;
+    uint32_t l_entryLimit = 0;
+
+    if( i_imageVer >= STOP_API_VER_CONTROL )
+    {
+        if( P9_STOP_SECTION_CORE_SCOM == i_section )
+        {
+            l_entryLimit = MAX_CORE_SCOM_ENTRIES;
+        }
+        else
+        {
+            l_entryLimit = MAX_EQ_SCOM_ENTRIES + MAX_L2_SCOM_ENTRIES +
+                           MAX_L3_SCOM_ENTRIES;
+        }
+
+        l_temp |= ( STOP_API_VER  & 0x7 ) << 28;
+        l_temp |= ( 0x000000ff & l_entryLimit );
+        i_scomEntry->scomEntryHeader = SWIZZLE_4_BYTE(l_temp);
+
+        MY_INF("SCOM Restore Header 0x%08x", l_temp );
+    }
+}
+
+//-----------------------------------------------------------------------------
 
 StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
                                     const uint32_t i_scomAddress,
@@ -767,13 +802,22 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
     uint32_t nopInst;
     ScomEntry_t* pEntryLocation = NULL;
     ScomEntry_t* pNopLocation = NULL;
+    ScomEntry_t* pEditScomHeader = NULL;
     ScomEntry_t* pTableEndLocationtable = NULL;
     uint32_t swizzleAddr;
     uint64_t swizzleData;
     uint32_t swizzleAttn;
-    uint32_t swizzleEntry;
+    uint32_t entrySwzHeader = 0;
     uint32_t index = 0;
     uint32_t swizzleBlr = SWIZZLE_4_BYTE(BLR_INST);
+
+    //Reads SGPE image version info from QPMR Header in HOMER
+    //For backward compatibility, for base version of SGPE Hcode,
+    //STOP API retains default behavior but adds version specific
+    //details in each entry in later versions.
+
+    uint32_t imageVer =  *(uint32_t*)((uint8_t*)i_pImage + QPMR_HOMER_OFFSET + QPMR_BUILD_VER_BYTE);
+    imageVer = SWIZZLE_4_BYTE(imageVer);
 
     do
     {
@@ -864,11 +908,11 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
         swizzleAddr = SWIZZLE_4_BYTE(i_scomAddress);
         swizzleData = SWIZZLE_8_BYTE(i_scomData);
         swizzleAttn = SWIZZLE_4_BYTE(ATTN_OPCODE);
-        swizzleEntry = SWIZZLE_4_BYTE(SCOM_ENTRY_START);
 
         for( index = 0; index < entryLimit; ++index )
         {
             uint32_t entrySwzAddress = pScomEntry[index].scomEntryAddress;
+            entrySwzHeader  = SWIZZLE_4_BYTE(pScomEntry[index].scomEntryHeader);
 
             if( ( swizzleAddr == entrySwzAddress ) && ( !pEntryLocation ) )
 
@@ -883,7 +927,10 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
                 pNopLocation = &pScomEntry[index];
             }
 
-            if( swizzleEntry == pScomEntry[index].scomEntryHeader )
+            // if entry is either 0xDEADDEAD or has SCOM entry limit in LSB of header
+            // place is already occupied
+            if( ( SCOM_ENTRY_START == entrySwzHeader ) ||
+                ( entrySwzHeader & 0x000000FF ) )
             {
                 continue;
             }
@@ -918,6 +965,8 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
 
                     l_rc = updateScomEntry ( swizzleAddr,
                                              swizzleData, pScomAppend );
+
+                    pEditScomHeader = pScomAppend;
                 }
                 break;
 
@@ -936,6 +985,8 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
 
                     l_rc = updateScomEntry( swizzleAddr,
                                             swizzleData, scomReplace );
+
+                    pEditScomHeader = scomReplace;
                 }
                 break;
 
@@ -949,6 +1000,8 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
                                           swizzleData,
                                           pEntryLocation,
                                           i_operation );
+
+                    pEditScomHeader = pEntryLocation;
                 }
                 else
                 {
@@ -999,6 +1052,8 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
                                           swizzleData,
                                           editAppend,
                                           tempOperation );
+
+                    pEditScomHeader = editAppend;
                 }
                 break;
 
@@ -1006,7 +1061,6 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
                 l_rc = STOP_SAVE_SCOM_INVALID_OPERATION;
                 break;
         }
-
     }
     while(0);
 
@@ -1015,6 +1069,12 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
         MY_ERR("SCOM image operation 0x%08x failed for chiplet 0x%08x addr"
                "0x%08x", i_operation, chipletId ,
                i_scomAddress );
+    }
+    else
+    {
+        //Update SCOM Restore entry with version and memory layout
+        //info
+        updateEntryHeader( pEditScomHeader, i_section, imageVer );
     }
 
     return l_rc;
