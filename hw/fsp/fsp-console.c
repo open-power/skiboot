@@ -704,6 +704,7 @@ static int64_t fsp_console_read(int64_t term_number, int64_t *length,
 	struct fsp_serbuf_hdr *sb;
 	bool pending = false;
 	uint32_t old_nin, n, i, chunk, req = *length;
+	int rc = OPAL_SUCCESS;
 
 	if (term_number < 0 || term_number >= MAX_SERIAL)
 		return OPAL_PARAMETER;
@@ -712,8 +713,8 @@ static int64_t fsp_console_read(int64_t term_number, int64_t *length,
 		return OPAL_PARAMETER;
 	lock(&fsp_con_lock);
 	if (!fs->open) {
-		unlock(&fsp_con_lock);
-		return OPAL_CLOSED;
+		rc = OPAL_CLOSED;
+		goto clr_flag;
 	}
 	if (fs->waiting)
 		fs->waiting = 0;
@@ -744,6 +745,7 @@ static int64_t fsp_console_read(int64_t term_number, int64_t *length,
 	       buffer[4], buffer[5], buffer[6], buffer[7]);
 #endif /* OPAL_DEBUG_CONSOLE_IO */
 
+clr_flag:
 	/* Might clear the input pending flag */
 	for (i = 0; i < MAX_SERIAL && !pending; i++) {
 		struct fsp_serial *fs = &fsp_serials[i];
@@ -772,7 +774,7 @@ static int64_t fsp_console_read(int64_t term_number, int64_t *length,
 
 	unlock(&fsp_con_lock);
 
-	return OPAL_SUCCESS;
+	return rc;
 }
 
 void fsp_console_poll(void *data __unused)
