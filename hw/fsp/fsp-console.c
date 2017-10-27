@@ -986,8 +986,6 @@ void fsp_console_reset(void)
 		return;
 
 	time_wait_ms(500);
-	
-	flush_all_input();
 
 	reopen_all_hvsi();
 
