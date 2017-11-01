@@ -4013,10 +4013,14 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 	/* Always notify flag */
 	if (qflags & OPAL_XIVE_EQ_ALWAYS_NOTIFY)
 		eq.w0 |= EQ_W0_UCOND_NOTIFY;
+	else
+		eq.w0 &= ~EQ_W0_UCOND_NOTIFY;
 
 	/* Escalation flag */
 	if (qflags & OPAL_XIVE_EQ_ESCALATE)
 		eq.w0 |= EQ_W0_ESCALATE_CTL;
+	else
+		eq.w0 &= ~EQ_W0_ESCALATE_CTL;
 
 	/* Unconditionally clear the current queue pointer, set
 	 * generation to 1 and disable escalation interrupts.
