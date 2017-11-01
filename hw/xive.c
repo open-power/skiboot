@@ -1671,9 +1671,13 @@ static bool xive_config_init(struct xive *x)
 #endif
 	val |= PC_TCTXT_CHIPID_OVERRIDE;
 	val |= PC_TCTXT_CFG_TARGET_EN;
-	/* Disable pressure relief as we hijack the field in the VPs */
-	val &= ~PC_TCTXT_CFG_STORE_ACK;
 	val = SETFIELD(PC_TCTXT_CHIPID, val, x->block_id);
+	if (x->rev >= XIVE_REV_2) {
+		val = SETFIELD(PC_TCTXT_INIT_AGE, val, 0x2);
+		val |= PC_TCTXT_CFG_LGS_EN;
+		/* Disable pressure relief as we hijack the field in the VPs */
+		val &= ~PC_TCTXT_CFG_STORE_ACK;
+	}
 	xive_regw(x, PC_TCTXT_CFG, val);
 	xive_dbg(x, "PC_TCTXT_CFG=%016llx\n", val);
 
@@ -1681,11 +1685,32 @@ static bool xive_config_init(struct xive *x)
 	if (x->rev < XIVE_REV_2)
 		return true;
 
+	val = xive_regr(x, CQ_CFG_PB_GEN);
+	/* 1-block-per-chip mode */
+	val = SETFIELD(CQ_INT_ADDR_OPT, val, 2);
+	xive_regw(x, CQ_CFG_PB_GEN, val);
+
 	/* Enable StoreEOI */
 	val = xive_regr(x, VC_SBC_CONFIG);
 	val |= VC_SBC_CONF_CPLX_CIST | VC_SBC_CONF_CIST_BOTH;
 	val |= VC_SBC_CONF_NO_UPD_PRF;
 	xive_regw(x, VC_SBC_CONFIG, val);
+
+	/* Enable block tracking */
+	val = xive_regr(x, PC_TCTXT_TRACK);
+	val |= PC_TCTXT_TRACK_EN;
+	xive_regw(x, PC_TCTXT_TRACK, val);
+
+	/* Enable relaxed ordering of trigger forwarding */
+	val = xive_regr(x, VC_AIB_TX_ORDER_TAG2);
+	val |= VC_AIB_TX_ORDER_TAG2_REL_TF;
+	xive_regw(x, VC_AIB_TX_ORDER_TAG2, val);
+
+	/* Enable new END s and u bits for silent escalate */
+	val = xive_regr(x, VC_EQC_CONFIG);
+	val |= VC_EQC_CONF_ENABLE_END_s_BIT;
+	val |= VC_EQC_CONF_ENABLE_END_u_BIT;
+	xive_regw(x, VC_EQC_CONFIG, val);
 
 	return true;
 }
