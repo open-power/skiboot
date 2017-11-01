@@ -3004,7 +3004,7 @@ static inline bool xive_check_vpc_update(struct xive *x __unused,
 #ifdef XIVE_EXTRA_CHECK_INIT_CACHE
 static void xive_special_cache_check(struct xive *x, uint32_t blk, uint32_t idx)
 {
-	struct xive_vp vp = {};
+	struct xive_vp vp = {0};
 	uint32_t i;
 
 	for (i = 0; i < 1000; i++) {
