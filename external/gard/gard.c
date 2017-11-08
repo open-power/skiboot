@@ -52,6 +52,9 @@
 /* Full gard version number (possibly includes gitid). */
 extern const char version[];
 
+
+#define __unused __attribute__((unused))
+
 struct gard_ctx {
 	bool ecc;
 	uint32_t f_size;
@@ -206,6 +209,25 @@ static const char *path_type_to_str(enum path_type t)
 	return "Unknown";
 }
 
+/*
+ * NB: buffer is assumped to be MAX_PATH_SIZE
+ */
+static char *format_path(struct entity_path *path, char *buffer)
+{
+	int elements = path->type_size & PATH_ELEMENTS_MASK;
+	int i, offset = 0;
+
+	for (i = 0; i < elements; i++) {
+		const struct path_element *e = &path->path_elements[i];
+
+		offset += sprintf(buffer + offset, "/%s%d",
+			target_type_to_str(e->target_type),
+			e->instance);
+	}
+
+	return buffer;
+}
+
 static bool is_valid_record(struct gard_record *g)
 {
 	return be32toh(g->record_id) != CLEARED_RECORD_ID;
@@ -289,39 +311,60 @@ static int count_valid_records(struct gard_ctx *ctx)
 	return rc ? rc : count;
 }
 
-static int do_list_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
+static size_t find_longest_path(struct gard_ctx *ctx)
 {
-	(void)ctx;
-	(void)pos;
-	(void)priv;
+	char scratch[MAX_PATH_SIZE];
+	struct gard_record gard;
+	size_t len, longest = 0;
+	int rc, pos;
 
-	if (!gard)
-		return -1;
+	for_each_gard(ctx, pos, &gard, &rc) {
+		len = strlen(format_path(&gard.target_id, scratch));
+		if (len > longest)
+			longest = len;
+	}
 
-	if (is_valid_record(gard))
-		printf("| %08x | %08x | %-15s |\n", be32toh(gard->record_id), be32toh(gard->errlog_eid),
-		       path_type_to_str(gard->target_id.type_size >> PATH_TYPE_SHIFT));
+	return longest;
+}
 
-	return 0;
+static void draw_ruler(char c, int size)
+{
+	int i;
+
+	for (i = 0; i < size; i++)
+		putchar(c);
+	putchar('\n');
 }
 
 static int do_list(struct gard_ctx *ctx, int argc, char **argv)
 {
-	int rc;
-
-	(void)argc;
-	(void)argv;
+	/* This header matches the line formatting above in do_list_i() */
+	const char *header = " ID       | Error    | Type       | Path";
+	size_t ruler_size;
+	char scratch[MAX_PATH_SIZE];
+	struct gard_record gard;
+	int rc = 0, pos;
 
 	/* No entries */
 	if (count_valid_records(ctx) == 0) {
 		printf("No GARD entries to display\n");
-		rc = 0;
-	} else {
-		printf("|    ID    |   Error  | Type            |\n");
-		printf("+---------------------------------------+\n");
-		rc = do_iterate(ctx, &do_list_i, NULL);
-		printf("+=======================================+\n");
+		return 0;
 	}
+
+	puts(header);
+
+	ruler_size = strlen(header) + find_longest_path(ctx);
+	draw_ruler('-', ruler_size);
+
+	for_each_gard(ctx, pos, &gard, &rc) {
+		printf(" %08x | %08x | %-10s | %s\n",
+			be32toh(gard.record_id),
+			be32toh(gard.errlog_eid),
+			deconfig_reason_str(gard.error_type),
+			format_path(&gard.target_id, scratch));
+	}
+
+	draw_ruler('=', ruler_size);
 
 	return rc;
 }
