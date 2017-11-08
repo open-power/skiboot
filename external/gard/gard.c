@@ -182,9 +182,9 @@ static const char *path_type_to_str(enum path_type t)
 	return "Unknown";
 }
 
-static bool is_valid_id(uint32_t record_id)
+static bool is_valid_record(struct gard_record *g)
 {
-	return record_id != CLEARED_RECORD_ID;
+	return be32toh(g->record_id) != CLEARED_RECORD_ID;
 }
 
 static int do_iterate(struct gard_ctx *ctx,
@@ -246,7 +246,7 @@ static int count_valid_records_i(struct gard_ctx *ctx, int pos, struct gard_reco
 	if (!gard || !priv)
 		return -1;
 
-	if (is_valid_id(be32toh(gard->record_id)))
+	if (is_valid_record(gard))
 		(*(int *)priv)++;
 
 	return 0;
@@ -272,7 +272,7 @@ static int do_list_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, vo
 	if (!gard)
 		return -1;
 
-	if (is_valid_id(be32toh(gard->record_id)))
+	if (is_valid_record(gard))
 		printf("| %08x | %08x | %-15s |\n", be32toh(gard->record_id), be32toh(gard->errlog_eid),
 		       path_type_to_str(gard->target_id.type_size >> PATH_TYPE_SHIFT));
 
