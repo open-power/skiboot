@@ -243,55 +243,26 @@ static int __gard_next(struct gard_ctx *ctx, int pos, struct gard_record *gard, 
 	for (pos = __gard_next(ctx, 0, gard, rc); \
 		pos >= 0; pos = __gard_next(ctx, ++pos, gard, rc))
 
-static int get_largest_pos_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
+static int count_records(struct gard_ctx *ctx)
 {
-	(void)ctx;
-	(void)gard;
+	struct gard_record record;
+	int rc, pos, count = 0;
 
-	if (!priv)
-		return -1;
+	for_each_gard(ctx, pos, &record, &rc)
+		count++;
 
-	*(int *)priv = pos;
-
-	return 0;
-}
-
-static int get_largest_pos(struct gard_ctx *ctx)
-{
-	int rc, largest = -1;
-
-	(void)ctx;
-
-	rc = do_iterate(ctx, &get_largest_pos_i, &largest);
-	if (rc)
-		return -1;
-
-	return largest;
-}
-
-static int count_valid_records_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
-{
-	(void)ctx;
-	(void)pos;
-
-	if (!gard || !priv)
-		return -1;
-
-	if (is_valid_record(gard))
-		(*(int *)priv)++;
-
-	return 0;
+	return rc ? rc : count;
 }
 
 static int count_valid_records(struct gard_ctx *ctx)
 {
-	int rc, count = 0;
+	struct gard_record record;
+	int rc, pos, count = 0;
 
-	rc = do_iterate(ctx, &count_valid_records_i, &count);
-	if (rc)
-		return 0;
+	for_each_gard(ctx, pos, &record, &rc)
+		count++;
 
-	return count;
+	return rc ? rc : count;
 }
 
 static int do_list_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
@@ -392,7 +363,7 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 
 	memset(&null_gard, 0xFF, sizeof(null_gard));
 
-	largest = get_largest_pos(ctx);
+	largest = count_records(ctx);
 
 	printf("Clearing gard record 0x%08x...", be32toh(gard->record_id));
 
