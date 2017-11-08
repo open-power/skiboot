@@ -212,6 +212,37 @@ static int do_iterate(struct gard_ctx *ctx,
 	return rc;
 }
 
+/*
+ * read the next guard record into the supplied buffer (gard)
+ *
+ * returns the record id (nb: 1 based not zero)
+ *
+ */
+static int __gard_next(struct gard_ctx *ctx, int pos, struct gard_record *gard, int *rc)
+{
+	uint32_t offset = pos * sizeof_gard(ctx);
+
+	if (offset > ctx->gard_data_len) /* too big */
+		return -1;
+
+	/* you lose error handling information, *gruble* */
+	memset(gard, 0, sizeof(*gard));
+	*rc = blocklevel_read(ctx->bl, ctx->gard_data_pos + offset,
+				gard, sizeof(*gard));
+
+	if (!is_valid_record(gard))
+		return -1;
+
+	if (*rc)
+		return -1;
+
+	return pos;
+}
+
+#define for_each_gard(ctx, pos, gard, rc) \
+	for (pos = __gard_next(ctx, 0, gard, rc); \
+		pos >= 0; pos = __gard_next(ctx, ++pos, gard, rc))
+
 static int get_largest_pos_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, void *priv)
 {
 	(void)ctx;
