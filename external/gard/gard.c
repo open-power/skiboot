@@ -526,6 +526,8 @@ static void usage(const char *progname)
 	print_version();
 	fprintf(stderr, "Usage: %s [-a -e -f <file> -p] <command> [<args>]\n\n",
 			progname);
+	fprintf(stderr, "-8 --p8\n");
+	fprintf(stderr, "-9 --p9\n\tSet the processor generation\n\n");
 	fprintf(stderr, "-e --ecc\n\tForce reading/writing with ECC bytes.\n\n");
 	fprintf(stderr, "-f --file <file>\n\tDon't search for MTD device,"
 	                " read from <file>.\n\n");
@@ -552,9 +554,11 @@ static struct option global_options[] = {
 	{ "file", required_argument, 0, 'f' },
 	{ "part", no_argument, 0, 'p' },
 	{ "ecc", no_argument, 0, 'e' },
+	{ "p8", no_argument, 0, '8' },
+	{ "p9", no_argument, 0, '9' },
 	{ 0 },
 };
-static const char *global_optstring = "+ef:p";
+static const char *global_optstring = "+ef:p89";
 
 int main(int argc, char **argv)
 {
@@ -570,7 +574,6 @@ int main(int argc, char **argv)
 
 	ctx = &_ctx;
 	memset(ctx, 0, sizeof(*ctx));
-	set_chip_gen(p8_chip_units);
 
 	if (is_fsp()) {
 		fprintf(stderr, "This is the OpenPower gard tool which does "
@@ -603,12 +606,20 @@ int main(int argc, char **argv)
 		case 'p':
 			part = true;
 			break;
+		case '8':
+			set_chip_gen(p8_chip_units);
+			break;
+		case '9':
+			set_chip_gen(p9_chip_units);
+			break;
 		case '?':
 			usage(progname);
 			rc = EXIT_FAILURE;
 			goto out_free;
 		}
 	}
+
+
 
 	/*
 	 * It doesn't make sense to specify that we have the gard partition but
@@ -629,6 +640,15 @@ int main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 	action = argv[0];
+
+	/* assume a P8 if we haven't been given any */
+	if (!chip_units) {
+#ifdef ASSUME_P9
+		set_chip_gen(p9_chip_units);
+#else
+		set_chip_gen(p8_chip_units);
+#endif
+	}
 
 	if (arch_flash_init(&(ctx->bl), filename, true)) {
 		/* Can fail for a few ways, most likely couldn't open MTD device */
