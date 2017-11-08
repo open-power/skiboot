@@ -50,6 +50,9 @@
 #define SYSFS_MTD_PATH "/sys/class/mtd/"
 #define FLASH_GARD_PART "GUARD"
 
+#define VPNOR_GARD_DIR "/media/pnor-prsv"
+#define VPNOR_GARD_FILE VPNOR_GARD_DIR"/GUARD"
+
 /* Full gard version number (possibly includes gitid). */
 extern const char version[];
 
@@ -878,6 +881,34 @@ int main(int argc, char **argv)
 		set_chip_gen(p8_chip_units);
 #endif
 	}
+
+#ifdef __arm__
+	/*
+	 * HACK: Look for a vPNOR GUARD file if we haven't been given anything
+	 * explitly. If it exists then we can safely assume that:
+	 * a) The host is a P9
+	 * b) The file is ECC protected
+	 * c) The file is a bare partition.
+	 *
+	 * This is a stupid hack, but there's not other sane place for it.
+	 * arch_init_flash() always looks for a FFS formatted PNOR when
+	 * filename is NULL
+	 */
+	if (!filename) {
+		struct stat buf;
+
+		if (!stat(VPNOR_GARD_FILE, &buf)) {
+			filename = strdup(VPNOR_GARD_FILE);
+			/* BUG: This ignores the command line settings */
+			part = true;
+			ecc = true;
+			set_chip_gen(p9_chip_units);
+		} else if (!stat(VPNOR_GARD_DIR, &buf)) {
+			printf(VPNOR_GARD_FILE" is missing. Nothing to do\n");
+			return 0;
+		}
+	}
+#endif
 
 	/*
 	 * Force libflash to do flash accesses via the MTD. Direct mode is
