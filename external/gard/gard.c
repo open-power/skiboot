@@ -165,6 +165,30 @@ static const char *target_type_to_str(int type)
 	return "UNKNOWN";
 }
 
+static const char *deconfig_reason_str(enum gard_reason reason)
+{
+	switch (reason) {
+	case GARD_NO_REASON:
+		return "None";
+	case GARD_MANUAL:
+		return "Manual";
+	case GARD_UNRECOVERABLE:
+		return "Unrecoverable";
+	case GARD_FATAL:
+		return "Fatal";
+	case GARD_PREDICTIVE:
+		return "Predictive";
+	case GARD_POWER:
+		return "Power"; // What does this even mean?
+	case GARD_HYP:
+		return "Hypervisor";
+	case GARD_RECONFIG:
+		return "Reconfig";
+	default:
+		return "Unknown";
+	}
+};
+
 static const char *path_type_to_str(enum path_type t)
 {
 	switch (t) {
@@ -320,7 +344,9 @@ static int do_show_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, vo
 		printf("Record ID:    0x%08x\n", id);
 		printf("========================\n");
 		printf("Error ID:     0x%08x\n", be32toh(gard->errlog_eid));
-		printf("Error Type:         0x%02x\n", gard->error_type);
+		printf("Error Type:   %s (0x%02x)\n",
+			deconfig_reason_str(gard->error_type),
+			gard->error_type);
 		printf("Path Type: %s\n", path_type_to_str(gard->target_id.type_size >> PATH_TYPE_SHIFT));
 		count = gard->target_id.type_size & PATH_ELEMENTS_MASK;
 		for (i = 0; i < count && i < MAX_PATH_ELEMENTS; i++)

@@ -20,6 +20,26 @@
 #define PATH_TYPE_SHIFT 4
 #define PATH_ELEMENTS_MASK (0x0F)
 
+/*
+ * Sourced from hostboot: src/include/usr/hwas/common/hwasCallout.H
+ */
+enum gard_reason {
+	GARD_NO_REASON = 0x0,
+	GARD_MANUAL = 0xD2,
+	GARD_UNRECOVERABLE = 0xE2,
+	GARD_FATAL = 0xE3,
+	GARD_PREDICTIVE = 0xE6,
+	GARD_POWER = 0xE9,
+	GARD_HYP = 0xEA,
+	GARD_RECONFIG = 0xEB,
+
+	/*
+	 * This should only occur if the GUARD partition isn't correctly
+	 * programmed with ECC bits.
+	 */
+	GARD_VOID = 0xFF,
+};
+
 /* see src/include/usr/targeting/common/entitypath.H */
 enum path_type {
 	PATH_NA			= 0x00,
