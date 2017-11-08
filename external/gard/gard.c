@@ -879,6 +879,14 @@ int main(int argc, char **argv)
 #endif
 	}
 
+	/*
+	 * Force libflash to do flash accesses via the MTD. Direct mode is
+	 * generally unsafe since it fiddles with the flash controller state
+	 * underneath the kernel. Anyone who needs direct mode can use pflash
+	 * instead.
+	 */
+	arch_flash_access(ctx->bl, PNOR_MTD);
+
 	if (arch_flash_init(&(ctx->bl), filename, true)) {
 		/* Can fail for a few ways, most likely couldn't open MTD device */
 		fprintf(stderr, "Can't open %s\n", filename ? filename : "MTD Device. Are you root?");
