@@ -168,6 +168,20 @@ static const char *target_type_to_str(int type)
 	return "UNKNOWN";
 }
 
+static int str_to_target_type(const char *path)
+{
+	int i, len;
+
+	for (i = 0; i < chip_unit_count; i++) {
+		len = strlen(chip_units[i].desc);
+
+		if (!strncmp(chip_units[i].desc, path, len))
+			return chip_units[i].type; /* match! */
+	}
+
+	return -1;
+}
+
 static const char *deconfig_reason_str(enum gard_reason reason)
 {
 	switch (reason) {
@@ -226,6 +240,79 @@ static char *format_path(struct entity_path *path, char *buffer)
 	}
 
 	return buffer;
+}
+
+/*
+ * parses a Path string into the entity_path structured provided.
+ *
+ * str    - In param, String to parse
+ * parsed - Out param, resultant entity_path
+ *
+ * e.g.
+ *
+ * "/Sys0/Node0/Proc1" -> {
+ *      type_size = 0x23,
+ *
+ *      path_element[0] = {0, 0}
+ *      path_element[1] = {1, 0}
+ *      path_element[2] = {2, 1}
+ * }
+ */
+int parse_path(const char *str, struct entity_path *parsed)
+{
+	int unit_count = 0;
+
+	memset(parsed, 0, sizeof(*parsed));
+
+	while (*str != '\0') {
+		int unit_id = str_to_target_type(++str); /* ++ skips the '/' */
+		long instance;
+		char *end;
+
+		if (unit_count > MAX_PATH_ELEMENTS - 1) {
+			fprintf(stderr, "Path has more than 10 components!\n");
+			return -1;
+		}
+
+		/* find the type Id of this component */
+		if (unit_id < 0) { /* unknown unit, bail out */
+			fprintf(stderr, "Unknown unit at: '%s'\n", str);
+			return -1;
+		}
+
+		parsed->path_elements[unit_count].target_type = unit_id;
+
+		/* now parse the instance # */
+		str += strlen(chip_units[unit_id].desc);
+		instance = strtol(str, &end, 10);
+
+		if (*end != '\0' && *end != '/') {
+			fprintf(stderr, "Unable to parse instance after '%s'\n",
+					str);
+			return -1;
+		}
+
+		if (instance > 15 || instance < 0) {
+			fprintf(stderr,
+				"Instance %ld out of range should be 0 to 15\n",
+				instance);
+			return -1;
+		}
+		parsed->path_elements[unit_count].instance = instance;
+
+		str = end;
+		unit_count++;
+	}
+
+	/*
+	 * We assume the path is a physical path because every gard record I've
+	 * seen so far uses them. We might need to fix this later on, but lets
+	 * cross the bridge when we have to.
+	 */
+	parsed->type_size = (unit_count & 0xf) |
+			(PATH_PHYSICAL << PATH_TYPE_SHIFT);
+
+	return 0;
 }
 
 static bool is_valid_record(struct gard_record *g)
