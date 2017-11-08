@@ -134,83 +134,35 @@ static void show_flash_err(int rc)
 	}
 }
 
-static const char *target_type_to_str(enum target_type t)
+/* FIXME: is this the same on p9? I thought the path types came from the XML
+ * rather than this stuff, maybe it's redundant?
+ *
+ * I don't think it is though since the target types are a bitmask rather than
+ * a plain enum.
+ */
+const struct chip_unit_desc *chip_units;
+int chip_unit_count;
+
+static void set_chip_gen(const struct chip_unit_desc *c)
 {
-	switch (t) {
-		case TYPE_NA:
-			return "Not applicable";
-		case TYPE_SYS:
-			return "System";
-		case TYPE_NODE:
-			return "Node";
-		case TYPE_DIMM:
-			return "Dimm";
-		case TYPE_MEMBUF:
-			return "Memory Buffer";
-		case TYPE_PROC:
-			return "Processor";
-		case TYPE_EX:
-			return "EX";
-		case TYPE_CORE:
-			return "Core";
-		case TYPE_L2:
-			return "L2 cache";
-		case TYPE_L3:
-			return "L3 cache";
-		case TYPE_L4:
-			return "L4 cache";
-		case TYPE_MCS:
-			return "MSC";
-		case TYPE_MBA:
-			return "MBA";
-		case TYPE_XBUS:
-			return "XBUS";
-		case TYPE_ABUS:
-			return "ABUS";
-		case TYPE_PCI:
-			return "PCI";
-		case TYPE_DPSS:
-			return "DPSS";
-		case TYPE_APSS:
-			return "APSS";
-		case TYPE_OCC:
-			return "OCC";
-		case TYPE_PSI:
-			return "PSI";
-		case TYPE_FSP:
-			return "FSP";
-		case TYPE_PNOR:
-			return "PNOR";
-		case TYPE_OSC:
-			return "OSC";
-		case TYPE_TODCLK:
-			return "Time of day clock";
-		case TYPE_CONTROL_NODE:
-			return "Control Node";
-		case TYPE_OSCREFCLK:
-			return "OSC Ref Clock";
-		case TYPE_OSCPCICLK:
-			return "OSC PCI Clock";
-		case TYPE_REFCLKENDPT:
-			return "Ref Clock";
-		case TYPE_PCICLKENDPT:
-			return "PCI Clock";
-		case TYPE_NX:
-			return "NX";
-		case TYPE_PORE:
-			return "PORE";
-		case TYPE_PCIESWITCH:
-			return "PCIE Switch";
-		case TYPE_CAPP:
-			return "CAPP";
-		case TYPE_FSI:
-			return "FSI";
-		case TYPE_TEST_FAIL:
-			return "Test Fail";
-		case TYPE_LAST_IN_RANGE:
-			return "Last";
+	chip_units = c;
+	chip_unit_count = 0;
+
+	while (strcmp("LAST_IN_RANGE", c->desc)) {
+		chip_unit_count++;
+		c++;
 	}
-	return "Unknown";
+}
+
+static const char *target_type_to_str(int type)
+{
+	int i;
+
+	for (i = 0; i < chip_unit_count; i++)
+		if (chip_units[i].type == type)
+			return chip_units[i].desc;
+
+	return "UNKNOWN";
 }
 
 static const char *path_type_to_str(enum path_type t)
@@ -618,6 +570,7 @@ int main(int argc, char **argv)
 
 	ctx = &_ctx;
 	memset(ctx, 0, sizeof(*ctx));
+	set_chip_gen(p8_chip_units);
 
 	if (is_fsp()) {
 		fprintf(stderr, "This is the OpenPower gard tool which does "

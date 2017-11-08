@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := all
 
 override CFLAGS += -O2 -Wall -Werror -I.
-OBJS      = version.o gard.o
+OBJS      = version.o gard.o units.o
 LIBFLASH_FILES    := libflash.c libffs.c ecc.c blocklevel.c file.c
 LIBFLASH_OBJS     := $(addprefix libflash-, $(LIBFLASH_FILES:.c=.o))
 LIBFLASH_SRC      := $(addprefix libflash/,$(LIBFLASH_FILES))

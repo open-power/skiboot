@@ -20,46 +20,7 @@
 #define PATH_TYPE_SHIFT 4
 #define PATH_ELEMENTS_MASK (0x0F)
 
-
-enum target_type {
-	TYPE_NA			= 0x00000000,
-	TYPE_SYS		= 0x00000001,
-	TYPE_NODE		= 0x00000002,
-	TYPE_DIMM		= 0x00000003,
-	TYPE_MEMBUF		= 0x00000004,
-	TYPE_PROC		= 0x00000005,
-	TYPE_EX			= 0x00000006,
-	TYPE_CORE		= 0x00000007,
-	TYPE_L2			= 0x00000008,
-	TYPE_L3			= 0x00000009,
-	TYPE_L4			= 0x0000000A,
-	TYPE_MCS		= 0x0000000B,
-	TYPE_MBA		= 0x0000000D,
-	TYPE_XBUS		= 0x0000000E,
-	TYPE_ABUS		= 0x0000000F,
-	TYPE_PCI		= 0x00000010,
-	TYPE_DPSS		= 0x00000011,
-	TYPE_APSS		= 0x00000012,
-	TYPE_OCC		= 0x00000013,
-	TYPE_PSI		= 0x00000014,
-	TYPE_FSP		= 0x00000015,
-	TYPE_PNOR		= 0x00000016,
-	TYPE_OSC		= 0x00000017,
-	TYPE_TODCLK		= 0x00000018,
-	TYPE_CONTROL_NODE	= 0x00000019,
-	TYPE_OSCREFCLK		= 0x0000001A,
-	TYPE_OSCPCICLK		= 0x0000001B,
-	TYPE_REFCLKENDPT	= 0x0000001C,
-	TYPE_PCICLKENDPT	= 0x0000001D,
-	TYPE_NX			= 0x0000001E,
-	TYPE_PORE		= 0x0000001F,
-	TYPE_PCIESWITCH		= 0x00000020,
-	TYPE_CAPP		= 0x00000021,
-	TYPE_FSI		= 0x00000022,
-	TYPE_TEST_FAIL		= 0x00000023,
-	TYPE_LAST_IN_RANGE	= 0x00000024,
-};
-
+/* see src/include/usr/targeting/common/entitypath.H */
 enum path_type {
 	PATH_NA			= 0x00,
 	PATH_AFFINITY		= 0x01,
@@ -81,15 +42,24 @@ struct entity_path {
 
 } __attribute__((packed));
 
-
-/* defined by hostboot */
+/* From hostboot: src/include/usr/hwas/common/deconfigGard.H:GardRecord */
 struct gard_record {
 	uint32_t		record_id;
 	struct entity_path	target_id;
-	uint8_t			pad0[3];
+	uint8_t			pad0[3]; /* compiler dependent padding */
 	uint32_t		errlog_eid;
 	uint8_t			error_type;
 	uint8_t			resource_recovery;
 	uint8_t			pad1[6];
 } __attribute__((packed));
 
+#define MAX_PATH_SIZE 420
+
+struct chip_unit_desc {
+	int type;
+	const char *desc;
+};
+
+extern const struct chip_unit_desc *chip_units;
+extern const struct chip_unit_desc p8_chip_units[];
+extern const struct chip_unit_desc p9_chip_units[];
