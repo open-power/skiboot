@@ -270,6 +270,7 @@ boot_entry:
 	cmpwi	cr0,%r3,PVR_TYPE_P9
 	beq 	1f
 	attn		/* Unsupported CPU type... what do we do ? */
+	b 	.	/* loop here, just in case attn is disabled */
 
 	/* P8 -> 8 threads */
 2:	li	%r26,7
