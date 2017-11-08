@@ -121,7 +121,7 @@ static uint8_t parity(uint64_t data)
 
 	return p;
 #else
-	return __builtin_parityl(data);
+	return __builtin_parityll(data);
 #endif
 }
 
