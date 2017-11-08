@@ -367,7 +367,6 @@ static int do_show_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, vo
 		printf("========================\n");
 		printf("Error ID:     0x%08x\n", be32toh(gard->errlog_eid));
 		printf("Error Type:         0x%02x\n", gard->error_type);
-		printf("Res Recovery:       0x%02x\n", gard->resource_recovery);
 		printf("Path Type: %s\n", path_type_to_str(gard->target_id.type_size >> PATH_TYPE_SHIFT));
 		count = gard->target_id.type_size & PATH_ELEMENTS_MASK;
 		for (i = 0; i < count && i < MAX_PATH_ELEMENTS; i++)
