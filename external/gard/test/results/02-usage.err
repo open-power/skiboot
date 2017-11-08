@@ -20,3 +20,4 @@ Where <command> is one of:
 	list   	List current GARD records
 	show   	Show details of a GARD record
 	clear  	Clear GARD records
+	create 	Create a GARD record

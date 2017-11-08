@@ -25,6 +25,7 @@
 #include <dirent.h>
 #include <limits.h>
 #include <inttypes.h>
+#include <ctype.h>
 
 #include <ccan/array_size/array_size.h>
 
@@ -175,7 +176,7 @@ static int str_to_target_type(const char *path)
 	for (i = 0; i < chip_unit_count; i++) {
 		len = strlen(chip_units[i].desc);
 
-		if (!strncmp(chip_units[i].desc, path, len))
+		if (!strncasecmp(chip_units[i].desc, path, len))
 			return chip_units[i].type; /* match! */
 	}
 
@@ -268,6 +269,7 @@ int parse_path(const char *str, struct entity_path *parsed)
 		int unit_id = str_to_target_type(++str); /* ++ skips the '/' */
 		long instance;
 		char *end;
+		size_t len;
 
 		if (unit_count > MAX_PATH_ELEMENTS - 1) {
 			fprintf(stderr, "Path has more than 10 components!\n");
@@ -283,8 +285,14 @@ int parse_path(const char *str, struct entity_path *parsed)
 		parsed->path_elements[unit_count].target_type = unit_id;
 
 		/* now parse the instance # */
-		str += strlen(chip_units[unit_id].desc);
-		instance = strtol(str, &end, 10);
+		len = strlen(chip_units[unit_id].desc);
+		instance = strtol(str + len, &end, 10);
+
+		if (!isdigit(*(str + len))) {
+			fprintf(stderr, "Missing instance number after '%s'\n",
+					str);
+			return -1;
+		}
 
 		if (*end != '\0' && *end != '/') {
 			fprintf(stderr, "Unable to parse instance after '%s'\n",
@@ -294,7 +302,7 @@ int parse_path(const char *str, struct entity_path *parsed)
 
 		if (instance > 15 || instance < 0) {
 			fprintf(stderr,
-				"Instance %ld out of range should be 0 to 15\n",
+				"Instance %ld is invalid. Must be 0 to 15\n",
 				instance);
 			return -1;
 		}
@@ -613,6 +621,68 @@ static int do_clear(struct gard_ctx *ctx, int argc, char **argv)
 	return rc;
 }
 
+static int do_create(struct gard_ctx *ctx, int argc, char **argv)
+{
+	int rc, pos, max_id = 0, last_pos = 0;
+	struct gard_record gard;
+	struct entity_path path;
+
+	if (argc < 2) {
+		fprintf(stderr, "create requires path to gard\n");
+		fprintf(stderr, "e.g.\n");
+		fprintf(stderr, "     /Sys0/Node0/Proc0\n");
+		fprintf(stderr, "     /Sys0/Node0/DIMM15\n");
+		return 0;
+	}
+
+	if (parse_path(argv[1], &path)) {
+		fprintf(stderr, "Unable to parse path\n");
+		return 0;
+	}
+
+	/* check if we already have a gard record applied to this path */
+	for_each_gard(ctx, pos, &gard, &rc) {
+		if (!memcmp(&path, &gard.target_id, sizeof(path))) {
+			fprintf(stderr,
+				"Unit %s is already GARDed by record %#08x\n",
+				argv[1], be32toh(gard.record_id));
+			return 0;
+		}
+
+		/*
+		 * Keep track of the largest record ID seen so far,
+		 * we'll give the new record the max + 1 to ensure
+		 * that it's unique
+		 */
+		if (be32toh(gard.record_id) > max_id)
+			max_id = be32toh(gard.record_id);
+
+		last_pos++;
+	}
+
+	/* do we have an empty record to write into? */
+	if (!rc && !is_valid_record(&gard)) {
+		int offset = last_pos * sizeof_gard(ctx);
+
+		memset(&gard, 0xff, sizeof(gard));
+
+		gard.record_id = be32toh(max_id + 1);
+		gard.error_type = GARD_MANUAL;
+		gard.target_id = path;
+		gard.errlog_eid = 0x0;
+
+		if (offset > ctx->gard_data_len - sizeof(gard)) {
+			fprintf(stderr, "No space in GUARD for a new record\n");
+			return 0;
+		}
+
+		rc = blocklevel_smart_write(ctx->bl,
+			ctx->gard_data_pos + offset, &gard, sizeof(gard));
+	}
+
+	return rc;
+}
+
 static int check_gard_partition(struct gard_ctx *ctx)
 {
 	int rc;
@@ -670,6 +740,7 @@ struct {
 	{ "list", "List current GARD records", do_list },
 	{ "show", "Show details of a GARD record", do_show },
 	{ "clear", "Clear GARD records", do_clear },
+	{ "create", "Create a GARD record", do_create },
 };
 
 static void print_version(void)
