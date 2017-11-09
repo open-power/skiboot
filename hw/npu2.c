@@ -1302,7 +1302,8 @@ static void npu2_probe_phb(struct dt_node *dn)
 	/* Retrieve chip id */
 	path = dt_get_path(dn);
 	gcid = dt_get_chip_id(dn);
-	assert(proc_chip = get_chip(gcid));
+	proc_chip = get_chip(gcid);
+	assert(proc_chip);
 	if ((proc_chip->ec_level & 0xf0) > 0x20) {
 		prerror("NPU2: unsupported ec level on Chip 0x%x!\n", gcid);
 		return;
@@ -1677,9 +1678,12 @@ static void npu2_add_interrupt_map(struct npu2 *p,
 	size_t map_size;
 	uint32_t mask[] = {0xff00, 0x0, 0x0, 0x7};
 
+	assert(p->phb.dt_node);
+	phb_dn = p->phb.dt_node;
+
 	npu2_phandle = dt_prop_get_u32(dn, "ibm,npcq");
-	assert((npu2_dn = dt_find_by_phandle(dt_root, npu2_phandle)));
-	assert((phb_dn = p->phb.dt_node));
+	npu2_dn = dt_find_by_phandle(dt_root, npu2_phandle);
+	assert(npu2_dn);
 	map_size = 7 * sizeof(*map) * p->total_devices;
 	map = malloc(map_size);
 	index = 0;
