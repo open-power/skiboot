@@ -3755,6 +3755,7 @@ static int64_t phb4_get_diag_data(struct phb *phb,
 				  void *diag_buffer,
 				  uint64_t diag_buffer_len)
 {
+	bool fenced;
 	struct phb4 *p = phb_to_phb4(phb);
 	struct OpalIoPhb4ErrorData *data = diag_buffer;
 
@@ -3767,10 +3768,10 @@ static int64_t phb4_get_diag_data(struct phb *phb,
 	 * Dummy check for fence so that phb4_read_phb_status knows
 	 * whether to use ASB or AIB
 	 */
-	phb4_fenced(p);
+	fenced = phb4_fenced(p);
 	phb4_read_phb_status(p, data);
 
-	if (!(p->flags & PHB4_AIB_FENCED))
+	if (!fenced)
 		phb4_eeh_dump_regs(p);
 
 	/*
