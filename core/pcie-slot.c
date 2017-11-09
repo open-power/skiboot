@@ -575,8 +575,9 @@ struct pci_slot *pcie_slot_create_dynamic(struct phb *phb,
 	 *
 	 * We have same issue with PEX8718 as above on "p8dnu" platform.
 	 */
-	if (dt_node_is_compatible(dt_root, "supermicro,p8dnu") && slot->pd &&
-	    (slot->pd->vdid == 0x973310b5 || slot->pd->vdid == 0x871810b5))
+	if (dt_node_is_compatible(dt_root, "supermicro,p8dnu") && slot &&
+	    slot->pd && (slot->pd->vdid == 0x973310b5 ||
+	    slot->pd->vdid == 0x871810b5))
 		pci_slot_add_flags(slot, PCI_SLOT_FLAG_FORCE_POWERON);
 
 	return slot;
