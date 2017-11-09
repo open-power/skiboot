@@ -192,6 +192,9 @@ static void pr_log_stdio(int priority, const char *fmt, va_list ap)
 
 	vprintf(fmt, ap);
 	printf("\n");
+
+	if (ctx->debug)
+		fflush(stdout);
 }
 
 /* standard logging prefixes:
