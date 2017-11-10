@@ -258,7 +258,7 @@ static uint32_t getMtsprInstruction( const uint16_t i_Rs, const uint16_t i_Spr )
     uint32_t mtsprInstOpcode = 0;
     uint32_t temp = (( i_Spr & 0x03FF ) << 11);
     mtsprInstOpcode = (uint8_t)i_Rs << 21;
-    mtsprInstOpcode = ( temp  & 0x0000F800 ) << 5;
+    mtsprInstOpcode |= ( temp  & 0x0000F800 ) << 5;
     mtsprInstOpcode |= ( temp & 0x001F0000 ) >> 5;
     mtsprInstOpcode |= MTSPR_BASE_OPCODE;
 
