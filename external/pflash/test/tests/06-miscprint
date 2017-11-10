@@ -3,7 +3,7 @@
 touch "$DATA_DIR/$CUR_TEST.pnor"
 
 # Don't record the output of ffspart
-../ffspart/ffspart -s 0x100 -c 10 -i "$DATA_DIR/$CUR_TEST.ffs" \
+../ffspart/ffspart -s 0x1000 -c 10 -i "$DATA_DIR/$CUR_TEST.ffs" \
 	-p "$DATA_DIR/$CUR_TEST.pnor" 2>&1 >/dev/null
 if [ "$?" -ne 0 ] ; then
 	fail_test
@@ -22,6 +22,10 @@ if [ "$?" -ne 0 ] ; then
 	fail_test;
 fi
 run_binary "./pflash" "--detail=4 -F $DATA_DIR/$CUR_TEST.pnor"
+if [ "$?" -ne 0 ] ; then
+	fail_test;
+fi
+run_binary "./pflash" "--detail=5 -F $DATA_DIR/$CUR_TEST.pnor"
 if [ "$?" -ne 0 ] ; then
 	fail_test;
 fi

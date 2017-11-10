@@ -3,7 +3,7 @@ Name:
 PRESERVED (ID=01)
 
 Start       End         Actual    
-0x00000300  0x00000400  0x00000100
+0x00003000  0x00004000  0x00001000
 
 Flags:
 PRESERVED [P]
@@ -12,7 +12,7 @@ Name:
 READONLY (ID=02)
 
 Start       End         Actual    
-0x00000400  0x00000500  0x00000100
+0x00004000  0x00005000  0x00001000
 
 Flags:
 READONLY [R]
@@ -21,7 +21,7 @@ Name:
 REPROVISION (ID=03)
 
 Start       End         Actual    
-0x00000500  0x00000600  0x00000100
+0x00005000  0x00006000  0x00001000
 
 Flags:
 REPROVISION [F]
@@ -30,7 +30,7 @@ Name:
 BACKUP (ID=04)
 
 Start       End         Actual    
-0x00000600  0x00000700  0x00000100
+0x00006000  0x00007000  0x00001000
 
 Flags:
 BACKUP [B]
@@ -39,7 +39,7 @@ Name:
 VOLATILE (ID=05)
 
 Start       End         Actual    
-0x00000700  0x00000800  0x00000100
+0x00007000  0x00008000  0x00001000
 
 Flags:
 VOLATILE [V]
