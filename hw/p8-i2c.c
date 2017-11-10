@@ -1223,6 +1223,14 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	if (rc)
 		return rc;
 
+	/* program the watermark register */
+	rc = p8_i2c_prog_watermark(master);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_I2C_INIT),
+			 "I2C: Failed to program the WATERMARK_REG\n");
+		return rc;
+	}
+
 	/* Initialize bytes_sent */
 	master->bytes_sent = 0;
 
@@ -1680,21 +1688,9 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 		      master->irq_ok ? "" : "non-");
 	}
 
-	/* Program the watermark register */
-	rc = p8_i2c_prog_watermark(master);
-
 	/* Re-enable the sensor cache, we aren't touching HW anymore */
 	if (master->type == I2C_CENTAUR)
 		centaur_enable_sensor_cache(master->chip_id);
-
-	/* Handle errors from p8_i2c_prog_watermark */
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_I2C_INIT),
-				 "I2C: Failed to program the "
-				 "WATERMARK_REG\n");
-		free(master);
-		return;
-	}
 
 	/* Allocate ports driven by this master */
 	count = 0;
