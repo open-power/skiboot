@@ -19,7 +19,7 @@ Device Tree
 -----------
 
 - ``/ibm,opal/`` compatible property now just lists ``ibm,opal-v3`` and no longer ``ibm,opal-v2`` (power9 and above only)
-
+- Rename ``fsp-ipl-side`` as ``sp-ipl-side`` in ``/ipl-params``
 
 TODO
 ----
