@@ -191,17 +191,27 @@ static uint32_t nop(struct npu2_dev *npu_dev __unused)
 }
 DEFINE_PROCEDURE(nop);
 
-/* Procedure 1.2.1 (RESET_NPU_DL) from opt_programmerguide.odt. Also
- * incorporates AT reset. */
-static uint32_t reset_ntl(struct npu2_dev *ndev __unused)
+static bool poll_fence_status(struct npu2_dev *ndev, uint64_t val)
 {
-	return PROCEDURE_NEXT;
+	uint64_t fs;
+	int i;
+
+	for (i = 0; i < 4096; i++) {
+		fs = npu2_read(ndev->npu, NPU2_NTL_CQ_FENCE_STATUS(ndev));
+		if ((fs & 0xc000000000000000) == val)
+			return true;
+	}
+
+	NPU2DEVERR(ndev, "NPU2_NTL_CQ_FENCE_STATUS timeout (0x%llx)\n", val);
+	return false;
 }
 
-static uint32_t reset_ndl(struct npu2_dev *ndev)
+/* Procedure 1.2.1 - Reset NPU/NDL */
+static uint32_t reset_ntl(struct npu2_dev *ndev)
 {
 	uint64_t val;
 
+	/* Write PRI */
 	if ((ndev->pl_xscom_base & 0xFFFFFFFF) == 0x9010C3F)
 		val = SETFIELD(PPC_BITMASK(0,1), 0ull, ndev->index % 3);
 	else {
@@ -220,24 +230,57 @@ static uint32_t reset_ndl(struct npu2_dev *ndev)
 
 	npu2_write_mask(ndev->npu, NPU2_NTL_PRI_CFG(ndev), val, -1ULL);
 
-	val = PPC_BIT32(0) | PPC_BIT32(1);
-
-	npu2_write_4b(ndev->npu, NPU2_NTL_DL_CONTROL(ndev), val);
-	npu2_write_4b(ndev->npu, NPU2_NTL_DL_CONTROL(ndev), 0);
-	npu2_write_4b(ndev->npu, NPU2_NTL_DL_CONFIG(ndev), PPC_BIT32(0));
-
 	/* NTL Reset */
-	val = PPC_BIT(8) | PPC_BIT(9);
+	val = npu2_read(ndev->npu, NPU2_NTL_MISC_CFG1(ndev));
+	val |= PPC_BIT(8) | PPC_BIT(9);
 	npu2_write(ndev->npu, NPU2_NTL_MISC_CFG1(ndev), val);
-	val = PPC_BIT(8);
-	npu2_write(ndev->npu, NPU2_NTL_MISC_CFG1(ndev), val);
-	val = 0;
-	npu2_write(ndev->npu, NPU2_NTL_MISC_CFG1(ndev), val);
+
+	if (!poll_fence_status(ndev, 0xc000000000000000))
+		return PROCEDURE_COMPLETE | PROCEDURE_FAILED;
+
+	return PROCEDURE_NEXT;
+}
+
+static uint32_t reset_ndl(struct npu2_dev *ndev)
+{
+	uint64_t val;
+
+	val = npu2_read_4b(ndev->npu, NPU2_NTL_DL_CONTROL(ndev));
+	val |= PPC_BIT32(0) | PPC_BIT32(1);
+	npu2_write_4b(ndev->npu, NPU2_NTL_DL_CONTROL(ndev), val);
+
+	val = npu2_read_4b(ndev->npu, NPU2_NTL_DL_CONTROL(ndev));
+	val &= ~(PPC_BIT32(0) | PPC_BIT32(1));
+	npu2_write_4b(ndev->npu, NPU2_NTL_DL_CONTROL(ndev), val);
+
+	val = PPC_BIT32(0);
+	npu2_write_4b(ndev->npu, NPU2_NTL_DL_CONFIG(ndev), val);
 
 	return PROCEDURE_NEXT;
 }
 
 static uint32_t reset_ntl_release(struct npu2_dev *ndev)
+{
+	uint64_t val;
+
+	val = npu2_read(ndev->npu, NPU2_NTL_MISC_CFG1(ndev));
+	val &= 0xFFBFFFFFFFFFFFFF;
+	npu2_write(ndev->npu, NPU2_NTL_MISC_CFG1(ndev), val);
+
+	if (!poll_fence_status(ndev, 0x8000000000000000))
+		return PROCEDURE_COMPLETE | PROCEDURE_FAILED;
+
+	val = npu2_read(ndev->npu, NPU2_NTL_MISC_CFG1(ndev));
+	val &= 0xFF3FFFFFFFFFFFFF;
+	npu2_write(ndev->npu, NPU2_NTL_MISC_CFG1(ndev), val);
+
+	if (!poll_fence_status(ndev, 0x0))
+		return PROCEDURE_COMPLETE | PROCEDURE_FAILED;
+
+	return PROCEDURE_NEXT;
+}
+
+static uint32_t reset_ntl_finish(struct npu2_dev *ndev)
 {
 	/* Credit Setup */
 	npu2_write(ndev->npu, NPU2_NTL_CRED_HDR_CREDIT_TX(ndev), 0x0200000000000000);
@@ -257,7 +300,7 @@ static uint32_t reset_ntl_release(struct npu2_dev *ndev)
 
 	return PROCEDURE_COMPLETE;
 }
-DEFINE_PROCEDURE(reset_ntl, reset_ndl, reset_ntl_release);
+DEFINE_PROCEDURE(reset_ntl, reset_ndl, reset_ntl_release, reset_ntl_finish);
 
 /* Procedure 1.2.2 - Reset I/O PHY Lanes */
 static uint32_t phy_reset(struct npu2_dev *ndev)
