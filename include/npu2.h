@@ -152,6 +152,7 @@ uint32_t npu2_read_4b(struct npu2 *p, uint64_t reg);
 void npu2_write(struct npu2 *p, uint64_t reg, uint64_t val);
 uint64_t npu2_read(struct npu2 *p, uint64_t reg);
 void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
+void npu2_write_mask_4b(struct npu2 *p, uint64_t reg, uint32_t val, uint32_t mask);
 int64_t npu2_dev_procedure(void *dev, struct pci_cfg_reg_filter *pcrf,
 			   uint32_t offset, uint32_t len, uint32_t *data,
 			   bool write);

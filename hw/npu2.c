@@ -145,6 +145,17 @@ void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask)
 	npu2_scom_write(p->chip_id, p->xscom_base, reg, NPU2_MISC_DA_LEN_8B, new_val);
 }
 
+void npu2_write_mask_4b(struct npu2 *p, uint64_t reg, uint32_t val, uint32_t mask)
+{
+	uint32_t new_val;
+
+	new_val = npu2_read_4b(p, reg);
+	new_val &= ~mask;
+	new_val |= val & mask;
+	npu2_scom_write(p->chip_id, p->xscom_base, reg, NPU2_MISC_DA_LEN_4B,
+			(uint64_t)new_val << 32);
+}
+
 /* Set a specific flag in the vendor config space */
 void npu2_set_link_flag(struct npu2_dev *ndev, uint8_t flag)
 {
