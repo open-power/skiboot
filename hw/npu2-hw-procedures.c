@@ -561,6 +561,23 @@ static uint32_t phy_rx_dccal_complete(struct npu2_dev *ndev)
 	return PROCEDURE_NEXT;
 }
 
+static uint32_t phy_rx_clock_sel(struct npu2_dev *ndev)
+{
+	/*
+	 * Change the RX clk mux control to be done by software instead of HW. This
+	 * avoids glitches caused by changing the mux setting.
+	 *
+	 * Work around a known DL bug by doing these writes twice.
+	 */
+	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000003, 0x80000003);
+	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000003, 0x80000003);
+
+	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000001, 0x80000003);
+	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000001, 0x80000003);
+
+	return PROCEDURE_NEXT;
+}
+
 /* Procedure 1.2.5 - IO PHY Tx FIFO Init */
 static uint32_t phy_tx_fifo_init(struct npu2_dev *ndev)
 {
@@ -577,7 +594,8 @@ static uint32_t phy_tx_fifo_init(struct npu2_dev *ndev)
 
 /* We group TX FIFO init in here mainly because that's what was done
  * on NVLink1 */
-DEFINE_PROCEDURE(phy_rx_dccal, phy_rx_dccal_complete, phy_tx_fifo_init);
+DEFINE_PROCEDURE(phy_rx_dccal, phy_rx_dccal_complete, phy_rx_clock_sel,
+		 phy_tx_fifo_init);
 
 /* Procedure 1.2.7 - I/O PHY Upstream Link Training */
 static uint32_t phy_rx_training(struct npu2_dev *ndev)

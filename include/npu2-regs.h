@@ -275,6 +275,7 @@ void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
 #define NPU2_NTL_CQ_FENCE_STATUS(ndev)		NPU2_NTLU_REG_OFFSET(ndev, 0x500)
 #define NPU2_NTL_DL_CONTROL(ndev)		NPU2_DL_REG_OFFSET(ndev, 0xFFF4)
 #define NPU2_NTL_DL_CONFIG(ndev)		NPU2_DL_REG_OFFSET(ndev, 0xFFF8)
+#define NPU2_NTL_DL_CLK_CTRL(ndev)		NPU2_DL_REG_OFFSET(ndev, 0x001C)
 
 /* Misc block registers. Unlike the SM/CTL/DAT/NTL registers above
  * there is only a single instance of each of these in the NPU so we
