@@ -4263,7 +4263,7 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0d08,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d18,	0xffffff0fffffffffull);
 	out_be64(p->regs + 0x0d28,	0x0000400a00000000ull);
-	out_be64(p->regs + 0x0d30,	0xdff7fb01f7ddfff0ull); /* XXX CAPI has diff. value */
+	out_be64(p->regs + 0x0d30,	0xdff7bd01f7ddfff0ull); /* XXX CAPI has diff. value */
 	out_be64(p->regs + 0x0d40,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d48,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d50,	0x0000000000000000ull);
