@@ -41,7 +41,7 @@ The bootloader will kexec a host kernel (probably linux). The host OS can
 make OPAL calls. The OPAL API is documented in doc/opal-api/ (there are
 missing parts, patches are welcome!)
 
-See doc/overview.txt for a more in depth overview of skiboot.
+See doc/overview.rst for a more in depth overview of skiboot.
 
 ## Building
 
