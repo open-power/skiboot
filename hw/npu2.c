@@ -860,21 +860,10 @@ static void npu2_write_mcd(struct npu2 *p, uint64_t pcb_addr, uint64_t addr,
 	xscom_write(p->chip_id, pcb_addr, val);
 }
 
-static void npu2_hw_init(struct npu2 *p)
+static void npu2_mcd_init(struct npu2 *p)
 {
 	int i;
-	uint64_t val, size, addr, gpu_min_addr, gpu_max_addr, total_size;
-
-	npu2_ioda_reset(&p->phb, false);
-
-	/* Enable XTS retry mode */
-	val = npu2_read(p, NPU2_XTS_CFG);
-	npu2_write(p, NPU2_XTS_CFG, val | NPU2_XTS_CFG_MMIOSD | NPU2_XTS_CFG_TRY_ATR_RO);
-
-	if (!is_p9dd1()) {
-		val = npu2_read(p, NPU2_XTS_CFG2);
-		npu2_write(p, NPU2_XTS_CFG2, val | NPU2_XTS_CFG2_NO_FLUSH_ENA);
-	}
+	uint64_t size, addr, gpu_min_addr, gpu_max_addr, total_size;
 
 	/* Init memory cache directory (MCD) registers. */
 	phys_map_get(p->chip_id, GPU_MEM, NPU2_LINKS_PER_CHIP - 1,
@@ -910,6 +899,24 @@ static void npu2_hw_init(struct npu2 *p)
 		assert(addr <= gpu_min_addr);
 		npu2_write_mcd(p, MCD1_BANK0_CN3, addr, size);
 	}
+}
+
+static void npu2_hw_init(struct npu2 *p)
+{
+	uint64_t val;
+
+	npu2_ioda_reset(&p->phb, false);
+
+	/* Enable XTS retry mode */
+	val = npu2_read(p, NPU2_XTS_CFG);
+	npu2_write(p, NPU2_XTS_CFG, val | NPU2_XTS_CFG_MMIOSD | NPU2_XTS_CFG_TRY_ATR_RO);
+
+	if (!is_p9dd1()) {
+		val = npu2_read(p, NPU2_XTS_CFG2);
+		npu2_write(p, NPU2_XTS_CFG2, val | NPU2_XTS_CFG2_NO_FLUSH_ENA);
+	}
+
+	npu2_mcd_init(p);
 }
 
 static int64_t npu2_map_pe_dma_window_real(struct phb *phb,
