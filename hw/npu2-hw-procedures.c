@@ -363,26 +363,9 @@ static uint32_t phy_reset_complete(struct npu2_dev *ndev)
 		phy_write_lane(ndev, &NPU2_PHY_RX_E_INTEG_COARSE_GAIN, lane, 11);
 	}
 
-	return PROCEDURE_NEXT;
-}
-
-/* Procedure 1.2.11 - Enable Low Power Mode */
-static uint32_t enable_low_power(struct npu2_dev *ndev)
-{
-	uint64_t val;
-
-	val = SETFIELD(NPU2_NTL_LOW_POWER_CFG_MODE_ENABLE, 0ull, 1);
-	val = SETFIELD(NPU2_NTL_LOW_POWER_CFG_ONLY_MODE, val, 1);
-	val = SETFIELD(NPU2_NTL_LOW_POWER_CFG_TIMER_TICK_CONFIG, val, 22);
-	val = SETFIELD(NPU2_NTL_LOW_POWER_CFG_MIN_CRED_THRESH, val, 68);
-	val = SETFIELD(NPU2_NTL_LOW_POWER_CFG_MAX_CRED_THRESH, val, 68);
-	val = SETFIELD(NPU2_NTL_LOW_POWER_CFG_CNT_THRESH, val, 477);
-	npu2_write(ndev->npu, NPU2_NTL_LOW_POWER_CFG(ndev), val);
-
 	return PROCEDURE_COMPLETE;
 }
-DEFINE_PROCEDURE(phy_reset, phy_reset_wait, phy_reset_complete,
-		 enable_low_power);
+DEFINE_PROCEDURE(phy_reset, phy_reset_wait, phy_reset_complete);
 
 /* Procedure 1.2.6 - I/O PHY Tx Impedance Calibration */
 static uint32_t phy_tx_zcal(struct npu2_dev *ndev)
