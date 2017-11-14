@@ -649,11 +649,12 @@ static int npu2_assign_gmb(struct npu2_dev *ndev)
 
 	npu2_get_gpu_base(ndev, &base, &size);
 
-	/* Base address is in GB */
-	base >>= 30;
-	val = SETFIELD(NPU2_MEM_BAR_SEL_MEM, 0ULL, 4);
-	val = SETFIELD(NPU2_MEM_BAR_NODE_ADDR, val, base);
-	val = SETFIELD(NPU2_MEM_BAR_GROUP | NPU2_MEM_BAR_CHIP, val, p->chip_id);
+	NPU2DBG(p, "Setting BAR region dt:%llx\n", base);
+	val = SETFIELD(NPU2_MEM_BAR_EN, 0ULL, 1);
+	val = SETFIELD(NPU2_MEM_BAR_SEL_MEM, val, base >> (63-14));
+	val = SETFIELD(NPU2_MEM_BAR_GROUP, val, base >> (63-18));
+	val = SETFIELD(NPU2_MEM_BAR_CHIP, val, base >> (63-21));
+	val = SETFIELD(NPU2_MEM_BAR_NODE_ADDR, val, base >> (63-33));
 	val = SETFIELD(NPU2_MEM_BAR_POISON, val, 1);
 	val = SETFIELD(NPU2_MEM_BAR_GRANULE, val, 0);
 
