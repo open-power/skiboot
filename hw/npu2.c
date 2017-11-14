@@ -604,10 +604,11 @@ static struct dt_node *npu2_create_memory_dn(uint64_t addr, uint64_t size)
  * on bdfn. */
 static void npu2_get_gpu_base(struct npu2_dev *ndev, uint64_t *addr, uint64_t *size)
 {
+	struct npu2 *p = ndev->npu;
 	int group;
 
 	group = (ndev->bdfn >> 3) & 0x1f;
-	phys_map_get(ndev->npu->chip_id, GPU_MEM_4T_DOWN, group, addr, size);
+	phys_map_get(ndev->npu->chip_id, p->gpu_map_type, group, addr, size);
 }
 
 static void npu2_dn_fixup_gmb(struct dt_node *pd_dn, struct npu2_dev *ndev)
@@ -866,16 +867,16 @@ static void npu2_mcd_init(struct npu2 *p)
 	uint64_t size, addr, gpu_min_addr, gpu_max_addr, total_size;
 
 	/* Init memory cache directory (MCD) registers. */
-	phys_map_get(p->chip_id, GPU_MEM_4T_DOWN, NPU2_LINKS_PER_CHIP - 1,
+	phys_map_get(p->chip_id, p->gpu_map_type, NPU2_LINKS_PER_CHIP - 1,
 			&gpu_min_addr, NULL);
-	phys_map_get(p->chip_id, GPU_MEM_4T_DOWN, 0, &gpu_max_addr, &size);
+	phys_map_get(p->chip_id, p->gpu_map_type, 0, &gpu_max_addr, &size);
 	gpu_max_addr += size;
 
 	/* We assume GPU memory is contiguous from the first possible GPU to the
 	 * last and that the size is the same so best to check that. */
 	for (i = 0; i < NPU2_LINKS_PER_CHIP; i++) {
 		uint64_t tmp;
-		phys_map_get(p->chip_id, GPU_MEM_4T_DOWN, i, &addr, &tmp);
+		phys_map_get(p->chip_id, p->gpu_map_type, i, &addr, &tmp);
 		assert((addr >= gpu_min_addr) && (addr + tmp <= gpu_max_addr));
 		assert(tmp == size);
 	}
@@ -916,7 +917,54 @@ static void npu2_hw_init(struct npu2 *p)
 		npu2_write(p, NPU2_XTS_CFG2, val | NPU2_XTS_CFG2_NO_FLUSH_ENA);
 	}
 
-	npu2_mcd_init(p);
+	/*
+	 * There are three different ways we configure the MCD and memory map.
+	 * 1) Old way
+	 *    Skiboot configures the MCD and puts GPUs at 4TB and below
+	 * 2) New way with MCD
+	 *    Hostboot configures the MCD and skiboot puts GPU at 4TB and above
+	 * 3) New way without MCD
+	 *    No one configures the MCD and skiboot puts GPU at 4TB and below
+	 *
+	 * 1) Will go away evenutally as it's a configuration that can
+	 *    cause an xstop or data integrity problems. We are keeping
+	 *    it around to support existing hostboot. Print error
+	 *    message if used.
+	 * 2) Is for smaller memory configurations and will be used
+	 *    initially for GPUs on Witherspoon. Supports only to
+	 *    512GB of memory and 4 GPUs per socket.
+	 * 3) Is for fully populated configurations of 4TB of memory
+	 *    and 6GPUs per socket. May have performance impacts.
+	 *
+	 * The different configurations can be detected via the following scoms:
+	 * 1) 0x5011c0c bit 2 = 1, 0x5011c0a bits 42:48 = 0
+	 * 2) 0x5011c0c bit 2 = 1, 0x5011c0a bits 42:48 = 7
+	 * 3) 0x5011c0c bit 2 = 0, 0x5011c0a bits 42:48 = 0
+	 */
+
+	/* Get 0x05011c0c bit 2 = 1 */
+	xscom_read(p->chip_id, PB_CENT_HP_MODE_CURR, &val);
+	if ((val & PB_CFG_CHG_RATE_GP_MASTER) != 0) {
+		/* Get 0x05011c0a bits 42:48 */
+		xscom_read(p->chip_id, PB_CENT_MODE, &val);
+		if (GETFIELD(PB_CFG_CHIP_ADDR_EXTENSION_MASK_CENT, val) == 0) {
+			/* 1) */
+			NPU2DBG(p, "Using old memory map + MCD enabled in skiboot\n");
+			NPU2ERR(p, "!!! Old firmware detected. Update hostboot for new MCD mapping !!!\n");
+			p->gpu_map_type = GPU_MEM_4T_DOWN;
+			npu2_mcd_init(p);
+		} else if (GETFIELD(PB_CFG_CHIP_ADDR_EXTENSION_MASK_CENT, val) == 7) {
+			/* 2) */
+			NPU2DBG(p, "Using small memory map + MCD enabled\n");
+			p->gpu_map_type = GPU_MEM_4T_UP;
+		} else
+			NPU2ERR(p, "!!! Unsupported NPU2 configuration. "
+				"0x%llx!!!\n", val);
+	} else {
+		/* 3) */
+		NPU2DBG(p, "Using large memory map + MCD disabled\n");
+		p->gpu_map_type = GPU_MEM_4T_DOWN;
+	}
 }
 
 static int64_t npu2_map_pe_dma_window_real(struct phb *phb,

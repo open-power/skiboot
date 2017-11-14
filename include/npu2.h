@@ -128,6 +128,7 @@ struct npu2 {
 	uint32_t	base_lsi;
 	uint32_t	total_devices;
 	struct npu2_dev	*devices;
+	enum phys_map_type gpu_map_type;
 
 	/* IODA cache */
 	uint64_t	lxive_cache[8];
