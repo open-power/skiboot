@@ -31,6 +31,11 @@ void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
 #define	MCD_BANK_CN_VALID	PPC_BIT(0)
 #define	MCD_BANK_CN_SIZE	PPC_BITMASK(13,29)
 #define	MCD_BANK_CN_ADDR	PPC_BITMASK(33,63)
+#define PB_CENT_HP_MODE_CURR	0x5011c0c
+#define  PB_CFG_CHG_RATE_GP_MASTER PPC_BIT(2)
+#define PB_CENT_MODE		0x5011c0a
+#define  PB_CFG_CHIP_ADDR_EXTENSION_MASK_CENT PPC_BITMASK(42,48)
+
 
 #define NPU2_REG_OFFSET(stack, block, offset) \
 	(((stack) << 20) | ((block) << 16) | (offset))
