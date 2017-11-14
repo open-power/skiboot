@@ -28,6 +28,9 @@ void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
  * code */
 #define MCD0_BANK0_CN3 0x301100d
 #define MCD1_BANK0_CN3 0x301140d
+#define	MCD_BANK_CN_VALID	PPC_BIT(0)
+#define	MCD_BANK_CN_SIZE	PPC_BITMASK(13,29)
+#define	MCD_BANK_CN_ADDR	PPC_BITMASK(33,63)
 
 #define NPU2_REG_OFFSET(stack, block, offset) \
 	(((stack) << 20) | ((block) << 16) | (offset))

@@ -845,6 +845,20 @@ static int64_t npu2_ioda_reset(struct phb *phb, bool purge)
 	return OPAL_SUCCESS;
 }
 
+static void npu2_write_mcd(struct npu2 *p, uint64_t pcb_addr, uint64_t addr,
+			   uint64_t size)
+{
+	uint64_t val;
+
+	NPU2DBG(p, "Setting MCD addr:%llx\n", pcb_addr);
+	assert(is_pow2(size));
+
+	val = MCD_BANK_CN_VALID;
+	val = SETFIELD(MCD_BANK_CN_SIZE, val, (size >> 25) - 1);
+	val = SETFIELD(MCD_BANK_CN_ADDR, val, addr >> 25);
+	xscom_write(p->chip_id, pcb_addr, val);
+}
+
 static void npu2_hw_init(struct npu2 *p)
 {
 	int i;
@@ -884,10 +898,7 @@ static void npu2_hw_init(struct npu2 *p)
 	/* Allocate the biggest chunk first as we assume gpu_max_addr has the
 	 * highest alignment. */
 	addr = gpu_max_addr - size;
-	val = PPC_BIT(0);
-	val = SETFIELD(PPC_BITMASK(13, 29), val, (size >> 25) - 1);
-	val = SETFIELD(PPC_BITMASK(33, 63), val, addr >> 25);
-	xscom_write(p->chip_id, MCD0_BANK0_CN3, val);
+	npu2_write_mcd(p, MCD0_BANK0_CN3, addr, size);
 	total_size -= size;
 	if (total_size) {
 	/* total_size was not a power of two, but the remainder should
@@ -896,10 +907,7 @@ static void npu2_hw_init(struct npu2 *p)
 		size = 1ull << ilog2(total_size);
 		addr -= size;
 		assert(addr <= gpu_min_addr);
-		val = PPC_BIT(0);
-		val = SETFIELD(PPC_BITMASK(13, 29), val, (size >> 25) - 1);
-		val = SETFIELD(PPC_BITMASK(33, 63), val, addr >> 25);
-		xscom_write(p->chip_id, MCD1_BANK0_CN3, val);
+		npu2_write_mcd(p, MCD1_BANK0_CN3, addr, size);
 	}
 }
 
