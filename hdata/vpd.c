@@ -260,6 +260,28 @@ static void vpd_opfr_parse(struct dt_node *node,
 	return;
 }
 
+/*
+ * For CPUs, parse the VRML data.
+ */
+static void vpd_vrml_parse(struct dt_node *node,
+		const void *fruvpd, unsigned int fruvpd_sz)
+{
+	const void *kw;
+	uint8_t sz;
+
+	/* Part number */
+	kw = vpd_find(fruvpd, fruvpd_sz, "VRML", "PN", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "part-number", kw, sz);
+
+	/* Serial number */
+	kw = vpd_find(fruvpd, fruvpd_sz, "VRML", "SN", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "serial-number", kw, sz);
+
+	return;
+}
+
 static void vpd_vini_parse(struct dt_node *node,
 			   const void *fruvpd, unsigned int fruvpd_sz)
 {
@@ -341,6 +363,8 @@ void vpd_data_parse(struct dt_node *node, const void *fruvpd, u32 fruvpd_sz)
 {
 	if (vpd_find_record(fruvpd, fruvpd_sz, "OPFR", NULL))
 		vpd_opfr_parse(node, fruvpd, fruvpd_sz);
+	else if (vpd_find_record(fruvpd, fruvpd_sz, "VRML", NULL))
+		vpd_vrml_parse(node, fruvpd, fruvpd_sz);
 	else
 		vpd_vini_parse(node, fruvpd, fruvpd_sz);
 }
