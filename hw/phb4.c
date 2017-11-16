@@ -257,7 +257,7 @@ static inline void phb4_ioda_sel(struct phb4 *p, uint32_t table,
  */
 static int64_t phb4_pcicfg_check(struct phb4 *p, uint32_t bdfn,
 				 uint32_t offset, uint32_t size,
-				 uint8_t *pe)
+				 uint16_t *pe)
 {
 	uint32_t sm = size - 1;
 
@@ -437,7 +437,7 @@ static int64_t phb4_pcicfg_read(struct phb4 *p, uint32_t bdfn,
 {
 	uint64_t addr, val64;
 	int64_t rc;
-	uint8_t pe;
+	uint16_t pe;
 	bool use_asb = false;
 
 	rc = phb4_pcicfg_check(p, bdfn, offset, size, &pe);
@@ -530,7 +530,7 @@ static int64_t phb4_pcicfg_write(struct phb4 *p, uint32_t bdfn,
 {
 	uint64_t addr;
 	int64_t rc;
-	uint8_t pe;
+	uint16_t pe;
 	bool use_asb = false;
 
 	rc = phb4_pcicfg_check(p, bdfn, offset, size, &pe);
