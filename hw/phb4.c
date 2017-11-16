@@ -5150,7 +5150,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 		size_t leq_size;
 		const void *leq = dt_prop_get_def_size(stk_node, "ibm,lane-eq",
 						       NULL, &leq_size);
-		if (leq != NULL && leq_size == 4 * 8)
+		if (leq != NULL && leq_size >= 6 * 8)
 			dt_add_property(np, "ibm,lane-eq", leq, leq_size);
 	}
 	if (dt_has_node_property(stk_node, "ibm,capp-ucode", NULL)) {
