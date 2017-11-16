@@ -873,19 +873,15 @@ static uint64_t phb4_default_mbt0(struct phb4 *p, unsigned int bar_idx)
 		switch (p->mbt_size - bar_idx - 1) {
 		case 0:
 			mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_MDT);
-			mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 0);
+			mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 3);
 			break;
 		case 1:
 			mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_MDT);
-			mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 1);
+			mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 2);
 			break;
 		case 2:
 			mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_MDT);
-			mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 2);
-			break;
-		case 3:
-			mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_MDT);
-			mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 3);
+			mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 1);
 			break;
 		default:
 			mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_PE_SEG);
@@ -957,16 +953,18 @@ static void phb4_init_ioda_cache(struct phb4 *p)
 		}
 
 	}
-	for (i = 0; i < p->mbt_size; i++) {
+
+	/* Initialize MBT entries for BARs 1...N */
+	for (i = 1; i < p->mbt_size; i++) {
 		p->mbt_cache[i][0] = phb4_default_mbt0(p, i);
 		p->mbt_cache[i][1] = 0;
 	}
 
-	/* Initialise M32 bar using MDT entry 0 */
-	p->mbt_cache[0][0] |= IODA3_MBT0_TYPE_M32 |
-		(p->mm1_base & IODA3_MBT0_BASE_ADDR);
-	p->mbt_cache[0][1] = IODA3_MBT1_ENABLE |
-		((~(M32_PCI_SIZE - 1)) & IODA3_MBT1_MASK);
+	/* Initialize M32 bar using MBT entry 0, MDT colunm A */
+	p->mbt_cache[0][0] = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_MDT);
+	p->mbt_cache[0][0] |= SETFIELD(IODA3_MBT0_MDT_COLUMN, 0ull, 0);
+	p->mbt_cache[0][0] |= IODA3_MBT0_TYPE_M32 | (p->mm1_base & IODA3_MBT0_BASE_ADDR);
+	p->mbt_cache[0][1] = IODA3_MBT1_ENABLE | ((~(M32_PCI_SIZE - 1)) & IODA3_MBT1_MASK);
 }
 
 static int64_t phb4_wait_bit(struct phb4 *p, uint32_t reg,
