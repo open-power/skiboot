@@ -612,13 +612,15 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 	nr_pstates = labs(pmax - pmin) + 1;
 	prlog(PR_DEBUG, "OCC: Version %x Min %d Nom %d Max %d Nr States %d\n",
 	      occ_data->version, pmin, pnom, pmax, nr_pstates);
-	if (nr_pstates <= 1 || nr_pstates > 128) {
+	if ((occ_data->version == 0x90 && (nr_pstates <= 1)) ||
+	    (occ_data->version <= 0x02 &&
+	     (nr_pstates <= 1 || nr_pstates > 128))) {
 		/**
 		 * @fwts-label OCCInvalidPStateRange
 		 * @fwts-advice The number of pstates is outside the valid
-		 * range (currently <=1 or > 128), so OPAL has not added
-		 * pstates to the device tree. This means that OCC (On Chip
-		 * Controller) will be non-functional. This means
+		 * range (currently <=1 or > 128 on p8, >255 on P9), so OPAL
+		 * has not added pstates to the device tree. This means that
+		 * OCC (On Chip Controller) will be non-functional. This means
 		 * that CPU idle states and CPU frequency scaling
 		 * will not be functional.
 		 */
