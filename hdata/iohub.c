@@ -280,6 +280,8 @@ static struct dt_node *add_pec_stack(const struct cechub_io_hub *hub,
 
 	for (i = 0; i < 4; i++) /* gen 3 eq settings */
 		eq[i] = be64_to_cpu(hub->phb_lane_eq[phb_index][i]);
+	for (i = 0; i < 4; i++) /* gen 4 eq settings */
+		eq[i+4] = be64_to_cpu(hub->phb4_lane_eq[phb_index][i]);
 
 	/* Lane-eq settings are packed 2 bytes per lane for 16 lanes
 	 * On P9 DD1, 2 bytes per lane are used in the hardware
