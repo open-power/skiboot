@@ -78,10 +78,7 @@ struct npu2_pcie_bar {
 struct npu2;
 struct npu2_dev {
 	uint32_t		index;
-	uint32_t                flags;
-	uint64_t                xscom;
 	uint64_t		pl_xscom_base;
-	void			*regs;
 	struct dt_node		*dt_node;
 	struct npu2_pcie_bar	bars[2];
 	struct npu2		*npu;
