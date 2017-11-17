@@ -64,6 +64,7 @@ struct i2c_request {
 	void			(*completion)(	/* Completion callback */
 					      int rc, struct i2c_request *req);
 	void			*user_data;	/* Client data */
+	int			retries;
 };
 
 /* Generic i2c */

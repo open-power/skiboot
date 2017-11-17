@@ -1134,8 +1134,16 @@ static void p8_i2c_check_work(struct p8_i2c_master *master)
 	while (master->state == state_idle && !list_empty(&master->req_list)) {
 		req = list_top(&master->req_list, struct i2c_request, link);
 		rc = p8_i2c_start_request(master, req);
-		if (rc && rc != OPAL_BUSY)
-			p8_i2c_complete_request(master, req, rc);
+		if (rc) {
+			/*
+			 * If it didn't work the first three times then
+			 * odds are it's not going to work on the 4th.
+			 */
+			if (rc && req->retries > 3)
+				p8_i2c_complete_request(master, req, rc);
+			else
+				req->retries++;
+		}
 	}
 }
 
