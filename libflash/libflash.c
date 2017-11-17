@@ -23,10 +23,6 @@
 #include "ecc.h"
 #include "blocklevel.h"
 
-#ifndef MIN
-#define MIN(a, b)	((a) < (b) ? (a) : (b))
-#endif
-
 static const struct flash_info flash_info[] = {
 	{ 0xc22018, 0x01000000, FL_ERASE_ALL | FL_CAN_4B, "Macronix MXxxL12835F"},
 	{ 0xc22019, 0x02000000, FL_ERASE_ALL | FL_CAN_4B, "Macronix MXxxL25635F"},

@@ -325,16 +325,20 @@ static int erase_range(struct flash_details *flash,
 	 */
 	progress_init(size);
 	if (start & erase_mask) {
-		/* Align to next erase block */
-		rc = blocklevel_smart_erase(flash->bl, start,
-				flash->erase_granule - (start & erase_mask));
+		/*
+		 * Align to next erase block, or just do the entire
+		 * thing if we fit within one erase block
+		 */
+		uint32_t first_size = MIN(size, (flash->erase_granule - (start & erase_mask)));
+
+		rc = blocklevel_smart_erase(flash->bl, start, first_size);
 		if (rc) {
 			fprintf(stderr, "Failed to blocklevel_smart_erase(): %d\n", rc);
 			return 1;
 		}
-		size -= flash->erase_granule - (start & erase_mask);
-		done = flash->erase_granule - (start & erase_mask);
-		start += flash->erase_granule - (start & erase_mask);
+		size -= first_size;
+		done = first_size;
+		start += first_size;
 	}
 	progress_tick(done);
 	while (size & ~(erase_mask)) {

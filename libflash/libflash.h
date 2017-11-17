@@ -28,6 +28,10 @@
  */
 #include <libflash/errors.h>
 
+#ifndef MIN
+#define MIN(a, b)	((a) < (b) ? (a) : (b))
+#endif
+
 /* Flash chip, opaque */
 struct flash_chip;
 struct spi_flash_ctrl;
