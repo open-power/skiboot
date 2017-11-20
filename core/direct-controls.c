@@ -220,7 +220,7 @@ static int p9_sreset_thread(struct cpu_thread *cpu)
 	return 0;
 }
 
-static int dctl_set_special_wakeup(struct cpu_thread *t)
+int dctl_set_special_wakeup(struct cpu_thread *t)
 {
 	struct cpu_thread *c = t->primary;
 	int rc = OPAL_SUCCESS;
@@ -238,7 +238,7 @@ static int dctl_set_special_wakeup(struct cpu_thread *t)
 	return rc;
 }
 
-static int dctl_clear_special_wakeup(struct cpu_thread *t)
+int dctl_clear_special_wakeup(struct cpu_thread *t)
 {
 	struct cpu_thread *c = t->primary;
 	int rc = OPAL_SUCCESS;

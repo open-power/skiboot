@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 
-extern int64_t dts_sensor_read(uint32_t sensor_hndl, uint32_t *sensor_data);
+extern int64_t dts_sensor_read(u32 sensor_hndl, int token, u32 *sensor_data);
 extern bool dts_sensor_create_nodes(struct dt_node *sensors);
 
 #endif /* __DTS_H */

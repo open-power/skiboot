@@ -23,6 +23,7 @@
 #include <device.h>
 #include <opal.h>
 #include <stack.h>
+#include <timer.h>
 
 /*
  * cpu_thread is our internal structure representing each
@@ -102,6 +103,16 @@ struct cpu_thread {
 	struct lock			dctl_lock; /* primary only */
 	bool				dctl_stopped; /* per thread */
 	uint32_t			special_wakeup_count; /* primary */
+
+	/*
+	 * For reading DTS sensors async
+	 */
+	struct lock			dts_lock;
+	struct timer			dts_timer;
+	void				*sensor_data;
+	u32				sensor_attr;
+	u32				token;
+	bool				dts_read_in_progress;
 };
 
 /* This global is set to 1 to allow secondaries to callin,
@@ -283,5 +294,8 @@ extern void cpu_idle_delay(unsigned long delay);
 
 extern void cpu_set_radix_mode(void);
 extern void cpu_fast_reboot_complete(void);
+
+int dctl_set_special_wakeup(struct cpu_thread *t);
+int dctl_clear_special_wakeup(struct cpu_thread *t);
 
 #endif /* __CPU_H */
