@@ -186,6 +186,7 @@ struct pci_slot {
 	uint64_t		retries;
 	uint64_t		link_retries;
 	struct pci_slot_ops	ops;
+	struct pci_slot		*peer_slot;
 	void			*data;
 };
 

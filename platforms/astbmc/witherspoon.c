@@ -457,8 +457,11 @@ static void phb4_pre_pci_fixup_witherspoon(void)
 			slot0->ops.get_presence_state(slot0, &p0);
 		if (slot1->ops.get_presence_state)
 			slot1->ops.get_presence_state(slot1, &p1);
-		if (p0 == 1 && p1 == 1)
+		if (p0 == 1 && p1 == 1) {
 			phb4_activate_shared_slot_witherspoon(chip1);
+			slot0->peer_slot = slot1;
+			slot1->peer_slot = slot0;
+		}
 	}
 }
 

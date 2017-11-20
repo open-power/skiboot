@@ -178,6 +178,7 @@ struct pci_slot *pci_slot_alloc(struct phb *phb,
 	slot->power_state = PCI_SLOT_POWER_ON;
 	slot->ops.run_sm = pci_slot_run_sm;
 	slot->ops.prepare_link_change = pci_slot_prepare_link_change;
+	slot->peer_slot = NULL;
 	if (!pd) {
 		slot->id = PCI_PHB_SLOT_ID(phb);
 		phb->slot = slot;
