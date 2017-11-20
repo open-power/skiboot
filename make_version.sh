@@ -50,7 +50,7 @@ else
 	then
 		echo $SKIBOOT_VERSION
 	else
-		if [ ! -z "`cat .version`" ];
+		if [ -f ".version" -a -s ".version" ];
 		then
 			cat .version
 		else
