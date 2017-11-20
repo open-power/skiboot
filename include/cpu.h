@@ -297,5 +297,6 @@ extern void cpu_fast_reboot_complete(void);
 
 int dctl_set_special_wakeup(struct cpu_thread *t);
 int dctl_clear_special_wakeup(struct cpu_thread *t);
+int dctl_core_is_gated(struct cpu_thread *t);
 
 #endif /* __CPU_H */

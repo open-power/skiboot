@@ -35,6 +35,7 @@
 #define P9_SPWKUP_SET			PPC_BIT(0)
 
 #define P9_EC_PPM_SSHHYP		0x0114
+#define P9_CORE_GATED			PPC_BIT(0)
 #define P9_SPECIAL_WKUP_DONE		PPC_BIT(1)
 
 /* Waking may take up to 5ms for deepest sleep states. Set timeout to 100ms */
@@ -278,6 +279,26 @@ out:
 	unlock(&c->dctl_lock);
 
 	return rc;
+}
+
+int dctl_core_is_gated(struct cpu_thread *t)
+{
+	struct cpu_thread *c = t->primary;
+	uint32_t chip_id = pir_to_chip_id(c->pir);
+	uint32_t core_id = pir_to_core_id(c->pir);
+	uint32_t sshhyp_addr;
+	uint64_t val;
+
+	sshhyp_addr = XSCOM_ADDR_P9_EC_SLAVE(core_id, P9_EC_PPM_SSHHYP);
+
+	if (xscom_read(chip_id, sshhyp_addr, &val)) {
+		prlog(PR_ERR, "Could not query core gated on %u:%u:"
+				" Unable to read PPM_SSHHYP.\n",
+				chip_id, core_id);
+		return OPAL_HARDWARE;
+	}
+
+	return !!(val & P9_CORE_GATED);
 }
 
 static int dctl_stop(struct cpu_thread *t)
