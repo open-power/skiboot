@@ -78,6 +78,7 @@ static void pci_slot_prepare_link_change(struct pci_slot *slot, bool up)
 
 static int64_t pci_slot_run_sm(struct pci_slot *slot)
 {
+	struct pci_slot *peer = slot->peer_slot;
 	uint64_t now = mftb();
 	int64_t ret;
 
@@ -89,10 +90,23 @@ static int64_t pci_slot_run_sm(struct pci_slot *slot)
 	slot->delay_tgt_tb = 0;
 	switch (slot->state & PCI_SLOT_STATE_MASK) {
 	case PCI_SLOT_STATE_LINK:
+		// If the peer slot hasn't finished its hreset, need to wait
+		if (peer && peer->state & PCI_SLOT_STATE_HRESET &&
+		    !pci_slot_has_flags(peer, PCI_SLOT_FLAG_BOOTUP))
+			return slot->ops.hreset(peer);
+
 		ret = slot->ops.poll_link(slot);
+		if (peer && peer->state & PCI_SLOT_STATE_LINK &&
+		    !pci_slot_has_flags(peer, PCI_SLOT_FLAG_BOOTUP))
+			ret = MAX(ret, slot->ops.poll_link(peer));
 		break;
 	case PCI_SLOT_STATE_HRESET:
 		ret = slot->ops.hreset(slot);
+
+		// If the slot has a peer, it needs to hreset as well.
+		if (peer && peer->state == PCI_SLOT_STATE_NORMAL &&
+		    !pci_slot_has_flags(peer, PCI_SLOT_FLAG_BOOTUP))
+			slot->ops.hreset(peer);
 		break;
 	case PCI_SLOT_STATE_FRESET:
 		ret = slot->ops.freset(slot);
