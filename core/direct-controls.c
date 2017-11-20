@@ -95,8 +95,12 @@ static int p9_core_clear_special_wakeup(struct cpu_thread *cpu)
 	uint32_t chip_id = pir_to_chip_id(cpu->pir);
 	uint32_t core_id = pir_to_core_id(cpu->pir);
 	uint32_t swake_addr;
+	uint32_t sshhyp_addr;
+	uint64_t val;
+	int i;
 
 	swake_addr = XSCOM_ADDR_P9_EC_SLAVE(core_id, EC_PPM_SPECIAL_WKUP_HYP);
+	sshhyp_addr = XSCOM_ADDR_P9_EC_SLAVE(core_id, P9_EC_PPM_SSHHYP);
 
 	/*
 	 * De-assert special wakeup after a small delay.
@@ -110,8 +114,25 @@ static int p9_core_clear_special_wakeup(struct cpu_thread *cpu)
 				chip_id, core_id);
 		return OPAL_HARDWARE;
 	}
+	time_wait_us(1);
 
-	return OPAL_SUCCESS;
+	for (i = 0; i < P9_SPWKUP_TIMEOUT/P9_SPWKUP_POLL_INTERVAL; i++) {
+		if (xscom_read(chip_id, sshhyp_addr, &val)) {
+			prlog(PR_ERR, "Could not clear special wakeup on %u:%u:"
+					" Unable to read PPM_SSHHYP.\n",
+					chip_id, core_id);
+			return OPAL_HARDWARE;
+		}
+		if (!(val & P9_SPECIAL_WKUP_DONE))
+			return 0;
+
+		time_wait_us(P9_SPWKUP_POLL_INTERVAL);
+	}
+
+	prlog(PR_ERR, "Could not clear special wakeup on %u:%u:"
+			" timeout waiting for clear of SPECIAL_WKUP_DONE.\n",
+			chip_id, core_id);
+	return OPAL_HARDWARE;
 }
 
 static int p9_thread_quiesced(struct cpu_thread *cpu)
