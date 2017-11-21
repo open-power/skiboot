@@ -4142,13 +4142,13 @@ static int64_t opal_xive_set_vp_info(uint64_t vp_id,
 		return OPAL_PARAMETER;
 
 	vp_new = *vp;
-	if (flags & OPAL_XIVE_VP_ENABLED)
+	if (flags & OPAL_XIVE_VP_ENABLED) {
 		vp_new.w0 |= VP_W0_VALID;
-	else
-		vp_new.w0 &= ~VP_W0_VALID;
+		vp_new.w6 = report_cl_pair >> 32;
+		vp_new.w7 = report_cl_pair & 0xffffffff;
+	} else
+		vp_new.w0 = vp_new.w6 = vp_new.w7 = 0;
 
-	vp_new.w7 = report_cl_pair & 0xffffffff;
-	vp_new.w6 = report_cl_pair >> 32;
 
 	lock(&x->lock);
 	rc = xive_vpc_cache_update(x, blk, idx, 0, 8, &vp_new, false, false);

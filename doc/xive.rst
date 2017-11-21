@@ -699,6 +699,8 @@ This call configures a VP:
 * report_cl_pair: This is the real address of the reporting cache line
   pair for that VP or 0 to disable.
 
+    .. note:: When disabling a VP, all other VP settings are lost.
+
 
 OPAL_XIVE_ALLOCATE_IRQ
 ^^^^^^^^^^^^^^^^^^^^^^
