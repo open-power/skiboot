@@ -4539,6 +4539,7 @@ static void xive_reset_one(struct xive *x)
 			continue;
 
 		/* Clear it */
+		xive_dbg(x, "VP 0x%x:0x%x is valid at reset\n", x->block_id, i);
 		xive_vpc_cache_update(x, x->block_id,
 				      i, 0, 8, &vp0, false, true);
 	}
@@ -4698,8 +4699,10 @@ static int64_t opal_xive_free_vp_block(uint64_t vp_base)
 		}
 
 		/* VP must be disabled */
-		if (vp->w0 & VP_W0_VALID)
+		if (vp->w0 & VP_W0_VALID) {
+			prlog(PR_ERR, "XIVE: freeing active VP %d\n", vp_id);
 			return OPAL_XIVE_FREE_ACTIVE;
+		}
 
 		/* Not populated */
 		if (vp->w1 == 0)
