@@ -118,6 +118,7 @@ Procedure Control Register
     10. Naples NPU - RESET
     11. Naples PHY - PHY preterminate
     12. Naples PHY - PHY terminated
+    13. Witherspoon TL credit validation
 
    Procedure 5 (TX_ZCAL) should only be run once. System firmware will
    ensure this so device drivers may call this procedure mutiple
