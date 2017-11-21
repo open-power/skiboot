@@ -663,6 +663,41 @@ static uint32_t phy_rx_training_wait(struct npu2_dev *ndev)
 }
 DEFINE_PROCEDURE(phy_rx_training, phy_rx_training_wait);
 
+static uint32_t check_credit(struct npu2_dev *ndev, uint64_t reg,
+			     const char *reg_name, uint64_t expected)
+{
+	uint64_t val;
+
+	val = npu2_read(ndev->npu, reg);
+	if (val == expected)
+		return 0;
+
+	NPU2DEVERR(ndev, "%s: expected 0x%llx, read 0x%llx\n",
+		   reg_name, expected, val);
+
+	return 1;
+}
+
+#define CHECK_CREDIT(ndev, reg, expected) \
+	check_credit(ndev, reg(ndev), #reg, expected);
+
+static uint32_t check_credits(struct npu2_dev *ndev)
+{
+	int fail = 0;
+
+	fail += CHECK_CREDIT(ndev, NPU2_NTL_CRED_HDR_CREDIT_RX, 0x0BE0BE0000000000ULL);
+	fail += CHECK_CREDIT(ndev, NPU2_NTL_RSP_HDR_CREDIT_RX, 0x0BE0BE0000000000ULL);
+	fail += CHECK_CREDIT(ndev, NPU2_NTL_CRED_DATA_CREDIT_RX, 0x1001000000000000ULL);
+	fail += CHECK_CREDIT(ndev, NPU2_NTL_RSP_DATA_CREDIT_RX, 0x1001000000000000ULL);
+	fail += CHECK_CREDIT(ndev, NPU2_NTL_DBD_HDR_CREDIT_RX, 0x0640640000000000ULL);
+	fail += CHECK_CREDIT(ndev, NPU2_NTL_ATSD_HDR_CREDIT_RX, 0x0200200000000000ULL);
+
+	assert(!fail);
+
+	return PROCEDURE_COMPLETE;
+}
+DEFINE_PROCEDURE(check_credits);
+
 static struct procedure *npu_procedures[] = {
 	&procedure_stop,
 	&procedure_nop,
@@ -678,7 +713,9 @@ static struct procedure *npu_procedures[] = {
 
 	/* Place holders for pre-terminate and terminate procedures */
 	&procedure_nop,
-	&procedure_nop};
+	&procedure_nop,
+	&procedure_check_credits
+};
 
 /* Run a procedure step(s) and return status */
 static uint32_t get_procedure_status(struct npu2_dev *dev)
