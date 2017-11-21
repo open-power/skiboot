@@ -4494,10 +4494,15 @@ static void xive_reset_one(struct xive *x)
 			 * we will incorrectly free the EQs that are reserved
 			 * for the physical CPUs
 			 */
-			eq0 = *eq;
-			xive_cleanup_eq(&eq0);
-			xive_eqc_cache_update(x, x->block_id,
-					      idx, 0, 4, &eq0, false, true);
+			if (eq->w0 & EQ_W0_VALID) {
+				if (!(eq->w0 & EQ_W0_FIRMWARE))
+					xive_dbg(x, "EQ 0x%x:0x%x is valid at reset: %08x %08x\n",
+						 x->block_id, idx, eq->w0, eq->w1);
+				eq0 = *eq;
+				xive_cleanup_eq(&eq0);
+				xive_eqc_cache_update(x, x->block_id,
+						      idx, 0, 4, &eq0, false, true);
+			}
 			if (eq->w0 & EQ_W0_FIRMWARE)
 				eq_firmware = true;
 		}
