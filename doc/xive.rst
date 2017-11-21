@@ -565,13 +565,17 @@ and priority and adjust the behaviour of the queue via flags.
   .. note:: This call will reset the generation bit to 1 and the queue
 	    production pointer to 0.
 
-  .. note:: The PQ bits of the escalation interrupts will be set to 00
-	    when OPAL_XIVE_EQ_ENABLED is set, and to 01 (masked) when
-	    disabling it.
+  .. note:: The PQ bits of the escalation interrupts and of the queue
+            notification will be set to 00 when OPAL_XIVE_EQ_ENABLED is
+	    set, and to 01 (masked) when disabling it.
 
   .. note:: This must be called at least once on a queue with the flag
 	    OPAL_XIVE_EQ_ENABLED in order to enable it after it has been
 	    allocated (along with its owner VP).
+
+  .. note:: When the queue is disabled (flag OPAL_XIVE_EQ_ENABLED cleared)
+	    all other flags and arguments are ignored and the queue
+	    configuration is wiped.
 
 OPAL_XIVE_DONATE_PAGE
 ^^^^^^^^^^^^^^^^^^^^^

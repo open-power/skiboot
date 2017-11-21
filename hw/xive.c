@@ -3983,61 +3983,62 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 	 */
 	eq = *old_eq;
 
-	switch(qsize) {
-		/* Supported sizes */
-	case 12:
-	case 16:
-	case 21:
-	case 24:
-		eq.w3 = ((uint64_t)qpage) & 0xffffffff;
-		eq.w2 = (((uint64_t)qpage)) >> 32 & 0x0fffffff;
-		eq.w0 |= EQ_W0_ENQUEUE;
-		eq.w0 = SETFIELD(EQ_W0_QSIZE, eq.w0, qsize - 12);
-		break;
-	case 0:
-		eq.w2 = eq.w3 = 0;
-		eq.w0 &= ~EQ_W0_ENQUEUE;
-		break;
-	default:
-		return OPAL_PARAMETER;
-	}
+	if (qflags & OPAL_XIVE_EQ_ENABLED) {
+		switch(qsize) {
+			/* Supported sizes */
+		case 12:
+		case 16:
+		case 21:
+		case 24:
+			eq.w3 = ((uint64_t)qpage) & 0xffffffff;
+			eq.w2 = (((uint64_t)qpage)) >> 32 & 0x0fffffff;
+			eq.w0 |= EQ_W0_ENQUEUE;
+			eq.w0 = SETFIELD(EQ_W0_QSIZE, eq.w0, qsize - 12);
+			break;
+		case 0:
+			eq.w2 = eq.w3 = 0;
+			eq.w0 &= ~EQ_W0_ENQUEUE;
+			break;
+		default:
+			return OPAL_PARAMETER;
+		}
 
-	/* Ensure the priority and target are correctly set (they will
-	 * not be right after allocation
-	 */
-	eq.w6 = SETFIELD(EQ_W6_NVT_BLOCK, 0ul, vp_blk) |
-		SETFIELD(EQ_W6_NVT_INDEX, 0ul, vp_idx);
-	eq.w7 = SETFIELD(EQ_W7_F0_PRIORITY, 0ul, prio);
-	/* XXX Handle group i bit when needed */
+		/* Ensure the priority and target are correctly set (they will
+		 * not be right after allocation
+		 */
+		eq.w6 = SETFIELD(EQ_W6_NVT_BLOCK, 0ul, vp_blk) |
+			SETFIELD(EQ_W6_NVT_INDEX, 0ul, vp_idx);
+		eq.w7 = SETFIELD(EQ_W7_F0_PRIORITY, 0ul, prio);
+		/* XXX Handle group i bit when needed */
 
-	/* Always notify flag */
-	if (qflags & OPAL_XIVE_EQ_ALWAYS_NOTIFY)
-		eq.w0 |= EQ_W0_UCOND_NOTIFY;
-	else
-		eq.w0 &= ~EQ_W0_UCOND_NOTIFY;
+		/* Always notify flag */
+		if (qflags & OPAL_XIVE_EQ_ALWAYS_NOTIFY)
+			eq.w0 |= EQ_W0_UCOND_NOTIFY;
+		else
+			eq.w0 &= ~EQ_W0_UCOND_NOTIFY;
 
-	/* Escalation flag */
-	if (qflags & OPAL_XIVE_EQ_ESCALATE)
-		eq.w0 |= EQ_W0_ESCALATE_CTL;
-	else
-		eq.w0 &= ~EQ_W0_ESCALATE_CTL;
+		/* Escalation flag */
+		if (qflags & OPAL_XIVE_EQ_ESCALATE)
+			eq.w0 |= EQ_W0_ESCALATE_CTL;
+		else
+			eq.w0 &= ~EQ_W0_ESCALATE_CTL;
 
-	/* Unconditionally clear the current queue pointer, set
-	 * generation to 1 and disable escalation interrupts.
-	 */
-	eq.w1 = EQ_W1_GENERATION |
-		(old_eq->w1 & (EQ_W1_ESe_P | EQ_W1_ESe_Q |
-			       EQ_W1_ESn_P | EQ_W1_ESn_Q));
+		/* Unconditionally clear the current queue pointer, set
+		 * generation to 1 and disable escalation interrupts.
+		 */
+		eq.w1 = EQ_W1_GENERATION |
+			(old_eq->w1 & (EQ_W1_ESe_P | EQ_W1_ESe_Q |
+				       EQ_W1_ESn_P | EQ_W1_ESn_Q));
 
-	/* Enable or disable. We always enable backlog for an
-	 * enabled queue otherwise escalations won't work.
-	 */
-	if (qflags & OPAL_XIVE_EQ_ENABLED)
+		/* Enable. We always enable backlog for an enabled queue
+		 * otherwise escalations won't work.
+		 */
 		eq.w0 |= EQ_W0_VALID | EQ_W0_BACKLOG;
-	else {
-		eq.w0 &= ~EQ_W0_VALID;
-		eq.w1 &= ~(EQ_W1_ESe_P | EQ_W1_ESn_P);
-		eq.w1 |= EQ_W1_ESe_Q | EQ_W1_ESn_Q;
+	} else {
+		/* Clear everything and set PQ bits to 01 */
+		eq.w0 = old_eq->w0 & EQ_W0_FIRMWARE;
+		eq.w1 = EQ_W1_ESe_Q | EQ_W1_ESn_Q;
+		eq.w2 = eq.w3 = eq.w4 = eq.w5 = eq.w6 = eq.w7 = 0;
 	}
 
 	/* Update EQ, non-synchronous */
