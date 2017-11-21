@@ -990,7 +990,7 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect __unused)
 		 */
 		if (alloc_indirect) {
 			/* Allocate/provision indirect page during boot only */
-			xive_dbg(x, "Indirect empty, provisioning from local pool\n");
+			xive_vdbg(x, "Indirect empty, provisioning from local pool\n");
 			page = local_alloc(x->chip_id, 0x10000, 0x10000);
 			if (!page) {
 				xive_dbg(x, "provisioning failed !\n");
@@ -998,10 +998,10 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect __unused)
 			}
 			vsd_flags |= VSD_FIRMWARE;
 		} else {
-			xive_dbg(x, "Indirect empty, provisioning from donated pages\n");
+			xive_vdbg(x, "Indirect empty, provisioning from donated pages\n");
 			page = xive_get_donated_page(x);
 			if (!page) {
-				xive_dbg(x, "none available !\n");
+				xive_vdbg(x, "no idirect pages available !\n");
 				return XIVE_ALLOC_NO_IND;
 			}
 		}
@@ -2932,7 +2932,7 @@ static void xive_reset_enable_thread(struct cpu_thread *c)
 void xive_cpu_callin(struct cpu_thread *cpu)
 {
 	struct xive_cpu_state *xs = cpu->xstate;
-	uint8_t old_w2, w2;
+	uint8_t old_w2 __unused, w2 __unused;
 
 	if (!xs)
 		return;
@@ -2945,10 +2945,10 @@ void xive_cpu_callin(struct cpu_thread *cpu)
 	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2, 0x80);
 	w2 = in_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_WORD2);
 
-	xive_cpu_dbg(cpu, "Initialized TIMA VP=%x/%x W01=%016llx W2=%02x->%02x\n",
-		     xs->vp_blk, xs->vp_idx,
-		     in_be64(xs->tm_ring1 + TM_QW3_HV_PHYS),
-		     old_w2, w2);
+	xive_cpu_vdbg(cpu, "Initialized TIMA VP=%x/%x W01=%016llx W2=%02x->%02x\n",
+		      xs->vp_blk, xs->vp_idx,
+		      in_be64(xs->tm_ring1 + TM_QW3_HV_PHYS),
+		      old_w2, w2);
 }
 
 #ifdef XIVE_DEBUG_INIT_CACHE_UPDATES
@@ -3147,12 +3147,12 @@ static void xive_configure_ex_special_bar(struct xive *x, struct cpu_thread *c)
 	uint64_t xa, val;
 	int64_t rc;
 
-	xive_cpu_dbg(c, "Setting up special BAR\n");
+	xive_cpu_vdbg(c, "Setting up special BAR\n");
 	xa = XSCOM_ADDR_P9_EX(pir_to_core_id(c->pir), P9X_EX_NCU_SPEC_BAR);
 	val = (uint64_t)x->tm_base | P9X_EX_NCU_SPEC_BAR_ENABLE;
 	if (x->tm_shift == 16)
 		val |= P9X_EX_NCU_SPEC_BAR_256K;
-	xive_cpu_dbg(c, "NCU_SPEC_BAR_XA[%08llx]=%016llx\n", xa, val);
+	xive_cpu_vdbg(c, "NCU_SPEC_BAR_XA[%08llx]=%016llx\n", xa, val);
 	rc = xscom_write(c->chip_id, xa, val);
 	if (rc) {
 		xive_cpu_err(c, "Failed to setup NCU_SPEC_BAR\n");
@@ -3230,7 +3230,7 @@ static void xive_init_cpu(struct cpu_thread *c)
 	/* Allocate an IPI */
 	xs->ipi_irq = xive_alloc_ipi_irqs(c->chip_id, 1, 1);
 
-	xive_cpu_dbg(c, "CPU IPI is irq %08x\n", xs->ipi_irq);
+	xive_cpu_vdbg(c, "CPU IPI is irq %08x\n", xs->ipi_irq);
 
 	/* Provision a VP and some EQDs for a physical CPU */
 	xive_provision_cpu(xs, c);
@@ -4340,7 +4340,7 @@ static void xive_cleanup_cpu_tima(struct cpu_thread *c)
 	struct xive_cpu_state *xs = c->xstate;
 	struct xive *x = xs->xive;
 	void *ind_tm_base = x->ic_base + (4 << x->ic_shift);
-	uint8_t old_w2, w2;
+	uint8_t old_w2 __unused, w2 __unused;
 
 	/* Reset the HW context */
 	xive_reset_enable_thread(c);
@@ -4361,10 +4361,10 @@ static void xive_cleanup_cpu_tima(struct cpu_thread *c)
 	w2 = in_8(ind_tm_base + TM_QW3_HV_PHYS + TM_WORD2);
 
 	/* Dump HV state */
-	xive_cpu_dbg(c, "[reset] VP TIMA VP=%x/%x W01=%016llx W2=%02x->%02x\n",
-		     xs->vp_blk, xs->vp_idx,
-		     in_be64(ind_tm_base + TM_QW3_HV_PHYS),
-		     old_w2, w2);
+	xive_cpu_vdbg(c, "[reset] VP TIMA VP=%x/%x W01=%016llx W2=%02x->%02x\n",
+		      xs->vp_blk, xs->vp_idx,
+		      in_be64(ind_tm_base + TM_QW3_HV_PHYS),
+		      old_w2, w2);
 
 	/* Reset indirect access */
 	xive_regw(x, PC_TCTXT_INDIR0, 0);
@@ -4596,7 +4596,7 @@ static void xive_reset_mask_source_cb(struct irq_source *is,
 		if (!bitmap_tst_bit(*x->int_enabled_map, GIRQ_TO_IDX(isn)))
 			continue;
 		/* Mask it and clear the enabled map bit */
-		xive_dbg(x, "[reset] disabling source 0x%x\n", isn);
+		xive_vdbg(x, "[reset] disabling source 0x%x\n", isn);
 		__xive_set_irq_config(is, isn, 0, 0xff, isn, true, true);
 		bitmap_clr_bit(*x->int_enabled_map, GIRQ_TO_IDX(isn));
 	}
@@ -4750,7 +4750,7 @@ static int64_t opal_xive_alloc_vp_block(uint32_t alloc_order)
 	if (xive_mode != XIVE_MODE_EXPL)
 		return OPAL_WRONG_STATE;
 
-	prlog(PR_DEBUG, "opal_xive_alloc_vp_block(%d)\n", alloc_order);
+	prlog(PR_TRACE, "opal_xive_alloc_vp_block(%d)\n", alloc_order);
 
 	vp_base = xive_alloc_vps(alloc_order);
 	if (XIVE_ALLOC_IS_ERR(vp_base)) {
