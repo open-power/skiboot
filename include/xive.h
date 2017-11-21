@@ -397,13 +397,14 @@ struct xive_ive {
 /* EQ */
 struct xive_eq {
 	uint32_t	w0;
-#define EQ_W0_VALID		PPC_BIT32(0)
-#define EQ_W0_ENQUEUE		PPC_BIT32(1)
-#define EQ_W0_UCOND_NOTIFY	PPC_BIT32(2)
-#define EQ_W0_BACKLOG		PPC_BIT32(3)
-#define EQ_W0_PRECL_ESC_CTL	PPC_BIT32(4)
-#define EQ_W0_ESCALATE_CTL	PPC_BIT32(5)
-#define EQ_W0_END_OF_INTR	PPC_BIT32(6)
+#define EQ_W0_VALID		PPC_BIT32(0) /* "v" bit */
+#define EQ_W0_ENQUEUE		PPC_BIT32(1) /* "q" bit */
+#define EQ_W0_UCOND_NOTIFY	PPC_BIT32(2) /* "n" bit */
+#define EQ_W0_BACKLOG		PPC_BIT32(3) /* "b" bit */
+#define EQ_W0_PRECL_ESC_CTL	PPC_BIT32(4) /* "p" bit */
+#define EQ_W0_ESCALATE_CTL	PPC_BIT32(5) /* "e" bit */
+#define EQ_W0_UNCOND_ESCALATE	PPC_BIT32(6) /* "u" bit - DD2.0 */
+#define EQ_W0_SILENT_ESCALATE	PPC_BIT32(7) /* "s" bit - DD2.0 */
 #define EQ_W0_QSIZE		PPC_BITMASK32(12,15)
 #define EQ_W0_SW0		PPC_BIT32(16)
 #define EQ_W0_FIRMWARE		EQ_W0_SW0 /* Owned by FW */

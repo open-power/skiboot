@@ -849,6 +849,14 @@ static struct xive_ive *xive_get_ive(struct xive *x, unsigned int isn)
 			xive_err(x, "xive_get_ive, ESC ISN 0x%x EQ not found\n", isn);
 			return NULL;
 		}
+
+		/* If using single-escalation, don't let anybody get to the individual
+		 * esclation interrupts
+		 */
+		if (eq->w0 & EQ_W0_UNCOND_ESCALATE)
+			return NULL;
+
+		/* Grab the buried IVE */
 		return (struct xive_ive *)(char *)&eq->w4;
 	} else {
 		/* Check the block matches */
@@ -1929,6 +1937,8 @@ static void xive_create_mmio_dt_node(struct xive *x)
 			      12, 16, 21, 24);
 
 	dt_add_property_cells(xive_dt_node, "ibm,xive-#priorities", 8);
+	if (x->rev >= XIVE_REV_2)
+		dt_add_property(xive_dt_node, "single-escalation-support", NULL, 0);
 
 	xive_add_provisioning_properties();
 }
@@ -3912,9 +3922,32 @@ static int64_t opal_xive_get_queue_info(uint64_t vp, uint32_t prio,
 		return OPAL_PARAMETER;
 
 	if (out_escalate_irq) {
+		uint32_t esc_idx = idx;
+
+		/* If escalations are routed to a single queue, fix up
+		 * the escalation interrupt number here.
+		 */
+		if (eq->w0 & EQ_W0_UNCOND_ESCALATE)
+			esc_idx |= 7;
 		*out_escalate_irq =
-			MAKE_ESCALATION_GIRQ(blk, idx);
+			MAKE_ESCALATION_GIRQ(blk, esc_idx);
 	}
+
+	/* If this is a single-escalation gather queue, that's all
+	 * there is to return
+	 */
+	if (eq->w0 & EQ_W0_SILENT_ESCALATE) {
+		if (out_qflags)
+			*out_qflags = 0;
+		if (out_qpage)
+			*out_qpage = 0;
+		if (out_qsize)
+			*out_qsize = 0;
+		if (out_qeoi_page)
+			*out_qeoi_page = 0;
+		return OPAL_SUCCESS;
+	}
+
 	if (out_qpage) {
 		if (eq->w0 & EQ_W0_ENQUEUE)
 			*out_qpage =
@@ -3976,6 +4009,12 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 
 	old_eq = xive_get_eq(x, idx);
 	if (!old_eq)
+		return OPAL_PARAMETER;
+
+	/* If this is a silent escalation queue, it cannot be
+	 * configured directly
+	 */
+	if (old_eq->w0 & EQ_W0_SILENT_ESCALATE)
 		return OPAL_PARAMETER;
 
 	/* This shouldn't fail or xive_eq_for_target would have
@@ -4098,9 +4137,32 @@ static int64_t opal_xive_get_vp_info(uint64_t vp_id,
 		return OPAL_PARAMETER;
 
 	if (out_flags) {
+		uint32_t eq_blk, eq_idx;
+		struct xive_eq *eq;
+		struct xive *eq_x;
 		*out_flags = 0;
+
+		/* We would like to a way to stash a SW bit in the VP to
+		 * know whether silent escalation is enabled or not, but
+		 * unlike what happens with EQs, the PC cache watch doesn't
+		 * implement the reserved bit in the VPs... so we have to go
+		 * look at EQ 7 instead.
+		 */
+		/* Grab EQ for prio 7 to check for silent escalation */
+		if (!xive_eq_for_target(vp_id, 7, &eq_blk, &eq_idx))
+			return OPAL_PARAMETER;
+
+		eq_x = xive_from_vc_blk(eq_blk);
+		if (!eq_x)
+			return OPAL_PARAMETER;
+
+		eq = xive_get_eq(x, eq_idx);
+		if (!eq)
+			return OPAL_PARAMETER;
 		if (vp->w0 & VP_W0_VALID)
 			*out_flags |= OPAL_XIVE_VP_ENABLED;
+		if (eq->w0 & EQ_W0_SILENT_ESCALATE)
+			*out_flags |= OPAL_XIVE_VP_SINGLE_ESCALATION;
 	}
 
 	if (out_cam_value)
@@ -4115,6 +4177,94 @@ static int64_t opal_xive_get_vp_info(uint64_t vp_id,
 		*out_chip_id = xive_block_to_chip[blk];
 
 	return OPAL_SUCCESS;
+}
+
+static int64_t xive_setup_silent_gather(uint64_t vp_id, bool enable)
+{
+	uint32_t blk, idx, i;
+	struct xive_eq *eq_orig;
+	struct xive_eq eq;
+	struct xive *x;
+	int64_t rc;
+
+	/* Get base EQ block */
+	if (!xive_eq_for_target(vp_id, 0, &blk, &idx))
+		return OPAL_PARAMETER;
+	x = xive_from_vc_blk(blk);
+	if (!x)
+		return OPAL_PARAMETER;
+
+	/* Grab prio 7 */
+	eq_orig = xive_get_eq(x, idx + 7);
+	if (!eq_orig)
+		return OPAL_PARAMETER;
+
+	/* If trying to enable silent gather, make sure prio 7 is not
+	 * already enabled as a normal queue
+	 */
+	if (enable && (eq_orig->w0 & EQ_W0_VALID) &&
+	    !(eq_orig->w0 & EQ_W0_SILENT_ESCALATE)) {
+		xive_dbg(x, "Attempt at enabling silent gather but"
+			 " prio 7 queue already in use\n");
+		return OPAL_PARAMETER;
+	}
+
+	eq = *eq_orig;
+
+	if (enable) {
+		/* W0: Enabled and "s" set, no other bit */
+		eq.w0 &= EQ_W0_FIRMWARE;
+		eq.w0 |= EQ_W0_VALID | EQ_W0_SILENT_ESCALATE |
+			EQ_W0_ESCALATE_CTL | EQ_W0_BACKLOG;
+
+		/* W1: Mark ESn as 01, ESe as 00 */
+		eq.w1 &= ~EQ_W1_ESn_P;
+		eq.w1 |= EQ_W1_ESn_Q;
+		eq.w1 &= ~(EQ_W1_ESe);
+	} else if (eq.w0 & EQ_W0_SILENT_ESCALATE)
+		xive_cleanup_eq(&eq);
+
+	if (!memcmp(eq_orig, &eq, sizeof(eq)))
+		rc = 0;
+	else
+		rc = xive_eqc_cache_update(x, blk, idx + 7, 0, 4, &eq,
+					   false, false);
+	if (rc)
+		return rc;
+
+	/* Mark/unmark all other prios with the new "u" bit and update
+	 * escalation
+	 */
+	for (i = 0; i < 6; i++) {
+		eq_orig = xive_get_eq(x, idx + i);
+		if (!eq_orig)
+			continue;
+		eq = *eq_orig;
+		if (enable) {
+			/* Set new "u" bit */
+			eq.w0 |= EQ_W0_UNCOND_ESCALATE;
+
+			/* Re-route escalation interrupt (previous
+			 * route is lost !) to the gather queue
+			 */
+			eq.w4 = SETFIELD(EQ_W4_ESC_EQ_BLOCK,
+					 eq.w4, blk);
+			eq.w4 = SETFIELD(EQ_W4_ESC_EQ_INDEX,
+					 eq.w4, idx + 7);
+		} else if (eq.w0 & EQ_W0_UNCOND_ESCALATE) {
+			/* Clear the "u" bit, disable escalations if it was set */
+			eq.w0 &= ~EQ_W0_UNCOND_ESCALATE;
+			eq.w0 &= ~EQ_W0_ESCALATE_CTL;
+		}
+		if (!memcmp(eq_orig, &eq, sizeof(eq)))
+			continue;
+		rc = xive_eqc_cache_update(x, blk, idx + i, 0, 4, &eq,
+					   false, false);
+		if (rc)
+			break;
+	}
+
+	return rc;
 }
 
 static int64_t opal_xive_set_vp_info(uint64_t vp_id,
@@ -4141,21 +4291,38 @@ static int64_t opal_xive_set_vp_info(uint64_t vp_id,
 	if (!vp)
 		return OPAL_PARAMETER;
 
+	lock(&x->lock);
+
 	vp_new = *vp;
 	if (flags & OPAL_XIVE_VP_ENABLED) {
 		vp_new.w0 |= VP_W0_VALID;
 		vp_new.w6 = report_cl_pair >> 32;
 		vp_new.w7 = report_cl_pair & 0xffffffff;
-	} else
+
+		if (flags & OPAL_XIVE_VP_SINGLE_ESCALATION) {
+			if (x->rev < XIVE_REV_2) {
+				xive_dbg(x, "Attempt at enabling single escalate"
+					 " on xive rev %d failed\n",
+					 x->rev);
+				return OPAL_PARAMETER;
+			}
+			rc = xive_setup_silent_gather(vp_id, true);
+		} else
+			rc = xive_setup_silent_gather(vp_id, false);
+	} else {
 		vp_new.w0 = vp_new.w6 = vp_new.w7 = 0;
-
-
-	lock(&x->lock);
-	rc = xive_vpc_cache_update(x, blk, idx, 0, 8, &vp_new, false, false);
-	if (rc) {
-		unlock(&x->lock);
-		return rc;
+		rc = xive_setup_silent_gather(vp_id, false);
 	}
+
+	if (rc) {
+		if (rc != OPAL_BUSY)
+			xive_dbg(x, "Silent gather setup failed with err %lld\n", rc);
+		goto bail;
+	}
+
+	rc = xive_vpc_cache_update(x, blk, idx, 0, 8, &vp_new, false, false);
+	if (rc)
+		goto bail;
 
 	/* When disabling, we scrub clean (invalidate the entry) so
 	 * we can avoid cache ops in alloc/free
@@ -4164,8 +4331,8 @@ static int64_t opal_xive_set_vp_info(uint64_t vp_id,
 		xive_vpc_scrub_clean(x, blk, idx);
 
 	unlock(&x->lock);
-
-	return OPAL_SUCCESS;
+bail:
+	return rc;
 }
 
 static void xive_cleanup_cpu_tima(struct cpu_thread *c)
@@ -4529,10 +4696,8 @@ static int64_t opal_xive_free_vp_block(uint64_t vp_base)
 		}
 
 		/* VP must be disabled */
-		if (vp->w0 & VP_W0_VALID) {
-			prerror("XIVE: Freeing enabled VP !\n");
-			// XXX Disable it synchronously
-		}
+		if (vp->w0 & VP_W0_VALID)
+			return OPAL_XIVE_FREE_ACTIVE;
 
 		/* Not populated */
 		if (vp->w1 == 0)

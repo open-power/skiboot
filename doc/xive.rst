@@ -657,17 +657,12 @@ This call returns information about a VP:
 
   - OPAL_XIVE_VP_ENABLED
 
-    This must be set for the VP to be usable and cleared before freeing it
+    Returns the enabled state of the VP
 
   - OPAL_XIVE_VP_SINGLE_ESCALATION (if available)
 
-    If this is set, the queues are configured such that all priorities
-    turn into a single escalation interrupt. This results in the loss of
-    priority 7 which can no longer be used. This this needs to be set
-    before any interrupt is routed to that priority.
-
-    This feature is available if the "single-escalation-property" is
-    present in the xive device-tree node.
+    Returns whether single escalation mode is enabled for this VP
+    (see opal_xive_set_vp_info()).
 
 * cam_value: This is the value to program into the thread management
   area to dispatch that VP (ie, an encoding of the block + index).
@@ -695,6 +690,24 @@ This call configures a VP:
 
     .. note:: This can be used to disable the boot time VPs though this
 	      isn't recommended. This must be used to enable allocated VPs.
+
+  - OPAL_XIVE_VP_SINGLE_ESCALATION (if available)
+
+    If this is set, the queues are configured such that all priorities
+    turn into a single escalation interrupt. This results in the loss of
+    priority 7 which can no longer be used. This this needs to be set
+    before any interrupt is routed to that priority and queue 7 must not
+    have been already enabled.
+
+    This feature is available if the "single-escalation-property" is
+    present in the xive device-tree node.
+
+    .. warning:: When enabling single escalation, and pre-existing routing
+		 and configuration of the individual queues escalation
+		 is lost (except queue 7 which is the new merged escalation).
+		 When further disabling it, the previous value is not
+		 retrieved and the field cleared, escalation is disabled on
+		 all the queues.
 
 * report_cl_pair: This is the real address of the reporting cache line
   pair for that VP or 0 to disable.
