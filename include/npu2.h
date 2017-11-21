@@ -27,9 +27,14 @@
 #define NPU2ERR(p, fmt, a...)	prlog(PR_ERR,   "NPU%d: " fmt, \
 				      (p)->phb.opal_id, ##a)
 
-#define NPU2DEVDBG(p, fmt, a...)	NPU2DBG((p)->npu, fmt, ##a)
-#define NPU2DEVINF(p, fmt, a...)	NPU2INF((p)->npu, fmt, ##a)
-#define NPU2DEVERR(p, fmt, a...)	NPU2ERR((p)->npu, fmt, ##a)
+#define NPU2DEVLOG(l, p, fmt, a...)	prlog(l, "NPU%d:%d:%d.%d " fmt, \
+					      (p)->npu->phb.opal_id, \
+					      ((p)->bdfn >> 8) & 0xff, \
+					      ((p)->bdfn >> 3) & 0x1f, \
+					      (p)->bdfn & 0x7, ##a)
+#define NPU2DEVDBG(p, fmt, a...)	NPU2DEVLOG(PR_DEBUG, p, fmt, ##a)
+#define NPU2DEVINF(p, fmt, a...)	NPU2DEVLOG(PR_INFO, p, fmt, ##a)
+#define NPU2DEVERR(p, fmt, a...)	NPU2DEVLOG(PR_ERR, p, fmt, ##a)
 
 /* Number of PEs supported */
 #define NPU2_MAX_PE_NUM		16
