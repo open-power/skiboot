@@ -1089,8 +1089,6 @@ static void xive_init_vp_allocator(void)
 	 *
 	 * These are 0x80..0xff, so order 7 starting at 0x80. This will
 	 * reserve that range on each chip.
-	 *
-	 * XXX This can go away if we just call xive_reset ..
 	 */
 	assert(buddy_reserve(xive_vp_buddy, 0x80, 7));
 }
