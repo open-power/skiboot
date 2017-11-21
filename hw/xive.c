@@ -3945,6 +3945,13 @@ static int64_t opal_xive_get_queue_info(uint64_t vp, uint32_t prio,
 	return OPAL_SUCCESS;
 }
 
+static void xive_cleanup_eq(struct xive_eq *eq)
+{
+	eq->w0 = eq->w0 & EQ_W0_FIRMWARE;
+	eq->w1 = EQ_W1_ESe_Q | EQ_W1_ESn_Q;
+	eq->w2 = eq->w3 = eq->w4 = eq->w5 = eq->w6 = eq->w7 = 0;
+}
+
 static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 					uint64_t qpage,
 					uint64_t qsize,
@@ -4034,12 +4041,8 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 		 * otherwise escalations won't work.
 		 */
 		eq.w0 |= EQ_W0_VALID | EQ_W0_BACKLOG;
-	} else {
-		/* Clear everything and set PQ bits to 01 */
-		eq.w0 = old_eq->w0 & EQ_W0_FIRMWARE;
-		eq.w1 = EQ_W1_ESe_Q | EQ_W1_ESn_Q;
-		eq.w2 = eq.w3 = eq.w4 = eq.w5 = eq.w6 = eq.w7 = 0;
-	}
+	} else
+		xive_cleanup_eq(&eq);
 
 	/* Update EQ, non-synchronous */
 	lock(&x->lock);
@@ -4313,7 +4316,6 @@ static void xive_reset_one(struct xive *x)
 		if (i == 0)
 			continue;
 		eq_firmware = false;
-		memset(&eq0, 0, sizeof(eq0));
 		for (j = 0; j < 8; j++) {
 			uint32_t idx = (i << 3) | j;
 
@@ -4325,7 +4327,8 @@ static void xive_reset_one(struct xive *x)
 			 * we will incorrectly free the EQs that are reserved
 			 * for the physical CPUs
 			 */
-			eq0.w0 = eq->w0 & EQ_W0_FIRMWARE;
+			eq0 = *eq;
+			xive_cleanup_eq(&eq0);
 			xive_eqc_cache_update(x, x->block_id,
 					      idx, 0, 4, &eq0, false, true);
 			if (eq->w0 & EQ_W0_FIRMWARE)
@@ -4477,7 +4480,7 @@ static int64_t opal_xive_reset(uint64_t version)
 
 static int64_t opal_xive_free_vp_block(uint64_t vp_base)
 {
-	uint32_t blk, idx, i, count;
+	uint32_t blk, idx, i, j, count;
 	uint8_t order;
 	bool group;
 
@@ -4536,15 +4539,35 @@ static int64_t opal_xive_free_vp_block(uint64_t vp_base)
 			continue;
 		eq_blk = vp->w1 >> 28;
 		eq_idx = vp->w1 & 0x0fffffff;
+
+		lock(&x->lock);
+
+		/* Ensure EQs are disabled and cleaned up. Ideally the caller
+		 * should have done it but we double check it here
+		 */
+		for (j = 0; j < 7; j++) {
+			struct xive *eq_x = xive_from_vc_blk(eq_blk);
+			struct xive_eq eq, *orig_eq = xive_get_eq(eq_x, eq_idx + j);
+
+			if (!(orig_eq->w0 & EQ_W0_VALID))
+				continue;
+
+			prlog(PR_WARNING, "XIVE: freeing VP %d with queue %d active\n",
+			      vp_id, j);
+			eq = *orig_eq;
+			xive_cleanup_eq(&eq);
+			xive_eqc_cache_update(x, eq_blk, eq_idx + j, 0, 4, &eq, false, true);
+		}
+
+		/* Mark it not populated so we don't try to free it again */
 		vp->w1 = 0;
 
 		if (eq_blk != blk) {
 			prerror("XIVE: Block mismatch trying to free EQs\n");
+			unlock(&x->lock);
 			return OPAL_INTERNAL_ERROR;
 		}
 
-		/* XX Ensure the EQs are disabled */
-		lock(&x->lock);
 		xive_free_eq_set(x, eq_idx);
 		unlock(&x->lock);
 	}
