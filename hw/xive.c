@@ -4546,6 +4546,8 @@ static void xive_reset_one(struct xive *x)
 #ifndef USE_BLOCK_GROUP_MODE
 	/* If block group mode isn't enabled, reset VP alloc buddy */
 	buddy_reset(x->vp_buddy);
+	if (x->block_id == 0)
+		assert(buddy_reserve(x->vp_buddy, 0x800, 11));
 #endif
 
 #ifdef USE_INDIRECT
