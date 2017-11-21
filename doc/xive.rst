@@ -63,7 +63,11 @@ I - Device-tree updates
 
       For any of these, a size of 0 means this level is not supported.
 
- 3) Interrupt descriptors
+    - ``single-escalation-support`` (option). When present, indicatges that
+      the "single escalation" feature is supported, thus enabling the use
+      of the OPAL_XIVE_VP_SINGLE_ESCALATION flag.
+
+3) Interrupt descriptors
 
     The interrupt descriptors (aka "interrupts" properties and parts
     of "interrupt-map" properties) remain 2 cells. The first cell is
@@ -506,6 +510,12 @@ with a virtual processor and a priority.
 	       XIVE source. Those interrupts have no triggers, and will not
 	       be masked by opal_set_irq_config() with a prio of 0xff.
 
+  ..note::     The state of the OPAL_XIVE_VP_SINGLE_ESCALATION flag passed to
+	       opal_xive_set_vp_info() can change the escalation irq number,
+	       so make sure you only retrieve this after having set the flag
+	       to the desired value. When set, all priorities will have the
+	       same escalation interrupt.
+
 * out_qflags: will contain flags defined as follow:
 
   - OPAL_XIVE_EQ_ENABLED
@@ -644,6 +654,16 @@ This call returns information about a VP:
   - OPAL_XIVE_VP_ENABLED
 
     This must be set for the VP to be usable and cleared before freeing it
+
+  - OPAL_XIVE_VP_SINGLE_ESCALATION (if available)
+
+    If this is set, the queues are configured such that all priorities
+    turn into a single escalation interrupt. This results in the loss of
+    priority 7 which can no longer be used. This this needs to be set
+    before any interrupt is routed to that priority.
+
+    This feature is available if the "single-escalation-property" is
+    present in the xive device-tree node.
 
 * cam_value: This is the value to program into the thread management
   area to dispatch that VP (ie, an encoding of the block + index).
