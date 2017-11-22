@@ -27,7 +27,7 @@
 #include <interrupts.h>
 #include <bitutils.h>
 
-#include <valgrind/memcheck.h>
+#include <skiboot-valgrind.h>
 
 #include "../../libfdt/fdt.c"
 #include "../../libfdt/fdt_ro.c"

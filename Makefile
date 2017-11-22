@@ -20,6 +20,9 @@ endif
 #
 DEBUG ?= 0
 
+# Run tests under valgrind?
+USE_VALGRIND ?= 1
+
 #
 # Optional location of embedded linux kernel file
 # This can be a raw vmlinux, stripped vmlinux or

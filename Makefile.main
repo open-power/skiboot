@@ -43,7 +43,7 @@ HOSTCFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
 
 HOSTGCOVCFLAGS = -fprofile-arcs -ftest-coverage -lgcov -O0 -g -pg
 
-VALGRIND=valgrind -q --show-reachable=yes --error-exitcode=99
+VALGRIND := valgrind -q --show-reachable=yes --error-exitcode=99
 
 # Target options
 
@@ -82,6 +82,12 @@ endif
 
 ifeq ($(SKIBOOT_GCOV),1)
 CFLAGS += -fprofile-arcs -ftest-coverage -DSKIBOOT_GCOV=1
+endif
+
+ifeq ($(USE_VALGRIND),1)
+CFLAGS += -DUSE_VALGRIND=1
+else
+VALGRIND :=
 endif
 
 # Stack protector disabled for now. gcc tends to use the TLS to

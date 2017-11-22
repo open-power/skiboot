@@ -26,7 +26,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <valgrind/valgrind.h>
+#include <skiboot-valgrind.h>
 
 /* Don't include these: PPC-specific */
 #define __CPU_H
