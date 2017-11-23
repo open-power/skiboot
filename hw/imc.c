@@ -307,6 +307,42 @@ static void check_imc_device_type(struct dt_node *dev)
 	return;
 }
 
+static void imc_dt_exports_prop_add(struct dt_node *dev)
+{
+	struct dt_node *node;
+	struct proc_chip *chip;
+	const struct dt_property *type;
+	uint32_t offset = 0, size = 0;
+	uint64_t baddr;
+	char namebuf[32];
+
+
+	dt_for_each_compatible(dev, node, "ibm,imc-counters") {
+		type = dt_find_property(node, "type");
+		if (type && is_nest_node(node)) {
+			offset = dt_prop_get_u32(node, "offset");
+			size = dt_prop_get_u32(node, "size");
+		}
+	}
+
+	/*
+	 * Enable only if we have valid values.
+	 */
+	if (!size && !offset)
+		return;
+
+	node = dt_find_by_name(opal_node, "exports");
+	if (!node)
+		return;
+
+	for_each_chip(chip) {
+		snprintf(namebuf, sizeof(namebuf), "imc_nest_chip_%x", chip->id);
+		baddr = chip->homer_base;
+		baddr += offset;
+		dt_add_property_u64s(node, namebuf, baddr, size);
+	}
+}
+
 /*
  * Remove the PMU device nodes from the incoming new subtree, if they are not
  * available in the hardware. The availability is described by the
@@ -320,6 +356,9 @@ static void disable_unavailable_units(struct dt_node *dev)
 	struct imc_chip_cb *cb;
 	struct dt_node *target;
 	int i;
+
+	/* Add a property to "exports" node in opal_node */
+	imc_dt_exports_prop_add(dev);
 
 	/* Fetch the IMC control block structure */
 	cb = get_imc_cb(this_cpu()->chip_id);
@@ -417,9 +456,6 @@ static void imc_dt_update_nest_node(struct dt_node *dev)
 	int i=0, nr_chip = nr_chips();
 	struct dt_node *node;
 	const struct dt_property *type;
-	uint32_t offset = 0, size = 0;
-	uint64_t baddr;
-	char namebuf[32];
 
 	/* Add the base_addr and chip-id properties for the nest node */
 	base_addr = malloc(sizeof(uint64_t) * nr_chip);
@@ -435,26 +471,7 @@ static void imc_dt_update_nest_node(struct dt_node *dev)
 		if (type && is_nest_node(node)) {
 			dt_add_property(node, "base-addr", base_addr, (i * sizeof(u64)));
 			dt_add_property(node, "chip-id", chipids, (i * sizeof(u32)));
-			offset = dt_prop_get_u32(node, "offset");
-			size = dt_prop_get_u32(node, "size");
 		}
-	}
-
-	/*
-	 * Enable only if we have active nest pmus.
-	 */
-	if (!size)
-		return;
-
-	node = dt_find_by_name(opal_node, "exports");
-	if (!node)
-		return;
-
-	for_each_chip(chip) {
-		snprintf(namebuf, sizeof(namebuf), "imc_nest_chip_%x", chip->id);
-		baddr = chip->homer_base;
-		baddr += offset;
-		dt_add_property_u64s(node, namebuf, baddr, size);
 	}
 }
 
