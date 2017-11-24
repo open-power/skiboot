@@ -103,6 +103,11 @@
 #define OCC_SENSOR_DATA_BLOCK_OFFSET		0x00580000
 #define OCC_SENSOR_DATA_BLOCK_SIZE		0x00025800
 
+/*
+ * These should match the definitions inside the OCC source:
+ * occ/src/occ_405/sensor/sensor_info.c
+ */
+
 enum occ_sensor_type {
 	OCC_SENSOR_TYPE_GENERIC		= 0x0001,
 	OCC_SENSOR_TYPE_CURRENT		= 0x0002,
@@ -123,8 +128,8 @@ enum occ_sensor_location {
 	OCC_SENSOR_LOC_VRM		= 0x0010,
 	OCC_SENSOR_LOC_OCC		= 0x0020,
 	OCC_SENSOR_LOC_CORE		= 0x0040,
-	OCC_SENSOR_LOC_QUAD		= 0x0080,
-	OCC_SENSOR_LOC_GPU		= 0x0100,
+	OCC_SENSOR_LOC_GPU		= 0x0080,
+	OCC_SENSOR_LOC_QUAD		= 0x0100,
 };
 
 enum sensor_struct_type {
