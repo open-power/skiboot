@@ -25,40 +25,36 @@
 #include <xscom-p9-regs.h>
 #include <phys-map.h>
 
-extern void nx_p9_rng_init(void);
-
-void nx_p9_rng_init(void)
+static void p9_darn_init(void)
 {
+	struct dt_node *nx;
 	struct proc_chip *chip;
 	struct cpu_thread *c;
-	uint64_t bar, tmp;
+	uint64_t bar, default_bar;
 
-	if (proc_gen != proc_gen_p9)
-		return;
 	if (chip_quirk(QUIRK_NO_RNG))
 		return;
 
 	/*
-	 * Two things we need to setup here:
-	 *
-	 * 1) The per chip BAR for the NX RNG region. The location of
-	 *    this is determined by the global MMIO Map.
-
-	 * 2) The per core BAR for the DARN BAR, which points to the
-	 *    per chip RNG region set in 1.
-	 *
+	 * To allow the DARN instruction to function there must be at least
+	 * one NX available in the system. Otherwise using DARN will result
+	 * in a checkstop. I suppose we could mask the FIR...
 	 */
-	for_each_chip(chip) {
-		/* 1) NX RNG BAR */
-		phys_map_get(chip->id, NX_RNG, 0, &bar, NULL);
-		xscom_write(chip->id, P9X_NX_MMIO_BAR,
-			    bar | P9X_NX_MMIO_BAR_EN);
-		/* Read config register for pace info */
-		xscom_read(chip->id, P9X_NX_RNG_CFG, &tmp);
-		prlog(PR_INFO, "NX RNG[%x] pace:%lli\n", chip->id,
-		      0xffff & (tmp >> 2));
+	dt_for_each_compatible(dt_root, nx, "ibm,power9-nx")
+		break;
+	if (!nx) {
+		assert(nx);
+		return;
+	}
 
-		/* 2) DARN BAR */
+	phys_map_get(dt_get_chip_id(nx), NX_RNG, 0, &default_bar, NULL);
+
+	for_each_chip(chip) {
+		/* is this NX enabled? */
+		xscom_read(chip->id, P9X_NX_MMIO_BAR, &bar);
+		if (!(bar & ~P9X_NX_MMIO_BAR_EN))
+			bar = default_bar;
+
 		for_each_available_core_in_chip(c, chip->id) {
 			uint64_t addr;
 			addr = XSCOM_ADDR_P9_EX(pir_to_core_id(c->pir),
@@ -80,8 +76,6 @@ void nx_init(void)
 {
 	struct dt_node *node;
 
-	nx_p9_rng_init();
-
 	dt_for_each_compatible(dt_root, node, "ibm,power-nx") {
 		nx_init_one(node);
 	}
@@ -89,4 +83,7 @@ void nx_init(void)
 	dt_for_each_compatible(dt_root, node, "ibm,power9-nx") {
 		nx_init_one(node);
 	}
+
+	if (proc_gen == proc_gen_p9)
+		p9_darn_init();
 }
