@@ -59,11 +59,11 @@ extern int bitmap_find_one_bit(bitmap_t map, unsigned int start,
 #define bitmap_for_each_zero(map, size, bit)                   \
 	for (bit = bitmap_find_zero_bit(map, 0, size);         \
 	     bit >= 0;					       \
-	     bit = bitmap_find_zero_bit(map, bit + 1, size))
+	     bit = bitmap_find_zero_bit(map, (bit) + 1, (size) - (bit) - 1))
 
 #define bitmap_for_each_one(map, size, bit)                    \
 	for (bit = bitmap_find_one_bit(map, 0, size);          \
 	     bit >= 0;					       \
-	     bit = bitmap_find_one_bit(map, bit + 1, size))
+	     bit = bitmap_find_one_bit(map, (bit) + 1, (size) - (bit) - 1))
 
 #endif /* __BITMAP_H */
