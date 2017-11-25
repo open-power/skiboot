@@ -1,3 +1,4 @@
+source $env(LIB_DIR)/perf/qtrace.tcl
 
 #
 # behave like gdb
@@ -364,32 +365,12 @@ proc skisym { name } {
 }
 
 proc start_qtrace { { qtfile qtrace.qt } } {
-    global env
+	QTrace::Initialize p9 mysim
+	QTrace::Start $qtfile mysim
+}
 
-    mysim mode simple
-
-    ereader expect 1
-    simemit set "Header_Record" 1
-    simemit set "Footer_Record" 1
-    simemit set "Instructions" 1
-    simemit set "Interrupt" 1
-    simemit set "External_Int" 1
-    simemit set "Config" 1
-    simemit set "MSR" 1
-    simemit set "Pid_Creatd" 1
-    simemit set "Pid_Killed" 1
-    simemit set "TLB_Inst_Miss" 1
-    simemit set "TLB_Data_Miss" 1
-    simemit set "SLB_Inst_Miss" 1
-    simemit set "SLB_Data_Miss" 1
-    simemit set "L1_ICache_Miss" 1
-    simemit set "L1_DCache_Miss" 1
-    simemit set "L2_Cache_Miss" 1
-    simemit set "Memory_Write" 1
-    simemit set "Memory_Read" 1
-    simemit set "Bus_Wait" 1
-
-    ereader start $env(EXEC_DIR)/emitter/qtracer [pid] -outfile $qtfile
+proc stop_qtrace { } {
+	QTrace::Stop mysim
 }
 
 proc current_insn { { t 0 } { c 0 } } {
