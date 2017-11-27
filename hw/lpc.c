@@ -1176,6 +1176,10 @@ static void lpc_init_chip_p9(struct dt_node *opb_node)
 	/* Mask all interrupts for now */
 	opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQMASK, 0, 4);
 
+	/* Clear any stale LPC bus errors */
+	opb_write(lpc, lpc_reg_opb_base + LPC_HC_IRQSTAT,
+		       LPC_HC_IRQ_BASE_IRQS, 4);
+
 	/* Default with routing to PSI SerIRQ 0, this will be updated
 	 * later when interrupts are initialized.
 	 */
