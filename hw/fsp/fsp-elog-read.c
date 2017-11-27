@@ -500,7 +500,7 @@ static bool fsp_elog_msg(uint32_t cmd_sub_mod, struct fsp_msg *msg)
 	log_id = msg->data.words[0];
 	log_size = msg->data.words[1];
 
-	printf("ELOG: Notified of log 0x%08x (size: %d)\n",
+	prlog(PR_TRACE, "ELOG: Notified of log 0x%08x (size: %d)\n",
 	       log_id, log_size);
 
 	/* Make sure we don't cross read buffer size */
@@ -531,7 +531,7 @@ static bool fsp_elog_msg(uint32_t cmd_sub_mod, struct fsp_msg *msg)
 		fsp_elog_check_and_fetch_head();
 
 	} else {
-		printf("ELOG: Log entry 0x%08x discarded\n", log_id);
+		prlog(PR_TRACE, "ELOG: Log entry 0x%08x discarded\n", log_id);
 
 		/* Unlock if elog_read_free is empty. */
 		unlock(&elog_read_lock);
