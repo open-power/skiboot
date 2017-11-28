@@ -191,6 +191,18 @@ static uint32_t nop(struct npu2_dev *npu_dev __unused)
 }
 DEFINE_PROCEDURE(nop);
 
+/* Return the brick number (0-2) within an obus chiplet */
+static int obus_brick_index(struct npu2_dev *ndev)
+{
+	int index = ndev->index % 3;
+
+	/* On the second obus chiplet, index is reversed */
+	if ((ndev->pl_xscom_base & 0x3F000000) != 0x09000000)
+		return 2 - index;
+
+	return index;
+}
+
 static bool poll_fence_status(struct npu2_dev *ndev, uint64_t val)
 {
 	uint64_t fs;
@@ -212,22 +224,7 @@ static uint32_t reset_ntl(struct npu2_dev *ndev)
 	uint64_t val;
 
 	/* Write PRI */
-	if ((ndev->pl_xscom_base & 0xFFFFFFFF) == 0x9010C3F)
-		val = SETFIELD(PPC_BITMASK(0,1), 0ull, ndev->index % 3);
-	else {
-		switch (ndev->index % 3) {
-		case 0:
-			val = SETFIELD(PPC_BITMASK(0,1), 0ull, 2);
-			break;
-		case 1:
-			val = SETFIELD(PPC_BITMASK(0,1), 0ull, 1);
-			break;
-		case 2:
-			val = SETFIELD(PPC_BITMASK(0,1), 0ull, 0);
-			break;
-		}
-	}
-
+	val = SETFIELD(PPC_BITMASK(0,1), 0ull, obus_brick_index(ndev));
 	npu2_write_mask(ndev->npu, NPU2_NTL_PRI_CFG(ndev), val, -1ULL);
 
 	/* NTL Reset */
