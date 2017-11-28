@@ -203,6 +203,20 @@ static int obus_brick_index(struct npu2_dev *ndev)
 	return index;
 }
 
+static void set_iovalid(struct npu2_dev *ndev, bool raise)
+{
+	uint64_t addr, val, mask;
+	int rc;
+
+	addr = (ndev->pl_xscom_base & 0x3F000000) | 0x9;
+	mask = PPC_BIT(6 + obus_brick_index(ndev));
+	val = raise ? mask : 0;
+
+	rc = xscom_write_mask(ndev->npu->chip_id, addr, val, mask);
+	if (rc)
+		NPU2DEVERR(ndev, "error %d writing scom 0x%llx\n", rc, addr);
+}
+
 static bool poll_fence_status(struct npu2_dev *ndev, uint64_t val)
 {
 	uint64_t fs;
@@ -222,6 +236,8 @@ static bool poll_fence_status(struct npu2_dev *ndev, uint64_t val)
 static uint32_t reset_ntl(struct npu2_dev *ndev)
 {
 	uint64_t val;
+
+	set_iovalid(ndev, true);
 
 	/* Write PRI */
 	val = SETFIELD(PPC_BITMASK(0,1), 0ull, obus_brick_index(ndev));
@@ -304,6 +320,8 @@ static uint32_t phy_reset(struct npu2_dev *ndev)
 {
 	int lane;
 
+	set_iovalid(ndev, false);
+
 	/* Power on clocks */
 	phy_write(ndev, &NPU2_PHY_RX_CLKDIST_PDWN, 0);
 	phy_write(ndev, &NPU2_PHY_RX_IREF_PDWN, 1);
@@ -359,6 +377,8 @@ static uint32_t phy_reset_complete(struct npu2_dev *ndev)
 		phy_write_lane(ndev, &NPU2_PHY_RX_B_INTEG_COARSE_GAIN, lane, 11);
 		phy_write_lane(ndev, &NPU2_PHY_RX_E_INTEG_COARSE_GAIN, lane, 11);
 	}
+
+	set_iovalid(ndev, true);
 
 	return PROCEDURE_COMPLETE;
 }
@@ -572,6 +592,8 @@ static uint32_t phy_rx_dccal(struct npu2_dev *ndev)
 {
 	int lane;
 
+	set_iovalid(ndev, false);
+
 	FOR_EACH_LANE(ndev, lane)
 		phy_write_lane(ndev, &NPU2_PHY_RX_PR_FW_OFF, lane, 1);
 
@@ -597,6 +619,8 @@ static uint32_t phy_rx_dccal_complete(struct npu2_dev *ndev)
 		phy_write_lane(ndev, &NPU2_PHY_RX_PR_EDGE_TRACK_CNTL, lane, 0);
 		phy_write_lane(ndev, &NPU2_PHY_RX_PR_FW_OFF, lane, 0);
 	}
+
+	set_iovalid(ndev, true);
 
 	return PROCEDURE_NEXT;
 }
