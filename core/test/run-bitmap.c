@@ -22,6 +22,7 @@
 int main(void)
 {
 	bitmap_t *map = malloc(sizeof(bitmap_elem_t));
+	int i;
 	memset(map, 0, sizeof(bitmap_elem_t));
 
 	assert(BITMAP_ELEMS(16) == (BITMAP_ELEMS(8)));
@@ -72,6 +73,16 @@ int main(void)
 	assert(bitmap_find_one_bit(*map, 0, 16) == -1);
 	assert(*(unsigned long*)map == 0x00);
 	assert(bitmap_tst_bit(*map, 8) == false);
+
+	bitmap_for_each_zero(*map, 7, i) {
+		bitmap_set_bit(*map, i);
+	}
+
+	for (i = 0; i < 7; i++)
+		assert(bitmap_tst_bit(*map, i) == true);
+
+	assert(bitmap_tst_bit(*map, 8) == false);
+
 
 	free(map);
 
