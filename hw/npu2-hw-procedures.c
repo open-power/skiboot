@@ -633,11 +633,11 @@ static uint32_t phy_rx_clock_sel(struct npu2_dev *ndev)
 	 *
 	 * Work around a known DL bug by doing these writes twice.
 	 */
-	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000003, 0x80000003);
-	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000003, 0x80000003);
+	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000002, 0x80000003);
+	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000002, 0x80000003);
 
-	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000001, 0x80000003);
-	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000001, 0x80000003);
+	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000000, 0x80000003);
+	npu2_write_mask_4b(ndev->npu, NPU2_NTL_DL_CLK_CTRL(ndev), 0x80000000, 0x80000003);
 
 	return PROCEDURE_NEXT;
 }
