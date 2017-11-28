@@ -27,6 +27,10 @@ run_binary() {
 
 fail_test() {
 	echo "$0 ($CUR_TEST): test failed";
+	echo "Test directory preserved:"
+	echo "  DATA_DIR = $DATA_DIR"
+	echo "  STDOUT = $STDOUT_OUT"
+	echo "  STDERR = $STDERR_OUT"
 	exit ${1:-1};
 }
 
@@ -76,9 +80,9 @@ run_tests() {
 		exit 1;
 	fi
 
-	export STDERR_OUT=$(mktemp --tmpdir external-test-stderr.XXXXXX);
-	export STDOUT_OUT=$(mktemp --tmpdir external-test-stdout.XXXXXX);
 	export DATA_DIR=$(mktemp --tmpdir -d external-test-datadir.XXXXXX);
+	export STDERR_OUT="$DATA_DIR/stderr"
+	export STDOUT_OUT="$DATA_DIR/stdout"
 	if [ $# -eq 3 ] ; then
 		cp -r $3/* "$DATA_DIR"
 	fi
