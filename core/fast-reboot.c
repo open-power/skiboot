@@ -437,7 +437,7 @@ void fast_reboot(void)
 		return;
 
 	/* Ensure all the sresets get through */
-	if (!cpu_state_wait_all_others(cpu_state_present, msecs_to_tb(200)))
+	if (!cpu_state_wait_all_others(cpu_state_present, msecs_to_tb(100)))
 		return;
 
 	asm volatile("ba	0x100\n\t" : : : "memory");
@@ -535,7 +535,6 @@ void __noreturn fast_reboot_entry(void);
 void __noreturn fast_reboot_entry(void)
 {
 	prlog(PR_DEBUG, "RESET: CPU 0x%04x reset in\n", this_cpu()->pir);
-	time_wait_ms(100);
 
 	/* We reset our ICP first ! Otherwise we might get stray interrupts
 	 * when unsplitting
