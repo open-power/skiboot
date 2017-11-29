@@ -92,11 +92,9 @@ long opal_bad_token(uint64_t token)
 	return OPAL_PARAMETER;
 }
 
-/* Called from head.S, thus no prototype */
-void opal_trace_entry(struct stack_frame *eframe);
-
-void opal_trace_entry(struct stack_frame *eframe)
+static void opal_trace_entry(struct stack_frame *eframe __unused)
 {
+#ifdef OPAL_TRACE_ENTRY
 	union trace t;
 	unsigned nargs, i;
 
@@ -117,6 +115,27 @@ void opal_trace_entry(struct stack_frame *eframe)
 		t.opal.r3_to_11[i] = cpu_to_be64(eframe->gpr[3+i]);
 
 	trace_add(&t, TRACE_OPAL, offsetof(struct trace_opal, r3_to_11[nargs]));
+#endif
+}
+
+/* Called from head.S, thus no prototype */
+int64_t opal_entry_check(struct stack_frame *eframe);
+
+int64_t __attrconst opal_entry_check(struct stack_frame *eframe)
+{
+	uint64_t token = eframe->gpr[0];
+
+	opal_trace_entry(eframe);
+
+	return OPAL_SUCCESS;
+}
+
+void opal_exit_check(int64_t retval, struct stack_frame *eframe);
+
+void __attrconst opal_exit_check(int64_t retval, struct stack_frame *eframe)
+{
+	(void)retval;
+	(void)eframe;
 }
 
 void __opal_register(uint64_t token, void *func, unsigned int nargs)

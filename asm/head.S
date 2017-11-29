@@ -930,8 +930,7 @@ opal_entry:
 	std	%r1,STACK_GPR1(%r12)
 	mr	%r1,%r12
 
-	/* May save arguments for tracing */
-#ifdef OPAL_TRACE_ENTRY
+	/* Save arguments because we call C */
 	std	%r3,STACK_GPR3(%r1)
 	std	%r4,STACK_GPR4(%r1)
 	std	%r5,STACK_GPR5(%r1)
@@ -940,7 +939,7 @@ opal_entry:
 	std	%r8,STACK_GPR8(%r1)
 	std	%r9,STACK_GPR9(%r1)
 	std	%r10,STACK_GPR10(%r1)
-#endif
+
 	/* Save Token (r0), LR and r13 */
 	mflr	%r12
 	std	%r0,STACK_GPR0(%r1)
@@ -967,9 +966,12 @@ opal_entry:
 	cmpwi	%r12,0
 	bne	3f
 
-#ifdef OPAL_TRACE_ENTRY
+	/* Check entry */
 	mr	%r3,%r1
-	bl	opal_trace_entry
+	bl	opal_entry_check
+	cmpdi	%r3,0
+	bne	1f
+
 	ld	%r0,STACK_GPR0(%r1)
 	ld	%r3,STACK_GPR3(%r1)
 	ld	%r4,STACK_GPR4(%r1)
@@ -979,7 +981,6 @@ opal_entry:
 	ld	%r8,STACK_GPR8(%r1)
 	ld	%r9,STACK_GPR9(%r1)
 	ld	%r10,STACK_GPR10(%r1)
-#endif /* OPAL_TRACE_ENTRY */
 
 	/* Convert our token into a table entry and get the
 	 * function pointer. Also check the token.
@@ -996,6 +997,9 @@ opal_entry:
 
 	/* Jump ! */
 	bctrl
+
+	mr	%r4,%r1
+	bl	opal_exit_check
 
 1:	ld	%r12,STACK_LR(%r1)
 	mtlr	%r12
