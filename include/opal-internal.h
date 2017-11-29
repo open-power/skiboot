@@ -61,6 +61,8 @@ extern void add_opal_node(void);
 			(func), (nargs))
 extern void __opal_register(uint64_t token, void *func, unsigned num_args);
 
+int64_t opal_quiesce(uint32_t shutdown_type, int32_t cpu);
+
 /* Warning: no locking at the moment, do at init time only
  *
  * XXX TODO: Add the big RCU-ish "opal API lock" to protect us here

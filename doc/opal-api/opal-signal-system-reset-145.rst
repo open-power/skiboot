@@ -17,6 +17,13 @@ raised when the target has MSR[RI]=0), so it should not be used in
 normal operation, but only for crashing, debugging, and similar
 exceptional cases.
 
+OPAL_SIGNAL_SYSTEM_RESET can pull CPUs out of OPAL, which may be
+undesirable in a crash or shutdown situation (e.g., because they may
+hold locks which are required to access the console, or may be halfway
+through setting hardware registers), so OPAL_QUIESCE can be used
+before OPAL_SIGNAL_SYSTEM_RESET to (attempt to) ensure all CPUs are
+out of OPAL before being interrupted.
+
 Arguments
 ---------
 ::

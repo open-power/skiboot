@@ -1220,6 +1220,11 @@ static int64_t opal_return_cpu(void)
 {
 	prlog(PR_DEBUG, "OPAL: Returning CPU 0x%04x\n", this_cpu()->pir);
 
+	this_cpu()->in_opal_call--;
+	if (this_cpu()->in_opal_call != 0) {
+		printf("OPAL in_opal_call=%u\n", this_cpu()->in_opal_call);
+	}
+
 	__secondary_cpu_entry();
 
 	return OPAL_HARDWARE; /* Should not happen */

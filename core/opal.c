@@ -113,6 +113,14 @@ static void opal_trace_entry(struct stack_frame *eframe __unused)
 #endif
 }
 
+/*
+ * opal_quiesce_state is used as a lock. Don't use an actual lock to avoid
+ * lock busting.
+ */
+static uint32_t opal_quiesce_state;	/* 0 or QUIESCE_HOLD/QUIESCE_REJECT */
+static int32_t opal_quiesce_owner;	/* PIR */
+static int32_t opal_quiesce_target;	/* -1 or PIR */
+
 static int64_t opal_check_token(uint64_t token);
 
 /* Called from head.S, thus no prototype */
@@ -134,16 +142,172 @@ int64_t opal_entry_check(struct stack_frame *eframe)
 	if (!opal_check_token(token))
 		return opal_bad_token(token);
 
+	if (!opal_quiesce_state && cpu->in_opal_call) {
+		printf("CPU ATTEMPT TO RE-ENTER FIRMWARE! PIR=%04lx cpu @%p -> pir=%04x token=%llu\n",
+		       mfspr(SPR_PIR), cpu, cpu->pir, token);
+		return OPAL_BUSY;
+	}
+
+again:
+	cpu->in_opal_call++;
+	/*
+	 * Order the store in_opal_call vs load quiesce_opal_call.
+	 * This also provides an acquire barrier for opal entry vs
+	 * another thread quiescing opal. In this way, quiescing
+	 * can behave as mutual exclusion.
+	 */
+	sync();
+	if (cpu->quiesce_opal_call) {
+		cpu->in_opal_call--;
+		if (opal_quiesce_state == QUIESCE_REJECT)
+			return OPAL_BUSY;
+		smt_lowest();
+		while (cpu->quiesce_opal_call)
+			barrier();
+		smt_medium();
+		goto again;
+	}
+
 	return OPAL_SUCCESS;
 }
 
 void opal_exit_check(int64_t retval, struct stack_frame *eframe);
 
-void __attrconst opal_exit_check(int64_t retval, struct stack_frame *eframe)
+void opal_exit_check(int64_t retval, struct stack_frame *eframe)
 {
-	(void)retval;
-	(void)eframe;
+	struct cpu_thread *cpu = this_cpu();
+	uint64_t token = eframe->gpr[0];
+
+	if (!cpu->in_opal_call) {
+		printf("CPU UN-ACCOUNTED FIRMWARE ENTRY! PIR=%04lx cpu @%p -> pir=%04x token=%llu retval=%lld\n",
+		       mfspr(SPR_PIR), cpu, cpu->pir, token, retval);
+	} else {
+		sync(); /* release barrier vs quiescing */
+		cpu->in_opal_call--;
+	}
 }
+
+int64_t opal_quiesce(uint32_t quiesce_type, int32_t cpu_target)
+{
+	struct cpu_thread *cpu = this_cpu();
+	struct cpu_thread *target = NULL;
+	struct cpu_thread *c;
+	uint64_t end;
+	bool stuck = false;
+
+	if (cpu_target >= 0) {
+		target = find_cpu_by_server(cpu_target);
+		if (!target)
+			return OPAL_PARAMETER;
+	} else if (cpu_target != -1) {
+		return OPAL_PARAMETER;
+	}
+
+	if (quiesce_type == QUIESCE_HOLD || quiesce_type == QUIESCE_REJECT) {
+		if (cmpxchg32(&opal_quiesce_state, 0, quiesce_type) != 0) {
+			if (opal_quiesce_owner != cpu->pir) {
+				/*
+				 * Nested is allowed for now just for
+				 * internal uses, so an error is returned
+				 * for OS callers, but no error message
+				 * printed if we are nested.
+				 */
+				printf("opal_quiesce already quiescing\n");
+			}
+			return OPAL_BUSY;
+		}
+		opal_quiesce_owner = cpu->pir;
+		opal_quiesce_target = cpu_target;
+	}
+
+	if (opal_quiesce_owner != cpu->pir) {
+		printf("opal_quiesce CPU does not own quiesce state (must call QUIESCE_HOLD or QUIESCE_REJECT)\n");
+		return OPAL_BUSY;
+	}
+
+	/* Okay now we own the quiesce state */
+
+	if (quiesce_type == QUIESCE_RESUME ||
+			quiesce_type == QUIESCE_RESUME_FAST_REBOOT) {
+		bust_locks = false;
+		sync(); /* release barrier vs opal entry */
+		if (target) {
+			target->quiesce_opal_call = false;
+		} else {
+			for_each_cpu(c) {
+				if (quiesce_type == QUIESCE_RESUME_FAST_REBOOT)
+					c->in_opal_call = 0;
+
+				if (c == cpu) {
+					assert(!c->quiesce_opal_call);
+					continue;
+				}
+				c->quiesce_opal_call = false;
+			}
+		}
+		sync();
+		opal_quiesce_state = 0;
+		return OPAL_SUCCESS;
+	}
+
+	if (quiesce_type == QUIESCE_LOCK_BREAK) {
+		if (opal_quiesce_target != -1) {
+			printf("opal_quiesce has not quiesced all CPUs (must target -1)\n");
+			return OPAL_BUSY;
+		}
+		bust_locks = true;
+		return OPAL_SUCCESS;
+	}
+
+	if (target) {
+		target->quiesce_opal_call = true;
+	} else {
+		for_each_cpu(c) {
+			if (c == cpu)
+				continue;
+			c->quiesce_opal_call = true;
+		}
+	}
+
+	sync(); /* Order stores to quiesce_opal_call vs loads of in_opal_call */
+
+	end = mftb() + msecs_to_tb(1000);
+
+	smt_lowest();
+	if (target) {
+		while (target->in_opal_call) {
+			if (tb_compare(mftb(), end) == TB_AAFTERB) {
+				printf("OPAL quiesce CPU:%04x stuck in OPAL\n", c->pir);
+				stuck = true;
+				break;
+			}
+			barrier();
+		}
+	} else {
+		for_each_cpu(c) {
+			if (c == cpu)
+				continue;
+			while (c->in_opal_call) {
+				if (tb_compare(mftb(), end) == TB_AAFTERB) {
+					printf("OPAL quiesce CPU:%04x stuck in OPAL\n", c->pir);
+					stuck = true;
+					break;
+				}
+				barrier();
+			}
+		}
+	}
+	smt_medium();
+	sync(); /* acquire barrier vs opal entry */
+
+	if (stuck) {
+		printf("OPAL quiesce could not kick all CPUs out of OPAL\n");
+		return OPAL_PARTIAL;
+	}
+
+	return OPAL_SUCCESS;
+}
+opal_call(OPAL_QUIESCE, opal_quiesce, 2);
 
 void __opal_register(uint64_t token, void *func, unsigned int nargs)
 {
