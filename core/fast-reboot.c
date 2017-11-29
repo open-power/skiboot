@@ -363,7 +363,8 @@ void fast_reboot(void)
 	struct cpu_thread *cpu;
 	static int fast_reboot_count = 0;
 
-	if (proc_gen != proc_gen_p8) {
+	if (!chip_quirk(QUIRK_MAMBO_CALLOUTS) &&
+			proc_gen != proc_gen_p8) {
 		prlog(PR_DEBUG,
 		      "RESET: Fast reboot not available on this CPU\n");
 		return;
