@@ -2144,9 +2144,9 @@ static void phb4_prepare_link_change(struct pci_slot *slot, bool is_up)
 		out_be64(p->regs + PHB_REGB_ERR_INF_ENABLE,
 			 0x2130006efca8bc00ull);
 		out_be64(p->regs + PHB_REGB_ERR_ERC_ENABLE,
-			 0x0000000000000000ull);
+			 0x0080000000000000ull);
 		out_be64(p->regs + PHB_REGB_ERR_FAT_ENABLE,
-			 0xde8fff91035743ffull);
+			 0xde0fff91035743ffull);
 
 		/*
 		 * We might lose the bus numbers during the reset operation
@@ -4245,12 +4245,12 @@ static void phb4_init_errors(struct phb4 *p)
 	/* Enable/disable error status indicators that trigger irqs */
 	if (p->has_link) {
 		out_be64(p->regs + 0x1c20,	0x2130006efca8bc00ull);
-		out_be64(p->regs + 0x1c30,	0xde8fff91035743ffull);
+		out_be64(p->regs + 0x1c30,	0xde1fff91035743ffull);
 	} else {
 		out_be64(p->regs + 0x1c20,	0x0000000000000000ull);
 		out_be64(p->regs + 0x1c30,	0x0000000000000000ull);
 	}
-	out_be64(p->regs + 0x1c28,	0x0000000000000000ull);
+	out_be64(p->regs + 0x1c28,	0x0080000000000000ull);
 	out_be64(p->regs + 0x1c40,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1c48,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1c50,	0x0000000000000000ull);
@@ -4274,7 +4274,7 @@ static void phb4_init_errors(struct phb4 *p)
 	if (p->rev == PHB4_REV_NIMBUS_DD10)
 		out_be64(p->regs + 0x0da8,	0xc00000b801000060ull);
 	else
-		out_be64(p->regs + 0x0da8,	0xc00008b801000060ull);
+		out_be64(p->regs + 0x0da8,	0xc00018b801000060ull);
 	/*
 	 * Errata ER20161123 says we should set the top two bits in
 	 * 0x0db0 but this causes config space accesses which don't
@@ -4494,7 +4494,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 	/* Init_126..130 - Re-enable error interrupts */
 	out_be64(p->regs + PHB_ERR_IRQ_ENABLE,			0xca8880cc00000000ull);
 	out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE,		0x2008400e08200000ull);
-	out_be64(p->regs + PHB_RXE_ARB_ERR_IRQ_ENABLE,		0xc40028fc01804070ull);
+	out_be64(p->regs + PHB_RXE_ARB_ERR_IRQ_ENABLE,		0xc40038fc01804070ull);
 	out_be64(p->regs + PHB_RXE_MRG_ERR_IRQ_ENABLE,		0x00006100008000a8ull);
 	if (p->rev == PHB4_REV_NIMBUS_DD10)
 		out_be64(p->regs + PHB_RXE_TCE_ERR_IRQ_ENABLE,	0x6051005000000000ull);
