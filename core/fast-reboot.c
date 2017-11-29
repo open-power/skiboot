@@ -61,9 +61,6 @@ static bool cpu_state_wait_all_others(enum cpu_thread_state state,
 	return true;
 }
 
-extern void *fdt;
-extern struct lock capi_lock;
-
 static const char *fast_reboot_disabled = NULL;
 
 void disable_fast_reboot(const char *reason)
@@ -104,10 +101,9 @@ void fast_reboot(void)
 		return;
 	}
 
+	/* Should mem_check() all regions before allowing fast reboot? */
+
 	prlog(PR_NOTICE, "RESET: Initiating fast reboot %d...\n", ++fast_reboot_count);
-
-	free(fdt);
-
 	fast_boot_release = false;
 	sync();
 

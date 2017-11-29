@@ -501,8 +501,14 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 		/* Wait for FW VPD data read to complete */
 		fsp_code_update_wait_vpd(true);
-	} else
+
+	} else {
+		/* fdt will be rebuilt */
+		free(fdt);
+		fdt = NULL;
+
 		nvram_reinit();
+	}
 
 	fsp_console_select_stdout();
 
