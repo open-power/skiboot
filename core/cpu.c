@@ -709,6 +709,34 @@ struct cpu_thread *first_present_cpu(void)
 	return next_present_cpu(NULL);
 }
 
+struct cpu_thread *next_ungarded_cpu(struct cpu_thread *cpu)
+{
+	do {
+		cpu = next_cpu(cpu);
+	} while(cpu && cpu->state == cpu_state_unavailable);
+
+	return cpu;
+}
+
+struct cpu_thread *first_ungarded_cpu(void)
+{
+	return next_ungarded_cpu(NULL);
+}
+
+struct cpu_thread *next_ungarded_primary(struct cpu_thread *cpu)
+{
+	do {
+		cpu = next_cpu(cpu);
+	} while(cpu && cpu->state == cpu_state_unavailable && cpu->primary != cpu);
+
+	return cpu;
+}
+
+struct cpu_thread *first_ungarded_primary(void)
+{
+	return next_ungarded_primary(NULL);
+}
+
 u8 get_available_nr_cores_in_chip(u32 chip_id)
 {
 	struct cpu_thread *core;

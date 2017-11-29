@@ -233,24 +233,15 @@ static int sreset_all_prepare(void)
 	      this_cpu()->pir, pir_to_core_id(this_cpu()->pir));
 
 	/* Assert special wakup on all cores. Only on operational cores. */
-	for_each_cpu(cpu) {
-		/* GARDed CPUs are marked unavailable. Skip them.  */
-		if (cpu->state == cpu_state_unavailable)
-			continue;
-
-		if (cpu->primary == cpu)
-			if (set_special_wakeup(cpu) != OPAL_SUCCESS)
-				return false;
+	for_each_ungarded_primary(cpu) {
+		if (set_special_wakeup(cpu) != OPAL_SUCCESS)
+			return false;
 	}
 
 	prlog(PR_DEBUG, "RESET: Stopping the world...\n");
 
 	/* Put everybody in stop except myself */
-	for_each_cpu(cpu) {
-		/* GARDed CPUs are marked unavailable. Skip them.  */
-		if (cpu->state == cpu_state_unavailable)
-			continue;
-
+	for_each_ungarded_cpu(cpu) {
 		if (cpu != this_cpu())
 			set_direct_ctl(cpu, P8_DIRECT_CTL_STOP);
 	}
@@ -262,14 +253,8 @@ static void sreset_all_finish(void)
 {
 	struct cpu_thread *cpu;
 
-	for_each_cpu(cpu) {
-		/* GARDed CPUs are marked unavailable. Skip them.  */
-		if (cpu->state == cpu_state_unavailable)
-			continue;
-
-		if (cpu->primary == cpu)
-			clr_special_wakeup(cpu);
-	}
+	for_each_ungarded_primary(cpu)
+		clr_special_wakeup(cpu);
 }
 
 static void sreset_all_others(void)
@@ -279,11 +264,7 @@ static void sreset_all_others(void)
 	prlog(PR_DEBUG, "RESET: Pre-napping all threads but one...\n");
 
 	/* Put everybody in pre-nap except myself */
-	for_each_cpu(cpu) {
-		/* GARDed CPUs are marked unavailable. Skip them.  */
-		if (cpu->state == cpu_state_unavailable)
-			continue;
-
+	for_each_ungarded_cpu(cpu) {
 		if (cpu != this_cpu())
 			set_direct_ctl(cpu, P8_DIRECT_CTL_PRENAP);
 	}
@@ -291,11 +272,7 @@ static void sreset_all_others(void)
 	prlog(PR_DEBUG, "RESET: Resetting all threads but one...\n");
 
 	/* Reset everybody except my own core threads */
-	for_each_cpu(cpu) {
-		/* GARDed CPUs are marked unavailable. Skip them.  */
-		if (cpu->state == cpu_state_unavailable)
-			continue;
-
+	for_each_ungarded_cpu(cpu) {
 		if (cpu != this_cpu())
 			set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
 	}
@@ -309,11 +286,7 @@ static bool fast_reset_p8(void)
 		return false;
 
 	/* Put everybody in stop except myself */
-	for_each_cpu(cpu) {
-		/* GARDed CPUs are marked unavailable. Skip them.  */
-		if (cpu->state == cpu_state_unavailable)
-			continue;
-
+	for_each_ungarded_cpu(cpu) {
 		/* Also make sure that saved_r1 is 0 ! That's what will
 		 * make our reset vector jump to fast_reboot_entry
 		 */
@@ -522,12 +495,8 @@ void __noreturn fast_reboot_entry(void)
 	/* We are the original boot CPU, wait for secondaries to
 	 * be captured.
 	 */
-	for_each_cpu(cpu) {
+	for_each_ungarded_cpu(cpu) {
 		if (cpu == this_cpu())
-			continue;
-
-		/* GARDed CPUs are marked unavailable. Skip them.  */
-		if (cpu->state == cpu_state_unavailable)
 			continue;
 
 		/* XXX Add a callin timeout ? */
@@ -545,12 +514,8 @@ void __noreturn fast_reboot_entry(void)
 	sync();
 
 	/* Wait for them to respond */
-	for_each_cpu(cpu) {
+	for_each_ungarded_cpu(cpu) {
 		if (cpu == this_cpu())
-			continue;
-
-		/* GARDed CPUs are marked unavailable. Skip them.  */
-		if (cpu->state == cpu_state_unavailable)
 			continue;
 
 		/* XXX Add a callin timeout ? */

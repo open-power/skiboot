@@ -190,6 +190,10 @@ extern struct cpu_thread *first_available_cpu(void);
 extern struct cpu_thread *next_available_cpu(struct cpu_thread *cpu);
 extern struct cpu_thread *first_present_cpu(void);
 extern struct cpu_thread *next_present_cpu(struct cpu_thread *cpu);
+extern struct cpu_thread *first_ungarded_cpu(void);
+extern struct cpu_thread *next_ungarded_cpu(struct cpu_thread *cpu);
+extern struct cpu_thread *first_ungarded_primary(void);
+extern struct cpu_thread *next_ungarded_primary(struct cpu_thread *cpu);
 
 #define for_each_cpu(cpu)	\
 	for (cpu = first_cpu(); cpu; cpu = next_cpu(cpu))
@@ -199,6 +203,12 @@ extern struct cpu_thread *next_present_cpu(struct cpu_thread *cpu);
 
 #define for_each_present_cpu(cpu)	\
 	for (cpu = first_present_cpu(); cpu; cpu = next_present_cpu(cpu))
+
+#define for_each_ungarded_cpu(cpu)				\
+	for (cpu = first_ungarded_cpu(); cpu; cpu = next_ungarded_cpu(cpu))
+
+#define for_each_ungarded_primary(cpu)				\
+	for (cpu = first_ungarded_primary(); cpu; cpu = next_ungarded_primary(cpu))
 
 extern struct cpu_thread *first_available_core_in_chip(u32 chip_id);
 extern struct cpu_thread *next_available_core_in_chip(struct cpu_thread *cpu, u32 chip_id);
