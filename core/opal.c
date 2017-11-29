@@ -98,11 +98,6 @@ static void opal_trace_entry(struct stack_frame *eframe __unused)
 	union trace t;
 	unsigned nargs, i;
 
-	if (this_cpu()->pir != mfspr(SPR_PIR)) {
-		printf("CPU MISMATCH ! PIR=%04lx cpu @%p -> pir=%04x\n",
-		       mfspr(SPR_PIR), this_cpu(), this_cpu()->pir);
-		abort();
-	}
 	if (eframe->gpr[0] > OPAL_LAST)
 		nargs = 0;
 	else
@@ -125,7 +120,14 @@ int64_t opal_entry_check(struct stack_frame *eframe);
 
 int64_t opal_entry_check(struct stack_frame *eframe)
 {
+	struct cpu_thread *cpu = this_cpu();
 	uint64_t token = eframe->gpr[0];
+
+	if (cpu->pir != mfspr(SPR_PIR)) {
+		printf("CPU MISMATCH ! PIR=%04lx cpu @%p -> pir=%04x token=%llu\n",
+		       mfspr(SPR_PIR), cpu, cpu->pir, token);
+		abort();
+	}
 
 	opal_trace_entry(eframe);
 
