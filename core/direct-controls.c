@@ -251,20 +251,15 @@ static void p8_sreset_all_others(void)
 {
 	struct cpu_thread *cpu;
 
-	prlog(PR_DEBUG, "RESET: Pre-napping all threads but one...\n");
-
-	/* Put everybody in pre-nap except myself */
-	for_each_ungarded_cpu(cpu) {
-		if (cpu != this_cpu())
-			p8_set_direct_ctl(cpu, P8_DIRECT_CTL_PRENAP);
-	}
-
 	prlog(PR_DEBUG, "RESET: Resetting all threads but one...\n");
 
 	/* Reset everybody except my own core threads */
 	for_each_ungarded_cpu(cpu) {
-		if (cpu != this_cpu())
-			p8_set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
+		if (cpu == this_cpu())
+			continue;
+
+		p8_set_direct_ctl(cpu, P8_DIRECT_CTL_PRENAP);
+		p8_set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
 	}
 }
 
