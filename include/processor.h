@@ -233,6 +233,8 @@ static inline bool is_power9n(uint32_t version)
 	return true;
 }
 
+#ifndef __TEST__
+
 /*
  * SMT priority
  */
@@ -369,6 +371,8 @@ static inline void st_le32(uint32_t *addr, uint32_t val)
 {
 	asm volatile("stwbrx %0,0,%1" : : "r"(val), "r"(addr), "m"(*addr));
 }
+
+#endif /* __TEST__ */
 
 #endif /* __ASSEMBLY__ */
 

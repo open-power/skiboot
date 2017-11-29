@@ -17,6 +17,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#define __TEST__
+
 #include "../ipmi-fru.c"
 
 int error = 0;

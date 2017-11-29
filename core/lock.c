@@ -33,7 +33,7 @@ static void lock_error(struct lock *l, const char *reason, uint16_t err)
 {
 	bust_locks = true;
 
-	fprintf(stderr, "LOCK ERROR: %s @%p (state: 0x%016lx)\n",
+	fprintf(stderr, "LOCK ERROR: %s @%p (state: 0x%016llx)\n",
 		reason, l, l->lock_val);
 	op_display(OP_FATAL, OP_MOD_LOCK, err);
 
@@ -73,12 +73,30 @@ bool lock_held_by_me(struct lock *l)
 	return l->lock_val == ((pir64 << 32) | 1);
 }
 
+static inline bool __try_lock(struct cpu_thread *cpu, struct lock *l)
+{
+	uint64_t val;
+
+	val = cpu->pir;
+	val <<= 32;
+	val |= 1;
+
+	barrier();
+	if (__cmpxchg64(&l->lock_val, 0, val) == 0) {
+		sync();
+		return true;
+	}
+	return false;
+}
+
 bool try_lock(struct lock *l)
 {
-	if (__try_lock(l)) {
+	struct cpu_thread *cpu = this_cpu();
+
+	if (__try_lock(cpu, l)) {
 		if (l->in_con_path)
-			this_cpu()->con_suspend++;
-		this_cpu()->lock_depth++;
+			cpu->con_suspend++;
+		cpu->lock_depth++;
 		return true;
 	}
 	return false;
