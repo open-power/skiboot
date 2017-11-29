@@ -226,12 +226,9 @@ static void set_direct_ctl(struct cpu_thread *cpu, uint64_t bits)
 	xscom_write(chip_id, xscom_addr, bits);
 }
 
-static bool fast_reset_p8(void)
+static int sreset_all_prepare(void)
 {
 	struct cpu_thread *cpu;
-
-	/* Mark ourselves as last man standing in need of a reset */
-	last_man_standing = this_cpu();
 
 	prlog(PR_DEBUG, "RESET: Resetting from cpu: 0x%x (core 0x%x)\n",
 	      this_cpu()->pir, pir_to_core_id(this_cpu()->pir));
@@ -257,16 +254,28 @@ static bool fast_reset_p8(void)
 
 		if (cpu != this_cpu())
 			set_direct_ctl(cpu, P8_DIRECT_CTL_STOP);
-
-		/* Also make sure that saved_r1 is 0 ! That's what will
-		 * make our reset vector jump to fast_reboot_entry
-		 */
-		cpu->save_r1 = 0;
 	}
 
-	/* Restore skiboot vectors  */
-	copy_exception_vectors();
-	setup_reset_vector();
+	return true;
+}
+
+static void sreset_all_finish(void)
+{
+	struct cpu_thread *cpu;
+
+	for_each_cpu(cpu) {
+		/* GARDed CPUs are marked unavailable. Skip them.  */
+		if (cpu->state == cpu_state_unavailable)
+			continue;
+
+		if (cpu->primary == cpu)
+			clr_special_wakeup(cpu);
+	}
+}
+
+static void sreset_all_others(void)
+{
+	struct cpu_thread *cpu;
 
 	prlog(PR_DEBUG, "RESET: Pre-napping all threads but one...\n");
 
@@ -291,6 +300,42 @@ static bool fast_reset_p8(void)
 		if (cpu != this_cpu())
 			set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
 	}
+}
+
+static void sreset_cpu(struct cpu_thread *cpu)
+{
+	set_direct_ctl(cpu, P8_DIRECT_CTL_PRENAP);
+	set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
+}
+
+static bool fast_reset_p8(void)
+{
+	struct cpu_thread *cpu;
+
+	/* Mark ourselves as last man standing in need of a reset */
+	last_man_standing = this_cpu();
+
+	if (!sreset_all_prepare())
+		return false;
+
+	/* Put everybody in stop except myself */
+	for_each_cpu(cpu) {
+		/* GARDed CPUs are marked unavailable. Skip them.  */
+		if (cpu->state == cpu_state_unavailable)
+			continue;
+
+		/* Also make sure that saved_r1 is 0 ! That's what will
+		 * make our reset vector jump to fast_reboot_entry
+		 */
+		cpu->save_r1 = 0;
+	}
+
+	/* Restore skiboot vectors  */
+	copy_exception_vectors();
+	setup_reset_vector();
+
+	/* Send everyone else to 0x100 */
+	sreset_all_others();
 
 	return true;
 }
@@ -463,8 +508,7 @@ void __noreturn fast_reboot_entry(void)
 	lock(&reset_lock);
 	if (last_man_standing && next_cpu(first_cpu())) {
 		prlog(PR_DEBUG, "RESET: last man standing fixup...\n");
-		set_direct_ctl(last_man_standing, P8_DIRECT_CTL_PRENAP);
-		set_direct_ctl(last_man_standing, P8_DIRECT_CTL_SRESET);
+		sreset_cpu(last_man_standing);
 	}
 	last_man_standing = NULL;
 	unlock(&reset_lock);
@@ -540,14 +584,7 @@ void __noreturn fast_reboot_entry(void)
 
 	prlog(PR_DEBUG, "RESET: Releasing special wakeups...\n");
 
-	for_each_cpu(cpu) {
-		/* GARDed CPUs are marked unavailable. Skip them.  */
-		if (cpu->state == cpu_state_unavailable)
-			continue;
-
-		if (cpu->primary == cpu)
-			clr_special_wakeup(cpu);
-	}
+	sreset_all_finish();
 
 	prlog(PR_INFO, "RESET: All done, cleaning up...\n");
 
