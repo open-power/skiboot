@@ -37,7 +37,6 @@
 /* Flag tested by the OPAL entry code */
 uint8_t reboot_in_progress;
 static volatile bool fast_boot_release;
-static struct cpu_thread *last_man_standing;
 static struct lock reset_lock = LOCK_UNLOCKED;
 
 static int set_special_wakeup(struct cpu_thread *cpu)
@@ -302,18 +301,9 @@ static void sreset_all_others(void)
 	}
 }
 
-static void sreset_cpu(struct cpu_thread *cpu)
-{
-	set_direct_ctl(cpu, P8_DIRECT_CTL_PRENAP);
-	set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
-}
-
 static bool fast_reset_p8(void)
 {
 	struct cpu_thread *cpu;
-
-	/* Mark ourselves as last man standing in need of a reset */
-	last_man_standing = this_cpu();
 
 	if (!sreset_all_prepare())
 		return false;
@@ -402,10 +392,7 @@ void fast_reboot(void)
 	unlock(&reset_lock);
 
 	if (success) {
-		if (!next_cpu(first_cpu()))
-			/* Only 1 CPU, so fake reset ourselves */
-			asm volatile("ba 0x100 " : : : );
-		/* Don't return */
+		asm volatile("ba	0x100\n\t" : : : "memory");
 		for (;;)
 			;
 	}
@@ -504,14 +491,6 @@ void __noreturn fast_reboot_entry(void)
 
 	prlog(PR_DEBUG, "RESET: CPU 0x%04x reset in\n", this_cpu()->pir);
 	time_wait_ms(100);
-
-	lock(&reset_lock);
-	if (last_man_standing && next_cpu(first_cpu())) {
-		prlog(PR_DEBUG, "RESET: last man standing fixup...\n");
-		sreset_cpu(last_man_standing);
-	}
-	last_man_standing = NULL;
-	unlock(&reset_lock);
 
 	/* We reset our ICP first ! Otherwise we might get stray interrupts
 	 * when unsplitting
