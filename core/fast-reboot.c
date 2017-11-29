@@ -316,32 +316,6 @@ static int sreset_all_others(void)
 	return OPAL_UNSUPPORTED;
 }
 
-static bool fast_reset_p8(void)
-{
-	struct cpu_thread *cpu;
-
-	if (sreset_all_prepare())
-		return false;
-
-	/* Put everybody in stop except myself */
-	for_each_ungarded_cpu(cpu) {
-		/* Also make sure that saved_r1 is 0 ! That's what will
-		 * make our reset vector jump to fast_reboot_entry
-		 */
-		cpu->save_r1 = 0;
-	}
-
-	/* Restore skiboot vectors  */
-	copy_exception_vectors();
-	setup_reset_vector();
-
-	/* Send everyone else to 0x100 */
-	if (sreset_all_others() == OPAL_SUCCESS)
-		return true;
-
-	return false;
-}
-
 static bool cpu_state_wait_all_others(enum cpu_thread_state state,
 					unsigned long timeout_tb)
 {
@@ -386,7 +360,7 @@ void disable_fast_reboot(const char *reason)
 
 void fast_reboot(void)
 {
-	bool success;
+	struct cpu_thread *cpu;
 	static int fast_reboot_count = 0;
 
 	if (proc_gen != proc_gen_p8) {
@@ -428,12 +402,32 @@ void fast_reboot(void)
 	fast_boot_release = false;
 	sync();
 
-	success = fast_reset_p8();
+	/* Put everybody in stop except myself */
+	if (sreset_all_prepare())
+		return;
 
-	/* Unlock, at this point we go away */
+	/* Now everyone else is stopped */
 	unlock(&reset_lock);
 
-	if (!success)
+	/*
+	 * There is no point clearing special wakeup due to failure after this
+	 * point, because we will be going to full IPL. Less cleanup work means
+	 * less opportunity to fail.
+	 */
+
+	for_each_ungarded_cpu(cpu) {
+		/* Also make sure that saved_r1 is 0 ! That's what will
+		 * make our reset vector jump to fast_reboot_entry
+		 */
+		cpu->save_r1 = 0;
+	}
+
+	/* Restore skiboot vectors  */
+	copy_exception_vectors();
+	setup_reset_vector();
+
+	/* Send everyone else to 0x100 */
+	if (sreset_all_others() != OPAL_SUCCESS)
 		return;
 
 	/* Ensure all the sresets get through */
