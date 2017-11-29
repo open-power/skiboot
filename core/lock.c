@@ -93,6 +93,9 @@ bool try_lock(struct lock *l)
 {
 	struct cpu_thread *cpu = this_cpu();
 
+	if (bust_locks)
+		return true;
+
 	if (__try_lock(cpu, l)) {
 		if (l->in_con_path)
 			cpu->con_suspend++;
