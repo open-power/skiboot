@@ -470,6 +470,7 @@ struct xive_vp {
 #define XIVE_IRQ_ERROR	0xffffffff
 
 void init_xive(void);
+int64_t xive_reset(void);
 
 /* Allocate a chunk of HW sources */
 uint32_t xive_alloc_hw_irqs(uint32_t chip_id, uint32_t count, uint32_t align);

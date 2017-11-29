@@ -24,10 +24,12 @@
 #include <cec.h>
 #include <timebase.h>
 #include <pci.h>
+#include <xive.h>
 #include <chip.h>
 #include <chiptod.h>
 #include <ipmi.h>
 #include <direct-controls.h>
+#include <nvram.h>
 
 /* Flag tested by the OPAL entry code */
 static volatile bool fast_boot_release;
@@ -73,8 +75,13 @@ void fast_reboot(void)
 	struct cpu_thread *cpu;
 	static int fast_reboot_count = 0;
 
+	if (proc_gen == proc_gen_p9) {
+		if (!nvram_query_eq("experimental-fast-reset","feeling-lucky"))
+			return;
+	}
+
 	if (!chip_quirk(QUIRK_MAMBO_CALLOUTS) &&
-			proc_gen != proc_gen_p8) {
+			(proc_gen != proc_gen_p8 && proc_gen != proc_gen_p9)) {
 		prlog(PR_DEBUG,
 		      "RESET: Fast reboot not available on this CPU\n");
 		return;
@@ -168,20 +175,24 @@ static void cleanup_cpu_state(void)
 		/* XXX Update the SLW copies ! Also dbl check HIDs etc... */
 		init_shared_sprs();
 
-		/* If somebody was in fast_sleep, we may have a workaround
-		 * to undo
-		 */
-		if (cpu->in_fast_sleep) {
-			prlog(PR_DEBUG, "RESET: CPU 0x%04x in fast sleep"
-			      " undoing workarounds...\n", cpu->pir);
-			fast_sleep_exit();
+		if (proc_gen == proc_gen_p8) {
+			/* If somebody was in fast_sleep, we may have a
+			 * workaround to undo
+			 */
+			if (cpu->in_fast_sleep) {
+				prlog(PR_DEBUG, "RESET: CPU 0x%04x in fast sleep"
+				      " undoing workarounds...\n", cpu->pir);
+				fast_sleep_exit();
+			}
+
+			/* The TLB surely contains garbage.
+			 * P9 clears TLBs in cpu_fast_reboot_complete
+			 */
+			cleanup_local_tlb();
 		}
 
 		/* And we might have lost TB sync */
 		chiptod_wakeup_resync();
-
-		/* The TLB surely contains garbage */
-		cleanup_local_tlb();
 	}
 
 	/* Per-thread additional cleanup */
@@ -248,15 +259,19 @@ void __noreturn fast_reboot_entry(void)
 {
 	prlog(PR_DEBUG, "RESET: CPU 0x%04x reset in\n", this_cpu()->pir);
 
-	/* We reset our ICP first ! Otherwise we might get stray interrupts
-	 * when unsplitting
-	 */
-	reset_cpu_icp();
+	if (proc_gen == proc_gen_p9) {
+		reset_cpu_xive();
+	} else if (proc_gen == proc_gen_p8) {
+		/* We reset our ICP first ! Otherwise we might get stray
+		 * interrupts when unsplitting
+		 */
+		reset_cpu_icp();
 
-	/* If we are split, we need to unsplit. Since that can send us
-	 * to NAP, which will come back via reset, we do it now
-	 */
-	check_split_core();
+		/* If we are split, we need to unsplit. Since that can send us
+		 * to NAP, which will come back via reset, we do it now
+		 */
+		check_split_core();
+	}
 
 	sync();
 	this_cpu()->state = cpu_state_present;
@@ -284,6 +299,10 @@ void __noreturn fast_reboot_entry(void)
 	 * be captured.
 	 */
 	cpu_state_wait_all_others(cpu_state_present, 0);
+
+	if (proc_gen == proc_gen_p9) {
+		xive_reset();
+	}
 
 	prlog(PR_INFO, "RESET: Releasing secondaries...\n");
 
@@ -322,8 +341,11 @@ void __noreturn fast_reboot_entry(void)
 	/* Poke the consoles (see comments in the code there) */
 	fsp_console_reset();
 
-	/* Reset/EOI the PSI interrupt */
-	psi_irq_reset();
+	if (proc_gen == proc_gen_p8) {
+		/* XXX */
+		/* Reset/EOI the PSI interrupt */
+		psi_irq_reset();
+	}
 
 	/* Remove all PCI devices */
 	pci_reset();

@@ -502,6 +502,13 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 		/* Wait for FW VPD data read to complete */
 		fsp_code_update_wait_vpd(true);
 
+		/*
+		 * OCC takes few secs to boot.  Call this as late as
+		 * as possible to avoid delay.
+		 */
+		occ_pstates_init();
+		occ_sensors_init();
+
 	} else {
 		/* fdt will be rebuilt */
 		free(fdt);
@@ -511,13 +518,6 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	}
 
 	fsp_console_select_stdout();
-
-	/*
-	 * OCC takes few secs to boot.  Call this as late as
-	 * as possible to avoid delay.
-	 */
-	occ_pstates_init();
-	occ_sensors_init();
 
 	/* Use nvram bootargs over device tree */
 	cmdline = nvram_query("bootargs");

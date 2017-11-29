@@ -4608,14 +4608,20 @@ static void xive_reset_mask_source_cb(struct irq_source *is,
 	}
 }
 
-static int64_t opal_xive_reset(uint64_t version)
+void reset_cpu_xive(void)
+{
+	struct cpu_thread *c = this_cpu();
+	struct xive_cpu_state *xs = c->xstate;
+
+	xs->cppr = 0;
+	out_8(xs->tm_ring1 + TM_QW3_HV_PHYS + TM_CPPR, 0);
+
+	in_be64(xs->tm_ring1 + TM_SPC_PULL_POOL_CTX);
+}
+
+static int64_t __xive_reset(uint64_t version)
 {
 	struct proc_chip *chip;
-
-	prlog(PR_DEBUG, "XIVE reset, version: %d...\n", (int)version);
-
-	if (version > 1)
-		return OPAL_PARAMETER;
 
 	xive_mode = version;
 
@@ -4649,6 +4655,22 @@ static int64_t opal_xive_reset(uint64_t version)
 #endif /* USE_BLOCK_GROUP_MODE */
 
 	return OPAL_SUCCESS;
+}
+
+/* Called by fast reboot */
+int64_t xive_reset(void)
+{
+	return __xive_reset(XIVE_MODE_EMU);
+}
+
+static int64_t opal_xive_reset(uint64_t version)
+{
+	prlog(PR_DEBUG, "XIVE reset, version: %d...\n", (int)version);
+
+	if (version > 1)
+		return OPAL_PARAMETER;
+
+	return __xive_reset(version);
 }
 
 static int64_t opal_xive_free_vp_block(uint64_t vp_base)
