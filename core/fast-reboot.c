@@ -92,7 +92,8 @@ void fast_reboot(void)
 	 * Ensure all other CPUs have left OPAL calls.
 	 */
 	if (!opal_quiesce(QUIESCE_HOLD, -1)) {
-		prlog(PR_DEBUG, "RESET: Fast reboot disabled because OPAL quiesce timed out\n");
+		prlog(PR_NOTICE, "RESET: Fast reboot disabled because OPAL "
+				"quiesce timed out\n");
 		return;
 	}
 
@@ -104,6 +105,7 @@ void fast_reboot(void)
 	}
 
 	prlog(PR_NOTICE, "RESET: Initiating fast reboot %d...\n", ++fast_reboot_count);
+
 	free(fdt);
 
 	fast_boot_release = false;
@@ -111,6 +113,8 @@ void fast_reboot(void)
 
 	/* Put everybody in stop except myself */
 	if (sreset_all_prepare()) {
+		prlog(PR_NOTICE, "RESET: Fast reboot failed to prepare "
+				"secondaries for system reset\n");
 		opal_quiesce(QUIESCE_RESUME, -1);
 		return;
 	}
@@ -133,12 +137,18 @@ void fast_reboot(void)
 	setup_reset_vector();
 
 	/* Send everyone else to 0x100 */
-	if (sreset_all_others() != OPAL_SUCCESS)
+	if (sreset_all_others() != OPAL_SUCCESS) {
+		prlog(PR_NOTICE, "RESET: Fast reboot failed to system reset "
+				"secondaries\n");
 		return;
+	}
 
 	/* Ensure all the sresets get through */
-	if (!cpu_state_wait_all_others(cpu_state_present, msecs_to_tb(100)))
+	if (!cpu_state_wait_all_others(cpu_state_present, msecs_to_tb(100))) {
+		prlog(PR_NOTICE, "RESET: Fast reboot timed out waiting for "
+				"secondaries to call in\n");
 		return;
+	}
 
 	prlog(PR_DEBUG, "RESET: Releasing special wakeups...\n");
 	sreset_all_finish();
