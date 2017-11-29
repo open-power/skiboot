@@ -342,6 +342,35 @@ static bool fast_reset_p8(void)
 	return false;
 }
 
+static bool cpu_state_wait_all_others(enum cpu_thread_state state,
+					unsigned long timeout_tb)
+{
+	struct cpu_thread *cpu;
+	unsigned long end = mftb() + timeout_tb;
+
+	sync();
+	for_each_ungarded_cpu(cpu) {
+		if (cpu == this_cpu())
+			continue;
+
+		if (cpu->state != state) {
+			smt_lowest();
+			while (cpu->state != state) {
+				barrier();
+
+				if (timeout_tb && (tb_compare(mftb(), end) == TB_AAFTERB)) {
+					smt_medium();
+					return false;
+				}
+			}
+			smt_medium();
+		}
+	}
+	sync();
+
+	return true;
+}
+
 extern void *fdt;
 extern struct lock capi_lock;
 
@@ -403,11 +432,16 @@ void fast_reboot(void)
 	/* Unlock, at this point we go away */
 	unlock(&reset_lock);
 
-	if (success) {
-		asm volatile("ba	0x100\n\t" : : : "memory");
-		for (;;)
-			;
-	}
+	if (!success)
+		return;
+
+	/* Ensure all the sresets get through */
+	if (!cpu_state_wait_all_others(cpu_state_present, msecs_to_tb(200)))
+		return;
+
+	asm volatile("ba	0x100\n\t" : : : "memory");
+	for (;;)
+		;
 }
 
 static void cleanup_cpu_state(void)
@@ -499,8 +533,6 @@ void __noreturn fast_reboot_entry(void);
 
 void __noreturn fast_reboot_entry(void)
 {
-	struct cpu_thread *cpu;
-
 	prlog(PR_DEBUG, "RESET: CPU 0x%04x reset in\n", this_cpu()->pir);
 	time_wait_ms(100);
 
@@ -514,13 +546,15 @@ void __noreturn fast_reboot_entry(void)
 	 */
 	check_split_core();
 
+	sync();
+	this_cpu()->state = cpu_state_present;
+	sync();
+
 	/* Are we the original boot CPU ? If not, we spin waiting
 	 * for a relase signal from CPU 1, then we clean ourselves
 	 * up and go processing jobs.
 	 */
 	if (this_cpu() != boot_cpu) {
-		this_cpu()->state = cpu_state_present;
-		sync();
 		if (!fast_boot_release) {
 			smt_lowest();
 			while (!fast_boot_release)
@@ -537,18 +571,7 @@ void __noreturn fast_reboot_entry(void)
 	/* We are the original boot CPU, wait for secondaries to
 	 * be captured.
 	 */
-	for_each_ungarded_cpu(cpu) {
-		if (cpu == this_cpu())
-			continue;
-
-		/* XXX Add a callin timeout ? */
-		if (cpu->state != cpu_state_present) {
-			smt_lowest();
-			while (cpu->state != cpu_state_present)
-				barrier();
-			smt_medium();
-		}
-	}
+	cpu_state_wait_all_others(cpu_state_present, 0);
 
 	prlog(PR_INFO, "RESET: Releasing secondaries...\n");
 
@@ -557,18 +580,7 @@ void __noreturn fast_reboot_entry(void)
 	sync();
 
 	/* Wait for them to respond */
-	for_each_ungarded_cpu(cpu) {
-		if (cpu == this_cpu())
-			continue;
-
-		/* XXX Add a callin timeout ? */
-		if (cpu->state == cpu_state_present) {
-			smt_lowest();
-			while (cpu->state == cpu_state_present)
-				barrier();
-			smt_medium();
-		}
-	}
+	cpu_state_wait_all_others(cpu_state_active, 0);
 
 	prlog(PR_DEBUG, "RESET: Releasing special wakeups...\n");
 
