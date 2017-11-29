@@ -426,6 +426,7 @@ void fast_reboot(void)
 	lock(&reset_lock);
 
 	fast_boot_release = false;
+	sync();
 
 	success = fast_reset_p8();
 
@@ -576,8 +577,8 @@ void __noreturn fast_reboot_entry(void)
 	prlog(PR_INFO, "RESET: Releasing secondaries...\n");
 
 	/* Release everybody */
-	fast_boot_release = true;
 	sync();
+	fast_boot_release = true;
 
 	/* Wait for them to respond */
 	cpu_state_wait_all_others(cpu_state_active, 0);
@@ -597,7 +598,9 @@ void __noreturn fast_reboot_entry(void)
 	cleanup_cpu_state();
 
 	/* Set our state to active */
+	sync();
 	this_cpu()->state = cpu_state_active;
+	sync();
 
 	/* Let the CPU layer do some last minute global cleanups */
 	cpu_fast_reboot_complete();

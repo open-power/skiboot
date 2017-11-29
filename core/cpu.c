@@ -1126,7 +1126,10 @@ void cpu_bringup(void)
 
 void cpu_callin(struct cpu_thread *cpu)
 {
+	sync();
 	cpu->state = cpu_state_active;
+	sync();
+
 	cpu->job_has_no_return = false;
 
 	init_hid();
