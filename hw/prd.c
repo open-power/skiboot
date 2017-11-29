@@ -23,6 +23,7 @@
 #include <fsp.h>
 #include <mem_region.h>
 #include <prd-fw-msg.h>
+#include <hostservices.h>
 
 enum events {
 	EVENT_ATTN	= 1 << 0,
@@ -372,6 +373,18 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 	case PRD_FW_MSG_TYPE_REQ_NOP:
 		fw_resp->type = cpu_to_be64(PRD_FW_MSG_TYPE_RESP_NOP);
 		prd_msg->fw_resp.len = cpu_to_be64(PRD_FW_MSG_BASE_SIZE);
+		prd_msg->hdr.size = cpu_to_be16(sizeof(*prd_msg));
+		rc = 0;
+		break;
+	case PRD_FW_MSG_TYPE_ERROR_LOG:
+		rc = hservice_send_error_log(fw_req->errorlog.plid,
+					     fw_req->errorlog.size,
+					     fw_req->errorlog.data);
+		/* Return generic response to HBRT */
+		fw_resp->type = cpu_to_be64(PRD_FW_MSG_TYPE_RESP_GENERIC);
+		fw_resp->generic_resp.status = cpu_to_be64(rc);
+		prd_msg->fw_resp.len = cpu_to_be64(PRD_FW_MSG_BASE_SIZE +
+						 sizeof(fw_resp->generic_resp));
 		prd_msg->hdr.size = cpu_to_be16(sizeof(*prd_msg));
 		rc = 0;
 		break;

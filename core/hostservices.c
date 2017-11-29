@@ -329,7 +329,7 @@ static void hservice_start_elog_send(void)
 	goto again;
 }
 
-static int hservice_send_error_log(uint32_t plid, uint32_t dsize, void *data)
+int hservice_send_error_log(uint32_t plid, uint32_t dsize, void *data)
 {
 	struct hbrt_elog_ent *ent;
 	void *abuf;

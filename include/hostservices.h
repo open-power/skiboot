@@ -38,5 +38,6 @@ void host_services_occ_base_setup(void);
 
 int find_master_and_slave_occ(uint64_t **master, uint64_t **slave,
 			      int *nr_masters, int *nr_slaves);
+int hservice_send_error_log(uint32_t plid, uint32_t dsize, void *data);
 
 #endif /* __HOSTSERVICES_H */

@@ -39,6 +39,11 @@ struct prd_fw_msg {
 		struct {
 			__be64	status;
 		} generic_resp;
+		struct {
+			__be32	plid;
+			__be32	size;
+			char	data[];
+		} __packed errorlog;
 	};
 };
 
