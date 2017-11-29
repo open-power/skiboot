@@ -520,11 +520,14 @@ void __noreturn fast_reboot_entry(void)
 	 */
 	if (this_cpu() != boot_cpu) {
 		this_cpu()->state = cpu_state_present;
-		while (!fast_boot_release) {
+		sync();
+		if (!fast_boot_release) {
 			smt_lowest();
-			sync();
+			while (!fast_boot_release)
+				barrier();
+			smt_medium();
 		}
-		smt_medium();
+		sync();
 		cleanup_cpu_state();
 		__secondary_cpu_entry();
 	}
@@ -539,11 +542,12 @@ void __noreturn fast_reboot_entry(void)
 			continue;
 
 		/* XXX Add a callin timeout ? */
-		while (cpu->state != cpu_state_present) {
+		if (cpu->state != cpu_state_present) {
 			smt_lowest();
-			sync();
+			while (cpu->state != cpu_state_present)
+				barrier();
+			smt_medium();
 		}
-		smt_medium();
 	}
 
 	prlog(PR_INFO, "RESET: Releasing secondaries...\n");
@@ -558,16 +562,18 @@ void __noreturn fast_reboot_entry(void)
 			continue;
 
 		/* XXX Add a callin timeout ? */
-		while (cpu->state == cpu_state_present) {
+		if (cpu->state == cpu_state_present) {
 			smt_lowest();
-			sync();
+			while (cpu->state == cpu_state_present)
+				barrier();
+			smt_medium();
 		}
-		smt_medium();
 	}
 
 	prlog(PR_DEBUG, "RESET: Releasing special wakeups...\n");
 
 	sreset_all_finish();
+	sync();
 
 	prlog(PR_INFO, "RESET: All done, cleaning up...\n");
 
