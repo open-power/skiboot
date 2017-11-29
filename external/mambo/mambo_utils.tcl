@@ -1,5 +1,3 @@
-source $env(LIB_DIR)/perf/qtrace.tcl
-
 #
 # behave like gdb
 #
@@ -362,15 +360,6 @@ proc skisym { name } {
     }
 
     return $ret
-}
-
-proc start_qtrace { { qtfile qtrace.qt } } {
-	QTrace::Initialize p9 mysim
-	QTrace::Start $qtfile mysim
-}
-
-proc stop_qtrace { } {
-	QTrace::Stop mysim
 }
 
 proc current_insn { { t 0 } { c 0 } } {
