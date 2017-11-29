@@ -960,12 +960,6 @@ opal_entry:
 	addis	%r2,%r2,(__toc_start - __head)@ha
 	addi	%r2,%r2,(__toc_start - __head)@l
 
-	/* Check for a reboot in progress */
-	LOAD_ADDR_FROM_TOC(%r12, reboot_in_progress)
-	lbz	%r12,0(%r12)
-	cmpwi	%r12,0
-	bne	2f
-
 	/* Check entry */
 	mr	%r3,%r1
 	bl	opal_entry_check
@@ -1002,10 +996,6 @@ opal_entry:
 	ld	%r13,STACK_GPR13(%r1)
 	ld	%r1,STACK_GPR1(%r1)
 	blr
-
-2:	/* Reboot in progress, reject all calls */
-	li	%r3,OPAL_BUSY
-	b	1b
 
 .global start_kernel
 start_kernel:

@@ -41,6 +41,8 @@ static int64_t opal_cec_power_down(uint64_t request)
 {
 	prlog(PR_NOTICE, "OPAL: Shutdown request type 0x%llx...\n", request);
 
+	opal_quiesce(QUIESCE_HOLD, -1);
+
 	console_complete_flush();
 
 	if (platform.cec_power_down)
@@ -53,6 +55,8 @@ opal_call(OPAL_CEC_POWER_DOWN, opal_cec_power_down, 1);
 static int64_t opal_cec_reboot(void)
 {
 	prlog(PR_NOTICE, "OPAL: Reboot request...\n");
+
+	opal_quiesce(QUIESCE_HOLD, -1);
 
 	console_complete_flush();
 
@@ -70,6 +74,8 @@ opal_call(OPAL_CEC_REBOOT, opal_cec_reboot, 0);
 static int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
 {
 	struct errorlog *buf;
+
+	opal_quiesce(QUIESCE_HOLD, -1);
 
 	switch (reboot_type) {
 	case OPAL_REBOOT_NORMAL:

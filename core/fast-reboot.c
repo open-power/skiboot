@@ -30,9 +30,7 @@
 #include <direct-controls.h>
 
 /* Flag tested by the OPAL entry code */
-uint8_t reboot_in_progress;
 static volatile bool fast_boot_release;
-static struct lock reset_lock = LOCK_UNLOCKED;
 
 static bool cpu_state_wait_all_others(enum cpu_thread_state state,
 					unsigned long timeout_tb)
@@ -67,13 +65,10 @@ extern void *fdt;
 extern struct lock capi_lock;
 
 static const char *fast_reboot_disabled = NULL;
-static struct lock fast_reboot_disabled_lock = LOCK_UNLOCKED;
 
 void disable_fast_reboot(const char *reason)
 {
-	lock(&fast_reboot_disabled_lock);
 	fast_reboot_disabled = reason;
-	unlock(&fast_reboot_disabled_lock);
 }
 
 void fast_reboot(void)
@@ -93,45 +88,37 @@ void fast_reboot(void)
 		return;
 	}
 
-	lock(&fast_reboot_disabled_lock);
+	/*
+	 * Ensure all other CPUs have left OPAL calls.
+	 */
+	if (!opal_quiesce(QUIESCE_HOLD, -1)) {
+		prlog(PR_DEBUG, "RESET: Fast reboot disabled because OPAL quiesce timed out\n");
+		return;
+	}
+
 	if (fast_reboot_disabled) {
 		prlog(PR_DEBUG, "RESET: Fast reboot disabled because %s\n",
 		      fast_reboot_disabled);
-		unlock(&fast_reboot_disabled_lock);
+		opal_quiesce(QUIESCE_RESUME, -1);
 		return;
 	}
-	unlock(&fast_reboot_disabled_lock);
 
 	prlog(PR_NOTICE, "RESET: Initiating fast reboot %d...\n", ++fast_reboot_count);
 	free(fdt);
-
-	/* XXX We need a way to ensure that no other CPU is in skiboot
-	 * holding locks (via the OPAL APIs) and if they are, we need
-	 * for them to get out. Hopefully that isn't happening, but...
-	 *
-	 * To fix this properly, we want to keep track of OPAL entry/exit
-	 * on all CPUs.
-	 */
-	reboot_in_progress = 1;
-	time_wait_ms(200);
-
-	/* Lock so the new guys coming don't reset us */
-	lock(&reset_lock);
 
 	fast_boot_release = false;
 	sync();
 
 	/* Put everybody in stop except myself */
-	if (sreset_all_prepare())
+	if (sreset_all_prepare()) {
+		opal_quiesce(QUIESCE_RESUME, -1);
 		return;
-
-	/* Now everyone else is stopped */
-	unlock(&reset_lock);
+	}
 
 	/*
-	 * There is no point clearing special wakeup due to failure after this
-	 * point, because we will be going to full IPL. Less cleanup work means
-	 * less opportunity to fail.
+	 * There is no point clearing special wakeup or un-quiesce due to
+	 * failure after this point, because we will be going to full IPL.
+	 * Less cleanup work means less opportunity to fail.
 	 */
 
 	for_each_ungarded_cpu(cpu) {
@@ -155,6 +142,9 @@ void fast_reboot(void)
 
 	prlog(PR_DEBUG, "RESET: Releasing special wakeups...\n");
 	sreset_all_finish();
+
+	/* This resets our quiesce state ready to enter the new kernel. */
+	opal_quiesce(QUIESCE_RESUME_FAST_REBOOT, -1);
 
 	asm volatile("ba	0x100\n\t" : : : "memory");
 	for (;;)
@@ -304,7 +294,6 @@ void __noreturn fast_reboot_entry(void)
 
 	/* Clear release flag for next time */
 	fast_boot_release = false;
-	reboot_in_progress = 0;
 
 	/* Cleanup ourselves */
 	cleanup_cpu_state();
