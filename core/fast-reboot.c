@@ -291,6 +291,14 @@ void __noreturn fast_reboot_entry(void)
 	sync();
 	fast_boot_release = true;
 
+	/* Cleanup ourselves */
+	cleanup_cpu_state();
+
+	/* Set our state to active */
+	sync();
+	this_cpu()->state = cpu_state_active;
+	sync();
+
 	/* Wait for them to respond */
 	cpu_state_wait_all_others(cpu_state_active, 0);
 
@@ -300,14 +308,6 @@ void __noreturn fast_reboot_entry(void)
 
 	/* Clear release flag for next time */
 	fast_boot_release = false;
-
-	/* Cleanup ourselves */
-	cleanup_cpu_state();
-
-	/* Set our state to active */
-	sync();
-	this_cpu()->state = cpu_state_active;
-	sync();
 
 	/* Let the CPU layer do some last minute global cleanups */
 	cpu_fast_reboot_complete();
