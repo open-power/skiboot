@@ -535,6 +535,7 @@ void __noreturn fast_reboot_entry(void)
 			smt_lowest();
 			sync();
 		}
+		smt_medium();
 	}
 
 	prlog(PR_DEBUG, "RESET: Releasing special wakeups...\n");
