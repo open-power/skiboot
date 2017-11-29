@@ -964,7 +964,7 @@ opal_entry:
 	LOAD_ADDR_FROM_TOC(%r12, reboot_in_progress)
 	lbz	%r12,0(%r12)
 	cmpwi	%r12,0
-	bne	3f
+	bne	2f
 
 	/* Check entry */
 	mr	%r3,%r1
@@ -986,13 +986,9 @@ opal_entry:
 	 * function pointer. Also check the token.
 	 * For ELFv2 ABI, the local entry point is used so no need for r12.
 	 */
-	cmpldi	%r0,OPAL_LAST
-	bgt-	2f
 	sldi	%r0,%r0,3
 	LOAD_ADDR_FROM_TOC(%r12, opal_branch_table)
 	ldx	%r0,%r12,%r0
-	cmpldi	%r0,0
-	beq-	2f
 	mtctr	%r0
 
 	/* Jump ! */
@@ -1007,12 +1003,7 @@ opal_entry:
 	ld	%r1,STACK_GPR1(%r1)
 	blr
 
-2:	/* Bad token */
-	ld	%r3,STACK_GPR0(%r1)
-	bl	opal_bad_token
-	b	1b
-
-3:	/* Reboot in progress, reject all calls */
+2:	/* Reboot in progress, reject all calls */
 	li	%r3,OPAL_BUSY
 	b	1b
 

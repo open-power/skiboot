@@ -118,14 +118,19 @@ static void opal_trace_entry(struct stack_frame *eframe __unused)
 #endif
 }
 
+static int64_t opal_check_token(uint64_t token);
+
 /* Called from head.S, thus no prototype */
 int64_t opal_entry_check(struct stack_frame *eframe);
 
-int64_t __attrconst opal_entry_check(struct stack_frame *eframe)
+int64_t opal_entry_check(struct stack_frame *eframe)
 {
 	uint64_t token = eframe->gpr[0];
 
 	opal_trace_entry(eframe);
+
+	if (!opal_check_token(token))
+		return opal_bad_token(token);
 
 	return OPAL_SUCCESS;
 }
