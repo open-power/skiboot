@@ -239,7 +239,8 @@
 static enum {
 	XIVE_MODE_EMU	= OPAL_XIVE_MODE_EMU,
 	XIVE_MODE_EXPL	= OPAL_XIVE_MODE_EXPL,
-} xive_mode;
+	XIVE_MODE_NONE,
+} xive_mode = XIVE_MODE_NONE;
 
 
 /* Each source controller has one of these. There's one embedded
@@ -4660,6 +4661,8 @@ static int64_t __xive_reset(uint64_t version)
 /* Called by fast reboot */
 int64_t xive_reset(void)
 {
+	if (xive_mode == XIVE_MODE_NONE)
+		return OPAL_SUCCESS;
 	return __xive_reset(XIVE_MODE_EMU);
 }
 
@@ -5200,6 +5203,8 @@ void init_xive(void)
 	}
 	if (first)
 		return;
+
+	xive_mode = XIVE_MODE_EMU;
 
 	/* Init VP allocator */
 	xive_init_vp_allocator();

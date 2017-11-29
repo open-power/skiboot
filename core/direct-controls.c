@@ -33,7 +33,17 @@ static void mambo_sreset_cpu(struct cpu_thread *cpu)
 	uint32_t thread_id = pir_to_thread_id(cpu->pir);
 	char tcl_cmd[50];
 
-	snprintf(tcl_cmd, sizeof(tcl_cmd), "mysim cpu %i:%i set spr pc 0x100", core_id, thread_id);
+	snprintf(tcl_cmd, sizeof(tcl_cmd), "mysim cpu 0:%i:%i start_thread 0x100", core_id, thread_id);
+	callthru_tcl(tcl_cmd, strlen(tcl_cmd));
+}
+
+static void mambo_stop_cpu(struct cpu_thread *cpu)
+{
+	uint32_t core_id = pir_to_core_id(cpu->pir);
+	uint32_t thread_id = pir_to_thread_id(cpu->pir);
+	char tcl_cmd[50];
+
+	snprintf(tcl_cmd, sizeof(tcl_cmd), "mysim cpu 0:%i:%i stop_thread", core_id, thread_id);
 	callthru_tcl(tcl_cmd, strlen(tcl_cmd));
 }
 
@@ -629,8 +639,14 @@ int sreset_all_prepare(void)
 	prlog(PR_DEBUG, "RESET: Resetting from cpu: 0x%x (core 0x%x)\n",
 	      this_cpu()->pir, pir_to_core_id(this_cpu()->pir));
 
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
+		for_each_ungarded_cpu(cpu) {
+			if (cpu == this_cpu())
+				continue;
+			mambo_stop_cpu(cpu);
+		}
 		return OPAL_SUCCESS;
+	}
 
 	/* Assert special wakup on all cores. Only on operational cores. */
 	for_each_ungarded_primary(cpu) {
