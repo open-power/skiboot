@@ -44,7 +44,7 @@ static void mambo_sreset_cpu(struct cpu_thread *cpu)
 #define P8_DIRECT_CTL_PRENAP		PPC_BIT(47)
 #define P8_DIRECT_CTL_SRESET		PPC_BIT(60)
 
-static int p8_set_special_wakeup(struct cpu_thread *cpu)
+static int p8_core_set_special_wakeup(struct cpu_thread *cpu)
 {
 	uint64_t val, poll_target, stamp;
 	uint32_t core_id;
@@ -155,7 +155,7 @@ static int p8_set_special_wakeup(struct cpu_thread *cpu)
 	return OPAL_HARDWARE;
 }
 
-static int p8_clr_special_wakeup(struct cpu_thread *cpu)
+static int p8_core_clear_special_wakeup(struct cpu_thread *cpu)
 {
 	uint64_t val;
 	uint32_t core_id;
@@ -215,94 +215,19 @@ static void p8_set_direct_ctl(struct cpu_thread *cpu, uint64_t bits)
 	xscom_write(chip_id, xscom_addr, bits);
 }
 
-static int p8_sreset_all_prepare(void)
+static int p8_stop_thread(struct cpu_thread *cpu)
 {
-	struct cpu_thread *cpu;
-
-	prlog(PR_DEBUG, "RESET: Resetting from cpu: 0x%x (core 0x%x)\n",
-	      this_cpu()->pir, pir_to_core_id(this_cpu()->pir));
-
-	/* Assert special wakup on all cores. Only on operational cores. */
-	for_each_ungarded_primary(cpu) {
-		if (p8_set_special_wakeup(cpu) != OPAL_SUCCESS)
-			return OPAL_HARDWARE;
-	}
-
-	prlog(PR_DEBUG, "RESET: Stopping the world...\n");
-
-	/* Put everybody in stop except myself */
-	for_each_ungarded_cpu(cpu) {
-		if (cpu != this_cpu())
-			p8_set_direct_ctl(cpu, P8_DIRECT_CTL_STOP);
-	}
+	p8_set_direct_ctl(cpu, P8_DIRECT_CTL_STOP);
 
 	return OPAL_SUCCESS;
 }
 
-static void p8_sreset_all_finish(void)
+static int p8_sreset_thread(struct cpu_thread *cpu)
 {
-	struct cpu_thread *cpu;
+	p8_set_direct_ctl(cpu, P8_DIRECT_CTL_PRENAP);
+	p8_set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
 
-	for_each_ungarded_primary(cpu)
-		p8_clr_special_wakeup(cpu);
-}
-
-static void p8_sreset_all_others(void)
-{
-	struct cpu_thread *cpu;
-
-	prlog(PR_DEBUG, "RESET: Resetting all threads but one...\n");
-
-	/* Reset everybody except my own core threads */
-	for_each_ungarded_cpu(cpu) {
-		if (cpu == this_cpu())
-			continue;
-
-		p8_set_direct_ctl(cpu, P8_DIRECT_CTL_PRENAP);
-		p8_set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
-	}
-}
-
-int sreset_all_prepare(void)
-{
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
-		return OPAL_SUCCESS;
-
-	if (proc_gen == proc_gen_p8)
-		return p8_sreset_all_prepare();
-
-	return OPAL_UNSUPPORTED;
-}
-
-void sreset_all_finish(void)
-{
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
-		return;
-
-	if (proc_gen == proc_gen_p8)
-		return p8_sreset_all_finish();
-}
-
-int sreset_all_others(void)
-{
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
-		struct cpu_thread *cpu;
-
-		for_each_ungarded_cpu(cpu) {
-			if (cpu == this_cpu())
-				continue;
-			mambo_sreset_cpu(cpu);
-		}
-
-		return OPAL_SUCCESS;
-	}
-
-	if (proc_gen == proc_gen_p8) {
-		p8_sreset_all_others();
-		return OPAL_SUCCESS;
-	}
-
-	return OPAL_UNSUPPORTED;
+	return OPAL_SUCCESS;
 }
 
 
@@ -529,17 +454,23 @@ static int p9_sreset_thread(struct cpu_thread *cpu)
 	return 0;
 }
 
+/**************** generic direct controls ****************/
+
 int dctl_set_special_wakeup(struct cpu_thread *t)
 {
 	struct cpu_thread *c = t->primary;
 	int rc = OPAL_SUCCESS;
 
-	if (proc_gen != proc_gen_p9)
+	if (proc_gen != proc_gen_p9 && proc_gen != proc_gen_p8)
 		return OPAL_UNSUPPORTED;
 
 	lock(&c->dctl_lock);
-	if (c->special_wakeup_count == 0)
-		rc = p9_core_set_special_wakeup(c);
+	if (c->special_wakeup_count == 0) {
+		if (proc_gen == proc_gen_p9)
+			rc = p9_core_set_special_wakeup(c);
+		else /* (proc_gen == proc_gen_p8) */
+			rc = p8_core_set_special_wakeup(c);
+	}
 	if (!rc)
 		c->special_wakeup_count++;
 	unlock(&c->dctl_lock);
@@ -552,14 +483,18 @@ int dctl_clear_special_wakeup(struct cpu_thread *t)
 	struct cpu_thread *c = t->primary;
 	int rc = OPAL_SUCCESS;
 
-	if (proc_gen != proc_gen_p9)
+	if (proc_gen != proc_gen_p9 && proc_gen != proc_gen_p8)
 		return OPAL_UNSUPPORTED;
 
 	lock(&c->dctl_lock);
 	if (!c->special_wakeup_count)
 		goto out;
-	if (c->special_wakeup_count == 1)
-		rc = p9_core_clear_special_wakeup(c);
+	if (c->special_wakeup_count == 1) {
+		if (proc_gen == proc_gen_p9)
+			rc = p9_core_clear_special_wakeup(c);
+		else /* (proc_gen == proc_gen_p8) */
+			rc = p8_core_clear_special_wakeup(c);
+	}
 	if (!rc)
 		c->special_wakeup_count--;
 out:
@@ -575,6 +510,9 @@ int dctl_core_is_gated(struct cpu_thread *t)
 	uint32_t core_id = pir_to_core_id(c->pir);
 	uint32_t sshhyp_addr;
 	uint64_t val;
+
+	if (proc_gen != proc_gen_p9)
+		return OPAL_UNSUPPORTED;
 
 	sshhyp_addr = XSCOM_ADDR_P9_EC_SLAVE(core_id, P9_EC_PPM_SSHHYP);
 
@@ -593,7 +531,7 @@ static int dctl_stop(struct cpu_thread *t)
 	struct cpu_thread *c = t->primary;
 	int rc;
 
-	if (proc_gen != proc_gen_p9)
+	if (proc_gen != proc_gen_p9 && proc_gen != proc_gen_p8)
 		return OPAL_UNSUPPORTED;
 
 	lock(&c->dctl_lock);
@@ -601,7 +539,10 @@ static int dctl_stop(struct cpu_thread *t)
 		unlock(&c->dctl_lock);
 		return OPAL_BUSY;
 	}
-	rc = p9_stop_thread(t);
+	if (proc_gen == proc_gen_p9)
+		rc = p9_stop_thread(t);
+	else /* (proc_gen == proc_gen_p8) */
+		rc = p8_stop_thread(t);
 	if (!rc)
 		t->dctl_stopped = true;
 	unlock(&c->dctl_lock);
@@ -630,12 +571,18 @@ static int dctl_cont(struct cpu_thread *t)
 	return rc;
 }
 
+/*
+ * NOTE:
+ * The POWER8 sreset does not provide SRR registers, so it can be used
+ * for fast reboot, but not OPAL_SIGNAL_SYSTEM_RESET or anywhere that is
+ * expected to return. For now, callers beware.
+ */
 static int dctl_sreset(struct cpu_thread *t)
 {
 	struct cpu_thread *c = t->primary;
 	int rc;
 
-	if (proc_gen != proc_gen_p9)
+	if (proc_gen != proc_gen_p9 && proc_gen != proc_gen_p8)
 		return OPAL_UNSUPPORTED;
 
 	lock(&c->dctl_lock);
@@ -643,13 +590,92 @@ static int dctl_sreset(struct cpu_thread *t)
 		unlock(&c->dctl_lock);
 		return OPAL_BUSY;
 	}
-	rc = p9_sreset_thread(t);
+	if (proc_gen == proc_gen_p9)
+		rc = p9_sreset_thread(t);
+	else /* (proc_gen == proc_gen_p8) */
+		rc = p8_sreset_thread(t);
 	if (!rc)
 		t->dctl_stopped = false;
 	unlock(&c->dctl_lock);
 
 	return rc;
 }
+
+
+/**************** fast reboot API ****************/
+
+int sreset_all_prepare(void)
+{
+	struct cpu_thread *cpu;
+
+	prlog(PR_DEBUG, "RESET: Resetting from cpu: 0x%x (core 0x%x)\n",
+	      this_cpu()->pir, pir_to_core_id(this_cpu()->pir));
+
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+		return OPAL_SUCCESS;
+
+	/* Assert special wakup on all cores. Only on operational cores. */
+	for_each_ungarded_primary(cpu) {
+		if (dctl_set_special_wakeup(cpu) != OPAL_SUCCESS)
+			return OPAL_HARDWARE;
+	}
+
+	prlog(PR_DEBUG, "RESET: Stopping the world...\n");
+
+	/* Put everybody in stop except myself */
+	for_each_ungarded_cpu(cpu) {
+		if (cpu == this_cpu())
+			continue;
+		if (dctl_stop(cpu) != OPAL_SUCCESS)
+			return OPAL_HARDWARE;
+
+	}
+
+	return OPAL_SUCCESS;
+}
+
+void sreset_all_finish(void)
+{
+	struct cpu_thread *cpu;
+
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+		return;
+
+	for_each_ungarded_primary(cpu)
+		dctl_clear_special_wakeup(cpu);
+}
+
+int sreset_all_others(void)
+{
+	struct cpu_thread *cpu;
+
+	prlog(PR_DEBUG, "RESET: Resetting all threads but self...\n");
+
+	/*
+	 * mambo should actually implement stop as well, and implement
+	 * the dctl_ helpers properly. Currently it's racy just sresetting.
+	 */
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
+		for_each_ungarded_cpu(cpu) {
+			if (cpu == this_cpu())
+				continue;
+			mambo_sreset_cpu(cpu);
+		}
+		return OPAL_SUCCESS;
+	}
+
+	for_each_ungarded_cpu(cpu) {
+		if (cpu == this_cpu())
+			continue;
+		if (dctl_sreset(cpu) != OPAL_SUCCESS)
+			return OPAL_HARDWARE;
+	}
+
+	return OPAL_SUCCESS;
+}
+
+
+/**************** OPAL_SIGNAL_SYSTEM_RESET API ****************/
 
 /*
  * This provides a way for the host to raise system reset exceptions
