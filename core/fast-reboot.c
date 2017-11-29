@@ -39,7 +39,7 @@ uint8_t reboot_in_progress;
 static volatile bool fast_boot_release;
 static struct lock reset_lock = LOCK_UNLOCKED;
 
-static int set_special_wakeup(struct cpu_thread *cpu)
+static int p8_set_special_wakeup(struct cpu_thread *cpu)
 {
 	uint64_t val, poll_target, stamp;
 	uint32_t core_id;
@@ -54,8 +54,6 @@ static int set_special_wakeup(struct cpu_thread *cpu)
 	core_id = pir_to_core_id(cpu->pir);
 
 	prlog(PR_DEBUG, "RESET Waking up core 0x%x\n", core_id);
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
-		return OPAL_SUCCESS;
 
 	/*
 	 * The original HWp reads the XSCOM first but ignores the result
@@ -152,7 +150,7 @@ static int set_special_wakeup(struct cpu_thread *cpu)
 	return OPAL_HARDWARE;
 }
 
-static int clr_special_wakeup(struct cpu_thread *cpu)
+static int p8_clr_special_wakeup(struct cpu_thread *cpu)
 {
 	uint64_t val;
 	uint32_t core_id;
@@ -167,8 +165,6 @@ static int clr_special_wakeup(struct cpu_thread *cpu)
 	core_id = pir_to_core_id(cpu->pir);
 
 	prlog(PR_DEBUG, "RESET: Releasing core 0x%x wakeup\n", core_id);
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
-		return OPAL_SUCCESS;
 
 	/*
 	 * The original HWp reads the XSCOM first but ignores the result
@@ -201,23 +197,12 @@ static int clr_special_wakeup(struct cpu_thread *cpu)
 	return 0;
 }
 
-extern unsigned long callthru_tcl(const char *str, int len);
-
-static void set_direct_ctl(struct cpu_thread *cpu, uint64_t bits)
+static void p8_set_direct_ctl(struct cpu_thread *cpu, uint64_t bits)
 {
 	uint32_t core_id = pir_to_core_id(cpu->pir);
 	uint32_t chip_id = pir_to_chip_id(cpu->pir);
 	uint32_t thread_id = pir_to_thread_id(cpu->pir);
 	uint32_t xscom_addr;
-	char tcl_cmd[50];
-
-	if (chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
-		if (bits != P8_DIRECT_CTL_SRESET)
-			return;
-		snprintf(tcl_cmd, sizeof(tcl_cmd), "mysim cpu %i:%i set spr pc 0x100", core_id, thread_id);
-		callthru_tcl(tcl_cmd, strlen(tcl_cmd));
-		return;
-	}
 
 	xscom_addr = XSCOM_ADDR_P8_EX(core_id,
 				      P8_EX_TCTL_DIRECT_CONTROLS(thread_id));
@@ -225,7 +210,7 @@ static void set_direct_ctl(struct cpu_thread *cpu, uint64_t bits)
 	xscom_write(chip_id, xscom_addr, bits);
 }
 
-static int sreset_all_prepare(void)
+static int p8_sreset_all_prepare(void)
 {
 	struct cpu_thread *cpu;
 
@@ -234,7 +219,7 @@ static int sreset_all_prepare(void)
 
 	/* Assert special wakup on all cores. Only on operational cores. */
 	for_each_ungarded_primary(cpu) {
-		if (set_special_wakeup(cpu) != OPAL_SUCCESS)
+		if (p8_set_special_wakeup(cpu) != OPAL_SUCCESS)
 			return false;
 	}
 
@@ -243,21 +228,21 @@ static int sreset_all_prepare(void)
 	/* Put everybody in stop except myself */
 	for_each_ungarded_cpu(cpu) {
 		if (cpu != this_cpu())
-			set_direct_ctl(cpu, P8_DIRECT_CTL_STOP);
+			p8_set_direct_ctl(cpu, P8_DIRECT_CTL_STOP);
 	}
 
 	return true;
 }
 
-static void sreset_all_finish(void)
+static void p8_sreset_all_finish(void)
 {
 	struct cpu_thread *cpu;
 
 	for_each_ungarded_primary(cpu)
-		clr_special_wakeup(cpu);
+		p8_clr_special_wakeup(cpu);
 }
 
-static void sreset_all_others(void)
+static void p8_sreset_all_others(void)
 {
 	struct cpu_thread *cpu;
 
@@ -266,7 +251,7 @@ static void sreset_all_others(void)
 	/* Put everybody in pre-nap except myself */
 	for_each_ungarded_cpu(cpu) {
 		if (cpu != this_cpu())
-			set_direct_ctl(cpu, P8_DIRECT_CTL_PRENAP);
+			p8_set_direct_ctl(cpu, P8_DIRECT_CTL_PRENAP);
 	}
 
 	prlog(PR_DEBUG, "RESET: Resetting all threads but one...\n");
@@ -274,7 +259,58 @@ static void sreset_all_others(void)
 	/* Reset everybody except my own core threads */
 	for_each_ungarded_cpu(cpu) {
 		if (cpu != this_cpu())
-			set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
+			p8_set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
+	}
+}
+
+extern unsigned long callthru_tcl(const char *str, int len);
+
+static void mambo_sreset_cpu(struct cpu_thread *cpu)
+{
+	uint32_t core_id = pir_to_core_id(cpu->pir);
+	uint32_t thread_id = pir_to_thread_id(cpu->pir);
+	char tcl_cmd[50];
+
+	snprintf(tcl_cmd, sizeof(tcl_cmd), "mysim cpu %i:%i set spr pc 0x100", core_id, thread_id);
+	callthru_tcl(tcl_cmd, strlen(tcl_cmd));
+}
+
+static int sreset_all_prepare(void)
+{
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+		return true;
+
+	if (proc_gen == proc_gen_p8)
+		return p8_sreset_all_prepare();
+
+	return false;
+}
+
+static void sreset_all_finish(void)
+{
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+		return;
+
+	if (proc_gen == proc_gen_p8)
+		return p8_sreset_all_finish();
+}
+
+static void sreset_all_others(void)
+{
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
+		struct cpu_thread *cpu;
+
+		for_each_ungarded_cpu(cpu) {
+			if (cpu == this_cpu())
+				continue;
+			mambo_sreset_cpu(cpu);
+		}
+		return;
+	}
+
+	if (proc_gen == proc_gen_p8) {
+		p8_sreset_all_others();
+		return;
 	}
 }
 
