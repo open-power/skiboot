@@ -202,7 +202,7 @@ static int p8_core_clear_special_wakeup(struct cpu_thread *cpu)
 	return 0;
 }
 
-static void p8_set_direct_ctl(struct cpu_thread *cpu, uint64_t bits)
+static int p8_stop_thread(struct cpu_thread *cpu)
 {
 	uint32_t core_id = pir_to_core_id(cpu->pir);
 	uint32_t chip_id = pir_to_chip_id(cpu->pir);
@@ -212,20 +212,38 @@ static void p8_set_direct_ctl(struct cpu_thread *cpu, uint64_t bits)
 	xscom_addr = XSCOM_ADDR_P8_EX(core_id,
 				      P8_EX_TCTL_DIRECT_CONTROLS(thread_id));
 
-	xscom_write(chip_id, xscom_addr, bits);
-}
-
-static int p8_stop_thread(struct cpu_thread *cpu)
-{
-	p8_set_direct_ctl(cpu, P8_DIRECT_CTL_STOP);
+	if (xscom_write(chip_id, xscom_addr, P8_DIRECT_CTL_STOP)) {
+		prlog(PR_ERR, "Could not stop thread %u:%u:%u:"
+				" Unable to write EX_TCTL_DIRECT_CONTROLS.\n",
+				chip_id, core_id, thread_id);
+		return OPAL_HARDWARE;
+	}
 
 	return OPAL_SUCCESS;
 }
 
 static int p8_sreset_thread(struct cpu_thread *cpu)
 {
-	p8_set_direct_ctl(cpu, P8_DIRECT_CTL_PRENAP);
-	p8_set_direct_ctl(cpu, P8_DIRECT_CTL_SRESET);
+	uint32_t core_id = pir_to_core_id(cpu->pir);
+	uint32_t chip_id = pir_to_chip_id(cpu->pir);
+	uint32_t thread_id = pir_to_thread_id(cpu->pir);
+	uint32_t xscom_addr;
+
+	xscom_addr = XSCOM_ADDR_P8_EX(core_id,
+				      P8_EX_TCTL_DIRECT_CONTROLS(thread_id));
+
+	if (xscom_write(chip_id, xscom_addr, P8_DIRECT_CTL_PRENAP)) {
+		prlog(PR_ERR, "Could not prenap thread %u:%u:%u:"
+				" Unable to write EX_TCTL_DIRECT_CONTROLS.\n",
+				chip_id, core_id, thread_id);
+		return OPAL_HARDWARE;
+	}
+	if (xscom_write(chip_id, xscom_addr, P8_DIRECT_CTL_SRESET)) {
+		prlog(PR_ERR, "Could not sreset thread %u:%u:%u:"
+				" Unable to write EX_TCTL_DIRECT_CONTROLS.\n",
+				chip_id, core_id, thread_id);
+		return OPAL_HARDWARE;
+	}
 
 	return OPAL_SUCCESS;
 }
