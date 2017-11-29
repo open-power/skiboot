@@ -220,7 +220,7 @@ static int p8_sreset_all_prepare(void)
 	/* Assert special wakup on all cores. Only on operational cores. */
 	for_each_ungarded_primary(cpu) {
 		if (p8_set_special_wakeup(cpu) != OPAL_SUCCESS)
-			return false;
+			return OPAL_HARDWARE;
 	}
 
 	prlog(PR_DEBUG, "RESET: Stopping the world...\n");
@@ -231,7 +231,7 @@ static int p8_sreset_all_prepare(void)
 			p8_set_direct_ctl(cpu, P8_DIRECT_CTL_STOP);
 	}
 
-	return true;
+	return OPAL_SUCCESS;
 }
 
 static void p8_sreset_all_finish(void)
@@ -278,12 +278,12 @@ static void mambo_sreset_cpu(struct cpu_thread *cpu)
 static int sreset_all_prepare(void)
 {
 	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
-		return true;
+		return OPAL_SUCCESS;
 
 	if (proc_gen == proc_gen_p8)
 		return p8_sreset_all_prepare();
 
-	return false;
+	return OPAL_UNSUPPORTED;
 }
 
 static void sreset_all_finish(void)
@@ -295,7 +295,7 @@ static void sreset_all_finish(void)
 		return p8_sreset_all_finish();
 }
 
-static void sreset_all_others(void)
+static int sreset_all_others(void)
 {
 	if (chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
 		struct cpu_thread *cpu;
@@ -305,20 +305,22 @@ static void sreset_all_others(void)
 				continue;
 			mambo_sreset_cpu(cpu);
 		}
-		return;
+		return OPAL_SUCCESS;
 	}
 
 	if (proc_gen == proc_gen_p8) {
 		p8_sreset_all_others();
-		return;
+		return OPAL_SUCCESS;
 	}
+
+	return OPAL_UNSUPPORTED;
 }
 
 static bool fast_reset_p8(void)
 {
 	struct cpu_thread *cpu;
 
-	if (!sreset_all_prepare())
+	if (sreset_all_prepare())
 		return false;
 
 	/* Put everybody in stop except myself */
@@ -334,9 +336,10 @@ static bool fast_reset_p8(void)
 	setup_reset_vector();
 
 	/* Send everyone else to 0x100 */
-	sreset_all_others();
+	if (sreset_all_others() == OPAL_SUCCESS)
+		return true;
 
-	return true;
+	return false;
 }
 
 extern void *fdt;
