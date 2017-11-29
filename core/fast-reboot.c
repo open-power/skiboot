@@ -434,6 +434,9 @@ void fast_reboot(void)
 	if (!cpu_state_wait_all_others(cpu_state_present, msecs_to_tb(100)))
 		return;
 
+	prlog(PR_DEBUG, "RESET: Releasing special wakeups...\n");
+	sreset_all_finish();
+
 	asm volatile("ba	0x100\n\t" : : : "memory");
 	for (;;)
 		;
@@ -576,9 +579,6 @@ void __noreturn fast_reboot_entry(void)
 	/* Wait for them to respond */
 	cpu_state_wait_all_others(cpu_state_active, 0);
 
-	prlog(PR_DEBUG, "RESET: Releasing special wakeups...\n");
-
-	sreset_all_finish();
 	sync();
 
 	prlog(PR_INFO, "RESET: All done, cleaning up...\n");
