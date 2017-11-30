@@ -139,12 +139,6 @@ static void show_flash_err(int rc)
 	}
 }
 
-/* FIXME: is this the same on p9? I thought the path types came from the XML
- * rather than this stuff, maybe it's redundant?
- *
- * I don't think it is though since the target types are a bitmask rather than
- * a plain enum.
- */
 const struct chip_unit_desc *chip_units;
 int chip_unit_count;
 
