@@ -42,8 +42,6 @@
 
 #include "gard.h"
 
-#define CLEARED_RECORD_ID 0xFFFFFFFF
-
 #define FDT_PATH "/proc/device-tree"
 #define FDT_FSP_NODE FDT_PATH"/fsps"
 #define FDT_ACTIVE_FLASH_PATH FDT_PATH"/chosen/ibm,system-flash"
@@ -326,9 +324,11 @@ int parse_path(const char *str, struct entity_path *parsed)
 	return 0;
 }
 
+static struct gard_record blank_record;
+
 static bool is_valid_record(struct gard_record *g)
 {
-	return be32toh(g->record_id) != CLEARED_RECORD_ID;
+	return memcmp(&blank_record, g, sizeof(*g));
 }
 
 static int do_iterate(struct gard_ctx *ctx,
@@ -806,6 +806,7 @@ int main(int argc, char **argv)
 
 	ctx = &_ctx;
 	memset(ctx, 0, sizeof(*ctx));
+	memset(&blank_record, 0xff, sizeof(blank_record));
 
 	if (is_fsp()) {
 		fprintf(stderr, "This is the OpenPower gard tool which does "
