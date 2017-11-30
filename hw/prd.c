@@ -415,6 +415,8 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 		rc = 0;
 		break;
 	default:
+		prlog(PR_DEBUG, "PRD: Unsupported fw_request type : 0x%llx\n",
+		      be64_to_cpu(fw_req->type));
 		rc = -ENOSYS;
 	}
 
@@ -470,6 +472,8 @@ static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 					msg->fsp_occ_reset_status.status);
 		break;
 	default:
+		prlog(PR_DEBUG, "PRD: Unsupported prd message type : 0x%x\n",
+		      msg->hdr.type);
 		rc = OPAL_UNSUPPORTED;
 	}
 
