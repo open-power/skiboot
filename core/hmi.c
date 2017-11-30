@@ -26,6 +26,7 @@
 #include <cpu.h>
 #include <chip.h>
 #include <npu-regs.h>
+#include <npu2-regs.h>
 #include <npu.h>
 #include <capp.h>
 
@@ -526,6 +527,86 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	*event_generated = true;
 }
 
+static void find_npu2_checkstop_reason(int flat_chip_id,
+				      struct OpalHMIEvent *hmi_evt,
+				      bool *event_generated)
+{
+	struct phb *phb;
+	struct npu *p = NULL;
+	int i;
+
+	uint64_t npu2_fir;
+	uint64_t npu2_fir_mask;
+	uint64_t npu2_fir_action0;
+	uint64_t npu2_fir_action1;
+	uint64_t npu2_fir_addr;
+	uint64_t npu2_fir_mask_addr;
+	uint64_t npu2_fir_action0_addr;
+	uint64_t npu2_fir_action1_addr;
+	uint64_t fatal_errors;
+	int total_errors = 0;
+
+	/* Find the NPU on the chip associated with the HMI. */
+	for_each_phb(phb) {
+		/* NOTE: if a chip ever has >1 NPU this will need adjusting */
+		if (dt_node_is_compatible(phb->dt_node, "ibm,power9-npu-pciex") &&
+		    (dt_get_chip_id(phb->dt_node) == flat_chip_id)) {
+			p = phb_to_npu(phb);
+			break;
+		}
+	}
+
+	/* If we didn't find a NPU on the chip, it's not our checkstop. */
+	if (p == NULL)
+		return;
+
+	npu2_fir_addr = NPU2_FIR_REGISTER_0;
+	npu2_fir_mask_addr = NPU2_FIR_REGISTER_0 + NPU2_FIR_MASK_OFFSET;
+	npu2_fir_action0_addr = NPU2_FIR_REGISTER_0 + NPU2_FIR_ACTION0_OFFSET;
+	npu2_fir_action1_addr = NPU2_FIR_REGISTER_0 + NPU2_FIR_ACTION1_OFFSET;
+
+	for (i = 0; i < NPU2_TOTAL_FIR_REGISTERS; i++) {
+		/* Read all the registers necessary to find a checkstop condition. */
+		if (xscom_read(flat_chip_id, npu2_fir_addr, &npu2_fir) ||
+			xscom_read(flat_chip_id, npu2_fir_mask_addr, &npu2_fir_mask) ||
+			xscom_read(flat_chip_id, npu2_fir_action0_addr, &npu2_fir_action0) ||
+			xscom_read(flat_chip_id, npu2_fir_action1_addr, &npu2_fir_action1)) {
+			prerror("HMI: Couldn't read NPU FIR register%d with XSCOM\n", i);
+			continue;
+		}
+
+		fatal_errors = npu2_fir & ~npu2_fir_mask & npu2_fir_action0 & npu2_fir_action1;
+
+		if (fatal_errors) {
+			prlog(PR_ERR, "NPU: FIR#%d FIR 0x%016llx mask 0x%016llx\n",
+					i, npu2_fir, npu2_fir_mask);
+			prlog(PR_ERR, "NPU: ACTION0 0x%016llx, ACTION1 0x%016llx\n",
+					npu2_fir_action0, npu2_fir_action1);
+			total_errors++;
+		}
+
+		/* Can't do a fence yet, we are just logging fir information for now */
+		npu2_fir_addr += NPU2_FIR_OFFSET;
+		npu2_fir_mask_addr += NPU2_FIR_OFFSET;
+		npu2_fir_action0_addr += NPU2_FIR_OFFSET;
+		npu2_fir_action1_addr += NPU2_FIR_OFFSET;
+
+	}
+
+	if (!total_errors)
+		return;
+
+	/* Set up the HMI event */
+	hmi_evt->severity = OpalHMI_SEV_WARNING;
+	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
+	hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_NPU;
+	hmi_evt->u.xstop_error.u.chip_id = flat_chip_id;
+
+	/* Marking the event as recoverable so that we don't crash */
+	queue_hmi_event(hmi_evt, 1);
+	*event_generated = true;
+}
+
 static void find_npu_checkstop_reason(int flat_chip_id,
 				      struct OpalHMIEvent *hmi_evt,
 				      bool *event_generated)
@@ -541,7 +622,7 @@ static void find_npu_checkstop_reason(int flat_chip_id,
 
 	/* Only check for NPU errors if the chip has a NPU */
 	if (PVR_TYPE(mfspr(SPR_PVR)) != PVR_TYPE_P8NVL)
-		return;
+		return find_npu2_checkstop_reason(flat_chip_id, hmi_evt, event_generated);
 
 	/* Find the NPU on the chip associated with the HMI. */
 	for_each_phb(phb) {

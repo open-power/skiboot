@@ -460,4 +460,15 @@ void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
 #define NPU2_DD1_MISC_SCOM_IND_SCOM_DATA	0x38f
 #define NPU2_MISC_SCOM_IND_SCOM_DATA		0x68f
 
+#define NPU2_FIR_OFFSET				0x40
+#define NPU2_FIR_MASK_OFFSET			0x3
+#define NPU2_FIR_ACTION0_OFFSET			0x6
+#define NPU2_FIR_ACTION1_OFFSET			0x7
+
+#define NPU2_FIR_REGISTER_0			0x0000000005013C00
+#define NPU2_FIR_REGISTER_1			0x0000000005013C40
+#define NPU2_FIR_REGISTER_2			0x0000000005013C80
+
+#define NPU2_TOTAL_FIR_REGISTERS		3
+
 #endif /* __NPU2_REGS_H */
