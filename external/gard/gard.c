@@ -340,9 +340,9 @@ int parse_path(const char *str, struct entity_path *parsed)
 			return -1;
 		}
 
-		if (instance > 15 || instance < 0) {
+		if (instance > 255 || instance < 0) {
 			fprintf(stderr,
-				"Instance %ld is invalid. Must be 0 to 15\n",
+				"Instance %ld is invalid. Must be 0 to 255\n",
 				instance);
 			return -1;
 		}
