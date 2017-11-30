@@ -1,6 +1,6 @@
 #! /bin/sh
 
-run_binary "./gard" "-p -e -f test/files/data1.bin list"
+run_binary "./gard" "-p -e -8 -f test/files/data1.bin list"
 if [ "$?" -ne 0 ] ; then
 	fail_test
 fi
