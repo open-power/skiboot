@@ -899,6 +899,7 @@ int main(int argc, char **argv)
 	 */
 	if (part && !filename) {
 		usage(progname);
+		fprintf(stderr, "-p only makes sense when used with -f!\n");
 		return EXIT_FAILURE;
 	}
 
