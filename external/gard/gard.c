@@ -668,12 +668,12 @@ static int do_create(struct gard_ctx *ctx, int argc, char **argv)
 		fprintf(stderr, "e.g.\n");
 		fprintf(stderr, "     /Sys0/Node0/Proc0\n");
 		fprintf(stderr, "     /Sys0/Node0/DIMM15\n");
-		return 0;
+		return -1;
 	}
 
 	if (parse_path(argv[1], &path)) {
 		fprintf(stderr, "Unable to parse path\n");
-		return 0;
+		return -1;
 	}
 
 	/* check if we already have a gard record applied to this path */
@@ -682,7 +682,7 @@ static int do_create(struct gard_ctx *ctx, int argc, char **argv)
 			fprintf(stderr,
 				"Unit %s is already GARDed by record %#08x\n",
 				argv[1], be32toh(gard.record_id));
-			return 0;
+			return -1;
 		}
 
 		/*
@@ -709,7 +709,7 @@ static int do_create(struct gard_ctx *ctx, int argc, char **argv)
 
 		if (offset > ctx->gard_data_len - sizeof(gard)) {
 			fprintf(stderr, "No space in GUARD for a new record\n");
-			return 0;
+			return -1;
 		}
 
 		rc = blocklevel_smart_write(ctx->bl,
