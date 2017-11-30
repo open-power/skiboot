@@ -459,7 +459,16 @@ static bool fsp_crit_op_in_progress(struct fsp *fsp)
 /* Notify the FSP that it will be reset soon by writing to the DRCR */
 static void fsp_prep_for_reset(struct fsp *fsp)
 {
-	u32 drcr = fsp_rreg(fsp, FSP_DRCR_REG);
+	u32 drcr;
+
+	/*
+	 * Its possible that the FSP went into reset by itself between the
+	 * time the HIR is triggered and we get here. Check and bail out if so.
+	 */
+	if (fsp_in_rr())
+		return;
+
+	drcr = fsp_rreg(fsp, FSP_DRCR_REG);
 
 	prlog(PR_TRACE, "FSP: Writing reset to DRCR\n");
 	drcr_last_print = drcr;
@@ -471,6 +480,9 @@ static void fsp_prep_for_reset(struct fsp *fsp)
 static void fsp_hir_poll(struct fsp *fsp, struct psi *psi)
 {
 	u32 drcr;
+
+	if (fsp_in_reset(fsp) || !(psi_check_link_active(psi)))
+		return;
 
 	switch (fsp->state) {
 	case fsp_mbx_crit_op:
@@ -1588,14 +1600,14 @@ static void __fsp_poll(bool interrupt)
 	}
 	iop = &fsp->iopath[fsp->active_iopath];
 
+	/* Check for error state and handle R&R completion */
+	fsp_handle_errors(fsp);
+
 	/* Handle host initiated resets */
 	if (fsp_in_hir(fsp)) {
 		fsp_hir_poll(fsp, iop->psi);
 		return;
 	}
-
-	/* Check for error state and handle R&R completion */
-	fsp_handle_errors(fsp);
 
 	/*
 	 * The above might have triggered and R&R, check that we
