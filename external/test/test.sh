@@ -91,6 +91,7 @@ run_tests() {
 	for the_test in $all_tests; do
 		export CUR_TEST=$(basename $the_test)
 		export RESULT="$res_path/$CUR_TEST"
+		echo "running $the_test"
 
 		. "$the_test";
 		R="$?"
