@@ -325,7 +325,7 @@ int parse_path(const char *str, struct entity_path *parsed)
 		parsed->path_elements[unit_count].target_type = unit_id;
 
 		/* now parse the instance # */
-		len = strlen(chip_units[unit_id].desc);
+		len = strlen(target_type_to_str(unit_id));
 		instance = strtol(str + len, &end, 10);
 
 		if (!isdigit(*(str + len))) {
