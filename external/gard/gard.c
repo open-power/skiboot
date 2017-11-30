@@ -159,6 +159,45 @@ static void set_chip_gen(const struct chip_unit_desc *c)
 	}
 }
 
+#ifdef __powerpc64__
+static void guess_chip_gen(void)
+{
+	/*
+	 * Guesstimate what chip generation based on the PVR if we're running
+	 * on ppc64.
+	 */
+	uint32_t pvr;
+
+	/* grab the chip type from the PVR SPR */
+	asm ("mfspr  %0,0x11f" : "=r" (pvr));
+
+	switch (pvr >> 16) {
+	case 0x004b: /* murano */
+	case 0x004c: /* naples */
+	case 0x004d: /* venice */
+		set_chip_gen(p8_chip_units);
+		return;
+
+	case 0x004e: /* nimbus */
+		set_chip_gen(p9_chip_units);
+		return;
+
+	default:
+		fprintf(stderr, "Unsupported processor (pvr %#x)! Set the processor generation manually with -8 or -9\n", pvr);
+		exit(1);
+	}
+}
+#else
+static void guess_chip_gen(void)
+{
+#ifdef ASSUME_P8
+	set_chip_gen(p8_chip_units);
+#else
+	set_chip_gen(p9_chip_units);
+#endif
+}
+#endif
+
 static const char *target_type_to_str(int type)
 {
 	int i;
@@ -874,15 +913,6 @@ int main(int argc, char **argv)
 	argv += optind;
 	action = argv[0];
 
-	/* assume a P8 if we haven't been given any */
-	if (!chip_units) {
-#ifdef ASSUME_P9
-		set_chip_gen(p9_chip_units);
-#else
-		set_chip_gen(p8_chip_units);
-#endif
-	}
-
 #ifdef __arm__
 	/*
 	 * HACK: Look for a vPNOR GUARD file if we haven't been given anything
@@ -903,13 +933,15 @@ int main(int argc, char **argv)
 			/* BUG: This ignores the command line settings */
 			part = true;
 			ecc = true;
-			set_chip_gen(p9_chip_units);
 		} else if (!stat(VPNOR_GARD_DIR, &buf)) {
 			printf(VPNOR_GARD_FILE" is missing. Nothing to do\n");
 			return 0;
 		}
 	}
 #endif
+
+	if (!chip_units)
+		guess_chip_gen();
 
 	/*
 	 * Force libflash to do flash accesses via the MTD. Direct mode is
