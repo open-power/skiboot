@@ -18,7 +18,17 @@
 
 #include "../nvram-format.c"
 
+bool nvram_wait_for_load(void)
+{
+	return true;
+}
+
 bool nvram_validate(void)
+{
+	return true;
+}
+
+bool nvram_has_loaded(void)
 {
 	return true;
 }

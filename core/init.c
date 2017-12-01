@@ -497,7 +497,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 		/* We wait for the nvram read to complete here so we can
 		 * grab stuff from there such as the kernel arguments
 		 */
-		fsp_nvram_wait_open();
+		nvram_wait_for_load();
 
 		/* Wait for FW VPD data read to complete */
 		fsp_code_update_wait_vpd(true);

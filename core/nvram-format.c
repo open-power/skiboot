@@ -216,6 +216,15 @@ const char *nvram_query(const char *key)
 	const char *part_end, *start;
 	int key_len = strlen(key);
 
+	if (!nvram_has_loaded()) {
+		prlog(PR_WARNING, "NVRAM: Query before is done loading\n");
+		prlog(PR_WARNING, "NVRAM: Waiting for load\n");
+		if (!nvram_wait_for_load()) {
+			prlog(PR_CRIT, "NVRAM: Failed to load\n");
+			return NULL;
+		}
+	}
+
 	/*
 	 * The running OS can modify the NVRAM as it pleases so we need to be
 	 * a little paranoid and check that it's ok before we try parse it.

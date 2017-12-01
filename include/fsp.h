@@ -776,7 +776,6 @@ extern void fsp_used_by_console(void);
 extern int fsp_nvram_info(uint32_t *total_size);
 extern int fsp_nvram_start_read(void *dst, uint32_t src, uint32_t len);
 extern int fsp_nvram_write(uint32_t offset, void *src, uint32_t size);
-extern void fsp_nvram_wait_open(void);
 
 /* RTC */
 extern void fsp_rtc_init(void);

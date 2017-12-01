@@ -122,6 +122,41 @@ void nvram_read_complete(bool success)
 	nvram_ready = true;
 }
 
+bool nvram_wait_for_load(void)
+{
+	/* Short cut */
+	if (nvram_ready)
+		return true;
+
+	/* Tell the caller it will never happen */
+	if (!platform.nvram_info)
+		return false;
+
+	/*
+	 * One of two things has happened here.
+	 * 1. nvram_wait_for_load() was called before nvram_init()
+	 * 2. The read of NVRAM failed.
+	 * Either way, this is quite a bad event.
+	 */
+	if (!nvram_image && !nvram_size) {
+		prlog(PR_CRIT, "NVRAM: Possible wait before nvram_init()!\n");
+		return false;
+	}
+
+	while (!nvram_ready) {
+		opal_run_pollers();
+		/* If the read fails, tell the caller */
+		if (!nvram_image && !nvram_size)
+			return false;
+	}
+	return true;
+}
+
+bool nvram_has_loaded(void)
+{
+	return nvram_ready;
+}
+
 void nvram_init(void)
 {
 	int rc;

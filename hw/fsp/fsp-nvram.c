@@ -203,6 +203,10 @@ static void fsp_nvram_rd_complete(struct fsp_msg *msg)
 		 */
 	}
 	unlock(&fsp_nvram_lock);
+	nvram_read_complete(fsp_nvram_state == NVRAM_STATE_OPEN);
+	if (fsp_nvram_state != NVRAM_STATE_OPEN)
+		log_simple_error(&e_info(OPAL_RC_NVRAM_INIT),
+		"FSP: NVRAM not read, skipping init\n");
 }
 
 static void fsp_nvram_send_read(void)
@@ -427,28 +431,4 @@ int fsp_nvram_write(uint32_t offset, void *src, uint32_t size)
 	unlock(&fsp_nvram_lock);
 
 	return 0;
-}
-
-/* This is called right before starting the payload (Linux) to
- * ensure the initial open & read of nvram has happened before
- * we transfer control as the guest OS. This is necessary as
- * Linux will not handle a OPAL_BUSY return properly and treat
- * it as an error
- */
-void fsp_nvram_wait_open(void)
-{
-	if (!fsp_present())
-		return;
-
-	while(fsp_nvram_state == NVRAM_STATE_OPENING)
-		opal_run_pollers();
-
-	if (!fsp_nvram_was_read) {
-		log_simple_error(&e_info(OPAL_RC_NVRAM_INIT),
-			"FSP: NVRAM not read, skipping init\n");
-		nvram_read_complete(false);
-		return;
-	}
-
-	nvram_read_complete(true);
 }
