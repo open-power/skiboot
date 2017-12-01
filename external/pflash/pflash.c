@@ -511,7 +511,7 @@ static int do_read_file(struct blocklevel_device *bl, const char *file,
 	}
 	progress_end();
 	close(fd);
-	return rc;
+	return size ? rc : 0;
 }
 
 static int enable_4B_addresses(struct blocklevel_device *bl)
