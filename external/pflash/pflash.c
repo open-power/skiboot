@@ -501,13 +501,18 @@ static int do_read_file(struct blocklevel_device *bl, const char *file,
 			break;
 		}
 		rc = write(fd, file_buf, len);
-		if (rc < 0) {
+		/*
+		 * zero isn't strictly an error.
+		 * Treat it as such so we can be sure we'lre always
+		 * making forward progress.
+		 */
+		if (rc <= 0) {
 			perror("Error writing file");
 			break;
 		}
-		start += len;
-		size -= len;
-		done += len;
+		start += rc;
+		size -= rc;
+		done += rc;
 		progress_tick(done >> 8);
 	}
 	progress_end();
