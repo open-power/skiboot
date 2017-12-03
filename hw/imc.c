@@ -356,13 +356,34 @@ static void disable_unavailable_units(struct dt_node *dev)
 	struct imc_chip_cb *cb;
 	struct dt_node *target;
 	int i;
+	bool disable_all_nests = false;
+	struct proc_chip *chip;
+
+	/*
+	 * Check the state of ucode in all the chip.
+	 * Disable the nest unit if ucode is not initialized
+	 * in any of the chip.
+	 */
+	for_each_chip(chip) {
+		cb = get_imc_cb(chip->id);
+		if (!cb) {
+			/*
+			 * At least currently, if one chip isn't functioning,
+			 * none of the IMC Nest units will be functional.
+			 * So while you may *think* this should be per chip,
+			 * it isn't.
+			 */
+			disable_all_nests = true;
+			break;
+		}
+	}
 
 	/* Add a property to "exports" node in opal_node */
 	imc_dt_exports_prop_add(dev);
 
 	/* Fetch the IMC control block structure */
 	cb = get_imc_cb(this_cpu()->chip_id);
-	if (cb)
+	if (cb && !disable_all_nests)
 		avl_vec = be64_to_cpu(cb->imc_chip_avl_vector);
 	else {
 		avl_vec = 0; /* Remove only nest imc device nodes */
