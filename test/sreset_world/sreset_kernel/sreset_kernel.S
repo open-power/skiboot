@@ -63,7 +63,7 @@ c:
 	bctrl
 
 	li	%r0, 145 /* OPAL_SIGNAL_SYSTEM_RESET */
-	li	%r3, -1 /* All CPUs */
+	li	%r3, -2 /* All *OTHER* CPUs */
 	mr	%r2, %r13
 	mtctr	%r14
 	bctrl
