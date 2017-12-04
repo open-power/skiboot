@@ -263,7 +263,9 @@ static int p8_sreset_thread(struct cpu_thread *cpu)
 
 #define P9_RAS_STATUS			0x10a02
 #define P9_THREAD_QUIESCED(t)		PPC_BITMASK(0 + 8*(t), 3 + 8*(t))
-#define P9_QUIESCE_RETRIES		100
+/* Long running instructions may take time to complete. Timeout 100ms */
+#define P9_QUIESCE_POLL_INTERVAL	100
+#define P9_QUIESCE_TIMEOUT		100000
 
 #define P9_EC_DIRECT_CONTROLS		0x10a9c
 #define P9_THREAD_STOP(t)		PPC_BIT(7 + 8*(t))
@@ -306,7 +308,7 @@ static int p9_core_set_special_wakeup(struct cpu_thread *cpu)
 		return OPAL_HARDWARE;
 	}
 
-	for (i = 0; i < P9_SPWKUP_TIMEOUT/P9_SPWKUP_POLL_INTERVAL; i++) {
+	for (i = 0; i < P9_SPWKUP_TIMEOUT / P9_SPWKUP_POLL_INTERVAL; i++) {
 		if (xscom_read(chip_id, sshhyp_addr, &val)) {
 			prlog(PR_ERR, "Could not set special wakeup on %u:%u:"
 					" Unable to read PPM_SSHHYP.\n",
@@ -357,7 +359,7 @@ static int p9_core_clear_special_wakeup(struct cpu_thread *cpu)
 	}
 	time_wait_us(1);
 
-	for (i = 0; i < P9_SPWKUP_TIMEOUT/P9_SPWKUP_POLL_INTERVAL; i++) {
+	for (i = 0; i < P9_SPWKUP_TIMEOUT / P9_SPWKUP_POLL_INTERVAL; i++) {
 		if (xscom_read(chip_id, sshhyp_addr, &val)) {
 			prlog(PR_ERR, "Could not clear special wakeup on %u:%u:"
 					" Unable to read PPM_SSHHYP.\n",
@@ -392,6 +394,12 @@ static int p9_thread_quiesced(struct cpu_thread *cpu)
 		return OPAL_HARDWARE;
 	}
 
+	/*
+	 * This returns true when the thread is quiesced and all
+	 * instructions completed. For sreset this may not be necessary,
+	 * but we may want to use instruction ramming or stepping
+	 * direct controls where it is important.
+	 */
 	if ((ras_status & P9_THREAD_QUIESCED(thread_id))
 			== P9_THREAD_QUIESCED(thread_id))
 		return 1;
@@ -425,12 +433,14 @@ static int p9_stop_thread(struct cpu_thread *cpu)
 		return OPAL_HARDWARE;
 	}
 
-	for (i = 0; i < P9_QUIESCE_RETRIES; i++) {
+	for (i = 0; i < P9_QUIESCE_TIMEOUT / P9_QUIESCE_POLL_INTERVAL; i++) {
 		int rc = p9_thread_quiesced(cpu);
 		if (rc < 0)
 			break;
 		if (rc)
 			return 0;
+
+		time_wait_us(P9_QUIESCE_POLL_INTERVAL);
 	}
 
 	prlog(PR_ERR, "Could not stop thread %u:%u:%u:"
