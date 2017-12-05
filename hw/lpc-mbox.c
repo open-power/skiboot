@@ -61,8 +61,7 @@ struct mbox {
 	void *drv_data;
 	void (*attn)(uint8_t bits, void *priv);
 	void *attn_data;
-	struct lock lock; /* Protect in_flight */
-	struct bmc_mbox_msg *in_flight;
+	struct lock lock;
 	uint8_t sequence;
 	unsigned long timeout;
 };
@@ -124,7 +123,7 @@ int bmc_mbox_enqueue(struct bmc_mbox_msg *msg, unsigned int timeout_sec)
 	}
 
 	lock(&mbox.lock);
-	if (mbox.in_flight) {
+	if (mbox.timeout) {
 		prlog(PR_DEBUG, "MBOX message already in flight\n");
 		if (mftb() > mbox.timeout) {
 			prlog(PR_ERR, "In flight message dropped on the floor\n");
@@ -135,11 +134,10 @@ int bmc_mbox_enqueue(struct bmc_mbox_msg *msg, unsigned int timeout_sec)
 	}
 
 	mbox.timeout = mftb() + secs_to_tb(timeout_sec);
-	mbox.in_flight = msg;
-	unlock(&mbox.lock);
 	msg->seq = ++mbox.sequence;
 
 	bmc_mbox_send_message(msg);
+	unlock(&mbox.lock);
 
 	schedule_timer(&mbox.poller, mbox.irq_ok ?
 			TIMER_POLL : msecs_to_tb(MBOX_DEFAULT_POLL_MS));
@@ -150,42 +148,34 @@ int bmc_mbox_enqueue(struct bmc_mbox_msg *msg, unsigned int timeout_sec)
 static void mbox_poll(struct timer *t __unused, void *data __unused,
 		uint64_t now __unused)
 {
-	struct bmc_mbox_msg *msg;
+	struct bmc_mbox_msg msg;
+
+	if (!lpc_ok())
+		return;
 
 	/*
 	 * This status bit being high means that someone touched the
 	 * response byte (byte 13).
 	 * There is probably a response for the previously sent commant
 	 */
+	lock(&mbox.lock);
 	if (bmc_mbox_inb(MBOX_STATUS_1) & MBOX_STATUS_1_RESP) {
 		/* W1C on that reg */
 		bmc_mbox_outb(MBOX_STATUS_1_RESP, MBOX_STATUS_1);
 
 		prlog(PR_INSANE, "Got a regular interrupt\n");
-		/*
-		 * This should be safe lockless
-		 */
-		msg = mbox.in_flight;
-		if (msg == NULL) {
-			prlog(PR_CRIT, "Couldn't find the message!!\n");
-			goto out_response;
-		}
 
-		bmc_mbox_recv_message(msg);
-		if (mbox.sequence != msg->seq) {
+		bmc_mbox_recv_message(&msg);
+		if (mbox.sequence != msg.seq) {
 			prlog(PR_ERR, "Got a response to a message we no longer care about\n");
 			goto out_response;
 		}
 
+		mbox.timeout = 0;
 		if (mbox.callback)
-			mbox.callback(msg, mbox.drv_data);
+			mbox.callback(&msg, mbox.drv_data);
 		else
 			prlog(PR_ERR, "Detected NULL callback for mbox message\n");
-
-		/* Yeah we'll need locks here */
-		lock(&mbox.lock);
-		mbox.in_flight = NULL;
-		unlock(&mbox.lock);
 	}
 
 out_response:
@@ -229,6 +219,8 @@ out_response:
 
 		mbox.attn(all, mbox.attn_data);
 	}
+
+	unlock(&mbox.lock);
 
 	schedule_timer(&mbox.poller,
 		       mbox.irq_ok ? TIMER_POLL : msecs_to_tb(MBOX_DEFAULT_POLL_MS));
@@ -341,9 +333,9 @@ void mbox_init(void)
 	bmc_mbox_outb(MBOX_STATUS_1_RESP | MBOX_STATUS_1_ATTN, MBOX_STATUS_1);
 
 	mbox.queue_len = 0;
-	mbox.in_flight = NULL;
 	mbox.callback = NULL;
 	mbox.drv_data = NULL;
+	mbox.timeout = 0;
 	mbox.sequence = 0;
 	init_lock(&mbox.lock);
 
