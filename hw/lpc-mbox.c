@@ -64,6 +64,7 @@ struct mbox {
 	struct lock lock; /* Protect in_flight */
 	struct bmc_mbox_msg *in_flight;
 	uint8_t sequence;
+	unsigned long timeout;
 };
 
 static struct mbox mbox;
@@ -115,7 +116,7 @@ static void bmc_mbox_send_message(struct bmc_mbox_msg *msg)
 	bmc_mbox_outb(MBOX_CTRL_INT_SEND, MBOX_HOST_CTRL);
 }
 
-int bmc_mbox_enqueue(struct bmc_mbox_msg *msg)
+int bmc_mbox_enqueue(struct bmc_mbox_msg *msg, unsigned int timeout_sec)
 {
 	if (!mbox.base) {
 		prlog(PR_CRIT, "Using MBOX without init!\n");
@@ -125,10 +126,15 @@ int bmc_mbox_enqueue(struct bmc_mbox_msg *msg)
 	lock(&mbox.lock);
 	if (mbox.in_flight) {
 		prlog(PR_DEBUG, "MBOX message already in flight\n");
-		unlock(&mbox.lock);
-		return OPAL_BUSY;
+		if (mftb() > mbox.timeout) {
+			prlog(PR_ERR, "In flight message dropped on the floor\n");
+		} else {
+			unlock(&mbox.lock);
+			return OPAL_BUSY;
+		}
 	}
 
+	mbox.timeout = mftb() + secs_to_tb(timeout_sec);
 	mbox.in_flight = msg;
 	unlock(&mbox.lock);
 	msg->seq = ++mbox.sequence;

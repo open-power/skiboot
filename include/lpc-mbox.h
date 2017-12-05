@@ -63,7 +63,7 @@ struct bmc_mbox_msg {
 	uint8_t bmc;
 };
 
-int bmc_mbox_enqueue(struct bmc_mbox_msg *msg);
+int bmc_mbox_enqueue(struct bmc_mbox_msg *msg, unsigned int timeout_sec);
 int bmc_mbox_register_callback(void (*callback)(struct bmc_mbox_msg *msg, void *priv),
 		void *drv_data);
 int bmc_mbox_register_attn(void (*callback)(uint8_t bits, void *priv),
