@@ -972,9 +972,11 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	cpu_set_sreset_enable(true);
 
 	/*
-	 * Synchronize time bases. Thi resets all the TB values to a small
-	 * value (so they appear to go backward at this point), and synchronize
-	 * all core timebases to the global ChipTOD network
+	 * Synchronize time bases. Prior to chiptod_init() the timebase
+	 * is free-running at a frequency based on the core clock rather
+	 * than being synchronised to the ChipTOD network. This means
+	 * that the timestamps in early boot might be a little off compared
+	 * to wall clock time.
 	 */
 	chiptod_init();
 

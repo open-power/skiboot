@@ -120,9 +120,6 @@
 #define LOCAL_CORE_FIR		0x0104000C
 #define LFIR_SWITCH_COMPLETE	PPC_BIT(18)
 
-/* Magic TB value. One step cycle ahead of sync */
-#define INIT_TB	0x000000000001ff0
-
 /* Number of iterations for the various timeouts */
 #define TIMEOUT_LOOPS		20000000
 
@@ -775,6 +772,7 @@ static void chiptod_reset_tod_errors(void)
 
 static void chiptod_sync_master(void *data)
 {
+	uint64_t initial_tb_value;
 	bool *result = data;
 
 	prlog(PR_DEBUG, "Master sync on CPU PIR 0x%04x...\n",
@@ -824,8 +822,17 @@ static void chiptod_sync_master(void *data)
 		goto error;
 	}
 
+	/*
+	 * Load the master's current timebase value into the Chip TOD
+	 * network. This is so we have sane timestamps across the whole
+	 * IPL process. The Chip TOD documentation says that the loaded
+	 * value needs to be one STEP before a SYNC. In other words,
+	 * set the low bits to 0x1ff0.
+	 */
+	initial_tb_value = (mftb() & ~0x1fff) | 0x1ff0;
+
 	/* Chip TOD load initial value */
-	if (xscom_writeme(TOD_CHIPTOD_LOAD_TB, INIT_TB)) {
+	if (xscom_writeme(TOD_CHIPTOD_LOAD_TB, initial_tb_value)) {
 		prerror("XSCOM error setting init TB\n");
 		goto error;
 	}
