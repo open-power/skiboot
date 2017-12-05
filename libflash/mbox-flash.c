@@ -617,6 +617,9 @@ static int mbox_window_move(struct mbox_flash_data *mbox_flash,
 		goto out;
 	}
 
+	mbox_flash->read.open = false;
+	mbox_flash->write.open = false;
+
 	rc = wait_for_bmc(mbox_flash, MBOX_DEFAULT_TIMEOUT);
 	if (rc) {
 		prlog(PR_ERR, "Error waiting for BMC\n");
