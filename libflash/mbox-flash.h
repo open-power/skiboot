@@ -17,6 +17,7 @@
 #ifndef __LIBFLASH_MBOX_FLASH_H
 #define __LIBFLASH_MBOX_FLASH_H
 
+int mbox_flash_lock(struct blocklevel_device *bl, uint64_t pos, uint64_t len);
 int mbox_flash_init(struct blocklevel_device **bl);
 void mbox_flash_exit(struct blocklevel_device *bl);
 #endif /* __LIBFLASH_MBOX_FLASH_H */

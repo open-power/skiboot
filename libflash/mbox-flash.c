@@ -152,7 +152,7 @@ static mbox_handler *handlers_v1[] = {
 static void mbox_flash_callback(struct bmc_mbox_msg *msg, void *priv);
 static void mbox_flash_attn(uint8_t attn, void *priv);
 
-static int protocol_init(struct mbox_flash_data *mbox_flash);
+static int protocol_init(struct mbox_flash_data *mbox_flash, uint8_t shift);
 
 static int lpc_window_read(struct mbox_flash_data *mbox_flash, uint32_t pos,
 			   void *buf, uint32_t len)
@@ -539,7 +539,7 @@ static int handle_reboot(struct mbox_flash_data *mbox_flash)
 		return rc;
 	}
 
-	rc = protocol_init(mbox_flash);
+	rc = protocol_init(mbox_flash, 0);
 	if (rc)
 		mbox_flash->reboot = true;
 
@@ -975,10 +975,13 @@ out:
 	mbox_flash->busy = false;
 }
 
-static int protocol_init(struct mbox_flash_data *mbox_flash)
+static int protocol_init(struct mbox_flash_data *mbox_flash, uint8_t shift)
 {
 	struct bmc_mbox_msg msg = MSG_CREATE(MBOX_C_GET_MBOX_INFO);
 	int rc;
+
+	mbox_flash->read.open = false;
+	mbox_flash->write.open = false;
 
 	/* Assume V2+ */
 	mbox_flash->bl.read = &mbox_flash_read;
@@ -1013,7 +1016,7 @@ static int protocol_init(struct mbox_flash_data *mbox_flash)
 	mbox_flash->version = 3;
 
 	msg_put_u8(&msg, 0, mbox_flash->version);
-	msg_put_u8(&msg, 1, 0); /* Don't request a shift, let the BMC give us one */
+	msg_put_u8(&msg, 1, shift);
 	rc = msg_send(mbox_flash, &msg, mbox_flash->timeout);
 	if (rc) {
 		prlog(PR_ERR, "Failed to enqueue/send BMC MBOX message\n");
@@ -1050,6 +1053,63 @@ static int protocol_init(struct mbox_flash_data *mbox_flash)
 	return rc;
 }
 
+int mbox_flash_lock(struct blocklevel_device *bl, uint64_t pos, uint64_t len)
+{
+	struct mbox_flash_data *mbox_flash;
+	struct bmc_mbox_msg msg = MSG_CREATE(MBOX_C_MARK_LOCKED);
+	int rc;
+
+	/* mbox-flash only talks 32bit for now */
+	if (pos > UINT_MAX || len > UINT_MAX)
+		return FLASH_ERR_PARM_ERROR;
+
+	/*
+	 * If the region isn't at least 4k aligned and in size then bail
+	 * out, the protocol won't allow for smaller block sizes.
+	 */
+	if (pos & ((1 << 12) - 1) || len & ((1 << 12) - 1))
+		return FLASH_ERR_PARM_ERROR;
+
+	mbox_flash = container_of(bl, struct mbox_flash_data, bl);
+	if ((pos & mbox_flash_mask(mbox_flash)) || (len & mbox_flash_mask(mbox_flash))) {
+		uint8_t shift = 0;
+		/*
+		 * The current block size won't work for locking the requested
+		 * region must reinit.
+		 */
+		while (!((1 << shift) & pos) && !((1 << shift) & len))
+			shift++;
+
+		prlog(PR_INFO, "Locking flash requires re-init from shift of %d to shift of %d\n",
+				mbox_flash->shift, shift);
+
+		rc = protocol_init(mbox_flash, shift);
+		if (rc)
+			return rc;
+
+		/*
+		 * The daemon didn't agree with the requested shift - the
+		 * flash won't be able to be locked
+		 */
+		if (mbox_flash->shift > shift)
+			return FLASH_ERR_PARM_ERROR;
+	}
+
+	msg_put_u16(&msg, 0, bytes_to_blocks(mbox_flash, pos));
+	msg_put_u16(&msg, 2, bytes_to_blocks(mbox_flash, len));
+	rc = msg_send(mbox_flash, &msg, mbox_flash->timeout);
+	if (rc) {
+		prlog(PR_ERR, "Failed to enqueue/send BMC MBOX message\n");
+		return rc;
+	}
+
+	rc = wait_for_bmc(mbox_flash, mbox_flash->timeout);
+	if (rc)
+		prlog(PR_ERR, "Error waiting for BMC\n");
+
+	return rc;
+}
+
 int mbox_flash_init(struct blocklevel_device **bl)
 {
 	struct mbox_flash_data *mbox_flash;
@@ -1077,7 +1137,7 @@ int mbox_flash_init(struct blocklevel_device **bl)
 	if (bmc_mbox_get_attn_reg() & MBOX_ATTN_BMC_REBOOT)
 		rc = handle_reboot(mbox_flash);
 	else
-		rc = protocol_init(mbox_flash);
+		rc = protocol_init(mbox_flash, 0);
 	if (rc) {
 		free(mbox_flash);
 		return rc;
