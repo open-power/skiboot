@@ -41,6 +41,9 @@
 
 #define MSG_CREATE(init_command) { .command = init_command }
 
+struct mbox_flash_data;
+typedef void (mbox_handler)(struct mbox_flash_data *, struct bmc_mbox_msg *);
+
 struct lpc_window {
 	uint32_t lpc_addr; /* Offset into LPC space */
 	uint32_t cur_pos;  /* Current position of the window in the flash */
@@ -62,9 +65,62 @@ struct mbox_flash_data {
 	bool pause;
 	bool busy;
 	bool ack;
-	/* Plus one, commands start at 1 */
-	void (*handlers[MBOX_COMMAND_COUNT + 1])(struct mbox_flash_data *, struct bmc_mbox_msg*);
+	mbox_handler **handlers;
 };
+
+static mbox_handler mbox_flash_do_nop;
+static mbox_handler mbox_flash_do_illegal;
+
+/* Version 1 and Version 2 compatible */
+static mbox_handler mbox_flash_do_get_mbox_info;
+
+static mbox_handler mbox_flash_do_get_flash_info_v2;
+static mbox_handler mbox_flash_do_get_flash_info_v1;
+
+static mbox_handler mbox_flash_do_create_read_window_v2;
+static mbox_handler mbox_flash_do_create_read_window_v1;
+
+static mbox_handler mbox_flash_do_create_write_window_v2;
+static mbox_handler mbox_flash_do_create_write_window_v1;
+
+/* Version 1 and Version 2 compatible */
+static mbox_handler mbox_flash_do_close_window;
+
+/* Plus one, commands start at 1 */
+static mbox_handler *handlers_v2[MBOX_COMMAND_COUNT + 1] = {
+	NULL,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_get_mbox_info,
+	&mbox_flash_do_get_flash_info_v2,
+	&mbox_flash_do_create_read_window_v2,
+	&mbox_flash_do_close_window,
+	&mbox_flash_do_create_write_window_v2,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_nop
+};
+
+/*
+ * Plus one, commands start at 1.
+ * V2 adds a command so there should never be a response for the last
+ * command.
+ * Ensure we print an error message with mbox_flash_do_illegal().
+ */
+static mbox_handler *handlers_v1[MBOX_COMMAND_COUNT + 1] = {
+	NULL,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_get_mbox_info,
+	&mbox_flash_do_get_flash_info_v1,
+	&mbox_flash_do_create_read_window_v1,
+	&mbox_flash_do_close_window,
+	&mbox_flash_do_create_write_window_v1,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_illegal
+};
+
 
 static void mbox_flash_callback(struct bmc_mbox_msg *msg, void *priv);
 static void mbox_flash_attn(uint8_t attn, void *priv);
@@ -331,6 +387,12 @@ static int do_acks(struct mbox_flash_data *mbox_flash)
 static void mbox_flash_do_nop(struct mbox_flash_data *mbox_flash __unused,
 		struct bmc_mbox_msg *msg __unused)
 {
+}
+
+static void mbox_flash_do_illegal(struct mbox_flash_data *mbox_flash __unused,
+		struct bmc_mbox_msg *msg __unused)
+{
+	prlog(PR_CRIT, "Got response to unknown message type\n");
 }
 
 /* Version 1 and Version 2 compatible */
@@ -891,18 +953,7 @@ static int protocol_init(struct mbox_flash_data *mbox_flash)
 	mbox_flash->bl.get_info = &mbox_flash_get_info;
 
 	/* Assume V2 */
-	mbox_flash->handlers[0] = NULL;
-	mbox_flash->handlers[MBOX_C_RESET_STATE] = &mbox_flash_do_nop;
-	mbox_flash->handlers[MBOX_C_GET_MBOX_INFO] = &mbox_flash_do_get_mbox_info;
-	mbox_flash->handlers[MBOX_C_GET_FLASH_INFO] = &mbox_flash_do_get_flash_info_v2;
-	mbox_flash->handlers[MBOX_C_CREATE_READ_WINDOW] = &mbox_flash_do_create_read_window_v2;
-	mbox_flash->handlers[MBOX_C_CLOSE_WINDOW] = &mbox_flash_do_close_window;
-	mbox_flash->handlers[MBOX_C_CREATE_WRITE_WINDOW] = &mbox_flash_do_create_write_window_v2;
-	mbox_flash->handlers[MBOX_C_MARK_WRITE_DIRTY] = &mbox_flash_do_nop;
-	mbox_flash->handlers[MBOX_C_WRITE_FLUSH] = &mbox_flash_do_nop;
-	mbox_flash->handlers[MBOX_C_BMC_EVENT_ACK] = &mbox_flash_do_nop;
-	mbox_flash->handlers[MBOX_C_MARK_WRITE_ERASED] = &mbox_flash_do_nop;
-
+	mbox_flash->handlers = handlers_v2;
 
 	bmc_mbox_register_callback(&mbox_flash_callback, mbox_flash);
 	bmc_mbox_register_attn(&mbox_flash_attn, mbox_flash);
@@ -922,7 +973,8 @@ static int protocol_init(struct mbox_flash_data *mbox_flash)
 	/*
 	 * Always attempt init with V2.
 	 * The GET_MBOX_INFO response will confirm that the other side can
-	 * talk V2, we'll update this variable then if V2 is not supported
+	 * talk the highest version, we'll update this variable then if
+	 * our highest version is not supported
 	 */
 	mbox_flash->version = 2;
 
@@ -940,23 +992,20 @@ static int protocol_init(struct mbox_flash_data *mbox_flash)
 	}
 
 	prlog(PR_INFO, "Detected mbox protocol version %d\n", mbox_flash->version);
-	if (mbox_flash->version == 1) {
-		mbox_flash->bl.erase = &mbox_flash_erase_v1;
-		/* Not all handlers differ, update those which do */
-		mbox_flash->handlers[MBOX_C_GET_FLASH_INFO] = &mbox_flash_do_get_flash_info_v1;
-		mbox_flash->handlers[MBOX_C_CREATE_READ_WINDOW] =
-			&mbox_flash_do_create_read_window_v1;
-		mbox_flash->handlers[MBOX_C_CREATE_WRITE_WINDOW] =
-			&mbox_flash_do_create_write_window_v1;
-		mbox_flash->handlers[MBOX_C_MARK_WRITE_ERASED] = NULL; /* Not in V1 */
-	} else if (mbox_flash->version > 2) {
-		/*
-		 * Uh, we requested version 2... The BMC is can only lower the
-		 * requested version not do anything else. FWIW there is no
-		 * verion 0
-		 */
-		prlog(PR_CRIT, "Bad version: %u\n", mbox_flash->version);
-		rc = FLASH_ERR_PARM_ERROR;
+	switch (mbox_flash->version) {
+		case 1:
+			mbox_flash->bl.erase = &mbox_flash_erase_v1;
+			mbox_flash->handlers = handlers_v1;
+			break;
+		case 2:
+			break;
+		default:
+			/*
+			 * The BMC is can only lower the requested version not do
+			 * anything else. FWIW there is no verion 0.
+			 */
+			prlog(PR_CRIT, "Bad version: %u\n", mbox_flash->version);
+			rc = FLASH_ERR_PARM_ERROR;
 	}
 
 	return rc;
