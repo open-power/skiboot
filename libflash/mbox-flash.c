@@ -37,6 +37,9 @@
 #error "This libflash backend must be compiled with skiboot"
 #endif
 
+/* Same technique as BUILD_BUG_ON from linux */
+#define CHECK_HANDLER_SIZE(handlers) ((void)sizeof(char[1 - 2*!!(ARRAY_SIZE(handlers) != (MBOX_COMMAND_COUNT + 1))]))
+
 #define MBOX_DEFAULT_TIMEOUT 30
 
 #define MSG_CREATE(init_command) { .command = init_command }
@@ -71,34 +74,56 @@ struct mbox_flash_data {
 static mbox_handler mbox_flash_do_nop;
 static mbox_handler mbox_flash_do_illegal;
 
-/* Version 1 and Version 2 compatible */
+/* Version 1, 2, 3 compatible */
 static mbox_handler mbox_flash_do_get_mbox_info;
 
-static mbox_handler mbox_flash_do_get_flash_info_v2;
+/* Version 2 and 3 compatible */
+static mbox_handler mbox_flash_do_get_flash_info;
 static mbox_handler mbox_flash_do_get_flash_info_v1;
 
-static mbox_handler mbox_flash_do_create_read_window_v2;
+/* Version 2 and 3 compatible */
+static mbox_handler mbox_flash_do_create_read_window;
 static mbox_handler mbox_flash_do_create_read_window_v1;
 
-static mbox_handler mbox_flash_do_create_write_window_v2;
+/* Version 2 and 3 compatible */
+static mbox_handler mbox_flash_do_create_write_window;
 static mbox_handler mbox_flash_do_create_write_window_v1;
 
-/* Version 1 and Version 2 compatible */
+/* Version 1, 2, 3 compatible */
 static mbox_handler mbox_flash_do_close_window;
 
 /* Plus one, commands start at 1 */
-static mbox_handler *handlers_v2[MBOX_COMMAND_COUNT + 1] = {
+static mbox_handler *handlers_v3[] = {
 	NULL,
 	&mbox_flash_do_nop,
 	&mbox_flash_do_get_mbox_info,
-	&mbox_flash_do_get_flash_info_v2,
-	&mbox_flash_do_create_read_window_v2,
+	&mbox_flash_do_get_flash_info,
+	&mbox_flash_do_create_read_window,
 	&mbox_flash_do_close_window,
-	&mbox_flash_do_create_write_window_v2,
+	&mbox_flash_do_create_write_window,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_nop,
 	&mbox_flash_do_nop,
 	&mbox_flash_do_nop,
 	&mbox_flash_do_nop,
 	&mbox_flash_do_nop
+};
+
+/* Plus one, commands start at 1 */
+static mbox_handler *handlers_v2[] = {
+	NULL,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_get_mbox_info,
+	&mbox_flash_do_get_flash_info,
+	&mbox_flash_do_create_read_window,
+	&mbox_flash_do_close_window,
+	&mbox_flash_do_create_write_window,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_nop,
+	&mbox_flash_do_illegal,
+	&mbox_flash_do_illegal
 };
 
 /*
@@ -107,7 +132,7 @@ static mbox_handler *handlers_v2[MBOX_COMMAND_COUNT + 1] = {
  * command.
  * Ensure we print an error message with mbox_flash_do_illegal().
  */
-static mbox_handler *handlers_v1[MBOX_COMMAND_COUNT + 1] = {
+static mbox_handler *handlers_v1[] = {
 	NULL,
 	&mbox_flash_do_nop,
 	&mbox_flash_do_get_mbox_info,
@@ -118,6 +143,8 @@ static mbox_handler *handlers_v1[MBOX_COMMAND_COUNT + 1] = {
 	&mbox_flash_do_nop,
 	&mbox_flash_do_nop,
 	&mbox_flash_do_nop,
+	&mbox_flash_do_illegal,
+	&mbox_flash_do_illegal,
 	&mbox_flash_do_illegal
 };
 
@@ -395,22 +422,26 @@ static void mbox_flash_do_illegal(struct mbox_flash_data *mbox_flash __unused,
 	prlog(PR_CRIT, "Got response to unknown message type\n");
 }
 
-/* Version 1 and Version 2 compatible */
+/* Version 1, 2 and 3 compatible */
 static void mbox_flash_do_get_mbox_info(struct mbox_flash_data *mbox_flash,
 		struct bmc_mbox_msg *msg)
 {
 
 	mbox_flash->version = msg_get_u8(msg, 0);
-	if (mbox_flash->version == 1) {
-		/* Not all version 1 daemons set argument 5 correctly */
-		mbox_flash->shift = 12; /* Protocol hardcodes to 4K anyway */
-		mbox_flash->read.size = blocks_to_bytes(mbox_flash, msg_get_u16(msg, 1));
-		mbox_flash->write.size = blocks_to_bytes(mbox_flash, msg_get_u16(msg, 3));
-	} else { /* V2 compatible */
-		mbox_flash->shift = msg_get_u8(msg, 5);
-		mbox_flash->timeout = msg_get_u16(msg, 6);
-		if (mbox_flash->timeout == 0)
-			mbox_flash->timeout = MBOX_DEFAULT_TIMEOUT;
+	switch (mbox_flash->version) {
+		case 1:
+			/* Not all version 1 daemons set argument 5 correctly */
+			mbox_flash->shift = 12; /* Protocol hardcodes to 4K anyway */
+			mbox_flash->read.size = blocks_to_bytes(mbox_flash, msg_get_u16(msg, 1));
+			mbox_flash->write.size = blocks_to_bytes(mbox_flash, msg_get_u16(msg, 3));
+			break;
+		case 3:
+		case 2:
+			mbox_flash->shift = msg_get_u8(msg, 5);
+			mbox_flash->timeout = msg_get_u16(msg, 6);
+			if (mbox_flash->timeout == 0)
+				mbox_flash->timeout = MBOX_DEFAULT_TIMEOUT;
+			break;
 	}
 	/* Callers will handle the case where the version is not known
 	 *
@@ -421,7 +452,8 @@ static void mbox_flash_do_get_mbox_info(struct mbox_flash_data *mbox_flash,
 	 */
 }
 
-static void mbox_flash_do_get_flash_info_v2(struct mbox_flash_data *mbox_flash,
+/* Version 2 and 3 compatible */
+static void mbox_flash_do_get_flash_info(struct mbox_flash_data *mbox_flash,
 		struct bmc_mbox_msg *msg)
 {
 	mbox_flash->total_size = blocks_to_bytes(mbox_flash, msg_get_u16(msg, 0));
@@ -435,7 +467,8 @@ static void mbox_flash_do_get_flash_info_v1(struct mbox_flash_data *mbox_flash,
 	mbox_flash->erase_granule = msg_get_u32(msg, 4);
 }
 
-static void mbox_flash_do_create_read_window_v2(struct mbox_flash_data *mbox_flash,
+/* Version 2 and 3 compatible */
+static void mbox_flash_do_create_read_window(struct mbox_flash_data *mbox_flash,
 		struct bmc_mbox_msg *msg)
 {
 	mbox_flash->read.lpc_addr = blocks_to_bytes(mbox_flash, msg_get_u16(msg, 0));
@@ -453,7 +486,8 @@ static void mbox_flash_do_create_read_window_v1(struct mbox_flash_data *mbox_fla
 	mbox_flash->write.open = false;
 }
 
-static void mbox_flash_do_create_write_window_v2(struct mbox_flash_data *mbox_flash,
+/* Version 2 and 3 compatible */
+static void mbox_flash_do_create_write_window(struct mbox_flash_data *mbox_flash,
 		struct bmc_mbox_msg *msg)
 {
 	mbox_flash->write.lpc_addr = blocks_to_bytes(mbox_flash, msg_get_u16(msg, 0));
@@ -946,39 +980,40 @@ static int protocol_init(struct mbox_flash_data *mbox_flash)
 	struct bmc_mbox_msg msg = MSG_CREATE(MBOX_C_GET_MBOX_INFO);
 	int rc;
 
-	/* Assume V2 */
+	/* Assume V2+ */
 	mbox_flash->bl.read = &mbox_flash_read;
 	mbox_flash->bl.write = &mbox_flash_write;
 	mbox_flash->bl.erase = &mbox_flash_erase_v2;
 	mbox_flash->bl.get_info = &mbox_flash_get_info;
 
-	/* Assume V2 */
-	mbox_flash->handlers = handlers_v2;
+	/* Assume V3 */
+	mbox_flash->handlers = handlers_v3;
 
 	bmc_mbox_register_callback(&mbox_flash_callback, mbox_flash);
 	bmc_mbox_register_attn(&mbox_flash_attn, mbox_flash);
 
 	/*
 	 * For V1 of the protocol this is fixed.
-	 * V2: The init code will update this
+	 * V2+: The init code will update this
 	 */
 	mbox_flash->shift = 12;
 
 	/*
 	 * For V1 we'll use this value.
-	 * V2: The init code (may) update this
+	 * V2+: The init code (may) update this
 	 */
 	mbox_flash->timeout = MBOX_DEFAULT_TIMEOUT;
 
 	/*
-	 * Always attempt init with V2.
+	 * Always attempt init with highest version known.
 	 * The GET_MBOX_INFO response will confirm that the other side can
 	 * talk the highest version, we'll update this variable then if
 	 * our highest version is not supported
 	 */
-	mbox_flash->version = 2;
+	mbox_flash->version = 3;
 
 	msg_put_u8(&msg, 0, mbox_flash->version);
+	msg_put_u8(&msg, 1, 0); /* Don't request a shift, let the BMC give us one */
 	rc = msg_send(mbox_flash, &msg, mbox_flash->timeout);
 	if (rc) {
 		prlog(PR_ERR, "Failed to enqueue/send BMC MBOX message\n");
@@ -998,6 +1033,10 @@ static int protocol_init(struct mbox_flash_data *mbox_flash)
 			mbox_flash->handlers = handlers_v1;
 			break;
 		case 2:
+			mbox_flash->handlers = handlers_v2;
+			break;
+		case 3:
+			/* Nothing to do we assumed it would be V3 */
 			break;
 		default:
 			/*
@@ -1016,6 +1055,10 @@ int mbox_flash_init(struct blocklevel_device **bl)
 	struct mbox_flash_data *mbox_flash;
 	int rc;
 
+	CHECK_HANDLER_SIZE(handlers_v3);
+	CHECK_HANDLER_SIZE(handlers_v2);
+	CHECK_HANDLER_SIZE(handlers_v1);
+
 	if (!bl)
 		return FLASH_ERR_PARM_ERROR;
 
@@ -1025,7 +1068,7 @@ int mbox_flash_init(struct blocklevel_device **bl)
 	if (!mbox_flash)
 		return FLASH_ERR_MALLOC_FAILED;
 
-	/* Assume V2 */
+	/* Assume V2+ */
 	mbox_flash->bl.read = &mbox_flash_read;
 	mbox_flash->bl.write = &mbox_flash_write;
 	mbox_flash->bl.erase = &mbox_flash_erase_v2;

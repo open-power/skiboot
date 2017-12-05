@@ -34,7 +34,9 @@
 #define MBOX_C_WRITE_FLUSH 0x08
 #define MBOX_C_BMC_EVENT_ACK 0x09
 #define MBOX_C_MARK_WRITE_ERASED 0x0a
-#define MBOX_COMMAND_COUNT 10
+#define MBOX_C_GET_FLASH_NAME 0xb /* Unimplemented */
+#define MBOX_C_MARK_LOCKED 0x0c
+#define MBOX_COMMAND_COUNT 12
 
 #define MBOX_R_SUCCESS 0x01
 #define MBOX_R_PARAM_ERROR 0x02
@@ -44,6 +46,7 @@
 #define MBOX_R_BUSY 0x06
 #define MBOX_R_WINDOW_ERROR 0x07
 #define MBOX_R_SEQ_ERROR 0x08
+#define MBOX_R_LOCKED 0x09
 
 #define MBOX_ATTN_ACK_MASK 0x3
 #define MBOX_ATTN_BMC_REBOOT (1 << 0)
