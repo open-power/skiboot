@@ -50,6 +50,7 @@ struct lpc_window {
 
 struct mbox_flash_data {
 	int version;
+	uint16_t timeout;
 	uint32_t shift;
 	struct lpc_window read;
 	struct lpc_window write;
@@ -286,7 +287,12 @@ static int mbox_flash_ack(struct mbox_flash_data *mbox_flash, uint8_t reg)
 	/* Clear this first so msg_send() doesn't freak out */
 	mbox_flash->reboot = false;
 
-	rc = msg_send(mbox_flash, &msg, MBOX_DEFAULT_TIMEOUT);
+	/*
+	 * Use a lower timeout - there is strong evidence to suggest the
+	 * BMC won't respond, don't waste time spinning here just have the
+	 * high levels retry when the BMC might be back
+	 */
+	rc = msg_send(mbox_flash, &msg, 3);
 
 	/* Still need to deal with it, we've only acked it now. */
 	mbox_flash->reboot = true;
@@ -340,6 +346,9 @@ static void mbox_flash_do_get_mbox_info(struct mbox_flash_data *mbox_flash,
 		mbox_flash->write.size = blocks_to_bytes(mbox_flash, msg_get_u16(msg, 3));
 	} else { /* V2 compatible */
 		mbox_flash->shift = msg_get_u8(msg, 5);
+		mbox_flash->timeout = msg_get_u16(msg, 6);
+		if (mbox_flash->timeout == 0)
+			mbox_flash->timeout = MBOX_DEFAULT_TIMEOUT;
 	}
 	/* Callers will handle the case where the version is not known
 	 *
@@ -472,13 +481,13 @@ static int mbox_flash_mark_write(struct mbox_flash_data *mbox_flash,
 		msg_put_u16(&msg, 2, end - start); /* Total Length */
 	}
 
-	rc = msg_send(mbox_flash, &msg, MBOX_DEFAULT_TIMEOUT);
+	rc = msg_send(mbox_flash, &msg, mbox_flash->timeout);
 	if (rc) {
 		prlog(PR_ERR, "Failed to enqueue/send BMC MBOX message\n");
 		return rc;
 	}
 
-	rc = wait_for_bmc(mbox_flash, MBOX_DEFAULT_TIMEOUT);
+	rc = wait_for_bmc(mbox_flash, mbox_flash->timeout);
 	if (rc)
 		prlog(PR_ERR, "Error waiting for BMC\n");
 
@@ -519,13 +528,13 @@ static int mbox_flash_flush(struct mbox_flash_data *mbox_flash)
 		return FLASH_ERR_DEVICE_GONE;
 	}
 
-	rc = msg_send(mbox_flash, &msg, MBOX_DEFAULT_TIMEOUT);
+	rc = msg_send(mbox_flash, &msg, mbox_flash->timeout);
 	if (rc) {
 		prlog(PR_ERR, "Failed to enqueue/send BMC MBOX message\n");
 		return rc;
 	}
 
-	rc = wait_for_bmc(mbox_flash, MBOX_DEFAULT_TIMEOUT);
+	rc = wait_for_bmc(mbox_flash, mbox_flash->timeout);
 	if (rc)
 		prlog(PR_ERR, "Error waiting for BMC\n");
 
@@ -568,7 +577,7 @@ static int mbox_window_move(struct mbox_flash_data *mbox_flash,
 	win->cur_pos = pos & ~mbox_flash_mask(mbox_flash);
 
 	msg_put_u16(&msg, 0, bytes_to_blocks(mbox_flash, pos));
-	rc = msg_send(mbox_flash, &msg, MBOX_DEFAULT_TIMEOUT);
+	rc = msg_send(mbox_flash, &msg, mbox_flash->timeout);
 	if (rc) {
 		prlog(PR_ERR, "Failed to enqueue/send BMC MBOX message\n");
 		return rc;
@@ -577,7 +586,7 @@ static int mbox_window_move(struct mbox_flash_data *mbox_flash,
 	mbox_flash->read.open = false;
 	mbox_flash->write.open = false;
 
-	rc = wait_for_bmc(mbox_flash, MBOX_DEFAULT_TIMEOUT);
+	rc = wait_for_bmc(mbox_flash, mbox_flash->timeout);
 	if (rc) {
 		prlog(PR_ERR, "Error waiting for BMC\n");
 		return rc;
@@ -725,13 +734,13 @@ static int mbox_flash_get_info(struct blocklevel_device *bl, const char **name,
 		*name = NULL;
 
 	mbox_flash->busy = true;
-	rc = msg_send(mbox_flash, &msg, MBOX_DEFAULT_TIMEOUT);
+	rc = msg_send(mbox_flash, &msg, mbox_flash->timeout);
 	if (rc) {
 		prlog(PR_ERR, "Failed to enqueue/send BMC MBOX message\n");
 		return rc;
 	}
 
-	if (wait_for_bmc(mbox_flash, MBOX_DEFAULT_TIMEOUT)) {
+	if (wait_for_bmc(mbox_flash, mbox_flash->timeout)) {
 		prlog(PR_ERR, "Error waiting for BMC\n");
 		return rc;
 	}
@@ -905,6 +914,12 @@ static int protocol_init(struct mbox_flash_data *mbox_flash)
 	mbox_flash->shift = 12;
 
 	/*
+	 * For V1 we'll use this value.
+	 * V2: The init code (may) update this
+	 */
+	mbox_flash->timeout = MBOX_DEFAULT_TIMEOUT;
+
+	/*
 	 * Always attempt init with V2.
 	 * The GET_MBOX_INFO response will confirm that the other side can
 	 * talk V2, we'll update this variable then if V2 is not supported
@@ -912,13 +927,13 @@ static int protocol_init(struct mbox_flash_data *mbox_flash)
 	mbox_flash->version = 2;
 
 	msg_put_u8(&msg, 0, mbox_flash->version);
-	rc = msg_send(mbox_flash, &msg, MBOX_DEFAULT_TIMEOUT);
+	rc = msg_send(mbox_flash, &msg, mbox_flash->timeout);
 	if (rc) {
 		prlog(PR_ERR, "Failed to enqueue/send BMC MBOX message\n");
 		return rc;
 	}
 
-	rc = wait_for_bmc(mbox_flash, MBOX_DEFAULT_TIMEOUT);
+	rc = wait_for_bmc(mbox_flash, mbox_flash->timeout);
 	if (rc) {
 		prlog(PR_ERR, "Error waiting for BMC\n");
 		return rc;
