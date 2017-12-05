@@ -1,5 +1,7 @@
 # -*-Makefile-*-
-LIBFLASH_TEST := libflash/test/test-flash libflash/test/test-ecc libflash/test/test-blocklevel
+TEST_FLAGS = -D__TEST__
+
+LIBFLASH_TEST := libflash/test/test-flash libflash/test/test-ecc libflash/test/test-blocklevel libflash/test/test-mbox
 
 LCOV_EXCLUDE += $(LIBFLASH_TEST:%=%.c)
 
@@ -10,19 +12,22 @@ libflash-coverage: $(LIBFLASH_TEST:%=%-gcov-run)
 check: libflash-check libc-coverage
 coverage: libflash-coverage
 
+strict-check: TEST_FLAGS += -D__STRICT_TEST__
+strict-check: check
+
 $(LIBFLASH_TEST:%=%-gcov-run) : %-run: %
 	$(call QTEST, TEST-COVERAGE ,$< , $<)
 
 $(LIBFLASH_TEST:%=%-check) : %-check: %
 	$(call QTEST, RUN-TEST ,$(VALGRIND) $<, $<)
 
-libflash/test/stubs.o: libflash/test/stubs.c
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -g -c -o $@ $<, $<)
+LIBFLASH_TEST_EXTRA :=  libflash/test/stubs.o libflash/test/mbox-server.o
+$(LIBFLASH_TEST_EXTRA) : %.o : %.c
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(TEST_FLAGS) -Wno-suggest-attribute=const -g -c -o $@ $<, $<)
 
-$(LIBFLASH_TEST) : libflash/test/stubs.o libflash/libflash.c libflash/ecc.c libflash/blocklevel.c
-
+$(LIBFLASH_TEST) : libflash/libflash.c libflash/ecc.c libflash/blocklevel.c $(LIBFLASH_TEST_EXTRA)
 $(LIBFLASH_TEST) : % : %.c
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -o $@ $< libflash/test/stubs.o, $<)
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(TEST_FLAGS) -Wno-suggest-attribute=const -O0 -g -I include -I . -o $@ $< $(LIBFLASH_TEST_EXTRA), $<)
 
 $(LIBFLASH_TEST:%=%-gcov): %-gcov : %.c %
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I include -I . -o $@ $< libflash/test/stubs.o, $<)

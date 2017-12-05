@@ -81,6 +81,7 @@ libc/test/run-time-gcov
 libflash/test/test-blocklevel
 libflash/test/test-flash
 libflash/test/test-ecc
+libflash/test/test-mbox
 libflash/test/test-flash-gcov
 libstb/create-container
 libstb/test/run-stb-container

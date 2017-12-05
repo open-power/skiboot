@@ -34,7 +34,9 @@
 #include <ccan/container_of/container_of.h>
 
 #ifndef __SKIBOOT__
+#ifndef __TEST__
 #error "This libflash backend must be compiled with skiboot"
+#endif
 #endif
 
 /* Same technique as BUILD_BUG_ON from linux */

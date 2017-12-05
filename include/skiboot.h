@@ -146,6 +146,7 @@ extern unsigned int pcie_max_link_speed;
 /* Convert a 4-bit number to a hex char */
 extern char __attrconst tohex(uint8_t nibble);
 
+#ifndef __TEST__
 /* Bit position of the most significant 1-bit (LSB=0, MSB=63) */
 static inline int ilog2(unsigned long val)
 {
@@ -160,6 +161,7 @@ static inline bool is_pow2(unsigned long val)
 {
 	return val == (1ul << ilog2(val));
 }
+#endif
 
 #define lo32(x)	((x) & 0xffffffff)
 #define hi32(x)	(((x) >> 32) & 0xffffffff)
