@@ -63,6 +63,7 @@ struct mbox {
 	void *attn_data;
 	struct lock lock; /* Protect in_flight */
 	struct bmc_mbox_msg *in_flight;
+	uint8_t sequence;
 };
 
 static struct mbox mbox;
@@ -130,6 +131,7 @@ int bmc_mbox_enqueue(struct bmc_mbox_msg *msg)
 
 	mbox.in_flight = msg;
 	unlock(&mbox.lock);
+	msg->seq = ++mbox.sequence;
 
 	bmc_mbox_send_message(msg);
 
@@ -162,7 +164,13 @@ static void mbox_poll(struct timer *t __unused, void *data __unused,
 			prlog(PR_CRIT, "Couldn't find the message!!\n");
 			goto out_response;
 		}
+
 		bmc_mbox_recv_message(msg);
+		if (mbox.sequence != msg->seq) {
+			prlog(PR_ERR, "Got a response to a message we no longer care about\n");
+			goto out_response;
+		}
+
 		if (mbox.callback)
 			mbox.callback(msg, mbox.drv_data);
 		else
@@ -330,6 +338,7 @@ void mbox_init(void)
 	mbox.in_flight = NULL;
 	mbox.callback = NULL;
 	mbox.drv_data = NULL;
+	mbox.sequence = 0;
 	init_lock(&mbox.lock);
 
 	init_timer(&mbox.poller, mbox_poll, NULL);

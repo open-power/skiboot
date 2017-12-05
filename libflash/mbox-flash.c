@@ -59,7 +59,6 @@ struct mbox_flash_data {
 	bool pause;
 	bool busy;
 	bool ack;
-	uint8_t seq;
 	/* Plus one, commands start at 1 */
 	void (*handlers[MBOX_COMMAND_COUNT + 1])(struct mbox_flash_data *, struct bmc_mbox_msg*);
 	struct bmc_mbox_msg msg_mem;
@@ -199,7 +198,6 @@ static struct bmc_mbox_msg *msg_alloc(struct mbox_flash_data *mbox_flash,
 	 * really the performance optimisation you want to make.
 	 */
 	memset(&mbox_flash->msg_mem, 0, sizeof(mbox_flash->msg_mem));
-	mbox_flash->msg_mem.seq = ++mbox_flash->seq;
 	mbox_flash->msg_mem.command = command;
 	return &mbox_flash->msg_mem;
 }
@@ -897,14 +895,6 @@ static void mbox_flash_callback(struct bmc_mbox_msg *msg, void *priv)
 	if (msg->response != MBOX_R_SUCCESS) {
 		prlog(PR_ERR, "Bad response code from BMC %d\n", msg->response);
 		mbox_flash->rc = msg->response;
-		goto out;
-	}
-
-	if (msg->seq != mbox_flash->seq) {
-		/* Uhoh */
-		prlog(PR_ERR, "Sequence numbers don't match! Got: %02x Expected: %02x\n",
-				msg->seq, mbox_flash->seq);
-		mbox_flash->rc = MBOX_R_SYSTEM_ERROR;
 		goto out;
 	}
 
