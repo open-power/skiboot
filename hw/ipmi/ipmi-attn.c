@@ -67,7 +67,7 @@ void __attribute__((noreturn)) ipmi_terminate(const char *msg)
 {
 	/* Terminate called before initializing IPMI (early abort) */
 	if (!ipmi_present()) {
-		if (platform.cec_reboot())
+		if (platform.cec_reboot)
 			platform.cec_reboot();
 		goto out;
 	}
@@ -76,7 +76,7 @@ void __attribute__((noreturn)) ipmi_terminate(const char *msg)
 	ipmi_log_terminate_event(msg);
 
 	/* Reboot call */
-	if (platform.cec_reboot())
+	if (platform.cec_reboot)
 		platform.cec_reboot();
 
 out:
