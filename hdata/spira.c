@@ -1374,7 +1374,7 @@ static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 		 * this is going to break.
 		 */
 
-		prlog(PR_DEBUG, "NPU: %04x:%d: Link (%d) targets slot %u",
+		prlog(PR_DEBUG, "NPU: %04x:%d: Link (%d) targets slot %u\n",
 			chip_id, link_count, link_count, slot_id);
 
 		if (link_count >= 6) {
