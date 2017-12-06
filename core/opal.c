@@ -171,9 +171,9 @@ again:
 	return OPAL_SUCCESS;
 }
 
-void opal_exit_check(int64_t retval, struct stack_frame *eframe);
+int64_t opal_exit_check(int64_t retval, struct stack_frame *eframe);
 
-void opal_exit_check(int64_t retval, struct stack_frame *eframe)
+int64_t opal_exit_check(int64_t retval, struct stack_frame *eframe)
 {
 	struct cpu_thread *cpu = this_cpu();
 	uint64_t token = eframe->gpr[0];
@@ -185,6 +185,7 @@ void opal_exit_check(int64_t retval, struct stack_frame *eframe)
 		sync(); /* release barrier vs quiescing */
 		cpu->in_opal_call--;
 	}
+	return retval;
 }
 
 int64_t opal_quiesce(uint32_t quiesce_type, int32_t cpu_target)
