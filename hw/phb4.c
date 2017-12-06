@@ -4509,13 +4509,13 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 	out_be64(p->regs + PHB_TCE_SPEC_CTL,			0x0000000000000000ull);
 
 	/* Init_133 - Timeout Control Register 1 */
-	out_be64(p->regs + PHB_TIMEOUT_CTRL1,			0x0018150000160000ull);
+	out_be64(p->regs + PHB_TIMEOUT_CTRL1,			0x0015150000150000ull);
 
 	/* Init_134 - Timeout Control Register 2 */
 	out_be64(p->regs + PHB_TIMEOUT_CTRL2,			0x0000181700000000ull);
 
 	/* Init_135 - PBL Timeout Control Register */
-	out_be64(p->regs + PHB_PBL_TIMEOUT_CTRL,		0x2015000000000000ull);
+	out_be64(p->regs + PHB_PBL_TIMEOUT_CTRL,		0x2013000000000000ull);
 
 	/* Mark the PHB as functional which enables all the various sequences */
 	p->state = PHB4_STATE_FUNCTIONAL;
