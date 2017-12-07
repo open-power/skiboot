@@ -697,34 +697,49 @@ static int hservice_clr_special_wakeup(struct cpu_thread *cpu)
 	return 0;
 }
 
-static int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
+int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 {
+	int (*set_wakeup)(struct cpu_thread *cpu);
+	int (*clear_wakeup)(struct cpu_thread *cpu);
 	struct cpu_thread *cpu;
 	int rc = OPAL_SUCCESS;
 
-	/*
-	 * Mask out the top nibble of i_core since it may contain
-	 * 0x4 (which we use for XSCOM targeting)
-	 */
-	i_core &= 0x0fffffff;
+	switch (proc_gen) {
+	case proc_gen_p8:
+		/*
+		 * Mask out the top nibble of i_core since it may contain
+		 * 0x4 (which we use for XSCOM targeting)
+		 */
+		i_core &= 0x0fffffff;
+		i_core <<= 3;
+		set_wakeup = hservice_set_special_wakeup;
+		clear_wakeup = hservice_clr_special_wakeup;
+		break;
+	case proc_gen_p9:
+		i_core &= SPR_PIR_P9_MASK;
+		i_core <<= 2;
+		set_wakeup = dctl_set_special_wakeup;
+		clear_wakeup = dctl_clear_special_wakeup;
+		break;
+	default:
+		return OPAL_UNSUPPORTED;
+	}
 
 	/* What do we need to do ? */
 	switch(i_mode) {
 	case 0: /* Assert special wakeup */
-		/* XXX Assume P8 */
-		cpu = find_cpu_by_pir(i_core << 3);
+		cpu = find_cpu_by_pir(i_core);
 		if (!cpu)
 			return OPAL_PARAMETER;
 		prlog(PR_DEBUG, "HBRT: Special wakeup assert for core 0x%x,"
 		      " count=%d\n", i_core, cpu->hbrt_spec_wakeup);
 		if (cpu->hbrt_spec_wakeup == 0)
-			rc = hservice_set_special_wakeup(cpu);
+			rc = set_wakeup(cpu);
 		if (rc == 0)
 			cpu->hbrt_spec_wakeup++;
 		return rc;
 	case 1: /* Deassert special wakeup */
-		/* XXX Assume P8 */
-		cpu = find_cpu_by_pir(i_core << 3);
+		cpu = find_cpu_by_pir(i_core);
 		if (!cpu)
 			return OPAL_PARAMETER;
 		prlog(PR_DEBUG, "HBRT: Special wakeup release for core"
@@ -738,7 +753,7 @@ static int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 		/* What to do with count on errors ? */
 		cpu->hbrt_spec_wakeup--;
 		if (cpu->hbrt_spec_wakeup == 0)
-			rc = hservice_clr_special_wakeup(cpu);
+			rc = clear_wakeup(cpu);
 		return rc;
 	case 2: /* Clear all special wakeups */
 		prlog(PR_DEBUG, "HBRT: Special wakeup release for all cores\n");
@@ -746,7 +761,7 @@ static int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 			if (cpu->hbrt_spec_wakeup) {
 				cpu->hbrt_spec_wakeup = 0;
 				/* What to do on errors ? */
-				hservice_clr_special_wakeup(cpu);
+				clear_wakeup(cpu);
 			}
 		}
 		return OPAL_SUCCESS;

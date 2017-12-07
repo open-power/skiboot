@@ -1843,6 +1843,44 @@ out:
 	return rc;
 }
 
+static u32 last_seq_id;
+
+int fsp_occ_reset_status(u64 chipid, s64 status)
+{
+	struct fsp_msg *stat;
+	int rc = OPAL_NO_MEM;
+	int status_word = 0;
+
+	prlog(PR_INFO, "HBRT: OCC stop() completed with %lld\n", status);
+
+	if (status) {
+		struct proc_chip *chip = get_chip(chipid);
+
+		if (!chip)
+			return OPAL_PARAMETER;
+
+		status_word = 0xfe00 | (chip->pcid & 0xff);
+		log_simple_error(&e_info(OPAL_RC_OCC_RESET),
+				 "OCC: Error %lld in OCC reset of chip %lld\n",
+				 status, chipid);
+	} else {
+		occ_msg_queue_occ_reset();
+	}
+
+	stat = fsp_mkmsg(FSP_CMD_RESET_OCC_STAT, 2, status_word, last_seq_id);
+	if (!stat)
+		return rc;
+
+	rc = fsp_queue_msg(stat, fsp_freemsg);
+	if (rc) {
+		fsp_freemsg(stat);
+		log_simple_error(&e_info(OPAL_RC_OCC_RESET),
+			"OCC: Error %d queueing FSP OCC RESET STATUS message\n",
+			rc);
+	}
+	return rc;
+}
+
 static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 {
 	struct fsp_msg *rsp, *stat;
@@ -1883,7 +1921,18 @@ static void occ_do_reset(u8 scope, u32 dbob_id, u32 seq_id)
 	 * FSP will request OCC to left in stopped state.
 	 */
 
-	rc = host_services_occ_stop();
+	switch (proc_gen) {
+	case proc_gen_p8:
+		rc = host_services_occ_stop();
+		break;
+	case proc_gen_p9:
+		last_seq_id = seq_id;
+		chip = next_chip(NULL);
+		prd_fsp_occ_reset(chip->id);
+		return;
+	default:
+		return;
+	}
 
 	/* Handle fallback to preload */
 	if (rc == -ENOENT && chip->homer_base) {

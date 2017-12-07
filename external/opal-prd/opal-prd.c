@@ -163,6 +163,9 @@ struct func_desc {
 	void *toc;
 } hbrt_entry;
 
+static int nr_chips;
+static u64 chips[256];
+
 static int read_prd_msg(struct opal_prd_ctx *ctx);
 
 static struct prd_range *find_range(const char *name, uint32_t instance)
@@ -522,6 +525,24 @@ int hservice_i2c_write(uint64_t i_master, uint16_t i_devAddr,
 		HBRT_I2C_MASTER_PORT_SHIFT;
 	return i2c_write(chip_id, engine, port, i_devAddr, i_offsetSize,
 			 i_offset, i_length, i_data);
+}
+
+int hservice_wakeup(u32 core, u32 mode)
+{
+	struct opal_prd_msg msg;
+
+	msg.hdr.type = OPAL_PRD_MSG_TYPE_CORE_SPECIAL_WAKEUP;
+	msg.hdr.size = htobe16(sizeof(msg));
+	msg.spl_wakeup.core = htobe32(core);
+	msg.spl_wakeup.mode = htobe32(mode);
+
+	if (write(ctx->fd, &msg, sizeof(msg)) != sizeof(msg)) {
+		pr_log(LOG_ERR, "FW: Failed to send CORE_SPECIAL_WAKEUP msg %x : %m\n",
+		       core);
+		return -1;
+	}
+
+	return 0;
 }
 
 static void ipmi_init(struct opal_prd_ctx *ctx)
@@ -1173,6 +1194,52 @@ static void print_ranges(struct opal_prd_ctx *ctx)
 	}
 }
 
+static int chip_init(void)
+{
+	struct dirent *dirent;
+	char *path;
+	DIR *dir;
+	__be32 *chipid;
+	void *buf;
+	int rc, len, i;
+
+	dir = opendir(devicetree_base);
+	if (!dir) {
+		pr_log(LOG_ERR, "FW: Can't open %s", devicetree_base);
+		return  -1;
+	}
+
+	for (;;) {
+		dirent = readdir(dir);
+		if (!dirent)
+			break;
+
+		if (strncmp("xscom", dirent->d_name, 5))
+			continue;
+
+		rc = asprintf(&path, "%s/%s/ibm,chip-id", devicetree_base,
+			      dirent->d_name);
+		if (rc < 0) {
+			pr_log(LOG_ERR, "FW: Failed to create chip-id path");
+			return -1;
+		}
+
+		rc = open_and_read(path, &buf, &len);
+		if (rc) {
+			pr_log(LOG_ERR, "FW; Failed to read chipid");
+			return -1;
+		}
+		chipid = buf;
+		chips[nr_chips++] = be32toh(*chipid);
+	}
+
+	pr_log(LOG_DEBUG, "FW: Chip init");
+	for (i = 0; i < nr_chips; i++)
+		pr_log(LOG_DEBUG, "FW: Chip 0x%lx", chips[i]);
+
+	return 0;
+}
+
 static int prd_init_ranges(struct opal_prd_ctx *ctx)
 {
 	struct dirent *dirent;
@@ -1292,6 +1359,10 @@ static int prd_init(struct opal_prd_ctx *ctx)
 		pr_log(LOG_ERR, "FW: can't parse PRD memory information");
 		return -1;
 	}
+
+	rc = chip_init();
+	if (rc)
+		pr_log(LOG_ERR, "FW: Failed to initialize chip IDs");
 
 	return 0;
 }
@@ -1436,6 +1507,41 @@ static int handle_msg_sbe_passthrough(struct opal_prd_ctx *ctx,
 	return rc;
 }
 
+static int handle_msg_fsp_occ_reset(struct opal_prd_msg *msg)
+{
+	struct opal_prd_msg omsg;
+	int rc = -1, i;
+
+	pr_debug("FW: FSP requested OCC reset");
+
+	if (!hservice_runtime->reset_pm_complex) {
+		pr_log_nocall("reset_pm_complex");
+		return rc;
+	}
+
+	for (i = 0; i < nr_chips; i++) {
+		pr_debug("PM: calling pm_complex_reset(0x%lx)", chips[i]);
+		rc = call_reset_pm_complex(chips[i]);
+		if (rc) {
+			pr_log(LOG_ERR, "PM: Failed pm_complex_reset(0x%lx) %m",
+			       chips[i]);
+			break;
+		}
+	}
+
+	omsg.hdr.type = OPAL_PRD_MSG_TYPE_FSP_OCC_RESET_STATUS;
+	omsg.hdr.size = htobe16(sizeof(omsg));
+	omsg.fsp_occ_reset_status.chip = msg->occ_reset.chip;
+	omsg.fsp_occ_reset_status.status = htobe64(rc);
+
+	if (write(ctx->fd, &omsg, sizeof(omsg)) != sizeof(omsg)) {
+		pr_log(LOG_ERR, "FW: Failed to send FSP_OCC_RESET_STATUS msg: %m");
+		return -1;
+	}
+
+	return rc;
+}
+
 static int handle_prd_msg(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 {
 	int rc = -1;
@@ -1455,6 +1561,9 @@ static int handle_prd_msg(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 		break;
 	case OPAL_PRD_MSG_TYPE_SBE_PASSTHROUGH:
 		rc = handle_msg_sbe_passthrough(ctx, msg);
+		break;
+	case OPAL_PRD_MSG_TYPE_FSP_OCC_RESET:
+		rc = handle_msg_fsp_occ_reset(msg);
 		break;
 	default:
 		pr_log(LOG_WARNING, "Invalid incoming message type 0x%x",
@@ -1987,6 +2096,9 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 		hinterface.pnor_read = NULL;
 		hinterface.pnor_write = NULL;
 	}
+
+	if (!is_fsp_system())
+		hinterface.wakeup = NULL;
 
 	ipmi_init(ctx);
 

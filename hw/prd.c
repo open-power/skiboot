@@ -30,6 +30,7 @@ enum events {
 	EVENT_OCC_ERROR	= 1 << 1,
 	EVENT_OCC_RESET	= 1 << 2,
 	EVENT_SBE_PASSTHROUGH = 1 << 3,
+	EVENT_FSP_OCC_RESET = 1 << 4,
 };
 
 static uint8_t events[MAX_CHIPS];
@@ -115,6 +116,10 @@ static void prd_msg_consumed(void *data)
 		proc = msg->sbe_passthrough.chip;
 		event = EVENT_SBE_PASSTHROUGH;
 		break;
+	case OPAL_PRD_MSG_TYPE_FSP_OCC_RESET:
+		proc = msg->occ_reset.chip;
+		event = EVENT_FSP_OCC_RESET;
+		break;
 	default:
 		prlog(PR_ERR, "PRD: invalid msg consumed, type: 0x%x\n",
 				msg->hdr.type);
@@ -189,6 +194,9 @@ static void send_next_pending_event(void)
 	} else if (event & EVENT_SBE_PASSTHROUGH) {
 		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_SBE_PASSTHROUGH;
 		prd_msg->sbe_passthrough.chip = proc;
+	} else if (event & EVENT_FSP_OCC_RESET) {
+		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_FSP_OCC_RESET;
+		prd_msg->occ_reset.chip = proc;
 	}
 
 	/*
@@ -273,6 +281,11 @@ void prd_tmgt_interrupt(uint32_t proc)
 void prd_occ_reset(uint32_t proc)
 {
 	prd_event(proc, EVENT_OCC_RESET);
+}
+
+void prd_fsp_occ_reset(uint32_t proc)
+{
+	prd_event(proc, EVENT_FSP_OCC_RESET);
 }
 
 void prd_sbe_passthrough(uint32_t proc)
@@ -430,6 +443,14 @@ static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 		break;
 	case OPAL_PRD_MSG_TYPE_FIRMWARE_REQUEST:
 		rc = prd_msg_handle_firmware_req(msg);
+		break;
+	case OPAL_PRD_MSG_TYPE_FSP_OCC_RESET_STATUS:
+		rc = fsp_occ_reset_status(msg->fsp_occ_reset_status.chip,
+					  msg->fsp_occ_reset_status.status);
+		break;
+	case OPAL_PRD_MSG_TYPE_CORE_SPECIAL_WAKEUP:
+		rc = hservice_wakeup(msg->spl_wakeup.core,
+				     msg->spl_wakeup.mode);
 		break;
 	default:
 		rc = OPAL_UNSUPPORTED;

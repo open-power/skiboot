@@ -1061,6 +1061,9 @@ enum opal_prd_msg_type {
 	OPAL_PRD_MSG_TYPE_FIRMWARE_RESPONSE, /* HBRT <-- OPAL */
 	OPAL_PRD_MSG_TYPE_FIRMWARE_NOTIFY, /* HBRT <-- OPAL */
 	OPAL_PRD_MSG_TYPE_SBE_PASSTHROUGH, /* HBRT <-- OPAL */
+	OPAL_PRD_MSG_TYPE_FSP_OCC_RESET, /* HBRT <-- OPAL */
+	OPAL_PRD_MSG_TYPE_FSP_OCC_RESET_STATUS, /* HBRT --> OPAL */
+	OPAL_PRD_MSG_TYPE_CORE_SPECIAL_WAKEUP, /* HBRT --> OPAL */
 };
 
 struct opal_prd_msg_header {
@@ -1108,6 +1111,14 @@ struct opal_prd_msg {
 		struct {
 			__be64	chip;
 		} sbe_passthrough;
+		struct {
+			__be64 chip;
+			__be64 status; /* 0 SUCCESS */
+		} fsp_occ_reset_status;
+		struct {
+			__be32 core;
+			__be32 mode;
+		} spl_wakeup;
 	};
 };
 

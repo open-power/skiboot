@@ -183,7 +183,7 @@ hinterface:
 	DISABLED_THUNK(hservice_lid_load)
 	DISABLED_THUNK(hservice_lid_unload)
 	CALLBACK_THUNK(hservice_get_reserved_mem)
-	DISABLED_THUNK(hservice_wakeup)
+	CALLBACK_THUNK(hservice_wakeup)
 	CALLBACK_THUNK(hservice_nanosleep)
 	DISABLED_THUNK(hservice_report_occ_failure)
 	CALLBACK_THUNK(hservice_clock_gettime)
