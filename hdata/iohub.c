@@ -705,7 +705,7 @@ static void parse_one_slot(const struct slot_map_entry *entry,
 			st_name(type), vid, did);
 
 		/* The VID:DID is only meaningful for builtins and switches */
-		if (vid && did) {
+		if (type == st_sw_upstream && vid && did) {
 			node = dt_new_2addr(parent, st_name(type), vid, did);
 			dt_add_property_cells(node, "reg", vid, did);
 		} else {
