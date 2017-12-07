@@ -306,6 +306,8 @@ extern int call_sbe_message_passing(uint32_t i_chipId);
 extern uint64_t call_get_ipoll_events(void);
 extern int call_firmware_notify(uint64_t len, void *data);
 extern int call_reset_pm_complex(uint64_t chip);
+extern int call_load_pm_complex(u64 chip, u64 homer, u64 occ_common, u32 mode);
+extern int call_start_pm_complex(u64 chip);
 
 void hservice_puts(const char *str)
 {
@@ -1421,6 +1423,61 @@ static int handle_msg_occ_error(struct opal_prd_ctx *ctx,
 	return 0;
 }
 
+static int pm_complex_load_start(void)
+{
+	struct prd_range *range;
+	u64 homer, occ_common;
+	int rc = -1, i;
+
+	if (!hservice_runtime->load_pm_complex) {
+		pr_log_nocall("load_pm_complex");
+		return rc;
+	}
+
+	if (!hservice_runtime->start_pm_complex) {
+		pr_log_nocall("start_pm_complex");
+		return rc;
+	}
+
+	range = find_range("ibm,occ-common-area", 0);
+	if (!range) {
+		pr_log(LOG_ERR, "PM: ibm,occ-common-area not found");
+		return rc;
+	}
+	occ_common = range->physaddr;
+
+	for (i = 0; i < nr_chips; i++) {
+		range = find_range("ibm,homer-image", chips[i]);
+		if (!range) {
+			pr_log(LOG_ERR, "PM: ibm,homer-image not found 0x%lx",
+			       chips[i]);
+			return -1;
+		}
+		homer = range->physaddr;
+
+		pr_debug("PM: calling load_pm_complex(0x%lx, 0x%lx, 0x%lx, LOAD)",
+			 chips[i], homer, occ_common);
+		rc = call_load_pm_complex(chips[i], homer, occ_common, 0);
+		if (rc) {
+			pr_log(LOG_ERR, "PM: Failed load_pm_complex(0x%lx) %m",
+			       chips[i]);
+			return rc;
+		}
+	}
+
+	for (i = 0; i < nr_chips; i++) {
+		pr_debug("PM: calling start_pm_complex(0x%lx)", chips[i]);
+		rc = call_start_pm_complex(chips[i]);
+		if (rc) {
+			pr_log(LOG_ERR, "PM: Failed start_pm_complex(0x%lx): %m",
+			       chips[i]);
+			return rc;
+		}
+	}
+
+	return rc;
+}
+
 static int pm_complex_reset(uint64_t chip)
 {
 	int rc;
@@ -1430,13 +1487,24 @@ static int pm_complex_reset(uint64_t chip)
 	 * BMC system -> process_occ_reset
 	 */
 	if (is_fsp_system()) {
+		int i;
+
 		if (!hservice_runtime->reset_pm_complex) {
 			pr_log_nocall("reset_pm_complex");
 			return -1;
 		}
 
-		pr_debug("PM: calling pm_complex_reset(%ld)", chip);
-		rc = call_reset_pm_complex(chip);
+		for (i = 0; i < nr_chips; i++) {
+			pr_debug("PM: calling pm_complex_reset(%ld)", chips[i]);
+			rc = call_reset_pm_complex(chip);
+			if (rc) {
+				pr_log(LOG_ERR, "PM: Failed pm_complex_reset(%ld): %m",
+				       chips[i]);
+				return rc;
+			}
+		}
+
+		rc = pm_complex_load_start();
 	} else {
 		if (!hservice_runtime->process_occ_reset) {
 			pr_log_nocall("process_occ_reset");
@@ -1542,6 +1610,27 @@ static int handle_msg_fsp_occ_reset(struct opal_prd_msg *msg)
 	return rc;
 }
 
+static int handle_msg_fsp_occ_load_start(struct opal_prd_msg *msg)
+{
+	struct opal_prd_msg omsg;
+	int rc;
+
+	pr_debug("FW: FSP requested OCC load/start");
+	rc = pm_complex_load_start();
+
+	omsg.hdr.type = OPAL_PRD_MSG_TYPE_FSP_OCC_LOAD_START_STATUS;
+	omsg.hdr.size = htobe16(sizeof(omsg));
+	omsg.fsp_occ_reset_status.chip = msg->occ_reset.chip;
+	omsg.fsp_occ_reset_status.status = htobe64(rc);
+
+	if (write(ctx->fd, &omsg, sizeof(omsg)) != sizeof(omsg)) {
+		pr_log(LOG_ERR, "FW: Failed to send FSP_OCC_LOAD_START_STATUS msg: %m");
+		return -1;
+	}
+
+	return rc;
+}
+
 static int handle_prd_msg(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 {
 	int rc = -1;
@@ -1564,6 +1653,9 @@ static int handle_prd_msg(struct opal_prd_ctx *ctx, struct opal_prd_msg *msg)
 		break;
 	case OPAL_PRD_MSG_TYPE_FSP_OCC_RESET:
 		rc = handle_msg_fsp_occ_reset(msg);
+		break;
+	case OPAL_PRD_MSG_TYPE_FSP_OCC_LOAD_START:
+		rc = handle_msg_fsp_occ_load_start(msg);
 		break;
 	default:
 		pr_log(LOG_WARNING, "Invalid incoming message type 0x%x",

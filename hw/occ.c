@@ -1754,6 +1754,8 @@ void occ_poke_load_queue(void)
 	}
 }
 
+static u32 last_seq_id;
+static bool in_ipl = true;
 static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 {
 	struct fsp_msg *rsp;
@@ -1786,15 +1788,25 @@ static void occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 		return;
 
 	if (proc_gen == proc_gen_p9) {
-		rc = -ENOMEM;
-		/* OCC is pre-loaded in P9, so send SUCCESS to FSP */
-		rsp = fsp_mkmsg(FSP_CMD_LOAD_OCC_STAT, 2, 0, seq_id);
-		if (rsp)
+		if (in_ipl) {
+			/* OCC is pre-loaded in P9, so send SUCCESS to FSP */
+			rsp = fsp_mkmsg(FSP_CMD_LOAD_OCC_STAT, 2, 0, seq_id);
+			if (!rsp)
+				return;
+
 			rc = fsp_queue_msg(rsp, fsp_freemsg);
-		if (rc) {
-			log_simple_error(&e_info(OPAL_RC_OCC_LOAD),
-				"OCC: Error %d queueing FSP OCC LOAD STATUS msg", rc);
-			fsp_freemsg(rsp);
+			if (rc) {
+				log_simple_error(&e_info(OPAL_RC_OCC_LOAD),
+				"OCC: Error %d queueing OCC LOAD STATUS msg",
+						 rc);
+				fsp_freemsg(rsp);
+			}
+			in_ipl = false;
+		} else {
+			struct proc_chip *chip = next_chip(NULL);
+
+			last_seq_id = seq_id;
+			prd_fsp_occ_load_start(chip->id);
 		}
 		return;
 	}
@@ -1843,8 +1855,6 @@ out:
 	return rc;
 }
 
-static u32 last_seq_id;
-
 int fsp_occ_reset_status(u64 chipid, s64 status)
 {
 	struct fsp_msg *stat;
@@ -1878,6 +1888,38 @@ int fsp_occ_reset_status(u64 chipid, s64 status)
 			"OCC: Error %d queueing FSP OCC RESET STATUS message\n",
 			rc);
 	}
+	return rc;
+}
+
+int fsp_occ_load_start_status(u64 chipid, s64 status)
+{
+	struct fsp_msg *stat;
+	int rc = OPAL_NO_MEM;
+	int status_word = 0;
+
+	if (status) {
+		struct proc_chip *chip = get_chip(chipid);
+
+		if (!chip)
+			return OPAL_PARAMETER;
+
+		status_word = 0xB500 | (chip->pcid & 0xff);
+		log_simple_error(&e_info(OPAL_RC_OCC_LOAD),
+				 "OCC: Error %d in load/start OCC %lld\n", rc,
+				 chipid);
+	}
+
+	stat = fsp_mkmsg(FSP_CMD_LOAD_OCC_STAT, 2, status_word, last_seq_id);
+	if (!stat)
+		return rc;
+
+	rc = fsp_queue_msg(stat, fsp_freemsg);
+	if (rc) {
+		fsp_freemsg(stat);
+		log_simple_error(&e_info(OPAL_RC_OCC_LOAD),
+			"OCC: Error %d queueing FSP OCC LOAD STATUS msg", rc);
+	}
+
 	return rc;
 }
 
