@@ -92,10 +92,11 @@ static uint64_t xscom_wait_done(void)
 	return mfspr(SPR_HMER);
 }
 
-static void xscom_reset(uint32_t gcid)
+static void xscom_reset(uint32_t gcid, bool need_delay)
 {
 	u64 hmer;
 	uint32_t recv_status_reg, log_reg, err_reg;
+	struct timespec ts;
 
 	/* Clear errors in HMER */
 	mtspr(SPR_HMER, HMER_CLR_MASK);
@@ -126,6 +127,21 @@ static void xscom_reset(uint32_t gcid)
 	hmer = xscom_wait_done();
 	if (hmer & SPR_HMER_XSCOM_FAIL)
 		goto fail;
+
+	if (need_delay) {
+		/*
+		 * Its observed that sometimes immediate retry of
+		 * XSCOM operation returns wrong data. Adding a
+		 * delay for XSCOM reset to be effective. Delay of
+		 * 10 ms is found to be working fine experimentally.
+		 * FIXME: Replace 10ms delay by exact delay needed
+		 * or other alternate method to confirm XSCOM reset
+		 * completion, after checking from HW folks.
+		 */
+		ts.tv_sec = 0;
+		ts.tv_nsec = 10 * 1000;
+		nanosleep_nopoll(&ts, NULL);
+	}
 	return;
  fail:
 	/* Fatal error resetting XSCOM */
@@ -140,7 +156,6 @@ static void xscom_reset(uint32_t gcid)
 static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_addr,
 			      bool is_write, int64_t retries)
 {
-	struct timespec ts;
 	unsigned int stat = GETFIELD(SPR_HMER_XSCOM_STATUS, hmer);
 	int64_t rc = OPAL_HARDWARE;
 
@@ -158,20 +173,8 @@ static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_add
 			prlog(PR_NOTICE, "XSCOM: Busy even after %d retries, "
 				"resetting XSCOM now. Total retries  = %lld\n",
 				XSCOM_BUSY_RESET_THRESHOLD, retries);
-			xscom_reset(gcid);
+			xscom_reset(gcid, true);
 
-			/*
-			 * Its observed that sometimes immediate retry of
-			 * XSCOM operation returns wrong data. Adding a
-			 * delay for XSCOM reset to be effective. Delay of
-			 * 10 ms is found to be working fine experimentally.
-			 * FIXME: Replace 10ms delay by exact delay needed
-			 * or other alternate method to confirm XSCOM reset
-			 * completion, after checking from HW folks.
-			 */
-			ts.tv_sec = 0;
-			ts.tv_nsec = 10 * 1000;
-			nanosleep_nopoll(&ts, NULL);
 		}
 
 		/* Log error if we have retried enough and its still busy */
@@ -183,7 +186,7 @@ static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_add
 		return OPAL_XSCOM_BUSY;
 
 	case 2: /* CPU is asleep, reset XSCOM engine and return */
-		xscom_reset(gcid);
+		xscom_reset(gcid, false);
 		return OPAL_XSCOM_CHIPLET_OFF;
 	case 3: /* Partial good */
 		rc = OPAL_XSCOM_PARTIAL_GOOD;
@@ -208,7 +211,7 @@ static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_add
 		is_write ? "write" : "read", gcid, pcb_addr, stat);
 
 	/* We need to reset the XSCOM or we'll hang on the next access */
-	xscom_reset(gcid);
+	xscom_reset(gcid, false);
 
 	/* Non recovered ... just fail */
 	return rc;
