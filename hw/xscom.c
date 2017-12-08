@@ -153,8 +153,69 @@ static void xscom_reset(uint32_t gcid, bool need_delay)
 	 */
 }
 
+static int xscom_clear_error(uint32_t gcid, uint32_t pcb_addr)
+{
+	u64 hmer;
+	uint32_t base_xscom_addr;
+	uint32_t xscom_clear_reg = 0x20010800;
+
+	/* only in case of p9 */
+	if (proc_gen != proc_gen_p9)
+		return 0;
+
+	/*
+	 * Due to a hardware issue where core responding to scom was delayed
+	 * due to thread reconfiguration, leaves the scom logic in a state
+	 * where the subsequent scom to that core can get errors. This is
+	 * affected for Core PC scom registers in the range of
+	 * 20010A80-20010ABF.
+	 *
+	 * The solution is if a xscom timeout occurs to one of Core PC scom
+	 * registers in the range of 20010A80-20010ABF, a clearing scom
+	 * write is done to 0x20010800 with data of '0x00000000' which will
+	 * also get a timeout but clears the scom logic errors. After the
+	 * clearing write is done the original scom operation can be retried.
+	 *
+	 * The scom timeout is reported as status 0x4 (Invalid address)
+	 * in HMER[21-23].
+	 */
+
+	base_xscom_addr = pcb_addr & XSCOM_CLEAR_RANGE_MASK;
+	if (!((base_xscom_addr >= XSCOM_CLEAR_RANGE_START) &&
+				(base_xscom_addr <= XSCOM_CLEAR_RANGE_END)))
+		return 0;
+
+	/*
+	 * Reset the XSCOM or next scom operation will fail.
+	 * We also need a small delay before we go ahead with clearing write.
+	 * We have observed that without a delay the clearing write has reported
+	 * a wrong status.
+	 */
+	xscom_reset(gcid, true);
+
+	/* Clear errors in HMER */
+	mtspr(SPR_HMER, HMER_CLR_MASK);
+
+	/* Write 0 to clear the xscom logic errors on target chip */
+	out_be64(xscom_addr(gcid, xscom_clear_reg), 0);
+	hmer = xscom_wait_done();
+
+	/*
+	 * Above clearing xscom write will timeout and error out with
+	 * invalid access as there is no register at that address. This
+	 * xscom operation just helps to clear the xscom logic error.
+	 *
+	 * On failure, reset the XSCOM or we'll hang on the next access
+	 */
+	if (hmer & SPR_HMER_XSCOM_FAIL)
+		xscom_reset(gcid, true);
+
+	return 1;
+}
+
 static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_addr,
-			      bool is_write, int64_t retries)
+			      bool is_write, int64_t retries,
+			      int64_t *xscom_clear_retries)
 {
 	unsigned int stat = GETFIELD(SPR_HMER_XSCOM_STATUS, hmer);
 	int64_t rc = OPAL_HARDWARE;
@@ -193,6 +254,15 @@ static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_add
 		break;
 	case 4: /* Invalid address / address error */
 		rc = OPAL_XSCOM_ADDR_ERROR;
+		if (xscom_clear_error(gcid, pcb_addr)) {
+			/* return busy if retries still pending. */
+			if ((*xscom_clear_retries)--)
+				return OPAL_XSCOM_BUSY;
+
+			prlog(PR_DEBUG, "XSCOM: error recovery failed for "
+				"gcid=0x%x pcb_addr=0x%x\n", gcid, pcb_addr);
+
+		}
 		break;
 	case 5: /* Clock error */
 		rc = OPAL_XSCOM_CLOCK_ERROR;
@@ -255,6 +325,7 @@ static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val)
 {
 	uint64_t hmer;
 	int64_t ret, retries;
+	int64_t xscom_clear_retries = XSCOM_CLEAR_MAX_RETRIES;
 
 	if (!xscom_gcid_ok(gcid)) {
 		prerror("%s: invalid XSCOM gcid 0x%x\n", __func__, gcid);
@@ -278,7 +349,8 @@ static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val)
 			return OPAL_SUCCESS;
 
 		/* Handle error and possibly eventually retry */
-		ret = xscom_handle_error(hmer, gcid, pcb_addr, false, retries);
+		ret = xscom_handle_error(hmer, gcid, pcb_addr, false, retries,
+				&xscom_clear_retries);
 		if (ret != OPAL_BUSY)
 			break;
 	}
@@ -305,6 +377,7 @@ static int __xscom_write(uint32_t gcid, uint32_t pcb_addr, uint64_t val)
 {
 	uint64_t hmer;
 	int64_t ret, retries = 0;
+	int64_t xscom_clear_retries = XSCOM_CLEAR_MAX_RETRIES;
 
 	if (!xscom_gcid_ok(gcid)) {
 		prerror("%s: invalid XSCOM gcid 0x%x\n", __func__, gcid);
@@ -328,7 +401,8 @@ static int __xscom_write(uint32_t gcid, uint32_t pcb_addr, uint64_t val)
 			return OPAL_SUCCESS;
 
 		/* Handle error and possibly eventually retry */
-		ret = xscom_handle_error(hmer, gcid, pcb_addr, true, retries);
+		ret = xscom_handle_error(hmer, gcid, pcb_addr, true, retries,
+				&xscom_clear_retries);
 		if (ret != OPAL_BUSY)
 			break;
 	}
