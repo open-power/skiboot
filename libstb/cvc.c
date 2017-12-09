@@ -134,6 +134,58 @@ static void cvc_service_register(uint32_t id, uint32_t offset, uint32_t version)
 	      name, service->addr, service->version);
 }
 
+static int cvc_reserved_mem_init(struct dt_node *parent) {
+	struct dt_node *node, *service;
+	struct dt_node *reserved_mem;
+	struct dt_node *cvc_resv_mem = NULL;
+	uint32_t phandle;
+	uint64_t addr, size;
+
+	reserved_mem = dt_find_by_path(dt_root, "/ibm,hostboot/reserved-memory");
+	if (!reserved_mem) {
+		prlog(PR_ERR, "/ibm,hostboot/reserved-memory not found\n");
+		return -1;
+	}
+
+	/*
+	 * The container verification code is stored in a hostboot reserved
+	 * memory which is pointed by the property
+	 * /ibm,secureboot/ibm,container-verification-code/memory-region
+	 */
+	dt_for_each_child(parent, node) {
+		if (dt_node_is_compatible(node, "ibm,container-verification-code")) {
+			phandle = dt_prop_get_u32(node, "memory-region");
+			cvc_resv_mem = dt_find_by_phandle(reserved_mem, phandle);
+			break;
+		}
+	}
+	if (!cvc_resv_mem) {
+		prlog(PR_ERR, "CVC not found in /ibm,hostboot/reserved-memory\n");
+		return -1;
+	}
+	addr = dt_get_address(cvc_resv_mem, 0, &size);
+	cvc_register(addr, addr + size-1);
+
+	/*
+	 *  Each child of the CVC node describes a CVC service
+	 */
+	dt_for_each_child(node, service) {
+		uint32_t version, offset;
+
+		version = dt_prop_get_u32(service, "version");
+		offset = dt_prop_get_u32(service, "reg");
+
+		if (dt_node_is_compatible(service, "ibm,cvc-sha512"))
+			cvc_service_register(CVC_SHA512_SERVICE, offset, version);
+		else if (dt_node_is_compatible(service, "ibm,cvc-verify"))
+			cvc_service_register(CVC_VERIFY_SERVICE, offset, version);
+		else
+			prlog(PR_DEBUG, "unknown %s\n", service->name);
+	}
+
+	return 0;
+}
+
 #define SECURE_ROM_MEMORY_SIZE		(16 * 1024)
 #define SECURE_ROM_XSCOM_ADDRESS	0x02020017
 
@@ -198,6 +250,8 @@ int cvc_init(void)
 		rc = cvc_secure_rom_init();
 	} else if (version == IBM_SECUREBOOT_SOFTROM) {
 		softrom = true;
+	} else if (version == IBM_SECUREBOOT_V2) {
+		rc = cvc_reserved_mem_init(node);
 	} else {
 		prlog(PR_ERR, "%s FAILED. /ibm,secureboot not supported\n",
 		      __func__);

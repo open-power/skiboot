@@ -35,6 +35,7 @@ static struct {
 } secureboot_map[] = {
 	{ IBM_SECUREBOOT_V1, "ibm,secureboot-v1" },
 	{ IBM_SECUREBOOT_SOFTROM, "ibm,secureboot-v1-softrom" },
+	{ IBM_SECUREBOOT_V2, "ibm,secureboot-v2" },
 };
 
 static void secureboot_enforce(void)
@@ -130,6 +131,21 @@ void secureboot_init(void)
 			secureboot_enforce();
 		}
 		hw_key_hash_size = SHA512_DIGEST_LENGTH;
+
+	} else if (version == IBM_SECUREBOOT_V2) {
+
+		hw_key_hash_size = dt_prop_get_u32(node, "hw-key-hash-size");
+		if (hw_key_hash_size == 0) {
+			prlog(PR_EMERG, "hw-key-hash-size=%zd too short\n",
+			      hw_key_hash_size);
+			secureboot_enforce();
+		}
+		if (hw_key_hash_size > SHA512_DIGEST_LENGTH) {
+			prlog(PR_EMERG, "hw-key-hash-size=%zd too big\n",
+			      hw_key_hash_size);
+			secureboot_enforce();
+		}
+
 	} else {
 		prlog(PR_ERR, "%s FAILED. /ibm,secureboot not supported",
 		      __func__);

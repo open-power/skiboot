@@ -25,6 +25,7 @@
 enum secureboot_version {
 	IBM_SECUREBOOT_V1,
 	IBM_SECUREBOOT_SOFTROM,
+	IBM_SECUREBOOT_V2,
 };
 
 bool secureboot_is_compatible(struct dt_node *node, int *version, const char **compat);
