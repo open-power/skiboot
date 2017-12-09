@@ -581,6 +581,16 @@ void tpm_i2c_nuvoton_probe(void)
 		assert(bus->check_quirk == NULL);
 		bus->check_quirk = nuvoton_tpm_quirk;
 		bus->check_quirk_data = tpm_device;
+
+		/*
+		 * Tweak for linux. It doesn't have a driver compatible
+		 * with "nuvoton,npct650"
+		 */
+		if (!dt_node_is_compatible(node, "nuvoton,npct601")) {
+			dt_check_del_prop(node, "compatible");
+			dt_add_property_strings(node, "compatible",
+						"nuvoton,npct650", "nuvoton,npct601");
+		}
 	}
 	return;
 disable:
