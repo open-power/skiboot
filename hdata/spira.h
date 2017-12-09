@@ -355,6 +355,7 @@ struct iplparams_sysparams {
 	__be32		abc_bus_speed;
 	__be32		wxyz_bus_speed;
 	__be32		sys_eco_mode;
+#define SYS_ATTR_MULTIPLE_TPM PPC_BIT32(0)
 #define SYS_ATTR_RISK_LEVEL PPC_BIT32(3)
 	__be32		sys_attributes;
 	__be32		mem_scrubbing;
@@ -369,12 +370,14 @@ struct iplparams_sysparams {
 	uint8_t		split_core_mode;	/* >= 0x5c */
 	uint8_t		reserved[3];
 	uint8_t		sys_vendor[64];		/* >= 0x5f */
-	/* >= 0x60 */
-	__be16		sys_sec_setting;
-	__be16		tpm_config_bit;
-	__be16		tpm_drawer;
-	__be16		reserved2;
-	uint8_t		hw_key_hash[64];
+#define SEC_CONTAINER_SIG_CHECKING PPC_BIT16(0)
+#define SEC_HASHES_EXTENDED_TO_TPM PPC_BIT16(1)
+	__be16		sys_sec_setting;	/* >= 0x60 */
+	__be16		tpm_config_bit;		/* >= 0x60 */
+	__be16		tpm_drawer;		/* >= 0x60 */
+	__be16		hw_key_hash_size;	/* >= 0x60 */
+#define SYSPARAMS_HW_KEY_HASH_MAX   64
+	uint8_t		hw_key_hash[SYSPARAMS_HW_KEY_HASH_MAX];  /* >= 0x60 */
 	uint8_t		sys_family_str[64];	/* vendor,name */
 	uint8_t		sys_type_str[64];	/* vendor,type */
 } __packed;

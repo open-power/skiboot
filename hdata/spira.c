@@ -938,6 +938,42 @@ static void add_nmmu(void)
 	}
 }
 
+static void dt_init_secureboot_node(const struct iplparams_sysparams *sysparams)
+{
+	struct dt_node *node;
+	u16 sys_sec_setting;
+	u16 hw_key_hash_size;
+
+	node = dt_new(dt_root, "ibm,secureboot");
+	assert(node);
+
+	dt_add_property_string(node, "compatible", "ibm,secureboot-v2");
+
+	sys_sec_setting = be16_to_cpu(sysparams->sys_sec_setting);
+	if (sys_sec_setting & SEC_CONTAINER_SIG_CHECKING)
+		dt_add_property(node, "secure-enabled", NULL, 0);
+	if (sys_sec_setting & SEC_HASHES_EXTENDED_TO_TPM)
+		dt_add_property(node, "trusted-enabled", NULL, 0);
+
+	hw_key_hash_size = be16_to_cpu(sysparams->hw_key_hash_size);
+
+	/* Prevent hw-key-hash buffer overflow by truncating hw-key-hash-size if
+	 * it is bigger than the hw-key-hash buffer.
+	 * Secure boot will be enforced later in skiboot, if the hw-key-hash-size
+	 * was not supposed to be SYSPARAMS_HW_KEY_HASH_MAX.
+	 */
+	if (hw_key_hash_size > SYSPARAMS_HW_KEY_HASH_MAX) {
+		prlog(PR_ERR, "IPLPARAMS: hw-key-hash-size=%d too big, "
+		      "truncating to %d\n", hw_key_hash_size,
+		      SYSPARAMS_HW_KEY_HASH_MAX);
+		hw_key_hash_size = SYSPARAMS_HW_KEY_HASH_MAX;
+	}
+
+	dt_add_property(node, "hw-key-hash", sysparams->hw_key_hash,
+			hw_key_hash_size);
+	dt_add_property_cells(node, "hw-key-hash-size", hw_key_hash_size);
+}
+
 static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 {
 	const struct iplparams_sysparams *p;
@@ -1024,6 +1060,9 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 	sys_attributes = be32_to_cpu(p->sys_attributes);
 	if (sys_attributes & SYS_ATTR_RISK_LEVEL)
 		dt_add_property(node, "elevated-risk-level", NULL, 0);
+
+	if (version >= 0x60 && proc_gen >= proc_gen_p9)
+		dt_init_secureboot_node(p);
 }
 
 static void add_iplparams_ipl_params(const void *iplp, struct dt_node *node)
