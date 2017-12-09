@@ -30,6 +30,7 @@
 //#define STB_DEBUG
 
 static bool trusted_mode = false;
+static bool boot_services_exited = false;
 
 /*
  * This maps a PCR for each resource we can measure. The PCR number is
@@ -44,6 +45,26 @@ static struct {
 	{ RESOURCE_ID_IMA_CATALOG, PCR_2 },
 	{ RESOURCE_ID_KERNEL, PCR_4 },
 	{ RESOURCE_ID_CAPP,   PCR_2 },
+};
+
+/*
+ * Event Separator - digest of 0xFFFFFFFF
+ */
+static struct {
+	const unsigned char *event;
+	const unsigned char *sha1;
+	const unsigned char *sha256;
+} ev_separator = {
+
+	.event = "\xff\xff\xff\xff",
+
+	.sha1   = "\xd9\xbe\x65\x24\xa5\xf5\x04\x7d\xb5\x86"
+		  "\x68\x13\xac\xf3\x27\x78\x92\xa7\xa3\x0a",
+
+	.sha256 = "\xad\x95\x13\x1b\xc0\xb7\x99\xc0\xb1\xaf"
+		  "\x47\x7f\xb1\x4f\xcf\x26\xa6\xa9\xf7\x60"
+		  "\x79\xe4\x8b\xf0\x90\xac\xb7\xe8\x36\x7b"
+		  "\xfd\x0e"
 };
 
 static TPM_Pcr map_pcr(enum resource_id id)
@@ -95,6 +116,48 @@ void trustedboot_init(void)
 	tpm_init();
 }
 
+int trustedboot_exit_boot_services(void)
+{
+	uint32_t pcr;
+	int rc = 0;
+	bool failed = false;
+
+	boot_services_exited = true;
+
+	if (!trusted_mode)
+		goto out_free;
+
+#ifdef STB_DEBUG
+	prlog(PR_NOTICE, "ev_separator.event: %s\n", ev_separator.event);
+	prlog(PR_NOTICE, "ev_separator.sha1:\n");
+	stb_print_data((uint8_t*) ev_separator.sha1, TPM_ALG_SHA1_SIZE);
+	prlog(PR_NOTICE, "ev_separator.sha256:\n");
+	stb_print_data((uint8_t*) ev_separator.sha256, TPM_ALG_SHA256_SIZE);
+#endif
+	/*
+	 * As defined in the TCG Platform Firmware PWe are done. Extending the digest of 0xFFFFFFFF
+	 * in PCR[0-7], and recording an EV_SEPARATOR event in
+	 * event log as defined in the TCG Platform Firmware Profile
+	 * specification, Revision 00.21
+	 */
+	for (pcr = 0; pcr < 8; pcr++) {
+		rc = tpm_extendl(pcr, TPM_ALG_SHA256,
+				(uint8_t*) ev_separator.sha256,
+				TPM_ALG_SHA256_SIZE, TPM_ALG_SHA1,
+				(uint8_t*) ev_separator.sha1,
+				TPM_ALG_SHA1_SIZE, EV_SEPARATOR,
+				ev_separator.event);
+		if (rc)
+			failed = true;
+	}
+	tpm_add_status_property();
+
+out_free:
+	tpm_cleanup();
+
+	return (failed) ? -1 : 0;
+}
+
 int trustedboot_measure(enum resource_id id, void *buf, size_t len)
 {
 	uint8_t digest[SHA512_DIGEST_LENGTH];
@@ -115,6 +178,11 @@ int trustedboot_measure(enum resource_id id, void *buf, size_t len)
 		 * caller, which is passing an unknown resource_id.
 		 */
 		prlog(PR_ERR, "resource NOT MEASURED, resource_id=%d unknown\n", id);
+		return -1;
+	}
+	if (boot_services_exited) {
+		prlog(PR_ERR, "%s NOT MEASURED. Already exited from boot "
+		      "services\n", name);
 		return -1;
 	}
 	pcr = map_pcr(id);

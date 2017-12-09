@@ -22,6 +22,17 @@
 void trustedboot_init(void);
 
 /**
+ * As defined in the TCG Platform Firmware Profile specification, the
+ * digest of 0xFFFFFFFF or 0x00000000  must be extended in PCR[0-7] and
+ * an EV_SEPARATOR event must be recorded in the event log for PCR[0-7]
+ * prior to the first invocation of the first Ready to Boot call.
+ *
+ * This function must be called just before BOOTKERNEL is executed. Every call
+ * to trustedboot_measure() will fail afterwards.
+ */
+int trustedboot_exit_boot_services(void);
+
+/**
  * trustedboot_measure - measure a resource
  * @id    : resource id
  * @buf   : data to be measured
