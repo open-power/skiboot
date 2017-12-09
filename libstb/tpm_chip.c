@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+#ifndef pr_fmt
+#define pr_fmt(fmt) "STB: " fmt
+#endif
+
 #include <skiboot.h>
 #include <device.h>
 #include <string.h>
-
-#include "status_codes.h"
 #include "container.h"
 #include "tpm_chip.h"
 #include "drivers/tpm_i2c_nuvoton.h"
@@ -53,11 +55,11 @@ static void tpm_print_pcr(struct tpm_chip *tpm, TPM_Pcr pcr, TPM_Alg_Id alg,
 		 * the TSS or the TPM device driver. Each one
 		 * has local debug macros that can help.
 		 */
-		prlog(PR_ERR, "STB: tpmCmdPcrRead() failed: "
+		prlog(PR_ERR, "tpmCmdPcrRead() failed: "
 		      "tpm%d, alg=%x, pcr%d, rc=%d\n",
 		      tpm->id, alg, pcr, rc);
 	} else {
-		prlog(PR_NOTICE,"STB: print pcr-read: tpm%d alg=%x pcr%d\n",
+		prlog(PR_NOTICE,"print pcr-read: tpm%d alg=0x%x pcr%d\n",
 		      tpm->id, alg, pcr);
 		stb_print_data(digest, size);
 	}
@@ -81,9 +83,8 @@ int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
 			 * node is being registered twice or there is a
 			 * tpm node duplicate in the device tree
 			 */
-			prlog(PR_WARNING, "TPM: tpm%d already registered\n",
-			      tpm->id);
-			return STB_ERROR;
+			prlog(PR_WARNING, "tpm%d already registered\n", tpm->id);
+			return -1;
 		}
 		i++;
 	}
@@ -109,7 +110,7 @@ int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
 		 * indicates a Hostboot bug if the property really
 		 * doesn't exist in the tpm node.
 		 */
-		prlog(PR_ERR, "TPM: linux,sml-base property not found "
+		prlog(PR_ERR, "linux,sml-base property not found "
 		      "tpm node %p\n", node);
 		goto disable;
 	}
@@ -123,7 +124,7 @@ int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
 		 * indicates a Hostboot bug if the property really
 		 * doesn't exist in the tpm node.
 		 */
-		prlog(PR_ERR, "TPM: linux,sml-size property not found, "
+		prlog(PR_ERR, "linux,sml-size property not found, "
 		      "tpm node %p\n", node);
 		goto disable;
 	}
@@ -144,7 +145,7 @@ int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
 		 * TpmLogMgr code (or friends) has been updated, the changes
 		 * need to be applied to skiboot as well.
 		 */
-		prlog(PR_ERR, "TPM: eventlog init failed: tpm%d rc=%d",
+		prlog(PR_ERR, "eventlog init failed: tpm%d rc=%d",
 		      tpm->id, rc);
 		goto disable;
 	}
@@ -156,16 +157,17 @@ int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
 
 	list_add_tail(&tpm_list, &tpm->link);
 
-	prlog(PR_NOTICE, "TPM: tpm%d registered: driver=%s felsz=%d\n",
-	      tpm->id, tpm->driver->name, tpm->logmgr.logSize);
+	prlog(PR_NOTICE, "Found tpm%d,%s evLogLen=%d evLogSize=%d\n",
+	      tpm->id, tpm->driver->name, tpm->logmgr.logSize,
+	      tpm->logmgr.logMaxSize);
 
 	return 0;
 
 disable:
 	dt_add_property_string(node, "status", "disabled");
-	prlog(PR_NOTICE, "TPM: tpm node %p disabled\n", node);
+	prlog(PR_NOTICE, "tpm node %p disabled\n", node);
 	free(tpm);
-	return STB_ERROR;
+	return -1;
 }
 
 int tpm_init(void)
@@ -192,7 +194,6 @@ void tpm_cleanup(void)
 	tpm = list_pop(&tpm_list, struct tpm_chip, link);
 
 	while (tpm) {
-		/* deallocate memory */
 		if (tpm->dev)
 			free(tpm->dev);
 		tpm->driver = NULL;
@@ -207,7 +208,7 @@ static void tpm_disable(struct tpm_chip *tpm)
 {
 	assert(tpm);
 	tpm->enabled = false;
-	prlog(PR_NOTICE, "STB: tpm%d disabled\n", tpm->id);
+	prlog(PR_NOTICE, "tpm%d disabled\n", tpm->id);
 }
 
 int tpm_extendl(TPM_Pcr pcr,
@@ -215,17 +216,18 @@ int tpm_extendl(TPM_Pcr pcr,
 		TPM_Alg_Id alg2, uint8_t* digest2, size_t size2,
 		uint32_t event_type, const char* event_msg)
 {
-	int rc, measured, failed;
+	int rc, failed;
 	TCG_PCR_EVENT2 event;
 	struct tpm_chip *tpm = NULL;
 
-	measured = 0;
 	failed = 0;
 
 	if (list_empty(&tpm_list)) {
-		prlog(PR_NOTICE, "TPM: %s (pcr%d) not measured. No TPM "
-		      "registered/enabled\n", event_msg, pcr);
-		return STB_NO_TPM_INITIALIZED;
+		prlog(PR_ERR, "%s (pcr%d) NOT MEASURED. No TPM "
+		      "registered/enabled\n",
+		      (event_type==EV_SEPARATOR) ? "EV_SEPARATOR" : event_msg,
+		      pcr);
+		return -1;
 	}
 
 	list_for_each(&tpm_list, tpm, link) {
@@ -248,21 +250,23 @@ int tpm_extendl(TPM_Pcr pcr,
 			 * and log marshall executed with no error. Enabling the
 			 * trace routines in trustedbootUtils.H may help.
 			 */
-			prlog(PR_ERR, "TPM: %s -> elog%d FAILED: pcr%d et=%x rc=%d\n",
-			      event_msg, tpm->id, pcr, event_type, rc);
+			prlog(PR_ERR, "%s -> evLog%d FAILED: pcr%d evType=0x%x rc=%d\n",
+			      (event_type==EV_SEPARATOR) ? "EV_SEPARATOR" : event_msg,
+			      tpm->id, pcr, event_type, rc);
 			tpm_disable(tpm);
 			failed++;
 			continue;
 		}
 #ifdef STB_DEBUG
 		if (rc == 0)
-			prlog(PR_NOTICE, "TPM: %s -> elog%d: pcr%d et=%x "
-			      "ls=%d\n", event_msg, tpm->id, pcr,
-			      event_type, tpm->logmgr.logSize);
+			prlog(PR_NOTICE, "%s -> evLog%d: pcr%d evType=0x%x "
+			      "evLogLen=%d\n",
+			      (event_type==EV_SEPARATOR) ? "EV_SEPARATOR" : event_msg,
+			      tpm->id, pcr, event_type, tpm->logmgr.logSize);
 		tpm_print_pcr(tpm, pcr, alg1, size1);
 		tpm_print_pcr(tpm, pcr, alg2, size2);
 #endif
-		/* extend pcr of both sha1 and sha256 banks*/
+		/* extend the pcr number in both sha1 and sha256 banks*/
 		rc = tpmCmdPcrExtend2Hash(tpm, pcr,
 					  alg1, digest1, size1,
 					  alg2, digest2, size2);
@@ -279,28 +283,30 @@ int tpm_extendl(TPM_Pcr pcr,
 			 * device driver. Each one has local debug macros that
 			 * can help.
 			 */
-			prlog(PR_ERR, "TPM: %s -> tpm%d FAILED: pcr%d rc=%d\n",
-			      event_msg, tpm->id, pcr, rc);
+			prlog(PR_ERR, "%s -> tpm%d FAILED: pcr%d rc=%d\n",
+			      (event_type==EV_SEPARATOR) ? "EV_SEPARATOR" : event_msg,
+			      tpm->id, pcr, rc);
 			tpm_disable(tpm);
 			failed++;
 			continue;
 		}
 #ifdef STB_DEBUG
 		if (rc == 0) {
-			prlog(PR_NOTICE, "TPM: %s -> tpm%d: pcr%d\n",
-			      event_msg, tpm->id, pcr);
+			prlog(PR_NOTICE, "%s -> tpm%d: pcr%d\n",
+			      (event_type==EV_SEPARATOR) ? "EV_SEPARATOR" : event_msg,
+			      tpm->id, pcr);
 			tpm_print_pcr(tpm, pcr, alg1, size1);
 			tpm_print_pcr(tpm, pcr, alg2, size2);
 		}
 #endif
-		measured++;
+		prlog(PR_NOTICE, "%s measured on pcr%d (tpm%d, evType 0x%x, "
+		      "evLogLen %d)\n",
+		      (event_type==EV_SEPARATOR) ? "EV_SEPARATOR" : event_msg,
+		      pcr, tpm->id, event_type, tpm->logmgr.logSize);
 	}
 
-	prlog(PR_NOTICE, "TPM: %s (pcr%d) measured on %d tpms and "
-	      "failed on %d tpms\n", event_msg, pcr, measured, failed);
-
 	if (failed > 0)
-		return STB_MEASURE_FAILED;
+		return -2;
 	return 0;
 }
 
