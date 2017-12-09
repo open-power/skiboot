@@ -42,7 +42,7 @@ static sha2_hash_t *hw_key_hash = NULL;
  * func_ptr is the ROM code function address, followed
  * by additional parameters as necessary
  */
-ROM_response call_rom_verify(void *func_ptr, ROM_container_raw *container,
+ROM_response __cvc_verify_v1(void *func_ptr, ROM_container_raw *container,
 			     ROM_hw_params *params);
 void call_rom_SHA512(void *func_ptr, const uint8_t *data, size_t len,
 		     uint8_t *digest);
@@ -54,7 +54,7 @@ static int romcode_verify(void *container)
 
 	memset(&hw_params, 0, sizeof(ROM_hw_params));
 	memcpy(&hw_params.hw_key_hash, hw_key_hash, sizeof(sha2_hash_t));
-	rc = call_rom_verify(romcode_base_addr + ROMCODE_VERIFY_OFFSET,
+	rc = __cvc_verify_v1(romcode_base_addr + ROMCODE_VERIFY_OFFSET,
 			     (ROM_container_raw*) container, &hw_params);
 	if (rc != ROM_DONE) {
 		/*

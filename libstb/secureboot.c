@@ -21,9 +21,9 @@
 #include <skiboot.h>
 #include <device.h>
 #include <nvram.h>
+#include <opal-api.h>
+#include <inttypes.h>
 #include "secureboot.h"
-#include "container.h"
-#include "cvc.h"
 
 static const void* hw_key_hash = NULL;
 static size_t hw_key_hash_size;
@@ -48,7 +48,7 @@ static void secureboot_enforce(void)
 	 * extra info to BMC other than just abort.  Terminate Immediate
 	 * Attention ? (TI)
 	 */
-	prlog(PR_EMERG, "enforcing secure mode ...\n");
+	prlog(PR_EMERG, "secure mode enforced, aborting.\n");
 	abort();
 }
 
@@ -145,4 +145,50 @@ void secureboot_init(void)
 	}
 	if (cvc_init())
 		secureboot_enforce();
+}
+
+int secureboot_verify(enum resource_id id, void *buf, size_t len)
+{
+	const char *name;
+	uint64_t log;
+	int rc = -1;
+
+	if (!secure_mode)
+		return 0;
+
+	name = flash_map_resource_name(id);
+	if (!name) {
+		prlog(PR_EMERG, "container NOT VERIFIED, resource_id=%d "
+		      "unknown\n", id);
+		secureboot_enforce();
+	}
+
+	rc = call_cvc_verify(buf, len, hw_key_hash, hw_key_hash_size, &log);
+
+	if (rc == OPAL_SUCCESS) {
+		prlog(PR_INFO, "%s verified\n", name);
+	} else if (rc == OPAL_PARTIAL) {
+		/*
+		 * The value returned in log indicates what checking has
+		 * failed. Return codes defined in
+		 * /hostboot/src/include/securerom/status_codes.H
+		 */
+		prlog(PR_EMERG, "%s verification FAILED. log=0x%" PRIx64 "\n",
+			name, be64_to_cpu(log));
+		secureboot_enforce();
+	} else if (rc == OPAL_PARAMETER) {
+		prlog(PR_EMERG, "%s NOT VERIFIED, invalid param. buf=%p, "
+		      "len=%zd key-hash=%p hash-size=%zd\n", name, buf, len,
+		      hw_key_hash, hw_key_hash_size);
+		secureboot_enforce();
+	} else if (rc == OPAL_UNSUPPORTED) {
+		prlog(PR_EMERG, "%s NOT VERIFIED, CVC-verify service not "
+		      "supported\n", name);
+		secureboot_enforce();
+	} else {
+		prlog(PR_EMERG, "%s NOT VERIFIED, unknown CVC-verify error. "
+		      "rc=%d\n", name, rc);
+		secureboot_enforce();
+	}
+	return 0;
 }

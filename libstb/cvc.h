@@ -24,4 +24,24 @@ enum cvc_service_id {
 
 int cvc_init(void);
 
+/************************************************************************
+ * Wrappers for the services provided by the Container-Verification-Code
+ ************************************************************************/
+
+/*
+ * call_cvc_verify - Call the CVC-verify service to verify the container fetched
+ * from PNOR.
+ *
+ * @buf - buffer that has the firmware component to be verified
+ * @size - number of bytes allocated for @buf
+ * @hw_key_hash - hash of the three harware public keys trusted by the platform
+ * owner
+ * @hw_key_hash_size - number of bytes allocated for @hw_key_hash
+ * @log - hexadecimal returned by the CVC. In case of verification failure, it
+ * indicates what checking failed
+ *
+ */
+int call_cvc_verify(void *buf, size_t size, const void *hw_key_hash,
+		    size_t hw_key_hash_size, uint64_t *log);
+
 #endif /* __CVC_H */

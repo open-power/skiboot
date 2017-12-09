@@ -20,11 +20,19 @@
 
 #include <skiboot.h>
 #include <string.h>
+#include <opal-api.h>
 #include <chip.h>
 #include <xscom.h>
 #include <inttypes.h>
 #include "secureboot.h"
 #include "cvc.h"
+
+/*
+ * Assembly interfaces to call into the Container Verification Code.
+ * func_ptr: CVC base address + offset
+ */
+ROM_response __cvc_verify_v1(void *func_ptr, ROM_container_raw *container,
+			     ROM_hw_params *params);
 
 struct container_verification_code {
 	uint64_t start_addr;
@@ -189,6 +197,40 @@ int cvc_init(void)
 		      __func__);
 		return -1;
 	}
-
 	return rc;
+}
+
+int call_cvc_verify(void *container, size_t len, const void *hw_key_hash,
+		    size_t hw_key_hash_size, uint64_t *log)
+{
+	ROM_hw_params hw_params;
+	ROM_response rc;
+	struct cvc_service *service;
+
+	if (!container || len < SECURE_BOOT_HEADERS_SIZE ||
+	    !hw_key_hash || hw_key_hash_size <= 0)
+		return OPAL_PARAMETER;
+
+	service = cvc_find_service(CVC_VERIFY_SERVICE);
+
+	if (!service)
+		return OPAL_UNSUPPORTED;
+
+	memset(&hw_params, 0, sizeof(ROM_hw_params));
+	memcpy(&hw_params.hw_key_hash, hw_key_hash, hw_key_hash_size);
+
+	if (service->version == 1)
+		rc = __cvc_verify_v1((void*) service->addr,
+				   (ROM_container_raw*) container,
+				   &hw_params);
+	else
+		return OPAL_UNSUPPORTED;
+
+	if (log)
+		*log = hw_params.log;
+
+	if (rc != ROM_DONE)
+		return OPAL_PARTIAL;
+
+	return OPAL_SUCCESS;
 }
