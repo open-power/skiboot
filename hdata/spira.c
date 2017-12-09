@@ -1556,6 +1556,7 @@ static void fixup_spira(void)
 	spira.ntuples.proc_chip = spiras->ntuples.proc_chip;
 	spira.ntuples.hs_data = spiras->ntuples.hs_data;
 	spira.ntuples.ipmi_sensor = spiras->ntuples.ipmi_sensor;
+	spira.ntuples.node_stb_data = spiras->ntuples.node_stb_data;
 }
 
 int parse_hdat(bool is_opal)

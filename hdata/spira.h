@@ -40,7 +40,7 @@ struct spira_ntuple {
 	__be64		padding;
 } __packed;
 
-#define SPIRA_NTUPLES_COUNT	0x18
+#define SPIRA_NTUPLES_COUNT	0x19
 
 struct spira_ntuples {
 	struct HDIF_array_hdr	array_hdr;
@@ -69,6 +69,7 @@ struct spira_ntuples {
 	struct spira_ntuple	proc_chip;		/* 0x300 */
 	struct spira_ntuple	hs_data;		/* 0x320 */
 	struct spira_ntuple	ipmi_sensor;		/* 0x360 */
+	struct spira_ntuple	node_stb_data;		/* 0x380 */
 };
 
 struct spira {
@@ -82,7 +83,7 @@ struct spira {
 	 *
 	 * According to FSP engineers, this is an okay thing to do.
 	 */
-	u8			reserved[0xa0];
+	u8			reserved[0x80];
 } __packed __align(0x100);
 
 extern struct spira spira;
@@ -146,7 +147,7 @@ struct spiras_ntuples {
 	struct spira_ntuple	hs_data;		/* 0x200 */
 	struct spira_ntuple	hbrt_data;		/* 0x220 */
 	struct spira_ntuple	ipmi_sensor;		/* 0x240 */
-	struct spira_ntuple	node_data;		/* 0x260 */
+	struct spira_ntuple	node_stb_data;		/* 0x260 */
 };
 
 struct spiras {
