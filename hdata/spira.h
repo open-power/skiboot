@@ -529,6 +529,8 @@ struct msvpd_trace {
 /* Idata index 5: Hostboot reserved memory address range */
 #define MSVPD_IDATA_HB_RESERVED_MEM	5
 struct msvpd_hb_reserved_mem {
+#define MSVPD_HBRMEM_RANGE_TYPE	PPC_BITMASK32(0,7)
+#define HBRMEM_CONTAINER_VERIFICATION_CODE 	0x3
 	__be32		type_instance;
 	__be64		start_addr;
 	__be64		end_addr;
@@ -1257,6 +1259,18 @@ struct secureboot_tpm_info {
 	/* zero indicates no tpm log data */
 	__be32 drtm_log_offset;
 	__be32 drtm_log_size;
+} __packed;
+
+/* Idata index 2: Hash and Verification Function Offsets Array */
+#define TPMREL_IDATA_HASH_VERIF_OFFSETS 	2
+
+struct hash_and_verification {
+#define TPMREL_HV_SHA512	0x00
+#define TPMREL_HV_VERIFY	0x01
+	__be32 type;
+	__be32 version;
+	__be32 dbob_id;
+	__be32 offset;
 } __packed;
 
 static inline const char *cpu_state(u32 flags)
