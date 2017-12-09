@@ -54,6 +54,7 @@ extern void slca_dt_add_sai_node(void);
 extern bool hservices_from_hdat(const void *fdt, size_t size);
 int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 	struct dt_node *xscom);
+extern void node_stb_parse(void);
 
 /* used to look up the device-tree node representing a slot */
 struct dt_node *find_slot_entry_node(struct dt_node *root, u32 entry_id);

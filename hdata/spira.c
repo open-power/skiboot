@@ -1669,6 +1669,10 @@ int parse_hdat(bool is_opal)
 
 	add_stop_levels();
 
+	/* Parse node secure and trusted boot data */
+	if (proc_gen >= proc_gen_p9)
+		node_stb_parse();
+
 	prlog(PR_DEBUG, "Parsing HDAT...done\n");
 
 	return 0;

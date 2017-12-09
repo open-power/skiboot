@@ -1226,6 +1226,39 @@ struct ipmi_sensors {
 /* Idata index 1 : LED - sensors ID mapping data */
 #define IPMI_SENSORS_IDATA_LED		1
 
+/*
+ * Node Secure and Trusted Boot Related Data
+ */
+#define STB_HDIF_SIG	"TPMREL"
+
+/*
+ * Idata index 0 : Secure Boot and TPM Instance Info
+ *
+ * There can be multiple entries with each entry corresponding to
+ * a master processor that has a TPM device
+ */
+#define TPMREL_IDATA_SECUREBOOT_TPM_INFO	0
+
+struct secureboot_tpm_info {
+	__be32 chip_id;
+	__be32 dbob_id;
+	uint8_t locality1;
+	uint8_t locality2;
+	uint8_t locality3;
+	uint8_t locality4;
+#define TPM_PRESENT_AND_FUNCTIONAL	0x01
+#define TPM_PRESENT_AND_NOT_FUNCTIONAL	0x02
+#define TPM_NOT_PRESENT			0x03
+	uint8_t tpm_status;
+	uint8_t reserved[3];
+	/* zero indicates no tpm log data */
+	__be32 srtm_log_offset;
+	__be32 srtm_log_size;
+	/* zero indicates no tpm log data */
+	__be32 drtm_log_offset;
+	__be32 drtm_log_size;
+} __packed;
+
 static inline const char *cpu_state(u32 flags)
 {
 	switch ((flags & CPU_ID_VERIFY_MASK) >> CPU_ID_VERIFY_SHIFT) {
