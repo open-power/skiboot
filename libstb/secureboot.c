@@ -34,6 +34,7 @@ static struct {
 	const char *compat;
 } secureboot_map[] = {
 	{ IBM_SECUREBOOT_V1, "ibm,secureboot-v1" },
+	{ IBM_SECUREBOOT_SOFTROM, "ibm,secureboot-v1-softrom" },
 };
 
 static void secureboot_enforce(void)
@@ -112,7 +113,9 @@ void secureboot_init(void)
 	if (!secure_mode)
 		return;
 
-	if (version == IBM_SECUREBOOT_V1) {
+	if (version == IBM_SECUREBOOT_V1 ||
+	    version == IBM_SECUREBOOT_SOFTROM) {
+
 		hash_algo = dt_prop_get(node, "hash-algo");
 		if (strcmp(hash_algo, "sha512")) {
 			/**

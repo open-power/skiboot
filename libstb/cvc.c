@@ -26,6 +26,7 @@
 #include <inttypes.h>
 #include "secureboot.h"
 #include "cvc.h"
+#include "mbedtls/sha512.h"
 
 /*
  * Assembly interfaces to call into the Container Verification Code.
@@ -43,6 +44,7 @@ struct container_verification_code {
 };
 
 static struct container_verification_code *cvc = NULL;
+static bool softrom = false;
 static void *secure_rom_mem = NULL;
 
 struct cvc_service {
@@ -194,6 +196,8 @@ int cvc_init(void)
 	if (version == IBM_SECUREBOOT_V1 &&
 	    proc_gen == proc_gen_p8) {
 		rc = cvc_secure_rom_init();
+	} else if (version == IBM_SECUREBOOT_SOFTROM) {
+		softrom = true;
 	} else {
 		prlog(PR_ERR, "%s FAILED. /ibm,secureboot not supported\n",
 		      __func__);
@@ -214,6 +218,15 @@ int call_cvc_sha512(const uint8_t *data, size_t data_len, uint8_t *digest,
 		return OPAL_SUCCESS;
 
 	memset(digest, 0, SHA512_DIGEST_LENGTH);
+	if (softrom) {
+		mbedtls_sha512_context ctx;
+		mbedtls_sha512_init(&ctx);
+		mbedtls_sha512_starts(&ctx, 0); // SHA512 = 0
+		mbedtls_sha512_update(&ctx, data, data_len);
+		mbedtls_sha512_finish(&ctx, digest);
+		mbedtls_sha512_free(&ctx);
+		return OPAL_SUCCESS;
+	}
 
 	service = cvc_find_service(CVC_SHA512_SERVICE);
 
@@ -238,6 +251,9 @@ int call_cvc_verify(void *container, size_t len, const void *hw_key_hash,
 	if (!container || len < SECURE_BOOT_HEADERS_SIZE ||
 	    !hw_key_hash || hw_key_hash_size <= 0)
 		return OPAL_PARAMETER;
+
+	if (softrom)
+		return OPAL_UNSUPPORTED;
 
 	service = cvc_find_service(CVC_VERIFY_SERVICE);
 
