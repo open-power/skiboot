@@ -17,8 +17,8 @@
 #include <chip.h>
 #include <string.h>
 #include <skiboot.h>
+#include <libstb/mbedtls/sha512.h>
 #include "../rom.h"
-#include "sha512.h"
 #include "sw_driver.h"
 
 static sha2_hash_t *hw_key_hash = NULL;
