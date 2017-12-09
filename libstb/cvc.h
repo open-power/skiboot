@@ -22,6 +22,7 @@ enum cvc_service_id {
 	CVC_VERIFY_SERVICE,
 };
 
+void cvc_update_reserved_memory_phandle(void);
 int cvc_init(void);
 
 /************************************************************************

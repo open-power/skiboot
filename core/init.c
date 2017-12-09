@@ -1062,6 +1062,13 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* ... and add remaining reservations to the DT */
 	mem_region_add_dt_reserved();
 
+	/*
+	 * Update /ibm,secureboot/ibm,cvc/memory-region to point to
+	 * /reserved-memory/secure-crypt-algo-code instead of
+	 * /ibm,hostboot/reserved-memory/secure-crypt-algo-code.
+	 */
+	cvc_update_reserved_memory_phandle();
+
 	prd_register_reserved_memory();
 
 	/* On P9, switch to radix mode by default */

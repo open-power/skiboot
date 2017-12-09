@@ -47,6 +47,9 @@ static struct container_verification_code *cvc = NULL;
 static bool softrom = false;
 static void *secure_rom_mem = NULL;
 
+static struct dt_node *cvc_resv_mem = NULL;
+static struct dt_node *cvc_node = NULL;
+
 struct cvc_service {
 	int id;
 	uint64_t addr;    /* base_addr + offset */
@@ -137,7 +140,6 @@ static void cvc_service_register(uint32_t id, uint32_t offset, uint32_t version)
 static int cvc_reserved_mem_init(struct dt_node *parent) {
 	struct dt_node *node, *service;
 	struct dt_node *reserved_mem;
-	struct dt_node *cvc_resv_mem = NULL;
 	uint32_t phandle;
 	uint64_t addr, size;
 
@@ -156,6 +158,7 @@ static int cvc_reserved_mem_init(struct dt_node *parent) {
 		if (dt_node_is_compatible(node, "ibm,container-verification-code")) {
 			phandle = dt_prop_get_u32(node, "memory-region");
 			cvc_resv_mem = dt_find_by_phandle(reserved_mem, phandle);
+			cvc_node = node;
 			break;
 		}
 	}
@@ -216,6 +219,34 @@ static int cvc_secure_rom_init(void) {
 	cvc_service_register(CVC_SHA512_SERVICE, SECURE_ROM_SHA512_OFFSET, 1);
 	cvc_service_register(CVC_VERIFY_SERVICE, SECURE_ROM_VERIFY_OFFSET, 1);
 	return 0;
+}
+
+void cvc_update_reserved_memory_phandle(void) {
+	struct dt_node *reserved_mem;
+
+	if (!cvc_resv_mem || !cvc_node)
+		return;
+
+	/*
+	 * The linux documentation, reserved-memory.txt, says that memory-region
+	 * is a phandle that pairs to a children of /reserved-memory
+	 */
+	reserved_mem = dt_find_by_path(dt_root, "/reserved-memory");
+	if (!reserved_mem) {
+		prlog(PR_ERR, "/reserved-memory not found\n");
+		return;
+	}
+	cvc_resv_mem = dt_find_by_name(reserved_mem, cvc_resv_mem->name);
+	if (cvc_resv_mem) {
+		dt_check_del_prop(cvc_node, "memory-region");
+		dt_add_property_cells(cvc_node, "memory-region", cvc_resv_mem->phandle);
+	} else {
+		prlog(PR_WARNING, "CVC not found in /reserved-memory\n");
+		return;
+	}
+
+	cvc_resv_mem = NULL;
+	cvc_node = NULL;
 }
 
 int cvc_init(void)
