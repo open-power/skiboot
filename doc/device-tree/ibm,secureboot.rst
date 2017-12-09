@@ -3,56 +3,57 @@
 ibm,secureboot
 ==============
 
-Secure boot and trusted boot relies on a code stored in the secure ROM at
-manufacture time to verify and measure other codes before they are executed.
-This ROM code is also referred to as ROM verification code.
-
-On POWER8, the presence of the ROM code is announced to skiboot (by Hostboot)
-by the ``ibm,secureboot`` device tree node.
-
-If the system is booting up in secure mode, the ROM code is called for secure
-boot to verify the integrity and authenticity of an image before it is executed.
-
-If the system is booting up in trusted mode, the ROM code is called for trusted
-boot to calculate the SHA512 hash of an image only if the image is not a secure boot
-container or the system is not booting up in secure mode.
-
-For further information about secure boot and trusted boot please refer to
-:ref:`stb-overview`.
-
+The ``ìbm,secureboot`` node provides secure boot and trusted boot information
+up to the target OS. Further information can be found in :ref:`stb-overview`.
 
 Required properties
 -------------------
 
 .. code-block:: none
 
-    compatible:         ibm,secureboot version. It is related to the ROM code version.
-                
-    hash-algo:          hash algorithm used for the hw-key-hash. Aspects such as the size
-                        of the hw-key-hash can be infered from this property.
+    compatible:         Either one of the following values:
 
-    secure-enabled:     this property exists if the system is booting in secure mode.
+                        ibm,secureboot-v1  :  The container-verification-code
+                                              is stored in a secure ROM memory.
 
-    trusted-enabled:    this property exists if the system is booting in trusted mode.
+                        ibm,secureboot-v2  :  The container-verification-code
+                                              is stored in a reserved memory.
+                                              It described by the ibm,cvc child
+                                              node.
 
-    hw-key-hash:        hash of three concatenated hardware public key. This is required
-                        by the ROM code to verify images.
+    secure-enabled:     this property exists when the firmware stack is booting
+                        in secure mode (hardware secure boot jumper asserted).
+
+    trusted-enabled:    this property exists when the firmware stack is booting
+                        in trusted mode.
+
+    hw-key-hash:        hash of the three hardware public keys trusted by the
+                        platformw owner. This is used to verify if a firmware
+                        code is signed with trusted keys.
+
+    hw-key-hash-size:   hw-key-hash size
+
+
+Obsolete properties
+-------------------
+
+.. code-block:: none
+
+    hash-algo:          Superseded by the hw-key-hash-size property in
+                        'ibm,secureboot-v2'.
 
 Example
 -------
 
-For the first version ``ibm,secureboot-v1``, the ROM code expects the *hw-key-hash*
-to be a SHA512 hash.
-
 .. code-block:: dts
 
     ibm,secureboot {
-        compatible = "ibm,secureboot-v1";
-        hash-algo = "sha512";
+        compatible = "ibm,secureboot-v2";
         secure-enabled;
         trusted-enabled;
+        hw-key-hash-size = <0x40>;
         hw-key-hash = <0x40d487ff 0x7380ed6a 0xd54775d5 0x795fea0d 0xe2f541fe
-                       0xa9db06b8 0x466a42a3 0x20e65f75 0xb4866546 0x17d907
+                       0xa9db06b8 0x466a42a3 0x20e65f75 0xb4866546 0x0017d907
                        0x515dc2a5 0xf9fc5095 0x4d6ee0c9 0xb67d219d 0xfb708535
                        0x1d01d6d1>;
         phandle = <0x100000fd>;

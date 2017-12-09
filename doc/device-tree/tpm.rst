@@ -9,12 +9,12 @@ event log information.
 Required properties
 -------------------
 
-All these properties are added by hostboot and consumed by skiboot and the
-linux kernel (tpm and vtpm codes)
+All these properties are consumed by skiboot and the linux kernel (tpm and
+vtpm codes)
 
 ::
 
-    compatible :       manufacturer,model
+    compatible :       should have "nuvoton,npct650"
 
     linux,sml-base:    64-bit base address of the reserved memory allocated for firmware event log.
                        sml stands for shared memory log.
