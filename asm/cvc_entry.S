@@ -26,10 +26,10 @@
 .section .text
 
 .global __cvc_verify_v1
-.global call_rom_SHA512
+.global __cvc_sha512_v1
 
 __cvc_verify_v1:
-call_rom_SHA512:
+__cvc_sha512_v1:
 
 call_rom_entry:
     std %r2, 40(%r1)

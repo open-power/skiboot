@@ -44,4 +44,17 @@ int cvc_init(void);
 int call_cvc_verify(void *buf, size_t size, const void *hw_key_hash,
 		    size_t hw_key_hash_size, uint64_t *log);
 
+/*
+ * call_cvc_sha512 - Call the CVC-sha512 service to calculate a sha512 hash.
+ *
+ * @data - buffer that has data to be hashed
+ * @data_len - number of bytes from @data to be considered in the hash
+ * calculation
+ * @digest - buffer to store the calculated hash
+ * @digest_size - number of bytes allocated for @digest
+ *
+ */
+int call_cvc_sha512(const uint8_t *data, size_t data_len, uint8_t *digest,
+		    size_t digest_size);
+
 #endif /* __CVC_H */

@@ -33,6 +33,8 @@
  */
 ROM_response __cvc_verify_v1(void *func_ptr, ROM_container_raw *container,
 			     ROM_hw_params *params);
+void __cvc_sha512_v1(void *func_ptr, const uint8_t *data, size_t len,
+		     uint8_t *digest);
 
 struct container_verification_code {
 	uint64_t start_addr;
@@ -198,6 +200,32 @@ int cvc_init(void)
 		return -1;
 	}
 	return rc;
+}
+
+int call_cvc_sha512(const uint8_t *data, size_t data_len, uint8_t *digest,
+		   size_t digest_size)
+{
+	struct cvc_service *service;
+
+	if (!data || !digest || digest_size < SHA512_DIGEST_LENGTH)
+		return OPAL_PARAMETER;
+
+	if (data_len <= 0)
+		return OPAL_SUCCESS;
+
+	memset(digest, 0, SHA512_DIGEST_LENGTH);
+
+	service = cvc_find_service(CVC_SHA512_SERVICE);
+
+	if (!service)
+		return OPAL_UNSUPPORTED;
+
+	if (service->version == 1)
+		__cvc_sha512_v1((void*) service->addr, data, data_len, digest);
+	else
+		return OPAL_UNSUPPORTED;
+
+	return OPAL_SUCCESS;
 }
 
 int call_cvc_verify(void *container, size_t len, const void *hw_key_hash,

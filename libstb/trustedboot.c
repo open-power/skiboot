@@ -21,11 +21,40 @@
 #include <skiboot.h>
 #include <device.h>
 #include <nvram.h>
+#include <opal-api.h>
 #include "secureboot.h"
 #include "trustedboot.h"
 #include "tpm_chip.h"
 
+/* For debugging only */
+//#define STB_DEBUG
+
 static bool trusted_mode = false;
+
+/*
+ * This maps a PCR for each resource we can measure. The PCR number is
+ * mapped according to the TCG PC Client Platform Firmware Profile
+ * specification, Revision 00.21
+ * Only resources included in this whitelist can be measured.
+ */
+static struct {
+	enum resource_id id;
+	TPM_Pcr pcr;
+} resources[] = {
+	{ RESOURCE_ID_IMA_CATALOG, PCR_2 },
+	{ RESOURCE_ID_KERNEL, PCR_4 },
+	{ RESOURCE_ID_CAPP,   PCR_2 },
+};
+
+static TPM_Pcr map_pcr(enum resource_id id)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(resources); i++) {
+		if (resources[i].id == id)
+			return resources[i].pcr;
+	}
+	return -1;
+}
 
 void trustedboot_init(void)
 {
@@ -61,6 +90,89 @@ void trustedboot_init(void)
 
 	if (!trusted_mode)
 		return;
+
 	cvc_init();
 	tpm_init();
+}
+
+int trustedboot_measure(enum resource_id id, void *buf, size_t len)
+{
+	uint8_t digest[SHA512_DIGEST_LENGTH];
+	void *buf_aux;
+	size_t len_aux;
+	const char *name;
+	TPM_Pcr pcr;
+	int rc = -1;
+
+	if (!trusted_mode)
+		return 1;
+
+	name = flash_map_resource_name(id);
+	if (!name) {
+		/**
+		 * @fwts-label ResourceNotMeasuredUnknown
+		 * @fwts-advice This is a bug in the trustedboot_measure()
+		 * caller, which is passing an unknown resource_id.
+		 */
+		prlog(PR_ERR, "resource NOT MEASURED, resource_id=%d unknown\n", id);
+		return -1;
+	}
+	pcr = map_pcr(id);
+	if (pcr == -1) {
+		/**
+		 * @fwts-label ResourceNotMappedToPCR
+		 * @fwts-advice This is a bug. The resource cannot be measured
+		 * because it is not mapped to a PCR in the resources[] array.
+		 */
+		prlog(PR_ERR, "%s NOT MEASURED, it's not mapped to a PCR\n", name);
+		return -1;
+	}
+	if (!buf) {
+		/**
+		 * @fwts-label ResourceNotMeasuredNull
+		 * @fwts-advice This is a bug. The trustedboot_measure() caller
+		 * provided a NULL container.
+		 */
+		prlog(PR_ERR, "%s NOT MEASURED, it's null\n", name);
+		return -1;
+	}
+	if (stb_is_container(buf, len)) {
+		buf_aux = buf + SECURE_BOOT_HEADERS_SIZE;
+		len_aux = len - SECURE_BOOT_HEADERS_SIZE;
+	} else {
+		buf_aux = buf;
+		len_aux = len;
+	}
+
+	rc = call_cvc_sha512(buf_aux, len_aux, digest, SHA512_DIGEST_LENGTH);
+
+	if (rc == OPAL_SUCCESS) {
+		prlog(PR_INFO, "%s hash calculated\n", name);
+	} else if (rc == OPAL_PARAMETER) {
+		prlog(PR_ERR, "%s NOT MEASURED, invalid param. buf=%p, "
+		      "len=%zd, digest=%p\n", name, buf_aux,
+		      len_aux, digest);
+		return -1;
+	} else if (rc == OPAL_UNSUPPORTED) {
+		prlog(PR_ERR, "%s NOT MEASURED, CVC-sha512 service not "
+		      "supported\n", name);
+		return -1;
+	} else {
+		prlog(PR_ERR, "%s NOT MEASURED, unknown CVC-sha512 error. "
+		      "rc=%d\n", name, rc);
+		return -1;
+	}
+
+#ifdef STB_DEBUG
+	stb_print_data(digest, TPM_ALG_SHA256_SIZE);
+#endif
+	/*
+	 * Extend the given PCR number in both sha256 and sha1 banks with the
+	 * sha512 hash calculated. The hash is truncated accordingly to fit the
+	 * PCR.
+	 */
+	return tpm_extendl(pcr,
+			   TPM_ALG_SHA256, digest, TPM_ALG_SHA256_SIZE,
+			   TPM_ALG_SHA1,   digest, TPM_ALG_SHA1_SIZE,
+			   EV_ACTION, name);
 }

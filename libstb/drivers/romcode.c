@@ -44,7 +44,7 @@ static sha2_hash_t *hw_key_hash = NULL;
  */
 ROM_response __cvc_verify_v1(void *func_ptr, ROM_container_raw *container,
 			     ROM_hw_params *params);
-void call_rom_SHA512(void *func_ptr, const uint8_t *data, size_t len,
+void __cvc_sha512_v1(void *func_ptr, const uint8_t *data, size_t len,
 		     uint8_t *digest);
 
 static int romcode_verify(void *container)
@@ -71,7 +71,7 @@ static int romcode_verify(void *container)
 static void romcode_sha512(const uint8_t *data, size_t len, uint8_t *digest)
 {
 	memset(digest, 0, sizeof(sha2_hash_t));
-	call_rom_SHA512(romcode_base_addr + ROMCODE_SHA512_OFFSET,
+	__cvc_sha512_v1(romcode_base_addr + ROMCODE_SHA512_OFFSET,
 			data, len, digest);
 }
 
