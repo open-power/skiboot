@@ -19,8 +19,8 @@
  * codes to equivalent routines and types in skiboot.
  ***************************************************************/
 
-#ifndef __TRUSTEDBOOT_H
-#define __TRUSTEDBOOT_H
+#ifndef __TSS_TRUSTEDBOOT_H
+#define __TSS_TRUSTEDBOOT_H
 
 #include <skiboot.h>
 #include <stdint.h>
@@ -69,4 +69,4 @@ typedef enum {
     IMPLEMENTATION_PCR = 24
 } TPM_Pcr;
 
-#endif
+#endif /* __TSS_TRUSTEDBOOT_H */

@@ -168,32 +168,21 @@ disable:
 	return STB_ERROR;
 }
 
-void tpm_init(void)
+int tpm_init(void)
 {
-	if (!list_empty(&tpm_list)) {
-		/**
-		 * @fwts-label TPMAlreadyInitialized
-		 * @fwts-advice TPM already initialized. Check if tpm is being
-		 * initialized more than once.
-		 */
-		prlog(PR_WARNING, "TPM: tpm device(s) already initialized\n");
-		return;
-	}
+	if (!list_empty(&tpm_list))
+		return 0;
 
 	list_head_init(&tpm_list);
 
 	/* tpm drivers supported */
 	tpm_i2c_nuvoton_probe();
 
-	if (list_empty(&tpm_list))
-		/**
-		 * @fwts-label NoTPMRegistered
-		 * @fwts-advice No TPM chip has been initialized. We may not
-		 * have a compatible tpm driver or there is no tpm node in the
-		 * device tree with the expected bindings.
-		 */
-		prlog(PR_ERR, "TPM: no tpm chip registered\n");
-
+	if (list_empty(&tpm_list)) {
+		prlog(PR_INFO, "no compatible tpm device found!");
+		return -1;
+	}
+	return 0;
 }
 
 void tpm_cleanup(void)

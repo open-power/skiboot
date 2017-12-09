@@ -102,7 +102,7 @@ extern int tpm_extendl(TPM_Pcr pcr,
 /* Add status property to the TPM devices */
 extern void tpm_add_status_property(void);
 
-extern void tpm_init(void);
+extern int tpm_init(void);
 extern void tpm_cleanup(void);
 
 #endif /* __TPM_H */
