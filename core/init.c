@@ -46,8 +46,8 @@
 #include <xive.h>
 #include <nvram.h>
 #include <vas.h>
-#include <libstb/stb.h>
-#include <libstb/container.h>
+#include <libstb/secureboot.h>
+#include <libstb/trustedboot.h>
 #include <phys-map.h>
 #include <imc.h>
 
@@ -417,7 +417,7 @@ static bool load_kernel(void)
 		return false;
 	}
 
-	stb_final();
+	trustedboot_exit_boot_services();
 
 	return true;
 }
@@ -993,7 +993,8 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	console_log_level();
 
 	/* Secure/Trusted Boot init. We look for /ibm,secureboot in DT */
-	stb_init();
+	secureboot_init();
+	trustedboot_init();
 
 	/* Install the OPAL Console handlers */
 	init_opal_console();

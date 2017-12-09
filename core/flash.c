@@ -25,8 +25,8 @@
 #include <libflash/libffs.h>
 #include <libflash/blocklevel.h>
 #include <libflash/ecc.h>
-#include <libstb/stb.h>
-#include <libstb/container.h>
+#include <libstb/secureboot.h>
+#include <libstb/trustedboot.h>
 #include <elf.h>
 
 struct flash {
@@ -799,8 +799,8 @@ done_reading:
 	 * Verify and measure the retrieved PNOR partition as part of the
 	 * secure boot and trusted boot requirements
 	 */
-	sb_verify(id, buf, *len);
-	tb_measure(id, buf, *len);
+	secureboot_verify(id, buf, *len);
+	trustedboot_measure(id, buf, *len);
 
 	/* Find subpartition */
 	if (subid != RESOURCE_SUBID_NONE) {
