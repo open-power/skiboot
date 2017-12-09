@@ -258,6 +258,7 @@ extern int flash_subpart_info(void *part_header, uint32_t header_len,
 			      uint32_t *size);
 extern void flash_fw_version_preload(void);
 extern void flash_dt_add_fw_version(void);
+extern const char *flash_map_resource_name(enum resource_id id);
 
 /* NVRAM support */
 extern void nvram_init(void);

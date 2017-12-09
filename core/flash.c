@@ -537,6 +537,16 @@ static struct {
 	{ RESOURCE_ID_VERSION,	RESOURCE_SUBID_NONE,		"VERSION" },
 };
 
+const char *flash_map_resource_name(enum resource_id id)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(part_name_map); i++) {
+		if (part_name_map[i].id == id)
+			return part_name_map[i].name;
+	}
+	return NULL;
+}
 
 static size_t sizeof_elf_from_hdr(void *buf)
 {
