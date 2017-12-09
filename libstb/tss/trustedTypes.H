@@ -80,9 +80,25 @@ namespace TRUSTEDBOOT
 
     typedef enum
     {
-        EV_NO_ACTION    = 0x3,     ///< Event field contains info
-        EV_SEPARATOR    = 0x4,     ///< Used to indicate an error
-        EV_ACTION       = 0x5,     ///< Must extend a PCR
+        EV_PREBOOT_CERT            = 0x00,
+        EV_POST_CODE               = 0x01,
+        EV_UNUSED                  = 0x02,
+        EV_NO_ACTION               = 0x03,
+        EV_SEPARATOR               = 0x04,
+        EV_ACTION                  = 0x05,
+        EV_EVENT_TAG               = 0x06,
+        EV_S_CRTM_CONTENTS         = 0x07,
+        EV_S_CRTM_VERSION          = 0x08,
+        EV_CPU_MICROCODE           = 0x09,
+        EV_PLATFORM_CONFIG_FLAGS   = 0x0A,
+        EV_TABLE_OF_DEVICES        = 0x0B,
+        EV_COMPACT_HASH            = 0x0C,
+        EV_IPL                     = 0x0D,   ///< Deprecated
+        EV_IPL_PARTITION_DATA      = 0x0E,   ///< Deprecated
+        EV_NONHOST_CODE            = 0x0F,
+        EV_NONHOST_CONFIG          = 0x10,
+        EV_NONHOST_INFO            = 0x11,
+        EV_OMIT_BOOT_DEVICE_EVENTS = 0x12,
         EV_INVALID                 ///< Used for error checking
     } EventTypes;
 
