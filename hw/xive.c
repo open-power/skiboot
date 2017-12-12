@@ -1770,6 +1770,11 @@ static bool xive_config_init(struct xive *x)
 	val |= VC_EQC_CONF_ENABLE_END_u_BIT;
 	xive_regw(x, VC_EQC_CONFIG, val);
 
+	/* Disable error reporting in the FIR for info errors
+	 * from the VC.
+	 */
+	xive_regw(x, CQ_FIRMASK_OR, 3ull);
+
 	return true;
 }
 
