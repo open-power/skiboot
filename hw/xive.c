@@ -1244,6 +1244,52 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 				  void *new_data, bool light_watch,
 				  bool synchronous);
 
+static void xive_scrub_workaround_vp(struct xive *x, uint32_t block, uint32_t idx __unused)
+{
+	/* VP variant of the workaround described in __xive_cache_scrub(),
+	 * we need to be careful to use for that workaround an NVT that
+	 * sits on the same xive but isn NOT part of a donated indirect
+	 * entry.
+	 *
+	 * The reason is that the dummy cache watch will re-create a
+	 * dirty entry in the cache, even if the entry is marked
+	 * invalid.
+	 *
+	 * Thus if we are about to dispose of the indirect entry backing
+	 * it, we'll cause a checkstop later on when trying to write it
+	 * out.
+	 *
+	 * Note: This means the workaround only works for block group
+	 * mode.
+	 */
+#ifdef USE_BLOCK_GROUP_MODE
+	__xive_cache_watch(x, xive_cache_vpc, block, INITIAL_VP_BASE, 0,
+			   0, NULL, true, false);
+#else
+	/* WARNING: Some workarounds related to cache scrubs require us to
+	 * have at least one firmware owned (permanent) indirect entry for
+	 * each XIVE instance. This currently only happens in block group
+	 * mode
+	 */
+#warning Block group mode should not be disabled
+#endif
+}
+
+static void xive_scrub_workaround_eq(struct xive *x, uint32_t block __unused, uint32_t idx)
+{
+	void *mmio;
+
+	/* EQ variant of the workaround described in __xive_cache_scrub(),
+	 * a simple non-side effect load from ESn will do
+	 */
+	mmio = x->eq_mmio + idx * 0x20000;
+
+	/* Ensure the above has returned before we do anything else
+	 * the XIVE store queue is completely empty
+	 */
+	load_wait(in_be64(mmio + 0x800));
+}
+
 static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 				  uint64_t block, uint64_t idx,
 				  bool want_inval, bool want_disable)
@@ -1263,6 +1309,9 @@ static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 	 * invalidate, then after the scrub, we do a dummy cache
 	 * watch which will make the HW read the data back, which
 	 * should be ordered behind all the preceding stores.
+	 *
+	 * Update: For EQs we can do a non-side effect ESB load instead
+	 * which is faster.
 	 */
 	want_inval = true;
 
@@ -1324,9 +1373,11 @@ static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
 	/* Workaround for HW bug described above (only applies to
 	 * EQC and VPC
 	 */
-	if (ctype == xive_cache_eqc || ctype == xive_cache_vpc)
-		__xive_cache_watch(x, ctype, block, idx, 0, 0, NULL,
-				   true, false);
+	if (ctype == xive_cache_eqc)
+		xive_scrub_workaround_eq(x, block, idx);
+	else if (ctype == xive_cache_vpc)
+		xive_scrub_workaround_vp(x, block, idx);
+
 	return 0;
 }
 
