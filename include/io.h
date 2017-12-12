@@ -170,6 +170,14 @@ static inline void out_le64(volatile uint64_t *addr, uint64_t val)
 #define in_le8	in_8
 #define out_le8	out_8
 
+/* Ensure completion of a load (ie, value returned to CPU)
+ * before continuing execution
+ */
+static inline void load_wait(uint64_t data)
+{
+	asm volatile("twi 0,%0,0;isync" : : "r" (data) : "memory");
+}
+
 #endif /* __ASSEMBLY__ */
 
 #endif /* __IO_H */
