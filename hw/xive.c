@@ -2101,8 +2101,8 @@ void *xive_get_trigger_port(uint32_t girq)
 		return NULL;
 
 	if (GIRQ_IS_ESCALATION(girq)) {
-		/* Page 2 of the EQ MMIO space is the escalate irq */
-		return x->eq_mmio + idx * 0x20000 + 0x10000;
+		/* There is no trigger page for escalation interrupts */
+		return NULL;
 	} else {
 		/* Make sure it's an IPI on that chip */
 		if (girq < x->int_base ||
