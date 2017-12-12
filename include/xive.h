@@ -70,6 +70,12 @@
 #define CQ_AIB_CTL		0x110
 #define X_CQ_RST_CTL		0x23
 #define CQ_RST_CTL		0x118
+#define X_CQ_FIRMASK		0x33
+#define CQ_FIRMASK		0x198
+#define X_CQ_FIRMASK_AND	0x34
+#define CQ_FIRMASK_AND		0x1a0
+#define X_CQ_FIRMASK_OR		0x35
+#define CQ_FIRMASK_OR		0x1a8
 
 /* PC LBS1 register offsets */
 #define X_PC_TCTXT_CFG		0x100
