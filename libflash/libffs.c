@@ -724,8 +724,7 @@ int ffs_entry_user_set(struct ffs_entry *ent, struct ffs_entry_user *user)
 		return -1;
 	if (user->miscflags & ~(FFS_MISCFLAGS_PRESERVED | FFS_MISCFLAGS_BACKUP |
 				FFS_MISCFLAGS_READONLY | FFS_MISCFLAGS_REPROVISION |
-				FFS_MISCFLAGS_VOLATILE
-))
+				FFS_MISCFLAGS_VOLATILE | FFS_MISCFLAGS_CLEARECC))
 		return -1;
 
 	memcpy(&ent->user, user, sizeof(*user));

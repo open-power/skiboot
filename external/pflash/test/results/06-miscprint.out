@@ -43,3 +43,12 @@ Start       End         Actual
 
 Flags:
 VOLATILE [V]
+Detailed partition information
+Name:
+CLEARECC (ID=06)
+
+Start       End         Actual    
+0x00008000  0x00009000  0x00001000
+
+Flags:
+CLEARECC [C]

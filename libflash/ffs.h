@@ -77,6 +77,7 @@ enum ffs_type {
 #define FFS_MISCFLAGS_BACKUP 0x20
 #define FFS_MISCFLAGS_REPROVISION 0x10
 #define FFS_MISCFLAGS_VOLATILE 0x08
+#define FFS_MISCFLAGS_CLEARECC 0x04
 
 /**
  * struct __ffs_entry_user - On flash user data entries

@@ -89,6 +89,7 @@ struct ffs_entry_user {
 #define FFS_MISCFLAGS_BACKUP 0x20
 #define FFS_MISCFLAGS_REPROVISION 0x10
 #define FFS_MISCFLAGS_VOLATILE 0x08
+#define FFS_MISCFLAGS_CLEARECC 0x04
 
 
 bool has_ecc(struct ffs_entry *ent);

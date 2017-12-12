@@ -29,6 +29,10 @@ run_binary "./pflash" "--detail=5 -F $DATA_DIR/$CUR_TEST.pnor"
 if [ "$?" -ne 0 ] ; then
 	fail_test;
 fi
+run_binary "./pflash" "--detail=6 -F $DATA_DIR/$CUR_TEST.pnor"
+if [ "$?" -ne 0 ] ; then
+	fail_test;
+fi
 
 # The test infrastructure will clean up but lets no chew unnecessarily
 # though disk space
