@@ -4720,7 +4720,7 @@ static int64_t opal_xive_free_irq(uint32_t girq)
 	xive_update_irq_mask(s, girq - s->esb_base, true);
 
 	/* Mark the IVE masked and invalid */
-	ive->w = IVE_MASKED;
+	ive->w = IVE_MASKED | IVE_VALID;
 	xive_ivc_scrub(x, x->block_id, idx);
 
 	/* Free it */
