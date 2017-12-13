@@ -215,6 +215,9 @@ struct proc_chip {
 	struct xive		*xive;
 
 	struct vas		*vas;
+
+	/* location code of this chip */
+	const uint8_t		*loc_code;
 };
 
 extern uint32_t pir_to_chip_id(uint32_t pir);
@@ -239,6 +242,18 @@ static inline int nr_chips(void)
 		nr_chips++;
 
 	return nr_chips;
+}
+
+/* helper to get location code of a chip */
+static inline const char *chip_loc_code(uint32_t chip_id)
+{
+	struct proc_chip *chip;
+
+	chip = get_chip(chip_id);
+	if (!chip)
+		return NULL;
+
+	return chip->loc_code;
 }
 
 #endif /* __CHIP_H */

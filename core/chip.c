@@ -76,6 +76,7 @@ static void init_chip(struct dt_node *dn)
 {
 	struct proc_chip *chip;
 	uint32_t id;
+	const char *lc = NULL;
 
 	id = dt_get_chip_id(dn);
 	assert(id < MAX_CHIPS);
@@ -96,6 +97,15 @@ static void init_chip(struct dt_node *dn)
 		chip->occ_functional = false;
 
 	list_head_init(&chip->i2cms);
+
+	/* Update the location code for this chip. */
+	if (dt_has_node_property(dn, "ibm,loc-code", NULL))
+		lc = dt_prop_get(dn, "ibm,loc-code");
+	else if (dt_has_node_property(dn, "ibm,slot-location-code", NULL))
+		lc = dt_prop_get(dn, "ibm,slot-location-code");
+
+	if (lc)
+		chip->loc_code = strdup(lc);
 
 	prlog(PR_INFO, "CHIP: Initialised chip %d from %s\n", id, dn->name);
 	chips[id] = chip;
