@@ -23,7 +23,11 @@ if [ ! `command -v expect` ]; then
     exit 0;
 fi
 
-export SKIBOOT_ZIMAGE=`pwd`/test/sreset_world/sreset_kernel/sreset_kernel
+if [ -n "$SKIBOOT_ENABLE_MAMBO_STB" ]; then
+    export SKIBOOT_ZIMAGE=`pwd`/test/sreset_world/sreset_kernel/sreset_kernel.stb
+else
+    export SKIBOOT_ZIMAGE=`pwd`/test/sreset_world/sreset_kernel/sreset_kernel
+fi
 
 # Currently getting some core dumps from mambo, so disable them!
 OLD_ULIMIT_C=`ulimit -c`

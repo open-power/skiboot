@@ -342,6 +342,7 @@ bool start_preload_kernel(void)
 
 static bool load_kernel(void)
 {
+	void *stb_container = NULL;
 	struct elf_hdr *kh;
 	int loaded;
 
@@ -390,9 +391,10 @@ static bool load_kernel(void)
 			/* Hack for STB in Mambo, assume at least 4kb in mem */
 			kernel_size = SECURE_BOOT_HEADERS_SIZE;
 		}
-		if (stb_is_container(KERNEL_LOAD_BASE, kernel_size))
+		if (stb_is_container(KERNEL_LOAD_BASE, kernel_size)) {
+			stb_container = KERNEL_LOAD_BASE;
 			kh = (struct elf_hdr *) (KERNEL_LOAD_BASE + SECURE_BOOT_HEADERS_SIZE);
-		else
+		} else
 			kh = (struct elf_hdr *) (KERNEL_LOAD_BASE);
 
 	}
@@ -415,6 +417,15 @@ static bool load_kernel(void)
 	} else {
 		prerror("INIT: Neither ELF32 not ELF64 ?\n");
 		return false;
+	}
+
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
+		secureboot_verify(RESOURCE_ID_KERNEL,
+				  stb_container,
+				  SECURE_BOOT_HEADERS_SIZE + kernel_size);
+		trustedboot_measure(RESOURCE_ID_KERNEL,
+				    stb_container,
+				    SECURE_BOOT_HEADERS_SIZE + kernel_size);
 	}
 
 	trustedboot_exit_boot_services();

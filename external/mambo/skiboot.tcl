@@ -437,7 +437,7 @@ mconfig enable_stb SKIBOOT_ENABLE_MAMBO_STB 0
 if { [info exists env(SKIBOOT_ENABLE_MAMBO_STB)] } {
     set stb_node [ mysim of addchild $root_node "ibm,secureboot" "" ]
     mysim of addprop $stb_node string "compatible" "ibm,secureboot-v1-softrom"
-    mysim of addprop $stb_node string "secure-enabled" ""
+#    mysim of addprop $stb_node string "secure-enabled" ""
     mysim of addprop $stb_node string "trusted-enabled" ""
     mysim of addprop $stb_node string "hash-algo" "sha512"
     set hw_key_hash {}
