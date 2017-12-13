@@ -2070,6 +2070,7 @@
 		bus-frequency = <0x0 0x1dcd6500>;
 		ibm,dbob-id = <0x0>;
 		ibm,occ-functional-state = <0x1>;
+		ibm,loc-code = "U78CB.001.WZS00AL-P1-C32";
 		ibm,module-vpd = <0xcafebeef 0x10000 0x3e067c18>;
 		ibm,ccm-node-id = <0x0>;
 		ibm,hw-card-id = <0x0>;
@@ -2132,6 +2133,7 @@
 		bus-frequency = <0x0 0x1dcd6500>;
 		ibm,dbob-id = <0x0>;
 		ibm,occ-functional-state = <0x1>;
+		ibm,loc-code = "U78CB.001.WZS00AL-P1-C32";
 		ibm,module-vpd = <0xcafebeef 0x10000 0x1b85218f>;
 		ibm,ccm-node-id = <0x0>;
 		ibm,hw-card-id = <0x0>;
@@ -2191,6 +2193,7 @@
 		bus-frequency = <0x0 0x1dcd6500>;
 		ibm,dbob-id = <0x0>;
 		ibm,occ-functional-state = <0x1>;
+		ibm,loc-code = "U78CB.001.WZS00AL-P1-C33";
 		ibm,module-vpd = <0xcafebeef 0x10000 0x36f99ead>;
 		ibm,ccm-node-id = <0x0>;
 		ibm,hw-card-id = <0x0>;
@@ -2241,6 +2244,7 @@
 		bus-frequency = <0x0 0x1dcd6500>;
 		ibm,dbob-id = <0x0>;
 		ibm,occ-functional-state = <0x1>;
+		ibm,loc-code = "U78CB.001.WZS00AL-P1-C33";
 		ibm,module-vpd = <0xcafebeef 0x10000 0x65fe8f66>;
 		ibm,ccm-node-id = <0x0>;
 		ibm,hw-card-id = <0x0>;

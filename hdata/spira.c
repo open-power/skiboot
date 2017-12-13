@@ -505,6 +505,7 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 	for_each_ntuple_idx(&spira.ntuples.proc_chip, hdif, i,
 			    SPPCRD_HDIF_SIG) {
 		const struct sppcrd_chip_info *cinfo;
+		const struct spira_fru_id *fru_id = NULL;
 		unsigned int csize;
 		u32 ve, version;
 
@@ -547,6 +548,10 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 		if (vpd_node)
 			dt_add_property_cells(vpd_node, "ibm,chip-id",
 					      be32_to_cpu(cinfo->xscom_id));
+
+		fru_id = HDIF_get_idata(hdif, SPPCRD_IDATA_FRU_ID, NULL);
+		if (fru_id)
+			slca_vpd_add_loc_code(np, be16_to_cpu(fru_id->slca_index));
 
 		/* Add module VPD on version A and later */
 		if (version >= 0x000a) {
