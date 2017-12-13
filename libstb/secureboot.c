@@ -111,9 +111,6 @@ void secureboot_init(void)
 		      secure_mode ? "on" : "off");
 	}
 
-	if (!secure_mode)
-		return;
-
 	if (version == IBM_SECUREBOOT_V1 ||
 	    version == IBM_SECUREBOOT_SOFTROM) {
 
@@ -171,9 +168,6 @@ int secureboot_verify(enum resource_id id, void *buf, size_t len)
 	const char *name;
 	uint64_t log;
 	int rc = -1;
-
-	if (!secure_mode)
-		return 0;
 
 	name = flash_map_resource_name(id);
 	if (!name) {
