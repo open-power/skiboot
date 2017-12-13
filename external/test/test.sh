@@ -40,8 +40,8 @@ pass_test() {
 
 strip_version_from_result() {
 	VERSION=$(./make_version.sh $1)
-	sed -i "s/${VERSION}/VERSION/" $STDERR_OUT
-	sed -i "s/${VERSION}/VERSION/" $STDOUT_OUT
+	sed -i "s/${VERSION}/VERSION/;s/^Open-Power \(.*\) tool v.*/Open-Power \\1 tool VERSION/" $STDERR_OUT
+	sed -i "s/${VERSION}/VERSION/;s/^Open-Power \(.*\) tool v.*/Open-Power \\1 tool VERSION/" $STDOUT_OUT
 }
 
 diff_with_result() {
