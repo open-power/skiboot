@@ -1,17 +1,15 @@
 # -*-Makefile-*-
-LIBSTB_TEST := libstb/test/run-stb-container \
-	    libstb/test/print-stb-container
+LIBSTB_TEST := libstb/test/run-stb-container
 
 HOSTCFLAGS+=-I . -I include
 
-libstb/test/print-stb-container-check: libstb/test/print-stb-container-q
+libstb/test/print-stb-container-check: libstb/print-container libstb/test/print-stb-container-q
 
-libstb/test/print-stb-container-q: libstb/test/print-stb-container
-	$(call Q, TEST , $(VALGRIND) libstb/test/print-stb-container libstb/test/t.container |diff -u libstb/test/t.container.out -, $< t.container)
-
+libstb/test/print-stb-container-q: libstb/print-container
+	$(call Q, TEST , $(VALGRIND) libstb/print-container -I libstb/test/t.container |diff -u libstb/test/t.container.out -, $< t.container)
 
 .PHONY : libstb-check
-libstb-check: $(LIBSTB_TEST:%=%-check) $(LIBSTB_TEST:%=%-gcov-run)
+libstb-check: $(LIBSTB_TEST:%=%-check) $(LIBSTB_TEST:%=%-gcov-run) libstb/test/print-stb-container-check
 libstb-check: $(LIBSTB_TEST_NOSTUB:%=%-check) $(LIBSTB_TEST_NOSTUB:%=%-gcov-run)
 
 .PHONY : libstb-coverage

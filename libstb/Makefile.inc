@@ -14,9 +14,13 @@ include $(SRC)/$(LIBSTB_DIR)/tss/Makefile.inc
 
 $(LIBSTB): $(LIBSTB_OBJS:%=$(LIBSTB_DIR)/%) $(DRIVERS) $(TSS) $(MBEDTLS)
 
-libstb/create-container: libstb/create-container.c
+libstb/create-container: libstb/create-container.c libstb/container-utils.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) \
-	-Wpadded -O0 -g -I$(SRC) -I$(SRC)/include -o $@ $< -lssl -lcrypto,$<)
+	-Wpadded -O0 -g -I$(SRC) -I$(SRC)/include -o $@ $^ -lssl -lcrypto,$<)
+
+libstb/print-container: libstb/print-container.c libstb/container-utils.c
+	$(call Q, HOSTCC , $(HOSTCC) $(HOSTCFLAGS) \
+	-O0 -g -I$(SRC) -I$(SRC)/include -o $@ $^ -lssl -lcrypto, $<)
 
 clean: create-container-clean
 
