@@ -319,6 +319,7 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 	int i;
 	bool found = false;
 	int64_t ret;
+	const char *loc;
 
 	/* Sanity check */
 	if (!cpu || !hmi_evt)
@@ -349,7 +350,9 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 	if (!core_fir)
 		return false;
 
-	prlog(PR_INFO, "CHIP ID: %x, CORE ID: %x, FIR: %016llx\n",
+	loc = chip_loc_code(cpu->chip_id);
+	prlog(PR_INFO, "[Loc: %s]: CHIP ID: %x, CORE ID: %x, FIR: %016llx\n",
+			loc ? loc : "Not Available",
 			cpu->chip_id, core_id, core_fir);
 
 	/* Check CORE FIR bits and populate HMI event with error info. */
