@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define pr_fmt(fmt)	"HMI: " fmt
+
 #include <skiboot.h>
 #include <opal.h>
 #include <opal-msg.h>
@@ -255,7 +258,7 @@ static int setup_scom_addresses(void)
 		nx_pbi_fir = P9_NX_PBI_FIR;
 		return 1;
 	default:
-		prerror("HMI: %s: Unknown CPU type\n", __func__);
+		prerror("%s: Unknown CPU type\n", __func__);
 		break;
 	}
 	return 0;
@@ -327,7 +330,7 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 	ret = read_core_fir(cpu->chip_id, core_id, &core_fir);
 
 	if (ret == OPAL_HARDWARE) {
-		prerror("HMI: XSCOM error reading CORE FIR\n");
+		prerror("XSCOM error reading CORE FIR\n");
 		/* If the FIR can't be read, we should checkstop. */
 		return true;
 	} else if (ret == OPAL_WRONG_STATE) {
@@ -338,12 +341,12 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 		 * error will be handled appropriately.
 		 */
 		prlog(PR_DEBUG,
-		      "HMI: FIR read failed, chip %d core %d asleep\n",
+		      "FIR read failed, chip %d core %d asleep\n",
 		      cpu->chip_id, core_id);
 		return false;
 	}
 
-	prlog(PR_INFO, "HMI: CHIP ID: %x, CORE ID: %x, FIR: %016llx\n",
+	prlog(PR_INFO, "CHIP ID: %x, CORE ID: %x, FIR: %016llx\n",
 			cpu->chip_id, core_id, core_fir);
 
 	/* Check CORE FIR bits and populate HMI event with error info. */
@@ -426,10 +429,10 @@ static void find_capp_checkstop_reason(int flat_chip_id,
 		if (!(capp_fir & ~capp_fir_mask))
 			continue;
 
-		prlog(PR_DEBUG, "HMI: CAPP#%d (PHB:#%x): FIR 0x%016llx mask 0x%016llx\n",
+		prlog(PR_DEBUG, "CAPP#%d (PHB:#%x): FIR 0x%016llx mask 0x%016llx\n",
 		      info.capp_index, info.phb_index, capp_fir,
 		      capp_fir_mask);
-		prlog(PR_DEBUG, "HMI: CAPP#%d (PHB:#%x): ACTION0 0x%016llx, ACTION1 0x%016llx\n",
+		prlog(PR_DEBUG, "CAPP#%d (PHB:#%x): ACTION0 0x%016llx, ACTION1 0x%016llx\n",
 		      info.capp_index, info.phb_index, capp_fir_action0,
 		      capp_fir_action1);
 
@@ -464,7 +467,7 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 
 	/* Get NX status register value. */
 	if (xscom_read(flat_chip_id, nx_status_reg, &nx_status) != 0) {
-		prerror("HMI: XSCOM error reading NX_STATUS_REG\n");
+		prerror("XSCOM error reading NX_STATUS_REG\n");
 		return;
 	}
 
@@ -480,13 +483,13 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 
 	/* Get DMA & Engine FIR data register value. */
 	if (xscom_read(flat_chip_id, nx_dma_engine_fir, &nx_dma_fir) != 0) {
-		prerror("HMI: XSCOM error reading NX_DMA_ENGINE_FIR\n");
+		prerror("XSCOM error reading NX_DMA_ENGINE_FIR\n");
 		return;
 	}
 
 	/* Get PowerBus Interface FIR data register value. */
 	if (xscom_read(flat_chip_id, nx_pbi_fir, &nx_pbi_fir_val) != 0) {
-		prerror("HMI: XSCOM error reading NX_PBI_FIR\n");
+		prerror("XSCOM error reading NX_PBI_FIR\n");
 		return;
 	}
 
@@ -557,7 +560,7 @@ static void find_npu_checkstop_reason(int flat_chip_id,
 		       p->at_xscom + NX_FIR_ACTION0, &npu_fir_action0) ||
 	    xscom_read(flat_chip_id,
 		       p->at_xscom + NX_FIR_ACTION1, &npu_fir_action1)) {
-		prerror("HMI: Couldn't read NPU registers with XSCOM\n");
+		prerror("Couldn't read NPU registers with XSCOM\n");
 		return;
 	}
 
@@ -593,7 +596,7 @@ static void decode_malfunction(struct OpalHMIEvent *hmi_evt)
 	bool event_generated = false;
 
 	if (!setup_scom_addresses()) {
-		prerror("HMI: Failed to setup scom addresses\n");
+		prerror("Failed to setup scom addresses\n");
 		/* Send an unknown HMI event. */
 		hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_UNKNOWN;
 		hmi_evt->u.xstop_error.xstop_reason = 0;
@@ -647,7 +650,7 @@ static void wait_for_cleanup_complete(void)
 			 * informed about the failure. This way we can avoid
 			 * looping here if other threads are stuck.
 			 */
-			prlog(PR_DEBUG, "HMI: TB pre-recovery timeout\n");
+			prlog(PR_DEBUG, "TB pre-recovery timeout\n");
 			break;
 		}
 		barrier();
@@ -935,7 +938,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	 * TB register.
 	 */
 	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
-	prlog(PR_DEBUG, "HMI: Received HMI interrupt: HMER = 0x%016llx\n", hmer);
+	prlog(PR_DEBUG, "Received HMI interrupt: HMER = 0x%016llx\n", hmer);
 	if (hmi_evt)
 		hmi_evt->hmer = hmer;
 	if (hmer & SPR_HMER_PROC_RECV_DONE) {
@@ -945,7 +948,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE;
 			queue_hmi_event(hmi_evt, recover);
 		}
-		prlog(PR_DEBUG, "HMI: Processor recovery Done.\n");
+		prlog(PR_DEBUG, "Processor recovery Done.\n");
 	}
 	if (hmer & SPR_HMER_PROC_RECV_ERROR_MASKED) {
 		hmer &= ~SPR_HMER_PROC_RECV_ERROR_MASKED;
@@ -954,7 +957,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_MASKED;
 			queue_hmi_event(hmi_evt, recover);
 		}
-		prlog(PR_DEBUG, "HMI: Processor recovery Done (masked).\n");
+		prlog(PR_DEBUG, "Processor recovery Done (masked).\n");
 	}
 	if (hmer & SPR_HMER_PROC_RECV_AGAIN) {
 		hmer &= ~SPR_HMER_PROC_RECV_AGAIN;
@@ -963,7 +966,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE_AGAIN;
 			queue_hmi_event(hmi_evt, recover);
 		}
-		prlog(PR_DEBUG, "HMI: Processor recovery occurred again before"
+		prlog(PR_DEBUG, "Processor recovery occurred again before"
 			"bit2 was cleared\n");
 	}
 	/* Assert if we see malfunction alert, we can not continue. */
