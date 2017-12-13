@@ -346,6 +346,9 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 		return false;
 	}
 
+	if (!core_fir)
+		return false;
+
 	prlog(PR_INFO, "CHIP ID: %x, CORE ID: %x, FIR: %016llx\n",
 			cpu->chip_id, core_id, core_fir);
 
