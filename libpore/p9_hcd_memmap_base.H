@@ -261,7 +261,22 @@ HCD_CONST(QUAD_SCOM_RESTORE_HOMER_OFFSET,
 
 HCD_CONST(MAX_L2_SCOM_ENTRIES,                  16)
 HCD_CONST(MAX_L3_SCOM_ENTRIES,                  16)
-HCD_CONST(MAX_EQ_SCOM_ENTRIES,                  15)
+
+//HW423686
+//Inorder to continue IMA after STOP11 on all four cores of a quad, 2
+//EQ SCOM registers need to restored per core. STOP API desgin allowed
+//only 15 SCOM restore entries per EQ. Out of total budget, 12 are
+//consumed during IPL. Hence it was not possible to manage IMA within
+//this limit. As a resolution, limit for EQ SCOM restore entries has
+//been changed to 31. Below is the break down for EQ SCOM Restore
+//Entries
+
+// Power Management         12
+// Core IMA                 08
+// PRD FIR Mask             05
+// Reserve                  06
+
+HCD_CONST(MAX_EQ_SCOM_ENTRIES,                  31)
 HCD_CONST(QUAD_SCOM_RESTORE_REGS_PER_QUAD,
           (MAX_EQ_SCOM_ENTRIES + MAX_L2_SCOM_ENTRIES + MAX_L3_SCOM_ENTRIES + 1))
 
