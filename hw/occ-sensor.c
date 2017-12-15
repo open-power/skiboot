@@ -275,32 +275,80 @@ enum sensor_attr {
 				 OCC_SENSOR_TYPE_TEMPERATURE | \
 				 OCC_SENSOR_TYPE_POWER)
 
+/*
+ * Standard HWMON linux interface expects the below units for the
+ * environment sensors:
+ * - Current		: milliampere
+ * - Voltage		: millivolt
+ * - Temperature	: millidegree Celsius (scaled in kernel)
+ * - Power		: microWatt	      (scaled in kernel)
+ * - Energy		: microJoule
+ */
+
+/*
+ * OCC sensor units are obtained after scaling the sensor values.
+ * https://github.com/open-power/occ/blob/master/src/occ_405/sensor/sensor_info.c
+ */
+
 static struct str_map {
 	const char *occ_str;
 	const char *opal_str;
 } str_maps[] = {
 	{"PWRSYS", "System"},
+	/* Bulk power of the system: Watt */
 	{"PWRFAN", "Fan"},
+	/* Power consumption of the system fans: Watt */
 	{"PWRIO", "IO"},
+	/* Power consumption of the IO subsystem: Watt */
 	{"PWRSTORE", "Storage"},
+	/* Power comsumption of the storage subsystem: Watt */
 	{"PWRGPU", "GPU"},
+	/* Power consumption for GPUs per socket read from APSS: Watt */
 	{"PWRAPSSCH", "APSS"},
+	/* Power Provided by APSS channel x (where x=0…15): Watt */
 	{"PWRPROC", ""},
+	/* Power consumption for this Processor: Watt */
 	{"PWRVDD", "Vdd"},
-	{"CURVDD", "Vdd"},
-	{"VOLTVDDSENSE", "Vdd Remote Sense"},
-	{"VOLTVDD", "Vdd"},
+	/* Power consumption for this Processor's Vdd(AVSBus readings): Watt */
 	{"PWRVDN", "Vdn"},
-	{"CURVDN", "Vdn"},
-	{"VOLTVDNSENSE", "Vdn Remote Sense"},
-	{"VOLTVDN", "Vdn"},
+	/* Power consumption for  this Processor's Vdn (nest)
+	 * Calculated from AVSBus readings: Watt */
 	{"PWRMEM", "Memory"},
+	/* Power consumption for Memory  for this Processor read from APSS:
+	 * Watt */
+	{"CURVDD", "Vdd"},
+	/* Processor Vdd Current (read from AVSBus): Ampere */
+	{"CURVDN", "Vdn"},
+	/* Processor Vdn Current (read from AVSBus): Ampere */
+	{"VOLTVDDSENSE", "Vdd Remote Sense"},
+	/* Vdd Voltage at the remote sense.
+	 * AVS reading adjusted for loadline: millivolt */
+	{"VOLTVDNSENSE", "Vdn Remote Sense"},
+	/* Vdn Voltage at the remote sense.
+	 * AVS reading adjusted for loadline: millivolt */
+	{"VOLTVDD", "Vdd"},
+	/* Processor Vdd Voltage (read from AVSBus): millivolt */
+	{"VOLTVDN", "Vdn"},
+	/* Processor Vdn Voltage (read from AVSBus): millivolt */
 	{"TEMPC", "Core"},
+	/* Average temperature of core DTS sensors for Processor's Core y:
+	 * Celsius */
 	{"TEMPQ", "Quad"},
+	/* Average temperature of quad (in cache) DTS sensors for
+	 * Processor’s Quad y: Celsius */
 	{"TEMPNEST", "Nest"},
+	/* Average temperature of nest DTS sensors: Celsius */
 	{"TEMPPROCTHRMC", "Core"},
+	/* The combined weighted core/quad temperature for processor core y:
+	 * Celsius */
 	{"TEMPDIMM", "DIMM"},
+	/* DIMM temperature for DIMM x: Celsius */
 	{"TEMPGPU", "GPU"},
+	/* GPU x (0..2) board temperature: Celsius */
+	/* TEMPGPUxMEM: GPU x hottest HBM temperature (individual memory
+	 * temperatures are not available): Celsius */
+	{"TEMPVDD", "VRM VDD"},
+	/* VRM Vdd temperature: Celsius */
 };
 
 static u64 occ_sensor_base;
@@ -321,6 +369,52 @@ struct occ_sensor_name *get_names_block(struct occ_sensor_data_header *hb)
 static inline u32 sensor_handler(int occ_num, int sensor_id, int attr)
 {
 	return sensor_make_handler(SENSOR_OCC, occ_num, sensor_id, attr);
+}
+
+/*
+ * The scaling factor for the sensors is encoded in the below format:
+ * (((UINT32)mantissa << 8) | (UINT32)((UINT8) 256 + (UINT8)exp))
+ * https://github.com/open-power/occ/blob/master/src/occ_405/sensor/sensor.h
+ */
+static void scale_sensor(struct occ_sensor_name *md, u64 *sensor)
+{
+	u32 factor = md->scale_factor;
+	int i;
+	s8 exp;
+
+	if (md->type == OCC_SENSOR_TYPE_CURRENT)
+		*sensor *= 1000; //convert to mA
+
+	*sensor *= factor >> 8;
+	exp = factor & 0xFF;
+
+	if (exp > 0) {
+		for (i = labs(exp); i > 0; i--)
+			*sensor *= 10;
+	} else {
+		for (i = labs(exp); sensor && i > 0; i--)
+			*sensor /= 10;
+	}
+}
+
+static void scale_energy(struct occ_sensor_name *md, u64 *sensor)
+{
+	u32 factor = md->freq;
+	int i;
+	s8 exp;
+
+	*sensor *= 1000000; //convert to uJ
+
+	*sensor /= factor >> 8;
+	exp = factor & 0xFF;
+
+	if (exp > 0) {
+		for (i = labs(exp); sensor && i > 0; i--)
+			*sensor /= 10;
+	} else {
+		for (i = labs(exp); i > 0; i--)
+			*sensor *= 10;
+	}
 }
 
 static u64 read_sensor(struct occ_sensor_record *sensor, int attr)
@@ -397,6 +491,7 @@ static void *select_sensor_buffer(struct occ_sensor_data_header *hb, int id)
 int occ_sensor_read(u32 handle, u64 *data)
 {
 	struct occ_sensor_data_header *hb;
+	struct occ_sensor_name *md;
 	u16 id = sensor_get_rid(handle);
 	u8 occ_num = sensor_get_frc(handle);
 	u8 attr = sensor_get_attr(handle);
@@ -421,6 +516,14 @@ int occ_sensor_read(u32 handle, u64 *data)
 		return OPAL_HARDWARE;
 
 	*data = read_sensor(buff, attr);
+	if (!*data)
+		return OPAL_SUCCESS;
+
+	md = get_names_block(hb);
+	if (md[id].type == OCC_SENSOR_TYPE_POWER && attr == SENSOR_ACCUMULATOR)
+		scale_energy(&md[id], data);
+	else
+		scale_sensor(&md[id], data);
 
 	return OPAL_SUCCESS;
 }
