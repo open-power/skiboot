@@ -266,6 +266,7 @@ enum sensor_attr {
 	SENSOR_SAMPLE_MAX,
 	SENSOR_CSM_MIN,		/* CSM's min/max */
 	SENSOR_CSM_MAX,
+	SENSOR_ACCUMULATOR,
 	MAX_SENSOR_ATTR,
 };
 
@@ -322,36 +323,41 @@ static inline u32 sensor_handler(int occ_num, int sensor_id, int attr)
 	return sensor_make_handler(SENSOR_OCC, occ_num, sensor_id, attr);
 }
 
-int occ_sensor_read(u32 handle, u64 *data)
+static u64 read_sensor(struct occ_sensor_record *sensor, int attr)
 {
-	struct occ_sensor_data_header *hb;
+	switch (attr) {
+	case SENSOR_SAMPLE:
+		return sensor->sample;
+	case SENSOR_SAMPLE_MIN:
+		return sensor->sample_min;
+	case SENSOR_SAMPLE_MAX:
+		return sensor->sample_max;
+	case SENSOR_CSM_MIN:
+		return sensor->csm_min;
+	case SENSOR_CSM_MAX:
+		return sensor->csm_max;
+	case SENSOR_ACCUMULATOR:
+		return sensor->accumulator;
+	default:
+		break;
+	}
+
+	return 0;
+}
+
+static void *select_sensor_buffer(struct occ_sensor_data_header *hb, int id)
+{
 	struct occ_sensor_name *md;
-	struct occ_sensor_record *sping, *spong;
-	struct occ_sensor_record *sensor = NULL;
 	u8 *ping, *pong;
-	u16 id = sensor_get_rid(handle);
-	u8 occ_num = sensor_get_frc(handle);
-	u8 attr = sensor_get_attr(handle);
+	void *buffer = NULL;
 
-	if (occ_num > MAX_OCCS)
-		return OPAL_PARAMETER;
+	if (!hb)
+		return NULL;
 
-	if (attr > MAX_SENSOR_ATTR)
-		return OPAL_PARAMETER;
-
-	hb = get_sensor_header_block(occ_num);
 	md = get_names_block(hb);
-
-	if (hb->valid != 1)
-		return OPAL_HARDWARE;
-
-	if (id > hb->nr_sensors)
-		return OPAL_PARAMETER;
 
 	ping = (u8 *)((u64)hb + hb->reading_ping_offset);
 	pong = (u8 *)((u64)hb + hb->reading_pong_offset);
-	sping = (struct occ_sensor_record *)((u64)ping + md[id].reading_offset);
-	spong = (struct occ_sensor_record *)((u64)pong + md[id].reading_offset);
 
 	/* Check which buffer is valid  and read the data from that.
 	 * Ping Pong	Action
@@ -360,40 +366,61 @@ int occ_sensor_read(u32 handle, u64 *data)
 	 *  1	0	Read Ping
 	 *  1	1	Read the buffer with latest timestamp
 	 */
-	if (*ping && *pong) {
-		if (sping->timestamp > spong->timestamp)
-			sensor = sping;
-		else
-			sensor = spong;
 
+	if (*ping && *pong) {
+		u64 tping, tpong;
+		u64 ping_buf = (u64)ping + md[id].reading_offset;
+		u64 pong_buf = (u64)pong + md[id].reading_offset;
+
+		tping = ((struct occ_sensor_record *)ping_buf)->timestamp;
+		tpong = ((struct occ_sensor_record *)pong_buf)->timestamp;
+
+		if (tping > tpong)
+			buffer = ping;
+		else
+			buffer = pong;
 	} else if (*ping && !*pong) {
-		sensor = sping;
+		buffer = ping;
 	} else if (!*ping && *pong) {
-		sensor = spong;
+		buffer = pong;
 	} else if (!*ping && !*pong) {
 		prlog(PR_DEBUG, "OCC: Both ping and pong sensor buffers are invalid\n");
-		return OPAL_HARDWARE;
+		return NULL;
 	}
 
-	switch (attr) {
-	case SENSOR_SAMPLE:
-		*data = sensor->sample;
-		break;
-	case SENSOR_SAMPLE_MIN:
-		*data = sensor->sample_min;
-		break;
-	case SENSOR_SAMPLE_MAX:
-		*data = sensor->sample_max;
-		break;
-	case SENSOR_CSM_MIN:
-		*data = sensor->csm_min;
-		break;
-	case SENSOR_CSM_MAX:
-		*data = sensor->csm_max;
-		break;
-	default:
-		*data = 0;
-	}
+	assert(buffer);
+	buffer = (void *)((u64)buffer + md[id].reading_offset);
+
+	return buffer;
+}
+
+int occ_sensor_read(u32 handle, u64 *data)
+{
+	struct occ_sensor_data_header *hb;
+	u16 id = sensor_get_rid(handle);
+	u8 occ_num = sensor_get_frc(handle);
+	u8 attr = sensor_get_attr(handle);
+	void *buff;
+
+	if (occ_num > MAX_OCCS)
+		return OPAL_PARAMETER;
+
+	if (attr > MAX_SENSOR_ATTR)
+		return OPAL_PARAMETER;
+
+	hb = get_sensor_header_block(occ_num);
+
+	if (hb->valid != 1)
+		return OPAL_HARDWARE;
+
+	if (id > hb->nr_sensors)
+		return OPAL_PARAMETER;
+
+	buff = select_sensor_buffer(hb, id);
+	if (!buff)
+		return OPAL_HARDWARE;
+
+	*data = read_sensor(buff, attr);
 
 	return OPAL_SUCCESS;
 }
@@ -565,6 +592,38 @@ static bool check_sensor_sample(struct occ_sensor_data_header *hb, u32 offset)
 	return ping->sample || pong->sample;
 }
 
+static void add_sensor_node(const char *loc, const char *type, int i, int attr,
+			    struct occ_sensor_name *md, u32 *phandle, u32 pir,
+			    u32 occ_num, u32 chipid)
+{
+	char name[30];
+	struct dt_node *node;
+	u32 handler;
+
+	snprintf(name, sizeof(name), "%s-%s", loc, type);
+	handler = sensor_handler(occ_num, i, attr);
+	node = dt_new_addr(sensor_node, name, handler);
+	dt_add_property_string(node, "sensor-type", type);
+	dt_add_property_cells(node, "sensor-data", handler);
+	dt_add_property_cells(node, "reg", handler);
+	dt_add_property_string(node, "occ_label", md->name);
+	add_sensor_label(node, md, chipid);
+
+	if (md->location == OCC_SENSOR_LOC_CORE)
+		dt_add_property_cells(node, "ibm,pir", pir);
+
+	if (attr == SENSOR_SAMPLE) {
+		handler = sensor_handler(occ_num, i, SENSOR_CSM_MAX);
+		dt_add_property_cells(node, "sensor-data-max", handler);
+
+		handler = sensor_handler(occ_num, i, SENSOR_CSM_MIN);
+		dt_add_property_cells(node, "sensor-data-min", handler);
+	}
+
+	dt_add_property_string(node, "compatible", "ibm,opal-sensor");
+	*phandle = node->phandle;
+}
+
 void occ_sensors_init(void)
 {
 	struct proc_chip *chip;
@@ -613,11 +672,8 @@ void occ_sensors_init(void)
 		assert(phandles);
 
 		for (i = 0; i < hb->nr_sensors; i++) {
-			char name[30];
 			const char *type, *loc;
-			struct dt_node *node;
 			struct cpu_thread *c = NULL;
-			u32 handler;
 
 			if (md[i].structure_type != OCC_SENSOR_READING_FULL)
 				continue;
@@ -644,29 +700,22 @@ void occ_sensors_init(void)
 
 			type = get_sensor_type_string(md[i].type);
 			loc = get_sensor_loc_string(md[i].location);
-			snprintf(name, sizeof(name), "%s-%s", loc, type);
 
-			handler = sensor_handler(occ_num, i, SENSOR_SAMPLE);
-			node = dt_new_addr(sensor_node, name, handler);
+			add_sensor_node(loc, type, i, SENSOR_SAMPLE, &md[i],
+					&phandles[phcount], c->pir, occ_num,
+					chip->id);
+			phcount++;
 
-			dt_add_property_string(node, "sensor-type", type);
-			dt_add_property_cells(node, "sensor-data", handler);
-			dt_add_property_cells(node, "reg", handler);
+			/* Add energy sensors */
+			if (md[i].type == OCC_SENSOR_TYPE_POWER &&
+			    md[i].structure_type == OCC_SENSOR_READING_FULL) {
+				add_sensor_node(loc, "energy", i,
+						SENSOR_ACCUMULATOR, &md[i],
+						&phandles[phcount], c->pir,
+						occ_num, chip->id);
+				phcount++;
+			}
 
-			handler = sensor_handler(occ_num, i, SENSOR_CSM_MAX);
-			dt_add_property_cells(node, "sensor-data-max", handler);
-
-			handler = sensor_handler(occ_num, i, SENSOR_CSM_MIN);
-			dt_add_property_cells(node, "sensor-data-min", handler);
-
-			dt_add_property_string(node, "compatible",
-					       "ibm,opal-sensor");
-			dt_add_property_string(node, "occ_label", md[i].name);
-			add_sensor_label(node, &md[i], chip->id);
-
-			if (md[i].location == OCC_SENSOR_LOC_CORE)
-				dt_add_property_cells(node, "ibm,pir", c->pir);
-			phandles[phcount++] = node->phandle;
 		}
 		occ_num++;
 		occ_add_sensor_groups(sg, phandles, phcount, chip->id);
