@@ -28,7 +28,7 @@ struct errorlog;
 extern int elog_fsp_commit(struct errorlog *buf);
 
 extern int64_t ibm_fsp_sensor_read(uint32_t sensor_hndl, int token,
-				uint32_t *sensor_data);
+				uint64_t *sensor_data);
 
 /* Apollo PCI support */
 extern void apollo_pci_setup_phb(struct phb *phb,

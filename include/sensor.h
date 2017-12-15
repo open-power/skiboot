@@ -63,5 +63,6 @@ enum {
 extern struct dt_node *sensor_node;
 
 extern void sensor_init(void);
+extern void check_sensor_read(int token);
 
 #endif /* __SENSOR_H */

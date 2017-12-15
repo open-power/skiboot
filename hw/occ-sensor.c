@@ -322,7 +322,7 @@ static inline u32 sensor_handler(int occ_num, int sensor_id, int attr)
 	return sensor_make_handler(SENSOR_OCC, occ_num, sensor_id, attr);
 }
 
-int occ_sensor_read(u32 handle, u32 *data)
+int occ_sensor_read(u32 handle, u64 *data)
 {
 	struct occ_sensor_data_header *hb;
 	struct occ_sensor_name *md;
