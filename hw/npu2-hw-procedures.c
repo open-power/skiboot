@@ -233,7 +233,7 @@ static bool poll_fence_status(struct npu2_dev *ndev, uint64_t val)
 }
 
 /* Procedure 1.2.1 - Reset NPU/NDL */
-static uint32_t reset_ntl(struct npu2_dev *ndev)
+uint32_t reset_ntl(struct npu2_dev *ndev)
 {
 	uint64_t val;
 	int lane;
