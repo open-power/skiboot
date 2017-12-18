@@ -24,6 +24,7 @@
 #include <errorlog.h>
 #include <opal-api.h>
 #include <timebase.h>
+#include <nvram.h>
 
 /* Mask of bits to clear in HMER before an access */
 #define HMER_CLR_MASK	(~(SPR_HMER_XSCOM_FAIL | \
@@ -826,6 +827,37 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 int64_t xscom_trigger_xstop(void)
 {
 	int rc = OPAL_UNSUPPORTED;
+	bool xstop_disabled = false;
+
+	/*
+	 * Workaround until we iron out all checkstop issues at present.
+	 *
+	 * For p9:
+	 * By default do not trigger sw checkstop unless explicitly enabled
+	 * through nvram option 'opal-sw-xstop=enable'.
+	 *
+	 * For p8:
+	 * Keep it enabled by default unless explicitly disabled.
+	 *
+	 * NOTE: Once all checkstop issues are resolved/stabilized reverse
+	 * the logic to enable sw checkstop by default on p9.
+	 */
+	switch (proc_gen) {
+	case proc_gen_p8:
+		if (nvram_query_eq("opal-sw-xstop", "disable"))
+			xstop_disabled = true;
+		break;
+	case proc_gen_p9:
+	default:
+		if (!nvram_query_eq("opal-sw-xstop", "enable"))
+			xstop_disabled = true;
+		break;
+	}
+
+	if (xstop_disabled) {
+		prlog(PR_NOTICE, "Software initiated checkstop disabled.\n");
+		return rc;
+	}
 
 	if (xstop_xscom.addr)
 		rc = xscom_writeme(xstop_xscom.addr,
