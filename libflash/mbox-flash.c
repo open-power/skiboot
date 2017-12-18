@@ -348,8 +348,9 @@ static int wait_for_bmc(struct mbox_flash_data *mbox_flash, unsigned int timeout
 		 * Both functions are important.
 		 * Well time_wait_ms() relaxes the spin... so... its nice
 		 */
-		time_wait_ms(MBOX_DEFAULT_POLL_MS);
 		check_timers(false);
+		if (mbox_flash->busy)
+			time_wait_ms(MBOX_DEFAULT_POLL_MS);
 		asm volatile ("" ::: "memory");
 	}
 
