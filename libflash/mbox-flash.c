@@ -1018,6 +1018,7 @@ static int protocol_init(struct mbox_flash_data *mbox_flash, uint8_t shift)
 	 */
 	mbox_flash->version = 3;
 
+negotiate_version:
 	msg_put_u8(&msg, 0, mbox_flash->version);
 	msg_put_u8(&msg, 1, shift);
 	rc = msg_send(mbox_flash, &msg, mbox_flash->timeout);
@@ -1029,6 +1030,12 @@ static int protocol_init(struct mbox_flash_data *mbox_flash, uint8_t shift)
 	rc = wait_for_bmc(mbox_flash, mbox_flash->timeout);
 	if (rc) {
 		prlog(PR_ERR, "Error waiting for BMC\n");
+		if (mbox_flash->version > 1) {
+			mbox_flash->version--;
+			prlog(PR_INFO, "Retrying MBOX negotiation with BMC"
+			      " with MBOXv%d\n", mbox_flash->version);
+			goto negotiate_version;
+		}
 		return rc;
 	}
 
