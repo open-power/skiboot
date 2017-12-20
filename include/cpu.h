@@ -61,8 +61,8 @@ struct cpu_thread {
 	uint64_t			save_r1;
 	void				*icp_regs;
 	uint32_t			in_opal_call;
-	uint32_t			lock_depth;
 	uint32_t			con_suspend;
+	struct list_head		locks_held;
 	bool				con_need_flush;
 	bool				quiesce_opal_call;
 	bool				in_mcount;

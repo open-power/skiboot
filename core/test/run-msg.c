@@ -41,8 +41,9 @@ static void *zalloc(size_t size)
 #include "../opal-msg.c"
 #include <skiboot.h>
 
-void lock(struct lock *l)
+void lock_caller(struct lock *l, const char *caller)
 {
+	(void)caller;
         assert(!l->lock_val);
         l->lock_val = 1;
 }

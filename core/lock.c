@@ -57,8 +57,8 @@ static void unlock_check(struct lock *l)
 	if (l->in_con_path && this_cpu()->con_suspend == 0)
 		lock_error(l, "Unlock con lock with console not suspended", 3);
 
-	if (this_cpu()->lock_depth == 0)
-		lock_error(l, "Releasing lock with 0 depth", 4);
+	if (list_empty(&this_cpu()->locks_held))
+		lock_error(l, "Releasing lock we don't hold depth", 4);
 }
 
 #else
@@ -89,7 +89,7 @@ static inline bool __try_lock(struct cpu_thread *cpu, struct lock *l)
 	return false;
 }
 
-bool try_lock(struct lock *l)
+bool try_lock_caller(struct lock *l, const char *owner)
 {
 	struct cpu_thread *cpu = this_cpu();
 
@@ -97,22 +97,23 @@ bool try_lock(struct lock *l)
 		return true;
 
 	if (__try_lock(cpu, l)) {
+		l->owner = owner;
 		if (l->in_con_path)
 			cpu->con_suspend++;
-		cpu->lock_depth++;
+		list_add(&cpu->locks_held, &l->list);
 		return true;
 	}
 	return false;
 }
 
-void lock(struct lock *l)
+void lock_caller(struct lock *l, const char *owner)
 {
 	if (bust_locks)
 		return;
 
 	lock_check(l);
 	for (;;) {
-		if (try_lock(l))
+		if (try_lock_caller(l, owner))
 			break;
 		smt_lowest();
 		while (l->lock_val)
@@ -130,8 +131,9 @@ void unlock(struct lock *l)
 
 	unlock_check(l);
 
+	l->owner = NULL;
+	list_del(&l->list);
 	lwsync();
-	this_cpu()->lock_depth--;
 	l->lock_val = 0;
 
 	/* WARNING: On fast reboot, we can be reset right at that
@@ -144,7 +146,7 @@ void unlock(struct lock *l)
 	}
 }
 
-bool lock_recursive(struct lock *l)
+bool lock_recursive_caller(struct lock *l, const char *caller)
 {
 	if (bust_locks)
 		return false;
@@ -152,7 +154,7 @@ bool lock_recursive(struct lock *l)
 	if (lock_held_by_me(l))
 		return false;
 
-	lock(l);
+	lock_caller(l, caller);
 	return true;
 }
 
@@ -160,3 +162,24 @@ void init_locks(void)
 {
 	bust_locks = false;
 }
+
+void dump_locks_list(void)
+{
+	struct lock *l;
+
+	prlog(PR_ERR, "Locks held:\n");
+	list_for_each(&this_cpu()->locks_held, l, list)
+		prlog(PR_ERR, "  %s\n", l->owner);
+}
+
+void drop_my_locks(bool warn)
+{
+	struct lock *l;
+
+	while((l = list_pop(&this_cpu()->locks_held, struct lock, list)) != NULL) {
+		if (warn)
+			prlog(PR_ERR, "  %s\n", l->owner);
+		unlock(l);
+	}
+}
+

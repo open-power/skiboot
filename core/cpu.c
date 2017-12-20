@@ -285,6 +285,11 @@ void cpu_process_jobs(void)
 		if (no_return)
 			free(job);
 		func(data);
+		if (!list_empty(&cpu->locks_held)) {
+			prlog(PR_ERR, "OPAL job %s returning with locks held\n",
+			      job->name);
+			drop_my_locks(true);
+		}
 		lock(&cpu->job_lock);
 		if (!no_return) {
 			cpu->job_count--;
@@ -822,6 +827,7 @@ static void init_cpu_thread(struct cpu_thread *t,
 	init_lock(&t->dctl_lock);
 	init_lock(&t->job_lock);
 	list_head_init(&t->job_queue);
+	list_head_init(&t->locks_held);
 	t->stack_guard = STACK_CHECK_GUARD_BASE ^ pir;
 	t->state = state;
 	t->pir = pir;

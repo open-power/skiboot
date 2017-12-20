@@ -182,6 +182,11 @@ int64_t opal_exit_check(int64_t retval, struct stack_frame *eframe)
 		printf("CPU UN-ACCOUNTED FIRMWARE ENTRY! PIR=%04lx cpu @%p -> pir=%04x token=%llu retval=%lld\n",
 		       mfspr(SPR_PIR), cpu, cpu->pir, token, retval);
 	} else {
+		if (!list_empty(&cpu->locks_held)) {
+			prlog(PR_ERR, "OPAL exiting with locks held, token=%llu retval=%lld\n",
+			      token, retval);
+			drop_my_locks(true);
+		}
 		sync(); /* release barrier vs quiescing */
 		cpu->in_opal_call--;
 	}
@@ -557,7 +562,7 @@ void opal_run_pollers(void)
 	}
 	this_cpu()->in_poller = true;
 
-	if (this_cpu()->lock_depth && pollers_with_lock_warnings < 64) {
+	if (!list_empty(&this_cpu()->locks_held) && pollers_with_lock_warnings < 64) {
 		/**
 		 * @fwts-label OPALPollerWithLock
 		 * @fwts-advice opal_run_pollers() was called with a lock
@@ -565,6 +570,7 @@ void opal_run_pollers(void)
 		 * lucky/careful.
 		 */
 		prlog(PR_ERR, "Running pollers with lock held !\n");
+		dump_locks_list();
 		backtrace();
 		pollers_with_lock_warnings++;
 		if (pollers_with_lock_warnings == 64) {

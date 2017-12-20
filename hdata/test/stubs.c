@@ -109,7 +109,7 @@ static bool false_stub(void) { return false; }
 #define NOOP_STUB FALSE_STUB
 
 TRUE_STUB(lock_held_by_me);
-NOOP_STUB(lock);
+NOOP_STUB(lock_caller);
 NOOP_STUB(unlock);
 NOOP_STUB(early_uart_init);
 NOOP_STUB(mem_reserve_fw);

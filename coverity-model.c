@@ -10,7 +10,8 @@ void mem_free(struct mem_region *region, void *mem, const char *location) {
 	__coverity_free__(mem);
 }
 
-void lock(struct lock *l) {
+void lock_caller(struct lock *l, const char *caller)
+{
 	__coverity_exclusive_lock_acquire__(l);
 }
 

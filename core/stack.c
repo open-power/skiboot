@@ -21,6 +21,7 @@
 #include <stack.h>
 #include <mem_region.h>
 #include <unistd.h>
+#include <lock.h>
 
 #define STACK_BUF_ENTRIES	60
 static struct bt_entry bt_buf[STACK_BUF_ENTRIES];

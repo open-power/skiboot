@@ -52,8 +52,9 @@ static void real_free(void *p)
 #include <assert.h>
 #include <stdio.h>
 
-void lock(struct lock *l)
+void lock_caller(struct lock *l, const char *caller)
 {
+	(void)caller;
 	assert(!l->lock_val);
 	l->lock_val++;
 }

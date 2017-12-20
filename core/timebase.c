@@ -53,7 +53,7 @@ void time_wait(unsigned long duration)
 {
 	struct cpu_thread *c = this_cpu();
 
-	if (this_cpu()->lock_depth) {
+	if (!list_empty(&this_cpu()->locks_held)) {
 		time_wait_nopoll(duration);
 		return;
 	}

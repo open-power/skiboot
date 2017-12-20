@@ -60,8 +60,9 @@ static inline void __free(void *p, const char *location __attribute__((unused)))
 #include <assert.h>
 #include <stdio.h>
 
-void lock(struct lock *l)
+void lock_caller(struct lock *l, const char *caller)
 {
+	(void)caller;
 	l->lock_val++;
 }
 

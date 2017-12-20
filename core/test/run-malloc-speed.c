@@ -55,8 +55,9 @@ static inline void real_free(void *p)
 char __rodata_start[1], __rodata_end[1];
 struct dt_node *dt_root;
 
-void lock(struct lock *l)
+void lock_caller(struct lock *l, const char *caller)
 {
+	(void)caller;
 	assert(!l->lock_val);
 	l->lock_val = 1;
 }

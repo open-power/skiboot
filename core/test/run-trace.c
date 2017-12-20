@@ -113,8 +113,9 @@ struct debug_descriptor debug_descriptor = {
 	.trace_mask = -1
 };
 
-void lock(struct lock *l)
+void lock_caller(struct lock *l, const char *caller)
 {
+	(void)caller;
 	assert(!l->lock_val);
 	l->lock_val = 1;
 }
