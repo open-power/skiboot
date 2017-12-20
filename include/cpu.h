@@ -45,6 +45,11 @@ struct cpu_job;
 struct xive_cpu_state;
 
 struct cpu_thread {
+	/*
+	 * "stack_guard" must be at offset 0 to match the
+	 * -mstack-protector-guard-offset=0 statement in the Makefile
+	 */
+	uint64_t			stack_guard;
 	uint32_t			pir;
 	uint32_t			server_no;
 	uint32_t			chip_id;

@@ -19,6 +19,7 @@ try = $(shell set -e; if ($(1)) >/dev/null 2>&1; \
 	else echo "$(3)"; fi )
 
 try-cflag = $(call try,$(1) $(2) -x c -c /dev/null -o /dev/null,$(2))
+test_cflag = $(call try,$(1) $(2) -x c -c /dev/null -o /dev/null,1,0)
 
 # Base warnings
 CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
@@ -90,19 +91,28 @@ else
 VALGRIND :=
 endif
 
-# Stack protector disabled for now. gcc tends to use the TLS to
-# access the canary (depending on how gcc was built), and this won't
-# work for us.
-#
+# Check if the new parametrized stack protector option is supported
+# by gcc, otherwise disable stack protector
+STACK_PROT_CFLAGS := -mstack-protector-guard=tls -mstack-protector-guard-reg=r13
+STACK_PROT_CFLAGS += -mstack-protector-guard-offset=0
+HAS_STACK_PROT := $(call test_cflag,$(CC),$(STACK_PROT_CFLAGS))
+
 ifeq ($(STACK_CHECK),1)
-#CFLAGS += -fstack-protector-all -pg
-CFLAGS += -fno-stack-protector -pg
+STACK_PROT_CFLAGS += -fstack-protector-all
 CPPFLAGS += -DSTACK_CHECK_ENABLED
+CFLAGS += -pg
+else
+STACK_PROT_CFLAGS += -fstack-protector
+STACK_PROT_CFLAGS += $(call try-cflag,$(CC),-fstack-protector-strong)
+endif
+
+ifeq ($(HAS_STACK_PROT),1)
+CPPFLAGS += -DHAS_STACK_PROT
+CFLAGS += $(STACK_PROT_CFLAGS)
 else
 CFLAGS += -fno-stack-protector
-#CFLAGS += -fstack-protector
-#CFLAGS += $(call try-cflag,$(CC),-fstack-protector-strong)
 endif
+
 
 CFLAGS += $(call try-cflag,$(CC),-Wjump-misses-init) \
 	  $(call try-cflag,$(CC),-Wsuggest-attribute=const) \

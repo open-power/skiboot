@@ -389,6 +389,11 @@ boot_entry:
 	li	%r0,0
 	std	%r0,CPUTHREAD_STACK_BOT_MARK(%r13)
 #endif
+	/* Initialize the stack guard */
+	LOAD_IMM64(%r3,STACK_CHECK_GUARD_BASE);
+	xor	%r3,%r3,%r31
+	std	%r3,0(%r13)
+
 	/* Jump to C */
 	mr	%r3,%r27
 	bl	main_cpu_entry

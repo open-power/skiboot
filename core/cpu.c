@@ -822,6 +822,7 @@ static void init_cpu_thread(struct cpu_thread *t,
 	init_lock(&t->dctl_lock);
 	init_lock(&t->job_lock);
 	list_head_init(&t->job_queue);
+	t->stack_guard = STACK_CHECK_GUARD_BASE ^ pir;
 	t->state = state;
 	t->pir = pir;
 #ifdef STACK_CHECK_ENABLED
@@ -865,7 +866,8 @@ void __nomcount pre_init_boot_cpu(void)
 {
 	struct cpu_thread *cpu = this_cpu();
 
-	memset(cpu, 0, sizeof(struct cpu_thread));
+	/* We skip the stack guard ! */
+	memset(((void *)cpu) + 8, 0, sizeof(struct cpu_thread) - 8);
 }
 
 void init_boot_cpu(void)
@@ -943,8 +945,14 @@ void init_boot_cpu(void)
 	top_of_ram += (cpu_max_pir + 1) * STACK_SIZE;
 
 	/* Clear the CPU structs */
-	for (i = 0; i <= cpu_max_pir; i++)
+	for (i = 0; i <= cpu_max_pir; i++) {
+		/* boot CPU already cleared and we don't want to clobber
+		 * its stack guard value.
+		 */
+		if (i == pir)
+			continue;
 		memset(&cpu_stacks[i].cpu, 0, sizeof(struct cpu_thread));
+	}
 
 	/* Setup boot CPU state */
 	boot_cpu = &cpu_stacks[pir].cpu;
