@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 IBM Corp.
+/* Copyright 2013-2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,6 +126,17 @@ static int opal_sensor_group_clear(u32 group_hndl, int token)
 	return OPAL_UNSUPPORTED;
 }
 
+static int opal_sensor_group_enable(u32 group_hndl, int token, bool enable)
+{
+	switch (sensor_get_family(group_hndl)) {
+	case SENSOR_OCC:
+		return occ_sensor_group_enable(group_hndl, token, enable);
+	default:
+		break;
+	}
+
+	return OPAL_UNSUPPORTED;
+}
 void sensor_init(void)
 {
 	sensor_node = dt_new(opal_node, "sensors");
@@ -139,4 +150,5 @@ void sensor_init(void)
 	opal_register(OPAL_SENSOR_READ, opal_sensor_read, 3);
 	opal_register(OPAL_SENSOR_GROUP_CLEAR, opal_sensor_group_clear, 2);
 	opal_register(OPAL_SENSOR_READ_U64, opal_sensor_read_u64, 3);
+	opal_register(OPAL_SENSOR_GROUP_ENABLE, opal_sensor_group_enable, 3);
 }

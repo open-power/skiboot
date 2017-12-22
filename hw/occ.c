@@ -31,6 +31,7 @@
 #include <powercap.h>
 #include <psr.h>
 #include <sensor.h>
+#include <occ-sensor.h>
 
 /* OCC Communication Area for PStates */
 
@@ -954,7 +955,7 @@ enum occ_cmd {
 	OCC_CMD_CLEAR_SENSOR_DATA,
 	OCC_CMD_SET_POWER_CAP,
 	OCC_CMD_SET_POWER_SHIFTING_RATIO,
-	OCC_CMD_LAST
+	OCC_CMD_SELECT_SENSOR_GROUP,
 };
 
 struct opal_occ_cmd_info {
@@ -989,6 +990,13 @@ static struct opal_occ_cmd_info occ_cmds[] = {
 		PPC_BIT16(OCC_STATE_CHARACTERIZATION),
 		PPC_BIT8(OCC_ROLE_MASTER) | PPC_BIT8(OCC_ROLE_SLAVE)
 	},
+	{	OCC_CMD_SELECT_SENSOR_GROUP,
+		0xD3, 2, 2, 1000,
+		PPC_BIT16(OCC_STATE_OBSERVATION) |
+		PPC_BIT16(OCC_STATE_ACTIVE) |
+		PPC_BIT16(OCC_STATE_CHARACTERIZATION),
+		PPC_BIT8(OCC_ROLE_MASTER) | PPC_BIT8(OCC_ROLE_SLAVE)
+	},
 };
 
 enum occ_response_status {
@@ -1018,6 +1026,7 @@ static struct cmd_interface {
 	u8 *valid;
 	u32 chip_id;
 	u32 token;
+	u16 enabled_sensor_mask;
 	u8 occ_role;
 	u8 request_id;
 	bool cmd_in_progress;
@@ -1212,6 +1221,10 @@ static void handle_occ_rsp(uint32_t chip_id)
 		goto exit;
 	}
 
+	if (rsp->cmd == occ_cmds[OCC_CMD_SELECT_SENSOR_GROUP].cmd_value &&
+	    rsp->status == OCC_RSP_SUCCESS)
+		chip->enabled_sensor_mask = *(u16 *)chip->cdata->data;
+
 	chip->cmd_in_progress = false;
 	queue_occ_rsp_msg(chip->token, read_occ_rsp(chip->rsp));
 exit:
@@ -1252,6 +1265,7 @@ static void occ_cmd_interface_init(void)
 		init_lock(&chips[i].queue_lock);
 		chips[i].cmd_in_progress = false;
 		chips[i].request_id = 0;
+		chips[i].enabled_sensor_mask = OCC_ENABLED_SENSOR_MASK;
 		init_timer(&chips[i].timeout, occ_cmd_timeout_handler,
 			   &chips[i]);
 		i++;
@@ -1503,16 +1517,93 @@ int occ_sensor_group_clear(u32 group_hndl, int token)
 	return opal_occ_command(&chips[i], token, &slimit_data);
 }
 
-void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, int nr_phandles,
-			   int chipid)
+static u16 sensor_enable;
+static struct opal_occ_cmd_data sensor_mask_data = {
+	.data		= (u8 *)&sensor_enable,
+	.cmd		= OCC_CMD_SELECT_SENSOR_GROUP,
+};
+
+int occ_sensor_group_enable(u32 group_hndl, int token, bool enable)
 {
-	struct limit_group_info {
-		int limit;
+	u16 type = sensor_get_rid(group_hndl);
+	u8 i = sensor_get_attr(group_hndl);
+
+	if (i > nr_occs)
+		return OPAL_UNSUPPORTED;
+
+	switch (type) {
+	case OCC_SENSOR_TYPE_GENERIC:
+	case OCC_SENSOR_TYPE_CURRENT:
+	case OCC_SENSOR_TYPE_VOLTAGE:
+	case OCC_SENSOR_TYPE_TEMPERATURE:
+	case OCC_SENSOR_TYPE_UTILIZATION:
+	case OCC_SENSOR_TYPE_TIME:
+	case OCC_SENSOR_TYPE_FREQUENCY:
+	case OCC_SENSOR_TYPE_POWER:
+	case OCC_SENSOR_TYPE_PERFORMANCE:
+		break;
+	default:
+		return OPAL_UNSUPPORTED;
+	}
+
+	if (!(*chips[i].valid))
+		return OPAL_HARDWARE;
+
+	if (enable && (type & chips[i].enabled_sensor_mask))
+		return OPAL_SUCCESS;
+	else if (!enable && !(type & chips[i].enabled_sensor_mask))
+		return OPAL_SUCCESS;
+
+	sensor_enable = enable ? type | chips[i].enabled_sensor_mask :
+				~type & chips[i].enabled_sensor_mask;
+
+	return opal_occ_command(&chips[i], token, &sensor_mask_data);
+}
+
+void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, u32 *ptype,
+			   int nr_phandles, int chipid)
+{
+	struct group_info {
+		int type;
 		const char *str;
-	} limits[] = {
-		{ OCC_SENSOR_LIMIT_GROUP_CSM, "csm" },
-		{ OCC_SENSOR_LIMIT_GROUP_PROFILER, "profiler" },
-		{ OCC_SENSOR_LIMIT_GROUP_JOB_SCHED, "js" },
+		u32 ops;
+	} groups[] = {
+		{ OCC_SENSOR_LIMIT_GROUP_CSM, "csm",
+		  OPAL_SENSOR_GROUP_CLEAR
+		},
+		{ OCC_SENSOR_LIMIT_GROUP_PROFILER, "profiler",
+		  OPAL_SENSOR_GROUP_CLEAR
+		},
+		{ OCC_SENSOR_LIMIT_GROUP_JOB_SCHED, "js",
+		  OPAL_SENSOR_GROUP_CLEAR
+		},
+		{ OCC_SENSOR_TYPE_GENERIC, "generic",
+		  OPAL_SENSOR_GROUP_ENABLE
+		},
+		{ OCC_SENSOR_TYPE_CURRENT, "current",
+		  OPAL_SENSOR_GROUP_ENABLE
+		},
+		{ OCC_SENSOR_TYPE_VOLTAGE, "voltage",
+		  OPAL_SENSOR_GROUP_ENABLE
+		},
+		{ OCC_SENSOR_TYPE_TEMPERATURE, "temperature",
+		  OPAL_SENSOR_GROUP_ENABLE
+		},
+		{ OCC_SENSOR_TYPE_UTILIZATION, "utilization",
+		  OPAL_SENSOR_GROUP_ENABLE
+		},
+		{ OCC_SENSOR_TYPE_TIME, "time",
+		  OPAL_SENSOR_GROUP_ENABLE
+		},
+		{ OCC_SENSOR_TYPE_FREQUENCY, "frequency",
+		  OPAL_SENSOR_GROUP_ENABLE
+		},
+		{ OCC_SENSOR_TYPE_POWER, "power",
+		  OPAL_SENSOR_GROUP_ENABLE
+		},
+		{ OCC_SENSOR_TYPE_PERFORMANCE, "performance",
+		  OPAL_SENSOR_GROUP_ENABLE
+		},
 	};
 	int i, j;
 
@@ -1520,14 +1611,14 @@ void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, int nr_phandles,
 		if (chips[i].chip_id == chipid)
 			break;
 
-	for (j = 0; j < ARRAY_SIZE(limits); j++) {
+	for (j = 0; j < ARRAY_SIZE(groups); j++) {
 		struct dt_node *node;
 		char name[20];
 		u32 handle;
 
-		snprintf(name, 20, "occ-%s", limits[j].str);
+		snprintf(name, 20, "occ-%s", groups[j].str);
 		handle = sensor_make_handler(SENSOR_OCC, 0,
-					     limits[j].limit, i);
+					     groups[j].type, i);
 		node = dt_new_addr(sg, name, handle);
 		if (!node) {
 			prerror("Failed to create sensor group nodes\n");
@@ -1535,11 +1626,27 @@ void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, int nr_phandles,
 		}
 
 		dt_add_property_cells(node, "sensor-group-id", handle);
-		dt_add_property_string(node, "type", limits[j].str);
+		dt_add_property_string(node, "type", groups[j].str);
 		dt_add_property_cells(node, "ibm,chip-id", chipid);
-		dt_add_property(node, "sensors", phandles, nr_phandles);
-		dt_add_property_cells(node, "ops", OPAL_SENSOR_GROUP_CLEAR);
 		dt_add_property_cells(node, "reg", handle);
+		if (groups[j].ops == OPAL_SENSOR_GROUP_ENABLE) {
+			u32 *_phandles;
+			int k, pcount = 0;
+
+			_phandles = malloc(sizeof(u32) * nr_phandles);
+			assert(_phandles);
+			for (k = 0; k < nr_phandles; k++)
+				if (ptype[k] == groups[j].type)
+					_phandles[pcount++] = phandles[k];
+			if (pcount)
+				dt_add_property(node, "sensors", _phandles,
+						pcount);
+			free(_phandles);
+		} else {
+			dt_add_property(node, "sensors", phandles,
+					nr_phandles);
+		}
+		dt_add_property_cells(node, "ops", groups[j].ops);
 	}
 }
 
