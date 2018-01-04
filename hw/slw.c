@@ -819,6 +819,36 @@ static struct cpu_idle_states power9_ndd1_cpu_idle_states[] = {
 				 | OPAL_PM_PSSCR_EC,
 		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK }
 };
+static void slw_late_init_p9(struct proc_chip *chip)
+{
+	struct cpu_thread *c;
+	int rc;
+
+	if (!chip->homer_base) {
+		log_simple_error(&e_info(OPAL_RC_SLW_REG),
+				 "SLW: HOMER base not set %x\n",
+				 chip->id);
+		return;
+	}
+	prlog(PR_NOTICE, "SLW: Configuring self-restore for HRMOR\n");
+	for_each_available_cpu(c) {
+		if (c->chip_id != chip->id)
+			continue;
+		/*
+		 * Clear HRMOR. Need to update only for thread
+		 * 0 of each core. Doing it anyway for all threads
+		 */
+		rc =  p9_stop_save_cpureg((void *)chip->homer_base,
+						P9_STOP_SPR_HRMOR, 0,
+						c->pir);
+		if (rc) {
+			log_simple_error(&e_info(OPAL_RC_SLW_REG),
+			"SLW: Failed to set HRMOR for CPU %x,RC=0x%x\n",
+			c->pir, rc);
+			prlog(PR_ERR, "Disabling deep stop states\n");
+		}
+	}
+}
 
 /* Add device tree properties to describe idle states */
 void add_cpu_idle_state_properties(void)
@@ -1281,7 +1311,6 @@ static void slw_patch_regs(struct proc_chip *chip)
 static void slw_init_chip_p9(struct proc_chip *chip)
 {
 	struct cpu_thread *c;
-	int rc;
 
 	prlog(PR_DEBUG, "SLW: Init chip 0x%x\n", chip->id);
 
@@ -1289,38 +1318,11 @@ static void slw_init_chip_p9(struct proc_chip *chip)
 	for_each_available_core_in_chip(c, chip->id)
 		slw_set_overrides_p9(chip, c);
 
-	if (!chip->homer_base) {
-		log_simple_error(&e_info(OPAL_RC_SLW_REG),
-				 "SLW: HOMER base not set %x\n",
-				 chip->id);
-		return;
-	}
 
-	prlog(PR_NOTICE, "SLW: Configuring self-restore for HRMOR\n");
-
-	/* Should this be for_each_present_cpu() ? */
-	for_each_available_cpu(c) {
-		if (c->chip_id != chip->id)
-			continue;
-
-		/*
-		 * Clear HRMOR. Need to update only for thread
-		 * 0 of each core. Doing it anyway for all threads
-		 */
-		rc =  p9_stop_save_cpureg((void *)chip->homer_base,
-						P9_STOP_SPR_HRMOR, 0,
-					       c->pir);
-		if (rc) {
-			log_simple_error(&e_info(OPAL_RC_SLW_REG),
-				 "SLW: Failed to set HRMOR for CPU %x,RC=0x%x\n",
-				 c->pir, rc);
-		}
-	}
 }
-static void slw_init_chip(struct proc_chip *chip)
+static void slw_late_init_p8(struct proc_chip *chip)
 {
 	int64_t rc;
-	struct cpu_thread *c;
 
 	prlog(PR_DEBUG, "SLW: Init chip 0x%x\n", chip->id);
 
@@ -1352,6 +1354,11 @@ static void slw_init_chip(struct proc_chip *chip)
 
 	/* Patch SLW image */
         slw_patch_regs(chip);
+
+}
+static void slw_init_chip_p8(struct proc_chip *chip)
+{
+	struct cpu_thread *c;
 
 	/* At power ON setup inits for fast-sleep */
 	for_each_available_core_in_chip(c, chip->id) {
@@ -1698,12 +1705,16 @@ void slw_init(void)
 	struct proc_chip *chip;
 
 	if (proc_gen == proc_gen_p8) {
-		for_each_chip(chip)
-			slw_init_chip(chip);
+		for_each_chip(chip) {
+			slw_init_chip_p8(chip);
+			slw_late_init_p8(chip);
+		}
 		slw_init_timer();
 	} else if (proc_gen == proc_gen_p9) {
-		for_each_chip(chip)
+		for_each_chip(chip) {
 			slw_init_chip_p9(chip);
+			slw_late_init_p9(chip);
+		}
 	}
 	add_cpu_idle_state_properties();
 }
