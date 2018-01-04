@@ -924,6 +924,10 @@ void add_cpu_idle_state_properties(void)
 				}
 			}
 
+			if ((wakeup_engine_state == WAKEUP_ENGINE_PRESENT) && has_deep_states)
+				slw_late_init_p9(chip);
+			if (wakeup_engine_state != WAKEUP_ENGINE_PRESENT)
+				has_deep_states = false;
 	} else if (chip->type == PROC_CHIP_P8_MURANO ||
 	    chip->type == PROC_CHIP_P8_VENICE ||
 	    chip->type == PROC_CHIP_P8_NAPLES) {
@@ -1487,6 +1491,11 @@ int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 	assert(chip);
 
 	if (proc_gen == proc_gen_p9) {
+		if (!has_deep_states) {
+			prlog(PR_INFO, "SLW: Deep states not enabled\n");
+			return OPAL_SUCCESS;
+		}
+
 		if (wakeup_engine_state != WAKEUP_ENGINE_PRESENT) {
 			log_simple_error(&e_info(OPAL_RC_SLW_REG),
 					 "SLW: wakeup_engine in bad state=%d chip=%x\n",
