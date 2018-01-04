@@ -302,6 +302,14 @@ extern void prd_fsp_occ_load_start(u32 proc);
 /* Flatten device-tree */
 extern void *create_dtb(const struct dt_node *root, bool exclusive);
 
+/* Track failure in Wakup engine */
+enum wakeup_engine_states {
+	WAKEUP_ENGINE_NOT_PRESENT,
+	WAKEUP_ENGINE_PRESENT,
+	WAKEUP_ENGINE_FAILED
+};
+extern enum wakeup_engine_states wakeup_engine_state;
+
 /* SLW reinit function for switching core settings */
 extern int64_t slw_reinit(uint64_t flags);
 

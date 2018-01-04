@@ -40,7 +40,7 @@ static uint32_t slw_saved_reset[MAX_RESET_PATCH_SIZE];
 
 static bool slw_current_le = false;
 
-bool has_wakeup_engine = true;
+enum wakeup_engine_states wakeup_engine_state = WAKEUP_ENGINE_NOT_PRESENT;
 
 /* SLW timer related stuff */
 static bool slw_has_timer;
@@ -947,20 +947,8 @@ void add_cpu_idle_state_properties(void)
 		nr_states = ARRAY_SIZE(power7_cpu_idle_states);
 	}
 
-	/*
-	 * Enable deep idle states only if :
-	 * P8 : slw image is intact
-	 * P9 : homer_base is set
-	 */
-	if (!(proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)) {
-		if (proc_gen == proc_gen_p9)
-			has_wakeup_engine = !!(chip->homer_base);
-		else /* (proc_gen == proc_gen_p8) */
-			has_wakeup_engine = (chip->slw_base && chip->slw_bar_size &&
-					chip->slw_image_size);
-	} else {
-		has_wakeup_engine = false;
-	}
+	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+		wakeup_engine_state = WAKEUP_ENGINE_NOT_PRESENT;
 
 	/*
 	 * Currently we can't append strings and cells to dt properties.
@@ -988,7 +976,7 @@ void add_cpu_idle_state_properties(void)
 	if (has_stop_inst) {
 		/* Power 9 / POWER ISA 3.0 */
 		supported_states_mask = OPAL_PM_STOP_INST_FAST;
-		if (has_wakeup_engine)
+		if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT)
 			supported_states_mask |= OPAL_PM_STOP_INST_DEEP;
 	} else {
 		/* Power 7 and Power 8 */
@@ -996,7 +984,7 @@ void add_cpu_idle_state_properties(void)
 		if (can_sleep)
 			supported_states_mask |= OPAL_PM_SLEEP_ENABLED |
 						OPAL_PM_SLEEP_ENABLED_ER1;
-		if (has_wakeup_engine)
+		if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT)
 			supported_states_mask |= OPAL_PM_WINKLE_ENABLED;
 	}
 	for (i = 0; i < nr_states; i++) {
@@ -1492,10 +1480,10 @@ int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 	assert(chip);
 
 	if (proc_gen == proc_gen_p9) {
-		if (!chip->homer_base) {
+		if (wakeup_engine_state != WAKEUP_ENGINE_PRESENT) {
 			log_simple_error(&e_info(OPAL_RC_SLW_REG),
-					 "SLW: HOMER base not set %x\n",
-					 chip->id);
+					 "SLW: wakeup_engine in bad state=%d chip=%x\n",
+					 wakeup_engine_state,chip->id);
 			return OPAL_INTERNAL_ERROR;
 		}
 		rc = p9_stop_save_cpureg((void *)chip->homer_base,
@@ -1726,16 +1714,18 @@ void slw_init(void)
 	if (proc_gen == proc_gen_p8) {
 		for_each_chip(chip) {
 			slw_init_chip_p8(chip);
-			has_wakeup_engine &= slw_image_check_p8(chip);
-			if (has_wakeup_engine)
+			if(slw_image_check_p8(chip))
+				wakeup_engine_state = WAKEUP_ENGINE_PRESENT;
+			if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT)
 				slw_late_init_p8(chip);
 		}
 		slw_init_timer();
 	} else if (proc_gen == proc_gen_p9) {
 		for_each_chip(chip) {
 			slw_init_chip_p9(chip);
-			has_wakeup_engine &= slw_image_check_p9(chip);
-			if (has_wakeup_engine)
+			if(slw_image_check_p9(chip))
+				wakeup_engine_state = WAKEUP_ENGINE_PRESENT;
+			if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT)
 				slw_late_init_p9(chip);
 		}
 	}
