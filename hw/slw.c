@@ -41,6 +41,7 @@ static uint32_t slw_saved_reset[MAX_RESET_PATCH_SIZE];
 static bool slw_current_le = false;
 
 enum wakeup_engine_states wakeup_engine_state = WAKEUP_ENGINE_NOT_PRESENT;
+bool has_deep_states = false;
 
 /* SLW timer related stuff */
 static bool slw_has_timer;
@@ -908,8 +909,21 @@ void add_cpu_idle_state_properties(void)
 		has_stop_inst = true;
 		stop_levels = dt_prop_get_u32_def(power_mgt,
 			"ibm,enabled-stop-levels", 0);
-		if (!stop_levels)
+		if (!stop_levels) {
 			prerror("SLW: No stop levels available. Power saving is disabled!\n");
+			has_deep_states = false;
+		} else {
+		/* Iterate to see if we have deep states enabled */
+			for (i = 0; i < nr_states; i++) {
+				u32 level = 31 - (states[i].pm_ctrl_reg_val &
+					 OPAL_PM_PSSCR_RL_MASK);
+
+				if ((stop_levels & (1ul << level)) &&
+					(states[i].flags & OPAL_PM_STOP_INST_DEEP))
+					has_deep_states = true;
+				}
+			}
+
 	} else if (chip->type == PROC_CHIP_P8_MURANO ||
 	    chip->type == PROC_CHIP_P8_VENICE ||
 	    chip->type == PROC_CHIP_P8_NAPLES) {

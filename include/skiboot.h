@@ -309,6 +309,7 @@ enum wakeup_engine_states {
 	WAKEUP_ENGINE_FAILED
 };
 extern enum wakeup_engine_states wakeup_engine_state;
+extern bool has_deep_states;
 
 /* SLW reinit function for switching core settings */
 extern int64_t slw_reinit(uint64_t flags);
