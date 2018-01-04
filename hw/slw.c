@@ -40,6 +40,8 @@ static uint32_t slw_saved_reset[MAX_RESET_PATCH_SIZE];
 
 static bool slw_current_le = false;
 
+bool has_wakeup_engine = true;
+
 /* SLW timer related stuff */
 static bool slw_has_timer;
 static uint64_t slw_timer_inc;
@@ -824,12 +826,6 @@ static void slw_late_init_p9(struct proc_chip *chip)
 	struct cpu_thread *c;
 	int rc;
 
-	if (!chip->homer_base) {
-		log_simple_error(&e_info(OPAL_RC_SLW_REG),
-				 "SLW: HOMER base not set %x\n",
-				 chip->id);
-		return;
-	}
 	prlog(PR_NOTICE, "SLW: Configuring self-restore for HRMOR\n");
 	for_each_available_cpu(c) {
 		if (c->chip_id != chip->id)
@@ -859,7 +855,6 @@ void add_cpu_idle_state_properties(void)
 	int nr_states;
 
 	bool can_sleep = true;
-	bool has_wakeup_engine = true;
 	bool has_stop_inst = false;
 	u8 i;
 
@@ -1320,15 +1315,29 @@ static void slw_init_chip_p9(struct proc_chip *chip)
 
 
 }
-static void slw_late_init_p8(struct proc_chip *chip)
+
+static bool  slw_image_check_p9(struct proc_chip *chip)
+{
+
+	if (!chip->homer_base) {
+		log_simple_error(&e_info(OPAL_RC_SLW_REG),
+				 "SLW: HOMER base not set %x\n",
+				 chip->id);
+		return false;
+	} else
+		return true;
+
+
+}
+
+static bool  slw_image_check_p8(struct proc_chip *chip)
 {
 	int64_t rc;
 
-	prlog(PR_DEBUG, "SLW: Init chip 0x%x\n", chip->id);
-
+	prlog(PR_DEBUG, "SLW: slw_check chip 0x%x\n", chip->id);
 	if (!chip->slw_base) {
 		prerror("SLW: No image found !\n");
-		return;
+		return false;
 	}
 
 	/* Check actual image size */
@@ -1341,7 +1350,7 @@ static void slw_late_init_p8(struct proc_chip *chip)
 		chip->slw_base = 0;
 		chip->slw_bar_size = 0;
 		chip->slw_image_size = 0;
-		return;
+		return false;
 	}
 	prlog(PR_DEBUG, "SLW: Image size from image: 0x%llx\n",
 	      chip->slw_image_size);
@@ -1350,7 +1359,16 @@ static void slw_late_init_p8(struct proc_chip *chip)
 		log_simple_error(&e_info(OPAL_RC_SLW_INIT),
 			"SLW: Built-in image size larger than BAR size !\n");
 		/* XXX Panic ? */
+		return false;
 	}
+	return true;
+
+}
+
+static void slw_late_init_p8(struct proc_chip *chip)
+{
+
+	prlog(PR_DEBUG, "SLW: late Init chip 0x%x\n", chip->id);
 
 	/* Patch SLW image */
         slw_patch_regs(chip);
@@ -1360,6 +1378,7 @@ static void slw_init_chip_p8(struct proc_chip *chip)
 {
 	struct cpu_thread *c;
 
+	prlog(PR_DEBUG, "SLW: Init chip 0x%x\n", chip->id);
 	/* At power ON setup inits for fast-sleep */
 	for_each_available_core_in_chip(c, chip->id) {
 		idle_prepare_core(chip, c);
@@ -1707,13 +1726,17 @@ void slw_init(void)
 	if (proc_gen == proc_gen_p8) {
 		for_each_chip(chip) {
 			slw_init_chip_p8(chip);
-			slw_late_init_p8(chip);
+			has_wakeup_engine &= slw_image_check_p8(chip);
+			if (has_wakeup_engine)
+				slw_late_init_p8(chip);
 		}
 		slw_init_timer();
 	} else if (proc_gen == proc_gen_p9) {
 		for_each_chip(chip) {
 			slw_init_chip_p9(chip);
-			slw_late_init_p9(chip);
+			has_wakeup_engine &= slw_image_check_p9(chip);
+			if (has_wakeup_engine)
+				slw_late_init_p9(chip);
 		}
 	}
 	add_cpu_idle_state_properties();
