@@ -923,9 +923,11 @@ void add_cpu_idle_state_properties(void)
 					has_deep_states = true;
 				}
 			}
-
-			if ((wakeup_engine_state == WAKEUP_ENGINE_PRESENT) && has_deep_states)
+			if ((wakeup_engine_state == WAKEUP_ENGINE_PRESENT) && has_deep_states) {
 				slw_late_init_p9(chip);
+				xive_late_init();
+				nx_p9_rng_late_init();
+			}
 			if (wakeup_engine_state != WAKEUP_ENGINE_PRESENT)
 				has_deep_states = false;
 	} else if (chip->type == PROC_CHIP_P8_MURANO ||

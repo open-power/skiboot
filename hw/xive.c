@@ -24,6 +24,7 @@
 #include <bitmap.h>
 #include <buddy.h>
 #include <phys-map.h>
+#include <p9_stop_api.H>
 
 /* Use Block group mode to move chip_id into block .... */
 #define USE_BLOCK_GROUP_MODE
@@ -3215,6 +3216,35 @@ static void xive_configure_ex_special_bar(struct xive *x, struct cpu_thread *c)
 	}
 }
 
+void xive_late_init(void)
+{
+	struct cpu_thread *c;
+
+	prlog(PR_NOTICE, "SLW: Configuring self-restore for NCU_SPEC_BAR\n");
+	for_each_present_cpu(c) {
+		if(cpu_is_thread0(c)) {
+			struct proc_chip *chip = get_chip(c->chip_id);
+			struct xive *x = chip->xive;
+			uint64_t xa, val, rc;
+			xa = XSCOM_ADDR_P9_EX(pir_to_core_id(c->pir),
+				P9X_EX_NCU_SPEC_BAR);
+			val = (uint64_t)x->tm_base | P9X_EX_NCU_SPEC_BAR_ENABLE;
+			/* Bail out if wakeup engine has already failed */
+			if ( wakeup_engine_state != WAKEUP_ENGINE_PRESENT) {
+				prlog(PR_ERR, "XIVE p9_stop_api fail detected\n");
+				break;
+			}
+			rc = p9_stop_save_scom((void *)chip->homer_base, xa, val,
+				P9_STOP_SCOM_REPLACE, P9_STOP_SECTION_EQ_SCOM);
+			if (rc) {
+				xive_cpu_err(c, "p9_stop_api failed for NCU_SPEC_BAR rc=%lld\n",
+				rc);
+				wakeup_engine_state = WAKEUP_ENGINE_FAILED;
+			}
+		}
+	}
+
+}
 static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
 {
 	struct xive *x;

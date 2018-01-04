@@ -310,6 +310,10 @@ enum wakeup_engine_states {
 };
 extern enum wakeup_engine_states wakeup_engine_state;
 extern bool has_deep_states;
+extern void nx_p9_rng_late_init(void);
+extern void xive_late_init(void);
+
+
 
 /* SLW reinit function for switching core settings */
 extern int64_t slw_reinit(uint64_t flags);
