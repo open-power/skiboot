@@ -20,6 +20,7 @@
 #include <chip.h>
 #include <libxz/xz.h>
 #include <device.h>
+#include <p9_stop_api.H>
 
 /*
  * Nest IMC PMU names along with their bit values as represented in the
@@ -633,6 +634,9 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 {
 	struct cpu_thread *c = find_cpu_by_pir(cpu_pir);
 	int port_id, phys_core_id;
+	struct proc_chip *chip = get_chip(c->chip_id);
+	int ret;
+	uint32_t scoms;
 
 	switch (type) {
 	case OPAL_IMC_COUNTERS_NEST:
@@ -665,12 +669,48 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 		 *
 		 * HTM Scom: scom to enable counter data movement to memory.
 		 */
+
+
 		 if (xscom_write(c->chip_id,
 				XSCOM_ADDR_P9_EP(phys_core_id,
 						pdbar_scom_index[port_id]),
 				(u64)(CORE_IMC_PDBAR_MASK & addr))) {
 			prerror("error in xscom_write for pdbar\n");
 			return OPAL_HARDWARE;
+		}
+
+		if (has_deep_states) {
+			if ((wakeup_engine_state == WAKEUP_ENGINE_PRESENT)) {
+				prlog(PR_INFO, "Configuring stopapi for IMC\n");
+				scoms = XSCOM_ADDR_P9_EP(phys_core_id,pdbar_scom_index[port_id]);
+				ret = p9_stop_save_scom(( void *)chip->homer_base,scoms,
+					(u64)(CORE_IMC_PDBAR_MASK & addr),
+					P9_STOP_SCOM_REPLACE,
+					P9_STOP_SECTION_EQ_SCOM);
+				if ( ret ) {
+					prerror("IMC pdbar stopapi ret = %d, scoms = %x (core id = %x)\n", ret, scoms, phys_core_id);
+					if ( ret != STOP_SAVE_SCOM_ENTRY_UPDATE_FAILED )
+						wakeup_engine_state = WAKEUP_ENGINE_FAILED;
+					else
+						prerror("SCOM entries are full\n");
+					return OPAL_HARDWARE;
+				}
+				scoms = XSCOM_ADDR_P9_EC(phys_core_id,CORE_IMC_EVENT_MASK_ADDR);
+				ret = p9_stop_save_scom(( void *)chip->homer_base,scoms,
+				(u64)CORE_IMC_EVENT_MASK, P9_STOP_SCOM_REPLACE,
+				P9_STOP_SECTION_CORE_SCOM);
+				if ( ret ) {
+					prerror("IMC event_mask stopapi ret = %d, scoms = %x (core id = %x)\n", ret, scoms, phys_core_id);
+					if ( ret != STOP_SAVE_SCOM_ENTRY_UPDATE_FAILED )
+						wakeup_engine_state = WAKEUP_ENGINE_FAILED;
+					else
+						prerror("SCOM entries are full\n");
+					return OPAL_HARDWARE;
+				}
+			} else {
+				prerror("IMC: Wakeup engine in error state!");
+				return OPAL_HARDWARE;
+			}
 		}
 
 		if (xscom_write(c->chip_id,
