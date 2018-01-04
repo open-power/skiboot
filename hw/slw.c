@@ -1705,4 +1705,5 @@ void slw_init(void)
 		for_each_chip(chip)
 			slw_init_chip_p9(chip);
 	}
+	add_cpu_idle_state_properties();
 }
