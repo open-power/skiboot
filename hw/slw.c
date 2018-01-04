@@ -292,11 +292,6 @@ static bool slw_set_overrides_p9(struct proc_chip *chip, struct cpu_thread *c)
 	int rc;
 	uint32_t core = pir_to_core_id(c->pir);
 
-	/* MAMBO does not require this init */
-	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS) {
-		return true;
-	}
-
 	/* Clear special wakeup bits that could hold power mgt */
 	rc = xscom_write(chip->id,
 			 XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_HYP),
@@ -947,8 +942,6 @@ void add_cpu_idle_state_properties(void)
 		nr_states = ARRAY_SIZE(power7_cpu_idle_states);
 	}
 
-	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
-		wakeup_engine_state = WAKEUP_ENGINE_NOT_PRESENT;
 
 	/*
 	 * Currently we can't append strings and cells to dt properties.
@@ -1711,6 +1704,8 @@ void slw_init(void)
 {
 	struct proc_chip *chip;
 
+	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+		wakeup_engine_state = WAKEUP_ENGINE_NOT_PRESENT;
 	if (proc_gen == proc_gen_p8) {
 		for_each_chip(chip) {
 			slw_init_chip_p8(chip);
