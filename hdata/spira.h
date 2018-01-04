@@ -443,6 +443,13 @@ struct iplparms_serial {
 #define PLPARMS_SERIAL_FLAGS_CALLHOME	0x8000
 } __packed;
 
+/* Idata index 9: FW features */
+#define IPLPARAMS_FEATURES	9
+struct iplparams_feature {
+	char name[64];
+	__be64 flags;
+} __packed;
+
 /*
  * Chip TOD structure
  *

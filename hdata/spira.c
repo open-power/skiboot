@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <inttypes.h>
 #include <device.h>
 #include "spira.h"
 #include <cpu.h>
@@ -1179,6 +1180,51 @@ static void add_iplparams_platform_dump(const void *iplp, struct dt_node *node)
 	}
 }
 
+static void add_iplparams_features(const struct HDIF_common_hdr *iplp)
+{
+	const struct iplparams_feature *feature;
+	const struct HDIF_array_hdr *array;
+	struct dt_node *fw_features;
+	unsigned int count, i;
+	char name[65];
+
+	array = HDIF_get_iarray(iplp, IPLPARAMS_FEATURES, &count);
+	if (!array || !count)
+		return;
+
+	opal_node = dt_new_check(dt_root, "ibm,opal");
+	fw_features = dt_new(opal_node, "fw-features");
+	if (!fw_features)
+		return;
+
+	HDIF_iarray_for_each(array, i, feature) {
+		struct dt_node *n;
+		uint64_t flags;
+
+		/* the name field isn't necessarily null terminated */
+		strncpy(name, feature->name, sizeof(feature->name));
+		flags = be64_to_cpu(feature->flags);
+
+		prlog(PR_DEBUG, "IPLPARAMS: FW feature %s = %016"PRIx64"\n",
+				name, flags);
+
+		/* get rid of tm-suspend-mode-enabled being disabled */
+		if (strcmp(name, "tm-suspend-mode-enabled") == 0)
+			strcpy(name, "tm-suspend-mode");
+
+		n = dt_new(fw_features, name);
+
+		/*
+		 * This is a bit overkill, but we'll want seperate properties
+		 * for each flag bit(s).
+		 */
+		if (flags & PPC_BIT(0))
+			dt_add_property(n, "enabled", NULL, 0);
+		else
+			dt_add_property(n, "disabled", NULL, 0);
+	}
+}
+
 static void add_iplparams(void)
 {
 	struct dt_node *iplp_node;
@@ -1199,6 +1245,7 @@ static void add_iplparams(void)
 	add_iplparams_ipl_params(ipl_parms, iplp_node);
 	add_iplparams_serials(ipl_parms, iplp_node);
 	add_iplparams_platform_dump(ipl_parms, iplp_node);
+	add_iplparams_features(ipl_parms);
 }
 
 /* Various structure contain a "proc_chip_id" which is an arbitrary
