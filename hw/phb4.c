@@ -2338,6 +2338,28 @@ static void phb4_train_info(struct phb4 *p, uint64_t reg, unsigned long time)
 	PHBERR(p, "%s\n", s);
 }
 
+static void phb4_dump_capp_err_regs(struct phb4 *p)
+{
+	uint64_t fir, apc_master_err, snoop_err, transport_err;
+	uint64_t tlbi_err, capp_err_status;
+	uint64_t offset = PHB4_CAPP_REG_OFFSET(p);
+
+	xscom_read(p->chip_id, CAPP_FIR + offset, &fir);
+	xscom_read(p->chip_id, CAPP_APC_MASTER_ERR_RPT + offset,
+		   &apc_master_err);
+	xscom_read(p->chip_id, CAPP_SNOOP_ERR_RTP + offset, &snoop_err);
+	xscom_read(p->chip_id, CAPP_TRANSPORT_ERR_RPT + offset, &transport_err);
+	xscom_read(p->chip_id, CAPP_TLBI_ERR_RPT + offset, &tlbi_err);
+	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &capp_err_status);
+
+	PHBERR(p, "           CAPP FIR=%016llx\n", fir);
+	PHBERR(p, "CAPP APC MASTER ERR=%016llx\n", apc_master_err);
+	PHBERR(p, "     CAPP SNOOP ERR=%016llx\n", snoop_err);
+	PHBERR(p, " CAPP TRANSPORT ERR=%016llx\n", transport_err);
+	PHBERR(p, "      CAPP TLBI ERR=%016llx\n", tlbi_err);
+	PHBERR(p, "    CAPP ERR STATUS=%016llx\n", capp_err_status);
+}
+
 /* Check if AIB is fenced via PBCQ NFIR */
 static bool phb4_fenced(struct phb4 *p)
 {
@@ -2369,15 +2391,19 @@ static bool phb4_fenced(struct phb4 *p)
 	xscom_read(p->chip_id,
 		   p->pci_stk_xscom + XPEC_PCI_STK_PBAIB_ERR_REPORT, &err_aib);
 
-	PHBERR(p, " PCI FIR=%016llx\n", nfir_p);
-	PHBERR(p, "NEST FIR=%016llx\n", nfir_n);
-	PHBERR(p, "ERR RPT0=%016llx\n", err_rpt0);
-	PHBERR(p, "ERR RPT1=%016llx\n", err_rpt1);
-	PHBERR(p, " AIB ERR=%016llx\n", err_aib);
+	PHBERR(p, "            PCI FIR=%016llx\n", nfir_p);
+	PHBERR(p, "           NEST FIR=%016llx\n", nfir_n);
+	PHBERR(p, "           ERR RPT0=%016llx\n", err_rpt0);
+	PHBERR(p, "           ERR RPT1=%016llx\n", err_rpt1);
+	PHBERR(p, "            AIB ERR=%016llx\n", err_aib);
 
 	/* Mark ourselves fenced */
 	p->flags |= PHB4_AIB_FENCED;
 	p->state = PHB4_STATE_FENCED;
+
+	/* dump capp error registers in case phb was fenced due to capp */
+	if (nfir_n & XPEC_NEST_STK_PCI_NFIR_CXA_PE_CAPP)
+		phb4_dump_capp_err_regs(p);
 
 	phb4_eeh_dump_regs(p);
 

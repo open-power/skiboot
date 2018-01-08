@@ -343,6 +343,7 @@
 
 /* Nest base per-stack registers */
 #define XPEC_NEST_STK_PCI_NFIR			0x0
+#define   XPEC_NEST_STK_PCI_NFIR_CXA_PE_CAPP	PPC_BIT(24)
 #define XPEC_NEST_STK_PCI_NFIR_CLR		0x1
 #define XPEC_NEST_STK_PCI_NFIR_SET		0x2
 #define XPEC_NEST_STK_PCI_NFIR_MSK		0x3
