@@ -40,7 +40,7 @@
 
 #define NPU2_IRQ_BASE_SHIFT 13
 #define NPU2_N_DL_IRQS 23
-#define NPU2_N_DL_IRQS_ALIGN 32
+#define NPU2_N_DL_IRQS_ALIGN 64
 
 #define VENDOR_CAP_START    0x80
 #define VENDOR_CAP_END      0x90
