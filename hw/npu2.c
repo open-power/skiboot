@@ -1213,6 +1213,35 @@ static int64_t npu2_freeze_status(struct phb *phb __unused,
 	return OPAL_SUCCESS;
 }
 
+static int64_t npu2_eeh_next_error(struct phb *phb,
+				   uint64_t *first_frozen_pe,
+				   uint16_t *pci_error_type,
+				   uint16_t *severity)
+{
+	struct npu2 *p = phb_to_npu2(phb);
+	int i;
+	uint64_t result = 0;
+
+	if (!first_frozen_pe || !pci_error_type || !severity)
+		return OPAL_PARAMETER;
+
+	*first_frozen_pe = -1;
+	*pci_error_type = OPAL_EEH_NO_ERROR;
+	*severity = OPAL_EEH_SEV_NO_ERROR;
+
+	for (i = 0; i < NPU2_MAX_PE_NUM; i++) {
+		result = npu2_read(p, NPU2_MISC_PESTB(i));
+		if (result > 0) {
+			*first_frozen_pe = i;
+			*pci_error_type = OPAL_EEH_PE_ERROR;
+			*severity = OPAL_EEH_SEV_PE_ER;
+			break;
+		}
+	}
+
+	return OPAL_SUCCESS;
+}
+
 static int64_t npu2_tce_kill(struct phb *phb, uint32_t kill_type,
 			     uint64_t pe_number, uint32_t tce_size,
 			     uint64_t dma_addr, uint32_t npages)
@@ -1281,7 +1310,7 @@ static const struct phb_ops npu_ops = {
 	.eeh_freeze_status	= npu2_freeze_status,
 	.eeh_freeze_clear	= NULL,
 	.eeh_freeze_set		= NULL,
-	.next_error		= NULL,
+	.next_error		= npu2_eeh_next_error,
 	.err_inject		= NULL,
 	.get_diag_data		= NULL,
 	.get_diag_data2		= NULL,
@@ -1814,7 +1843,14 @@ static void npu2_add_phb_properties(struct npu2 *p)
 
 static uint64_t npu2_ipi_attributes(struct irq_source *is __unused, uint32_t isn __unused)
 {
-	return IRQ_ATTR_TARGET_LINUX;
+	struct npu2 *p = is->data;
+	uint32_t idx = isn - p->base_lsi;
+
+	if (idx == 18)
+		/* TCE Interrupt - used to detect a frozen PE */
+		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE;
+	else
+		return IRQ_ATTR_TARGET_LINUX;
 }
 
 static char *npu2_ipi_name(struct irq_source *is, uint32_t isn)
@@ -1852,7 +1888,22 @@ static char *npu2_ipi_name(struct irq_source *is, uint32_t isn)
 	return strdup(name);
 }
 
+static void npu2_err_interrupt(struct irq_source *is, uint32_t isn)
+{
+	struct npu2 *p = is->data;
+	uint32_t idx = isn - p->base_lsi;
+
+	if (idx != 18) {
+		prerror("OPAL received unknown NPU2 interrupt %d\n", idx);
+		return;
+	}
+
+	opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
+				OPAL_EVENT_PCI_ERROR);
+}
+
 static const struct irq_source_ops npu2_ipi_ops = {
+	.interrupt	= npu2_err_interrupt,
 	.attributes	= npu2_ipi_attributes,
 	.name = npu2_ipi_name,
 };
