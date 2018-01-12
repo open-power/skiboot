@@ -105,7 +105,7 @@ static struct hdat_i2c_type hdat_i2c_devs[] = {
 	{ 0xb, "eeprom", "atmel,24c256" },
 	{ 0xc, "i2c", NULL },   /* Thermal Sensor */
 	{ 0xd, "eeprom", "atmel,24c04" },
-	{ 0xe, "eeprom", "atmel,24c412" },
+	{ 0xe, "eeprom", "atmel,24c512" },
 	{ 0xf, "eeprom", "atmel,24c32" },
 	{ 0x10, "eeprom", "atmel,24c64" },
 	{ 0x11, "eeprom", "atmel,24c16" },
