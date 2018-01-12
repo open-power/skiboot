@@ -577,6 +577,8 @@
 	vpd {
 		phandle = <0x2>;
 		compatible = "ibm,opal-v3-vpd";
+		#size-cells = <0x0>;
+		#address-cells = <0x1>;
 		ibm,vpd = <0x84b00052 0x54045653 0x59534452 0x6535953 0x54454d42 0x52025330 0x53450754 0x55303031 0x36335347 0x7202020 0x20202020 0x544d0838 0x3238362d 0x34314154 0x4e082020 0x20202020 0x20204d4e 0x7202020 0x20202020 0x49440220 0x20535506 0x4ac19 0x77064e4e 0x10202020 0x20202020 0x20202020 0x20202020 0x20524704 0xf0c00000 0x52420433 0x20202057 0x4e0c4330 0x35303736 0x30364237 0x30344656 0x20202020 0x20202020 0x20202020 0x20202020 0x20202020 0x20202020 0x20202020 0x20202020 0x20504603 0x78 0x0>;
 		ibm,loc-code = "U8286.41A.TU00163";
 
@@ -584,11 +586,17 @@
 			phandle = <0x3>;
 			ibm,loc-code = "U8286.41A.TU00163";
 			fru-type = [56 56];
+			reg = <0xa000>;
+			#size-cells = <0x0>;
+			#address-cells = <0x1>;
 
 			enclosure@1e00 {
 				phandle = <0x5>;
 				ibm,loc-code = "U78C9.001.WZS0CWX";
 				fru-type = [45 56];
+				reg = <0x1e00>;
+				#size-cells = <0x0>;
+				#address-cells = <0x1>;
 				ibm,vpd = <0x848c0052 0x54045649 0x4e494452 0x10492f4f 0x20424143 0x4b504c41 0x4e452020 0x20434501 0x31565a02 0x3031464e 0x7373459 0x34333434 0x504e0730 0x30453432 0x3431534e 0xc594c33 0x30554635 0x354e3030 0x36434304 0x32434435 0x50520821 0x0 0x48 0x45043030 0x30324354 0x480f300 0x26485702 0x74233 0x6000000 0x142 0x34010042 0x370c0000 0x0 0x0 0x5046 0x2000078 0x841c0052 0x54044c58 0x5230565a 0x230314c 0x58083100 0x4010030 0x435046 0x2000078 0x84440052 0x54045643 0x454e4452 0x6434543 0x20202053 0x4507575a 0x53304357 0x58544d08 0x20202020 0x20202020 0x46430837 0x3843392d 0x30303152 0x470400a0 0xb32c5242 0x4202020 0x20504603 0x78 0x0>;
 				fru-number = "74Y4344";
 				serial-number = "YL30UF55N006";
@@ -604,18 +612,27 @@
 					phandle = <0xd>;
 					ibm,loc-code = "U78C9.001.WZS0CWX-A1";
 					fru-type = [41 4d];
+					reg = <0x3a00>;
+					#size-cells = <0x0>;
+					#address-cells = <0x1>;
 				};
 
 				air-mover@3a01 {
 					phandle = <0xe>;
 					ibm,loc-code = "U78C9.001.WZS0CWX-A2";
 					fru-type = [41 4d];
+					reg = <0x3a01>;
+					#size-cells = <0x0>;
+					#address-cells = <0x1>;
 				};
 
 				backplane@800 {
 					phandle = <0x6>;
 					ibm,loc-code = "U78C9.001.WZS0CWX-P1";
 					fru-type = [42 50];
+					reg = <0x800>;
+					#size-cells = <0x0>;
+					#address-cells = <0x1>;
 					ibm,vpd = <0x848c0052 0x54045649 0x4e494452 0x10492f4f 0x20424143 0x4b504c41 0x4e452020 0x20434501 0x31565a02 0x3031464e 0x7373459 0x34333434 0x504e0730 0x30453432 0x3431534e 0xc594c33 0x30554635 0x354e3030 0x36434304 0x32434435 0x50520821 0x0 0x48 0x45043030 0x30324354 0x480f300 0x26485702 0x74233 0x6000000 0x142 0x34010042 0x370c0000 0x0 0x0 0x5046 0x2000078 0x841c0052 0x54044c58 0x5230565a 0x230314c 0x58083100 0x4010030 0x435046 0x2000078 0x0>;
 					fru-number = "74Y4344";
 					serial-number = "YL30UF55N006";
@@ -631,6 +648,9 @@
 						phandle = <0x14>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-C13";
 						fru-type = [41 56];
+						reg = <0x500>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 						ibm,vpd = <0x84cc0052 0x54045649 0x4e494452 0x10414e43 0x484f5220 0x20202020 0x20202020 0x20434501 0x31565a02 0x3031464e 0x7303045 0x32313532 0x504e0730 0x30453231 0x3438534e 0xc594c31 0x30424733 0x3132314e 0x4a434304 0x35324632 0x50520881 0x300000 0x48 0x45043030 0x31304354 0x440b400 0x485702 0x14233 0x6000000 0x142 0x34010042 0x370c0000 0x0 0x0 0x4239 0x3c435331 0x58150757 0x4e705f53 0x50f139a0 0xbf7efeb7 0x44d314d 0xd7cd74f2 0x862d884d 0x327cb552 0x79809378 0xa24d333e 0x6aed1eb8 0x49dab34d 0x344e1745 0x9bf468e9 0xa1504603 0x78 0x0>;
 						fru-number = "00E2152";
 						serial-number = "YL10BG3121NJ";
@@ -647,6 +667,9 @@
 						phandle = <0x11>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-C1";
 						fru-type = [42 58];
+						reg = <0x900>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 						ibm,vpd = <0x84800052 0x54045649 0x4e494452 0x104e4154 0x49564520 0x492f4f20 0x43415244 0x20434501 0x31565a02 0x3031464e 0x7303045 0x31393630 0x504e0730 0x30453338 0x3039534e 0xc594c31 0x30554635 0x3537304c 0x39434304 0x32423042 0x48450430 0x30303143 0x540480b5 0x4857 0x2000142 0x33060000 0x0 0x42340100 0x42370c00 0x0 0x0 0x50 0x46010078 0x0>;
 						fru-number = "00E1960";
 						serial-number = "YL10UF5570L9";
@@ -662,18 +685,27 @@
 							phandle = <0x1f>;
 							ibm,loc-code = "U78C9.001.WZS0CWX-P1-C1-T1";
 							fru-type = [43 53];
+							reg = <0x2a00>;
+							#size-cells = <0x0>;
+							#address-cells = <0x1>;
 						};
 
 						usb-connector@2900 {
 							phandle = <0x1d>;
 							ibm,loc-code = "U78C9.001.WZS0CWX-P1-C1-T3";
 							fru-type = [43 55];
+							reg = <0x2900>;
+							#size-cells = <0x0>;
+							#address-cells = <0x1>;
 						};
 
 						usb-connector@2901 {
 							phandle = <0x1e>;
 							ibm,loc-code = "U78C9.001.WZS0CWX-P1-C1-T2";
 							fru-type = [43 55];
+							reg = <0x2901>;
+							#size-cells = <0x0>;
+							#address-cells = <0x1>;
 						};
 					};
 
@@ -681,18 +713,27 @@
 						phandle = <0x19>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-T3";
 						fru-type = [48 4d];
+						reg = <0x2d00>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 					};
 
 					hmc-connector@2d01 {
 						phandle = <0x1a>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-T4";
 						fru-type = [48 4d];
+						reg = <0x2d01>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 					};
 
 					ms-dimm@d000 {
 						phandle = <0x1b>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-C16";
 						fru-type = [4d 53];
+						reg = <0xd000>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 						ibm,vpd = <0x84940052 0x54045649 0x4e494452 0x1049424d 0x20313647 0x42204d53 0x20202020 0x20434501 0x31565a02 0x3034464e 0x7343154 0x39353735 0x504e0734 0x31543935 0x3735534e 0xc594833 0x314d5333 0x41343031 0x31434304 0x33314530 0x50520849 0x0 0x1000053 0x5a073030 0x31363338 0x34484504 0x30303031 0x43540400 0x48 0x57020090 0x42330600 0x0 0x423401 0x42370c 0x0 0x0 0x0 0x50460078 0x0>;
 						fru-number = "41T9575";
 						serial-number = "YH31MS3A4011";
@@ -712,6 +753,9 @@
 						phandle = <0x1c>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-C18";
 						fru-type = [4d 53];
+						reg = <0xd002>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 						ibm,vpd = <0x84940052 0x54045649 0x4e494452 0x1049424d 0x20313647 0x42204d53 0x20202020 0x20434501 0x31565a02 0x3034464e 0x7343154 0x39353735 0x504e0734 0x31543935 0x3735534e 0xc594833 0x314d5533 0x41433143 0x50434304 0x33314530 0x50520849 0x0 0x1000053 0x5a073030 0x31363338 0x34484504 0x30303031 0x43540400 0x48 0x57020090 0x42330600 0x0 0x423401 0x42370c 0x0 0x0 0x0 0x50460078 0x0>;
 						fru-number = "41T9575";
 						serial-number = "YH31MU3AC1CP";
@@ -731,6 +775,9 @@
 						phandle = <0x12>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-C32";
 						fru-type = [50 46];
+						reg = <0x1000>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 						ibm,vpd = [84 8c 00 52 54 04 56 49 4e 49 44 52 10 30 36 2d 57 41 59 20 50 52 4f 43 20 43 55 4f 44 46 4e 07 30 30 46 58 35 32 33 50 4e 07 30 30 46 58 37 34 38 53 4e 0c 59 41 31 39 33 32 30 36 33 35 36 32 43 43 04 35 34 45 31 48 45 04 30 30 30 31 43 54 04 00 00 00 00 48 57 02 00 01 42 33 06 00 00 00 00 00 00 42 34 01 00 42 37 0c 00 00 00 00 00 00 00 00 00 00 00 00 50 52 08 35 00 30 01 44 00 80 01 56 5a 02 30 31 43 45 01 31 50 46 02 00 00 78 00];
 						fru-number = "00FX523";
 						serial-number = "YA1932063562";
@@ -748,6 +795,9 @@
 						phandle = <0x13>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-C32";
 						fru-type = [50 46];
+						reg = <0x1001>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 						ibm,vpd = [84 8c 00 52 54 04 56 49 4e 49 44 52 10 30 36 2d 57 41 59 20 50 52 4f 43 20 43 55 4f 44 46 4e 07 30 30 46 58 35 32 33 50 4e 07 30 30 46 58 37 34 38 53 4e 0c 59 41 31 39 33 32 30 36 33 35 36 32 43 43 04 35 34 45 31 48 45 04 30 30 30 31 43 54 04 00 00 00 00 48 57 02 00 01 42 33 06 00 00 00 00 00 00 42 34 01 00 42 37 0c 00 00 00 00 00 00 00 00 00 00 00 00 50 52 08 35 00 30 01 44 00 80 01 56 5a 02 30 31 43 45 01 31 50 46 02 00 00 78 00];
 						fru-number = "00FX523";
 						serial-number = "YA1932063562";
@@ -765,24 +815,36 @@
 						phandle = <0x15>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-T1";
 						fru-type = [43 55];
+						reg = <0x2902>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 					};
 
 					usb-connector@2903 {
 						phandle = <0x16>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-T2";
 						fru-type = [43 55];
+						reg = <0x2903>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 					};
 
 					usb-connector@2904 {
 						phandle = <0x17>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-T5";
 						fru-type = [43 55];
+						reg = <0x2904>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 					};
 
 					usb-connector@2905 {
 						phandle = <0x18>;
 						ibm,loc-code = "U78C9.001.WZS0CWX-P1-T6";
 						fru-type = [43 55];
+						reg = <0x2905>;
+						#size-cells = <0x0>;
+						#address-cells = <0x1>;
 					};
 				};
 
@@ -790,30 +852,45 @@
 					phandle = <0x9>;
 					ibm,loc-code = "U78C9.001.WZS0CWX-P2";
 					fru-type = [44 42];
+					reg = <0x2400>;
+					#size-cells = <0x0>;
+					#address-cells = <0x1>;
 				};
 
 				dasd-backplane@2401 {
 					phandle = <0xa>;
 					ibm,loc-code = "U78C9.001.WZS0CWX-P2";
 					fru-type = [44 42];
+					reg = <0x2401>;
+					#size-cells = <0x0>;
+					#address-cells = <0x1>;
 				};
 
 				enclosure-fault-led@a300 {
 					phandle = <0x10>;
 					ibm,loc-code = "U78C9.001.WZS0CWX-D1";
 					fru-type = [45 46];
+					reg = <0xa300>;
+					#size-cells = <0x0>;
+					#address-cells = <0x1>;
 				};
 
 				enclosure-led@a200 {
 					phandle = <0xf>;
 					ibm,loc-code = "U78C9.001.WZS0CWX-D1";
 					fru-type = [45 49];
+					reg = <0xa200>;
+					#size-cells = <0x0>;
+					#address-cells = <0x1>;
 				};
 
 				op-panel@300 {
 					phandle = <0x8>;
 					ibm,loc-code = "U78C9.001.WZS0CWX-D1";
 					fru-type = [4f 50];
+					reg = <0x300>;
+					#size-cells = <0x0>;
+					#address-cells = <0x1>;
 					ibm,vpd = <0x84800052 0x54045649 0x4e494452 0x10434543 0x204f5020 0x50414e45 0x4c202020 0x20434501 0x31565a02 0x3032464e 0x7303045 0x31393636 0x504e0730 0x30453239 0x3532534e 0xc594c33 0x30554633 0x38453033 0x52434304 0x32423038 0x48450430 0x30303143 0x540480b5 0x4857 0x2000242 0x33060000 0x0 0x42340100 0x42370c00 0x0 0x0 0x50 0x46010078 0x0>;
 					fru-number = "00E1966";
 					serial-number = "YL30UF38E03R";
@@ -830,18 +907,27 @@
 					phandle = <0xb>;
 					ibm,loc-code = "U78C9.001.WZS0CWX-E3";
 					fru-type = [50 53];
+					reg = <0x3102>;
+					#size-cells = <0x0>;
+					#address-cells = <0x1>;
 				};
 
 				power-supply@3103 {
 					phandle = <0xc>;
 					ibm,loc-code = "U78C9.001.WZS0CWX-E4";
 					fru-type = [50 53];
+					reg = <0x3103>;
+					#size-cells = <0x0>;
+					#address-cells = <0x1>;
 				};
 
 				service-processor@200 {
 					phandle = <0x7>;
 					ibm,loc-code = "U78C9.001.WZS0CWX-P1";
 					fru-type = [53 50];
+					reg = <0x200>;
+					#size-cells = <0x0>;
+					#address-cells = <0x1>;
 					ibm,vpd = <0x848c0052 0x54045649 0x4e494452 0x10492f4f 0x20424143 0x4b504c41 0x4e452020 0x20434501 0x31565a02 0x3031464e 0x7373459 0x34333434 0x504e0730 0x30453432 0x3431534e 0xc594c33 0x30554635 0x354e3030 0x36434304 0x32434435 0x50520821 0x0 0x48 0x45043030 0x30324354 0x480f300 0x26485702 0x74233 0x6000000 0x142 0x34010042 0x370c0000 0x0 0x0 0x5046 0x2000078 0x841c0052 0x54044c58 0x5230565a 0x230314c 0x58083100 0x4010030 0x435046 0x2000078 0x84500052 0x54045652 0x31304452 0x10465350 0x20202020 0x20202020 0x20202020 0x20464704 0x564e5350 0x44430f42 0x44203230 0x31323032 0x32303038 0x3030464c 0x14503120 0x20202020 0x20202020 0x20202020 0x20202020 0x20504603 0x78 0x84400052 0x54045657 0x31304452 0x10465350 0x20565731 0x30202020 0x20202020 0x20474420 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x50460078 0x0>;
 					fru-number = "74Y4344";
 					serial-number = "YL30UF55N006";
@@ -859,6 +945,9 @@
 				phandle = <0x4>;
 				ibm,loc-code = "U8286.41A.TU00163";
 				fru-type = [53 56];
+				reg = <0x1c00>;
+				#size-cells = <0x0>;
+				#address-cells = <0x1>;
 			};
 		};
 	};

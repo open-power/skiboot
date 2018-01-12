@@ -383,6 +383,8 @@ void dt_init_vpd_node(void)
 	dt_vpd = dt_new(dt_root, "vpd");
 	assert(dt_vpd);
 	dt_add_property_string(dt_vpd, "compatible", "ibm,opal-v3-vpd");
+	dt_add_property_cells(dt_vpd, "#size-cells", 0);
+	dt_add_property_cells(dt_vpd, "#address-cells", 1);
 
 	slca_hdr = get_hdif(&spira.ntuples.slca, SLCA_HDIF_SIG);
 	if (!slca_hdr) {
@@ -442,6 +444,9 @@ void dt_init_vpd_node(void)
 		slca_vpd_add_loc_code(node, be16_to_cpu(entry->my_index));
 		/* Add FRU label */
 		dt_add_property(node, "fru-type", entry->fru_id, 2);
+		dt_add_property_cells(node, "reg", addr);
+		dt_add_property_cells(node, "#size-cells", 0);
+		dt_add_property_cells(node, "#address-cells", 1);
 
 next_entry:
 		/* Skip dups -- dups are contiguous */
