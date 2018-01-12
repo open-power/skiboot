@@ -259,7 +259,22 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		purpose = be32_to_cpu(dev->purpose);
 		type = map_type(dev->type);
 		label = map_label(purpose);
-		if (type) {
+
+		/* HACK: Hostboot doesn't export the correct type information
+		 * for the DIMM SPD EEPROMs. This is a problem because SPD
+		 * EEPROMs have a different wire protocol to the atmel,24XXXX
+		 * series. The main difference being that SPD EEPROMs have an
+		 * 8bit offset rather than a 16bit offset. This means that the
+		 * driver will send 2 bytes when doing a random read,
+		 * potentially overwriting part of the SPD information.
+		 *
+		 * To work around this we force the compat string to "spd"
+		 */
+		if (proc_gen == proc_gen_p9 && dev->type == 0x2 &&
+		    dev->i2cm_engine == 3) {
+			compat = "spd";
+			name = "eeprom";
+		} else if (type) {
 			compat = type->compat;
 			name = type->name;
 		} else {
