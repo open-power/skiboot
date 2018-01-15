@@ -402,7 +402,7 @@ void dt_init_vpd_node(void)
 		/* Get SLCA entry */
 		entry = slca_get_entry(index);
 		if (!entry)
-			goto next_entry;
+			continue;
 
 		/*
 		 * A child entry is valid if all of the following criteria is met
