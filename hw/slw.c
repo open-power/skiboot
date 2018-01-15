@@ -1729,8 +1729,10 @@ void slw_init(void)
 {
 	struct proc_chip *chip;
 
-	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS) {
 		wakeup_engine_state = WAKEUP_ENGINE_NOT_PRESENT;
+		return;
+	}
 	if (proc_gen == proc_gen_p8) {
 		for_each_chip(chip) {
 			slw_init_chip_p8(chip);
