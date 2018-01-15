@@ -283,7 +283,7 @@ int64_t opal_quiesce(uint32_t quiesce_type, int32_t cpu_target)
 	if (target) {
 		while (target->in_opal_call) {
 			if (tb_compare(mftb(), end) == TB_AAFTERB) {
-				printf("OPAL quiesce CPU:%04x stuck in OPAL\n", c->pir);
+				printf("OPAL quiesce CPU:%04x stuck in OPAL\n", target->pir);
 				stuck = true;
 				break;
 			}
