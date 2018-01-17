@@ -545,162 +545,8 @@ static void hservice_nanosleep(uint64_t i_seconds, uint64_t i_nano_seconds)
 	nanosleep_nopoll(&ts, NULL);
 }
 
-static int hservice_set_special_wakeup(struct cpu_thread *cpu)
-{
-	uint64_t val, core_id, poll_target, stamp;
-	int rc;
-
-	/*
-	 * Note: HWP checks for checkstops, but I assume we don't need to
-	 * as we wouldn't be running if one was present
-	 */
-
-	/* Grab core ID once */
-	core_id = pir_to_core_id(cpu->pir);
-
-	/*
-	 * The original HWp reads the XSCOM first but ignores the result
-	 * and error, let's do the same until I know for sure that is
-	 * not necessary
-	 */
-	xscom_read(cpu->chip_id,
-		   XSCOM_ADDR_P8_EX_SLAVE(core_id, EX_PM_SPECIAL_WAKEUP_PHYP),
-		   &val);
-
-	/* Then we write special wakeup */
-	rc = xscom_write(cpu->chip_id,
-			 XSCOM_ADDR_P8_EX_SLAVE(core_id,
-						EX_PM_SPECIAL_WAKEUP_PHYP),
-			 PPC_BIT(0));
-	if (rc) {
-		prerror("HBRT: XSCOM error %d asserting special"
-			" wakeup on 0x%x\n", rc, cpu->pir);
-		return rc;
-	}
-
-	/*
-	 * HWP uses the history for Perf register here, dunno why it uses
-	 * that one instead of the pHyp one, maybe to avoid clobbering it...
-	 *
-	 * In any case, it does that to check for run/nap vs.sleep/winkle/other
-	 * to decide whether to poll on checkstop or not. Since we don't deal
-	 * with checkstop conditions here, we ignore that part.
-	 */
-
-	/*
-	 * Now poll for completion of special wakeup. The HWP is nasty here,
-	 * it will poll at 5ms intervals for up to 200ms. This is not quite
-	 * acceptable for us at runtime, at least not until we have the
-	 * ability to "context switch" HBRT. In practice, because we don't
-	 * winkle, it will never take that long, so we increase the polling
-	 * frequency to 1us per poll. However we do have to keep the same
-	 * timeout.
-	 *
-	 * We don't use time_wait_ms() either for now as we don't want to
-	 * poll the FSP here.
-	 */
-	stamp = mftb();
-	poll_target = stamp + msecs_to_tb(200);
-	val = 0;
-	while (!(val & EX_PM_GP0_SPECIAL_WAKEUP_DONE)) {
-		/* Wait 1 us */
-		hservice_nanosleep(0, 1000);
-
-		/* Read PM state */
-		rc = xscom_read(cpu->chip_id,
-				XSCOM_ADDR_P8_EX_SLAVE(core_id, EX_PM_GP0),
-				&val);
-		if (rc) {
-			prerror("HBRT: XSCOM error %d reading PM state on"
-				" 0x%x\n", rc, cpu->pir);
-			return rc;
-		}
-		/* Check timeout */
-		if (mftb() > poll_target)
-			break;
-	}
-
-	/* Success ? */
-	if (val & EX_PM_GP0_SPECIAL_WAKEUP_DONE) {
-		uint64_t now = mftb();
-		prlog(PR_TRACE, "HBRT: Special wakeup complete after %ld us\n",
-		      tb_to_usecs(now - stamp));
-		return 0;
-	}
-
-	/*
-	 * We timed out ...
-	 *
-	 * HWP has a complex workaround for HW255321 which affects
-	 * Murano DD1 and Venice DD1. Ignore that for now
-	 *
-	 * Instead we just dump some XSCOMs for error logging
-	 */
-	prerror("HBRT: Timeout on special wakeup of 0x%0x\n", cpu->pir);
-	prerror("HBRT:      PM0 = 0x%016llx\n", val);
-	val = -1;
-	xscom_read(cpu->chip_id,
-		   XSCOM_ADDR_P8_EX_SLAVE(core_id, EX_PM_SPECIAL_WAKEUP_PHYP),
-		   &val);
-	prerror("HBRT: SPC_WKUP = 0x%016llx\n", val);
-	val = -1;
-	xscom_read(cpu->chip_id,
-		   XSCOM_ADDR_P8_EX_SLAVE(core_id,
-					  EX_PM_IDLE_STATE_HISTORY_PHYP),
-		   &val);
-	prerror("HBRT:  HISTORY = 0x%016llx\n", val);
-
-	return OPAL_HARDWARE;
-}
-
-static int hservice_clr_special_wakeup(struct cpu_thread *cpu)
-{
-	uint64_t val, core_id;
-	int rc;
-
-	/*
-	 * Note: HWP checks for checkstops, but I assume we don't need to
-	 * as we wouldn't be running if one was present
-	 */
-
-	/* Grab core ID once */
-	core_id = pir_to_core_id(cpu->pir);
-
-	/*
-	 * The original HWp reads the XSCOM first but ignores the result
-	 * and error, let's do the same until I know for sure that is
-	 * not necessary
-	 */
-	xscom_read(cpu->chip_id,
-		   XSCOM_ADDR_P8_EX_SLAVE(core_id, EX_PM_SPECIAL_WAKEUP_PHYP),
-		   &val);
-
-	/* Then we write special wakeup */
-	rc = xscom_write(cpu->chip_id,
-			 XSCOM_ADDR_P8_EX_SLAVE(core_id,
-						EX_PM_SPECIAL_WAKEUP_PHYP), 0);
-	if (rc) {
-		prerror("HBRT: XSCOM error %d deasserting"
-			" special wakeup on 0x%x\n", rc, cpu->pir);
-		return rc;
-	}
-
-	/*
-	 * The original HWp reads the XSCOM again with the comment
-	 * "This puts an inherent delay in the propagation of the reset
-	 * transition"
-	 */
-	xscom_read(cpu->chip_id,
-		   XSCOM_ADDR_P8_EX_SLAVE(core_id, EX_PM_SPECIAL_WAKEUP_PHYP),
-		   &val);
-
-	return 0;
-}
-
 int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 {
-	int (*set_wakeup)(struct cpu_thread *cpu);
-	int (*clear_wakeup)(struct cpu_thread *cpu);
 	struct cpu_thread *cpu;
 	int rc = OPAL_SUCCESS;
 
@@ -712,14 +558,10 @@ int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 		 */
 		i_core &= 0x0fffffff;
 		i_core <<= 3;
-		set_wakeup = hservice_set_special_wakeup;
-		clear_wakeup = hservice_clr_special_wakeup;
 		break;
 	case proc_gen_p9:
 		i_core &= SPR_PIR_P9_MASK;
 		i_core <<= 2;
-		set_wakeup = dctl_set_special_wakeup;
-		clear_wakeup = dctl_clear_special_wakeup;
 		break;
 	default:
 		return OPAL_UNSUPPORTED;
@@ -734,7 +576,7 @@ int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 		prlog(PR_DEBUG, "HBRT: Special wakeup assert for core 0x%x,"
 		      " count=%d\n", i_core, cpu->hbrt_spec_wakeup);
 		if (cpu->hbrt_spec_wakeup == 0)
-			rc = set_wakeup(cpu);
+			rc = dctl_set_special_wakeup(cpu);
 		if (rc == 0)
 			cpu->hbrt_spec_wakeup++;
 		return rc;
@@ -753,7 +595,7 @@ int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 		/* What to do with count on errors ? */
 		cpu->hbrt_spec_wakeup--;
 		if (cpu->hbrt_spec_wakeup == 0)
-			rc = clear_wakeup(cpu);
+			rc = dctl_clear_special_wakeup(cpu);
 		return rc;
 	case 2: /* Clear all special wakeups */
 		prlog(PR_DEBUG, "HBRT: Special wakeup release for all cores\n");
@@ -761,7 +603,7 @@ int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 			if (cpu->hbrt_spec_wakeup) {
 				cpu->hbrt_spec_wakeup = 0;
 				/* What to do on errors ? */
-				clear_wakeup(cpu);
+				dctl_clear_special_wakeup(cpu);
 			}
 		}
 		return OPAL_SUCCESS;
