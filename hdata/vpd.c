@@ -304,6 +304,11 @@ static void vpd_vini_parse(struct dt_node *node,
 	if (kw)
 		dt_add_property_nstr(node, "part-number", kw, sz);
 
+	/* Vendor Name */
+	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "VN", &sz);
+	if (kw)
+		dt_add_property_nstr(node, "vendor", kw, sz);
+
 	/* CCIN Extension */
 	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "CE", &sz);
 	if (kw)
