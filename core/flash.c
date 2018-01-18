@@ -156,6 +156,7 @@ out:
 
 static void __flash_dt_add_fw_version(struct dt_node *fw_version, char* data)
 {
+	static bool first = true;
 	char *prop;
 	int version_len, i;
 	int len = strlen(data);
@@ -163,6 +164,25 @@ static void __flash_dt_add_fw_version(struct dt_node *fw_version, char* data)
 				      "hostboot-binaries", "hostboot", "linux",
 				      "petitboot", "occ", "capp-ucode", "sbe",
 				      "machine-xml"};
+
+	if (first) {
+		first = false;
+
+		/* Increment past "key-" */
+		if (memcmp(data, "open-power", strlen("open-power")) == 0)
+			prop = data + strlen("open-power");
+		else
+			prop = strchr(data, '-');
+		if (!prop) {
+			prlog(PR_DEBUG,
+			      "FLASH: Invalid fw version format (%s)\n", data);
+			return;
+		}
+		prop++;
+
+		dt_add_property_string(fw_version, "version", prop);
+		return;
+	}
 
 	/*
 	 * PNOR version strings are not easily consumable. Split them into
