@@ -3582,6 +3582,7 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 	xscom_read(p->chip_id, APC_MASTER_PB_CTRL + offset, &reg);
 	reg |= PPC_BIT(0); /* enable cResp exam */
 	reg |= PPC_BIT(3); /* disable vg not sys */
+	reg |= PPC_BIT(12);/* HW417025: disable capp virtual machines */
 	if (p->rev == PHB4_REV_NIMBUS_DD10) {
 		reg |= PPC_BIT(1);
 	} else {
