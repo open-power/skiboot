@@ -2899,14 +2899,15 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		slot->retries = 500;
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
 	case PHB4_SLOT_CRESET_WAIT_CQ:
-		/* capp recovery */
-		if (p->flags & PHB4_CAPP_RECOVERY)
-			do_capp_recovery_scoms(p);
 
 		// Wait until operations are complete
 		xscom_read(p->chip_id, p->pe_stk_xscom + 0xc, &pbcq_status);
 		if (!(pbcq_status & 0xC000000000000000)) {
 			PHBDBG(p, "CRESET: No pending transactions\n");
+
+			/* capp recovery */
+			if (p->flags & PHB4_CAPP_RECOVERY)
+				do_capp_recovery_scoms(p);
 
 			/* Clear errors in PFIR and NFIR */
 			xscom_write(p->chip_id, p->pci_stk_xscom + 0x1,
