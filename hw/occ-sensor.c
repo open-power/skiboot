@@ -548,6 +548,23 @@ static const char *get_sensor_loc_string(enum occ_sensor_location loc)
 	return "unknown";
 }
 
+/*
+ * Power sensors can be 0 valued in few platforms like Zaius, Romulus
+ * which do not have APSS. At the moment there is no HDAT/DT property
+ * to indicate if APSS is present. So for now skip zero valued power
+ * sensors.
+ */
+static bool check_sensor_sample(struct occ_sensor_data_header *hb, u32 offset)
+{
+	struct occ_sensor_record *ping, *pong;
+
+	ping = (struct occ_sensor_record *)((u64)hb + hb->reading_ping_offset
+					     + offset);
+	pong = (struct occ_sensor_record *)((u64)hb + hb->reading_pong_offset
+					     + offset);
+	return ping->sample || pong->sample;
+}
+
 void occ_sensors_init(void)
 {
 	struct proc_chip *chip;
@@ -609,6 +626,10 @@ void occ_sensors_init(void)
 				continue;
 
 			if (md[i].location == OCC_SENSOR_LOC_GPU && !has_gpu)
+				continue;
+
+			if (md[i].type == OCC_SENSOR_TYPE_POWER &&
+			    !check_sensor_sample(hb, md[i].reading_offset))
 				continue;
 
 			if (md[i].location == OCC_SENSOR_LOC_CORE) {
