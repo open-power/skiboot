@@ -214,8 +214,8 @@ static int cvc_secure_rom_init(void) {
 	xscom_read(chip->id, reg_addr, &reg_data);
 	memcpy_from_ci(secure_rom_mem, (void*) reg_data,
 		       SECURE_ROM_MEMORY_SIZE);
-	cvc_register((uint64_t)&secure_rom_mem,
-		     (uint64_t)&secure_rom_mem + SECURE_ROM_MEMORY_SIZE-1);
+	cvc_register((uint64_t)secure_rom_mem,
+		     (uint64_t)secure_rom_mem + SECURE_ROM_MEMORY_SIZE-1);
 	cvc_service_register(CVC_SHA512_SERVICE, SECURE_ROM_SHA512_OFFSET, 1);
 	cvc_service_register(CVC_VERIFY_SERVICE, SECURE_ROM_VERIFY_OFFSET, 1);
 	return 0;
