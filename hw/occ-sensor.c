@@ -553,6 +553,7 @@ void occ_sensors_init(void)
 	struct proc_chip *chip;
 	struct dt_node *sg, *exports;
 	int occ_num = 0, i;
+	bool has_gpu = false;
 
 	/* OCC inband sensors is only supported in P9 */
 	if (proc_gen != proc_gen_p9)
@@ -575,6 +576,9 @@ void occ_sensors_init(void)
 	dt_add_property_string(sg, "compatible", "ibm,opal-sensor-group");
 	dt_add_property_cells(sg, "#address-cells", 1);
 	dt_add_property_cells(sg, "#size-cells", 0);
+
+	if (dt_find_compatible_node(dt_root, NULL, "ibm,power9-npu"))
+		has_gpu = true;
 
 	for_each_chip(chip) {
 		struct occ_sensor_data_header *hb;
@@ -602,6 +606,9 @@ void occ_sensors_init(void)
 				continue;
 
 			if (!(md[i].type & HWMON_SENSORS_MASK))
+				continue;
+
+			if (md[i].location == OCC_SENSOR_LOC_GPU && !has_gpu)
 				continue;
 
 			if (md[i].location == OCC_SENSOR_LOC_CORE) {
