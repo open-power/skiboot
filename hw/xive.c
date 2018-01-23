@@ -1774,7 +1774,13 @@ static bool xive_config_init(struct xive *x)
 	/* Disable error reporting in the FIR for info errors
 	 * from the VC.
 	 */
-	xive_regw(x, CQ_FIRMASK_OR, 3ull);
+	xive_regw(x, CQ_FIRMASK_OR, CQ_FIR_VC_INFO_ERROR_0_1);
+
+	/* Mask CI Load and Store to bad location, as IPI trigger
+	 * pages may be mapped to user space, and a read on the
+	 * trigger page causes a checkstop
+	 */
+	xive_regw(x, CQ_FIRMASK_OR, CQ_FIR_PB_RCMDX_CI_ERR1);
 
 	return true;
 }
