@@ -102,12 +102,12 @@ struct npu2_phy_reg NPU2_PHY_RX_CTL_DATASM_CLKDIST_PDWN = {0x2e0, 60, 1};
 #define NPU2_PHY_REG(scom_base, reg, lane)					\
 	SETFIELD(PPC_BITMASK(27, 31), ((reg)->offset << 42) | scom_base, lane)
 
-#define NPU2_MAX_PHY_LANES			24
+#define NPU2_MAX_PHY_LANE			23
 
 /* This is a bit of a gross hack but it does the job */
 #define FOR_EACH_LANE(ndev, lane) \
-	for (lane = 0; lane < NPU2_MAX_PHY_LANES; lane++)	\
-		if (!(ndev->lane_mask & (1 << lane)))		\
+	for (lane = 0; lane <= NPU2_MAX_PHY_LANE; lane++)	\
+		if (!(ndev->lane_mask & (1 << (NPU2_MAX_PHY_LANE - lane)))) \
 			continue;				\
 		else
 
