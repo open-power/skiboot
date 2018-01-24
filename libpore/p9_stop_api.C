@@ -255,10 +255,12 @@ static uint32_t getOrisInstruction( const uint16_t i_Rs, const uint16_t i_Ra,
  */
 static uint32_t getMtsprInstruction( const uint16_t i_Rs, const uint16_t i_Spr )
 {
-    uint32_t mtsprInstOpcode = MTSPR_BASE_OPCODE;
-    uint32_t temp = ((i_Spr & 0x1F) << 5) | ((i_Spr & 0x8F) >> 5);
-
-    mtsprInstOpcode |= ((i_Rs & 0x1F) << 21) | ((temp & 0x03FF) << 11);
+    uint32_t mtsprInstOpcode = 0;
+    uint32_t temp = (( i_Spr & 0x03FF ) << 11);
+    mtsprInstOpcode = (uint8_t)i_Rs << 21;
+    mtsprInstOpcode = ( temp  & 0x0000F800 ) << 5;
+    mtsprInstOpcode |= ( temp & 0x001F0000 ) >> 5;
+    mtsprInstOpcode |= MTSPR_BASE_OPCODE;
 
     return SWIZZLE_4_BYTE(mtsprInstOpcode);
 }
