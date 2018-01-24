@@ -236,8 +236,21 @@ static bool poll_fence_status(struct npu2_dev *ndev, uint64_t val)
 static uint32_t reset_ntl(struct npu2_dev *ndev)
 {
 	uint64_t val;
+	int lane;
 
 	set_iovalid(ndev, true);
+
+	/* Power on clocks */
+	phy_write(ndev, &NPU2_PHY_RX_CLKDIST_PDWN, 0);
+	phy_write(ndev, &NPU2_PHY_RX_IREF_PDWN, 1);
+	phy_write(ndev, &NPU2_PHY_TX_CLKDIST_PDWN, 0);
+	phy_write(ndev, &NPU2_PHY_RX_CTL_DATASM_CLKDIST_PDWN, 0);
+
+	FOR_EACH_LANE(ndev, lane) {
+		phy_write_lane(ndev, &NPU2_PHY_RX_LANE_ANA_PDWN, lane, 0);
+		phy_write_lane(ndev, &NPU2_PHY_RX_LANE_DIG_PDWN, lane, 0);
+		phy_write_lane(ndev, &NPU2_PHY_TX_LANE_PDWN, lane, 0);
+	}
 
 	/* Write PRI */
 	val = SETFIELD(PPC_BITMASK(0,1), 0ull, obus_brick_index(ndev));
