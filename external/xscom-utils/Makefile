@@ -44,7 +44,7 @@ clean:
 
 .PHONY: distclean
 distclean: clean
-	rm -rf *.c~ *.h~ *.i *.s Makefile~
+	rm -rf *.c~ *.h~ *.i *.s Makefile~ .version version.c
 
 version.c: ../../make_version.sh  .version
 	@(if [ "a$(XSCOM_VERSION)" = "a" ]; then \
