@@ -20,6 +20,7 @@ check: version.o all
 
 install: all $(INSTALLDEPS)
 	install -D pflash $(DESTDIR)$(sbindir)/pflash
+	install -D -m 0644 pflash.1 $(DESTDIR)$(mandir)/man1/pflash.1
 
 .PHONY: dist
 #File is named $(PFLASH_VERSION).tar because the expectation is that pflash-

@@ -10,7 +10,9 @@ CCAN_SRC	:= $(addprefix ccan/list/,$(CCAN_FILES))
 PFLASH_OBJS	:= pflash.o progress.o version.o common-arch_flash.o
 OBJS		:= $(PFLASH_OBJS) $(LIBFLASH_OBJS) $(CCAN_OBJS)
 EXE     	:= pflash
-sbindir		?= /usr/sbin
+sbindir		= $(prefix)/sbin
+datadir		= $(prefix)/share
+mandir		= $(datadir)/man
 
 PFLASH_VERSION	?= $(shell ../../make_version.sh $(EXE))
 LINKAGE		?= static

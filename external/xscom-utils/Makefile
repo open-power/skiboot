@@ -34,6 +34,9 @@ install: all
 	install -D getscom $(DESTDIR)$(sbindir)/getscom
 	install -D putscom $(DESTDIR)$(sbindir)/putscom
 	install -D getsram $(DESTDIR)$(sbindir)/getsram
+	install -D -m 0644 getscom.1 $(DESTDIR)$(mandir)/man1/getscom.1
+	install -D -m 0644 putscom.1 $(DESTDIR)$(mandir)/man1/putscom.1
+	install -D -m 0644 getsram.1 $(DESTDIR)$(mandir)/man1/getsram.1
 
 .PHONY: clean
 clean:
