@@ -211,7 +211,7 @@ void i2c_init(void)
 #define SYSFS	"/sys"	/* XXX Find it ? */
 	DIR *devsdir;
 	struct dirent *devent;
-	char dpath[NAME_MAX];
+	char dpath[PATH_MAX];
 	char busname[256];
 	char *s;
 	FILE *f;
