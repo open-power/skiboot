@@ -3796,14 +3796,10 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 	reg |= dma_eng;
 	xscom_write(p->chip_id, p->pe_xscom + XPEC_NEST_CAPP_CNTL, reg);
 
-	/* PCI to PB data movement ignores the PB init signal.
-	 * Disable streaming.
-	 */
-	xscom_read(p->chip_id, p->pe_xscom + XPEC_NEST_PBCQ_HW_CONFIG, &reg);
-	reg |= XPEC_NEST_PBCQ_HW_CONFIG_PBINIT;
-	if (p->index == CAPP0_PHB_INDEX)
-		reg &= ~XPEC_NEST_PBCQ_HW_CONFIG_CH_STR;
-	xscom_write(p->chip_id, p->pe_xscom + XPEC_NEST_PBCQ_HW_CONFIG, reg);
+	/* PCI to PB data movement ignores the PB init signal. */
+	xscom_write_mask(p->chip_id, p->pe_xscom + XPEC_NEST_PBCQ_HW_CONFIG,
+			 XPEC_NEST_PBCQ_HW_CONFIG_PBINIT,
+			 XPEC_NEST_PBCQ_HW_CONFIG_PBINIT);
 
 	/* PEC Phase 4 (PHB) registers adjustment
 	 * Inbound CAPP traffic: The CAPI can send both CAPP packets and
