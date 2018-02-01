@@ -5,6 +5,8 @@
 *.gcno
 *.rej
 *.swp
+*.pyc
+*.patch
 .version
 skiboot-nosection.elf
 skiboot*.elf
