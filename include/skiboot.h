@@ -332,6 +332,8 @@ extern void fast_sleep_exit(void);
 extern void fake_rtc_init(void);
 
 /* Assembly in head.S */
+extern void disable_machine_check(void);
+extern void enable_machine_check(void);
 extern void enter_p8_pm_state(bool winkle);
 extern void enter_p9_pm_state(uint64_t psscr);
 extern void enter_p9_pm_lite_state(uint64_t psscr);

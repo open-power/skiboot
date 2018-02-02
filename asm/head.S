@@ -479,6 +479,35 @@ call_relocate:
        .long 0xa6037b7d; /* mtsrr1 r11                         */ \
        .long 0x2400004c  /* rfid                               */
 
+.global enable_machine_check
+enable_machine_check:
+	mflr	%r0
+	bcl	20,31,$+4
+0:	mflr	%r3
+	addi	%r3,%r3,(1f - 0b)
+	mtspr	SPR_HSRR0,%r3
+	mfmsr	%r3
+	ori	%r3,%r3,MSR_ME
+	mtspr	SPR_HSRR1,%r3
+	hrfid
+1:	mtlr	%r0
+	blr
+
+.global disable_machine_check
+disable_machine_check:
+	mflr	%r0
+	bcl	20,31,$+4
+0:	mflr	%r3
+	addi	%r3,%r3,(1f - 0b)
+	mtspr	SPR_HSRR0,%r3
+	mfmsr	%r3
+	li	%r4,MSR_ME
+	andc	%r3,%r3,%r4
+	mtspr	SPR_HSRR1,%r3
+	hrfid
+1:	mtlr	%r0
+	blr
+
 pm_save_regs:
 	SAVE_GPR(2,%r1)
 	SAVE_GPR(14,%r1)

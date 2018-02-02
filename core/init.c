@@ -809,8 +809,23 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 */
 	clear_console();
 
+	/*
+	 * Some boot firmwares enter OPAL with MSR[ME]=1, as they presumably
+	 * handle machine checks until we take over. As we overwrite the
+	 * previous exception vectors with our own handlers, disable MSR[ME].
+	 * This could be done atomically by patching in a branch then patching
+	 * it out last, but that's a lot of effort.
+	 */
+	disable_machine_check();
+
 	/* Copy all vectors down to 0 */
 	copy_exception_vectors();
+
+	/*
+	 * Enable MSR[ME] bit so we can take MCEs. We don't currently
+	 * recover, but we print some useful information.
+	 */
+	enable_machine_check();
 
 	/* Setup a NULL catcher to catch accidental NULL ptr calls */
 	setup_branch_null_catcher();
