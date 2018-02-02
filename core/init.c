@@ -486,6 +486,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	ipmi_set_fw_progress_sensor(IPMI_FW_OS_BOOT);
 
+	occ_pstates_init();
+
 	if (!is_reboot) {
 		/* We wait for the nvram read to complete here so we can
 		 * grab stuff from there such as the kernel arguments
@@ -499,7 +501,6 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 		 * OCC takes few secs to boot.  Call this as late as
 		 * as possible to avoid delay.
 		 */
-		occ_pstates_init();
 		occ_sensors_init();
 
 	} else {

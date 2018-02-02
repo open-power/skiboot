@@ -1556,8 +1556,24 @@ void occ_pstates_init(void)
 	if (proc_gen < proc_gen_p8)
 		return;
 	/* Handle fast reboots */
-	if (occ_pstates_initialized)
-		return;
+	if (occ_pstates_initialized) {
+		struct dt_node *power_mgt;
+		int i;
+		const char *props[] = {
+				"ibm,pstate-core-max",
+				"ibm,pstate-frequencies-mhz",
+				"ibm,pstate-ids",
+				"ibm,pstate-max",
+				"ibm,pstate-min",
+				"ibm,pstate-nominal",
+				"ibm,pstate-turbo",
+				"ibm,pstate-ultra-turbo",
+				};
+
+		power_mgt = dt_find_by_path(dt_root, "/ibm,opal/power-mgt");
+		for (i = 0; i < ARRAY_SIZE(props); i++)
+			dt_check_del_prop(power_mgt, props[i]);
+	}
 
 	switch (proc_gen) {
 	case proc_gen_p8:
@@ -1604,6 +1620,9 @@ void occ_pstates_init(void)
 			for_each_available_core_in_chip(c, chip->id)
 				cpu_pstates_prepare_core(chip, c, pstate_nom);
 	}
+
+	if (occ_pstates_initialized)
+		return;
 
 	/* Add opal_poller to poll OCC throttle status of each chip */
 	for_each_chip(chip)
