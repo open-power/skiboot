@@ -61,7 +61,7 @@ char __attrconst tohex(uint8_t nibble)
 	return __tohex[nibble];
 }
 
-unsigned long get_symbol(unsigned long addr, char **sym, char **sym_end)
+static unsigned long get_symbol(unsigned long addr, char **sym, char **sym_end)
 {
 	unsigned long prev = 0, next;
 	char *psym = NULL, *p = __sym_map_start;
@@ -88,3 +88,27 @@ unsigned long get_symbol(unsigned long addr, char **sym, char **sym_end)
 	return 0;
 }
 
+size_t snprintf_symbol(char *buf, size_t len, uint64_t addr)
+{
+	unsigned long saddr;
+	char *sym, *sym_end;
+	size_t l;
+
+	saddr = get_symbol(addr, &sym, &sym_end);
+	if (!saddr)
+		return 0;
+
+	if (len > sym_end - sym)
+		l = sym_end - sym;
+	else
+		l = len - 1;
+	memcpy(buf, sym, l);
+
+	/*
+	 * This snprintf will insert the terminating NUL even if the
+	 * symbol has used up the entire buffer less 1.
+	 */
+	l += snprintf(buf + l, len - l, "+0x%llx", addr - saddr);
+
+	return l;
+}

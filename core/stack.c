@@ -59,8 +59,7 @@ void __print_backtrace(unsigned int pir,
 	static char bt_text_buf[4096];
 	int i, l = 0, max;
 	char *buf = out_buf;
-	unsigned long bottom, top, tbot, ttop, saddr = 0;
-	char *sym = NULL, *sym_end = NULL;
+	unsigned long bottom, top, tbot, ttop;
 	char mark;
 
 	if (!out_buf) {
@@ -82,20 +81,12 @@ void __print_backtrace(unsigned int pir,
 			mark = '*';
 		else
 			mark = ' ';
-		if (symbols)
-			saddr = get_symbol(entries->pc, &sym, &sym_end);
-		else
-			saddr = 0;
 		l += snprintf(buf + l, max - l,
 			      " S: %016lx R: %016lx %c ",
 			      entries->sp, entries->pc, mark);
-		while(saddr && sym < sym_end && l < max)
-			buf[l++] = *(sym++);
-		if (sym && l < max)
-			l += snprintf(buf + l, max - l, "+0x%lx\n",
-				      entries->pc - saddr);
-		else
-			l += snprintf(buf + l, max - l, "\n");
+		if (symbols)
+			l += snprintf_symbol(buf + l, max - l, entries->pc);
+		l += snprintf(buf + l, max - l, "\n");
 		entries++;
 	}
 	if (!out_buf)

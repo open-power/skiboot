@@ -204,8 +204,7 @@ extern const char version[];
 /* Debug support */
 extern char __sym_map_start[];
 extern char __sym_map_end[];
-extern unsigned long get_symbol(unsigned long addr,
-				char **sym, char **sym_end);
+extern size_t snprintf_symbol(char *buf, size_t len, uint64_t addr);
 
 /* Direct controls */
 extern void direct_controls_init(void);
