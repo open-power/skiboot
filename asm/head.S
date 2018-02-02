@@ -210,6 +210,10 @@ _exception:
 	std	%r4,STACK_SRR1(%r1)
 	std	%r5,STACK_HSRR0(%r1)
 	std	%r6,STACK_HSRR1(%r1)
+	mfspr	%r3,SPR_DSISR
+	mfspr	%r4,SPR_DAR
+	stw	%r3,STACK_DSISR(%r1)
+	std	%r4,STACK_DAR(%r1)
 	mr	%r3,%r1
 	LOAD_IMM64(%r4, SKIBOOT_BASE)
 	LOAD_IMM32(%r5, exception_entry_foo - __head)

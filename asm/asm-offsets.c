@@ -81,6 +81,7 @@ int main(void)
 
 	OFFSET(STACK_CR,	stack_frame, cr);
 	OFFSET(STACK_XER,	stack_frame, xer);
+	OFFSET(STACK_DSISR,	stack_frame, dsisr);
 	OFFSET(STACK_CTR,	stack_frame, ctr);
 	OFFSET(STACK_LR,	stack_frame, lr);
 	OFFSET(STACK_PC,	stack_frame, pc);
@@ -89,6 +90,7 @@ int main(void)
 	OFFSET(STACK_SRR1,	stack_frame, srr1);
 	OFFSET(STACK_HSRR0,	stack_frame, hsrr0);
 	OFFSET(STACK_HSRR1,	stack_frame, hsrr1);
+	OFFSET(STACK_DAR,	stack_frame, dar);
 	DEFINE(STACK_FRAMESIZE,	sizeof(struct stack_frame));
 
 	return 0;
