@@ -348,7 +348,18 @@ void __noreturn fast_reboot_entry(void)
 	}
 
 	/* Remove all PCI devices */
-	pci_reset();
+	if (pci_reset()) {
+		prlog(PR_NOTICE, "RESET: Fast reboot failed to reset PCI\n");
+
+		/*
+		 * Can't return to caller here because we're past no-return.
+		 * Attempt an IPL here which is what the caller would do.
+		 */
+		if (platform.cec_reboot)
+			platform.cec_reboot();
+		for (;;)
+			;
+	}
 
 	ipmi_set_fw_progress_sensor(IPMI_FW_PCI_INIT);
 

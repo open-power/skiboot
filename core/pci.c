@@ -1668,7 +1668,7 @@ static void __pci_reset(struct list_head *list)
 	}
 }
 
-void pci_reset(void)
+int64_t pci_reset(void)
 {
 	unsigned int i;
 	struct pci_slot *slot;
@@ -1695,11 +1695,9 @@ void pci_reset(void)
 				rc = slot->ops.run_sm(slot);
 			}
 			if (rc < 0) {
-				PCIERR(phb, 0, "Complete reset failed, aborting"
-				               "fast reboot (rc=%lld)\n", rc);
-				if (platform.cec_reboot)
-					platform.cec_reboot();
-				while (true) {}
+				PCIERR(phb, 0, "Complete reset failed "
+				               "(rc=%lld)\n", rc);
+				return rc;
 			}
 		}
 
@@ -1710,6 +1708,7 @@ void pci_reset(void)
 	/* Re-Initialize all discovered PCI slots */
 	pci_init_slots();
 
+	return 0;
 }
 
 static void pci_do_jobs(void (*fn)(void *))
