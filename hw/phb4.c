@@ -3597,8 +3597,8 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 		    0x1772000000000000);
 	PHBINF(p, "CAPP: port attached\n");
 
-	/* Set snoop ttype decoding , dir size to 256k */
-	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0xA000000000000000);
+	/* Set snoop ttype decoding , dir size to 512K */
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0x9000000000000000);
 
 	/* Use Read Epsilon Tier2 for all scopes.
 	 * Set Tier2 Read Epsilon.
@@ -3638,6 +3638,7 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 		reg &= ~PPC_BIT(12); /* Set CI Store Buffer Threshold=5 */
 		reg |= PPC_BIT(13);  /* Set CI Store Buffer Threshold=5 */
 		reg &= ~PPC_BITMASK(14, 17); /* Set Max LPC CI store buffer to zeros */
+		reg &= ~PPC_BITMASK(18, 21); /* Set Max tlbi divider */
 		if (capp_eng & CAPP_MIN_STQ_ENGINES) {
 			/* 2 CAPP msg engines */
 			reg |= PPC_BIT(59);
