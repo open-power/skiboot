@@ -4708,6 +4708,11 @@ static void phb4_add_properties(struct phb4 *p)
 	/* M64 ranges start at 1 as MBT0 is used for M32 */
 	dt_add_property_cells(np, "ibm,opal-available-m64-ranges",
 			      1, p->mbt_size - 1);
+	dt_add_property_cells(np, "ibm,supported-tce-sizes",
+			      12, // 4K
+			      16, // 64K
+			      21, // 2M
+			      30); // 1G
 
 	/* Tell Linux about alignment limits for segment splits.
 	 *

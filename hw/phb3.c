@@ -4469,6 +4469,11 @@ static void phb3_add_properties(struct phb3 *p)
 	tkill = reg + PHB_TCE_KILL;
 	dt_add_property_cells(np, "ibm,opal-tce-kill",
 			      hi32(tkill), lo32(tkill));
+	dt_add_property_cells(np, "ibm,supported-tce-sizes",
+			      12, // 4K
+			      16, // 64K
+			      24, // 16M
+			      28); // 256M
 
 	/*
 	 * Indicate to Linux that the architected IODA2 MSI EOI method

@@ -2596,6 +2596,11 @@ static void p7ioc_pcie_add_node(struct p7ioc_phb *p)
 	tkill = reg[0] + PHB_TCE_KILL;
 	dt_add_property_cells(np, "ibm,opal-tce-kill",
 			      hi32(tkill), lo32(tkill));
+	dt_add_property_cells(np, "ibm,supported-tce-sizes",
+			      12, // 4K
+			      16, // 64K
+			      24, // 16M
+			      34); // 16G
 
 	/*
 	 * Linux may use this property to allocate the diag data buffer, which
