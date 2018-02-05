@@ -1256,7 +1256,9 @@ static int64_t npu2_tce_kill(struct phb *phb, uint32_t kill_type,
 	sync();
 	switch(kill_type) {
 	case OPAL_PCI_TCE_KILL_PAGES:
-		tce_page_size = GETFIELD(npu->tve_cache[pe_number], NPU2_ATS_IODA_TBL_TVT_PSIZE);
+		tce_page_size = 1ULL << (
+				11 + GETFIELD(npu->tve_cache[pe_number],
+					NPU2_ATS_IODA_TBL_TVT_PSIZE));
 		if (tce_page_size != tce_size) {
 			NPU2ERR(npu, "npu2_tce_kill: Unexpected TCE size (got 0x%x expected 0x%x)\n",
 				tce_size, tce_page_size);
