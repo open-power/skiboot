@@ -1504,11 +1504,11 @@ static int64_t phb4_map_pe_dma_window(struct phb *phb,
 	case 0x10000:	/* 64K */
 		data64 = SETFIELD(IODA3_TVT_IO_PSIZE, data64, 5);
 		break;
-	case 0x1000000:	/* 16M */
-		data64 = SETFIELD(IODA3_TVT_IO_PSIZE, data64, 13);
+	case 0x200000:	/* 2M */
+		data64 = SETFIELD(IODA3_TVT_IO_PSIZE, data64, 10);
 		break;
-	case 0x10000000: /* 256M */
-		data64 = SETFIELD(IODA3_TVT_IO_PSIZE, data64, 17);
+	case 0x40000000: /* 1G */
+		data64 = SETFIELD(IODA3_TVT_IO_PSIZE, data64, 19);
 		break;
 	default:
 		return OPAL_PARAMETER;
