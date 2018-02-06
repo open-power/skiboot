@@ -48,6 +48,8 @@ The secure mode status, hardware key hash and hardware key hash size
 information is found in the device tree, see
 :ref:`doc/device-tree/ibm,secureboot.rst <device-tree/ibm,secureboot>`.
 
+.. _signing-firmware-code:
+
 Signing Firmware Code
 ^^^^^^^^^^^^^^^^^^^^^
 
