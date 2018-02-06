@@ -28,6 +28,7 @@
 static const void* hw_key_hash = NULL;
 static size_t hw_key_hash_size;
 static bool secure_mode = false;
+static bool secure_init = false;
 
 static struct {
 	enum secureboot_version version;
@@ -161,6 +162,8 @@ void secureboot_init(void)
 	}
 	if (cvc_init())
 		secureboot_enforce();
+
+	secure_init = true;
 }
 
 int secureboot_verify(enum resource_id id, void *buf, size_t len)
@@ -175,6 +178,12 @@ int secureboot_verify(enum resource_id id, void *buf, size_t len)
 		      "unknown\n", id);
 		secureboot_enforce();
 	}
+
+        if (!secure_init) {
+                prlog(PR_WARNING, "container NOT VERIFIED, resource_id=%d "
+                      "secureboot not yet initialized\n", id);
+		return -1;
+        }
 
 	rc = call_cvc_verify(buf, len, hw_key_hash, hw_key_hash_size, &log);
 
