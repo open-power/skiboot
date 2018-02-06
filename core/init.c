@@ -997,15 +997,15 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Read in NVRAM and set it up */
 	nvram_init();
 
-	/* preload the IMC catalog dtb */
-	imc_catalog_preload();
-
 	/* Set the console level */
 	console_log_level();
 
 	/* Secure/Trusted Boot init. We look for /ibm,secureboot in DT */
 	secureboot_init();
 	trustedboot_init();
+
+        /* preload the IMC catalog dtb */
+        imc_catalog_preload();
 
 	/* Install the OPAL Console handlers */
 	init_opal_console();
