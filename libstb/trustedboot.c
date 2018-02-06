@@ -30,6 +30,7 @@
 //#define STB_DEBUG
 
 static bool trusted_mode = false;
+static bool trusted_init = false;
 static bool boot_services_exited = false;
 
 /*
@@ -114,6 +115,8 @@ void trustedboot_init(void)
 
 	cvc_init();
 	tpm_init();
+
+	trusted_init = true;
 }
 
 int trustedboot_exit_boot_services(void)
@@ -180,6 +183,13 @@ int trustedboot_measure(enum resource_id id, void *buf, size_t len)
 		prlog(PR_ERR, "resource NOT MEASURED, resource_id=%d unknown\n", id);
 		return -1;
 	}
+
+        if (!trusted_init) {
+                prlog(PR_ERR, "resource NOT MEASURED, resource_id=%d "
+                      "trustedboot not yet initialized\n", id);
+                return -1;
+        }
+
 	if (boot_services_exited) {
 		prlog(PR_ERR, "%s NOT MEASURED. Already exited from boot "
 		      "services\n", name);
