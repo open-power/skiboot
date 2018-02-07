@@ -145,7 +145,7 @@ int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
 		 * TpmLogMgr code (or friends) has been updated, the changes
 		 * need to be applied to skiboot as well.
 		 */
-		prlog(PR_ERR, "eventlog init failed: tpm%d rc=%d",
+		prlog(PR_ERR, "eventlog init failed: tpm%d rc=%d\n",
 		      tpm->id, rc);
 		goto disable;
 	}
@@ -181,7 +181,7 @@ int tpm_init(void)
 	tpm_i2c_nuvoton_probe();
 
 	if (list_empty(&tpm_list)) {
-		prlog(PR_INFO, "no compatible tpm device found!");
+		prlog(PR_INFO, "no compatible tpm device found!\n");
 		return -1;
 	}
 	return 0;
