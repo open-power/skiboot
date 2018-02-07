@@ -179,7 +179,7 @@ int secureboot_verify(enum resource_id id, void *buf, size_t len)
 	rc = call_cvc_verify(buf, len, hw_key_hash, hw_key_hash_size, &log);
 
 	if (rc == OPAL_SUCCESS) {
-		prlog(PR_INFO, "%s verified\n", name);
+		prlog(PR_NOTICE, "%s verified\n", name);
 	} else if (rc == OPAL_PARTIAL) {
 		/*
 		 * The value returned in log indicates what checking has

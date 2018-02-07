@@ -215,7 +215,7 @@ int trustedboot_measure(enum resource_id id, void *buf, size_t len)
 	rc = call_cvc_sha512(buf_aux, len_aux, digest, SHA512_DIGEST_LENGTH);
 
 	if (rc == OPAL_SUCCESS) {
-		prlog(PR_INFO, "%s hash calculated\n", name);
+		prlog(PR_NOTICE, "%s hash calculated\n", name);
 	} else if (rc == OPAL_PARAMETER) {
 		prlog(PR_ERR, "%s NOT MEASURED, invalid param. buf=%p, "
 		      "len=%zd, digest=%p\n", name, buf_aux,
