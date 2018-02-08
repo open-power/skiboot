@@ -183,6 +183,7 @@ int secureboot_verify(enum resource_id id, void *buf, size_t len)
         if (!secure_init) {
                 prlog(PR_WARNING, "container NOT VERIFIED, resource_id=%d "
                       "secureboot not yet initialized\n", id);
+		secureboot_enforce();
 		return -1;
         }
 
