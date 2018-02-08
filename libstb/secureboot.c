@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 IBM Corp.
+/* Copyright 2013-2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,6 +177,7 @@ int secureboot_verify(enum resource_id id, void *buf, size_t len)
 		prlog(PR_EMERG, "container NOT VERIFIED, resource_id=%d "
 		      "unknown\n", id);
 		secureboot_enforce();
+		return -1;
 	}
 
         if (!secure_init) {
