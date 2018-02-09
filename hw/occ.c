@@ -1568,6 +1568,8 @@ void occ_pstates_init(void)
 				"ibm,pstate-nominal",
 				"ibm,pstate-turbo",
 				"ibm,pstate-ultra-turbo",
+				"#address-cells",
+				"#size-cells",
 				};
 
 		power_mgt = dt_find_by_path(dt_root, "/ibm,opal/power-mgt");
