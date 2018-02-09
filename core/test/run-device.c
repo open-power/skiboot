@@ -323,13 +323,26 @@ int main(void)
 	gc1 = dt_new(c1, "coprocessor1");
 	dt_add_property_strings(gc1, "compatible",
 				"specific-fake-coprocessor");
+	gc2 = dt_new(gc1, "coprocessor2");
+	dt_add_property_strings(gc2, "compatible",
+				"specific-fake-coprocessor");
+	gc3 = dt_new(c1, "coprocessor3");
+	dt_add_property_strings(gc3, "compatible",
+				"specific-fake-coprocessor");
 
-	gc2 = dt_new(c1, "node-without-compatible");
-	assert(__dt_find_property(gc2, "compatible") == NULL);
-	assert(!dt_node_is_compatible(gc2, "any-property"));
 
 	assert(dt_find_compatible_node(root, NULL, "generic-fake-bus") == c2);
 	assert(dt_find_compatible_node(root, c2, "generic-fake-bus") == NULL);
+
+	/* we can find all compatible nodes */
+	assert(dt_find_compatible_node(c1, NULL, "specific-fake-coprocessor") == gc1);
+	assert(dt_find_compatible_node(c1, gc1, "specific-fake-coprocessor") == gc2);
+	assert(dt_find_compatible_node(c1, gc2, "specific-fake-coprocessor") == gc3);
+	assert(dt_find_compatible_node(c1, gc3, "specific-fake-coprocessor") == NULL);
+	assert(dt_find_compatible_node(root, NULL, "specific-fake-coprocessor") == gc1);
+	assert(dt_find_compatible_node(root, gc1, "specific-fake-coprocessor") == gc2);
+	assert(dt_find_compatible_node(root, gc2, "specific-fake-coprocessor") == gc3);
+	assert(dt_find_compatible_node(root, gc3, "specific-fake-coprocessor") == NULL);
 
 	/* we can find the coprocessor once on the cpu */
 	assert(dt_find_compatible_node_on_chip(root,
@@ -338,6 +351,14 @@ int main(void)
 					       0xcafe) == gc1);
 	assert(dt_find_compatible_node_on_chip(root,
 					       gc1,
+					       "specific-fake-coprocessor",
+					       0xcafe) == gc2);
+	assert(dt_find_compatible_node_on_chip(root,
+					       gc2,
+					       "specific-fake-coprocessor",
+					       0xcafe) == gc3);
+	assert(dt_find_compatible_node_on_chip(root,
+					       gc3,
 					       "specific-fake-coprocessor",
 					       0xcafe) == NULL);
 
@@ -349,9 +370,9 @@ int main(void)
 
 	/* Test phandles. We override the automatically generated one. */
 	phandle = 0xf00;
-	dt_add_property(gc2, "phandle", (const void *)&phandle, 4);
+	dt_add_property(gc3, "phandle", (const void *)&phandle, 4);
 	assert(last_phandle == 0xf00);
-	assert(dt_find_by_phandle(root, 0xf00) == gc2);
+	assert(dt_find_by_phandle(root, 0xf00) == gc3);
 	assert(dt_find_by_phandle(root, 0xf0f) == NULL);
 
 	dt_free(root);

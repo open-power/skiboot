@@ -608,6 +608,15 @@ struct dt_node *dt_first(const struct dt_node *root)
 struct dt_node *dt_next(const struct dt_node *root,
 			const struct dt_node *prev)
 {
+	if (!prev) {
+		struct dt_node *first = dt_first(root);
+
+		if (!first)
+			return NULL;
+		else
+			return first;
+	}
+
 	/* Children? */
 	if (!list_empty(&prev->children))
 		return dt_first(prev);
@@ -719,10 +728,9 @@ struct dt_node *dt_find_compatible_node(struct dt_node *root,
 					struct dt_node *prev,
 					const char *compat)
 {
-	struct dt_node *node;
+	struct dt_node *node = prev;
 
-	node = prev ? dt_next(root, prev) : root;
-	for (; node; node = dt_next(root, node))
+	while ((node = dt_next(root, node)))
 		if (dt_node_is_compatible(node, compat))
 			return node;
 	return NULL;
@@ -964,10 +972,9 @@ struct dt_node *dt_find_compatible_node_on_chip(struct dt_node *root,
 						const char *compat,
 						uint32_t chip_id)
 {
-	struct dt_node *node;
+	struct dt_node *node = prev;
 
-	node = prev ? dt_next(root, prev) : root;
-	for (; node; node = dt_next(root, node)) {
+	while ((node = dt_next(root, node))) {
 		u32 cid = __dt_get_chip_id(node);
 		if (cid == chip_id &&
 		    dt_node_is_compatible(node, compat))
