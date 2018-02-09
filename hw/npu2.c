@@ -970,11 +970,10 @@ static void npu2_hw_init(struct npu2 *p)
 static int64_t npu2_map_pe_dma_window_real(struct phb *phb,
 					   uint64_t pe_num,
 					   uint16_t window_id,
-					   uint64_t pci_start_addr,
-					   uint64_t pci_mem_size)
+					   uint64_t pci_start_addr __unused,
+					   uint64_t pci_mem_size __unused)
 {
 	struct npu2 *p = phb_to_npu2(phb);
-	uint64_t end;
 	uint64_t tve;
 
 	/* Sanity check. Each PE has one corresponding TVE */
@@ -983,37 +982,13 @@ static int64_t npu2_map_pe_dma_window_real(struct phb *phb,
 		return OPAL_PARAMETER;
 
 	if (pci_mem_size) {
-		/* Enable */
-
-		end = pci_start_addr + pci_mem_size;
-
-		/* We have to be 16M aligned */
-		if ((pci_start_addr & 0x00ffffff) ||
-		    (pci_mem_size & 0x00ffffff))
-			return OPAL_PARAMETER;
-
-		/*
-		 * It *looks* like this is the max we can support (we need
-		 * to verify this. Also we are not checking for rollover,
-		 * but then we aren't trying too hard to protect ourselves
-		 * againt a completely broken OS.
-		 */
-		if (end > 0x0003ffffffffffffull)
-			return OPAL_PARAMETER;
-
-		/*
-		 * Put start address bits 49:24 into TVE[52:53]||[0:23]
-		 * and end address bits 49:24 into TVE[54:55]||[24:47]
-		 * and set TVE[51]
-		 */
-		tve  = (pci_start_addr << 16) & (0xffffffull << 40);
-		tve |= (pci_start_addr >> 38) & (3ull << 10);
-		tve |= (end >>  8) & (0xfffffful << 16);
-		tve |= (end >> 40) & (3ull << 8);
-		tve |= PPC_BIT(51);
+		/* GPUs need to be able to access the MMIO memory space as well.
+		 * On POWER9 this is above the top of ram so disable the TVT
+		 * range check allowing access to all memory addresses. */
+		tve = 0;
 	} else {
 		/* Disable */
-		tve = 0;
+		tve = PPC_BIT(51);
 	}
 
 	npu2_ioda_sel(p, NPU2_ATS_IODA_TBL_TVT, window_id, false);
