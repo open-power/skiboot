@@ -1,7 +1,7 @@
 PLATDIR = platforms
 
 SUBDIRS += $(PLATDIR)
-PLATFORMS = $(PLATDIR)/built-in.o
+PLATFORMS = $(PLATDIR)/built-in.a
 
 include $(SRC)/$(PLATDIR)/ibm-fsp/Makefile.inc
 include $(SRC)/$(PLATDIR)/rhesus/Makefile.inc

@@ -126,7 +126,7 @@ LDFLAGS += -Wl,-pie
 LDFLAGS += -Wl,-Ttext-segment,$(LD_TEXT) -Wl,-N -Wl,--build-id=none
 LDFLAGS += -Wl,--no-multi-toc
 LDFLAGS += -mcpu=power7 -mbig-endian -Wl,--oformat,elf64-powerpc
-
+LDFLAGS_FINAL = $(LDFLAGS) -Wl,--whole-archive
 LDRFLAGS=-melf64ppc
 # Debug stuff
 #LDFLAGS += -Wl,-v -Wl,-Map,foomap 
@@ -213,8 +213,8 @@ OBJS += $(LIBC) $(CCAN) $(DEVSRC_OBJ) $(LIBPORE)
 OBJS_NO_VER = $(OBJS)
 ALL_OBJS = $(OBJS) version.o
 
-ALL_OBJS_1 = $(ALL_OBJS) asm/dummy_map.o
-ALL_OBJS_2 = $(ALL_OBJS) asm/real_map.o
+ALL_OBJS_1 = $(TARGET).tmp.a asm/dummy_map.o
+ALL_OBJS_2 = $(TARGET).tmp.a asm/real_map.o
 
 $(TARGET).lid.xz: $(TARGET).lid
 	$(call Q,XZ, cat $^ | xz -9 -C crc32 > $@, $@)
@@ -228,13 +228,17 @@ $(TARGET).lid.stb: $(TARGET).lid libstb/create-container
 $(TARGET).lid.xz.stb: $(TARGET).lid.xz libstb/create-container
 	$(call Q,STB-DEVELOPMENT-SIGNED-CONTAINER,$(SRC)/libstb/sign-with-local-keys.sh $< $@ $(SRC)/libstb/keys/ PAYLOAD,$@)
 
+$(TARGET).tmp.a: $(ALL_OBJS)
+	@rm -f $(TARGET).tmp.a
+	$(call Q,AR, $(AR) rcsTPD $@ $(ALL_OBJS), $@)
+
 $(TARGET).tmp.elf: $(ALL_OBJS_1) $(TARGET).lds $(KERNEL)
-	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(ALL_OBJS_1) -o $@, $@)
+	$(call Q,LD, $(CC) $(LDFLAGS_FINAL) -o $@ -T $(TARGET).lds $(ALL_OBJS_1), $@)
 
 asm/real_map.o : $(TARGET).tmp.map
 
 $(TARGET).elf: $(ALL_OBJS_2) $(TARGET).lds $(KERNEL)
-	$(call Q,LD, $(CC) $(LDFLAGS) -T $(TARGET).lds $(ALL_OBJS_2) -o $@, $@)
+	$(call Q,LD, $(CC) $(LDFLAGS_FINAL) -o $@ -T $(TARGET).lds $(ALL_OBJS_2), $@)
 
 $(SUBDIRS):
 	$(call Q,MKDIR,mkdir -p $@, $@)

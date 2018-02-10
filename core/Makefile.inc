@@ -15,7 +15,7 @@ ifeq ($(SKIBOOT_GCOV),1)
 CORE_OBJS += gcov-profiling.o
 endif
 
-CORE=core/built-in.o
+CORE=core/built-in.a
 
 CFLAGS_SKIP_core/relocate.o = -pg -fstack-protector-all
 CFLAGS_SKIP_core/relocate.o += -fstack-protector -fstack-protector-strong

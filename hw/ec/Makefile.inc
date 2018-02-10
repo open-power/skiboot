@@ -3,6 +3,6 @@
 
 SUBDIRS += hw/ec
 EC_OBJS = gpio.o
-EC=hw/ec/built-in.o
+EC=hw/ec/built-in.a
 
 $(EC): $(EC_OBJS:%=hw/ec/%)

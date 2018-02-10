@@ -16,6 +16,6 @@ STRING_OBJS = strcat.o strchr.o strcmp.o strcpy.o strlen.o \
 	      strncmp.o strncpy.o strstr.o memset.o memcpy.o memcpy_from_ci.o \
 	      memmove.o memchr.o memcmp.o strcasecmp.o strncasecmp.o \
 	      strtok.o strdup.o
-STRING = $(LIBCDIR)/string/built-in.o
+STRING = $(LIBCDIR)/string/built-in.a
 $(STRING): $(STRING_OBJS:%=$(LIBCDIR)/string/%)
 

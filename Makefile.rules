@@ -67,8 +67,9 @@ endif
 %.i : %.c
 	$(call Q,CC, $(CC) $(call cook_cflags,$@) -E -c $< -o $@, $@)
 
-%built-in.o :
-	$(call Q,LD, $(LD) $(LDRFLAGS) -r $^ -o $@, $@)
+%built-in.a :
+	@rm -f $@
+	$(call Q,AR, $(AR) rcSTPD $@ $^, $@)
 
 %.lds : %.lds.S
 	$(call Q,CC, $(CC) $(CPPFLAGS) -P -E $< -o $@, $@)

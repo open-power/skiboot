@@ -12,7 +12,7 @@ LIBFDT_OBJS = $(LIBFDT_SRCS:%.c=%.o)
 CFLAGS_SKIP_libfdt/fdt_sw.o = -Wstack-usage=4096
 
 SUBDIRS += libfdt
-LIBFDT = libfdt/built-in.o
+LIBFDT = libfdt/built-in.a
 
 $(LIBFDT): $(LIBFDT_OBJS:%=libfdt/%)
 

@@ -14,6 +14,6 @@ SUBDIRS += $(LIBCDIR)/ctype
 
 CTYPE_OBJS = isdigit.o isprint.o isspace.o isxdigit.o tolower.o toupper.o
 
-CTYPE = $(LIBCDIR)/ctype/built-in.o
+CTYPE = $(LIBCDIR)/ctype/built-in.a
 $(CTYPE): $(CTYPE_OBJS:%=$(LIBCDIR)/ctype/%)
 

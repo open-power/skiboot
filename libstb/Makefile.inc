@@ -6,7 +6,7 @@ SUBDIRS += $(LIBSTB_DIR)
 
 LIBSTB_SRCS = container.c tpm_chip.c cvc.c secureboot.c trustedboot.c
 LIBSTB_OBJS = $(LIBSTB_SRCS:%.c=%.o)
-LIBSTB = $(LIBSTB_DIR)/built-in.o
+LIBSTB = $(LIBSTB_DIR)/built-in.a
 
 include $(SRC)/$(LIBSTB_DIR)/mbedtls/Makefile.inc
 include $(SRC)/$(LIBSTB_DIR)/drivers/Makefile.inc
