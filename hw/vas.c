@@ -69,6 +69,42 @@ static int vas_scom_write(struct proc_chip *chip, uint64_t reg, uint64_t val)
 	return rc;
 }
 
+/*
+ * Return true if NX crypto/compression is enabled on this processor.
+ *
+ * On POWER8, NX-842 crypto and compression are allowed, but they do not
+ * use VAS (return true).
+ *
+ * On POWER9, NX 842 and GZIP compressions use VAS but the PASTE instruction
+ * and hence VAS is not enabled in following revisions:
+ *
+ *	- Nimbus DD1.X, DD2.01, DD2.1
+ *	- Cumulus DD1.0
+ *
+ * Return false for these revisions. Return true otherwise.
+ */
+__attrconst inline bool vas_nx_enabled(void)
+{
+	uint32_t pvr;
+	int major, minor;
+	struct proc_chip *chip;
+
+	chip = next_chip(NULL);
+
+	pvr = mfspr(SPR_PVR);
+	major = PVR_VERS_MAJ(pvr);
+	minor = PVR_VERS_MIN(pvr);
+
+	switch (chip->type) {
+	case PROC_CHIP_P9_NIMBUS:
+		return (major > 2 || (major == 2 && minor > 1));
+	case PROC_CHIP_P9_CUMULUS:
+		return (major > 1 || minor > 0);
+	default:
+		return true;
+	}
+}
+
 /* Interface for NX - make sure VAS is fully initialized first */
 __attrconst inline uint64_t vas_get_hvwc_mmio_bar(const int chipid)
 {
@@ -110,6 +146,9 @@ static int init_north_ctl(struct proc_chip *chip)
 	return vas_scom_write(chip, VAS_MISC_N_CTL, val);
 }
 
+/*
+ * Ensure paste instructions are not accepted and MMIO BARs are disabled.
+ */
 static inline int reset_north_ctl(struct proc_chip *chip)
 {
 	return vas_scom_write(chip, VAS_MISC_N_CTL, 0ULL);
@@ -397,9 +436,9 @@ static void disable_vas_inst(struct dt_node *np)
 }
 
 /*
- * Initialize one VAS instance
+ * Initialize one VAS instance and enable it if @enable is true.
  */
-static int init_vas_inst(struct dt_node *np)
+static int init_vas_inst(struct dt_node *np, bool enable)
 {
 	uint32_t vas_id;
 	uint64_t xscom_base;
@@ -410,6 +449,11 @@ static int init_vas_inst(struct dt_node *np)
 	xscom_base = dt_get_address(np, 0, NULL);
 
 	chip->vas = alloc_vas(chip->id, vas_id, xscom_base);
+
+	if (!enable) {
+		reset_north_ctl(chip);
+		return 0;
+	}
 
 	if (alloc_init_wcbs(chip))
 		return -1;
@@ -429,17 +473,20 @@ static int init_vas_inst(struct dt_node *np)
 
 void vas_init()
 {
+	bool enabled;
 	struct dt_node *np;
 
 	if (proc_gen != proc_gen_p9)
 		return;
 
+	enabled = vas_nx_enabled();
+
 	dt_for_each_compatible(dt_root, np, "ibm,power9-vas-x") {
-		if (init_vas_inst(np))
+		if (init_vas_inst(np, enabled))
 			goto out;
 	}
 
-	vas_initialized = 1;
+	vas_initialized = enabled;
 	return;
 
 out:

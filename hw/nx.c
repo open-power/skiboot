@@ -24,6 +24,7 @@
 #include <chip.h>
 #include <xscom-p9-regs.h>
 #include <phys-map.h>
+#include <vas.h>
 #include <p9_stop_api.H>
 
 static void p9_darn_init(void)
@@ -110,7 +111,12 @@ void nx_p9_rng_late_init(void)
 static void nx_init_one(struct dt_node *node)
 {
 	nx_create_rng_node(node);
+
+	if (!vas_nx_enabled())
+		return;
+
 	nx_create_crypto_node(node);
+
 	nx_create_compress_node(node);
 }
 
