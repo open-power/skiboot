@@ -37,17 +37,17 @@ version.c: .version
 	echo "const char version[] = \"$(PFLASH_VERSION)\";" ;\
 	fi) > $@
 
-%.o : %.c
+%.o : %.c | links
 	$(Q_CC)$(CC) $(CFLAGS) -c $< -o $@
 
 $(LIBFLASH_SRC): | links
 
 $(CCAN_SRC): | links
 
-$(LIBFLASH_OBJS): libflash-%.o : libflash/%.c
+$(LIBFLASH_OBJS): libflash-%.o : libflash/%.c | links
 	$(Q_CC)$(CC) $(CFLAGS) -c $< -o $@
 
-$(CCAN_OBJS): ccan-list-%.o: ccan/list/%.c
+$(CCAN_OBJS): ccan-list-%.o: ccan/list/%.c | links
 	$(Q_CC)$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXE): $(OBJS)
