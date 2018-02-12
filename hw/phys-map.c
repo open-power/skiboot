@@ -184,7 +184,7 @@ void phys_map_get(uint64_t gcid, enum phys_map_type type,
 
 error:
 	/* Something has gone really wrong */
-	prlog(PR_EMERG, "ERROR: Failed to lookup BAR type:%i index:%i",
+	prlog(PR_EMERG, "ERROR: Failed to lookup BAR type:%i index:%i\n",
 	      type, index);
 	assert(0);
 }
