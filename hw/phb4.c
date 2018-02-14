@@ -3012,6 +3012,29 @@ static uint64_t phb4_get_pesta(struct phb4 *p, uint64_t pe_number)
 	return pesta;
 }
 
+/* Check if the chip requires escalating a freeze to fence on MMIO loads */
+static bool phb4_escalation_required(void)
+{
+	uint64_t pvr = mfspr(SPR_PVR);
+
+	/*
+	 * Escalation is required on the following chip versions:
+	 * - Cumulus DD1.0
+	 * - Nimbus DD1, DD2.0, DD2.1
+	 */
+	if (pvr & PVR_POWER9_CUMULUS) {
+		if (PVR_VERS_MAJ(pvr) == 1 && PVR_VERS_MIN(pvr) == 0)
+			return true;
+	} else { /* Nimbus */
+		if (PVR_VERS_MAJ(pvr) == 1)
+			return true;
+		if (PVR_VERS_MAJ(pvr) == 2 && PVR_VERS_MIN(pvr) < 2)
+			return true;
+	}
+
+	return false;
+}
+
 static bool phb4_freeze_escalate(uint64_t pesta)
 {
 	if ((GETFIELD(IODA3_PESTA_TRANS_TYPE, pesta) ==
@@ -3067,7 +3090,7 @@ static int64_t phb4_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 	/* Read the full PESTA */
 	pesta = phb4_get_pesta(p, pe_number);
 	/* Check if we need to escalate to fence */
-	if (phb4_freeze_escalate(pesta)) {
+	if (phb4_escalation_required() && phb4_freeze_escalate(pesta)) {
 		PHBERR(p, "Escalating freeze to fence PESTA[%lli]=%016llx\n",
 		       pe_number, pesta);
 		*severity = OPAL_EEH_SEV_PHB_FENCED;
