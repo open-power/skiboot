@@ -8,4 +8,5 @@ Device Tree for OPAL. Please refer to Device Tree Spec.
    :glob:
 
    *
+   ibm,powerpc-cpu-features/*
 

@@ -195,6 +195,11 @@ extern void start_kernel_secondary(uint64_t entry) __noreturn;
 /* Get description of machine from HDAT and create device-tree */
 extern int parse_hdat(bool is_opal);
 
+struct dt_node;
+
+/* Add /cpus/features node for boot environment that passes an fdt */
+extern void dt_add_cpufeatures(struct dt_node *root);
+
 /* Root of device tree. */
 extern struct dt_node *dt_root;
 

@@ -141,6 +141,7 @@ void dt_check_del_prop(struct dt_node *node, const char *name);
 /* Warning: moves *prop! */
 void dt_resize_property(struct dt_property **prop, size_t len);
 
+void dt_property_set_cell(struct dt_property *prop, u32 index, u32 val);
 u32 dt_property_get_cell(const struct dt_property *prop, u32 index);
 
 /* First child of this node. */

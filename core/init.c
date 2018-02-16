@@ -882,6 +882,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	} else {
 		dt_expand(fdt);
 	}
+	dt_add_cpufeatures(dt_root);
 
 	/* Now that we have a full devicetree, verify that we aren't on fire. */
 	per_thread_sanity_checks();
