@@ -74,7 +74,7 @@ struct debug_descriptor debug_descriptor = {
 	/* console log level:
 	 *   high 4 bits in memory, low 4 bits driver (e.g. uart). */
 #ifdef DEBUG
-	.console_log_levels = (PR_DEBUG << 4) | PR_DEBUG,
+	.console_log_levels = (PR_TRACE << 4) | PR_DEBUG,
 #else
 	.console_log_levels = (PR_DEBUG << 4) | PR_NOTICE,
 #endif
