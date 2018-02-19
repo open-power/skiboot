@@ -833,7 +833,13 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Call library constructors */
 	do_ctors();
 
-	prlog(PR_NOTICE, "OPAL %s starting...\n", version);
+	prlog(PR_NOTICE, "OPAL %s%s starting...\n", version,
+#ifdef DEBUG
+	"-debug"
+#else
+	""
+#endif
+	);
 	prlog(PR_DEBUG, "initial console log level: memory %d, driver %d\n",
 	       (debug_descriptor.console_log_levels >> 4),
 	       (debug_descriptor.console_log_levels & 0x0f));
