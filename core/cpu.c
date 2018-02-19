@@ -245,9 +245,9 @@ void cpu_wait_job(struct cpu_job *job, bool free_it)
 	}
 	lwsync();
 
-	if (time_waited > msecs_to_tb(1000))
-		prlog(PR_DEBUG, "cpu_wait_job(%s) for %lu\n",
-		      job->name, tb_to_msecs(time_waited));
+	if (time_waited > 1000)
+		prlog(PR_DEBUG, "cpu_wait_job(%s) for %lums\n",
+		      job->name, time_waited);
 
 	if (free_it)
 		free(job);
