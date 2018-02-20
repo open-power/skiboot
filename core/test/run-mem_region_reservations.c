@@ -119,6 +119,7 @@ static void check_property_reservations(void)
 	unsigned int i, l;
 	const char *name;
 	uint64_t *rangep;
+	const char *at;
 
 	/* check dt properties */
 	names = dt_find_property(dt_root, "reserved-names");
@@ -137,7 +138,9 @@ static void check_property_reservations(void)
 		l = strlen(name) + 1;
 
 		for (i = 0; i < ARRAY_SIZE(test_regions); i++) {
-			if (strcmp(test_regions[i].name, name))
+			at = strchr(name, '@');
+			if (strncmp(test_regions[i].name, name,
+				    at ? at-name: strlen(name)))
 				continue;
 			assert(test_regions[i].addr == addr);
 			assert(!test_regions[i].found);

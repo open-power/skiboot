@@ -1232,25 +1232,14 @@ void mem_region_add_dt_reserved(void)
 		dt_add_property(node, "ranges", NULL, 0);
 	}
 
-	/* First pass: calculate length of property data */
-	list_for_each(&regions, region, list) {
-		if (!region_is_reservable(region))
-			continue;
-		names_len += strlen(region->name) + 1;
-		ranges_len += 2 * sizeof(uint64_t);
-	}
-
-	name = names = malloc(names_len);
-	range = ranges = malloc(ranges_len);
-
 	prlog(PR_INFO, "Reserved regions:\n");
-	/* Second pass: populate property data */
+
+	/* First pass, create /reserved-memory/ nodes for each reservation,
+	 * and calculate the length for the /reserved-names and
+	 * /reserved-ranges properties */
 	list_for_each(&regions, region, list) {
 		if (!region_is_reservable(region))
 			continue;
-		len = strlen(region->name) + 1;
-		memcpy(name, region->name, len);
-		name += len;
 
 		prlog(PR_INFO, "  0x%012llx..%012llx : %s\n",
 		       (long long)region->start,
@@ -1259,12 +1248,29 @@ void mem_region_add_dt_reserved(void)
 
 		mem_region_add_dt_reserved_node(node, region);
 
+		/* calculate the size of the properties populated later */
+		names_len += strlen(region->node->name) + 1;
+		ranges_len += 2 * sizeof(uint64_t);
+	}
+
+	name = names = malloc(names_len);
+	range = ranges = malloc(ranges_len);
+
+	/* Second pass: populate the old-style reserved-names and
+	 * reserved-regions arrays based on the node data */
+	list_for_each(&regions, region, list) {
+		if (!region_is_reservable(region))
+			continue;
+
+		len = strlen(region->node->name) + 1;
+		memcpy(name, region->node->name, len);
+		name += len;
+
 		range[0] = cpu_to_fdt64(region->start);
 		range[1] = cpu_to_fdt64(region->len);
 		range += 2;
 	}
 	unlock(&mem_region_lock);
-
 
 	prop = dt_find_property(dt_root, "reserved-names");
 	if (prop)
