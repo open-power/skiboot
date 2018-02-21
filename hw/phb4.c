@@ -2494,12 +2494,33 @@ static bool phb4_adapter_in_whitelist(uint32_t vdid)
 	return false;
 }
 
+static struct pci_card_id lane_eq_disable[] = {
+	{ 0x10de, 0x17fd }, /* Nvidia GM200GL [Tesla M40] */
+	{ 0x10de, 0x1db4 }, /* Nvidia GV100 */
+};
+
+static bool phb4_lane_eq_retry_whitelist(uint32_t vdid)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(lane_eq_disable); i++)
+		if ((lane_eq_disable[i].vendor == VENDOR(vdid)) &&
+		    (lane_eq_disable[i].device == DEVICE(vdid)))
+			return true;
+	return false;
+}
+
+static void phb4_lane_eq_change(struct phb4 *p, uint32_t vdid)
+{
+	p->lane_eq_en = !phb4_lane_eq_retry_whitelist(vdid);
+}
+
 #define min(x,y) ((x) < (y) ? x : y)
 
-static bool phb4_link_optimal(struct pci_slot *slot)
+static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
-	uint32_t vdid;
+	uint32_t id;
 	uint16_t bdfn;
 	uint8_t trained_speed, phb_speed, dev_speed, target_speed;
 	uint8_t trained_width, phb_width, dev_width, target_width;
@@ -2516,7 +2537,7 @@ static bool phb4_link_optimal(struct pci_slot *slot)
 	/* Get device capability */
 	bdfn = 0x0100; /* bus=1 dev=0 device=0 */
 	/* Since this is the first access, we need to wait for CRS */
-	if (!pci_wait_crs(slot->phb, bdfn , &vdid))
+	if (!pci_wait_crs(slot->phb, bdfn , &id))
 		return true;
 	phb4_get_info(slot->phb, bdfn, &dev_speed, &dev_width);
 
@@ -2526,16 +2547,20 @@ static bool phb4_link_optimal(struct pci_slot *slot)
 	target_width = min(phb_width, dev_width);
 	optimal_width = (trained_width >= target_width);
 	optimal = optimal_width && optimal_speed;
-	retry_enabled = phb4_chip_retry_workaround() &&
-		phb4_adapter_in_whitelist(vdid);
+	retry_enabled = (phb4_chip_retry_workaround() &&
+			 phb4_adapter_in_whitelist(id)) ||
+		phb4_lane_eq_retry_whitelist(id);
 
-	PHBDBG(p, "LINK: Card [%04x:%04x] %s Retry:%s\n", VENDOR(vdid),
-	       DEVICE(vdid), optimal ? "Optimal" : "Degraded",
+	PHBDBG(p, "LINK: Card [%04x:%04x] %s Retry:%s\n", VENDOR(id),
+	       DEVICE(id), optimal ? "Optimal" : "Degraded",
 	       retry_enabled ? "enabled" : "disabled");
 	PHBDBG(p, "LINK: Speed Train:GEN%i PHB:GEN%i DEV:GEN%i%s\n",
 	       trained_speed, phb_speed, dev_speed, optimal_speed ? "" : " *");
 	PHBDBG(p, "LINK: Width Train:x%02i PHB:x%02i DEV:x%02i%s\n",
 	       trained_width, phb_width, dev_width, optimal_width ? "" : " *");
+
+	if (vdid)
+		*vdid = id;
 
 	if (!retry_enabled)
 		return true;
@@ -2582,6 +2607,7 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
 	uint64_t reg;
+	uint32_t vdid;
 
 	switch (slot->state) {
 	case PHB4_SLOT_NORMAL:
@@ -2657,10 +2683,12 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 		}
 		if (reg & PHB_PCIE_DLP_TL_LINKACT) {
 			PHBDBG(p, "LINK: Link is stable\n");
-			if (!phb4_link_optimal(slot)) {
+			if (!phb4_link_optimal(slot, &vdid)) {
 				PHBDBG(p, "LINK: Link degraded\n");
-				if (slot->link_retries)
+				if (slot->link_retries) {
+					phb4_lane_eq_change(p, vdid);
 					return phb4_retry_state(slot);
+				}
 				/*
 				 * Link is degraded but no more retries, so
 				 * settle for what we have :-(
@@ -4463,6 +4491,13 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 				 be64_to_cpu(p->lane_eq[7]));
 		}
 	}
+	if (!p->lane_eq_en) {
+		/* Read modify write and set to 2 bits */
+		PHBDBG(p, "LINK: Disabling Lane EQ\n");
+		val = in_be64(p->regs + PHB_PCIE_DLP_CTL);
+		val |= PHB_PCIE_DLP_CTL_BYPASS_PH2 | PHB_PCIE_DLP_CTL_BYPASS_PH2;
+		out_be64(p->regs + PHB_PCIE_DLP_CTL, val);
+	}
 
 	/* Init_14 - Clear link training */
 	phb4_pcicfg_write32(&p->phb, 0, 0x78,
@@ -5021,6 +5056,7 @@ static void phb4_create(struct dt_node *np)
 	PHBINF(p, "Max link speed: GEN%i\n", p->max_link_speed);
 
 	/* Check for lane equalization values from HB or HDAT */
+	p->lane_eq_en = true;
 	p->lane_eq = dt_prop_get_def_size(np, "ibm,lane-eq", NULL, &lane_eq_len);
 	if (p->rev == PHB4_REV_NIMBUS_DD10)
 		lane_eq_len_req = 8 * 8;

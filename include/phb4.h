@@ -264,6 +264,7 @@ struct phb4 {
 	int64_t			ecap;	    /* cached PCI-E cap offset */
 	int64_t			aercap;	    /* cached AER ecap offset */
 	const __be64		*lane_eq;
+	bool			lane_eq_en;
 	unsigned int		max_link_speed;
 
 	uint64_t		mrt_size;
