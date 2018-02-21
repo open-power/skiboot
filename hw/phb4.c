@@ -3775,6 +3775,39 @@ static void phb4_init_capp_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0cb0,	0x35777073ff000000ull);
 }
 
+ /*
+ * The capi indicator is over the 8 most significant bits on p9 (and
+ * not 16). We stay away from bits 59 (TVE select), 60 and 61 (MSI)
+ *
+ * For the mask, we keep bit 59 in, as capi messages must hit TVE#0.
+ * Bit 56 is not part of the mask, so that a NBW message (see below)
+ * is also considered a capi message.
+ */
+#define CAPIIND		0x0200
+#define CAPIMASK	0xFE00
+
+/*
+ * Non-Blocking Write messages are a subset of capi messages, so the
+ * indicator is the same as capi + an extra bit (56) to differentiate.
+ * Mask is the same as capi + the extra bit
+ */
+#define NBWIND		0x0300
+#define NBWMASK		0xFF00
+
+/*
+ * The ASN indicator is used for tunneled operations (as_notify and
+ * atomics).  Tunneled operation messages can be sent in PCI mode as
+ * well as CAPI mode.
+ *
+ * The format of those messages is specific and, for as_notify
+ * messages, the address field is hijacked to encode the LPID/PID/TID
+ * of the target thread, so those messages should not go through
+ * translation. They must hit TVE#1. Therefore bit 59 is part of the
+ * indicator.
+ */
+#define ASNIND		0x0C00
+#define ASNMASK		0xFF00
+
 /* Power Bus Common Queue Registers
  * All PBCQ and PBAIB registers are accessed via SCOM
  * NestBase = 4010C00 for PEC0
@@ -3861,16 +3894,13 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 
 	/*
 	 * Bit [0:7] XSL_DSNCTL[capiind]
-	 * Init_25 - CAPI Compare/Mask
+	 * Init_26 - CAPI Compare/Mask
 	 */
 	out_be64(p->regs + PHB_CAPI_CMPM,
-		 0x0200FE0000000000Ull | PHB_CAPI_CMPM_ENABLE);
+		 ((u64)CAPIIND << 48) |
+		 ((u64)CAPIMASK << 32) | PHB_CAPI_CMPM_ENABLE);
 
 	if (!(p->rev == PHB4_REV_NIMBUS_DD10)) {
-		/* Init_24 - ASN Compare/Mask */
-		out_be64(p->regs + PHB_PBL_ASN_CMPM,
-			 0x0400FF0000000000Ull | PHB_PBL_ASN_ENABLE);
-
 		/* PBCQ Tunnel Bar Register
 		 * Write Tunnel register to match PSL TNR register
 		 */
@@ -4192,7 +4222,8 @@ static void phb4_init_ioda3(struct phb4 *p)
 	/* See enable_capi_mode() */
 
 	/* Init_25 - ASN Compare/Mask */
-	/* See enable_capi_mode() */
+	out_be64(p->regs + PHB_ASN_CMPM, ((u64)ASNIND << 48) |
+		 ((u64)ASNMASK << 32) | PHB_ASN_CMPM_ENABLE);
 
 	/* Init_26 - CAPI Compare/Mask */
 	/* See enable_capi_mode() */
@@ -4804,6 +4835,10 @@ static void phb4_add_properties(struct phb4 *p)
 
 	/* Indicate to Linux that CAPP timebase sync is supported */
 	dt_add_property_string(np, "ibm,capp-timebase-sync", NULL);
+
+	/* Tell Linux Compare/Mask indication values */
+	dt_add_property_cells(np, "ibm,phb-indications", CAPIIND, ASNIND,
+			      NBWIND);
 }
 
 static bool phb4_calculate_windows(struct phb4 *p)
