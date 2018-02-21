@@ -1016,3 +1016,39 @@ static int64_t opal_pci_set_p2p(uint64_t phbid_init, uint64_t phbid_target,
 	return OPAL_SUCCESS;
 }
 opal_call(OPAL_PCI_SET_P2P, opal_pci_set_p2p, 4);
+
+static int64_t opal_pci_get_pbcq_tunnel_bar(uint64_t phb_id, uint64_t *addr)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+
+	if (!opal_addr_valid(addr))
+		return OPAL_PARAMETER;
+
+	if (!phb)
+		return OPAL_PARAMETER;
+	if (!phb->ops->get_tunnel_bar)
+		return OPAL_UNSUPPORTED;
+
+	phb_lock(phb);
+	phb->ops->get_tunnel_bar(phb, addr);
+	phb_unlock(phb);
+	return OPAL_SUCCESS;
+}
+opal_call(OPAL_PCI_GET_PBCQ_TUNNEL_BAR, opal_pci_get_pbcq_tunnel_bar, 2);
+
+static int64_t opal_pci_set_pbcq_tunnel_bar(uint64_t phb_id, uint64_t addr)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+	int64_t rc;
+
+	if (!phb)
+		return OPAL_PARAMETER;
+	if (!phb->ops->set_tunnel_bar)
+		return OPAL_UNSUPPORTED;
+
+	phb_lock(phb);
+	rc = phb->ops->set_tunnel_bar(phb, addr);
+	phb_unlock(phb);
+	return rc;
+}
+opal_call(OPAL_PCI_SET_PBCQ_TUNNEL_BAR, opal_pci_set_pbcq_tunnel_bar, 2);

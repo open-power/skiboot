@@ -3901,12 +3901,24 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 		 ((u64)CAPIMASK << 32) | PHB_CAPI_CMPM_ENABLE);
 
 	if (!(p->rev == PHB4_REV_NIMBUS_DD10)) {
-		/* PBCQ Tunnel Bar Register
-		 * Write Tunnel register to match PSL TNR register
+		/*
+		 * PBCQ Tunnel Bar Register
+		 *
+		 * If set, for example by a driver that may already have
+		 * tweaked the tunnel bar, then we do not touch it when
+		 * entering capi mode. It's up to the driver to handle it.
+		 *
+		 * If unset, then we use the PSL_TNR_ADDR[TNR_Addr] reset
+		 * value. For fpga/cxl, this code will define the tunnel bar.
 		 */
-		xscom_write(p->chip_id,
-			    p->pe_stk_xscom + XPEC_NEST_STK_TUNNEL_BAR,
-			    0x020000E000000000);
+		xscom_read(p->chip_id,
+			   p->pe_stk_xscom + XPEC_NEST_STK_TUNNEL_BAR, &reg);
+		if (!reg) {
+			reg = 0x00020000E0000000ull << 8;
+			xscom_write(p->chip_id,
+				    p->pe_stk_xscom + XPEC_NEST_STK_TUNNEL_BAR,
+				    reg);
+		}
 
 		/* PB AIB Hardware Control Register
 		 * Wait 32 PCI clocks for a credit to become available
@@ -4153,6 +4165,53 @@ static int64_t phb4_set_capp_recovery(struct phb *phb)
 	return 0;
 }
 
+/*
+ * Return the address out of a PBCQ Tunnel Bar register.
+ */
+static void phb4_get_tunnel_bar(struct phb *phb, uint64_t *addr)
+{
+	struct phb4 *p = phb_to_phb4(phb);
+	uint64_t val;
+
+	xscom_read(p->chip_id, p->pe_stk_xscom + XPEC_NEST_STK_TUNNEL_BAR,
+		   &val);
+	*addr = val >> 8;
+}
+
+/*
+ * Set PBCQ Tunnel Bar register.
+ * Store addr bits [8:50] in PBCQ Tunnel Bar register bits [0:42].
+ * Note that addr bits [8:50] must also match PSL_TNR_ADDR[8:50].
+ * Reset register if val == 0.
+ *
+ * This interface is required to let device drivers set the Tunnel Bar
+ * value of their choice.
+ *
+ * Compatibility with older versions of linux, that do not set the
+ * Tunnel Bar with phb4_set_tunnel_bar(), is ensured by enable_capi_mode(),
+ * that will set the default value that used to be assumed.
+ */
+static int64_t phb4_set_tunnel_bar(struct phb *phb, uint64_t addr)
+{
+	struct phb4 *p = phb_to_phb4(phb);
+	uint64_t mask = 0x00FFFFFFFFFFE000ULL;
+
+	if (!addr) {
+		/* Reset register */
+		xscom_write(p->chip_id,
+			    p->pe_stk_xscom + XPEC_NEST_STK_TUNNEL_BAR, addr);
+		return OPAL_SUCCESS;
+	}
+	if ((addr & ~mask))
+		return OPAL_PARAMETER;
+	if (!(addr & mask))
+		return OPAL_PARAMETER;
+
+	xscom_write(p->chip_id, p->pe_stk_xscom + XPEC_NEST_STK_TUNNEL_BAR,
+		    (addr & mask) << 8);
+	return OPAL_SUCCESS;
+}
+
 static const struct phb_ops phb4_ops = {
 	.cfg_read8		= phb4_pcicfg_read8,
 	.cfg_read16		= phb4_pcicfg_read16,
@@ -4188,6 +4247,8 @@ static const struct phb_ops phb4_ops = {
 	.set_capi_mode		= phb4_set_capi_mode,
 	.set_p2p		= phb4_set_p2p,
 	.set_capp_recovery	= phb4_set_capp_recovery,
+	.get_tunnel_bar         = phb4_get_tunnel_bar,
+	.set_tunnel_bar         = phb4_set_tunnel_bar,
 };
 
 static void phb4_init_ioda3(struct phb4 *p)

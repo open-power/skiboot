@@ -333,6 +333,10 @@ struct phb_ops {
 	/* PCI peer-to-peer setup */
 	void (*set_p2p)(struct phb *phb, uint64_t mode, uint64_t flags,
 			uint16_t pe_number);
+
+	/* Get/set PBCQ Tunnel BAR register */
+	void (*get_tunnel_bar)(struct phb *phb, uint64_t *addr);
+	int64_t (*set_tunnel_bar)(struct phb *phb, uint64_t addr);
 };
 
 enum phb_type {
