@@ -29,21 +29,27 @@ extern unsigned long callthru_tcl(const char *str, int len);
 
 static void mambo_sreset_cpu(struct cpu_thread *cpu)
 {
+	uint32_t chip_id = pir_to_chip_id(cpu->pir);
 	uint32_t core_id = pir_to_core_id(cpu->pir);
 	uint32_t thread_id = pir_to_thread_id(cpu->pir);
 	char tcl_cmd[50];
 
-	snprintf(tcl_cmd, sizeof(tcl_cmd), "mysim cpu 0:%i:%i start_thread 0x100", core_id, thread_id);
+	snprintf(tcl_cmd, sizeof(tcl_cmd),
+			"mysim cpu %i:%i:%i start_thread 0x100",
+			chip_id, core_id, thread_id);
 	callthru_tcl(tcl_cmd, strlen(tcl_cmd));
 }
 
 static void mambo_stop_cpu(struct cpu_thread *cpu)
 {
+	uint32_t chip_id = pir_to_chip_id(cpu->pir);
 	uint32_t core_id = pir_to_core_id(cpu->pir);
 	uint32_t thread_id = pir_to_thread_id(cpu->pir);
 	char tcl_cmd[50];
 
-	snprintf(tcl_cmd, sizeof(tcl_cmd), "mysim cpu 0:%i:%i stop_thread", core_id, thread_id);
+	snprintf(tcl_cmd, sizeof(tcl_cmd),
+			"mysim cpu %i:%i:%i stop_thread",
+			chip_id, core_id, thread_id);
 	callthru_tcl(tcl_cmd, strlen(tcl_cmd));
 }
 
