@@ -973,13 +973,13 @@ static void pci_reset_phb(void *data)
 	struct pci_slot *slot = phb->slot;
 	int64_t rc;
 
-	if (!slot || !slot->ops.freset) {
-		PCINOTICE(phb, 0, "Cannot issue fundamental reset\n");
+	if (!slot || !slot->ops.run_sm) {
+		PCINOTICE(phb, 0, "Cannot issue reset\n");
 		return;
 	}
 
 	pci_slot_add_flags(slot, PCI_SLOT_FLAG_BOOTUP);
-	rc = slot->ops.freset(slot);
+	rc = slot->ops.run_sm(slot);
 	while (rc > 0) {
 		PCITRACE(phb, 0, "Waiting %ld ms\n", tb_to_msecs(rc));
 		time_wait(rc);
@@ -987,7 +987,7 @@ static void pci_reset_phb(void *data)
 	}
 	pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
 	if (rc < 0)
-		PCIERR(phb, 0, "Error %lld fundamental resetting\n", rc);
+		PCIERR(phb, 0, "Error %lld resetting\n", rc);
 }
 
 static void pci_scan_phb(void *data)
@@ -1680,7 +1680,7 @@ static void pci_do_jobs(void (*fn)(void *))
 	free(jobs);
 }
 
-void pci_init_slots(void)
+static void __pci_init_slots(void)
 {
 	unsigned int i;
 
@@ -1748,44 +1748,35 @@ static void __pci_reset(struct list_head *list)
 int64_t pci_reset(void)
 {
 	unsigned int i;
-	struct pci_slot *slot;
-	int64_t rc;
 
 	prlog(PR_NOTICE, "PCI: Clearing all devices...\n");
 
-	/* XXX Do those in parallel (at least the power up
-	 * state machine could be done in parallel)
-	 */
 	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
 		struct phb *phb = phbs[i];
 		if (!phb)
 			continue;
 		__pci_reset(&phb->devices);
 
-		slot = phb->slot;
-		if (!slot || !slot->ops.creset) {
-			PCINOTICE(phb, 0, "Can't do complete reset\n");
-		} else {
-			rc = slot->ops.creset(slot);
-			while (rc > 0) {
-				time_wait(rc);
-				rc = slot->ops.run_sm(slot);
-			}
-			if (rc < 0) {
-				PCIERR(phb, 0, "Complete reset failed "
-				               "(rc=%lld)\n", rc);
-				return rc;
-			}
-		}
-
-		if (phb->ops->ioda_reset)
-			phb->ops->ioda_reset(phb, true);
+		pci_slot_set_state(phb->slot, PCI_SLOT_STATE_CRESET_START);
 	}
 
-	/* Re-Initialize all discovered PCI slots */
-	pci_init_slots();
+	/* Do init and discovery of PCI slots in parallel */
+	__pci_init_slots();
 
 	return 0;
+}
+
+void pci_init_slots(void)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
+		struct phb *phb = phbs[i];
+		if (!phb)
+			continue;
+		pci_slot_set_state(phb->slot, PCI_SLOT_STATE_FRESET_POWER_OFF);
+	}
+	__pci_init_slots();
 }
 
 /*
