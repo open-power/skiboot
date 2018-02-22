@@ -1648,69 +1648,6 @@ void pci_add_device_nodes(struct phb *phb,
 	}
 }
 
-static void __pci_reset(struct list_head *list)
-{
-	struct pci_device *pd;
-	struct pci_cfg_reg_filter *pcrf;
-	int i;
-
-	while ((pd = list_pop(list, struct pci_device, link)) != NULL) {
-		__pci_reset(&pd->children);
-		dt_free(pd->dn);
-		free(pd->slot);
-		while((pcrf = list_pop(&pd->pcrf, struct pci_cfg_reg_filter, link)) != NULL) {
-			free(pcrf);
-		}
-		for(i=0; i < 64; i++)
-			if (pd->cap[i].free_func)
-				pd->cap[i].free_func(pd->cap[i].data);
-		free(pd);
-	}
-}
-
-int64_t pci_reset(void)
-{
-	unsigned int i;
-	struct pci_slot *slot;
-	int64_t rc;
-
-	prlog(PR_NOTICE, "PCI: Clearing all devices...\n");
-
-	/* XXX Do those in parallel (at least the power up
-	 * state machine could be done in parallel)
-	 */
-	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
-		struct phb *phb = phbs[i];
-		if (!phb)
-			continue;
-		__pci_reset(&phb->devices);
-
-		slot = phb->slot;
-		if (!slot || !slot->ops.creset) {
-			PCINOTICE(phb, 0, "Can't do complete reset\n");
-		} else {
-			rc = slot->ops.creset(slot);
-			while (rc > 0) {
-				time_wait(rc);
-				rc = slot->ops.run_sm(slot);
-			}
-			if (rc < 0) {
-				PCIERR(phb, 0, "Complete reset failed "
-				               "(rc=%lld)\n", rc);
-				return rc;
-			}
-		}
-
-		if (phb->ops->ioda_reset)
-			phb->ops->ioda_reset(phb, true);
-	}
-
-	/* Re-Initialize all discovered PCI slots */
-	pci_init_slots();
-
-	return 0;
-}
-
 static void pci_do_jobs(void (*fn)(void *))
 {
 	struct cpu_job **jobs;
@@ -1786,6 +1723,69 @@ void pci_init_slots(void)
 
 		phbs[i]->ops->phb_final_fixup(phbs[i]);
 	}
+}
+
+static void __pci_reset(struct list_head *list)
+{
+	struct pci_device *pd;
+	struct pci_cfg_reg_filter *pcrf;
+	int i;
+
+	while ((pd = list_pop(list, struct pci_device, link)) != NULL) {
+		__pci_reset(&pd->children);
+		dt_free(pd->dn);
+		free(pd->slot);
+		while((pcrf = list_pop(&pd->pcrf, struct pci_cfg_reg_filter, link)) != NULL) {
+			free(pcrf);
+		}
+		for(i=0; i < 64; i++)
+			if (pd->cap[i].free_func)
+				pd->cap[i].free_func(pd->cap[i].data);
+		free(pd);
+	}
+}
+
+int64_t pci_reset(void)
+{
+	unsigned int i;
+	struct pci_slot *slot;
+	int64_t rc;
+
+	prlog(PR_NOTICE, "PCI: Clearing all devices...\n");
+
+	/* XXX Do those in parallel (at least the power up
+	 * state machine could be done in parallel)
+	 */
+	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
+		struct phb *phb = phbs[i];
+		if (!phb)
+			continue;
+		__pci_reset(&phb->devices);
+
+		slot = phb->slot;
+		if (!slot || !slot->ops.creset) {
+			PCINOTICE(phb, 0, "Can't do complete reset\n");
+		} else {
+			rc = slot->ops.creset(slot);
+			while (rc > 0) {
+				time_wait(rc);
+				rc = slot->ops.run_sm(slot);
+			}
+			if (rc < 0) {
+				PCIERR(phb, 0, "Complete reset failed "
+				               "(rc=%lld)\n", rc);
+				return rc;
+			}
+		}
+
+		if (phb->ops->ioda_reset)
+			phb->ops->ioda_reset(phb, true);
+	}
+
+	/* Re-Initialize all discovered PCI slots */
+	pci_init_slots();
+
+	return 0;
 }
 
 /*
