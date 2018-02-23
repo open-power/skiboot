@@ -3,7 +3,7 @@
 skiboot-5.10-rc4
 ================
 
-skiboot v5.10-rc4 was released on Wednesday February 2st 2018. It is the fourth
+skiboot v5.10-rc4 was released on Wednesday February 21st 2018. It is the fourth
 release candidate of skiboot 5.10, which will become the new stable release
 of skiboot following the 5.9 release, first released October 31st 2017.
 
