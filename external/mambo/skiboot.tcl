@@ -61,6 +61,9 @@ mconfig net MAMBO_NET none
 # Net: What is the base interface for the tun/tap device
 mconfig tap_base MAMBO_NET_TAP_BASE 0
 
+# Enable (default) or disable the "speculation-policy-favor-security" setting,
+# set to 0 to disable. When enabled it causes Linux's RFI flush to be enabled.
+mconfig speculation_policy_favor_security MAMBO_SPECULATION_POLICY_FAVOR_SECURITY 1
 
 #
 # Create machine config
@@ -251,12 +254,30 @@ set reg [list $fake_nvram_start $fake_nvram_size ]
 mysim of addprop $fake_nvram_node array64 "reg" reg
 mysim of addprop $fake_nvram_node empty "name" "ibm,fake-nvram"
 
+set opal_node [mysim of addchild $root_node "ibm,opal" ""]
+
 # Allow P9 to use all idle states
 if { $default_config == "P9" } {
-    set opal_node [mysim of addchild $root_node "ibm,opal" ""]
     set power_mgt_node [mysim of addchild $opal_node "power-mgt" ""]
     mysim of addprop $power_mgt_node int "ibm,enabled-stop-levels" 0xffffffff
 }
+
+proc add_feature_node { parent name { value 1 } } {
+    if { $value != 1 } {
+	set value "disabled"
+    } else {
+	set value "enabled"
+    }
+    set np [mysim of addchild $parent $name ""]
+    mysim of addprop $np empty $value ""
+}
+
+set np [mysim of addchild $opal_node "fw-features" ""]
+add_feature_node $np "speculation-policy-favor-security" $mconf(speculation_policy_favor_security)
+add_feature_node $np "needs-l1d-flush-msr-hv-1-to-0"
+add_feature_node $np "needs-l1d-flush-msr-pr-0-to-1"
+add_feature_node $np "needs-spec-barrier-for-bound-checks"
+
 
 # Init CPUs
 set pir 0
