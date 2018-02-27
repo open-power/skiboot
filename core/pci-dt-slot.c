@@ -47,6 +47,9 @@ static struct dt_node *map_phb_to_slot(struct phb *phb)
 	if (!dt_slots)
 		dt_slots = dt_find_by_path(dt_root, "/ibm,pcie-slots");
 
+	if (!dt_slots)
+		return NULL;
+
 	dt_for_each_child(dt_slots, slot_node) {
 		u32 reg[2];
 
