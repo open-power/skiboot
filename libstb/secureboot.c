@@ -29,6 +29,7 @@ static const void* hw_key_hash = NULL;
 static size_t hw_key_hash_size;
 static bool secure_mode = false;
 static bool secure_init = false;
+static unsigned int level = PR_ERR;
 
 static struct {
 	enum secureboot_version version;
@@ -112,6 +113,12 @@ void secureboot_init(void)
 		      secure_mode ? "on" : "off");
 	}
 
+	/* Use emergency log level only when secure mode is ON */
+        if (secure_mode)
+                level = PR_EMERG;
+        else
+                level = PR_ERR;
+
 	if (version == IBM_SECUREBOOT_V1 ||
 	    version == IBM_SECUREBOOT_SOFTROM) {
 
@@ -124,7 +131,7 @@ void secureboot_init(void)
 			 * running the latest POWER firmware, so probably there
 			 * is a bug in the device tree received from hostboot.
 			 */
-			prlog(PR_EMERG, "secureboot init FAILED, hash-algo=%s "
+			prlog(level, "secureboot init FAILED, hash-algo=%s "
 			      "not supported\n", hash_algo);
 			secureboot_enforce();
 		}
@@ -134,29 +141,29 @@ void secureboot_init(void)
 
 		hw_key_hash_size = dt_prop_get_u32(node, "hw-key-hash-size");
 		if (hw_key_hash_size == 0) {
-			prlog(PR_EMERG, "hw-key-hash-size=%zd too short\n",
+			prlog(level, "hw-key-hash-size=%zd too short\n",
 			      hw_key_hash_size);
 			secureboot_enforce();
 		}
 		if (hw_key_hash_size > SHA512_DIGEST_LENGTH) {
-			prlog(PR_EMERG, "hw-key-hash-size=%zd too big\n",
+			prlog(level, "hw-key-hash-size=%zd too big\n",
 			      hw_key_hash_size);
 			secureboot_enforce();
 		}
 
 	} else {
-		prlog(PR_ERR, "%s FAILED. /ibm,secureboot not supported",
+		prlog(level, "%s FAILED. /ibm,secureboot not supported",
 		      __func__);
 		secureboot_enforce();
 	}
 
 	hw_key_hash = dt_prop_get_def_size(node, "hw-key-hash", NULL, &size);
 	if (!hw_key_hash) {
-		prlog(PR_EMERG, "hw-key-hash not found\n");
+		prlog(level, "hw-key-hash not found\n");
 		secureboot_enforce();
 	}
 	if (size != hw_key_hash_size) {
-	       prlog(PR_EMERG, "hw_key-hash wrong size %zd (expected=%zd)\n",
+	       prlog(level, "hw_key-hash wrong size %zd (expected=%zd)\n",
 		     size, hw_key_hash_size);
 	       secureboot_enforce();
 	}
@@ -174,14 +181,14 @@ int secureboot_verify(enum resource_id id, void *buf, size_t len)
 
 	name = flash_map_resource_name(id);
 	if (!name) {
-		prlog(PR_EMERG, "container NOT VERIFIED, resource_id=%d "
+		prlog(level, "container NOT VERIFIED, resource_id=%d "
 		      "unknown\n", id);
 		secureboot_enforce();
 		return -1;
 	}
 
         if (!secure_init) {
-                prlog(PR_WARNING, "container NOT VERIFIED, resource_id=%d "
+                prlog(level, "container NOT VERIFIED, resource_id=%d "
                       "secureboot not yet initialized\n", id);
 		secureboot_enforce();
 		return -1;
@@ -197,20 +204,20 @@ int secureboot_verify(enum resource_id id, void *buf, size_t len)
 		 * failed. Return codes defined in
 		 * /hostboot/src/include/securerom/status_codes.H
 		 */
-		prlog(PR_EMERG, "%s verification FAILED. log=0x%" PRIx64 "\n",
+		prlog(level, "%s verification FAILED. log=0x%" PRIx64 "\n",
 			name, be64_to_cpu(log));
 		secureboot_enforce();
 	} else if (rc == OPAL_PARAMETER) {
-		prlog(PR_EMERG, "%s NOT VERIFIED, invalid param. buf=%p, "
+		prlog(level, "%s NOT VERIFIED, invalid param. buf=%p, "
 		      "len=%zd key-hash=%p hash-size=%zd\n", name, buf, len,
 		      hw_key_hash, hw_key_hash_size);
 		secureboot_enforce();
 	} else if (rc == OPAL_UNSUPPORTED) {
-		prlog(PR_EMERG, "%s NOT VERIFIED, CVC-verify service not "
+		prlog(level, "%s NOT VERIFIED, CVC-verify service not "
 		      "supported\n", name);
 		secureboot_enforce();
 	} else {
-		prlog(PR_EMERG, "%s NOT VERIFIED, unknown CVC-verify error. "
+		prlog(level, "%s NOT VERIFIED, unknown CVC-verify error. "
 		      "rc=%d\n", name, rc);
 		secureboot_enforce();
 	}
