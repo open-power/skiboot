@@ -348,7 +348,7 @@ int blocklevel_smart_erase(struct blocklevel_device *bl, uint64_t pos, uint64_t 
 		 * so we need to write back the chunk at the end of the block
 		 */
 		if (base_pos + base_len + len < base_pos + block_size) {
-			rc = bl->write(bl, pos + len, erase_buf + pos + len,
+			rc = bl->write(bl, pos + len, erase_buf + base_len + len,
 					block_size - base_len - len);
 			FL_DBG("%s: Early exit, everything was in one erase block\n",
 					__func__);
