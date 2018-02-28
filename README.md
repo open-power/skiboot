@@ -123,6 +123,25 @@ You probably want to read the linux
 https://kernel.org/doc/html/latest/process/submitting-patches.html as
 much of it applies to skiboot.
 
+
+## Output files
+
+The Skiboot build process produces a bunch of different outputs. This is what
+they are, and where you should use them:
+
+ skiboot.elf: The output of the linker. Don't flash to a system, but useful when debugging
+
+ skiboot.lid: The raw binary object, named .lid because IBM. Flash this on
+	      really old P8 systems, the POWER Functional Simulator (mambo), or
+	      FSP systems
+
+ skiboot.lid.stb: Lid wrapped with secure boot header. Use on FSP systems
+
+ skiboot.lid.xz: Compressed raw binary. Use this on a OpenPower P8
+
+ skiboot.lid.xz.stb: Compressed raw binary wrapped with a secure boot header.
+                     Use this on OpenPower P9 systems
+
 ## License
 
 See LICENSE
