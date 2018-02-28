@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 IBM Corp.
+/* Copyright 2013-2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,10 @@ void npu2_write4(struct npu2 *p, uint64_t reg, uint64_t val);
 uint64_t npu2_read(struct npu2 *p, uint64_t reg);
 void npu2_write(struct npu2 *p, uint64_t reg, uint64_t val);
 void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
+
+/* SCOM Registers to dump on HMI to aid in debugging */
+#define NPU2_DEBUG_REG_START 0x5011000
+#define NPU2_DEBUG_REG_END   0x50110FF
 
 /* These aren't really NPU specific registers but we initialise them in NPU
  * code */
@@ -468,6 +472,7 @@ void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
 #define NPU2_FIR_REGISTER_0			0x0000000005013C00
 #define NPU2_FIR_REGISTER_1			0x0000000005013C40
 #define NPU2_FIR_REGISTER_2			0x0000000005013C80
+#define NPU2_FIR_REGISTER_END			0x0000000005013CFF
 
 #define NPU2_TOTAL_FIR_REGISTERS		3
 
