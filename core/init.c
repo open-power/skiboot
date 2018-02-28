@@ -559,6 +559,13 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	debug_descriptor.state_flags |= OPAL_BOOT_COMPLETE;
 
 	fdt_set_boot_cpuid_phys(fdt, this_cpu()->pir);
+
+	/* Check there is something there before we branch to it */
+	if (*(uint32_t *)kernel_entry == 0) {
+		prlog(PR_EMERG, "FATAL: Kernel is zeros, can't execute!\n");
+		assert(0);
+	}
+
 	if (kernel_32bit)
 		start_kernel32(kernel_entry, fdt, mem_top);
 	start_kernel(kernel_entry, fdt, mem_top);
