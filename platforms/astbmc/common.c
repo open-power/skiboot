@@ -213,8 +213,9 @@ static void astbmc_fixup_dt_mbox(struct dt_node *lpc)
 	struct dt_node *mbox;
 	char namebuf[32];
 
-	/* All P9 machines have this and no earlier machines do */
-	if (proc_gen != proc_gen_p9)
+	/* All P9 machines use mbox. P8 machines can indicate they support
+	 * it using the scratch register */
+	if (proc_gen != proc_gen_p9 && !ast_scratch_reg_is_mbox())
 		return;
 
 	/* First check if the mbox interface is already there */
