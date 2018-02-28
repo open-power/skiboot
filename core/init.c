@@ -937,6 +937,11 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Reserve HOMER and OCC area */
 	homer_init();
 
+	/* Initialize the rest of the cpu thread structs */
+	init_all_cpus();
+	if (proc_gen == proc_gen_p9)
+		cpu_set_ipi_enable(true);
+
 	/* Add the /opal node to the device-tree */
 	add_opal_node();
 
@@ -947,11 +952,6 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 * Note: Timebases still not synchronized.
 	 */
 	probe_platform();
-
-	/* Initialize the rest of the cpu thread structs */
-	init_all_cpus();
-	if (proc_gen == proc_gen_p9)
-		cpu_set_ipi_enable(true);
 
 	/* Allocate our split trace buffers now. Depends add_opal_node() */
 	init_trace_buffers();
