@@ -75,11 +75,6 @@ void fast_reboot(void)
 	struct cpu_thread *cpu;
 	static int fast_reboot_count = 0;
 
-	if (proc_gen == proc_gen_p9) {
-		if (!nvram_query_eq("experimental-fast-reset","feeling-lucky"))
-			return;
-	}
-
 	if (!chip_quirk(QUIRK_MAMBO_CALLOUTS) &&
 			(proc_gen != proc_gen_p8 && proc_gen != proc_gen_p9)) {
 		prlog(PR_DEBUG,
