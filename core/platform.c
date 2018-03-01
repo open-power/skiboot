@@ -168,6 +168,16 @@ static int generic_start_preload_resource(enum resource_id id, uint32_t subid,
 	return OPAL_EMPTY;
 }
 
+/* These values will work for a ZZ booted using BML */
+const struct platform_ocapi generic_ocapi = {
+	.i2c_engine	= 1,
+	.i2c_port	= 4,
+	.i2c_offset	= { 0x3, 0x1, 0x1 },
+	.i2c_odl0_data	= { 0xFD, 0xFD, 0xFF },
+	.i2c_odl1_data	= { 0xBF, 0xBF, 0xFF },
+	.odl_phy_swap	= true,
+};
+
 static struct bmc_platform generic_bmc = {
 	.name = "generic",
 };
@@ -183,6 +193,7 @@ static struct platform generic_platform = {
 	.cec_power_down	= generic_cec_power_down,
 	.start_preload_resource	= generic_start_preload_resource,
 	.resource_loaded	= generic_resource_loaded,
+	.ocapi		= &generic_ocapi,
 };
 
 const struct bmc_platform *bmc_platform = &generic_bmc;

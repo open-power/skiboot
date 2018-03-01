@@ -27,6 +27,16 @@
 #include "ibm-fsp.h"
 #include "lxvpd.h"
 
+/* We don't yet create NPU device nodes on ZZ, but these values are correct */
+const struct platform_ocapi zz_ocapi = {
+	.i2c_engine	= 1,
+	.i2c_port	= 4,
+	.i2c_offset	= { 0x3, 0x1, 0x1 },
+	.i2c_odl0_data	= { 0xFD, 0xFD, 0xFF },
+	.i2c_odl1_data	= { 0xBF, 0xBF, 0xFF },
+	.odl_phy_swap	= true,
+};
+
 static bool zz_probe(void)
 {
 	/* FIXME: make this neater when the dust settles */
@@ -71,4 +81,5 @@ DECLARE_PLATFORM(zz) = {
 	.resource_loaded	= fsp_resource_loaded,
 	.sensor_read		= ibm_fsp_sensor_read,
 	.terminate		= ibm_fsp_terminate,
+	.ocapi			= &zz_ocapi,
 };

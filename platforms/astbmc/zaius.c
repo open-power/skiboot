@@ -24,6 +24,99 @@
 
 #include "astbmc.h"
 
+const struct platform_ocapi zaius_ocapi = {
+	.i2c_engine	= 1,
+	.i2c_port	= 4,
+	.i2c_offset	= { 0x3, 0x1, 0x1 },
+	.i2c_odl0_data	= { 0xFD, 0xFD, 0xFF },
+	.i2c_odl1_data	= { 0xBF, 0xBF, 0xFF },
+	.odl_phy_swap	= true,
+};
+
+#define NPU_BASE 0x5011000
+#define NPU_SIZE 0x2c
+#define NPU_INDIRECT0	0x8000000009010c3f /* OB0 - no OB3 on Zaius */
+
+/* OpenCAPI only */
+static void create_link(struct dt_node *npu, int group, int index)
+{
+	struct dt_node *link;
+	uint32_t lane_mask;
+	char namebuf[32];
+
+	snprintf(namebuf, sizeof(namebuf), "link@%x", index);
+	link = dt_new(npu, namebuf);
+
+	dt_add_property_string(link, "compatible", "ibm,npu-link-opencapi");
+	dt_add_property_cells(link, "ibm,npu-link-index", index);
+
+	switch (index) {
+	case 2:
+		lane_mask = 0xf1e000; /* 0-3, 7-10 */
+		break;
+	case 3:
+		lane_mask = 0x00078f; /* 13-16, 20-23 */
+		break;
+	default:
+		assert(0);
+	}
+
+	dt_add_property_u64s(link, "ibm,npu-phy", NPU_INDIRECT0);
+	dt_add_property_cells(link, "ibm,npu-lane-mask", lane_mask);
+	dt_add_property_cells(link, "ibm,npu-group-id", group);
+	dt_add_property_u64s(link, "ibm,link-speed", 25000000000ul);
+}
+
+/* FIXME: Get rid of this after we get NPU information properly via HDAT/MRW */
+static void zaius_create_npu(void)
+{
+	struct dt_node *xscom, *npu;
+	int npu_index = 0;
+	int phb_index = 7;
+	char namebuf[32];
+
+	/* Abort if there's already an NPU in the device tree */
+	if (dt_find_compatible_node(dt_root, NULL, "ibm,power9-npu"))
+		return;
+
+	prlog(PR_DEBUG, "OCAPI: Adding NPU device nodes\n");
+	dt_for_each_compatible(dt_root, xscom, "ibm,xscom") {
+		snprintf(namebuf, sizeof(namebuf), "npu@%x", NPU_BASE);
+		npu = dt_new(xscom, namebuf);
+		dt_add_property_cells(npu, "reg", NPU_BASE, NPU_SIZE);
+		dt_add_property_strings(npu, "compatible", "ibm,power9-npu");
+		dt_add_property_cells(npu, "ibm,npu-index", npu_index++);
+		dt_add_property_cells(npu, "ibm,phb-index", phb_index++);
+		dt_add_property_cells(npu, "ibm,npu-links", 2);
+		create_link(npu, 1, 2);
+		create_link(npu, 2, 3);
+	}
+}
+
+/* FIXME: Get rid of this after we get NPU information properly via HDAT/MRW */
+static void zaius_create_ocapi_i2c_bus(void)
+{
+	struct dt_node *xscom, *i2cm, *i2c_bus;
+	prlog(PR_DEBUG, "OCAPI: Adding I2C bus device node for OCAPI reset\n");
+	dt_for_each_compatible(dt_root, xscom, "ibm,xscom") {
+		i2cm = dt_find_by_name(xscom, "i2cm@a1000");
+		if (!i2cm) {
+			prlog(PR_ERR, "OCAPI: Failed to add I2C bus device node\n");
+			continue;
+		}
+
+		if (dt_find_by_name(i2cm, "i2c-bus@4"))
+			continue;
+
+		i2c_bus = dt_new_addr(i2cm, "i2c-bus", 4);
+		dt_add_property_cells(i2c_bus, "reg", 4);
+		dt_add_property_cells(i2c_bus, "bus-frequency", 0x61a80);
+		dt_add_property_strings(i2c_bus, "compatible",
+					"ibm,opal-i2c", "ibm,power8-i2c-port",
+					"ibm,power9-i2c-port");
+	}
+}
+
 static bool zaius_probe(void)
 {
 	if (!dt_node_is_compatible(dt_root, "ingrasys,zaius"))
@@ -34,6 +127,9 @@ static bool zaius_probe(void)
 
 	/* Setup UART for direct use by Linux */
 	uart_set_console_policy(UART_CONSOLE_OS);
+
+	zaius_create_npu();
+	zaius_create_ocapi_i2c_bus();
 
 	return true;
 }
@@ -52,4 +148,5 @@ DECLARE_PLATFORM(zaius) = {
 	.elog_commit		= ipmi_elog_commit,
 	.exit			= ipmi_wdt_final_reset,
 	.terminate		= ipmi_terminate,
+	.ocapi			= &zaius_ocapi,
 };
