@@ -21,6 +21,8 @@ Device Tree
 - ``/ibm,opal/`` compatible property now just lists ``ibm,opal-v3`` and no longer ``ibm,opal-v2`` (power9 and above only)
 - Use only ``stdout-path`` property from POWER9 and above as usage of ``linux,stdout-path`` is deprecated
 - Rename ``fsp-ipl-side`` as ``sp-ipl-side`` in ``/ipl-params``
+- Add interrupt-parent property for ``/ibm,opal/ipmi`` node on POWER9 and above
+  to make use of OPAL irqchip rather than event interface in linux.
 
 TODO
 ----
