@@ -67,16 +67,16 @@
 /* Set a specific flag in the vendor config space */
 void npu2_set_link_flag(struct npu2_dev *ndev, uint8_t flag)
 {
-	ndev->link_flags |= flag;
-	PCI_VIRT_CFG_INIT_RO(ndev->pvd, VENDOR_CAP_START +
-			     VENDOR_CAP_PCI_DEV_OFFSET, 1, ndev->link_flags);
+	ndev->nvlink.link_flags |= flag;
+	PCI_VIRT_CFG_INIT_RO(ndev->nvlink.pvd, VENDOR_CAP_START +
+			     VENDOR_CAP_PCI_DEV_OFFSET, 1, ndev->nvlink.link_flags);
 }
 
 void npu2_clear_link_flag(struct npu2_dev *ndev, uint8_t flag)
 {
-	ndev->link_flags &= ~flag;
-	PCI_VIRT_CFG_INIT_RO(ndev->pvd, VENDOR_CAP_START +
-			     VENDOR_CAP_PCI_DEV_OFFSET, 1, ndev->link_flags);
+	ndev->nvlink.link_flags &= ~flag;
+	PCI_VIRT_CFG_INIT_RO(ndev->nvlink.pvd, VENDOR_CAP_START +
+			     VENDOR_CAP_PCI_DEV_OFFSET, 1, ndev->nvlink.link_flags);
 }
 
 static inline void npu2_ioda_sel(struct npu2 *p, uint32_t table,
@@ -97,7 +97,7 @@ static struct npu2_dev *npu2_bdf_to_dev(struct npu2 *p,
 	if (bdfn & ~0xff)
 		return NULL;
 
-	pvd = pci_virt_find_device(&p->phb, bdfn);
+	pvd = pci_virt_find_device(&p->phb_nvlink, bdfn);
 	if (pvd)
 		return pvd->data;
 
@@ -270,7 +270,7 @@ static int64_t npu2_cfg_write_bar(struct npu2_dev *dev,
 				  uint32_t offset, uint32_t size,
 				  uint32_t data)
 {
-	struct pci_virt_device *pvd = dev->pvd;
+	struct pci_virt_device *pvd = dev->nvlink.pvd;
 	struct npu2_pcie_bar *bar = (struct npu2_pcie_bar *) pcrf->data;
 	struct npu2_bar old_bar, *npu2_bar = &bar->npu2_bar;
 	uint32_t pci_cmd;
@@ -343,7 +343,7 @@ static int64_t npu2_dev_cfg_exp_devcap(void *dev,
 	if ((size != 2) || (offset & 1)) {
 		/* Short config writes are not supported */
 		prlog(PR_ERR, "NPU%d: Unsupported write to pcie control register\n",
-		      ndev->phb->opal_id);
+		      ndev->nvlink.phb->opal_id);
 		return OPAL_PARAMETER;
 	}
 
@@ -407,9 +407,9 @@ static int __npu2_dev_bind_pci_dev(struct phb *phb __unused,
 	pcislot = (char *)dt_prop_get(pci_dt_node, "ibm,slot-label");
 
 	prlog(PR_DEBUG, "NPU2: comparing GPU '%s' and NPU2 '%s'\n",
-	      pcislot, dev->slot_label);
+	      pcislot, dev->nvlink.slot_label);
 
-	if (streq(pcislot, dev->slot_label))
+	if (streq(pcislot, dev->nvlink.slot_label))
 		return 1;
 
 	return 0;
@@ -420,20 +420,20 @@ static void npu2_dev_bind_pci_dev(struct npu2_dev *dev)
 	struct phb *phb;
 	uint32_t i;
 
-	if (dev->pd)
+	if (dev->nvlink.pd)
 		return;
 
 	for (i = 0; i < 64; i++) {
-		if (dev->npu->phb.opal_id == i)
+		if (dev->npu->phb_nvlink.opal_id == i)
 			continue;
 
 		phb = pci_get_phb(i);
 		if (!phb)
 			continue;
 
-		dev->pd = pci_walk_dev(phb, NULL, __npu2_dev_bind_pci_dev, dev);
-		if (dev->pd) {
-			dev->phb = phb;
+		dev->nvlink.pd = pci_walk_dev(phb, NULL, __npu2_dev_bind_pci_dev, dev);
+		if (dev->nvlink.pd) {
+			dev->nvlink.phb = phb;
 			/* Found the device, set the bit in config space */
 			npu2_set_link_flag(dev, NPU2_DEV_PCI_LINKED);
 			return;
@@ -441,7 +441,7 @@ static void npu2_dev_bind_pci_dev(struct npu2_dev *dev)
 	}
 
 	prlog(PR_INFO, "%s: No PCI device for NPU2 device %04x:00:%02x.0 to bind to. If you expect a GPU to be there, this is a problem.\n",
-	      __func__, dev->npu->phb.opal_id, dev->index);
+	      __func__, dev->npu->phb_nvlink.opal_id, dev->index);
 }
 
 static struct lock pci_npu_phandle_lock = LOCK_UNLOCKED;
@@ -628,14 +628,14 @@ static int npu2_dn_fixup(struct phb *phb,
 			 struct pci_device *pd,
 			 void *data __unused)
 {
-	struct npu2 *p = phb_to_npu2(phb);
+	struct npu2 *p = phb_to_npu2_nvlink(phb);
 	struct npu2_dev *dev;
 	uint32_t speed;
 	const char *label;
 
 	dev = npu2_bdf_to_dev(p, pd->bdfn);
 	assert(dev);
-	if (dev->phb || dev->pd)
+	if (dev->nvlink.phb || dev->nvlink.pd)
 		return 0;
 
 	npu2_assign_gmb(dev);
@@ -675,7 +675,7 @@ static int npu2_dn_fixup(struct phb *phb,
 		return 0;
 	}
 
-	dev->slot_label = label;
+	dev->nvlink.slot_label = label;
 
 	/*
 	 * Bind the emulated PCI device with the real one, which can't
@@ -684,14 +684,14 @@ static int npu2_dn_fixup(struct phb *phb,
 	 * for it
 	 */
 	npu2_dev_bind_pci_dev(dev);
-	if (dev->phb && dev->pd && dev->pd->dn) {
-		if (dt_find_property(dev->pd->dn, "ibm,npu"))
-			npu2_append_phandle(dev->pd->dn, pd->dn->phandle);
+	if (dev->nvlink.phb && dev->nvlink.pd && dev->nvlink.pd->dn) {
+		if (dt_find_property(dev->nvlink.pd->dn, "ibm,npu"))
+			npu2_append_phandle(dev->nvlink.pd->dn, pd->dn->phandle);
 		else
-			dt_add_property_cells(dev->pd->dn, "ibm,npu", pd->dn->phandle);
+			dt_add_property_cells(dev->nvlink.pd->dn, "ibm,npu", pd->dn->phandle);
 
-		dt_add_property_cells(pd->dn, "ibm,gpu", dev->pd->dn->phandle);
-		dev->gpu_bdfn = dev->pd->bdfn;
+		dt_add_property_cells(pd->dn, "ibm,gpu", dev->nvlink.pd->dn->phandle);
+		dev->nvlink.gpu_bdfn = dev->nvlink.pd->bdfn;
 	}
 
 	return 0;
@@ -739,7 +739,7 @@ static void npu2_init_ioda_cache(struct npu2 *p)
 
 static int64_t npu2_ioda_reset(struct phb *phb, bool purge)
 {
-	struct npu2 *p = phb_to_npu2(phb);
+	struct npu2 *p = phb_to_npu2_nvlink(phb);
 	uint32_t i;
 
 	if (purge) {
@@ -814,7 +814,7 @@ static void npu2_hw_init(struct npu2 *p)
 {
 	uint64_t val;
 
-	npu2_ioda_reset(&p->phb, false);
+	npu2_ioda_reset(&p->phb_nvlink, false);
 
 	/* Enable XTS retry mode */
 	val = npu2_read(p, NPU2_XTS_CFG);
@@ -881,7 +881,7 @@ static int64_t npu2_map_pe_dma_window_real(struct phb *phb,
 					   uint64_t pci_start_addr __unused,
 					   uint64_t pci_mem_size __unused)
 {
-	struct npu2 *p = phb_to_npu2(phb);
+	struct npu2 *p = phb_to_npu2_nvlink(phb);
 	uint64_t tve;
 
 	/* Sanity check. Each PE has one corresponding TVE */
@@ -914,7 +914,7 @@ static int64_t npu2_map_pe_dma_window(struct phb *phb,
 				      uint64_t tce_table_size,
 				      uint64_t tce_page_size)
 {
-	struct npu2 *p = phb_to_npu2(phb);
+	struct npu2 *p = phb_to_npu2_nvlink(phb);
 	uint64_t tts_encoded;
 	uint64_t data64 = 0;
 
@@ -983,7 +983,7 @@ static int64_t npu2_set_pe(struct phb *phb,
 			   uint8_t fcompare,
 			   uint8_t action)
 {
-	struct npu2 *p = phb_to_npu2(phb);
+	struct npu2 *p;
 	struct npu2_dev *dev;
 	uint64_t reg, val;
 
@@ -998,15 +998,20 @@ static int64_t npu2_set_pe(struct phb *phb,
 	    dcompare != OPAL_COMPARE_RID_DEVICE_NUMBER ||
 	    fcompare != OPAL_COMPARE_RID_FUNCTION_NUMBER)
 		return OPAL_UNSUPPORTED;
+	if (phb->phb_type != phb_type_npu_v2)
+		return OPAL_PARAMETER;
 
-	/* Get the NPU2 device */
+	p = phb_to_npu2_nvlink(phb);
+	if (!p)
+		return OPAL_PARAMETER;
+
 	dev = npu2_bdf_to_dev(p, bdfn);
 	if (!dev)
 		return OPAL_PARAMETER;
 
 	val = NPU2_CQ_BRICK_BDF2PE_MAP_ENABLE;
 	val = SETFIELD(NPU2_CQ_BRICK_BDF2PE_MAP_PE, val, pe_num);
-	val = SETFIELD(NPU2_CQ_BRICK_BDF2PE_MAP_BDF, val, dev->gpu_bdfn);
+	val = SETFIELD(NPU2_CQ_BRICK_BDF2PE_MAP_BDF, val, dev->nvlink.gpu_bdfn);
 
 	if (!NPU2DEV_BRICK(dev))
 		reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + dev->index/2,
@@ -1018,7 +1023,7 @@ static int64_t npu2_set_pe(struct phb *phb,
 	npu2_write(p, reg, val);
 	val = NPU2_MISC_BRICK_BDF2PE_MAP_ENABLE;
 	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_PE, val, pe_num);
-	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_BDF, val, dev->gpu_bdfn);
+	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_BDF, val, dev->nvlink.gpu_bdfn);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC,
 			      NPU2_MISC_BRICK0_BDF2PE_MAP0 + (dev->index * 0x18));
 	p->bdf2pe_cache[dev->index] = val;
@@ -1059,7 +1064,7 @@ static int64_t npu2_creset(struct pci_slot *slot)
 	int i;
 	struct npu2_dev *ndev;
 
-	p = phb_to_npu2(slot->phb);
+	p = phb_to_npu2_nvlink(slot->phb);
 	NPU2INF(p, "Creset PHB state\n");
 
 	for (i = 0; i < p->total_devices; i++) {
@@ -1120,7 +1125,7 @@ static int64_t npu2_eeh_next_error(struct phb *phb,
 				   uint16_t *pci_error_type,
 				   uint16_t *severity)
 {
-	struct npu2 *p = phb_to_npu2(phb);
+	struct npu2 *p = phb_to_npu2_nvlink(phb);
 	int i;
 	uint64_t result = 0;
 
@@ -1148,7 +1153,7 @@ static int64_t npu2_tce_kill(struct phb *phb, uint32_t kill_type,
 			     uint64_t pe_number, uint32_t tce_size,
 			     uint64_t dma_addr, uint32_t npages)
 {
-	struct npu2 *npu = phb_to_npu2(phb);
+	struct npu2 *npu = phb_to_npu2_nvlink(phb);
 	uint32_t tce_page_size;
 	uint64_t val;
 
@@ -1385,7 +1390,7 @@ static uint32_t npu2_populate_pcie_cap(struct npu2_dev *dev,
 				       uint32_t start,
 				       uint32_t prev_cap)
 {
-	struct pci_virt_device *pvd = dev->pvd;
+	struct pci_virt_device *pvd = dev->nvlink.pvd;
 	uint32_t val;
 
 	/* Add capability list */
@@ -1467,12 +1472,12 @@ static uint32_t npu2_populate_vendor_cap(struct npu2_dev *dev,
 					 uint32_t start,
 					 uint32_t prev_cap)
 {
-	struct pci_virt_device *pvd = dev->pvd;
+	struct pci_virt_device *pvd = dev->nvlink.pvd;
 
 	/* Capbility list */
 	PCI_VIRT_CFG_INIT_RO(pvd, prev_cap, 1, start);
 	PCI_VIRT_CFG_INIT_RO(pvd, start, 1, PCI_CFG_CAP_ID_VENDOR);
-	dev->vendor_cap = start;
+	dev->nvlink.vendor_cap = start;
 
 	/* Length and version */
 	PCI_VIRT_CFG_INIT_RO(pvd, start + 2, 1, VENDOR_CAP_LEN);
@@ -1499,7 +1504,7 @@ static uint32_t npu2_populate_vendor_cap(struct npu2_dev *dev,
 
 static void npu2_populate_cfg(struct npu2_dev *dev)
 {
-	struct pci_virt_device *pvd = dev->pvd;
+	struct pci_virt_device *pvd = dev->nvlink.pvd;
 	struct npu2_pcie_bar *bar;
 	uint32_t pos;
 
@@ -1607,12 +1612,13 @@ static void npu2_populate_devices(struct npu2 *p,
 
 	/* Walk the link@x nodes to initialize devices */
 	p->total_devices = 0;
-	p->phb.scan_map = 0;
+	p->phb_nvlink.scan_map = 0;
 	dt_for_each_compatible(npu2_dn, link, "ibm,npu-link") {
 		uint32_t group_id;
 		struct npu2_bar *npu2_bar;
 
 		dev = &p->devices[index];
+		dev->type = NPU2_DEV_TYPE_NVLINK;
 		dev->npu = p;
 		dev->dt_node = link;
 		dev->index = dt_prop_get_u32(link, "ibm,npu-link-index");
@@ -1623,7 +1629,7 @@ static void npu2_populate_devices(struct npu2 *p,
 		/* This must be done after calling
 		 * npu_allocate_bdfn() */
 		p->total_devices++;
-		p->phb.scan_map |= 0x1 << ((dev->bdfn & 0xf8) >> 3);
+		p->phb_nvlink.scan_map |= 0x1 << ((dev->bdfn & 0xf8) >> 3);
 
 		dev->pl_xscom_base = dt_prop_get_u64(link, "ibm,npu-phy");
 		dev->lane_mask = dt_prop_get_u32(link, "ibm,npu-lane-mask");
@@ -1654,10 +1660,10 @@ static void npu2_populate_devices(struct npu2 *p,
 		dev->bars[1].flags = PCI_CFG_BAR_TYPE_MEM | PCI_CFG_BAR_MEM64;
 
 		/* Initialize PCI virtual device */
-		dev->pvd = pci_virt_add_device(&p->phb, dev->bdfn, 0x100, dev);
-		if (dev->pvd) {
-			p->phb.scan_map |=
-				0x1 << ((dev->pvd->bdfn & 0xf8) >> 3);
+		dev->nvlink.pvd = pci_virt_add_device(&p->phb_nvlink, dev->bdfn, 0x100, dev);
+		if (dev->nvlink.pvd) {
+			p->phb_nvlink.scan_map |=
+				0x1 << ((dev->nvlink.pvd->bdfn & 0xf8) >> 3);
 			npu2_populate_cfg(dev);
 		}
 
@@ -1675,8 +1681,8 @@ static void npu2_add_interrupt_map(struct npu2 *p,
 	size_t map_size;
 	uint32_t mask[] = {0xff00, 0x0, 0x0, 0x7};
 
-	assert(p->phb.dt_node);
-	phb_dn = p->phb.dt_node;
+	assert(p->phb_nvlink.dt_node);
+	phb_dn = p->phb_nvlink.dt_node;
 
 	npu2_phandle = dt_prop_get_u32(dn, "ibm,npcq");
 	npu2_dn = dt_find_by_phandle(dt_root, npu2_phandle);
@@ -1703,7 +1709,7 @@ static void npu2_add_interrupt_map(struct npu2 *p,
 
 static void npu2_add_phb_properties(struct npu2 *p)
 {
-	struct dt_node *np = p->phb.dt_node;
+	struct dt_node *np = p->phb_nvlink.dt_node;
 	uint32_t icsp = get_ics_phandle();
 	uint64_t mm_base, mm_size, mmio_atsd;
 
@@ -1867,20 +1873,20 @@ static void npu2_create_phb(struct dt_node *dn)
 	p->devices = pmem + sizeof(struct npu2);
 
 	/* Generic PHB */
-	p->phb.dt_node = dn;
-	p->phb.ops = &npu_ops;
-	p->phb.phb_type = phb_type_npu_v2;
+	p->phb_nvlink.dt_node = dn;
+	p->phb_nvlink.ops = &npu_ops;
+	p->phb_nvlink.phb_type = phb_type_npu_v2;
 	init_lock(&p->lock);
-	init_lock(&p->phb.lock);
-	list_head_init(&p->phb.devices);
-	list_head_init(&p->phb.virt_devices);
+	init_lock(&p->phb_nvlink.lock);
+	list_head_init(&p->phb_nvlink.devices);
+	list_head_init(&p->phb_nvlink.virt_devices);
 
 	npu2_setup_irqs(p);
 	npu2_populate_devices(p, dn);
 	npu2_add_interrupt_map(p, dn);
 	npu2_add_phb_properties(p);
 
-	slot = npu2_slot_create(&p->phb);
+	slot = npu2_slot_create(&p->phb_nvlink);
 	if (!slot)
 	{
 		/**
@@ -1891,7 +1897,7 @@ static void npu2_create_phb(struct dt_node *dn)
 		prlog(PR_ERR, "NPU2: Cannot create PHB slot\n");
 	}
 
-	pci_register_phb(&p->phb, OPAL_DYNAMIC_PHB_ID);
+	pci_register_phb(&p->phb_nvlink, OPAL_DYNAMIC_PHB_ID);
 
 	npu2_init_ioda_cache(p);
 	npu2_hw_init(p);
@@ -1951,7 +1957,7 @@ static int64_t opal_npu_init_context(uint64_t phb_id, int pasid, uint64_t msr,
 				     uint64_t bdf)
 {
 	struct phb *phb = pci_get_phb(phb_id);
-	struct npu2 *p = phb_to_npu2(phb);
+	struct npu2 *p = phb_to_npu2_nvlink(phb);
 	uint64_t xts_bdf, xts_bdf_pid = 0;
 	int id, lparshort;
 
@@ -2029,7 +2035,7 @@ opal_call(OPAL_NPU_INIT_CONTEXT, opal_npu_init_context, 4);
 static int opal_npu_destroy_context(uint64_t phb_id, uint64_t pid, uint64_t bdf)
 {
 	struct phb *phb = pci_get_phb(phb_id);
-	struct npu2 *p = phb_to_npu2(phb);
+	struct npu2 *p = phb_to_npu2_nvlink(phb);
 	uint64_t xts_bdf, xts_bdf_pid;
 	uint64_t lparshort;
 	int id, rc = 0;
@@ -2077,7 +2083,7 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 			     uint64_t lpcr)
 {
 	struct phb *phb = pci_get_phb(phb_id);
-	struct npu2 *p = phb_to_npu2(phb);
+	struct npu2 *p = phb_to_npu2_nvlink(phb);
 	struct npu2_dev *ndev = NULL;
 	uint64_t xts_bdf_lpar, rc = OPAL_SUCCESS;
 	int i;
@@ -2124,7 +2130,7 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 
 	/* Need to find an NVLink to send the ATSDs for this device over */
 	for (i = 0; i < p->total_devices; i++) {
-		if (p->devices[i].gpu_bdfn == bdf) {
+		if (p->devices[i].nvlink.gpu_bdfn == bdf) {
 			ndev = &p->devices[i];
 			break;
 		}
