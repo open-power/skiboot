@@ -163,6 +163,9 @@
 #define P8_CORE_FIR		0x10013100
 #define P9_CORE_FIR		0x20010A40
 
+/* And core WOF (Whose On First) */
+#define P9_CORE_WOF		0x20010A48
+
 /* xscom addresses for pMisc Receive Malfunction Alert Register */
 #define P8_MALFUNC_ALERT	0x02020011
 #define P9_MALFUNC_ALERT	0x00090022
@@ -213,6 +216,28 @@ static const struct core_xstop_bit_info {
 	{ 54, CORE_CHECKSTOP_PC_AMBI_HANG_DETECTED },
 	{ 60, CORE_CHECKSTOP_PC_DEBUG_TRIG_ERR_INJ },
 	{ 63, CORE_CHECKSTOP_PC_SPRD_HYP_ERR_INJ },
+};
+
+static const struct core_recoverable_bit_info {
+	uint8_t bit;		/* CORE FIR bit number */
+	const char *reason;
+} recoverable_bits[] = {
+	{ 0, "IFU - SRAM (ICACHE parity, etc)" },
+	{ 2, "IFU - RegFile" },
+	{ 4, "IFU - Logic" },
+	{ 9, "ISU - RegFile" },
+	{ 11, "ISU - Logic" },
+	{ 13, "ISU - Recoverable due to not in MT window" },
+	{ 24, "VSU - Logic" },
+	{ 27, "VSU - DFU logic" },
+	{ 29, "LSU - SRAM (DCACHE parity, etc)" },
+	{ 31, "LSU - RegFile" },
+	/* The following 3 bits may be set by SRAM errors. */
+	{ 33, "LSU - TLB multi hit" },
+	{ 34, "LSU - SLB multi hit" },
+	{ 35, "LSU - ERAT multi hit" },
+	{ 37, "LSU - Logic" },
+	{ 39, "LSU - Recoverable due to not in MT window" },
 };
 
 static const struct nx_xstop_bit_info {
@@ -306,6 +331,21 @@ static int read_core_fir(uint32_t chip_id, uint32_t core_id, uint64_t *core_fir)
 	case proc_gen_p9:
 		rc = xscom_read(chip_id,
 			XSCOM_ADDR_P9_EC(core_id, P9_CORE_FIR), core_fir);
+		break;
+	default:
+		rc = OPAL_HARDWARE;
+	}
+	return rc;
+}
+
+static int read_core_wof(uint32_t chip_id, uint32_t core_id, uint64_t *core_wof)
+{
+	int rc;
+
+	switch (proc_gen) {
+	case proc_gen_p9:
+		rc = xscom_read(chip_id,
+			XSCOM_ADDR_P9_EC(core_id, P9_CORE_WOF), core_wof);
 		break;
 	default:
 		rc = OPAL_HARDWARE;
@@ -1069,6 +1109,7 @@ static void hmi_print_debug(const uint8_t *msg)
 
 int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 {
+	struct cpu_thread *cpu = this_cpu();
 	int recover = 1;
 	uint64_t tfmr;
 
@@ -1084,18 +1125,33 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	 * looking at TFMR register. TFMR will tell us correct state of
 	 * TB register.
 	 */
-	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
+	cpu->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
 	prlog(PR_DEBUG, "Received HMI interrupt: HMER = 0x%016llx\n", hmer);
 	if (hmi_evt)
 		hmi_evt->hmer = hmer;
 	if (hmer & SPR_HMER_PROC_RECV_DONE) {
+		uint32_t chip_id = pir_to_chip_id(cpu->pir);
+		uint32_t core_id = pir_to_core_id(cpu->pir);
+		uint64_t core_wof;
+
+		hmi_print_debug("Processor recovery occurred.");
+		if (!read_core_wof(chip_id, core_id, &core_wof)) {
+			int i;
+
+			prlog(PR_DEBUG, "Core WOF = 0x%016llx recovered error:\n", core_wof);
+			for (i = 0; i < ARRAY_SIZE(recoverable_bits); i++) {
+				if (core_wof & PPC_BIT(recoverable_bits[i].bit))
+					prlog(PR_DEBUG, "%s\n",
+						recoverable_bits[i].reason);
+			}
+		}
+
 		hmer &= ~SPR_HMER_PROC_RECV_DONE;
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE;
 			queue_hmi_event(hmi_evt, recover);
 		}
-		hmi_print_debug("Processor recovery Done.");
 	}
 	if (hmer & SPR_HMER_PROC_RECV_ERROR_MASKED) {
 		hmer &= ~SPR_HMER_PROC_RECV_ERROR_MASKED;
@@ -1180,7 +1236,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	mtspr(SPR_HMER, hmer);
 	hmi_exit();
 	/* Set the TB state looking at TFMR register before we head out. */
-	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
+	cpu->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
 	unlock(&hmi_lock);
 	return recover;
 }
