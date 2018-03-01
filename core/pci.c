@@ -1549,7 +1549,8 @@ static void pci_add_one_device_node(struct phb *phb,
 	pd->dn = np = dt_new(parent_node, name);
 
 	/* XXX FIXME: make proper "compatible" properties */
-	if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false)) {
+	if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false) ||
+		phb->phb_type == phb_type_npu_v2_opencapi) {
 		snprintf(compat, MAX_NAME, "pciex%x,%x",
 			 vdid & 0xffff, vdid >> 16);
 		dt_add_property_cells(np, "ibm,pci-config-space-type", 1);
