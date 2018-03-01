@@ -3993,7 +3993,7 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 {
 	struct phb4 *p = phb_to_phb4(phb);
 	struct proc_chip *chip = get_chip(p->chip_id);
-	uint64_t reg;
+	uint64_t reg, ret;
 	uint32_t offset;
 
 
@@ -4017,33 +4017,33 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 	}
 
 	switch (mode) {
-	case OPAL_PHB_CAPI_MODE_PCIE:
-		return OPAL_UNSUPPORTED;
-
 	case OPAL_PHB_CAPI_MODE_CAPI:
-		return enable_capi_mode(p, pe_number, CAPI_DMA_TVT0,
+		ret = enable_capi_mode(p, pe_number, CAPI_DMA_TVT0,
 					CAPP_MAX_STQ_ENGINES |
 					CAPP_MIN_DMA_READ_ENGINES);
-
-	case OPAL_PHB_CAPI_MODE_DMA:
-		/* shouldn't be called, enabled by default on p9 */
-		return OPAL_UNSUPPORTED;
-
+		break;
 	case OPAL_PHB_CAPI_MODE_DMA_TVT1:
-		return enable_capi_mode(p, pe_number, CAPI_DMA_TVT1,
+		ret = enable_capi_mode(p, pe_number, CAPI_DMA_TVT1,
 					CAPP_MIN_STQ_ENGINES |
 					CAPP_MAX_DMA_READ_ENGINES);
-
-	case OPAL_PHB_CAPI_MODE_SNOOP_OFF:
-		/* shouldn't be called */
-		return OPAL_UNSUPPORTED;
-
+		break;
 	case OPAL_PHB_CAPI_MODE_SNOOP_ON:
-		/* nothing to do */
-		return OPAL_SUCCESS;
+		/* nothing to do P9 if CAPP is alreay enabled */
+		ret = OPAL_SUCCESS;
+		break;
+
+	case OPAL_PHB_CAPI_MODE_PCIE: /* shouldn't be called on p9*/
+	case OPAL_PHB_CAPI_MODE_DMA: /* Enabled by default on p9 */
+	case OPAL_PHB_CAPI_MODE_SNOOP_OFF: /* shouldn't be called on p9*/
+	default:
+		ret = OPAL_UNSUPPORTED;
 	}
 
-	return OPAL_UNSUPPORTED;
+	/* If CAPP enabled then disable fast-reboot for now */
+	if (ret == OPAL_SUCCESS)
+		disable_fast_reboot("CAPP being enabled");
+
+	return ret;
 }
 
 static void phb4_p2p_set_initiator(struct phb4 *p, uint16_t pe_number)
