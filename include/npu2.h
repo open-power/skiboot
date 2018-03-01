@@ -201,10 +201,14 @@ int64_t npu2_dev_procedure(void *dev, struct pci_cfg_reg_filter *pcrf,
 			   uint32_t offset, uint32_t len, uint32_t *data,
 			   bool write);
 void npu2_dev_procedure_reset(struct npu2_dev *dev);
+
 void npu2_set_link_flag(struct npu2_dev *ndev, uint8_t flag);
 void npu2_clear_link_flag(struct npu2_dev *ndev, uint8_t flag);
 uint32_t reset_ntl(struct npu2_dev *ndev);
 extern int nv_zcal_nominal;
 bool is_p9dd1(void);
+void npu2_opencapi_phy_setup(struct npu2_dev *dev);
+void npu2_opencapi_phy_prbs31(struct npu2_dev *dev);
+void npu2_opencapi_bump_ui_lane(struct npu2_dev *dev);
 
 #endif /* __NPU2_H */
