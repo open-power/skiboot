@@ -139,6 +139,7 @@ struct npu2_dev {
 
 struct npu2 {
 	uint32_t	index;
+	struct dt_node	*dt_node;
 	uint32_t	flags;
 	uint32_t	chip_id;
 	uint64_t	xscom_base;
@@ -147,6 +148,7 @@ struct npu2 {
 	uint64_t	mm_base;
 	uint64_t	mm_size;
 	uint32_t	base_lsi;
+	uint32_t	irq_base;
 	uint32_t	total_devices;
 	struct npu2_dev	*devices;
 	enum phys_map_type gpu_map_type;

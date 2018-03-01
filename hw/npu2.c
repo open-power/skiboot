@@ -1301,6 +1301,15 @@ static void npu2_probe_phb(struct dt_node *dn)
 	uint64_t reg[2], mm_win[2];
 	char *path;
 
+	/* Abort if any OpenCAPI links detected */
+	if (dt_find_compatible_node(dn, NULL, "ibm,npu-link-opencapi")) {
+		/* Die if there's also an NVLink link */
+		assert(!dt_find_compatible_node(dn, NULL, "ibm,npu-link"));
+		prlog(PR_INFO, "NPU2: OpenCAPI link configuration detected, "
+		      "not initialising NVLink\n");
+		return;
+	}
+
 	/* Retrieve chip id */
 	path = dt_get_path(dn);
 	gcid = dt_get_chip_id(dn);

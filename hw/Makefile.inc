@@ -8,6 +8,8 @@ HW_OBJS += phb3.o sfc-ctrl.o fake-rtc.o bt.o p8-i2c.o prd.o
 HW_OBJS += dts.o lpc-rtc.o npu.o npu-hw-procedures.o xive.o phb4.o
 HW_OBJS += fake-nvram.o lpc-mbox.o npu2.o npu2-hw-procedures.o
 HW_OBJS += npu2-common.o phys-map.o sbe-p9.o capp.o occ-sensor.o vas.o
+HW_OBJS += npu2-common.o npu2-opencapi.o phys-map.o sbe-p9.o capp.o occ-sensor.o
+HW_OBJS += vas.o
 HW=hw/built-in.a
 
 # FIXME hack this for now
