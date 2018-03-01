@@ -1,5 +1,5 @@
 Name:		opal-prd
-Version:	5.6.0
+Version:	5.10
 Release:	1%{?dist}
 Summary:	OPAL Processor Recovery Diagnostics Daemon
 
@@ -12,7 +12,7 @@ BuildRequires:	systemd
 
 Requires:	systemd
 
-Source0:	https://github.com/open-power/skiboot/archive/skiboot-%{version}.tar.gz
+Source0:	https://github.com/open-power/skiboot/archive/v%{version}.tar.gz
 
 %description
 This package provides a daemon to load and run the OpenPower firmware's
@@ -44,7 +44,7 @@ services to the OS (Linux) on IBM Power and OpenPower systems.
 
 %prep
 
-%setup -q -n skiboot-skiboot-%version
+%setup -q -n skiboot-%{version}
 
 %build
 SKIBOOT_VERSION=%version CROSS= make V=1 %{?_smp_mflags}
@@ -108,6 +108,9 @@ fi
 %{_datadir}/qemu/
 
 %changelog
+* Thu Mar 01 2018 Murilo Opsfelder Araujo <muriloo@linux.vnet.ibm.com> - 5.10-1
+- Update to v5.10 release
+
 * Tue Feb 09 2016 Vasant Hegde <hegdevasant@linux.vnet.ibm.com> - 5.1.13
 - Update to latest upstream release
 
