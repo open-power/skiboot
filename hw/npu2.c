@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 IBM Corp.
+/* Copyright 2013-2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1962,13 +1962,13 @@ static int npu_table_search(struct npu2 *p, uint64_t table_addr, int stride,
  * allocated.
  */
 #define NPU2_VALID_ATS_MSR_BITS (MSR_DR | MSR_HV | MSR_PR | MSR_SF)
-static int64_t opal_npu_init_context(uint64_t phb_id, int pasid, uint64_t msr,
-				     uint64_t bdf)
+static int64_t opal_npu_init_context(uint64_t phb_id, int pasid __unused,
+				     uint64_t msr, uint64_t bdf)
 {
 	struct phb *phb = pci_get_phb(phb_id);
 	struct npu2 *p = phb_to_npu2_nvlink(phb);
-	uint64_t xts_bdf, xts_bdf_pid = 0;
-	int id, lparshort;
+	uint64_t xts_bdf, old_xts_bdf_pid, xts_bdf_pid;
+	int id;
 
 	if (!phb || phb->phb_type != phb_type_npu_v2)
 		return OPAL_PARAMETER;
@@ -1992,20 +1992,8 @@ static int64_t opal_npu_init_context(uint64_t phb_id, int pasid, uint64_t msr,
 		goto out;
 	}
 
-	lparshort = GETFIELD(NPU2_XTS_BDF_MAP_LPARSHORT, xts_bdf);
-	NPU2DBG(p, "Found LPARSHORT = 0x%x for BDF = 0x%03llx\n", lparshort,
-		bdf);
-
-	/*
-	 * Need to find a free context.
-	 */
-	id = npu_table_search(p, NPU2_XTS_PID_MAP, 0x20, NPU2_XTS_PID_MAP_SIZE,
-			      &xts_bdf_pid, -1UL);
-	if (id < 0) {
-		NPU2ERR(p, "No XTS contexts available\n");
-		id = OPAL_RESOURCE;
-		goto out;
-	}
+	id = GETFIELD(NPU2_XTS_BDF_MAP_LPARSHORT, xts_bdf);
+	NPU2DBG(p, "Found LPARSHORT = 0x%x for BDF = 0x%03llx\n", id, bdf);
 
 	/* Enable this mapping for both real and virtual addresses */
 	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_VALID_ATRGPA0, 0UL, 1);
@@ -2013,8 +2001,7 @@ static int64_t opal_npu_init_context(uint64_t phb_id, int pasid, uint64_t msr,
 
 	/* Enables TLBIE/MMIOSD forwarding for this entry */
 	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_VALID_ATSD, xts_bdf_pid, 1);
-	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_LPARSHORT, xts_bdf_pid,
-			       lparshort);
+	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_LPARSHORT, xts_bdf_pid, id);
 
 	/* Set the relevant MSR bits */
 	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_MSR_DR, xts_bdf_pid,
@@ -2028,8 +2015,20 @@ static int64_t opal_npu_init_context(uint64_t phb_id, int pasid, uint64_t msr,
 	 * it here */
 	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_MSR_SF, xts_bdf_pid, 1);
 
-	/* Finally set the PID/PASID */
-	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_PASID, xts_bdf_pid, pasid);
+	/*
+	 * Throw an error if the wildcard entry for this bdf is already set
+	 * with different msr bits.
+	 */
+	old_xts_bdf_pid = npu2_read(p, NPU2_XTS_PID_MAP + id*0x20);
+	if (old_xts_bdf_pid) {
+		if (GETFIELD(NPU2_XTS_PID_MAP_MSR, old_xts_bdf_pid) !=
+		    GETFIELD(NPU2_XTS_PID_MAP_MSR, xts_bdf_pid)) {
+			NPU2ERR(p, "%s: Unexpected MSR value\n", __func__);
+			id = OPAL_PARAMETER;
+		}
+
+		goto out;
+	}
 
 	/* Write the entry */
 	NPU2DBG(p, "XTS_PID_MAP[%03d] = 0x%08llx\n", id, xts_bdf_pid);
@@ -2041,13 +2040,13 @@ out:
 }
 opal_call(OPAL_NPU_INIT_CONTEXT, opal_npu_init_context, 4);
 
-static int opal_npu_destroy_context(uint64_t phb_id, uint64_t pid, uint64_t bdf)
+static int opal_npu_destroy_context(uint64_t phb_id, uint64_t pid __unused,
+				    uint64_t bdf)
 {
 	struct phb *phb = pci_get_phb(phb_id);
 	struct npu2 *p = phb_to_npu2_nvlink(phb);
-	uint64_t xts_bdf, xts_bdf_pid;
-	uint64_t lparshort;
-	int id, rc = 0;
+	uint64_t xts_bdf;
+	int rc = 0;
 
 	if (!phb || phb->phb_type != phb_type_npu_v2)
 		return OPAL_PARAMETER;
@@ -2060,26 +2059,13 @@ static int opal_npu_destroy_context(uint64_t phb_id, uint64_t pid, uint64_t bdf)
 			     &xts_bdf, NPU2_XTS_BDF_MAP_BDF) < 0) {
 		NPU2ERR(p, "LPARID not associated with any GPU\n");
 		rc = OPAL_PARAMETER;
-		goto out;
 	}
 
-	lparshort = GETFIELD(NPU2_XTS_BDF_MAP_LPARSHORT, xts_bdf);
-	NPU2DBG(p, "Found LPARSHORT = 0x%llx destroy context for BDF = 0x%03llx PID = 0x%llx\n",
-		lparshort, bdf, pid);
+	/*
+	 * The bdf/pid table only contains wildcard entries, so we don't
+	 * need to remove anything here.
+	 */
 
-	/* Now find the entry in the bdf/pid table */
-	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_LPARSHORT, 0ul, lparshort);
-	xts_bdf_pid = SETFIELD(NPU2_XTS_PID_MAP_PASID, xts_bdf_pid, pid);
-	id = npu_table_search(p, NPU2_XTS_PID_MAP, 0x20, NPU2_XTS_PID_MAP_SIZE, &xts_bdf_pid,
-			      NPU2_XTS_PID_MAP_LPARSHORT | NPU2_XTS_PID_MAP_PASID);
-	if (id < 0) {
-		rc = OPAL_PARAMETER;
-		goto out;
-	}
-
-	/* And zero the entry */
-	npu2_write(p, NPU2_XTS_PID_MAP + id*0x20, 0);
-out:
 	unlock(&p->lock);
 	return rc;
 }
@@ -2131,6 +2117,7 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 	}
 
 	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_VALID, 0UL, 1);
+	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_UNFILT, xts_bdf_lpar, 1);
 	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_BDF, xts_bdf_lpar, bdf);
 
 	/* We only support radix for the moment */
