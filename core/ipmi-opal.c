@@ -127,7 +127,7 @@ out_unlock:
 
 void ipmi_opal_init(void)
 {
-	struct dt_node *opal_ipmi;
+	struct dt_node *opal_ipmi, *opal_event = NULL;
 
 	opal_ipmi = dt_new(opal_node, "ipmi");
 	dt_add_property_strings(opal_ipmi, "compatible", "ibm,opal-ipmi");
@@ -135,6 +135,12 @@ void ipmi_opal_init(void)
 			      IPMI_DEFAULT_INTERFACE);
 	dt_add_property_cells(opal_ipmi, "interrupts",
 			      ilog2(ipmi_backend->opal_event_ipmi_recv));
+
+        if (proc_gen >= proc_gen_p9)
+		opal_event = dt_find_by_name(opal_node, "event");
+	if (opal_event)
+		dt_add_property_cells(opal_ipmi, "interrupt-parent",
+				      opal_event->phandle);
 
 	opal_register(OPAL_IPMI_SEND, opal_ipmi_send, 3);
 	opal_register(OPAL_IPMI_RECV, opal_ipmi_recv, 3);
