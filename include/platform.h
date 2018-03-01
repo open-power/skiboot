@@ -44,6 +44,17 @@ struct bmc_platform {
 	uint32_t ipmi_oem_pnor_access_status;
 };
 
+/* OpenCAPI platform-specific I2C information */
+struct platform_ocapi {
+	uint8_t i2c_engine;		/* I2C engine number */
+	uint8_t i2c_port;		/* I2C port number */
+	uint32_t i2c_offset[3];		/* Offsets on I2C device */
+	uint8_t i2c_odl0_data[3];	/* Data to reset ODL0 */
+	uint8_t i2c_odl1_data[3];	/* Data to reset ODL1 */
+	bool odl_phy_swap;		/* Swap ODL1 to use brick 2 rather than
+					 * brick 1 lanes */
+};
+
 /*
  * Each platform can provide a set of hooks
  * that can affect the generic code
@@ -57,6 +68,9 @@ struct platform {
 	 * not a constant.
 	 */
 	const struct bmc_platform *bmc;
+
+	/* OpenCAPI platform-specific I2C information */
+	const struct platform_ocapi *ocapi;
 
 	/*
 	 * Probe platform, return true on a match, called before
