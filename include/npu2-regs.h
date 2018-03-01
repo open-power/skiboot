@@ -327,6 +327,7 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 #define NPU2_NTL_DL_CLK_CTRL(ndev)		NPU2_DL_REG_OFFSET(ndev, 0x001C)
 
 /* OpenCAPI - XSL registers */
+#define NPU2_XSL_PSL_LLCMD_A0			0x008
 #define NPU2_XSL_PSL_SCNTL_A0			0x010
 #define   NPU2_XSL_PSL_SCNTL_A0_MULTI_AFU_DIAL	PPC_BIT(0)
 #define NPU2_XSL_DEF				0x040
@@ -334,6 +335,9 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 #define   NPU2_XSL_GP_BLOOM_FILTER_ENABLE	PPC_BIT(16)
 #define NPU2_XSL_WRAP_CFG			0x0C0
 #define   NPU2_XSL_WRAP_CFG_XSLO_CLOCK_ENABLE	PPC_BIT(0)
+#define NPU2_XSL_PSL_SPAP_A0			0
+#define NPU2_XSL_PSL_SPAP_A1			0x18
+#define   NPU2_XSL_PSL_SPAP_EN			PPC_BIT(63)
 
 /* OpenCAPI - OTL registers */
 #define NPU2_OTL_CONFIG0(stack, block)		NPU2_REG_OFFSET(stack, block, 0x000)

@@ -54,6 +54,9 @@
 
 #define NPU_IRQ_LEVELS		35
 #define NPU_IRQ_LEVELS_XSL	23
+#define MAX_PE_HANDLE		((1 << 15) - 1)
+#define TL_MAX_TEMPLATE		63
+#define TL_RATE_BUF_SIZE	32
 
 enum npu2_link_training_state {
 	NPU2_TRAIN_DEFAULT, /* fully train the link */
@@ -1500,3 +1503,206 @@ static const struct phb_ops npu2_opencapi_ops = {
 	.set_capp_recovery	= NULL,
 	.tce_kill		= NULL,
 };
+
+static int64_t opal_npu_spa_setup(uint64_t phb_id, uint32_t __unused bdfn,
+				uint64_t addr, uint64_t PE_mask)
+{
+	uint64_t stack, block, offset, reg;
+	struct phb *phb = pci_get_phb(phb_id);
+	struct npu2_dev *dev;
+	int rc;
+
+	if (!phb || phb->phb_type != phb_type_npu_v2_opencapi)
+		return OPAL_PARAMETER;
+
+	/* 4k aligned */
+	if (addr & 0xFFF)
+		return OPAL_PARAMETER;
+
+	if (PE_mask > 15)
+		return OPAL_PARAMETER;
+
+	dev = phb_to_npu2_dev_ocapi(phb);
+	if (!dev)
+		return OPAL_PARAMETER;
+
+	block = index_to_block(dev->index);
+	stack = index_to_stack(dev->index);
+	if (block == NPU2_BLOCK_OTL1)
+		offset = NPU2_XSL_PSL_SPAP_A1;
+	else
+		offset = NPU2_XSL_PSL_SPAP_A0;
+
+
+	lock(&dev->npu->lock);
+	/*
+	 * set the SPAP used by the device
+	 */
+	reg = npu2_scom_read(dev->npu->chip_id, dev->npu->xscom_base,
+			NPU2_REG_OFFSET(stack, NPU2_BLOCK_XSL, offset),
+			NPU2_MISC_DA_LEN_8B);
+	if ((addr && (reg & NPU2_XSL_PSL_SPAP_EN)) ||
+		(!addr && !(reg & NPU2_XSL_PSL_SPAP_EN))) {
+		rc = OPAL_BUSY;
+		goto out;
+	}
+	/* SPA is disabled by passing a NULL address */
+	reg = addr;
+	if (addr)
+		reg = addr | NPU2_XSL_PSL_SPAP_EN;
+
+	npu2_scom_write(dev->npu->chip_id, dev->npu->xscom_base,
+			NPU2_REG_OFFSET(stack, NPU2_BLOCK_XSL, offset),
+			NPU2_MISC_DA_LEN_8B, reg);
+
+	/*
+	 * set the PE mask that the OS uses for PASID -> PE handle
+	 * conversion
+	 */
+	reg = npu2_scom_read(dev->npu->chip_id, dev->npu->xscom_base,
+			NPU2_OTL_CONFIG0(stack, block), NPU2_MISC_DA_LEN_8B);
+	reg &= ~NPU2_OTL_CONFIG0_PE_MASK;
+	reg |= (PE_mask << (63-7));
+	npu2_scom_write(dev->npu->chip_id, dev->npu->xscom_base,
+			NPU2_OTL_CONFIG0(stack, block), NPU2_MISC_DA_LEN_8B,
+			reg);
+	rc = OPAL_SUCCESS;
+out:
+	unlock(&dev->npu->lock);
+	return rc;
+}
+opal_call(OPAL_NPU_SPA_SETUP, opal_npu_spa_setup, 4);
+
+static int64_t opal_npu_spa_clear_cache(uint64_t phb_id, uint32_t __unused bdfn,
+					uint64_t PE_handle)
+{
+	uint64_t cc_inv, stack, block, reg, rc;
+	uint32_t retries = 5;
+	struct phb *phb = pci_get_phb(phb_id);
+	struct npu2_dev *dev;
+
+	if (!phb || phb->phb_type != phb_type_npu_v2_opencapi)
+		return OPAL_PARAMETER;
+
+	if (PE_handle > MAX_PE_HANDLE)
+		return OPAL_PARAMETER;
+
+	dev = phb_to_npu2_dev_ocapi(phb);
+	if (!dev)
+		return OPAL_PARAMETER;
+
+	block = index_to_block(dev->index);
+	stack = index_to_stack(dev->index);
+	cc_inv = NPU2_REG_OFFSET(stack, NPU2_BLOCK_XSL, NPU2_XSL_PSL_LLCMD_A0);
+
+	lock(&dev->npu->lock);
+	reg = npu2_scom_read(dev->npu->chip_id, dev->npu->xscom_base, cc_inv,
+			NPU2_MISC_DA_LEN_8B);
+	if (reg & PPC_BIT(16)) {
+		rc = OPAL_BUSY;
+		goto out;
+	}
+
+	reg = PE_handle | PPC_BIT(15);
+	if (block == NPU2_BLOCK_OTL1)
+		reg |= PPC_BIT(48);
+	npu2_scom_write(dev->npu->chip_id, dev->npu->xscom_base, cc_inv,
+			NPU2_MISC_DA_LEN_8B, reg);
+
+	rc = OPAL_HARDWARE;
+	while (retries--) {
+		reg = npu2_scom_read(dev->npu->chip_id, dev->npu->xscom_base,
+				     cc_inv, NPU2_MISC_DA_LEN_8B);
+		if (!(reg & PPC_BIT(16))) {
+			rc = OPAL_SUCCESS;
+			break;
+		}
+		/* the bit expected to flip in less than 200us */
+		time_wait_us(200);
+	}
+out:
+	unlock(&dev->npu->lock);
+	return rc;
+}
+opal_call(OPAL_NPU_SPA_CLEAR_CACHE, opal_npu_spa_clear_cache, 3);
+
+static int get_template_rate(unsigned int templ, char *rate_buf)
+{
+	int shift, idx, val;
+
+	/*
+	 * Each rate is encoded over 4 bits (0->15), with 15 being the
+	 * slowest. The buffer is a succession of rates for all the
+	 * templates. The first 4 bits are for template 63, followed
+	 * by 4 bits for template 62, ... etc. So the rate for
+	 * template 0 is at the very end of the buffer.
+	 */
+	idx = (TL_MAX_TEMPLATE - templ) / 2;
+	shift = 4 * (1 - ((TL_MAX_TEMPLATE - templ) % 2));
+	val = rate_buf[idx] >> shift;
+	return val;
+}
+
+static bool is_template_supported(unsigned int templ, long capabilities)
+{
+	return !!(capabilities & (1ull << templ));
+}
+
+static int64_t opal_npu_tl_set(uint64_t phb_id, uint32_t bdfn,
+			long capabilities, uint64_t rate_phys, int rate_sz)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+	struct npu2_dev *dev;
+	uint64_t stack, block, reg, templ_rate;
+	int i, rate_pos;
+	char *rate = (char *) rate_phys;
+
+	if (!phb || phb->phb_type != phb_type_npu_v2_opencapi)
+		return OPAL_PARAMETER;
+	if (!opal_addr_valid(rate) || rate_sz != TL_RATE_BUF_SIZE)
+		return OPAL_PARAMETER;
+
+	dev = phb_to_npu2_dev_ocapi(phb);
+	if (!dev)
+		return OPAL_PARAMETER;
+
+	block = index_to_block(dev->index);
+	stack = index_to_stack(dev->index);
+	/*
+	 * The 'capabilities' argument defines what TL template the
+	 * device can receive. OpenCAPI 3.0 and 4.0 define 64 templates, so
+	 * that's one bit per template.
+	 *
+	 * For each template, the device processing time may vary, so
+	 * the device advertises at what rate a message of a given
+	 * template can be sent. That's encoded in the 'rate' buffer.
+	 *
+	 * On P9, NPU only knows about TL templates 0 -> 3.
+	 * Per the spec, template 0 must be supported.
+	 */
+	if (!is_template_supported(0, capabilities))
+		return OPAL_PARAMETER;
+
+	reg = npu2_scom_read(dev->npu->chip_id, dev->npu->xscom_base,
+			     NPU2_OTL_CONFIG1(stack, block),
+			     NPU2_MISC_DA_LEN_8B);
+	reg &= ~(NPU2_OTL_CONFIG1_TX_TEMP1_EN | NPU2_OTL_CONFIG1_TX_TEMP3_EN |
+		 NPU2_OTL_CONFIG1_TX_TEMP1_EN);
+	for (i = 0; i < 4; i++) {
+		/* Skip template 0 as it is implicitly enabled */
+		if (i && is_template_supported(i, capabilities))
+			reg |= PPC_BIT(i);
+		/* The tx rate should still be set for template 0 */
+		templ_rate = get_template_rate(i, rate);
+		rate_pos = 8 + i * 4;
+		reg = SETFIELD(PPC_BITMASK(rate_pos, rate_pos + 3), reg,
+			       templ_rate);
+	}
+	npu2_scom_write(dev->npu->chip_id, dev->npu->xscom_base,
+			NPU2_OTL_CONFIG1(stack, block), NPU2_MISC_DA_LEN_8B,
+			reg);
+	prlog(PR_DEBUG, "OCAPI: Link %llx:%x, TL conf1 register set to %llx\n",
+	      phb_id, bdfn, reg);
+	return OPAL_SUCCESS;
+}
+opal_call(OPAL_NPU_TL_SET, opal_npu_tl_set, 5);
