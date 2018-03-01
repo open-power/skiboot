@@ -23,6 +23,11 @@ void npu2_write4(struct npu2 *p, uint64_t reg, uint64_t val);
 uint64_t npu2_read(struct npu2 *p, uint64_t reg);
 void npu2_write(struct npu2 *p, uint64_t reg, uint64_t val);
 void npu2_write_mask(struct npu2 *p, uint64_t reg, uint64_t val, uint64_t mask);
+uint64_t npu2_scom_read(uint64_t gcid, uint64_t scom_base,
+			uint64_t reg, uint64_t size);
+void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
+		     uint64_t reg, uint64_t size,
+		     uint64_t val);
 
 /* SCOM Registers to dump on HMI to aid in debugging */
 #define NPU2_DEBUG_REG_START 0x5011000
