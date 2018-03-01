@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1072,14 +1072,22 @@ void fsp_console_select_stdout(void)
 			 */
 		}
 	}
+
 	dt_check_del_prop(dt_chosen, "linux,stdout-path");
+	dt_check_del_prop(dt_chosen, "stdout-path");
 
 	if (fsp_serials[1].open && use_serial) {
-		dt_add_property_string(dt_chosen, "linux,stdout-path",
+		if (proc_gen < proc_gen_p9)
+			dt_add_property_string(dt_chosen, "linux,stdout-path",
+                                       "/ibm,opal/consoles/serial@1");
+		dt_add_property_string(dt_chosen, "stdout-path",
 				       "/ibm,opal/consoles/serial@1");
 		prlog(PR_NOTICE, "FSPCON: default console set to serial A\n");
 	} else {
-		dt_add_property_string(dt_chosen, "linux,stdout-path",
+		if (proc_gen < proc_gen_p9)
+			dt_add_property_string(dt_chosen, "linux,stdout-path",
+					       "/ibm,opal/consoles/serial@0");
+		dt_add_property_string(dt_chosen, "stdout-path",
 				       "/ibm,opal/consoles/serial@0");
 		prlog(PR_NOTICE, "FSPCON: default console set to SOL/DVS\n");
 	}
