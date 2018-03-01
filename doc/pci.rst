@@ -59,3 +59,8 @@ To Manage DMA Windows :
 
 1. The host calls ``opal_pci_map_pe_dma_window( phb_id, dma_window_number, pe_number, tce_levels, tce_table_addr, tce_table_size, tce_page_size, utin64_t* pci_start_addr )`` to setup a DMA window for a PE to translate through a TCE table structure in KVM memory.
 2. The host calls ``opal_pci_map_pe_dma_window_real( phb_id, dma_window_number, pe_number, mem_low_addr, mem_high_addr)`` to setup a DMA window for a PE that is translated (but validated by the PHB as an untranlsated address space authorized to this PE).
+
+Device Tree Bindings
+--------------------
+
+See :doc:`device-tree/pci` for device tree information.
