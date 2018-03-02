@@ -4061,11 +4061,13 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 		ret = enable_capi_mode(p, pe_number, CAPI_DMA_TVT0,
 					CAPP_MAX_STQ_ENGINES |
 					CAPP_MIN_DMA_READ_ENGINES);
+		disable_fast_reboot("CAPP being enabled");
 		break;
 	case OPAL_PHB_CAPI_MODE_DMA_TVT1:
 		ret = enable_capi_mode(p, pe_number, CAPI_DMA_TVT1,
 					CAPP_MIN_STQ_ENGINES |
 					CAPP_MAX_DMA_READ_ENGINES);
+		disable_fast_reboot("CAPP being enabled");
 		break;
 	case OPAL_PHB_CAPI_MODE_SNOOP_ON:
 		/* nothing to do P9 if CAPP is alreay enabled */
@@ -4078,10 +4080,6 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 	default:
 		ret = OPAL_UNSUPPORTED;
 	}
-
-	/* If CAPP enabled then disable fast-reboot for now */
-	if (ret == OPAL_SUCCESS)
-		disable_fast_reboot("CAPP being enabled");
 
 	return ret;
 }
