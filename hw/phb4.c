@@ -4019,10 +4019,8 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 
 	if (!chiptod_capp_timebase_sync(p->chip_id, CAPP_TFMR,
 					CAPP_TB,
-					PHB4_CAPP_REG_OFFSET(p))) {
+					PHB4_CAPP_REG_OFFSET(p)))
 		PHBERR(p, "CAPP: Failed to sync timebase\n");
-		return OPAL_HARDWARE;
-	}
 
 	/* set callbacks to handle HMI events */
 	capi_ops.get_capp_info = &phb4_get_capp_info;
