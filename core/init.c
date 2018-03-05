@@ -50,6 +50,7 @@
 #include <libstb/trustedboot.h>
 #include <phys-map.h>
 #include <imc.h>
+#include <dts.h>
 
 enum proc_gen proc_gen;
 unsigned int pcie_max_link_speed;
@@ -517,7 +518,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 		 * OCC takes few secs to boot.  Call this as late as
 		 * as possible to avoid delay.
 		 */
-		occ_sensors_init();
+		if (!occ_sensors_init())
+			dts_sensor_create_nodes(sensor_node);
 
 	} else {
 		/* fdt will be rebuilt */
