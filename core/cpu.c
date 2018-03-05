@@ -57,6 +57,7 @@ static bool ipi_enabled;
 static bool pm_enabled;
 static bool current_hile_mode;
 static bool current_radix_mode;
+static bool tm_suspend_enabled;
 
 unsigned long cpu_secondary_start __force_data = 0;
 
@@ -1012,6 +1013,21 @@ static int find_dec_bits(void)
 	return bits;
 }
 
+static void init_tm_suspend_mode_property(void)
+{
+	struct dt_node *node;
+
+	/* If we don't find anything, assume TM suspend is enabled */
+	tm_suspend_enabled = true;
+
+	node = dt_find_by_path(dt_root, "/ibm,opal/fw-features/tm-suspend-mode");
+	if (!node)
+		return;
+
+	if (dt_find_property(node, "disabled"))
+		tm_suspend_enabled = false;
+}
+
 void init_all_cpus(void)
 {
 	struct dt_node *cpus, *cpu;
@@ -1020,6 +1036,8 @@ void init_all_cpus(void)
 
 	cpus = dt_find_by_path(dt_root, "/cpus");
 	assert(cpus);
+
+	init_tm_suspend_mode_property();
 
 	/* Iterate all CPUs in the device-tree */
 	dt_for_each_child(cpus, cpu) {
@@ -1436,11 +1454,10 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 	if (flags & OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED) {
 		flags &= ~OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED;
 
-		/*
-		 * Pending a hostboot change we can't determine the status of
-		 * this, so it always fails.
-		 */
-		rc = OPAL_UNSUPPORTED;
+		if (tm_suspend_enabled)
+			rc = OPAL_UNSUPPORTED;
+		else
+			rc = OPAL_SUCCESS;
 	}
 
 	/* Handle P8 DD1 SLW reinit */
