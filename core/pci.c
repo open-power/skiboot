@@ -987,7 +987,7 @@ static void pci_reset_phb(void *data)
 	}
 	pci_slot_remove_flags(slot, PCI_SLOT_FLAG_BOOTUP);
 	if (rc < 0)
-		PCIERR(phb, 0, "Error %lld resetting\n", rc);
+		PCIDBG(phb, 0, "Error %lld resetting\n", rc);
 }
 
 static void pci_scan_phb(void *data)
