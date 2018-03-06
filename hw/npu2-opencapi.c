@@ -898,6 +898,15 @@ static struct pci_slot *npu2_opencapi_slot_create(struct phb *phb)
 	slot->ops.get_latch_state     = NULL;
 	slot->ops.set_power_state     = NULL;
 	slot->ops.set_attention_state = NULL;
+	/*
+	 * Temporarily erase the run_sm callback until we support
+	 * dynamic reset of the link. Otherwise, run_sm may call
+	 * freset, creset, ... and we don't define them. The run_sm
+	 * pointer is always tested before being called, at least at
+	 * the time of this writing :-) It will go away when we
+	 * implement dynamic reset of the link
+	 */
+	slot->ops.run_sm = NULL;
 
 	return slot;
 }
