@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -683,8 +683,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 	prlog(PR_DEBUG,"FLASH: %s partition %s ECC\n",
 	      name, ecc  ? "has" : "doesn't have");
 
-	if ((ecc ? ecc_buffer_size_minus_ecc(ffs_part_size) : ffs_part_size) <
-	     SECURE_BOOT_HEADERS_SIZE) {
+	if (ffs_part_size < SECURE_BOOT_HEADERS_SIZE) {
 		prerror("FLASH: secboot headers bigger than "
 			"partition size 0x%x\n", ffs_part_size);
 		goto out_free_ffs;
@@ -722,8 +721,6 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		}
 
 		ffs_part_start += SECURE_BOOT_HEADERS_SIZE;
-		if (ecc)
-			ffs_part_start += ecc_size(SECURE_BOOT_HEADERS_SIZE);
 
 		rc = blocklevel_read(flash->bl, ffs_part_start, bufp,
 					  content_size);

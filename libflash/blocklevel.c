@@ -68,6 +68,11 @@ static int ecc_protected(struct blocklevel_device *bl, uint64_t pos, uint64_t le
 	return 0;
 }
 
+static uint64_t with_ecc_pos(uint64_t ecc_start, uint64_t pos)
+{
+	return pos + ((pos - ecc_start) / (BYTES_PER_ECC));
+}
+
 static int reacquire(struct blocklevel_device *bl)
 {
 	if (!bl->keep_alive && bl->reacquire)
@@ -112,7 +117,7 @@ int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint6
 {
 	int rc, ecc_protection;
 	struct ecc64 *buffer;
-	uint64_t ecc_start, ecc_len = ecc_buffer_size(len);
+	uint64_t ecc_pos, ecc_start, ecc_diff, ecc_len;
 
 	FL_DBG("%s: 0x%" PRIx64 "\t%p\t0x%" PRIx64 "\n", __func__, pos, buf, len);
 	if (!bl || !buf) {
@@ -139,6 +144,15 @@ int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint6
 		return FLASH_ERR_PARM_ERROR;
 	}
 
+	pos = with_ecc_pos(ecc_start, pos);
+
+	ecc_pos = ecc_buffer_align(ecc_start, pos);
+	ecc_diff = pos - ecc_pos;
+	ecc_len = ecc_buffer_size(len + ecc_diff);
+
+	FL_DBG("%s: adjusted_pos: 0x%" PRIx64 ", ecc_pos: 0x%" PRIx64
+			", ecc_diff: 0x%" PRIx64 ", ecc_len: 0x%" PRIx64 "\n",
+			__func__, pos, ecc_pos, ecc_diff, ecc_len);
 	buffer = malloc(ecc_len);
 	if (!buffer) {
 		errno = ENOMEM;
@@ -146,11 +160,15 @@ int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint6
 		goto out;
 	}
 
-	rc = blocklevel_raw_read(bl, pos, buffer, ecc_len);
+	rc = blocklevel_raw_read(bl, ecc_pos, buffer, ecc_len);
 	if (rc)
 		goto out;
 
-	if (memcpy_from_ecc(buf, buffer, len)) {
+	/*
+	 * Could optimise and simply call memcpy_from_ecc() if ecc_diff
+	 * == 0 but _unaligned checks and bascially does that for us
+	 */
+	if (memcpy_from_ecc_unaligned(buf, buffer, len, ecc_diff)) {
 		errno = EBADF;
 		rc = FLASH_ERR_ECC_INVALID;
 	}
@@ -188,7 +206,7 @@ int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf
 	int rc, ecc_protection;
 	struct ecc64 *buffer;
 	uint64_t ecc_len = ecc_buffer_size(len);
-	uint64_t ecc_start;
+	uint64_t ecc_start, ecc_pos, ecc_diff;
 
 	FL_DBG("%s: 0x%" PRIx64 "\t%p\t0x%" PRIx64 "\n", __func__, pos, buf, len);
 	if (!bl || !buf) {
@@ -215,6 +233,16 @@ int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf
 		return FLASH_ERR_PARM_ERROR;
 	}
 
+	pos = with_ecc_pos(ecc_start, pos);
+
+	ecc_pos = ecc_buffer_align(ecc_start, pos);
+	ecc_diff = pos - ecc_pos;
+	ecc_len = ecc_buffer_size(len + ecc_diff);
+
+	FL_DBG("%s: adjusted_pos: 0x%" PRIx64 ", ecc_pos: 0x%" PRIx64
+			", ecc_diff: 0x%" PRIx64 ", ecc_len: 0x%" PRIx64 "\n",
+			__func__, pos, ecc_pos, ecc_diff, ecc_len);
+
 	buffer = malloc(ecc_len);
 	if (!buffer) {
 		errno = ENOMEM;
@@ -222,12 +250,44 @@ int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf
 		goto out;
 	}
 
-	if (memcpy_to_ecc(buffer, buf, len)) {
-		errno = EBADF;
-		rc = FLASH_ERR_ECC_INVALID;
-		goto out;
-	}
+	if (ecc_diff) {
+		uint64_t start_chunk = ecc_diff;
+		uint64_t end_chunk = BYTES_PER_ECC - ecc_diff;
+		uint64_t end_len = ecc_len - end_chunk;
 
+		/*
+		 * Read the start bytes that memcpy_to_ecc_unaligned() will need
+		 * to calculate the first ecc byte
+		 */
+		rc = blocklevel_raw_read(bl, ecc_pos, buffer, start_chunk);
+		if (rc) {
+			errno = EBADF;
+			rc = FLASH_ERR_ECC_INVALID;
+		}
+
+		/*
+		 * Read the end bytes that memcpy_to_ecc_unaligned() will need
+		 * to calculate the last ecc byte
+		 */
+		rc = blocklevel_raw_read(bl, ecc_pos + end_len, ((char *)buffer) + end_len,
+				end_chunk);
+		if (rc) {
+			errno = EBADF;
+			rc = FLASH_ERR_ECC_INVALID;
+		}
+
+		if (memcpy_to_ecc_unaligned(buffer, buf, len, ecc_diff)) {
+			errno = EBADF;
+			rc = FLASH_ERR_ECC_INVALID;
+			goto out;
+		}
+	} else {
+		if (memcpy_to_ecc(buffer, buf, len)) {
+			errno = EBADF;
+			rc = FLASH_ERR_ECC_INVALID;
+			goto out;
+		}
+	}
 	rc = blocklevel_raw_write(bl, pos, buffer, ecc_len);
 
 out:

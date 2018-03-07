@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
 #include <libflash/file.h>
-#include <libflash/ecc.h>
 #include <libflash/blocklevel.h>
 #include <common/arch_flash.h>
 
@@ -58,7 +57,6 @@ extern const char version[];
 #define __unused __attribute__((unused))
 
 struct gard_ctx {
-	bool ecc;
 	uint32_t f_size;
 	uint32_t f_pos;
 
@@ -69,15 +67,6 @@ struct gard_ctx {
 	struct blocklevel_device *bl;
 	struct ffs_handle *ffs;
 };
-
-/*
- * Return the size of a struct gard_ctx depending on if the buffer contains
- * ECC bits
- */
-static inline size_t sizeof_gard(struct gard_ctx *ctx)
-{
-	return ctx->ecc ? ecc_buffer_size(sizeof(struct gard_record)) : sizeof(struct gard_record);
-}
 
 static void show_flash_err(int rc)
 {
@@ -374,11 +363,11 @@ static int do_iterate(struct gard_ctx *ctx,
 	struct gard_record gard, null_gard;
 
 	memset(&null_gard, UINT_MAX, sizeof(gard));
-	for (i = 0; i * sizeof_gard(ctx) < ctx->gard_data_len && rc == 0; i++) {
+	for (i = 0; i * sizeof(gard) < ctx->gard_data_len && rc == 0; i++) {
 		memset(&gard, 0, sizeof(gard));
 
-		rc = blocklevel_read(ctx->bl, ctx->gard_data_pos +
-				(i * sizeof_gard(ctx)), &gard, sizeof(gard));
+		rc = blocklevel_read(ctx->bl, ctx->gard_data_pos + (i * sizeof(gard)),
+					&gard, sizeof(gard));
 		/* It isn't super clear what constitutes the end, this should do */
 		if (rc || memcmp(&gard, &null_gard, sizeof(gard)) == 0)
 			break;
@@ -397,7 +386,7 @@ static int do_iterate(struct gard_ctx *ctx,
  */
 static int __gard_next(struct gard_ctx *ctx, int pos, struct gard_record *gard, int *rc)
 {
-	uint32_t offset = pos * sizeof_gard(ctx);
+	uint32_t offset = pos * sizeof(*gard);
 
 	if (offset > ctx->gard_data_len) /* too big */
 		return -1;
@@ -577,7 +566,7 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 	if (pos < largest) {
 		/* We're not clearing the last record, shift all the records up */
 		int buf_len = ((largest - pos) * sizeof(struct gard_record));
-		int buf_pos = ctx->gard_data_pos + ((pos + 1) * sizeof_gard(ctx));
+		int buf_pos = ctx->gard_data_pos + ((pos + 1) * sizeof(struct gard_record));
 		buf = malloc(buf_len);
 		if (!buf)
 			return -ENOMEM;
@@ -589,17 +578,17 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 			return rc;
 		}
 
-		rc = blocklevel_smart_write(ctx->bl, buf_pos - sizeof_gard(ctx), buf, buf_len);
+		rc = blocklevel_smart_write(ctx->bl, buf_pos - sizeof(gard), buf, buf_len);
 		free(buf);
 		if (rc) {
 			fprintf(stderr, "Couldn't write to flash at 0x%08x for len 0x%08x\n",
-			        buf_pos - (int) sizeof_gard(ctx), buf_len);
+					buf_pos - (int) sizeof(struct gard_record), buf_len);
 			return rc;
 		}
 	}
 
 	/* Now wipe the last record */
-	rc = blocklevel_smart_write(ctx->bl, ctx->gard_data_pos + (largest * sizeof_gard(ctx)),
+	rc = blocklevel_smart_write(ctx->bl, ctx->gard_data_pos + (largest * sizeof(null_gard)),
 	                            &null_gard, sizeof(null_gard));
 	printf("done\n");
 
@@ -608,27 +597,24 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 
 static int reset_partition(struct gard_ctx *ctx)
 {
-	int len, num_entries, rc = 0;
 	struct gard_record *gard;
+	int rc = 0;
 
-	num_entries = ctx->gard_data_len / sizeof_gard(ctx);
-	len = num_entries * sizeof(*gard);
-	gard = malloc(len);
+	gard = malloc(ctx->gard_data_len);
 	if (!gard) {
 		return FLASH_ERR_MALLOC_FAILED;
 	}
-	memset(gard, 0xFF, len);
+	memset(gard, 0xFF, ctx->gard_data_len);
 
 	rc = blocklevel_smart_erase(ctx->bl, ctx->gard_data_pos, ctx->gard_data_len);
 	if (rc) {
 		fprintf(stderr, "Couldn't erase the gard partition. Bailing out\n");
 		goto out;
 	}
-	rc = blocklevel_write(ctx->bl, ctx->gard_data_pos, gard, len);
-	if (rc) {
+
+	rc = blocklevel_write(ctx->bl, ctx->gard_data_pos, gard, ctx->gard_data_len);
+	if (rc)
 		fprintf(stderr, "Couldn't reset the entire gard partition. Bailing out\n");
-		goto out;
-	}
 
 out:
 	free(gard);
@@ -699,7 +685,7 @@ static int do_create(struct gard_ctx *ctx, int argc, char **argv)
 
 	/* do we have an empty record to write into? */
 	if (!rc && !is_valid_record(&gard)) {
-		int offset = last_pos * sizeof_gard(ctx);
+		int offset = last_pos * sizeof(gard);
 
 		memset(&gard, 0xff, sizeof(gard));
 
@@ -976,7 +962,7 @@ int main(int argc, char **argv)
 			goto out;
 
 		rc = ffs_part_info(ctx->ffs, ctx->gard_part_idx, NULL, &(ctx->gard_data_pos),
-				&(ctx->gard_data_len), NULL, &(ctx->ecc));
+				&(ctx->gard_data_len), NULL, NULL);
 		if (rc)
 			goto out;
 	} else {
@@ -986,7 +972,6 @@ int main(int argc, char **argv)
 				goto out;
 		}
 
-		ctx->ecc = ecc;
 		ctx->gard_data_pos = 0;
 		ctx->gard_data_len = ctx->f_size;
 	}
