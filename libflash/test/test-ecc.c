@@ -487,5 +487,36 @@ int main(void)
 
 	free(buf);
 	free(ret_buf);
+
+	/* Check that unaligned address become aligned */
+	if (ecc_buffer_align(0, 5) != 0) {
+		ERR("ecc_buffer_align(0, 5) not 0 -> %ld\n", ecc_buffer_align(0, 5));
+		exit(1);
+	}
+
+	if (ecc_buffer_align(0, 8) != 0) {
+		ERR("ecc_buffer_align(0, 8) not 0 -> %ld\n", ecc_buffer_align(0, 8));
+		exit(1);
+	}
+	if (ecc_buffer_align(0, 9) != 9) {
+		ERR("ecc_buffer_align(0, 9) not 9 -> %ld\n", ecc_buffer_align(0, 9));
+		exit(1);
+	}
+	if (ecc_buffer_align(0, 15) != 9) {
+		ERR("ecc_buffer_align(0, 15) not 9 -> %ld\n", ecc_buffer_align(0, 15));
+		exit(1);
+	}
+	if (ecc_buffer_align(5, 10) != 5) {
+		ERR("ecc_buffer_align(5, 10) not 5 -> %ld\n", ecc_buffer_align(5, 10));
+		exit(1);
+	}
+	if (ecc_buffer_align(5, 18) != 14) {
+		ERR("ecc_buffer_align(5, 18) not 14 -> %ld\n", ecc_buffer_align(5, 18));
+		exit(1);
+	}
+	if (ecc_buffer_align(0, 50) != 45) {
+		ERR("ecc_buffer_align(0, 50) not 45 -> %ld\n", ecc_buffer_align(0, 50));
+		exit(1);
+	}
 	return 0;
 }

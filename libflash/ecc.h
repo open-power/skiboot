@@ -67,4 +67,9 @@ static inline uint64_t ecc_buffer_size_minus_ecc(uint64_t len)
 	return len * BYTES_PER_ECC / (BYTES_PER_ECC + 1);
 }
 
+static inline uint64_t ecc_buffer_align(uint64_t start, uint64_t pos)
+{
+	return pos - ((pos - start) % (BYTES_PER_ECC + 1));
+}
+
 #endif
