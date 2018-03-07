@@ -549,10 +549,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	cpu_set_ipi_enable(false);
 
 	/* Dump the selected console */
-	if (proc_gen >= proc_gen_p9)
-		stdoutp = dt_prop_get_def(dt_chosen, "stdout-path", NULL);
-	else
-		stdoutp = dt_prop_get_def(dt_chosen, "linux,stdout-path", NULL);
+	stdoutp = dt_prop_get_def(dt_chosen, "linux,stdout-path", NULL);
 	prlog(PR_DEBUG, "INIT: stdout-path: %s\n", stdoutp ? stdoutp : "");
 
 
