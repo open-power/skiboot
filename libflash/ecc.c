@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include <inttypes.h>
+#include <string.h>
 
 #include <ccan/endian/endian.h>
 
@@ -168,6 +169,50 @@ static inline uint64_t eccflipbit(uint64_t data, uint8_t bit)
 	return data ^ (1ul << (63 - bit));
 }
 
+static int eccbyte(uint64_t *dst, struct ecc64 *src)
+{
+	uint8_t ecc, badbit;
+	uint64_t data;
+
+	data = src->data;
+	ecc = src->ecc;
+
+	badbit = eccverify(be64_to_cpu(data), ecc);
+	if (badbit == UE) {
+		FL_ERR("ECC: uncorrectable error: %016lx %02x\n",
+				(long unsigned int)be64_to_cpu(data), ecc);
+		return badbit;
+	}
+	*dst = data;
+	if (badbit <= UE)
+		FL_INF("ECC: correctable error: %i\n", badbit);
+	if (badbit < 64)
+		*dst = (uint64_t)be64_to_cpu(eccflipbit(be64_to_cpu(data),
+					badbit));
+
+	return 0;
+}
+
+static uint64_t *inc_uint64_by(const uint64_t *p, uint64_t i)
+{
+	return (uint64_t *)(((char *)p) + i);
+}
+
+static struct ecc64 *inc_ecc64_by(struct ecc64 *p, uint64_t i)
+{
+	return (struct ecc64 *)(((char *)p) + i);
+}
+
+static uint64_t whole_ecc_bytes(uint64_t i)
+{
+	return i & ~(BYTES_PER_ECC - 1);
+}
+
+static uint64_t whole_ecc_structs(uint64_t i)
+{
+	return whole_ecc_bytes(i) >> 3;
+}
+
 /**
  * Copy data from an input buffer with ECC to an output buffer without ECC.
  * Correct it along the way and check for errors.
@@ -184,10 +229,7 @@ static inline uint64_t eccflipbit(uint64_t data, uint8_t bit)
  */
 int memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint64_t len)
 {
-	beint64_t data;
-	uint8_t ecc;
 	uint32_t i;
-	uint8_t badbit;
 
 	if (len & 0x7) {
 		/* TODO: we could probably handle this */
@@ -200,22 +242,97 @@ int memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint64_t len)
 	len >>= 3;
 
 	for (i = 0; i < len; i++) {
-		data = (src + i)->data;
-		ecc = (src + i)->ecc;
-
-		badbit = eccverify(be64_to_cpu(data), ecc);
-		if (badbit == UE) {
-			FL_ERR("ECC: uncorrectable error: %016lx %02x\n",
-				(long unsigned int)be64_to_cpu(data), ecc);
-			return badbit;
-		}
-		*dst = data;
-		if (badbit <= UE)
-			FL_INF("ECC: correctable error: %i\n", badbit);
-		if (badbit < 64)
-			*dst = (uint64_t)be64_to_cpu(eccflipbit(be64_to_cpu(data), badbit));
+		int rc;
+		rc = eccbyte(dst, src + i);
+		if (rc)
+			return rc;
 		dst++;
 	}
+	return 0;
+}
+
+/**
+ * Copy data from an input buffer with ECC to an output buffer without ECC.
+ * Correct it along the way and check for errors.
+ *
+ * Unlike memcmp_from_ecc() which requires that the first byte into
+ * dst be the first byte in src (which must also be aligned to a
+ * struct ecc64 struct boundary) this function can cope with the first
+ * byte in dst not being the first byte in src.
+ *
+ * Note: src MUST still be aligned to a struct ecc64 otherwise ECC
+ * calculations are impossible.
+ *
+ * The alignment parameter species the number of bytes present at the
+ * start of src that should be skipped and not written to dst. Once
+ * again, these bytes must be in src otherwise the ECC cannot be
+ * checked.
+ *
+ * len also doesn't have any value limitation for this function. Of
+ * course src must contain an exact multiple of struct ecc64 otherwise
+ * ECC calculation cannot be performed but this function won't copy
+ * the entirety of the last src data word if len is not mutiple of 8
+ *
+ * @dst:		destination buffer without ECC
+ * @src:		source buffer with ECC
+ * @len:		number of bytes of data to copy (without ecc).
+ * @alignment:	number of leading bytes in src which shouldn't be
+ * 				copied to dst
+ * @return:	Success or error
+ *
+ * @retval: 0 - success
+ * @retfal: other - fail
+ */
+int memcpy_from_ecc_unaligned(uint64_t *dst, struct ecc64 *src,
+		uint64_t len, uint8_t alignment)
+{
+	char data[BYTES_PER_ECC];
+	uint8_t bytes_wanted;
+	int rc;
+
+	if (alignment > 8)
+		return -1;
+
+	bytes_wanted = BYTES_PER_ECC - alignment;
+
+	/*
+	 * Only actually do the first calculation if an alignment is
+	 * required - otherwise jump straight to memcpy_from_ecc()
+	 */
+	if (alignment) {
+		rc = eccbyte((uint64_t *)data, src);
+		if (rc)
+			return rc;
+
+		memcpy(dst, &data[alignment], bytes_wanted);
+
+		src = inc_ecc64_by(src, sizeof(struct ecc64));
+		dst = inc_uint64_by(dst, bytes_wanted);
+		len -= bytes_wanted;
+	}
+
+	if (len >= BYTES_PER_ECC) {
+		rc = memcpy_from_ecc(dst, src, whole_ecc_bytes(len));
+		if (rc)
+			return rc;
+
+		/*
+		 * It helps to let the compiler to the pointer arithmetic
+		 * here, (dst and src are different types)
+		 */
+		dst += whole_ecc_structs(len);
+		src += whole_ecc_structs(len);
+		len -= whole_ecc_bytes(len);
+	}
+
+	if (len) {
+		rc = eccbyte((uint64_t *)data, src);
+		if (rc)
+			return rc;
+
+		memcpy(dst, data, len);
+	}
+
 	return 0;
 }
 
@@ -253,6 +370,102 @@ int memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint64_t len)
 		ecc_word.data = *(src + i);
 
 		*(dst + i) = ecc_word;
+	}
+
+	return 0;
+}
+
+/**
+ * Copy data from an input buffer without ECC to an output buffer with ECC.
+ *
+ * Unlike memcmp_to_ecc() which requires that the first byte in src be
+ * the first byte of a struct ecc64 structure this function does not
+ * have this requirement.
+ *
+ * Like memcpy_to_ecc_unaligned() the alignment parameter specfies the
+ * number of bytes in the first src word that are missing and would be
+ * required to form a struct ecc64 structure.
+ *
+ * It must be noted here that extra work IN THE CALLER must be done
+ * if your data is unaligned. In order to peform ECC calculations
+ * whatever portions of the ecc words are missing in src must be in
+ * dst.
+ *
+ * For example, if there is an alignment value of 1 then this means
+ * there is 1 byte (of the total of 8 bytes) missing in src which is
+ * needed to calculate the first ECC byte. Therefore the first byte of
+ * dst MUST CONTAIN IT!
+ *
+ * The same problem exists for the end of the buffer where src may not
+ * end exactly aligned, if this is the case dst must contain the
+ * required bytes to calculate the last ECC byte - they should be in
+ * dst where they would normally be found if src did contain those
+ * bytes.
+ *
+ * @dst:		destination buffer with ECC
+ * @src:		source buffer without ECC
+ * @len:		number of bytes of data to copy (without ecc, length of src).
+ * @alignment:	The number of bytes 'missing' from the start of src to
+ * 				be struct ecc64 aligned
+ *
+ *       Note: dst must be big enough to hold ecc bytes as well.
+ *                   Must be 8 byte aligned.
+ *
+ * @return:	success or failure
+ *
+ * @retval: 0 - success
+ * @retfal: other - fail
+ */
+
+int memcpy_to_ecc_unaligned(struct ecc64 *dst, const uint64_t *src,
+		uint64_t len, uint8_t alignment)
+{
+	struct ecc64 ecc_word;
+	uint8_t bytes_wanted;
+	int rc;
+
+	bytes_wanted = BYTES_PER_ECC - alignment;
+
+	/*
+	 * Only actually do the first calculation if an alignment is
+	 * required - otherwise jump straight to memcpy_to_ecc()
+	 */
+	if (alignment) {
+		ecc_word.data = dst->data;
+		memcpy(inc_uint64_by(&ecc_word.data, alignment), src, bytes_wanted);
+
+		ecc_word.ecc = eccgenerate(be64_to_cpu(ecc_word.data));
+		memcpy(dst, inc_ecc64_by(&ecc_word, alignment),
+				sizeof(struct ecc64) - alignment);
+
+		dst = inc_ecc64_by(dst, sizeof(struct ecc64) - alignment);
+		src = inc_uint64_by(src, bytes_wanted);
+		len -= bytes_wanted;
+	}
+
+	if (len >= BYTES_PER_ECC) {
+		rc = memcpy_to_ecc(dst, src, whole_ecc_bytes(len));
+		if (rc)
+			return rc;
+
+		/*
+		 * It helps to let the compiler to the pointer arithmetic
+		 * here, (dst and src are different types)
+		 */
+		dst += whole_ecc_structs(len);
+		src += whole_ecc_structs(len);
+		len -= whole_ecc_bytes(len);
+	}
+
+	if (len) {
+		bytes_wanted = BYTES_PER_ECC - len;
+
+		ecc_word.data = *src;
+		memcpy(inc_uint64_by(&ecc_word.data, len), inc_ecc64_by(dst, len),
+				bytes_wanted);
+		ecc_word.ecc = eccgenerate(be64_to_cpu(ecc_word.data));
+
+		*dst = ecc_word;
 	}
 
 	return 0;
