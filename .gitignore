@@ -87,11 +87,14 @@ libflash/test/test-ecc
 libflash/test/test-mbox
 libflash/test/test-flash-gcov
 libstb/create-container
+libstb/print-container
 libstb/test/run-stb-container
 libstb/test/print-stb-container
 libstb/test/*-gcov
 test/hello_world/hello_kernel/hello_kernel
 test/sreset_world/sreset_kernel/sreset_kernel
+test/hello_world/hello_kernel/hello_kernel.stb
+test/sreset_world/sreset_kernel/sreset_kernel.stb
 zImage.epapr
 vgcore.*
 doc/_build
