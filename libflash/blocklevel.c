@@ -22,6 +22,7 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include <libflash/libflash.h>
 #include <libflash/errors.h>
 
 #include "blocklevel.h"
@@ -34,7 +35,7 @@
  * 0  - The region is not ECC protected
  * -1 - Partially protected
  */
-static int ecc_protected(struct blocklevel_device *bl, uint64_t pos, uint64_t len)
+static int ecc_protected(struct blocklevel_device *bl, uint64_t pos, uint64_t len, uint64_t *start)
 {
 	int i;
 
@@ -44,8 +45,12 @@ static int ecc_protected(struct blocklevel_device *bl, uint64_t pos, uint64_t le
 
 	for (i = 0; i < bl->ecc_prot.n_prot; i++) {
 		/* Fits entirely within the range */
-		if (bl->ecc_prot.prot[i].start <= pos && bl->ecc_prot.prot[i].start + bl->ecc_prot.prot[i].len >= pos + len)
+		if (bl->ecc_prot.prot[i].start <= pos &&
+				bl->ecc_prot.prot[i].start + bl->ecc_prot.prot[i].len >= pos + len) {
+			if (start)
+				*start = bl->ecc_prot.prot[i].start;
 			return 1;
+		}
 
 		/*
 		 * Since we merge regions on inserting we can be sure that a
@@ -53,8 +58,12 @@ static int ecc_protected(struct blocklevel_device *bl, uint64_t pos, uint64_t le
 		 * region
 		 */
 		if ((bl->ecc_prot.prot[i].start >= pos && bl->ecc_prot.prot[i].start < pos + len) ||
-		   (bl->ecc_prot.prot[i].start <= pos && bl->ecc_prot.prot[i].start + bl->ecc_prot.prot[i].len > pos))
+		   (bl->ecc_prot.prot[i].start <= pos &&
+			bl->ecc_prot.prot[i].start + bl->ecc_prot.prot[i].len > pos)) {
+			if (start)
+				*start = bl->ecc_prot.prot[i].start;
 			return -1;
+		}
 	}
 	return 0;
 }
@@ -101,9 +110,9 @@ int blocklevel_raw_read(struct blocklevel_device *bl, uint64_t pos, void *buf, u
 
 int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint64_t len)
 {
-	int rc;
+	int rc, ecc_protection;
 	struct ecc64 *buffer;
-	uint64_t ecc_len = ecc_buffer_size(len);
+	uint64_t ecc_start, ecc_len = ecc_buffer_size(len);
 
 	FL_DBG("%s: 0x%" PRIx64 "\t%p\t0x%" PRIx64 "\n", __func__, pos, buf, len);
 	if (!bl || !buf) {
@@ -111,10 +120,25 @@ int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint6
 		return FLASH_ERR_PARM_ERROR;
 	}
 
-	if (!ecc_protected(bl, pos, len))
+	ecc_protection = ecc_protected(bl, pos, len, &ecc_start);
+
+	FL_DBG("%s: 0x%" PRIx64 " for 0x%" PRIx64 " ecc=%s",
+		__func__, pos, len, ecc_protection ?
+		(ecc_protection == -1 ? "partial" : "yes") : "no");
+
+	if (!ecc_protection)
 		return blocklevel_raw_read(bl, pos, buf, len);
 
-	FL_DBG("%s: region has ECC\n", __func__);
+	/*
+	 * The region we're reading to has both ecc protection and not.
+	 * Perhaps one day in the future blocklevel can cope with this.
+	 */
+	if (ecc_protection == -1) {
+		FL_ERR("%s: Can't cope with partial ecc\n", __func__);
+		errno = EINVAL;
+		return FLASH_ERR_PARM_ERROR;
+	}
+
 	buffer = malloc(ecc_len);
 	if (!buffer) {
 		errno = ENOMEM;
@@ -161,9 +185,10 @@ int blocklevel_raw_write(struct blocklevel_device *bl, uint64_t pos,
 int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf,
 		uint64_t len)
 {
-	int rc;
+	int rc, ecc_protection;
 	struct ecc64 *buffer;
 	uint64_t ecc_len = ecc_buffer_size(len);
+	uint64_t ecc_start;
 
 	FL_DBG("%s: 0x%" PRIx64 "\t%p\t0x%" PRIx64 "\n", __func__, pos, buf, len);
 	if (!bl || !buf) {
@@ -171,10 +196,25 @@ int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf
 		return FLASH_ERR_PARM_ERROR;
 	}
 
-	if (!ecc_protected(bl, pos, len))
+	ecc_protection = ecc_protected(bl, pos, len, &ecc_start);
+
+	FL_DBG("%s: 0x%" PRIx64 " for 0x%" PRIx64 " ecc=%s",
+		__func__, pos, len, ecc_protection ?
+		(ecc_protection == -1 ? "partial" : "yes") : "no");
+
+	if (!ecc_protection)
 		return blocklevel_raw_write(bl, pos, buf, len);
 
-	FL_DBG("%s: region has ECC\n", __func__);
+	/*
+	 * The region we're writing to has both ecc protection and not.
+	 * Perhaps one day in the future blocklevel can cope with this.
+	 */
+	if (ecc_protection == -1) {
+		FL_ERR("%s: Can't cope with partial ecc\n", __func__);
+		errno = EINVAL;
+		return FLASH_ERR_PARM_ERROR;
+	}
+
 	buffer = malloc(ecc_len);
 	if (!buffer) {
 		errno = ENOMEM;
@@ -420,6 +460,7 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 	uint32_t erase_size;
 	const void *write_buf = buf;
 	void *write_buf_start = NULL;
+	uint64_t ecc_start;
 	void *erase_buf;
 	int rc = 0;
 
@@ -439,7 +480,7 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 	if (rc)
 		return rc;
 
-	if (ecc_protected(bl, pos, len)) {
+	if (ecc_protected(bl, pos, len, &ecc_start)) {
 		FL_DBG("%s: region has ECC\n", __func__);
 
 		len = ecc_buffer_size(len);
