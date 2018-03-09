@@ -450,6 +450,7 @@ void cpu_idle_job(void)
 		while (!cpu_check_jobs(cpu)) {
 			if (pm_enabled)
 				break;
+			cpu_relax();
 			barrier();
 		}
 		smt_medium();
