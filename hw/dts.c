@@ -236,34 +236,6 @@ static int dts_read_core_temp_p9(uint32_t pir, struct dts *dts)
 	return 0;
 }
 
-static int dts_wakeup_core(struct cpu_thread *cpu)
-{
-	int retries = 10;
-	int rc;
-
-	while (retries-- > 0) {
-		rc = dctl_set_special_wakeup(cpu);
-		if (rc) {
-			prerror("Failed to set special wakeup on %d (%d)\n",
-				cpu->pir, rc);
-			return rc;
-		}
-
-		if (!dctl_core_is_gated(cpu))
-			break;
-
-		prlog(PR_NOTICE, "Retrying special wakeup on %d\n", cpu->pir);
-		rc = dctl_clear_special_wakeup(cpu);
-		if (rc) {
-			prerror("Failed to clear special wakeup on %d (%d)\n",
-				cpu->pir, rc);
-			return rc;
-		}
-	}
-
-	return rc;
-}
-
 static void dts_async_read_temp(struct timer *t __unused, void *data,
 				u64 now __unused)
 {
@@ -271,7 +243,7 @@ static void dts_async_read_temp(struct timer *t __unused, void *data,
 	int rc, swkup_rc;
 	struct cpu_thread *cpu = data;
 
-	swkup_rc = dts_wakeup_core(cpu);
+	swkup_rc = dctl_set_special_wakeup(cpu);
 
 	rc = dts_read_core_temp_p9(cpu->pir, &dts);
 	if (!rc) {
