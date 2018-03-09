@@ -140,6 +140,13 @@ static inline bool lock_timeout(unsigned long start)
 	unsigned long wait = tb_to_msecs(mftb());
 
 	if (wait - start > LOCK_TIMEOUT_MS) {
+		/*
+		 * If the timebase is invalid, we shouldn't
+		 * throw an error. This is possible with pending HMIs
+		 * that need to recover TB.
+		 */
+		if( !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID))
+			return false;
 		prlog(PR_WARNING, "WARNING: Lock has been "\
 		      "spinning for %lums\n", wait - start);
 		backtrace();
