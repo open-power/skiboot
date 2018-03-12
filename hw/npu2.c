@@ -1393,6 +1393,9 @@ static void npu2_probe_phb(struct dt_node *dn)
 	dt_add_property_cells(np, "ibm,links", links);
 	dt_add_property(np, "ibm,mmio-window", mm_win, sizeof(mm_win));
 	dt_add_property_cells(np, "ibm,phb-diag-data-size", 0);
+
+	/* Disable fast reboot - not currently supported */
+	disable_fast_reboot("NVLink device enabled");
 }
 
 static uint32_t npu2_populate_pcie_cap(struct npu2_dev *dev,
