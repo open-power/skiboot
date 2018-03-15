@@ -101,8 +101,8 @@ static uint32_t print_ffs_info(struct ffs_handle *ffsh, uint32_t toc)
 
 	for (i = 0;; i++) {
 		uint32_t start, size, act, end;
+		struct ffs_entry_user user;
 		char *name = NULL, *flags;
-		int l;
 
 		rc = ffs_part_info(ffsh, i, &name, &start, &size, &act, NULL);
 		if (rc == FFS_ERR_PART_NOT_FOUND)
@@ -115,19 +115,13 @@ static uint32_t print_ffs_info(struct ffs_handle *ffsh, uint32_t toc)
 		    goto out;
 		}
 
-		l = asprintf(&flags, "[%c%c%c%c%c%c%c]",
-				has_ecc(ent) ? 'E' : '-',
-				has_flag(ent, FFS_MISCFLAGS_PRESERVED) ? 'P' : '-',
-				has_flag(ent, FFS_MISCFLAGS_READONLY) ? 'R' : '-',
-				has_flag(ent, FFS_MISCFLAGS_BACKUP) ? 'B' : '-',
-				has_flag(ent, FFS_MISCFLAGS_REPROVISION) ? 'F' : '-',
-				has_flag(ent, FFS_MISCFLAGS_VOLATILE) ? 'V' : '-',
-				has_flag(ent, FFS_MISCFLAGS_CLEARECC) ? 'C' : '-');
-		if (l < 0)
+		user = ffs_entry_user_get(ent);
+		flags = ffs_entry_user_to_string(&user);
+		if (!flags)
 			goto out;
 
 		end = start + size;
-		printf("ID=%02d %15s 0x%08x..0x%08x (actual=0x%08x) %s\n",
+		printf("ID=%02d %15s 0x%08x..0x%08x (actual=0x%08x) [%s]\n",
 				i, name, start, end, act, flags);
 
 		if (strcmp(name, "OTHER_SIDE") == 0)
