@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
 			goto out_while;
 		}
 
-		rc = ffs_entry_add(new_hdr, new_entry, 0);
+		rc = ffs_entry_add(new_hdr, new_entry);
 		if (rc) {
 			fprintf(stderr, "Couldn't add entry '%s' 0x%08x for 0x%08x\n",
 					name, pbase, psize);

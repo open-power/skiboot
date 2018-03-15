@@ -207,7 +207,6 @@ struct __ffs_hdr {
  * @block_size:		Size of block on device (in bytes)
  * @block_count:	Number of blocks on device.
  * @backup		The backup partition
- * @side		The ffs header for the other side
  * @entries:		List of partition entries
  */
 struct ffs_hdr {
@@ -218,7 +217,6 @@ struct ffs_hdr {
 	uint32_t block_count;
 	struct ffs_entry *part;
 	struct ffs_entry *backup;
-	struct ffs_hdr *side;
 	struct list_head entries;
 };
 

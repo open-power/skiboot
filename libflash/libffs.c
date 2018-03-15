@@ -448,10 +448,6 @@ static void __hdr_free(struct ffs_hdr *hdr)
 		list_del(&ent->list);
 		free(ent);
 	}
-	if (hdr->side) {
-		hdr->side->side = NULL;
-		ffs_hdr_free(hdr->side);
-	}
 }
 
 int ffs_hdr_free(struct ffs_hdr *hdr)
@@ -615,10 +611,8 @@ static int __ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry)
 	return 0;
 }
 
-int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry, unsigned int side)
+int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry)
 {
-	int rc;
-
 	/*
 	 * Refuse to add anything after BACKUP_PART has been added, not
 	 * sure why this is needed anymore
@@ -626,36 +620,7 @@ int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry, unsigned int sid
 	if (hdr->backup)
 		return FLASH_ERR_PARM_ERROR;
 
-	if (side == 0) { /* Sideless... */
-		rc = __ffs_entry_add(hdr, entry);
-		if (!rc && hdr->side) {
-			struct ffs_entry *other_ent;
-
-			/*
-			 * A rather sneaky copy is hidden here.
-			 * It doesn't make sense for a consumer to be aware that structures
-			 * must be duplicated. The entries list in the header could have
-			 * been an array of pointers and no copy would have been required.
-			 */
-			other_ent = calloc(1, sizeof (struct ffs_entry));
-			if (!other_ent)
-				/* TODO Remove the added entry from side 1 */
-				return FLASH_ERR_PARM_ERROR;
-			memcpy(other_ent, entry, sizeof(struct ffs_entry));
-			rc = __ffs_entry_add(hdr->side, other_ent);
-			if (rc)
-				/* TODO Remove the added entry from side 1 */
-				free(other_ent);
-		}
-	} else if (side == 1) {
-		rc = __ffs_entry_add(hdr, entry);
-	} else if (side == 2 && hdr->side) {
-		rc = __ffs_entry_add(hdr->side, entry);
-	} else {
-		rc = FLASH_ERR_PARM_ERROR;
-	}
-
-	return rc;
+	return __ffs_entry_add(hdr, entry);
 }
 
 /* This should be done last! */
@@ -687,29 +652,6 @@ int ffs_hdr_create_backup(struct ffs_hdr *hdr)
 
 	hdr->backup = backup;
 
-	/* Do we try to roll back completely if that fails or leave what we've added? */
-	if (hdr->side && hdr->base == 0)
-		rc = ffs_hdr_create_backup(hdr->side);
-
-	return rc;
-}
-
-int ffs_hdr_add_side(struct ffs_hdr *hdr)
-{
-	int rc;
-
-	/* Only a second side for now */
-	if (hdr->side)
-		return FLASH_ERR_PARM_ERROR;
-
-	rc = ffs_hdr_new(hdr->block_size, hdr->block_count, &hdr->side);
-	if (rc)
-		return rc;
-
-	hdr->side->base = hdr->block_size * hdr->block_count;
-	/* Sigh */
-	hdr->side->side = hdr;
-
 	return rc;
 }
 
@@ -724,16 +666,6 @@ int ffs_hdr_finalise(struct blocklevel_device *bl, struct ffs_hdr *hdr)
 	/* A TOC shouldn't have zero partitions */
 	if (num_entries == 0)
 		return FFS_ERR_BAD_SIZE;
-
-	if (hdr->side) {
-		struct ffs_entry *other_side;
-		/* TODO: Change the hard coded 0x8000 */
-		rc = ffs_entry_new("OTHER_SIDE", hdr->side->base, 0x8000, &other_side);
-		if (rc)
-			return rc;
-		list_add_tail(&hdr->entries, &other_side->list);
-		num_entries++;
-	}
 
 	real_hdr = malloc(ffs_hdr_raw_size(num_entries));
 	if (!real_hdr)
@@ -785,11 +717,6 @@ int ffs_hdr_finalise(struct blocklevel_device *bl, struct ffs_hdr *hdr)
 		rc = blocklevel_write(bl, hdr->backup->base, real_hdr,
 			ffs_hdr_raw_size(num_entries));
 	}
-	if (rc)
-		goto out;
-
-	if (hdr->side && hdr->base == 0)
-		rc = ffs_hdr_finalise(bl, hdr->side);
 out:
 	free(real_hdr);
 	return rc;
