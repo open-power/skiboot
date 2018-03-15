@@ -440,14 +440,32 @@ out:
 	return rc;
 }
 
-void ffs_close(struct ffs_handle *ffs)
+static void __hdr_free(struct ffs_hdr *hdr)
 {
 	struct ffs_entry *ent, *next;
 
-	list_for_each_safe(&ffs->hdr.entries, ent, next, list) {
+	list_for_each_safe(&hdr->entries, ent, next, list) {
 		list_del(&ent->list);
 		free(ent);
 	}
+	if (hdr->side) {
+		hdr->side->side = NULL;
+		ffs_hdr_free(hdr->side);
+	}
+}
+
+int ffs_hdr_free(struct ffs_hdr *hdr)
+{
+	printf("Freeing hdr\n");
+	__hdr_free(hdr);
+	free(hdr);
+
+	return 0;
+}
+
+void ffs_close(struct ffs_handle *ffs)
+{
+	__hdr_free(&ffs->hdr);
 
 	if (ffs->cache)
 		free(ffs->cache);
@@ -899,24 +917,6 @@ int ffs_hdr_new(uint32_t block_size, uint32_t block_count, struct ffs_hdr **r)
 	list_add(&ret->entries, &part_table->list);
 
 	*r = ret;
-
-	return 0;
-}
-
-int ffs_hdr_free(struct ffs_hdr *hdr)
-{
-	struct ffs_entry *ent, *next;
-
-	printf("Freeing hdr\n");
-	list_for_each_safe(&hdr->entries, ent, next, list) {
-		list_del(&ent->list);
-		free(ent);
-	}
-	if (hdr->side) {
-		hdr->side->side = NULL;
-		ffs_hdr_free(hdr->side);
-	}
-	free(hdr);
 
 	return 0;
 }
