@@ -149,6 +149,8 @@ int ffs_entry_new(const char *name, uint32_t base, uint32_t size, struct ffs_ent
 
 int ffs_entry_user_set(struct ffs_entry *ent, struct ffs_entry_user *user);
 
+int ffs_entry_set_act_size(struct ffs_entry *ent, uint32_t actual_size);
+
 int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry, unsigned int side);
 
 struct ffs_entry_user ffs_entry_user_get(struct ffs_entry *ent);

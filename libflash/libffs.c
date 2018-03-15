@@ -856,6 +856,19 @@ int ffs_entry_new(const char *name, uint32_t base, uint32_t size, struct ffs_ent
 	return 0;
 }
 
+int ffs_entry_set_act_size(struct ffs_entry *ent, uint32_t actual_size)
+{
+	if (!ent)
+		return -1;
+
+	if (actual_size > ent->size)
+		return FFS_ERR_BAD_PART_SIZE;
+
+	ent->actual = actual_size;
+
+	return 0;
+}
+
 int ffs_hdr_new(uint32_t block_size, uint32_t block_count, struct ffs_hdr **r)
 {
 	struct ffs_hdr *ret;
