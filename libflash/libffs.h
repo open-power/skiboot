@@ -90,7 +90,12 @@ struct ffs_entry_user {
 #define FFS_MISCFLAGS_REPROVISION 0x10
 #define FFS_MISCFLAGS_VOLATILE 0x08
 #define FFS_MISCFLAGS_CLEARECC 0x04
+#define FFS_MISCFLAGS_GOLDEN 0x01
 
+
+int ffs_string_to_entry_user(const char *flags, int nflags,
+		struct ffs_entry_user *user);
+char *ffs_entry_user_to_string(struct ffs_entry_user *user);
 
 bool has_ecc(struct ffs_entry *ent);
 
@@ -145,6 +150,8 @@ int ffs_entry_new(const char *name, uint32_t base, uint32_t size, struct ffs_ent
 int ffs_entry_user_set(struct ffs_entry *ent, struct ffs_entry_user *user);
 
 int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry, unsigned int side);
+
+struct ffs_entry_user ffs_entry_user_get(struct ffs_entry *ent);
 
 int ffs_hdr_create_backup(struct ffs_hdr *hdr);
 

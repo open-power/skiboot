@@ -284,7 +284,7 @@ int main(int argc, char *argv[])
 			case 'E':
 				user.datainteg |= FFS_ENRY_INTEG_ECC;
 				break;
-			case 'V':
+			case 'L':
 				user.vercheck |= FFS_VERCHECK_SHA512V;
 				break;
 			case 'I':
@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
 			case 'F':
 				user.miscflags |= FFS_MISCFLAGS_REPROVISION;
 				break;
-			case 'L':
+			case 'V':
 				user.miscflags |= FFS_MISCFLAGS_VOLATILE;
 				break;
 			case 'C':
