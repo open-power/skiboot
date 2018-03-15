@@ -147,6 +147,8 @@ int ffs_hdr_add_side(struct ffs_hdr *hdr);
 
 int ffs_entry_new(const char *name, uint32_t base, uint32_t size, struct ffs_entry **r);
 
+struct ffs_entry *ffs_entry_put(struct ffs_entry *ent);
+
 int ffs_entry_user_set(struct ffs_entry *ent, struct ffs_entry_user *user);
 
 int ffs_entry_set_act_size(struct ffs_entry *ent, uint32_t actual_size);
@@ -158,5 +160,5 @@ int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry);
 
 int ffs_hdr_finalise(struct blocklevel_device *bl, struct ffs_hdr *hdr);
 
-int ffs_hdr_free(struct ffs_hdr *hdr);
+void ffs_hdr_free(struct ffs_hdr *hdr);
 #endif /* __LIBFFS_H */

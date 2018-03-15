@@ -280,11 +280,33 @@ bool has_flag(struct ffs_entry *ent, uint16_t flag)
 	return ((ent->user.miscflags & flag) != 0);
 }
 
-struct ffs_entry *ffs_entry_get(struct ffs_handle *ffs, uint32_t index)
+static struct ffs_entry *__ffs_entry_get(struct ffs_handle *ffs, uint32_t index)
 {
-	if (!ffs || index >= ffs->hdr.count)
+	if (index >= ffs->hdr.count)
 		return NULL;
 	return ffs->hdr.entries[index];
+}
+
+struct ffs_entry *ffs_entry_get(struct ffs_handle *ffs, uint32_t index)
+{
+	struct ffs_entry *ret = __ffs_entry_get(ffs, index);
+	if (ret)
+		ret->ref++;
+	return ret;
+}
+
+struct ffs_entry *ffs_entry_put(struct ffs_entry *ent)
+{
+	if (!ent)
+		return NULL;
+
+	ent->ref--;
+	if (ent->ref == 0) {
+		free(ent);
+		ent = NULL;
+	}
+
+	return ent;
 }
 
 bool has_ecc(struct ffs_entry *ent)
@@ -402,6 +424,7 @@ int ffs_init(uint32_t offset, uint32_t max_size, struct blocklevel_device *bl,
 		}
 
 		f->hdr.entries[f->hdr.count++] = ent;
+		ent->ref = 1;
 		rc = ffs_entry_to_cpu(&f->hdr, ent, &f->cache->entries[i]);
 		if (rc) {
 			FL_DBG("FFS: Failed checksum for partition %s\n",
@@ -436,15 +459,14 @@ static void __hdr_free(struct ffs_hdr *hdr)
 		return;
 
 	for (i = 0; i < hdr->count; i++)
-		free(hdr->entries[i]);
+		ffs_entry_put(hdr->entries[i]);
 	free(hdr->entries);
 }
 
-int ffs_hdr_free(struct ffs_hdr *hdr)
+void ffs_hdr_free(struct ffs_hdr *hdr)
 {
 	__hdr_free(hdr);
 	free(hdr);
-	return 0;
 }
 
 void ffs_close(struct ffs_handle *ffs)
@@ -483,7 +505,7 @@ int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 	struct ffs_entry *ent;
 	char *n;
 
-	ent = ffs_entry_get(ffs, part_idx);
+	ent = __ffs_entry_get(ffs, part_idx);
 	if (!ent)
 		return FFS_ERR_PART_NOT_FOUND;
 
@@ -609,6 +631,7 @@ int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry)
 		}
 		hdr->entries_size += HDR_ENTRIES_NUM;
 	}
+	entry->ref++;
 	hdr->entries[hdr->count++] = entry;
 
 	return 0;
@@ -728,6 +751,7 @@ int ffs_entry_new(const char *name, uint32_t base, uint32_t size, struct ffs_ent
 	ret->actual = size;
 	ret->pid = FFS_PID_TOPLEVEL;
 	ret->type = FFS_TYPE_DATA;
+	ret->ref = 1;
 
 	*r = ret;
 	return 0;
@@ -790,7 +814,7 @@ int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 	uint32_t offset;
 	int rc;
 
-	ent = ffs_entry_get(ffs, part_idx);
+	ent = __ffs_entry_get(ffs, part_idx);
 	if (!ent) {
 		FL_DBG("FFS: Entry not found\n");
 		return FFS_ERR_PART_NOT_FOUND;

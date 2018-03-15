@@ -116,6 +116,7 @@ static uint32_t print_ffs_info(struct ffs_handle *ffsh, uint32_t toc)
 		}
 
 		user = ffs_entry_user_get(ent);
+		ffs_entry_put(ent);
 		flags = ffs_entry_user_to_string(&user);
 		if (!flags)
 			goto out;
@@ -589,6 +590,7 @@ static void print_partition_detail(struct ffs_handle *ffsh, uint32_t part_id)
 					"REPROVISION [F]\n" : "",
 			has_flag(ent, FFS_MISCFLAGS_VOLATILE) ? "VOLATILE [V]\n" : "",
 			has_flag(ent, FFS_MISCFLAGS_CLEARECC) ? "CLEARECC [C]\n" : "");
+	ffs_entry_put(ent);
 	if (l < 0) {
 		fprintf(stderr, "Memory allocation failure printing flags!\n");
 		goto out;
