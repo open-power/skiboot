@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 IBM Corp.
+/* Copyright 2013-2017 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -49,11 +50,250 @@
  *  Plus \n 40
  *  Lets do 50.
  */
-#define MAX_LINE 100
+#define MAX_LINE 255
+#define MAX_TOCS 10
 #define SEPARATOR ','
 
 /* Full version number (possibly includes gitid). */
 extern const char version[];
+
+static int read_u32(const char *input, uint32_t *val)
+{
+	char *endptr;
+	*val = strtoul(input, &endptr, 0);
+	return (*endptr == SEPARATOR) ? 0 : 1;
+}
+
+static const char *advance_line(const char *input)
+{
+	char *pos = strchr(input, SEPARATOR);
+	if (!pos)
+		return NULL;
+	return pos + 1;
+}
+
+static struct ffs_hdr *parse_toc(const char *line, uint32_t block_size,
+		uint32_t block_count)
+{
+	struct ffs_entry_user user;
+	struct ffs_entry *ent;
+	struct ffs_hdr *hdr;
+	uint32_t tbase;
+	int rc;
+
+	if (read_u32(line, &tbase)) {
+		fprintf(stderr, "Couldn't parse TOC base address\n");
+		return NULL;
+	}
+
+	line = advance_line(line);
+	if (!line) {
+		fprintf(stderr, "Couldn't find TOC flags\n");
+		return NULL;
+	}
+
+	rc = ffs_string_to_entry_user(line, strlen(line), &user);
+	if (rc) {
+		fprintf(stderr, "Couldn't parse TOC flags\n");
+		return NULL;
+	}
+
+	rc = ffs_entry_new("part", tbase, 0, &ent);
+	if (rc) {
+		fprintf(stderr, "Couldn't make entry for TOC@0x%08x\n", tbase);
+		return NULL;
+	}
+
+	rc = ffs_entry_user_set(ent, &user);
+	if (rc) {
+		fprintf(stderr, "Invalid TOC flag\n");
+		ffs_entry_put(ent);
+		return NULL;
+	}
+
+	rc = ffs_hdr_new(block_size, block_count, &ent, &hdr);
+	if (rc) {
+		hdr = NULL;
+		fprintf(stderr, "Couldn't make header for TOC@0x%08x\n", tbase);
+	}
+
+	ffs_entry_put(ent);
+	return hdr;
+}
+
+static int parse_entry(struct blocklevel_device *bl,
+		struct ffs_hdr **tocs, const char *line)
+{
+	char name[FFS_PART_NAME_MAX + 2] = { 0 };
+	struct ffs_entry_user user = { 0 };
+	uint32_t pbase, psize, pactual;
+	struct ffs_entry *new_entry;
+	struct stat data_stat;
+	const char *filename;
+	bool added = false;
+	uint8_t *data_ptr;
+	int data_fd, rc;
+	char *pos;
+
+	memcpy(name, line, FFS_PART_NAME_MAX + 1);
+	pos = strchr(name, SEPARATOR);
+	/* There is discussion to be had as to if we should bail here */
+	if (!pos) {
+		fprintf(stderr, "WARNING: Long partition name will get truncated to '%s'\n",
+				name);
+		name[FFS_PART_NAME_MAX] = '\0';
+	} else {
+		*pos = '\0';
+	}
+
+	line = advance_line(line);
+	if (!line || read_u32(line, &pbase)) {
+		fprintf(stderr, "Couldn't parse '%s' partition base address\n",
+				name);
+		return -1;
+	}
+
+	line = advance_line(line);
+	if (!line || read_u32(line, &psize)) {
+		fprintf(stderr, "Couldn't parse '%s' partition length\n",
+				name);
+		return -1;
+	}
+
+	line = advance_line(line);
+	if (!line || !advance_line(line)) {
+		fprintf(stderr, "Couldn't find '%s' partition flags\n",
+				name);
+		return -1;
+	}
+
+	rc = ffs_string_to_entry_user(line, advance_line(line) - 1 - line, &user);
+	if (rc) {
+		fprintf(stderr, "Couldn't parse '%s' partition flags\n",
+				name);
+		return -1;
+	}
+	line = advance_line(line);
+	/* Already checked return value */
+
+	rc = ffs_entry_new(name, pbase, psize, &new_entry);
+	if (rc) {
+		fprintf(stderr, "Invalid entry '%s' 0x%08x for 0x%08x\n",
+				name, pbase, psize);
+		return -1;
+	}
+
+	rc = ffs_entry_user_set(new_entry, &user);
+	if (rc) {
+		fprintf(stderr, "Couldn't set '%s' partition flags\n",
+				name);
+		ffs_entry_put(new_entry);
+		return -1;
+	}
+
+	if (has_flag(new_entry, FFS_MISCFLAGS_BACKUP)) {
+		rc = ffs_entry_set_act_size(new_entry, 0);
+		if (rc) {
+			fprintf(stderr, "Couldn't set '%s' partition actual size\n",
+					name);
+			ffs_entry_put(new_entry);
+			return -1;
+		}
+	}
+
+	if (!advance_line(line)) {
+		fprintf(stderr, "Missing TOC field for '%s' partition\n",
+				name);
+		ffs_entry_put(new_entry);
+		return -1;
+	}
+
+	while (*line != SEPARATOR) {
+		int toc = *(line++);
+
+		if (!isdigit(toc)) {
+			fprintf(stderr, "Bad TOC value %d (%c) for '%s' partition\n",
+					toc, toc, name);
+			ffs_entry_put(new_entry);
+			return -1;
+		}
+		toc -= '0';
+		if (!tocs[toc]) {
+			fprintf(stderr, "No TOC with ID %d for '%s' partition\n",
+					toc, name);
+			ffs_entry_put(new_entry);
+			return -1;
+		}
+		rc = ffs_entry_add(tocs[toc], new_entry);
+		if (rc) {
+			fprintf(stderr, "Couldn't add '%s' parition to TOC %d\n",
+					name, toc);
+			ffs_entry_put(new_entry);
+			return rc;
+		}
+		added = true;
+	}
+	if (!added) {
+		/*
+		 * They didn't specify a TOC in the TOC field, use
+		 * TOC@0 as the default
+		 */
+		rc = ffs_entry_add(tocs[0], new_entry);
+		if (rc) {
+			fprintf(stderr, "Couldn't add '%s' partition to default TOC: %d\n",
+					name, rc);
+			ffs_entry_put(new_entry);
+			return rc;
+		}
+	}
+	ffs_entry_put(new_entry);
+
+	if (*line != '\0' && *(line + 1) != '\0') {
+		filename = line + 1;
+		data_fd = open(filename, O_RDONLY);
+		if (data_fd == -1) {
+			fprintf(stderr, "Couldn't open file '%s' for '%s' partition "
+					"(%m)\n", filename, name);
+			return -1;
+		}
+
+		if (fstat(data_fd, &data_stat) == -1) {
+			fprintf(stderr, "Couldn't stat file '%s' for '%s' partition "
+				"(%m)\n", filename, name);
+			close(data_fd);
+			return -1;
+		}
+		pactual = data_stat.st_size;
+
+		/*
+		 * Sanity check that the file isn't too large for
+		 * partition
+		 */
+		if (pactual > psize) {
+			fprintf(stderr, "File '%s' for partition '%s' is too large\n",
+					filename, name);
+			close(data_fd);
+			return -1;
+		}
+
+		data_ptr = mmap(NULL, pactual, PROT_READ, MAP_SHARED, data_fd, 0);
+		if (!data_ptr) {
+			fprintf(stderr, "Couldn't mmap file '%s' for '%s' partition "
+				"(%m)\n", filename, name);
+			close(data_fd);
+			return -1;
+		}
+
+		rc = blocklevel_write(bl, pbase, data_ptr, pactual);
+		if (rc)
+			fprintf(stderr, "Couldn't write file '%s' for '%s' partition to PNOR "
+					"(%m)\n", filename, name);
+		munmap(data_ptr, pactual);
+		close(data_fd);
+	}
+
+	return 0;
+}
 
 static void print_version(void)
 {
@@ -77,20 +317,19 @@ static void print_help(const char *pname)
 
 int main(int argc, char *argv[])
 {
-	const char *pname = argv[0];
-	struct blocklevel_device *bl = NULL;
+	char *pnor = NULL, *input = NULL, line[MAX_LINE];
+	bool toc_created = false, bad_input = false;
 	uint32_t block_size = 0, block_count = 0;
-	bool bad_input = false;
-	char *pnor = NULL, *input = NULL;
-	struct ffs_hdr *new_hdr;
+	struct ffs_hdr *tocs[MAX_TOCS] = { 0 };
+	struct blocklevel_device *bl = NULL;
+	const char *pname = argv[0];
+	int line_number, rc, i;
 	FILE *in_file;
-	char line[MAX_LINE];
-	int rc;
 
 	while(1) {
 		struct option long_opts[] = {
-			{"block_size",	required_argument,	NULL,	's'},
 			{"block_count",	required_argument,	NULL,	'c'},
+			{"block_size",	required_argument,	NULL,	's'},
 			{"debug",	no_argument,	NULL,	'g'},
 			{"input",	required_argument,	NULL,	'i'},
 			{"pnor",	required_argument,	NULL,	'p'},
@@ -98,7 +337,7 @@ int main(int argc, char *argv[])
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "c:gi:p:s:", long_opts, &oidx);
+		c = getopt_long(argc, argv, "+:c:gi:p:s:", long_opts, &oidx);
 		if (c == EOF)
 			break;
 		switch(c) {
@@ -109,50 +348,55 @@ int main(int argc, char *argv[])
 			libflash_debug = true;
 			break;
 		case 'i':
+			free(input);
 			input = strdup(optarg);
+			if (!input)
+				fprintf(stderr, "Out of memory!\n");
 			break;
 		case 'p':
+			free(pnor);
 			pnor = strdup(optarg);
+			if (!pnor)
+				fprintf(stderr, "Out of memory!\n");
 			break;
 		case 's':
 			block_size = strtoul(optarg, NULL, 0);
 			break;
+		case ':':
+			fprintf(stderr, "Unrecognised option \"%s\" to '%c'\n",
+					optarg, optopt);
+			bad_input = true;
+			break;
+		case '?':
+			fprintf(stderr, "Unrecognised option '%c'\n", optopt);
+			bad_input = true;
+			break;
 		default:
-			exit(1);
+			fprintf(stderr , "Encountered unknown error parsing options\n");
+			bad_input = true;
 		}
 	}
 
-	if (!block_size || !block_count || !input || !pnor)
-		bad_input = true;
-
-	if (bad_input) {
+	if (bad_input || !block_size || !block_count || !input || !pnor) {
 		print_help(pname);
-		rc = 1;
-		goto out;
-	}
-
-	rc = ffs_hdr_new(block_size, block_count, NULL, &new_hdr);
-	if (rc) {
-		if (rc == FFS_ERR_BAD_SIZE) {
-			/* Well this check is a tad redudant now */
-			fprintf(stderr, "Bad parametres passed to libffs\n");
-		} else {
-			fprintf(stderr, "Error %d initialising new TOC\n", rc);
-		}
-		goto out;
+		return 1;
 	}
 
 	in_file = fopen(input, "r");
 	if (!in_file) {
-		rc = errno;
-		fprintf(stderr, "Couldn't open your input file %s because %s\n", input, strerror(errno));
-		goto out_free_hdr;
+		fprintf(stderr, "Couldn't open your input file %s: %m\n", input);
+		return 2;
 	}
 
+	/*
+	 * TODO: This won't create the file.
+	 * We should do this
+	 */
 	rc = arch_flash_init(&bl, pnor, true);
 	if (rc) {
 		fprintf(stderr, "Couldn't initialise architecture flash structures\n");
-		goto out_close_f;
+		fclose(in_file);
+		return 3;
 	}
 
 	/*
@@ -161,16 +405,14 @@ int main(int argc, char *argv[])
 	 */
 	rc = blocklevel_erase(bl, 0, block_size * block_count);
 	if (rc) {
-		fprintf(stderr, "Couldn't erase file\n");
-		goto out_close_bl;
+		fprintf(stderr, "Couldn't erase '%s' pnor file\n", pnor);
+		fclose(in_file);
+		return 4;
 	}
 
+	line_number = 0;
 	while (fgets(line, MAX_LINE, in_file) != NULL) {
-		struct ffs_entry *new_entry;
-		struct ffs_entry_user user = { 0 };
-		char *pos, *old_pos;
-		char *name, *endptr;
-		uint32_t pbase, psize, pactual = 0;
+		line_number++;
 
 		/* Inline comments in input file */
 		if (line[0] == '#')
@@ -179,186 +421,71 @@ int main(int argc, char *argv[])
 		if (line[strlen(line) - 1] == '\n')
 			line[strlen(line) - 1] = '\0';
 
-		pos = strchr(line, SEPARATOR);
-		if (!pos) {
-			fprintf(stderr, "Invalid input file format: Couldn't find name\n");
-			rc = -1;
-			goto out_close_bl;
-		}
-		*pos = '\0';
-		name = line;
-		/* There is discussion to be had as to if we should bail here */
-		if (pos - line > FFS_PART_NAME_MAX)
-			fprintf(stderr, "WARNING: Long partition '%s' name will get truncated\n",
-					line);
+		if (line[0] == '@') {
+			int toc_num = line[1];
+			rc = 5;
 
-		pos++;
-		old_pos = pos;
-		pos = strchr(pos, SEPARATOR);
-		if (!pos) {
-			fprintf(stderr, "Invalid input file format: Couldn't find base\n");
-			rc = -1;
-			goto out_close_bl;
-		}
-		*pos = '\0';
-		pbase = strtoul(old_pos, &endptr, 0);
-		if (*endptr != '\0') {
-			fprintf(stderr, "Invalid input file format: Couldn't parse "
-					"'%s' partition base address\n", name);
-			rc = -1;
-			goto out_close_bl;
-		}
-
-		pos++;
-		old_pos = pos;
-		pos = strchr(pos, SEPARATOR);
-		if (!pos) {
-			fprintf(stderr, "Invalid input file format: Couldn't find size\n");
-			rc = -1;
-			goto out_close_bl;
-		}
-		*pos = '\0';
-		psize = strtoul(old_pos, &endptr, 0);
-		if (*endptr != '\0') {
-			fprintf(stderr, "Invalid input file format: Couldn't parse "
-					"'%s' partition length\n", name);
-			rc = -1;
-			goto out_close_bl;
-		}
-
-		pos++;
-		while (*pos != '\0' && *pos != SEPARATOR) {
-			switch (*pos) {
-			case 'E':
-				user.datainteg |= FFS_ENRY_INTEG_ECC;
-				break;
-			case 'L':
-				user.vercheck |= FFS_VERCHECK_SHA512V;
-				break;
-			case 'I':
-				user.vercheck |= FFS_VERCHECK_SHA512EC;
-				break;
-			case 'P':
-				user.miscflags |= FFS_MISCFLAGS_PRESERVED;
-				break;
-			case 'R':
-				user.miscflags |= FFS_MISCFLAGS_READONLY;
-				break;
-			case 'F':
-				user.miscflags |= FFS_MISCFLAGS_REPROVISION;
-				break;
-			case 'V':
-				user.miscflags |= FFS_MISCFLAGS_VOLATILE;
-				break;
-			case 'C':
-				user.miscflags |= FFS_MISCFLAGS_CLEARECC;
-				break;
-			/* Not sure these are valid */
-			case 'B':
-				user.miscflags |= FFS_MISCFLAGS_BACKUP;
-				break;
-			default:
-				fprintf(stderr, "Unknown flag '%c'\n", *pos);
-				rc = -1;
-				goto out_close_bl;
-			}
-			pos++;
-		}
-
-		printf("Adding '%s' 0x%08x, 0x%08x\n", name, pbase, psize);
-		rc = ffs_entry_new(name, pbase, psize, &new_entry);
-		if (rc) {
-			fprintf(stderr, "Invalid entry '%s' 0x%08x for 0x%08x\n",
-					name, pbase, psize);
-			goto out_close_bl;
-		}
-
-		rc = ffs_entry_user_set(new_entry, &user);
-		if (rc) {
-			fprintf(stderr, "Invalid flag passed to ffs_entry_user_set\n");
-			goto out_while;
-		}
-
-		rc = ffs_entry_add(new_hdr, new_entry);
-		if (rc) {
-			fprintf(stderr, "Couldn't add entry '%s' 0x%08x for 0x%08x\n",
-					name, pbase, psize);
-			goto out_while;
-		}
-
-		if (*pos != '\0') {
-			struct stat data_stat;
-			int data_fd;
-			uint8_t *data_ptr;
-			char *data_fname = pos + 1;
-
-			data_fd = open(data_fname, O_RDONLY);
-			if (data_fd == -1) {
-				fprintf(stderr, "Couldn't open data file for partition '%s' (filename: %s)\n",
-						name, data_fname);
-				rc = -1;
-				goto out_while;
+			if (!isdigit(toc_num)) {
+				fprintf(stderr, "Invalid TOC ID %d (%c)\n",
+						toc_num, toc_num);
+				goto parse_out;
 			}
 
-			if (fstat(data_fd, &data_stat) == -1) {
-				fprintf(stderr, "Couldn't stat data file for partition '%s': %s\n",
-						name, strerror(errno));
-				rc = -1;
-				goto out_if;
-			}
-			pactual = data_stat.st_size;
+			toc_num -= '0';
 
-			/*
-			 * Sanity check that the file isn't too large for
-			 * partition
-			 */
-			if (pactual > psize) {
-				fprintf(stderr, "Data file for partition '%s' is too large\n",
-						name);
-				rc = -1;
-				goto out_if;
+			if (line[2] != SEPARATOR) {
+				fprintf(stderr, "TOC ID too long\n");
+				goto parse_out;
 			}
 
-			data_ptr = mmap(NULL, pactual, PROT_READ, MAP_SHARED, data_fd, 0);
-			if (!data_ptr) {
-				fprintf(stderr, "Couldn't mmap data file for partition '%s': %s\n",
-						name, strerror(errno));
-				rc = -1;
-				goto out_if;
+			if (tocs[toc_num]) {
+				fprintf(stderr, "Duplicate TOC ID %d\n", toc_num);
+				goto parse_out;
 			}
 
-			rc = blocklevel_write(bl, pbase, data_ptr, pactual);
-			if (rc)
-				fprintf(stderr, "Couldn't write data file for partition '%s' to pnor file:"
-					    " %s\n", name, strerror(errno));
-
-			munmap(data_ptr, pactual);
-out_if:
-			close(data_fd);
-			if (rc)
-				goto out_while;
-			/*
-			 * TODO: Update the actual size within the partition table.
-			 */
+			tocs[toc_num] = parse_toc(&line[3], block_size, block_count);
+			if (!tocs[toc_num])
+				goto parse_out;
+			toc_created = true;
+		} else {
+			if (!toc_created) {
+				fprintf(stderr, "WARNING: Attempting to parse a partition line without any TOCs created.\n");
+				fprintf(stderr, "         Generating a default TOC at zero\n");
+				rc = ffs_hdr_new(block_size, block_count, NULL, &tocs[0]);
+				if (rc) {
+					rc = 7;
+					fprintf(stderr, "Couldn't generate a default TOC at zero\n");
+					goto parse_out;
+				}
+				toc_created = true;
+			}
+			rc = parse_entry(bl, tocs, line);
+			if (rc) {
+				rc = 6;
+				goto parse_out;
+			}
 		}
-
-		continue;
-out_while:
-		ffs_entry_put(new_entry);
-		goto out_close_bl;
 	}
 
-	rc = ffs_hdr_finalise(bl, new_hdr);
-	if (rc)
-		fprintf(stderr, "Failed to write out TOC values\n");
+	for(i = 0; i < MAX_TOCS; i++) {
+		if (tocs[i]) {
+			rc = ffs_hdr_finalise(bl, tocs[i]);
+			if (rc) {
+				rc = 7;
+				fprintf(stderr, "Failed to write out TOC values\n");
+				break;
+			}
+		}
+	}
 
-out_close_bl:
+parse_out:
+	if (rc == 5 || rc == 6)
+		fprintf(stderr, "Failed to parse input file '%s' at line %d\n",
+				input, line_number);
 	arch_flash_close(bl, pnor);
-out_close_f:
 	fclose(in_file);
-out_free_hdr:
-	ffs_hdr_free(new_hdr);
-out:
+	for(i = 0; i < MAX_TOCS; i++)
+		ffs_hdr_free(tocs[i]);
 	free(input);
 	free(pnor);
 	return rc;

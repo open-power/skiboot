@@ -1,6 +1,6 @@
 #! /bin/sh
 
-run_binary "./ffspart" "-c 3 -i /dev/null -p /dev/null"
+run_binary "./ffspart" "-s 1 -i /dev/null -p /dev/null"
 if [ "$?" -ne 1 ] ; then
 	fail_test
 fi

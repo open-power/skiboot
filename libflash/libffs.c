@@ -574,8 +574,11 @@ int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry)
 	uint32_t smallest_base;
 	int i;
 
+	FL_DBG("LIBFFS: Adding '%s' at 0x%08x..0x%08x\n",
+		entry->name, entry->base, entry->base + entry->size);
+
 	if (hdr->count == 0) {
-		FL_DBG("Adding an entry to an empty header\n");
+		FL_DBG("LIBFFS: Adding an entry to an empty header\n");
 		hdr->entries[hdr->count++] = entry;
 	}
 	if (entry->base + entry->size > hdr->block_size * hdr->block_count)

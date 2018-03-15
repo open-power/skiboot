@@ -17,6 +17,10 @@ if [ "$?" -eq 0 ] ; then
 	fail_test
 fi
 
+sed -i "s|$DATA_DIR/$CUR_TEST.1|FILE_ONE|" "$STDERR_OUT"
+
+sed -i "s|$DATA_DIR/$CUR_TEST.in|FILE|" "$STDERR_OUT"
+
 diff_with_result
 
 pass_test

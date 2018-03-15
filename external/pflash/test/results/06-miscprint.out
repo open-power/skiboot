@@ -30,7 +30,7 @@ Name:
 BACKUP (ID=04)
 
 Start       End         Actual    
-0x00006000  0x00007000  0x00001000
+0x00006000  0x00007000  0x00000000
 
 Flags:
 BACKUP [B]

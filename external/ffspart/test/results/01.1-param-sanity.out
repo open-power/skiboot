@@ -11,11 +11,6 @@ Usage: ./ffspart [options] -s size -c num -i layout_file -p pnor_file ...
 	-i, --input=file
 		File containing the required partition data
 
-	-o, --order=( ADB | ABD )
-		Ordering of the TOC, Data and Backup TOC. Currently only ADB (default)
-		is supported
 	-p, --pnor=file
 		Output file to write data
 
-	-t, --sides=( 1 | 2 )
-		Number of sides to the flash (Default: 1)
