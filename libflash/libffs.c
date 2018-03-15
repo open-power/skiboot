@@ -610,25 +610,7 @@ static int __ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry)
 		return FFS_ERR_BAD_PART_BASE;
 	}
 
-	/*
-	 * A header can't have zero entries. Was asserted.
-	 */
-	list_for_each(&hdr->entries, ent, list)
-		if (entry->base < ent->base)
-			break;
-
-	if (ent == list_top(&hdr->entries, struct ffs_entry, list)) {
-		/*
-		 * This should never happen because the partition entry
-		 * should ALWAYS be here
-		 */
-		fprintf(stderr, "Warning: replacing first entry in FFS header\n");
-		list_add(&hdr->entries, &entry->list);
-	} else if (!ent) {
-		list_add_tail(&hdr->entries, &entry->list);
-	} else {
-		list_add_before(&hdr->entries, &entry->list, &ent->list);
-	}
+	list_add_tail(&hdr->entries, &entry->list);
 
 	return 0;
 }
