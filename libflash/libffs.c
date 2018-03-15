@@ -571,7 +571,7 @@ int ffs_next_side(struct ffs_handle *ffs, struct ffs_handle **new_ffs,
 int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry)
 {
 	const char *smallest_name;
-	uint32_t smallest_base;
+	uint32_t smallest_base, toc_base;
 	int i;
 
 	FL_DBG("LIBFFS: Adding '%s' at 0x%08x..0x%08x\n",
@@ -586,6 +586,7 @@ int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry)
 
 	smallest_base = entry->base;
 	smallest_name = entry->name;
+	toc_base = 0;
 	/*
 	 * TODO: This may have assumed entries was sorted
 	 */
@@ -609,17 +610,27 @@ int ffs_entry_add(struct ffs_hdr *hdr, struct ffs_entry *entry)
 		if (entry->pid != FFS_PID_TOPLEVEL)
 			return FFS_ERR_BAD_PART_PID;
 
-		/* Skip the first partition as it IS the partition table */
-		if (ent->base < smallest_base && i > 0) {
-			smallest_base = ent->base;
-			smallest_name = ent->name;
+		/* First partition is the partition table */
+		if (i == 0) {
+			toc_base = ent->base;
+		} else {
+			/*
+			 * We're looking for the partition directly
+			 * after the toc to make sure we don't
+			 * overflow onto it.
+			 */
+			if (ent->base < smallest_base && ent->base > toc_base) {
+				smallest_base = ent->base;
+				smallest_name = ent->name;
+			}
 		}
 	}
-	if ((hdr->count + 1) * sizeof(struct __ffs_entry) +
-			sizeof(struct __ffs_hdr) > smallest_base) {
+	/* If the smallest base is before the TOC, don't worry */
+	if (smallest_base > toc_base && (hdr->count + 1) * sizeof(struct __ffs_entry) +
+			sizeof(struct __ffs_hdr) + toc_base > smallest_base) {
 		fprintf(stderr, "Adding partition '%s' would cause partition '%s' at "
-				"0x%08x to overlap with the header\n", entry->name, smallest_name,
-				smallest_base);
+			"0x%08x to overlap with the header\n", entry->name, smallest_name,
+			smallest_base);
 		return FFS_ERR_BAD_PART_BASE;
 	}
 
