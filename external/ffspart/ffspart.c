@@ -226,8 +226,8 @@ static int parse_entry(struct blocklevel_device *bl,
 		}
 		rc = ffs_entry_add(tocs[toc], new_entry);
 		if (rc) {
-			fprintf(stderr, "Couldn't add '%s' parition to TOC %d\n",
-					name, toc);
+			fprintf(stderr, "Couldn't add '%s' partition to TOC %d: %d\n",
+					name, toc, rc);
 			ffs_entry_put(new_entry);
 			return rc;
 		}
