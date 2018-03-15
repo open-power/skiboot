@@ -1,5 +1,9 @@
 #! /bin/sh
 
+#The backup partition flag is gone
+#disable this test temporarily
+return 0
+
 touch $DATA_DIR/$CUR_TEST.gen
 
 run_binary "./ffspart" "-b -s 0x100 -c 15 -i $DATA_DIR/$CUR_TEST.in -p $DATA_DIR/$CUR_TEST.gen"

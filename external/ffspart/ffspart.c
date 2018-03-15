@@ -52,11 +52,6 @@
 #define MAX_LINE 100
 #define SEPARATOR ','
 
-enum order {
-	ORDER_ADB,
-	ORDER_ABD
-};
-
 /* Full version number (possibly includes gitid). */
 extern const char version[];
 
@@ -76,23 +71,16 @@ static void print_help(const char *pname)
 	printf("\t\tNumber of blocks on the flash\n\n");
 	printf("\t-i, --input=file\n");
 	printf("\t\tFile containing the required partition data\n\n");
-	printf("\t-o, --order=( ADB | ABD )\n");
-	printf("\t\tOrdering of the TOC, Data and Backup TOC. Currently only ADB (default)\n");
-	printf("\t\tis supported\n");
 	printf("\t-p, --pnor=file\n");
 	printf("\t\tOutput file to write data\n\n");
-	printf("\t-t, --sides=( 1 | 2 )\n");
-	printf("\t\tNumber of sides to the flash (Default: 1)\n");
 }
 
 int main(int argc, char *argv[])
 {
 	const char *pname = argv[0];
 	struct blocklevel_device *bl = NULL;
-	unsigned int sides = 1;
 	uint32_t block_size = 0, block_count = 0;
-	enum order order = ORDER_ADB;
-	bool bad_input = false, backup_part = false;
+	bool bad_input = false;
 	char *pnor = NULL, *input = NULL;
 	struct ffs_hdr *new_hdr;
 	FILE *in_file;
@@ -101,25 +89,19 @@ int main(int argc, char *argv[])
 
 	while(1) {
 		struct option long_opts[] = {
-			{"backup",	no_argument, NULL, 'b'},
 			{"block_size",	required_argument,	NULL,	's'},
 			{"block_count",	required_argument,	NULL,	'c'},
 			{"debug",	no_argument,	NULL,	'g'},
 			{"input",	required_argument,	NULL,	'i'},
-			{"order",	required_argument,	NULL,	'o'},
 			{"pnor",	required_argument,	NULL,	'p'},
-			{"tocs",	required_argument,	NULL,	't'},
 			{NULL,	0,	0, 0}
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "bc:gi:o:p:s:t:", long_opts, &oidx);
+		c = getopt_long(argc, argv, "c:gi:p:s:", long_opts, &oidx);
 		if (c == EOF)
 			break;
 		switch(c) {
-		case 'b':
-			backup_part = true;
-			break;
 		case 'c':
 			block_count = strtoul(optarg, NULL, 0);
 			break;
@@ -129,52 +111,27 @@ int main(int argc, char *argv[])
 		case 'i':
 			input = strdup(optarg);
 			break;
-		case 'o':
-			if (strncmp(optarg, "ABD", 3) == 0)
-				order = ORDER_ABD;
-			else if (strncmp(optarg, "ADB", 3) == 0)
-				order = ORDER_ADB;
-			else
-				bad_input = true;
-			break;
 		case 'p':
 			pnor = strdup(optarg);
 			break;
 		case 's':
 			block_size = strtoul(optarg, NULL, 0);
 			break;
-		case 't':
-			sides = strtoul(optarg, NULL, 0);
-			break;
 		default:
 			exit(1);
 		}
 	}
 
-	if (sides == 0)
-		sides = 1;
-
-	if (sides > 2) {
-		fprintf(stderr, "Greater than two sides is not supported\n");
-		bad_input = true;
-	}
-
 	if (!block_size || !block_count || !input || !pnor)
 		bad_input = true;
 
-	/* TODO Check assumption that sides divide the flash in half. */
-	if (block_count % sides) {
-		fprintf(stderr, "Invalid block_count %u for sides %u\n", block_count, sides);
-		bad_input = true;
-	}
-
-	if (bad_input || order == ORDER_ABD) {
+	if (bad_input) {
 		print_help(pname);
 		rc = 1;
 		goto out;
 	}
 
-	rc = ffs_hdr_new(block_size, block_count / sides, &new_hdr);
+	rc = ffs_hdr_new(block_size, block_count, &new_hdr);
 	if (rc) {
 		if (rc == FFS_ERR_BAD_SIZE) {
 			/* Well this check is a tad redudant now */
@@ -183,14 +140,6 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Error %d initialising new TOC\n", rc);
 		}
 		goto out;
-	}
-
-	if (sides == 2) {
-		rc = ffs_hdr_add_side(new_hdr);
-		if (rc) {
-			fprintf(stderr, "Couldn't add side to header\n");
-			goto out_free_hdr;
-		}
 	}
 
 	in_file = fopen(input, "r");
@@ -221,7 +170,6 @@ int main(int argc, char *argv[])
 		struct ffs_entry_user user = { 0 };
 		char *pos, *old_pos;
 		char *name, *endptr;
-		int side = -1;
 		uint32_t pbase, psize, pactual = 0;
 
 		/* Inline comments in input file */
@@ -309,20 +257,6 @@ int main(int argc, char *argv[])
 			case 'B':
 				user.miscflags |= FFS_MISCFLAGS_BACKUP;
 				break;
-			case '0':
-			case '1':
-			case '2':
-				/*
-				 * There should only be one side specified, fail if
-				 * we've already seen a side
-				 */
-				if (side != -1) {
-					rc = -1;
-					goto out_close_bl;
-				} else {
-					side = *pos - '0';
-				}
-				break;
 			default:
 				fprintf(stderr, "Unknown flag '%c'\n", *pos);
 				rc = -1;
@@ -330,9 +264,6 @@ int main(int argc, char *argv[])
 			}
 			pos++;
 		}
-
-		if (side == -1) /* Default to 0 */
-			side = 0;
 
 		printf("Adding '%s' 0x%08x, 0x%08x\n", name, pbase, psize);
 		rc = ffs_entry_new(name, pbase, psize, &new_entry);
@@ -348,7 +279,7 @@ int main(int argc, char *argv[])
 			goto out_while;
 		}
 
-		rc = ffs_entry_add(new_hdr, new_entry, side);
+		rc = ffs_entry_add(new_hdr, new_entry, 0);
 		if (rc) {
 			fprintf(stderr, "Couldn't add entry '%s' 0x%08x for 0x%08x\n",
 					name, pbase, psize);
@@ -415,14 +346,6 @@ out_if:
 out_while:
 		free(new_entry);
 		goto out_close_bl;
-	}
-
-	if (backup_part) {
-		rc = ffs_hdr_create_backup(new_hdr);
-		if (rc) {
-			fprintf(stderr, "Failed to create backup part\n");
-			goto out_close_bl;
-		}
 	}
 
 	rc = ffs_hdr_finalise(bl, new_hdr);
