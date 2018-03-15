@@ -684,8 +684,8 @@ int ffs_hdr_finalise(struct blocklevel_device *bl, struct ffs_hdr *hdr)
 	}
 
 	/* Don't really care if this fails */
-	blocklevel_erase(bl, hdr->base, hdr->size);
-	rc = blocklevel_write(bl, hdr->base, real_hdr,
+	blocklevel_erase(bl, hdr->part->base, hdr->size);
+	rc = blocklevel_write(bl, hdr->part->base, real_hdr,
 		ffs_hdr_raw_size(num_entries));
 	if (rc)
 		goto out;
@@ -770,7 +770,8 @@ int ffs_entry_set_act_size(struct ffs_entry *ent, uint32_t actual_size)
 	return 0;
 }
 
-int ffs_hdr_new(uint32_t block_size, uint32_t block_count, struct ffs_hdr **r)
+int ffs_hdr_new(uint32_t block_size, uint32_t block_count,
+		struct ffs_entry **e, struct ffs_hdr **r)
 {
 	struct ffs_hdr *ret;
 	struct ffs_entry *part_table;
@@ -786,12 +787,23 @@ int ffs_hdr_new(uint32_t block_size, uint32_t block_count, struct ffs_hdr **r)
 	ret->entries = calloc(HDR_ENTRIES_NUM, sizeof(struct ffs_entry *));
 	ret->entries_size = HDR_ENTRIES_NUM;
 
-	/* Don't know how big it will be, ffs_hdr_finalise() will fix */
-	rc = ffs_entry_new("part", 0, 0, &part_table);
-	if (rc) {
-		free(ret);
-		return rc;
+	if (!e || !(*e)) {
+		/* Don't know how big it will be, ffs_hdr_finalise() will fix */
+		rc = ffs_entry_new("part", 0, 0, &part_table);
+		if (rc) {
+			free(ret);
+			return rc;
+		}
+		if (e)
+			*e = part_table;
+	} else {
+		part_table = *e;
 	}
+
+	/* If the user still holds a ref to e, then inc the refcount */
+	if (e)
+		part_table->ref++;
+
 	ret->part = part_table;
 
 	part_table->pid = FFS_PID_TOPLEVEL;

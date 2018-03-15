@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
-	rc = ffs_hdr_new(block_size, block_count, &new_hdr);
+	rc = ffs_hdr_new(block_size, block_count, NULL, &new_hdr);
 	if (rc) {
 		if (rc == FFS_ERR_BAD_SIZE) {
 			/* Well this check is a tad redudant now */

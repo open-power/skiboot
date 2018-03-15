@@ -141,7 +141,7 @@ int ffs_update_act_size(struct ffs_handle *ffs, uint32_t part_idx,
 			uint32_t act_size);
 
 int ffs_hdr_new(uint32_t block_size, uint32_t block_count,
-		struct ffs_hdr **r);
+		struct ffs_entry **e, struct ffs_hdr **r);
 
 int ffs_hdr_add_side(struct ffs_hdr *hdr);
 

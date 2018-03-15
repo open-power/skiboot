@@ -212,7 +212,6 @@ struct __ffs_hdr {
  */
 struct ffs_hdr {
 	uint32_t version;
-	uint32_t base;
 	uint32_t size;
 	uint32_t block_size;
 	uint32_t block_count;
