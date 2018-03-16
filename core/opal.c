@@ -145,7 +145,7 @@ int64_t opal_entry_check(struct stack_frame *eframe)
 	if (!opal_quiesce_state && cpu->in_opal_call) {
 		printf("CPU ATTEMPT TO RE-ENTER FIRMWARE! PIR=%04lx cpu @%p -> pir=%04x token=%llu\n",
 		       mfspr(SPR_PIR), cpu, cpu->pir, token);
-		return OPAL_BUSY;
+		abort();
 	}
 
 again:
