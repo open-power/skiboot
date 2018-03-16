@@ -132,11 +132,7 @@ static void npu2_read_bar(struct npu2 *p, struct npu2_bar *bar)
 	case NPU2_NTL1_BAR:
 		bar->base = GETFIELD(NPU2_NTL_BAR_ADDR, val) << 16;
 		enabled = GETFIELD(NPU2_NTL_BAR_ENABLE, val);
-
-		if (is_p9dd1())
-			bar->size = 0x20000;
-		else
-			bar->size = 0x10000 << GETFIELD(NPU2_NTL_BAR_SIZE, val);
+		bar->size = 0x10000 << GETFIELD(NPU2_NTL_BAR_SIZE, val);
 		break;
 	case NPU2_GENID_BAR:
 		bar->base = GETFIELD(NPU2_GENID_BAR_ADDR, val) << 16;
@@ -170,9 +166,7 @@ static void npu2_write_bar(struct npu2 *p,
 	case NPU2_NTL1_BAR:
 		val = SETFIELD(NPU2_NTL_BAR_ADDR, 0ul, bar->base >> 16);
 		val = SETFIELD(NPU2_NTL_BAR_ENABLE, val, enable);
-
-		if (!is_p9dd1())
-			val = SETFIELD(NPU2_NTL_BAR_SIZE, val, 1);
+		val = SETFIELD(NPU2_NTL_BAR_SIZE, val, 1);
 		break;
 	case NPU2_GENID_BAR:
 		val = SETFIELD(NPU2_GENID_BAR_ADDR, 0ul, bar->base >> 16);
@@ -544,7 +538,7 @@ static int npu2_assign_gmb(struct npu2_dev *ndev)
 	struct npu2 *p = ndev->npu;
 	int peers, mode;
 	uint32_t bdfn;
-	uint64_t base, size, reg, val, old_val, gmb;
+	uint64_t base, size, reg, val, gmb;
 
 	/* Need to work out number of link peers. This amount to
 	 * working out the maximum function number. So work start at
@@ -596,19 +590,11 @@ static int npu2_assign_gmb(struct npu2_dev *ndev)
 	val = SETFIELD(NPU2_MEM_BAR_MODE, val, mode);
 
 	gmb = NPU2_GPU0_MEM_BAR;
-	if (NPU2DEV_BRICK(ndev) && !is_p9dd1())
+	if (NPU2DEV_BRICK(ndev))
 		gmb = NPU2_GPU1_MEM_BAR;
 
 	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
 			      NPU2_BLOCK_SM_0, gmb);
-
-	if (is_p9dd1()) {
-		old_val = npu2_read(p, reg);
-		if (NPU2DEV_BRICK(ndev))
-			val = SETFIELD(PPC_BITMASK(32, 63), old_val, val >> 32);
-		else
-			val = SETFIELD(PPC_BITMASK(0, 31), old_val, val >> 32);
-	}
 
 	npu2_write(p, reg, val);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + NPU2DEV_STACK(ndev),
@@ -820,10 +806,8 @@ static void npu2_hw_init(struct npu2 *p)
 	val = npu2_read(p, NPU2_XTS_CFG);
 	npu2_write(p, NPU2_XTS_CFG, val | NPU2_XTS_CFG_MMIOSD | NPU2_XTS_CFG_TRY_ATR_RO);
 
-	if (!is_p9dd1()) {
-		val = npu2_read(p, NPU2_XTS_CFG2);
-		npu2_write(p, NPU2_XTS_CFG2, val | NPU2_XTS_CFG2_NO_FLUSH_ENA);
-	}
+	val = npu2_read(p, NPU2_XTS_CFG2);
+	npu2_write(p, NPU2_XTS_CFG2, val | NPU2_XTS_CFG2_NO_FLUSH_ENA);
 
 	/*
 	 * There are three different ways we configure the MCD and memory map.
@@ -1263,13 +1247,6 @@ static void assign_mmio_bars(uint64_t gcid, uint32_t scom, uint64_t reg[2], uint
 		  .reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0, NPU2_GENID_BAR) },
 	};
 
-	/* On DD1, stack 2 was used for NPU_REGS, stack 0/1 for NPU_PHY */
-	if (is_p9dd1()) {
-		npu2_bars[0].reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_2, 0, NPU2_PHY_BAR);
-		npu2_bars[1].reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0, 0, NPU2_PHY_BAR);
-		npu2_bars[2].reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_1, 0, NPU2_PHY_BAR);
-	}
-
 	for (i = 0; i < ARRAY_SIZE(npu2_bars); i++) {
 		bar = &npu2_bars[i];
 		npu2_get_bar(gcid, bar);
@@ -1320,41 +1297,39 @@ static void npu2_probe_phb(struct dt_node *dn)
 		return;
 	}
 
-	if (!is_p9dd1()) {
-		/* TODO: Clean this up with register names, etc. when we get
-		 * time. This just turns NVLink mode on in each brick and should
-		 * get replaced with a patch from ajd once we've worked out how
-		 * things are going to work there.
-		 *
-		 * Obviously if the year is now 2020 that didn't happen and you
-		 * should fix this :-) */
-		xscom_write_mask(gcid, 0x5011000, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-		xscom_write_mask(gcid, 0x5011030, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-		xscom_write_mask(gcid, 0x5011060, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-		xscom_write_mask(gcid, 0x5011090, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-		xscom_write_mask(gcid, 0x5011200, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-		xscom_write_mask(gcid, 0x5011230, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-		xscom_write_mask(gcid, 0x5011260, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-		xscom_write_mask(gcid, 0x5011290, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-		xscom_write_mask(gcid, 0x5011400, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-		xscom_write_mask(gcid, 0x5011430, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-		xscom_write_mask(gcid, 0x5011460, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-		xscom_write_mask(gcid, 0x5011490, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	/* TODO: Clean this up with register names, etc. when we get
+	 * time. This just turns NVLink mode on in each brick and should
+	 * get replaced with a patch from ajd once we've worked out how
+	 * things are going to work there.
+	 *
+	 * Obviously if the year is now 2020 that didn't happen and you
+	 * should fix this :-) */
+	xscom_write_mask(gcid, 0x5011000, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011030, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011060, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011090, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011200, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011230, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011260, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011290, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011400, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011430, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011460, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011490, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
 
-		xscom_write_mask(gcid, 0x50110c0, PPC_BIT(53), PPC_BIT(53));
-		xscom_write_mask(gcid, 0x50112c0, PPC_BIT(53), PPC_BIT(53));
-		xscom_write_mask(gcid, 0x50114c0, PPC_BIT(53), PPC_BIT(53));
-		xscom_write_mask(gcid, 0x50110f1, PPC_BIT(41), PPC_BIT(41));
-		xscom_write_mask(gcid, 0x50112f1, PPC_BIT(41), PPC_BIT(41));
-		xscom_write_mask(gcid, 0x50114f1, PPC_BIT(41), PPC_BIT(41));
+	xscom_write_mask(gcid, 0x50110c0, PPC_BIT(53), PPC_BIT(53));
+	xscom_write_mask(gcid, 0x50112c0, PPC_BIT(53), PPC_BIT(53));
+	xscom_write_mask(gcid, 0x50114c0, PPC_BIT(53), PPC_BIT(53));
+	xscom_write_mask(gcid, 0x50110f1, PPC_BIT(41), PPC_BIT(41));
+	xscom_write_mask(gcid, 0x50112f1, PPC_BIT(41), PPC_BIT(41));
+	xscom_write_mask(gcid, 0x50114f1, PPC_BIT(41), PPC_BIT(41));
 
-		xscom_write_mask(gcid, 0x5011110, PPC_BIT(0), PPC_BIT(0));
-		xscom_write_mask(gcid, 0x5011130, PPC_BIT(0), PPC_BIT(0));
-		xscom_write_mask(gcid, 0x5011310, PPC_BIT(0), PPC_BIT(0));
-		xscom_write_mask(gcid, 0x5011330, PPC_BIT(0), PPC_BIT(0));
-		xscom_write_mask(gcid, 0x5011510, PPC_BIT(0), PPC_BIT(0));
-		xscom_write_mask(gcid, 0x5011530, PPC_BIT(0), PPC_BIT(0));
-	}
+	xscom_write_mask(gcid, 0x5011110, PPC_BIT(0), PPC_BIT(0));
+	xscom_write_mask(gcid, 0x5011130, PPC_BIT(0), PPC_BIT(0));
+	xscom_write_mask(gcid, 0x5011310, PPC_BIT(0), PPC_BIT(0));
+	xscom_write_mask(gcid, 0x5011330, PPC_BIT(0), PPC_BIT(0));
+	xscom_write_mask(gcid, 0x5011510, PPC_BIT(0), PPC_BIT(0));
+	xscom_write_mask(gcid, 0x5011530, PPC_BIT(0), PPC_BIT(0));
 
 	index = dt_prop_get_u32(dn, "ibm,npu-index");
 	phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
@@ -1917,8 +1892,18 @@ static void npu2_create_phb(struct dt_node *dn)
 
 void probe_npu2(void)
 {
+	struct proc_chip *chip = next_chip(NULL);
 	struct dt_node *np;
 	const char *zcal;
+
+	/* Abort if we're running on DD1 */
+	if (chip &&
+	    (chip->type == PROC_CHIP_P9_NIMBUS ||
+	     chip->type == PROC_CHIP_P9_CUMULUS) &&
+	    (chip->ec_level & 0xf0) == 0x10) {
+		prlog(PR_INFO, "NPU2: DD1 not supported\n");
+		return;
+	}
 
 	/* Check for a zcal override */
 	zcal = nvram_query("nv_zcal_override");

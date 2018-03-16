@@ -21,16 +21,6 @@
 #include <npu2-regs.h>
 #include <bitutils.h>
 
-bool is_p9dd1(void)
-{
-	struct proc_chip *chip = next_chip(NULL);
-
-	return chip &&
-	       (chip->type == PROC_CHIP_P9_NIMBUS ||
-		chip->type == PROC_CHIP_P9_CUMULUS) &&
-	       (chip->ec_level & 0xf0) == 0x10;
-}
-
 /*
  * We use the indirect method because it uses the same addresses as
  * the MMIO offsets (NPU RING)
@@ -38,34 +28,26 @@ bool is_p9dd1(void)
 static void npu2_scom_set_addr(uint64_t gcid, uint64_t scom_base,
 			       uint64_t addr, uint64_t size)
 {
-	uint64_t isa = is_p9dd1() ? NPU2_DD1_MISC_SCOM_IND_SCOM_ADDR :
-				    NPU2_MISC_SCOM_IND_SCOM_ADDR;
-
 	addr = SETFIELD(NPU2_MISC_DA_ADDR, 0ull, addr);
 	addr = SETFIELD(NPU2_MISC_DA_LEN, addr, size);
-	xscom_write(gcid, scom_base + isa, addr);
+	xscom_write(gcid, scom_base + NPU2_MISC_SCOM_IND_SCOM_ADDR, addr);
 }
 
 void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 		     uint64_t reg, uint64_t size,
 		     uint64_t val)
 {
-	uint64_t isd = is_p9dd1() ? NPU2_DD1_MISC_SCOM_IND_SCOM_DATA :
-				    NPU2_MISC_SCOM_IND_SCOM_DATA;
-
 	npu2_scom_set_addr(gcid, scom_base, reg, size);
-	xscom_write(gcid, scom_base + isd, val);
+	xscom_write(gcid, scom_base + NPU2_MISC_SCOM_IND_SCOM_DATA, val);
 }
 
 uint64_t npu2_scom_read(uint64_t gcid, uint64_t scom_base,
 			uint64_t reg, uint64_t size)
 {
 	uint64_t val;
-	uint64_t isd = is_p9dd1() ? NPU2_DD1_MISC_SCOM_IND_SCOM_DATA :
-				    NPU2_MISC_SCOM_IND_SCOM_DATA;
 
 	npu2_scom_set_addr(gcid, scom_base, reg, size);
-	xscom_read(gcid, scom_base + isd, &val);
+	xscom_read(gcid, scom_base + NPU2_MISC_SCOM_IND_SCOM_DATA, &val);
 
 	return val;
 }

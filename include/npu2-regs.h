@@ -561,13 +561,11 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 #define NPU2_XTS_MMIO_ATSD_STATUS		0x010
 
 /* ALTD SCOM addresses */
-#define NPU2_DD1_MISC_SCOM_IND_SCOM_ADDR	0x38e
 #define NPU2_MISC_SCOM_IND_SCOM_ADDR		0x68e
 #define  NPU2_MISC_DA_ADDR			PPC_BITMASK(0, 23)
 #define  NPU2_MISC_DA_LEN			PPC_BITMASK(24, 25)
 #define   NPU2_MISC_DA_LEN_4B			2
 #define   NPU2_MISC_DA_LEN_8B			3
-#define NPU2_DD1_MISC_SCOM_IND_SCOM_DATA	0x38f
 #define NPU2_MISC_SCOM_IND_SCOM_DATA		0x68f
 
 #define NPU2_FIR_OFFSET				0x40
