@@ -143,6 +143,7 @@ int64_t opal_entry_check(struct stack_frame *eframe)
 		return opal_bad_token(token);
 
 	if (!opal_quiesce_state && cpu->in_opal_call) {
+		disable_fast_reboot("Kernel re-entered OPAL");
 		switch (token) {
 		case OPAL_CONSOLE_READ:
 		case OPAL_CONSOLE_WRITE:
@@ -192,6 +193,7 @@ int64_t opal_exit_check(int64_t retval, struct stack_frame *eframe)
 	uint64_t token = eframe->gpr[0];
 
 	if (!cpu->in_opal_call) {
+		disable_fast_reboot("Un-accounted firmware entry");
 		printf("CPU UN-ACCOUNTED FIRMWARE ENTRY! PIR=%04lx cpu @%p -> pir=%04x token=%llu retval=%lld\n",
 		       mfspr(SPR_PIR), cpu, cpu->pir, token, retval);
 	} else {
