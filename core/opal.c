@@ -143,9 +143,22 @@ int64_t opal_entry_check(struct stack_frame *eframe)
 		return opal_bad_token(token);
 
 	if (!opal_quiesce_state && cpu->in_opal_call) {
-		printf("CPU ATTEMPT TO RE-ENTER FIRMWARE! PIR=%04lx cpu @%p -> pir=%04x token=%llu\n",
-		       mfspr(SPR_PIR), cpu, cpu->pir, token);
-		abort();
+		switch (token) {
+		case OPAL_CONSOLE_READ:
+		case OPAL_CONSOLE_WRITE:
+		case OPAL_CONSOLE_WRITE_BUFFER_SPACE:
+		case OPAL_CONSOLE_FLUSH:
+		case OPAL_POLL_EVENTS:
+		case OPAL_CHECK_TOKEN:
+		case OPAL_CEC_REBOOT:
+		case OPAL_CEC_REBOOT2:
+		case OPAL_SIGNAL_SYSTEM_RESET:
+			break;
+		default:
+			printf("CPU ATTEMPT TO RE-ENTER FIRMWARE! PIR=%04lx cpu @%p -> pir=%04x token=%llu\n",
+			       mfspr(SPR_PIR), cpu, cpu->pir, token);
+			return OPAL_INTERNAL_ERROR;
+		}
 	}
 
 again:
