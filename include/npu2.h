@@ -140,10 +140,8 @@ struct npu2_dev {
 struct npu2 {
 	uint32_t	index;
 	struct dt_node	*dt_node;
-	uint32_t	flags;
 	uint32_t	chip_id;
 	uint64_t	xscom_base;
-	uint64_t	at_xscom;
 	void		*regs;
 	uint64_t	mm_base;
 	uint64_t	mm_size;
