@@ -154,7 +154,7 @@ static void scale_sensor(struct occ_sensor_name *md, u64 *sensor)
 		for (i = labs(exp); i > 0; i--)
 			*sensor *= 10;
 	} else {
-		for (i = labs(exp); sensor && i > 0; i--)
+		for (i = labs(exp); i > 0; i--)
 			*sensor /= 10;
 	}
 }
@@ -171,7 +171,7 @@ static void scale_energy(struct occ_sensor_name *md, u64 *sensor)
 	exp = factor & 0xFF;
 
 	if (exp > 0) {
-		for (i = labs(exp); sensor && i > 0; i--)
+		for (i = labs(exp); i > 0; i--)
 			*sensor /= 10;
 	} else {
 		for (i = labs(exp); i > 0; i--)
