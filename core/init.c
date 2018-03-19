@@ -428,13 +428,13 @@ static bool load_kernel(void)
 				    SECURE_BOOT_HEADERS_SIZE + kernel_size);
 	}
 
-	trustedboot_exit_boot_services();
-
 	return true;
 }
 
 static void load_initramfs(void)
 {
+	uint64_t *initramfs_start;
+	void *stb_container = NULL;
 	int loaded;
 
 	loaded = wait_for_resource_loaded(RESOURCE_ID_INITRAMFS,
@@ -443,15 +443,31 @@ static void load_initramfs(void)
 	if (loaded != OPAL_SUCCESS || !initramfs_size)
 		return;
 
+	if (stb_is_container(INITRAMFS_LOAD_BASE, initramfs_size)) {
+		stb_container = INITRAMFS_LOAD_BASE;
+		initramfs_start = INITRAMFS_LOAD_BASE + SECURE_BOOT_HEADERS_SIZE;
+	} else {
+		initramfs_start = INITRAMFS_LOAD_BASE;
+	}
+
 	dt_check_del_prop(dt_chosen, "linux,initrd-start");
 	dt_check_del_prop(dt_chosen, "linux,initrd-end");
 
 	printf("INIT: Initramfs loaded, size: %zu bytes\n", initramfs_size);
 
 	dt_add_property_u64(dt_chosen, "linux,initrd-start",
-			(uint64_t)INITRAMFS_LOAD_BASE);
+			(uint64_t)initramfs_start);
 	dt_add_property_u64(dt_chosen, "linux,initrd-end",
-			(uint64_t)INITRAMFS_LOAD_BASE + initramfs_size);
+			(uint64_t)initramfs_start + initramfs_size);
+
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
+		secureboot_verify(RESOURCE_ID_INITRAMFS,
+				  stb_container,
+				  SECURE_BOOT_HEADERS_SIZE + initramfs_size);
+		trustedboot_measure(RESOURCE_ID_INITRAMFS,
+				    stb_container,
+				    SECURE_BOOT_HEADERS_SIZE + initramfs_size);
+	}
 }
 
 void *fdt;
@@ -481,6 +497,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	}
 
 	load_initramfs();
+
+	trustedboot_exit_boot_services();
 
 	ipmi_set_fw_progress_sensor(IPMI_FW_OS_BOOT);
 

@@ -748,7 +748,8 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 		 * Back to the old way of doing things, no STB header.
 		 */
 		if (subid == RESOURCE_SUBID_NONE) {
-			if (id == RESOURCE_ID_KERNEL) {
+			if (id == RESOURCE_ID_KERNEL ||
+				id == RESOURCE_ID_INITRAMFS) {
 				/*
 				 * Because actualSize is a lie, we compute the
 				 * size of the BOOTKERNEL based on what the ELF
