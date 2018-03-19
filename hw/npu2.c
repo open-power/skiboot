@@ -1954,7 +1954,7 @@ static int64_t opal_npu_init_context(uint64_t phb_id, int pasid __unused,
 				     uint64_t msr, uint64_t bdf)
 {
 	struct phb *phb = pci_get_phb(phb_id);
-	struct npu2 *p = phb_to_npu2_nvlink(phb);
+	struct npu2 *p;
 	uint64_t xts_bdf, old_xts_bdf_pid, xts_bdf_pid;
 	int id;
 
@@ -1971,6 +1971,7 @@ static int64_t opal_npu_init_context(uint64_t phb_id, int pasid __unused,
 	/*
 	 * Need to get LPARSHORT.
 	 */
+	p = phb_to_npu2_nvlink(phb);
 	lock(&p->lock);
 	xts_bdf = SETFIELD(NPU2_XTS_BDF_MAP_BDF, 0ul, bdf);
 	if (npu_table_search(p, NPU2_XTS_BDF_MAP, 8, NPU2_XTS_BDF_MAP_SIZE,
@@ -2032,13 +2033,14 @@ static int opal_npu_destroy_context(uint64_t phb_id, uint64_t pid __unused,
 				    uint64_t bdf)
 {
 	struct phb *phb = pci_get_phb(phb_id);
-	struct npu2 *p = phb_to_npu2_nvlink(phb);
+	struct npu2 *p;
 	uint64_t xts_bdf;
 	int rc = 0;
 
 	if (!phb || phb->phb_type != phb_type_npu_v2)
 		return OPAL_PARAMETER;
 
+	p = phb_to_npu2_nvlink(phb);
 	lock(&p->lock);
 
 	/* Need to find lparshort for this bdf */
@@ -2066,7 +2068,7 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 			     uint64_t lpcr)
 {
 	struct phb *phb = pci_get_phb(phb_id);
-	struct npu2 *p = phb_to_npu2_nvlink(phb);
+	struct npu2 *p;
 	struct npu2_dev *ndev = NULL;
 	uint64_t xts_bdf_lpar, rc = OPAL_SUCCESS;
 	int i;
@@ -2081,6 +2083,7 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 		 * future. */
 		return OPAL_UNSUPPORTED;
 
+	p = phb_to_npu2_nvlink(phb);
 	lock(&p->lock);
 
 	/* Find any existing entries and update them */
