@@ -634,7 +634,6 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 {
 	struct cpu_thread *c = find_cpu_by_pir(cpu_pir);
 	int port_id, phys_core_id;
-	struct proc_chip *chip = get_chip(c->chip_id);
 	int ret;
 	uint32_t scoms;
 
@@ -681,6 +680,8 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 
 		if (has_deep_states) {
 			if ((wakeup_engine_state == WAKEUP_ENGINE_PRESENT)) {
+				struct proc_chip *chip = get_chip(c->chip_id);
+
 				prlog(PR_INFO, "Configuring stopapi for IMC\n");
 				scoms = XSCOM_ADDR_P9_EP(phys_core_id,pdbar_scom_index[port_id]);
 				ret = p9_stop_save_scom(( void *)chip->homer_base,scoms,
