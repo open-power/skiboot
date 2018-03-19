@@ -55,23 +55,23 @@ int wrap = 100;
 
 void usage(int status);
 
-void getPublicKeyRaw(ecc_key_t *pubkeyraw, char *inFile)
+void getPublicKeyRaw(ecc_key_t *pubkeyraw, char *filename)
 {
 	EVP_PKEY* pkey;
 	unsigned char pubkeyData[1 + 2 * EC_COORDBYTES];
 
-	FILE *fp = fopen(inFile, "r");
+	FILE *fp = fopen(filename, "r");
 	if (!fp)
-		die(EX_NOINPUT, "Cannot open key file: %s: %s", inFile, strerror(errno));
+		die(EX_NOINPUT, "Cannot open key file: %s: %s", filename, strerror(errno));
 
 	if ((pkey = PEM_read_PrivateKey(fp, NULL, NULL, NULL))) {
-		debug_msg("File \"%s\" is a PEM private key", inFile);
+		debug_msg("File \"%s\" is a PEM private key", filename);
 		fclose(fp);
 	} else {
 		fclose(fp);
-		fp = fopen(inFile, "r");
+		fp = fopen(filename, "r");
 		if ((pkey = PEM_read_PUBKEY(fp, NULL, NULL, NULL))) {
-			debug_msg("File \"%s\" is a PEM public key", inFile);
+			debug_msg("File \"%s\" is a PEM public key", filename);
 		}
 		fclose(fp);
 	}
@@ -110,13 +110,13 @@ void getPublicKeyRaw(ecc_key_t *pubkeyraw, char *inFile)
 		struct stat s;
 		void *infile = NULL;
 
-		fdin = open(inFile, O_RDONLY);
+		fdin = open(filename, O_RDONLY);
 		if (fdin <= 0)
-			die(EX_NOINPUT, "Cannot open key file: %s: %s", inFile, strerror(errno));
+			die(EX_NOINPUT, "Cannot open key file: %s: %s", filename, strerror(errno));
 
 		r = fstat(fdin, &s);
 		if (r != 0)
-			die(EX_NOINPUT, "Cannot stat key file: %s", inFile);
+			die(EX_NOINPUT, "Cannot stat key file: %s", filename);
 
 		if (s.st_size == 1 + 2 * EC_COORDBYTES)
 			infile = mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, fdin, 0);
@@ -126,12 +126,13 @@ void getPublicKeyRaw(ecc_key_t *pubkeyraw, char *inFile)
 		if (!infile || (*(unsigned char*) infile != 0x04)) {
 			die(EX_DATAERR,
 					"File \"%s\" is not in expected format (private or public key in PEM, or public key RAW)",
-					inFile);
+					filename);
 		}
 		else
-			debug_msg("File \"%s\" is a RAW public key", inFile);
+			debug_msg("File \"%s\" is a RAW public key", filename);
 
 		memcpy(pubkeyData, infile, sizeof(ecc_key_t) + 1);
+		munmap(infile, s.st_size);
 	}
 
 	// Remove the leading byte
@@ -140,7 +141,7 @@ void getPublicKeyRaw(ecc_key_t *pubkeyraw, char *inFile)
 	return;
 }
 
-void getSigRaw(ecc_signature_t *sigraw, char *inFile)
+void getSigRaw(ecc_signature_t *sigraw, char *filename)
 {
 	int fdin;
 	struct stat s;
@@ -151,13 +152,13 @@ void getSigRaw(ecc_signature_t *sigraw, char *inFile)
 	unsigned char outbuf[2 * EC_COORDBYTES];
 	ECDSA_SIG* signature;
 
-	fdin = open(inFile, O_RDONLY);
+	fdin = open(filename, O_RDONLY);
 	if (fdin <= 0)
-		die(EX_NOINPUT, "Cannot open sig file: %s: %s", inFile, strerror(errno));
+		die(EX_NOINPUT, "Cannot open sig file: %s: %s", filename, strerror(errno));
 
 	r = fstat(fdin, &s);
 	if (r != 0)
-		die(EX_NOINPUT, "Cannot stat sig file: %s", inFile);
+		die(EX_NOINPUT, "Cannot stat sig file: %s", filename);
 
 	infile = mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, fdin, 0);
 	if (!infile)
@@ -167,13 +168,13 @@ void getSigRaw(ecc_signature_t *sigraw, char *inFile)
 
 	if (s.st_size == 2 * EC_COORDBYTES) {
 		/* The file is a p521 signature in RAW format. */
-		debug_msg("File \"%s\" is a RAW signature", inFile);
+		debug_msg("File \"%s\" is a RAW signature", filename);
 		memcpy(sigraw, infile, sizeof(ecc_signature_t));
 	}
 	else {
 		/* Assume the file is a p521 signature in DER format.
 		 * Convert the DER to a signature object, then extract the RAW. */
-		debug_msg("File \"%s\" is a DER signature", inFile);
+		debug_msg("File \"%s\" is a DER signature", filename);
 
 		signature = d2i_ECDSA_SIG(NULL,
 					  (const unsigned char **) &infile, 7 + 2 * EC_COORDBYTES);
@@ -198,6 +199,7 @@ void getSigRaw(ecc_signature_t *sigraw, char *inFile)
 
 		ECDSA_SIG_free(signature);
 	}
+	munmap(infile, s.st_size);
 	return;
 }
 
