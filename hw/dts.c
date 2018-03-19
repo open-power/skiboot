@@ -239,7 +239,7 @@ static int dts_read_core_temp_p9(uint32_t pir, struct dts *dts)
 static void dts_async_read_temp(struct timer *t __unused, void *data,
 				u64 now __unused)
 {
-	struct dts dts;
+	struct dts dts = {0};
 	int rc, swkup_rc;
 	struct cpu_thread *cpu = data;
 
@@ -367,7 +367,7 @@ int64_t dts_sensor_read(u32 sensor_hndl, int token, u64 *sensor_data)
 {
 	uint8_t	attr = sensor_get_attr(sensor_hndl);
 	uint32_t rid = sensor_get_rid(sensor_hndl);
-	struct dts dts;
+	struct dts dts = {0};
 	int64_t rc;
 
 	if (attr > SENSOR_DTS_ATTR_TEMP_TRIP)
