@@ -1387,7 +1387,6 @@ static void npu2_opencapi_probe(struct dt_node *dn)
 	struct npu2 *n;
 	int rc, i = 0;
 
-	path = dt_get_path(dn);
 	gcid = dt_get_chip_id(dn);
 	index = dt_prop_get_u32(dn, "ibm,npu-index");
 	links = dt_prop_get_u32(dn, "ibm,npu-links");
@@ -1399,6 +1398,7 @@ static void npu2_opencapi_probe(struct dt_node *dn)
 		return;
 	}
 
+	path = dt_get_path(dn);
 	prlog(PR_INFO, "OCAPI: Chip %d Found OpenCAPI NPU%d (%d links) at %s\n",
 	      gcid, index, links, path);
 	free(path);
