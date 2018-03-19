@@ -1696,12 +1696,14 @@ void occ_pstates_init(void)
 				};
 
 		power_mgt = dt_find_by_path(dt_root, "/ibm,opal/power-mgt");
-		for (i = 0; i < ARRAY_SIZE(props); i++)
-			dt_check_del_prop(power_mgt, props[i]);
+		if (power_mgt) {
+			for (i = 0; i < ARRAY_SIZE(props); i++)
+				dt_check_del_prop(power_mgt, props[i]);
 
-		dt_for_each_child(power_mgt, child)
-			if (!strncmp(child->name, "occ", 3))
-				dt_free(child);
+			dt_for_each_child(power_mgt, child)
+				if (!strncmp(child->name, "occ", 3))
+					dt_free(child);
+		}
 	}
 
 	switch (proc_gen) {
