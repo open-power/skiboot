@@ -146,68 +146,6 @@
 #define PHB_LSI_PCIE_UNUSED		6
 #define PHB_LSI_PCIE_ERROR		7
 
-/*
- * State structure for a PHB on P7IOC
- */
-
-/*
- * The PHB State structure is essentially used during PHB reset
- * or recovery operations to indicate that the PHB cannot currently
- * be used for normal operations.
- *
- * Some states involve waiting for the timebase to reach a certain
- * value. In which case the field "delay_tgt_tb" is set and the
- * state machine will be run from the "state_poll" callback.
- *
- * At IPL time, we call this repeatedly during the various sequences
- * however under OS control, this will require a change in API.
- *
- * Fortunately, the OPAL API for slot power & reset are not currently
- * used by Linux, so changing them isn't going to be an issue. The idea
- * here is that some of these APIs will return a positive integer when
- * needing such a delay to proceed. The OS will then be required to
- * call a new function opal_poll_phb() after that delay. That function
- * will potentially return a new delay, or OPAL_SUCCESS when the original
- * operation has completed successfully. If the operation has completed
- * with an error, then opal_poll_phb() will return that error.
- *
- * Note: Should we consider also returning optionally some indication
- * of what operation is in progress for OS debug/diag purposes ?
- *
- * Any attempt at starting a new "asynchronous" operation while one is
- * already in progress will result in an error.
- *
- * Internally, this is represented by the state being P7IOC_PHB_STATE_FUNCTIONAL
- * when no operation is in progress, which it reaches at the end of the
- * boot time initializations. Any attempt at performing a slot operation
- * on a PHB in that state will change the state to the corresponding
- * operation state machine. Any attempt while not in that state will
- * return an error.
- *
- * Some operations allow for a certain amount of retries, this is
- * provided for by the "retries" structure member for use by the state
- * machine as it sees fit.
- */
-enum p7ioc_phb_state {
-	/* First init state */
-	P7IOC_PHB_STATE_UNINITIALIZED,
-
-	/* During PHB HW inits */
-	P7IOC_PHB_STATE_INITIALIZING,
-
-	/* Set if the PHB is for some reason unusable */
-	P7IOC_PHB_STATE_BROKEN,
-
-	/* Set if the PHB is fenced due to an error */
-	P7IOC_PHB_STATE_FENCED,
-
-	/* PHB turned off by FSP (no clocks) */
-	P7IOC_PHB_STATE_OFF,
-
-	/* Normal PHB functional state */
-	P7IOC_PHB_STATE_FUNCTIONAL,
-};
-
 /* P7IOC PHB slot states */
 #define P7IOC_SLOT_NORMAL		PCI_SLOT_STATE_NORMAL
 #define P7IOC_SLOT_LINK			PCI_SLOT_STATE_LINK
@@ -290,7 +228,7 @@ struct p7ioc_phb {
 	uint8_t				index;	/* 0..5 index inside p7ioc */
 	uint8_t				gen;
 	uint32_t			flags;
-	enum p7ioc_phb_state		state;
+	bool				broken;
 #define P7IOC_REV_DD10	0x00a20001
 #define P7IOC_REV_DD11	0x00a20002
 	uint32_t			rev;	/* Both major and minor have 2 bytes */

@@ -72,7 +72,6 @@ static bool phb3_fenced(struct phb3 *p)
 	xscom_read(p->chip_id, p->pe_xscom + 0x0, &nfir);
 	if (nfir & PPC_BIT(16)) {
 		p->flags |= PHB3_AIB_FENCED;
-		p->state = PHB3_STATE_FENCED;
 		return true;
 	}
 	return false;
@@ -134,7 +133,7 @@ static int64_t phb3_pcicfg_check(struct phb3 *p, uint32_t bdfn,
 		return OPAL_HARDWARE;
 
 	/* Check PHB state */
-	if (p->state == PHB3_STATE_BROKEN)
+	if (p->broken)
 		return OPAL_HARDWARE;
 
 	/* Fetch the PE# from cache */
@@ -1798,7 +1797,7 @@ static int64_t phb3_msi_set_xive(struct irq_source *is, uint32_t isn,
 	index = p8_irq_to_phb(isn);
 	ive_num = PHB3_IRQ_NUM(isn);
 
-	if (p->state == PHB3_STATE_BROKEN || !p->tbl_rtt)
+	if (p->broken || !p->tbl_rtt)
 		return OPAL_HARDWARE;
 	if (chip != p->chip_id ||
 	    index != p->index ||
@@ -1908,7 +1907,7 @@ static int64_t phb3_lsi_set_xive(struct irq_source *is, uint32_t isn,
 	index = p8_irq_to_phb(isn);
 	irq = PHB3_IRQ_NUM(isn);
 
-	if (p->state == PHB3_STATE_BROKEN)
+	if (p->broken)
 		return OPAL_HARDWARE;
 
 	if (chip != p->chip_id	||
@@ -1953,7 +1952,7 @@ static void phb3_err_interrupt(struct irq_source *is, uint32_t isn)
 				OPAL_EVENT_PCI_ERROR);
 
 	/* If the PHB is broken, go away */
-	if (p->state == PHB3_STATE_BROKEN)
+	if (p->broken)
 		return;
 
 	/*
@@ -2181,7 +2180,7 @@ static int64_t phb3_get_presence_state(struct pci_slot *slot, uint8_t *val)
 	struct phb3 *p = phb_to_phb3(slot->phb);
 	uint64_t hp_override;
 
-	if (p->state == PHB3_STATE_BROKEN)
+	if (p->broken)
 		return OPAL_HARDWARE;
 
 	/*
@@ -2675,7 +2674,6 @@ static int64_t phb3_creset(struct pci_slot *slot)
 	}
 
 error:
-	p->state = PHB3_STATE_FENCED;
 	return OPAL_HARDWARE;
 }
 
@@ -2732,7 +2730,7 @@ static int64_t phb3_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 	*pci_error_type = OPAL_EEH_NO_ERROR;
 
 	/* Check dead */
-	if (p->state == PHB3_STATE_BROKEN) {
+	if (p->broken) {
 		*freeze_state = OPAL_EEH_STOPPED_MMIO_DMA_FREEZE;
 		*pci_error_type = OPAL_EEH_PHB_ERROR;
 		if (severity)
@@ -2788,7 +2786,7 @@ static int64_t phb3_eeh_freeze_clear(struct phb *phb, uint64_t pe_number,
 	int32_t i;
 	bool frozen_pe = false;
 
-	if (p->state == PHB3_STATE_BROKEN)
+	if (p->broken)
 		return OPAL_HARDWARE;
 
 	/* Summary. If nothing, move to clearing the PESTs which can
@@ -2845,7 +2843,7 @@ static int64_t phb3_eeh_freeze_set(struct phb *phb, uint64_t pe_number,
         struct phb3 *p = phb_to_phb3(phb);
         uint64_t data;
 
-	if (p->state == PHB3_STATE_BROKEN)
+	if (p->broken)
 		return OPAL_HARDWARE;
 
 	if (pe_number >= PHB3_MAX_PE_NUM)
@@ -2884,7 +2882,7 @@ static int64_t phb3_eeh_next_error(struct phb *phb,
 	int32_t i, j;
 
 	/* If the PHB is broken, we needn't go forward */
-	if (p->state == PHB3_STATE_BROKEN) {
+	if (p->broken) {
 		*pci_error_type = OPAL_EEH_PHB_ERROR;
 		*severity = OPAL_EEH_SEV_PHB_DEAD;
 		return OPAL_SUCCESS;
@@ -3369,7 +3367,7 @@ static int64_t phb3_get_diag_data(struct phb *phb,
 
 	if (diag_buffer_len < sizeof(struct OpalIoPhb3ErrorData))
 		return OPAL_PARAMETER;
-	if (p->state == PHB3_STATE_BROKEN)
+	if (p->broken)
 		return OPAL_HARDWARE;
 
 	/*
@@ -4373,7 +4371,7 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 	out_be64(p->regs + PHB_TIMEOUT_CTRL2,			0x2320d71600000000);
 
 	/* Mark the PHB as functional which enables all the various sequences */
-	p->state = PHB3_STATE_FUNCTIONAL;
+	p->broken = false;
 
 	PHBDBG(p, "Initialization complete\n");
 
@@ -4381,7 +4379,7 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 
  failed:
 	PHBERR(p, "Initialization failed\n");
-	p->state = PHB3_STATE_BROKEN;
+	p->broken = true;
 }
 
 static void phb3_allocate_tables(struct phb3 *p)
@@ -4625,7 +4623,6 @@ static void phb3_create(struct dt_node *np)
 	p->phb.ops = &phb3_ops;
 	p->phb.phb_type = phb_type_pcie_v3;
 	p->phb.scan_map = 0x1; /* Only device 0 to scan */
-	p->state = PHB3_STATE_UNINITIALIZED;
 
 	if (!phb3_calculate_windows(p))
 		return;

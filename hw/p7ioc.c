@@ -666,8 +666,6 @@ static void p7ioc_create_hub(struct dt_node *np)
 	for (i = 0; i < P7IOC_NUM_PHBS; i++) {
 		if (p7ioc_phb_enabled(ioc, i))
 			p7ioc_phb_setup(ioc, i);
-		else
-			ioc->phbs[i].state = P7IOC_PHB_STATE_OFF;
 	}
 
 	/* Now, we do the bulk of the inits */

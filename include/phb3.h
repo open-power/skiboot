@@ -146,67 +146,6 @@
 #define PHB3_RESERVED_PE_NUM	255
 
 /*
- * State structure for a PHB
- */
-
-/*
- * (Comment copied from p7ioc.h, please update both when relevant)
- *
- * The PHB State structure is essentially used during PHB reset
- * or recovery operations to indicate that the PHB cannot currently
- * be used for normal operations.
- *
- * Some states involve waiting for the timebase to reach a certain
- * value. In which case the field "delay_tgt_tb" is set and the
- * state machine will be run from the "state_poll" callback.
- *
- * At IPL time, we call this repeatedly during the various sequences
- * however under OS control, this will require a change in API.
- *
- * Fortunately, the OPAL API for slot power & reset are not currently
- * used by Linux, so changing them isn't going to be an issue. The idea
- * here is that some of these APIs will return a positive integer when
- * neededing such a delay to proceed. The OS will then be required to
- * call a new function opal_poll_phb() after that delay. That function
- * will potentially return a new delay, or OPAL_SUCCESS when the original
- * operation has completed successfully. If the operation has completed
- * with an error, then opal_poll_phb() will return that error.
- *
- * Note: Should we consider also returning optionally some indication
- * of what operation is in progress for OS debug/diag purposes ?
- *
- * Any attempt at starting a new "asynchronous" operation while one is
- * already in progress will result in an error.
- *
- * Internally, this is represented by the state being P7IOC_PHB_STATE_FUNCTIONAL
- * when no operation is in progress, which it reaches at the end of the
- * boot time initializations. Any attempt at performing a slot operation
- * on a PHB in that state will change the state to the corresponding
- * operation state machine. Any attempt while not in that state will
- * return an error.
- *
- * Some operations allow for a certain amount of retries, this is
- * provided for by the "retries" structure member for use by the state
- * machine as it sees fit.
- */
-enum phb3_state {
-	/* First init state */
-	PHB3_STATE_UNINITIALIZED,
-
-	/* During PHB HW inits */
-	PHB3_STATE_INITIALIZING,
-
-	/* Set if the PHB is for some reason unusable */
-	PHB3_STATE_BROKEN,
-
-	/* PHB fenced */
-	PHB3_STATE_FENCED,
-
-	/* Normal PHB functional state */
-	PHB3_STATE_FUNCTIONAL,
-};
-
-/*
  * PHB3 PCI slot state. When you're going to apply any
  * changes here, please make sure the base state isn't
  * conflicting with those defined in pci-slot.h
@@ -267,7 +206,7 @@ struct phb3 {
 	unsigned int		index;	    /* 0..2 index inside P8 */
 	unsigned int		flags;
 	unsigned int		chip_id;    /* Chip ID (== GCID on P8) */
-	enum phb3_state		state;
+	bool			broken;
 	unsigned int		rev;        /* 00MMmmmm */
 #define PHB3_REV_MURANO_DD10	0xa30001
 #define PHB3_REV_VENICE_DD10	0xa30002
