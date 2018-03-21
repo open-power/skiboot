@@ -598,7 +598,7 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 	{
 		.name = "stop4",
 		.latency_ns = 100000,
-		.residency_ns = 1000000,
+		.residency_ns = 10000000,
 		.flags = 0*OPAL_PM_DEC_STOP \
 		       | 0*OPAL_PM_TIMEBASE_STOP  \
 		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
@@ -614,7 +614,7 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 	{
 		.name = "stop5",
 		.latency_ns = 200000,
-		.residency_ns = 2000000,
+		.residency_ns = 20000000,
 		.flags = 0*OPAL_PM_DEC_STOP \
 		       | 0*OPAL_PM_TIMEBASE_STOP  \
 		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
