@@ -1,4 +1,5 @@
 /* Copyright 2013-2018 IBM Corp.
+ * Copyright 2018 Raptor Engineering, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +40,19 @@ struct flash {
 	uint64_t		size;
 	uint32_t		block_size;
 	int			id;
+};
+
+static struct {
+	enum resource_id	id;
+	uint32_t		subid;
+	char			name[PART_NAME_MAX+1];
+} part_name_map[] = {
+	{ RESOURCE_ID_KERNEL,	RESOURCE_SUBID_NONE,		"BOOTKERNEL" },
+	{ RESOURCE_ID_INITRAMFS,RESOURCE_SUBID_NONE,		"ROOTFS" },
+	{ RESOURCE_ID_CAPP,	RESOURCE_SUBID_SUPPORTED,	"CAPP" },
+	{ RESOURCE_ID_IMA_CATALOG,  RESOURCE_SUBID_SUPPORTED,	"IMA_CATALOG" },
+	{ RESOURCE_ID_VERSION,	RESOURCE_SUBID_NONE,		"VERSION" },
+	{ RESOURCE_ID_KERNEL_FW,	RESOURCE_SUBID_NONE,		"BOOTKERNFW" },
 };
 
 static LIST_HEAD(flashes);
@@ -206,7 +220,15 @@ static int flash_nvram_probe(struct flash *flash, struct ffs_handle *ffs)
 
 static struct dt_node *flash_add_dt_node(struct flash *flash, int id)
 {
+	int i;
+	int rc;
+	const char *name;
+	bool ecc;
+	struct ffs_handle *ffs;
+	int ffs_part_num, ffs_part_start, ffs_part_size;
 	struct dt_node *flash_node;
+	struct dt_node *partition_container_node;
+	struct dt_node *partition_node;
 
 	flash_node = dt_new_addr(opal_node, "flash", id);
 	dt_add_property_strings(flash_node, "compatible", "ibm,opal-flash");
@@ -220,6 +242,48 @@ static struct dt_node *flash_add_dt_node(struct flash *flash, int id)
 	/* we fix to 32-bits */
 	dt_add_property_cells(flash_node, "#address-cells", 1);
 	dt_add_property_cells(flash_node, "#size-cells", 1);
+
+	/* Add partition container node */
+	partition_container_node = dt_new(flash_node, "partitions");
+	dt_add_property_strings(partition_container_node, "compatible", "fixed-partitions");
+
+	/* we fix to 32-bits */
+	dt_add_property_cells(partition_container_node, "#address-cells", 1);
+	dt_add_property_cells(partition_container_node, "#size-cells", 1);
+
+	/* Add partitions */
+	for (i = 0, name = NULL; i < ARRAY_SIZE(part_name_map); i++) {
+		name = part_name_map[i].name;
+
+		rc = ffs_init(0, flash->size, flash->bl, &ffs, 1);
+		if (rc) {
+			prerror("FLASH: Can't open ffs handle\n");
+			continue;
+		}
+
+		rc = ffs_lookup_part(ffs, name, &ffs_part_num);
+		if (rc) {
+			/* This is not an error per-se, some partitions
+			 * are purposefully absent, don't spam the logs
+			 */
+		        prlog(PR_DEBUG, "FLASH: No %s partition\n", name);
+			continue;
+		}
+		rc = ffs_part_info(ffs, ffs_part_num, NULL,
+				   &ffs_part_start, NULL, &ffs_part_size, &ecc);
+		if (rc) {
+			prerror("FLASH: Failed to get %s partition info\n", name);
+			continue;
+		}
+
+		partition_node = dt_new_addr(partition_container_node, "partition", ffs_part_start);
+		dt_add_property_strings(partition_node, "label", name);
+		dt_add_property_cells(partition_node, "reg", ffs_part_start, ffs_part_size);
+	}
+
+	partition_node = dt_new_addr(partition_container_node, "partition", 0);
+	dt_add_property_strings(partition_node, "label", "PNOR");
+	dt_add_property_cells(partition_node, "reg", 0, flash->size);
 
 	return flash_node;
 }
@@ -431,18 +495,6 @@ opal_call(OPAL_FLASH_WRITE, opal_flash_write, 5);
 opal_call(OPAL_FLASH_ERASE, opal_flash_erase, 4);
 
 /* flash resource API */
-static struct {
-	enum resource_id	id;
-	uint32_t		subid;
-	char			name[PART_NAME_MAX+1];
-} part_name_map[] = {
-	{ RESOURCE_ID_KERNEL,	RESOURCE_SUBID_NONE,		"BOOTKERNEL" },
-	{ RESOURCE_ID_INITRAMFS,RESOURCE_SUBID_NONE,		"ROOTFS" },
-	{ RESOURCE_ID_CAPP,	RESOURCE_SUBID_SUPPORTED,	"CAPP" },
-	{ RESOURCE_ID_IMA_CATALOG,  RESOURCE_SUBID_SUPPORTED,	"IMA_CATALOG" },
-	{ RESOURCE_ID_VERSION,	RESOURCE_SUBID_NONE,		"VERSION" },
-};
-
 const char *flash_map_resource_name(enum resource_id id)
 {
 	int i;
