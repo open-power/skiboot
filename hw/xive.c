@@ -4421,8 +4421,8 @@ static int64_t opal_xive_set_vp_info(uint64_t vp_id,
 	if (!(flags & OPAL_XIVE_VP_ENABLED))
 		xive_vpc_scrub_clean(x, blk, idx);
 
-	unlock(&x->lock);
 bail:
+	unlock(&x->lock);
 	return rc;
 }
 
