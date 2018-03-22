@@ -1590,13 +1590,13 @@ void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, u32 *ptype,
 		{ OCC_SENSOR_TYPE_GENERIC, "generic",
 		  OPAL_SENSOR_GROUP_ENABLE
 		},
-		{ OCC_SENSOR_TYPE_CURRENT, "current",
+		{ OCC_SENSOR_TYPE_CURRENT, "curr",
 		  OPAL_SENSOR_GROUP_ENABLE
 		},
-		{ OCC_SENSOR_TYPE_VOLTAGE, "voltage",
+		{ OCC_SENSOR_TYPE_VOLTAGE, "in",
 		  OPAL_SENSOR_GROUP_ENABLE
 		},
-		{ OCC_SENSOR_TYPE_TEMPERATURE, "temperature",
+		{ OCC_SENSOR_TYPE_TEMPERATURE, "temp",
 		  OPAL_SENSOR_GROUP_ENABLE
 		},
 		{ OCC_SENSOR_TYPE_UTILIZATION, "utilization",
@@ -1643,6 +1643,17 @@ void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, u32 *ptype,
 
 		dt_add_property_cells(node, "sensor-group-id", handle);
 		dt_add_property_string(node, "type", groups[j].str);
+
+		if (groups[j].type == OCC_SENSOR_TYPE_CURRENT ||
+		    groups[j].type == OCC_SENSOR_TYPE_VOLTAGE ||
+		    groups[j].type == OCC_SENSOR_TYPE_TEMPERATURE ||
+		    groups[j].type == OCC_SENSOR_TYPE_POWER) {
+			dt_add_property_string(node, "sensor-type",
+					      groups[j].str);
+			dt_add_property_string(node, "compatible",
+					       "ibm,opal-sensor");
+		}
+
 		dt_add_property_cells(node, "ibm,chip-id", chipid);
 		dt_add_property_cells(node, "reg", handle);
 		if (groups[j].ops == OPAL_SENSOR_GROUP_ENABLE) {
