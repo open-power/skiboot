@@ -42,7 +42,7 @@
 /* Same technique as BUILD_BUG_ON from linux */
 #define CHECK_HANDLER_SIZE(handlers) ((void)sizeof(char[1 - 2*!!(ARRAY_SIZE(handlers) != (MBOX_COMMAND_COUNT + 1))]))
 
-#define MBOX_DEFAULT_TIMEOUT 30
+#define MBOX_DEFAULT_TIMEOUT 3 /* seconds */
 
 #define MSG_CREATE(init_command) { .command = init_command }
 
@@ -334,15 +334,14 @@ static int wait_for_bmc(struct mbox_flash_data *mbox_flash, unsigned int timeout
 {
 	unsigned long last = 1, start = tb_to_secs(mftb());
 	prlog(PR_TRACE, "Waiting for BMC\n");
-	while (mbox_flash->busy && timeout_sec) {
+	while (mbox_flash->busy && timeout_sec > last) {
 		long now = tb_to_secs(mftb());
 		if (now - start > last) {
-			timeout_sec--;
-			last = now - start;
 			if (last < timeout_sec / 2)
 				prlog(PR_TRACE, "Been waiting for the BMC for %lu secs\n", last);
 			else
 				prlog(PR_ERR, "BMC NOT RESPONDING %lu second wait\n", last);
+			last++;
 		}
 		/*
 		 * Both functions are important.
