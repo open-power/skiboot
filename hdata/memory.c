@@ -602,8 +602,6 @@ static struct dt_node *add_hb_reserve_node(const char *name, u64 start, u64 end)
 	return node;
 }
 
-#define HRMOR_BIT (1ul << 63)
-
 static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 {
 	const struct msvpd_hb_reserved_mem *hb_resv_mem;

@@ -20,6 +20,12 @@
 #include "hdif.h"
 
 /*
+ * To help the FSP to distinguish between physical address and TCE mapped address.
+ * Also to help hostboot to distinguish physical and relative address.
+ */
+#define HRMOR_BIT (1ul << 63)
+
+/*
  * The SPIRA structure
  *
  * NOTE: This is one of the only HDIF structure that we layout entirely

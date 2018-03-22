@@ -88,16 +88,15 @@ __section(".cpuctrl.data") struct cpu_ctl_init_data cpu_ctl_init_data = {
  * To help the FSP distinguishing between TCE tokens and actual physical
  * addresses, we set the top bit to 1 on physical addresses
  */
-#define ADDR_TOP_BIT	(1ul << 63)
 
 __section(".mdst.data") struct dump_mdst_table init_mdst_table[2] = {
 	{
-		.addr = CPU_TO_BE64(INMEM_CON_START | ADDR_TOP_BIT),
+		.addr = CPU_TO_BE64(INMEM_CON_START | HRMOR_BIT),
 		.type = CPU_TO_BE32(DUMP_REGION_CONSOLE),
 		.size = CPU_TO_BE32(INMEM_CON_LEN),
 	},
 	{
-		.addr = CPU_TO_BE64(HBRT_CON_START | ADDR_TOP_BIT),
+		.addr = CPU_TO_BE64(HBRT_CON_START | HRMOR_BIT),
 		.type = CPU_TO_BE32(DUMP_REGION_HBRT_LOG),
 		.size = CPU_TO_BE32(HBRT_CON_LEN),
 	},
