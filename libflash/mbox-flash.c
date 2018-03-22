@@ -706,9 +706,17 @@ static int mbox_window_move(struct mbox_flash_data *mbox_flash,
 	 * bug will be obvious from the barf.
 	 */
 	if (len != 0 && *size == 0) {
+		prlog(PR_ERR, "Failed read/write!\n");
+		prlog(PR_ERR, "Please update your BMC firmware\n");
 		prlog(PR_ERR, "Move window is indicating size zero!\n");
 		prlog(PR_ERR, "pos: 0x%" PRIx64 ", len: 0x%" PRIx64 "\n", pos, len);
 		prlog(PR_ERR, "win pos: 0x%08x win size: 0x%08x\n", win->cur_pos, win->size);
+		/*
+		 * In practice skiboot gets stuck and this eventually
+		 * brings down the host. Just fail pass the error back
+		 * up and hope someone makes a good decision
+		 */
+		return MBOX_R_SYSTEM_ERROR;
 	}
 
 	return rc;
