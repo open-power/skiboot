@@ -2114,6 +2114,7 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 	/* We only support radix for the moment */
 	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_XLAT, xts_bdf_lpar, 0x3);
 	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_LPARID, xts_bdf_lpar, lparid);
+	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_LPARSHORT, xts_bdf_lpar, id);
 
 	/* Need to find an NVLink to send the ATSDs for this device over */
 	for (i = 0; i < p->total_devices; i++) {
