@@ -1242,6 +1242,13 @@ static void occ_cmd_interface_init(void)
 	struct proc_chip *chip;
 	int i = 0;
 
+	/* Check if the OCC data is valid */
+	for_each_chip(chip) {
+		pdata = get_occ_pstate_table(chip);
+		if (!pdata->valid)
+			return;
+	}
+
 	chip = next_chip(NULL);
 	pdata = get_occ_pstate_table(chip);
 	if (pdata->version != 0x90)
@@ -1364,6 +1371,9 @@ int occ_set_powercap(u32 handle, int token, u32 pcap)
 
 	if (powercap_get_attr(handle) != POWERCAP_OCC_CUR)
 		return OPAL_PERMISSION;
+
+	if (!chips)
+		return OPAL_HARDWARE;
 
 	for (i = 0; i < nr_occs; i++)
 		if (chips[i].occ_role == OCC_ROLE_MASTER)
@@ -1607,6 +1617,12 @@ void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, u32 *ptype,
 	};
 	int i, j;
 
+	/*
+	 * Dont add sensor groups if cmd-interface is not intialized
+	 */
+	if (!chips)
+		return;
+
 	for (i = 0; i < nr_occs; i++)
 		if (chips[i].chip_id == chipid)
 			break;
@@ -1717,14 +1733,11 @@ void occ_pstates_init(void)
 	if (!add_cpu_pstate_properties(&pstate_nom)) {
 		log_simple_error(&e_info(OPAL_RC_OCC_PSTATE_INIT),
 			"Skiping core cpufreq init due to OCC error\n");
-		return;
-	}
-
-	/*
-	 * Setup host based pstates and set nominal frequency only in
-	 * P8.
-	 */
-	if (proc_gen == proc_gen_p8) {
+	} else if (proc_gen == proc_gen_p8) {
+		/*
+		 * Setup host based pstates and set nominal frequency only in
+		 * P8.
+		 */
 		for_each_chip(chip)
 			for_each_available_core_in_chip(c, chip->id)
 				cpu_pstates_prepare_core(chip, c, pstate_nom);
