@@ -789,9 +789,73 @@ static int npu2_dn_fixup(struct phb *phb,
 	return 0;
 }
 
+static int npu2_links_per_gpu(struct phb *phb,
+			      struct pci_device *pd,
+			      void *data)
+{
+	struct npu2 *p = phb_to_npu2(phb);
+	struct npu2_dev *dev;
+	int *nlinks = (int *)data;
+
+	dev = npu2_bdf_to_dev(p, pd->bdfn);
+	assert(dev);
+
+	if (dev->phb && dev->pd && dev->pd->dn) {
+		const struct dt_property *prop;
+		int n;
+
+		/* The link count is the number of phandles in "ibm,npu" */
+		prop = dt_find_property(dev->pd->dn, "ibm,npu");
+		if (!prop)
+			return 0;
+
+		/* Count could vary by gpu, so find the max */
+		n = prop->len / sizeof(uint32_t);
+		if (n > *nlinks)
+			*nlinks = n;
+	}
+
+	return 0;
+}
+
+static void npu2_phb_fixup_scominit(struct dt_node *dn, int links_per_gpu)
+{
+	uint32_t gcid = dt_get_chip_id(dn);
+	uint64_t val, mask;
+
+	/*
+	 * MRBSP settings for 2- and 3-link GPU systems. These can improve
+	 * GPU peer-to-peer fully ordered write performance.
+	 */
+	if (links_per_gpu == 3) {
+		val = PPC_BIT(30) | PPC_BIT(34) | PPC_BIT(36) | PPC_BIT(37) |
+		      PPC_BIT(44) | PPC_BIT(45);
+		mask = PPC_BITMASK(28,39) | PPC_BITMASK(44,47);
+	} else if (links_per_gpu == 2) {
+		val = PPC_BIT(46) | PPC_BIT(47);
+		mask = PPC_BITMASK(44,47);
+	} else
+		return;
+
+	xscom_write_mask(gcid, 0x50110c0, val, mask);
+	xscom_write_mask(gcid, 0x50112c0, val, mask);
+	xscom_write_mask(gcid, 0x50114c0, val, mask);
+}
+
 static void npu2_phb_final_fixup(struct phb *phb)
 {
+	int links_per_gpu = 0;
+	struct dt_node *np;
+
 	pci_walk_dev(phb, NULL, npu2_dn_fixup, NULL);
+
+	/*
+	 * Now that the emulated devices are bound to the real ones, we can
+	 * determine links_per_gpu and do some final init.
+	 */
+	pci_walk_dev(phb, NULL, npu2_links_per_gpu, &links_per_gpu);
+	dt_for_each_compatible(dt_root, np, "ibm,power9-npu")
+		npu2_phb_fixup_scominit(np, links_per_gpu);
 }
 
 static void npu2_init_ioda_cache(struct npu2 *p)
@@ -1385,7 +1449,7 @@ static void npu2_probe_phb(struct dt_node *dn)
 	struct proc_chip *proc_chip;
 	struct dt_node *np;
 	uint32_t gcid, scom, index, phb_index, links;
-	uint64_t reg[2], mm_win[2];
+	uint64_t reg[2], mm_win[2], val;
 	char *path;
 
 	/* Retrieve chip id */
@@ -1433,6 +1497,37 @@ static void npu2_probe_phb(struct dt_node *dn)
 		xscom_write_mask(gcid, 0x5011510, PPC_BIT(0), PPC_BIT(0));
 		xscom_write_mask(gcid, 0x5011530, PPC_BIT(0), PPC_BIT(0));
 	}
+
+	/*
+	 * Enable relaxed ordering for peer-to-peer reads
+	 */
+	val = PPC_BIT(5) | PPC_BIT(29);
+	xscom_write_mask(gcid, 0x501100c, val, val);
+	xscom_write_mask(gcid, 0x501103c, val, val);
+	xscom_write_mask(gcid, 0x501106c, val, val);
+	xscom_write_mask(gcid, 0x501109c, val, val);
+	xscom_write_mask(gcid, 0x501120c, val, val);
+	xscom_write_mask(gcid, 0x501123c, val, val);
+	xscom_write_mask(gcid, 0x501126c, val, val);
+	xscom_write_mask(gcid, 0x501129c, val, val);
+	xscom_write_mask(gcid, 0x501140c, val, val);
+	xscom_write_mask(gcid, 0x501143c, val, val);
+	xscom_write_mask(gcid, 0x501146c, val, val);
+	xscom_write_mask(gcid, 0x501149c, val, val);
+
+	val = PPC_BIT(6) | PPC_BIT(7) | PPC_BIT(11);
+	xscom_write_mask(gcid, 0x5011009, val, PPC_BITMASK(6,11));
+	xscom_write_mask(gcid, 0x5011039, val, PPC_BITMASK(6,11));
+	xscom_write_mask(gcid, 0x5011069, val, PPC_BITMASK(6,11));
+	xscom_write_mask(gcid, 0x5011099, val, PPC_BITMASK(6,11));
+	xscom_write_mask(gcid, 0x5011209, val, PPC_BITMASK(6,11));
+	xscom_write_mask(gcid, 0x5011239, val, PPC_BITMASK(6,11));
+	xscom_write_mask(gcid, 0x5011269, val, PPC_BITMASK(6,11));
+	xscom_write_mask(gcid, 0x5011299, val, PPC_BITMASK(6,11));
+	xscom_write_mask(gcid, 0x5011409, val, PPC_BITMASK(6,11));
+	xscom_write_mask(gcid, 0x5011439, val, PPC_BITMASK(6,11));
+	xscom_write_mask(gcid, 0x5011469, val, PPC_BITMASK(6,11));
+	xscom_write_mask(gcid, 0x5011499, val, PPC_BITMASK(6,11));
 
 	index = dt_prop_get_u32(dn, "ibm,npu-index");
 	phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
