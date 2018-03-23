@@ -238,9 +238,23 @@ static void enable_odl_phy_mux(uint32_t gcid, int index)
 	/* PowerBus OLL PHY Training Config Register */
 	xscom_read(gcid, phy_config_scom, &reg);
 
-	/* Enable ODLs to use shared PHYs */
-	reg |= OBUS_IOOL_PHY_CONFIG_ODL0_ENABLED;
-	reg |= OBUS_IOOL_PHY_CONFIG_ODL1_ENABLED;
+	/*
+	 * Enable ODL to use shared PHYs
+	 *
+	 * On obus3, OTL0 is connected to ODL1 (and OTL1 to ODL0), so
+	 * even if it may look odd at first, we do want to enable ODL0
+	 * for links 2 and 5
+	 */
+	switch (index) {
+	case 2:
+	case 5:
+		reg |= OBUS_IOOL_PHY_CONFIG_ODL0_ENABLED;
+		break;
+	case 3:
+	case 4:
+		reg |= OBUS_IOOL_PHY_CONFIG_ODL1_ENABLED;
+		break;
+	}
 
 	/*
 	 * Based on the platform, we may have to activate an extra mux
