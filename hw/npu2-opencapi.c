@@ -134,6 +134,30 @@ static uint64_t get_odl_status(uint32_t gcid, uint64_t index) {
 	return reg;
 }
 
+static void disable_nvlink(uint32_t gcid, int index)
+{
+	uint64_t phy_config_scom, reg;
+
+	switch (index) {
+	case 2:
+	case 3:
+		phy_config_scom = OBUS_LL0_IOOL_PHY_CONFIG;
+		break;
+	case 4:
+	case 5:
+		phy_config_scom = OBUS_LL3_IOOL_PHY_CONFIG;
+		break;
+	default:
+		assert(false);
+	}
+	/* Disable NV-Link link layers */
+	xscom_read(gcid, phy_config_scom, &reg);
+	reg &= ~OBUS_IOOL_PHY_CONFIG_NV0_NPU_ENABLED;
+	reg &= ~OBUS_IOOL_PHY_CONFIG_NV1_NPU_ENABLED;
+	reg &= ~OBUS_IOOL_PHY_CONFIG_NV2_NPU_ENABLED;
+	xscom_write(gcid, phy_config_scom, reg);
+}
+
 /* Procedure 13.1.3.1 - select OCAPI vs NVLink for bricks 2-3/4-5 */
 
 static void set_transport_mux_controls(uint32_t gcid, uint32_t scom_base,
@@ -273,10 +297,6 @@ static void enable_odl_phy_mux(uint32_t gcid, int index)
 	reg &= ~OBUS_IOOL_PHY_CONFIG_LINK0_OLL_ENABLED;
 	reg &= ~OBUS_IOOL_PHY_CONFIG_LINK1_OLL_ENABLED;
 
-	/* Disable NV-Link link layers */
-	reg &= ~OBUS_IOOL_PHY_CONFIG_NV0_NPU_ENABLED;
-	reg &= ~OBUS_IOOL_PHY_CONFIG_NV1_NPU_ENABLED;
-	reg &= ~OBUS_IOOL_PHY_CONFIG_NV2_NPU_ENABLED;
 	xscom_write(gcid, phy_config_scom, reg);
 }
 
@@ -497,6 +517,7 @@ static void brick_config(uint32_t gcid, uint32_t scom_base, int index)
 	 * We assume at this point that the PowerBus Hotplug Mode Control
 	 * register is correctly set by Hostboot
 	 */
+	disable_nvlink(gcid, index);
 	set_transport_mux_controls(gcid, scom_base, index,
 				   NPU2_DEV_TYPE_OPENCAPI);
 	enable_odl_phy_mux(gcid, index);
