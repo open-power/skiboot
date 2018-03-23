@@ -1,4 +1,4 @@
-/* Copyright 2013-2018 IBM Corp.
+/* Copyright 2013-2014 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@
 #include <npu2-regs.h>
 #include <npu.h>
 #include <capp.h>
-#include <nvram.h>
 
 /*
  * HMER register layout:
@@ -585,10 +584,7 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 	uint64_t npu2_fir_action0_addr;
 	uint64_t npu2_fir_action1_addr;
 	uint64_t fatal_errors;
-	uint64_t npu_scom_dump[2];
-	bool npu2_hmi_verbose;
 	int total_errors = 0;
-	uint64_t r;
 
 	/* Find the NPU on the chip associated with the HMI. */
 	for_each_phb(phb) {
@@ -639,38 +635,6 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 
 	if (!total_errors)
 		return;
-
-	npu2_hmi_verbose = nvram_query_eq("npu2-hmi-verbose", "true");
-	/* Force this for now until we sort out something better */
-	npu2_hmi_verbose = true;
-
-	if (npu2_hmi_verbose) {
-		_xscom_lock();
-		for (r = NPU2_DEBUG_REG_START; r < NPU2_DEBUG_REG_END; r++) {
-			npu_scom_dump[0] = npu_scom_dump[1] = 0;
-			_xscom_read(flat_chip_id, r++, &npu_scom_dump[0], false, true);
-			_xscom_read(flat_chip_id, r,   &npu_scom_dump[1], false, true);
-			prlog(PR_ERR, "NPU: 0x%016llx=0x%016llx 0x%016llx=0x%016llx\n",
-			      r-1, npu_scom_dump[0],
-			      r, npu_scom_dump[1]);
-		}
-		for (r = NPU2_FIR_REGISTER_0; r < NPU2_FIR_REGISTER_END; r++) {
-			npu_scom_dump[0] = npu_scom_dump[1] = 0;
-			_xscom_read(flat_chip_id, r++, &npu_scom_dump[0], false, true);
-			_xscom_read(flat_chip_id, r,   &npu_scom_dump[1], false, true);
-			prlog(PR_ERR, "NPU: 0x%016llx=0x%016llx 0x%016llx=0x%016llx\n",
-			      r-1, npu_scom_dump[0],
-			      r, npu_scom_dump[1]);
-		}
-		_xscom_unlock();
-		prlog(PR_ERR, " _________________________ \n");
-		prlog(PR_ERR, "< It's Driver Debug time! >\n");
-		prlog(PR_ERR, " ------------------------- \n");
-		prlog(PR_ERR, "       \\   ,__,            \n");
-		prlog(PR_ERR, "        \\  (oo)____        \n");
-		prlog(PR_ERR, "           (__)    )\\      \n");
-		prlog(PR_ERR, "              ||--|| *     \n");
-	}
 
 	/* Set up the HMI event */
 	hmi_evt->severity = OpalHMI_SEV_WARNING;

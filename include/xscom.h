@@ -225,7 +225,7 @@
 
 /* Use only in select places where multiple SCOMs are time/latency sensitive */
 extern void _xscom_lock(void);
-extern int _xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val, bool take_lock, bool ignore_error);
+extern int _xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val, bool take_lock);
 extern int _xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val, bool take_lock);
 extern void _xscom_unlock(void);
 
@@ -233,7 +233,7 @@ extern void _xscom_unlock(void);
 /* Targeted SCOM access */
 static inline int xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val)
 {
-	return _xscom_read(partid, pcb_addr, val, true, false);
+	return _xscom_read(partid, pcb_addr, val, true);
 }
 static inline int xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val) {
 	return _xscom_write(partid, pcb_addr, val, true);

@@ -1,4 +1,4 @@
-/* Copyright 2013-2018 IBM Corp.
+/* Copyright 2013-2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,6 @@ uint64_t npu2_scom_read(uint64_t gcid, uint64_t scom_base,
 void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 		     uint64_t reg, uint64_t size,
 		     uint64_t val);
-
-/* SCOM Registers to dump on HMI to aid in debugging */
-#define NPU2_DEBUG_REG_START 0x5011000
-#define NPU2_DEBUG_REG_END   0x50110FF
 
 /* These aren't really NPU specific registers but we initialise them in NPU
  * code */
@@ -576,7 +572,6 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 #define NPU2_FIR_REGISTER_0			0x0000000005013C00
 #define NPU2_FIR_REGISTER_1			0x0000000005013C40
 #define NPU2_FIR_REGISTER_2			0x0000000005013C80
-#define NPU2_FIR_REGISTER_END			0x0000000005013CFF
 
 #define NPU2_TOTAL_FIR_REGISTERS		3
 
