@@ -215,9 +215,8 @@ static int xscom_clear_error(uint32_t gcid, uint32_t pcb_addr)
 }
 
 static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_addr,
-				  bool is_write, int64_t retries,
-				  int64_t *xscom_clear_retries,
-				  bool ignore_error)
+			      bool is_write, int64_t retries,
+			      int64_t *xscom_clear_retries)
 {
 	unsigned int stat = GETFIELD(SPR_HMER_XSCOM_STATUS, hmer);
 	int64_t rc = OPAL_HARDWARE;
@@ -278,12 +277,9 @@ static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_add
 	}
 
 	/* XXX: Create error log entry ? */
-	if (!ignore_error)
-		log_simple_error(&e_info(OPAL_RC_XSCOM_RW),
-				 "XSCOM: %s error gcid=0x%x "
-				 "pcb_addr=0x%x stat=0x%x\n",
-				 is_write ? "write" : "read", gcid,
-				 pcb_addr, stat);
+	log_simple_error(&e_info(OPAL_RC_XSCOM_RW),
+		"XSCOM: %s error gcid=0x%x pcb_addr=0x%x stat=0x%x\n",
+		is_write ? "write" : "read", gcid, pcb_addr, stat);
 
 	/* We need to reset the XSCOM or we'll hang on the next access */
 	xscom_reset(gcid, false);
@@ -326,16 +322,14 @@ static inline bool xscom_is_multicast_addr(uint32_t addr)
  * Low level XSCOM access functions, perform a single direct xscom
  * access via MMIO
  */
-static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val,
-			bool ignore_error)
+static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val)
 {
 	uint64_t hmer;
 	int64_t ret, retries;
 	int64_t xscom_clear_retries = XSCOM_CLEAR_MAX_RETRIES;
 
 	if (!xscom_gcid_ok(gcid)) {
-		if (!ignore_error)
-			prerror("%s: invalid XSCOM gcid 0x%x\n", __func__, gcid);
+		prerror("%s: invalid XSCOM gcid 0x%x\n", __func__, gcid);
 		return OPAL_PARAMETER;
 	}
 
@@ -357,7 +351,7 @@ static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val,
 
 		/* Handle error and possibly eventually retry */
 		ret = xscom_handle_error(hmer, gcid, pcb_addr, false, retries,
-					 &xscom_clear_retries, ignore_error);
+				&xscom_clear_retries);
 		if (ret != OPAL_BUSY)
 			break;
 	}
@@ -376,8 +370,7 @@ static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val,
 	if (proc_gen == proc_gen_p9 && ret == OPAL_XSCOM_CHIPLET_OFF)
 		return ret;
 
-	if (!ignore_error)
-		prerror("XSCOM: Read failed, ret =  %lld\n", ret);
+	prerror("XSCOM: Read failed, ret =  %lld\n", ret);
 	return ret;
 }
 
@@ -410,7 +403,7 @@ static int __xscom_write(uint32_t gcid, uint32_t pcb_addr, uint64_t val)
 
 		/* Handle error and possibly eventually retry */
 		ret = xscom_handle_error(hmer, gcid, pcb_addr, true, retries,
-					 &xscom_clear_retries, false);
+				&xscom_clear_retries);
 		if (ret != OPAL_BUSY)
 			break;
 	}
@@ -458,7 +451,7 @@ static int xscom_indirect_read_form0(uint32_t gcid, uint64_t pcb_addr,
 
 	/* Wait for completion */
 	for (retries = 0; retries < XSCOM_IND_MAX_RETRIES; retries++) {
-		rc = __xscom_read(gcid, addr, &data, false);
+		rc = __xscom_read(gcid, addr, &data);
 		if (rc)
 			goto bail;
 		if ((data & XSCOM_DATA_IND_COMPLETE) &&
@@ -520,7 +513,7 @@ static int xscom_indirect_write_form0(uint32_t gcid, uint64_t pcb_addr,
 
 	/* Wait for completion */
 	for (retries = 0; retries < XSCOM_IND_MAX_RETRIES; retries++) {
-		rc = __xscom_read(gcid, addr, &data, false);
+		rc = __xscom_read(gcid, addr, &data);
 		if (rc)
 			goto bail;
 		if ((data & XSCOM_DATA_IND_COMPLETE) &&
@@ -595,8 +588,7 @@ void _xscom_unlock(void)
 /*
  * External API
  */
-int _xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val,
-		bool take_lock, bool ignore_error)
+int _xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val, bool take_lock)
 {
 	uint32_t gcid;
 	int rc;
@@ -643,7 +635,7 @@ int _xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val,
 	if (pcb_addr & XSCOM_ADDR_IND_FLAG)
 		rc = xscom_indirect_read(gcid, pcb_addr, val);
 	else
-		rc = __xscom_read(gcid, pcb_addr & 0x7fffffff, val, ignore_error);
+		rc = __xscom_read(gcid, pcb_addr & 0x7fffffff, val);
 
 	/* Unlock it */
 	if (take_lock)

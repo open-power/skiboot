@@ -1620,7 +1620,7 @@ void slw_update_timer_expiry(uint64_t new_target)
 		/* Grab generation and spin if odd */
 		_xscom_lock();
 		for (;;) {
-			rc = _xscom_read(slw_timer_chip, 0xE0006, &gen, false, false);
+			rc = _xscom_read(slw_timer_chip, 0xE0006, &gen, false);
 			if (rc) {
 				prerror("SLW: Error %lld reading tmr gen "
 					" count\n", rc);
@@ -1664,7 +1664,7 @@ void slw_update_timer_expiry(uint64_t new_target)
 		}
 
 		/* Re-check gen count */
-		rc = _xscom_read(slw_timer_chip, 0xE0006, &gen2, false, false);
+		rc = _xscom_read(slw_timer_chip, 0xE0006, &gen2, false);
 		if (rc) {
 			prerror("SLW: Error %lld re-reading tmr gen "
 				" count\n", rc);
