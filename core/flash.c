@@ -279,6 +279,13 @@ static struct dt_node *flash_add_dt_node(struct flash *flash, int id)
 		partition_node = dt_new_addr(partition_container_node, "partition", ffs_part_start);
 		dt_add_property_strings(partition_node, "label", name);
 		dt_add_property_cells(partition_node, "reg", ffs_part_start, ffs_part_size);
+		if (part_name_map[i].id != RESOURCE_ID_KERNEL_FW) {
+			/* Mark all partitions other than the full PNOR and the boot kernel
+			 * firmware as read only.  These two partitions are the only partitions
+			 * that are properly erase block aligned at this time.
+			 */
+			dt_add_property(partition_node, "read-only", NULL, 0);
+		}
 	}
 
 	partition_node = dt_new_addr(partition_container_node, "partition", 0);
