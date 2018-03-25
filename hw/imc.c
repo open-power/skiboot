@@ -154,6 +154,9 @@ static struct imc_chip_cb *get_imc_cb(uint32_t chip_id)
 	struct proc_chip *chip = get_chip(chip_id);
 	struct imc_chip_cb *cb;
 
+	if (!chip->homer_base)
+		return NULL; /* The No Homers Club */
+
 	cb = (struct imc_chip_cb *)(chip->homer_base + P9_CB_STRUCT_OFFSET);
 	if (!is_nest_mem_initialized(cb))
 		return NULL;
