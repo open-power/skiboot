@@ -933,6 +933,12 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	lpc_init();
 
 	/*
+	 * This should be done before mem_region_init, so the stack
+	 * region length can be set according to the maximum PIR.
+	 */
+	init_cpu_max_pir();
+
+	/*
 	 * Now, we init our memory map from the device-tree, and immediately
 	 * reserve areas which we know might contain data coming from
 	 * HostBoot. We need to do these things before we start doing

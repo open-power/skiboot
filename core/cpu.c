@@ -43,7 +43,7 @@ struct cpu_stack {
 	};
 } __align(STACK_SIZE);
 
-static struct cpu_stack *cpu_stacks = (struct cpu_stack *)CPU_STACKS_BASE;
+static struct cpu_stack * const cpu_stacks = (struct cpu_stack *)CPU_STACKS_BASE;
 unsigned int cpu_thread_count;
 unsigned int cpu_max_pir;
 struct cpu_thread *boot_cpu;
@@ -826,6 +826,7 @@ static void init_cpu_thread(struct cpu_thread *t,
 			    enum cpu_thread_state state,
 			    unsigned int pir)
 {
+	memset(t, 0, sizeof(struct cpu_thread));
 	init_lock(&t->dctl_lock);
 	init_lock(&t->job_lock);
 	list_head_init(&t->job_queue);
@@ -880,7 +881,7 @@ void __nomcount pre_init_boot_cpu(void)
 
 void init_boot_cpu(void)
 {
-	unsigned int i, pir, pvr;
+	unsigned int pir, pvr;
 
 	pir = mfspr(SPR_PIR);
 	pvr = mfspr(SPR_PVR);
@@ -915,23 +916,20 @@ void init_boot_cpu(void)
 		proc_gen = proc_gen_unknown;
 	}
 
-	/* Get a CPU thread count and an initial max PIR based on family */
+	/* Get a CPU thread count based on family */
 	switch(proc_gen) {
 	case proc_gen_p7:
 		cpu_thread_count = 4;
-		cpu_max_pir = SPR_PIR_P7_MASK;
 		prlog(PR_INFO, "CPU: P7 generation processor"
 		      " (max %d threads/core)\n", cpu_thread_count);
 		break;
 	case proc_gen_p8:
 		cpu_thread_count = 8;
-		cpu_max_pir = SPR_PIR_P8_MASK;
 		prlog(PR_INFO, "CPU: P8 generation processor"
 		      " (max %d threads/core)\n", cpu_thread_count);
 		break;
 	case proc_gen_p9:
 		cpu_thread_count = 4;
-		cpu_max_pir = SPR_PIR_P9_MASK;
 		prlog(PR_INFO, "CPU: P9 generation processor"
 		      " (max %d threads/core)\n", cpu_thread_count);
 		break;
@@ -943,24 +941,13 @@ void init_boot_cpu(void)
 
 	prlog(PR_DEBUG, "CPU: Boot CPU PIR is 0x%04x PVR is 0x%08x\n",
 	      pir, pvr);
-	prlog(PR_DEBUG, "CPU: Initial max PIR set to 0x%x\n", cpu_max_pir);
 
 	/*
-	 * Adjust top of RAM to include CPU stacks. While we *could* have
-	 * less RAM than this... during early boot, it's enough of a check
-	 * until we start parsing device tree / hdat and find out for sure
+	 * Adjust top of RAM to include the boot CPU stack. If we have less
+	 * RAM than this, it's not possible to boot.
 	 */
+	cpu_max_pir = pir;
 	top_of_ram += (cpu_max_pir + 1) * STACK_SIZE;
-
-	/* Clear the CPU structs */
-	for (i = 0; i <= cpu_max_pir; i++) {
-		/* boot CPU already cleared and we don't want to clobber
-		 * its stack guard value.
-		 */
-		if (i == pir)
-			continue;
-		memset(&cpu_stacks[i].cpu, 0, sizeof(struct cpu_thread));
-	}
 
 	/* Setup boot CPU state */
 	boot_cpu = &cpu_stacks[pir].cpu;
@@ -1029,10 +1016,39 @@ static void init_tm_suspend_mode_property(void)
 		tm_suspend_enabled = false;
 }
 
+void init_cpu_max_pir(void)
+{
+	struct dt_node *cpus, *cpu;
+
+	cpus = dt_find_by_path(dt_root, "/cpus");
+	assert(cpus);
+
+	/* Iterate all CPUs in the device-tree */
+	dt_for_each_child(cpus, cpu) {
+		unsigned int pir, server_no;
+
+		/* Skip cache nodes */
+		if (strcmp(dt_prop_get(cpu, "device_type"), "cpu"))
+			continue;
+
+		server_no = dt_prop_get_u32(cpu, "reg");
+
+		/* If PIR property is absent, assume it's the same as the
+		 * server number
+		 */
+		pir = dt_prop_get_u32_def(cpu, "ibm,pir", server_no);
+
+		if (cpu_max_pir < pir + cpu_thread_count - 1)
+			cpu_max_pir = pir + cpu_thread_count - 1;
+	}
+
+	prlog(PR_DEBUG, "CPU: New max PIR set to 0x%x\n", cpu_max_pir);
+}
+
 void init_all_cpus(void)
 {
 	struct dt_node *cpus, *cpu;
-	unsigned int thread, new_max_pir = 0;
+	unsigned int thread;
 	int dec_bits = find_dec_bits();
 
 	cpus = dt_find_by_path(dt_root, "/cpus");
@@ -1071,7 +1087,6 @@ void init_all_cpus(void)
 		      " State=%d\n", pir, server_no, state);
 
 		/* Setup thread 0 */
-		assert(pir <= cpu_max_pir);
 		t = pt = &cpu_stacks[pir].cpu;
 		if (t != boot_cpu) {
 			init_cpu_thread(t, state, pir);
@@ -1096,10 +1111,6 @@ void init_all_cpus(void)
 		/* Add the decrementer width property */
 		dt_add_property_cells(cpu, "ibm,dec-bits", dec_bits);
 
-		/* Adjust max PIR */
-		if (new_max_pir < (pir + cpu_thread_count - 1))
-			new_max_pir = pir + cpu_thread_count - 1;
-
 		/* Iterate threads */
 		p = dt_find_property(cpu, "ibm,ppc-interrupt-server#s");
 		if (!p)
@@ -1120,9 +1131,6 @@ void init_all_cpus(void)
 		}
 		prlog(PR_INFO, "CPU:  %d secondary threads\n", thread);
 	}
-	cpu_max_pir = new_max_pir;
-	prlog(PR_DEBUG, "CPU: New max PIR set to 0x%x\n", new_max_pir);
-	adjust_cpu_stacks_alloc();
 }
 
 void cpu_bringup(void)

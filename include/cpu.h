@@ -157,6 +157,7 @@ static inline void __nomcount cpu_relax(void)
 /* Initialize CPUs */
 void pre_init_boot_cpu(void);
 void init_boot_cpu(void);
+void init_cpu_max_pir(void);
 void init_all_cpus(void);
 
 /* This brings up our secondaries */

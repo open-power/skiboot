@@ -921,15 +921,6 @@ bool mem_range_is_reserved(uint64_t start, uint64_t size)
 	return false;
 }
 
-void adjust_cpu_stacks_alloc(void)
-{
-	/* CPU stacks start at 0, then when we know max possible PIR,
-	 * we adjust, then when we bring all CPUs online we know the
-	 * runtime max PIR, so we adjust this a few times during boot.
-	 */
-	skiboot_cpu_stacks.len = (cpu_max_pir + 1) * STACK_SIZE;
-}
-
 static void mem_region_parse_reserved_properties(void)
 {
 	const struct dt_property *names, *ranges;
@@ -1063,7 +1054,11 @@ void mem_region_init(void)
 		unlock(&mem_region_lock);
 	}
 
-	adjust_cpu_stacks_alloc();
+	/*
+	 * This is called after we know the maximum PIR of all CPUs,
+	 * so we can dynamically set the stack length.
+	 */
+	skiboot_cpu_stacks.len = (cpu_max_pir + 1) * STACK_SIZE;
 
 	lock(&mem_region_lock);
 
