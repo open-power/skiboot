@@ -351,6 +351,22 @@ void __noreturn fast_reboot_entry(void)
 	cpu_set_sreset_enable(true);
 	cpu_set_ipi_enable(true);
 
+	if (!chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
+		/*
+		 * mem_region_clear_unused avoids these preload regions
+		 * so it can run along side image preloading. Clear these
+		 * regions now to catch anything not overwritten by
+		 * preload.
+		 *
+		 * Mambo may have embedded payload here, so don't clear
+		 * it at all. The OS may have already overwritten it, so
+		 * mambo really should reserve memory regions for this, if
+		 * fast reboot is to work reliably.
+		 */
+		memset(KERNEL_LOAD_BASE, 0, KERNEL_LOAD_SIZE);
+		memset(INITRAMFS_LOAD_BASE, 0, INITRAMFS_LOAD_SIZE);
+	}
+
 	/* Start preloading kernel and ramdisk */
 	start_preload_kernel();
 
@@ -378,6 +394,8 @@ void __noreturn fast_reboot_entry(void)
 	}
 
 	ipmi_set_fw_progress_sensor(IPMI_FW_PCI_INIT);
+
+	mem_region_clear_unused();
 
 	/* Load and boot payload */
 	load_and_boot_kernel(true);

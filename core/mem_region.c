@@ -1171,6 +1171,70 @@ void mem_region_release_unused(void)
 	unlock(&mem_region_lock);
 }
 
+static void mem_clear_range(uint64_t s, uint64_t e)
+{
+	uint64_t res_start, res_end;
+
+	/* Skip exception vectors */
+	if (s < EXCEPTION_VECTORS_END)
+		s = EXCEPTION_VECTORS_END;
+
+	/* Skip kernel preload area */
+	res_start = (uint64_t)KERNEL_LOAD_BASE;
+	res_end = res_start + KERNEL_LOAD_SIZE;
+
+	if (s >= res_start && s < res_end)
+	       s = res_end;
+	if (e > res_start && e <= res_end)
+	       e = res_start;
+	if (e <= s)
+		return;
+	if (s < res_start && e > res_end) {
+		mem_clear_range(s, res_start);
+		mem_clear_range(res_end, e);
+		return;
+	}
+
+	/* Skip initramfs preload area */
+	res_start = (uint64_t)INITRAMFS_LOAD_BASE;
+	res_end = res_start + INITRAMFS_LOAD_SIZE;
+
+	if (s >= res_start && s < res_end)
+	       s = res_end;
+	if (e > res_start && e <= res_end)
+	       e = res_start;
+	if (e <= s)
+		return;
+	if (s < res_start && e > res_end) {
+		mem_clear_range(s, res_start);
+		mem_clear_range(res_end, e);
+		return;
+	}
+
+	prlog(PR_NOTICE, "Clearing region %llx-%llx\n", s, e);
+	memset((void *)s, 0, e - s);
+}
+
+void mem_region_clear_unused(void)
+{
+	struct mem_region *r;
+
+	lock(&mem_region_lock);
+	assert(mem_regions_finalised);
+
+	prlog(PR_NOTICE, "Clearing unused memory:\n");
+	list_for_each(&regions, r, list) {
+		/* If it's not unused, ignore it. */
+		if (!(r->type == REGION_OS))
+			continue;
+
+		assert(r != &skiboot_heap);
+
+		mem_clear_range(r->start, r->start + r->len);
+	}
+	unlock(&mem_region_lock);
+}
+
 static void mem_region_add_dt_reserved_node(struct dt_node *parent,
 		struct mem_region *region)
 {
