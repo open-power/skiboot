@@ -69,8 +69,10 @@ opal_call(OPAL_WRITE_NVRAM, opal_write_nvram, 3);
 
 bool nvram_validate(void)
 {
-	if (!nvram_valid)
-		nvram_valid = !nvram_check(nvram_image, nvram_size);
+	if (!nvram_valid) {
+		if (!nvram_check(nvram_image, nvram_size))
+			nvram_valid = true;
+	}
 
 	return nvram_valid;
 }
@@ -87,7 +89,7 @@ static void nvram_reformat(void)
 	if (platform.nvram_write)
 		platform.nvram_write(0, nvram_image, nvram_size);
 
-	nvram_valid = true;
+	nvram_validate();
 }
 
 void nvram_reinit(void)

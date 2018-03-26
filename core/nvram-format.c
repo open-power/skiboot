@@ -180,6 +180,7 @@ int nvram_check(void *nvram_image, const uint32_t nvram_size)
 	}
 
 	prlog(PR_INFO, "NVRAM: Layout appears sane\n");
+	assert(skiboot_part_hdr);
 	return 0;
  failed:
 	return -1;
@@ -233,6 +234,8 @@ const char *nvram_query(const char *key)
 	 */
 	if (!nvram_validate())
 		return NULL;
+
+	assert(skiboot_part_hdr);
 
 	part_end = (const char *) skiboot_part_hdr
 		+ be16_to_cpu(skiboot_part_hdr->len) * 16 - 1;
