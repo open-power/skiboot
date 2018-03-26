@@ -26,9 +26,6 @@
 #include <mem_region.h>
 #include <mem_region-malloc.h>
 
-int64_t mem_dump_free(void);
-void mem_dump_allocs(void);
-
 /* Memory poisoning on free (if POISON_MEM_REGION set to 1) */
 #ifdef DEBUG
 #define POISON_MEM_REGION	1
@@ -619,6 +616,18 @@ bool mem_check(const struct mem_region *region)
 			region->name);
 		return false;
 	}
+	return true;
+}
+
+bool mem_check_all(void)
+{
+	struct mem_region *r;
+
+	list_for_each(&regions, r, list) {
+		if (!mem_check(r))
+			return false;
+	}
+
 	return true;
 }
 

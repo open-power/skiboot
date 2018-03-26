@@ -63,7 +63,11 @@ bool mem_resize(struct mem_region *region, void *mem, size_t len,
 		const char *location);
 size_t mem_allocated_size(const void *ptr);
 bool mem_check(const struct mem_region *region);
+bool mem_check_all(void);
 void mem_region_release_unused(void);
+void mem_region_clear_unused(void);
+int64_t mem_dump_free(void);
+void mem_dump_allocs(void);
 
 /* Specifically for working on the heap. */
 extern struct mem_region skiboot_heap;

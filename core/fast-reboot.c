@@ -19,6 +19,7 @@
 #include <fsp.h>
 #include <psi.h>
 #include <opal.h>
+#include <mem_region.h>
 #include <xscom.h>
 #include <interrupts.h>
 #include <cec.h>
@@ -70,6 +71,23 @@ void disable_fast_reboot(const char *reason)
 	fast_reboot_disabled = reason;
 }
 
+/*
+ * This is called by the reboot CPU after all other CPUs have been
+ * quiesced and stopped, to perform various sanity checks on firmware
+ * data (and potentially hardware), to determine whether the fast
+ * reboot should go ahead.
+ */
+static bool fast_reboot_sanity_check(void)
+{
+	if (!mem_check_all()) {
+		prlog(PR_NOTICE, "REST: Fast reboot failed due to inconsistent "
+				"firmware data\n");
+		return false;
+	}
+
+	return true;
+}
+
 void fast_reboot(void)
 {
 	struct cpu_thread *cpu;
@@ -103,8 +121,6 @@ void fast_reboot(void)
 		return;
 	}
 
-	/* Should mem_check() all regions before allowing fast reboot? */
-
 	prlog(PR_NOTICE, "RESET: Initiating fast reboot %d...\n", ++fast_reboot_count);
 	fast_boot_release = false;
 	sync();
@@ -113,6 +129,11 @@ void fast_reboot(void)
 	if (sreset_all_prepare()) {
 		prlog(PR_NOTICE, "RESET: Fast reboot failed to prepare "
 				"secondaries for system reset\n");
+		opal_quiesce(QUIESCE_RESUME, -1);
+		return;
+	}
+
+	if (!fast_reboot_sanity_check()) {
 		opal_quiesce(QUIESCE_RESUME, -1);
 		return;
 	}

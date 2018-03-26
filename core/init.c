@@ -454,8 +454,6 @@ static void load_initramfs(void)
 			(uint64_t)INITRAMFS_LOAD_BASE + initramfs_size);
 }
 
-int64_t mem_dump_free(void);
-
 void *fdt;
 
 void __noreturn load_and_boot_kernel(bool is_reboot)
