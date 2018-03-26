@@ -488,11 +488,12 @@ static int do_list(struct gard_ctx *ctx, int argc, char **argv)
 	draw_ruler('-', ruler_size);
 
 	for_each_gard(ctx, pos, &gard, &rc) {
-		printf(" %08x | %08x | %-10s | %s\n",
+		printf(" %08x | %08x | %-10s | %s%s\n",
 			be32toh(gard.record_id),
 			be32toh(gard.errlog_eid),
 			deconfig_reason_str(gard.error_type),
-			format_path(&gard.target_id, scratch));
+			format_path(&gard.target_id, scratch),
+                        gard.record_id == 0xffffffff ? " *CLEARED*" : "");
 	}
 
 	draw_ruler('=', ruler_size);
@@ -515,7 +516,7 @@ static int do_show_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, vo
 	if (be32toh(gard->record_id) == id) {
 		unsigned int count, i;
 
-		printf("Record ID:    0x%08x\n", id);
+		printf("Record ID:    0x%08x%s\n", id, id == 0xffffffff ? " *CLEARED*" : "");
 		printf("========================\n");
 		printf("Error ID:     0x%08x\n", be32toh(gard->errlog_eid));
 		printf("Error Type:   %s (0x%02x)\n",
