@@ -59,7 +59,7 @@ static size_t kernel_size;
 static bool kernel_32bit;
 
 /* We backup the previous vectors here before copying our own */
-static uint8_t old_vectors[0x2000];
+static uint8_t old_vectors[EXCEPTION_VECTORS_END];
 
 #ifdef SKIBOOT_GCOV
 void skiboot_gcov_done(void);
@@ -379,9 +379,9 @@ static bool load_kernel(void)
 		 * If the kernel is at 0, restore it as it was overwritten
 		 * by our vectors.
 		 */
-		if (kernel_entry < 0x2000) {
+		if (kernel_entry < EXCEPTION_VECTORS_END) {
 			cpu_set_sreset_enable(false);
-			memcpy(NULL, old_vectors, 0x2000);
+			memcpy(NULL, old_vectors, EXCEPTION_VECTORS_END);
 			sync_icache();
 		}
 	} else {
@@ -739,14 +739,16 @@ void copy_exception_vectors(void)
 	/* Backup previous vectors as this could contain a kernel
 	 * image.
 	 */
-	memcpy(old_vectors, NULL, 0x2000);
+	memcpy(old_vectors, NULL, EXCEPTION_VECTORS_END);
 
-	/* Copy from 0x100 to 0x2000, avoid below 0x100 as this is
-	 * the boot flag used by CPUs still potentially entering
+	/* Copy from 0x100 to EXCEPTION_VECTORS_END, avoid below 0x100 as
+	 * this is the boot flag used by CPUs still potentially entering
 	 * skiboot.
 	 */
-	BUILD_ASSERT((&reset_patch_end - &reset_patch_start) < 0x1f00);
-	memcpy((void *)0x100, (void *)(SKIBOOT_BASE + 0x100), 0x1f00);
+	BUILD_ASSERT((&reset_patch_end - &reset_patch_start) <
+			EXCEPTION_VECTORS_END - 0x100);
+	memcpy((void *)0x100, (void *)(SKIBOOT_BASE + 0x100),
+			EXCEPTION_VECTORS_END - 0x100);
 	sync_icache();
 }
 

@@ -224,7 +224,7 @@ _exception:
 exception_entry_foo:
 	b	exception_entry
 
-	.= 0x2000
+	.= EXCEPTION_VECTORS_END
 	/* This is the OPAL branch table. It's populated at boot time
 	 * with function pointers to the various OPAL functions from
 	 * the content of the .opal_table section, indexed by Token.

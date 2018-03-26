@@ -29,6 +29,11 @@
 #define STACK_SHIFT		14
 #define STACK_SIZE		(1 << STACK_SHIFT)
 
+/* End of the exception region we copy from 0x0. 0x0-0x100 will have
+ * IPL data and is not actually for exception vectors.
+ */
+#define EXCEPTION_VECTORS_END	0x2000
+
 /* The NACA and other stuff in head.S need to be at the start: we
  * give it 64k before placing the SPIRA and related data.
  */
