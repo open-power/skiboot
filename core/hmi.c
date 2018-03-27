@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include <npu2-regs.h>
 #include <npu.h>
 #include <capp.h>
+#include <nvram.h>
 
 /*
  * HMER register layout:
@@ -527,6 +528,59 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	*event_generated = true;
 }
 
+/*
+ * If the year is 2018 and you still see all these hardcoded, you
+ * should really replace this with the neat macros that's in the
+ * NPU2 code rather than this horrible listing of every single
+ * NPU2 register hardcoded for a specific chip.
+ *
+ * I feel dirty having even written it.
+ */
+static uint32_t npu2_scom_dump[] = {
+	0x5011017, 0x5011047, 0x5011077, 0x50110A7,
+	0x5011217, 0x5011247, 0x5011277, 0x50112A7,
+	0x5011417, 0x5011447, 0x5011477, 0x50114A7,
+	0x50110DA, 0x50112DA, 0x50114DA,
+	0x50110DB, 0x50112DB, 0x50114DB,
+	0x5011011, 0x5011041, 0x5011071, 0x50110A1,
+	0x5011211, 0x5011241, 0x5011271, 0x50112A1,
+	0x5011411, 0x5011441, 0x5011471, 0x50114A1,
+	0x5011018, 0x5011048, 0x5011078, 0x50110A8,
+	0x5011218, 0x5011248, 0x5011278, 0x50112A8,
+	0x5011418, 0x5011448, 0x5011478, 0x50114A8,
+	0x5011640,
+	0x5011114, 0x5011134, 0x5011314, 0x5011334,
+	0x5011514, 0x5011534, 0x5011118, 0x5011138,
+	0x5011318, 0x5011338, 0x5011518, 0x5011538,
+	0x50110D8, 0x50112D8, 0x50114D8,
+	0x50110D9, 0x50112D9, 0x50114D9,
+	0x5011019, 0x5011049, 0x5011079, 0x50110A9,
+	0x5011219, 0x5011249, 0x5011279, 0x50112A9,
+	0x5011419, 0x5011449, 0x5011479, 0x50114A9,
+	0x50110F4, 0x50112F4, 0x50114F4,
+	0x50110F5, 0x50112F5, 0x50114F5,
+	0x50110F6, 0x50112F6, 0x50114F6,
+	0x50110FD, 0x50112FD, 0x50114FD,
+	0x50110FE, 0x50112FE, 0x50114FE,
+	0x00
+};
+
+static void dump_scoms(int flat_chip_id, const char *unit, uint32_t *scoms)
+{
+	uint64_t value;
+	int r;
+
+	while (*scoms != 0) {
+		value = 0;
+		r = _xscom_read(flat_chip_id, *scoms, &value, false);
+		if (r != OPAL_SUCCESS)
+			continue;
+		prlog(PR_ERR, "%s: 0x%08x=0x%016llx\n",
+		      unit, *scoms, value);
+		scoms++;
+	}
+}
+
 static void find_npu2_checkstop_reason(int flat_chip_id,
 				      struct OpalHMIEvent *hmi_evt,
 				      bool *event_generated)
@@ -534,7 +588,7 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 	struct phb *phb;
 	struct npu *p = NULL;
 	int i;
-
+	bool npu2_hmi_verbose = false;
 	uint64_t npu2_fir;
 	uint64_t npu2_fir_mask;
 	uint64_t npu2_fir_action0;
@@ -595,6 +649,23 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 
 	if (!total_errors)
 		return;
+
+	npu2_hmi_verbose = nvram_query_eq("npu2-hmi-verbose", "true");
+	/* Force this for now until we sort out something better */
+	npu2_hmi_verbose = true;
+
+	if (npu2_hmi_verbose) {
+		_xscom_lock();
+		dump_scoms(flat_chip_id, "NPU2", npu2_scom_dump);
+		_xscom_unlock();
+		prlog(PR_ERR, " _________________________ \n");
+		prlog(PR_ERR, "< It's Driver Debug time! >\n");
+		prlog(PR_ERR, " ------------------------- \n");
+		prlog(PR_ERR, "       \\   ,__,            \n");
+		prlog(PR_ERR, "        \\  (oo)____        \n");
+		prlog(PR_ERR, "           (__)    )\\      \n");
+		prlog(PR_ERR, "              ||--|| *     \n");
+	}
 
 	/* Set up the HMI event */
 	hmi_evt->severity = OpalHMI_SEV_WARNING;
