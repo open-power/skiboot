@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 IBM Corp.
+/* Copyright 2013-2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1206,7 +1206,8 @@ static void mem_clear_range(uint64_t s, uint64_t e)
 		return;
 	}
 
-	prlog(PR_NOTICE, "Clearing region %llx-%llx\n", s, e);
+	prlog(PR_NOTICE, "Clearing region %llx-%llx\n",
+	      (long long)s, (long long)e);
 	memset((void *)s, 0, e - s);
 }
 
