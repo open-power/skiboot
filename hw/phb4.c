@@ -2856,25 +2856,75 @@ static int64_t load_capp_ucode(struct phb4 *p)
 	return rc;
 }
 
-static void do_capp_recovery_scoms(struct phb4 *p)
+static int do_capp_recovery_scoms(struct phb4 *p)
 {
-	uint64_t reg;
-	uint32_t offset;
+	uint64_t rc, reg, end;
+	uint64_t offset = PHB4_CAPP_REG_OFFSET(p);
 
-	PHBDBG(p, "Doing CAPP recovery scoms\n");
 
-	offset = PHB4_CAPP_REG_OFFSET(p);
-	/* disable snoops */
-	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0);
-	load_capp_ucode(p);
-	/* clear err rpt reg*/
-	xscom_write(p->chip_id, CAPP_ERR_RPT_CLR + offset, 0);
-	/* clear capp fir */
-	xscom_write(p->chip_id, CAPP_FIR + offset, 0);
-
+	/* Get the status of CAPP recovery */
 	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &reg);
-	reg &= ~(PPC_BIT(0) | PPC_BIT(1));
-	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, reg);
+
+	/* No recovery in progress ignore */
+	if ((reg & PPC_BIT(0)) == 0) {
+		PHBDBG(p, "CAPP: No recovery in progress\n");
+		return OPAL_SUCCESS;
+	}
+
+	PHBDBG(p, "CAPP: Waiting for recovery to complete\n");
+	/* recovery timer failure period 168ms */
+	end = mftb() + msecs_to_tb(168);
+	while ((reg & (PPC_BIT(1) | PPC_BIT(5) | PPC_BIT(9))) == 0) {
+
+		time_wait_ms(5);
+		xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &reg);
+
+		if (end && tb_compare(mftb(), end) != TB_AAFTERB) {
+			PHBERR(p, "CAPP: Capp recovery Timed-out.\n");
+			end = 0;
+			break;
+		}
+	}
+
+	/* Check if the recovery failed or passed */
+	if (reg & PPC_BIT(1)) {
+		PHBDBG(p, "Doing CAPP recovery scoms\n");
+		/* disable snoops */
+		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0);
+		load_capp_ucode(p);
+
+		/* clear err rpt reg*/
+		xscom_write(p->chip_id, CAPP_ERR_RPT_CLR + offset, 0);
+
+		/* clear capp fir */
+		xscom_write(p->chip_id, CAPP_FIR + offset, 0);
+
+		/* Just reset Bit-0,1 and dont touch any other bit */
+		xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &reg);
+		reg &= ~(PPC_BIT(0) | PPC_BIT(1));
+		xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, reg);
+
+		PHBDBG(p, "CAPP recovery complete\n");
+		rc = OPAL_SUCCESS;
+
+	} else {
+		/* Most likely will checkstop here due to FIR ACTION for
+		 * failed recovery. So this message would never be logged.
+		 * But if we still enter here then return an error forcing a
+		 * fence of the PHB.
+		 */
+		if (reg  & PPC_BIT(5))
+			PHBERR(p, "CAPP: Capp recovery Failed\n");
+		else if (reg  & PPC_BIT(9))
+			PHBERR(p, "CAPP: Capp recovery hang detected\n");
+		else if (end != 0)
+			PHBERR(p, "CAPP: Unknown recovery failure\n");
+
+		PHBDBG(p, "CAPP: Err/Status-reg=0x%016llx\n", reg);
+		rc = OPAL_HARDWARE;
+	}
+
+	return rc;
 }
 
 static int64_t phb4_creset(struct pci_slot *slot)
@@ -2933,8 +2983,9 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			PHBDBG(p, "CRESET: No pending transactions\n");
 
 			/* capp recovery */
-			if (p->flags & PHB4_CAPP_RECOVERY)
-				do_capp_recovery_scoms(p);
+			if ((p->flags & PHB4_CAPP_RECOVERY) &&
+			    (do_capp_recovery_scoms(p) != OPAL_SUCCESS))
+				goto error;
 
 			/* Clear errors in PFIR and NFIR */
 			xscom_write(p->chip_id, p->pci_stk_xscom + 0x1,
