@@ -206,7 +206,7 @@ bool try_lock_caller(struct lock *l, const char *owner)
 void lock_caller(struct lock *l, const char *owner)
 {
 	bool timeout_warn = false;
-	unsigned long start;
+	unsigned long start = 0;
 
 	if (bust_locks)
 		return;
@@ -218,7 +218,13 @@ void lock_caller(struct lock *l, const char *owner)
 	add_lock_request(l);
 
 #ifdef DEBUG_LOCKS
-	start = tb_to_msecs(mftb());
+	/*
+	 * Ensure that we get a valid start value
+	 * as we may be handling TFMR errors and taking
+	 * a lock to do so, so timebase could be garbage
+	 */
+	if( (mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID))
+		start = tb_to_msecs(mftb());
 #endif
 
 	for (;;) {
@@ -229,7 +235,7 @@ void lock_caller(struct lock *l, const char *owner)
 			barrier();
 		smt_medium();
 
-		if (!timeout_warn)
+		if (start && !timeout_warn)
 			timeout_warn = lock_timeout(start);
 	}
 
