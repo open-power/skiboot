@@ -145,6 +145,9 @@ static void phb4_init_hw(struct phb4 *p, bool first_init);
 #define PHBLOGCFG(p, fmt, a...) do {} while (0)
 #endif
 
+#define PHB4_CAN_STORE_EOI(p) \
+	(XIVE_STORE_EOI_ENABLED && ((p)->rev >= PHB4_REV_NIMBUS_DD20))
+
 static bool verbose_eeh;
 static bool pci_tracing;
 static bool pci_eeh_mmio;
@@ -4660,7 +4663,8 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 		val |= SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_DD1_2_PER_PE);
 	} else {
 		val |= SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_2_PER_PE);
-		val |= PHB_CTRLR_IRQ_STORE_EOI;
+		if (PHB4_CAN_STORE_EOI(p))
+			val |= PHB_CTRLR_IRQ_STORE_EOI;
 	}
 
 	if (!pci_eeh_mmio)
@@ -5255,10 +5259,16 @@ static void phb4_create(struct dt_node *np)
 	/* Load capp microcode into capp unit */
 	load_capp_ucode(p);
 
-	/* Register all interrupt sources with XIVE */
-	irq_flags = XIVE_SRC_SHIFT_BUG | XIVE_SRC_TRIGGER_PAGE;
-	if (p->rev >= PHB4_REV_NIMBUS_DD20)
+	/* Compute XIVE source flags depending on PHB revision */
+	irq_flags = 0;
+	if (p->rev == PHB4_REV_NIMBUS_DD10)
+		irq_flags |= XIVE_SRC_SHIFT_BUG;
+	if (PHB4_CAN_STORE_EOI(p))
 		irq_flags |= XIVE_SRC_STORE_EOI;
+	else
+		irq_flags |= XIVE_SRC_TRIGGER_PAGE;
+
+	/* Register all interrupt sources with XIVE */
 	xive_register_hw_source(p->base_msi, p->num_irqs - 8, 16,
 				p->int_mmio, irq_flags, NULL, NULL);
 
