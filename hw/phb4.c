@@ -3947,25 +3947,6 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 		 ((u64)CAPIMASK << 32) | PHB_CAPI_CMPM_ENABLE);
 
 	if (!(p->rev == PHB4_REV_NIMBUS_DD10)) {
-		/*
-		 * PBCQ Tunnel Bar Register
-		 *
-		 * If set, for example by a driver that may already have
-		 * tweaked the tunnel bar, then we do not touch it when
-		 * entering capi mode. It's up to the driver to handle it.
-		 *
-		 * If unset, then we use the PSL_TNR_ADDR[TNR_Addr] reset
-		 * value. For fpga/cxl, this code will define the tunnel bar.
-		 */
-		xscom_read(p->chip_id,
-			   p->pe_stk_xscom + XPEC_NEST_STK_TUNNEL_BAR, &reg);
-		if (!reg) {
-			reg = 0x00020000E0000000ull << 8;
-			xscom_write(p->chip_id,
-				    p->pe_stk_xscom + XPEC_NEST_STK_TUNNEL_BAR,
-				    reg);
-		}
-
 		/* PB AIB Hardware Control Register
 		 * Wait 32 PCI clocks for a credit to become available
 		 * before rejecting.
