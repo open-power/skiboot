@@ -5366,6 +5366,10 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 		return;
 	}
 
+	/* Clear errors in PFIR and NFIR */
+	xscom_write(gcid, pci_stack + XPEC_PCI_STK_PCI_FIR, 0);
+	xscom_write(gcid, nest_stack + XPEC_NEST_STK_PCI_NFIR, 0);
+
 	/* Check ETU reset */
 	xscom_read(gcid, pci_stack + XPEC_PCI_STK_ETU_RESET, &val);
 	prlog_once(PR_DEBUG, "ETU reset: %llx\n", val);
