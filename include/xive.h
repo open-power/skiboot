@@ -492,6 +492,9 @@ uint32_t xive_alloc_ipi_irqs(uint32_t chip_id, uint32_t count, uint32_t align);
 uint64_t xive_get_notify_port(uint32_t chip_id, uint32_t ent);
 uint32_t xive_get_notify_base(uint32_t girq);
 
+/* XIVE feature flag to de/activate store EOI */
+#define XIVE_STORE_EOI_ENABLED 0
+
 /* Internal IRQ flags */
 #define XIVE_SRC_TRIGGER_PAGE	0x01 /* Trigger page exist (either separate
 				      * or not, so different from the OPAL
