@@ -547,6 +547,11 @@ int hservice_wakeup(u32 core, u32 mode)
 	return 0;
 }
 
+static void pnor_load_module(struct opal_prd_ctx *ctx)
+{
+	insert_module("powernv_flash");
+}
+
 static void ipmi_init(struct opal_prd_ctx *ctx)
 {
 	insert_module("ipmi_devintf");
@@ -2177,7 +2182,9 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 
 	fixup_hinterface_table();
 
-	if (pnor_available(&ctx->pnor)) {
+	if (!is_fsp_system()) {
+		pnor_load_module(ctx);
+
 		rc = pnor_init(&ctx->pnor);
 		if (rc) {
 			pr_log(LOG_ERR, "PNOR: Failed to open pnor: %m");
