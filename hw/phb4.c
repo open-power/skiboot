@@ -3876,7 +3876,8 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 				uint32_t capp_eng)
 {
 	uint64_t reg, start_addr, end_addr, stq_eng, dma_eng;
-	int i;
+	uint64_t mbt0, mbt1;
+	int i, entf = -1;
 
 	/* CAPP Control Register */
 	xscom_read(p->chip_id, p->pe_xscom + XPEC_NEST_CAPP_CNTL, &reg);
@@ -4001,41 +4002,44 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 	for (i = 0; i < p->tvt_size; i++)
 		out_be64(p->regs + PHB_IODA_DATA0, p->tve_cache[i]);
 
-	/* set mbt bar to pass capi mmio window. First applied cleared
-	 * values to HW
+	/* set mbt bar to pass capi mmio window and keep the other
+	 * mmio values
 	 */
+	mbt0 = IODA3_MBT0_ENABLE | IODA3_MBT0_TYPE_M64 |
+	       SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_SINGLE_PE) |
+	       SETFIELD(IODA3_MBT0_MDT_COLUMN, 0ull, 0) |
+	       (0x0002000000000000ULL & IODA3_MBT0_BASE_ADDR);
+
+	mbt1 = IODA3_MBT1_ENABLE |
+	       (0x00ff000000000000ULL & IODA3_MBT1_MASK) |
+	       SETFIELD(IODA3_MBT1_SINGLE_PE_NUM, 0ull, pe_number);
+
 	for (i = 0; i < p->mbt_size; i++) {
-		p->mbt_cache[i][0] = 0;
-		p->mbt_cache[i][1] = 0;
+		/* search if the capi mmio window is already present */
+		if ((p->mbt_cache[i][0] == mbt0) &&
+		    (p->mbt_cache[i][1] == mbt1))
+			break;
+
+		/* search a free entry */
+		if ((entf == -1) &&
+		   ((!(p->mbt_cache[i][0] & IODA3_MBT0_ENABLE)) &&
+		    (!(p->mbt_cache[i][1] & IODA3_MBT1_ENABLE))))
+			entf = i;
 	}
-	phb4_ioda_sel(p, IODA3_TBL_MBT, 0, true);
-	for (i = 0; i < p->mbt_size; i++) {
-		out_be64(p->regs + PHB_IODA_DATA0, p->mbt_cache[i][0]);
-		out_be64(p->regs + PHB_IODA_DATA0, p->mbt_cache[i][1]);
-	}
 
-	p->mbt_cache[0][0] = IODA3_MBT0_ENABLE |
-			     IODA3_MBT0_TYPE_M64 |
-		SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_SINGLE_PE) |
-		SETFIELD(IODA3_MBT0_MDT_COLUMN, 0ull, 0) |
-		(p->mm0_base & IODA3_MBT0_BASE_ADDR);
-	p->mbt_cache[0][1] = IODA3_MBT1_ENABLE |
-		((~(p->mm0_size - 1)) & IODA3_MBT1_MASK) |
-		SETFIELD(IODA3_MBT1_SINGLE_PE_NUM, 0ull, pe_number);
+	if (entf >= 0 && i == p->mbt_size) {
+		/* no capi mmio window found, so add it */
+		p->mbt_cache[entf][0] = mbt0;
+		p->mbt_cache[entf][1] = mbt1;
 
-	p->mbt_cache[1][0] = IODA3_MBT0_ENABLE |
-			     IODA3_MBT0_TYPE_M64 |
-		SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_SINGLE_PE) |
-		SETFIELD(IODA3_MBT0_MDT_COLUMN, 0ull, 0) |
-		(0x0002000000000000ULL & IODA3_MBT0_BASE_ADDR);
-	p->mbt_cache[1][1] = IODA3_MBT1_ENABLE |
-		(0x00ff000000000000ULL & IODA3_MBT1_MASK) |
-		SETFIELD(IODA3_MBT1_SINGLE_PE_NUM, 0ull, pe_number);
-
-	phb4_ioda_sel(p, IODA3_TBL_MBT, 0, true);
-	for (i = 0; i < p->mbt_size; i++) {
-		out_be64(p->regs + PHB_IODA_DATA0, p->mbt_cache[i][0]);
-		out_be64(p->regs + PHB_IODA_DATA0, p->mbt_cache[i][1]);
+		phb4_ioda_sel(p, IODA3_TBL_MBT, 0, true);
+		out_be64(p->regs + PHB_IODA_DATA0, p->mbt_cache[entf][0]);
+		out_be64(p->regs + PHB_IODA_DATA0, p->mbt_cache[entf][1]);
+	} else if (i == p->mbt_size) {
+		/* mbt cache full, this case should never happen */
+		PHBERR(p, "CAPP: Failed to add CAPI mmio window\n");
+	} else {
+		/* duplicate entry. Nothing to do */
 	}
 
 	phb4_init_capp_errors(p);
