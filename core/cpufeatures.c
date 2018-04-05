@@ -558,7 +558,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	CPU_P9,
 	ISA_V3_0B, USABLE_OS|USABLE_PR,
 	HV_NONE, OS_CUSTOM,
-	-1, PPC_BITLSHIFT(51), -1,
+	-1, PPC_BITLSHIFT(51), 52,
 	NULL, },
 
 	/*
@@ -612,7 +612,7 @@ static const struct cpu_feature cpu_features_table[] = {
 	CPU_P9,
 	ISA_V3_0B, USABLE_HV|USABLE_OS|USABLE_PR,
 	HV_NONE, OS_NONE,
-	-1, -1, -1,
+	-1, -1, 53,
 	NULL, },
 
 	/*
