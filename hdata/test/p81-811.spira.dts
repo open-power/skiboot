@@ -2185,6 +2185,8 @@
 		ibm,occ-functional-state = <0x1>;
 		ibm,loc-code = "U78CB.001.WZS00AL-P1-C32";
 		ibm,module-vpd = <0xcafebeef 0x10000 0x3e067c18>;
+		part-number = "00KV627";
+		serial-number = "YA1932096951";
 		ibm,ccm-node-id = <0x0>;
 		ibm,hw-card-id = <0x0>;
 		ibm,hw-module-id = <0x0>;
@@ -2248,6 +2250,8 @@
 		ibm,occ-functional-state = <0x1>;
 		ibm,loc-code = "U78CB.001.WZS00AL-P1-C32";
 		ibm,module-vpd = <0xcafebeef 0x10000 0x1b85218f>;
+		part-number = "00KV627";
+		serial-number = "YA1932096951";
 		ibm,ccm-node-id = <0x0>;
 		ibm,hw-card-id = <0x0>;
 		ibm,hw-module-id = <0x0>;
@@ -2308,6 +2312,8 @@
 		ibm,occ-functional-state = <0x1>;
 		ibm,loc-code = "U78CB.001.WZS00AL-P1-C33";
 		ibm,module-vpd = <0xcafebeef 0x10000 0x36f99ead>;
+		part-number = "00KV627";
+		serial-number = "YA1932096950";
 		ibm,ccm-node-id = <0x0>;
 		ibm,hw-card-id = <0x0>;
 		ibm,hw-module-id = <0x1>;
@@ -2359,6 +2365,8 @@
 		ibm,occ-functional-state = <0x1>;
 		ibm,loc-code = "U78CB.001.WZS00AL-P1-C33";
 		ibm,module-vpd = <0xcafebeef 0x10000 0x65fe8f66>;
+		part-number = "00KV627";
+		serial-number = "YA1932096950";
 		ibm,ccm-node-id = <0x0>;
 		ibm,hw-card-id = <0x0>;
 		ibm,hw-module-id = <0x1>;

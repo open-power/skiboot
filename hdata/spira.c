@@ -557,9 +557,11 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 		if (version >= 0x000a) {
 			vpd = HDIF_get_idata(hdif, SPPCRD_IDATA_MODULE_VPD,
 					     &vpd_sz);
-			if (CHECK_SPPTR(vpd))
+			if (CHECK_SPPTR(vpd)) {
 				dt_add_property(np, "ibm,module-vpd", vpd,
 						vpd_sz);
+				vpd_data_parse(np, vpd, vpd_sz);
+			}
 		}
 
 		/*
