@@ -37,6 +37,8 @@ int main(void)
 	OFFSET(CPUTHREAD_PIR, cpu_thread, pir);
 	OFFSET(CPUTHREAD_SAVE_R1, cpu_thread, save_r1);
 	OFFSET(CPUTHREAD_STATE, cpu_thread, state);
+	OFFSET(CPUTHREAD_IN_OPAL_CALL, cpu_thread, in_opal_call);
+	OFFSET(CPUTHREAD_QUIESCE_OPAL_CALL, cpu_thread, quiesce_opal_call);
 	OFFSET(CPUTHREAD_CUR_TOKEN, cpu_thread, current_token);
 	DEFINE(CPUTHREAD_GAP, sizeof(struct cpu_thread) + STACK_SAFETY_GAP);
 #ifdef STACK_CHECK_ENABLED

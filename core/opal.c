@@ -142,7 +142,7 @@ int64_t opal_entry_check(struct stack_frame *eframe)
 	if (!opal_check_token(token))
 		return opal_bad_token(token);
 
-	if (!opal_quiesce_state && cpu->in_opal_call) {
+	if (!opal_quiesce_state && cpu->in_opal_call > 1) {
 		disable_fast_reboot("Kernel re-entered OPAL");
 		switch (token) {
 		case OPAL_CONSOLE_READ:
@@ -158,28 +158,12 @@ int64_t opal_entry_check(struct stack_frame *eframe)
 		default:
 			printf("CPU ATTEMPT TO RE-ENTER FIRMWARE! PIR=%04lx cpu @%p -> pir=%04x token=%llu\n",
 			       mfspr(SPR_PIR), cpu, cpu->pir, token);
+			if (cpu->in_opal_call > 2) {
+				printf("Emergency stack is destroyed, can't continue.\n");
+				abort();
+			}
 			return OPAL_INTERNAL_ERROR;
 		}
-	}
-
-again:
-	cpu->in_opal_call++;
-	/*
-	 * Order the store in_opal_call vs load quiesce_opal_call.
-	 * This also provides an acquire barrier for opal entry vs
-	 * another thread quiescing opal. In this way, quiescing
-	 * can behave as mutual exclusion.
-	 */
-	sync();
-	if (cpu->quiesce_opal_call) {
-		cpu->in_opal_call--;
-		if (opal_quiesce_state == QUIESCE_REJECT)
-			return OPAL_BUSY;
-		smt_lowest();
-		while (cpu->quiesce_opal_call)
-			barrier();
-		smt_medium();
-		goto again;
 	}
 
 	return OPAL_SUCCESS;
@@ -196,14 +180,17 @@ int64_t opal_exit_check(int64_t retval, struct stack_frame *eframe)
 		disable_fast_reboot("Un-accounted firmware entry");
 		printf("CPU UN-ACCOUNTED FIRMWARE ENTRY! PIR=%04lx cpu @%p -> pir=%04x token=%llu retval=%lld\n",
 		       mfspr(SPR_PIR), cpu, cpu->pir, token, retval);
+		cpu->in_opal_call++; /* avoid exit path underflowing */
 	} else {
+		if (cpu->in_opal_call > 2) {
+			printf("Emergency stack is destroyed, can't continue.\n");
+			abort();
+		}
 		if (!list_empty(&cpu->locks_held)) {
 			prlog(PR_ERR, "OPAL exiting with locks held, token=%llu retval=%lld\n",
 			      token, retval);
 			drop_my_locks(true);
 		}
-		sync(); /* release barrier vs quiescing */
-		cpu->in_opal_call--;
 	}
 	return retval;
 }
@@ -253,7 +240,7 @@ int64_t opal_quiesce(uint32_t quiesce_type, int32_t cpu_target)
 		bust_locks = false;
 		sync(); /* release barrier vs opal entry */
 		if (target) {
-			target->quiesce_opal_call = false;
+			target->quiesce_opal_call = 0;
 		} else {
 			for_each_cpu(c) {
 				if (quiesce_type == QUIESCE_RESUME_FAST_REBOOT)
@@ -263,7 +250,7 @@ int64_t opal_quiesce(uint32_t quiesce_type, int32_t cpu_target)
 					assert(!c->quiesce_opal_call);
 					continue;
 				}
-				c->quiesce_opal_call = false;
+				c->quiesce_opal_call = 0;
 			}
 		}
 		sync();
@@ -281,12 +268,12 @@ int64_t opal_quiesce(uint32_t quiesce_type, int32_t cpu_target)
 	}
 
 	if (target) {
-		target->quiesce_opal_call = true;
+		target->quiesce_opal_call = quiesce_type;
 	} else {
 		for_each_cpu(c) {
 			if (c == cpu)
 				continue;
-			c->quiesce_opal_call = true;
+			c->quiesce_opal_call = quiesce_type;
 		}
 	}
 

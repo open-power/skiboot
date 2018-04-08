@@ -955,14 +955,64 @@ opal_boot_trampoline:
  *       r0: Token
  *       r2: OPAL Base
  *  r3..r10: Args
- *      r12: Scratch
+ * r11..r12: Scratch
  * r13..r31: Preserved
- *
  */
 	.balign	0x10
 .global opal_entry
 opal_entry:
-	/* Get our per CPU stack */
+	/* Get our per CPU pointer in r12 to check for quiesce */
+	mfspr	%r12,SPR_PIR
+	GET_STACK(%r12,%r12)
+
+	/* Get CPU thread */
+	clrrdi	%r12,%r12,STACK_SHIFT
+
+	/*
+	 * OPAL entry must first increment in_opal_call, then check
+	 * for quiesce, without touching the stack or clobbering
+	 * registers other than r11 and r12 and cr0. In this way, OPAL
+	 * is tolerant of re-entry on this same CPU while it is spinning
+	 * for quiesce.
+	 *
+	 * Sequence goes:
+	 * in_opal_call++;
+	 * sync;
+	 * if (quiesce_opal_call) {
+	 *     in_opal_call--;
+	 *     reject-or-spin-then-retry;
+	 */
+1:	lwz	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
+	addi	%r11,%r11,1
+	stw	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
+	/*
+	 * Order the store in_opal_call vs load quiesce_opal_call.
+	 * This also provides an acquire barrier for opal entry vs
+	 * another thread quiescing opal. In this way, quiescing
+	 * can behave as mutual exclusion.
+	 */
+	sync
+	lwz	%r11,CPUTHREAD_QUIESCE_OPAL_CALL(%r12)
+	cmpwi	%cr0,%r11,0
+	beq+	4f
+	/* We are quiescing, hold or reject */
+	cmpwi	%cr0,%r11,QUIESCE_REJECT
+	bne	2f
+	li	%r3,OPAL_BUSY
+	b	.Lreturn /* reject */
+2:	/* hold */
+	lwz	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
+	subi	%r11,%r11,1
+	stw	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
+	smt_lowest
+3:	lwz	%r11,CPUTHREAD_QUIESCE_OPAL_CALL(%r12)
+	cmpwi	%cr0,%r11,QUIESCE_HOLD
+	beq	3b
+	/* spin finished, try again */
+	smt_medium
+	b	1b
+
+4:	/* Quiesce protocol done, get our per CPU stack */
 	mfspr	%r12,SPR_PIR
 	GET_STACK(%r12,%r12)
 	stdu	%r12,-STACK_FRAMESIZE(%r12)
@@ -1006,7 +1056,7 @@ opal_entry:
 	mr	%r3,%r1
 	bl	opal_entry_check
 	cmpdi	%r3,0
-	bne	1f
+	bne	.Lreturn
 
 	ld	%r0,STACK_GPR0(%r1)
 	ld	%r3,STACK_GPR3(%r1)
@@ -1031,12 +1081,22 @@ opal_entry:
 	bctrl
 
 	mr	%r4,%r1
-	bl	opal_exit_check
+	bl	opal_exit_check /* r3 is preserved */
 
-1:	ld	%r12,STACK_LR(%r1)
+	/*
+	 * Restore r1 and r13 before decrementing in_opal_call.
+	 * Move per-cpu pointer to volatile r12, restore lr, r1, r13.
+	 */
+.Lreturn:
+	ld	%r12,STACK_LR(%r1)
 	mtlr	%r12
+	mr	%r12,%r13
 	ld	%r13,STACK_GPR13(%r1)
 	ld	%r1,STACK_GPR1(%r1)
+	sync 	/* release barrier vs quiescing */
+	lwz	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
+	subi	%r11,%r11,1
+	stw	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
 	blr
 
 .global start_kernel
