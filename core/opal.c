@@ -546,18 +546,21 @@ void opal_del_poller(void (*poller)(void *data))
 
 void opal_run_pollers(void)
 {
-	struct opal_poll_entry *poll_ent;
 	static int pollers_with_lock_warnings = 0;
 	static int poller_recursion = 0;
+	struct opal_poll_entry *poll_ent;
+	bool was_in_poller;
 
-	/* Don't re-enter on this CPU */
-	if (this_cpu()->in_poller && poller_recursion < 16) {
+	/* Don't re-enter on this CPU, unless it was an OPAL re-entry */
+	if (this_cpu()->in_opal_call == 1 &&
+			this_cpu()->in_poller && poller_recursion < 16) {
 		/**
 		 * @fwts-label OPALPollerRecursion
 		 * @fwts-advice Recursion detected in opal_run_pollers(). This
 		 * indicates a bug in OPAL where a poller ended up running
 		 * pollers, which doesn't lead anywhere good.
 		 */
+		disable_fast_reboot("Poller recursion detected.");
 		prlog(PR_ERR, "OPAL: Poller recursion detected.\n");
 		backtrace();
 		poller_recursion++;
@@ -565,6 +568,7 @@ void opal_run_pollers(void)
 			prlog(PR_ERR, "OPAL: Squashing future poller recursion warnings (>16).\n");
 		return;
 	}
+	was_in_poller = this_cpu()->in_poller;
 	this_cpu()->in_poller = true;
 
 	if (!list_empty(&this_cpu()->locks_held) && pollers_with_lock_warnings < 64) {
@@ -598,7 +602,7 @@ void opal_run_pollers(void)
 		poll_ent->poller(poll_ent->data);
 
 	/* Disable poller flag */
-	this_cpu()->in_poller = false;
+	this_cpu()->in_poller = was_in_poller;
 
 	/* On debug builds, print max stack usage */
 	check_stacks();
