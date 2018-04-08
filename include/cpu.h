@@ -310,6 +310,7 @@ static inline void cpu_give_self_os(void)
 
 extern unsigned long __attrconst cpu_stack_bottom(unsigned int pir);
 extern unsigned long __attrconst cpu_stack_top(unsigned int pir);
+extern unsigned long __attrconst cpu_emergency_stack_top(unsigned int pir);
 
 extern void cpu_idle_job(void);
 extern void cpu_idle_delay(unsigned long delay);

@@ -30,12 +30,17 @@
 
 #define PPC_INST_STOP		.long 0x4c0002e4
 
-#define GET_STACK(stack_reg,pir_reg)				\
-	sldi	stack_reg,pir_reg,STACK_SHIFT;			\
-	addis	stack_reg,stack_reg,CPU_STACKS_OFFSET@ha;	\
+#define GET_STACK(stack_reg,pir_reg)					\
+	sldi	stack_reg,pir_reg,STACK_SHIFT;				\
+	addis	stack_reg,stack_reg,CPU_STACKS_OFFSET@ha;		\
 	addi	stack_reg,stack_reg,CPU_STACKS_OFFSET@l;
 
-#define GET_CPU()						\
+#define GET_EMERGENCY_STACK(stack_reg,pir_reg)				\
+	sldi	stack_reg,pir_reg,STACK_SHIFT;				\
+	addis	stack_reg,stack_reg,EMERGENCY_CPU_STACKS_OFFSET@ha;	\
+	addi	stack_reg,stack_reg,EMERGENCY_CPU_STACKS_OFFSET@l;
+
+#define GET_CPU()							\
 	clrrdi	%r13,%r1,STACK_SHIFT
 
 #define SAVE_GPR(reg,sp)	std %r##reg,STACK_GPR##reg(sp)
@@ -1013,8 +1018,17 @@ opal_entry:
 	b	1b
 
 4:	/* Quiesce protocol done, get our per CPU stack */
+	/* Emergency stack if we have re-entered OPAL */
+	lwz	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
+	cmpwi	%r11,1
+
 	mfspr	%r12,SPR_PIR
+	beq	5f
 	GET_STACK(%r12,%r12)
+	b	6f
+5:
+	GET_EMERGENCY_STACK(%r12,%r12)
+6:
 	stdu	%r12,-STACK_FRAMESIZE(%r12)
 
 	/* Save caller r1, establish new r1 */

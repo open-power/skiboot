@@ -71,7 +71,7 @@ void ___print_backtrace(unsigned int pir, struct bt_entry *entries,
 	static char bt_text_buf[4096];
 	int i, l = 0, max;
 	char *buf = out_buf;
-	unsigned long bottom, top, tbot, ttop;
+	unsigned long bottom, top, normal_top, tbot, ttop;
 	char mark;
 
 	if (!out_buf) {
@@ -81,7 +81,8 @@ void ___print_backtrace(unsigned int pir, struct bt_entry *entries,
 		max = *len - 1;
 
 	bottom = cpu_stack_bottom(pir);
-	top = cpu_stack_top(pir);
+	normal_top = cpu_stack_top(pir);
+	top = cpu_emergency_stack_top(pir);
 	tbot = SKIBOOT_BASE;
 	ttop = (unsigned long)&_etext;
 
@@ -89,6 +90,8 @@ void ___print_backtrace(unsigned int pir, struct bt_entry *entries,
 	for (i = 0; i < count && l < max; i++) {
 		if (entries->sp < bottom || entries->sp > top)
 			mark = '!';
+		else if (entries->sp > normal_top)
+			mark = 'E';
 		else if (entries->pc < tbot || entries->pc > ttop)
 			mark = '*';
 		else
@@ -160,6 +163,12 @@ void __nomcount __mcount_stack_check(uint64_t sp, uint64_t lr)
 	uint64_t bot = base + sizeof(struct cpu_thread);
 	int64_t mark = sp - bot;
 	uint64_t top = base + NORMAL_STACK_SIZE;
+
+	/*
+	 * Don't check the emergency stack just yet.
+	 */
+	if (c->in_opal_call > 1)
+		return;
 
 	/*
 	 * Don't re-enter on this CPU or don't enter at all if somebody

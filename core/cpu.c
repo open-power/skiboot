@@ -79,13 +79,16 @@ unsigned long __attrconst cpu_stack_bottom(unsigned int pir)
 
 unsigned long __attrconst cpu_stack_top(unsigned int pir)
 {
-	/* This is the top of the MC stack which is above the normal
-	 * stack, which means a SP between cpu_stack_bottom() and
-	 * cpu_stack_top() can either be a normal stack pointer or
-	 * a Machine Check stack pointer
-	 */
+	/* This is the top of the normal stack. */
 	return ((unsigned long)&cpu_stacks[pir]) +
 		NORMAL_STACK_SIZE - STACK_TOP_GAP;
+}
+
+unsigned long __attrconst cpu_emergency_stack_top(unsigned int pir)
+{
+	/* This is the top of the emergency stack, above the normal stack. */
+	return ((unsigned long)&cpu_stacks[pir]) +
+		NORMAL_STACK_SIZE + EMERGENCY_STACK_SIZE - STACK_TOP_GAP;
 }
 
 static void cpu_wake(struct cpu_thread *cpu)

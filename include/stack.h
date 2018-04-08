@@ -28,11 +28,18 @@
 #define STACK_TOP_GAP		0x100
 
 /* Remaining stack space (gap included) */
-#define NORMAL_STACK_SIZE	STACK_SIZE
+#define NORMAL_STACK_SIZE	(STACK_SIZE/2)
+
+/* Emergency (re-entry) stack size */
+#define EMERGENCY_STACK_SIZE	(STACK_SIZE/2)
 
 /* Offset to get to normal CPU stacks */
 #define CPU_STACKS_OFFSET	(CPU_STACKS_BASE + \
 				 NORMAL_STACK_SIZE - STACK_TOP_GAP)
+
+/* Offset to get to emergency CPU stacks */
+#define EMERGENCY_CPU_STACKS_OFFSET	(CPU_STACKS_BASE + NORMAL_STACK_SIZE + \
+				 EMERGENCY_STACK_SIZE - STACK_TOP_GAP)
 
 /* Gap below the stack. If our stack checker sees the stack below that
  * gap, it will flag a stack overflow
