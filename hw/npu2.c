@@ -2118,6 +2118,11 @@ static int64_t opal_npu_init_context(uint64_t phb_id, int pasid __unused,
 	NPU2DBG(p, "XTS_PID_MAP[%03d] = 0x%08llx\n", id, xts_bdf_pid);
 	npu2_write(p, NPU2_XTS_PID_MAP + id*0x20, xts_bdf_pid);
 
+	if (!GETFIELD(NPU2_XTS_BDF_MAP_VALID, xts_bdf)) {
+		xts_bdf = SETFIELD(NPU2_XTS_BDF_MAP_VALID, xts_bdf, 1);
+		npu2_write(p, NPU2_XTS_BDF_MAP + id*8, xts_bdf);
+	}
+
 out:
 	unlock(&p->lock);
 	return id;
@@ -2182,12 +2187,9 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 	lock(&p->lock);
 
 	/* Find any existing entries and update them */
-	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_VALID, 0UL, 1);
-	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_BDF, xts_bdf_lpar, bdf);
+	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_BDF, 0L, bdf);
 	id = npu_table_search(p, NPU2_XTS_BDF_MAP, 8, NPU2_XTS_BDF_MAP_SIZE,
-			      &xts_bdf_lpar,
-			      NPU2_XTS_BDF_MAP_VALID |
-			      NPU2_XTS_BDF_MAP_BDF);
+			      &xts_bdf_lpar, NPU2_XTS_BDF_MAP_BDF);
 	if (id < 0) {
 		/* No existing mapping found, find space for a new one */
 		xts_bdf_lpar = 0;
@@ -2202,8 +2204,7 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 		goto out;
 	}
 
-	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_VALID, 0UL, 1);
-	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_UNFILT, xts_bdf_lpar, 1);
+	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_UNFILT, 0UL, 1);
 	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_BDF, xts_bdf_lpar, bdf);
 
 	/* We only support radix for the moment */
