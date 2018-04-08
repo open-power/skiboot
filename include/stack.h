@@ -49,6 +49,7 @@
 #ifndef __ASSEMBLY__
 
 #include <stdint.h>
+#include <opal-api.h>
 
 /* This is the struct used to save GPRs etc.. on OPAL entry
  * and from some exceptions. It is not always entirely populated
@@ -108,12 +109,30 @@ struct bt_entry {
 extern void *boot_stack_top;
 
 /* Create a backtrace */
-extern void __backtrace(struct bt_entry *entries, unsigned int *count);
+void ___backtrace(struct bt_entry *entries, unsigned int *count,
+				unsigned long r1,
+				unsigned long *token, unsigned long *r1_caller);
+static inline void __backtrace(struct bt_entry *entries, unsigned int *count)
+{
+	unsigned long token, r1_caller;
+
+	___backtrace(entries, count,
+			(unsigned long)__builtin_frame_address(0),
+			&token, &r1_caller);
+}
 
 /* Convert a backtrace to ASCII */
-extern void __print_backtrace(unsigned int pir, struct bt_entry *entries,
-			      unsigned int count, char *out_buf,
+extern void ___print_backtrace(unsigned int pir, struct bt_entry *entries,
+			      unsigned int count, unsigned long token,
+			      unsigned long r1_caller, char *out_buf,
 			      unsigned int *len, bool symbols);
+
+static inline void __print_backtrace(unsigned int pir, struct bt_entry *entries,
+			      unsigned int count, char *out_buf,
+			      unsigned int *len, bool symbols)
+{
+	___print_backtrace(pir, entries, count, OPAL_LAST + 1, 0, out_buf, len, symbols);
+}
 
 /* For use by debug code, create and print backtrace, uses a static buffer */
 extern void backtrace(void);

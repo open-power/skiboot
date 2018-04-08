@@ -29,11 +29,14 @@ static struct bt_entry bt_buf[STACK_BUF_ENTRIES];
 extern uint32_t _stext, _etext;
 
 /* Dumps backtrace to buffer */
-void __nomcount __backtrace(struct bt_entry *entries, unsigned int *count)
+void __nomcount ___backtrace(struct bt_entry *entries, unsigned int *count,
+				unsigned long r1,
+				unsigned long *token, unsigned long *r1_caller)
 {
 	unsigned int room = *count;
-	unsigned long *fp = __builtin_frame_address(0);
+	unsigned long *fp = (unsigned long *)r1;
 	unsigned long top_adj = top_of_ram;
+	struct stack_frame *eframe = (struct stack_frame *)fp;
 
 	/* Assume one stack for early backtraces */
 	if (top_of_ram == SKIBOOT_BASE + SKIBOOT_SIZE)
@@ -44,17 +47,26 @@ void __nomcount __backtrace(struct bt_entry *entries, unsigned int *count)
 		fp = (unsigned long *)fp[0];
 		if (!fp || (unsigned long)fp > top_adj)
 			break;
+		eframe = (struct stack_frame *)fp;
 		entries->sp = (unsigned long)fp;
 		entries->pc = fp[2];
 		entries++;
 		*count = (*count) + 1;
 		room--;
 	}
+
+	*r1_caller = eframe->gpr[1];
+
+	if (fp)
+		*token = eframe->gpr[0];
+	else
+		*token = -1UL;
 }
 
-void __print_backtrace(unsigned int pir,
-		       struct bt_entry *entries, unsigned int count,
-		       char *out_buf, unsigned int *len, bool symbols)
+void ___print_backtrace(unsigned int pir, struct bt_entry *entries,
+			      unsigned int count, unsigned long token,
+			      unsigned long r1_caller, char *out_buf,
+			      unsigned int *len, bool symbols)
 {
 	static char bt_text_buf[4096];
 	int i, l = 0, max;
@@ -89,6 +101,10 @@ void __print_backtrace(unsigned int pir,
 		l += snprintf(buf + l, max - l, "\n");
 		entries++;
 	}
+	if (token <= OPAL_LAST)
+		l += snprintf(buf + l, max - l, " --- OPAL call token: 0x%lx caller R1: 0x%016lx ---\n", token, r1_caller);
+	else if (token == -1UL)
+		l += snprintf(buf + l, max - l, " --- OPAL boot ---\n");
 	if (!out_buf)
 		write(stdout->fd, bt_text_buf, l);
 	buf[l++] = 0;
@@ -107,11 +123,14 @@ struct lock bt_lock = LOCK_UNLOCKED;
 void backtrace(void)
 {
 	unsigned int ents = STACK_BUF_ENTRIES;
+	unsigned long token, r1_caller;
 
 	lock(&bt_lock);
 
-	__backtrace(bt_buf, &ents);
-	__print_backtrace(mfspr(SPR_PIR), bt_buf, ents, NULL, NULL, true);
+	___backtrace(bt_buf, &ents, (unsigned long)__builtin_frame_address(0),
+			&token, &r1_caller);
+	___print_backtrace(mfspr(SPR_PIR), bt_buf, ents, token, r1_caller,
+			NULL, NULL, true);
 
 	unlock(&bt_lock);
 }

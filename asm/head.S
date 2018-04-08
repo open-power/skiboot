@@ -359,7 +359,10 @@ boot_entry:
 	/* Get ready for C code: get a stack */
 2:	GET_STACK(%r1,%r31)
 
-	/* Clear up initial frame */
+	/* Clear up initial frame.
+	 * Zero back chain indicates stack entry from boot,
+	 * non-zero indicates entry from OS (see backtrace code).
+	 */
 	li	%r3,0
 	std	%r3,0(%r1)
 	std	%r3,8(%r1)
@@ -965,6 +968,7 @@ opal_entry:
 	stdu	%r12,-STACK_FRAMESIZE(%r12)
 
 	/* Save caller r1, establish new r1 */
+	std	%r1,0(%r12)
 	std	%r1,STACK_GPR1(%r12)
 	mr	%r1,%r12
 
