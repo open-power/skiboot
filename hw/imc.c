@@ -161,7 +161,7 @@ static struct imc_chip_cb *get_imc_cb(uint32_t chip_id)
 	return cb;
 }
 
-static void pause_microcode_at_boot(void)
+static int pause_microcode_at_boot(void)
 {
 	struct proc_chip *chip;
 	struct imc_chip_cb *cb;
@@ -170,7 +170,11 @@ static void pause_microcode_at_boot(void)
 		cb = get_imc_cb(chip->id);
 		if (cb)
 			cb->imc_chip_command =  cpu_to_be64(NEST_IMC_DISABLE);
+		else
+			return -1; /* ucode is not init-ed */
 	}
+
+	return 0;
 }
 
 /*
@@ -603,7 +607,8 @@ imc_mambo:
 	 * then out to band tools will race with ucode and end up getting
 	 * undesirable values. Hence pause the ucode if it is already running.
 	 */
-	pause_microcode_at_boot();
+	if (pause_microcode_at_boot())
+		goto err;
 
 	/*
 	 * If the dt_attach_root() fails, "imc-counters" node will not be
