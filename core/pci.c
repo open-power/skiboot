@@ -1518,6 +1518,7 @@ static void pci_add_one_device_node(struct phb *phb,
 	uint32_t rev_class, vdid;
 	uint32_t reg[5];
 	uint8_t intpin;
+	bool is_pcie;
 	const uint32_t ranges_direct[] = {
 				/* 64-bit direct mapping. We know the bridges
 				 * don't cover the entire address space so
@@ -1529,14 +1530,14 @@ static void pci_add_one_device_node(struct phb *phb,
 	pci_cfg_read32(phb, pd->bdfn, 0, &vdid);
 	pci_cfg_read32(phb, pd->bdfn, PCI_CFG_REV_ID, &rev_class);
 	pci_cfg_read8(phb, pd->bdfn, PCI_CFG_INT_PIN, &intpin);
+	is_pcie = pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false);
 
 	/*
-	 * Quirk for IBM bridge bogus class on PCIe root complex.
-	 * Without it, the PCI DN won't be created for its downstream
-	 * devices in Linux.
+	 * Some IBM PHBs (p7ioc?) have an invalid PCI class code. Linux
+	 * uses prefers to read the class code from the DT rather than
+	 * re-reading config space we can hack around it here.
 	 */
-	if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false) &&
-	    parent_node == phb->dt_node)
+	if (is_pcie && parent_node == phb->dt_node)
 		rev_class = (rev_class & 0xff) | 0x6040000;
 	cname = pci_class_name(rev_class >> 8);
 
@@ -1548,9 +1549,12 @@ static void pci_add_one_device_node(struct phb *phb,
 			 cname, (pd->bdfn >> 3) & 0x1f);
 	pd->dn = np = dt_new(parent_node, name);
 
-	/* XXX FIXME: make proper "compatible" properties */
-	if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false) ||
-		phb->phb_type == phb_type_npu_v2_opencapi) {
+	/*
+	 * NB: ibm,pci-config-space-type is the PAPR way of indicating the
+	 * device has a 4KB config space. It's got nothing to do with the
+	 * standard Type 0/1 config spaces defined by PCI.
+	 */
+	if (is_pcie || phb->phb_type == phb_type_npu_v2_opencapi) {
 		snprintf(compat, MAX_NAME, "pciex%x,%x",
 			 vdid & 0xffff, vdid >> 16);
 		dt_add_property_cells(np, "ibm,pci-config-space-type", 1);
@@ -1603,7 +1607,7 @@ static void pci_add_one_device_node(struct phb *phb,
 	dt_add_property_cells(np, "#interrupt-cells", 1);
 
 	/* We want "device_type" for bridges */
-	if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false))
+	if (is_pcie)
 		dt_add_property_string(np, "device_type", "pciex");
 	else
 		dt_add_property_string(np, "device_type", "pci");
