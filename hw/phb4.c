@@ -153,11 +153,6 @@ static bool pci_tracing;
 static bool pci_eeh_mmio;
 static bool pci_retry_all;
 
-enum capi_dma_tvt {
-	CAPI_DMA_TVT0,
-	CAPI_DMA_TVT1,
-};
-
 /* Note: The "ASB" name is historical, practically this means access via
  * the XSCOM backdoor
  */
@@ -3879,7 +3874,6 @@ static void phb4_init_capp_errors(struct phb4 *p)
  *             = 000000C0 for Stack2
  */
 static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
-				enum capi_dma_tvt dma_tvt,
 				uint32_t capp_eng)
 {
 	uint64_t reg, start_addr, end_addr, stq_eng, dma_eng;
@@ -4017,13 +4011,11 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 	p->tve_cache[pe_number * 2] =
 		tve_encode_50b_noxlate(start_addr, end_addr);
 
-	/* TVT#1: DMA, all memory, in bypass mode */
-	if (dma_tvt == CAPI_DMA_TVT1) {
-		start_addr = (1ull << 59);
-		end_addr   = start_addr + 0x0003ffffffffffffull;
-		p->tve_cache[pe_number * 2 + 1] =
-			tve_encode_50b_noxlate(start_addr, end_addr);
-	}
+	/* TVT#1: CAPI window + DMA, all memory, in bypass mode */
+	start_addr = (1ull << 59);
+	end_addr   = start_addr + 0x0003ffffffffffffull;
+	p->tve_cache[pe_number * 2 + 1] =
+		tve_encode_50b_noxlate(start_addr, end_addr);
 
 	phb4_ioda_sel(p, IODA3_TBL_TVT, 0, true);
 	for (i = 0; i < p->tvt_size; i++)
@@ -4111,13 +4103,13 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 
 	switch (mode) {
 	case OPAL_PHB_CAPI_MODE_CAPI:
-		ret = enable_capi_mode(p, pe_number, CAPI_DMA_TVT0,
+		ret = enable_capi_mode(p, pe_number,
 					CAPP_MAX_STQ_ENGINES |
 					CAPP_MIN_DMA_READ_ENGINES);
 		disable_fast_reboot("CAPP being enabled");
 		break;
 	case OPAL_PHB_CAPI_MODE_DMA_TVT1:
-		ret = enable_capi_mode(p, pe_number, CAPI_DMA_TVT1,
+		ret = enable_capi_mode(p, pe_number,
 					CAPP_MIN_STQ_ENGINES |
 					CAPP_MAX_DMA_READ_ENGINES);
 		disable_fast_reboot("CAPP being enabled");
