@@ -2641,9 +2641,8 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 		}
 
 		if (slot->retries-- == 0) {
-			PHBERR(p, "LINK: Timeout waiting for electrical link\n");
-			PHBDBG(p, "LINK: DLP train control: 0x%016llx\n", reg);
-			return OPAL_HARDWARE;
+			PHBDBG(p, "LINK: No in-band presence\n");
+			return OPAL_SUCCESS;
 		}
 		/* Retry */
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
