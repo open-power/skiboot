@@ -51,6 +51,33 @@ struct slot_table_entry {
 	.children = child_table \
 }
 
+/*
+ * For the most part the "table" isn't really a table and only contains
+ * a single real entry and the etype = st_end terminator. In these cases
+ * we can use these helpers. If you need something special in the slot
+ * table for each slot (e.g. power limit, devfn != 0) then you need to
+ * define the actual structure.
+ */
+#define ST_BUILTIN_DEV(st_name, slot_name) \
+static struct slot_table_entry st_name[] = \
+{ \
+	{ \
+		.etype = st_pluggable_slot, \
+		.name = slot_name, \
+	}, \
+	{ .etype = st_end }, \
+}
+
+#define ST_PLUGGABLE(st_name, slot_name) \
+static struct slot_table_entry st_name[] = \
+{ \
+	{ \
+		.etype = st_pluggable_slot, \
+		.name = slot_name, \
+	}, \
+	{ .etype = st_end }, \
+}
+
 extern const struct bmc_platform astbmc_ami;
 extern const struct bmc_platform astbmc_openbmc;
 
