@@ -757,7 +757,7 @@ unsigned int lpc_get_irq_policy(uint32_t chip_id, uint32_t psi_idx)
 	if (c->lpc->sirq_ralloc[psi_idx] == LPC_ROUTE_LINUX)
 		return IRQ_ATTR_TARGET_LINUX;
 	else
-		return IRQ_ATTR_TARGET_OPAL;
+		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TYPE_LSI;
 }
 
 static void lpc_create_int_map(struct lpcm *lpc, struct dt_node *psi_node)

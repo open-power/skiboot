@@ -584,7 +584,7 @@ static void p7ioc_rgc_interrupt(struct irq_source *is, uint32_t isn)
 static uint64_t p7ioc_rgc_irq_attributes(struct irq_source *is __unused,
 					 uint32_t isn __unused)
 {
-	return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE;
+	return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE | IRQ_ATTR_TYPE_LSI;
 }
 
 static const struct irq_source_ops p7ioc_rgc_irq_ops = {

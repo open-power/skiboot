@@ -1840,7 +1840,7 @@ static uint64_t npu2_ipi_attributes(struct irq_source *is __unused, uint32_t isn
 
 	if (idx == 18)
 		/* TCE Interrupt - used to detect a frozen PE */
-		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE;
+		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE | IRQ_ATTR_TYPE_MSI;
 	else
 		return IRQ_ATTR_TARGET_LINUX;
 }

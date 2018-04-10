@@ -2518,7 +2518,7 @@ static uint64_t p7ioc_lsi_attributes(struct irq_source *is __unused,
 	uint32_t irq = (isn & 0x7);
 
 	if (irq == PHB_LSI_PCIE_ERROR)
-		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE;
+		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE | IRQ_ATTR_TYPE_LSI;
 	return IRQ_ATTR_TARGET_LINUX;
 }
 

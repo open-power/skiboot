@@ -282,6 +282,9 @@ struct irq_source_ops {
 /* For OPAL interrupts, estimate frequency */
 #define IRQ_ATTR_TARGET_RARE		0x0
 #define IRQ_ATTR_TARGET_FREQUENT	0x2
+/* For OPAL interrupts, level vs. edge setting */
+#define IRQ_ATTR_TYPE_LSI		0x0
+#define IRQ_ATTR_TYPE_MSI		0x4
 	void (*interrupt)(struct irq_source *is, uint32_t isn);
 	void (*eoi)(struct irq_source *is, uint32_t isn);
 	char *(*name)(struct irq_source *is, uint32_t isn);

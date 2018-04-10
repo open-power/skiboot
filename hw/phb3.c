@@ -1969,7 +1969,7 @@ static uint64_t phb3_lsi_attributes(struct irq_source *is, uint32_t isn)
 	uint32_t idx = isn - p->base_lsi;
 
 	if (idx == PHB3_LSI_PCIE_INF || idx == PHB3_LSI_PCIE_ER)
-		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE;
+		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE | IRQ_ATTR_TYPE_LSI;
 #endif
 	return IRQ_ATTR_TARGET_LINUX;
 }
