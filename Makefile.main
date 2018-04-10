@@ -290,13 +290,16 @@ skiboot.info: coverage external/pflash/pflash.info external/gard/gard.info
 	lcov -q -a $@ -a external/gard/gard.info -o $@
 	lcov -q -r $@ $(LCOV_EXCLUDE) -o $@ --rc lcov_branch_coverage=1
 
+doc:
+	make -C doc html
+
 tags:
 	find . -name '*.[chS]' | xargs ctags
 
 TAGS:
 	find . -name '*.[chS]' | xargs etags
 
-.PHONY: tags TAGS check coverage
+.PHONY: tags TAGS check coverage doc
 
 cscope:
 	find . -name '*.[chS]' | xargs cscope
