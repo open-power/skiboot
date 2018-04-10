@@ -267,6 +267,7 @@
 
 // FIXME add more here
 #define PHB_PCIE_SCR			0x1A00
+#define   PHB_PCIE_SCR_SLOT_CAP		PPC_BIT(15)
 #define	  PHB_PCIE_SCR_MAXLINKSPEED	PPC_BITMASK(32,35)
 
 

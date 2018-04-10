@@ -619,6 +619,8 @@ static int64_t phb4_get_reserved_pe_number(struct phb *phb)
 static void phb4_root_port_init(struct phb *phb, struct pci_device *dev,
 				int ecap, int aercap)
 {
+	struct phb4 *p = phb_to_phb4(phb);
+	struct pci_slot *slot = dev->slot;
 	uint16_t bdfn = dev->bdfn;
 	uint16_t val16;
 	uint32_t val32;
@@ -633,6 +635,24 @@ static void phb4_root_port_init(struct phb *phb, struct pci_device *dev,
 			phb->slot->ops.prepare_link_change;
 
 	// FIXME: check recommended init values for phb4
+
+	/*
+	 * Enable the bridge slot capability in the root port's config
+	 * space. This should probably be done *before* we start
+	 * scanning config space, but we need a pci_device struct to
+	 * exist before we do a slot lookup so *faaaaaaaaaaaaaart*
+	 */
+	if (slot && slot->pluggable && slot->power_limit) {
+		uint64_t val;
+
+		val = in_be64(p->regs + PHB_PCIE_SCR);
+		val |= PHB_PCIE_SCR_SLOT_CAP;
+		out_be64(p->regs + PHB_PCIE_SCR, val);
+
+		/* update the cached slotcap */
+		pci_cfg_read32(phb, bdfn, ecap + PCICAP_EXP_SLOTCAP,
+				&slot->slot_cap);
+	}
 
 	/* Enable SERR and parity checking */
 	pci_cfg_read16(phb, bdfn, PCI_CFG_CMD, &val16);
