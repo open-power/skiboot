@@ -713,6 +713,37 @@ void pci_remove_bus(struct phb *phb, struct list_head *list)
 	}
 }
 
+static void pci_set_power_limit(struct pci_device *pd)
+{
+	uint32_t offset, val;
+	uint16_t caps;
+
+	offset = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
+	if (!offset)
+		return; /* legacy dev */
+
+	pci_cfg_read16(pd->phb, pd->bdfn,
+			offset + PCICAP_EXP_CAPABILITY_REG, &caps);
+
+	if (!(caps & PCICAP_EXP_CAP_SLOT))
+		return; /* bridge has no slot capabilities */
+	if (!pd->slot || !pd->slot->power_limit)
+		return;
+
+	pci_cfg_read32(pd->phb, pd->bdfn, offset + PCICAP_EXP_SLOTCAP, &val);
+
+	val = SETFIELD(PCICAP_EXP_SLOTCAP_SPLSC, val, 0); /* 1W scale */
+	val = SETFIELD(PCICAP_EXP_SLOTCAP_SPLVA, val, pd->slot->power_limit);
+
+	pci_cfg_write32(pd->phb, pd->bdfn, offset + PCICAP_EXP_SLOTCAP, val);
+
+	/* update the cached copy in the slot */
+	pd->slot->slot_cap = val;
+
+	PCIDBG(pd->phb, pd->bdfn, "Slot power limit set to %dW\n",
+		pd->slot->power_limit);
+}
+
 /* Perform a recursive scan of the bus at bus_number populating
  * the list passed as an argument. This also performs the bus
  * numbering, so it returns the largest bus number that was
@@ -775,6 +806,12 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 			       rc->secondary_bus);
 		pci_cfg_write8(phb, rc->bdfn, PCI_CFG_SUBORDINATE_BUS,
 			       rc->subordinate_bus);
+	}
+
+	/* set the power limit for any downstream slots while we're here */
+	list_for_each(list, pd, link) {
+		if (pd->is_bridge)
+			pci_set_power_limit(pd);
 	}
 
 	/*

@@ -169,6 +169,7 @@ struct pci_slot {
 	uint8_t			card_desc;
 	uint8_t			card_mech;
 	uint8_t			wired_lanes;
+	uint8_t			power_limit;
 
 	/*
 	 * PCI slot is driven by state machine with polling function.

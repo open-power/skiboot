@@ -133,6 +133,7 @@ void pci_slot_add_dt_properties(struct pci_slot *slot,
 	dt_add_property_cells(np, "ibm,slot-card-desc", slot->card_desc);
 	dt_add_property_cells(np, "ibm,slot-card-mech", slot->card_mech);
 	dt_add_property_cells(np, "ibm,slot-wired-lanes", slot->wired_lanes);
+	dt_add_property_cells(np, "ibm,power-limit", slot->power_limit);
 
 	if (slot->ops.add_properties)
 		slot->ops.add_properties(slot, np);
