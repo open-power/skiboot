@@ -39,6 +39,7 @@ struct slot_table_entry {
 	uint32_t location;
 	const char *name;
 	const struct slot_table_entry *children;
+	uint8_t power_limit;
 };
 
 /*
