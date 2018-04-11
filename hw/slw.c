@@ -29,6 +29,7 @@
 #include <errorlog.h>
 #include <libfdt/libfdt.h>
 #include <opal-api.h>
+#include <nvram.h>
 
 #include <p9_stop_api.H>
 #include <p8_pore_table_gen_api.H>
@@ -857,6 +858,9 @@ void add_cpu_idle_state_properties(void)
 	u64 *pm_ctrl_reg_val_buf;
 	u64 *pm_ctrl_reg_mask_buf;
 	u32 supported_states_mask;
+	u32 opal_disabled_states_mask = ~0xE0000000; /* all but stop0,1,2 */
+	const char* nvram_disable_str;
+	u32 nvram_disabled_states_mask = 0x00;
 	u32 stop_levels;
 
 	/* Variables to track buffer length */
@@ -1000,6 +1004,10 @@ void add_cpu_idle_state_properties(void)
 		if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT)
 			supported_states_mask |= OPAL_PM_WINKLE_ENABLED;
 	}
+	nvram_disable_str = nvram_query("opal-stop-state-disable-mask");
+	if (nvram_disable_str)
+		nvram_disabled_states_mask = strtol(nvram_disable_str, NULL, 0);
+	prlog(PR_DEBUG, "NVRAM stop disable mask: %x\n", nvram_disabled_states_mask);
 	for (i = 0; i < nr_states; i++) {
 		/* For each state, check if it is one of the supported states. */
 		if (!(states[i].flags & supported_states_mask))
@@ -1012,6 +1020,21 @@ void add_cpu_idle_state_properties(void)
 
 			if (!(stop_levels & (1ul << level)))
 				continue;
+
+			if ((opal_disabled_states_mask |
+			     nvram_disabled_states_mask) &
+			    (1ul << level)) {
+				if (nvram_disable_str &&
+				    !(nvram_disabled_states_mask & (1ul << level))) {
+					prlog(PR_NOTICE, "SLW: Enabling: %s "
+					      "(disabled in OPAL, forced by "
+					      "NVRAM)\n",states[i].name);
+				} else {
+					prlog(PR_NOTICE, "SLW: Disabling: %s in OPAL\n",
+					      states[i].name);
+					continue;
+				}
+			}
 		}
 
 		prlog(PR_NOTICE, "SLW: Enabling: %s\n", states[i].name);
