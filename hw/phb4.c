@@ -2166,18 +2166,6 @@ static void phb4_prepare_link_change(struct pci_slot *slot, bool is_up)
 		out_be64(p->regs + PHB_REGB_ERR_FAT_ENABLE,
 			 0xde0fff91035743ffull);
 
-		/*
-		 * We might lose the bus numbers during the reset operation
-		 * and we need to restore them. Otherwise, some adapters (e.g.
-		 * IPR) can't be probed properly by the kernel. We don't need
-		 * to restore bus numbers for every kind of reset, however,
-		 * it's not harmful to always restore the bus numbers, which
-		 * simplifies the logic.
-		 */
-		pci_restore_bridge_buses(slot->phb, slot->pd);
-		if (slot->phb->ops->device_init)
-			pci_walk_dev(slot->phb, slot->pd,
-				     slot->phb->ops->device_init, NULL);
 	} else {
 		/* Mask AER receiver error */
 		phb4_pcicfg_read32(&p->phb, 0, p->aercap +
@@ -2711,6 +2699,7 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 				 */
 				PHBERR(p, "LINK: Degraded but no more retries\n");
 			}
+			pci_restore_slot_bus_configs(slot);
 			pci_slot_set_state(slot, PHB4_SLOT_NORMAL);
 			return OPAL_SUCCESS;
 		}

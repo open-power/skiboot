@@ -1923,6 +1923,22 @@ void pci_restore_bridge_buses(struct phb *phb, struct pci_device *pd)
 	pci_walk_dev(phb, pd, __pci_restore_bridge_buses, NULL);
 }
 
+void pci_restore_slot_bus_configs(struct pci_slot *slot)
+{
+	/*
+	 * We might lose the bus numbers during the reset operation
+	 * and we need to restore them. Otherwise, some adapters (e.g.
+	 * IPR) can't be probed properly by the kernel. We don't need
+	 * to restore bus numbers for every kind of reset, however,
+	 * it's not harmful to always restore the bus numbers, which
+	 * simplifies the logic.
+	 */
+	pci_restore_bridge_buses(slot->phb, slot->pd);
+	if (slot->phb->ops->device_init)
+		pci_walk_dev(slot->phb, slot->pd,
+			     slot->phb->ops->device_init, NULL);
+}
+
 struct pci_cfg_reg_filter *pci_find_cfg_reg_filter(struct pci_device *pd,
 						   uint32_t start, uint32_t len)
 {

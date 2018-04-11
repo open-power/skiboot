@@ -436,6 +436,7 @@ extern int64_t pci_find_ecap(struct phb *phb, uint16_t bdfn, uint16_t cap,
 			     uint8_t *version);
 extern void pci_init_capabilities(struct phb *phb, struct pci_device *pd);
 extern bool pci_wait_crs(struct phb *phb, uint16_t bdfn, uint32_t *out_vdid);
+extern void pci_restore_slot_bus_configs(struct pci_slot *slot);
 extern void pci_device_init(struct phb *phb, struct pci_device *pd);
 extern struct pci_device *pci_walk_dev(struct phb *phb,
 				       struct pci_device *pd,
