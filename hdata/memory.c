@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ struct HDIF_ram_area_id {
 #define RAM_AREA_INSTALLED	0x8000
 #define RAM_AREA_FUNCTIONAL	0x4000
 	__be16 flags;
+	__be32 dimm_id;
+	__be32 speed;
 } __packed;
 
 struct HDIF_ram_area_size {
@@ -285,6 +287,11 @@ static void vpd_add_ram_area(const struct HDIF_common_hdr *msarea)
 
 		chip_id = add_chip_id_to_ram_area(msarea, ram_node);
 		add_bus_freq_to_ram_area(ram_node, chip_id);
+
+		if (ram_sz >= offsetof(struct HDIF_ram_area_id, speed)) {
+			dt_add_property_cells(ram_node, "frequency",
+					      be32_to_cpu(ram_id->speed)*1000000);
+		}
 
 		vpd_blob = HDIF_get_idata(ramarea, 1, &ram_sz);
 
