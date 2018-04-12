@@ -1899,7 +1899,7 @@
 						description = "32GB CDIMM";
 						ibm,chip-id = <0x0>;
 						ibm,memory-bus-frequency = <0x0 0x0>;
-						size = "0032768";
+						size = "32768";
 					};
 
 					ms-dimm@d002 {
@@ -1921,7 +1921,7 @@
 						description = "32GB CDIMM";
 						ibm,chip-id = <0x0>;
 						ibm,memory-bus-frequency = <0x0 0x0>;
-						size = "0032768";
+						size = "32768";
 					};
 
 					ms-dimm@d008 {
@@ -1943,7 +1943,7 @@
 						description = "32GB CDIMM";
 						ibm,chip-id = <0x10>;
 						ibm,memory-bus-frequency = <0x0 0x0>;
-						size = "0032768";
+						size = "32768";
 					};
 
 					ms-dimm@d00a {
@@ -1965,7 +1965,7 @@
 						description = "32GB CDIMM";
 						ibm,chip-id = <0x10>;
 						ibm,memory-bus-frequency = <0x0 0x0>;
-						size = "0032768";
+						size = "32768";
 					};
 
 					processor@1000 {

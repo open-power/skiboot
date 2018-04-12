@@ -746,7 +746,7 @@
 						description = "16GB CDIMM";
 						ibm,chip-id = <0x0>;
 						ibm,memory-bus-frequency = <0x0 0x0>;
-						size = "0016384";
+						size = "16384";
 					};
 
 					ms-dimm@d002 {
@@ -768,7 +768,7 @@
 						description = "16GB CDIMM";
 						ibm,chip-id = <0x0>;
 						ibm,memory-bus-frequency = <0x0 0x0>;
-						size = "0016384";
+						size = "16384";
 					};
 
 					processor@1000 {

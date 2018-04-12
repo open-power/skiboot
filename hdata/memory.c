@@ -234,32 +234,19 @@ static void add_bus_freq_to_ram_area(struct dt_node *ram_node, u32 chip_id)
 }
 
 static void add_size_to_ram_area(struct dt_node *ram_node,
-				 const struct HDIF_common_hdr *hdr,
-				 int indx_vpd)
+				 const struct HDIF_common_hdr *ramarea)
 {
-	const void	*fruvpd;
-	unsigned int	fruvpd_sz;
-	const void	*kw;
-	char		*str;
-	uint8_t		kwsz;
+	char	str[16];
+	const struct HDIF_ram_area_size *ram_area_sz;
 
-	fruvpd = HDIF_get_idata(hdr, indx_vpd, &fruvpd_sz);
-	if (!CHECK_SPPTR(fruvpd))
+	/* DIMM size */
+	ram_area_sz = HDIF_get_idata(ramarea, 3, NULL);
+	if (!CHECK_SPPTR(ram_area_sz))
 		return;
 
-	/* DIMM Size */
-	kw = vpd_find(fruvpd, fruvpd_sz, "VINI", "SZ", &kwsz);
-	if (!kw)
-		return;
-
-	str = zalloc(kwsz + 1);
-	if (!str){
-		prerror("Allocation failed\n");
-		return;
-	}
-	memcpy(str, kw, kwsz);
+	memset(str, 0, 16);
+	snprintf(str, 16, "%d", be32_to_cpu(ram_area_sz->mb));
 	dt_add_property_string(ram_node, "size", str);
-	free(str);
 }
 
 static void vpd_add_ram_area(const struct HDIF_common_hdr *msarea)
@@ -301,21 +288,15 @@ static void vpd_add_ram_area(const struct HDIF_common_hdr *msarea)
 
 		vpd_blob = HDIF_get_idata(ramarea, 1, &ram_sz);
 
+		/* DIMM size */
+		add_size_to_ram_area(ram_node, ramarea);
 		/*
 		 * For direct-attached memory we have a DDR "Serial
 		 * Presence Detection" blob rather than an IBM keyword
 		 * blob.
 		 */
-		if (vpd_valid(vpd_blob, ram_sz)) {
-			/* the ibm,vpd blob was added in dt_add_vpd_node() */
-			add_size_to_ram_area(ram_node, ramarea, 1);
-		} else {
-			/*
-			 * FIXME: There's probably a way to calculate the
-			 * size of the DIMM from the SPD info.
-			 */
+		if (!vpd_valid(vpd_blob, ram_sz))
 			dt_add_property(ram_node, "spd", vpd_blob, ram_sz);
-		}
 	}
 }
 
