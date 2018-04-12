@@ -127,7 +127,7 @@ int blocklevel_read(struct blocklevel_device *bl, uint64_t pos, void *buf, uint6
 
 	ecc_protection = ecc_protected(bl, pos, len, &ecc_start);
 
-	FL_DBG("%s: 0x%" PRIx64 " for 0x%" PRIx64 " ecc=%s",
+	FL_DBG("%s: 0x%" PRIx64 " for 0x%" PRIx64 " ecc=%s\n",
 		__func__, pos, len, ecc_protection ?
 		(ecc_protection == -1 ? "partial" : "yes") : "no");
 
@@ -216,7 +216,7 @@ int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf
 
 	ecc_protection = ecc_protected(bl, pos, len, &ecc_start);
 
-	FL_DBG("%s: 0x%" PRIx64 " for 0x%" PRIx64 " ecc=%s",
+	FL_DBG("%s: 0x%" PRIx64 " for 0x%" PRIx64 " ecc=%s\n",
 		__func__, pos, len, ecc_protection ?
 		(ecc_protection == -1 ? "partial" : "yes") : "no");
 
