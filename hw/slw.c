@@ -851,7 +851,7 @@ void add_cpu_idle_state_properties(void)
 	u64 *pm_ctrl_reg_val_buf;
 	u64 *pm_ctrl_reg_mask_buf;
 	u32 supported_states_mask;
-	u32 opal_disabled_states_mask = ~0xE0000000; /* all but stop0,1,2 */
+	u32 opal_disabled_states_mask = ~0xEC000000; /* all but stop11 */
 	const char* nvram_disable_str;
 	u32 nvram_disabled_states_mask = 0x00;
 	u32 stop_levels;
