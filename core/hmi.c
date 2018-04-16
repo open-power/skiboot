@@ -22,6 +22,7 @@
 #include <processor.h>
 #include <chiptod.h>
 #include <xscom.h>
+#include <xscom-p9-regs.h>
 #include <pci.h>
 #include <cpu.h>
 #include <chip.h>
@@ -1047,6 +1048,45 @@ error_out:
 	return recover;
 }
 
+static uint64_t read_tfmr_t0(void)
+{
+	uint64_t tfmr_t0;
+	uint32_t chip_id = this_cpu()->chip_id;
+	uint32_t core_id = pir_to_core_id(this_cpu()->pir);
+
+	lock(&hmi_lock);
+
+	xscom_write(chip_id, XSCOM_ADDR_P9_EC(core_id, P9_SCOM_SPRC),
+			SETFIELD(P9_SCOMC_SPR_SELECT, 0, P9_SCOMC_TFMR_T0));
+	xscom_read(chip_id, XSCOM_ADDR_P9_EC(core_id, P9_SCOM_SPRD),
+				&tfmr_t0);
+	unlock(&hmi_lock);
+	return tfmr_t0;
+}
+
+/* P9 errata: In theory, an HDEC error is sent to all threads. However,
+ * due to an errata on P9 where TFMR bit 26 (HDEC parity) cannot be
+ * cleared on thread 1..3, I am not confident we can do a rendez-vous
+ * in all cases.
+ *
+ * Our current approach is to ignore that error unless it is present
+ * on thread 0 TFMR. Also, ignore TB residue error due to a similar
+ * errata as above.
+ */
+static void validate_latched_errors(uint64_t *tfmr)
+{
+	if ((*tfmr & (SPR_TFMR_HDEC_PARITY_ERROR | SPR_TFMR_TB_RESIDUE_ERR))
+				&& this_cpu()->is_secondary) {
+		uint64_t tfmr_t0 = read_tfmr_t0();
+
+		if (!(tfmr_t0 & SPR_TFMR_HDEC_PARITY_ERROR))
+			*tfmr &= ~SPR_TFMR_HDEC_PARITY_ERROR;
+
+		if (!(tfmr_t0 & SPR_TFMR_TB_RESIDUE_ERR))
+			*tfmr &= ~SPR_TFMR_TB_RESIDUE_ERR;
+	}
+}
+
 static int handle_tfac_errors(struct OpalHMIEvent *hmi_evt, uint64_t *out_flags)
 {
 	int recover = -1;
@@ -1063,25 +1103,8 @@ static int handle_tfac_errors(struct OpalHMIEvent *hmi_evt, uint64_t *out_flags)
 
 	this_cpu()->tb_invalid = !(tfmr & SPR_TFMR_TB_VALID);
 
-	/* P9 errata: In theory, an HDEC error is sent to all threads. However,
-	 * due to an errata on P9 where TFMR bit 26 (HDEC parity) cannot be
-	 * cleared on thread 1..3, I am not confident we can do a rendez-vous
-	 * in all cases.
-	 *
-	 * Our current approach is to ignore that error unless no other TFAC
-	 * error is present in the TFMR. The error will be re-detected and
-	 * re-reported if necessary.
-	 */
-	if (proc_gen == proc_gen_p9 && (tfmr & SPR_TFMR_HDEC_PARITY_ERROR)) {
-		if (this_cpu()->tb_invalid || (tfmr & SPR_TFMR_OTHER_ERRORS))
-			tfmr &= ~SPR_TFMR_HDEC_PARITY_ERROR;
-	}
-
-	/* The TB residue error is ignored if TB is valid due to a similar
-	 * errata as above
-	 */
-	if ((tfmr & SPR_TFMR_TB_RESIDUE_ERR) && !this_cpu()->tb_invalid)
-		tfmr &= ~SPR_TFMR_TB_RESIDUE_ERR;
+	if (proc_gen == proc_gen_p9)
+		validate_latched_errors(&tfmr);
 
 	/* First, handle thread local errors */
 	if (tfmr & SPR_TFMR_THREAD_ERRORS) {
