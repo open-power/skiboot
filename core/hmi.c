@@ -1131,8 +1131,14 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 	int recover = 1;
 	uint64_t handled = 0;
 
+	prlog(PR_DEBUG, "Received HMI interrupt: HMER = 0x%016llx\n", hmer);
+	/* Initialize the hmi event with old value of HMER */
+	if (hmi_evt)
+		hmi_evt->hmer = hmer;
+
 	/* Handle Timer/TOD errors separately */
 	if (hmer & (SPR_HMER_TFAC_ERROR | SPR_HMER_TFMR_PARITY_ERROR)) {
+		hmi_print_debug("Timer Facility Error", hmer);
 		handled = hmer & (SPR_HMER_TFAC_ERROR | SPR_HMER_TFMR_PARITY_ERROR);
 		mtspr(SPR_HMER, ~handled);
 		recover = handle_tfac_errors(hmer, hmi_evt, out_flags);
@@ -1145,9 +1151,6 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 	 * looking at TFMR register. TFMR will tell us correct state of
 	 * TB register.
 	 */
-	prlog(PR_DEBUG, "Received HMI interrupt: HMER = 0x%016llx\n", hmer);
-	if (hmi_evt)
-		hmi_evt->hmer = hmer;
 	if (hmer & SPR_HMER_PROC_RECV_DONE) {
 		uint32_t chip_id = pir_to_chip_id(cpu->pir);
 		uint32_t core_id = pir_to_core_id(cpu->pir);
