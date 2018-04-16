@@ -204,7 +204,7 @@
 	(SPR_TFMR_TBST_CORRUPT | SPR_TFMR_TB_MISSING_SYNC |	\
 	 SPR_TFMR_TB_MISSING_STEP | SPR_TFMR_FW_CONTROL_ERR |	\
 	 SPR_TFMR_TFMR_CORRUPT | SPR_TFMR_TB_RESIDUE_ERR |	\
-	 SPR_TFMR_HDEC_PARITY_ERROR | SPR_TFMR_CHIP_TOD_INTERRUPT)
+	 SPR_TFMR_HDEC_PARITY_ERROR)
 
 /* TFMR "thread" errors  */
 #define SPR_TFMR_THREAD_ERRORS \
@@ -1099,6 +1099,20 @@ static int handle_tfac_errors(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 		/* Only update "recover" if it's not already 0 (non-recovered)
 		 */
 		recover2 = handle_all_core_tfac_error(tfmr, out_flags);
+		if (recover != 0)
+			recover = recover2;
+	} else if (tfmr & SPR_TFMR_CHIP_TOD_INTERRUPT) {
+		int recover2;
+
+		/*
+		 * There are some TOD errors which do not affect working of
+		 * TOD and TB. They stay in valid state. Hence we don't need
+		 * rendez vous.
+		 *
+		 * TOD errors that affects TOD/TB will report a global error
+		 * on TFMR alongwith bit 51, and they will go in rendez vous.
+		 */
+		recover2 = chiptod_recover_tod_errors();
 		if (recover != 0)
 			recover = recover2;
 	} else if (this_cpu()->tb_invalid) {

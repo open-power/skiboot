@@ -970,7 +970,7 @@ bool chiptod_wakeup_resync(void)
 	return false;
 }
 
-static int chiptod_recover_tod_errors(void)
+static int __chiptod_recover_tod_errors(void)
 {
 	uint64_t terr;
 	uint64_t treset = 0;
@@ -1024,6 +1024,16 @@ static int chiptod_recover_tod_errors(void)
 	}
 	/* We have handled all the TOD errors routed to hypervisor */
 	return 1;
+}
+
+int chiptod_recover_tod_errors(void)
+{
+	int rc;
+
+	lock(&chiptod_lock);
+	rc = __chiptod_recover_tod_errors();
+	unlock(&chiptod_lock);
+	return rc;
 }
 
 static int32_t chiptod_get_active_master(void)
@@ -1550,7 +1560,7 @@ int chiptod_recover_tb_errors(bool *out_resynced)
 	 * Bit 33 of TOD error register indicates sync check error.
 	 */
 	if (tfmr & SPR_TFMR_CHIP_TOD_INTERRUPT)
-		rc = chiptod_recover_tod_errors();
+		rc = __chiptod_recover_tod_errors();
 
 	/* Check if TB is running. If not then we need to get it running. */
 	if (!(tfmr & SPR_TFMR_TB_VALID)) {
