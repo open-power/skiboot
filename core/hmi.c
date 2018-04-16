@@ -1045,14 +1045,13 @@ error_out:
 	return recover;
 }
 
-static int handle_tfac_errors(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
-			      uint64_t *out_flags)
+static int handle_tfac_errors(struct OpalHMIEvent *hmi_evt, uint64_t *out_flags)
 {
 	int recover = -1;
 	uint64_t tfmr = mfspr(SPR_TFMR);
 
-	/* A TFMR parity error makes us ignore all the local stuff */
-	if ((hmer & SPR_HMER_TFMR_PARITY_ERROR) || (tfmr & SPR_TFMR_TFMR_CORRUPT)) {
+	/* A TFMR parity/corrupt error makes us ignore all the local stuff.*/
+	if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
 		/* Mark TB as invalid for now as we don't trust TFMR, we'll fix
 		 * it up later
 		 */
@@ -1160,7 +1159,7 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 		hmi_print_debug("Timer Facility Error", hmer);
 		handled = hmer & (SPR_HMER_TFAC_ERROR | SPR_HMER_TFMR_PARITY_ERROR);
 		mtspr(SPR_HMER, ~handled);
-		recover = handle_tfac_errors(hmer, hmi_evt, out_flags);
+		recover = handle_tfac_errors(hmi_evt, out_flags);
 		handled = 0;
 	}
 
