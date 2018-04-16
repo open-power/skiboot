@@ -1505,8 +1505,9 @@ bool tfmr_clear_core_errors(uint64_t tfmr)
  *	1	<= Successfully recovered from errors
  *	-1	<= No errors found. Errors are already been fixed.
  */
-int chiptod_recover_tb_errors(uint64_t tfmr, bool *out_resynced)
+int chiptod_recover_tb_errors(bool *out_resynced)
 {
+	uint64_t tfmr;
 	int rc = -1;
 
 	*out_resynced = false;
@@ -1515,6 +1516,9 @@ int chiptod_recover_tb_errors(uint64_t tfmr, bool *out_resynced)
 		return 0;
 
 	lock(&chiptod_lock);
+
+	/* Get fresh copy of TFMR */
+	tfmr = mfspr(SPR_TFMR);
 
 	/*
 	 * Check for TB errors.

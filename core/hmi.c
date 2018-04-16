@@ -955,7 +955,7 @@ static int handle_thread_tfac_error(uint64_t tfmr, uint64_t *out_flags)
 static int handle_all_core_tfac_error(uint64_t tfmr, uint64_t *out_flags)
 {
 	struct cpu_thread *t, *t0;
-	int recover = 1;
+	int recover = -1;
 
 	t = this_cpu();
 	t0 = find_cpu_by_pir(cpu_get_thread0(t));
@@ -975,11 +975,15 @@ static int handle_all_core_tfac_error(uint64_t tfmr, uint64_t *out_flags)
 	if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
 		/* Check if it's still in error state */
 		if (mfspr(SPR_TFMR) & SPR_TFMR_TFMR_CORRUPT)
-			if (!recover_corrupt_tfmr())
+			if (!recover_corrupt_tfmr()) {
+				unlock(&hmi_lock);
 				recover = 0;
+			}
 
-		if (!recover)
+		if (!recover) {
+			unlock(&hmi_lock);
 			goto error_out;
+		}
 
 		tfmr = mfspr(SPR_TFMR);
 
@@ -988,8 +992,10 @@ static int handle_all_core_tfac_error(uint64_t tfmr, uint64_t *out_flags)
 			recover = handle_thread_tfac_error(tfmr, out_flags);
 			tfmr &= ~SPR_TFMR_THREAD_ERRORS;
 		}
-		if (!recover)
+		if (!recover) {
+			unlock(&hmi_lock);
 			goto error_out;
+		}
 	}
 
 	/* Tell the OS ... */
@@ -1023,8 +1029,7 @@ static int handle_all_core_tfac_error(uint64_t tfmr, uint64_t *out_flags)
 
 	/* Now perform the actual TB recovery on thread 0 */
 	if (t == t0)
-		recover = chiptod_recover_tb_errors(tfmr,
-						&this_cpu()->tb_resynced);
+		recover = chiptod_recover_tb_errors(&this_cpu()->tb_resynced);
 
 error_out:
 	/* Last rendez-vous */
@@ -1043,7 +1048,7 @@ error_out:
 static int handle_tfac_errors(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 			      uint64_t *out_flags)
 {
-	int recover = 1;
+	int recover = -1;
 	uint64_t tfmr = mfspr(SPR_TFMR);
 
 	/* A TFMR parity error makes us ignore all the local stuff */
@@ -1106,7 +1111,7 @@ static int handle_tfac_errors(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 						mfspr(SPR_TFMR));
 	}
 
-	if (hmi_evt) {
+	if (recover != -1 && hmi_evt) {
 		hmi_evt->severity = OpalHMI_SEV_ERROR_SYNC;
 		hmi_evt->type = OpalHMI_ERROR_TFAC;
 		hmi_evt->tfmr = tfmr;
