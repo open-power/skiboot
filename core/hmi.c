@@ -1139,7 +1139,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 {
 	struct cpu_thread *cpu = this_cpu();
 	int recover = 1;
-	uint64_t tfmr;
+	uint64_t tfmr, handled = 0;
 
 	/*
 	 * In case of split core, some of the Timer facility errors need
@@ -1174,7 +1174,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			}
 		}
 
-		hmer &= ~SPR_HMER_PROC_RECV_DONE;
+		handled |= SPR_HMER_PROC_RECV_DONE;
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE;
@@ -1182,7 +1182,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		}
 	}
 	if (hmer & SPR_HMER_PROC_RECV_ERROR_MASKED) {
-		hmer &= ~SPR_HMER_PROC_RECV_ERROR_MASKED;
+		handled |= SPR_HMER_PROC_RECV_ERROR_MASKED;
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_MASKED;
@@ -1191,7 +1191,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		hmi_print_debug("Processor recovery Done (masked).", hmer);
 	}
 	if (hmer & SPR_HMER_PROC_RECV_AGAIN) {
-		hmer &= ~SPR_HMER_PROC_RECV_AGAIN;
+		handled |= SPR_HMER_PROC_RECV_AGAIN;
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE_AGAIN;
@@ -1202,7 +1202,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	}
 	/* Assert if we see malfunction alert, we can not continue. */
 	if (hmer & SPR_HMER_MALFUNCTION_ALERT) {
-		hmer &= ~SPR_HMER_MALFUNCTION_ALERT;
+		handled |= SPR_HMER_MALFUNCTION_ALERT;
 
 		hmi_print_debug("Malfunction Alert", hmer);
 		if (hmi_evt)
@@ -1211,7 +1211,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 
 	/* Assert if we see Hypervisor resource error, we can not continue. */
 	if (hmer & SPR_HMER_HYP_RESOURCE_ERR) {
-		hmer &= ~SPR_HMER_HYP_RESOURCE_ERR;
+		handled |= SPR_HMER_HYP_RESOURCE_ERR;
 
 		hmi_print_debug("Hypervisor resource error", hmer);
 		recover = 0;
@@ -1228,10 +1228,10 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	 */
 	if (hmer & SPR_HMER_TFAC_ERROR) {
 		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
+		handled |= SPR_HMER_TFAC_ERROR;
 
 		hmi_print_debug("Timer Facility Error", hmer);
 
-		hmer &= ~SPR_HMER_TFAC_ERROR;
 		recover = chiptod_recover_tb_errors();
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_ERROR_SYNC;
@@ -1242,7 +1242,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	}
 	if (hmer & SPR_HMER_TFMR_PARITY_ERROR) {
 		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
-		hmer &= ~SPR_HMER_TFMR_PARITY_ERROR;
+		handled |= SPR_HMER_TFMR_PARITY_ERROR;
 
 		hmi_print_debug("TFMR parity Error", hmer);
 		recover = chiptod_recover_tb_errors();
@@ -1259,9 +1259,11 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	/*
 	 * HMER bits are sticky, once set to 1 they remain set to 1 until
 	 * they are set to 0. Reset the error source bit to 0, otherwise
-	 * we keep getting HMI interrupt again and again.
+	 * we keep getting HMI interrupt again and again. Writing to HMER
+	 * acts as an AND, so we write mask of all 1's except for the bits
+	 * we want to clear.
 	 */
-	mtspr(SPR_HMER, hmer);
+	mtspr(SPR_HMER, ~handled);
 	hmi_exit();
 	/* Set the TB state looking at TFMR register before we head out. */
 	cpu->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
