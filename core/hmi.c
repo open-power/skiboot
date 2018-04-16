@@ -911,15 +911,12 @@ static int get_split_core_mode(void)
  *	- SPR_TFMR_TB_RESIDUE_ERR
  *	- SPR_TFMR_HDEC_PARITY_ERROR
  */
-static void pre_recovery_cleanup_p8(void)
+static void pre_recovery_cleanup_p8(uint64_t hmer)
 {
-	uint64_t hmer;
 	uint64_t tfmr;
 	uint32_t sibling_thread_mask;
 	int split_core_mode, subcore_id, thread_id, threads_per_core;
 	int i;
-
-	hmer = mfspr(SPR_HMER);
 
 	/* exit if it is not Time facility error. */
 	if (!(hmer & SPR_HMER_TFAC_ERROR))
@@ -1018,14 +1015,11 @@ static void pre_recovery_cleanup_p8(void)
  *	- SPR_TFMR_TB_RESIDUE_ERR
  *	- SPR_TFMR_HDEC_PARITY_ERROR
  */
-static void pre_recovery_cleanup_p9(void)
+static void pre_recovery_cleanup_p9(uint64_t hmer)
 {
-	uint64_t hmer;
 	uint64_t tfmr;
 	int threads_per_core = cpu_thread_count;
 	int i;
-
-	hmer = mfspr(SPR_HMER);
 
 	/* exit if it is not Time facility error. */
 	if (!(hmer & SPR_HMER_TFAC_ERROR))
@@ -1104,12 +1098,12 @@ static void pre_recovery_cleanup_p9(void)
 	wait_for_cleanup_complete();
 }
 
-static void pre_recovery_cleanup(void)
+static void pre_recovery_cleanup(uint64_t hmer)
 {
 	if (proc_gen == proc_gen_p9)
-		return pre_recovery_cleanup_p9();
+		return pre_recovery_cleanup_p9(hmer);
 	else
-		return pre_recovery_cleanup_p8();
+		return pre_recovery_cleanup_p8(hmer);
 }
 
 static void hmi_exit(void)
@@ -1118,9 +1112,8 @@ static void hmi_exit(void)
 	*(this_cpu()->core_hmi_state_ptr) &= ~(this_cpu()->thread_mask);
 }
 
-static void hmi_print_debug(const uint8_t *msg)
+static void hmi_print_debug(const uint8_t *msg, uint64_t hmer)
 {
-	uint64_t hmer = mfspr(SPR_HMER);
 	const char *loc;
 	uint32_t core_id, thread_index;
 
@@ -1152,7 +1145,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	 * In case of split core, some of the Timer facility errors need
 	 * cleanup to be done before we proceed with the error recovery.
 	 */
-	pre_recovery_cleanup();
+	pre_recovery_cleanup(hmer);
 
 	lock(&hmi_lock);
 	/*
@@ -1169,7 +1162,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		uint32_t core_id = pir_to_core_id(cpu->pir);
 		uint64_t core_wof;
 
-		hmi_print_debug("Processor recovery occurred.");
+		hmi_print_debug("Processor recovery occurred.", hmer);
 		if (!read_core_wof(chip_id, core_id, &core_wof)) {
 			int i;
 
@@ -1195,7 +1188,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_MASKED;
 			queue_hmi_event(hmi_evt, recover);
 		}
-		hmi_print_debug("Processor recovery Done (masked).");
+		hmi_print_debug("Processor recovery Done (masked).", hmer);
 	}
 	if (hmer & SPR_HMER_PROC_RECV_AGAIN) {
 		hmer &= ~SPR_HMER_PROC_RECV_AGAIN;
@@ -1205,13 +1198,13 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			queue_hmi_event(hmi_evt, recover);
 		}
 		hmi_print_debug("Processor recovery occurred again before"
-				"bit2 was cleared\n");
+				"bit2 was cleared\n", hmer);
 	}
 	/* Assert if we see malfunction alert, we can not continue. */
 	if (hmer & SPR_HMER_MALFUNCTION_ALERT) {
 		hmer &= ~SPR_HMER_MALFUNCTION_ALERT;
 
-		hmi_print_debug("Malfunction Alert");
+		hmi_print_debug("Malfunction Alert", hmer);
 		if (hmi_evt)
 			decode_malfunction(hmi_evt);
 	}
@@ -1220,7 +1213,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	if (hmer & SPR_HMER_HYP_RESOURCE_ERR) {
 		hmer &= ~SPR_HMER_HYP_RESOURCE_ERR;
 
-		hmi_print_debug("Hypervisor resource error");
+		hmi_print_debug("Hypervisor resource error", hmer);
 		recover = 0;
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_FATAL;
@@ -1236,7 +1229,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	if (hmer & SPR_HMER_TFAC_ERROR) {
 		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
 
-		hmi_print_debug("Timer Facility Error");
+		hmi_print_debug("Timer Facility Error", hmer);
 
 		hmer &= ~SPR_HMER_TFAC_ERROR;
 		recover = chiptod_recover_tb_errors();
@@ -1251,7 +1244,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
 		hmer &= ~SPR_HMER_TFMR_PARITY_ERROR;
 
-		hmi_print_debug("TFMR parity Error");
+		hmi_print_debug("TFMR parity Error", hmer);
 		recover = chiptod_recover_tb_errors();
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_FATAL;
