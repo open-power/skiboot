@@ -97,9 +97,8 @@ struct cpu_thread {
 	 */
 	uint32_t			core_hmi_state; /* primary only */
 	uint32_t			*core_hmi_state_ptr;
-	/* Mask to indicate thread id in core. */
-	uint8_t				thread_mask;
 	bool				tb_invalid;
+	bool				tb_resynced;
 
 	/* For use by XICS emulation on XIVE */
 	struct xive_cpu_state		*xstate;

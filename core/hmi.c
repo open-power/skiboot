@@ -184,8 +184,12 @@
  */
 #define NX_HMI_ACTIVE		PPC_BIT(54)
 
-/* Number of iterations for the various timeouts */
-#define TIMEOUT_LOOPS		20000000
+/*
+ * Number of iterations for the various timeouts. We can't use the timebase
+ * as it might be broken. We measured experimentally that 40 millions loops
+ * of cpu_relax() gives us more than 1s. The margin is comfortable enough.
+ */
+#define TIMEOUT_LOOPS		40000000
 
 /* TFMR other errors. (other than bit 26 and 45) */
 #define SPR_TFMR_OTHER_ERRORS	\
@@ -194,6 +198,18 @@
 	 SPR_TFMR_PURR_PARITY_ERR | SPR_TFMR_SPURR_PARITY_ERR |	\
 	 SPR_TFMR_DEC_PARITY_ERR | SPR_TFMR_TFMR_CORRUPT |	\
 	 SPR_TFMR_CHIP_TOD_INTERRUPT)
+
+/* TFMR "all core" errors (sent to all threads) */
+#define SPR_TFMR_CORE_ERRORS	\
+	(SPR_TFMR_TBST_CORRUPT | SPR_TFMR_TB_MISSING_SYNC |	\
+	 SPR_TFMR_TB_MISSING_STEP | SPR_TFMR_FW_CONTROL_ERR |	\
+	 SPR_TFMR_TFMR_CORRUPT | SPR_TFMR_TB_RESIDUE_ERR |	\
+	 SPR_TFMR_HDEC_PARITY_ERROR | SPR_TFMR_CHIP_TOD_INTERRUPT)
+
+/* TFMR "thread" errors  */
+#define SPR_TFMR_THREAD_ERRORS \
+	(SPR_TFMR_PURR_PARITY_ERR | SPR_TFMR_SPURR_PARITY_ERR |	\
+	 SPR_TFMR_DEC_PARITY_ERR)
 
 static const struct core_xstop_bit_info {
 	uint8_t bit;		/* CORE FIR bit number */
@@ -827,289 +843,76 @@ static void decode_malfunction(struct OpalHMIEvent *hmi_evt, uint64_t *out_flags
 	*out_flags |= flags;
 }
 
-static void wait_for_cleanup_complete(void)
-{
-	uint64_t timeout = 0;
-
-	smt_lowest();
-	while (!(*(this_cpu()->core_hmi_state_ptr) & HMI_STATE_CLEANUP_DONE)) {
-		/*
-		 * We use a fixed number of TIMEOUT_LOOPS rather
-		 * than using the timebase to do a pseudo-wall time
-		 * timeout due to the fact that timebase may not actually
-		 * work at this point in time.
-		 */
-		if (++timeout >= (TIMEOUT_LOOPS*3)) {
-			/*
-			 * Break out the loop here and fall through
-			 * recovery code. If recovery fails, kernel will get
-			 * informed about the failure. This way we can avoid
-			 * looping here if other threads are stuck.
-			 */
-			prlog(PR_DEBUG, "TB pre-recovery timeout\n");
-			break;
-		}
-		barrier();
-	}
-	smt_medium();
-}
-
 /*
- * For successful recovery of TB residue error, remove dirty data
- * from TB/HDEC register in each active partition (subcore). Writing
- * zero's to TB/HDEC will achieve the same.
+ * This will "rendez-vous" all threads on the core to the rendez-vous
+ * id "sig". You need to make sure that "sig" is different from the
+ * previous rendez vous. The sig value must be between 0 and 7 with
+ * boot time being set to 0.
+ *
+ * Note: in theory, we could just use a flip flop "sig" in the thread
+ * structure (binary rendez-vous with no argument). This is a bit more
+ * debuggable and better at handling timeouts (arguably).
+ *
+ * This should be called with the no lock held
  */
-static void timer_facility_do_cleanup(uint64_t tfmr)
+static void hmi_rendez_vous(uint32_t sig)
 {
-	/*
-	 * Workaround for HW logic bug in Power9. Do not reset the
-	 * TB register if TB is valid and running.
-	 */
-	if ((tfmr & SPR_TFMR_TB_RESIDUE_ERR) && !(tfmr & SPR_TFMR_TB_VALID)) {
+	struct cpu_thread *t = this_cpu();
+	uint32_t my_id = cpu_get_thread_index(t);
+	uint32_t my_shift = my_id << 2;
+	uint32_t *sptr = t->core_hmi_state_ptr;
+	uint32_t val, prev, shift, i;
+	uint64_t timeout;
 
-		/* Reset the TB register to clear the dirty data. */
-		mtspr(SPR_TBWU, 0);
-		mtspr(SPR_TBWL, 0);
+	assert(sig <= 0x7);
+
+	/*
+	 * Mark ourselves as having reached the rendez vous point with
+	 * the exit bit cleared
+	 */
+	do {
+		val = prev = *sptr;
+		val &= ~(0xfu << my_shift);
+		val |= sig << my_shift;
+	} while (cmpxchg32(sptr, prev, val) != prev);
+
+	/*
+	 * Wait for everybody else to reach that point, ignore the
+	 * exit bit as another thread could have already set it.
+	 */
+	for (i = 0; i < cpu_thread_count; i++) {
+		shift = i << 2;
+
+		timeout = TIMEOUT_LOOPS;
+		while (((*sptr >> shift) & 0x7) != sig && --timeout)
+			cpu_relax();
+		if (!timeout)
+			prlog(PR_ERR, "Rendez-vous stage 1 timeout, CPU 0x%x"
+			      " waiting for thread %d\n", t->pir, i);
 	}
 
-	if (tfmr & SPR_TFMR_HDEC_PARITY_ERROR) {
-		/* Reset HDEC register */
-		mtspr(SPR_HDEC, 0);
+	/* Set the exit bit */
+	do {
+		val = prev = *sptr;
+		val &= ~(0xfu << my_shift);
+		val |= (sig | 8) << my_shift;
+	} while (cmpxchg32(sptr, prev, val) != prev);
+
+	/* At this point, we need to wait for everybody else to have a value
+	 * that is *not* sig. IE. they either have set the exit bit *or* they
+	 * have changed the rendez-vous (meaning they have moved on to another
+	 * rendez vous point).
+	 */
+	for (i = 0; i < cpu_thread_count; i++) {
+		shift = i << 2;
+
+		timeout = TIMEOUT_LOOPS;
+		while (((*sptr >> shift) & 0xf) == sig && --timeout)
+			cpu_relax();
+		if (!timeout)
+			prlog(PR_ERR, "Rendez-vous stage 2 timeout, CPU 0x%x"
+			      " waiting for thread %d\n", t->pir, i);
 	}
-}
-
-static int get_split_core_mode(void)
-{
-	uint64_t hid0;
-
-	hid0 = mfspr(SPR_HID0);
-	if (hid0 & SPR_HID0_POWER8_2LPARMODE)
-		return 2;
-	else if (hid0 & SPR_HID0_POWER8_4LPARMODE)
-		return 4;
-
-	return 1;
-}
-
-
-/*
- * Certain TB/HDEC errors leaves dirty data in timebase and hdec register
- * which need to cleared before we initiate clear_tb_errors through TFMR[24].
- * The cleanup has to be done by once by any one thread from core or subcore.
- *
- * In split core mode, it is required to clear the dirty data from TB/HDEC
- * register by all subcores (active partitions) before we clear tb errors
- * through TFMR[24]. The HMI recovery would fail even if one subcore do
- * not cleanup the respective TB/HDEC register.
- *
- * For un-split core, any one thread can do the cleanup.
- * For split core, any one thread from each subcore can do the cleanup.
- *
- * Errors that required pre-recovery cleanup:
- *	- SPR_TFMR_TB_RESIDUE_ERR
- *	- SPR_TFMR_HDEC_PARITY_ERROR
- */
-static void pre_recovery_cleanup_p8(uint64_t *out_flags)
-{
-	uint64_t tfmr;
-	uint32_t sibling_thread_mask;
-	int split_core_mode, subcore_id, thread_id, threads_per_core;
-	int i;
-
-	/*
-	 * Exit if it is not the error that leaves dirty data in timebase
-	 * or HDEC register. OR this may be the thread which came in very
-	 * late and recovery is been already done.
-	 *
-	 * TFMR is per [sub]core register. If any one thread on the [sub]core
-	 * does the recovery it reflects in TFMR register and applicable to
-	 * all threads in that [sub]core. Hence take a lock before checking
-	 * TFMR errors. Once a thread from a [sub]core completes the
-	 * recovery, all other threads on that [sub]core will return from
-	 * here.
-	 *
-	 * If TFMR does not show error that we are looking for, return
-	 * from here. We would just fall through recovery code which would
-	 * check for other errors on TFMR and fix them.
-	 */
-	lock(&hmi_lock);
-	tfmr = mfspr(SPR_TFMR);
-	if (!(tfmr & SPR_TFMR_TB_VALID))
-		*out_flags |= OPAL_HMI_FLAGS_TB_RESYNC;
-	if (tfmr & SPR_TFMR_DEC_PARITY_ERR)
-		*out_flags |= OPAL_HMI_FLAGS_DEC_LOST;
-	if (!(tfmr & (SPR_TFMR_TB_RESIDUE_ERR | SPR_TFMR_HDEC_PARITY_ERROR))) {
-		unlock(&hmi_lock);
-		return;
-	}
-
-	/* Tell OS about a possible loss of HDEC */
-	if (tfmr & SPR_TFMR_HDEC_PARITY_ERROR)
-		*out_flags |= OPAL_HMI_FLAGS_HDEC_LOST;
-
-	/* Gather split core information. */
-	split_core_mode = get_split_core_mode();
-	threads_per_core = cpu_thread_count / split_core_mode;
-
-	/* Prepare core/subcore sibling mask */
-	thread_id = cpu_get_thread_index(this_cpu());
-	subcore_id = thread_id / threads_per_core;
-	sibling_thread_mask = SUBCORE_THREAD_MASK(subcore_id, threads_per_core);
-
-	/*
-	 * First thread on the core ?
-	 * if yes, setup the hmi cleanup state to !DONE
-	 */
-	if ((*(this_cpu()->core_hmi_state_ptr) & CORE_THREAD_MASK) == 0)
-		*(this_cpu()->core_hmi_state_ptr) &= ~HMI_STATE_CLEANUP_DONE;
-
-	/*
-	 * First thread on subcore ?
-	 * if yes, do cleanup.
-	 *
-	 * Clear TB and wait for other threads (one from each subcore) to
-	 * finish its cleanup work.
-	 */
-
-	if ((*(this_cpu()->core_hmi_state_ptr) & sibling_thread_mask) == 0)
-		timer_facility_do_cleanup(tfmr);
-
-	/*
-	 * Mark this thread bit. This bit will stay on until this thread
-	 * exit from handle_hmi_exception().
-	 */
-	*(this_cpu()->core_hmi_state_ptr) |= this_cpu()->thread_mask;
-
-	/*
-	 * Check if each subcore has completed the cleanup work.
-	 * if yes, then notify all the threads that we are done with cleanup.
-	 */
-	for (i = 0; i < split_core_mode; i++) {
-		uint32_t subcore_thread_mask =
-				SUBCORE_THREAD_MASK(i, threads_per_core);
-		if (!(*(this_cpu()->core_hmi_state_ptr) & subcore_thread_mask))
-			break;
-	}
-
-	if (i == split_core_mode)
-		*(this_cpu()->core_hmi_state_ptr) |= HMI_STATE_CLEANUP_DONE;
-
-	unlock(&hmi_lock);
-
-	/* Wait for other subcore to complete the cleanup. */
-	wait_for_cleanup_complete();
-}
-
-/*
- * Certain TB/HDEC errors leaves dirty data in timebase and hdec register
- * which need to cleared before we initiate clear_tb_errors through TFMR[24].
- * The cleanup has to be done by all the threads from core in p9.
- *
- * On TB/HDEC errors, all 4 threads on the affected receives HMI. On power9,
- * every thread on the core has its own copy of TB and hence every thread
- * has to clear the dirty data from its own TB register before we clear tb
- * errors through TFMR[24]. The HMI recovery would fail even if one thread
- * do not cleanup the respective TB/HDEC register.
- *
- * There is no split core mode in power9.
- *
- * Errors that required pre-recovery cleanup:
- *	- SPR_TFMR_TB_RESIDUE_ERR
- *	- SPR_TFMR_HDEC_PARITY_ERROR
- */
-static void pre_recovery_cleanup_p9(uint64_t *out_flags)
-{
-	uint64_t tfmr;
-	int threads_per_core = cpu_thread_count;
-	int i;
-
-	/*
-	 * Exit if it is not the error that leaves dirty data in timebase
-	 * or HDEC register. OR this may be the thread which came in very
-	 * late and recovery is been already done.
-	 *
-	 * TFMR is per core register. Ideally if any one thread on the core
-	 * does the recovery it should reflect in TFMR register and
-	 * applicable to all threads in that core. Hence take a lock before
-	 * checking TFMR errors. Once a thread from a core completes the
-	 * recovery, all other threads on that core will return from
-	 * here.
-	 *
-	 * If TFMR does not show error that we are looking for, return
-	 * from here. We would just fall through recovery code which would
-	 * check for other errors on TFMR and fix them.
-	 */
-	lock(&hmi_lock);
-	tfmr = mfspr(SPR_TFMR);
-	if (!(tfmr & SPR_TFMR_TB_VALID))
-		*out_flags |= OPAL_HMI_FLAGS_TB_RESYNC;
-	if (tfmr & SPR_TFMR_DEC_PARITY_ERR)
-		*out_flags |= OPAL_HMI_FLAGS_DEC_LOST;
-	if (!(tfmr & (SPR_TFMR_TB_RESIDUE_ERR | SPR_TFMR_HDEC_PARITY_ERROR))) {
-		unlock(&hmi_lock);
-		return;
-	}
-
-	/*
-	 * Due to a HW logic bug in p9, TFMR bit 26 and 45 always set
-	 * once TB residue or HDEC errors occurs at first time. Hence for HMI
-	 * on subsequent TB errors add additional check as workaround to
-	 * identify validity of the errors and decide whether pre-recovery
-	 * is required or not. Exit pre-recovery if there are other TB
-	 * errors also present on TFMR.
-	 */
-	if (tfmr & SPR_TFMR_OTHER_ERRORS) {
-		unlock(&hmi_lock);
-		return;
-	}
-
-	/*
-	 * First thread on the core ?
-	 * if yes, setup the hmi cleanup state to !DONE
-	 */
-	if ((*(this_cpu()->core_hmi_state_ptr) & CORE_THREAD_MASK) == 0)
-		*(this_cpu()->core_hmi_state_ptr) &= ~HMI_STATE_CLEANUP_DONE;
-
-	/* Tell OS about a possible loss of HDEC */
-	if (tfmr & SPR_TFMR_HDEC_PARITY_ERROR)
-		*out_flags |= OPAL_HMI_FLAGS_HDEC_LOST;
-
-	/*
-	 * Clear TB and wait for other threads to finish its cleanup work.
-	 */
-	timer_facility_do_cleanup(tfmr);
-
-	/*
-	 * Mark this thread bit. This bit will stay on until this thread
-	 * exit from handle_hmi_exception().
-	 */
-	*(this_cpu()->core_hmi_state_ptr) |= this_cpu()->thread_mask;
-
-	/*
-	 * Check if each thread has completed the cleanup work.
-	 * if yes, then notify all the threads that we are done with cleanup.
-	 */
-	for (i = 0; i < threads_per_core; i++) {
-		uint32_t thread_mask = SINGLE_THREAD_MASK(i);
-		if (!(*(this_cpu()->core_hmi_state_ptr) & thread_mask))
-			break;
-	}
-
-	if (i == threads_per_core)
-		*(this_cpu()->core_hmi_state_ptr) |= HMI_STATE_CLEANUP_DONE;
-
-	unlock(&hmi_lock);
-
-	/* Wait for other threads to complete the cleanup. */
-	wait_for_cleanup_complete();
-}
-
-static void pre_recovery_cleanup(uint64_t *out_flags)
-{
-	if (proc_gen == proc_gen_p9)
-		return pre_recovery_cleanup_p9(out_flags);
-	else
-		return pre_recovery_cleanup_p8(out_flags);
 }
 
 static void hmi_print_debug(const uint8_t *msg, uint64_t hmer)
@@ -1135,52 +938,188 @@ static void hmi_print_debug(const uint8_t *msg, uint64_t hmer)
 	}
 }
 
+static int handle_thread_tfac_error(uint64_t tfmr, uint64_t *out_flags)
+{
+	int recover = 1;
+
+	if (tfmr & SPR_TFMR_DEC_PARITY_ERR)
+		*out_flags |= OPAL_HMI_FLAGS_DEC_LOST;
+	if (!tfmr_recover_local_errors(tfmr))
+		recover = 0;
+	tfmr &= ~(SPR_TFMR_PURR_PARITY_ERR |
+		  SPR_TFMR_SPURR_PARITY_ERR |
+		  SPR_TFMR_DEC_PARITY_ERR);
+	return recover;
+}
+
+static int handle_all_core_tfac_error(uint64_t tfmr, uint64_t *out_flags)
+{
+	struct cpu_thread *t, *t0;
+	int recover = 1;
+
+	t = this_cpu();
+	t0 = find_cpu_by_pir(cpu_get_thread0(t));
+
+	/* Rendez vous all threads */
+	hmi_rendez_vous(1);
+
+	/* We use a lock here as some of the TFMR bits are shared and I
+	 * prefer avoiding doing the cleanup simultaneously.
+	 */
+	lock(&hmi_lock);
+
+	/* First handle corrupt TFMR otherwise we can't trust anything.
+	 * We'll use a lock here so that the threads don't try to do it at
+	 * the same time
+	 */
+	if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
+		/* Check if it's still in error state */
+		if (mfspr(SPR_TFMR) & SPR_TFMR_TFMR_CORRUPT)
+			if (!recover_corrupt_tfmr())
+				recover = 0;
+
+		if (!recover)
+			goto error_out;
+
+		tfmr = mfspr(SPR_TFMR);
+
+		/* We could have got new thread errors in the meantime */
+		if (tfmr & SPR_TFMR_THREAD_ERRORS) {
+			recover = handle_thread_tfac_error(tfmr, out_flags);
+			tfmr &= ~SPR_TFMR_THREAD_ERRORS;
+		}
+		if (!recover)
+			goto error_out;
+	}
+
+	/* Tell the OS ... */
+	if (tfmr & SPR_TFMR_HDEC_PARITY_ERROR)
+		*out_flags |= OPAL_HMI_FLAGS_HDEC_LOST;
+
+	/* Cleanup bad HDEC or TB on all threads or subcures before we clear
+	 * the error conditions
+	 */
+	tfmr_cleanup_core_errors(tfmr);
+
+	/* Unlock before next rendez-vous */
+	unlock(&hmi_lock);
+
+	/* Second rendez vous, ensure the above cleanups are all done before
+	 * we proceed further
+	 */
+	hmi_rendez_vous(2);
+
+	/* We can now clear the error conditions in the core. */
+	if (!tfmr_clear_core_errors(tfmr)) {
+		recover = 0;
+		goto error_out;
+	}
+
+	/* Third rendez-vous. We could in theory do the timebase resync as
+	 * part of the previous one, but I prefer having all the error
+	 * conditions cleared before we start trying.
+	 */
+	hmi_rendez_vous(3);
+
+	/* Now perform the actual TB recovery on thread 0 */
+	if (t == t0)
+		recover = chiptod_recover_tb_errors(tfmr,
+						&this_cpu()->tb_resynced);
+
+error_out:
+	/* Last rendez-vous */
+	hmi_rendez_vous(4);
+
+	/* Now all threads have gone past rendez-vous 3 and not yet past another
+	 * rendez-vous 1, so the value of tb_resynced of thread 0 of the core
+	 * contains an accurate indication as to whether the timebase was lost.
+	 */
+	if (t0->tb_resynced)
+		*out_flags |= OPAL_HMI_FLAGS_TB_RESYNC;
+
+	return recover;
+}
+
 static int handle_tfac_errors(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 			      uint64_t *out_flags)
 {
 	int recover = 1;
-	uint64_t tfmr;
+	uint64_t tfmr = mfspr(SPR_TFMR);
 
-	pre_recovery_cleanup(out_flags);
+	/* A TFMR parity error makes us ignore all the local stuff */
+	if ((hmer & SPR_HMER_TFMR_PARITY_ERROR) || (tfmr & SPR_TFMR_TFMR_CORRUPT)) {
+		/* Mark TB as invalid for now as we don't trust TFMR, we'll fix
+		 * it up later
+		 */
+		this_cpu()->tb_invalid = true;
+		goto bad_tfmr;
+	}
 
-	lock(&hmi_lock);
-	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
+	this_cpu()->tb_invalid = !(tfmr & SPR_TFMR_TB_VALID);
 
-	/*
-	 * Assert for now for all TOD errors. In future we need to decode
-	 * TFMR and take corrective action wherever required.
+	/* P9 errata: In theory, an HDEC error is sent to all threads. However,
+	 * due to an errata on P9 where TFMR bit 26 (HDEC parity) cannot be
+	 * cleared on thread 1..3, I am not confident we can do a rendez-vous
+	 * in all cases.
+	 *
+	 * Our current approach is to ignore that error unless no other TFAC
+	 * error is present in the TFMR. The error will be re-detected and
+	 * re-reported if necessary.
 	 */
-	if (hmer & SPR_HMER_TFAC_ERROR) {
-		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
-
-		hmi_print_debug("Timer Facility Error", hmer);
-
-		recover = chiptod_recover_tb_errors();
-		if (hmi_evt) {
-			hmi_evt->severity = OpalHMI_SEV_ERROR_SYNC;
-			hmi_evt->type = OpalHMI_ERROR_TFAC;
-			hmi_evt->tfmr = tfmr;
-			queue_hmi_event(hmi_evt, recover, out_flags);
-		}
+	if (proc_gen == proc_gen_p9 && (tfmr & SPR_TFMR_HDEC_PARITY_ERROR)) {
+		if (this_cpu()->tb_invalid || (tfmr & SPR_TFMR_OTHER_ERRORS))
+			tfmr &= ~SPR_TFMR_HDEC_PARITY_ERROR;
 	}
-	if (hmer & SPR_HMER_TFMR_PARITY_ERROR) {
-		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
 
-		hmi_print_debug("TFMR parity Error", hmer);
-		recover = chiptod_recover_tb_errors();
-		if (hmi_evt) {
-			hmi_evt->severity = OpalHMI_SEV_FATAL;
-			hmi_evt->type = OpalHMI_ERROR_TFMR_PARITY;
-			hmi_evt->tfmr = tfmr;
-			queue_hmi_event(hmi_evt, recover, out_flags);
-		}
+	/* The TB residue error is ignored if TB is valid due to a similar
+	 * errata as above
+	 */
+	if ((tfmr & SPR_TFMR_TB_RESIDUE_ERR) && !this_cpu()->tb_invalid)
+		tfmr &= ~SPR_TFMR_TB_RESIDUE_ERR;
+
+	/* First, handle thread local errors */
+	if (tfmr & SPR_TFMR_THREAD_ERRORS) {
+		recover = handle_thread_tfac_error(tfmr, out_flags);
+		tfmr &= ~SPR_TFMR_THREAD_ERRORS;
 	}
-	/* Unconditionally unset the thread bit */
-	*(this_cpu()->core_hmi_state_ptr) &= ~(this_cpu()->thread_mask);
+
+ bad_tfmr:
+
+	/* Let's see if we still have a all-core error to deal with, if
+	 * not, we just bail out
+	 */
+	if (tfmr & SPR_TFMR_CORE_ERRORS) {
+		int recover2;
+
+		/* Only update "recover" if it's not already 0 (non-recovered)
+		 */
+		recover2 = handle_all_core_tfac_error(tfmr, out_flags);
+		if (recover != 0)
+			recover = recover2;
+	} else if (this_cpu()->tb_invalid) {
+		/* This shouldn't happen, TB is invalid and no global error
+		 * was reported. We just return for now assuming one will
+		 * be. We can't do a rendez vous without a core-global HMI.
+		 */
+		prlog(PR_ERR, "HMI: TB invalid without core error reported ! "
+			"CPU=%x, TFMR=0x%016lx\n", this_cpu()->pir,
+						mfspr(SPR_TFMR));
+	}
+
+	if (hmi_evt) {
+		hmi_evt->severity = OpalHMI_SEV_ERROR_SYNC;
+		hmi_evt->type = OpalHMI_ERROR_TFAC;
+		hmi_evt->tfmr = tfmr;
+		queue_hmi_event(hmi_evt, recover, out_flags);
+	}
 
 	/* Set the TB state looking at TFMR register before we head out. */
 	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
-	unlock(&hmi_lock);
+
+	if (this_cpu()->tb_invalid)
+		prlog(PR_WARNING, "Failed to get TB in running state! "
+			"CPU=%x, TFMR=%016lx\n", this_cpu()->pir,
+					mfspr(SPR_TFMR));
 
 	return recover;
 }
