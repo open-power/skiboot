@@ -1491,18 +1491,21 @@ void tfmr_cleanup_core_errors(uint64_t tfmr)
 	}
 }
 
-bool tfmr_clear_core_errors(uint64_t tfmr)
+int tfmr_clear_core_errors(uint64_t tfmr)
 {
 	uint64_t tfmr_reset_errors = 0;
 
-	if (tfmr & SPR_TFMR_HDEC_PARITY_ERROR)
-		tfmr_reset_errors |= SPR_TFMR_HDEC_PARITY_ERROR;
+	/* return -1 if there is nothing to be fixed. */
+	if (!(tfmr & SPR_TFMR_HDEC_PARITY_ERROR))
+		return -1;
+
+	tfmr_reset_errors |= SPR_TFMR_HDEC_PARITY_ERROR;
 
 	/* Write TFMR twice to clear the error */
 	mtspr(SPR_TFMR, base_tfmr | tfmr_reset_errors);
 	mtspr(SPR_TFMR, base_tfmr | tfmr_reset_errors);
 
-	return true;
+	return 1;
 }
 
 /*

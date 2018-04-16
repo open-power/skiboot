@@ -1019,10 +1019,9 @@ static int handle_all_core_tfac_error(uint64_t tfmr, uint64_t *out_flags)
 	hmi_rendez_vous(2);
 
 	/* We can now clear the error conditions in the core. */
-	if (!tfmr_clear_core_errors(tfmr)) {
-		recover = 0;
+	recover = tfmr_clear_core_errors(tfmr);
+	if (recover == 0)
 		goto error_out;
-	}
 
 	/* Third rendez-vous. We could in theory do the timebase resync as
 	 * part of the previous one, but I prefer having all the error

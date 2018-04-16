@@ -33,7 +33,7 @@ extern int chiptod_recover_tb_errors(bool *out_resynced);
 extern bool tfmr_recover_local_errors(uint64_t tfmr);
 extern bool recover_corrupt_tfmr(void);
 extern void tfmr_cleanup_core_errors(uint64_t tfmr);
-extern bool tfmr_clear_core_errors(uint64_t tfmr);
+extern int tfmr_clear_core_errors(uint64_t tfmr);
 extern void chiptod_reset_tb(void);
 extern bool chiptod_adjust_topology(enum chiptod_topology topo, bool enable);
 extern bool chiptod_capp_timebase_sync(unsigned int chip_id, uint32_t tfmr_addr,
