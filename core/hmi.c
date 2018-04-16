@@ -888,7 +888,8 @@ static void hmi_rendez_vous(uint32_t sig)
 			cpu_relax();
 		if (!timeout)
 			prlog(PR_ERR, "Rendez-vous stage 1 timeout, CPU 0x%x"
-			      " waiting for thread %d\n", t->pir, i);
+			      " waiting for thread %d (sptr=%08x)\n",
+						      t->pir, i, *sptr);
 	}
 
 	/* Set the exit bit */
@@ -911,7 +912,8 @@ static void hmi_rendez_vous(uint32_t sig)
 			cpu_relax();
 		if (!timeout)
 			prlog(PR_ERR, "Rendez-vous stage 2 timeout, CPU 0x%x"
-			      " waiting for thread %d\n", t->pir, i);
+			      " waiting for thread %d (sptr=%08x)\n",
+						      t->pir, i, *sptr);
 	}
 }
 
