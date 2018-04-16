@@ -974,7 +974,7 @@ static int __chiptod_recover_tod_errors(void)
 {
 	uint64_t terr;
 	uint64_t treset = 0;
-	int i;
+	int i, rc = -1;
 	int32_t chip_id = this_cpu()->chip_id;
 
 	/* Read TOD error register */
@@ -990,6 +990,7 @@ static int __chiptod_recover_tod_errors(void)
 		(terr & TOD_ERR_DELAY_COMPL_PARITY) ||
 		(terr & TOD_ERR_TOD_REGISTER_PARITY)) {
 		chiptod_reset_tod_errors();
+		rc = 1;
 	}
 
 	/*
@@ -1023,7 +1024,9 @@ static int __chiptod_recover_tod_errors(void)
 		return 0;
 	}
 	/* We have handled all the TOD errors routed to hypervisor */
-	return 1;
+	if (treset)
+		rc = 1;
+	return rc;
 }
 
 int chiptod_recover_tod_errors(void)
