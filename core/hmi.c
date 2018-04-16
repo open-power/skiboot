@@ -909,16 +909,12 @@ static int get_split_core_mode(void)
  *	- SPR_TFMR_TB_RESIDUE_ERR
  *	- SPR_TFMR_HDEC_PARITY_ERROR
  */
-static void pre_recovery_cleanup_p8(uint64_t hmer, uint64_t *out_flags)
+static void pre_recovery_cleanup_p8(uint64_t *out_flags)
 {
 	uint64_t tfmr;
 	uint32_t sibling_thread_mask;
 	int split_core_mode, subcore_id, thread_id, threads_per_core;
 	int i;
-
-	/* exit if it is not Time facility error. */
-	if (!(hmer & SPR_HMER_TFAC_ERROR))
-		return;
 
 	/*
 	 * Exit if it is not the error that leaves dirty data in timebase
@@ -1021,15 +1017,11 @@ static void pre_recovery_cleanup_p8(uint64_t hmer, uint64_t *out_flags)
  *	- SPR_TFMR_TB_RESIDUE_ERR
  *	- SPR_TFMR_HDEC_PARITY_ERROR
  */
-static void pre_recovery_cleanup_p9(uint64_t hmer, uint64_t *out_flags)
+static void pre_recovery_cleanup_p9(uint64_t *out_flags)
 {
 	uint64_t tfmr;
 	int threads_per_core = cpu_thread_count;
 	int i;
-
-	/* exit if it is not Time facility error. */
-	if (!(hmer & SPR_HMER_TFAC_ERROR))
-		return;
 
 	/*
 	 * Exit if it is not the error that leaves dirty data in timebase
@@ -1112,12 +1104,12 @@ static void pre_recovery_cleanup_p9(uint64_t hmer, uint64_t *out_flags)
 	wait_for_cleanup_complete();
 }
 
-static void pre_recovery_cleanup(uint64_t hmer, uint64_t *out_flags)
+static void pre_recovery_cleanup(uint64_t *out_flags)
 {
 	if (proc_gen == proc_gen_p9)
-		return pre_recovery_cleanup_p9(hmer, out_flags);
+		return pre_recovery_cleanup_p9(out_flags);
 	else
-		return pre_recovery_cleanup_p8(hmer, out_flags);
+		return pre_recovery_cleanup_p8(out_flags);
 }
 
 static void hmi_print_debug(const uint8_t *msg, uint64_t hmer)
@@ -1149,7 +1141,7 @@ static int handle_tfac_errors(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 	int recover = 1;
 	uint64_t tfmr;
 
-	pre_recovery_cleanup(hmer, out_flags);
+	pre_recovery_cleanup(out_flags);
 
 	lock(&hmi_lock);
 	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
