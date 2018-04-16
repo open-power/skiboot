@@ -769,6 +769,14 @@ struct OpalHMIEvent {
 	} u;
 };
 
+/* OPAL_HANDLE_HMI2 out_flags */
+enum {
+	OPAL_HMI_FLAGS_TB_RESYNC	= (1ull << 0), /* Timebase has been resynced */
+	OPAL_HMI_FLAGS_DEC_LOST		= (1ull << 1), /* DEC lost, needs to be reprogrammed */
+	OPAL_HMI_FLAGS_HDEC_LOST	= (1ull << 2), /* HDEC lost, needs to be reprogrammed */
+	OPAL_HMI_FLAGS_NEW_EVENT	= (1ull << 63), /* An event has been created */
+};
+
 enum {
 	OPAL_P7IOC_DIAG_TYPE_NONE	= 0,
 	OPAL_P7IOC_DIAG_TYPE_RGC	= 1,

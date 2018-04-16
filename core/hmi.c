@@ -291,7 +291,7 @@ static int setup_scom_addresses(void)
 	return 0;
 }
 
-static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
+static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover, uint64_t *out_flags)
 {
 	size_t num_params;
 
@@ -313,6 +313,8 @@ static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover)
 	 * num_params value.
 	 */
 	num_params = ALIGN_UP(sizeof(*hmi_evt), sizeof(u64)) / sizeof(u64);
+
+	*out_flags |= OPAL_HMI_FLAGS_NEW_EVENT;
 
 	/* queue up for delivery to host. */
 	return _opal_queue_msg(OPAL_MSG_HMI_EVT, NULL, NULL,
@@ -409,7 +411,7 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 }
 
 static void find_core_checkstop_reason(struct OpalHMIEvent *hmi_evt,
-				       bool *event_generated)
+				       uint64_t *out_flags)
 {
 	struct cpu_thread *cpu;
 
@@ -435,16 +437,14 @@ static void find_core_checkstop_reason(struct OpalHMIEvent *hmi_evt,
 		hmi_evt->u.xstop_error.xstop_reason = 0;
 		hmi_evt->u.xstop_error.u.pir = cpu->pir;
 
-		if (decode_core_fir(cpu, hmi_evt)) {
-			queue_hmi_event(hmi_evt, 0);
-			*event_generated = 1;
-		}
+		if (decode_core_fir(cpu, hmi_evt))
+			queue_hmi_event(hmi_evt, 0, out_flags);
 	}
 }
 
 static void find_capp_checkstop_reason(int flat_chip_id,
 				       struct OpalHMIEvent *hmi_evt,
-				       bool *event_generated)
+				       uint64_t *out_flags)
 {
 	struct capp_info info;
 	struct phb *phb;
@@ -496,8 +496,7 @@ static void find_capp_checkstop_reason(int flat_chip_id,
 
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_CAPP_RECOVERY;
-			queue_hmi_event(hmi_evt, 1);
-			*event_generated = true;
+			queue_hmi_event(hmi_evt, 1, out_flags);
 
 			return;
 		}
@@ -506,7 +505,7 @@ static void find_capp_checkstop_reason(int flat_chip_id,
 
 static void find_nx_checkstop_reason(int flat_chip_id,
 				     struct OpalHMIEvent *hmi_evt,
-				     bool *event_generated)
+				     uint64_t *out_flags)
 {
 	uint64_t nx_status;
 	uint64_t nx_dma_fir;
@@ -564,8 +563,7 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	xscom_write(flat_chip_id, nx_dma_engine_fir, PPC_BIT(38));
 
 	/* Send an HMI event. */
-	queue_hmi_event(hmi_evt, 0);
-	*event_generated = true;
+	queue_hmi_event(hmi_evt, 0, out_flags);
 }
 
 /*
@@ -623,7 +621,7 @@ static void dump_scoms(int flat_chip_id, const char *unit, uint32_t *scoms)
 
 static void find_npu2_checkstop_reason(int flat_chip_id,
 				      struct OpalHMIEvent *hmi_evt,
-				      bool *event_generated)
+				      uint64_t *out_flags)
 {
 	struct phb *phb;
 	struct npu *p = NULL;
@@ -714,13 +712,12 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 	hmi_evt->u.xstop_error.u.chip_id = flat_chip_id;
 
 	/* Marking the event as recoverable so that we don't crash */
-	queue_hmi_event(hmi_evt, 1);
-	*event_generated = true;
+	queue_hmi_event(hmi_evt, 1, out_flags);
 }
 
 static void find_npu_checkstop_reason(int flat_chip_id,
 				      struct OpalHMIEvent *hmi_evt,
-				      bool *event_generated)
+				      uint64_t *out_flags)
 {
 	struct phb *phb;
 	struct npu *p = NULL;
@@ -733,7 +730,7 @@ static void find_npu_checkstop_reason(int flat_chip_id,
 
 	/* Only check for NPU errors if the chip has a NPU */
 	if (PVR_TYPE(mfspr(SPR_PVR)) != PVR_TYPE_P8NVL)
-		return find_npu2_checkstop_reason(flat_chip_id, hmi_evt, event_generated);
+		return find_npu2_checkstop_reason(flat_chip_id, hmi_evt, out_flags);
 
 	/* Find the NPU on the chip associated with the HMI. */
 	for_each_phb(phb) {
@@ -783,22 +780,22 @@ static void find_npu_checkstop_reason(int flat_chip_id,
 	hmi_evt->u.xstop_error.u.chip_id = flat_chip_id;
 
 	/* The HMI is "recoverable" because it shouldn't crash the system */
-	queue_hmi_event(hmi_evt, 1);
-	*event_generated = true;
+	queue_hmi_event(hmi_evt, 1, out_flags);
 }
 
-static void decode_malfunction(struct OpalHMIEvent *hmi_evt)
+static void decode_malfunction(struct OpalHMIEvent *hmi_evt, uint64_t *out_flags)
 {
 	int i;
-	uint64_t malf_alert;
-	bool event_generated = false;
+	uint64_t malf_alert, flags;
+
+	flags = 0;
 
 	if (!setup_scom_addresses()) {
 		prerror("Failed to setup scom addresses\n");
 		/* Send an unknown HMI event. */
 		hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_UNKNOWN;
 		hmi_evt->u.xstop_error.xstop_reason = 0;
-		queue_hmi_event(hmi_evt, false);
+		queue_hmi_event(hmi_evt, false, out_flags);
 		return;
 	}
 
@@ -811,22 +808,23 @@ static void decode_malfunction(struct OpalHMIEvent *hmi_evt)
 		if (malf_alert & PPC_BIT(i)) {
 			xscom_write(this_cpu()->chip_id, malf_alert_scom,
 								~PPC_BIT(i));
-			find_capp_checkstop_reason(i, hmi_evt, &event_generated);
-			find_nx_checkstop_reason(i, hmi_evt, &event_generated);
-			find_npu_checkstop_reason(i, hmi_evt, &event_generated);
+			find_capp_checkstop_reason(i, hmi_evt, &flags);
+			find_nx_checkstop_reason(i, hmi_evt, &flags);
+			find_npu_checkstop_reason(i, hmi_evt, &flags);
 		}
 	}
 
-	find_core_checkstop_reason(hmi_evt, &event_generated);
+	find_core_checkstop_reason(hmi_evt, &flags);
 
 	/*
 	 * If we fail to find checkstop reason, send an unknown HMI event.
 	 */
-	if (!event_generated) {
+	if (!(flags & OPAL_HMI_FLAGS_NEW_EVENT)) {
 		hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_UNKNOWN;
 		hmi_evt->u.xstop_error.xstop_reason = 0;
-		queue_hmi_event(hmi_evt, false);
+		queue_hmi_event(hmi_evt, false, &flags);
 	}
+	*out_flags |= flags;
 }
 
 static void wait_for_cleanup_complete(void)
@@ -911,7 +909,7 @@ static int get_split_core_mode(void)
  *	- SPR_TFMR_TB_RESIDUE_ERR
  *	- SPR_TFMR_HDEC_PARITY_ERROR
  */
-static void pre_recovery_cleanup_p8(uint64_t hmer)
+static void pre_recovery_cleanup_p8(uint64_t hmer, uint64_t *out_flags)
 {
 	uint64_t tfmr;
 	uint32_t sibling_thread_mask;
@@ -940,10 +938,18 @@ static void pre_recovery_cleanup_p8(uint64_t hmer)
 	 */
 	lock(&hmi_lock);
 	tfmr = mfspr(SPR_TFMR);
+	if (!(tfmr & SPR_TFMR_TB_VALID))
+		*out_flags |= OPAL_HMI_FLAGS_TB_RESYNC;
+	if (tfmr & SPR_TFMR_DEC_PARITY_ERR)
+		*out_flags |= OPAL_HMI_FLAGS_DEC_LOST;
 	if (!(tfmr & (SPR_TFMR_TB_RESIDUE_ERR | SPR_TFMR_HDEC_PARITY_ERROR))) {
 		unlock(&hmi_lock);
 		return;
 	}
+
+	/* Tell OS about a possible loss of HDEC */
+	if (tfmr & SPR_TFMR_HDEC_PARITY_ERROR)
+		*out_flags |= OPAL_HMI_FLAGS_HDEC_LOST;
 
 	/* Gather split core information. */
 	split_core_mode = get_split_core_mode();
@@ -1015,7 +1021,7 @@ static void pre_recovery_cleanup_p8(uint64_t hmer)
  *	- SPR_TFMR_TB_RESIDUE_ERR
  *	- SPR_TFMR_HDEC_PARITY_ERROR
  */
-static void pre_recovery_cleanup_p9(uint64_t hmer)
+static void pre_recovery_cleanup_p9(uint64_t hmer, uint64_t *out_flags)
 {
 	uint64_t tfmr;
 	int threads_per_core = cpu_thread_count;
@@ -1043,6 +1049,10 @@ static void pre_recovery_cleanup_p9(uint64_t hmer)
 	 */
 	lock(&hmi_lock);
 	tfmr = mfspr(SPR_TFMR);
+	if (!(tfmr & SPR_TFMR_TB_VALID))
+		*out_flags |= OPAL_HMI_FLAGS_TB_RESYNC;
+	if (tfmr & SPR_TFMR_DEC_PARITY_ERR)
+		*out_flags |= OPAL_HMI_FLAGS_DEC_LOST;
 	if (!(tfmr & (SPR_TFMR_TB_RESIDUE_ERR | SPR_TFMR_HDEC_PARITY_ERROR))) {
 		unlock(&hmi_lock);
 		return;
@@ -1067,6 +1077,10 @@ static void pre_recovery_cleanup_p9(uint64_t hmer)
 	 */
 	if ((*(this_cpu()->core_hmi_state_ptr) & CORE_THREAD_MASK) == 0)
 		*(this_cpu()->core_hmi_state_ptr) &= ~HMI_STATE_CLEANUP_DONE;
+
+	/* Tell OS about a possible loss of HDEC */
+	if (tfmr & SPR_TFMR_HDEC_PARITY_ERROR)
+		*out_flags |= OPAL_HMI_FLAGS_HDEC_LOST;
 
 	/*
 	 * Clear TB and wait for other threads to finish its cleanup work.
@@ -1098,12 +1112,12 @@ static void pre_recovery_cleanup_p9(uint64_t hmer)
 	wait_for_cleanup_complete();
 }
 
-static void pre_recovery_cleanup(uint64_t hmer)
+static void pre_recovery_cleanup(uint64_t hmer, uint64_t *out_flags)
 {
 	if (proc_gen == proc_gen_p9)
-		return pre_recovery_cleanup_p9(hmer);
+		return pre_recovery_cleanup_p9(hmer, out_flags);
 	else
-		return pre_recovery_cleanup_p8(hmer);
+		return pre_recovery_cleanup_p8(hmer, out_flags);
 }
 
 static void hmi_exit(void)
@@ -1135,7 +1149,8 @@ static void hmi_print_debug(const uint8_t *msg, uint64_t hmer)
 	}
 }
 
-int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
+static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
+				uint64_t *out_flags)
 {
 	struct cpu_thread *cpu = this_cpu();
 	int recover = 1;
@@ -1145,7 +1160,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 	 * In case of split core, some of the Timer facility errors need
 	 * cleanup to be done before we proceed with the error recovery.
 	 */
-	pre_recovery_cleanup(hmer);
+	pre_recovery_cleanup(hmer, out_flags);
 
 	lock(&hmi_lock);
 	/*
@@ -1178,7 +1193,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE;
-			queue_hmi_event(hmi_evt, recover);
+			queue_hmi_event(hmi_evt, recover, out_flags);
 		}
 	}
 	if (hmer & SPR_HMER_PROC_RECV_ERROR_MASKED) {
@@ -1186,7 +1201,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_MASKED;
-			queue_hmi_event(hmi_evt, recover);
+			queue_hmi_event(hmi_evt, recover, out_flags);
 		}
 		hmi_print_debug("Processor recovery Done (masked).", hmer);
 	}
@@ -1195,7 +1210,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE_AGAIN;
-			queue_hmi_event(hmi_evt, recover);
+			queue_hmi_event(hmi_evt, recover, out_flags);
 		}
 		hmi_print_debug("Processor recovery occurred again before"
 				"bit2 was cleared\n", hmer);
@@ -1206,7 +1221,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 
 		hmi_print_debug("Malfunction Alert", hmer);
 		if (hmi_evt)
-			decode_malfunction(hmi_evt);
+			decode_malfunction(hmi_evt, out_flags);
 	}
 
 	/* Assert if we see Hypervisor resource error, we can not continue. */
@@ -1218,7 +1233,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 		if (hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_FATAL;
 			hmi_evt->type = OpalHMI_ERROR_HYP_RESOURCE;
-			queue_hmi_event(hmi_evt, recover);
+			queue_hmi_event(hmi_evt, recover, out_flags);
 		}
 	}
 
@@ -1237,7 +1252,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			hmi_evt->severity = OpalHMI_SEV_ERROR_SYNC;
 			hmi_evt->type = OpalHMI_ERROR_TFAC;
 			hmi_evt->tfmr = tfmr;
-			queue_hmi_event(hmi_evt, recover);
+			queue_hmi_event(hmi_evt, recover, out_flags);
 		}
 	}
 	if (hmer & SPR_HMER_TFMR_PARITY_ERROR) {
@@ -1250,7 +1265,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 			hmi_evt->severity = OpalHMI_SEV_FATAL;
 			hmi_evt->type = OpalHMI_ERROR_TFMR_PARITY;
 			hmi_evt->tfmr = tfmr;
-			queue_hmi_event(hmi_evt, recover);
+			queue_hmi_event(hmi_evt, recover, out_flags);
 		}
 	}
 
@@ -1273,7 +1288,7 @@ int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt)
 
 static int64_t opal_handle_hmi(void)
 {
-	uint64_t hmer;
+	uint64_t hmer, dummy_flags;
 	struct OpalHMIEvent hmi_evt;
 
 	/*
@@ -1286,8 +1301,30 @@ static int64_t opal_handle_hmi(void)
 	hmi_evt.version = OpalHMIEvt_V2;
 
 	hmer = mfspr(SPR_HMER);		/* Get HMER register value */
-	handle_hmi_exception(hmer, &hmi_evt);
+	handle_hmi_exception(hmer, &hmi_evt, &dummy_flags);
 
 	return OPAL_SUCCESS;
 }
 opal_call(OPAL_HANDLE_HMI, opal_handle_hmi, 0);
+
+static int64_t opal_handle_hmi2(__be64 *out_flags)
+{
+	uint64_t hmer, flags;
+	struct OpalHMIEvent hmi_evt;
+
+	/*
+	 * Compiled time check to see size of OpalHMIEvent do not exceed
+	 * that of struct opal_msg.
+	 */
+	BUILD_ASSERT(sizeof(struct opal_msg) >= sizeof(struct OpalHMIEvent));
+
+	memset(&hmi_evt, 0, sizeof(struct OpalHMIEvent));
+	hmi_evt.version = OpalHMIEvt_V2;
+
+	hmer = mfspr(SPR_HMER);		/* Get HMER register value */
+	handle_hmi_exception(hmer, &hmi_evt, &flags);
+	*out_flags = cpu_to_be64(flags);
+
+	return OPAL_SUCCESS;
+}
+opal_call(OPAL_HANDLE_HMI2, opal_handle_hmi2, 1);
