@@ -1120,12 +1120,6 @@ static void pre_recovery_cleanup(uint64_t hmer, uint64_t *out_flags)
 		return pre_recovery_cleanup_p8(hmer, out_flags);
 }
 
-static void hmi_exit(void)
-{
-	/* unconditionally unset the thread bit */
-	*(this_cpu()->core_hmi_state_ptr) &= ~(this_cpu()->thread_mask);
-}
-
 static void hmi_print_debug(const uint8_t *msg, uint64_t hmer)
 {
 	const char *loc;
@@ -1149,18 +1143,70 @@ static void hmi_print_debug(const uint8_t *msg, uint64_t hmer)
 	}
 }
 
+static int handle_tfac_errors(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
+			      uint64_t *out_flags)
+{
+	int recover = 1;
+	uint64_t tfmr;
+
+	pre_recovery_cleanup(hmer, out_flags);
+
+	lock(&hmi_lock);
+	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
+
+	/*
+	 * Assert for now for all TOD errors. In future we need to decode
+	 * TFMR and take corrective action wherever required.
+	 */
+	if (hmer & SPR_HMER_TFAC_ERROR) {
+		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
+
+		hmi_print_debug("Timer Facility Error", hmer);
+
+		recover = chiptod_recover_tb_errors();
+		if (hmi_evt) {
+			hmi_evt->severity = OpalHMI_SEV_ERROR_SYNC;
+			hmi_evt->type = OpalHMI_ERROR_TFAC;
+			hmi_evt->tfmr = tfmr;
+			queue_hmi_event(hmi_evt, recover, out_flags);
+		}
+	}
+	if (hmer & SPR_HMER_TFMR_PARITY_ERROR) {
+		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
+
+		hmi_print_debug("TFMR parity Error", hmer);
+		recover = chiptod_recover_tb_errors();
+		if (hmi_evt) {
+			hmi_evt->severity = OpalHMI_SEV_FATAL;
+			hmi_evt->type = OpalHMI_ERROR_TFMR_PARITY;
+			hmi_evt->tfmr = tfmr;
+			queue_hmi_event(hmi_evt, recover, out_flags);
+		}
+	}
+	/* Unconditionally unset the thread bit */
+	*(this_cpu()->core_hmi_state_ptr) &= ~(this_cpu()->thread_mask);
+
+	/* Set the TB state looking at TFMR register before we head out. */
+	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
+	unlock(&hmi_lock);
+
+	return recover;
+}
+
 static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 				uint64_t *out_flags)
 {
 	struct cpu_thread *cpu = this_cpu();
 	int recover = 1;
-	uint64_t tfmr, handled = 0;
+	uint64_t handled = 0;
 
-	/*
-	 * In case of split core, some of the Timer facility errors need
-	 * cleanup to be done before we proceed with the error recovery.
-	 */
-	pre_recovery_cleanup(hmer, out_flags);
+	/* Handle Timer/TOD errors separately */
+	if (hmer & (SPR_HMER_TFAC_ERROR | SPR_HMER_TFMR_PARITY_ERROR)) {
+		handled = hmer & (SPR_HMER_TFAC_ERROR | SPR_HMER_TFMR_PARITY_ERROR);
+		mtspr(SPR_HMER, ~handled);
+		recover = handle_tfac_errors(hmer, hmi_evt, out_flags);
+		handled = 0;
+	}
 
 	lock(&hmi_lock);
 	/*
@@ -1168,7 +1214,6 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 	 * looking at TFMR register. TFMR will tell us correct state of
 	 * TB register.
 	 */
-	cpu->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
 	prlog(PR_DEBUG, "Received HMI interrupt: HMER = 0x%016llx\n", hmer);
 	if (hmi_evt)
 		hmi_evt->hmer = hmer;
@@ -1237,38 +1282,6 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 		}
 	}
 
-	/*
-	 * Assert for now for all TOD errors. In future we need to decode
-	 * TFMR and take corrective action wherever required.
-	 */
-	if (hmer & SPR_HMER_TFAC_ERROR) {
-		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
-		handled |= SPR_HMER_TFAC_ERROR;
-
-		hmi_print_debug("Timer Facility Error", hmer);
-
-		recover = chiptod_recover_tb_errors();
-		if (hmi_evt) {
-			hmi_evt->severity = OpalHMI_SEV_ERROR_SYNC;
-			hmi_evt->type = OpalHMI_ERROR_TFAC;
-			hmi_evt->tfmr = tfmr;
-			queue_hmi_event(hmi_evt, recover, out_flags);
-		}
-	}
-	if (hmer & SPR_HMER_TFMR_PARITY_ERROR) {
-		tfmr = mfspr(SPR_TFMR);		/* save original TFMR */
-		handled |= SPR_HMER_TFMR_PARITY_ERROR;
-
-		hmi_print_debug("TFMR parity Error", hmer);
-		recover = chiptod_recover_tb_errors();
-		if (hmi_evt) {
-			hmi_evt->severity = OpalHMI_SEV_FATAL;
-			hmi_evt->type = OpalHMI_ERROR_TFMR_PARITY;
-			hmi_evt->tfmr = tfmr;
-			queue_hmi_event(hmi_evt, recover, out_flags);
-		}
-	}
-
 	if (recover == 0)
 		disable_fast_reboot("Unrecoverable HMI");
 	/*
@@ -1279,9 +1292,6 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 	 * we want to clear.
 	 */
 	mtspr(SPR_HMER, ~handled);
-	hmi_exit();
-	/* Set the TB state looking at TFMR register before we head out. */
-	cpu->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
 	unlock(&hmi_lock);
 	return recover;
 }
