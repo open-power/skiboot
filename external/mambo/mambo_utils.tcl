@@ -378,6 +378,7 @@ proc sreset_trigger { args } {
     variable SRR1
 
     mysim trigger clear pc 0x100
+    mysim trigger clear pc 0x104
     set s [expr [mysim cpu 0 display spr srr1] & ~0x00000000003c0002]
     set SRR1 [expr $SRR1 | $s]
     mysim cpu 0 set spr srr1 $SRR1
@@ -410,13 +411,22 @@ proc exc_sreset { } {
 
     if { [current_insn] in { "stop" "nap" "sleep" "winkle" } } {
         # mambo has a quirk that interrupts from idle wake immediately
+        # and go over current instruction.
         mysim trigger set pc 0x100 "sreset_trigger"
-        mysim cpu 0 interrupt MachineCheck
-	# XXX: only trigger if pc is 0x100
-	sreset_trigger
+        mysim trigger set pc 0x104 "sreset_trigger"
+        mysim cpu 0 interrupt SystemReset
     } else {
         mysim trigger set pc 0x100 "sreset_trigger"
+        mysim trigger set pc 0x104 "sreset_trigger"
         mysim cpu 0 interrupt SystemReset
+    }
+
+    # sleep and sometimes other types of interrupts do not trigger 0x100
+    if { [expr [mysim cpu 0 display spr pc] == 0x100 ] } {
+	sreset_trigger
+    }
+    if { [expr [mysim cpu 0 display spr pc] == 0x104 ] } {
+	sreset_trigger
     }
 }
 
@@ -426,12 +436,13 @@ proc mce_trigger { args } {
     variable DAR
 
     mysim trigger clear pc 0x200
+    mysim trigger clear pc 0x204
 
     set s [expr [mysim cpu 0 display spr srr1] & ~0x00000000801f0002]
     set SRR1 [expr $SRR1 | $s]
     mysim cpu 0 set spr srr1 $SRR1
     mysim cpu 0 set spr dsisr $DSISR
-    mysim cpu 0 set spr dar $DAR
+    mysim cpu 0 set spr dar $DAR ; list
 }
 
 #
@@ -451,6 +462,8 @@ proc exc_mce { { d_side 0 } { cause 0x5 } { recoverable 1 } } {
     variable DSISR
     variable DAR
 
+#    puts "INJECTING MCE"
+
     # In case of recoverable MCE, idle wakeup always sets RI, others get
     # RI from current environment. For unrecoverable, RI would always be
     # clear by hardware.
@@ -466,7 +479,6 @@ proc exc_mce { { d_side 0 } { cause 0x5 } { recoverable 1 } } {
         set msr_ri 0x0
     }
 
-    # recoverable d-side SLB multihit
     if { $d_side } {
         set is_dside 1
         set SRR1_mc_cause 0x0
@@ -489,13 +501,22 @@ proc exc_mce { { d_side 0 } { cause 0x5 } { recoverable 1 } } {
 
     if { [current_insn] in { "stop" "nap" "sleep" "winkle" } } {
         # mambo has a quirk that interrupts from idle wake immediately
+        # and go over current instruction.
         mysim trigger set pc 0x200 "mce_trigger"
+        mysim trigger set pc 0x204 "mce_trigger"
         mysim cpu 0 interrupt MachineCheck
-	# XXX: only trigger if pc is 0x200
-	mce_trigger
     } else {
         mysim trigger set pc 0x200 "mce_trigger"
+        mysim trigger set pc 0x204 "mce_trigger"
         mysim cpu 0 interrupt MachineCheck
+    }
+
+    # sleep and sometimes other types of interrupts do not trigger 0x200
+    if { [expr [mysim cpu 0 display spr pc] == 0x200 ] } {
+	mce_trigger
+    }
+    if { [expr [mysim cpu 0 display spr pc] == 0x204 ] } {
+	mce_trigger
     }
 }
 
@@ -536,11 +557,34 @@ proc inject_mce_step { {nr 1} } {
 
 # inject if RI is set and step over one instruction, and repeat.
 proc inject_mce_step_ri { {nr 1} } {
+    set reserve_inject 1
+    set reserve_inject_skip 0
+    set reserve_counter 0
+
     for { set i 0 } { $i < $nr } { incr i 1 } {
         if { [expr [mysim cpu 0 display spr msr] & 0x2] } {
-            inject_mce
+            # inject_mce
+            if { [mysim cpu 0 display reservation] in { "none" } } {
+                inject_mce
+                mysim cpu 0 set reservation none
+                if { $reserve_inject_skip } {
+                    set reserve_inject 1
+                    set reserve_inject_skip 0
+                }
+            } else {
+                if { $reserve_inject } {
+                    inject_mce
+                    mysim cpu 0 set reservation none
+                    set reserve_inject 0
+                } else {
+                    set reserve_inject_skip 1
+                    set reserve_counter [ expr $reserve_counter + 1 ]
+                    if { $reserve_counter > 30 } {
+                        mysim cpu 0 set reservation none
+                    }
+                }
+            }
         }
         s
     }
 }
-
