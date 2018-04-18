@@ -737,7 +737,7 @@ struct cpu_thread *next_ungarded_primary(struct cpu_thread *cpu)
 {
 	do {
 		cpu = next_cpu(cpu);
-	} while(cpu && cpu->state == cpu_state_unavailable && cpu->primary != cpu);
+	} while(cpu && (cpu->state == cpu_state_unavailable || cpu->primary != cpu));
 
 	return cpu;
 }
