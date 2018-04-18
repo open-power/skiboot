@@ -453,7 +453,8 @@ proc mce_trigger { args } {
 #
 # Default with no arguments is a recoverable i-side TLB multi-hit
 # Other options:
-# d_side=1 cause=0x80 - recoverable d-side SLB multi-hit
+# d_side=1 dsisr=0x80 - recoverable d-side SLB multi-hit
+# d_side=1 dsisr=0x8000 - ue error on instruction fetch
 # d_side=0 cause=0xd  - unrecoverable i-side async store timeout (POWER9 only)
 # d_side=0 cause=0x1  - unrecoverable i-side ifetch
 #
@@ -545,6 +546,19 @@ proc inject_mce { } {
     exc_mce
     c
     mysim trigger clear pc $pc ; list
+}
+
+#
+# We've stopped at addr and we need to inject the mce and continue
+#
+proc trigger_mce_ue_addr {args} {
+    set addr [lindex [lindex $args 0] 1]
+    mysim trigger clear memory system rw $addr $addr
+    exc_mce 0x1 0x8000 0x1
+}
+
+proc inject_mce_ue_on_addr {addr} {
+    mysim trigger set memory system rw $addr $addr 1 "trigger_mce_ue_addr"
 }
 
 # inject and step over one instruction, and repeat.
