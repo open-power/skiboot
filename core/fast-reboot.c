@@ -163,7 +163,7 @@ void fast_reboot(void)
 	}
 
 	/* Ensure all the sresets get through */
-	if (!cpu_state_wait_all_others(cpu_state_present, msecs_to_tb(100))) {
+	if (!cpu_state_wait_all_others(cpu_state_present, msecs_to_tb(1000))) {
 		prlog(PR_NOTICE, "RESET: Fast reboot timed out waiting for "
 				"secondaries to call in\n");
 		return;
