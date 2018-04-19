@@ -400,8 +400,8 @@ static int __npu2_dev_bind_pci_dev(struct phb *phb __unused,
 
 	pcislot = (char *)dt_prop_get(pci_dt_node, "ibm,slot-label");
 
-	prlog(PR_DEBUG, "NPU2: comparing GPU '%s' and NPU2 '%s'\n",
-	      pcislot, dev->nvlink.slot_label);
+	NPU2DEVDBG(dev, "Comparing GPU '%s' and NPU2 '%s'\n",
+		   pcislot, dev->nvlink.slot_label);
 
 	if (streq(pcislot, dev->nvlink.slot_label))
 		return 1;
@@ -434,8 +434,8 @@ static void npu2_dev_bind_pci_dev(struct npu2_dev *dev)
 		}
 	}
 
-	prlog(PR_INFO, "%s: No PCI device for NPU2 device %04x:00:%02x.0 to bind to. If you expect a GPU to be there, this is a problem.\n",
-	      __func__, dev->npu->phb_nvlink.opal_id, dev->index);
+	NPU2DEVINF(dev, "No PCI device found for slot '%s'\n",
+		   dev->nvlink.slot_label);
 }
 
 static struct lock pci_npu_phandle_lock = LOCK_UNLOCKED;
