@@ -127,7 +127,8 @@ void trace_add(union trace *trace, u8 type, u16 len)
 	assert(trace->hdr.type != TRACE_OVERFLOW);
 #endif
 	/* Skip traces not enabled in the debug descriptor */
-	if (!((1ul << trace->hdr.type) & debug_descriptor.trace_mask))
+	if (trace->hdr.type < (8 * sizeof(debug_descriptor.trace_mask)) &&
+	    !((1ul << trace->hdr.type) & debug_descriptor.trace_mask))
 		return;
 
 	trace->hdr.timestamp = cpu_to_be64(mftb());
