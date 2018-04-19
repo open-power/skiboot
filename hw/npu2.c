@@ -1368,18 +1368,18 @@ static void npu2_probe_phb(struct dt_node *dn)
 	 *
 	 * Obviously if the year is now 2020 that didn't happen and you
 	 * should fix this :-) */
-	xscom_write_mask(gcid, 0x5011000, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011030, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011060, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011090, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011200, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011230, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011260, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011290, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011400, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011430, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011460, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011490, PPC_BIT(58), PPC_BIT(6) | PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011000, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011030, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011060, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011090, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011200, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011230, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011260, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011290, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011400, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011430, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011460, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(gcid, 0x5011490, PPC_BIT(58), PPC_BIT(58));
 
 	xscom_write_mask(gcid, 0x50110c0, PPC_BIT(53), PPC_BIT(53));
 	xscom_write_mask(gcid, 0x50112c0, PPC_BIT(53), PPC_BIT(53));
