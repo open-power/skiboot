@@ -193,7 +193,7 @@ static u32 hash_prop(const struct dt_property *p)
 
 	/* a stupid checksum */
 	for (i = 0; i < p->len; i++)
-		hash += ((p->prop[i] & ~0x10) + 1) * i;
+		hash += (((signed char)p->prop[i] & ~0x10) + 1) * i;
 
 	return hash;
 }
