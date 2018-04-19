@@ -10,7 +10,7 @@ RUN sudo apt-get install -y wget curl
 RUN curl -L -O https://www.kernel.org/pub/tools/crosstool/files/bin/x86_64/4.8.0/x86_64-gcc-4.8.0-nolibc_powerpc64-linux.tar.xz
 RUN sudo mkdir /opt/cross
 RUN sudo tar -C /opt/cross -xf x86_64-gcc-4.8.0-nolibc_powerpc64-linux.tar.xz
-RUN curl -L -O ftp://public.dhe.ibm.com/software/server/powerfuncsim/p8/packages/v1.0-2/systemsim-p8_1.0-2_amd64.deb
+RUN curl -L -O http://public.dhe.ibm.com/software/server/powerfuncsim/p8/packages/v1.0-2/systemsim-p8_1.0-2_amd64.deb
 RUN sudo dpkg -i systemsim-p8_1.0-2_amd64.deb
 RUN apt-get install -y libtcl8.6
 RUN curl -L -O http://public.dhe.ibm.com/software/server/powerfuncsim/p9/packages/v1.1-0/systemsim-p9-1.1-0-trusty_amd64.deb
