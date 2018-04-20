@@ -392,13 +392,13 @@ static int __npu2_dev_bind_pci_dev(struct phb *phb __unused,
 
 	/* Find the PCI device's slot location */
 	for (pci_dt_node = pd->dn;
-	     pci_dt_node && !dt_find_property(pci_dt_node, "ibm,slot-label");
+	     pci_dt_node && !dt_find_property(pci_dt_node, "ibm,loc-code");
 	     pci_dt_node = pci_dt_node->parent);
 
 	if (!pci_dt_node)
 		return 0;
 
-	pcislot = (char *)dt_prop_get(pci_dt_node, "ibm,slot-label");
+	pcislot = (char *)dt_prop_get(pci_dt_node, "ibm,loc-code");
 
 	NPU2DEVDBG(dev, "Comparing GPU '%s' and NPU2 '%s'\n",
 		   pcislot, dev->nvlink.slot_label);
@@ -639,18 +639,11 @@ static int npu2_dn_fixup(struct phb *phb,
 		dt_add_property_cells(pd->dn, "ibm,nvlink-speed", speed);
 
 	/*
-	 * NPU2 devices require a slot location to associate with GPUs.
-	 * This can be added via the slot table matching, otherwise we
-	 * read it from the link node.
+	 * NPU2 devices have a slot label that indicates which GPU slot
+	 * this NPU is connected to. Add a location code to the NVlink
+	 * device node based on the slot label.
 	 */
-	label = dt_prop_get_def(pd->dn, "ibm,slot-label", NULL);
-
-	if (!label) {
-		label = dt_prop_get_def(dev->dt_node, "ibm,slot-label", NULL);
-		if (label)
-			dt_add_property_string(pd->dn, "ibm,slot-label", label);
-	}
-
+	label = dt_prop_get_def(dev->dt_node, "ibm,slot-label", NULL);
 	if (!label) {
 		/**
 		 * @fwts-label NPUNoPHBSlotLabel
@@ -660,6 +653,7 @@ static int npu2_dn_fixup(struct phb *phb,
 		prlog(PR_ERR, "NPU2: Cannot find GPU slot information\n");
 		return 0;
 	}
+	dt_add_property_string(pd->dn, "ibm,loc-code", label);
 
 	dev->nvlink.slot_label = label;
 
