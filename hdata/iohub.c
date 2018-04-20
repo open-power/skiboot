@@ -757,9 +757,23 @@ static void parse_one_slot(const struct slot_map_entry *entry,
 		dt_add_property_cells(node, "lanes-reversed",
 				be16_to_cpu(entry->lane_reverse));
 
-	if (strnlen(entry->name, sizeof(entry->name)))
+	if (strnlen(entry->name, sizeof(entry->name))) {
+		/*
+		 * HACK: On some platforms (witherspoon) the slot label is
+		 * applied to the device rather than the pcie downstream port
+		 * that has the slot under it. Hack around this by moving the
+		 * slot label up if the parent port doesn't have one.
+		 */
+		if (dt_node_is_compatible(node->parent, "ibm,pcie-port") &&
+		    !dt_find_property(node->parent, "ibm,slot-label")) {
+			dt_add_property_nstr(node->parent, "ibm,slot-label",
+					entry->name, sizeof(entry->name));
+		}
+
 		dt_add_property_nstr(node, "ibm,slot-label",
 				entry->name, sizeof(entry->name));
+	}
+
 	if (entry->type == st_slot || entry->type == st_rc_slot)
 		dt_add_property(node, "ibm,pluggable", NULL, 0);
 

@@ -1529,7 +1529,13 @@ static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 				continue;
 			}
 
-			name = dt_prop_get_def(slot, "ibm,slot-label",
+			/*
+			 * The slot_id points to a node that indicates that
+			 * this GPU should appear under the slot. Grab the
+			 * slot-label from the parent node that represents
+			 * the actual slot.
+			 */
+			name = dt_prop_get_def(slot->parent, "ibm,slot-label",
 						(char *)"<SLOT NAME MISSING>");
 
 			prlog(PR_DEBUG, "NPU: %04x:%d: Target slot %s\n",
