@@ -59,6 +59,14 @@ static void tpmrel_add_firmware_event_log(const struct HDIF_common_hdr *hdif_hdr
 					      TPMREL_IDATA_SECUREBOOT_TPM_INFO,
 					      i, NULL);
 
+		/*
+		 * If tpm is not present, hostboot creates an empty
+		 * secureboot_tpm_info entry, but setting
+		 * tpm_status=TPM_NOT_PRESENT
+		 */
+		if (stinfo->tpm_status == TPM_NOT_PRESENT)
+			continue;
+
 		xscom = find_xscom_for_chip(be32_to_cpu(stinfo->chip_id));
 		if (xscom) {
 			dt_for_each_node(xscom, node) {
