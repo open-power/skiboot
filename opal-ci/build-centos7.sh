@@ -7,8 +7,13 @@ set -vx
 # We're limited as to what we want to bother to run on CentOS7
 # It's fairly old and some of the things (e.g. build+run qemu) we don't
 # want to bother doing.
-
-export CROSS=/opt/cross/gcc-4.8.0-nolibc/powerpc64-linux/bin/powerpc64-linux-
+if [ `arch` == "x86_64" ]; then
+    export CROSS=/opt/cross/gcc-4.8.0-nolibc/powerpc64-linux/bin/powerpc64-linux-
+fi
+# Note that this doesn't work on centos7 because "/lib64/ld64.so.2: version `GLIBC_2.22' not found"
+if [ `arch` == "ppc64le" ]; then
+    export CROSS=/opt/cross/gcc-4.9.4-nolibc/powerpc64-linux/bin/powerpc64-linux-
+fi
 
 MAKE_J=`grep -c processor /proc/cpuinfo`
 

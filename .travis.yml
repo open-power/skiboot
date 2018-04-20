@@ -1,5 +1,9 @@
 language: c
 
+os:
+ - linux
+ - linux-ppc64le
+
 cache: ccache
 
 env:
@@ -25,6 +29,18 @@ matrix:
   allow_failures:
     - env: RUN_ON_CONTAINER=fedora-rawhide
     - env: RUN_ON_CONTAINER=debian-unstable
+  exclude:
+    - os: linux-ppc64le
+      env: RUN_ON_CONTAINER=ubuntu-12.04
+    - os: linux-ppc64le
+      env: RUN_ON_CONTAINER=fedora24
+    - os: linux-ppc64le
+      env: RUN_ON_CONTAINER=fedora25
+    - os: linux-ppc64le
+      env: RUN_ON_CONTAINER=centos6
+    - os: linux-ppc64le
+      env: RUN_ON_CONTAINER=centos7
+
 
 sudo: required
 services: docker
