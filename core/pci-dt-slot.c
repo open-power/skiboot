@@ -66,95 +66,33 @@ static struct dt_node *map_phb_to_slot(struct phb *phb)
 	return NULL;
 }
 
-static struct dt_node *map_downport_to_slot(struct phb *phb,
-					    struct pci_device *pd)
+static struct dt_node *find_devfn(struct dt_node *bus, uint32_t bdfn)
 {
-	struct dt_node *bus_node, *child;
-	struct pci_device *cursor;
-	uint32_t port_dev_id;
+	uint32_t port_dev_id = (bdfn >> 3) & 0x1f;
+	struct dt_node *child;
 
-	/*
-	 * Downports are a little bit special since we need to figure
-	 * out which PCI device corresponds to which down port in the
-	 * slot map.
-	 *
-	 * XXX: I'm assuming the ordering of port IDs and probed
-	 * PCIe switch downstream devices is the same. We should
-	 * check what we actually get in the HDAT.
-	 */
-
-	list_for_each(&pd->parent->children, cursor, link)
-		if (cursor == pd)
-			break;
-
-	/* the child should always be on the parent's child list */
-	assert(cursor);
-	port_dev_id = (cursor->bdfn >> 3) & 0x1f;
-
-	bus_node = map_pci_dev_to_slot(phb, pd->parent);
-	if (!bus_node)
-		return NULL;
-
-	dt_for_each_child(bus_node, child)
-		if (dt_prop_get_u32(child, "reg") == port_dev_id)
+	dt_for_each_child(bus, child)
+		if (dt_prop_get_u32_def(child, "reg", ~0u) == port_dev_id)
 			return child;
 
-	/* unused downport */
 	return NULL;
 }
 
-static struct dt_node *__map_pci_dev_to_slot(struct phb *phb,
+/* Looks for a device device under this slot. */
+static struct dt_node *find_dev_under_slot(struct dt_node *slot,
 					   struct pci_device *pd)
 {
-	struct dt_node *child, *bus_node, *wildcard= NULL;
-
-	if (!pd || !pd->parent || pd->dev_type == PCIE_TYPE_ROOT_PORT)
-		return map_phb_to_slot(phb);
-
-	if (pd->dev_type == PCIE_TYPE_SWITCH_DNPORT)
-		return map_downport_to_slot(phb, pd);
-
-	/*
-	 * For matching against devices always use the 0th function.
-	 * This is necessary since some functions may have a different
-	 * VDID to the base device. e.g. The DMA engines in PLX switches
-	 */
-	if (pd->bdfn & 0x7) {
-		struct pci_device *cursor;
-
-		PCIDBG(phb, pd->bdfn, "mapping fn %x to 0th fn (%x)\n",
-			pd->bdfn, pd->bdfn & (~0x7));
-
-		list_for_each(&pd->parent->children, cursor, link)
-			if ((pd->bdfn & ~0x7) == cursor->bdfn)
-				return map_pci_dev_to_slot(phb, cursor);
-
-		return NULL;
-	}
-
-	/* No slot information for this device. Might be a firmware bug */
-	bus_node = map_pci_dev_to_slot(phb, pd->parent);
-	if (!bus_node)
-		return NULL;
-
-	/*
-	 * If this PCI device is mounted on a card the parent "bus"
-	 * may actually be a slot or builtin.
-	 */
-	if (list_empty(&bus_node->children))
-		return bus_node;
+	struct dt_node *child, *wildcard = NULL;
 
 	/* find the device in the parent bus node */
-	dt_for_each_child(bus_node, child) {
+	dt_for_each_child(slot, child) {
 		u32 vdid;
 
 		/* "pluggable" and "builtin" without unit addrs are wildcards */
 		if (!dt_has_node_property(child, "reg", NULL)) {
-			if (wildcard) {
+			if (wildcard)
 				prerror("Duplicate wildcard entry! Already have %s, found %s",
 					wildcard->name, child->name);
-				assert(0);
-			}
 
 			wildcard = child;
 			continue;
@@ -169,30 +107,86 @@ static struct dt_node *__map_pci_dev_to_slot(struct phb *phb,
 	}
 
 	if (!wildcard)
-		PCIDBG(phb, pd->bdfn,
+		PCIDBG(pd->phb, pd->bdfn,
 			"Unable to find a slot for device %.4x:%.4x\n",
 			(pd->vdid & 0xffff0000) >> 16, pd->vdid & 0xffff);
 
 	return wildcard;
 }
 
+/*
+ * If the `pd` is a bridge this returns a node with a compatible of
+ * ibm,pcie-port to indicate it's a "slot node".
+ */
+static struct dt_node *find_node_for_dev(struct phb *phb,
+					 struct pci_device *pd)
+{
+	struct dt_node *sw_slot, *sw_up;
+
+	assert(pd);
+
+	if (pd->slot && pd->slot->data)
+		return pd->slot->data;
+
+	/*
+	 * Example DT:
+	 *	 /root-complex@8,5/switch-up@10b5,8725/down-port@4
+	 */
+	switch (pd->dev_type) {
+	case PCIE_TYPE_ROOT_PORT: // find the root-complex@<chip>,<phb> node
+		return map_phb_to_slot(phb);
+
+	case PCIE_TYPE_SWITCH_DNPORT: // grab the down-port@<devfn>
+		/*
+		 * Walk up the topology to find the slot that contains
+		 * the switch upstream port is connected to. In the example
+		 * this would be the root-complex@8,5 node.
+		 */
+		sw_slot = find_node_for_dev(phb, pd->parent->parent);
+		if (!sw_slot)
+			return NULL;
+
+		/* find the per-device node for this switch */
+		sw_up = find_dev_under_slot(sw_slot, pd->parent);
+		if (!sw_up)
+			return NULL;
+
+		/* find this down port */
+		return find_devfn(sw_up, pd->bdfn & 0x1f);
+
+	default:
+		PCIDBG(phb, pd->bdfn,
+			"Trying to find a slot for non-pcie bridge type %d\n",
+			pd->dev_type);
+		assert(0);
+	}
+
+	return NULL;
+}
+
 struct dt_node *map_pci_dev_to_slot(struct phb *phb, struct pci_device *pd)
 {
-	uint32_t bdfn = pd ? pd->bdfn : 0;
 	struct dt_node *n;
 	char *path;
 
-	if (pd && pd->slot && pd->slot->data)
-		return pd->slot->data;
+	assert(pd);
 
-	PCIDBG(phb, bdfn, "Finding slot\n");
+	/*
+	 * Having a slot only makes sense for root and switch downstream ports.
+	 * We don't care about PCI-X.
+	 */
+	if (pd->dev_type != PCIE_TYPE_SWITCH_DNPORT &&
+	    pd->dev_type != PCIE_TYPE_ROOT_PORT)
+		return NULL;
 
-	n = __map_pci_dev_to_slot(phb, pd);
+	PCIDBG(phb, pd->bdfn, "Finding slot\n");
+
+	n = find_node_for_dev(phb, pd);
 	if (!n) {
-		PCIDBG(phb, bdfn, "No slot found!\n");
+		PCIDBG(phb, pd->bdfn, "No slot found!\n");
 	} else {
 		path = dt_get_path(n);
-		PCIDBG(phb, bdfn, "Slot found %s\n", path);
+		PCIDBG(phb, pd->bdfn, "Slot found %s\n", path);
 		free(path);
 	}
 
