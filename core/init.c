@@ -51,6 +51,7 @@
 #include <phys-map.h>
 #include <imc.h>
 #include <dts.h>
+#include <sbe-p9.h>
 
 enum proc_gen proc_gen;
 unsigned int pcie_max_link_speed;
@@ -1028,6 +1029,12 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 * to wall clock time.
 	 */
 	chiptod_init();
+
+	/*
+	 * SBE uses TB value for scheduling timer. Hence init after
+	 * chiptod init
+	 */
+	p9_sbe_init();
 
 	/* Initialize i2c */
 	p8_i2c_init();

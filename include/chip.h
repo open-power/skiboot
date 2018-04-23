@@ -113,6 +113,7 @@ struct mfsi;
 struct xive;
 struct lpcm;
 struct vas;
+struct p9_sbe;
 
 /* Chip type */
 enum proc_chip_type {
@@ -218,6 +219,9 @@ struct proc_chip {
 
 	/* location code of this chip */
 	const uint8_t		*loc_code;
+
+	/* Used by hw/sbe-p9.c */
+	struct p9_sbe		*sbe;
 };
 
 extern uint32_t pir_to_chip_id(uint32_t pir);

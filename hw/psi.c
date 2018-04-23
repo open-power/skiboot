@@ -605,7 +605,7 @@ static void psihb_p9_interrupt(struct irq_source *is, uint32_t isn)
 		printf("PSI: DIO irq received\n");
 		break;
 	case P9_PSI_IRQ_PSU:
-		sbe_interrupt(psi->chip_id);
+		p9_sbe_interrupt(psi->chip_id);
 		break;
 	}
 }
