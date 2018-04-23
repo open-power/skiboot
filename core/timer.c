@@ -4,6 +4,7 @@
 #include <fsp.h>
 #include <device.h>
 #include <opal.h>
+#include <sbe-p8.h>
 
 #ifdef __TEST__
 #define this_cpu()	((void *)-1)
@@ -109,7 +110,7 @@ static void __schedule_timer_at(struct timer *t, uint64_t when)
 	/* Pick up the next timer and upddate the SBE HW timer */
 	lt = list_top(&timer_list, struct timer, link);
 	if (lt)
-		slw_update_timer_expiry(lt->target);
+		p8_sbe_update_timer_expiry(lt->target);
 }
 
 void schedule_timer_at(struct timer *t, uint64_t when)
@@ -166,7 +167,7 @@ static void __check_poll_timers(uint64_t now)
 		 * arbitrarily 1us.
 		 */
 		if (t->running) {
-			slw_update_timer_expiry(now + usecs_to_tb(1));
+			p8_sbe_update_timer_expiry(now + usecs_to_tb(1));
 			break;
 		}
 
@@ -257,7 +258,7 @@ void late_init_timers(void)
 	 *
 	 * If a platform quirk exists, use that, else use the default.
 	 *
-	 * If we have an SLW timer facility, we run this 10 times slower,
+	 * If we have an SBE timer facility, we run this 10 times slower,
 	 * we could possibly completely get rid of it.
 	 *
 	 * We use a value in milliseconds, we don't want this to ever be
@@ -265,7 +266,7 @@ void late_init_timers(void)
 	 */
 	if (platform.heartbeat_time) {
 		heartbeat = platform.heartbeat_time();
-	} else if (slw_timer_ok() || fsp_present()) {
+	} else if (p8_sbe_timer_ok() || fsp_present()) {
 		heartbeat = HEARTBEAT_DEFAULT_MS * 10;
 	}
 

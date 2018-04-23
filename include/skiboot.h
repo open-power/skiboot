@@ -323,12 +323,6 @@ extern void xive_late_init(void);
 /* SLW reinit function for switching core settings */
 extern int64_t slw_reinit(uint64_t flags);
 
-/* SLW update timer function */
-extern void slw_update_timer_expiry(uint64_t new_target);
-
-/* Is SLW timer available ? */
-extern bool slw_timer_ok(void);
-
 /* Patch SPR in SLW image */
 extern int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val);
 

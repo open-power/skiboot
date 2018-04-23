@@ -47,7 +47,7 @@ static void expiry(struct timer *t, void *data, uint64_t now)
 	count--;
 }
 
-void slw_update_timer_expiry(uint64_t new_target)
+void p8_sbe_update_timer_expiry(uint64_t new_target)
 {
 	(void)new_target;
 	/* FIXME: do intersting SLW timer sim */
