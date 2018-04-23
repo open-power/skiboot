@@ -1212,7 +1212,7 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 		}
 
 		handled |= SPR_HMER_PROC_RECV_DONE;
-		if (hmi_evt) {
+		if (cpu_is_thread0(cpu) && hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE;
 			queue_hmi_event(hmi_evt, recover, out_flags);
@@ -1220,7 +1220,7 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 	}
 	if (hmer & SPR_HMER_PROC_RECV_ERROR_MASKED) {
 		handled |= SPR_HMER_PROC_RECV_ERROR_MASKED;
-		if (hmi_evt) {
+		if (cpu_is_thread0(cpu) && hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_MASKED;
 			queue_hmi_event(hmi_evt, recover, out_flags);
@@ -1229,7 +1229,7 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 	}
 	if (hmer & SPR_HMER_PROC_RECV_AGAIN) {
 		handled |= SPR_HMER_PROC_RECV_AGAIN;
-		if (hmi_evt) {
+		if (cpu_is_thread0(cpu) && hmi_evt) {
 			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
 			hmi_evt->type = OpalHMI_ERROR_PROC_RECOV_DONE_AGAIN;
 			queue_hmi_event(hmi_evt, recover, out_flags);
