@@ -1122,6 +1122,7 @@ struct sppcrd_chip_info {
 #define CHIP_VERIFY_USABLE_FAILURES		1
 #define CHIP_VERIFY_NOT_INSTALLED		2
 #define CHIP_VERIFY_UNUSABLE			3
+#define CHIP_VERIFY_MASTER_PROC			PPC_BIT32(4)
 	__be32 nx_state;
 	__be32 pore_state;
 	__be32 xscom_id;

@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 IBM Corp.
+/* Copyright 2013-2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -578,6 +578,9 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 			parse_i2c_devs(hdif, SPPCRD_IDATA_HOST_I2C, np);
 			add_vas_node(np, i);
 			add_ecid_data(hdif, np);
+
+			if (be32_to_cpu(cinfo->verif_exist_flags) & CHIP_VERIFY_MASTER_PROC)
+				dt_add_property(np, "primary", NULL, 0);
 		}
 
 		/*
