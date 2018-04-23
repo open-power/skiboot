@@ -53,6 +53,7 @@
 #include <sbe-p9.h>
 #include <skiboot.h>
 #include <timebase.h>
+#include <timer.h>
 #include <trace.h>
 #include <xscom.h>
 
@@ -80,11 +81,34 @@ struct p9_sbe {
 /* Default SBE chip ID */
 static int sbe_default_chip_id = -1;
 
+/* Is SBE timer running? */
+static bool sbe_has_timer = false;
+static bool sbe_timer_in_progress = false;
+static bool has_new_target = false;
+
+/* Inflight and next timer in TB */
+static uint64_t sbe_last_gen_stamp;
+static uint64_t sbe_timer_target;
+
+/* Timer lock */
+struct lock sbe_timer_lock;
+
+/*
+ * Minimum timeout value for P9 is 500 microseconds. After that
+ * SBE timer can handle granularity of 1 microsecond.
+ */
+#define SBE_TIMER_DEFAULT_US	500
+static uint64_t sbe_timer_def_tb;
+
+/* Timer control message */
+static struct p9_sbe_msg *timer_ctrl_msg;
+
 #define SBE_STATUS_PRI_SHIFT	0x30
 #define SBE_STATUS_SEC_SHIFT	0x20
 
 /* Forward declaration */
 static void p9_sbe_timeout_poll_one(struct p9_sbe *sbe);
+static void p9_sbe_timer_schedule(void);
 
 /* bit 0-15 : Primary status code */
 static inline u16 p9_sbe_get_primary_rc(struct p9_sbe_msg *resp)
@@ -507,6 +531,19 @@ static int p9_sbe_clear_interrupt(struct p9_sbe *sbe, u64 bits)
 }
 
 /* WARNING: This will drop sbe->lock */
+static void p9_sbe_timer_response(struct p9_sbe *sbe)
+{
+	if (sbe->chip_id != sbe_default_chip_id)
+		return;
+
+	sbe_timer_in_progress = false;
+	/* Drop lock and call timers */
+	unlock(&sbe->lock);
+	check_timers(true);
+	lock(&sbe->lock);
+}
+
+/* WARNING: This will drop sbe->lock */
 static void __p9_sbe_interrupt(struct p9_sbe *sbe)
 {
 	bool has_response;
@@ -590,6 +627,15 @@ again:
 		goto again;
 	}
 
+	/* Timer expired */
+	if (data & SBE_HOST_TIMER_EXPIRY) {
+		rc = p9_sbe_clear_interrupt(sbe, SBE_HOST_TIMER_EXPIRY);
+		if (rc)
+			return;
+		p9_sbe_timer_response(sbe);
+		goto again;
+	}
+
 	/* Unhandled bits */
 	val = data & ~(SBE_HOST_RESPONSE_MASK);
 	if (val) {
@@ -618,12 +664,42 @@ void p9_sbe_interrupt(uint32_t chip_id)
 	unlock(&sbe->lock);
 }
 
+/*
+ * Check if the timer is working. If at least 10ms elapsed since
+ * last scheduled timer expiry.
+ */
+static void p9_sbe_timer_poll(struct p9_sbe *sbe)
+{
+	if (sbe->chip_id != sbe_default_chip_id)
+		return;
+
+	if (!sbe_has_timer || !sbe_timer_in_progress)
+		return;
+
+	if (tb_compare(mftb(), sbe_last_gen_stamp + msecs_to_tb(10))
+	    != TB_AAFTERB)
+		return;
+
+	prlog(PR_ERR, "Timer stuck, falling back to OPAL pollers.\n");
+	prlog(PR_ERR, "You will likely have slower I2C and may have "
+	      "experienced increased jitter.\n");
+	p9_sbe_reg_dump(sbe->chip_id);
+	sbe_has_timer = false;
+	sbe_timer_in_progress = false;
+}
+
 static void p9_sbe_timeout_poll_one(struct p9_sbe *sbe)
 {
 	struct p9_sbe_msg *msg;
 
-	if (list_empty_nocheck(&sbe->msg_list))
-		return;
+	if (sbe->chip_id == sbe_default_chip_id) {
+		if (list_empty_nocheck(&sbe->msg_list) &&
+		    !sbe_timer_in_progress)
+			return;
+	} else {
+		if (list_empty_nocheck(&sbe->msg_list))
+			return;
+	}
 
 	lock(&sbe->lock);
 
@@ -634,6 +710,7 @@ static void p9_sbe_timeout_poll_one(struct p9_sbe *sbe)
 	 * Hence check for SBE response.
 	 */
 	__p9_sbe_interrupt(sbe);
+	p9_sbe_timer_poll(sbe);
 
 	if (list_empty(&sbe->msg_list))
 		goto out;
@@ -683,6 +760,107 @@ static void p9_sbe_timeout_poll(void *user_data __unused)
 	}
 }
 
+static void p9_sbe_timer_resp(struct p9_sbe_msg *msg)
+{
+	if (msg->state != sbe_msg_done) {
+		prlog(PR_DEBUG, "Failed to schedule timer [chip id %x]\n",
+		      sbe_default_chip_id);
+	} else {
+		/* Update last scheduled timer value */
+		sbe_last_gen_stamp = mftb() +
+			usecs_to_tb(timer_ctrl_msg->reg[1]);
+		sbe_timer_in_progress = true;
+	}
+
+	if (!has_new_target)
+		return;
+
+	lock(&sbe_timer_lock);
+	if (has_new_target) {
+		has_new_target = false;
+		p9_sbe_timer_schedule();
+	}
+	unlock(&sbe_timer_lock);
+}
+
+static void p9_sbe_timer_schedule(void)
+{
+	int rc;
+	u32 tick_us = SBE_TIMER_DEFAULT_US;
+	u64 tb_cnt, now = mftb();
+
+	if (sbe_timer_in_progress) {
+		if (now >= sbe_last_gen_stamp)
+			return;
+
+		/* Remaining time of inflight timer <= sbe_timer_def_tb */
+		if ((sbe_last_gen_stamp - now) <= sbe_timer_def_tb)
+			return;
+	}
+
+	if (now < sbe_timer_target) {
+		/* Calculate how many microseconds from now, rounded up */
+		if ((sbe_timer_target - now) > sbe_timer_def_tb) {
+			tb_cnt = sbe_timer_target - now + usecs_to_tb(1) - 1;
+			tick_us = tb_to_usecs(tb_cnt);
+		}
+	}
+
+	/* Clear sequence number. p9_sbe_queue_msg will add new sequene ID */
+	timer_ctrl_msg->reg[0] &= ~(PPC_BITMASK(32, 47));
+	/* Update timeout value */
+	timer_ctrl_msg->reg[1] = tick_us;
+	rc = p9_sbe_queue_msg(sbe_default_chip_id, timer_ctrl_msg,
+			      p9_sbe_timer_resp);
+	if (rc != OPAL_SUCCESS) {
+		prlog(PR_ERR, "Failed to start timer [chip id = %x]\n",
+		      sbe_default_chip_id);
+		return;
+	}
+}
+
+/*
+ * This is called with the timer lock held, so there is no
+ * issue with re-entrancy or concurrence
+ */
+void p9_sbe_update_timer_expiry(uint64_t new_target)
+{
+	if (!sbe_has_timer || new_target == sbe_timer_target)
+		return;
+
+	lock(&sbe_timer_lock);
+	/* Timer message is in flight. Record new timer and schedule later */
+	if (p9_sbe_msg_busy(timer_ctrl_msg) || has_new_target) {
+		if (new_target < sbe_timer_target) {
+			sbe_timer_target = new_target;
+			has_new_target = true;
+		}
+	} else {
+		sbe_timer_target = new_target;
+		p9_sbe_timer_schedule();
+	}
+	unlock(&sbe_timer_lock);
+}
+
+/* Initialize SBE timer */
+static void p9_sbe_timer_init(void)
+{
+	timer_ctrl_msg = p9_sbe_mkmsg(SBE_CMD_CONTROL_TIMER,
+				      CONTROL_TIMER_START, 0, 0, 0);
+	assert(timer_ctrl_msg);
+	init_lock(&sbe_timer_lock);
+	sbe_has_timer = true;
+	sbe_timer_target = mftb();
+	sbe_last_gen_stamp = ~0ull;
+	sbe_timer_def_tb = usecs_to_tb(SBE_TIMER_DEFAULT_US);
+	prlog(PR_INFO, "Timer facility on chip %x\n", sbe_default_chip_id);
+}
+
+bool p9_sbe_timer_ok(void)
+{
+	return sbe_has_timer;
+}
+
 void p9_sbe_init(void)
 {
 	struct dt_node *xn;
@@ -715,6 +893,9 @@ void p9_sbe_init(void)
 		prlog(PR_ERR, "Master chip ID not found.\n");
 		return;
 	}
+
+	/* Initiate SBE timer */
+	p9_sbe_timer_init();
 
 	/* Initiate SBE timeout poller */
 	opal_add_poller(p9_sbe_timeout_poll, NULL);

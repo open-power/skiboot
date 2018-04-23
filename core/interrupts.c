@@ -26,6 +26,7 @@
 #include <ccan/str/str.h>
 #include <timer.h>
 #include <sbe-p8.h>
+#include <sbe-p9.h>
 
 /* ICP registers */
 #define ICP_XIRR		0x4	/* 32-bit access */
@@ -489,7 +490,7 @@ static int64_t opal_handle_interrupt(uint32_t isn, __be64 *outstanding_event_mas
 	is->ops->interrupt(is, isn);
 
 	/* Check timers if SBE timer isn't working */
-	if (!p8_sbe_timer_ok())
+	if (!p8_sbe_timer_ok() && !p9_sbe_timer_ok())
 		check_timers(true);
 
 	/* Update output events */

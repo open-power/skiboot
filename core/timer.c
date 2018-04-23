@@ -5,6 +5,7 @@
 #include <device.h>
 #include <opal.h>
 #include <sbe-p8.h>
+#include <sbe-p9.h>
 
 #ifdef __TEST__
 #define this_cpu()	((void *)-1)
@@ -109,8 +110,12 @@ static void __schedule_timer_at(struct timer *t, uint64_t when)
  bail:
 	/* Pick up the next timer and upddate the SBE HW timer */
 	lt = list_top(&timer_list, struct timer, link);
-	if (lt)
-		p8_sbe_update_timer_expiry(lt->target);
+	if (lt) {
+		if (proc_gen < proc_gen_p9)
+			p8_sbe_update_timer_expiry(lt->target);
+		else
+			p9_sbe_update_timer_expiry(lt->target);
+	}
 }
 
 void schedule_timer_at(struct timer *t, uint64_t when)
@@ -167,7 +172,11 @@ static void __check_poll_timers(uint64_t now)
 		 * arbitrarily 1us.
 		 */
 		if (t->running) {
-			p8_sbe_update_timer_expiry(now + usecs_to_tb(1));
+			if (proc_gen < proc_gen_p9)
+				p8_sbe_update_timer_expiry(now + usecs_to_tb(1));
+			else
+				p9_sbe_update_timer_expiry(now + usecs_to_tb(1));
+
 			break;
 		}
 
@@ -266,6 +275,8 @@ void late_init_timers(void)
 	 */
 	if (platform.heartbeat_time) {
 		heartbeat = platform.heartbeat_time();
+	} else if (p9_sbe_timer_ok()) {
+		heartbeat = HEARTBEAT_DEFAULT_MS * 10;
 	} else if (p8_sbe_timer_ok() || fsp_present()) {
 		heartbeat = HEARTBEAT_DEFAULT_MS * 10;
 	}
