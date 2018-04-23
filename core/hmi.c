@@ -255,6 +255,7 @@ static const struct core_recoverable_bit_info {
 	{ 35, "LSU - ERAT multi hit" },
 	{ 37, "LSU - Logic" },
 	{ 39, "LSU - Recoverable due to not in MT window" },
+	{ 43, "PC - Thread hang recovery" },
 };
 
 static const struct nx_xstop_bit_info {
