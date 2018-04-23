@@ -232,6 +232,26 @@ static bool poll_fence_status(struct npu2_dev *ndev, uint64_t val)
 	return false;
 }
 
+static int64_t npu2_dev_fence_brick(struct npu2_dev *ndev, bool set)
+{
+	/*
+	 * Add support for queisce/fence the brick at
+	 * procedure reset time.
+	 */
+	uint32_t brick;
+	uint64_t val;
+
+	brick = ndev->index;
+	if (set)
+		brick += 6;
+
+	val = PPC_BIT(brick);
+	NPU2DEVINF(ndev, "%s fence brick %d, val %llx\n", set ? "set" : "clear",
+			ndev->index, val);
+	npu2_write(ndev->npu, NPU2_MISC_FENCE_STATE, val);
+	return 0;
+}
+
 /* Procedure 1.2.1 - Reset NPU/NDL */
 uint32_t reset_ntl(struct npu2_dev *ndev)
 {
@@ -288,19 +308,28 @@ static uint32_t reset_ndl(struct npu2_dev *ndev)
 static uint32_t reset_ntl_release(struct npu2_dev *ndev)
 {
 	uint64_t val;
+	uint64_t npu2_fir;
+	uint64_t npu2_fir_addr;
+	int i;
+
+	/* Clear FIR bits */
+	npu2_fir_addr = NPU2_FIR_REGISTER_0;
+	npu2_fir = 0;
+
+	for (i = 0; i < NPU2_TOTAL_FIR_REGISTERS; i++) {
+		npu2_write(ndev->npu, npu2_fir_addr, npu2_fir);
+		npu2_fir_addr += NPU2_FIR_OFFSET;
+
+	}
+
+	/* Release the fence */
+	npu2_dev_fence_brick(ndev, false);
 
 	val = npu2_read(ndev->npu, NPU2_NTL_MISC_CFG1(ndev));
 	val &= 0xFFBFFFFFFFFFFFFF;
 	npu2_write(ndev->npu, NPU2_NTL_MISC_CFG1(ndev), val);
 
 	if (!poll_fence_status(ndev, 0x8000000000000000))
-		return PROCEDURE_COMPLETE | PROCEDURE_FAILED;
-
-	val = npu2_read(ndev->npu, NPU2_NTL_MISC_CFG1(ndev));
-	val &= 0xFF3FFFFFFFFFFFFF;
-	npu2_write(ndev->npu, NPU2_NTL_MISC_CFG1(ndev), val);
-
-	if (!poll_fence_status(ndev, 0x0))
 		return PROCEDURE_COMPLETE | PROCEDURE_FAILED;
 
 	return PROCEDURE_NEXT;
@@ -718,6 +747,7 @@ static uint32_t check_credit(struct npu2_dev *ndev, uint64_t reg,
 static uint32_t check_credits(struct npu2_dev *ndev)
 {
 	int fail = 0;
+	uint64_t val;
 
 	fail += CHECK_CREDIT(ndev, NPU2_NTL_CRED_HDR_CREDIT_RX, 0x0BE0BE0000000000ULL);
 	fail += CHECK_CREDIT(ndev, NPU2_NTL_RSP_HDR_CREDIT_RX, 0x0BE0BE0000000000ULL);
@@ -727,6 +757,13 @@ static uint32_t check_credits(struct npu2_dev *ndev)
 	fail += CHECK_CREDIT(ndev, NPU2_NTL_ATSD_HDR_CREDIT_RX, 0x0200200000000000ULL);
 
 	assert(!fail);
+
+	val = npu2_read(ndev->npu, NPU2_NTL_MISC_CFG1(ndev));
+	val &= 0xFF3FFFFFFFFFFFFF;
+	npu2_write(ndev->npu, NPU2_NTL_MISC_CFG1(ndev), val);
+
+	if (!poll_fence_status(ndev, 0x0))
+		return PROCEDURE_COMPLETE | PROCEDURE_FAILED;
 
 	return PROCEDURE_COMPLETE;
 }
@@ -885,5 +922,6 @@ int64_t npu2_dev_procedure(void *dev, struct pci_cfg_reg_filter *pcrf,
 
 void npu2_dev_procedure_reset(struct npu2_dev *dev)
 {
+	npu2_dev_fence_brick(dev, true);
 	npu2_clear_link_flag(dev, NPU2_DEV_DL_RESET);
 }
