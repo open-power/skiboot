@@ -24,6 +24,24 @@
 
 #include "astbmc.h"
 
+/*
+ * HACK: Hostboot doesn't export the correct data for the system VPD EEPROM
+ *       for this system. So we need to work around it here.
+ */
+static void p9dsu_dt_fixups(void)
+{
+	struct dt_node *n = dt_find_by_path(dt_root,
+		"/xscom@603fc00000000/i2cm@a2000/i2c-bus@0/eeprom@50");
+
+	if (n) {
+		dt_check_del_prop(n, "compatible");
+		dt_add_property_string(n, "compatible", "atmel,24c256");
+
+		dt_check_del_prop(n, "label");
+		dt_add_property_string(n, "label", "system-vpd");
+	}
+}
+
 static bool p9dsu_probe(void)
 {
 	if (!dt_node_is_compatible(dt_root, "supermicro,p9dsu"))
@@ -34,6 +52,8 @@ static bool p9dsu_probe(void)
 
 	/* Setup UART for use by OPAL (Linux hvc) */
 	uart_set_console_policy(UART_CONSOLE_OPAL);
+
+	p9dsu_dt_fixups();
 
 	return true;
 }
