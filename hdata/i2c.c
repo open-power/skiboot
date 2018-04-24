@@ -261,6 +261,16 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 			continue;
 		}
 
+		/*
+		 * On some systems the CFAM I2C master is represented in the
+		 * host I2C table as engine 6. There are only 4 (0, 1, 2, 3)
+		 * engines accessible to the host via XSCOM so filter out
+		 * engines outside this range so we don't create bogus
+		 * i2cm@<addr> nodes.
+		 */
+		if (dev->i2cm_engine >= 4 && proc_gen == proc_gen_p9)
+			continue;
+
 		i2cm = get_i2cm_node(xscom, dev->i2cm_engine);
 		bus = get_bus_node(i2cm, dev->i2cm_port,
 			be16_to_cpu(dev->i2c_bus_freq));
