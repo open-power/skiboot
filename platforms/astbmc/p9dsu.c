@@ -24,6 +24,515 @@
 
 #include "astbmc.h"
 
+static const struct slot_table_entry p9dsu1u_phb0_0_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "UIO Slot1",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu1u_phb0_1_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "UIO Slot2",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu1u_phb0_2_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Onboard LAN",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu1u_phb0_3_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Onboard SAS",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu1u_phb0_4_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Onboard BMC",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu1u_phb0_5_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Onboard USB",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu1u_phb8_0_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO Slot1",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu1u_phb8_1_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO-R Slot",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu1u_phb8_2_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO Slot3",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu1u_phb8_3_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO Slot2",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu1u_phb_table[] = {
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,0),
+		.children = p9dsu1u_phb0_0_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,1),
+		.children = p9dsu1u_phb0_1_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,2),
+		.children = p9dsu1u_phb0_2_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,3),
+		.children = p9dsu1u_phb0_3_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,4),
+		.children = p9dsu1u_phb0_4_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,5),
+		.children = p9dsu1u_phb0_5_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,0),
+		.children = p9dsu1u_phb8_0_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,1),
+		.children = p9dsu1u_phb8_1_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,2),
+		.children = p9dsu1u_phb8_2_slot,
+	},
+		{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,3),
+		.children = p9dsu1u_phb8_3_slot,
+	},
+	{ .etype = st_end },
+};
+
+
+static const struct slot_table_entry p9dsu2u_phb0_0_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "UIO Slot1",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2u_phb0_1_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "UIO Slot2",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2u_phb0_2_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Onboard LAN",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2u_phb0_3_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Onboard SAS",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2u_phb0_4_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Onboard BMC",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2u_phb0_5_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Onboard USB",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2u_phb8_0_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO Slot1",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2u_phb8_1_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO-R Slot",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2u_phb8_2_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO Slot3",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2u_phb8_3_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO Slot3",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2u_phb8_4_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO Slot2",
+	},
+	{ .etype = st_end },
+};
+
+
+static const struct slot_table_entry p9dsu2u_phb_table[] = {
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,0),
+		.children = p9dsu2u_phb0_0_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,1),
+		.children = p9dsu2u_phb0_1_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,2),
+		.children = p9dsu2u_phb0_2_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,3),
+		.children = p9dsu2u_phb0_3_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,4),
+		.children = p9dsu2u_phb0_4_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,5),
+		.children = p9dsu2u_phb0_5_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,0),
+		.children = p9dsu2u_phb8_0_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,1),
+		.children = p9dsu2u_phb8_1_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,2),
+		.children = p9dsu2u_phb8_2_slot,
+	},
+		{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,3),
+		.children = p9dsu2u_phb8_3_slot,
+	},
+			{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,4),
+		.children = p9dsu2u_phb8_4_slot,
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_uio_plx_down[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0x1,0),
+		.name = "UIO Slot2",
+	},
+    	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0x8,0),
+		.name = "PLX switch",
+	},
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0x9,0),
+		.name = "Onboard LAN",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_uio_plx_up[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.children = p9dsu2uess_uio_plx_down,
+		.name = "PLX up",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_wio_plx_down[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0x1,0),
+		.name = "WIO Slot1",
+	},
+    	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0x8,0),
+		.name = "PLX switch",
+	},
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0x9,0),
+		.name = "WIO Slot2",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_wio_plx_up[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.children = p9dsu2uess_wio_plx_down,
+		.name = "PLX up",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_phb0_0_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "UIO Slot1",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_phb0_1_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.children = p9dsu2uess_uio_plx_up,
+		.name = "PLX",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_phb0_2_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "UIO Slot3",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_phb0_3_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Onboard SAS",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_phb0_4_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Onboard BMC",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_phb0_5_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "Onboard USB",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_phb8_0_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO Slot3",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_phb8_1_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO-R Slot",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_phb8_2_slot[] = {
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0,0),
+		.children = p9dsu2uess_wio_plx_up,
+		.name = "PLX",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_phb8_3_slot[] = {
+	{
+		.etype = st_pluggable_slot,
+		.location = ST_LOC_DEVFN(0,0),
+		.name = "WIO Slot4",
+	},
+	{ .etype = st_end },
+};
+
+static const struct slot_table_entry p9dsu2uess_phb_table[] = {
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,0),
+		.children = p9dsu2uess_phb0_0_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,1),
+		.children = p9dsu2uess_phb0_1_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,2),
+		.children = p9dsu2uess_phb0_2_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,3),
+		.children = p9dsu2uess_phb0_3_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,4),
+		.children = p9dsu2uess_phb0_4_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(0,5),
+		.children = p9dsu2uess_phb0_5_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,0),
+		.children = p9dsu2uess_phb8_0_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,1),
+		.children = p9dsu2uess_phb8_1_slot,
+	},
+	{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,2),
+		.children = p9dsu2uess_phb8_2_slot,
+	},
+		{
+		.etype = st_phb,
+		.location = ST_LOC_PHB(8,3),
+		.children = p9dsu2uess_phb8_3_slot,
+	},
+	{ .etype = st_end },
+};
+
+
 /*
  * HACK: Hostboot doesn't export the correct data for the system VPD EEPROM
  *       for this system. So we need to work around it here.
@@ -42,9 +551,9 @@ static void p9dsu_dt_fixups(void)
 	}
 }
 
-static bool p9dsu_probe(void)
+static bool p9dsu1u_probe(void)
 {
-	if (!dt_node_is_compatible(dt_root, "supermicro,p9dsu"))
+	if (!dt_node_is_compatible(dt_root, "supermicro,p9dsu1u"))
 		return false;
 
 	/* Lot of common early inits here */
@@ -55,26 +564,94 @@ static bool p9dsu_probe(void)
 
 	p9dsu_dt_fixups();
 
+	slot_table_init(p9dsu1u_phb_table);
+
 	return true;
 }
+static bool p9dsu2u_probe(void)
+{
+	if (!dt_node_is_compatible(dt_root, "supermicro,p9dsu2u"))
+		return false;
+
+	/* Lot of common early inits here */
+	astbmc_early_init();
+
+	/* Setup UART for use by OPAL (Linux hvc) */
+	uart_set_console_policy(UART_CONSOLE_OPAL);
+
+	p9dsu_dt_fixups();
+
+	slot_table_init(p9dsu2u_phb_table);
+
+	return true;
+}
+
+
+static bool p9dsu2uess_probe(void)
+{
+	if (!dt_node_is_compatible(dt_root, "supermicro,p9dsu2uess"))
+		return false;
+
+	/* Lot of common early inits here */
+	astbmc_early_init();
+
+	/* Setup UART for use by OPAL (Linux hvc) */
+	uart_set_console_policy(UART_CONSOLE_OPAL);
+
+	p9dsu_dt_fixups();
+
+	slot_table_init(p9dsu2uess_phb_table);
+
+	return true;
+}
+
 
 static const struct bmc_platform astbmc_smc = {
 	.name = "SMC",
 	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
 };
 
-DECLARE_PLATFORM(p9dsu) = {
-	.name			= "p9dsu",
-	.probe			= p9dsu_probe,
+DECLARE_PLATFORM(p9dsu1u) = {
+	.name			= "p9dsu1u",
+	.probe			= p9dsu1u_probe,
 	.init			= astbmc_init,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
-	.bmc			= &astbmc_smc,  /* FIXME: Add openBMC */
+	.bmc			= &astbmc_smc,
 	.pci_get_slot_info	= slot_table_get_slot_info,
-	.pci_probe_complete	= check_all_slot_table,
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
 	.elog_commit		= ipmi_elog_commit,
 	.exit			= ipmi_wdt_final_reset,
 	.terminate		= ipmi_terminate,
 };
+DECLARE_PLATFORM(p9dsu2u) = {
+	.name			= "p9dsu2u",
+	.probe			= p9dsu2u_probe,
+	.init			= astbmc_init,
+	.start_preload_resource	= flash_start_preload_resource,
+	.resource_loaded	= flash_resource_loaded,
+	.bmc			= &astbmc_smc,
+	.pci_get_slot_info	= slot_table_get_slot_info,
+	.cec_power_down         = astbmc_ipmi_power_down,
+	.cec_reboot             = astbmc_ipmi_reboot,
+	.elog_commit		= ipmi_elog_commit,
+	.exit			= ipmi_wdt_final_reset,
+	.terminate		= ipmi_terminate,
+};
+
+DECLARE_PLATFORM(p9dsu2uess) = {
+	.name			= "p9dsu2uess",
+	.probe			= p9dsu2uess_probe,
+	.init			= astbmc_init,
+	.start_preload_resource	= flash_start_preload_resource,
+	.resource_loaded	= flash_resource_loaded,
+	.bmc			= &astbmc_smc,
+	.pci_get_slot_info	= slot_table_get_slot_info,
+	.cec_power_down         = astbmc_ipmi_power_down,
+	.cec_reboot             = astbmc_ipmi_reboot,
+	.elog_commit		= ipmi_elog_commit,
+	.exit			= ipmi_wdt_final_reset,
+	.terminate		= ipmi_terminate,
+};
+
