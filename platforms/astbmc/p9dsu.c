@@ -38,13 +38,18 @@ static bool p9dsu_probe(void)
 	return true;
 }
 
+static const struct bmc_platform astbmc_smc = {
+	.name = "SMC",
+	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
+};
+
 DECLARE_PLATFORM(p9dsu) = {
 	.name			= "p9dsu",
 	.probe			= p9dsu_probe,
 	.init			= astbmc_init,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
-	.bmc			= NULL, /* FIXME: Add openBMC */
+	.bmc			= &astbmc_smc,  /* FIXME: Add openBMC */
 	.pci_get_slot_info	= slot_table_get_slot_info,
 	.pci_probe_complete	= check_all_slot_table,
 	.cec_power_down         = astbmc_ipmi_power_down,
