@@ -31,8 +31,8 @@ struct i2c_dev {
 
 	/* i2c slave info */
 	uint8_t type;
-	uint8_t i2c_addr;
-	uint8_t i2c_port;
+	uint8_t dev_addr;
+	uint8_t dev_port;
 	uint8_t __reserved;
 
 	__be32 purpose;
@@ -207,7 +207,7 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 	const struct i2c_dev *dev;
 	const char *label, *name, *compat;
 	const struct host_i2c_hdr *ahdr;
-	uint32_t i2c_addr;
+	uint32_t dev_addr;
 	uint32_t version;
 	uint32_t size;
 	uint32_t purpose;
@@ -280,7 +280,7 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		 * justified quantity (i.e it includes the R/W bit). So we need
 		 * to strip it off to get an address linux can use.
 		 */
-		i2c_addr = dev->i2c_addr >> 1;
+		dev_addr = dev->dev_addr >> 1;
 
 		purpose = be32_to_cpu(dev->purpose);
 		type = map_type(dev->type);
@@ -315,18 +315,18 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		 */
 		if (!type || dev->type == 0xFF)
 			prlog(PR_WARNING, "HDAT I2C: found e%dp%d - %s@%x (%#x:%s)\n",
-			      dev->i2cm_engine, dev->i2cm_port, name, i2c_addr,
+			      dev->i2cm_engine, dev->i2cm_port, name, dev_addr,
 			      purpose, label);
 		else
 			prlog(PR_TRACE, "HDAT I2C: found e%dp%d - %s@%x (%#x:%s)\n",
-			      dev->i2cm_engine, dev->i2cm_port, name, i2c_addr,
+			      dev->i2cm_engine, dev->i2cm_port, name, dev_addr,
 			      purpose, label);
 
-		node = dt_new_addr(bus, name, i2c_addr);
+		node = dt_new_addr(bus, name, dev_addr);
 		if (!node)
 			continue;
 
-		dt_add_property_cells(node, "reg", i2c_addr);
+		dt_add_property_cells(node, "reg", dev_addr);
 		dt_add_property_cells(node, "link-id",
 			be32_to_cpu(dev->i2c_link));
 		if (compat)
