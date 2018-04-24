@@ -1,4 +1,5 @@
 /* Copyright 2017 Supermicro Inc.
+ * Copyright 2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +22,8 @@
 #include <ipmi.h>
 #include <psi.h>
 #include <npu-regs.h>
+#include <opal-internal.h>
+#include <cpu.h>
 
 #include "astbmc.h"
 
@@ -578,9 +581,12 @@ static void p9dsu_dt_fixups(void)
 	}
 }
 
-static bool p9dsu1u_probe(void)
+static bool p9dsu_probe(void)
 {
-	if (!dt_node_is_compatible(dt_root, "supermicro,p9dsu1u"))
+	if (!(dt_node_is_compatible(dt_root, "supermicro,p9dsu") ||
+	      dt_node_is_compatible(dt_root, "supermicro,p9dsu1u") ||
+	      dt_node_is_compatible(dt_root, "supermicro,p9dsu2u") ||
+	      dt_node_is_compatible(dt_root, "supermicro,p9dsu2uess")))
 		return false;
 
 	/* Lot of common early inits here */
@@ -591,47 +597,83 @@ static bool p9dsu1u_probe(void)
 
 	p9dsu_dt_fixups();
 
-	slot_table_init(p9dsu1u_phb_table);
+	if (dt_node_is_compatible(dt_root, "supermicro,p9dsu1u")) {
+		prlog(PR_INFO, "Detected p9dsu1u variant\n");
+		slot_table_init(p9dsu1u_phb_table);
+	} else if (dt_node_is_compatible(dt_root, "supermicro,p9dsu2u")) {
+		prlog(PR_INFO, "Detected p9dsu2u variant\n");
+		slot_table_init(p9dsu2u_phb_table);
+	} else if (dt_node_is_compatible(dt_root, "supermicro,p9dsu2uess")) {
+		prlog(PR_INFO, "Detected p9dsu2uess variant\n");
+		slot_table_init(p9dsu2uess_phb_table);
+	}
+	/*
+	 * else we need to ask the BMC what subtype we are, but we need IPMI
+	 * which we don't get until astbmc_init(), so we delay setting up the
+	 * slot table until later.
+	 *
+	 * This only applies if you're using a Hostboot that doesn't do this
+	 * for us.
+	 */
 
 	return true;
 }
-static bool p9dsu2u_probe(void)
+
+static void p9dsu_riser_query_complete(struct ipmi_msg *m)
 {
-	if (!dt_node_is_compatible(dt_root, "supermicro,p9dsu2u"))
-		return false;
-
-	/* Lot of common early inits here */
-	astbmc_early_init();
-
-	/* Setup UART for use by OPAL (Linux hvc) */
-	uart_set_console_policy(UART_CONSOLE_OPAL);
-
-	p9dsu_dt_fixups();
-
-	slot_table_init(p9dsu2u_phb_table);
-
-	return true;
+	u8 *riser_id = (u8*)m->user_data;
+	lwsync();
+	*riser_id = m->data[0];
+	ipmi_free_msg(m);
 }
 
-
-static bool p9dsu2uess_probe(void)
+static void p9dsu_init(void)
 {
-	if (!dt_node_is_compatible(dt_root, "supermicro,p9dsu2uess"))
-		return false;
+	u8 smc_riser_req[] = {0x03, 0x70, 0x01, 0x02};
+	struct ipmi_msg *ipmi_msg;
+	u8 riser_id = 0;
+	const char *p9dsu_variant;
 
-	/* Lot of common early inits here */
-	astbmc_early_init();
-
-	/* Setup UART for use by OPAL (Linux hvc) */
-	uart_set_console_policy(UART_CONSOLE_OPAL);
-
-	p9dsu_dt_fixups();
-
-	slot_table_init(p9dsu2uess_phb_table);
-
-	return true;
+	astbmc_init();
+	/*
+	 * Now we have IPMI up and running we can ask the BMC for what p9dsu
+	 * variant we are if Hostboot isn't the patched one that does this
+	 * for us.
+	 */
+	if (dt_node_is_compatible(dt_root, "supermicro,p9dsu")) {
+		ipmi_msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
+				      IPMI_CODE(IPMI_NETFN_APP, 0x52),
+				      p9dsu_riser_query_complete,
+				      &riser_id,
+				      smc_riser_req, sizeof(smc_riser_req), 1);
+		ipmi_queue_msg(ipmi_msg);
+		while(riser_id==0) {
+			opal_run_pollers();
+			cpu_relax();
+		}
+		switch (riser_id) {
+		default:
+			prlog(PR_INFO,"Defaulting to p9dsu1u\n");
+			/* fallthrough */
+		case 0x9:
+			p9dsu_variant = "supermicro,p9dsu1u";
+			slot_table_init(p9dsu1u_phb_table);
+			break;
+		case 0x19:
+			p9dsu_variant = "supermicro,p9dsu2u";
+			slot_table_init(p9dsu2u_phb_table);
+			break;
+		case 0x1D:
+			p9dsu_variant = "supermicro,p9dsuess";
+			slot_table_init(p9dsu2uess_phb_table);
+			break;
+		}
+		prlog(PR_INFO,"Detected %s variant via IPMI\n", p9dsu_variant);
+		dt_check_del_prop(dt_root, "compatible");
+		dt_add_property_strings(dt_root, "compatible", "ibm,powernv",
+					"supermicro,p9dsu", p9dsu_variant);
+	}
 }
-
 
 static const struct bmc_platform astbmc_smc = {
 	.name = "SMC",
@@ -639,9 +681,9 @@ static const struct bmc_platform astbmc_smc = {
 };
 
 DECLARE_PLATFORM(p9dsu1u) = {
-	.name			= "p9dsu1u",
-	.probe			= p9dsu1u_probe,
-	.init			= astbmc_init,
+	.name			= "p9dsu",
+	.probe			= p9dsu_probe,
+	.init			= p9dsu_init,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
 	.bmc			= &astbmc_smc,
@@ -652,33 +694,3 @@ DECLARE_PLATFORM(p9dsu1u) = {
 	.exit			= ipmi_wdt_final_reset,
 	.terminate		= ipmi_terminate,
 };
-DECLARE_PLATFORM(p9dsu2u) = {
-	.name			= "p9dsu2u",
-	.probe			= p9dsu2u_probe,
-	.init			= astbmc_init,
-	.start_preload_resource	= flash_start_preload_resource,
-	.resource_loaded	= flash_resource_loaded,
-	.bmc			= &astbmc_smc,
-	.pci_get_slot_info	= slot_table_get_slot_info,
-	.cec_power_down         = astbmc_ipmi_power_down,
-	.cec_reboot             = astbmc_ipmi_reboot,
-	.elog_commit		= ipmi_elog_commit,
-	.exit			= ipmi_wdt_final_reset,
-	.terminate		= ipmi_terminate,
-};
-
-DECLARE_PLATFORM(p9dsu2uess) = {
-	.name			= "p9dsu2uess",
-	.probe			= p9dsu2uess_probe,
-	.init			= astbmc_init,
-	.start_preload_resource	= flash_start_preload_resource,
-	.resource_loaded	= flash_resource_loaded,
-	.bmc			= &astbmc_smc,
-	.pci_get_slot_info	= slot_table_get_slot_info,
-	.cec_power_down         = astbmc_ipmi_power_down,
-	.cec_reboot             = astbmc_ipmi_reboot,
-	.elog_commit		= ipmi_elog_commit,
-	.exit			= ipmi_wdt_final_reset,
-	.terminate		= ipmi_terminate,
-};
-
