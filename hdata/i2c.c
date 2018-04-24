@@ -314,13 +314,22 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		 * hdat. Log both cases to see what/where/why.
 		 */
 		if (!type || dev->type == 0xFF)
-			prlog(PR_WARNING, "HDAT I2C: found e%dp%d - %s@%x (%#x:%s)\n",
+			prlog(PR_WARNING, "HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n",
 			      dev->i2cm_engine, dev->i2cm_port, name, dev_addr,
-			      purpose, label);
+			      dev->dev_port, purpose, label);
 		else
-			prlog(PR_TRACE, "HDAT I2C: found e%dp%d - %s@%x (%#x:%s)\n",
+			prlog(PR_DEBUG, "HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n",
 			      dev->i2cm_engine, dev->i2cm_port, name, dev_addr,
-			      purpose, label);
+			      dev->dev_port, purpose, label);
+
+		/*
+		 * Multi-port device require special handling since we need to
+		 * generate the device-specific DT bindings. For now we're just
+		 * going to ignore them since these devices are owned by FW
+		 * any way.
+		 */
+		if (dev->dev_port != 0xff)
+			continue;
 
 		node = dt_new_addr(bus, name, dev_addr);
 		if (!node)
