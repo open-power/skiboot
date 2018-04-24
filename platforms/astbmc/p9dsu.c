@@ -29,6 +29,7 @@ static const struct slot_table_entry p9dsu1u_phb0_0_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "UIO Slot1",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -38,6 +39,7 @@ static const struct slot_table_entry p9dsu1u_phb0_1_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "UIO Slot2",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -83,6 +85,7 @@ static const struct slot_table_entry p9dsu1u_phb8_0_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO Slot1",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -92,6 +95,7 @@ static const struct slot_table_entry p9dsu1u_phb8_1_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO-R Slot",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -101,6 +105,7 @@ static const struct slot_table_entry p9dsu1u_phb8_2_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO Slot3",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -110,6 +115,7 @@ static const struct slot_table_entry p9dsu1u_phb8_3_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO Slot2",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -174,6 +180,7 @@ static const struct slot_table_entry p9dsu2u_phb0_0_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "UIO Slot1",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -183,6 +190,7 @@ static const struct slot_table_entry p9dsu2u_phb0_1_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "UIO Slot2",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -228,6 +236,7 @@ static const struct slot_table_entry p9dsu2u_phb8_0_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO Slot1",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -237,6 +246,7 @@ static const struct slot_table_entry p9dsu2u_phb8_1_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO-R Slot",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -246,6 +256,7 @@ static const struct slot_table_entry p9dsu2u_phb8_2_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO Slot3",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -255,6 +266,7 @@ static const struct slot_table_entry p9dsu2u_phb8_3_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO Slot3",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -264,6 +276,7 @@ static const struct slot_table_entry p9dsu2u_phb8_4_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO Slot2",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -333,11 +346,13 @@ static const struct slot_table_entry p9dsu2uess_uio_plx_down[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0x1,0),
 		.name = "UIO Slot2",
+		.power_limit = 75,
 	},
     	{
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0x8,0),
 		.name = "PLX switch",
+		.power_limit = 75,
 	},
 	{
 		.etype = st_builtin_dev,
@@ -353,6 +368,7 @@ static const struct slot_table_entry p9dsu2uess_uio_plx_up[] = {
 		.location = ST_LOC_DEVFN(0,0),
 		.children = p9dsu2uess_uio_plx_down,
 		.name = "PLX up",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -362,16 +378,19 @@ static const struct slot_table_entry p9dsu2uess_wio_plx_down[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0x1,0),
 		.name = "WIO Slot1",
+		.power_limit = 75,
 	},
     	{
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0x8,0),
 		.name = "PLX switch",
+		.power_limit = 75,
 	},
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0x9,0),
 		.name = "WIO Slot2",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -382,6 +401,7 @@ static const struct slot_table_entry p9dsu2uess_wio_plx_up[] = {
 		.location = ST_LOC_DEVFN(0,0),
 		.children = p9dsu2uess_wio_plx_down,
 		.name = "PLX up",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -391,6 +411,7 @@ static const struct slot_table_entry p9dsu2uess_phb0_0_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "UIO Slot1",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -401,6 +422,7 @@ static const struct slot_table_entry p9dsu2uess_phb0_1_slot[] = {
 		.location = ST_LOC_DEVFN(0,0),
 		.children = p9dsu2uess_uio_plx_up,
 		.name = "PLX",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -410,6 +432,7 @@ static const struct slot_table_entry p9dsu2uess_phb0_2_slot[] = {
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "UIO Slot3",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -446,6 +469,7 @@ static const struct slot_table_entry p9dsu2uess_phb8_0_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO Slot3",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -455,6 +479,7 @@ static const struct slot_table_entry p9dsu2uess_phb8_1_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO-R Slot",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -465,6 +490,7 @@ static const struct slot_table_entry p9dsu2uess_phb8_2_slot[] = {
 		.location = ST_LOC_DEVFN(0,0),
 		.children = p9dsu2uess_wio_plx_up,
 		.name = "PLX",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
@@ -474,6 +500,7 @@ static const struct slot_table_entry p9dsu2uess_phb8_3_slot[] = {
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
 		.name = "WIO Slot4",
+		.power_limit = 75,
 	},
 	{ .etype = st_end },
 };
