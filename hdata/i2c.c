@@ -136,8 +136,8 @@ struct hdat_i2c_label {
 
 static struct hdat_i2c_label hdat_i2c_labels[] = {
 	{ 0x1, "led-controller" },
-	{ 0x2, "eeprom-pgood" },
-	{ 0x3, "eeprom-control" },
+	{ 0x2, "pci-hotplug-pgood" },
+	{ 0x3, "pci-hotplug-control" },
 	{ 0x4, "tpm" },
 	{ 0x5, "module-vpd" },
 	{ 0x6, "dimm SPD" },
