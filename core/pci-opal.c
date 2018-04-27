@@ -785,8 +785,10 @@ static int64_t opal_pci_set_power_state(uint64_t async_token,
 	switch (*state) {
 	case OPAL_PCI_SLOT_POWER_OFF:
 		if (!slot->ops.prepare_link_change ||
-		    !slot->ops.set_power_state)
+		    !slot->ops.set_power_state) {
+			phb_unlock(phb);
 			return OPAL_UNSUPPORTED;
+		}
 
 		slot->async_token = async_token;
 		slot->ops.prepare_link_change(slot, false);
@@ -794,22 +796,28 @@ static int64_t opal_pci_set_power_state(uint64_t async_token,
 		break;
 	case OPAL_PCI_SLOT_POWER_ON:
 		if (!slot->ops.set_power_state ||
-		    !slot->ops.get_link_state)
+		    !slot->ops.get_link_state) {
+			phb_unlock(phb);
 			return OPAL_UNSUPPORTED;
+		}
 
 		slot->async_token = async_token;
 		rc = slot->ops.set_power_state(slot, PCI_SLOT_POWER_ON);
 		break;
 	case OPAL_PCI_SLOT_OFFLINE:
-		if (!pd)
+		if (!pd) {
+			phb_unlock(phb);
 			return OPAL_PARAMETER;
+		}
 
 		pci_remove_bus(phb, &pd->children);
 		phb_unlock(phb);
 		return OPAL_SUCCESS;
 	case OPAL_PCI_SLOT_ONLINE:
-		if (!pd)
+		if (!pd) {
+			phb_unlock(phb);
 			return OPAL_PARAMETER;
+		}
 		pci_scan_bus(phb, pd->secondary_bus, pd->subordinate_bus,
 			     &pd->children, pd, true);
 		pci_add_device_nodes(phb, &pd->children, pd->dn,
