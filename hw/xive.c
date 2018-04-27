@@ -4402,6 +4402,7 @@ static int64_t opal_xive_set_vp_info(uint64_t vp_id,
 				xive_dbg(x, "Attempt at enabling single escalate"
 					 " on xive rev %d failed\n",
 					 x->rev);
+				unlock(&x->lock);
 				return OPAL_PARAMETER;
 			}
 			rc = xive_setup_silent_gather(vp_id, true);
