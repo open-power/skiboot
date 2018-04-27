@@ -1023,7 +1023,7 @@ opal_entry:
 	cmpwi	%r11,1
 
 	mfspr	%r12,SPR_PIR
-	beq	5f
+	bgt	5f
 	GET_STACK(%r12,%r12)
 	b	6f
 5:
