@@ -1511,9 +1511,17 @@ int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val)
 	struct proc_chip *chip;
 	int rc;
 
-	assert(c);
+	if (!c) {
+		prerror("SLW: Unknown thread with pir %x\n", (u32) cpu_pir);
+		return OPAL_PARAMETER;
+	}
+
 	chip = get_chip(c->chip_id);
-	assert(chip);
+	if (!chip) {
+		prerror("SLW: Unknown chip for thread with pir %x\n",
+			(u32) cpu_pir);
+		return OPAL_PARAMETER;
+	}
 
 	if (proc_gen == proc_gen_p9) {
 		if (!has_deep_states) {
