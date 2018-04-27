@@ -152,7 +152,7 @@ static struct dt_node *find_node_for_dev(struct phb *phb,
 			return NULL;
 
 		/* find this down port */
-		return find_devfn(sw_up, pd->bdfn & 0x1f);
+		return find_devfn(sw_up, pd->bdfn);
 
 	default:
 		PCIDBG(phb, pd->bdfn,
