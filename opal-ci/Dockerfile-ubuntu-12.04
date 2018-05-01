@@ -1,4 +1,5 @@
 FROM ubuntu:trusty
+ENV DEBIAN_FRONTEND    noninteractive
 RUN sudo apt-get update -qq
 RUN sudo apt-get install -y software-properties-common
 RUN sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test

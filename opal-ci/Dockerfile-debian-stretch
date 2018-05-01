@@ -1,4 +1,5 @@
 FROM debian:stretch
+ENV DEBIAN_FRONTEND    noninteractive
 RUN apt-get update -qq
 RUN if [ `arch` != "ppc64le" ]; then apt-get update -qq && apt-get install -y gcc-powerpc64le-linux-gnu; fi
 RUN apt-get update -qq && apt-get install -y gcc ccache expect libssl-dev wget xterm curl device-tree-compiler build-essential gcc python g++ pkg-config libz-dev libglib2.0-dev libpixman-1-dev libfdt-dev git libstdc++6 valgrind libtcl8.6
