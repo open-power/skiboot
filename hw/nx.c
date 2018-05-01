@@ -78,7 +78,7 @@ void nx_p9_rng_late_init(void)
 	if (chip_quirk(QUIRK_NO_RNG))
 		return;
 
-	prlog(PR_NOTICE, "SLW: Configuring self-restore for P9X_EX_NCU_DARN_BAR\n");
+	prlog(PR_INFO, "SLW: Configuring self-restore for P9X_EX_NCU_DARN_BAR\n");
 	for_each_present_cpu(c) {
 		if(cpu_is_thread0(c)) {
 			struct proc_chip *chip = get_chip(c->chip_id);

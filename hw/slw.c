@@ -816,7 +816,7 @@ static void slw_late_init_p9(struct proc_chip *chip)
 	struct cpu_thread *c;
 	int rc;
 
-	prlog(PR_NOTICE, "SLW: Configuring self-restore for HRMOR\n");
+	prlog(PR_INFO, "SLW: Configuring self-restore for HRMOR\n");
 	for_each_available_cpu(c) {
 		if (c->chip_id != chip->id)
 			continue;

@@ -3233,7 +3233,7 @@ void xive_late_init(void)
 {
 	struct cpu_thread *c;
 
-	prlog(PR_NOTICE, "SLW: Configuring self-restore for NCU_SPEC_BAR\n");
+	prlog(PR_INFO, "SLW: Configuring self-restore for NCU_SPEC_BAR\n");
 	for_each_present_cpu(c) {
 		if(cpu_is_thread0(c)) {
 			struct proc_chip *chip = get_chip(c->chip_id);
