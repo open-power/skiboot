@@ -24,7 +24,7 @@ Secure and Trusted Boot Library (LibSTB) Documentation
 In order to support Secure and Trusted Boot, the flash driver calls libSTB to
 verify and measure the code it fetches from PNOR.
 
-LibSTB is initialized by calling *stb_init()*, see ``libstb/stb.h``.
+LibSTB is initialized by calling *stb_init()*, see ``libstb/secureboot.h``.
 
 Secure Boot
 -----------
