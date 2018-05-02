@@ -1,16 +1,12 @@
 #!/bin/bash
 
 
-if [ -z "$QEMU_PATH" ]; then
-    QEMU_PATH=`pwd`/opal-ci/qemu/ppc64-softmmu/
+if [ -z "$QEMU" ]; then
+    QEMU="qemu-system-ppc64"
 fi
 
-if [ -z "$QEMU_BINARY" ]; then
-    QEMU_BINARY="qemu-system-ppc64"
-fi
-
-if [ ! -x "$QEMU_PATH/$QEMU_BINARY" ]; then
-    echo 'Could not find executable QEMU_BINARY. Skipping hello_world test';
+if [ ! `command -v qemu-system-ppc64` ]; then
+    echo 'Could not find executable QEMU. Skipping hello_world test';
     exit 0;
 fi
 
@@ -37,7 +33,7 @@ T=`mktemp  --tmpdir skiboot_qemu_boot_test.XXXXXXXXXX`
 
 ( cat <<EOF | expect
 set timeout 600
-spawn $QEMU_PATH/$QEMU_BINARY -m 3G -M powernv -kernel $SKIBOOT_ZIMAGE -nographic -device ipmi-bmc-sim,id=ipmi0 -device isa-ipmi-bt,bmc=ipmi0
+spawn $QEMU -m 3G -M powernv -kernel $SKIBOOT_ZIMAGE -nographic -device ipmi-bmc-sim,id=ipmi0 -device isa-ipmi-bt,bmc=ipmi0
 expect {
 timeout { send_user "\nTimeout waiting for petitboot\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
