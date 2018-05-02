@@ -1,6 +1,17 @@
 # need to get images path defined early
 source $env(LIB_DIR)/ppc/util.tcl
 
+#
+# Call tclreadline's Loop to move to friendlier
+# commandline if one exists
+#
+proc readline { } {
+    set readline [catch { package require tclreadline }]
+    if { $readline == 0 } {
+        ::tclreadline::Loop
+    }
+}
+
 proc mconfig { name env_name def } {
     global mconf
     global env
@@ -531,5 +542,7 @@ epapr::of2dtb mysim $mconf(epapr_dt_addr)
 mysim mode fastest
 
 if { [info exists env(SKIBOOT_AUTORUN)] } {
-    mysim go
+    if [catch { mysim go }] {
+	readline
+    }
 }
