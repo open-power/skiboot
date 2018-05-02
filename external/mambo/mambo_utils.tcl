@@ -158,15 +158,9 @@ proc ex {  ea { size 8 } } {
     puts "$pa : $val"
 }
 
-proc di { location { count 16 } }    {
-    set addr  [expr $location & 0xfffffffffffffff0]
-    set top [expr $addr + ($count * 4)]
-    for { set i $addr } { $i < $top } { incr i 4 } {
-	set pc_laddr [mysim cpu 0 util itranslate $i]
-	set inst [mysim cpu 0 memory display $pc_laddr 4]
-	set disasm [mysim cpu 0 util ppc_disasm $inst $i]
-	puts "$pc_laddr: Enc:$inst : $disasm"
-    }
+proc di { location { count 16 } } {
+    set addr [expr $location & 0xfffffffffffffff0]
+    disasm_mem mysim $addr $count
 }
 
 proc hexdump { location count }    {
