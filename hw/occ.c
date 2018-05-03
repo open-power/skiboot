@@ -66,7 +66,7 @@
  *
  * struct occ_pstate_table -	Pstate table layout
  * @valid:			Indicates if data is valid
- * @version:			Layout version
+ * @version:			Layout version [Major/Minor]
  * @v2.throttle:		Reason for limiting the max pstate
  * @v9.occ_role:		OCC role (Master/Slave)
  * @v#.pstate_min:		Minimum pstate ever allowed
@@ -488,7 +488,7 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 	int pmax, pmin, pnom;
 	u8 nr_pstates;
 	bool ultra_turbo_supported;
-	int i;
+	int i, major, minor;
 
 	prlog(PR_DEBUG, "OCC: CPU pstate state device tree init\n");
 
@@ -526,12 +526,12 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 	 */
 	ultra_turbo_supported = true;
 
+	major = occ_data->version >> 4;
+	minor = occ_data->version & 0xF;
+
 	/* Parse Pmax, Pmin and Pnominal */
-	switch (occ_data->version) {
-	case 0x01:
-		ultra_turbo_supported = false;
-		/* fallthrough */
-	case 0x02:
+	switch (major) {
+	case 0:
 		if (proc_gen == proc_gen_p9) {
 			/**
 			 * @fwts-label OCCInvalidVersion02
@@ -544,6 +544,8 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 				occ_data->version);
 			return false;
 		}
+		if (minor == 0x1)
+			ultra_turbo_supported = false;
 		pmin = occ_data->v2.pstate_min;
 		pnom = occ_data->v2.pstate_nom;
 		if (ultra_turbo_supported)
@@ -551,7 +553,7 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 		else
 			pmax = occ_data->v2.pstate_turbo;
 		break;
-	case 0x90:
+	case 0x9:
 		if (proc_gen == proc_gen_p8) {
 			/**
 			 * @fwts-label OCCInvalidVersion90
@@ -613,9 +615,8 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 	nr_pstates = labs(pmax - pmin) + 1;
 	prlog(PR_DEBUG, "OCC: Version %x Min %d Nom %d Max %d Nr States %d\n",
 	      occ_data->version, pmin, pnom, pmax, nr_pstates);
-	if ((occ_data->version == 0x90 && (nr_pstates <= 1)) ||
-	    (occ_data->version <= 0x02 &&
-	     (nr_pstates <= 1 || nr_pstates > 128))) {
+	if ((major == 0x9 && nr_pstates <= 1) ||
+	    (major == 0 && (nr_pstates <= 1 || nr_pstates > 128))) {
 		/**
 		 * @fwts-label OCCInvalidPStateRange
 		 * @fwts-advice The number of pstates is outside the valid
@@ -647,13 +648,12 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 	dt_freq = malloc(nr_pstates * sizeof(u32));
 	assert(dt_freq);
 
-	switch (occ_data->version) {
-	case 0x01:
-	case 0x02:
+	switch (major) {
+	case 0:
 		parse_pstates_v2(occ_data, dt_id, dt_freq, nr_pstates,
 				 pmax, pmin);
 		break;
-	case 0x90:
+	case 0x9:
 		parse_pstates_v9(occ_data, dt_id, dt_freq, nr_pstates,
 				 pmax, pmin);
 		break;
@@ -685,14 +685,14 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 
 		dt_cmax = malloc(nr_cores * sizeof(u32));
 		assert(dt_cmax);
-		switch (occ_data->version) {
-		case 0x02:
+		switch (major) {
+		case 0:
 			pturbo = occ_data->v2.pstate_turbo;
 			pultra_turbo = occ_data->v2.pstate_ultra_turbo;
 			for (i = 0; i < nr_cores; i++)
 				dt_cmax[i] = occ_data->v2.core_max[i];
 			break;
-		case 0x90:
+		case 0x9:
 			pturbo = occ_data->v9.pstate_turbo;
 			pultra_turbo = occ_data->v9.pstate_ultra_turbo;
 			for (i = 0; i < nr_cores; i++)
@@ -720,7 +720,7 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 		free(dt_cmax);
 	}
 
-	if (occ_data->version > 0x02)
+	if (major == 0x9)
 		goto out;
 
 	dt_add_property_cells(power_mgt, "#address-cells", 2);
@@ -862,11 +862,10 @@ static inline u8 get_cpu_throttle(struct proc_chip *chip)
 	struct occ_pstate_table *pdata = get_occ_pstate_table(chip);
 	struct occ_dynamic_data *data;
 
-	switch (pdata->version) {
-	case 0x01:
-	case 0x02:
+	switch (pdata->version >> 4) {
+	case 0:
 		return pdata->v2.throttle;
-	case 0x90:
+	case 0x9:
 		data = get_occ_dynamic_data(chip);
 		return data->cpu_throttle;
 	default:
@@ -1251,7 +1250,7 @@ static void occ_cmd_interface_init(void)
 
 	chip = next_chip(NULL);
 	pdata = get_occ_pstate_table(chip);
-	if (pdata->version != 0x90)
+	if ((pdata->version >> 4) != 0x9)
 		return;
 
 	for_each_chip(chip)
