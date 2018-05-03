@@ -496,10 +496,12 @@ static int p9_stop_thread(struct cpu_thread *cpu)
 	rc = p9_thread_quiesced(cpu);
 	if (rc < 0)
 		return rc;
-	if (rc)
-		prlog(PR_WARNING, "Stopping thread %u:%u:%u warning:"
-				" thread is quiesced already.\n",
+	if (rc) {
+		prlog(PR_ERR, "Could not stop thread %u:%u:%u:"
+				" Thread is quiesced already.\n",
 				chip_id, core_id, thread_id);
+		return OPAL_BUSY;
+	}
 
 	if (xscom_write(chip_id, dctl_addr, P9_THREAD_STOP(thread_id))) {
 		prlog(PR_ERR, "Could not stop thread %u:%u:%u:"
@@ -521,12 +523,6 @@ static int p9_stop_thread(struct cpu_thread *cpu)
 	prlog(PR_ERR, "Could not stop thread %u:%u:%u:"
 			" Unable to quiesce thread.\n",
 			chip_id, core_id, thread_id);
-
-	if (xscom_write(chip_id, dctl_addr, P9_THREAD_CONT(thread_id))) {
-		prlog(PR_ERR, "Could not resume thread %u:%u:%u:"
-				" Unable to write EC_DIRECT_CONTROLS.\n",
-				chip_id, core_id, thread_id);
-	}
 
 	return OPAL_HARDWARE;
 }
