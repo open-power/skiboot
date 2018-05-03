@@ -23,6 +23,14 @@ static LIST_HEAD(timer_poll_list);
 static bool timer_in_poll;
 static uint64_t timer_poll_gen;
 
+static inline void update_timer_expiry(uint64_t target)
+{
+	if (proc_gen < proc_gen_p9)
+		p8_sbe_update_timer_expiry(target);
+	else
+		p9_sbe_update_timer_expiry(target);
+}
+
 void init_timer(struct timer *t, timer_func_t expiry, void *data)
 {
 	t->link.next = t->link.prev = NULL;
@@ -111,10 +119,7 @@ static void __schedule_timer_at(struct timer *t, uint64_t when)
 	/* Pick up the next timer and upddate the SBE HW timer */
 	lt = list_top(&timer_list, struct timer, link);
 	if (lt) {
-		if (proc_gen < proc_gen_p9)
-			p8_sbe_update_timer_expiry(lt->target);
-		else
-			p9_sbe_update_timer_expiry(lt->target);
+		update_timer_expiry(lt->target);
 	}
 }
 
@@ -172,11 +177,7 @@ static void __check_poll_timers(uint64_t now)
 		 * arbitrarily 1us.
 		 */
 		if (t->running) {
-			if (proc_gen < proc_gen_p9)
-				p8_sbe_update_timer_expiry(now + usecs_to_tb(1));
-			else
-				p9_sbe_update_timer_expiry(now + usecs_to_tb(1));
-
+			update_timer_expiry(now + usecs_to_tb(1));
 			break;
 		}
 
