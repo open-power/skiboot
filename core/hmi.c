@@ -1296,7 +1296,7 @@ opal_call(OPAL_HANDLE_HMI, opal_handle_hmi, 0);
 
 static int64_t opal_handle_hmi2(__be64 *out_flags)
 {
-	uint64_t hmer, flags;
+	uint64_t hmer, flags = 0;
 	struct OpalHMIEvent hmi_evt;
 
 	/*
