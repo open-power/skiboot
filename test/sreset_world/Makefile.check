@@ -1,4 +1,4 @@
-SRESET_WORLD_TEST := test/sreset_world/sreset_kernel/sreset_kernel.stb
+SRESET_WORLD_TEST := test/sreset_world/sreset_kernel/sreset_kernel
 SRESET_WORLD_STB_TEST := test/sreset_world/sreset_kernel/sreset_kernel.stb
 
 .PHONY: sreset_world-tests
