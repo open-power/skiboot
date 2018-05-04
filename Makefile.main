@@ -69,7 +69,7 @@ endif
 CFLAGS := -fno-strict-aliasing -pie -fpie -fno-pic -mbig-endian -m64
 CFLAGS += -mcpu=power7
 CFLAGS += -Wl,--oformat,elf64-powerpc
-CFLAGS += -ffixed-r13
+CFLAGS += $(call try-cflag,$(CC),-ffixed-r13)
 CFLAGS += $(call try-cflag,$(CC),-std=gnu11)
 ifeq ($(ELF_ABI_v2),1)
 CFLAGS += $(call try-cflag,$(CC),-mabi=elfv2)
@@ -146,9 +146,9 @@ endif
 # Do not use the floating point unit
 CFLAGS += -msoft-float
 # Do not use string instructions
-CFLAGS += -mno-string
+CFLAGS += $(call try-cflag,$(CC),-mno-string)
 # do not use load/store multiple word instrcutions
-CFLAGS += -mno-multiple
+CFLAGS += $(call try-cflag,$(CC),-mno-multiple)
 # do not use any automatic vector foo
 # While it would be safe during boot, we don't save/restore across OPAL calls
 CFLAGS += $(call try-cflag,$(CC),-mno-vsx) \
