@@ -27,3 +27,8 @@ rm -rf builddir
 mkdir builddir
 make SRC=`pwd` -f ../Makefile -C builddir -j${MAKE_J}
 make clean
+
+echo "Building with clang..."
+make clean
+make -j${MAKE_J} CC=clang
+make -j${MAKE_J} CC=clang check
