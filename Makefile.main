@@ -128,7 +128,8 @@ LDFLAGS += -Wl,-pie
 LDFLAGS += -Wl,-Ttext-segment,$(LD_TEXT) -Wl,-N -Wl,--build-id=none
 LDFLAGS += -Wl,--no-multi-toc
 LDFLAGS += -mcpu=power7 -mbig-endian -Wl,--oformat,elf64-powerpc
-LDFLAGS_FINAL = $(LDFLAGS) -Wl,--whole-archive
+LDFLAGS_FINAL = -EB -m elf64ppc --no-multi-toc -N --build-id=none --whole-archive
+LDFLAGS_FINAL += -static -nostdlib -pie -Ttext-segment=$(LD_TEXT) --oformat=elf64-powerpc
 LDRFLAGS=-melf64ppc
 # Debug stuff
 #LDFLAGS += -Wl,-v -Wl,-Map,foomap 
@@ -267,12 +268,12 @@ $(TARGET).tmp.a: $(ALL_OBJS)
 	$(call Q,AR, $(AR) rcsTPD $@ $(ALL_OBJS), $@)
 
 $(TARGET).tmp.elf: $(ALL_OBJS_1) $(TARGET).lds $(KERNEL)
-	$(call Q,LD, $(CC) $(LDFLAGS_FINAL) -o $@ -T $(TARGET).lds $(ALL_OBJS_1), $@)
+	$(call Q,LD, $(LD) $(LDFLAGS_FINAL) -o $@ -T $(TARGET).lds $(ALL_OBJS_1), $@)
 
 asm/real_map.o : $(TARGET).tmp.map
 
 $(TARGET).elf: $(ALL_OBJS_2) $(TARGET).lds $(KERNEL)
-	$(call Q,LD, $(CC) $(LDFLAGS_FINAL) -o $@ -T $(TARGET).lds $(ALL_OBJS_2), $@)
+	$(call Q,LD, $(LD) $(LDFLAGS_FINAL) -o $@ -T $(TARGET).lds $(ALL_OBJS_2), $@)
 
 $(SUBDIRS):
 	$(call Q,MKDIR,mkdir -p $@, $@)
