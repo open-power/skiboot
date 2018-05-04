@@ -1004,7 +1004,7 @@ static void __fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod,
 	va_end(list);
 }
 
-void fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod, u8 add_words, ...)
+void fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod, u32 add_words, ...)
 {
 	va_list list;
 
@@ -1013,7 +1013,7 @@ void fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod, u8 add_words, ...)
 	va_end(list);
 }
 
-struct fsp_msg *fsp_mkmsg(u32 cmd_sub_mod, u8 add_words, ...)
+struct fsp_msg *fsp_mkmsg(u32 cmd_sub_mod, u32 add_words, ...)
 {
 	struct fsp_msg *msg = fsp_allocmsg(!!(cmd_sub_mod & 0x1000000));
 	va_list list;
