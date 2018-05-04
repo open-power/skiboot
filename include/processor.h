@@ -215,9 +215,15 @@
 
 #else /* __ASSEMBLY__ */
 
+#include <ccan/str/str.h>
 #include <compiler.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+
+#define RB(b)		(((b) & 0x1f) << 11)
+#define MSGSND(b)	stringify(.long 0x7c00019c | RB(b))
+#define MSGCLR(b)	stringify(.long 0x7c0001dc | RB(b))
+#define MSGSYNC		stringify(.long 0x7c0006ec)
 
 static inline bool is_power9n(uint32_t version)
 {
@@ -328,20 +334,24 @@ static inline void sync_icache(void)
 static inline void msgclr(void)
 {
 	uint64_t rb = (0x05 << (63-36));
-	asm volatile("msgclr %0" : : "r"(rb));
+	asm volatile(MSGCLR(%0) : : "r"(rb));
 }
 
 static inline void p9_dbell_receive(void)
 {
 	uint64_t rb = (0x05 << (63-36));
-	/* msgclr ; msgsync ; lwsync */
-	asm volatile("msgclr %0 ; .long 0x7c0006ec ; lwsync" : : "r"(rb));
+	asm volatile(MSGCLR(%0)	";"
+		     MSGSYNC	";"
+		     "lwsync"
+		     : : "r"(rb));
 }
 
 static inline void p9_dbell_send(uint32_t pir)
 {
 	uint64_t rb = (0x05 << (63-36)) | pir;
-	asm volatile("sync ; msgsnd %0" : : "r"(rb));
+	asm volatile("sync ;"
+		     MSGSND(%0)
+		     : : "r"(rb));
 }
 
 /*
