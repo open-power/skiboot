@@ -67,7 +67,7 @@ static void quirk_astbmc_vga(struct phb *phb __unused,
 static const struct pci_quirk quirk_table[] = {
 	/* ASPEED 2400 VGA device */
 	{ &quirk_astbmc_vga, 0x1a03, 0x2000 },
-	{NULL}
+	{ NULL, 0, 0 }
 };
 
 void pci_handle_quirk(struct phb *phb, struct pci_device *pd)
