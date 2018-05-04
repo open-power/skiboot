@@ -763,7 +763,7 @@ init_shared_sprs:
 	li	%r0,1
 	sldi	%r4,%r0,(63-13)
 	sldi	%r5,%r0,(63-19)
-	or	%r0,%r4,%r5,
+	or	%r0,%r4,%r5
 	andc	%r3,%r3,%r0
 	sync
 	mtspr	SPR_HID0,%r3
@@ -797,7 +797,7 @@ init_shared_sprs:
 	li	%r0,1
 	sldi	%r4,%r0,(63-5)
 	sldi	%r5,%r0,(63-4)
-	or	%r0,%r4,%r5,
+	or	%r0,%r4,%r5
 	andc	%r3,%r3,%r0
 	sync
 	mtspr	SPR_HID0,%r3
