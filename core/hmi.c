@@ -1258,6 +1258,16 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 			queue_hmi_event(hmi_evt, recover, out_flags);
 		}
 	}
+	if (hmer & SPR_HMER_TRIG_FIR_HMI) {
+		hmer &= ~SPR_HMER_TRIG_FIR_HMI;
+
+		hmi_print_debug("Clearing unknown debug trigger", hmer);
+		if (hmi_evt) {
+			hmi_evt->severity = OpalHMI_SEV_NO_ERROR;
+			hmi_evt->type = OpalHMI_ERROR_DEBUG_TRIG_FIR,
+				queue_hmi_event(hmi_evt, recover, out_flags);
+		}
+	}
 
 	if (recover == 0)
 		disable_fast_reboot("Unrecoverable HMI");
