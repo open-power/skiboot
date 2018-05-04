@@ -21,6 +21,8 @@ try = $(shell set -e; if ($(1)) >/dev/null 2>&1; \
 try-cflag = $(call try,$(1) $(2) -x c -c /dev/null -o /dev/null,$(2))
 test_cflag = $(call try,$(1) $(2) -x c -c /dev/null -o /dev/null,1,0)
 
+cc-name := $(shell $(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
+
 # Base warnings
 CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 	  -Werror-implicit-function-declaration -Wdeclaration-after-statement \
@@ -140,6 +142,27 @@ ifeq ($(ELF_ABI_v2),1)
 AFLAGS += $(call try-cflag,$(CC),-mabi=elfv2)
 else
 AFLAGS += $(call try-cflag,$(CC),-mabi=elfv1)
+endif
+
+ifeq ($(cc-name),clang)
+ifneq ($(CROSS),)
+CLANG_TARGET    := --target=$(notdir $(CROSS:%-=%))
+GCC_TOOLCHAIN   := $(realpath $(dir $(shell which $(LD)))/..)
+endif
+ifneq ($(GCC_TOOLCHAIN),)
+CLANG_GCC_TC    := --gcc-toolchain=$(GCC_TOOLCHAIN)
+endif
+CFLAGS += $(CLANG_TARGET) $(CLANG_GCC_TC)
+AFLAGS += $(CLANG_TARGET) $(CLANG_GCC_TC)
+CFLAGS += $(call cc-option, -no-integrated-as)
+AFLAGS += $(call cc-option, -no-integrated-as)
+
+LDFLAGS += $(CLANG_TARGET) $(CLANG_GCC_TC)
+
+CFLAGS += -mcpu=pwr8
+LDFLAGS += -mcpu=pwr8
+ASFLAGS += -mcpu=pwr8
+
 endif
 
 # Special tool flags:
