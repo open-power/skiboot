@@ -687,7 +687,7 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 		}
 
 		if (has_deep_states) {
-			if ((wakeup_engine_state == WAKEUP_ENGINE_PRESENT)) {
+			if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT) {
 				struct proc_chip *chip = get_chip(c->chip_id);
 
 				prlog(PR_INFO, "Configuring stopapi for IMC\n");
