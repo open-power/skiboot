@@ -163,6 +163,17 @@ CFLAGS += -mcpu=pwr8
 LDFLAGS += -mcpu=pwr8
 ASFLAGS += -mcpu=pwr8
 
+# Workarounds
+# TODO: Fix the issues these hide, and remove them
+CFLAGS += -Wno-cast-align \
+	-Wno-unused-command-line-argument \
+	-Wno-unknown-warning-option \
+	-Wno-gnu-variable-sized-type-not-at-end \
+	-Wno-address-of-packed-member
+
+# pci_add_device_nodes is the largest, at 2048 with clang-7 (smaller with older
+# versions)
+CFLAGS += -Wframe-larger-than=2048
 endif
 
 # Special tool flags:
