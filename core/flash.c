@@ -163,7 +163,7 @@ static void __flash_dt_add_fw_version(struct dt_node *fw_version, char* data)
 	const char * version_str[] = {"open-power", "buildroot", "skiboot",
 				      "hostboot-binaries", "hostboot", "linux",
 				      "petitboot", "occ", "capp-ucode", "sbe",
-				      "machine-xml"};
+				      "machine-xml", "hcode"};
 
 	if (first) {
 		first = false;
