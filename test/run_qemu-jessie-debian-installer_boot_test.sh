@@ -36,7 +36,7 @@ D=`mktemp  --tmpdir debian-jessie-install.qcow2.XXXXXXXXXX`
 # In future we should do full install:
 # FIXME: -append "DEBIAN_FRONTEND=text locale=en_US keymap=us hostname=OPALtest domain=unassigned-domain rescue/enable=true"
 
-$QEMU_PATH/../qemu-img  create -f qcow2 $D 128G 2>&1 > $T
+qemu-img  create -f qcow2 $D 128G 2>&1 > $T
 
 ( cat <<EOF | expect
 set timeout 600
