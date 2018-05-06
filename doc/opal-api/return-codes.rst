@@ -111,7 +111,10 @@ OPAL_RESOURCE
 
    #define OPAL_RESOURCE		-10
 
-**FIXME**
+When trying to use a limited resource, OPAL found that there were none free.
+While OPAL_BUSY indicates that OPAL may soon be able to proces the requent,
+OPAL_RESOURCE is a more permanent error and while the resource *may* become
+available again in the future, it is not certain that it will.
 
 OPAL_INTERNAL_ERROR
 -------------------
@@ -119,7 +122,8 @@ OPAL_INTERNAL_ERROR
 
    #define OPAL_INTERNAL_ERROR	-11
 
-**FIXME**
+Something has gone wrong inside OPAL. This is likely a bug somewhere and we
+return OPAL_INTERNAL_ERROR for safety.
 
 OPAL_BUSY_EVENT
 ---------------
@@ -141,6 +145,10 @@ OPAL_WRONG_STATE
 ::
 
    #define OPAL_WRONG_STATE	-14
+
+The requested operation requires a (hardware or software) component to be in
+a different state. For example, you cannot call OPAL_START_CPU on a CPU that
+is not currently in OPAL.
 
 OPAL_ASYNC_COMPLETION
 ---------------------
@@ -164,6 +172,10 @@ OPAL_EMPTY
 ::
 
    #define OPAL_EMPTY		-16
+
+The call was successful and the correct result is empty. For example, the
+OPAL_IPMI_RECV call can succeed and return that there is no waiting IPMI
+message.
 
 I2C Calls
 ---------
