@@ -46,10 +46,13 @@ completion.
 
 Parameters
 ----------
-::
-        u32 handle
-        int token
-        u32 ratio
+
+=== ======
+=== ======
+u32 handle
+int token
+u32 ratio
+=== ======
 
 Returns
 -------
