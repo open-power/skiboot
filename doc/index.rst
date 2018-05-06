@@ -16,20 +16,30 @@ Overview
    overview
    opal-spec
 
+Development Process
+===================
+
+.. toctree::
+   :maxdepth: 2
+
+   process/dev-release-process
+   process/CONTRIBUTING.md
+   process/stable-skiboot-rules
+   process/versioning
+
 Developer Guide and Internals
 =============================
 
 .. toctree::
    :maxdepth: 2
 
+   CONTRIBUTING.md
    console-log
    error-logging
    bmc
    gcov
    memory
    nvlink
-   stable-skiboot-rules
-   versioning
    pci
    pci-slot
    xscom-node-bindings

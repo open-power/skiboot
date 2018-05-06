@@ -9,12 +9,8 @@ the mailing list ( skiboot@lists.ozlabs.org - subscribe by
 going to https://lists.ozlabs.org/listinfo/skiboot )
 
 While we do use GitHub Issues, patches are accepted via the mailing list.
-We use GitHub Issues and Pull Requests for tracking contributions. We
-expect participants to adhere to the GitHub Community Guidelines (found
+We expect participants to adhere to the GitHub Community Guidelines (found
 at https://help.github.com/articles/github-community-guidelines/ ).
-
-If you are unable or unwilling to use GitHub, we can accept contributions
-via the mailing list.
 
 All contributions should have a Developer Certificate of Origin (see below).
 
