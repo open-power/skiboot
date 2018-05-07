@@ -137,6 +137,9 @@ void astbmc_init(void)
 	/* Preload PNOR VERSION section */
 	flash_fw_version_preload();
 
+	/* Request BMC information */
+	ipmi_get_bmc_info_request();
+
 	/* As soon as IPMI is up, inform BMC we are in "S0" */
 	ipmi_set_power_state(IPMI_PWR_SYS_S0_WORKING, IPMI_PWR_NOCHANGE);
 
@@ -150,6 +153,9 @@ void astbmc_init(void)
 
 	/* Add ibm,firmware-versions node */
 	flash_dt_add_fw_version();
+
+	/* Add BMC firmware info to device tree */
+	ipmi_dt_add_bmc_info();
 }
 
 int64_t astbmc_ipmi_power_down(uint64_t request)
