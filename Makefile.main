@@ -146,23 +146,14 @@ AFLAGS += $(call try-cflag,$(CC),-mabi=elfv1)
 endif
 
 ifeq ($(cc-name),clang)
-ifneq ($(CROSS),)
-CLANG_TARGET    := --target=$(notdir $(CROSS:%-=%))
+CLANG_TARGET    := --target=powerpc64-linux-gnu -mcpu=pwr8
 GCC_TOOLCHAIN   := $(realpath $(dir $(shell which $(LD)))/..)
-endif
 ifneq ($(GCC_TOOLCHAIN),)
 CLANG_GCC_TC    := --gcc-toolchain=$(GCC_TOOLCHAIN)
 endif
 CFLAGS += $(CLANG_TARGET) $(CLANG_GCC_TC)
 AFLAGS += $(CLANG_TARGET) $(CLANG_GCC_TC)
-CFLAGS += $(call cc-option, -no-integrated-as)
-AFLAGS += $(call cc-option, -no-integrated-as)
-
 LDFLAGS += $(CLANG_TARGET) $(CLANG_GCC_TC)
-
-CFLAGS += -mcpu=pwr8
-LDFLAGS += -mcpu=pwr8
-ASFLAGS += -mcpu=pwr8
 
 # Workarounds
 # TODO: Fix the issues these hide, and remove them
