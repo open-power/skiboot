@@ -31,16 +31,15 @@ if [ ! -f debian-jessie-initrd.gz ]; then
 fi
 
 T=`mktemp  --tmpdir skiboot_qemu_debian-jessie-boot_test.XXXXXXXXXX`
-D=`mktemp  --tmpdir debian-jessie-install.qcow2.XXXXXXXXXX`
+#D=`mktemp  --tmpdir debian-jessie-install.qcow2.XXXXXXXXXX`
 
 # In future we should do full install:
 # FIXME: -append "DEBIAN_FRONTEND=text locale=en_US keymap=us hostname=OPALtest domain=unassigned-domain rescue/enable=true"
-
-qemu-img  create -f qcow2 $D 128G 2>&1 > $T
+# qemu-img  create -f qcow2 $D 128G 2>&1 > $T
 
 ( cat <<EOF | expect
 set timeout 600
-spawn $QEMU -m 2G -M powernv -kernel debian-jessie-vmlinux -initrd debian-jessie-initrd.gz -nographic -device ipmi-bmc-sim,id=ipmi0 -device isa-ipmi-bt,bmc=ipmi0 -hda $D
+spawn $QEMU -m 2G -M powernv -kernel debian-jessie-vmlinux -initrd debian-jessie-initrd.gz -nographic -device ipmi-bmc-sim,id=ipmi0 -device isa-ipmi-bt,bmc=ipmi0
 expect {
 timeout { send_user "\nTimeout waiting for petitboot\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
