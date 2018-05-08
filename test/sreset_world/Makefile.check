@@ -12,6 +12,13 @@ sreset_world-tests: $(SRESET_WORLD_STB_TEST:%=%-check-stb-smt-p9-mambo)
 boot-tests: sreset_world-tests
 check: sreset_world-tests
 
+cc-name := $(shell $(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
+
+ifeq ($(cc-name),clang)
+sreset_kernel_CFLAGS = --target=powerpc64-linux-gnu
+endif
+sreset_kernel_CFLAGS += -mbig-endian -m64
+
 $(SRESET_WORLD_TEST:%=%-check-smt-mambo): %-check-smt-mambo: % skiboot.lid
 	$(call Q , BOOT TEST , THREADS=2 ./test/sreset_world/run_mambo_sreset.sh , $@)
 
@@ -24,15 +31,11 @@ $(SRESET_WORLD_STB_TEST:%=%-check-stb-smt-mambo): %-check-stb-smt-mambo: % skibo
 $(SRESET_WORLD_STB_TEST:%=%-check-stb-smt-p9-mambo): %-check-stb-smt-p9-mambo: % skiboot.lid.stb
 	$(call Q , BOOT TEST , SKIBOOT_ENABLE_MAMBO_STB=1 THREADS=2 ./test/sreset_world/run_mambo_p9_sreset.sh , $@)
 
-test/sreset_world/sreset_kernel/sreset_kernel.o: test/sreset_world/sreset_kernel/sreset_kernel.S test/sreset_world/sreset_kernel/sreset_kernel.ld
-	$(call Q,CC, $(CC) -mbig-endian -m64 -c -MMD -o $@ $< ,$@)
-
-sreset_kernel_LDFLAGS=-m64 -Wl,--build-id=none -T test/sreset_world/sreset_kernel/sreset_kernel.ld -ffreestanding -nostdlib -Ttext=0x0 -mbig-endian -N
-
--include $(wildcard test/sreset_world/sreset_kernel/*.d)
+test/sreset_world/sreset_kernel/sreset_kernel.o: test/sreset_world/sreset_kernel/sreset_kernel.S
+	$(call Q,CC, $(CC) $(sreset_kernel_CFLAGS) -c -o $@ $< ,$@)
 
 test/sreset_world/sreset_kernel/sreset_kernel: test/sreset_world/sreset_kernel/sreset_kernel.o
-	$(call Q,LD, $(CC) $(sreset_kernel_LDFLAGS) -o $@ $^ , $@)
+	$(call Q,LD, $(LD) -EB -m elf64ppc -N -o $@ $^ , $@)
 
 test/sreset_world/sreset_kernel/sreset_kernel.stb: test/sreset_world/sreset_kernel/sreset_kernel libstb/create-container
 	$(call Q,STB-DEVELOPMENT-SIGNED-CONTAINER,$(SRC)/libstb/sign-with-local-keys.sh $< $@ $(SRC)/libstb/keys/,$@)
@@ -41,5 +44,5 @@ test/sreset_world/sreset_kernel/sreset_kernel.stb: test/sreset_world/sreset_kern
 clean: sreset_world-test-clean
 
 sreset_world-test-clean:
-	$(RM) -f test/sreset_world/sreset_kernel/sreset_kernel
-	$(RM) -f test/sreset_world/sreset_kernel/sreset_kernel.[od]
+	$(RM) test/sreset_world/sreset_kernel/sreset_kernel
+	$(RM) test/sreset_world/sreset_kernel/sreset_kernel.o
