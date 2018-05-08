@@ -100,7 +100,7 @@ void clear_console(void)
  * Optionally can skip flushing to drivers, leaving messages
  * just in memory console.
  */
-static bool __flush_console(bool flush_to_drivers)
+static bool __flush_console(bool flush_to_drivers, bool need_unlock)
 {
 	struct cpu_thread *cpu = this_cpu();
 	size_t req, len = 0;
@@ -114,8 +114,12 @@ static bool __flush_console(bool flush_to_drivers)
 	 * Console flushing is suspended on this CPU, typically because
 	 * some critical locks are held that would potentially cause a
 	 * flush to deadlock
+	 *
+	 * Also if it recursed on con_lock (need_unlock is false). This
+	 * can happen due to debug code firing (e.g., list or stack
+	 * debugging).
 	 */
-	if (cpu->con_suspend) {
+	if (cpu->con_suspend || !need_unlock) {
 		cpu->con_need_flush = true;
 		return false;
 	}
@@ -176,7 +180,7 @@ bool flush_console(void)
 	bool ret;
 
 	lock(&con_lock);
-	ret = __flush_console(true);
+	ret = __flush_console(true, true);
 	unlock(&con_lock);
 
 	return ret;
@@ -250,7 +254,7 @@ ssize_t console_write(bool flush_to_drivers, const void *buf, size_t count)
 		write_char(c);
 	}
 
-	__flush_console(flush_to_drivers);
+	__flush_console(flush_to_drivers, need_unlock);
 
 	if (need_unlock)
 		unlock(&con_lock);
