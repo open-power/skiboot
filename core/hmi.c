@@ -1259,6 +1259,7 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 		}
 	}
 	if (hmer & SPR_HMER_TRIG_FIR_HMI) {
+		handled |= SPR_HMER_TRIG_FIR_HMI;
 		hmer &= ~SPR_HMER_TRIG_FIR_HMI;
 
 		hmi_print_debug("Clearing unknown debug trigger", hmer);
