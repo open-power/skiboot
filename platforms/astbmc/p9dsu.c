@@ -24,6 +24,7 @@
 #include <npu-regs.h>
 #include <opal-internal.h>
 #include <cpu.h>
+#include <timebase.h>
 
 #include "astbmc.h"
 
@@ -633,6 +634,7 @@ static void p9dsu_init(void)
 	struct ipmi_msg *ipmi_msg;
 	u8 riser_id = 0;
 	const char *p9dsu_variant;
+	int timeout_ms = 2000;
 
 	astbmc_init();
 	/*
@@ -647,14 +649,11 @@ static void p9dsu_init(void)
 				      &riser_id,
 				      smc_riser_req, sizeof(smc_riser_req), 1);
 		ipmi_queue_msg(ipmi_msg);
-		while(riser_id==0) {
-			opal_run_pollers();
-			cpu_relax();
+		while(riser_id==0 && timeout_ms > 0) {
+			time_wait(10);
+			timeout_ms -= 10;
 		}
 		switch (riser_id) {
-		default:
-			prlog(PR_INFO,"Defaulting to p9dsu1u\n");
-			/* fallthrough */
 		case 0x9:
 			p9dsu_variant = "supermicro,p9dsu1u";
 			slot_table_init(p9dsu1u_phb_table);
@@ -663,6 +662,9 @@ static void p9dsu_init(void)
 			p9dsu_variant = "supermicro,p9dsu2u";
 			slot_table_init(p9dsu2u_phb_table);
 			break;
+		default:
+			prlog(PR_ERR,"Defaulting to p9dsuess\n");
+			/* fallthrough */
 		case 0x1D:
 			p9dsu_variant = "supermicro,p9dsuess";
 			slot_table_init(p9dsu2uess_phb_table);
