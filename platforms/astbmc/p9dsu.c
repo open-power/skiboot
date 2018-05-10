@@ -28,6 +28,8 @@
 
 #include "astbmc.h"
 
+static bool p9dsu_riser_found = false;
+
 static const struct slot_table_entry p9dsu1u_phb0_0_slot[] = {
 	{
 		.etype = st_pluggable_slot,
@@ -590,6 +592,8 @@ static bool p9dsu_probe(void)
 	      dt_node_is_compatible(dt_root, "supermicro,p9dsu2uess")))
 		return false;
 
+	p9dsu_riser_found = true;
+
 	/* Lot of common early inits here */
 	astbmc_early_init();
 
@@ -607,7 +611,7 @@ static bool p9dsu_probe(void)
 	} else if (dt_node_is_compatible(dt_root, "supermicro,p9dsu2uess")) {
 		prlog(PR_INFO, "Detected p9dsu2uess variant\n");
 		slot_table_init(p9dsu2uess_phb_table);
-	}
+	} else {
 	/*
 	 * else we need to ask the BMC what subtype we are, but we need IPMI
 	 * which we don't get until astbmc_init(), so we delay setting up the
@@ -616,6 +620,8 @@ static bool p9dsu_probe(void)
 	 * This only applies if you're using a Hostboot that doesn't do this
 	 * for us.
 	 */
+	p9dsu_riser_found = false;
+	}
 
 	return true;
 }
@@ -642,7 +648,7 @@ static void p9dsu_init(void)
 	 * variant we are if Hostboot isn't the patched one that does this
 	 * for us.
 	 */
-	if (dt_node_is_compatible(dt_root, "supermicro,p9dsu")) {
+	if (!p9dsu_riser_found) {
 		ipmi_msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
 				      IPMI_CODE(IPMI_NETFN_APP, 0x52),
 				      p9dsu_riser_query_complete,
