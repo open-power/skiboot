@@ -2369,7 +2369,7 @@ static void phb4_dump_capp_err_regs(struct phb4 *p)
 /* Check if AIB is fenced via PBCQ NFIR */
 static bool phb4_fenced(struct phb4 *p)
 {
-	uint64_t nfir_p, nfir_n, err_aib;
+	uint64_t nfir_p, nfir_p_wof, nfir_n, nfir_n_wof, err_aib;
 	uint64_t err_rpt0, err_rpt1;
 
 	/* Already fenced ? */
@@ -2389,7 +2389,11 @@ static bool phb4_fenced(struct phb4 *p)
 	xscom_read(p->chip_id,
 		   p->pci_stk_xscom + XPEC_PCI_STK_PCI_FIR, &nfir_p);
 	xscom_read(p->chip_id,
+		   p->pci_stk_xscom + XPEC_PCI_STK_PCI_FIR_WOF, &nfir_p_wof);
+	xscom_read(p->chip_id,
 		   p->pe_stk_xscom + XPEC_NEST_STK_PCI_NFIR, &nfir_n);
+	xscom_read(p->chip_id,
+		   p->pe_stk_xscom + XPEC_NEST_STK_PCI_NFIR_WOF, &nfir_n_wof);
 	xscom_read(p->chip_id,
 		   p->pe_stk_xscom + XPEC_NEST_STK_ERR_RPT0, &err_rpt0);
 	xscom_read(p->chip_id,
@@ -2398,7 +2402,9 @@ static bool phb4_fenced(struct phb4 *p)
 		   p->pci_stk_xscom + XPEC_PCI_STK_PBAIB_ERR_REPORT, &err_aib);
 
 	PHBERR(p, "            PCI FIR=%016llx\n", nfir_p);
+	PHBERR(p, "        PCI FIR WOF=%016llx\n", nfir_p_wof);
 	PHBERR(p, "           NEST FIR=%016llx\n", nfir_n);
+	PHBERR(p, "       NEST FIR WOF=%016llx\n", nfir_n_wof);
 	PHBERR(p, "           ERR RPT0=%016llx\n", err_rpt0);
 	PHBERR(p, "           ERR RPT1=%016llx\n", err_rpt1);
 	PHBERR(p, "            AIB ERR=%016llx\n", err_aib);
