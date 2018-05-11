@@ -409,14 +409,14 @@ static void cpu_idle_p9(enum cpu_wake_cause wake_on)
 
 	if (sreset_enabled) {
 		/* stop with EC=1 (sreset) and ESL=1 (enable thread switch). */
-		/* PSSCR SD=0 ESL=1 EC=1 PSSL=0 TR=3 MTL=0 RL=3 */
+		/* PSSCR SD=0 ESL=1 EC=1 PSSL=0 TR=3 MTL=0 RL=1 */
 		psscr = PPC_BIT(42) | PPC_BIT(43) |
-			PPC_BITMASK(54, 55) | PPC_BITMASK(62,63);
+			PPC_BITMASK(54, 55) | PPC_BIT(63);
 		enter_p9_pm_state(psscr);
 	} else {
 		/* stop with EC=0 (resumes) which does not require sreset. */
-		/* PSSCR SD=0 ESL=0 EC=0 PSSL=0 TR=3 MTL=0 RL=3 */
-		psscr = PPC_BITMASK(54, 55) | PPC_BITMASK(62,63);
+		/* PSSCR SD=0 ESL=0 EC=0 PSSL=0 TR=3 MTL=0 RL=1 */
+		psscr = PPC_BITMASK(54, 55) | PPC_BIT(63);
 		enter_p9_pm_lite_state(psscr);
 	}
 
