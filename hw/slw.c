@@ -73,6 +73,7 @@ static void slw_do_rvwinkle(void *data)
 
 	/* Setup LPCR to wakeup on external interrupts only */
 	mtspr(SPR_LPCR, ((lpcr & ~SPR_LPCR_P8_PECE) | SPR_LPCR_P8_PECE2));
+	isync();
 
 	prlog(PR_DEBUG, "SLW: CPU PIR 0x%04x goint to rvwinkle...\n",
 	      cpu->pir);
@@ -99,6 +100,7 @@ static void slw_do_rvwinkle(void *data)
 
 	/* Restore LPCR */
 	mtspr(SPR_LPCR, lpcr);
+	isync();
 
 	/* If we are passed a master pointer we are the designated
 	 * waker, let's proceed. If not, return, we are finished.

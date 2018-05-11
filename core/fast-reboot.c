@@ -239,6 +239,7 @@ static void check_split_core(void)
 		/* Setup LPCR to wakeup on external interrupts only */
 		mtspr(SPR_LPCR, ((mfspr(SPR_LPCR) & ~SPR_LPCR_P8_PECE) |
 				 SPR_LPCR_P8_PECE2));
+		isync();
 		/* Go to nap (doesn't return) */
 		enter_nap();
 	}

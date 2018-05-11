@@ -351,6 +351,7 @@ static void cpu_idle_p8(enum cpu_wake_cause wake_on)
 		lpcr |= SPR_LPCR_P8_PECE2 | SPR_LPCR_P8_PECE3;
 		mtspr(SPR_LPCR, lpcr);
 	}
+	isync();
 
 	/* Enter nap */
 	enter_p8_pm_state(false);
@@ -404,6 +405,7 @@ static void cpu_idle_p9(enum cpu_wake_cause wake_on)
 	}
 
 	mtspr(SPR_LPCR, lpcr);
+	isync();
 
 	if (sreset_enabled) {
 		/* stop with EC=1 (sreset) and ESL=1 (enable thread switch). */
@@ -973,6 +975,7 @@ static void enable_large_dec(bool on)
 		lpcr &= ~SPR_LPCR_P9_LD;
 
 	mtspr(SPR_LPCR, lpcr);
+	isync();
 }
 
 #define HIGH_BIT (1ull << 63)
