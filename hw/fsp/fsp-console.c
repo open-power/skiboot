@@ -850,6 +850,9 @@ void fsp_console_init(void)
 	/* Register poller */
 	opal_add_poller(fsp_console_poll, NULL);
 
+	/* Register OPAL console backend */
+	set_opal_console(&fsp_opal_con);
+
 	/* Parse serial port data */
 	serials = dt_find_by_path(dt_root, "ipl-params/fsp-serial");
 	if (!serials) {
@@ -869,8 +872,6 @@ void fsp_console_init(void)
 	}
 
 	op_display(OP_LOG, OP_MOD_FSPCON, 0x0005);
-
-	set_opal_console(&fsp_opal_con);
 }
 
 static int64_t fsp_console_flush(int64_t terminal __unused)
