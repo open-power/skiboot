@@ -701,7 +701,7 @@ int hservice_memory_error(uint64_t i_start_addr, uint64_t i_endAddr,
 {
 	const char *sysfsfile, *typestr;
 	char buf[ADDR_STRING_SZ];
-	int memfd, rc, n;
+	int memfd, rc, n, ret = 0;
 	uint64_t addr;
 
 	switch(i_errorType) {
@@ -737,11 +737,11 @@ int hservice_memory_error(uint64_t i_start_addr, uint64_t i_endAddr,
 			pr_log(LOG_CRIT, "MEM: Failed to offline memory! "
 					"page addr: %016lx type: %d: %m",
 				addr, i_errorType);
-			return rc;
+			ret = rc;
 		}
 	}
 
-	return 0;
+	return ret;
 }
 
 uint64_t hservice_get_interface_capabilities(uint64_t set)
