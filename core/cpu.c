@@ -375,8 +375,6 @@ static void cpu_idle_p9(enum cpu_wake_cause wake_on)
 		return;
 	}
 
-	msgclr(); /* flush pending messages */
-
 	/* Synchronize with wakers */
 	if (wake_on == cpu_wake_on_job) {
 		/* Mark ourselves in idle so other CPUs know to send an IPI */
@@ -420,11 +418,14 @@ static void cpu_idle_p9(enum cpu_wake_cause wake_on)
 		enter_p9_pm_lite_state(psscr);
 	}
 
-skip_sleep:
+	/* Clear doorbell */
+	p9_dbell_receive();
+
+ skip_sleep:
 	/* Restore */
+	sync();
 	cpu->in_idle = false;
 	cpu->in_sleep = false;
-	p9_dbell_receive();
 }
 
 static void cpu_idle_pm(enum cpu_wake_cause wake_on)
