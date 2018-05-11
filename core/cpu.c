@@ -401,7 +401,6 @@ static void cpu_idle_p9(enum cpu_wake_cause wake_on)
 
 		/* HV DBELL and DEC */
 		lpcr |= SPR_LPCR_P9_PECEL1 | SPR_LPCR_P9_PECEL3;
-		mtspr(SPR_LPCR, lpcr);
 	}
 
 	mtspr(SPR_LPCR, lpcr);
