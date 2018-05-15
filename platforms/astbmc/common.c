@@ -429,5 +429,5 @@ const struct bmc_platform astbmc_ami = {
 
 const struct bmc_platform astbmc_openbmc = {
 	.name = "OpenBMC",
-	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x32, 0xf0),
+	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
 };
