@@ -28,6 +28,7 @@
 #include <chip.h>
 #include <npu-regs.h>
 #include <npu2-regs.h>
+#include <npu2.h>
 #include <npu.h>
 #include <capp.h>
 #include <nvram.h>
@@ -621,7 +622,8 @@ static uint32_t npu2_scom_dump[] = {
 	0x00
 };
 
-static void dump_scoms(int flat_chip_id, const char *unit, uint32_t *scoms)
+static void dump_scoms(int flat_chip_id, const char *unit, uint32_t *scoms,
+			const char *loc)
 {
 	uint64_t value;
 	int r;
@@ -631,8 +633,8 @@ static void dump_scoms(int flat_chip_id, const char *unit, uint32_t *scoms)
 		r = _xscom_read(flat_chip_id, *scoms, &value, false);
 		if (r != OPAL_SUCCESS)
 			continue;
-		prlog(PR_ERR, "%s: 0x%08x=0x%016llx\n",
-		      unit, *scoms, value);
+		prlog(PR_ERR, "%s: [Loc: %s] P:%d 0x%08x=0x%016llx\n",
+		      unit, loc, this_cpu()->chip_id, *scoms, value);
 		scoms++;
 	}
 }
@@ -655,6 +657,7 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 	uint64_t npu2_fir_action1_addr;
 	uint64_t fatal_errors;
 	int total_errors = 0;
+	const char *loc;
 
 	/* Find the NPU on the chip associated with the HMI. */
 	for_each_phb(phb) {
@@ -688,10 +691,13 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 		fatal_errors = npu2_fir & ~npu2_fir_mask & npu2_fir_action0 & npu2_fir_action1;
 
 		if (fatal_errors) {
-			prlog(PR_ERR, "NPU: FIR#%d FIR 0x%016llx mask 0x%016llx\n",
-					i, npu2_fir, npu2_fir_mask);
-			prlog(PR_ERR, "NPU: ACTION0 0x%016llx, ACTION1 0x%016llx\n",
-					npu2_fir_action0, npu2_fir_action1);
+			loc = chip_loc_code(this_cpu()->chip_id);
+			if (!loc)
+				loc = "Not Available";
+			prlog(PR_ERR, "NPU2: [Loc: %s] P:%d FIR#%d FIR 0x%016llx mask 0x%016llx\n",
+					loc, this_cpu()->chip_id, i, npu2_fir, npu2_fir_mask);
+			prlog(PR_ERR, "NPU2: [Loc: %s] P:%d ACTION0 0x%016llx, ACTION1 0x%016llx\n",
+					loc, this_cpu()->chip_id, npu2_fir_action0, npu2_fir_action1);
 			total_errors++;
 		}
 
@@ -712,7 +718,7 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 
 	if (npu2_hmi_verbose) {
 		_xscom_lock();
-		dump_scoms(flat_chip_id, "NPU2", npu2_scom_dump);
+		dump_scoms(flat_chip_id, "NPU2", npu2_scom_dump, loc);
 		_xscom_unlock();
 		prlog(PR_ERR, " _________________________ \n");
 		prlog(PR_ERR, "< It's Driver Debug time! >\n");
