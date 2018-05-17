@@ -3764,7 +3764,11 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 	}
 	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, reg);
 
-	/* Initialize CI Store Buffers */
+	/* The transport control register needs to be loaded in two
+	 * steps. Once the register values have been set, we have to
+	 * write bit 63 to a '1', which loads the register values into
+	 * the ci store buffer logic.
+	 */
 	xscom_read(p->chip_id, TRANSPORT_CONTROL + offset, &reg);
 	reg |= PPC_BIT(63);
 	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, reg);
