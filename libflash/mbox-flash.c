@@ -947,9 +947,6 @@ static void mbox_flash_attn(uint8_t attn, void *priv)
 	} else {
 		mbox_flash->pause = false;
 	}
-
-	if (attn & MBOX_ATTN_BMC_DAEMON_READY)
-		attn &= ~MBOX_ATTN_BMC_DAEMON_READY;
 }
 
 static void mbox_flash_callback(struct bmc_mbox_msg *msg, void *priv)
