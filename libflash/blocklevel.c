@@ -205,7 +205,7 @@ int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf
 {
 	int rc, ecc_protection;
 	struct ecc64 *buffer;
-	uint64_t ecc_len = ecc_buffer_size(len);
+	uint64_t ecc_len;
 	uint64_t ecc_start, ecc_pos, ecc_diff;
 
 	FL_DBG("%s: 0x%" PRIx64 "\t%p\t0x%" PRIx64 "\n", __func__, pos, buf, len);
