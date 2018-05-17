@@ -18,8 +18,11 @@ strtok(char *src, const char *pattern)
 	static char *nxtTok;
 	char *retVal = NULL;
 
-	if (!src)
+	if (!src) {
 		src = nxtTok;
+		if (!src)
+			return retVal;
+	}
 
 	while (*src) {
 		const char *pp = pattern;
