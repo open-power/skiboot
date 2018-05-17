@@ -203,9 +203,12 @@ static inline void opal_led_update_complete(u64 async_token, u64 result)
 	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL, async_token, result);
 }
 
-static inline bool is_sai_loc_code(char *loc_code)
+static inline bool is_sai_loc_code(const char *loc_code)
 {
-	if (!strcmp(sai_data.loc_code, loc_code))
+	if (!loc_code)
+		return false;
+
+	if (!strncmp(sai_data.loc_code, loc_code, strlen(sai_data.loc_code)))
 		return true;
 
 	return false;
