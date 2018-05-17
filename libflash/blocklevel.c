@@ -263,6 +263,7 @@ int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf
 		if (rc) {
 			errno = EBADF;
 			rc = FLASH_ERR_ECC_INVALID;
+			goto out;
 		}
 
 		/*
@@ -274,6 +275,7 @@ int blocklevel_write(struct blocklevel_device *bl, uint64_t pos, const void *buf
 		if (rc) {
 			errno = EBADF;
 			rc = FLASH_ERR_ECC_INVALID;
+			goto out;
 		}
 
 		if (memcpy_to_ecc_unaligned(buffer, buf, len, ecc_diff)) {
