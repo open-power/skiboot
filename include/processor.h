@@ -77,6 +77,7 @@
 #define SPR_LPCR	0x13e
 #define SPR_HMER	0x150	/* Hypervisor Maintenance Exception */
 #define SPR_HMEER	0x151	/* HMER interrupt enable mask */
+#define SPR_PCR		0x152
 #define SPR_AMOR	0x15d
 #define SPR_PSSCR	0x357   /* RW: Stop status and control (ISA 3) */
 #define SPR_TSCR	0x399
