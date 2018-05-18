@@ -1333,6 +1333,7 @@ static void cpu_cleanup_one(void *param __unused)
 {
 	mtspr(SPR_AMR, 0);
 	mtspr(SPR_IAMR, 0);
+	mtspr(SPR_PCR, 0);
 }
 
 static int64_t cpu_cleanup_all(void)
