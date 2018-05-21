@@ -516,151 +516,54 @@ static void p8_i2c_translate_error(struct i2c_request *req, uint64_t status)
 		req->result = OPAL_I2C_TIMEOUT;
 }
 
-static void p8_i2c_force_reset(struct p8_i2c_master *master)
+static int p8_i2c_reset_port(struct p8_i2c_master_port *p)
 {
-	struct p8_i2c_master_port *p;
-	uint64_t mode;
-	int rc;
-
-	/* Reset the i2c engine */
-	rc = xscom_write(master->chip_id, master->xscom_base +
-			 I2C_RESET_I2C_REG, 0);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_I2C_RESET), "I2C: Failed "
-				 "to reset the i2c engine\n");
-		return;
-	}
-	time_wait_us_nopoll(10);
-	/* Reset port busy */
-	rc = xscom_write(master->chip_id, master->xscom_base +
-			 I2C_PORT_BUSY_REG, 0x8000000000000000ULL);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_I2C_RESET), "I2C: Failed "
-				 "to reset port busy on i2c engine\n");
-		return;
-	}
-	time_wait_us_nopoll(10);
-	list_for_each(&master->ports, p, link) {
-		mode = 0;
-		mode = SETFIELD(I2C_MODE_PORT_NUM, mode, p->port_num);
-		mode = SETFIELD(I2C_MODE_BIT_RATE_DIV, mode, p->bit_rate_div);
-		mode |= I2C_MODE_DIAGNOSTIC;
-		rc = xscom_write(master->chip_id,
-				 master->xscom_base + I2C_MODE_REG,
-				 mode);
-		if (rc)
-			prlog(PR_ERR, "I2C: Failed to write the MODE_REG\n");
-
-		time_wait_us_nopoll(10);
-		rc = xscom_write(master->chip_id,
-				 master->xscom_base + I2C_RESET_S_SCL_REG,
-				 0);
-		if (rc)
-			prlog(PR_ERR, "I2C: Failed to reset S_SCL\n");
-
-		time_wait_us_nopoll(10);
-		rc = xscom_write(master->chip_id,
-				 master->xscom_base + I2C_SET_S_SCL_REG,
-				 0);
-		if (rc)
-			prlog(PR_ERR, "I2C: Failed to set S_SCL\n");
-
-		/* Manually reset */
-		time_wait_us_nopoll(10);
-		rc = xscom_write(master->chip_id,
-				 master->xscom_base + I2C_RESET_S_SCL_REG,
-				 0);
-		if (rc)
-			prlog(PR_ERR, "I2C: sendStop: fail reset S_SCL\n");
-
-		time_wait_us_nopoll(10);
-		rc = xscom_write(master->chip_id,
-				 master->xscom_base + I2C_RESET_S_SDA_REG,
-				 0);
-		if (rc)
-			prlog(PR_ERR, "I2C: sendStop: fail reset S_SDA\n");
-
-		time_wait_us_nopoll(10);
-		rc = xscom_write(master->chip_id,
-				 master->xscom_base + I2C_SET_S_SCL_REG,
-				 0);
-		if (rc)
-			prlog(PR_ERR, "I2C: sendStop: fail set S_SCL\n");
-
-		time_wait_us_nopoll(10);
-		rc = xscom_write(master->chip_id,
-				 master->xscom_base + I2C_SET_S_SDA_REG,
-				 0);
-		if (rc)
-			prlog(PR_ERR, "I2C: sendStop: fail set 2 S_SDA\n");
-
-		mode ^= I2C_MODE_DIAGNOSTIC;
-		time_wait_us_nopoll(10);
-		rc = xscom_write(master->chip_id,
-				 master->xscom_base + I2C_MODE_REG,
-				 mode);
-		if (rc)
-			prlog(PR_ERR, "I2C: Failed to write the MODE_REG\n");
-	}
-}
-
-static int p8_i2c_reset_engine(struct p8_i2c_master *master)
-{
-	struct p8_i2c_master_port *p;
-	int reset_loops;
-	int rc;
+	struct p8_i2c_master *master = p->master;
+	int reset_loops, rc;
 	uint64_t status;
 
-	list_for_each(&master->ports, p, link) {
-		/*
-		 * Reset each port by issuing a STOP command to slave.
-		 *
-		 * Reprogram the mode register with 'enhanced bit' set
-		 */
-		rc = p8_i2c_prog_mode(p, true);
-		if (rc) {
-			log_simple_error(&e_info(OPAL_RC_I2C_RESET),
-					 "I2C: Failed to program the MODE_REG\n");
-			return -1;
-		}
+	/* FIXME: this should per per-port rather than per-master */
+	master->state = state_error;
 
-		/* Send an immediate stop */
-		master->state = state_error;
-		rc = xscom_write(master->chip_id, master->xscom_base +
-				 I2C_CMD_REG, I2C_CMD_WITH_STOP);
-		if (rc) {
-			log_simple_error(&e_info(OPAL_RC_I2C_RESET),
-					 "I2C: Failed to issue immediate STOP\n");
-			return -1;
-		}
-
-		/* Wait for COMMAND COMPLETE */
-		reset_loops = 0;
-		do {
-			rc = xscom_read(master->chip_id,
-					master->xscom_base + I2C_STAT_REG,
-					&status);
-			if (rc) {
-				log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
-						 "I2C: Failed to read the STAT_REG\n");
-				return -1;
-			}
-			if (! (status & I2C_STAT_CMD_COMP)) {
-				time_wait_ms(10);
-				if (reset_loops++ == 5) {
-					prlog(PR_WARNING, "I2C: Retrying reset, with force!\n");
-					p8_i2c_force_reset(master);
-					continue;
-				}
-				if (reset_loops == 10) {
-					log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
-							 "I2C: Failed to recover i2c engine\n");
-					break;
-				}
-			}
-		} while (! (status & I2C_STAT_CMD_COMP));
+	/*
+	 * Put the master into enhanced STOP mode when recovering the
+	 * port. This causes the master to send additional STOP conditions
+	 * to work around some particularly stupid I2C devices and it's
+	 * required on secure I2C masters since they will not send a bare
+	 * stop condition.
+	 */
+	rc = p8_i2c_prog_mode(p, true);
+	if (rc) {
+		log_simple_error(&e_info(OPAL_RC_I2C_RESET),
+				 "I2C: Failed to enable enhanced mode\n");
+		return -1;
 	}
-	return 0;
+
+	rc = xscom_write(master->chip_id, master->xscom_base +
+			 I2C_CMD_REG, I2C_CMD_WITH_STOP);
+	if (rc)
+		goto err;
+
+	/* Wait for COMMAND COMPLETE */
+	for (reset_loops = 0; reset_loops < 10; reset_loops++) {
+		time_wait_ms(10);
+
+		rc = xscom_read(master->chip_id,
+				master->xscom_base + I2C_STAT_REG,
+				&status);
+		if (rc)
+			goto err;
+
+		if (status & I2C_STAT_CMD_COMP)
+			break;
+	}
+
+	if (status & I2C_STAT_CMD_COMP)
+		return 0;
+err:
+	prerror("I2C: Failed to reset c%de%dp%d\n",
+		master->chip_id, master->engine_id, p->port_num);
+	return -1;
 }
 
 static void p8_i2c_status_error(struct p8_i2c_master_port *port,
@@ -699,7 +602,7 @@ static void p8_i2c_status_error(struct p8_i2c_master_port *port,
 		 */
 		p8_i2c_complete_request(master, req, req->result);
 	} else {
-		if (p8_i2c_reset_engine(master))
+		if (p8_i2c_reset_port(port))
 			goto exit;
 		/* Enable the interrupt */
 		p8_i2c_enable_irqs(master);
