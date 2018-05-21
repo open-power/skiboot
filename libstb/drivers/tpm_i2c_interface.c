@@ -21,7 +21,8 @@
 #include "tpm_i2c_interface.h"
 #include "../status_codes.h"
 
-#define I2C_BYTE_TIMEOUT_MS		30  /* 30ms/byte timeout */
+/* TPMs can clock strech I2C operations for a LOOOOOOONG */
+#define I2C_BYTE_TIMEOUT_MS		2000  /* 2000ms/byte timeout */
 
 /**
  * tpm_i2c_request_send - send request to i2c bus
