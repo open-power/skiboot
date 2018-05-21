@@ -192,7 +192,6 @@ struct p8_i2c_master {
 	uint64_t		start_time;	/* Request start time */
 	uint64_t		last_update;
 	uint64_t		poll_interval;	/* Polling interval  */
-	uint64_t		byte_timeout;	/* Timeout per byte */
 	uint64_t		xscom_base;	/* xscom base of i2cm */
 	uint32_t		fifo_size;	/* Maximum size of FIFO  */
 	uint32_t		chip_id;	/* Chip the i2cm sits on */
@@ -225,6 +224,7 @@ struct p8_i2c_master_port {
 	struct p8_i2c_master	*master;
 	uint32_t		port_num;
 	uint32_t		bit_rate_div;	/* Divisor to set bus speed*/
+	uint64_t		byte_timeout;	/* Timeout per byte */
 	struct list_node	link;
 };
 
@@ -1287,7 +1287,7 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 
 	/* If we don't have a user-set timeout then use the master's default */
 	if (!request->timeout)
-		request->timeout = master->byte_timeout;
+		request->timeout = port->byte_timeout;
 
 	/* Start the timeout */
 	p8_i2c_reset_timeout(master, req);
@@ -1608,7 +1608,7 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	struct dt_node *i2cm_port;
 	struct p8_i2c_master *master;
 	struct list_head *chip_list;
-	uint64_t ex_stat;
+	uint64_t ex_stat, default_timeout;
 	static bool irq_printed;
 	int64_t rc;
 
@@ -1717,7 +1717,12 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	list_add_tail(chip_list, &master->link);
 	max_bus_speed = 0;
 
+	default_timeout = master->irq_ok ?
+		I2C_TIMEOUT_IRQ_MS :
+		I2C_TIMEOUT_POLL_MS;
+
 	dt_for_each_child(i2cm, i2cm_port) {
+		uint64_t timeout_ms;
 		uint32_t speed;
 
 		port->port_num = dt_prop_get_u32(i2cm_port, "reg");
@@ -1733,6 +1738,11 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 		port->bus.free_req = p8_i2c_free_request;
 		port->bus.set_req_timeout = p8_i2c_set_request_timeout;
 		port->bus.run_req = p8_i2c_run_request;
+
+		timeout_ms = dt_prop_get_u32_def(i2cm_port, "timeout-ms",
+						default_timeout);
+		port->byte_timeout = msecs_to_tb(timeout_ms);
+
 		i2c_add_bus(&port->bus);
 		list_add_tail(&master->ports, &port->link);
 
@@ -1752,10 +1762,6 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 	 * poll_interval is that interval.
 	 */
 	master->poll_interval = (max_bus_speed) ? p8_i2c_get_poll_interval(max_bus_speed) : TIMER_POLL;
-
-	master->byte_timeout = master->irq_ok ?
-		msecs_to_tb(I2C_TIMEOUT_IRQ_MS) :
-		msecs_to_tb(I2C_TIMEOUT_POLL_MS);
 }
 
 void p8_i2c_init(void)
