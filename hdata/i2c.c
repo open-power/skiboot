@@ -343,6 +343,16 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		if (label)
 			dt_add_property_string(node, "label", label);
 
+		/*
+		 * Set a default timeout of 2s on the ports with a TPM. This is
+		 * to work around a bug with certain TPM firmwares that can
+		 * clock stretch for long periods of time and will lock up
+		 * until they are power cycled if a STOP condition is sent
+		 * during this period.
+		 */
+		if (dev->type == 0x3)
+			dt_add_property_cells(bus, "timeout-ms", 2000);
+
 		/* XXX: SLCA index? */
 	}
 
