@@ -135,6 +135,8 @@ struct npu2_dev {
 	/* OpenCAPI */
 	struct phb		phb_ocapi;
 	uint64_t		i2c_port_id_ocapi;
+	bool			train_need_fence;
+	bool			train_fenced;
 };
 
 struct npu2 {

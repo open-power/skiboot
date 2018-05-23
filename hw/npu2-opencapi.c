@@ -58,6 +58,21 @@
 #define TL_MAX_TEMPLATE		63
 #define TL_RATE_BUF_SIZE	32
 
+#define OCAPI_SLOT_NORMAL                   PCI_SLOT_STATE_NORMAL
+#define OCAPI_SLOT_LINK                     PCI_SLOT_STATE_LINK
+#define   OCAPI_SLOT_LINK_START             (OCAPI_SLOT_LINK + 1)
+#define   OCAPI_SLOT_LINK_WAIT              (OCAPI_SLOT_LINK + 2)
+#define   OCAPI_SLOT_LINK_TRAINED           (OCAPI_SLOT_LINK + 3)
+#define OCAPI_SLOT_FRESET                   PCI_SLOT_STATE_FRESET
+#define   OCAPI_SLOT_FRESET_START           (OCAPI_SLOT_FRESET + 1)
+#define   OCAPI_SLOT_FRESET_INIT            (OCAPI_SLOT_FRESET + 2)
+#define   OCAPI_SLOT_FRESET_ASSERT_DELAY    (OCAPI_SLOT_FRESET + 3)
+#define   OCAPI_SLOT_FRESET_DEASSERT_DELAY  (OCAPI_SLOT_FRESET + 4)
+#define   OCAPI_SLOT_FRESET_INIT_DELAY      (OCAPI_SLOT_FRESET + 5)
+
+#define OCAPI_LINK_TRAINING_RETRIES	5
+#define OCAPI_LINK_TRAINING_TIMEOUT	3000 /* ms */
+
 enum npu2_link_training_state {
 	NPU2_TRAIN_DEFAULT, /* fully train the link */
 	NPU2_TRAIN_PRBS31,  /* used for Signal Integrity testing */
@@ -792,7 +807,7 @@ static void otl_enabletx(uint32_t gcid, uint32_t scom_base, uint64_t index)
 	/* TODO: Abort if credits are zero */
 }
 
-static void reset_ocapi_device(struct npu2_dev *dev)
+static void assert_reset(struct npu2_dev *dev)
 {
 	uint8_t pin, data;
 	int rc;
@@ -824,10 +839,7 @@ static void reset_ocapi_device(struct npu2_dev *dev)
 	if (rc)
 		goto err;
 
-	/*
-	 * assert i2c reset for 5ms
-	 * register 1 controls the signal, reset is active low
-	 */
+	/* register 1 controls the signal, reset is active low */
 	data = ~pin;
 	rc = i2c_request_send(dev->i2c_port_id_ocapi,
 			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
@@ -835,20 +847,6 @@ static void reset_ocapi_device(struct npu2_dev *dev)
 			&data, sizeof(data), 120);
 	if (rc)
 		goto err;
-	time_wait_ms(5);
-
-	/*
-	 * deassert i2c reset and wait 5ms
-	 */
-	data = 0xFF;
-	rc = i2c_request_send(dev->i2c_port_id_ocapi,
-			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
-			0x1, 1,
-			&data, sizeof(data), 120);
-	if (rc)
-		goto err;
-	time_wait_ms(5);
-
 	return;
 
 err:
@@ -858,6 +856,26 @@ err:
 	 * a reset signal over I2C to the OpenCAPI device.
 	 */
 	prlog(PR_ERR, "OCAPI: Error writing I2C reset signal: %d\n", rc);
+}
+
+static void deassert_reset(struct npu2_dev *dev)
+{
+	uint8_t data;
+	int rc;
+
+	data = 0xFF;
+	rc = i2c_request_send(dev->i2c_port_id_ocapi,
+			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
+			0x1, 1,
+			&data, sizeof(data), 120);
+	if (rc) {
+		/**
+		 * @fwts-label OCAPIDeviceResetFailed
+		 * @fwts-advice There was an error attempting to send
+		 * a reset signal over I2C to the OpenCAPI device.
+		 */
+		prlog(PR_ERR, "OCAPI: Error writing I2C reset signal: %d\n", rc);
+	}
 }
 
 static bool i2c_presence_detect(struct npu2_dev *dev)
@@ -898,13 +916,11 @@ static bool i2c_presence_detect(struct npu2_dev *dev)
 	return !(state & data);
 }
 
-static int odl_train(uint32_t gcid, uint32_t index, struct npu2_dev *dev)
+static void reset_odl(uint32_t gcid, struct npu2_dev *dev)
 {
 	uint64_t reg, config_xscom;
-	int timeout = 3000;
-	prlog(PR_DEBUG, "OCAPI: %s: Training ODL\n", __func__);
 
-	switch (index) {
+	switch (dev->index) {
 	case 2:
 		config_xscom = OB0_ODL0_CONFIG;
 		break;
@@ -934,35 +950,60 @@ static int odl_train(uint32_t gcid, uint32_t index, struct npu2_dev *dev)
 
 	reg &= ~OB_ODL_CONFIG_RESET;
 	xscom_write(gcid, config_xscom, reg);
+}
 
-	reset_ocapi_device(dev);
+static void set_init_pattern(uint32_t gcid, struct npu2_dev *dev)
+{
+	uint64_t reg, config_xscom;
+
+	switch (dev->index) {
+	case 2:
+		config_xscom = OB0_ODL0_CONFIG;
+		break;
+	case 3:
+		config_xscom = OB0_ODL1_CONFIG;
+		break;
+	case 4:
+		config_xscom = OB3_ODL1_CONFIG;
+		break;
+	case 5:
+		config_xscom = OB3_ODL0_CONFIG;
+		break;
+	default:
+		assert(false);
+	}
 
 	/* Transmit Pattern A */
+	xscom_read(gcid, config_xscom, &reg);
 	reg = SETFIELD(OB_ODL_CONFIG_TRAIN_MODE, reg, 0b0001);
 	xscom_write(gcid, config_xscom, reg);
-	time_wait_ms(5);
+}
 
-	/* Bump lanes - this improves training reliability */
-	npu2_opencapi_bump_ui_lane(dev);
+static void start_training(uint32_t gcid, struct npu2_dev *dev)
+{
+	uint64_t reg, config_xscom;
+
+	switch (dev->index) {
+	case 2:
+		config_xscom = OB0_ODL0_CONFIG;
+		break;
+	case 3:
+		config_xscom = OB0_ODL1_CONFIG;
+		break;
+	case 4:
+		config_xscom = OB3_ODL1_CONFIG;
+		break;
+	case 5:
+		config_xscom = OB3_ODL0_CONFIG;
+		break;
+	default:
+		assert(false);
+	}
 
 	/* Start training */
+	xscom_read(gcid, config_xscom, &reg);
 	reg = SETFIELD(OB_ODL_CONFIG_TRAIN_MODE, reg, 0b1000);
 	xscom_write(gcid, config_xscom, reg);
-
-	do {
-		reg = get_odl_status(gcid, index);
-		if (GETFIELD(OB_ODL_STATUS_TRAINING_STATE_MACHINE, reg) == 0x7) {
-			prlog(PR_NOTICE,
-			      "OCAPI: Link %d on chip %u trained in %dms\n",
-			      index, gcid, 3000 - timeout);
-			return OPAL_SUCCESS;
-		}
-		time_wait_ms(1);
-	} while (timeout--);
-	prlog(PR_INFO, "OCAPI: Link %d on chip %u failed to train, retrying\n",
-	      index, gcid);
-	prlog(PR_INFO, "OCAPI: Link status: %016llx\n", reg);
-	return OPAL_HARDWARE;
 }
 
 static int64_t npu2_opencapi_get_presence_state(struct pci_slot *slot,
@@ -1000,6 +1041,167 @@ static int64_t npu2_opencapi_get_link_state(struct pci_slot *slot, uint8_t *val)
 	return rc;
 }
 
+static int64_t npu2_opencapi_retry_state(struct pci_slot *slot)
+{
+	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
+	uint32_t chip_id = dev->npu->chip_id;
+
+	if (!slot->link_retries--) {
+		/**
+		 * @fwts-label OCAPILinkTrainingFailed
+		 * @fwts-advice The OpenCAPI link training procedure failed.
+		 * This indicates a hardware or firmware bug. OpenCAPI
+		 * functionality will not be available on this link.
+		 */
+		prlog(PR_ERR,
+			"OCAPI: Link %d on chip %u failed to train\n",
+			dev->index, chip_id);
+		prlog(PR_ERR, "OCAPI: Final link status: %016llx\n",
+			get_odl_status(chip_id, dev->index));
+		return OPAL_HARDWARE;
+	}
+
+	prlog(PR_ERR,
+		"OCAPI: Link %d on chip %u failed to train, retrying\n",
+		dev->index, chip_id);
+	pci_slot_set_state(slot, OCAPI_SLOT_FRESET_INIT);
+	return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
+}
+
+static int64_t npu2_opencapi_poll_link(struct pci_slot *slot)
+{
+	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
+	uint32_t chip_id = dev->npu->chip_id;
+	uint64_t reg;
+
+	switch (slot->state) {
+	case OCAPI_SLOT_NORMAL:
+	case OCAPI_SLOT_LINK_START:
+		prlog(PR_DEBUG, "OCAPI: LINK: Start polling\n");
+		pci_slot_set_state(slot, OCAPI_SLOT_LINK_WAIT);
+		/* fall-through */
+	case OCAPI_SLOT_LINK_WAIT:
+		reg = get_odl_status(chip_id, dev->index);
+		if (GETFIELD(OB_ODL_STATUS_TRAINING_STATE_MACHINE, reg) == 0x7) {
+			prlog(PR_NOTICE,
+				"OCAPI: Link %d on chip %u trained in %lld ms\n",
+				dev->index, chip_id,
+				OCAPI_LINK_TRAINING_TIMEOUT - slot->retries);
+			pci_slot_set_state(slot, OCAPI_SLOT_LINK_TRAINED);
+			return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
+		}
+		if (slot->retries-- == 0)
+			return npu2_opencapi_retry_state(slot);
+
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
+
+	case OCAPI_SLOT_LINK_TRAINED:
+		otl_enabletx(chip_id, dev->npu->xscom_base, dev->index);
+		pci_slot_set_state(slot, OCAPI_SLOT_NORMAL);
+		return OPAL_SUCCESS;
+
+	default:
+		prlog(PR_ERR, "OCAPI: LINK: unexpected slot state %08x\n",
+			slot->state);
+
+	}
+	pci_slot_set_state(slot, OCAPI_SLOT_NORMAL);
+	return OPAL_HARDWARE;
+}
+
+static int64_t npu2_opencapi_creset(struct pci_slot *slot __unused)
+{
+	prlog(PR_ERR, "OCAPI: creset not supported\n");
+	return OPAL_UNSUPPORTED;
+}
+
+static int64_t npu2_opencapi_freset(struct pci_slot *slot)
+{
+	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
+	uint32_t chip_id = dev->npu->chip_id;
+	uint8_t presence = 1;
+
+	switch (slot->state) {
+	case OCAPI_SLOT_NORMAL:
+	case OCAPI_SLOT_FRESET_START:
+		prlog(PR_DEBUG, "OCAPI: FRESET: Starts\n");
+
+		if (slot->ops.get_presence_state)
+			slot->ops.get_presence_state(slot, &presence);
+		if (!presence) {
+			/*
+			 * FIXME: if there's no card on the link, we
+			 * should consider powering off the unused
+			 * lanes to save energy
+			 */
+			prlog(PR_INFO,
+				"OCAPI: no card detected on link %d, chip %d\n",
+				dev->index, chip_id);
+			return OPAL_SUCCESS;
+		}
+		if (dev->train_need_fence) {
+			prlog(PR_DEBUG, "Fencing OTL during reset\n");
+			set_fence_control(chip_id, dev->npu->xscom_base,
+					dev->index, 0b11);
+			npu2_write(dev->npu, NPU2_MISC_FENCE_STATE,
+				PPC_BIT(dev->index + 6));
+			dev->train_fenced = true;
+		}
+		dev->train_need_fence = true;
+		slot->link_retries = OCAPI_LINK_TRAINING_RETRIES;
+		npu2_opencapi_phy_setup(dev);
+		/* fall-through */
+	case OCAPI_SLOT_FRESET_INIT:
+		reset_odl(chip_id, dev);
+		assert_reset(dev);
+		pci_slot_set_state(slot,
+				OCAPI_SLOT_FRESET_ASSERT_DELAY);
+		/* assert for 5ms */
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
+
+	case OCAPI_SLOT_FRESET_ASSERT_DELAY:
+		deassert_reset(dev);
+		pci_slot_set_state(slot,
+				OCAPI_SLOT_FRESET_DEASSERT_DELAY);
+		/* give another 5ms to device to be ready */
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
+
+	case OCAPI_SLOT_FRESET_DEASSERT_DELAY:
+		if (dev->train_fenced) {
+			prlog(PR_DEBUG, "Unfencing OTL after reset\n");
+			npu2_write(dev->npu, NPU2_MISC_FENCE_STATE, PPC_BIT(dev->index));
+			set_fence_control(chip_id, dev->npu->xscom_base,
+					dev->index, 0b00);
+			dev->train_fenced = false;
+		}
+
+		set_init_pattern(chip_id, dev);
+		pci_slot_set_state(slot,
+				OCAPI_SLOT_FRESET_INIT_DELAY);
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
+
+	case OCAPI_SLOT_FRESET_INIT_DELAY:
+		/* Bump lanes - this improves training reliability */
+		npu2_opencapi_bump_ui_lane(dev);
+		start_training(chip_id, dev);
+		slot->retries = OCAPI_LINK_TRAINING_TIMEOUT;
+		pci_slot_set_state(slot, OCAPI_SLOT_LINK_START);
+		return slot->ops.poll_link(slot);
+
+	default:
+		prlog(PR_ERR, "OCAPI: FRESET: unexpected slot state %08x\n",
+			slot->state);
+	}
+	pci_slot_set_state(slot, OCAPI_SLOT_NORMAL);
+	return OPAL_HARDWARE;
+}
+
+static int64_t npu2_opencapi_hreset(struct pci_slot *slot __unused)
+{
+	prlog(PR_ERR, "OCAPI: hreset not supported\n");
+	return OPAL_UNSUPPORTED;
+}
+
 static struct pci_slot *npu2_opencapi_slot_create(struct phb *phb)
 {
 	struct pci_slot *slot;
@@ -1016,15 +1218,11 @@ static struct pci_slot *npu2_opencapi_slot_create(struct phb *phb)
 	slot->ops.get_latch_state     = NULL;
 	slot->ops.set_power_state     = NULL;
 	slot->ops.set_attention_state = NULL;
-	/*
-	 * Temporarily erase the run_sm callback until we support
-	 * dynamic reset of the link. Otherwise, run_sm may call
-	 * freset, creset, ... and we don't define them. The run_sm
-	 * pointer is always tested before being called, at least at
-	 * the time of this writing :-) It will go away when we
-	 * implement dynamic reset of the link
-	 */
-	slot->ops.run_sm = NULL;
+
+	slot->ops.poll_link           = npu2_opencapi_poll_link;
+	slot->ops.creset              = npu2_opencapi_creset;
+	slot->ops.freset              = npu2_opencapi_freset;
+	slot->ops.hreset              = npu2_opencapi_hreset;
 
 	return slot;
 }
@@ -1345,48 +1543,22 @@ static int setup_irq(struct npu2 *p)
 	return 0;
 }
 
-#define LINK_TRAINING_RETRIES	5
-
-static int train_link(int chip_id, struct npu2_dev *dev)
+static void setup_debug_training_state(struct npu2_dev *dev)
 {
-	bool train;
-	int rc;
-	int retries = LINK_TRAINING_RETRIES;
+	npu2_opencapi_phy_setup(dev);
 
-	if (platform.ocapi->force_presence)
-		train = true;
-	else
-		train = i2c_presence_detect(dev);
-	if (!train) {
-		/*
-		 * FIXME: if there's no card on the link, we should consider
-		 * powering off the unused lanes to save energy
-		 */
-		prlog(PR_INFO, "OCAPI: no card detected on link %d, chip %d\n",
-			dev->index, chip_id);
-		return -1;
+	switch (npu2_ocapi_training_state) {
+	case NPU2_TRAIN_PRBS31:
+		prlog(PR_INFO, "OCAPI: sending PRBS31 pattern per NVRAM setting\n");
+		npu2_opencapi_phy_prbs31(dev);
+		break;
+
+	case NPU2_TRAIN_NONE:
+		prlog(PR_INFO, "OCAPI: link not trained per NVRAM setting\n");
+		break;
+	default:
+		assert(false);
 	}
-
-	do {
-		rc = odl_train(chip_id, dev->index, dev);
-	} while (rc != OPAL_SUCCESS && --retries);
-
-	if (rc != OPAL_SUCCESS && retries == 0) {
-		/**
-		 * @fwts-label OCAPILinkTrainingFailed
-		 * @fwts-advice The OpenCAPI link training procedure failed.
-		 * This indicates a hardware or firmware bug. OpenCAPI
-		 * functionality will not be available on this link.
-		 */
-		prlog(PR_ERR,
-			"OCAPI: Link %d on chip %u failed to train\n",
-			dev->index, chip_id);
-		prlog(PR_ERR, "OCAPI: Final link status: %016llx\n",
-			get_odl_status(chip_id, dev->index));
-		return -1;
-	}
-
-	return 0;
 }
 
 static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
@@ -1397,7 +1569,6 @@ static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 	struct pci_slot *slot;
 	char port_name[17];
 	uint64_t mm_win[2];
-	int rc;
 
 	dev_index = dt_prop_get_u32(dn_link, "ibm,npu-link-index");
 	npu_index = dt_prop_get_u32(n->dt_node, "ibm,npu-index");
@@ -1452,6 +1623,8 @@ static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 	dev->lane_mask = dt_prop_get_u32(dn_link, "ibm,npu-lane-mask");
 	dev->link_speed = dt_prop_get_u64(dn_link, "ibm,link-speed");
 	dev->bdfn = 0;
+	dev->train_need_fence = false;
+	dev->train_fenced = false;
 	n->total_devices++;
 
 	/* Find I2C port for handling device reset */
@@ -1480,22 +1653,9 @@ static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 
 	set_fence_control(n->chip_id, n->xscom_base, dev->index, 0b00);
 
-	npu2_opencapi_phy_setup(dev);
-
-	switch (npu2_ocapi_training_state) {
-	case NPU2_TRAIN_PRBS31:
-		prlog(PR_INFO,
-			"OCAPI: Link %d sending PRBS31 pattern per NVRAM setting\n",
-			dev->index);
-		npu2_opencapi_phy_prbs31(dev);
-		break;
-
-	case NPU2_TRAIN_DEFAULT:
-		rc = train_link(n->chip_id, dev);
-		if (rc)
-			goto failed;
-
-		otl_enabletx(n->chip_id, n->xscom_base, dev->index);
+	if (npu2_ocapi_training_state != NPU2_TRAIN_DEFAULT) {
+		setup_debug_training_state(dev);
+	} else {
 		slot = npu2_opencapi_slot_create(&dev->phb_ocapi);
 		if (!slot) {
 			/**
@@ -1505,14 +1665,7 @@ static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 			 */
 			prlog(PR_ERR, "OCAPI: Cannot create PHB slot\n");
 		}
-		break;
-
-	case NPU2_TRAIN_NONE:
-		prlog(PR_INFO, "OCAPI: Link %d not trained per NVRAM setting\n",
-			dev->index);
-		break;
 	}
-
 	pci_register_phb(&dev->phb_ocapi, OPAL_DYNAMIC_PHB_ID);
 	return;
 failed:
