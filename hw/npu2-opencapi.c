@@ -794,39 +794,70 @@ static void otl_enabletx(uint32_t gcid, uint32_t scom_base, uint64_t index)
 
 static void reset_ocapi_device(struct npu2_dev *dev)
 {
-	uint8_t data[3];
+	uint8_t pin, data;
 	int rc;
-	int i;
 
 	switch (dev->index) {
 	case 2:
 	case 4:
-		memcpy(data, platform.ocapi->i2c_odl0_data, sizeof(data));
+		pin = platform.ocapi->i2c_reset_odl0;
 		break;
 	case 3:
 	case 5:
-		memcpy(data, platform.ocapi->i2c_odl1_data, sizeof(data));
+		pin = platform.ocapi->i2c_reset_odl1;
 		break;
 	default:
 		assert(false);
 	}
 
-	for (i = 0; i < 3; i++) {
-		rc = i2c_request_send(dev->i2c_port_id_ocapi, 0x20, SMBUS_WRITE,
-				      platform.ocapi->i2c_offset[i], 1,
-				      &data[i], sizeof(data[i]), 120);
-		if (rc) {
-			/**
-			 * @fwts-label OCAPIDeviceResetFailed
-			 * @fwts-advice There was an error attempting to send
-			 * a reset signal over I2C to the OpenCAPI device.
-			 */
-			prlog(PR_ERR, "OCAPI: Error writing I2C reset signal: %d\n", rc);
-			break;
-		}
-		if (i != 0)
-			time_wait_ms(5);
-	}
+	/*
+	 * set the i2c reset pin in output mode
+	 *
+	 * On the 9554 device, register 3 is the configuration
+	 * register and a pin is in output mode if its value is 0
+	 */
+	data = ~pin;
+	rc = i2c_request_send(dev->i2c_port_id_ocapi,
+			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
+			0x3, 1,
+			&data, sizeof(data), 120);
+	if (rc)
+		goto err;
+
+	/*
+	 * assert i2c reset for 5ms
+	 * register 1 controls the signal, reset is active low
+	 */
+	data = ~pin;
+	rc = i2c_request_send(dev->i2c_port_id_ocapi,
+			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
+			0x1, 1,
+			&data, sizeof(data), 120);
+	if (rc)
+		goto err;
+	time_wait_ms(5);
+
+	/*
+	 * deassert i2c reset and wait 5ms
+	 */
+	data = 0xFF;
+	rc = i2c_request_send(dev->i2c_port_id_ocapi,
+			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
+			0x1, 1,
+			&data, sizeof(data), 120);
+	if (rc)
+		goto err;
+	time_wait_ms(5);
+
+	return;
+
+err:
+	/**
+	 * @fwts-label OCAPIDeviceResetFailed
+	 * @fwts-advice There was an error attempting to send
+	 * a reset signal over I2C to the OpenCAPI device.
+	 */
+	prlog(PR_ERR, "OCAPI: Error writing I2C reset signal: %d\n", rc);
 }
 
 static bool i2c_presence_detect(struct npu2_dev *dev)

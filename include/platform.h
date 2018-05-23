@@ -48,9 +48,9 @@ struct bmc_platform {
 struct platform_ocapi {
 	uint8_t i2c_engine;		/* I2C engine number */
 	uint8_t i2c_port;		/* I2C port number */
-	uint32_t i2c_offset[3];		/* Offsets on I2C device */
-	uint8_t i2c_odl0_data[3];	/* Data to reset ODL0 */
-	uint8_t i2c_odl1_data[3];	/* Data to reset ODL1 */
+	uint8_t i2c_reset_addr;		/* I2C address for reset */
+	uint8_t i2c_reset_odl0;		/* I2C pin to write to reset ODL0 */
+	uint8_t i2c_reset_odl1;		/* I2C pin to write to reset ODL1 */
 	uint8_t i2c_presence_addr;	/* I2C address for presence detection */
 	uint8_t i2c_presence_odl0;	/* I2C mask for detection on ODL0 */
 	uint8_t i2c_presence_odl1;	/* I2C mask for detection on ODL1 */

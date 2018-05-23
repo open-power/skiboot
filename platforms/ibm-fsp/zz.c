@@ -29,11 +29,11 @@
 
 /* We don't yet create NPU device nodes on ZZ, but these values are correct */
 const struct platform_ocapi zz_ocapi = {
-	.i2c_engine	= 1,
-	.i2c_port	= 4,
-	.i2c_offset	= { 0x3, 0x1, 0x1 },
-	.i2c_odl0_data	= { 0xFD, 0xFD, 0xFF },
-	.i2c_odl1_data	= { 0xBF, 0xBF, 0xFF },
+	.i2c_engine        = 1,
+	.i2c_port          = 4,
+	.i2c_reset_addr    = 0x20,
+	.i2c_reset_odl0    = (1 << 1),
+	.i2c_reset_odl1    = (1 << 6),
 	.i2c_presence_addr = 0x20,
 	.i2c_presence_odl0 = (1 << 2), /* bottom connector */
 	.i2c_presence_odl1 = (1 << 7), /* top connector */
@@ -42,7 +42,7 @@ const struct platform_ocapi zz_ocapi = {
 	 * force the presence until all our systems are upgraded
 	 */
 	.force_presence    = true,
-	.odl_phy_swap   = true,
+	.odl_phy_swap      = true,
 };
 
 static bool zz_probe(void)
