@@ -51,6 +51,10 @@ struct platform_ocapi {
 	uint32_t i2c_offset[3];		/* Offsets on I2C device */
 	uint8_t i2c_odl0_data[3];	/* Data to reset ODL0 */
 	uint8_t i2c_odl1_data[3];	/* Data to reset ODL1 */
+	uint8_t i2c_presence_addr;	/* I2C address for presence detection */
+	uint8_t i2c_presence_odl0;	/* I2C mask for detection on ODL0 */
+	uint8_t i2c_presence_odl1;	/* I2C mask for detection on ODL1 */
+	bool force_presence;            /* don't use i2c detection */
 	bool odl_phy_swap;		/* Swap ODL1 to use brick 2 rather than
 					 * brick 1 lanes */
 };

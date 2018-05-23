@@ -24,13 +24,17 @@
 
 #include "astbmc.h"
 
+
 const struct platform_ocapi zaius_ocapi = {
 	.i2c_engine	= 1,
 	.i2c_port	= 4,
 	.i2c_offset	= { 0x3, 0x1, 0x1 },
 	.i2c_odl0_data	= { 0xFD, 0xFD, 0xFF },
 	.i2c_odl1_data	= { 0xBF, 0xBF, 0xFF },
-	.odl_phy_swap	= true,
+	.i2c_presence_addr = 0x20,
+	.i2c_presence_odl0 = (1 << 2), /* bottom connector */
+	.i2c_presence_odl1 = (1 << 7), /* top connector */
+	.odl_phy_swap   = true,
 };
 
 #define NPU_BASE 0x5011000

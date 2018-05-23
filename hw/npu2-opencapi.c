@@ -829,6 +829,44 @@ static void reset_ocapi_device(struct npu2_dev *dev)
 	}
 }
 
+static bool i2c_presence_detect(struct npu2_dev *dev)
+{
+	uint8_t state, data;
+	int rc;
+
+	/*
+	 * Opencapi presence detection is done through i2c
+	 *
+	 * Lagrange platforms (ZZ, Zaius) use the same default mechanism.
+	 * Witherspoon will need a specific implementation, TBD.
+	 */
+	rc = i2c_request_send(dev->i2c_port_id_ocapi,
+			platform.ocapi->i2c_presence_addr,
+			SMBUS_READ, 0, 1,
+			&state, 1, 120);
+	if (rc) {
+		prlog(PR_ERR, "OCAPI: error detecting link presence: %d\n",
+			rc);
+		return true; /* assume link exists */
+	}
+
+	prlog(PR_DEBUG, "OCAPI: I2C presence detect: 0x%x\n", state);
+
+	switch (dev->index) {
+	case 2:
+		data = platform.ocapi->i2c_presence_odl0;
+		break;
+	case 3:
+		data = platform.ocapi->i2c_presence_odl1;
+		break;
+	default:
+		prlog(PR_ERR, "OCAPI: presence detection on invalid link\n");
+		return true;
+	}
+	/* Presence detect bits are active low */
+	return !(state & data);
+}
+
 static int odl_train(uint32_t gcid, uint32_t index, struct npu2_dev *dev)
 {
 	uint64_t reg, config_xscom;
@@ -896,6 +934,20 @@ static int odl_train(uint32_t gcid, uint32_t index, struct npu2_dev *dev)
 	return OPAL_HARDWARE;
 }
 
+static int64_t npu2_opencapi_get_presence_state(struct pci_slot *slot,
+						uint8_t *val)
+{
+	bool present;
+	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
+
+	if (platform.ocapi->force_presence)
+		present = true;
+	else
+		present = i2c_presence_detect(dev);
+	*val = present;
+	return OPAL_SUCCESS;
+}
+
 static int64_t npu2_opencapi_get_link_state(struct pci_slot *slot, uint8_t *val)
 {
 	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
@@ -926,9 +978,9 @@ static struct pci_slot *npu2_opencapi_slot_create(struct phb *phb)
 		return slot;
 
 	/* TODO: Figure out other slot functions */
-	slot->ops.get_presence_state = NULL;
-	slot->ops.get_link_state = npu2_opencapi_get_link_state;
-	slot->ops.get_power_state = NULL;
+	slot->ops.get_presence_state  = npu2_opencapi_get_presence_state;
+	slot->ops.get_link_state      = npu2_opencapi_get_link_state;
+	slot->ops.get_power_state     = NULL;
 	slot->ops.get_attention_state = NULL;
 	slot->ops.get_latch_state     = NULL;
 	slot->ops.set_power_state     = NULL;
@@ -1264,6 +1316,48 @@ static int setup_irq(struct npu2 *p)
 
 #define LINK_TRAINING_RETRIES	5
 
+static int train_link(int chip_id, struct npu2_dev *dev)
+{
+	bool train;
+	int rc;
+	int retries = LINK_TRAINING_RETRIES;
+
+	if (platform.ocapi->force_presence)
+		train = true;
+	else
+		train = i2c_presence_detect(dev);
+	if (!train) {
+		/*
+		 * FIXME: if there's no card on the link, we should consider
+		 * powering off the unused lanes to save energy
+		 */
+		prlog(PR_INFO, "OCAPI: no card detected on link %d, chip %d\n",
+			dev->index, chip_id);
+		return -1;
+	}
+
+	do {
+		rc = odl_train(chip_id, dev->index, dev);
+	} while (rc != OPAL_SUCCESS && --retries);
+
+	if (rc != OPAL_SUCCESS && retries == 0) {
+		/**
+		 * @fwts-label OCAPILinkTrainingFailed
+		 * @fwts-advice The OpenCAPI link training procedure failed.
+		 * This indicates a hardware or firmware bug. OpenCAPI
+		 * functionality will not be available on this link.
+		 */
+		prlog(PR_ERR,
+			"OCAPI: Link %d on chip %u failed to train\n",
+			dev->index, chip_id);
+		prlog(PR_ERR, "OCAPI: Final link status: %016llx\n",
+			get_odl_status(chip_id, dev->index));
+		return -1;
+	}
+
+	return 0;
+}
+
 static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 				       struct npu2_dev *dev)
 {
@@ -1272,7 +1366,6 @@ static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 	struct pci_slot *slot;
 	char port_name[17];
 	uint64_t mm_win[2];
-	int retries = LINK_TRAINING_RETRIES;
 	int rc;
 
 	dev_index = dt_prop_get_u32(dn_link, "ibm,npu-link-index");
@@ -1367,27 +1460,11 @@ static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 		break;
 
 	case NPU2_TRAIN_DEFAULT:
-		do {
-			rc = odl_train(n->chip_id, dev->index, dev);
-		} while (rc != OPAL_SUCCESS && --retries);
-
-		if (rc != OPAL_SUCCESS && retries == 0) {
-			/**
-			 * @fwts-label OCAPILinkTrainingFailed
-			 * @fwts-advice The OpenCAPI link training procedure failed.
-			 * This indicates a hardware or firmware bug. OpenCAPI
-			 * functionality will not be available on this link.
-			 */
-			prlog(PR_ERR,
-				"OCAPI: Link %d on chip %u failed to train\n",
-				dev->index, n->chip_id);
-			prlog(PR_ERR, "OCAPI: Final link status: %016llx\n",
-				get_odl_status(n->chip_id, dev->index));
+		rc = train_link(n->chip_id, dev);
+		if (rc)
 			goto failed;
-		}
 
 		otl_enabletx(n->chip_id, n->xscom_base, dev->index);
-
 		slot = npu2_opencapi_slot_create(&dev->phb_ocapi);
 		if (!slot) {
 			/**
