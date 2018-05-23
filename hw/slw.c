@@ -531,20 +531,9 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 				 | OPAL_PM_PSSCR_ESL \
 				 | OPAL_PM_PSSCR_EC,
 		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
-	{
-		.name = "stop1_lite", /* Enter stop1 with no state loss */
-		.latency_ns = 4900,
-		.residency_ns = 49000,
-		.flags = 0*OPAL_PM_DEC_STOP \
-		       | 0*OPAL_PM_TIMEBASE_STOP  \
-		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
-		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
-		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
-		       | 1*OPAL_PM_STOP_INST_FAST,
-		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(1) \
-				 | OPAL_PM_PSSCR_MTL(3) \
-				 | OPAL_PM_PSSCR_TR(3),
-		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
+
+	/* stop1_lite has been removed since it adds no additional benefit over stop0_lite */
+
 	{
 		.name = "stop1",
 		.latency_ns = 5000,
@@ -561,20 +550,11 @@ static struct cpu_idle_states power9_cpu_idle_states[] = {
 				 | OPAL_PM_PSSCR_ESL \
 				 | OPAL_PM_PSSCR_EC,
 		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
-	{
-		.name = "stop2_lite", /* Enter stop2 with no state loss */
-		.latency_ns = 9900,
-		.residency_ns = 99000,
-		.flags = 0*OPAL_PM_DEC_STOP \
-		       | 0*OPAL_PM_TIMEBASE_STOP  \
-		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
-		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
-		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
-		       | 1*OPAL_PM_STOP_INST_FAST,
-		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(2) \
-				 | OPAL_PM_PSSCR_MTL(3) \
-				 | OPAL_PM_PSSCR_TR(3),
-		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
+	/*
+	 * stop2_lite has been removed since currently it adds minimal benefit over stop2.
+	 * However, the benefit is eclipsed by the time required to ungate the clocks
+	 */
+
 	{
 		.name = "stop2",
 		.latency_ns = 10000,
