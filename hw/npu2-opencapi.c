@@ -80,6 +80,7 @@
 
 #define OCAPI_LINK_TRAINING_RETRIES	5
 #define OCAPI_LINK_TRAINING_TIMEOUT	3000 /* ms */
+#define OCAPI_LINK_STATE_TRAINED        0x7
 
 enum npu2_link_training_state {
 	NPU2_TRAIN_DEFAULT, /* fully train the link */
@@ -1032,10 +1033,17 @@ static int64_t npu2_opencapi_get_link_state(struct pci_slot *slot, uint8_t *val)
 {
 	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
 	uint64_t reg;
-	int64_t link_width, rc = OPAL_SUCCESS;
+	int64_t link_width, training_status, rc = OPAL_SUCCESS;
 
 	reg = get_odl_status(dev->npu->chip_id, dev->index);
 	link_width = GETFIELD(OB_ODL_STATUS_TRAINED_MODE, reg);
+	training_status = GETFIELD(OB_ODL_STATUS_TRAINING_STATE_MACHINE, reg);
+
+	if (training_status != OCAPI_LINK_STATE_TRAINED) {
+		*val = OPAL_SHPC_LINK_DOWN;
+		return OPAL_SUCCESS;
+	}
+
 	switch (link_width) {
 	case 0b0001:
 		*val = OPAL_SHPC_LINK_UP_x4;
@@ -1086,7 +1094,8 @@ static int64_t npu2_opencapi_poll_link(struct pci_slot *slot)
 		/* fall-through */
 	case OCAPI_SLOT_LINK_WAIT:
 		reg = get_odl_status(chip_id, dev->index);
-		if (GETFIELD(OB_ODL_STATUS_TRAINING_STATE_MACHINE, reg) == 0x7) {
+		if (GETFIELD(OB_ODL_STATUS_TRAINING_STATE_MACHINE, reg) ==
+			OCAPI_LINK_STATE_TRAINED) {
 			OCAPIINF(dev, "link trained in %lld ms\n",
 				OCAPI_LINK_TRAINING_TIMEOUT - slot->retries);
 			pci_slot_set_state(slot, OCAPI_SLOT_LINK_TRAINED);
