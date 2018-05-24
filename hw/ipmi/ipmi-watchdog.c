@@ -57,7 +57,8 @@ static void ipmi_wdt_complete(struct ipmi_msg *msg)
 	ipmi_free_msg(msg);
 }
 
-static void set_wdt(uint8_t action, uint16_t count, uint8_t pretimeout)
+static void set_wdt(uint8_t action, uint16_t count, uint8_t pretimeout,
+		bool dont_stop)
 {
 	struct ipmi_msg *ipmi_msg;
 
@@ -69,7 +70,8 @@ static void set_wdt(uint8_t action, uint16_t count, uint8_t pretimeout)
 	}
 	ipmi_msg->error = ipmi_wdt_complete;
 	ipmi_msg->data[0] = TIMER_USE_POST |
-		TIMER_USE_DONT_LOG; 			/* Timer Use */
+		TIMER_USE_DONT_LOG |
+		(dont_stop ? TIMER_USE_DONT_STOP : 0);
 	ipmi_msg->data[1] = action;			/* Timer Actions */
 	ipmi_msg->data[2] = pretimeout;			/* Pre-timeout Interval */
 	ipmi_msg->data[3] = 0;				/* Timer Use Flags */
@@ -113,7 +115,7 @@ void ipmi_wdt_stop(void)
 {
 	if (!wdt_stopped) {
 		wdt_stopped = true;
-		set_wdt(WDT_NO_ACTION, 100, 0);
+		set_wdt(WDT_NO_ACTION, 100, 0, false);
 	}
 }
 
@@ -123,10 +125,10 @@ void ipmi_wdt_final_reset(void)
 	 * behaviour */
 #if 0
 	set_wdt(WDT_RESET_ACTION | WDT_PRETIMEOUT_SMI, WDT_TIMEOUT,
-		WDT_MARGIN/10);
+		WDT_MARGIN/10, true);
 	reset_wdt(NULL, (void *) 1);
 #endif
-	set_wdt(WDT_NO_ACTION, 100, 0);
+	set_wdt(WDT_NO_ACTION, 100, 0, false);
 	ipmi_set_boot_count();
 	cancel_timer(&wdt_timer);
 }
@@ -134,7 +136,7 @@ void ipmi_wdt_final_reset(void)
 void ipmi_wdt_init(void)
 {
 	init_timer(&wdt_timer, reset_wdt, NULL);
-	set_wdt(WDT_RESET_ACTION, WDT_TIMEOUT, 0);
+	set_wdt(WDT_RESET_ACTION, WDT_TIMEOUT, 0, true);
 
 	/* Start the WDT. We do it synchronously to make sure it has
 	 * started before skiboot continues booting. Otherwise we
