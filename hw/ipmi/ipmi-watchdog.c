@@ -31,7 +31,7 @@
 
 /* WDT expiration actions */
 #define WDT_PRETIMEOUT_SMI	0x10
-#define WDT_POWER_CYCLE_ACTION 	0x01
+#define WDT_RESET_ACTION 	0x01
 #define WDT_NO_ACTION		0x00
 
 /* How long to set the overall watchdog timeout for. In units of
@@ -122,7 +122,7 @@ void ipmi_wdt_final_reset(void)
 	/* todo: this is disabled while we're waiting on fixed watchdog
 	 * behaviour */
 #if 0
-	set_wdt(WDT_POWER_CYCLE_ACTION | WDT_PRETIMEOUT_SMI, WDT_TIMEOUT,
+	set_wdt(WDT_RESET_ACTION | WDT_PRETIMEOUT_SMI, WDT_TIMEOUT,
 		WDT_MARGIN/10);
 	reset_wdt(NULL, (void *) 1);
 #endif
@@ -134,7 +134,7 @@ void ipmi_wdt_final_reset(void)
 void ipmi_wdt_init(void)
 {
 	init_timer(&wdt_timer, reset_wdt, NULL);
-	set_wdt(WDT_POWER_CYCLE_ACTION, WDT_TIMEOUT, 0);
+	set_wdt(WDT_RESET_ACTION, WDT_TIMEOUT, 0);
 
 	/* Start the WDT. We do it synchronously to make sure it has
 	 * started before skiboot continues booting. Otherwise we
