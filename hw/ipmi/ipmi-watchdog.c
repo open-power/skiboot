@@ -48,27 +48,18 @@ static struct timer wdt_timer;
 static bool wdt_stopped;
 static bool wdt_ticking;
 
-static void ipmi_wdt_complete(struct ipmi_msg *msg)
-{
-	if (msg->cmd == IPMI_CMD(IPMI_RESET_WDT) && wdt_ticking)
-		schedule_timer(&wdt_timer, msecs_to_tb(
-				       (WDT_TIMEOUT - WDT_MARGIN)*100));
-
-	ipmi_free_msg(msg);
-}
-
 static void set_wdt(uint8_t action, uint16_t count, uint8_t pretimeout,
 		bool dont_stop)
 {
 	struct ipmi_msg *ipmi_msg;
 
 	ipmi_msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_SET_WDT,
-			      ipmi_wdt_complete, NULL, NULL, 6, 0);
+			      ipmi_free_msg, NULL, NULL, 6, 0);
 	if (!ipmi_msg) {
 		prerror("Unable to allocate set wdt message\n");
 		return;
 	}
-	ipmi_msg->error = ipmi_wdt_complete;
+	ipmi_msg->error = ipmi_free_msg;
 	ipmi_msg->data[0] = TIMER_USE_POST |
 		TIMER_USE_DONT_LOG |
 		(dont_stop ? TIMER_USE_DONT_STOP : 0);
@@ -80,12 +71,24 @@ static void set_wdt(uint8_t action, uint16_t count, uint8_t pretimeout,
 	ipmi_queue_msg(ipmi_msg);
 }
 
+static void reset_wdt_complete(struct ipmi_msg *msg)
+{
+	const uint64_t reset_delay_ms = (WDT_TIMEOUT - WDT_MARGIN) * 100;
+
+	/* If we are inside of skiboot we need to periodically restart the
+	 * timer. Reschedule a reset so it happens before the timeout. */
+	if (wdt_ticking)
+		schedule_timer(&wdt_timer, msecs_to_tb(reset_delay_ms));
+
+	ipmi_free_msg(msg);
+}
+
 static struct ipmi_msg *wdt_reset_mkmsg(void)
 {
 	struct ipmi_msg *ipmi_msg;
 
 	ipmi_msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_RESET_WDT,
-			      ipmi_wdt_complete, NULL, NULL, 0, 0);
+			      reset_wdt_complete, NULL, NULL, 0, 0);
 	if (!ipmi_msg) {
 		prerror("Unable to allocate reset wdt message\n");
 		return NULL;
