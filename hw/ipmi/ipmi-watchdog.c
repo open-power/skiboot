@@ -114,6 +114,15 @@ static void reset_wdt(struct timer *t __unused, void *data __unused,
 void ipmi_wdt_stop(void)
 {
 	if (!wdt_stopped) {
+		/* Make sure the background reset timer is disabled before
+		 * stopping the watchdog. If we issue a reset after disabling
+		 * the timer, it will be re-enabled. */
+		wdt_ticking = false;
+		cancel_timer(&wdt_timer);
+
+		/* Configure the watchdog to be disabled and do no action
+		 * in case the underlying implementation is buggy and times
+		 * out anyway. */
 		wdt_stopped = true;
 		set_wdt(WDT_NO_ACTION, 100, 0, false);
 	}
