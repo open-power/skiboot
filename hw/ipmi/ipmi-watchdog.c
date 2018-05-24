@@ -143,9 +143,5 @@ void ipmi_wdt_init(void)
 	 * could crash before the wdt has actually been started. */
 	sync_reset_wdt();
 
-	/* For some reason we have to reset it twice to get it to
-	 * actually start the first time. */
-	sync_reset_wdt();
-
 	return;
 }
