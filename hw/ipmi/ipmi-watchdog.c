@@ -46,11 +46,12 @@ more frequently than necessary. */
 #define WDT_MARGIN		300
 
 static struct timer wdt_timer;
-static bool wdt_stopped = false;
+static bool wdt_stopped;
+static bool wdt_ticking;
 
 static void ipmi_wdt_complete(struct ipmi_msg *msg)
 {
-	if (msg->cmd == IPMI_CMD(IPMI_RESET_WDT) && !msg->user_data)
+	if (msg->cmd == IPMI_CMD(IPMI_RESET_WDT) && wdt_ticking)
 		schedule_timer(&wdt_timer, msecs_to_tb(
 				       (WDT_TIMEOUT - WDT_MARGIN)*100));
 
@@ -121,11 +122,18 @@ void ipmi_wdt_stop(void)
 
 void ipmi_wdt_final_reset(void)
 {
+	/* We can safely stop the timer prior to setting up our final
+	 * watchdog timeout since we have enough margin before the
+	 * timeout. */
+	wdt_ticking = false;
+	cancel_timer(&wdt_timer);
+
+	/* Configure the watchdog and make sure it is still enabled */
 	set_wdt(WDT_RESET_ACTION | WDT_PRETIMEOUT_SMI, WDT_TIMEOUT,
 		WDT_MARGIN/10, true);
 	sync_reset_wdt();
+
 	ipmi_set_boot_count();
-	cancel_timer(&wdt_timer);
 }
 
 void ipmi_wdt_init(void)
@@ -136,6 +144,7 @@ void ipmi_wdt_init(void)
 	/* Start the WDT. We do it synchronously to make sure it has
 	 * started before skiboot continues booting. Otherwise we
 	 * could crash before the wdt has actually been started. */
+	wdt_ticking = true;
 	sync_reset_wdt();
 
 	return;
