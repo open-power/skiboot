@@ -33,8 +33,13 @@
 #define WDT_RESET_ACTION 	0x01
 #define WDT_NO_ACTION		0x00
 
+/* IPMI defined custom completion codes for the watchdog */
+#define WDT_CC_OK		0x00
+#define WDT_CC_NOT_INITIALIZED	0x80
+
 /* Flags used for IPMI callbacks */
 #define WDT_SET_DO_RESET	0x01
+#define WDT_RESET_NO_REINIT	0x01
 
 /* How long to set the overall watchdog timeout for. In units of
  * 100ms. If the timer is not reset within this time the watchdog
@@ -51,14 +56,23 @@ static struct timer wdt_timer;
 static bool wdt_stopped;
 static bool wdt_ticking;
 
+/* Saved values from the last watchdog set action */
+static uint8_t last_action;
+static uint16_t last_count;
+static uint8_t last_pretimeout;
+
 static void reset_wdt(struct timer *t, void *data, uint64_t now);
 
 static void set_wdt_complete(struct ipmi_msg *msg)
 {
 	const uintptr_t flags = (uintptr_t)msg->user_data;
 
-	if (flags & WDT_SET_DO_RESET)
-		reset_wdt(NULL, NULL, 0);
+	if (flags & WDT_SET_DO_RESET) {
+		/* Make sure the reset action does not create a loop and
+		 * perform a reset in the case where the BMC send an
+		 * uninitialized error. */
+		reset_wdt(NULL, (void *)WDT_RESET_NO_REINIT, 0);
+	}
 
 	ipmi_free_msg(msg);
 }
@@ -71,6 +85,12 @@ static void set_wdt(uint8_t action, uint16_t count, uint8_t pretimeout,
 
 	if (do_reset)
 		completion_flags |= WDT_SET_DO_RESET;
+
+	/* Save the values prior to issuing the set operation so that we can
+	 * re-initialize the watchdog in error cases. */
+	last_action = action;
+	last_count = count;
+	last_pretimeout = pretimeout;
 
 	ipmi_msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_SET_WDT,
 			      set_wdt_complete, NULL, NULL, 6, 0);
@@ -93,7 +113,21 @@ static void set_wdt(uint8_t action, uint16_t count, uint8_t pretimeout,
 
 static void reset_wdt_complete(struct ipmi_msg *msg)
 {
-	const uint64_t reset_delay_ms = (WDT_TIMEOUT - WDT_MARGIN) * 100;
+	const uintptr_t flags = (uintptr_t)msg->user_data;
+	uint64_t reset_delay_ms = (WDT_TIMEOUT - WDT_MARGIN) * 100;
+
+	if (msg->cc == WDT_CC_NOT_INITIALIZED &&
+			!(flags & WDT_RESET_NO_REINIT)) {
+		/* If our timer was not initialized on the BMC side, we should
+		 * perform a single attempt to set it up again. */
+		set_wdt(last_action, last_count, last_pretimeout, true, true);
+	} else if (msg->cc != WDT_CC_OK) {
+		/* Use a short (10s) timeout before performing the next reset
+		 * if we encounter an unknown error. This makes sure that we
+		 * are able to reset and re-initialize the timer since it might
+		 * expire. */
+		reset_delay_ms = 10 * 1000;
+	}
 
 	/* If we are inside of skiboot we need to periodically restart the
 	 * timer. Reschedule a reset so it happens before the timeout. */
@@ -113,6 +147,7 @@ static struct ipmi_msg *wdt_reset_mkmsg(void)
 		prerror("Unable to allocate reset wdt message\n");
 		return NULL;
 	}
+	ipmi_msg->error = reset_wdt_complete;
 
 	return ipmi_msg;
 }
@@ -125,13 +160,15 @@ static void sync_reset_wdt(void)
 		ipmi_queue_msg_sync(ipmi_msg);
 }
 
-static void reset_wdt(struct timer *t __unused, void *data __unused,
+static void reset_wdt(struct timer *t __unused, void *data,
 		      uint64_t now __unused)
 {
 	struct ipmi_msg *ipmi_msg;
 
-	if ((ipmi_msg = wdt_reset_mkmsg()))
+	if ((ipmi_msg = wdt_reset_mkmsg())) {
+		ipmi_msg->user_data = data;
 		ipmi_queue_msg_head(ipmi_msg);
+	}
 }
 
 void ipmi_wdt_stop(void)
