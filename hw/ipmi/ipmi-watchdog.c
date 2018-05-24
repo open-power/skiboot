@@ -33,6 +33,9 @@
 #define WDT_RESET_ACTION 	0x01
 #define WDT_NO_ACTION		0x00
 
+/* Flags used for IPMI callbacks */
+#define WDT_SET_DO_RESET	0x01
+
 /* How long to set the overall watchdog timeout for. In units of
  * 100ms. If the timer is not reset within this time the watchdog
  * expiration action will occur. */
@@ -48,18 +51,35 @@ static struct timer wdt_timer;
 static bool wdt_stopped;
 static bool wdt_ticking;
 
+static void reset_wdt(struct timer *t, void *data, uint64_t now);
+
+static void set_wdt_complete(struct ipmi_msg *msg)
+{
+	const uintptr_t flags = (uintptr_t)msg->user_data;
+
+	if (flags & WDT_SET_DO_RESET)
+		reset_wdt(NULL, NULL, 0);
+
+	ipmi_free_msg(msg);
+}
+
 static void set_wdt(uint8_t action, uint16_t count, uint8_t pretimeout,
-		bool dont_stop)
+		bool dont_stop, bool do_reset)
 {
 	struct ipmi_msg *ipmi_msg;
+	uintptr_t completion_flags = 0;
+
+	if (do_reset)
+		completion_flags |= WDT_SET_DO_RESET;
 
 	ipmi_msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_SET_WDT,
-			      ipmi_free_msg, NULL, NULL, 6, 0);
+			      set_wdt_complete, NULL, NULL, 6, 0);
 	if (!ipmi_msg) {
 		prerror("Unable to allocate set wdt message\n");
 		return;
 	}
-	ipmi_msg->error = ipmi_free_msg;
+	ipmi_msg->error = set_wdt_complete;
+	ipmi_msg->user_data = (void *)completion_flags;
 	ipmi_msg->data[0] = TIMER_USE_POST |
 		TIMER_USE_DONT_LOG |
 		(dont_stop ? TIMER_USE_DONT_STOP : 0);
@@ -127,7 +147,7 @@ void ipmi_wdt_stop(void)
 		 * in case the underlying implementation is buggy and times
 		 * out anyway. */
 		wdt_stopped = true;
-		set_wdt(WDT_NO_ACTION, 100, 0, false);
+		set_wdt(WDT_NO_ACTION, 100, 0, false, false);
 	}
 }
 
@@ -148,10 +168,10 @@ void ipmi_wdt_final_reset(void)
 #if 0
 	/* Configure the watchdog and make sure it is still enabled */
 	set_wdt(WDT_RESET_ACTION | WDT_PRETIMEOUT_SMI, WDT_TIMEOUT,
-		WDT_MARGIN/10, true);
+		WDT_MARGIN/10, true, true);
 	sync_reset_wdt();
 #else
-	set_wdt(WDT_NO_ACTION, 100, 0, false);
+	set_wdt(WDT_NO_ACTION, 100, 0, false, false);
 #endif
 	ipmi_set_boot_count();
 }
@@ -159,7 +179,7 @@ void ipmi_wdt_final_reset(void)
 void ipmi_wdt_init(void)
 {
 	init_timer(&wdt_timer, reset_wdt, NULL);
-	set_wdt(WDT_RESET_ACTION, WDT_TIMEOUT, 0, true);
+	set_wdt(WDT_RESET_ACTION, WDT_TIMEOUT, 0, true, false);
 
 	/* Start the WDT. We do it synchronously to make sure it has
 	 * started before skiboot continues booting. Otherwise we
