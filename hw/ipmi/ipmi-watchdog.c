@@ -121,14 +121,9 @@ void ipmi_wdt_stop(void)
 
 void ipmi_wdt_final_reset(void)
 {
-	/* todo: this is disabled while we're waiting on fixed watchdog
-	 * behaviour */
-#if 0
 	set_wdt(WDT_RESET_ACTION | WDT_PRETIMEOUT_SMI, WDT_TIMEOUT,
 		WDT_MARGIN/10, true);
-	reset_wdt(NULL, (void *) 1);
-#endif
-	set_wdt(WDT_NO_ACTION, 100, 0, false);
+	sync_reset_wdt();
 	ipmi_set_boot_count();
 	cancel_timer(&wdt_timer);
 }
