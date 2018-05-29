@@ -122,16 +122,16 @@ static struct ffs_hdr *parse_toc(const char *line, uint32_t block_size,
 }
 
 static int parse_entry(struct blocklevel_device *bl,
-		struct ffs_hdr **tocs, const char *line)
+		struct ffs_hdr **tocs, const char *line, bool allow_empty)
 {
 	char name[FFS_PART_NAME_MAX + 2] = { 0 };
 	struct ffs_entry_user user = { 0 };
-	uint32_t pbase, psize, pactual;
+	uint32_t pbase, psize, pactual, i;
 	struct ffs_entry *new_entry;
 	struct stat data_stat;
 	const char *filename;
 	bool added = false;
-	uint8_t *data_ptr;
+	uint8_t *data_ptr, ecc = 0;
 	int data_fd, rc;
 	char *pos;
 
@@ -290,6 +290,25 @@ static int parse_entry(struct blocklevel_device *bl,
 					"(%m)\n", filename, name);
 		munmap(data_ptr, pactual);
 		close(data_fd);
+	} else {
+		if (!allow_empty) {
+			fprintf(stderr, "Filename missing for partition %s!\n",
+					name);
+			return -1;
+		}
+		if (has_ecc(new_entry)) {
+			i = pbase + 8;
+			while (i < pbase + psize) {
+				rc = blocklevel_write(bl, i, &ecc, sizeof(ecc));
+				if (rc) {
+					fprintf(stderr, "\nError setting ECC byte at 0x%08x\n",
+							i);
+					return rc;
+				}
+				i += 9;
+			}
+		}
+
 	}
 
 	return 0;
@@ -303,8 +322,10 @@ static void print_version(void)
 static void print_help(const char *pname)
 {
 	print_version();
-	printf("Usage: %s [options] -s size -c num -i layout_file -p pnor_file ...\n\n", pname);
+	printf("Usage: %s [options] -e -s size -c num -i layout_file -p pnor_file ...\n\n", pname);
 	printf(" Options:\n");
+	printf("\t-e, --allow_empty\n");
+	printf("\t\tCreate partition as blank if not specified (sets ECC if flag set)\n\n");
 	printf("\t-s, --block_size=size\n");
 	printf("\t\tSize (in hex with leading 0x) of the blocks on the flash in bytes\n\n");
 	printf("\t-c, --block_count=num\n");
@@ -318,7 +339,7 @@ static void print_help(const char *pname)
 int main(int argc, char *argv[])
 {
 	char *pnor = NULL, *input = NULL, line[MAX_LINE];
-	bool toc_created = false, bad_input = false;
+	bool toc_created = false, bad_input = false, allow_empty = false;
 	uint32_t block_size = 0, block_count = 0;
 	struct ffs_hdr *tocs[MAX_TOCS] = { 0 };
 	struct blocklevel_device *bl = NULL;
@@ -328,19 +349,23 @@ int main(int argc, char *argv[])
 
 	while(1) {
 		struct option long_opts[] = {
+			{"allow_empty", no_argument,		NULL,	'e'},
 			{"block_count",	required_argument,	NULL,	'c'},
 			{"block_size",	required_argument,	NULL,	's'},
-			{"debug",	no_argument,	NULL,	'g'},
+			{"debug",	no_argument,		NULL,	'g'},
 			{"input",	required_argument,	NULL,	'i'},
 			{"pnor",	required_argument,	NULL,	'p'},
 			{NULL,	0,	0, 0}
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "+:c:gi:p:s:", long_opts, &oidx);
+		c = getopt_long(argc, argv, "+:ec:gi:p:s:", long_opts, &oidx);
 		if (c == EOF)
 			break;
 		switch(c) {
+		case 'e':
+			allow_empty = true;
+			break;
 		case 'c':
 			block_count = strtoul(optarg, NULL, 0);
 			break;
@@ -459,7 +484,7 @@ int main(int argc, char *argv[])
 				}
 				toc_created = true;
 			}
-			rc = parse_entry(bl, tocs, line);
+			rc = parse_entry(bl, tocs, line, allow_empty);
 			if (rc) {
 				rc = 6;
 				goto parse_out;
