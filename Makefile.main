@@ -31,6 +31,7 @@ CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 	  -Wwrite-strings -Wcast-align \
 	  -Winit-self \
 	  -Wframe-larger-than=1024 \
+	  -Wno-stringop-truncation \
 	  -Werror
 
 # Host tools and options
