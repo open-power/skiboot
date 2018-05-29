@@ -1206,7 +1206,9 @@ static void add_iplparams_features(const struct HDIF_common_hdr *iplp)
 		uint64_t flags;
 
 		/* the name field isn't necessarily null terminated */
-		strncpy(name, feature->name, sizeof(feature->name));
+		BUILD_ASSERT(sizeof(name) > sizeof(feature->name));
+		strncpy(name, feature->name, sizeof(name)-1);
+		name[sizeof(name)-1] = '\0';
 		flags = be64_to_cpu(feature->flags);
 
 		prlog(PR_DEBUG, "IPLPARAMS: FW feature %s = %016"PRIx64"\n",
