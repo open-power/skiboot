@@ -103,9 +103,9 @@ static bool true_stub(void) { return true; }
 static bool false_stub(void) { return false; }
 
 #define TRUE_STUB(fnname) \
-	void fnname(void) __attribute__((weak, alias ("true_stub")))
+	bool fnname(void) __attribute__((weak, alias ("true_stub")))
 #define FALSE_STUB(fnname) \
-	void fnname(void) __attribute__((weak, alias ("false_stub")))
+	bool fnname(void) __attribute__((weak, alias ("false_stub")))
 #define NOOP_STUB FALSE_STUB
 
 TRUE_STUB(lock_held_by_me);
