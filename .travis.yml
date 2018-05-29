@@ -8,7 +8,6 @@ cache: ccache
 
 env:
     matrix:
-    - RUN_ON_CONTAINER=ubuntu-12.04
     - RUN_ON_CONTAINER=ubuntu-16.04
     - RUN_ON_CONTAINER=ubuntu-18.04
     - RUN_ON_CONTAINER=ubuntu-latest
