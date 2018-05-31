@@ -634,7 +634,7 @@ static void dump_scoms(int flat_chip_id, const char *unit, uint32_t *scoms,
 		if (r != OPAL_SUCCESS)
 			continue;
 		prlog(PR_ERR, "%s: [Loc: %s] P:%d 0x%08x=0x%016llx\n",
-		      unit, loc, this_cpu()->chip_id, *scoms, value);
+		      unit, loc, flat_chip_id, *scoms, value);
 		scoms++;
 	}
 }
@@ -691,13 +691,13 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 		fatal_errors = npu2_fir & ~npu2_fir_mask & npu2_fir_action0 & npu2_fir_action1;
 
 		if (fatal_errors) {
-			loc = chip_loc_code(this_cpu()->chip_id);
+			loc = chip_loc_code(flat_chip_id);
 			if (!loc)
 				loc = "Not Available";
 			prlog(PR_ERR, "NPU2: [Loc: %s] P:%d FIR#%d FIR 0x%016llx mask 0x%016llx\n",
-					loc, this_cpu()->chip_id, i, npu2_fir, npu2_fir_mask);
+					loc, flat_chip_id, i, npu2_fir, npu2_fir_mask);
 			prlog(PR_ERR, "NPU2: [Loc: %s] P:%d ACTION0 0x%016llx, ACTION1 0x%016llx\n",
-					loc, this_cpu()->chip_id, npu2_fir_action0, npu2_fir_action1);
+					loc, flat_chip_id, npu2_fir_action0, npu2_fir_action1);
 			total_errors++;
 		}
 
