@@ -24,7 +24,7 @@ OBJS		:= $(PFLASH_OBJS) $(SHARED)
 INSTALLDEPS	+= install-shared
 
 install-shared:
-	$(MAKE) -C ../shared install PREFIX=$(PREFIX)
+	$(MAKE) -C ../shared install prefix=$(prefix)
 
 $(SHARED):
 	$(MAKE) -C ../shared
