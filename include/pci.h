@@ -76,7 +76,7 @@ struct pci_device {
 	uint32_t		vdid;
 	uint32_t		sub_vdid;
 #define PCI_VENDOR_ID(x)	((x) & 0xFFFF)
-#define PCI_DEVICE_ID(x)	((x) >> 8)
+#define PCI_DEVICE_ID(x)	((x) >> 16)
 	uint32_t		class;
 	uint64_t		cap_list;
 	struct {
