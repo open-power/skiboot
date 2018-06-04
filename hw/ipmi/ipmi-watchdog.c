@@ -1,5 +1,4 @@
-
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2018 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,11 +127,20 @@ void ipmi_wdt_final_reset(void)
 	wdt_ticking = false;
 	cancel_timer(&wdt_timer);
 
+	/*
+	 * We're going to wait a little while before requiring
+	 * BOOTKERNEL to have IPMI watchdog support so that people
+	 * can catch up in their development environments.
+	 * If you still read this after 2018, send a patch!
+	 */
+#if 0
 	/* Configure the watchdog and make sure it is still enabled */
 	set_wdt(WDT_RESET_ACTION | WDT_PRETIMEOUT_SMI, WDT_TIMEOUT,
 		WDT_MARGIN/10, true);
 	sync_reset_wdt();
-
+#else
+	set_wdt(WDT_NO_ACTION, 100, 0, false);
+#endif
 	ipmi_set_boot_count();
 }
 
