@@ -70,10 +70,9 @@ static const struct pci_quirk quirk_table[] = {
 	{ NULL, 0, 0 }
 };
 
-void pci_handle_quirk(struct phb *phb, struct pci_device *pd)
+static void __pci_handle_quirk(struct phb *phb, struct pci_device *pd,
+			       const struct pci_quirk *quirks)
 {
-	const struct pci_quirk *quirks = quirk_table;
-
 	while (quirks->vendor_id) {
 		if (quirks->vendor_id == PCI_VENDOR_ID(pd->vdid) &&
 		    (quirks->device_id == PCI_ANY_ID ||
@@ -81,4 +80,9 @@ void pci_handle_quirk(struct phb *phb, struct pci_device *pd)
 			quirks->fixup(phb, pd);
 		quirks++;
 	}
+}
+
+void pci_handle_quirk(struct phb *phb, struct pci_device *pd)
+{
+	__pci_handle_quirk(phb, pd, quirk_table);
 }
