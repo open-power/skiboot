@@ -657,7 +657,7 @@ void bt_init(void)
 	list_head_init(&bt.msgq);
 	bt.queue_len = 0;
 
-	prlog(PR_NOTICE, "Interface initialized, IO 0x%04x\n", bt.base_addr);
+	prlog(PR_INFO, "Interface initialized, IO 0x%04x\n", bt.base_addr);
 
 	ipmi_register_backend(&bt_backend);
 

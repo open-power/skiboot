@@ -170,9 +170,9 @@ void nvram_init(void)
 		prerror("NVRAM: Error %d retrieving nvram info\n", rc);
 		return;
 	}
-	printf("NVRAM: Size is %d KB\n", nvram_size >> 10);
+	prlog(PR_INFO, "NVRAM: Size is %d KB\n", nvram_size >> 10);
 	if (nvram_size > 0x100000) {
-		printf("NVRAM: Cropping to 1MB !\n");
+		prlog(PR_WARNING, "NVRAM: Cropping to 1MB !\n");
 		nvram_size = 0x100000;
 	}
 

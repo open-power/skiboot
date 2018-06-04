@@ -466,7 +466,7 @@ static int init_vas_inst(struct dt_node *np, bool enable)
 
 	create_mm_dt_node(chip);
 
-	prlog(PR_NOTICE, "VAS: Initialized chip %d\n", chip->id);
+	prlog(PR_INFO, "VAS: Initialized chip %d\n", chip->id);
 	return 0;
 
 }

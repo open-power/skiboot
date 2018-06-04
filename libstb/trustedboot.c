@@ -106,7 +106,7 @@ void trustedboot_init(void)
 		prlog(PR_NOTICE, "trusted mode on (FORCED by nvram)\n");
 	} else {
 		trusted_mode = dt_has_node_property(node, "trusted-enabled", NULL);
-		prlog(PR_NOTICE, "trusted mode %s\n",
+		prlog(PR_INFO, "trusted mode %s\n",
 		      trusted_mode ? "on" : "off");
 	}
 

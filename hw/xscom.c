@@ -814,7 +814,7 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 		default:
 			rev = 0;
 		}
-		printf("P9 DD%i.%i%d detected\n", 0xf & (chip->ec_level >> 4),
+		prlog(PR_INFO,"P9 DD%i.%i%d detected\n", 0xf & (chip->ec_level >> 4),
 		       chip->ec_level & 0xf, rev);
 		chip->ec_rev = rev;
 	}
@@ -900,9 +900,9 @@ void xscom_init(void)
 			chip_name = chip_names[chip->type];
 
 		/* We keep a "CHIP" prefix to make the log more user-friendly */
-		prlog(PR_NOTICE, "CHIP: Chip ID %04x type: %s DD%x.%x\n",
+		prlog(PR_NOTICE, "CHIP: Chip ID %04x type: %s DD%x.%x%d\n",
 		      gcid, chip_name, chip->ec_level >> 4,
-		      chip->ec_level & 0xf);
+		      chip->ec_level & 0xf, chip->ec_rev);
 		prlog(PR_DEBUG, "XSCOM: Base address: 0x%llx\n", chip->xscom_base);
 	}
 

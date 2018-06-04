@@ -1631,7 +1631,7 @@ static void fixup_spira(void)
 	if (!HDIF_check(&spiras->hdr, SPIRAS_HDIF_SIG))
 		return;
 
-	prlog(PR_NOTICE, "SPIRA-S found.\n");
+	prlog(PR_DEBUG, "SPIRA-S found.\n");
 
 	spira.ntuples.sp_subsys = spiras->ntuples.sp_subsys;
 	spira.ntuples.ipl_parms = spiras->ntuples.ipl_parms;

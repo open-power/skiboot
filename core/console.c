@@ -338,7 +338,7 @@ void init_opal_console(void)
 		opal_con_driver = &dummy_opal_con;
 	}
 
-	prlog(PR_NOTICE, "OPAL: Using %s\n", opal_con_driver->name);
+	prlog(PR_INFO, "OPAL: Using %s\n", opal_con_driver->name);
 
 	if (opal_con_driver->init)
 		opal_con_driver->init();

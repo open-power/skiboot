@@ -605,7 +605,7 @@ void early_uart_init(void)
 
 	if (uart_init_hw(baud, clk)) {
 		set_console(&uart_con_driver);
-		prlog(PR_NOTICE, "UART: Using UART at %p\n", mmio_uart_base);
+		prlog(PR_DEBUG, "UART: Using UART at %p\n", mmio_uart_base);
 	} else {
 		prerror("UART: Early init failed!");
 		mmio_uart_base = NULL;

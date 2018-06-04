@@ -102,14 +102,14 @@ void secureboot_init(void)
 		return;
 	}
 
-	prlog(PR_NOTICE, "Found %s\n", compat);
+	prlog(PR_DEBUG, "Found %s\n", compat);
 
 	if (nvram_query_eq("force-secure-mode", "always")) {
 		secure_mode = true;
 		prlog(PR_NOTICE, "secure mode on (FORCED by nvram)\n");
 	} else {
 		secure_mode = dt_has_node_property(node, "secure-enabled", NULL);
-		prlog(PR_NOTICE, "secure mode %s\n",
+		prlog(PR_INFO, "secure mode %s\n",
 		      secure_mode ? "on" : "off");
 	}
 

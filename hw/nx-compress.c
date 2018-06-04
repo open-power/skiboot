@@ -219,7 +219,7 @@ void nx_create_compress_node(struct dt_node *node)
 	if (dt_node_is_compatible(node, "ibm,power9-nx")) {
 		u64 cfg_mmio, cfg_txwc, cfg_uctrl, cfg_dma;
 
-		printf("Found ibm,power9-nx\n");
+		prlog(PR_DEBUG, "Found ibm,power9-nx\n");
 		cfg_mmio = pb_base + NX_P9_UMAC_VAS_MMIO_BAR;
 		cfg_dma = pb_base + NX_P9_DMA_VAS_MMIO_BAR;
 		cfg_txwc = pb_base + NX_P9_UMAC_TX_WINDOW_CONTEXT_BAR;
