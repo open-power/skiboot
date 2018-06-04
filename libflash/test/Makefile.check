@@ -30,7 +30,7 @@ $(LIBFLASH_TEST) : % : %.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(TEST_FLAGS) -Wno-suggest-attribute=const -O0 -g -I include -I . -o $@ $< $(LIBFLASH_TEST_EXTRA), $<)
 
 $(LIBFLASH_TEST:%=%-gcov): %-gcov : %.c %
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I include -I . -o $@ $< libflash/test/stubs.o, $<)
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) $(TEST_FLAGS) -Wno-suggest-attribute=const -I include -I . -o $@ $< $(LIBFLASH_TEST_EXTRA), $<)
 
 -include $(wildcard libflash/test/*.d)
 
