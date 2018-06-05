@@ -74,7 +74,7 @@ void psi_disable_link(struct psi *psi)
 
 		/* Mask errors in SEMR */
 		reg = in_be64(psi->regs + PSIHB_SEMR);
-		reg = ((0xfffull << 36) | (0xfffull << 20));
+		reg &= ((0xfffull << 36) | (0xfffull << 20));
 		out_be64(psi->regs + PSIHB_SEMR, reg);
 		printf("PSI: SEMR set to %llx\n", reg);
 
