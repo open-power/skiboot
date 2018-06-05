@@ -543,6 +543,7 @@ bool occ_sensors_init(void)
 		for (i = 0; i < hb->nr_sensors; i++) {
 			const char *type, *loc;
 			struct cpu_thread *c = NULL;
+			uint32_t pir = 0;
 
 			if (md[i].structure_type != OCC_SENSOR_READING_FULL)
 				continue;
@@ -565,6 +566,7 @@ bool occ_sensors_init(void)
 						break;
 				if (!c)
 					continue;
+				pir = c->pir;
 			}
 
 			type = get_sensor_type_string(md[i].type);
@@ -572,7 +574,7 @@ bool occ_sensors_init(void)
 
 			add_sensor_node(loc, type, i, SENSOR_SAMPLE, &md[i],
 					&phandles[phcount], &ptype[phcount],
-					c->pir, occ_num, chip->id);
+					pir, occ_num, chip->id);
 			phcount++;
 
 			/* Add energy sensors */
@@ -581,7 +583,7 @@ bool occ_sensors_init(void)
 				add_sensor_node(loc, "energy", i,
 						SENSOR_ACCUMULATOR, &md[i],
 						&phandles[phcount], &ptype[phcount],
-						c->pir, occ_num, chip->id);
+						pir, occ_num, chip->id);
 				phcount++;
 			}
 
