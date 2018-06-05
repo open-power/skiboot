@@ -848,7 +848,6 @@ static void io_parse_slots(const struct HDIF_common_hdr *sp_iohubs, int hub_id)
 static void io_parse_fru(const void *sp_iohubs)
 {
 	unsigned int i;
-	struct dt_node *hn;
 	int count;
 
 	count = HDIF_get_iarray_size(sp_iohubs, CECHUB_FRU_IO_HUBS);
@@ -863,6 +862,7 @@ static void io_parse_fru(const void *sp_iohubs)
 	for (i = 0; i < count; i++) {
 		const struct cechub_io_hub *hub;
 		unsigned int size, hub_id;
+		struct dt_node *hn;
 		uint32_t chip_id;
 
 		hub = HDIF_get_iarray_item(sp_iohubs, CECHUB_FRU_IO_HUBS,
@@ -906,26 +906,25 @@ static void io_parse_fru(const void *sp_iohubs)
 		case CECHUB_HUB_MURANO:
 		case CECHUB_HUB_MURANO_SEGU:
 			prlog(PR_INFO, "CEC:     Murano !\n");
-			hn = io_add_p8(hub, sp_iohubs);
+			io_add_p8(hub, sp_iohubs);
 			break;
 		case CECHUB_HUB_VENICE_WYATT:
 			prlog(PR_INFO, "CEC:     Venice !\n");
-			hn = io_add_p8(hub, sp_iohubs);
+			io_add_p8(hub, sp_iohubs);
 			break;
 		case CECHUB_HUB_NIMBUS_SFORAZ:
 		case CECHUB_HUB_NIMBUS_MONZA:
 		case CECHUB_HUB_NIMBUS_LAGRANGE:
 			prlog(PR_INFO, "CEC:     Nimbus !\n");
-			hn = io_add_p9(hub, sp_iohubs);
+			io_add_p9(hub, sp_iohubs);
 			break;
 		case CECHUB_HUB_CUMULUS_DUOMO:
 			prlog(PR_INFO, "CEC:     Cumulus !\n");
-			hn = io_add_p9(hub, sp_iohubs);
+			io_add_p9(hub, sp_iohubs);
 			break;
 		default:
 			prlog(PR_ERR, "CEC:     Hub ID 0x%04x unsupported !\n",
 			      hub_id);
-			hn = NULL;
 		}
 
 		chip_id = pcid_to_chip_id(be32_to_cpu(hub->proc_chip_id));
