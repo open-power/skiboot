@@ -21,6 +21,7 @@
 #include <cpu.h>
 #include <nx.h>
 #include <vas.h>
+#include <opal.h>
 
 static int nx_cfg_umac_tx_wc(u32 gcid, u64 xcfg)
 {
@@ -206,13 +207,77 @@ int nx_cfg_rx_fifo(struct dt_node *node, const char *compat,
 	return 0;
 }
 
+static int nx_init_fifo_ctrl(u32 gcid, u64 fifo_ctrl)
+{
+	u64 cfg;
+	int rc = 0;
+
+	rc = xscom_read(gcid, fifo_ctrl, &cfg);
+	if (rc)
+		return rc;
+
+	cfg = SETFIELD(NX_P9_RX_FIFO_CTRL_READ_OFFSET, cfg, 0);
+	cfg = SETFIELD(NX_P9_RX_FIFO_CTRL_QUEUED, cfg, 0);
+
+	rc = xscom_write(gcid, fifo_ctrl, cfg);
+
+	return rc;
+}
+
+
+static int opal_nx_coproc_init(u32 gcid, u32 ct)
+{
+	struct proc_chip *chip;
+	u64 fifo, fifo_hi;
+	u32 nx_base;
+	int rc;
+
+	if (proc_gen < proc_gen_p9)
+		return OPAL_UNSUPPORTED;
+
+	chip =  get_chip(gcid);
+	if (!chip)
+		return OPAL_PARAMETER;
+
+	nx_base =  chip->nx_base;
+	if (!nx_base)
+		return OPAL_PARAMETER;
+
+	switch (ct) {
+	case NX_CT_842:
+		fifo_hi = nx_base + NX_P9_842_HIGH_PRI_RX_FIFO_CTRL;
+		fifo = nx_base + NX_P9_842_NORMAL_PRI_RX_FIFO_CTRL;
+		break;
+	case NX_CT_GZIP:
+		fifo_hi = nx_base + NX_P9_GZIP_HIGH_PRI_RX_FIFO_CTRL;
+		fifo = nx_base + NX_P9_GZIP_NORMAL_PRI_RX_FIFO_CTRL;
+		break;
+	default:
+		prlog(PR_EMERG, "OPAL: Unknown NX coprocessor type\n");
+		return OPAL_PARAMETER;
+	}
+
+	rc  = nx_init_fifo_ctrl(gcid, fifo_hi);
+
+	if (!rc)
+		rc  = nx_init_fifo_ctrl(gcid, fifo);
+
+	return rc;
+}
+
+opal_call(OPAL_NX_COPROC_INIT, opal_nx_coproc_init, 2);
+
 void nx_create_compress_node(struct dt_node *node)
 {
 	u32 gcid, pb_base;
+	struct proc_chip *chip;
 	int rc;
 
 	gcid = dt_get_chip_id(node);
 	pb_base = dt_get_address(node, 0, NULL);
+
+	chip = get_chip(gcid);
+	chip->nx_base =  pb_base;
 
 	prlog(PR_INFO, "NX%d: 842 at 0x%x\n", gcid, pb_base);
 
