@@ -217,6 +217,8 @@ struct proc_chip {
 
 	struct vas		*vas;
 
+	/* Used by hw/nx-compress.c */
+	uint64_t		nx_base;
 	/* location code of this chip */
 	const uint8_t		*loc_code;
 
