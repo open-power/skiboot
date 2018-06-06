@@ -826,10 +826,13 @@ static void p8_i2c_check_status(struct p8_i2c_master *master)
 
 	/*
 	 * When idle or waiting for the occ to release the bus there's
-	 * nothing to check. Error states are handled when starting
-	 * a new request.
+	 * nothing to check. Also ignore recovery state, as the bus
+	 * can be reset in that state, and a request can think it's
+	 * complete when it just means the reset is complete.
+	 * Error states are handled when starting a new request.
 	 */
-	if (master->state == state_idle || master->state == state_occache_dis)
+	if (master->state == state_idle || master->state == state_occache_dis ||
+		master->state == state_recovery)
 		return;
 
 	/* A non-idle master should always have a pending request */
