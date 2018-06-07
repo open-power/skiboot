@@ -88,8 +88,8 @@
 #define BT_Q_DBG(msg, fmt, args...) \
 	_BT_Q_LOG(PR_DEBUG, msg, fmt, ##args)
 
-#define BT_Q_INF(msg, fmt, args...) \
-	_BT_Q_LOG(PR_INFO, msg, fmt, ##args)
+#define BT_Q_TRACE(msg, fmt, args...) \
+	_BT_Q_LOG(PR_TRACE, msg, fmt, ##args)
 
 struct bt_msg {
 	struct list_node link;
@@ -270,7 +270,7 @@ static void bt_send_msg(struct bt_msg *bt_msg)
 	for (i = 0; i < ipmi_msg->req_size; i++)
 		bt_outb(ipmi_msg->data[i], BT_HOST2BMC);
 
-	BT_Q_INF(bt_msg, "Message sent to host");
+	BT_Q_TRACE(bt_msg, "Message sent to host");
 	bt_msg->send_count++;
 
 	bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
@@ -362,7 +362,7 @@ static void bt_get_resp(void)
 		ipmi_msg->data[i] = bt_inb(BT_HOST2BMC);
 	bt_set_h_busy(false);
 
-	BT_Q_INF(bt_msg, "IPMI MSG done");
+	BT_Q_TRACE(bt_msg, "IPMI MSG done");
 
 	list_del(&bt_msg->link);
 	bt.queue_len--;
