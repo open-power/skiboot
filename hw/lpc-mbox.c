@@ -111,7 +111,7 @@ static void bmc_mbox_send_message(struct bmc_mbox_msg *msg)
 	 */
 
 	/* Ping */
-	prlog(PR_DEBUG, "Sending BMC interrupt\n");
+	prlog(PR_TRACE, "Sending BMC interrupt\n");
 	bmc_mbox_outb(MBOX_CTRL_INT_SEND, MBOX_HOST_CTRL);
 }
 

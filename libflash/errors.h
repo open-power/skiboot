@@ -37,7 +37,7 @@
 #ifdef __SKIBOOT__
 #include <skiboot.h>
 #define FL_INF(fmt...) do { prlog(PR_INFO, fmt);  } while(0)
-#define FL_DBG(fmt...) do { prlog(PR_DEBUG, fmt); } while(0)
+#define FL_DBG(fmt...) do { prlog(PR_TRACE, fmt); } while(0)
 #define FL_ERR(fmt...) do { prlog(PR_ERR, fmt);   } while(0)
 #else
 #include <stdio.h>

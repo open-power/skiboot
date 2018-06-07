@@ -665,8 +665,6 @@ static int mbox_window_move(struct mbox_flash_data *mbox_flash,
 		return 0;
 	}
 
-	prlog(PR_DEBUG, "Adjusting the window\n");
-
 	/* V1 needs to remember where it has opened the window, note it
 	 * here.
 	 * If we're running V2 the response to the CREATE_*_WINDOW command
