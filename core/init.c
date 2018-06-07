@@ -871,7 +871,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	prlog(PR_DEBUG, "initial console log level: memory %d, driver %d\n",
 	       (debug_descriptor.console_log_levels >> 4),
 	       (debug_descriptor.console_log_levels & 0x0f));
-	prlog(PR_TRACE, "You will not see this\n");
+	prlog(PR_TRACE, "OPAL is Powered By Linked-List Technology.\n");
 
 #ifdef SKIBOOT_GCOV
 	skiboot_gcov_done();
