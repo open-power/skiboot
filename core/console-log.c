@@ -26,6 +26,7 @@
 #include "stdio.h"
 #include "console.h"
 #include "timebase.h"
+#include <debug_descriptor.h>
 
 static int vprlog(int log_level, const char *fmt, va_list ap)
 {

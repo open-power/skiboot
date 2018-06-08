@@ -25,6 +25,7 @@
 #include <processor.h>
 #include <skiboot.h>
 #include <opal-api.h>
+#include <debug_descriptor.h>
 
 #define DEBUG_TRACES
 

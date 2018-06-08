@@ -28,6 +28,7 @@
 #include <opal-msg.h>
 #include <errorlog.h>
 #include <centaur.h>
+#include <debug_descriptor.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_I2C_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_I2C,
 		 OPAL_IO_SUBSYSTEM, OPAL_PREDICTIVE_ERR_DEGRADED_PERF,
