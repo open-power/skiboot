@@ -27,6 +27,7 @@
 #include <device.h>
 #include <fsp-sysparam.h>
 #include <errorlog.h>
+#include <lock.h>
 
 DEFINE_LOG_ENTRY(OPAL_RC_CONSOLE_HANG, OPAL_PLATFORM_ERR_EVT, OPAL_CONSOLE,
 		 OPAL_PLATFORM_FIRMWARE,

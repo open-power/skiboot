@@ -18,7 +18,6 @@
 #define __CONSOLE_H
 
 #include "unistd.h"
-#include <lock.h>
 
 /*
  * Our internal console uses the format of BML new-style in-memory
