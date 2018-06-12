@@ -24,6 +24,8 @@
 #include <bt.h>
 #include <errorlog.h>
 #include <ipmi.h>
+#include <ast.h>
+#include <platforms/astbmc/astbmc.h>
 
 /* BT config */
 #define BT_IO_BASE	0xe4
@@ -78,6 +80,9 @@ static void qemu_ipmi_setenables(void)
 
 static void qemu_init(void)
 {
+	/* Initialize PNOR/NVRAM */
+	pnor_init();
+
 	/* Setup UART console for use by Linux via OPAL API */
 	set_opal_console(&uart_opal_con);
 
@@ -241,6 +246,9 @@ static bool qemu_probe(void)
 
 	psi_set_external_irq_policy(EXTERNAL_IRQ_POLICY_SKIBOOT);
 
+	/* Initialize AHB accesses via AST2400 */
+	ast_io_init();
+
 	/* Setup UART and use it as console */
 	uart_init();
 
@@ -254,5 +262,7 @@ DECLARE_PLATFORM(qemu) = {
 	.external_irq   = qemu_ext_irq_serirq_cpld,
 	.cec_power_down = qemu_ipmi_power_down,
 	.cec_reboot     = qemu_ipmi_reboot,
+	.start_preload_resource	= flash_start_preload_resource,
+	.resource_loaded	= flash_resource_loaded,
 	.terminate	= ipmi_terminate,
 };
