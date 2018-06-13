@@ -1092,6 +1092,20 @@ static int64_t npu2_get_power_state(struct pci_slot *slot __unused, uint8_t *val
 
 static int64_t npu2_hreset(struct pci_slot *slot __unused)
 {
+	struct npu2 *p;
+	int i;
+	struct npu2_dev *ndev;
+
+	p = phb_to_npu2_nvlink(slot->phb);
+	NPU2INF(p, "Hreset PHB state\n");
+
+	for (i = 0; i < p->total_devices; i++) {
+		ndev = &p->devices[i];
+		if (ndev) {
+			NPU2DEVINF(ndev, "Resetting device\n");
+			reset_ntl(ndev);
+		}
+	}
 	return OPAL_SUCCESS;
 }
 
