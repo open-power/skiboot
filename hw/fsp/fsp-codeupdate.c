@@ -206,6 +206,29 @@ static void get_platform_hmc_managed(void)
 	}
 }
 
+static bool fw_ipl_side_update_notify(struct fsp_msg *msg)
+{
+	u32 param_id = msg->data.words[0];
+	int dlen = msg->data.words[1] & 0xffff;
+	uint32_t state = msg->data.words[2];
+
+	if (param_id != SYS_PARAM_FW_IPL_SIDE)
+		return false;
+
+	if (dlen != 4) {
+		prlog(PR_DEBUG,
+		      "CUPD: Invalid sysparams notify len : 0x%x\n", dlen);
+		return false;
+	}
+
+	prlog(PR_NOTICE, "CUPD: FW IPL side changed. Disable fast reboot\n");
+	prlog(PR_NOTICE, "CUPD: Next IPL side : %s\n",
+	      state == FW_IPL_SIDE_TEMP ? "temp" : "perm");
+
+	disable_fast_reboot("FSP IPL Side Change");
+	return true;
+}
+
 static int64_t code_update_check_state(void)
 {
 	switch(flash_state) {
@@ -1274,6 +1297,9 @@ void fsp_code_update_init(void)
 	fsp_register_client(&fsp_get_notify, FSP_MCLASS_CODE_UPDATE);
 	/* Register for Class AA (FSP R/R) */
 	fsp_register_client(&fsp_cupd_client_rr, FSP_MCLASS_RR_EVENT);
+
+	/* Register for firmware IPL side update notification */
+	sysparam_add_update_notifier(fw_ipl_side_update_notify);
 
 	/* Flash hook */
 	fsp_flash_term_hook = NULL;
