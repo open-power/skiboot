@@ -267,6 +267,32 @@ if { [info exists env(PMEM_DISK)] } {
     }
 }
 
+if { [info exists env(PMEM_VOLATILE)] } {
+
+    set pmem_sizes [split $env(PMEM_VOLATILE) ","]
+
+    set pmem_root [mysim of addchild $root_node "pmem" ""]
+    mysim of addprop $pmem_root int "#address-cells" 2
+    mysim of addprop $pmem_root int "#size-cells" 2
+    mysim of addprop $pmem_root empty "ranges" ""
+
+    # Start above where XICS normally is at 0x1A0000000000
+    if (![info exists pmem_start]) {
+        set pmem_start [expr 0x20000000000]
+    }
+
+    foreach pmem_size $pmem_sizes {
+	set pmem_size [string trim $pmem_size]
+	set pmem_start_hex [format %x $pmem_start]
+	set pmem_node [mysim of addchild $pmem_root "pmem@$pmem_start_hex" ""]
+	set reg [list [expr $pmem_start >> 32] [expr $pmem_start & 0xffffffff] [expr $pmem_size >> 32] [expr $pmem_size & 0xffffffff] ]
+	mysim of addprop $pmem_node array "reg" reg
+	mysim of addprop $pmem_node string "compatible" "pmem-region"
+	mysim of addprop $pmem_root int "volatile" 1
+	set pmem_start [expr $pmem_start + $pmem_size]
+    }
+}
+
 # Default NVRAM is blank and will be formatted by Skiboot if no file is provided
 set fake_nvram_start $cpio_end
 set fake_nvram_size 0x40000
