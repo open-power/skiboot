@@ -229,10 +229,10 @@ struct occ_response_buffer {
  */
 struct occ_dynamic_data {
 	u8 occ_state;
+	u8 major_version;
+	u8 minor_version;
+	u8 gpus_present;
 	u8 spare1;
-	u8 spare2;
-	u8 spare3;
-	u8 spare4;
 	u8 cpu_throttle;
 	u8 mem_throttle;
 	u8 quick_pwr_drop;
@@ -1228,6 +1228,23 @@ static void handle_occ_rsp(uint32_t chip_id)
 	queue_occ_rsp_msg(chip->token, read_occ_rsp(chip->rsp));
 exit:
 	unlock(&chip->queue_lock);
+}
+
+bool occ_get_gpu_presence(struct proc_chip *chip, int gpu_num)
+{
+	struct occ_dynamic_data *ddata;
+
+	assert(gpu_num <= 2);
+
+	ddata = get_occ_dynamic_data(chip);
+
+	if (ddata->major_version != 0 || ddata->minor_version < 1) {
+		prlog(PR_INFO, "OCC: OCC not reporting GPU slot presence, "
+		      "assuming device is present\n");
+		return true;
+	}
+
+	return (bool)(ddata->gpus_present & 1 << gpu_num);
 }
 
 static void occ_add_powercap_sensors(struct dt_node *power_mgt);

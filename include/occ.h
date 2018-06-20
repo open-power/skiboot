@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <chip.h>
+
 /* OCC Functions */
 
 extern void occ_pstates_init(void);
@@ -36,6 +38,8 @@ enum pnor_owner {
 };
 extern void occ_pnor_set_owner(enum pnor_owner owner);
 
+/* GPU presence detection */
+bool occ_get_gpu_presence(struct proc_chip *chip, int gpu_num);
 
 /* OCC Inband Sensors */
 extern bool occ_sensors_init(void);
