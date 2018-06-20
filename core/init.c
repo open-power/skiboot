@@ -505,7 +505,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	ipmi_set_fw_progress_sensor(IPMI_FW_OS_BOOT);
 
-	occ_pstates_init();
+	if (fsp_present())
+		occ_pstates_init();
 
 	if (!is_reboot) {
 		/* We wait for the nvram read to complete here so we can
@@ -1078,6 +1079,17 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	slw_init();
 
 	op_display(OP_LOG, OP_MOD_INIT, 0x0002);
+
+	/*
+	 * On some POWER9 BMC systems, we need to initialise the OCC
+	 * before the NPU to facilitate NVLink/OpenCAPI presence
+	 * detection, so we set it up as early as possible. On FSP
+	 * systems, Hostboot starts booting the OCC later, so we delay
+	 * OCC initialisation as late as possible to give it the
+	 * maximum time to boot up.
+	 */
+	if (!fsp_present())
+		occ_pstates_init();
 
 	pci_nvram_init();
 
