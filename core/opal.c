@@ -31,6 +31,7 @@
 #include <timer.h>
 #include <elf-abi.h>
 #include <errorlog.h>
+#include <occ.h>
 
 /* Pending events to signal via opal_poll_events */
 uint64_t opal_pending_events;

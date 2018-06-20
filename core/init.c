@@ -53,6 +53,7 @@
 #include <dts.h>
 #include <sbe-p9.h>
 #include <debug_descriptor.h>
+#include <occ.h>
 
 enum proc_gen proc_gen;
 unsigned int pcie_max_link_speed;

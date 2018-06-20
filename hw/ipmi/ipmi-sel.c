@@ -26,6 +26,7 @@
 #include <pel.h>
 #include <opal-msg.h>
 #include <debug_descriptor.h>
+#include <occ.h>
 
 /* OEM SEL fields */
 #define SEL_OEM_ID_0		0x55

@@ -14,6 +14,38 @@
  * limitations under the License.
  */
 
+/* OCC Functions */
+
+extern void occ_pstates_init(void);
+extern void occ_fsp_init(void);
+
+/* OCC interrupt for P8 */
+extern void occ_p8_interrupt(uint32_t chip_id);
+extern void occ_send_dummy_interrupt(void);
+
+/* OCC interrupt for P9 */
+extern void occ_p9_interrupt(uint32_t chip_id);
+
+/* OCC load support */
+extern void occ_poke_load_queue(void);
+
+/* OCC/Host PNOR ownership */
+enum pnor_owner {
+	PNOR_OWNER_HOST,
+	PNOR_OWNER_EXTERNAL,
+};
+extern void occ_pnor_set_owner(enum pnor_owner owner);
+
+
+/* OCC Inband Sensors */
+extern bool occ_sensors_init(void);
+extern int occ_sensor_read(u32 handle, u64 *data);
+extern int occ_sensor_group_clear(u32 group_hndl, int token);
+extern void occ_add_sensor_groups(struct dt_node *sg, u32  *phandles,
+				  u32 *ptype, int nr_phandles, int chipid);
+
+extern int occ_sensor_group_enable(u32 group_hndl, int token, bool enable);
+
 /*
  * OCC Sensor Data
  *

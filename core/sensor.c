@@ -21,6 +21,7 @@
 #include <opal.h>
 #include <dts.h>
 #include <lock.h>
+#include <occ.h>
 
 struct dt_node *sensor_node;
 

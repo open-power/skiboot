@@ -20,7 +20,7 @@
 #include <sensor.h>
 #include <device.h>
 #include <cpu.h>
-#include <occ-sensor.h>
+#include <occ.h>
 
 enum sensor_attr {
 	SENSOR_SAMPLE,

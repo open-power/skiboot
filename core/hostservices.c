@@ -29,6 +29,7 @@
 #include <console.h>
 #include <mem-map.h>
 #include <timebase.h>
+#include <occ.h>
 
 #define HOSTBOOT_RUNTIME_INTERFACE_VERSION 1
 

@@ -31,7 +31,7 @@
 #include <powercap.h>
 #include <psr.h>
 #include <sensor.h>
-#include <occ-sensor.h>
+#include <occ.h>
 
 /* OCC Communication Area for PStates */
 

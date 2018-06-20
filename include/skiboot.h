@@ -206,10 +206,8 @@ extern void uart_init(void);
 extern void mbox_init(void);
 extern void early_uart_init(void);
 extern void homer_init(void);
-extern void occ_pstates_init(void);
 extern void slw_init(void);
 extern void add_cpu_idle_state_properties(void);
-extern void occ_fsp_init(void);
 extern void lpc_rtc_init(void);
 
 /* flash support */
@@ -241,23 +239,6 @@ enum {
 };
 extern void uart_set_console_policy(int policy);
 extern bool uart_enabled(void);
-
-/* OCC interrupt for P8 */
-extern void occ_p8_interrupt(uint32_t chip_id);
-extern void occ_send_dummy_interrupt(void);
-
-/* OCC interrupt for P9 */
-extern void occ_p9_interrupt(uint32_t chip_id);
-
-/* OCC load support */
-extern void occ_poke_load_queue(void);
-
-/* OCC/Host PNOR ownership */
-enum pnor_owner {
-	PNOR_OWNER_HOST,
-	PNOR_OWNER_EXTERNAL,
-};
-extern void occ_pnor_set_owner(enum pnor_owner owner);
 
 /* PRD */
 extern void prd_psi_interrupt(uint32_t proc);
@@ -310,12 +291,4 @@ extern int fake_nvram_info(uint32_t *total_size);
 extern int fake_nvram_start_read(void *dst, uint32_t src, uint32_t len);
 extern int fake_nvram_write(uint32_t offset, void *src, uint32_t size);
 
-/* OCC Inband Sensors */
-extern bool occ_sensors_init(void);
-extern int occ_sensor_read(u32 handle, u64 *data);
-extern int occ_sensor_group_clear(u32 group_hndl, int token);
-extern void occ_add_sensor_groups(struct dt_node *sg, u32  *phandles,
-				  u32 *ptype, int nr_phandles, int chipid);
-
-extern int occ_sensor_group_enable(u32 group_hndl, int token, bool enable);
 #endif /* __SKIBOOT_H */

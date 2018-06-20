@@ -35,6 +35,7 @@
 #include <xive.h>
 #include <sbe-p9.h>
 #include <phys-map.h>
+#include <occ.h>
 
 static LIST_HEAD(psis);
 static u64 psi_link_timer;
