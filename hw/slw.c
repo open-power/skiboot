@@ -75,7 +75,7 @@ static void slw_do_rvwinkle(void *data)
 	mtspr(SPR_LPCR, ((lpcr & ~SPR_LPCR_P8_PECE) | SPR_LPCR_P8_PECE2));
 	isync();
 
-	prlog(PR_DEBUG, "SLW: CPU PIR 0x%04x goint to rvwinkle...\n",
+	prlog(PR_DEBUG, "SLW: CPU PIR 0x%04x going to rvwinkle...\n",
 	      cpu->pir);
 
 	/* Tell that we got it */
