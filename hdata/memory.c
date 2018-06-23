@@ -448,7 +448,9 @@ static void add_memory_controller(const struct HDIF_common_hdr *msarea,
 	if (!mcbist) {
 		mcbist = dt_new_addr(xscom, "mcbist", mcbist_id);
 		assert(mcbist);
-		dt_add_mem_reg_property(mcbist, mcbist_id);
+		dt_add_property_cells(mcbist, "#address-cells", 1);
+		dt_add_property_cells(mcbist, "#size-cells", 0);
+		dt_add_property_cells(mcbist, "reg", mcbist_id, 0);
 	}
 
 	mcs_id = MS_CONTROLLER_MCS_ID(controller_id);
