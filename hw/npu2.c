@@ -650,7 +650,7 @@ static int npu2_dn_fixup(struct phb *phb,
 		 * @fwts-advice No GPU/NPU2 slot information was found.
 		 * NVLink2 functionality will not work.
 		 */
-		prlog(PR_ERR, "NPU2: Cannot find GPU slot information\n");
+		prlog(PR_ERR, "NPU: Cannot find GPU slot information\n");
 		return 0;
 	}
 	dt_add_property_string(pd->dn, "ibm,loc-code", label);
@@ -1354,7 +1354,7 @@ static void npu2_probe_phb(struct dt_node *dn)
 	if (dt_find_compatible_node(dn, NULL, "ibm,npu-link-opencapi")) {
 		/* Die if there's also an NVLink link */
 		assert(!dt_find_compatible_node(dn, NULL, "ibm,npu-link"));
-		prlog(PR_INFO, "NPU2: OpenCAPI link configuration detected, "
+		prlog(PR_INFO, "NPU: OpenCAPI link configuration detected, "
 		      "not initialising NVLink\n");
 		return;
 	}
@@ -1365,7 +1365,7 @@ static void npu2_probe_phb(struct dt_node *dn)
 	proc_chip = get_chip(gcid);
 	assert(proc_chip);
 	if ((proc_chip->ec_level & 0xf0) > 0x20) {
-		prerror("NPU2: unsupported ec level on Chip 0x%x!\n", gcid);
+		prerror("NPU: unsupported ec level on Chip 0x%x!\n", gcid);
 		return;
 	}
 
@@ -1437,7 +1437,7 @@ static void npu2_probe_phb(struct dt_node *dn)
 	index = dt_prop_get_u32(dn, "ibm,npu-index");
 	phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
 	links = dt_prop_get_u32(dn, "ibm,npu-links");
-	prlog(PR_INFO, "NPU2: Chip %d Found NPU2#%d (%d links) at %s\n",
+	prlog(PR_INFO, "NPU: Chip %d Found NPU2#%d (%d links) at %s\n",
 	      gcid, index, links, path);
 	free(path);
 
@@ -1915,7 +1915,7 @@ static void npu2_setup_irqs(struct npu2 *p)
 
 	p->base_lsi = xive_alloc_ipi_irqs(p->chip_id, NPU2_N_DL_IRQS, NPU2_N_DL_IRQS_ALIGN);
 	if (p->base_lsi == XIVE_IRQ_ERROR) {
-		prlog(PR_ERR, "NPU2: Failed to allocate interrupt sources, IRQs for NDL No-stall events will not be available.\n");
+		prlog(PR_ERR, "NPU: Failed to allocate interrupt sources, IRQs for NDL No-stall events will not be available.\n");
 		return;
 	}
 	xive_register_ipi_source(p->base_lsi, NPU2_N_DL_IRQS, p, &npu2_ipi_ops );
@@ -1984,7 +1984,7 @@ static void npu2_create_phb(struct dt_node *dn)
 		 * @fwts-advice Firmware probably ran out of memory creating
 		 * NPU2 slot. NVLink functionality could be broken.
 		 */
-		prlog(PR_ERR, "NPU2: Cannot create PHB slot\n");
+		prlog(PR_ERR, "NPU: Cannot create PHB slot\n");
 	}
 
 	pci_register_phb(&p->phb_nvlink, OPAL_DYNAMIC_PHB_ID);
@@ -2004,7 +2004,7 @@ void probe_npu2(void)
 	    (chip->type == PROC_CHIP_P9_NIMBUS ||
 	     chip->type == PROC_CHIP_P9_CUMULUS) &&
 	    (chip->ec_level & 0xf0) == 0x10) {
-		prlog(PR_INFO, "NPU2: DD1 not supported\n");
+		prlog(PR_INFO, "NPU: DD1 not supported\n");
 		return;
 	}
 
@@ -2012,7 +2012,7 @@ void probe_npu2(void)
 	zcal = nvram_query("nv_zcal_override");
 	if (zcal) {
 		nv_zcal_nominal = atoi(zcal);
-		prlog(PR_WARNING, "NPU2: Using ZCAL impedance override = %d\n", nv_zcal_nominal);
+		prlog(PR_WARNING, "NPU: Using ZCAL impedance override = %d\n", nv_zcal_nominal);
 	}
 
 	/* Scan NPU2 XSCOM nodes */

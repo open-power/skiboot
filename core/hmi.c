@@ -694,9 +694,9 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 			loc = chip_loc_code(flat_chip_id);
 			if (!loc)
 				loc = "Not Available";
-			prlog(PR_ERR, "NPU2: [Loc: %s] P:%d FIR#%d FIR 0x%016llx mask 0x%016llx\n",
+			prlog(PR_ERR, "NPU: [Loc: %s] P:%d FIR#%d FIR 0x%016llx mask 0x%016llx\n",
 					loc, flat_chip_id, i, npu2_fir, npu2_fir_mask);
-			prlog(PR_ERR, "NPU2: [Loc: %s] P:%d ACTION0 0x%016llx, ACTION1 0x%016llx\n",
+			prlog(PR_ERR, "NPU: [Loc: %s] P:%d ACTION0 0x%016llx, ACTION1 0x%016llx\n",
 					loc, flat_chip_id, npu2_fir_action0, npu2_fir_action1);
 			total_errors++;
 		}
@@ -718,7 +718,7 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 
 	if (npu2_hmi_verbose) {
 		_xscom_lock();
-		dump_scoms(flat_chip_id, "NPU2", npu2_scom_dump, loc);
+		dump_scoms(flat_chip_id, "NPU", npu2_scom_dump, loc);
 		_xscom_unlock();
 		prlog(PR_ERR, " _________________________ \n");
 		prlog(PR_ERR, "< It's Driver Debug time! >\n");
