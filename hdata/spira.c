@@ -561,6 +561,8 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 				dt_add_property(np, "ibm,module-vpd", vpd,
 						vpd_sz);
 				vpd_data_parse(np, vpd, vpd_sz);
+				if (vpd_node)
+					dt_add_proc_vendor(vpd_node, vpd, vpd_sz);
 			}
 		}
 
