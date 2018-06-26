@@ -1,12 +1,12 @@
 #!/bin/bash
 
 
-if [ -z "$QEMU" ]; then
-    QEMU="qemu-system-ppc64"
+if [ -z "$QEMU_BIN" ]; then
+    QEMU_BIN="qemu-system-ppc64"
 fi
 
-if [ ! `command -v $QEMU` ]; then
-    echo 'Could not find executable QEMU. Skipping hello_world test';
+if [ ! `command -v $QEMU_BIN` ]; then
+    echo "Could not find executable QEMU_BIN ($QEMU_BIN). Skipping hello_world test";
     exit 0;
 fi
 
@@ -30,7 +30,7 @@ trap "rm -f -- '$t'" EXIT
 (
 cat <<EOF | expect
 set timeout 30
-spawn $QEMU -m 1G -M powernv -kernel $SKIBOOT_ZIMAGE -nographic
+spawn $QEMU_BIN -m 1G -M powernv -kernel $SKIBOOT_ZIMAGE -nographic
 expect {
 timeout { send_user "\nTimeout waiting for hello world\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
