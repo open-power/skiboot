@@ -249,6 +249,21 @@ static struct dt_property *dt_add_prop_sanitize_val(struct dt_node *node,
 }
 
 /*
+ * OpenPower system does not provide processor vendor name under FRU VPD.
+ * Parse processor module VPD to get vendor detail
+ */
+void dt_add_proc_vendor(struct dt_node *proc_node,
+			const void *mvpd, unsigned int mvpd_sz)
+{
+	const void *kw;
+	uint8_t sz;
+
+	kw = vpd_find(mvpd, mvpd_sz, "VINI", "VN", &sz);
+	if (kw)
+		dt_add_prop_sanitize_val(proc_node, "vendor", kw, sz);
+}
+
+/*
  * For OpenPOWER, we only decipher OPFR records. While OP HDAT have VINI
  * records too, populating the fields in there is optional. Also, there
  * is an overlap in the fields contained therein.
