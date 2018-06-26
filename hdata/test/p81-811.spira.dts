@@ -2119,7 +2119,7 @@
 					card-type = [80 b5 00];
 					hw-characteristics = [00];
 					ccin = "2B08";
-					description = "CEC OP PANEL    ";
+					description = "CEC OP PANEL";
 				};
 
 				power-supply@3100 {
