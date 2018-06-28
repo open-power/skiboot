@@ -1224,31 +1224,38 @@ static void mem_region_clear_job(void *data)
 
 #define MEM_REGION_CLEAR_JOB_SIZE (16ULL*(1<<30))
 
-void mem_region_clear_unused(void)
+static struct cpu_job **mem_clear_jobs;
+static struct mem_region_clear_job_args *mem_clear_job_args;
+static int mem_clear_njobs = 0;
+
+void start_mem_region_clear_unused(void)
 {
-	int njobs = 0;
-	struct cpu_job **jobs;
 	struct mem_region *r;
-	struct mem_region_clear_job_args *job_args;
 	uint64_t s,l;
 	uint64_t total = 0;
 	uint32_t chip_id;
 	char *path;
 	int i;
+	struct cpu_job **jobs;
+	struct mem_region_clear_job_args *job_args;
 
 	lock(&mem_region_lock);
 	assert(mem_regions_finalised);
 
+	mem_clear_njobs = 0;
+
 	list_for_each(&regions, r, list) {
 		if (!(r->type == REGION_OS))
 			continue;
-		njobs++;
+		mem_clear_njobs++;
 		/* One job per 16GB */
-		njobs += r->len / MEM_REGION_CLEAR_JOB_SIZE;
+		mem_clear_njobs += r->len / MEM_REGION_CLEAR_JOB_SIZE;
 	}
 
-	jobs = malloc(njobs * sizeof(struct cpu_job*));
-	job_args = malloc(njobs * sizeof(struct mem_region_clear_job_args));
+	jobs = malloc(mem_clear_njobs * sizeof(struct cpu_job*));
+	job_args = malloc(mem_clear_njobs * sizeof(struct mem_region_clear_job_args));
+	mem_clear_jobs = jobs;
+	mem_clear_job_args = job_args;
 
 	prlog(PR_NOTICE, "Clearing unused memory:\n");
 	i = 0;
@@ -1278,7 +1285,6 @@ void mem_region_clear_unused(void)
 				 (job_args[i].e - job_args[i].s),
 				 chip_id);
 			free(path);
-			printf("job: %s\n", job_args[i].job_name);
 			jobs[i] = cpu_queue_job_on_node(chip_id,
 							job_args[i].job_name,
 							mem_region_clear_job,
@@ -1306,25 +1312,36 @@ void mem_region_clear_unused(void)
 			 (job_args[i].e - job_args[i].s),
 			 chip_id);
 		free(path);
-		printf("job: %s\n", job_args[i].job_name);
 		jobs[i] = cpu_queue_job_on_node(chip_id,
 						job_args[i].job_name,
 					mem_region_clear_job,
 					&job_args[i]);
 		i++;
 	}
+	unlock(&mem_region_lock);
 	cpu_process_local_jobs();
+}
+
+void wait_mem_region_clear_unused(void)
+{
+	uint64_t l;
+	uint64_t total = 0;
+	int i;
+
+	for(i=0; i < mem_clear_njobs; i++) {
+		total += (mem_clear_job_args[i].e - mem_clear_job_args[i].s);
+	}
+
 	l = 0;
-	for(i=0; i < njobs; i++) {
-		cpu_wait_job(jobs[i], true);
-		l += (job_args[i].e - job_args[i].s);
+	for(i=0; i < mem_clear_njobs; i++) {
+		cpu_wait_job(mem_clear_jobs[i], true);
+		l += (mem_clear_job_args[i].e - mem_clear_job_args[i].s);
 		printf("Clearing memory... %"PRIu64"/%"PRIu64"GB done\n",
 		       l>>30, total>>30);
-		free(job_args[i].job_name);
+		free(mem_clear_job_args[i].job_name);
 	}
-	unlock(&mem_region_lock);
-	free(jobs);
-	free(job_args);
+	free(mem_clear_jobs);
+	free(mem_clear_job_args);
 }
 
 static void mem_region_add_dt_reserved_node(struct dt_node *parent,

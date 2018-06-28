@@ -374,6 +374,9 @@ void __noreturn fast_reboot_entry(void)
 	/* Start preloading kernel and ramdisk */
 	start_preload_kernel();
 
+	/* Start clearing memory */
+	start_mem_region_clear_unused();
+
 	/* Poke the consoles (see comments in the code there) */
 	fsp_console_reset();
 
@@ -399,7 +402,7 @@ void __noreturn fast_reboot_entry(void)
 
 	ipmi_set_fw_progress_sensor(IPMI_FW_PCI_INIT);
 
-	mem_region_clear_unused();
+	wait_mem_region_clear_unused();
 
 	/* Load and boot payload */
 	load_and_boot_kernel(true);
