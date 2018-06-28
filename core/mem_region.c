@@ -447,8 +447,8 @@ void *mem_alloc(struct mem_region *region, size_t size, size_t align,
 	if (r)
 		return r;
 
-	prerror("mem_alloc(0x%lx, 0x%lx, \"%s\") failed !\n",
-		size, align, location);
+	prerror("mem_alloc(0x%lx, 0x%lx, \"%s\", %s) failed !\n",
+		size, align, location, region->name);
 	mem_dump_allocs();
 	return NULL;
 }
