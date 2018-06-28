@@ -548,12 +548,12 @@ bool mem_check(const struct mem_region *region)
 	struct free_hdr *f;
 
 	/* Check it's sanely aligned. */
-	if (region->start % sizeof(struct alloc_hdr)) {
+	if (region->start % sizeof(long)) {
 		prerror("Region '%s' not sanely aligned (%llx)\n",
 			region->name, (unsigned long long)region->start);
 		return false;
 	}
-	if ((long)region->len % sizeof(struct alloc_hdr)) {
+	if ((long)region->len % sizeof(long)) {
 		prerror("Region '%s' not sane length (%llu)\n",
 			region->name, (unsigned long long)region->len);
 		return false;
