@@ -2836,11 +2836,11 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		pci_slot_set_state(slot,
 			PHB4_SLOT_FRESET_DEASSERT_DELAY);
 
-		phb4_training_trace(p);
-
 		/* Move on to link poll right away */
 		return pci_slot_set_sm_timeout(slot, 1);
 	case PHB4_SLOT_FRESET_DEASSERT_DELAY:
+		phb4_training_trace(p);
+
 		pci_slot_set_state(slot, PHB4_SLOT_LINK_START);
 		return slot->ops.poll_link(slot);
 	default:
