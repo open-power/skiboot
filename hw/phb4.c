@@ -2839,7 +2839,7 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		phb4_training_trace(p);
 
 		/* Move on to link poll right away */
-		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
+		return pci_slot_set_sm_timeout(slot, 1);
 	case PHB4_SLOT_FRESET_DEASSERT_DELAY:
 		pci_slot_set_state(slot, PHB4_SLOT_LINK_START);
 		return slot->ops.poll_link(slot);
