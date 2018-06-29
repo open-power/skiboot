@@ -81,6 +81,7 @@ struct npu2_pcie_bar {
 };
 
 enum npu2_dev_type {
+	NPU2_DEV_TYPE_UNKNOWN,
 	NPU2_DEV_TYPE_NVLINK,
 	NPU2_DEV_TYPE_OPENCAPI,
 };
@@ -191,6 +192,7 @@ static inline struct phb *npu2_dev_to_phb(struct npu2_dev *ndev)
 	}
 }
 
+enum npu2_dev_type npu2_dt_link_dev_type(struct dt_node *link);
 void npu2_write_4b(struct npu2 *p, uint64_t reg, uint32_t val);
 uint32_t npu2_read_4b(struct npu2 *p, uint64_t reg);
 void npu2_write(struct npu2 *p, uint64_t reg, uint64_t val);

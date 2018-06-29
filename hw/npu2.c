@@ -1345,17 +1345,25 @@ static void assign_mmio_bars(uint64_t gcid, uint32_t scom, uint64_t reg[2], uint
 static void npu2_probe_phb(struct dt_node *dn)
 {
 	struct proc_chip *proc_chip;
-	struct dt_node *np;
+	struct dt_node *np, *link;
+	bool ocapi_detected = false, nvlink_detected = false;
 	uint32_t gcid, scom, index, phb_index, links;
 	uint64_t reg[2], mm_win[2], val;
 	char *path;
 
 	/* Abort if any OpenCAPI links detected */
-	if (dt_find_compatible_node(dn, NULL, "ibm,npu-link-opencapi")) {
-		/* Die if there's also an NVLink link */
-		assert(!dt_find_compatible_node(dn, NULL, "ibm,npu-link"));
-		prlog(PR_INFO, "NPU: OpenCAPI link configuration detected, "
-		      "not initialising NVLink\n");
+	dt_for_each_compatible(dn, link, "ibm,npu-link") {
+		if (npu2_dt_link_dev_type(link) == NPU2_DEV_TYPE_OPENCAPI)
+			ocapi_detected = true;
+		else
+			nvlink_detected = true;
+	}
+
+	if (ocapi_detected && nvlink_detected) {
+		prlog(PR_ERR, "NPU: NVLink and OpenCAPI devices on same chip not supported\n");
+		assert(false);
+	} else if (ocapi_detected) {
+		prlog(PR_INFO, "NPU: OpenCAPI link configuration detected, not initialising NVLink\n");
 		return;
 	}
 

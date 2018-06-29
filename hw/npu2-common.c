@@ -21,6 +21,19 @@
 #include <npu2-regs.h>
 #include <bitutils.h>
 
+enum npu2_dev_type npu2_dt_link_dev_type(struct dt_node *link)
+{
+	const char *link_type = dt_prop_get(link, "ibm,npu-link-type") ?:
+		"unknown";
+	if (streq(link_type, "nvlink")) {
+		return NPU2_DEV_TYPE_NVLINK;
+	} else if (streq(link_type, "opencapi")) {
+		return NPU2_DEV_TYPE_OPENCAPI;
+	} else {
+		return NPU2_DEV_TYPE_UNKNOWN;
+	}
+}
+
 /*
  * We use the indirect method because it uses the same addresses as
  * the MMIO offsets (NPU RING)

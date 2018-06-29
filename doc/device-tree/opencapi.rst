@@ -10,8 +10,8 @@ NPU bindings
 The NPU nodes are similar to those in :doc:`nvlink`.
 
 We distinguish between OpenCAPI and NVLink links using the
-`ibm.npu-link-opencapi` compatible string. NPUs with a mixture of
-OpenCAPI and NVLink links are currently unsupported.
+`ibm.npu-link-type` property. NPUs with a mixture of OpenCAPI and
+NVLink links are currently unsupported.
 
 .. code-block:: dts
 
@@ -25,7 +25,8 @@ OpenCAPI and NVLink links are currently unsupported.
       ibm,npu-links = <0x2>; /* Number of links wired up to this npu. */
 
       link@2 {
-        compatible = "ibm,npu-link-opencapi";
+	compatible = "ibm,npu-link";
+	ibm,npu-link-type = "opencapi";
         ibm,npu-group-id = <0x1>;
 	ibm,npu-lane-mask = <0xf1e000>; /* Mask specifying which IBM PHY lanes
 	                                 * are used for this link. 24-bit,
@@ -38,7 +39,8 @@ OpenCAPI and NVLink links are currently unsupported.
       };
 
       link@3 {
-        compatible = "ibm,npu-link-opencapi";
+	compatible = "ibm,npu-link";
+	ibm,npu-link-type = "opencapi";
 	ibm,npu-group-id = <0x2>;
 	ibm,npu-lane-mask = <0x78f>;
 	ibm,npu-phy = <0x80000000 0x9010c3f>;

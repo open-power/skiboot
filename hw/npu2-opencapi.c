@@ -1701,9 +1701,12 @@ static void npu2_opencapi_probe(struct dt_node *dn)
 
 	/* Don't try to init when we have an NVLink link */
 	dt_for_each_compatible(dn, link, "ibm,npu-link") {
-		prlog(PR_DEBUG, "OCAPI: NPU%d: NVLink link found, skipping\n",
-		      index);
-		return;
+		if (npu2_dt_link_dev_type(link) != NPU2_DEV_TYPE_OPENCAPI) {
+			prlog(PR_DEBUG,
+			      "OCAPI: NPU%d: Non-OpenCAPI link found, skipping OpenCAPI init\n",
+			      index);
+			return;
+		}
 	}
 
 	path = dt_get_path(dn);
@@ -1728,7 +1731,7 @@ static void npu2_opencapi_probe(struct dt_node *dn)
 	n->regs = (void *)reg[0];
 	n->dt_node = dn;
 
-	dt_for_each_compatible(dn, link, "ibm,npu-link-opencapi") {
+	dt_for_each_compatible(dn, link, "ibm,npu-link") {
 		dev_index = dt_prop_get_u32(link, "ibm,npu-link-index");
 		prlog(PR_INFO, "OCAPI: Configuring link index %lld\n",
 		      dev_index);
@@ -1748,7 +1751,7 @@ static void npu2_opencapi_probe(struct dt_node *dn)
 	if (rc)
 		goto failed;
 
-	dt_for_each_compatible(dn, link, "ibm,npu-link-opencapi") {
+	dt_for_each_compatible(dn, link, "ibm,npu-link") {
 		npu2_opencapi_setup_device(link, n, &n->devices[i]);
 		i++;
 	}

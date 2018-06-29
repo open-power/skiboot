@@ -50,7 +50,8 @@ static void create_link(struct dt_node *npu, int group, int index)
 	snprintf(namebuf, sizeof(namebuf), "link@%x", index);
 	link = dt_new(npu, namebuf);
 
-	dt_add_property_string(link, "compatible", "ibm,npu-link-opencapi");
+	dt_add_property_string(link, "compatible", "ibm,npu-link");
+	dt_add_property_string(link, "ibm,npu-link-type", "opencapi");
 	dt_add_property_cells(link, "ibm,npu-link-index", index);
 
 	switch (index) {
