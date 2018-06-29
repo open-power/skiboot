@@ -2784,6 +2784,7 @@ static int64_t phb4_freset(struct pci_slot *slot)
 	struct phb4 *p = phb_to_phb4(slot->phb);
 	uint8_t presence = 1;
 	uint64_t reg;
+	uint16_t reg16;
 
 	switch(slot->state) {
 	case PHB4_SLOT_NORMAL:
@@ -2802,6 +2803,12 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		phb4_prepare_link_change(slot, false);
 		/* fall through */
 	case PHB4_SLOT_FRESET_START:
+		phb4_pcicfg_read16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
+				   &reg16);
+		reg16 |= PCICAP_EXP_LCTL_LINK_DIS;
+		phb4_pcicfg_write16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
+				    reg16);
+
 		if (!p->skip_perst) {
 			PHBDBG(p, "FRESET: Assert\n");
 			reg = in_be64(p->regs + PHB_PCIE_CRESET);
@@ -2839,6 +2846,13 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		/* Move on to link poll right away */
 		return pci_slot_set_sm_timeout(slot, 1);
 	case PHB4_SLOT_FRESET_DEASSERT_DELAY:
+		PHBDBG(p, "FRESET: Starting training\n");
+		phb4_pcicfg_read16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
+				   &reg16);
+		reg16 &= ~(PCICAP_EXP_LCTL_LINK_DIS);
+		phb4_pcicfg_write16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
+				    reg16);
+
 		phb4_training_trace(p);
 
 		pci_slot_set_state(slot, PHB4_SLOT_LINK_START);
