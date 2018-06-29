@@ -212,6 +212,11 @@ struct occ_response_buffer {
  *
  * struct occ_dynamic_data -	Contains runtime attributes
  * @occ_state:			Current state of OCC
+ * @major_version:		Major version number
+ * @minor_version:		Minor version number (backwards compatible)
+ *				Version 1 indicates GPU presence populated
+ * @gpus_present:		Bitmask of GPUs present (on systems where GPU
+ *				presence is detected through APSS)
  * @cpu_throttle:		Reason for limiting the max pstate
  * @mem_throttle:		Reason for throttling memory
  * @quick_pwr_drop:		Indicates if QPD is asserted
