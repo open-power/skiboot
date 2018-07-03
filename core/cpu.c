@@ -1304,17 +1304,30 @@ static void cpu_change_hid0(void *__req)
 static int64_t cpu_change_all_hid0(struct hid0_change_req *req)
 {
 	struct cpu_thread *cpu;
+	struct cpu_job **jobs;
+
+	jobs = zalloc(sizeof(struct cpu_job *) * cpu_max_pir + 1);
+	assert(jobs);
 
 	for_each_available_cpu(cpu) {
 		if (!cpu_is_thread0(cpu))
 			continue;
-		if (cpu == this_cpu()) {
-			cpu_change_hid0(req);
+		if (cpu == this_cpu())
 			continue;
-		}
-		cpu_wait_job(cpu_queue_job(cpu, "cpu_change_hid0",
-			cpu_change_hid0, req), true);
+		jobs[cpu->pir] = cpu_queue_job(cpu, "cpu_change_hid0",
+						cpu_change_hid0, req);
 	}
+
+	/* this cpu */
+	cpu_change_hid0(req);
+
+	for_each_available_cpu(cpu) {
+		if (jobs[cpu->pir])
+			cpu_wait_job(jobs[cpu->pir], true);
+	}
+
+	free(jobs);
+
 	return OPAL_SUCCESS;
 }
 
@@ -1342,15 +1355,29 @@ static void cpu_cleanup_one(void *param __unused)
 static int64_t cpu_cleanup_all(void)
 {
 	struct cpu_thread *cpu;
+	struct cpu_job **jobs;
+
+	jobs = zalloc(sizeof(struct cpu_job *) * cpu_max_pir + 1);
+	assert(jobs);
 
 	for_each_available_cpu(cpu) {
-		if (cpu == this_cpu()) {
-			cpu_cleanup_one(NULL);
+		if (cpu == this_cpu())
 			continue;
-		}
-		cpu_wait_job(cpu_queue_job(cpu, "cpu_cleanup",
-					   cpu_cleanup_one, NULL), true);
+		jobs[cpu->pir] = cpu_queue_job(cpu, "cpu_cleanup",
+						cpu_cleanup_one, NULL);
 	}
+
+	/* this cpu */
+	cpu_cleanup_one(NULL);
+
+	for_each_available_cpu(cpu) {
+		if (jobs[cpu->pir])
+			cpu_wait_job(jobs[cpu->pir], true);
+	}
+
+	free(jobs);
+
+
 	return OPAL_SUCCESS;
 }
 
