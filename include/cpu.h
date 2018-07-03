@@ -280,6 +280,10 @@ static inline struct cpu_job *cpu_queue_job(struct cpu_thread *cpu,
 	return __cpu_queue_job(cpu, name, func, data, false);
 }
 
+extern struct cpu_job *cpu_queue_job_on_node(uint32_t chip_id,
+				       const char *name,
+				       void (*func)(void *data), void *data);
+
 
 /* Poll job status, returns true if completed */
 extern bool cpu_poll_job(struct cpu_job *job);

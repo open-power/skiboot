@@ -106,7 +106,11 @@ static void cpu_wake(struct cpu_thread *cpu)
 	}
 }
 
-static struct cpu_thread *cpu_find_job_target(void)
+/*
+ * If chip_id is >= 0, schedule the job on that node.
+ * Otherwise schedule the job anywhere.
+ */
+static struct cpu_thread *cpu_find_job_target(int32_t chip_id)
 {
 	struct cpu_thread *cpu, *best, *me = this_cpu();
 	uint32_t best_count;
@@ -124,6 +128,8 @@ static struct cpu_thread *cpu_find_job_target(void)
 	/* First we scan all available primary threads
 	 */
 	for_each_available_cpu(cpu) {
+		if (chip_id >= 0 && cpu->chip_id != chip_id)
+			continue;
 		if (cpu == me || !cpu_is_thread0(cpu) || cpu->job_has_no_return)
 			continue;
 		if (cpu->job_count)
@@ -143,6 +149,8 @@ static struct cpu_thread *cpu_find_job_target(void)
 	best = NULL;
 	best_count = -1u;
 	for_each_available_cpu(cpu) {
+		if (chip_id >= 0 && cpu->chip_id != chip_id)
+			continue;
 		if (cpu == me || cpu->job_has_no_return)
 			continue;
 		if (!best || cpu->job_count < best_count) {
@@ -165,6 +173,26 @@ static struct cpu_thread *cpu_find_job_target(void)
 
 	/* Go away */
 	return NULL;
+}
+
+/* job_lock is held, returns with it released */
+static void queue_job_on_cpu(struct cpu_thread *cpu, struct cpu_job *job)
+{
+	/* That's bad, the job will never run */
+	if (cpu->job_has_no_return) {
+		prlog(PR_WARNING, "WARNING ! Job %s scheduled on CPU 0x%x"
+		      " which has a no-return job on its queue !\n",
+		      job->name, cpu->pir);
+		backtrace();
+	}
+	list_add_tail(&cpu->job_queue, &job->link);
+	if (job->no_return)
+		cpu->job_has_no_return = true;
+	else
+		cpu->job_count++;
+	if (pm_enabled)
+		cpu_wake(cpu);
+	unlock(&cpu->job_lock);
 }
 
 struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
@@ -196,7 +224,7 @@ struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 
 	/* Pick a candidate. Returns with target queue locked */
 	if (cpu == NULL)
-		cpu = cpu_find_job_target();
+		cpu = cpu_find_job_target(-1);
 	else if (cpu != this_cpu())
 		lock(&cpu->job_lock);
 	else
@@ -211,21 +239,45 @@ struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 		return job;
 	}
 
-	/* That's bad, the job will never run */
-	if (cpu->job_has_no_return) {
-		prlog(PR_WARNING, "WARNING ! Job %s scheduled on CPU 0x%x"
-		      " which has a no-return job on its queue !\n",
-		      job->name, cpu->pir);
-		backtrace();
+	queue_job_on_cpu(cpu, job);
+
+	return job;
+}
+
+struct cpu_job *cpu_queue_job_on_node(uint32_t chip_id,
+				const char *name,
+				void (*func)(void *data), void *data)
+{
+	struct cpu_thread *cpu;
+	struct cpu_job *job;
+
+	job = zalloc(sizeof(struct cpu_job));
+	if (!job)
+		return NULL;
+	job->func = func;
+	job->data = data;
+	job->name = name;
+	job->complete = false;
+	job->no_return = false;
+
+	/* Pick a candidate. Returns with target queue locked */
+	cpu = cpu_find_job_target(chip_id);
+
+	/* Can't be scheduled... */
+	if (cpu == NULL) {
+		cpu = this_cpu();
+		if (cpu->chip_id == chip_id) {
+			/* Run it now if we're the right node. */
+			func(data);
+			job->complete = true;
+			return job;
+		}
+		/* Otherwise fail. */
+		free(job);
+		return NULL;
 	}
-	list_add_tail(&cpu->job_queue, &job->link);
-	if (no_return)
-		cpu->job_has_no_return = true;
-	else
-		cpu->job_count++;
-	if (pm_enabled)
-		cpu_wake(cpu);
-	unlock(&cpu->job_lock);
+
+	queue_job_on_cpu(cpu, job);
 
 	return job;
 }

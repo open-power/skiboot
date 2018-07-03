@@ -83,6 +83,15 @@ struct cpu_thread {
 	uint32_t			pir;
 	uint32_t			chip_id;
 };
+struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
+				const char *name,
+				void (*func)(void *data), void *data,
+				bool no_return);
+void cpu_wait_job(struct cpu_job *job, bool free_it);
+void cpu_process_local_jobs(void);
+struct cpu_job *cpu_queue_job_on_node(uint32_t chip_id,
+				       const char *name,
+				       void (*func)(void *data), void *data);
 
 struct cpu_thread __boot_cpu, *boot_cpu = &__boot_cpu;
 static unsigned long fake_pvr = PVR_P7;

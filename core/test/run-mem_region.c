@@ -15,14 +15,12 @@
  */
 
 #include <config.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #define BITS_PER_LONG (sizeof(long) * 8)
-/* Don't include this, it's PPC-specific */
-#define __CPU_H
-static unsigned int cpu_max_pir = 1;
-struct cpu_thread {
-	unsigned int			chip_id;
-};
+
+#include "dummy-cpu.h"
 
 #include <stdlib.h>
 #include <string.h>
