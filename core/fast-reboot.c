@@ -16,6 +16,7 @@
 
 #include <skiboot.h>
 #include <cpu.h>
+#include <console.h>
 #include <fsp.h>
 #include <psi.h>
 #include <opal.h>
@@ -174,6 +175,8 @@ void fast_reboot(void)
 
 	/* This resets our quiesce state ready to enter the new kernel. */
 	opal_quiesce(QUIESCE_RESUME_FAST_REBOOT, -1);
+
+	console_complete_flush();
 
 	asm volatile("ba	0x100\n\t" : : : "memory");
 	for (;;)

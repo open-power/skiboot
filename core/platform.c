@@ -58,11 +58,11 @@ static int64_t opal_cec_reboot(void)
 
 	opal_quiesce(QUIESCE_HOLD, -1);
 
-	console_complete_flush();
-
 	/* Try fast-reset unless explicitly disabled */
 	if (!nvram_query_eq("fast-reset","0"))
 		fast_reboot();
+
+	console_complete_flush();
 
 	if (platform.cec_reboot)
 		return platform.cec_reboot();
@@ -97,6 +97,7 @@ static int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
 			prerror("OPAL: failed to log an error\n");
 		}
 		disable_fast_reboot("Reboot due to Platform Error");
+		console_complete_flush();
 		return xscom_trigger_xstop();
 	case OPAL_REBOOT_FULL_IPL:
 		disable_fast_reboot("full IPL reboot requested");
