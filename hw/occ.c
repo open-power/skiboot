@@ -1688,11 +1688,11 @@ void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, u32 *ptype,
 					_phandles[pcount++] = phandles[k];
 			if (pcount)
 				dt_add_property(node, "sensors", _phandles,
-						pcount);
+						pcount * sizeof(u32));
 			free(_phandles);
 		} else {
 			dt_add_property(node, "sensors", phandles,
-					nr_phandles);
+					nr_phandles * sizeof(u32));
 		}
 		dt_add_property_cells(node, "ops", groups[j].ops);
 	}
