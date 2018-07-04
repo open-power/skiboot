@@ -3928,8 +3928,6 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 		return OPAL_HARDWARE;
 	}
 
-	/* CAPP Control Register. Enable CAPP Mode */
-	reg = 0x8000000000000000ULL; /* PEC works in CAPP Mode */
 	if (p->index == CAPP0_PHB_INDEX) {
 		/* PBCQ is operating as a x16 stack
 		 * - The maximum number of engines give to CAPP will be
@@ -3939,17 +3937,37 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 		stq_eng = 0x000E000000000000ULL; /* 14 CAPP msg engines */
 		dma_eng = 0x0000FFFFFFFFFFFFULL; /* 48 CAPP Read machines */
 	}
+
 	if (p->index == CAPP1_PHB_INDEX) {
-		/* PBCQ is operating as a x8 stack
-		 * - The maximum number of engines given to CAPP should
-		 * be 6 and will be assigned in the order of 7 to 2.
-		 * - 0-30 (Read machines) are available for capp use.
-		 */
-		stq_eng = 0x0006000000000000ULL; /* 6 CAPP msg engines */
-		dma_eng = 0x0000FFFFF00E0000ULL; /* 30 Read machines for CAPP Minus 20-27 for DMA */
+		/* Check if PEC is in x8 or x16 mode */
+		xscom_read(p->chip_id, XPEC_PCI2_CPLT_CONF1, &reg);
+
+		if ((reg & XPEC_PCI2_IOVALID_MASK) == XPEC_PCI2_IOVALID_X16) {
+			/* PBCQ is operating as a x16 stack
+			 * - The maximum number of engines give to CAPP will be
+			 * 14 and will be assigned in the order of STQ 15 to 2.
+			 * - 0-47 (Read machines) are available for capp use.
+			 */
+			stq_eng = 0x000E000000000000ULL;
+			dma_eng = 0x0000FFFFFFFFFFFFULL;
+		} else {
+
+			/* PBCQ is operating as a x8 stack
+			 * - The maximum number of engines given to CAPP should
+			 * be 6 and will be assigned in the order of 7 to 2.
+			 * - 0-30 (Read machines) are available for capp use.
+			 */
+			stq_eng = 0x0006000000000000ULL;
+			/* 30 Read machines for CAPP Minus 20-27 for DMA */
+			dma_eng = 0x0000FFFFF00E0000ULL;
+		}
 	}
+
 	if (capp_eng & CAPP_MIN_STQ_ENGINES)
 		stq_eng = 0x0002000000000000ULL; /* 2 capp msg engines */
+
+	/* CAPP Control Register. Enable CAPP Mode */
+	reg = 0x8000000000000000ULL; /* PEC works in CAPP Mode */
 	reg |= stq_eng;
 	if (capp_eng & CAPP_MAX_DMA_READ_ENGINES)
 		dma_eng = 0x0000FF0000000000ULL; /* 16 CAPP Read machines */
