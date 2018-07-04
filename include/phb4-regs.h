@@ -400,6 +400,12 @@
 #define   XETU_HV_IND_ADDR_AUTOINC		PPC_BIT(2)
 #define XETU_HV_IND_DATA			0x1
 
+
+/* PCI Chiplet Config Register */
+#define XPEC_PCI2_CPLT_CONF1			0x000000000F000009ULL
+#define XPEC_PCI2_IOVALID_MASK			PPC_BITMASK(4, 6)
+#define XPEC_PCI2_IOVALID_X16			PPC_BIT(4)
+
 /*
  * IODA3 on-chip tables
  */
