@@ -3910,7 +3910,7 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 {
 	uint64_t reg, start_addr, end_addr, stq_eng, dma_eng;
 	uint64_t mbt0, mbt1;
-	int i, entf = -1;
+	int i, window_num = -1;
 
 	/* CAPP Control Register */
 	xscom_read(p->chip_id, p->pe_xscom + XPEC_NEST_CAPP_CNTL, &reg);
@@ -4072,20 +4072,20 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 			break;
 
 		/* search a free entry */
-		if ((entf == -1) &&
+		if ((window_num == -1) &&
 		   ((!(p->mbt_cache[i][0] & IODA3_MBT0_ENABLE)) &&
 		    (!(p->mbt_cache[i][1] & IODA3_MBT1_ENABLE))))
-			entf = i;
+			window_num = i;
 	}
 
-	if (entf >= 0 && i == p->mbt_size) {
+	if (window_num >= 0 && i == p->mbt_size) {
 		/* no capi mmio window found, so add it */
-		p->mbt_cache[entf][0] = mbt0;
-		p->mbt_cache[entf][1] = mbt1;
+		p->mbt_cache[window_num][0] = mbt0;
+		p->mbt_cache[window_num][1] = mbt1;
 
-		phb4_ioda_sel(p, IODA3_TBL_MBT, 0, true);
-		out_be64(p->regs + PHB_IODA_DATA0, p->mbt_cache[entf][0]);
-		out_be64(p->regs + PHB_IODA_DATA0, p->mbt_cache[entf][1]);
+		phb4_ioda_sel(p, IODA3_TBL_MBT, window_num << 1, true);
+		out_be64(p->regs + PHB_IODA_DATA0, mbt0);
+		out_be64(p->regs + PHB_IODA_DATA0, mbt1);
 	} else if (i == p->mbt_size) {
 		/* mbt cache full, this case should never happen */
 		PHBERR(p, "CAPP: Failed to add CAPI mmio window\n");
