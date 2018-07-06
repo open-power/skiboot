@@ -204,6 +204,8 @@ struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 
 	/* Can't be scheduled, run it now */
 	if (cpu == NULL) {
+		if (!this_cpu()->job_has_no_return)
+			this_cpu()->job_has_no_return = no_return;
 		func(data);
 		job->complete = true;
 		return job;
