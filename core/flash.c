@@ -51,7 +51,7 @@ static u32 nvram_offset, nvram_size;
 
 /* ibm,firmware-versions support */
 static char *version_buf;
-static size_t version_buf_size = 0x1000;
+static size_t version_buf_size = 0x2000;
 
 bool flash_reserve(void)
 {
@@ -246,6 +246,8 @@ void flash_dt_add_fw_version(void)
 	fw_version = dt_new(dt_root, "ibm,firmware-versions");
 	assert(fw_version);
 
+	if (stb_is_container(version_buf, version_buf_size))
+		numbytes += SECURE_BOOT_HEADERS_SIZE;
 	for ( ; (numbytes < version_buf_size) && version_buf[numbytes]; numbytes++) {
 		if (version_buf[numbytes] == '\n') {
 			version_data[i] = '\0';
