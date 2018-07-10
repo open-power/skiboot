@@ -1070,6 +1070,13 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	secureboot_init();
 	trustedboot_init();
 
+	/*
+	 * BMC platforms load version information from flash after
+	 * secure/trustedboot init.
+	 */
+	if (platform.bmc)
+		flash_fw_version_preload();
+
         /* preload the IMC catalog dtb */
         imc_catalog_preload();
 
@@ -1127,6 +1134,12 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* Add OPAL timer related properties */
 	late_init_timers();
+
+	/* Setup ibm,firmware-versions if able */
+	if (platform.bmc) {
+		flash_dt_add_fw_version();
+		ipmi_dt_add_bmc_info();
+	}
 
 	ipmi_set_fw_progress_sensor(IPMI_FW_PCI_INIT);
 

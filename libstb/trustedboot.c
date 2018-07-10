@@ -46,6 +46,7 @@ static struct {
 	{ RESOURCE_ID_IMA_CATALOG, PCR_2 },
 	{ RESOURCE_ID_KERNEL, PCR_4 },
 	{ RESOURCE_ID_CAPP,   PCR_2 },
+	{ RESOURCE_ID_VERSION, PCR_3 },
 };
 
 /*

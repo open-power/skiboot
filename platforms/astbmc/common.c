@@ -134,9 +134,6 @@ void astbmc_init(void)
 	astbmc_fru_init();
 	ipmi_sensor_init();
 
-	/* Preload PNOR VERSION section */
-	flash_fw_version_preload();
-
 	/* Request BMC information */
 	ipmi_get_bmc_info_request();
 
@@ -150,12 +147,6 @@ void astbmc_init(void)
 
 	/* Setup UART console for use by Linux via OPAL API */
 	set_opal_console(&uart_opal_con);
-
-	/* Add ibm,firmware-versions node */
-	flash_dt_add_fw_version();
-
-	/* Add BMC firmware info to device tree */
-	ipmi_dt_add_bmc_info();
 }
 
 int64_t astbmc_ipmi_power_down(uint64_t request)
