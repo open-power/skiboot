@@ -212,6 +212,10 @@ static void __flash_dt_add_fw_version(struct dt_node *fw_version, char* data)
 		/* Increment past "key-" */
 		prop = data + version_len + 1;
 		dt_add_property_string(fw_version, version_str[i], prop);
+
+		if (strncmp(version_str[i], "skiboot", strlen("skiboot")) == 0)
+			if (strncmp(prop, version, strlen(version)) != 0)
+				prlog(PR_WARNING, "WARNING! Skiboot version does not match VERSION partition!\n");
 	}
 }
 
