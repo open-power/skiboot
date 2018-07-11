@@ -236,26 +236,6 @@ static bool poll_fence_status(struct npu2_dev *ndev, uint64_t val)
 	return false;
 }
 
-static int64_t npu2_dev_fence_brick(struct npu2_dev *ndev, bool set)
-{
-	/*
-	 * Add support for queisce/fence the brick at
-	 * procedure reset time.
-	 */
-	uint32_t brick;
-	uint64_t val;
-
-	brick = ndev->index;
-	if (set)
-		brick += 6;
-
-	val = PPC_BIT(brick);
-	NPU2DEVINF(ndev, "%s fence brick %d, val %llx\n", set ? "set" : "clear",
-			ndev->index, val);
-	npu2_write(ndev->npu, NPU2_MISC_FENCE_STATE, val);
-	return 0;
-}
-
 /* Procedure 1.2.1 - Reset NPU/NDL */
 uint32_t reset_ntl(struct npu2_dev *ndev)
 {
@@ -325,9 +305,6 @@ static uint32_t reset_ntl_release(struct npu2_dev *ndev)
 		npu2_fir_addr += NPU2_FIR_OFFSET;
 
 	}
-
-	/* Release the fence */
-	npu2_dev_fence_brick(ndev, false);
 
 	val = npu2_read(ndev->npu, NPU2_NTL_MISC_CFG1(ndev));
 	val &= 0xFFBFFFFFFFFFFFFF;
@@ -952,7 +929,13 @@ int64_t npu2_dev_procedure(void *dev, struct pci_cfg_reg_filter *pcrf,
 
 void npu2_dev_procedure_reset(struct npu2_dev *dev)
 {
-	npu2_dev_fence_brick(dev, true);
+	uint64_t val;
+
+	/* Fence the brick */
+	val = npu2_read(dev->npu, NPU2_NTL_MISC_CFG1(dev));
+	val |= PPC_BIT(8) | PPC_BIT(9);
+	npu2_write(dev->npu, NPU2_NTL_MISC_CFG1(dev), val);
+
 	npu2_clear_link_flag(dev, NPU2_DEV_DL_RESET);
 }
 
