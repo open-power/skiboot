@@ -5,7 +5,7 @@
 /*                                                                        */
 /* OpenPOWER HostBoot Project                                             */
 /*                                                                        */
-/* Contributors Listed Below - COPYRIGHT 2015,2017                        */
+/* Contributors Listed Below - COPYRIGHT 2015,2018                        */
 /* [+] International Business Machines Corp.                              */
 /*                                                                        */
 /*                                                                        */
@@ -32,6 +32,9 @@
 // *HWP Team        :  PM
 // *HWP Level       :  2
 // *HWP Consumed by :  HB:HYP
+#ifdef PPC_HYP
+    #include <HvPlicModule.H>
+#endif
 
 #include "p9_stop_api.H"
 #include "p9_stop_util.H"
@@ -42,22 +45,24 @@ namespace stopImageSection
 {
 #endif
 
+//-----------------------------------------------------------------------
+
 /**
  * @brief   Returns proc chip's fuse mode status.
  * @param   i_pImage    points to start of chip's HOMER image.
  * @param   o_fusedMode  points to fuse mode information.
  * @return  STOP_SAVE_SUCCESS if functions succeeds, error code otherwise.
  */
-static StopReturnCode_t  isFusedMode( void* const i_pImage, bool* o_fusedMode )
+STATIC StopReturnCode_t  isFusedMode( void* const i_pImage, bool* o_fusedMode )
 {
-    uint64_t cpmrCheckWord;
-    StopReturnCode_t l_rc = STOP_SAVE_SUCCESS;
+    StopReturnCode_t l_rc   =   STOP_SAVE_SUCCESS;
+    uint64_t cpmrCheckWord  =   0;
     *o_fusedMode = false;
 
     do
     {
-        HomerSection_t* pHomerDesc = ( HomerSection_t* ) i_pImage;
-        HomerImgDesc_t* pHomer =  (HomerImgDesc_t*)( pHomerDesc->interrruptHandler );
+        HomerSection_t* pHomerDesc  =   ( HomerSection_t* ) i_pImage;
+        HomerImgDesc_t* pHomer      =   (HomerImgDesc_t*)( pHomerDesc->interrruptHandler );
 
         if( !i_pImage )
         {
@@ -90,7 +95,7 @@ static StopReturnCode_t  isFusedMode( void* const i_pImage, bool* o_fusedMode )
         }
 
         MY_ERR("Unexpected value 0x%08x for fused mode. Bad or corrupt "
-               "HOMER location", pHomer->fuseModeStatus );
+               "HOMER location", pHomer->fusedModeStatus );
         l_rc = STOP_SAVE_INVALID_FUSED_CORE_STATUS ;
 
     }

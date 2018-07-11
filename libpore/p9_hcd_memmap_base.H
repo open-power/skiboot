@@ -5,7 +5,7 @@
 /*                                                                        */
 /* OpenPOWER HostBoot Project                                             */
 /*                                                                        */
-/* Contributors Listed Below - COPYRIGHT 2015,2017                        */
+/* Contributors Listed Below - COPYRIGHT 2015,2018                        */
 /* [+] International Business Machines Corp.                              */
 /*                                                                        */
 /*                                                                        */
@@ -171,6 +171,7 @@ HCD_CONST(QPMR_STOP_FFDC_OFFSET_BYTE,           0x58)
 HCD_CONST(QPMR_STOP_FFDC_LENGTH_BYTE,           0x5C)
 HCD_CONST(QPMR_SGPE_BOOT_PROG_CODE,             0x60)
 HCD_CONST(QPMR_SGPE_IMAGE_SIZE,                 0x64)
+HCD_CONST(QPMR_QUAD_MAX_SCOM_ENTRY_BYTE,        0x68)
 
 /// SGPE Boot
 
@@ -284,7 +285,7 @@ HCD_CONST(QUAD_SCOM_RESTORE_SIZE_PER_QUAD,
           (SCOM_RESTORE_ENTRY_SIZE* QUAD_SCOM_RESTORE_REGS_PER_QUAD))
 
 HCD_CONST(QUAD_SCOM_RESTORE_SIZE_TOTAL,         (6 * ONE_KB)) //rounded to 6KB
-
+HCD_CONST(LEGACY_SCOM_RESTORE_VER,              0x02)
 //---------------------------------------------------------------------------------------
 
 /// CPMR Header
@@ -309,6 +310,7 @@ HCD_CONST(CPMR_CORE_SCOM_RESTORE_OFFSET_BYTE,   0x40)
 HCD_CONST(CPMR_CORE_SCOM_RESTORE_LENGTH_BYTE,   0x44)
 HCD_CONST(CPMR_SELF_RESTORE_OFFSET_BYTE,        0x48)
 HCD_CONST(CPMR_SELF_RESTORE_LENGTH_BYTE,        0x4C)
+HCD_CONST(CPMR_MAX_SCOM_REST_PER_CORE_BYTE,     0x50)
 
 /// Self Restore
 

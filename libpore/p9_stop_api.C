@@ -5,7 +5,7 @@
 /*                                                                        */
 /* OpenPOWER HostBoot Project                                             */
 /*                                                                        */
-/* Contributors Listed Below - COPYRIGHT 2015,2017                        */
+/* Contributors Listed Below - COPYRIGHT 2015,2018                        */
 /* [+] International Business Machines Corp.                              */
 /*                                                                        */
 /*                                                                        */
@@ -32,13 +32,14 @@
 // *HWP Team        :  PM
 // *HWP Level       :  2
 // *HWP Consumed by :  HB:HYP
-
+#ifdef PPC_HYP
+    #include <HvPlicModule.H>
+#endif
 #include "p9_stop_api.H"
 #include "p9_cpu_reg_restore_instruction.H"
 #include "p9_stop_data_struct.H"
 #include <string.h>
 #include "p9_stop_util.H"
-#include <stdio.h>
 
 #ifdef __FAPI_2_
     #include <fapi2.H>
@@ -67,8 +68,7 @@ const StopSprReg_t g_sprRegister[] =
     { P9_STOP_SPR_DAWR,      true  },
 };
 
-const uint32_t MAX_SPR_SUPPORTED =
-    sizeof ( g_sprRegister ) / sizeof( StopSprReg_t );
+const uint32_t MAX_SPR_SUPPORTED =  10;
 
 //-----------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ const uint32_t MAX_SPR_SUPPORTED =
  * @note    for register of scope core, function shall force io_threadId to
  *          zero.
  */
-static StopReturnCode_t validateSprImageInputs( void*   const i_pImage,
+STATIC StopReturnCode_t validateSprImageInputs( void*   const i_pImage,
         const CpuReg_t i_regId,
         const uint32_t  i_coreId,
         uint32_t*     i_pThreadId,
@@ -179,7 +179,7 @@ static StopReturnCode_t validateSprImageInputs( void*   const i_pImage,
  * @param[in]   i_data  16 bit immediate data
  * @return  returns 32 bit number representing ori instruction.
  */
-static uint32_t getOriInstruction( const uint16_t i_Rs, const uint16_t i_Ra,
+STATIC uint32_t getOriInstruction( const uint16_t i_Rs, const uint16_t i_Ra,
                                    const uint16_t i_data )
 {
     uint32_t oriInstOpcode = 0;
@@ -197,7 +197,7 @@ static uint32_t getOriInstruction( const uint16_t i_Rs, const uint16_t i_Ra,
 /**
  * @brief generates 32 bit key used for SPR lookup in core section.
  */
-static uint32_t genKeyForSprLookup( const CpuReg_t i_regId )
+STATIC uint32_t genKeyForSprLookup( const CpuReg_t i_regId )
 {
     return getOriInstruction( 0, 0, (uint16_t) i_regId );
 }
@@ -211,7 +211,7 @@ static uint32_t genKeyForSprLookup( const CpuReg_t i_regId )
  * @param[in] i_Rb source register number for xor operation
  * @return returns 32 bit number representing xor  immediate instruction.
  */
-static uint32_t getXorInstruction( const uint16_t i_Ra, const uint16_t i_Rs,
+STATIC uint32_t getXorInstruction( const uint16_t i_Ra, const uint16_t i_Rs,
                                    const uint16_t i_Rb )
 {
     uint32_t xorRegInstOpcode;
@@ -233,7 +233,7 @@ static uint32_t getXorInstruction( const uint16_t i_Ra, const uint16_t i_Rs,
  * @param[in] i_data    16 bit immediate data
  * @return returns 32 bit number representing oris  immediate instruction.
  */
-static uint32_t getOrisInstruction( const uint16_t i_Rs, const uint16_t i_Ra,
+STATIC uint32_t getOrisInstruction( const uint16_t i_Rs, const uint16_t i_Ra,
                                     const uint16_t i_data )
 {
     uint32_t orisInstOpcode;
@@ -253,7 +253,7 @@ static uint32_t getOrisInstruction( const uint16_t i_Rs, const uint16_t i_Ra,
  * @param[in] i_Spr represents spr where data is to be moved.
  * @return returns 32 bit number representing mtspr instruction.
  */
-static uint32_t getMtsprInstruction( const uint16_t i_Rs, const uint16_t i_Spr )
+STATIC uint32_t getMtsprInstruction( const uint16_t i_Rs, const uint16_t i_Spr )
 {
     uint32_t mtsprInstOpcode = 0;
     uint32_t temp = (( i_Spr & 0x03FF ) << 11);
@@ -275,7 +275,7 @@ static uint32_t getMtsprInstruction( const uint16_t i_Rs, const uint16_t i_Spr )
  * @param[in] i_me      bit position up to which mask should be 1.
  * @return returns 32 bit number representing rldicr instruction.
  */
-static uint32_t getRldicrInstruction( const uint16_t i_Ra, const uint16_t i_Rs,
+STATIC uint32_t getRldicrInstruction( const uint16_t i_Ra, const uint16_t i_Rs,
                                       const uint16_t i_sh, uint16_t i_me )
 {
     uint32_t rldicrInstOpcode = 0;
@@ -294,24 +294,24 @@ static uint32_t getRldicrInstruction( const uint16_t i_Ra, const uint16_t i_Rs,
  * @brief looks up entry for given SPR in given thread/core section.
  * @param[in]   i_pThreadSectLoc    start of given thread section or core section.
  * @param[in]   i_lookUpKey         search key for lookup of given SPR entry.
- * @param[in]   i_isCoreReg         true if register is of scope core, false
+ * @param[in]   i_isThreadReg       true if register is of scope thread, false
  *                                  otherwise.
  * @param[in|out] io_pSprEntryLoc   Input:  NULL
  *                                  Output: location of given entry or end of table.
  * @return      STOP_SAVE_SUCCESS if entry is found, STOP_SAVE_FAIL in case of
  *              an error.
  */
-static StopReturnCode_t lookUpSprInImage( uint32_t* i_pThreadSectLoc,
+STATIC StopReturnCode_t lookUpSprInImage( uint32_t* i_pThreadSectLoc,
         const uint32_t i_lookUpKey,
-        const bool i_isCoreReg,
+        const bool i_isThreadReg,
         void** io_pSprEntryLoc )
 {
-    StopReturnCode_t l_rc = STOP_SAVE_FAIL;
-    uint32_t temp = i_isCoreReg ? (uint32_t)(CORE_RESTORE_CORE_AREA_SIZE) :
-                    (uint32_t)(CORE_RESTORE_THREAD_AREA_SIZE);
-    uint32_t* i_threadSectEnd = i_pThreadSectLoc + temp;
-    uint32_t bctr_inst = SWIZZLE_4_BYTE(BLR_INST);
-    *io_pSprEntryLoc = NULL;
+    StopReturnCode_t l_rc       =   STOP_SAVE_FAIL;
+    uint32_t bctr_inst          =   SWIZZLE_4_BYTE(BLR_INST);
+    uint32_t temp               =   i_isThreadReg ? (uint32_t)(CORE_RESTORE_THREAD_AREA_SIZE) :
+                                    (uint32_t)(CORE_RESTORE_CORE_AREA_SIZE);
+    uint32_t* i_threadSectEnd   =   i_pThreadSectLoc + ( temp >> 2 );
+    *io_pSprEntryLoc            =   NULL;
 
     do
     {
@@ -352,16 +352,16 @@ static StopReturnCode_t lookUpSprInImage( uint32_t* i_pThreadSectLoc,
  * @param[in] i_regData     data needs to be written to SPR entry.
  * @return    STOP_SAVE_SUCCESS if update works, STOP_SAVE_FAIL otherwise.
  */
-static StopReturnCode_t updateSprEntryInImage( uint32_t* i_pSprEntryLocation,
+STATIC StopReturnCode_t updateSprEntryInImage( uint32_t* i_pSprEntryLocation,
         const CpuReg_t i_regId,
         const uint64_t i_regData )
 {
     StopReturnCode_t l_rc = STOP_SAVE_SUCCESS;
-    uint32_t tempInst = 0;
-    uint64_t tempRegData = 0;
-    bool newEntry  = true;
-    uint16_t regRs = 0; //to use R0 for SPR restore insruction generation
-    uint16_t regRa = 0;
+    uint32_t tempInst       =   0;
+    uint64_t tempRegData    =   0;
+    bool newEntry           =   true;
+    uint16_t regRs          =   0; //to use R0 for SPR restore insruction generation
+    uint16_t regRa          =   0;
 
     do
     {
@@ -469,12 +469,14 @@ StopReturnCode_t p9_stop_save_cpureg(  void* const i_pImage,
 
     do
     {
-        uint32_t threadId = 0;
-        uint32_t coreId   = 0;
-        uint32_t lookUpKey = 0;
+        uint32_t threadId       = 0;
+        uint32_t coreId         = 0;
+        uint32_t lookUpKey      = 0;
         void* pSprEntryLocation = NULL;   // an offset w.r.t. to start of image
-        void* pThreadLocation = NULL;
-        bool threadScopeReg = false;
+        void* pThreadLocation   = NULL;
+        bool threadScopeReg     = false;
+
+        MY_INF(">> p9_stop_save_cpureg" );
 
         l_rc = getCoreAndThread( i_pImage, i_pir, &coreId, &threadId );
 
@@ -556,6 +558,7 @@ StopReturnCode_t p9_stop_save_cpureg(  void* const i_pImage,
     }
     while(0);
 
+    MY_INF("<< p9_stop_save_cpureg" );
     return l_rc;
 }
 
@@ -572,7 +575,7 @@ StopReturnCode_t p9_stop_save_cpureg(  void* const i_pImage,
  * @note        Function does not validate that the given SCOM address really
  *              belongs to the given section.
  */
-static StopReturnCode_t validateScomImageInputs( void* const i_pImage,
+STATIC StopReturnCode_t validateScomImageInputs( void* const i_pImage,
         const uint32_t i_scomAddress,
         const uint8_t i_chipletId,
         const ScomOperation_t i_operation,
@@ -665,7 +668,7 @@ static StopReturnCode_t validateScomImageInputs( void* const i_pImage,
  * @return      STOP_SAVE_SUCCESS if existing entry is updated, STOP_SAVE_FAIL
  *              otherwise.
  */
-static StopReturnCode_t editScomEntry( uint32_t i_scomAddr, uint64_t i_scomData,
+STATIC StopReturnCode_t editScomEntry( uint32_t i_scomAddr, uint64_t i_scomData,
                                        ScomEntry_t* i_pEntryLocation,
                                        uint32_t i_operation )
 {
@@ -695,16 +698,16 @@ static StopReturnCode_t editScomEntry( uint32_t i_scomAddr, uint64_t i_scomData,
             case P9_STOP_SCOM_NOOP:
                 {
                     uint32_t nopInst = getOriInstruction( 0, 0, 0 );
-                    i_pEntryLocation->scomEntryHeader = SWIZZLE_4_BYTE(SCOM_ENTRY_START);
-                    i_pEntryLocation->scomEntryData = nopInst;
-                    i_pEntryLocation->scomEntryAddress = nopInst;
+                    i_pEntryLocation->scomEntryHeader   =   SWIZZLE_4_BYTE(SCOM_ENTRY_START);
+                    i_pEntryLocation->scomEntryData     =   nopInst;
+                    i_pEntryLocation->scomEntryAddress  =   nopInst;
                 }
                 break;
 
             case P9_STOP_SCOM_APPEND:
-                i_pEntryLocation->scomEntryHeader = SWIZZLE_4_BYTE(SCOM_ENTRY_START);
-                i_pEntryLocation->scomEntryData = i_scomData;
-                i_pEntryLocation->scomEntryAddress = i_scomAddr;
+                i_pEntryLocation->scomEntryHeader       =   SWIZZLE_4_BYTE(SCOM_ENTRY_START);
+                i_pEntryLocation->scomEntryData         =   i_scomData;
+                i_pEntryLocation->scomEntryAddress      =   i_scomAddr;
                 break;
         }
 
@@ -726,7 +729,7 @@ static StopReturnCode_t editScomEntry( uint32_t i_scomAddr, uint64_t i_scomData,
  *              place of NOP, at the end of table or as first entry of the cache
  *              sub-section(L2, L3 or EQ ).
  */
-static StopReturnCode_t updateScomEntry( uint32_t i_scomAddr, uint64_t i_scomData,
+STATIC StopReturnCode_t updateScomEntry( uint32_t i_scomAddr, uint64_t i_scomData,
         ScomEntry_t* i_scomEntry   )
 {
     StopReturnCode_t l_rc = STOP_SAVE_SUCCESS;
@@ -740,9 +743,9 @@ static StopReturnCode_t updateScomEntry( uint32_t i_scomAddr, uint64_t i_scomDat
             break;
         }
 
-        i_scomEntry->scomEntryHeader = SWIZZLE_4_BYTE(SCOM_ENTRY_START); // done for now
-        i_scomEntry->scomEntryAddress = i_scomAddr;
-        i_scomEntry->scomEntryData = i_scomData;
+        i_scomEntry->scomEntryHeader    =   SWIZZLE_4_BYTE(SCOM_ENTRY_START); // done for now
+        i_scomEntry->scomEntryAddress   =   i_scomAddr;
+        i_scomEntry->scomEntryData      =   i_scomData;
 
     }
     while(0);
@@ -754,31 +757,20 @@ static StopReturnCode_t updateScomEntry( uint32_t i_scomAddr, uint64_t i_scomDat
 /**
  * @brief populates SCOM restore entry header with version and layout info.
  * @param[in]   i_scomEntry     points to SCOM restore entry
- * @param[in]   i_section       section of SCOM restore area
  * @param[in]   i_imageVer      SGPE image version
+ * @param[in]   i_maxScomEntry  max SCOM entries supported
  */
 
-static void updateEntryHeader( ScomEntry_t* i_scomEntry ,
-                               const ScomSection_t i_section,
-                               uint32_t i_imageVer )
+STATIC void updateEntryHeader( ScomEntry_t* i_scomEntry ,
+                               uint32_t i_imageVer,
+                               uint32_t i_maxScomEntry )
 {
     uint32_t l_temp = 0;
-    uint32_t l_entryLimit = 0;
 
     if( i_imageVer >= STOP_API_VER_CONTROL )
     {
-        if( P9_STOP_SECTION_CORE_SCOM == i_section )
-        {
-            l_entryLimit = MAX_CORE_SCOM_ENTRIES;
-        }
-        else
-        {
-            l_entryLimit = MAX_EQ_SCOM_ENTRIES + MAX_L2_SCOM_ENTRIES +
-                           MAX_L3_SCOM_ENTRIES;
-        }
-
+        l_temp = ( 0x000000ff & i_maxScomEntry );
         l_temp |= ( STOP_API_VER  & 0x7 ) << 28;
-        l_temp |= ( 0x000000ff & l_entryLimit );
         i_scomEntry->scomEntryHeader = SWIZZLE_4_BYTE(l_temp);
 
         MY_INF("SCOM Restore Header 0x%08x", l_temp );
@@ -794,41 +786,41 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
                                     const ScomSection_t i_section )
 {
     StopReturnCode_t l_rc = STOP_SAVE_SUCCESS;
-    StopCacheSection_t* pStopCacheScomStart = NULL;
-    ScomEntry_t* pScomEntry = NULL;
-    uint32_t entryLimit = 0;
-    uint8_t chipletId = 0;
-
-    uint32_t nopInst;
-    ScomEntry_t* pEntryLocation = NULL;
-    ScomEntry_t* pNopLocation = NULL;
-    ScomEntry_t* pEditScomHeader = NULL;
-    ScomEntry_t* pTableEndLocationtable = NULL;
+    uint32_t entryLimit =   0;
+    uint8_t chipletId   =   0;
+    uint32_t nopInst    =   0;
+    uint32_t index      =   0;
+    uint32_t imageVer   =   0;
+    uint32_t entrySwzHeader = 0;
+    uint32_t l_maxScomRestoreEntry = 0;
+    ScomEntry_t* pScomEntry      =  NULL;
+    ScomEntry_t* pEntryLocation  =  NULL;
+    ScomEntry_t* pNopLocation    =  NULL;
+    ScomEntry_t* pEditScomHeader =  NULL;
+    StopCacheSection_t* pStopCacheScomStart =   NULL;
+    ScomEntry_t* pTableEndLocationtable     =   NULL;
     uint32_t swizzleAddr;
     uint64_t swizzleData;
     uint32_t swizzleAttn;
-    uint32_t entrySwzHeader = 0;
-    uint32_t index = 0;
-    uint32_t swizzleBlr = SWIZZLE_4_BYTE(BLR_INST);
+    uint32_t swizzleBlr     =   SWIZZLE_4_BYTE(BLR_INST);
+    bool     cacheEntry     =   true;
+
+    MY_INF(">> p9_stop_save_scom");
 
     //Reads SGPE image version info from QPMR Header in HOMER
     //For backward compatibility, for base version of SGPE Hcode,
     //STOP API retains default behavior but adds version specific
     //details in each entry in later versions.
+    imageVer       =  *(uint32_t*)((uint8_t*)i_pImage + QPMR_HOMER_OFFSET + QPMR_BUILD_VER_BYTE);
+    imageVer       =  SWIZZLE_4_BYTE(imageVer);
 
-    uint32_t imageVer =  *(uint32_t*)((uint8_t*)i_pImage + QPMR_HOMER_OFFSET + QPMR_BUILD_VER_BYTE);
-    imageVer = SWIZZLE_4_BYTE(imageVer);
 
     do
     {
-        chipletId = i_scomAddress >> 24;
-        chipletId = chipletId & 0x3F;
+        chipletId   =   i_scomAddress >> 24;
+        chipletId   =   chipletId & 0x3F;
 
-        l_rc = validateScomImageInputs( i_pImage,
-                                        i_scomAddress,
-                                        chipletId,
-                                        i_operation,
-                                        i_section );
+        l_rc        =   validateScomImageInputs( i_pImage, i_scomAddress, chipletId, i_operation, i_section );
 
         if( l_rc )
         {
@@ -840,18 +832,27 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
         {
             // chiplet is core. So, let us find the start address of SCOM area
             // pertaining to a core in STOP image.
-            pScomEntry = CORE_ID_SCOM_START(i_pImage,
-                                            chipletId )
-                         entryLimit = MAX_CORE_SCOM_ENTRIES;
+            l_maxScomRestoreEntry   =
+                *(uint32_t*)((uint8_t*)i_pImage + CPMR_HOMER_OFFSET + CPMR_MAX_SCOM_REST_PER_CORE_BYTE);
+            pScomEntry              =   CORE_ID_SCOM_START(i_pImage, chipletId )
+                                        cacheEntry              =   false;
+	    if( !l_maxScomRestoreEntry )
+	    {
+                l_maxScomRestoreEntry   = 15;
+            }
         }
         else
         {
+            l_maxScomRestoreEntry   =
+                *(uint32_t*)((uint8_t*)i_pImage + QPMR_HOMER_OFFSET + QPMR_QUAD_MAX_SCOM_ENTRY_BYTE);
             // chiplet is a cache. let us find start address of cache section
             // associated with given chiplet. A cache section associated with
             // given chiplet is split in to L2, L3 and EQ area.
             pStopCacheScomStart = CACHE_SECTN_START(i_pImage,
                                                     chipletId);
         }
+
+        l_maxScomRestoreEntry   =   SWIZZLE_4_BYTE(l_maxScomRestoreEntry);
 
         if(( !pStopCacheScomStart ) && ( !pScomEntry) )
         {
@@ -885,11 +886,22 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
                 //Handling for core and cache segment is different for scom
                 //entries. It is because scom entries are organized differently
                 //in core and cache segment.
+
+                entryLimit  =   l_maxScomRestoreEntry;
                 break;
 
             default:
                 l_rc = STOP_SAVE_SCOM_INVALID_SECTION;
                 break;
+        }
+
+        if(( imageVer > LEGACY_SCOM_RESTORE_VER ) && ( cacheEntry ) )
+        {
+            //STOP API migrated to newer algorithm for creation of entries
+            pScomEntry  =   CACHE_SCOM_ADDR(i_pImage,
+                                            chipletId,
+                                            l_maxScomRestoreEntry )
+                            entryLimit  =   l_maxScomRestoreEntry;
         }
 
         if(( !pScomEntry ) || ( l_rc ) )
@@ -901,13 +913,13 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
             break;
         }
 
-        nopInst = getOriInstruction( 0, 0, 0 );
-        pEntryLocation = NULL;
-        pNopLocation = NULL;
-        pTableEndLocationtable = NULL;
-        swizzleAddr = SWIZZLE_4_BYTE(i_scomAddress);
-        swizzleData = SWIZZLE_8_BYTE(i_scomData);
-        swizzleAttn = SWIZZLE_4_BYTE(ATTN_OPCODE);
+        nopInst                 =   getOriInstruction( 0, 0, 0 );
+        pEntryLocation          =   NULL;
+        pNopLocation            =   NULL;
+        pTableEndLocationtable  =   NULL;
+        swizzleAddr             =   SWIZZLE_4_BYTE(i_scomAddress);
+        swizzleData             =   SWIZZLE_8_BYTE(i_scomData);
+        swizzleAttn             =   SWIZZLE_4_BYTE(ATTN_OPCODE);
 
         for( index = 0; index < entryLimit; ++index )
         {
@@ -1027,7 +1039,7 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
             case P9_STOP_SCOM_OR_APPEND:
             case P9_STOP_SCOM_AND_APPEND:
                 {
-                    uint32_t tempOperation = P9_STOP_SCOM_APPEND;
+                    uint32_t tempOperation  = P9_STOP_SCOM_APPEND;
                     ScomEntry_t* editAppend = NULL;
 
                     if( NULL == pEntryLocation )
@@ -1074,9 +1086,10 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
     {
         //Update SCOM Restore entry with version and memory layout
         //info
-        updateEntryHeader( pEditScomHeader, i_section, imageVer );
+        updateEntryHeader( pEditScomHeader, imageVer, l_maxScomRestoreEntry );
     }
 
+    MY_INF("<< p9_stop_save_scom");
     return l_rc;
 }
 

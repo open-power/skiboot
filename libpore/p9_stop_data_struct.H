@@ -5,7 +5,7 @@
 /*                                                                        */
 /* OpenPOWER HostBoot Project                                             */
 /*                                                                        */
-/* Contributors Listed Below - COPYRIGHT 2015,2017                        */
+/* Contributors Listed Below - COPYRIGHT 2015,2018                        */
 /* [+] International Business Machines Corp.                              */
 /*                                                                        */
 /*                                                                        */
@@ -35,10 +35,6 @@
 #ifndef __STOP_DATA_STRUCT_
 #define __STOP_DATA_STRUCT_
 
-#if !(defined  _AIX) && !(defined __SKIBOOT__)
-    #include <endian.h>
-#endif
-
 #include "p9_hcd_memmap_base.H"
 
 #ifdef __SKIBOOT__
@@ -49,6 +45,15 @@
     #include <fapi2.H>
 #endif
 
+#ifdef PPC_HYP
+
+    #define STATIC
+
+#else
+
+    #define STATIC static
+
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -140,6 +145,13 @@ enum
 ((StopCacheSection_t *)(((uint8_t *)(io_image)) + QUAD_SCOM_RESTORE_HOMER_OFFSET +\
                         ((i_chipletId - CACHE_CHIPLET_ID_MIN) * \
                          QUAD_SCOM_RESTORE_SIZE_PER_QUAD)));
+
+#define CACHE_SCOM_ADDR(io_image,\
+                        i_chipletId,\
+                        i_maxScomEntry)\
+((ScomEntry_t *)(((uint8_t *)(io_image)) + QUAD_SCOM_RESTORE_HOMER_OFFSET +\
+                 ((i_chipletId - CACHE_CHIPLET_ID_MIN) * \
+                  ((i_maxScomEntry + 1) * 16 ))));
 #ifdef __cplusplus
 }  // extern "C"
 
