@@ -15,6 +15,7 @@ Overview
 
    overview
    opal-spec
+   platforms-and-cpus
 
 Development Process
 ===================
