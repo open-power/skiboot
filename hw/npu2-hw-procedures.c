@@ -260,6 +260,9 @@ uint32_t reset_ntl(struct npu2_dev *ndev)
 	val = SETFIELD(PPC_BITMASK(0,1), 0ull, obus_brick_index(ndev));
 	npu2_write_mask(ndev->npu, NPU2_NTL_PRI_CFG(ndev), val, -1ULL);
 
+	val = NPU2_NTL_MISC_CFG2_NDL_RX_PARITY_ENA;
+	npu2_write_mask(ndev->npu, NPU2_NTL_MISC_CFG2(ndev), 0ull, val);
+
 	/* NTL Reset */
 	val = npu2_read(ndev->npu, NPU2_NTL_MISC_CFG1(ndev));
 	val |= PPC_BIT(8) | PPC_BIT(9);
@@ -771,6 +774,9 @@ static uint32_t check_credits(struct npu2_dev *ndev)
 
 	if (!poll_fence_status(ndev, 0x0))
 		return PROCEDURE_COMPLETE | PROCEDURE_FAILED;
+
+	val = NPU2_NTL_MISC_CFG2_NDL_RX_PARITY_ENA;
+	npu2_write_mask(ndev->npu, NPU2_NTL_MISC_CFG2(ndev), val, val);
 
 	return PROCEDURE_COMPLETE;
 }
