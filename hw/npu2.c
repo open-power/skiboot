@@ -1404,7 +1404,10 @@ static void npu2_probe_phb(struct dt_node *dn)
 	xscom_write_mask(gcid, 0x50112f1, PPC_BIT(41), PPC_BIT(41));
 	xscom_write_mask(gcid, 0x50114f1, PPC_BIT(41), PPC_BIT(41));
 
-	val = NPU2_NTL_MISC_CFG2_BRICK_ENABLE;
+	val = NPU2_NTL_MISC_CFG2_BRICK_ENABLE |
+	      NPU2_NTL_MISC_CFG2_NDL_TX_PARITY_ENA |
+	      NPU2_NTL_MISC_CFG2_NDL_PRI_PARITY_ENA |
+	      NPU2_NTL_MISC_CFG2_RCV_CREDIT_OVERFLOW_ENA;
 	xscom_write_mask(gcid, 0x5011110, val, val);
 	xscom_write_mask(gcid, 0x5011130, val, val);
 	xscom_write_mask(gcid, 0x5011310, val, val);
