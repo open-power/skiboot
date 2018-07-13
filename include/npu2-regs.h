@@ -268,6 +268,7 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 
 /* NTL block registers */
 #define NPU2_NTL_MISC_CFG2(ndev)		NPU2_NTL_REG_OFFSET(ndev, 0x000)
+#define   NPU2_NTL_MISC_CFG2_BRICK_ENABLE	PPC_BIT(0)
 #define NPU2_NTL_MISC_CFG3(ndev)		NPU2_NTL_REG_OFFSET(ndev, 0x008)
 #define NPU2_NTL_ERR_HOLD1(ndev)		NPU2_NTL_REG_OFFSET(ndev, 0x010)
 #define NPU2_NTL_ERR_MASK1(ndev)		NPU2_NTL_REG_OFFSET(ndev, 0x018)

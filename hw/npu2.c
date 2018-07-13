@@ -1382,12 +1382,13 @@ static void npu2_probe_phb(struct dt_node *dn)
 	xscom_write_mask(gcid, 0x50112f1, PPC_BIT(41), PPC_BIT(41));
 	xscom_write_mask(gcid, 0x50114f1, PPC_BIT(41), PPC_BIT(41));
 
-	xscom_write_mask(gcid, 0x5011110, PPC_BIT(0), PPC_BIT(0));
-	xscom_write_mask(gcid, 0x5011130, PPC_BIT(0), PPC_BIT(0));
-	xscom_write_mask(gcid, 0x5011310, PPC_BIT(0), PPC_BIT(0));
-	xscom_write_mask(gcid, 0x5011330, PPC_BIT(0), PPC_BIT(0));
-	xscom_write_mask(gcid, 0x5011510, PPC_BIT(0), PPC_BIT(0));
-	xscom_write_mask(gcid, 0x5011530, PPC_BIT(0), PPC_BIT(0));
+	val = NPU2_NTL_MISC_CFG2_BRICK_ENABLE;
+	xscom_write_mask(gcid, 0x5011110, val, val);
+	xscom_write_mask(gcid, 0x5011130, val, val);
+	xscom_write_mask(gcid, 0x5011310, val, val);
+	xscom_write_mask(gcid, 0x5011330, val, val);
+	xscom_write_mask(gcid, 0x5011510, val, val);
+	xscom_write_mask(gcid, 0x5011530, val, val);
 
 	/*
 	 * Enable relaxed ordering for peer-to-peer reads
