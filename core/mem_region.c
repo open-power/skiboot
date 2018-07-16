@@ -1206,19 +1206,52 @@ static void mem_clear_range(uint64_t s, uint64_t e)
 		return;
 	}
 
-	prlog(PR_NOTICE, "Clearing region %llx-%llx\n",
+	prlog(PR_DEBUG, "Clearing region %llx-%llx\n",
 	      (long long)s, (long long)e);
 	memset((void *)s, 0, e - s);
 }
 
+struct mem_region_clear_job_args {
+	char *job_name;
+	uint64_t s,e;
+};
+
+static void mem_region_clear_job(void *data)
+{
+	struct mem_region_clear_job_args *arg = (struct mem_region_clear_job_args*)data;
+	mem_clear_range(arg->s, arg->e);
+}
+
+#define MEM_REGION_CLEAR_JOB_SIZE (16ULL*(1<<30))
+
 void mem_region_clear_unused(void)
 {
+	int njobs = 0;
+	struct cpu_job **jobs;
 	struct mem_region *r;
+	struct mem_region_clear_job_args *job_args;
+	uint64_t s,l;
+	uint64_t total = 0;
+	uint32_t chip_id;
+	char *path;
+	int i;
 
 	lock(&mem_region_lock);
 	assert(mem_regions_finalised);
 
+	list_for_each(&regions, r, list) {
+		if (!(r->type == REGION_OS))
+			continue;
+		njobs++;
+		/* One job per 16GB */
+		njobs += r->len / MEM_REGION_CLEAR_JOB_SIZE;
+	}
+
+	jobs = malloc(njobs * sizeof(struct cpu_job*));
+	job_args = malloc(njobs * sizeof(struct mem_region_clear_job_args));
+
 	prlog(PR_NOTICE, "Clearing unused memory:\n");
+	i = 0;
 	list_for_each(&regions, r, list) {
 		/* If it's not unused, ignore it. */
 		if (!(r->type == REGION_OS))
@@ -1226,9 +1259,72 @@ void mem_region_clear_unused(void)
 
 		assert(r != &skiboot_heap);
 
-		mem_clear_range(r->start, r->start + r->len);
+		s = r->start;
+		l = r->len;
+		while(l > MEM_REGION_CLEAR_JOB_SIZE) {
+			job_args[i].s = s+l - MEM_REGION_CLEAR_JOB_SIZE;
+			job_args[i].e = s+l;
+			l-=MEM_REGION_CLEAR_JOB_SIZE;
+			job_args[i].job_name = malloc(sizeof(char)*100);
+			total+=MEM_REGION_CLEAR_JOB_SIZE;
+			chip_id = __dt_get_chip_id(r->node);
+			if (chip_id == -1)
+				chip_id = 0;
+			path = dt_get_path(r->node);
+			snprintf(job_args[i].job_name, 100,
+				 "clear %s, %s 0x%"PRIx64" len: %"PRIx64" on %d",
+				 r->name, path,
+				 job_args[i].s,
+				 (job_args[i].e - job_args[i].s),
+				 chip_id);
+			free(path);
+			printf("job: %s\n", job_args[i].job_name);
+			jobs[i] = cpu_queue_job_on_node(chip_id,
+							job_args[i].job_name,
+							mem_region_clear_job,
+							&job_args[i]);
+			if (!jobs[i])
+				jobs[i] = cpu_queue_job(NULL,
+							job_args[i].job_name,
+							mem_region_clear_job,
+							&job_args[i]);
+			assert(jobs[i]);
+			i++;
+		}
+		job_args[i].s = s;
+		job_args[i].e = s+l;
+		job_args[i].job_name = malloc(sizeof(char)*100);
+		total+=l;
+		chip_id = __dt_get_chip_id(r->node);
+		if (chip_id == -1)
+			chip_id = 0;
+		path = dt_get_path(r->node);
+		snprintf(job_args[i].job_name,100,
+			 "clear %s, %s 0x%"PRIx64" len: 0x%"PRIx64" on %d",
+			 r->name, path,
+			 job_args[i].s,
+			 (job_args[i].e - job_args[i].s),
+			 chip_id);
+		free(path);
+		printf("job: %s\n", job_args[i].job_name);
+		jobs[i] = cpu_queue_job_on_node(chip_id,
+						job_args[i].job_name,
+					mem_region_clear_job,
+					&job_args[i]);
+		i++;
+	}
+	cpu_process_local_jobs();
+	l = 0;
+	for(i=0; i < njobs; i++) {
+		cpu_wait_job(jobs[i], true);
+		l += (job_args[i].e - job_args[i].s);
+		printf("Clearing memory... %"PRIu64"/%"PRIu64"GB done\n",
+		       l>>30, total>>30);
+		free(job_args[i].job_name);
 	}
 	unlock(&mem_region_lock);
+	free(jobs);
+	free(job_args);
 }
 
 static void mem_region_add_dt_reserved_node(struct dt_node *parent,

@@ -237,8 +237,11 @@ u32 dt_n_size_cells(const struct dt_node *node);
 u64 dt_get_number(const void *pdata, unsigned int cells);
 
 /* Find an ibm,chip-id property in this node; if not found, walk up the parent
- * nodes. Returns -1 if no chip-id property exists. */
+ * nodes. */
 u32 dt_get_chip_id(const struct dt_node *node);
+
+/* Same as dt_get_chip_id except Returns -1 if no chip-id property exists. */
+u32 __dt_get_chip_id(const struct dt_node *node);
 
 /* Address accessors ("reg" properties parsing). No translation,
  * only support "simple" address forms (1 or 2 cells). Asserts

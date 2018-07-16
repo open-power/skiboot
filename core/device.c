@@ -955,7 +955,7 @@ u64 dt_get_address(const struct dt_node *node, unsigned int index,
 	return dt_get_number(p->prop + pos, na);
 }
 
-static u32 __dt_get_chip_id(const struct dt_node *node)
+u32 __dt_get_chip_id(const struct dt_node *node)
 {
 	const struct dt_property *prop;
 
