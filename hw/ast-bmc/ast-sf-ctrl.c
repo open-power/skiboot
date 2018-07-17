@@ -22,7 +22,9 @@
 
 #include <libflash/libflash.h>
 #include <libflash/libflash-priv.h>
-#include <lpc.h>
+#ifdef __SKIBOOT__
+#include "lpc.h"
+#endif
 
 #include "ast.h"
 
@@ -69,6 +71,7 @@ static const uint32_t ast_ct_hclk_divs[] = {
 	0xd, /* HCLK/5 */
 };
 
+#ifdef __SKIBOOT__
 #define PNOR_AHB_ADDR	0x30000000
 static uint32_t pnor_lpc_offset;
 
@@ -152,6 +155,7 @@ static int ast_copy_from_ahb(void *dst, uint32_t reg, uint32_t len)
 	prerror("AST_IO: Attempted read bytes access to %08x\n", reg);
 	return -EINVAL;
 }
+#endif /* __SKIBOOT__ */
 
 static int ast_sf_start_cmd(struct ast_sf_ctrl *ct, uint8_t cmd)
 {
@@ -942,7 +946,9 @@ static int ast_mem_erase(struct spi_flash_ctrl *ctrl, uint32_t addr, uint32_t si
 int ast_sf_open(uint8_t type, struct spi_flash_ctrl **ctrl)
 {
 	struct ast_sf_ctrl *ct;
+#ifdef __SKIBOOT__
 	uint32_t hicr7;
+#endif /* __SKIBOOT__ */
 
 	if (type != AST_SF_TYPE_PNOR && type != AST_SF_TYPE_BMC
 	    && type != AST_SF_TYPE_MEM)
@@ -985,6 +991,7 @@ int ast_sf_open(uint8_t type, struct spi_flash_ctrl **ctrl)
 			goto fail;
 	}
 
+#ifdef __SKIBOOT__
 	/* Read the configuration of the LPC->AHB bridge for PNOR
 	 * to extract the PNOR LPC offset which can be different
 	 * depending on flash size
@@ -992,6 +999,7 @@ int ast_sf_open(uint8_t type, struct spi_flash_ctrl **ctrl)
 	hicr7 = ast_ahb_readl(LPC_HICR7);
 	pnor_lpc_offset = (hicr7 & 0xffffu) << 16;
 	prlog(PR_DEBUG, "AST: PNOR LPC offset: 0x%08x\n", pnor_lpc_offset);
+#endif /* __SKIBOOT__ */
 
 	*ctrl = &ct->ops;
 
