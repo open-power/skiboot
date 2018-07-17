@@ -39,6 +39,8 @@
 #define LPC_HICR6		(LPC_BASE + 0x80)
 #define LPC_HICR7		(LPC_BASE + 0x88)
 #define LPC_HICR8		(LPC_BASE + 0x8c)
+#define LPC_HICRB               (LPC_BASE + 0x100)
+#define  LPC_HICRB_ILPC_DISABLE (1 << 6)
 #define LPC_iBTCR0		(LPC_BASE + 0x140)
 
 /* VUART1 */
@@ -49,9 +51,15 @@
 #define VUART1_ADDRH		(VUART1_BASE + 0x2c)
 
 /* SCU registers */
-#define SCU_BASE		0x1e6e2000
-#define SCU_HW_STRAPPING	(SCU_BASE + 0x70)
-#define SCU_REVISION_ID		(SCU_BASE + 0x7C)
+#define SCU_BASE		        0x1e6e2000
+#define SCU_HW_STRAPPING	        (SCU_BASE + 0x70)
+#define  SCU_STRAP_SIO_DECODE_DISABLE   (1 << 20)
+#define SCU_REVISION_ID		        (SCU_BASE + 0x7C)
+#define  SCU_REVISION_SOC_FAMILY(x)     (((x) >> 24) & 0xff)
+#define   SCU_REVISION_SOC_FAMILY_2400  0x02
+#define   SCU_REVISION_SOC_FAMILY_2500  0x04
+#define  SCU_REVISION_HW_REVISION_ID(x) (((x) >> 16) & 0xff)
+#define  SCU_REVISION_CHIP_BONDING(x)   (((x) >> 8) & 0x3)
 
 /* MCR registers */
 #define MCR_BASE		0x1e6e0000
@@ -73,7 +81,10 @@
 void ast_ahb_writel(uint32_t val, uint32_t reg);
 uint32_t ast_ahb_readl(uint32_t reg);
 
-void ast_io_init(void);
+bool ast_sio_init(void);
+bool ast_can_isolate_sp(void);
+bool ast_io_init(void);
+bool ast_io_is_rw(void);
 bool ast_lpc_fw_is_flash(void);
 bool ast_lpc_fw_is_mbox(void);
 bool ast_scratch_reg_is_mbox(void);

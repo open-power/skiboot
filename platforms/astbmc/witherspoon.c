@@ -29,6 +29,7 @@
 #include <phb4.h>
 
 #include "astbmc.h"
+#include "ast.h"
 
 /*
  * HACK: Hostboot doesn't export the correct data for the system VPD EEPROM
@@ -165,7 +166,7 @@ DECLARE_PLATFORM(witherspoon) = {
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
 	.elog_commit		= ipmi_elog_commit,
-	.exit			= ipmi_wdt_final_reset,
+	.exit			= astbmc_exit,
 	.terminate		= ipmi_terminate,
 
 	.pci_get_slot_info	= dt_slot_get_slot_info,

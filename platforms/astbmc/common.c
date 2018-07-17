@@ -372,6 +372,24 @@ static void astbmc_fixup_psi_bar(void)
 	xscom_write(chip->id, 0x201090A, psibar);
 }
 
+static void astbmc_fixup_uart(void)
+{
+	/*
+	 * Depending on which image we are running, it may be configuring the
+	 * virtual UART or not.  Check if VUART is enabled and use SIO if not.
+	 * We also correct the configuration of VUART as some BMC images don't
+	 * setup the interrupt properly
+	 */
+	if (ast_is_vuart1_enabled()) {
+		printf("PLAT: Using virtual UART\n");
+		ast_disable_sio_uart1();
+		ast_setup_vuart1(UART_IO_BASE, UART_LPC_IRQ);
+	} else {
+		printf("PLAT: Using SuperIO UART\n");
+		ast_setup_sio_uart1(UART_IO_BASE, UART_LPC_IRQ);
+	}
+}
+
 void astbmc_early_init(void)
 {
 	/* Hostboot's device-tree isn't quite right yet */
@@ -383,28 +401,24 @@ void astbmc_early_init(void)
 	/* Send external interrupts to me */
 	psi_set_external_irq_policy(EXTERNAL_IRQ_POLICY_SKIBOOT);
 
-	/* Initialize AHB accesses via AST2400 */
-	ast_io_init();
+	if (ast_sio_init()) {
+		if (!ast_can_isolate_sp()) {
+			/*
+			 * BMCs claiming support for isolation must have
+			 * correctly configured the UART and BT for host
+			 * firmware. If not, let's apply some fixups for broken
+			 * BMC firmwares.
+			 */
+			if (ast_io_init()) {
+				astbmc_fixup_uart();
+				ast_setup_ibt(BT_IO_BASE, BT_LPC_IRQ);
+			} else
+				prerror("PLAT: AST IO initialisation failed!\n");
+		}
 
-	/*
-	 * Depending on which image we are running, it may be configuring
-	 * the virtual UART or not. Check if VUART is enabled and use
-	 * SIO if not. We also correct the configuration of VUART as some
-	 * BMC images don't setup the interrupt properly
-	 */
-	if (ast_is_vuart1_enabled()) {
-		printf("PLAT: Using virtual UART\n");
-		ast_disable_sio_uart1();
-		ast_setup_vuart1(UART_IO_BASE, UART_LPC_IRQ);
-	} else {
-		printf("PLAT: Using SuperIO UART\n");
-		ast_setup_sio_uart1(UART_IO_BASE, UART_LPC_IRQ);
-	}
-
-	/* Similarly, some BMCs don't configure the BT interrupt properly */
-	ast_setup_ibt(BT_IO_BASE, BT_LPC_IRQ);
-
-	ast_setup_sio_mbox(MBOX_IO_BASE, MBOX_LPC_IRQ);
+		ast_setup_sio_mbox(MBOX_IO_BASE, MBOX_LPC_IRQ);
+	} else
+		prerror("PLAT: AST SIO initialisation failed!\n");
 
 	/* Setup UART and use it as console */
 	uart_init();
@@ -412,6 +426,64 @@ void astbmc_early_init(void)
 	mbox_init();
 
 	prd_init();
+}
+
+static bool astbmc_isolate_via_io(void)
+{
+	uint32_t hw_strapping;
+	uint32_t silicon_rev;
+	uint8_t family;
+
+	silicon_rev = ast_ahb_readl(SCU_REVISION_ID);
+	family = SCU_REVISION_SOC_FAMILY(silicon_rev);
+
+	if (family == SCU_REVISION_SOC_FAMILY_2400) {
+		/* Strapping is read-modify-write on SCU70 */
+		hw_strapping = SCU_STRAP_SIO_DECODE_DISABLE;
+		hw_strapping |= ast_ahb_readl(SCU_HW_STRAPPING);
+	} else if (family == SCU_REVISION_SOC_FAMILY_2500) {
+		/*
+		 * Strapping is W1S on SCU70, W1C on SCU7C. We're setting a bit
+		 * so read-modify-write *should* work, but in reality it breaks
+		 * the AXI/AHB divider, so don't do that.
+		 */
+		hw_strapping = SCU_STRAP_SIO_DECODE_DISABLE;
+	} else {
+		prerror("PLAT: Unrecognised BMC silicon revision 0x%x, isolation failed\n",
+			silicon_rev);
+		return false;
+	}
+
+	ast_ahb_writel(hw_strapping, SCU_HW_STRAPPING);
+
+	return true;
+}
+
+static bool astbmc_isolate_via_ipmi(void)
+{
+	return false;
+}
+
+static void astbmc_isolate(void)
+{
+	bool isolated;
+
+	isolated = ast_io_is_rw() ? astbmc_isolate_via_io()
+				  : astbmc_isolate_via_ipmi();
+
+	if (!isolated) {
+		prlog(PR_EMERG, "PLAT: BMC isolation failed\n");
+		abort();
+	}
+
+	prlog(PR_INFO, "PLAT: Isolated BMC\n");
+}
+
+void astbmc_exit(void)
+{
+	if (ast_can_isolate_sp())
+		astbmc_isolate();
+	ipmi_wdt_final_reset();
 }
 
 const struct bmc_platform astbmc_ami = {

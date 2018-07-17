@@ -246,8 +246,8 @@ static bool qemu_probe(void)
 
 	psi_set_external_irq_policy(EXTERNAL_IRQ_POLICY_SKIBOOT);
 
-	/* Initialize AHB accesses via AST2400 */
-	ast_io_init();
+	if (!ast_sio_init())
+		prerror("PLAT: AST SIO initialisation failed!\n");
 
 	/* Setup UART and use it as console */
 	uart_init();
