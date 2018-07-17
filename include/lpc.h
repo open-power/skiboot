@@ -168,4 +168,7 @@ static inline uint32_t lpc_inl(uint32_t addr)
 	return (rc == OPAL_SUCCESS) ? le32_to_cpu(d32) : 0xffffffff;
 }
 
+/* LPC IRQ error masking - required for some corner cases */
+extern void lpc_irq_err_mask_sync_no_response(void);
+
 #endif /* __LPC_H */
