@@ -73,12 +73,6 @@
 void ast_ahb_writel(uint32_t val, uint32_t reg);
 uint32_t ast_ahb_readl(uint32_t reg);
 
-/*
- * copy to/from accessors. Cannot cross IDSEL boundaries (256M)
- */
-int ast_copy_to_ahb(uint32_t reg, const void *src, uint32_t len);
-int ast_copy_from_ahb(void *dst, uint32_t reg, uint32_t len);
-
 void ast_io_init(void);
 bool ast_is_ahb_lpc_pnor(void);
 bool ast_is_mbox_pnor(void);
