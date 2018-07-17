@@ -25,21 +25,6 @@ static void quirk_astbmc_vga(struct phb *phb __unused,
 	struct dt_node *np = pd->dn;
 	uint32_t revision, mcr_configuration, mcr_scu_mpll, mcr_scu_strap;
 
-	/*
-	 * These accesses will only work if the BMC address 0x1E6E2180 is set
-	 * to 0x7B, which is its default state on current systems.  In future,
-	 * for security purposes it is proposed to configure this register to
-	 * disallow accesses from the host, and provide the properties that
-	 * the Linux ast VGA driver used through the device tree instead.
-	 * Here we set those properties so we can test how things would work
-	 * if the window into BMC memory was closed.
-	 *
-	 * If both the petitboot kernel and the host kernel have an ast driver
-	 * that reads properties from the device tree, setting 0x1E6E2180 to
-	 * 0x79 will disable the backdoor into BMC memory and the only way the
-	 * ast driver can operate is using the device tree properties.
-	 */
-
 	revision = ast_ahb_readl(SCU_REVISION_ID);
 	mcr_configuration = ast_ahb_readl(MCR_CONFIGURATION);
 	mcr_scu_mpll = ast_ahb_readl(MCR_SCU_MPLL);
