@@ -119,6 +119,17 @@
 #define BMC_SIO_SCR29_MBOX 0x08
 #define BMC_SIO_SCR29_MEMBOOT 0x10
 
+/*
+ *  SIO Register 0x2d: Platform Flags (normal bit ordering)
+ *
+ *       [ 7 ] Hostboot configures SUART
+ *       [ 6 ] Hostboot configures VUART
+ *       [5:1] Reserved
+ *       [ 0 ] Isolate Service Processor
+ */
+#define BMC_SIO_PLAT_FLAGS 		0x2d
+#define  BMC_SIO_PLAT_ISOLATE_SP 	0x01
+
 enum {
 	BMC_SIO_DEV_NONE	= -1,
 	BMC_SIO_DEV_UART1	= 2,
@@ -310,10 +321,58 @@ static void ast_setup_sio_irq_polarity(void)
 	bmc_sio_put(true);
 }
 
-void ast_io_init(void)
+static bool ast_sio_is_enabled(void)
 {
+	bool enabled;
+
+	lpc_outb(0xa5, 0x2e);
+	lpc_outb(0xa5, 0x2e);
+
+	/* Heuristic attempt to confirm SIO is enabled.
+	 *
+	 * Do two tests of 1 byte, giving a false positive probability of
+	 * 1/65536. Read tests on disabled SIO tended to return 0x60.
+	 */
+	bmc_sio_outb(0x2, 0x07);
+	enabled = bmc_sio_inb(0x07) == 2;
+	if (enabled) {
+		bmc_sio_outb(0xd, 0x07);
+		enabled = bmc_sio_inb(0x07) == 0xd;
+	}
+
+	if (enabled)
+		lpc_outb(0xaa, 0x2e);
+
+	return enabled;
+}
+
+bool ast_sio_init(void)
+{
+	bool enabled = ast_sio_is_enabled();
+
+	prlog(PR_NOTICE, "PLAT: SuperIO is %s\n",
+	      enabled ? "available" : "unavailable!");
+
 	/* Configure all AIO interrupts to level low */
-	ast_setup_sio_irq_polarity();
+	if (enabled)
+		ast_setup_sio_irq_polarity();
+
+	return enabled;
+}
+
+bool ast_can_isolate_sp(void)
+{
+	return bmc_sio_inb(BMC_SIO_PLAT_FLAGS) & BMC_SIO_PLAT_ISOLATE_SP;
+}
+
+bool ast_io_is_rw(void)
+{
+	return !(ast_ahb_readl(LPC_HICRB) & LPC_HICRB_ILPC_DISABLE);
+}
+
+bool ast_io_init(void)
+{
+	return ast_io_is_rw();
 }
 
 bool ast_lpc_fw_is_mbox(void)

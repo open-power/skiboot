@@ -80,6 +80,6 @@ DECLARE_PLATFORM(romulus) = {
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
 	.elog_commit		= ipmi_elog_commit,
-	.exit			= ipmi_wdt_final_reset,
+	.exit			= astbmc_exit,
 	.terminate		= ipmi_terminate,
 };
