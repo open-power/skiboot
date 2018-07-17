@@ -430,33 +430,7 @@ void astbmc_early_init(void)
 
 static bool astbmc_isolate_via_io(void)
 {
-	uint32_t hw_strapping;
-	uint32_t silicon_rev;
-	uint8_t family;
-
-	silicon_rev = ast_ahb_readl(SCU_REVISION_ID);
-	family = SCU_REVISION_SOC_FAMILY(silicon_rev);
-
-	if (family == SCU_REVISION_SOC_FAMILY_2400) {
-		/* Strapping is read-modify-write on SCU70 */
-		hw_strapping = SCU_STRAP_SIO_DECODE_DISABLE;
-		hw_strapping |= ast_ahb_readl(SCU_HW_STRAPPING);
-	} else if (family == SCU_REVISION_SOC_FAMILY_2500) {
-		/*
-		 * Strapping is W1S on SCU70, W1C on SCU7C. We're setting a bit
-		 * so read-modify-write *should* work, but in reality it breaks
-		 * the AXI/AHB divider, so don't do that.
-		 */
-		hw_strapping = SCU_STRAP_SIO_DECODE_DISABLE;
-	} else {
-		prerror("PLAT: Unrecognised BMC silicon revision 0x%x, isolation failed\n",
-			silicon_rev);
-		return false;
-	}
-
-	ast_ahb_writel(hw_strapping, SCU_HW_STRAPPING);
-
-	return true;
+	return ast_sio_disable();
 }
 
 static bool astbmc_isolate_via_ipmi(void)

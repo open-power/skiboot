@@ -891,6 +891,20 @@ static void lpc_dispatch_reset(struct lpcm *lpc)
 		lpc_setup_serirq(lpc);
 }
 
+uint32_t lpc_irq_err_mask;
+
+void lpc_irq_err_mask_sync_no_response(void)
+{
+	lpc_irq_err_mask |= LPC_HC_IRQ_SYNC_NORESP_ERR;
+	lwsync();
+}
+
+static void lpc_irq_err_mask_reset(void)
+{
+	lpc_irq_err_mask = 0;
+	lwsync();
+}
+
 static void lpc_dispatch_err_irqs(struct lpcm *lpc, uint32_t irqs)
 {
 	const char *sync_err = "Unknown LPC error";
@@ -911,8 +925,12 @@ static void lpc_dispatch_err_irqs(struct lpcm *lpc, uint32_t irqs)
 		lpc_dispatch_reset(lpc);
 	if (irqs & LPC_HC_IRQ_SYNC_ABNORM_ERR)
 		sync_err = "Got SYNC abnormal error.";
-	if (irqs & LPC_HC_IRQ_SYNC_NORESP_ERR)
+	if (irqs & LPC_HC_IRQ_SYNC_NORESP_ERR) {
+		if (lpc_irq_err_mask & LPC_HC_IRQ_SYNC_NORESP_ERR)
+			goto done;
+
 		sync_err = "Got SYNC no-response error.";
+	}
 	if (irqs & LPC_HC_IRQ_SYNC_NORM_ERR)
 		sync_err = "Got SYNC normal error.";
 	if (irqs & LPC_HC_IRQ_SYNC_TIMEOUT_ERR)
@@ -940,6 +958,9 @@ static void lpc_dispatch_err_irqs(struct lpcm *lpc, uint32_t irqs)
 		log_simple_error(info, "LPC[%03x]: %s Error address reg: "
 				 "0x%08x\n",
 				 lpc->chip_id, sync_err, err_addr);
+
+done:
+	lpc_irq_err_mask_reset();
 }
 
 static void lpc_dispatch_ser_irqs(struct lpcm *lpc, uint32_t irqs,
