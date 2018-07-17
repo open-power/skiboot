@@ -33,19 +33,6 @@ static void quirk_astbmc_vga(struct phb *phb __unused,
 	dt_add_property_cells(np, "aspeed,mcr-configuration", mcr_configuration);
 	dt_add_property_cells(np, "aspeed,mcr-scu-mpll", mcr_scu_mpll);
 	dt_add_property_cells(np, "aspeed,mcr-scu-strap", mcr_scu_strap);
-
-	/*
-	 * if
-	 *    - the petitboot kernel supports an ast driver that uses DT
-	 *    - every host kernel supports an ast driver that uses DT
-	 *    - the host can't flash unsigned skiboots
-	 *
-	 * then enabling the line below will allow the host and the BMC to be
-	 * securely isolated from each other, without changing what's running
-	 * on the BMC.
-	 */
-
-	/* ast_ahb_writel(0x79, 0x1E6E2180); */
 }
 
 /* Quirks are: {fixup function, vendor ID, (device ID or PCI_ANY_ID)} */
