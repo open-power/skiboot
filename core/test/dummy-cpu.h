@@ -32,6 +32,13 @@ struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 				const char *name,
 				void (*func)(void *data), void *data,
 				bool no_return);
+static inline struct cpu_job *cpu_queue_job(struct cpu_thread *cpu,
+					    const char *name,
+					    void (*func)(void *data),
+					    void *data)
+{
+	return __cpu_queue_job(cpu, name, func, data, false);
+}
 void cpu_wait_job(struct cpu_job *job, bool free_it);
 void cpu_process_local_jobs(void);
 struct cpu_job *cpu_queue_job_on_node(uint32_t chip_id,

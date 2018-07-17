@@ -92,6 +92,13 @@ void cpu_process_local_jobs(void);
 struct cpu_job *cpu_queue_job_on_node(uint32_t chip_id,
 				       const char *name,
 				       void (*func)(void *data), void *data);
+static inline struct cpu_job *cpu_queue_job(struct cpu_thread *cpu,
+					    const char *name,
+					    void (*func)(void *data),
+					    void *data)
+{
+	return __cpu_queue_job(cpu, name, func, data, false);
+}
 
 struct cpu_thread __boot_cpu, *boot_cpu = &__boot_cpu;
 static unsigned long fake_pvr = PVR_P7;

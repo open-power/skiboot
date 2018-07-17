@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 
+#include <compiler.h>
 #include "../../ccan/list/list.c"
 
 void _prlog(int log_level __attribute__((unused)), const char* fmt, ...) __attribute__((format (printf, 2, 3)));
@@ -48,6 +49,7 @@ struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 				const char *name,
 				void (*func)(void *data), void *data,
 				bool no_return);
+
 void cpu_wait_job(struct cpu_job *job, bool free_it);
 void cpu_process_local_jobs(void);
 struct cpu_job *cpu_queue_job_on_node(uint32_t chip_id,
@@ -74,14 +76,14 @@ struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 	return NULL;
 }
 
-void cpu_wait_job(struct cpu_job *job, bool free_it)
+void __attrconst cpu_wait_job(struct cpu_job *job, bool free_it)
 {
 	(void)job;
 	(void)free_it;
 	return;
 }
 
-void cpu_process_local_jobs(void)
+void __attrconst cpu_process_local_jobs(void)
 {
 }
 
