@@ -74,8 +74,8 @@ void ast_ahb_writel(uint32_t val, uint32_t reg);
 uint32_t ast_ahb_readl(uint32_t reg);
 
 void ast_io_init(void);
-bool ast_is_ahb_lpc_pnor(void);
-bool ast_is_mbox_pnor(void);
+bool ast_lpc_fw_is_flash(void);
+bool ast_lpc_fw_is_mbox(void);
 bool ast_scratch_reg_is_mbox(void);
 
 /* UART configuration */

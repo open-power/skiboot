@@ -33,7 +33,7 @@ int pnor_init(void)
 	int rc;
 	bool do_mbox;
 
-	do_mbox = ast_is_mbox_pnor();
+	do_mbox = ast_lpc_fw_is_mbox();
 	if (do_mbox) {
 		rc = mbox_flash_init(&bl);
 	} else {
@@ -43,7 +43,7 @@ int pnor_init(void)
 		 * FW reads & writes).
 		 */
 
-		if (ast_is_ahb_lpc_pnor())
+		if (ast_lpc_fw_is_flash())
 			rc = ast_sf_open(AST_SF_TYPE_PNOR, &pnor_ctrl);
 		else {
 			printf("PLAT: Memboot detected\n");

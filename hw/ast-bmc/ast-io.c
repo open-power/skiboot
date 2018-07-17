@@ -316,12 +316,12 @@ void ast_io_init(void)
 	ast_setup_sio_irq_polarity();
 }
 
-bool ast_is_mbox_pnor(void)
+bool ast_lpc_fw_is_mbox(void)
 {
 	return dt_find_compatible_node(dt_root, NULL, "mbox");
 }
 
-bool ast_is_ahb_lpc_pnor(void)
+bool ast_lpc_fw_is_flash(void)
 {
 	uint8_t boot_version;
 	uint8_t boot_flags;
