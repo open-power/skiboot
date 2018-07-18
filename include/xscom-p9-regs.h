@@ -29,4 +29,8 @@
 
 #define P9_SCOM_SPRD				0x20010A81
 
+#define PB_CENT_HP_MODE_CURR			0x5011c0c
+#define  PB_CFG_CHG_RATE_GP_MASTER		PPC_BIT(2)
+#define  PB_CFG_PUMP_MODE			PPC_BIT(54)
+
 #endif /* __XSCOM_P9_REGS_H__ */

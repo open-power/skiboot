@@ -37,6 +37,7 @@
 #include <phys-map.h>
 #include <nvram.h>
 #include <xive.h>
+#include <xscom-p9-regs.h>
 
 #define NPU2_IRQ_BASE_SHIFT 13
 #define NPU2_N_DL_IRQS 23
