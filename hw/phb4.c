@@ -3983,6 +3983,17 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 			 XPEC_NEST_PBCQ_HW_CONFIG_PBINIT,
 			 XPEC_NEST_PBCQ_HW_CONFIG_PBINIT);
 
+	/* If pump mode is enabled don't do nodal broadcasts.
+	 */
+	xscom_read(p->chip_id, PB_CENT_HP_MODE_CURR, &reg);
+	if (reg & PB_CFG_PUMP_MODE) {
+		reg = XPEC_NEST_PBCQ_HW_CONFIG_DIS_NODAL;
+		reg |= XPEC_NEST_PBCQ_HW_CONFIG_DIS_RNNN;
+		xscom_write_mask(p->chip_id,
+				 p->pe_xscom + XPEC_NEST_PBCQ_HW_CONFIG,
+				 reg, reg);
+	}
+
 	/* PEC Phase 4 (PHB) registers adjustment
 	 * Inbound CAPP traffic: The CAPI can send both CAPP packets and
 	 * I/O packets. A PCIe packet is indentified as a CAPP packet in
