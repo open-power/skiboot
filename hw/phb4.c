@@ -3802,7 +3802,7 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 		/* max PHB read buffers 0-47 */
 		reg = 0xFFFFFFFFFFFF0000;
 		if (capp_eng & CAPP_MAX_DMA_READ_ENGINES)
-			reg = 0xFF00000000000000;
+			reg = 0xF000000000000000;
 		xscom_write(p->chip_id, APC_FSM_READ_MASK + offset, reg);
 		xscom_write(p->chip_id, XPT_FSM_RMM + offset, reg);
 	}
@@ -3810,7 +3810,7 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 		/* Set 30 Read machines for CAPP Minus 20-27 for DMA */
 		reg = 0xFFFFF00E00000000;
 		if (capp_eng & CAPP_MAX_DMA_READ_ENGINES)
-			reg = 0xFF00000000000000;
+			reg = 0xF000000000000000;
 		xscom_write(p->chip_id, APC_FSM_READ_MASK + offset, reg);
 		xscom_write(p->chip_id, XPT_FSM_RMM + offset, reg);
 	}
@@ -3928,6 +3928,8 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 		return OPAL_HARDWARE;
 	}
 
+	stq_eng = 0x0000000000000000ULL;
+	dma_eng = 0x0000000000000000ULL;
 	if (p->index == CAPP0_PHB_INDEX) {
 		/* PBCQ is operating as a x16 stack
 		 * - The maximum number of engines give to CAPP will be
@@ -3970,9 +3972,41 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 	reg = 0x8000000000000000ULL; /* PEC works in CAPP Mode */
 	reg |= stq_eng;
 	if (capp_eng & CAPP_MAX_DMA_READ_ENGINES)
-		dma_eng = 0x0000FF0000000000ULL; /* 16 CAPP Read machines */
+		dma_eng = 0x0000F00000000000ULL; /* 4 CAPP Read machines */
 	reg |= dma_eng;
 	xscom_write(p->chip_id, p->pe_xscom + XPEC_NEST_CAPP_CNTL, reg);
+
+	/* PEC2 has 3 ETU's + 16 pci lanes that can operate as x16,
+	 * x8+x8 (bifurcated) or x8+x4+x4 (trifurcated) mode. When
+	 * Mellanox CX5 card is attached to stack0 of this PEC, indicated by
+	 * request to allocate CAPP_MAX_DMA_READ_ENGINES; we tweak the default
+	 * dma-read engines allocations to maximize the DMA read performance
+	 */
+	if ((p->index == CAPP1_PHB_INDEX) &&
+	    (capp_eng & CAPP_MAX_DMA_READ_ENGINES)) {
+
+		/*
+		 * Allocate Additional 16/8 dma read engines to stack0/stack1
+		 * respectively. Read engines 0:31 are anyways always assigned
+		 * to stack0. Also skip allocating DMA Read Engine-32 by
+		 * enabling Bit[0] in XPEC_NEST_READ_STACK_OVERRIDE register.
+		 * Enabling this bit seems cause a parity error reported in
+		 * NFIR[1]-nonbar_pe.
+		 */
+		reg = 0x7fff80007F008000ULL;
+
+		xscom_write(p->chip_id, p->pci_xscom + XPEC_PCI_PRDSTKOVR, reg);
+		xscom_write(p->chip_id, p->pe_xscom +
+			    XPEC_NEST_READ_STACK_OVERRIDE, reg);
+
+		/* Log this reallocation as it may impact dma performance of
+		 * other slots connected to PEC2
+		 */
+		PHBINF(p, "CAPP: Set %d dma-read engines for PEC2/stack-0\n",
+		      32 + __builtin_popcountll(reg & PPC_BITMASK(0, 31)));
+		PHBDBG(p, "CAPP: XPEC_NEST_READ_STACK_OVERRIDE: %016llx\n",
+		       reg);
+	}
 
 	/* PCI to PB data movement ignores the PB init signal. */
 	xscom_write_mask(p->chip_id, p->pe_xscom + XPEC_NEST_PBCQ_HW_CONFIG,
