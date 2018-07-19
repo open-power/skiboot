@@ -347,6 +347,7 @@
 #define   XPEC_NEST_PBCQ_HW_CONFIG_DIS_NODAL	PPC_BIT(50)
 #define   XPEC_NEST_PBCQ_HW_CONFIG_DIS_RNNN	PPC_BIT(52)
 #define XPEC_NEST_CAPP_CNTL			0x7
+#define XPEC_NEST_READ_STACK_OVERRIDE		0x8
 
 /* Nest base per-stack registers */
 #define XPEC_NEST_STK_PCI_NFIR			0x0
@@ -381,6 +382,7 @@
 /* PCI base registers */
 #define XPEC_PCI_PBAIB_HW_CONFIG		0x0
 #define XPEC_PCI_CAPP_SEC_BAR			0x1
+#define XPEC_PCI_PRDSTKOVR			0x2
 
 /* PCI base per-stack registers */
 #define XPEC_PCI_STK_PCI_FIR			0x0
