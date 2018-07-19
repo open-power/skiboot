@@ -1151,6 +1151,7 @@ void init_all_cpus(void)
 		      " State=%d\n", pir, server_no, state);
 
 		/* Setup thread 0 */
+		assert(pir <= cpu_max_pir);
 		t = pt = &cpu_stacks[pir].cpu;
 		if (t != boot_cpu) {
 			init_cpu_thread(t, state, pir);
