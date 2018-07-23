@@ -179,7 +179,6 @@ CFLAGS += $(call try-cflag,$(CC),-mno-multiple)
 # do not use any automatic vector foo
 # While it would be safe during boot, we don't save/restore across OPAL calls
 CFLAGS += $(call try-cflag,$(CC),-mno-vsx) \
-	$(call try-cflag,$(CC),-mno-direct-move) \
 	$(call try-cflag,$(CC),-mno-altivec)
 
 # Do not use load/store update. You REALLY do not want to use this!
