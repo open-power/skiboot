@@ -128,7 +128,7 @@
 /* Enable this to disable error interrupts for debug purposes */
 #define DISABLE_ERR_INTS
 
-static void phb4_init_hw(struct phb4 *p, bool first_init);
+static void phb4_init_hw(struct phb4 *p);
 
 #define PHBDBG(p, fmt, a...)	prlog(PR_DEBUG, "PHB#%04x[%d:%d]: " fmt, \
 				      (p)->phb.opal_id, (p)->chip_id, \
@@ -800,10 +800,10 @@ static void phb4_endpoint_init(struct phb *phb,
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, val32);
 }
 
-static int64_t phb4_pcicfg_no_dstate(void *dev,
+static int64_t phb4_pcicfg_no_dstate(void *dev __unused,
 				     struct pci_cfg_reg_filter *pcrf,
-				     uint32_t offset, uint32_t len,
-				     uint32_t *data,  bool write)
+				     uint32_t offset, uint32_t len __unused,
+				     uint32_t *data __unused,  bool write)
 {
 	uint32_t loff = offset - pcrf->start;
 
@@ -816,7 +816,7 @@ static int64_t phb4_pcicfg_no_dstate(void *dev,
 	return OPAL_PARTIAL;
 }
 
-static void phb4_check_device_quirks(struct phb *phb, struct pci_device *dev)
+static void phb4_check_device_quirks(struct pci_device *dev)
 {
 	/* Some special adapter tweaks for devices directly under the PHB */
 	if (dev->primary_bus != 1)
@@ -838,7 +838,7 @@ static int phb4_device_init(struct phb *phb, struct pci_device *dev,
 	int ecap, aercap;
 
 	/* Setup special device quirks */
-	phb4_check_device_quirks(phb, dev);
+	phb4_check_device_quirks(dev);
 
 	/* Common initialization for the device */
 	pci_device_init(phb, dev);
@@ -1209,7 +1209,7 @@ static int64_t phb4_set_phb_mem_window(struct phb *phb,
 				       uint16_t window_type,
 				       uint16_t window_num,
 				       uint64_t addr,
-				       uint64_t pci_addr,
+				       uint64_t pci_addr __unused,
 				       uint64_t size)
 {
 	struct phb4 *p = phb_to_phb4(phb);
@@ -3172,7 +3172,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		p->flags &= ~PHB4_AIB_FENCED;
 		p->flags &= ~PHB4_CAPP_RECOVERY;
 		p->flags &= ~PHB4_CFG_USE_ASB;
-		phb4_init_hw(p, false);
+		phb4_init_hw(p);
 		pci_slot_set_state(slot, PHB4_SLOT_CRESET_FRESET);
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
 	case PHB4_SLOT_CRESET_FRESET:
@@ -3573,16 +3573,20 @@ static int64_t phb4_err_inject_finalize(struct phb4 *phb, uint64_t addr,
 	return OPAL_SUCCESS;
 }
 
-static int64_t phb4_err_inject_mem32(struct phb4 *phb, uint64_t pe_number,
-				     uint64_t addr, uint64_t mask,
-				     bool is_write)
+static int64_t phb4_err_inject_mem32(struct phb4 *phb __unused,
+				     uint64_t pe_number __unused,
+				     uint64_t addr __unused,
+				     uint64_t mask __unused,
+				     bool is_write __unused)
 {
 	return OPAL_UNSUPPORTED;
 }
 
-static int64_t phb4_err_inject_mem64(struct phb4 *phb, uint64_t pe_number,
-				     uint64_t addr, uint64_t mask,
-				     bool is_write)
+static int64_t phb4_err_inject_mem64(struct phb4 *phb __unused,
+				     uint64_t pe_number __unused,
+				     uint64_t addr __unused,
+				     uint64_t mask __unused,
+				     bool is_write __unused)
 {
 	return OPAL_UNSUPPORTED;
 }
@@ -3648,9 +3652,12 @@ static int64_t phb4_err_inject_cfg(struct phb4 *phb, uint64_t pe_number,
 	return phb4_err_inject_finalize(phb, a, m, ctrl, is_write);
 }
 
-static int64_t phb4_err_inject_dma(struct phb4 *phb, uint64_t pe_number,
-				   uint64_t addr, uint64_t mask,
-				   bool is_write, bool is_64bits)
+static int64_t phb4_err_inject_dma(struct phb4 *phb __unused,
+				   uint64_t pe_number __unused,
+				   uint64_t addr __unused,
+				   uint64_t mask __unused,
+				   bool is_write __unused,
+				   bool is_64bits __unused)
 {
 	return OPAL_UNSUPPORTED;
 }
@@ -4784,7 +4791,7 @@ static bool phb4_wait_dlp_reset(struct phb4 *p)
 	}
 	return true;
 }
-static void phb4_init_hw(struct phb4 *p, bool first_init)
+static void phb4_init_hw(struct phb4 *p)
 {
 	uint64_t val, creset;
 
@@ -5234,7 +5241,7 @@ static uint64_t phb4_lsi_attributes(struct irq_source *is __unused,
 }
 
 static int64_t phb4_ndd1_lsi_set_xive(struct irq_source *is, uint32_t isn,
-				     uint16_t server, uint8_t priority)
+				     uint16_t server __unused, uint8_t priority)
 {
 	struct phb4 *p = is->data;
 	uint32_t idx = isn - p->base_lsi;
@@ -5455,7 +5462,7 @@ static void phb4_create(struct dt_node *np)
 	phb4_init_ioda_cache(p);
 
 	/* Get the HW up and running */
-	phb4_init_hw(p, true);
+	phb4_init_hw(p);
 
 	/* Load capp microcode into capp unit */
 	load_capp_ucode(p);

@@ -12,9 +12,6 @@ HW_OBJS += npu2-common.o npu2-opencapi.o phys-map.o sbe-p9.o capp.o occ-sensor.o
 HW_OBJS += vas.o sbe-p8.o
 HW=hw/built-in.a
 
-# FIXME hack this for now
-CFLAGS_hw/phb4.o = -Wno-unused-value -Wno-unused-parameter
-
 include $(SRC)/hw/fsp/Makefile.inc
 include $(SRC)/hw/ec/Makefile.inc
 include $(SRC)/hw/ast-bmc/Makefile.inc
