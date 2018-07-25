@@ -1109,6 +1109,7 @@ static int64_t npu2_opencapi_poll_link(struct pci_slot *slot)
 	case OCAPI_SLOT_LINK_TRAINED:
 		otl_enabletx(chip_id, dev->npu->xscom_base, dev);
 		pci_slot_set_state(slot, OCAPI_SLOT_NORMAL);
+		dev->phb_ocapi.scan_map = 1;
 		return OPAL_SUCCESS;
 
 	default:
@@ -1629,7 +1630,7 @@ static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 	dev->phb_ocapi.dt_node = dn_phb;
 	dev->phb_ocapi.ops = &npu2_opencapi_ops;
 	dev->phb_ocapi.phb_type = phb_type_npu_v2_opencapi;
-	dev->phb_ocapi.scan_map = 1;
+	dev->phb_ocapi.scan_map = 0;
 	dev->index = dt_prop_get_u32(dn_link, "ibm,npu-link-index");
 	dev->pl_xscom_base = dt_prop_get_u64(dn_link, "ibm,npu-phy");
 	dev->lane_mask = dt_prop_get_u32(dn_link, "ibm,npu-lane-mask");
