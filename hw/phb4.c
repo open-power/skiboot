@@ -2015,7 +2015,7 @@ static void phb4_eeh_dump_regs(struct phb4 *p)
 	for (i = 0; i < OPAL_PHB4_NUM_PEST_REGS; i++) {
 		if (!s->pestA[i] && !s->pestB[i])
 			continue;
-		PHBERR(p, "               PEST[%03d] = %016llx %016llx\n",
+		PHBERR(p, "               PEST[%03x] = %016llx %016llx\n",
 		       i, s->pestA[i], s->pestB[i]);
 	}
 	free(s);
