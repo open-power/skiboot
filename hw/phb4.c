@@ -1933,6 +1933,46 @@ static void phb4_read_phb_status(struct phb4 *p,
 	 }
 }
 
+static void __unused phb4_dump_peltv(struct phb4 *p)
+{
+	int stride = p->max_num_pes / 64;
+	uint64_t *tbl = (void *) p->tbl_peltv;
+	unsigned int pe;
+
+	PHBERR(p, "PELT-V: base addr: %p size: %llx (%d PEs, stride = %d)\n",
+			tbl, p->tbl_peltv_size, p->max_num_pes, stride);
+
+	for (pe = 0; pe < p->max_num_pes; pe++) {
+		unsigned int i, j;
+		uint64_t sum = 0;
+
+		i = pe * stride;
+
+		/*
+		 * Only print an entry if there's bits set in the PE's
+		 * PELT-V entry. There's a few hundred possible PEs and
+		 * generally only a handful will be in use.
+		 */
+
+		for (j = 0; j < stride; j++)
+			sum |= tbl[i + j];
+		if (!sum)
+			continue; /* unused PE, skip it */
+
+		if (p->max_num_pes == 512) {
+			PHBERR(p, "PELT-V[%03x] = "
+				"%016llx %016llx %016llx %016llx"
+				"%016llx %016llx %016llx %016llx\n", pe,
+				tbl[i + 0], tbl[i + 1], tbl[i + 2], tbl[i + 3],
+				tbl[i + 4], tbl[i + 5], tbl[i + 6], tbl[i + 7]);
+		} else if (p->max_num_pes == 256) {
+			PHBERR(p, "PELT-V[%03x] = "
+				"%016llx %016llx %016llx %016llx\n", pe,
+				tbl[i + 0], tbl[i + 1], tbl[i + 2], tbl[i + 3]);
+		}
+	}
+}
+
 static void phb4_eeh_dump_regs(struct phb4 *p)
 {
 	struct OpalIoPhb4ErrorData *s;
