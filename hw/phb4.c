@@ -1973,6 +1973,95 @@ static void __unused phb4_dump_peltv(struct phb4 *p)
 	}
 }
 
+static void __unused phb4_dump_ioda_table(struct phb4 *p, int table)
+{
+	const char *name;
+	int entries, i;
+
+	switch (table) {
+	case IODA3_TBL_LIST:
+		name = "LIST";
+		entries = 8;
+		break;
+	case IODA3_TBL_MIST:
+		name = "MIST";
+		entries = 1024;
+		break;
+	case IODA3_TBL_RCAM:
+		name = "RCAM";
+		entries = 128;
+		break;
+	case IODA3_TBL_MRT:
+		name = "MRT";
+		entries = 16;
+		break;
+	case IODA3_TBL_PESTA:
+		name = "PESTA";
+		entries = 512;
+		break;
+	case IODA3_TBL_PESTB:
+		name = "PESTB";
+		entries = 512;
+		break;
+	case IODA3_TBL_TVT:
+		name = "TVT";
+		entries = 512;
+		break;
+	case IODA3_TBL_TCAM:
+		name = "TCAM";
+		entries = 1024;
+		break;
+	case IODA3_TBL_TDR:
+		name = "TDR";
+		entries = 1024;
+		break;
+	case IODA3_TBL_MBT: /* special case, see below */
+		name = "MBT";
+		entries = 64;
+		break;
+	case IODA3_TBL_MDT:
+		name = "MDT";
+		entries = 512;
+		break;
+	case IODA3_TBL_PEEV:
+		name = "PEEV";
+		entries = 8;
+		break;
+	default:
+		PHBERR(p, "Invalid IODA table %d!\n", table);
+		return;
+	}
+
+	PHBERR(p, "Start %s dump (only non-zero entries are printed):\n", name);
+
+	phb4_ioda_sel(p, table, 0, true);
+
+	/*
+	 * Each entry in the MBT is 16 bytes. Every other table has 8 byte
+	 * entries so we special case the MDT to keep the output readable.
+	 */
+	if (table == IODA3_TBL_MBT) {
+		for (i = 0; i < 32; i++) {
+			uint64_t v1 = phb4_read_reg_asb(p, PHB_IODA_DATA0);
+			uint64_t v2 = phb4_read_reg_asb(p, PHB_IODA_DATA0);
+
+			if (!v1 && !v2)
+				continue;
+			PHBERR(p, "MBT[%03x] = %016llx %016llx\n", i, v1, v2);
+		}
+	} else {
+		for (i = 0; i < entries; i++) {
+			uint64_t v = phb4_read_reg_asb(p, PHB_IODA_DATA0);
+
+			if (!v)
+				continue;
+			PHBERR(p, "%s[%03x] = %016llx\n", name, i, v);
+		}
+	}
+
+	PHBERR(p, "End %s dump\n", name);
+}
+
 static void phb4_eeh_dump_regs(struct phb4 *p)
 {
 	struct OpalIoPhb4ErrorData *s;
