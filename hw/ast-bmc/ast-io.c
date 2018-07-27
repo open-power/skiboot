@@ -407,7 +407,13 @@ bool ast_sio_disable(void)
 
 bool ast_can_isolate_sp(void)
 {
-	return bmc_sio_inb(BMC_SIO_PLAT_FLAGS) & BMC_SIO_PLAT_ISOLATE_SP;
+	bool isolate;
+
+	bmc_sio_get(BMC_SIO_DEV_LPC2AHB);
+	isolate = bmc_sio_inb(BMC_SIO_PLAT_FLAGS) & BMC_SIO_PLAT_ISOLATE_SP;
+	bmc_sio_put(true);
+
+	return isolate;
 }
 
 bool ast_io_is_rw(void)
