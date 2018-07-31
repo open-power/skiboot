@@ -5297,7 +5297,7 @@ static u64 lane_eq_default[8] = {
 static void phb4_create(struct dt_node *np)
 {
 	const struct dt_property *prop;
-	struct phb4 *p = zalloc(sizeof(struct phb4));
+	struct phb4 *p;
 	struct pci_slot *slot;
 	size_t lane_eq_len, lane_eq_len_req;
 	struct dt_node *iplp;
@@ -5305,12 +5305,16 @@ static void phb4_create(struct dt_node *np)
 	uint32_t irq_base, irq_flags;
 	int i;
 	struct proc_chip *chip;
+	int chip_id;
 
+	chip_id = dt_prop_get_u32(np, "ibm,chip-id");
+	p = local_alloc(chip_id, sizeof(struct phb4), 8);
 	assert(p);
+	memset(p, 0x0, sizeof(struct phb4));
 
 	/* Populate base stuff */
 	p->index = dt_prop_get_u32(np, "ibm,phb-index");
-	p->chip_id = dt_prop_get_u32(np, "ibm,chip-id");
+	p->chip_id = chip_id;
 	chip = get_chip(p->chip_id);
 	p->regs = (void *)dt_get_address(np, 0, NULL);
 	p->int_mmio = (void *)dt_get_address(np, 1, NULL);
