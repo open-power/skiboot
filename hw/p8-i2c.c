@@ -318,6 +318,16 @@ static void p8_i2c_print_debug_info(struct p8_i2c_master_port *port,
 			 "    cmd:0x%016llx\tmode:0x%016llx\tstat:0x%016llx\n"
 			 "  estat:0x%016llx\tintm:0x%016llx\tintc:0x%016llx\n",
 			 cmd, mode, stat, estat, intm, intc);
+
+	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
+		"I2C: Error bits set: %s%s%s%s%s%s%s\n",
+		(stat & I2C_STAT_NACK_RCVD_ERR) ? "nack, " : "",
+		(stat & I2C_STAT_INVALID_CMD) ? "cmd invalid, " : "",
+		(stat & I2C_STAT_LBUS_PARITY_ERR) ? "interal parity, " : "",
+		(stat & I2C_STAT_BKEND_OVERRUN_ERR) ? "backend overrun, " : "",
+		(stat & I2C_STAT_BKEND_ACCESS_ERR) ? "backend access, " : "",
+		(stat & I2C_STAT_ARBT_LOST_ERR) ? "arbitration loss, " : "",
+		(stat & I2C_STAT_STOP_ERR) ? "stop error, " : "");
 }
 
 static bool p8_i2c_has_irqs(struct p8_i2c_master *master)
