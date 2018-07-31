@@ -401,8 +401,10 @@ static void pci_slot_set_power_state(struct phb *phb,
 
 	if (state == PCI_SLOT_POWER_OFF) {
 		/* Bail if there're something connected */
-		if (!list_empty(&pd->children))
+		if (!list_empty(&pd->children)) {
+			PCIERR(phb, pd->bdfn, "Attempted to power off slot with attached devices!\n");
 			return;
+		}
 
 		pci_slot_add_flags(slot, PCI_SLOT_FLAG_BOOTUP);
 		rc = slot->ops.get_power_state(slot, &cur_state);
@@ -915,7 +917,9 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 		pci_cfg_write8(phb, pd->bdfn, PCI_CFG_SUBORDINATE_BUS, max_sub);
 		next_bus = max_sub + 1;
 
-		pci_slot_set_power_state(phb, pd, PCI_SLOT_POWER_OFF);
+		/* power off the slot if there's nothing below it */
+		if (list_empty(&pd->children))
+			pci_slot_set_power_state(phb, pd, PCI_SLOT_POWER_OFF);
 	}
 
 	return max_sub;
