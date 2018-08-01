@@ -1762,9 +1762,11 @@ static bool xive_config_init(struct xive *x)
 	val |= VC_SBC_CONF_NO_UPD_PRF;
 	xive_regw(x, VC_SBC_CONFIG, val);
 
-	/* Enable block tracking */
+	/* Disable block tracking on Nimbus (we may want to enable
+	 * it on Cumulus later). HW Erratas.
+	 */
 	val = xive_regr(x, PC_TCTXT_TRACK);
-	val |= PC_TCTXT_TRACK_EN;
+	val &= ~PC_TCTXT_TRACK_EN;
 	xive_regw(x, PC_TCTXT_TRACK, val);
 
 	/* Enable relaxed ordering of trigger forwarding */
