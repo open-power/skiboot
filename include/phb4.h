@@ -169,6 +169,7 @@ struct phb4 {
 	unsigned int		index;	    /* 0..5 index inside p9 */
 	unsigned int		flags;
 	unsigned int		chip_id;    /* Chip ID (== GCID on p9) */
+	unsigned int		pec;
 	bool			broken;
 	unsigned int		rev;        /* 00MMmmmm */
 #define PHB4_REV_NIMBUS_DD10	0xa40001

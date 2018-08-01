@@ -5315,6 +5315,7 @@ static void phb4_create(struct dt_node *np)
 	/* Populate base stuff */
 	p->index = dt_prop_get_u32(np, "ibm,phb-index");
 	p->chip_id = chip_id;
+	p->pec = dt_prop_get_u32(np, "ibm,phb-pec-index");
 	chip = get_chip(p->chip_id);
 	p->regs = (void *)dt_get_address(np, 0, NULL);
 	p->int_mmio = (void *)dt_get_address(np, 1, NULL);
@@ -5623,6 +5624,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 			      nest_base, nest_stack, pci_base, pci_stack, etu_base);
 	dt_add_property(np, "ibm,mmio-windows", mmio_win, 8 * mmio_win_sz);
 	dt_add_property_cells(np, "ibm,phb-index", phb_num);
+	dt_add_property_cells(np, "ibm,phb-pec-index", pec_index);
 	dt_add_property_cells(np, "ibm,phb-stack", stk_node->phandle);
 	dt_add_property_cells(np, "ibm,phb-stack-index", stk_index);
 	dt_add_property_cells(np, "ibm,chip-id", gcid);
