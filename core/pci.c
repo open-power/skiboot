@@ -1752,7 +1752,7 @@ static void __pci_init_slots(void)
 	if (platform.pci_probe_complete)
 		platform.pci_probe_complete();
 
-	prlog(PR_DEBUG, "PCI Summary:\n");
+	prlog(PR_NOTICE, "PCI Summary:\n");
 
 	for (i = 0; i < ARRAY_SIZE(phbs); i++) {
 		if (!phbs[i])
