@@ -55,6 +55,10 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 	NPU2_REG_OFFSET(((ndev)->index >> 1),				\
 			8 + ((ndev)->index % 2)*2, offset)
 
+#define NPU2_SM_REG_OFFSET(ndev, sm, offset)				\
+	NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + ((ndev)->index >> 1),	\
+			NPU2_BLOCK_SM_0 + (sm), offset)
+
 /* Get the offset for this register */
 #define NPU2_REG(reg) \
 	((reg) & 0xffff)
