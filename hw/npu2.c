@@ -38,6 +38,7 @@
 #include <nvram.h>
 #include <xive.h>
 #include <xscom-p9-regs.h>
+#include <phb4.h>
 
 #define NPU2_IRQ_BASE_SHIFT 13
 #define NPU2_N_DL_IRQS 23
@@ -919,12 +920,17 @@ static void npu2_hw_init(struct npu2 *p)
 	}
 
 	/* Static initialization of every relaxed-ordering cfg[2] register */
-	val = NPU2_RELAXED_ORDERING_CMD_CL_RD_NC_F0 |
+	val = NPU2_RELAXED_ORDERING_CMD_CL_DMA_W |
+	      NPU2_RELAXED_ORDERING_CMD_CL_DMA_W_HP |
+	      NPU2_RELAXED_ORDERING_CMD_CL_DMA_INJ |
+	      NPU2_RELAXED_ORDERING_CMD_PR_DMA_INJ |
+	      NPU2_RELAXED_ORDERING_CMD_DMA_PR_W |
+	      NPU2_RELAXED_ORDERING_CMD_CL_RD_NC_F0 |
 	      NPU2_RELAXED_ORDERING_SOURCE4_RDENA;
 
 	for (s = NPU2_STACK_STCK_0; s <= NPU2_STACK_STCK_2; s++) {
 		for (b = NPU2_BLOCK_SM_0; b <= NPU2_BLOCK_SM_3; b++) {
-			reg = NPU2_REG_OFFSET(s, b, NPU2_RELAXED_ORDERING_CFG2);
+			reg = NPU2_REG_OFFSET(s, b, NPU2_RELAXED_ORDERING_CFG(2));
 			npu2_write(p, reg, val);
 		}
 	}
@@ -2253,3 +2259,268 @@ out:
 	return rc;
 }
 opal_call(OPAL_NPU_MAP_LPAR, opal_npu_map_lpar, 4);
+
+static inline uint32_t npu2_relaxed_ordering_source_grpchp(uint32_t gcid)
+{
+	if (gcid & ~0x1b)
+		return OPAL_PARAMETER;
+
+	/* Repack 0bGGGGCCC to 0bGGCC */
+	return ((gcid & 0x18) >> 1) | (gcid & 0x3);
+}
+
+static uint64_t npu2_relaxed_ordering_cfg_read(struct npu2_dev *ndev, int n)
+{
+	uint64_t reg = NPU2_SM_REG_OFFSET(ndev, 0, NPU2_RELAXED_ORDERING_CFG(n));
+
+	return npu2_read(ndev->npu, reg);
+}
+
+static void npu2_relaxed_ordering_cfg_write(struct npu2_dev *ndev, int n,
+					    uint64_t val)
+{
+	uint64_t reg;
+	int sm;
+
+	/* Set every register on our stack */
+	for (sm = NPU2_BLOCK_SM_0; sm <= NPU2_BLOCK_SM_3; sm++) {
+		reg = NPU2_SM_REG_OFFSET(ndev, sm, NPU2_RELAXED_ORDERING_CFG(n));
+		npu2_write(ndev->npu, reg, val);
+	}
+}
+
+/*
+ * Parse the value of a relaxed ordering config register. Returns SOURCE0 or
+ * SOURCE1 register mask if relaxed ordering is set for the given chip/pec.
+ * Returns 0 if unset.
+ */
+static uint64_t npu2_relaxed_ordering_cfg_enabled(uint64_t val, uint32_t gcid,
+						  int pec)
+{
+	uint32_t src, grpchp;
+	uint64_t mask;
+	int i;
+
+	for (i = 0; i < 2; i++) {
+		mask = NPU2_RELAXED_ORDERING_SOURCE(i);
+		src = GETFIELD(mask, val);
+
+		if (!GETFIELD(NPU2_RELAXED_ORDERING_SOURCE_ENA, src))
+			continue;
+
+		if (GETFIELD(NPU2_RELAXED_ORDERING_SOURCE_PECSEL, src) != pec)
+			continue;
+
+		grpchp = GETFIELD(NPU2_RELAXED_ORDERING_SOURCE_GRPCHP, src);
+		if (grpchp == npu2_relaxed_ordering_source_grpchp(gcid))
+			return mask;
+
+		if (grpchp == 0xf) /* match all */
+			return mask;
+	}
+
+	return 0;
+}
+
+static int npu2_enable_relaxed_ordering(struct npu2_dev *ndev, uint32_t gcid,
+					int pec)
+{
+	uint64_t val, mask;
+	uint32_t src;
+	int rc = OPAL_RESOURCE;
+	int i;
+
+	NPU2DEVINF(ndev, "Enabling relaxed ordering for PEC %d on chip %d\n", pec, gcid);
+	lock(&ndev->npu->lock);
+
+	for (i = 0; i < 2; i++) {
+		val = npu2_relaxed_ordering_cfg_read(ndev, i);
+		if (!npu2_relaxed_ordering_cfg_enabled(val, gcid, pec))
+			continue;
+
+		/* Already enabled */
+		rc = OPAL_SUCCESS;
+		goto out;
+	}
+
+	src = NPU2_RELAXED_ORDERING_SOURCE_WRENA |
+	      NPU2_RELAXED_ORDERING_SOURCE_RDENA;
+	src = SETFIELD(NPU2_RELAXED_ORDERING_SOURCE_PECSEL, src, pec);
+	src = SETFIELD(NPU2_RELAXED_ORDERING_SOURCE_GRPCHP, src,
+		       npu2_relaxed_ordering_source_grpchp(gcid));
+	src = SETFIELD(NPU2_RELAXED_ORDERING_SOURCE_WRMIN, src, 0);
+	src = SETFIELD(NPU2_RELAXED_ORDERING_SOURCE_WRMAX, src, 23);
+	src = SETFIELD(NPU2_RELAXED_ORDERING_SOURCE_RDMIN, src, 0);
+	src = SETFIELD(NPU2_RELAXED_ORDERING_SOURCE_RDMAX, src, 47);
+
+	/* Find somewhere to write this config */
+	for (i = 0; i < 2; i++) {
+		val = npu2_relaxed_ordering_cfg_read(ndev, i);
+
+		if (!GETFIELD(NPU2_RELAXED_ORDERING_SOURCE_ENA << 32, val))
+			mask = NPU2_RELAXED_ORDERING_SOURCE(0);
+		else if (!GETFIELD(NPU2_RELAXED_ORDERING_SOURCE_ENA, val))
+			mask = NPU2_RELAXED_ORDERING_SOURCE(1);
+		else
+			continue;
+
+		val = SETFIELD(mask, val, src);
+		npu2_relaxed_ordering_cfg_write(ndev, i, val);
+
+		rc = OPAL_SUCCESS;
+		break;
+	}
+
+out:
+	unlock(&ndev->npu->lock);
+	return rc;
+}
+
+static void npu2_disable_relaxed_ordering(struct npu2_dev *ndev, uint32_t gcid,
+					  int pec)
+{
+	uint64_t val, mask;
+	int i;
+
+	NPU2DEVINF(ndev, "Disabling relaxed ordering for PEC %d on chip %d\n", pec, gcid);
+	lock(&ndev->npu->lock);
+
+	for (i = 0; i < 2; i++) {
+		val = npu2_relaxed_ordering_cfg_read(ndev, i);
+
+		mask = npu2_relaxed_ordering_cfg_enabled(val, gcid, pec);
+		if (!mask)
+			continue;
+
+		val = SETFIELD(mask, val, 0);
+		npu2_relaxed_ordering_cfg_write(ndev, i, val);
+	}
+
+	unlock(&ndev->npu->lock);
+}
+
+/*
+ * Enable or disable relaxed ordering on all nvlinks for a given PEC. May leave
+ * relaxed ordering partially enabled if there are insufficient HW resources to
+ * enable it on all links.
+ */
+static int npu2_set_relaxed_ordering(uint32_t gcid, int pec, bool enable)
+{
+	int rc = OPAL_SUCCESS;
+	struct phb *phb;
+	struct npu2 *npu;
+	struct npu2_dev *ndev;
+
+	for_each_phb(phb) {
+		if (phb->phb_type != phb_type_npu_v2)
+			continue;
+
+		npu = phb_to_npu2_nvlink(phb);
+		for (int i = 0; i < npu->total_devices; i++) {
+			ndev = &npu->devices[i];
+			if (enable)
+				rc = npu2_enable_relaxed_ordering(ndev, gcid, pec);
+			else
+				npu2_disable_relaxed_ordering(ndev, gcid, pec);
+
+			if (rc != OPAL_SUCCESS) {
+				NPU2DEVINF(ndev, "Insufficient resources to activate relaxed ordering mode\n");
+				return OPAL_RESOURCE;
+			}
+		}
+	}
+
+	return OPAL_SUCCESS;
+}
+
+static int npu2_check_relaxed_ordering(struct phb *phb __unused,
+				       struct pci_device *pd, void *enable)
+{
+	/*
+	 * IBM PCIe bridge devices (ie. the root ports) can always allow relaxed
+	 * ordering
+	 */
+	if (pd->vdid == 0x04c11014)
+		pd->allow_relaxed_ordering = true;
+
+	PCIDBG(phb, pd->bdfn, "Checking relaxed ordering config\n");
+	if (pd->allow_relaxed_ordering)
+		return 0;
+
+	PCIDBG(phb, pd->bdfn, "Relaxed ordering not allowed\n");
+	*(bool *) enable = false;
+
+	return 1;
+}
+
+static int64_t opal_npu_set_relaxed_order(uint64_t phb_id, uint16_t bdfn,
+					  bool request_enabled)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+	struct phb4 *phb4;
+	uint32_t chip_id, pec;
+	struct pci_device *pd;
+	bool enable = true;
+
+	if (!phb || phb->phb_type != phb_type_pcie_v4)
+		return OPAL_PARAMETER;
+
+	phb4 = phb_to_phb4(phb);
+	pec = phb4->pec;
+	chip_id = phb4->chip_id;
+
+	if (npu2_relaxed_ordering_source_grpchp(chip_id) == OPAL_PARAMETER)
+		return OPAL_PARAMETER;
+
+	pd = pci_find_dev(phb, bdfn);
+	if (!pd)
+		return OPAL_PARAMETER;
+
+	/*
+	 * Not changing state, so no need to rescan PHB devices to determine if
+	 * we need to enable/disable it
+	 */
+	if (pd->allow_relaxed_ordering == request_enabled)
+		return OPAL_SUCCESS;
+
+	pd->allow_relaxed_ordering = request_enabled;
+
+	/*
+	 * Walk all devices on this PHB to ensure they all support relaxed
+	 * ordering
+	 */
+	pci_walk_dev(phb, NULL, npu2_check_relaxed_ordering, &enable);
+
+	if (request_enabled && !enable) {
+		/*
+		 * Not all devices on this PHB support relaxed-ordering
+		 * mode so we can't enable it as requested
+		 */
+		prlog(PR_INFO, "Cannot set relaxed ordering for PEC %d on chip %d\n",
+		      pec, chip_id);
+		return OPAL_CONSTRAINED;
+	}
+
+	if (npu2_set_relaxed_ordering(chip_id, pec, request_enabled) != OPAL_SUCCESS) {
+		npu2_set_relaxed_ordering(chip_id, pec, false);
+		return OPAL_RESOURCE;
+	}
+
+	phb4->ro_state = request_enabled;
+	return OPAL_SUCCESS;
+}
+opal_call(OPAL_NPU_SET_RELAXED_ORDER, opal_npu_set_relaxed_order, 3);
+
+static int64_t opal_npu_get_relaxed_order(uint64_t phb_id,
+					  uint16_t bdfn __unused)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+	struct phb4 *phb4;
+
+	if (!phb || phb->phb_type != phb_type_pcie_v4)
+		return OPAL_PARAMETER;
+
+	phb4 = phb_to_phb4(phb);
+	return phb4->ro_state;
+}
+opal_call(OPAL_NPU_GET_RELAXED_ORDER, opal_npu_get_relaxed_order, 2);

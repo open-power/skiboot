@@ -111,6 +111,14 @@ struct pci_device {
 	uint32_t		pcrf_end;
 	struct list_head	pcrf;
 
+	/*
+	 * Relaxed ordering is a feature which allows PCIe devices accessing GPU
+	 * memory to bypass the normal PCIe ordering rules to increase
+	 * performance. It is enabled on a per-PEC basis so every device on a
+	 * PEC must support it before we can enable it.
+	 */
+	bool                    allow_relaxed_ordering;
+
 	struct dt_node		*dn;
 	struct pci_slot		*slot;
 	struct pci_device	*parent;

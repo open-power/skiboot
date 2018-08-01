@@ -224,7 +224,9 @@
 #define OPAL_PCI_SET_PBCQ_TUNNEL_BAR		165
 #define OPAL_HANDLE_HMI2			166
 #define OPAL_NX_COPROC_INIT			167
-#define OPAL_LAST				167
+#define OPAL_NPU_SET_RELAXED_ORDER		168
+#define OPAL_NPU_GET_RELAXED_ORDER		169
+#define OPAL_LAST				169
 
 #define QUIESCE_HOLD			1 /* Spin all calls at entry */
 #define QUIESCE_REJECT			2 /* Fail all calls with OPAL_BUSY */

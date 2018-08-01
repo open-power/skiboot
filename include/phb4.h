@@ -227,6 +227,9 @@ struct phb4 {
 	/* Cache some RC registers that need to be emulated */
 	uint32_t		rc_cache[4];
 
+	/* Current NPU2 relaxed ordering state */
+	bool			ro_state;
+
 	struct phb		phb;
 };
 
