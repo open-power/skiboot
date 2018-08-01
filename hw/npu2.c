@@ -857,7 +857,8 @@ static void npu2_mcd_init(struct npu2 *p)
 
 static void npu2_hw_init(struct npu2 *p)
 {
-	uint64_t val;
+	uint64_t reg, val;
+	int s, b;
 
 	npu2_ioda_reset(&p->phb_nvlink, false);
 
@@ -915,6 +916,17 @@ static void npu2_hw_init(struct npu2 *p)
 		/* 3) */
 		NPU2DBG(p, "Using large memory map + MCD disabled\n");
 		p->gpu_map_type = GPU_MEM_4T_DOWN;
+	}
+
+	/* Static initialization of every relaxed-ordering cfg[2] register */
+	val = NPU2_RELAXED_ORDERING_CMD_CL_RD_NC_F0 |
+	      NPU2_RELAXED_ORDERING_SOURCE4_RDENA;
+
+	for (s = NPU2_STACK_STCK_0; s <= NPU2_STACK_STCK_2; s++) {
+		for (b = NPU2_BLOCK_SM_0; b <= NPU2_BLOCK_SM_3; b++) {
+			reg = NPU2_REG_OFFSET(s, b, NPU2_RELAXED_ORDERING_CFG2);
+			npu2_write(p, reg, val);
+		}
 	}
 }
 
@@ -1415,23 +1427,6 @@ static void npu2_probe_phb(struct dt_node *dn)
 	xscom_write_mask(gcid, 0x5011330, val, val);
 	xscom_write_mask(gcid, 0x5011510, val, val);
 	xscom_write_mask(gcid, 0x5011530, val, val);
-
-	/*
-	 * Enable relaxed ordering for peer-to-peer reads
-	 */
-	val = PPC_BIT(5) | PPC_BIT(29);
-	xscom_write_mask(gcid, 0x501100c, val, val);
-	xscom_write_mask(gcid, 0x501103c, val, val);
-	xscom_write_mask(gcid, 0x501106c, val, val);
-	xscom_write_mask(gcid, 0x501109c, val, val);
-	xscom_write_mask(gcid, 0x501120c, val, val);
-	xscom_write_mask(gcid, 0x501123c, val, val);
-	xscom_write_mask(gcid, 0x501126c, val, val);
-	xscom_write_mask(gcid, 0x501129c, val, val);
-	xscom_write_mask(gcid, 0x501140c, val, val);
-	xscom_write_mask(gcid, 0x501143c, val, val);
-	xscom_write_mask(gcid, 0x501146c, val, val);
-	xscom_write_mask(gcid, 0x501149c, val, val);
 
 	val = PPC_BIT(6) | PPC_BIT(7) | PPC_BIT(11);
 	xscom_write_mask(gcid, 0x5011009, val, PPC_BITMASK(6,11));
