@@ -38,7 +38,7 @@ astbmc   vesnin       Power9      Yadro              "YADRO,vesnin"             
 astbmc   witherspoon  Power9                         "ibm,witherspoon"          Witherspoon, Newell, AC922    [#]_
 astbmc   zaius        Power9      Ingrasys (Foxconn) "ingrasys,zaius"           Zaius, Google Machine
 ibm-fsp  apollo       Power8                         "ibm,apollo"
-ibm-fsp  firenze      Power8E                        "ibm,firenze"
+ibm-fsp  firenze      Power8E     IBM                "ibm,firenze"              Tuleta, S812L, S822L          [#]_
 ibm-fsp  zz           Power9                         "ibm,zz-(1|2)s(2|4)u"
 rhesus   n/a          Power8E                        "ibm,powernv"              Rhesus, Google machine
 ======== ============ =========== ================== ========================== ============================= =======
@@ -58,3 +58,5 @@ rhesus   n/a          Power8E                        "ibm,powernv"              
 .. [#] `First Look IBM POWER8 S821LC 8001-12C (Stratton) <https://www.youtube.com/watch?v=OM3wU4Uu8LI>`_
 .. [#] `Boston Power9s Set To Debut <https://www.itjungle.com/2018/05/14/boston-power9s-set-to-debut/>`_
 .. [#] `POWER9 TO THE PEOPLE <https://www.nextplatform.com/2017/12/05/power9-to-the-people/>`_
+.. Tuleta
+.. [#] `IBM Power System S812L and IBM Power System S822L <https://www.ibm.com/au-en/marketplace/power-system-s812l-s822l>`_
