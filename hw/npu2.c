@@ -1362,7 +1362,7 @@ static void npu2_probe_phb(struct dt_node *dn)
 
 	if (ocapi_detected && nvlink_detected) {
 		prlog(PR_ERR, "NPU: NVLink and OpenCAPI devices on same chip not supported\n");
-		assert(false);
+	        return;
 	} else if (ocapi_detected) {
 		prlog(PR_INFO, "NPU: OpenCAPI link configuration detected, not initialising NVLink\n");
 		return;
