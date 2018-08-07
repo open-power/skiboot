@@ -833,7 +833,7 @@ static void init_cpu_thread(struct cpu_thread *t,
 	const size_t guard_skip = container_off_var(t, stack_guard) +
 		sizeof(t->stack_guard);
 
-	memset(t + guard_skip, 0, sizeof(struct cpu_thread) - guard_skip);
+	memset(((void *)t) + guard_skip, 0, sizeof(struct cpu_thread) - guard_skip);
 	init_lock(&t->dctl_lock);
 	init_lock(&t->job_lock);
 	list_head_init(&t->job_queue);
