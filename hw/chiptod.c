@@ -1601,6 +1601,10 @@ error_out:
 
 static int64_t opal_resync_timebase(void)
 {
+	/* Mambo and qemu doesn't simulate the chiptod */
+	if (chip_quirk(QUIRK_NO_CHIPTOD))
+		return OPAL_SUCCESS;
+
 	if (!chiptod_wakeup_resync()) {
 		prerror("OPAL: Resync timebase failed on CPU 0x%04x\n",
 			this_cpu()->pir);
