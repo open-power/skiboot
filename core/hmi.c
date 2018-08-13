@@ -639,14 +639,19 @@ static void dump_scoms(int flat_chip_id, const char *unit, uint32_t *scoms,
 	}
 }
 
+static bool phb_is_npu2(struct dt_node *dn)
+{
+	return (dt_node_is_compatible(dn, "ibm,power9-npu-pciex") ||
+		dt_node_is_compatible(dn, "ibm,power9-npu-opencapi-pciex"));
+}
+
 static void find_npu2_checkstop_reason(int flat_chip_id,
 				      struct OpalHMIEvent *hmi_evt,
 				      uint64_t *out_flags)
 {
 	struct phb *phb;
-	struct npu *p = NULL;
 	int i;
-	bool npu2_hmi_verbose = false;
+	bool npu2_hmi_verbose = false, found = false;
 	uint64_t npu2_fir;
 	uint64_t npu2_fir_mask;
 	uint64_t npu2_fir_action0;
@@ -662,15 +667,15 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 	/* Find the NPU on the chip associated with the HMI. */
 	for_each_phb(phb) {
 		/* NOTE: if a chip ever has >1 NPU this will need adjusting */
-		if (dt_node_is_compatible(phb->dt_node, "ibm,power9-npu-pciex") &&
+		if (phb_is_npu2(phb->dt_node) &&
 		    (dt_get_chip_id(phb->dt_node) == flat_chip_id)) {
-			p = phb_to_npu(phb);
+			found = true;
 			break;
 		}
 	}
 
 	/* If we didn't find a NPU on the chip, it's not our checkstop. */
-	if (p == NULL)
+	if (!found)
 		return;
 
 	npu2_fir_addr = NPU2_FIR_REGISTER_0;
