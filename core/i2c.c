@@ -224,11 +224,10 @@ int i2c_request_send(int bus_id, int dev_addr, int read_write,
 
 		rc = ud.rc;
 
-		if (rc == OPAL_I2C_NACK_RCVD)
-			continue;
-		else
-			/* error or success */
+		/* error or success */
+		if (rc != OPAL_I2C_NACK_RCVD)
 			break;
+		ud.done = false;
 	}
 
 	prlog(PR_DEBUG, "I2C: %s req op=%x offset=%x buf=%016llx buflen=%d "
