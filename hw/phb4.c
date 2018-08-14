@@ -3034,7 +3034,7 @@ static int do_capp_recovery_scoms(struct phb4 *p)
 		time_wait_ms(5);
 		xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &reg);
 
-		if (end && tb_compare(mftb(), end) != TB_AAFTERB) {
+		if (tb_compare(mftb(), end) != TB_ABEFOREB) {
 			PHBERR(p, "CAPP: Capp recovery Timed-out.\n");
 			end = 0;
 			break;
