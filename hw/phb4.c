@@ -4249,6 +4249,15 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 	for (i = 0; i < p->tvt_size; i++)
 		out_be64(p->regs + PHB_IODA_DATA0, p->tve_cache[i]);
 
+	/*
+	 * Since TVT#0 is in by-pass mode, disable 32-bit MSI, as a
+	 * DMA write targeting 0x00000000FFFFxxxx would be interpreted
+	 * as a 32-bit MSI
+	 */
+	reg = in_be64(p->regs + PHB_PHB4_CONFIG);
+	reg &= ~PHB_PHB4C_32BIT_MSI_EN;
+	out_be64(p->regs + PHB_PHB4_CONFIG, reg);
+
 	/* set mbt bar to pass capi mmio window and keep the other
 	 * mmio values
 	 */
