@@ -20,6 +20,7 @@
 #include <device.h>
 #include <opal-msg.h>
 #include <timebase.h>
+#include <processor.h>
 
 static LIST_HEAD(i2c_bus_list);
 
@@ -148,6 +149,7 @@ static void i2c_sync_request_complete(int rc, struct i2c_request *req)
 {
 	struct i2c_sync_userdata *ud = req->user_data;
 	ud->rc = rc;
+	lwsync();
 	ud->done = true;
 }
 
@@ -222,6 +224,7 @@ int i2c_request_send(int bus_id, int dev_addr, int read_write,
 			waited += time_to_wait;
 		} while (!ud.done);
 
+		lwsync();
 		rc = ud.rc;
 
 		/* error or success */
