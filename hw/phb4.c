@@ -3807,10 +3807,24 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 		xscom_write(p->chip_id, XPT_FSM_RMM + offset, reg);
 	}
 	if (p->index == CAPP1_PHB_INDEX) {
-		/* Set 30 Read machines for CAPP Minus 20-27 for DMA */
-		reg = 0xFFFFF00E00000000;
-		if (capp_eng & CAPP_MAX_DMA_READ_ENGINES)
-			reg = 0xF000000000000000;
+
+		if (capp_eng & CAPP_MAX_DMA_READ_ENGINES) {
+			reg = 0xF000000000000000ULL;
+		} else {
+			/* Check if PEC is in x8 or x16 mode */
+			xscom_read(p->chip_id, XPEC_PCI2_CPLT_CONF1, &reg);
+			if ((reg & XPEC_PCI2_IOVALID_MASK) ==
+			    XPEC_PCI2_IOVALID_X16)
+				/* 0-47 (Read machines) are available for
+				 * capp use
+				 */
+				reg = 0x0000FFFFFFFFFFFFULL;
+			else
+				/* Set 30 Read machines for CAPP Minus
+				 * 20-27 for DMA
+				 */
+				reg = 0xFFFFF00E00000000ULL;
+		}
 		xscom_write(p->chip_id, APC_FSM_READ_MASK + offset, reg);
 		xscom_write(p->chip_id, XPT_FSM_RMM + offset, reg);
 	}
