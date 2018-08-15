@@ -1,5 +1,7 @@
 if { [file exists $env(LIB_DIR)/perf/qtrace.tcl] == 1} {
-    source $env(LIB_DIR)/perf/qtrace.tcl
+    if { [catch {source $env(LIB_DIR)/perf/qtrace.tcl} issue ] } {
+        puts "QTrace not available: $issue"
+    }
 
     proc start_qtrace { { qtfile qtrace.qt } } {
         QTrace::Initialize p9 mysim
