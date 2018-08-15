@@ -39,6 +39,9 @@
 /* Enable lock debugging */
 #define DEBUG_LOCKS		1
 
+/* Enable lock dependency checker */
+#define DEADLOCK_CHECKER	1
+
 /* Enable malloc debugging */
 #define DEBUG_MALLOC		1
 

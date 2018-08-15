@@ -29,9 +29,8 @@
 bool bust_locks = true;
 
 #ifdef DEBUG_LOCKS
-static struct lock dl_lock = LOCK_UNLOCKED;
 
-static void lock_error(struct lock *l, const char *reason, uint16_t err)
+static void __nomcount lock_error(struct lock *l, const char *reason, uint16_t err)
 {
 	bust_locks = true;
 
@@ -42,13 +41,13 @@ static void lock_error(struct lock *l, const char *reason, uint16_t err)
 	abort();
 }
 
-static void lock_check(struct lock *l)
+static inline void __nomcount lock_check(struct lock *l)
 {
 	if ((l->lock_val & 1) && (l->lock_val >> 32) == this_cpu()->pir)
 		lock_error(l, "Invalid recursive lock", 0);
 }
 
-static void unlock_check(struct lock *l)
+static inline void __nomcount unlock_check(struct lock *l)
 {
 	if (!(l->lock_val & 1))
 		lock_error(l, "Unlocking unlocked lock", 1);
@@ -102,8 +101,21 @@ static inline bool lock_timeout(unsigned long start)
 	return false;
 }
 #else
+static inline void lock_check(struct lock *l) { };
+static inline void unlock_check(struct lock *l) { };
+static inline bool lock_timeout(unsigned long s) { return false; }
+#endif /* DEBUG_LOCKS */
+
+#if defined(DEADLOCK_CHECKER) && defined(DEBUG_LOCKS)
+
+static struct lock dl_lock = {
+	.lock_val = 0,
+	.in_con_path = true,
+	.owner = LOCK_CALLER
+};
+
 /* Find circular dependencies in the lock requests. */
-static bool check_deadlock(void)
+static __nomcount inline bool check_deadlock(void)
 {
 	uint32_t lock_owner, start, i;
 	struct cpu_thread *next_cpu;
@@ -126,7 +138,7 @@ static bool check_deadlock(void)
 		if (lock_owner == start)
 			return true;
 
-		next_cpu = find_cpu_by_pir(lock_owner);
+		next_cpu = find_cpu_by_pir_nomcount(lock_owner);
 
 		if (!next_cpu)
 			return false;
@@ -141,6 +153,7 @@ static bool check_deadlock(void)
 static void add_lock_request(struct lock *l)
 {
 	struct cpu_thread *curr = this_cpu();
+	bool dead;
 
 	if (curr->state != cpu_state_active &&
 	    curr->state != cpu_state_os)
@@ -148,10 +161,12 @@ static void add_lock_request(struct lock *l)
 
 	/*
 	 * For deadlock detection we must keep the lock states constant
-	 * while doing the deadlock check.
+	 * while doing the deadlock check. However we need to avoid
+	 * clashing with the stack checker, so no mcount and use an
+	 * inline implementation of the lock for the dl_lock
 	 */
 	for (;;) {
-		if (try_lock(&dl_lock))
+		if (__try_lock(curr, &dl_lock))
 			break;
 		smt_lowest();
 		while (dl_lock.lock_val)
@@ -161,10 +176,13 @@ static void add_lock_request(struct lock *l)
 
 	curr->requested_lock = l;
 
-	if (check_deadlock())
-		lock_error(l, "Deadlock detected", 0);
+	dead = check_deadlock();
 
-	unlock(&dl_lock);
+	lwsync();
+	dl_lock.lock_val = 0;
+
+	if (dead)
+		lock_error(l, "Deadlock detected", 0);
 }
 
 static void remove_lock_request(void)
@@ -172,12 +190,9 @@ static void remove_lock_request(void)
 	this_cpu()->requested_lock = NULL;
 }
 #else
-static inline void lock_check(struct lock *l) { };
-static inline void unlock_check(struct lock *l) { };
 static inline void add_lock_request(struct lock *l) { };
 static inline void remove_lock_request(void) { };
-static inline bool lock_timeout(unsigned long s) { return false; }
-#endif /* DEBUG_LOCKS */
+#endif /* #if defined(DEADLOCK_CHECKER) && defined(DEBUG_LOCKS) */
 
 bool lock_held_by_me(struct lock *l)
 {

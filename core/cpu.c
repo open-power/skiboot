@@ -714,6 +714,13 @@ struct cpu_thread *find_cpu_by_pir(u32 pir)
 	return &cpu_stacks[pir].cpu;
 }
 
+struct __nomcount cpu_thread *find_cpu_by_pir_nomcount(u32 pir)
+{
+	if (pir > cpu_max_pir)
+		return NULL;
+	return &cpu_stacks[pir].cpu;
+}
+
 struct cpu_thread *find_cpu_by_server(u32 server_no)
 {
 	struct cpu_thread *t;

@@ -174,6 +174,9 @@ extern struct cpu_thread *find_cpu_by_node(struct dt_node *cpu);
 extern struct cpu_thread *find_cpu_by_server(u32 server_no);
 extern struct cpu_thread *find_cpu_by_pir(u32 pir);
 
+/* Used for lock internals to avoid re-entrancy */
+extern struct __nomcount cpu_thread *find_cpu_by_pir_nomcount(u32 pir);
+
 extern struct dt_node *get_cpu_node(u32 pir);
 
 /* Iterator */
