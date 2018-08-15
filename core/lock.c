@@ -193,13 +193,15 @@ bool try_lock_caller(struct lock *l, const char *owner)
 	if (bust_locks)
 		return true;
 
+	if (l->in_con_path)
+		cpu->con_suspend++;
 	if (__try_lock(cpu, l)) {
 		l->owner = owner;
-		if (l->in_con_path)
-			cpu->con_suspend++;
 		list_add(&cpu->locks_held, &l->list);
 		return true;
 	}
+	if (l->in_con_path)
+		cpu->con_suspend--;
 	return false;
 }
 
