@@ -63,6 +63,45 @@ static void unlock_check(struct lock *l)
 		lock_error(l, "Releasing lock we don't hold depth", 4);
 }
 
+static inline bool __nomcount __try_lock(struct cpu_thread *cpu, struct lock *l)
+{
+	uint64_t val;
+
+	val = cpu->pir;
+	val <<= 32;
+	val |= 1;
+
+	barrier();
+	if (__cmpxchg64(&l->lock_val, 0, val) == 0) {
+		sync();
+		return true;
+	}
+	return false;
+}
+
+#define LOCK_TIMEOUT_MS 5000
+static inline bool lock_timeout(unsigned long start)
+{
+	/* Print warning if lock has been spinning for more than TIMEOUT_MS */
+	unsigned long wait = tb_to_msecs(mftb());
+
+	if (wait - start > LOCK_TIMEOUT_MS) {
+		/*
+		 * If the timebase is invalid, we shouldn't
+		 * throw an error. This is possible with pending HMIs
+		 * that need to recover TB.
+		 */
+		if( !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID))
+			return false;
+		prlog(PR_WARNING, "WARNING: Lock has been "\
+		      "spinning for %lums\n", wait - start);
+		backtrace();
+		return true;
+	}
+
+	return false;
+}
+#else
 /* Find circular dependencies in the lock requests. */
 static bool check_deadlock(void)
 {
@@ -132,29 +171,6 @@ static void remove_lock_request(void)
 {
 	this_cpu()->requested_lock = NULL;
 }
-
-#define LOCK_TIMEOUT_MS 5000
-static inline bool lock_timeout(unsigned long start)
-{
-	/* Print warning if lock has been spinning for more than TIMEOUT_MS */
-	unsigned long wait = tb_to_msecs(mftb());
-
-	if (wait - start > LOCK_TIMEOUT_MS) {
-		/*
-		 * If the timebase is invalid, we shouldn't
-		 * throw an error. This is possible with pending HMIs
-		 * that need to recover TB.
-		 */
-		if( !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID))
-			return false;
-		prlog(PR_WARNING, "WARNING: Lock has been "\
-		      "spinning for %lums\n", wait - start);
-		backtrace();
-		return true;
-	}
-
-	return false;
-}
 #else
 static inline void lock_check(struct lock *l) { };
 static inline void unlock_check(struct lock *l) { };
@@ -168,22 +184,6 @@ bool lock_held_by_me(struct lock *l)
 	uint64_t pir64 = this_cpu()->pir;
 
 	return l->lock_val == ((pir64 << 32) | 1);
-}
-
-static inline bool __try_lock(struct cpu_thread *cpu, struct lock *l)
-{
-	uint64_t val;
-
-	val = cpu->pir;
-	val <<= 32;
-	val |= 1;
-
-	barrier();
-	if (__cmpxchg64(&l->lock_val, 0, val) == 0) {
-		sync();
-		return true;
-	}
-	return false;
 }
 
 bool try_lock_caller(struct lock *l, const char *owner)
