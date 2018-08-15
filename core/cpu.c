@@ -300,6 +300,11 @@ void cpu_wait_job(struct cpu_job *job, bool free_it)
 		time_wait_ms(10);
 		time_waited += 10;
 		lwsync();
+		if ((time_waited % 30000) == 0) {
+			prlog(PR_INFO, "cpu_wait_job(%s) for %lums\n",
+			      job->name, time_waited);
+			backtrace();
+		}
 	}
 	lwsync();
 
