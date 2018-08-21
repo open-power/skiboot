@@ -21,8 +21,59 @@
 #include <ipmi.h>
 #include <psi.h>
 #include <npu-regs.h>
+#include <pci.h>
+#include <pci-cfg.h>
 
 #include "astbmc.h"
+
+/* backplane slots */
+static const struct slot_table_entry hdd_bay_slots[] = {
+	SW_PLUGGABLE("hdd0", 0xe),
+	SW_PLUGGABLE("hdd1", 0x4),
+	SW_PLUGGABLE("hdd2", 0x5),
+	SW_PLUGGABLE("hdd3", 0x6),
+	SW_PLUGGABLE("hdd4", 0x7),
+	SW_PLUGGABLE("hdd5", 0xf),
+	SW_PLUGGABLE("hdd6", 0xc),
+	SW_PLUGGABLE("hdd7", 0xd),
+	SW_PLUGGABLE("hdd8", 0x14),
+	SW_PLUGGABLE("hdd9", 0x17),
+	SW_PLUGGABLE("hdd10", 0x8),
+	SW_PLUGGABLE("hdd11", 0xb),
+	SW_PLUGGABLE("hdd12", 0x10),
+	SW_PLUGGABLE("hdd13", 0x13),
+	SW_PLUGGABLE("hdd14", 0x16),
+	SW_PLUGGABLE("hdd15", 0x09),
+	SW_PLUGGABLE("hdd16", 0xa),
+	SW_PLUGGABLE("hdd17", 0x11),
+	SW_PLUGGABLE("hdd18", 0x12),
+	SW_PLUGGABLE("hdd19", 0x15),
+
+	{ .etype = st_end },
+};
+
+static void zaius_get_slot_info(struct phb *phb, struct pci_device *pd)
+{
+	const struct slot_table_entry *ent = NULL;
+
+	if (!pd || pd->slot)
+		return;
+
+	/*
+	 * If we find a 9797 switch then assume it's the HDD Rack. This might
+	 * break if we have another 9797 in the system for some reason. This is
+	 * a really dumb hack, but until we get query the BMC about whether we
+	 * have a HDD rack or not we don't have much of a choice.
+	 */
+	if (pd->dev_type == PCIE_TYPE_SWITCH_DNPORT && pd->vdid == 0x979710b5)
+		for (ent = hdd_bay_slots; ent->etype != st_end; ent++)
+			if (ent->location == (pd->bdfn & 0xff))
+				break;
+	if (ent)
+		slot_table_add_slot_info(pd, ent);
+	else
+		slot_table_get_slot_info(phb, pd);
+}
 
 const struct platform_ocapi zaius_ocapi = {
 	.i2c_engine        = 1,
@@ -186,7 +237,7 @@ DECLARE_PLATFORM(zaius) = {
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
 	.bmc			= NULL, /* FIXME: Add openBMC */
-	.pci_get_slot_info	= slot_table_get_slot_info,
+	.pci_get_slot_info	= zaius_get_slot_info,
 	.pci_probe_complete	= check_all_slot_table,
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
