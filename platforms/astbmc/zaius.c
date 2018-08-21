@@ -36,6 +36,45 @@ const struct platform_ocapi zaius_ocapi = {
 	.odl_phy_swap      = true,
 };
 
+ST_PLUGGABLE(pe0_slot, "PE0");
+ST_PLUGGABLE(pe1_slot, "PE1");
+ST_PLUGGABLE(pe2_slot, "PE2");
+ST_PLUGGABLE(pe3_slot, "PE3");
+ST_PLUGGABLE(pe4_slot, "PE4");
+ST_PLUGGABLE(mezz_slot_a, "MEZZ A");
+ST_PLUGGABLE(mezz_slot_b, "MEZZ B");
+
+static const struct slot_table_entry zaius_phb_table[] = {
+	ST_PHB_ENTRY(0, 0, pe1_slot), /* PE1 is on PHB0 */
+	ST_PHB_ENTRY(0, 1, pe0_slot), /* PE0 is on PHB1 */
+/*	ST_PHB_ENTRY(0, 2, builtin_sata), */
+	ST_PHB_ENTRY(0, 3, pe2_slot), /* un-bifurcated 16x */
+
+	ST_PHB_ENTRY(8, 0, pe3_slot),
+	ST_PHB_ENTRY(8, 1, pe4_slot),
+/*	ST_PHB_ENTRY(8, 2, builtin_usb), */
+
+	/*
+	 * The MEZZ slot is kind of weird. Conceptually it's a 16x slot, but
+	 * physically it's two separate 8x slots (MEZZ A and B) which can be
+	 * used as a 16x slot if the PHB is un-bifurcated. The BMC detects what
+	 * to do based on the the presence detect bits of the MEZZ slots to
+	 * configure the correct bifurcation at IPL time.
+	 *
+	 * There's some additional weirdness too since MEZZ B can be used to
+	 * access the built-in BCM5719 and the BMC PCIe interface via a special
+	 * module that bridges MEZZ B to an adjacent connector.
+	 *
+	 * We should probably detect the bifurcation setting and set the slot
+	 * names appropriately, but this will do for now.
+	 */
+	ST_PHB_ENTRY(8, 3, mezz_slot_a),
+	ST_PHB_ENTRY(8, 4, mezz_slot_b),
+/*	ST_PHB_ENTRY(8, 5, builtin_bmc), */
+
+	{ .etype = st_end },
+};
+
 #define NPU_BASE 0x5011000
 #define NPU_SIZE 0x2c
 #define NPU_INDIRECT0	0x8000000009010c3f /* OB0 - no OB3 on Zaius */
@@ -134,6 +173,8 @@ static bool zaius_probe(void)
 
 	zaius_create_npu();
 	zaius_create_ocapi_i2c_bus();
+
+	slot_table_init(zaius_phb_table);
 
 	return true;
 }
