@@ -1921,13 +1921,13 @@ static void phb4_read_phb_status(struct phb4 *p,
 	 */
 	 pPEST = (uint64_t *)p->tbl_pest;
 	 phb4_ioda_sel(p, IODA3_TBL_PESTA, 0, true);
-	 for (i = 0; i < OPAL_PHB4_NUM_PEST_REGS; i++) {
+	 for (i = 0; i < p->max_num_pes; i++) {
 		 stat->pestA[i] = phb4_read_reg_asb(p, PHB_IODA_DATA0);
 		 stat->pestA[i] |= pPEST[2 * i];
 	 }
 
 	 phb4_ioda_sel(p, IODA3_TBL_PESTB, 0, true);
-	 for (i = 0; i < OPAL_PHB4_NUM_PEST_REGS; i++) {
+	 for (i = 0; i < p->max_num_pes; i++) {
 		 stat->pestB[i] = phb4_read_reg_asb(p, PHB_IODA_DATA0);
 		 stat->pestB[i] |= pPEST[2 * i + 1];
 	 }
@@ -2012,7 +2012,7 @@ static void phb4_eeh_dump_regs(struct phb4 *p)
 	PHBERR(p, "        phbRegbErrorLog0 = %016llx\n", s->phbRegbErrorLog0);
 	PHBERR(p, "        phbRegbErrorLog1 = %016llx\n", s->phbRegbErrorLog1);
 
-	for (i = 0; i < OPAL_PHB4_NUM_PEST_REGS; i++) {
+	for (i = 0; i < p->max_num_pes; i++) {
 		if (!s->pestA[i] && !s->pestB[i])
 			continue;
 		PHBERR(p, "               PEST[%03d] = %016llx %016llx\n",
