@@ -79,6 +79,14 @@ static struct slot_table_entry st_name[] = \
 	{ .etype = st_end }, \
 }
 
+#define SW_PLUGGABLE(slot_name, port, ...) \
+{ \
+	.etype = st_pluggable_slot, \
+	.name = slot_name, \
+	.location = ST_LOC_DEVFN(port, 0), \
+	##__VA_ARGS__ \
+}
+
 extern const struct bmc_platform astbmc_ami;
 extern const struct bmc_platform astbmc_openbmc;
 
