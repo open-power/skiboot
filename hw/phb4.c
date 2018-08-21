@@ -2072,6 +2072,10 @@ static void phb4_eeh_dump_regs(struct phb4 *p)
 		return;
 
 	s = zalloc(sizeof(struct OpalIoPhb4ErrorData));
+	if (!s) {
+		PHBERR(p, "Failed to allocate error info !\n");
+		return;
+	}
 	phb4_read_phb_status(p, s);
 
 
