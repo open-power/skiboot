@@ -135,7 +135,7 @@ static void qemu_dt_fixup_uart(struct dt_node *lpc)
 	/* check if the UART device was defined by qemu */
 	dt_for_each_child(lpc, uart) {
 		if (dt_node_is_compatible(uart, "pnpPNP,501")) {
-			prlog(PR_WARNING, "QEMU: uart device already here\n");
+			prlog(PR_DEBUG, "QEMU: uart device already here\n");
 			return;
 		}
 	}
@@ -174,7 +174,7 @@ static void qemu_dt_fixup_rtc(struct dt_node *lpc)
 	/* check if the RTC device was defined by qemu */
 	dt_for_each_child(lpc, rtc) {
 		if (dt_node_is_compatible(rtc, "pnpPNP,b00")) {
-			prlog(PR_WARNING, "QEMU: rtc device already here\n");
+			prlog(PR_DEBUG, "QEMU: rtc device already here\n");
 			return;
 		}
 	}
