@@ -208,12 +208,13 @@ int i2c_request_send(int bus_id, int dev_addr, int read_write,
 	req->rw_buf     = (void*) buf;
 	req->rw_len     = buflen;
 	req->completion = i2c_sync_request_complete;
+	req->timeout    = timeout;
 	ud.done = false;
 	req->user_data = &ud;
 
 	for (retries = 0; retries <= MAX_NACK_RETRIES; retries++) {
 		waited = 0;
-		i2c_set_req_timeout(req, timeout);
+
 		i2c_queue_req(req);
 
 		do {

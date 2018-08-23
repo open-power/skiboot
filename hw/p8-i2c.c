@@ -378,12 +378,10 @@ static int p8_i2c_enable_irqs(struct p8_i2c_master *master)
 static void p8_i2c_reset_timeout(struct p8_i2c_master *master,
 		struct i2c_request *req)
 {
-	struct p8_i2c_request *request;
 	uint64_t now = mftb();
 
 	master->last_update = now;
-	request = container_of(req, struct p8_i2c_request, req);
-	schedule_timer_at(&master->timeout, now + request->timeout);
+	schedule_timer_at(&master->timeout, now + req->timeout);
 }
 
 static int p8_i2c_prog_watermark(struct p8_i2c_master *master)
@@ -446,14 +444,10 @@ static int p8_i2c_prog_mode(struct p8_i2c_master_port *port, bool enhanced_mode)
 static void p8_i2c_complete_request(struct p8_i2c_master *master,
 				    struct i2c_request *req, int ret)
 {
-	struct p8_i2c_request *request =
-		container_of(req, struct p8_i2c_request, req);
-
 	/* We only complete the current top level request */
 	assert(req == list_top(&master->req_list, struct i2c_request, link));
 
 	cancel_timer_async(&master->timeout);
-	request->timeout = 0ul;
 
 	list_del(&req->link);
 	master->state = state_idle;
@@ -830,7 +824,6 @@ static void p8_i2c_status_cmd_completion(struct p8_i2c_master *master,
 static void p8_i2c_check_status(struct p8_i2c_master *master)
 {
 	struct p8_i2c_master_port *port;
-	struct p8_i2c_request *request;
 	uint64_t status, deadline, now;
 	struct i2c_request *req;
 	int rc;
@@ -872,8 +865,7 @@ static void p8_i2c_check_status(struct p8_i2c_master *master)
 	port = container_of(req->bus, struct p8_i2c_master_port, bus);
 	now = mftb();
 
-	request = container_of(req, struct p8_i2c_request, req);
-	deadline = master->last_update + request->timeout;
+	deadline = master->last_update + req->timeout;
 
 	if (status & I2C_STAT_ANY_ERR)
 		p8_i2c_status_error(port, req, status & I2C_STAT_ANY_ERR, now);
@@ -1060,8 +1052,6 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 				struct i2c_request *req)
 {
 	struct p8_i2c_master_port *port;
-	struct p8_i2c_request *request =
-		container_of(req, struct p8_i2c_request, req);
 	uint64_t cmd, poll_interval;
 	int64_t rc;
 
@@ -1203,8 +1193,8 @@ static int p8_i2c_start_request(struct p8_i2c_master *master,
 	schedule_timer(&master->poller, poll_interval);
 
 	/* If we don't have a user-set timeout then use the master's default */
-	if (!request->timeout)
-		request->timeout = port->byte_timeout;
+	if (!req->timeout)
+		req->timeout = port->byte_timeout;
 
 	/* Start the timeout */
 	p8_i2c_reset_timeout(master, req);
@@ -1313,15 +1303,6 @@ static void p8_i2c_free_request(struct i2c_request *req)
 	struct p8_i2c_request *request =
 		container_of(req, struct p8_i2c_request, req);
 	free(request);
-}
-
-static void p8_i2c_set_request_timeout(struct i2c_request *req,
-				       uint64_t duration)
-{
-	struct p8_i2c_request *request =
-		container_of(req, struct p8_i2c_request, req);
-
-	request->timeout = msecs_to_tb(duration);
 }
 
 static uint64_t p8_i2c_run_request(struct i2c_request *req)
@@ -1653,7 +1634,6 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 		port->bus.queue_req = p8_i2c_queue_request;
 		port->bus.alloc_req = p8_i2c_alloc_request;
 		port->bus.free_req = p8_i2c_free_request;
-		port->bus.set_req_timeout = p8_i2c_set_request_timeout;
 		port->bus.run_req = p8_i2c_run_request;
 
 		timeout_ms = dt_prop_get_u32_def(i2cm_port, "timeout-ms",
