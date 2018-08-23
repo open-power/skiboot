@@ -5609,7 +5609,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	uint32_t pci_stack, nest_stack, etu_base, gcid, phb_num, stk_index;
 	uint64_t val, phb_bar = 0, irq_bar = 0, bar_en;
 	uint64_t mmio0_bar = 0, mmio0_bmask, mmio0_sz;
-	uint64_t mmio1_bar, mmio1_bmask, mmio1_sz;
+	uint64_t mmio1_bar = 0, mmio1_bmask, mmio1_sz;
 	uint64_t reg[4];
 	void *foo;
 	uint64_t mmio_win[4];
@@ -5668,7 +5668,6 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	mmio1_bmask =  (~(mmio1_sz - 1)) & 0x00FFFFFFFFFFFFFFULL;
 	xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1, mmio1_bar << 8);
 	xscom_write(gcid, nest_stack + XPEC_NEST_STK_MMIO_BAR1_MASK, mmio1_bmask << 8);
-	bar_en |= XPEC_NEST_STK_BAR_EN_MMIO0 | XPEC_NEST_STK_BAR_EN_MMIO1;
 
 	/* Build MMIO windows list */
 	mmio_win_sz = 0;
