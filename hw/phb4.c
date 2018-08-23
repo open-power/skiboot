@@ -5400,6 +5400,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	char *path;
 	uint64_t capp_ucode_base;
 	unsigned int max_link_speed;
+	int rc;
 
 	gcid = dt_get_chip_id(stk_node);
 	stk_index = dt_prop_get_u32(stk_node, "reg");
@@ -5421,9 +5422,17 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 
 	/* Initialize PHB register BAR */
 	phys_map_get(gcid, PHB4_REG_SPC, phb_num, &phb_bar, NULL);
-	xscom_write(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR, phb_bar << 8);
-	bar_en |= XPEC_NEST_STK_BAR_EN_PHB;
+	rc = xscom_write(gcid, nest_stack + XPEC_NEST_STK_PHB_REG_BAR,
+			 phb_bar << 8);
 
+	/* A scom error here probably indicates a defective/garded PHB */
+	if (rc != OPAL_SUCCESS) {
+		prerror("PHB[%d:%d] Unable to set PHB BAR. Error=%d\n",
+		      gcid, phb_num, rc);
+		return;
+	}
+
+	bar_en |= XPEC_NEST_STK_BAR_EN_PHB;
 
 	/* Same with INT BAR (ESB) */
 	phys_map_get(gcid, PHB4_XIVE_ESB, phb_num, &irq_bar, NULL);
