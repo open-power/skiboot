@@ -229,14 +229,7 @@ struct p8_i2c_master_port {
 	struct list_node	link;
 };
 
-struct p8_i2c_request {
-	struct i2c_request	req;
-	uint32_t		port_num;
-	uint64_t		timeout;
-};
-
 static int occ_i2c_unlock(struct p8_i2c_master *master);
-
 
 static int64_t i2cm_read_reg(struct p8_i2c_master *m, int reg, uint64_t *val)
 {
@@ -410,10 +403,6 @@ static int p8_i2c_prog_watermark(struct p8_i2c_master *master)
 static int p8_i2c_prog_mode(struct p8_i2c_master_port *port, bool enhanced_mode)
 {
 	struct p8_i2c_master *master = port->master;
-	struct i2c_request *req = list_top(&master->req_list,
-					   struct i2c_request, link);
-	struct p8_i2c_request *request =
-		container_of(req, struct p8_i2c_request, req);
 	uint64_t mode, omode;
 	int rc;
 
@@ -424,7 +413,7 @@ static int p8_i2c_prog_mode(struct p8_i2c_master_port *port, bool enhanced_mode)
 		return rc;
 	}
 	omode = mode;
-	mode = SETFIELD(I2C_MODE_PORT_NUM, mode, request->port_num);
+	mode = SETFIELD(I2C_MODE_PORT_NUM, mode, port->port_num);
 	mode = SETFIELD(I2C_MODE_BIT_RATE_DIV, mode, port->bit_rate_div);
 	if (enhanced_mode)
 		mode |= I2C_MODE_ENHANCED;
@@ -1282,29 +1271,12 @@ static int p8_i2c_queue_request(struct i2c_request *req)
 
 static struct i2c_request *p8_i2c_alloc_request(struct i2c_bus *bus)
 {
-	struct p8_i2c_master_port *port =
-		container_of(bus, struct p8_i2c_master_port, bus);
-	struct p8_i2c_request *request;
-
-	request = zalloc(sizeof(*request));
-	if (!request) {
-		prlog(PR_ERR, "I2C: Failed to allocate i2c request\n");
-		return NULL;
-	}
-
-	request->port_num = port->port_num;
-	request->req.bus = bus;
-
-	return &request->req;
+	return zalloc(sizeof(struct i2c_request));
 }
-
 static void p8_i2c_free_request(struct i2c_request *req)
 {
-	struct p8_i2c_request *request =
-		container_of(req, struct p8_i2c_request, req);
-	free(request);
+	free(req);
 }
-
 static uint64_t p8_i2c_run_request(struct i2c_request *req)
 {
 	struct i2c_bus *bus = req->bus;
