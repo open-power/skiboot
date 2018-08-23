@@ -825,7 +825,7 @@ static void firenze_pci_setup_power_mgt(struct pci_slot *slot,
 	if (!plat_slot->i2c_bus)
 		return;
 
-	plat_slot->req = i2c_alloc_req(plat_slot->i2c_bus);
+	plat_slot->req = zalloc(sizeof(*plat_slot->req));
 	if (!plat_slot->req)
 		return;
 

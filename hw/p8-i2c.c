@@ -1269,14 +1269,6 @@ static int p8_i2c_queue_request(struct i2c_request *req)
 	return rc;
 }
 
-static struct i2c_request *p8_i2c_alloc_request(struct i2c_bus *bus)
-{
-	return zalloc(sizeof(struct i2c_request));
-}
-static void p8_i2c_free_request(struct i2c_request *req)
-{
-	free(req);
-}
 static uint64_t p8_i2c_run_request(struct i2c_request *req)
 {
 	struct i2c_bus *bus = req->bus;
@@ -1604,8 +1596,6 @@ static void p8_i2c_init_one(struct dt_node *i2cm, enum p8_i2c_master_type type)
 			p8_i2c_get_bit_rate_divisor(lb_freq, speed);
 		port->bus.dt_node = i2cm_port;
 		port->bus.queue_req = p8_i2c_queue_request;
-		port->bus.alloc_req = p8_i2c_alloc_request;
-		port->bus.free_req = p8_i2c_free_request;
 		port->bus.run_req = p8_i2c_run_request;
 
 		timeout_ms = dt_prop_get_u32_def(i2cm_port, "timeout-ms",
