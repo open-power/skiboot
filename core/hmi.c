@@ -379,7 +379,7 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 {
 	uint64_t core_fir;
 	uint32_t core_id;
-	int i;
+	int i, swkup_rc;
 	bool found = false;
 	int64_t ret;
 	const char *loc;
@@ -390,14 +390,19 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 
 	core_id = pir_to_core_id(cpu->pir);
 
+	/* Force the core to wakeup, otherwise reading core_fir is unrealiable
+	 * if stop-state 5 is enabled.
+	 */
+	swkup_rc = dctl_set_special_wakeup(cpu);
+
 	/* Get CORE FIR register value. */
 	ret = read_core_fir(cpu->chip_id, core_id, &core_fir);
 
-	if (ret == OPAL_HARDWARE) {
-		prerror("XSCOM error reading CORE FIR\n");
-		/* If the FIR can't be read, we should checkstop. */
-		return true;
-	} else if (ret == OPAL_WRONG_STATE) {
+	if (!swkup_rc)
+		dctl_clear_special_wakeup(cpu);
+
+
+	if (ret == OPAL_WRONG_STATE) {
 		/*
 		 * CPU is asleep, so it probably didn't cause the checkstop.
 		 * If no other HMI cause is found a "catchall" checkstop
@@ -408,6 +413,10 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 		      "FIR read failed, chip %d core %d asleep\n",
 		      cpu->chip_id, core_id);
 		return false;
+	} else if (ret != OPAL_SUCCESS) {
+		prerror("XSCOM error reading CORE FIR\n");
+		/* If the FIR can't be read, we should checkstop. */
+		return true;
 	}
 
 	if (!core_fir)
