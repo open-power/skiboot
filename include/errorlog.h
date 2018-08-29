@@ -175,7 +175,7 @@ struct opal_err_info {
 #define OPAL_UART				0x5541  /* UA */
 #define OPAL_OCC				0x4F43  /* OC */
 #define OPAL_OP_PANEL				0x4F50  /* OP */
-#define OPAL_PHB3				0x5048  /* PH */
+#define OPAL_PHB				0x5048  /* PH */
 #define OPAL_PSI				0x5053  /* PS */
 #define OPAL_VPD				0x5650  /* VP */
 #define OPAL_XSCOM				0x5853  /* XS */
@@ -222,7 +222,7 @@ struct opal_err_info {
 #define OPAL_SRC_COMPONENT_UART			0xb000
 #define OPAL_SRC_COMPONENT_OCC			0xc000
 #define OPAL_SRC_COMPONENT_OP_PANEL		0xd000
-#define OPAL_SRC_COMPONENT_PHB3			0xe000
+#define OPAL_SRC_COMPONENT_PHB			0xe000
 #define OPAL_SRC_COMPONENT_PSI			0xf000
 
 enum opal_reasoncode {
