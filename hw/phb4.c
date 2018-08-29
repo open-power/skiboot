@@ -4876,7 +4876,7 @@ static void phb4_init_hw(struct phb4 *p)
 		/* Read modify write and set to 2 bits */
 		PHBDBG(p, "LINK: Disabling Lane EQ\n");
 		val = in_be64(p->regs + PHB_PCIE_DLP_CTL);
-		val |= PHB_PCIE_DLP_CTL_BYPASS_PH2 | PHB_PCIE_DLP_CTL_BYPASS_PH2;
+		val |= PHB_PCIE_DLP_CTL_BYPASS_PH2 | PHB_PCIE_DLP_CTL_BYPASS_PH3;
 		out_be64(p->regs + PHB_PCIE_DLP_CTL, val);
 	}
 
