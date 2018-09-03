@@ -1373,7 +1373,7 @@ static int64_t cpu_change_all_hid0(struct hid0_change_req *req)
 	struct cpu_thread *cpu;
 	struct cpu_job **jobs;
 
-	jobs = zalloc(sizeof(struct cpu_job *) * cpu_max_pir + 1);
+	jobs = zalloc(sizeof(struct cpu_job *) * (cpu_max_pir + 1));
 	assert(jobs);
 
 	for_each_available_cpu(cpu) {
@@ -1424,7 +1424,7 @@ static int64_t cpu_cleanup_all(void)
 	struct cpu_thread *cpu;
 	struct cpu_job **jobs;
 
-	jobs = zalloc(sizeof(struct cpu_job *) * cpu_max_pir + 1);
+	jobs = zalloc(sizeof(struct cpu_job *) * (cpu_max_pir + 1));
 	assert(jobs);
 
 	for_each_available_cpu(cpu) {
