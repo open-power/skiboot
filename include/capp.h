@@ -19,7 +19,7 @@
 
 /*
  * eyecatcher PHB3:  'CAPPLIDH' in ASCII
- * eyecatcher PHB4:  'CAPPPSLL' in ASCII
+ * eyecatcher PHB4:  'CAPPLIDH' in ASCII
  */
 struct capp_lid_hdr {
 	be64 eyecatcher;
