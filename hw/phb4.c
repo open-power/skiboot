@@ -2876,9 +2876,9 @@ static int64_t load_capp_ucode(struct phb4 *p)
 	if (p->index != CAPP0_PHB_INDEX && p->index != CAPP1_PHB_INDEX)
 		return OPAL_HARDWARE;
 
-	/* 0x4341505050534C4C = 'CAPPPSLL' in ASCII */
+	/* 0x434150504c494448 = 'CAPPLIDH' in ASCII */
 	rc = capp_load_ucode(p->chip_id, p->phb.opal_id, p->index,
-			0x4341505050534C4C, PHB4_CAPP_REG_OFFSET(p),
+			0x434150504c494448, PHB4_CAPP_REG_OFFSET(p),
 			CAPP_APC_MASTER_ARRAY_ADDR_REG,
 			CAPP_APC_MASTER_ARRAY_WRITE_REG,
 			CAPP_SNP_ARRAY_ADDR_REG,
