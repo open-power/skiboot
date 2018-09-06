@@ -153,9 +153,11 @@ static void fsp_surv_got_param(uint32_t param_id __unused, int err_len,
 		return;
 	}
 
-	printf("SURV: Status from FSP: %d\n", surv_state_param);
-	if (!(surv_state_param & 0x01))
+	if (!(surv_state_param & 0x01)) {
+		prlog(PR_NOTICE, "SURV: Status from FSP: disabled\n");
 		return;
+	}
+	prlog(PR_NOTICE, "SURV: Status from FSP: enabled\n");
 
 	lock(&surv_lock);
 	fsp_surv_state = true;
