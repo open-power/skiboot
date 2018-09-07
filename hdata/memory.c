@@ -567,6 +567,8 @@ static struct dt_node *dt_hb_reserves;
 
 static struct dt_node *add_hb_reserve_node(const char *name, u64 start, u64 end)
 {
+	/* label size + "ibm," + NULL */
+	char node_name[HB_RESERVE_MEM_LABEL_SIZE + 5] = { 0 };
 	struct dt_node *node, *hb;
 
 	if (!dt_hb_reserves) {
@@ -580,10 +582,15 @@ static struct dt_node *add_hb_reserve_node(const char *name, u64 start, u64 end)
 		dt_add_property_cells(dt_hb_reserves, "#address-cells", 2);
 	}
 
-	node = dt_new_addr(dt_hb_reserves, name, start);
+	/* Add "ibm," to reserved node name */
+	if (strncasecmp(name, "ibm", 3))
+		snprintf(node_name, 5, "ibm,");
+	strcat(node_name, name);
+
+	node = dt_new_addr(dt_hb_reserves, node_name, start);
 	if (!node) {
 		prerror("Unable to create node for %s@%llx\n",
-			name, (unsigned long long) start);
+			node_name, (unsigned long long) start);
 		return NULL;
 	}
 
