@@ -541,6 +541,7 @@ struct msvpd_trace {
 
 /* Idata index 5: Hostboot reserved memory address range */
 #define MSVPD_IDATA_HB_RESERVED_MEM	5
+#define HB_RESERVE_MEM_LABEL_SIZE	64
 struct msvpd_hb_reserved_mem {
 #define MSVPD_HBRMEM_RANGE_TYPE	PPC_BITMASK32(0,7)
 #define HBRMEM_CONTAINER_VERIFICATION_CODE 	0x3
@@ -548,7 +549,7 @@ struct msvpd_hb_reserved_mem {
 	__be64		start_addr;
 	__be64		end_addr;
 	__be32		label_size;
-	uint8_t		label[64];
+	uint8_t		label[HB_RESERVE_MEM_LABEL_SIZE];
 	uint8_t		rw_perms;
 #define HB_RESERVE_READABLE 0x80
 #define HB_RESERVE_WRITEABLE 0x40

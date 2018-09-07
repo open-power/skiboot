@@ -598,7 +598,7 @@ static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 	u64 start_addr, end_addr, label_size;
 	struct dt_node *node;
 	int count, i;
-	char *label;
+	char label[HB_RESERVE_MEM_LABEL_SIZE + 1];
 
 	/*
 	 * XXX: Reservation names only exist on P9 and on P7/8 we get the
@@ -642,20 +642,16 @@ static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 		/* remove the HRMOR bypass bit */
 		start_addr &= ~HRMOR_BIT;
 		end_addr &= ~HRMOR_BIT;
-		if (label_size > 64)
-			label_size = 64;
+		if (label_size > HB_RESERVE_MEM_LABEL_SIZE)
+			label_size = HB_RESERVE_MEM_LABEL_SIZE;
 
-		label = malloc(label_size+1);
-		assert(label);
-
+		memset(label, 0, HB_RESERVE_MEM_LABEL_SIZE + 1);
 		memcpy(label, hb_resv_mem->label, label_size);
 		label[label_size] = '\0';
 
 		/* Unnamed reservations are always broken. Ignore them. */
-		if (strlen(label) == 0) {
-			free(label);
+		if (strlen(label) == 0)
 			continue;
-		}
 
 		prlog(PR_DEBUG, "MEM: Reserve '%s' %#" PRIx64 "-%#" PRIx64 " (type/inst=0x%08x)\n",
 		      label, start_addr, end_addr, be32_to_cpu(hb_resv_mem->type_instance));
