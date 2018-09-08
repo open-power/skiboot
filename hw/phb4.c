@@ -3706,8 +3706,19 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 {
 	uint64_t reg;
 	uint32_t offset;
+	uint8_t link_width_x16 = 1;
 
 	offset = PHB4_CAPP_REG_OFFSET(p);
+
+	/* Calculate the phb link width if card is attached to PEC2 */
+	if (p->index == CAPP1_PHB_INDEX) {
+		/* Check if PEC2 is in x8 or x16 mode.
+		 * PEC0 is always in x16
+		 */
+		xscom_read(p->chip_id, XPEC_PCI2_CPLT_CONF1, &reg);
+		link_width_x16 = ((reg & XPEC_PCI2_IOVALID_MASK) ==
+				  XPEC_PCI2_IOVALID_X16);
+	}
 
 	/* APC Master PowerBus Control Register */
 	xscom_read(p->chip_id, APC_MASTER_PB_CTRL + offset, &reg);
@@ -3774,10 +3785,15 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 			/* 2 CAPP msg engines */
 			reg |= PPC_BIT(59);
 			reg |= PPC_BIT(60);
-		}
-		if (capp_eng & CAPP_MAX_STQ_ENGINES) {
-			/* 6 CAPP msg engines */
-			reg |= PPC_BIT(60);
+
+		} else if (capp_eng & CAPP_MAX_STQ_ENGINES) {
+
+			if (link_width_x16)
+				/* 14 CAPP msg engines */
+				reg |= PPC_BIT(60) | PPC_BIT(62);
+			else
+				/* 6 CAPP msg engines */
+				reg |= PPC_BIT(60);
 		}
 	}
 	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, reg);
@@ -3814,20 +3830,16 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 
 		if (capp_eng & CAPP_MAX_DMA_READ_ENGINES) {
 			reg = 0xF000000000000000ULL;
+		} else if (link_width_x16) {
+			/* 0-47 (Read machines) are available for
+			 * capp use
+			 */
+			reg = 0x0000FFFFFFFFFFFFULL;
 		} else {
-			/* Check if PEC is in x8 or x16 mode */
-			xscom_read(p->chip_id, XPEC_PCI2_CPLT_CONF1, &reg);
-			if ((reg & XPEC_PCI2_IOVALID_MASK) ==
-			    XPEC_PCI2_IOVALID_X16)
-				/* 0-47 (Read machines) are available for
-				 * capp use
-				 */
-				reg = 0x0000FFFFFFFFFFFFULL;
-			else
-				/* Set 30 Read machines for CAPP Minus
-				 * 20-27 for DMA
-				 */
-				reg = 0xFFFFF00E00000000ULL;
+			/* Set 30 Read machines for CAPP Minus
+			 * 20-27 for DMA
+			 */
+			reg = 0xFFFFF00E00000000ULL;
 		}
 		xscom_write(p->chip_id, APC_FSM_READ_MASK + offset, reg);
 		xscom_write(p->chip_id, XPT_FSM_RMM + offset, reg);
