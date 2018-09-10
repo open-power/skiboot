@@ -8,4 +8,4 @@ git submodule update --init dtc
 export CC="ccache gcc"
 export CXX="ccache g++"
 ./configure --target-list=ppc64-softmmu --disable-werror
-make -j `grep -c processor /proc/cpuinfo`
+make -j $(grep -c processor /proc/cpuinfo)

@@ -2,7 +2,7 @@
 
 # We cheat and do this in a shell script so I don't go Makefile crazy.
 
-SKIBOOT_GCOV_ADDR=`perl -e "printf '0x%x', 0x30000000 + 0x\`grep gcov_info_list skiboot.map|cut -f 1 -d ' '\`"`
+SKIBOOT_GCOV_ADDR=$(perl -e "printf '0x%x', 0x30000000 + 0x$(grep gcov_info_list skiboot.map|cut -f 1 -d ' ')")
 
 LCOV_INFO_FILES=""
 

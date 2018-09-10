@@ -4,7 +4,7 @@ set -uo pipefail
 set -e
 set -vx
 
-MAKE_J=`grep -c processor /proc/cpuinfo`
+MAKE_J=$(grep -c processor /proc/cpuinfo)
 
 export CROSS="ccache powerpc64le-linux-gnu-"
 
@@ -28,7 +28,7 @@ SKIBOOT_GCOV=1 make -j${MAKE_J} check
 make clean
 rm -rf builddir
 mkdir builddir
-make SRC=`pwd` -f ../Makefile -C builddir -j${MAKE_J}
+make SRC=$(pwd) -f ../Makefile -C builddir -j${MAKE_J}
 make clean
 
 echo "Building with clang..."

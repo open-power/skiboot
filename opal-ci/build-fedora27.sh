@@ -4,7 +4,7 @@ set -uo pipefail
 set -e
 set -vx
 
-MAKE_J=`grep -c processor /proc/cpuinfo`
+MAKE_J=$(grep -c processor /proc/cpuinfo)
 export CROSS="ccache powerpc64-linux-gnu-"
 
 make -j${MAKE_J} all
@@ -21,5 +21,5 @@ make clean
 make clean
 rm -rf builddir
 mkdir builddir
-make SRC=`pwd` -f ../Makefile -C builddir -j${MAKE_J}
+make SRC=$(pwd) -f ../Makefile -C builddir -j${MAKE_J}
 make clean

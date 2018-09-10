@@ -14,14 +14,14 @@ fi
 
 if test -e .git || git rev-parse --is-inside-work-tree > /dev/null 2>&1;
 then
-	version=`git describe --exact-match 2>/dev/null`
+	version=$(git describe --exact-match 2>/dev/null)
 	if [ -z "$version" ];
 	then
-		version=`git describe 2>/dev/null`
+		version=$(git describe 2>/dev/null)
 	fi
 	if [ -z "$version" ];
 	then
-		version=`git rev-parse --verify --short HEAD 2>/dev/null`
+		version=$(git rev-parse --verify --short HEAD 2>/dev/null)
 	fi
 	if [ ! -z "$EXTRA_VERSION" ];
 	then
@@ -34,14 +34,14 @@ then
 			version="$version-$USER"
 		fi
 		version="$version-dirty"
-		diffsha=`git diff|sha1sum`
-		diffsha=`cut -c-7 <<< "$diffsha"`
+		diffsha=$(git diff|sha1sum)
+		diffsha=$(cut -c-7 <<< "$diffsha")
 		version="$version-$diffsha"
 	fi
 
 	if [ $# -eq 1 ];
 	then
-		version=`echo $version | sed s/skiboot/$1/`
+		version=$(echo $version | sed s/skiboot/$1/)
 	fi
 
 	echo $version

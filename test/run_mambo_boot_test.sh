@@ -19,13 +19,13 @@ if [ -n "$KERNEL" ]; then
     exit 0;
 fi
 
-if [ ! `command -v expect` ]; then
+if [ ! $(command -v expect) ]; then
     echo 'Could not find expect binary. Skipping hello_world test';
     exit 0;
 fi
 
 if [ -z "$SKIBOOT_ZIMAGE" ]; then
-    export SKIBOOT_ZIMAGE=`pwd`/zImage.epapr
+    export SKIBOOT_ZIMAGE=$(pwd)/zImage.epapr
 fi
 
 if [ ! -f "$SKIBOOT_ZIMAGE" ]; then
@@ -38,7 +38,7 @@ if [ -z "$SKIBOOT_MEM_DUMP" ]; then
 fi
 
 # Currently getting some core dumps from mambo, so disable them!
-OLD_ULIMIT_C=`ulimit -c`
+OLD_ULIMIT_C=$(ulimit -c)
 ulimit -c 0
 
 t=$(mktemp) || exit 1

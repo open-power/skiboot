@@ -11,7 +11,7 @@ fi
 KEYLOC=$3
 LABEL=$4
 
-T=`mktemp -d`
+T=$(mktemp -d)
 LABEL_ARG=""
 if [ ! -z "$LABEL" ]; then
 	LABEL_ARG="-L $LABEL"

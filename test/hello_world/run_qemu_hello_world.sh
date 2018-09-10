@@ -5,7 +5,7 @@ if [ -z "$QEMU_BIN" ]; then
     QEMU_BIN="qemu-system-ppc64"
 fi
 
-if [ ! `command -v $QEMU_BIN` ]; then
+if [ ! $(command -v $QEMU_BIN) ]; then
     echo "Could not find executable QEMU_BIN ($QEMU_BIN). Skipping hello_world test";
     exit 0;
 fi
@@ -15,13 +15,13 @@ if [ -n "$KERNEL" ]; then
     exit 0;
 fi
 
-if [ ! `command -v expect` ]; then
+if [ ! $(command -v expect) ]; then
     echo 'Could not find expect binary. Skipping hello_world test';
     exit 0;
 fi
 
 
-export SKIBOOT_ZIMAGE=`pwd`/test/hello_world/hello_kernel/hello_kernel
+export SKIBOOT_ZIMAGE=$(pwd)/test/hello_world/hello_kernel/hello_kernel
 
 t=$(mktemp) || exit 1
 

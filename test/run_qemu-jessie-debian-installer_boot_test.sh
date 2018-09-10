@@ -5,7 +5,7 @@ if [ -z "$QEMU_BIN" ]; then
     QEMU_BIN="qemu-system-ppc64"
 fi
 
-if [ ! `command -v $QEMU_BIN` ]; then
+if [ ! $(command -v $QEMU_BIN) ]; then
     echo "Could not find executable QEMU_BIN ($QEMU_BIN). Skipping hello_world test";
     exit 0;
 fi
@@ -15,7 +15,7 @@ if [ -n "$KERNEL" ]; then
     exit 0;
 fi
 
-if [ ! `command -v expect` ]; then
+if [ ! $(command -v expect) ]; then
     echo 'Could not find expect binary. Skipping boot test';
     exit 0;
 fi
@@ -30,8 +30,8 @@ if [ ! -f debian-jessie-initrd.gz ]; then
     exit 0;
 fi
 
-T=`mktemp  --tmpdir skiboot_qemu_debian-jessie-boot_test.XXXXXXXXXX`
-#D=`mktemp  --tmpdir debian-jessie-install.qcow2.XXXXXXXXXX`
+T=$(mktemp  --tmpdir skiboot_qemu_debian-jessie-boot_test.XXXXXXXXXX)
+#D=$(mktemp  --tmpdir debian-jessie-install.qcow2.XXXXXXXXXX)
 
 # In future we should do full install:
 # FIXME: -append "DEBIAN_FRONTEND=text locale=en_US keymap=us hostname=OPALtest domain=unassigned-domain rescue/enable=true"

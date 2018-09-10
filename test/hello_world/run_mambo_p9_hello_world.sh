@@ -18,19 +18,19 @@ if [ -n "$KERNEL" ]; then
     exit 0;
 fi
 
-if [ ! `command -v expect` ]; then
+if [ ! $(command -v expect) ]; then
     echo 'Could not find expect binary. Skipping hello_world test';
     exit 0;
 fi
 
 if [ -n "$SKIBOOT_ENABLE_MAMBO_STB" ]; then
-    export SKIBOOT_ZIMAGE=`pwd`/test/hello_world/hello_kernel/hello_kernel.stb
+    export SKIBOOT_ZIMAGE=$(pwd)/test/hello_world/hello_kernel/hello_kernel.stb
 else
-    export SKIBOOT_ZIMAGE=`pwd`/test/hello_world/hello_kernel/hello_kernel
+    export SKIBOOT_ZIMAGE=$(pwd)/test/hello_world/hello_kernel/hello_kernel
 fi
 
 # Currently getting some core dumps from mambo, so disable them!
-OLD_ULIMIT_C=`ulimit -c`
+OLD_ULIMIT_C=$(ulimit -c)
 ulimit -c 0
 
 t=$(mktemp) || exit 1

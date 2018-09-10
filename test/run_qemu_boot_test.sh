@@ -5,7 +5,7 @@ if [ -z "$QEMU_BIN" ]; then
     QEMU_BIN="qemu-system-ppc64"
 fi
 
-if [ ! `command -v $QEMU_BIN` ]; then
+if [ ! $(command -v $QEMU_BIN) ]; then
     echo "Could not find executable QEMU_BIN ($QEMU_BIN). Skipping hello_world test";
     exit 0;
 fi
@@ -15,13 +15,13 @@ if [ -n "$KERNEL" ]; then
     exit 0;
 fi
 
-if [ ! `command -v expect` ]; then
+if [ ! $(command -v expect) ]; then
     echo 'Could not find expect binary. Skipping hello_world test';
     exit 0;
 fi
 
 if [ -z "$SKIBOOT_ZIMAGE" ]; then
-    export SKIBOOT_ZIMAGE=`pwd`/zImage.epapr
+    export SKIBOOT_ZIMAGE=$(pwd)/zImage.epapr
 fi
 
 if [ ! -f "$SKIBOOT_ZIMAGE" ]; then
@@ -29,7 +29,7 @@ if [ ! -f "$SKIBOOT_ZIMAGE" ]; then
     exit 0;
 fi
 
-T=`mktemp  --tmpdir skiboot_qemu_boot_test.XXXXXXXXXX`
+T=$(mktemp  --tmpdir skiboot_qemu_boot_test.XXXXXXXXXX)
 
 ( cat <<EOF | expect
 set timeout 600
