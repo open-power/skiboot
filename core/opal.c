@@ -692,10 +692,10 @@ void opal_del_host_sync_notifier(bool (*notify)(void *data))
  */
 static int64_t opal_sync_host_reboot(void)
 {
-	struct opal_sync_entry *ent;
+	struct opal_sync_entry *ent, *nxt;
 	bool ret = true;
 
-	list_for_each(&opal_syncers, ent, link)
+	list_for_each_safe(&opal_syncers, ent, nxt, link)
 		ret &= ent->notify(ent->data);
 
 	if (ret)
