@@ -1213,6 +1213,11 @@ static void add_iplparams_features(const struct HDIF_common_hdr *iplp)
 		name[sizeof(name)-1] = '\0';
 		flags = be64_to_cpu(feature->flags);
 
+		if (strlen(name) == 0) {
+			prlog(PR_DEBUG, "IPLPARAMS: FW feature name is NULL\n");
+			continue;
+		}
+
 		prlog(PR_DEBUG, "IPLPARAMS: FW feature %s = %016"PRIx64"\n",
 				name, flags);
 
