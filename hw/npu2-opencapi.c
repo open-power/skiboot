@@ -2007,8 +2007,8 @@ static int64_t opal_npu_tl_set(uint64_t phb_id, uint32_t __unused bdfn,
 	reg = npu2_scom_read(dev->npu->chip_id, dev->npu->xscom_base,
 			     NPU2_OTL_CONFIG1(stack, block),
 			     NPU2_MISC_DA_LEN_8B);
-	reg &= ~(NPU2_OTL_CONFIG1_TX_TEMP1_EN | NPU2_OTL_CONFIG1_TX_TEMP3_EN |
-		 NPU2_OTL_CONFIG1_TX_TEMP1_EN);
+	reg &= ~(NPU2_OTL_CONFIG1_TX_TEMP1_EN | NPU2_OTL_CONFIG1_TX_TEMP2_EN |
+		 NPU2_OTL_CONFIG1_TX_TEMP3_EN);
 	for (i = 0; i < 4; i++) {
 		/* Skip template 0 as it is implicitly enabled */
 		if (i && is_template_supported(i, capabilities))
