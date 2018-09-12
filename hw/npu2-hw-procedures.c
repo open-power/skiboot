@@ -96,6 +96,7 @@ struct npu2_phy_reg NPU2_PHY_TX_NSEG_MAIN_EN		= {0x359, 51, 7};
 struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH	= {0x24e, 54, 8};
 struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH_LANE	= {0x24e, 49, 5};
 struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH_VALID= {0x24e, 48, 1};
+struct npu2_phy_reg NPU2_PHY_RX_RC_ENABLE_AUTO_RECAL    = {0x25c, 51, 1};
 
 struct npu2_phy_reg NPU2_PHY_RX_CLKDIST_PDWN		= {0x204, 48, 3};
 struct npu2_phy_reg NPU2_PHY_RX_IREF_PDWN		= {0x230, 54, 1};
@@ -1009,6 +1010,13 @@ void npu2_opencapi_bump_ui_lane(struct npu2_dev *dev)
 
 void npu2_opencapi_phy_setup(struct npu2_dev *dev)
 {
+	/*
+	 * This is only required for OpenCAPI - Hostboot tries to set this
+	 * on systems where it can tell a link is OpenCAPI, but for
+	 * Witherspoon it needs to be done in skiboot after device detection.
+	 */
+	phy_write(dev, &NPU2_PHY_RX_RC_ENABLE_AUTO_RECAL, 0x1);
+
 	run_procedure(dev, 4); /* procedure_phy_reset */
 	run_procedure(dev, 5); /* procedure_phy_tx_zcal */
 	run_procedure(dev, 6); /* procedure_phy_rx_dccal */
