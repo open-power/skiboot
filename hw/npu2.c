@@ -1257,7 +1257,7 @@ static int64_t npu2_tce_kill(struct phb *phb, uint32_t kill_type,
 		 * NPU2 doesn't support killing a PE so fall through
 		 * and do a kill all instead.
 		 */
-	case OPAL_PCI_TCE_KILL:
+	case OPAL_PCI_TCE_KILL_ALL:
 		npu2_write(npu, NPU2_ATS_TCE_KILL, NPU2_ATS_TCE_KILL_ALL);
 		break;
 	default:
