@@ -162,7 +162,8 @@ CFLAGS += -Wno-cast-align \
 	-Wno-unused-command-line-argument \
 	-Wno-unknown-warning-option \
 	-Wno-gnu-variable-sized-type-not-at-end \
-	-Wno-address-of-packed-member
+	-Wno-address-of-packed-member \
+	-Wno-error=ignored-attributes
 
 # pci_add_device_nodes is the largest, at 2048 with clang-7 (smaller with older
 # versions)
