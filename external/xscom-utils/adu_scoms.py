@@ -39,7 +39,7 @@ class XSCom(object):
 
 	def scan_chips(self):
 		if not self.enabled:
-			print "Not supported"
+			print("Not supported")
 			return False
 
 		for i in os.listdir(self.base):
@@ -52,7 +52,7 @@ class XSCom(object):
 				b = open(self.base+i+self.file, "rb+")
 				self.key_val_bin[int(i,16)] = b
 			except:
-				print "Count not open"+self.base+i+self.file
+				print("Count not open"+self.base+i+self.file)
 				return False
 
 		self.setup = True
@@ -62,7 +62,7 @@ class XSCom(object):
 		return self.enabled
 
 	def get_chip_ids(self):
-		return self.key_val_bin.keys()
+		return list(self.key_val_bin.keys())
 
 	def mangle_addr(self, addr):
 		tmp = (addr & 0xf000000000000000) >> 4
@@ -72,11 +72,11 @@ class XSCom(object):
 
 	def xscom_read(self, chip_id, addr):
 		if not isinstance(chip_id, int) or not isinstance(addr, int):
-			print "xscom_read: Input paramater type mismatch"
+			print("xscom_read: Input paramater type mismatch")
 			return -1
 
-		if not self.key_val_bin.has_key(chip_id):
-			print "Invalid Chip id"
+		if chip_id not in self.key_val_bin:
+			print("Invalid Chip id")
 			return -1
 
 		saddr = self.mangle_addr(addr)
@@ -86,11 +86,11 @@ class XSCom(object):
 
 	def xscom_read_spl(self, chip_id, addr):
 		if not isinstance(chip_id, int) or not isinstance(addr, int):
-			print "xscom_read: Input paramater type mismatch"
+			print("xscom_read: Input paramater type mismatch")
 			return -1
 
-		if not self.key_val_bin.has_key(chip_id):
-			print "Invalid Chip id"
+		if chip_id not in self.key_val_bin:
+			print("Invalid Chip id")
 			return -1
 
 		saddr = self.mangle_addr(addr)
@@ -101,14 +101,14 @@ class XSCom(object):
 		try:
 			b = open(self.key_val_path.get(chip_id), "rb+")
 		except:
-			print "Reopen failed"
+			print("Reopen failed")
 			return val
 		self.key_val_bin[chip_id] = b
 		return val
 
 	def xscom_write(self, chip_id, addr, val):
-		if not self.key_val_bin.has_key(chip_id):
-			print "Invalid Chip id"
+		if chip_id not in self.key_val_bin:
+			print("Invalid Chip id")
 			return -1
 
 		c = struct.pack('Q',val)
@@ -122,12 +122,12 @@ class XSCom(object):
 			fd.seek(saddr, 0)
 			fd.write(c)
 		except:
-			print "Write() error"
+			print("Write() error")
 			return -1
 
 	def xscom_read_ex(self, ex_target_id, addr):
 		if not isinstance(ex_target_id, int) or not isinstance(addr, int):
-			print "xscom_read_ex: Input paramater type mismatch"
+			print("xscom_read_ex: Input paramater type mismatch")
 			return -1
 
 		chip_id = ex_target_id >> 4
@@ -150,7 +150,7 @@ class GetSCom(object):
 		self.flg_addr = False
 
 		if not self.backend.is_supported():
-			print "In-Band SCom not supported Exiting...."
+			print("In-Band SCom not supported Exiting....")
 			raise ValueError
 
 	def set_chip(self, chip_id):
@@ -171,7 +171,7 @@ class GetSCom(object):
 	def chip_info(self, chip_id):
 		val = self.backend.xscom_read(chip_id, 0xf000f)
 		if val < 0:
-			print "Error in scom read"
+			print("Error in scom read")
 			raise ValueError
 
 		c_id = val >> 44
@@ -195,13 +195,13 @@ class GetSCom(object):
 		else:
 			name = "Unknown ID 0x%x"%id
 
-		print ("%08x | DD%s.%s | %s"%(chip_id, ((c_id >> 16) & 0xf), ((c_id >> 8) & 0xf), name))
+		print(("%08x | DD%s.%s | %s"%(chip_id, ((c_id >> 16) & 0xf), ((c_id >> 8) & 0xf), name)))
 
 	def parse_args(self):
 		try:
 			optlist, sys.argv = getopt.getopt(sys.argv[1:], "lhc:", ["chip", "list-chips", "help"])
 		except getopt.GetoptError as err:
-			print str(err)
+			print(str(err))
 			self.print_usage()
 			sys.exit(0)
 
@@ -235,7 +235,7 @@ class GetSCom(object):
 
 	def run_command(self):
 		if self.chips and self.flg_addr:
-			print hex(self.backend.xscom_read(self.chip_id, self.addr))
+			print(hex(self.backend.xscom_read(self.chip_id, self.addr)))
 
 	def list_chips(self):
 		print("Chip ID  | Rev   | Chip type")
@@ -261,7 +261,7 @@ class PutSCom(object):
 		self.value = 0
 
 		if not self.backend.is_supported():
-			print "In-Band SCom not supported Exiting...."
+			print("In-Band SCom not supported Exiting....")
 			raise ValueError
 
 	def set_addr(self, addr):
@@ -279,7 +279,7 @@ class PutSCom(object):
 		try:
 			optlist, sys.argv = getopt.getopt(sys.argv[1:], "hc:", ["chip", "help"])
 		except getopt.GetoptError as err:
-			print str(err)
+			print(str(err))
 			self.print_usage()
 			sys.exit(0)
 
