@@ -823,7 +823,12 @@ done_reading:
 	 * Verify and measure the retrieved PNOR partition as part of the
 	 * secure boot and trusted boot requirements
 	 */
-	secureboot_verify(id, buf, *len);
+	/*
+	 * FIXME: TEMPORARY HACK: Don't verify VERSION until all bits of code
+	 * to produce a signed VERSION partition are upstream for a while.
+	 */
+	if (id != RESOURCE_ID_VERSION)
+		secureboot_verify(id, buf, *len);
 	trustedboot_measure(id, buf, *len);
 
 	/* Find subpartition */
