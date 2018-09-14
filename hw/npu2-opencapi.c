@@ -52,14 +52,6 @@
 #include <i2c.h>
 #include <nvram.h>
 
-#define OCAPIDBG(dev, fmt, a...)    prlog(PR_DEBUG, "OCAPI[%d:%d]: " fmt, \
-					  dev->npu->chip_id, dev->brick_index, ## a)
-#define OCAPIINF(dev, fmt, a...)    prlog(PR_INFO, "OCAPI[%d:%d]: " fmt, \
-					  dev->npu->chip_id, dev->brick_index, ## a)
-#define OCAPIERR(dev, fmt, a...)    prlog(PR_ERR, "OCAPI[%d:%d]: " fmt, \
-					  dev->npu->chip_id, dev->brick_index, ## a)
-
-
 #define NPU_IRQ_LEVELS		35
 #define NPU_IRQ_LEVELS_XSL	23
 #define MAX_PE_HANDLE		((1 << 15) - 1)
@@ -842,7 +834,7 @@ static void assert_reset(struct npu2_dev *dev)
 	 * register and a pin is in output mode if its value is 0
 	 */
 	data = ~pin;
-	rc = i2c_request_send(dev->i2c_port_id_ocapi,
+	rc = i2c_request_send(dev->npu->i2c_port_id_ocapi,
 			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
 			0x3, 1,
 			&data, sizeof(data), 120);
@@ -851,7 +843,7 @@ static void assert_reset(struct npu2_dev *dev)
 
 	/* register 1 controls the signal, reset is active low */
 	data = ~pin;
-	rc = i2c_request_send(dev->i2c_port_id_ocapi,
+	rc = i2c_request_send(dev->npu->i2c_port_id_ocapi,
 			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
 			0x1, 1,
 			&data, sizeof(data), 120);
@@ -874,7 +866,7 @@ static void deassert_reset(struct npu2_dev *dev)
 	int rc;
 
 	data = 0xFF;
-	rc = i2c_request_send(dev->i2c_port_id_ocapi,
+	rc = i2c_request_send(dev->npu->i2c_port_id_ocapi,
 			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
 			0x1, 1,
 			&data, sizeof(data), 120);
@@ -886,43 +878,6 @@ static void deassert_reset(struct npu2_dev *dev)
 		 */
 		OCAPIERR(dev, "Error writing I2C reset signal: %d\n", rc);
 	}
-}
-
-static bool i2c_presence_detect(struct npu2_dev *dev)
-{
-	uint8_t state, data;
-	int rc;
-
-	/*
-	 * Opencapi presence detection is done through i2c
-	 *
-	 * Lagrange platforms (ZZ, Zaius) use the same default mechanism.
-	 * Witherspoon will need a specific implementation, TBD.
-	 */
-	rc = i2c_request_send(dev->i2c_port_id_ocapi,
-			platform.ocapi->i2c_presence_addr,
-			SMBUS_READ, 0, 1,
-			&state, 1, 120);
-	if (rc) {
-		OCAPIERR(dev, "error detecting link presence: %d\n", rc);
-		return true; /* assume link exists */
-	}
-
-	OCAPIDBG(dev, "I2C presence detect: 0x%x\n", state);
-
-	switch (dev->brick_index) { // TODO(ajd): Link or brick index?
-	case 2:
-		data = platform.ocapi->i2c_presence_odl0;
-		break;
-	case 3:
-		data = platform.ocapi->i2c_presence_odl1;
-		break;
-	default:
-		OCAPIERR(dev, "presence detection on invalid link\n");
-		return true;
-	}
-	/* Presence detect bits are active low */
-	return !(state & data);
 }
 
 static void reset_odl(uint32_t gcid, struct npu2_dev *dev)
@@ -1015,17 +970,18 @@ static void start_training(uint32_t gcid, struct npu2_dev *dev)
 	xscom_write(gcid, config_xscom, reg);
 }
 
-static int64_t npu2_opencapi_get_presence_state(struct pci_slot *slot,
+static int64_t npu2_opencapi_get_presence_state(struct pci_slot __unused *slot,
 						uint8_t *val)
 {
-	bool present;
-	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
-
-	if (platform.ocapi->force_presence)
-		present = true;
-	else
-		present = i2c_presence_detect(dev);
-	*val = present;
+	/*
+	 * Presence detection for OpenCAPI is currently done at the start of
+	 * NPU initialisation, and we only create slots if a device is present.
+	 * As such we will never be asked to get the presence of a slot that's
+	 * empty.
+	 *
+	 * This may change if we ever support hotplug down the track.
+	 */
+	*val = true;
 	return OPAL_SUCCESS;
 }
 
@@ -1578,9 +1534,8 @@ static void setup_debug_training_state(struct npu2_dev *dev)
 
 static void setup_device(struct npu2_dev *dev)
 {
-	struct dt_node *dn_phb, *dn;
+	struct dt_node *dn_phb;
 	struct pci_slot *slot;
-	char port_name[17];
 	uint64_t mm_win[2];
 
 	/* Populate PHB device node */
@@ -1626,23 +1581,6 @@ static void setup_device(struct npu2_dev *dev)
 	dev->bdfn = 0;
 	dev->train_need_fence = false;
 	dev->train_fenced = false;
-	/* Find I2C port for handling device reset */
-	snprintf(port_name, sizeof(port_name), "p8_%08x_e%dp%d",
-		 dev->npu->chip_id, platform.ocapi->i2c_engine,
-		 platform.ocapi->i2c_port);
-	prlog(PR_DEBUG, "OCAPI: Looking for I2C port %s\n", port_name);
-
-	dt_for_each_compatible(dt_root, dn, "ibm,power9-i2c-port") {
-		if (streq(port_name, dt_prop_get(dn, "ibm,port-name"))) {
-			dev->i2c_port_id_ocapi = dt_prop_get_u32(dn, "ibm,opal-id");
-			break;
-		}
-	}
-
-	if (!dev->i2c_port_id_ocapi) {
-		prlog(PR_ERR, "OCAPI: Couldn't find I2C port %s\n", port_name);
-		goto failed;
-	}
 
 	/* TODO: Procedure 13.1.3.7 - AFU Memory Range BARs */
 	/* Procedure 13.1.3.8 - AFU MMIO Range BARs */
@@ -1666,9 +1604,6 @@ static void setup_device(struct npu2_dev *dev)
 		}
 	}
 	pci_register_phb(&dev->phb_ocapi, OPAL_DYNAMIC_PHB_ID);
-	return;
-failed:
-	dt_add_property_string(dn_phb, "status", "error");
 	return;
 }
 

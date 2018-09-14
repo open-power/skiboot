@@ -17,6 +17,7 @@
 #ifndef __NPU2_H
 #define __NPU2_H
 
+#include <pci.h>
 #include <phys-map.h>
 
 /* Debugging options */
@@ -35,6 +36,14 @@
 #define NPU2DEVDBG(p, fmt, a...)	NPU2DEVLOG(PR_DEBUG, p, fmt, ##a)
 #define NPU2DEVINF(p, fmt, a...)	NPU2DEVLOG(PR_INFO, p, fmt, ##a)
 #define NPU2DEVERR(p, fmt, a...)	NPU2DEVLOG(PR_ERR, p, fmt, ##a)
+
+#define OCAPIDBG(dev, fmt, a...)    prlog(PR_DEBUG, "OCAPI[%d:%d]: " fmt, \
+					  dev->npu->chip_id, dev->brick_index, ## a)
+#define OCAPIINF(dev, fmt, a...)    prlog(PR_INFO, "OCAPI[%d:%d]: " fmt, \
+					  dev->npu->chip_id, dev->brick_index, ## a)
+#define OCAPIERR(dev, fmt, a...)    prlog(PR_ERR, "OCAPI[%d:%d]: " fmt, \
+					  dev->npu->chip_id, dev->brick_index, ## a)
+
 
 /* Number of PEs supported */
 #define NPU2_MAX_PE_NUM		16
@@ -136,7 +145,6 @@ struct npu2_dev {
 
 	/* OpenCAPI */
 	struct phb		phb_ocapi;
-	uint64_t		i2c_port_id_ocapi;
 	bool			train_need_fence;
 	bool			train_fenced;
 };
@@ -168,6 +176,8 @@ struct npu2 {
 	/* NVLink */
 	struct phb	phb_nvlink;
 	uint32_t	phb_index;
+
+	uint64_t	i2c_port_id_ocapi;
 };
 
 static inline struct npu2 *phb_to_npu2_nvlink(struct phb *phb)
@@ -194,11 +204,11 @@ static inline struct phb *npu2_dev_to_phb(struct npu2_dev *ndev)
 	}
 }
 
+void npu2_i2c_presence_detect(struct npu2 *npu);
 int npu2_opencapi_init_npu(struct npu2 *npu);
 int npu2_nvlink_init_npu(struct npu2 *npu);
 void npu2_nvlink_create_phb(struct npu2 *npu, struct dt_node *dn);
 
-enum npu2_dev_type npu2_dt_link_dev_type(struct dt_node *link);
 void npu2_write_4b(struct npu2 *p, uint64_t reg, uint32_t val);
 uint32_t npu2_read_4b(struct npu2 *p, uint64_t reg);
 void npu2_write(struct npu2 *p, uint64_t reg, uint64_t val);

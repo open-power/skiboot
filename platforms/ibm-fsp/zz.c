@@ -23,6 +23,7 @@
 #include <i2c.h>
 #include <timebase.h>
 #include <hostservices.h>
+#include <npu2.h>
 
 #include "ibm-fsp.h"
 #include "lxvpd.h"
@@ -90,4 +91,5 @@ DECLARE_PLATFORM(zz) = {
 	.sensor_read		= ibm_fsp_sensor_read,
 	.terminate		= ibm_fsp_terminate,
 	.ocapi			= &zz_ocapi,
+	.npu2_device_detect	= npu2_i2c_presence_detect,
 };

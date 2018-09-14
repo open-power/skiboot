@@ -27,6 +27,7 @@
 #include <pci.h>
 #include <pci-slot.h>
 #include <phb4.h>
+#include <npu2.h>
 
 #include "astbmc.h"
 #include "ast.h"
@@ -153,6 +154,14 @@ static void witherspoon_pre_pci_fixup(void)
 	phb4_pre_pci_fixup_witherspoon();
 }
 
+static void witherspoon_npu2_device_detect(struct npu2 *npu)
+{
+        /* Stub until we implement real device detection */
+	for (int i = 0; i < npu->total_devices; i++) {
+		npu->devices[i].type = NPU2_DEV_TYPE_NVLINK;
+	}
+}
+
 /* The only difference between these is the PCI slot handling */
 
 DECLARE_PLATFORM(witherspoon) = {
@@ -170,4 +179,5 @@ DECLARE_PLATFORM(witherspoon) = {
 	.terminate		= ipmi_terminate,
 
 	.pci_get_slot_info	= dt_slot_get_slot_info,
+	.npu2_device_detect	= witherspoon_npu2_device_detect,
 };

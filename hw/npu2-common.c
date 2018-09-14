@@ -21,19 +21,7 @@
 #include <npu2-regs.h>
 #include <bitutils.h>
 #include <nvram.h>
-
-enum npu2_dev_type npu2_dt_link_dev_type(struct dt_node *link)
-{
-	const char *link_type = dt_prop_get(link, "ibm,npu-link-type") ?:
-		"unknown";
-	if (streq(link_type, "nvlink")) {
-		return NPU2_DEV_TYPE_NVLINK;
-	} else if (streq(link_type, "opencapi")) {
-		return NPU2_DEV_TYPE_OPENCAPI;
-	} else {
-		return NPU2_DEV_TYPE_UNKNOWN;
-	}
-}
+#include <i2c.h>
 
 /*
  * We use the indirect method because it uses the same addresses as
@@ -109,12 +97,62 @@ void npu2_write_mask_4b(struct npu2 *p, uint64_t reg, uint32_t val, uint32_t mas
 			(uint64_t)new_val << 32);
 }
 
+static bool _i2c_presence_detect(struct npu2_dev *dev)
+{
+	uint8_t state, data;
+	int rc;
+
+	rc = i2c_request_send(dev->npu->i2c_port_id_ocapi,
+			platform.ocapi->i2c_presence_addr,
+			SMBUS_READ, 0, 1,
+			&state, 1, 120);
+	if (rc) {
+		OCAPIERR(dev, "error detecting link presence: %d\n", rc);
+		return true; /* assume link exists */
+	}
+
+	OCAPIDBG(dev, "I2C presence detect: 0x%x\n", state);
+
+	switch (dev->link_index) {
+	case 2:
+		data = platform.ocapi->i2c_presence_odl0;
+		break;
+	case 3:
+		data = platform.ocapi->i2c_presence_odl1;
+		break;
+	default:
+		OCAPIERR(dev, "presence detection on invalid link\n");
+		return true;
+	}
+	/* Presence detect bits are active low */
+	return !(state & data);
+}
+
+/*
+ * A default presence detection implementation for platforms like ZZ and Zaius
+ * that don't implement their own. Assumes all devices found will be OpenCAPI.
+ */
+void npu2_i2c_presence_detect(struct npu2 *npu)
+{
+	struct npu2_dev *dev;
+	assert(platform.ocapi);
+	for (int i = 0; i < npu->total_devices; i++) {
+		dev = &npu->devices[i];
+		if (platform.ocapi->force_presence ||
+		    _i2c_presence_detect(dev))
+			dev->type = NPU2_DEV_TYPE_OPENCAPI;
+		else
+			dev->type = NPU2_DEV_TYPE_UNKNOWN;
+	}
+}
+
 static struct npu2 *setup_npu(struct dt_node *dn)
 {
 	struct npu2 *npu;
 	struct npu2_dev *dev;
 	struct dt_node *np;
 	uint32_t num_links;
+	char port_name[17];
 	void *npumem;
 	char *path;
 	int gcid;
@@ -138,6 +176,28 @@ static struct npu2 *setup_npu(struct dt_node *dn)
 	npu->chip_id = gcid;
 	npu->xscom_base = dt_get_address(dn, 0, NULL);
 	npu->phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
+
+	if (platform.ocapi) {
+		/* Find I2C port for handling device presence/reset */
+		snprintf(port_name, sizeof(port_name), "p8_%08x_e%dp%d",
+			 gcid, platform.ocapi->i2c_engine,
+			 platform.ocapi->i2c_port);
+		prlog(PR_DEBUG, "NPU: Looking for I2C port %s\n", port_name);
+
+		dt_for_each_compatible(dt_root, np, "ibm,power9-i2c-port") {
+			if (streq(port_name, dt_prop_get(np, "ibm,port-name"))) {
+				npu->i2c_port_id_ocapi = dt_prop_get_u32(np, "ibm,opal-id");
+				break;
+			}
+		}
+
+		if (!npu->i2c_port_id_ocapi) {
+			prlog(PR_ERR, "NPU: Couldn't find I2C port %s\n",
+			      port_name);
+			goto failed;
+		}
+	}
+
 	npu->devices = npumem + sizeof(struct npu2);
 
 	dt_for_each_compatible(dn, np, "ibm,npu-link") {
@@ -146,7 +206,8 @@ static struct npu2 *setup_npu(struct dt_node *dn)
 		dev->link_index = dt_prop_get_u32(np, "ibm,npu-link-index");
 		/* May be overridden by platform presence detection */
 		dev->brick_index = dev->link_index;
-		dev->type = npu2_dt_link_dev_type(np);
+		/* Will be overridden by presence detection */
+		dev->type = NPU2_DEV_TYPE_UNKNOWN;
 		dev->npu = npu;
 		dev->dt_node = np;
 		dev->pl_xscom_base = dt_prop_get_u64(np, "ibm,npu-phy");
@@ -161,6 +222,12 @@ static struct npu2 *setup_npu(struct dt_node *dn)
 	prlog(PR_INFO, "   SCOM Base:  %08llx\n", npu->xscom_base);
 	free(path);
 	return npu;
+
+failed:
+	prlog(PR_ERR, "NPU: Chip %d NPU setup failed\n", gcid);
+	free(path);
+	free(npu);
+	return NULL;
 }
 
 static void setup_devices(struct npu2 *npu)
@@ -177,13 +244,22 @@ static void setup_devices(struct npu2 *npu)
 		switch (dev->type) {
 		case NPU2_DEV_TYPE_NVLINK:
 			nvlink_detected = true;
+			dt_add_property_strings(dev->dt_node,
+						"ibm,npu-link-type",
+						"nvlink");
 			break;
 		case NPU2_DEV_TYPE_OPENCAPI:
 			ocapi_detected = true;
+			dt_add_property_strings(dev->dt_node,
+						"ibm,npu-link-type",
+						"opencapi");
 			break;
 		default:
 			prlog(PR_INFO, "NPU: Link %d device not present\n",
 			      npu->devices[i].link_index);
+			dt_add_property_strings(dev->dt_node,
+						"ibm,npu-link-type",
+						"unknown");
 		}
 	}
 
@@ -221,8 +297,16 @@ void probe_npu2(void)
 		prlog(PR_WARNING, "NPU2: Using ZCAL impedance override = %d\n", nv_zcal_nominal);
 	}
 
+	if (!platform.npu2_device_detect) {
+		prlog(PR_INFO, "NPU: Platform does not support NPU\n");
+		return;
+	}
+
 	dt_for_each_compatible(dt_root, np, "ibm,power9-npu") {
 	        npu = setup_npu(np);
+		if (!npu)
+			continue;
+		platform.npu2_device_detect(npu);
 		setup_devices(npu);
 	}
 }

@@ -21,6 +21,7 @@
 #include <ipmi.h>
 #include <psi.h>
 #include <npu-regs.h>
+#include <npu2.h>
 #include <pci.h>
 #include <pci-cfg.h>
 
@@ -141,7 +142,6 @@ static void create_link(struct dt_node *npu, int group, int index)
 	link = dt_new(npu, namebuf);
 
 	dt_add_property_string(link, "compatible", "ibm,npu-link");
-	dt_add_property_string(link, "ibm,npu-link-type", "opencapi");
 	dt_add_property_cells(link, "ibm,npu-link-index", index);
 
 	switch (index) {
@@ -245,4 +245,5 @@ DECLARE_PLATFORM(zaius) = {
 	.exit			= ipmi_wdt_final_reset,
 	.terminate		= ipmi_terminate,
 	.ocapi			= &zaius_ocapi,
+	.npu2_device_detect	= npu2_i2c_presence_detect,
 };

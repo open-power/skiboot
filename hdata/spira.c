@@ -1495,7 +1495,6 @@ static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 		}
 
 		dt_add_property_string(node, "compatible", "ibm,npu-link");
-		dt_add_property_string(node, "ibm,npu-link-type", "nvlink");
 		dt_add_property_cells(node, "reg", link_count);
 		dt_add_property_cells(node, "ibm,npu-link-index", link_count);
 		dt_add_property_cells(node, "ibm,workbook-link-id", link_id);

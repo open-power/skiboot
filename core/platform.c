@@ -25,6 +25,7 @@
 #include <errorlog.h>
 #include <bt.h>
 #include <nvram.h>
+#include <npu2.h>
 #include <platforms/astbmc/astbmc.h>
 
 bool manufacturing_mode = false;
@@ -204,6 +205,7 @@ static struct platform generic_platform = {
 	.start_preload_resource	= generic_start_preload_resource,
 	.resource_loaded	= generic_resource_loaded,
 	.ocapi		= &generic_ocapi,
+	.npu2_device_detect = npu2_i2c_presence_detect, /* Assumes ZZ */
 };
 
 const struct bmc_platform *bmc_platform = &generic_bmc;
