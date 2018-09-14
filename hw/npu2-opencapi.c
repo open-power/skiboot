@@ -53,11 +53,11 @@
 #include <nvram.h>
 
 #define OCAPIDBG(dev, fmt, a...)    prlog(PR_DEBUG, "OCAPI[%d:%d]: " fmt, \
-					  dev->npu->chip_id, dev->index, ## a)
+					  dev->npu->chip_id, dev->brick_index, ## a)
 #define OCAPIINF(dev, fmt, a...)    prlog(PR_INFO, "OCAPI[%d:%d]: " fmt, \
-					  dev->npu->chip_id, dev->index, ## a)
+					  dev->npu->chip_id, dev->brick_index, ## a)
 #define OCAPIERR(dev, fmt, a...)    prlog(PR_ERR, "OCAPI[%d:%d]: " fmt, \
-					  dev->npu->chip_id, dev->index, ## a)
+					  dev->npu->chip_id, dev->brick_index, ## a)
 
 
 #define NPU_IRQ_LEVELS		35
@@ -753,16 +753,16 @@ static void setup_global_mmio_bar(uint32_t gcid, uint32_t scom_base,
 static void setup_afu_mmio_bars(uint32_t gcid, uint32_t scom_base,
 				struct npu2_dev *dev)
 {
-	uint64_t stack = index_to_stack(dev->index);
-	uint64_t offset = index_to_block(dev->index) == NPU2_BLOCK_OTL0 ?
+	uint64_t stack = index_to_stack(dev->brick_index);
+	uint64_t offset = index_to_block(dev->brick_index) == NPU2_BLOCK_OTL0 ?
 		NPU2_NTL0_BAR : NPU2_NTL1_BAR;
-	uint64_t pa_offset = index_to_block(dev->index) == NPU2_BLOCK_OTL0 ?
+	uint64_t pa_offset = index_to_block(dev->brick_index) == NPU2_BLOCK_OTL0 ?
 		NPU2_CQ_CTL_MISC_MMIOPA0_CONFIG :
 		NPU2_CQ_CTL_MISC_MMIOPA1_CONFIG;
 	uint64_t addr, size, reg;
 
 	prlog(PR_DEBUG, "OCAPI: %s: Setup AFU MMIO BARs\n", __func__);
-	phys_map_get(gcid, NPU_OCAPI_MMIO, dev->index, &addr, &size);
+	phys_map_get(gcid, NPU_OCAPI_MMIO, dev->brick_index, &addr, &size);
 
 	prlog(PR_DEBUG, "OCAPI: AFU MMIO set to %llx, size %llx\n", addr, size);
 	write_bar(gcid, scom_base, NPU2_REG_OFFSET(stack, 0, offset), addr,
@@ -783,7 +783,7 @@ static void setup_afu_mmio_bars(uint32_t gcid, uint32_t scom_base,
 static void setup_afu_config_bars(uint32_t gcid, uint32_t scom_base,
 				  struct npu2_dev *dev)
 {
-	uint64_t stack = index_to_stack(dev->index);
+	uint64_t stack = index_to_stack(dev->brick_index);
 	int stack_num = stack - NPU2_STACK_STCK_0;
 	uint64_t addr, size;
 
@@ -799,8 +799,8 @@ static void setup_afu_config_bars(uint32_t gcid, uint32_t scom_base,
 static void otl_enabletx(uint32_t gcid, uint32_t scom_base,
 			struct npu2_dev *dev)
 {
-	uint64_t stack = index_to_stack(dev->index);
-	uint64_t block = index_to_block(dev->index);
+	uint64_t stack = index_to_stack(dev->brick_index);
+	uint64_t block = index_to_block(dev->brick_index);
 	uint64_t reg;
 
 	/* OTL Config 2 Register */
@@ -822,7 +822,7 @@ static void assert_reset(struct npu2_dev *dev)
 	uint8_t pin, data;
 	int rc;
 
-	switch (dev->index) {
+	switch (dev->brick_index) {
 	case 2:
 	case 4:
 		pin = platform.ocapi->i2c_reset_odl0;
@@ -910,7 +910,7 @@ static bool i2c_presence_detect(struct npu2_dev *dev)
 
 	OCAPIDBG(dev, "I2C presence detect: 0x%x\n", state);
 
-	switch (dev->index) {
+	switch (dev->brick_index) { // TODO(ajd): Link or brick index?
 	case 2:
 		data = platform.ocapi->i2c_presence_odl0;
 		break;
@@ -929,7 +929,7 @@ static void reset_odl(uint32_t gcid, struct npu2_dev *dev)
 {
 	uint64_t reg, config_xscom;
 
-	switch (dev->index) {
+	switch (dev->brick_index) {
 	case 2:
 		config_xscom = OB0_ODL0_CONFIG;
 		break;
@@ -965,7 +965,7 @@ static void set_init_pattern(uint32_t gcid, struct npu2_dev *dev)
 {
 	uint64_t reg, config_xscom;
 
-	switch (dev->index) {
+	switch (dev->brick_index) {
 	case 2:
 		config_xscom = OB0_ODL0_CONFIG;
 		break;
@@ -992,7 +992,7 @@ static void start_training(uint32_t gcid, struct npu2_dev *dev)
 {
 	uint64_t reg, config_xscom;
 
-	switch (dev->index) {
+	switch (dev->brick_index) {
 	case 2:
 		config_xscom = OB0_ODL0_CONFIG;
 		break;
@@ -1035,7 +1035,7 @@ static int64_t npu2_opencapi_get_link_state(struct pci_slot *slot, uint8_t *val)
 	uint64_t reg;
 	int64_t link_width, training_status, rc = OPAL_SUCCESS;
 
-	reg = get_odl_status(dev->npu->chip_id, dev->index);
+	reg = get_odl_status(dev->npu->chip_id, dev->brick_index);
 	link_width = GETFIELD(OB_ODL_STATUS_TRAINED_MODE, reg);
 	training_status = GETFIELD(OB_ODL_STATUS_TRAINING_STATE_MACHINE, reg);
 
@@ -1071,7 +1071,7 @@ static int64_t npu2_opencapi_retry_state(struct pci_slot *slot)
 		 */
 		OCAPIERR(dev,
 			"Link failed to train, final link status: %016llx\n",
-			get_odl_status(chip_id, dev->index));
+			get_odl_status(chip_id, dev->brick_index));
 		return OPAL_HARDWARE;
 	}
 
@@ -1093,7 +1093,7 @@ static int64_t npu2_opencapi_poll_link(struct pci_slot *slot)
 		pci_slot_set_state(slot, OCAPI_SLOT_LINK_WAIT);
 		/* fall-through */
 	case OCAPI_SLOT_LINK_WAIT:
-		reg = get_odl_status(chip_id, dev->index);
+		reg = get_odl_status(chip_id, dev->brick_index);
 		if (GETFIELD(OB_ODL_STATUS_TRAINING_STATE_MACHINE, reg) ==
 			OCAPI_LINK_STATE_TRAINED) {
 			OCAPIINF(dev, "link trained in %lld ms\n",
@@ -1153,9 +1153,9 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 		if (dev->train_need_fence) {
 			OCAPIDBG(dev, "Fencing OTL during reset\n");
 			set_fence_control(chip_id, dev->npu->xscom_base,
-					dev->index, 0b11);
+					dev->brick_index, 0b11);
 			npu2_write(dev->npu, NPU2_MISC_FENCE_STATE,
-				PPC_BIT(dev->index + 6));
+				PPC_BIT(dev->brick_index + 6));
 			dev->train_fenced = true;
 		}
 		dev->train_need_fence = true;
@@ -1180,9 +1180,10 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 	case OCAPI_SLOT_FRESET_DEASSERT_DELAY:
 		if (dev->train_fenced) {
 			OCAPIDBG(dev, "Unfencing OTL after reset\n");
-			npu2_write(dev->npu, NPU2_MISC_FENCE_STATE, PPC_BIT(dev->index));
+			npu2_write(dev->npu, NPU2_MISC_FENCE_STATE,
+				   PPC_BIT(dev->brick_index));
 			set_fence_control(chip_id, dev->npu->xscom_base,
-					dev->index, 0b00);
+					  dev->brick_index, 0b00);
 			dev->train_fenced = false;
 		}
 
@@ -1263,7 +1264,7 @@ static int64_t npu2_opencapi_pcicfg_read(struct phb *phb, uint32_t bdfn,
 		return rc;
 
 	genid_base = dev->bars[1].npu2_bar.base +
-		(index_to_block(dev->index) == NPU2_BLOCK_OTL1 ? 256 : 0);
+		(index_to_block(dev->brick_index) == NPU2_BLOCK_OTL1 ? 256 : 0);
 
 	cfg_addr = NPU2_CQ_CTL_CONFIG_ADDR_ENABLE;
 	cfg_addr = SETFIELD(NPU2_CQ_CTL_CONFIG_ADDR_BUS_NUMBER |
@@ -1321,7 +1322,7 @@ static int64_t npu2_opencapi_pcicfg_write(struct phb *phb, uint32_t bdfn,
 		return rc;
 
 	genid_base = dev->bars[1].npu2_bar.base +
-		(index_to_block(dev->index) == NPU2_BLOCK_OTL1 ? 256 : 0);
+		(index_to_block(dev->brick_index) == NPU2_BLOCK_OTL1 ? 256 : 0);
 
 	cfg_addr = NPU2_CQ_CTL_CONFIG_ADDR_ENABLE;
 	cfg_addr = SETFIELD(NPU2_CQ_CTL_CONFIG_ADDR_BUS_NUMBER |
@@ -1409,13 +1410,14 @@ static int64_t npu2_opencapi_set_pe(struct phb *phb,
 	p = dev->npu;
 
 	pe_bdfn = dev->bdfn;
-	
+
 	val = NPU2_MISC_BRICK_BDF2PE_MAP_ENABLE;
 	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_PE, val, pe_num);
 	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_BDF, val, pe_bdfn);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC,
-			      NPU2_MISC_BRICK0_BDF2PE_MAP0 + (dev->index * 0x18));
-	p->bdf2pe_cache[dev->index] = val;
+			      NPU2_MISC_BRICK0_BDF2PE_MAP0 +
+			      (dev->brick_index * 0x18));
+	p->bdf2pe_cache[dev->brick_index] = val;
 	npu2_write(p, reg, val);
 
 	return OPAL_SUCCESS;
@@ -1426,8 +1428,8 @@ static int npu2_add_mmio_regs(struct phb *phb, struct pci_device *pd,
 {
 	uint32_t irq;
 	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(phb);
-	uint64_t block = index_to_block(dev->index);
-	uint64_t stacku = index_to_stacku(dev->index);
+	uint64_t block = index_to_block(dev->brick_index);
+	uint64_t stacku = index_to_stacku(dev->brick_index);
 	uint64_t dsisr, dar, tfc, handle;
 
 	/*
@@ -1631,7 +1633,8 @@ static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 	dev->phb_ocapi.ops = &npu2_opencapi_ops;
 	dev->phb_ocapi.phb_type = phb_type_npu_v2_opencapi;
 	dev->phb_ocapi.scan_map = 0;
-	dev->index = dt_prop_get_u32(dn_link, "ibm,npu-link-index");
+	dev->link_index = dt_prop_get_u32(dn_link, "ibm,npu-link-index");
+	dev->brick_index = dev->link_index;
 	dev->pl_xscom_base = dt_prop_get_u64(dn_link, "ibm,npu-phy");
 	dev->lane_mask = dt_prop_get_u32(dn_link, "ibm,npu-lane-mask");
 	dev->link_speed = dt_prop_get_u64(dn_link, "ibm,link-speed");
@@ -1664,7 +1667,7 @@ static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 	/* Procedure 13.1.3.9 - AFU Config BARs */
 	setup_afu_config_bars(n->chip_id, n->xscom_base, dev);
 
-	set_fence_control(n->chip_id, n->xscom_base, dev->index, 0b00);
+	set_fence_control(n->chip_id, n->xscom_base, dev->brick_index, 0b00);
 
 	if (npu2_ocapi_training_state != NPU2_TRAIN_DEFAULT) {
 		setup_debug_training_state(dev);
@@ -1847,8 +1850,8 @@ static int64_t opal_npu_spa_setup(uint64_t phb_id, uint32_t __unused bdfn,
 	if (!dev)
 		return OPAL_PARAMETER;
 
-	block = index_to_block(dev->index);
-	stack = index_to_stack(dev->index);
+	block = index_to_block(dev->brick_index);
+	stack = index_to_stack(dev->brick_index);
 	if (block == NPU2_BLOCK_OTL1)
 		offset = NPU2_XSL_PSL_SPAP_A1;
 	else
@@ -1912,8 +1915,8 @@ static int64_t opal_npu_spa_clear_cache(uint64_t phb_id, uint32_t __unused bdfn,
 	if (!dev)
 		return OPAL_PARAMETER;
 
-	block = index_to_block(dev->index);
-	stack = index_to_stack(dev->index);
+	block = index_to_block(dev->brick_index);
+	stack = index_to_stack(dev->brick_index);
 	cc_inv = NPU2_REG_OFFSET(stack, NPU2_BLOCK_XSL, NPU2_XSL_PSL_LLCMD_A0);
 
 	lock(&dev->npu->lock);
@@ -1987,8 +1990,8 @@ static int64_t opal_npu_tl_set(uint64_t phb_id, uint32_t __unused bdfn,
 	if (!dev)
 		return OPAL_PARAMETER;
 
-	block = index_to_block(dev->index);
-	stack = index_to_stack(dev->index);
+	block = index_to_block(dev->brick_index);
+	stack = index_to_stack(dev->brick_index);
 	/*
 	 * The 'capabilities' argument defines what TL template the
 	 * device can receive. OpenCAPI 3.0 and 4.0 define 64 templates, so

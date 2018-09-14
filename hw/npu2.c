@@ -1075,10 +1075,10 @@ static int64_t npu2_set_pe(struct phb *phb,
 	val = SETFIELD(NPU2_CQ_BRICK_BDF2PE_MAP_BDF, val, dev->nvlink.gpu_bdfn);
 
 	if (!NPU2DEV_BRICK(dev))
-		reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + dev->index/2,
+		reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + dev->brick_index/2,
 				      NPU2_BLOCK_CTL, NPU2_CQ_BRICK0_BDF2PE_MAP0);
 	else
-		reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + dev->index/2,
+		reg = NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + dev->brick_index/2,
 				      NPU2_BLOCK_CTL, NPU2_CQ_BRICK1_BDF2PE_MAP0);
 
 	npu2_write(p, reg, val);
@@ -1086,8 +1086,8 @@ static int64_t npu2_set_pe(struct phb *phb,
 	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_PE, val, pe_num);
 	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_BDF, val, dev->nvlink.gpu_bdfn);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC,
-			      NPU2_MISC_BRICK0_BDF2PE_MAP0 + (dev->index * 0x18));
-	p->bdf2pe_cache[dev->index] = val;
+			      NPU2_MISC_BRICK0_BDF2PE_MAP0 + (dev->brick_index * 0x18));
+	p->bdf2pe_cache[dev->brick_index] = val;
 	npu2_write(p, reg, val);
 
 	return OPAL_SUCCESS;
@@ -1601,7 +1601,7 @@ static uint32_t npu2_populate_vendor_cap(struct npu2_dev *dev,
 			    NULL);
 
 	/* Link index */
-	PCI_VIRT_CFG_INIT_RO(pvd, start + 0xc, 1, dev->index);
+	PCI_VIRT_CFG_INIT_RO(pvd, start + 0xc, 1, dev->link_index);
 
 	return start + VENDOR_CAP_LEN;
 }
@@ -1725,7 +1725,8 @@ static void npu2_populate_devices(struct npu2 *p,
 		dev->type = NPU2_DEV_TYPE_NVLINK;
 		dev->npu = p;
 		dev->dt_node = link;
-		dev->index = dt_prop_get_u32(link, "ibm,npu-link-index");
+		dev->link_index = dt_prop_get_u32(link, "ibm,npu-link-index");
+		dev->brick_index = dev->link_index;
 
 		group_id = dt_prop_get_u32(link, "ibm,npu-group-id");
 		dev->bdfn = npu_allocate_bdfn(p, group_id);
@@ -1742,7 +1743,7 @@ static void npu2_populate_devices(struct npu2 *p,
 		stack = NPU2_STACK_STCK_0 + NPU2DEV_STACK(dev);
 		npu2_bar = &dev->bars[0].npu2_bar;
 		npu2_bar->type = NPU_NTL;
-		npu2_bar->index = dev->index;
+		npu2_bar->index = dev->brick_index;
 		npu2_bar->reg = NPU2_REG_OFFSET(stack, 0, NPU2DEV_BRICK(dev) == 0 ?
 						NPU2_NTL0_BAR : NPU2_NTL1_BAR);
 	        npu2_get_bar(p->chip_id, npu2_bar);
@@ -2248,8 +2249,10 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 		goto out;
 	}
 
-	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_STACK, xts_bdf_lpar, 0x4 >> (ndev->index / 2));
-	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_BRICK, xts_bdf_lpar, (ndev->index % 2));
+	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_STACK, xts_bdf_lpar,
+				0x4 >> (ndev->brick_index / 2));
+	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_BRICK, xts_bdf_lpar,
+				(ndev->brick_index % 2));
 
 	NPU2DBG(p, "XTS_BDF_MAP[%03d] = 0x%08llx\n", id, xts_bdf_lpar);
 	npu2_write(p, NPU2_XTS_BDF_MAP + id*8, xts_bdf_lpar);

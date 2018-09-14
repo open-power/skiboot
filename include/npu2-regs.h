@@ -44,19 +44,19 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 	(((stack) << 20) | ((block) << 16) | (offset))
 
 #define NPU2_NTL_REG_OFFSET(ndev, offset)				\
-	NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + ((ndev)->index >> 1),       \
-			NPU2_BLOCK_NTL0 + ((ndev)->index % 2)*2, offset)
+	NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + ((ndev)->brick_index >> 1),       \
+			NPU2_BLOCK_NTL0 + ((ndev)->brick_index % 2)*2, offset)
 
 #define NPU2_NTLU_REG_OFFSET(ndev, offset)				\
-	NPU2_REG_OFFSET(NPU2_STACK_STCK_0U + ((ndev)->index >> 1),       \
-			NPU2_BLOCK_NTL0 + ((ndev)->index % 2)*2, offset)
+	NPU2_REG_OFFSET(NPU2_STACK_STCK_0U + ((ndev)->brick_index >> 1),       \
+			NPU2_BLOCK_NTL0 + ((ndev)->brick_index % 2)*2, offset)
 
 #define NPU2_DL_REG_OFFSET(ndev, offset)	\
-	NPU2_REG_OFFSET(((ndev)->index >> 1),				\
-			8 + ((ndev)->index % 2)*2, offset)
+	NPU2_REG_OFFSET(((ndev)->brick_index >> 1),				\
+			8 + ((ndev)->brick_index % 2)*2, offset)
 
 #define NPU2_SM_REG_OFFSET(ndev, sm, offset)				\
-	NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + ((ndev)->index >> 1),	\
+	NPU2_REG_OFFSET(NPU2_STACK_STCK_0 + ((ndev)->brick_index >> 1),	\
 			NPU2_BLOCK_SM_0 + (sm), offset)
 
 /* Get the offset for this register */

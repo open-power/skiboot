@@ -199,7 +199,7 @@ DEFINE_PROCEDURE(nop);
 /* Return the brick number (0-2) within an obus chiplet */
 static int obus_brick_index(struct npu2_dev *ndev)
 {
-	int index = ndev->index % 3;
+	int index = ndev->brick_index % 3;
 
 	/* On the second obus chiplet, index is reversed */
 	if ((ndev->pl_xscom_base & 0x3F000000) != 0x09000000)
@@ -433,7 +433,7 @@ DEFINE_PROCEDURE(phy_reset, phy_reset_wait, phy_reset_complete);
 /* Procedure 1.2.6 - I/O PHY Tx Impedance Calibration */
 static uint32_t phy_tx_zcal(struct npu2_dev *ndev)
 {
-	if (ndev->npu->tx_zcal_complete[ndev->index > 2])
+	if (ndev->npu->tx_zcal_complete[ndev->brick_index > 2])
 		return PROCEDURE_COMPLETE;
 
 	/* Turn off SW enable and enable zcal state machine */
@@ -604,7 +604,7 @@ static uint32_t phy_tx_zcal_calculate(struct npu2_dev *ndev)
 	phy_write(ndev, &NPU2_PHY_TX_MARGINPU_SELECT, therm(margin_select + 1)/2);
 	phy_write(ndev, &NPU2_PHY_TX_MARGINPD_SELECT, therm(margin_select + 1)/2);
 
-	ndev->npu->tx_zcal_complete[ndev->index > 2] = 1;
+	ndev->npu->tx_zcal_complete[ndev->brick_index > 2] = 1;
 	return PROCEDURE_COMPLETE;
 }
 DEFINE_PROCEDURE(phy_tx_zcal, phy_tx_zcal_wait, phy_tx_zcal_calculate);
@@ -978,7 +978,7 @@ void npu2_opencapi_bump_ui_lane(struct npu2_dev *dev)
 	uint64_t status_xscom;
 	int lane, bit = 7;
 
-	switch (dev->index) {
+	switch (dev->brick_index) {
 	case 2:
 		status_xscom = OB0_ODL0_TRAINING_STATUS;
 		break;

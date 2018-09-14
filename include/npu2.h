@@ -47,10 +47,10 @@
 #define NPU2_DEV_DL_RESET	0x2
 
 /* Return the stack (0-2) of a device */
-#define NPU2DEV_STACK(ndev) ((ndev)->index / 2)
+#define NPU2DEV_STACK(ndev) ((ndev)->brick_index / 2)
 
 /* Return the brick number (0-1) within a stack */
-#define NPU2DEV_BRICK(ndev) ((ndev)->index % 2)
+#define NPU2DEV_BRICK(ndev) ((ndev)->brick_index % 2)
 
 /* This represents the state of the actual hardware BARs not the
  * emulated PCIe BARs. The is a subtle difference between the two as
@@ -111,7 +111,8 @@ struct npu2_dev_nvlink {
 
 struct npu2_dev {
 	enum npu2_dev_type	type;
-	uint32_t		index;
+	uint32_t		link_index;
+	uint32_t		brick_index;
 	uint64_t		pl_xscom_base;
 	struct dt_node		*dt_node;
 	struct npu2_pcie_bar	bars[2];
