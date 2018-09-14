@@ -77,15 +77,19 @@ static void zaius_get_slot_info(struct phb *phb, struct pci_device *pd)
 }
 
 const struct platform_ocapi zaius_ocapi = {
-	.i2c_engine        = 1,
-	.i2c_port          = 4,
-	.i2c_reset_addr    = 0x20,
-	.i2c_reset_odl0    = (1 << 1),
-	.i2c_reset_odl1    = (1 << 6),
-	.i2c_presence_addr = 0x20,
-	.i2c_presence_odl0 = (1 << 2), /* bottom connector */
-	.i2c_presence_odl1 = (1 << 7), /* top connector */
-	.odl_phy_swap      = true,
+	.i2c_engine          = 1,
+	.i2c_port            = 4,
+	.i2c_reset_addr      = 0x20,
+	.i2c_reset_brick2    = (1 << 1),
+	.i2c_reset_brick3    = (1 << 6),
+	.i2c_reset_brick4    = 0, /* unused */
+	.i2c_reset_brick5    = 0, /* unused */
+	.i2c_presence_addr   = 0x20,
+	.i2c_presence_brick2 = (1 << 2), /* bottom connector */
+	.i2c_presence_brick3 = (1 << 7), /* top connector */
+	.i2c_presence_brick4 = 0, /* unused */
+	.i2c_presence_brick5 = 0, /* unused */
+	.odl_phy_swap        = true,
 };
 
 ST_PLUGGABLE(pe0_slot, "PE0");

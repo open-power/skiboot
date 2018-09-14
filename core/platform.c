@@ -172,21 +172,25 @@ static int generic_start_preload_resource(enum resource_id id, uint32_t subid,
 
 /* These values will work for a ZZ booted using BML */
 const struct platform_ocapi generic_ocapi = {
-	.i2c_engine        = 1,
-	.i2c_port          = 4,
-	.i2c_reset_addr    = 0x20,
-	.i2c_reset_odl0    = (1 << 1),
-	.i2c_reset_odl1    = (1 << 6),
-	.i2c_presence_addr = 0x20,
-	.i2c_presence_odl0 = (1 << 2), /* bottom connector */
-	.i2c_presence_odl1 = (1 << 7), /* top connector */
+	.i2c_engine          = 1,
+	.i2c_port            = 4,
+	.i2c_reset_addr      = 0x20,
+	.i2c_reset_brick2    = (1 << 1),
+	.i2c_reset_brick3    = (1 << 6),
+	.i2c_reset_brick4    = 0, /* unused */
+	.i2c_reset_brick5    = 0, /* unused */
+	.i2c_presence_addr   = 0x20,
+	.i2c_presence_brick2 = (1 << 2), /* bottom connector */
+	.i2c_presence_brick3 = (1 << 7), /* top connector */
+	.i2c_presence_brick4 = 0, /* unused */
+	.i2c_presence_brick5 = 0, /* unused */
 	/*
 	 * The ZZs we typically use for BML/generic platform tend to
 	 * have old planars and presence detection is broken there, so
 	 * force presence.
 	 */
-	.force_presence    = true,
-	.odl_phy_swap      = true,
+	.force_presence      = true,
+	.odl_phy_swap        = true,
 };
 
 static struct bmc_platform generic_bmc = {

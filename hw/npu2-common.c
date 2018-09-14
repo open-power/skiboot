@@ -115,10 +115,16 @@ static bool _i2c_presence_detect(struct npu2_dev *dev)
 
 	switch (dev->link_index) {
 	case 2:
-		data = platform.ocapi->i2c_presence_odl0;
+		data = platform.ocapi->i2c_presence_brick2;
 		break;
 	case 3:
-		data = platform.ocapi->i2c_presence_odl1;
+		data = platform.ocapi->i2c_presence_brick3;
+		break;
+	case 4:
+		data = platform.ocapi->i2c_presence_brick4;
+		break;
+	case 5:
+		data = platform.ocapi->i2c_presence_brick5;
 		break;
 	default:
 		OCAPIERR(dev, "presence detection on invalid link\n");

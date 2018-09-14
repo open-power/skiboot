@@ -50,11 +50,15 @@ struct platform_ocapi {
 	uint8_t i2c_engine;		/* I2C engine number */
 	uint8_t i2c_port;		/* I2C port number */
 	uint8_t i2c_reset_addr;		/* I2C address for reset */
-	uint8_t i2c_reset_odl0;		/* I2C pin to write to reset ODL0 */
-	uint8_t i2c_reset_odl1;		/* I2C pin to write to reset ODL1 */
+	uint8_t i2c_reset_brick2;	/* I2C pin to write to reset brick 2 */
+	uint8_t i2c_reset_brick3;	/* I2C pin to write to reset brick 3 */
+	uint8_t i2c_reset_brick4;	/* I2C pin to write to reset brick 4 */
+	uint8_t i2c_reset_brick5;	/* I2C pin to write to reset brick 5 */
 	uint8_t i2c_presence_addr;	/* I2C address for presence detection */
-	uint8_t i2c_presence_odl0;	/* I2C mask for detection on ODL0 */
-	uint8_t i2c_presence_odl1;	/* I2C mask for detection on ODL1 */
+	uint8_t i2c_presence_brick2;	/* I2C pin to read for presence on brick 2 */
+	uint8_t i2c_presence_brick3;	/* I2C pin to read for presence on brick 3 */
+	uint8_t i2c_presence_brick4;	/* I2C pin to read for presence on brick 4 */
+	uint8_t i2c_presence_brick5;	/* I2C pin to read for presence on brick 5 */
 	bool force_presence;            /* don't use i2c detection */
 	bool odl_phy_swap;		/* Swap ODL1 to use brick 2 rather than
 					 * brick 1 lanes */
