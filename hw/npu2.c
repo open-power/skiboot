@@ -1357,44 +1357,13 @@ static void assign_mmio_bars(uint64_t gcid, uint32_t scom, uint64_t reg[2], uint
 }
 
 /*
- * Probe NPU2 device node and create PCI root device node
- * accordingly. The NPU2 device node should specify number
- * of links and xscom base address to access links.
+ * Set up NPU for NVLink and create PCI root device node
+ * accordingly.
  */
-static void npu2_probe_phb(struct dt_node *dn)
+int npu2_nvlink_init_npu(struct npu2 *npu)
 {
-	struct proc_chip *proc_chip;
-	struct dt_node *np, *link;
-	bool ocapi_detected = false, nvlink_detected = false;
-	uint32_t gcid, scom, index, phb_index, links;
+	struct dt_node *np;
 	uint64_t reg[2], mm_win[2], val;
-	char *path;
-
-	/* Abort if any OpenCAPI links detected */
-	dt_for_each_compatible(dn, link, "ibm,npu-link") {
-		if (npu2_dt_link_dev_type(link) == NPU2_DEV_TYPE_OPENCAPI)
-			ocapi_detected = true;
-		else
-			nvlink_detected = true;
-	}
-
-	if (ocapi_detected && nvlink_detected) {
-		prlog(PR_ERR, "NPU: NVLink and OpenCAPI devices on same chip not supported\n");
-	        return;
-	} else if (ocapi_detected) {
-		prlog(PR_INFO, "NPU: OpenCAPI link configuration detected, not initialising NVLink\n");
-		return;
-	}
-
-	/* Retrieve chip id */
-	path = dt_get_path(dn);
-	gcid = dt_get_chip_id(dn);
-	proc_chip = get_chip(gcid);
-	assert(proc_chip);
-	if ((proc_chip->ec_level & 0xf0) > 0x20) {
-		prerror("NPU: unsupported ec level on Chip 0x%x!\n", gcid);
-		return;
-	}
 
 	/* TODO: Clean this up with register names, etc. when we get
 	 * time. This just turns NVLink mode on in each brick and should
@@ -1403,64 +1372,56 @@ static void npu2_probe_phb(struct dt_node *dn)
 	 *
 	 * Obviously if the year is now 2020 that didn't happen and you
 	 * should fix this :-) */
-	xscom_write_mask(gcid, 0x5011000, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011030, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011060, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011090, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011200, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011230, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011260, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011290, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011400, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011430, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011460, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(gcid, 0x5011490, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011000, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011030, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011060, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011090, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011200, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011230, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011260, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011290, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011400, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011430, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011460, PPC_BIT(58), PPC_BIT(58));
+	xscom_write_mask(npu->chip_id, 0x5011490, PPC_BIT(58), PPC_BIT(58));
 
-	xscom_write_mask(gcid, 0x50110c0, PPC_BIT(53), PPC_BIT(53));
-	xscom_write_mask(gcid, 0x50112c0, PPC_BIT(53), PPC_BIT(53));
-	xscom_write_mask(gcid, 0x50114c0, PPC_BIT(53), PPC_BIT(53));
-	xscom_write_mask(gcid, 0x50110f1, PPC_BIT(41), PPC_BIT(41));
-	xscom_write_mask(gcid, 0x50112f1, PPC_BIT(41), PPC_BIT(41));
-	xscom_write_mask(gcid, 0x50114f1, PPC_BIT(41), PPC_BIT(41));
+	xscom_write_mask(npu->chip_id, 0x50110c0, PPC_BIT(53), PPC_BIT(53));
+	xscom_write_mask(npu->chip_id, 0x50112c0, PPC_BIT(53), PPC_BIT(53));
+	xscom_write_mask(npu->chip_id, 0x50114c0, PPC_BIT(53), PPC_BIT(53));
+	xscom_write_mask(npu->chip_id, 0x50110f1, PPC_BIT(41), PPC_BIT(41));
+	xscom_write_mask(npu->chip_id, 0x50112f1, PPC_BIT(41), PPC_BIT(41));
+	xscom_write_mask(npu->chip_id, 0x50114f1, PPC_BIT(41), PPC_BIT(41));
 
 	val = NPU2_NTL_MISC_CFG2_BRICK_ENABLE |
 	      NPU2_NTL_MISC_CFG2_NDL_TX_PARITY_ENA |
 	      NPU2_NTL_MISC_CFG2_NDL_PRI_PARITY_ENA |
 	      NPU2_NTL_MISC_CFG2_RCV_CREDIT_OVERFLOW_ENA;
-	xscom_write_mask(gcid, 0x5011110, val, val);
-	xscom_write_mask(gcid, 0x5011130, val, val);
-	xscom_write_mask(gcid, 0x5011310, val, val);
-	xscom_write_mask(gcid, 0x5011330, val, val);
-	xscom_write_mask(gcid, 0x5011510, val, val);
-	xscom_write_mask(gcid, 0x5011530, val, val);
+	xscom_write_mask(npu->chip_id, 0x5011110, val, val);
+	xscom_write_mask(npu->chip_id, 0x5011130, val, val);
+	xscom_write_mask(npu->chip_id, 0x5011310, val, val);
+	xscom_write_mask(npu->chip_id, 0x5011330, val, val);
+	xscom_write_mask(npu->chip_id, 0x5011510, val, val);
+	xscom_write_mask(npu->chip_id, 0x5011530, val, val);
 
 	val = PPC_BIT(6) | PPC_BIT(7) | PPC_BIT(11);
-	xscom_write_mask(gcid, 0x5011009, val, PPC_BITMASK(6,11));
-	xscom_write_mask(gcid, 0x5011039, val, PPC_BITMASK(6,11));
-	xscom_write_mask(gcid, 0x5011069, val, PPC_BITMASK(6,11));
-	xscom_write_mask(gcid, 0x5011099, val, PPC_BITMASK(6,11));
-	xscom_write_mask(gcid, 0x5011209, val, PPC_BITMASK(6,11));
-	xscom_write_mask(gcid, 0x5011239, val, PPC_BITMASK(6,11));
-	xscom_write_mask(gcid, 0x5011269, val, PPC_BITMASK(6,11));
-	xscom_write_mask(gcid, 0x5011299, val, PPC_BITMASK(6,11));
-	xscom_write_mask(gcid, 0x5011409, val, PPC_BITMASK(6,11));
-	xscom_write_mask(gcid, 0x5011439, val, PPC_BITMASK(6,11));
-	xscom_write_mask(gcid, 0x5011469, val, PPC_BITMASK(6,11));
-	xscom_write_mask(gcid, 0x5011499, val, PPC_BITMASK(6,11));
-
-	index = dt_prop_get_u32(dn, "ibm,npu-index");
-	phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
-	links = dt_prop_get_u32(dn, "ibm,npu-links");
-	prlog(PR_INFO, "NPU: Chip %d Found NPU2#%d (%d links) at %s\n",
-	      gcid, index, links, path);
-	free(path);
-
-	/* Retrieve scom base address */
-	scom = dt_get_address(dn, 0, NULL);
-	prlog(PR_INFO, "   SCOM Base:  %08x\n", scom);
+	xscom_write_mask(npu->chip_id, 0x5011009, val, PPC_BITMASK(6,11));
+	xscom_write_mask(npu->chip_id, 0x5011039, val, PPC_BITMASK(6,11));
+	xscom_write_mask(npu->chip_id, 0x5011069, val, PPC_BITMASK(6,11));
+	xscom_write_mask(npu->chip_id, 0x5011099, val, PPC_BITMASK(6,11));
+	xscom_write_mask(npu->chip_id, 0x5011209, val, PPC_BITMASK(6,11));
+	xscom_write_mask(npu->chip_id, 0x5011239, val, PPC_BITMASK(6,11));
+	xscom_write_mask(npu->chip_id, 0x5011269, val, PPC_BITMASK(6,11));
+	xscom_write_mask(npu->chip_id, 0x5011299, val, PPC_BITMASK(6,11));
+	xscom_write_mask(npu->chip_id, 0x5011409, val, PPC_BITMASK(6,11));
+	xscom_write_mask(npu->chip_id, 0x5011439, val, PPC_BITMASK(6,11));
+	xscom_write_mask(npu->chip_id, 0x5011469, val, PPC_BITMASK(6,11));
+	xscom_write_mask(npu->chip_id, 0x5011499, val, PPC_BITMASK(6,11));
 
 	/* Reassign the BARs */
-	assign_mmio_bars(gcid, scom, reg, mm_win);
+	assign_mmio_bars(npu->chip_id, npu->xscom_base, reg, mm_win);
+	npu->regs = (void *)reg[0];
+	npu->mm_base = mm_win[0];
+	npu->mm_size = mm_win[1];
 
 	if (reg[0] && reg[1])
 		prlog(PR_INFO, "   Global MMIO BAR:  %016llx (%lldMB)\n",
@@ -1477,17 +1438,21 @@ static void npu2_probe_phb(struct dt_node *dn)
 				"ibm,ioda2-npu2-phb");
 	dt_add_property_strings(np, "device_type", "pciex");
 	dt_add_property(np, "reg", reg, sizeof(reg));
-	dt_add_property_cells(np, "ibm,phb-index", phb_index);
-	dt_add_property_cells(np, "ibm,npu-index", index);
-	dt_add_property_cells(np, "ibm,chip-id", gcid);
-	dt_add_property_cells(np, "ibm,xscom-base", scom);
-	dt_add_property_cells(np, "ibm,npcq", dn->phandle);
-	dt_add_property_cells(np, "ibm,links", links);
+	dt_add_property_cells(np, "ibm,phb-index", npu->phb_index);
+	dt_add_property_cells(np, "ibm,npu-index", npu->index);
+	dt_add_property_cells(np, "ibm,chip-id", npu->chip_id);
+	dt_add_property_cells(np, "ibm,xscom-base", npu->xscom_base);
+	dt_add_property_cells(np, "ibm,npcq", npu->dt_node->phandle);
+	dt_add_property_cells(np, "ibm,links", npu->total_devices);
 	dt_add_property(np, "ibm,mmio-window", mm_win, sizeof(mm_win));
 	dt_add_property_cells(np, "ibm,phb-diag-data-size", 0);
 
 	/* Disable fast reboot - not currently supported */
 	disable_fast_reboot("NVLink device enabled");
+
+	npu2_nvlink_create_phb(npu, np);
+
+	return 0;
 }
 
 static uint32_t npu2_populate_pcie_cap(struct npu2_dev *dev,
@@ -1949,49 +1914,25 @@ static void npu2_setup_irqs(struct npu2 *p)
 	npu2_write(p, reg, val);
 }
 
-static void npu2_create_phb(struct dt_node *dn)
+void npu2_nvlink_create_phb(struct npu2 *npu, struct dt_node *dn)
 {
-	const struct dt_property *prop;
-	struct npu2 *p;
 	struct pci_slot *slot;
-	uint32_t links;
-	void *pmem;
-
-	/* Retrieve number of devices */
-	links = dt_prop_get_u32(dn, "ibm,links");
-	pmem = zalloc(sizeof(struct npu2) + links * sizeof(struct npu2_dev));
-	assert(pmem);
-
-	/* Populate PHB */
-	p = pmem;
-	p->index = dt_prop_get_u32(dn, "ibm,phb-index");
-	p->chip_id = dt_prop_get_u32(dn, "ibm,chip-id");
-	p->xscom_base = dt_prop_get_u32(dn, "ibm,xscom-base");
-	p->total_devices = links;
-	p->regs = (void *)dt_get_address(dn, 0, NULL);
-
-	prop = dt_require_property(dn, "ibm,mmio-window", -1);
-	assert(prop->len >= (2 * sizeof(uint64_t)));
-	p->mm_base = ((const uint64_t *)prop->prop)[0];
-	p->mm_size = ((const uint64_t *)prop->prop)[1];
-
-	p->devices = pmem + sizeof(struct npu2);
 
 	/* Generic PHB */
-	p->phb_nvlink.dt_node = dn;
-	p->phb_nvlink.ops = &npu_ops;
-	p->phb_nvlink.phb_type = phb_type_npu_v2;
-	init_lock(&p->lock);
-	init_lock(&p->phb_nvlink.lock);
-	list_head_init(&p->phb_nvlink.devices);
-	list_head_init(&p->phb_nvlink.virt_devices);
+	npu->phb_nvlink.dt_node = dn;
+	npu->phb_nvlink.ops = &npu_ops;
+	npu->phb_nvlink.phb_type = phb_type_npu_v2;
+	init_lock(&npu->lock);
+	init_lock(&npu->phb_nvlink.lock);
+	list_head_init(&npu->phb_nvlink.devices);
+	list_head_init(&npu->phb_nvlink.virt_devices);
 
-	npu2_setup_irqs(p);
-	npu2_populate_devices(p, dn);
-	npu2_add_interrupt_map(p, dn);
-	npu2_add_phb_properties(p);
+	npu2_setup_irqs(npu);
+	npu2_populate_devices(npu, dn);
+	npu2_add_interrupt_map(npu, dn);
+	npu2_add_phb_properties(npu);
 
-	slot = npu2_slot_create(&p->phb_nvlink);
+	slot = npu2_slot_create(&npu->phb_nvlink);
 	if (!slot)
 	{
 		/**
@@ -2002,41 +1943,10 @@ static void npu2_create_phb(struct dt_node *dn)
 		prlog(PR_ERR, "NPU: Cannot create PHB slot\n");
 	}
 
-	pci_register_phb(&p->phb_nvlink, OPAL_DYNAMIC_PHB_ID);
+	pci_register_phb(&npu->phb_nvlink, OPAL_DYNAMIC_PHB_ID);
 
-	npu2_init_ioda_cache(p);
-	npu2_hw_init(p);
-}
-
-void probe_npu2(void)
-{
-	struct proc_chip *chip = next_chip(NULL);
-	struct dt_node *np;
-	const char *zcal;
-
-	/* Abort if we're running on DD1 */
-	if (chip &&
-	    (chip->type == PROC_CHIP_P9_NIMBUS ||
-	     chip->type == PROC_CHIP_P9_CUMULUS) &&
-	    (chip->ec_level & 0xf0) == 0x10) {
-		prlog(PR_INFO, "NPU: DD1 not supported\n");
-		return;
-	}
-
-	/* Check for a zcal override */
-	zcal = nvram_query("nv_zcal_override");
-	if (zcal) {
-		nv_zcal_nominal = atoi(zcal);
-		prlog(PR_WARNING, "NPU: Using ZCAL impedance override = %d\n", nv_zcal_nominal);
-	}
-
-	/* Scan NPU2 XSCOM nodes */
-	dt_for_each_compatible(dt_root, np, "ibm,power9-npu")
-		npu2_probe_phb(np);
-
-	/* Scan newly created PHB nodes */
-	dt_for_each_compatible(dt_root, np, "ibm,power9-npu-pciex")
-		npu2_create_phb(np);
+	npu2_init_ioda_cache(npu);
+	npu2_hw_init(npu);
 }
 
 /*

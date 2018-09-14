@@ -201,7 +201,6 @@ extern int preload_capp_ucode(void);
 extern void preload_io_vpd(void);
 extern void probe_npu(void);
 extern void probe_npu2(void);
-extern void probe_npu2_opencapi(void);
 extern void uart_init(void);
 extern void mbox_init(void);
 extern void early_uart_init(void);

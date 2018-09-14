@@ -167,6 +167,7 @@ struct npu2 {
 
 	/* NVLink */
 	struct phb	phb_nvlink;
+	uint32_t	phb_index;
 };
 
 static inline struct npu2 *phb_to_npu2_nvlink(struct phb *phb)
@@ -192,6 +193,10 @@ static inline struct phb *npu2_dev_to_phb(struct npu2_dev *ndev)
 		assert(false);
 	}
 }
+
+int npu2_opencapi_init_npu(struct npu2 *npu);
+int npu2_nvlink_init_npu(struct npu2 *npu);
+void npu2_nvlink_create_phb(struct npu2 *npu, struct dt_node *dn);
 
 enum npu2_dev_type npu2_dt_link_dev_type(struct dt_node *link);
 void npu2_write_4b(struct npu2 *p, uint64_t reg, uint32_t val);

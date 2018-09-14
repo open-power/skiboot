@@ -1450,7 +1450,7 @@ static int npu2_add_mmio_regs(struct phb *phb, struct pci_device *pd,
 	dar    = (uint64_t) dev->npu->regs + NPU2_OTL_OSL_DAR(stacku, block);
 	tfc    = (uint64_t) dev->npu->regs + NPU2_OTL_OSL_TFC(stacku, block);
 	handle = (uint64_t) dev->npu->regs + NPU2_OTL_OSL_PEHANDLE(stacku,
-								block);
+								   block);
 	dt_add_property_cells(pd->dn, "ibm,opal-xsl-irq", irq);
 	dt_add_property_cells(pd->dn, "ibm,opal-xsl-mmio",
 			hi32(dsisr), lo32(dsisr),
@@ -1576,20 +1576,15 @@ static void setup_debug_training_state(struct npu2_dev *dev)
 	}
 }
 
-static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
-				       struct npu2_dev *dev)
+static void setup_device(struct npu2_dev *dev)
 {
-	uint32_t dev_index, npu_index;
 	struct dt_node *dn_phb, *dn;
 	struct pci_slot *slot;
 	char port_name[17];
 	uint64_t mm_win[2];
 
-	dev_index = dt_prop_get_u32(dn_link, "ibm,npu-link-index");
-	npu_index = dt_prop_get_u32(n->dt_node, "ibm,npu-index");
-
 	/* Populate PHB device node */
-	phys_map_get(n->chip_id, NPU_OCAPI_MMIO, dev_index, &mm_win[0],
+	phys_map_get(dev->npu->chip_id, NPU_OCAPI_MMIO, dev->brick_index, &mm_win[0],
 		     &mm_win[1]);
 	prlog(PR_DEBUG, "OCAPI: Setting MMIO window to %016llx + %016llx\n",
 	      mm_win[0], mm_win[1]);
@@ -1609,40 +1604,28 @@ static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 
 	dt_add_property_strings(dn_phb, "device_type", "pciex");
 	dt_add_property(dn_phb, "reg", mm_win, sizeof(mm_win));
-	dt_add_property_cells(dn_phb, "ibm,npu-index", npu_index);
-	dt_add_property_cells(dn_phb, "ibm,chip-id", n->chip_id);
-	dt_add_property_cells(dn_phb, "ibm,xscom-base", n->xscom_base);
-	dt_add_property_cells(dn_phb, "ibm,npcq", n->dt_node->phandle);
+	dt_add_property_cells(dn_phb, "ibm,npu-index", dev->npu->index);
+	dt_add_property_cells(dn_phb, "ibm,chip-id", dev->npu->chip_id);
+	dt_add_property_cells(dn_phb, "ibm,xscom-base", dev->npu->xscom_base);
+	dt_add_property_cells(dn_phb, "ibm,npcq", dev->npu->dt_node->phandle);
 	dt_add_property_cells(dn_phb, "ibm,links", 1);
 	dt_add_property(dn_phb, "ibm,mmio-window", mm_win, sizeof(mm_win));
 	dt_add_property_cells(dn_phb, "ibm,phb-diag-data-size", 0);
 	dt_add_property_cells(dn_phb, "ibm,opal-num-pes", NPU2_MAX_PE_NUM);
 
-	n->mm_base = mm_win[0];
-	n->mm_size = mm_win[1];
-
 	dt_add_property_cells(dn_phb, "ranges", 0x02000000,
-			      hi32(n->mm_base), lo32(n->mm_base),
-			      hi32(n->mm_base), lo32(n->mm_base),
-			      hi32(n->mm_size), lo32(n->mm_size));
+			      hi32(mm_win[0]), lo32(mm_win[0]),
+			      hi32(mm_win[0]), lo32(mm_win[0]),
+			      hi32(mm_win[1]), lo32(mm_win[1]));
 
-	dev->type = NPU2_DEV_TYPE_OPENCAPI;
-	dev->npu = n;
-	dev->dt_node = dn_link;
 	dev->phb_ocapi.dt_node = dn_phb;
 	dev->phb_ocapi.ops = &npu2_opencapi_ops;
 	dev->phb_ocapi.phb_type = phb_type_npu_v2_opencapi;
 	dev->phb_ocapi.scan_map = 0;
-	dev->link_index = dt_prop_get_u32(dn_link, "ibm,npu-link-index");
-	dev->brick_index = dev->link_index;
-	dev->pl_xscom_base = dt_prop_get_u64(dn_link, "ibm,npu-phy");
-	dev->lane_mask = dt_prop_get_u32(dn_link, "ibm,npu-lane-mask");
-	dev->link_speed = dt_prop_get_u64(dn_link, "ibm,link-speed");
+
 	dev->bdfn = 0;
 	dev->train_need_fence = false;
 	dev->train_fenced = false;
-	n->total_devices++;
-
 	/* Find I2C port for handling device reset */
 	snprintf(port_name, sizeof(port_name), "p8_%08x_e%dp%d",
 		 dev->npu->chip_id, platform.ocapi->i2c_engine,
@@ -1663,11 +1646,11 @@ static void npu2_opencapi_setup_device(struct dt_node *dn_link, struct npu2 *n,
 
 	/* TODO: Procedure 13.1.3.7 - AFU Memory Range BARs */
 	/* Procedure 13.1.3.8 - AFU MMIO Range BARs */
-	setup_afu_mmio_bars(n->chip_id, n->xscom_base, dev);
+	setup_afu_mmio_bars(dev->npu->chip_id, dev->npu->xscom_base, dev);
 	/* Procedure 13.1.3.9 - AFU Config BARs */
-	setup_afu_config_bars(n->chip_id, n->xscom_base, dev);
+	setup_afu_config_bars(dev->npu->chip_id, dev->npu->xscom_base, dev);
 
-	set_fence_control(n->chip_id, n->xscom_base, dev->brick_index, 0b00);
+	set_fence_control(dev->npu->chip_id, dev->npu->xscom_base, dev->brick_index, 0b00);
 
 	if (npu2_ocapi_training_state != NPU2_TRAIN_DEFAULT) {
 		setup_debug_training_state(dev);
@@ -1689,82 +1672,6 @@ failed:
 	return;
 }
 
-static void npu2_opencapi_probe(struct dt_node *dn)
-{
-	struct dt_node *link;
-	char *path;
-	uint32_t gcid, index, links, scom_base;
-	uint64_t reg[2];
-	uint64_t dev_index;
-	struct npu2 *n;
-	int rc, i = 0;
-
-	gcid = dt_get_chip_id(dn);
-	index = dt_prop_get_u32(dn, "ibm,npu-index");
-	links = dt_prop_get_u32(dn, "ibm,npu-links");
-
-	/* Don't try to init when we have an NVLink link */
-	dt_for_each_compatible(dn, link, "ibm,npu-link") {
-		if (npu2_dt_link_dev_type(link) != NPU2_DEV_TYPE_OPENCAPI) {
-			prlog(PR_DEBUG,
-			      "OCAPI: NPU%d: Non-OpenCAPI link found, skipping OpenCAPI init\n",
-			      index);
-			return;
-		}
-	}
-
-	path = dt_get_path(dn);
-	prlog(PR_INFO, "OCAPI: Chip %d Found OpenCAPI NPU%d (%d links) at %s\n",
-	      gcid, index, links, path);
-	free(path);
-
-	assert(platform.ocapi);
-
-	/* TODO: Test OpenCAPI with fast reboot and make it work */
-	disable_fast_reboot("OpenCAPI device enabled");
-
-	scom_base = dt_get_address(dn, 0, NULL);
-	prlog(PR_INFO, "OCAPI:	 SCOM Base:  %08x\n", scom_base);
-
-	setup_global_mmio_bar(gcid, scom_base, reg);
-
-	n = zalloc(sizeof(struct npu2) + links * sizeof(struct npu2_dev));
-	n->devices = (struct npu2_dev *)(n + 1);
-	n->chip_id = gcid;
-	n->xscom_base = scom_base;
-	n->regs = (void *)reg[0];
-	n->dt_node = dn;
-
-	dt_for_each_compatible(dn, link, "ibm,npu-link") {
-		dev_index = dt_prop_get_u32(link, "ibm,npu-link-index");
-		prlog(PR_INFO, "OCAPI: Configuring link index %lld\n",
-		      dev_index);
-
-		/* Procedure 13.1.3.1 - Select OCAPI vs NVLink */
-		brick_config(gcid, scom_base, dev_index);
-
-		/* Procedure 13.1.3.5 - Transaction Layer Configuration */
-		tl_config(gcid, scom_base, dev_index);
-
-		/* Procedure 13.1.3.6 - Address Translation Configuration */
-		address_translation_config(gcid, scom_base, dev_index);
-	}
-
-	/* Procedure 13.1.3.10 - Interrupt Configuration */
-	rc = setup_irq(n);
-	if (rc)
-		goto failed;
-
-	dt_for_each_compatible(dn, link, "ibm,npu-link") {
-		npu2_opencapi_setup_device(link, n, &n->devices[i]);
-		i++;
-	}
-
-	return;
-failed:
-	free(n);
-}
-
 static void read_nvram_training_state(void)
 {
 	const char *state;
@@ -1782,14 +1689,55 @@ static void read_nvram_training_state(void)
 	}
 }
 
-void probe_npu2_opencapi(void)
+int npu2_opencapi_init_npu(struct npu2 *npu)
 {
-	struct dt_node *np_npu;
+	struct npu2_dev *dev;
+	uint64_t reg[2];
+	int rc;
 
+	assert(platform.ocapi);
 	read_nvram_training_state();
 
-	dt_for_each_compatible(dt_root, np_npu, "ibm,power9-npu")
-		npu2_opencapi_probe(np_npu);
+	/* TODO: Test OpenCAPI with fast reboot and make it work */
+	disable_fast_reboot("OpenCAPI device enabled");
+
+	setup_global_mmio_bar(npu->chip_id, npu->xscom_base, reg);
+
+	npu->regs = (void *)reg[0];
+
+	for (int i = 0; i < npu->total_devices; i++) {
+		dev = &npu->devices[i];
+		if (dev->type != NPU2_DEV_TYPE_OPENCAPI)
+			continue;
+
+		prlog(PR_INFO, "OCAPI: Configuring link index %d, brick %d\n",
+		      dev->link_index, dev->brick_index);
+
+		/* Procedure 13.1.3.1 - Select OCAPI vs NVLink */
+		brick_config(npu->chip_id, npu->xscom_base, dev->brick_index);
+
+		/* Procedure 13.1.3.5 - Transaction Layer Configuration */
+		tl_config(npu->chip_id, npu->xscom_base, dev->brick_index);
+
+		/* Procedure 13.1.3.6 - Address Translation Configuration */
+		address_translation_config(npu->chip_id, npu->xscom_base, dev->brick_index);
+	}
+
+	/* Procedure 13.1.3.10 - Interrupt Configuration */
+	rc = setup_irq(npu);
+	if (rc)
+		goto failed;
+
+	for (int i = 0; i < npu->total_devices; i++) {
+		dev = &npu->devices[i];
+		if (dev->type != NPU2_DEV_TYPE_OPENCAPI)
+			continue;
+		setup_device(dev);
+	}
+
+	return 0;
+failed:
+	return -1;
 }
 
 static const struct phb_ops npu2_opencapi_ops = {
