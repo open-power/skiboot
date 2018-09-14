@@ -1238,14 +1238,24 @@ exit:
 bool occ_get_gpu_presence(struct proc_chip *chip, int gpu_num)
 {
 	struct occ_dynamic_data *ddata;
+	static int max_retries = 20;
+	static bool found = false;
 
 	assert(gpu_num <= 2);
 
 	ddata = get_occ_dynamic_data(chip);
+	while (!found && max_retries) {
+		if (ddata->major_version == 0 && ddata->minor_version >= 1) {
+			found = true;
+			break;
+		}
+		time_wait_ms(100);
+		max_retries--;
+		ddata = get_occ_dynamic_data(chip);
+	}
 
-	if (ddata->major_version != 0 || ddata->minor_version < 1) {
-		prlog(PR_INFO, "OCC: OCC not reporting GPU slot presence, "
-		      "assuming device is present\n");
+	if (!found) {
+		prlog(PR_INFO, "OCC: No GPU slot presence, assuming GPU present\n");
 		return true;
 	}
 
