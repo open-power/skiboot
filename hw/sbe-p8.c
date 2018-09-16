@@ -71,7 +71,7 @@ static void p8_sbe_dump_timer_ffdc(void)
  */
 void p8_sbe_update_timer_expiry(uint64_t new_target)
 {
-	uint64_t count, gen, gen2, req, now = mftb();
+	uint64_t count, gen, gen2, req, now;
 	int64_t rc;
 
 	if (!sbe_has_timer || new_target == sbe_timer_target)
@@ -79,6 +79,8 @@ void p8_sbe_update_timer_expiry(uint64_t new_target)
 
 	sbe_timer_target = new_target;
 
+	_xscom_lock();
+	now = mftb();
 	/* Calculate how many increments from now, rounded up */
 	if (now < new_target)
 		count = (new_target - now + sbe_timer_inc - 1) / sbe_timer_inc;
@@ -95,7 +97,6 @@ void p8_sbe_update_timer_expiry(uint64_t new_target)
 
 	do {
 		/* Grab generation and spin if odd */
-		_xscom_lock();
 		for (;;) {
 			rc = _xscom_read(sbe_timer_chip, 0xE0006, &gen, false);
 			if (rc) {
@@ -148,8 +149,8 @@ void p8_sbe_update_timer_expiry(uint64_t new_target)
 			_xscom_unlock();
 			return;
 		}
-		_xscom_unlock();
 	} while(gen != gen2);
+	_xscom_unlock();
 
 	/* Check if the timer is working. If at least 1ms has elapsed
 	 * since the last call to this function, check that the gen
