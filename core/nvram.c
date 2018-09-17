@@ -21,6 +21,7 @@
 #include <device.h>
 #include <platform.h>
 #include <nvram.h>
+#include <timebase.h>
 
 static void *nvram_image;
 static uint32_t nvram_size;
@@ -126,6 +127,8 @@ void nvram_read_complete(bool success)
 
 bool nvram_wait_for_load(void)
 {
+	uint64_t started;
+
 	/* Short cut */
 	if (nvram_ready)
 		return true;
@@ -145,12 +148,18 @@ bool nvram_wait_for_load(void)
 		return false;
 	}
 
+	started = mftb();
+
 	while (!nvram_ready) {
 		opal_run_pollers();
 		/* If the read fails, tell the caller */
 		if (!nvram_image && !nvram_size)
 			return false;
 	}
+
+	prlog(PR_DEBUG, "NVRAM: Waited %lums for nvram to load\n",
+		tb_to_msecs(mftb() - started));
+
 	return true;
 }
 

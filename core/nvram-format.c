@@ -217,6 +217,8 @@ const char *nvram_query(const char *key)
 	const char *part_end, *start;
 	int key_len = strlen(key);
 
+	assert(key);
+
 	if (!nvram_has_loaded()) {
 		prlog(PR_WARNING, "NVRAM: Query before is done loading\n");
 		prlog(PR_WARNING, "NVRAM: Waiting for load\n");
