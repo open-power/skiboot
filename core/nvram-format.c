@@ -278,6 +278,14 @@ const char *nvram_query(const char *key)
 }
 
 
+/*
+ * nvram_query_eq() - Check if the given 'key' exists and
+ * is set to 'value'.
+ *
+ * Note: Its an error to check for non-existence of a key
+ * by passing 'value == NULL' as a key's value can never be
+ * NULL in nvram.
+ */
 bool nvram_query_eq(const char *key, const char *value)
 {
 	const char *s = nvram_query(key);
@@ -285,5 +293,6 @@ bool nvram_query_eq(const char *key, const char *value)
 	if (!s)
 		return false;
 
+	assert(value != NULL);
 	return !strcmp(s, value);
 }
