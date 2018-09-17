@@ -47,7 +47,7 @@ enum MemoryError_t
 	MEMORY_ERROR_PREDICTIVE = 2,
 };
 
-/* Capability sets, for get_interface_capabilities */
+/** Capability sets, for get_interface_capabilities */
 #define HBRT_CAPS_SET0_COMMON		0
 #define HBRT_CAPS_SET1_OPAL		1
 #define HBRT_CAPS_SET2_PHYP		2
@@ -59,7 +59,19 @@ enum MemoryError_t
  * Previous implementations may have incorrectly ignored failures.
  */
 #define HBRT_CAPS_OPAL_HAS_XSCOM_RC   (1ul << 0)
-#define HBRT_CAPS_OPAL_HAS_WAKEUP_SUPPORT (1ul << 1)
+
+/**
+ * OPAL supports wakeup interface
+ */
+#define HBRT_CAPS_OPAL_HAS_WAKEUP_SUPPORT     (1ul << 1)
+
+/**
+ * OPAL supports '2=clear all previous forces' argument
+ */
+#define HBRT_CAPS_OPAL_HAS_WAKEUP_CLEAR       (1ul << 2)
+
+/********************/
+
 
 /**
  *  Load types for the load_pm_complex() interface
@@ -70,6 +82,61 @@ enum MemoryError_t
  */
 #define HBRT_PM_LOAD    0
 #define HBRT_PM_RELOAD  1
+
+/** Common return codes for scom_read(), scom_write(). */
+#define HBRT_RC_RANGE__SCOM   0x1000
+
+/* RC for a piberr is equal to 0x1000 plus the pib error value,
+ made into a negative */
+#define HBRT_RC_PIBERR_MASK            (0x00000000u - 0x00001007u) /* 0xFFFF_EFF9 */
+
+#define HBRT_RC_PIBERR_001_BUSY        (0x00000000u - 0x00001001u) /* 0xFFFF_EFFF */
+#define HBRT_RC_PIBERR_010_OFFLINE     (0x00000000u - 0x00001002u) /* 0xFFFF_EFFE */
+#define HBRT_RC_PIBERR_011_PGOOD       (0x00000000u - 0x00001003u) /* 0xFFFF_EFFD */
+#define HBRT_RC_PIBERR_100_INVALIDADDR (0x00000000u - 0x00001004u) /* 0xFFFF_EFFC */
+#define HBRT_RC_PIBERR_101_CLOCKERR    (0x00000000u - 0x00001005u) /* 0xFFFF_EFFB */
+#define HBRT_RC_PIBERR_110_PARITYERR   (0x00000000u - 0x00001006u) /* 0xFFFF_EFFA */
+#define HBRT_RC_PIBERR_111_TIMEOUT     (0x00000000u - 0x00001007u) /* 0xFFFF_EFF9 */
+
+/* Memory channel failure caused an error out to buffer chip. */
+#define HBRT_RC_CHANNEL_FAILURE        (0x00000000u - 0x00001008u) /* 0xFFFF_EFF8 */
+
+/* Any host-specific RCs will be this value or bigger */
+#define HBRT_RC_NEXT_OPEN_RC           (0x00000000u - 0x00001009u) /* 0xFFFF_EFF7 */
+
+/********************/
+
+
+/** Common return codes for firmware_request(). -0x2000 */
+#define HBRT_RC_RANGE__FIRMWARE_REQUEST   0x2000
+
+/* FSP failed due to a a reset/reload. Only applicable when
+ * hostInterfaces::hbrt_fw_msg::io_type is set to
+ * HBRT_FW_MSG_HBRT_FSP_REQ
+ */
+#define HBRT_RC_FSPDEAD       -8193    //0x2001
+
+/********************/
+
+
+/** Common return codes for wakeup(). -0x3000 */
+#define HBRT_RC_RANGE__WAKEUP   0x3000
+
+/* Wakeup was rejected because core was in checkstop statte */
+#define HBRT_RC_WAKEUP_INVALID_ON_CORE_XSTOP      -12289   /* -0x3001 */
+
+/********************/
+
+
+/* FSP failed due to a a reset/reload. Only applicable when
+ * hostInterfaces::hbrt_fw_msg::io_type is set to
+ * HBRT_FW_MSG_HBRT_FSP_REQ
+ */
+#define HBRT_RC_FSPDEAD       -8193    //0x2001
+
+/********************/
+
+
 
 struct host_interfaces {
 	/** Interface version. */
