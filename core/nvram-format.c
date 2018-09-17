@@ -220,8 +220,9 @@ const char *nvram_query(const char *key)
 	assert(key);
 
 	if (!nvram_has_loaded()) {
-		prlog(PR_WARNING, "NVRAM: Query before is done loading\n");
-		prlog(PR_WARNING, "NVRAM: Waiting for load\n");
+		prlog(PR_DEBUG,
+			"NVRAM: Query for '%s' must wait for NVRAM to load\n",
+			key);
 		if (!nvram_wait_for_load()) {
 			prlog(PR_CRIT, "NVRAM: Failed to load\n");
 			return NULL;
