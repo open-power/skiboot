@@ -3152,6 +3152,25 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			xscom_write(p->chip_id, p->pe_stk_xscom + 0x1,
 				    ~p->nfir_cache);
 
+			/* Re-read errors in PFIR and NFIR and reset any new
+			 * error reported.
+			 */
+			xscom_read(p->chip_id, p->pci_stk_xscom +
+				   XPEC_PCI_STK_PCI_FIR, &p->pfir_cache);
+			xscom_read(p->chip_id, p->pe_stk_xscom +
+				   XPEC_NEST_STK_PCI_NFIR, &p->nfir_cache);
+
+			if (p->pfir_cache || p->nfir_cache) {
+				PHBERR(p, "CRESET: PHB still fenced !!\n");
+				phb4_dump_pec_err_regs(p);
+
+				/* Reset the PHB errors */
+				xscom_write(p->chip_id, p->pci_stk_xscom +
+					    XPEC_PCI_STK_PCI_FIR, 0);
+				xscom_write(p->chip_id, p->pe_stk_xscom +
+					    XPEC_NEST_STK_PCI_NFIR, 0);
+			}
+
 			/* Clear PHB from reset */
 			xscom_write(p->chip_id,
 				    p->pci_stk_xscom + XPEC_PCI_STK_ETU_RESET, 0x0);
