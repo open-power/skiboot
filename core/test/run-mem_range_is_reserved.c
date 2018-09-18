@@ -53,6 +53,8 @@ static void real_free(void *p)
 #include <assert.h>
 #include <stdio.h>
 
+enum proc_chip_quirks proc_chip_quirks;
+
 void lock_caller(struct lock *l, const char *caller)
 {
 	(void)caller;

@@ -52,6 +52,7 @@ static inline void real_free(void *p)
 #include <stdio.h>
 
 struct dt_node *dt_root;
+enum proc_chip_quirks proc_chip_quirks;
 
 void lock_caller(struct lock *l, const char *caller)
 {

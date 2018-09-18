@@ -376,9 +376,7 @@ void __noreturn fast_reboot_entry(void)
 		 * preload.
 		 *
 		 * Mambo may have embedded payload here, so don't clear
-		 * it at all. The OS may have already overwritten it, so
-		 * mambo really should reserve memory regions for this, if
-		 * fast reboot is to work reliably.
+		 * it at all.
 		 */
 		memset(KERNEL_LOAD_BASE, 0, KERNEL_LOAD_SIZE);
 		memset(INITRAMFS_LOAD_BASE, 0, INITRAMFS_LOAD_SIZE);

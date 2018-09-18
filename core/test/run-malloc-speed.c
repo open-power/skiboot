@@ -49,6 +49,7 @@ static inline void real_free(void *p)
 
 char __rodata_start[1], __rodata_end[1];
 struct dt_node *dt_root;
+enum proc_chip_quirks proc_chip_quirks;
 
 void lock_caller(struct lock *l, const char *caller)
 {

@@ -51,6 +51,7 @@ static inline void real_free(void *p)
 #define TEST_HEAP_SIZE (1ULL << TEST_HEAP_ORDER)
 
 struct dt_node *dt_root;
+enum proc_chip_quirks proc_chip_quirks;
 
 void lock_caller(struct lock *l, const char *caller)
 {

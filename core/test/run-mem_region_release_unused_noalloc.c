@@ -56,6 +56,8 @@ static inline void __free(void *p, const char *location __attribute__((unused)))
 #include <assert.h>
 #include <stdio.h>
 
+enum proc_chip_quirks proc_chip_quirks;
+
 void lock_caller(struct lock *l, const char *caller)
 {
 	(void)caller;

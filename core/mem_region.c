@@ -21,6 +21,7 @@
 #include <lock.h>
 #include <device.h>
 #include <cpu.h>
+#include <chip.h>
 #include <affinity.h>
 #include <types.h>
 #include <mem_region.h>
@@ -92,6 +93,21 @@ static struct mem_region skiboot_cpu_stacks = {
 	.len		= 0, /* TBA */
 	.type		= REGION_SKIBOOT_FIRMWARE,
 };
+
+static struct mem_region skiboot_mambo_kernel = {
+	.name		= "ibm,firmware-mambo-kernel",
+	.start		= (unsigned long)KERNEL_LOAD_BASE,
+	.len		= KERNEL_LOAD_SIZE,
+	.type		= REGION_SKIBOOT_FIRMWARE,
+};
+
+static struct mem_region skiboot_mambo_initramfs = {
+	.name		= "ibm,firmware-mambo-initramfs",
+	.start		= (unsigned long)INITRAMFS_LOAD_BASE,
+	.len		= INITRAMFS_LOAD_SIZE,
+	.type		= REGION_SKIBOOT_FIRMWARE,
+};
+
 
 struct alloc_hdr {
 	bool free : 1;
@@ -1105,6 +1121,14 @@ void mem_region_init(void)
 	    !add_region(&skiboot_cpu_stacks)) {
 		prerror("Out of memory adding skiboot reserved areas\n");
 		abort();
+	}
+
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
+		if (!add_region(&skiboot_mambo_kernel) ||
+		    !add_region(&skiboot_mambo_initramfs)) {
+			prerror("Out of memory adding mambo payload\n");
+			abort();
+		}
 	}
 
 	/* Add reserved reanges from HDAT */
