@@ -69,6 +69,10 @@ static const char *fast_reboot_disabled = NULL;
 
 void disable_fast_reboot(const char *reason)
 {
+	if (fast_reboot_disabled)
+		return;
+
+	prlog(PR_NOTICE, "RESET: Fast reboot disabled: %s\n", reason);
 	fast_reboot_disabled = reason;
 }
 
@@ -92,8 +96,7 @@ void add_fast_reboot_dt_entries(void)
 static bool fast_reboot_sanity_check(void)
 {
 	if (!mem_check_all()) {
-		prlog(PR_NOTICE, "REST: Fast reboot failed due to inconsistent "
-				"firmware data\n");
+		disable_fast_reboot("Inconsistent firmware data");
 		return false;
 	}
 
@@ -121,13 +124,12 @@ void fast_reboot(void)
 	 * Ensure all other CPUs have left OPAL calls.
 	 */
 	if (!opal_quiesce(QUIESCE_HOLD, -1)) {
-		prlog(PR_NOTICE, "RESET: Fast reboot disabled because OPAL "
-				"quiesce timed out\n");
+		disable_fast_reboot("OPAL quiesce timeout");
 		return;
 	}
 
 	if (fast_reboot_disabled) {
-		prlog(PR_DEBUG, "RESET: Fast reboot disabled because %s\n",
+		prlog(PR_NOTICE, "RESET: Fast reboot disabled: %s\n",
 		      fast_reboot_disabled);
 		opal_quiesce(QUIESCE_RESUME, -1);
 		return;
