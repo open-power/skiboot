@@ -84,4 +84,7 @@ struct mem_region *find_mem_region(const char *name);
 
 bool mem_range_is_reserved(uint64_t start, uint64_t size);
 
+/* Read-only memory checksum */
+bool verify_romem(void);
+
 #endif /* __MEMORY_REGION */

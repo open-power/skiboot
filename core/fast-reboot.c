@@ -100,6 +100,11 @@ static bool fast_reboot_sanity_check(void)
 		return false;
 	}
 
+	if (!verify_romem()) {
+		disable_fast_reboot("Inconsistent firmware romem checksum");
+		return false;
+	}
+
 	return true;
 }
 

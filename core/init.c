@@ -816,6 +816,51 @@ static void pci_nvram_init(void)
 	}
 }
 
+static uint32_t mem_csum(void *_p, void *_e)
+{
+	size_t len = _e - _p;
+	uint32_t *p = _p;
+	uint32_t v1 = 0, v2 = 0;
+	uint32_t csum;
+	unsigned int i;
+
+	for (i = 0; i < len; i += 4) {
+		uint32_t v = *p++;
+		v1 += v;
+		v2 += v1;
+	}
+
+	csum = v1 ^ v2;
+
+	return csum;
+}
+
+static uint32_t romem_csum;
+
+static void checksum_romem(void)
+{
+	uint32_t csum;
+
+	romem_csum = 0;
+
+	csum = mem_csum(_start, _romem_end);
+	romem_csum ^= csum;
+	csum = mem_csum(__builtin_kernel_start, __builtin_kernel_end);
+	romem_csum ^= csum;
+}
+
+bool verify_romem(void)
+{
+	uint32_t old = romem_csum;
+	checksum_romem();
+	if (old != romem_csum) {
+		romem_csum = old;
+		prlog(PR_NOTICE, "OPAL checksums did not match\n");
+		return false;
+	}
+	return true;
+}
+
 /* Called from head.S, thus no prototype. */
 void main_cpu_entry(const void *fdt);
 
@@ -1176,6 +1221,8 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* On P9, switch to radix mode by default */
 	cpu_set_radix_mode();
+
+	checksum_romem();
 
 	load_and_boot_kernel(false);
 }
