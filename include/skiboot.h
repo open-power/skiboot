@@ -217,6 +217,7 @@ extern int64_t opal_signal_system_reset(int cpu_nr);
 
 /* Fast reboot support */
 extern void disable_fast_reboot(const char *reason);
+extern void add_fast_reboot_dt_entries(void);
 extern void fast_reboot(void);
 extern void __noreturn __secondary_cpu_entry(void);
 extern void __noreturn load_and_boot_kernel(bool is_reboot);

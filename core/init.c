@@ -543,6 +543,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	op_display(OP_LOG, OP_MOD_INIT, 0x000B);
 
+	add_fast_reboot_dt_entries();
+
 	/* Create the device tree blob to boot OS. */
 	fdt = create_dtb(dt_root, false);
 	if (!fdt) {
