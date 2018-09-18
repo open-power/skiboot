@@ -72,6 +72,17 @@ void disable_fast_reboot(const char *reason)
 	fast_reboot_disabled = reason;
 }
 
+void add_fast_reboot_dt_entries(void)
+{
+	dt_check_del_prop(opal_node, "fast-reboot");
+
+	if (fast_reboot_disabled) {
+		dt_add_property_string(opal_node, "fast-reboot", fast_reboot_disabled);
+	} else {
+		dt_add_property_string(opal_node, "fast-reboot", "okay");
+	}
+}
+
 /*
  * This is called by the reboot CPU after all other CPUs have been
  * quiesced and stopped, to perform various sanity checks on firmware
