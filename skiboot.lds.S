@@ -20,6 +20,7 @@
 ENTRY(boot_entry);
 SECTIONS
 {
+	_start = .;
 	. = 0;
 
 	.head : {
@@ -63,23 +64,6 @@ SECTIONS
 		__rodata_start = .;
 		*(.rodata .rodata.*)
 		__rodata_end = .;
-	}
-
-	.data : {
-		/*
-		 * A couple of things that need to be 4K aligned and
-		 * to reside in their own pages for the sake of TCE
-		 * mappings
-		 */
-		. = ALIGN(0x1000);
-		*(.data.memcons);
-		. = ALIGN(0x1000);
-		*(.data.boot_trace);
-		. = ALIGN(0x1000);
-		*(.data*)
-		*(.force.data)
-		*(.toc1)
-		*(.branch_lt)
 	}
 
 	. = ALIGN(0x10);
@@ -144,6 +128,29 @@ SECTIONS
 		__sym_map_start = . ;
 		KEEP(*(.sym_map))
 		__sym_map_end = . ;
+	}
+
+	/*
+	 * Memory above this point should be un-changing after the OS
+	 * boots, and is verified with a checksum upon fast reboot.
+	 */
+	_romem_end = .;
+
+	.data : {
+		/*
+		 * A couple of things that need to be 4K aligned and
+		 * to reside in their own pages for the sake of TCE
+		 * mappings
+		 */
+		. = ALIGN(0x1000);
+		*(.data.memcons);
+		. = ALIGN(0x1000);
+		*(.data.boot_trace);
+		. = ALIGN(0x1000);
+		*(.data*)
+		*(.force.data)
+		*(.toc1)
+		*(.branch_lt)
 	}
 
 	/* We locate the BSS at 3M to leave room for the symbol map */

@@ -26,8 +26,6 @@
 #define STACK_BUF_ENTRIES	60
 static struct bt_entry bt_buf[STACK_BUF_ENTRIES];
 
-extern uint32_t _stext, _etext;
-
 /* Dumps backtrace to buffer */
 void __nomcount ___backtrace(struct bt_entry *entries, unsigned int *count,
 				unsigned long r1,

@@ -48,6 +48,13 @@
 struct mem_region;
 extern struct mem_region *mem_region_next(struct mem_region *region);
 
+/* Misc linker script symbols */
+extern char _start[];
+extern char _stext[];
+extern char _etext[];
+extern char __sym_map_end[];
+extern char _romem_end[];
+
 #ifndef __TESTING__
 /* Readonly section start and end. */
 extern char __rodata_start[], __rodata_end[];
