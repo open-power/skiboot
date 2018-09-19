@@ -61,7 +61,7 @@ struct i2c_request {
 					      int rc, struct i2c_request *req);
 	void			*user_data;	/* Client data */
 	int			retries;
-	uint64_t		timeout;
+	uint64_t		timeout;	/* in ms */
 };
 
 /* Generic i2c */
