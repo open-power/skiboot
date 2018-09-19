@@ -1299,7 +1299,6 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 		fsp_alloc_inbound(msg);
 		return true;
 	case FSP_CMD_SP_RELOAD_COMP:
-		prlog(PR_INFO, "FSP: SP says Reset/Reload complete\n");
 		if (msg->data.bytes[3] & PPC_BIT8(0)) {
 			fsp_fips_dump_notify(msg->data.words[1],
 					     msg->data.words[2]);
@@ -1309,8 +1308,9 @@ static bool fsp_local_command(u32 cmd_sub_mod, struct fsp_msg *msg)
 				      msg->data.words[3]);
 		}
 		if (msg->data.bytes[3] & PPC_BIT8(2)) {
-			prlog(PR_DEBUG, "  A Reset/Reload was NOT done\n");
+			prlog(PR_INFO, "FSP: SP Reset/Reload was NOT done\n");
 		} else {
+			prlog(PR_INFO, "FSP: SP says Reset/Reload complete\n");
 			/* Notify clients that the FSP is back up */
 			fsp_notify_rr_state(FSP_RELOAD_COMPLETE);
 			fsp_repost_queued_msgs_post_rr();
