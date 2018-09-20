@@ -281,7 +281,10 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 	}
 	dt_add_property_u64s(node, "reg", addr, size);
 
-	/* Derive bus frquency */
+	/*
+	 * The bus-frequency of the xscom node is actually the PIB/PCB
+	 * frequency. It is derived from the nest-clock via a 4:1 divider
+	 */
 	freq = dt_prop_get_u64_def(dt_root, "nest-frequency", 0);
 	freq /= 4;
 	if (freq)
