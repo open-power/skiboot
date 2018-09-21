@@ -32,6 +32,7 @@
 #include <npu.h>
 #include <capp.h>
 #include <nvram.h>
+#include <cpu.h>
 
 /*
  * HMER register layout:
@@ -962,13 +963,53 @@ static int handle_thread_tfac_error(uint64_t tfmr, uint64_t *out_flags)
 	return recover;
 }
 
+static int64_t opal_handle_hmi(void);
+
+static void opal_handle_hmi_job(void *data __unused)
+{
+	opal_handle_hmi();
+}
+
+/*
+ * Queue hmi handling job If secondaries are still in OPAL
+ * This function is called by thread 0.
+ */
+static struct cpu_job **hmi_kick_secondaries(void)
+{
+	struct cpu_thread *ts = this_cpu();
+	struct cpu_job **hmi_jobs = NULL;
+	int job_sz = sizeof(struct cpu_job *) * cpu_thread_count;
+	int i;
+
+	for (i = 1; i < cpu_thread_count; i++) {
+		ts = next_cpu(ts);
+
+		/* Is this thread still in OPAL ? */
+		if (ts->state == cpu_state_active) {
+			if (!hmi_jobs) {
+				hmi_jobs = zalloc(job_sz);
+				assert(hmi_jobs);
+			}
+
+			prlog(PR_DEBUG, "Sending hmi job to thread %d\n", i);
+			hmi_jobs[i] = cpu_queue_job(ts, "handle_hmi_job",
+					opal_handle_hmi_job, NULL);
+		}
+	}
+	return hmi_jobs;
+}
+
 static int handle_all_core_tfac_error(uint64_t tfmr, uint64_t *out_flags)
 {
 	struct cpu_thread *t, *t0;
 	int recover = -1;
+	struct cpu_job **hmi_jobs = NULL;
 
 	t = this_cpu();
 	t0 = find_cpu_by_pir(cpu_get_thread0(t));
+
+	if (t == t0 && t0->state == cpu_state_os)
+		hmi_jobs = hmi_kick_secondaries();
 
 	/* Rendez vous all threads */
 	hmi_rendez_vous(1);
@@ -1050,6 +1091,14 @@ error_out:
 	 */
 	if (t0->tb_resynced)
 		*out_flags |= OPAL_HMI_FLAGS_TB_RESYNC;
+
+	if (t == t0 && hmi_jobs) {
+		int i;
+		for (i = 1; i < cpu_thread_count; i++)
+			if (hmi_jobs[i])
+				cpu_wait_job(hmi_jobs[i], true);
+		free(hmi_jobs);
+	}
 
 	return recover;
 }
