@@ -142,7 +142,7 @@ static void phb4_activate_shared_slot_witherspoon(struct proc_chip *chip)
 	prlog(PR_INFO, "Shared PCI slot activated\n");
 }
 
-static void phb4_pre_pci_fixup_witherspoon(void)
+static void witherspoon_shared_slot_fixup(void)
 {
 	struct pci_slot *slot0, *slot1;
 	struct proc_chip *chip0, *chip1;
@@ -202,11 +202,6 @@ static void phb4_pre_pci_fixup_witherspoon(void)
 			slot1->peer_slot = slot0;
 		}
 	}
-}
-
-static void witherspoon_pre_pci_fixup(void)
-{
-	phb4_pre_pci_fixup_witherspoon();
 }
 
 static void set_link_details(struct npu2 *npu, uint32_t link_index,
@@ -366,7 +361,7 @@ DECLARE_PLATFORM(witherspoon) = {
 	.name			= "Witherspoon",
 	.probe			= witherspoon_probe,
 	.init			= astbmc_init,
-	.pre_pci_fixup		= witherspoon_pre_pci_fixup,
+	.pre_pci_fixup		= witherspoon_shared_slot_fixup,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
 	.bmc			= &astbmc_openbmc,
