@@ -129,30 +129,31 @@ static struct hdat_i2c_type hdat_i2c_devs[] = {
 	{ 0x13, "i2c", "nxp,lpc11u35" },
 };
 
-struct hdat_i2c_label {
+struct hdat_i2c_info {
 	uint32_t id;
+	bool whitelist; /* true if the host may use the device */
 	const char *label;
 };
 
-static struct hdat_i2c_label hdat_i2c_labels[] = {
-	{ 0x1, "led-controller" },
-	{ 0x2, "pci-hotplug-pgood" },
-	{ 0x3, "pci-hotplug-control" },
-	{ 0x4, "tpm" },
-	{ 0x5, "module-vpd" },
-	{ 0x6, "dimm SPD" },
-	{ 0x7, "proc-vpd" },
-	{ 0x8, "sbe-eeprom" },
-	{ 0x9, "planar-vpd" },
-	{ 0xa, "opencapi-topology" },
-	{ 0xb, "opencapi-micro-reset" },
-	{ 0xc, "nvlink-cable" },
-	{ 0xd, "secure-window-open" },
-	{ 0xe, "physical-presence" },
-	{ 0xf, "mex-fpga" },
-	{ 0x10, "thermal-sensor" },
-	{ 0x11, "host-i2c-enable" },
-	{ 0x12, "gpu-config" },
+static struct hdat_i2c_info hdat_i2c_extra_info[] = {
+	{ 0x1,  false, "led-controller" },
+	{ 0x2,  false, "pci-hotplug-pgood" },
+	{ 0x3,  false, "pci-hotplug-control" },
+	{ 0x4,  true,  "tpm" },
+	{ 0x5,  true,  "module-vpd" },
+	{ 0x6,  true,  "dimm-spd" },
+	{ 0x7,  true,  "proc-vpd" },
+	{ 0x8,  false, "sbe-eeprom"},
+	{ 0x9,  true,  "planar-vpd" },
+	{ 0xa,  false, "opencapi-topology" },
+	{ 0xb,  false, "opencapi-micro-reset" },
+	{ 0xc,  false, "nvlink-cable" },
+	{ 0xd,  false, "secure-window-open" },
+	{ 0xe,  false, "physical-presence" },
+	{ 0xf,  false, "mex-fpga" },
+	{ 0x10, false, "thermal-sensor" },
+	{ 0x11, false, "host-i2c-enable" },
+	{ 0x12, false, "gpu-config" },
 };
 
 /*
@@ -171,15 +172,17 @@ static struct hdat_i2c_type *map_type(uint32_t type)
 	return NULL;
 }
 
-static const char *map_label(uint32_t type)
+static struct hdat_i2c_info *get_info(uint32_t type)
 {
+	static struct hdat_i2c_info no_info =
+		{ .id = 0x0, .whitelist = false, .label = "" };
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(hdat_i2c_labels); i++)
-		if (hdat_i2c_labels[i].id == type)
-			return hdat_i2c_labels[i].label;
+	for (i = 0; i < ARRAY_SIZE(hdat_i2c_extra_info); i++)
+		if (hdat_i2c_extra_info[i].id == type)
+			return &hdat_i2c_extra_info[i];
 
-	return NULL;
+	return &no_info;
 }
 
 static bool is_zeros(const void *p, size_t size)
@@ -204,8 +207,9 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 {
 	struct dt_node *i2cm, *bus, *node;
 	const struct hdat_i2c_type *type;
+	const struct hdat_i2c_info *info;
 	const struct i2c_dev *dev;
-	const char *label, *name, *compat;
+	const char *name, *compat;
 	const struct host_i2c_hdr *ahdr;
 	uint32_t dev_addr;
 	uint32_t version;
@@ -284,7 +288,7 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 
 		purpose = be32_to_cpu(dev->purpose);
 		type = map_type(dev->type);
-		label = map_label(purpose);
+		info = get_info(purpose);
 
 		/* HACK: Hostboot doesn't export the correct type information
 		 * for the DIMM SPD EEPROMs. This is a problem because SPD
@@ -316,11 +320,11 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		if (!type || dev->type == 0xFF)
 			prlog(PR_WARNING, "HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n",
 			      dev->i2cm_engine, dev->i2cm_port, name, dev_addr,
-			      dev->dev_port, purpose, label);
+			      dev->dev_port, purpose, info->label);
 		else
 			prlog(PR_DEBUG, "HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n",
 			      dev->i2cm_engine, dev->i2cm_port, name, dev_addr,
-			      dev->dev_port, purpose, label);
+			      dev->dev_port, purpose, info->label);
 
 		/*
 		 * Multi-port device require special handling since we need to
@@ -340,8 +344,10 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 			be32_to_cpu(dev->i2c_link));
 		if (compat)
 			dt_add_property_string(node, "compatible", compat);
-		if (label)
-			dt_add_property_string(node, "label", label);
+		if (info->label)
+			dt_add_property_string(node, "label", info->label);
+		if (!info->whitelist)
+			dt_add_property_string(node, "status", "reserved");
 
 		/*
 		 * Set a default timeout of 2s on the ports with a TPM. This is
