@@ -298,10 +298,15 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		 * driver will send 2 bytes when doing a random read,
 		 * potentially overwriting part of the SPD information.
 		 *
-		 * To work around this we force the compat string to "spd"
+		 * Just to make things interested the FSP also gets the device
+		 * type wrong. To work around both just set the device-type to
+		 * "spd" for anything in the 0x50 to 0x57 range since that's the
+		 * SPD eeprom range.
+		 *
+		 * XXX: Future chips might not use engine 3 for the DIMM buses.
 		 */
-		if (proc_gen == proc_gen_p9 && dev->type == 0x2 &&
-		    dev->i2cm_engine == 3) {
+		if (dev->i2cm_engine == 3 && dev_addr >= 0x50
+		    && dev_addr < 0x58) {
 			compat = "spd";
 			name = "eeprom";
 		} else if (type) {
