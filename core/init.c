@@ -394,6 +394,7 @@ static bool load_kernel(void)
 			       KERNEL_LOAD_BASE);
 			/* Hack for STB in Mambo, assume at least 4kb in mem */
 			kernel_size = SECURE_BOOT_HEADERS_SIZE;
+			kernel_entry = (uint64_t)KERNEL_LOAD_BASE;
 		}
 		if (stb_is_container(KERNEL_LOAD_BASE, kernel_size)) {
 			stb_container = KERNEL_LOAD_BASE;
