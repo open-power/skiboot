@@ -3703,6 +3703,15 @@ static uint64_t tve_encode_50b_noxlate(uint64_t start_addr, uint64_t end_addr)
 	return tve;
 }
 
+static bool phb4_is_dd20(struct phb4 *p)
+{
+	struct proc_chip *chip = get_chip(p->chip_id);
+
+	if (p->rev == PHB4_REV_NIMBUS_DD20 && ((0xf & chip->ec_level) == 0))
+		return true;
+	return false;
+}
+
 static int64_t phb4_get_capp_info(int chip_id, struct phb *phb,
 				  struct capp_info *info)
 {
@@ -3896,8 +3905,10 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 static void phb4_init_capp_errors(struct phb4 *p)
 {
 	/* Init_77: TXE Error AIB Fence Enable Register */
-	out_be64(p->regs + 0x0d30,	0xdff7bf0ff7ddfff0ull);
-
+	if (phb4_is_dd20(p))
+		out_be64(p->regs + 0x0d30,	0xdfffbf0ff7ddfff0ull);
+	else
+		out_be64(p->regs + 0x0d30,	0xdff7bf0ff7ddfff0ull);
 	/* Init_86: RXE_ARB Error AIB Fence Enable Register */
 	out_be64(p->regs + 0x0db0,	0xfbffd7bbfb7fbfefull);
 
@@ -4611,15 +4622,21 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x1c58,	0x0040000000000000ull);
 
 	/* Init_73..81 - TXE errors */
-	out_be64(p->regs + 0x0d00,	0xffffffffffffffffull);
 	out_be64(p->regs + 0x0d08,	0x0000000000000000ull);
-	out_be64(p->regs + 0x0d18,	0xffffff0fffffffffull);
-
 	/* Errata: Clear bit 17, otherwise a CFG write UR/CA will incorrectly
 	 * freeze a "random" PE (whatever last PE did an MMIO)
 	 */
 	out_be64(p->regs + 0x0d28,	0x0000000a00000000ull);
-	out_be64(p->regs + 0x0d30,	0xdff7bd05f7ddfff0ull); /* XXX CAPI has diff. value */
+	if (phb4_is_dd20(p)) {
+		out_be64(p->regs + 0x0d00,	0xf3acff0ff7ddfff0ull);
+		out_be64(p->regs + 0x0d18,	0xf3acff0ff7ddfff0ull);
+		out_be64(p->regs + 0x0d30,	0xdfffbd05f7ddfff0ull); /* XXX CAPI has diff. value */
+	} else  {
+		out_be64(p->regs + 0x0d00,	0xffffffffffffffffull);
+		out_be64(p->regs + 0x0d18,	0xffffff0fffffffffull);
+		out_be64(p->regs + 0x0d30,	0xdff7bd05f7ddfff0ull);
+	}
+
 	out_be64(p->regs + 0x0d40,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d48,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d50,	0x0000000000000000ull);
@@ -4686,8 +4703,13 @@ static void phb4_init_errors(struct phb4 *p)
 
 	/* Init_118..121 - LEM */
 	out_be64(p->regs + 0x0c00,	0x0000000000000000ull);
-	out_be64(p->regs + 0x0c30,	0xffffffffffffffffull);
-	out_be64(p->regs + 0x0c38,	0xffffffffffffffffull);
+	if (phb4_is_dd20(p)) {
+		out_be64(p->regs + 0x0c30,	0xf3ffffffffffffffull);
+		out_be64(p->regs + 0x0c38,	0xf3ffffffffffffffull);
+	} else {
+		out_be64(p->regs + 0x0c30,	0xffffffffffffffffull);
+		out_be64(p->regs + 0x0c38,	0xffffffffffffffffull);
+	}
 	out_be64(p->regs + 0x0c40,	0x0000000000000000ull);
 }
 
@@ -4859,7 +4881,10 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 
 	/* Init_126..130 - Re-enable error interrupts */
 	out_be64(p->regs + PHB_ERR_IRQ_ENABLE,			0xca8880cc00000000ull);
-	out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE,		0x2008400e08200000ull);
+	if (phb4_is_dd20(p))
+		out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE,		0x2000400e08200000ull);
+	else
+		out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE,		0x2008400e08200000ull);
 	out_be64(p->regs + PHB_RXE_ARB_ERR_IRQ_ENABLE,		0xc40038fc01804070ull);
 	out_be64(p->regs + PHB_RXE_MRG_ERR_IRQ_ENABLE,		0x00006100008000a8ull);
 	if (p->rev == PHB4_REV_NIMBUS_DD10)
