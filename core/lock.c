@@ -34,8 +34,6 @@ bool bust_locks = true;
 
 static void __nomcount lock_error(struct lock *l, const char *reason, uint16_t err)
 {
-	bust_locks = true;
-
 	fprintf(stderr, "LOCK ERROR: %s @%p (state: 0x%016llx)\n",
 		reason, l, l->lock_val);
 	op_display(OP_FATAL, OP_MOD_LOCK, err);
