@@ -28,6 +28,8 @@
  */
 bool bust_locks = true;
 
+#define LOCK_TIMEOUT_MS 5000
+
 #ifdef DEBUG_LOCKS
 
 static void __nomcount lock_error(struct lock *l, const char *reason, uint16_t err)
@@ -78,7 +80,6 @@ static inline bool __nomcount __try_lock(struct cpu_thread *cpu, struct lock *l)
 	return false;
 }
 
-#define LOCK_TIMEOUT_MS 5000
 static inline bool lock_timeout(unsigned long start)
 {
 	/* Print warning if lock has been spinning for more than TIMEOUT_MS */
@@ -92,9 +93,6 @@ static inline bool lock_timeout(unsigned long start)
 		 */
 		if( !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID))
 			return false;
-		prlog(PR_WARNING, "WARNING: Lock has been "\
-		      "spinning for %lums\n", wait - start);
-		backtrace();
 		return true;
 	}
 
@@ -252,8 +250,19 @@ void lock_caller(struct lock *l, const char *owner)
 			barrier();
 		smt_medium();
 
-		if (start && !timeout_warn)
-			timeout_warn = lock_timeout(start);
+		if (start && !timeout_warn && lock_timeout(start)) {
+			/*
+			 * Holding the lock request while printing a
+			 * timeout and taking console locks can result
+			 * in deadlock fals positive if the lock owner
+			 * tries to take the console lock. So drop it.
+			 */
+			remove_lock_request();
+			prlog(PR_WARNING, "WARNING: Lock has been spinning for over %dms\n", LOCK_TIMEOUT_MS);
+			backtrace();
+			add_lock_request(l);
+			timeout_warn = true;
+		}
 	}
 
 	remove_lock_request();
