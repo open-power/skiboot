@@ -948,6 +948,9 @@ int ast_sf_open(uint8_t type, struct spi_flash_ctrl **ctrl)
 	struct ast_sf_ctrl *ct;
 #ifdef __SKIBOOT__
 	uint32_t hicr7;
+
+	if (!ast_sio_is_enabled())
+		return -ENODEV;
 #endif /* __SKIBOOT__ */
 
 	if (type != AST_SF_TYPE_PNOR && type != AST_SF_TYPE_BMC
