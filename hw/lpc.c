@@ -127,6 +127,11 @@ enum {
 	LPC_ROUTE_LINUX
 };
 
+struct lpc_error_entry {
+	int64_t rc;
+	const char *description;
+};
+
 struct lpcm {
 	uint32_t		chip_id;
 	uint32_t		xbase;
@@ -453,13 +458,85 @@ static int64_t lpc_opb_prepare(struct lpcm *lpc,
 	return OPAL_SUCCESS;
 }
 
+#define LPC_ERROR_IDX(x) (__builtin_ffs(x) - 1 - 2)
+#define LPC_ERROR(_sts, _rc, _description) \
+	[LPC_ERROR_IDX(_sts)] = { _rc, _description }
+static const struct lpc_error_entry lpc_error_table[] = {
+	LPC_ERROR(LPC_HC_IRQ_BM_TAR_ERR, OPAL_WRONG_STATE, "Got bus master TAR error."),
+	LPC_ERROR(LPC_HC_IRQ_TARG_TAR_ERR, OPAL_WRONG_STATE, "Got abnormal TAR error."),
+	LPC_ERROR(LPC_HC_IRQ_SYNC_TIMEOUT_ERR, OPAL_TIMEOUT, "Got SYNC timeout error."),
+	LPC_ERROR(LPC_HC_IRQ_SYNC_NORM_ERR, OPAL_WRONG_STATE, "Got SYNC normal error."),
+	LPC_ERROR(LPC_HC_IRQ_SYNC_NORESP_ERR, OPAL_HARDWARE, "Got SYNC no-response error."),
+	LPC_ERROR(LPC_HC_IRQ_SYNC_ABNORM_ERR, OPAL_WRONG_STATE, "Got SYNC abnormal error."),
+};
+
+static int64_t lpc_probe_prepare(struct lpcm *lpc)
+{
+	const uint32_t irqmask_addr = lpc_reg_opb_base + LPC_HC_IRQMASK;
+	uint32_t irqmask;
+	int rc;
+
+	rc = opb_read(lpc, irqmask_addr, &irqmask, 4);
+	if (rc)
+		return rc;
+
+	irqmask &= ~LPC_HC_IRQ_SYNC_NORESP_ERR;
+	return opb_write(lpc, irqmask_addr, irqmask, 4);
+}
+
+static int64_t lpc_probe_test(struct lpcm *lpc)
+{
+	const uint32_t irqmask_addr = lpc_reg_opb_base + LPC_HC_IRQMASK;
+	const uint32_t irqstat_addr = lpc_reg_opb_base + LPC_HC_IRQSTAT;
+	uint32_t irqmask, irqstat;
+	int64_t idx;
+	int rc;
+
+	rc = opb_read(lpc, irqstat_addr, &irqstat, 4);
+	if (rc)
+		return rc;
+
+	rc = opb_write(lpc, irqstat_addr, LPC_HC_IRQ_SYNC_NORESP_ERR, 4);
+	if (rc)
+		return rc;
+
+	rc = opb_read(lpc, irqmask_addr, &irqmask, 4);
+	if (rc)
+		return rc;
+
+	irqmask |= LPC_HC_IRQ_SYNC_NORESP_ERR;
+	rc = opb_write(lpc, irqmask_addr, irqmask, 4);
+	if (rc)
+		return rc;
+
+	if (!(irqstat & LPC_HC_IRQ_BASE_IRQS))
+		return OPAL_SUCCESS;
+
+	/* Ensure we can perform a valid lookup in the error table */
+	idx = LPC_ERROR_IDX(irqstat);
+	if (idx < 0 || idx > ARRAY_SIZE(lpc_error_table)) {
+		prerror("LPC bus error translation failed with status 0x%x\n",
+			irqstat);
+		return OPAL_PARAMETER;
+	}
+
+	rc = lpc_error_table[idx].rc;
+	return rc;
+}
+
 static int64_t __lpc_write(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
-			   uint32_t addr, uint32_t data, uint32_t sz)
+			   uint32_t addr, uint32_t data, uint32_t sz,
+			   bool probe)
 {
 	uint32_t opb_base;
 	int64_t rc;
 
 	lock(&lpc->lock);
+	if (probe) {
+		rc = lpc_probe_prepare(lpc);
+		if (rc)
+			goto bail;
+	}
 
 	/*
 	 * Convert to an OPB access and handle LPC HC configuration
@@ -471,15 +548,19 @@ static int64_t __lpc_write(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 
 	/* Perform OPB access */
 	rc = opb_write(lpc, opb_base + addr, data, sz);
+	if (rc)
+		goto bail;
 
-	/* XXX Add LPC error handling/recovery */
+	if (probe)
+		rc = lpc_probe_test(lpc);
  bail:
 	unlock(&lpc->lock);
 	return rc;
 }
 
-int64_t lpc_write(enum OpalLPCAddressType addr_type, uint32_t addr,
-		  uint32_t data, uint32_t sz)
+static int64_t __lpc_write_sanity(enum OpalLPCAddressType addr_type,
+				  uint32_t addr, uint32_t data, uint32_t sz,
+				  bool probe)
 {
 	struct proc_chip *chip;
 
@@ -488,7 +569,19 @@ int64_t lpc_write(enum OpalLPCAddressType addr_type, uint32_t addr,
 	chip = get_chip(lpc_default_chip_id);
 	if (!chip || !chip->lpc)
 		return OPAL_PARAMETER;
-	return __lpc_write(chip->lpc, addr_type, addr, data, sz);
+	return __lpc_write(chip->lpc, addr_type, addr, data, sz, probe);
+}
+
+int64_t lpc_write(enum OpalLPCAddressType addr_type, uint32_t addr,
+		  uint32_t data, uint32_t sz)
+{
+	return __lpc_write_sanity(addr_type, addr, data, sz, false);
+}
+
+int64_t lpc_probe_write(enum OpalLPCAddressType addr_type, uint32_t addr,
+			uint32_t data, uint32_t sz)
+{
+	return __lpc_write_sanity(addr_type, addr, data, sz, true);
 }
 
 /*
@@ -507,9 +600,9 @@ static int64_t opal_lpc_write(uint32_t chip_id, enum OpalLPCAddressType addr_typ
 		return OPAL_PARAMETER;
 
 	if (addr_type == OPAL_LPC_FW || sz == 1)
-		return __lpc_write(chip->lpc, addr_type, addr, data, sz);
+		return __lpc_write(chip->lpc, addr_type, addr, data, sz, false);
 	while(sz--) {
-		rc = __lpc_write(chip->lpc, addr_type, addr, data & 0xff, 1);
+		rc = __lpc_write(chip->lpc, addr_type, addr, data & 0xff, 1, false);
 		if (rc)
 			return rc;
 		addr++;
@@ -519,12 +612,18 @@ static int64_t opal_lpc_write(uint32_t chip_id, enum OpalLPCAddressType addr_typ
 }
 
 static int64_t __lpc_read(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
-			  uint32_t addr, uint32_t *data, uint32_t sz)
+			  uint32_t addr, uint32_t *data, uint32_t sz,
+			  bool probe)
 {
 	uint32_t opb_base;
 	int64_t rc;
 
 	lock(&lpc->lock);
+	if (probe) {
+		rc = lpc_probe_prepare(lpc);
+		if (rc)
+			goto bail;
+	}
 
 	/*
 	 * Convert to an OPB access and handle LPC HC configuration
@@ -536,15 +635,19 @@ static int64_t __lpc_read(struct lpcm *lpc, enum OpalLPCAddressType addr_type,
 
 	/* Perform OPB access */
 	rc = opb_read(lpc, opb_base + addr, data, sz);
+	if (rc)
+		goto bail;
 
-	/* XXX Add LPC error handling/recovery */
+	if (probe)
+		rc = lpc_probe_test(lpc);
  bail:
 	unlock(&lpc->lock);
 	return rc;
 }
 
-int64_t lpc_read(enum OpalLPCAddressType addr_type, uint32_t addr,
-		 uint32_t *data, uint32_t sz)
+static int64_t __lpc_read_sanity(enum OpalLPCAddressType addr_type,
+				 uint32_t addr, uint32_t *data, uint32_t sz,
+				 bool probe)
 {
 	struct proc_chip *chip;
 
@@ -553,7 +656,19 @@ int64_t lpc_read(enum OpalLPCAddressType addr_type, uint32_t addr,
 	chip = get_chip(lpc_default_chip_id);
 	if (!chip || !chip->lpc)
 		return OPAL_PARAMETER;
-	return __lpc_read(chip->lpc, addr_type, addr, data, sz);
+	return __lpc_read(chip->lpc, addr_type, addr, data, sz, probe);
+}
+
+int64_t lpc_read(enum OpalLPCAddressType addr_type, uint32_t addr,
+		 uint32_t *data, uint32_t sz)
+{
+	return __lpc_read_sanity(addr_type, addr, data, sz, false);
+}
+
+int64_t lpc_probe_read(enum OpalLPCAddressType addr_type, uint32_t addr,
+		       uint32_t *data, uint32_t sz)
+{
+	return __lpc_read_sanity(addr_type, addr, data, sz, true);
 }
 
 /*
@@ -572,12 +687,12 @@ static int64_t opal_lpc_read(uint32_t chip_id, enum OpalLPCAddressType addr_type
 		return OPAL_PARAMETER;
 
 	if (addr_type == OPAL_LPC_FW || sz == 1)
-		return __lpc_read(chip->lpc, addr_type, addr, data, sz);
+		return __lpc_read(chip->lpc, addr_type, addr, data, sz, false);
 	*data = 0;
 	while(sz--) {
 		uint32_t byte;
 
-		rc = __lpc_read(chip->lpc, addr_type, addr, &byte, 1);
+		rc = __lpc_read(chip->lpc, addr_type, addr, &byte, 1, false);
 		if (rc)
 			return rc;
 		*data = *data | (byte << (8 * sz));
@@ -891,26 +1006,13 @@ static void lpc_dispatch_reset(struct lpcm *lpc)
 		lpc_setup_serirq(lpc);
 }
 
-uint32_t lpc_irq_err_mask;
-
-void lpc_irq_err_mask_sync_no_response(void)
-{
-	lpc_irq_err_mask |= LPC_HC_IRQ_SYNC_NORESP_ERR;
-	lwsync();
-}
-
-static void lpc_irq_err_mask_reset(void)
-{
-	lpc_irq_err_mask = 0;
-	lwsync();
-}
-
 static void lpc_dispatch_err_irqs(struct lpcm *lpc, uint32_t irqs)
 {
-	const char *sync_err = "Unknown LPC error";
+	const struct lpc_error_entry *err;
 	static int lpc_bus_err_count;
 	struct opal_err_info *info;
-	uint32_t err_addr;
+	uint32_t addr;
+	int64_t idx;
 	int rc;
 
 	/* Write back to clear error interrupts, we clear SerIRQ later
@@ -921,46 +1023,36 @@ static void lpc_dispatch_err_irqs(struct lpcm *lpc, uint32_t irqs)
 	if (rc)
 		prerror("Failed to clear IRQ error latches !\n");
 
-	if (irqs & LPC_HC_IRQ_LRESET)
+	if (irqs & LPC_HC_IRQ_LRESET) {
 		lpc_dispatch_reset(lpc);
-	if (irqs & LPC_HC_IRQ_SYNC_ABNORM_ERR)
-		sync_err = "Got SYNC abnormal error.";
-	if (irqs & LPC_HC_IRQ_SYNC_NORESP_ERR) {
-		if (lpc_irq_err_mask & LPC_HC_IRQ_SYNC_NORESP_ERR)
-			goto done;
-
-		sync_err = "Got SYNC no-response error.";
+		return;
 	}
-	if (irqs & LPC_HC_IRQ_SYNC_NORM_ERR)
-		sync_err = "Got SYNC normal error.";
-	if (irqs & LPC_HC_IRQ_SYNC_TIMEOUT_ERR)
-		sync_err = "Got SYNC timeout error.";
-	if (irqs & LPC_HC_IRQ_TARG_TAR_ERR)
-		sync_err = "Got abnormal TAR error.";
-	if (irqs & LPC_HC_IRQ_BM_TAR_ERR)
-		sync_err = "Got bus master TAR error.";
 
-	rc = opb_read(lpc, lpc_reg_opb_base + LPC_HC_ERROR_ADDRESS,
-		      &err_addr, 4);
+	/* Ensure we can perform a valid lookup in the error table */
+	idx = LPC_ERROR_IDX(irqs);
+	if (idx < 0 || idx > ARRAY_SIZE(lpc_error_table)) {
+		prerror("LPC bus error translation failed with status 0x%x\n",
+			irqs);
+		return;
+	}
 
+	/* Find and report the error */
+	err = &lpc_error_table[idx];
 	lpc_bus_err_count++;
 	if (manufacturing_mode && (lpc_bus_err_count > LPC_BUS_DEGRADED_PERF_THRESHOLD))
 		info = &e_info(OPAL_RC_LPC_SYNC_PERF);
 	else
 		info = &e_info(OPAL_RC_LPC_SYNC);
 
-
+	rc = opb_read(lpc, lpc_reg_opb_base + LPC_HC_ERROR_ADDRESS, &addr, 4);
 	if (rc)
 		log_simple_error(info, "LPC[%03x]: %s "
 				 "Error reading error address register\n",
-				 lpc->chip_id, sync_err);
+				 lpc->chip_id, err->description);
 	else
 		log_simple_error(info, "LPC[%03x]: %s Error address reg: "
 				 "0x%08x\n",
-				 lpc->chip_id, sync_err, err_addr);
-
-done:
-	lpc_irq_err_mask_reset();
+				 lpc->chip_id, err->description, addr);
 }
 
 static void lpc_dispatch_ser_irqs(struct lpcm *lpc, uint32_t irqs,

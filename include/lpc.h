@@ -103,11 +103,20 @@ extern unsigned int lpc_get_irq_policy(uint32_t chip_id, uint32_t psi_idx);
 /* Clear SerIRQ latch on P9 DD1 */
 extern void lpc_p9_sirq_eoi(uint32_t chip_id, uint32_t index);
 
-/* Default bus accessors */
+/* Default bus accessors that perform error logging */
 extern int64_t lpc_write(enum OpalLPCAddressType addr_type, uint32_t addr,
 			 uint32_t data, uint32_t sz);
 extern int64_t lpc_read(enum OpalLPCAddressType addr_type, uint32_t addr,
 			uint32_t *data, uint32_t sz);
+
+/*
+ * LPC bus accessors that return errors as required but do not log the failure.
+ * Useful if the caller wants to test the presence of a device on the LPC bus.
+ */
+extern int64_t lpc_probe_write(enum OpalLPCAddressType addr_type, uint32_t addr,
+			       uint32_t data, uint32_t sz);
+extern int64_t lpc_probe_read(enum OpalLPCAddressType addr_type, uint32_t addr,
+			      uint32_t *data, uint32_t sz);
 
 /* Mark LPC bus as used by console */
 extern void lpc_used_by_console(void);
@@ -167,8 +176,5 @@ static inline uint32_t lpc_inl(uint32_t addr)
 	int64_t rc = lpc_read(OPAL_LPC_IO, addr, &d32, 4);
 	return (rc == OPAL_SUCCESS) ? le32_to_cpu(d32) : 0xffffffff;
 }
-
-/* LPC IRQ error masking - required for some corner cases */
-extern void lpc_irq_err_mask_sync_no_response(void);
 
 #endif /* __LPC_H */
