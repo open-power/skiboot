@@ -226,8 +226,8 @@ static bool hiomap_get_info(struct ipmi_hiomap *ctx)
 	req[2] = HIOMAP_V2;
 
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
-		         bmc_platform->ipmi_oem_hiomap_cmd, ipmi_hiomap_cmd_cb,
-			 &res, req, sizeof(req), 6);
+		         bmc_platform->sw->ipmi_oem_hiomap_cmd,
+			 ipmi_hiomap_cmd_cb, &res, req, sizeof(req), 6);
 	ipmi_queue_msg_sync(msg);
 
 	if (res.cc != IPMI_CC_NO_ERROR) {
@@ -251,8 +251,8 @@ static bool hiomap_get_flash_info(struct ipmi_hiomap *ctx)
 	req[0] = HIOMAP_C_GET_FLASH_INFO;
 	req[1] = ++ctx->seq;
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
-		         bmc_platform->ipmi_oem_hiomap_cmd, ipmi_hiomap_cmd_cb,
-			 &res, req, sizeof(req), 2 + 2 + 2);
+		         bmc_platform->sw->ipmi_oem_hiomap_cmd,
+			 ipmi_hiomap_cmd_cb, &res, req, sizeof(req), 2 + 2 + 2);
 	ipmi_queue_msg_sync(msg);
 
 	if (res.cc != IPMI_CC_NO_ERROR) {
@@ -294,8 +294,9 @@ static bool hiomap_window_move(struct ipmi_hiomap *ctx, uint8_t command,
 	unlock(&ctx->lock);
 
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
-		         bmc_platform->ipmi_oem_hiomap_cmd, ipmi_hiomap_cmd_cb,
-			 &res, req, sizeof(req), 2 + 2 + 2 + 2);
+		         bmc_platform->sw->ipmi_oem_hiomap_cmd,
+			 ipmi_hiomap_cmd_cb, &res, req, sizeof(req),
+			 2 + 2 + 2 + 2);
 	ipmi_queue_msg_sync(msg);
 
 	if (res.cc != IPMI_CC_NO_ERROR) {
@@ -348,8 +349,8 @@ static bool hiomap_mark_dirty(struct ipmi_hiomap *ctx, uint64_t offset,
 	range->size = cpu_to_le16(bytes_to_blocks(ctx, size));
 
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
-		         bmc_platform->ipmi_oem_hiomap_cmd, ipmi_hiomap_cmd_cb,
-			 &res, req, sizeof(req), 2);
+		         bmc_platform->sw->ipmi_oem_hiomap_cmd,
+			 ipmi_hiomap_cmd_cb, &res, req, sizeof(req), 2);
 	ipmi_queue_msg_sync(msg);
 
 	if (res.cc != IPMI_CC_NO_ERROR) {
@@ -381,8 +382,8 @@ static bool hiomap_flush(struct ipmi_hiomap *ctx)
 	req[1] = ++ctx->seq;
 
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
-		         bmc_platform->ipmi_oem_hiomap_cmd, ipmi_hiomap_cmd_cb,
-			 &res, req, sizeof(req), 2);
+		         bmc_platform->sw->ipmi_oem_hiomap_cmd,
+			 ipmi_hiomap_cmd_cb, &res, req, sizeof(req), 2);
 	ipmi_queue_msg_sync(msg);
 
 	if (res.cc != IPMI_CC_NO_ERROR) {
@@ -406,8 +407,8 @@ static bool hiomap_ack(struct ipmi_hiomap *ctx, uint8_t ack)
 	req[2] = ack;
 
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
-		         bmc_platform->ipmi_oem_hiomap_cmd, ipmi_hiomap_cmd_cb,
-			 &res, req, sizeof(req), 2);
+		         bmc_platform->sw->ipmi_oem_hiomap_cmd,
+			 ipmi_hiomap_cmd_cb, &res, req, sizeof(req), 2);
 	ipmi_queue_msg_sync(msg);
 
 	if (res.cc != IPMI_CC_NO_ERROR) {
@@ -446,8 +447,8 @@ static bool hiomap_erase(struct ipmi_hiomap *ctx, uint64_t offset,
 	range->size = cpu_to_le16(bytes_to_blocks(ctx, size));
 
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
-		         bmc_platform->ipmi_oem_hiomap_cmd, ipmi_hiomap_cmd_cb,
-			 &res, req, sizeof(req), 2);
+		         bmc_platform->sw->ipmi_oem_hiomap_cmd,
+			 ipmi_hiomap_cmd_cb, &res, req, sizeof(req), 2);
 	ipmi_queue_msg_sync(msg);
 
 	if (res.cc != IPMI_CC_NO_ERROR) {
@@ -787,7 +788,7 @@ int ipmi_hiomap_init(struct blocklevel_device **bl)
 	struct ipmi_hiomap *ctx;
 	int rc;
 
-	if (!bmc_platform->ipmi_oem_hiomap_cmd)
+	if (!bmc_platform->sw->ipmi_oem_hiomap_cmd)
 		/* FIXME: Find a better error code */
 		return FLASH_ERR_DEVICE_GONE;
 

@@ -7,6 +7,14 @@
 struct dt_property;
 struct dt_node;
 
+static struct bmc_platform fake_bmc;
+const struct bmc_platform *bmc_platform = &fake_bmc;
+
+static int ast_sio_is_enabled(void)
+{
+	return 0;
+}
+
 static uint32_t ast_ahb_readl(uint32_t reg)
 {
 	return reg;

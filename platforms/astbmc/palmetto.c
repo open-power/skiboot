@@ -121,7 +121,7 @@ static bool palmetto_probe(void)
 DECLARE_PLATFORM(palmetto) = {
 	.name			= "Palmetto",
 	.probe			= palmetto_probe,
-	.bmc			= &astbmc_ami,
+	.bmc			= &bmc_plat_ast2400_ami,
 	.init			= astbmc_init,
 	.pci_get_slot_info	= slot_table_get_slot_info,
 	.pci_probe_complete	= check_all_slot_table,

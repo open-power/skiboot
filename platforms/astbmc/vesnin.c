@@ -247,7 +247,7 @@ static bool vesnin_probe(void)
 
 DECLARE_PLATFORM(vesnin) = {
 	.name			= "vesnin",
-	.bmc			= &astbmc_ami,
+	.bmc			= &bmc_plat_ast2400_ami,
 	.probe			= vesnin_probe,
 	.init			= astbmc_init,
 	.pci_get_slot_info	= slot_table_get_slot_info,

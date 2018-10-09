@@ -334,7 +334,7 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 	struct errorlog *elog_buf = (struct errorlog *) msg->user_data;
 	size_t req_size;
 
-	if (bmc_platform->ipmi_oem_partial_add_esel == 0) {
+	if (bmc_platform->sw->ipmi_oem_partial_add_esel == 0) {
 		prlog(PR_WARNING, "Dropped eSEL: BMC code is buggy/missing\n");
 		return;
 	}
@@ -392,7 +392,7 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 	}
 
 	ipmi_init_msg(msg, IPMI_DEFAULT_INTERFACE,
-		      bmc_platform->ipmi_oem_partial_add_esel,
+		      bmc_platform->sw->ipmi_oem_partial_add_esel,
 		      ipmi_elog_poll, elog_buf, req_size, 2);
 
 	msg->data[0] = reservation_id & 0xff;
@@ -464,7 +464,7 @@ static void sel_pnor(uint8_t access, void *context __unused)
 	switch (access) {
 	case REQUEST_PNOR:
 		prlog(PR_NOTICE, "PNOR access requested\n");
-		if (bmc_platform->ipmi_oem_pnor_access_status == 0) {
+		if (bmc_platform->sw->ipmi_oem_pnor_access_status == 0) {
 			/**
 			 * @fwts-label PNORAccessYeahButNoBut
 			 * @fwts-advice OPAL doesn't know that the BMC supports
@@ -479,7 +479,7 @@ static void sel_pnor(uint8_t access, void *context __unused)
 		if (granted)
 			occ_pnor_set_owner(PNOR_OWNER_EXTERNAL);
 		/* Ack the request */
-		msg = ipmi_mkmsg_simple(bmc_platform->ipmi_oem_pnor_access_status, &granted, 1);
+		msg = ipmi_mkmsg_simple(bmc_platform->sw->ipmi_oem_pnor_access_status, &granted, 1);
 		ipmi_queue_msg(msg);
 		break;
 	case RELEASE_PNOR:
