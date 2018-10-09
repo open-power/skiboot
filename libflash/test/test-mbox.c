@@ -31,6 +31,10 @@
 
 #undef pr_fmt
 
+void mbox_init(void)
+{
+}
+
 #include "../libflash.c"
 #include "../mbox-flash.c"
 #include "../ecc.c"

@@ -426,12 +426,16 @@ bool ast_io_init(void)
 	return ast_io_is_rw();
 }
 
-bool ast_lpc_fw_is_mbox(void)
+bool ast_lpc_fw_needs_hiomap(void)
 {
-	return dt_find_compatible_node(dt_root, NULL, "mbox");
+	struct dt_node *n;
+
+	n = dt_find_compatible_node(dt_root, NULL, "mbox");
+
+	return n != NULL;
 }
 
-bool ast_lpc_fw_is_flash(void)
+bool ast_lpc_fw_maps_flash(void)
 {
 	uint8_t boot_version;
 	uint8_t boot_flags;

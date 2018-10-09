@@ -18,6 +18,7 @@
 #include <device.h>
 #include <console.h>
 #include <opal.h>
+#include <libflash/ipmi-hiomap.h>
 #include <libflash/mbox-flash.h>
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
@@ -26,16 +27,27 @@
 
 #include "astbmc.h"
 
+enum ast_flash_style {
+    raw_flash,
+    raw_mem,
+    ipmi_hiomap,
+    mbox_hiomap,
+};
+
 int pnor_init(void)
 {
 	struct spi_flash_ctrl *pnor_ctrl = NULL;
 	struct blocklevel_device *bl = NULL;
+	enum ast_flash_style style;
 	int rc;
-	bool do_mbox;
 
-	do_mbox = ast_lpc_fw_is_mbox();
-	if (do_mbox) {
-		rc = mbox_flash_init(&bl);
+	if (ast_lpc_fw_needs_hiomap()) {
+		style = ipmi_hiomap;
+		rc = ipmi_hiomap_init(&bl);
+		if (rc) {
+			style = mbox_hiomap;
+			rc = mbox_flash_init(&bl);
+		}
 	} else {
 		/* Open controller and flash. If the LPC->AHB doesn't point to
 		 * the PNOR flash base we assume we're booting from BMC system
@@ -43,10 +55,12 @@ int pnor_init(void)
 		 * FW reads & writes).
 		 */
 
-		if (ast_lpc_fw_is_flash())
+		if (ast_lpc_fw_maps_flash()) {
+			style = raw_flash;
 			rc = ast_sf_open(AST_SF_TYPE_PNOR, &pnor_ctrl);
-		else {
+		} else {
 			printf("PLAT: Memboot detected\n");
+			style = raw_mem;
 			rc = ast_sf_open(AST_SF_TYPE_MEM, &pnor_ctrl);
 		}
 		if (rc) {
@@ -66,12 +80,20 @@ int pnor_init(void)
 	if (!rc)
 		return 0;
 
- fail:
+fail:
 	if (bl) {
-		if (do_mbox)
-			mbox_flash_exit(bl);
-		else
+		switch (style) {
+		case raw_flash:
+		case raw_mem:
 			flash_exit(bl);
+			break;
+		case ipmi_hiomap:
+			ipmi_hiomap_exit(bl);
+			break;
+		case mbox_hiomap:
+			mbox_flash_exit(bl);
+			break;
+		}
 	}
 	if (pnor_ctrl)
 		ast_sf_close(pnor_ctrl);
