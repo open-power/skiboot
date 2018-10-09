@@ -15,6 +15,10 @@
  */
 
 #define pr_fmt(fmt) "IPMI: " fmt
+#include <ccan/list/list.h>
+#include <ccan/str/str.h>
+#include <compiler.h>
+#include <errno.h>
 #include <skiboot.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,9 +41,13 @@
 #define SEL_NETFN_IBM		0x3a
 
 /* OEM SEL Commands */
+/* TODO: Move these to their respective source files */
 #define CMD_AMI_POWER		0x04
 #define CMD_AMI_PNOR_ACCESS	0x07
 #define CMD_AMI_OCC_RESET	0x0e
+
+/* XXX: Listed here for completeness, registered in libflash/ipmi-flash.c */
+#define CMD_OP_HIOMAP_EVENT	0x0f
 
 #define SOFT_OFF	        0x00
 #define SOFT_REBOOT	        0x01
@@ -137,20 +145,10 @@ struct ipmi_sel_panic_msg {
 };
 static struct ipmi_sel_panic_msg ipmi_sel_panic_msg;
 
+static LIST_HEAD(sel_handlers);
+
 /* Forward declaration */
 static void ipmi_elog_poll(struct ipmi_msg *msg);
-
-void ipmi_sel_init(void)
-{
-	/* Already done */
-	if (ipmi_sel_panic_msg.msg != NULL)
-		return;
-
-	memset(&ipmi_sel_panic_msg, 0, sizeof(struct ipmi_sel_panic_msg));
-	ipmi_sel_panic_msg.msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
-					IPMI_RESERVE_SEL, ipmi_elog_poll,
-					NULL, NULL, IPMI_MAX_REQ_SIZE, 2);
-}
 
 /*
  * Allocate IPMI message:
@@ -458,7 +456,7 @@ int ipmi_elog_commit(struct errorlog *elog_buf)
 #define ACCESS_DENIED	0x00
 #define ACCESS_GRANTED	0x01
 
-static void sel_pnor(uint8_t access)
+static void sel_pnor(uint8_t access, void *context __unused)
 {
 	struct ipmi_msg *msg;
 	uint8_t granted = ACCESS_GRANTED;
@@ -501,7 +499,7 @@ static void sel_pnor(uint8_t access)
 	}
 }
 
-static void sel_power(uint8_t power)
+static void sel_power(uint8_t power, void *context __unused)
 {
 	switch (power) {
 	case SOFT_OFF:
@@ -562,7 +560,7 @@ static uint32_t occ_sensor_id_to_chip(uint8_t sensor, uint32_t *chip)
 	return 0;
 }
 
-static void sel_occ_reset(uint8_t sensor)
+static void sel_occ_reset(uint8_t sensor, void *context __unused)
 {
 	uint32_t chip;
 	int rc;
@@ -581,8 +579,77 @@ static void sel_occ_reset(uint8_t sensor)
 	prd_occ_reset(chip);
 }
 
+struct ipmi_sel_handler {
+	uint8_t oem_cmd;
+	void (*fn)(uint8_t data, void *context);
+	void *context;
+	struct list_node node;
+};
+
+int ipmi_sel_register(uint8_t oem_cmd,
+		      void (*fn)(uint8_t data, void *context),
+		      void *context)
+{
+	struct ipmi_sel_handler *handler;
+
+	list_for_each(&sel_handlers, handler, node) {
+		if (handler->oem_cmd == oem_cmd) {
+			prerror("Handler for SEL command 0x%02x already registered\n",
+				oem_cmd);
+			return -EINVAL;
+		}
+	}
+
+	handler = malloc(sizeof(*handler));
+	if (!handler)
+		return -ENOMEM;
+
+	handler->oem_cmd = oem_cmd;
+	handler->fn = fn;
+	handler->context = context;
+
+	list_add(&sel_handlers, &handler->node);
+
+	return 0;
+}
+
+void ipmi_sel_init(void)
+{
+	int rc;
+
+	/* Already done */
+	if (ipmi_sel_panic_msg.msg != NULL)
+		return;
+
+	memset(&ipmi_sel_panic_msg, 0, sizeof(struct ipmi_sel_panic_msg));
+	ipmi_sel_panic_msg.msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
+					IPMI_RESERVE_SEL, ipmi_elog_poll,
+					NULL, NULL, IPMI_MAX_REQ_SIZE, 2);
+
+	/* Hackishly register these old-style handlers here for now */
+	/* TODO: Move them to their appropriate source files */
+	rc = ipmi_sel_register(CMD_AMI_POWER, sel_power, NULL);
+	if (rc < 0) {
+		prerror("Failed to register SEL handler for %s",
+			stringify(CMD_AMI_POWER));
+	}
+
+	rc = ipmi_sel_register(CMD_AMI_OCC_RESET, sel_occ_reset, NULL);
+	if (rc < 0) {
+		prerror("Failed to register SEL handler for %s",
+			stringify(CMD_AMI_OCC_RESET));
+	}
+
+	rc = ipmi_sel_register(CMD_AMI_PNOR_ACCESS, sel_pnor, NULL);
+	if (rc < 0) {
+		prerror("Failed to register SEL handler for %s",
+			stringify(CMD_AMI_PNOR_ACCESS));
+	}
+}
+
 void ipmi_parse_sel(struct ipmi_msg *msg)
 {
+	struct ipmi_sel_handler *handler;
 	struct oem_sel sel;
 
 	assert(msg->resp_size <= 16);
@@ -606,19 +673,12 @@ void ipmi_parse_sel(struct ipmi_msg *msg)
 		return;
 	}
 
-	switch (sel.cmd) {
-	case CMD_AMI_POWER:
-		sel_power(sel.data[0]);
-		break;
-	case CMD_AMI_OCC_RESET:
-		sel_occ_reset(sel.data[0]);
-		break;
-	case CMD_AMI_PNOR_ACCESS:
-		sel_pnor(sel.data[0]);
-		break;
-	default:
-		prlog(PR_WARNING,
-		      "unknown OEM SEL command %02x received\n",
-		      sel.cmd);
+	list_for_each(&sel_handlers, handler, node) {
+		if (handler->oem_cmd == sel.cmd) {
+			handler->fn(sel.data[0], handler->context);
+			return;
+		}
 	}
+
+	prlog(PR_WARNING, "unknown OEM SEL command %02x received\n", sel.cmd);
 }
