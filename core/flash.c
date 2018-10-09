@@ -400,13 +400,9 @@ int flash_register(struct blocklevel_device *bl)
 	prlog(PR_INFO, "FLASH: registering flash device %s "
 			"(size 0x%llx, blocksize 0x%x)\n",
 			name ?: "(unnamed)", size, block_size);
-
-	lock(&flash_lock);
-
 	flash = malloc(sizeof(struct flash));
 	if (!flash) {
 		prlog(PR_ERR, "FLASH: Error allocating flash structure\n");
-		unlock(&flash_lock);
 		return OPAL_RESOURCE;
 	}
 
@@ -416,8 +412,6 @@ int flash_register(struct blocklevel_device *bl)
 	flash->size = size;
 	flash->block_size = block_size;
 	flash->id = num_flashes();
-
-	list_add(&flashes, &flash->list);
 
 	rc = ffs_init(0, flash->size, bl, &ffs, 1);
 	if (rc) {
@@ -439,6 +433,8 @@ int flash_register(struct blocklevel_device *bl)
 	if (ffs)
 		ffs_close(ffs);
 
+	lock(&flash_lock);
+	list_add(&flashes, &flash->list);
 	unlock(&flash_lock);
 
 	return OPAL_SUCCESS;
