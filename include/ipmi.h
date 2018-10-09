@@ -241,6 +241,11 @@ void ipmi_register_backend(struct ipmi_backend *backend);
 /* Allocate IPMI SEL panic message */
 void ipmi_sel_init(void);
 
+/* Register SEL handler with IPMI core */
+int ipmi_sel_register(uint8_t oem_cmd,
+		      void (*handler)(uint8_t data, void *context),
+		      void *context);
+
 /* Register rtc ipmi commands with as opal callbacks. */
 void ipmi_rtc_init(void);
 
