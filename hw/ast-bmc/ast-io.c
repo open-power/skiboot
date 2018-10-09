@@ -323,35 +323,25 @@ static void ast_setup_sio_irq_polarity(void)
 
 static bool ast_sio_is_enabled(void)
 {
-	bool enabled;
+	int64_t rc;
 
+	/* Begin the unlock sequence with a probe to establish presence */
+	rc = lpc_probe_write(OPAL_LPC_IO, 0x2e, 0xa5, 1);
+	if (rc)
+		return false;
+
+	/* Complete the unlock sequence if the device is present */
 	lpc_outb(0xa5, 0x2e);
-	lpc_outb(0xa5, 0x2e);
 
-	/* Heuristic attempt to confirm SIO is enabled.
-	 *
-	 * Do two tests of 1 byte, giving a false positive probability of
-	 * 1/65536. Read tests on disabled SIO tended to return 0x60.
-	 */
-	bmc_sio_outb(0x2, 0x07);
-	enabled = bmc_sio_inb(0x07) == 2;
-	if (enabled) {
-		bmc_sio_outb(0xd, 0x07);
-		enabled = bmc_sio_inb(0x07) == 0xd;
-	}
+	/* Re-lock to return to a known state */
+	lpc_outb(0xaa, 0x2e);
 
-	if (enabled)
-		lpc_outb(0xaa, 0x2e);
-
-	return enabled;
+	return true;
 }
 
 bool ast_sio_init(void)
 {
 	bool enabled = ast_sio_is_enabled();
-
-	prlog(PR_NOTICE, "PLAT: SuperIO is %s\n",
-	      enabled ? "available" : "unavailable!");
 
 	/* Configure all AIO interrupts to level low */
 	if (enabled)
