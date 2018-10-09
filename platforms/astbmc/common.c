@@ -406,23 +406,15 @@ void astbmc_early_init(void)
 	psi_set_external_irq_policy(EXTERNAL_IRQ_POLICY_SKIBOOT);
 
 	if (ast_sio_init()) {
-		if (!ast_can_isolate_sp()) {
-			/*
-			 * BMCs claiming support for isolation must have
-			 * correctly configured the UART and BT for host
-			 * firmware. If not, let's apply some fixups for broken
-			 * BMC firmwares.
-			 */
-			if (ast_io_init()) {
-				astbmc_fixup_uart();
-				ast_setup_ibt(BT_IO_BASE, BT_LPC_IRQ);
-			} else
-				prerror("PLAT: AST IO initialisation failed!\n");
-		}
+		if (ast_io_init()) {
+			astbmc_fixup_uart();
+			ast_setup_ibt(BT_IO_BASE, BT_LPC_IRQ);
+		} else
+			prerror("PLAT: AST IO initialisation failed!\n");
 
 		ast_setup_sio_mbox(MBOX_IO_BASE, MBOX_LPC_IRQ);
 	} else
-		prerror("PLAT: AST SIO initialisation failed!\n");
+		prlog(PR_WARNING, "PLAT: AST SIO unavailable!\n");
 
 	/* Setup UART and use it as console */
 	uart_init();
@@ -430,35 +422,8 @@ void astbmc_early_init(void)
 	prd_init();
 }
 
-static bool astbmc_isolate_via_io(void)
-{
-	return ast_sio_disable();
-}
-
-static bool astbmc_isolate_via_ipmi(void)
-{
-	return false;
-}
-
-static void astbmc_isolate(void)
-{
-	bool isolated;
-
-	isolated = ast_io_is_rw() ? astbmc_isolate_via_io()
-				  : astbmc_isolate_via_ipmi();
-
-	if (!isolated) {
-		prlog(PR_EMERG, "PLAT: BMC isolation failed\n");
-		abort();
-	}
-
-	prlog(PR_INFO, "PLAT: Isolated BMC\n");
-}
-
 void astbmc_exit(void)
 {
-	if (ast_can_isolate_sp())
-		astbmc_isolate();
 	ipmi_wdt_final_reset();
 }
 

@@ -82,8 +82,6 @@ void ast_ahb_writel(uint32_t val, uint32_t reg);
 uint32_t ast_ahb_readl(uint32_t reg);
 
 bool ast_sio_init(void);
-bool ast_can_isolate_sp(void);
-bool ast_sio_disable(void);
 bool ast_io_init(void);
 bool ast_io_is_rw(void);
 bool ast_lpc_fw_maps_flash(void);
