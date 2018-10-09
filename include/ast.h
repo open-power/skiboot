@@ -86,8 +86,8 @@ bool ast_can_isolate_sp(void);
 bool ast_sio_disable(void);
 bool ast_io_init(void);
 bool ast_io_is_rw(void);
-bool ast_lpc_fw_is_flash(void);
-bool ast_lpc_fw_is_mbox(void);
+bool ast_lpc_fw_maps_flash(void);
+bool ast_lpc_fw_needs_hiomap(void);
 bool ast_scratch_reg_is_mbox(void);
 
 /* UART configuration */

@@ -1139,6 +1139,12 @@ int mbox_flash_init(struct blocklevel_device **bl)
 	if (!bl)
 		return FLASH_ERR_PARM_ERROR;
 
+	/* XXX: We only support one blocklevel flash device over mbox. If we
+	 * ever support more than one, move this out. The chances of that are
+	 * slim though due to circumstances.
+	 */
+	mbox_init();
+
 	*bl = NULL;
 
 	mbox_flash = zalloc(sizeof(struct mbox_flash_data));
