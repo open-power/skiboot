@@ -118,8 +118,13 @@ static int flash_nvram_start_read(void *dst, uint32_t src, uint32_t len)
 		goto out;
 	}
 
+	nvram_flash->busy = true;
+	unlock(&flash_lock);
+
 	rc = blocklevel_read(nvram_flash->bl, nvram_offset + src, dst, len);
 
+	lock(&flash_lock);
+	nvram_flash->busy = false;
 out:
 	unlock(&flash_lock);
 	if (!rc)
@@ -147,8 +152,14 @@ static int flash_nvram_write(uint32_t dst, void *src, uint32_t len)
 		rc = OPAL_PARAMETER;
 		goto out;
 	}
+
+	nvram_flash->busy = true;
+	unlock(&flash_lock);
+
 	rc = blocklevel_write(nvram_flash->bl, nvram_offset + dst, src, len);
 
+	lock(&flash_lock);
+	nvram_flash->busy = false;
 out:
 	unlock(&flash_lock);
 	return rc;
