@@ -360,56 +360,6 @@ bool ast_sio_init(void)
 	return enabled;
 }
 
-bool ast_sio_disable(void)
-{
-	uint32_t hw_strapping;
-	uint32_t silicon_rev;
-	uint8_t family;
-
-	/* Determine the necessary strapping value */
-	silicon_rev = ast_ahb_readl(SCU_REVISION_ID);
-	family = SCU_REVISION_SOC_FAMILY(silicon_rev);
-
-	if (family == SCU_REVISION_SOC_FAMILY_2400) {
-		/* Strapping is read-modify-write on SCU70 */
-		hw_strapping = SCU_STRAP_SIO_DECODE_DISABLE;
-		hw_strapping |= ast_ahb_readl(SCU_HW_STRAPPING);
-	} else if (family == SCU_REVISION_SOC_FAMILY_2500) {
-		/*
-		 * Strapping is W1S on SCU70, W1C on SCU7C. We're setting a bit
-		 * so read-modify-write *should* work, but in reality it breaks
-		 * the AXI/AHB divider, so don't do that.
-		 */
-		hw_strapping = SCU_STRAP_SIO_DECODE_DISABLE;
-	} else {
-		prerror("PLAT: Unrecognised BMC silicon revision 0x%x\n",
-			silicon_rev);
-		return false;
-	}
-
-	/* Apply the strapping value */
-	bmc_sio_get(BMC_SIO_DEV_LPC2AHB);
-
-	bmc_sio_ahb_prep(SCU_HW_STRAPPING, 2);
-
-	bmc_sio_outb(hw_strapping >> 24, 0xf4);
-	bmc_sio_outb(hw_strapping >> 16, 0xf5);
-	bmc_sio_outb(hw_strapping >>  8, 0xf6);
-	bmc_sio_outb(hw_strapping      , 0xf7);
-
-	lpc_irq_err_mask_sync_no_response();
-	bmc_sio_outb(0xcf, 0xfe);
-
-	bmc_sio_put(true);
-
-	return true;
-}
-
-bool ast_can_isolate_sp(void)
-{
-	return bmc_sio_inb(BMC_SIO_PLAT_FLAGS) & BMC_SIO_PLAT_ISOLATE_SP;
-}
-
 bool ast_io_is_rw(void)
 {
 	return !(ast_ahb_readl(LPC_HICRB) & LPC_HICRB_ILPC_DISABLE);
