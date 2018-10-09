@@ -226,7 +226,7 @@ void lock_caller(struct lock *l, const char *owner)
 
 	lock_check(l);
 
-	if (try_lock(l))
+	if (try_lock_caller(l, owner))
 		return;
 	add_lock_request(l);
 
