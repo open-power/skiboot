@@ -43,6 +43,7 @@ struct bmc_platform {
 	 */
 	uint32_t ipmi_oem_partial_add_esel;
 	uint32_t ipmi_oem_pnor_access_status;
+	uint32_t ipmi_oem_hiomap_cmd;
 };
 
 /* OpenCAPI platform-specific I2C information */
