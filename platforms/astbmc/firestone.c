@@ -146,7 +146,7 @@ static bool firestone_probe(void)
 
 DECLARE_PLATFORM(firestone) = {
 	.name			= "Firestone",
-	.bmc			= &astbmc_ami,
+	.bmc			= &bmc_plat_ast2400_ami,
 	.probe			= firestone_probe,
 	.init			= astbmc_init,
 	.pci_get_slot_info	= slot_table_get_slot_info,

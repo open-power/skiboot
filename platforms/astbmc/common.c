@@ -435,14 +435,46 @@ void astbmc_exit(void)
 	ipmi_wdt_final_reset();
 }
 
-const struct bmc_platform astbmc_ami = {
-	.name = "AMI",
+const struct bmc_sw_config bmc_sw_ami = {
 	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
 	.ipmi_oem_pnor_access_status = IPMI_CODE(0x3a, 0x07),
 };
 
-const struct bmc_platform astbmc_openbmc = {
-	.name = "OpenBMC",
+const struct bmc_sw_config bmc_sw_openbmc = {
 	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
 	.ipmi_oem_hiomap_cmd         = IPMI_CODE(0x3a, 0x5a),
+};
+
+/* Extracted from a Palmetto */
+const struct bmc_hw_config bmc_hw_ast2400 = {
+	.scu_revision_id = 0x2010303,
+	.mcr_configuration = 0x00000577,
+	.mcr_scu_mpll = 0x000050c0,
+	.mcr_scu_strap = 0x00000000,
+};
+
+/* Extracted from a Witherspoon */
+const struct bmc_hw_config bmc_hw_ast2500 = {
+	.scu_revision_id = 0x04030303,
+	.mcr_configuration = 0x11200756,
+	.mcr_scu_mpll = 0x000071C1,
+	.mcr_scu_strap = 0x00000000,
+};
+
+const struct bmc_platform bmc_plat_ast2400_ami = {
+	.name = "ast2400:ami",
+	.hw = &bmc_hw_ast2400,
+	.sw = &bmc_sw_ami,
+};
+
+const struct bmc_platform bmc_plat_ast2500_ami = {
+	.name = "ast2500:ami",
+	.hw = &bmc_hw_ast2500,
+	.sw = &bmc_sw_ami,
+};
+
+const struct bmc_platform bmc_plat_ast2500_openbmc = {
+	.name = "ast2500:openbmc",
+	.hw = &bmc_hw_ast2500,
+	.sw = &bmc_sw_openbmc,
 };

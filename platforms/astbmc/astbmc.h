@@ -18,6 +18,8 @@
 #ifndef __ASTBMC_H
 #define __ASTBMC_H
 
+#include <platform.h>
+
 #define ST_LOC_PHB(chip_id, phb_idx)    ((chip_id) << 16 | (phb_idx))
 #define ST_LOC_DEVFN(dev, fn)	        ((dev) << 3 | (fn))
 /*
@@ -79,8 +81,11 @@ static struct slot_table_entry st_name[] = \
 	{ .etype = st_end }, \
 }
 
-extern const struct bmc_platform astbmc_ami;
-extern const struct bmc_platform astbmc_openbmc;
+extern const struct bmc_hw_config bmc_hw_ast2400;
+extern const struct bmc_hw_config bmc_hw_ast2500;
+extern const struct bmc_platform bmc_plat_ast2400_ami;
+extern const struct bmc_platform bmc_plat_ast2500_ami;
+extern const struct bmc_platform bmc_plat_ast2500_openbmc;
 
 extern void astbmc_early_init(void);
 extern int64_t astbmc_ipmi_reboot(void);

@@ -321,7 +321,7 @@ static void ast_setup_sio_irq_polarity(void)
 	bmc_sio_put(true);
 }
 
-static bool ast_sio_is_enabled(void)
+bool ast_sio_is_enabled(void)
 {
 	int64_t rc;
 

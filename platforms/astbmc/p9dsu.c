@@ -683,9 +683,14 @@ static void p9dsu_init(void)
 	}
 }
 
-static const struct bmc_platform astbmc_smc = {
-	.name = "SMC",
+static const struct bmc_sw_config bmc_sw_smc = {
 	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
+};
+
+static const struct bmc_platform bmc_plat_ast2500_smc = {
+	.name = "SMC",
+	.hw = &bmc_hw_ast2500,
+	.sw = &bmc_sw_smc,
 };
 
 DECLARE_PLATFORM(p9dsu1u) = {
@@ -694,7 +699,7 @@ DECLARE_PLATFORM(p9dsu1u) = {
 	.init			= p9dsu_init,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
-	.bmc			= &astbmc_smc,
+	.bmc			= &bmc_plat_ast2500_smc,
 	.pci_get_slot_info	= slot_table_get_slot_info,
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,

@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
+#define pr_fmt(fmt)  "PCI-QUIRK: " fmt
+
 #include <skiboot.h>
 #include <pci.h>
 #include <pci-quirk.h>
+#include <platform.h>
 #include <ast.h>
 
 static void quirk_astbmc_vga(struct phb *phb __unused,
@@ -25,10 +28,20 @@ static void quirk_astbmc_vga(struct phb *phb __unused,
 	struct dt_node *np = pd->dn;
 	uint32_t revision, mcr_configuration, mcr_scu_mpll, mcr_scu_strap;
 
-	revision = ast_ahb_readl(SCU_REVISION_ID);
-	mcr_configuration = ast_ahb_readl(MCR_CONFIGURATION);
-	mcr_scu_mpll = ast_ahb_readl(MCR_SCU_MPLL);
-	mcr_scu_strap = ast_ahb_readl(MCR_SCU_STRAP);
+	if (ast_sio_is_enabled()) {
+		revision = ast_ahb_readl(SCU_REVISION_ID);
+		mcr_configuration = ast_ahb_readl(MCR_CONFIGURATION);
+		mcr_scu_mpll = ast_ahb_readl(MCR_SCU_MPLL);
+		mcr_scu_strap = ast_ahb_readl(MCR_SCU_STRAP);
+	} else {
+		prlog(PR_WARNING, "Assumed platform default parameters for %s\n",
+		      __func__);
+		revision = bmc_platform->hw->scu_revision_id;
+		mcr_configuration = bmc_platform->hw->mcr_configuration;
+		mcr_scu_mpll = bmc_platform->hw->mcr_scu_mpll;
+		mcr_scu_strap = bmc_platform->hw->mcr_scu_strap;
+	}
+
 	dt_add_property_cells(np, "aspeed,scu-revision-id", revision);
 	dt_add_property_cells(np, "aspeed,mcr-configuration", mcr_configuration);
 	dt_add_property_cells(np, "aspeed,mcr-scu-mpll", mcr_scu_mpll);
