@@ -122,6 +122,7 @@ int main(void)
 	check_path(c1, "/c1");
 	assert(dt_find_by_name(root, "c1") == c1);
 	assert(dt_find_by_path(root, "/c1") == c1);
+	assert(dt_new(root, "c1") == NULL);
 
 	c2 = dt_new(root, "c2");
 	assert(!list_top(&c2->properties, struct dt_property, list));
