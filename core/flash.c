@@ -171,6 +171,7 @@ static void __flash_dt_add_fw_version(struct dt_node *fw_version, char* data)
 	char *prop;
 	int version_len, i;
 	int len = strlen(data);
+	const char *skiboot_version;
 	const char * version_str[] = {"open-power", "buildroot", "skiboot",
 				      "hostboot-binaries", "hostboot", "linux",
 				      "petitboot", "occ", "capp-ucode", "sbe",
@@ -224,9 +225,22 @@ static void __flash_dt_add_fw_version(struct dt_node *fw_version, char* data)
 		prop = data + version_len + 1;
 		dt_add_property_string(fw_version, version_str[i], prop);
 
-		if (strncmp(version_str[i], "skiboot", strlen("skiboot")) == 0)
-			if (strncmp(prop, version, strlen(version)) != 0)
+		/* Sanity check against what Skiboot thinks its version is. */
+		if (strncmp(version_str[i], "skiboot",
+					strlen("skiboot")) == 0) {
+			/*
+			 * If Skiboot was built with Buildroot its version may
+			 * include a 'skiboot-' prefix; ignore it.
+			 */
+			if (strncmp(version, "skiboot-",
+						strlen("skiboot-")) == 0)
+				skiboot_version = version + strlen("skiboot-");
+			else
+				skiboot_version = version;
+			if (strncmp(prop, skiboot_version,
+						strlen(skiboot_version)) != 0)
 				prlog(PR_WARNING, "WARNING! Skiboot version does not match VERSION partition!\n");
+		}
 	}
 }
 
