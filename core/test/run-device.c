@@ -166,12 +166,14 @@ int main(void)
 	assert(dt_find_by_name(root, "addr@1337") == addr1);
 	assert(dt_find_by_name_addr(root, "addr", 0x1337) == addr1);
 	assert(dt_find_by_path(root, "/addrs/addr@1337") == addr1);
+	assert(dt_new_addr(addrs, "addr", 0x1337) == NULL);
 
 	addr2 = dt_new_2addr(addrs, "2addr", 0xdead, 0xbeef);
 	assert(!list_top(&addr2->properties, struct dt_property, list));
 	check_path(addr2, "/addrs/2addr@dead,beef");
 	assert(dt_find_by_name(root, "2addr@dead,beef") == addr2);
 	assert(dt_find_by_path(root, "/addrs/2addr@dead,beef") == addr2);
+	assert(dt_new_2addr(addrs, "2addr", 0xdead, 0xbeef) == NULL);
 
 	/* Test walking the tree, checking and setting values */
 	for (n = 0, i = dt_first(root); i; i = dt_next(root, i), n++) {
