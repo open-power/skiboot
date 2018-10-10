@@ -103,7 +103,7 @@ const char **props_to_fix(struct dt_node *node)
 
 int main(void)
 {
-	struct dt_node *root, *other_root, *c1, *c2, *gc1, *gc2, *gc3, *ggc1, *ggc2;
+	struct dt_node *root, *other_root, *c1, *c2, *c2_c, *gc1, *gc2, *gc3, *ggc1, *ggc2;
 	struct dt_node *addrs, *addr1, *addr2;
 	struct dt_node *i, *subtree, *ev1, *ut1, *ut2;
 	const struct dt_property *p;
@@ -117,7 +117,7 @@ int main(void)
 	assert(!list_top(&root->properties, struct dt_property, list));
 	check_path(root, "/");
 
-	c1 = dt_new(root, "c1");
+	c1 = dt_new_check(root, "c1");
 	assert(!list_top(&c1->properties, struct dt_property, list));
 	check_path(c1, "/c1");
 	assert(dt_find_by_name(root, "c1") == c1);
@@ -125,6 +125,8 @@ int main(void)
 	assert(dt_new(root, "c1") == NULL);
 
 	c2 = dt_new(root, "c2");
+	c2_c = dt_new_check(root, "c2");
+	assert(c2 == c2_c);
 	assert(!list_top(&c2->properties, struct dt_property, list));
 	check_path(c2, "/c2");
 	assert(dt_find_by_name(root, "c2") == c2);
