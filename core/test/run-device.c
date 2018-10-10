@@ -103,7 +103,7 @@ const char **props_to_fix(struct dt_node *node)
 
 int main(void)
 {
-	struct dt_node *root, *c1, *c2, *gc1, *gc2, *gc3, *ggc1, *ggc2;
+	struct dt_node *root, *other_root, *c1, *c2, *gc1, *gc2, *gc3, *ggc1, *ggc2;
 	struct dt_node *addrs, *addr1, *addr2;
 	struct dt_node *i, *subtree, *ev1, *ut1, *ut2;
 	const struct dt_property *p;
@@ -388,6 +388,13 @@ int main(void)
 
 	assert(is_sorted(root));
 
+	/* Now test dt_attach_root */
+	other_root = dt_new_root("other_root");
+	dt_new(other_root, "d@1");
+
+	assert(dt_attach_root(root, other_root));
+	other_root = dt_new_root("other_root");
+	assert(!dt_attach_root(root, other_root));
 	dt_free(root);
 
 	/* Test child node sorting */
