@@ -13,6 +13,7 @@ CORE_OBJS += pci-dt-slot.o direct-controls.o cpufeatures.o
 
 ifeq ($(SKIBOOT_GCOV),1)
 CORE_OBJS += gcov-profiling.o
+CFLAGS_SKIP_core/gcov-profiling.o = -Wsuggest-attribute=const
 endif
 
 CORE=core/built-in.a

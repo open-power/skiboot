@@ -51,13 +51,13 @@ struct gcov_info *gcov_info_list;
 
 void __gcov_init(struct gcov_info* f);
 void skiboot_gcov_done(void);
-void __gcov_flush(void) __attrconst;
-void __gcov_merge_add(gcov_type *counters, unsigned int n_counters) __attrconst;
-void __gcov_merge_single(gcov_type *counters, unsigned int n_counters) __attrconst;
-void __gcov_merge_delta(gcov_type *counters, unsigned int n_counters) __attrconst;
-void __gcov_merge_ior(gcov_type *counters, unsigned int n_counters) __attrconst;
-void __gcov_merge_time_profile(gcov_type *counters, unsigned int n_counters) __attrconst;
-void __gcov_exit(void) __attrconst;
+void __gcov_flush(void);
+void __gcov_merge_add(gcov_type *counters, unsigned int n_counters);
+void __gcov_merge_single(gcov_type *counters, unsigned int n_counters);
+void __gcov_merge_delta(gcov_type *counters, unsigned int n_counters);
+void __gcov_merge_ior(gcov_type *counters, unsigned int n_counters);
+void __gcov_merge_time_profile(gcov_type *counters, unsigned int n_counters);
+void __gcov_exit(void);
 
 void __gcov_init(struct gcov_info* f)
 {
