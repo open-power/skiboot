@@ -322,14 +322,16 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		 * outdated or the device is marked as unknown (0xFF) in the
 		 * hdat. Log both cases to see what/where/why.
 		 */
-		if (!type || dev->type == 0xFF)
+		if (!type || dev->type == 0xFF) {
 			prlog(PR_WARNING, "HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n",
 			      dev->i2cm_engine, dev->i2cm_port, name, dev_addr,
 			      dev->dev_port, purpose, info->label);
-		else
-			prlog(PR_DEBUG, "HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n",
-			      dev->i2cm_engine, dev->i2cm_port, name, dev_addr,
-			      dev->dev_port, purpose, info->label);
+			continue;
+		}
+
+		prlog(PR_DEBUG, "HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n",
+		      dev->i2cm_engine, dev->i2cm_port, name, dev_addr,
+		      dev->dev_port, purpose, info->label);
 
 		/*
 		 * Multi-port device require special handling since we need to
