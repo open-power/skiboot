@@ -90,16 +90,21 @@ To test in a simulator, install the IBM POWER8 Functional Simulator from:
 http://www-304.ibm.com/support/customercare/sas/f/pwrfs/home.html
 Also see external/mambo/README.md
 
-Qemu (as of 2.2.0) is not suitable as it does not (yet) implement
-the HyperVisor mode of the POWER8 processor.
-See https://www.flamingspork.com/blog/2015/08/28/running-opal-in-qemu-the-powernv-platform/ for instructions on how to use a work-in-progress patchset
-to qemu that may be suitable for some work.
+Qemu as of version 2.8 implements the 'powernv' machine model and is sufficient
+to run skiboot:
 
-To run a boot-to-bootloader test, you'll need a zImage.papr built using
-the mambo_defconfig config for op-build. See
-https://github.com/open-power/op-build/ on howto build. Drop zImage.epapr
-in the skiboot directory and the skiboot test suite will automatically pick
-it up.
+ qemu-system-ppc64 -M powernv -m 3G -nographic -L /path/to/skiboot/
+
+To run a boot-to-bootloader test you need a Linux kernel image 'zImage.epapr'.
+Build one using the `mambo_defconfig` config for op-build. See
+https://github.com/open-power/op-build/ on how to build, or download one from
+https://openpower.xyz/job/openpower/job/openpower-op-build/.
+
+Drop zImage.epapr in the skiboot directory and the skiboot test suite will
+automatically pick it up. You can also run a combined skiboot and Linux test in
+Qemu (version 3.0+):
+
+ qemu-system-ppc64 -M powernv -m 3G -nographic -kernel zImage.epapr -L /path/to/skiboot/
 
 See opal-ci/README for further testing instructions.
 
