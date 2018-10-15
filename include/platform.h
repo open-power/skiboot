@@ -72,7 +72,6 @@ struct platform_ocapi {
 	uint8_t i2c_presence_brick3;	/* I2C pin to read for presence on brick 3 */
 	uint8_t i2c_presence_brick4;	/* I2C pin to read for presence on brick 4 */
 	uint8_t i2c_presence_brick5;	/* I2C pin to read for presence on brick 5 */
-	bool force_presence;            /* don't use i2c detection */
 	bool odl_phy_swap;		/* Swap ODL1 to use brick 2 rather than
 					 * brick 1 lanes */
 };

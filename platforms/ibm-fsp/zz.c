@@ -42,11 +42,6 @@ const struct platform_ocapi zz_ocapi = {
 	.i2c_presence_brick3 = (1 << 7), /* top connector */
 	.i2c_presence_brick4 = 0, /* unused */
 	.i2c_presence_brick5 = 0, /* unused */
-	/*
-	 * i2c presence detection is broken on ZZ planar < v4 so we
-	 * force the presence until all our systems are upgraded
-	 */
-	.force_presence      = true,
 	.odl_phy_swap        = true,
 };
 

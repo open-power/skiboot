@@ -144,8 +144,7 @@ void npu2_i2c_presence_detect(struct npu2 *npu)
 	assert(platform.ocapi);
 	for (int i = 0; i < npu->total_devices; i++) {
 		dev = &npu->devices[i];
-		if (platform.ocapi->force_presence ||
-		    _i2c_presence_detect(dev))
+		if (_i2c_presence_detect(dev))
 			dev->type = NPU2_DEV_TYPE_OPENCAPI;
 		else
 			dev->type = NPU2_DEV_TYPE_UNKNOWN;
