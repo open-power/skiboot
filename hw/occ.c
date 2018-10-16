@@ -48,6 +48,11 @@
 #define MAX_OPAL_CMD_DATA_LENGTH	4090
 #define MAX_OCC_RSP_DATA_LENGTH		8698
 
+#define P8_PIR_CORE_MASK		0xFFF8
+#define P9_PIR_QUAD_MASK		0xFFF0
+#define FREQ_MAX_IN_DOMAIN		0
+#define FREQ_MOST_RECENTLY_SET		1
+
 /**
  * OCC-OPAL Shared Memory Region
  *
@@ -498,6 +503,15 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 	u8 nr_pstates;
 	bool ultra_turbo_supported;
 	int i, major, minor;
+	u8 domain_runs_at;
+	u32 freq_domain_mask;
+
+	/* TODO Firmware plumbing required so as to have two modes to set
+	 * PMCR based on max in domain or most recently used. As of today,
+	 * it is always max in domain for P9.
+	 */
+	domain_runs_at = 0;
+	freq_domain_mask = 0;
 
 	prlog(PR_DEBUG, "OCC: CPU pstate state device tree init\n");
 
@@ -670,6 +684,14 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 		return false;
 	}
 
+	if (proc_gen == proc_gen_p8) {
+		freq_domain_mask = P8_PIR_CORE_MASK;
+		domain_runs_at = FREQ_MOST_RECENTLY_SET;
+	} else if (proc_gen == proc_gen_p9) {
+		freq_domain_mask = P9_PIR_QUAD_MASK;
+		domain_runs_at = FREQ_MAX_IN_DOMAIN;
+	}
+
 	/* Add the device-tree entries */
 	dt_add_property(power_mgt, "ibm,pstate-ids", dt_id,
 			nr_pstates * sizeof(u32));
@@ -678,6 +700,8 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 	dt_add_property_cells(power_mgt, "ibm,pstate-min", pmin);
 	dt_add_property_cells(power_mgt, "ibm,pstate-nominal", pnom);
 	dt_add_property_cells(power_mgt, "ibm,pstate-max", pmax);
+	dt_add_property_cells(power_mgt, "freq-domain-mask", freq_domain_mask);
+	dt_add_property_cells(power_mgt, "domain-runs-at", domain_runs_at);
 
 	free(dt_freq);
 	free(dt_id);
