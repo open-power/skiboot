@@ -62,7 +62,7 @@ STATIC StopReturnCode_t  isFusedMode( void* const i_pImage, bool* o_fusedMode )
     do
     {
         HomerSection_t* pHomerDesc  =   ( HomerSection_t* ) i_pImage;
-        HomerImgDesc_t* pHomer      =   (HomerImgDesc_t*)( pHomerDesc->interrruptHandler );
+        HomerImgDesc_t* pHomer      =   (HomerImgDesc_t*)( pHomerDesc->iv_interrruptHandler );
 
         if( !i_pImage )
         {
@@ -176,6 +176,7 @@ StopReturnCode_t getCoreAndThread( void* const i_pImage, const uint64_t i_pir,
                 *o_pThreadId += 1;
             }
         }
+
 
         MY_INF("Core Type %s", fusedMode ? "Fused" : "Un-Fused" );
         //quad field is not affected by fuse mode
