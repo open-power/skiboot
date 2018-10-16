@@ -32,6 +32,8 @@
 // *HWP Team        :  PM
 // *HWP Level       :  2
 // *HWP Consumed by :  HB:HYP
+
+// *INDENT-OFF*
 #ifdef PPC_HYP
     #include <HvPlicModule.H>
 #endif
@@ -69,6 +71,8 @@ const StopSprReg_t g_sprRegister[] =
 };
 
 const uint32_t MAX_SPR_SUPPORTED =  10;
+const uint32_t LEGACY_CORE_SCOM_SUPPORTED   =   15;
+const uint32_t LEGACY_QUAD_SCOM_SUPPORTED   =   63;
 
 //-----------------------------------------------------------------------------
 
@@ -835,16 +839,24 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
             l_maxScomRestoreEntry   =
                 *(uint32_t*)((uint8_t*)i_pImage + CPMR_HOMER_OFFSET + CPMR_MAX_SCOM_REST_PER_CORE_BYTE);
             pScomEntry              =   CORE_ID_SCOM_START(i_pImage, chipletId )
-                                        cacheEntry              =   false;
-	    if( !l_maxScomRestoreEntry )
-	    {
-                l_maxScomRestoreEntry   = 15;
+            cacheEntry              =   false;
+
+            if( !l_maxScomRestoreEntry )
+            {
+                //Old HB and new STOP API case. Retain legacy Number
+                l_maxScomRestoreEntry   =  SWIZZLE_4_BYTE(LEGACY_CORE_SCOM_SUPPORTED);
             }
         }
         else
         {
             l_maxScomRestoreEntry   =
                 *(uint32_t*)((uint8_t*)i_pImage + QPMR_HOMER_OFFSET + QPMR_QUAD_MAX_SCOM_ENTRY_BYTE);
+
+            if( !l_maxScomRestoreEntry )
+            {
+                // Incase of a bad HOMER header initialization, fall back on legacy number.
+                l_maxScomRestoreEntry   =  SWIZZLE_4_BYTE(LEGACY_QUAD_SCOM_SUPPORTED);
+            }
             // chiplet is a cache. let us find start address of cache section
             // associated with given chiplet. A cache section associated with
             // given chiplet is split in to L2, L3 and EQ area.
@@ -895,13 +907,16 @@ StopReturnCode_t p9_stop_save_scom( void* const   i_pImage,
                 break;
         }
 
+
         if(( imageVer > LEGACY_SCOM_RESTORE_VER ) && ( cacheEntry ) )
         {
             //STOP API migrated to newer algorithm for creation of entries
+
             pScomEntry  =   CACHE_SCOM_ADDR(i_pImage,
                                             chipletId,
                                             l_maxScomRestoreEntry )
-                            entryLimit  =   l_maxScomRestoreEntry;
+
+            entryLimit  =   l_maxScomRestoreEntry;
         }
 
         if(( !pScomEntry ) || ( l_rc ) )
