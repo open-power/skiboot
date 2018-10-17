@@ -32,17 +32,18 @@ struct flash_hostboot_header {
 };
 
 int flash_subpart_info(void *part_header, uint32_t header_len,
-		       uint32_t part_size, uint32_t *part_actual,
+		       uint32_t part_size, uint32_t *part_actualp,
 		       uint32_t subid, uint32_t *offset, uint32_t *size)
 {
 	struct flash_hostboot_header *header;
 	char eyecatcher[5];
 	uint32_t i, ec, o, s;
+	uint32_t part_actual;
 	bool subpart_found;
 
-	if (!part_header || ( !offset && !size && !part_actual)) {
+	if (!part_header || ( !offset && !size && !part_actualp)) {
 		prlog(PR_ERR, "FLASH: invalid parameters: ph %p of %p sz %p "
-		      "tsz %p\n", part_header, offset, size, part_actual);
+		      "tsz %p\n", part_header, offset, size, part_actualp);
 		return OPAL_PARAMETER;
 	}
 
@@ -68,7 +69,7 @@ int flash_subpart_info(void *part_header, uint32_t header_len,
 	      eyecatcher);
 
 	subpart_found = false;
-	*part_actual = 0;
+	part_actual = 0;
 	for (i = 0; i < FLASH_HOSTBOOT_TOC_MAX_ENTRIES; i++) {
 
 		ec = be32_to_cpu(header->toc[i].ec);
@@ -97,8 +98,8 @@ int flash_subpart_info(void *part_header, uint32_t header_len,
 		 * Subpartitions content are different, but multiple toc entries
 		 * may point to the same subpartition.
 		 */
-		if (ALIGN_UP(o + s, FLASH_SUBPART_HEADER_SIZE) > *part_actual)
-			*part_actual = ALIGN_UP(o + s, FLASH_SUBPART_HEADER_SIZE);
+		if (ALIGN_UP(o + s, FLASH_SUBPART_HEADER_SIZE) > part_actual)
+			part_actual = ALIGN_UP(o + s, FLASH_SUBPART_HEADER_SIZE);
 
 		if (ec == subid) {
 			if (offset)
@@ -112,5 +113,7 @@ int flash_subpart_info(void *part_header, uint32_t header_len,
 		prerror("FLASH: flash subpartition not found.\n");
 		return OPAL_RESOURCE;
 	}
+	if (part_actualp)
+		*part_actualp = part_actual;
 	return OPAL_SUCCESS;
 }

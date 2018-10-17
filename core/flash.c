@@ -428,9 +428,13 @@ int flash_register(struct blocklevel_device *bl)
 	if (rc)
 		return rc;
 
+	if (!name)
+		name = "(unnamed)";
+
 	prlog(PR_INFO, "FLASH: registering flash device %s "
 			"(size 0x%llx, blocksize 0x%x)\n",
-			name ?: "(unnamed)", size, block_size);
+			name, size, block_size);
+
 	flash = malloc(sizeof(struct flash));
 	if (!flash) {
 		prlog(PR_ERR, "FLASH: Error allocating flash structure\n");
