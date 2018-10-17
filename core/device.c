@@ -494,7 +494,10 @@ struct dt_property *dt_add_property_string(struct dt_node *node,
 					   const char *name,
 					   const char *value)
 {
-	return dt_add_property(node, name, value, strlen(value)+1);
+	size_t len = 0;
+	if (value)
+		len = strlen(value) + 1;
+	return dt_add_property(node, name, value, len);
 }
 
 struct dt_property *dt_add_property_nstr(struct dt_node *node,
