@@ -473,6 +473,7 @@ static const struct lpc_error_entry lpc_error_table[] = {
 static int64_t lpc_probe_prepare(struct lpcm *lpc)
 {
 	const uint32_t irqmask_addr = lpc_reg_opb_base + LPC_HC_IRQMASK;
+	const uint32_t irqstat_addr = lpc_reg_opb_base + LPC_HC_IRQSTAT;
 	uint32_t irqmask;
 	int rc;
 
@@ -481,7 +482,11 @@ static int64_t lpc_probe_prepare(struct lpcm *lpc)
 		return rc;
 
 	irqmask &= ~LPC_HC_IRQ_SYNC_NORESP_ERR;
-	return opb_write(lpc, irqmask_addr, irqmask, 4);
+	rc = opb_write(lpc, irqmask_addr, irqmask, 4);
+	if (rc)
+		return rc;
+
+	return opb_write(lpc, irqstat_addr, LPC_HC_IRQ_SYNC_NORESP_ERR, 4);
 }
 
 static int64_t lpc_probe_test(struct lpcm *lpc)
