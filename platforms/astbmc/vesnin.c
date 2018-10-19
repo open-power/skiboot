@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018 YADRO (KNS Group LLC)
+ * Copyright (c) 2018 YADRO
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
 #include <console.h>
 #include <chip.h>
 #include <ipmi.h>
+#include <pci.h>
+#include <pci-cfg.h>
 
 #include "astbmc.h"
 
@@ -26,6 +28,51 @@
 #define CHIP_ID_CPU1 0x08
 #define CHIP_ID_CPU2 0x10
 #define CHIP_ID_CPU3 0x18
+
+/* Current version of the PCI inventory synchronization packet. */
+#define PCI_INV_VERSION 1
+
+/* IPMI message identifier (IBM OEM) for PCI inventory. */
+#define IPMI_PCI_INV IPMI_CODE(0x3a, 0x2a)
+
+/* Id of the current PCI inventory synchronization session. */
+static uint8_t pci_inv_session_id;
+
+/**
+ * struct pciinv_device - PCI device inventory description.
+ * @domain_num: Domain number.
+ * @bus_num: Bus number.
+ * @device_num: Device number.
+ * @func_num: Function number.
+ * @vendor_id: Vendor Id.
+ * @device_id: Device Id.
+ * @class_code: Device class code.
+ * @revision: Revision number.
+ *
+ * All fields have Big Endian byte order.
+ */
+struct pciinv_device {
+	uint16_t	domain_num;
+	uint8_t		bus_num;
+	uint8_t		device_num;
+	uint8_t		func_num;
+	uint16_t	vendor_id;
+	uint16_t	device_id;
+	uint32_t	class_code;
+	uint8_t		revision;
+} __packed;
+
+/**
+ * struct pciinv_packet - IPMI message packet data.
+ * @version: Packet version, must be set to %PCI_INVENTORY_VERSION.
+ * @session: Sync session Id.
+ * @device: PCI device description.
+ */
+struct pciinv_packet {
+	uint8_t		version;
+	uint8_t		session;
+	struct pciinv_device device;
+} __packed;
 
 
 static const struct slot_table_entry vesnin_phb0_0_slot[] = {
@@ -233,6 +280,58 @@ static const struct slot_table_entry vesnin_phb_table[] = {
 	{ .etype = st_end }
 };
 
+/**
+ * pciinv_walk() - Callback from PCI enumerator, see :c:func:`pci_walk_dev`.
+ */
+static int pciinv_walk(struct phb *phb, struct pci_device *pd, void *data __unused)
+{
+	struct ipmi_msg *msg;
+	struct pciinv_packet pack = {
+		.version = PCI_INV_VERSION,
+		.session = pci_inv_session_id
+	};
+
+	/* PCI device filter: Skip non-EP devices */
+	if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false)) {
+		if (pd->dev_type != PCIE_TYPE_ENDPOINT)
+			return OPAL_SUCCESS;
+	}
+	else if (pd->is_bridge)
+		return OPAL_SUCCESS;
+
+	/* Fill the PCI device inventory description */
+	pack.device.domain_num = cpu_to_be16(phb->opal_id & 0xffff);
+	pack.device.bus_num = (pd->bdfn >> 8) & 0xff;
+	pack.device.device_num = (pd->bdfn >> 3) & 0x1f;
+	pack.device.func_num = pd->bdfn & 0x7;
+	pack.device.vendor_id = cpu_to_be16(PCI_VENDOR_ID(pd->vdid));
+	pack.device.device_id = cpu_to_be16(PCI_DEVICE_ID(pd->vdid));
+	pack.device.class_code = cpu_to_be32(pd->class & 0xffffff);
+	pci_cfg_read8(phb, pd->bdfn, PCI_CFG_REV_ID, &pack.device.revision);
+
+	msg = ipmi_mkmsg_simple(IPMI_PCI_INV, &pack, sizeof(pack));
+	if (!msg)
+		return OPAL_HARDWARE;
+
+	/* Synchronously send the IPMI message, the queue is too small */
+	ipmi_queue_msg_sync(msg);
+
+	return OPAL_SUCCESS;
+}
+
+static void vesnin_pci_probe_complete(void)
+{
+	struct phb *phb;
+
+	check_all_slot_table();
+
+	/* Send PCI device list to the BMC */
+	++pci_inv_session_id;
+	for_each_phb(phb) {
+		pci_walk_dev(phb, NULL, &pciinv_walk, NULL);
+	}
+}
+
 static bool vesnin_probe(void)
 {
 	if (!dt_node_is_compatible(dt_root, "YADRO,vesnin"))
@@ -251,7 +350,7 @@ DECLARE_PLATFORM(vesnin) = {
 	.probe			= vesnin_probe,
 	.init			= astbmc_init,
 	.pci_get_slot_info	= slot_table_get_slot_info,
-	.pci_probe_complete	= check_all_slot_table,
+	.pci_probe_complete	= vesnin_pci_probe_complete,
 	.external_irq		= astbmc_ext_irq_serirq_cpld,
 	.cec_power_down		= astbmc_ipmi_power_down,
 	.cec_reboot		= astbmc_ipmi_reboot,
