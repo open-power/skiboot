@@ -1,6 +1,8 @@
 # need to get images path defined early
 source $env(LIB_DIR)/ppc/util.tcl
-source qtrace_utils.tcl
+if { [file exists qtrace_utils.tcl] } then {
+	source qtrace_utils.tcl
+}
 
 #
 # Call tclreadline's Loop to move to friendlier
