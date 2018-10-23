@@ -471,7 +471,7 @@ out:
 }
 
 static int do_read_file(struct blocklevel_device *bl, const char *file,
-		uint32_t start, uint32_t size)
+		uint32_t start, uint32_t size, uint32_t skip_size)
 {
 	int fd, rc = 0;
 	uint32_t done = 0;
@@ -481,6 +481,9 @@ static int do_read_file(struct blocklevel_device *bl, const char *file,
 		perror("Failed to open file");
 		return 1;
 	}
+	start += skip_size;
+	size -= skip_size;
+
 	printf("Reading to \"%s\" from 0x%08x..0x%08x !\n",
 	       file, start, start + size);
 
@@ -644,6 +647,8 @@ static void print_help(const char *pname)
 	printf("\t\tTarget filename instead of actual flash.\n\n");
 	printf("\t-S, --side\n");
 	printf("\t\tSide of the flash on which to operate, 0 (default) or 1\n\n");
+	printf("\t--skip=N\n");
+	printf("\t\tSkip N number of bytes from the start when reading\n\n");
 	printf("\t-T, --toc\n");
 	printf("\t\tlibffs TOC on which to operate, defaults to 0.\n");
 	printf("\t\tleading 0x is required for interpretation of a hex value\n\n");
@@ -709,7 +714,7 @@ int main(int argc, char *argv[])
 	bool no_action = false, tune = false;
 	char *write_file = NULL, *read_file = NULL, *part_name = NULL;
 	bool ffs_toc_seen = false, direct = false, print_detail = false;
-	int flash_side = 0;
+	int flash_side = 0, skip_size = 0;
 	int rc = 0;
 
 	while(1) {
@@ -735,6 +740,7 @@ int main(int argc, char *argv[])
 			{"version",	no_argument,		NULL,	'v'},
 			{"debug",	no_argument,		NULL,	'g'},
 			{"side",	required_argument,	NULL,	'S'},
+			{"skip",	required_argument,	NULL,	'k'},
 			{"toc",		required_argument,	NULL,	'T'},
 			{"clear",   no_argument,        NULL,   'c'},
 			{NULL,	    0,                  NULL,    0 }
@@ -825,6 +831,13 @@ int main(int argc, char *argv[])
 			break;
 		case 'S':
 			flash_side = atoi(optarg);
+			break;
+		case 'k':
+			skip_size = strtoul(optarg, &endptr, 0);
+			if (*endptr != '\0') {
+				rc = 1;
+				no_action = true;
+			}
 			break;
 		case 'T':
 			if (!optarg)
@@ -931,6 +944,13 @@ int main(int argc, char *argv[])
 	/* Read command should always come with a file */
 	if (do_read && !read_file) {
 		fprintf(stderr, "Read with no file specified !\n");
+		rc = 1;
+		goto out;
+	}
+
+	/* Skip only supported on read */
+	if (skip_size && !do_read) {
+		fprintf(stderr, "--skip requires a --read command !\n");
 		rc = 1;
 		goto out;
 	}
@@ -1142,7 +1162,7 @@ int main(int argc, char *argv[])
 	}
 	rc = 0;
 	if (do_read)
-		rc = do_read_file(flash.bl, read_file, address, read_size);
+		rc = do_read_file(flash.bl, read_file, address, read_size, skip_size);
 	if (!rc && erase_all)
 		rc = erase_chip(&flash);
 	else if (!rc && erase)
