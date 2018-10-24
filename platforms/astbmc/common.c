@@ -421,8 +421,15 @@ void astbmc_early_init(void)
 			prerror("PLAT: AST IO initialisation failed!\n");
 
 		ast_setup_sio_mbox(MBOX_IO_BASE, MBOX_LPC_IRQ);
-	} else
-		prlog(PR_WARNING, "PLAT: AST SIO unavailable!\n");
+	} else {
+		/*
+		 * This may or may not be an error depending on if we set up
+		 * hiomap or not. In the old days it *was* an error, but now
+		 * with the way we configure the BMC hardware, this is actually
+		 * the not error case.
+		 */
+		prlog(PR_INFO, "PLAT: AST SIO unavailable!\n");
+	}
 
 	/* Setup UART and use it as console */
 	uart_init();
