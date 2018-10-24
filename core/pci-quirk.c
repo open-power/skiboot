@@ -34,7 +34,8 @@ static void quirk_astbmc_vga(struct phb *phb __unused,
 		mcr_scu_mpll = ast_ahb_readl(MCR_SCU_MPLL);
 		mcr_scu_strap = ast_ahb_readl(MCR_SCU_STRAP);
 	} else {
-		prlog(PR_WARNING, "Assumed platform default parameters for %s\n",
+		/* Previously we would warn, now SIO disabled by design */
+		prlog(PR_INFO, "Assumed platform default parameters for %s\n",
 		      __func__);
 		revision = bmc_platform->hw->scu_revision_id;
 		mcr_configuration = bmc_platform->hw->mcr_configuration;
