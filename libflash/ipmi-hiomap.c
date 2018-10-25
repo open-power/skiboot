@@ -117,6 +117,7 @@ static void ipmi_hiomap_cmd_cb(struct ipmi_msg *msg)
 	if (msg->resp_size < 2) {
 		prerror("Illegal response size: %u\n", msg->resp_size);
 		res->cc = IPMI_ERR_UNSPECIFIED;
+		ipmi_free_msg(msg);
 		return;
 	}
 
@@ -124,6 +125,7 @@ static void ipmi_hiomap_cmd_cb(struct ipmi_msg *msg)
 		prerror("Unmatched sequence number: wanted %u got %u\n",
 			ctx->seq, msg->data[1]);
 		res->cc = IPMI_ERR_UNSPECIFIED;
+		ipmi_free_msg(msg);
 		return;
 	}
 
@@ -210,6 +212,7 @@ static void ipmi_hiomap_cmd_cb(struct ipmi_msg *msg)
 		      msg->data[0]);
 		break;
 	};
+	ipmi_free_msg(msg);
 }
 
 static bool hiomap_get_info(struct ipmi_hiomap *ctx)
