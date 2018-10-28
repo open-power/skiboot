@@ -8,4 +8,3 @@ RUN curl -L -O http://public.dhe.ibm.com/software/server/powerfuncsim/p8/package
 RUN yum -y install systemsim-p8-1.0-2.el6.x86_64.rpm
 COPY . /build/
 WORKDIR /build
-ENTRYPOINT ./opal-ci/build-centos6.sh
