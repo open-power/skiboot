@@ -159,6 +159,8 @@ struct phb4_err {
 #define PHB4_LINK_ELECTRICAL_RETRIES	100
 #define PHB4_LINK_WAIT_RETRIES		200
 
+#define PHB4_RX_ERR_MAX			8
+
 /* PHB4 flags */
 #define PHB4_AIB_FENCED		0x00000001
 #define PHB4_CFG_USE_ASB	0x00000002
