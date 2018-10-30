@@ -152,6 +152,7 @@ static bool verbose_eeh;
 static bool pci_tracing;
 static bool pci_eeh_mmio;
 static bool pci_retry_all;
+static int rx_err_max = PHB4_RX_ERR_MAX;
 
 /* Note: The "ASB" name is historical, practically this means access via
  * the XSCOM backdoor
@@ -2672,11 +2673,12 @@ static void phb4_lane_eq_change(struct phb4 *p, uint32_t vdid)
 static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
+	uint64_t reg;
 	uint32_t id;
-	uint16_t bdfn;
-	uint8_t trained_speed, phb_speed, dev_speed, target_speed;
+	uint16_t bdfn, lane_errs;
+	uint8_t trained_speed, phb_speed, dev_speed, target_speed, rx_errs;
 	uint8_t trained_width, phb_width, dev_width, target_width;
-	bool optimal_speed, optimal_width, optimal, retry_enabled;
+	bool optimal_speed, optimal_width, optimal, retry_enabled, rx_err_ok;
 
 
 	/* Current trained state */
@@ -2702,6 +2704,11 @@ static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
 	retry_enabled = (phb4_chip_retry_workaround() &&
 			 phb4_adapter_in_whitelist(id)) ||
 		phb4_lane_eq_retry_whitelist(id);
+	reg = in_be64(p->regs + PHB_PCIE_DLP_ERR_COUNTERS);
+	rx_errs =  GETFIELD(PHB_PCIE_DLP_RX_ERR_CNT, reg);
+	rx_err_ok = (rx_errs < rx_err_max);
+	reg = in_be64(p->regs + PHB_PCIE_DLP_ERR_STATUS);
+	lane_errs = GETFIELD(PHB_PCIE_DLP_LANE_ERR, reg);
 
 	PHBDBG(p, "LINK: Card [%04x:%04x] %s Retry:%s\n", VENDOR(id),
 	       DEVICE(id), optimal ? "Optimal" : "Degraded",
@@ -2710,9 +2717,15 @@ static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
 	       trained_speed, phb_speed, dev_speed, optimal_speed ? "" : " *");
 	PHBDBG(p, "LINK: Width Train:x%02i PHB:x%02i DEV:x%02i%s\n",
 	       trained_width, phb_width, dev_width, optimal_width ? "" : " *");
+	PHBDBG(p, "LINK: RX Errors Now:%i Max:%i Lane:0x%04x%s\n",
+	       rx_errs, rx_err_max, lane_errs, rx_err_ok ? "" : " *");
 
 	if (vdid)
 		*vdid = id;
+
+	/* Always do RX error retry irrespective of chip and card */
+	if (!rx_err_ok)
+		return false;
 
 	if (!retry_enabled)
 		return true;
@@ -5778,6 +5791,7 @@ static void phb4_probe_pbcq(struct dt_node *pbcq)
 void probe_phb4(void)
 {
 	struct dt_node *np;
+	const char *s;
 
 	verbose_eeh = nvram_query_eq("pci-eeh-verbose", "true");
 	/* REMOVEME: force this for now until we stabalise PCIe */
@@ -5788,6 +5802,15 @@ void probe_phb4(void)
 	pci_tracing = nvram_query_eq("pci-tracing", "true");
 	pci_eeh_mmio = !nvram_query_eq("pci-eeh-mmio", "disabled");
 	pci_retry_all = nvram_query_eq("pci-retry-all", "true");
+	s = nvram_query("phb-rx-err-max");
+	if (s) {
+		rx_err_max = atoi(s);
+
+		/* Clip to uint8_t used by hardware */
+		rx_err_max = MAX(rx_err_max, 0);
+		rx_err_max = MIN(rx_err_max, 255);
+	}
+	prlog(PR_DEBUG, "PHB4: Maximum RX errors during training: %d\n", rx_err_max);
 
 	/* Look for PBCQ XSCOM nodes */
 	dt_for_each_compatible(dt_root, np, "ibm,power9-pbcq")
