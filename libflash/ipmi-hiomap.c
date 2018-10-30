@@ -394,7 +394,7 @@ static bool hiomap_flush(struct ipmi_hiomap *ctx)
 		return false;
 	}
 
-	prlog(PR_DEBUG, "Flushed writes");
+	prlog(PR_DEBUG, "Flushed writes\n");
 
 	return true;
 }
