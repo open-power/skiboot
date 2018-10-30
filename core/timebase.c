@@ -1,4 +1,3 @@
-
 /* Copyright 2013-2014 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +18,7 @@
 #include <opal.h>
 #include <cpu.h>
 #include <chip.h>
+#include <debug_descriptor.h>
 
 unsigned long tb_hz = 512000000;
 
@@ -57,7 +57,7 @@ void time_wait(unsigned long duration)
 		return;
 	}
 
-	if (c != boot_cpu)
+	if (c != boot_cpu && opal_booting())
 		time_wait_nopoll(duration);
 	else
 		time_wait_poll(duration);
