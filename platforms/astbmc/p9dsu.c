@@ -685,6 +685,7 @@ static void p9dsu_init(void)
 
 static const struct bmc_sw_config bmc_sw_smc = {
 	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
+	.ipmi_oem_hiomap_cmd         = IPMI_CODE(0x3a, 0x5a),
 };
 
 static const struct bmc_platform bmc_plat_ast2500_smc = {
