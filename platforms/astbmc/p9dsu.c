@@ -688,9 +688,17 @@ static const struct bmc_sw_config bmc_sw_smc = {
 	.ipmi_oem_hiomap_cmd         = IPMI_CODE(0x3a, 0x5a),
 };
 
+/* Provided by Eric Chen (SMC) */
+const struct bmc_hw_config p9dsu_bmc_hw = {
+	.scu_revision_id = 0x04030303,
+	.mcr_configuration = 0x11000756,
+	.mcr_scu_mpll = 0x000071c1,
+	.mcr_scu_strap = 0x00000000,
+};
+
 static const struct bmc_platform bmc_plat_ast2500_smc = {
 	.name = "SMC",
-	.hw = &bmc_hw_ast2500,
+	.hw = &p9dsu_bmc_hw,
 	.sw = &bmc_sw_smc,
 };
 
