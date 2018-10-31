@@ -813,25 +813,28 @@ int ipmi_hiomap_init(struct blocklevel_device **bl)
 
 	rc = ipmi_sel_register(CMD_OP_HIOMAP_EVENT, hiomap_event, ctx);
 	if (rc < 0)
-		return rc;
+		goto err;
 
 	/* Ack all pending ack-able events to avoid spurious failures */
 	if (!hiomap_ack(ctx, HIOMAP_E_ACK_MASK)) {
 		prlog(PR_DEBUG, "Failed to ack events: 0x%x\n",
 		      HIOMAP_E_ACK_MASK);
-		return FLASH_ERR_AGAIN;
+		rc = FLASH_ERR_AGAIN;
+		goto err;
 	}
 
 	/* Negotiate protocol behaviour */
 	if (!hiomap_get_info(ctx)) {
 		prerror("Failed to get hiomap parameters\n");
-		return FLASH_ERR_DEVICE_GONE;
+		rc = FLASH_ERR_DEVICE_GONE;
+		goto err;
 	}
 
 	/* Grab the flash parameters */
 	if (!hiomap_get_flash_info(ctx)) {
 		prerror("Failed to get flash parameters\n");
-		return FLASH_ERR_DEVICE_GONE;
+		rc = FLASH_ERR_DEVICE_GONE;
+		goto err;
 	}
 
 	prlog(PR_NOTICE, "Negotiated hiomap protocol v%u\n", ctx->version);
@@ -847,6 +850,11 @@ int ipmi_hiomap_init(struct blocklevel_device **bl)
 	*bl = &(ctx->bl);
 
 	return 0;
+
+err:
+	free(ctx);
+
+	return rc;
 }
 
 void ipmi_hiomap_exit(struct blocklevel_device *bl)
