@@ -693,7 +693,7 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 
 	rc = ffs_init(0, flash->size, flash->bl, &ffs, 1);
 	if (rc) {
-		prerror("FLASH: Can't open ffs handle\n");
+		prerror("FLASH: Can't open ffs handle: %d\n", rc);
 		goto out_unlock;
 	}
 
