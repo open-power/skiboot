@@ -137,14 +137,16 @@ static void ipmi_hiomap_cmd_cb(struct ipmi_msg *msg)
 		if (msg->resp_size != 6) {
 			prerror("%u: Unexpected response size: %u\n", msg->data[0],
 				msg->resp_size);
-			abort();
+			res->cc = IPMI_ERR_UNSPECIFIED;
+			break;
 		}
 
 		ctx->version = msg->data[2];
 		if (ctx->version < 2) {
 			prerror("Failed to negotiate protocol v2 or higher: %d\n",
 				ctx->version);
-			abort();
+			res->cc = IPMI_ERR_UNSPECIFIED;
+			break;
 		}
 
 		parms = (struct hiomap_v2_info *)&msg->data[3];
@@ -159,7 +161,8 @@ static void ipmi_hiomap_cmd_cb(struct ipmi_msg *msg)
 		if (msg->resp_size != 6) {
 			prerror("%u: Unexpected response size: %u\n", msg->data[0],
 				msg->resp_size);
-			abort();
+			res->cc = IPMI_ERR_UNSPECIFIED;
+			break;
 		}
 
 		parms = (struct hiomap_v2_flash_info *)&msg->data[2];
@@ -177,7 +180,8 @@ static void ipmi_hiomap_cmd_cb(struct ipmi_msg *msg)
 		if (msg->resp_size != 8) {
 			prerror("%u: Unexpected response size: %u\n", msg->data[0],
 				msg->resp_size);
-			abort();
+			res->cc = IPMI_ERR_UNSPECIFIED;
+			break;
 		}
 
 		parms = (struct hiomap_v2_create_window *)&msg->data[2];
@@ -316,7 +320,7 @@ static bool hiomap_window_move(struct ipmi_hiomap *ctx, uint8_t command,
 	if (len != 0 && *size == 0) {
 		prerror("Invalid window properties: len: %llu, size: %llu\n",
 			len, *size);
-		abort();
+		return false;
 	}
 
 	prlog(PR_DEBUG, "Opened %s window from 0x%x for %u bytes at 0x%x\n",
@@ -806,7 +810,7 @@ static int ipmi_hiomap_get_flash_info(struct blocklevel_device *bl,
 		return rc;
 
 	if (!hiomap_get_flash_info(ctx)) {
-		abort();
+		return FLASH_ERR_DEVICE_GONE;
 	}
 
 	ctx->bl.erase_mask = ctx->erase_granule - 1;
