@@ -561,6 +561,29 @@ static int lpc_window_write(struct ipmi_hiomap *ctx, uint32_t pos,
 	return 0;
 }
 
+/* Try to restore the window state */
+static bool ipmi_hiomap_restore_window(struct ipmi_hiomap *ctx)
+{
+	uint64_t size;
+	uint8_t cmd;
+
+	lock(&ctx->lock);
+	if (ctx->window_state == closed_window) {
+		unlock(&ctx->lock);
+		return true;
+	}
+
+	cmd = ctx->window_state == read_window ?
+		HIOMAP_C_CREATE_READ_WINDOW :
+		HIOMAP_C_CREATE_WRITE_WINDOW;
+
+	ctx->window_state = closed_window;
+	unlock(&ctx->lock);
+
+	return hiomap_window_move(ctx, cmd, ctx->current.cur_pos,
+				  ctx->current.size, &size);
+}
+
 /* Best-effort asynchronous event handling by blocklevel callbacks */
 static int ipmi_hiomap_handle_events(struct ipmi_hiomap *ctx)
 {
@@ -599,6 +622,8 @@ static int ipmi_hiomap_handle_events(struct ipmi_hiomap *ctx)
 	}
 
 	if (status & HIOMAP_E_PROTOCOL_RESET) {
+		prlog(PR_INFO, "Protocol was reset\n");
+
 		if (!hiomap_get_info(ctx)) {
 			prerror("Failure to renegotiate after protocol reset\n");
 			return FLASH_ERR_DEVICE_GONE;
@@ -609,13 +634,24 @@ static int ipmi_hiomap_handle_events(struct ipmi_hiomap *ctx)
 			return FLASH_ERR_DEVICE_GONE;
 		}
 
-		prlog(PR_INFO, "Renegotiated protocol after reset\n");
-		return FLASH_ERR_AGAIN;
+		if (!ipmi_hiomap_restore_window(ctx)) {
+			prerror("Failure to restore window state after protocol reset\n");
+			return FLASH_ERR_DEVICE_GONE;
+		}
+
+		prlog(PR_INFO, "Restored window state after protocol reset\n");
+		return 0;
 	}
 
 	if (status & HIOMAP_E_WINDOW_RESET) {
 		prlog(PR_INFO, "Window was reset\n");
-		return FLASH_ERR_AGAIN;
+
+		if (!ipmi_hiomap_restore_window(ctx)) {
+			prerror("Failed to restore previous window parameters after protocol reset\n");
+			return FLASH_ERR_DEVICE_GONE;
+		}
+
+		prlog(PR_INFO, "Restored window state after window reset\n");
 	}
 
 	return 0;
