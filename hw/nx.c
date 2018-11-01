@@ -45,7 +45,8 @@ static void p9_darn_init(void)
 	dt_for_each_compatible(dt_root, nx, "ibm,power9-nx")
 		break;
 	if (!nx) {
-		assert(nx);
+		if (!dt_node_is_compatible(dt_root, "qemu,powernv"))
+			assert(nx);
 		return;
 	}
 
