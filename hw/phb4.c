@@ -2931,7 +2931,24 @@ static int do_capp_recovery_scoms(struct phb4 *p)
 
 	/* Check if the recovery failed or passed */
 	if (reg & PPC_BIT(1)) {
+		uint64_t act0, act1, mask, fir;
+
+		/* Use the Action0/1 and mask to only clear the bits
+		 * that cause local checkstop. Other bits needs attention
+		 * of the PRD daemon.
+		 */
+		xscom_read(p->chip_id, CAPP_FIR_ACTION0 + offset, &act0);
+		xscom_read(p->chip_id, CAPP_FIR_ACTION1 + offset, &act1);
+		xscom_read(p->chip_id, CAPP_FIR_MASK + offset, &mask);
+		xscom_read(p->chip_id, CAPP_FIR + offset, &fir);
+
+		fir = ~(fir & ~mask & act0 & act1);
 		PHBDBG(p, "Doing CAPP recovery scoms\n");
+
+		/* update capp fir clearing bits causing local checkstop */
+		PHBDBG(p, "Resetting CAPP Fir with mask 0x%016llX\n", fir);
+		xscom_write(p->chip_id, CAPP_FIR_CLEAR + offset, fir);
+
 		/* disable snoops */
 		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0);
 		load_capp_ucode(p);
