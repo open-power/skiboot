@@ -469,12 +469,11 @@ static void hiomap_event(uint8_t events, void *context)
 {
 	struct ipmi_hiomap *ctx = context;
 
-	lock(&ctx->lock);
-	ctx->bmc_state = events;
-	ctx->update = true;
+	prlog(PR_DEBUG, "Received events: 0x%x\n", events);
 
-	if (events & (HIOMAP_E_PROTOCOL_RESET | HIOMAP_E_WINDOW_RESET))
-		ctx->window_state = closed_window;
+	lock(&ctx->lock);
+	ctx->bmc_state |= events;
+	ctx->update = true;
 	unlock(&ctx->lock);
 }
 
