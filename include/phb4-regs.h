@@ -34,9 +34,6 @@
 #define   PHB_CPU_LS_ANY_ERR		PPC_BIT(27)
 #define   PHB_CPU_LS_ANY_ERR1		PPC_BIT(28)
 #define   PHB_CPU_LS_ANY_FREEZE		PPC_BIT(29)
-#define PHB_DMA_MSI_NODE_ID		0x128
-#define   PHB_DMAMSI_NID_FIXED		PPC_BIT(0)
-#define   PHB_DMAMSI_NID		PPC_BITMASK(24,31)
 #define PHB_CONFIG_DATA			0x130
 #define PHB_LOCK0			0x138
 #define PHB_CONFIG_ADDRESS		0x140
@@ -49,13 +46,6 @@
 #define   PHB_CA_REG			PPC_BITMASK(20,31)
 #define   PHB_CA_PE			PPC_BITMASK(39,47)
 #define PHB_LOCK1			0x148
-#define PHB_IVT_BAR			0x150
-#define   PHB_IVT_BAR_ENABLE		PPC_BIT(0)
-#define   PHB_IVT_BASE_ADDRESS		PPC_BITMASK(14,48)
-#define   PHB_IVT_LENGTH		PPC_BITMASK(52,63)
-#define PHB_RBA_BAR			0x158
-#define   PHB_RBA_BAR_ENABLE		PPC_BIT(0)
-#define   PHB_RBA_BASE_ADDRESS		PPC_BITMASK(14,55)
 #define PHB_PHB4_CONFIG			0x160
 #define   PHB_PHB4C_32BIT_MSI_EN	PPC_BIT(8)
 #define   PHB_PHB4C_64BIT_MSI_EN	PPC_BIT(14)
@@ -65,16 +55,15 @@
 #define PHB_PELTV_BAR			0x188
 #define   PHB_PELTV_BAR_ENABLE		PPC_BIT(0)
 #define   PHB_PELTV_BASE_ADDRESS	PPC_BITMASK(8,50)
-#define PHB_M32_BASE_ADDR		0x190
-#define PHB_M32_BASE_MASK		0x198
 #define PHB_M32_START_ADDR		0x1a0
 #define PHB_PEST_BAR			0x1a8
 #define   PHB_PEST_BAR_ENABLE		PPC_BIT(0)
 #define   PHB_PEST_BASE_ADDRESS		PPC_BITMASK(8,51)
-#define PHB_ASN_CMPM			0x1C0
+#define PHB_ASN_CMPM			0x1c0
 #define   PHB_ASN_CMPM_ENABLE		PPC_BIT(63)
-#define PHB_CAPI_CMPM			0x1C8
+#define PHB_CAPI_CMPM			0x1c8
 #define   PHB_CAPI_CMPM_ENABLE		PPC_BIT(63)
+#define PHB_M64_AOMASK			0x1d0
 #define PHB_M64_UPPER_BITS		0x1f0
 #define PHB_NXLATE_PREFIX		0x1f8
 #define PHB_DMARD_SYNC			0x200
@@ -99,11 +88,6 @@
 #define	  PHB_IODA_AD_MIST_PWV		PPC_BITMASK(28,31)
 #define	  PHB_IODA_AD_TADR		PPC_BITMASK(54,63)
 #define PHB_IODA_DATA0			0x228
-#define PHB_FFI_REQUEST			0x238
-#define   PHB_FFI_LOCK_CLEAR		PPC_BIT(3)
-#define   PHB_FFI_REQUEST_ISN		PPC_BITMASK(49,59)
-#define PHB_FFI_LOCK			0x240
-#define PHB_XIVE_UPDATE			0x248 /* Broken in DD1 */
 #define PHB_PHB4_GEN_CAP		0x250
 #define PHB_PHB4_TCE_CAP		0x258
 #define PHB_PHB4_IRQ_CAP		0x260
@@ -159,7 +143,7 @@
 #define   PHB_Q_DMA_R_TCE_KILL_STATUS	PPC_BIT(7)
 #define PHB_TCE_TAG_STATUS		0x908
 
-/* FIR & Error registers - identical to PHB3 */
+/* FIR & Error registers */
 #define PHB_LEM_FIR_ACCUM		0xc00
 #define PHB_LEM_FIR_AND_MASK		0xc08
 #define PHB_LEM_FIR_OR_MASK		0xc10
@@ -242,11 +226,13 @@
 #define PHB_PERFMON_CTR2			0xfa0
 #define PHB_PERFMON_CTR3			0xfa8
 
-// FIXME add more here
+/* Root complex config space memory mapped */
 #define PHB_RC_CONFIG_BASE			0x1000
 #define   PHB_RC_CONFIG_SIZE			0x800
 
 /* PHB4 REGB registers */
+
+/* PBL core */
 #define PHB_PBL_CONTROL				0x1800
 #define PHB_PBL_TIMEOUT_CTRL			0x1810
 #define PHB_PBL_NPTAG_ENABLE			0x1820
@@ -265,7 +251,7 @@
 #define PHB_PBL_ERR_STATUS_MASK			0x1950
 #define PHB_PBL_ERR1_STATUS_MASK		0x1958
 
-// FIXME add more here
+/* PCI-E stack */
 #define PHB_PCIE_SCR			0x1A00
 #define   PHB_PCIE_SCR_SLOT_CAP		PPC_BIT(15)
 #define	  PHB_PCIE_SCR_MAXLINKSPEED	PPC_BITMASK(32,35)
@@ -327,6 +313,7 @@
 #define PHB_PCIE_TRACE_CTRL		0x1B20
 #define PHB_PCIE_MISC_STRAP		0x1B30
 
+/* Error */
 #define PHB_REGB_ERR_STATUS		0x1C00
 #define PHB_REGB_ERR1_STATUS		0x1C08
 #define PHB_REGB_ERR_INJECT		0x1C10
