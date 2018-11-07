@@ -39,7 +39,7 @@
  *
  * Returns: Zero on success otherwise a negative error code
  */
-int tpm_i2c_request_send(int bus_id, int dev_addr, int read_write,
+int tpm_i2c_request_send(struct tpm_dev *tpm_device, int read_write,
 			 uint32_t offset, uint32_t offset_bytes, void* buf,
 			 size_t buflen)
 {
@@ -52,8 +52,9 @@ int tpm_i2c_request_send(int bus_id, int dev_addr, int read_write,
 	 */
 	timeout = (buflen + offset_bytes + 2) * I2C_BYTE_TIMEOUT_MS;
 
-	rc = i2c_request_send(bus_id, dev_addr, read_write, offset,
-			      offset_bytes, buf, buflen, timeout);
+	rc = i2c_request_send(tpm_device->bus_id, tpm_device->i2c_addr,
+				read_write, offset, offset_bytes, buf, buflen,
+				timeout);
 	if (rc == OPAL_PARAMETER)
 		return STB_ARG_ERROR;
 	else if (rc < 0)

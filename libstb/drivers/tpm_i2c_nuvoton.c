@@ -61,15 +61,13 @@ static struct tpm_dev *tpm_device = NULL;
 static int tpm_status_write_byte(uint8_t byte)
 {
 	uint8_t value = byte;
-	return tpm_i2c_request_send(tpm_device->bus_id, tpm_device->xscom_base,
-				    SMBUS_WRITE, TPM_STS, 1, &value,
+	return tpm_i2c_request_send(tpm_device, SMBUS_WRITE, TPM_STS, 1, &value,
 				    sizeof(value));
 }
 
 static int tpm_status_read_byte(uint8_t offset, uint8_t *byte)
 {
-	return tpm_i2c_request_send(tpm_device->bus_id, tpm_device->xscom_base,
-				    SMBUS_READ, offset, 1, byte,
+	return tpm_i2c_request_send(tpm_device, SMBUS_READ, offset, 1, byte,
 				    sizeof(uint8_t));
 }
 
@@ -292,8 +290,7 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 		bytes = (count + burst_count > buflen - 1 ?
 			  (buflen - 1 - count) : burst_count);
 
-		rc = tpm_i2c_request_send(tpm_device->bus_id,
-					  tpm_device->xscom_base,
+		rc = tpm_i2c_request_send(tpm_device,
 					  SMBUS_WRITE, TPM_DATA_FIFO_W,
 					  1, &buf[count], bytes);
 		count += bytes;
@@ -335,8 +332,7 @@ static int tpm_write_fifo(uint8_t* buf, size_t buflen)
 	if (burst_count < 0)
 		return burst_count;
 
-	rc = tpm_i2c_request_send(tpm_device->bus_id,
-				  tpm_device->xscom_base,
+	rc = tpm_i2c_request_send(tpm_device,
 				  SMBUS_WRITE,
 				  TPM_DATA_FIFO_W, 1,
 				  &buf[count], 1);
@@ -401,8 +397,7 @@ static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 			      "bc=%d, bl=%zd\n", count, burst_count, *buflen);
 			rc = STB_TPM_OVERFLOW;
 		}
-		rc = tpm_i2c_request_send(tpm_device->bus_id,
-					  tpm_device->xscom_base,
+		rc = tpm_i2c_request_send(tpm_device,
 					  SMBUS_READ,
 					  TPM_DATA_FIFO_R, 1,
 					  &buf[count], burst_count);
@@ -452,7 +447,7 @@ static int tpm_transmit(struct tpm_dev *dev, uint8_t* buf, size_t cmdlen,
 	tpm_device = dev;
 	DBG("**** %s: dev %#x/%#x buf %016llx cmdlen %zu"
 	    " buflen %zu ****\n",
-	    __func__, dev->bus_id, dev->xscom_base, *(uint64_t*) buf,
+	    __func__, dev->bus_id, dev->i2c_addr, *(uint64_t *) buf,
 	    cmdlen, *buflen);
 
 	DBG("step 1/5: set command ready\n");
@@ -518,7 +513,7 @@ static int nuvoton_tpm_quirk(void *data, struct i2c_request *req, int *rc)
 	 * in a nice world of pain.
 	 */
 	if (tpm_device->bus_id == req->bus->opal_id &&
-	    tpm_device->xscom_base == req->dev_addr &&
+	    tpm_device->i2c_addr == req->dev_addr &&
 	    ((req->op == I2C_READ && req->rw_len == 1) ||
 	     (req->op == I2C_WRITE && req->rw_len == 0))) {
 		*rc = OPAL_I2C_TIMEOUT;
@@ -545,9 +540,8 @@ void tpm_i2c_nuvoton_probe(void)
 		 * Read TPM device address and bus id. Make sure the properties
 		 * really exist if the default value is returned.
 		 */
-		tpm_device->xscom_base = dt_prop_get_u32_def(node, "reg", 0);
-		if (!tpm_device->xscom_base &&
-		    !dt_find_property(node, "reg")) {
+		tpm_device->i2c_addr = dt_prop_get_u32_def(node, "reg", 0);
+		if (!tpm_device->i2c_addr && !dt_find_property(node, "reg")) {
 			/*
 			 * @fwts-label NuvotonRegNotFound
 			 * @fwts-advice reg property not found. This indicates

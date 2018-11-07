@@ -28,7 +28,7 @@ struct tpm_dev {
 	int bus_id;
 
 	/* TPM address in the bus */
-	int xscom_base;
+	int i2c_addr;
 };
 
 struct tpm_driver {
