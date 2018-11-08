@@ -277,7 +277,7 @@ static bool hiomap_window_move(struct ipmi_hiomap *ctx, uint8_t command,
 	ipmi_queue_msg_sync(msg);
 
 	if (res.cc != IPMI_CC_NO_ERROR) {
-		prerror("%s failed: %d\n", __func__, res.cc);
+		prlog(PR_INFO, "%s failed: %d\n", __func__, res.cc);
 		return false;
 	}
 
