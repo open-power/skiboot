@@ -69,7 +69,7 @@ SECTIONS
 	. = ALIGN(0x10);
 	.init : {
 		__ctors_start = .;
-		KEEP(*(.ctors))
+		KEEP(*(.ctors*))
 		KEEP(*(SORT(.init_array.*)))
 		KEEP(*(.init_array))
 		__ctors_end = .;
