@@ -318,7 +318,7 @@ static bool hiomap_window_move(struct ipmi_hiomap *ctx, uint8_t command,
 		*size = (ctx->current.cur_pos + ctx->current.size) - pos;
 
 	if (len != 0 && *size == 0) {
-		prerror("Invalid window properties: len: %llu, size: %llu\n",
+		prerror("Invalid window properties: len: %"PRIu64", size: %"PRIu64"\n",
 			len, *size);
 		return false;
 	}
