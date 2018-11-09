@@ -90,3 +90,22 @@ u16 bmc_get_u16(struct bmc_mbox_msg *msg, int offset)
 
 	return data;
 }
+
+void *__zalloc(size_t sz)
+{
+	return calloc(1, sz);
+}
+
+void __free(const void *p)
+{
+	free((void *)p);
+}
+
+void lock_caller(struct lock *l __attribute__((unused)),
+		 const char *caller __attribute__((unused)))
+{
+}
+
+void unlock(struct lock *l __attribute__((unused)))
+{
+}
