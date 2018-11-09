@@ -285,6 +285,326 @@ static void test_hiomap_event_daemon_ready(void)
 	scenario_exit();
 }
 
+static const struct scenario_event scenario_hiomap_event_daemon_stopped[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{ .type = scenario_sel, .s = { .bmc_state = HIOMAP_E_DAEMON_READY } },
+	{ .type = scenario_sel, .s = { .bmc_state = HIOMAP_E_PROTOCOL_RESET } },
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_event_daemon_stopped(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+
+	scenario_enter(scenario_hiomap_event_daemon_stopped);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	assert(ctx->bmc_state == HIOMAP_E_PROTOCOL_RESET);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
+static const struct scenario_event scenario_hiomap_event_daemon_restarted[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{ .type = scenario_sel, .s = { .bmc_state = HIOMAP_E_DAEMON_READY } },
+	{ .type = scenario_sel, .s = { .bmc_state = HIOMAP_E_PROTOCOL_RESET } },
+	{ .type = scenario_sel, .s = { .bmc_state = HIOMAP_E_DAEMON_READY } },
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_event_daemon_restarted(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+
+	scenario_enter(scenario_hiomap_event_daemon_restarted);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	assert(ctx->bmc_state == (HIOMAP_E_DAEMON_READY | HIOMAP_E_PROTOCOL_RESET));
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
+static const struct scenario_event
+scenario_hiomap_event_daemon_lost_flash_control[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{ .type = scenario_sel, .s = { .bmc_state = HIOMAP_E_DAEMON_READY } },
+	{
+		.type = scenario_sel,
+		.s = {
+			.bmc_state = (HIOMAP_E_DAEMON_READY
+					| HIOMAP_E_FLASH_LOST),
+		}
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_event_daemon_lost_flash_control(void)
+{
+	struct blocklevel_device *bl;
+	size_t len = 2 * (1 << 12);
+	void *buf;
+
+	buf = malloc(len);
+	assert(buf);
+
+	scenario_enter(scenario_hiomap_event_daemon_lost_flash_control);
+	assert(!ipmi_hiomap_init(&bl));
+	assert(bl->read(bl, 0, buf, len) == FLASH_ERR_AGAIN);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+
+	free(buf);
+}
+
+static const struct scenario_event
+scenario_hiomap_event_daemon_regained_flash_control_dirty[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{ .type = scenario_sel, .s = { .bmc_state = HIOMAP_E_DAEMON_READY } },
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 4,
+				.args = {
+					[0] = 0x00, [1] = 0x00,
+					[2] = 0x02, [3] = 0x00,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 4,
+				.args = {
+					[0] = 0xfe, [1] = 0x0f,
+					[2] = 0x02, [3] = 0x00,
+					[4] = 0x00, [5] = 0x00,
+				},
+			},
+		},
+	},
+	{
+		.type = scenario_sel,
+		.s = {
+			.bmc_state = (HIOMAP_E_DAEMON_READY
+					| HIOMAP_E_FLASH_LOST),
+		}
+	},
+	{
+		.type = scenario_sel,
+		.s = {
+			.bmc_state = (HIOMAP_E_DAEMON_READY
+					| HIOMAP_E_WINDOW_RESET),
+		}
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_ACK,
+				.seq = 5,
+				.args = { [0] = HIOMAP_E_WINDOW_RESET },
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_ACK,
+				.seq = 5,
+			}
+		}
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 6,
+				.args = {
+					[0] = 0x00, [1] = 0x00,
+					[2] = 0x02, [3] = 0x00,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 6,
+				.args = {
+					[0] = 0xfe, [1] = 0x0f,
+					[2] = 0x02, [3] = 0x00,
+					[4] = 0x00, [5] = 0x00,
+				},
+			},
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_event_daemon_regained_flash_control_dirty(void)
+{
+	struct blocklevel_device *bl;
+	size_t len = 2 * (1 << 12);
+	void *buf;
+
+	buf = malloc(len);
+	assert(buf);
+
+	scenario_enter(scenario_hiomap_event_daemon_regained_flash_control_dirty);
+	assert(!ipmi_hiomap_init(&bl));
+	assert(!bl->read(bl, 0, buf, len));
+	assert(!bl->read(bl, 0, buf, len));
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+
+	free(buf);
+}
+
+static const struct scenario_event scenario_hiomap_protocol_reset_recovery[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{ .type = scenario_sel, .s = { .bmc_state = HIOMAP_E_DAEMON_READY } },
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 4,
+				.args = {
+					[0] = 0x00, [1] = 0x00,
+					[2] = 0x02, [3] = 0x00,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 4,
+				.args = {
+					[0] = 0xfe, [1] = 0x0f,
+					[2] = 0x02, [3] = 0x00,
+					[4] = 0x00, [5] = 0x00,
+				},
+			},
+		},
+	},
+	{
+		.type = scenario_sel,
+		.s = { .bmc_state = HIOMAP_E_PROTOCOL_RESET, }
+	},
+	{
+		.type = scenario_sel,
+		.s = { .bmc_state = HIOMAP_E_DAEMON_READY, }
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_ACK,
+				.seq = 5,
+				.args = { [0] = HIOMAP_E_PROTOCOL_RESET },
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_ACK,
+				.seq = 5,
+			}
+		}
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_GET_INFO,
+				.seq = 6,
+				.args = {
+					[0] = HIOMAP_V2,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_GET_INFO,
+				.seq = 6,
+				.args = {
+					[0] = HIOMAP_V2,
+					[1] = 12,
+					[2] = 8, [3] = 0,
+				},
+			},
+		},
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_GET_FLASH_INFO,
+				.seq = 7,
+				.args = {
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_GET_FLASH_INFO,
+				.seq = 7,
+				.args = {
+					[0] = 0x00, [1] = 0x20,
+					[2] = 0x01, [3] = 0x00,
+				},
+			},
+		},
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 8,
+				.args = {
+					[0] = 0x00, [1] = 0x00,
+					[2] = 0x02, [3] = 0x00,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 8,
+				.args = {
+					[0] = 0xfe, [1] = 0x0f,
+					[2] = 0x02, [3] = 0x00,
+					[4] = 0x00, [5] = 0x00,
+				},
+			},
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_reset_recovery(void)
+{
+	struct blocklevel_device *bl;
+	size_t len = 2 * (1 << 12);
+	void *buf;
+
+	buf = malloc(len);
+	assert(buf);
+
+	scenario_enter(scenario_hiomap_protocol_reset_recovery);
+	assert(!ipmi_hiomap_init(&bl));
+	assert(!bl->read(bl, 0, buf, len));
+	assert(!bl->read(bl, 0, buf, len));
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+
+	free(buf);
+}
+
 struct test_case {
 	const char *name;
 	void (*fn)(void);
@@ -295,6 +615,11 @@ struct test_case {
 struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_init),
 	TEST_CASE(test_hiomap_event_daemon_ready),
+	TEST_CASE(test_hiomap_event_daemon_stopped),
+	TEST_CASE(test_hiomap_event_daemon_restarted),
+	TEST_CASE(test_hiomap_event_daemon_lost_flash_control),
+	TEST_CASE(test_hiomap_event_daemon_regained_flash_control_dirty),
+	TEST_CASE(test_hiomap_protocol_reset_recovery),
 	{ NULL, NULL },
 };
 

@@ -446,7 +446,7 @@ static void hiomap_event(uint8_t events, void *context)
 	prlog(PR_DEBUG, "Received events: 0x%x\n", events);
 
 	lock(&ctx->lock);
-	ctx->bmc_state |= events;
+	ctx->bmc_state = events | (ctx->bmc_state & HIOMAP_E_ACK_MASK);
 	ctx->update = true;
 	unlock(&ctx->lock);
 }
