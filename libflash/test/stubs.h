@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <lock.h>
 #include <stdint.h>
 
 #include "../../include/lpc-mbox.h"
@@ -25,3 +26,7 @@ void bmc_put_u16(struct bmc_mbox_msg *msg, int offset, uint16_t data);
 void bmc_put_u32(struct bmc_mbox_msg *msg, int offset, uint32_t data);
 u16 bmc_get_u16(struct bmc_mbox_msg *msg, int offset);
 u32 bmc_get_u32(struct bmc_mbox_msg *msg, int offset);
+void *__zalloc(size_t sz);
+void __free(const void *p);
+void lock_caller(struct lock *l, const char *caller);
+void unlock(struct lock *l);
