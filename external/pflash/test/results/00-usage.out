@@ -43,6 +43,9 @@ Usage: ./pflash [options] commands...
 	-S, --side
 		Side of the flash on which to operate, 0 (default) or 1
 
+	--skip=N
+		Skip N number of bytes from the start when reading
+
 	-T, --toc
 		libffs TOC on which to operate, defaults to 0.
 		leading 0x is required for interpretation of a hex value
