@@ -59,6 +59,7 @@ enum MemoryError_t
  * Previous implementations may have incorrectly ignored failures.
  */
 #define HBRT_CAPS_OPAL_HAS_XSCOM_RC   (1ul << 0)
+#define HBRT_CAPS_OPAL_HAS_WAKEUP_SUPPORT (1ul << 1)
 
 /**
  *  Load types for the load_pm_complex() interface
