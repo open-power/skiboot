@@ -747,7 +747,8 @@ int hservice_memory_error(uint64_t i_start_addr, uint64_t i_endAddr,
 uint64_t hservice_get_interface_capabilities(uint64_t set)
 {
 	if (set == HBRT_CAPS_SET1_OPAL)
-		return HBRT_CAPS_OPAL_HAS_XSCOM_RC;
+		return HBRT_CAPS_OPAL_HAS_XSCOM_RC ||
+			HBRT_CAPS_OPAL_HAS_WAKEUP_SUPPORT;
 
 	return 0;
 }
@@ -2195,9 +2196,6 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 		hinterface.pnor_read = NULL;
 		hinterface.pnor_write = NULL;
 	}
-
-	if (!is_fsp_system())
-		hinterface.wakeup = NULL;
 
 	ipmi_init(ctx);
 
