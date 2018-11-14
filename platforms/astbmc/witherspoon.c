@@ -271,6 +271,13 @@ static void witherspoon_npu2_device_detect(struct npu2 *npu)
 		prlog(PR_DEBUG, "PLAT: Chip %d GPU#1 slot present\n", chip->id);
 	}
 
+	/*
+	 * The following I2C ops generate errors if no device is
+	 * present on any SXM2 slot. Since it's useless, let's skip it
+	 */
+	if (!gpu0_present && !gpu1_present)
+		return;
+
 	/* Set pins to input */
 	state = 0xff;
 	rc = i2c_request_send(i2c_port_id,
