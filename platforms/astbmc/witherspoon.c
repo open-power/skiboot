@@ -300,11 +300,11 @@ static void witherspoon_npu2_device_detect(struct npu2 *npu)
 			      chip->id);
 			/*
 			 * On witherspoon, bricks 2 and 3 are connected to
-			 * the lanes matching links 1 and 0 in OpenCAPI mode.
+			 * the lanes matching links 0 and 1 in OpenCAPI mode.
 			 */
-			set_link_details(npu, 0, 3, NPU2_DEV_TYPE_OPENCAPI);
+			set_link_details(npu, 1, 3, NPU2_DEV_TYPE_OPENCAPI);
 			/* We current don't support using the second link */
-			set_link_details(npu, 1, 2, NPU2_DEV_TYPE_UNKNOWN);
+			set_link_details(npu, 0, 2, NPU2_DEV_TYPE_UNKNOWN);
 		} else {
 			prlog(PR_DEBUG, "PLAT: Chip %d GPU#0 is NVLink\n",
 			      chip->id);
