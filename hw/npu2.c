@@ -1781,7 +1781,7 @@ static void npu2_add_phb_properties(struct npu2 *p)
 {
 	struct dt_node *np = p->phb_nvlink.dt_node;
 	uint32_t icsp = get_ics_phandle();
-	uint64_t mm_base, mm_size, mmio_atsd;
+	uint64_t mm_base, mm_size;
 
 	/*
 	 * Add various properties that HB doesn't have to
@@ -1803,10 +1803,15 @@ static void npu2_add_phb_properties(struct npu2 *p)
 	dt_add_property_cells(np, "ibm,opal-reserved-pe",
 			      NPU2_RESERVED_PE_NUM);
 
-	mmio_atsd = (u64) p->regs +
-		NPU2_REG_OFFSET(NPU2_STACK_ATSD, NPU2_BLOCK_ATSD0, NPU2_XTS_MMIO_ATSD_LAUNCH);
-	dt_add_property_cells(np, "ibm,mmio-atsd", hi32(mmio_atsd),
-			      lo32(mmio_atsd));
+	dt_add_property_u64s(np, "ibm,mmio-atsd",
+			MMIO_ATSD_ADDR(p->regs, 0),
+			MMIO_ATSD_ADDR(p->regs, 1),
+			MMIO_ATSD_ADDR(p->regs, 2),
+			MMIO_ATSD_ADDR(p->regs, 3),
+			MMIO_ATSD_ADDR(p->regs, 4),
+			MMIO_ATSD_ADDR(p->regs, 5),
+			MMIO_ATSD_ADDR(p->regs, 6),
+			MMIO_ATSD_ADDR(p->regs, 7));
 
 	/*
 	 * Memory window is exposed as 64-bits non-prefetchable

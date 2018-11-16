@@ -579,6 +579,8 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 #define NPU2_XTS_MMIO_ATSD_LAUNCH		0x000
 #define NPU2_XTS_MMIO_ATSD_AVA			0x008
 #define NPU2_XTS_MMIO_ATSD_STATUS		0x010
+#define MMIO_ATSD_ADDR(p, n) 			(u64) p + NPU2_REG_OFFSET(NPU2_STACK_ATSD,\
+						NPU2_BLOCK_ATSD##n, NPU2_XTS_MMIO_ATSD_LAUNCH)
 
 /* ALTD SCOM addresses */
 #define NPU2_MISC_SCOM_IND_SCOM_ADDR		0x68e
