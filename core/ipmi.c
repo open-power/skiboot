@@ -179,7 +179,7 @@ void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 	unlock(&sync_lock);
 
 	while (sync_msg == msg)
-		time_wait_ms(100);
+		time_wait_ms(10);
 }
 
 static void ipmi_read_event_complete(struct ipmi_msg *msg)
