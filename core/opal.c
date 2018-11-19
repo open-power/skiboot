@@ -167,6 +167,7 @@ int64_t opal_entry_check(struct stack_frame *eframe)
 		}
 	}
 
+	cpu->entered_opal_call_at = mftb();
 	return OPAL_SUCCESS;
 }
 
@@ -176,6 +177,8 @@ int64_t opal_exit_check(int64_t retval, struct stack_frame *eframe)
 {
 	struct cpu_thread *cpu = this_cpu();
 	uint64_t token = eframe->gpr[0];
+	uint64_t now = mftb();
+	uint64_t call_time = tb_to_msecs(now - cpu->entered_opal_call_at);
 
 	if (!cpu->in_opal_call) {
 		disable_fast_reboot("Un-accounted firmware entry");
@@ -192,6 +195,12 @@ int64_t opal_exit_check(int64_t retval, struct stack_frame *eframe)
 			      token, retval);
 			drop_my_locks(true);
 		}
+	}
+
+	if (call_time > 100) {
+		prlog((call_time < 1000) ? PR_DEBUG : PR_WARNING,
+		      "Spent %llu msecs in OPAL call %llu!\n",
+		      call_time, token);
 	}
 	return retval;
 }
