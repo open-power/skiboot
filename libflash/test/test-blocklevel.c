@@ -289,24 +289,6 @@ int main(void)
 		ERR("Failed to blocklevel_ecc_protect(0x6200, 0x100)\n");
 		return 1;
 	}
-	/*This addition should cause this one to merge the other two together*/
-	if (blocklevel_ecc_protect(bl, 0x6100, 0x100)) {
-		ERR("Failed to blocklevel_ecc_protect(0x6100, 0x100)\n");
-		return 1;
-	}
-	/* Make sure we trigger the merging code */
-	for (i = bl->ecc_prot.n_prot; i < bl->ecc_prot.total_prot; i++)
-		blocklevel_ecc_protect(bl, 0x10000 + i * 0x200, 0x10);
-	/* Check that the region merging works */
-	for (i = 0; i < bl->ecc_prot.n_prot - 1; i++) {
-		if (bl->ecc_prot.prot[i].start + bl->ecc_prot.prot[i].len == bl->ecc_prot.prot[i + 1].start ||
-			  bl->ecc_prot.prot[i + 1].start + bl->ecc_prot.prot[i + 1].len == bl->ecc_prot.prot[i].start) {
-			ERR("Problem with protection range merge code, region starting at 0x%08lx for 0x%08lx appears "
-				"to touch region 0x%lx for 0x%lx\n", bl->ecc_prot.prot[i].start, bl->ecc_prot.prot[i].len,
-				bl->ecc_prot.prot[i + 1].start, bl->ecc_prot.prot[i + 1].len);
-			return 1;
-		}
-	}
 
 	/* Test ECC reading and writing being 100% transparent to the
 	 * caller */
