@@ -4,6 +4,10 @@ libflash_test_test_ipmi_hiomap_SOURCES = \
 	libflash/test/stubs.c \
 	libflash/ipmi-hiomap.c
 
+libflash_test_test_blocklevel_SOURCES = \
+	libflash/test/test-blocklevel.c \
+	libflash/test/stubs.c
+
 libflash_test_test_flash_SOURCES = \
 	libflash/test/test-flash.c \
 	libflash/test/stubs.c \
@@ -21,6 +25,7 @@ libflash_test_test_mbox_SOURCES = \
 
 check_PROGRAMS = \
 	libflash/test/test-ipmi-hiomap \
+	libflash/test/test-blocklevel \
 	libflash/test/test-flash \
 	libflash/test/test-ecc \
 	libflash/test/test-mbox
