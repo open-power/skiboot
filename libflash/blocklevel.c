@@ -53,9 +53,9 @@ static int ecc_protected(struct blocklevel_device *bl, uint64_t pos, uint64_t le
 		}
 
 		/*
-		 * Since we merge regions on inserting we can be sure that a
-		 * partial fit means that the non fitting region won't fit in another ecc
-		 * region
+		 * Even if ranges are merged we can't currently guarantee two
+		 * contiguous regions are sanely ECC protected so a partial fit
+		 * is no good.
 		 */
 		if ((bl->ecc_prot.prot[i].start >= pos && bl->ecc_prot.prot[i].start < pos + len) ||
 		   (bl->ecc_prot.prot[i].start <= pos &&
@@ -694,26 +694,6 @@ static bool insert_bl_prot_range(struct blocklevel_range *ranges, struct bl_prot
 		ranges->prot = new_ranges;
 		ranges->n_prot++;
 		prot = new_ranges;
-	}
-
-	/* Probably only worth mergeing when we're low on space */
-	if (ranges->n_prot + 1 == ranges->total_prot) {
-		FL_DBG("%s: merging ranges\n", __func__);
-		/* Check to see if we can merge ranges */
-		for (i = 0; i < ranges->n_prot - 1; i++) {
-			if (prot[i].start + prot[i].len == prot[i + 1].start) {
-				int j;
-				FL_DBG("%s: merging 0x%" PRIx64 "..0x%" PRIx64 " with "
-						"0x%" PRIx64 "..0x%" PRIx64 "\n",
-						__func__, prot[i].start, prot[i].start + prot[i].len,
-						prot[i + 1].start, prot[i + 1].start + prot[i + 1].len);
-				prot[i].len += prot[i + 1].len;
-				for (j = i + 1; j < ranges->n_prot - 1; j++)
-					memcpy(&prot[j] , &prot[j + 1], sizeof(range));
-				ranges->n_prot--;
-				i--; /* Maybe the next one can merge too */
-			}
-		}
 	}
 
 	return true;
