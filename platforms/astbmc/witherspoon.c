@@ -1,4 +1,4 @@
-/* Copyright 2017 IBM Corp.
+/* Copyright 2017-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,7 +184,8 @@ static void witherspoon_shared_slot_fixup(void)
 	chip1 = next_chip(chip0);
 	if (!chip1 || next_chip(chip1)) {
 		prlog(PR_WARNING,
-			"Unexpected number of chips, skipping shared slot detection\n");
+		      "PLAT: Can't find second chip, "
+		      "skipping PCIe shared slot detection\n");
 		return;
 	}
 
