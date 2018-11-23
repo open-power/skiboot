@@ -150,6 +150,30 @@ static uint64_t get_odl_status(uint32_t gcid, uint64_t index) {
 	return reg;
 }
 
+static uint64_t get_odl_training_status(uint32_t gcid, uint64_t index)
+{
+	uint64_t status_xscom, reg;
+
+	switch (index) {
+	case 2:
+		status_xscom = OB0_ODL0_TRAINING_STATUS;
+		break;
+	case 3:
+		status_xscom = OB0_ODL1_TRAINING_STATUS;
+		break;
+	case 4:
+		status_xscom = OB3_ODL1_TRAINING_STATUS;
+		break;
+	case 5:
+		status_xscom = OB3_ODL0_TRAINING_STATUS;
+		break;
+	default:
+		assert(false);
+	}
+	xscom_read(gcid, status_xscom, &reg);
+	return reg;
+}
+
 static void disable_nvlink(uint32_t gcid, int index)
 {
 	uint64_t phy_config_scom, reg;
@@ -1017,7 +1041,8 @@ static int64_t npu2_opencapi_get_link_state(struct pci_slot *slot, uint8_t *val)
 	return rc;
 }
 
-static int64_t npu2_opencapi_retry_state(struct pci_slot *slot)
+static int64_t npu2_opencapi_retry_state(struct pci_slot *slot,
+					 uint64_t odl_status)
 {
 	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
 	uint32_t chip_id = dev->npu->chip_id;
@@ -1031,11 +1056,17 @@ static int64_t npu2_opencapi_retry_state(struct pci_slot *slot)
 		 */
 		OCAPIERR(dev,
 			"Link failed to train, final link status: %016llx\n",
-			get_odl_status(chip_id, dev->brick_index));
+			odl_status);
+		OCAPIDBG(dev, "Final link training status: %016llx\n",
+			get_odl_training_status(chip_id, dev->brick_index));
 		return OPAL_HARDWARE;
 	}
 
 	OCAPIERR(dev, "Link failed to train, retrying\n");
+	OCAPIDBG(dev, "Link status: %016llx, training status: %016llx\n",
+		odl_status,
+		get_odl_training_status(chip_id, dev->brick_index));
+
 	pci_slot_set_state(slot, OCAPI_SLOT_FRESET_INIT);
 	return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 }
@@ -1062,7 +1093,7 @@ static int64_t npu2_opencapi_poll_link(struct pci_slot *slot)
 			return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 		}
 		if (slot->retries-- == 0)
-			return npu2_opencapi_retry_state(slot);
+			return npu2_opencapi_retry_state(slot, reg);
 
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 
