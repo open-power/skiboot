@@ -1013,32 +1013,43 @@ static int64_t npu2_opencapi_get_presence_state(struct pci_slot __unused *slot,
 	return OPAL_SUCCESS;
 }
 
+static enum OpalShpcLinkState get_link_width(uint64_t odl_status)
+{
+	uint64_t tx_lanes, rx_lanes, state;
+
+	/*
+	 * On P9, the 'trained mode' field of the ODL status is
+	 * hard-coded to x8 and is useless for us. We need to look at
+	 * the status of the individual lanes.
+	 * The link trains at x8, x4 or not at all.
+	 */
+	state = GETFIELD(OB_ODL_STATUS_TRAINING_STATE_MACHINE, odl_status);
+	if (state != OCAPI_LINK_STATE_TRAINED)
+		return OPAL_SHPC_LINK_DOWN;
+
+	rx_lanes = GETFIELD(OB_ODL_STATUS_RX_TRAINED_LANES, odl_status);
+	tx_lanes = GETFIELD(OB_ODL_STATUS_TX_TRAINED_LANES, odl_status);
+	if ((rx_lanes != 0xFF) || (tx_lanes != 0xFF))
+		return OPAL_SHPC_LINK_UP_x4;
+	else
+		return OPAL_SHPC_LINK_UP_x8;
+}
+
 static int64_t npu2_opencapi_get_link_state(struct pci_slot *slot, uint8_t *val)
 {
 	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
 	uint64_t reg;
-	int64_t link_width, training_status, rc = OPAL_SUCCESS;
 
 	reg = get_odl_status(dev->npu->chip_id, dev->brick_index);
-	link_width = GETFIELD(OB_ODL_STATUS_TRAINED_MODE, reg);
-	training_status = GETFIELD(OB_ODL_STATUS_TRAINING_STATE_MACHINE, reg);
+	*val = get_link_width(reg);
+	return OPAL_SUCCESS;
+}
 
-	if (training_status != OCAPI_LINK_STATE_TRAINED) {
-		*val = OPAL_SHPC_LINK_DOWN;
-		return OPAL_SUCCESS;
-	}
-
-	switch (link_width) {
-	case 0b0001:
-		*val = OPAL_SHPC_LINK_UP_x4;
-		break;
-	case 0b0010:
-		*val = OPAL_SHPC_LINK_UP_x8;
-		break;
-	default:
-		rc = OPAL_HARDWARE;
-	}
-	return rc;
+static void check_trained_link(struct npu2_dev *dev, uint64_t odl_status)
+{
+	if (get_link_width(odl_status) != OPAL_SHPC_LINK_UP_x8)
+		OCAPIERR(dev, "Link trained in degraded mode (%016llx)\n",
+			odl_status);
 }
 
 static int64_t npu2_opencapi_retry_state(struct pci_slot *slot,
@@ -1089,6 +1100,7 @@ static int64_t npu2_opencapi_poll_link(struct pci_slot *slot)
 			OCAPI_LINK_STATE_TRAINED) {
 			OCAPIINF(dev, "link trained in %lld ms\n",
 				OCAPI_LINK_TRAINING_TIMEOUT - slot->retries);
+			check_trained_link(dev, reg);
 			pci_slot_set_state(slot, OCAPI_SLOT_LINK_TRAINED);
 			return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 		}
