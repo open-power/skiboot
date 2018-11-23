@@ -174,6 +174,30 @@ static uint64_t get_odl_training_status(uint32_t gcid, uint64_t index)
 	return reg;
 }
 
+static uint64_t get_odl_endpoint_info(uint32_t gcid, uint64_t index)
+{
+	uint64_t status_xscom, reg;
+
+	switch (index) {
+	case 2:
+		status_xscom = OB0_ODL0_ENDPOINT_INFO;
+		break;
+	case 3:
+		status_xscom = OB0_ODL1_ENDPOINT_INFO;
+		break;
+	case 4:
+		status_xscom = OB3_ODL1_ENDPOINT_INFO;
+		break;
+	case 5:
+		status_xscom = OB3_ODL0_ENDPOINT_INFO;
+		break;
+	default:
+		assert(false);
+	}
+	xscom_read(gcid, status_xscom, &reg);
+	return reg;
+}
+
 static void disable_nvlink(uint32_t gcid, int index)
 {
 	uint64_t phy_config_scom, reg;
@@ -1047,9 +1071,12 @@ static int64_t npu2_opencapi_get_link_state(struct pci_slot *slot, uint8_t *val)
 
 static void check_trained_link(struct npu2_dev *dev, uint64_t odl_status)
 {
-	if (get_link_width(odl_status) != OPAL_SHPC_LINK_UP_x8)
+	if (get_link_width(odl_status) != OPAL_SHPC_LINK_UP_x8) {
 		OCAPIERR(dev, "Link trained in degraded mode (%016llx)\n",
 			odl_status);
+		OCAPIDBG(dev, "Link endpoint info: %016llx\n",
+			get_odl_endpoint_info(dev->npu->chip_id, dev->brick_index));
+	}
 }
 
 static int64_t npu2_opencapi_retry_state(struct pci_slot *slot,
