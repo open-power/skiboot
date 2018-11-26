@@ -5,7 +5,9 @@
 /*                                                                        */
 /* OpenPOWER HostBoot Project                                             */
 /*                                                                        */
-/* COPYRIGHT International Business Machines Corp. 2012,2014              */
+/* Contributors Listed Below - COPYRIGHT 2012,2015                        */
+/* [+] International Business Machines Corp.                              */
+/*                                                                        */
 /*                                                                        */
 /* Licensed under the Apache License, Version 2.0 (the "License");        */
 /* you may not use this file except in compliance with the License.       */
@@ -23,12 +25,12 @@
 #ifndef __SBE_XIP_IMAGE_H
 #define __SBE_XIP_IMAGE_H
 
-// $Id: sbe_xip_image.h,v 1.24 2013/06/13 20:26:33 bcbrock Exp $
+// $Id: sbe_xip_image.h,v 1.26 2015/07/29 23:40:17 cmolsen Exp $
 // $Source: /afs/awd/projects/eclipz/KnowledgeBase/.cvsroot/eclipz/chips/p8/working/procedures/ipl/sbe/sbe_xip_image.h,v $
 //-----------------------------------------------------------------------------
 // *! (C) Copyright International Business Machines Corp. 2011
 // *! All Rights Reserved -- Property of IBM
-// *! *** IBM Confidential ***
+// *! ***  ***
 //-----------------------------------------------------------------------------
 // *! OWNER NAME: Bishop Brock          Email: bcbrock@us.ibm.com
 //------------------------------------------------------------------------------
@@ -341,8 +343,11 @@ typedef struct {
     /// address 
     uint64_t iv_linkAddress;
 
+    /// PTS version
+    uint64_t iv_ptsVersion;
+
     /// Reserved for future expansion
-    uint64_t iv_reserved64[5];
+    uint64_t iv_reserved64[4];
 
     //////////////////////////////////////////////////////////////////////
     // Section Table - 4-byte aligned; 16 entries

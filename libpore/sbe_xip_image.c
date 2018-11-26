@@ -5,7 +5,9 @@
 /*                                                                        */
 /* OpenPOWER HostBoot Project                                             */
 /*                                                                        */
-/* COPYRIGHT International Business Machines Corp. 2012,2014              */
+/* Contributors Listed Below - COPYRIGHT 2012,2015                        */
+/* [+] International Business Machines Corp.                              */
+/*                                                                        */
 /*                                                                        */
 /* Licensed under the Apache License, Version 2.0 (the "License");        */
 /* you may not use this file except in compliance with the License.       */
@@ -20,12 +22,12 @@
 /* permissions and limitations under the License.                         */
 /*                                                                        */
 /* IBM_PROLOG_END_TAG                                                     */
-// $Id: sbe_xip_image.c,v 1.28 2013/12/11 00:12:41 bcbrock Exp $
+// $Id: sbe_xip_image.c,v 1.31 2015/07/29 23:40:06 cmolsen Exp $
 // $Source: /afs/awd/projects/eclipz/KnowledgeBase/.cvsroot/eclipz/chips/p8/working/procedures/ipl/sbe/sbe_xip_image.c,v $
 //-----------------------------------------------------------------------------
 // *! (C) Copyright International Business Machines Corp. 2011
 // *! All Rights Reserved -- Property of IBM
-// *! *** IBM Confidential ***
+// *! ***  ***
 //-----------------------------------------------------------------------------
 // *! OWNER NAME: Bishop Brock          Email: bcbrock@us.ibm.com
 //------------------------------------------------------------------------------
@@ -578,7 +580,7 @@ xipPutSection(const void* i_image,
               SbeXipSection* i_hostSection)
 {
     int rc;
-    SbeXipSection *imageSection;
+    SbeXipSection *imageSection = NULL;
 
     rc = xipGetSectionPointer(i_image, i_sectionId, &imageSection);
 
@@ -596,7 +598,7 @@ XIP_STATIC int
 xipSetSectionOffset(void* io_image, const int i_section, 
                     const uint32_t i_offset)
 {
-    SbeXipSection* section;
+    SbeXipSection* section = NULL;
     int rc;
 
     rc = xipGetSectionPointer(io_image, i_section, &section);
@@ -612,7 +614,7 @@ xipSetSectionOffset(void* io_image, const int i_section,
 XIP_STATIC int
 xipSetSectionSize(void* io_image, const int i_section, const uint32_t i_size)
 {
-    SbeXipSection* section;
+    SbeXipSection* section = NULL;
     int rc;
 
     rc = xipGetSectionPointer(io_image, i_section, &section);
@@ -1711,7 +1713,7 @@ sbe_xip_get_section(const void* i_image,
                     SbeXipSection* o_hostSection)
 {
     int rc;
-    SbeXipSection *imageSection;
+    SbeXipSection *imageSection = NULL;
 
     rc = xipGetSectionPointer(i_image, i_sectionId, &imageSection);
 
@@ -1841,6 +1843,7 @@ xipGetHaltMap(void* io_image,
               void* io_arg)
 {
     int rc;
+
     GetHaltStruct* s = (GetHaltStruct*)io_arg;
 
     (void)io_image;
@@ -2257,7 +2260,8 @@ sbe_xip_append(void* io_image,
     SbeXipSection section, initialSection;
     int rc, final, restoreOnError;
     void* hostAddress;
-    uint32_t pad, initialSize;
+    uint32_t pad;
+    uint32_t initialSize = 0;
 
     do {
         restoreOnError = 0;
@@ -2493,8 +2497,9 @@ sbe_xip_translate_header(SbeXipHeader* o_dest, const SbeXipHeader* i_src)
     o_dest->iv_magic = xipRevLe64(i_src->iv_magic);
     o_dest->iv_entryOffset = xipRevLe64(i_src->iv_entryOffset);
     o_dest->iv_linkAddress = xipRevLe64(i_src->iv_linkAddress);
+    o_dest->iv_ptsVersion = xipRevLe64(i_src->iv_ptsVersion);
 
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < 4; i++) {
         o_dest->iv_reserved64[i] = 0;
     }
 

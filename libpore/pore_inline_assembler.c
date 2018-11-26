@@ -5,7 +5,9 @@
 /*                                                                        */
 /* OpenPOWER HostBoot Project                                             */
 /*                                                                        */
-/* COPYRIGHT International Business Machines Corp. 2012,2014              */
+/* Contributors Listed Below - COPYRIGHT 2012,2014                        */
+/* [+] International Business Machines Corp.                              */
+/*                                                                        */
 /*                                                                        */
 /* Licensed under the Apache License, Version 2.0 (the "License");        */
 /* you may not use this file except in compliance with the License.       */
@@ -25,7 +27,7 @@
 //-----------------------------------------------------------------------------
 // *! (C) Copyright International Business Machines Corp. 2013
 // *! All Rights Reserved -- Property of IBM
-// *! *** IBM Confidential ***
+// *! ***  ***
 //-----------------------------------------------------------------------------
 
 // ** WARNING : This file is maintained as part of the OCC firmware.  Do **
@@ -890,7 +892,7 @@ pore_inline_instruction3(PoreInlineContext *ctx, int opcode, uint32_t operand,
 // Assemble WAIT
 //
 // The cycle count must be an unsigned 24-bit immediate otherwise the error
-// PORE_INLINE_UINT24_REQUIRED is signaled.  PGAS requires that HALT be used
+// PORE_INLINE_UINT24_REQUIRED is signalled.  PGAS requires that HALT be used
 // if the intention is to halt 
 
 int
@@ -914,7 +916,7 @@ pore_WAITS(PoreInlineContext *ctx, uint32_t cycles)
 // Assemble HOOKI
 //
 // The hook index must be an unsigned 24-bit immediate otherwise the error
-// PORE_INLINE_UINT24_REQUIRED is signaled.
+// PORE_INLINE_UINT24_REQUIRED is signalled.
 
 int
 pore_HOOKI(PoreInlineContext *ctx, uint32_t index, uint64_t imm)
