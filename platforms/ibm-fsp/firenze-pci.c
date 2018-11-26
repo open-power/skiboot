@@ -835,6 +835,7 @@ static void firenze_pci_setup_power_mgt(struct pci_slot *slot,
 	plat_slot->req->rw_len		= 1;
 	plat_slot->req->completion	= firenze_i2c_req_done;
 	plat_slot->req->user_data	= slot;
+	plat_slot->req->bus		= plat_slot->i2c_bus;
 
 	firenze_pci_slot_fixup(slot, info);
 
