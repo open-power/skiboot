@@ -739,13 +739,13 @@ struct cpu_thread *find_cpu_by_server(u32 server_no)
 
 struct cpu_thread *next_cpu(struct cpu_thread *cpu)
 {
-	struct cpu_stack *s = container_of(cpu, struct cpu_stack, cpu);
-	unsigned int index;
+	struct cpu_stack *s;
+	unsigned int index = 0;
 
-	if (cpu == NULL)
-		index = 0;
-	else
+	if (cpu != NULL) {
+		s = container_of(cpu, struct cpu_stack, cpu);
 		index = s - cpu_stacks + 1;
+	}
 	for (; index <= cpu_max_pir; index++) {
 		cpu = &cpu_stacks[index].cpu;
 		if (cpu->state != cpu_state_no_cpu)
