@@ -82,8 +82,7 @@ static bool io_get_lx_info(const void *kwvpd, unsigned int kwvpd_sz,
 		return false;
 	}
 
-	if (lxr)
-		memcpy(lxrbuf, lxr, sizeof(uint32_t)*2);
+	memcpy(lxrbuf, lxr, sizeof(uint32_t)*2);
 
 	prlog(PR_DEBUG, "CEC:     LXRn=%d LXR=%08x%08x\n", lx_idx, lxrbuf[0], lxrbuf[1]);
 	prlog(PR_DEBUG, "CEC:     LX Info added to %llx\n", (long long)hn);
