@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:rolling
 ENV DEBIAN_FRONTEND    noninteractive
 RUN apt-get update -qq
 RUN if [ `arch` != "ppc64le" ]; then apt-get update -qq && apt-get install -y gcc-powerpc64le-linux-gnu; fi
