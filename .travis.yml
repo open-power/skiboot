@@ -41,9 +41,6 @@ services: docker
 
 dist: trusty
 
-before_install:
-    - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
-
 script:
     - if [ ${COVERITY_SCAN_BRANCH} != 1 ]; then
        docker build --pull -t ${RUN_ON_CONTAINER} -f opal-ci/Dockerfile-${RUN_ON_CONTAINER} . &&
