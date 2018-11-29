@@ -204,7 +204,7 @@ static void *vpd_lid_preload(const uint8_t *lx)
 
 void vpd_iohub_load(struct dt_node *hub_node)
 {
-	char record[4] = "LXR0";
+	uint8_t record[4] = { 'L','X','R','0' }; /* not null terminated */
 	const void *valid_lx;
 	uint8_t lx_size;
 	int r;
