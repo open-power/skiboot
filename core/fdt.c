@@ -108,8 +108,6 @@ static void dump_fdt(void *fdt)
 		prlog(PR_INFO, "name: %s [%u]\n", name, off);
 	}
 }
-#else
-static inline void dump_fdt(void *fdt __unused) { }
 #endif
 
 static void flatten_dt_properties(void *fdt, const struct dt_node *dn)
@@ -183,7 +181,9 @@ static int __create_dtb(void *fdt, size_t len,
 		return fdt_error;
 	}
 
+#ifdef DEBUG_FDT
 	dump_fdt(fdt);
+#endif
 	return 0;
 }
 
