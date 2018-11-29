@@ -21,6 +21,7 @@
 #include <opal-msg.h>
 #include <timebase.h>
 #include <processor.h>
+#include <timer.h>
 
 static LIST_HEAD(i2c_bus_list);
 
@@ -177,6 +178,7 @@ int i2c_request_send(int bus_id, int dev_addr, int read_write,
 	struct i2c_bus *bus;
 	uint64_t time_to_wait = 0;
 	struct i2c_sync_userdata ud;
+	uint64_t timer_period = msecs_to_tb(5), timer_count;
 
 	bus = i2c_find_bus_by_id(bus_id);
 	if (!bus) {
@@ -215,6 +217,7 @@ int i2c_request_send(int bus_id, int dev_addr, int read_write,
 
 	for (retries = 0; retries <= MAX_NACK_RETRIES; retries++) {
 		waited = 0;
+		timer_count = 0;
 
 		i2c_queue_req(req);
 
@@ -224,6 +227,19 @@ int i2c_request_send(int bus_id, int dev_addr, int read_write,
 				time_to_wait = REQ_COMPLETE_POLLING;
 			time_wait(time_to_wait);
 			waited += time_to_wait;
+			timer_count += time_to_wait;
+			if (timer_count > timer_period) {
+				/*
+				 * The above request may be relying on
+				 * timers to complete, yet there may
+				 * not be called, especially during
+				 * opal init. We could be looping here
+				 * forever. So explicitly check the
+				 * timers once in a while
+				 */
+				check_timers(false);
+				timer_count = 0;
+			}
 		} while (!ud.done);
 
 		lwsync();
