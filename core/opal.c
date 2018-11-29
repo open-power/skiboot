@@ -704,14 +704,12 @@ void opal_del_host_sync_notifier(bool (*notify)(void *data))
 static int64_t opal_sync_host_reboot(void)
 {
 	struct opal_sync_entry *ent, *nxt;
-	bool ret = true;
+	int ret = OPAL_SUCCESS;
 
 	list_for_each_safe(&opal_syncers, ent, nxt, link)
-		ret &= ent->notify(ent->data);
+		if (! ent->notify(ent->data))
+			ret = OPAL_BUSY_EVENT;
 
-	if (ret)
-		return OPAL_SUCCESS;
-	else
-		return OPAL_BUSY_EVENT;
+	return ret;
 }
 opal_call(OPAL_SYNC_HOST_REBOOT, opal_sync_host_reboot, 0);
