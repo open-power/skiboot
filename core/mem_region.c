@@ -162,8 +162,6 @@ static void mem_poison(struct free_hdr *f)
 
 	memset(f+1, POISON_MEM_REGION_WITH, poison_size);
 }
-#else
-static inline void mem_poison(struct free_hdr *f __unused) { }
 #endif
 
 /* Creates free block covering entire region. */
@@ -178,7 +176,9 @@ static void init_allocatable_region(struct mem_region *region)
 	*tailer(f) = f->hdr.num_longs;
 	list_head_init(&region->free_list);
 	list_add(&region->free_list, &f->list);
+#if POISON_MEM_REGION == 1
 	mem_poison(f);
+#endif
 }
 
 static void make_free(struct mem_region *region, struct free_hdr *f,
@@ -186,8 +186,12 @@ static void make_free(struct mem_region *region, struct free_hdr *f,
 {
 	struct alloc_hdr *next;
 
+#if POISON_MEM_REGION == 1
 	if (!skip_poison)
 		mem_poison(f);
+#else
+	(void)skip_poison;
+#endif
 
 	if (f->hdr.prev_free) {
 		struct free_hdr *prev;
