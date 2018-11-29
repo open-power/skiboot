@@ -409,9 +409,9 @@ static void bt_expire_old_msg(uint64_t tb)
 	}
 }
 
+#if BT_QUEUE_DEBUG
 static void print_debug_queue_info(void)
 {
-#if BT_QUEUE_DEBUG
 	struct bt_msg *msg;
 	static bool printed;
 
@@ -426,8 +426,8 @@ static void print_debug_queue_info(void)
 		printed = true;
 		prlog(PR_DEBUG, "----- BT Msg Queue Empty -----\n");
 	}
-#endif
 }
+#endif
 
 static void bt_send_and_unlock(void)
 {
@@ -473,7 +473,9 @@ static void bt_poll(struct timer *t __unused, void *data __unused,
 	 */
 	lock(&bt.lock);
 
+#if BT_QUEUE_DEBUG
 	print_debug_queue_info();
+#endif
 
 	bt_ctrl = bt_inb(BT_CTRL);
 
