@@ -93,9 +93,9 @@ long opal_bad_token(uint64_t token)
 	return OPAL_PARAMETER;
 }
 
+#ifdef OPAL_TRACE_ENTRY
 static void opal_trace_entry(struct stack_frame *eframe __unused)
 {
-#ifdef OPAL_TRACE_ENTRY
 	union trace t;
 	unsigned nargs, i;
 
@@ -111,8 +111,8 @@ static void opal_trace_entry(struct stack_frame *eframe __unused)
 		t.opal.r3_to_11[i] = cpu_to_be64(eframe->gpr[3+i]);
 
 	trace_add(&t, TRACE_OPAL, offsetof(struct trace_opal, r3_to_11[nargs]));
-#endif
 }
+#endif
 
 /*
  * opal_quiesce_state is used as a lock. Don't use an actual lock to avoid
@@ -138,7 +138,9 @@ int64_t opal_entry_check(struct stack_frame *eframe)
 		abort();
 	}
 
+#ifdef OPAL_TRACE_ENTRY
 	opal_trace_entry(eframe);
+#endif
 
 	if (!opal_check_token(token))
 		return opal_bad_token(token);
