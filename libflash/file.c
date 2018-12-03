@@ -117,15 +117,17 @@ static int file_write(struct blocklevel_device *bl, uint64_t dst, const void *sr
  */
 static int file_erase(struct blocklevel_device *bl, uint64_t dst, uint64_t len)
 {
-	unsigned long long int d = ULLONG_MAX;
+	char buf[4096];
 	int i = 0;
 	int rc;
 
+	memset(buf, ~0, sizeof(buf));
+
 	while (len - i > 0) {
-		rc = file_write(bl, dst + i, &d, len - i > sizeof(d) ? sizeof(d) : len - i);
+		rc = file_write(bl, dst + i, buf, len - i > sizeof(buf) ? sizeof(buf) : len - i);
 		if (rc)
 			return rc;
-		i += len - i > sizeof(d) ? sizeof(d) : len - i;
+		i += (len - i > sizeof(buf)) ? sizeof(buf) : len - i;
 	}
 
 	return 0;
