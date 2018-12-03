@@ -50,7 +50,7 @@
  *  Plus \n 40
  *  Lets do 50.
  */
-#define MAX_LINE 255
+#define MAX_LINE (PATH_MAX+255)
 #define MAX_TOCS 10
 #define SEPARATOR ','
 
