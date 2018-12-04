@@ -28,7 +28,6 @@
 #include <ccan/str/str.h>
 #include <ccan/array_size/array_size.h>
 #include <affinity.h>
-#include <npu2-regs.h>
 #include <npu2.h>
 #include <lock.h>
 #include <xscom.h>
@@ -2144,19 +2143,25 @@ static int64_t opal_npu_init_context(uint64_t phb_id, int pasid __unused,
 		    GETFIELD(NPU2_XTS_PID_MAP_MSR, xts_bdf_pid)) {
 			NPU2ERR(p, "%s: Unexpected MSR value\n", __func__);
 			id = OPAL_PARAMETER;
+			goto out;
+		} else if (!p->ctx_ref[id]) {
+			NPU2ERR(p, "%s: Unexpected mapping\n", __func__);
+			id = OPAL_INTERNAL_ERROR;
+			goto out;
 		}
-
-		goto out;
 	}
 
 	/* Write the entry */
-	NPU2DBG(p, "XTS_PID_MAP[%03d] = 0x%08llx\n", id, xts_bdf_pid);
-	npu2_write(p, NPU2_XTS_PID_MAP + id*0x20, xts_bdf_pid);
+	if (!p->ctx_ref[id]) {
+		NPU2DBG(p, "XTS_PID_MAP[%03d] = 0x%08llx\n", id, xts_bdf_pid);
+		npu2_write(p, NPU2_XTS_PID_MAP + id*0x20, xts_bdf_pid);
 
-	if (!GETFIELD(NPU2_XTS_BDF_MAP_VALID, xts_bdf)) {
-		xts_bdf = SETFIELD(NPU2_XTS_BDF_MAP_VALID, xts_bdf, 1);
-		npu2_write(p, NPU2_XTS_BDF_MAP + id*8, xts_bdf);
+		if (!GETFIELD(NPU2_XTS_BDF_MAP_VALID, xts_bdf)) {
+			xts_bdf = SETFIELD(NPU2_XTS_BDF_MAP_VALID, xts_bdf, 1);
+			npu2_write(p, NPU2_XTS_BDF_MAP + id*8, xts_bdf);
+		}
 	}
+	++p->ctx_ref[id];
 
 out:
 	unlock(&p->lock);
@@ -2170,7 +2175,7 @@ static int opal_npu_destroy_context(uint64_t phb_id, uint64_t pid __unused,
 	struct phb *phb = pci_get_phb(phb_id);
 	struct npu2 *p;
 	uint64_t xts_bdf;
-	int rc = 0;
+	int rc = OPAL_PARAMETER, id;
 
 	if (!phb || phb->phb_type != phb_type_npu_v2)
 		return OPAL_PARAMETER;
@@ -2183,14 +2188,23 @@ static int opal_npu_destroy_context(uint64_t phb_id, uint64_t pid __unused,
 	if (npu_table_search(p, NPU2_XTS_BDF_MAP, 8, NPU2_XTS_BDF_MAP_SIZE,
 			     &xts_bdf, NPU2_XTS_BDF_MAP_BDF) < 0) {
 		NPU2ERR(p, "LPARID not associated with any GPU\n");
-		rc = OPAL_PARAMETER;
+	} else {
+		/*
+		 * The bdf/pid table contains wildcard entries and MSR bits
+		 * which we need to clear between switching a device from
+		 * a host to a guest or vice versa.
+		 */
+		id = GETFIELD(NPU2_XTS_BDF_MAP_LPARSHORT, xts_bdf);
+		if (p->ctx_ref[id]) {
+			--p->ctx_ref[id];
+			if (!p->ctx_ref[id]) {
+				NPU2DBG(p, "XTS_PID_MAP[%03d] = 0 (destroy)\n",
+					id);
+				npu2_write(p, NPU2_XTS_PID_MAP + id*0x20, 0);
+			}
+			rc = OPAL_SUCCESS;
+		}
 	}
-
-	/*
-	 * The bdf/pid table only contains wildcard entries, so we don't
-	 * need to remove anything here.
-	 */
-
 	unlock(&p->lock);
 	return rc;
 }

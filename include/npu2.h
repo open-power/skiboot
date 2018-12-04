@@ -19,6 +19,7 @@
 
 #include <pci.h>
 #include <phys-map.h>
+#include <npu2-regs.h>
 
 /* Debugging options */
 #define NPU2DBG(p, fmt, a...)	prlog(PR_DEBUG, "NPU%d: " fmt, \
@@ -158,6 +159,7 @@ struct npu2 {
 	uint32_t	total_devices;
 	struct npu2_dev	*devices;
 	enum phys_map_type gpu_map_type;
+	int		ctx_ref[NPU2_XTS_BDF_MAP_SIZE];
 
 	/* IODA cache */
 	uint64_t	tve_cache[16];
