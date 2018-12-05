@@ -758,4 +758,15 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 #define OB3_ODL0_ENDPOINT_INFO			0xC010832
 #define OB3_ODL1_ENDPOINT_INFO			0xC010833
 
+/* Registers and bits used to clear the L2 and L3 cache */
+#define L2_PRD_PURGE_CMD_REG 			0x1080E
+#define L2_PRD_PURGE_CMD_REG_BUSY 		0x0040000000000000
+#define L2_PRD_PURGE_CMD_TYPE_MASK		PPC_BIT(1) | PPC_BIT(2) | PPC_BIT(3) | PPC_BIT(4)
+#define L2_PRD_PURGE_CMD_TRIGGER		PPC_BIT(0)
+#define L2CAC_FLUSH				0x0
+#define L3_PRD_PURGE_REG			0x1180E
+#define L3_PRD_PURGE_REQ			PPC_BIT(0)
+#define L3_PRD_PURGE_TTYPE_MASK 		PPC_BIT(1) | PPC_BIT(2) | PPC_BIT(3) | PPC_BIT(4)
+#define L3_FULL_PURGE				0x0
+
 #endif /* __NPU2_REGS_H */

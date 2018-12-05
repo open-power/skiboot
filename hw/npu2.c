@@ -326,6 +326,138 @@ static int64_t npu2_dev_cfg_bar(void *dev, struct pci_cfg_reg_filter *pcrf,
 	return npu2_cfg_read_bar(ndev, pcrf, offset, len, data);
 }
 
+static int start_l2_purge(uint32_t chip_id, uint32_t core_id)
+{
+	uint64_t addr = XSCOM_ADDR_P9_EX(core_id, L2_PRD_PURGE_CMD_REG);
+	int rc;
+
+	rc = xscom_write_mask(chip_id, addr, L2CAC_FLUSH,
+			      L2_PRD_PURGE_CMD_TYPE_MASK);
+	if (!rc)
+		rc = xscom_write_mask(chip_id, addr, L2_PRD_PURGE_CMD_TRIGGER,
+			      L2_PRD_PURGE_CMD_TRIGGER);
+	if (rc)
+		prlog(PR_ERR, "PURGE L2 on core 0x%x: XSCOM write_mask "
+		      "failed %i\n", core_id, rc);
+	return rc;
+}
+
+static int wait_l2_purge(uint32_t chip_id, uint32_t core_id)
+{
+	uint64_t val;
+	uint64_t addr = XSCOM_ADDR_P9_EX(core_id, L2_PRD_PURGE_CMD_REG);
+	unsigned long now = mftb();
+	unsigned long end = now + msecs_to_tb(2);
+	int rc;
+
+	while (1) {
+		rc = xscom_read(chip_id, addr, &val);
+		if (rc) {
+			prlog(PR_ERR, "PURGE L2 on core 0x%x: XSCOM read "
+			      "failed %i\n", core_id, rc);
+			break;
+		}
+		if (!(val & L2_PRD_PURGE_CMD_REG_BUSY))
+			break;
+		now = mftb();
+		if (tb_compare(now, end) == TB_AAFTERB) {
+			prlog(PR_ERR, "PURGE L2 on core 0x%x timed out %i\n",
+			      core_id, rc);
+			return OPAL_BUSY;
+		}
+	}
+
+	/* We have to clear the trigger bit ourselves */
+	val &= ~L2_PRD_PURGE_CMD_TRIGGER;
+	rc = xscom_write(chip_id, addr, val);
+	if (rc)
+		prlog(PR_ERR, "PURGE L2 on core 0x%x: XSCOM write failed %i\n",
+		      core_id, rc);
+	return rc;
+}
+
+static int start_l3_purge(uint32_t chip_id, uint32_t core_id)
+{
+	uint64_t addr = XSCOM_ADDR_P9_EX(core_id, L3_PRD_PURGE_REG);
+	int rc;
+
+	rc = xscom_write_mask(chip_id, addr, L3_FULL_PURGE,
+			      L3_PRD_PURGE_TTYPE_MASK);
+	if (!rc)
+		rc = xscom_write_mask(chip_id, addr, L3_PRD_PURGE_REQ,
+			      L3_PRD_PURGE_REQ);
+	if (rc)
+		prlog(PR_ERR, "PURGE L3 on core 0x%x: XSCOM write_mask "
+		      "failed %i\n", core_id, rc);
+	return rc;
+}
+
+static int wait_l3_purge(uint32_t chip_id, uint32_t core_id)
+{
+	uint64_t val;
+	uint64_t addr = XSCOM_ADDR_P9_EX(core_id, L3_PRD_PURGE_REG);
+	unsigned long now = mftb();
+	unsigned long end = now + msecs_to_tb(2);
+	int rc;
+
+	/* Trigger bit is automatically set to zero when flushing is done */
+	while (1) {
+		rc = xscom_read(chip_id, addr, &val);
+		if (rc) {
+			prlog(PR_ERR, "PURGE L3 on core 0x%x: XSCOM read "
+			      "failed %i\n", core_id, rc);
+			break;
+		}
+		if (!(val & L3_PRD_PURGE_REQ))
+			break;
+		now = mftb();
+		if (tb_compare(now, end) == TB_AAFTERB) {
+			prlog(PR_ERR, "PURGE L3 on core 0x%x timed out %i\n",
+			      core_id, rc);
+			return OPAL_BUSY;
+		}
+	}
+	return rc;
+}
+
+static int64_t purge_l2_l3_caches(void)
+{
+	struct cpu_thread *t;
+	uint64_t core_id, prev_core_id = (uint64_t)-1;
+	int rc;
+
+	for_each_ungarded_cpu(t) {
+		/* Only need to do it once per core chiplet */
+		core_id = pir_to_core_id(t->pir);
+		if (prev_core_id == core_id)
+			continue;
+		prev_core_id = core_id;
+		rc = start_l2_purge(t->chip_id, core_id);
+		if (rc)
+			return rc;
+		rc = start_l3_purge(t->chip_id, core_id);
+		if (rc)
+			return rc;
+	}
+
+	prev_core_id = (uint64_t)-1;
+	for_each_ungarded_cpu(t) {
+		/* Only need to do it once per core chiplet */
+		core_id = pir_to_core_id(t->pir);
+		if (prev_core_id == core_id)
+			continue;
+		prev_core_id = core_id;
+
+		rc = wait_l2_purge(t->chip_id, core_id);
+		if (rc)
+			return rc;
+		rc = wait_l3_purge(t->chip_id, core_id);
+		if (rc)
+			return rc;
+	}
+	return OPAL_SUCCESS;
+}
+
 static int64_t npu2_dev_cfg_exp_devcap(void *dev,
 		struct pci_cfg_reg_filter *pcrf __unused,
 		uint32_t offset, uint32_t size,
@@ -333,6 +465,7 @@ static int64_t npu2_dev_cfg_exp_devcap(void *dev,
 {
 	struct pci_virt_device *pvd = dev;
 	struct npu2_dev *ndev = pvd->data;
+	int rc;
 
 	assert(write);
 
@@ -345,6 +478,10 @@ static int64_t npu2_dev_cfg_exp_devcap(void *dev,
 
 	if (*data & PCICAP_EXP_DEVCTL_FUNC_RESET)
 		npu2_dev_procedure_reset(ndev);
+
+	rc = purge_l2_l3_caches();
+	if (rc)
+		return rc;
 
 	return OPAL_PARTIAL;
 }
@@ -1125,7 +1262,7 @@ static int64_t npu2_hreset(struct pci_slot *slot __unused)
 			reset_ntl(ndev);
 		}
 	}
-	return OPAL_SUCCESS;
+	return purge_l2_l3_caches();
 }
 
 static int64_t npu2_freset(struct pci_slot *slot __unused)
