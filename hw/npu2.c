@@ -1181,8 +1181,8 @@ static struct pci_slot *npu2_slot_create(struct phb *phb)
 int64_t npu2_freeze_status(struct phb *phb __unused,
 			   uint64_t pe_number __unused,
 			   uint8_t *freeze_state,
-			   uint16_t *pci_error_type __unused,
-			   uint16_t *severity __unused,
+			   uint16_t *pci_error_type,
+			   uint16_t *severity,
 			   uint64_t *phb_status __unused)
 {
 	/*
@@ -1192,6 +1192,10 @@ int64_t npu2_freeze_status(struct phb *phb __unused,
 	 * it keeps the skiboot PCI enumeration going.
 	 */
 	*freeze_state = OPAL_EEH_STOPPED_NOT_FROZEN;
+	*pci_error_type = OPAL_EEH_NO_ERROR;
+	if (severity)
+		*severity = OPAL_EEH_SEV_NO_ERROR;
+
 	return OPAL_SUCCESS;
 }
 
