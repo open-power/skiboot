@@ -1813,6 +1813,11 @@ static void npu2_add_phb_properties(struct npu2 *p)
 			      NPU2_MAX_PE_NUM);
 	dt_add_property_cells(np, "ibm,opal-reserved-pe",
 			      NPU2_RESERVED_PE_NUM);
+	dt_add_property_cells(np, "ibm,supported-tce-sizes",
+			      12, // 4K
+			      16, // 64K
+			      24, // 16M
+			      28); // 256M
 
 	mmio_atsd = (u64) p->regs +
 		NPU2_REG_OFFSET(NPU2_STACK_ATSD, NPU2_BLOCK_ATSD0, NPU2_XTS_MMIO_ATSD_LAUNCH);
