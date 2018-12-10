@@ -31,6 +31,7 @@
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
 #include <libflash/blocklevel.h>
+#include <libflash/ecc.h>
 #include <common/arch_flash.h>
 
 /*
@@ -250,6 +251,14 @@ static int parse_entry(struct blocklevel_device *bl,
 
 	if (*line != '\0' && *(line + 1) != '\0') {
 		filename = line + 1;
+
+		/*
+		 * Support flashing already ecc'd data as this is the case
+		 * for POWER8 SBE image binary.
+		 */
+		if (has_ecc(new_entry) && !strstr(filename, ".ecc"))
+			blocklevel_ecc_protect(bl, pbase, psize);
+
 		data_fd = open(filename, O_RDONLY);
 		if (data_fd == -1) {
 			fprintf(stderr, "Couldn't open file '%s' for '%s' partition "
@@ -269,9 +278,12 @@ static int parse_entry(struct blocklevel_device *bl,
 		 * Sanity check that the file isn't too large for
 		 * partition
 		 */
+		if (has_ecc(new_entry) && !strstr(filename, ".ecc"))
+			psize = ecc_buffer_size_minus_ecc(psize);
 		if (pactual > psize) {
-			fprintf(stderr, "File '%s' for partition '%s' is too large\n",
-					filename, name);
+			fprintf(stderr, "File '%s' for partition '%s' is too large,"
+				" %u > %u\n",
+				filename, name, pactual, psize);
 			close(data_fd);
 			return -1;
 		}
