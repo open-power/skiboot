@@ -97,6 +97,10 @@ Usage: ./pflash [options] commands...
 		Must be used in conjunction with -P. Will erase the
 		partition and then set all the ECC bits as they should be
 
+	-9 --ecc
+		Encode/Decode ECC where specified in the FFS header.
+		This 9 byte ECC method is used for some OpenPOWER
+		partitions.
 	-i, --info
 		Display some information about the flash.
 

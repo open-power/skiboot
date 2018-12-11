@@ -36,6 +36,7 @@
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
 #include <libflash/blocklevel.h>
+#include <libflash/ecc.h>
 #include <common/arch_flash.h>
 #include "progress.h"
 
@@ -48,6 +49,7 @@ struct flash_details {
 	uint64_t toc;
 	uint64_t total_size;
 	uint32_t erase_granule;
+	bool mark_ecc;
 };
 
 /* Full pflash version number (possibly includes gitid). */
@@ -142,7 +144,7 @@ static struct ffs_handle *open_ffs(struct flash_details *flash)
 	int rc;
 
 	rc = ffs_init(flash->toc, flash->total_size,
-			flash->bl, &ffsh, 0);
+			flash->bl, &ffsh, flash->mark_ecc);
 	if (rc) {
 		fprintf(stderr, "Error %d opening ffs !\n", rc);
 		if (flash->toc) {
@@ -429,7 +431,7 @@ static int program_file(struct blocklevel_device *bl,
 	}
 
 	printf("Programming & Verifying...\n");
-	progress_init(size >> 8);
+	progress_init(size);
 	while(size) {
 		ssize_t len;
 
@@ -456,7 +458,7 @@ static int program_file(struct blocklevel_device *bl,
 			goto out;
 		}
 		start += len;
-		progress_tick(actual_size >> 8);
+		progress_tick(actual_size);
 	}
 	progress_end();
 
@@ -487,7 +489,7 @@ static int do_read_file(struct blocklevel_device *bl, const char *file,
 	printf("Reading to \"%s\" from 0x%08x..0x%08x !\n",
 	       file, start, start + size);
 
-	progress_init(size >> 8);
+	progress_init(size);
 	while(size) {
 		ssize_t len;
 
@@ -511,7 +513,7 @@ static int do_read_file(struct blocklevel_device *bl, const char *file,
 		start += rc;
 		size -= rc;
 		done += rc;
-		progress_tick(done >> 8);
+		progress_tick(done);
 	}
 	progress_end();
 	close(fd);
@@ -690,6 +692,10 @@ static void print_help(const char *pname)
 	printf("\t\tUsed to ECC clear a partition of the flash\n");
 	printf("\t\tMust be used in conjunction with -P. Will erase the\n");
 	printf("\t\tpartition and then set all the ECC bits as they should be\n\n");
+	printf("\t-9 --ecc\n");
+	printf("\t\tEncode/Decode ECC where specified in the FFS header.\n");
+	printf("\t\tThis 9 byte ECC method is used for some OpenPOWER\n");
+	printf("\t\tpartitions.\n");
 	printf("\t-i, --info\n");
 	printf("\t\tDisplay some information about the flash.\n\n");
 	printf("\t--detail\n");
@@ -706,7 +712,8 @@ int main(int argc, char *argv[])
 	struct flash_details flash = { 0 };
 	static struct ffs_handle *ffsh = NULL;
 	uint32_t ffs_index;
-	uint32_t address = 0, read_size = 0, write_size = 0, detail_id = UINT_MAX;
+	uint32_t address = 0, read_size = 0, detail_id = UINT_MAX;
+	uint32_t write_size = 0, write_size_minus_ecc = 0;
 	bool erase = false, do_clear = false;
 	bool program = false, erase_all = false, info = false, do_read = false;
 	bool enable_4B = false, disable_4B = false;
@@ -743,11 +750,12 @@ int main(int argc, char *argv[])
 			{"skip",	required_argument,	NULL,	'k'},
 			{"toc",		required_argument,	NULL,	'T'},
 			{"clear",   no_argument,        NULL,   'c'},
+			{"ecc",         no_argument,            NULL,   '9'},
 			{NULL,	    0,                  NULL,    0 }
 		};
 		int c, oidx = 0;
 
-		c = getopt_long(argc, argv, "+:a:s:P:r:43Eep:fdihvbtgS:T:cF:",
+		c = getopt_long(argc, argv, "+:a:s:P:r:43Eep:fdihvbtgS:T:c9F:",
 				long_opts, &oidx);
 		if (c == -1)
 			break;
@@ -861,6 +869,9 @@ int main(int argc, char *argv[])
 					no_action = true;
 				}
 			}
+			break;
+		case '9':
+			flash.mark_ecc = true;
 			break;
 		case ':':
 			fprintf(stderr, "Unrecognised option \"%s\" to '%c'\n", optarg, optopt);
@@ -1052,6 +1063,9 @@ int main(int argc, char *argv[])
 		write_size = stbuf.st_size;
 	}
 
+	/* Only take ECC into account under some conditions later */
+	write_size_minus_ecc = write_size;
+
 	/* If read specified and no read_size, use flash size */
 	if (do_read && !read_size && !part_name)
 		read_size = flash.total_size;
@@ -1095,18 +1109,27 @@ int main(int argc, char *argv[])
 		/* Read size is obtained from partition "actual" size */
 		if (!read_size)
 			read_size = pactsize;
+		/* If we're decoding ecc and partition is ECC'd, then adjust */
+		if (ecc && flash.mark_ecc)
+			read_size = ecc_buffer_size_minus_ecc(read_size);
 
 		/* Write size is max size of partition */
 		if (!write_size)
 			write_size = pmaxsz;
 
+		/* But write size can take into account ECC as well */
+		if (ecc && flash.mark_ecc)
+			write_size_minus_ecc = ecc_buffer_size_minus_ecc(write_size);
+		else
+			write_size_minus_ecc = write_size;
+
 		/* Crop write size to partition size if --force was passed */
-		if (write_size > pmaxsz && !must_confirm) {
+		if ((write_size_minus_ecc > pmaxsz) && !must_confirm) {
 			printf("WARNING: Size (%d bytes) larger than partition"
 			       " (%d bytes), cropping to fit\n",
 			       write_size, pmaxsz);
 			write_size = pmaxsz;
-		} else if (write_size > pmaxsz) {
+		} else if (write_size_minus_ecc > pmaxsz) {
 			printf("ERROR: Size (%d bytes) larger than partition"
 			       " (%d bytes). Use --force to force\n",
 			       write_size, pmaxsz);
@@ -1169,7 +1192,7 @@ int main(int argc, char *argv[])
 		rc = erase_range(&flash, address, write_size,
 				program, ffsh, ffs_index);
 	if (!rc && program)
-		rc = program_file(flash.bl, write_file, address, write_size,
+		rc = program_file(flash.bl, write_file, address, write_size_minus_ecc,
 				ffsh, ffs_index);
 	if (!rc && do_clear)
 		rc = set_ecc(&flash, address, write_size);
