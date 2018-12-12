@@ -15,26 +15,45 @@
  */
 
 #include <skiboot.h>
+#include <console.h>
 #include <device.h>
 #include <ipmi.h>
 
 #include <platforms/astbmc/astbmc.h>
 
+static bool bt_device_present;
 
 static bool qemu_probe(void)
 {
+	struct dt_node *n;
+
 	if (!dt_node_is_compatible(dt_root, "qemu,powernv"))
 		return false;
 
         astbmc_early_init();
 
+	/* check if the BT device was defined by QEMU */
+	dt_for_each_child(dt_root, n) {
+		if (dt_node_is_compatible(n, "bt"))
+		       bt_device_present = true;
+	}
+
 	return true;
+}
+
+static void qemu_init(void)
+{
+	if (!bt_device_present) {
+		set_opal_console(&uart_opal_con);
+	} else {
+		astbmc_init();
+	}
 }
 
 DECLARE_PLATFORM(qemu) = {
 	.name		= "Qemu",
 	.probe		= qemu_probe,
-	.init		= astbmc_init,
+	.init		= qemu_init,
 	.external_irq   = astbmc_ext_irq_serirq_cpld,
 	.cec_power_down = astbmc_ipmi_power_down,
 	.cec_reboot     = astbmc_ipmi_reboot,
