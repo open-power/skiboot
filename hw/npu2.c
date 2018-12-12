@@ -2254,14 +2254,9 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 	struct phb *phb = pci_get_phb(phb_id);
 	struct npu2 *p;
 	struct npu2_dev *ndev = NULL;
-	uint64_t xts_bdf_lpar, atsd_lpar, rc = OPAL_SUCCESS;
+	uint64_t xts_bdf_lpar, rc = OPAL_SUCCESS;
 	int i;
 	int id;
-	static uint64_t atsd_lpar_regs[] = {
-		NPU2_XTS_MMIO_ATSD0_LPARID, NPU2_XTS_MMIO_ATSD1_LPARID,
-		NPU2_XTS_MMIO_ATSD2_LPARID, NPU2_XTS_MMIO_ATSD3_LPARID,
-		NPU2_XTS_MMIO_ATSD4_LPARID, NPU2_XTS_MMIO_ATSD5_LPARID,
-		NPU2_XTS_MMIO_ATSD6_LPARID, NPU2_XTS_MMIO_ATSD7_LPARID };
 
 	if (!phb || phb->phb_type != phb_type_npu_v2)
 		return OPAL_PARAMETER;
@@ -2301,20 +2296,11 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_LPARID, xts_bdf_lpar, lparid);
 	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_LPARSHORT, xts_bdf_lpar, id);
 
-	/*
-	 * Need to find an NVLink to send the ATSDs for this device over.
-	 * Also, the host allocates an ATSD per NVLink, enable filtering now.
-	 */
-	atsd_lpar = SETFIELD(NPU2_XTS_MMIO_ATSD_LPARID, 0, lparid);
-	if (!lparid)
-		atsd_lpar = SETFIELD(NPU2_XTS_MMIO_ATSD_MSR_HV, atsd_lpar, 1);
-
+	/* Need to find an NVLink to send the ATSDs for this device over */
 	for (i = 0; i < p->total_devices; i++) {
 		if (p->devices[i].nvlink.gpu_bdfn == bdf) {
-			if (!ndev)
-				ndev = &p->devices[i];
-			if (i < ARRAY_SIZE(atsd_lpar_regs))
-				npu2_write(p, atsd_lpar_regs[i], atsd_lpar);
+			ndev = &p->devices[i];
+			break;
 		}
 	}
 
