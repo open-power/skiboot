@@ -1,5 +1,6 @@
 #!/bin/bash
 
+QEMU_ARGS="-M powernv -m 3G -nographic -device ipmi-bmc-sim,id=bmc0 -device isa-ipmi-bt,bmc=bmc0,irq=10"
 
 if [ -z "$QEMU_BIN" ]; then
     QEMU_BIN="qemu-system-ppc64"
@@ -33,7 +34,7 @@ T=$(mktemp  --tmpdir skiboot_qemu_boot_test.XXXXXXXXXX)
 
 ( cat <<EOF | expect
 set timeout 600
-spawn $QEMU_BIN -m 3G -M powernv -kernel $SKIBOOT_ZIMAGE -nographic -device ipmi-bmc-sim,id=ipmi0 -device isa-ipmi-bt,bmc=ipmi0
+spawn $QEMU_BIN $QEMU_ARGS -kernel $SKIBOOT_ZIMAGE
 expect {
 timeout { send_user "\nTimeout waiting for petitboot\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+QEMU_ARGS="-M powernv -nographic -device ipmi-bmc-sim,id=bmc0 -device isa-ipmi-bt,bmc=bmc0,irq=10"
 
 if [ -z "$QEMU_BIN" ]; then
     QEMU_BIN="qemu-system-ppc64"
@@ -30,7 +31,7 @@ trap "rm -f -- '$t'" EXIT
 (
 cat <<EOF | expect
 set timeout 30
-spawn $QEMU_BIN -m 1G -M powernv -kernel $SKIBOOT_ZIMAGE -nographic
+spawn $QEMU_BIN $QEMU_ARGS -kernel $SKIBOOT_ZIMAGE -nographic
 expect {
 timeout { send_user "\nTimeout waiting for hello world\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }

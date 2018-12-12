@@ -1,5 +1,6 @@
 #!/bin/bash
 
+QEMU_ARGS="-m 2G -M powernv -nographic -device ipmi-bmc-sim,id=ipmi0 -device isa-ipmi-bt,bmc=ipmi0"
 
 if [ -z "$QEMU_BIN" ]; then
     QEMU_BIN="qemu-system-ppc64"
@@ -39,7 +40,7 @@ T=$(mktemp  --tmpdir skiboot_qemu_debian-jessie-boot_test.XXXXXXXXXX)
 
 ( cat <<EOF | expect
 set timeout 600
-spawn $QEMU_BIN -m 2G -M powernv -kernel debian-jessie-vmlinux -initrd debian-jessie-initrd.gz -nographic -device ipmi-bmc-sim,id=ipmi0 -device isa-ipmi-bt,bmc=ipmi0
+spawn $QEMU_BIN $QEMU_ARGS -kernel debian-jessie-vmlinux -initrd debian-jessie-initrd.gz
 expect {
 timeout { send_user "\nTimeout waiting for petitboot\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
