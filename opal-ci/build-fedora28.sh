@@ -17,10 +17,9 @@ make -j${MAKE_J} all
 make -j${MAKE_J} check
 (make clean; cd external/gard && CROSS= make -j${MAKE_J})
 (cd external/pflash; make -j${MAKE_J})
-make clean
-# Disable GCOV builds on Fedora 24 as toolchain gives us:
-# /usr/bin/powerpc64-linux-gnu-ld: section .bss VMA [0000000000200000,000000000024d757] overlaps section .sym_map VMA [000000000019f340,0000000000208e5c]
-# (we shoud fix it, but not yet)
+# GCOV build disabled for GCC 8.2
+# https://github.com/open-power/skiboot/issues/206
+#make clean
 #SKIBOOT_GCOV=1 make -j${MAKE_J}
 #SKIBOOT_GCOV=1 make -j${MAKE_J} check
 
