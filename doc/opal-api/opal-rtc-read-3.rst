@@ -62,6 +62,10 @@ OPAL_PARAMETER
 
 OPAL_INTERNAL_ERROR
   something went wrong, Possibly reported in error log.
+  This can be a transient error
 
 OPAL_BUSY_EVENT
   request is in flight
+
+OPAL_BUSY
+  request may be in flight
