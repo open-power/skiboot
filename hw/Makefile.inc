@@ -10,6 +10,7 @@ HW_OBJS += fake-nvram.o lpc-mbox.o npu2.o npu2-hw-procedures.o
 HW_OBJS += npu2-common.o phys-map.o sbe-p9.o capp.o occ-sensor.o vas.o
 HW_OBJS += npu2-opencapi.o phys-map.o sbe-p9.o capp.o occ-sensor.o
 HW_OBJS += vas.o sbe-p8.o
+HW_OBJS += lpc-port80h.o
 HW=hw/built-in.a
 
 include $(SRC)/hw/fsp/Makefile.inc
