@@ -1,4 +1,5 @@
 /* Copyright 2013-2016 IBM Corp.
+ * Copyright 2018 Raptor Engineering, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2297,6 +2298,14 @@ static int64_t phb4_retry_state(struct pci_slot *slot)
 	/* Mark link as down */
 	phb4_prepare_link_change(slot, false);
 
+	/* Last attempt to activate link */
+	if (slot->link_retries == 1) {
+		if (slot->state == PHB4_SLOT_LINK_WAIT) {
+			PHBERR(p, "Falling back to GEN1 training\n");
+			p->max_link_speed = 1;
+		}
+	}
+
 	if (!slot->link_retries--) {
 		switch (slot->state) {
 		case PHB4_SLOT_LINK_WAIT_ELECTRICAL:
@@ -2828,6 +2837,39 @@ static int64_t phb4_poll_link(struct pci_slot *slot)
 	return OPAL_HARDWARE;
 }
 
+static unsigned int phb4_get_max_link_speed(struct phb4 *p, struct dt_node *np)
+{
+	unsigned int max_link_speed;
+	struct proc_chip *chip;
+	chip = get_chip(p->chip_id);
+
+	/* Priority order: NVRAM -> dt -> GEN3 dd2.00 -> GEN4 */
+	max_link_speed = 4;
+	if (p->rev == PHB4_REV_NIMBUS_DD20 &&
+	    ((0xf & chip->ec_level) == 0) && chip->ec_rev == 0)
+		max_link_speed = 3;
+	if (np) {
+		if (dt_has_node_property(np, "ibm,max-link-speed", NULL)) {
+			max_link_speed = dt_prop_get_u32(np, "ibm,max-link-speed");
+			p->dt_max_link_speed = max_link_speed;
+		}
+		else {
+			p->dt_max_link_speed = 0;
+		}
+	}
+	else {
+		if (p->dt_max_link_speed > 0) {
+			max_link_speed = p->dt_max_link_speed;
+		}
+	}
+	if (pcie_max_link_speed)
+		max_link_speed = pcie_max_link_speed;
+	if (max_link_speed > 4) /* clamp to 4 */
+		max_link_speed = 4;
+
+	return max_link_speed;
+}
+
 static int64_t phb4_hreset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
@@ -2896,6 +2938,9 @@ static int64_t phb4_freset(struct pci_slot *slot)
 	switch(slot->state) {
 	case PHB4_SLOT_NORMAL:
 		PHBDBG(p, "FRESET: Starts\n");
+
+		/* Reset max link speed for training */
+		p->max_link_speed = phb4_get_max_link_speed(p, NULL);
 
 		/* Nothing to do without adapter connected */
 		if (slot->ops.get_presence_state)
@@ -5490,7 +5535,6 @@ static void phb4_create(struct dt_node *np)
 	char *path;
 	uint32_t irq_base, irq_flags;
 	int i;
-	struct proc_chip *chip;
 	int chip_id;
 
 	chip_id = dt_prop_get_u32(np, "ibm,chip-id");
@@ -5502,7 +5546,6 @@ static void phb4_create(struct dt_node *np)
 	p->index = dt_prop_get_u32(np, "ibm,phb-index");
 	p->chip_id = chip_id;
 	p->pec = dt_prop_get_u32(np, "ibm,phb-pec-index");
-	chip = get_chip(p->chip_id);
 	p->regs = (void *)dt_get_address(np, 0, NULL);
 	p->int_mmio = (void *)dt_get_address(np, 1, NULL);
 	p->phb.dt_node = np;
@@ -5584,17 +5627,7 @@ static void phb4_create(struct dt_node *np)
 	if (!phb4_read_capabilities(p))
 		goto failed;
 
-	/* Priority order: NVRAM -> dt -> GEN3 dd2.00 -> GEN4 */
-	p->max_link_speed = 4;
-	if (p->rev == PHB4_REV_NIMBUS_DD20 &&
-	    ((0xf & chip->ec_level) == 0) && chip->ec_rev == 0)
-		p->max_link_speed = 3;
-	if (dt_has_node_property(np, "ibm,max-link-speed", NULL))
-		p->max_link_speed = dt_prop_get_u32(np, "ibm,max-link-speed");
-	if (pcie_max_link_speed)
-		p->max_link_speed = pcie_max_link_speed;
-	if (p->max_link_speed > 4) /* clamp to 4 */
-		p->max_link_speed = 4;
+	p->max_link_speed = phb4_get_max_link_speed(p, np);
 	PHBINF(p, "Max link speed: GEN%i\n", p->max_link_speed);
 
 	/* Check for lane equalization values from HB or HDAT */

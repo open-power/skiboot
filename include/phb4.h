@@ -154,7 +154,7 @@ struct phb4_err {
 	uint32_t err_bit;
 };
 
-#define PHB4_LINK_LINK_RETRIES		3
+#define PHB4_LINK_LINK_RETRIES		4
 /* Link timeouts, increments of 10ms */
 #define PHB4_LINK_ELECTRICAL_RETRIES	100
 #define PHB4_LINK_WAIT_RETRIES		200
@@ -210,6 +210,7 @@ struct phb4 {
 	const __be64		*lane_eq;
 	bool			lane_eq_en;
 	unsigned int		max_link_speed;
+	unsigned int		dt_max_link_speed;
 
 	uint64_t		mrt_size;
 	uint64_t		mbt_size;
