@@ -2219,9 +2219,15 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 	struct phb *phb = pci_get_phb(phb_id);
 	struct npu2 *p;
 	struct npu2_dev *ndev = NULL;
-	uint64_t xts_bdf_lpar, rc = OPAL_SUCCESS;
+	uint64_t xts_bdf_lpar, atsd_lpar, rc = OPAL_SUCCESS;
 	int i;
 	int id;
+	static uint64_t atsd_lpar_regs[] = {
+		NPU2_XTS_MMIO_ATSD0_LPARID, NPU2_XTS_MMIO_ATSD1_LPARID,
+		NPU2_XTS_MMIO_ATSD2_LPARID, NPU2_XTS_MMIO_ATSD3_LPARID,
+		NPU2_XTS_MMIO_ATSD4_LPARID, NPU2_XTS_MMIO_ATSD5_LPARID,
+		NPU2_XTS_MMIO_ATSD6_LPARID, NPU2_XTS_MMIO_ATSD7_LPARID
+	};
 
 	if (!phb || phb->phb_type != phb_type_npu_v2)
 		return OPAL_PARAMETER;
@@ -2274,6 +2280,20 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 		rc = OPAL_PARAMETER;
 		goto out;
 	}
+
+	/*
+	 * We need to allocate an ATSD per NVLink bridge if possible,
+	 * use the ibm,npu-link-index property for that.
+	 */
+	atsd_lpar = SETFIELD(NPU2_XTS_MMIO_ATSD_LPARID, 0, lparid);
+	if (!lparid)
+		atsd_lpar = SETFIELD(NPU2_XTS_MMIO_ATSD_MSR_HV, atsd_lpar, 1);
+
+	if (ndev->link_index < ARRAY_SIZE(atsd_lpar_regs))
+		npu2_write(p, atsd_lpar_regs[ndev->link_index], atsd_lpar);
+	else
+		NPU2ERR(p, "Unable to assign ATSD for link index %u\n",
+				ndev->link_index);
 
 	xts_bdf_lpar = SETFIELD(NPU2_XTS_BDF_MAP_STACK, xts_bdf_lpar,
 				0x4 >> (ndev->brick_index / 2));
