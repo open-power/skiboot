@@ -283,10 +283,10 @@ static int64_t npu2_cfg_write_bar(struct npu2_dev *dev,
 	}
 
 	if (offset == pcrf->start) {
-		npu2_bar->base &= 0xffffffff00000000;
+		npu2_bar->base &= 0xffffffff00000000UL;
 		npu2_bar->base |= (data & 0xfffffff0);
 	} else {
-		npu2_bar->base &= 0x00000000ffffffff;
+		npu2_bar->base &= 0x00000000ffffffffUL;
 		npu2_bar->base |= ((uint64_t)data << 32);
 
 		if (NPU2_REG(npu2_bar->reg) == NPU2_GENID_BAR && NPU2DEV_BRICK(dev))

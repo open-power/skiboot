@@ -367,7 +367,7 @@ static void astbmc_fixup_psi_bar(void)
 		return;
 
 	/* Hard wire ... yuck */
-	psibar = 0x3fffe80000001;
+	psibar = 0x3fffe80000001UL;
 
 	printf("PLAT: Fixing up PSI BAR on chip %d BAR=%llx\n",
 	       chip->id, psibar);

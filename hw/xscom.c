@@ -543,8 +543,8 @@ static int xscom_indirect_write_form1(uint32_t gcid, uint64_t pcb_addr,
 		return OPAL_PARAMETER;
 
 	/* Mangle address and data for form1 */
-	addr = (pcb_addr & 0x000ffffffff);
-	data = (pcb_addr & 0xfff00000000) << 20;
+	addr = (pcb_addr & 0x000ffffffffUL);
+	data = (pcb_addr & 0xfff00000000UL) << 20;
 	data |= val;
 	return __xscom_write(gcid, addr, data);
 }

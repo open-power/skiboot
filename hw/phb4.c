@@ -3089,7 +3089,7 @@ static int64_t load_capp_ucode(struct phb4 *p)
 
 	/* 0x434150504c494448 = 'CAPPLIDH' in ASCII */
 	rc = capp_load_ucode(p->chip_id, p->phb.opal_id, p->index,
-			0x434150504c494448, PHB4_CAPP_REG_OFFSET(p),
+			0x434150504c494448UL, PHB4_CAPP_REG_OFFSET(p),
 			CAPP_APC_MASTER_ARRAY_ADDR_REG,
 			CAPP_APC_MASTER_ARRAY_WRITE_REG,
 			CAPP_SNP_ARRAY_ADDR_REG,
@@ -3313,7 +3313,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		/* Force fence on the PHB to work around a non-existent PE */
 		if (!phb4_fenced(p))
 			xscom_write(p->chip_id, p->pe_stk_xscom + 0x2,
-				    0x0000002000000000);
+				    0x0000002000000000UL);
 
 		/*
 		 * Force use of ASB for register access until the PHB has
@@ -3331,7 +3331,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 
 		/* Actual reset */
 		xscom_write(p->chip_id, p->pci_stk_xscom + XPEC_PCI_STK_ETU_RESET,
-			    0x8000000000000000);
+			    0x8000000000000000UL);
 
 		/* Read errors in PFIR and NFIR */
 		xscom_read(p->chip_id, p->pci_stk_xscom + 0x0, &p->pfir_cache);
@@ -3344,7 +3344,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 
 		// Wait until operations are complete
 		xscom_read(p->chip_id, p->pe_stk_xscom + 0xc, &pbcq_status);
-		if (!(pbcq_status & 0xC000000000000000)) {
+		if (!(pbcq_status & 0xC000000000000000UL)) {
 			PHBDBG(p, "CRESET: No pending transactions\n");
 
 			/* capp recovery */
@@ -3596,7 +3596,7 @@ static int64_t phb4_eeh_freeze_clear(struct phb *phb, uint64_t pe_number,
 	 * explicitely by the user
 	 */
 	err = in_be64(p->regs + PHB_ETU_ERR_SUMMARY);
-	if (err == 0xffffffffffffffff) {
+	if (err == 0xffffffffffffffffUL) {
 		if (phb4_fenced(p)) {
 			PHBERR(p, "eeh_freeze_clear on fenced PHB\n");
 			return OPAL_HARDWARE;
@@ -4111,11 +4111,11 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 
 	/* Set PHB mode, HPC Dir State and P9 mode */
 	xscom_write(p->chip_id, APC_MASTER_CAPI_CTRL + offset,
-		    0x1772000000000000);
+		    0x1772000000000000UL);
 	PHBINF(p, "CAPP: port attached\n");
 
 	/* Set snoop ttype decoding , dir size to 512K */
-	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0x9000000000000000);
+	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, 0x9000000000000000UL);
 
 	/* Use Read Epsilon Tier2 for all scopes.
 	 * Set Tier2 Read Epsilon.
@@ -4184,24 +4184,24 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 
 	/* Enable epoch timer */
 	xscom_write(p->chip_id, EPOCH_RECOVERY_TIMERS_CTRL + offset,
-		    0xC0000000FFF8FFE0);
+		    0xC0000000FFF8FFE0UL);
 
 	/* Flush SUE State Map Register */
 	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP + offset,
-		    0x08020A0000000000);
+		    0x08020A0000000000UL);
 
 	if (!(p->rev == PHB4_REV_NIMBUS_DD10)) {
 		/* Flush SUE uOP1 Register */
 		xscom_write(p->chip_id, FLUSH_SUE_UOP1 + offset,
-			    0xDCE0280428000000);
+			    0xDCE0280428000000UL);
 	}
 
 	/* capp owns PHB read buffers */
 	if (p->index == CAPP0_PHB_INDEX) {
 		/* max PHB read buffers 0-47 */
-		reg = 0xFFFFFFFFFFFF0000;
+		reg = 0xFFFFFFFFFFFF0000UL;
 		if (capp_eng & CAPP_MAX_DMA_READ_ENGINES)
-			reg = 0xF000000000000000;
+			reg = 0xF000000000000000UL;
 		xscom_write(p->chip_id, APC_FSM_READ_MASK + offset, reg);
 		xscom_write(p->chip_id, XPT_FSM_RMM + offset, reg);
 	}
@@ -4225,13 +4225,13 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 	}
 
 	/* CAPP FIR Action 0 */
-	xscom_write(p->chip_id, CAPP_FIR_ACTION0 + offset, 0x0b1c000104060000);
+	xscom_write(p->chip_id, CAPP_FIR_ACTION0 + offset, 0x0b1c000104060000UL);
 
 	/* CAPP FIR Action 1 */
-	xscom_write(p->chip_id, CAPP_FIR_ACTION1 + offset, 0x2b9c0001240E0000);
+	xscom_write(p->chip_id, CAPP_FIR_ACTION1 + offset, 0x2b9c0001240E0000UL);
 
 	/* CAPP FIR MASK */
-	xscom_write(p->chip_id, CAPP_FIR_MASK + offset, 0x80031f98d8717000);
+	xscom_write(p->chip_id, CAPP_FIR_MASK + offset, 0x80031f98d8717000UL);
 
 	/* Mask the CAPP PSL Credit Timeout Register error */
 	xscom_write_mask(p->chip_id, CAPP_FIR_MASK + offset,
@@ -4330,11 +4330,11 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 		xscom_read(p->chip_id,
 			   p->pe_stk_xscom + XPEC_NEST_STK_PBCQ_STAT,
 			   &reg);
-		if (!(reg & 0xC000000000000000))
+		if (!(reg & 0xC000000000000000UL))
 			break;
 		time_wait_us(10);
 	}
-	if (reg & 0xC000000000000000) {
+	if (reg & 0xC000000000000000UL) {
 		PHBERR(p, "CAPP: Timeout waiting for pending transaction\n");
 		return OPAL_HARDWARE;
 	}
@@ -5356,7 +5356,7 @@ static bool phb4_read_capabilities(struct phb4 *p)
 
 	/* Grab version and fit it in an int */
 	val = phb4_read_reg_asb(p, PHB_VERSION);
-	if (val == 0 || val == 0xffffffffffffffff) {
+	if (val == 0 || val == 0xffffffffffffffffUL) {
 		PHBERR(p, "Failed to read version, PHB appears broken\n");
 		return false;
 	}
@@ -5366,7 +5366,7 @@ static bool phb4_read_capabilities(struct phb4 *p)
 
 	/* Read EEH capabilities */
 	val = in_be64(p->regs + PHB_PHB4_EEH_CAP);
-	if (val == 0xffffffffffffffff) {
+	if (val == 0xffffffffffffffffUL) {
 		PHBERR(p, "Failed to read EEH cap, PHB appears broken\n");
 		return false;
 	}
@@ -5385,7 +5385,7 @@ static bool phb4_read_capabilities(struct phb4 *p)
 		p->tvt_size *= 2;
 
 	val = in_be64(p->regs + PHB_PHB4_IRQ_CAP);
-	if (val == 0xffffffffffffffff) {
+	if (val == 0xffffffffffffffffUL) {
 		PHBERR(p, "Failed to read IRQ cap, PHB appears broken\n");
 		return false;
 	}
@@ -5670,10 +5670,10 @@ static const struct irq_source_ops phb4_lsi_ops = {
 
 #ifdef HAVE_BIG_ENDIAN
 static u64 lane_eq_default[8] = {
-	0x5454545454545454, 0x5454545454545454,
-	0x5454545454545454, 0x5454545454545454,
-	0x7777777777777777, 0x7777777777777777,
-	0x7777777777777777, 0x7777777777777777
+	0x5454545454545454UL, 0x5454545454545454UL,
+	0x5454545454545454UL, 0x5454545454545454UL,
+	0x7777777777777777UL, 0x7777777777777777UL,
+	0x7777777777777777UL, 0x7777777777777777UL
 };
 #else
 #error lane_eq_default needs to be big endian (device tree property)

@@ -175,7 +175,7 @@ int64_t capp_load_ucode(unsigned int chip_id, uint32_t opal_id,
 	}
 
 	/* 'CAPPULID' in ASCII */
-	if ((be64_to_cpu(ucode->eyecatcher) != 0x43415050554C4944) ||
+	if ((be64_to_cpu(ucode->eyecatcher) != 0x43415050554C4944UL) ||
 	    (be64_to_cpu(ucode->version != 1))) {
 		PHBERR(opal_id, chip_id, index,
 		       "CAPP: ucode header invalid\n");
@@ -190,7 +190,7 @@ int64_t capp_load_ucode(unsigned int chip_id, uint32_t opal_id,
 		offset += sizeof(struct capp_ucode_data_hdr) + chunk_count * 8;
 
 		/* 'CAPPUCOD' in ASCII */
-		if (be64_to_cpu(data->hdr.eyecatcher) != 0x4341505055434F44) {
+		if (be64_to_cpu(data->hdr.eyecatcher) != 0x4341505055434F44UL) {
 			PHBERR(opal_id, chip_id, index,
 			       "CAPP: ucode data header invalid:%i\n",
 			       offset);

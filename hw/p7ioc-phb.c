@@ -1973,7 +1973,7 @@ static void p7ioc_prepare_link_change(struct pci_slot *slot, bool up)
 
 	if (!up) {
 		/* Mask PCIE port interrupts and AER receiver error */
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7E00000000000000);
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0x7E00000000000000UL);
 		p7ioc_pcicfg_read32(&p->phb, 0,
 				    p->aercap + PCIECAP_AER_CE_MASK, &cfg32);
 		cfg32 |= PCIECAP_AER_CE_RECVR_ERR;
@@ -1992,8 +1992,8 @@ static void p7ioc_prepare_link_change(struct pci_slot *slot, bool up)
 		p->flags |= P7IOC_PHB_CFG_BLOCKED;
 	} else {
 		/* Clear spurious errors and enable PCIE port interrupts */
-		out_be64(p->regs + UTL_PCIE_PORT_STATUS, 0x00E0000000000000);
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0xFE65000000000000);
+		out_be64(p->regs + UTL_PCIE_PORT_STATUS, 0x00E0000000000000UL);
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0xFE65000000000000UL);
 
 		/* Clear AER receiver error status */
 		p7ioc_pcicfg_write32(&p->phb, 0,

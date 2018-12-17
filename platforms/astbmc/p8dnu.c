@@ -252,8 +252,8 @@ static const struct slot_table_entry p8dnu_phb_table[] = {
 
 #define NPU_BASE	0x8013c00
 #define NPU_SIZE	0x2c
-#define NPU_INDIRECT0	0x8000000008010c3f
-#define NPU_INDIRECT1	0x8000000008010c7f
+#define NPU_INDIRECT0	0x8000000008010c3fUL
+#define NPU_INDIRECT1	0x8000000008010c7fUL
 
 static void create_link(struct dt_node *npu, int group, int index)
 {

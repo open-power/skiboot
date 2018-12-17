@@ -395,7 +395,7 @@ static void phb3_root_port_init(struct phb *phb, struct pci_device *dev,
 	 * instead of EEH subsystem.
 	 */
 	if (dev->slot && dev->slot->surprise_pluggable)
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0xad42800000000000);
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN, 0xad42800000000000UL);
 
 	/* Enable SERR and parity checking */
 	pci_cfg_read16(phb, bdfn, PCI_CFG_CMD, &val16);
@@ -1426,11 +1426,11 @@ static bool phb3_err_check_pbcq(struct phb3 *p)
 	uint64_t nfir, mask, wof, val64;
 	int32_t class, bit;
 	uint64_t severity[PHB3_ERR_CLASS_LAST] = {
-		0x0000000000000000,	/* NONE	*/
-		0x018000F800000000,	/* DEAD */
-		0x7E7DC70000000000,	/* FENCED */
-		0x0000000000000000,	/* ER	*/
-		0x0000000000000000	/* INF	*/
+		0x0000000000000000UL,	/* NONE	*/
+		0x018000F800000000UL,	/* DEAD */
+		0x7E7DC70000000000UL,	/* FENCED */
+		0x0000000000000000UL,	/* ER	*/
+		0x0000000000000000UL	/* INF	*/
 	};
 
 	/*
@@ -1439,7 +1439,7 @@ static bool phb3_err_check_pbcq(struct phb3 *p)
 	 * into account any more.
 	 */
 	xscom_read(p->chip_id, p->pe_xscom + 0x0, &nfir);
-	if (nfir == 0xffffffffffffffff) {
+	if (nfir == 0xffffffffffffffffUL) {
 		p->err.err_src = PHB3_ERR_SRC_NONE;
 		p->err.err_class = PHB3_ERR_CLASS_DEAD;
 		phb3_set_err_pending(p, true);
@@ -1491,11 +1491,11 @@ static bool phb3_err_check_lem(struct phb3 *p)
 	uint64_t fir, wof, mask, val64;
 	int32_t class, bit;
 	uint64_t severity[PHB3_ERR_CLASS_LAST] = {
-		0x0000000000000000,	/* NONE */
-		0x0000000000000000,	/* DEAD */
-		0xADB670C980ADD151,	/* FENCED */
-		0x000800107F500A2C,	/* ER   */
-		0x42018E2200002482	/* INF  */
+		0x0000000000000000UL,	/* NONE */
+		0x0000000000000000UL,	/* DEAD */
+		0xADB670C980ADD151UL,	/* FENCED */
+		0x000800107F500A2CUL,	/* ER   */
+		0x42018E2200002482UL	/* INF  */
 	};
 
 	/*
@@ -1503,7 +1503,7 @@ static bool phb3_err_check_lem(struct phb3 *p)
 	 * go forward and just mark the PHB with dead state
 	 */
 	fir = phb3_read_reg_asb(p, PHB_LEM_FIR_ACCUM);
-	if (fir == 0xffffffffffffffff) {
+	if (fir == 0xffffffffffffffffUL) {
 		p->err.err_src = PHB3_ERR_SRC_PHB;
 		p->err.err_class = PHB3_ERR_CLASS_DEAD;
 		phb3_set_err_pending(p, true);
@@ -2111,7 +2111,7 @@ static void phb3_prepare_link_change(struct pci_slot *slot,
 		if (!pd || !pd->slot || !pd->slot->surprise_pluggable) {
 			/* Mask PCIE port interrupts */
 			out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,
-				 0xad42800000000000);
+				 0xad42800000000000UL);
 
 			pci_cfg_read32(&p->phb, 0,
 				       p->aercap + PCIECAP_AER_UE_MASK, &reg32);
@@ -2144,11 +2144,11 @@ static void phb3_prepare_link_change(struct pci_slot *slot,
 
 		/* Clear spurrious errors and enable PCIE port interrupts */
 		out_be64(p->regs + UTL_PCIE_PORT_STATUS,
-			 0xffdfffffffffffff);
+			 0xffdfffffffffffffUL);
 
 		if (!pd || !pd->slot || !pd->slot->surprise_pluggable) {
 			out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,
-				 0xad52800000000000);
+				 0xad52800000000000UL);
 
 			pci_cfg_read32(&p->phb, 0,
 				       p->aercap + PCIECAP_AER_UE_MASK, &reg32);
@@ -2439,7 +2439,7 @@ static int64_t load_capp_ucode(struct phb3 *p)
 
 	/* 0x434150504c494448 = 'CAPPLIDH' in ASCII */
 	rc = capp_load_ucode(p->chip_id, p->phb.opal_id, p->index,
-			0x434150504c494448, PHB3_CAPP_REG_OFFSET(p),
+			0x434150504c494448UL, PHB3_CAPP_REG_OFFSET(p),
 			CAPP_APC_MASTER_ARRAY_ADDR_REG,
 			CAPP_APC_MASTER_ARRAY_WRITE_REG,
 			CAPP_SNP_ARRAY_ADDR_REG,
@@ -2546,7 +2546,7 @@ static void disable_capi_mode(struct phb3 *p)
 	xscom_write(p->chip_id, p->pci_xscom + 0xd, reg);
 
 	/* AIB TX Credit Init Timer - reset timer */
-	xscom_write(p->chip_id, p->pci_xscom + 0xc, 0xff00000000000000);
+	xscom_write(p->chip_id, p->pci_xscom + 0xc, 0xff00000000000000UL);
 
 	/*
 	 * PBCQ Mode Control Register - set dcache handling to normal, not CAPP
@@ -2559,7 +2559,7 @@ static void disable_capi_mode(struct phb3 *p)
 	/* Registers touched by phb3_init_capp_regs() */
 
 	/* CAPP Transport Control Register */
-	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, 0x0001000000000000);
+	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, 0x0001000000000000UL);
 
 	/* Canned pResp Map Register 0/1/2 */
 	xscom_write(p->chip_id, CANNED_PRESP_MAP0 + offset, 0);
@@ -2624,7 +2624,7 @@ static int64_t phb3_creset(struct pci_slot *slot)
 
 		xscom_read(p->chip_id, p->spci_xscom + 1, &val);/* HW275117 */
 		xscom_write(p->chip_id, p->pci_xscom + 0xa,
-			    0x8000000000000000);
+			    0x8000000000000000UL);
 		pci_slot_set_state(slot, PHB3_SLOT_CRESET_WAIT_CQ);
 		slot->retries = 500;
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
@@ -2633,7 +2633,7 @@ static int64_t phb3_creset(struct pci_slot *slot)
 		xscom_read(p->chip_id, p->pe_xscom + 0x1d, &val);
 		xscom_read(p->chip_id, p->pe_xscom + 0x1e, &val);
 		xscom_read(p->chip_id, p->pe_xscom + 0xf, &cqsts);
-		if (!(cqsts & 0xC000000000000000)) {
+		if (!(cqsts & 0xC000000000000000UL)) {
 			PHBDBG(p, "CRESET: No pending transactions\n");
 			xscom_write(p->chip_id, p->pe_xscom + 0x1, ~p->nfir_cache);
 
@@ -2794,7 +2794,7 @@ static int64_t phb3_eeh_freeze_clear(struct phb *phb, uint64_t pe_number,
 	 * explicitely by the user
 	 */
 	err = in_be64(p->regs + PHB_ETU_ERR_SUMMARY);
-	if (err == 0xffffffffffffffff) {
+	if (err == 0xffffffffffffffffUL) {
 		if (phb3_fenced(p)) {
 			PHBERR(p, "eeh_freeze_clear on fenced PHB\n");
 			return OPAL_HARDWARE;
@@ -3475,29 +3475,29 @@ static void phb3_init_capp_regs(struct phb3 *p, bool dma_mode)
 	 *    CAPP1/PHB1 -> APC MASTER(bits 1:3) = 0b010
 	 */
 	reg = 0x4000000000000000ULL >> p->index;
-	reg |= 0x0070000000000000;
+	reg |= 0x0070000000000000UL;
 	xscom_write(p->chip_id, APC_MASTER_CAPI_CTRL + offset, reg);
 	PHBINF(p, "CAPP: port attached\n");
 
 	/* tlb and mmio */
-	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, 0x4028000104000000);
+	xscom_write(p->chip_id, TRANSPORT_CONTROL + offset, 0x4028000104000000UL);
 
 	xscom_write(p->chip_id, CANNED_PRESP_MAP0 + offset, 0);
-	xscom_write(p->chip_id, CANNED_PRESP_MAP1 + offset, 0xFFFFFFFF00000000);
+	xscom_write(p->chip_id, CANNED_PRESP_MAP1 + offset, 0xFFFFFFFF00000000UL);
 	xscom_write(p->chip_id, CANNED_PRESP_MAP2 + offset, 0);
 
 	/* error recovery */
 	xscom_write(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, 0);
 
 	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP + offset,
-		    0x1DC20B6600000000);
+		    0x1DC20B6600000000UL);
 	xscom_write(p->chip_id, CAPP_EPOCH_TIMER_CTRL + offset,
-		    0xC0000000FFF0FFE0);
+		    0xC0000000FFF0FFE0UL);
 	xscom_write(p->chip_id,  FLUSH_UOP_CONFIG1 + offset,
-		    0xB188280728000000);
-	xscom_write(p->chip_id, FLUSH_UOP_CONFIG2 + offset, 0xB188400F00000000);
+		    0xB188280728000000UL);
+	xscom_write(p->chip_id, FLUSH_UOP_CONFIG2 + offset, 0xB188400F00000000UL);
 
-	reg = 0xA1F0000000000000;
+	reg = 0xA1F0000000000000UL;
 	reg |= read_buffers << PPC_BITLSHIFT(39);
 	xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, reg);
 }
@@ -3505,11 +3505,11 @@ static void phb3_init_capp_regs(struct phb3 *p, bool dma_mode)
 /* override some inits with CAPI defaults */
 static void phb3_init_capp_errors(struct phb3 *p)
 {
-	out_be64(p->regs + PHB_ERR_AIB_FENCE_ENABLE,       0xffffffdd8c80ffc0);
-	out_be64(p->regs + PHB_OUT_ERR_AIB_FENCE_ENABLE,   0x9cf3fe08f8dc700f);
-	out_be64(p->regs + PHB_INA_ERR_AIB_FENCE_ENABLE,   0xffff57fbff01ffde);
-	out_be64(p->regs + PHB_INB_ERR_AIB_FENCE_ENABLE,   0xfcffe0fbff7ff0ec);
-	out_be64(p->regs + PHB_LEM_ERROR_MASK,		   0x40018e2400022482);
+	out_be64(p->regs + PHB_ERR_AIB_FENCE_ENABLE,       0xffffffdd8c80ffc0UL);
+	out_be64(p->regs + PHB_OUT_ERR_AIB_FENCE_ENABLE,   0x9cf3fe08f8dc700fUL);
+	out_be64(p->regs + PHB_INA_ERR_AIB_FENCE_ENABLE,   0xffff57fbff01ffdeUL);
+	out_be64(p->regs + PHB_INB_ERR_AIB_FENCE_ENABLE,   0xfcffe0fbff7ff0ecUL);
+	out_be64(p->regs + PHB_LEM_ERROR_MASK,		   0x40018e2400022482UL);
 }
 
 /*
@@ -3530,11 +3530,11 @@ static int64_t enable_capi_mode(struct phb3 *p, uint64_t pe_number, bool dma_mod
 	/* poll cqstat */
 	for (i = 0; i < 500000; i++) {
 		xscom_read(p->chip_id, p->pe_xscom + 0xf, &reg);
-		if (!(reg & 0xC000000000000000))
+		if (!(reg & 0xC000000000000000UL))
 			break;
 		time_wait_us(10);
 	}
-	if (reg & 0xC000000000000000) {
+	if (reg & 0xC000000000000000UL) {
 		PHBERR(p, "CAPP: Timeout waiting for pending transaction\n");
 		return OPAL_HARDWARE;
 	}
@@ -3714,7 +3714,7 @@ static int64_t phb3_set_capi_mode(struct phb *phb, uint64_t mode,
 		 */
 		xscom_read(p->chip_id, APC_MASTER_PB_CTRL + offset, &reg);
 		read_buffers = (reg >> PPC_BITLSHIFT(11)) & 0x3;
-		reg = 0xA1F0000000000000;
+		reg = 0xA1F0000000000000UL;
 		reg |= read_buffers << PPC_BITLSHIFT(39);
 		xscom_write(p->chip_id, SNOOP_CAPI_CONFIG + offset, reg);
 
@@ -3783,28 +3783,28 @@ static const struct phb_ops phb3_ops = {
 static void phb3_setup_aib(struct phb3 *p)
 {
 	/* Init_2 - AIB TX Channel Mapping Register */
-	phb3_write_reg_asb(p, PHB_AIB_TX_CHAN_MAPPING,    	0x0211230000000000);
+	phb3_write_reg_asb(p, PHB_AIB_TX_CHAN_MAPPING,    	0x0211230000000000UL);
 
 	/* Init_3 - AIB RX command credit register */
 	if (p->rev >= PHB3_REV_VENICE_DD20)
-		phb3_write_reg_asb(p, PHB_AIB_RX_CMD_CRED,	0x0020000100020001);
+		phb3_write_reg_asb(p, PHB_AIB_RX_CMD_CRED,	0x0020000100020001UL);
 	else
-		phb3_write_reg_asb(p, PHB_AIB_RX_CMD_CRED,	0x0020000100010001);
+		phb3_write_reg_asb(p, PHB_AIB_RX_CMD_CRED,	0x0020000100010001UL);
 	
 	/* Init_4 - AIB rx data credit register */
 	if (p->rev >= PHB3_REV_VENICE_DD20)
-		phb3_write_reg_asb(p, PHB_AIB_RX_DATA_CRED,	0x0020002000010001);
+		phb3_write_reg_asb(p, PHB_AIB_RX_DATA_CRED,	0x0020002000010001UL);
 	else
-		phb3_write_reg_asb(p, PHB_AIB_RX_DATA_CRED,	0x0020002000000001);
+		phb3_write_reg_asb(p, PHB_AIB_RX_DATA_CRED,	0x0020002000000001UL);
 
 	/* Init_5 - AIB rx credit init timer register */
-	phb3_write_reg_asb(p, PHB_AIB_RX_CRED_INIT_TIMER,	0x0f00000000000000);
+	phb3_write_reg_asb(p, PHB_AIB_RX_CRED_INIT_TIMER,	0x0f00000000000000UL);
 
 	/* Init_6 - AIB Tag Enable register */
-	phb3_write_reg_asb(p, PHB_AIB_TAG_ENABLE,		0xffffffff00000000);
+	phb3_write_reg_asb(p, PHB_AIB_TAG_ENABLE,		0xffffffff00000000UL);
 
 	/* Init_7 - TCE Tag Enable register */
-	phb3_write_reg_asb(p, PHB_TCE_TAG_ENABLE,         0xffffffff00000000);
+	phb3_write_reg_asb(p, PHB_TCE_TAG_ENABLE,         0xffffffff00000000UL);
 }
 
 static void phb3_init_ioda2(struct phb3 *p)
@@ -3850,9 +3850,9 @@ static void phb3_init_ioda2(struct phb3 *p)
 	 * The register doesn't take effect on Murano DD1.0
 	 */
 	if (p->rev >= PHB3_REV_NAPLES_DD10)
-		out_be64(p->regs + PHB_INTREP_TIMER, 0x0014000000000000);
+		out_be64(p->regs + PHB_INTREP_TIMER, 0x0014000000000000UL);
 	else if (p->rev >= PHB3_REV_MURANO_DD20)
-		out_be64(p->regs + PHB_INTREP_TIMER, 0x0004000000000000);
+		out_be64(p->regs + PHB_INTREP_TIMER, 0x0004000000000000UL);
 	else
 		out_be64(p->regs + PHB_INTREP_TIMER, 0);
 
@@ -4054,9 +4054,9 @@ static void phb3_init_utl(struct phb3 *p)
 	/* Init_77..79: Clear spurrious errors and assign errors to the
 	 * right "interrupt" signal
 	 */
-	out_be64(p->regs + UTL_SYS_BUS_AGENT_STATUS,       0xffffffffffffffff);
-	out_be64(p->regs + UTL_SYS_BUS_AGENT_ERR_SEVERITY, 0x5000000000000000);
-	out_be64(p->regs + UTL_SYS_BUS_AGENT_IRQ_EN,       0xfcc0000000000000);
+	out_be64(p->regs + UTL_SYS_BUS_AGENT_STATUS,       0xffffffffffffffffUL);
+	out_be64(p->regs + UTL_SYS_BUS_AGENT_ERR_SEVERITY, 0x5000000000000000UL);
+	out_be64(p->regs + UTL_SYS_BUS_AGENT_IRQ_EN,       0xfcc0000000000000UL);
 
 	/* Init_80..81: Setup tag allocations
 	 *
@@ -4066,66 +4066,66 @@ static void phb3_init_utl(struct phb3 *p)
 	/* Init_82: PCI Express port control
 	 * SW283991: Set Outbound Non-Posted request timeout to 16ms (RTOS).
 	 */
-	out_be64(p->regs + UTL_PCIE_PORT_CONTROL,          0x8588007000000000);
+	out_be64(p->regs + UTL_PCIE_PORT_CONTROL,          0x8588007000000000UL);
 
 	/* Init_83..85: Clean & setup port errors */
-	out_be64(p->regs + UTL_PCIE_PORT_STATUS,           0xffdfffffffffffff);
-	out_be64(p->regs + UTL_PCIE_PORT_ERROR_SEV,        0x5039000000000000);
+	out_be64(p->regs + UTL_PCIE_PORT_STATUS,           0xffdfffffffffffffUL);
+	out_be64(p->regs + UTL_PCIE_PORT_ERROR_SEV,        0x5039000000000000UL);
 
 	if (p->has_link)
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,   0xad52800000000000);
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,   0xad52800000000000UL);
 	else
-		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,   0xad42800000000000);
+		out_be64(p->regs + UTL_PCIE_PORT_IRQ_EN,   0xad42800000000000UL);
 
 	/* Init_86 : Cleanup RC errors */
-	out_be64(p->regs + UTL_RC_STATUS,                  0xffffffffffffffff);
+	out_be64(p->regs + UTL_RC_STATUS,                  0xffffffffffffffffUL);
 }
 
 static void phb3_init_errors(struct phb3 *p)
 {
 	/* Init_88: LEM Error Mask : Temporarily disable error interrupts */
-	out_be64(p->regs + PHB_LEM_ERROR_MASK,		   0xffffffffffffffff);
+	out_be64(p->regs + PHB_LEM_ERROR_MASK,		   0xffffffffffffffffUL);
 
 	/* Init_89..97: Disable all error interrupts until end of init */
-	out_be64(p->regs + PHB_ERR_STATUS,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_ERR1_STATUS,		   0x0000000000000000);
-	out_be64(p->regs + PHB_ERR_LEM_ENABLE,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_ERR_FREEZE_ENABLE,	   0x0000000080800000);
-	out_be64(p->regs + PHB_ERR_AIB_FENCE_ENABLE,	   0xffffffdd0c00ffc0);
-	out_be64(p->regs + PHB_ERR_LOG_0,		   0x0000000000000000);
-	out_be64(p->regs + PHB_ERR_LOG_1,		   0x0000000000000000);
-	out_be64(p->regs + PHB_ERR_STATUS_MASK,		   0x0000000000000000);
-	out_be64(p->regs + PHB_ERR1_STATUS_MASK,	   0x0000000000000000);
+	out_be64(p->regs + PHB_ERR_STATUS,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_ERR1_STATUS,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_ERR_LEM_ENABLE,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_ERR_FREEZE_ENABLE,	   0x0000000080800000UL);
+	out_be64(p->regs + PHB_ERR_AIB_FENCE_ENABLE,	   0xffffffdd0c00ffc0UL);
+	out_be64(p->regs + PHB_ERR_LOG_0,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_ERR_LOG_1,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_ERR_STATUS_MASK,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_ERR1_STATUS_MASK,	   0x0000000000000000UL);
 
 	/* Init_98_106: Configure MMIO error traps & clear old state
 	 *
 	 * Don't enable BAR multi-hit detection in bit 41.
 	 */
-	out_be64(p->regs + PHB_OUT_ERR_STATUS,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_OUT_ERR1_STATUS,		   0x0000000000000000);
-	out_be64(p->regs + PHB_OUT_ERR_LEM_ENABLE,	   0xfdffffffffbfffff);
-	out_be64(p->regs + PHB_OUT_ERR_FREEZE_ENABLE,	   0x0000420800000000);
-	out_be64(p->regs + PHB_OUT_ERR_AIB_FENCE_ENABLE,   0x9cf3bc00f89c700f);
-	out_be64(p->regs + PHB_OUT_ERR_LOG_0,		   0x0000000000000000);
-	out_be64(p->regs + PHB_OUT_ERR_LOG_1,		   0x0000000000000000);
-	out_be64(p->regs + PHB_OUT_ERR_STATUS_MASK,	   0x0000000000400000);
-	out_be64(p->regs + PHB_OUT_ERR1_STATUS_MASK,	   0x0000000000400000);
+	out_be64(p->regs + PHB_OUT_ERR_STATUS,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_OUT_ERR1_STATUS,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_OUT_ERR_LEM_ENABLE,	   0xfdffffffffbfffffUL);
+	out_be64(p->regs + PHB_OUT_ERR_FREEZE_ENABLE,	   0x0000420800000000UL);
+	out_be64(p->regs + PHB_OUT_ERR_AIB_FENCE_ENABLE,   0x9cf3bc00f89c700fUL);
+	out_be64(p->regs + PHB_OUT_ERR_LOG_0,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_OUT_ERR_LOG_1,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_OUT_ERR_STATUS_MASK,	   0x0000000000400000UL);
+	out_be64(p->regs + PHB_OUT_ERR1_STATUS_MASK,	   0x0000000000400000UL);
 
 	/* Init_107_115: Configure DMA_A error traps & clear old state */
-	out_be64(p->regs + PHB_INA_ERR_STATUS,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_INA_ERR1_STATUS,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INA_ERR_LEM_ENABLE,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_INA_ERR_FREEZE_ENABLE,	   0xc00003a901006000);
-	out_be64(p->regs + PHB_INA_ERR_AIB_FENCE_ENABLE,   0x3fff5452fe019fde);
-	out_be64(p->regs + PHB_INA_ERR_LOG_0,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INA_ERR_LOG_1,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INA_ERR_STATUS_MASK,	   0x0000000000000000);
-	out_be64(p->regs + PHB_INA_ERR1_STATUS_MASK,	   0x0000000000000000);
+	out_be64(p->regs + PHB_INA_ERR_STATUS,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_INA_ERR1_STATUS,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INA_ERR_LEM_ENABLE,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_INA_ERR_FREEZE_ENABLE,	   0xc00003a901006000UL);
+	out_be64(p->regs + PHB_INA_ERR_AIB_FENCE_ENABLE,   0x3fff5452fe019fdeUL);
+	out_be64(p->regs + PHB_INA_ERR_LOG_0,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INA_ERR_LOG_1,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INA_ERR_STATUS_MASK,	   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INA_ERR1_STATUS_MASK,	   0x0000000000000000UL);
 
 	/* Init_116_124: Configure DMA_B error traps & clear old state */
-	out_be64(p->regs + PHB_INB_ERR_STATUS,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_INB_ERR1_STATUS,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INB_ERR_LEM_ENABLE,	   0xffffffffffffffff);
+	out_be64(p->regs + PHB_INB_ERR_STATUS,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_INB_ERR1_STATUS,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INB_ERR_LEM_ENABLE,	   0xffffffffffffffffUL);
 
 	/*
 	 * Workaround for errata HW257476, turn correctable messages into
@@ -4133,22 +4133,22 @@ static void phb3_init_errors(struct phb3 *p)
 	 */
 	if (p->rev < PHB3_REV_MURANO_DD20)
 		out_be64(p->regs + PHB_INB_ERR_FREEZE_ENABLE,
-			                                   0x0000600000000070);
+			                                   0x0000600000000070UL);
 	else
 		out_be64(p->regs + PHB_INB_ERR_FREEZE_ENABLE,
-			                                   0x0000600000000060);
+			                                   0x0000600000000060UL);
 
-	out_be64(p->regs + PHB_INB_ERR_AIB_FENCE_ENABLE,   0xfcff80fbff7ff08c);
-	out_be64(p->regs + PHB_INB_ERR_LOG_0,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INB_ERR_LOG_1,		   0x0000000000000000);
-	out_be64(p->regs + PHB_INB_ERR_STATUS_MASK,	   0x0000000000000000);
-	out_be64(p->regs + PHB_INB_ERR1_STATUS_MASK,	   0x0000000000000000);
+	out_be64(p->regs + PHB_INB_ERR_AIB_FENCE_ENABLE,   0xfcff80fbff7ff08cUL);
+	out_be64(p->regs + PHB_INB_ERR_LOG_0,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INB_ERR_LOG_1,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INB_ERR_STATUS_MASK,	   0x0000000000000000UL);
+	out_be64(p->regs + PHB_INB_ERR1_STATUS_MASK,	   0x0000000000000000UL);
 
 	/* Init_125..128: Cleanup & configure LEM */
-	out_be64(p->regs + PHB_LEM_FIR_ACCUM,		   0x0000000000000000);
-	out_be64(p->regs + PHB_LEM_ACTION0,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_LEM_ACTION1,		   0xffffffffffffffff);
-	out_be64(p->regs + PHB_LEM_WOF,			   0x0000000000000000);
+	out_be64(p->regs + PHB_LEM_FIR_ACCUM,		   0x0000000000000000UL);
+	out_be64(p->regs + PHB_LEM_ACTION0,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_LEM_ACTION1,		   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_LEM_WOF,			   0x0000000000000000UL);
 }
 
 static int64_t phb3_fixup_pec_inits(struct phb3 *p)
@@ -4198,7 +4198,7 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 
 	/* Grab version and fit it in an int */
 	val = phb3_read_reg_asb(p, PHB_VERSION);
-	if (val == 0 || val == 0xffffffffffffffff) {
+	if (val == 0 || val == 0xffffffffffffffffUL) {
 		PHBERR(p, "Failed to read version, PHB appears broken\n");
 		goto failed;
 	}
@@ -4243,7 +4243,7 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 	 * and Venice
 	 */
 	if (p->index == 2 && p->rev < PHB3_REV_NAPLES_DD10)
-		out_be64(p->regs + PHB_PCIE_SYS_LINK_INIT, 0x9008133332120000);
+		out_be64(p->regs + PHB_PCIE_SYS_LINK_INIT, 0x9008133332120000UL);
 
 	/* Init_13 - PCIE Reset */
 	/*
@@ -4251,25 +4251,25 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 	 * later by the initial PERST state machine
 	 */
 	PHBDBG(p, "PHB_RESET is 0x%016llx\n", in_be64(p->regs + PHB_RESET));
-	out_be64(p->regs + PHB_RESET,			   0xd000000000000000);
+	out_be64(p->regs + PHB_RESET,			   0xd000000000000000UL);
 
 	/* Architected IODA2 inits */
 	phb3_init_ioda2(p);
 
 	/* Init_37..42 - Clear UTL & DLP error logs */
-	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG1,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG2,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG3,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG4,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_PCIE_DLP_ERRLOG1,	   0xffffffffffffffff);
-	out_be64(p->regs + PHB_PCIE_DLP_ERRLOG2,	   0xffffffffffffffff);
+	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG1,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG2,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG3,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_PCIE_UTL_ERRLOG4,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_PCIE_DLP_ERRLOG1,	   0xffffffffffffffffUL);
+	out_be64(p->regs + PHB_PCIE_DLP_ERRLOG2,	   0xffffffffffffffffUL);
 
 	/* Init_43 - Wait for UTL core to come out of reset */
 	if (!phb3_wait_dlp_reset(p))
 		goto failed;
 
 	/* Init_44 - Clear port status */
-	out_be64(p->regs + UTL_PCIE_PORT_STATUS,	   0xffffffffffffffff);
+	out_be64(p->regs + UTL_PCIE_PORT_STATUS,	   0xffffffffffffffffUL);
 
 	/* Init_45..76: Init root complex config space */
 	if (!phb3_init_rc_cfg(p))
@@ -4283,17 +4283,17 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 	 *          Enable IVC for Murano DD2.0 or later one
 	 */
 #ifdef IVT_TABLE_IVE_16B
-	val = 0xf3a80e4b00000000;
+	val = 0xf3a80e4b00000000UL;
 #else
-	val = 0xf3a80ecb00000000;
+	val = 0xf3a80ecb00000000UL;
 #endif
 	if (p->rev >= PHB3_REV_MURANO_DD20)
-		val |= 0x0000010000000000;
+		val |= 0x0000010000000000UL;
 	if (first_init && p->rev >= PHB3_REV_NAPLES_DD10) {
 		/* Enable 32-bit bypass support on Naples and tell the OS
 		 * about it
 		 */
-		val |= 0x0010000000000000;
+		val |= 0x0010000000000000UL;
 		dt_add_property(p->phb.dt_node,
 				"ibm,32-bit-bypass-supported", NULL, 0);
 	}
@@ -4338,11 +4338,11 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 	/* Init_136 - Re-enable error interrupts */
 
 	/* TBD: Should we mask any of these for PERST ? */
-	out_be64(p->regs + PHB_ERR_IRQ_ENABLE,	   0x0000002280b80000);
-	out_be64(p->regs + PHB_OUT_ERR_IRQ_ENABLE, 0x600c42fc042080f0);
-	out_be64(p->regs + PHB_INA_ERR_IRQ_ENABLE, 0xc000a3a901826020);
-	out_be64(p->regs + PHB_INB_ERR_IRQ_ENABLE, 0x0000600000800070);
-	out_be64(p->regs + PHB_LEM_ERROR_MASK,	   0x42498e367f502eae);
+	out_be64(p->regs + PHB_ERR_IRQ_ENABLE,	   0x0000002280b80000UL);
+	out_be64(p->regs + PHB_OUT_ERR_IRQ_ENABLE, 0x600c42fc042080f0UL);
+	out_be64(p->regs + PHB_INA_ERR_IRQ_ENABLE, 0xc000a3a901826020UL);
+	out_be64(p->regs + PHB_INB_ERR_IRQ_ENABLE, 0x0000600000800070UL);
+	out_be64(p->regs + PHB_LEM_ERROR_MASK,	   0x42498e367f502eaeUL);
 
 	/*
 	 * Init_141 - Enable DMA address speculation
@@ -4354,21 +4354,21 @@ static void phb3_init_hw(struct phb3 *p, bool first_init)
 	 * it once that has been done.
 	 */
 	if (p->rev >= PHB3_REV_MURANO_DD20)
-		out_be64(p->regs + PHB_TCE_SPEC_CTL,		0xf000000000000000);
+		out_be64(p->regs + PHB_TCE_SPEC_CTL,		0xf000000000000000UL);
 	else
 		out_be64(p->regs + PHB_TCE_SPEC_CTL,		0x0ul);
 
 	/* Errata#20131017: avoid TCE queue overflow */
 	if (p->rev == PHB3_REV_MURANO_DD20)
-		phb3_write_reg_asb(p, PHB_TCE_WATERMARK,	0x0003000000030302);
+		phb3_write_reg_asb(p, PHB_TCE_WATERMARK,	0x0003000000030302UL);
 
 	/* Init_142 - PHB3 - Timeout Control Register 1
 	 * SW283991: Increase timeouts
 	 */
-	out_be64(p->regs + PHB_TIMEOUT_CTRL1,			0x1715152016200000);
+	out_be64(p->regs + PHB_TIMEOUT_CTRL1,			0x1715152016200000UL);
 
 	/* Init_143 - PHB3 - Timeout Control Register 2 */
-	out_be64(p->regs + PHB_TIMEOUT_CTRL2,			0x2320d71600000000);
+	out_be64(p->regs + PHB_TIMEOUT_CTRL2,			0x2320d71600000000UL);
 
 	/* Mark the PHB as functional which enables all the various sequences */
 	p->broken = false;

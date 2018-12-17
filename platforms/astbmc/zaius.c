@@ -133,7 +133,7 @@ static const struct slot_table_entry zaius_phb_table[] = {
 
 #define NPU_BASE 0x5011000
 #define NPU_SIZE 0x2c
-#define NPU_INDIRECT0	0x8000000009010c3f /* OB0 - no OB3 on Zaius */
+#define NPU_INDIRECT0	0x8000000009010c3fUL /* OB0 - no OB3 on Zaius */
 
 /* OpenCAPI only */
 static void create_link(struct dt_node *npu, int group, int index)

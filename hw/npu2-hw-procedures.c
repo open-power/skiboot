@@ -229,7 +229,7 @@ static bool poll_fence_status(struct npu2_dev *ndev, uint64_t val)
 
 	for (i = 0; i < 4096; i++) {
 		fs = npu2_read(ndev->npu, NPU2_NTL_CQ_FENCE_STATUS(ndev));
-		if ((fs & 0xc000000000000000) == val)
+		if ((fs & 0xc000000000000000UL) == val)
 			return true;
 	}
 
@@ -269,7 +269,7 @@ uint32_t reset_ntl(struct npu2_dev *ndev)
 	val |= PPC_BIT(8) | PPC_BIT(9);
 	npu2_write(ndev->npu, NPU2_NTL_MISC_CFG1(ndev), val);
 
-	if (!poll_fence_status(ndev, 0xc000000000000000))
+	if (!poll_fence_status(ndev, 0xc000000000000000UL))
 		return PROCEDURE_COMPLETE | PROCEDURE_FAILED;
 
 	return PROCEDURE_NEXT;
@@ -311,10 +311,10 @@ static uint32_t reset_ntl_release(struct npu2_dev *ndev)
 	}
 
 	val = npu2_read(ndev->npu, NPU2_NTL_MISC_CFG1(ndev));
-	val &= 0xFFBFFFFFFFFFFFFF;
+	val &= 0xFFBFFFFFFFFFFFFFUL;
 	npu2_write(ndev->npu, NPU2_NTL_MISC_CFG1(ndev), val);
 
-	if (!poll_fence_status(ndev, 0x8000000000000000))
+	if (!poll_fence_status(ndev, 0x8000000000000000UL))
 		return PROCEDURE_COMPLETE | PROCEDURE_FAILED;
 
 	return PROCEDURE_NEXT;
@@ -323,18 +323,18 @@ static uint32_t reset_ntl_release(struct npu2_dev *ndev)
 static uint32_t reset_ntl_finish(struct npu2_dev *ndev)
 {
 	/* Credit Setup */
-	npu2_write(ndev->npu, NPU2_NTL_CRED_HDR_CREDIT_TX(ndev), 0x0200000000000000);
-	npu2_write(ndev->npu, NPU2_NTL_PRB_HDR_CREDIT_TX(ndev), 0x0200000000000000);
-	npu2_write(ndev->npu, NPU2_NTL_ATR_HDR_CREDIT_TX(ndev), 0x0200000000000000);
-	npu2_write(ndev->npu, NPU2_NTL_RSP_HDR_CREDIT_TX(ndev), 0x0200000000000000);
-	npu2_write(ndev->npu, NPU2_NTL_CRED_DATA_CREDIT_TX(ndev), 0x1000000000000000);
-	npu2_write(ndev->npu, NPU2_NTL_RSP_DATA_CREDIT_TX(ndev), 0x1000000000000000);
-	npu2_write(ndev->npu, NPU2_NTL_CRED_HDR_CREDIT_RX(ndev), 0x0000BE0000000000);
-	npu2_write(ndev->npu, NPU2_NTL_DBD_HDR_CREDIT_RX(ndev), 0x0000640000000000);
-	npu2_write(ndev->npu, NPU2_NTL_ATSD_HDR_CREDIT_RX(ndev), 0x0000200000000000);
-	npu2_write(ndev->npu, NPU2_NTL_RSP_HDR_CREDIT_RX(ndev), 0x0000BE0000000000);
-	npu2_write(ndev->npu, NPU2_NTL_CRED_DATA_CREDIT_RX(ndev), 0x0001000000000000);
-	npu2_write(ndev->npu, NPU2_NTL_RSP_DATA_CREDIT_RX(ndev), 0x0001000000000000);
+	npu2_write(ndev->npu, NPU2_NTL_CRED_HDR_CREDIT_TX(ndev), 0x0200000000000000UL);
+	npu2_write(ndev->npu, NPU2_NTL_PRB_HDR_CREDIT_TX(ndev), 0x0200000000000000UL);
+	npu2_write(ndev->npu, NPU2_NTL_ATR_HDR_CREDIT_TX(ndev), 0x0200000000000000UL);
+	npu2_write(ndev->npu, NPU2_NTL_RSP_HDR_CREDIT_TX(ndev), 0x0200000000000000UL);
+	npu2_write(ndev->npu, NPU2_NTL_CRED_DATA_CREDIT_TX(ndev), 0x1000000000000000UL);
+	npu2_write(ndev->npu, NPU2_NTL_RSP_DATA_CREDIT_TX(ndev), 0x1000000000000000UL);
+	npu2_write(ndev->npu, NPU2_NTL_CRED_HDR_CREDIT_RX(ndev), 0x0000BE0000000000UL);
+	npu2_write(ndev->npu, NPU2_NTL_DBD_HDR_CREDIT_RX(ndev), 0x0000640000000000UL);
+	npu2_write(ndev->npu, NPU2_NTL_ATSD_HDR_CREDIT_RX(ndev), 0x0000200000000000UL);
+	npu2_write(ndev->npu, NPU2_NTL_RSP_HDR_CREDIT_RX(ndev), 0x0000BE0000000000UL);
+	npu2_write(ndev->npu, NPU2_NTL_CRED_DATA_CREDIT_RX(ndev), 0x0001000000000000UL);
+	npu2_write(ndev->npu, NPU2_NTL_RSP_DATA_CREDIT_RX(ndev), 0x0001000000000000UL);
 
 	npu2_set_link_flag(ndev, NPU2_DEV_DL_RESET);
 
@@ -396,12 +396,12 @@ static uint32_t phy_reset_complete(struct npu2_dev *ndev)
 		phy_write(ndev, &NPU2_PHY_RX_AC_COUPLED, 1);
 
 		switch (ndev->link_speed) {
-		case 20000000000:
+		case 20000000000UL:
 			prlog(PR_INFO, "OCAPI: Link speed set at 20Gb/s\n");
 			phy_write(ndev, &NPU2_PHY_RX_SPEED_SELECT, 1);
 			break;
-		case 25000000000:
-		case 25781250000:
+		case 25000000000UL:
+		case 25781250000UL:
 			prlog(PR_INFO, "OCAPI: Link speed set at 25.xGb/s\n");
 			phy_write(ndev, &NPU2_PHY_RX_SPEED_SELECT, 0);
 			break;
@@ -770,7 +770,7 @@ static uint32_t check_credits(struct npu2_dev *ndev)
 	assert(!fail);
 
 	val = npu2_read(ndev->npu, NPU2_NTL_MISC_CFG1(ndev));
-	val &= 0xFF3FFFFFFFFFFFFF;
+	val &= 0xFF3FFFFFFFFFFFFFUL;
 	npu2_write(ndev->npu, NPU2_NTL_MISC_CFG1(ndev), val);
 
 	if (!poll_fence_status(ndev, 0x0))

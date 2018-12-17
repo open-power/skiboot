@@ -192,7 +192,7 @@ struct pci_slot {
 	void			*data;
 };
 
-#define PCI_SLOT_ID_PREFIX	0x8000000000000000
+#define PCI_SLOT_ID_PREFIX	0x8000000000000000UL
 #define PCI_SLOT_ID(phb, bdfn)	\
 	(PCI_SLOT_ID_PREFIX | ((uint64_t)(bdfn) << 16) | (phb)->opal_id)
 #define PCI_PHB_SLOT_ID(phb)	((phb)->opal_id)

@@ -711,7 +711,7 @@ static void address_translation_config(uint32_t gcid, uint32_t scom_base,
 		/* To update XSL_GP, we must first write a magic value to it */
 		npu2_scom_write(gcid, scom_base,
 				NPU2_REG_OFFSET(stack, NPU2_BLOCK_XSL, NPU2_XSL_GP),
-				NPU2_MISC_DA_LEN_8B, 0x0523790323000000);
+				NPU2_MISC_DA_LEN_8B, 0x0523790323000000UL);
 		reg &= ~NPU2_XSL_GP_BLOOM_FILTER_ENABLE;
 		npu2_scom_write(gcid, scom_base,
 				NPU2_REG_OFFSET(stack, NPU2_BLOCK_XSL, NPU2_XSL_GP),
@@ -722,7 +722,7 @@ static void address_translation_config(uint32_t gcid, uint32_t scom_base,
 		/*
 		 * DD2.0/2.1 EOA Bug. Fixed in DD2.2
 		 */
-		reg = 0x32F8000000000001;
+		reg = 0x32F8000000000001UL;
 		npu2_scom_write(gcid, scom_base,
 				NPU2_REG_OFFSET(stack, NPU2_BLOCK_XSL,
 						NPU2_XSL_DEF),

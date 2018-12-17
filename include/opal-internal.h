@@ -100,7 +100,7 @@ static inline bool opal_addr_valid(const void *addr)
 	unsigned long val = (unsigned long)addr;
 	if ((val >> 60) != 0xc && (val >> 60) != 0x0)
 		return false;
-	val &= ~0xf000000000000000;
+	val &= ~0xf000000000000000UL;
 	if (val > top_of_ram)
 		return false;
 	return true;
