@@ -29,7 +29,7 @@
 #include "lxvpd.h"
 
 /* We don't yet create NPU device nodes on ZZ, but these values are correct */
-const struct platform_ocapi zz_ocapi = {
+static const struct platform_ocapi zz_ocapi = {
 	.i2c_engine          = 1,
 	.i2c_port            = 4,
 	.i2c_reset_addr      = 0x20,
