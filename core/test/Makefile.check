@@ -3,6 +3,7 @@ CORE_TEST := \
 	core/test/run-bitmap \
 	core/test/run-device \
 	core/test/run-flash-subpartition \
+	core/test/run-flash-firmware-versions \
 	core/test/run-mem_region \
 	core/test/run-malloc \
 	core/test/run-malloc-speed \
@@ -71,6 +72,23 @@ $(CORE_TEST:%=%-gcov): %-gcov : %.c %
 
 $(CORE_TEST_NOSTUB:%=%-gcov) : %-gcov : %.c %
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I include -I . -I libfdt -lgcov -o $@ $< , $<)
+
+core/test/run-flash-firmware-versions-gcov-run: core/test/run-flash-firmware-versions-inputs-gcov-run
+
+core/test/run-flash-firmware-versions-inputs-gcov-run: core/test/run-flash-firmware-versions-gcov
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-0 > /dev/null, $< version-0)
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-1 > /dev/null, $< version-1)
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-2 > /dev/null, $< version-2)
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-10 > /dev/null, $< version-10)
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-11 > /dev/null, $< version-11)
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-16 > /dev/null, $< version-16)
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-26 > /dev/null, $< version-26)
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-27 > /dev/null, $< version-27)
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-29 > /dev/null, $< version-29)
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-trunc > /dev/null, $< version-trunc)
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-long > /dev/null, $< version-long)
+	$(call Q, TEST-COVERAGE , ./core/test/run-flash-firmware-versions-gcov core/test/firmware-versions-input/version-nodash > /dev/null, $< version-nodash)
+
 
 -include $(wildcard core/test/*.d)
 
