@@ -76,7 +76,7 @@ static void zaius_get_slot_info(struct phb *phb, struct pci_device *pd)
 		slot_table_get_slot_info(phb, pd);
 }
 
-const struct platform_ocapi zaius_ocapi = {
+static const struct platform_ocapi zaius_ocapi = {
 	.i2c_engine          = 1,
 	.i2c_port            = 4,
 	.i2c_reset_addr      = 0x20,
