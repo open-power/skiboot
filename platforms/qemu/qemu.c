@@ -33,9 +33,8 @@ static bool qemu_probe(void)
         astbmc_early_init();
 
 	/* check if the BT device was defined by QEMU */
-	dt_for_each_child(dt_root, n) {
-		if (dt_node_is_compatible(n, "bt"))
-		       bt_device_present = true;
+	dt_for_each_compatible(dt_root, n, "bt") {
+		bt_device_present = true;
 	}
 
 	return true;
