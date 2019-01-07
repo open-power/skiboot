@@ -162,9 +162,23 @@ hdat_entry:
 
 	.= 0x1e00
 _exception:
-	stdu	%r1,-STACK_FRAMESIZE(%r1)
+	stdu	%r1,-INT_FRAMESIZE(%r1)
 	std	%r3,STACK_CFAR(%r1)
 	std	%r4,STACK_TYPE(%r1)
+	mfspr	%r3,SPR_SRR0
+	mfspr	%r4,SPR_SRR1
+	std	%r3,STACK_SRR0(%r1)
+	std	%r4,STACK_SRR1(%r1)
+	mfspr	%r3,SPR_DSISR
+	mfspr	%r4,SPR_DAR
+	stw	%r3,STACK_DSISR(%r1)
+	std	%r4,STACK_DAR(%r1)
+	mfmsr	%r3
+	std	%r3,STACK_MSR(%r1)
+	mfspr	%r3,SPR_HSRR0
+	mfspr	%r4,SPR_HSRR1
+	std	%r3,STACK_HSRR0(%r1)
+	std	%r4,STACK_HSRR1(%r1)
 	mfsprg0	%r3
 	mfsprg1 %r4
 	SAVE_GPR(0,%r1)
@@ -207,29 +221,68 @@ _exception:
 	stw	%r4,STACK_XER(%r1)
 	std	%r5,STACK_CTR(%r1)
 	std	%r6,STACK_LR(%r1)
-	mfspr	%r3,SPR_SRR0
-	mfspr	%r4,SPR_SRR1
-	mfspr	%r5,SPR_HSRR0
-	mfspr	%r6,SPR_HSRR1
-	std	%r3,STACK_SRR0(%r1)
-	std	%r4,STACK_SRR1(%r1)
-	std	%r5,STACK_HSRR0(%r1)
-	std	%r6,STACK_HSRR1(%r1)
-	mfspr	%r3,SPR_DSISR
-	mfspr	%r4,SPR_DAR
-	mfmsr	%r5
-	stw	%r3,STACK_DSISR(%r1)
-	std	%r4,STACK_DAR(%r1)
-	std	%r5,STACK_MSR(%r1)
 	mr	%r3,%r1
 	LOAD_IMM64(%r4, SKIBOOT_BASE)
 	LOAD_IMM32(%r5, exception_entry_foo - __head)
 	add	%r4,%r4,%r5
 	mtctr	%r4
-	bctrl
-	b	.
+	bctr
 exception_entry_foo:
-	b	exception_entry
+	bl	exception_entry
+	/* Restore HSRRs in case a NMI interrupted an HSRR-live section
+	 * and the NMI uses HSRRs for something. Possibly does not happen
+	 * in current skiboot code, but good to be careful.
+	 */
+	ld	%r3,STACK_HSRR0(%r1)
+	ld	%r4,STACK_HSRR1(%r1)
+	mtspr	SPR_HSRR0,%r3
+	mtspr	SPR_HSRR1,%r4
+	lwz	%r3,STACK_CR(%r1)
+	lwz	%r4,STACK_XER(%r1)
+	ld	%r5,STACK_CTR(%r1)
+	ld	%r6,STACK_LR(%r1)
+	mtcr	%r3
+	mtxer	%r4
+	mtctr	%r5
+	mtlr	%r6
+	REST_GPR(0,%r1)
+	REST_GPR(2,%r1)
+	REST_GPR(4,%r1)
+	REST_GPR(5,%r1)
+	REST_GPR(6,%r1)
+	REST_GPR(7,%r1)
+	REST_GPR(8,%r1)
+	REST_GPR(9,%r1)
+	REST_GPR(10,%r1)
+	REST_GPR(11,%r1)
+	REST_GPR(12,%r1)
+	REST_GPR(13,%r1)
+	REST_GPR(14,%r1)
+	REST_GPR(15,%r1)
+	REST_GPR(16,%r1)
+	REST_GPR(17,%r1)
+	REST_GPR(18,%r1)
+	REST_GPR(19,%r1)
+	REST_GPR(20,%r1)
+	REST_GPR(21,%r1)
+	REST_GPR(22,%r1)
+	REST_GPR(23,%r1)
+	REST_GPR(24,%r1)
+	REST_GPR(25,%r1)
+	REST_GPR(26,%r1)
+	REST_GPR(27,%r1)
+	REST_GPR(28,%r1)
+	REST_GPR(29,%r1)
+	REST_GPR(30,%r1)
+	REST_GPR(31,%r1)
+	ld	%r3,STACK_SRR0(%r1)
+	mtspr	SPR_SRR0,%r3
+	ld	%r3,STACK_SRR1(%r1)
+	mtspr	SPR_SRR1,%r3
+	REST_GPR(3,%r1)
+	addi	%r1,%r1,INT_FRAMESIZE
+	rfid
+	b	.
 
 	.= EXCEPTION_VECTORS_END
 	/* This is the OPAL branch table. It's populated at boot time

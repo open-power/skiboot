@@ -40,9 +40,9 @@ static void dump_regs(struct stack_frame *stack)
 }
 
 /* Called from head.S, thus no prototype */
-void exception_entry(struct stack_frame *stack) __noreturn;
+void __noreturn exception_entry(struct stack_frame *stack);
 
-void exception_entry(struct stack_frame *stack)
+void __noreturn exception_entry(struct stack_frame *stack)
 {
 	uint64_t nip;
 	uint64_t msr;

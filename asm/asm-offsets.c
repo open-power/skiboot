@@ -28,6 +28,11 @@
 #define OFFSET(sym, str, mem) \
 	DEFINE(sym, offsetof(struct str, mem))
 
+/*
+ * 64-bit ELF ABI specifies 288 byte redzone size.
+ */
+#define REDZONE_SIZE 288
+
 int main(void);
 
 int main(void)
@@ -95,6 +100,7 @@ int main(void)
 	OFFSET(STACK_HSRR1,	stack_frame, hsrr1);
 	OFFSET(STACK_DAR,	stack_frame, dar);
 	DEFINE(STACK_FRAMESIZE,	sizeof(struct stack_frame));
+	DEFINE(INT_FRAMESIZE,	(sizeof(struct stack_frame) + REDZONE_SIZE));
 
 	return 0;
 }
