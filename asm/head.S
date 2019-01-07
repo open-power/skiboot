@@ -119,6 +119,31 @@ hdat_entry:
 	li	%r27,0
 	b	boot_entry
 
+	.= 0x200
+	mtsprg0	%r3
+	mtsprg1 %r4
+	mfspr	%r3,SPR_SRR1
+	mfcr	%r4
+	rldicl.	%r3,%r3,48,62
+	bne	1f		/* powersave wakeup (CFAR not required) */
+	mtcr	%r4
+	mfspr	%r3,SPR_CFAR
+	li	%r4,0x200
+	b	_exception
+1:
+	LOAD_IMM64(%r30, SKIBOOT_BASE)
+	cmpdi	%r3,0x1
+	bne	2f		/* state loss */
+	LOAD_IMM32(%r3, reset_resume - __head)
+	b	3f
+2:
+	LOAD_IMM32(%r3, reset_wakeup - __head)
+3:
+	add	%r3,%r30,%r3
+	mtctr	%r3
+	li	%r3,0x200
+	bctr
+
 #define EXCEPTION(nr)		\
 	.= nr			;\
 	mtsprg0	%r3		;\
@@ -128,7 +153,6 @@ hdat_entry:
 	b	_exception
 
 	/* More exception stubs */
-	EXCEPTION(0x200)
 	EXCEPTION(0x300)
 	EXCEPTION(0x380)
 	EXCEPTION(0x400)
@@ -669,7 +693,8 @@ enter_p9_pm_state:
 	b	.
 
 /* This is a little piece of code that is copied down to
- * 0x100 for handling power management wakeups
+ * 0x100 for handling sresets and power management wakeups.
+ * This matches the 0x200 handler closely.
  */
 .global reset_patch_start
 reset_patch_start:
@@ -694,10 +719,12 @@ reset_patch_start:
 3:
 	add	%r3,%r30,%r3
 	mtctr	%r3
+	li	%r3,0x100
 	bctr
 .global reset_patch_end
 reset_patch_end:
 
+/* Wakeup vector in r3 */
 reset_wakeup:
 	/* Get PIR */
 	mfspr	%r31,SPR_PIR
@@ -710,14 +737,14 @@ reset_wakeup:
 	ld	%r1,CPUTHREAD_SAVE_R1(%r13)
 
 	/* Restore more stuff */
-	lwz	%r3,STACK_CR(%r1)
-	lwz	%r4,STACK_XER(%r1)
-	ld	%r5,STACK_GPR0(%r1)
-	ld	%r6,STACK_GPR1(%r1)
-	mtcr	%r3
-	mtxer	%r4
-	mtspr	SPR_HSPRG0,%r5
-	mtspr	SPR_HSPRG1,%r6
+	lwz	%r4,STACK_CR(%r1)
+	lwz	%r5,STACK_XER(%r1)
+	ld	%r6,STACK_GPR0(%r1)
+	ld	%r7,STACK_GPR1(%r1)
+	mtcr	%r4
+	mtxer	%r5
+	mtspr	SPR_HSPRG0,%r6
+	mtspr	SPR_HSPRG1,%r7
 	REST_GPR(2,%r1)
 	REST_GPR(14,%r1)
 	REST_GPR(15,%r1)

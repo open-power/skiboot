@@ -426,8 +426,7 @@ static unsigned int cpu_idle_p8(enum cpu_wake_cause wake_on)
 	isync();
 
 	/* Enter nap */
-	enter_p8_pm_state(false);
-	vec = 0x100;
+	vec = enter_p8_pm_state(false);
 
 skip_sleep:
 	/* Restore */
@@ -486,8 +485,7 @@ static unsigned int cpu_idle_p9(enum cpu_wake_cause wake_on)
 		/* PSSCR SD=0 ESL=1 EC=1 PSSL=0 TR=3 MTL=0 RL=1 */
 		psscr = PPC_BIT(42) | PPC_BIT(43) |
 			PPC_BITMASK(54, 55) | PPC_BIT(63);
-		enter_p9_pm_state(psscr);
-		vec = 0x100;
+		vec = enter_p9_pm_state(psscr);
 	} else {
 		/* stop with EC=0 (resumes) which does not require sreset. */
 		/* PSSCR SD=0 ESL=0 EC=0 PSSL=0 TR=3 MTL=0 RL=1 */
@@ -534,6 +532,11 @@ static void cpu_idle_pm(enum cpu_wake_cause wake_on)
 		default:
 			break;
 		}
+		mtmsrd(MSR_RI, 1);
+
+	} else if (vec == 0x200) {
+		exception_entry_pm_mce();
+		enable_machine_check();
 		mtmsrd(MSR_RI, 1);
 	}
 }

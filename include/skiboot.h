@@ -289,12 +289,13 @@ extern void fake_rtc_init(void);
 struct stack_frame;
 extern void exception_entry(struct stack_frame *stack);
 extern void exception_entry_pm_sreset(void);
+extern void exception_entry_pm_mce(void);
 
 /* Assembly in head.S */
 extern void disable_machine_check(void);
 extern void enable_machine_check(void);
-extern void enter_p8_pm_state(bool winkle);
-extern void enter_p9_pm_state(uint64_t psscr);
+extern unsigned int enter_p8_pm_state(bool winkle);
+extern unsigned int enter_p9_pm_state(uint64_t psscr);
 extern void enter_p9_pm_lite_state(uint64_t psscr);
 extern uint32_t reset_patch_start;
 extern uint32_t reset_patch_end;

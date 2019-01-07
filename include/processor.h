@@ -92,6 +92,7 @@
 
 #define SPR_SRR1_PM_WAKE_MASK	0x3c0000	/* PM wake reason for P8/9 */
 #define SPR_SRR1_PM_WAKE_SRESET	0x100000
+#define SPR_SRR1_PM_WAKE_MCE	0x3c0000	/* Use reserved value for MCE */
 
 /* Bits in LPCR */
 

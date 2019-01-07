@@ -127,6 +127,23 @@ void exception_entry_pm_sreset(void)
 	backtrace();
 }
 
+void __noreturn exception_entry_pm_mce(void)
+{
+	const size_t max = 320;
+	char buf[max];
+	size_t l;
+
+	prerror("***********************************************\n");
+	l = 0;
+	l += snprintf(buf + l, max - l,
+		"Fatal MCE in sleep");
+	prerror("%s\n", buf);
+	prerror("SRR0 : "REG" SRR1 : "REG"\n",
+			(uint64_t)mfspr(SPR_SRR0), (uint64_t)mfspr(SPR_SRR1));
+	prerror("DSISR: "REG32"         DAR  : "REG"\n",
+			(uint32_t)mfspr(SPR_DSISR), (uint64_t)mfspr(SPR_DAR));
+	abort();
+}
 
 static int64_t opal_register_exc_handler(uint64_t opal_exception __unused,
 					 uint64_t handler_address __unused,
