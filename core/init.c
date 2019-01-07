@@ -565,23 +565,11 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	/* Clear SRCs on the op-panel when Linux starts */
 	op_panel_clear_src();
 
-	cpu_give_self_os();
-
 	mem_dump_free();
-
-	/* Take processours out of nap */
-	cpu_set_sreset_enable(false);
-	cpu_set_ipi_enable(false);
 
 	/* Dump the selected console */
 	stdoutp = dt_prop_get_def(dt_chosen, "linux,stdout-path", NULL);
 	prlog(PR_DEBUG, "INIT: stdout-path: %s\n", stdoutp ? stdoutp : "");
-
-
-	printf("INIT: Starting kernel at 0x%llx, fdt at %p %u bytes\n",
-	       kernel_entry, fdt, fdt_totalsize(fdt));
-
-	debug_descriptor.state_flags |= OPAL_BOOT_COMPLETE;
 
 	fdt_set_boot_cpuid_phys(fdt, this_cpu()->pir);
 
@@ -590,6 +578,17 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 		prlog(PR_EMERG, "FATAL: Kernel is zeros, can't execute!\n");
 		assert(0);
 	}
+
+	/* Take processors out of nap */
+	cpu_set_sreset_enable(false);
+	cpu_set_ipi_enable(false);
+
+	printf("INIT: Starting kernel at 0x%llx, fdt at %p %u bytes\n",
+	       kernel_entry, fdt, fdt_totalsize(fdt));
+
+	debug_descriptor.state_flags |= OPAL_BOOT_COMPLETE;
+
+	cpu_give_self_os();
 
 	if (kernel_32bit)
 		start_kernel32(kernel_entry, fdt, mem_top);
