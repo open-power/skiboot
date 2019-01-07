@@ -28,7 +28,7 @@ static void dump_regs(struct stack_frame *stack)
 {
 	unsigned int i;
 
-	prerror("CFAR : "REG"\n", stack->cfar);
+	prerror("CFAR : "REG" MSR  : "REG"\n", stack->cfar, stack->msr);
 	prerror("SRR0 : "REG" SRR1 : "REG"\n", stack->srr0, stack->srr1);
 	prerror("HSRR0: "REG" HSRR1: "REG"\n", stack->hsrr0, stack->hsrr1);
 	prerror("DSISR: "REG32"         DAR  : "REG"\n", stack->dsisr, stack->dar);
@@ -44,40 +44,45 @@ void exception_entry(struct stack_frame *stack) __noreturn;
 
 void exception_entry(struct stack_frame *stack)
 {
+	uint64_t nip;
+	uint64_t msr;
 	const size_t max = 320;
 	char buf[max];
 	size_t l;
 
-	prerror("***********************************************\n");
-	if (stack->type == 0x200) {
-		l = 0;
-		l += snprintf(buf + l, max - l, "Fatal MCE at "REG"   ", stack->srr0);
-		l += snprintf_symbol(buf + l, max - l, stack->srr0);
-		prerror("%s\n", buf);
-	} else {
-		uint64_t nip;
-		switch (stack->type) {
-		case 0x500:
-		case 0x980:
-		case 0xe00:
-		case 0xe20:
-		case 0xe40:
-		case 0xe60:
-		case 0xe80:
-		case 0xea0:
-		case 0xf80:
-			nip = stack->hsrr0;
-			break;
-		default:
-			nip = stack->srr0;
-			break;
-		}
-		l = 0;
-		l += snprintf(buf + l, max - l, "Fatal Exception 0x%llx at "REG"   ", stack->type, nip);
-		l += snprintf_symbol(buf + l, max - l, nip);
-		prerror("%s\n", buf);
+	switch (stack->type) {
+	case 0x500:
+	case 0x980:
+	case 0xe00:
+	case 0xe20:
+	case 0xe40:
+	case 0xe60:
+	case 0xe80:
+	case 0xea0:
+	case 0xf80:
+		nip = stack->hsrr0;
+		msr = stack->hsrr1;
+		break;
+	default:
+		nip = stack->srr0;
+		msr = stack->srr1;
+		break;
 	}
+
+	prerror("***********************************************\n");
+	l = 0;
+	if (stack->type == 0x200) {
+		l += snprintf(buf + l, max - l,
+			"Fatal MCE at "REG"   ", nip);
+	} else {
+		l += snprintf(buf + l, max - l,
+			"Fatal Exception 0x%llx at "REG"  ", stack->type, nip);
+	}
+	l += snprintf_symbol(buf + l, max - l, nip);
+	l += snprintf(buf + l, max - l, "  MSR "REG, msr);
+	prerror("%s\n", buf);
 	dump_regs(stack);
+
 	abort();
 }
 

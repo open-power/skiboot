@@ -87,6 +87,7 @@ int main(void)
 	OFFSET(STACK_CTR,	stack_frame, ctr);
 	OFFSET(STACK_LR,	stack_frame, lr);
 	OFFSET(STACK_PC,	stack_frame, pc);
+	OFFSET(STACK_MSR,	stack_frame, msr);
 	OFFSET(STACK_CFAR,	stack_frame, cfar);
 	OFFSET(STACK_SRR0,	stack_frame, srr0);
 	OFFSET(STACK_SRR1,	stack_frame, srr1);

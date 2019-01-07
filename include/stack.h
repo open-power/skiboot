@@ -98,6 +98,7 @@ struct stack_frame {
 	uint64_t	ctr;
 	uint64_t	lr;
 	uint64_t	pc;
+	uint64_t	msr;
 	uint64_t	cfar;
 	uint64_t	srr0;
 	uint64_t	srr1;
