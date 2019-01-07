@@ -1180,8 +1180,8 @@ void cpu_callin(struct cpu_thread *cpu)
 	sync();
 
 	cpu->job_has_no_return = false;
-
-	init_hid();
+	if (cpu_is_thread0(cpu))
+		init_hid();
 }
 
 static void opal_start_thread_job(void *data)
