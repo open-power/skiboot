@@ -142,17 +142,7 @@ extern unsigned int cpu_thread_count;
 /* Boot CPU. */
 extern struct cpu_thread *boot_cpu;
 
-static inline void __nomcount cpu_relax(void)
-{
-	/* Relax a bit to give sibling threads some breathing space */
-	smt_lowest();
-	asm volatile("nop; nop; nop; nop;\n"
-		     "nop; nop; nop; nop;\n"
-		     "nop; nop; nop; nop;\n"
-		     "nop; nop; nop; nop;\n");
-	smt_medium();
-	barrier();
-}
+extern void __nomcount cpu_relax(void);
 
 /* Initialize CPUs */
 void pre_init_boot_cpu(void);

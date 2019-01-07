@@ -91,6 +91,18 @@ unsigned long __attrconst cpu_emergency_stack_top(unsigned int pir)
 		NORMAL_STACK_SIZE + EMERGENCY_STACK_SIZE - STACK_TOP_GAP;
 }
 
+void __nomcount cpu_relax(void)
+{
+	/* Relax a bit to give sibling threads some breathing space */
+	smt_lowest();
+	asm volatile("nop; nop; nop; nop;\n"
+		     "nop; nop; nop; nop;\n"
+		     "nop; nop; nop; nop;\n"
+		     "nop; nop; nop; nop;\n");
+	smt_medium();
+	barrier();
+}
+
 static void cpu_wake(struct cpu_thread *cpu)
 {
 	/* Is it idle ? If not, no need to wake */
