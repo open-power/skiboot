@@ -362,6 +362,8 @@ void __noreturn fast_reboot_entry(void)
 		}
 		sync();
 		cleanup_cpu_state();
+		enable_machine_check();
+
 		__secondary_cpu_entry();
 	}
 
