@@ -1,25 +1,49 @@
 #
 # behave like gdb
 #
-proc p { reg { t 0 } { c 0 } } {
+set target_t 0
+set target_c 0
+set target_p 0
+
+proc target { { t 0 } { c 0 } { p 0 } } {
+    global target_t
+    global target_c
+    global target_p
+
+    set target_t $t
+    set target_c $c
+    set target_p $p
+
+    return "targeting cpu $p:$c:$t"
+}
+
+proc p { reg { t -1 } { c -1 }  { p -1 } } {
+    global target_t
+    global target_c
+    global target_p
+
+    if { $t == -1 } { set t $target_t }
+    if { $c == -1 } { set c $target_c }
+    if { $p == -1 } { set p $target_p }
+
     switch -regexp $reg {
 	^r$ {
-            set val [mysim cpu $c thread $t display gprs]
+            set val [mysim cpu $p:$c:$t display gprs]
 	}
         ^r[0-9]+$ {
             regexp "r(\[0-9\]*)" $reg dummy num
-            set val [mysim cpu $c thread $t display gpr $num]
+            set val [mysim cpu $p:$c:$t display gpr $num]
         }
         ^f[0-9]+$ {
             regexp "f(\[0-9\]*)" $reg dummy num
-            set val [mysim cpu $c thread $t display fpr $num]
+            set val [mysim cpu $p:$c:$t display fpr $num]
         }
         ^v[0-9]+$ {
             regexp "v(\[0-9\]*)" $reg dummy num
-            set val [mysim cpu $c thread $t display vmxr $num]
+            set val [mysim cpu $p:$c:$t display vmxr $num]
         }
         default {
-            set val [mysim cpu $c thread $t display spr $reg]
+            set val [mysim cpu $p:$c:$t display spr $reg]
         }
     }
 
@@ -29,22 +53,30 @@ proc p { reg { t 0 } { c 0 } } {
 #
 # behave like gdb
 #
-proc sr { reg val {t 0}} {
+proc sr { reg val { t -1} { c -1 } { p -1 } } {
+    global target_t
+    global target_c
+    global target_p
+
+    if { $t == -1 } { set t $target_t }
+    if { $c == -1 } { set c $target_c }
+    if { $p == -1 } { set p $target_p }
+
     switch -regexp $reg {
         ^r[0-9]+$ {
             regexp "r(\[0-9\]*)" $reg dummy num
-            mysim cpu 0:$t set gpr $num $val
+            mysim cpu $p:$c:$t set gpr $num $val
         }
         ^f[0-9]+$ {
             regexp "f(\[0-9\]*)" $reg dummy num
-            mysim cpu 0:$t set fpr $num $val
+            mysim cpu $p:$c:$t set fpr $num $val
         }
         ^v[0-9]+$ {
             regexp "v(\[0-9\]*)" $reg dummy num
-            mysim cpu 0:$t set vmxr $num $val
+            mysim cpu $p:$c:$t set vmxr $num $val
         }
         default {
-            mysim cpu 0:$t set spr $reg $val
+            mysim cpu $p:$c:$t set spr $reg $val
         }
     }
     p $reg $t
@@ -78,16 +110,32 @@ proc c { } {
     mysim go
 }
 
-proc i { pc { t 0 } { c 0 } } {
-    set pc_laddr [mysim cpu $c util itranslate $pc]
-    set inst [mysim cpu $c memory display $pc_laddr 4]
-    set disasm [mysim cpu $c util ppc_disasm $inst $pc]
-    return "\[$c:$t\]: $pc ($pc_laddr) Enc:$inst : $disasm"
+proc i { pc { t -1 } { c -1 } { p -1 } } {
+    global target_t
+    global target_c
+    global target_p
+
+    if { $t == -1 } { set t $target_t }
+    if { $c == -1 } { set c $target_c }
+    if { $p == -1 } { set p $target_p }
+
+    set pc_laddr [mysim cpu $p:$c:$t util itranslate $pc]
+    set inst [mysim cpu $p:$c:$t memory display $pc_laddr 4]
+    set disasm [mysim cpu $p:$c:$t util ppc_disasm $inst $pc]
+    return "\[$p:$c:$t\]: $pc ($pc_laddr) Enc:$inst : $disasm"
 }
 
-proc ipc { {t 0} {c 0}} {
-    set pc [mysim cpu $c thread $t display spr pc]
-    i $pc $t $c
+proc ipc { { t -1 } { c -1 } { p -1 } } {
+    global target_t
+    global target_c
+    global target_p
+
+    if { $t == -1 } { set t $target_t }
+    if { $c == -1 } { set c $target_c }
+    if { $p == -1 } { set p $target_p }
+
+    set pc [mysim cpu $p:$c:$t display spr pc]
+    i $pc $t $c $p
 }
 
 proc ipca { } {
@@ -120,6 +168,17 @@ proc s { {nr 1} } {
     }
 }
 
+proc S { {nr 1} } {
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    for { set i 0 } { $i < $nr } { incr i 1 } {
+        mysim cpu $p:$c:$t step 1
+        puts [ipc]
+    }
+}
+
 proc z { count } {
     while { $count > 0 } {
         s
@@ -136,7 +195,11 @@ proc sample_pc { sample count } {
 }
 
 proc e2p { ea } {
-    set pa [ mysim util dtranslate $ea ]
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    set pa [ mysim cpu $p:$c:$t util dtranslate $ea ]
     puts "$pa"
 }
 
@@ -146,14 +209,26 @@ proc x {  pa { size 8 } } {
 }
 
 proc it { ea } {
-    mysim util itranslate $ea
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    mysim cpu $p:$c:$t util itranslate $ea
 }
 proc dt { ea } {
-    mysim util dtranslate $ea
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    mysim cpu $p:$c:$t util dtranslate $ea
 }
 
 proc ex {  ea { size 8 } } {
-    set pa [ mysim util dtranslate $ea ]
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    set pa [ mysim cpu $p:$c:$t util dtranslate $ea ]
     set val [ mysim memory display $pa $size ]
     puts "$pa : $val"
 }
@@ -212,22 +287,42 @@ proc p_str { addr { limit 0 } } {
 }
 
 proc slbv {} {
-    puts [mysim cpu 0 display slb valid]
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    puts [mysim cpu $p:$c:$t display slb valid]
 }
 
-proc regs { { t 0 } { c 0 } } {
+proc regs { { t -1 } { c -1 } { p -1 }} {
+    global target_t
+    global target_c
+    global target_p
+
+    if { $t == -1 } { set t $target_t }
+    if { $c == -1 } { set c $target_c }
+    if { $p == -1 } { set p $target_p }
+
     puts "GPRS:"
-    puts [mysim cpu $c thread $t display gprs]
+    puts [mysim cpu $p:$c:$t display gprs]
 }
 
-proc tlbv { { c 0 } } {
-    puts "$c:TLB: ----------------------"
-    puts [mysim cpu $c display tlb valid]
+proc tlbv {} {
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    puts "$p:$c:$t:TLB: ----------------------"
+    puts [mysim cpu $p:$c:$t display tlb valid]
 }
 
-proc exc { { i SystemReset } { c 0 } } {
-    puts "$c:EXCEPTION:$i"
-    puts [mysim cpu $c interrupt $i]
+proc exc { { i SystemReset } } {
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    puts "$p:$c:$t:EXCEPTION:$i"
+    puts [mysim cpu $p:$c:$t interrupt $i]
 }
 
 proc just_stop { args } {
@@ -236,13 +331,17 @@ proc just_stop { args } {
 }
 
 proc st { count } {
-    set sp [mysim cpu 0 display gpr 1]
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    set sp [mysim cpu $p:$c:$t display gpr 1]
     puts "SP: $sp"
     ipc
-    set lr [mysim cpu 0 display spr lr]
+    set lr [mysim cpu $p:$c:$t display spr lr]
     i $lr
     while { $count > 0 } {
-        set sp [mysim util itranslate $sp]
+        set sp [mysim cpu $p:$c:$t util itranslate $sp]
         set lr [mysim memory display [expr $sp++16] 8]
         i $lr
         set sp [mysim memory display $sp 8]
@@ -262,17 +361,21 @@ proc mywatch { } {
 #
 # force gdb to attach
 #
-proc gdb { {t 0} } {
+proc gdb { { timeout 0 } } {
     mysim set fast off
-    mysim debugger wait $t
+    mysim debugger wait $timeout
 }
 
-proc egdb { {t 0} } {
-    set srr0 [mysim cpu 0 display spr srr0]
-    set srr1 [mysim cpu 0 display spr srr1]
-    mysim cpu 0 set spr pc $srr0
-    mysim cpu 0 set spr msr $srr1
-    gdb $t
+proc egdb { { timeout 0 }} {
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    set srr0 [mysim cpu $p:$c:$t display spr srr0]
+    set srr1 [mysim cpu $p:$c:$t display spr srr1]
+    mysim cpu $p:$c:$t set spr pc $srr0
+    mysim cpu $p:$c:$t set spr msr $srr1
+    gdb $timeout
 }
 
 proc mem_display_64_le { addr } {
@@ -294,25 +397,24 @@ proc mem_display_64 { addr le } {
 }
 
 proc bt { {sp 0} } {
-    set t 0
-    if { $sp < 16 } {
-        set t $sp
-        set sp 0
-    }
-    set lr [mysim cpu 0:$t display spr pc]
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
+    set lr [mysim cpu $p:$c:$t display spr pc]
     puts "pc:\t\t\t\t$lr"
     if { $sp == 0 } {
-        set sp [mysim cpu 0:$t display gpr 1]
+        set sp [mysim cpu $p:$c:$t display gpr 1]
     }
-    set lr [mysim cpu 0:$t display spr lr]
+    set lr [mysim cpu $p:$c:$t display spr lr]
     puts "lr:\t\t\t\t$lr"
 
-    set msr [mysim cpu 0:$t display spr msr]
+    set msr [mysim cpu $p:$c:$t display spr msr]
     set le [ expr $msr & 1 ]
 
     # Limit to 200 in case of an infinite loop
     for {set i 0} {$i < 200} {incr i} {
-        set pa [ mysim util dtranslate $sp ]
+        set pa [ mysim cpu $p:$c:$t util dtranslate $sp ]
         set bc [ mem_display_64 $pa $le ]
         set lr [ mem_display_64 [ expr $pa + 16 ] $le ]
         puts "stack:$pa \t$lr"
@@ -367,32 +469,46 @@ proc skisym { name } {
     return $ret
 }
 
-proc current_insn { { t 0 } { c 0 } } {
-    set pc [mysim cpu $c thread $t display spr pc]
-    set pc_laddr [mysim cpu $c util itranslate $pc]
-    set inst [mysim cpu $c memory display $pc_laddr 4]
-    set disasm [mysim cpu $c util ppc_disasm $inst $pc]
+proc current_insn { { t -1 } { c -1 } { p -1 }} {
+    global target_t
+    global target_c
+    global target_p
+
+    if { $t == -1 } { set t $target_t }
+    if { $c == -1 } { set c $target_c }
+    if { $p == -1 } { set p $target_p }
+
+    set pc [mysim cpu $p:$c:$t display spr pc]
+    set pc_laddr [mysim cpu $p:$c:$t util itranslate $pc]
+    set inst [mysim cpu $p:$c:$t memory display $pc_laddr 4]
+    set disasm [mysim cpu $p:$c:$t util ppc_disasm $inst $pc]
     return $disasm
 }
 
-global SRR1
-global DSISR
-global DAR
+set SRR1 0
+set DSISR 0
+set DAR 0
 
 proc sreset_trigger { args } {
-    variable SRR1
+    global SRR1
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
 
     mysim trigger clear pc 0x100
     mysim trigger clear pc 0x104
-    set s [expr [mysim cpu 0 display spr srr1] & ~0x00000000003c0002]
+    set s [expr [mysim cpu $p:$c:$t display spr srr1] & ~0x00000000003c0002]
     set SRR1 [expr $SRR1 | $s]
-    mysim cpu 0 set spr srr1 $SRR1
+    mysim cpu $p:$c:$t set spr srr1 $SRR1
 }
 
 proc exc_sreset { } {
-    variable SRR1
-    variable DSISR
-    variable DAR
+    global SRR1
+    global DSISR
+    global DAR
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
 
     # In case of recoverable MCE, idle wakeup always sets RI, others get
     # RI from current environment. For unrecoverable, RI would always be
@@ -401,7 +517,7 @@ proc exc_sreset { } {
         set msr_ri 0x2
         set SRR1_powersave [expr (0x2 << (63-47))]
     } else {
-        set msr_ri [expr [mysim cpu 0 display spr msr] & 0x2]
+        set msr_ri [expr [mysim cpu $p:$c:$t display spr msr] & 0x2]
         set SRR1_powersave 0
     }
 
@@ -419,35 +535,38 @@ proc exc_sreset { } {
         # and go over current instruction.
         mysim trigger set pc 0x100 "sreset_trigger"
         mysim trigger set pc 0x104 "sreset_trigger"
-        mysim cpu 0 interrupt SystemReset
+        mysim cpu $p:$c:$t interrupt SystemReset
     } else {
         mysim trigger set pc 0x100 "sreset_trigger"
         mysim trigger set pc 0x104 "sreset_trigger"
-        mysim cpu 0 interrupt SystemReset
+        mysim cpu $p:$c:$t interrupt SystemReset
     }
 
     # sleep and sometimes other types of interrupts do not trigger 0x100
-    if { [expr [mysim cpu 0 display spr pc] == 0x100 ] } {
+    if { [expr [mysim cpu $p:$c:$t display spr pc] == 0x100 ] } {
 	sreset_trigger
     }
-    if { [expr [mysim cpu 0 display spr pc] == 0x104 ] } {
+    if { [expr [mysim cpu $p:$c:$t display spr pc] == 0x104 ] } {
 	sreset_trigger
     }
 }
 
 proc mce_trigger { args } {
-    variable SRR1
-    variable DSISR
-    variable DAR
+    global SRR1
+    global DSISR
+    global DAR
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
 
     mysim trigger clear pc 0x200
     mysim trigger clear pc 0x204
 
     set s [expr [mysim cpu 0 display spr srr1] & ~0x00000000801f0002]
     set SRR1 [expr $SRR1 | $s]
-    mysim cpu 0 set spr srr1 $SRR1
-    mysim cpu 0 set spr dsisr $DSISR
-    mysim cpu 0 set spr dar $DAR ; list
+    mysim cpu $p:$c:$t set spr srr1 $SRR1
+    mysim cpu $p:$c:$t set spr dsisr $DSISR
+    mysim cpu $p:$c:$t set spr dar $DAR ; list
 }
 
 #
@@ -464,9 +583,12 @@ proc mce_trigger { args } {
 # d_side=0 cause=0x1  - unrecoverable i-side ifetch
 #
 proc exc_mce { { d_side 0 } { cause 0x5 } { recoverable 1 } } {
-    variable SRR1
-    variable DSISR
-    variable DAR
+    global SRR1
+    global DSISR
+    global DAR
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
 
 #    puts "INJECTING MCE"
 
@@ -477,7 +599,7 @@ proc exc_mce { { d_side 0 } { cause 0x5 } { recoverable 1 } } {
         set msr_ri 0x2
         set SRR1_powersave [expr (0x2 << (63-47))]
     } else {
-        set msr_ri [expr [mysim cpu 0 display spr msr] & 0x2]
+        set msr_ri [expr [mysim cpu $p:$c:$t display spr msr] & 0x2]
         set SRR1_powersave 0
     }
 
@@ -510,30 +632,33 @@ proc exc_mce { { d_side 0 } { cause 0x5 } { recoverable 1 } } {
         # and go over current instruction.
         mysim trigger set pc 0x200 "mce_trigger"
         mysim trigger set pc 0x204 "mce_trigger"
-        mysim cpu 0 interrupt MachineCheck
+        mysim cpu $p:$c:$t interrupt MachineCheck
     } else {
         mysim trigger set pc 0x200 "mce_trigger"
         mysim trigger set pc 0x204 "mce_trigger"
-        mysim cpu 0 interrupt MachineCheck
+        mysim cpu $p:$c:$t interrupt MachineCheck
     }
 
     # sleep and sometimes other types of interrupts do not trigger 0x200
-    if { [expr [mysim cpu 0 display spr pc] == 0x200 ] } {
+    if { [expr [mysim cpu $p:$c:$t display spr pc] == 0x200 ] } {
 	mce_trigger
     }
-    if { [expr [mysim cpu 0 display spr pc] == 0x204 ] } {
+    if { [expr [mysim cpu $p:$c:$t display spr pc] == 0x204 ] } {
 	mce_trigger
     }
 }
 
-global R1
+set R1 0
 
 # Avoid stopping if we re-enter the same code. Wait until r1 matches.
 # This helps stepping over exceptions or function calls etc.
 proc stop_stack_match { args } {
-    variable R1
+    global R1
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
 
-    set r1 [mysim cpu 0 display gpr 1]
+    set r1 [mysim cpu $p:$c:$t display gpr 1]
     if { $R1 == $r1 } {
         simstop
         ipca
@@ -543,10 +668,13 @@ proc stop_stack_match { args } {
 # inject default recoverable MCE and step over it. Useful for testing whether
 # code copes with taking an interleaving MCE.
 proc inject_mce { } {
-    variable R1
+    global R1
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
 
-    set R1 [mysim cpu 0 display gpr 1]
-    set pc [mysim cpu 0 display spr pc]
+    set R1 [mysim cpu $p:$c:$t display gpr 1]
+    set pc [mysim cpu $p:$c:$t display spr pc]
     mysim trigger set pc $pc "stop_stack_match"
     exc_mce
     c
@@ -576,16 +704,20 @@ proc inject_mce_step { {nr 1} } {
 
 # inject if RI is set and step over one instruction, and repeat.
 proc inject_mce_step_ri { {nr 1} } {
+    upvar #0 target_t t
+    upvar #0 target_c c
+    upvar #0 target_p p
+
     set reserve_inject 1
     set reserve_inject_skip 0
     set reserve_counter 0
 
     for { set i 0 } { $i < $nr } { incr i 1 } {
-        if { [expr [mysim cpu 0 display spr msr] & 0x2] } {
+        if { [expr [mysim cpu $p:$c:$t display spr msr] & 0x2] } {
             # inject_mce
-            if { [mysim cpu 0 display reservation] in { "none" } } {
+            if { [mysim cpu $p:$c:$t display reservation] in { "none" } } {
                 inject_mce
-                mysim cpu 0 set reservation none
+                mysim cpu $p:$c:$t set reservation none
                 if { $reserve_inject_skip } {
                     set reserve_inject 1
                     set reserve_inject_skip 0
@@ -593,13 +725,13 @@ proc inject_mce_step_ri { {nr 1} } {
             } else {
                 if { $reserve_inject } {
                     inject_mce
-                    mysim cpu 0 set reservation none
+                    mysim cpu $p:$c:$t set reservation none
                     set reserve_inject 0
                 } else {
                     set reserve_inject_skip 1
                     set reserve_counter [ expr $reserve_counter + 1 ]
                     if { $reserve_counter > 30 } {
-                        mysim cpu 0 set reservation none
+                        mysim cpu $p:$c:$t set reservation none
                     }
                 }
             }
