@@ -200,6 +200,7 @@ extern void init_replicated_sprs(void);
 extern bool start_preload_kernel(void);
 extern void copy_exception_vectors(void);
 extern void copy_sreset_vector(void);
+extern void copy_sreset_vector_fast_reboot(void);
 
 /* Various probe routines, to replace with an initcall system */
 extern void probe_p7ioc(void);
@@ -292,6 +293,8 @@ extern void enter_p9_pm_state(uint64_t psscr);
 extern void enter_p9_pm_lite_state(uint64_t psscr);
 extern uint32_t reset_patch_start;
 extern uint32_t reset_patch_end;
+extern uint32_t reset_fast_reboot_patch_start;
+extern uint32_t reset_fast_reboot_patch_end;
 
 /* Fallback fake NVRAM */
 extern int fake_nvram_info(uint32_t *total_size);

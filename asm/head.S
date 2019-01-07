@@ -700,12 +700,7 @@ reset_wakeup:
 	GET_CPU()
 
 	/* Restore original stack pointer */
-	ld	%r3,CPUTHREAD_SAVE_R1(%r13)
-
-	/* If it's 0, we are doing a fast reboot */
-	cmpldi	%r3,0
-	beq	fast_reset_entry
-	mr	%r1,%r3
+	ld	%r1,CPUTHREAD_SAVE_R1(%r13)
 
 	/* Restore more stuff */
 	lwz	%r3,STACK_CR(%r1)
@@ -742,13 +737,31 @@ reset_wakeup:
 	mtlr	%r0
 	blr
 
-/* Fast reset code. We clean up the TLB and a few SPRs and
- * return to C code. All CPUs do that, the CPU triggering the
- * reset does it to itself last. The C code will sort out who
- * the master is. We come from the trampoline above with
- * r30 containing SKIBOOT_BASE
+.global reset_fast_reboot_patch_start
+reset_fast_reboot_patch_start:
+	FIXUP_ENDIAN	/* HILE bit may or may not be set */
+	smt_medium
+	LOAD_IMM64(%r30, SKIBOOT_BASE)
+	LOAD_IMM32(%r3, reset_fast_reboot_wakeup - __head)
+	add	%r3,%r30,%r3
+	mtctr	%r3
+	bctr
+.global reset_fast_reboot_patch_end
+reset_fast_reboot_patch_end:
+
+/* Fast reset code. We reset the stack, clean up the TLB and a few SPRs and
+ * jump to C code. All CPUs do that, the CPU triggering the reset does it to
+ * itself last. The C code will sort out who the master is. We come from the
+ * trampoline above with r30 containing SKIBOOT_BASE
  */
-fast_reset_entry:
+reset_fast_reboot_wakeup:
+	/* Get PIR */
+	mfspr	%r31,SPR_PIR
+
+	/* Get that CPU stack base and use it to restore r13 */
+	GET_STACK(%r1,%r31)
+	GET_CPU()
+
 	/* Clear out SLB */
 	li	%r6,0
 	slbmte	%r6,%r6

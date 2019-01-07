@@ -793,7 +793,18 @@ void copy_sreset_vector(void)
 	while(src < &reset_patch_end)
 		*(dst++) = *(src++);
 	sync_icache();
-	cpu_set_sreset_enable(true);
+}
+
+void copy_sreset_vector_fast_reboot(void)
+{
+	uint32_t *src, *dst;
+
+	/* Copy the reset code over the entry point. */
+	src = &reset_fast_reboot_patch_start;
+	dst = (uint32_t *)0x100;
+	while(src < &reset_fast_reboot_patch_end)
+		*(dst++) = *(src++);
+	sync_icache();
 }
 
 void copy_exception_vectors(void)

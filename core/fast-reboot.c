@@ -110,7 +110,6 @@ static bool fast_reboot_sanity_check(void)
 
 void fast_reboot(void)
 {
-	struct cpu_thread *cpu;
 	static int fast_reboot_count = 0;
 
 	if (!chip_quirk(QUIRK_MAMBO_CALLOUTS) &&
@@ -157,18 +156,14 @@ void fast_reboot(void)
 		return;
 	}
 
+	cpu_set_sreset_enable(false);
+	cpu_set_ipi_enable(false);
+
 	/*
 	 * There is no point clearing special wakeup or un-quiesce due to
 	 * failure after this point, because we will be going to full IPL.
 	 * Less cleanup work means less opportunity to fail.
 	 */
-
-	for_each_ungarded_cpu(cpu) {
-		/* Also make sure that saved_r1 is 0 ! That's what will
-		 * make our reset vector jump to fast_reboot_entry
-		 */
-		cpu->save_r1 = 0;
-	}
 
 	/*
 	 * Move SPRs and exception vectors back to OPAL-mode while all
@@ -206,7 +201,7 @@ void fast_reboot(void)
 	 * sreset vector has a FIXUP_ENDIAN sequence at the start, so
 	 * secondaries can cope.
 	 */
-	copy_sreset_vector();
+	copy_sreset_vector_fast_reboot();
 
 	/* Send everyone else to 0x100 */
 	if (sreset_all_others() != OPAL_SUCCESS) {
@@ -374,9 +369,8 @@ void __noreturn fast_reboot_entry(void)
 	 */
 	cpu_state_wait_all_others(cpu_state_present, 0);
 
-	if (proc_gen == proc_gen_p9) {
+	if (proc_gen == proc_gen_p9)
 		xive_reset();
-	}
 
 	prlog(PR_INFO, "RESET: Releasing secondaries...\n");
 
@@ -404,6 +398,9 @@ void __noreturn fast_reboot_entry(void)
 
 	/* Let the CPU layer do some last minute global cleanups */
 	cpu_fast_reboot_complete();
+
+	/* Restore OPAL's sreset vector now that all CPUs have HILE clear */
+	copy_sreset_vector();
 
 	/* We can now do NAP mode */
 	cpu_set_sreset_enable(true);
