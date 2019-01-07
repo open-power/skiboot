@@ -39,8 +39,10 @@ static void dump_regs(struct stack_frame *stack)
 		       i, stack->gpr[i], i + 16, stack->gpr[i + 16]);
 }
 
-void __noreturn exception_entry(struct stack_frame *stack)
+void exception_entry(struct stack_frame *stack)
 {
+	bool fatal = false;
+	bool hv;
 	uint64_t nip;
 	uint64_t msr;
 	const size_t max = 320;
@@ -57,24 +59,40 @@ void __noreturn exception_entry(struct stack_frame *stack)
 	case 0xe80:
 	case 0xea0:
 	case 0xf80:
-		nip = stack->hsrr0;
-		msr = stack->hsrr1;
+		hv = true;
 		break;
 	default:
-		nip = stack->srr0;
-		msr = stack->srr1;
+		hv = false;
 		break;
 	}
+
+	if (hv) {
+		nip = stack->hsrr0;
+		msr = stack->hsrr1;
+	} else {
+		nip = stack->srr0;
+		msr = stack->srr1;
+	}
+
+	if (!(msr & MSR_RI))
+		fatal = true;
 
 	prerror("***********************************************\n");
 	l = 0;
 	if (stack->type == 0x100) {
-		l += snprintf(buf + l, max - l,
-			"Fatal System Reset at "REG"   ", nip);
+		if (fatal) {
+			l += snprintf(buf + l, max - l,
+				"Fatal System Reset at "REG"   ", nip);
+		} else {
+			l += snprintf(buf + l, max - l,
+				"System Reset at "REG"   ", nip);
+		}
 	} else if (stack->type == 0x200) {
+		fatal = true;
 		l += snprintf(buf + l, max - l,
 			"Fatal MCE at "REG"   ", nip);
 	} else {
+		fatal = true;
 		l += snprintf(buf + l, max - l,
 			"Fatal Exception 0x%llx at "REG"  ", stack->type, nip);
 	}
@@ -83,10 +101,19 @@ void __noreturn exception_entry(struct stack_frame *stack)
 	prerror("%s\n", buf);
 	dump_regs(stack);
 
-	abort();
+	if (fatal)
+		abort();
+	else
+		backtrace();
+
+	if (hv) {
+		/* Set up for SRR return */
+		stack->srr0 = nip;
+		stack->srr1 = msr;
+	}
 }
 
-void __noreturn exception_entry_pm_sreset(void)
+void exception_entry_pm_sreset(void)
 {
 	const size_t max = 320;
 	char buf[max];
@@ -95,10 +122,9 @@ void __noreturn exception_entry_pm_sreset(void)
 	prerror("***********************************************\n");
 	l = 0;
 	l += snprintf(buf + l, max - l,
-		"Fatal System Reset in sleep");
+		"System Reset in sleep");
 	prerror("%s\n", buf);
-
-	abort();
+	backtrace();
 }
 
 

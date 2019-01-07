@@ -534,6 +534,7 @@ static void cpu_idle_pm(enum cpu_wake_cause wake_on)
 		default:
 			break;
 		}
+		mtmsrd(MSR_RI, 1);
 	}
 }
 

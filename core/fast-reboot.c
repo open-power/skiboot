@@ -196,6 +196,7 @@ void fast_reboot(void)
 	 * crash.
 	 */
 	enable_machine_check();
+	mtmsrd(MSR_RI, 1);
 
 	/*
 	 * sreset vector has a FIXUP_ENDIAN sequence at the start, so
@@ -358,6 +359,7 @@ void __noreturn fast_reboot_entry(void)
 		sync();
 		cleanup_cpu_state();
 		enable_machine_check();
+		mtmsrd(MSR_RI, 1);
 
 		__secondary_cpu_entry();
 	}

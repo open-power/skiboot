@@ -475,12 +475,13 @@ static void load_initramfs(void)
 	}
 }
 
-static void cpu_disable_ME_one(void *param __unused)
+static void cpu_disable_ME_RI_one(void *param __unused)
 {
 	disable_machine_check();
+	mtmsrd(0, 1);
 }
 
-static int64_t cpu_disable_ME_all(void)
+static int64_t cpu_disable_ME_RI_all(void)
 {
 	struct cpu_thread *cpu;
 	struct cpu_job **jobs;
@@ -491,12 +492,12 @@ static int64_t cpu_disable_ME_all(void)
 	for_each_available_cpu(cpu) {
 		if (cpu == this_cpu())
 			continue;
-		jobs[cpu->pir] = cpu_queue_job(cpu, "cpu_disable_ME",
-						cpu_disable_ME_one, NULL);
+		jobs[cpu->pir] = cpu_queue_job(cpu, "cpu_disable_ME_RI",
+						cpu_disable_ME_RI_one, NULL);
 	}
 
 	/* this cpu */
-	cpu_disable_ME_one(NULL);
+	cpu_disable_ME_RI_one(NULL);
 
 	for_each_available_cpu(cpu) {
 		if (jobs[cpu->pir])
@@ -620,7 +621,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	       kernel_entry, fdt, fdt_totalsize(fdt));
 
 	/* Disable machine checks on all */
-	cpu_disable_ME_all();
+	cpu_disable_ME_RI_all();
 
 	debug_descriptor.state_flags |= OPAL_BOOT_COMPLETE;
 
@@ -951,6 +952,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 * recover, but we print some useful information.
 	 */
 	enable_machine_check();
+	mtmsrd(MSR_RI, 1);
 
 	/* Setup a NULL catcher to catch accidental NULL ptr calls */
 	setup_branch_null_catcher();
@@ -1282,6 +1284,7 @@ void __noreturn __secondary_cpu_entry(void)
 	cpu_callin(cpu);
 
 	enable_machine_check();
+	mtmsrd(MSR_RI, 1);
 
 	/* Some XIVE setup */
 	xive_cpu_callin(cpu);

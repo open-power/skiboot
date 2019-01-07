@@ -287,8 +287,8 @@ extern void fake_rtc_init(void);
 
 /* Exceptions */
 struct stack_frame;
-extern void __noreturn exception_entry(struct stack_frame *stack);
-extern void __noreturn exception_entry_pm_sreset(void);
+extern void exception_entry(struct stack_frame *stack);
+extern void exception_entry_pm_sreset(void);
 
 /* Assembly in head.S */
 extern void disable_machine_check(void);

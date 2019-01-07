@@ -175,7 +175,9 @@ _exception:
 	stw	%r3,STACK_DSISR(%r1)
 	std	%r4,STACK_DAR(%r1)
 	mfmsr	%r3
+	li	%r4,MSR_RI
 	std	%r3,STACK_MSR(%r1)
+	mtmsrd	%r4,1
 	mfspr	%r3,SPR_HSRR0
 	mfspr	%r4,SPR_HSRR1
 	std	%r3,STACK_HSRR0(%r1)
@@ -276,6 +278,8 @@ exception_entry_foo:
 	REST_GPR(29,%r1)
 	REST_GPR(30,%r1)
 	REST_GPR(31,%r1)
+	li	%r3,0
+	mtmsrd	%r3,1	/* Clear MSR[RI] */
 	ld	%r3,STACK_SRR0(%r1)
 	mtspr	SPR_SRR0,%r3
 	ld	%r3,STACK_SRR1(%r1)
