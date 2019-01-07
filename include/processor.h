@@ -88,6 +88,10 @@
 #define SPR_HID5	0x3f6
 #define SPR_PIR		0x3ff	/* RO: Processor Identification */
 
+/* Bits in SRR1 */
+
+#define SPR_SRR1_PM_WAKE_MASK	0x3c0000	/* PM wake reason for P8/9 */
+#define SPR_SRR1_PM_WAKE_SRESET	0x100000
 
 /* Bits in LPCR */
 

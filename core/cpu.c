@@ -380,14 +380,15 @@ enum cpu_wake_cause {
 	cpu_wake_on_dec,
 };
 
-static void cpu_idle_p8(enum cpu_wake_cause wake_on)
+static unsigned int cpu_idle_p8(enum cpu_wake_cause wake_on)
 {
 	uint64_t lpcr = mfspr(SPR_LPCR) & ~SPR_LPCR_P8_PECE;
 	struct cpu_thread *cpu = this_cpu();
+	unsigned int vec = 0;
 
 	if (!pm_enabled) {
 		prlog_once(PR_DEBUG, "cpu_idle_p8 called pm disabled\n");
-		return;
+		return vec;
 	}
 
 	/* Clean up ICP, be ready for IPIs */
@@ -426,6 +427,7 @@ static void cpu_idle_p8(enum cpu_wake_cause wake_on)
 
 	/* Enter nap */
 	enter_p8_pm_state(false);
+	vec = 0x100;
 
 skip_sleep:
 	/* Restore */
@@ -433,17 +435,20 @@ skip_sleep:
 	cpu->in_idle = false;
 	cpu->in_sleep = false;
 	reset_cpu_icp();
+
+	return vec;
 }
 
-static void cpu_idle_p9(enum cpu_wake_cause wake_on)
+static unsigned int cpu_idle_p9(enum cpu_wake_cause wake_on)
 {
 	uint64_t lpcr = mfspr(SPR_LPCR) & ~SPR_LPCR_P9_PECE;
 	uint64_t psscr;
 	struct cpu_thread *cpu = this_cpu();
+	unsigned int vec = 0;
 
 	if (!pm_enabled) {
 		prlog_once(PR_DEBUG, "cpu_idle_p9 called pm disabled\n");
-		return;
+		return vec;
 	}
 
 	/* Synchronize with wakers */
@@ -482,6 +487,7 @@ static void cpu_idle_p9(enum cpu_wake_cause wake_on)
 		psscr = PPC_BIT(42) | PPC_BIT(43) |
 			PPC_BITMASK(54, 55) | PPC_BIT(63);
 		enter_p9_pm_state(psscr);
+		vec = 0x100;
 	} else {
 		/* stop with EC=0 (resumes) which does not require sreset. */
 		/* PSSCR SD=0 ESL=0 EC=0 PSSL=0 TR=3 MTL=0 RL=1 */
@@ -497,20 +503,37 @@ static void cpu_idle_p9(enum cpu_wake_cause wake_on)
 	sync();
 	cpu->in_idle = false;
 	cpu->in_sleep = false;
+
+	return vec;
 }
 
 static void cpu_idle_pm(enum cpu_wake_cause wake_on)
 {
+	unsigned int vec;
+
 	switch(proc_gen) {
 	case proc_gen_p8:
-		cpu_idle_p8(wake_on);
+		vec = cpu_idle_p8(wake_on);
 		break;
 	case proc_gen_p9:
-		cpu_idle_p9(wake_on);
+		vec = cpu_idle_p9(wake_on);
 		break;
 	default:
+		vec = 0;
 		prlog_once(PR_DEBUG, "cpu_idle_pm called with bad processor type\n");
 		break;
+	}
+
+	if (vec == 0x100) {
+		unsigned long srr1 = mfspr(SPR_SRR1);
+
+		switch (srr1 & SPR_SRR1_PM_WAKE_MASK) {
+		case SPR_SRR1_PM_WAKE_SRESET:
+			exception_entry_pm_sreset();
+			break;
+		default:
+			break;
+		}
 	}
 }
 

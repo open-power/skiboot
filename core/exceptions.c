@@ -39,9 +39,6 @@ static void dump_regs(struct stack_frame *stack)
 		       i, stack->gpr[i], i + 16, stack->gpr[i + 16]);
 }
 
-/* Called from head.S, thus no prototype */
-void __noreturn exception_entry(struct stack_frame *stack);
-
 void __noreturn exception_entry(struct stack_frame *stack)
 {
 	uint64_t nip;
@@ -71,7 +68,10 @@ void __noreturn exception_entry(struct stack_frame *stack)
 
 	prerror("***********************************************\n");
 	l = 0;
-	if (stack->type == 0x200) {
+	if (stack->type == 0x100) {
+		l += snprintf(buf + l, max - l,
+			"Fatal System Reset at "REG"   ", nip);
+	} else if (stack->type == 0x200) {
 		l += snprintf(buf + l, max - l,
 			"Fatal MCE at "REG"   ", nip);
 	} else {
@@ -85,6 +85,22 @@ void __noreturn exception_entry(struct stack_frame *stack)
 
 	abort();
 }
+
+void __noreturn exception_entry_pm_sreset(void)
+{
+	const size_t max = 320;
+	char buf[max];
+	size_t l;
+
+	prerror("***********************************************\n");
+	l = 0;
+	l += snprintf(buf + l, max - l,
+		"Fatal System Reset in sleep");
+	prerror("%s\n", buf);
+
+	abort();
+}
+
 
 static int64_t opal_register_exc_handler(uint64_t opal_exception __unused,
 					 uint64_t handler_address __unused,

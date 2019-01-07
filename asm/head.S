@@ -107,6 +107,7 @@ hir_trigger:
 	 * used for recovering from rvw or nap mode
 	 */
 	. = 0x100
+sreset_vector:
 	/* BML entry, load up r3 with device tree location */
 	li	%r3, 0
 	oris	%r3, %r3, 0xa
@@ -668,8 +669,25 @@ enter_p9_pm_state:
  */
 .global reset_patch_start
 reset_patch_start:
+	mtsprg0	%r3
+	mtsprg1 %r4
+	mfspr	%r3,SPR_SRR1
+	mfcr	%r4
+	rldicl.	%r3,%r3,48,62
+	bne	1f		/* powersave wakeup (CFAR not required) */
+	mtcr	%r4
+	mfspr	%r3,SPR_CFAR
+	li	%r4,0x100
+	b	_exception + (reset_patch_start - sreset_vector)
+1:
 	LOAD_IMM64(%r30, SKIBOOT_BASE)
+	cmpdi	%r3,0x1
+	bne	2f		/* state loss */
+	LOAD_IMM32(%r3, reset_resume - __head)
+	b	3f
+2:
 	LOAD_IMM32(%r3, reset_wakeup - __head)
+3:
 	add	%r3,%r30,%r3
 	mtctr	%r3
 	bctr
@@ -715,7 +733,7 @@ reset_wakeup:
 	REST_GPR(29,%r1)
 	REST_GPR(30,%r1)
 	REST_GPR(31,%r1)
-
+reset_resume:
 	/* Get LR back, pop stack and return */
 	addi	%r1,%r1,STACK_FRAMESIZE
 	ld	%r0,16(%r1)
