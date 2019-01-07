@@ -536,19 +536,6 @@ call_relocate:
 1:	/* Fatal relocate failure */
 	attn
 
-#define FIXUP_ENDIAN						   \
-	tdi   0,0,0x48;	  /* Reverse endian of b . + 8		*/ \
-	b     191f;	  /* Skip trampoline if endian is good	*/ \
-	.long 0xa600607d; /* mfmsr r11				*/ \
-	.long 0x01006b69; /* xori r11,r11,1			*/ \
-	.long 0x05009f42; /* bcl 20,31,$+4			*/ \
-	.long 0xa602487d; /* mflr r10				*/ \
-	.long 0x14004a39; /* addi r10,r10,20			*/ \
-	.long 0xa64b5a7d; /* mthsrr0 r10			*/ \
-	.long 0xa64b7b7d; /* mthsrr1 r11			*/ \
-	.long 0x2402004c; /* hrfid				*/ \
-191:
-
 .global enable_machine_check
 enable_machine_check:
 	mflr	%r0
@@ -681,8 +668,6 @@ enter_p9_pm_state:
  */
 .global reset_patch_start
 reset_patch_start:
-	FIXUP_ENDIAN
-	smt_medium
 	LOAD_IMM64(%r30, SKIBOOT_BASE)
 	LOAD_IMM32(%r3, reset_wakeup - __head)
 	add	%r3,%r30,%r3

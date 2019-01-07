@@ -41,5 +41,17 @@
 /* Load an address via the TOC */
 #define LOAD_ADDR_FROM_TOC(r, e)	ld r,e@got(%r2)
 
+#define FIXUP_ENDIAN						   \
+	tdi   0,0,0x48;	  /* Reverse endian of b . + 8		*/ \
+	b     191f;	  /* Skip trampoline if endian is good	*/ \
+	.long 0xa600607d; /* mfmsr r11				*/ \
+	.long 0x01006b69; /* xori r11,r11,1			*/ \
+	.long 0x05009f42; /* bcl 20,31,$+4			*/ \
+	.long 0xa602487d; /* mflr r10				*/ \
+	.long 0x14004a39; /* addi r10,r10,20			*/ \
+	.long 0xa64b5a7d; /* mthsrr0 r10			*/ \
+	.long 0xa64b7b7d; /* mthsrr1 r11			*/ \
+	.long 0x2402004c; /* hrfid				*/ \
+191:
 
 #endif /* __ASM_UTILS_H */
