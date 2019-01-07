@@ -170,8 +170,42 @@ void fast_reboot(void)
 		cpu->save_r1 = 0;
 	}
 
+	/*
+	 * Move SPRs and exception vectors back to OPAL-mode while all
+	 * others are quiesced. MSR[ME] is disabled while these are switched,
+	 * but system reset can not be blocked -- in theory an sreset coming
+	 * from the BMC or SPE could crash here.
+	 */
+	disable_machine_check();
+
+	/*
+	 * Primarily we want to fix up the HID bits here to allow the OPAL
+	 * exception handlers to work. Machine check would be the important
+	 * one.
+	 *
+	 * This is one case where a thread other than thread0 of the core
+	 * may update the shared SPRs. All other threads are stopped, so
+	 * there should be no races.
+	 */
+	init_shared_sprs();
+	init_replicated_sprs();
+
 	/* Restore skiboot vectors  */
 	copy_exception_vectors();
+
+	/*
+	 * Secondaries may still have an issue with machine checks if they have
+	 * HILE set because the machine check exception does not FIXUP_ENDIAN.
+	 * Adding that would trash CFAR however. So we have a window where
+	 * if a secondary takes an interrupt before the HILE is fixed, it will
+	 * crash.
+	 */
+	enable_machine_check();
+
+	/*
+	 * sreset vector has a FIXUP_ENDIAN sequence at the start, so
+	 * secondaries can cope.
+	 */
 	copy_sreset_vector();
 
 	/* Send everyone else to 0x100 */
