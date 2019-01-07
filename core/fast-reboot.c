@@ -172,7 +172,7 @@ void fast_reboot(void)
 
 	/* Restore skiboot vectors  */
 	copy_exception_vectors();
-	setup_reset_vector();
+	copy_sreset_vector();
 
 	/* Send everyone else to 0x100 */
 	if (sreset_all_others() != OPAL_SUCCESS) {

@@ -748,7 +748,7 @@ static void setup_branch_null_catcher(void)
 }
 #endif
 
-void setup_reset_vector(void)
+void copy_sreset_vector(void)
 {
 	uint32_t *src, *dst;
 
@@ -1067,7 +1067,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* We can now overwrite the 0x100 vector as we are no longer being
 	 * entered there.
 	 */
-	setup_reset_vector();
+	copy_sreset_vector();
 
 	/* We can now do NAP mode */
 	cpu_set_sreset_enable(true);
