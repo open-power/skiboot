@@ -303,6 +303,7 @@ static int erase_range(struct flash_details *flash,
 		struct ffs_handle *ffsh, int ffs_index)
 {
 	uint32_t done = 0, erase_mask = flash->erase_granule - 1;
+	struct ffs_entry *toc;
 	bool confirm;
 	int rc;
 
@@ -360,13 +361,26 @@ static int erase_range(struct flash_details *flash,
 		progress_tick(done);
 	}
 	progress_end();
+
+	if (!ffsh)
+		return 0;
+
 	/* If this is a flash partition, mark it empty if we aren't
 	 * going to program over it as well
 	 */
-	if (ffsh && ffs_index >= 0 && !will_program) {
-		printf("Updating actual size in partition header...\n");
-		ffs_update_act_size(ffsh, ffs_index, 0);
+	toc = ffs_entry_get(ffsh, 0);
+	if (toc) {
+		struct ffs_entry_user user;
+		bool rw_toc;
+
+		user = ffs_entry_user_get(toc);
+		rw_toc = !(user.miscflags & FFS_MISCFLAGS_READONLY);
+		if (ffs_index >= 0 && !will_program && rw_toc) {
+			printf("Updating actual size in partition header...\n");
+			ffs_update_act_size(ffsh, ffs_index, 0);
+		}
 	}
+
 	return 0;
 }
 
@@ -407,9 +421,10 @@ static int program_file(struct blocklevel_device *bl,
 		const char *file, uint32_t start, uint32_t size,
 		struct ffs_handle *ffsh, int ffs_index)
 {
-	bool confirm;
-	int fd, rc = 0;
 	uint32_t actual_size = 0;
+	struct ffs_entry *toc;
+	int fd, rc = 0;
+	bool confirm;
 
 	fd = open(file, O_RDONLY);
 	if (fd == -1) {
@@ -462,10 +477,21 @@ static int program_file(struct blocklevel_device *bl,
 	}
 	progress_end();
 
+	if (!ffsh)
+		goto out;
+
 	/* If this is a flash partition, adjust its size */
-	if (ffsh && ffs_index >= 0) {
-		printf("Updating actual size in partition header...\n");
-		ffs_update_act_size(ffsh, ffs_index, actual_size);
+	toc = ffs_entry_get(ffsh, 0);
+	if (toc) {
+		struct ffs_entry_user user;
+		bool rw_toc;
+
+		user = ffs_entry_user_get(toc);
+		rw_toc = !(user.miscflags & FFS_MISCFLAGS_READONLY);
+		if (ffs_index >= 0 && rw_toc) {
+			printf("Updating actual size in partition header...\n");
+			ffs_update_act_size(ffsh, ffs_index, actual_size);
+		}
 	}
 out:
 	close(fd);
