@@ -111,9 +111,6 @@ struct npu2_dev_nvlink {
 
 	uint8_t			link_flags;
 
-	/* Vendor specific capability */
-	uint32_t		vendor_cap;
-
 	/* Used to associate the NPU device with GPU PCI devices */
 	const char		*slot_label;
 };

@@ -1653,7 +1653,6 @@ static uint32_t npu2_populate_vendor_cap(struct npu2_dev *dev,
 	/* Capbility list */
 	PCI_VIRT_CFG_INIT_RO(pvd, prev_cap, 1, start);
 	PCI_VIRT_CFG_INIT_RO(pvd, start, 1, PCI_CFG_CAP_ID_VENDOR);
-	dev->nvlink.vendor_cap = start;
 
 	/* Length and version */
 	PCI_VIRT_CFG_INIT_RO(pvd, start + 2, 1, VENDOR_CAP_LEN);
