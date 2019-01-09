@@ -1447,7 +1447,6 @@ static int64_t npu2_opencapi_set_pe(struct phb *phb,
 	reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC,
 			      NPU2_MISC_BRICK0_BDF2PE_MAP0 +
 			      (dev->brick_index * 0x18));
-	p->bdf2pe_cache[dev->brick_index] = val;
 	npu2_write(p, reg, val);
 
 	return OPAL_SUCCESS;

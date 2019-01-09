@@ -883,35 +883,6 @@ static void npu2_phb_final_fixup(struct phb *phb)
 
 static void npu2_init_ioda_cache(struct npu2 *p)
 {
-	uint64_t val[2];
-	uint32_t i;
-
-	/*
-	 * PE mapping: there are two sets of registers. One of them
-	 * is used to map PEs for transactions. Another set is used
-	 * for error routing. We should have consistent setting in
-	 * both of them. Note that each brick can support 3 PEs at
-	 * the maximal degree. For now, we just support one PE per
-	 * brick.
-	 */
-	val[0] = NPU2_CQ_BRICK_BDF2PE_MAP_ENABLE;
-	val[0] = SETFIELD(NPU2_CQ_BRICK_BDF2PE_MAP_PE,
-			  val[0], NPU2_RESERVED_PE_NUM);
-	val[1] = NPU2_MISC_BRICK_BDF2PE_MAP_ENABLE;
-	val[1] = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_PE,
-			  val[1], NPU2_RESERVED_PE_NUM);
-	for (i = 0; i < ARRAY_SIZE(p->bdf2pe_cache); i++) {
-		if (i < ARRAY_SIZE(p->bdf2pe_cache))
-			p->bdf2pe_cache[i] = SETFIELD(NPU2_CQ_BRICK_BDF2PE_MAP_BDF,
-						      val[0], i / 3);
-		else
-			p->bdf2pe_cache[i] = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_BDF,
-						      val[1], i / 3);
-
-		if (i % 3)
-			p->bdf2pe_cache[i] = 0ul;
-	}
-
 	/* TVT */
 	memset(p->tve_cache, 0, sizeof(p->tve_cache));
 }
@@ -1220,7 +1191,6 @@ static int64_t npu2_set_pe(struct phb *phb,
 	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_BDF, val, dev->nvlink.gpu_bdfn);
 	reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC,
 			      NPU2_MISC_BRICK0_BDF2PE_MAP0 + (dev->brick_index * 0x18));
-	p->bdf2pe_cache[dev->brick_index] = val;
 	npu2_write(p, reg, val);
 
 	return OPAL_SUCCESS;

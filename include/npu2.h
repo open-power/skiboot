@@ -165,7 +165,6 @@ struct npu2 {
 
 	/* IODA cache */
 	uint64_t	lxive_cache[8];
-	uint64_t	bdf2pe_cache[36];
 	uint64_t	tve_cache[16];
 	bool		tx_zcal_complete[2];
 
