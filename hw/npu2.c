@@ -1838,11 +1838,8 @@ static void npu2_populate_devices(struct npu2 *p,
 
 		/* Initialize PCI virtual device */
 		dev->nvlink.pvd = pci_virt_add_device(&p->phb_nvlink, dev->bdfn, 0x100, dev);
-		if (dev->nvlink.pvd) {
-			p->phb_nvlink.scan_map |=
-				0x1 << ((dev->nvlink.pvd->bdfn & 0xf8) >> 3);
+		if (dev->nvlink.pvd)
 			npu2_populate_cfg(dev);
-		}
 
 		index++;
 	}
