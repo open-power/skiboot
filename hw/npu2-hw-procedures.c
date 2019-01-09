@@ -908,7 +908,6 @@ static int64_t npu_dev_procedure_write(struct npu2_dev *dev, uint32_t offset,
 		dev->procedure_status = PROCEDURE_INPROGRESS;
 		dev->procedure_number = data;
 		dev->procedure_step = 0;
-		dev->procedure_data = 0;
 		dev->procedure_tb = mftb();
 		break;
 
@@ -961,7 +960,6 @@ static uint32_t run_procedure(struct npu2_dev *dev, uint16_t procedure_number)
 	dev->procedure_status = PROCEDURE_INPROGRESS;
 	dev->procedure_number = procedure_number;
 	dev->procedure_step = 0;
-	dev->procedure_data = 0;
 	dev->procedure_tb = mftb();
 
 	result = get_procedure_status(dev);

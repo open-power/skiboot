@@ -136,7 +136,6 @@ struct npu2_dev {
 	/* Track currently running procedure and step number */
 	uint16_t		procedure_number;
 	uint16_t		procedure_step;
-	uint64_t		procedure_data;
 	unsigned long		procedure_tb;
 	uint32_t		procedure_status;
 
