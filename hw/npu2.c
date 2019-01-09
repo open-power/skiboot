@@ -266,10 +266,8 @@ static int64_t npu2_cfg_write_bar(struct npu2_dev *dev,
 				  uint32_t offset, uint32_t size,
 				  uint32_t data)
 {
-	struct pci_virt_device *pvd = dev->nvlink.pvd;
 	struct npu2_pcie_bar *bar = (struct npu2_pcie_bar *) pcrf->data;
 	struct npu2_bar old_bar, *npu2_bar = &bar->npu2_bar;
-	uint32_t pci_cmd;
 
 	if ((size != 4) ||
 	    (offset != pcrf->start && offset != pcrf->start + 4))
@@ -290,8 +288,6 @@ static int64_t npu2_cfg_write_bar(struct npu2_dev *dev,
 	} else {
 		npu2_bar->base &= 0x00000000ffffffff;
 		npu2_bar->base |= ((uint64_t)data << 32);
-
-		PCI_VIRT_CFG_NORMAL_RD(pvd, PCI_CFG_CMD, 4, &pci_cmd);
 
 		if (NPU2_REG(npu2_bar->reg) == NPU2_GENID_BAR && NPU2DEV_BRICK(dev))
 			npu2_bar->base -= 0x10000;
