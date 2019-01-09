@@ -605,20 +605,9 @@ static void npu2_append_phandle(struct dt_node *dn,
 static struct dt_node *npu2_create_memory_dn(uint64_t addr, uint64_t size)
 {
 	struct dt_node *mem;
-	char *name;
-	size_t namesz;
 	static u32 chip_id = 255;
 
-	/*
-	 * Find and return the node if it already exists.
-	 */
-	namesz = sizeof("memory@") + STR_MAX_CHARS(addr);
-	name = malloc(namesz);
-	if (!name)
-		return NULL;
-	snprintf(name, namesz, "memory@%llx", (long long)addr);
-	mem = dt_find_by_name(dt_root, name);
-	free(name);
+	mem = dt_find_by_name_addr(dt_root, "memory", addr);
 	if (mem)
 		return mem;
 
