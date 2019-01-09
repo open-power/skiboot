@@ -1357,6 +1357,7 @@ static int64_t npu2_tce_kill(struct phb *phb, uint32_t kill_type,
 		while (npages--) {
 			val = SETFIELD(NPU2_ATS_TCE_KILL_PENUM, dma_addr, pe_number);
 			npu2_write(npu, NPU2_ATS_TCE_KILL, NPU2_ATS_TCE_KILL_ONE | val);
+			dma_addr += tce_size;
 		}
 		break;
 	case OPAL_PCI_TCE_KILL_PE:
