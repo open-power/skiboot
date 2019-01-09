@@ -164,7 +164,6 @@ struct npu2 {
 	enum phys_map_type gpu_map_type;
 
 	/* IODA cache */
-	uint64_t	lxive_cache[8];
 	uint64_t	tve_cache[16];
 	bool		tx_zcal_complete[2];
 
