@@ -573,6 +573,22 @@ static void phb3_endpoint_init(struct phb *phb,
 	pci_cfg_write32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, val32);
 }
 
+static int64_t phb3_pcicfg_no_dstate(void *dev __unused,
+				     struct pci_cfg_reg_filter *pcrf,
+				     uint32_t offset, uint32_t len __unused,
+				     uint32_t *data __unused,  bool write)
+{
+	uint32_t loff = offset - pcrf->start;
+
+	/* Disable D-state change on children of the PHB. For now we
+	 * simply block all writes to the PM control/status
+	 */
+	if (write && loff >= 4 && loff < 6)
+		return OPAL_SUCCESS;
+
+	return OPAL_PARTIAL;
+}
+
 static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
 {
 	struct phb3 *p = phb_to_phb3(phb);
@@ -601,6 +617,19 @@ static void phb3_check_device_quirks(struct phb *phb, struct pci_device *dev)
 		else
 			modectl &= ~PPC_BIT(14);
 		xscom_write(p->chip_id, p->pe_xscom + 0x0b, modectl);
+
+		/*
+		 * Naples has a problem with D-states at least on Mellanox CX4,
+		 * disable changing D-state on Naples like we do it for PHB4.
+		 */
+		if (PHB3_IS_NAPLES(p) &&
+		    pci_has_cap(dev, PCI_CFG_CAP_ID_PM, false)) {
+			pci_add_cfg_reg_filter(dev,
+					pci_cap(dev, PCI_CFG_CAP_ID_PM, false),
+					8,
+					PCI_REG_FLAG_WRITE,
+					phb3_pcicfg_no_dstate);
+		}
 	} else if (dev->primary_bus == 0) {
 		/*
 		 * Emulate the prefetchable window of the root port
