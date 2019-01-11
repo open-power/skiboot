@@ -225,6 +225,5 @@ int64_t npu2_freeze_status(struct phb *phb __unused,
 			   uint64_t pe_number __unused,
 			   uint8_t *freeze_state,
 			   uint16_t *pci_error_type __unused,
-			   uint16_t *severity __unused,
-			   uint64_t *phb_status __unused);
+			   uint16_t *severity __unused);
 #endif /* __NPU2_H */

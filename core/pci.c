@@ -337,7 +337,7 @@ static void pci_check_clear_freeze(struct phb *phb)
 
 	/* Retrieve the frozen state */
 	rc = phb->ops->eeh_freeze_status(phb, pe_number, &freeze_state,
-					 &pci_error_type, &sev, NULL);
+					 &pci_error_type, &sev);
 	if (rc)
 		return;
 	if (freeze_state == OPAL_EEH_STOPPED_NOT_FROZEN)

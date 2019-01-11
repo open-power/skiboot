@@ -284,8 +284,7 @@ static void p7ioc_eeh_read_phb_status(struct p7ioc_phb *p,
 static int64_t p7ioc_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 				       uint8_t *freeze_state,
 				       uint16_t *pci_error_type,
-				       uint16_t *severity,
-				       uint64_t *phb_status)
+				       uint16_t *severity)
 {
 	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
 	uint64_t peev_bit = PPC_BIT(pe_number & 0x3f);
@@ -301,7 +300,7 @@ static int64_t p7ioc_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 		*pci_error_type = OPAL_EEH_PHB_ERROR;
 		if (severity)
 			*severity = OPAL_EEH_SEV_PHB_DEAD;
-		goto bail;
+		return OPAL_SUCCESS;
 	}
 
 	/* Check fence */
@@ -311,7 +310,7 @@ static int64_t p7ioc_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 		*pci_error_type = OPAL_EEH_PHB_ERROR;
 		if (severity)
 			*severity = OPAL_EEH_SEV_PHB_FENCED;
-		goto bail;
+		return OPAL_SUCCESS;
 	}
 
 	/* Check the PEEV */
@@ -345,10 +344,6 @@ static int64_t p7ioc_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 	else
 		*pci_error_type = OPAL_EEH_PE_DMA_ERROR;
 
- bail:
-	if (phb_status)
-		p7ioc_eeh_read_phb_status(p, (struct OpalIoP7IOCPhbErrorData *)
-					  phb_status);
 	return OPAL_SUCCESS;
 }
 

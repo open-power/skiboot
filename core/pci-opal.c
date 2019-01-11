@@ -111,8 +111,13 @@ static int64_t opal_pci_eeh_freeze_status(uint64_t phb_id, uint64_t pe_number,
 	if (!phb->ops->eeh_freeze_status)
 		return OPAL_UNSUPPORTED;
 	phb_lock(phb);
+
+	if (phb_status)
+		prlog(PR_ERR, "PHB#%04llx: %s: deprecated PHB status\n",
+				phb_id, __func__);
+
 	rc = phb->ops->eeh_freeze_status(phb, pe_number, freeze_state,
-					 pci_error_type, NULL, phb_status);
+					 pci_error_type, NULL);
 	phb_unlock(phb);
 
 	return rc;
@@ -961,8 +966,13 @@ static int64_t opal_pci_eeh_freeze_status2(uint64_t phb_id, uint64_t pe_number,
 	if (!phb->ops->eeh_freeze_status)
 		return OPAL_UNSUPPORTED;
 	phb_lock(phb);
+
+	if (phb_status)
+		prlog(PR_ERR, "PHB#%04llx: %s: deprecated PHB status\n",
+				phb_id, __func__);
+
 	rc = phb->ops->eeh_freeze_status(phb, pe_number, freeze_state,
-					 pci_error_type, severity, phb_status);
+					 pci_error_type, severity);
 	phb_unlock(phb);
 
 	return rc;

@@ -260,8 +260,7 @@ struct phb_ops {
 	int64_t (*eeh_freeze_status)(struct phb *phb, uint64_t pe_number,
 				     uint8_t *freeze_state,
 				     uint16_t *pci_error_type,
-				     uint16_t *severity,
-				     uint64_t *phb_status);
+				     uint16_t *severity);
 	int64_t (*eeh_freeze_clear)(struct phb *phb, uint64_t pe_number,
 				    uint64_t eeh_action_token);
 	int64_t (*eeh_freeze_set)(struct phb *phb, uint64_t pe_number,

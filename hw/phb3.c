@@ -2718,8 +2718,7 @@ static struct pci_slot *phb3_slot_create(struct phb *phb)
 static int64_t phb3_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 				      uint8_t *freeze_state,
 				      uint16_t *pci_error_type,
-				      uint16_t *severity,
-				      uint64_t *phb_status)
+				      uint16_t *severity)
 {
 	struct phb3 *p = phb_to_phb3(phb);
 	uint64_t peev_bit = PPC_BIT(pe_number & 0x3f);
@@ -2744,7 +2743,7 @@ static int64_t phb3_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 		*pci_error_type = OPAL_EEH_PHB_ERROR;
 		if (severity)
 			*severity = OPAL_EEH_SEV_PHB_FENCED;
-		goto bail;
+		return OPAL_SUCCESS;
 	}
 
 	/* Check the PEEV */
@@ -2769,11 +2768,6 @@ static int64_t phb3_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 		*freeze_state |= OPAL_EEH_STOPPED_MMIO_FREEZE;
 	if (pestb & IODA2_PESTB_DMA_STOPPED)
 		*freeze_state |= OPAL_EEH_STOPPED_DMA_FREEZE;
-
-bail:
-	if (phb_status)
-		phb3_read_phb_status(p,
-			(struct OpalIoPhb3ErrorData *)phb_status);
 
 	return OPAL_SUCCESS;
 }

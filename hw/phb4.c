@@ -3398,8 +3398,7 @@ static bool phb4_freeze_escalate(uint64_t pesta)
 static int64_t phb4_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 				      uint8_t *freeze_state,
 				      uint16_t *pci_error_type,
-				      uint16_t *severity,
-				      uint64_t *phb_status)
+				      uint16_t *severity)
 {
 	struct phb4 *p = phb_to_phb4(phb);
 	uint64_t peev_bit = PPC_BIT(pe_number & 0x3f);
@@ -3424,7 +3423,7 @@ static int64_t phb4_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 		*pci_error_type = OPAL_EEH_PHB_ERROR;
 		if (severity)
 			*severity = OPAL_EEH_SEV_PHB_FENCED;
-		goto bail;
+		return OPAL_SUCCESS;
 	}
 
 	/* Check the PEEV */
@@ -3457,10 +3456,6 @@ static int64_t phb4_eeh_freeze_status(struct phb *phb, uint64_t pe_number,
 		*freeze_state |= OPAL_EEH_STOPPED_MMIO_FREEZE;
 	if (pestb & IODA3_PESTB_DMA_STOPPED)
 		*freeze_state |= OPAL_EEH_STOPPED_DMA_FREEZE;
-
-bail:
-	if (phb_status)
-		PHBERR(p, "%s: deprecated PHB status\n", __func__);
 
 	return OPAL_SUCCESS;
 }

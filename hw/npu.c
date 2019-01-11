@@ -882,8 +882,7 @@ static int64_t npu_freeze_status(struct phb *phb,
 				     uint64_t pe_number __unused,
 				     uint8_t *freeze_state,
 				     uint16_t *pci_error_type __unused,
-				     uint16_t *severity __unused,
-				     uint64_t *phb_status __unused)
+				     uint16_t *severity __unused)
 {
 	/* FIXME: When it's called by skiboot PCI config accessor,
 	 * the PE number is fixed to 0, which is incorrect. We need
