@@ -3284,6 +3284,7 @@ static void disable_capi_mode(struct phb4 *p)
 static int64_t phb4_creset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
+	struct capp *capp = p->capp;
 	uint64_t pbcq_status, reg;
 
 	/* Don't even try fixing a broken PHB */
@@ -3298,6 +3299,16 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		phb4_prepare_link_change(slot, false);
 		/* Clear error inject register, preventing recursive errors */
 		xscom_write(p->chip_id, p->pe_xscom + 0x2, 0x0);
+
+		/* Prevent HMI when PHB gets fenced as we are disabling CAPP */
+		if (p->flags & PHB4_CAPP_DISABLE &&
+		    capp && capp->phb == slot->phb) {
+			/* Since no HMI, So set the recovery flag manually. */
+			p->flags |= PHB4_CAPP_RECOVERY;
+			xscom_write_mask(p->chip_id, capp->capp_xscom_offset +
+					 CAPP_FIR_MASK,
+					 PPC_BIT(31), PPC_BIT(31));
+		}
 
 		/* Force fence on the PHB to work around a non-existent PE */
 		if (!phb4_fenced(p))
