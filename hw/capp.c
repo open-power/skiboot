@@ -240,3 +240,15 @@ int64_t capp_get_info(int chip_id, struct phb *phb, struct capp_info *info)
 
 	return OPAL_PARAMETER;
 }
+
+int64_t capp_xscom_read(struct capp *capp, int64_t off, uint64_t *val)
+{
+	return capp == NULL ? OPAL_PARAMETER :
+		xscom_read(capp->chip_id, off + capp->capp_xscom_offset, val);
+}
+
+int64_t capp_xscom_write(struct capp *capp, int64_t off, uint64_t val)
+{
+	return capp == NULL ? OPAL_PARAMETER :
+		xscom_write(capp->chip_id, off + capp->capp_xscom_offset, val);
+}

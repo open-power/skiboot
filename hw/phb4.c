@@ -3880,13 +3880,13 @@ static int64_t phb4_get_capp_info(int chip_id, struct phb *phb,
 				  struct capp_info *info)
 {
 	struct phb4 *p = phb_to_phb4(phb);
-	struct proc_chip *chip = get_chip(p->chip_id);
 	uint32_t offset;
 
 	if (chip_id != p->chip_id)
 		return OPAL_PARAMETER;
 
-	if (!((1 << p->index) & chip->capp_phb4_attached_mask))
+	/* Check is CAPP is attached to the PHB */
+	if (p->capp == NULL || p->capp->phb != phb)
 		return OPAL_PARAMETER;
 
 	offset = PHB4_CAPP_REG_OFFSET(p);
@@ -4397,23 +4397,63 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 	return OPAL_SUCCESS;
 }
 
+
+static int64_t phb4_init_capp(struct phb4 *p)
+{
+	struct capp *capp;
+	int rc;
+
+	if (p->index != CAPP0_PHB_INDEX &&
+	    p->index != CAPP1_PHB_INDEX)
+		return OPAL_UNSUPPORTED;
+
+	capp = zalloc(sizeof(struct capp));
+	if (capp == NULL)
+		return OPAL_NO_MEM;
+
+	if (p->index == CAPP0_PHB_INDEX) {
+		capp->capp_index = 0;
+		capp->capp_xscom_offset = 0;
+
+	} else if (p->index == CAPP1_PHB_INDEX) {
+		capp->capp_index = 1;
+		capp->capp_xscom_offset = CAPP1_REG_OFFSET;
+	}
+
+	capp->attached_pe = phb4_get_reserved_pe_number(&p->phb);
+	capp->chip_id = p->chip_id;
+
+	/* Load capp microcode into the capp unit */
+	rc = load_capp_ucode(p);
+
+	if (rc == OPAL_SUCCESS)
+		p->capp = capp;
+	else
+		free(capp);
+
+	return rc;
+}
+
 static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 				  uint64_t pe_number)
 {
 	struct phb4 *p = phb_to_phb4(phb);
 	struct proc_chip *chip = get_chip(p->chip_id);
+	struct capp *capp = p->capp;
 	uint64_t reg, ret;
 	uint32_t offset;
 
+	if (capp == NULL)
+		return OPAL_UNSUPPORTED;
 
 	if (!capp_ucode_loaded(chip, p->index)) {
 		PHBERR(p, "CAPP: ucode not loaded\n");
 		return OPAL_RESOURCE;
 	}
 
-	lock(&capi_lock);
-	chip->capp_phb4_attached_mask |= 1 << p->index;
-	unlock(&capi_lock);
+	/* mark the capp attached to the phb */
+	capp->phb = phb;
+	capp->attached_pe = pe_number;
 
 	offset = PHB4_CAPP_REG_OFFSET(p);
 	xscom_read(p->chip_id, CAPP_ERR_STATUS_CTRL + offset, &reg);
@@ -5595,8 +5635,8 @@ static void phb4_create(struct dt_node *np)
 	/* Get the HW up and running */
 	phb4_init_hw(p);
 
-	/* Load capp microcode into capp unit */
-	load_capp_ucode(p);
+	/* init capp that might get attached to the phb */
+	phb4_init_capp(p);
 
 	/* Compute XIVE source flags depending on PHB revision */
 	irq_flags = 0;

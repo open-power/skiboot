@@ -197,7 +197,6 @@ struct proc_chip {
 
 	/* Must hold capi_lock to change */
 	uint8_t			capp_phb3_attached_mask;
-	uint8_t			capp_phb4_attached_mask;
 	uint8_t			capp_ucode_loaded;
 
 	/* Used by hw/centaur.c */

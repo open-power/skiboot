@@ -232,6 +232,9 @@ struct phb4 {
 	/* Current NPU2 relaxed ordering state */
 	bool			ro_state;
 
+	/* Any capp instance attached to the PHB4 */
+	struct capp		*capp;
+
 	struct phb		phb;
 };
 

@@ -79,6 +79,14 @@ struct capp_ops {
 	int64_t (*get_capp_info)(int, struct phb *, struct capp_info *);
 };
 
+struct capp {
+	struct phb *phb;
+	unsigned int capp_index;
+	uint64_t capp_xscom_offset;
+	uint64_t attached_pe;
+	uint64_t chip_id;
+};
+
 struct proc_chip;
 extern struct lock capi_lock;
 extern struct capp_ops capi_ops;
@@ -96,4 +104,8 @@ extern int64_t capp_load_ucode(unsigned int chip_id, uint32_t opal_id,
 extern int64_t capp_get_info(int chip_id, struct phb *phb,
 			     struct capp_info *info);
 
+
+/* Helpers to read/write capp registers */
+extern int64_t capp_xscom_read(struct capp *capp, int64_t off, uint64_t *val);
+extern int64_t capp_xscom_write(struct capp *capp, int64_t off, uint64_t val);
 #endif /* __CAPP_H */
