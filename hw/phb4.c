@@ -2799,6 +2799,36 @@ static bool phb4_host_sync_reset(void *data)
 	return rc <= OPAL_SUCCESS;
 }
 
+/*
+ * Notification from the pci-core that a pci slot state machine completed.
+ * We use this callback to mark the CAPP disabled if we were waiting for it.
+ */
+static int64_t phb4_slot_sm_run_completed(struct pci_slot *slot, uint64_t err)
+{
+	struct phb4 *p = phb_to_phb4(slot->phb);
+
+	/* Check if we are disabling the capp */
+	if (p->flags & PHB4_CAPP_DISABLE) {
+
+		/* Unset struct capp so that we dont fall into a creset loop */
+		p->flags &= ~(PHB4_CAPP_DISABLE);
+		p->capp->phb = NULL;
+		p->capp->attached_pe = phb4_get_reserved_pe_number(&p->phb);
+
+		/* Remove the host sync notifier is we are done.*/
+		opal_del_host_sync_notifier(phb4_host_sync_reset, p);
+		if (err) {
+			/* Force a CEC ipl reboot */
+			disable_fast_reboot("CAPP: reset failed");
+			PHBERR(p, "CAPP: Unable to reset. Error=%lld\n", err);
+		} else {
+			PHBINF(p, "CAPP: reset complete\n");
+		}
+	}
+
+	return OPAL_SUCCESS;
+}
+
 static int64_t phb4_poll_link(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
@@ -3155,6 +3185,42 @@ static int do_capp_recovery_scoms(struct phb4 *p)
 	return rc;
 }
 
+/*
+ * Disable CAPI mode on a PHB. Must be done while PHB is fenced and
+ * not in recovery.
+ */
+static void disable_capi_mode(struct phb4 *p)
+{
+	uint64_t reg;
+	struct capp *capp = p->capp;
+
+	PHBINF(p, "CAPP: Deactivating\n");
+
+	/* Check if CAPP attached to the PHB and active */
+	if (!capp || capp->phb != &p->phb) {
+		PHBDBG(p, "CAPP: Not attached to this PHB!\n");
+		return;
+	}
+
+	xscom_read(p->chip_id, p->pe_xscom + XPEC_NEST_CAPP_CNTL, &reg);
+	if (!(reg & PPC_BIT(0))) {
+		/* Not in CAPI mode, no action required */
+		PHBERR(p, "CAPP: Not enabled!\n");
+		return;
+	}
+
+	/* CAPP should already be out of recovery in this function */
+	capp_xscom_read(capp, CAPP_ERR_STATUS_CTRL, &reg);
+	if (reg & PPC_BIT(0)) {
+		PHBERR(p, "CAPP: Can't disable while still in recovery!\n");
+		return;
+	}
+
+	PHBINF(p, "CAPP: Disabling CAPI mode\n");
+
+	/* Implement procedure to disable CAPP based on h/w sequence */
+}
+
 static int64_t phb4_creset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
@@ -3214,6 +3280,9 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			if ((p->flags & PHB4_CAPP_RECOVERY) &&
 			    (do_capp_recovery_scoms(p) != OPAL_SUCCESS))
 				goto error;
+
+			if (p->flags & PHB4_CAPP_DISABLE)
+				disable_capi_mode(p);
 
 			/* Clear errors in PFIR and NFIR */
 			xscom_write(p->chip_id, p->pci_stk_xscom + 0x1,
@@ -3318,6 +3387,7 @@ static struct pci_slot *phb4_slot_create(struct phb *phb)
 	slot->ops.hreset		= phb4_hreset;
 	slot->ops.freset		= phb4_freset;
 	slot->ops.creset		= phb4_creset;
+	slot->ops.completed_sm_run	= phb4_slot_sm_run_completed;
 	slot->link_retries		= PHB4_LINK_LINK_RETRIES;
 
 	return slot;
@@ -4493,12 +4563,37 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 		break;
 
 	case OPAL_PHB_CAPI_MODE_SNOOP_OFF:
-	case OPAL_PHB_CAPI_MODE_PCIE: /* Not supported at the moment */
 		ret = p->capp->phb ? OPAL_UNSUPPORTED : OPAL_SUCCESS;
+		break;
+
+	case OPAL_PHB_CAPI_MODE_PCIE:
+		if (p->flags & PHB4_CAPP_DISABLE) {
+			/* We are in middle of a CAPP disable */
+			ret = OPAL_BUSY;
+
+		} else if (capp->phb) {
+			/* Kick start a creset */
+			p->flags |= PHB4_CAPP_DISABLE;
+			PHBINF(p, "CAPP: PCIE mode needs a cold-reset\n");
+			/* Kick off the pci state machine */
+			ret = phb4_creset(phb->slot);
+			ret = ret > 0 ? OPAL_BUSY : ret;
+
+		} else {
+			/* PHB already in PCI mode */
+			ret = OPAL_SUCCESS;
+		}
 		break;
 
 	case OPAL_PHB_CAPI_MODE_CAPI: /* Fall Through */
 	case OPAL_PHB_CAPI_MODE_DMA_TVT1:
+		/* Make sure that PHB is not disabling CAPP */
+		if (p->flags & PHB4_CAPP_DISABLE) {
+			PHBERR(p, "CAPP: Disable in progress\n");
+			ret = OPAL_BUSY;
+			break;
+		}
+
 		/* Check if ucode is available */
 		if (!capp_ucode_loaded(chip, p->index)) {
 			PHBERR(p, "CAPP: ucode not loaded\n");
