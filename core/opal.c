@@ -685,12 +685,15 @@ void opal_add_host_sync_notifier(bool (*notify)(void *data), void *data)
 	list_add_tail(&opal_syncers, &ent->link);
 }
 
-void opal_del_host_sync_notifier(bool (*notify)(void *data))
+/*
+ * Remove a host sync notifier for given callback and data
+ */
+void opal_del_host_sync_notifier(bool (*notify)(void *data), void *data)
 {
 	struct opal_sync_entry *ent;
 
 	list_for_each(&opal_syncers, ent, link) {
-		if (ent->notify == notify) {
+		if (ent->notify == notify && ent->data == data) {
 			list_del(&ent->link);
 			free(ent);
 			return;
