@@ -2768,6 +2768,37 @@ static void phb4_training_trace(struct phb4 *p)
 	}
 }
 
+/*
+ * This helper is called repeatedly by the host sync notifier mechanism, which
+ * relies on the kernel to regularly poll the OPAL_SYNC_HOST_REBOOT call as it
+ * shuts down.
+ */
+static bool phb4_host_sync_reset(void *data)
+{
+	struct phb4 *p = (struct phb4 *)data;
+	struct phb *phb = &p->phb;
+	int64_t rc = 0;
+
+	/* Make sure no-one modifies the phb flags while we are active */
+	phb_lock(phb);
+
+	/* Make sure CAPP is attached to the PHB */
+	if (p->capp)
+		/* Call phb ops to disable capi */
+		rc = phb->ops->set_capi_mode(phb, OPAL_PHB_CAPI_MODE_PCIE,
+				       p->capp->attached_pe);
+	else
+		rc = OPAL_SUCCESS;
+
+	/* Continue kicking state-machine if in middle of a mode transition */
+	if (rc == OPAL_BUSY)
+		rc = phb->slot->ops.run_sm(phb->slot);
+
+	phb_unlock(phb);
+
+	return rc <= OPAL_SUCCESS;
+}
+
 static int64_t phb4_poll_link(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
@@ -4494,6 +4525,9 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 					       CAPP_MAX_STQ_ENGINES |
 					       CAPP_MIN_DMA_READ_ENGINES);
 		if (ret == OPAL_SUCCESS) {
+			/* register notification on system shutdown */
+			opal_add_host_sync_notifier(&phb4_host_sync_reset, p);
+
 			/* Disable fast reboot for CAPP */
 			disable_fast_reboot("CAPP being enabled");
 		} else {
