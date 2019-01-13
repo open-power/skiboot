@@ -110,6 +110,7 @@ struct pci_slot_ops {
 	int64_t (*freset)(struct pci_slot *slot);
 	int64_t (*hreset)(struct pci_slot *slot);
 	int64_t (*run_sm)(struct pci_slot *slot);
+	int64_t (*completed_sm_run)(struct pci_slot *slot, uint64_t err);
 
 	/* Auxillary functions */
 	void (*add_properties)(struct pci_slot *slot, struct dt_node *np);

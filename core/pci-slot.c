@@ -104,8 +104,12 @@ static int64_t pci_slot_run_sm(struct pci_slot *slot)
 		prlog(PR_ERR, PCI_SLOT_PREFIX
 		      "Invalid state %08x\n", slot->id, slot->state);
 		pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
-		return OPAL_HARDWARE;
+		ret = OPAL_HARDWARE;
 	}
+
+	/* Notify about the pci slot state machine completion */
+	if (ret <= 0 && slot->ops.completed_sm_run)
+		slot->ops.completed_sm_run(slot, ret);
 
 	return ret;
 }
