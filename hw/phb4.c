@@ -3218,7 +3218,67 @@ static void disable_capi_mode(struct phb4 *p)
 
 	PHBINF(p, "CAPP: Disabling CAPI mode\n");
 
-	/* Implement procedure to disable CAPP based on h/w sequence */
+	/* First Phase Reset CAPP Registers */
+	/* CAPP about to be disabled mark TLBI_FENCED and tlbi_psl_is_dead */
+	capp_xscom_write(capp, CAPP_ERR_STATUS_CTRL, PPC_BIT(3) | PPC_BIT(4));
+
+	/* Flush SUE uOP1 Register */
+	if (p->rev != PHB4_REV_NIMBUS_DD10)
+		capp_xscom_write(capp, FLUSH_SUE_UOP1, 0);
+
+	/* Release DMA/STQ engines */
+	capp_xscom_write(capp, APC_FSM_READ_MASK, 0ull);
+	capp_xscom_write(capp, XPT_FSM_RMM, 0ull);
+
+	/* Disable snoop */
+	capp_xscom_write(capp, SNOOP_CAPI_CONFIG, 0);
+
+	/* Clear flush SUE state map register */
+	capp_xscom_write(capp, FLUSH_SUE_STATE_MAP, 0);
+
+	/* Disable epoch timer */
+	capp_xscom_write(capp, EPOCH_RECOVERY_TIMERS_CTRL, 0);
+
+	/* CAPP Transport Control Register */
+	capp_xscom_write(capp, TRANSPORT_CONTROL, PPC_BIT(15));
+
+	/* Disable snooping */
+	capp_xscom_write(capp, SNOOP_CONTROL, 0);
+	capp_xscom_write(capp, SNOOP_CAPI_CONFIG, 0);
+
+	/* APC Master PB Control Register - disable examining cResps */
+	capp_xscom_write(capp, APC_MASTER_PB_CTRL, 0);
+
+	/* APC Master Config Register - de-select PHBs */
+	xscom_write_mask(p->chip_id, capp->capp_xscom_offset +
+			 APC_MASTER_CAPI_CTRL, 0, PPC_BITMASK(2, 3));
+
+	/* Clear all error registers */
+	capp_xscom_write(capp, CAPP_ERR_RPT_CLR, 0);
+	capp_xscom_write(capp, CAPP_FIR, 0);
+	capp_xscom_write(capp, CAPP_FIR_ACTION0, 0);
+	capp_xscom_write(capp, CAPP_FIR_ACTION1, 0);
+	capp_xscom_write(capp, CAPP_FIR_MASK, 0);
+
+	/* Second Phase Reset PEC/PHB Registers */
+
+	/* Reset the stack overrides if any */
+	xscom_write(p->chip_id, p->pci_xscom + XPEC_PCI_PRDSTKOVR, 0);
+	xscom_write(p->chip_id, p->pe_xscom +
+		    XPEC_NEST_READ_STACK_OVERRIDE, 0);
+
+	/* PE Bus AIB Mode Bits. Disable Tracing. Leave HOL Blocking as it is */
+	if (!(p->rev == PHB4_REV_NIMBUS_DD10) && p->index == CAPP1_PHB_INDEX)
+		xscom_write_mask(p->chip_id,
+				 p->pci_xscom + XPEC_PCI_PBAIB_HW_CONFIG, 0,
+				 PPC_BIT(30));
+
+	/* Reset for PCI to PB data movement */
+	xscom_write_mask(p->chip_id, p->pe_xscom + XPEC_NEST_PBCQ_HW_CONFIG,
+			 0, XPEC_NEST_PBCQ_HW_CONFIG_PBINIT);
+
+	/* Disable CAPP mode in PEC CAPP Control Register */
+	xscom_write(p->chip_id, p->pe_xscom + XPEC_NEST_CAPP_CNTL, 0ull);
 }
 
 static int64_t phb4_creset(struct pci_slot *slot)
@@ -4623,8 +4683,6 @@ static int64_t phb4_set_capi_mode(struct phb *phb, uint64_t mode,
 			/* register notification on system shutdown */
 			opal_add_host_sync_notifier(&phb4_host_sync_reset, p);
 
-			/* Disable fast reboot for CAPP */
-			disable_fast_reboot("CAPP being enabled");
 		} else {
 			/* In case of an error mark the PHB detached */
 			capp->phb = NULL;
@@ -4840,6 +4898,9 @@ static void phb4_init_ioda3(struct phb4 *p)
 
 	/* Init_26 - CAPI Compare/Mask */
 	/* See enable_capi_mode() */
+	/* if CAPP being disabled then reset CAPI Compare/Mask Register */
+	if (p->flags & PHB4_CAPP_DISABLE)
+		out_be64(p->regs + PHB_CAPI_CMPM, 0);
 
 	/* Init_27 - PCIE Outbound upper address */
 	out_be64(p->regs + PHB_M64_UPPER_BITS, 0);
