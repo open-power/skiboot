@@ -3384,11 +3384,6 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			xscom_write(p->chip_id,
 				    p->pci_stk_xscom + XPEC_PCI_STK_ETU_RESET, 0x0);
 
-			/* DD1 errata: write to PEST to force update */
-			phb4_ioda_sel(p, IODA3_TBL_PESTA, PHB4_RESERVED_PE_NUM(p),
-				      false);
-			phb4_write_reg(p, PHB_IODA_DATA0, 0);
-
 			pci_slot_set_state(slot, PHB4_SLOT_CRESET_REINIT);
 			/* After lifting PHB reset, wait while logic settles */
 			return pci_slot_set_sm_timeout(slot, msecs_to_tb(10));
