@@ -252,12 +252,17 @@ static bool slw_set_overrides_p9(struct proc_chip *chip, struct cpu_thread *c)
 	rc = xscom_read(chip->id,
 			XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_HYP),
 			&tmp);
-	prlog(PR_DEBUG, "SLW: EC_PPM_SPECIAL_WKUP_HYP read  0x%016llx\n", tmp);
+	if (tmp)
+		prlog(PR_WARNING,
+			"SLW: core %d EC_PPM_SPECIAL_WKUP_HYP read  0x%016llx\n",
+		     core, tmp);
 	rc = xscom_read(chip->id,
 			XSCOM_ADDR_P9_EC_SLAVE(core, EC_PPM_SPECIAL_WKUP_OTR),
 			&tmp);
 	if (tmp)
-		prlog(PR_WARNING, "SLW: EC_PPM_SPECIAL_WKUP_OTR read  0x%016llx\n", tmp);
+		prlog(PR_WARNING,
+			"SLW: core %d EC_PPM_SPECIAL_WKUP_OTR read  0x%016llx\n",
+		      core, tmp);
 	return true;
 }
 
