@@ -219,58 +219,8 @@ static bool slw_general_init(struct proc_chip *chip, struct cpu_thread *c)
 static bool slw_set_overrides(struct proc_chip *chip, struct cpu_thread *c)
 {
 	uint32_t core = pir_to_core_id(c->pir);
-	uint64_t tmp;
 	int rc;
 
-	/*
-	 * Set ENABLE_IGNORE_RECOV_ERRORS in OHA_MODE_REG
-	 *
-	 * XXX FIXME: This should be only done for "forced" winkle such as
-	 * when doing repairs or LE transition, and we should restore the
-	 * original value when done
-	 */
-	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX(core, PM_OHA_MODE_REG),
-			&tmp);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_SLW_SET),
-				"SLW: Failed to read PM_OHA_MODE_REG\n");
-		return false;
-	}
-	tmp = tmp | 0x8000000000000000ULL;
-	rc = xscom_write(chip->id, XSCOM_ADDR_P8_EX(core, PM_OHA_MODE_REG),
-			 tmp);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_SLW_SET),
-				"SLW: Failed to write PM_OHA_MODE_REG\n");
-		return false;
-	}
-	prlog(PR_TRACE, "SLW: PM_OHA_MODE_REG set to 0x%016llx\n", tmp);
-
-	/* Read back for debug */
-	rc = xscom_read(chip->id, XSCOM_ADDR_P8_EX(core, PM_OHA_MODE_REG),&tmp);
-	prlog(PR_TRACE, "SLW: PM_OHA_MODE_REG read   0x%016llx\n", tmp);
-
-	/*
-	 * Clear special wakeup bits that could hold power mgt
-	 *
-	 * XXX FIXME: See above
-	 */
-	rc = xscom_write(chip->id,
-			 XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_SPECIAL_WAKEUP_FSP),
-			 0);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_SLW_SET),
-			"SLW: Failed to write PM_SPECIAL_WAKEUP_FSP\n");
-		return false;
-	}
-	rc = xscom_write(chip->id,
-			 XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_SPECIAL_WAKEUP_OCC),
-			 0);
-	if (rc) {
-		log_simple_error(&e_info(OPAL_RC_SLW_SET),
-			"SLW: Failed to write PM_SPECIAL_WAKEUP_OCC\n");
-		return false;
-	}
 	rc = xscom_write(chip->id,
 			 XSCOM_ADDR_P8_EX_SLAVE(core, EX_PM_SPECIAL_WAKEUP_PHYP),
 			 0);
