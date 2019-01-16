@@ -367,7 +367,7 @@ struct xive {
 	struct dt_node	*x_node;
 	int		rev;
 #define XIVE_REV_UNKNOWN	0	/* Unknown version */
-#define XIVE_REV_1		1	/* P9 (Nimbus) DD1.x */
+#define XIVE_REV_1		1	/* P9 (Nimbus) DD1.x (not supported) */
 #define XIVE_REV_2		2	/* P9 (Nimbus) DD2.x or Cumulus */
 
 	uint64_t	xscom_base;
@@ -487,8 +487,7 @@ struct xive {
 	void		*q_ovf;
 };
 
-#define XIVE_CAN_STORE_EOI(x) \
-	(XIVE_STORE_EOI_ENABLED && ((x)->rev >= XIVE_REV_2))
+#define XIVE_CAN_STORE_EOI(x) XIVE_STORE_EOI_ENABLED
 
 /* Global DT node */
 static struct dt_node *xive_dt_node;
@@ -1730,18 +1729,12 @@ static bool xive_config_init(struct xive *x)
 	val |= PC_TCTXT_CHIPID_OVERRIDE;
 	val |= PC_TCTXT_CFG_TARGET_EN;
 	val = SETFIELD(PC_TCTXT_CHIPID, val, x->block_id);
-	if (x->rev >= XIVE_REV_2) {
-		val = SETFIELD(PC_TCTXT_INIT_AGE, val, 0x2);
-		val |= PC_TCTXT_CFG_LGS_EN;
-		/* Disable pressure relief as we hijack the field in the VPs */
-		val &= ~PC_TCTXT_CFG_STORE_ACK;
-	}
+	val = SETFIELD(PC_TCTXT_INIT_AGE, val, 0x2);
+	val |= PC_TCTXT_CFG_LGS_EN;
+	/* Disable pressure relief as we hijack the field in the VPs */
+	val &= ~PC_TCTXT_CFG_STORE_ACK;
 	xive_regw(x, PC_TCTXT_CFG, val);
 	xive_dbg(x, "PC_TCTXT_CFG=%016llx\n", val);
-
-	/* Subsequent inits are DD2 only */
-	if (x->rev < XIVE_REV_2)
-		return true;
 
 	val = xive_regr(x, CQ_CFG_PB_GEN);
 	/* 1-block-per-chip mode */
@@ -2004,8 +1997,7 @@ static void xive_create_mmio_dt_node(struct xive *x)
 			      12, 16, 21, 24);
 
 	dt_add_property_cells(xive_dt_node, "ibm,xive-#priorities", 8);
-	if (x->rev >= XIVE_REV_2)
-		dt_add_property(xive_dt_node, "single-escalation-support", NULL, 0);
+	dt_add_property(xive_dt_node, "single-escalation-support", NULL, 0);
 
 	xive_add_provisioning_properties();
 }
@@ -2836,10 +2828,8 @@ static struct xive *init_one_xive(struct dt_node *np)
 
 	x->rev = XIVE_REV_UNKNOWN;
 	if (chip->type == PROC_CHIP_P9_NIMBUS) {
-		if ((chip->ec_level & 0xf0) == 0x10)
-			x->rev = XIVE_REV_1;
-		else if ((chip->ec_level & 0xf0) == 0x20)
-			x->rev = XIVE_REV_2;
+		assert((chip->ec_level & 0xf0) != 0x10);
+		x->rev = XIVE_REV_2;
 	} else if (chip->type == PROC_CHIP_P9_CUMULUS)
 		x->rev = XIVE_REV_2;
 
@@ -4395,16 +4385,9 @@ static int64_t opal_xive_set_vp_info(uint64_t vp_id,
 		vp_new.w6 = report_cl_pair >> 32;
 		vp_new.w7 = report_cl_pair & 0xffffffff;
 
-		if (flags & OPAL_XIVE_VP_SINGLE_ESCALATION) {
-			if (x->rev < XIVE_REV_2) {
-				xive_dbg(x, "Attempt at enabling single escalate"
-					 " on xive rev %d failed\n",
-					 x->rev);
-				unlock(&x->lock);
-				return OPAL_PARAMETER;
-			}
+		if (flags & OPAL_XIVE_VP_SINGLE_ESCALATION)
 			rc = xive_setup_silent_gather(vp_id, true);
-		} else
+		else
 			rc = xive_setup_silent_gather(vp_id, false);
 	} else {
 		vp_new.w0 = vp_new.w6 = vp_new.w7 = 0;

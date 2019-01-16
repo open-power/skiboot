@@ -851,17 +851,10 @@ int64_t opal_signal_system_reset(int cpu_nr)
 
 void direct_controls_init(void)
 {
-	uint32_t version;
-
 	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
 		return;
 
 	if (proc_gen != proc_gen_p9)
-		return;
-
-	/* DD1 has some sreset quirks we do not support */
-	version = mfspr(SPR_PVR);
-	if (is_power9n(version) && PVR_VERS_MAJ(version) == 1)
 		return;
 
 	opal_register(OPAL_SIGNAL_SYSTEM_RESET, opal_signal_system_reset, 1);

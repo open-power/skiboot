@@ -145,8 +145,7 @@ static void phb4_init_hw(struct phb4 *p);
 #define PHBLOGCFG(p, fmt, a...) do {} while (0)
 #endif
 
-#define PHB4_CAN_STORE_EOI(p) \
-	(XIVE_STORE_EOI_ENABLED && ((p)->rev >= PHB4_REV_NIMBUS_DD20))
+#define PHB4_CAN_STORE_EOI(p) XIVE_STORE_EOI_ENABLED
 
 static bool verbose_eeh;
 static bool pci_tracing;
@@ -419,8 +418,6 @@ static int64_t phb4_rc_write(struct phb4 *p, uint32_t offset, uint8_t sz,
 		break;
 	default:
 		/* Workaround PHB config space enable */
-		if ((p->rev == PHB4_REV_NIMBUS_DD10) && (reg == PCI_CFG_CMD))
-			val |= PCI_CFG_CMD_MEM_EN | PCI_CFG_CMD_BUS_MASTER_EN;
 		PHBLOGCFG(p, "000 CFG%02d Wr %02x=%08x\n", 8 * sz, reg, val);
 		if (use_asb)
 			phb4_write_reg_asb(p, PHB_RC_CONFIG_BASE + reg, val);
@@ -882,29 +879,21 @@ static uint64_t phb4_default_mbt0(struct phb4 *p, unsigned int bar_idx)
 {
 	uint64_t mbt0;
 
-	if (p->rev == PHB4_REV_NIMBUS_DD10) {
+	switch (p->mbt_size - bar_idx - 1) {
+	case 0:
 		mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_MDT);
-		if (bar_idx == 0)
-			mbt0 |= SETFIELD(IODA3_MBT0_MDT_COLUMN, 0ull, 0);
-		else
-			mbt0 |= SETFIELD(IODA3_MBT0_MDT_COLUMN, 0ull, 1);
-	} else {
-		switch (p->mbt_size - bar_idx - 1) {
-		case 0:
-			mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_MDT);
-			mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 3);
-			break;
-		case 1:
-			mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_MDT);
-			mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 2);
-			break;
-		case 2:
-			mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_MDT);
-			mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 1);
-			break;
-		default:
-			mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_PE_SEG);
-		}
+		mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 3);
+		break;
+	case 1:
+		mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_MDT);
+		mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 2);
+		break;
+	case 2:
+		mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_MDT);
+		mbt0 = SETFIELD(IODA3_MBT0_MDT_COLUMN, mbt0, 1);
+		break;
+	default:
+		mbt0 = SETFIELD(IODA3_MBT0_MODE, 0ull, IODA3_MBT0_MODE_PE_SEG);
 	}
 	return mbt0;
 }
@@ -943,34 +932,17 @@ static void phb4_init_ioda_cache(struct phb4 *p)
 	memset(p->mist_cache, 0x0, sizeof(p->mist_cache));
 
 	/* Configure MBT entries 1...N */
-	if (p->rev == PHB4_REV_NIMBUS_DD10) {
-		/* Since we configure the DD1.0 PHB4 with half the PE's,
-		 * we need to give the illusion that we support only
-		 * 128/256 segments half the segments.
-		 *
-		 * To achieve that, we configure *all* the M64 windows to use
-		 * column 1 of the MDT, which is itself set so that segment 0
-		 * and 1 map to PE0, 2 and 3 to PE1 etc...
-		 *
-		 * Column 0, 2 and 3 are left all 0, column 0 will be used for
-		 * M32 and configured by the OS.
-		 */
-		for (i = 0; i < p->max_num_pes; i++)
-			p->mdt_cache[i] = SETFIELD(IODA3_MDT_PE_B, 0ull, i >> 1);
 
-	} else {
-		/* On DD2.0 we don't have the above problem. We still use MDT
-		 * column 1..3 for the last 3 BARs however, thus allowing Linux
-		 * to remap those, and setup all the other ones for now in mode 00
-		 * (segment# == PE#). By default those columns are set to map
-		 * the same way.
-		 */
-		for (i = 0; i < p->max_num_pes; i++) {
-			p->mdt_cache[i]  = SETFIELD(IODA3_MDT_PE_B, 0ull, i);
-			p->mdt_cache[i] |= SETFIELD(IODA3_MDT_PE_C, 0ull, i);
-			p->mdt_cache[i] |= SETFIELD(IODA3_MDT_PE_D, 0ull, i);
-		}
-
+	/* Column 0 is left 0 and will be used fo M32 and configured
+	 * by the OS. We use MDT column 1..3 for the last 3 BARs, thus
+	 * allowing Linux to remap those, and setup all the other ones
+	 * for now in mode 00 (segment# == PE#). By default those
+	 * columns are set to map the same way.
+	 */
+	for (i = 0; i < p->max_num_pes; i++) {
+		p->mdt_cache[i]  = SETFIELD(IODA3_MDT_PE_B, 0ull, i);
+		p->mdt_cache[i] |= SETFIELD(IODA3_MDT_PE_C, 0ull, i);
+		p->mdt_cache[i] |= SETFIELD(IODA3_MDT_PE_D, 0ull, i);
 	}
 
 	/* Initialize MBT entries for BARs 1...N */
@@ -1217,10 +1189,7 @@ static int64_t phb4_set_phb_mem_window(struct phb *phb,
 	uint64_t mbt0, mbt1;
 
 	/*
-	 * We have a unified MBT for all BARs on PHB4. However we
-	 * also have a current limitation that only half of the PEs
-	 * are available (in order to have 2 TVT entries per PE)
-	 * on DD1.0
+	 * We have a unified MBT for all BARs on PHB4.
 	 *
 	 * So we use it as follow:
 	 *
@@ -1231,16 +1200,8 @@ static int64_t phb4_set_phb_mem_window(struct phb *phb,
 	 *    fully segmented or single PE (we don't yet expose the
 	 *    new segmentation modes).
 	 *
-	 *  - [DD1.0] In order to deal with the above PE# limitations, since
-	 *    the OS assumes the segmentation is done with as many
-	 *    segments as PEs, we effectively fake it by mapping all
-	 *    MBT[1..n] to NDT column 1 which has been configured to
-	 *    give 2 adjacent segments the same PE# (see comment in
-	 *    ioda cache init). We don't expose the other columns to
-	 *    the OS.
-	 *
-	 *  - [DD2.0] We configure the 3 last BARs to columnt 1..3
-	 *    initially set to segment# == PE#. We will need to provide some
+	 *  - We configure the 3 last BARs to columnt 1..3 initially
+	 *    set to segment# == PE#. We will need to provide some
 	 *    extensions to the existing APIs to enable remapping of
 	 *    segments on those BARs (and only those) as the current
 	 *    API forces single segment mode.
@@ -1392,7 +1353,7 @@ static int64_t phb4_map_pe_mmio_window(struct phb *phb,
 				       uint16_t segment_num)
 {
 	struct phb4 *p = phb_to_phb4(phb);
-	uint64_t mbt0, mbt1, mdt0, mdt1;
+	uint64_t mbt0, mbt1, mdt0;
 
 	if (pe_number >= p->num_pes)
 		return OPAL_PARAMETER;
@@ -1401,13 +1362,9 @@ static int64_t phb4_map_pe_mmio_window(struct phb *phb,
 	 * We support a combined MDT that has 4 columns. We let the OS
 	 * use kernel 0 for M32.
 	 *
-	 * On DD1.0 we configure column1 ourselves to handle the "half PEs"
-	 * problem and thus simulate having a smaller number of segments.
-	 * columns 2 and 3 unused.
-	 *
-	 * On DD2.0 we configure the 3 last BARs to map column 3..1 which
-	 * by default are set to map segment# == pe#, but can be remapped
-	 * here if we extend this function.
+	 * We configure the 3 last BARs to map column 3..1 which by default
+	 * are set to map segment# == pe#, but can be remapped here if we
+	 * extend this function.
 	 *
 	 * The problem is that the current API was "hijacked" so that an
 	 * attempt at remapping any segment of an M64 has the effect of
@@ -1422,22 +1379,10 @@ static int64_t phb4_map_pe_mmio_window(struct phb *phb,
 		if (window_num != 0 || segment_num >= p->num_pes)
 			return OPAL_PARAMETER;
 
-		if (p->rev == PHB4_REV_NIMBUS_DD10) {
-			mdt0 = p->mdt_cache[segment_num << 1];
-			mdt1 = p->mdt_cache[(segment_num << 1) + 1];
-			mdt0 = SETFIELD(IODA3_MDT_PE_A, mdt0, pe_number);
-			mdt1 = SETFIELD(IODA3_MDT_PE_A, mdt1, pe_number);
-			p->mdt_cache[segment_num << 1] = mdt0;
-			p->mdt_cache[(segment_num << 1) + 1] = mdt1;
-			phb4_ioda_sel(p, IODA3_TBL_MDT, segment_num << 1, true);
-			out_be64(p->regs + PHB_IODA_DATA0, mdt0);
-			out_be64(p->regs + PHB_IODA_DATA0, mdt1);
-		} else {
-			mdt0 = p->mdt_cache[segment_num];
-			mdt0 = SETFIELD(IODA3_MDT_PE_A, mdt0, pe_number);
-			phb4_ioda_sel(p, IODA3_TBL_MDT, segment_num, false);
-			out_be64(p->regs + PHB_IODA_DATA0, mdt0);
-		}
+		mdt0 = p->mdt_cache[segment_num];
+		mdt0 = SETFIELD(IODA3_MDT_PE_A, mdt0, pe_number);
+		phb4_ioda_sel(p, IODA3_TBL_MDT, segment_num, false);
+		out_be64(p->regs + PHB_IODA_DATA0, mdt0);
 		break;
 	case OPAL_M64_WINDOW_TYPE:
 		if (window_num == 0 || window_num >= p->mbt_size)
@@ -2593,15 +2538,13 @@ static bool phb4_chip_retry_workaround(void)
 
 	/* Chips that need this retry are:
 	 *  - CUMULUS DD1.0
-	 *  - NIMBUS DD2.0 and below
+	 *  - NIMBUS DD2.0 (and DD1.0, but it is unsupported so no check).
 	 */
 	pvr = mfspr(SPR_PVR);
 	if (pvr & PVR_POWER9_CUMULUS) {
 		if ((PVR_VERS_MAJ(pvr) == 1) && (PVR_VERS_MIN(pvr) == 0))
 			return true;
 	} else { /* NIMBUS */
-		if (PVR_VERS_MAJ(pvr) == 1)
-			return true;
 		if ((PVR_VERS_MAJ(pvr) == 2) && (PVR_VERS_MIN(pvr) == 0))
 			return true;
 	}
@@ -3481,14 +3424,12 @@ static bool phb4_escalation_required(void)
 	/*
 	 * Escalation is required on the following chip versions:
 	 * - Cumulus DD1.0
-	 * - Nimbus DD1, DD2.0, DD2.1
+	 * - Nimbus DD2.0, DD2.1 (and DD1.0, but it is unsupported so no check).
 	 */
 	if (pvr & PVR_POWER9_CUMULUS) {
 		if (PVR_VERS_MAJ(pvr) == 1 && PVR_VERS_MIN(pvr) == 0)
 			return true;
 	} else { /* Nimbus */
-		if (PVR_VERS_MAJ(pvr) == 1)
-			return true;
 		if (PVR_VERS_MAJ(pvr) == 2 && PVR_VERS_MIN(pvr) < 2)
 			return true;
 	}
@@ -4095,13 +4036,9 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 	reg |= PPC_BIT(0); /* enable cResp exam */
 	reg |= PPC_BIT(3); /* disable vg not sys */
 	reg |= PPC_BIT(12);/* HW417025: disable capp virtual machines */
-	if (p->rev == PHB4_REV_NIMBUS_DD10) {
-		reg |= PPC_BIT(1);
-	} else {
-		reg |= PPC_BIT(2); /* disable nn rn */
-		reg |= PPC_BIT(4); /* disable g */
-		reg |= PPC_BIT(5); /* disable ln */
-	}
+	reg |= PPC_BIT(2); /* disable nn rn */
+	reg |= PPC_BIT(4); /* disable g */
+	reg |= PPC_BIT(5); /* disable ln */
 	xscom_write(p->chip_id, APC_MASTER_PB_CTRL + offset, reg);
 
 	/* Set PHB mode, HPC Dir State and P9 mode */
@@ -4185,11 +4122,9 @@ static void phb4_init_capp_regs(struct phb4 *p, uint32_t capp_eng)
 	xscom_write(p->chip_id, FLUSH_SUE_STATE_MAP + offset,
 		    0x08020A0000000000UL);
 
-	if (!(p->rev == PHB4_REV_NIMBUS_DD10)) {
-		/* Flush SUE uOP1 Register */
-		xscom_write(p->chip_id, FLUSH_SUE_UOP1 + offset,
-			    0xDCE0280428000000UL);
-	}
+	/* Flush SUE uOP1 Register */
+	xscom_write(p->chip_id, FLUSH_SUE_UOP1 + offset,
+		    0xDCE0280428000000);
 
 	/* capp owns PHB read buffers */
 	if (p->index == CAPP0_PHB_INDEX) {
@@ -4445,20 +4380,15 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 		 ((u64)CAPIIND << 48) |
 		 ((u64)CAPIMASK << 32) | PHB_CAPI_CMPM_ENABLE);
 
-	if (!(p->rev == PHB4_REV_NIMBUS_DD10)) {
-		/* PB AIB Hardware Control Register
-		 * Wait 32 PCI clocks for a credit to become available
-		 * before rejecting.
-		 */
-		xscom_read(p->chip_id,
-			   p->pci_xscom + XPEC_PCI_PBAIB_HW_CONFIG, &reg);
-		reg |= PPC_BITMASK(40, 42);
-		if (p->index == CAPP1_PHB_INDEX)
-			reg |= PPC_BIT(30);
-		xscom_write(p->chip_id,
-			    p->pci_xscom + XPEC_PCI_PBAIB_HW_CONFIG,
-			    reg);
-	}
+	/* PB AIB Hardware Control Register
+	 * Wait 32 PCI clocks for a credit to become available
+	 * before rejecting.
+	 */
+	xscom_read(p->chip_id, p->pci_xscom + XPEC_PCI_PBAIB_HW_CONFIG, &reg);
+	reg |= PPC_BITMASK(40, 42);
+	if (p->index == CAPP1_PHB_INDEX)
+		reg |= PPC_BIT(30);
+	xscom_write(p->chip_id, p->pci_xscom + XPEC_PCI_PBAIB_HW_CONFIG, reg);
 
 	/* non-translate/50-bit mode */
 	out_be64(p->regs + PHB_NXLATE_PREFIX, 0x0000000000000000Ull);
@@ -5017,10 +4947,7 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x1908,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1920,	0x000000004d1780f8ull);
 	out_be64(p->regs + 0x1928,	0x0000000000000000ull);
-	if (p->rev == PHB4_REV_NIMBUS_DD10)
-		out_be64(p->regs + 0x1930,	0xffffffffb2e87f07ull);
-	else
-		out_be64(p->regs + 0x1930,	0xffffffffb2f87f07ull);
+	out_be64(p->regs + 0x1930,	0xffffffffb2f87f07ull);
 	out_be64(p->regs + 0x1940,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1948,	0x0000000000000000ull);
 	out_be64(p->regs + 0x1950,	0x0000000000000000ull);
@@ -5068,10 +4995,7 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0d80,	0xffffffffffffffffull);
 	out_be64(p->regs + 0x0d88,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0d98,	0xfffffffffbffffffull);
-	if (p->rev == PHB4_REV_NIMBUS_DD10)
-		out_be64(p->regs + 0x0da8,	0xc00000b801000060ull);
-	else
-		out_be64(p->regs + 0x0da8,	0xc00018b801000060ull);
+	out_be64(p->regs + 0x0da8,	0xc00018b801000060ull);
 	/*
 	 * Errata ER20161123 says we should set the top two bits in
 	 * 0x0db0 but this causes config space accesses which don't
@@ -5089,10 +5013,7 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0e08,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0e18,	0xffffffffffffffffull);
 	out_be64(p->regs + 0x0e28,	0x0000600000000000ull);
-	if (p->rev == PHB4_REV_NIMBUS_DD10) /* XXX CAPI has diff. value */
-		out_be64(p->regs + 0x0e30,	0xffff9effff7fff57ull);
-	else
-		out_be64(p->regs + 0x0e30,	0xfffffeffff7fff57ull);
+	out_be64(p->regs + 0x0e30,	0xfffffeffff7fff57ull);
 	out_be64(p->regs + 0x0e40,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0e48,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0e50,	0x0000000000000000ull);
@@ -5102,10 +5023,7 @@ static void phb4_init_errors(struct phb4 *p)
 	out_be64(p->regs + 0x0e80,	0xffffffffffffffffull);
 	out_be64(p->regs + 0x0e88,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0e98,	0xffffffffffffffffull);
-	if (p->rev == PHB4_REV_NIMBUS_DD10)
-		out_be64(p->regs + 0x0ea8,	0x6000000000000000ull);
-	else
-		out_be64(p->regs + 0x0ea8,	0x60000000c0000000ull);
+	out_be64(p->regs + 0x0ea8,	0x60000000c0000000ull);
 	out_be64(p->regs + 0x0eb0,	0x9faeffaf3fffffffull); /* XXX CAPI has diff. value */
 	out_be64(p->regs + 0x0ec0,	0x0000000000000000ull);
 	out_be64(p->regs + 0x0ec8,	0x0000000000000000ull);
@@ -5210,12 +5128,6 @@ static void phb4_init_hw(struct phb4 *p)
 		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL3, be64_to_cpu(p->lane_eq[3]));
 		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL20, be64_to_cpu(p->lane_eq[4]));
 		out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL21, be64_to_cpu(p->lane_eq[5]));
-		if (p->rev == PHB4_REV_NIMBUS_DD10) {
-			out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL22,
-				 be64_to_cpu(p->lane_eq[6]));
-			out_be64(p->regs + PHB_PCIE_LANE_EQ_CNTL23,
-				 be64_to_cpu(p->lane_eq[7]));
-		}
 	}
 	if (!p->lane_eq_en) {
 		/* Read modify write and set to 2 bits */
@@ -5244,13 +5156,9 @@ static void phb4_init_hw(struct phb4 *p)
 
 	/* Init_17 - PHB Control */
 	val = PHB_CTRLR_IRQ_PGSZ_64K;
-	if (p->rev == PHB4_REV_NIMBUS_DD10) {
-		val |= SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_DD1_2_PER_PE);
-	} else {
-		val |= SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_2_PER_PE);
-		if (PHB4_CAN_STORE_EOI(p))
-			val |= PHB_CTRLR_IRQ_STORE_EOI;
-	}
+	val |= SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_2_PER_PE);
+	if (PHB4_CAN_STORE_EOI(p))
+		val |= PHB_CTRLR_IRQ_STORE_EOI;
 
 	if (!pci_eeh_mmio)
 		val |= PHB_CTRLR_MMIO_EEH_DISABLE;
@@ -5309,10 +5217,7 @@ static void phb4_init_hw(struct phb4 *p)
 		out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE,		0x2008400e08200000ull);
 	out_be64(p->regs + PHB_RXE_ARB_ERR_IRQ_ENABLE,		0xc40038fc01804070ull);
 	out_be64(p->regs + PHB_RXE_MRG_ERR_IRQ_ENABLE,		0x00006100008000a8ull);
-	if (p->rev == PHB4_REV_NIMBUS_DD10)
-		out_be64(p->regs + PHB_RXE_TCE_ERR_IRQ_ENABLE,	0x6051005000000000ull);
-	else
-		out_be64(p->regs + PHB_RXE_TCE_ERR_IRQ_ENABLE,	0x60510050c0000000ull);
+	out_be64(p->regs + PHB_RXE_TCE_ERR_IRQ_ENABLE,	0x60510050c0000000ull);
 
 	/* Init_131 - Re-enable LEM error mask */
 	out_be64(p->regs + PHB_LEM_ERROR_MASK,			0x0000000000000000ull);
@@ -5369,15 +5274,12 @@ static bool phb4_read_capabilities(struct phb4 *p)
 	if (p->max_num_pes >= 512) {
 		p->mrt_size = 16;
 		p->mbt_size = 32;
-		p->tvt_size = 512;
+		p->tvt_size = 1024;
 	} else {
 		p->mrt_size = 8;
 		p->mbt_size = 16;
-		p->tvt_size = 256;
+		p->tvt_size = 512;
 	}
-	/* DD2.0 has twice has many TVEs */
-	if (p->rev >= PHB4_REV_NIMBUS_DD20)
-		p->tvt_size *= 2;
 
 	val = in_be64(p->regs + PHB_PHB4_IRQ_CAP);
 	if (val == 0xffffffffffffffffUL) {
@@ -5620,44 +5522,6 @@ static uint64_t phb4_lsi_attributes(struct irq_source *is __unused,
 	return IRQ_ATTR_TARGET_LINUX;
 }
 
-static int64_t phb4_ndd1_lsi_set_xive(struct irq_source *is, uint32_t isn,
-				     uint16_t server __unused, uint8_t priority)
-{
-	struct phb4 *p = is->data;
-	uint32_t idx = isn - p->base_lsi;
-
-	if (idx > 8)
-		return OPAL_PARAMETER;
-
-	phb_lock(&p->phb);
-
-	phb4_ioda_sel(p, IODA3_TBL_LIST, idx, false);
-
-	/* Mask using P=0,Q=1, unmask using P=1,Q=0 followed by EOI */
-	/* XXX FIXME: A quick mask/umask can make us shoot an interrupt
-	 * more than once to a queue. We need to keep track better.
-	 *
-	 * Thankfully, this is only on Nimubs DD1 and for LSIs, so
-	 * will go away soon enough.
-	 */
-	if (priority == 0xff)
-		out_be64(p->regs + PHB_IODA_DATA0, IODA3_LIST_Q);
-	else {
-		out_be64(p->regs + PHB_IODA_DATA0, IODA3_LIST_P);
-		__irq_source_eoi(is, isn);
-	}
-
-	phb_unlock(&p->phb);
-
-	return 0;
-}
-
-static const struct irq_source_ops phb4_ndd1_lsi_ops = {
-	.set_xive = phb4_ndd1_lsi_set_xive,
-	.interrupt = phb4_err_interrupt,
-	.attributes = phb4_lsi_attributes,
-};
-
 static const struct irq_source_ops phb4_lsi_ops = {
 	.interrupt = phb4_err_interrupt,
 	.attributes = phb4_lsi_attributes,
@@ -5778,10 +5642,8 @@ static void phb4_create(struct dt_node *np)
 	if (!phb4_read_capabilities(p))
 		goto failed;
 
-	/* Priority order: NVRAM -> dt -> GEN2 dd1 -> GEN3 dd2.00 -> GEN4 */
+	/* Priority order: NVRAM -> dt -> GEN3 dd2.00 -> GEN4 */
 	p->max_link_speed = 4;
-	if (p->rev == PHB4_REV_NIMBUS_DD10)
-		p->max_link_speed = 2;
 	if (p->rev == PHB4_REV_NIMBUS_DD20 &&
 	    ((0xf & chip->ec_level) == 0) && chip->ec_rev == 0)
 		p->max_link_speed = 3;
@@ -5796,10 +5658,7 @@ static void phb4_create(struct dt_node *np)
 	/* Check for lane equalization values from HB or HDAT */
 	p->lane_eq_en = true;
 	p->lane_eq = dt_prop_get_def_size(np, "ibm,lane-eq", NULL, &lane_eq_len);
-	if (p->rev == PHB4_REV_NIMBUS_DD10)
-		lane_eq_len_req = 8 * 8;
-	else
-		lane_eq_len_req = 6 * 8;
+	lane_eq_len_req = 6 * 8;
 	if (p->lane_eq) {
 		if (lane_eq_len < lane_eq_len_req) {
 			PHBERR(p, "Device-tree has ibm,lane-eq too short: %ld"
@@ -5832,11 +5691,7 @@ static void phb4_create(struct dt_node *np)
 	p->base_lsi = irq_base + p->num_irqs - 8;
 	p->irq_port = xive_get_notify_port(p->chip_id,
 					   XIVE_HW_SRC_PHBn(p->index));
-
-	if (p->rev == PHB4_REV_NIMBUS_DD10)
-		p->num_pes = p->max_num_pes/2;
-	else
-		p->num_pes = p->max_num_pes;
+	p->num_pes = p->max_num_pes;
 
 	/* Allocate the SkiBoot internal in-memory tables for the PHB */
 	phb4_allocate_tables(p);
@@ -5854,8 +5709,6 @@ static void phb4_create(struct dt_node *np)
 
 	/* Compute XIVE source flags depending on PHB revision */
 	irq_flags = 0;
-	if (p->rev == PHB4_REV_NIMBUS_DD10)
-		irq_flags |= XIVE_SRC_SHIFT_BUG;
 	if (PHB4_CAN_STORE_EOI(p))
 		irq_flags |= XIVE_SRC_STORE_EOI;
 	else
@@ -5869,8 +5722,7 @@ static void phb4_create(struct dt_node *np)
 				p->int_mmio + ((p->num_irqs - 8) << 16),
 				XIVE_SRC_LSI | XIVE_SRC_SHIFT_BUG,
 				p,
-				(p->rev == PHB4_REV_NIMBUS_DD10) ?
-				&phb4_ndd1_lsi_ops : &phb4_lsi_ops);
+				&phb4_lsi_ops);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)

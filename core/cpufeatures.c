@@ -900,10 +900,7 @@ void dt_add_cpufeatures(struct dt_node *root)
 			cpu_name = "POWER9";
 
 		cpu_feature_isa = ISA_V3_0B;
-		if (is_power9n(version) && (PVR_VERS_MAJ(version) == 1)) {
-			/* P9N DD1 */
-			cpu_feature_cpu = CPU_P9_DD1;
-		} else if (is_power9n(version) &&
+		if (is_power9n(version) &&
 			   (PVR_VERS_MAJ(version) == 2)) {
 			/* P9N DD2.x */
 			cpu_feature_cpu = CPU_P9_DD2;

@@ -119,11 +119,6 @@
 #define   PHB_CTRLR_CFG_EEH_BLOCK	PPC_BIT(15)
 #define   PHB_CTRLR_FENCE_LNKILL_DIS	PPC_BIT(16)
 #define   PHB_CTRLR_TVT_ADDR_SEL	PPC_BITMASK(17,19)
-#define     TVT_DD1_1_PER_PE		0
-#define     TVT_DD1_2_PER_PE		1
-#define     TVT_DD1_4_PER_PE		2
-#define     TVT_DD1_8_PER_PE		3
-#define     TVT_DD1_16_PER_PE		4
 #define     TVT_2_PER_PE		0
 #define     TVT_4_PER_PE		1
 #define     TVT_8_PER_PE		2
@@ -308,8 +303,6 @@
 #define PHB_PCIE_LANE_EQ_CNTL3		0x1AE8
 #define PHB_PCIE_LANE_EQ_CNTL20		0x1AF0
 #define PHB_PCIE_LANE_EQ_CNTL21		0x1AF8
-#define PHB_PCIE_LANE_EQ_CNTL22		0x1B00 /* DD1 only */
-#define PHB_PCIE_LANE_EQ_CNTL23		0x1B08 /* DD1 only */
 #define PHB_PCIE_TRACE_CTRL		0x1B20
 #define PHB_PCIE_MISC_STRAP		0x1B30
 

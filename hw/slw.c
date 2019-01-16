@@ -701,53 +701,6 @@ static struct cpu_idle_states power9_mambo_cpu_idle_states[] = {
 
 };
 
-/* Idle states supported for P9 DD1 */
-static struct cpu_idle_states power9_ndd1_cpu_idle_states[] = {
-	{
-		.name = "stop0_lite",
-		.latency_ns = 1000,
-		.residency_ns = 10000,
-		.flags = 0*OPAL_PM_DEC_STOP \
-		       | 0*OPAL_PM_TIMEBASE_STOP  \
-		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
-		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
-		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
-		       | 1*OPAL_PM_STOP_INST_FAST,
-		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(0) \
-				 | OPAL_PM_PSSCR_MTL(3) \
-				 | OPAL_PM_PSSCR_TR(3),
-		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
-	{
-		.name = "stop1_lite",
-		.latency_ns = 4900,
-		.residency_ns = 49000,
-		.flags = 0*OPAL_PM_DEC_STOP \
-		       | 0*OPAL_PM_TIMEBASE_STOP  \
-		       | 0*OPAL_PM_LOSE_USER_CONTEXT \
-		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
-		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
-		       | 1*OPAL_PM_STOP_INST_FAST,
-		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(1) \
-				 | OPAL_PM_PSSCR_MTL(3) \
-				 | OPAL_PM_PSSCR_TR(3),
-		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK },
-	{
-		.name = "stop1",
-		.latency_ns = 2050000,
-		.residency_ns = 50000,
-		.flags = 0*OPAL_PM_DEC_STOP \
-		       | 0*OPAL_PM_TIMEBASE_STOP  \
-		       | 1*OPAL_PM_LOSE_USER_CONTEXT \
-		       | 0*OPAL_PM_LOSE_HYP_CONTEXT \
-		       | 0*OPAL_PM_LOSE_FULL_CONTEXT \
-		       | 1*OPAL_PM_STOP_INST_FAST,
-		.pm_ctrl_reg_val = OPAL_PM_PSSCR_RL(1) \
-				 | OPAL_PM_PSSCR_MTL(3) \
-				 | OPAL_PM_PSSCR_TR(3) \
-				 | OPAL_PM_PSSCR_ESL \
-				 | OPAL_PM_PSSCR_EC,
-		.pm_ctrl_reg_mask = OPAL_PM_PSSCR_MASK }
-};
 static void slw_late_init_p9(struct proc_chip *chip)
 {
 	struct cpu_thread *c;
@@ -831,10 +784,6 @@ void add_cpu_idle_state_properties(void)
 		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS) {
 			states = power9_mambo_cpu_idle_states;
 			nr_states = ARRAY_SIZE(power9_mambo_cpu_idle_states);
-		} else if ((chip->ec_level == 0x10) &&
-		    (chip->type == PROC_CHIP_P9_NIMBUS)) {
-			states = power9_ndd1_cpu_idle_states;
-			nr_states = ARRAY_SIZE(power9_ndd1_cpu_idle_states);
 		} else {
 			states = power9_cpu_idle_states;
 			nr_states = ARRAY_SIZE(power9_cpu_idle_states);

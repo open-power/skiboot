@@ -610,11 +610,6 @@ void cpu_set_sreset_enable(bool enabled)
 		}
 
 	} else if (proc_gen == proc_gen_p9) {
-		/* Don't use sreset idle on DD1 (has a number of bugs) */
-		uint32_t version = mfspr(SPR_PVR);
-		if (is_power9n(version) && (PVR_VERS_MAJ(version) == 1))
-			return;
-
 		sreset_enabled = enabled;
 		sync();
 		/*
@@ -643,11 +638,6 @@ void cpu_set_ipi_enable(bool enabled)
 		}
 
 	} else if (proc_gen == proc_gen_p9) {
-		/* Don't use doorbell on DD1 (requires darn for msgsync) */
-		uint32_t version = mfspr(SPR_PVR);
-		if (is_power9n(version) && (PVR_VERS_MAJ(version) == 1))
-			return;
-
 		ipi_enabled = enabled;
 		sync();
 		if (!enabled)
@@ -1012,6 +1002,11 @@ void init_boot_cpu(void)
 		prerror("CPU: Unknown PVR, assuming 1 thread\n");
 		cpu_thread_count = 1;
 		cpu_max_pir = mfspr(SPR_PIR);
+	}
+
+	if (is_power9n(pvr) && (PVR_VERS_MAJ(pvr) == 1)) {
+		prerror("CPU: POWER9N DD1 is not supported\n");
+		abort();
 	}
 
 	prlog(PR_DEBUG, "CPU: Boot CPU PIR is 0x%04x PVR is 0x%08x\n",

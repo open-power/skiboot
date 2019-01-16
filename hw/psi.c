@@ -665,24 +665,6 @@ static char *psi_p9_irq_name(struct irq_source *is, uint32_t isn)
 	return strdup(names[idx]);
 }
 
-static void psi_p9_irq_ndd1_eoi(struct irq_source *is, uint32_t isn)
-{
-	struct psi *psi = is->data;
-	unsigned int idx = isn & 0xf;
-
-	if (idx >= P9_PSI_IRQ_LPC_SIRQ0 &&
-	    idx <= P9_PSI_IRQ_LPC_SIRQ3)
-		lpc_p9_sirq_eoi(psi->chip_id, idx - P9_PSI_IRQ_LPC_SIRQ0);
-	__xive_source_eoi(is, isn);
-}
-
-static const struct irq_source_ops psi_p9_ndd1_irq_ops = {
-	.interrupt = psihb_p9_interrupt,
-	.attributes = psi_p9_irq_attributes,
-	.name = psi_p9_irq_name,
-	.eoi = psi_p9_irq_ndd1_eoi,
-};
-
 static const struct irq_source_ops psi_p9_irq_ops = {
 	.interrupt = psihb_p9_interrupt,
 	.attributes = psi_p9_irq_attributes,
@@ -824,7 +806,6 @@ static void psi_init_p8_interrupts(struct psi *psi)
 static void psi_init_p9_interrupts(struct psi *psi)
 {
 	struct proc_chip *chip;
-	bool is_p9ndd1;
 	u64 val;
 
 	/* Grab chip */
@@ -853,24 +834,12 @@ static void psi_init_p9_interrupts(struct psi *psi)
 	out_be64(psi->regs + PSIHB_IVT_OFFSET, val);
 
 	/* Register sources */
-	is_p9ndd1 = (chip->ec_level < 0x20 &&
-		     chip->type == PROC_CHIP_P9_NIMBUS);
-
-	if (is_p9ndd1) {
-		prlog(PR_DEBUG,
-		      "PSI[0x%03x]: Interrupts sources registered for P9N DD1.x\n",
-		      psi->chip_id);
-		xive_register_hw_source(psi->interrupt, P9_PSI_NUM_IRQS,
-					12, psi->esb_mmio, XIVE_SRC_LSI,
-					psi, &psi_p9_ndd1_irq_ops);
-	} else {
-		prlog(PR_DEBUG,
-		      "PSI[0x%03x]: Interrupts sources registered for P9 DD2.x\n",
-		      psi->chip_id);
-		xive_register_hw_source(psi->interrupt, P9_PSI_NUM_IRQS,
-					12, psi->esb_mmio, XIVE_SRC_LSI,
-					psi, &psi_p9_irq_ops);
-	}
+	prlog(PR_DEBUG,
+	      "PSI[0x%03x]: Interrupts sources registered for P9 DD2.x\n",
+	      psi->chip_id);
+	xive_register_hw_source(psi->interrupt, P9_PSI_NUM_IRQS,
+				12, psi->esb_mmio, XIVE_SRC_LSI,
+				psi, &psi_p9_irq_ops);
 
 	/* Reset irq handling and switch to ESB mode */
 	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, PSIHB_IRQ_RESET);

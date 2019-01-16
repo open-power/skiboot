@@ -286,10 +286,9 @@ void probe_npu2(void)
 	struct dt_node *np;
 	const char *zcal;
 
-	/* Abort if we're running on DD1 */
+	/* Abort if we're running on POWER9C DD1 (P9N DD1 is not supported) */
 	if (chip &&
-	    (chip->type == PROC_CHIP_P9_NIMBUS ||
-	     chip->type == PROC_CHIP_P9_CUMULUS) &&
+	    chip->type == PROC_CHIP_P9_CUMULUS &&
 	    (chip->ec_level & 0xf0) == 0x10) {
 		prlog(PR_INFO, "NPU2: DD1 not supported\n");
 		return;
