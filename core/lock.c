@@ -297,7 +297,7 @@ void drop_my_locks(bool warn)
 	struct lock *l;
 
 	disable_fast_reboot("Lock corruption");
-	while((l = list_pop(&this_cpu()->locks_held, struct lock, list)) != NULL) {
+	while((l = list_top(&this_cpu()->locks_held, struct lock, list)) != NULL) {
 		if (warn)
 			prlog(PR_ERR, "  %s\n", l->owner);
 		unlock(l);
