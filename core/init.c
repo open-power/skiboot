@@ -1201,6 +1201,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	preload_capp_ucode();
 	start_preload_kernel();
 
+	/* Catalog decompression routine */
+	imc_decompress_catalog();
+
 	/* Virtual Accelerator Switchboard */
 	vas_init();
 

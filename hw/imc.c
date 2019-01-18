@@ -181,58 +181,6 @@ static int pause_microcode_at_boot(void)
 }
 
 /*
- * Decompresses the blob obtained from the IMC pnor sub-partition
- * in "src" of size "src_size", assigns the uncompressed device tree
- * binary to "dst" and returns.
- *
- * Returns 0 on success and -1 on error.
- *
- * TODO: Ideally this should be part of generic subpartition load
- * infrastructure. And decompression can be queued as another CPU job
- */
-static int decompress(void *dst, size_t dst_size, void *src, size_t src_size)
-{
-	struct xz_dec *s;
-	struct xz_buf b;
-	int ret = 0;
-
-	/* Initialize the xz library first */
-	xz_crc32_init();
-	s = xz_dec_init(XZ_SINGLE, 0);
-	if (s == NULL) {
-		prerror("initialization error for xz\n");
-		return -1;
-	}
-
-	/*
-	 * Source address : src
-	 * Source size : src_size
-	 * Destination address : dst
-	 * Destination size : dst_src
-	 */
-	b.in = src;
-	b.in_pos = 0;
-	b.in_size = src_size;
-	b.out = dst;
-	b.out_pos = 0;
-	b.out_size = dst_size;
-
-	/* Start decompressing */
-	ret = xz_dec_run(s, &b);
-	if (ret != XZ_STREAM_END) {
-		prerror("failed to decompress subpartition\n");
-		ret = -1;
-		goto err;
-	}
-
-	return 0;
-err:
-	/* Clean up memory */
-	xz_dec_end(s);
-	return ret;
-}
-
-/*
  * Function return list of properties names for the fixup
  */
 const char **prop_to_fix(struct dt_node *node)
@@ -504,6 +452,50 @@ static void imc_dt_update_nest_node(struct dt_node *dev)
 	}
 }
 
+static struct xz_decompress *imc_xz;
+
+void imc_decompress_catalog(void)
+{
+	void *decompress_buf = NULL;
+	uint32_t pvr = (mfspr(SPR_PVR) & ~(0xf0ff));
+	int ret;
+
+	/* Check we succeeded in starting the preload */
+	if (compress_buf == NULL)
+		return;
+
+	ret = wait_for_resource_loaded(RESOURCE_ID_IMA_CATALOG, pvr);
+	if (ret != OPAL_SUCCESS) {
+		prerror("IMC Catalog load failed\n");
+		return;
+	}
+
+	/*
+	 * Memory for decompression.
+	 */
+	decompress_buf = malloc(MAX_DECOMPRESSED_IMC_DTB_SIZE);
+	if (!decompress_buf) {
+		prerror("No memory for decompress_buf \n");
+		return;
+	}
+
+	/*
+	 * Decompress the compressed buffer
+	 */
+	imc_xz = malloc(sizeof(struct xz_decompress));
+	if (!imc_xz) {
+		prerror("No memory to decompress IMC catalog\n");
+		free(decompress_buf);
+		return;
+	}
+
+	imc_xz->dst = decompress_buf;
+	imc_xz->src = compress_buf;
+	imc_xz->dst_size = MAX_DECOMPRESSED_IMC_DTB_SIZE;
+	imc_xz->src_size = compress_buf_size;
+	xz_start_decompress(imc_xz);
+}
+
 /*
  * Load the IMC pnor partition and find the appropriate sub-partition
  * based on the platform's PVR.
@@ -512,10 +504,8 @@ static void imc_dt_update_nest_node(struct dt_node *dev)
  */
 void imc_init(void)
 {
-	void *decompress_buf = NULL;
-	uint32_t pvr = (mfspr(SPR_PVR) & ~(0xf0ff));
 	struct dt_node *dev;
-	int ret;
+	int err_flag = -1;
 
 	if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS) {
 		dev = dt_find_compatible_node(dt_root, NULL,
@@ -530,15 +520,12 @@ void imc_init(void)
 	if (proc_gen != proc_gen_p9)
 		return;
 
-	/* Check we succeeded in starting the preload */
-	if (compress_buf == NULL)
+	if (!imc_xz)
 		return;
 
-	ret = wait_for_resource_loaded(RESOURCE_ID_IMA_CATALOG, pvr);
-	if (ret != OPAL_SUCCESS) {
-		prerror("IMC Catalog load failed\n");
-		return;
-	}
+	wait_xz_decompress(imc_xz);
+	if (imc_xz->status != OPAL_SUCCESS)
+		goto err;
 
 	/*
 	 * Flow of the data from PNOR to main device tree:
@@ -549,22 +536,6 @@ void imc_init(void)
 	 * free compressed local buffer
 	 */
 
-	/*
-	 * Memory for decompression.
-	 */
-	decompress_buf = malloc(MAX_DECOMPRESSED_IMC_DTB_SIZE);
-	if (!decompress_buf) {
-		prerror("No memory for decompress_buf \n");
-		goto err;
-	}
-
-	/*
-	 * Decompress the compressed buffer
-	 */
-	ret = decompress(decompress_buf, MAX_DECOMPRESSED_IMC_DTB_SIZE,
-				compress_buf, compress_buf_size);
-	if (ret < 0)
-		goto err;
 
 	/* Create a device tree entry for imc counters */
 	dev = dt_new_root("imc-counters");
@@ -575,8 +546,7 @@ void imc_init(void)
 	 * Attach the new decompress_buf to the imc-counters node.
 	 * dt_expand_node() does sanity checks for fdt_header, piggyback
 	 */
-	ret = dt_expand_node(dev, decompress_buf, 0);
-	if (ret < 0) {
+	if (dt_expand_node(dev, imc_xz->dst, 0) < 0) {
 		dt_free(dev);
 		goto err;
 	}
@@ -623,12 +593,15 @@ imc_mambo:
 		goto err;
 	}
 
-	free(compress_buf);
-	return;
+	err_flag = OPAL_SUCCESS;
+
 err:
-	prerror("IMC Devices not added\n");
-	free(decompress_buf);
+	if (err_flag != OPAL_SUCCESS)
+		prerror("IMC Devices not added\n");
+
 	free(compress_buf);
+	free(imc_xz->dst);
+	free(imc_xz);
 }
 
 /*
