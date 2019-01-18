@@ -236,6 +236,40 @@ extern void flash_fw_version_preload(void);
 extern void flash_dt_add_fw_version(void);
 extern const char *flash_map_resource_name(enum resource_id id);
 
+/*
+ * Decompression routines
+ *
+ * The below structure members are needed for the xz library routines,
+ *   src: Source address (The compressed binary)
+ *   src_size: Source size
+ *   dst: Destination address (The memory area where the `src` will be
+ *        decompressed)
+ *   dst_size: Destination size
+ */
+struct xz_decompress {
+	void *dst;
+	void *src;
+	size_t dst_size;
+	size_t src_size;
+	/* The status of the decompress process:
+	     - OPAL_PARTIAL: if the job is in progress
+	     - OPAL_SUCCESS: if the job is successful
+	     - OPAL_NO_MEM: memory allocation failure
+	     - OPAL_PARAMETER: If any of the above (src, dst..) are invalid or
+	     if xz decompress fails. In which case the caller should check the
+	     xz_error for failure reason.
+	 */
+	int status;
+	int xz_error;
+	/* The decompression job, this will be freed if the caller uses
+	 * `wait_xz_decompression` function, in any other case its the
+	 * responsibility of caller to free the allocation job.  */
+	struct cpu_job *job;
+};
+
+extern void xz_start_decompress(struct xz_decompress *);
+extern void wait_xz_decompress(struct xz_decompress *);
+
 /* NVRAM support */
 extern void nvram_init(void);
 extern void nvram_read_complete(bool success);

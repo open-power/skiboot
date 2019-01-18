@@ -27,6 +27,7 @@
 #include <libflash/ecc.h>
 #include <libstb/secureboot.h>
 #include <libstb/trustedboot.h>
+#include <libxz/xz.h>
 #include <elf.h>
 
 struct flash {
@@ -833,4 +834,106 @@ int flash_start_preload_resource(enum resource_id id, uint32_t subid,
 		start_flash_load_resource_job();
 
 	return OPAL_SUCCESS;
+}
+
+/*
+ * The `libxz` decompression routines are blocking; the new decompression
+ * routines, wrapper around `libxz` functions, provide support for asynchronous
+ * decompression. There are two routines, which start the decompression, and one
+ * which waits for the decompression to complete.
+ *
+ * The decompressed image will be present in the `dst` parameter of
+ * `xz_decompress` structure.
+ *
+ * When the decompression is successful, the xz_decompress->status will be
+ * `OPAL_SUCCESS` else OPAL_PARAMETER, see definition of xz_decompress structure
+ * for details.
+ */
+static void xz_decompress(void *data)
+{
+	struct xz_decompress *xz = (struct xz_decompress *)data;
+	struct xz_dec *s;
+	struct xz_buf b;
+
+	/* Initialize the xz library first */
+	xz_crc32_init();
+	s = xz_dec_init(XZ_SINGLE, 0);
+	if (s == NULL) {
+		prerror("initialization error for xz\n");
+		xz->status = OPAL_NO_MEM;
+		return;
+	}
+
+	xz->xz_error = XZ_DATA_ERROR;
+	xz->status = OPAL_PARTIAL;
+
+	b.in = xz->src;
+	b.in_pos = 0;
+	b.in_size = xz->src_size;
+	b.out = xz->dst;
+	b.out_pos = 0;
+	b.out_size = xz->dst_size;
+
+	/* Start decompressing */
+	xz->xz_error = xz_dec_run(s, &b);
+	if (xz->xz_error != XZ_STREAM_END) {
+		prerror("failed to decompress subpartition\n");
+		xz->status = OPAL_PARAMETER;
+	} else
+		xz->status = OPAL_SUCCESS;
+
+	xz_dec_end(s);
+}
+
+/*
+ * xz_start_decompress: start the decompression job and return.
+ *
+ * struct xz_decompress *xz, should be populated by the caller with
+ *     - the starting address of the compressed binary
+ *     - the address where the decompressed image should be placed
+ *     - the sizes of the source and the destination
+ *
+ * xz->src: Source address (The compressed binary)
+ * xz->src_size: Source size
+ * xz->dst: Destination address (The memory area where the `src` will be
+ *          decompressed)
+ * xz->dst_size: Destination size
+ *
+ * The `status` value will be OPAL_PARTIAL till the job completes (successfully
+ * or not)
+ */
+void xz_start_decompress(struct xz_decompress *xz)
+{
+	struct cpu_job *job;
+
+	if (!xz)
+		return;
+
+	if (!xz->dst || !xz->dst_size || !xz->src || !xz->src_size) {
+		xz->status = OPAL_PARAMETER;
+		return;
+	}
+
+	job = cpu_queue_job(NULL, "xz_decompress", xz_decompress,
+			    (void *) xz);
+	if (!job) {
+		xz->status = OPAL_NO_MEM;
+		return;
+	}
+
+	xz->job = job;
+}
+
+/*
+ * This function waits for the decompression job to complete. The `ret`
+ * structure member in `xz_decompress` will have the status code.
+ *
+ * status == OPAL_SUCCESS on success, else the corresponding error code.
+ */
+void wait_xz_decompress(struct xz_decompress *xz)
+{
+	if (!xz)
+		return;
+
+	cpu_wait_job(xz->job, true);
 }
