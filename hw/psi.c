@@ -24,6 +24,7 @@
 #include <gx.h>
 #include <interrupts.h>
 #include <cpu.h>
+#include <dio-p9.h>
 #include <trace.h>
 #include <xscom.h>
 #include <chip.h>
@@ -604,6 +605,7 @@ static void psihb_p9_interrupt(struct irq_source *is, uint32_t isn)
 		break;
 	case P9_PSI_IRQ_DIO:
 		printf("PSI: DIO irq received\n");
+		dio_interrupt_handler(psi->chip_id);
 		break;
 	case P9_PSI_IRQ_PSU:
 		p9_sbe_interrupt(psi->chip_id);

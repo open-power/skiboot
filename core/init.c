@@ -51,6 +51,7 @@
 #include <phys-map.h>
 #include <imc.h>
 #include <dts.h>
+#include <dio-p9.h>
 #include <sbe-p9.h>
 #include <debug_descriptor.h>
 #include <occ.h>
@@ -1141,6 +1142,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 * to wall clock time.
 	 */
 	chiptod_init();
+
+	/* Initialize P9 DIO */
+	p9_dio_init();
 
 	/*
 	 * SBE uses TB value for scheduling timer. Hence init after

@@ -114,6 +114,7 @@ struct xive;
 struct lpcm;
 struct vas;
 struct p9_sbe;
+struct p9_dio;
 
 /* Chip type */
 enum proc_chip_type {
@@ -224,6 +225,9 @@ struct proc_chip {
 
 	/* Used by hw/sbe-p9.c */
 	struct p9_sbe		*sbe;
+
+	/* Used by hw/dio-p9.c */
+	struct p9_dio		*dio;
 };
 
 extern uint32_t pir_to_chip_id(uint32_t pir);
