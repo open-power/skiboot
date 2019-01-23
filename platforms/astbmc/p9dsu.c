@@ -354,16 +354,16 @@ static const struct slot_table_entry p9dsu2uess_uio_plx_down[] = {
 		.name = "UIO Slot2",
 		.power_limit = 75,
 	},
-    	{
+	{
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0x8,0),
-		.name = "PLX switch",
+		.name = "PLX switch UIO Slot2",
 		.power_limit = 75,
 	},
 	{
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0x9,0),
-		.name = "Onboard LAN",
+		.name = "PLX Down Onboard LAN UIO Slot2",
 	},
 	{ .etype = st_end },
 };
@@ -373,7 +373,7 @@ static const struct slot_table_entry p9dsu2uess_uio_plx_up[] = {
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0,0),
 		.children = p9dsu2uess_uio_plx_down,
-		.name = "PLX up",
+		.name = "PLX up UIO Slot2",
 		.power_limit = 75,
 	},
 	{ .etype = st_end },
@@ -383,19 +383,19 @@ static const struct slot_table_entry p9dsu2uess_wio_plx_down[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0x1,0),
-		.name = "WIO Slot1",
+		.name = "WIO Slot3",
 		.power_limit = 75,
 	},
     	{
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0x8,0),
-		.name = "PLX switch",
+		.name = "PLX switch WIO Slot3",
 		.power_limit = 75,
 	},
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0x9,0),
-		.name = "WIO Slot2",
+		.name = "WIO Slot3",
 		.power_limit = 75,
 	},
 	{ .etype = st_end },
@@ -406,7 +406,7 @@ static const struct slot_table_entry p9dsu2uess_wio_plx_up[] = {
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0,0),
 		.children = p9dsu2uess_wio_plx_down,
-		.name = "PLX up",
+		.name = "PLX up WIO Slot3",
 		.power_limit = 75,
 	},
 	{ .etype = st_end },
@@ -425,9 +425,9 @@ static const struct slot_table_entry p9dsu2uess_phb0_0_slot[] = {
 static const struct slot_table_entry p9dsu2uess_phb0_1_slot[] = {
 	{
 		.etype = st_builtin_dev,
-		.location = ST_LOC_DEVFN(0,0),
+		.location = ST_LOC_DEVFN(0x1,0),
 		.children = p9dsu2uess_uio_plx_up,
-		.name = "PLX",
+		.name = "PLX UIO Slot2",
 		.power_limit = 75,
 	},
 	{ .etype = st_end },
@@ -474,7 +474,7 @@ static const struct slot_table_entry p9dsu2uess_phb8_0_slot[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "WIO Slot3",
+		.name = "WIO Slot1",
 		.power_limit = 75,
 	},
 	{ .etype = st_end },
@@ -484,7 +484,7 @@ static const struct slot_table_entry p9dsu2uess_phb8_1_slot[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "WIO-R Slot",
+		.name = "WIO-R Slot2",
 		.power_limit = 75,
 	},
 	{ .etype = st_end },
@@ -495,7 +495,7 @@ static const struct slot_table_entry p9dsu2uess_phb8_2_slot[] = {
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0,0),
 		.children = p9dsu2uess_wio_plx_up,
-		.name = "PLX",
+		.name = "PLX WIO Slot3",
 		.power_limit = 75,
 	},
 	{ .etype = st_end },
@@ -640,7 +640,7 @@ static void p9dsu_init(void)
 	struct ipmi_msg *ipmi_msg;
 	u8 riser_id = 0;
 	const char *p9dsu_variant;
-	int timeout_ms = 2000;
+	int timeout_ms = 3000;
 
 	astbmc_init();
 	/*
@@ -656,7 +656,7 @@ static void p9dsu_init(void)
 				      smc_riser_req, sizeof(smc_riser_req), 1);
 		ipmi_queue_msg(ipmi_msg);
 		while(riser_id==0 && timeout_ms > 0) {
-			time_wait(10);
+			time_wait_ms(10);
 			timeout_ms -= 10;
 		}
 		switch (riser_id) {
@@ -668,11 +668,13 @@ static void p9dsu_init(void)
 			p9dsu_variant = "supermicro,p9dsu2u";
 			slot_table_init(p9dsu2u_phb_table);
 			break;
-		default:
-			prlog(PR_ERR,"Defaulting to p9dsuess\n");
-			/* fallthrough */
 		case 0x1D:
-			p9dsu_variant = "supermicro,p9dsuess";
+			p9dsu_variant = "supermicro,p9dsu2uess";
+			slot_table_init(p9dsu2uess_phb_table);
+			break;
+		default:
+			prlog(PR_ERR, "Defaulting to p9dsu2uess\n");
+			p9dsu_variant = "supermicro,p9dsu2uess";
 			slot_table_init(p9dsu2uess_phb_table);
 			break;
 		}
