@@ -2109,8 +2109,7 @@ static int64_t phb4_set_pe(struct phb *phb,
 			   uint8_t action)
 {
 	struct phb4 *p = phb_to_phb4(phb);
-	uint64_t mask, val, tmp, idx;
-	int32_t all = 0;
+	uint64_t mask, idx;
 	uint16_t *rte;
 
 	/* Sanity check */
@@ -2124,55 +2123,32 @@ static int64_t phb4_set_pe(struct phb *phb,
 	    fcompare > OPAL_COMPARE_RID_FUNCTION_NUMBER)
 		return OPAL_PARAMETER;
 
+	/* match everything by default */
+	mask = 0;
+
 	/* Figure out the RID range */
-	if (bcompare == OpalPciBusAny) {
-		mask = 0x0;
-		val  = 0x0;
-		all  = 0x1;
-	} else {
-		tmp  = ((0x1 << (bcompare + 1)) - 1) << (15 - bcompare);
-		mask = tmp;
-		val  = bdfn & tmp;
-	}
+	if (bcompare != OpalPciBusAny)
+		mask  = ((0x1 << (bcompare + 1)) - 1) << (15 - bcompare);
 
-	if (dcompare == OPAL_IGNORE_RID_DEVICE_NUMBER)
-		all = (all << 1) | 0x1;
-	else {
+	if (dcompare == OPAL_COMPARE_RID_DEVICE_NUMBER)
 		mask |= 0xf8;
-		val  |= (bdfn & 0xf8);
-	}
 
-	if (fcompare == OPAL_IGNORE_RID_FUNCTION_NUMBER)
-		all = (all << 1) | 0x1;
-	else {
+	if (fcompare == OPAL_COMPARE_RID_FUNCTION_NUMBER)
 		mask |= 0x7;
-		val  |= (bdfn & 0x7);
-	}
+
+	if (action == OPAL_UNMAP_PE)
+		pe_number = PHB4_RESERVED_PE_NUM(p);
 
 	/* Map or unmap the RTT range */
-	if (all == 0x7) {
-		if (action == OPAL_MAP_PE) {
-			for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++)
-				p->rte_cache[idx] = pe_number;
-		} else {
-			for (idx = 0; idx < ARRAY_SIZE(p->rte_cache); idx++)
-				p->rte_cache[idx] = PHB4_RESERVED_PE_NUM(p);
-		}
-		memcpy((void *)p->tbl_rtt, p->rte_cache, RTT_TABLE_SIZE);
-	} else {
-		rte = (uint16_t *)p->tbl_rtt;
-		for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++, rte++) {
-			if ((idx & mask) != val)
-				continue;
-			if (action == OPAL_MAP_PE)
-				p->rte_cache[idx] = pe_number;
-			else
-				p->rte_cache[idx] = PHB4_RESERVED_PE_NUM(p);
-			*rte = p->rte_cache[idx];
+	rte = (uint16_t *)p->tbl_rtt;
+	for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++) {
+		if ((idx & mask) == (bdfn & mask)) {
+			p->rte_cache[idx] = pe_number;
+			rte[idx] = pe_number;
 		}
 	}
 
-	/* Invalidate the entire RTC */
+	/* Invalidate the RID Translation Cache (RTC) inside the PHB */
 	out_be64(p->regs + PHB_RTC_INVALIDATE, PHB_RTC_INVALIDATE_ALL);
 
 	return OPAL_SUCCESS;
