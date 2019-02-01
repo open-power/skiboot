@@ -925,7 +925,7 @@ static void phb4_init_ioda_cache(struct phb4 *p)
 	 */
 	for (i = 0; i < RTT_TABLE_ENTRIES; i++)
 		p->tbl_rtt[i] = PHB4_RESERVED_PE_NUM(p);
-	memset(p->peltv_cache, 0x0,  sizeof(p->peltv_cache));
+	memset(p->tbl_peltv, 0x0, p->tbl_peltv_size);
 	memset(p->tve_cache, 0x0, sizeof(p->tve_cache));
 
 	/* XXX Should we mask them ? */
@@ -1135,9 +1135,6 @@ static int64_t phb4_ioda_reset(struct phb *phb, bool purge)
 		out_be64(p->regs + PHB_IODA_DATA0, p->mdt_cache[i]);
 
 	/* Additional OPAL specific inits */
-
-	/* Clear the PELTV */
-	memcpy((void *)p->tbl_peltv, p->peltv_cache, p->tbl_peltv_size);
 
 	/* Clear PEST & PEEV */
 	for (i = 0; i < p->max_num_pes; i++) {
@@ -2150,7 +2147,6 @@ static int64_t phb4_set_peltv(struct phb *phb,
 			      uint8_t state)
 {
 	struct phb4 *p = phb_to_phb4(phb);
-	uint8_t *peltv;
 	uint32_t idx, mask;
 
 	/* Sanity check */
@@ -2162,15 +2158,10 @@ static int64_t phb4_set_peltv(struct phb *phb,
 	idx += (child_pe / 8);
 	mask = 0x1 << (7 - (child_pe % 8));
 
-	peltv = (uint8_t *)p->tbl_peltv;
-	peltv += idx;
-	if (state) {
-		*peltv |= mask;
-		p->peltv_cache[idx] |= mask;
-	} else {
-		*peltv &= ~mask;
-		p->peltv_cache[idx] &= ~mask;
-	}
+	if (state)
+		p->tbl_peltv[idx] |= mask;
+	else
+		p->tbl_peltv[idx] &= ~mask;
 
 	return OPAL_SUCCESS;
 }
@@ -4776,7 +4767,8 @@ static void phb4_init_ioda3(struct phb4 *p)
 	out_be64(p->regs + PHB_RTT_BAR, (u64) p->tbl_rtt | PHB_RTT_BAR_ENABLE);
 
 	/* Init_21 - PELT-V BAR */
-	out_be64(p->regs + PHB_PELTV_BAR, p->tbl_peltv | PHB_PELTV_BAR_ENABLE);
+	out_be64(p->regs + PHB_PELTV_BAR,
+		 (u64) p->tbl_peltv | PHB_PELTV_BAR_ENABLE);
 
 	/* Init_22 - Setup M32 starting address */
 	out_be64(p->regs + PHB_M32_START_ADDR, M32_PCI_START);
@@ -5276,9 +5268,9 @@ static void phb4_allocate_tables(struct phb4 *p)
 	for (i = 0; i < RTT_TABLE_ENTRIES; i++)
 		p->tbl_rtt[i] = PHB4_RESERVED_PE_NUM(p);
 
-	p->tbl_peltv = (uint64_t)local_alloc(p->chip_id, p->tbl_peltv_size, p->tbl_peltv_size);
+	p->tbl_peltv = local_alloc(p->chip_id, p->tbl_peltv_size, p->tbl_peltv_size);
 	assert(p->tbl_peltv);
-	memset((void *)p->tbl_peltv, 0, p->tbl_peltv_size);
+	memset(p->tbl_peltv, 0, p->tbl_peltv_size);
 
 	p->tbl_pest = (uint64_t)local_alloc(p->chip_id, p->tbl_pest_size, p->tbl_pest_size);
 	assert(p->tbl_pest);
@@ -5386,7 +5378,9 @@ static void phb4_add_properties(struct phb4 *p)
 		hi32((u64) p->tbl_rtt), lo32((u64) p->tbl_rtt), RTT_TABLE_SIZE);
 
 	dt_add_property_cells(np, "ibm,opal-peltv-table",
-		hi32(p->tbl_peltv), lo32(p->tbl_peltv), p->tbl_peltv_size);
+		hi32((u64) p->tbl_peltv), lo32((u64) p->tbl_peltv),
+		p->tbl_peltv_size);
+
 	dt_add_property_cells(np, "ibm,opal-pest-table",
 		hi32(p->tbl_pest), lo32(p->tbl_pest), p->tbl_pest_size);
 

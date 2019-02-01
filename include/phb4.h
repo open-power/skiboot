@@ -198,7 +198,7 @@ struct phb4 {
 
 	/* SkiBoot owned in-memory tables */
 	uint16_t		*tbl_rtt;
-	uint64_t		tbl_peltv;
+	uint8_t			*tbl_peltv;
 	uint64_t		tbl_peltv_size;
 	uint64_t		tbl_pest;
 	uint64_t		tbl_pest_size;
@@ -217,7 +217,6 @@ struct phb4 {
 
 	/* FIXME: dynamically allocate only what's needed below */
 	uint64_t		tve_cache[1024];
-	uint8_t			peltv_cache[PELTV_TABLE_SIZE_MAX];
 	uint64_t		mbt_cache[32][2];
 	uint64_t		mdt_cache[512]; /* max num of PEs */
 	uint64_t		mist_cache[4096/4];/* max num of MSIs */
