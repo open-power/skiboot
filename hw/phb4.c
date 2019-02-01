@@ -276,7 +276,7 @@ static int64_t phb4_pcicfg_check(struct phb4 *p, uint32_t bdfn,
 		return OPAL_HARDWARE;
 
 	/* Fetch the PE# from cache */
-	*pe = p->rte_cache[bdfn];
+	*pe = p->tbl_rtt[bdfn];
 
 	return OPAL_SUCCESS;
 }
@@ -923,8 +923,8 @@ static void phb4_init_ioda_cache(struct phb4 *p)
 	 * ever let a live FF RTT even temporarily when resetting
 	 * for EEH etc... (HW278969).
 	 */
-	for (i = 0; i < ARRAY_SIZE(p->rte_cache); i++)
-		p->rte_cache[i] = PHB4_RESERVED_PE_NUM(p);
+	for (i = 0; i < RTT_TABLE_ENTRIES; i++)
+		p->tbl_rtt[i] = PHB4_RESERVED_PE_NUM(p);
 	memset(p->peltv_cache, 0x0,  sizeof(p->peltv_cache));
 	memset(p->tve_cache, 0x0, sizeof(p->tve_cache));
 
@@ -1136,8 +1136,7 @@ static int64_t phb4_ioda_reset(struct phb *phb, bool purge)
 
 	/* Additional OPAL specific inits */
 
-	/* Clear RTT and PELTV and PEST */
-	memcpy((void *)p->tbl_rtt, p->rte_cache, RTT_TABLE_SIZE);
+	/* Clear the PELTV */
 	memcpy((void *)p->tbl_peltv, p->peltv_cache, p->tbl_peltv_size);
 
 	/* Clear PEST & PEEV */
@@ -2108,7 +2107,6 @@ static int64_t phb4_set_pe(struct phb *phb,
 {
 	struct phb4 *p = phb_to_phb4(phb);
 	uint64_t mask, idx;
-	uint16_t *rte;
 
 	/* Sanity check */
 	if (action != OPAL_MAP_PE && action != OPAL_UNMAP_PE)
@@ -2136,13 +2134,9 @@ static int64_t phb4_set_pe(struct phb *phb,
 		pe_number = PHB4_RESERVED_PE_NUM(p);
 
 	/* Map or unmap the RTT range */
-	rte = (uint16_t *)p->tbl_rtt;
-	for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++) {
-		if ((idx & mask) == (bdfn & mask)) {
-			p->rte_cache[idx] = pe_number;
-			rte[idx] = pe_number;
-		}
-	}
+	for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++)
+		if ((idx & mask) == (bdfn & mask))
+			p->tbl_rtt[idx] = pe_number;
 
 	/* Invalidate the RID Translation Cache (RTC) inside the PHB */
 	out_be64(p->regs + PHB_RTC_INVALIDATE, PHB_RTC_INVALIDATE_ALL);
@@ -3744,13 +3738,13 @@ static int64_t phb4_err_inject_cfg(struct phb4 *phb, uint64_t pe_number,
 	ctrl = PHB_PAPR_ERR_INJ_CTL_CFG;
 
 	for (bdfn = 0; bdfn < RTT_TABLE_ENTRIES; bdfn++) {
-		if (phb->rte_cache[bdfn] != pe_number)
+		if (phb->tbl_rtt[bdfn] != pe_number)
 			continue;
 
 		/* The PE can be associated with PCI bus or device */
 		is_bus_pe = false;
 		if ((bdfn + 8) < RTT_TABLE_ENTRIES &&
-		    phb->rte_cache[bdfn + 8] == pe_number)
+		    phb->tbl_rtt[bdfn + 8] == pe_number)
 			is_bus_pe = true;
 
 		/* Figure out the PCI config address */
@@ -4779,7 +4773,7 @@ static void phb4_init_ioda3(struct phb4 *p)
 		 SETFIELD(PHB_LSI_SRC_ID, 0ull, (p->num_irqs - 1) >> 3));
 
 	/* Init_20 - RTT BAR */
-	out_be64(p->regs + PHB_RTT_BAR, p->tbl_rtt | PHB_RTT_BAR_ENABLE);
+	out_be64(p->regs + PHB_RTT_BAR, (u64) p->tbl_rtt | PHB_RTT_BAR_ENABLE);
 
 	/* Init_21 - PELT-V BAR */
 	out_be64(p->regs + PHB_PELTV_BAR, p->tbl_peltv | PHB_PELTV_BAR_ENABLE);
@@ -5269,7 +5263,6 @@ static bool phb4_read_capabilities(struct phb4 *p)
 
 static void phb4_allocate_tables(struct phb4 *p)
 {
-	uint16_t *rte;
 	uint32_t i;
 
 	/* XXX Our current memalign implementation sucks,
@@ -5278,11 +5271,10 @@ static void phb4_allocate_tables(struct phb4 *p)
 	 * the memory and wastes space by always allocating twice
 	 * as much as requested (size + alignment)
 	 */
-	p->tbl_rtt = (uint64_t)local_alloc(p->chip_id, RTT_TABLE_SIZE, RTT_TABLE_SIZE);
+	p->tbl_rtt = local_alloc(p->chip_id, RTT_TABLE_SIZE, RTT_TABLE_SIZE);
 	assert(p->tbl_rtt);
-	rte = (uint16_t *)(p->tbl_rtt);
-	for (i = 0; i < RTT_TABLE_ENTRIES; i++, rte++)
-		*rte = PHB4_RESERVED_PE_NUM(p);
+	for (i = 0; i < RTT_TABLE_ENTRIES; i++)
+		p->tbl_rtt[i] = PHB4_RESERVED_PE_NUM(p);
 
 	p->tbl_peltv = (uint64_t)local_alloc(p->chip_id, p->tbl_peltv_size, p->tbl_peltv_size);
 	assert(p->tbl_peltv);
@@ -5391,7 +5383,8 @@ static void phb4_add_properties(struct phb4 *p)
 
 	/* Indicators for variable tables */
 	dt_add_property_cells(np, "ibm,opal-rtt-table",
-		hi32(p->tbl_rtt), lo32(p->tbl_rtt), RTT_TABLE_SIZE);
+		hi32((u64) p->tbl_rtt), lo32((u64) p->tbl_rtt), RTT_TABLE_SIZE);
+
 	dt_add_property_cells(np, "ibm,opal-peltv-table",
 		hi32(p->tbl_peltv), lo32(p->tbl_peltv), p->tbl_peltv_size);
 	dt_add_property_cells(np, "ibm,opal-pest-table",
