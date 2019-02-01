@@ -1137,10 +1137,8 @@ static int64_t phb4_ioda_reset(struct phb *phb, bool purge)
 	/* Additional OPAL specific inits */
 
 	/* Clear RTT and PELTV and PEST */
-	if (p->tbl_rtt)
-		memcpy((void *)p->tbl_rtt, p->rte_cache, RTT_TABLE_SIZE);
-	if (p->tbl_peltv)
-		memcpy((void *)p->tbl_peltv, p->peltv_cache, p->tbl_peltv_size);
+	memcpy((void *)p->tbl_rtt, p->rte_cache, RTT_TABLE_SIZE);
+	memcpy((void *)p->tbl_peltv, p->peltv_cache, p->tbl_peltv_size);
 
 	/* Clear PEST & PEEV */
 	for (i = 0; i < p->max_num_pes; i++) {
@@ -2113,8 +2111,6 @@ static int64_t phb4_set_pe(struct phb *phb,
 	uint16_t *rte;
 
 	/* Sanity check */
-	if (!p->tbl_rtt)
-		return OPAL_HARDWARE;
 	if (action != OPAL_MAP_PE && action != OPAL_UNMAP_PE)
 		return OPAL_PARAMETER;
 	if (pe_number >= p->num_pes || bdfn > 0xffff ||
@@ -2164,8 +2160,6 @@ static int64_t phb4_set_peltv(struct phb *phb,
 	uint32_t idx, mask;
 
 	/* Sanity check */
-	if (!p->tbl_peltv)
-		return OPAL_HARDWARE;
 	if (parent_pe >= p->num_pes || child_pe >= p->num_pes)
 		return OPAL_PARAMETER;
 
@@ -3830,10 +3824,6 @@ static int64_t phb4_err_inject(struct phb *phb, uint64_t pe_number,
 	int64_t (*handler)(struct phb4 *p, uint64_t pe_number,
 			   uint64_t addr, uint64_t mask, bool is_write);
 	bool is_write;
-
-	/* How could we get here without valid RTT? */
-	if (!p->tbl_rtt)
-		return OPAL_HARDWARE;
 
 	/* We can't inject error to the reserved PE */
 	if (pe_number == PHB4_RESERVED_PE_NUM(p) || pe_number >= p->num_pes)
