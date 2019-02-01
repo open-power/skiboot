@@ -898,30 +898,24 @@ static uint64_t phb4_default_mbt0(struct phb4 *p, unsigned int bar_idx)
 	return mbt0;
 }
 
-/* Clear IODA cache tables */
+/*
+ * Clear the saved (cached) IODA state.
+ *
+ * The caches here are used to save the configuration of the IODA tables
+ * done by the OS. When the PHB is reset it loses all of its internal state
+ * so we need to keep a copy to restore from. This function re-initialises
+ * the saved state to sane defaults.
+ */
 static void phb4_init_ioda_cache(struct phb4 *p)
 {
 	uint32_t i;
 
 	/*
-	 * RTT and PELTV. RTE should be 0xFF's to indicate
-	 * invalid PE# for the corresponding RID.
-	 *
-	 * Note: Instead we set all RTE entries to 0x00 to
-	 * work around a problem where PE lookups might be
-	 * done before Linux has established valid PE's
-	 * (during PCI probing). We can revisit that once/if
-	 * Linux has been fixed to always setup valid PEs.
-	 *
-	 * The value 0x00 corresponds to the default PE# Linux
-	 * uses to check for config space freezes before it
-	 * has assigned PE# to busses.
-	 *
-	 * WARNING: Additionally, we need to be careful, there's
-	 * a HW issue, if we get an MSI on an RTT entry that is
-	 * FF, things will go bad. We need to ensure we don't
-	 * ever let a live FF RTT even temporarily when resetting
-	 * for EEH etc... (HW278969).
+	 * The RTT entries (RTE) are supposed to be initialised to
+	 * 0xFF which indicates an invalid PE# for that RTT index
+	 * (the bdfn). However, we set them to 0x00 since Linux
+	 * needs to find the devices first by scanning config space
+	 * and this occurs before PEs have been assigned.
 	 */
 	for (i = 0; i < RTT_TABLE_ENTRIES; i++)
 		p->tbl_rtt[i] = PHB4_RESERVED_PE_NUM(p);
