@@ -187,8 +187,8 @@ int64_t opal_exit_check(int64_t retval, struct stack_frame *eframe)
 			abort();
 		}
 		if (!list_empty(&cpu->locks_held)) {
-			prlog(PR_ERR, "OPAL exiting with locks held, token=%llu retval=%lld\n",
-			      token, retval);
+			prlog(PR_ERR, "OPAL exiting with locks held, pir=%04x token=%llu retval=%lld\n",
+			      cpu->pir, token, retval);
 			drop_my_locks(true);
 		}
 	}
