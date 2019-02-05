@@ -225,9 +225,12 @@ struct occ_response_buffer {
  *				power to maintain a power cap. Value of 100
  *				means take all power from CPU.
  * @pwr_cap_type:		Indicates type of power cap in effect
- * @min_pwr_cap:		Minimum allowed system power cap in Watts
+ * @hard_min_pwr_cap:		Hard minimum system power cap in Watts.
+ *				Guaranteed unless hardware failure
  * @max_pwr_cap:		Maximum allowed system power cap in Watts
  * @cur_pwr_cap:		Current system power cap
+ * @soft_min_pwr_cap:		Soft powercap minimum. OCC may or may not be
+ *				able to maintain this
  * @spare/reserved:		Unused data
  * @cmd:			Opal Command Buffer
  * @rsp:			OCC Response Buffer
@@ -243,10 +246,11 @@ struct occ_dynamic_data {
 	u8 quick_pwr_drop;
 	u8 pwr_shifting_ratio;
 	u8 pwr_cap_type;
-	u16 min_pwr_cap;
+	u16 hard_min_pwr_cap;
 	u16 max_pwr_cap;
 	u16 cur_pwr_cap;
-	u8 pad[112];
+	u16 soft_min_pwr_cap;
+	u8 pad[110];
 	struct opal_command_buffer cmd;
 	struct occ_response_buffer rsp;
 } __packed;
@@ -1324,9 +1328,10 @@ static void occ_cmd_interface_init(void)
 
 /* Powercap interface */
 enum sensor_powercap_occ_attr {
-	POWERCAP_OCC_MIN,
+	POWERCAP_OCC_SOFT_MIN,
 	POWERCAP_OCC_MAX,
 	POWERCAP_OCC_CUR,
+	POWERCAP_OCC_HARD_MIN,
 };
 
 static void occ_add_powercap_sensors(struct dt_node *power_mgt)
@@ -1350,11 +1355,17 @@ static void occ_add_powercap_sensors(struct dt_node *power_mgt)
 	handle = powercap_make_handle(POWERCAP_CLASS_OCC, POWERCAP_OCC_CUR);
 	dt_add_property_cells(node, "powercap-current", handle);
 
-	handle = powercap_make_handle(POWERCAP_CLASS_OCC, POWERCAP_OCC_MIN);
+	handle = powercap_make_handle(POWERCAP_CLASS_OCC,
+				      POWERCAP_OCC_SOFT_MIN);
 	dt_add_property_cells(node, "powercap-min", handle);
 
 	handle = powercap_make_handle(POWERCAP_CLASS_OCC, POWERCAP_OCC_MAX);
 	dt_add_property_cells(node, "powercap-max", handle);
+
+	handle = powercap_make_handle(POWERCAP_CLASS_OCC,
+				      POWERCAP_OCC_HARD_MIN);
+	dt_add_property_cells(node, "powercap-hard-min", handle);
+
 }
 
 int occ_get_powercap(u32 handle, u32 *pcap)
@@ -1371,14 +1382,17 @@ int occ_get_powercap(u32 handle, u32 *pcap)
 		return OPAL_HARDWARE;
 
 	switch (powercap_get_attr(handle)) {
-	case POWERCAP_OCC_MIN:
-		*pcap = ddata->min_pwr_cap;
+	case POWERCAP_OCC_SOFT_MIN:
+		*pcap = ddata->soft_min_pwr_cap;
 		break;
 	case POWERCAP_OCC_MAX:
 		*pcap = ddata->max_pwr_cap;
 		break;
 	case POWERCAP_OCC_CUR:
 		*pcap = ddata->cur_pwr_cap;
+		break;
+	case POWERCAP_OCC_HARD_MIN:
+		*pcap = ddata->hard_min_pwr_cap;
 		break;
 	default:
 		*pcap = 0;
@@ -1420,7 +1434,7 @@ int occ_set_powercap(u32 handle, int token, u32 pcap)
 		return OPAL_SUCCESS;
 
 	if (pcap && (pcap > ddata->max_pwr_cap ||
-	    pcap < ddata->min_pwr_cap))
+	    pcap < ddata->soft_min_pwr_cap))
 		return OPAL_PARAMETER;
 
 	pcap_cdata = pcap;

@@ -20,10 +20,16 @@ Each child node has below properties:
   Handle to indicate the current powercap
 
 `powercap-min`
-  Minimum possible powercap
+  Absolute minimum possible powercap. This points to the soft powercap minimum
+  limit as exported by OCC. The powercap set in the soft powercap range may or
+  may not be maintained.
 
 `powercap-max`
   Maximum possible powercap
+
+`powercap-hard-min`
+  This value points to the hard minimum powercap limit. The powercap set above
+  this limit is guaranteed unless there is a hardware failure
 
 Powercap handle uses the following encoding: ::
 
@@ -44,6 +50,7 @@ the future.
                 powercap-current = <0x00000002>;
                 powercap-min = <0x00000000>;
                 powercap-max = <0x00000001>;
+                powercap-hard-min = <0x000000003>;
         };
      };
     };
