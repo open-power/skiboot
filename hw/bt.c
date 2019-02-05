@@ -390,10 +390,18 @@ static void bt_expire_old_msg(uint64_t tb)
 			 * doing anything. The data will still be in the
 			 * FIFO so just reset the flag.*/
 			BT_Q_ERR(bt_msg, "Retry sending message");
-			bt_msg->send_count++;
 
+			/* This means we have started message timeout, but not
+			 * yet sent message to BMC as driver was not free to
+			 * send message. Lets resend message.
+			 */
+			if (bt_msg->send_count == 0)
+				bt_send_msg(bt_msg);
+			else
+				bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
+
+			bt_msg->send_count++;
 			bt_msg->tb = tb;
-			bt_outb(BT_CTRL_H2B_ATN, BT_CTRL);
 		} else {
 			BT_Q_ERR(bt_msg, "Timeout sending message");
 			bt_msg_del(bt_msg);
