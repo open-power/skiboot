@@ -31,8 +31,8 @@ New Features
 New features in this release for POWER9 systems:
 
 - In Memory Counters (IMC) (See :ref:`imc` for details)
-- phb4: Activate shared PCI slot on witherspoon (see :ref:`Shared Slot <shared-slot-rn>`)
-- phb4 capi (i.e. CAPI2): Enable capi mode for PHB4 (see :ref:`CAPI on PHB4 <capi2-rn>`)
+- phb4: Activate shared PCI slot on witherspoon (see :ref:`Shared Slot <shared-slot-5.7-rc1-rn>`)
+- phb4 capi (i.e. CAPI2): Enable capi mode for PHB4 (see :ref:`CAPI on PHB4 <capi2-5.7-rc1-rn>`)
 
 New feature for IBM FSP based systems:
 
@@ -258,7 +258,7 @@ PCI/PHB4
   operations) is only available with P9 DD2. A new patch will be provided
   to support this feature.
 
-.. _capi2-rn:
+.. _capi2-5.7-rc1-rn:
 
 - phb4 capi (i.e. CAPI2): Enable capi mode for PHB4
 
@@ -304,7 +304,7 @@ PCI/PHB4
 
   Only partially tested and contends with some DD1 errata, but it's a start.
 
-.. _shared-slot-rn:
+.. _shared-slot-5.7-rc1-rn:
 
 - phb4: Activate shared PCI slot on witherspoon
 
