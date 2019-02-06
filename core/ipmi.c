@@ -176,6 +176,8 @@ void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 	lock(&sync_lock);
 	while (sync_msg);
 	sync_msg = msg;
+	if (msg->backend->disable_retry)
+		msg->backend->disable_retry(msg);
 	ipmi_queue_msg(msg);
 	unlock(&sync_lock);
 

@@ -181,6 +181,7 @@ struct ipmi_backend {
 	int (*queue_msg)(struct ipmi_msg *);
 	int (*queue_msg_head)(struct ipmi_msg *);
 	int (*dequeue_msg)(struct ipmi_msg *);
+	void (*disable_retry)(struct ipmi_msg *);
 };
 
 extern struct ipmi_backend *ipmi_backend;
