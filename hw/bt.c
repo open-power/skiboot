@@ -96,6 +96,7 @@ struct bt_msg {
 	unsigned long tb;
 	uint8_t seq;
 	uint8_t send_count;
+	bool disable_retry;
 	struct ipmi_msg ipmi_msg;
 };
 
@@ -384,7 +385,8 @@ static void bt_expire_old_msg(uint64_t tb)
 	if (bt_msg && bt_msg->tb > 0 && !chip_quirk(QUIRK_SIMICS) &&
 	    (tb_compare(tb, bt_msg->tb +
 			secs_to_tb(bt.caps.msg_timeout)) == TB_AAFTERB)) {
-		if (bt_msg->send_count <= bt.caps.max_retries) {
+		if (bt_msg->send_count <= bt.caps.max_retries &&
+		    !bt_msg->disable_retry) {
 			/* A message timeout is usually due to the BMC
 			 * clearing the H2B_ATN flag without actually
 			 * doing anything. The data will still be in the
@@ -597,6 +599,16 @@ static void bt_free_ipmi_msg(struct ipmi_msg *ipmi_msg)
 }
 
 /*
+ * Do not resend IPMI messages to BMC.
+ */
+static void bt_disable_ipmi_msg_retry(struct ipmi_msg *ipmi_msg)
+{
+	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
+
+	bt_msg->disable_retry = true;
+}
+
+/*
  * Remove a message from the queue. The memory allocated for the ipmi message
  * will need to be freed by the caller with bt_free_ipmi_msg() as it will no
  * longer be in the queue of messages.
@@ -618,6 +630,7 @@ static struct ipmi_backend bt_backend = {
 	.queue_msg = bt_add_ipmi_msg,
 	.queue_msg_head = bt_add_ipmi_msg_head,
 	.dequeue_msg = bt_del_ipmi_msg,
+	.disable_retry = bt_disable_ipmi_msg_retry,
 };
 
 static struct lpc_client bt_lpc_client = {
