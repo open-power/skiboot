@@ -885,15 +885,16 @@ void dt_add_cpufeatures(struct dt_node *root)
 		if (!cpu_name)
 			cpu_name = "POWER8E";
 		/* fallthrough */
-	case PVR_TYPE_P8NVL:
-		if (!cpu_name)
-			cpu_name = "POWER8NVL";
-
 		cpu_feature_isa = ISA_V2_07B;
 		if (PVR_VERS_MAJ(version) == 1)
 			cpu_feature_cpu = CPU_P8_DD1;
 		else
 			cpu_feature_cpu = CPU_P8_DD2;
+		break;
+	case PVR_TYPE_P8NVL:
+		cpu_name = "POWER8NVL";
+		cpu_feature_isa = ISA_V2_07B;
+		cpu_feature_cpu = CPU_P8_DD2;
 		break;
 	case PVR_TYPE_P9:
 		if (!cpu_name)
