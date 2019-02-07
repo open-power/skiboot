@@ -208,15 +208,8 @@ static void astbmc_fixup_dt_mbox(struct dt_node *lpc)
 	struct dt_node *mbox;
 	char namebuf[32];
 
-	if (!lpc)
-		return;
-
-	/*
-	 * P9 machines always use hiomap, either by ipmi or mbox. P8 machines
-	 * can indicate they support mbox using the scratch register, or ipmi
-	 * by configuring the hiomap ipmi command. If neither are configured
-	 * for P8 then skiboot will drive the flash controller directly.
-	 */
+	/* All P9 machines use mbox. P8 machines can indicate they support
+	 * it using the scratch register */
 	if (proc_gen != proc_gen_p9 && !ast_scratch_reg_is_mbox())
 		return;
 
@@ -317,7 +310,7 @@ static void astbmc_fixup_bmc_sensors(void)
 	}
 }
 
-static struct dt_node *dt_find_primary_lpc(void)
+static void astbmc_fixup_dt(void)
 {
 	struct dt_node *n, *primary_lpc = NULL;
 
@@ -335,15 +328,6 @@ static struct dt_node *dt_find_primary_lpc(void)
 			break;
 	}
 
-	return primary_lpc;
-}
-
-static void astbmc_fixup_dt(void)
-{
-	struct dt_node *primary_lpc;
-
-	primary_lpc = dt_find_primary_lpc();
-
 	if (!primary_lpc)
 		return;
 
@@ -352,6 +336,9 @@ static void astbmc_fixup_dt(void)
 
 	/* BT is not in HB either */
 	astbmc_fixup_dt_bt(primary_lpc);
+
+	/* MBOX is not in HB */
+	astbmc_fixup_dt_mbox(primary_lpc);
 
 	/* The pel logging code needs a system-id property to work so
 	   make sure we have one. */
@@ -425,16 +412,7 @@ void astbmc_early_init(void)
 		} else
 			prerror("PLAT: AST IO initialisation failed!\n");
 
-		/*
-		 * P9 prefers IPMI for HIOMAP but will use MBOX if IPMI is not
-		 * supported. P8 either uses IPMI HIOMAP or direct IO, and
-		 * never MBOX. Thus only populate the MBOX node on P9 to allow
-		 * fallback.
-		 */
-		if (proc_gen == proc_gen_p9) {
-			astbmc_fixup_dt_mbox(dt_find_primary_lpc());
-			ast_setup_sio_mbox(MBOX_IO_BASE, MBOX_LPC_IRQ);
-		}
+		ast_setup_sio_mbox(MBOX_IO_BASE, MBOX_LPC_IRQ);
 	} else {
 		/*
 		 * This may or may not be an error depending on if we set up
