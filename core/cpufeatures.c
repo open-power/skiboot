@@ -57,9 +57,10 @@
 #define CPU_P8_DD2	(1U << 1)
 #define CPU_P9_DD1	(1U << 2)
 #define CPU_P9_DD2	(1U << 3)
+#define CPU_P9P		(1U << 4)
 
 #define CPU_P8		(CPU_P8_DD1|CPU_P8_DD2)
-#define CPU_P9		(CPU_P9_DD1|CPU_P9_DD2)
+#define CPU_P9		(CPU_P9_DD1|CPU_P9_DD2|CPU_P9P)
 #define CPU_ALL		(CPU_P8|CPU_P9)
 
 struct cpu_feature {
@@ -909,6 +910,13 @@ void dt_add_cpufeatures(struct dt_node *root)
 			assert(0);
 		}
 
+		break;
+	case PVR_TYPE_P9P:
+		if (!cpu_name)
+			cpu_name = "POWER9P";
+
+		cpu_feature_isa = ISA_V3_0B;
+		cpu_feature_cpu = CPU_P9P;
 		break;
 	default:
 		return;

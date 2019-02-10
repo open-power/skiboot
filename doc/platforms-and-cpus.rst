@@ -16,6 +16,7 @@ Power9N         0x004e0xxx      Nimbus 12 small core
 Power9N         0x004e1xxx      Nimbus 24 small core
 Power9C         0x004e2xxx      Cumulus 12 small core
 Power9C         0x004e3xxx      Cumulus 24 small core
+Power9P         0x004fxxxx      Axone
 =============== =============== =====================
 
 Platforms

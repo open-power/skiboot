@@ -98,6 +98,7 @@ struct dt_node * add_core_common(struct dt_node *cpus,
 		pa_features_size = sizeof(pa_features_p8);
 		break;
 	case PVR_TYPE_P9:
+	case PVR_TYPE_P9P:
 		name = "PowerPC,POWER9";
 		if (is_power9n(version) &&
 			   (PVR_VERS_MAJ(version) == 2) &&

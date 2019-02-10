@@ -278,6 +278,8 @@ boot_entry:
 	beq	2f
 	cmpwi	cr0,%r3,PVR_TYPE_P9
 	beq 	1f
+	cmpwi	cr0,%r3,PVR_TYPE_P9P
+	beq 	1f
 	attn		/* Unsupported CPU type... what do we do ? */
 	b 	.	/* loop here, just in case attn is disabled */
 
@@ -733,6 +735,8 @@ init_shared_sprs:
 	beq	3f
 	cmpwi	cr0,%r3,PVR_TYPE_P9
 	beq	4f
+	cmpwi	cr0,%r3,PVR_TYPE_P9P
+	beq	4f
 	/* Unsupported CPU type... what do we do ? */
 	b	9f
 
@@ -829,6 +833,8 @@ init_replicated_sprs:
 	cmpwi	cr0,%r3,PVR_TYPE_P8NVL
 	beq	3f
 	cmpwi	cr0,%r3,PVR_TYPE_P9
+	beq	4f
+	cmpwi	cr0,%r3,PVR_TYPE_P9P
 	beq	4f
 	/* Unsupported CPU type... what do we do ? */
 	b	9f

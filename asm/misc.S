@@ -73,10 +73,13 @@ cleanup_global_tlb:
 	mfspr	%r3,SPR_PVR
 	srdi	%r3,%r3,16
 	cmpwi	cr0,%r3,PVR_TYPE_P9
-	bnelr
+	beq	cr0,1f
+	cmpwi	cr0,%r3,PVR_TYPE_P9P
+	beq	cr0,1f
+	blr
 
 	/* Sync out previous updates */
-	ptesync
+1:	ptesync
 
 #ifndef OLD_BINUTILS
 	.machine "power9"

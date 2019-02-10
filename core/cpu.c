@@ -971,6 +971,7 @@ void init_boot_cpu(void)
 		hid0_attn = SPR_HID0_POWER8_ENABLE_ATTN;
 		break;
 	case PVR_TYPE_P9:
+	case PVR_TYPE_P9P:
 		proc_gen = proc_gen_p9;
 		hile_supported = true;
 		radix_supported = true;

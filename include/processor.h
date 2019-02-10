@@ -201,6 +201,7 @@
 #define PVR_TYPE_P8	0x004d /* Venice */
 #define PVR_TYPE_P8NVL	0x004c /* Naples */
 #define PVR_TYPE_P9	0x004e
+#define PVR_TYPE_P9P	0x004f /* Axone */
 
 #ifdef __ASSEMBLY__
 

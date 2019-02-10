@@ -428,10 +428,10 @@ static void add_memory_controller(const struct HDIF_common_hdr *msarea,
 
 	/*
 	 * Memory hierarchy may change between processor version. Presently
-	 * its creating memory hierarchy for P9 (Nimbus) only.
+	 * it's only creating memory hierarchy for P9 (Nimbus) and P9P (Axone).
 	 */
 	version = PVR_TYPE(mfspr(SPR_PVR));
-	if (version != PVR_TYPE_P9)
+	if (version != PVR_TYPE_P9 && version != PVR_TYPE_P9P)
 		return;
 
 	chip_id = pcid_to_chip_id(be32_to_cpu(arange->chip));
