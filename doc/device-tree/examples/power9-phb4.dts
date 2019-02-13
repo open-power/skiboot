@@ -219,7 +219,7 @@
 			interrupts = <4>;
 		    };
 
-		    impi@ie4 {
+		    ipmi@ie4 {
 			compatible = "ipmi-bt";
 			reg = < 1 0xe4 0x3 >;
 			interrupts = <10>;
