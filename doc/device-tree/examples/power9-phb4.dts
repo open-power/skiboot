@@ -166,6 +166,11 @@
 			 #address-cells = <0>;
 			 #interrupt-map-mask = < 0xff >;
 		};
+
+		nx@2010000 {
+			reg = <0x2010000 0x4000>;
+			compatible = "ibm,power9-nx";
+		};
 	};
 
 	lpcm-opb@6030000000000 {
