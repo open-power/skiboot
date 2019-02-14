@@ -45,6 +45,7 @@
 #define CMD_AMI_POWER		0x04
 #define CMD_AMI_PNOR_ACCESS	0x07
 #define CMD_AMI_OCC_RESET	0x0e
+#define CMD_HEARTBEAT		0xff
 
 /* XXX: Listed here for completeness, registered in libflash/ipmi-flash.c */
 #define CMD_OP_HIOMAP_EVENT	0x0f
@@ -528,6 +529,13 @@ static void sel_power(uint8_t power, void *context __unused)
 	}
 }
 
+static void sel_heartbeat(uint8_t heartbeat, void *context __unused)
+{
+	/* There is only one sub-command so no processing needed */
+	prlog(PR_DEBUG, "BMC issued heartbeat command: %02x\n",
+	      heartbeat);
+}
+
 static uint32_t occ_sensor_id_to_chip(uint8_t sensor, uint32_t *chip)
 {
 	struct dt_node *node, *bmc_node, *sensors_node;
@@ -644,6 +652,12 @@ void ipmi_sel_init(void)
 	if (rc < 0) {
 		prerror("Failed to register SEL handler for %s",
 			stringify(CMD_AMI_PNOR_ACCESS));
+	}
+
+	rc = ipmi_sel_register(CMD_HEARTBEAT, sel_heartbeat, NULL);
+	if (rc < 0) {
+		prerror("Failed to register SEL handler for %s",
+			stringify(CMD_HEARTBEAT));
 	}
 }
 
