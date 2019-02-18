@@ -18,6 +18,25 @@
 #include <stdlib.h>
 #include <ipmi.h>
 #include <opal.h>
+#include <timebase.h>
+
+static void ipmi_chassis_control_complete(struct ipmi_msg *msg)
+{
+	uint8_t request = msg->data[0];
+	uint8_t cc = msg->cc;
+
+	ipmi_free_msg(msg);
+	if (cc == IPMI_CC_NO_ERROR)
+		return;
+
+	prlog(PR_INFO, "IPMI: Chassis control request failed. "
+	      "request=0x%02x, rc=0x%02x\n", request, cc);
+
+	if (ipmi_chassis_control(request)) {
+		prlog(PR_INFO, "IPMI: Failed to resend chassis control "
+		      "request [0x%02x]\n", request);
+	}
+}
 
 int ipmi_chassis_control(uint8_t request)
 {
@@ -29,10 +48,13 @@ int ipmi_chassis_control(uint8_t request)
 	if (request > IPMI_CHASSIS_SOFT_SHUTDOWN)
 		return OPAL_PARAMETER;
 
-	msg = ipmi_mkmsg_simple(IPMI_CHASSIS_CONTROL, &request,
-				sizeof(request));
+	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE, IPMI_CHASSIS_CONTROL,
+			 ipmi_chassis_control_complete, NULL,
+			 &request, sizeof(request), 0);
 	if (!msg)
 		return OPAL_HARDWARE;
+	/* Set msg->error callback function */
+	msg->error = ipmi_chassis_control_complete;
 
 	prlog(PR_INFO, "IPMI: sending chassis control request 0x%02x\n",
 			request);
