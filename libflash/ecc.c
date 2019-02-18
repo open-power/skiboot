@@ -177,7 +177,7 @@ static int eccbyte(uint64_t *dst, struct ecc64 *src)
 	return 0;
 }
 
-static uint64_t *inc_uint64_by(const uint64_t *p, uint64_t i)
+static uint64_t *inc_uint64_by(const void *p, uint64_t i)
 {
 	return (uint64_t *)(((char *)p) + i);
 }
