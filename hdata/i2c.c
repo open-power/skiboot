@@ -323,7 +323,7 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 		 * hdat. Log both cases to see what/where/why.
 		 */
 		if (!type || dev->type == 0xFF) {
-			prlog(PR_WARNING, "HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n",
+			prlog(PR_NOTICE, "HDAT I2C: found e%dp%d - %s@%x dp:%02x (%#x:%s)\n",
 			      dev->i2cm_engine, dev->i2cm_port, name, dev_addr,
 			      dev->dev_port, purpose, info->label);
 			continue;
