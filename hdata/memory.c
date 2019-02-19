@@ -68,32 +68,6 @@ struct HDIF_ms_area_id {
 	__be16 share_id;
 } __packed;
 
-static struct dt_node *find_shared(struct dt_node *root, u16 id, u64 start, u64 len)
-{
-	struct dt_node *i;
-
-	for (i = dt_first(root); i; i = dt_next(root, i)) {
-		__be64 reg[2];
-		const struct dt_property *shared, *type, *region;
-
-		type = dt_find_property(i, "device_type");
-		if (!type || strcmp(type->prop, "memory") != 0)
-			continue;
-
-		shared = dt_find_property(i, DT_PRIVATE "share-id");
-		if (!shared || fdt32_to_cpu(*(u32 *)shared->prop) != id)
-			continue;
-
-		region = dt_find_property(i, "reg");
-		if (!region)
-			continue;
-		memcpy(reg, region->prop, sizeof(reg));
-		if (be64_to_cpu(reg[0]) == start && be64_to_cpu(reg[1]) == len)
-			break;
-	}
-	return i;
-}
-
 static void append_chip_id(struct dt_node *mem, u32 id)
 {
 	struct dt_property *prop;
@@ -123,13 +97,8 @@ static bool add_address_range(struct dt_node *root,
 			      const struct HDIF_ms_area_address_range *arange)
 {
 	struct dt_node *mem;
+	u32 chip_id, type;
 	u64 reg[2];
-	char *name;
-	u32 chip_id;
-	size_t namesz = sizeof("memory@") + STR_MAX_CHARS(reg[0]);
-
-	name = (char*)malloc(namesz);
-	assert(name);
 
 	chip_id = pcid_to_chip_id(be32_to_cpu(arange->chip));
 
@@ -144,26 +113,20 @@ static bool add_address_range(struct dt_node *root,
 	reg[1] = cleanup_addr(be64_to_cpu(arange->end)) - reg[0];
 
 	if (be16_to_cpu(id->flags) & MS_AREA_SHARED) {
-		/* Only enter shared nodes once. */ 
-		mem = find_shared(root, be16_to_cpu(id->share_id),
-				  reg[0], reg[1]);
+		mem = dt_find_by_name_addr("memory", reg[0]);
 		if (mem) {
 			append_chip_id(mem, chip_id);
-			free(name);
 			return true;
 		}
 	}
-	snprintf(name, namesz, "memory@%llx", (long long)reg[0]);
 
-	mem = dt_new(root, name);
+	mem = dt_new_addr(root, name, reg[0]);
 	dt_add_property_string(mem, "device_type", "memory");
 	dt_add_property_cells(mem, "ibm,chip-id", chip_id);
 	dt_add_property_u64s(mem, "reg", reg[0], reg[1]);
 	if (be16_to_cpu(id->flags) & MS_AREA_SHARED)
 		dt_add_property_cells(mem, DT_PRIVATE "share-id",
 				      be16_to_cpu(id->share_id));
-
-	free(name);
 
 	return true;
 }
