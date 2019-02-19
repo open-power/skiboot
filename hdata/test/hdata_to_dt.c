@@ -253,7 +253,22 @@ static void squash_blobs(struct dt_node *root)
 
 static void dump_hdata_fdt(struct dt_node *root)
 {
+	struct dt_node *n;
 	void *fdt_blob;
+
+	/* delete some properties that hardcode pointers */
+	dt_for_each_node(dt_root, n) {
+		struct dt_property *base;
+
+		/*
+		 * sml-base is a raw pointer into the HDAT area so it changes
+		 * on each execution of hdata_to_dt. Work around this by
+		 * zeroing it.
+		 */
+		base = __dt_find_property(n, "linux,sml-base");
+		if (base)
+			memset(base->prop, 0, base->len);
+	}
 
 	fdt_blob = create_dtb(root, false);
 
