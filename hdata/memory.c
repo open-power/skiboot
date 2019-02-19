@@ -48,7 +48,25 @@ struct HDIF_ms_area_address_range {
 	__be32 mirror_attr;
 	__be64 mirror_start;
 	__be32 controller_id;
+	__be32 phys_attr;
 } __packed;
+#define PHYS_ATTR_TYPE_MASK 	0xff000000
+#define   PHYS_ATTR_TYPE_STD		0
+#define   PHYS_ATTR_TYPE_NVDIMM		1
+#define   PHYS_ATTR_TYPE_MRAM		2
+#define   PHYS_ATTR_TYPE_PCM		3
+
+#define PHYS_ATTR_STATUS_MASK 	0x00ff0000
+/*
+ * The values here are mutually exclusive. I have no idea why anyone
+ * decided encoding these are flags rather than sequential numbers was
+ * a good idea, but here we are.
+ */
+#define   PHYS_ATTR_STATUS_CANT_SAVE 	0x01
+#define   PHYS_ATTR_STATUS_SAVE_FAILED	0x02
+#define   PHYS_ATTR_STATUS_SAVED	0x04
+#define   PHYS_ATTR_STATUS_NOT_SAVED	0x08
+#define   PHYS_ATTR_STATUS_MEM_INVALID	0xff
 
 #define MS_CONTROLLER_MCBIST_ID(id)	GETFIELD(PPC_BITMASK32(0, 1), id)
 #define MS_CONTROLLER_MCS_ID(id)	GETFIELD(PPC_BITMASK32(4, 7), id)
@@ -92,42 +110,99 @@ static void append_chip_id(struct dt_node *mem, u32 id)
 	p[len] = cpu_to_be32(id);
 }
 
+static void update_status(struct dt_node *mem, uint32_t status)
+{
+	switch (status) {
+	case PHYS_ATTR_STATUS_CANT_SAVE:
+		if (!dt_find_property(mem, "save-trigged-unarmed"))
+			dt_add_property(mem, "save-trigger-unarmed", NULL, 0);
+		break;
+
+	case PHYS_ATTR_STATUS_SAVE_FAILED:
+		if (!dt_find_property(mem, "save-failed"))
+			dt_add_property(mem, "save-failed", NULL, 0);
+
+		break;
+
+	case PHYS_ATTR_STATUS_MEM_INVALID:
+		if (dt_find_property(mem, "save-trigged-unarmed"))
+			dt_add_property_string(mem, "status",
+				"disabled-memory-invalid");
+		break;
+	}
+}
+
 static bool add_address_range(struct dt_node *root,
 			      const struct HDIF_ms_area_id *id,
-			      const struct HDIF_ms_area_address_range *arange)
+			      const struct HDIF_ms_area_address_range *arange,
+			      uint32_t mem_type, uint32_t mem_status)
 {
+	const char *compat = NULL, *dev_type = NULL, *name = NULL;
 	struct dt_node *mem;
-	u32 chip_id, type;
+	u32 chip_id;
 	u64 reg[2];
 
 	chip_id = pcid_to_chip_id(be32_to_cpu(arange->chip));
 
 	prlog(PR_DEBUG, "  Range: 0x%016llx..0x%016llx "
-	      "on Chip 0x%x mattr: 0x%x\n",
+	      "on Chip 0x%x mattr: 0x%x pattr: 0x%x status:0x%x\n",
 	      (long long)be64_to_cpu(arange->start),
 	      (long long)be64_to_cpu(arange->end),
-	      chip_id, arange->mirror_attr);
+	      chip_id, arange->mirror_attr, mem_type, mem_status);
 
 	/* reg contains start and length */
 	reg[0] = cleanup_addr(be64_to_cpu(arange->start));
 	reg[1] = cleanup_addr(be64_to_cpu(arange->end)) - reg[0];
 
+	switch (mem_type) {
+	case PHYS_ATTR_TYPE_STD:
+		name = "memory";
+		dev_type = "memory";
+		break;
+
+	case PHYS_ATTR_TYPE_NVDIMM:
+	case PHYS_ATTR_TYPE_MRAM:
+	case PHYS_ATTR_TYPE_PCM:
+		/* fall through */
+		name = "nvdimm";
+		compat = "pmem-region";
+		break;
+
+	/*
+	 * Future memory types could be volatile or non-volatile. Bail if don't
+	 * recognise the type so we don't end up trashing data accidently.
+	 */
+	default:
+		return false;
+	}
+
 	if (be16_to_cpu(id->flags) & MS_AREA_SHARED) {
-		mem = dt_find_by_name_addr("memory", reg[0]);
+		mem = dt_find_by_name_addr(dt_root, name, reg[0]);
 		if (mem) {
 			append_chip_id(mem, chip_id);
+			if (mem_type == PHYS_ATTR_TYPE_NVDIMM)
+				update_status(mem, mem_status);
 			return true;
 		}
 	}
 
 	mem = dt_new_addr(root, name, reg[0]);
-	dt_add_property_string(mem, "device_type", "memory");
-	dt_add_property_cells(mem, "ibm,chip-id", chip_id);
+	if (compat)
+		dt_add_property_string(mem, "compatible", compat);
+	if (dev_type)
+		dt_add_property_string(mem, "device_type", dev_type);
+
+	/* add in the nvdimm backup status flags */
+	if (mem_type == PHYS_ATTR_TYPE_NVDIMM)
+		update_status(mem, mem_status);
+
+	/* common properties */
+
 	dt_add_property_u64s(mem, "reg", reg[0], reg[1]);
+	dt_add_property_cells(mem, "ibm,chip-id", chip_id);
 	if (be16_to_cpu(id->flags) & MS_AREA_SHARED)
 		dt_add_property_cells(mem, DT_PRIVATE "share-id",
 				      be16_to_cpu(id->share_id));
-
 	return true;
 }
 
@@ -515,12 +590,27 @@ static void get_msareas(struct dt_node *root,
 		/* This offset is from the arr, not the header! */
 		arange = (void *)arr + be32_to_cpu(arr->offset);
 		for (j = 0; j < be32_to_cpu(arr->ecnt); j++) {
+			uint32_t type = 0, status = 0;
+
+			/*
+			 * Check that the required fields are present in this
+			 * version of the HDAT structure.
+			 */
 			offset = offsetof(struct HDIF_ms_area_address_range, controller_id);
 			if (be32_to_cpu(arr->eactsz) >= offset)
 				add_memory_controller(msarea, arange);
 
-			if (!add_address_range(root, id, arange))
-				return;
+			offset = offsetof(struct HDIF_ms_area_address_range, phys_attr);
+			if (be32_to_cpu(arr->eactsz) >= offset) {
+				uint32_t attr = be32_to_cpu(arange->phys_attr);
+
+				type = GETFIELD(PHYS_ATTR_TYPE_MASK, attr);
+				status = GETFIELD(PHYS_ATTR_STATUS_MASK, attr);
+			}
+
+			if (add_address_range(root, id, arange, type, status))
+				prerror("Unable to use memory range %d from MSAREA %d\n", j, i);
+
 			arange = (void *)arange + be32_to_cpu(arr->esize);
 		}
 	}
