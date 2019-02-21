@@ -1658,6 +1658,46 @@ static void test_hiomap_ack_error(void)
 	test_hiomap_protocol_action_error();
 }
 
+static const struct scenario_event scenario_hiomap_erase_error[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{
+		.type = scenario_event_p,
+		.p = &hiomap_create_write_window_qs0l1_rs0l1_call,
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_ERASE,
+				.seq = 5,
+				.args = {
+					[0] = 0x00, [1] = 0x00,
+					[2] = 0x01, [3] = 0x00,
+				},
+			},
+			.cc = IPMI_INVALID_COMMAND_ERR,
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_erase_error(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+	size_t len;
+
+	scenario_enter(scenario_hiomap_erase_error);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	len = 1 << ctx->block_size_shift;
+	assert(bl->erase(bl, 0, len) > 0);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
 struct test_case {
 	const char *name;
 	void (*fn)(void);
@@ -1696,6 +1736,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_mark_dirty_error),
 	TEST_CASE(test_hiomap_flush_error),
 	TEST_CASE(test_hiomap_ack_error),
+	TEST_CASE(test_hiomap_erase_error),
 	{ NULL, NULL },
 };
 
