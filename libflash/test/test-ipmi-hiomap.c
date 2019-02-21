@@ -25,7 +25,8 @@ enum scenario_event_type {
 	scenario_sentinel = 0,
 	scenario_event_p,
 	scenario_cmd,
-	scenario_sel
+	scenario_sel,
+	scenario_delay,
 };
 
 struct scenario_cmd_data {
@@ -77,6 +78,20 @@ static void scenario_enter(const struct scenario_event *scenario)
 {
 	ipmi_msg_ctx.scenario = scenario;
 	ipmi_msg_ctx.cursor = scenario;
+}
+
+static void scenario_advance(void)
+{
+	struct ipmi_msg_ctx *ctx = &ipmi_msg_ctx;
+
+	assert(ctx->cursor->type == scenario_delay);
+	ctx->cursor++;
+
+	/* Deliver all the undelayed, scheduled SELs */
+	while (ctx->cursor->type == scenario_sel) {
+		ctx->sel.fn(ctx->cursor->s.bmc_state, ctx->sel.context);
+		ctx->cursor++;
+	}
 }
 
 static void scenario_exit(void)
@@ -394,6 +409,9 @@ scenario_hiomap_event_daemon_regained_flash_control_dirty[] = {
 		},
 	},
 	{
+		.type = scenario_delay
+	},
+	{
 		.type = scenario_sel,
 		.s = {
 			.bmc_state = (HIOMAP_E_DAEMON_READY
@@ -460,6 +478,7 @@ static void test_hiomap_event_daemon_regained_flash_control_dirty(void)
 	scenario_enter(scenario_hiomap_event_daemon_regained_flash_control_dirty);
 	assert(!ipmi_hiomap_init(&bl));
 	assert(!bl->read(bl, 0, buf, len));
+	scenario_advance();
 	assert(!bl->read(bl, 0, buf, len));
 	ipmi_hiomap_exit(bl);
 	scenario_exit();
@@ -494,6 +513,9 @@ static const struct scenario_event scenario_hiomap_protocol_reset_recovery[] = {
 				},
 			},
 		},
+	},
+	{
+		.type = scenario_delay
 	},
 	{
 		.type = scenario_sel,
@@ -598,6 +620,7 @@ static void test_hiomap_protocol_reset_recovery(void)
 	scenario_enter(scenario_hiomap_protocol_reset_recovery);
 	assert(!ipmi_hiomap_init(&bl));
 	assert(!bl->read(bl, 0, buf, len));
+	scenario_advance();
 	assert(!bl->read(bl, 0, buf, len));
 	ipmi_hiomap_exit(bl);
 	scenario_exit();
