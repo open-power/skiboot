@@ -208,6 +208,12 @@ static void ipmi_hiomap_cmd_cb(struct ipmi_msg *msg)
 	case HIOMAP_C_FLUSH:
 	case HIOMAP_C_ACK:
 	case HIOMAP_C_ERASE:
+		if (msg->resp_size != 2) {
+			prerror("%u: Unexpected response size: %u\n", msg->data[0],
+				msg->resp_size);
+			res->cc = IPMI_ERR_UNSPECIFIED;
+			break;
+		}
 		break;
 	default:
 		prlog(PR_WARNING, "Unimplemented command handler: %u\n",
