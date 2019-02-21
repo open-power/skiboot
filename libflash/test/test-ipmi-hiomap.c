@@ -1880,6 +1880,99 @@ static void test_hiomap_get_flash_info_malformed_large(void)
 	scenario_exit();
 }
 
+static const struct scenario_event
+scenario_hiomap_create_read_window_malformed_small[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 4,
+				.args = {
+					[0] = 0x00, [1] = 0x00,
+					[2] = 0x01, [3] = 0x00,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp_size = 7,
+			.resp = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 4,
+			},
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_create_read_window_malformed_small(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+	size_t len;
+	void *buf;
+
+	scenario_enter(scenario_hiomap_create_read_window_malformed_small);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	len = 1 << ctx->block_size_shift;
+	buf = calloc(1, len);
+	assert(buf);
+	assert(bl->read(bl, 0, buf, len) > 0);
+	free(buf);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+
+}
+
+static const struct scenario_event
+scenario_hiomap_create_read_window_malformed_large[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 4,
+				.args = {
+					[0] = 0x00, [1] = 0x00,
+					[2] = 0x01, [3] = 0x00,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp_size = 9,
+			.resp = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 4,
+			},
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_create_read_window_malformed_large(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+	size_t len;
+	void *buf;
+
+	scenario_enter(scenario_hiomap_create_read_window_malformed_large);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	len = 1 << ctx->block_size_shift;
+	buf = calloc(1, len);
+	assert(buf);
+	assert(bl->read(bl, 0, buf, len) > 0);
+	free(buf);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
 struct test_case {
 	const char *name;
 	void (*fn)(void);
@@ -1925,6 +2018,8 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_get_info_malformed_large),
 	TEST_CASE(test_hiomap_get_flash_info_malformed_small),
 	TEST_CASE(test_hiomap_get_flash_info_malformed_large),
+	TEST_CASE(test_hiomap_create_read_window_malformed_small),
+	TEST_CASE(test_hiomap_create_read_window_malformed_large),
 	{ NULL, NULL },
 };
 
