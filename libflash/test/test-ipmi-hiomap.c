@@ -797,6 +797,35 @@ static void test_hiomap_protocol_read_two_blocks(void)
 }
 
 static const struct scenario_event
+scenario_hiomap_protocol_event_before_action[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{
+		.type = scenario_sel,
+		.s = {
+			.bmc_state = HIOMAP_E_DAEMON_READY |
+					HIOMAP_E_FLASH_LOST,
+		}
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_event_before_read(void)
+{
+	struct blocklevel_device *bl;
+	char buf;
+	int rc;
+
+	scenario_enter(scenario_hiomap_protocol_event_before_action);
+	assert(!ipmi_hiomap_init(&bl));
+	rc = bl->read(bl, 0, &buf, sizeof(buf));
+	assert(rc == FLASH_ERR_AGAIN);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
+static const struct scenario_event
 scenario_hiomap_protocol_persistent_error[] = {
 	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
 	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
@@ -841,6 +870,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_protocol_reset_recovery),
 	TEST_CASE(test_hiomap_protocol_read_one_block),
 	TEST_CASE(test_hiomap_protocol_read_two_blocks),
+	TEST_CASE(test_hiomap_protocol_event_before_read),
 	TEST_CASE(test_hiomap_protocol_persistent_error),
 	{ NULL, NULL },
 };
