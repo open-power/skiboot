@@ -1073,6 +1073,20 @@ static void test_hiomap_protocol_write_two_blocks(void)
 	scenario_exit();
 }
 
+static void test_hiomap_protocol_event_before_write(void)
+{
+	struct blocklevel_device *bl;
+	char buf;
+	int rc;
+
+	scenario_enter(scenario_hiomap_protocol_event_before_action);
+	assert(!ipmi_hiomap_init(&bl));
+	rc = bl->write(bl, 0, &buf, sizeof(buf));
+	assert(rc == FLASH_ERR_AGAIN);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
 static const struct scenario_event
 scenario_hiomap_protocol_persistent_error[] = {
 	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
@@ -1122,6 +1136,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_protocol_event_during_read),
 	TEST_CASE(test_hiomap_protocol_write_one_block),
 	TEST_CASE(test_hiomap_protocol_write_two_blocks),
+	TEST_CASE(test_hiomap_protocol_event_before_write),
 	TEST_CASE(test_hiomap_protocol_persistent_error),
 	{ NULL, NULL },
 };
