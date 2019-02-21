@@ -96,7 +96,12 @@ static void scenario_advance(void)
 
 static void scenario_exit(void)
 {
-	assert(ipmi_msg_ctx.cursor->type == scenario_sentinel);
+	if (ipmi_msg_ctx.cursor->type != scenario_sentinel) {
+		ptrdiff_t d = ipmi_msg_ctx.cursor - ipmi_msg_ctx.scenario;
+		printf("%s: Exiting on event %tu with event type %d \n",
+		       __func__, d, ipmi_msg_ctx.cursor->type);
+		assert(false);
+	}
 }
 
 void ipmi_init_msg(struct ipmi_msg *msg, int interface __attribute__((unused)),
