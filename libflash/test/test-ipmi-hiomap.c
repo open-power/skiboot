@@ -1356,6 +1356,51 @@ static void test_hiomap_protocol_action_error(void)
 }
 
 static const struct scenario_event
+scenario_hiomap_protocol_get_flash_info[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_GET_FLASH_INFO,
+				.seq = 4,
+				.args = {
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_GET_FLASH_INFO,
+				.seq = 4,
+				.args = {
+					[0] = 0x00, [1] = 0x20,
+					[2] = 0x01, [3] = 0x00,
+				},
+			},
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_get_flash_info(void)
+{
+	struct blocklevel_device *bl;
+	const char *name;
+	uint32_t granule;
+	uint64_t size;
+
+	scenario_enter(scenario_hiomap_protocol_get_flash_info);
+	assert(!ipmi_hiomap_init(&bl));
+	assert(!bl->get_info(bl, &name, &size, &granule));
+	assert(!name);
+	assert(size == (32 * 1024 * 1024));
+	assert(granule == (4 * 1024));
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
+static const struct scenario_event
 scenario_hiomap_protocol_persistent_error[] = {
 	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
 	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
@@ -1413,6 +1458,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_protocol_bad_sequence),
 	TEST_CASE(test_hiomap_protocol_action_error),
 	TEST_CASE(test_hiomap_protocol_persistent_error),
+	TEST_CASE(test_hiomap_protocol_get_flash_info),
 	{ NULL, NULL },
 };
 
