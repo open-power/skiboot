@@ -164,6 +164,8 @@ void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 		}
 		assert(false);
 	}
+
+	msg->cc = cmd->cc;
 	memcpy(msg->data, &cmd->resp, msg->resp_size);
 
 	msg->complete(msg);
