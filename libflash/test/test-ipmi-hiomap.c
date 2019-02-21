@@ -1165,6 +1165,69 @@ scenario_hiomap_protocol_erase_one_block[] = {
 	SCENARIO_SENTINEL,
 };
 
+static const struct scenario_event
+scenario_hiomap_protocol_erase_two_blocks[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{
+		.type = scenario_event_p,
+		.p = &hiomap_create_write_window_qs0l2_rs0l1_call,
+	},
+	{ .type = scenario_event_p, .p = &hiomap_erase_qs0l1_call, },
+	{ .type = scenario_event_p, .p = &hiomap_flush_call, },
+	{
+		.type = scenario_event_p,
+		.p = &hiomap_create_write_window_qs1l1_rs1l1_call,
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_ERASE,
+				.seq = 8,
+				.args = {
+					[0] = 0x00, [1] = 0x00,
+					[2] = 0x01, [3] = 0x00,
+				},
+			},
+			.resp = {
+				.cmd = HIOMAP_C_ERASE,
+				.seq = 8,
+			},
+		},
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_FLUSH,
+				.seq = 9,
+			},
+			.resp = {
+				.cmd = HIOMAP_C_FLUSH,
+				.seq = 9,
+			},
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_erase_two_blocks(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+	size_t len;
+
+	scenario_enter(scenario_hiomap_protocol_erase_two_blocks);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	len = 2 * (1 << ctx->block_size_shift);
+	assert(!bl->erase(bl, 0, len));
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
 static void test_hiomap_protocol_erase_one_block(void)
 {
 	struct blocklevel_device *bl;
@@ -1232,6 +1295,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_protocol_event_before_write),
 	TEST_CASE(test_hiomap_protocol_event_during_write),
 	TEST_CASE(test_hiomap_protocol_erase_one_block),
+	TEST_CASE(test_hiomap_protocol_erase_two_blocks),
 	TEST_CASE(test_hiomap_protocol_persistent_error),
 	{ NULL, NULL },
 };
