@@ -1652,6 +1652,12 @@ static void test_hiomap_flush_error(void)
 	scenario_exit();
 }
 
+static void test_hiomap_ack_error(void)
+{
+	/* Same thing at the moment */
+	test_hiomap_protocol_action_error();
+}
+
 struct test_case {
 	const char *name;
 	void (*fn)(void);
@@ -1689,6 +1695,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_create_write_window_error),
 	TEST_CASE(test_hiomap_mark_dirty_error),
 	TEST_CASE(test_hiomap_flush_error),
+	TEST_CASE(test_hiomap_ack_error),
 	{ NULL, NULL },
 };
 
