@@ -381,7 +381,12 @@ bool ast_io_init(void)
 	return ast_io_is_rw();
 }
 
-bool ast_lpc_fw_needs_hiomap(void)
+bool ast_lpc_fw_ipmi_hiomap(void)
+{
+	return platform.bmc->sw->ipmi_oem_hiomap_cmd != 0;
+}
+
+bool ast_lpc_fw_mbox_hiomap(void)
 {
 	struct dt_node *n;
 
