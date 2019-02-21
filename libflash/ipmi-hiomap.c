@@ -204,11 +204,6 @@ static void ipmi_hiomap_cmd_cb(struct ipmi_msg *msg)
 
 		break;
 	}
-	case HIOMAP_C_CLOSE_WINDOW:
-		lock(&ctx->lock);
-		ctx->window_state = closed_window;
-		unlock(&ctx->lock);
-		break;
 	case HIOMAP_C_MARK_DIRTY:
 	case HIOMAP_C_FLUSH:
 	case HIOMAP_C_ACK:
