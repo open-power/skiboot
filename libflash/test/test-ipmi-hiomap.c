@@ -207,12 +207,15 @@ int64_t lpc_write(enum OpalLPCAddressType addr_type __attribute__((unused)),
 }
 
 int64_t lpc_read(enum OpalLPCAddressType addr_type __attribute__((unused)),
-		 uint32_t addr __attribute__((unused)),
-		 uint32_t *data __attribute__((unused)),
-		 uint32_t sz __attribute__((unused)))
+		 uint32_t addr __attribute__((unused)), uint32_t *data,
+		 uint32_t sz)
 {
+	memset(data, 0xaa, sz);
+
 	return 0;
 }
+
+/* Commonly used messages */
 
 static const struct scenario_event hiomap_ack_call = {
 	.type = scenario_cmd,
@@ -271,6 +274,31 @@ static const struct scenario_event hiomap_get_flash_info_call = {
 			.args = {
 				[0] = 0x00, [1] = 0x20,
 				[2] = 0x01, [3] = 0x00,
+			},
+		},
+	},
+};
+
+static const struct scenario_event
+hiomap_create_read_window_qs0l1_rs0l1_call = {
+	.type = scenario_cmd,
+	.c = {
+		.req = {
+			.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+			.seq = 4,
+			.args = {
+				[0] = 0x00, [1] = 0x00,
+				[2] = 0x01, [3] = 0x00,
+			},
+		},
+		.cc = IPMI_CC_NO_ERROR,
+		.resp = {
+			.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+			.seq = 4,
+			.args = {
+				[0] = 0xff, [1] = 0x0f,
+				[2] = 0x01, [3] = 0x00,
+				[4] = 0x00, [5] = 0x00,
 			},
 		},
 	},
@@ -643,6 +671,42 @@ static void test_hiomap_protocol_reset_recovery(void)
 }
 
 static const struct scenario_event
+scenario_hiomap_protocol_read_one_block[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{
+		.type = scenario_event_p,
+		.p = &hiomap_create_read_window_qs0l1_rs0l1_call,
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_read_one_block(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+	size_t len;
+	unsigned char *buf;
+	int i;
+
+	scenario_enter(scenario_hiomap_protocol_read_one_block);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	len = 1 << ctx->block_size_shift;
+	buf = malloc(len);
+	assert(buf);
+	assert(!bl->read(bl, 0, buf, len));
+	assert(len > 64);
+	for (i = 0; i < 64; i++)
+		assert(buf[i] == 0xaa);
+	assert(!memcmp(buf, buf + 64, len - 64));
+	free(buf);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
+static const struct scenario_event
 scenario_hiomap_protocol_persistent_error[] = {
 	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
 	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
@@ -685,6 +749,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_event_daemon_lost_flash_control),
 	TEST_CASE(test_hiomap_event_daemon_regained_flash_control_dirty),
 	TEST_CASE(test_hiomap_protocol_reset_recovery),
+	TEST_CASE(test_hiomap_protocol_read_one_block),
 	TEST_CASE(test_hiomap_protocol_persistent_error),
 	{ NULL, NULL },
 };
