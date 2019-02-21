@@ -215,6 +215,20 @@ int64_t lpc_read(enum OpalLPCAddressType addr_type __attribute__((unused)),
 	return 0;
 }
 
+static bool lpc_read_success(const uint8_t *buf, size_t len)
+{
+	if (len < 64)
+		while (len--)
+			if (*buf++ != 0xaa)
+				return false;
+
+	for (int i = 0; i < 64; i++)
+		if (buf[i] != 0xaa)
+			return false;
+
+	return !memcmp(buf, buf + 64, len - 64);
+}
+
 /* Commonly used messages */
 
 static const struct scenario_event hiomap_ack_call = {
@@ -289,6 +303,31 @@ hiomap_create_read_window_qs0l1_rs0l1_call = {
 			.args = {
 				[0] = 0x00, [1] = 0x00,
 				[2] = 0x01, [3] = 0x00,
+			},
+		},
+		.cc = IPMI_CC_NO_ERROR,
+		.resp = {
+			.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+			.seq = 4,
+			.args = {
+				[0] = 0xff, [1] = 0x0f,
+				[2] = 0x01, [3] = 0x00,
+				[4] = 0x00, [5] = 0x00,
+			},
+		},
+	},
+};
+
+static const struct scenario_event
+hiomap_create_read_window_qs0l2_rs0l1_call = {
+	.type = scenario_cmd,
+	.c = {
+		.req = {
+			.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+			.seq = 4,
+			.args = {
+				[0] = 0x00, [1] = 0x00,
+				[2] = 0x02, [3] = 0x00,
 			},
 		},
 		.cc = IPMI_CC_NO_ERROR,
@@ -686,21 +725,72 @@ static void test_hiomap_protocol_read_one_block(void)
 {
 	struct blocklevel_device *bl;
 	struct ipmi_hiomap *ctx;
+	uint8_t *buf;
 	size_t len;
-	unsigned char *buf;
-	int i;
 
 	scenario_enter(scenario_hiomap_protocol_read_one_block);
 	assert(!ipmi_hiomap_init(&bl));
 	ctx = container_of(bl, struct ipmi_hiomap, bl);
 	len = 1 << ctx->block_size_shift;
-	buf = malloc(len);
+	buf = calloc(1, len);
 	assert(buf);
 	assert(!bl->read(bl, 0, buf, len));
-	assert(len > 64);
-	for (i = 0; i < 64; i++)
-		assert(buf[i] == 0xaa);
-	assert(!memcmp(buf, buf + 64, len - 64));
+	assert(lpc_read_success(buf, len));
+	free(buf);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
+static const struct scenario_event
+scenario_hiomap_protocol_read_two_blocks[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{
+		.type = scenario_event_p,
+		.p = &hiomap_create_read_window_qs0l2_rs0l1_call,
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 5,
+				.args = {
+					[0] = 0x01, [1] = 0x00,
+					[2] = 0x01, [3] = 0x00,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_CREATE_READ_WINDOW,
+				.seq = 5,
+				.args = {
+					[0] = 0xfe, [1] = 0x0f,
+					[2] = 0x01, [3] = 0x00,
+					[4] = 0x01, [5] = 0x00,
+				},
+			},
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_read_two_blocks(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+	uint8_t *buf;
+	size_t len;
+
+	scenario_enter(scenario_hiomap_protocol_read_two_blocks);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	len = 2 * (1 << ctx->block_size_shift);
+	buf = calloc(1, len);
+	assert(buf);
+	assert(!bl->read(bl, 0, buf, len));
+	assert(lpc_read_success(buf, len));
 	free(buf);
 	ipmi_hiomap_exit(bl);
 	scenario_exit();
@@ -750,6 +840,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_event_daemon_regained_flash_control_dirty),
 	TEST_CASE(test_hiomap_protocol_reset_recovery),
 	TEST_CASE(test_hiomap_protocol_read_one_block),
+	TEST_CASE(test_hiomap_protocol_read_two_blocks),
 	TEST_CASE(test_hiomap_protocol_persistent_error),
 	{ NULL, NULL },
 };
