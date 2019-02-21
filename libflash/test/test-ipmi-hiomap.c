@@ -1326,6 +1326,35 @@ static void test_hiomap_protocol_bad_sequence(void)
 	scenario_exit();
 }
 
+static const struct scenario_event scenario_hiomap_protocol_action_error[] = {
+	{
+		.type = scenario_cmd,
+		.c = {
+			/* Ack is legitimate, but we'll pretend it's invalid */
+			.req = {
+				.cmd = HIOMAP_C_ACK,
+				.seq = 1,
+				.args = { [0] = 0x3 },
+			},
+			.cc = IPMI_INVALID_COMMAND_ERR,
+			.resp = {
+				.cmd = HIOMAP_C_ACK,
+				.seq = 1,
+			},
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_action_error(void)
+{
+	struct blocklevel_device *bl;
+
+	scenario_enter(scenario_hiomap_protocol_action_error);
+	assert(ipmi_hiomap_init(&bl) > 0);
+	scenario_exit();
+}
+
 static const struct scenario_event
 scenario_hiomap_protocol_persistent_error[] = {
 	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
@@ -1382,6 +1411,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_protocol_event_before_erase),
 	TEST_CASE(test_hiomap_protocol_event_during_erase),
 	TEST_CASE(test_hiomap_protocol_bad_sequence),
+	TEST_CASE(test_hiomap_protocol_action_error),
 	TEST_CASE(test_hiomap_protocol_persistent_error),
 	{ NULL, NULL },
 };
