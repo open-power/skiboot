@@ -282,7 +282,7 @@ static char *format_path(struct entity_path *path, char *buffer)
  *      path_element[2] = {2, 1}
  * }
  */
-int parse_path(const char *str, struct entity_path *parsed)
+static int parse_path(const char *str, struct entity_path *parsed)
 {
 	int unit_count = 0;
 
@@ -456,7 +456,8 @@ static void draw_ruler(char c, int size)
 	putchar('\n');
 }
 
-static int do_list(struct gard_ctx *ctx, int argc, char **argv)
+static int do_list(struct gard_ctx *ctx, int argc __attribute__((unused)),
+		   char **argv __attribute__((unused)))
 {
 	/* This header matches the line formatting above in do_list_i() */
 	const char *header = " ID       | Error    | Type       | Path";
