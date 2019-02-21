@@ -30,7 +30,7 @@ check_PROGRAMS = \
 	libflash/test/test-ecc \
 	libflash/test/test-mbox
 
-TEST_FLAGS = -D__TEST__
+TEST_FLAGS = -D__TEST__ -MMD -MP
 
 .PHONY: libflash-check libflash-coverage
 libflash-check: $(check_PROGRAMS:%=%-check) $(CORE_TEST:%=%-gcov-run)
@@ -162,3 +162,6 @@ libflash-test-gcov-clean:
 	$(RM) $(GCOV_OBJ_STEMS:%=%.d)
 	$(RM) $(GCOV_OBJ_STEMS:%=%.gcda)
 	$(RM) $(GCOV_OBJ_STEMS:%=%.gcno)
+
+-include $(patsubst %,%.d,$(call objstem,$(check_PROGRAMS),$(HOST_TRIPLE)/))
+-include $(patsubst %,%.d,$(call objstem,$(check_PROGRAMS),$(HOST_TRIPLE)/gcov/))
