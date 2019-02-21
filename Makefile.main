@@ -225,8 +225,16 @@ include $(SRC)/libstb/Makefile.inc
 gard:
 	(cd external/gard; CROSS_COMPILE="" CFLAGS="$(HOSTCFLAGS) $(HOSTGCOVCFLAGS)" make)
 
+coverage: gard-coverage
+gard-coverage:
+	(cd external/gard; CROSS_COMPILE="" CFLAGS="$(HOSTCFLAGS) $(HOSTGCOVCFLAGS)" make coverage)
+
 pflash:
 	(cd external/pflash; CROSS_COMPILE="" CFLAGS="$(HOSTCFLAGS) $(HOSTGCOVCFLAGS)" make)
+
+coverage: pflash-coverage
+pflash-coverage:
+	(cd external/pflash; CROSS_COMPILE="" CFLAGS="$(HOSTCFLAGS) $(HOSTGCOVCFLAGS)" make coverage)
 
 pflash-coverity:
 	(cd external/pflash; ./build-all-arch.sh)

@@ -4,6 +4,10 @@ include ../../external/common/rules.mk
 
 all: links arch_links $(EXE)
 
+.PHONY: coverage
+coverage: CFLAGS += -fprofile-arcs -ftest-coverage
+coverage: check
+
 #Rebuild version.o so that the the version always matches
 #what the test suite will get from ./make_version.sh
 check: version.o all
