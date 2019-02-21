@@ -521,7 +521,6 @@ static void hiomap_event(uint8_t events, void *context)
 
 	lock(&ctx->lock);
 	ctx->bmc_state = events | (ctx->bmc_state & HIOMAP_E_ACK_MASK);
-	ctx->update = true;
 	unlock(&ctx->lock);
 }
 
@@ -609,66 +608,63 @@ static int lpc_window_write(struct ipmi_hiomap *ctx, uint32_t pos,
 	return 0;
 }
 
-/* Try to restore the window state */
-static int ipmi_hiomap_restore_window(struct ipmi_hiomap *ctx)
-{
-	uint64_t size;
-	uint8_t cmd;
-
-	lock(&ctx->lock);
-	if (ctx->window_state == closed_window) {
-		unlock(&ctx->lock);
-		return 0;
-	}
-
-	cmd = ctx->window_state == read_window ?
-		HIOMAP_C_CREATE_READ_WINDOW :
-		HIOMAP_C_CREATE_WRITE_WINDOW;
-
-	ctx->window_state = closed_window;
-	unlock(&ctx->lock);
-
-	return hiomap_window_move(ctx, cmd, ctx->current.cur_pos,
-				  ctx->current.size, &size);
-}
-
 /* Best-effort asynchronous event handling by blocklevel callbacks */
 static int ipmi_hiomap_handle_events(struct ipmi_hiomap *ctx)
 {
 	uint8_t status;
-	bool update;
 	int rc;
 
 	lock(&ctx->lock);
+
 	status = ctx->bmc_state;
-	update = ctx->update;
-	if (update) {
-		ctx->bmc_state &= ~HIOMAP_E_ACK_MASK;
-		ctx->update = false;
-	}
+
+	/*
+	 * Immediately clear the ackable events to make sure we don't race to
+	 * clear them after dropping the lock, as we may lose protocol or
+	 * window state if a race materialises. In the event of a failure where
+	 * we haven't completed the recovery, the state we mask out below gets
+	 * OR'ed back in to avoid losing it.
+	 */
+	ctx->bmc_state &= ~HIOMAP_E_ACK_MASK;
+
+	/*
+	 * We won't be attempting to restore window state -
+	 * ipmi_hiomap_handle_events() is followed by hiomap_window_move() in
+	 * all cases. Attempting restoration after HIOMAP_E_PROTOCOL_RESET or
+	 * HIOMAP_E_WINDOW_RESET can be wasteful if we immediately shift the
+	 * window elsewhere, and if it does not need to be shifted with respect
+	 * to the subsequent request then hiomap_window_move() will handle
+	 * re-opening it from the closed state.
+	 *
+	 * Therefore it is enough to mark the window as closed to consider it
+	 * recovered.
+	 */
+	if (status & (HIOMAP_E_PROTOCOL_RESET | HIOMAP_E_WINDOW_RESET))
+		ctx->window_state = closed_window;
+
 	unlock(&ctx->lock);
 
-	if (!update)
-		return 0;
-
-	if (!(status & HIOMAP_E_DAEMON_READY)) {
-		prerror("Daemon not ready\n");
-		return FLASH_ERR_DEVICE_GONE;
-	}
-
+	/*
+	 * If there's anything to acknowledge, do so in the one request to
+	 * minimise overhead. By sending the ACK prior to performing the
+	 * protocol recovery we ensure that even with coalesced resets we still
+	 * end up in the recovered state and not unknowingly stuck in a reset
+	 * state. We may receive reset events after the ACK but prior to the
+	 * recovery procedures being run, but this just means that we will
+	 * needlessly perform recovery on the following invocation of
+	 * ipmi_hiomap_handle_events(). If the reset event is a
+	 * HIOMAP_E_WINDOW_RESET it is enough that the window is already marked
+	 * as closed above - future accesses will force it to be re-opened and
+	 * the BMC's cache must be valid if opening the window is successful.
+	 */
 	if (status & HIOMAP_E_ACK_MASK) {
 		/* ACK is unversioned, can send it if the daemon is ready */
 		rc = hiomap_ack(ctx, status & HIOMAP_E_ACK_MASK);
 		if (rc) {
 			prlog(PR_DEBUG, "Failed to ack events: 0x%x\n",
 			      status & HIOMAP_E_ACK_MASK);
-			return rc;
+			goto restore;
 		}
-	}
-
-	if (status & HIOMAP_E_FLASH_LOST) {
-		prlog(PR_INFO, "Lost control of flash device\n");
-		return FLASH_ERR_AGAIN;
 	}
 
 	if (status & HIOMAP_E_PROTOCOL_RESET) {
@@ -677,38 +673,37 @@ static int ipmi_hiomap_handle_events(struct ipmi_hiomap *ctx)
 		rc = hiomap_get_info(ctx);
 		if (rc) {
 			prerror("Failure to renegotiate after protocol reset\n");
-			return rc;
+			goto restore;
 		}
 
 		rc = hiomap_get_flash_info(ctx);
 		if (rc) {
 			prerror("Failure to fetch flash info after protocol reset\n");
-			return rc;
+			goto restore;
 		}
 
-		rc = ipmi_hiomap_restore_window(ctx);
-		if (rc) {
-			prerror("Failure to restore window state after protocol reset\n");
-			return rc;
-		}
-
-		prlog(PR_INFO, "Restored window state after protocol reset\n");
-		return 0;
+		prlog(PR_INFO, "Restored state after protocol reset\n");
 	}
 
-	if (status & HIOMAP_E_WINDOW_RESET) {
-		prlog(PR_INFO, "Window was reset\n");
-
-		rc = ipmi_hiomap_restore_window(ctx);
-		if (rc) {
-			prerror("Failed to restore previous window parameters after protocol reset\n");
-			return rc;
-		}
-
-		prlog(PR_INFO, "Restored window state after window reset\n");
-	}
+	/*
+	 * As there's no change to the protocol on HIOMAP_E_WINDOW_RESET we
+	 * simply need to open a window to recover, which as mentioned above is
+	 * handled by hiomap_window_move() after our cleanup here.
+	 */
 
 	return 0;
+
+restore:
+	/*
+	 * Conservatively restore the events to the un-acked state to avoid
+	 * losing events due to races. It might cause us to restore state more
+	 * than necessary, but never less than necessary.
+	 */
+	lock(&ctx->lock);
+	ctx->bmc_state |= (status & HIOMAP_E_ACK_MASK);
+	unlock(&ctx->lock);
+
+	return rc;
 }
 
 static int ipmi_hiomap_read(struct blocklevel_device *bl, uint64_t pos,

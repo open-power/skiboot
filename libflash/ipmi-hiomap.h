@@ -48,7 +48,6 @@ struct ipmi_hiomap {
 	 * three variables are protected by lock to avoid conflict.
 	 */
 	struct lock lock;
-	bool update;
 	uint8_t bmc_state;
 	enum lpc_window_state window_state;
 };
