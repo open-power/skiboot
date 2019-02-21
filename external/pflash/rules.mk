@@ -50,6 +50,7 @@ $(LIBFLASH_OBJS): libflash-%.o : libflash/%.c | links
 $(CCAN_OBJS): ccan-list-%.o: ccan/list/%.c | links
 	$(Q_CC)$(CC) $(CFLAGS) -c $< -o $@
 
+$(EXE): CFLAGS += -Wframe-larger-than=2048
 $(EXE): $(OBJS)
 	$(Q_CC)$(CC) $(LDFLAGS) $(CFLAGS) $^ -lrt -o $@
 
