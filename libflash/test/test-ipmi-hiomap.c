@@ -1296,6 +1296,36 @@ static void test_hiomap_protocol_event_during_erase(void)
 	scenario_exit();
 }
 
+static const struct scenario_event scenario_hiomap_protocol_bad_sequence[] = {
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_ACK,
+				.seq = 1,
+				.args = {
+					[0] = HIOMAP_E_ACK_MASK,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_ACK,
+				.seq = 0,
+			},
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_bad_sequence(void)
+{
+	struct blocklevel_device *bl;
+
+	scenario_enter(scenario_hiomap_protocol_bad_sequence);
+	assert(ipmi_hiomap_init(&bl) > 0);
+	scenario_exit();
+}
+
 static const struct scenario_event
 scenario_hiomap_protocol_persistent_error[] = {
 	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
@@ -1351,6 +1381,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_protocol_erase_two_blocks),
 	TEST_CASE(test_hiomap_protocol_event_before_erase),
 	TEST_CASE(test_hiomap_protocol_event_during_erase),
+	TEST_CASE(test_hiomap_protocol_bad_sequence),
 	TEST_CASE(test_hiomap_protocol_persistent_error),
 	{ NULL, NULL },
 };
