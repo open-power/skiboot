@@ -1088,6 +1088,46 @@ static void test_hiomap_protocol_event_before_write(void)
 }
 
 static const struct scenario_event
+scenario_hiomap_protocol_event_during_write[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{
+		.type = scenario_event_p,
+		.p = &hiomap_create_write_window_qs0l1_rs0l1_call,
+	},
+	{
+		.type = scenario_sel,
+		.s = {
+			.bmc_state = HIOMAP_E_DAEMON_READY |
+					HIOMAP_E_FLASH_LOST,
+		}
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_event_during_write(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+	size_t len;
+	char *buf;
+	int rc;
+
+	scenario_enter(scenario_hiomap_protocol_event_during_write);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	len = 1 << ctx->block_size_shift;
+	buf = calloc(1, len);
+	assert(buf);
+	rc = bl->write(bl, 0, buf, len);
+	free(buf);
+	assert(rc == FLASH_ERR_AGAIN);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
+static const struct scenario_event
 scenario_hiomap_protocol_persistent_error[] = {
 	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
 	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
@@ -1137,6 +1177,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_protocol_write_one_block),
 	TEST_CASE(test_hiomap_protocol_write_two_blocks),
 	TEST_CASE(test_hiomap_protocol_event_before_write),
+	TEST_CASE(test_hiomap_protocol_event_during_write),
 	TEST_CASE(test_hiomap_protocol_persistent_error),
 	{ NULL, NULL },
 };
