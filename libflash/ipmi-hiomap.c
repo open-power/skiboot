@@ -80,6 +80,7 @@ static void ipmi_hiomap_cmd_cb(struct ipmi_msg *msg)
 
 	res->cc = msg->cc;
 	if (msg->cc != IPMI_CC_NO_ERROR) {
+		ipmi_free_msg(msg);
 		return;
 	}
 
