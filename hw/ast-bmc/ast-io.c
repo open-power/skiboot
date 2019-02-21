@@ -323,20 +323,41 @@ static void ast_setup_sio_irq_polarity(void)
 
 bool ast_sio_is_enabled(void)
 {
+	bool enabled;
 	int64_t rc;
 
-	/* Begin the unlock sequence with a probe to establish presence */
-	rc = lpc_probe_write(OPAL_LPC_IO, 0x2e, 0xa5, 1);
-	if (rc)
-		return false;
+	lock(&bmc_sio_lock);
+	/*
+	 * Probe by attempting to lock the SIO device, this way the
+	 * post-condition is that the SIO device is locked or not able to be
+	 * unlocked. This turns out neater than trying to use the unlock code.
+	 */
+	rc = lpc_probe_write(OPAL_LPC_IO, 0x2e, 0xaa, 1);
+	if (rc) {
+		enabled = false;
+		/* If we can't lock it, then we can't unlock it either */
+		goto out;
+	}
 
-	/* Complete the unlock sequence if the device is present */
-	lpc_outb(0xa5, 0x2e);
+	/*
+	 * Now that we know that is locked and able to be unlocked, unlock it
+	 * if skiboot's recorded device state indicates it was previously
+	 * unlocked.
+	 */
+	if (bmc_sio_cur_dev != BMC_SIO_DEV_NONE) {
+		/* Send SuperIO password */
+		lpc_outb(0xa5, 0x2e);
+		lpc_outb(0xa5, 0x2e);
 
-	/* Re-lock to return to a known state */
-	lpc_outb(0xaa, 0x2e);
+		/* Ensure the previously selected logical dev is selected */
+		bmc_sio_outb(bmc_sio_cur_dev, 0x07);
+	}
 
-	return true;
+	enabled = true;
+out:
+	unlock(&bmc_sio_lock);
+
+	return enabled;
 }
 
 bool ast_sio_init(void)
