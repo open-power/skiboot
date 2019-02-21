@@ -117,7 +117,7 @@ static int file_write(struct blocklevel_device *bl, uint64_t dst, const void *sr
  */
 static int file_erase(struct blocklevel_device *bl, uint64_t dst, uint64_t len)
 {
-	char buf[4096];
+	static char buf[4096];
 	int i = 0;
 	int rc;
 

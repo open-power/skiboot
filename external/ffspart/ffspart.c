@@ -350,7 +350,9 @@ static void print_help(const char *pname)
 
 int main(int argc, char *argv[])
 {
-	char *pnor = NULL, *input = NULL, line[MAX_LINE];
+	static char line[MAX_LINE];
+
+	char *pnor = NULL, *input = NULL;
 	bool toc_created = false, bad_input = false, allow_empty = false;
 	uint32_t block_size = 0, block_count = 0;
 	struct ffs_hdr *tocs[MAX_TOCS] = { 0 };
