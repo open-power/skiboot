@@ -2348,6 +2348,175 @@ static void test_hiomap_erase_malformed_large(void)
 	scenario_exit();
 }
 
+static const struct scenario_event
+scenario_hiomap_protocol_recovery_failure_ack[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{
+		.type = scenario_event_p,
+		.p = &hiomap_create_write_window_qs0l1_rs0l1_call,
+	},
+	{ .type = scenario_event_p, .p = &hiomap_erase_qs0l1_call, },
+	{ .type = scenario_event_p, .p = &hiomap_flush_call, },
+	{ .type = scenario_delay },
+	{
+		.type = scenario_sel,
+		.s = {
+			.bmc_state = HIOMAP_E_DAEMON_READY |
+					HIOMAP_E_PROTOCOL_RESET
+		}
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_ACK,
+				.seq = 7,
+				.args = {
+					[0] = HIOMAP_E_PROTOCOL_RESET,
+				},
+			},
+			.cc = IPMI_ERR_UNSPECIFIED,
+		},
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_ACK,
+				.seq = 8,
+				.args = {
+					[0] = HIOMAP_E_PROTOCOL_RESET,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_ACK,
+				.seq = 8,
+			},
+		},
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_GET_INFO,
+				.seq = 9,
+				.args = {
+					[0] = HIOMAP_V2,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_GET_INFO,
+				.seq = 9,
+				.args = {
+					[0] = HIOMAP_V2,
+					[1] = 12,
+					[2] = 8, [3] = 0,
+				},
+			},
+		},
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_GET_FLASH_INFO,
+				.seq = 10,
+				.args = {
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_GET_FLASH_INFO,
+				.seq = 10,
+				.args = {
+					[0] = 0x00, [1] = 0x20,
+					[2] = 0x01, [3] = 0x00,
+				},
+			},
+		},
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_CREATE_WRITE_WINDOW,
+				.seq = 11,
+				.args = {
+					[0] = 0x00, [1] = 0x00,
+					[2] = 0x01, [3] = 0x00,
+				},
+			},
+			.cc = IPMI_CC_NO_ERROR,
+			.resp = {
+				.cmd = HIOMAP_C_CREATE_WRITE_WINDOW,
+				.seq = 11,
+				.args = {
+					[0] = 0xff, [1] = 0x0f,
+					[2] = 0x01, [3] = 0x00,
+					[4] = 0x00, [5] = 0x00,
+				},
+			},
+		},
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_ERASE,
+				.seq = 12,
+				.args = {
+					[0] = 0x00, [1] = 0x00,
+					[2] = 0x01, [3] = 0x00,
+				},
+			},
+			.resp = {
+				.cmd = HIOMAP_C_ERASE,
+				.seq = 12,
+			},
+		},
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_FLUSH,
+				.seq = 13,
+			},
+			.resp = {
+				.cmd = HIOMAP_C_FLUSH,
+				.seq = 13,
+			},
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_recovery_failure_ack(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+	size_t len;
+
+	scenario_enter(scenario_hiomap_protocol_recovery_failure_ack);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	len = 1 << ctx->block_size_shift;
+	/*
+	 * We're erasing the same block 3 times - it's irrelevant, we're just
+	 * trying to manipulate window state
+	 */
+	assert(!bl->erase(bl, 0, len));
+	scenario_advance();
+	assert(bl->erase(bl, 0, len) > 0);
+	assert(!bl->erase(bl, 0, len));
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
 struct test_case {
 	const char *name;
 	void (*fn)(void);
@@ -2403,6 +2572,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_flush_malformed_large),
 	TEST_CASE(test_hiomap_erase_malformed_small),
 	TEST_CASE(test_hiomap_erase_malformed_large),
+	TEST_CASE(test_hiomap_protocol_recovery_failure_ack),
 	{ NULL, NULL },
 };
 
