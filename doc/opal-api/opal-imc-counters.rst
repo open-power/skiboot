@@ -35,9 +35,15 @@ Parameters
 
 Returns
 -------
-OPAL_PARAMETER - In case of  unsupported ``type``
-OPAL_HARDWARE  - If any error in setting up the hardware.
-OPAL_SUCCESS   - On succesfully initialized or even if init operation is a no-op.
+
+OPAL_PARAMETER
+  In case of  unsupported ``type``
+
+OPAL_HARDWARE
+  If any error in setting up the hardware.
+
+OPAL_SUCCESS
+  On succesfully initialized or even if init operation is a no-op.
 
 
 OPAL_IMC_COUNTERS_START
@@ -57,13 +63,19 @@ Parameters
 
 Returns
 -------
-OPAL_PARAMETER - In case of  Unsupported ``type``
-OPAL_HARDWARE  - If any error in setting up the hardware.
-OPAL_SUCCESS   - On successful execution of the operation for the given ``type``.
+
+OPAL_PARAMETER
+  In case of  Unsupported ``type``
+
+OPAL_HARDWARE
+  If any error in setting up the hardware.
+
+OPAL_SUCCESS
+  On successful execution of the operation for the given ``type``.
 
 
 OPAL_IMC_COUNTERS_STOP
-===========================
+======================
 OPAL call interface for stoping In-Memory
 Collection counters for a specified domain (NEST/CORE).
 STOP should always be called after a related START.
@@ -82,6 +94,12 @@ Parameters
 
 Returns
 -------
-OPAL_PARAMETER - In case of  Unsupported ``type``
-OPAL_HARDWARE  - If any error in setting up the hardware.
-OPAL_SUCCESS   - On successful execution of the operation for the given ``type``.
+
+OPAL_PARAMETER
+  In case of  Unsupported ``type``
+
+OPAL_HARDWARE
+  If any error in setting up the hardware.
+
+OPAL_SUCCESS
+  On successful execution of the operation for the given ``type``.
