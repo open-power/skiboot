@@ -387,6 +387,31 @@ static const struct scenario_event hiomap_mark_dirty_qs0l1_call = {
 	},
 };
 
+static const struct scenario_event
+hiomap_create_write_window_qs0l2_rs0l1_call = {
+	.type = scenario_cmd,
+	.c = {
+		.req = {
+			.cmd = HIOMAP_C_CREATE_WRITE_WINDOW,
+			.seq = 4,
+			.args = {
+				[0] = 0x00, [1] = 0x00,
+				[2] = 0x02, [3] = 0x00,
+			},
+		},
+		.cc = IPMI_CC_NO_ERROR,
+		.resp = {
+			.cmd = HIOMAP_C_CREATE_WRITE_WINDOW,
+			.seq = 4,
+			.args = {
+				[0] = 0xff, [1] = 0x0f,
+				[2] = 0x01, [3] = 0x00,
+				[4] = 0x00, [5] = 0x00,
+			},
+		},
+	},
+};
+
 static const struct scenario_event hiomap_flush_call = {
 	.type = scenario_cmd,
 	.c = {
@@ -397,6 +422,31 @@ static const struct scenario_event hiomap_flush_call = {
 		.resp = {
 			.cmd = HIOMAP_C_FLUSH,
 			.seq = 6,
+		},
+	},
+};
+
+static const struct scenario_event
+hiomap_create_write_window_qs1l1_rs1l1_call = {
+	.type = scenario_cmd,
+	.c = {
+		.req = {
+			.cmd = HIOMAP_C_CREATE_WRITE_WINDOW,
+			.seq = 7,
+			.args = {
+				[0] = 0x01, [1] = 0x00,
+				[2] = 0x01, [3] = 0x00,
+			},
+		},
+		.cc = IPMI_CC_NO_ERROR,
+		.resp = {
+			.cmd = HIOMAP_C_CREATE_WRITE_WINDOW,
+			.seq = 7,
+			.args = {
+				[0] = 0xfe, [1] = 0x0f,
+				[2] = 0x01, [3] = 0x00,
+				[4] = 0x01, [5] = 0x00,
+			},
 		},
 	},
 };
@@ -957,6 +1007,73 @@ static void test_hiomap_protocol_write_one_block(void)
 }
 
 static const struct scenario_event
+scenario_hiomap_protocol_write_two_blocks[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{
+		.type = scenario_event_p,
+		.p = &hiomap_create_write_window_qs0l2_rs0l1_call,
+	},
+	{ .type = scenario_event_p, .p = &hiomap_mark_dirty_qs0l1_call, },
+	{ .type = scenario_event_p, .p = &hiomap_flush_call, },
+	{
+		.type = scenario_event_p,
+		.p = &hiomap_create_write_window_qs1l1_rs1l1_call,
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_MARK_DIRTY,
+				.seq = 8,
+				.args = {
+					[0] = 0x00, [1] = 0x00,
+					[2] = 0x01, [3] = 0x00,
+				},
+			},
+			.resp = {
+				.cmd = HIOMAP_C_MARK_DIRTY,
+				.seq = 8,
+			},
+		},
+	},
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_FLUSH,
+				.seq = 9,
+			},
+			.resp = {
+				.cmd = HIOMAP_C_FLUSH,
+				.seq = 9,
+			},
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_write_two_blocks(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+	uint8_t *buf;
+	size_t len;
+
+	scenario_enter(scenario_hiomap_protocol_write_two_blocks);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	len = 2 * (1 << ctx->block_size_shift);
+	buf = calloc(1, len);
+	assert(buf);
+	assert(!bl->write(bl, 0, buf, len));
+	free(buf);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
+static const struct scenario_event
 scenario_hiomap_protocol_persistent_error[] = {
 	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
 	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
@@ -1004,6 +1121,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_protocol_event_before_read),
 	TEST_CASE(test_hiomap_protocol_event_during_read),
 	TEST_CASE(test_hiomap_protocol_write_one_block),
+	TEST_CASE(test_hiomap_protocol_write_two_blocks),
 	TEST_CASE(test_hiomap_protocol_persistent_error),
 	{ NULL, NULL },
 };
