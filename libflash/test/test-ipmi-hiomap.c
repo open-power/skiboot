@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <ccan/container_of/container_of.h>
+#include <libflash/blocklevel.h>
 #include <lock.h>
 #include <lpc.h>
 #include <hiomap.h>
@@ -11,6 +12,9 @@
 
 #include "../ipmi-hiomap.h"
 #include "../errors.h"
+
+/* Stub for blocklevel debug macros */
+bool libflash_debug;
 
 const struct bmc_sw_config bmc_sw_hiomap = {
 	.ipmi_oem_hiomap_cmd         = IPMI_CODE(0x3a, 0x5a),
@@ -638,6 +642,34 @@ static void test_hiomap_protocol_reset_recovery(void)
 	free(buf);
 }
 
+static const struct scenario_event
+scenario_hiomap_protocol_persistent_error[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_flash_info_call, },
+	{ .type = scenario_sel, .s = { .bmc_state = HIOMAP_E_PROTOCOL_RESET } },
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_protocol_persistent_error(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+	char buf;
+	int rc;
+
+	scenario_enter(scenario_hiomap_protocol_persistent_error);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	assert(ctx->bmc_state == HIOMAP_E_PROTOCOL_RESET);
+	rc = bl->read(bl, 0, &buf, sizeof(buf));
+	assert(rc == FLASH_ERR_DEVICE_GONE);
+	rc = bl->read(bl, 0, &buf, sizeof(buf));
+	assert(rc == FLASH_ERR_DEVICE_GONE);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
 struct test_case {
 	const char *name;
 	void (*fn)(void);
@@ -653,6 +685,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_event_daemon_lost_flash_control),
 	TEST_CASE(test_hiomap_event_daemon_regained_flash_control_dirty),
 	TEST_CASE(test_hiomap_protocol_reset_recovery),
+	TEST_CASE(test_hiomap_protocol_persistent_error),
 	{ NULL, NULL },
 };
 
