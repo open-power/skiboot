@@ -146,6 +146,9 @@ void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 		assert(ctx->cursor->p->type == scenario_cmd);
 		cmd = &ctx->cursor->p->c;
 	} else {
+		printf("Got unexpected request:\n");
+		for (ssize_t i = 0; i < msg->req_size; i++)
+			printf("msg->data[%zd]: 0x%02x\n", i, msg->data[i]);
 		assert(false);
 	}
 
