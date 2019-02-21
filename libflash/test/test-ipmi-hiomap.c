@@ -1456,6 +1456,35 @@ static void test_hiomap_get_info_error(void)
 	scenario_exit();
 }
 
+static const struct scenario_event
+scenario_hiomap_get_flash_info_error[] = {
+	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
+	{ .type = scenario_event_p, .p = &hiomap_get_info_call, },
+	{
+		.type = scenario_cmd,
+		.c = {
+			.req = {
+				.cmd = HIOMAP_C_GET_FLASH_INFO,
+				.seq = 3,
+				.args = {
+					[0] = HIOMAP_V2,
+				},
+			},
+			.cc = IPMI_INVALID_COMMAND_ERR,
+		},
+	},
+	SCENARIO_SENTINEL,
+};
+
+static void test_hiomap_get_flash_info_error(void)
+{
+	struct blocklevel_device *bl;
+
+	scenario_enter(scenario_hiomap_get_flash_info_error);
+	assert(ipmi_hiomap_init(&bl) > 0);
+	scenario_exit();
+}
+
 struct test_case {
 	const char *name;
 	void (*fn)(void);
@@ -1488,6 +1517,7 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_protocol_persistent_error),
 	TEST_CASE(test_hiomap_protocol_get_flash_info),
 	TEST_CASE(test_hiomap_get_info_error),
+	TEST_CASE(test_hiomap_get_flash_info_error),
 	{ NULL, NULL },
 };
 
