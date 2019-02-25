@@ -1,4 +1,4 @@
-/* Copyright 2017-2018 IBM Corp.
+/* Copyright 2017-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ static uint64_t sbe_last_gen_stamp;
 static uint64_t sbe_timer_target;
 
 /* Timer lock */
-struct lock sbe_timer_lock;
+static struct lock sbe_timer_lock;
 
 /*
  * Minimum timeout value for P9 is 500 microseconds. After that
