@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 IBM Corp.
+/* Copyright 2013-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ struct procedure {
 };
 
 #define DEFINE_PROCEDURE(NAME, STEPS...)		\
-	struct procedure procedure_##NAME =		\
+	static struct procedure procedure_##NAME =	\
 	{.name = #NAME, .steps = {NAME, ##STEPS}}
 
 #define PROCEDURE_INPROGRESS	(1 << 31)
