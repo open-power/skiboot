@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ enum P9_BAR {
 	P9_BAR_SBE = 3,
 };
 
-u64 pba_bar0, pba_barmask0;
-u8 bar_homer, bar_slw, bar_occ_common;
+static u64 pba_bar0, pba_barmask0;
+static u8 bar_homer, bar_slw, bar_occ_common;
 
 static bool read_pba_bar(struct proc_chip *chip, unsigned int bar_no,
 			 uint64_t *base, uint64_t *size)
