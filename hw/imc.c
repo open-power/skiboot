@@ -1,4 +1,4 @@
-/* Copyright 2016 IBM Corp.
+/* Copyright 2016-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@
  * imc_chip_avl_vector(in struct imc_chip_cb, look at include/imc.h).
  * nest_pmus[] is an array containing all the possible nest IMC PMU node names.
  */
-char const *nest_pmus[] = {
+static char const *nest_pmus[] = {
 	"powerbus0",
 	"mcs0",
 	"mcs1",
@@ -89,7 +89,7 @@ char const *nest_pmus[] = {
  * in the debug mode (which will be supported by microcode in the future).
  * These will be advertised only when OPAL provides interface for the it.
  */
-char const *debug_mode_units[] = {
+static char const *debug_mode_units[] = {
 	"mcs0",
 	"mcs1",
 	"mcs2",
@@ -116,7 +116,7 @@ static struct combined_units_node cu_node[] = {
 static char *compress_buf;
 static size_t compress_buf_size;
 const char **prop_to_fix(struct dt_node *node);
-const char *props_to_fix[] = {"events", NULL};
+static const char *props_to_fix[] = {"events", NULL};
 
 static bool is_nest_mem_initialized(struct imc_chip_cb *ptr)
 {
@@ -136,13 +136,13 @@ static bool is_nest_mem_initialized(struct imc_chip_cb *ptr)
  * SCOM port addresses in the arrays below, each for Hardware Trace Macro (HTM)
  * mode and PDBAR.
  */
-unsigned int pdbar_scom_index[] = {
+static unsigned int pdbar_scom_index[] = {
 	0x1001220B,
 	0x1001230B,
 	0x1001260B,
 	0x1001270B
 };
-unsigned int htm_scom_index[] = {
+static unsigned int htm_scom_index[] = {
 	0x10012200,
 	0x10012300,
 	0x10012600,
