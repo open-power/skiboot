@@ -790,3 +790,54 @@ state information about the XIVE.
   - XIVE_DUMP_EMU:     Dump the state of the XICS emulation for a thread
 		       "id" is the PIR value of the thread
 
+
+OPAL_XIVE_GET_QUEUE_STATE
+^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: c
+
+ int64_t opal_xive_get_queue_state(uint64_t vp, uint32_t prio,
+				   uint32_t *out_qtoggle,
+				   uint32_t *out_qindex);
+
+This call saves the queue toggle bit and index. This must be called on
+an enabled queue.
+
+* vp, prio: The target queue
+
+* out_qtoggle: toggle bit of the queue
+
+* out_qindex: index of the queue
+
+
+OPAL_XIVE_SET_QUEUE_STATE
+^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: c
+
+ int64_t opal_xive_set_queue_state(uint64_t vp, uint32_t prio,
+				   uint32_t qtoggle,
+				   uint32_t qindex);
+
+This call restores the queue toggle bit and index that was previously
+saved by a call to opal_xive_get_queue_state(). This must be called on
+an enabled queue.
+
+* vp, prio: The target queue
+
+* qtoggle: toggle bit of the queue
+
+* qindex: index of the queue
+
+
+OPAL_XIVE_GET_VP_STATE
+^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: c
+
+ int64_t opal_xive_get_vp_state(uint64_t vp_id,
+				uint64_t *out_state);
+
+This call saves the VP HW state in "out_state". The format matches the
+XIVE NVT word 4 and word 5. This must be called on an enabled VP.
+
+* vp_id: The target VP
+
+* out_state: Location where the state is to be stored

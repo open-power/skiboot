@@ -199,8 +199,8 @@
 #define OPAL_XIVE_FREE_IRQ			140
 #define OPAL_XIVE_SYNC				141
 #define OPAL_XIVE_DUMP				142
-#define OPAL_XIVE_RESERVED3			143
-#define OPAL_XIVE_RESERVED4			144
+#define OPAL_XIVE_GET_QUEUE_STATE		143 /* Get END state */
+#define OPAL_XIVE_SET_QUEUE_STATE		144 /* Set END state */
 #define OPAL_SIGNAL_SYSTEM_RESET		145
 #define OPAL_NPU_INIT_CONTEXT			146
 #define OPAL_NPU_DESTROY_CONTEXT		147
@@ -226,7 +226,8 @@
 #define OPAL_NX_COPROC_INIT			167
 #define OPAL_NPU_SET_RELAXED_ORDER		168
 #define OPAL_NPU_GET_RELAXED_ORDER		169
-#define OPAL_LAST				169
+#define OPAL_XIVE_GET_VP_STATE			170 /* Get NVT state */
+#define OPAL_LAST				170
 
 #define QUIESCE_HOLD			1 /* Spin all calls at entry */
 #define QUIESCE_REJECT			2 /* Fail all calls with OPAL_BUSY */
