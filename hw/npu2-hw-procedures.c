@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 IBM Corp.
+/* Copyright 2013-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,73 +36,78 @@ struct npu2_phy_reg {
 	uint64_t len;
 };
 
-struct npu2_phy_reg NPU2_PHY_RX_DATA_DAC_SPARE_MODE	= {0x000, 63, 64};
-struct npu2_phy_reg NPU2_PHY_RX_DAC_CNTL6		= {0x00c, 63, 64};
-struct npu2_phy_reg NPU2_PHY_RX_DAC_CNTL5		= {0x028, 63, 64};
-struct npu2_phy_reg NPU2_PHY_RX_DAC_CNTL9		= {0x030, 63, 64};
-struct npu2_phy_reg NPU2_PHY_RX_DAC_CNTL5_EO		= {0x00a, 63, 64};
-struct npu2_phy_reg NPU2_PHY_RX_DAC_CNTL4		= {0x026, 63, 64};
-struct npu2_phy_reg NPU2_PHY_RX_RUN_LANE		= {0x0c8, 48, 1};
-struct npu2_phy_reg NPU2_PHY_RX_IORESET			= {0x096, 63, 1};
-struct npu2_phy_reg NPU2_PHY_TX_IORESET			= {0x113, 48, 1};
-struct npu2_phy_reg NPU2_PHY_RX_PR_RESET		= {0x096, 62, 1};
-struct npu2_phy_reg NPU2_PHY_RX_LANE_ANA_PDWN		= {0x002, 54, 1};
-struct npu2_phy_reg NPU2_PHY_RX_LANE_DIG_PDWN		= {0x088, 48, 1};
-struct npu2_phy_reg NPU2_PHY_RX_PR_IQ_RES_SEL		= {0x004, 59, 3};
-struct npu2_phy_reg NPU2_PHY_RX_PR_PHASE_STEP		= {0x08a, 60, 4};
-struct npu2_phy_reg NPU2_PHY_TX_LANE_PDWN		= {0x101, 48, 1};
-struct npu2_phy_reg NPU2_PHY_RX_RUN_DCCAL		= {0x0c8, 49, 1};
-struct npu2_phy_reg NPU2_PHY_RX_DCCAL_DONE		= {0x0ca, 49, 1};
-struct npu2_phy_reg NPU2_PHY_RX_LANE_BUSY		= {0x0ca, 50, 1};
-struct npu2_phy_reg NPU2_PHY_RX_B_BANK_CONTROLS		= {0x002, 58, 6};
-struct npu2_phy_reg NPU2_PHY_TX_UNLOAD_CLK_DISABLE	= {0x103, 56, 1};
-struct npu2_phy_reg NPU2_PHY_TX_FIFO_INIT		= {0x105, 53, 1};
-struct npu2_phy_reg NPU2_PHY_TX_RXCAL			= {0x103, 57, 1};
-struct npu2_phy_reg NPU2_PHY_RX_INIT_DONE		= {0x0ca, 48, 1};
-struct npu2_phy_reg NPU2_PHY_RX_PR_EDGE_TRACK_CNTL	= {0x092, 48, 2};
-struct npu2_phy_reg NPU2_PHY_RX_PR_BUMP_SL_1UI		= {0x092, 57, 1};
-struct npu2_phy_reg NPU2_PHY_RX_PR_FW_OFF		= {0x08a, 56, 1};
-struct npu2_phy_reg NPU2_PHY_RX_PR_FW_INERTIA_AMT	= {0x08a, 57, 3};
-struct npu2_phy_reg NPU2_PHY_RX_CFG_LTE_MC		= {0x000, 60, 4};
-struct npu2_phy_reg NPU2_PHY_RX_A_INTEG_COARSE_GAIN	= {0x00a, 48, 4};
-struct npu2_phy_reg NPU2_PHY_RX_B_INTEG_COARSE_GAIN	= {0x026, 48, 4};
-struct npu2_phy_reg NPU2_PHY_RX_E_INTEG_COARSE_GAIN	= {0x030, 48, 4};
+/*
+ * Currently unused, but documented here:
+static struct npu2_phy_reg NPU2_PHY_RX_DATA_DAC_SPARE_MODE = {0x000, 63, 64};
+static struct npu2_phy_reg NPU2_PHY_RX_DAC_CNTL6	   = {0x00c, 63, 64};
+static struct npu2_phy_reg NPU2_PHY_RX_DAC_CNTL5	   = {0x028, 63, 64};
+static struct npu2_phy_reg NPU2_PHY_RX_DAC_CNTL9	   = {0x030, 63, 64};
+static struct npu2_phy_reg NPU2_PHY_RX_DAC_CNTL5_EO	   = {0x00a, 63, 64};
+static struct npu2_phy_reg NPU2_PHY_RX_DAC_CNTL4	   = {0x026, 63, 64};
+*/
+static struct npu2_phy_reg NPU2_PHY_RX_RUN_LANE		   = {0x0c8, 48, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_IORESET		   = {0x096, 63, 1};
+static struct npu2_phy_reg NPU2_PHY_TX_IORESET		   = {0x113, 48, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_PR_RESET		   = {0x096, 62, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_LANE_ANA_PDWN	   = {0x002, 54, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_LANE_DIG_PDWN	   = {0x088, 48, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_PR_IQ_RES_SEL	   = {0x004, 59, 3};
+static struct npu2_phy_reg NPU2_PHY_RX_PR_PHASE_STEP	   = {0x08a, 60, 4};
+static struct npu2_phy_reg NPU2_PHY_TX_LANE_PDWN	   = {0x101, 48, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_RUN_DCCAL	   = {0x0c8, 49, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_DCCAL_DONE	   = {0x0ca, 49, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_LANE_BUSY	   = {0x0ca, 50, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_B_BANK_CONTROLS	   = {0x002, 58, 6};
+static struct npu2_phy_reg NPU2_PHY_TX_UNLOAD_CLK_DISABLE  = {0x103, 56, 1};
+static struct npu2_phy_reg NPU2_PHY_TX_FIFO_INIT	   = {0x105, 53, 1};
+static struct npu2_phy_reg NPU2_PHY_TX_RXCAL		   = {0x103, 57, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_INIT_DONE	   = {0x0ca, 48, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_PR_EDGE_TRACK_CNTL  = {0x092, 48, 2};
+static struct npu2_phy_reg NPU2_PHY_RX_PR_BUMP_SL_1UI	   = {0x092, 57, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_PR_FW_OFF	   = {0x08a, 56, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_PR_FW_INERTIA_AMT   = {0x08a, 57, 3};
+static struct npu2_phy_reg NPU2_PHY_RX_CFG_LTE_MC	   = {0x000, 60, 4};
+static struct npu2_phy_reg NPU2_PHY_RX_A_INTEG_COARSE_GAIN = {0x00a, 48, 4};
+static struct npu2_phy_reg NPU2_PHY_RX_B_INTEG_COARSE_GAIN = {0x026, 48, 4};
+static struct npu2_phy_reg NPU2_PHY_RX_E_INTEG_COARSE_GAIN = {0x030, 48, 4};
 
 /* These registers are per-PHY, not per lane */
-struct npu2_phy_reg NPU2_PHY_RX_SPEED_SELECT		= {0x262, 51, 2};
-struct npu2_phy_reg NPU2_PHY_RX_AC_COUPLED		= {0x262, 53, 1};
-struct npu2_phy_reg NPU2_PHY_TX_ZCAL_SWO_EN		= {0x3c9, 48, 1};
-struct npu2_phy_reg NPU2_PHY_TX_ZCAL_REQ		= {0x3c1, 49, 1};
-struct npu2_phy_reg NPU2_PHY_TX_ZCAL_DONE		= {0x3c1, 50, 1};
-struct npu2_phy_reg NPU2_PHY_TX_ZCAL_ERROR		= {0x3c1, 51, 1};
-struct npu2_phy_reg NPU2_PHY_TX_ZCAL_N			= {0x3c3, 48, 9};
-struct npu2_phy_reg NPU2_PHY_TX_ZCAL_P			= {0x3c5, 48, 9};
-struct npu2_phy_reg NPU2_PHY_TX_PSEG_PRE_EN		= {0x34d, 51, 5};
-struct npu2_phy_reg NPU2_PHY_TX_PSEG_PRE_SELECT		= {0x34d, 56, 5};
-struct npu2_phy_reg NPU2_PHY_TX_NSEG_PRE_EN		= {0x34f, 51, 5};
-struct npu2_phy_reg NPU2_PHY_TX_NSEG_PRE_SELECT		= {0x34f, 56, 5};
-struct npu2_phy_reg NPU2_PHY_TX_PSEG_POST_EN		= {0x361, 49, 7};
-struct npu2_phy_reg NPU2_PHY_TX_PSEG_POST_SELECT	= {0x361, 56, 7};
-struct npu2_phy_reg NPU2_PHY_TX_NSEG_POST_EN		= {0x363, 49, 7};
-struct npu2_phy_reg NPU2_PHY_TX_NSEG_POST_SELECT	= {0x363, 56, 7};
-struct npu2_phy_reg NPU2_PHY_TX_PSEG_MARGINPU_EN	= {0x351, 48, 8};
-struct npu2_phy_reg NPU2_PHY_TX_NSEG_MARGINPU_EN	= {0x353, 48, 8};
-struct npu2_phy_reg NPU2_PHY_TX_PSEG_MARGINPD_EN	= {0x351, 56, 8};
-struct npu2_phy_reg NPU2_PHY_TX_NSEG_MARGINPD_EN	= {0x353, 56, 8};
-struct npu2_phy_reg NPU2_PHY_TX_MARGINPU_SELECT		= {0x355, 48, 8};
-struct npu2_phy_reg NPU2_PHY_TX_MARGINPD_SELECT		= {0x355, 56, 8};
-struct npu2_phy_reg NPU2_PHY_TX_PSEG_MAIN_EN		= {0x357, 51, 7};
-struct npu2_phy_reg NPU2_PHY_TX_NSEG_MAIN_EN		= {0x359, 51, 7};
-struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH	= {0x24e, 54, 8};
-struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH_LANE	= {0x24e, 49, 5};
-struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH_VALID= {0x24e, 48, 1};
-struct npu2_phy_reg NPU2_PHY_RX_RC_ENABLE_AUTO_RECAL    = {0x25c, 51, 1};
+static struct npu2_phy_reg NPU2_PHY_RX_SPEED_SELECT	       = {0x262, 51, 2};
+static struct npu2_phy_reg NPU2_PHY_RX_AC_COUPLED	       = {0x262, 53, 1};
+static struct npu2_phy_reg NPU2_PHY_TX_ZCAL_SWO_EN	       = {0x3c9, 48, 1};
+static struct npu2_phy_reg NPU2_PHY_TX_ZCAL_REQ		       = {0x3c1, 49, 1};
+static struct npu2_phy_reg NPU2_PHY_TX_ZCAL_DONE	       = {0x3c1, 50, 1};
+static struct npu2_phy_reg NPU2_PHY_TX_ZCAL_ERROR	       = {0x3c1, 51, 1};
+static struct npu2_phy_reg NPU2_PHY_TX_ZCAL_N		       = {0x3c3, 48, 9};
+static struct npu2_phy_reg NPU2_PHY_TX_ZCAL_P		       = {0x3c5, 48, 9};
+static struct npu2_phy_reg NPU2_PHY_TX_PSEG_PRE_EN	       = {0x34d, 51, 5};
+static struct npu2_phy_reg NPU2_PHY_TX_PSEG_PRE_SELECT	       = {0x34d, 56, 5};
+static struct npu2_phy_reg NPU2_PHY_TX_NSEG_PRE_EN	       = {0x34f, 51, 5};
+static struct npu2_phy_reg NPU2_PHY_TX_NSEG_PRE_SELECT	       = {0x34f, 56, 5};
+static struct npu2_phy_reg NPU2_PHY_TX_PSEG_POST_EN	       = {0x361, 49, 7};
+static struct npu2_phy_reg NPU2_PHY_TX_PSEG_POST_SELECT        = {0x361, 56, 7};
+static struct npu2_phy_reg NPU2_PHY_TX_NSEG_POST_EN	       = {0x363, 49, 7};
+static struct npu2_phy_reg NPU2_PHY_TX_NSEG_POST_SELECT        = {0x363, 56, 7};
+static struct npu2_phy_reg NPU2_PHY_TX_PSEG_MARGINPU_EN        = {0x351, 48, 8};
+static struct npu2_phy_reg NPU2_PHY_TX_NSEG_MARGINPU_EN        = {0x353, 48, 8};
+static struct npu2_phy_reg NPU2_PHY_TX_PSEG_MARGINPD_EN        = {0x351, 56, 8};
+static struct npu2_phy_reg NPU2_PHY_TX_NSEG_MARGINPD_EN        = {0x353, 56, 8};
+static struct npu2_phy_reg NPU2_PHY_TX_MARGINPU_SELECT	       = {0x355, 48, 8};
+static struct npu2_phy_reg NPU2_PHY_TX_MARGINPD_SELECT	       = {0x355, 56, 8};
+static struct npu2_phy_reg NPU2_PHY_TX_PSEG_MAIN_EN	       = {0x357, 51, 7};
+static struct npu2_phy_reg NPU2_PHY_TX_NSEG_MAIN_EN	       = {0x359, 51, 7};
+/* Currently unused, but documented here
+static struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH      = {0x24e, 54, 8};
+static struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH_LANE = {0x24e, 49, 5};
+static struct npu2_phy_reg NPU2_PHY_RX_HIST_MIN_EYE_WIDTH_VALID= {0x24e, 48, 1};
+*/
+static struct npu2_phy_reg NPU2_PHY_RX_RC_ENABLE_AUTO_RECAL    = {0x25c, 51, 1};
 
-struct npu2_phy_reg NPU2_PHY_RX_CLKDIST_PDWN		= {0x204, 48, 3};
-struct npu2_phy_reg NPU2_PHY_RX_IREF_PDWN		= {0x230, 54, 1};
-struct npu2_phy_reg NPU2_PHY_TX_CLKDIST_PDWN		= {0x305, 48, 3};
-struct npu2_phy_reg NPU2_PHY_RX_CTL_DATASM_CLKDIST_PDWN = {0x2e0, 60, 1};
-struct npu2_phy_reg NPU2_PHY_TX_DRV_DATA_PATTERN_GCRMSG = {0x309, 50, 4};
+static struct npu2_phy_reg NPU2_PHY_RX_CLKDIST_PDWN	       = {0x204, 48, 3};
+static struct npu2_phy_reg NPU2_PHY_RX_IREF_PDWN	       = {0x230, 54, 1};
+static struct npu2_phy_reg NPU2_PHY_TX_CLKDIST_PDWN	       = {0x305, 48, 3};
+static struct npu2_phy_reg NPU2_PHY_RX_CTL_DATASM_CLKDIST_PDWN = {0x2e0, 60, 1};
+static struct npu2_phy_reg NPU2_PHY_TX_DRV_DATA_PATTERN_GCRMSG = {0x309, 50, 4};
 
 #define NPU2_PHY_REG(scom_base, reg, lane)					\
 	SETFIELD(PPC_BITMASK(27, 31), ((reg)->offset << 42) | scom_base, lane)
