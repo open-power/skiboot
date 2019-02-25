@@ -1,4 +1,4 @@
-/* Copyright 2016 IBM Corp.
+/* Copyright 2016-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -595,8 +595,8 @@ static uint32_t xive_chip_to_block(uint32_t chip_id)
 
 /* VP allocation */
 static uint32_t xive_chips_alloc_bits = 0;
-struct buddy *xive_vp_buddy;
-struct lock xive_buddy_lock = LOCK_UNLOCKED;
+static struct buddy *xive_vp_buddy;
+static struct lock xive_buddy_lock = LOCK_UNLOCKED;
 
 /* VP# decoding/encoding */
 static bool xive_decode_vp(uint32_t vp, uint32_t *blk, uint32_t *idx,
