@@ -2013,8 +2013,7 @@ static void phb4_eeh_dump_regs(struct phb4 *p)
 	}
 	phb4_read_phb_status(p, s);
 
-
-	PHBERR(p, "brdgCtl        = %08x\n", s->brdgCtl);
+	PHBERR(p, "                 brdgCtl = %08x\n", s->brdgCtl);
 
 	/* PHB4 cfg regs */
 	PHBERR(p, "            deviceStatus = %08x\n", s->deviceStatus);
