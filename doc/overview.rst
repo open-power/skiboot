@@ -136,8 +136,7 @@ In the source file include/mem-map.h we include a memory map. This is
 manually generated, not automatically generated.
 
 We use CCAN for a bunch of helper code, turning on things like DEBUG_LOCKS
-and DEBUG_MALLOC as these are not a performance issue for us, and we like
-to be careful.
+as these are not a performance issue for us, and we like to be careful.
 
 In include/config.h there are defines for turning on extra tracing.
 OPAL is what we name the interface from skiboot to OS (Linux).

@@ -42,9 +42,6 @@
 /* Enable lock dependency checker */
 #define DEADLOCK_CHECKER	1
 
-/* Enable malloc debugging */
-#define DEBUG_MALLOC		1
-
 /* Enable OPAL entry point tracing */
 //#define OPAL_TRACE_ENTRY	1
 
