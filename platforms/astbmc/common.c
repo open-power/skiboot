@@ -459,6 +459,7 @@ void astbmc_exit(void)
 const struct bmc_sw_config bmc_sw_ami = {
 	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
 	.ipmi_oem_pnor_access_status = IPMI_CODE(0x3a, 0x07),
+	.ipmi_oem_hiomap_cmd         = IPMI_CODE(0x3a, 0x5a),
 };
 
 const struct bmc_sw_config bmc_sw_openbmc = {
