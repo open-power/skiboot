@@ -608,7 +608,7 @@ static void get_msareas(struct dt_node *root,
 				status = GETFIELD(PHYS_ATTR_STATUS_MASK, attr);
 			}
 
-			if (add_address_range(root, id, arange, type, status))
+			if (!add_address_range(root, id, arange, type, status))
 				prerror("Unable to use memory range %d from MSAREA %d\n", j, i);
 
 			arange = (void *)arange + be32_to_cpu(arr->esize);
