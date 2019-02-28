@@ -200,9 +200,6 @@ static bool add_address_range(struct dt_node *root,
 
 	dt_add_property_u64s(mem, "reg", reg[0], reg[1]);
 	dt_add_property_cells(mem, "ibm,chip-id", chip_id);
-	if (be16_to_cpu(id->flags) & MS_AREA_SHARED)
-		dt_add_property_cells(mem, DT_PRIVATE "share-id",
-				      be16_to_cpu(id->share_id));
 	return true;
 }
 
