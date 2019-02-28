@@ -176,7 +176,7 @@ void ipmi_queue_msg_sync(struct ipmi_msg *msg)
 	lock(&sync_lock);
 	while (sync_msg);
 	sync_msg = msg;
-	if (msg->backend->disable_retry)
+	if (msg->backend->disable_retry && !opal_booting())
 		msg->backend->disable_retry(msg);
 	ipmi_queue_msg_head(msg);
 	unlock(&sync_lock);
