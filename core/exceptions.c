@@ -39,14 +39,15 @@ static void dump_regs(struct stack_frame *stack)
 		       i, stack->gpr[i], i + 16, stack->gpr[i + 16]);
 }
 
+#define EXCEPTION_MAX_STR 320
+
 void exception_entry(struct stack_frame *stack)
 {
 	bool fatal = false;
 	bool hv;
 	uint64_t nip;
 	uint64_t msr;
-	const size_t max = 320;
-	char buf[max];
+	char buf[EXCEPTION_MAX_STR];
 	size_t l;
 
 	switch (stack->type) {
@@ -81,23 +82,23 @@ void exception_entry(struct stack_frame *stack)
 	l = 0;
 	if (stack->type == 0x100) {
 		if (fatal) {
-			l += snprintf(buf + l, max - l,
+			l += snprintf(buf + l, EXCEPTION_MAX_STR - l,
 				"Fatal System Reset at "REG"   ", nip);
 		} else {
-			l += snprintf(buf + l, max - l,
+			l += snprintf(buf + l, EXCEPTION_MAX_STR - l,
 				"System Reset at "REG"   ", nip);
 		}
 	} else if (stack->type == 0x200) {
 		fatal = true;
-		l += snprintf(buf + l, max - l,
+		l += snprintf(buf + l, EXCEPTION_MAX_STR - l,
 			"Fatal MCE at "REG"   ", nip);
 	} else {
 		fatal = true;
-		l += snprintf(buf + l, max - l,
+		l += snprintf(buf + l, EXCEPTION_MAX_STR - l,
 			"Fatal Exception 0x%llx at "REG"  ", stack->type, nip);
 	}
-	l += snprintf_symbol(buf + l, max - l, nip);
-	l += snprintf(buf + l, max - l, "  MSR "REG, msr);
+	l += snprintf_symbol(buf + l, EXCEPTION_MAX_STR - l, nip);
+	l += snprintf(buf + l, EXCEPTION_MAX_STR - l, "  MSR "REG, msr);
 	prerror("%s\n", buf);
 	dump_regs(stack);
 
@@ -115,13 +116,12 @@ void exception_entry(struct stack_frame *stack)
 
 void exception_entry_pm_sreset(void)
 {
-	const size_t max = 320;
-	char buf[max];
+	char buf[EXCEPTION_MAX_STR];
 	size_t l;
 
 	prerror("***********************************************\n");
 	l = 0;
-	l += snprintf(buf + l, max - l,
+	l += snprintf(buf + l, EXCEPTION_MAX_STR - l,
 		"System Reset in sleep");
 	prerror("%s\n", buf);
 	backtrace();
@@ -129,13 +129,12 @@ void exception_entry_pm_sreset(void)
 
 void __noreturn exception_entry_pm_mce(void)
 {
-	const size_t max = 320;
-	char buf[max];
+	char buf[EXCEPTION_MAX_STR];
 	size_t l;
 
 	prerror("***********************************************\n");
 	l = 0;
-	l += snprintf(buf + l, max - l,
+	l += snprintf(buf + l, EXCEPTION_MAX_STR - l,
 		"Fatal MCE in sleep");
 	prerror("%s\n", buf);
 	prerror("SRR0 : "REG" SRR1 : "REG"\n",
