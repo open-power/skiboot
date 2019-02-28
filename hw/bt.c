@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,6 +112,7 @@ struct bt {
 	uint32_t base_addr;
 	struct lock lock;
 	struct list_head msgq;
+	struct list_head msgq_sync; /* separate list for synchronous messages */
 	struct timer poller;
 	bool irq_ok;
 	int queue_len;
@@ -119,6 +120,7 @@ struct bt {
 };
 
 static struct bt bt;
+static struct bt_msg *inflight_bt_msg; /* Holds in flight message */
 
 static int ipmi_seq;
 
@@ -300,7 +302,6 @@ static void bt_flush_msg(void)
 static void bt_get_resp(void)
 {
 	int i;
-	struct bt_msg *tmp_bt_msg, *bt_msg = NULL;
 	struct ipmi_msg *ipmi_msg;
 	uint8_t resp_len, netfn, seq, cmd;
 	uint8_t cc = IPMI_CC_NO_ERROR;
@@ -329,14 +330,7 @@ static void bt_get_resp(void)
 	cc = bt_inb(BT_HOST2BMC);
 
 	/* Find the corresponding message */
-	list_for_each(&bt.msgq, tmp_bt_msg, link) {
-		if (tmp_bt_msg->seq == seq) {
-			bt_msg = tmp_bt_msg;
-			break;
-		}
-
-	}
-	if (!bt_msg) {
+	if (inflight_bt_msg == NULL || inflight_bt_msg->seq != seq) {
 		/* A response to a message we no longer care about. */
 		prlog(PR_INFO, "Nobody cared about a response to an BT/IPMI message"
 		       "(seq 0x%02x netfn 0x%02x cmd 0x%02x)\n", seq, (netfn >> 2), cmd);
@@ -344,7 +338,7 @@ static void bt_get_resp(void)
 		return;
 	}
 
-	ipmi_msg = &bt_msg->ipmi_msg;
+	ipmi_msg = &inflight_bt_msg->ipmi_msg;
 
 	/*
 	 * Make sure we have enough room to store the response. As all values
@@ -352,7 +346,7 @@ static void bt_get_resp(void)
 	 * bt_inb(BT_HOST2BMC) < BT_MIN_RESP_LEN (which should never occur).
 	 */
 	if (resp_len > ipmi_msg->resp_size) {
-		BT_Q_ERR(bt_msg, "Invalid resp_len %d", resp_len);
+		BT_Q_ERR(inflight_bt_msg, "Invalid resp_len %d", resp_len);
 		resp_len = ipmi_msg->resp_size;
 		cc = IPMI_ERR_MSG_TRUNCATED;
 	}
@@ -363,9 +357,11 @@ static void bt_get_resp(void)
 		ipmi_msg->data[i] = bt_inb(BT_HOST2BMC);
 	bt_set_h_busy(false);
 
-	BT_Q_TRACE(bt_msg, "IPMI MSG done");
+	BT_Q_TRACE(inflight_bt_msg, "IPMI MSG done");
 
-	list_del(&bt_msg->link);
+	list_del(&inflight_bt_msg->link);
+	/* Ready to send next message */
+	inflight_bt_msg = NULL;
 	bt.queue_len--;
 	unlock(&bt.lock);
 
@@ -378,9 +374,7 @@ static void bt_get_resp(void)
 
 static void bt_expire_old_msg(uint64_t tb)
 {
-	struct bt_msg *bt_msg;
-
-	bt_msg = list_top(&bt.msgq, struct bt_msg, link);
+	struct bt_msg *bt_msg = inflight_bt_msg;
 
 	if (bt_msg && bt_msg->tb > 0 && !chip_quirk(QUIRK_SIMICS) &&
 	    (tb_compare(tb, bt_msg->tb +
@@ -408,6 +402,9 @@ static void bt_expire_old_msg(uint64_t tb)
 			BT_Q_ERR(bt_msg, "Timeout sending message");
 			bt_msg_del(bt_msg);
 
+			/* Ready to send next message */
+			inflight_bt_msg = NULL;
+
 			/*
 			 * Timing out a message is inherently racy as the BMC
 			 * may start writing just as we decide to kill the
@@ -425,46 +422,60 @@ static void print_debug_queue_info(void)
 	struct bt_msg *msg;
 	static bool printed;
 
-	if (!list_empty(&bt.msgq)) {
+	if (!list_empty(&bt.msgq_sync) || !list_empty(&bt.msgq)) {
 		printed = false;
-		prlog(PR_DEBUG, "-------- BT Msg Queue --------\n");
+		prlog(PR_DEBUG, "-------- BT Sync Msg Queue -------\n");
+		list_for_each(&bt.msgq_sync, msg, link) {
+			BT_Q_DBG(msg, "[ sent %d ]", msg->send_count);
+		}
+		prlog(PR_DEBUG, "---------- BT Msg Queue ----------\n");
 		list_for_each(&bt.msgq, msg, link) {
 			BT_Q_DBG(msg, "[ sent %d ]", msg->send_count);
 		}
-		prlog(PR_DEBUG, "-----------------------------\n");
+		prlog(PR_DEBUG, "----------------------------------\n");
 	} else if (!printed) {
 		printed = true;
-		prlog(PR_DEBUG, "----- BT Msg Queue Empty -----\n");
+		prlog(PR_DEBUG, "------- BT Msg Queue Empty -------\n");
 	}
 }
 #endif
 
 static void bt_send_and_unlock(void)
 {
-	if (lpc_ok() && !list_empty(&bt.msgq)) {
-		struct bt_msg *bt_msg;
+	/* Busy? */
+	if (inflight_bt_msg)
+		goto out_unlock;
 
-		bt_msg = list_top(&bt.msgq, struct bt_msg, link);
-		assert(bt_msg);
+	if (!lpc_ok())
+		goto out_unlock;
 
-		/*
-		 * Start the message timeout once it gets to the top
-		 * of the queue. This will ensure we timeout messages
-		 * in the case of a broken bt interface as occurs when
-		 * the BMC is not responding to any IPMI messages.
-		 */
-		if (bt_msg->tb == 0)
-			bt_msg->tb = mftb();
+	/* Synchronous messages gets priority over normal message */
+	if (!list_empty(&bt.msgq_sync))
+		inflight_bt_msg = list_top(&bt.msgq_sync, struct bt_msg, link);
+	else if (!list_empty(&bt.msgq))
+		inflight_bt_msg = list_top(&bt.msgq, struct bt_msg, link);
+	else
+		goto out_unlock;
 
-		/*
-		 * Only send it if we haven't already.
-		 * Timeouts and retries happen in bt_expire_old_msg()
-		 * called from bt_poll()
-		 */
-		if (bt_idle() && bt_msg->send_count == 0)
-			bt_send_msg(bt_msg);
-	}
+	assert(inflight_bt_msg);
+	/*
+	 * Start the message timeout once it gets to the top
+	 * of the queue. This will ensure we timeout messages
+	 * in the case of a broken bt interface as occurs when
+	 * the BMC is not responding to any IPMI messages.
+	 */
+	if (inflight_bt_msg->tb == 0)
+		inflight_bt_msg->tb = mftb();
 
+	/*
+	 * Only send it if we haven't already.
+	 * Timeouts and retries happen in bt_expire_old_msg()
+	 * called from bt_poll()
+	 */
+	if (bt_idle() && inflight_bt_msg->send_count == 0)
+		bt_send_msg(inflight_bt_msg);
+
+out_unlock:
 	unlock(&bt.lock);
 }
 
@@ -524,20 +535,25 @@ static void bt_add_msg(struct bt_msg *bt_msg)
 	if (bt.queue_len > BT_MAX_QUEUE_LEN) {
 		/* Maximum queue length exceeded, remove oldest messages. */
 		BT_Q_ERR(bt_msg, "Maximum queue length exceeded");
-		bt_msg = list_tail(&bt.msgq, struct bt_msg, link);
+		/* First try to remove message from normal queue */
+		if (!list_empty(&bt.msgq))
+			bt_msg = list_tail(&bt.msgq, struct bt_msg, link);
+		else if (!list_empty(&bt.msgq_sync))
+			bt_msg = list_tail(&bt.msgq_sync, struct bt_msg, link);
 		assert(bt_msg);
 		BT_Q_ERR(bt_msg, "Removed from queue");
 		bt_msg_del(bt_msg);
 	}
 }
 
+/* Add message to synchronous message list */
 static int bt_add_ipmi_msg_head(struct ipmi_msg *ipmi_msg)
 {
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
 	lock(&bt.lock);
 	bt_add_msg(bt_msg);
-	list_add(&bt.msgq, &bt_msg->link);
+	list_add_tail(&bt.msgq_sync, &bt_msg->link);
 	bt_send_and_unlock();
 
 	return 0;
@@ -618,7 +634,7 @@ static int bt_del_ipmi_msg(struct ipmi_msg *ipmi_msg)
 	struct bt_msg *bt_msg = container_of(ipmi_msg, struct bt_msg, ipmi_msg);
 
 	lock(&bt.lock);
-	list_del_from(&bt.msgq, &bt_msg->link);
+	list_del(&bt_msg->link);
 	bt.queue_len--;
 	bt_send_and_unlock();
 	return 0;
@@ -678,6 +694,8 @@ void bt_init(void)
 	 * initialised it.
 	 */
 	list_head_init(&bt.msgq);
+	list_head_init(&bt.msgq_sync);
+	inflight_bt_msg = NULL;
 	bt.queue_len = 0;
 
 	prlog(PR_INFO, "Interface initialized, IO 0x%04x\n", bt.base_addr);
