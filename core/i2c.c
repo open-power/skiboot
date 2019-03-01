@@ -102,21 +102,21 @@ static int opal_i2c_request(uint64_t async_token, uint32_t bus_id,
 		break;
 	case OPAL_I2C_SM_READ:
 		req->op = SMBUS_READ;
-		req->offset = oreq->subaddr;
+		req->offset = be32_to_cpu(oreq->subaddr);
 		req->offset_bytes = oreq->subaddr_sz;
 		break;
 	case OPAL_I2C_SM_WRITE:
 		req->op = SMBUS_WRITE;
-		req->offset = oreq->subaddr;
+		req->offset = be32_to_cpu(oreq->subaddr);
 		req->offset_bytes = oreq->subaddr_sz;
 		break;
 	default:
 		free(req);
 		return OPAL_PARAMETER;
 	}
-	req->dev_addr = oreq->addr;
-	req->rw_len = oreq->size;
-	req->rw_buf = (void *)oreq->buffer_ra;
+	req->dev_addr = be16_to_cpu(oreq->addr);
+	req->rw_len = be32_to_cpu(oreq->size);
+	req->rw_buf = (void *)be64_to_cpu(oreq->buffer_ra);
 	req->completion = opal_i2c_request_complete;
 	req->user_data = (void *)(unsigned long)async_token;
 	req->bus = bus;
