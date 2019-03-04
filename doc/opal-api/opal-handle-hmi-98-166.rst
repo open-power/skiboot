@@ -93,7 +93,14 @@ OPAL_HANDLE_HMI and OPAL_HANDLE_HMI2
   is an old interface. ```OPAL_HANDLE_HMI2``` is newly introduced opal call
   that returns direct info to Linux. It returns a 64-bit flag mask currently
   set to provide info about which timer facilities were lost, and whether an
-  event was generated.
+  event was generated. This information will help OS to take respective
+  actions.
+
+  In case where opal hmi handler is unable to recover from TOD or TB errors,
+  it would flag ```OPAL_HMI_FLAGS_TOD_TB_FAIL``` to indicate OS that TB is
+  dead. This information then can be used by OS to make sure that the
+  functions relying on TB value (e.g. udelay()) are aware of TB not ticking.
+  This will avoid OS getting stuck or hang during its way to panic path.
 
 OPAL_HANDLE_HMI
 ---------------
@@ -122,5 +129,6 @@ parameters
         OPAL_HMI_FLAGS_TB_RESYNC        = (1ull << 0), /* Timebase has been resynced */
         OPAL_HMI_FLAGS_DEC_LOST         = (1ull << 1), /* DEC lost, needs to be reprogrammed */
         OPAL_HMI_FLAGS_HDEC_LOST        = (1ull << 2), /* HDEC lost, needs to be reprogrammed */
+        OPAL_HMI_FLAGS_TOD_TB_FAIL      = (1ull << 3), /* TOD/TB recovery failed. */
         OPAL_HMI_FLAGS_NEW_EVENT        = (1ull << 63), /* An event has been created */
    };

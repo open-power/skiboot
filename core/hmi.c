@@ -1223,10 +1223,12 @@ static int handle_tfac_errors(struct OpalHMIEvent *hmi_evt, uint64_t *out_flags)
 	/* Set the TB state looking at TFMR register before we head out. */
 	this_cpu()->tb_invalid = !(mfspr(SPR_TFMR) & SPR_TFMR_TB_VALID);
 
-	if (this_cpu()->tb_invalid)
+	if (this_cpu()->tb_invalid) {
+		*out_flags |= OPAL_HMI_FLAGS_TOD_TB_FAIL;
 		prlog(PR_WARNING, "Failed to get TB in running state! "
 			"CPU=%x, TFMR=%016lx\n", this_cpu()->pir,
 					mfspr(SPR_TFMR));
+	}
 
 	return recover;
 }

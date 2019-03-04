@@ -777,6 +777,7 @@ enum {
 	OPAL_HMI_FLAGS_TB_RESYNC	= (1ull << 0), /* Timebase has been resynced */
 	OPAL_HMI_FLAGS_DEC_LOST		= (1ull << 1), /* DEC lost, needs to be reprogrammed */
 	OPAL_HMI_FLAGS_HDEC_LOST	= (1ull << 2), /* HDEC lost, needs to be reprogrammed */
+	OPAL_HMI_FLAGS_TOD_TB_FAIL	= (1ull << 3), /* TOD/TB recovery failed. */
 	OPAL_HMI_FLAGS_NEW_EVENT	= (1ull << 63), /* An event has been created */
 };
 
