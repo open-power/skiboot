@@ -76,10 +76,9 @@ DECLARE_PLATFORM(zz) = {
 	.exit			= ibm_fsp_exit,
 	.cec_power_down		= ibm_fsp_cec_power_down,
 	.cec_reboot		= ibm_fsp_cec_reboot,
-	/* FIXME: correct once PCI slot into is available */
-	.pci_setup_phb		= NULL,
-	.pci_get_slot_info	= NULL,
-	.pci_probe_complete	= NULL,
+	.pci_setup_phb		= firenze_pci_setup_phb,
+	.pci_get_slot_info	= firenze_pci_get_slot_info,
+	.pci_probe_complete	= firenze_pci_send_inventory,
 	.nvram_info		= fsp_nvram_info,
 	.nvram_start_read	= fsp_nvram_start_read,
 	.nvram_write		= fsp_nvram_write,
