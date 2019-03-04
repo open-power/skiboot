@@ -1042,12 +1042,8 @@ static int handle_all_core_tfac_error(uint64_t tfmr, uint64_t *out_flags)
 			if (!recover_corrupt_tfmr()) {
 				unlock(&hmi_lock);
 				recover = 0;
+				goto error_out;
 			}
-
-		if (!recover) {
-			unlock(&hmi_lock);
-			goto error_out;
-		}
 
 		tfmr = mfspr(SPR_TFMR);
 
