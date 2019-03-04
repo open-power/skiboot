@@ -227,6 +227,7 @@ static uint64_t base_tfmr;
  * take all of them for RAS cases.
  */
 static struct lock chiptod_lock = LOCK_UNLOCKED;
+static bool chiptod_unrecoverable;
 
 static void _chiptod_cache_tod_regs(int32_t chip_id)
 {
@@ -1234,7 +1235,6 @@ static void chiptod_topology_switch_complete(void)
 static int chiptod_start_tod(void)
 {
 	struct proc_chip *chip = NULL;
-	int rc = 1;
 
 	/*  Do a topology switch if required. */
 	if (is_topology_switch_required()) {
@@ -1257,14 +1257,14 @@ static int chiptod_start_tod(void)
 		if (!chiptod_backup_valid()) {
 			prerror("Backup master is not enabled. "
 				"Can not do a topology switch.\n");
-			return 0;
+			goto error_out;
 		}
 
 		chiptod_stop_slave_tods();
 
 		if (xscom_write(mchip, TOD_TTYPE_1, PPC_BIT(0))) {
 			prerror("XSCOM error switching primary/secondary\n");
-			return 0;
+			goto error_out;
 		}
 
 		/* Update topology info. */
@@ -1278,7 +1278,7 @@ static int chiptod_start_tod(void)
 		 */
 		if (!chiptod_master_running()) {
 			prerror("TOD is not running on new master.\n");
-			return 0;
+			goto error_out;
 		}
 
 		/*
@@ -1289,7 +1289,7 @@ static int chiptod_start_tod(void)
 		 */
 		if (xscom_writeme(TOD_TTYPE_2, PPC_BIT(0))) {
 			prerror("XSCOM error enabling steppers\n");
-			return 0;
+			goto error_out;
 		}
 
 		chiptod_topology_switch_complete();
@@ -1314,7 +1314,7 @@ static int chiptod_start_tod(void)
 	/* Switch local chiptod to "Not Set" state */
 	if (xscom_writeme(TOD_LOAD_TOD_MOD, PPC_BIT(0))) {
 		prerror("XSCOM error sending LOAD_TOD_MOD\n");
-		return 0;
+		goto error_out;
 	}
 
 	/*
@@ -1323,16 +1323,20 @@ static int chiptod_start_tod(void)
 	 */
 	if (xscom_writeme(TOD_TTYPE_3, PPC_BIT(0))) {
 		prerror("XSCOM error sending TTYPE_3\n");
-		return 0;
+		goto error_out;
 	}
 
 	/* Check if chip TOD is running. */
 	if (!chiptod_poll_running())
-		rc = 0;
+		goto error_out;
 
 	/* Restore the ttype4_mode. */
 	chiptod_set_ttype4_mode(chip, false);
-	return rc;
+	return 1;
+
+error_out:
+	chiptod_unrecoverable = true;
+	return 0;
 }
 
 static bool tfmr_recover_tb_errors(uint64_t tfmr)
@@ -1532,6 +1536,15 @@ int chiptod_recover_tb_errors(bool *out_resynced)
 		return 0;
 
 	lock(&chiptod_lock);
+
+	/*
+	 * Return if TOD is unrecoverable.
+	 * The previous attempt to recover TOD has been failed.
+	 */
+	if (chiptod_unrecoverable) {
+		rc = 0;
+		goto error_out;
+	}
 
 	/* Get fresh copy of TFMR */
 	tfmr = mfspr(SPR_TFMR);
