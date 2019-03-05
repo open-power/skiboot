@@ -11,7 +11,6 @@ env:
     - RUN_ON_CONTAINER=ubuntu-16.04
     - RUN_ON_CONTAINER=ubuntu-18.04
     - RUN_ON_CONTAINER=ubuntu-latest
-    - RUN_ON_CONTAINER=centos6
     - RUN_ON_CONTAINER=centos7
     - RUN_ON_CONTAINER=fedora28
     - RUN_ON_CONTAINER=fedora29
@@ -28,10 +27,6 @@ matrix:
     - env: RUN_ON_CONTAINER=fedora-rawhide
     - env: RUN_ON_CONTAINER=debian-unstable
   exclude:
-    - os: linux-ppc64le
-      env: RUN_ON_CONTAINER=ubuntu-12.04
-    - os: linux-ppc64le
-      env: RUN_ON_CONTAINER=centos6
     - os: linux-ppc64le
       env: RUN_ON_CONTAINER=centos7
 
