@@ -234,13 +234,32 @@ static bool zaius_probe(void)
 	return true;
 }
 
+/* Extracted from zaius1-bmc */
+static const struct bmc_hw_config bmc_hw_zaius = {
+	.scu_revision_id	= 0x04030303,
+	.mcr_configuration	= 0x11000FD7,
+	.mcr_scu_mpll		= 0x000071C1,
+	.mcr_scu_strap		= 0x00000000,
+};
+
+static const struct bmc_sw_config bmc_sw_openbmc = {
+	.ipmi_oem_partial_add_esel   = IPMI_CODE(0x3a, 0xf0),
+	.ipmi_oem_hiomap_cmd         = IPMI_CODE(0x3a, 0x5a),
+};
+
+static const struct bmc_platform bmc_zaius_openbmc = {
+	.name			= "zaius:openbmc",
+	.hw			= &bmc_hw_zaius,
+	.sw			= &bmc_sw_openbmc,
+};
+
 DECLARE_PLATFORM(zaius) = {
 	.name			= "Zaius",
 	.probe			= zaius_probe,
 	.init			= astbmc_init,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
-	.bmc			= NULL, /* FIXME: Add openBMC */
+	.bmc			= &bmc_zaius_openbmc,
 	.pci_get_slot_info	= zaius_get_slot_info,
 	.pci_probe_complete	= check_all_slot_table,
 	.cec_power_down         = astbmc_ipmi_power_down,
