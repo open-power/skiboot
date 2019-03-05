@@ -32,7 +32,8 @@ What patches are accepted?
 HOWTO submit to stable
 ----------------------
 Two ways:
-1. Send patch to the skiboot@ list with "[PATCH stable]" in subject
+1. Send patch to the skiboot-stable@lists.ozlabs.org list with
+   "[PATCH <stable version>]" in subject
 
    * This targets the patch *ONLY* to the stable branch.
 
@@ -50,18 +51,19 @@ Two ways:
        commit <sha1> upstream.
    * If the patch has been modified, explain why in description.
 
-2. Add "Cc: stable" above your Signed-off-by line when sending to skiboot@
+2. Add "Cc: skiboot-stable@lists.ozlabs.org" above your Signed-off-by line
+   when sending to skiboot@
 
    * This targets the patch to master and stable.
    * You can target a patch to a specific stable tree with: ::
 
-      Cc: stable # 5.1.x
+      Cc: skiboot-stable@lists.ozlabs.org # 5.1.x
 
      and that will target it to the 5.1.x branch.
    * You can ask for prerequisites to be cherry-picked: ::
 
-        Cc: stable # 5.1.x 55ae15b Ensure we run pollers in cpu_wait_job()
-        Cc: stable # 5.1.x
+        Cc: skiboot-stable@lists.ozlabs.org # 5.1.x 55ae15b Ensure we run pollers in cpu_wait_job()
+        Cc: skiboot-stable@lists.ozlabs.org # 5.1.x
 
      Which means:
 
