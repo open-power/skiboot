@@ -491,27 +491,18 @@ static void parse_vid(struct occ_pstate_table *occ_data,
 
 /* Add device tree properties to describe pstates states */
 /* Return nominal pstate to set in each core */
-static bool add_cpu_pstate_properties(int *pstate_nom)
+static bool add_cpu_pstate_properties(struct dt_node *power_mgt,
+				      int *pstate_nom)
 {
 	struct proc_chip *chip;
 	uint64_t occ_data_area;
 	struct occ_pstate_table *occ_data;
-	struct dt_node *power_mgt;
 	/* Arrays for device tree */
 	u32 *dt_id, *dt_freq;
 	int pmax, pmin, pnom;
 	u8 nr_pstates;
 	bool ultra_turbo_supported;
 	int i, major, minor;
-	u8 domain_runs_at;
-	u32 freq_domain_mask;
-
-	/* TODO Firmware plumbing required so as to have two modes to set
-	 * PMCR based on max in domain or most recently used. As of today,
-	 * it is always max in domain for P9.
-	 */
-	domain_runs_at = 0;
-	freq_domain_mask = 0;
 
 	prlog(PR_DEBUG, "OCC: CPU pstate state device tree init\n");
 
@@ -654,18 +645,6 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 		return false;
 	}
 
-	power_mgt = dt_find_by_path(dt_root, "/ibm,opal/power-mgt");
-	if (!power_mgt) {
-		/**
-		 * @fwts-label OCCDTNodeNotFound
-		 * @fwts-advice Device tree node /ibm,opal/power-mgt not
-		 * found. OPAL didn't add pstate information to device tree.
-		 * Probably a firmware bug.
-		 */
-		prlog(PR_ERR, "OCC: dt node /ibm,opal/power-mgt not found\n");
-		return false;
-	}
-
 	dt_id = malloc(nr_pstates * sizeof(u32));
 	assert(dt_id);
 	dt_freq = malloc(nr_pstates * sizeof(u32));
@@ -684,14 +663,6 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 		return false;
 	}
 
-	if (proc_gen == proc_gen_p8) {
-		freq_domain_mask = P8_PIR_CORE_MASK;
-		domain_runs_at = FREQ_MOST_RECENTLY_SET;
-	} else if (proc_gen == proc_gen_p9) {
-		freq_domain_mask = P9_PIR_QUAD_MASK;
-		domain_runs_at = FREQ_MAX_IN_DOMAIN;
-	}
-
 	/* Add the device-tree entries */
 	dt_add_property(power_mgt, "ibm,pstate-ids", dt_id,
 			nr_pstates * sizeof(u32));
@@ -700,8 +671,6 @@ static bool add_cpu_pstate_properties(int *pstate_nom)
 	dt_add_property_cells(power_mgt, "ibm,pstate-min", pmin);
 	dt_add_property_cells(power_mgt, "ibm,pstate-nominal", pnom);
 	dt_add_property_cells(power_mgt, "ibm,pstate-max", pmax);
-	dt_add_property_cells(power_mgt, "freq-domain-mask", freq_domain_mask);
-	dt_add_property_cells(power_mgt, "domain-runs-at", domain_runs_at);
 
 	free(dt_freq);
 	free(dt_id);
@@ -1752,15 +1721,31 @@ void occ_pstates_init(void)
 {
 	struct proc_chip *chip;
 	struct cpu_thread *c;
+	struct dt_node *power_mgt;
 	int pstate_nom;
+	u32 freq_domain_mask;
+	u8 domain_runs_at;
 	static bool occ_pstates_initialized;
 
 	/* OCC is supported in P8 and P9 */
 	if (proc_gen < proc_gen_p8)
 		return;
+
+	power_mgt = dt_find_by_path(dt_root, "/ibm,opal/power-mgt");
+	if (!power_mgt) {
+		/**
+		 * @fwts-label OCCDTNodeNotFound
+		 * @fwts-advice Device tree node /ibm,opal/power-mgt not
+		 * found. OPAL didn't add pstate information to device tree.
+		 * Probably a firmware bug.
+		 */
+		prlog(PR_ERR, "OCC: dt node /ibm,opal/power-mgt not found\n");
+		return;
+	}
+
 	/* Handle fast reboots */
 	if (occ_pstates_initialized) {
-		struct dt_node *power_mgt, *child;
+		struct dt_node *child;
 		int i;
 		const char *props[] = {
 				"ibm,pstate-core-max",
@@ -1775,15 +1760,12 @@ void occ_pstates_init(void)
 				"#size-cells",
 				};
 
-		power_mgt = dt_find_by_path(dt_root, "/ibm,opal/power-mgt");
-		if (power_mgt) {
-			for (i = 0; i < ARRAY_SIZE(props); i++)
-				dt_check_del_prop(power_mgt, props[i]);
+		for (i = 0; i < ARRAY_SIZE(props); i++)
+			dt_check_del_prop(power_mgt, props[i]);
 
-			dt_for_each_child(power_mgt, child)
-				if (!strncmp(child->name, "occ", 3))
-					dt_free(child);
-		}
+		dt_for_each_child(power_mgt, child)
+			if (!strncmp(child->name, "occ", 3))
+				dt_free(child);
 	}
 
 	switch (proc_gen) {
@@ -1816,7 +1798,7 @@ void occ_pstates_init(void)
 	 * Check boundary conditions and add device tree nodes
 	 * and return nominal pstate to set for the core
 	 */
-	if (!add_cpu_pstate_properties(&pstate_nom)) {
+	if (!add_cpu_pstate_properties(power_mgt, &pstate_nom)) {
 		log_simple_error(&e_info(OPAL_RC_OCC_PSTATE_INIT),
 			"Skiping core cpufreq init due to OCC error\n");
 	} else if (proc_gen == proc_gen_p8) {
@@ -1840,6 +1822,23 @@ void occ_pstates_init(void)
 
 	/* Init OPAL-OCC command-response interface */
 	occ_cmd_interface_init();
+
+	/* TODO Firmware plumbing required so as to have two modes to set
+	 * PMCR based on max in domain or most recently used. As of today,
+	 * it is always max in domain for P9.
+	 */
+	domain_runs_at = 0;
+	freq_domain_mask = 0;
+	if (proc_gen == proc_gen_p8) {
+		freq_domain_mask = P8_PIR_CORE_MASK;
+		domain_runs_at = FREQ_MOST_RECENTLY_SET;
+	} else if (proc_gen == proc_gen_p9) {
+		freq_domain_mask = P9_PIR_QUAD_MASK;
+		domain_runs_at = FREQ_MAX_IN_DOMAIN;
+	}
+
+	dt_add_property_cells(power_mgt, "freq-domain-mask", freq_domain_mask);
+	dt_add_property_cells(power_mgt, "domain-runs-at", domain_runs_at);
 }
 
 struct occ_load_req {
