@@ -507,8 +507,6 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	ipmi_set_fw_progress_sensor(IPMI_FW_OS_BOOT);
 
-	if (fsp_present())
-		occ_pstates_init();
 
 	if (!is_reboot) {
 		/* We wait for the nvram read to complete here so we can
@@ -523,6 +521,9 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 		 * OCC takes few secs to boot.  Call this as late as
 		 * as possible to avoid delay.
 		 */
+		if (fsp_present())
+			occ_pstates_init();
+
 		if (!occ_sensors_init())
 			dts_sensor_create_nodes(sensor_node);
 
@@ -532,6 +533,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 		fdt = NULL;
 
 		nvram_reinit();
+		occ_pstates_init();
 	}
 
 	fsp_console_select_stdout();
