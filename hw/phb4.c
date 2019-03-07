@@ -318,6 +318,14 @@ static int64_t phb4_rc_read(struct phb4 *p, uint32_t offset, uint8_t sz,
 				oval = in_le32(p->regs + PHB_RC_CONFIG_BASE + reg);
 		}
 	}
+
+	/* Apply any post-read fixups */
+	switch (reg) {
+	case PCI_CFG_IO_BASE:
+		oval |= 0x01f1; /* Set IO base < limit to disable the window */
+		break;
+	}
+
 	switch (sz) {
 	case 1:
 		offset &= 3;
