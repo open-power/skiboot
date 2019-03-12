@@ -1198,8 +1198,8 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 		deassert_adapter_reset(dev);
 		pci_slot_set_state(slot,
 				OCAPI_SLOT_FRESET_DEASSERT_DELAY2);
-		/* give 5ms to device to be ready */
-		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
+		/* give 250ms to device to be ready */
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(250));
 
 	case OCAPI_SLOT_FRESET_DEASSERT_DELAY2:
 		if (dev->train_fenced) {
