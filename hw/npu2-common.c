@@ -182,6 +182,9 @@ static struct npu2 *setup_npu(struct dt_node *dn)
 	npu->xscom_base = dt_get_address(dn, 0, NULL);
 	npu->phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
 
+	init_lock(&npu->i2c_lock);
+	npu->i2c_pin_mode = ~0; // input mode by default
+	npu->i2c_pin_wr_state = ~0; // reset is active low
 	if (platform.ocapi) {
 		/* Find I2C port for handling device presence/reset */
 		snprintf(port_name, sizeof(port_name), "p8_%08x_e%dp%d",

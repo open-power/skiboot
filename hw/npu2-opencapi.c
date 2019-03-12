@@ -848,10 +848,9 @@ static void otl_enabletx(uint32_t gcid, uint32_t scom_base,
 	/* TODO: Abort if credits are zero */
 }
 
-static void assert_adapter_reset(struct npu2_dev *dev)
+static uint8_t get_reset_pin(struct npu2_dev *dev)
 {
-	uint8_t pin, data;
-	int rc;
+	uint8_t pin;
 
 	switch (dev->brick_index) {
 	case 2:
@@ -869,14 +868,25 @@ static void assert_adapter_reset(struct npu2_dev *dev)
 	default:
 		assert(false);
 	}
+	return pin;
+}
 
+static void assert_adapter_reset(struct npu2_dev *dev)
+{
+	uint8_t pin, data;
+	int rc;
+
+	pin = get_reset_pin(dev);
 	/*
 	 * set the i2c reset pin in output mode
 	 *
 	 * On the 9554 device, register 3 is the configuration
 	 * register and a pin is in output mode if its value is 0
 	 */
-	data = ~pin;
+	lock(&dev->npu->i2c_lock);
+	dev->npu->i2c_pin_mode &= ~pin;
+	data = dev->npu->i2c_pin_mode;
+
 	rc = i2c_request_send(dev->npu->i2c_port_id_ocapi,
 			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
 			0x3, 1,
@@ -885,16 +895,20 @@ static void assert_adapter_reset(struct npu2_dev *dev)
 		goto err;
 
 	/* register 1 controls the signal, reset is active low */
-	data = ~pin;
+	dev->npu->i2c_pin_wr_state &= ~pin;
+	data = dev->npu->i2c_pin_wr_state;
+
 	rc = i2c_request_send(dev->npu->i2c_port_id_ocapi,
 			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
 			0x1, 1,
 			&data, sizeof(data), 120);
 	if (rc)
 		goto err;
+	unlock(&dev->npu->i2c_lock);
 	return;
 
 err:
+	unlock(&dev->npu->i2c_lock);
 	/**
 	 * @fwts-label OCAPIDeviceResetFailed
 	 * @fwts-advice There was an error attempting to send
@@ -905,14 +919,20 @@ err:
 
 static void deassert_adapter_reset(struct npu2_dev *dev)
 {
-	uint8_t data;
+	uint8_t pin, data;
 	int rc;
 
-	data = 0xFF;
+	pin = get_reset_pin(dev);
+
+	lock(&dev->npu->i2c_lock);
+	dev->npu->i2c_pin_wr_state |= pin;
+	data = dev->npu->i2c_pin_wr_state;
+
 	rc = i2c_request_send(dev->npu->i2c_port_id_ocapi,
 			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
 			0x1, 1,
 			&data, sizeof(data), 120);
+	unlock(&dev->npu->i2c_lock);
 	if (rc) {
 		/**
 		 * @fwts-label OCAPIDeviceResetFailed

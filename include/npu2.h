@@ -173,7 +173,11 @@ struct npu2 {
 	struct phb	phb_nvlink;
 	uint32_t	phb_index;
 
+	/* OCAPI */
 	uint64_t	i2c_port_id_ocapi;
+	struct lock	i2c_lock;
+	uint8_t		i2c_pin_mode;
+	uint8_t		i2c_pin_wr_state;
 };
 
 static inline struct npu2 *phb_to_npu2_nvlink(struct phb *phb)
