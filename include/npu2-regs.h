@@ -725,6 +725,23 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 #define    PU_IOE_PB_FP_CFG_FP1_FMR_DISABLE	PPC_BIT(52)
 #define    PU_IOE_PB_FP_CFG_FP1_PRS_DISABLE	PPC_BIT(57)
 
+#define OB_DLL_PERF_MONITOR_CONFIG(brick_index) \
+	(0x901081C + ((brick_index - 2) >> 1) * 0x3000000)
+#define   OB_DLL_PERF_MONITOR_CONFIG_ENABLE	PPC_BITMASK(0, 1)
+#define   OB_DLL_PERF_MONITOR_CONFIG_LINK0	0b10
+#define   OB_DLL_PERF_MONITOR_CONFIG_LINK1	0b01
+#define   OB_DLL_PERF_MONITOR_CONFIG_SIZE	PPC_BITMASK(16, 23)
+#define   OB_DLL_PERF_MONITOR_CONFIG_SIZE16	0xFF
+#define OB_DLL_PERF_MONITOR_SELECT(brick_index) \
+	(0x901081D + ((brick_index - 2) >> 1) * 0x3000000)
+#define   OB_DLL_PERF_MONITOR_SELECT_COUNTER	PPC_BITMASK(0, 7)
+#define   OB_DLL_PERF_MONITOR_SELECT_CRC_ODL	0x44
+#define   OB_DLL_PERF_MONITOR_SELECT_CRC_DLX	0x45
+#define OB_DLL_PERF_COUNTER0(brick_index) \
+	(0x901081E + ((brick_index - 2) >> 1) * 0x3000000)
+#define   OB_DLL_PERF_COUNTER0_VAL		PPC_BITMASK(0, 31)
+
+
 #define OB_ODL_OFFSET(brick_index) \
 	((((brick_index - 2) >> 1) * 0x3000000) + ((brick_index == 3 || brick_index == 4) ? 1 : 0))
 

@@ -909,6 +909,66 @@ static void reset_odl(uint32_t gcid, struct npu2_dev *dev)
 	xscom_write(gcid, config_xscom, reg);
 }
 
+static void setup_perf_counters(struct npu2_dev *dev)
+{
+	uint64_t addr, reg, link;
+
+	/*
+	 * setup the DLL perf counters to check CRC errors detected by
+	 * the NPU or the adapter.
+	 *
+	 * Counter 0: link 0/ODL0, CRC error detected by ODL
+	 * Counter 1: link 0/ODL0, CRC error detected by DLx
+	 * Counter 2: link 1/ODL1, CRC error detected by ODL
+	 * Counter 3: link 1/ODL1, CRC error detected by DLx
+	 */
+	if ((dev->brick_index == 2) || (dev->brick_index == 5))
+		link = 0;
+	else
+		link = 1;
+
+	addr = OB_DLL_PERF_MONITOR_CONFIG(dev->brick_index);
+	xscom_read(dev->npu->chip_id, addr, &reg);
+	if (link == 0) {
+		reg = SETFIELD(OB_DLL_PERF_MONITOR_CONFIG_ENABLE, reg,
+			OB_DLL_PERF_MONITOR_CONFIG_LINK0);
+		reg = SETFIELD(OB_DLL_PERF_MONITOR_CONFIG_ENABLE >> 2, reg,
+			OB_DLL_PERF_MONITOR_CONFIG_LINK0);
+	} else {
+		reg = SETFIELD(OB_DLL_PERF_MONITOR_CONFIG_ENABLE >> 4, reg,
+			OB_DLL_PERF_MONITOR_CONFIG_LINK1);
+		reg = SETFIELD(OB_DLL_PERF_MONITOR_CONFIG_ENABLE >> 6, reg,
+			OB_DLL_PERF_MONITOR_CONFIG_LINK1);
+	}
+	reg = SETFIELD(OB_DLL_PERF_MONITOR_CONFIG_SIZE, reg,
+		OB_DLL_PERF_MONITOR_CONFIG_SIZE16);
+	xscom_write(dev->npu->chip_id,
+		OB_DLL_PERF_MONITOR_CONFIG(dev->brick_index), reg);
+	OCAPIDBG(dev, "perf counter config %llx = %llx\n", addr, reg);
+
+	addr = OB_DLL_PERF_MONITOR_SELECT(dev->brick_index);
+	xscom_read(dev->npu->chip_id, addr, &reg);
+	reg = SETFIELD(OB_DLL_PERF_MONITOR_SELECT_COUNTER >> (link * 16),
+		reg, OB_DLL_PERF_MONITOR_SELECT_CRC_ODL);
+	reg = SETFIELD(OB_DLL_PERF_MONITOR_SELECT_COUNTER >> ((link * 16) + 8),
+		reg, OB_DLL_PERF_MONITOR_SELECT_CRC_DLX);
+	xscom_write(dev->npu->chip_id, addr, reg);
+	OCAPIDBG(dev, "perf counter select %llx = %llx\n", addr, reg);
+}
+
+static void check_perf_counters(struct npu2_dev *dev)
+{
+	uint64_t addr, reg, link0, link1;
+
+	addr = OB_DLL_PERF_COUNTER0(dev->brick_index);
+	xscom_read(dev->npu->chip_id, addr, &reg);
+	link0 = GETFIELD(PPC_BITMASK(0, 31), reg);
+	link1 = GETFIELD(PPC_BITMASK(32, 63), reg);
+	if (link0 || link1)
+		OCAPIERR(dev, "CRC error count link0=%08llx link1=%08llx\n",
+			link0, link1);
+}
+
 static void set_init_pattern(uint32_t gcid, struct npu2_dev *dev)
 {
 	uint64_t reg, config_xscom;
@@ -1048,6 +1108,7 @@ static int64_t npu2_opencapi_poll_link(struct pci_slot *slot)
 	case OCAPI_SLOT_LINK_TRAINED:
 		otl_enabletx(chip_id, dev->npu->xscom_base, dev);
 		pci_slot_set_state(slot, OCAPI_SLOT_NORMAL);
+		check_perf_counters(dev);
 		dev->phb_ocapi.scan_map = 1;
 		return OPAL_SUCCESS;
 
@@ -1569,6 +1630,7 @@ static void setup_device(struct npu2_dev *dev)
 	setup_afu_mmio_bars(dev->npu->chip_id, dev->npu->xscom_base, dev);
 	/* Procedure 13.1.3.9 - AFU Config BARs */
 	setup_afu_config_bars(dev->npu->chip_id, dev->npu->xscom_base, dev);
+	setup_perf_counters(dev);
 
 	set_fence_control(dev->npu->chip_id, dev->npu->xscom_base, dev->brick_index, 0b00);
 
