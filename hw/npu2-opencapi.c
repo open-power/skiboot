@@ -68,7 +68,8 @@
 #define   OCAPI_SLOT_FRESET_INIT            (OCAPI_SLOT_FRESET + 2)
 #define   OCAPI_SLOT_FRESET_ASSERT_DELAY    (OCAPI_SLOT_FRESET + 3)
 #define   OCAPI_SLOT_FRESET_DEASSERT_DELAY  (OCAPI_SLOT_FRESET + 4)
-#define   OCAPI_SLOT_FRESET_INIT_DELAY      (OCAPI_SLOT_FRESET + 5)
+#define   OCAPI_SLOT_FRESET_DEASSERT_DELAY2 (OCAPI_SLOT_FRESET + 5)
+#define   OCAPI_SLOT_FRESET_INIT_DELAY      (OCAPI_SLOT_FRESET + 6)
 
 #define OCAPI_LINK_TRAINING_RETRIES	2
 #define OCAPI_LINK_TRAINING_TIMEOUT	3000 /* ms */
@@ -259,6 +260,33 @@ static void set_transport_mux_controls(uint32_t gcid, uint32_t scom_base,
 		break;
 	}
 	xscom_write(gcid, PU_IOE_PB_MISC_CFG, reg);
+}
+
+static void assert_odl_reset(uint32_t gcid, int index)
+{
+	uint64_t reg, config_xscom;
+
+	config_xscom = OB_ODL_CONFIG(index);
+	/* Reset ODL */
+	reg = OB_ODL_CONFIG_RESET;
+	reg = SETFIELD(OB_ODL_CONFIG_VERSION, reg, 0b000001);
+	reg = SETFIELD(OB_ODL_CONFIG_TRAIN_MODE, reg, 0b0110);
+	reg = SETFIELD(OB_ODL_CONFIG_SUPPORTED_MODES, reg, 0b0010);
+	reg |= OB_ODL_CONFIG_X4_BACKOFF_ENABLE;
+	reg = SETFIELD(OB_ODL_CONFIG_PHY_CNTR_LIMIT, reg, 0b1111);
+	reg |= OB_ODL_CONFIG_DEBUG_ENABLE;
+	reg = SETFIELD(OB_ODL_CONFIG_FWD_PROGRESS_TIMER, reg, 0b0110);
+	xscom_write(gcid, config_xscom, reg);
+}
+
+static void deassert_odl_reset(uint32_t gcid, int index)
+{
+	uint64_t reg, config_xscom;
+
+	config_xscom = OB_ODL_CONFIG(index);
+	xscom_read(gcid, config_xscom, &reg);
+	reg &= ~OB_ODL_CONFIG_RESET;
+	xscom_write(gcid, config_xscom, reg);
 }
 
 static void enable_odl_phy_mux(uint32_t gcid, int index)
@@ -889,26 +917,6 @@ static void deassert_adapter_reset(struct npu2_dev *dev)
 	}
 }
 
-static void reset_odl(uint32_t gcid, struct npu2_dev *dev)
-{
-	uint64_t reg, config_xscom;
-
-	config_xscom = OB_ODL_CONFIG(dev->brick_index);
-	/* Reset ODL */
-	reg = OB_ODL_CONFIG_RESET;
-	reg = SETFIELD(OB_ODL_CONFIG_VERSION, reg, 0b000001);
-	reg = SETFIELD(OB_ODL_CONFIG_TRAIN_MODE, reg, 0b0110);
-	reg = SETFIELD(OB_ODL_CONFIG_SUPPORTED_MODES, reg, 0b0010);
-	reg |= OB_ODL_CONFIG_X4_BACKOFF_ENABLE;
-	reg = SETFIELD(OB_ODL_CONFIG_PHY_CNTR_LIMIT, reg, 0b1111);
-	reg |= OB_ODL_CONFIG_DEBUG_ENABLE;
-	reg = SETFIELD(OB_ODL_CONFIG_FWD_PROGRESS_TIMER, reg, 0b0110);
-	xscom_write(gcid, config_xscom, reg);
-
-	reg &= ~OB_ODL_CONFIG_RESET;
-	xscom_write(gcid, config_xscom, reg);
-}
-
 static void setup_perf_counters(struct npu2_dev *dev)
 {
 	uint64_t addr, reg, link;
@@ -1163,7 +1171,7 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 		npu2_opencapi_phy_setup(dev);
 		/* fall-through */
 	case OCAPI_SLOT_FRESET_INIT:
-		reset_odl(chip_id, dev);
+		assert_odl_reset(chip_id, dev->brick_index);
 		assert_adapter_reset(dev);
 		pci_slot_set_state(slot,
 				OCAPI_SLOT_FRESET_ASSERT_DELAY);
@@ -1171,13 +1179,23 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
 
 	case OCAPI_SLOT_FRESET_ASSERT_DELAY:
-		deassert_adapter_reset(dev);
+		deassert_odl_reset(chip_id, dev->brick_index);
 		pci_slot_set_state(slot,
 				OCAPI_SLOT_FRESET_DEASSERT_DELAY);
-		/* give another 5ms to device to be ready */
-		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
+		/*
+		 * Minimal delay before taking adapter out of
+		 * reset. Could be useless, but doesn't hurt
+		 */
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 
 	case OCAPI_SLOT_FRESET_DEASSERT_DELAY:
+		deassert_adapter_reset(dev);
+		pci_slot_set_state(slot,
+				OCAPI_SLOT_FRESET_DEASSERT_DELAY2);
+		/* give 5ms to device to be ready */
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
+
+	case OCAPI_SLOT_FRESET_DEASSERT_DELAY2:
 		if (dev->train_fenced) {
 			OCAPIDBG(dev, "Unfencing OTL after reset\n");
 			npu2_write(dev->npu, NPU2_MISC_FENCE_STATE,
