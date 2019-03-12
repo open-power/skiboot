@@ -725,10 +725,11 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 #define    PU_IOE_PB_FP_CFG_FP1_FMR_DISABLE	PPC_BIT(52)
 #define    PU_IOE_PB_FP_CFG_FP1_PRS_DISABLE	PPC_BIT(57)
 
-#define OB0_ODL0_CONFIG				0x901082A
-#define OB0_ODL1_CONFIG				0x901082B
-#define OB3_ODL0_CONFIG				0xC01082A
-#define OB3_ODL1_CONFIG				0xC01082B
+#define OB_ODL_OFFSET(brick_index) \
+	((((brick_index - 2) >> 1) * 0x3000000) + ((brick_index == 3 || brick_index == 4) ? 1 : 0))
+
+#define OB_ODL_CONFIG(brick_index) \
+	(0x901082A + OB_ODL_OFFSET(brick_index))
 #define   OB_ODL_CONFIG_RESET			PPC_BIT(0)
 #define   OB_ODL_CONFIG_VERSION			PPC_BITMASK(2, 7)
 #define   OB_ODL_CONFIG_TRAIN_MODE		PPC_BITMASK(8, 11)
@@ -737,26 +738,17 @@ void npu2_scom_write(uint64_t gcid, uint64_t scom_base,
 #define   OB_ODL_CONFIG_PHY_CNTR_LIMIT		PPC_BITMASK(20, 23)
 #define   OB_ODL_CONFIG_DEBUG_ENABLE		PPC_BIT(33)
 #define   OB_ODL_CONFIG_FWD_PROGRESS_TIMER	PPC_BITMASK(40, 43)
-
-#define OB0_ODL0_STATUS				0x901082C
-#define OB0_ODL1_STATUS				0x901082D
-#define OB3_ODL0_STATUS				0xC01082C
-#define OB3_ODL1_STATUS				0xC01082D
+#define OB_ODL_STATUS(brick_index) \
+	(0x901082C + OB_ODL_OFFSET(brick_index))
 #define   OB_ODL_STATUS_TRAINED_MODE		PPC_BITMASK(0,3)
 #define   OB_ODL_STATUS_RX_TRAINED_LANES	PPC_BITMASK(16, 23)
 #define   OB_ODL_STATUS_TX_TRAINED_LANES	PPC_BITMASK(24, 31)
 #define   OB_ODL_STATUS_TRAINING_STATE_MACHINE	PPC_BITMASK(49, 51)
-
-#define OB0_ODL0_TRAINING_STATUS		0x901082E
-#define OB0_ODL1_TRAINING_STATUS		0x901082F
-#define OB3_ODL0_TRAINING_STATUS		0xC01082E
-#define OB3_ODL1_TRAINING_STATUS		0xC01082F
+#define OB_ODL_TRAINING_STATUS(brick_index) \
+	(0x901082E + OB_ODL_OFFSET(brick_index))
 #define   OB_ODL_TRAINING_STATUS_STS_RX_PATTERN_B PPC_BITMASK(8, 15)
-
-#define OB0_ODL0_ENDPOINT_INFO			0x9010832
-#define OB0_ODL1_ENDPOINT_INFO			0x9010833
-#define OB3_ODL0_ENDPOINT_INFO			0xC010832
-#define OB3_ODL1_ENDPOINT_INFO			0xC010833
+#define OB_ODL_ENDPOINT_INFO(brick_index)		\
+	(0x9010832 + OB_ODL_OFFSET(brick_index))
 
 /* Registers and bits used to clear the L2 and L3 cache */
 #define L2_PRD_PURGE_CMD_REG 			0x1080E

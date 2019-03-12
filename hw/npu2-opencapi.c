@@ -128,24 +128,11 @@ static inline uint64_t index_to_block(uint64_t index) {
 	}
 }
 
-static uint64_t get_odl_status(uint32_t gcid, uint64_t index) {
+static uint64_t get_odl_status(uint32_t gcid, uint64_t index)
+{
 	uint64_t reg, status_xscom;
-	switch (index) {
-	case 2:
-		status_xscom = OB0_ODL0_STATUS;
-		break;
-	case 3:
-		status_xscom = OB0_ODL1_STATUS;
-		break;
-	case 4:
-		status_xscom = OB3_ODL1_STATUS;
-		break;
-	case 5:
-		status_xscom = OB3_ODL0_STATUS;
-		break;
-	default:
-		assert(false);
-	}
+
+	status_xscom = OB_ODL_STATUS(index);
 	xscom_read(gcid, status_xscom, &reg);
 	return reg;
 }
@@ -154,22 +141,7 @@ static uint64_t get_odl_training_status(uint32_t gcid, uint64_t index)
 {
 	uint64_t status_xscom, reg;
 
-	switch (index) {
-	case 2:
-		status_xscom = OB0_ODL0_TRAINING_STATUS;
-		break;
-	case 3:
-		status_xscom = OB0_ODL1_TRAINING_STATUS;
-		break;
-	case 4:
-		status_xscom = OB3_ODL1_TRAINING_STATUS;
-		break;
-	case 5:
-		status_xscom = OB3_ODL0_TRAINING_STATUS;
-		break;
-	default:
-		assert(false);
-	}
+	status_xscom = OB_ODL_TRAINING_STATUS(index);
 	xscom_read(gcid, status_xscom, &reg);
 	return reg;
 }
@@ -178,22 +150,7 @@ static uint64_t get_odl_endpoint_info(uint32_t gcid, uint64_t index)
 {
 	uint64_t status_xscom, reg;
 
-	switch (index) {
-	case 2:
-		status_xscom = OB0_ODL0_ENDPOINT_INFO;
-		break;
-	case 3:
-		status_xscom = OB0_ODL1_ENDPOINT_INFO;
-		break;
-	case 4:
-		status_xscom = OB3_ODL1_ENDPOINT_INFO;
-		break;
-	case 5:
-		status_xscom = OB3_ODL0_ENDPOINT_INFO;
-		break;
-	default:
-		assert(false);
-	}
+	status_xscom = OB_ODL_ENDPOINT_INFO(index);
 	xscom_read(gcid, status_xscom, &reg);
 	return reg;
 }
@@ -936,23 +893,7 @@ static void reset_odl(uint32_t gcid, struct npu2_dev *dev)
 {
 	uint64_t reg, config_xscom;
 
-	switch (dev->brick_index) {
-	case 2:
-		config_xscom = OB0_ODL0_CONFIG;
-		break;
-	case 3:
-		config_xscom = OB0_ODL1_CONFIG;
-		break;
-	case 4:
-		config_xscom = OB3_ODL1_CONFIG;
-		break;
-	case 5:
-		config_xscom = OB3_ODL0_CONFIG;
-		break;
-	default:
-		assert(false);
-	}
-
+	config_xscom = OB_ODL_CONFIG(dev->brick_index);
 	/* Reset ODL */
 	reg = OB_ODL_CONFIG_RESET;
 	reg = SETFIELD(OB_ODL_CONFIG_VERSION, reg, 0b000001);
@@ -972,23 +913,7 @@ static void set_init_pattern(uint32_t gcid, struct npu2_dev *dev)
 {
 	uint64_t reg, config_xscom;
 
-	switch (dev->brick_index) {
-	case 2:
-		config_xscom = OB0_ODL0_CONFIG;
-		break;
-	case 3:
-		config_xscom = OB0_ODL1_CONFIG;
-		break;
-	case 4:
-		config_xscom = OB3_ODL1_CONFIG;
-		break;
-	case 5:
-		config_xscom = OB3_ODL0_CONFIG;
-		break;
-	default:
-		assert(false);
-	}
-
+	config_xscom = OB_ODL_CONFIG(dev->brick_index);
 	/* Transmit Pattern A */
 	xscom_read(gcid, config_xscom, &reg);
 	reg = SETFIELD(OB_ODL_CONFIG_TRAIN_MODE, reg, 0b0001);
@@ -999,23 +924,7 @@ static void start_training(uint32_t gcid, struct npu2_dev *dev)
 {
 	uint64_t reg, config_xscom;
 
-	switch (dev->brick_index) {
-	case 2:
-		config_xscom = OB0_ODL0_CONFIG;
-		break;
-	case 3:
-		config_xscom = OB0_ODL1_CONFIG;
-		break;
-	case 4:
-		config_xscom = OB3_ODL1_CONFIG;
-		break;
-	case 5:
-		config_xscom = OB3_ODL0_CONFIG;
-		break;
-	default:
-		assert(false);
-	}
-
+	config_xscom = OB_ODL_CONFIG(dev->brick_index);
 	/* Start training */
 	xscom_read(gcid, config_xscom, &reg);
 	reg = SETFIELD(OB_ODL_CONFIG_TRAIN_MODE, reg, 0b1000);

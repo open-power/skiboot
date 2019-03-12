@@ -981,22 +981,7 @@ void npu2_opencapi_bump_ui_lane(struct npu2_dev *dev)
 	uint64_t status_xscom;
 	int lane, bit = 7;
 
-	switch (dev->brick_index) {
-	case 2:
-		status_xscom = OB0_ODL0_TRAINING_STATUS;
-		break;
-	case 3:
-		status_xscom = OB0_ODL1_TRAINING_STATUS;
-		break;
-	case 4:
-		status_xscom = OB3_ODL1_TRAINING_STATUS;
-		break;
-	case 5:
-		status_xscom = OB3_ODL0_TRAINING_STATUS;
-		break;
-	default:
-		assert(false);
-	}
+	status_xscom = OB_ODL_TRAINING_STATUS(dev->brick_index);
 	xscom_read(dev->npu->chip_id, status_xscom, &reg);
 	reg = GETFIELD(OB_ODL_TRAINING_STATUS_STS_RX_PATTERN_B, reg);
 
