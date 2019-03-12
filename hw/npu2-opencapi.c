@@ -814,7 +814,7 @@ static void otl_enabletx(uint32_t gcid, uint32_t scom_base,
 	/* TODO: Abort if credits are zero */
 }
 
-static void assert_reset(struct npu2_dev *dev)
+static void assert_adapter_reset(struct npu2_dev *dev)
 {
 	uint8_t pin, data;
 	int rc;
@@ -869,7 +869,7 @@ err:
 	OCAPIERR(dev, "Error writing I2C reset signal: %d\n", rc);
 }
 
-static void deassert_reset(struct npu2_dev *dev)
+static void deassert_adapter_reset(struct npu2_dev *dev)
 {
 	uint8_t data;
 	int rc;
@@ -1164,14 +1164,14 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 		/* fall-through */
 	case OCAPI_SLOT_FRESET_INIT:
 		reset_odl(chip_id, dev);
-		assert_reset(dev);
+		assert_adapter_reset(dev);
 		pci_slot_set_state(slot,
 				OCAPI_SLOT_FRESET_ASSERT_DELAY);
 		/* assert for 5ms */
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
 
 	case OCAPI_SLOT_FRESET_ASSERT_DELAY:
-		deassert_reset(dev);
+		deassert_adapter_reset(dev);
 		pci_slot_set_state(slot,
 				OCAPI_SLOT_FRESET_DEASSERT_DELAY);
 		/* give another 5ms to device to be ready */
