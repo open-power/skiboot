@@ -308,6 +308,12 @@ static void enable_odl_phy_mux(uint32_t gcid, int index)
 		assert(false);
 	}
 
+	/*
+	 * ODL must be in reset when enabling.
+	 * It stays in reset until the link is trained
+	 */
+	assert_odl_reset(gcid, index);
+
 	/* PowerBus OLL PHY Training Config Register */
 	xscom_read(gcid, phy_config_scom, &reg);
 
