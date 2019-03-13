@@ -404,7 +404,7 @@ int ffs_part_info(struct ffs_handle *ffs, uint32_t part_idx,
 		n = calloc(1, FFS_PART_NAME_MAX + 1);
 		if (!n)
 			return FLASH_ERR_MALLOC_FAILED;
-		strncpy(n, ent->name, FFS_PART_NAME_MAX);
+		memcpy(n, ent->name, FFS_PART_NAME_MAX);
 		*name = n;
 	}
 	return 0;
