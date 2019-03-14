@@ -363,6 +363,136 @@ const struct platform_ocapi witherspoon_ocapi = {
        .i2c_presence_brick5 = 0,
 };
 
+static int gpu_slot_to_num(const char *slot)
+{
+	char *p = NULL;
+	int ret;
+
+	if (!slot)
+		return -1;
+
+	if (memcmp(slot, "GPU", 3))
+		return -1;
+
+	ret = strtol(slot + 3, &p, 10);
+	if (*p || p == slot + 3)
+		return -1;
+
+	return ret;
+}
+
+static void npu2_phb_nvlink_dt(struct phb *npuphb)
+{
+	struct dt_node *g[3] = { 0 }; /* Current maximum is 3 GPUs per 1 NPU */
+	struct dt_node *n[6] = { 0 };
+	int max_gpus, i, gpuid, first, last;
+	struct npu2 *npu2_phb = phb_to_npu2_nvlink(npuphb);
+	struct pci_device *npd;
+
+	switch (witherspoon_type) {
+	case WITHERSPOON_TYPE_REDBUD:
+		max_gpus = 4;
+		break;
+	case WITHERSPOON_TYPE_SEQUOIA:
+		max_gpus = 6;
+		break;
+	default:
+		/* witherspoon_probe() already reported missing support */
+		return;
+	}
+
+	/* Find the indexes of GPUs connected to this NPU */
+	for (i = 0, first = max_gpus, last = 0; i < npu2_phb->total_devices;
+			++i) {
+		gpuid = gpu_slot_to_num(npu2_phb->devices[i].nvlink.slot_label);
+		if (gpuid < 0)
+			continue;
+		if (gpuid > last)
+			last = gpuid;
+		if (gpuid < first)
+			first = gpuid;
+	}
+
+	/* Either no "GPUx" slots found or they are not consecutive, abort */
+	if (!last || last + 1 - first > max_gpus)
+		return;
+
+	/* Collect GPU device nodes, sorted by an index from "GPUn" */
+	for (i = 0; i < npu2_phb->total_devices; ++i) {
+		gpuid = gpu_slot_to_num(npu2_phb->devices[i].nvlink.slot_label);
+		g[gpuid - first] = npu2_phb->devices[i].nvlink.pd->dn;
+
+		/* Collect NVLink bridge nodes too, for their phandles */
+		list_for_each(&npuphb->devices, npd, link) {
+			if (npd->bdfn == npu2_phb->devices[i].bdfn) {
+				assert(npu2_phb->devices[i].brick_index <
+						ARRAY_SIZE(n));
+				n[npu2_phb->devices[i].brick_index] = npd->dn;
+			}
+		}
+	}
+
+	/*
+	 * Store interconnect phandles in the device tree.
+	 * The mapping is from Witherspoon_Design_Workbook_v1.7_19June2018.pdf,
+	 * pages 39 (Sequoia), 40 (Redbud):
+	 *   Figure 16: NVLink wiring diagram for planar with 6 GPUs
+	 *   Figure 17: NVLink wiring diagram for planar with 4 GPUs
+	 */
+#define PEERPH(g) 	((g)?(g)->phandle:0)
+	switch (witherspoon_type) {
+	case WITHERSPOON_TYPE_REDBUD:
+		if (g[0])
+			dt_add_property_cells(g[0], "ibm,nvlink-peers",
+					PEERPH(g[1]), PEERPH(n[0]),
+					PEERPH(g[1]), PEERPH(n[1]),
+					PEERPH(g[1]), PEERPH(n[2]));
+		if (g[1])
+			dt_add_property_cells(g[1], "ibm,nvlink-peers",
+					PEERPH(g[0]), PEERPH(n[3]),
+					PEERPH(g[0]), PEERPH(n[4]),
+					PEERPH(g[0]), PEERPH(n[5]));
+		break;
+	case WITHERSPOON_TYPE_SEQUOIA:
+		if (g[0])
+			dt_add_property_cells(g[0], "ibm,nvlink-peers",
+					PEERPH(g[1]), PEERPH(n[0]),
+					PEERPH(g[2]), PEERPH(g[2]),
+					PEERPH(g[1]), PEERPH(n[1]));
+		if (g[1])
+			dt_add_property_cells(g[1], "ibm,nvlink-peers",
+					PEERPH(g[0]), PEERPH(n[2]),
+					PEERPH(g[2]), PEERPH(g[2]),
+					PEERPH(g[0]), PEERPH(n[3]));
+		if (g[2])
+			dt_add_property_cells(g[2], "ibm,nvlink-peers",
+					PEERPH(g[1]), PEERPH(g[0]),
+					PEERPH(g[1]), PEERPH(n[4]),
+					PEERPH(g[0]), PEERPH(n[5]));
+		break;
+	default:
+		break;
+	}
+}
+
+static void witherspoon_exit(void)
+{
+	struct dt_node *np;
+
+	dt_for_each_compatible(dt_root, np, "ibm,power9-npu-pciex") {
+		u32 opal_id = dt_prop_get_cell(np, "ibm,opal-phbid", 1);
+		struct phb *npphb = pci_get_phb(opal_id);
+
+		if (!npphb)
+			continue;
+		if (npphb->phb_type != phb_type_npu_v2)
+			continue;
+		npu2_phb_nvlink_dt(npphb);
+	}
+
+	astbmc_exit();
+}
+
 /* The only difference between these is the PCI slot handling */
 
 DECLARE_PLATFORM(witherspoon) = {
@@ -376,7 +506,7 @@ DECLARE_PLATFORM(witherspoon) = {
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
 	.elog_commit		= ipmi_elog_commit,
-	.exit			= astbmc_exit,
+	.exit			= witherspoon_exit,
 	.terminate		= ipmi_terminate,
 
 	.pci_get_slot_info	= dt_slot_get_slot_info,
