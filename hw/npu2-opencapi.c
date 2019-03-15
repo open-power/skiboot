@@ -1194,7 +1194,7 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 		}
 		dev->train_need_fence = true;
 		slot->link_retries = OCAPI_LINK_TRAINING_RETRIES;
-		npu2_opencapi_phy_setup(dev);
+		npu2_opencapi_phy_reset(dev);
 		/* fall-through */
 	case OCAPI_SLOT_FRESET_INIT:
 		assert_odl_reset(chip_id, dev->brick_index);
@@ -1603,7 +1603,7 @@ static int setup_irq(struct npu2 *p)
 
 static void setup_debug_training_state(struct npu2_dev *dev)
 {
-	npu2_opencapi_phy_setup(dev);
+	npu2_opencapi_phy_reset(dev);
 
 	switch (npu2_ocapi_training_state) {
 	case NPU2_TRAIN_PRBS31:
@@ -1675,6 +1675,7 @@ static void setup_device(struct npu2_dev *dev)
 	/* Procedure 13.1.3.9 - AFU Config BARs */
 	setup_afu_config_bars(dev->npu->chip_id, dev->npu->xscom_base, dev);
 	setup_perf_counters(dev);
+	npu2_opencapi_phy_init(dev);
 
 	set_fence_control(dev->npu->chip_id, dev->npu->xscom_base, dev->brick_index, 0b00);
 

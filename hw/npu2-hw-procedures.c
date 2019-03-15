@@ -1017,17 +1017,20 @@ void npu2_opencapi_bump_ui_lane(struct npu2_dev *dev)
 	}
 }
 
-void npu2_opencapi_phy_setup(struct npu2_dev *dev)
+void npu2_opencapi_phy_init(struct npu2_dev *dev)
 {
+	run_procedure(dev, 5); /* procedure_phy_tx_zcal */
 	/*
 	 * This is only required for OpenCAPI - Hostboot tries to set this
 	 * on systems where it can tell a link is OpenCAPI, but for
 	 * Witherspoon it needs to be done in skiboot after device detection.
 	 */
 	phy_write(dev, &NPU2_PHY_RX_RC_ENABLE_AUTO_RECAL, 0x1);
+}
 
+void npu2_opencapi_phy_reset(struct npu2_dev *dev)
+{
 	run_procedure(dev, 4); /* procedure_phy_reset */
-	run_procedure(dev, 5); /* procedure_phy_tx_zcal */
 	run_procedure(dev, 6); /* procedure_phy_rx_dccal */
 }
 
