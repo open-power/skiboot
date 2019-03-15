@@ -218,6 +218,9 @@ static void set_iovalid(struct npu2_dev *ndev, bool raise)
 	uint64_t addr, val, mask;
 	int rc;
 
+	if (ndev->type == NPU2_DEV_TYPE_OPENCAPI)
+		return;
+
 	addr = (ndev->pl_xscom_base & 0x3F000000) | 0x9;
 	mask = PPC_BIT(6 + obus_brick_index(ndev));
 	val = raise ? mask : 0;
