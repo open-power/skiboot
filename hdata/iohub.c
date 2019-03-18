@@ -660,6 +660,10 @@ static void parse_one_slot(const struct slot_map_entry *entry,
 	case st_rc_slot:
 		node = dt_new_2addr(dt_slots, "root-complex",
 						chip_id, entry->phb_index);
+		if (!node) {
+			SM_ERR("Couldn't add DT node\n");
+			return;
+		}
 		dt_add_property_cells(node, "reg", chip_id, entry->phb_index);
 		dt_add_property_cells(node, "#address-cells", 2);
 		dt_add_property_cells(node, "#size-cells", 0);
