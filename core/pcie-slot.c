@@ -473,14 +473,14 @@ struct pci_slot *pcie_slot_create(struct phb *phb, struct pci_device *pd)
 	if (slot->slot_cap & PCICAP_EXP_SLOTCAP_HPLUG_CAP)
 		slot->pluggable = 1;
 
+	/* Assume the slot is powered on by default */
+	slot->power_state = PCI_SLOT_POWER_ON;
 	if (slot->slot_cap & PCICAP_EXP_SLOTCAP_PWCTRL) {
 		slot->power_ctl = 1;
 
-		/* The power is on by default */
-		slot->power_state = PCI_SLOT_POWER_ON;
 		pci_cfg_read16(phb, pd->bdfn, ecap + PCICAP_EXP_SLOTCTL,
 			       &slot_ctl);
-		if (((slot_ctl & PCICAP_EXP_SLOTCTL_PWRI) >> 8) == PCIE_INDIC_OFF)
+		if (slot_ctl & PCICAP_EXP_SLOTCTL_PWRCTLR)
 			slot->power_state = PCI_SLOT_POWER_OFF;
 	}
 
