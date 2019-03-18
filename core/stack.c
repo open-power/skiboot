@@ -57,6 +57,8 @@ void __nomcount ___backtrace(struct bt_entry *entries, unsigned int max_ents,
 		metadata->token = eframe->gpr[0];
 	else
 		metadata->token = -1UL;
+
+	metadata->pir = mfspr(SPR_PIR);
 }
 
 void ___print_backtrace(struct bt_entry *entries, struct bt_metadata *metadata,
@@ -121,9 +123,7 @@ struct lock bt_lock = LOCK_UNLOCKED;
 
 void backtrace(void)
 {
-	struct bt_metadata metadata = {
-		.pir = mfspr(SPR_PIR),
-	};
+	struct bt_metadata metadata;
 
 	lock(&bt_lock);
 
