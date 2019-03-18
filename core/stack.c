@@ -27,10 +27,9 @@
 static struct bt_entry bt_buf[STACK_BUF_ENTRIES];
 
 /* Dumps backtrace to buffer */
-void __nomcount ___backtrace(struct bt_entry *entries, unsigned int *count,
-				unsigned long *token, unsigned long *r1_caller)
+void __nomcount ___backtrace(struct bt_entry *entries, unsigned int max_ents,
+			     struct bt_metadata *metadata)
 {
-	unsigned int room = *count;
 	unsigned long *fp = __builtin_frame_address(0);
 	unsigned long top_adj = top_of_ram;
 	struct stack_frame *eframe = (struct stack_frame *)fp;
@@ -39,8 +38,8 @@ void __nomcount ___backtrace(struct bt_entry *entries, unsigned int *count,
 	if (top_of_ram == SKIBOOT_BASE + SKIBOOT_SIZE)
 		top_adj = top_of_ram + STACK_SIZE;
 
-	*count = 0;
-	while(room) {
+	metadata->ents = 0;
+	while (max_ents) {
 		fp = (unsigned long *)fp[0];
 		if (!fp || (unsigned long)fp > top_adj)
 			break;
@@ -48,22 +47,20 @@ void __nomcount ___backtrace(struct bt_entry *entries, unsigned int *count,
 		entries->sp = (unsigned long)fp;
 		entries->pc = fp[2];
 		entries++;
-		*count = (*count) + 1;
-		room--;
+		metadata->ents++;
+		max_ents--;
 	}
 
-	*r1_caller = eframe->gpr[1];
+	metadata->r1_caller = eframe->gpr[1];
 
 	if (fp)
-		*token = eframe->gpr[0];
+		metadata->token = eframe->gpr[0];
 	else
-		*token = -1UL;
+		metadata->token = -1UL;
 }
 
-void ___print_backtrace(unsigned int pir, struct bt_entry *entries,
-			      unsigned int count, unsigned long token,
-			      unsigned long r1_caller, char *out_buf,
-			      unsigned int *len, bool symbols)
+void ___print_backtrace(struct bt_entry *entries, struct bt_metadata *metadata,
+			char *out_buf, unsigned int *len, bool symbols)
 {
 	static char bt_text_buf[4096];
 	int i, l = 0, max;
@@ -77,14 +74,14 @@ void ___print_backtrace(unsigned int pir, struct bt_entry *entries,
 	} else
 		max = *len - 1;
 
-	bottom = cpu_stack_bottom(pir);
-	normal_top = cpu_stack_top(pir);
-	top = cpu_emergency_stack_top(pir);
+	bottom = cpu_stack_bottom(metadata->pir);
+	normal_top = cpu_stack_top(metadata->pir);
+	top = cpu_emergency_stack_top(metadata->pir);
 	tbot = SKIBOOT_BASE;
 	ttop = (unsigned long)&_etext;
 
-	l += snprintf(buf, max, "CPU %04x Backtrace:\n", pir);
-	for (i = 0; i < count && l < max; i++) {
+	l += snprintf(buf, max, "CPU %04lx Backtrace:\n", metadata->pir);
+	for (i = 0; i < metadata->ents && l < max; i++) {
 		if (entries->sp < bottom || entries->sp > top)
 			mark = '!';
 		else if (entries->sp > normal_top)
@@ -101,9 +98,11 @@ void ___print_backtrace(unsigned int pir, struct bt_entry *entries,
 		l += snprintf(buf + l, max - l, "\n");
 		entries++;
 	}
-	if (token <= OPAL_LAST)
-		l += snprintf(buf + l, max - l, " --- OPAL call token: 0x%lx caller R1: 0x%016lx ---\n", token, r1_caller);
-	else if (token == -1UL)
+	if (metadata->token <= OPAL_LAST)
+		l += snprintf(buf + l, max - l,
+			      " --- OPAL call token: 0x%lx caller R1: 0x%016lx ---\n",
+			      metadata->token, metadata->r1_caller);
+	else if (metadata->token == -1UL)
 		l += snprintf(buf + l, max - l, " --- OPAL boot ---\n");
 	if (!out_buf)
 		write(stdout->fd, bt_text_buf, l);
@@ -122,14 +121,14 @@ struct lock bt_lock = LOCK_UNLOCKED;
 
 void backtrace(void)
 {
-	unsigned int ents = STACK_BUF_ENTRIES;
-	unsigned long token, r1_caller;
+	struct bt_metadata metadata = {
+		.pir = mfspr(SPR_PIR),
+	};
 
 	lock(&bt_lock);
 
-	___backtrace(bt_buf, &ents, &token, &r1_caller);
-	___print_backtrace(mfspr(SPR_PIR), bt_buf, ents, token, r1_caller,
-			NULL, NULL, true);
+	___backtrace(bt_buf, STACK_BUF_ENTRIES, &metadata);
+	___print_backtrace(bt_buf, &metadata, NULL, NULL, true);
 
 	unlock(&bt_lock);
 }

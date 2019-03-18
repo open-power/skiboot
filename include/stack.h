@@ -107,36 +107,52 @@ struct stack_frame {
 	uint64_t	dar;
 } __attribute__((aligned(16)));
 
-/* Backtrace */
+/* Backtrace entry */
 struct bt_entry {
 	unsigned long	sp;
 	unsigned long	pc;
+};
+
+/* Backtrace metadata */
+struct bt_metadata {
+	unsigned int	ents;
+	unsigned long	token;
+	unsigned long	r1_caller;
+	unsigned long	pir;
 };
 
 /* Boot stack top */
 extern void *boot_stack_top;
 
 /* Create a backtrace */
-void ___backtrace(struct bt_entry *entries, unsigned int *count,
-				unsigned long *token, unsigned long *r1_caller);
+void ___backtrace(struct bt_entry *entries, unsigned int max_ents,
+		  struct bt_metadata *metadata);
+
 static inline void __backtrace(struct bt_entry *entries, unsigned int *count)
 {
-	unsigned long token, r1_caller;
+	struct bt_metadata metadata;
 
-	___backtrace(entries, count, &token, &r1_caller);
+	___backtrace(entries, *count, &metadata);
+
+	*count = metadata.ents;
 }
 
 /* Convert a backtrace to ASCII */
-extern void ___print_backtrace(unsigned int pir, struct bt_entry *entries,
-			      unsigned int count, unsigned long token,
-			      unsigned long r1_caller, char *out_buf,
-			      unsigned int *len, bool symbols);
+extern void ___print_backtrace(struct bt_entry *entries,
+			       struct bt_metadata *metadata, char *out_buf,
+			       unsigned int *len, bool symbols);
 
 static inline void __print_backtrace(unsigned int pir, struct bt_entry *entries,
-			      unsigned int count, char *out_buf,
-			      unsigned int *len, bool symbols)
+				     unsigned int count, char *out_buf,
+				     unsigned int *len, bool symbols)
 {
-	___print_backtrace(pir, entries, count, OPAL_LAST + 1, 0, out_buf, len, symbols);
+	struct bt_metadata metadata = {
+		.ents = count,
+		.token = OPAL_LAST + 1,
+		.r1_caller = 0,
+		.pir = pir
+	};
+	___print_backtrace(entries, &metadata, out_buf, len, symbols);
 }
 
 /* For use by debug code, create and print backtrace, uses a static buffer */
