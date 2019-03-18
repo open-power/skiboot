@@ -125,35 +125,13 @@ struct bt_metadata {
 extern void *boot_stack_top;
 
 /* Create a backtrace */
-void ___backtrace(struct bt_entry *entries, unsigned int max_ents,
-		  struct bt_metadata *metadata);
-
-static inline void __backtrace(struct bt_entry *entries, unsigned int *count)
-{
-	struct bt_metadata metadata;
-
-	___backtrace(entries, *count, &metadata);
-
-	*count = metadata.ents;
-}
+void backtrace_create(struct bt_entry *entries, unsigned int max_ents,
+		      struct bt_metadata *metadata);
 
 /* Convert a backtrace to ASCII */
-extern void ___print_backtrace(struct bt_entry *entries,
-			       struct bt_metadata *metadata, char *out_buf,
-			       unsigned int *len, bool symbols);
-
-static inline void __print_backtrace(unsigned int pir, struct bt_entry *entries,
-				     unsigned int count, char *out_buf,
-				     unsigned int *len, bool symbols)
-{
-	struct bt_metadata metadata = {
-		.ents = count,
-		.token = OPAL_LAST + 1,
-		.r1_caller = 0,
-		.pir = pir
-	};
-	___print_backtrace(entries, &metadata, out_buf, len, symbols);
-}
+extern void backtrace_print(struct bt_entry *entries,
+			    struct bt_metadata *metadata, char *out_buf,
+			    unsigned int *len, bool symbols);
 
 /* For use by debug code, create and print backtrace, uses a static buffer */
 extern void backtrace(void);

@@ -27,8 +27,9 @@
 static struct bt_entry bt_buf[STACK_BUF_ENTRIES];
 
 /* Dumps backtrace to buffer */
-void __nomcount ___backtrace(struct bt_entry *entries, unsigned int max_ents,
-			     struct bt_metadata *metadata)
+void __nomcount backtrace_create(struct bt_entry *entries,
+				 unsigned int max_ents,
+				 struct bt_metadata *metadata)
 {
 	unsigned long *fp = __builtin_frame_address(0);
 	unsigned long top_adj = top_of_ram;
@@ -61,8 +62,8 @@ void __nomcount ___backtrace(struct bt_entry *entries, unsigned int max_ents,
 	metadata->pir = mfspr(SPR_PIR);
 }
 
-void ___print_backtrace(struct bt_entry *entries, struct bt_metadata *metadata,
-			char *out_buf, unsigned int *len, bool symbols)
+void backtrace_print(struct bt_entry *entries, struct bt_metadata *metadata,
+		     char *out_buf, unsigned int *len, bool symbols)
 {
 	static char bt_text_buf[4096];
 	int i, l = 0, max;
@@ -127,8 +128,8 @@ void backtrace(void)
 
 	lock(&bt_lock);
 
-	___backtrace(bt_buf, STACK_BUF_ENTRIES, &metadata);
-	___print_backtrace(bt_buf, &metadata, NULL, NULL, true);
+	backtrace_create(bt_buf, STACK_BUF_ENTRIES, &metadata);
+	backtrace_print(bt_buf, &metadata, NULL, NULL, true);
 
 	unlock(&bt_lock);
 }

@@ -106,10 +106,10 @@ static void update_sp_attn_area(const char *msg)
 		cpu_to_be32((uint32_t)((uint64_t)__builtin_return_address(0) & 0xffffffff));
 
 	snprintf(ti_attn->msg.version, VERSION_LEN, "%s", version);
-	___backtrace(bt_buf, STACK_BUF_ENTRIES, &metadata);
+	backtrace_create(bt_buf, STACK_BUF_ENTRIES, &metadata);
 	metadata.token = OPAL_LAST + 1;
 	len = BT_FRAME_LEN;
-	___print_backtrace(bt_buf, &metadata, ti_attn->msg.bt_buf, &len, false);
+	backtrace_print(bt_buf, &metadata, ti_attn->msg.bt_buf, &len, false);
 	snprintf(ti_attn->msg.file_info, FILE_INFO_LEN, "%s", msg);
 
 	ti_attn->msg_len = VERSION_LEN + BT_FRAME_LEN +

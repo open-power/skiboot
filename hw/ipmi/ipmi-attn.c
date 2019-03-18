@@ -53,10 +53,9 @@ static void ipmi_log_terminate_event(const char *msg)
 	ti_size = IPMI_TI_BUFFER_SIZE - ti_len;
 
 	/* Backtrace */
-	___backtrace(bt_buf, STACK_BUF_ENTRIES, &metadata);
+	backtrace_create(bt_buf, STACK_BUF_ENTRIES, &metadata);
 	metadata.token = OPAL_LAST + 1;
-	___print_backtrace(bt_buf, &metadata, ti_buffer + ti_len, &ti_size,
-			   true);
+	backtrace_print(bt_buf, &metadata, ti_buffer + ti_len, &ti_size, true);
 
 	/* Create eSEL event and commit */
 	elog_buf = opal_elog_create(&e_info(OPAL_RC_ATTN), 0);
