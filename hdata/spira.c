@@ -215,8 +215,29 @@ struct HDIF_common_hdr *__get_hdif(struct spira_ntuple *n, const char id[],
 				   const char *file, int line)
 {
 	struct HDIF_common_hdr *h = ntuple_addr(n);
+	u16 act_cnt, alloc_cnt;
+	u32 act_len, alloc_len;
+
 	if (!spira_check_ptr(h, file, line))
 		return NULL;
+
+	act_cnt = be16_to_cpu(n->act_cnt);
+	alloc_cnt = be16_to_cpu(n->alloc_cnt);
+
+	if (act_cnt > alloc_cnt) {
+		prerror("SPIRA: bad ntuple, act_cnt > alloc_cnt (%u > %u)\n",
+			act_cnt, alloc_cnt);
+		return NULL;
+	}
+
+	act_len = be32_to_cpu(n->act_len);
+	alloc_len = be32_to_cpu(n->alloc_len);
+
+	if (act_len > alloc_len) {
+		prerror("SPIRA: bad ntuple, act_len > alloc_len (%u > %u)\n",
+			act_len, alloc_len);
+		return NULL;
+	}
 
 	if (!HDIF_check(h, id)) {
 		prerror("SPIRA: bad tuple %p: expected %s at %s line %d\n",
