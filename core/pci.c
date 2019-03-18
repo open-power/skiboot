@@ -1471,7 +1471,7 @@ static void pci_print_summary_line(struct phb *phb, struct pci_device *pd,
 {
 	const char *label, *dtype, *s;
 	u32 vdid;
-#define MAX_SLOTSTR 32
+#define MAX_SLOTSTR 80
 	char slotstr[MAX_SLOTSTR  + 1] = { 0, };
 
 	pci_cfg_read32(phb, pd->bdfn, 0, &vdid);
