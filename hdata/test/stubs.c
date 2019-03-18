@@ -140,7 +140,6 @@ static void stub_function(void)
 #define STUB(fnname) \
 	void fnname(void) __attribute__((weak, alias ("stub_function")))
 
-STUB(op_display);
 STUB(fsp_preload_lid);
 STUB(fsp_wait_lid_loaded);
 STUB(fsp_adjust_lid_side);

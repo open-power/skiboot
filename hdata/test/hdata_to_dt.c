@@ -168,6 +168,17 @@ static bool spira_check_ptr(const void *ptr, const char *file, unsigned int line
 
 #include <err.h>
 
+#include <op-panel.h>
+
+void op_display(enum op_severity s, enum op_module m, uint16_t code)
+{
+	fprintf(stderr, "op_panel Severity: 0x%x (%s), module %x, %x\n",
+		s, (s == OP_FATAL) ? "FATAL" : "non-fatal",
+		m, code);
+	if (s == OP_FATAL)
+		exit(EXIT_FAILURE);
+}
+
 char __rodata_start[1], __rodata_end[1];
 
 enum proc_gen proc_gen = proc_gen_p7;
