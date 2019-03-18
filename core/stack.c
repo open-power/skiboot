@@ -175,13 +175,12 @@ void __nomcount __mcount_stack_check(uint64_t sp, uint64_t lr)
 
 	/* Capture lowest stack for this thread */
 	if (mark < c->stack_bot_mark) {
-		unsigned int count = CPU_BACKTRACE_SIZE;
 		lock(&stack_check_lock);
 		c->stack_bot_mark = mark;
 		c->stack_bot_pc = lr;
 		c->stack_bot_tok = c->current_token;
-		__backtrace(c->stack_bot_bt, &count);
-		c->stack_bot_bt_count = count;
+		backtrace_create(c->stack_bot_bt, CPU_BACKTRACE_SIZE,
+				 &c->stack_bot_bt_metadata);
 		unlock(&stack_check_lock);
 	}
 
@@ -232,8 +231,9 @@ void check_stacks(void)
 		      " pc=%08llx token=%lld\n",
 		      lowest->pir, lowest->stack_bot_mark, lowest->stack_bot_pc,
 		      lowest->stack_bot_tok);
-		__print_backtrace(lowest->pir, lowest->stack_bot_bt,
-				  lowest->stack_bot_bt_count, NULL, NULL, true);
+		backtrace_print(lowest->stack_bot_bt,
+				&lowest->stack_bot_bt_metadata,
+				NULL, NULL, true);
 		unlock(&stack_check_lock);
 	}
 
