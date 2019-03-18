@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,6 +169,11 @@ static bool spira_check_ptr(const void *ptr, const char *file, unsigned int line
 #include <err.h>
 
 #include <op-panel.h>
+
+bool fsp_present()
+{
+	return false;
+}
 
 void op_display(enum op_severity s, enum op_module m, uint16_t code)
 {

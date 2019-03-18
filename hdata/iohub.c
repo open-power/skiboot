@@ -927,8 +927,7 @@ static void io_parse_fru(const void *sp_iohubs)
 		io_parse_slots(sp_iohubs, chip_id);
 	}
 
-	/* On P8, grab the CEC VPD */
-	if (proc_gen == proc_gen_p8)
+	if (proc_gen == proc_gen_p8 || proc_gen == proc_gen_p9)
 		io_add_p8_cec_vpd(sp_iohubs);
 }
 

@@ -157,6 +157,9 @@ static void *vpd_lid_preload(const uint8_t *lx)
 {
 	int rc;
 
+	if (!fsp_present())
+		return NULL;
+
 	/* Now this is a guess game as we don't have the info from the
 	 * pHyp folks. But basically, it seems to boil down to loading
 	 * a LID whose name is 0x80e000yy where yy is the last 2 digits
@@ -211,6 +214,9 @@ void vpd_iohub_load(struct dt_node *hub_node)
 	const uint32_t *p;
 	const uint8_t *lx;
 	unsigned int lxrn;
+
+	if (!fsp_present())
+		return;
 
 	p = dt_prop_get_def(hub_node, "ibm,vpd-lx-info", NULL);
 	if (!p)
