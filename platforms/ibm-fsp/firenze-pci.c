@@ -879,7 +879,10 @@ static void firenze_pci_slot_init(struct pci_slot *slot)
 	uint32_t vdid;
 	int i;
 
-	/* Search for PCI slot info */
+	/* Init the slot info from the LXVPD */
+	slot->ops.add_properties = lxvpd_add_slot_properties;
+
+	/* Search for power control information in the per-system table */
 	for (i = 0; i < ARRAY_SIZE(firenze_pci_slots); i++) {
 		if (firenze_pci_slots[i].index == s->slot_index &&
 		    !strcmp(firenze_pci_slots[i].label, s->label)) {
@@ -927,13 +930,6 @@ static void firenze_pci_slot_init(struct pci_slot *slot)
 			}
 		}
 	}
-
-	/*
-         * Anyway, the slot has platform specific info. That
-         * requires platform specific method to parse it out
-         * properly.
-         */
-	slot->ops.add_properties = lxvpd_add_slot_properties;
 }
 
 void firenze_pci_setup_phb(struct phb *phb, unsigned int index)
