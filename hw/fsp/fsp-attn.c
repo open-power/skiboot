@@ -92,7 +92,8 @@ static void update_sp_attn_area(const char *msg)
 {
 #define STACK_BUF_ENTRIES	20
 	struct bt_entry bt_buf[STACK_BUF_ENTRIES];
-	unsigned int ent_cnt, len;
+	struct bt_metadata metadata;
+	unsigned int len;
 
 	if (!fsp_present())
 		return;
@@ -105,11 +106,10 @@ static void update_sp_attn_area(const char *msg)
 		cpu_to_be32((uint32_t)((uint64_t)__builtin_return_address(0) & 0xffffffff));
 
 	snprintf(ti_attn->msg.version, VERSION_LEN, "%s", version);
-	ent_cnt = STACK_BUF_ENTRIES;
-	__backtrace(bt_buf, &ent_cnt);
+	___backtrace(bt_buf, STACK_BUF_ENTRIES, &metadata);
+	metadata.token = OPAL_LAST + 1;
 	len = BT_FRAME_LEN;
-	__print_backtrace(mfspr(SPR_PIR), bt_buf, ent_cnt,
-			  ti_attn->msg.bt_buf, &len, false);
+	___print_backtrace(bt_buf, &metadata, ti_attn->msg.bt_buf, &len, false);
 	snprintf(ti_attn->msg.file_info, FILE_INFO_LEN, "%s", msg);
 
 	ti_attn->msg_len = VERSION_LEN + BT_FRAME_LEN +

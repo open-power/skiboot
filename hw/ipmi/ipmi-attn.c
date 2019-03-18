@@ -38,7 +38,7 @@ static struct bt_entry bt_buf[STACK_BUF_ENTRIES];
 /* Log eSEL event with OPAL backtrace */
 static void ipmi_log_terminate_event(const char *msg)
 {
-	unsigned int bt_entry_cnt = STACK_BUF_ENTRIES;
+	struct bt_metadata metadata;
 	unsigned int ti_len;
 	unsigned int ti_size;
 	struct errorlog *elog_buf;
@@ -53,9 +53,10 @@ static void ipmi_log_terminate_event(const char *msg)
 	ti_size = IPMI_TI_BUFFER_SIZE - ti_len;
 
 	/* Backtrace */
-	__backtrace(bt_buf, &bt_entry_cnt);
-	__print_backtrace(mfspr(SPR_PIR), bt_buf, bt_entry_cnt,
-			  ti_buffer + ti_len, &ti_size, true);
+	___backtrace(bt_buf, STACK_BUF_ENTRIES, &metadata);
+	metadata.token = OPAL_LAST + 1;
+	___print_backtrace(bt_buf, &metadata, ti_buffer + ti_len, &ti_size,
+			   true);
 
 	/* Create eSEL event and commit */
 	elog_buf = opal_elog_create(&e_info(OPAL_RC_ATTN), 0);
