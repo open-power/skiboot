@@ -118,15 +118,12 @@ extern void *boot_stack_top;
 
 /* Create a backtrace */
 void ___backtrace(struct bt_entry *entries, unsigned int *count,
-				unsigned long r1,
 				unsigned long *token, unsigned long *r1_caller);
 static inline void __backtrace(struct bt_entry *entries, unsigned int *count)
 {
 	unsigned long token, r1_caller;
 
-	___backtrace(entries, count,
-			(unsigned long)__builtin_frame_address(0),
-			&token, &r1_caller);
+	___backtrace(entries, count, &token, &r1_caller);
 }
 
 /* Convert a backtrace to ASCII */

@@ -28,11 +28,10 @@ static struct bt_entry bt_buf[STACK_BUF_ENTRIES];
 
 /* Dumps backtrace to buffer */
 void __nomcount ___backtrace(struct bt_entry *entries, unsigned int *count,
-				unsigned long r1,
 				unsigned long *token, unsigned long *r1_caller)
 {
 	unsigned int room = *count;
-	unsigned long *fp = (unsigned long *)r1;
+	unsigned long *fp = __builtin_frame_address(0);
 	unsigned long top_adj = top_of_ram;
 	struct stack_frame *eframe = (struct stack_frame *)fp;
 
@@ -128,8 +127,7 @@ void backtrace(void)
 
 	lock(&bt_lock);
 
-	___backtrace(bt_buf, &ents, (unsigned long)__builtin_frame_address(0),
-			&token, &r1_caller);
+	___backtrace(bt_buf, &ents, &token, &r1_caller);
 	___print_backtrace(mfspr(SPR_PIR), bt_buf, ents, token, r1_caller,
 			NULL, NULL, true);
 
