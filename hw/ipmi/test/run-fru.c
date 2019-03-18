@@ -21,6 +21,8 @@
 
 #include "../ipmi-fru.c"
 
+#include <string.h>
+
 int error = 0;
 
 const char version[] = "a-too-long-version-test-string-is-here";
@@ -88,7 +90,10 @@ int main(void)
 	buf = malloc(256);
 
 	len = fru_fill_product_info(buf, &info, 40);
-	assert(len > 0);
+	assert(len == 40);
+	assert(memcmp(buf, "\001\005\000\303IBM\307skiboot\305hello"
+		      "\30512345\30512345\304abcd\301-",len) == 0);
+
 
 	/* Make sure the checksum is right */
 	assert(!fru_checksum(buf, len));
@@ -106,6 +111,10 @@ int main(void)
 
 	memset(buf, 0, 256);
 	assert(fru_add(buf, 256) > 0);
+	assert(0 == memcmp(&buf[64], "\001\a\000\303IBM\307skiboot\300"
+			   "\337a-too-long-version-test-string+\300\300\301"
+			   "\0\0\0",54));
+
 
 	memset(buf, 0, 256);
 	assert(fru_add(buf, 1) == OPAL_PARAMETER);
