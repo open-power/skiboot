@@ -149,6 +149,9 @@ void lxvpd_extract_info(struct pci_slot *slot, struct lxvpd_pci_slot *s)
 	slot->card_desc      = s->card_desc;
 	slot->card_mech      = s->card_mech;
 	slot->wired_lanes    = s->wired_lanes;
+
+	prlog(PR_DEBUG, "[%s]: pluggable: %d power_ctrl: %d\n",
+		s->label, (int) s->pluggable, (int) s->power_ctl);
 }
 
 static struct lxvpd_pci_slot_data *lxvpd_alloc_slots(struct phb *phb,
