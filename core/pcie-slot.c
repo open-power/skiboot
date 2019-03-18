@@ -234,10 +234,11 @@ static int64_t pcie_slot_set_power_state_ext(struct pci_slot *slot, uint8_t val,
 		if (val == PCI_SLOT_POWER_OFF)
 			return OPAL_SUCCESS;
 
-		if (!pci_slot_has_flags(slot, PCI_SLOT_FLAG_FORCE_POWERON)) {
-			pci_slot_set_state(slot, PCI_SLOT_STATE_SPOWER_DONE);
-			return OPAL_ASYNC_COMPLETION;
-		}
+		/*
+		 * Some systems have the slot power disabled by default
+		 * so we always perform the power-on step. This is not
+		 * *strictly* required, but it's probably a good idea.
+		 */
 	}
 
 	pci_slot_set_state(slot, PCI_SLOT_STATE_SPOWER_START);
