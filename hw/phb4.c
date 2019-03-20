@@ -2931,30 +2931,20 @@ static int64_t phb4_hreset(struct pci_slot *slot)
 static int64_t phb4_freset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
-	uint8_t presence = 1;
 	uint64_t reg;
 	uint16_t reg16;
 
 	switch(slot->state) {
 	case PHB4_SLOT_NORMAL:
+	case PHB4_SLOT_FRESET_START:
 		PHBDBG(p, "FRESET: Starts\n");
 
 		/* Reset max link speed for training */
 		p->max_link_speed = phb4_get_max_link_speed(p, NULL);
 
-		/* Nothing to do without adapter connected */
-		if (slot->ops.get_presence_state)
-			slot->ops.get_presence_state(slot, &presence);
-		if (!presence) {
-			PHBDBG(p, "FRESET: No device\n");
-			return OPAL_SUCCESS;
-		}
-
 		PHBDBG(p, "FRESET: Prepare for link down\n");
-
 		phb4_prepare_link_change(slot, false);
-		/* fall through */
-	case PHB4_SLOT_FRESET_START:
+
 		phb4_pcicfg_read16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
 				   &reg16);
 		reg16 |= PCICAP_EXP_LCTL_LINK_DIS;
