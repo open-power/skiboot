@@ -79,8 +79,11 @@ int pnor_init(void)
 		goto fail;
 	}
 
-	if (style == raw_flash || style == raw_mem)
+	if (style == raw_flash || style == raw_mem) {
 	    rc = flash_init(pnor_ctrl, &bl, NULL);
+	    if (rc)
+		goto fail;
+	}
 
 	rc = flash_register(bl);
 	if (!rc)
