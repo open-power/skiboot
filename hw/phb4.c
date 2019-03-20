@@ -2870,6 +2870,34 @@ static unsigned int phb4_get_max_link_speed(struct phb4 *p, struct dt_node *np)
 	return max_link_speed;
 }
 
+static void phb4_assert_perst(struct pci_slot *slot, bool assert)
+{
+	struct phb4 *p = phb_to_phb4(slot->phb);
+	uint16_t linkctl;
+	uint64_t reg;
+
+	/*
+	 * Disable the link before asserting PERST. The Cursed RAID card
+	 * in ozrom1 (9005:028c) has problems coming back if PERST is asserted
+	 * while link is active. To work around the problem we assert the link
+	 * disable bit before asserting PERST. Asserting the secondary reset
+	 * bit in the btctl register also works.
+	 */
+	phb4_pcicfg_read16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL, &linkctl);
+	reg = in_be64(p->regs + PHB_PCIE_CRESET);
+
+	if (assert) {
+		linkctl |= PCICAP_EXP_LCTL_LINK_DIS;
+		reg &= ~PHB_PCIE_CRESET_PERST_N;
+	} else {
+		linkctl &= ~PCICAP_EXP_LCTL_LINK_DIS;
+		reg |= PHB_PCIE_CRESET_PERST_N;
+	}
+
+	out_be64(p->regs + PHB_PCIE_CRESET, reg);
+	phb4_pcicfg_write16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL, linkctl);
+}
+
 static int64_t phb4_hreset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
@@ -2932,7 +2960,6 @@ static int64_t phb4_freset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
 	uint64_t reg;
-	uint16_t reg16;
 
 	switch(slot->state) {
 	case PHB4_SLOT_NORMAL:
@@ -2945,19 +2972,11 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		PHBDBG(p, "FRESET: Prepare for link down\n");
 		phb4_prepare_link_change(slot, false);
 
-		phb4_pcicfg_read16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
-				   &reg16);
-		reg16 |= PCICAP_EXP_LCTL_LINK_DIS;
-		phb4_pcicfg_write16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
-				    reg16);
-
 		if (!p->skip_perst) {
 			PHBDBG(p, "FRESET: Assert\n");
-			reg = in_be64(p->regs + PHB_PCIE_CRESET);
-			reg &= ~PHB_PCIE_CRESET_PERST_N;
-			out_be64(p->regs + PHB_PCIE_CRESET, reg);
-			pci_slot_set_state(slot,
-				PHB4_SLOT_FRESET_ASSERT_DELAY);
+			phb4_assert_perst(slot, true);
+			pci_slot_set_state(slot, PHB4_SLOT_FRESET_ASSERT_DELAY);
+
 			/* 250ms assert time aligns with powernv */
 			return pci_slot_set_sm_timeout(slot, msecs_to_tb(250));
 		}
@@ -2979,21 +2998,12 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		}
 
 		PHBDBG(p, "FRESET: Deassert\n");
-		reg = in_be64(p->regs + PHB_PCIE_CRESET);
-		reg |= PHB_PCIE_CRESET_PERST_N;
-		out_be64(p->regs + PHB_PCIE_CRESET, reg);
-		pci_slot_set_state(slot,
-			PHB4_SLOT_FRESET_DEASSERT_DELAY);
+		phb4_assert_perst(slot, false);
+		pci_slot_set_state(slot, PHB4_SLOT_FRESET_DEASSERT_DELAY);
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 
-		/* Move on to link poll right away */
-		return pci_slot_set_sm_timeout(slot, 1);
 	case PHB4_SLOT_FRESET_DEASSERT_DELAY:
 		PHBDBG(p, "FRESET: Starting training\n");
-		phb4_pcicfg_read16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
-				   &reg16);
-		reg16 &= ~(PCICAP_EXP_LCTL_LINK_DIS);
-		phb4_pcicfg_write16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
-				    reg16);
 
 		phb4_training_trace(p);
 
@@ -3212,7 +3222,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
 	struct capp *capp = p->capp;
-	uint64_t pbcq_status, reg;
+	uint64_t pbcq_status;
 	uint64_t creset_time, wait_time;
 
 	/* Don't even try fixing a broken PHB */
@@ -3252,9 +3262,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		p->flags |= PHB4_CFG_USE_ASB | PHB4_AIB_FENCED;
 
 		/* Assert PREST before clearing errors */
-		reg = phb4_read_reg(p, PHB_PCIE_CRESET);
-		reg &= ~PHB_PCIE_CRESET_PERST_N;
-		phb4_write_reg(p, PHB_PCIE_CRESET, reg);
+		phb4_assert_perst(slot, true);
 
 		/* Clear errors, following the proper sequence */
 		phb4_err_clear(p);
