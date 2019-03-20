@@ -2569,6 +2569,7 @@ static void phb4_lane_eq_change(struct phb4 *p, uint32_t vdid)
 }
 
 #define min(x,y) ((x) < (y) ? x : y)
+#define max(x,y) ((x) < (y) ? x : y)
 
 static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
 {
@@ -3222,6 +3223,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 	struct phb4 *p = phb_to_phb4(slot->phb);
 	struct capp *capp = p->capp;
 	uint64_t pbcq_status, reg;
+	uint64_t creset_time, wait_time;
 
 	/* Don't even try fixing a broken PHB */
 	if (p->broken)
@@ -3231,6 +3233,8 @@ static int64_t phb4_creset(struct pci_slot *slot)
 	case PHB4_SLOT_NORMAL:
 	case PHB4_SLOT_CRESET_START:
 		PHBDBG(p, "CRESET: Starts\n");
+
+		p->creset_start_time = mftb();
 
 		phb4_prepare_link_change(slot, false);
 		/* Clear error inject register, preventing recursive errors */
@@ -3337,8 +3341,26 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		p->flags &= ~PHB4_CFG_USE_ASB;
 		phb4_init_hw(p);
 		pci_slot_set_state(slot, PHB4_SLOT_CRESET_FRESET);
-		return pci_slot_set_sm_timeout(slot, msecs_to_tb(100));
+
+		/*
+		 * wait either 100ms (for the ETU logic) or until we've had
+		 * PERST asserted for 250ms.
+		 */
+		creset_time = tb_to_msecs(mftb() - p->creset_start_time);
+		if (creset_time < 250)
+			wait_time = max(100, 250 - creset_time);
+		else
+			wait_time = 100;
+		PHBDBG(p, "CRESET: wait_time = %lld\n", wait_time);
+		return pci_slot_set_sm_timeout(slot, msecs_to_tb(wait_time));
+
 	case PHB4_SLOT_CRESET_FRESET:
+		/*
+		 * We asserted PERST at the beginning of the CRESET and we
+		 * have waited long enough, so we can skip it in the freset
+		 * procedure.
+		 */
+		p->skip_perst = true;
 		pci_slot_set_state(slot, PHB4_SLOT_NORMAL);
 		return slot->ops.freset(slot);
 	default:

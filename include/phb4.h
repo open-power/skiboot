@@ -195,6 +195,7 @@ struct phb4 {
 	uint32_t		num_pes;
 	uint32_t		max_num_pes;
 	uint32_t		num_irqs;
+	uint64_t		creset_start_time;
 
 	/* SkiBoot owned in-memory tables */
 	uint16_t		*tbl_rtt;
