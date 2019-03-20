@@ -2999,11 +2999,6 @@ static int64_t phb4_freset(struct pci_slot *slot)
 
 		PHBDBG(p, "FRESET: Deassert\n");
 		phb4_assert_perst(slot, false);
-		pci_slot_set_state(slot, PHB4_SLOT_FRESET_DEASSERT_DELAY);
-		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
-
-	case PHB4_SLOT_FRESET_DEASSERT_DELAY:
-		PHBDBG(p, "FRESET: Starting training\n");
 
 		phb4_training_trace(p);
 
