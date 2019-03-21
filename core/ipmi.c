@@ -149,7 +149,7 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 
 	if (cc != IPMI_CC_NO_ERROR) {
 		prlog(PR_DEBUG, "IPMI: Got error response. cmd=0x%x, netfn=0x%x,"
-		      " rc=0x%02x\n", msg->cmd, msg->netfn, msg->cc);
+		      " rc=0x%02x\n", msg->cmd, msg->netfn >> 2, msg->cc);
 
 		assert(msg->error);
 		msg->error(msg);
