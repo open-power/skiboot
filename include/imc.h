@@ -112,6 +112,7 @@ struct imc_chip_cb
 #define IMC_COUNTER_CHIP		0x10
 #define IMC_COUNTER_CORE		0x4
 #define IMC_COUNTER_THREAD		0x1
+#define IMC_COUNTER_TRACE		0x2
 
 /*
  * Nest IMC operations
@@ -127,6 +128,35 @@ struct imc_chip_cb
 #define CORE_IMC_PDBAR_MASK		0x0003ffffffffe000ull
 #define CORE_IMC_HTM_MODE_ENABLE	0xE800000000000000ull
 #define CORE_IMC_HTM_MODE_DISABLE	0xE000000000000000ull
+
+/*
+ * Trace IMC SCOMs for IMC trace-mode.
+ *
+ * TRACE_IMC_SCOM layout
+ *
+ *  0          4         8         12        16        20        24        28
+ * | - - - - | - - - - | - - - - | - - - - | - - - - | - - - - | - - - - | - - - - |
+ *   [ ] [      CPMC_LOAD [2:33]
+ *    |
+ *    *SAMPSEL
+ *
+ *  32        36        40        44        48        52        56        60
+ * | - - - - | - - - - | - - - - | - - - - | - - - - | - - - - | - - - - | - - - - |
+ *     ] [               ] [             ]   [   ] [     RESERVED [51:63]        ]
+ *     		|		 |	       |
+ *     		*CPMC1SEL	 *CPMC2SEL     *BUFFERSIZE
+ */
+#define TRACE_IMC_ADDR            0x20010AA9ull
+#define TRACE_IMC_SAMPLESEL(x)	((uint64_t)x << 62)
+#define TRACE_IMC_CPMC_LOAD(x)	((0xffffffff - (uint64_t)x) << 30)
+#define TRACE_IMC_CPMC1SEL(x)	((uint64_t)x << 23)
+#define TRACE_IMC_CPMC2SEL(x)	((uint64_t)x << 16)
+#define TRACE_IMC_BUFFERSIZE(x)	((uint64_t)x << 13)
+#define TRACE_IMC_SCOM(a, b, c, d, e)	(TRACE_IMC_SAMPLESEL(a)	|\
+					TRACE_IMC_CPMC_LOAD(b)	|\
+					TRACE_IMC_CPMC1SEL(c)	|\
+					TRACE_IMC_CPMC2SEL(d)	|\
+					TRACE_IMC_BUFFERSIZE(e))
 
 void imc_init(void);
 void imc_catalog_preload(void);
