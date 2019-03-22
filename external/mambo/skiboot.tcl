@@ -508,6 +508,27 @@ if { $default_config == "P9" } {
      mysim of addprop  $thread string "scale" "512"
      mysim of addprop  $thread int "events" $ct_et
      mysim of addprop  $thread int "type" 1
+
+      #Add a common trace event  node
+      set tr_et [mysim of addchild $imc_c "trace-events" ""]
+      mysim of addprop $tr_et int "#address-cells" 1
+      mysim of addprop $tr_et int "#size-cells" 1
+
+         #Add an event
+         set tr [mysim of addchild $tr_et event [format 10200000]]
+         mysim of addprop  $tr string "event-name" "cycles"
+         mysim of addprop  $tr string "desc" "Reference cycles"
+         mysim of addprop  $tr int "reg" 0x10200000
+
+     #Add a trace device node
+     set trace [mysim of addchild $imc_c "trace" ""]
+     mysim of addprop $trace string "compatible" "ibm,imc-counters"
+     mysim of addprop  $trace string "events-prefix" "trace_"
+     mysim of addprop  $trace int "reg" 0
+     mysim of addprop  $trace int "size" 262144
+     mysim of addprop  $trace int "events" $tr_et
+     mysim of addprop  $trace int "type" 2
+
 }
 
 mconfig enable_stb SKIBOOT_ENABLE_MAMBO_STB 0
