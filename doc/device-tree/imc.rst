@@ -46,6 +46,14 @@ IMC device/units bindings
                 chipids = <chip-id for the base_addr >
         };
 
+        trace@0 {
+                 compatible = "ibm,imc-counters";
+                 events-prefix = "trace_";
+                 reg = <0x0 0x8>;
+                 events = < &TRACE_IMC >;
+                 type = <0x2>;
+                 size = <0x40000>;
+         };
 
 IMC device event bindings
 -------------------------
@@ -70,3 +78,45 @@ IMC device event bindings
 		/* List of events supported */
 
         };
+
+        TRACE_IMC: trace-events {
+              #address-cells = <0x1>;
+              #size-cells = <0x1>;
+
+              event@10200000 {
+                    event-name = "cycles" ; /* For trace node, we only have cycles event now */
+                    reg = <0x10200000 0x8>;
+                    desc = "Reference cycles" ;
+              };
+         };
+
+Trace-mode SCOM
+----------------
+
+Trace scom is a 64 bit value which contains the event information for
+IMC-trace mode. Following is the trace-scom layout.
+
+**TRACE_IMC_SCOM bit representation**
+
+:0-1:   SAMPSEL
+
+:2-33:  CPMC_LOAD
+
+:34-40: CPMC1SEL
+
+:41-47: CPMC2SEL
+
+:48-50: BUFFERSIZE
+
+:51-63: RESERVED
+
+*CPMC_LOAD* contains the sampling duration. *SAMPSEL* and *CPMC*SEL*
+determines the event to count. *BUFFRSIZE* indicates the memory range.
+
+*BUFFERSIZE* can be
+::
+   b’000’ - 4K entries * 64 per entry = 256K
+   b’001’ - 8K entries * 64 per entry = 512K
+   b’010’ - 16K entries * 64 per entry = 1M
+   b’011’ - 32K entries * 64 per entry = 2M
+   b’100’ - 64K entries * 64 per entry = 4M
