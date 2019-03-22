@@ -23,6 +23,19 @@
 #include <p9_stop_api.H>
 
 /*
+ * IMC trace scom values
+ */
+#define IMC_TRACE_SAMPLESEL_VAL	1	/* select cpmc2 */
+#define IMC_TRACE_CPMCLOAD_VAL	0xfa	/*
+					 * Value to be loaded into cpmc2
+					 * at sampling start
+					 */
+#define IMC_TRACE_CPMC2SEL_VAL	2	/* Event: CPM_32MHZ_CYC */
+#define IMC_TRACE_BUFF_SIZE	0	/*
+					 * b’000’- 4K entries * 64 per
+					 * entry = 256K buffersize
+					 */
+/*
  * Nest IMC PMU names along with their bit values as represented in the
  * imc_chip_avl_vector(in struct imc_chip_cb, look at include/imc.h).
  * nest_pmus[] is an array containing all the possible nest IMC PMU node names.
@@ -212,6 +225,8 @@ static int get_imc_device_type(struct dt_node *node)
 		return IMC_COUNTER_CORE;
 	case IMC_COUNTER_THREAD:
 		return IMC_COUNTER_THREAD;
+	case IMC_COUNTER_TRACE:
+		return IMC_COUNTER_TRACE;
 	default:
 		break;
 	}
@@ -231,11 +246,23 @@ static bool is_nest_node(struct dt_node *node)
 static bool is_imc_device_type_supported(struct dt_node *node)
 {
 	u32 val = get_imc_device_type(node);
+	struct proc_chip *chip = get_chip(this_cpu()->chip_id);
+	uint64_t pvr;
 
 	if ((val == IMC_COUNTER_CHIP) || (val == IMC_COUNTER_CORE) ||
 						(val == IMC_COUNTER_THREAD))
 		return true;
 
+	if (val == IMC_COUNTER_TRACE) {
+		pvr = mfspr(SPR_PVR);
+		/*
+		 * Trace mode is supported in Nimbus DD2.2
+		 * and later versions.
+		 */
+		if ((chip->type == PROC_CHIP_P9_NIMBUS) &&
+			(PVR_VERS_MAJ(pvr) == 2) && (PVR_VERS_MIN(pvr) >= 2))
+			return true;
+	}
 	return false;
 }
 
@@ -641,7 +668,10 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 	int port_id, phys_core_id;
 	int ret;
 	uint32_t scoms;
-
+	uint64_t trace_scom_val = TRACE_IMC_SCOM(IMC_TRACE_SAMPLESEL_VAL,
+						 IMC_TRACE_CPMCLOAD_VAL, 0,
+						 IMC_TRACE_CPMC2SEL_VAL,
+						 IMC_TRACE_BUFF_SIZE);
 	switch (type) {
 	case OPAL_IMC_COUNTERS_NEST:
 		return OPAL_SUCCESS;
@@ -727,6 +757,48 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 			return OPAL_HARDWARE;
 		}
 		return OPAL_SUCCESS;
+	case OPAL_IMC_COUNTERS_TRACE:
+		if (!c)
+			return OPAL_PARAMETER;
+
+		phys_core_id = cpu_get_core_index(c);
+		port_id = phys_core_id % 4;
+
+		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS)
+			return OPAL_SUCCESS;
+
+		if (has_deep_states) {
+			if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT) {
+				struct proc_chip *chip = get_chip(c->chip_id);
+
+				scoms = XSCOM_ADDR_P9_EC(phys_core_id,
+							 TRACE_IMC_ADDR);
+				ret = stop_api_init(chip, phys_core_id, scoms,
+						    trace_scom_val,
+						    P9_STOP_SCOM_REPLACE,
+						    P9_STOP_SECTION_CORE_SCOM,
+						    "trace_imc");
+				if (ret)
+					return ret;
+			} else {
+				prerror("IMC-trace:Wakeup engine not present!");
+				return OPAL_HARDWARE;
+			}
+		}
+		if (xscom_write(c->chip_id,
+			XSCOM_ADDR_P9_EP(phys_core_id, htm_scom_index[port_id]),
+					(u64)CORE_IMC_HTM_MODE_DISABLE)) {
+				prerror("IMC-trace: error in xscom_write for htm mode\n");
+				return OPAL_HARDWARE;
+		}
+		if (xscom_write(c->chip_id,
+			XSCOM_ADDR_P9_EC(phys_core_id,
+					TRACE_IMC_ADDR), trace_scom_val)) {
+			prerror("IMC-trace: error in xscom_write for trace mode\n");
+			return OPAL_HARDWARE;
+		}
+		return OPAL_SUCCESS;
+
 	}
 
 	return OPAL_SUCCESS;
@@ -762,6 +834,7 @@ static int64_t opal_imc_counters_start(uint32_t type, uint64_t cpu_pir)
 
 		return OPAL_SUCCESS;
 	case OPAL_IMC_COUNTERS_CORE:
+	case OPAL_IMC_COUNTERS_TRACE:
 		/*
 		 * Core IMC hardware mandates setting of htm_mode in specific
 		 * scom ports (port_id are in htm_scom_index[])
@@ -823,6 +896,7 @@ static int64_t opal_imc_counters_stop(uint32_t type, uint64_t cpu_pir)
 		return OPAL_SUCCESS;
 
 	case OPAL_IMC_COUNTERS_CORE:
+	case OPAL_IMC_COUNTERS_TRACE:
 		/*
 		 * Core IMC hardware mandates setting of htm_mode in specific
 		 * scom ports (port_id are in htm_scom_index[])
