@@ -604,6 +604,30 @@ err:
 	free(imc_xz);
 }
 
+static int stop_api_init(struct proc_chip *chip, int phys_core_id,
+			uint32_t scoms,  uint64_t data,
+			const ScomOperation_t operation,
+			const ScomSection_t section,
+			const char *type)
+{
+	int ret;
+
+	prlog(PR_DEBUG, "Configuring stopapi for IMC\n");
+	ret = p9_stop_save_scom((void *)chip->homer_base, scoms,
+				data, operation, section);
+	if (ret) {
+		prerror("IMC %s stopapi ret = %d, scoms = %x (core id = %x)\n",\
+				type, ret, scoms, phys_core_id);
+		if (ret != STOP_SAVE_SCOM_ENTRY_UPDATE_FAILED)
+			wakeup_engine_state = WAKEUP_ENGINE_FAILED;
+		else
+			prerror("SCOM entries are full\n");
+		return OPAL_HARDWARE;
+	}
+
+	return ret;
+}
+
 /*
  * opal_imc_counters_init : This call initialize the IMC engine.
  *
@@ -663,34 +687,26 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 			if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT) {
 				struct proc_chip *chip = get_chip(c->chip_id);
 
-				prlog(PR_INFO, "Configuring stopapi for IMC\n");
-				scoms = XSCOM_ADDR_P9_EP(phys_core_id,pdbar_scom_index[port_id]);
-				ret = p9_stop_save_scom(( void *)chip->homer_base,scoms,
-					(u64)(CORE_IMC_PDBAR_MASK & addr),
-					P9_STOP_SCOM_REPLACE,
-					P9_STOP_SECTION_EQ_SCOM);
-				if ( ret ) {
-					prerror("IMC pdbar stopapi ret = %d, scoms = %x (core id = %x)\n", ret, scoms, phys_core_id);
-					if ( ret != STOP_SAVE_SCOM_ENTRY_UPDATE_FAILED )
-						wakeup_engine_state = WAKEUP_ENGINE_FAILED;
-					else
-						prerror("SCOM entries are full\n");
-					return OPAL_HARDWARE;
-				}
-				scoms = XSCOM_ADDR_P9_EC(phys_core_id,CORE_IMC_EVENT_MASK_ADDR);
-				ret = p9_stop_save_scom(( void *)chip->homer_base,scoms,
-				(u64)CORE_IMC_EVENT_MASK, P9_STOP_SCOM_REPLACE,
-				P9_STOP_SECTION_CORE_SCOM);
-				if ( ret ) {
-					prerror("IMC event_mask stopapi ret = %d, scoms = %x (core id = %x)\n", ret, scoms, phys_core_id);
-					if ( ret != STOP_SAVE_SCOM_ENTRY_UPDATE_FAILED )
-						wakeup_engine_state = WAKEUP_ENGINE_FAILED;
-					else
-						prerror("SCOM entries are full\n");
-					return OPAL_HARDWARE;
-				}
+				scoms = XSCOM_ADDR_P9_EP(phys_core_id,
+						pdbar_scom_index[port_id]);
+				ret = stop_api_init(chip, phys_core_id, scoms,
+						(u64)(CORE_IMC_PDBAR_MASK & addr),
+						P9_STOP_SCOM_REPLACE,
+						P9_STOP_SECTION_EQ_SCOM,
+						"pdbar");
+				if (ret)
+					return ret;
+				scoms = XSCOM_ADDR_P9_EC(phys_core_id,
+						CORE_IMC_EVENT_MASK_ADDR);
+				ret = stop_api_init(chip, phys_core_id, scoms,
+						(u64)CORE_IMC_EVENT_MASK,
+						P9_STOP_SCOM_REPLACE,
+						P9_STOP_SECTION_CORE_SCOM,
+						"event_mask");
+				if (ret)
+					return ret;
 			} else {
-				prerror("IMC: Wakeup engine in error state!");
+				prerror("IMC: Wakeup engine not present!");
 				return OPAL_HARDWARE;
 			}
 		}
