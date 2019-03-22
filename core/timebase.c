@@ -29,6 +29,16 @@ static void time_wait_poll(unsigned long duration)
 	unsigned long period = msecs_to_tb(5);
 
 	if (this_cpu()->tb_invalid) {
+		/*
+		 * Run pollers to allow some backends to process response.
+		 *
+		 * In TOD failure case where TOD is unrecoverable, running
+		 * pollers allows ipmi backend to deal with ipmi response
+		 * from bmc and helps ipmi_queue_msg_sync() to get un-stuck.
+		 * Thus it avoids linux kernel to hang during panic due to
+		 * TOD failure.
+		 */
+		opal_run_pollers();
 		cpu_relax();
 		return;
 	}
