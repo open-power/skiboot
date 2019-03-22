@@ -4,7 +4,7 @@ OPAL_IMC_COUNTERS_INIT
 ==============================
 OPAL call interface to initialize In-memory collection
 infrastructure. Call does multiple scom writes on each
-incavation for Core IMC initialization. And for the
+invocation for Core/Trace IMC initialization. And for the
 Nest IMC, at this point, call is a no-op and returns
 OPAL_SUCCESS. Incase of kexec, OS driver should first
 stop the engine via OPAL_IMC_COUNTER_STOP(and then
@@ -24,7 +24,8 @@ Parameters
 ----------
 ``uint32_t type``
   This parameter specifies the imc counter domain.
-  The value should be 'OPAL_IMC_COUNTERS_CORE'
+  The value can be 'OPAL_IMC_COUNTERS_NEST', 'OPAL_IMC_COUNTERS_CORE'
+  or 'OPAL_IMC_COUNTERS_TRACE'.
 
 ``uint64_t addr``
   This parameter must have a non-zero value.
@@ -49,14 +50,14 @@ OPAL_SUCCESS
 OPAL_IMC_COUNTERS_START
 ============================
 OPAL call interface for starting the In-Memory Collection
-counters for a specified domain (NEST/CORE).
+counters for a specified domain (NEST/CORE/TRACE).
 
 Parameters
 ----------
 ``uint32_t type``
  This parameter specifies the imc counter domain.
- The value can be either 'OPAL_IMC_COUNTERS_NEST'
- or 'OPAL_IMC_COUNTERS_CORE'
+ The value can be 'OPAL_IMC_COUNTERS_NEST',
+ 'OPAL_IMC_COUNTERS_CORE' or 'OPAL_IMC_COUNTERS_TRACE'.
 
 ``uint64_t cpu_pir``
   This parameter specifices target cpu pir
@@ -77,7 +78,7 @@ OPAL_SUCCESS
 OPAL_IMC_COUNTERS_STOP
 ======================
 OPAL call interface for stoping In-Memory
-Collection counters for a specified domain (NEST/CORE).
+Collection counters for a specified domain (NEST/CORE/TRACE).
 STOP should always be called after a related START.
 While STOP *may* run successfully without an associated
 START call, this is not gaurenteed.
@@ -86,8 +87,8 @@ Parameters
 ----------
 ``uint32_t type``
  This parameter specifies the imc counter domain.
- The value can be either 'OPAL_IMC_COUNTERS_NEST'
- or 'OPAL_IMC_COUNTERS_CORE'
+ The value can be 'OPAL_IMC_COUNTERS_NEST',
+ 'OPAL_IMC_COUNTERS_CORE' or 'OPAL_IMC_COUNTERS_TRACE'
 
 ``uint64_t cpu_pir``
   This parameter specifices target cpu pir
