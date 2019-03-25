@@ -28,6 +28,7 @@
 #include <libstb/secureboot.h>
 #include <libstb/trustedboot.h>
 #include <elf.h>
+#include <timebase.h>
 
 struct flash {
 	struct list_node	list;
@@ -760,10 +761,18 @@ int flash_resource_loaded(enum resource_id id, uint32_t subid)
 	return rc;
 }
 
+/*
+ * Retry for 10 minutes in 5 second intervals: allow 5 minutes for a BMC reboot
+ * (need the BMC if we're using HIOMAP flash access), then 2x for some margin.
+ */
+#define FLASH_LOAD_WAIT_MS	5000
+#define FLASH_LOAD_RETRIES	(2 * 5 * (60 / (FLASH_LOAD_WAIT_MS / 1000)))
+
 static void flash_load_resources(void *data __unused)
 {
 	struct flash_load_resource_item *r;
-	int result;
+	int retries = FLASH_LOAD_RETRIES;
+	int result = OPAL_RESOURCE;
 
 	lock(&flash_load_resource_lock);
 	do {
@@ -778,11 +787,31 @@ static void flash_load_resources(void *data __unused)
 		r->result = OPAL_BUSY;
 		unlock(&flash_load_resource_lock);
 
-		result = flash_load_resource(r->id, r->subid, r->buf, r->len);
+		while (retries) {
+			result = flash_load_resource(r->id, r->subid, r->buf,
+						     r->len);
+			if (result == OPAL_SUCCESS) {
+				retries = FLASH_LOAD_RETRIES;
+				break;
+			}
+
+			if (result != FLASH_ERR_AGAIN &&
+					result != FLASH_ERR_DEVICE_GONE)
+				break;
+
+			time_wait_ms(FLASH_LOAD_WAIT_MS);
+
+			retries--;
+
+			prlog(PR_WARNING,
+			      "FLASH: Retrying load of %d:%d, %d attempts remain\n",
+			      r->id, r->subid, retries);
+		}
 
 		lock(&flash_load_resource_lock);
 		r = list_pop(&flash_load_resource_queue,
 			     struct flash_load_resource_item, link);
+		/* Will reuse the result from when we hit retries == 0 */
 		r->result = result;
 		list_add_tail(&flash_loaded_resources, &r->link);
 	} while(true);
