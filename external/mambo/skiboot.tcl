@@ -552,6 +552,10 @@ mysim memory fread $mconf(boot_load) $boot_size $mconf(boot_image)
 set payload_size [file size $mconf(payload)]
 mysim memory fread $mconf(payload_addr) $payload_size $mconf(payload)
 
+if { $payload_size > [expr $mconf(boot_load) - $mconf(payload_addr)] } {
+	error "vmlinux is too large, consider adjusting PAYLOAD_ADDR"
+}
+
 # Flatten it
 epapr::of2dtb mysim $mconf(epapr_dt_addr)
 
