@@ -221,6 +221,10 @@ lappend compat "ibm,power8-xscom"
 set compat [of::encode_compat $compat]
 mysim of addprop $xscom_node byte_array "compatible" $compat
 
+set chosen_node [mysim of find_device /chosen]
+set base_addr [list $mconf(payload_addr)]
+mysim of addprop $chosen_node array64 "kernel-base-address" base_addr
+
 # Load any initramfs
 set cpio_start 0x80000000
 set cpio_end $cpio_start
@@ -236,7 +240,6 @@ if { [info exists env(SKIBOOT_INITRD)] } {
 	    set cpio_end [expr $cpio_end + $cpio_size]
     }
 
-    set chosen_node [mysim of find_device /chosen]
     mysim of addprop $chosen_node int "linux,initrd-start" $cpio_start
     mysim of addprop $chosen_node int "linux,initrd-end"   $cpio_end
 }

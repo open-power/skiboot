@@ -387,6 +387,15 @@ static bool load_kernel(void)
 			cpu_set_sreset_enable(false);
 			memcpy(NULL, old_vectors, EXCEPTION_VECTORS_END);
 			sync_icache();
+		} else {
+			/* Hack for STB in Mambo, assume at least 4kb in mem */
+			if (!kernel_size)
+				kernel_size = SECURE_BOOT_HEADERS_SIZE;
+			if (stb_is_container((void*)kernel_entry, kernel_size)) {
+				stb_container = (void*)kernel_entry;
+				kh = (struct elf_hdr *) (kernel_entry + SECURE_BOOT_HEADERS_SIZE);
+			} else
+				kh = (struct elf_hdr *) (kernel_entry);
 		}
 	} else {
 		if (!kernel_size) {
