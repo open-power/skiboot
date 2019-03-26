@@ -140,20 +140,6 @@ opal_call(OPAL_I2C_REQUEST, opal_i2c_request, 3);
 #define MAX_NACK_RETRIES		 2
 #define REQ_COMPLETE_POLLING		 5  /* Check if req is complete
 					       in 5ms interval */
-
-struct i2c_sync_userdata {
-	int rc;
-	bool done;
-};
-
-static void i2c_sync_request_complete(int rc, struct i2c_request *req)
-{
-	struct i2c_sync_userdata *ud = req->user_data;
-	ud->rc = rc;
-	lwsync();
-	ud->done = true;
-}
-
 /**
  * i2c_request_send - send request to i2c bus synchronously
  * @bus_id: i2c bus id
@@ -177,7 +163,6 @@ int i2c_request_send(int bus_id, int dev_addr, int read_write,
 	struct i2c_request *req;
 	struct i2c_bus *bus;
 	uint64_t time_to_wait = 0;
-	struct i2c_sync_userdata ud;
 	uint64_t timer_period = msecs_to_tb(5), timer_count;
 
 	bus = i2c_find_bus_by_id(bus_id);
@@ -210,10 +195,7 @@ int i2c_request_send(int bus_id, int dev_addr, int read_write,
 	req->offset_bytes = offset_bytes;
 	req->rw_buf     = (void*) buf;
 	req->rw_len     = buflen;
-	req->completion = i2c_sync_request_complete;
 	req->timeout    = timeout;
-	ud.done = false;
-	req->user_data = &ud;
 
 	for (retries = 0; retries <= MAX_NACK_RETRIES; retries++) {
 		waited = 0;
@@ -240,15 +222,15 @@ int i2c_request_send(int bus_id, int dev_addr, int read_write,
 				check_timers(false);
 				timer_count = 0;
 			}
-		} while (!ud.done);
+		} while (req->req_state != i2c_req_done);
 
 		lwsync();
-		rc = ud.rc;
+		rc = req->result;
 
-		/* error or success */
+		/* retry on NACK, otherwise exit */
 		if (rc != OPAL_I2C_NACK_RCVD)
 			break;
-		ud.done = false;
+		req->req_state = i2c_req_new;
 	}
 
 	prlog(PR_DEBUG, "I2C: %s req op=%x offset=%x buf=%016llx buflen=%d "
