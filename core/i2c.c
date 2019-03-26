@@ -140,62 +140,11 @@ opal_call(OPAL_I2C_REQUEST, opal_i2c_request, 3);
 #define MAX_NACK_RETRIES		 2
 #define REQ_COMPLETE_POLLING		 5  /* Check if req is complete
 					       in 5ms interval */
-/**
- * i2c_request_send - send request to i2c bus synchronously
- * @bus_id: i2c bus id
- * @dev_addr: address of the device
- * @read_write: SMBUS_READ or SMBUS_WRITE
- * @offset: any of the I2C interface offset defined
- * @offset_bytes: offset size in bytes
- * @buf: data to be read or written
- * @buflen: buf length
- * @timeout: request timeout in milliseconds
- *
- * Send an I2C request to a device synchronously
- *
- * Returns: Zero on success otherwise a negative error code
- */
-int i2c_request_send(int bus_id, int dev_addr, int read_write,
-		     uint32_t offset, uint32_t offset_bytes, void* buf,
-		     size_t buflen, int timeout)
+int64_t i2c_request_sync(struct i2c_request *req)
 {
-	int rc, waited, retries;
-	struct i2c_request *req;
-	struct i2c_bus *bus;
-	uint64_t time_to_wait = 0;
 	uint64_t timer_period = msecs_to_tb(5), timer_count;
-
-	bus = i2c_find_bus_by_id(bus_id);
-	if (!bus) {
-		/**
-		 * @fwts-label I2CInvalidBusID
-		 * @fwts-advice i2c_request_send was passed an invalid bus
-		 * ID. This indicates a bug.
-		 */
-		prlog(PR_ERR, "I2C: Invalid bus_id=%x\n", bus_id);
-		return OPAL_PARAMETER;
-	}
-
-	req = zalloc(sizeof(*req));
-	if (!req) {
-		/**
-		 * @fwts-label I2CAllocationFailed
-		 * @fwts-advice OPAL failed to allocate memory for an
-		 * i2c_request. This points to an OPAL bug as OPAL run out of
-		 * memory and this should never happen.
-		 */
-		prlog(PR_ERR, "I2C: allocating i2c_request failed\n");
-		return OPAL_INTERNAL_ERROR;
-	}
-
-	req->bus	= bus;
-	req->dev_addr   = dev_addr;
-	req->op         = read_write;
-	req->offset     = offset;
-	req->offset_bytes = offset_bytes;
-	req->rw_buf     = (void*) buf;
-	req->rw_len     = buflen;
-	req->timeout    = timeout;
+	uint64_t time_to_wait = 0;
+	int64_t rc, waited, retries;
 
 	for (retries = 0; retries <= MAX_NACK_RETRIES; retries++) {
 		waited = 0;
@@ -234,9 +183,69 @@ int i2c_request_send(int bus_id, int dev_addr, int read_write,
 	}
 
 	prlog(PR_DEBUG, "I2C: %s req op=%x offset=%x buf=%016llx buflen=%d "
-	      "delay=%lu/%d rc=%d\n",
+	      "delay=%lu/%lld rc=%lld\n",
 	      (rc) ? "!!!!" : "----", req->op, req->offset,
-	      *(uint64_t*) buf, req->rw_len, tb_to_msecs(waited), timeout, rc);
+	      *(uint64_t*) req->rw_buf, req->rw_len, tb_to_msecs(waited), req->timeout, rc);
+
+	return rc;
+}
+
+/**
+ * i2c_request_send - send request to i2c bus synchronously
+ * @bus_id: i2c bus id
+ * @dev_addr: address of the device
+ * @read_write: SMBUS_READ or SMBUS_WRITE
+ * @offset: any of the I2C interface offset defined
+ * @offset_bytes: offset size in bytes
+ * @buf: data to be read or written
+ * @buflen: buf length
+ * @timeout: request timeout in milliseconds
+ *
+ * Send an I2C request to a device synchronously
+ *
+ * Returns: Zero on success otherwise a negative error code
+ */
+int64_t i2c_request_send(int bus_id, int dev_addr, int read_write,
+		     uint32_t offset, uint32_t offset_bytes, void* buf,
+		     size_t buflen, int timeout)
+{
+	struct i2c_request *req;
+	struct i2c_bus *bus;
+	int64_t rc;
+
+	bus = i2c_find_bus_by_id(bus_id);
+	if (!bus) {
+		/**
+		 * @fwts-label I2CInvalidBusID
+		 * @fwts-advice i2c_request_send was passed an invalid bus
+		 * ID. This indicates a bug.
+		 */
+		prlog(PR_ERR, "I2C: Invalid bus_id=%x\n", bus_id);
+		return OPAL_PARAMETER;
+	}
+
+	req = zalloc(sizeof(*req));
+	if (!req) {
+		/**
+		 * @fwts-label I2CAllocationFailed
+		 * @fwts-advice OPAL failed to allocate memory for an
+		 * i2c_request. This points to an OPAL bug as OPAL run out of
+		 * memory and this should never happen.
+		 */
+		prlog(PR_ERR, "I2C: allocating i2c_request failed\n");
+		return OPAL_INTERNAL_ERROR;
+	}
+
+	req->bus	= bus;
+	req->dev_addr   = dev_addr;
+	req->op         = read_write;
+	req->offset     = offset;
+	req->offset_bytes = offset_bytes;
+	req->rw_buf     = (void*) buf;
+	req->rw_len     = buflen;
+	req->timeout    = timeout;
+
+	rc = i2c_request_sync(req);
 
 	free(req);
 	if (rc)
