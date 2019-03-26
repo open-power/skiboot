@@ -79,7 +79,7 @@ static const struct slot_table_entry vesnin_phb0_0_slot[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "AUX connector0",
+		.name = "AUX connector00",
 	},
 	{ .etype = st_end }
 };
@@ -89,17 +89,27 @@ static const struct slot_table_entry vesnin_plx_slots[] = {
 	{
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0x01,0),
-		.name = "Backplane BMC",
+		.name = "Backplane SSD0",
 	},
 	{
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0x02,0),
-		.name = "Backplane USB",
+		.name = "Backplane SSD1",
 	},
 	{
 		.etype = st_builtin_dev,
 		.location = ST_LOC_DEVFN(0x03,0),
 		.name = "Backplane LAN",
+	},
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0x04,0),
+		.name = "Backplane BMC",
+	},
+	{
+		.etype = st_builtin_dev,
+		.location = ST_LOC_DEVFN(0x05,0),
+		.name = "Backplane USB",
 	},
 	{ .etype = st_end }
 };
@@ -145,16 +155,7 @@ static const struct slot_table_entry vesnin_phb8_1_slot[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "AUX connector1",
-	},
-	{ .etype = st_end }
-};
-
-static const struct slot_table_entry vesnin_phb8_2_slot[] = {
-	{
-		.etype = st_pluggable_slot,
-		.location = ST_LOC_DEVFN(0,0),
-		.name = "AUX connector2",
+		.name = "AUX connector10",
 	},
 	{ .etype = st_end }
 };
@@ -163,7 +164,7 @@ static const struct slot_table_entry vesnin_phb9_0_slot[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "AUX connector3",
+		.name = "AUX connector30",
 	},
 	{ .etype = st_end }
 };
@@ -199,16 +200,7 @@ static const struct slot_table_entry vesnin_phbA_1_slot[] = {
 	{
 		.etype = st_pluggable_slot,
 		.location = ST_LOC_DEVFN(0,0),
-		.name = "AUX connector4",
-	},
-	{ .etype = st_end }
-};
-
-static const struct slot_table_entry vesnin_phbA_2_slot[] = {
-	{
-		.etype = st_pluggable_slot,
-		.location = ST_LOC_DEVFN(0,0),
-		.name = "AUX connector5",
+		.name = "AUX connector40",
 	},
 	{ .etype = st_end }
 };
@@ -240,11 +232,6 @@ static const struct slot_table_entry vesnin_phb_table[] = {
 		.location = ST_LOC_PHB(CHIP_ID_CPU1,1),
 		.children = vesnin_phb8_1_slot,
 	},
-	{
-		.etype = st_phb,
-		.location = ST_LOC_PHB(CHIP_ID_CPU1,2),
-		.children = vesnin_phb8_2_slot,
-	},
 
 	{
 		.etype = st_phb,
@@ -271,11 +258,6 @@ static const struct slot_table_entry vesnin_phb_table[] = {
 		.etype = st_phb,
 		.location = ST_LOC_PHB(CHIP_ID_CPU3,1),
 		.children = vesnin_phbA_1_slot,
-	},
-	{
-		.etype = st_phb,
-		.location = ST_LOC_PHB(CHIP_ID_CPU3,2),
-		.children = vesnin_phbA_2_slot,
 	},
 	{ .etype = st_end }
 };
