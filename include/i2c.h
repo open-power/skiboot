@@ -57,6 +57,12 @@ struct i2c_request {
 	uint32_t		offset;		/* Internal device offset */
 	uint32_t		rw_len;		/* Length of the data request */
 	void			*rw_buf;	/* Data request buffer */
+	enum i2c_request_state {
+		i2c_req_new,	/* un-initialised */
+		i2c_req_queued, /* waiting in the queue */
+		i2c_req_done,   /* request has been completed */
+	} req_state;
+
 	void			(*completion)(	/* Completion callback */
 					      int rc, struct i2c_request *req);
 	void			*user_data;	/* Client data */
@@ -68,9 +74,13 @@ struct i2c_request {
 extern void i2c_add_bus(struct i2c_bus *bus);
 extern struct i2c_bus *i2c_find_bus_by_id(uint32_t opal_id);
 
-static inline int i2c_queue_req(struct i2c_request *req)
+static inline int64_t i2c_queue_req(struct i2c_request *req)
 {
-	return req->bus->queue_req(req);
+	int64_t ret = req->bus->queue_req(req);
+
+	if (!ret)
+		req->req_state = i2c_req_queued;
+	return ret;
 }
 
 static inline uint64_t i2c_run_req(struct i2c_request *req)
