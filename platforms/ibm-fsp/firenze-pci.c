@@ -146,6 +146,11 @@ static struct firenze_pci_slot_info firenze_pci_slots[] = {
 	{ 0x07,  "C3", 1, 1, 0x10, 1, 0, 0x3A, 1, 0xAA, 12 },
 	{ 0x06,  "C2", 1, 1, 0x10, 1, 0, 0x3A, 0, 0xAA, 12 }
 };
+
+/*
+ * I2C power controller register fix up table. Not sure what they do, but
+ * they seem to relate to the fast-trip setpoint.
+ */
 static struct firenze_pci_slot_fixup_info firenze_pci_slot_fixup_tbl[] = {
 	{ "C3",  0x5e, 0xfb },
 	{ "C3",  0x5b, 0xff },
@@ -737,62 +742,52 @@ static struct i2c_bus *firenze_pci_find_i2c_bus(uint8_t chip,
 }
 
 static int64_t firenze_pci_slot_fixup_one_reg(struct pci_slot *slot,
-			struct firenze_pci_slot_fixup_info *fixup,
-			bool write)
+			struct firenze_pci_slot_fixup_info *fixup)
 {
 	struct firenze_pci_slot *plat_slot = slot->data;
-	struct i2c_request *req = plat_slot->req;
-	int32_t retries = FIRENZE_PCI_SLOT_RETRIES;
-	int64_t rc = OPAL_SUCCESS;
+	struct i2c_request req;
+	uint8_t buf;
+	int64_t rc;
 
-	req->offset = fixup->reg;
-	if (write) {
-		req->op = SMBUS_WRITE;
-		*(uint8_t *)(req->rw_buf) = fixup->val;
-	} else {
-		req->op = SMBUS_READ;
-		*(uint8_t *)(req->rw_buf) = 0;
-	}
-	pci_slot_set_state(slot, FIRENZE_PCI_SLOT_FRESET_WAIT_RSP);
-	req->timeout = FIRENZE_PCI_I2C_TIMEOUT;
-	i2c_queue_req(plat_slot->req);
+	/*
+	 * Fill out our own request structure since we don't want to invoke the
+	 * normal completion handler.
+	 */
+	memset(&req, 0, sizeof(req));
+	req.dev_addr     = plat_slot->req->dev_addr;
+	req.bus	         = plat_slot->req->bus;
+	req.offset       = fixup->reg;
+	req.offset_bytes = 1;
+	req.rw_buf       = &buf;
+	req.rw_len       = 1;
+	req.timeout      = FIRENZE_PCI_I2C_TIMEOUT;
 
-	while (retries-- > 0) {
-		check_timers(false);
-		if (slot->state == FIRENZE_PCI_SLOT_FRESET_DELAY)
-			break;
+	req.op = SMBUS_WRITE;
+	buf = fixup->val;
+	rc = i2c_request_sync(&req);
+	if (rc < 0)
+		return rc;
 
-		time_wait_ms(FIRENZE_PCI_SLOT_DELAY);
-	}
-
-	if (slot->state != FIRENZE_PCI_SLOT_FRESET_DELAY) {
-		rc = OPAL_BUSY;
-		prlog(PR_ERR, "Timeout %s PCI slot [%s] - (%02x, %02x)\n",
-		      write ? "writing" : "reading", fixup->label,
-		      fixup->reg, fixup->val);
-		goto out;
-	}
-
-	if (!write && (*(uint8_t *)(req->rw_buf)) != fixup->val) {
-		rc = OPAL_INTERNAL_ERROR;
-		prlog(PR_ERR, "Error fixing PCI slot [%s] - (%02x, %02x, %02x)\n",
-		      fixup->label, fixup->reg, fixup->val,
-		      (*(uint8_t *)(req->rw_buf)));
+	/*
+	 * Check the register fixup has been applied. It's not the end of the
+	 * world we don't, but eh...
+	 */
+	req.op = SMBUS_READ;
+	rc = i2c_request_sync(&req);
+	if (rc == OPAL_SUCCESS && buf != fixup->val) {
+		prlog(PR_ERR, "Error verifying fixup [%s] - (%02x, %02x, %02x)\n",
+		      fixup->label, fixup->reg, fixup->val, buf);
 	}
 
-out:
-	pci_slot_set_state(slot, FIRENZE_PCI_SLOT_NORMAL);
 	return rc;
 }
 
 static void firenze_pci_slot_fixup(struct pci_slot *slot,
 				   struct firenze_pci_slot_info *info)
 {
-	struct firenze_pci_slot_fixup_info *fixup;
+	int64_t rc, i, applied = 0;
 	const uint32_t *p;
 	uint64_t id;
-	uint32_t i;
-	int64_t rc;
 
 	p = dt_prop_get_def(dt_root, "ibm,vpd-lx-info", NULL);
 	id = p ? (((uint64_t)p[1] << 32) | p[2]) : 0ul;
@@ -800,19 +795,26 @@ static void firenze_pci_slot_fixup(struct pci_slot *slot,
 	    id != LX_VPD_1S4U_BACKPLANE)
 		return;
 
-	fixup = firenze_pci_slot_fixup_tbl;
-	for (i = 0; i < ARRAY_SIZE(firenze_pci_slot_fixup_tbl); i++, fixup++) {
+	for (i = 0; i < ARRAY_SIZE(firenze_pci_slot_fixup_tbl); i++) {
+		struct firenze_pci_slot_fixup_info *fixup =
+				&firenze_pci_slot_fixup_tbl[i];
+
 		if (strcmp(info->label, fixup->label))
 			continue;
 
-		rc = firenze_pci_slot_fixup_one_reg(slot, fixup, true);
-		if (rc)
+		rc = firenze_pci_slot_fixup_one_reg(slot, fixup);
+		if (rc) {
+			prlog(PR_ERR, "I2C error (%lld) applying fixup [%s] - (%02x, %02x)\n",
+			      rc, fixup->label, fixup->reg, fixup->val);
 			return;
+		}
 
-		rc = firenze_pci_slot_fixup_one_reg(slot, fixup, false);
-		if (rc)
-			return;
+		applied++;
 	}
+
+	if (applied)
+		prlog(PR_INFO, "Applied %lld fixups for [%s]\n",
+		      applied, info->label);
 }
 
 static void firenze_pci_setup_power_mgt(struct pci_slot *slot,
