@@ -9,7 +9,6 @@ MAKE_J=$(grep -c processor /proc/cpuinfo)
 export CROSS="ccache powerpc64le-linux-gnu-"
 
 make -j${MAKE_J} all
-./opal-ci/fetch-debian-jessie-installer.sh
 make -j${MAKE_J} check
 (make clean; cd external/gard && CROSS= make -j${MAKE_J})
 # because some ppc64le versions don't have arm cross compiler

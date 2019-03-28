@@ -9,7 +9,6 @@ MAKE_J=$(nproc)
 export CROSS="ccache powerpc64le-linux-gnu-"
 
 make -j${MAKE_J} all
-./opal-ci/fetch-debian-jessie-installer.sh
 make -j${MAKE_J} check
 (make clean; cd external/gard && CROSS= make -j${MAKE_J})
 ( cd external/pflash;

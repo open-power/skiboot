@@ -67,8 +67,6 @@ core/test/run-bitmap
 core/test/run-buddy
 core/test/run-flash-subpartition
 core/test/*-gcov
-debian-jessie-vmlinux
-debian-jessie-initrd.gz
 external/dump_trace
 external/mambo/skiboot-boot_test.dump
 external/mambo/skiboot-hello_world.dump
