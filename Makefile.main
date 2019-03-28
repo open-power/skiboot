@@ -30,7 +30,6 @@ CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 	  -Wmissing-prototypes -Wmissing-declarations \
 	  -Wwrite-strings -Wcast-align \
 	  -Winit-self \
-	  -Wframe-larger-than=1024 \
 	  $(call try-cflag,$(CC),--Wno-stringop-truncation) \
 	  -Werror
 
@@ -44,6 +43,12 @@ HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-Wjump-misses-init) \
 	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=const) \
 	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=noreturn)
 HOSTCFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
+
+# We want small stack usage for skiboot
+# but host compilation of unit tests tend to inline heavily,
+# which creates larger stack frames and triggering useless warnings
+HOSTCFLAGS += -Wframe-larger-than=4096
+CWARNS += -Wframe-larger-than=1024
 
 HOSTGCOVCFLAGS = -fprofile-arcs -ftest-coverage -lgcov -O0 -g -pg
 
