@@ -34,7 +34,7 @@ T=$(mktemp  --tmpdir skiboot_qemu_boot_test.XXXXXXXXXX)
 
 ( cat <<EOF | expect
 set timeout 600
-spawn $QEMU_BIN $QEMU_ARGS -kernel $SKIBOOT_ZIMAGE
+spawn $QEMU_BIN $QEMU_ARGS -bios skiboot.lid -kernel $SKIBOOT_ZIMAGE
 expect {
 timeout { send_user "\nTimeout waiting for petitboot\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }

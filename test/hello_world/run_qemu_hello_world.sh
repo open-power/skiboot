@@ -31,7 +31,7 @@ trap "rm -f -- '$t'" EXIT
 (
 cat <<EOF | expect
 set timeout 30
-spawn $QEMU_BIN $QEMU_ARGS -kernel $SKIBOOT_ZIMAGE -nographic
+spawn $QEMU_BIN -bios skiboot.lid $QEMU_ARGS -kernel $SKIBOOT_ZIMAGE -nographic
 expect {
 timeout { send_user "\nTimeout waiting for hello world\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
