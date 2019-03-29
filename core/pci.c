@@ -1524,11 +1524,11 @@ static void pci_print_summary_line(struct phb *phb, struct pci_device *pd,
 			  rev_class & 0xff, rev_class >> 8, cname, slotstr);
 }
 
-static void pci_add_one_device_node(struct phb *phb,
-				    struct pci_device *pd,
-				    struct dt_node *parent_node,
-				    struct pci_lsi_state *lstate,
-				    uint8_t swizzle)
+static void __noinline pci_add_one_device_node(struct phb *phb,
+					       struct pci_device *pd,
+					       struct dt_node *parent_node,
+					       struct pci_lsi_state *lstate,
+					       uint8_t swizzle)
 {
 	struct dt_node *np;
 	const char *cname;
@@ -1653,11 +1653,11 @@ static void pci_add_one_device_node(struct phb *phb,
 	dt_add_property(np, "ranges", ranges_direct, sizeof(ranges_direct));
 }
 
-void pci_add_device_nodes(struct phb *phb,
-			  struct list_head *list,
-			  struct dt_node *parent_node,
-			  struct pci_lsi_state *lstate,
-			  uint8_t swizzle)
+void __noinline pci_add_device_nodes(struct phb *phb,
+				     struct list_head *list,
+				     struct dt_node *parent_node,
+				     struct pci_lsi_state *lstate,
+				     uint8_t swizzle)
 {
 	struct pci_device *pd;
 
