@@ -96,7 +96,7 @@ to run skiboot:
  qemu-system-ppc64 -M powernv -m 3G -nographic -L /path/to/skiboot/
 
 To run a boot-to-bootloader test you need a Linux kernel image 'zImage.epapr'.
-Build one using the `mambo_defconfig` config for op-build. See
+Build one using the `opal_defconfig` config for op-build. See
 https://github.com/open-power/op-build/ on how to build, or download one from
 https://openpower.xyz/job/openpower/job/openpower-op-build/.
 

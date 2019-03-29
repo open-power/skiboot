@@ -31,7 +31,7 @@ using powernv_defconfig.
 If you use op-build to build a full set of OpenPower images, you’ll
 likely be able to extract skiboot, zImage.epapr (or vmlinux and
 rootfs.cpio.xz) from output/images. We suggest using the
-openpower_mambo_defconfig.
+opal_defconfig.
 
 ### Setup environment variables
 Setup environment variables to point to your images
