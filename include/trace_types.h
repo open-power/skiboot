@@ -36,10 +36,6 @@ struct tracebuf {
 	__be64 end;
 	/* This is where the writer wrote to previously. */
 	__be64 last;
-	/* This is where the reader is up to. */
-	__be64 rpos;
-	/* If the last one we read was a repeat, this shows how many. */
-	__be32 last_repeat;
 	/* Maximum possible size of a record. */
 	__be32 max_size;
 

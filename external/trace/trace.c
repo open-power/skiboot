@@ -17,14 +17,21 @@
 #include <external/trace/trace.h>
 #include "../ccan/endian/endian.h"
 #include "../ccan/short_types/short_types.h"
+#include "trace.h"
 #include <trace_types.h>
 #include <errno.h>
 
-bool trace_empty(const struct tracebuf *tb)
+#if defined(__powerpc__) || defined(__powerpc64__)
+#define rmb() lwsync()
+#else
+#define rmb()
+#endif
+
+bool trace_empty(const struct trace_reader *tr)
 {
 	const struct trace_repeat *rep;
 
-	if (tb->rpos == tb->end)
+	if (tr->rpos == be64_to_cpu(tr->tb->end))
 		return true;
 
 	/*
@@ -32,29 +39,29 @@ bool trace_empty(const struct tracebuf *tb)
 	 * we've already seen every repeat for (yet which may be
 	 * incremented in future), we're also empty.
 	 */
-	rep = (void *)tb->buf + be64_to_cpu(tb->rpos) % be64_to_cpu(tb->buf_size);
-	if (be64_to_cpu(tb->end) != be64_to_cpu(tb->rpos) + sizeof(*rep))
+	rep = (void *)tr->tb->buf + tr->rpos % be64_to_cpu(tr->tb->buf_size);
+	if (be64_to_cpu(tr->tb->end) != tr->rpos + sizeof(*rep))
 		return false;
 
 	if (rep->type != TRACE_REPEAT)
 		return false;
 
-	if (be16_to_cpu(rep->num) != be32_to_cpu(tb->last_repeat))
+	if (be16_to_cpu(rep->num) != tr->last_repeat)
 		return false;
 
 	return true;
 }
 
 /* You can't read in parallel, so some locking required in caller. */
-bool trace_get(union trace *t, struct tracebuf *tb)
+bool trace_get(union trace *t, struct trace_reader *tr)
 {
 	u64 start, rpos;
 	size_t len;
 
-	len = sizeof(*t) < be32_to_cpu(tb->max_size) ? sizeof(*t) :
-		be32_to_cpu(tb->max_size);
+	len = sizeof(*t) < be32_to_cpu(tr->tb->max_size) ? sizeof(*t) :
+		be32_to_cpu(tr->tb->max_size);
 
-	if (trace_empty(tb))
+	if (trace_empty(tr))
 		return false;
 
 again:
@@ -62,12 +69,12 @@ again:
 	 * The actual buffer is slightly larger than tbsize, so this
 	 * memcpy is always valid.
 	 */
-	memcpy(t, tb->buf + be64_to_cpu(tb->rpos) % be64_to_cpu(tb->buf_size), len);
+	memcpy(t, tr->tb->buf + tr->rpos % be64_to_cpu(tr->tb->buf_size), len);
 
-	rmb(); /* read barrier, so we read tb->start after copying record. */
+	rmb(); /* read barrier, so we read tr->tb->start after copying record. */
 
-	start = be64_to_cpu(tb->start);
-	rpos = be64_to_cpu(tb->rpos);
+	start = be64_to_cpu(tr->tb->start);
+	rpos = tr->rpos;
 
 	/* Now, was that overwritten? */
 	if (rpos < start) {
@@ -76,7 +83,7 @@ again:
 		t->overflow.type = TRACE_OVERFLOW;
 		t->overflow.len_div_8 = sizeof(t->overflow) / 8;
 		t->overflow.bytes_missed = cpu_to_be64(start - rpos);
-		tb->rpos = cpu_to_be64(start);
+		tr->rpos = start;
 		return true;
 	}
 
@@ -85,10 +92,10 @@ again:
 		u32 num = be16_to_cpu(t->repeat.num);
 
 		/* In case we've read some already... */
-		t->repeat.num = cpu_to_be16(num - be32_to_cpu(tb->last_repeat));
+		t->repeat.num = cpu_to_be16(num - tr->last_repeat);
 
 		/* Record how many repeats we saw this time. */
-		tb->last_repeat = cpu_to_be32(num);
+		tr->last_repeat = num;
 
 		/* Don't report an empty repeat buffer. */
 		if (t->repeat.num == 0) {
@@ -96,16 +103,16 @@ again:
 			 * This can't be the last buffer, otherwise
 			 * trace_empty would have returned true.
 			 */
-			assert(be64_to_cpu(tb->end) >
+			assert(be64_to_cpu(tr->tb->end) >
 			       rpos + t->hdr.len_div_8 * 8);
 			/* Skip to next entry. */
-			tb->rpos = cpu_to_be64(rpos + t->hdr.len_div_8 * 8);
-			tb->last_repeat = 0;
+			tr->rpos = rpos + t->hdr.len_div_8 * 8;
+			tr->last_repeat = 0;
 			goto again;
 		}
 	} else {
-		tb->last_repeat = 0;
-		tb->rpos = cpu_to_be64(rpos + t->hdr.len_div_8 * 8);
+		tr->last_repeat = 0;
+		tr->rpos = rpos + t->hdr.len_div_8 * 8;
 	}
 
 	return true;
