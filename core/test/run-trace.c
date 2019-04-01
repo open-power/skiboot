@@ -55,7 +55,7 @@ struct cpu_thread {
 	uint32_t pir;
 	uint32_t chip_id;
 	struct trace_info *trace;
-	int server_no;
+	uint32_t server_no;
 	bool is_secondary;
 	struct cpu_thread *primary;
 };
