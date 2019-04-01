@@ -29,7 +29,7 @@
 
 #define DEBUG_TRACES
 
-#define MAX_SIZE (sizeof(union trace) + 7)
+#define MAX_SIZE sizeof(union trace)
 
 /* Smaller trace buffer for early booting */
 #define BOOT_TBUF_SZ 65536
@@ -41,7 +41,7 @@ static struct {
 void init_boot_tracebuf(struct cpu_thread *boot_cpu)
 {
 	init_lock(&boot_tracebuf.trace_info.lock);
-	boot_tracebuf.trace_info.tb.mask = cpu_to_be64(BOOT_TBUF_SZ - 1);
+	boot_tracebuf.trace_info.tb.buf_size = cpu_to_be64(BOOT_TBUF_SZ);
 	boot_tracebuf.trace_info.tb.max_size = cpu_to_be32(MAX_SIZE);
 
 	boot_cpu->trace = &boot_tracebuf.trace_info;
@@ -61,7 +61,7 @@ static bool handle_repeat(struct tracebuf *tb, const union trace *trace)
 	struct trace_repeat *rpt;
 	u32 len;
 
-	prev = (void *)tb->buf + be64_to_cpu(tb->last & tb->mask);
+	prev = (void *)tb->buf + be64_to_cpu(tb->last) % be64_to_cpu(tb->buf_size);
 
 	if (prev->type != trace->hdr.type
 	    || prev->len_div_8 != trace->hdr.len_div_8
@@ -80,7 +80,7 @@ static bool handle_repeat(struct tracebuf *tb, const union trace *trace)
 	if (be64_to_cpu(tb->last) + len != be64_to_cpu(tb->end)) {
 		u64 pos = be64_to_cpu(tb->last) + len;
 		/* FIXME: Reader is not protected from seeing this! */
-		rpt = (void *)tb->buf + (pos & be64_to_cpu(tb->mask));
+		rpt = (void *)tb->buf + pos % be64_to_cpu(tb->buf_size);
 		assert(pos + rpt->len_div_8*8 == be64_to_cpu(tb->end));
 		assert(rpt->type == TRACE_REPEAT);
 
@@ -99,7 +99,7 @@ static bool handle_repeat(struct tracebuf *tb, const union trace *trace)
 	 */
 	assert(trace->hdr.len_div_8 * 8 >= sizeof(*rpt));
 
-	rpt = (void *)tb->buf + be64_to_cpu(tb->end & tb->mask);
+	rpt = (void *)tb->buf + be64_to_cpu(tb->end) % be64_to_cpu(tb->buf_size);
 	rpt->timestamp = trace->hdr.timestamp;
 	rpt->type = TRACE_REPEAT;
 	rpt->len_div_8 = sizeof(*rpt) >> 3;
@@ -138,12 +138,12 @@ void trace_add(union trace *trace, u8 type, u16 len)
 	lock(&ti->lock);
 
 	/* Throw away old entries before we overwrite them. */
-	while ((be64_to_cpu(ti->tb.start) + be64_to_cpu(ti->tb.mask) + 1)
+	while ((be64_to_cpu(ti->tb.start) + be64_to_cpu(ti->tb.buf_size))
 	       < (be64_to_cpu(ti->tb.end) + tsz)) {
 		struct trace_hdr *hdr;
 
 		hdr = (void *)ti->tb.buf +
-			be64_to_cpu(ti->tb.start & ti->tb.mask);
+			be64_to_cpu(ti->tb.start) % be64_to_cpu(ti->tb.buf_size);
 		ti->tb.start = cpu_to_be64(be64_to_cpu(ti->tb.start) +
 					   (hdr->len_div_8 << 3));
 	}
@@ -154,7 +154,7 @@ void trace_add(union trace *trace, u8 type, u16 len)
 	/* Check for duplicates... */
 	if (!handle_repeat(&ti->tb, trace)) {
 		/* This may go off end, and that's why ti->tb.buf is oversize */
-		memcpy(ti->tb.buf + be64_to_cpu(ti->tb.end & ti->tb.mask),
+		memcpy(ti->tb.buf + be64_to_cpu(ti->tb.end) % be64_to_cpu(ti->tb.buf_size),
 		       trace, tsz);
 		ti->tb.last = ti->tb.end;
 		lwsync(); /* write barrier: write entry before exposing */
@@ -220,8 +220,8 @@ void init_trace_buffers(void)
 			any = t->trace;
 			memset(t->trace, 0, size);
 			init_lock(&t->trace->lock);
-			t->trace->tb.mask = cpu_to_be64(TBUF_SZ - 1);
 			t->trace->tb.max_size = cpu_to_be32(MAX_SIZE);
+			t->trace->tb.buf_size = cpu_to_be64(TBUF_SZ);
 			trace_add_desc(any, sizeof(t->trace->tb) +
 				       tracebuf_extra());
 		} else

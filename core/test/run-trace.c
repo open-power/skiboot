@@ -182,7 +182,7 @@ static void test_parallel(void)
 
 	for (i = 0; i < CPUS; i++) {
 		fake_cpus[i].trace = p + i * len;
-		fake_cpus[i].trace->tb.mask = cpu_to_be64(TBUF_SZ - 1);
+		fake_cpus[i].trace->tb.buf_size = cpu_to_be64(TBUF_SZ);
 		fake_cpus[i].trace->tb.max_size = cpu_to_be32(sizeof(union trace));
 		fake_cpus[i].is_secondary = false;
 	}

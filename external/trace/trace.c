@@ -32,7 +32,7 @@ bool trace_empty(const struct tracebuf *tb)
 	 * we've already seen every repeat for (yet which may be
 	 * incremented in future), we're also empty.
 	 */
-	rep = (void *)tb->buf + be64_to_cpu(tb->rpos & tb->mask);
+	rep = (void *)tb->buf + be64_to_cpu(tb->rpos) % be64_to_cpu(tb->buf_size);
 	if (be64_to_cpu(tb->end) != be64_to_cpu(tb->rpos) + sizeof(*rep))
 		return false;
 
@@ -62,7 +62,7 @@ again:
 	 * The actual buffer is slightly larger than tbsize, so this
 	 * memcpy is always valid.
 	 */
-	memcpy(t, tb->buf + be64_to_cpu(tb->rpos & tb->mask), len);
+	memcpy(t, tb->buf + be64_to_cpu(tb->rpos) % be64_to_cpu(tb->buf_size), len);
 
 	rmb(); /* read barrier, so we read tb->start after copying record. */
 

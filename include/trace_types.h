@@ -28,8 +28,8 @@
 
 /* One per cpu, plus one for NMIs */
 struct tracebuf {
-	/* Mask to apply to get buffer offset. */
-	__be64 mask;
+	/* Size used to get buffer offset */
+	__be64 buf_size;
 	/* This where the buffer starts. */
 	__be64 start;
 	/* This is where writer has written to. */
