@@ -19,6 +19,7 @@
 #include <lock.h>
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <cpu.h>
 #include <device.h>
 #include <libfdt.h>
@@ -167,12 +168,21 @@ static void trace_add_dt_props(void)
 {
 	unsigned int i;
 	u64 *prop, tmask;
+	struct dt_node *exports;
+	char tname[256];
 
 	prop = malloc(sizeof(u64) * 2 * debug_descriptor.num_traces);
 
+	exports = dt_find_by_path(opal_node, "firmware/exports");
 	for (i = 0; i < debug_descriptor.num_traces; i++) {
 		prop[i * 2] = cpu_to_fdt64(debug_descriptor.trace_phys[i]);
 		prop[i * 2 + 1] = cpu_to_fdt64(debug_descriptor.trace_size[i]);
+
+		snprintf(tname, sizeof(tname), "trace-%x-%"PRIx64,
+			 debug_descriptor.trace_pir[i],
+			 debug_descriptor.trace_phys[i]);
+		dt_add_property_u64s(exports, tname, debug_descriptor.trace_phys[i],
+				     debug_descriptor.trace_size[i]);
 	}
 
 	dt_add_property(opal_node, "ibm,opal-traces",

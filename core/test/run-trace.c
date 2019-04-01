@@ -269,6 +269,7 @@ int main(void)
 	unsigned int i, j;
 
 	opal_node = dt_new_root("opal");
+	dt_new(dt_new(opal_node, "firmware"), "exports");
 	for (i = 0; i < CPUS; i++) {
 		fake_cpus[i].server_no = i;
 		fake_cpus[i].is_secondary = (i & 0x1);
