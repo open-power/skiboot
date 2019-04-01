@@ -210,9 +210,6 @@ static void test_parallel(void)
 		i = (i + last) % CPUS;
 		last = i;
 
-		assert(be16_to_cpu(t.hdr.cpu) < CPUS);
-		assert(!done[be16_to_cpu(t.hdr.cpu)]);
-
 		if (t.hdr.type == TRACE_OVERFLOW) {
 			/* Conveniently, each record is 16 bytes here. */
 			assert(be64_to_cpu(t.overflow.bytes_missed) % 16 == 0);
@@ -221,6 +218,8 @@ static void test_parallel(void)
 			continue;
 		}
 
+		assert(be16_to_cpu(t.hdr.cpu) < CPUS);
+		assert(!done[be16_to_cpu(t.hdr.cpu)]);
 		assert(be64_to_cpu(t.hdr.timestamp) % CPUS == be16_to_cpu(t.hdr.cpu));
 		if (t.hdr.type == TRACE_REPEAT) {
 			assert(t.hdr.len_div_8 * 8 == sizeof(t.repeat));
