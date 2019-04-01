@@ -27,6 +27,7 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "../../ccan/endian/endian.h"
 #include "../../ccan/short_types/short_types.h"
@@ -39,6 +40,9 @@ struct trace_entry {
 	union trace t;
 	struct list_node link;
 };
+
+static int follow;
+static long poll_msecs;
 
 static void *ezalloc(size_t size)
 {
@@ -243,19 +247,53 @@ static void display_traces(struct trace_reader *trs, int count)
 	heap_free(h);
 }
 
+
+/* Can't poll for 0 msec, so use 0 to signify failure */
+static long get_mseconds(char *s)
+{
+	char *end;
+	long ms;
+
+	errno = 0;
+	ms = strtol(s, &end, 10);
+	if (errno || *end || ms < 0)
+		return 0;
+	return ms;
+}
+
+static void usage(void)
+{
+	errx(1, "Usage: dump_trace [-f [-s msecs]] file...");
+}
+
 int main(int argc, char *argv[])
 {
 	struct trace_reader *trs;
 	struct trace_info *ti;
 	struct stat sb;
-	int fd, i;
+	int fd, opt, i;
 
+	poll_msecs = 1000;
+	while ((opt = getopt(argc, argv, "fs:")) != -1) {
+		switch (opt) {
+		case 'f':
+			follow++;
+			break;
+		case 's':
+			poll_msecs = get_mseconds(optarg);
+			if (follow && poll_msecs)
+				break;
+			/* fallthru */
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
-	if (argc < 2)
-		errx(1, "Usage: dump_trace file...");
+	if (argc < 1)
+		usage();
 
-	argc--;
-	argv++;
 	trs = ezalloc(sizeof(struct trace_reader) * argc);
 
 	for (i =  0; i < argc; i++) {
@@ -274,8 +312,12 @@ int main(int argc, char *argv[])
 		list_head_init(&trs[i].traces);
 	}
 
-	load_traces(trs, argc);
-	display_traces(trs, argc);
+	do {
+		load_traces(trs, argc);
+		display_traces(trs, argc);
+		if (follow)
+			usleep(poll_msecs * 1000);
+	} while (follow);
 
 	return 0;
 }
