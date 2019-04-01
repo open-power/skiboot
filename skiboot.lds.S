@@ -192,9 +192,9 @@ SECTIONS
 		 */
 		. = ALIGN(0x1000);
 		*(.data.memcons);
-		. = ALIGN(0x1000);
+		. = ALIGN(0x10000);
 		*(.data.boot_trace);
-		. = ALIGN(0x1000);
+		. = ALIGN(0x10000);
 		*(.data*)
 		*(.force.data)
 		*(.toc1)

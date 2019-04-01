@@ -193,7 +193,7 @@ static void trace_add_desc(struct trace_info *t, uint64_t size)
 	}
 	debug_descriptor.num_traces++;
 
-	debug_descriptor.trace_phys[i] = (uint64_t)&t->tb;
+	debug_descriptor.trace_phys[i] = (uint64_t)t;
 	debug_descriptor.trace_tce[i] = 0; /* populated later */
 	debug_descriptor.trace_size[i] = size;
 }
@@ -206,16 +206,16 @@ void init_trace_buffers(void)
 	uint64_t size;
 
 	/* Boot the boot trace in the debug descriptor */
-	trace_add_desc(any, sizeof(boot_tracebuf.buf));
+	trace_add_desc(any, sizeof(boot_tracebuf));
 
 	/* Allocate a trace buffer for each primary cpu. */
 	for_each_cpu(t) {
 		if (t->is_secondary)
 			continue;
 
-		/* Use a 4K alignment for TCE mapping */
-		size = ALIGN_UP(sizeof(*t->trace) + tracebuf_extra(), 0x1000);
-		t->trace = local_alloc(t->chip_id, size, 0x1000);
+		/* Use a 64K alignment for TCE mapping */
+		size = ALIGN_UP(sizeof(*t->trace) + tracebuf_extra(), 0x10000);
+		t->trace = local_alloc(t->chip_id, size, 0x10000);
 		if (t->trace) {
 			any = t->trace;
 			memset(t->trace, 0, size);
