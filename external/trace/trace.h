@@ -26,6 +26,7 @@ struct trace_reader {
 	u64 rpos;
 	/* If the last one we read was a repeat, this shows how many. */
 	u32 last_repeat;
+	struct list_head traces;
 	struct tracebuf *tb;
 };
 

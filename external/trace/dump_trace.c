@@ -30,8 +30,25 @@
 
 #include "../../ccan/endian/endian.h"
 #include "../../ccan/short_types/short_types.h"
+#include "../../ccan/heap/heap.h"
 #include "trace.h"
 
+
+struct trace_entry {
+	int index;
+	union trace t;
+	struct list_node link;
+};
+
+static void *ezalloc(size_t size)
+{
+	void *p;
+
+	p = calloc(size, 1);
+	if (!p)
+		err(1, "Allocating memory");
+	return p;
+}
 
 static void display_header(const struct trace_hdr *h)
 {
@@ -132,60 +149,133 @@ static void dump_uart(struct trace_uart *t)
 	}
 }
 
-int main(int argc, char *argv[])
+static void load_traces(struct trace_reader *trs, int count)
 {
-	struct trace_reader tr;
-	struct trace_info *ti;
-	struct stat sb;
+	struct trace_entry *te;
 	union trace t;
-	int fd;
+	int i;
 
-	if (argc != 2)
-		errx(1, "Usage: dump_trace file");
-
-	fd = open(argv[1], O_RDONLY);
-	if (fd < 0)
-		err(1, "Opening %s", argv[1]);
-
-	if (fstat(fd, &sb) < 0)
-		err(1, "Stating %s", argv[1]);
-
-	ti = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (ti == MAP_FAILED)
-		err(1, "Mmaping %s", argv[1]);
-
-	memset(&tr, 0, sizeof(struct trace_reader));
-	tr.tb = &ti->tb;
-
-
-	while (trace_get(&t, &tr)) {
-		display_header(&t.hdr);
-		switch (t.hdr.type) {
-		case TRACE_REPEAT:
-			printf("REPEATS: %u times\n",
-			       be16_to_cpu(t.repeat.num));
-			break;
-		case TRACE_OVERFLOW:
-			printf("**OVERFLOW**: %"PRIu64" bytes missed\n",
-			       be64_to_cpu(t.overflow.bytes_missed));
-			break;
-		case TRACE_OPAL:
-			dump_opal_call(&t.opal);
-			break;
-		case TRACE_FSP_MSG:
-			dump_fsp_msg(&t.fsp_msg);
-			break;
-		case TRACE_FSP_EVENT:
-			dump_fsp_event(&t.fsp_evt);
-			break;
-		case TRACE_UART:
-			dump_uart(&t.uart);
-			break;
-		default:
-			printf("UNKNOWN(%u) CPU %u length %u\n",
-			       t.hdr.type, be16_to_cpu(t.hdr.cpu),
-			       t.hdr.len_div_8 * 8);
+	for (i = 0; i < count; i++) {
+		while (trace_get(&t, &trs[i])) {
+			te = ezalloc(sizeof(struct trace_entry));
+			memcpy(&te->t, &t, sizeof(union trace));
+			te->index = i;
+			list_add_tail(&trs[i].traces, &te->link);
 		}
 	}
+}
+
+static void print_trace(union trace *t)
+{
+	display_header(&t->hdr);
+	switch (t->hdr.type) {
+	case TRACE_REPEAT:
+		printf("REPEATS: %u times\n",
+		       be16_to_cpu(t->repeat.num));
+		break;
+	case TRACE_OVERFLOW:
+		printf("**OVERFLOW**: %"PRIu64" bytes missed\n",
+		       be64_to_cpu(t->overflow.bytes_missed));
+		break;
+	case TRACE_OPAL:
+		dump_opal_call(&t->opal);
+		break;
+	case TRACE_FSP_MSG:
+		dump_fsp_msg(&t->fsp_msg);
+		break;
+	case TRACE_FSP_EVENT:
+		dump_fsp_event(&t->fsp_evt);
+		break;
+	case TRACE_UART:
+		dump_uart(&t->uart);
+		break;
+	default:
+		printf("UNKNOWN(%u) CPU %u length %u\n",
+		       t->hdr.type, be16_to_cpu(t->hdr.cpu),
+		       t->hdr.len_div_8 * 8);
+	}
+}
+
+/* Gives a min heap */
+bool earlier_entry(const void *va, const void *vb)
+{
+	struct trace_entry *a, *b;
+
+	a = (struct trace_entry *) va;
+	b = (struct trace_entry *) vb;
+
+	if (!a)
+		return false;
+	if (!b)
+		return true;
+	return be64_to_cpu(a->t.hdr.timestamp) < be64_to_cpu(b->t.hdr.timestamp);
+}
+
+static void display_traces(struct trace_reader *trs, int count)
+{
+	struct trace_entry *current, *next;
+	struct heap *h;
+	int i;
+
+	h = heap_init(earlier_entry);
+	if (!h)
+		err(1, "Allocating memory");
+
+	for (i = 0; i < count; i++) {
+		current = list_pop(&trs[i].traces, struct trace_entry, link);
+		/* no need to add empty ones */
+		if (current)
+			heap_push(h, current);
+	}
+
+	while (h->len) {
+		current = heap_pop(h);
+		if (!current)
+			break;
+
+		print_trace(&current->t);
+
+		next = list_pop(&trs[current->index].traces, struct trace_entry,
+				link);
+		heap_push(h, next);
+		free(current);
+	}
+	heap_free(h);
+}
+
+int main(int argc, char *argv[])
+{
+	struct trace_reader *trs;
+	struct trace_info *ti;
+	struct stat sb;
+	int fd, i;
+
+
+	if (argc < 2)
+		errx(1, "Usage: dump_trace file...");
+
+	argc--;
+	argv++;
+	trs = ezalloc(sizeof(struct trace_reader) * argc);
+
+	for (i =  0; i < argc; i++) {
+		fd = open(argv[i], O_RDONLY);
+		if (fd < 0)
+			err(1, "Opening %s", argv[i]);
+
+		if (fstat(fd, &sb) < 0)
+			err(1, "Stating %s", argv[1]);
+
+		ti = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+		if (ti == MAP_FAILED)
+			err(1, "Mmaping %s", argv[i]);
+
+		trs[i].tb = &ti->tb;
+		list_head_init(&trs[i].traces);
+	}
+
+	load_traces(trs, argc);
+	display_traces(trs, argc);
+
 	return 0;
 }
