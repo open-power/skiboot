@@ -14,42 +14,24 @@
  * limitations under the License.
  */
 
+#include <trace.h>
 #include <err.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <fcntl.h>
 #include <string.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "../../ccan/endian/endian.h"
 #include "../../ccan/short_types/short_types.h"
-#include <trace_types.h>
+#include "trace.h"
 
-/* Handles trace from debugfs (one record at a time) or file */ 
-static bool get_trace(int fd, union trace *t, int *len)
-{
-	void *dest = t;
-	int r;
-
-	/* Move down any extra we read last time. */
-	if (*len >= sizeof(t->hdr) && *len >= t->hdr.len_div_8 * 8) {
-		u8 rlen = t->hdr.len_div_8 * 8;
-		memmove(dest, dest + rlen, *len - rlen);
-		*len -= rlen;
-	}
-
-	r = read(fd, dest + *len, sizeof(*t) - *len);
-	if (r < 0)
-		return false;
-
-	*len += r;
-	/* We should have a complete record. */
-	return *len >= sizeof(t->hdr) && *len >= t->hdr.len_div_8 * 8;
-}
 
 static void display_header(const struct trace_hdr *h)
 {
@@ -152,20 +134,31 @@ static void dump_uart(struct trace_uart *t)
 
 int main(int argc, char *argv[])
 {
-	int fd, len = 0;
+	struct trace_reader tr;
+	struct trace_info *ti;
+	struct stat sb;
 	union trace t;
-	const char *in = "/sys/kernel/debug/powerpc/opal-trace";
+	int fd;
 
-	if (argc > 2)
-		errx(1, "Usage: dump_trace [file]");
+	if (argc != 2)
+		errx(1, "Usage: dump_trace file");
 
-	if (argv[1])
-		in = argv[1];
-	fd = open(in, O_RDONLY);
+	fd = open(argv[1], O_RDONLY);
 	if (fd < 0)
-		err(1, "Opening %s", in);
+		err(1, "Opening %s", argv[1]);
 
-	while (get_trace(fd, &t, &len)) {
+	if (fstat(fd, &sb) < 0)
+		err(1, "Stating %s", argv[1]);
+
+	ti = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (ti == MAP_FAILED)
+		err(1, "Mmaping %s", argv[1]);
+
+	memset(&tr, 0, sizeof(struct trace_reader));
+	tr.tb = &ti->tb;
+
+
+	while (trace_get(&t, &tr)) {
 		display_header(&t.hdr);
 		switch (t.hdr.type) {
 		case TRACE_REPEAT:
