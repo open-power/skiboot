@@ -36,7 +36,7 @@
 static struct {
 	struct trace_info trace_info;
 	char buf[BOOT_TBUF_SZ + MAX_SIZE];
-} boot_tracebuf;
+} boot_tracebuf __section(".data.boot_trace");
 
 void init_boot_tracebuf(struct cpu_thread *boot_cpu)
 {
