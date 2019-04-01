@@ -23,14 +23,6 @@
 #ifndef __SKIBOOT__
 #include <sys/types.h>
 #include <unistd.h>
-#else
-static void *calloc(size_t num, size_t size)
-{
-	void *ptr = malloc(num * size);
-	if (ptr)
-		memset(ptr, 0, num * size);
-	return ptr;
-}
 #endif
 
 #include "ffs.h"

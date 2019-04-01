@@ -31,6 +31,7 @@ void *__memalign(size_t boundary, size_t size, const char *location) __warn_unus
 
 #define malloc(size) __malloc(size, __location__)
 #define zalloc(size) __zalloc(size, __location__)
+#define calloc(nmemb, size) __zalloc(((nmemb) * (size)), __location__)
 #define realloc(ptr, size) __realloc(ptr, size, __location__)
 #define free(ptr) __free(ptr, __location__)
 #define memalign(boundary, size) __memalign(boundary, size, __location__)
