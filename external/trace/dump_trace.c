@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 		switch (t.hdr.type) {
 		case TRACE_REPEAT:
 			printf("REPEATS: %u times\n",
-			       be32_to_cpu(t.repeat.num));
+			       be16_to_cpu(t.repeat.num));
 			break;
 		case TRACE_OVERFLOW:
 			printf("**OVERFLOW**: %"PRIu64" bytes missed\n",
