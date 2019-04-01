@@ -183,7 +183,7 @@ static void trace_add_dt_props(void)
 	dt_add_property_u64(opal_node, "ibm,opal-trace-mask", tmask);
 }
 
-static void trace_add_desc(struct trace_info *t, uint64_t size)
+static void trace_add_desc(struct trace_info *t, uint64_t size, uint16_t pir)
 {
 	unsigned int i = debug_descriptor.num_traces;
 
@@ -196,6 +196,7 @@ static void trace_add_desc(struct trace_info *t, uint64_t size)
 	debug_descriptor.trace_phys[i] = (uint64_t)t;
 	debug_descriptor.trace_tce[i] = 0; /* populated later */
 	debug_descriptor.trace_size[i] = size;
+	debug_descriptor.trace_pir[i] = pir;
 }
 
 /* Allocate trace buffers once we know memory topology */
@@ -206,7 +207,7 @@ void init_trace_buffers(void)
 	uint64_t size;
 
 	/* Boot the boot trace in the debug descriptor */
-	trace_add_desc(any, sizeof(boot_tracebuf));
+	trace_add_desc(any, sizeof(boot_tracebuf), this_cpu()->pir);
 
 	/* Allocate a trace buffer for each primary cpu. */
 	for_each_cpu(t) {
@@ -223,7 +224,7 @@ void init_trace_buffers(void)
 			t->trace->tb.max_size = cpu_to_be32(MAX_SIZE);
 			t->trace->tb.buf_size = cpu_to_be64(TBUF_SZ);
 			trace_add_desc(any, sizeof(t->trace->tb) +
-				       tracebuf_extra());
+				       tracebuf_extra(), t->pir);
 		} else
 			prerror("TRACE: cpu 0x%x allocation failed\n", t->pir);
 	}

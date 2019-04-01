@@ -274,8 +274,8 @@ int main(void)
 		fake_cpus[i].is_secondary = (i & 0x1);
 		fake_cpus[i].primary = &fake_cpus[i & ~0x1];
 	}
-	init_trace_buffers();
 	my_fake_cpu = &fake_cpus[0];
+	init_trace_buffers();
 
 	for (i = 0; i < CPUS; i++) {
 		assert(trace_empty(&fake_cpus[i].trace->tb));

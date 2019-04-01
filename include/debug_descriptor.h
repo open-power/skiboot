@@ -44,6 +44,7 @@ struct debug_descriptor {
 	u64	trace_phys[DEBUG_DESC_MAX_TRACES];
 	u32	trace_size[DEBUG_DESC_MAX_TRACES];
 	u32	trace_tce[DEBUG_DESC_MAX_TRACES];
+	u16	trace_pir[DEBUG_DESC_MAX_TRACES];
 };
 extern struct debug_descriptor debug_descriptor;
 
