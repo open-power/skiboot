@@ -1,6 +1,7 @@
 # -*-Makefile-*-
 CORE_TEST := \
 	core/test/run-bitmap \
+	core/test/run-cpufeatures \
 	core/test/run-device \
 	core/test/run-flash-subpartition \
 	core/test/run-flash-firmware-versions \

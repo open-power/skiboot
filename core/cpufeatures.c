@@ -1,4 +1,4 @@
-/* Copyright 2017-2018 IBM Corp.
+/* Copyright 2017-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,12 @@
 #define CPU_P8_DD1	(1U << 0)
 #define CPU_P8_DD2	(1U << 1)
 #define CPU_P9_DD1	(1U << 2)
-#define CPU_P9_DD2	(1U << 3)
+#define CPU_P9_DD2_0_1	(1U << 3) // 2.01 or 2.1
 #define CPU_P9P		(1U << 4)
+#define CPU_P9_DD2_2    (1U << 5)
+#define CPU_P9_DD2_3    (1U << 6)
+
+#define CPU_P9_DD2      (CPU_P9_DD2_0_1|CPU_P9_DD2_2|CPU_P9_DD2_3|CPU_P9P)
 
 #define CPU_P8		(CPU_P8_DD1|CPU_P8_DD2)
 #define CPU_P9		(CPU_P9_DD1|CPU_P9_DD2|CPU_P9P)
@@ -721,6 +725,39 @@ static const struct cpu_feature cpu_features_table[] = {
 	HV_NONE, OS_NONE,
 	-1, -1, -1,
 	NULL, },
+
+	/*
+	 * Due to hardware bugs in POWER9, the hypervisor needs to assist
+	 * guests.
+	 *
+	 * Presence of this feature indicates presence of the bug.
+	 *
+	 * See linux kernel commit 4bb3c7a0208f
+	 * and linux Documentation/powerpc/transactional_memory.txt
+	 */
+	{ "tm-suspend-hypervisor-assist",
+	CPU_P9_DD2_2|CPU_P9_DD2_3|CPU_P9P,
+	ISA_V3_0B, USABLE_HV,
+	HV_CUSTOM, OS_NONE,
+	-1, -1, -1,
+	NULL, },
+
+	/*
+	 * Due to hardware bugs in POWER9, the hypervisor can hit
+	 * CPU bugs in the operations it needs to do for
+	 * tm-suspend-hypervisor-assist.
+	 *
+	 * Presence of this "feature" means processor is affected by the bug.
+	 *
+	 * See linux kernel commit 4bb3c7a0208f
+	 * and linux Documentation/powerpc/transactional_memory.txt
+	 */
+	{ "tm-suspend-xer-so-bug",
+	CPU_P9_DD2_2,
+	ISA_V3_0B, USABLE_HV,
+	HV_CUSTOM, OS_NONE,
+	-1, -1, -1,
+	NULL, },
 };
 
 static void add_cpu_feature_nodeps(struct dt_node *features,
@@ -905,7 +942,20 @@ void dt_add_cpufeatures(struct dt_node *root)
 		if (is_power9n(version) &&
 			   (PVR_VERS_MAJ(version) == 2)) {
 			/* P9N DD2.x */
-			cpu_feature_cpu = CPU_P9_DD2;
+			switch (PVR_VERS_MIN(version)) {
+			case 0:
+			case 1:
+				cpu_feature_cpu = CPU_P9_DD2_0_1;
+				break;
+			case 2:
+				cpu_feature_cpu = CPU_P9_DD2_2;
+				break;
+			case 3:
+				cpu_feature_cpu = CPU_P9_DD2_3;
+				break;
+			default:
+				assert(0);
+			}
 		} else {
 			assert(0);
 		}
