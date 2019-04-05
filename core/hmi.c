@@ -679,7 +679,7 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 	if (npu2_hmi_verbose) {
 		npu2_dump_scoms(flat_chip_id);
 		prlog(PR_ERR, " _________________________ \n");
-		prlog(PR_ERR, "< It's Driver Debug time! >\n");
+		prlog(PR_ERR, "<    It's Debug time!     >\n");
 		prlog(PR_ERR, " ------------------------- \n");
 		prlog(PR_ERR, "       \\   ,__,            \n");
 		prlog(PR_ERR, "        \\  (oo)____        \n");
