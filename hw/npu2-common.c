@@ -26,7 +26,7 @@
 #include <xive.h>
 
 #define NPU2_IRQ_BASE_SHIFT 13
-#define NPU2_N_DL_IRQS 23
+#define NPU2_N_DL_IRQS 35
 #define NPU2_N_DL_IRQS_ALIGN 64
 
 /*
@@ -145,6 +145,18 @@ static char *npu2_ipi_name(struct irq_source *is, uint32_t isn)
 	case 20: name = "CQ Event"; break;
 	case 21: name = "MISC Event"; break;
 	case 22: name = "NMMU Local Xstop"; break;
+	case 23: name = "Translate Fail (brick 2)"; break;
+	case 24: name = "Translate Fail (brick 3)"; break;
+	case 25: name = "Translate Fail (brick 4)"; break;
+	case 26: name = "Translate Fail (brick 5)"; break;
+	case 27: name = "OTL Event (brick 2)"; break;
+	case 28: name = "OTL Event (brick 3)"; break;
+	case 29: name = "OTL Event (brick 4)"; break;
+	case 30: name = "OTL Event (brick 5)"; break;
+	case 31: name = "XSL Event (brick 2)"; break;
+	case 32: name = "XSL Event (brick 3)"; break;
+	case 33: name = "XSL Event (brick 4)"; break;
+	case 34: name = "XSL Event (brick 5)"; break;
 	default: name = "Unknown";
 	}
 	return strdup(name);
@@ -177,7 +189,7 @@ static void setup_irqs(struct npu2 *p)
 
 	p->base_lsi = xive_alloc_ipi_irqs(p->chip_id, NPU2_N_DL_IRQS, NPU2_N_DL_IRQS_ALIGN);
 	if (p->base_lsi == XIVE_IRQ_ERROR) {
-		prlog(PR_ERR, "NPU: Failed to allocate interrupt sources, IRQs for NDL No-stall events will not be available.\n");
+		prlog(PR_ERR, "NPU: Failed to allocate interrupt sources\n");
 		return;
 	}
 	xive_register_ipi_source(p->base_lsi, NPU2_N_DL_IRQS, p, &npu2_ipi_ops);
@@ -375,8 +387,7 @@ static void setup_devices(struct npu2 *npu)
 		return;
 	}
 
-	if (nvlink_detected)
-		setup_irqs(npu);
+	setup_irqs(npu);
 
 	if (nvlink_detected)
 		npu2_nvlink_init_npu(npu);

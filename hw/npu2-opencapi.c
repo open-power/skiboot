@@ -48,11 +48,9 @@
 #include <npu2.h>
 #include <npu2-regs.h>
 #include <phys-map.h>
-#include <xive.h>
 #include <i2c.h>
 #include <nvram.h>
 
-#define NPU_IRQ_LEVELS		35
 #define NPU_IRQ_LEVELS_XSL	23
 #define MAX_PE_HANDLE		((1 << 15) - 1)
 #define TL_MAX_TEMPLATE		63
@@ -1464,7 +1462,7 @@ static int npu2_add_mmio_regs(struct phb *phb, struct pci_device *pd,
 	 * Pass the hw irq number for the translation fault irq
 	 * irq levels 23 -> 26 are for translation faults, 1 per brick
 	 */
-	irq = dev->npu->irq_base + NPU_IRQ_LEVELS_XSL;
+	irq = dev->npu->base_lsi + NPU_IRQ_LEVELS_XSL;
 	if (stacku == NPU2_STACK_STCK_2U)
 		irq += 2;
 	if (block == NPU2_BLOCK_OTL1)
@@ -1537,43 +1535,9 @@ static void mask_nvlink_fir(struct npu2 *p)
 			NPU2_MISC_IRQ_ENABLE1, NPU2_MISC_DA_LEN_8B, reg);
 }
 
-static int setup_irq(struct npu2 *p)
+static int enable_xsl_irq(struct npu2 *p)
 {
-	uint64_t reg, mmio_addr;
-	uint32_t base;
-
-	base = xive_alloc_ipi_irqs(p->chip_id, NPU_IRQ_LEVELS, 64);
-	if (base == XIVE_IRQ_ERROR) {
-		/**
-		 * @fwts-label OCAPIIRQAllocationFailed
-		 * @fwts-advice OpenCAPI IRQ setup failed. This is probably
-		 * a firmware bug. OpenCAPI functionality will be broken.
-		 */
-		prlog(PR_ERR, "OCAPI: Couldn't allocate interrupts for NPU\n");
-		return -1;
-	}
-	p->irq_base = base;
-
-	xive_register_ipi_source(base, NPU_IRQ_LEVELS, NULL, NULL);
-	mmio_addr = (uint64_t ) xive_get_trigger_port(base);
-	prlog(PR_DEBUG, "OCAPI: NPU base irq %d @%llx\n", base, mmio_addr);
-	reg = (mmio_addr & NPU2_MISC_IRQ_BASE_MASK) << 13;
-	npu2_scom_write(p->chip_id, p->xscom_base, NPU2_MISC_IRQ_BASE,
-			NPU2_MISC_DA_LEN_8B, reg);
-	/*
-	 * setup page size = 64k
-	 *
-	 * OS type is set to AIX: opal also runs with 2 pages per interrupt,
-	 * so to cover the max offset for 35 levels of interrupt, we need
-	 * bits 41 to 46, which is what the AIX setting does. There's no
-	 * other meaning for that AIX setting.
-	 */
-	reg = npu2_scom_read(p->chip_id, p->xscom_base, NPU2_MISC_CFG,
-			NPU2_MISC_DA_LEN_8B);
-	reg |= NPU2_MISC_CFG_IPI_PS;
-	reg &= ~NPU2_MISC_CFG_IPI_OS;
-	npu2_scom_write(p->chip_id, p->xscom_base, NPU2_MISC_CFG,
-			NPU2_MISC_DA_LEN_8B, reg);
+	uint64_t reg;
 
 	/* enable translation interrupts for all bricks */
 	reg = npu2_scom_read(p->chip_id, p->xscom_base, NPU2_MISC_IRQ_ENABLE2,
@@ -1708,7 +1672,6 @@ int npu2_opencapi_init_npu(struct npu2 *npu)
 {
 	struct npu2_dev *dev;
 	uint64_t reg[2];
-	int rc;
 
 	assert(platform.ocapi);
 	read_nvram_training_state();
@@ -1741,10 +1704,7 @@ int npu2_opencapi_init_npu(struct npu2 *npu)
 		address_translation_config(npu->chip_id, npu->xscom_base, dev->brick_index);
 	}
 
-	/* Procedure 13.1.3.10 - Interrupt Configuration */
-	rc = setup_irq(npu);
-	if (rc)
-		goto failed;
+	enable_xsl_irq(npu);
 
 	for (int i = 0; i < npu->total_devices; i++) {
 		dev = &npu->devices[i];
@@ -1754,8 +1714,6 @@ int npu2_opencapi_init_npu(struct npu2 *npu)
 	}
 
 	return 0;
-failed:
-	return -1;
 }
 
 static const struct phb_ops npu2_opencapi_ops = {

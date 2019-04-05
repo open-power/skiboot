@@ -170,7 +170,6 @@ struct npu2 {
 	uint64_t	mm_base;
 	uint64_t	mm_size;
 	uint32_t	base_lsi;
-	uint32_t	irq_base;
 	uint32_t	total_devices;
 	struct npu2_dev	*devices;
 	enum phys_map_type gpu_map_type;
