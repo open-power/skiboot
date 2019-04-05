@@ -248,4 +248,5 @@ int64_t npu2_freeze_status(struct phb *phb __unused,
 			   uint8_t *freeze_state,
 			   uint16_t *pci_error_type __unused,
 			   uint16_t *severity __unused);
+void npu2_dump_scoms(int chip_id);
 #endif /* __NPU2_H */
