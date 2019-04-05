@@ -108,8 +108,12 @@ static uint64_t npu2_ipi_attributes(struct irq_source *is __unused, uint32_t isn
 	struct npu2 *p = is->data;
 	uint32_t idx = isn - p->base_lsi;
 
-	if (idx == 18)
-		/* TCE Interrupt - used to detect a frozen PE */
+	if ((idx == 18) || (idx >= 27 && idx <= 34))
+		/*
+		 * level 18: TCE Interrupt - used to detect a frozen PE (nvlink)
+		 * level 27-30: OTL interrupt (opencapi)
+		 * level 31-34: XSL interrupt (opencapi)
+		 */
 		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE | IRQ_ATTR_TYPE_MSI;
 	else
 		return IRQ_ATTR_TARGET_LINUX;
@@ -166,14 +170,25 @@ static void npu2_err_interrupt(struct irq_source *is, uint32_t isn)
 {
 	struct npu2 *p = is->data;
 	uint32_t idx = isn - p->base_lsi;
+	int brick;
 
-	if (idx != 18) {
+	switch (idx) {
+	case 18:
+		opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
+					OPAL_EVENT_PCI_ERROR);
+		break;
+	case 27 ... 34:
+		/* opencapi only */
+		brick = 2 + ((idx - 27) % 4);
+		prlog(PR_ERR, "NPU[%d] error interrupt for brick %d\n",
+			p->chip_id, brick);
+		opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
+					OPAL_EVENT_PCI_ERROR);
+		break;
+	default:
 		prerror("OPAL received unknown NPU2 interrupt %d\n", idx);
 		return;
 	}
-
-	opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
-				OPAL_EVENT_PCI_ERROR);
 }
 
 static const struct irq_source_ops npu2_ipi_ops = {

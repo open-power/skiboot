@@ -1509,9 +1509,9 @@ static void mask_nvlink_fir(struct npu2 *p)
 	 */
 
 	/* Mask FIRs */
-	xscom_read(p->chip_id, p->xscom_base + NPU2_MISC_FIR_MASK1, &reg);
+	xscom_read(p->chip_id, p->xscom_base + NPU2_MISC_FIR1_MASK, &reg);
 	reg = SETFIELD(PPC_BITMASK(0, 11), reg, 0xFFF);
-	xscom_write(p->chip_id, p->xscom_base + NPU2_MISC_FIR_MASK1, reg);
+	xscom_write(p->chip_id, p->xscom_base + NPU2_MISC_FIR1_MASK, reg);
 
 	/* freeze disable */
 	reg = npu2_scom_read(p->chip_id, p->xscom_base,
@@ -1535,15 +1535,40 @@ static void mask_nvlink_fir(struct npu2 *p)
 			NPU2_MISC_IRQ_ENABLE1, NPU2_MISC_DA_LEN_8B, reg);
 }
 
-static int enable_xsl_irq(struct npu2 *p)
+static int enable_interrupts(struct npu2 *p)
 {
-	uint64_t reg;
+	uint64_t reg, val_xsl, val_override;
 
-	/* enable translation interrupts for all bricks */
+	/*
+	 * Enable translation interrupts for all bricks and override
+	 * every brick-fatal error to send an interrupt instead of
+	 * checkstopping.
+	 *
+	 * FIR bits configured to trigger an interrupt must have their
+	 * default action masked
+	 */
+	val_xsl = PPC_BIT(0) | PPC_BIT(1) | PPC_BIT(2) | PPC_BIT(3);
+	val_override = 0x0FFFEFC00FF1B000;
+
+	xscom_read(p->chip_id, p->xscom_base + NPU2_MISC_FIR2_MASK, &reg);
+	reg |= val_xsl | val_override;
+	xscom_write(p->chip_id, p->xscom_base + NPU2_MISC_FIR2_MASK, reg);
+
 	reg = npu2_scom_read(p->chip_id, p->xscom_base, NPU2_MISC_IRQ_ENABLE2,
 			     NPU2_MISC_DA_LEN_8B);
-	reg |= PPC_BIT(0) | PPC_BIT(1) | PPC_BIT(2) | PPC_BIT(3);
+	reg |= val_xsl | val_override;
 	npu2_scom_write(p->chip_id, p->xscom_base, NPU2_MISC_IRQ_ENABLE2,
+			NPU2_MISC_DA_LEN_8B, reg);
+
+	/*
+	 * Make sure the brick is fenced on those errors.
+	 * Fencing is incompatible with freezing, but there's no
+	 * freeze defined for FIR2, so we don't have to worry about it
+	 */
+	reg = npu2_scom_read(p->chip_id, p->xscom_base, NPU2_MISC_FENCE_ENABLE2,
+			     NPU2_MISC_DA_LEN_8B);
+	reg |= val_override;
+	npu2_scom_write(p->chip_id, p->xscom_base, NPU2_MISC_FENCE_ENABLE2,
 			NPU2_MISC_DA_LEN_8B, reg);
 
 	mask_nvlink_fir(p);
@@ -1704,7 +1729,7 @@ int npu2_opencapi_init_npu(struct npu2 *npu)
 		address_translation_config(npu->chip_id, npu->xscom_base, dev->brick_index);
 	}
 
-	enable_xsl_irq(npu);
+	enable_interrupts(npu);
 
 	for (int i = 0; i < npu->total_devices; i++) {
 		dev = &npu->devices[i];
