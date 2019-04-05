@@ -1434,18 +1434,64 @@ static int64_t npu2_opencapi_ioda_reset(struct phb __unused *phb,
 	return OPAL_SUCCESS;
 }
 
-static int64_t npu2_opencapi_set_pe(struct phb __unused *phb,
-				    uint64_t __unused pe_num,
+static int64_t npu2_opencapi_set_pe(struct phb *phb,
+				    uint64_t pe_num,
 				    uint64_t __unused bdfn,
 				    uint8_t __unused bcompare,
 				    uint8_t __unused dcompare,
 				    uint8_t __unused fcompare,
 				    uint8_t __unused action)
 {
+	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(phb);
 	/*
 	 * Ignored on OpenCAPI - we use fixed PE assignments. May need
 	 * addressing when we support dual-link devices.
+	 *
+	 * We nonetheless store the PE reported by the OS so that we
+	 * can send it back in case of error. If there are several PCI
+	 * functions on the device, the OS can define many PEs, we
+	 * only keep one, the OS will handle it.
 	 */
+	dev->linux_pe = pe_num;
+	return OPAL_SUCCESS;
+}
+
+static int64_t npu2_opencapi_freeze_status(struct phb *phb __unused,
+			   uint64_t pe_number __unused,
+			   uint8_t *freeze_state,
+			   uint16_t *pci_error_type,
+			   uint16_t *severity)
+{
+	*freeze_state = OPAL_EEH_STOPPED_NOT_FROZEN;
+	*pci_error_type = OPAL_EEH_NO_ERROR;
+	if (severity)
+		*severity = OPAL_EEH_SEV_NO_ERROR;
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t npu2_opencapi_eeh_next_error(struct phb *phb,
+				   uint64_t *first_frozen_pe,
+				   uint16_t *pci_error_type,
+				   uint16_t *severity)
+{
+	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(phb);
+	uint64_t reg;
+
+	if (!first_frozen_pe || !pci_error_type || !severity)
+		return OPAL_PARAMETER;
+
+	reg = npu2_read(dev->npu, NPU2_MISC_FENCE_STATE);
+	if (reg & PPC_BIT(dev->brick_index)) {
+		OCAPIERR(dev, "Brick %d fenced!\n", dev->brick_index);
+		*first_frozen_pe = dev->linux_pe;
+		*pci_error_type = OPAL_EEH_PHB_ERROR;
+		*severity = OPAL_EEH_SEV_PHB_DEAD;
+	} else {
+		*first_frozen_pe = -1;
+		*pci_error_type = OPAL_EEH_NO_ERROR;
+		*severity = OPAL_EEH_SEV_NO_ERROR;
+	}
 	return OPAL_SUCCESS;
 }
 
@@ -1646,6 +1692,7 @@ static void setup_device(struct npu2_dev *dev)
 	dev->phb_ocapi.scan_map = 0;
 
 	dev->bdfn = 0;
+	dev->linux_pe = -1;
 	dev->train_need_fence = false;
 	dev->train_fenced = false;
 
@@ -1765,10 +1812,10 @@ static const struct phb_ops npu2_opencapi_ops = {
 	.get_msi_64		= NULL,
 	.set_pe			= npu2_opencapi_set_pe,
 	.set_peltv		= NULL,
-	.eeh_freeze_status	= npu2_freeze_status,  /* TODO */
+	.eeh_freeze_status	= npu2_opencapi_freeze_status,
 	.eeh_freeze_clear	= NULL,
 	.eeh_freeze_set		= NULL,
-	.next_error		= NULL,
+	.next_error		= npu2_opencapi_eeh_next_error,
 	.err_inject		= NULL,
 	.get_diag_data		= NULL,
 	.get_diag_data2		= NULL,
