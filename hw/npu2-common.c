@@ -22,6 +22,12 @@
 #include <bitutils.h>
 #include <nvram.h>
 #include <i2c.h>
+#include <interrupts.h>
+#include <xive.h>
+
+#define NPU2_IRQ_BASE_SHIFT 13
+#define NPU2_N_DL_IRQS 23
+#define NPU2_N_DL_IRQS_ALIGN 64
 
 /*
  * We use the indirect method because it uses the same addresses as
@@ -95,6 +101,99 @@ void npu2_write_mask_4b(struct npu2 *p, uint64_t reg, uint32_t val, uint32_t mas
 	new_val |= val & mask;
 	npu2_scom_write(p->chip_id, p->xscom_base, reg, NPU2_MISC_DA_LEN_4B,
 			(uint64_t)new_val << 32);
+}
+
+static uint64_t npu2_ipi_attributes(struct irq_source *is __unused, uint32_t isn __unused)
+{
+	struct npu2 *p = is->data;
+	uint32_t idx = isn - p->base_lsi;
+
+	if (idx == 18)
+		/* TCE Interrupt - used to detect a frozen PE */
+		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE | IRQ_ATTR_TYPE_MSI;
+	else
+		return IRQ_ATTR_TARGET_LINUX;
+}
+
+static char *npu2_ipi_name(struct irq_source *is, uint32_t isn)
+{
+	struct npu2 *p = is->data;
+	uint32_t idx = isn - p->base_lsi;
+	const char *name;
+
+	switch (idx) {
+	case 0: name = "NDL 0 Stall Event (brick 0)"; break;
+	case 1: name = "NDL 0 No-Stall Event (brick 0)"; break;
+	case 2: name = "NDL 1 Stall Event (brick 1)"; break;
+	case 3: name = "NDL 1 No-Stall Event (brick 1)"; break;
+	case 4: name = "NDL 2 Stall Event (brick 2)"; break;
+	case 5: name = "NDL 2 No-Stall Event (brick 2)"; break;
+	case 6: name = "NDL 5 Stall Event (brick 3)"; break;
+	case 7: name = "NDL 5 No-Stall Event (brick 3)"; break;
+	case 8: name = "NDL 4 Stall Event (brick 4)"; break;
+	case 9: name = "NDL 4 No-Stall Event (brick 4)"; break;
+	case 10: name = "NDL 3 Stall Event (brick 5)"; break;
+	case 11: name = "NDL 3 No-Stall Event (brick 5)"; break;
+	case 12: name = "NTL 0 Event"; break;
+	case 13: name = "NTL 1 Event"; break;
+	case 14: name = "NTL 2 Event"; break;
+	case 15: name = "NTL 3 Event"; break;
+	case 16: name = "NTL 4 Event"; break;
+	case 17: name = "NTL 5 Event"; break;
+	case 18: name = "TCE Event"; break;
+	case 19: name = "ATS Event"; break;
+	case 20: name = "CQ Event"; break;
+	case 21: name = "MISC Event"; break;
+	case 22: name = "NMMU Local Xstop"; break;
+	default: name = "Unknown";
+	}
+	return strdup(name);
+}
+
+static void npu2_err_interrupt(struct irq_source *is, uint32_t isn)
+{
+	struct npu2 *p = is->data;
+	uint32_t idx = isn - p->base_lsi;
+
+	if (idx != 18) {
+		prerror("OPAL received unknown NPU2 interrupt %d\n", idx);
+		return;
+	}
+
+	opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
+				OPAL_EVENT_PCI_ERROR);
+}
+
+static const struct irq_source_ops npu2_ipi_ops = {
+	.interrupt	= npu2_err_interrupt,
+	.attributes	= npu2_ipi_attributes,
+	.name = npu2_ipi_name,
+};
+
+static void setup_irqs(struct npu2 *p)
+{
+	uint64_t reg, val;
+	void *tp;
+
+	p->base_lsi = xive_alloc_ipi_irqs(p->chip_id, NPU2_N_DL_IRQS, NPU2_N_DL_IRQS_ALIGN);
+	if (p->base_lsi == XIVE_IRQ_ERROR) {
+		prlog(PR_ERR, "NPU: Failed to allocate interrupt sources, IRQs for NDL No-stall events will not be available.\n");
+		return;
+	}
+	xive_register_ipi_source(p->base_lsi, NPU2_N_DL_IRQS, p, &npu2_ipi_ops);
+
+	/* Set IPI configuration */
+	reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC, NPU2_MISC_CFG);
+	val = npu2_read(p, reg);
+	val = SETFIELD(NPU2_MISC_CFG_IPI_PS, val, NPU2_MISC_CFG_IPI_PS_64K);
+	val = SETFIELD(NPU2_MISC_CFG_IPI_OS, val, NPU2_MISC_CFG_IPI_OS_AIX);
+	npu2_write(p, reg, val);
+
+	/* Set IRQ base */
+	reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC, NPU2_MISC_IRQ_BASE);
+	tp = xive_get_trigger_port(p->base_lsi);
+	val = ((uint64_t)tp) << NPU2_IRQ_BASE_SHIFT;
+	npu2_write(p, reg, val);
 }
 
 static bool _i2c_presence_detect(struct npu2_dev *dev)
@@ -275,6 +374,9 @@ static void setup_devices(struct npu2 *npu)
 		prlog(PR_ERR, "NPU: NVLink and OpenCAPI devices on same chip not supported, aborting NPU init\n");
 		return;
 	}
+
+	if (nvlink_detected)
+		setup_irqs(npu);
 
 	if (nvlink_detected)
 		npu2_nvlink_init_npu(npu);
