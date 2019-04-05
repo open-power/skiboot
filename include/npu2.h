@@ -46,9 +46,24 @@
 					  dev->npu->chip_id, dev->brick_index, ## a)
 
 
-/* Number of PEs supported */
-#define NPU2_MAX_PE_NUM		16
-#define NPU2_RESERVED_PE_NUM	15
+/*
+ * Number of PEs supported
+ *
+ * The NPU supports PE numbers from 0-15. At present, we only assign a maximum
+ * of 1 PE per brick.
+ *
+ * NVLink devices are currently exposed to Linux underneath a single virtual
+ * PHB. Therefore, we give NVLink half the available PEs, which is enough for
+ * 6 bricks plus 1 reserved PE.
+ *
+ * For OpenCAPI, the BDF-to-PE registers are used exclusively for mapping
+ * bricks to System Interrupt Log registers (the BDF component of those
+ * registers is ignored). Currently, we allocate a fixed PE based on the brick
+ * index in the upper half of the PE namespace.
+ */
+#define NPU2_MAX_PE_NUM		8
+#define NPU2_RESERVED_PE_NUM	7
+#define NPU2_OCAPI_PE(ndev) ((ndev)->brick_index + NPU2_MAX_PE_NUM)
 
 #define NPU2_LINKS_PER_CHIP 6
 

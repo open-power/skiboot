@@ -584,6 +584,20 @@ static void brick_config(uint32_t gcid, uint32_t scom_base, int index)
 	enable_pb_snooping(gcid, scom_base, index);
 }
 
+/* Procedure 13.1.3.4 - Brick to PE Mapping */
+static void pe_config(struct npu2_dev *dev)
+{
+	/* We currently use a fixed PE assignment per brick */
+	uint64_t val, reg;
+	val = NPU2_MISC_BRICK_BDF2PE_MAP_ENABLE;
+	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_PE, val, NPU2_OCAPI_PE(dev));
+	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_BDF, val, 0);
+	reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC,
+			      NPU2_MISC_BRICK0_BDF2PE_MAP0 +
+			      (dev->brick_index * 0x18));
+	npu2_write(dev->npu, reg, val);
+}
+
 /* Procedure 13.1.3.5 - TL Configuration */
 static void tl_config(uint32_t gcid, uint32_t scom_base, uint64_t index)
 {
@@ -1422,47 +1436,18 @@ static int64_t npu2_opencapi_ioda_reset(struct phb __unused *phb,
 	return OPAL_SUCCESS;
 }
 
-static int64_t npu2_opencapi_set_pe(struct phb *phb,
-				    uint64_t pe_num,
-				    uint64_t bdfn,
-				    uint8_t bcompare,
-				    uint8_t dcompare,
-				    uint8_t fcompare,
-				    uint8_t action)
+static int64_t npu2_opencapi_set_pe(struct phb __unused *phb,
+				    uint64_t __unused pe_num,
+				    uint64_t __unused bdfn,
+				    uint8_t __unused bcompare,
+				    uint8_t __unused dcompare,
+				    uint8_t __unused fcompare,
+				    uint8_t __unused action)
 {
-	struct npu2 *p;
-	struct npu2_dev *dev;
-	uint64_t reg, val, pe_bdfn;
-
-	/* Sanity check */
-	if (action != OPAL_MAP_PE && action != OPAL_UNMAP_PE)
-		return OPAL_PARAMETER;
-	if (pe_num >= NPU2_MAX_PE_NUM)
-		return OPAL_PARAMETER;
-	if (bdfn >> 8)
-		return OPAL_PARAMETER;
-	if (bcompare != OpalPciBusAll ||
-	    dcompare != OPAL_COMPARE_RID_DEVICE_NUMBER ||
-	    fcompare != OPAL_COMPARE_RID_FUNCTION_NUMBER)
-		return OPAL_UNSUPPORTED;
-
-	/* Get the NPU2 device */
-	dev = phb_to_npu2_dev_ocapi(phb);
-	if (!dev)
-		return OPAL_PARAMETER;
-
-	p = dev->npu;
-
-	pe_bdfn = dev->bdfn;
-
-	val = NPU2_MISC_BRICK_BDF2PE_MAP_ENABLE;
-	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_PE, val, pe_num);
-	val = SETFIELD(NPU2_MISC_BRICK_BDF2PE_MAP_BDF, val, pe_bdfn);
-	reg = NPU2_REG_OFFSET(NPU2_STACK_MISC, NPU2_BLOCK_MISC,
-			      NPU2_MISC_BRICK0_BDF2PE_MAP0 +
-			      (dev->brick_index * 0x18));
-	npu2_write(p, reg, val);
-
+	/*
+	 * Ignored on OpenCAPI - we use fixed PE assignments. May need
+	 * addressing when we support dual-link devices.
+	 */
 	return OPAL_SUCCESS;
 }
 
@@ -1653,7 +1638,13 @@ static void setup_device(struct npu2_dev *dev)
 	dt_add_property_cells(dn_phb, "ibm,links", 1);
 	dt_add_property(dn_phb, "ibm,mmio-window", mm_win, sizeof(mm_win));
 	dt_add_property_cells(dn_phb, "ibm,phb-diag-data-size", 0);
+
+	/*
+	 * We ignore whatever PE numbers Linux tries to set, so we just
+	 * advertise enough that Linux won't complain
+	 */
 	dt_add_property_cells(dn_phb, "ibm,opal-num-pes", NPU2_MAX_PE_NUM);
+	dt_add_property_cells(dn_phb, "ibm,opal-reserved-pe", NPU2_RESERVED_PE_NUM);
 
 	dt_add_property_cells(dn_phb, "ranges", 0x02000000,
 			      hi32(mm_win[0]), lo32(mm_win[0]),
@@ -1739,6 +1730,9 @@ int npu2_opencapi_init_npu(struct npu2 *npu)
 
 		/* Procedure 13.1.3.1 - Select OCAPI vs NVLink */
 		brick_config(npu->chip_id, npu->xscom_base, dev->brick_index);
+
+		/* Procedure 13.1.3.4 - Brick to PE Mapping */
+		pe_config(dev);
 
 		/* Procedure 13.1.3.5 - Transaction Layer Configuration */
 		tl_config(npu->chip_id, npu->xscom_base, dev->brick_index);
