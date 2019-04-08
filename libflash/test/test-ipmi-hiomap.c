@@ -222,10 +222,12 @@ int64_t lpc_read(enum OpalLPCAddressType addr_type __attribute__((unused)),
 
 static bool lpc_read_success(const uint8_t *buf, size_t len)
 {
-	if (len < 64)
+	if (len < 64) {
 		while (len--)
 			if (*buf++ != 0xaa)
 				return false;
+		return true;
+	}
 
 	for (int i = 0; i < 64; i++)
 		if (buf[i] != 0xaa)
