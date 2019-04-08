@@ -49,6 +49,21 @@ static inline uint16_t bytes_to_blocks(struct ipmi_hiomap *ctx, uint32_t bytes)
 	return bytes >> ctx->block_size_shift;
 }
 
+static inline uint16_t bytes_to_blocks_align_up(struct ipmi_hiomap *ctx,
+						uint32_t pos, uint32_t len)
+{
+	uint32_t block_size = 1 << ctx->block_size_shift;
+	uint32_t delta = pos & (block_size - 1);
+	uint32_t aligned = ALIGN_UP((len + delta), block_size);
+	uint32_t blocks = aligned >> ctx->block_size_shift;
+	/* Our protocol can handle block count < sizeof(u16) */
+	uint32_t mask = ((1 << 16) - 1);
+
+	assert(!(blocks & ~mask));
+
+	return blocks & mask;
+}
+
 /* Call under ctx->lock */
 static int hiomap_protocol_ready(struct ipmi_hiomap *ctx)
 {
@@ -321,7 +336,7 @@ static int hiomap_window_move(struct ipmi_hiomap *ctx, uint8_t command,
 
 	range = (struct hiomap_v2_range *)&req[2];
 	range->offset = cpu_to_le16(bytes_to_blocks(ctx, pos));
-	range->size = cpu_to_le16(bytes_to_blocks(ctx, len));
+	range->size = cpu_to_le16(bytes_to_blocks_align_up(ctx, pos, len));
 
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
 		         bmc_platform->sw->ipmi_oem_hiomap_cmd,
@@ -384,7 +399,7 @@ static int hiomap_mark_dirty(struct ipmi_hiomap *ctx, uint64_t offset,
 	pos = offset - ctx->current.cur_pos;
 	range = (struct hiomap_v2_range *)&req[2];
 	range->offset = cpu_to_le16(bytes_to_blocks(ctx, pos));
-	range->size = cpu_to_le16(bytes_to_blocks(ctx, size));
+	range->size = cpu_to_le16(bytes_to_blocks_align_up(ctx, pos, size));
 
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
 		         bmc_platform->sw->ipmi_oem_hiomap_cmd,
@@ -494,7 +509,7 @@ static int hiomap_erase(struct ipmi_hiomap *ctx, uint64_t offset,
 	pos = offset - ctx->current.cur_pos;
 	range = (struct hiomap_v2_range *)&req[2];
 	range->offset = cpu_to_le16(bytes_to_blocks(ctx, pos));
-	range->size = cpu_to_le16(bytes_to_blocks(ctx, size));
+	range->size = cpu_to_le16(bytes_to_blocks_align_up(ctx, pos, size));
 
 	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
 		         bmc_platform->sw->ipmi_oem_hiomap_cmd,
