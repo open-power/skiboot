@@ -205,8 +205,9 @@ int ipmi_sel_register(uint8_t oem_cmd __attribute__((unused)),
 int64_t lpc_write(enum OpalLPCAddressType addr_type __attribute__((unused)),
 		  uint32_t addr __attribute__((unused)),
 		  uint32_t data __attribute__((unused)),
-		  uint32_t sz __attribute__((unused)))
+		  uint32_t sz)
 {
+	assert(sz != 0);
 	return 0;
 }
 
