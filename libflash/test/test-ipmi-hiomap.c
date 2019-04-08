@@ -1061,6 +1061,23 @@ static void test_hiomap_protocol_write_one_block(void)
 	scenario_exit();
 }
 
+static void test_hiomap_protocol_write_one_byte(void)
+{
+	struct blocklevel_device *bl;
+	uint8_t *buf;
+	size_t len;
+
+	scenario_enter(scenario_hiomap_protocol_write_one_block);
+	assert(!ipmi_hiomap_init(&bl));
+	len = 1;
+	buf = calloc(1, len);
+	assert(buf);
+	assert(!bl->write(bl, 0, buf, len));
+	free(buf);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
 static const struct scenario_event
 scenario_hiomap_protocol_write_two_blocks[] = {
 	{ .type = scenario_event_p, .p = &hiomap_ack_call, },
@@ -1120,6 +1137,25 @@ static void test_hiomap_protocol_write_two_blocks(void)
 	assert(!ipmi_hiomap_init(&bl));
 	ctx = container_of(bl, struct ipmi_hiomap, bl);
 	len = 2 * (1 << ctx->block_size_shift);
+	buf = calloc(1, len);
+	assert(buf);
+	assert(!bl->write(bl, 0, buf, len));
+	free(buf);
+	ipmi_hiomap_exit(bl);
+	scenario_exit();
+}
+
+static void test_hiomap_protocol_write_1block_1byte(void)
+{
+	struct blocklevel_device *bl;
+	struct ipmi_hiomap *ctx;
+	uint8_t *buf;
+	size_t len;
+
+	scenario_enter(scenario_hiomap_protocol_write_two_blocks);
+	assert(!ipmi_hiomap_init(&bl));
+	ctx = container_of(bl, struct ipmi_hiomap, bl);
+	len =  (1 << ctx->block_size_shift) + 1;
 	buf = calloc(1, len);
 	assert(buf);
 	assert(!bl->write(bl, 0, buf, len));
@@ -3079,7 +3115,9 @@ struct test_case test_cases[] = {
 	TEST_CASE(test_hiomap_protocol_event_before_read),
 	TEST_CASE(test_hiomap_protocol_event_during_read),
 	TEST_CASE(test_hiomap_protocol_write_one_block),
+	TEST_CASE(test_hiomap_protocol_write_one_byte),
 	TEST_CASE(test_hiomap_protocol_write_two_blocks),
+	TEST_CASE(test_hiomap_protocol_write_1block_1byte),
 	TEST_CASE(test_hiomap_protocol_write_one_block_twice),
 	TEST_CASE(test_hiomap_protocol_event_before_write),
 	TEST_CASE(test_hiomap_protocol_event_during_write),
