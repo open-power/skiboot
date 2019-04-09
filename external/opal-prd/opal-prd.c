@@ -255,6 +255,7 @@ static void pr_log_daemon_init(void)
 /* Check service processor type */
 static bool is_fsp_system(void)
 {
+	bool fsp_system = true;
 	char *path;
 	int rc;
 
@@ -264,7 +265,11 @@ static bool is_fsp_system(void)
 		return false;
 	}
 
-	return access(path, F_OK) ? false : true;
+	if (access(path, F_OK))
+		fsp_system = false;
+
+	free(path);
+	return fsp_system;
 }
 
 /**
