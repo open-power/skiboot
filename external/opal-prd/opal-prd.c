@@ -1017,6 +1017,10 @@ static int open_and_read(const char *path, void **bufp, int *lenp)
 	}
 
 	buf = malloc(statbuf.st_size);
+	if (!buf) {
+		close(fd);
+		return -1;
+	}
 
 	for (rc = bytes = 0; bytes < statbuf.st_size; bytes += rc) {
 		rc = read(fd, buf + bytes, statbuf.st_size - bytes);
