@@ -144,9 +144,11 @@ void init_chips(void)
 		prlog(PR_NOTICE, "CHIP: Detected Awan emulator\n");
 	}
 	/* Detect Qemu */
-	if (dt_node_is_compatible(dt_root, "qemu,powernv")) {
+	if (dt_node_is_compatible(dt_root, "qemu,powernv") ||
+	    dt_node_is_compatible(dt_root, "qemu,powernv8") ||
+	    dt_node_is_compatible(dt_root, "qemu,powernv9")) {
 		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_NO_PBA
-			| QUIRK_NO_DIRECT_CTL;
+			| QUIRK_NO_DIRECT_CTL | QUIRK_NO_RNG;
 		prlog(PR_NOTICE, "CHIP: Detected Qemu simulator\n");
 	}
 
