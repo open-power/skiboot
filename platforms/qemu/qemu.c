@@ -23,11 +23,11 @@
 
 static bool bt_device_present;
 
-static bool qemu_probe(void)
+static bool qemu_probe_common(const char *compat)
 {
 	struct dt_node *n;
 
-	if (!dt_node_is_compatible(dt_root, "qemu,powernv"))
+	if (!dt_node_is_compatible(dt_root, compat))
 		return false;
 
         astbmc_early_init();
@@ -40,6 +40,21 @@ static bool qemu_probe(void)
 	return true;
 }
 
+static bool qemu_probe(void)
+{
+	return qemu_probe_common("qemu,powernv");
+}
+
+static bool qemu_probe_powernv8(void)
+{
+	return qemu_probe_common("qemu,powernv8");
+}
+
+static bool qemu_probe_powernv9(void)
+{
+	return qemu_probe_common("qemu,powernv9");
+}
+
 static void qemu_init(void)
 {
 	if (!bt_device_present) {
@@ -50,7 +65,7 @@ static void qemu_init(void)
 }
 
 DECLARE_PLATFORM(qemu) = {
-	.name		= "Qemu",
+	.name		= "QEMU",
 	.probe		= qemu_probe,
 	.init		= qemu_init,
 	.external_irq   = astbmc_ext_irq_serirq_cpld,
@@ -58,5 +73,39 @@ DECLARE_PLATFORM(qemu) = {
 	.cec_reboot     = astbmc_ipmi_reboot,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
+	.terminate	= ipmi_terminate,
+};
+
+/*
+ * For a QEMU PowerNV machine using POWER8 CPUs (Palmetto)
+ */
+DECLARE_PLATFORM(qemu_powernv8) = {
+	.name		= "QEMU POWER8",
+	.probe		= qemu_probe_powernv8,
+	.bmc		= &bmc_plat_ast2400_ami,
+	.init		= qemu_init,
+	.external_irq   = astbmc_ext_irq_serirq_cpld,
+	.cec_power_down = astbmc_ipmi_power_down,
+	.cec_reboot     = astbmc_ipmi_reboot,
+	.start_preload_resource	= flash_start_preload_resource,
+	.resource_loaded	= flash_resource_loaded,
+	.exit			= astbmc_exit,
+	.terminate	= ipmi_terminate,
+};
+
+/*
+ * For a QEMU PowerNV machine using POWER9 CPUs (Witherspoon)
+ */
+DECLARE_PLATFORM(qemu_powernv9) = {
+	.name		= "QEMU POWER9",
+	.probe		= qemu_probe_powernv9,
+	.bmc		= &bmc_plat_ast2500_openbmc,
+	.init		= qemu_init,
+	.external_irq   = astbmc_ext_irq_serirq_cpld,
+	.cec_power_down = astbmc_ipmi_power_down,
+	.cec_reboot     = astbmc_ipmi_reboot,
+	.start_preload_resource	= flash_start_preload_resource,
+	.resource_loaded	= flash_resource_loaded,
+	.exit			= astbmc_exit,
 	.terminate	= ipmi_terminate,
 };
