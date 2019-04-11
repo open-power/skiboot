@@ -44,11 +44,7 @@ static void p9_darn_init(void)
 	 */
 	dt_for_each_compatible(dt_root, nx, "ibm,power9-nx")
 		break;
-	if (!nx) {
-		if (!dt_node_is_compatible(dt_root, "qemu,powernv"))
-			assert(nx);
-		return;
-	}
+	assert(nx);
 
 	phys_map_get(dt_get_chip_id(nx), NX_RNG, 0, &default_bar, NULL);
 
