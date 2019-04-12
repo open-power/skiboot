@@ -1282,9 +1282,6 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	prd_register_reserved_memory();
 
-	/* On P9, switch to radix mode by default */
-	cpu_set_radix_mode();
-
 	checksum_romem();
 
 	load_and_boot_kernel(false);

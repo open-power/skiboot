@@ -766,9 +766,12 @@ init_shared_sprs:
 	mtspr	SPR_TSCR, %r3
 	/* HID0: Clear bit 5 (enable core recovery)
 	 *       Clear bit 4 (HILE)
+	 *       Set bit 8 (radix)
 	 */
 	mfspr	%r3,SPR_HID0
 	li	%r0,1
+	sldi	%r4,%r0,(63-8)
+	or	%r3,%r3,%r4
 	sldi	%r4,%r0,(63-5)
 	sldi	%r5,%r0,(63-4)
 	or	%r0,%r4,%r5

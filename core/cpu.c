@@ -1433,20 +1433,6 @@ static int64_t cpu_change_all_hid0(struct hid0_change_req *req)
 	return OPAL_SUCCESS;
 }
 
-void cpu_set_radix_mode(void)
-{
-	struct hid0_change_req req;
-
-	if (!radix_supported)
-		return;
-
-	req.clr_bits = 0;
-	req.set_bits = SPR_HID0_POWER9_RADIX;
-	cleanup_global_tlb();
-	current_radix_mode = true;
-	cpu_change_all_hid0(&req);
-}
-
 static void cpu_cleanup_one(void *param __unused)
 {
 	mtspr(SPR_AMR, 0);
@@ -1488,8 +1474,8 @@ void cpu_fast_reboot_complete(void)
 	/* Fast reboot will have cleared HID0:HILE */
 	current_hile_mode = false;
 
-	/* On P9, restore radix mode */
-	cpu_set_radix_mode();
+	/* and set HID0:RADIX */
+	current_radix_mode = true;
 }
 
 static int64_t opal_reinit_cpus(uint64_t flags)

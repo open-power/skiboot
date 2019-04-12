@@ -313,7 +313,6 @@ extern unsigned long __attrconst cpu_emergency_stack_top(unsigned int pir);
 extern void cpu_idle_job(void);
 extern void cpu_idle_delay(unsigned long delay);
 
-extern void cpu_set_radix_mode(void);
 extern void cpu_fast_reboot_complete(void);
 
 int dctl_set_special_wakeup(struct cpu_thread *t);
