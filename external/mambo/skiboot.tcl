@@ -587,4 +587,6 @@ if { [info exists env(SKIBOOT_AUTORUN)] } {
     if [catch { mysim go }] {
 	readline
     }
+} else {
+	readline
 }
