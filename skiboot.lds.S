@@ -99,7 +99,7 @@ SECTIONS
 	_stext = .;
  	.text : {
 		*(.text*)
-		*(.sfpr)
+		*(.sfpr .glink)
 	}
 	_etext = .;
 
@@ -161,10 +161,15 @@ SECTIONS
 		*(.rela*)
 		__rela_dyn_end = .;
 	}
+	.plt    : { *(.plt) *(.iplt) }
 
-	.hash   : { *(.hash)   }
-	.dynsym : { *(.dynsym) }
-	.dynstr : { *(.dynstr) }
+	.hash          : { *(.hash)   }
+	.gnu.hash      : { *(.gnu.hash) }
+	.dynsym        : { *(.dynsym) }
+	.dynstr        : { *(.dynstr) }
+	.gnu.version   : { *(.gnu.version) }
+	.gnu.version_d : { *(.gnu.version_d) }
+	.gnu.version_r : { *(.gnu.version_r) }
 
 	. = ALIGN(0x10);
 	.sym_map : {
@@ -201,6 +206,7 @@ SECTIONS
 
 	_sbss = .;
 	.bss : {
+		*(.dynbss)
 		*(.bss*)
 	}
 	. = ALIGN(0x10000);
@@ -219,6 +225,7 @@ SECTIONS
 
 	/* Discards */
 	/DISCARD/ : {
+		*(.note.GNU-stack)
 		*(.comment)
 		*(.eh_frame)
 		*(.interp)
