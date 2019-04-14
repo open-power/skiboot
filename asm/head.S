@@ -1090,7 +1090,12 @@ opal_entry:
 	lwz	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
 	subi	%r11,%r11,1
 	stw	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
-	blr
+	/*
+	 * blr with BH=01b means it's not a function return, OPAL was entered
+	 * via (h)rfid not bl, so we don't have a corresponding link stack
+	 * prediction to return to here.
+	 */
+	bclr	20,0,1
 
 .global start_kernel
 start_kernel:
