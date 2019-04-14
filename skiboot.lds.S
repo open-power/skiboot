@@ -175,6 +175,7 @@ SECTIONS
 	/* Discards */
 	/DISCARD/ : {
 		*(.comment)
+		*(.eh_frame)
 		*(.interp)
 	}
 }
