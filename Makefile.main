@@ -136,6 +136,8 @@ LDFLAGS += -Wl,--no-multi-toc
 LDFLAGS += -mcpu=power7 -mbig-endian -Wl,--oformat,elf64-powerpc
 LDFLAGS_FINAL = -EB -m elf64ppc --no-multi-toc -N --build-id=none --whole-archive
 LDFLAGS_FINAL += -static -nostdlib -pie -Ttext-segment=$(LD_TEXT) --oformat=elf64-powerpc
+LDFLAGS_FINAL += --orphan-handling=warn
+
 LDRFLAGS=-melf64ppc
 # Debug stuff
 #LDFLAGS += -Wl,-v -Wl,-Map,foomap 
