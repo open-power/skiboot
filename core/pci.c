@@ -1423,15 +1423,20 @@ static void pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
 	uint8_t class, sub;
 	uint8_t pos, len;
 
-	/* If there is a label assigned to the function, use it on openpower machines */
-	if (pd->slot)
-		blcode = dt_prop_get_def(np, "ibm,slot-label", NULL);
+	while (p) {
+		/* if we have a slot label (i.e. openpower) use that */
+		blcode = dt_prop_get_def(p, "ibm,slot-label", NULL);
+		if (blcode)
+			break;
 
-	/* Look for a parent with a slot-location-code */
-	while (!blcode && p) {
+		/* otherwise use the fully qualified location code */
 		blcode = dt_prop_get_def(p, "ibm,slot-location-code", NULL);
+		if (blcode)
+			break;
+
 		p = p->parent;
 	}
+
 	if (!blcode)
 		return;
 
