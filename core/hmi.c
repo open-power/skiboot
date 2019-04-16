@@ -1146,6 +1146,9 @@ static int handle_tfac_errors(struct OpalHMIEvent *hmi_evt, uint64_t *out_flags)
 	int recover = -1;
 	uint64_t tfmr = mfspr(SPR_TFMR);
 
+	/* Initialize the hmi event with old value of TFMR */
+	hmi_evt->tfmr = tfmr;
+
 	/* A TFMR parity/corrupt error makes us ignore all the local stuff.*/
 	if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
 		/* Mark TB as invalid for now as we don't trust TFMR, we'll fix
@@ -1206,7 +1209,6 @@ static int handle_tfac_errors(struct OpalHMIEvent *hmi_evt, uint64_t *out_flags)
 	if (recover != -1 && hmi_evt) {
 		hmi_evt->severity = OpalHMI_SEV_ERROR_SYNC;
 		hmi_evt->type = OpalHMI_ERROR_TFAC;
-		hmi_evt->tfmr = tfmr;
 		queue_hmi_event(hmi_evt, recover, out_flags);
 	}
 
