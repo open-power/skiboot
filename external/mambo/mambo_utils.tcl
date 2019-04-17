@@ -402,12 +402,14 @@ proc bt { {sp 0} } {
     upvar #0 target_p p
 
     set lr [mysim cpu $p:$c:$t display spr pc]
-    puts "pc:\t\t\t\t$lr"
+    set sym [addr2func $lr]
+    puts "pc:\t\t\t\t$lr\t$sym"
     if { $sp == 0 } {
         set sp [mysim cpu $p:$c:$t display gpr 1]
     }
     set lr [mysim cpu $p:$c:$t display spr lr]
-    puts "lr:\t\t\t\t$lr"
+    set sym [addr2func $lr]
+    puts "lr:\t\t\t\t$lr\t$sym"
 
     set msr [mysim cpu $p:$c:$t display spr msr]
     set le [ expr $msr & 1 ]
@@ -417,7 +419,8 @@ proc bt { {sp 0} } {
         set pa [ mysim cpu $p:$c:$t util dtranslate $sp ]
         set bc [ mem_display_64 $pa $le ]
         set lr [ mem_display_64 [ expr $pa + 16 ] $le ]
-        puts "stack:$pa \t$lr"
+        set sym [addr2func $lr]
+        puts "stack:$pa \t$lr\t$sym"
         if { $bc == 0 } { break }
         set sp $bc
     }
