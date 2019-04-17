@@ -141,19 +141,30 @@ if {![info exists of::encode_compat]} {
 if { [file exists mambo_utils.tcl] } then {
 	source mambo_utils.tcl
 
+	if { [info exists env(USER_MAP)] } {
+		global user_symbol_map user_symbol_list
+
+		set fp [open $env(USER_MAP) r]
+		set user_symbol_map [read $fp]
+	        set user_symbol_list [split $user_symbol_map "\n"]
+		close $fp
+	}
+
 	if { [info exists env(VMLINUX_MAP)] } {
-		global linux_symbol_map
+		global linux_symbol_map linux_symbol_list
 
 		set fp [open $env(VMLINUX_MAP) r]
 		set linux_symbol_map [read $fp]
+	        set linux_symbol_list [split $linux_symbol_map "\n"]
 		close $fp
 	}
 
 	if { [info exists env(SKIBOOT_MAP)] } {
-		global skiboot_symbol_map
+		global skiboot_symbol_map skiboot_symbol_list
 
 		set fp [open $env(SKIBOOT_MAP) r]
 		set skiboot_symbol_map [read $fp]
+	        set skiboot_symbol_list [split $skiboot_symbol_map "\n"]
 		close $fp
 	}
 }
