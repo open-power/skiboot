@@ -23,6 +23,12 @@
 #include <ccan/list/list.h>
 #include <ccan/str/str.h>
 
+#ifdef DEBUG_LOCKS_BACKTRACE
+#include <stack.h>
+
+#define LOCKS_BACKTRACE_MAX_ENTS	60
+#endif
+
 struct lock {
 	/* Lock value has bit 63 as lock bit and the PIR of the owner
 	 * in the top 32-bit
@@ -37,6 +43,11 @@ struct lock {
 
 	/* file/line of lock owner */
 	const char *owner;
+
+#ifdef DEBUG_LOCKS_BACKTRACE
+	struct bt_entry bt_buf[LOCKS_BACKTRACE_MAX_ENTS];
+	struct bt_metadata bt_metadata;
+#endif
 
 	/* linkage in per-cpu list of owned locks */
 	struct list_node list;

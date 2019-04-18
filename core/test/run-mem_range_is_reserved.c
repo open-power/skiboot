@@ -16,6 +16,9 @@
 
 #include <config.h>
 
+/* The lock backtrace structures consume too much room on the skiboot heap */
+#undef DEBUG_LOCKS_BACKTRACE
+
 #define BITS_PER_LONG (sizeof(long) * 8)
 
 #include "dummy-cpu.h"

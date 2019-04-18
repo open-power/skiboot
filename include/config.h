@@ -39,6 +39,13 @@
 /* Enable lock debugging */
 #define DEBUG_LOCKS		1
 
+/* Enable printing of backtraces when locks not released */
+#ifdef DEBUG
+#define DEBUG_LOCKS_BACKTRACE  1
+#else
+//#define DEBUG_LOCKS_BACKTRACE	1
+#endif
+
 /* Enable lock dependency checker */
 #define DEADLOCK_CHECKER	1
 

@@ -208,6 +208,12 @@ bool try_lock_caller(struct lock *l, const char *owner)
 		cpu->con_suspend++;
 	if (__try_lock(cpu, l)) {
 		l->owner = owner;
+
+#ifdef DEBUG_LOCKS_BACKTRACE
+		backtrace_create(l->bt_buf, LOCKS_BACKTRACE_MAX_ENTS,
+				 &l->bt_metadata);
+#endif
+
 		list_add(&cpu->locks_held, &l->list);
 		return true;
 	}
@@ -312,8 +318,12 @@ void dump_locks_list(void)
 	struct lock *l;
 
 	prlog(PR_ERR, "Locks held:\n");
-	list_for_each(&this_cpu()->locks_held, l, list)
+	list_for_each(&this_cpu()->locks_held, l, list) {
 		prlog(PR_ERR, "  %s\n", l->owner);
+#ifdef DEBUG_LOCKS_BACKTRACE
+		backtrace_print(l->bt_buf, &l->bt_metadata, NULL, NULL, true);
+#endif
+	}
 }
 
 void drop_my_locks(bool warn)
@@ -322,8 +332,13 @@ void drop_my_locks(bool warn)
 
 	disable_fast_reboot("Lock corruption");
 	while((l = list_top(&this_cpu()->locks_held, struct lock, list)) != NULL) {
-		if (warn)
+		if (warn) {
 			prlog(PR_ERR, "  %s\n", l->owner);
+#ifdef DEBUG_LOCKS_BACKTRACE
+			backtrace_print(l->bt_buf, &l->bt_metadata, NULL, NULL,
+					true);
+#endif
+		}
 		unlock(l);
 	}
 }
