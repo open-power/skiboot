@@ -5874,8 +5874,8 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 		dt_add_property_cells(np, "ibm,hub-id", hub_id);
 	}
 
-	if (dt_has_node_property(stk_node, "ibm,loc-code", NULL)) {
-		const char *lc = dt_prop_get(stk_node, "ibm,loc-code");
+	if (dt_has_node_property(stk_node->parent, "ibm,loc-code", NULL)) {
+		const char *lc = dt_prop_get(stk_node->parent, "ibm,loc-code");
 		dt_add_property_string(np, "ibm,loc-code", lc);
 	}
 	if (dt_has_node_property(stk_node, "ibm,lane-eq", NULL)) {
