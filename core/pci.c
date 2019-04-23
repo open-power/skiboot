@@ -1611,6 +1611,15 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 	if (pd->slot)
 		pci_slot_add_dt_properties(pd->slot, np);
 
+	/*
+	 * Use the phb base location code for root ports if the platform
+	 * doesn't provide one via slot->add_properties() operation.
+	 */
+	if (pd->dev_type == PCIE_TYPE_ROOT_PORT && phb->base_loc_code &&
+	    !dt_has_node_property(np, "ibm,slot-location-code", NULL))
+		dt_add_property_string(np, "ibm,slot-location-code",
+				       phb->base_loc_code);
+
 	/* Make up location code */
 	pci_add_loc_code(np, pd);
 
