@@ -403,6 +403,7 @@ static void npu2_err_interrupt(struct irq_source *is, uint32_t isn)
 {
 	struct npu2 *p = is->data;
 	uint32_t idx = isn - p->base_lsi;
+	char *irq_name;
 	int brick;
 
 	switch (idx) {
@@ -413,8 +414,10 @@ static void npu2_err_interrupt(struct irq_source *is, uint32_t isn)
 	case 27 ... 34:
 		/* opencapi only */
 		brick = 2 + ((idx - 27) % 4);
-		prlog(PR_ERR, "NPU[%d] error interrupt for brick %d\n",
-			p->chip_id, brick);
+		irq_name = npu2_ipi_name(is, isn);
+		prlog(PR_ERR, "NPU[%d] received error interrupt '%s'\n",
+			p->chip_id, irq_name);
+		free(irq_name);
 		show_all_regs(p, brick);
 		opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
 					OPAL_EVENT_PCI_ERROR);
