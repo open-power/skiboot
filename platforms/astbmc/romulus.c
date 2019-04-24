@@ -54,8 +54,7 @@ static const struct slot_table_entry romulus_phb_table[] = {
 
 static bool romulus_probe(void)
 {
-	if (!dt_node_is_compatible(dt_root, "ibm,romulus") &&
-	    !dt_node_is_compatible(dt_root, "rcs,talos"))
+	if (!dt_node_is_compatible(dt_root, "ibm,romulus"))
 		return false;
 
 	/* Lot of common early inits here */
