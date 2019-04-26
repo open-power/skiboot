@@ -41,7 +41,6 @@ enum op_module {
 	OP_MOD_CHIPTOD	= 0x3035,	/* '05' - ChipTOP */
 	OP_MOD_CPU	= 0x3036,	/* '06' - CPU bringup */
 	OP_MOD_MEM	= 0x3037,	/* '07' - Memory */
-	OP_MOD_XSCOM	= 0x3038,	/* '08' - XSCOM */
 };
 
 /* Common codes:
@@ -63,6 +62,7 @@ enum op_module {
  */
 
 extern void op_display(enum op_severity, enum op_module, uint16_t code);
+extern void op_display_lpc(enum op_severity s, enum op_module m, uint16_t c);
 
 extern void op_panel_disable_src_echo(void);
 extern void op_panel_clear_src(void);

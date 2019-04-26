@@ -55,8 +55,10 @@ void op_display(enum op_severity sev, enum op_module mod, uint16_t code)
 	uint32_t w0;
 	uint32_t w1;
 
-	if (!fsp_present())
+	if (!fsp_present()) {
+		op_display_lpc(sev, mod, code);
 		return;
+	}
 
 	w0 = sev << 16 | mod;
 
