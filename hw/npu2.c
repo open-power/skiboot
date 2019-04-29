@@ -1452,7 +1452,7 @@ static void assign_mmio_bars(uint64_t gcid, uint32_t scom, uint64_t reg[2], uint
 int npu2_nvlink_init_npu(struct npu2 *npu)
 {
 	struct dt_node *np;
-	uint64_t reg[2], mm_win[2], val;
+	uint64_t reg[2], mm_win[2], val, mask;
 
 	/* TODO: Clean this up with register names, etc. when we get
 	 * time. This just turns NVLink mode on in each brick and should
@@ -1461,18 +1461,48 @@ int npu2_nvlink_init_npu(struct npu2 *npu)
 	 *
 	 * Obviously if the year is now 2020 that didn't happen and you
 	 * should fix this :-) */
-	xscom_write_mask(npu->chip_id, 0x5011000, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(npu->chip_id, 0x5011030, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(npu->chip_id, 0x5011060, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(npu->chip_id, 0x5011090, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(npu->chip_id, 0x5011200, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(npu->chip_id, 0x5011230, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(npu->chip_id, 0x5011260, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(npu->chip_id, 0x5011290, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(npu->chip_id, 0x5011400, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(npu->chip_id, 0x5011430, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(npu->chip_id, 0x5011460, PPC_BIT(58), PPC_BIT(58));
-	xscom_write_mask(npu->chip_id, 0x5011490, PPC_BIT(58), PPC_BIT(58));
+
+	val = PPC_BIT(58);
+	mask = PPC_BIT(58) | /* CONFIG_NVLINK_MODE */
+	       PPC_BIT(40); /* CONFIG_ENABLE_SNARF_CPM */
+
+	/*
+	 * V100 GPUs are known to violate NVLink2 protocol if some GPU memory
+	 * mapped by a CPU was also "linear-block" mapped by a GPU. When this
+	 * happens, it breaks the NPU2 cache coherency state machine and
+	 * it throws machine checkstop. Disabling snarfing fixes this so let's
+	 * disable it by default.
+	 */
+	if (nvram_query_eq("opal-npu2-snarf-cpm", "enable")) {
+		prlog(PR_WARNING, "NPU2#%d: enabling Probe.I.MO snarfing, a bad GPU driver may crash the system!\n",
+				npu->index);
+		val |= PPC_BIT(40); /* CONFIG_ENABLE_SNARF_CPM */
+	}
+
+	xscom_write_mask(npu->chip_id, NPU_STCK0_CS_SM0_MISC_CONFIG0,
+			 val, mask);
+	xscom_write_mask(npu->chip_id, NPU_STCK0_CS_SM1_MISC_CONFIG0,
+			 val, mask);
+	xscom_write_mask(npu->chip_id, NPU_STCK0_CS_SM2_MISC_CONFIG0,
+			 val, mask);
+	xscom_write_mask(npu->chip_id, NPU_STCK0_CS_SM3_MISC_CONFIG0,
+			 val, mask);
+	xscom_write_mask(npu->chip_id, NPU_STCK1_CS_SM0_MISC_CONFIG0,
+			 val, mask);
+	xscom_write_mask(npu->chip_id, NPU_STCK1_CS_SM1_MISC_CONFIG0,
+			 val, mask);
+	xscom_write_mask(npu->chip_id, NPU_STCK1_CS_SM2_MISC_CONFIG0,
+			 val, mask);
+	xscom_write_mask(npu->chip_id, NPU_STCK1_CS_SM3_MISC_CONFIG0,
+			 val, mask);
+	xscom_write_mask(npu->chip_id, NPU_STCK2_CS_SM0_MISC_CONFIG0,
+			 val, mask);
+	xscom_write_mask(npu->chip_id, NPU_STCK2_CS_SM1_MISC_CONFIG0,
+			 val, mask);
+	xscom_write_mask(npu->chip_id, NPU_STCK2_CS_SM2_MISC_CONFIG0,
+			 val, mask);
+	xscom_write_mask(npu->chip_id, NPU_STCK2_CS_SM3_MISC_CONFIG0,
+			 val, mask);
 
 	xscom_write_mask(npu->chip_id, 0x50110c0, PPC_BIT(53), PPC_BIT(53));
 	xscom_write_mask(npu->chip_id, 0x50112c0, PPC_BIT(53), PPC_BIT(53));
