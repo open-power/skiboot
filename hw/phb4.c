@@ -5522,10 +5522,10 @@ static uint64_t phb4_lsi_attributes(struct irq_source *is __unused,
 				uint32_t isn __unused)
 {
 #ifndef DISABLE_ERR_INTS
-	struct phb3 *p = is->data;
+	struct phb4 *p = is->data;
 	uint32_t idx = isn - p->base_lsi;
 
-	if (idx == PHB3_LSI_PCIE_INF || idx == PHB3_LSI_PCIE_ER)
+	if (idx == PHB4_LSI_PCIE_INF || idx == PHB4_LSI_PCIE_ER)
 		return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TARGET_RARE | IRQ_ATTR_TYPE_LSI;
 #endif
 	return IRQ_ATTR_TARGET_LINUX;
