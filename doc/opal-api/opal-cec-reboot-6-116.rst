@@ -66,3 +66,14 @@ OPAL_REBOOT_FULL_IPL = 2
 Unsupported Reboot type
 	For unsupported reboot type, this function will return with
 	OPAL_UNSUPPORTED and no reboot will be triggered.
+
+Debugging
+^^^^^^^^^
+
+This is **not** ABI and may change or be removed at any time.
+
+You can change if the software checkstop trigger is used or not by an NVRAM
+variable: ::
+
+  nvram -p ibm,skiboot --update-config opal-sw-xstop=enable
+  nvram -p ibm,skiboot --update-config opal-sw-xstop=disable

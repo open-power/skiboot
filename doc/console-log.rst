@@ -74,3 +74,20 @@ still only PR_NOTICE through drivers.
 
 People who write something like 0x1f will get a very quiet boot indeed.
 
+Debugging
+---------
+
+You can change the log level of what goes to the in memory buffer and whta
+goes to the driver (i.e. serial port / IPMI Serial over LAN) at boot time
+by setting NVRAM variables: ::
+
+  nvram -p ibm,skiboot --update-config log-level-driver=7
+  nvram -p ibm,skiboot --update-config log-level-memory=7
+
+You can also use the named versions of emerg, alert, crit, err,
+warning, notice, printf, info, debug, trace or insane.  ie. ::
+
+  nvram -p ibm,skiboot --update-config log-level-driver=insane
+
+
+You an also write to the debug_descriptor to change it at runtime.

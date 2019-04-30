@@ -1,7 +1,124 @@
 PCI
 ===
 
-**WARNING**: This documentation **urgently needs updating** and is *woefully* incomplete.
+Debugging
+---------
+
+There exist a couple of NVRAM options for enabling extra debug functionality
+to help debug PCI issues. These are not ABI and may be changed or removed at
+**any** time.
+
+Verbose EEH
+^^^^^^^^^^^
+
+::
+
+   nvram -p ibm,skiboot --update-config pci-eeh-verbose=true
+
+Disable EEH MMIO
+^^^^^^^^^^^^^^^^
+::
+   nvram -p ibm,skiboot --update-config pci-eeh-mmio=disabled
+
+
+Check for RX errors after link training
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some PHB4 PHYs can get stuck in a bad state where they are constantly
+retraining the link. This happens transparently to skiboot and Linux
+but will causes PCIe to be slow. Resetting the PHB4 clears the
+problem.
+
+We can detect this case by looking at the RX errors count where we
+check for link stability. This patch does this by modifying the link
+optimal code to check for RX errors. If errors are occurring we
+retrain the link irrespective of the chip rev or card.
+
+Normally when this problem occurs, the RX error count is maxed out at
+255. When there is no problem, the count is 0. We chose 8 as the max
+rx errors value to give us some margin for a few errors. There is also
+a knob that can be used to set the error threshold for when we should
+retrain the link. i.e. ::
+
+      nvram -p ibm,skiboot --update-config phb-rx-err-max=8
+
+Retrain link if degraded
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+On P9 Scale Out (Nimbus) DD2.0 and Scale in (Cumulus) DD1.0 (and
+below) the PCIe PHY can lockup causing training issues. This can cause
+a degradation in speed or width in ~5% of training cases (depending on
+the card). This is fixed in later chip revisions. This issue can also
+cause PCIe links to not train at all, but this case is already
+handled.
+
+There is code in skiboot that checks if the PCIe link has trained optimally
+and if not, does a full PHB reset (to fix the PHY lockup) and retrain.
+
+One complication is some devices are known to train degraded unless
+device specific configuration is performed. Because of this, we only
+retrain when the device is in a whitelist. All devices in the current
+whitelist have been testing on a P9DSU/Boston, ZZ and Witherspoon.
+
+We always gather information on the link and print it in the logs even
+if the card is not in the whitelist.
+
+For testing purposes, there's an nvram to retry all PCIe cards and all
+P9 chips when a degraded link is detected. The new option is
+'pci-retry-all=true' which can be set using: ::
+
+  nvram -p ibm,skiboot --update-config pci-retry-all=true
+
+This option may increase the boot time if used on a badly behaving
+card.
+
+Maximum link speed
+^^^^^^^^^^^^^^^^^^
+
+Was useful during bringup on P9 DD1.
+
+::
+   nvram -p ibm,skiboot --update-config pcie-max-link-speed=4
+
+
+Ric Mata Mode
+^^^^^^^^^^^^^
+
+This mode (for PHB4) will trace the training process closely. This activates
+as soon as PERST is deasserted and produces human readable output of
+the process.
+
+It will also add the PCIe Link Training and Status State Machine (LTSSM) tracing
+and details on speed and link width.
+
+Output looks a bit like this ::
+
+  [    1.096995141,3] PHB#0000[0:0]: TRACE:0x0000001101000000  0ms          GEN1:x16:detect
+  [    1.102849137,3] PHB#0000[0:0]: TRACE:0x0000102101000000 11ms presence GEN1:x16:polling
+  [    1.104341838,3] PHB#0000[0:0]: TRACE:0x0000182101000000 14ms training GEN1:x16:polling
+  [    1.104357444,3] PHB#0000[0:0]: TRACE:0x00001c5101000000 14ms training GEN1:x16:recovery
+  [    1.104580394,3] PHB#0000[0:0]: TRACE:0x00001c5103000000 14ms training GEN3:x16:recovery
+  [    1.123259359,3] PHB#0000[0:0]: TRACE:0x00001c5104000000 51ms training GEN4:x16:recovery
+  [    1.141737656,3] PHB#0000[0:0]: TRACE:0x0000144104000000 87ms presence GEN4:x16:L0
+  [    1.141752318,3] PHB#0000[0:0]: TRACE:0x0000154904000000 87ms trained  GEN4:x16:L0
+  [    1.141757964,3] PHB#0000[0:0]: TRACE: Link trained.
+  [    1.096834019,3] PHB#0001[0:1]: TRACE:0x0000001101000000  0ms          GEN1:x16:detect
+  [    1.105578525,3] PHB#0001[0:1]: TRACE:0x0000102101000000 17ms presence GEN1:x16:polling
+  [    1.112763075,3] PHB#0001[0:1]: TRACE:0x0000183101000000 31ms training GEN1:x16:config
+  [    1.112778956,3] PHB#0001[0:1]: TRACE:0x00001c5081000000 31ms training GEN1:x08:recovery
+  [    1.113002083,3] PHB#0001[0:1]: TRACE:0x00001c5083000000 31ms training GEN3:x08:recovery
+  [    1.114833873,3] PHB#0001[0:1]: TRACE:0x0000144083000000 35ms presence GEN3:x08:L0
+  [    1.114848832,3] PHB#0001[0:1]: TRACE:0x0000154883000000 35ms trained  GEN3:x08:L0
+  [    1.114854650,3] PHB#0001[0:1]: TRACE: Link trained.
+
+Enabled via NVRAM: ::
+
+  nvram -p ibm,skiboot --update-config pci-tracing=true
+
+Named after the person the output of this mode is typically sent to.
+
+
+**WARNING**: The documentation below **urgently needs updating** and is *woefully* incomplete.
 
 IODA PE Setup Sequences
 -----------------------

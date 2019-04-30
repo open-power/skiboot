@@ -1,3 +1,5 @@
+.. _power-mgt-devtree:
+
 ibm,opal/power-mgt device tree entries
 ======================================
 

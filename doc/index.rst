@@ -46,6 +46,7 @@ Developer Guide and Internals
    xscom-node-bindings
    xive
    imc
+   power-management
 
 
 OPAL ABI
