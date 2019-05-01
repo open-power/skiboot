@@ -18,7 +18,6 @@
 #include <cpu.h>
 #include <pci.h>
 #include <pci-cfg.h>
-#include <pci-iov.h>
 #include <pci-slot.h>
 #include <pci-quirk.h>
 #include <timebase.h>
@@ -214,7 +213,6 @@ void pci_init_capabilities(struct phb *phb, struct pci_device *pd)
 {
 	pci_init_pcie_cap(phb, pd);
 	pci_init_aer_cap(phb, pd);
-	pci_init_iov_cap(phb, pd);
 	pci_init_pm_cap(phb, pd);
 }
 
