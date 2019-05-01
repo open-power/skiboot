@@ -1056,7 +1056,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	dt_init_misc();
 
 	/*
-	 * Initialize LPC (P8 only) so we can get to UART, BMC and
+	 * Initialize LPC (P8 and beyond) so we can get to UART, BMC and
 	 * other system controller. This is done before probe_platform
 	 * so that the platform probing code can access an external
 	 * BMC if needed.
