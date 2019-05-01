@@ -254,6 +254,8 @@ static struct ipmi_backend fsp_ipmi_backend = {
 	.queue_msg	= fsp_ipmi_queue_msg,
 	.queue_msg_head	= fsp_ipmi_queue_msg_head,
 	.dequeue_msg	= fsp_ipmi_dequeue_msg,
+	/* FIXME if ever use ipmi_queue_msg_sync on FSP */
+	.poll           = NULL,
 };
 
 static bool fsp_ipmi_send_response(uint32_t cmd)

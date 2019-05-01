@@ -182,6 +182,15 @@ struct ipmi_backend {
 	int (*queue_msg_head)(struct ipmi_msg *);
 	int (*dequeue_msg)(struct ipmi_msg *);
 	void (*disable_retry)(struct ipmi_msg *);
+	/*
+	 * When processing a synchronous IPMI message, pollers may not run, and
+	 * neither may timers (as the synchronous IPMI message may be being
+	 * done with locks held, which a timer may then try to also take).
+	 *
+	 * So, ensure we have a way to drive any state machines that an IPMI
+	 * backend may neeed to crank to ensure forward progress.
+	 */
+	void (*poll)(void);
 };
 
 extern struct ipmi_backend *ipmi_backend;

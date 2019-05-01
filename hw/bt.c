@@ -524,6 +524,11 @@ static void bt_poll(struct timer *t __unused, void *data __unused,
 		       bt.irq_ok ? TIMER_POLL : msecs_to_tb(BT_DEFAULT_POLL_MS));
 }
 
+static void bt_ipmi_poll(void)
+{
+	bt_poll(NULL, NULL, mftb());
+}
+
 static void bt_add_msg(struct bt_msg *bt_msg)
 {
 	bt_msg->tb = 0;
@@ -645,6 +650,7 @@ static struct ipmi_backend bt_backend = {
 	.queue_msg_head = bt_add_ipmi_msg_head,
 	.dequeue_msg = bt_del_ipmi_msg,
 	.disable_retry = bt_disable_ipmi_msg_retry,
+	.poll = bt_ipmi_poll,
 };
 
 static struct lpc_client bt_lpc_client = {
