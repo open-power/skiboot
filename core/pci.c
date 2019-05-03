@@ -1438,6 +1438,21 @@ static void pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
 	}
 
 	if (!blcode)
+		blcode = dt_prop_get_def(np, "ibm,slot-location-code", NULL);
+
+	if (!blcode) {
+		/* Fall back to finding a ibm,loc-code */
+		p = np->parent;
+
+		while (p) {
+			blcode = dt_prop_get_def(p, "ibm,loc-code", NULL);
+			if (blcode)
+				break;
+			p = p->parent;
+		}
+	}
+
+	if (!blcode)
 		return;
 
 	/* ethernet devices get port codes */
