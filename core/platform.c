@@ -59,9 +59,16 @@ static int64_t opal_cec_reboot(void)
 
 	opal_quiesce(QUIESCE_HOLD, -1);
 
-	/* Try fast-reset unless explicitly disabled */
-	if (!nvram_query_eq("fast-reset","0"))
+	if (proc_gen == proc_gen_p8 && nvram_query_eq("fast-reset","1")) {
+		/*
+		 * Bugs in P8 mean fast reboot isn't 100% reliable when cores
+		 * are busy, so only attempt if explicitly *enabled*.
+		 */
 		fast_reboot();
+	} else if (!nvram_query_eq("fast-reset","0")) {
+		/* Try fast-reset unless explicitly disabled */
+		fast_reboot();
+	}
 
 	console_complete_flush();
 
