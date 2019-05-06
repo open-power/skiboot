@@ -137,6 +137,9 @@ static void phb4_init_hw(struct phb4 *p);
 #define PHBINF(p, fmt, a...)	prlog(PR_INFO, "PHB#%04x[%d:%d]: " fmt, \
 				      (p)->phb.opal_id, (p)->chip_id, \
 				      (p)->index,  ## a)
+#define PHBNOTICE(p, fmt, a...)	prlog(PR_NOTICE, "PHB#%04x[%d:%d]: " fmt, \
+				      (p)->phb.opal_id, (p)->chip_id, \
+				      (p)->index,  ## a)
 #define PHBERR(p, fmt, a...)	prlog(PR_ERR, "PHB#%04x[%d:%d]: " fmt, \
 				      (p)->phb.opal_id, (p)->chip_id, \
 				      (p)->index,  ## a)
@@ -2385,7 +2388,7 @@ static void phb4_train_info(struct phb4 *p, uint64_t reg, unsigned long time)
 	default:
 		snprintf(s, sizeof(s), "%sunvalid", s);
 	}
-	PHBERR(p, "%s\n", s);
+	PHBNOTICE(p, "%s\n", s);
 }
 
 static void phb4_dump_pec_err_regs(struct phb4 *p)
@@ -2663,15 +2666,15 @@ static void phb4_training_trace(struct phb4 *p)
 		reglast = reg;
 
 		if (!phb4_check_reg(p, reg)) {
-			PHBERR(p, "TRACE: PHB fence waiting link.\n");
+			PHBNOTICE(p, "TRACE: PHB fence waiting link.\n");
 			break;
 		}
 		if (reg & PHB_PCIE_DLP_TL_LINKACT) {
-			PHBERR(p, "TRACE: Link trained.\n");
+			PHBNOTICE(p, "TRACE: Link trained.\n");
 			break;
 		}
 		if ((now - start) > secs_to_tb(3)) {
-			PHBERR(p, "TRACE: Timeout waiting for link up.\n");
+			PHBNOTICE(p, "TRACE: Timeout waiting for link up.\n");
 			break;
 		}
 	}
