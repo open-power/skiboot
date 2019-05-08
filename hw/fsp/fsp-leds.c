@@ -534,8 +534,11 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	u32 cmd = FSP_RSP_SET_LED_STATE;
 	int rc = -1;
 
+	memset(sled.lc_code, 0, LOC_CODE_SIZE);
 	sled.lc_len = strlen(spcn_cmd->loc_code);
-	strncpy(sled.lc_code, spcn_cmd->loc_code, sled.lc_len);
+	if (sled.lc_len >= LOC_CODE_SIZE)
+		sled.lc_len = LOC_CODE_SIZE - 1;
+	strncpy(sled.lc_code, spcn_cmd->loc_code, LOC_CODE_SIZE - 1);
 
 	lock(&led_lock);
 
@@ -604,8 +607,8 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	}
 
 	/* Write into SPCN TCE buffer */
-	buf_write(buf, u8, sled.lc_len);	 /* Location code length */
-	strncpy(buf, sled.lc_code, sled.lc_len); /* Location code */
+	buf_write(buf, u8, sled.lc_len);	/* Location code length */
+	memcpy(buf, sled.lc_code, sled.lc_len);	/* Location code */
 	buf += sled.lc_len;
 	buf_write(buf, u16, sled.state);	/* LED state */
 
@@ -780,7 +783,7 @@ static u32 fsp_push_data_to_tce(struct fsp_led_data *led, u8 *out_data,
 	/* Location code */
 	memset(lcode.loc_code, 0, LOC_CODE_SIZE);
 	lcode.raw_len = strlen(led->loc_code);
-	strncpy(lcode.loc_code, led->loc_code, lcode.raw_len);
+	strncpy(lcode.loc_code, led->loc_code, LOC_CODE_SIZE - 1);
 	lcode.fld_sz = sizeof(lcode.loc_code);
 
 	/* Rest of the structure */
@@ -1631,6 +1634,8 @@ static void fsp_process_leds_data(u16 len)
 	 */
 	buf = led_buffer;
 	while (len) {
+		size_t lc_len;
+
 		/* Prepare */
 		led_data = zalloc(sizeof(struct fsp_led_data));
 		assert(led_data);
@@ -1643,14 +1648,18 @@ static void fsp_process_leds_data(u16 len)
 		buf_read(buf, u8, &led_data->lc_len);
 		len -= sizeof(led_data->lc_len);
 
-		if (led_data->lc_len == 0) {
+		lc_len = led_data->lc_len;
+		if (lc_len == 0) {
 			free(led_data);
 			break;
 		}
 
+		if (lc_len >= LOC_CODE_SIZE)
+			lc_len = LOC_CODE_SIZE - 1;
+
 		/* Location code */
-		strncpy(led_data->loc_code, buf, led_data->lc_len);
-		strcat(led_data->loc_code, "\0");
+		strncpy(led_data->loc_code, buf, lc_len);
+		led_data->loc_code[lc_len] = '\0';
 
 		buf += led_data->lc_len;
 		len -= led_data->lc_len;
@@ -1673,13 +1682,7 @@ static void fsp_process_leds_data(u16 len)
 			assert(encl_led_data);
 
 			/* copy over the original */
-			encl_led_data->rid = led_data->rid;
-			encl_led_data->lc_len = led_data->lc_len;
-			strncpy(encl_led_data->loc_code, led_data->loc_code,
-				led_data->lc_len);
-			encl_led_data->loc_code[led_data->lc_len] = '\0';
-			encl_led_data->parms = led_data->parms;
-			encl_led_data->status = led_data->status;
+			memcpy(encl_led_data, led_data, sizeof(struct fsp_led_data));
 
 			/* Add to the list of enclosure LEDs */
 			list_add_tail(&encl_ledq, &encl_led_data->link);
