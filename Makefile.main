@@ -347,6 +347,8 @@ cscope:
 
 clean:
 	$(RM) *.[odsa] $(SUBDIRS:%=%/*.[odsa])
+	$(RM) *.gcno $(SUBDIRS:%=%/*.gcno)
+	$(RM) *.gcda $(SUBDIRS:%=%/*.gcda)
 	$(RM) *.elf $(TARGET).lid *.map $(TARGET).lds $(TARGET).lid.xz
 	$(RM) include/asm-offsets.h version.c .version
 	$(RM) skiboot.info external/gard/gard.info external/pflash/pflash.info
