@@ -590,3 +590,7 @@ if { [info exists env(SKIBOOT_AUTORUN)] } {
 } else {
 	readline
 }
+
+if { [info exists env(SKIBOOT_AUTORUN)] && $env(SKIBOOT_AUTORUN) == 2 } {
+    quit
+}
