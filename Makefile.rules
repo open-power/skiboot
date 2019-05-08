@@ -30,11 +30,11 @@ define QTEST
 endef
 
 define cook_aflags
-       $(filter-out $(AFLAGS_SKIP_$(1)), $(CPPFLAGS) $(AFLAGS)) $(AFLAGS_$(1))
+       $(filter-out $(AFLAGS_SKIP_$(1)) $(AFLAGS_SKIP_$(dir $(1))), $(CPPFLAGS) $(AFLAGS)) $(AFLAGS_$(1)) $(AFLAGS_$(dir $(1)))
 endef
 
 define cook_cflags
-       $(filter-out $(CFLAGS_SKIP_$(1)), $(CPPFLAGS) $(CFLAGS)) $(CFLAGS_$(1))
+       $(filter-out $(CFLAGS_SKIP_$(1)) $(CFLAGS_SKIP_$(dir $(1))), $(CPPFLAGS) $(CFLAGS)) $(CFLAGS_$(1)) $(CFLAGS_$(dir $(1)))
 endef
 
 ifeq ($(C),1)
