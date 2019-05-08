@@ -167,16 +167,20 @@ static int __create_dtb(void *fdt, size_t len,
 			const struct dt_node *root,
 			bool exclusive)
 {
-	fdt_create(fdt, len);
+	save_err(fdt_create(fdt, len));
+	if (fdt_error)
+		goto err;
+
 	if (root == dt_root && !exclusive)
 		create_dtb_reservemap(fdt, root);
 	else
-		fdt_finish_reservemap(fdt);
+		save_err(fdt_finish_reservemap(fdt));
 
 	flatten_dt_node(fdt, root, exclusive);
 
 	save_err(fdt_finish(fdt));
 	if (fdt_error) {
+err:
 		prerror("dtb: error %s\n", fdt_strerror(fdt_error));
 		return fdt_error;
 	}
