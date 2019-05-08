@@ -365,10 +365,6 @@ struct xive {
 	uint32_t	chip_id;
 	uint32_t	block_id;
 	struct dt_node	*x_node;
-	int		rev;
-#define XIVE_REV_UNKNOWN	0	/* Unknown version */
-#define XIVE_REV_1		1	/* P9 (Nimbus) DD1.x (not supported) */
-#define XIVE_REV_2		2	/* P9 (Nimbus) DD2.x or Cumulus */
 
 	uint64_t	xscom_base;
 
@@ -2836,15 +2832,20 @@ static struct xive *init_one_xive(struct dt_node *np)
 	chip = get_chip(x->chip_id);
 	assert(chip);
 
-	x->rev = XIVE_REV_UNKNOWN;
-	if (chip->type == PROC_CHIP_P9_NIMBUS) {
+	/* All supported P9 are revision 2 (Nimbus DD2) */
+	switch (chip->type) {
+	case PROC_CHIP_P9_NIMBUS:
+		/* We should not be able to boot a P9N DD1 */
 		assert((chip->ec_level & 0xf0) != 0x10);
-		x->rev = XIVE_REV_2;
-	} else if (chip->type == PROC_CHIP_P9_CUMULUS)
-		x->rev = XIVE_REV_2;
+		/* Fallthrough */
+	case PROC_CHIP_P9_CUMULUS:
+	case PROC_CHIP_P9P:
+		break;
+	default:
+		assert(0);
+	}
 
-	xive_dbg(x, "Initializing rev %d block ID %d...\n",
-		 x->rev, x->block_id);
+	xive_dbg(x, "Initializing block ID %d...\n", x->block_id);
 	chip->xive = x;
 
 #ifdef USE_INDIRECT
