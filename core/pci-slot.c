@@ -241,10 +241,10 @@ void pci_slot_add_loc(struct pci_slot *slot,
 		snprintf(loc_code, sizeof(loc_code), "%s-%s",
 			phb->base_loc_code, label);
 	} else {
-		strncpy(loc_code, label, sizeof(loc_code));
+		strncpy(loc_code, label, sizeof(loc_code) - 1);
+		loc_code[LOC_CODE_SIZE - 1] = '\0';
 	}
 
 	dt_add_property_string(np, "ibm,slot-label", label);
-	dt_add_property_nstr(np, "ibm,slot-location-code", loc_code,
-				sizeof(loc_code));
+	dt_add_property_string(np, "ibm,slot-location-code", loc_code);
 }
