@@ -232,6 +232,11 @@ struct platform {
 	 * OPAL terminate
 	 */
 	void __attribute__((noreturn)) (*terminate)(const char *msg);
+
+	/*
+	 * SEEPROM update routine
+	 */
+	void		(*seeprom_update)(void);
 };
 
 extern struct platform __platforms_start;

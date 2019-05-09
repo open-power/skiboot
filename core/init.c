@@ -1190,6 +1190,14 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Install the OPAL Console handlers */
 	init_opal_console();
 
+	/*
+	 * Some platforms set a flag to wait for SBE validation to be
+	 * performed by the BMC. If this occurs it leaves the SBE in a
+	 * bad state and the system will reboot at this point.
+	 */
+	if (platform.seeprom_update)
+		platform.seeprom_update();
+
 	/* Init SLW related stuff, including fastsleep */
 	slw_init();
 
