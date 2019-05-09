@@ -109,6 +109,7 @@
 #define IPMI_GET_SEL_TIME		IPMI_CODE(IPMI_NETFN_STORAGE, 0x48)
 #define IPMI_SET_SEL_TIME		IPMI_CODE(IPMI_NETFN_STORAGE, 0x49)
 #define IPMI_CHASSIS_CONTROL		IPMI_CODE(IPMI_NETFN_CHASSIS, 0x02)
+#define IPMI_CHASSIS_GET_BOOT_OPT	IPMI_CODE(IPMI_NETFN_CHASSIS, 0x09)
 #define IPMI_BMC_GET_DEVICE_ID		IPMI_CODE(IPMI_NETFN_APP, 0x01)
 #define IPMI_SET_POWER_STATE		IPMI_CODE(IPMI_NETFN_APP, 0x06)
 #define IPMI_GET_POWER_STATE		IPMI_CODE(IPMI_NETFN_APP, 0x07)
@@ -299,5 +300,11 @@ extern int ipmi_get_bmc_info_request(void);
 
 /* Add BMC firmware info to device tree */
 extern void ipmi_dt_add_bmc_info(void);
+
+/* Get BMC Boot Options info (specifically OEM param 0x62) */
+int ipmi_get_chassis_boot_opt_request(void);
+
+/* Get OEM Boot Option 0x62 for SBE validation flag */
+int ipmi_chassis_check_sbe_validation(void);
 
 #endif

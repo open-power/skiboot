@@ -262,6 +262,7 @@ DECLARE_PLATFORM(p8dtu1u) = {
 	.resource_loaded	= flash_resource_loaded,
 	.exit			= ipmi_wdt_final_reset,
 	.terminate		= ipmi_terminate,
+	.seeprom_update		= astbmc_seeprom_update,
 };
 
 DECLARE_PLATFORM(p8dtu2u) = {
@@ -279,5 +280,6 @@ DECLARE_PLATFORM(p8dtu2u) = {
 	.resource_loaded	= flash_resource_loaded,
 	.exit			= ipmi_wdt_final_reset,
 	.terminate		= ipmi_terminate,
+	.seeprom_update		= astbmc_seeprom_update,
 };
 
