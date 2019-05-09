@@ -53,3 +53,30 @@ Real-time clock
 
 On platforms where a real-time-clock is not available, skiboot may use the
 IPMI SEL Time as a real-time-clock device.
+
+SBE validation
+--------------
+
+On some P8 platforms with an AMI or SMC BMC (ie. astbmc) SBE validation is done
+by a tool on the BMC. This is done to inspect the SBE and detect if a malicious
+host has written to the SBE, especially in multi-tenant
+"Bare-Metal-As-A-Service" scenarios.
+
+To complicate this the SBE validation occurs at host-runtime and reads the SBE
+SEEPROM over I2C using the FSI master which will conflict with anything the
+host may be doing at the same time. To avoid this Skiboot will pause boot until
+the validation is complete.
+If SBE validation is required the BMC will communicate this to Skiboot by
+setting an IPMI System Boot Option with OEM parameter 0x62. When this flag is
+set Skiboot will pause and wait for the validation to complete and the flag to
+be cleared. This ensures the validation completes before the execution is passed
+to Petitboot and the host operating system and any conflicts could occur. During
+this process Skiboot will print
+      SBE validation required, waiting for completion
+      System will be powered off if validation fails
+to the console with an update every minute until complete.
+
+Unfortunately the validation performed by the BMC leaves the SBE in a bad
+state. Once the validation is complete Skiboot will reboot to reset everything
+to a good state and normal booting can resume. No such reboot is required if
+the flag is not set and validation doesn't occur.
