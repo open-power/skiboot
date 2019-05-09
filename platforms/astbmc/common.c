@@ -26,6 +26,7 @@
 #include <bt.h>
 #include <errorlog.h>
 #include <lpc.h>
+#include <timebase.h>
 
 #include "astbmc.h"
 
@@ -166,6 +167,69 @@ int64_t astbmc_ipmi_power_down(uint64_t request)
 int64_t astbmc_ipmi_reboot(void)
 {
 	return ipmi_chassis_control(IPMI_CHASSIS_HARD_RESET);
+}
+
+void astbmc_seeprom_update(void)
+{
+	int flag_set, counter, rc;
+
+	rc = ipmi_get_chassis_boot_opt_request();
+
+	if (rc) {
+		prlog(PR_WARNING, "Failed to check SBE validation flag\n");
+		return;
+	}
+
+	flag_set = ipmi_chassis_check_sbe_validation();
+
+	if (flag_set <= 0) {
+		prlog(PR_DEBUG, "SBE validation flag unset or invalid\n");
+		return;
+	}
+
+	/*
+	 * Flag is set, wait until SBE validation is complete and the flag
+	 * has been reset.
+	 */
+	prlog(PR_WARNING, "SBE validation required, waiting for completion\n");
+	prlog(PR_WARNING, "System will be powered off if validation fails\n");
+	counter = 0;
+
+	while (flag_set > 0) {
+		time_wait_ms(10000);
+		if (++counter % 3 == 0) {
+			/* Let the user know we're alive every 30s */
+			prlog(PR_WARNING, "waiting for completion...\n");
+		}
+		if (counter == 180) {
+			/* This is longer than expected and we have no way of
+			 * checking if it's still running. Apologies if you
+			 * ever see this message.
+			 */
+			prlog(PR_WARNING, "30 minutes has elapsed, this is longer than expected for verification\n");
+			prlog(PR_WARNING, "If no progress is made a power reset of the BMC and Host may be required\n");
+			counter = 0;
+		}
+
+		/* As above, loop anyway if we fail to check the flag */
+		rc = ipmi_get_chassis_boot_opt_request();
+		if (rc == 0)
+			flag_set = ipmi_chassis_check_sbe_validation();
+		else
+			prlog(PR_WARNING, "Failed to check SBE validation flag\n");
+	}
+
+	/*
+	 * The SBE validation can (will) leave the SBE in a bad state,
+	 * preventing timers from working properly. Reboot so that we
+	 * can boot normally with everything intact.
+	 */
+	prlog(PR_WARNING, "SBE validation complete, rebooting\n");
+	if (platform.cec_reboot)
+		platform.cec_reboot();
+	else
+		abort();
+	while(true);
 }
 
 static void astbmc_fixup_dt_system_id(void)
