@@ -10,10 +10,12 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include <string.h>
+#include <stddef.h>
 
-char *
-strstr(const char *hay, const char *needle)
+size_t strlen(const char *s);
+int strncmp(const char *s1, const char *s2, size_t n);
+char *strstr(const char *hay, const char *needle);
+char *strstr(const char *hay, const char *needle)
 {
 	char *pos;
 	size_t hlen, nlen;

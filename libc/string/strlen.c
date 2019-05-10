@@ -10,10 +10,10 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include <string.h>
+#include <stddef.h>
 
-size_t
-strlen(const char *s)
+size_t strlen(const char *s);
+size_t strlen(const char *s)
 {
 	size_t len = 0;
 
@@ -25,8 +25,8 @@ strlen(const char *s)
 	return len;
 }
 
-size_t
-strnlen(const char *s, size_t n)
+size_t strnlen(const char *s, size_t n);
+size_t strnlen(const char *s, size_t n)
 {
 	size_t len = 0;
 

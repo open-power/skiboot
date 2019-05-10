@@ -10,11 +10,10 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include <string.h>
 #include <ctype.h>
 
-int
-strcasecmp(const char *s1, const char *s2)
+int strcasecmp(const char *s1, const char *s2);
+int strcasecmp(const char *s1, const char *s2)
 {
 	while (*s1 != 0 && *s2 != 0) {
 		if (toupper(*s1) != toupper(*s2))

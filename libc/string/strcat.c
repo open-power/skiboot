@@ -10,10 +10,12 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include <string.h>
+#include <stddef.h>
 
-char *
-strcat(char *dst, const char *src)
+size_t strlen(const char *s);
+char *strcpy(char *dst, const char *src);
+char *strcat(char *dst, const char *src);
+char *strcat(char *dst, const char *src)
 {
 	size_t p;
 

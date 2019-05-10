@@ -10,11 +10,8 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include <string.h>
-
-
-int
-strcmp(const char *s1, const char *s2)
+int strcmp(const char *s1, const char *s2);
+int strcmp(const char *s1, const char *s2)
 {
 	while (*s1 != 0 && *s2 != 0) {
 		if (*s1 != *s2)

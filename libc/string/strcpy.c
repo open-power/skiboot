@@ -10,10 +10,8 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include <string.h>
-
-char *
-strcpy(char *dst, const char *src)
+char *strcpy(char *dst, const char *src);
+char *strcpy(char *dst, const char *src)
 {
 	char *ptr = dst;
 

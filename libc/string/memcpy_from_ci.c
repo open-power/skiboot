@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include <string.h>
 #include <ccan/short_types/short_types.h>
 #include <io.h>
+#include <string.h>
 
-void* memcpy_from_ci(void *destpp, const void *srcpp, size_t len)
+void *memcpy_from_ci(void *destpp, const void *srcpp, size_t len)
 {
 	const size_t block = sizeof(uint64_t);
 	unsigned long int destp = (long int) destpp;

@@ -10,18 +10,27 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include "string.h"
+#include <stddef.h>
+#include <ccan/short_types/short_types.h>
 
-void *
-memcpy(void *dest, const void *src, size_t n)
+void *memcpy(void *dest, const void *src, size_t n);
+void *memcpy(void *dest, const void *src, size_t n)
 {
-	char *cdest;
-	const char *csrc = src;
+	void *ret = dest;
 
-	cdest = dest;
-	while (n-- > 0) {
-		*cdest++ = *csrc++;
+	while (n >= 8) {
+		*(uint64_t *)dest = *(uint64_t *)src;
+		dest += 8;
+		src += 8;
+		n -= 8;
 	}
 
-	return dest;
+	while (n > 0) {
+		*(uint8_t *)dest = *(uint8_t *)src;
+		dest += 1;
+		src += 1;
+		n -= 1;
+	}
+
+	return ret;
 }

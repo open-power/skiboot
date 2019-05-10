@@ -386,7 +386,7 @@ static bool load_kernel(void)
 		 */
 		if (kernel_entry < EXCEPTION_VECTORS_END) {
 			cpu_set_sreset_enable(false);
-			memcpy(NULL, old_vectors, EXCEPTION_VECTORS_END);
+			memcpy_null(NULL, old_vectors, EXCEPTION_VECTORS_END);
 			sync_icache();
 		} else {
 			/* Hack for STB in Mambo, assume at least 4kb in mem */
@@ -788,7 +788,7 @@ static void setup_branch_null_catcher(void)
         * ABI v1 (ie. big endian).  This will be broken if we ever
         * move to ABI v2 (ie little endian)
         */
-       memcpy(0, bn, 16);
+       memcpy_null(0, bn, 16);
 }
 #else
 static void setup_branch_null_catcher(void)
@@ -825,7 +825,7 @@ void copy_exception_vectors(void)
 	/* Backup previous vectors as this could contain a kernel
 	 * image.
 	 */
-	memcpy(old_vectors, NULL, EXCEPTION_VECTORS_END);
+	memcpy_null(old_vectors, NULL, EXCEPTION_VECTORS_END);
 
 	/* Copy from 0x100 to EXCEPTION_VECTORS_END, avoid below 0x100 as
 	 * this is the boot flag used by CPUs still potentially entering

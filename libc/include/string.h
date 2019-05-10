@@ -15,28 +15,34 @@
 
 #include "stddef.h"
 
-char *strcpy(char *dest, const char *src);
-char *strncpy(char *dest, const char *src, size_t n);
-char *strcat(char *dest, const char *src);
-int strcmp(const char *s1, const char *s2);
-int strncmp(const char *s1, const char *s2, size_t n);
-int strcasecmp(const char *s1, const char *s2);
-int strncasecmp(const char *s1, const char *s2, size_t n);
-char *strchr(const char *s, int c);
-char *strrchr(const char *s, int c);
-char *strrchr(const char *s, int c);
-size_t strlen(const char *s);
-size_t strnlen(const char *s, size_t n);
-char *strstr(const char *hay, const char *needle);
+#define strcpy __builtin_strcpy
+#define strncpy __builtin_strncpy
+#define strcat __builtin_strcat
+#define strcmp __builtin_strcmp
+#define strncmp __builtin_strncmp
+#define strcasecmp __builtin_strcasecmp
+#define strncasecmp __builtin_strncasecmp
+#define strchr __builtin_strchr
+#define strrchr __builtin_strrchr
+#define strlen __builtin_strlen
+#define strlen __builtin_strlen
+size_t strnlen(const char *s, size_t maxlen);
+#define strstr __builtin_strstr
+#define strdup __builtin_strdup
 char *strtok(char *src, const char *pattern);
-char *strdup(const char *src);
 
-void *memset(void *s, int c, size_t n);
-void *memchr(const void *s, int c, size_t n);
-void *memcpy(void *dest, const void *src, size_t n);
+#define memset __builtin_memset
+#define memchr __builtin_memchr
+#define memcpy __builtin_memcpy
+#define memmove __builtin_memmove
+#define memcmp __builtin_memcmp
+static inline void *memcpy_null(void *dest, const void *src, size_t n)
+{
+	asm("" : "+r"(dest));
+	asm("" : "+r"(src));
+	return memcpy(dest, src, n);
+}
 void *memcpy_from_ci(void *destpp, const void *srcpp, size_t len);
-void *memmove(void *dest, const void *src, size_t n);
-int memcmp(const void *s1, const void *s2, size_t n);
 
 static inline int ffs(unsigned long val)
 {

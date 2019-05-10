@@ -19,3 +19,5 @@ STRING_OBJS = strcat.o strchr.o strrchr.o strcmp.o strcpy.o strlen.o \
 STRING = $(LIBCDIR)/string/built-in.a
 $(STRING): $(STRING_OBJS:%=$(LIBCDIR)/string/%)
 
+CFLAGS_SKIP_libc/string/ += -Os
+CFLAGS_libc/string/ += -O2

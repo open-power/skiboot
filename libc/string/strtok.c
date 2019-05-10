@@ -10,10 +10,10 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include <string.h>
+#include <stddef.h>
 
-char *
-strtok(char *src, const char *pattern)
+char *strtok(char *src, const char *pattern);
+char *strtok(char *src, const char *pattern)
 {
 	static char *nxtTok;
 	char *retVal = NULL;

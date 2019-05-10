@@ -10,10 +10,10 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include <string.h>
+#include <stddef.h>
 
-char *
-strrchr(const char *s, int c)
+char *strrchr(const char *s, int c);
+char *strrchr(const char *s, int c)
 {
 	char *last = NULL;
 	char cb = c;

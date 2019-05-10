@@ -10,9 +10,11 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include <string.h>
 #include <stdlib.h>
 
+size_t strlen(const char *s);
+void *memcpy(void *dest, const void *src, size_t n);
+char *strdup(const char *src);
 char *strdup(const char *src)
 {
 	size_t len = strlen(src) + 1;

@@ -10,11 +10,10 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include "string.h"
+#include <stddef.h>
 
-
-void *
-memchr(const void *ptr, int c, size_t n)
+void *memchr(const void *ptr, int c, size_t n);
+void *memchr(const void *ptr, int c, size_t n)
 {
 	unsigned char ch = (unsigned char)c;
 	const unsigned char *p = ptr;

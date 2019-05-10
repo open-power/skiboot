@@ -10,12 +10,12 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include "string.h"
-
 #define CACHE_LINE_SIZE 128
 
-void *
-memset(void *dest, int c, size_t size)
+#include <stddef.h>
+
+void *memset(void *dest, int c, size_t size);
+void *memset(void *dest, int c, size_t size)
 {
 	unsigned char *d = (unsigned char *)dest;
 	unsigned long big_c = 0;

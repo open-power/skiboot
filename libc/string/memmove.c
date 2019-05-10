@@ -10,33 +10,27 @@
  *     IBM Corporation - initial implementation
  *****************************************************************************/
 
-#include "string.h"
+#include <stddef.h>
 
-
-void *
-memmove(void *dest, const void *src, size_t n)
+void *memcpy(void *dest, const void *src, size_t n);
+void *memmove(void *dest, const void *src, size_t n);
+void *memmove(void *dest, const void *src, size_t n)
 {
-	char *cdest;
-	const char *csrc;
-	int i;
-
 	/* Do the buffers overlap in a bad way? */
 	if (src < dest && src + n >= dest) {
+		char *cdest;
+		const char *csrc;
+		int i;
+
 		/* Copy from end to start */
 		cdest = dest + n - 1;
 		csrc = src + n - 1;
 		for (i = 0; i < n; i++) {
 			*cdest-- = *csrc--;
 		}
-	}
-	else {
+		return dest;
+	} else {
 		/* Normal copy is possible */
-		cdest = dest;
-		csrc = src;
-		for (i = 0; i < n; i++) {
-			*cdest++ = *csrc++;
-		}
+		return memcpy(dest, src, n);
 	}
-
-	return dest;
 }
