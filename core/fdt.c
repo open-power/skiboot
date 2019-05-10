@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <libfdt.h>
 #include <device.h>
+#include <chip.h>
 #include <cpu.h>
 #include <opal.h>
 #include <interrupts.h>
@@ -167,7 +168,10 @@ static int __create_dtb(void *fdt, size_t len,
 			const struct dt_node *root,
 			bool exclusive)
 {
-	save_err(fdt_create(fdt, len));
+	if (chip_quirk(QUIRK_SLOW_SIM))
+		save_err(fdt_create_with_flags(fdt, len, FDT_CREATE_FLAG_NO_NAME_DEDUP));
+	else
+		save_err(fdt_create_with_flags(fdt, len, 0));
 	if (fdt_error)
 		goto err;
 

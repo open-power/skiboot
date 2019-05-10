@@ -94,7 +94,7 @@ void __attrconst cpu_process_local_jobs(void)
 STUB(fdt_begin_node);
 STUB(fdt_property);
 STUB(fdt_end_node);
-STUB(fdt_create);
+STUB(fdt_create_with_flags);
 STUB(fdt_add_reservemap_entry);
 STUB(fdt_finish_reservemap);
 STUB(fdt_strerror);
