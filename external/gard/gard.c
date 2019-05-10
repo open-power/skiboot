@@ -598,6 +598,7 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 
 static int reset_partition(struct gard_ctx *ctx)
 {
+	int no_ecc_len = (ctx->gard_data_len / 9) * 8;
 	struct gard_record *gard;
 	int rc = 0;
 
@@ -613,7 +614,7 @@ static int reset_partition(struct gard_ctx *ctx)
 		goto out;
 	}
 
-	rc = blocklevel_write(ctx->bl, ctx->gard_data_pos, gard, ctx->gard_data_len);
+	rc = blocklevel_write(ctx->bl, ctx->gard_data_pos, gard, no_ecc_len);
 	if (rc)
 		fprintf(stderr, "Couldn't reset the entire gard partition. Bailing out\n");
 
