@@ -1,4 +1,4 @@
-DTC=/usr/bin/dtc
+DTC=dtc
 OUT=p9-simics.dtb
 
 all: $(OUT)
