@@ -1,6 +1,7 @@
 /*
  * libfdt - Flat Device Tree manipulation
- * Copyright (C) 2006 David Gibson, IBM Corporation.
+ * Copyright (C) 2014 David Gibson <david@gibson.dropbear.id.au>
+ * Copyright (C) 2018 embedded brains GmbH
  *
  * libfdt is dual licensed: you can use it either under the terms of
  * the GPL, or the BSD license, at your option.
@@ -55,49 +56,89 @@
 
 #include "libfdt_internal.h"
 
-struct fdt_errtabent {
-	const char *str;
-};
-
-#define FDT_ERRTABENT(val) \
-	[(val)] = { .str = #val, }
-
-static struct fdt_errtabent fdt_errtable[] = {
-	FDT_ERRTABENT(FDT_ERR_NOTFOUND),
-	FDT_ERRTABENT(FDT_ERR_EXISTS),
-	FDT_ERRTABENT(FDT_ERR_NOSPACE),
-
-	FDT_ERRTABENT(FDT_ERR_BADOFFSET),
-	FDT_ERRTABENT(FDT_ERR_BADPATH),
-	FDT_ERRTABENT(FDT_ERR_BADPHANDLE),
-	FDT_ERRTABENT(FDT_ERR_BADSTATE),
-
-	FDT_ERRTABENT(FDT_ERR_TRUNCATED),
-	FDT_ERRTABENT(FDT_ERR_BADMAGIC),
-	FDT_ERRTABENT(FDT_ERR_BADVERSION),
-	FDT_ERRTABENT(FDT_ERR_BADSTRUCTURE),
-	FDT_ERRTABENT(FDT_ERR_BADLAYOUT),
-	FDT_ERRTABENT(FDT_ERR_INTERNAL),
-	FDT_ERRTABENT(FDT_ERR_BADNCELLS),
-	FDT_ERRTABENT(FDT_ERR_BADVALUE),
-	FDT_ERRTABENT(FDT_ERR_BADOVERLAY),
-	FDT_ERRTABENT(FDT_ERR_NOPHANDLES),
-	FDT_ERRTABENT(FDT_ERR_BADFLAGS),
-};
-#define FDT_ERRTABSIZE	(sizeof(fdt_errtable) / sizeof(fdt_errtable[0]))
-
-const char *fdt_strerror(int errval)
+static int fdt_cells(const void *fdt, int nodeoffset, const char *name)
 {
-	if (errval > 0)
-		return "<valid offset/length>";
-	else if (errval == 0)
-		return "<no error>";
-	else if (errval > -FDT_ERRTABSIZE) {
-		const char *s = fdt_errtable[-errval].str;
+	const fdt32_t *c;
+	int val;
+	int len;
 
-		if (s)
-			return s;
+	c = fdt_getprop(fdt, nodeoffset, name, &len);
+	if (!c)
+		return len;
+
+	if (len != sizeof(*c))
+		return -FDT_ERR_BADNCELLS;
+
+	val = fdt32_to_cpu(*c);
+	if ((val <= 0) || (val > FDT_MAX_NCELLS))
+		return -FDT_ERR_BADNCELLS;
+
+	return val;
+}
+
+int fdt_address_cells(const void *fdt, int nodeoffset)
+{
+	int val;
+
+	val = fdt_cells(fdt, nodeoffset, "#address-cells");
+	if (val == -FDT_ERR_NOTFOUND)
+		return 2;
+	return val;
+}
+
+int fdt_size_cells(const void *fdt, int nodeoffset)
+{
+	int val;
+
+	val = fdt_cells(fdt, nodeoffset, "#size-cells");
+	if (val == -FDT_ERR_NOTFOUND)
+		return 1;
+	return val;
+}
+
+/* This function assumes that [address|size]_cells is 1 or 2 */
+int fdt_appendprop_addrrange(void *fdt, int parent, int nodeoffset,
+			     const char *name, uint64_t addr, uint64_t size)
+{
+	int addr_cells, size_cells, ret;
+	uint8_t data[sizeof(fdt64_t) * 2], *prop;
+
+	ret = fdt_address_cells(fdt, parent);
+	if (ret < 0)
+		return ret;
+	addr_cells = ret;
+
+	ret = fdt_size_cells(fdt, parent);
+	if (ret < 0)
+		return ret;
+	size_cells = ret;
+
+	/* check validity of address */
+	prop = data;
+	if (addr_cells == 1) {
+		if ((addr > UINT32_MAX) || ((UINT32_MAX + 1 - addr) < size))
+			return -FDT_ERR_BADVALUE;
+
+		fdt32_st(prop, (uint32_t)addr);
+	} else if (addr_cells == 2) {
+		fdt64_st(prop, addr);
+	} else {
+		return -FDT_ERR_BADNCELLS;
 	}
 
-	return "<unknown error>";
+	/* check validity of size */
+	prop += addr_cells * sizeof(fdt32_t);
+	if (size_cells == 1) {
+		if (size > UINT32_MAX)
+			return -FDT_ERR_BADVALUE;
+
+		fdt32_st(prop, (uint32_t)size);
+	} else if (size_cells == 2) {
+		fdt64_st(prop, size);
+	} else {
+		return -FDT_ERR_BADNCELLS;
+	}
+
+	return fdt_appendprop(fdt, nodeoffset, name, data,
+			      (addr_cells + size_cells) * sizeof(fdt32_t));
 }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <stdarg.h>
 #include <device.h>
 #include <stdlib.h>
 #include <skiboot.h>
@@ -853,7 +854,7 @@ int dt_expand_node(struct dt_node *node, const void *fdt, int fdt_node)
 	uint32_t tag;
 
 	if (((err = fdt_check_header(fdt)) != 0)
-	    || ((err = _fdt_check_node_offset(fdt, fdt_node)) < 0)) {
+	    || ((err = fdt_check_node_offset_(fdt, fdt_node)) < 0)) {
 		prerror("FDT: Error %d parsing node 0x%x\n", err, fdt_node);
 		return -1;
 	}
@@ -865,7 +866,7 @@ int dt_expand_node(struct dt_node *node, const void *fdt, int fdt_node)
 		tag = fdt_next_tag(fdt, offset, &nextoffset);
 		switch (tag) {
 		case FDT_PROP:
-			prop = _fdt_offset_ptr(fdt, offset);
+			prop = fdt_offset_ptr_(fdt, offset);
 			name = fdt_string(fdt, fdt32_to_cpu(prop->nameoff));
 			dt_add_property(node, name, prop->data,
 					fdt32_to_cpu(prop->len));

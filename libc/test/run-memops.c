@@ -26,6 +26,7 @@ int test_memchr(const void *ptr, int c, size_t n, void* expected);
 int test_memcmp(const void *ptr1, const void *ptr2, size_t n, int expected);
 int test_strcmp(const void *ptr1, const void *ptr2, int expected);
 int test_strchr(const char *s, int c, char *expected);
+int test_strrchr(const char *s, int c, char *expected);
 int test_strcasecmp(const char *s1, const char *s2, int expected);
 int test_strncasecmp(const char *s1, const char *s2, size_t n, int expected);
 int test_memmove(void *dest, const void *src, size_t n, const void *r, const void *expected, size_t expected_n);
@@ -63,6 +64,12 @@ int main(void)
 	assert(test_strchr(buf, 'e', buf+1));
 	assert(test_strchr(buf, 'a', NULL));
 	assert(test_strchr(buf, '!', buf+11));
+
+	assert(test_strrchr(buf, 'H', buf));
+	assert(test_strrchr(buf, 'o', buf+7));
+	assert(test_strrchr(buf, 'a', NULL));
+	assert(test_strrchr(buf, 'l', buf+9));
+	assert(test_strrchr(buf, '!', buf+11));
 
 	assert(test_strcasecmp(buf, "Hello World!", 0));
 	assert(test_strcasecmp(buf, "HELLO WORLD!", 0));

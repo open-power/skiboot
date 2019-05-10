@@ -32,6 +32,7 @@
 #include "../string/strcasecmp.c"
 #include "../string/strcat.c"
 #include "../string/strchr.c"
+#include "../string/strrchr.c"
 #include "../string/strcmp.c"
 #include "../string/strcpy.c"
 /* #include "../string/strdup.c" */
@@ -48,6 +49,7 @@ int test_memchr(const void *ptr, int c, size_t n, void* expected);
 int test_memcmp(const void *ptr1, const void *ptr2, size_t n, int expected);
 int test_strcmp(const void *ptr1, const void *ptr2, int expected);
 int test_strchr(const char *s, int c, char *expected);
+int test_strrchr(const char *s, int c, char *expected);
 int test_strcasecmp(const char *s1, const char *s2, int expected);
 int test_strncasecmp(const char *s1, const char *s2, size_t n, int expected);
 int test_memmove(void *dest, const void *src, size_t n, const void *r, const void *expected, size_t expected_n);
@@ -83,6 +85,11 @@ int test_strcmp(const void *ptr1, const void *ptr2, int expected)
 int test_strchr(const char *s, int c, char *expected)
 {
 	return(expected == strchr(s, c));
+}
+
+int test_strrchr(const char *s, int c, char *expected)
+{
+	return(expected == strrchr(s, c));
 }
 
 int test_strcasecmp(const char *s1, const char *s2, int expected)

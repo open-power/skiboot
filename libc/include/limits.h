@@ -30,4 +30,7 @@
 #define 	LONG_MIN	((-LONG_MAX)-1)
 
 #define		CHAR_BIT	8
+
+#define 	UINT32_MAX	UINT_MAX
+
 #endif

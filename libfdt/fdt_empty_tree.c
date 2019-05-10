@@ -1,6 +1,6 @@
 /*
  * libfdt - Flat Device Tree manipulation
- * Copyright (C) 2006 David Gibson, IBM Corporation.
+ * Copyright (C) 2012 David Gibson, IBM Corporation.
  *
  * libfdt is dual licensed: you can use it either under the terms of
  * the GPL, or the BSD license, at your option.
@@ -55,49 +55,29 @@
 
 #include "libfdt_internal.h"
 
-struct fdt_errtabent {
-	const char *str;
-};
-
-#define FDT_ERRTABENT(val) \
-	[(val)] = { .str = #val, }
-
-static struct fdt_errtabent fdt_errtable[] = {
-	FDT_ERRTABENT(FDT_ERR_NOTFOUND),
-	FDT_ERRTABENT(FDT_ERR_EXISTS),
-	FDT_ERRTABENT(FDT_ERR_NOSPACE),
-
-	FDT_ERRTABENT(FDT_ERR_BADOFFSET),
-	FDT_ERRTABENT(FDT_ERR_BADPATH),
-	FDT_ERRTABENT(FDT_ERR_BADPHANDLE),
-	FDT_ERRTABENT(FDT_ERR_BADSTATE),
-
-	FDT_ERRTABENT(FDT_ERR_TRUNCATED),
-	FDT_ERRTABENT(FDT_ERR_BADMAGIC),
-	FDT_ERRTABENT(FDT_ERR_BADVERSION),
-	FDT_ERRTABENT(FDT_ERR_BADSTRUCTURE),
-	FDT_ERRTABENT(FDT_ERR_BADLAYOUT),
-	FDT_ERRTABENT(FDT_ERR_INTERNAL),
-	FDT_ERRTABENT(FDT_ERR_BADNCELLS),
-	FDT_ERRTABENT(FDT_ERR_BADVALUE),
-	FDT_ERRTABENT(FDT_ERR_BADOVERLAY),
-	FDT_ERRTABENT(FDT_ERR_NOPHANDLES),
-	FDT_ERRTABENT(FDT_ERR_BADFLAGS),
-};
-#define FDT_ERRTABSIZE	(sizeof(fdt_errtable) / sizeof(fdt_errtable[0]))
-
-const char *fdt_strerror(int errval)
+int fdt_create_empty_tree(void *buf, int bufsize)
 {
-	if (errval > 0)
-		return "<valid offset/length>";
-	else if (errval == 0)
-		return "<no error>";
-	else if (errval > -FDT_ERRTABSIZE) {
-		const char *s = fdt_errtable[-errval].str;
+	int err;
 
-		if (s)
-			return s;
-	}
+	err = fdt_create(buf, bufsize);
+	if (err)
+		return err;
 
-	return "<unknown error>";
+	err = fdt_finish_reservemap(buf);
+	if (err)
+		return err;
+
+	err = fdt_begin_node(buf, "");
+	if (err)
+		return err;
+
+	err =  fdt_end_node(buf);
+	if (err)
+		return err;
+
+	err = fdt_finish(buf);
+	if (err)
+		return err;
+
+	return fdt_open_into(buf, buf, bufsize);
 }

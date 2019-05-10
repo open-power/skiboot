@@ -1,15 +1,13 @@
-# Makefile.libfdt
+# Makefile.inc
 #
-# This is not a complete Makefile of itself.  Instead, it is designed to
-# be easily embeddable into other systems of Makefiles.
-#
+# LIBFDT_ variables are taken from Makefile.libfdt
 
-LIBFDT_INCLUDES = fdt.h libfdt.h
-LIBFDT_SRCS = fdt.c fdt_ro.c fdt_wip.c fdt_sw.c fdt_rw.c fdt_strerror.c
+LIBFDT_INCLUDES = fdt.h libfdt.h libfdt_env.h
+LIBFDT_SRCS = fdt.c fdt_ro.c fdt_wip.c fdt_sw.c fdt_rw.c fdt_strerror.c fdt_empty_tree.c \
+	fdt_addresses.c fdt_overlay.c
 LIBFDT_OBJS = $(LIBFDT_SRCS:%.c=%.o)
 
-# That warning can't really be fixed so compile the file without it
-CFLAGS_SKIP_libfdt/fdt_sw.o = -Wstack-usage=4096
+CFLAGS_SKIP_libfdt/ = -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
 
 SUBDIRS += libfdt
 LIBFDT = libfdt/built-in.a
