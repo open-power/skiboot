@@ -901,6 +901,8 @@ static void checksum_romem(void)
 	uint32_t csum;
 
 	romem_csum = 0;
+	if (chip_quirk(QUIRK_SLOW_SIM))
+		return;
 
 	csum = mem_csum(_start, _romem_end);
 	romem_csum ^= csum;
