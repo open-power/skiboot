@@ -1,6 +1,6 @@
 #! /bin/sh
 
-run_binary "./gard"
+run_binary "./opal-gard"
 if [ "$?" -ne 1 ] ; then
 	fail_test
 fi

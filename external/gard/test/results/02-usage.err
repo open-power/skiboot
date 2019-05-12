@@ -1,4 +1,4 @@
-Usage: ./gard [-a -e -f <file> -p] <command> [<args>]
+Usage: ./opal-gard [-a -e -f <file> -p] <command> [<args>]
 
 -8 --p8
 -9 --p9

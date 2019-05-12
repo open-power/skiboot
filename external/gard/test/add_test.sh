@@ -2,7 +2,7 @@
 #
 # this is a really dumb script for auto-generating test cases from known good-data
 #
-# usage: ./add_test <pass|fail> <inputfile> <testname> [gard subcommand]
+# usage: ./add_test <pass|fail> <inputfile> <testname> [opal-gard subcommand]
 #
 # e.g.
 #      ./add_test.sh fail blank.bin create-bad-instance create /sys256
@@ -47,7 +47,7 @@ echo "making $num-$name: f=$script_file, normally $test_type, cmd='$*'"
 cat > $script_file <<EOF
 #! /bin/sh
 
-run_binary "./gard" "-9 -p -e -f $file $*"
+run_binary "./opal-gard" "-9 -p -e -f $file $*"
 $check
 	fail_test
 fi
@@ -63,5 +63,5 @@ stderr_file="test/results/$num-$name.err"
 
 test_input="$name-$num-input"
 cp $file $test_input
-./gard -f $test_input -p -e $* 2>$stderr_file >$stdout_file
+./opal-gard -f $test_input -p -e $* 2>$stderr_file >$stdout_file
 rm -f $test_input

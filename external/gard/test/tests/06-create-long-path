@@ -1,6 +1,6 @@
 #! /bin/sh
 
-run_binary "./gard" "-p -e -8 -f test/files/blank.bin create /sys0/sys0/sys0/sys0/sys0/sys0/sys0/sys0/sys0/sys0/sys0/sys0/"
+run_binary "./opal-gard" "-p -e -8 -f test/files/blank.bin create /sys0/sys0/sys0/sys0/sys0/sys0/sys0/sys0/sys0/sys0/sys0/sys0/"
 if [ "$?" -eq 0 ]; then
 	fail_test
 fi

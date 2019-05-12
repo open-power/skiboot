@@ -10,7 +10,7 @@ CCAN_OBJS	:= $(addprefix ccan-list-, $(CCAN_FILES:.c=.o))
 CCAN_SRC	:= $(addprefix ccan/list/,$(CCAN_FILES))
 OBJS     += $(LIBFLASH_OBJS) $(CCAN_OBJS)
 OBJS     += common-arch_flash.o
-EXE       = gard
+EXE       = opal-gard
 
 prefix = /usr/local/
 sbindir = $(prefix)/sbin
