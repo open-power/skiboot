@@ -102,7 +102,7 @@ void trustedboot_init(void)
 		return;
 	}
 
-	if (nvram_query_eq("force-trusted-mode", "true")) {
+	if (nvram_query_eq_dangerous("force-trusted-mode", "true")) {
 		trusted_mode = true;
 		prlog(PR_NOTICE, "trusted mode on (FORCED by nvram)\n");
 	} else {

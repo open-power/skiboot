@@ -1727,7 +1727,7 @@ static void read_nvram_training_state(void)
 {
 	const char *state;
 
-	state = nvram_query("opencapi-link-training");
+	state = nvram_query_dangerous("opencapi-link-training");
 	if (state) {
 		if (!strcmp(state, "prbs31"))
 			npu2_ocapi_training_state = NPU2_TRAIN_PRBS31;

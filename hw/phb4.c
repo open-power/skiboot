@@ -5919,16 +5919,16 @@ void probe_phb4(void)
 	struct dt_node *np;
 	const char *s;
 
-	verbose_eeh = nvram_query_eq("pci-eeh-verbose", "true");
+	verbose_eeh = nvram_query_eq_safe("pci-eeh-verbose", "true");
 	/* REMOVEME: force this for now until we stabalise PCIe */
 	verbose_eeh = 1;
 	if (verbose_eeh)
 		prlog(PR_INFO, "PHB4: Verbose EEH enabled\n");
 
-	pci_tracing = nvram_query_eq("pci-tracing", "true");
-	pci_eeh_mmio = !nvram_query_eq("pci-eeh-mmio", "disabled");
-	pci_retry_all = nvram_query_eq("pci-retry-all", "true");
-	s = nvram_query("phb-rx-err-max");
+	pci_tracing = nvram_query_eq_safe("pci-tracing", "true");
+	pci_eeh_mmio = !nvram_query_eq_dangerous("pci-eeh-mmio", "disabled");
+	pci_retry_all = nvram_query_eq_dangerous("pci-retry-all", "true");
+	s = nvram_query_dangerous("phb-rx-err-max");
 	if (s) {
 		rx_err_max = atoi(s);
 
@@ -5937,7 +5937,6 @@ void probe_phb4(void)
 		rx_err_max = MIN(rx_err_max, 255);
 	}
 	prlog(PR_DEBUG, "PHB4: Maximum RX errors during training: %d\n", rx_err_max);
-
 	/* Look for PBCQ XSCOM nodes */
 	dt_for_each_compatible(dt_root, np, "ibm,power9-pbcq")
 		phb4_probe_pbcq(np);

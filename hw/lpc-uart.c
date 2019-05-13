@@ -506,7 +506,7 @@ static void uart_init_opal_console(void)
 	/* Update the policy if the corresponding nvram variable
 	 * is present
 	 */
-	nv_policy = nvram_query("uart-con-policy");
+	nv_policy = nvram_query_dangerous("uart-con-policy");
 	if (nv_policy) {
 		if (!strcmp(nv_policy, "opal"))
 			uart_console_policy = UART_CONSOLE_OPAL;

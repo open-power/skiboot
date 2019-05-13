@@ -663,7 +663,7 @@ void probe_npu2(void)
 	}
 
 	/* Check for a zcal override */
-	zcal = nvram_query("nv_zcal_override");
+	zcal = nvram_query_dangerous("nv_zcal_override");
 	if (zcal) {
 		nv_zcal_nominal = atoi(zcal);
 		prlog(PR_WARNING, "NPU2: Using ZCAL impedance override = %d\n", nv_zcal_nominal);

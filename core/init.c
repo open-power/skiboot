@@ -582,7 +582,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	fsp_console_select_stdout();
 
 	/* Use nvram bootargs over device tree */
-	cmdline = nvram_query("bootargs");
+	cmdline = nvram_query_safe("bootargs");
 	if (cmdline) {
 		dt_check_del_prop(dt_chosen, "bootargs");
 		dt_add_property_string(dt_chosen, "bootargs", cmdline);
@@ -740,7 +740,7 @@ static void console_log_level(void)
 
 	/* console log level:
 	 *   high 4 bits in memory, low 4 bits driver (e.g. uart). */
-	s = nvram_query("log-level-driver");
+	s = nvram_query_safe("log-level-driver");
 	if (s) {
 		level = console_get_level(s);
 		debug_descriptor.console_log_levels =
@@ -749,7 +749,7 @@ static void console_log_level(void)
 		prlog(PR_NOTICE, "console: Setting driver log level to %i\n",
 		      level & 0x0f);
 	}
-	s = nvram_query("log-level-memory");
+	s = nvram_query_safe("log-level-memory");
 	if (s) {
 		level = console_get_level(s);
 		debug_descriptor.console_log_levels =
@@ -867,7 +867,7 @@ static void pci_nvram_init(void)
 
 	pcie_max_link_speed = 0;
 
-	nvram_speed = nvram_query("pcie-max-link-speed");
+	nvram_speed = nvram_query_dangerous("pcie-max-link-speed");
 	if (nvram_speed) {
 		pcie_max_link_speed = atoi(nvram_speed);
 		prlog(PR_NOTICE, "PHB: NVRAM set max link speed to GEN%i\n",

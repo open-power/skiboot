@@ -104,7 +104,7 @@ void secureboot_init(void)
 
 	prlog(PR_DEBUG, "Found %s\n", compat);
 
-	if (nvram_query_eq("force-secure-mode", "always")) {
+	if (nvram_query_eq_dangerous("force-secure-mode", "always")) {
 		secure_mode = true;
 		prlog(PR_NOTICE, "secure mode on (FORCED by nvram)\n");
 	} else {
