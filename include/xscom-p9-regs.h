@@ -1,6 +1,46 @@
 #ifndef __XSCOM_P9_REGS_H__
 #define __XSCOM_P9_REGS_H__
 
+/* Core FIR (Fault Isolation Register) */
+#define P9_CORE_FIR		0x20010A40
+
+/* Core WOF (Whose On First) */
+#define P9_CORE_WOF		0x20010A48
+
+/* pMisc Receive Malfunction Alert Register */
+#define P9_MALFUNC_ALERT	0x00090022
+
+#define P9_NX_STATUS_REG	0x02011040 /* NX status register */
+#define P9_NX_DMA_ENGINE_FIR	0x02011100 /* DMA & Engine FIR Data Register */
+#define P9_NX_PBI_FIR		0x02011080 /* PowerBus Interface FIR Register */
+
+/*
+ * Bit 54 from NX status register is set to 1 when HMI interrupt is triggered
+ * due to NX checksop.
+ */
+#define NX_HMI_ACTIVE		PPC_BIT(54)
+
+/* Direct controls */
+#define P9_EC_DIRECT_CONTROLS		0x10a9c
+#define P9_THREAD_STOP(t)		PPC_BIT(7 + 8*(t))
+#define P9_THREAD_CONT(t)		PPC_BIT(6 + 8*(t))
+#define P9_THREAD_SRESET(t)		PPC_BIT(4 + 8*(t))
+#define P9_THREAD_CLEAR_MAINT(t)	PPC_BIT(3 + 8*(t))
+#define P9_THREAD_PWR(t)		PPC_BIT(32 + 8*(t))
+
+#define P9_RAS_STATUS			0x10a02
+#define P9_THREAD_QUIESCED(t)		PPC_BITMASK(0 + 8*(t), 3 + 8*(t))
+
+#define P9_CORE_THREAD_STATE		0x10ab3
+#define P9_THREAD_INFO			0x10a9b
+
+/* EC_PPM_SPECIAL_WKUP_HYP */
+#define P9_SPWKUP_SET			PPC_BIT(0)
+
+#define P9_EC_PPM_SSHHYP		0x0114
+#define P9_CORE_GATED			PPC_BIT(0)
+#define P9_SPECIAL_WKUP_DONE		PPC_BIT(1)
+
 /* EX (core pair) registers, use XSCOM_ADDR_P9_EX to access */
 #define P9X_EX_NCU_STATUS_REG			0x1100f
 #define P9X_EX_NCU_SPEC_BAR			0x11010
@@ -32,5 +72,11 @@
 #define PB_CENT_HP_MODE_CURR			0x5011c0c
 #define  PB_CFG_CHG_RATE_GP_MASTER		PPC_BIT(2)
 #define  PB_CFG_PUMP_MODE			PPC_BIT(54)
+
+/* Power 9 EC slave per-core power mgt slave registers */
+#define EC_PPM_SPECIAL_WKUP_OTR		0x010A
+#define EC_PPM_SPECIAL_WKUP_FSP		0x010B
+#define EC_PPM_SPECIAL_WKUP_OCC		0x010C
+#define EC_PPM_SPECIAL_WKUP_HYP		0x010D
 
 #endif /* __XSCOM_P9_REGS_H__ */

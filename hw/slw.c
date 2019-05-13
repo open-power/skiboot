@@ -19,6 +19,8 @@
  */
 #include <skiboot.h>
 #include <xscom.h>
+#include <xscom-p8-regs.h>
+#include <xscom-p9-regs.h>
 #include <io.h>
 #include <cpu.h>
 #include <chip.h>

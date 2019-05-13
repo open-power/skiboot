@@ -164,6 +164,11 @@ static int xscom_clear_error(uint32_t gcid, uint32_t pcb_addr)
 	if (proc_gen != proc_gen_p9)
 		return 0;
 
+/* xscom clear address range/mask */
+#define XSCOM_CLEAR_RANGE_START		0x20010A00
+#define XSCOM_CLEAR_RANGE_END		0x20010ABF
+#define XSCOM_CLEAR_RANGE_MASK		0x200FFBFF
+
 	/*
 	 * Due to a hardware issue where core responding to scom was delayed
 	 * due to thread reconfiguration, leaves the scom logic in a state

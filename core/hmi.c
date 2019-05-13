@@ -22,6 +22,7 @@
 #include <processor.h>
 #include <chiptod.h>
 #include <xscom.h>
+#include <xscom-p8-regs.h>
 #include <xscom-p9-regs.h>
 #include <pci.h>
 #include <cpu.h>
@@ -161,31 +162,6 @@
 #define SUBCORE_THREAD_MASK(s_id, t_count) \
 		((((1UL) << (t_count)) - 1) << ((s_id) * (t_count)))
 #define SINGLE_THREAD_MASK(t_id)	((1UL) << (t_id))
-
-/* xscom addresses for core FIR (Fault Isolation Register) */
-#define P8_CORE_FIR		0x10013100
-#define P9_CORE_FIR		0x20010A40
-
-/* And core WOF (Whose On First) */
-#define P9_CORE_WOF		0x20010A48
-
-/* xscom addresses for pMisc Receive Malfunction Alert Register */
-#define P8_MALFUNC_ALERT	0x02020011
-#define P9_MALFUNC_ALERT	0x00090022
-
-#define P8_NX_STATUS_REG	0x02013040 /* NX status register */
-#define P8_NX_DMA_ENGINE_FIR	0x02013100 /* DMA & Engine FIR Data Register */
-#define P8_NX_PBI_FIR		0x02013080 /* PowerBus Interface FIR Register */
-
-#define P9_NX_STATUS_REG	0x02011040 /* NX status register */
-#define P9_NX_DMA_ENGINE_FIR	0x02011100 /* DMA & Engine FIR Data Register */
-#define P9_NX_PBI_FIR		0x02011080 /* PowerBus Interface FIR Register */
-
-/*
- * Bit 54 from NX status register is set to 1 when HMI interrupt is triggered
- * due to NX checksop.
- */
-#define NX_HMI_ACTIVE		PPC_BIT(54)
 
 /*
  * Number of iterations for the various timeouts. We can't use the timebase

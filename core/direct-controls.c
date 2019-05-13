@@ -19,6 +19,8 @@
 #include <opal.h>
 #include <cpu.h>
 #include <xscom.h>
+#include <xscom-p8-regs.h>
+#include <xscom-p9-regs.h>
 #include <timebase.h>
 #include <chip.h>
 
@@ -54,11 +56,6 @@ static void mambo_stop_cpu(struct cpu_thread *cpu)
 }
 
 /**************** POWER8 direct controls ****************/
-
-#define P8_EX_TCTL_DIRECT_CONTROLS(t)	(0x10013000 + (t) * 0x10)
-#define P8_DIRECT_CTL_STOP		PPC_BIT(63)
-#define P8_DIRECT_CTL_PRENAP		PPC_BIT(47)
-#define P8_DIRECT_CTL_SRESET		PPC_BIT(60)
 
 static int p8_core_set_special_wakeup(struct cpu_thread *cpu)
 {
@@ -267,28 +264,9 @@ static int p8_sreset_thread(struct cpu_thread *cpu)
 
 /**************** POWER9 direct controls ****************/
 
-#define P9_RAS_STATUS			0x10a02
-#define P9_THREAD_QUIESCED(t)		PPC_BITMASK(0 + 8*(t), 3 + 8*(t))
 /* Long running instructions may take time to complete. Timeout 100ms */
 #define P9_QUIESCE_POLL_INTERVAL	100
 #define P9_QUIESCE_TIMEOUT		100000
-
-#define P9_CORE_THREAD_STATE		0x10ab3
-#define P9_THREAD_INFO			0x10a9b
-
-#define P9_EC_DIRECT_CONTROLS		0x10a9c
-#define P9_THREAD_STOP(t)		PPC_BIT(7 + 8*(t))
-#define P9_THREAD_CONT(t)		PPC_BIT(6 + 8*(t))
-#define P9_THREAD_SRESET(t)		PPC_BIT(4 + 8*(t))
-#define P9_THREAD_CLEAR_MAINT(t)	PPC_BIT(3 + 8*(t))
-#define P9_THREAD_PWR(t)		PPC_BIT(32 + 8*(t))
-
-/* EC_PPM_SPECIAL_WKUP_HYP */
-#define P9_SPWKUP_SET			PPC_BIT(0)
-
-#define P9_EC_PPM_SSHHYP		0x0114
-#define P9_CORE_GATED			PPC_BIT(0)
-#define P9_SPECIAL_WKUP_DONE		PPC_BIT(1)
 
 /* Waking may take up to 5ms for deepest sleep states. Set timeout to 100ms */
 #define P9_SPWKUP_POLL_INTERVAL		100
