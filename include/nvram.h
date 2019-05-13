@@ -24,7 +24,9 @@ bool nvram_validate(void);
 bool nvram_has_loaded(void);
 bool nvram_wait_for_load(void);
 
-const char *nvram_query(const char *name);
-bool nvram_query_eq(const char *key, const char *value);
+const char *nvram_query_safe(const char *name);
+const char *nvram_query_dangerous(const char *name);
+bool nvram_query_eq_safe(const char *key, const char *value);
+bool nvram_query_eq_dangerous(const char *key, const char *value);
 
 #endif /* __NVRAM_H */

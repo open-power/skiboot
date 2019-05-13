@@ -1473,7 +1473,7 @@ int npu2_nvlink_init_npu(struct npu2 *npu)
 	 * it throws machine checkstop. Disabling snarfing fixes this so let's
 	 * disable it by default.
 	 */
-	if (nvram_query_eq("opal-npu2-snarf-cpm", "enable")) {
+	if (nvram_query_eq_dangerous("opal-npu2-snarf-cpm", "enable")) {
 		prlog(PR_WARNING, "NPU2#%d: enabling Probe.I.MO snarfing, a bad GPU driver may crash the system!\n",
 				npu->index);
 		val |= PPC_BIT(40); /* CONFIG_ENABLE_SNARF_CPM */

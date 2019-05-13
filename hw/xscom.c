@@ -833,7 +833,7 @@ int64_t xscom_trigger_xstop(void)
 	int rc = OPAL_UNSUPPORTED;
 	bool xstop_disabled = false;
 
-	if (nvram_query_eq("opal-sw-xstop", "disable"))
+	if (nvram_query_eq_dangerous("opal-sw-xstop", "disable"))
 		xstop_disabled = true;
 
 	if (xstop_disabled) {

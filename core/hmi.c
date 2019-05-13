@@ -672,7 +672,7 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 	if (!total_errors)
 		return;
 
-	npu2_hmi_verbose = nvram_query_eq("npu2-hmi-verbose", "true");
+	npu2_hmi_verbose = nvram_query_eq_safe("npu2-hmi-verbose", "true");
 	/* Force this for now until we sort out something better */
 	npu2_hmi_verbose = true;
 

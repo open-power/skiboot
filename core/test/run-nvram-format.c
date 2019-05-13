@@ -144,23 +144,23 @@ int main(void)
 
 	/* does an empty partition break us? */
 	data = nvram_reset(nvram_image, 128*1024);
-	assert(nvram_query("test") == NULL);
+	assert(nvram_query_safe("test") == NULL);
 
 	/* does a zero length key break us? */
 	data = nvram_reset(nvram_image, 128*1024);
 	data[0] = '=';
-	assert(nvram_query("test") == NULL);
+	assert(nvram_query_safe("test") == NULL);
 
 	/* does a missing = break us? */
 	data = nvram_reset(nvram_image, 128*1024);
 	data[0] = 'a';
-	assert(nvram_query("test") == NULL);
+	assert(nvram_query_safe("test") == NULL);
 
 	/* does an empty value break us? */
 	data = nvram_reset(nvram_image, 128*1024);
 	data[0] = 'a';
 	data[1] = '=';
-	result = nvram_query("a");
+	result = nvram_query_safe("a");
 	assert(result);
 	assert(strlen(result) == 0);
 
@@ -168,7 +168,7 @@ int main(void)
 	data = nvram_reset(nvram_image, 128*1024);
 #define TEST_1 "a\0a=\0test=test\0"
 	memcpy(data, TEST_1, sizeof(TEST_1));
-	result = nvram_query("test");
+	result = nvram_query_safe("test");
 	assert(result);
 	assert(strcmp(result, "test") == 0);
 

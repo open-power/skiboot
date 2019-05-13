@@ -206,13 +206,31 @@ static const char *find_next_key(const char *start, const char *end)
 	return NULL;
 }
 
+static void nvram_dangerous(const char *key)
+{
+	prlog(PR_ERR, " ___________________________________________________________\n");
+	prlog(PR_ERR, "<  Dangerous NVRAM option: %s\n", key);
+	prlog(PR_ERR, " -----------------------------------------------------------\n");
+	prlog(PR_ERR, "                  \\                         \n");
+	prlog(PR_ERR, "                   \\   WW                   \n");
+	prlog(PR_ERR, "                      <^ \\___/|             \n");
+	prlog(PR_ERR, "                       \\      /             \n");
+	prlog(PR_ERR, "                        \\_  _/              \n");
+	prlog(PR_ERR, "                          }{                 \n");
+}
+
+
 /*
- * nvram_query() - Searches skiboot NVRAM partition for a key=value pair.
+ * nvram_query_safe/dangerous() - Searches skiboot NVRAM partition
+ * for a key=value pair.
+ *
+ * Dangerous means it should only be used for testing as it may
+ * mask issues. Safe is ok for long term use.
  *
  * Returns a pointer to a NUL terminated string that contains the value
  * associated with the given key.
  */
-const char *nvram_query(const char *key)
+static const char *__nvram_query(const char *key, bool dangerous)
 {
 	const char *part_end, *start;
 	int key_len = strlen(key);
@@ -269,6 +287,8 @@ const char *nvram_query(const char *key)
 			prlog(PR_DEBUG, "NVRAM: Searched for '%s' found '%s'\n",
 				key, value);
 
+			if (dangerous)
+				nvram_dangerous(start);
 			return value;
 		}
 
@@ -280,18 +300,30 @@ const char *nvram_query(const char *key)
 	return NULL;
 }
 
+const char *nvram_query_safe(const char *key)
+{
+	return __nvram_query(key, false);
+}
+
+const char *nvram_query_dangerous(const char *key)
+{
+	return __nvram_query(key, true);
+}
 
 /*
- * nvram_query_eq() - Check if the given 'key' exists and
- * is set to 'value'.
+ * nvram_query_eq_safe/dangerous() - Check if the given 'key' exists
+ * and is set to 'value'.
+ *
+ * Dangerous means it should only be used for testing as it may
+ * mask issues. Safe is ok for long term use.
  *
  * Note: Its an error to check for non-existence of a key
  * by passing 'value == NULL' as a key's value can never be
  * NULL in nvram.
  */
-bool nvram_query_eq(const char *key, const char *value)
+static bool __nvram_query_eq(const char *key, const char *value, bool dangerous)
 {
-	const char *s = nvram_query(key);
+	const char *s = __nvram_query(key, dangerous);
 
 	if (!s)
 		return false;
@@ -299,3 +331,14 @@ bool nvram_query_eq(const char *key, const char *value)
 	assert(value != NULL);
 	return !strcmp(s, value);
 }
+
+bool nvram_query_eq_safe(const char *key, const char *value)
+{
+	return __nvram_query_eq(key, value, false);
+}
+
+bool nvram_query_eq_dangerous(const char *key, const char *value)
+{
+	return __nvram_query_eq(key, value, true);
+}
+

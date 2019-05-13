@@ -883,7 +883,7 @@ void add_cpu_idle_state_properties(void)
 		if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT)
 			supported_states_mask |= OPAL_PM_WINKLE_ENABLED;
 	}
-	nvram_disable_str = nvram_query("opal-stop-state-disable-mask");
+	nvram_disable_str = nvram_query_dangerous("opal-stop-state-disable-mask");
 	if (nvram_disable_str)
 		nvram_disabled_states_mask = strtol(nvram_disable_str, NULL, 0);
 	prlog(PR_DEBUG, "NVRAM stop disable mask: %x\n", nvram_disabled_states_mask);
