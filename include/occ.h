@@ -50,6 +50,8 @@ extern void occ_add_sensor_groups(struct dt_node *sg, u32  *phandles,
 
 extern int occ_sensor_group_enable(u32 group_hndl, int token, bool enable);
 
+extern bool is_occ_reset(void);
+
 /*
  * OCC Sensor Data
  *

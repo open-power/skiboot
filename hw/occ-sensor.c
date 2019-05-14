@@ -265,6 +265,9 @@ int occ_sensor_read(u32 handle, u64 *data)
 	if (attr > MAX_SENSOR_ATTR)
 		return OPAL_PARAMETER;
 
+	if (is_occ_reset())
+		return OPAL_HARDWARE;
+
 	hb = get_sensor_header_block(occ_num);
 
 	if (hb->valid != 1)

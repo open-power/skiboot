@@ -876,6 +876,11 @@ static inline u8 get_cpu_throttle(struct proc_chip *chip)
 	};
 }
 
+bool is_occ_reset(void)
+{
+	return occ_reset;
+}
+
 static void occ_throttle_poll(void *data __unused)
 {
 	struct proc_chip *chip;
