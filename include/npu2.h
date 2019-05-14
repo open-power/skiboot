@@ -180,8 +180,10 @@ struct npu2 {
 	uint64_t	tve_cache[16];
 	bool		tx_zcal_complete[2];
 
-	/* Used to protect global MMIO space, in particular the XTS
-	 * tables. */
+	/*
+	 * Used to protect global MMIO space, in particular the XTS
+	 * tables, and LPC allocation
+	 */
 	struct lock	lock;
 
 	/* NVLink */
@@ -193,6 +195,11 @@ struct npu2 {
 	struct lock	i2c_lock;
 	uint8_t		i2c_pin_mode;
 	uint8_t		i2c_pin_wr_state;
+	/*
+	 * Which device currently has an LPC allocation.
+	 * Temporary as long as we only support 1 LPC alloc per chip.
+	 */
+	struct npu2_dev	*lpc_mem_allocated;
 };
 
 static inline struct npu2 *phb_to_npu2_nvlink(struct phb *phb)

@@ -227,8 +227,8 @@
 #define OPAL_NPU_SET_RELAXED_ORDER		168
 #define OPAL_NPU_GET_RELAXED_ORDER		169
 #define OPAL_XIVE_GET_VP_STATE			170 /* Get NVT state */
-#define OPAL_NPU_RESERVED1			171  /* LPC Allocate */
-#define OPAL_NPU_RESERVED2			172  /* LPC Release */
+#define OPAL_NPU_MEM_ALLOC			171
+#define OPAL_NPU_MEM_RELEASE			172
 #define OPAL_LAST				172
 
 #define QUIESCE_HOLD			1 /* Spin all calls at entry */

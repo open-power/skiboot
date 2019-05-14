@@ -124,3 +124,80 @@ OPAL_SUCCESS
 
 OPAL_PARAMETER
    A provided parameter was invalid
+
+ .. _OPAL_NPU_MEM_ALLOC:
+
+OPAL_NPU_MEM_ALLOC
+==================
+
+OpenCAPI devices only.
+
+Sets up the NPU memory BAR for Lowest Point of Coherency (LPC) memory.
+
+At present, only one device per CPU can use LPC memory, and a maximum of 4TB
+can be allocated.
+
+Parameters
+----------
+::
+
+   uint64_t phb_id
+   uint32_t bdfn
+   uint64_t size
+   uint64_t *bar
+
+``phb_id``
+   OPAL ID of PHB
+
+``bdfn``
+   Bus-Device-Function number of OpenCAPI AFU
+
+``size``
+   Size of requested LPC memory area in bytes
+
+``bar``
+   Pointer to variable where base of LPC memory area will be returned
+
+Return Values
+-------------
+
+OPAL_SUCCESS
+   BAR setup completed successfully
+
+OPAL_PARAMETER
+   A provided parameter was invalid
+
+OPAL_RESOURCE
+   The BAR could not be assigned due to limitations
+
+.. _OPAL_NPU_MEM_RELEASE:
+
+OPAL_NPU_MEM_RELEASE
+====================
+
+OpenCAPI devices only.
+
+Releases NPU memory BAR.
+
+Parameters
+----------
+::
+
+   uint64_t phb_id
+   uint32_t bdfn
+
+``phb_id``
+   OPAL ID of PHB
+
+``bdfn``
+   Bus-Device-Function number of OpenCAPI AFU
+
+Return Values
+-------------
+
+OPAL_SUCCESS
+   BAR setup completed successfully
+
+OPAL_PARAMETER
+   A provided parameter was invalid, or the specified device does not currently
+   have LPC memory assigned

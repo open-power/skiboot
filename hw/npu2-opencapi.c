@@ -2025,3 +2025,184 @@ static int64_t opal_npu_tl_set(uint64_t phb_id, uint32_t __unused bdfn,
 	return OPAL_SUCCESS;
 }
 opal_call(OPAL_NPU_TL_SET, opal_npu_tl_set, 5);
+
+static void set_mem_bar(struct npu2_dev *dev, uint64_t base, uint64_t size)
+{
+	uint64_t stack, val, reg, bar_offset, pa_config_offset;
+	uint8_t memsel;
+
+	stack = index_to_stack(dev->brick_index);
+	switch (dev->brick_index) {
+	case 2:
+	case 4:
+		bar_offset = NPU2_GPU0_MEM_BAR;
+		pa_config_offset = NPU2_CQ_CTL_MISC_PA0_CONFIG;
+		break;
+	case 3:
+	case 5:
+		bar_offset = NPU2_GPU1_MEM_BAR;
+		pa_config_offset = NPU2_CQ_CTL_MISC_PA1_CONFIG;
+		break;
+	default:
+		assert(false);
+	}
+
+	assert((!size && !base) || (size && base));
+
+	/*
+	 * Memory select configuration:
+	 * - 0b000 - BAR disabled
+	 * - 0b001 - match 0b00, 0b01
+	 * - 0b010 - match 0b01, 0b10
+	 * - 0b011 - match 0b00, 0b10
+	 * - 0b100 - match 0b00
+	 * - 0b101 - match 0b01
+	 * - 0b110 - match 0b10
+	 * - 0b111 - match 0b00, 0b01, 0b10
+	 */
+	memsel = GETFIELD(PPC_BITMASK(13, 14), base);
+	if (size)
+		val = SETFIELD(NPU2_MEM_BAR_EN | NPU2_MEM_BAR_SEL_MEM, 0ULL, 0b100 + memsel);
+	else
+		val = 0;
+
+	/* Base address - 12 bits, 1G aligned */
+	val = SETFIELD(NPU2_MEM_BAR_NODE_ADDR, val, GETFIELD(PPC_BITMASK(22, 33), base));
+
+	/* GCID */
+	val = SETFIELD(NPU2_MEM_BAR_GROUP, val, GETFIELD(PPC_BITMASK(15, 18), base));
+	val = SETFIELD(NPU2_MEM_BAR_CHIP, val, GETFIELD(PPC_BITMASK(19, 21), base));
+
+	/* Other settings */
+	val = SETFIELD(NPU2_MEM_BAR_POISON, val, 1);
+	val = SETFIELD(NPU2_MEM_BAR_GRANULE, val, 0);
+	val = SETFIELD(NPU2_MEM_BAR_BAR_SIZE, val, ilog2(size >> 30));
+	val = SETFIELD(NPU2_MEM_BAR_MODE, val, 0);
+
+	for (int block = NPU2_BLOCK_SM_0; block <= NPU2_BLOCK_SM_3; block++) {
+		reg = NPU2_REG_OFFSET(stack, block, bar_offset);
+		npu2_write(dev->npu, reg, val);
+	}
+
+	/* Set PA config */
+	if (size)
+		val = SETFIELD(NPU2_CQ_CTL_MISC_PA_CONFIG_MEMSELMATCH, 0ULL, 0b100 + memsel);
+	else
+		val = 0;
+	val = SETFIELD(NPU2_CQ_CTL_MISC_PA_CONFIG_GRANULE, val, 0);
+	val = SETFIELD(NPU2_CQ_CTL_MISC_PA_CONFIG_SIZE, val, ilog2(size >> 30));
+	val = SETFIELD(NPU2_CQ_CTL_MISC_PA_CONFIG_MODE, val, 0);
+	val = SETFIELD(NPU2_CQ_CTL_MISC_PA_CONFIG_MASK, val, 0);
+	reg = NPU2_REG_OFFSET(stack, NPU2_BLOCK_CTL, pa_config_offset);
+	npu2_write(dev->npu, reg, val);
+}
+
+static int64_t alloc_mem_bar(struct npu2_dev *dev, uint64_t size, uint64_t *bar)
+{
+	uint64_t phys_map_base, phys_map_size;
+	int rc = OPAL_SUCCESS;
+
+	lock(&dev->npu->lock);
+
+	/*
+	 * Right now, we support 1 allocation per chip, of up to 4TB.
+	 *
+	 * In future, we will use chip address extension to support
+	 * >4TB ranges, and we will implement a more sophisticated
+	 * allocator to allow an allocation for every link on a chip.
+	 */
+
+	if (dev->npu->lpc_mem_allocated) {
+		rc = OPAL_RESOURCE;
+		goto out;
+	}
+
+	phys_map_get(dev->npu->chip_id, OCAPI_MEM, 0, &phys_map_base, &phys_map_size);
+
+	if (size > phys_map_size) {
+		/**
+		 * @fwts-label OCAPIInvalidLPCMemoryBARSize
+		 * @fwts-advice The operating system requested an unsupported
+		 * amount of OpenCAPI LPC memory. This is possibly a kernel
+		 * bug, or you may need to upgrade your firmware.
+		 */
+		OCAPIERR(dev, "Invalid LPC memory BAR allocation size requested: 0x%llx bytes (limit 0x%llx)\n",
+			 size, phys_map_size);
+		rc = OPAL_PARAMETER;
+		goto out;
+	}
+
+	/* Minimum BAR size is 1 GB */
+	if (size < (1 << 30)) {
+		size = 1 << 30;
+	}
+
+	if (!is_pow2(size)) {
+		size = 1 << (ilog2(size) + 1);
+	}
+
+	set_mem_bar(dev, phys_map_base, size);
+	*bar = phys_map_base;
+	dev->npu->lpc_mem_allocated = dev;
+
+out:
+	unlock(&dev->npu->lock);
+	return rc;
+}
+
+static int64_t release_mem_bar(struct npu2_dev *dev)
+{
+	int rc = OPAL_SUCCESS;
+
+	lock(&dev->npu->lock);
+
+	if (dev->npu->lpc_mem_allocated != dev) {
+		rc = OPAL_PARAMETER;
+		goto out;
+	}
+
+	set_mem_bar(dev, 0, 0);
+	dev->npu->lpc_mem_allocated = NULL;
+
+out:
+	unlock(&dev->npu->lock);
+	return rc;
+}
+
+static int64_t opal_npu_mem_alloc(uint64_t phb_id, uint32_t __unused bdfn,
+				  uint64_t size, uint64_t *bar)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+	struct npu2_dev *dev;
+
+
+	if (!phb || phb->phb_type != phb_type_npu_v2_opencapi)
+		return OPAL_PARAMETER;
+
+	dev = phb_to_npu2_dev_ocapi(phb);
+	if (!dev)
+		return OPAL_PARAMETER;
+
+	if (!opal_addr_valid(bar))
+		return OPAL_PARAMETER;
+
+	return alloc_mem_bar(dev, size, bar);
+}
+opal_call(OPAL_NPU_MEM_ALLOC, opal_npu_mem_alloc, 4);
+
+static int64_t opal_npu_mem_release(uint64_t phb_id, uint32_t __unused bdfn)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+	struct npu2_dev *dev;
+
+
+	if (!phb || phb->phb_type != phb_type_npu_v2_opencapi)
+		return OPAL_PARAMETER;
+
+	dev = phb_to_npu2_dev_ocapi(phb);
+	if (!dev)
+		return OPAL_PARAMETER;
+
+	return release_mem_bar(dev);
+}
+opal_call(OPAL_NPU_MEM_RELEASE, opal_npu_mem_release, 2);
