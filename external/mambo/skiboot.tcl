@@ -594,6 +594,10 @@ epapr::of2dtb mysim $mconf(epapr_dt_addr)
 # Set run speed
 mysim mode fastest
 
+if { [info exists env(GDB_SERVER)] } {
+    mysim debugger wait $env(GDB_SERVER)
+}
+
 if { [info exists env(SKIBOOT_AUTORUN)] } {
     if [catch { mysim go }] {
 	readline
