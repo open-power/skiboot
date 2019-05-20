@@ -3027,7 +3027,7 @@ static bool xive_check_eq_update(struct xive *x, uint32_t idx, struct xive_eq *e
 
 	assert(eq_p);
 	eq2 = *eq_p;
-	if (memcmp(eq, &eq2, sizeof(eq)) != 0) {
+	if (memcmp(eq, &eq2, sizeof(struct xive_eq)) != 0) {
 		xive_err(x, "EQ update mismatch idx %d\n", idx);
 		xive_err(x, "want: %08x %08x %08x %08x\n",
 			 eq->w0, eq->w1, eq->w2, eq->w3);
@@ -3049,7 +3049,7 @@ static bool xive_check_vpc_update(struct xive *x, uint32_t idx, struct xive_vp *
 
 	assert(vp_p);
 	vp2 = *vp_p;
-	if (memcmp(vp, &vp2, sizeof(vp)) != 0) {
+	if (memcmp(vp, &vp2, sizeof(struct xive_vp)) != 0) {
 		xive_err(x, "VP update mismatch idx %d\n", idx);
 		xive_err(x, "want: %08x %08x %08x %08x\n",
 			 vp->w0, vp->w1, vp->w2, vp->w3);
