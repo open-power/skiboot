@@ -537,6 +537,48 @@ static int __npu2_dev_bind_pci_dev(struct phb *phb __unused,
 	return 0;
 }
 
+static int64_t npu2_gpu_brigde_sec_bus_reset(void *dev,
+		struct pci_cfg_reg_filter *pcrf __unused,
+		uint32_t offset, uint32_t len,
+		uint32_t *data, bool write)
+{
+	struct pci_device *pd = dev;
+	struct pci_device *gpu;
+	struct phb *npphb;
+	struct npu2 *npu;
+	struct dt_node *np;
+	struct npu2_dev	*ndev;
+	int i;
+
+	assert(write);
+
+	if ((len != 2) || (offset & 1)) {
+		/* Short config writes are not supported */
+		PCIERR(pd->phb, pd->bdfn,
+		       "Unsupported write to bridge control register\n");
+		return OPAL_PARAMETER;
+	}
+
+	gpu = list_top(&pd->children, struct pci_device, link);
+	if (gpu && (*data & PCI_CFG_BRCTL_SECONDARY_RESET)) {
+		dt_for_each_compatible(dt_root, np, "ibm,power9-npu-pciex") {
+			npphb = pci_get_phb(dt_prop_get_cell(np,
+					"ibm,opal-phbid", 1));
+			if (!npphb || npphb->phb_type != phb_type_npu_v2)
+				continue;
+
+			npu = phb_to_npu2_nvlink(npphb);
+			for (i = 0; i < npu->total_devices; ++i) {
+				ndev = &npu->devices[i];
+				if (ndev->nvlink.pd == gpu)
+					npu2_dev_procedure_reset(ndev);
+			}
+		}
+	}
+
+	return OPAL_PARTIAL;
+}
+
 static void npu2_dev_bind_pci_dev(struct npu2_dev *dev)
 {
 	struct phb *phb;
@@ -558,6 +600,19 @@ static void npu2_dev_bind_pci_dev(struct npu2_dev *dev)
 			dev->nvlink.phb = phb;
 			/* Found the device, set the bit in config space */
 			npu2_set_link_flag(dev, NPU2_DEV_PCI_LINKED);
+
+			/*
+			 * We define a custom sec bus reset handler for a slot
+			 * with an NVLink-connected GPU to prevent HMIs which
+			 * will otherwise happen if we reset GPU before
+			 * resetting NVLinks.
+			 */
+			if (dev->nvlink.pd->parent &&
+			    dev->nvlink.pd->parent->slot)
+				pci_add_cfg_reg_filter(dev->nvlink.pd->parent,
+						PCI_CFG_BRCTL, 2,
+						PCI_REG_FLAG_WRITE,
+						npu2_gpu_brigde_sec_bus_reset);
 			return;
 		}
 	}
