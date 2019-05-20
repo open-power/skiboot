@@ -331,7 +331,7 @@ static uint32_t reset_ntl_release(struct npu2_dev *ndev)
 	npu2_fir = 0;
 
 	for (i = 0; i < NPU2_TOTAL_FIR_REGISTERS; i++) {
-		npu2_write(ndev->npu, npu2_fir_addr, npu2_fir);
+		xscom_write(ndev->npu->chip_id, npu2_fir_addr, npu2_fir);
 		npu2_fir_addr += NPU2_FIR_OFFSET;
 
 	}
