@@ -229,5 +229,6 @@ SECTIONS
 		*(.comment)
 		*(.eh_frame)
 		*(.interp)
+		*(.fini_array.*)
 	}
 }
