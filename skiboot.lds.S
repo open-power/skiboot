@@ -117,7 +117,7 @@ SECTIONS
 		KEEP(*(.init_array))
 		__ctors_end = .;
 	}
- 
+
 	. = ALIGN(0x10);
 	.opd : {
 		*(.opd)
@@ -201,8 +201,8 @@ SECTIONS
 		*(.branch_lt)
 	}
 
-	/* We locate the BSS at 3M to leave room for the symbol map */
-	. = 0x300000;
+	/* We locate the BSS at 4M to leave room for the symbol map */
+	. = 0x400000;
 
 	_sbss = .;
 	.bss : {

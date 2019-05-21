@@ -59,8 +59,8 @@
  */
 #define CPU_CTL_OFF             (SPIRA_OFF + 0x1800)
 
-/* We keep a gap of 2M for skiboot text & bss for now. We will
- * then we have our heap which goes up to base + 14M (so 12M for
+/* We keep a gap of 5M for skiboot text & bss for now. We will
+ * then we have our heap which goes up to base + 14M (so 11M for
  * now, though we can certainly reduce that a lot).
  *
  * Ideally, we should fix the heap end and use _end to basically
@@ -71,14 +71,16 @@
  * regions statically in mem_region.c, but still on the list of
  * things to improve.
  *
- * As of this writing (2014/4/6), we use approc 512K for skiboot
+ * As of A Long Time Ago (2014/4/6), we used approc 512K for skiboot
  * core and 2M of heap on a 1 socket machine.
  *
- * As of 2015/5/7 we use approx 800k for skiboot, 500k HEAP for
- * mambo boot.
+ * As of still a Long Time Ago (2015/5/7) we used approx 800k for skiboot,
+ * 500k HEAP for mambo boot.
+ *
+ * As of mid-2019, a 2 socket Romulus uses ~4MB heap.
  */
-#define HEAP_BASE		(SKIBOOT_BASE + 0x00400000)
-#define HEAP_SIZE		0x00c00000
+#define HEAP_BASE		(SKIBOOT_BASE + 0x00500000)
+#define HEAP_SIZE		0x00b00000
 
 /* This is the location of our console buffer at base + 16M */
 #define INMEM_CON_START		(SKIBOOT_BASE + 0x01000000)
