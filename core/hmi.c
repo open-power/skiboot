@@ -576,6 +576,46 @@ static bool phb_is_npu2(struct dt_node *dn)
 		dt_node_is_compatible(dn, "ibm,power9-npu-opencapi-pciex"));
 }
 
+static void add_npu2_xstop_reason(uint32_t *xstop_reason, uint8_t reason)
+{
+	int i, reason_count;
+	uint8_t *ptr;
+
+	reason_count = sizeof(*xstop_reason) / sizeof(reason);
+	ptr = (uint8_t *) xstop_reason;
+	for (i = 0; i < reason_count; i++) {
+		if (*ptr == 0) {
+			*ptr = reason;
+			break;
+		}
+		ptr++;
+	}
+}
+
+static void encode_npu2_xstop_reason(uint32_t *xstop_reason,
+				uint64_t fir, int fir_number)
+{
+	int bit;
+	uint8_t reason;
+
+	/*
+	 * There are three 64-bit FIRs but the xstop reason field of
+	 * the hmi event is only 32-bit. Encode which FIR bit is set as:
+	 * - 2 bits for the FIR number
+	 * - 6 bits for the bit number (0 -> 63)
+	 *
+	 * So we could even encode up to 4 reasons for the HMI, if
+	 * that can ever happen
+	 */
+	while (fir) {
+		bit = ilog2(fir);
+		reason = fir_number << 6;
+		reason |= (63 - bit); // IBM numbering
+		add_npu2_xstop_reason(xstop_reason, reason);
+		fir ^= 1ULL << bit;
+	}
+}
+
 static void find_npu2_checkstop_reason(int flat_chip_id,
 				      struct OpalHMIEvent *hmi_evt,
 				      uint64_t *out_flags)
@@ -592,6 +632,7 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 	uint64_t npu2_fir_action0_addr;
 	uint64_t npu2_fir_action1_addr;
 	uint64_t fatal_errors;
+	uint32_t xstop_reason = 0;
 	int total_errors = 0;
 	const char *loc;
 
@@ -635,6 +676,8 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 			prlog(PR_ERR, "NPU: [Loc: %s] P:%d ACTION0 0x%016llx, ACTION1 0x%016llx\n",
 					loc, flat_chip_id, npu2_fir_action0, npu2_fir_action1);
 			total_errors++;
+
+			encode_npu2_xstop_reason(&xstop_reason, fatal_errors, i);
 		}
 
 		/* Can't do a fence yet, we are just logging fir information for now */
@@ -667,6 +710,7 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 	hmi_evt->severity = OpalHMI_SEV_WARNING;
 	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
 	hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_NPU;
+	hmi_evt->u.xstop_error.xstop_reason = xstop_reason;
 	hmi_evt->u.xstop_error.u.chip_id = flat_chip_id;
 
 	/* Marking the event as recoverable so that we don't crash */
