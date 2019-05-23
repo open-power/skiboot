@@ -2233,6 +2233,13 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 	NPU2DBG(p, "XTS_BDF_MAP[%03d] = 0x%08llx\n", id, xts_bdf_lpar);
 	npu2_write(p, NPU2_XTS_BDF_MAP + id*8, xts_bdf_lpar);
 
+	/* Reset wildcard in the PID map and the refcounter */
+	if (npu2_read(p, NPU2_XTS_PID_MAP + id*0x20) || p->ctx_ref[id]) {
+		prlog(PR_INFO, "Resetting PID MAP for LPID %lld\n", lparid);
+		p->ctx_ref[id] = 0;
+		npu2_write(p, NPU2_XTS_PID_MAP + id*0x20, 0);
+	}
+
 out:
 	unlock(&p->lock);
 	return rc;
