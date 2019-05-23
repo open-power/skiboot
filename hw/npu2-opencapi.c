@@ -1583,26 +1583,37 @@ static void mask_nvlink_fir(struct npu2 *p)
 
 static int enable_interrupts(struct npu2 *p)
 {
-	uint64_t reg, val_xsl, val_override;
+	uint64_t reg, xsl_fault, xstop_override, xsl_mask;
 
 	/*
-	 * Enable translation interrupts for all bricks and override
-	 * every brick-fatal error to send an interrupt instead of
-	 * checkstopping.
+	 * We need to:
+	 * - enable translation interrupts for all bricks
+	 * - override most brick-fatal errors from FIR2 to send an
+	 *   interrupt instead of the default action of checkstopping
+	 *   the systems, since we can just fence the brick and keep
+	 *   the system alive.
+	 * - the exception to the above is 2 FIRs for XSL errors
+	 *   resulting of bad AFU behavior, for which we don't want to
+	 *   checkstop but can't configure to send an error interrupt
+	 *   either, as the XSL errors are reported on 2 links (the
+	 *   XSL is shared between 2 links). Instead, we mask
+	 *   them. The XSL errors will result in an OTL error, which
+	 *   is reported only once, for the correct link.
 	 *
 	 * FIR bits configured to trigger an interrupt must have their
 	 * default action masked
 	 */
-	val_xsl = PPC_BIT(0) | PPC_BIT(1) | PPC_BIT(2) | PPC_BIT(3);
-	val_override = 0x0FFFEFC00FF1B000;
+	xsl_fault = PPC_BIT(0) | PPC_BIT(1) | PPC_BIT(2) | PPC_BIT(3);
+	xstop_override = 0x0FFFEFC00F91B000;
+	xsl_mask = PPC_BIT(41) | PPC_BIT(42);
 
 	xscom_read(p->chip_id, p->xscom_base + NPU2_MISC_FIR2_MASK, &reg);
-	reg |= val_xsl | val_override;
+	reg |= xsl_fault | xstop_override | xsl_mask;
 	xscom_write(p->chip_id, p->xscom_base + NPU2_MISC_FIR2_MASK, reg);
 
 	reg = npu2_scom_read(p->chip_id, p->xscom_base, NPU2_MISC_IRQ_ENABLE2,
 			     NPU2_MISC_DA_LEN_8B);
-	reg |= val_xsl | val_override;
+	reg |= xsl_fault | xstop_override;
 	npu2_scom_write(p->chip_id, p->xscom_base, NPU2_MISC_IRQ_ENABLE2,
 			NPU2_MISC_DA_LEN_8B, reg);
 
@@ -1613,7 +1624,7 @@ static int enable_interrupts(struct npu2 *p)
 	 */
 	reg = npu2_scom_read(p->chip_id, p->xscom_base, NPU2_MISC_FENCE_ENABLE2,
 			     NPU2_MISC_DA_LEN_8B);
-	reg |= val_override;
+	reg |= xstop_override;
 	npu2_scom_write(p->chip_id, p->xscom_base, NPU2_MISC_FENCE_ENABLE2,
 			NPU2_MISC_DA_LEN_8B, reg);
 
