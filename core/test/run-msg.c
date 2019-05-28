@@ -132,13 +132,13 @@ int main(void)
         assert(r == 0);
 
         assert(list_count(&msg_pending_list) == ++npending);
-        assert(list_count(&msg_free_list) == --nfree);
+        assert(list_count(&msg_free_list) == nfree);
 
         r = opal_get_msg(m_ptr, sizeof(m));
-        assert(r == 0);
+	assert(r == OPAL_PARTIAL);
 
         assert(list_count(&msg_pending_list) == --npending);
-        assert(list_count(&msg_free_list) == ++nfree);
+        assert(list_count(&msg_free_list) == nfree);
 
         assert(m.params[0] == 0);
         assert(m.params[1] == 1);

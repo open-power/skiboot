@@ -558,7 +558,7 @@ enum opal_msg_type {
 
 struct opal_msg {
 	__be32 msg_type;
-	__be32 reserved;
+	__be32 size;
 	__be64 params[8];
 };
 

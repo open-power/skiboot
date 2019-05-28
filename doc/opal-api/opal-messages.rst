@@ -11,7 +11,7 @@ An opal_msg is: ::
 
   struct opal_msg {
 	__be32 msg_type;
-	__be32 reserved;
+	__be32 size;
 	__be64 params[8];
   };
 
@@ -21,8 +21,9 @@ define all eight parameters, the value in the undefined parameters is
 undefined, although can safely be memcpy()d or otherwise moved.
 
 In the device tree, there's an opal-msg-size property of the OPAL node that
-says the size of a struct opal-msg. In the future, OPAL may support larger
-messages. See ``OPAL_GET_MESSAGE`` documentation for details.
+says the size of a struct opal-msg. Kernel will use this property to allocate
+memory for opal_msg structure. See ``OPAL_GET_MESSAGE`` documentation for
+details.
 ::
 
   ibm,opal {
