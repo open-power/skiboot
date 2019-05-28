@@ -2120,7 +2120,9 @@ static int init_control_socket(struct opal_prd_ctx *ctx)
 
 static int run_prd_daemon(struct opal_prd_ctx *ctx)
 {
-	int rc;
+	char *opal_msg_path;
+	void *buf;
+	int rc, len;
 
 	/* log to syslog */
 	pr_log_daemon_init();
@@ -2130,14 +2132,31 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	ctx->fd = -1;
 	ctx->socket = -1;
 
-	/* set up our message buffer */
-	ctx->msg_alloc_len = sizeof(*ctx->msg);
+	/*
+	 * Set up our message buffer. Use opal-msg-size device tree
+	 * property to get message buffer size.
+	 */
+	rc = asprintf(&opal_msg_path,
+		       "%s/ibm,opal/opal-msg-size", devicetree_base);
+	if (rc > 0) {
+		rc = open_and_read(opal_msg_path, &buf, &len);
+		if (rc == 0) {
+			ctx->msg_alloc_len = be32toh(*(__be32 *)buf);
+			free(buf);
+		}
+
+		free(opal_msg_path);
+	}
+
+	if (ctx->msg_alloc_len == 0)
+		ctx->msg_alloc_len = sizeof(*ctx->msg);
+
 	ctx->msg = malloc(ctx->msg_alloc_len);
 	if (!ctx->msg) {
 		pr_log(LOG_ERR, "FW: Can't allocate PRD message buffer: %m");
 		return -1;
 	}
-
+	memset(ctx->msg, 0, ctx->msg_alloc_len);
 
 	list_head_init(&ctx->msgq);
 
