@@ -36,7 +36,7 @@ static struct lock opal_msg_lock = LOCK_UNLOCKED;
 
 int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
 		    void (*consumed)(void *data, int status),
-		    size_t num_params, const u64 *params)
+		    size_t params_size, const void *params)
 {
 	struct opal_msg_entry *entry;
 
@@ -57,11 +57,11 @@ int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
 	entry->data = data;
 	entry->msg.msg_type = cpu_to_be32(msg_type);
 
-	if (num_params > ARRAY_SIZE(entry->msg.params)) {
+	if (params_size > OPAL_MSG_FIXED_PARAMS_SIZE) {
 		prerror("Discarding extra parameters\n");
-		num_params = ARRAY_SIZE(entry->msg.params);
+		params_size = OPAL_MSG_FIXED_PARAMS_SIZE;
 	}
-	memcpy(entry->msg.params, params, num_params*sizeof(u64));
+	memcpy(entry->msg.params, params, params_size);
 
 	list_add_tail(&msg_pending_list, &entry->link);
 	opal_update_pending_evt(OPAL_EVENT_MSG_PENDING,

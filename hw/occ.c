@@ -908,8 +908,9 @@ static void occ_throttle_poll(void *data __unused)
 			occ_msg.type = cpu_to_be64(OCC_THROTTLE);
 			occ_msg.chip = 0;
 			occ_msg.throttle_status = 0;
-			rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL, 3,
-					     (uint64_t *)&occ_msg);
+			rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL,
+					     sizeof(struct opal_occ_msg),
+					     &occ_msg);
 			if (!rc)
 				occ_reset = false;
 		}
@@ -929,7 +930,8 @@ static void occ_throttle_poll(void *data __unused)
 				occ_msg.throttle_status = cpu_to_be64(throttle);
 				rc = _opal_queue_msg(OPAL_MSG_OCC, NULL,
 						     occ_msg_consumed,
-						     3, (uint64_t *)&occ_msg);
+						     sizeof(struct opal_occ_msg),
+						     &occ_msg);
 				if (!rc) {
 					chip->throttle = throttle;
 					occ_opal_msg_outstanding = true;
@@ -1938,8 +1940,8 @@ static void __occ_do_load(u8 scope, u32 dbob_id __unused, u32 seq_id)
 	} else if (!rc) {
 		struct opal_occ_msg occ_msg = { CPU_TO_BE64(OCC_LOAD), 0, 0 };
 
-		rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL, 3,
-				     (uint64_t *)&occ_msg);
+		rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL,
+				     sizeof(struct opal_occ_msg), &occ_msg);
 		if (rc)
 			prlog(PR_INFO, "OCC: Failed to queue message %d\n",
 			      OCC_LOAD);
@@ -2062,8 +2064,8 @@ int occ_msg_queue_occ_reset(void)
 	int rc;
 
 	lock(&occ_lock);
-	rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL, 3,
-			     (uint64_t *)&occ_msg);
+	rc = _opal_queue_msg(OPAL_MSG_OCC, NULL, NULL,
+			     sizeof(struct opal_occ_msg), &occ_msg);
 	if (rc) {
 		prlog(PR_INFO, "OCC: Failed to queue OCC_RESET message\n");
 		goto out;

@@ -212,8 +212,8 @@ static void send_next_pending_event(void)
 	 * disabled then we shouldn't propagate PRD events to the host.
 	 */
 	if (prd_enabled)
-		_opal_queue_msg(OPAL_MSG_PRD, prd_msg, prd_msg_consumed, 4,
-				(uint64_t *)prd_msg);
+		_opal_queue_msg(OPAL_MSG_PRD, prd_msg, prd_msg_consumed,
+				prd_msg->hdr.size, prd_msg);
 }
 
 static void __prd_event(uint32_t proc, uint8_t event)
@@ -421,8 +421,8 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 	}
 
 	if (!rc)
-		rc = _opal_queue_msg(OPAL_MSG_PRD, prd_msg, prd_msg_consumed, 4,
-				(uint64_t *) prd_msg);
+		rc = _opal_queue_msg(OPAL_MSG_PRD, prd_msg, prd_msg_consumed,
+				     prd_msg->hdr.size, prd_msg);
 	else
 		prd_msg_inuse = false;
 

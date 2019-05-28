@@ -288,7 +288,7 @@ static int setup_scom_addresses(void)
 
 static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover, uint64_t *out_flags)
 {
-	size_t num_params;
+	size_t size;
 
 	/* Don't queue up event if recover == -1 */
 	if (recover == -1)
@@ -307,13 +307,13 @@ static int queue_hmi_event(struct OpalHMIEvent *hmi_evt, int recover, uint64_t *
 	 * num_params divide the struct size by 8 bytes to get exact
 	 * num_params value.
 	 */
-	num_params = ALIGN_UP(sizeof(*hmi_evt), sizeof(u64)) / sizeof(u64);
+	size = ALIGN_UP(sizeof(*hmi_evt), sizeof(u64));
 
 	*out_flags |= OPAL_HMI_FLAGS_NEW_EVENT;
 
 	/* queue up for delivery to host. */
 	return _opal_queue_msg(OPAL_MSG_HMI_EVT, NULL, NULL,
-				num_params, (uint64_t *)hmi_evt);
+				size, hmi_evt);
 }
 
 static int read_core_fir(uint32_t chip_id, uint32_t core_id, uint64_t *core_fir)
