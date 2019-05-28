@@ -27,6 +27,9 @@
  */
 #define OPAL_MAX_ASYNC_COMP	16
 
+/* Max size of struct opal_msg */
+#define OPAL_MSG_SIZE		(64 * 1024)
+
 int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
 		    void (*consumed)(void *data), size_t num_params,
 		    const u64 *params);
