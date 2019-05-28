@@ -63,7 +63,7 @@ void opal_update_pending_evt(uint64_t evt_mask, uint64_t evt_values)
 static long magic = 8097883813087437089UL;
 static void callback(void *data, int status)
 {
-	assert(status == OPAL_SUCCESS);
+	assert((status == OPAL_SUCCESS || status == OPAL_PARTIAL));
         assert(*(uint64_t *)data == magic);
 }
 
@@ -139,6 +139,23 @@ int main(void)
 
         assert(list_count(&msg_pending_list) == --npending);
         assert(list_count(&msg_free_list) == nfree);
+
+        /* Return OPAL_PARTIAL to callback */
+	r = opal_queue_msg(0, &magic, callback, 0, 1, 2, 3, 4, 5, 6, 7, 0xBADDA7A);
+	assert(r == 0);
+
+	assert(list_count(&msg_pending_list) == ++npending);
+	assert(list_count(&msg_free_list) == nfree);
+
+	r = opal_get_msg(m_ptr, sizeof(m));
+	assert(r == OPAL_PARTIAL);
+
+	assert(list_count(&msg_pending_list) == --npending);
+	assert(list_count(&msg_free_list) == nfree);
+
+        /* return OPAL_PARAMETER */
+	r = _opal_queue_msg(0, NULL, NULL, OPAL_MSG_SIZE, m_ptr);
+	assert(r == OPAL_PARAMETER);
 
         assert(m.params[0] == 0);
         assert(m.params[1] == 1);
