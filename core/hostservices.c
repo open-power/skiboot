@@ -802,3 +802,80 @@ bool hservices_init(void)
 
 	return true;
 }		
+
+static void hservice_send_hbrt_msg_resp(struct fsp_msg *msg)
+{
+	int status = (msg->resp->word1 >> 8) & 0xff;
+
+	fsp_freemsg(msg);
+	if (status) {
+		prlog(PR_NOTICE, "HBRT: HBRT to FSP MBOX command failed "
+		      "[rc=0x%x]\n", status);
+	}
+
+	fsp_tce_unmap(PSI_DMA_HBRT_FSP_MSG, PSI_DMA_HBRT_FSP_MSG_SIZE);
+	/* Send response data to HBRT */
+	prd_fw_resp_fsp_response(status);
+}
+
+#define FSP_STATUS_RR	(-8193)
+/* Caller takes care of serializing MBOX message */
+int hservice_send_hbrt_msg(void *data, u64 dsize)
+{
+	uint32_t tce_len, offset;
+	int rc;
+	uint64_t addr;
+	struct fsp_msg *msg;
+
+	prlog(PR_NOTICE, "HBRT: HBRT - FSP message generated\n");
+
+	/* We only support FSP based system */
+	if (!fsp_present()) {
+		prlog(PR_DEBUG,
+		      "HBRT: Warning, HBRT - FSP message discarded!\n");
+		return OPAL_UNSUPPORTED;
+	}
+
+	/*
+	 * If FSP is in R/R then send specific return code to HBRT (inside
+	 * HBRT message) and return success to caller (opal_prd_msg()).
+	 */
+	if (fsp_in_rr()) {
+		prlog(PR_DEBUG,
+		      "HBRT: FSP is in R/R. Dropping HBRT - FSP message\n");
+		prd_fw_resp_fsp_response(FSP_STATUS_RR);
+		return OPAL_SUCCESS;
+	}
+
+	/* Adjust address, size for TCE mapping */
+	addr = (u64)data & ~TCE_MASK;
+	offset = (u64)data & TCE_MASK;
+	tce_len = ALIGN_UP((dsize + offset), TCE_PSIZE);
+
+	if (tce_len > PSI_DMA_HBRT_FSP_MSG_SIZE) {
+		prlog(PR_DEBUG,
+		      "HBRT: HBRT - FSP message is too big, discarded\n");
+		return OPAL_PARAMETER;
+	}
+	fsp_tce_map(PSI_DMA_HBRT_FSP_MSG, (void *)addr, tce_len);
+
+	msg = fsp_mkmsg(FSP_CMD_HBRT_TO_FSP, 3, 0,
+			(PSI_DMA_HBRT_FSP_MSG + offset), dsize);
+	if (!msg) {
+		prlog(PR_DEBUG,
+		      "HBRT: Failed to create HBRT - FSP message to FSP\n");
+		rc = OPAL_NO_MEM;
+		goto out_tce_unmap;
+	}
+
+	rc = fsp_queue_msg(msg, hservice_send_hbrt_msg_resp);
+	if (rc == 0)
+		return rc;
+
+	prlog(PR_DEBUG, "HBRT: Failed to queue HBRT message to FSP\n");
+	fsp_freemsg(msg);
+
+out_tce_unmap:
+	fsp_tce_unmap(PSI_DMA_HBRT_FSP_MSG, PSI_DMA_HBRT_FSP_MSG_SIZE);
+	return rc;
+}

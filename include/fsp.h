@@ -581,6 +581,12 @@
 #define FSP_RSP_MEM_DYN_DEALLOC	0x00e48500 /* HV->FSP */
 
 /*
+ * Class F2
+ */
+#define FSP_CMD_HBRT_TO_FSP	0x1f20100 /* HV->FSP: HBRT message */
+
+
+/*
  * Functions exposed to the rest of skiboot
  */
 

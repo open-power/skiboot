@@ -227,3 +227,9 @@ these values.
 If ``opal_occ_msg.type > 2`` then host should ignore the message for now,
 new events can be defined for ``opal_occ_msg.type`` in the future versions
 of OPAL.
+
+OPAL_MSG_PRD2
+-------------
+
+This message is a OPAL-to-HBRT notification. Its same as OPAL_MSG_PRD except
+this one supports passing more than 64bytes (8*8) of data.

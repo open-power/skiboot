@@ -44,6 +44,9 @@ struct prd_fw_msg {
 			__be32	size;
 			char	data[];
 		} __packed errorlog;
+		struct {
+			char	data;
+		} mbox_msg;
 	};
 };
 

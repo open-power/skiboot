@@ -553,6 +553,7 @@ enum opal_msg_type {
 	OPAL_MSG_DPO		= 5,
 	OPAL_MSG_PRD		= 6,
 	OPAL_MSG_OCC		= 7,
+	OPAL_MSG_PRD2		= 8,
 	OPAL_MSG_TYPE_MAX,
 };
 
@@ -1093,6 +1094,8 @@ enum opal_prd_msg_type {
 	OPAL_PRD_MSG_TYPE_FSP_OCC_LOAD_START, /* HBRT <-- OPAL */
 	OPAL_PRD_MSG_TYPE_FSP_OCC_LOAD_START_STATUS, /* HBRT --> OPAL */
 };
+
+#define OPAL_PRD_MSG_SIZE_MAX	(1 << 16)
 
 struct opal_prd_msg_header {
 	uint8_t		type;

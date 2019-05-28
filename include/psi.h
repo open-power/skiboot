@@ -233,6 +233,13 @@
 #define PSI_DMA_PLAT_REQ_BUF_SIZE	0x00001000
 #define PSI_DMA_PLAT_RESP_BUF		0x03301000
 #define PSI_DMA_PLAT_RESP_BUF_SIZE	0x00001000
+/*
+ * Our PRD interface can handle upto 64KB data transfer between
+ * OPAL - opal-prd. Hence adding TCE size as 68KB. If we increase
+ * OPAL - opal-prd message size, then we have to fix this.
+ */
+#define PSI_DMA_HBRT_FSP_MSG		0x03302000
+#define PSI_DMA_HBRT_FSP_MSG_SIZE	0x00011000
 
 /* P8 only mappings */
 #define PSI_DMA_TRACE_BASE		0x04000000

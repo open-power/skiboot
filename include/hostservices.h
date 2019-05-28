@@ -42,5 +42,6 @@ int hservice_send_error_log(uint32_t plid, uint32_t dsize, void *data);
 int hservice_wakeup(uint32_t i_core, uint32_t i_mode);
 int fsp_occ_reset_status(u64 chipid, s64 status);
 int fsp_occ_load_start_status(u64 chipid, s64 status);
+int hservice_send_hbrt_msg(void *data, u64 dsize);
 
 #endif /* __HOSTSERVICES_H */

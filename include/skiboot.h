@@ -291,6 +291,7 @@ extern void prd_init(void);
 extern void prd_register_reserved_memory(void);
 extern void prd_fsp_occ_reset(uint32_t proc);
 extern void prd_fsp_occ_load_start(u32 proc);
+extern void prd_fw_resp_fsp_response(int status);
 
 /* Flatten device-tree */
 extern void *create_dtb(const struct dt_node *root, bool exclusive);
