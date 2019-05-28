@@ -25,6 +25,7 @@
 #include "secureboot.h"
 #include "trustedboot.h"
 #include "tpm_chip.h"
+#include "tss/trustedTypes.H"
 
 /* For debugging only */
 //#define STB_DEBUG
@@ -34,19 +35,29 @@ static bool trusted_init = false;
 static bool boot_services_exited = false;
 
 /*
- * This maps a PCR for each resource we can measure. The PCR number is
- * mapped according to the TCG PC Client Platform Firmware Profile
- * specification, Revision 00.21
- * Only resources included in this whitelist can be measured.
+ * Partitions retrieved from PNOR must be extended to the proper PCR and
+ * recorded in the event log. Later, customers may use: the PCR values to attest
+ * the boot security, and the event log to inspect what measurements were
+ * extended to the PCRs.
+ *
+ * The whitelist below should map every skiboot event (or resource) to a PCR
+ * following the TCG PC Client Platform Firmware Profile specification,
+ * Family 2.0, Level 00, Revision 1.03 v51.
+ *
+ * Convention for skiboot events:
+ *	- Events that represents data should be extended to PCR 4.
+ *	- Events that represents config should be extended to PCR 5.
+ *	- For the lack of an event type that fits the specific purpose,
+ *	  both data and config events should be logged as EV_COMPACT_HASH.
  */
 static struct {
 	enum resource_id id;
 	TPM_Pcr pcr;
 } resources[] = {
-	{ RESOURCE_ID_IMA_CATALOG, PCR_2 },
-	{ RESOURCE_ID_KERNEL, PCR_4 },
-	{ RESOURCE_ID_CAPP,   PCR_2 },
-	{ RESOURCE_ID_VERSION, PCR_3 },
+	{ RESOURCE_ID_IMA_CATALOG,	PCR_4},
+	{ RESOURCE_ID_KERNEL,		PCR_4},
+	{ RESOURCE_ID_CAPP,		PCR_4},
+	{ RESOURCE_ID_VERSION,		PCR_4}, /* Also data for Hostboot */
 };
 
 /*
@@ -139,10 +150,8 @@ int trustedboot_exit_boot_services(void)
 	stb_print_data((uint8_t*) ev_separator.sha256, TPM_ALG_SHA256_SIZE);
 #endif
 	/*
-	 * As defined in the TCG Platform Firmware PWe are done. Extending the digest of 0xFFFFFFFF
-	 * in PCR[0-7], and recording an EV_SEPARATOR event in
-	 * event log as defined in the TCG Platform Firmware Profile
-	 * specification, Revision 00.21
+	 * Extend the digest of 0xFFFFFFFF to PCR[0-7] and record it as
+	 * EV_SEPARATOR
 	 */
 	for (pcr = 0; pcr < 8; pcr++) {
 		rc = tpm_extendl(pcr, TPM_ALG_SHA256,
@@ -253,5 +262,5 @@ int trustedboot_measure(enum resource_id id, void *buf, size_t len)
 	return tpm_extendl(pcr,
 			   TPM_ALG_SHA256, digest, TPM_ALG_SHA256_SIZE,
 			   TPM_ALG_SHA1,   digest, TPM_ALG_SHA1_SIZE,
-			   EV_ACTION, name);
+			   EV_COMPACT_HASH, name);
 }
