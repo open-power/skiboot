@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 IBM Corp.
+/* Copyright 2013-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -853,7 +853,7 @@ static bool cpu_pstates_prepare_core(struct proc_chip *chip,
 }
 
 static bool occ_opal_msg_outstanding = false;
-static void occ_msg_consumed(void *data __unused)
+static void occ_msg_consumed(void *data __unused, int status __unused)
 {
 	lock(&occ_lock);
 	occ_opal_msg_outstanding = false;

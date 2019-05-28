@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 
 struct opal_msg_entry {
 	struct list_node link;
-	void (*consumed)(void *data);
+	void (*consumed)(void *data, int status);
 	void *data;
 	struct opal_msg msg;
 };
@@ -35,8 +35,8 @@ static LIST_HEAD(msg_pending_list);
 static struct lock opal_msg_lock = LOCK_UNLOCKED;
 
 int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
-		    void (*consumed)(void *data), size_t num_params,
-		    const u64 *params)
+		    void (*consumed)(void *data, int status),
+		    size_t num_params, const u64 *params)
 {
 	struct opal_msg_entry *entry;
 
@@ -75,7 +75,7 @@ int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
 static int64_t opal_get_msg(uint64_t *buffer, uint64_t size)
 {
 	struct opal_msg_entry *entry;
-	void (*callback)(void *data);
+	void (*callback)(void *data, int status);
 	void *data;
 
 	if (size < sizeof(struct opal_msg) || !buffer)
@@ -103,7 +103,7 @@ static int64_t opal_get_msg(uint64_t *buffer, uint64_t size)
 	unlock(&opal_msg_lock);
 
 	if (callback)
-		callback(data);
+		callback(data, OPAL_SUCCESS);
 
 	return OPAL_SUCCESS;
 }
@@ -113,7 +113,7 @@ static int64_t opal_check_completion(uint64_t *buffer, uint64_t size,
 				     uint64_t token)
 {
 	struct opal_msg_entry *entry, *next_entry;
-	void (*callback)(void *data) = NULL;
+	void (*callback)(void *data, int status) = NULL;
 	int rc = OPAL_BUSY;
 	void *data = NULL;
 
@@ -142,7 +142,7 @@ static int64_t opal_check_completion(uint64_t *buffer, uint64_t size,
 	unlock(&opal_msg_lock);
 
 	if (callback)
-		callback(data);
+		callback(data, OPAL_SUCCESS);
 
 	return rc;
 

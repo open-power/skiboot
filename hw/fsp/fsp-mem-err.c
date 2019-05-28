@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ static bool send_response_to_fsp(u32 cmd_sub_mod)
  *            in that case, at least until we clarify a bit better how
  *            we want to handle things.
  */
-static void queue_event_for_delivery(void *data __unused)
+static void queue_event_for_delivery(void *data __unused, int staus __unused)
 {
 	struct fsp_mem_err_node *entry;
 	uint64_t *merr_data;
@@ -144,7 +144,7 @@ static int queue_mem_err_node(struct OpalMemoryErrorData *merr_evt)
 	unlock(&mem_err_lock);
 
 	/* Queue up the event for delivery to OS. */
-	queue_event_for_delivery(NULL);
+	queue_event_for_delivery(NULL, OPAL_SUCCESS);
 	return 0;
 }
 

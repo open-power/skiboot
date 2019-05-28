@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 IBM Corp.
+/* Copyright 2013-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,9 @@ void opal_update_pending_evt(uint64_t evt_mask, uint64_t evt_values)
 }
 
 static long magic = 8097883813087437089UL;
-static void callback(void *data)
+static void callback(void *data, int status)
 {
+	assert(status == OPAL_SUCCESS);
         assert(*(uint64_t *)data == magic);
 }
 

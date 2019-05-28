@@ -1,4 +1,4 @@
-/* Copyright 2014-2015 IBM Corp.
+/* Copyright 2014-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ static uint64_t prd_ipoll_mask;
 
 static void send_next_pending_event(void);
 
-static void prd_msg_consumed(void *data)
+static void prd_msg_consumed(void *data, int status __unused)
 {
 	struct opal_prd_msg *msg = data;
 	uint32_t proc;
