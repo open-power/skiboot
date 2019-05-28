@@ -296,7 +296,9 @@
 #define FSP_MCLASS_DIAG			0xee
 #define FSP_MCLASS_PCIE_LINK_TOPO	0xef
 #define FSP_MCLASS_OCC			0xf0
-#define FSP_MCLASS_LAST			0xf0
+#define FSP_MCLASS_TRUSTED_BOOT		0xf1
+#define FSP_MCLASS_HBRT			0xf2
+#define FSP_MCLASS_LAST			0xf2
 
 /*
  * Commands are provided in rxxyyzz form where:
@@ -584,6 +586,8 @@
  * Class F2
  */
 #define FSP_CMD_HBRT_TO_FSP	0x1f20100 /* HV->FSP: HBRT message */
+#define FSP_CMD_FSP_TO_HBRT	0x0f20200 /* FSP->HV: HBRT message */
+#define FSP_RSP_FSP_TO_HBRT	0x0f28200 /* HV->FSP: HBRT message */
 
 
 /*

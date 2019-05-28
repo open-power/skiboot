@@ -879,3 +879,65 @@ out_tce_unmap:
 	fsp_tce_unmap(PSI_DMA_HBRT_FSP_MSG, PSI_DMA_HBRT_FSP_MSG_SIZE);
 	return rc;
 }
+
+void hservice_hbrt_msg_response(uint32_t rc)
+{
+	struct fsp_msg *resp;
+
+	resp = fsp_mkmsg(FSP_RSP_FSP_TO_HBRT | (uint8_t)rc, 0);
+	if (!resp) {
+		prlog(PR_DEBUG,
+		      "HBRT: Failed to allocate FSP - HBRT response message\n");
+		return;
+	}
+
+	if (fsp_queue_msg(resp, fsp_freemsg)) {
+		prlog(PR_DEBUG,
+		      "HBRT: Failed to send FSP - HBRT response message\n");
+		fsp_freemsg(resp);
+		return;
+	}
+}
+
+/* FSP sends HBRT notification message. Pass this message to HBRT */
+static bool hservice_hbrt_msg_notify(uint32_t cmd_sub_mod, struct fsp_msg *msg)
+{
+	u32 tce_token, len;
+	void *buf;
+
+	if (cmd_sub_mod != FSP_CMD_FSP_TO_HBRT)
+		return false;
+
+	prlog(PR_TRACE, "HBRT: FSP - HBRT message generated\n");
+
+	tce_token = msg->data.words[1];
+	len = msg->data.words[2];
+	buf = fsp_inbound_buf_from_tce(tce_token);
+	if (!buf) {
+		prlog(PR_DEBUG, "HBRT: Invalid inbound data\n");
+		hservice_hbrt_msg_response(FSP_STATUS_INVALID_DATA);
+		return true;
+	}
+
+	if (prd_hbrt_fsp_msg_notify(buf, len))
+		hservice_hbrt_msg_response(FSP_STATUS_GENERIC_FAILURE);
+
+	return true;
+}
+
+static struct fsp_client fsp_hbrt_msg_client = {
+	.message = hservice_hbrt_msg_notify,
+};
+
+/* Register for FSP 0xF2 class messages */
+void hservice_fsp_init(void)
+{
+	if (proc_gen < proc_gen_p9)
+		return;
+
+	if (!fsp_present())
+		return;
+
+	/* Register for Class F2 */
+	fsp_register_client(&fsp_hbrt_msg_client, FSP_MCLASS_HBRT);
+}

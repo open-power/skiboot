@@ -66,6 +66,7 @@ static uint32_t ibm_fsp_occ_timeout(void)
 static void zz_init(void)
 {
 	ibm_fsp_init();
+	hservice_fsp_init();
 }
 
 DECLARE_PLATFORM(zz) = {

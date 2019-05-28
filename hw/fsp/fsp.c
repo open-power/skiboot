@@ -178,6 +178,8 @@ static struct fsp_cmdclass fsp_cmdclass[FSP_MCLASS_LAST - FSP_MCLASS_FIRST + 1]
 	DEF_CLASS(FSP_MCLASS_DIAG,		16),
 	DEF_CLASS(FSP_MCLASS_PCIE_LINK_TOPO,	16),
 	DEF_CLASS(FSP_MCLASS_OCC,		16),
+	DEF_CLASS(FSP_MCLASS_TRUSTED_BOOT,	2),
+	DEF_CLASS(FSP_MCLASS_HBRT,		2),
 };
 
 static void fsp_trace_msg(struct fsp_msg *msg, u8 dir __unused)
