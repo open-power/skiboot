@@ -1,4 +1,4 @@
-/* Copyright 2016 IBM Corp.
+/* Copyright 2016-2019 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,6 @@ static uint32_t ibm_fsp_occ_timeout(void)
 
 static void zz_init(void)
 {
-	hservices_init();
 	ibm_fsp_init();
 }
 
