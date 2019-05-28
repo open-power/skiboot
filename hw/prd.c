@@ -162,6 +162,7 @@ static void send_next_pending_event(void)
 {
 	struct proc_chip *chip;
 	uint32_t proc;
+	int rc;
 	uint8_t event;
 
 	assert(!prd_msg_inuse);
@@ -182,7 +183,6 @@ static void send_next_pending_event(void)
 	if (!event)
 		return;
 
-	prd_msg_inuse = true;
 	prd_msg->token = 0;
 	prd_msg->hdr.size = sizeof(*prd_msg);
 
@@ -211,9 +211,12 @@ static void send_next_pending_event(void)
 	 * We always need to handle PSI interrupts, but if the is PRD is
 	 * disabled then we shouldn't propagate PRD events to the host.
 	 */
-	if (prd_enabled)
-		_opal_queue_msg(OPAL_MSG_PRD, prd_msg, prd_msg_consumed,
-				prd_msg->hdr.size, prd_msg);
+	if (prd_enabled) {
+		rc = _opal_queue_msg(OPAL_MSG_PRD, prd_msg, prd_msg_consumed,
+				     prd_msg->hdr.size, prd_msg);
+		if (!rc)
+			prd_msg_inuse = true;
+	}
 }
 
 static void __prd_event(uint32_t proc, uint8_t event)
@@ -420,11 +423,14 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 		rc = -ENOSYS;
 	}
 
-	if (!rc)
+	if (!rc) {
 		rc = _opal_queue_msg(OPAL_MSG_PRD, prd_msg, prd_msg_consumed,
 				     prd_msg->hdr.size, prd_msg);
-	else
+		if (rc)
+			prd_msg_inuse = false;
+	} else {
 		prd_msg_inuse = false;
+	}
 
 	unlock(&events_lock);
 
