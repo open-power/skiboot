@@ -105,6 +105,9 @@
 #define OPAL_WRITE_OPPANEL			43 /* unimplemented */
 #define OPAL_PCI_MAP_PE_DMA_WINDOW		44
 #define OPAL_PCI_MAP_PE_DMA_WINDOW_REAL		45
+/* 46 is unused */
+/* 47 is unused */
+/* 48 is unused */
 #define OPAL_PCI_RESET				49
 #define OPAL_PCI_GET_HUB_DIAG_DATA		50
 #define OPAL_PCI_GET_PHB_DIAG_DATA		51
