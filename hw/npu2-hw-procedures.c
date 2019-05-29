@@ -256,6 +256,14 @@ uint32_t reset_ntl(struct npu2_dev *ndev)
 		phy_write_lane(ndev, &NPU2_PHY_TX_LANE_PDWN, lane, 0);
 	}
 
+	/* Clear fence state for the brick */
+	val = npu2_read(ndev->npu, NPU2_MISC_FENCE_STATE);
+	if (val & PPC_BIT(ndev->brick_index)) {
+		NPU2DEVINF(ndev, "Clearing brick fence\n");
+		val = PPC_BIT(ndev->brick_index);
+		npu2_write(ndev->npu, NPU2_MISC_FENCE_STATE, val);
+	}
+
 	/* Write PRI */
 	val = SETFIELD(PPC_BITMASK(0,1), 0ull, obus_brick_index(ndev));
 	npu2_write_mask(ndev->npu, NPU2_NTL_PRI_CFG(ndev), val, -1ULL);
