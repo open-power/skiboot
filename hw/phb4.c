@@ -3344,6 +3344,12 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		pci_slot_set_state(slot, PHB4_SLOT_CRESET_FRESET);
 
 		/*
+		 * The PERST is sticky across resets, but LINK_DIS isn't.
+		 * Re-assert it here now that we've reset the PHB.
+		 */
+		phb4_assert_perst(slot, true);
+
+		/*
 		 * wait either 100ms (for the ETU logic) or until we've had
 		 * PERST asserted for 250ms.
 		 */
