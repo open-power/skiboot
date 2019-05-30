@@ -18,6 +18,7 @@
 
 #include <lpc.h>
 #include <op-panel.h>
+#include <chip.h>
 
 /*
  * Convert our detailed op_display() call into 1 byte for LPC port 80h
@@ -167,6 +168,9 @@ void op_display_lpc(enum op_severity s, enum op_module m, uint16_t c)
 {
 	static uint8_t port80_val = 0x80;
 	static uint16_t port8x_val = 0x8000;
+
+	if (chip_quirk(QUIRK_SIMICS))
+		return;
 
 	port80_val = op_display_to_port80(port80_val, s, m, c);
 	lpc_outb(port80_val, 0x80);

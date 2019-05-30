@@ -42,6 +42,8 @@ void op_display_lpc(enum op_severity s, enum op_module m, uint16_t c);
 #include "../lpc-port80h.c"
 #include "../../core/test/stubs.c"
 
+enum proc_chip_quirks proc_chip_quirks;
+
 int main(void)
 {
 	op_display_lpc(OP_LOG, OP_MOD_INIT, 0x00);
