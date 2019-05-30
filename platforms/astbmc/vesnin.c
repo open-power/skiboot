@@ -29,14 +29,10 @@
 #define CHIP_ID_CPU2 0x10
 #define CHIP_ID_CPU3 0x18
 
-/* Current version of the PCI inventory synchronization packet. */
-#define PCI_INV_VERSION 1
-
-/* IPMI message identifier (IBM OEM) for PCI inventory. */
-#define IPMI_PCI_INV IPMI_CODE(0x3a, 0x2a)
-
-/* Id of the current PCI inventory synchronization session. */
-static uint8_t pci_inv_session_id;
+/* IPMI message code for PCI inventory (OEM). */
+#define PCIINV_IPMI_CODE	IPMI_CODE(0x2e, 0x2a)
+/* IANA number used to identify IPMI OEM command group. */
+#define PCIINV_OEM_IANA		49769 /* YADRO */
 
 /**
  * struct pciinv_device - PCI device inventory description.
@@ -63,14 +59,14 @@ struct pciinv_device {
 } __packed;
 
 /**
- * struct pciinv_packet - IPMI message packet data.
- * @version: Packet version, must be set to %PCI_INVENTORY_VERSION.
- * @session: Sync session Id.
+ * struct pciinv_message - IPMI message packet data.
+ * @iana: IANA id for OEM message, must be set to PCIINV_OEM_IANA.
+ * @reset: Reset flag.
  * @device: PCI device description.
  */
-struct pciinv_packet {
-	uint8_t		version;
-	uint8_t		session;
+struct pciinv_message {
+	uint8_t iana[3];
+	uint8_t reset;
 	struct pciinv_device device;
 } __packed;
 
@@ -264,14 +260,12 @@ static const struct slot_table_entry vesnin_phb_table[] = {
 
 /**
  * pciinv_walk() - Callback from PCI enumerator, see :c:func:`pci_walk_dev`.
+ * User data parameter is interpreted as a pointer to pciinv_message structure.
  */
-static int pciinv_walk(struct phb *phb, struct pci_device *pd, void *data __unused)
+static int pciinv_walk(struct phb *phb, struct pci_device *pd, void *data)
 {
 	struct ipmi_msg *msg;
-	struct pciinv_packet pack = {
-		.version = PCI_INV_VERSION,
-		.session = pci_inv_session_id
-	};
+	struct pciinv_message* pack = (struct pciinv_message*)data;
 
 	/* PCI device filter: Skip non-EP devices */
 	if (pci_has_cap(pd, PCI_CFG_CAP_ID_EXP, false)) {
@@ -282,21 +276,23 @@ static int pciinv_walk(struct phb *phb, struct pci_device *pd, void *data __unus
 		return OPAL_SUCCESS;
 
 	/* Fill the PCI device inventory description */
-	pack.device.domain_num = cpu_to_be16(phb->opal_id & 0xffff);
-	pack.device.bus_num = (pd->bdfn >> 8) & 0xff;
-	pack.device.device_num = (pd->bdfn >> 3) & 0x1f;
-	pack.device.func_num = pd->bdfn & 0x7;
-	pack.device.vendor_id = cpu_to_be16(PCI_VENDOR_ID(pd->vdid));
-	pack.device.device_id = cpu_to_be16(PCI_DEVICE_ID(pd->vdid));
-	pack.device.class_code = cpu_to_be32(pd->class & 0xffffff);
-	pci_cfg_read8(phb, pd->bdfn, PCI_CFG_REV_ID, &pack.device.revision);
+	pack->device.domain_num = cpu_to_be16(phb->opal_id & 0xffff);
+	pack->device.bus_num = (pd->bdfn >> 8) & 0xff;
+	pack->device.device_num = (pd->bdfn >> 3) & 0x1f;
+	pack->device.func_num = pd->bdfn & 0x7;
+	pack->device.vendor_id = cpu_to_be16(PCI_VENDOR_ID(pd->vdid));
+	pack->device.device_id = cpu_to_be16(PCI_DEVICE_ID(pd->vdid));
+	pack->device.class_code = cpu_to_be32(pd->class & 0xffffff);
+	pci_cfg_read8(phb, pd->bdfn, PCI_CFG_REV_ID, &pack->device.revision);
 
-	msg = ipmi_mkmsg_simple(IPMI_PCI_INV, &pack, sizeof(pack));
+	msg = ipmi_mkmsg_simple(PCIINV_IPMI_CODE, pack, sizeof(*pack));
 	if (!msg)
 		return OPAL_HARDWARE;
 
-	/* Synchronously send the IPMI message, the queue is too small */
-	ipmi_queue_msg_sync(msg);
+	ipmi_queue_msg(msg);
+
+	/* Disable reset flag for further messages in the current session. */
+	pack->reset = 0;
 
 	return OPAL_SUCCESS;
 }
@@ -305,12 +301,27 @@ static void vesnin_pci_probe_complete(void)
 {
 	struct phb *phb;
 
+	/* IPMI message packet instance.
+	 * PCI device description will be filled in the PCI enumerator, see
+	 * `pciinv_walk()` function.
+	 * For each first message in a session, the Reset flag is turned on,
+	 * this indicates that the list of existing PCI devices must be
+	 * cleaned. */
+	struct pciinv_message pack = {
+		.iana = {
+			PCIINV_OEM_IANA & 0xff,
+			(PCIINV_OEM_IANA >> 8) & 0xff,
+			(PCIINV_OEM_IANA >> 16) & 0xff
+		},
+		.reset = 1
+	};
+
 	check_all_slot_table();
 
 	/* Send PCI device list to the BMC */
-	++pci_inv_session_id;
+	prlog(PR_INFO, "Send PCI device list\n");
 	for_each_phb(phb) {
-		pci_walk_dev(phb, NULL, &pciinv_walk, NULL);
+		pci_walk_dev(phb, NULL, &pciinv_walk, &pack);
 	}
 }
 
