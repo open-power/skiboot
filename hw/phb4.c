@@ -2385,6 +2385,12 @@ static void phb4_train_info(struct phb4 *p, uint64_t reg, unsigned long time)
 	case PHB_PCIE_DLP_LTSSM_HOTRESET:
 		snprintf(s, sizeof(s), "%shotreset", s);
 		break;
+	case PHB_PCIE_DLP_LTSSM_DISABLED:
+		snprintf(s, sizeof(s), "%sdisabled", s);
+		break;
+	case PHB_PCIE_DLP_LTSSM_LOOPBACK:
+		snprintf(s, sizeof(s), "%sloopback", s);
+		break;
 	default:
 		snprintf(s, sizeof(s), "%sunvalid", s);
 	}
