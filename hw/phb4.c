@@ -2337,12 +2337,13 @@ static int64_t phb4_retry_state(struct pci_slot *slot)
 	return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 }
 
-static void phb4_train_info(struct phb4 *p, uint64_t reg, unsigned long time)
+static uint64_t phb4_train_info(struct phb4 *p, uint64_t reg, unsigned long dt)
 {
+	uint64_t ltssm_state = GETFIELD(PHB_PCIE_DLP_LTSSM_TRC, reg);
 	char s[80];
 
 	snprintf(s, sizeof(s), "TRACE:0x%016llx % 2lims",
-		 reg, tb_to_msecs(time));
+		 reg, tb_to_msecs(dt));
 
 	if (reg & PHB_PCIE_DLP_TL_LINKACT)
 		snprintf(s, sizeof(s), "%s trained ", s);
@@ -2357,7 +2358,7 @@ static void phb4_train_info(struct phb4 *p, uint64_t reg, unsigned long time)
 		 GETFIELD(PHB_PCIE_DLP_LINK_SPEED, reg),
 		 GETFIELD(PHB_PCIE_DLP_LINK_WIDTH, reg));
 
-	switch (GETFIELD(PHB_PCIE_DLP_LTSSM_TRC, reg)) {
+	switch (ltssm_state) {
 	case PHB_PCIE_DLP_LTSSM_RESET:
 		snprintf(s, sizeof(s), "%sreset", s);
 		break;
@@ -2395,6 +2396,8 @@ static void phb4_train_info(struct phb4 *p, uint64_t reg, unsigned long time)
 		snprintf(s, sizeof(s), "%sunvalid", s);
 	}
 	PHBNOTICE(p, "%s\n", s);
+
+	return ltssm_state;
 }
 
 static void phb4_dump_pec_err_regs(struct phb4 *p)
@@ -2656,10 +2659,10 @@ static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
  * training.  If any errors are detected it simply returns so the
  * normal code can deal with it.
  */
-static void phb4_training_trace(struct phb4 *p)
+static void phb4_link_trace(struct phb4 *p, uint64_t target_state, int max_ms)
 {
+	unsigned long now, end, start = mftb(), state = 0;
 	uint64_t trwctl, reg, reglast = -1;
-	unsigned long now, start = mftb();
 	bool enabled;
 
 	/*
@@ -2673,28 +2676,31 @@ static void phb4_training_trace(struct phb4 *p)
 				trwctl | PHB_PCIE_DLP_TRWCTL_EN);
 	}
 
+	end = start + msecs_to_tb(max_ms);
+	now = start;
 
-	while(1) {
-		now = mftb();
+	do {
 		reg = in_be64(p->regs + PHB_PCIE_DLP_TRAIN_CTL);
 		if (reg != reglast)
-			phb4_train_info(p, reg, now - start);
+			state = phb4_train_info(p, reg, now - start);
 		reglast = reg;
 
 		if (!phb4_check_reg(p, reg)) {
-			PHBNOTICE(p, "TRACE: PHB fence waiting link.\n");
-			break;
+			PHBNOTICE(p, "TRACE: PHB fenced.\n");
+			goto out;
 		}
-		if (reg & PHB_PCIE_DLP_TL_LINKACT) {
-			PHBNOTICE(p, "TRACE: Link trained.\n");
-			break;
-		}
-		if ((now - start) > secs_to_tb(3)) {
-			PHBNOTICE(p, "TRACE: Timeout waiting for link up.\n");
-			break;
-		}
-	}
 
+		if (tb_compare(now, end) == TB_AAFTERB) {
+			PHBNOTICE(p, "TRACE: Timed out after %dms\n", max_ms);
+			goto out;
+		}
+
+		now = mftb();
+	} while (state != target_state);
+
+	PHBNOTICE(p, "TRACE: Reached target state\n");
+
+out:
 	/*
 	 * The trace enable bit is a clock gate for the tracing logic. Turn
 	 * it off to save power if we're not using it otherwise.
@@ -3027,7 +3033,7 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		phb4_assert_perst(slot, false);
 
 		if (pci_tracing)
-			phb4_training_trace(p)
+			phb4_link_trace(p, PHB_PCIE_DLP_LTSSM_L0, 3000);
 
 		pci_slot_set_state(slot, PHB4_SLOT_LINK_START);
 		return slot->ops.poll_link(slot);
