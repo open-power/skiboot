@@ -2658,11 +2658,21 @@ static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
  */
 static void phb4_training_trace(struct phb4 *p)
 {
-	uint64_t reg, reglast = -1;
+	uint64_t trwctl, reg, reglast = -1;
 	unsigned long now, start = mftb();
+	bool enabled;
 
-	if (!pci_tracing)
-		return;
+	/*
+	 * Enable the DLP trace outputs. If we don't the LTSSM state in
+	 * PHB_PCIE_DLP_TRAIN_CTL won't be updated and always reads zero.
+	 */
+	trwctl = phb4_read_reg(p, PHB_PCIE_DLP_TRWCTL);
+	enabled = !!(trwctl & PHB_PCIE_DLP_TRWCTL_EN);
+	if (!enabled) {
+		phb4_write_reg(p, PHB_PCIE_DLP_TRWCTL,
+				trwctl | PHB_PCIE_DLP_TRWCTL_EN);
+	}
+
 
 	while(1) {
 		now = mftb();
@@ -2684,6 +2694,13 @@ static void phb4_training_trace(struct phb4 *p)
 			break;
 		}
 	}
+
+	/*
+	 * The trace enable bit is a clock gate for the tracing logic. Turn
+	 * it off to save power if we're not using it otherwise.
+	 */
+	if (!enabled)
+		phb4_write_reg(p, PHB_PCIE_DLP_TRWCTL, trwctl);
 }
 
 /*
@@ -2976,7 +2993,6 @@ static int64_t phb4_hreset(struct pci_slot *slot)
 static int64_t phb4_freset(struct pci_slot *slot)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
-	uint64_t reg;
 
 	switch(slot->state) {
 	case PHB4_SLOT_NORMAL:
@@ -3007,17 +3023,11 @@ static int64_t phb4_freset(struct pci_slot *slot)
 		/* Clear link errors before we deassert PERST */
 		phb4_err_clear_regb(p);
 
-		if (pci_tracing) {
-			/* Enable tracing */
-			reg = in_be64(p->regs + PHB_PCIE_DLP_TRWCTL);
-			out_be64(p->regs + PHB_PCIE_DLP_TRWCTL,
-				 reg | PHB_PCIE_DLP_TRWCTL_EN);
-		}
-
 		PHBDBG(p, "FRESET: Deassert\n");
 		phb4_assert_perst(slot, false);
 
-		phb4_training_trace(p);
+		if (pci_tracing)
+			phb4_training_trace(p)
 
 		pci_slot_set_state(slot, PHB4_SLOT_LINK_START);
 		return slot->ops.poll_link(slot);
