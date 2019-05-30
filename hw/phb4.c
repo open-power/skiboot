@@ -2892,7 +2892,7 @@ static void phb4_assert_perst(struct pci_slot *slot, bool assert)
 	 * bit in the btctl register also works.
 	 */
 	phb4_pcicfg_read16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL, &linkctl);
-	reg = in_be64(p->regs + PHB_PCIE_CRESET);
+	reg = phb4_read_reg(p, PHB_PCIE_CRESET);
 
 	if (assert) {
 		linkctl |= PCICAP_EXP_LCTL_LINK_DIS;
@@ -2902,7 +2902,7 @@ static void phb4_assert_perst(struct pci_slot *slot, bool assert)
 		reg |= PHB_PCIE_CRESET_PERST_N;
 	}
 
-	out_be64(p->regs + PHB_PCIE_CRESET, reg);
+	phb4_write_reg(p, PHB_PCIE_CRESET, reg);
 	phb4_pcicfg_write16(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL, linkctl);
 }
 
