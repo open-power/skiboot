@@ -125,6 +125,7 @@ Notes:
 	} u;
    };
 
+.. _OPAL_MSG_DPO:
 
 OPAL_MSG_DPO
 ------------
