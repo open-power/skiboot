@@ -1,11 +1,14 @@
+.. _OPAL_PCI_SET_P2P:
+
 OPAL_PCI_SET_P2P
 ================
-::
+
+.. code-block:: c
 
    #define OPAL_PCI_SET_P2P			157
 
    int64_t opal_pci_set_p2p(uint64_t phbid_init, uint64_t phbid_target,
-				uint64_t desc, uint16_t pe_number)
+				uint64_t desc, uint16_t pe_number);
 
    /* PCI p2p descriptor */
    #define OPAL_PCI_P2P_ENABLE		0x1
@@ -16,13 +19,6 @@ The host calls this function to enable PCI peer-to-peer on the PHBs.
 
 Parameters
 ----------
-::
-
-   uint64_t phbid_init
-   uint64_t phbid_target
-   uint64_t desc
-   uint16_t pe_number
-
 
 ``phbid_init``
   is the value from the PHB node ibm,opal-phbid property for the device initiating the p2p operation
@@ -40,11 +36,9 @@ Parameters
 Return Values
 -------------
 
-``OPAL_SUCCESS``
+:ref:`OPAL_SUCCESS`
   Configuration was successful
-
-``OPAL_PARAMETER``
+:ref:`OPAL_PARAMETER`
   Invalid PHB or mode parameter
-
-``OPAL_UNSUPPORTED``
+:ref:`OPAL_UNSUPPORTED`
   Not supported by hardware
