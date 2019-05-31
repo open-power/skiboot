@@ -1,3 +1,5 @@
+.. _device-tree/ibm,opal/power-mgt/powercap:
+
 power-mgt/powercap
 ------------------
 
@@ -8,7 +10,7 @@ For example : ::
 
         system-powercap/
 
-The OPAL_GET_POWERCAP and OPAL_SET_POWERCAP calls take a handle for
+The :ref:`OPAL_GET_POWERCAP` and :ref:`OPAL_SET_POWERCAP` calls take a handle for
 what powercap property to get/set which is defined in the child node.
 
 The compatible property for the linux driver which will be

@@ -1,7 +1,20 @@
 .. _opal-powercap:
 
+===============
+OPAL Power Caps
+===============
+
+Each entity that can be power capped is described in the device tree,
+see :ref:`device-tree/ibm,opal/power-mgt/powercap`. The values for each
+power cap aren't in the device tree, but rather fetched using the
+:ref:`OPAL_GET_POWERCAP` OPAL call. This is because there may be other
+entities such as a service processor that can change the nature of the
+power cap asynchronously to OPAL.
+
+.. _OPAL_GET_POWERCAP:
+
 OPAL_GET_POWERCAP
-==================
+=================
 The OPAL_GET_POWERCAP call retreives current information on the power
 cap.
 
@@ -30,24 +43,22 @@ u32 \*pcap
 Returns
 -------
 
-OPAL_SUCCESS
+:ref:`OPAL_SUCCESS`
   Success
-
-OPAL_PARAMETER
+:ref:`OPAL_PARAMETER`
   Invalid pcap pointer
-
-OPAL_UNSUPPORTED
+:ref:`OPAL_UNSUPPORTED`
   No support for reading powercap sensor
-
-OPAL_HARDWARE
+:ref:`OPAL_HARDWARE`
   Unable to procced due to the current hardware state
-
-OPAL_ASYNC_COMPLETION
+:ref:`OPAL_ASYNC_COMPLETION`
   Request was sent and an async completion message will be sent with
   token and status of the request.
 
+.. _OPAL_SET_POWERCAP:
+
 OPAL_SET_POWERCAP
-============================
+=================
 The OPAL_SET_POWERCAP call sets a power cap.
 
 For each entity that can be power capped, the device tree
@@ -71,30 +82,23 @@ Parameters
 
 Returns
 -------
-OPAL_SUCCESS
+
+:ref:`OPAL_SUCCESS`
   Success
-
-OPAL_PARAMETER
+:ref:`OPAL_PARAMETER`
   Invalid powercap requested beyond powercap limits
-
-OPAL_UNSUPPORTED
+:ref:`OPAL_UNSUPPORTED`
   No support for changing the powercap
-
-OPAL_PERMISSION
+:ref:`OPAL_PERMISSION`
   Hardware cannot take the request
-
-OPAL_ASYNC_COMPLETION
+:ref:`OPAL_ASYNC_COMPLETION`
   Request was sent and an async completion message will be sent with
   token and status of the request.
-
-OPAL_HARDWARE
+:ref:`OPAL_HARDWARE`
   Unable to procced due to the current hardware state
-
-OPAL_BUSY
+:ref:`OPAL_BUSY`
   Previous request in progress
-
-OPAL_INTERNAL_ERROR
+:ref:`OPAL_INTERNAL_ERROR`
   Error in request response
-
-OPAL_TIMEOUT
+:ref:`OPAL_TIMEOUT`
   Timeout in request completion
