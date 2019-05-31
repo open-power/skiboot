@@ -123,7 +123,8 @@ The OPAL API is the interface between an Operating System and OPAL.
 |                                             |              |                        |          | prior to public |
 |                                             |              |                        |          | release.        |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_PCI_FENCE_PHB`                   |  52          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_PCI_FENCE_PHB`                   |  52          | Never                  |          | Never           |
+|                                             |              |                        |          | implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_REINIT`                      |  53          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -400,6 +401,8 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_GET_XIVE_REISSUE`            |  36   | Never                 |                       |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_PCI_FENCE_PHB`                   |  52   | Never                 |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_GET_PHB_DIAG_DATA`           |  51   | pre-v1.0              | pre-v1.0, with last   |
 |                                             |       |                       | remnants removed in   |
 |                                             |       |                       | :ref:`skiboot-6.4`    |
@@ -463,6 +466,13 @@ OPAL_PCI_SET_XIVE_REISSUE
 A remnant of something prior to OPALv3. Never implemented in skiboot and never
 used by anyone. Returend :ref:`OPAL_UNSUPPORTED` until :ref:`skiboot-6.4`, where
 it was removed.
+
+.. _OPAL_PCI_FENCE_PHB:
+
+OPAL_PCI_FENCE_PHB
+^^^^^^^^^^^^^^^^^^
+
+Never implemented.
 
 .. _OPAL_PCI_GET_PHB_DIAG_DATA:
 
