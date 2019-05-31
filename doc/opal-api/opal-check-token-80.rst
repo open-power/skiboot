@@ -1,5 +1,13 @@
+.. _OPAL_CHECK_TOKEN:
+
 OPAL_CHECK_TOKEN
 ================
+
+.. code-block:: c
+
+   #define OPAL_CHECK_TOKEN			80
+
+   int64_t opal_check_token(uint64_t token);
 
 This OPAL call allows the host OS to determine if a particular OPAL call is present
 on a system. This allows for simple compatibility between OPAL versions and different
