@@ -1,8 +1,10 @@
 Skiboot overview
 ================
 
-Skiboot is firmware, loaded by the FSP. Along with loading the bootloader,
-it provides some runtime services to the OS (typically Linux).
+Skiboot is boot and runtime firmware for OpenPOWER systems.
+It's loaded by earlier boot firmware (typically Hostboot).
+Along with loading the bootloader, it provides some runtime
+services to the OS (typically Linux).
 
 Source layout
 -------------
