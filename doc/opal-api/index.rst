@@ -32,7 +32,10 @@ The OPAL API is the interface between an Operating System and OPAL.
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_POLL_EVENTS`                     |  10          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_PCI_SET_HUB_TCE_MEMORY`          |  11          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_PCI_SET_HUB_TCE_MEMORY`          |  11          | N/A                    |          | Was POWER7      |
+|                                             |              | Present only on        |          | p5ioc specific. |
+|                                             |              | internal systems.      |          | No use outside  |
+|                                             |              |                        |          | IBM development |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_SET_PHB_TCE_MEMORY`          |  12          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -52,7 +55,8 @@ The OPAL API is the interface between an Operating System and OPAL.
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_GET_XIVE`                        |  20          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_GET_COMPLETION_TOKEN_STATUS`     |  21          | v1.0 (Initial Release) | POWER8   | /* obsolete */  |
+| :ref:`OPAL_GET_COMPLETION_TOKEN_STATUS`     |  21          | Never                  |          | Never           |
+|                                             |              |                        |          | Implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_REGISTER_OPAL_EXCEPTION_HANDLER` |  22          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -361,3 +365,68 @@ The OPAL API is the interface between an Operating System and OPAL.
 
    *
 
+
+Removed Calls
+-------------
+
+Under **very** specific and careful circumstances, an OPAL call has been
+removed and no longer supported.
+
++---------------------------------------------+-------+-----------------------+-----------------------+
+| Name                                        | API   | Introduced            | Removed               |
+|                                             | Token |                       |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_GET_COMPLETION_TOKEN_STATUS`     |  21   | Never                 |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_WRITE_OPPANEL`                   |  43   | pre-v1.0              | pre-v1.0              |
++---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_OLD_I2C_REQUEST`                 | 106   | v4.0                  | v4.0                  |
++---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_PCI_SET_HUB_TCE_MEMORY`          |  11   | pre-v1.0              | :ref:`skiboot-5.2.0`  |
++---------------------------------------------+-------+-----------------------+-----------------------+
+
+
+.. _OPAL_GET_COMPLETION_TOKEN_STATUS:
+
+OPAL_GET_COMPLETION_TOKEN_STATUS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In the before time, long-long ago, there existed something called OPAL before
+the incarnation we know today. Presumably, this long forgotten incarnation
+had a call called this.
+
+This call has never been implemented, and never will be.
+
+.. _OPAL_WRITE_OPPANEL:
+
+OPAL_WRITE_OPPANEL
+^^^^^^^^^^^^^^^^^^
+
+Never in a released version, use :ref:`OPAL_WRITE_OPPANEL_ASYNC`.
+
+.. _OPAL_OLD_I2C_REQUEST:
+
+OPAL_OLD_I2C_REQUEST
+^^^^^^^^^^^^^^^^^^^^
+
+Never used. Only existing briefly in the :ref:`skiboot-4.0` development cycle.
+
+.. _OPAL_PCI_SET_HUB_TCE_MEMORY:
+
+OPAL_PCI_SET_HUB_TCE_MEMORY
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   #define OPAL_PCI_SET_HUB_TCE_MEMORY		11
+
+   int64_t opal_pci_set_hub_tce_memory(uint64_t hub_id,
+		                       uint64_t tce_mem_addr __unused,
+                                       uint64_t tce_mem_size __unused);
+
+
+Support for POWER7 systems with p5ioc was dropped in :ref:`skiboot-5.2.0`,
+and these systems were only ever used with OPAL inside IBM for development
+and bring-up purposes.
+
+Support for p5ioc was removed from the Linux kernel in v4.6-rc1.
