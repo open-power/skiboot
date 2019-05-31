@@ -1,21 +1,28 @@
 OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2
 ====================================
-::
+
+.. code-block:: c
 
    #define OPAL_CEC_REBOOT		6
    #define OPAL_CEC_REBOOT2	116
 
 There are two opal calls to invoke system reboot.
 
-``OPAL_CEC_REBOOT``
-  Used for normal reboot by Linux host.
+:ref:`OPAL_CEC_REBOOT`
+  Original reboot call for a normal reboot.
+  It is recommended to first try :ref:`OPAL_CEC_REBOOT2`
+  (use :ref:`OPAL_CHECK_TOKEN` first), and then, if not available,
+  fall back to :ref:`OPAL_CEC_REBOOT`.
+  All POWER9 systems shipped with support for :ref:`OPAL_CEC_REBOOT2`,
+  so it is safe to exclusively call the new call if an OS only targets POWER9
+  and above.
 
-``OPAL_CEC_REBOOT2``
-  Newly introduced to handle abnormal system reboots.
-  The Linux kernel will make this OPAL call when it has to terminate
-  abruptly due to an anomalous condition. The kernel will push some system
-  state context to OPAL, which will in turn push it down to the BMC for
-  further analysis.
+:ref:`OPAL_CEC_REBOOT2`
+  Newer call for rebooting a system, supporting different types of reboots.
+  For example, the OS may request a reboot due to a platform or OS error,
+  which may trigger host or BMC firmware to save debugging information.
+
+.. _OPAL_CEC_REBOOT:
 
 OPAL_CEC_REBOOT
 ---------------
@@ -23,13 +30,51 @@ Syntax: ::
 
   int64_t opal_cec_reboot(void)
 
-System reboots normally.
+System reboots normally, equivalent to :ref:`OPAL_CEC_REBOOT2`. See
+:ref:`OPAL_CEC_REBOOT2` for details, as both OPAL calls should be called
+in the same way.
+
+.. _OPAL_CEC_REBOOT2:
 
 OPAL_CEC_REBOOT2
 ----------------
-Syntax: ::
+Syntax:
+
+.. code-block:: c
 
   int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
+
+A reboot call is likely going to involve talking to a service processor to
+request a reboot, which can be quite a slow operation. Thus, the correct
+way for an OS to make an OPAL reboot call is to spin on :ref:`OPAL_POLL_EVENTS`
+to crank any state machine needed for the reboot until the machine reboots
+from underneath the OS.
+
+For example, the below code could be part of an OS calling to do any type
+of reboot, and falling back to a normal reboot if that type is not supported.
+
+.. code-block:: c
+
+	int rc;
+	int reboot_type = OPAL_REBOOT_NORMAL;
+
+	do {
+	  if (opal_check_token(OPAL_CEC_REBOOT2) == 0) {
+	    rc = opal_cec_reboot2(reboot_type, NULL);
+	  } else {
+	    rc = opal_cec_reboot();
+	  }
+	  if (rc == OPAL_UNSUPPORTED) {
+	    printf("Falling back to normal reboot\n");
+	    reboot_type = OPAL_REBOOT_NORMAL;
+	    rc = OPAL_BUSY;
+	  }
+	  opal_poll_events(NULL);
+	} while (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT);
+
+	for (;;)
+	  opal_poll_events(NULL);
+
 
 Input parameters
 ^^^^^^^^^^^^^^^^
@@ -40,7 +85,26 @@ Input parameters
   Null-terminated string.
 
 Depending on reboot type, this call will carry out additional steps
-before triggering reboot.
+before triggering a reboot.
+
+Return Codes
+^^^^^^^^^^^^
+
+:ref:`OPAL_SUCCESS`
+     The system will soon reboot. The OS should loop on :ref:`OPAL_POLL_EVENTS`
+     in case there's any work for OPAL to do.
+
+:ref:`OPAL_BUSY` or :ref:`OPAL_BUSY_EVENT`
+     OPAL is currently busy and can't issue a reboot, call
+     :ref:`OPAL_POLL_EVENTS` and retry reboot call.
+
+:ref:`OPAL_UNSUPPORTED`
+     Unsupported reboot type (applicable to :ref:`OPAL_CEC_REBOOT2` only), retry
+     with other reboot type.
+
+Other error codes
+     Keep calling reboot and hope for the best? In theory this should never happen.
+
 
 Supported reboot types:
 -----------------------
