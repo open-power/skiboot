@@ -1,3 +1,5 @@
+.. _skiboot-5.3.0:
+
 skiboot-5.3.0
 -------------
 
@@ -13,4 +15,4 @@ Changes over skiboot-5.3.0-rc2:
 - Adopt libtool rules for soname versioning for libflash
 
 See skiboot-5.3.0-rc2 and skiboot-5.3.0-rc1 release notes for a complete
-list of changes from skiboot-5.2.0.
+list of changes from skiboot-5.3.0.
