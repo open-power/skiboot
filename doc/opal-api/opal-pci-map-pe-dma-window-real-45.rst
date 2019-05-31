@@ -1,8 +1,18 @@
+.. _OPAL_PCI_MAP_PE_DMA_WINDOW_REAL:
+
 OPAL_PCI_MAP_PE_DMA_WINDOW_REAL
 ===============================
-::
+
+.. code-block:: c
 
    #define OPAL_PCI_MAP_PE_DMA_WINDOW_REAL		45
+
+   int64_t opal_pci_map_pe_dma_window_real(uint64_t phb_id,
+                                           uint64_t pe_number,
+                                           uint16_t window_id,
+                                           uint64_t pci_start_addr,
+                                           uint64_t pci_mem_size);
+
 
 **WARNING:** following documentation is from old sources, and is possibly
 not representative of OPALv3 as implemented by skiboot. This should be
@@ -40,6 +50,6 @@ within the window set associated with the specified PE number.
 
 ``window_size``
   is the size, in bytes, of the address range defined by this
-  window. This value must be a multiple of 16MB; OPAL returns OPAL_PARAMETER
+  window. This value must be a multiple of 16MB; OPAL returns :ref:`OPAL_PARAMETER`
   for any value that is not a multiple of 16MB. A value of '0' indicates to
   disable this DMA window.

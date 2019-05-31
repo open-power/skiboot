@@ -1,6 +1,9 @@
+.. _OPAL_PCI_MAP_PE_DMA_WINDOW:
+
 OPAL_PCI_MAP_PE_DMA_WINDOW
 ==========================
-::
+
+.. code-block:: c
 
    #define OPAL_PCI_MAP_PE_DMA_WINDOW		44
 
@@ -10,7 +13,7 @@ OPAL_PCI_MAP_PE_DMA_WINDOW
 					     uint16_t tce_levels,
 					     uint64_t tce_table_addr,
 					     uint64_t tce_table_size,
-					     uint64_t tce_page_size)
+					     uint64_t tce_page_size);
 
 **WARNING:** following documentation is from old sources, and is possibly
 not representative of OPALv3 as implemented by skiboot. This should be
@@ -94,7 +97,9 @@ a win_size_32 = 256MB, only 16 DMA windows (and therefore no more than 16
 distinct PEs) can map the 4GB of 32-bit PCI memory for DMA. OPAL does not
 police this limitation.
 
-Return value: ::
+Return value:
+
+.. code-block:: c
 
 	if (!phb)
 		return OPAL_PARAMETER;
