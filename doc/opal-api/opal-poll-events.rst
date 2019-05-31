@@ -18,6 +18,7 @@ OPAL_EVENT_NVRAM = 0x2
 ----------------------
 Unused
 
+.. _OPAL_EVENT_RTC:
 
 OPAL_EVENT_RTC = 0x4
 --------------------

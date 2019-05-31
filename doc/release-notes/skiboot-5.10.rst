@@ -137,7 +137,7 @@ we look to enabling by default in the next release.
 
 The OPAL Quiesce calls are designed to improve reliability and debuggability
 around reboot and error conditions. See the full API documentation for details:
-:ref:`opal-quiesce`.
+:ref:`OPAL_QUIESCE`.
 
 - fast-reboot: bare bones fast reboot implementation for POWER9
 

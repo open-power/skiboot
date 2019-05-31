@@ -48,10 +48,10 @@ The host calls this function to set the PBCQ Tunnel Bar register.
 Parameters
 ----------
 
-:ref:``phb_id`
+`phb_id`
   The value from the PHB node ibm,opal-phbid property for the device.
 
-:ref:`addr`
+`addr`
   The value of the address chosen for the PBCQ Tunnel Bar register.
   If the address is 0, then the PBCQ Tunnel Bar register will be reset.
   It the address is non-zero, then the PBCQ Tunnel Bar register will be
