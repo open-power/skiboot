@@ -636,3 +636,14 @@ and these systems were only ever used with OPAL inside IBM for development
 and bring-up purposes.
 
 Support for p5ioc was removed from the Linux kernel in v4.6-rc1.
+
+
+Future Calls
+------------
+
+.. _OPAL_ELOG_WRITE:
+
+OPAL_ELOG_WRITE
+^^^^^^^^^^^^^^^
+
+May be implemented in the future to complement the :ref:`OPAL_ELOG_READ` call.
