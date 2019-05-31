@@ -65,7 +65,8 @@ The OPAL API is the interface between an Operating System and OPAL.
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_EEH_FREEZE_STATUS`           |  23          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_PCI_SHPC`                        |  24          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_PCI_SHPC`                        |  24          | Never                  | POWER8   | Never           |
+|                                             |              |                        |          | Implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_CONSOLE_WRITE_BUFFER_SPACE`      |  25          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -383,6 +384,8 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_GET_COMPLETION_TOKEN_STATUS`     |  21   | Never                 |                       |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_PCI_SHPC`                        |  24   | Never                 |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_WRITE_OPPANEL`                   |  43   | pre-v1.0              | pre-v1.0              |
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_OLD_I2C_REQUEST`                 | 106   | v4.0                  | v4.0                  |
@@ -404,6 +407,14 @@ the incarnation we know today. Presumably, this long forgotten incarnation
 had a call called this.
 
 This call has never been implemented, and never will be.
+
+.. _OPAL_PCI_SHPC:
+
+OPAL_PCI_SHPC
+^^^^^^^^^^^^^
+
+A remnant of a long forgotten incarnation of OPAL. Never implemented, never
+will be.
 
 .. _OPAL_WRITE_OPPANEL:
 
