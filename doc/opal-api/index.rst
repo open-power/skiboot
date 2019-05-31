@@ -128,7 +128,8 @@ The OPAL API is the interface between an Operating System and OPAL.
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_REINIT`                      |  53          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_PCI_MASK_PE_ERROR`               |  54          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_PCI_MASK_PE_ERROR`               |  54          | Never                  |          | Never           |
+|                                             |              |                        |          | implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_SET_SLOT_LED_STATUS`             |  55          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -403,6 +404,8 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_FENCE_PHB`                   |  52   | Never                 |                       |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_PCI_MASK_PE_ERROR`               |  54   | Never                 |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_GET_PHB_DIAG_DATA`           |  51   | pre-v1.0              | pre-v1.0, with last   |
 |                                             |       |                       | remnants removed in   |
 |                                             |       |                       | :ref:`skiboot-6.4`    |
@@ -471,6 +474,13 @@ it was removed.
 
 OPAL_PCI_FENCE_PHB
 ^^^^^^^^^^^^^^^^^^
+
+Never implemented.
+
+.. _OPAL_PCI_MASK_PE_ERROR:
+
+OPAL_PCI_MASK_PE_ERROR
+^^^^^^^^^^^^^^^^^^^^^^
 
 Never implemented.
 
