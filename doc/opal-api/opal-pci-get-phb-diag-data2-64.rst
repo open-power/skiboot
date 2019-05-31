@@ -1,14 +1,3 @@
-.. _OPAL_PCI_GET_PHB_DIAG_DATA:
-
-OPAL_PCI_GET_PHB_DIAG_DATA
-==========================
-
-.. note:: This call is deprecated. It has not been used since Linux 3.11-rc1.
-	  Use :ref:`OPAL_PCI_GET_PHB_DIAG_DATA2` instead.
-
-.. note:: This call may be removed in the future.
-
-
 .. _OPAL_PCI_GET_PHB_DIAG_DATA2:
 
 OPAL_PCI_GET_PHB_DIAG_DATA2

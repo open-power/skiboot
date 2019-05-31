@@ -3793,7 +3793,6 @@ static const struct phb_ops phb3_ops = {
 	.eeh_freeze_set		= phb3_eeh_freeze_set,
 	.next_error		= phb3_eeh_next_error,
 	.err_inject		= phb3_err_inject,
-	.get_diag_data		= NULL,
 	.get_diag_data2		= phb3_get_diag_data,
 	.set_capi_mode		= phb3_set_capi_mode,
 	.set_capp_recovery	= phb3_set_capp_recovery,

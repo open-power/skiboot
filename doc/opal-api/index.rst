@@ -118,7 +118,10 @@ The OPAL API is the interface between an Operating System and OPAL.
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_GET_HUB_DIAG_DATA`           |  50          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_PCI_GET_PHB_DIAG_DATA`           |  51          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_PCI_GET_PHB_DIAG_DATA`           |  51          | N/A                    |          | Only            |
+|                                             |              |                        |          | implemented     |
+|                                             |              |                        |          | prior to public |
+|                                             |              |                        |          | release.        |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_FENCE_PHB`                   |  52          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -397,6 +400,10 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_GET_XIVE_REISSUE`            |  36   | Never                 |                       |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_PCI_GET_PHB_DIAG_DATA`           |  51   | pre-v1.0              | pre-v1.0, with last   |
+|                                             |       |                       | remnants removed in   |
+|                                             |       |                       | :ref:`skiboot-6.4`    |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_GET_XIVE_SOURCE`                 |  38   | v1.0 Initial Release  | :ref:`skiboot-6.4`    |
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_WRITE_OPPANEL`                   |  43   | pre-v1.0              | pre-v1.0              |
@@ -456,6 +463,20 @@ OPAL_PCI_SET_XIVE_REISSUE
 A remnant of something prior to OPALv3. Never implemented in skiboot and never
 used by anyone. Returend :ref:`OPAL_UNSUPPORTED` until :ref:`skiboot-6.4`, where
 it was removed.
+
+.. _OPAL_PCI_GET_PHB_DIAG_DATA:
+
+OPAL_PCI_GET_PHB_DIAG_DATA
+==========================
+
+This call was introduced and functionally removed (all backends for it were)
+before the first public opal release. It has not been used since Linux 3.11-rc1.
+Considering the state of EEH in such old kernels and firmware, removing the
+remnants of this call is considered safe. If for some bizarre reason such an
+old kernel is run on :ref:`skiboot-6.4` or later, an :ref:`OPAL_PARAMETER` error
+will be returned instead of :ref:`OPAL_UNSUPPORTED`.
+
+It is replaced by :ref:`OPAL_PCI_GET_PHB_DIAG_DATA2` instead.
 
 .. _OPAL_GET_XIVE_SOURCE:
 

@@ -1817,7 +1817,6 @@ static const struct phb_ops npu2_opencapi_ops = {
 	.eeh_freeze_set		= NULL,
 	.next_error		= npu2_opencapi_eeh_next_error,
 	.err_inject		= NULL,
-	.get_diag_data		= NULL,
 	.get_diag_data2		= NULL,
 	.set_capi_mode		= NULL,
 	.set_capp_recovery	= NULL,

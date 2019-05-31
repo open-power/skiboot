@@ -4797,7 +4797,6 @@ static const struct phb_ops phb4_ops = {
 	.eeh_freeze_set		= phb4_eeh_freeze_set,
 	.next_error		= phb4_eeh_next_error,
 	.err_inject		= phb4_err_inject,
-	.get_diag_data		= NULL,
 	.get_diag_data2		= phb4_get_diag_data,
 	.tce_kill		= phb4_tce_kill,
 	.set_capi_mode		= phb4_set_capi_mode,

@@ -2304,7 +2304,6 @@ static const struct phb_ops p7ioc_phb_ops = {
 	.eeh_freeze_clear	= p7ioc_eeh_freeze_clear,
 	.eeh_freeze_set		= p7ioc_eeh_freeze_set,
 	.err_inject		= p7ioc_err_inject,
-	.get_diag_data		= NULL,
 	.get_diag_data2		= p7ioc_get_diag_data,
 	.next_error		= p7ioc_eeh_next_error,
 	.phb_mmio_enable	= p7ioc_phb_mmio_enable,

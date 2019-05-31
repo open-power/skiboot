@@ -807,28 +807,6 @@ static int64_t opal_pci_set_power_state(uint64_t async_token,
 }
 opal_call(OPAL_PCI_SET_POWER_STATE, opal_pci_set_power_state, 3);
 
-static int64_t opal_pci_get_phb_diag_data(uint64_t phb_id,
-					  void *diag_buffer,
-					  uint64_t diag_buffer_len)
-{
-	struct phb *phb = pci_get_phb(phb_id);
-	int64_t rc;
-
-	if (!opal_addr_valid(diag_buffer))
-		return OPAL_PARAMETER;
-
-	if (!phb)
-		return OPAL_PARAMETER;
-	if (!phb->ops->get_diag_data)
-		return OPAL_UNSUPPORTED;
-	phb_lock(phb);
-	rc = phb->ops->get_diag_data(phb, diag_buffer, diag_buffer_len);
-	phb_unlock(phb);
-
-	return rc;
-}
-opal_call(OPAL_PCI_GET_PHB_DIAG_DATA, opal_pci_get_phb_diag_data, 3);
-
 static int64_t opal_pci_get_phb_diag_data2(uint64_t phb_id,
 					   void *diag_buffer,
 					   uint64_t diag_buffer_len)

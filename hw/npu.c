@@ -1015,7 +1015,6 @@ static const struct phb_ops npu_ops = {
 	.eeh_freeze_set		= NULL,
 	.next_error		= npu_eeh_next_error,
 	.err_inject		= npu_err_inject,
-	.get_diag_data		= NULL,
 	.get_diag_data2		= NULL,
 	.set_capi_mode		= NULL,
 	.set_capp_recovery	= NULL,
