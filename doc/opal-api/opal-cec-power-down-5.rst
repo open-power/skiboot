@@ -9,6 +9,24 @@ OPAL_CEC_POWER_DOWN
 
    int64 opal_cec_power_down(uint64 request)
 
+As powering down the system is likely an asynchronous operation that we
+have to wait for a service processor to do, :ref:`OPAL_CEC_POWER_DOWN`
+should be called like the example code below:
+
+.. code-block:: c
+
+   int rc = OPAL_BUSY;
+
+   do {
+     rc = opal_cec_power_down(0);
+     if (rc == OPAL_BUSY_EVENT)
+       opal_poll_events(NULL);
+   } while (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT);
+
+   for (;;)
+     opal_poll_events(NULL);
+
+
 Arguments
 ---------
 
