@@ -52,20 +52,6 @@ void cec_reset(void)
 	}
 }
 
-/* This was only supported by p5ioc, which was dropped */
-static int64_t opal_pci_set_hub_tce_memory(uint64_t hub_id,
-					   uint64_t tce_mem_addr __unused,
-					   uint64_t tce_mem_size __unused)
-{
-	struct io_hub *hub = cec_get_hub_by_id(hub_id);
-
-	if (!hub)
-		return OPAL_PARAMETER;
-
-	return OPAL_UNSUPPORTED;
-}
-opal_call(OPAL_PCI_SET_HUB_TCE_MEMORY, opal_pci_set_hub_tce_memory, 3);
-
 static int64_t opal_pci_get_hub_diag_data(uint64_t hub_id,
 					  void *diag_buffer,
 					  uint64_t diag_buffer_len)

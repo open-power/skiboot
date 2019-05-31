@@ -860,19 +860,6 @@ static int64_t opal_pci_set_power_state(uint64_t async_token,
 }
 opal_call(OPAL_PCI_SET_POWER_STATE, opal_pci_set_power_state, 3);
 
-static int64_t opal_pci_set_phb_tce_memory(uint64_t phb_id,
-					   uint64_t tce_mem_addr __unused,
-					   uint64_t tce_mem_size __unused)
-{
-	struct phb *phb = pci_get_phb(phb_id);
-
-	if (!phb)
-		return OPAL_PARAMETER;
-
-	return OPAL_UNSUPPORTED;
-}
-opal_call(OPAL_PCI_SET_PHB_TCE_MEMORY, opal_pci_set_phb_tce_memory, 3);
-
 static int64_t opal_pci_get_phb_diag_data(uint64_t phb_id,
 					  void *diag_buffer,
 					  uint64_t diag_buffer_len)
