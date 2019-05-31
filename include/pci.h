@@ -321,9 +321,6 @@ struct phb_ops {
 	int64_t (*set_xive_pe)(struct phb *phb, uint64_t pe_number,
 			       uint32_t xive_num);
 
-	int64_t (*get_xive_source)(struct phb *phb, uint32_t xive_num,
-				   int32_t *interrupt_source_number);
-
 	int64_t (*get_msi_32)(struct phb *phb, uint64_t mve_number,
 			      uint32_t xive_num, uint8_t msi_range,
 			      uint32_t *msi_address, uint32_t *message_data);

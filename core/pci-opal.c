@@ -378,27 +378,6 @@ static int64_t opal_pci_set_xive_pe(uint64_t phb_id, uint64_t pe_number,
 }
 opal_call(OPAL_PCI_SET_XIVE_PE, opal_pci_set_xive_pe, 3);
 
-static int64_t opal_get_xive_source(uint64_t phb_id, uint32_t xive_num,
-				    int32_t *interrupt_source_number)
-{
-	struct phb *phb = pci_get_phb(phb_id);
-	int64_t rc;
-
-	if (!opal_addr_valid(interrupt_source_number))
-		return OPAL_PARAMETER;
-
-	if (!phb)
-		return OPAL_PARAMETER;
-	if (!phb->ops->get_xive_source)
-		return OPAL_UNSUPPORTED;
-	phb_lock(phb);
-	rc = phb->ops->get_xive_source(phb, xive_num, interrupt_source_number);
-	phb_unlock(phb);
-
-	return rc;
-}
-opal_call(OPAL_GET_XIVE_SOURCE, opal_get_xive_source, 3);
-
 static int64_t opal_get_msi_32(uint64_t phb_id, uint32_t mve_number,
 			       uint32_t xive_num, uint8_t msi_range,
 			       uint32_t *msi_address, uint32_t *message_data)

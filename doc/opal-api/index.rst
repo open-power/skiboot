@@ -97,7 +97,8 @@ The OPAL API is the interface between an Operating System and OPAL.
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_SET_XIVE_PE`                 |  37          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_GET_XIVE_SOURCE`                 |  38          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_GET_XIVE_SOURCE`                 |  38          | v1.0 (Initial Release) | POWER8   | Never used,     |
+|                                             |              |                        |          | now removed.    |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_GET_MSI_32`                      |  39          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -396,6 +397,8 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_GET_XIVE_REISSUE`            |  36   | Never                 |                       |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_GET_XIVE_SOURCE`                 |  38   | v1.0 Initial Release  | :ref:`skiboot-6.4`    |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_WRITE_OPPANEL`                   |  43   | pre-v1.0              | pre-v1.0              |
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_OLD_I2C_REQUEST`                 | 106   | v4.0                  | v4.0                  |
@@ -453,6 +456,17 @@ OPAL_PCI_SET_XIVE_REISSUE
 A remnant of something prior to OPALv3. Never implemented in skiboot and never
 used by anyone. Returend :ref:`OPAL_UNSUPPORTED` until :ref:`skiboot-6.4`, where
 it was removed.
+
+.. _OPAL_GET_XIVE_SOURCE:
+
+OPAL_GET_XIVE_SOURCE
+^^^^^^^^^^^^^^^^^^^^
+
+While this call was technically implemented by skiboot, no code has ever called
+it, and it was only ever implemented for the p7ioc-phb back-end (i.e. POWER7).
+Since this call was unused in Linux, and that  POWER7 with OPAL was only ever
+available internally, it was determined that it was safe to remove this call as
+of :ref:`skiboot-6.4`.
 
 .. _OPAL_WRITE_OPPANEL:
 

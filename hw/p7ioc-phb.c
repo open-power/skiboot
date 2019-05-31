@@ -1312,19 +1312,6 @@ static int64_t p7ioc_set_xive_pe(struct phb *phb, uint64_t pe_number,
 	return OPAL_SUCCESS;
 }
 
-static int64_t p7ioc_get_xive_source(struct phb *phb, uint32_t xive_num,
-				     int32_t *interrupt_source_number)
-{
-	struct p7ioc_phb *p = phb_to_p7ioc_phb(phb);
-
-	if (xive_num > 255 || !interrupt_source_number)
-		return OPAL_PARAMETER;
-
-	*interrupt_source_number = (p->buid_msi << 4) | xive_num;
-
-	return OPAL_SUCCESS;
-}
-
 static int64_t p7ioc_get_msi_32(struct phb *phb __unused, uint64_t mve_number,
 				uint32_t xive_num, uint8_t msi_range,
 				uint32_t *msi_address, uint32_t *message_data)
@@ -2330,7 +2317,6 @@ static const struct phb_ops p7ioc_phb_ops = {
 	.set_mve		= p7ioc_set_mve,
 	.set_mve_enable		= p7ioc_set_mve_enable,
 	.set_xive_pe		= p7ioc_set_xive_pe,
-	.get_xive_source	= p7ioc_get_xive_source,
 	.get_msi_32		= p7ioc_get_msi_32,
 	.get_msi_64		= p7ioc_get_msi_64,
 	.ioda_reset		= p7ioc_ioda_reset,
