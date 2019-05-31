@@ -1,11 +1,16 @@
+.. _OPAL_PCI_PHB_MMIO_ENABLE:
+
 OPAL_PCI_PHB_MMIO_ENABLE
 ========================
-::
+
+.. code-block:: c
 
    #define OPAL_PCI_PHB_MMIO_ENABLE		27
 
-   static int64_t opal_pci_phb_mmio_enable(uint64_t phb_id, uint16_t window_type,
-					uint16_t window_num, uint16_t enable)
+   int64_t opal_pci_phb_mmio_enable(uint64_t phb_id, uint16_t window_type,
+                                    uint16_t window_num, uint16_t enable);
+
+.. note:: Appears to be POWER7 p7ioc specific. Likely to be removed soon.
 
 **WARNING:** following documentation is from old sources, and is possibly
 not representative of OPALv3 as implemented by skiboot. This should be
@@ -20,14 +25,14 @@ PHB decode and forwarding for the address range defined in a particular MMIO
 window.
 
 Not all PHB hardware may support disabling some or all MMIO windows. OPAL
-returns OPAL_UNSUPPORTED if called to disable an MMIO window for which
+returns :ref:`OPAL_UNSUPPORTED` if called to disable an MMIO window for which
 hardware does not support disable. KVM may call this function for all MMIO
 windows and ignore the opal_unsuppsorted return code so long as KVM has
 disabled MMIO to all downstream PCI devices and assured that KVM and OS guest
 partitions cannot issue CI loads/stores to these address spaces from the
 processor (e.g.,via HPT).
 
-OPAL returns OPAL_SUCCESS for calls to OPAL to enable them for PHBs that do
+OPAL returns :ref:`OPAL_SUCCESS` for calls to OPAL to enable them for PHBs that do
 not support disable.
 
 ``phb_id``
