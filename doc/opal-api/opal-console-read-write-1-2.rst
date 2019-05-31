@@ -48,6 +48,8 @@ Returns:
 A conforming implementation SHOULD try to NOT do partial writes, although
 partial writes and not writing anything are valid.
 
+.. _OPAL_CONSOLE_WRITE_BUFFER_SPACE:
+
 OPAL_CONSOLE_WRITE_BUFFER_SPACE
 -------------------------------
 
@@ -83,6 +85,8 @@ Returns:
  - :ref:`OPAL_CLOSED`
 
 Use :ref:`OPAL_POLL_EVENTS` for how to determine
+
+.. _OPAL_CONSOLE_FLUSH:
 
 OPAL_CONSOLE_FLUSH
 ------------------
