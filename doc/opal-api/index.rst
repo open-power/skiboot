@@ -131,7 +131,8 @@ The OPAL API is the interface between an Operating System and OPAL.
 | :ref:`OPAL_PCI_MASK_PE_ERROR`               |  54          | Never                  |          | Never           |
 |                                             |              |                        |          | implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_SET_SLOT_LED_STATUS`             |  55          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_SET_SLOT_LED_STATUS`             |  55          | Never                  |          | Never           |
+|                                             |              |                        |          | implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_GET_EPOW_STATUS`                 |  56          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -406,6 +407,8 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_MASK_PE_ERROR`               |  54   | Never                 |                       |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_SET_SLOT_LED_STATUS`             |  55   | Never                 |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_GET_PHB_DIAG_DATA`           |  51   | pre-v1.0              | pre-v1.0, with last   |
 |                                             |       |                       | remnants removed in   |
 |                                             |       |                       | :ref:`skiboot-6.4`    |
@@ -481,6 +484,13 @@ Never implemented.
 
 OPAL_PCI_MASK_PE_ERROR
 ^^^^^^^^^^^^^^^^^^^^^^
+
+Never implemented.
+
+.. _OPAL_SET_SLOT_LED_STATUS:
+
+OPAL_SET_SLOT_LED_STATUS
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Never implemented.
 
