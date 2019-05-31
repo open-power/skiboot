@@ -42,13 +42,15 @@ Additional parameters are function-specific.
 OPAL_MSG_MEM_ERR
 ----------------
 
+.. _OPAL_MSG_EPOW:
+
 OPAL_MSG_EPOW
 -------------
 
 Used by OPAL to issue environmental and power warnings to host OS for
 conditions requiring an earlier poweroff. A few examples of these are high
 ambient temperature or system running on UPS power with low UPS battery.
-Host OS can query OPAL via ``GET_EPOW_STATUS`` API to obtain information about
+Host OS can query OPAL via :ref:`OPAL_GET_EPOW_STATUS` API to obtain information about
 EPOW conditions present. Refer include/opal-api.h for description of
 all supported EPOW events. OPAL_SYSPOWER_CHNG, OPAL_SYSPOWER_FAIL and
 OPAL_SYSPOWER_INC events don't require system poweroff.
