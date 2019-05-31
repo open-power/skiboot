@@ -139,9 +139,11 @@ The OPAL API is the interface between an Operating System and OPAL.
 | :ref:`OPAL_SET_SYSTEM_ATTENTION_LED`        |  57          | Never                  |          | Never           |
 |                                             |              |                        |          | implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_RESERVED1`                       |  58          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_RESERVED1`                       |  58          | Never                  |          | Never           |
+|                                             |              |                        |          | implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_RESERVED2`                       |  59          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_RESERVED2`                       |  59          | Never                  |          | Never           |
+|                                             |              |                        |          | implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_NEXT_ERROR`                  |  60          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -412,6 +414,10 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_SET_SYSTEM_ATTENTION_LED`        |  57   | Never                 |                       |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_RESERVED1`                       |  58   | Never                 |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_RESERVED2`                       |  59   | Never                 |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_GET_PHB_DIAG_DATA`           |  51   | pre-v1.0              | pre-v1.0, with last   |
 |                                             |       |                       | remnants removed in   |
 |                                             |       |                       | :ref:`skiboot-6.4`    |
@@ -503,6 +509,20 @@ OPAL_SET_SYSTEM_ATTENTION_LED
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Never implemented.
+
+.. _OPAL_RESERVED1:
+
+OPAL_RESERVED1
+^^^^^^^^^^^^^^
+
+Reserved for future use, but never used.
+
+.. _OPAL_RESERVED2:
+
+OPAL_RESERVED2
+^^^^^^^^^^^^^^
+
+Reserved for future use, but never used.
 
 .. _OPAL_PCI_GET_PHB_DIAG_DATA:
 
