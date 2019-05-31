@@ -211,7 +211,7 @@ The OPAL API is the interface between an Operating System and OPAL.
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_DUMP_RESEND`                     |  91          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_ELOG_SEND`                       |  92          | v1.0 (Initial Release) |	POWER8   | Deprecated      |
+| :ref:`OPAL_ELOG_SEND`                       |  92          | Never                  |	         | Never used      |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_SET_PHB_CAPI_MODE`           |  93          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -418,6 +418,8 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_RESERVED2`                       |  59   | Never                 |                       |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_ELOG_SEND`                       |  92   | pre-v1.0              | pre-v1.0              |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_GET_PHB_DIAG_DATA`           |  51   | pre-v1.0              | pre-v1.0, with last   |
 |                                             |       |                       | remnants removed in   |
 |                                             |       |                       | :ref:`skiboot-6.4`    |
@@ -523,6 +525,15 @@ OPAL_RESERVED2
 ^^^^^^^^^^^^^^
 
 Reserved for future use, but never used.
+
+.. _OPAL_ELOG_SEND:
+
+OPAL_ELOG_SEND
+^^^^^^^^^^^^^^
+
+Brielfy present prior to the first public release of OPAL. Never used in any
+public kernel tree. If this functionality were to ever be implemented, it'd
+appear as :ref:`OPAL_ELOG_WRITE` rather than this call.
 
 .. _OPAL_PCI_GET_PHB_DIAG_DATA:
 
