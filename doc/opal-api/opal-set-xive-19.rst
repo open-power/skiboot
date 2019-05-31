@@ -1,8 +1,13 @@
+.. _OPAL_SET_XIVE:
+
 OPAL_SET_XIVE
 =============
-::
+
+.. code-block:: c
 
    #define OPAL_SET_XIVE				19
+
+   int64_t opal_set_xive(uint32_t isn, uint16_t server, uint8_t priority);
 
 The host calls this function to set the server (target processor)
 and priority parameters of an interrupt source.
