@@ -75,9 +75,12 @@ OPAL_EVENT_PCI_ERROR = 0x200
 ----------------------------
 TODO
 
+.. _OPAL_EVENT_DUMP_AVAIL:
+
 OPAL_EVENT_DUMP_AVAIL = 0x400
 -----------------------------
-Signifies that there is a pending system dump available. See OPAL_DUMP suite
-of calls for details. ::
+Signifies that there is a pending system dump available. See :ref:`opal-dumps` suite
+of calls for details.
 
-  OPAL_EVENT_MSG_PENDING = 0x800,
+OPAL_EVENT_MSG_PENDING = 0x800
+------------------------------
