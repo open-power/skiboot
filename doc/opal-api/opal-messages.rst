@@ -134,6 +134,8 @@ requested and a forced shutdown will happen in future. Host OS can use
 OPAL_GET_DPO_STATUS API to query OPAL the number of seconds remaining
 before a forced poweroff will occur.
 
+.. _OPAL_MSG_PRD:
+
 OPAL_MSG_PRD
 ------------
 
@@ -177,7 +179,7 @@ struct opal_prd_msg: ::
 	};
 
 Responses from the kernel use the same message format, but are passed
-through the opal_prd_msg call.
+through the :ref:`OPAL_PRD_MSG` call.
 
 OPAL_MSG_OCC
 ------------
