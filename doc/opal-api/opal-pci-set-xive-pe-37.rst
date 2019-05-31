@@ -1,9 +1,13 @@
+.. _OPAL_PCI_SET_XIVE_PE:
+
 OPAL_PCI_SET_XIVE_PE
 ====================
-::
 
-   static int64_t opal_pci_set_xive_pe(uint64_t phb_id, uint64_t pe_number,
-				    uint32_t xive_num)
+.. code-block:: c
+
+   #define OPAL_PCI_SET_XIVE_PE			37
+
+   int64_t opal_pci_set_xive_pe(uint64_t phb_id, uint64_t pe_number, uint32_t xive_num);
 
 **WARNING:** following documentation is from old sources, and is possibly
 not representative of OPALv3 as implemented by skiboot. This should be
@@ -25,7 +29,9 @@ This call maps the XIVR indexed by xive_num to the PE specified by
 pe_number. For ibm,opal-ioda HW, the pe_number must match the pe_number
 set in the MVE.
 
-Return value: ::
+Return value:
+
+.. code-block:: c
 
 	if (!phb)
 		return OPAL_PARAMETER;
