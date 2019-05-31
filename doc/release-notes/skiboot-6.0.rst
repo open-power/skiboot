@@ -867,6 +867,7 @@ Debugging/Testing improvements
 ------------------------------
 
 Since 6.0-rc1:
+
 - mambo: Enable XER CA32 and OV32 bits on P9
 
   POWER9 adds 32 bit carry and overflow bits to the XER, but we need to

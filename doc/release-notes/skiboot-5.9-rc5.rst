@@ -68,8 +68,7 @@ Over :ref:`skiboot-5.9-rc3`, we have the following changes:
   at error level indicating a problem.
 - phb4: Fix GEN3 for DD2.00
 
-  In this fix:
-   62ac7631ae phb4: Fix PCIe GEN4 on DD2.1 and above
+  In this fix:  ``62ac7631ae`` "phb4: Fix PCIe GEN4 on DD2.1 and above",
   We fixed DD2.1 GEN4 but broke DD2.00 as GEN3.
 
   This fixes DD2.00 back to GEN3. This time for sure!

@@ -32,6 +32,7 @@ What patches are accepted?
 HOWTO submit to stable
 ----------------------
 Two ways:
+
 1. Send patch to the skiboot-stable@lists.ozlabs.org list with
    "[PATCH <stable version>]" in subject
 

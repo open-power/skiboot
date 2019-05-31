@@ -110,6 +110,7 @@ BMC communication
 
   bt_add_ipmi_msg_head() adds message to top of the list. If bt message list
   is not empty then:
+
     - if bt_idle() is true then we will endup sending message to BMC before
       getting response from BMC for inflight message. Looks like on some
       BMC implementation this results in message timeout.

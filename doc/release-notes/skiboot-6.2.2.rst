@@ -1,8 +1,8 @@
 .. _skiboot-6.2.2:
 
-==============
+=============
 skiboot-6.2.2
-==============
+=============
 
 skiboot 6.2.2 was released on Wednesday March 6th, 2019. It replaces
 :ref:`skiboot-6.2.1` as the current stable release in the 6.2.x series.
@@ -27,7 +27,7 @@ powercap
   limit.
 
 ASTBMC
-=====
+======
 - astbmc: Enable IPMI HIOMAP for AMI platforms
 
   Required for Habanero, Palmetto and Romulus.
@@ -146,6 +146,7 @@ BMC communication
 
   bt_add_ipmi_msg_head() adds message to top of the list. If bt message list
   is not empty then:
+
     - if bt_idle() is true then we will endup sending message to BMC before
       getting response from BMC for inflight message. Looks like on some
       BMC implementation this results in message timeout.
