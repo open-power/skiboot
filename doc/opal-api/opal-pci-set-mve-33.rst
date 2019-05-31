@@ -1,11 +1,13 @@
+.. _OPAL_PCI_SET_MVE:
+
 OPAL_PCI_SET_MVE
 ================
-::
+
+.. code-block:: c
 
    #define OPAL_PCI_SET_MVE			33
 
-   static int64_t opal_pci_set_mve(uint64_t phb_id, uint32_t mve_number,
-				uint64_t pe_number)
+   int64_t opal_pci_set_mve(uint64_t phb_id, uint32_t mve_number, uint64_t pe_number);
 
 **WARNING:** following documentation is from old sources, and is possibly
 not representative of OPALv3 as implemented by skiboot. This should be
@@ -31,7 +33,9 @@ determine the PE domain. OPAL treats this call as a NOP for IODA2 PHBs
 and returns a status of OPAL_SUCCESS.
 
 
-Return value: ::
+Return value:
+
+.. code-block:: c
 
 	if (!phb)
 		return OPAL_PARAMETER;
