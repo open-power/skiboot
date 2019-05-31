@@ -246,18 +246,6 @@ static int64_t opal_pci_map_pe_mmio_window(uint64_t phb_id, uint64_t pe_number,
 }
 opal_call(OPAL_PCI_MAP_PE_MMIO_WINDOW, opal_pci_map_pe_mmio_window, 5);
 
-static int64_t opal_pci_set_phb_table_memory(uint64_t phb_id __unused,
-					     uint64_t rtt_addr __unused,
-					     uint64_t ivt_addr __unused,
-					     uint64_t ivt_len __unused,
-					     uint64_t rej_array_addr __unused,
-					     uint64_t peltv_addr __unused)
-{
-	/* IODA2 (P8) stuff, TODO */
-	return OPAL_UNSUPPORTED;
-}
-opal_call(OPAL_PCI_SET_PHB_TABLE_MEMORY, opal_pci_set_phb_table_memory, 6);
-
 static int64_t opal_pci_set_pe(uint64_t phb_id, uint64_t pe_number,
 			       uint64_t bus_dev_func, uint8_t bus_compare,
 			       uint8_t dev_compare, uint8_t func_compare,

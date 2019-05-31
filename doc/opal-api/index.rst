@@ -78,7 +78,8 @@ The OPAL API is the interface between an Operating System and OPAL.
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_MAP_PE_MMIO_WINDOW`          |  29          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_PCI_SET_PHB_TABLE_MEMORY`        |  30          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_PCI_SET_PHB_TABLE_MEMORY`        |  30          | Never                  | POWER8   | Never used or   |
+|                                             |              |                        |          | Implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_SET_PE`                      |  31          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -387,6 +388,8 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_SHPC`                        |  24   | Never                 |                       |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_PCI_SET_PHB_TABLE_MEMORY`        |  30   | Never                 |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_WRITE_OPPANEL`                   |  43   | pre-v1.0              | pre-v1.0              |
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_OLD_I2C_REQUEST`                 | 106   | v4.0                  | v4.0                  |
@@ -418,6 +421,14 @@ OPAL_PCI_SHPC
 
 A remnant of a long forgotten incarnation of OPAL. Never implemented, never
 will be.
+
+.. _OPAL_PCI_SET_PHB_TABLE_MEMORY:
+
+OPAL_PCI_SET_PHB_TABLE_MEMORY
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A remnant of an old API design. Never implemented, never used. Only ever
+returned :ref:`OPAL_UNSUPPORTED`, now the call is not implemented at all.
 
 .. _OPAL_WRITE_OPPANEL:
 
