@@ -1,7 +1,9 @@
 .. _opal-imc-counters:
 
+.. _OPAL_IMC_COUNTERS_INIT:
+
 OPAL_IMC_COUNTERS_INIT
-==============================
+======================
 OPAL call interface to initialize In-memory collection
 infrastructure. Call does multiple scom writes on each
 invocation for Core/Trace IMC initialization. And for the
@@ -37,18 +39,17 @@ Parameters
 Returns
 -------
 
-OPAL_PARAMETER
+:ref:`OPAL_PARAMETER`
   In case of  unsupported ``type``
-
-OPAL_HARDWARE
+:ref:`OPAL_HARDWARE`
   If any error in setting up the hardware.
-
-OPAL_SUCCESS
+:ref:`OPAL_SUCCESS`
   On succesfully initialized or even if init operation is a no-op.
 
+.. _OPAL_IMC_COUNTERS_START:
 
 OPAL_IMC_COUNTERS_START
-============================
+=======================
 OPAL call interface for starting the In-Memory Collection
 counters for a specified domain (NEST/CORE/TRACE).
 
@@ -65,15 +66,14 @@ Parameters
 Returns
 -------
 
-OPAL_PARAMETER
+:ref:`OPAL_PARAMETER`
   In case of  Unsupported ``type``
-
-OPAL_HARDWARE
+:ref:`OPAL_HARDWARE`
   If any error in setting up the hardware.
-
-OPAL_SUCCESS
+:ref:`OPAL_SUCCESS`
   On successful execution of the operation for the given ``type``.
 
+.. _OPAL_IMC_COUNTERS_STOP:
 
 OPAL_IMC_COUNTERS_STOP
 ======================
@@ -96,11 +96,9 @@ Parameters
 Returns
 -------
 
-OPAL_PARAMETER
+:ref:`OPAL_PARAMETER`
   In case of  Unsupported ``type``
-
-OPAL_HARDWARE
+:ref:`OPAL_HARDWARE`
   If any error in setting up the hardware.
-
-OPAL_SUCCESS
+:ref:`OPAL_SUCCESS`
   On successful execution of the operation for the given ``type``.
