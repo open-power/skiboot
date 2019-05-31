@@ -1,16 +1,23 @@
+.. _OPAL_REINIT_CPUS:
+
 OPAL_REINIT_CPUS
 ================
-::
+
+.. code-block:: c
+
+   #define OPAL_REINIT_CPUS			70
 
    static int64_t opal_reinit_cpus(uint64_t flags);
 
 This OPAL call reinitializes some bit of CPU state across *ALL* CPUs.
 Consequently, all CPUs must be in OPAL for this call to succeed (either
-at boot time or after OPAL_RETURN_CPU is called)
+at boot time or after OPAL_RETURN_CPU is called).
 
 Arguments
 ---------
-Currently, possible flags are: ::
+Currently, possible flags are:
+
+.. code-block:: c
 
   enum {
 	OPAL_REINIT_CPUS_HILE_BE	= (1 << 0),
@@ -41,8 +48,7 @@ suspend mode disabled. This may only be supported on some CPU versions.
 Returns
 -------
 
-``OPAL_SUCCESS``
+:ref:`OPAL_SUCCESS`
   Success!
-
-``OPAL_UNSUPPORTED``
+:ref:`OPAL_UNSUPPORTED`
   Processor does not suport reinit flags.
