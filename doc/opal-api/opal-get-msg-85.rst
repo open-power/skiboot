@@ -1,12 +1,15 @@
+.. _OPAL_GET_MSG:
+
 OPAL_GET_MSG
 ============
 
-OPAL_GET_MSG will get the next pending OPAL Message (see :ref:`opal-messages`).
+.. code-block:: c
 
-Parameters: ::
+   #define OPAL_GET_MSG				85
 
-	buffer to copy message into
-	sizeof buffer to copy message into
+   int64_t opal_get_msg(uint64_t *buffer, uint64_t size);
+
+:ref:`OPAL_GET_MSG` will get the next pending OPAL Message (see :ref:`opal-messages`).
 
 The maximum size of an opal message is specified in the device tree passed
 to the host OS: ::
@@ -27,14 +30,12 @@ bytes or opal-msg-size. It MUST NOT supply a buffer of < 72 bytes.
 Return values
 -------------
 
-OPAL_RESOURCE
+:ref:`OPAL_RESOURCE`
   no available message.
-
-OPAL_PARAMETER
+:ref:`OPAL_PARAMETER`
   buffer is NULL or size is < 72 bytes.
   If buffer size < 72 bytes, the message will NOT be discarded by OPAL.
-
-OPAL_PARTIAL
+:ref:`OPAL_PARTIAL`
   If pending opal message is greater than supplied buffer.
   In this case the message is *DISCARDED* by OPAL.
   This is to keep compatibility with host Operating Systems
@@ -42,6 +43,5 @@ OPAL_PARTIAL
   **NOT CURRENTLY IMPLEMENTED**. Specified so that host OS can
   prepare for the possible future with either a sensible
   error message or by gracefully ignoring such OPAL messages.
-
-OPAL_SUCCESS
+:ref:`OPAL_SUCCESS`
   message successfully copied to buffer.
