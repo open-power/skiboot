@@ -1,7 +1,14 @@
-.. _opal-sensor-groups-enable:
+.. _OPAL_SENSOR_GROUP_ENABLE:
 
 OPAL_SENSOR_GROUP_ENABLE
-==========================
+========================
+
+.. code-block:: c
+
+   #define OPAL_SENSOR_GROUP_ENABLE		163
+
+   int opal_sensor_group_enable(u32 group_hndl, int token, bool enable);
+
 OPAL call to enable/disable the sensor group using a handle to identify
 the type of sensor group provided in the device tree.
 
@@ -11,36 +18,24 @@ group by OCC to main memory.
 The call can be asynchronus, where the token parameter is used to wait
 for the completion.
 
-Parameters
-----------
-::
-        u32 handle
-        int token
-        bool enable
 
 Returns
 -------
-OPAL_SUCCESS
+
+:ref:`OPAL_SUCCESS`
   Success
-
-OPAL_UNSUPPORTED
+:ref:`OPAL_UNSUPPORTED`
   No support to enable/disable the sensor group
-
-OPAL_HARDWARE
+:ref:`OPAL_HARDWARE`
   Unable to procced due to the current hardware state
-
-OPAL_PERMISSION
+:ref:`OPAL_PERMISSION`
   Hardware cannot take the request
-
-OPAL_ASYNC_COMPLETION
+:ref:`OPAL_ASYNC_COMPLETION`
   Request was sent and an async completion message will be sent with
   token and status of the request.
-
-OPAL_BUSY
+:ref:`OPAL_BUSY`
   Previous request in progress
-
-OPAL_INTERNAL_ERROR
+:ref:`OPAL_INTERNAL_ERROR`
   Error in request response
-
-OPAL_TIMEOUT
+:ref:`OPAL_TIMEOUT`
   Timeout in request completion
