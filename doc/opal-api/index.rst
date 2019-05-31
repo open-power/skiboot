@@ -89,9 +89,11 @@ The OPAL API is the interface between an Operating System and OPAL.
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_SET_MVE_ENABLE`              |  34          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_PCI_GET_XIVE_REISSUE`            |  35          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_PCI_GET_XIVE_REISSUE`            |  35          | Never                  |          | Never used or   |
+|                                             |              |                        |          | Implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_PCI_SET_XIVE_REISSUE`            |  36          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_PCI_SET_XIVE_REISSUE`            |  36          | Never                  |          | Never used or   |
+|                                             |              |                        |          | Implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_SET_XIVE_PE`                 |  37          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -390,6 +392,10 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_SET_PHB_TABLE_MEMORY`        |  30   | Never                 |                       |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_PCI_GET_XIVE_REISSUE`            |  35   | Never                 |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_PCI_GET_XIVE_REISSUE`            |  36   | Never                 |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_WRITE_OPPANEL`                   |  43   | pre-v1.0              | pre-v1.0              |
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_OLD_I2C_REQUEST`                 | 106   | v4.0                  | v4.0                  |
@@ -429,6 +435,24 @@ OPAL_PCI_SET_PHB_TABLE_MEMORY
 
 A remnant of an old API design. Never implemented, never used. Only ever
 returned :ref:`OPAL_UNSUPPORTED`, now the call is not implemented at all.
+
+.. _OPAL_PCI_GET_XIVE_REISSUE:
+
+OPAL_PCI_GET_XIVE_REISSUE
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A remnant of something prior to OPALv3. Never implemented in skiboot and never
+used by anyone. Returend :ref:`OPAL_UNSUPPORTED` until :ref:`skiboot-6.4`, where
+it was removed.
+
+.. _OPAL_PCI_SET_XIVE_REISSUE:
+
+OPAL_PCI_SET_XIVE_REISSUE
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A remnant of something prior to OPALv3. Never implemented in skiboot and never
+used by anyone. Returend :ref:`OPAL_UNSUPPORTED` until :ref:`skiboot-6.4`, where
+it was removed.
 
 .. _OPAL_WRITE_OPPANEL:
 

@@ -321,26 +321,6 @@ static int64_t opal_pci_set_mve_enable(uint64_t phb_id, uint32_t mve_number,
 }
 opal_call(OPAL_PCI_SET_MVE_ENABLE, opal_pci_set_mve_enable, 3);
 
-static int64_t opal_pci_get_xive_reissue(uint64_t phb_id __unused,
-					 uint32_t xive_number __unused,
-					 uint8_t *p_bit __unused,
-					 uint8_t *q_bit __unused)
-{
-	/* IODA2 (P8) stuff, TODO */
-	return OPAL_UNSUPPORTED;
-}
-opal_call(OPAL_PCI_GET_XIVE_REISSUE, opal_pci_get_xive_reissue, 4);
-
-static int64_t opal_pci_set_xive_reissue(uint64_t phb_id __unused,
-					 uint32_t xive_number __unused,
-					 uint8_t p_bit __unused,
-					 uint8_t q_bit __unused)
-{
-	/* IODA2 (P8) stuff, TODO */
-	return OPAL_UNSUPPORTED;
-}
-opal_call(OPAL_PCI_SET_XIVE_REISSUE, opal_pci_set_xive_reissue, 4);
-
 static int64_t opal_pci_msi_eoi(uint64_t phb_id,
 				uint32_t hwirq)
 {

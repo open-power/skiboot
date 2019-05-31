@@ -94,8 +94,8 @@
 #define OPAL_PCI_SET_PELTV			32
 #define OPAL_PCI_SET_MVE			33
 #define OPAL_PCI_SET_MVE_ENABLE			34
-#define OPAL_PCI_GET_XIVE_REISSUE		35
-#define OPAL_PCI_SET_XIVE_REISSUE		36
+#define OPAL_PCI_GET_XIVE_REISSUE		35 /* never implemented */
+#define OPAL_PCI_SET_XIVE_REISSUE		36 /* never implemented */
 #define OPAL_PCI_SET_XIVE_PE			37
 #define OPAL_GET_XIVE_SOURCE			38
 #define OPAL_GET_MSI_32				39
