@@ -1,3 +1,5 @@
+.. _device-tree/ibm,opal/sensor-groups:
+
 ibm,opal/sensor-groups
 ----------------------
 
