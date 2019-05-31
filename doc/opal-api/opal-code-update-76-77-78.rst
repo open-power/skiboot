@@ -1,14 +1,26 @@
 Code Update on FSP based machine
 ================================
 
-There are three OPAL calls for code update on FSP based machine: ::
+There are three OPAL calls for code update. These are currently only
+implemented on FSP based machines.
+
+.. code-block::c
 
  #define OPAL_FLASH_VALIDATE	76
  #define OPAL_FLASH_MANAGE	77
  #define OPAL_FLASH_UPDATE	78
 
+.. _OPAL_FLASH_VALIDATE:
+
 OPAL_FLASH_VALIDATE
 -------------------
+
+.. code-block:: c
+
+   #define OPAL_FLASH_VALIDATE	76
+
+   int64_t fsp_opal_validate_flash(uint64_t buffer, uint32_t *size, uint32_t *result);
+
 
 Validate new image is valid for this platform or not. We do below
 validation in OPAL:
@@ -48,9 +60,17 @@ Return value
 ^^^^^^^^^^^^
 Validation status
 
+.. _OPAL_FLASH_MANAGE:
 
 OPAL_FLASH_MANAGE
 -----------------
+
+.. code-block:: c
+
+   #define OPAL_FLASH_MANAGE	77
+
+   int64_t fsp_opal_manage_flash(uint8_t op);
+
 Commit/Reject image.
 
   - We can commit new image (T -> P), if system is running with T side image.
@@ -69,8 +89,17 @@ op
 Return value
     Commit operation status (0 : Success)
 
+.. _OPAL_FLASH_UPDATE:
+
 OPAL_FLASH_UPDATE
-------------------
+-----------------
+
+.. code-block:: c
+
+    #define OPAL_FLASH_UPDATE	78
+
+    int64_t fsp_opal_update_flash(struct opal_sg_list *list);
+
 Update new image. It only sets the flag, actual update happens
 during system reboot/shutdown.
 
