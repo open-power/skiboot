@@ -1,8 +1,16 @@
+.. _OPAL_PCI_SET_PE:
+
 OPAL_PCI_SET_PE
 ===============
-::
+
+.. code-block:: c
 
    #define OPAL_PCI_SET_PE				31
+
+   int64_t opal_pci_set_pe(uint64_t phb_id, uint64_t pe_number,
+                           uint64_t bus_dev_func, uint8_t bus_compare,
+                           uint8_t dev_compare, uint8_t func_compare,
+                           uint8_t pe_action);
 
 **NOTE:** The following two paragraphs come from some old documentation and
 have not been checked for accuracy. Same goes for bus_compare, dev_compare
@@ -21,12 +29,6 @@ argument, for OPAL to correlate the RID (bus/dev/func) domain of the PE. If a
 PE domain is changed, the host must call this to reset the PE bus/dev/func
 domain and then call all other OPAL calls that map PHB IODA resources to
 update those domains within PHB facilities.
-::
-
-   static int64_t opal_pci_set_pe(uint64_t phb_id, uint64_t pe_number,
-			       uint64_t bus_dev_func, uint8_t bus_compare,
-			       uint8_t dev_compare, uint8_t func_compare,
-			       uint8_t pe_action)
 
 ``phb_id``
   is the value from the PHB node ibm,opal-phbid property.
@@ -75,17 +77,17 @@ update those domains within PHB facilities.
 	OPAL_MAP_PE = 1
     };
 
-Return value:
+Returns
+-------
 
-OPAL_PARAMETER
+:ref:`OPAL_PARAMETER`
   If one of the following:
-  - invalid phb
-  - invalid pe_action
-  - invalid bus_dev_func
-  - invalid bus_compare
 
-OPAL_UNSUPPORTED
+   - invalid phb
+   - invalid pe_action
+   - invalid bus_dev_func
+   - invalid bus_compare
+:ref:`OPAL_UNSUPPORTED`
   PHB does not support set_pe operation
-
-OPAL_SUCCESS
-  if opreation was successful
+:ref:`OPAL_SUCCESS`
+  if operation was successful
