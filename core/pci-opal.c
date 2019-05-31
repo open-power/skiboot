@@ -861,21 +861,15 @@ static int64_t opal_pci_set_power_state(uint64_t async_token,
 opal_call(OPAL_PCI_SET_POWER_STATE, opal_pci_set_power_state, 3);
 
 static int64_t opal_pci_set_phb_tce_memory(uint64_t phb_id,
-					   uint64_t tce_mem_addr,
-					   uint64_t tce_mem_size)
+					   uint64_t tce_mem_addr __unused,
+					   uint64_t tce_mem_size __unused)
 {
 	struct phb *phb = pci_get_phb(phb_id);
-	int64_t rc;
 
 	if (!phb)
 		return OPAL_PARAMETER;
-	if (!phb->ops->set_phb_tce_memory)
-		return OPAL_UNSUPPORTED;
-	phb_lock(phb);
-	rc = phb->ops->set_phb_tce_memory(phb, tce_mem_addr, tce_mem_size);
-	phb_unlock(phb);
 
-	return rc;
+	return OPAL_UNSUPPORTED;
 }
 opal_call(OPAL_PCI_SET_PHB_TCE_MEMORY, opal_pci_set_phb_tce_memory, 3);
 

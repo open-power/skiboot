@@ -37,7 +37,10 @@ The OPAL API is the interface between an Operating System and OPAL.
 |                                             |              | internal systems.      |          | No use outside  |
 |                                             |              |                        |          | IBM development |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_PCI_SET_PHB_TCE_MEMORY`          |  12          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_PCI_SET_PHB_TCE_MEMORY`          |  12          | N/A                    |          | Was POWER7      |
+|                                             |              | Present only on        |          | p5ioc specific. |
+|                                             |              | internal systems.      |          | No use outside  |
+|                                             |              |                        |          | IBM development |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_CONFIG_READ_BYTE`            |  13          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -384,7 +387,8 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_SET_HUB_TCE_MEMORY`          |  11   | pre-v1.0              | :ref:`skiboot-5.2.0`  |
 +---------------------------------------------+-------+-----------------------+-----------------------+
-
+| :ref:`OPAL_PCI_SET_PHB_TCE_MEMORY`          |  12   | pre-v1.0              | :ref:`skiboot-5.2.0`  |
++---------------------------------------------+-------+-----------------------+-----------------------+
 
 .. _OPAL_GET_COMPLETION_TOKEN_STATUS:
 
@@ -424,6 +428,30 @@ OPAL_PCI_SET_HUB_TCE_MEMORY
 		                       uint64_t tce_mem_addr __unused,
                                        uint64_t tce_mem_size __unused);
 
+This call was only ever relevant for p5ioc based POWER7 systems. These were
+never available with OPAL outside of IBM development.
+
+Support for POWER7 systems with p5ioc was dropped in :ref:`skiboot-5.2.0`,
+and these systems were only ever used with OPAL inside IBM for development
+and bring-up purposes.
+
+Support for p5ioc was removed from the Linux kernel in v4.6-rc1.
+
+.. _OPAL_PCI_SET_PHB_TCE_MEMORY:
+
+OPAL_PCI_SET_PHB_TCE_MEMORY
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   #define OPAL_PCI_SET_PHB_TCE_MEMORY		12
+
+   int64_t opal_pci_set_phb_tce_memory(uint64_t phb_id,
+                                       uint64_t tce_mem_addr,
+                                       uint64_t tce_mem_size);
+
+This call was only ever relevant for p5ioc based POWER7 systems. These were
+never available with OPAL outside of IBM development.
 
 Support for POWER7 systems with p5ioc was dropped in :ref:`skiboot-5.2.0`,
 and these systems were only ever used with OPAL inside IBM for development

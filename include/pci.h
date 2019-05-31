@@ -337,12 +337,6 @@ struct phb_ops {
 	int64_t (*papr_errinjct_reset)(struct phb *phb);
 
 	/*
-	 * P5IOC2 only
-	 */
-	int64_t (*set_phb_tce_memory)(struct phb *phb, uint64_t tce_mem_addr,
-				      uint64_t tce_mem_size);
-
-	/*
 	 * IODA2 PCI interfaces
 	 */
 	int64_t (*pci_msi_eoi)(struct phb *phb, uint32_t hwirq);
