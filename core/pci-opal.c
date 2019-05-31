@@ -929,37 +929,6 @@ static int64_t opal_pci_next_error(uint64_t phb_id, uint64_t *first_frozen_pe,
 }
 opal_call(OPAL_PCI_NEXT_ERROR, opal_pci_next_error, 4);
 
-static int64_t opal_pci_eeh_freeze_status2(uint64_t phb_id, uint64_t pe_number,
-					   uint8_t *freeze_state,
-					   uint16_t *pci_error_type,
-					   uint16_t *severity,
-					   uint64_t *phb_status)
-{
-	struct phb *phb = pci_get_phb(phb_id);
-	int64_t rc;
-
-	if (!opal_addr_valid(freeze_state) || !opal_addr_valid(pci_error_type)
-		|| !opal_addr_valid(severity) || !opal_addr_valid(phb_status))
-		return OPAL_PARAMETER;
-
-	if (!phb)
-		return OPAL_PARAMETER;
-	if (!phb->ops->eeh_freeze_status)
-		return OPAL_UNSUPPORTED;
-	phb_lock(phb);
-
-	if (phb_status)
-		prlog(PR_ERR, "PHB#%04llx: %s: deprecated PHB status\n",
-				phb_id, __func__);
-
-	rc = phb->ops->eeh_freeze_status(phb, pe_number, freeze_state,
-					 pci_error_type, severity);
-	phb_unlock(phb);
-
-	return rc;
-}
-opal_call(OPAL_PCI_EEH_FREEZE_STATUS2, opal_pci_eeh_freeze_status2, 6);
-
 static int64_t opal_pci_set_phb_capi_mode(uint64_t phb_id, uint64_t mode, uint64_t pe_number)
 {
 	struct phb *phb = pci_get_phb(phb_id);
