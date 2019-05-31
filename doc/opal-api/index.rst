@@ -61,7 +61,7 @@ The OPAL API is the interface between an Operating System and OPAL.
 | :ref:`OPAL_GET_COMPLETION_TOKEN_STATUS`     |  21          | Never                  |          | Never           |
 |                                             |              |                        |          | Implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_REGISTER_OPAL_EXCEPTION_HANDLER` |  22          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_REGISTER_OPAL_EXCEPTION_HANDLER` |  22          | v1.0 (Initial Release) |          | Removed         |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_EEH_FREEZE_STATUS`           |  23          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -386,6 +386,8 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_OLD_I2C_REQUEST`                 | 106   | v4.0                  | v4.0                  |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_REGISTER_OPAL_EXCEPTION_HANDLER` |  22   | v1.0 Initial Release  | :ref:`skiboot-5.0`    |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_SET_HUB_TCE_MEMORY`          |  11   | pre-v1.0              | :ref:`skiboot-5.2.0`  |
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_SET_PHB_TCE_MEMORY`          |  12   | pre-v1.0              | :ref:`skiboot-5.2.0`  |
@@ -415,6 +417,36 @@ OPAL_OLD_I2C_REQUEST
 ^^^^^^^^^^^^^^^^^^^^
 
 Never used. Only existing briefly in the :ref:`skiboot-4.0` development cycle.
+
+
+.. _OPAL_REGISTER_OPAL_EXCEPTION_HANDLER:
+
+OPAL_REGISTER_OPAL_EXCEPTION_HANDLER
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   #define OPAL_REGISTER_OPAL_EXCEPTION_HANDLER	22
+
+
+   int64_t opal_register_exc_handler(uint64_t opal_exception __unused,
+                                     uint64_t handler_address __unused,
+				     uint64_t glue_cache_line __unused);
+
+
+This call existed for a very short period of time and only ever worked with Big
+Endian host operating systems. The idea was that OPAL would handle HMIs and
+an OS could (if it chose to) register a handler for them. This call is not
+required since the introduction of :ref:`OPAL_HANDLE_HMI` and all machines that
+ever shipped without :ref:`OPAL_HANDLE_HMI` have a firmware update that
+supports it. For IBM Tuleta machines, this was FW810.20 (released Oct 2014)
+that had :ref:`OPAL_HANDLE_HMI` support.
+
+This call was removed in :ref:`skiboot-5.0` and now just
+returns :ref:`OPAL_UNSUPPORTED`.
+
+Use of the :ref:`OPAL_HANDLE_HMI` call was introduced in Linux 3.17.
+
 
 .. _OPAL_PCI_SET_HUB_TCE_MEMORY:
 
