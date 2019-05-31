@@ -1,11 +1,14 @@
+.. _OPAL_PCI_SET_MVE_ENABLE:
+
 OPAL_PCI_SET_MVE_ENABLE
 =======================
-::
+
+
+.. code-block:: c
 
    #define OPAL_PCI_SET_MVE_ENABLE			34
 
-   static int64_t opal_pci_set_mve_enable(uint64_t phb_id, uint32_t mve_number,
-				       uint32_t state)
+   int64_t opal_pci_set_mve_enable(uint64_t phb_id, uint32_t mve_number, uint32_t state);
 
    enum OpalMveEnableAction {
 	OPAL_DISABLE_MVE = 0,
@@ -31,7 +34,9 @@ DMA address and message data value.
 
 This call sets the MVE to an enabled (1) or disabled (0) state.
 
-Return value: ::
+Return value:
+
+.. code-block:: c
 
 	if (!phb)
 		return OPAL_PARAMETER;
