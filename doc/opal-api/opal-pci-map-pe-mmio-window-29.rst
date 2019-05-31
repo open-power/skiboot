@@ -1,14 +1,19 @@
+.. _OPAL_PCI_MAP_PE_MMIO_WINDOW:
+
 OPAL_PCI_MAP_PE_MMIO_WINDOW
 ===========================
-::
+
+.. code-block:: c
 
    #define OPAL_PCI_MAP_PE_MMIO_WINDOW		29
 
-   static int64_t opal_pci_map_pe_mmio_window(uint64_t phb_id,
-					      uint64_t pe_number,
-					      uint16_t window_type,
-					      uint16_t window_num,
-					      uint16_t segment_num)
+   int64_t opal_pci_map_pe_mmio_window(uint64_t phb_id,
+                                       uint64_t pe_number,
+                                       uint16_t window_type,
+                                       uint16_t window_num,
+                                       uint16_t segment_num);
+
+.. note:: Appears to be POWER7 p7ioc specific. Likely to be removed soon.
 
 **WARNING:** following documentation is from old sources, and is possibly
 not representative of OPALv3 as implemented by skiboot. This should be
@@ -38,7 +43,9 @@ The host calls this function to map a segment of MMIO address space to a PE.
   window.
 
 
-Return value: ::
+Return value:
+
+.. code-block:: c
 
 	if (!phb)
 		return OPAL_PARAMETER;
