@@ -1,5 +1,13 @@
+.. _OPAL_PCI_GET_PRESENCE_STATE:
+
 OPAL_PCI_GET_PRESENCE_STATE
 ===========================
+
+.. code-block: c
+
+   #define OPAL_PCI_GET_PRESENCE_STATE		119
+
+   int64_t opal_pci_get_presence_state(uint64_t id, uint64_t data);
 
 Get PCI slot presence state
 
@@ -23,11 +31,9 @@ state is stored in buffer pointed by @data.
 
 Return Codes
 ------------
-OPAL_SUCCESS
+:ref:`OPAL_SUCCESS`
   PCI slot's presence state is retrieved successfully
-
-OPAL_PARAMETER
+:ref:`OPAL_PARAMETER`
   The indicated PCI slot isn't found
-
-OPAL_UNSUPPORTED
+:ref:`OPAL_UNSUPPORTED`
   Presence retrieval not supported on the PCI slot
