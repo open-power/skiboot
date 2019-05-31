@@ -1,3 +1,5 @@
+.. _device-tree/ibm,opal/oppanel:
+
 Operator Panel (oppanel)
 ========================
 
