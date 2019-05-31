@@ -1,6 +1,7 @@
 P9 XIVE Exploitation
 ====================
 
+.. _xive-device-tree:
 
 I - Device-tree updates
 -----------------------
