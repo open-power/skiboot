@@ -1,12 +1,16 @@
+.. _OPAL_TEST:
+
 OPAL_TEST
 =========
 
-OPAL_TEST is a REQUIRED call for OPAL and conforming implementations MUST
+:ref:`OPAL_TEST` is a REQUIRED call for OPAL and conforming implementations MUST
 have it.
 
 It is designed to test basic OPAL call functionality.
 
-Token: ::
+Token:
+
+.. code-block:: c
 
   #define OPAL_TEST				0
 
@@ -25,9 +29,11 @@ Returns
 
 Function
 --------
-OPAL_TEST MAY print a string to the OPAL log with the value of argument.
+:ref:`OPAL_TEST` MAY print a string to the OPAL log with the value of argument.
 
-For example, the reference implementation (skiboot) implements OPAL_TEST as: ::
+For example, the reference implementation (skiboot) implements :ref:`OPAL_TEST` as:
+
+.. code-block:: c
 
   static uint64_t opal_test_func(uint64_t arg)
   {
