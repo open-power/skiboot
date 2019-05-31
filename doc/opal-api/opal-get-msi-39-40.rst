@@ -1,9 +1,48 @@
+===================================
 OPAL_GET_MSI_32 and OPAL_GET_MSI_64
 ===================================
-::
+
+.. code-block:: c
 
    #define OPAL_GET_MSI_32				39
    #define OPAL_GET_MSI_64				40
+
+   int64_t opal_get_msi_32(uint64_t phb_id, uint32_t mve_number,
+                           uint32_t xive_num, uint8_t msi_range,
+                           uint32_t *msi_address, uint32_t *message_data);
+
+   int64_t opal_get_msi_64(uint64_t phb_id, uint32_t mve_number,
+                           uint32_t xive_num, uint8_t msi_range,
+                           uint64_t *msi_address, uint32_t *message_data);
+
+.. _OPAL_GET_MSI_32:
+
+OPAL_GET_MSI_32
+===============
+
+.. code-block:: c
+
+   #define OPAL_GET_MSI_32				39
+
+   int64_t opal_get_msi_32(uint64_t phb_id, uint32_t mve_number,
+                           uint32_t xive_num, uint8_t msi_range,
+                           uint32_t *msi_address, uint32_t *message_data);
+
+See :ref:`OPAL_GET_MSI_64`.
+
+.. _OPAL_GET_MSI_64:
+
+OPAL_GET_MSI_64
+===============
+
+.. code-block:: c
+
+   #define OPAL_GET_MSI_64				40
+
+   int64_t opal_get_msi_64(uint64_t phb_id, uint32_t mve_number,
+                           uint32_t xive_num, uint8_t msi_range,
+                           uint64_t *msi_address, uint32_t *message_data);
+
 
 **WARNING:** the following documentation is from old sources, and is possibly
 not representative of OPALv3 as implemented by skiboot. This should be
@@ -34,14 +73,14 @@ returns the MSI DMA message data value the PE uses to signal that interrupt.
   MSI DMA address must be unique for any given consecutive power of 2 set
   of 32 message data values,. which in turn select particular PHB XIVEs.
   This value must be a power of 2 value in the range of 0 to 32. OPAL
-  returns opal_parameter for values outside of this range.
+  returns :ref:`OPAL_PARAMETER` for values outside of this range.
 
 For MSI conventional, the MSI address and message data returned apply to a
 power of 2 sequential set of XIVRs starting from the xive_number for the
 power of 2 msi_range input argument. The message data returned represents the
 power of 2 aligned starting message data value of the first interrupt number
 in that sequential range. Valid msi_range input values are from 1 to 32.
-Non-power of 2 values result in a return code of opal_PARAMETER .
+Non-power of 2 values result in a return code of :ref:`OPAL_PARAMETER`.
 
 An msi_range value of 0 or 1 signifies that OPAL should return the message
 data and message address for exactly one MSI specified by the input XIVE
