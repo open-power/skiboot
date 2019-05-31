@@ -65,6 +65,8 @@ or a reboot. ::
 
   params[0] = 0x01 reboot, 0x00 shutdown
 
+.. _OPAL_MSG_HMI_EVT:
+
 OPAL_MSG_HMI_EVT
 ----------------
 
