@@ -136,7 +136,8 @@ The OPAL API is the interface between an Operating System and OPAL.
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_GET_EPOW_STATUS`                 |  56          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
-| :ref:`OPAL_SET_SYSTEM_ATTENTION_LED`        |  57          | v1.0 (Initial Release) | POWER8   |                 |
+| :ref:`OPAL_SET_SYSTEM_ATTENTION_LED`        |  57          | Never                  |          | Never           |
+|                                             |              |                        |          | implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_RESERVED1`                       |  58          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -409,6 +410,8 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_SET_SLOT_LED_STATUS`             |  55   | Never                 |                       |
 +---------------------------------------------+-------+-----------------------+-----------------------+
+| :ref:`OPAL_SET_SYSTEM_ATTENTION_LED`        |  57   | Never                 |                       |
++---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_GET_PHB_DIAG_DATA`           |  51   | pre-v1.0              | pre-v1.0, with last   |
 |                                             |       |                       | remnants removed in   |
 |                                             |       |                       | :ref:`skiboot-6.4`    |
@@ -491,6 +494,13 @@ Never implemented.
 
 OPAL_SET_SLOT_LED_STATUS
 ^^^^^^^^^^^^^^^^^^^^^^^^
+
+Never implemented.
+
+.. _OPAL_SET_SYSTEM_ATTENTION_LED:
+
+OPAL_SET_SYSTEM_ATTENTION_LED
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Never implemented.
 
