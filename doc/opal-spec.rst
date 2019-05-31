@@ -16,7 +16,7 @@ implementation. It is not recommended that you do this though.
 
 Authors
 -------
-Stewart Smith <stewart@linux.vnet.ibm.com> : OPAL Architect, IBM
+Stewart Smith <stewart@linux.ibm.com> : OPAL Architect, IBM
 
 
 Definitions
