@@ -1,3 +1,7 @@
+===============================
+OPAL Real Time Clock (RTC) APIs
+===============================
+
 .. _OPAL_RTC_READ:
 
 OPAL_RTC_READ
@@ -73,3 +77,15 @@ Return codes
 
 :ref:`OPAL_BUSY`
   request may be in flight
+
+.. _OPAL_RTC_WRITE:
+
+OPAL_RTC_WRITE
+==============
+
+:ref:`OPAL_RTC_WRITE` is much like :ref:`OPAL_RTC_READ` in that it can be asynchronous.
+
+If multiple WRITES are issued before the first one completes, subsequent
+writes are ignored. There can only be one write in flight at any one time.
+
+Format of the time is the same as for :ref:`OPAL_RTC_READ`.
