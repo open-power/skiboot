@@ -1,15 +1,20 @@
+.. _OPAL_PCI_SET_PHB_MEM_WINDOW:
+
 OPAL_PCI_SET_PHB_MEM_WINDOW
 ===========================
-::
+
+.. code-block:: c
 
    #define OPAL_PCI_SET_PHB_MEM_WINDOW             28
 
-   static int64_t opal_pci_set_phb_mem_window(uint64_t phb_id,
-					   uint16_t window_type,
-					   uint16_t window_num,
-					   uint64_t addr,
-					   uint64_t pci_addr,
-					   uint64_t size)
+   int64_t opal_pci_set_phb_mem_window(uint64_t phb_id,
+                                       uint16_t window_type,
+                                       uint16_t window_num,
+                                       uint64_t addr,
+                                       uint64_t pci_addr,
+                                       uint64_t size);
+
+.. note:: Appears to be POWER7 p7ioc specific. Likely to be removed soon.
 
 **WARNING:** following documentation is from old sources, and is possibly
 not representative of OPALv3 as implemented by skiboot. This should be
@@ -71,7 +76,9 @@ segment_size times the number of segments within this MMIO window.
 The host must set PHB memory windows to be within the system real address
 ranges indicated in the PHB parent HDT hub node ibm,opal-mmio-real property.
 
-Return value: ::
+Return value:
+
+.. code-block:: c
 
 	if (!phb)
 		return OPAL_PARAMETER;
