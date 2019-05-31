@@ -1,5 +1,13 @@
+.. _OPAL_PCI_GET_POWER_STATE:
+
 OPAL_PCI_GET_POWER_STATE
 ========================
+
+.. code-block:: c
+
+   #define OPAL_PCI_GET_POWER_STATE		120
+
+   int64_t opal_pci_get_power_state(uint64_t id, uint64_t data);
 
 Get PCI slot power state
 
@@ -20,11 +28,10 @@ in buffer pointed by @data.
 
 Return Codes
 ------------
-OPAL_SUCCESS
+
+:ref:`OPAL_SUCCESS`
   PCI slot's power state is retrieved successfully
-
-OPAL_PARAMETER
+:ref:`OPAL_PARAMETER`
   The indicated PCI slot isn't found
-
-OPAL_UNSUPPORTED
+:ref:`OPAL_UNSUPPORTED`
   Power state retrieval not supported on the PCI slot

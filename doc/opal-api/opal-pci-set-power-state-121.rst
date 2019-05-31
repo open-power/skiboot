@@ -1,5 +1,13 @@
+.. _OPAL_PCI_SET_POWER_STATE:
+
 OPAL_PCI_SET_POWER_STATE
 ========================
+
+.. code-block:: c
+
+   #define OPAL_PCI_SET_POWER_STATE		121
+
+   int64_t opal_pci_set_power_state(uint64_t async_token, uint64_t id, uint64_t data);
 
 Set PCI slot power state
 
@@ -27,8 +35,8 @@ indicated PCI slot (by @id) in PCI hotplug path.
 
 User will receive an asychronous message after calling the API. The message
 contains the API completion status: event (Power off or on), device node's
-phandle identifying the PCI slot, errcode (e.g. OPAL_SUCCESS). The API returns
-OPAL_ASYNC_COMPLETION for the case.
+phandle identifying the PCI slot, errcode (e.g. :ref:`OPAL_SUCCESS`). The API returns
+:ref:`OPAL_ASYNC_COMPLETION` for the case.
 
 The states OPAL_PCI_SLOT_OFFLINE and OPAL_PCI_SLOT_ONLINE are used for removing
 or adding devices behind the slot. The device nodes in the device tree are
@@ -39,14 +47,11 @@ message will be sent.
 Return Codes
 ------------
 
-OPAL_SUCCESS
+:ref:`OPAL_SUCCESS`
   PCI hotplug on the slot is completed successfully
-
-OPAL_ASYNC_COMPLETION
+:ref:`OPAL_ASYNC_COMPLETION`
   PCI hotplug needs further message to confirm
-
-OPAL_PARAMETER
+:ref:`OPAL_PARAMETER`
   The indicated PCI slot isn't found
-
-OPAL_UNSUPPORTED
+:ref:`OPAL_UNSUPPORTED`
   Setting power state not supported on the PCI slot
