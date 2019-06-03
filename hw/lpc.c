@@ -519,7 +519,7 @@ static int64_t lpc_probe_test(struct lpcm *lpc)
 
 	/* Ensure we can perform a valid lookup in the error table */
 	idx = LPC_ERROR_IDX(irqstat);
-	if (idx < 0 || idx > ARRAY_SIZE(lpc_error_table)) {
+	if (idx < 0 || idx >= ARRAY_SIZE(lpc_error_table)) {
 		prerror("LPC bus error translation failed with status 0x%x\n",
 			irqstat);
 		return OPAL_PARAMETER;
@@ -1035,7 +1035,7 @@ static void lpc_dispatch_err_irqs(struct lpcm *lpc, uint32_t irqs)
 
 	/* Ensure we can perform a valid lookup in the error table */
 	idx = LPC_ERROR_IDX(irqs);
-	if (idx < 0 || idx > ARRAY_SIZE(lpc_error_table)) {
+	if (idx < 0 || idx >= ARRAY_SIZE(lpc_error_table)) {
 		prerror("LPC bus error translation failed with status 0x%x\n",
 			irqs);
 		return;
