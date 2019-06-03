@@ -361,8 +361,12 @@ void cpu_process_jobs(void)
 			free(job);
 		func(data);
 		if (!list_empty(&cpu->locks_held)) {
-			prlog(PR_ERR, "OPAL job %s returning with locks held\n",
-			      job->name);
+			if (no_return)
+				prlog(PR_ERR, "OPAL no-return job returned with"
+				      "locks held!\n");
+			else
+				prlog(PR_ERR, "OPAL job %s returning with locks held\n",
+				      job->name);
 			drop_my_locks(true);
 		}
 		lock(&cpu->job_lock);
