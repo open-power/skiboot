@@ -1103,9 +1103,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Allocate our split trace buffers now. Depends add_opal_node() */
 	init_trace_buffers();
 
-	/* On P7/P8, get the ICPs and make sure they are in a sane state */
+	/* On P8, get the ICPs and make sure they are in a sane state */
 	init_interrupts();
-	if (proc_gen == proc_gen_p7 || proc_gen == proc_gen_p8)
+	if (proc_gen == proc_gen_p8)
 		cpu_set_ipi_enable(true);
 
 	/* On P9, initialize XIVE */
@@ -1237,9 +1237,6 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* Init In-Memory Collection related stuff (load the IMC dtb into memory) */
 	imc_init();
-
-	/* Probe IO hubs */
-	probe_p7ioc();
 
 	/* Probe PHB3 on P8 */
 	probe_phb3();

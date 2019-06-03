@@ -191,11 +191,7 @@ void nx_enable_842(struct dt_node *node, u32 gcid, u32 pb_base)
 	u64 cfg_dma, cfg_842, cfg_ee;
 	int rc;
 
-	if (dt_node_is_compatible(node, "ibm,power7-nx")) {
-		cfg_dma = pb_base + NX_P7_DMA_CFG;
-		cfg_842 = pb_base + NX_P7_842_CFG;
-		cfg_ee = pb_base + NX_P7_EE_CFG;
-	} else if (dt_node_is_compatible(node, "ibm,power8-nx")) {
+	if (dt_node_is_compatible(node, "ibm,power8-nx")) {
 		cfg_dma = pb_base + NX_P8_DMA_CFG;
 		cfg_842 = pb_base + NX_P8_842_CFG;
 		cfg_ee = pb_base + NX_P8_EE_CFG;

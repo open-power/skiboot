@@ -756,14 +756,6 @@ static void xscom_init_chip_info(struct proc_chip *chip)
 
 	/* Identify chip */
 	switch(val & 0xff) {
-	case 0xf9:
-		chip->type = PROC_CHIP_P7;
-		assert(proc_gen == proc_gen_p7);
-		break;
-	case 0xe8:
-		chip->type = PROC_CHIP_P7P;
-		assert(proc_gen == proc_gen_p7);
-		break;
 	case 0xef:
 		chip->type = PROC_CHIP_P8_MURANO;
 		assert(proc_gen == proc_gen_p8);
@@ -864,7 +856,7 @@ void xscom_init(void)
 		struct proc_chip *chip;
 		const char *chip_name;
 		static const char *chip_names[] = {
-			"UNKNOWN", "P7", "P7+", "P8E", "P8", "P8NVL", "P9N", "P9C", "P9P"
+			"UNKNOWN", "P8E", "P8", "P8NVL", "P9N", "P9C", "P9P"
 		};
 
 		chip = get_chip(gcid);

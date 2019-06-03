@@ -29,7 +29,6 @@
 #include <fsp.h>
 #include <lock.h>
 #include <interrupts.h>
-#include <gx.h>
 #include <device.h>
 #include <trace.h>
 #include <timebase.h>

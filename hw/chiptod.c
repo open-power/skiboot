@@ -132,7 +132,6 @@
 
 static enum chiptod_type {
 	chiptod_unknown,
-	chiptod_p7,
 	chiptod_p8,
 	chiptod_p9
 } chiptod_type;
@@ -1647,8 +1646,6 @@ static bool chiptod_probe(void)
 
 		if (dt_has_node_property(np, "primary", NULL)) {
 			chiptod_primary = chip;
-			if (dt_node_is_compatible(np, "ibm,power7-chiptod"))
-				chiptod_type = chiptod_p7;
 			if (dt_node_is_compatible(np, "ibm,power8-chiptod"))
 				chiptod_type = chiptod_p8;
 			if (dt_node_is_compatible(np, "ibm,power9-chiptod"))

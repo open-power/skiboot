@@ -58,11 +58,7 @@ void nx_create_rng_node(struct dt_node *node)
 	gcid = dt_get_chip_id(node);
 	pb_base = dt_get_address(node, 0, NULL);
 
-	if (dt_node_is_compatible(node, "ibm,power7-nx")) {
-		xbar = pb_base + NX_P7_RNG_BAR;
-		xcfg = pb_base + NX_P7_RNG_CFG;
-		addr_mask = NX_P7_RNG_BAR_ADDR;
-	} else if (dt_node_is_compatible(node, "ibm,power8-nx")) {
+	if (dt_node_is_compatible(node, "ibm,power8-nx")) {
 		xbar = pb_base + NX_P8_RNG_BAR;
 		xcfg = pb_base + NX_P8_RNG_CFG;
 		addr_mask = NX_P8_RNG_BAR_ADDR;

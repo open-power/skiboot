@@ -152,16 +152,6 @@ uint32_t get_psi_interrupt(uint32_t chip_id)
 	uint32_t irq;
 
 	switch(proc_gen) {
-	case proc_gen_p7:
-		/* Get the chip ID into position, it already has
-		 * the T bit so all we need is room for the GX
-		 * bit, 9 bit BUID and 4 bit level
-		 */
-		irq  = chip_id << (1 + 9 + 4);
-
-		/* Add in the BUID */
-		irq |= P7_PSI_IRQ_BUID << 4;
-		break;
 	case proc_gen_p8:
 		irq = p8_chip_irq_block_base(chip_id, P8_IRQ_BLOCK_MISC);
 		irq += P8_IRQ_MISC_PSI_BASE;

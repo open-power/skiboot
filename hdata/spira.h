@@ -518,11 +518,6 @@ struct msvpd_pmover_bsr_synchro {
 #define MSVPD_PMS_FLAG_PMOVER_EN	0x40000000
 #define MSVPD_PMS_FLAG_BSR_EN		0x20000000
 #define MSVPD_PMS_FLAG_XSCOMBASE_VALID	0x10000000
-	/* P7 values for BSR mode */
-#define MSVPD_PMS_FLAG_P7BSR_1M_MODE	0x00000000
-#define MSVPD_PMS_FLAG_P7BSR_2M_MODE	0x02000000
-#define MSVPD_PMS_FLAG_P7BSR_4M_MODE	0x04000000
-#define MSVPD_PMS_FLAG_P7BSR_8M_MODE	0x06000000
 	__be32		hwlocks_per_page;
 	__be64		hwlock_addr;
 	__be64		pmover_addr;
@@ -655,7 +650,6 @@ struct cechub_io_hub {
 #define CECHUB_HUB_FAB_BR1_PDT_PHB4	0x08 /* p7ioc only */
 #define CECHUB_HUB_FAB_BR1_PDT_PHB5	0x04 /* p7ioc only */
 	__be16		iohub_id;	/* the type of hub */
-#define CECHUB_HUB_P7IOC		0x60e7	/* from VPL3 */
 #define CECHUB_HUB_MURANO		0x20ef	/* Murano from spec */
 #define CECHUB_HUB_MURANO_SEGU		0x0001	/* Murano+Seguso from spec */
 #define CECHUB_HUB_VENICE_WYATT		0x0010	/* Venice+Wyatt from spec */

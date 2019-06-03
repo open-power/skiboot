@@ -107,7 +107,6 @@ void _prlog(int log_level, const char* fmt, ...) __attribute__((format (printf, 
 /* Processor generation */
 enum proc_gen {
 	proc_gen_unknown,
-	proc_gen_p7,		/* P7 and P7+ */
 	proc_gen_p8,
 	proc_gen_p9,
 };
@@ -203,7 +202,6 @@ extern void copy_sreset_vector(void);
 extern void copy_sreset_vector_fast_reboot(void);
 
 /* Various probe routines, to replace with an initcall system */
-extern void probe_p7ioc(void);
 extern void probe_phb3(void);
 extern void probe_phb4(void);
 extern int preload_capp_ucode(void);

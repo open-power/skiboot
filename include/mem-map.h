@@ -94,11 +94,8 @@
 #define SPIRA_HEAP_BASE		(SKIBOOT_BASE + 0x01200000)
 #define SPIRA_HEAP_SIZE		0x00800000
 
-/* This is our PSI TCE table. It's 16K entries on P7 and 256K
- * entries on P8
- */
+/* This is our PSI TCE table. It's 256K entries on P8 */
 #define PSI_TCE_TABLE_BASE	(SKIBOOT_BASE + 0x01a00000)
-#define PSI_TCE_TABLE_SIZE_P7	0x00020000UL
 #define PSI_TCE_TABLE_SIZE_P8	0x00200000UL
 
 /* Total size of the above area

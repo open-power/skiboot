@@ -16,9 +16,9 @@
 
 #include <skiboot.h>
 #include <cec.h>
-#include <p7ioc.h>
 #include <interrupts.h>
 #include <opal-api.h>
+#include <opal-internal.h>
 
 /*
  * Note: This file os only used on P7/P7+

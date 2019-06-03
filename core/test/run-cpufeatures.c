@@ -44,7 +44,7 @@ static inline unsigned long mfspr(unsigned int spr);
 
 #include "../cpufeatures.c"
 
-static unsigned long fake_pvr = PVR_TYPE_P7;
+static unsigned long fake_pvr = PVR_TYPE_P8;
 
 static inline unsigned long mfspr(unsigned int spr)
 {

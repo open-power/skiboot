@@ -176,11 +176,7 @@ class GetSCom(object):
 
 		c_id = val >> 44
 		id = c_id & 0xff
-		if id == 0xf9:
-			name = "P7 processor"
-		elif id == 0xe8:
-			name = "P7+ processor"
-		elif id == 0xef:
+                if id == 0xef:
 			name = "P8E (Murano) processor"
 		elif id == 0xea:
 			name = "P8 (Venice) processor"

@@ -19,7 +19,7 @@
 
 #include <bitutils.h>
 
-/* P7 MSR bits */
+/* MSR bits */
 #define MSR_SF		PPC_BIT(0)	/* 64-bit mode */
 #define MSR_HV		PPC_BIT(3)	/* Hypervisor mode */
 #define MSR_VEC		PPC_BIT(38)	/* VMX enable */
@@ -41,7 +41,6 @@
 /* PIR */
 #define SPR_PIR_P9_MASK		0x7fff	/* Mask of implemented bits */
 #define SPR_PIR_P8_MASK		0x1fff	/* Mask of implemented bits */
-#define SPR_PIR_P7_MASK		0x03ff	/* Mask of implemented bits */
 
 /* SPR register definitions */
 #define SPR_DSCR	0x011	/* RW: Data stream control reg */
@@ -96,12 +95,7 @@
 
 /* Bits in LPCR */
 
-/* Powersave Exit Cause Enable is different for P7 and P8 */
-#define SPR_LPCR_P7_PECE	PPC_BITMASK(49,51)
-#define SPR_LPCR_P7_PECE0	PPC_BIT(49)   /* Wake on external interrupts */
-#define SPR_LPCR_P7_PECE1	PPC_BIT(50)   /* Wake on decrementer */
-#define SPR_LPCR_P7_PECE2	PPC_BIT(51)   /* Wake on MCs, HMIs, etc... */
-
+/* Powersave Exit Cause Enable is different on each generation */
 #define SPR_LPCR_P8_PECE	PPC_BITMASK(47,51)
 #define SPR_LPCR_P8_PECE0	PPC_BIT(47)   /* Wake on priv doorbell */
 #define SPR_LPCR_P8_PECE1	PPC_BIT(48)   /* Wake on hv doorbell */
@@ -200,8 +194,6 @@
 #define PVR_VERS_MIN(_pvr)	GETFIELD(SPR_PVR_VERS_MIN, _pvr)
 
 /* PVR definitions */
-#define PVR_TYPE_P7	0x003f
-#define PVR_TYPE_P7P	0x004a
 #define PVR_TYPE_P8E	0x004b /* Murano */
 #define PVR_TYPE_P8	0x004d /* Venice */
 #define PVR_TYPE_P8NVL	0x004c /* Naples */

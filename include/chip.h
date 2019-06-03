@@ -31,31 +31,11 @@
  * This ID is the HW fabric ID of a chip based on the XSCOM numbering,
  * also known as "GCID" (Global Chip ID).
  *
- * The format of this number is different between P7 and P8 and care must
+ * The format of this number is different between chip generations and care must
  * be taken when trying to convert between this chip ID and some other
  * representation such as PIR values, interrupt-server numbers etc... :
  *
- * P7 GCID
- * -------
- *
- * Global chip ID is a 6 bit number:
- *
- *     NodeID    T   ChipID
- * |           |   |       |
- * |___|___|___|___|___|___|
- *
- * Where T is the "torrent" bit and is 0 for P7 chips and 1 for
- * directly XSCOM'able IO chips such as Torrent
- *
- * This macro converts a PIR to a GCID
  */
-#define P7_PIR2GCID(pir) ({ 				\
-	uint32_t _pir = pir;				\
-	((_pir >> 4) & 0x38) | ((_pir >> 5) & 0x3); })
-
-#define P7_PIR2COREID(pir) (((pir) >> 2) & 0x7)
-
-#define P7_PIR2THREADID(pir) ((pir) & 0x3)
 
 /*
  * P8 GCID
@@ -119,8 +99,6 @@ struct p9_dio;
 /* Chip type */
 enum proc_chip_type {
 	PROC_CHIP_UNKNOWN,
-	PROC_CHIP_P7,
-	PROC_CHIP_P7P,
 	PROC_CHIP_P8_MURANO,
 	PROC_CHIP_P8_VENICE,
 	PROC_CHIP_P8_NAPLES,

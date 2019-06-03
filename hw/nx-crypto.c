@@ -38,10 +38,10 @@
 #define AMF_COMPLETION_MODE	NX_DMA_COMPLETION_MODE_PDMA
 #define AMF_CPB_WR		(0) /* CPB WR not done with AMF */
 #define AMF_OUTPUT_DATA_WR	NX_DMA_OUTPUT_DATA_WR_DMA
-#define EE_CH7			(0) /* disable engine AMF 2(P7) / 3(P8) */
-#define EE_CH6			(0) /* disable engine AMF 1(P7) / 2(P8) */
-#define EE_CH5			(0) /* disable engine AMF 0(P7) / 1(P8) */
-#define EE_CH4			(0) /* disable engine SYM 2(P7) / AMF 0(P8) */
+#define EE_CH7			(0) /* disable engine AMF 3(P8) */
+#define EE_CH6			(0) /* disable engine AMF 2(P8) */
+#define EE_CH5			(0) /* disable engine AMF 1(P8) */
+#define EE_CH4			(0) /* disable engine SYM AMF 0(P8) */
 #define EE_CH3			(0) /* disable engine SYM 1 */
 #define EE_CH2			(0) /* disable engine SYM 0 */
 
@@ -268,13 +268,7 @@ void nx_create_crypto_node(struct dt_node *node)
 
 	prlog(PR_INFO, "NX%d: Crypto at 0x%x\n", gcid, pb_base);
 
-	if (dt_node_is_compatible(node, "ibm,power7-nx")) {
-		cfg_dma = pb_base + NX_P7_DMA_CFG;
-		cfg_sym = pb_base + NX_P7_SYM_CFG;
-		cfg_asym = pb_base + NX_P7_ASYM_CFG;
-		cfg_iq = pb_base + NX_P7_CRB_IQ;
-		cfg_ee = pb_base + NX_P7_EE_CFG;
-	} else if (dt_node_is_compatible(node, "ibm,power8-nx")) {
+	if (dt_node_is_compatible(node, "ibm,power8-nx")) {
 		cfg_dma = pb_base + NX_P8_DMA_CFG;
 		cfg_sym = pb_base + NX_P8_SYM_CFG;
 		cfg_asym = pb_base + NX_P8_ASYM_CFG;

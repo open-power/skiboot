@@ -31,7 +31,7 @@ uint32_t pir_to_chip_id(uint32_t pir)
 	else if (proc_gen == proc_gen_p8)
 		return P8_PIR2GCID(pir);
 	else
-		return P7_PIR2GCID(pir);
+		assert(false);
 }
 
 uint32_t pir_to_core_id(uint32_t pir)
@@ -41,7 +41,7 @@ uint32_t pir_to_core_id(uint32_t pir)
 	else if (proc_gen == proc_gen_p8)
 		return P8_PIR2COREID(pir);
 	else
-		return P7_PIR2COREID(pir);
+		assert(false);
 }
 
 uint32_t pir_to_thread_id(uint32_t pir)
@@ -51,7 +51,7 @@ uint32_t pir_to_thread_id(uint32_t pir)
 	else if (proc_gen == proc_gen_p8)
 		return P8_PIR2THREADID(pir);
 	else
-		return P7_PIR2THREADID(pir);
+		assert(false);
 }
 
 struct proc_chip *next_chip(struct proc_chip *chip)

@@ -103,7 +103,7 @@ char __rodata_start[1], __rodata_end[1];
 
 const char version[]="Hello world!";
 
-enum proc_gen proc_gen = proc_gen_p7;
+enum proc_gen proc_gen = proc_gen_p8;
 
 static char *loaded_version_buf;
 static size_t loaded_version_buf_size;

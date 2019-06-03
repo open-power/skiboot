@@ -22,42 +22,11 @@
 #include <ccan/str/str.h>
 #include <ccan/array_size/array_size.h>
 #include <device.h>
-#include <p7ioc.h>
 #include <vpd.h>
 #include <inttypes.h>
 #include <string.h>
 
 #include "hdata.h"
-
-static void io_add_common(struct dt_node *hn, const struct cechub_io_hub *hub)
-{
-	dt_add_property_cells(hn, "#address-cells", 2);
-	dt_add_property_cells(hn, "#size-cells", 2);
-	dt_add_property_cells(hn, "ibm,buid-ext", be32_to_cpu(hub->buid_ext));
-	dt_add_property_cells(hn, "ibm,chip-id",
-			      pcid_to_chip_id(be32_to_cpu(hub->proc_chip_id)));
-	dt_add_property_cells(hn, "ibm,gx-index", be32_to_cpu(hub->gx_index));
-	dt_add_property_cells(hn, "revision", be32_to_cpu(hub->ec_level));
-
-	/* Instead of exposing the GX BARs as separate ranges as we *should*
-	 * do in an ideal world, we just create a pass-through ranges and
-	 * we use separate properties for the BARs.
-	 *
-	 * This is hackish but will do for now and avoids us having to
-	 * do too complex ranges property parsing
-	 */
-	dt_add_property(hn, "ranges", NULL, 0);
-	dt_add_property_u64(hn, "ibm,gx-bar-1", be64_to_cpu(hub->gx_ctrl_bar1));
-	dt_add_property_u64(hn, "ibm,gx-bar-2", be64_to_cpu(hub->gx_ctrl_bar2));
-
-	/* Add presence detect if valid */
-	if (hub->flags & CECHUB_HUB_FLAG_FAB_BR0_PDT)
-		dt_add_property_cells(hn, "ibm,br0-presence-detect",
-				      hub->fab_br0_pdt);
-	if (hub->flags & CECHUB_HUB_FLAG_FAB_BR1_PDT)
-		dt_add_property_cells(hn, "ibm,br1-presence-detect",
-				      hub->fab_br1_pdt);
-}
 
 static bool io_get_lx_info(const void *kwvpd, unsigned int kwvpd_sz,
 			   int lx_idx, struct dt_node *hn)
@@ -129,63 +98,6 @@ static void io_get_loc_code(const void *sp_iohubs, struct dt_node *hn, const cha
 	} else {
 		prlog(PR_DEBUG, "CEC:     Hub FRU ID not found...\n");
 	}
-}
-
-static struct dt_node *io_add_p7ioc(const struct cechub_io_hub *hub,
-				    const void *sp_iohubs)
-{
-	struct dt_node *hn;
-	uint64_t reg[2];
-
-	const void *kwvpd;
-	unsigned int kwvpd_sz;
-
-	prlog(PR_DEBUG, "    GX#%d BUID_Ext = 0x%x\n",
-	      be32_to_cpu(hub->gx_index),
-	      be32_to_cpu(hub->buid_ext));
-	prlog(PR_DEBUG, "    GX BAR 0 = 0x%016"PRIx64"\n",
-	      be64_to_cpu(hub->gx_ctrl_bar0));
-	prlog(PR_DEBUG, "    GX BAR 1 = 0x%016"PRIx64"\n",
-	      be64_to_cpu(hub->gx_ctrl_bar1));
-	prlog(PR_DEBUG, "    GX BAR 2 = 0x%016"PRIx64"\n",
-	      be64_to_cpu(hub->gx_ctrl_bar2));
-	prlog(PR_DEBUG, "    GX BAR 3 = 0x%016"PRIx64"\n",
-	      be64_to_cpu(hub->gx_ctrl_bar3));
-	prlog(PR_DEBUG, "    GX BAR 4 = 0x%016"PRIx64"\n",
-	      be64_to_cpu(hub->gx_ctrl_bar4));
-
-	/* We only know about memory map 1 */
-	if (be32_to_cpu(hub->mem_map_vers) != 1) {
-		prerror("P7IOC: Unknown memory map %d\n", be32_to_cpu(hub->mem_map_vers));
-		/* We try to continue anyway ... */
-	}
-
-	reg[0] = cleanup_addr(be64_to_cpu(hub->gx_ctrl_bar1));
-	reg[1] = 0x2000000;
-
-	hn = dt_new_addr(dt_root, "io-hub", reg[0]);
-	if (!hn)
-		return NULL;
-
-	dt_add_property(hn, "reg", reg, sizeof(reg));
-	dt_add_property_strings(hn, "compatible", "ibm,p7ioc", "ibm,ioda-hub");
-
-	kwvpd = HDIF_get_idata(sp_iohubs, CECHUB_ASCII_KEYWORD_VPD, &kwvpd_sz);
-	if (kwvpd && kwvpd != sp_iohubs) {
-		/*
-		 * XX We don't know how to properly find the LXRn
-		 * record so for now we'll just try LXR0 and if not
-		 * found, we try LXR1
-		 */
-		if (!io_get_lx_info(kwvpd, kwvpd_sz, 0, hn))
-			io_get_lx_info(kwvpd, kwvpd_sz, 1, hn);
-	} else {
-		prlog(PR_DEBUG, "CEC:     P7IOC Keywords not found.\n");
-	}
-
-	io_get_loc_code(sp_iohubs, hn, "ibm,io-base-loc-code");
-
-	return hn;
 }
 
 static struct dt_node *io_add_phb3(const struct cechub_io_hub *hub,
@@ -856,7 +768,6 @@ static void io_parse_fru(const void *sp_iohubs)
 	for (i = 0; i < count; i++) {
 		const struct cechub_io_hub *hub;
 		unsigned int size, hub_id;
-		struct dt_node *hn;
 		uint32_t chip_id;
 
 		hub = HDIF_get_iarray_item(sp_iohubs, CECHUB_FRU_IO_HUBS,
@@ -892,11 +803,6 @@ static void io_parse_fru(const void *sp_iohubs)
 		      be32_to_cpu(hub->ec_level), be16_to_cpu(hub->hub_num));
 
 		switch(hub_id) {
-		case CECHUB_HUB_P7IOC:
-			prlog(PR_INFO, "CEC:     P7IOC !\n");
-			hn = io_add_p7ioc(hub, sp_iohubs);
-			io_add_common(hn, hub);
-			break;
 		case CECHUB_HUB_MURANO:
 		case CECHUB_HUB_MURANO_SEGU:
 			prlog(PR_INFO, "CEC:     Murano !\n");

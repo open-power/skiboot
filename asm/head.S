@@ -44,12 +44,6 @@
 	. = 0
 .global __head
 __head:
-	/*
-	 * When booting a P7 machine in OPAL mode this pointer is used to
-	 * find the opal variant of the NACA. Unused on other machines.
-	 */
-	.llong	opal_naca
-
 	/* This entry point is used when booting with a flat device-tree
 	 * pointer in r3
 	 */
@@ -343,10 +337,6 @@ boot_entry:
 	mfspr	%r28,SPR_PVR
 	li	%r26,3	/* Default to SMT4 */
 	srdi	%r3,%r28,16
-	cmpwi	cr0,%r3,PVR_TYPE_P7
-	beq	1f
-	cmpwi	cr0,%r3,PVR_TYPE_P7P
-	beq	1f
 	cmpwi	cr0,%r3,PVR_TYPE_P8
 	beq	2f
 	cmpwi	cr0,%r3,PVR_TYPE_P8E
@@ -693,10 +683,6 @@ init_shared_sprs:
 
 	mfspr	%r3,SPR_PVR
 	srdi	%r3,%r3,16
-	cmpwi	cr0,%r3,PVR_TYPE_P7
-	beq	1f
-	cmpwi	cr0,%r3,PVR_TYPE_P7P
-	beq	2f
 	cmpwi	cr0,%r3,PVR_TYPE_P8E
 	beq	3f
 	cmpwi	cr0,%r3,PVR_TYPE_P8
@@ -708,20 +694,6 @@ init_shared_sprs:
 	cmpwi	cr0,%r3,PVR_TYPE_P9P
 	beq	4f
 	/* Unsupported CPU type... what do we do ? */
-	b	9f
-
-1:	/* P7 */
-	mtspr	SPR_SDR1, %r0
-	/* TSCR: Value from pHyp */
-	LOAD_IMM32(%r3,0x880DE880)
-	mtspr	SPR_TSCR, %r3
-	b	9f
-
-2:	/* P7+ */
-	mtspr	SPR_SDR1, %r0
-	/* TSCR: Recommended value by HW folks */
-	LOAD_IMM32(%r3,0x88CDE880)
-	mtspr	SPR_TSCR, %r3
 	b	9f
 
 3:	/* P8E/P8 */
@@ -795,10 +767,6 @@ init_shared_sprs:
 init_replicated_sprs:
 	mfspr	%r3,SPR_PVR
 	srdi	%r3,%r3,16
-	cmpwi	cr0,%r3,PVR_TYPE_P7
-	beq	1f
-	cmpwi	cr0,%r3,PVR_TYPE_P7P
-	beq	1f
 	cmpwi	cr0,%r3,PVR_TYPE_P8E
 	beq	3f
 	cmpwi	cr0,%r3,PVR_TYPE_P8
@@ -810,16 +778,6 @@ init_replicated_sprs:
 	cmpwi	cr0,%r3,PVR_TYPE_P9P
 	beq	4f
 	/* Unsupported CPU type... what do we do ? */
-	b	9f
-
-1:	/* P7, P7+ */
-	/* LPCR: sane value */
-	LOAD_IMM64(%r3,0x0040000000000004)
-	mtspr	SPR_LPCR, %r3
-	sync
-	isync
-	LOAD_IMM64(%r3,0x0)
-	mtspr	SPR_DSCR,%r3
 	b	9f
 
 3:	/* P8, P8E */
@@ -903,22 +861,6 @@ hv_lid_load_table:
 	.long	0
 	.long	0
 
-/*
- *
- * OPAL variant of NACA. This is only used when booting a P7 in OPAL mode.
- *
- */
-.global opal_naca
-opal_naca:
-	.llong	opal_boot_trampoline	/* Primary entry (used ?) */
-	.llong	opal_boot_trampoline	/* Secondary entry (used ?) */
-	.llong	spira			/* Spira pointer */
-	.llong	0			/* Load address */
-	.llong	opal_boot_trampoline	/* 0x180 trampoline */
-	.llong	0			/* More stuff as seen in objdump ...*/
-	.llong	0
-	.llong	0
-	.llong	0
 
 	/* The FSP seems to ignore our primary/secondary entry
 	 * points and instead copy that bit down to 0x180 and

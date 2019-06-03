@@ -30,12 +30,6 @@ struct dt_node * add_core_common(struct dt_node *cpus,
 	struct dt_node *cpu;
 	uint32_t version;
 	uint64_t freq;
-	const uint8_t pa_features_p7[] = {
-		6, 0,
-		0xf6, 0x3f, 0xc7, 0x00, 0x80, 0xc0 };
-	const uint8_t pa_features_p7p[] = {
-		6, 0,
-		0xf6, 0x3f, 0xc7, 0xc0, 0x80, 0xc0 };
 	const uint8_t pa_features_p8[] = {
 	       24, 0,
 	       0xf6, 0x3f, 0xc7, 0xc0, 0x80, 0xd0, 0x80, 0x00,
@@ -80,16 +74,6 @@ struct dt_node * add_core_common(struct dt_node *cpus,
 	 */
 	version = mfspr(SPR_PVR);
 	switch(PVR_TYPE(version)) {
-	case PVR_TYPE_P7:
-		name = "PowerPC,POWER7";
-		pa_features = pa_features_p7;
-		pa_features_size = sizeof(pa_features_p7);
-		break;
-	case PVR_TYPE_P7P:
-		name = "PowerPC,POWER7+";
-		pa_features = pa_features_p7p;
-		pa_features_size = sizeof(pa_features_p7p);
-		break;
 	case PVR_TYPE_P8E:
 	case PVR_TYPE_P8:
 	case PVR_TYPE_P8NVL:

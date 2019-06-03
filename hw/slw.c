@@ -384,7 +384,7 @@ struct cpu_idle_states {
 	u32 flags;
 };
 
-static struct cpu_idle_states power7_cpu_idle_states[] = {
+static struct cpu_idle_states nap_only_cpu_idle_states[] = {
 	{ /* nap */
 		.name = "nap",
 		.latency_ns = 4000,
@@ -843,8 +843,8 @@ void add_cpu_idle_state_properties(void)
 		}
 
 	} else {
-		states = power7_cpu_idle_states;
-		nr_states = ARRAY_SIZE(power7_cpu_idle_states);
+		states = nap_only_cpu_idle_states;
+		nr_states = ARRAY_SIZE(nap_only_cpu_idle_states);
 	}
 
 

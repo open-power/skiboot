@@ -110,7 +110,7 @@ static void cpu_wake(struct cpu_thread *cpu)
 	if (!cpu->in_idle)
 		return;
 
-	if (proc_gen == proc_gen_p8 || proc_gen == proc_gen_p7) {
+	if (proc_gen == proc_gen_p8) {
 		/* Poke IPI */
 		icp_kick_cpu(cpu);
 	} else if (proc_gen == proc_gen_p9) {
@@ -992,10 +992,6 @@ void init_boot_cpu(void)
 
 	/* Get CPU family and other flags based on PVR */
 	switch(PVR_TYPE(pvr)) {
-	case PVR_TYPE_P7:
-	case PVR_TYPE_P7P:
-		proc_gen = proc_gen_p7;
-		break;
 	case PVR_TYPE_P8E:
 	case PVR_TYPE_P8:
 		proc_gen = proc_gen_p8;
@@ -1023,11 +1019,6 @@ void init_boot_cpu(void)
 
 	/* Get a CPU thread count based on family */
 	switch(proc_gen) {
-	case proc_gen_p7:
-		cpu_thread_count = 4;
-		prlog(PR_INFO, "CPU: P7 generation processor"
-		      " (max %d threads/core)\n", cpu_thread_count);
-		break;
 	case proc_gen_p8:
 		cpu_thread_count = 8;
 		prlog(PR_INFO, "CPU: P8 generation processor"
@@ -1579,13 +1570,6 @@ static int64_t opal_reinit_cpus(uint64_t flags)
 	 /* Apply HID bits changes if any */
 	if (req.set_bits || req.clr_bits)
 		cpu_change_all_hid0(&req);
-
-	/* If we have a P7, error out for LE switch, do nothing for BE */
-	if (proc_gen < proc_gen_p8) {
-		if (flags & OPAL_REINIT_CPUS_HILE_LE)
-			rc = OPAL_UNSUPPORTED;
-		flags &= ~(OPAL_REINIT_CPUS_HILE_BE | OPAL_REINIT_CPUS_HILE_LE);
-	}
 
 	if (flags & OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED) {
 		flags &= ~OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED;

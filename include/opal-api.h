@@ -788,55 +788,6 @@ enum {
 	OPAL_HMI_FLAGS_NEW_EVENT	= (1ull << 63), /* An event has been created */
 };
 
-enum {
-	OPAL_P7IOC_DIAG_TYPE_NONE	= 0,
-	OPAL_P7IOC_DIAG_TYPE_RGC	= 1,
-	OPAL_P7IOC_DIAG_TYPE_BI		= 2,
-	OPAL_P7IOC_DIAG_TYPE_CI		= 3,
-	OPAL_P7IOC_DIAG_TYPE_MISC	= 4,
-	OPAL_P7IOC_DIAG_TYPE_I2C	= 5,
-	OPAL_P7IOC_DIAG_TYPE_LAST	= 6
-};
-
-struct OpalIoP7IOCErrorData {
-	__be16 type;
-
-	/* GEM */
-	__be64 gemXfir;
-	__be64 gemRfir;
-	__be64 gemRirqfir;
-	__be64 gemMask;
-	__be64 gemRwof;
-
-	/* LEM */
-	__be64 lemFir;
-	__be64 lemErrMask;
-	__be64 lemAction0;
-	__be64 lemAction1;
-	__be64 lemWof;
-
-	union {
-		struct OpalIoP7IOCRgcErrorData {
-			__be64 rgcStatus;	/* 3E1C10 */
-			__be64 rgcLdcp;		/* 3E1C18 */
-		}rgc;
-		struct OpalIoP7IOCBiErrorData {
-			__be64 biLdcp0;		/* 3C0100, 3C0118 */
-			__be64 biLdcp1;		/* 3C0108, 3C0120 */
-			__be64 biLdcp2;		/* 3C0110, 3C0128 */
-			__be64 biFenceStatus;	/* 3C0130, 3C0130 */
-
-			uint8_t biDownbound;	/* BI Downbound or Upbound */
-		}bi;
-		struct OpalIoP7IOCCiErrorData {
-			__be64 ciPortStatus;	/* 3Dn008 */
-			__be64 ciPortLdcp;	/* 3Dn010 */
-
-			uint8_t ciPort;		/* Index of CI port: 0/1 */
-		}ci;
-	};
-};
-
 /**
  * This structure defines the overlay which will be used to store PHB error
  * data upon request.
@@ -846,13 +797,11 @@ enum {
 };
 
 enum {
-	OPAL_PHB_ERROR_DATA_TYPE_P7IOC = 1,
 	OPAL_PHB_ERROR_DATA_TYPE_PHB3 = 2,
 	OPAL_PHB_ERROR_DATA_TYPE_PHB4 = 3
 };
 
 enum {
-	OPAL_P7IOC_NUM_PEST_REGS = 128,
 	OPAL_PHB3_NUM_PEST_REGS = 256,
 	OPAL_PHB4_NUM_PEST_REGS = 512
 };
@@ -861,65 +810,6 @@ struct OpalIoPhbErrorCommon {
 	__be32 version;
 	__be32 ioType;
 	__be32 len;
-};
-
-struct OpalIoP7IOCPhbErrorData {
-	struct OpalIoPhbErrorCommon common;
-
-	__be32 brdgCtl;
-
-	// P7IOC utl regs
-	__be32 portStatusReg;
-	__be32 rootCmplxStatus;
-	__be32 busAgentStatus;
-
-	// P7IOC cfg regs
-	__be32 deviceStatus;
-	__be32 slotStatus;
-	__be32 linkStatus;
-	__be32 devCmdStatus;
-	__be32 devSecStatus;
-
-	// cfg AER regs
-	__be32 rootErrorStatus;
-	__be32 uncorrErrorStatus;
-	__be32 corrErrorStatus;
-	__be32 tlpHdr1;
-	__be32 tlpHdr2;
-	__be32 tlpHdr3;
-	__be32 tlpHdr4;
-	__be32 sourceId;
-
-	__be32 rsv3;
-
-	// Record data about the call to allocate a buffer.
-	__be64 errorClass;
-	__be64 correlator;
-
-	//P7IOC MMIO Error Regs
-	__be64 p7iocPlssr;                // n120
-	__be64 p7iocCsr;                  // n110
-	__be64 lemFir;                    // nC00
-	__be64 lemErrorMask;              // nC18
-	__be64 lemWOF;                    // nC40
-	__be64 phbErrorStatus;            // nC80
-	__be64 phbFirstErrorStatus;       // nC88
-	__be64 phbErrorLog0;              // nCC0
-	__be64 phbErrorLog1;              // nCC8
-	__be64 mmioErrorStatus;           // nD00
-	__be64 mmioFirstErrorStatus;      // nD08
-	__be64 mmioErrorLog0;             // nD40
-	__be64 mmioErrorLog1;             // nD48
-	__be64 dma0ErrorStatus;           // nD80
-	__be64 dma0FirstErrorStatus;      // nD88
-	__be64 dma0ErrorLog0;             // nDC0
-	__be64 dma0ErrorLog1;             // nDC8
-	__be64 dma1ErrorStatus;           // nE00
-	__be64 dma1FirstErrorStatus;      // nE08
-	__be64 dma1ErrorLog0;             // nE40
-	__be64 dma1ErrorLog1;             // nE48
-	__be64 pestA[OPAL_P7IOC_NUM_PEST_REGS];
-	__be64 pestB[OPAL_P7IOC_NUM_PEST_REGS];
 };
 
 struct OpalIoPhb3ErrorData {

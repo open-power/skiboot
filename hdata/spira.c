@@ -255,9 +255,8 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 	uint64_t freq;
 
 	switch (proc_gen) {
-	case proc_gen_p7:
 	case proc_gen_p8:
-		/* On P7 and P8 all the chip SCOMs share single region */
+		/* On P8 all the chip SCOMs share single region */
 		addr = base | ((uint64_t)hw_id << PPC_BITLSHIFT(28));
 		break;
 	case proc_gen_p9:
@@ -285,10 +284,6 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 	dt_add_property(node, "scom-controller", NULL, 0);
 
 	switch(proc_gen) {
-	case proc_gen_p7:
-		dt_add_property_strings(node, "compatible",
-					"ibm,xscom", "ibm,power7-xscom");
-		break;
 	case proc_gen_p8:
 		dt_add_property_strings(node, "compatible",
 					"ibm,xscom", "ibm,power8-xscom");
@@ -375,11 +370,6 @@ static void add_psihb_node(struct dt_node *np)
 
 	/* PSI host bridge */
 	switch(proc_gen) {
-	case proc_gen_p7:
-		psi_scom = 0x2010c00;
-		psi_slen = 0x10;
-		psi_comp = "ibm,power7-psihb-x";
-		break;
 	case proc_gen_p8:
 		psi_scom = 0x2010900;
 		psi_slen = 0x20;
@@ -635,72 +625,6 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 	return i > 0;
 }
 
-static void add_xscom_sppaca(uint64_t xscom_base)
-{
-	const struct HDIF_common_hdr *hdif;
-	unsigned int i;
-	struct dt_node *np, *vpd_node;
-
-	for_each_ntuple_idx(&spira.ntuples.paca, hdif, i, PACA_HDIF_SIG) {
-		const struct sppaca_cpu_id *id;
-		unsigned int chip_id, size;
-		int ve;
-
-		/* We only suport old style PACA on P7 ! */
-		assert(proc_gen == proc_gen_p7);
-
-		id = HDIF_get_idata(hdif, SPPACA_IDATA_CPU_ID, &size);
-
-		if (!CHECK_SPPTR(id)) {
-			prerror("XSCOM: Bad processor data %d\n", i);
-			continue;
-		}
-
-		ve = be32_to_cpu(id->verify_exists_flags) & CPU_ID_VERIFY_MASK;
-		ve >>= CPU_ID_VERIFY_SHIFT;
-		if (ve == CPU_ID_VERIFY_NOT_INSTALLED ||
-		    ve == CPU_ID_VERIFY_UNUSABLE)
-			continue;
-
-		/* Convert to HW chip ID */
-		chip_id = P7_PIR2GCID(be32_to_cpu(id->pir));
-
-		/* do we already have an XSCOM for this chip? */
-		if (find_xscom_for_chip(chip_id))
-			continue;
-
-		/* Create the XSCOM node */
-		np = add_xscom_node(xscom_base, chip_id,
-				    be32_to_cpu(id->processor_chip_id));
-		if (!np)
-			continue;
-
-		/* Add chip VPD */
-		vpd_node = dt_add_vpd_node(hdif, SPPACA_IDATA_FRU_ID,
-					   SPPACA_IDATA_KW_VPD);
-		if (vpd_node)
-			dt_add_property_cells(vpd_node, "ibm,chip-id", chip_id);
-
-		/* Add chip associativity data */
-		dt_add_property_cells(np, "ibm,ccm-node-id",
-				      be32_to_cpu(id->ccm_node_id));
-		if (size > SPIRA_CPU_ID_MIN_SIZE) {
-			dt_add_property_cells(np, "ibm,hw-card-id",
-					      be32_to_cpu(id->hw_card_id));
-			dt_add_property_cells(np, "ibm,hw-module-id",
-					  be32_to_cpu(id->hardware_module_id));
-			if (!dt_find_property(np, "ibm,dbob-id"))
-				dt_add_property_cells(np, "ibm,dbob-id",
-				  be32_to_cpu(id->drawer_book_octant_blade_id));
-			dt_add_property_cells(np, "ibm,mem-interleave-scope",
-				 be32_to_cpu(id->memory_interleaving_scope));
-		}
-
-		/* Add PSI Host bridge */
-		add_psihb_node(np);
-	}
-}
-
 static void add_xscom(void)
 {
 	const void *ms_vpd;
@@ -727,23 +651,12 @@ static void add_xscom(void)
 
 	xscom_base = be64_to_cpu(pmbs->xscom_addr);
 
-	/* Some FSP (on P7) give me a crap base address for XSCOM (it has
-	 * spurious bits set as far as I can tell). Since only 5 bits 18:22 can
-	 * be programmed in hardware, let's isolate these. This seems to give
-	 * me the right value on VPL1
-	 */
-	if (cpu_type == PVR_TYPE_P7)
-		xscom_base &= 0x80003e0000000000ul;
-
 	/* Get rid of the top bits */
 	xscom_base = cleanup_addr(xscom_base);
 
 	/* First, try the new proc_chip ntuples for chip data */
 	if (add_xscom_sppcrd(xscom_base))
 		return;
-
-	/* Otherwise, check the old-style PACA, looking for unique chips */
-	add_xscom_sppaca(xscom_base);
 }
 
 static void add_chiptod_node(unsigned int chip_id, int flags)
@@ -766,9 +679,6 @@ static void add_chiptod_node(unsigned int chip_id, int flags)
 	len = 0x34;
 
 	switch(proc_gen) {
-	case proc_gen_p7:
-		compat_str = "ibm,power7-chiptod";
-		break;
 	case proc_gen_p8:
 		compat_str = "ibm,power8-chiptod";
 		break;
@@ -908,10 +818,6 @@ static void add_nx_node(u32 gcid)
 		return;
 
 	switch (proc_gen) {
-	case proc_gen_p7:
-		dt_add_property_strings(nx, "compatible", "ibm,power-nx",
-					"ibm,power7-nx");
-		break;
 	case proc_gen_p8:
 		dt_add_property_strings(nx, "compatible", "ibm,power-nx",
 					"ibm,power8-nx");
@@ -1312,24 +1218,6 @@ uint32_t pcid_to_chip_id(uint32_t proc_chip_id)
 		}
 		if (proc_chip_id == be32_to_cpu(cinfo->proc_chip_id))
 			return be32_to_cpu(cinfo->xscom_id);
-	}
-
-	/* Otherwise, check the old-style PACA, looking for unique chips */
-	for_each_ntuple_idx(&spira.ntuples.paca, hdif, i, PACA_HDIF_SIG) {
-		const struct sppaca_cpu_id *id;
-
-		/* We only suport old style PACA on P7 ! */
-		assert(proc_gen == proc_gen_p7);
-
-		id = HDIF_get_idata(hdif, SPPACA_IDATA_CPU_ID, NULL);
-
-		if (!CHECK_SPPTR(id)) {
-			prerror("XSCOM: Bad processor data %d\n", i);
-			continue;
-		}
-
-		if (proc_chip_id == be32_to_cpu(id->processor_chip_id))
-			return P7_PIR2GCID(be32_to_cpu(id->pir));
 	}
 
 	/* Not found, what to do ? Assert ? For now return a number

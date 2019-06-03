@@ -158,9 +158,7 @@ static struct dt_node *add_core_node(struct dt_node *cpus,
 					 be32_to_cpu(t->pir), okay);
 	dt_add_property_cells(cpu, "l2-cache", l2_phandle);
 
-	if (proc_gen == proc_gen_p7)
-		icp_compat = "IBM,power7-icp";
-	else
+	if (proc_gen == proc_gen_p8)
 		icp_compat = "IBM,power8-icp";
 
 	/* Get HW Chip ID */
@@ -182,7 +180,7 @@ static struct dt_node *add_core_node(struct dt_node *cpus,
 
 	dt_add_property(cpu, "ibm,ppc-interrupt-server#s", iserv, 4 * threads);
 
-	/* Add the ICP node for this CPU for P7 / P8 */
+	/* Add the ICP node for this CPU for P8 */
 	if (proc_gen <= proc_gen_p8)
 		add_xics_icp(pcia, threads, icp_compat);
 

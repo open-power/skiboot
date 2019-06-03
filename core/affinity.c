@@ -120,9 +120,7 @@ void add_core_associativity(struct cpu_thread *cpu)
 	if (!chip)
 		return;
 
-	if (proc_gen == proc_gen_p7)
-		core_id = (cpu->pir >> 2) & 0x7;
-	else if (proc_gen == proc_gen_p8)
+	if (proc_gen == proc_gen_p8)
 		core_id = (cpu->pir >> 3) & 0xf;
 	else if (proc_gen == proc_gen_p9)
 		core_id = (cpu->pir >> 2) & 0x1f;

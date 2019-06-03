@@ -47,12 +47,6 @@ static void print_chip_info(uint32_t chip_id)
 	cfam_id = f000f >> 44;
 
 	switch(cfam_id & 0xff) {
-	case 0xf9:
-		name = "P7 processor";
-		break;
-	case 0xe8:
-		name = "P7+ processor";
-		break;
 	case 0xef:
 		name = "P8E (Murano) processor";
 		break;
@@ -79,7 +73,6 @@ static void print_chip_info(uint32_t chip_id)
 
 	printf("%08x | DD%lx.%lx | %s\n",
 	       chip_id, (cfam_id >> 16) & 0xf, (cfam_id >> 8) & 0xf, name);
-	
 }
 
 extern const char version[];

@@ -17,7 +17,6 @@
 #include <skiboot.h>
 #include <device.h>
 #include <fsp.h>
-#include <p7ioc.h>
 #include <pci-cfg.h>
 #include <pci.h>
 #include <pci-slot.h>
