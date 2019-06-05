@@ -44,6 +44,20 @@ OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED
 This flag requests that CPUs be configured with TM (Transactional Memory)
 suspend mode disabled. This may only be supported on some CPU versions.
 
+OPAL_REINIT_CPUS_MMU_HASH and OPAL_REINIT_CPUS_MMU_RADIX
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some processors may need to change a processor specific register in order to
+support Hash or Radix translation.
+
+For POWER9 CPUs, this is bit 8 of the HID register (see the POWER9 User Manual
+for details). On POWER9 CPUS, when in Hash mode, the full TLB is available to
+the host OS rather than when in radix mode, half the TLB is taken for a Page
+Walk Cache (PWC).
+
+Future CPUs may or may not do anything with these flags, but a host OS must
+use them to ensure compatibility in the future.
+
 
 Returns
 -------
