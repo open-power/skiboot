@@ -561,6 +561,8 @@ static int64_t npu2_gpu_brigde_sec_bus_reset(void *dev,
 
 	gpu = list_top(&pd->children, struct pci_device, link);
 	if (gpu && (*data & PCI_CFG_BRCTL_SECONDARY_RESET)) {
+		int64_t rc;
+
 		dt_for_each_compatible(dt_root, np, "ibm,power9-npu-pciex") {
 			npphb = pci_get_phb(dt_prop_get_cell(np,
 					"ibm,opal-phbid", 1));
@@ -574,6 +576,10 @@ static int64_t npu2_gpu_brigde_sec_bus_reset(void *dev,
 					npu2_dev_procedure_reset(ndev);
 			}
 		}
+
+		rc = purge_l2_l3_caches();
+		if (rc)
+			return rc;
 	}
 
 	return OPAL_PARTIAL;
