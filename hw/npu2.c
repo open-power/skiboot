@@ -537,7 +537,7 @@ static int __npu2_dev_bind_pci_dev(struct phb *phb __unused,
 	return 0;
 }
 
-static int64_t npu2_gpu_brigde_sec_bus_reset(void *dev,
+static int64_t npu2_gpu_bridge_sec_bus_reset(void *dev,
 		struct pci_cfg_reg_filter *pcrf __unused,
 		uint32_t offset, uint32_t len,
 		uint32_t *data, bool write)
@@ -612,7 +612,7 @@ static void npu2_dev_bind_pci_dev(struct npu2_dev *dev)
 				pci_add_cfg_reg_filter(dev->nvlink.pd->parent,
 						PCI_CFG_BRCTL, 2,
 						PCI_REG_FLAG_WRITE,
-						npu2_gpu_brigde_sec_bus_reset);
+						npu2_gpu_bridge_sec_bus_reset);
 			return;
 		}
 	}
