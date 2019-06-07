@@ -72,8 +72,11 @@ mconfig rootdisk_cow_hash MAMBO_ROOTDISK_COW_HASH 1024
 # Net: What type of networking: none, phea, bogus
 mconfig net MAMBO_NET none
 
-# Net: What is the base interface for the tun/tap device
-mconfig tap_base MAMBO_NET_TAP_BASE 0
+# Net: What MAC address to use
+mconfig net_mac MAMBO_NET_MAC 00:11:22:33:44:55
+
+# Net: What is the name of the tap device
+mconfig net_tapdev MAMBO_NET_TAPDEV "tap0"
 
 # Enable (default) or disable the "speculation-policy-favor-security" setting,
 # set to 0 to disable. When enabled it causes Linux's RFI flush to be enabled.
@@ -197,8 +200,7 @@ switch $mconf(net) {
 	puts "No network support selected"
     }
     bogus - bogusnet {
-	set net_tap [format "tap%d" $mconf(tap_base)]
-	mysim bogus net init 0 $mconf(net_mac) $net_tap
+        mysim bogus net init 0 $mconf(net_mac) $mconf(net_tapdev)
     }
     default {
 	error "Bad net \[none | bogus]: $mconf(net)"
