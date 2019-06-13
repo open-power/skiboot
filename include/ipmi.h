@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <ccan/list/list.h>
 #include <stdbool.h>
+#include <types.h>
 
 #define MAX_IPMI_SENSORS 255
 
@@ -176,7 +177,7 @@ struct ipmi_msg {
 };
 
 struct ipmi_backend {
-	uint64_t opal_event_ipmi_recv;
+	__be64 opal_event_ipmi_recv;
 	struct ipmi_msg *(*alloc_msg)(size_t, size_t);
 	void (*free_msg)(struct ipmi_msg *);
 	int (*queue_msg)(struct ipmi_msg *);
