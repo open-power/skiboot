@@ -120,7 +120,7 @@ void backtrace_print(struct bt_entry *entries, struct bt_metadata *metadata,
  * a backtrace they garble each other. To prevent this we use a seperate
  * lock to serialise printing of the dumps.
  */
-struct lock bt_lock = LOCK_UNLOCKED;
+static struct lock bt_lock = LOCK_UNLOCKED;
 
 void backtrace(void)
 {
