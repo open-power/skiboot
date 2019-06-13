@@ -28,10 +28,17 @@ struct opal_table_entry {
 	u32	nargs;
 };
 
+#ifdef __CHECKER__
+#define __opal_func_test_arg(__func, __nargs) 0
+#else
+#define __opal_func_test_arg(__func, __nargs) 				\
+	sizeof(__func( __test_args##__nargs ))
+#endif
+
 #define opal_call(__tok, __func, __nargs)				\
 static struct opal_table_entry __e_##__func __used __section(".opal_table") = \
 { .func = __func, .token = __tok,					\
-  .nargs = __nargs + 0 * sizeof(__func( __test_args##__nargs )) }
+  .nargs = __nargs + 0 * __opal_func_test_arg(__func, __nargs) }
 
 /* Make sure function takes args they claim.  Look away now... */
 #define __test_args0
@@ -57,7 +64,7 @@ void opal_dynamic_event_free(__be64 event);
 extern void add_opal_node(void);
 
 #define opal_register(token, func, nargs)				\
-	__opal_register((token) + 0*sizeof(func(__test_args##nargs)),	\
+	__opal_register((token) + 0*__opal_func_test_arg(func, nargs),	\
 			(func), (nargs))
 extern void __opal_register(uint64_t token, void *func, unsigned num_args);
 
