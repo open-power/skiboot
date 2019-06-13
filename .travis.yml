@@ -41,3 +41,12 @@ dist: trusty
 script:
     - docker build --pull -t ${RUN_ON_CONTAINER} -f opal-ci/Dockerfile-${RUN_ON_CONTAINER} . &&
       docker run --volume $HOME/.ccache:/root/.ccache --volume `pwd`:/build --rm -t $RUN_ON_CONTAINER bash -c "./opal-ci/build-${RUN_ON_CONTAINER}.sh";
+
+addons:
+  coverity_scan:
+    project:
+      name: "open-power/skiboot"
+      description: "Build submitted via Travis CI"
+    notification_email: stewart@linux.vnet.ibm.com
+    branch_pattern: coverity_scan
+
