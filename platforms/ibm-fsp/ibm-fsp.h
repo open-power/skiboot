@@ -43,4 +43,9 @@ extern void firenze_pci_setup_phb(struct phb *phb,
 extern void firenze_pci_get_slot_info(struct phb *phb,
 				      struct pci_device *pd);
 
+/* VPD support */
+void vpd_iohub_load(struct dt_node *hub_node);
+void vpd_preload(struct dt_node *hub_node);
+
+
 #endif /*  __IBM_FSP_COMMON_H */

@@ -170,6 +170,8 @@ void ibm_fsp_init(void)
 
 	if (proc_gen >= proc_gen_p9)
 		prd_init();
+
+	preload_io_vpd();
 }
 
 void ibm_fsp_exit(void)

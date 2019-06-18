@@ -92,4 +92,5 @@ DECLARE_PLATFORM(zz) = {
 	.ocapi			= &zz_ocapi,
 	.npu2_device_detect	= npu2_i2c_presence_detect,
 	.op_display		= fsp_op_display,
+	.vpd_iohub_load		= vpd_iohub_load,
 };

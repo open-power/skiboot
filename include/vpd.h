@@ -39,9 +39,6 @@ bool vpd_valid(const void *vvpd, size_t vpd_size);
 /* Add model property to dt_root */
 void add_dtb_model(void);
 
-void vpd_iohub_load(struct dt_node *hub_node);
-void vpd_preload(struct dt_node *hub_node);
-
 #define VPD_LOAD_LXRN_VINI	0xff
 
 

@@ -77,6 +77,8 @@ struct platform_ocapi {
 					 * brick 1 lanes */
 };
 
+struct dt_node;
+
 /*
  * Each platform can provide a set of hooks
  * that can affect the generic code
@@ -250,6 +252,12 @@ struct platform {
 	 */
 	void (*op_display)(enum op_severity sev, enum op_module mod,
 			   uint16_t code);
+
+	/*
+	 * VPD load.
+	 * Currently FSP specific.
+	 */
+	void (*vpd_iohub_load)(struct dt_node *hub_node);
 };
 
 extern struct platform __platforms_start;

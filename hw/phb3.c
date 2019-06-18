@@ -4741,7 +4741,8 @@ static void phb3_create(struct dt_node *np)
 	prop = dt_find_property(dt_root, "ibm,io-vpd");
 	if (!prop) {
 		/* LX VPD Lid not already loaded */
-		vpd_iohub_load(dt_root);
+		if (platform.vpd_iohub_load)
+			platform.vpd_iohub_load(dt_root);
 	}
 
 	/* Allocate the SkiBoot internal in-memory tables for the PHB */
