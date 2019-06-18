@@ -125,7 +125,8 @@ endif
 CFLAGS += $(call try-cflag,$(CC),-Wjump-misses-init) \
 	  $(call try-cflag,$(CC),-Wsuggest-attribute=const) \
 	  $(call try-cflag,$(CC),-Wsuggest-attribute=noreturn) \
-	  $(call try-cflag,$(CC),-Wstack-usage=1024)
+	  $(call try-cflag,$(CC),-Wstack-usage=1024) \
+	  $(call try-cflag,$(CC),-Wno-error=address-of-packed-member)
 
 CFLAGS += $(CWARNS) $(OPTS) $(DBG)
 
