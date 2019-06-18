@@ -1205,7 +1205,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 * OCC initialisation as late as possible to give it the
 	 * maximum time to boot up.
 	 */
-	if (!fsp_present())
+	if (platform.bmc)
 		occ_pstates_init();
 
 	pci_nvram_init();
