@@ -180,6 +180,19 @@ void ibm_fsp_exit(void)
 	 * ensure we have all the LED information.
 	 */
 	create_led_device_nodes();
+
+	/* Wait for FW VPD data read to complete */
+	fsp_code_update_wait_vpd(true);
+
+	/*
+	 * OCC takes few secs to boot.  Call this as late as
+	 * as possible to avoid delay.
+	 */
+	if (fsp_present())
+		occ_pstates_init();
+
+	fsp_console_select_stdout();
+
 }
 
 int64_t ibm_fsp_cec_reboot(void)
