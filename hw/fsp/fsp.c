@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Service Processor handling code
- *
- * XXX This mixes PSI and FSP and currently only supports
- * P7/P7+ PSI and FSP1
- *
- * If we are going to support P8 PSI and FSP2, we probably want
- * to split the PSI support from the FSP support proper first.
- */
 #include <stdarg.h>
 #include <processor.h>
 #include <io.h>
