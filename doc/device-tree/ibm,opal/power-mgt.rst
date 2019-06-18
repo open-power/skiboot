@@ -116,7 +116,10 @@ ibm,pstate-ultra-turbo ibm,pstate-turbo
 ---------------------------------------
 
 These properties are added when ultra-turbo(WOF) is enabled. These properties
-give the max turbo and max ultra-turbo pstate.
+give the max turbo and max ultra-turbo pstate-id as specified in the
+ibm,pstate-ids file. The frequencies present in turbo to ultra-turbo range are
+referred to as boost/WOF frequencies and these are attained by the CPU under
+favourable environmental conditions, low workloads and low active core counts.
 
 Example:
 
@@ -134,3 +137,10 @@ ibm,pstate-core-max
 This property is added when ultra_turbo(WOF) is enabled. This property gives
 the list of max pstate for each 'n' number of active cores in the chip.
 
+ibm,pstate-base
+----------------
+
+This pstate points to the base frequency of the chip. POWER9 base frequency is
+the highest frequency that is guaranteed when ALL cores are active in ANY
+operating condition (ie. workloads, environmental conditions such as max
+ambient temperature, active core counts)

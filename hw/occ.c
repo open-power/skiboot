@@ -703,6 +703,7 @@ static bool add_cpu_pstate_properties(struct dt_node *power_mgt,
 		dt_add_property(power_mgt, "ibm,pstate-core-max", dt_cmax,
 				nr_cores * sizeof(u32));
 
+		dt_add_property_cells(power_mgt, "ibm,pstate-base", pturbo);
 		free(dt_cmax);
 	}
 
@@ -1747,6 +1748,7 @@ void occ_pstates_init(void)
 				"ibm,pstate-nominal",
 				"ibm,pstate-turbo",
 				"ibm,pstate-ultra-turbo",
+				"ibm,pstate-base",
 				"#address-cells",
 				"#size-cells",
 				};
