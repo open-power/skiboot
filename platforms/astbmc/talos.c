@@ -83,4 +83,5 @@ DECLARE_PLATFORM(talos) = {
 	.elog_commit		= ipmi_elog_commit,
 	.exit			= astbmc_exit,
 	.terminate		= ipmi_terminate,
+	.op_display		= op_display_lpc,
 };

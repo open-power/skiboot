@@ -853,4 +853,6 @@ extern void fsp_chiptod_init(void);
 /* Terminate immediate */
 extern void __attribute__((noreturn)) ibm_fsp_terminate(const char *msg);
 
+void fsp_op_display(enum op_severity sev, enum op_module mod, uint16_t code);
+
 #endif /* __FSP_H */

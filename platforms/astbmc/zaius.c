@@ -269,4 +269,5 @@ DECLARE_PLATFORM(zaius) = {
 	.terminate		= ipmi_terminate,
 	.ocapi			= &zaius_ocapi,
 	.npu2_device_detect	= npu2_i2c_presence_detect,
+	.op_display		= op_display_lpc,
 };

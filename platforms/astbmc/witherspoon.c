@@ -512,4 +512,5 @@ DECLARE_PLATFORM(witherspoon) = {
 	.pci_get_slot_info	= dt_slot_get_slot_info,
 	.ocapi                  = &witherspoon_ocapi,
 	.npu2_device_detect	= witherspoon_npu2_device_detect,
+	.op_display		= op_display_lpc,
 };

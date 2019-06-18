@@ -295,3 +295,9 @@ int wait_for_resource_loaded(enum resource_id id, uint32_t idx)
 	      id, idx, waited);
 	return r;
 }
+
+void op_display(enum op_severity sev, enum op_module mod, uint16_t code)
+{
+	if (platform.op_display)
+		platform.op_display(sev, mod, code);
+}

@@ -90,4 +90,5 @@ DECLARE_PLATFORM(zz) = {
 	.terminate		= ibm_fsp_terminate,
 	.ocapi			= &zz_ocapi,
 	.npu2_device_detect	= npu2_i2c_presence_detect,
+	.op_display		= fsp_op_display,
 };

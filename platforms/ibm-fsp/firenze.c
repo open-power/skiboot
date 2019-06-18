@@ -226,4 +226,5 @@ DECLARE_PLATFORM(firenze) = {
 	.resource_loaded	= fsp_resource_loaded,
 	.sensor_read		= ibm_fsp_sensor_read,
 	.terminate		= ibm_fsp_terminate,
+	.op_display		= fsp_op_display,
 };

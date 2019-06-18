@@ -237,6 +237,14 @@ struct platform {
 	 * SEEPROM update routine
 	 */
 	void		(*seeprom_update)(void);
+
+	/*
+	 * Operator Panel display
+	 * Physical FSP op panel or LPC port 80h
+	 * or any other "get boot status out to the user" thing.
+	 */
+	void (*op_display)(enum op_severity sev, enum op_module mod,
+			   uint16_t code);
 };
 
 extern struct platform __platforms_start;

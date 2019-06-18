@@ -732,4 +732,5 @@ DECLARE_PLATFORM(p9dsu1u) = {
 	.elog_commit		= ipmi_elog_commit,
 	.exit			= ipmi_wdt_final_reset,
 	.terminate		= ipmi_terminate,
+	.op_display		= op_display_lpc,
 };
