@@ -22,7 +22,6 @@
 #include <chip.h>
 #include <mem_region.h>
 #include <timebase.h>
-#include <hostservices.h>
 #include <errorlog.h>
 #include <opal-api.h>
 #include <opal-msg.h>

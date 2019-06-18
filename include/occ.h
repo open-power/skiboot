@@ -20,6 +20,8 @@
 
 extern void occ_pstates_init(void);
 extern void occ_fsp_init(void);
+int find_master_and_slave_occ(uint64_t **master, uint64_t **slave,
+			      int *nr_masters, int *nr_slaves);
 
 /* OCC interrupt for P8 */
 extern void occ_p8_interrupt(uint32_t chip_id);
