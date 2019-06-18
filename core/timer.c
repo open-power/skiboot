@@ -278,7 +278,7 @@ void late_init_timers(void)
 		heartbeat = platform.heartbeat_time();
 	} else if (p9_sbe_timer_ok()) {
 		heartbeat = HEARTBEAT_DEFAULT_MS * 10;
-	} else if (p8_sbe_timer_ok() || fsp_present()) {
+	} else if (p8_sbe_timer_ok()) {
 		heartbeat = HEARTBEAT_DEFAULT_MS * 10;
 	}
 

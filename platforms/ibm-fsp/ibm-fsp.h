@@ -47,5 +47,8 @@ extern void firenze_pci_get_slot_info(struct phb *phb,
 void vpd_iohub_load(struct dt_node *hub_node);
 void vpd_preload(struct dt_node *hub_node);
 
+/* Platform heartbeat time */
+int fsp_heartbeat_time(void);
+
 
 #endif /*  __IBM_FSP_COMMON_H */

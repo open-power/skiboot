@@ -93,4 +93,5 @@ DECLARE_PLATFORM(zz) = {
 	.npu2_device_detect	= npu2_i2c_presence_detect,
 	.op_display		= fsp_op_display,
 	.vpd_iohub_load		= vpd_iohub_load,
+	.heartbeat_time		= fsp_heartbeat_time,
 };

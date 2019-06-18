@@ -255,3 +255,9 @@ int64_t ibm_fsp_sensor_read(uint32_t sensor_hndl, int token,
 {
 	return fsp_opal_read_sensor(sensor_hndl, token, sensor_data);
 }
+
+int __attrconst fsp_heartbeat_time(void)
+{
+	/* Same as core/timer.c HEARTBEAT_DEFAULT_MS * 10 */
+	return 200 * 10;
+}
