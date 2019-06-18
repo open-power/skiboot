@@ -211,6 +211,7 @@ DECLARE_PLATFORM(firenze) = {
 	.name			= "Firenze",
 	.probe			= firenze_probe,
 	.init			= firenze_init,
+	.fast_reboot_init	= fsp_console_reset,
 	.exit			= ibm_fsp_exit,
 	.cec_power_down		= ibm_fsp_cec_power_down,
 	.cec_reboot		= ibm_fsp_cec_reboot,

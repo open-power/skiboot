@@ -433,8 +433,8 @@ void __noreturn fast_reboot_entry(void)
 	/* Start clearing memory */
 	start_mem_region_clear_unused();
 
-	/* Poke the consoles (see comments in the code there) */
-	fsp_console_reset();
+	if (platform.fast_reboot_init)
+		platform.fast_reboot_init();
 
 	if (proc_gen == proc_gen_p8) {
 		/* XXX */

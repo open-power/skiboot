@@ -125,6 +125,11 @@ struct platform {
 	void		(*init)(void);
 
 	/*
+	 * Called once every thread is back in skiboot as part of fast reboot.
+	 */
+	void		(*fast_reboot_init)(void);
+
+	/*
 	 * These are used to power down and reboot the machine
 	 */
 	int64_t		(*cec_power_down)(uint64_t request);
