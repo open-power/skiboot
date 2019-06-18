@@ -44,6 +44,8 @@ LITTLE_ENDIAN ?= 0
 ELF_ABI_v2 ?= $(LITTLE_ENDIAN)
 # Discard unreferenced code and data at link-time
 DEAD_CODE_ELIMINATION ?= 0
+# Try to build without FSP code
+CONFIG_FSP?=1
 
 #
 # Where is the source directory, must be a full path (no ~)
@@ -62,4 +64,3 @@ DEVSRC=hdata
 CONFIG := config.h
 
 include $(SRC)/Makefile.main
-

@@ -7,4 +7,7 @@ FSP_OBJS += fsp-elog-read.o fsp-elog-write.o fsp-epow.o fsp-dpo.o
 FSP_OBJS += fsp-dump.o fsp-mdst-table.o fsp-chiptod.o fsp-ipmi.o
 FSP_OBJS += fsp-attn.o fsp-occ.o fsp-psi.o
 FSP = hw/fsp/built-in.a
+
+ifeq ($(CONFIG_FSP),1)
 $(FSP): $(FSP_OBJS:%=hw/fsp/%)
+endif
