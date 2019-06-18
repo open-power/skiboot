@@ -210,6 +210,7 @@ static void firenze_init(void)
 DECLARE_PLATFORM(firenze) = {
 	.name			= "Firenze",
 	.psi			= &fsp_platform_psi,
+	.prd			= &fsp_platform_prd,
 	.probe			= firenze_probe,
 	.init			= firenze_init,
 	.fast_reboot_init	= fsp_console_reset,

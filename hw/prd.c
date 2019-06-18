@@ -130,7 +130,9 @@ static void prd_msg_consumed(void *data, int status)
 			      "PRD: Failed to send FSP -> HBRT message\n");
 			notify_status = FSP_STATUS_GENERIC_FAILURE;
 		}
-		hservice_hbrt_msg_response(notify_status);
+		assert(platform.prd);
+		assert(platform.prd->msg_response);
+		platform.prd->msg_response(notify_status);
 		break;
 	case OPAL_PRD_MSG_TYPE_SBE_PASSTHROUGH:
 		proc = msg->sbe_passthrough.chip;
@@ -529,9 +531,11 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 		rc = 0;
 		break;
 	case PRD_FW_MSG_TYPE_ERROR_LOG:
-		rc = hservice_send_error_log(fw_req->errorlog.plid,
-					     fw_req->errorlog.size,
-					     fw_req->errorlog.data);
+		assert(platform.prd);
+		assert(platform.prd->send_error_log);
+		rc = platform.prd->send_error_log(fw_req->errorlog.plid,
+						  fw_req->errorlog.size,
+						  fw_req->errorlog.data);
 		/* Return generic response to HBRT */
 		fw_resp->type = cpu_to_be64(PRD_FW_MSG_TYPE_RESP_GENERIC);
 		fw_resp->generic_resp.status = cpu_to_be64(rc);
@@ -604,7 +608,9 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 		unlock(&events_lock);
 
 		/* Send message to FSP */
-		rc = hservice_send_hbrt_msg(&(fw_resp->mbox_msg), data_len);
+		assert(platform.prd);
+		assert(platform.prd->send_hbrt_msg);
+		rc = platform.prd->send_hbrt_msg(&(fw_resp->mbox_msg), data_len);
 
 		/*
 		 * Callback handler from hservice_send_hbrt_msg will take
@@ -669,16 +675,24 @@ static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 		rc = prd_msg_handle_firmware_req(msg);
 		break;
 	case OPAL_PRD_MSG_TYPE_FSP_OCC_RESET_STATUS:
-		rc = fsp_occ_reset_status(msg->fsp_occ_reset_status.chip,
-					  msg->fsp_occ_reset_status.status);
+		assert(platform.prd);
+		assert(platform.prd->fsp_occ_reset_status);
+		rc = platform.prd->fsp_occ_reset_status(
+			msg->fsp_occ_reset_status.chip,
+			msg->fsp_occ_reset_status.status);
 		break;
 	case OPAL_PRD_MSG_TYPE_CORE_SPECIAL_WAKEUP:
-		rc = hservice_wakeup(msg->spl_wakeup.core,
-				     msg->spl_wakeup.mode);
+		assert(platform.prd);
+		assert(platform.prd->wakeup);
+		rc = platform.prd->wakeup(msg->spl_wakeup.core,
+					  msg->spl_wakeup.mode);
 		break;
 	case OPAL_PRD_MSG_TYPE_FSP_OCC_LOAD_START_STATUS:
-		rc = fsp_occ_load_start_status(msg->fsp_occ_reset_status.chip,
-					msg->fsp_occ_reset_status.status);
+		assert(platform.prd);
+		assert(platform.prd->fsp_occ_load_start_status);
+		rc = platform.prd->fsp_occ_load_start_status(
+			msg->fsp_occ_reset_status.chip,
+			msg->fsp_occ_reset_status.status);
 		break;
 	default:
 		prlog(PR_DEBUG, "PRD: Unsupported prd message type : 0x%x\n",

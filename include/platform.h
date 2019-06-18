@@ -90,6 +90,18 @@ struct platform_psi {
 };
 
 /*
+ * Some PRD functionality is platform specific.
+ */
+struct platform_prd {
+	void (*msg_response)(uint32_t rc);
+	int (*send_error_log)(uint32_t plid, uint32_t dsize, void *data);
+	int (*send_hbrt_msg)(void *data, u64 dsize);
+	int (*wakeup)(uint32_t i_core, uint32_t i_mode);
+	int (*fsp_occ_load_start_status)(u64 chipid, s64 status);
+	int (*fsp_occ_reset_status)(u64 chipid, s64 status);
+};
+
+/*
  * Each platform can provide a set of hooks
  * that can affect the generic code
  */
@@ -107,6 +119,11 @@ struct platform {
 	 * PSI handling code. FSP specific.
 	 */
 	const struct platform_psi *psi;
+
+	/*
+	 * Platform specific PRD handling
+	 */
+	const struct platform_prd *prd;
 
 	/* OpenCAPI platform-specific I2C information */
 	const struct platform_ocapi *ocapi;

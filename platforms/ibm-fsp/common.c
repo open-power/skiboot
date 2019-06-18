@@ -275,3 +275,12 @@ struct platform_psi fsp_platform_psi = {
 	.link_established = fsp_reinit_fsp,
 	.fsp_interrupt = fsp_interrupt,
 };
+
+struct platform_prd fsp_platform_prd = {
+	.msg_response = hservice_hbrt_msg_response,
+	.send_error_log = hservice_send_error_log,
+	.send_hbrt_msg = hservice_send_hbrt_msg,
+	.wakeup = hservice_wakeup,
+	.fsp_occ_load_start_status = fsp_occ_load_start_status,
+	.fsp_occ_reset_status = fsp_occ_reset_status,
+};

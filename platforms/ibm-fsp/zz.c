@@ -72,6 +72,7 @@ static void zz_init(void)
 DECLARE_PLATFORM(zz) = {
 	.name			= "ZZ",
 	.psi			= &fsp_platform_psi,
+	.prd			= &fsp_platform_prd,
 	.probe			= zz_probe,
 	.init			= zz_init,
 	.fast_reboot_init	= fsp_console_reset,
