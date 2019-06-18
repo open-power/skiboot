@@ -534,9 +534,6 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	op_display(OP_LOG, OP_MOD_INIT, 0x000A);
 
-	if (platform.exit)
-		platform.exit();
-
 	/* Load kernel LID */
 	if (!load_kernel()) {
 		op_display(OP_FATAL, OP_MOD_INIT, 1);
@@ -590,13 +587,6 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	op_display(OP_LOG, OP_MOD_INIT, 0x000C);
 
-	/* Start the kernel */
-	if (!is_reboot)
-		op_panel_disable_src_echo();
-
-	/* Clear SRCs on the op-panel when Linux starts */
-	op_panel_clear_src();
-
 	mem_dump_free();
 
 	/* Dump the selected console */
@@ -610,6 +600,9 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 		prlog(PR_EMERG, "FATAL: Kernel is zeros, can't execute!\n");
 		assert(0);
 	}
+
+	if (platform.exit)
+		platform.exit();
 
 	/* Take processors out of nap */
 	cpu_set_sreset_enable(false);

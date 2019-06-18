@@ -193,6 +193,10 @@ void ibm_fsp_exit(void)
 
 	fsp_console_select_stdout();
 
+	op_panel_disable_src_echo();
+
+	/* Clear SRCs on the op-panel when Linux starts */
+	op_panel_clear_src();
 }
 
 int64_t ibm_fsp_cec_reboot(void)
