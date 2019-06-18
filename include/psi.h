@@ -273,6 +273,6 @@ extern void psi_fsp_link_in_use(struct psi *psi);
 #define EXTERNAL_IRQ_POLICY_SKIBOOT	true
 extern void psi_set_external_irq_policy(bool policy);
 
-
+extern struct lock psi_lock;
 
 #endif /* __PSI_H */

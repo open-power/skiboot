@@ -261,3 +261,17 @@ int __attrconst fsp_heartbeat_time(void)
 	/* Same as core/timer.c HEARTBEAT_DEFAULT_MS * 10 */
 	return 200 * 10;
 }
+
+static void fsp_psihb_interrupt(void)
+{
+	/* Poll the console buffers on any interrupt since we don't
+	 * get send notifications
+	 */
+	fsp_console_poll(NULL);
+}
+
+struct platform_psi fsp_platform_psi = {
+	.psihb_interrupt = fsp_psihb_interrupt,
+	.link_established = fsp_reinit_fsp,
+	.fsp_interrupt = fsp_interrupt,
+};

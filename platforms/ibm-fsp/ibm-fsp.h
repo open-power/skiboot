@@ -50,5 +50,6 @@ void vpd_preload(struct dt_node *hub_node);
 /* Platform heartbeat time */
 int fsp_heartbeat_time(void);
 
+extern struct platform_psi fsp_platform_psi;
 
 #endif /*  __IBM_FSP_COMMON_H */

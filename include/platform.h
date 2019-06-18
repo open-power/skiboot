@@ -80,6 +80,16 @@ struct platform_ocapi {
 struct dt_node;
 
 /*
+ * Just for FSP platforms, allows us to partly decouple
+ * FSP specific code from core code.
+ */
+struct platform_psi {
+	void (*psihb_interrupt)(void);
+	void (*link_established)(void);
+	void (*fsp_interrupt)(void);
+};
+
+/*
  * Each platform can provide a set of hooks
  * that can affect the generic code
  */
@@ -92,6 +102,11 @@ struct platform {
 	 * not a constant.
 	 */
 	const struct bmc_platform *bmc;
+
+	/*
+	 * PSI handling code. FSP specific.
+	 */
+	const struct platform_psi *psi;
 
 	/* OpenCAPI platform-specific I2C information */
 	const struct platform_ocapi *ocapi;
