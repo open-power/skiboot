@@ -53,12 +53,6 @@ static uint64_t opal_dynamic_events;
 extern uint32_t attn_trigger;
 extern uint32_t hir_trigger;
 
-/* We make this look like a Surveillance error, even though it really
- * isn't one.
- */
-DEFINE_LOG_ENTRY(OPAL_INJECTED_HIR, OPAL_MISC_ERR_EVT, OPAL_SURVEILLANCE,
-		OPAL_SURVEILLANCE_ERR, OPAL_PREDICTIVE_ERR_GENERAL,
-		OPAL_MISCELLANEOUS_INFO_ONLY);
 
 void opal_table_init(void)
 {
@@ -635,14 +629,6 @@ static int64_t opal_poll_events(__be64 *outstanding_event_mask)
 	if (attn_trigger == 0xdeadbeef) {
 		prlog(PR_EMERG, "Triggering attn\n");
 		assert(false);
-	}
-
-	/* Test the host initiated reset */
-	if (hir_trigger == 0xdeadbeef) {
-		uint32_t plid = log_simple_error(&e_info(OPAL_INJECTED_HIR),
-			"SURV: Injected HIR, initiating FSP R/R\n");
-		fsp_trigger_reset(plid);
-		hir_trigger = 0;
 	}
 
 	opal_run_pollers();
