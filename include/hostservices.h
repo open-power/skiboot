@@ -24,7 +24,6 @@ bool hservices_lid_preload_complete(void);
 int host_services_occ_load(void);
 int host_services_occ_start(void);
 int host_services_occ_stop(void);
-void host_services_occ_base_setup(void);
 
 /* No LID can be larger than 16M, but OCC lid is less than 1 MB */
 

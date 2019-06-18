@@ -157,6 +157,31 @@ static void homer_init_chip(struct proc_chip *chip)
 	}
 }
 
+
+static void host_services_occ_base_setup(void)
+{
+	struct proc_chip *chip;
+	uint64_t occ_common;
+
+	chip = next_chip(NULL); /* Frist chip */
+	occ_common = (uint64_t) local_alloc(chip->id, OCC_COMMON_SIZE, OCC_COMMON_SIZE);
+
+	for_each_chip(chip) {
+		chip->occ_common_base = occ_common;
+		chip->occ_common_size = OCC_COMMON_SIZE;
+
+		chip->homer_base = (uint64_t) local_alloc(chip->id, HOMER_IMAGE_SIZE,
+							HOMER_IMAGE_SIZE);
+		chip->homer_size = HOMER_IMAGE_SIZE;
+		memset((void *)chip->homer_base, 0, chip->homer_size);
+
+		prlog(PR_DEBUG, "HBRT: Chip %d HOMER base %016llx : %08llx\n",
+		      chip->id, chip->homer_base, chip->homer_size);
+		prlog(PR_DEBUG, "HBRT: OCC common base %016llx : %08llx\n",
+		      chip->occ_common_base, chip->occ_common_size);
+	}
+}
+
 void homer_init(void)
 {
 	struct proc_chip *chip;
