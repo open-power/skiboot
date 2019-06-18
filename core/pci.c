@@ -22,7 +22,6 @@
 #include <pci-quirk.h>
 #include <timebase.h>
 #include <device.h>
-#include <fsp.h>
 
 #define MAX_PHB_ID	256
 static struct phb *phbs[MAX_PHB_ID];
@@ -1461,7 +1460,7 @@ static void pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
 	/* XXX Don't do that on openpower for now, we will need to sort things
 	 * out later, otherwise the mezzanine slot on Habanero gets weird results
 	 */
-	if (class == 0x02 && sub == 0x00 && fsp_present()) {
+	if (class == 0x02 && sub == 0x00 && !platform.bmc) {
 		/* There's usually several spaces at the end of the property.
 		   Test for, but don't rely on, that being the case */
 		len = strlen(blcode);
