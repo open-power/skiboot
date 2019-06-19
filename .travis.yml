@@ -17,6 +17,7 @@ env:
     - RUN_ON_CONTAINER=fedora-rawhide
     - RUN_ON_CONTAINER=debian-stretch
     - RUN_ON_CONTAINER=debian-unstable
+    - RUN_ON_CONTAINER=docs
     global:
         # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
         #   via the "travis encrypt" command using the project repo's public key
@@ -31,6 +32,8 @@ matrix:
   exclude:
     - os: linux-ppc64le
       env: RUN_ON_CONTAINER=centos7
+    - os: linux-ppc64le
+      env: RUN_ON_CONTAINER=docs
 
 
 sudo: required
@@ -50,3 +53,11 @@ addons:
     notification_email: stewart@linux.vnet.ibm.com
     branch_pattern: coverity_scan
 
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN # set in travis-ci.org dashboard, marked secure
+  local_dir: "doc/_build/ghpages"
+  on:
+    branch: master
+    condition: "$RUN_ON_CONTAINER = docs"
