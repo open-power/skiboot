@@ -51,7 +51,10 @@ static bool zz_probe(void)
 	if (dt_node_is_compatible(dt_root, "ibm,zz-1s2u") ||
 	    dt_node_is_compatible(dt_root, "ibm,zz-1s4u") ||
 	    dt_node_is_compatible(dt_root, "ibm,zz-2s2u") ||
-	    dt_node_is_compatible(dt_root, "ibm,zz-2s4u"))
+	    dt_node_is_compatible(dt_root, "ibm,zz-2s4u") ||
+	    dt_node_is_compatible(dt_root, "ibm,zz-1s4u+gen4") ||
+	    dt_node_is_compatible(dt_root, "ibm,zz-2s2u+gen4") ||
+	    dt_node_is_compatible(dt_root, "ibm,zz-2s4u+gen4"))
 		return true;
 
 	return false;
