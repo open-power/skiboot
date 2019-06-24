@@ -544,13 +544,8 @@ struct pci_slot *pcie_slot_create_dynamic(struct phb *phb,
 	if (!phb || !pd || pd->slot)
 		return NULL;
 
-	/* Try to create slot whose details aren't provided by platform.
-	 * We only care the downstream ports of PCIe switch that connects
-	 * to root port.
-	 */
-	if (pd->dev_type != PCIE_TYPE_SWITCH_DNPORT ||
-	    !pd->parent || !pd->parent->parent ||
-	    pd->parent->parent->parent)
+	/* Try to create slot whose details aren't provided by platform. */
+	if (pd->dev_type != PCIE_TYPE_SWITCH_DNPORT)
 		return NULL;
 
 	ecap = pci_cap(pd, PCI_CFG_CAP_ID_EXP, false);
