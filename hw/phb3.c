@@ -63,6 +63,9 @@ static inline void phb3_ioda_sel(struct phb3 *p, uint32_t table,
 		 SETFIELD(PHB_IODA_AD_TADR, 0ul, addr));
 }
 
+static void phb3_eeh_dump_regs(struct phb3 *p,
+				struct OpalIoPhb3ErrorData *regs);
+
 /* Check if AIB is fenced via PBCQ NFIR */
 static bool phb3_fenced(struct phb3 *p)
 {
@@ -72,6 +75,8 @@ static bool phb3_fenced(struct phb3 *p)
 	xscom_read(p->chip_id, p->pe_xscom + 0x0, &nfir);
 	if (nfir & PPC_BIT(16)) {
 		p->flags |= PHB3_AIB_FENCED;
+
+		phb3_eeh_dump_regs(p, NULL);
 		return true;
 	}
 	return false;
@@ -1787,6 +1792,92 @@ static void phb3_read_phb_status(struct phb3 *p,
 	}
 }
 
+static void phb3_eeh_dump_regs(struct phb3 *p, struct OpalIoPhb3ErrorData *regs)
+{
+	struct OpalIoPhb3ErrorData *s;
+	unsigned int i;
+
+	if (!verbose_eeh)
+		return;
+
+	if (!regs) {
+		s = zalloc(sizeof(struct OpalIoPhb3ErrorData));
+		if (!s) {
+			PHBERR(p, "Failed to allocate error info !\n");
+			return;
+		}
+
+		phb3_read_phb_status(p, s);
+	} else {
+		s = regs;
+	}
+
+	PHBERR(p, "Error detected!\n");
+
+	PHBERR(p, "       portStatusReg = %08x\n", s->portStatusReg);
+	PHBERR(p, "     rootCmplxStatus = %08x\n", s->rootCmplxStatus);
+	PHBERR(p, "      busAgentStatus = %08x\n", s->busAgentStatus);
+
+	PHBERR(p, "          errorClass = %016llx\n", s->errorClass);
+	PHBERR(p, "          correlator = %016llx\n", s->correlator);
+
+	PHBERR(p, "             brdgCtl = %08x\n", s->brdgCtl);
+	PHBERR(p, "        deviceStatus = %08x\n", s->deviceStatus);
+	PHBERR(p, "          slotStatus = %08x\n", s->slotStatus);
+	PHBERR(p, "          linkStatus = %08x\n", s->linkStatus);
+	PHBERR(p, "        devCmdStatus = %08x\n", s->devCmdStatus);
+	PHBERR(p, "        devSecStatus = %08x\n", s->devSecStatus);
+	PHBERR(p, "     rootErrorStatus = %08x\n", s->rootErrorStatus);
+	PHBERR(p, "     corrErrorStatus = %08x\n", s->corrErrorStatus);
+	PHBERR(p, "   uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
+
+	/* Byte swap TLP headers so they are the same as the PCIe spec */
+	PHBERR(p, "             tlpHdr1 = %08x\n", bswap_32(s->tlpHdr1));
+	PHBERR(p, "             tlpHdr2 = %08x\n", bswap_32(s->tlpHdr2));
+	PHBERR(p, "             tlpHdr3 = %08x\n", bswap_32(s->tlpHdr3));
+	PHBERR(p, "             tlpHdr4 = %08x\n", bswap_32(s->tlpHdr4));
+	PHBERR(p, "            sourceId = %08x\n", s->sourceId);
+
+	PHBERR(p, "                nFir = %016llx\n", s->nFir);
+	PHBERR(p, "            nFirMask = %016llx\n", s->nFirMask);
+	PHBERR(p, "             nFirWOF = %016llx\n", s->nFirWOF);
+	PHBERR(p, "            phbPlssr = %016llx\n", s->phbPlssr);
+	PHBERR(p, "              phbCsr = %016llx\n", s->phbCsr);
+	PHBERR(p, "              lemFir = %016llx\n", s->lemFir);
+	PHBERR(p, "        lemErrorMask = %016llx\n", s->lemErrorMask);
+	PHBERR(p, "              lemWOF = %016llx\n", s->lemWOF);
+
+	PHBERR(p, "      phbErrorStatus = %016llx\n", s->phbErrorStatus);
+	PHBERR(p, " phbFirstErrorStatus = %016llx\n", s->phbFirstErrorStatus);
+	PHBERR(p, "        phbErrorLog0 = %016llx\n", s->phbErrorLog0);
+	PHBERR(p, "        phbErrorLog1 = %016llx\n", s->phbErrorLog1);
+
+	PHBERR(p, "     mmioErrorStatus = %016llx\n", s->mmioErrorStatus);
+	PHBERR(p, "mmioFirstErrorStatus = %016llx\n", s->mmioFirstErrorStatus);
+	PHBERR(p, "       mmioErrorLog0 = %016llx\n", s->mmioErrorLog0);
+	PHBERR(p, "       mmioErrorLog1 = %016llx\n", s->mmioErrorLog1);
+
+	PHBERR(p, "     dma0ErrorStatus = %016llx\n", s->dma0ErrorStatus);
+	PHBERR(p, "dma0FirstErrorStatus = %016llx\n", s->dma0FirstErrorStatus);
+	PHBERR(p, "       dma0ErrorLog0 = %016llx\n", s->dma0ErrorLog0);
+	PHBERR(p, "       dma0ErrorLog1 = %016llx\n", s->dma0ErrorLog1);
+
+	PHBERR(p, "     dma1ErrorStatus = %016llx\n", s->dma1ErrorStatus);
+	PHBERR(p, "dma1FirstErrorStatus = %016llx\n", s->dma1FirstErrorStatus);
+	PHBERR(p, "       dma1ErrorLog0 = %016llx\n", s->dma1ErrorLog0);
+	PHBERR(p, "       dma1ErrorLog1 = %016llx\n", s->dma1ErrorLog1);
+
+	for (i = 0; i < OPAL_PHB3_NUM_PEST_REGS; i++) {
+		if (!s->pestA[i] && !s->pestB[i])
+			continue;
+		PHBERR(p, "          PEST[%03x] = %016llx %016llx\n",
+		       i, s->pestA[i], s->pestB[i]);
+	}
+
+	if (s != regs)
+		free(s);
+}
+
 static int64_t phb3_msi_get_xive(struct irq_source *is, uint32_t isn,
 				 uint16_t *server, uint8_t *prio)
 {
@@ -3387,6 +3478,7 @@ static int64_t phb3_get_diag_data(struct phb *phb,
 {
 	struct phb3 *p = phb_to_phb3(phb);
 	struct OpalIoPhb3ErrorData *data = diag_buffer;
+	bool fenced;
 
 	if (diag_buffer_len < sizeof(struct OpalIoPhb3ErrorData))
 		return OPAL_PARAMETER;
@@ -3397,8 +3489,11 @@ static int64_t phb3_get_diag_data(struct phb *phb,
 	 * Dummy check for fence so that phb3_read_phb_status knows
 	 * whether to use ASB or AIB
 	 */
-	phb3_fenced(p);
+	fenced = phb3_fenced(p);
 	phb3_read_phb_status(p, data);
+
+	if (!fenced)
+		phb3_eeh_dump_regs(p, data);
 
 	/*
 	 * We're running to here probably because of errors
