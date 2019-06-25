@@ -368,6 +368,9 @@ enum phb_type {
 	phb_type_npu_v2_opencapi,
 };
 
+
+extern bool verbose_eeh;
+
 struct phb {
 	struct dt_node		*dt_node;
 	int			opal_id;

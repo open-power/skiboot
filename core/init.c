@@ -56,6 +56,7 @@
 
 enum proc_gen proc_gen;
 unsigned int pcie_max_link_speed;
+bool verbose_eeh;
 
 static uint64_t kernel_entry;
 static size_t kernel_size;
@@ -844,6 +845,10 @@ static void per_thread_sanity_checks(void)
 static void pci_nvram_init(void)
 {
 	const char *nvram_speed;
+
+	verbose_eeh = nvram_query_eq_safe("pci-eeh-verbose", "true");
+	if (verbose_eeh)
+		prlog(PR_INFO, "PHB: Verbose EEH enabled\n");
 
 	pcie_max_link_speed = 0;
 

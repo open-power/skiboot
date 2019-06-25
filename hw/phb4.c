@@ -151,7 +151,6 @@ static void phb4_init_hw(struct phb4 *p);
 
 #define PHB4_CAN_STORE_EOI(p) XIVE_STORE_EOI_ENABLED
 
-static bool verbose_eeh;
 static bool pci_tracing;
 static bool pci_eeh_mmio;
 static bool pci_retry_all;
@@ -5935,6 +5934,9 @@ static void phb4_probe_pbcq(struct dt_node *pbcq)
 	uint32_t nest_base, pci_base, pec_index;
 	struct dt_node *stk;
 
+	/* REMOVEME: force this for now until we stabalise PCIe */
+	verbose_eeh = 1;
+
 	nest_base = dt_get_address(pbcq, 0, NULL);
 	pci_base = dt_get_address(pbcq, 1, NULL);
 	pec_index = dt_prop_get_u32(pbcq, "ibm,pec-index");
@@ -5949,12 +5951,6 @@ void probe_phb4(void)
 {
 	struct dt_node *np;
 	const char *s;
-
-	verbose_eeh = nvram_query_eq_safe("pci-eeh-verbose", "true");
-	/* REMOVEME: force this for now until we stabalise PCIe */
-	verbose_eeh = 1;
-	if (verbose_eeh)
-		prlog(PR_INFO, "PHB4: Verbose EEH enabled\n");
 
 	pci_tracing = nvram_query_eq_safe("pci-tracing", "true");
 	pci_eeh_mmio = !nvram_query_eq_dangerous("pci-eeh-mmio", "disabled");
