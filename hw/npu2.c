@@ -336,7 +336,7 @@ static int wait_l2_purge(uint32_t chip_id, uint32_t core_id)
 	uint64_t val;
 	uint64_t addr = XSCOM_ADDR_P9_EX(core_id, L2_PRD_PURGE_CMD_REG);
 	unsigned long now = mftb();
-	unsigned long end = now + msecs_to_tb(2);
+	unsigned long end = now + msecs_to_tb(L2_L3_PRD_PURGE_TIMEOUT_MS);
 	int rc;
 
 	while (1) {
@@ -386,7 +386,7 @@ static int wait_l3_purge(uint32_t chip_id, uint32_t core_id)
 	uint64_t val;
 	uint64_t addr = XSCOM_ADDR_P9_EX(core_id, L3_PRD_PURGE_REG);
 	unsigned long now = mftb();
-	unsigned long end = now + msecs_to_tb(2);
+	unsigned long end = now + msecs_to_tb(L2_L3_PRD_PURGE_TIMEOUT_MS);
 	int rc;
 
 	/* Trigger bit is automatically set to zero when flushing is done */
@@ -414,6 +414,7 @@ static int64_t purge_l2_l3_caches(void)
 	struct cpu_thread *t;
 	uint64_t core_id, prev_core_id = (uint64_t)-1;
 	int rc;
+	unsigned long now = mftb();
 
 	for_each_ungarded_cpu(t) {
 		/* Only need to do it once per core chiplet */
@@ -423,10 +424,10 @@ static int64_t purge_l2_l3_caches(void)
 		prev_core_id = core_id;
 		rc = start_l2_purge(t->chip_id, core_id);
 		if (rc)
-			return rc;
+			goto trace_exit;
 		rc = start_l3_purge(t->chip_id, core_id);
 		if (rc)
-			return rc;
+			goto trace_exit;
 	}
 
 	prev_core_id = (uint64_t)-1;
@@ -439,12 +440,17 @@ static int64_t purge_l2_l3_caches(void)
 
 		rc = wait_l2_purge(t->chip_id, core_id);
 		if (rc)
-			return rc;
+			goto trace_exit;
 		rc = wait_l3_purge(t->chip_id, core_id);
 		if (rc)
-			return rc;
+			goto trace_exit;
 	}
-	return OPAL_SUCCESS;
+
+trace_exit:
+	prlog(PR_TRACE, "L2/L3 purging took %ldus\n",
+			tb_to_usecs(mftb() - now));
+
+	return rc;
 }
 
 static int64_t npu2_dev_cfg_exp_devcap(void *dev,
