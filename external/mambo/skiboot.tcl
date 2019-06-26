@@ -111,8 +111,8 @@ if { $default_config == "PEGASUS" } {
 }
 
 if { $default_config == "P9" } {
-    # PVR configured for POWER9 DD2.0 Scale out 24 Core (ie SMT4)
-    myconf config processor/initial/PVR 0x4e1200
+    # PVR configured for POWER9 DD2.3 Scale out 24 Core (ie SMT4)
+    myconf config processor/initial/PVR 0x4e1203
     myconf config processor/initial/SIM_CTRL1 0xc228100400000000
 
     if { $mconf(numa) } {
