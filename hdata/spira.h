@@ -1175,10 +1175,11 @@ struct sppcrd_smp_link {
 	__be32 link_id;
 	__be32 usage;
 #define SMP_LINK_USE_NONE 	0
-#define SMP_LINK_USE_DEVICE	1
-#define SMP_LINK_USE_INTERPOSER 2
-#define SMP_LINK_USE_DRAWER	3
-#define SMP_LINK_USE_D2D	4 /* GPU to GPU */
+#define SMP_LINK_USE_GPU	1
+#define SMP_LINK_USE_OPENCAPI	2
+#define SMP_LINK_USE_INTERPOSER 3
+#define SMP_LINK_USE_DRAWER	4
+#define SMP_LINK_USE_D2D	5 /* GPU to GPU */
 	__be32 brick_id;
 	__be32 lane_mask;
 

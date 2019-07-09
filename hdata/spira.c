@@ -1370,7 +1370,7 @@ static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 		struct dt_node *node;
 
 		/* only add a link node if this link is targeted at at device */
-		if (be32_to_cpu(link->usage) != SMP_LINK_USE_DEVICE)
+		if (be32_to_cpu(link->usage) != SMP_LINK_USE_GPU)
 			continue;
 
 		/*
