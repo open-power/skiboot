@@ -45,6 +45,97 @@ static const struct platform_ocapi zz_ocapi = {
 	.odl_phy_swap        = true,
 };
 
+#define NPU_BASE 0x5011000
+#define NPU_SIZE 0x2c
+#define NPU_INDIRECT0	0x8000000009010c3f /* OB0 - no OB3 on ZZ */
+
+static void create_link(struct dt_node *npu, int group, int index)
+{
+	struct dt_node *link;
+	uint32_t lane_mask;
+
+	switch (index) {
+	case 2:
+		lane_mask = 0xf1e000; /* 0-3, 7-10 */
+		break;
+	case 3:
+		lane_mask = 0x00078f; /* 13-16, 20-23 */
+		break;
+	default:
+		assert(0);
+	}
+
+	link = dt_new_addr(npu, "link", index);
+	dt_add_property_string(link, "compatible", "ibm,npu-link");
+	dt_add_property_cells(link, "ibm,npu-link-index", index);
+	dt_add_property_u64s(link, "ibm,npu-phy", NPU_INDIRECT0);
+	dt_add_property_cells(link, "ibm,npu-lane-mask", lane_mask);
+	dt_add_property_cells(link, "ibm,npu-group-id", group);
+	dt_add_property_u64s(link, "ibm,link-speed", 25000000000ul);
+}
+
+static void add_opencapi_dt_nodes(void)
+{
+	struct dt_node *npu, *xscom;
+	int npu_index = 0;
+	int phb_index = 7;
+
+	/*
+	 * In an ideal world, we should get all the NPU links
+	 * information from HDAT. But after some effort, HDAT is still
+	 * giving incorrect information for opencapi. As of this
+	 * writing:
+	 * 1. link usage is wrong for most FPGA cards (0xFFFF vs. 2)
+	 * 2. the 24-bit lane mask is aligned differently than on
+	 *    other platforms (witherspoon)
+	 * 3. connecting a link entry in HDAT to the real physical
+	 *    link will need extra work:
+	 *    - HDAT does presence detection and only lists links with
+	 *      an adapter, so we cannot use default ordering like on
+	 *      witherspoon
+	 *    - best option is probably the brick ID field (offset 8).
+	 *      It's coming straight from the MRW, but seems to match
+	 *      what we expect (2 or 3). Would need to be checked.
+	 *
+	 * To make things more fun, any change in the HDAT data needs
+	 * to be coordinated with PHYP, which is using (some of) those
+	 * fields.
+	 *
+	 * As a consequence:
+	 * 1. the hdat parsing code in skiboot remains disabled (for
+	 *    opencapi)
+	 * 2. we hard-code the NPU and links entries in the device
+	 *    tree.
+	 *
+	 * Getting the data from HDAT would have the advantage of
+	 * providing the real link speed (20.0 vs. 25.78125 gbps),
+	 * which is useful as there's one speed-dependent setting we
+	 * need to do when initializing the NPU. Our hard coded
+	 * definition assumes the higher speed and may need tuning in
+	 * debug scenario using a lower link speed.
+	 */
+	dt_for_each_compatible(dt_root, xscom, "ibm,xscom") {
+		/*
+		 * our hdat parsing code may create NPU nodes with no
+		 * links, so let's make sure we start from a clean
+		 * state
+		 */
+		npu = dt_find_by_name_addr(xscom, "npu", NPU_BASE);
+		if (npu)
+			dt_free(npu);
+
+		npu = dt_new_addr(xscom, "npu", NPU_BASE);
+		dt_add_property_cells(npu, "reg", NPU_BASE, NPU_SIZE);
+		dt_add_property_strings(npu, "compatible", "ibm,power9-npu");
+		dt_add_property_cells(npu, "ibm,npu-index", npu_index++);
+		dt_add_property_cells(npu, "ibm,phb-index", phb_index++);
+		dt_add_property_cells(npu, "ibm,npu-links", 2);
+
+		create_link(npu, 1, 2);
+		create_link(npu, 2, 3);
+	}
+}
+
 static bool zz_probe(void)
 {
 	/* FIXME: make this neater when the dust settles */
@@ -54,8 +145,11 @@ static bool zz_probe(void)
 	    dt_node_is_compatible(dt_root, "ibm,zz-2s4u") ||
 	    dt_node_is_compatible(dt_root, "ibm,zz-1s4u+gen4") ||
 	    dt_node_is_compatible(dt_root, "ibm,zz-2s2u+gen4") ||
-	    dt_node_is_compatible(dt_root, "ibm,zz-2s4u+gen4"))
+	    dt_node_is_compatible(dt_root, "ibm,zz-2s4u+gen4")) {
+
+		add_opencapi_dt_nodes();
 		return true;
+	}
 
 	return false;
 }

@@ -1369,7 +1369,14 @@ static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 		uint64_t speed = 0, nvlink_speed = 0;
 		struct dt_node *node;
 
-		/* only add a link node if this link is targeted at at device */
+		/*
+		 * Only add a link node if this link is targeted at a
+		 * GPU device.
+		 *
+		 * If we ever activate it for an opencapi device, we
+		 * should revisit the link definitions hard-coded
+		 * on ZZ.
+		 */
 		if (be32_to_cpu(link->usage) != SMP_LINK_USE_GPU)
 			continue;
 
