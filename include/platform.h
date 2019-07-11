@@ -253,7 +253,13 @@ struct platform {
 	int		(*resource_loaded)(enum resource_id id, uint32_t idx);
 
 	/*
+	 * Executed just prior to creating the dtb for the kernel.
+	 */
+	void		(*finalise_dt)(bool is_reboot);
+
+	/*
 	 * Executed just prior to handing control over to the payload.
+	 * Used to terminate watchdogs, etc.
 	 */
 	void		(*exit)(void);
 

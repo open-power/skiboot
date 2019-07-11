@@ -579,6 +579,9 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 
 	add_fast_reboot_dt_entries();
 
+	if (platform.finalise_dt)
+		platform.finalise_dt(is_reboot);
+
 	/* Create the device tree blob to boot OS. */
 	fdt = create_dtb(dt_root, false);
 	if (!fdt) {
