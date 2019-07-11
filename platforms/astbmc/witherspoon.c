@@ -475,9 +475,12 @@ static void npu2_phb_nvlink_dt(struct phb *npuphb)
 	}
 }
 
-static void witherspoon_exit(void)
+static void witherspoon_finalise_dt(bool is_reboot)
 {
 	struct dt_node *np;
+
+	if (is_reboot)
+		return;
 
 	dt_for_each_compatible(dt_root, np, "ibm,power9-npu-pciex") {
 		u32 opal_id = dt_prop_get_cell(np, "ibm,opal-phbid", 1);
@@ -489,8 +492,6 @@ static void witherspoon_exit(void)
 			continue;
 		npu2_phb_nvlink_dt(npphb);
 	}
-
-	astbmc_exit();
 }
 
 /* The only difference between these is the PCI slot handling */
@@ -506,7 +507,8 @@ DECLARE_PLATFORM(witherspoon) = {
 	.cec_power_down         = astbmc_ipmi_power_down,
 	.cec_reboot             = astbmc_ipmi_reboot,
 	.elog_commit		= ipmi_elog_commit,
-	.exit			= witherspoon_exit,
+	.finalise_dt		= witherspoon_finalise_dt,
+	.exit			= astbmc_exit,
 	.terminate		= ipmi_terminate,
 
 	.pci_get_slot_info	= dt_slot_get_slot_info,
