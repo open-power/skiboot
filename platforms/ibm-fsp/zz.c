@@ -79,6 +79,7 @@ DECLARE_PLATFORM(zz) = {
 	.probe			= zz_probe,
 	.init			= zz_init,
 	.fast_reboot_init	= fsp_console_reset,
+	.finalise_dt		= ibm_fsp_finalise_dt,
 	.exit			= ibm_fsp_exit,
 	.cec_power_down		= ibm_fsp_cec_power_down,
 	.cec_reboot		= ibm_fsp_cec_reboot,

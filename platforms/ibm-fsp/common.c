@@ -174,8 +174,11 @@ void ibm_fsp_init(void)
 	preload_io_vpd();
 }
 
-void ibm_fsp_exit(void)
+void ibm_fsp_finalise_dt(bool is_reboot)
 {
+	if (is_reboot)
+		return;
+
 	/*
 	 * LED related SPCN commands might take a while to
 	 * complete. Call this as late as possible to
@@ -183,18 +186,20 @@ void ibm_fsp_exit(void)
 	 */
 	create_led_device_nodes();
 
-	/* Wait for FW VPD data read to complete */
-	fsp_code_update_wait_vpd(true);
-
 	/*
 	 * OCC takes few secs to boot.  Call this as late as
 	 * as possible to avoid delay.
 	 */
-	if (fsp_present())
-		occ_pstates_init();
+	occ_pstates_init();
+
+	/* Wait for FW VPD data read to complete */
+	fsp_code_update_wait_vpd(true);
 
 	fsp_console_select_stdout();
+}
 
+void ibm_fsp_exit(void)
+{
 	op_panel_disable_src_echo();
 
 	/* Clear SRCs on the op-panel when Linux starts */

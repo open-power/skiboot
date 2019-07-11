@@ -20,6 +20,7 @@
 
 extern void ibm_fsp_init(void);
 extern void ibm_fsp_exit(void);
+void ibm_fsp_finalise_dt(bool is_reboot);
 
 extern int64_t ibm_fsp_cec_power_down(uint64_t request);
 extern int64_t ibm_fsp_cec_reboot(void);
