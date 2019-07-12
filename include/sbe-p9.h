@@ -90,6 +90,13 @@
 #define SBE_HOST_TIMER_EXPIRY		PPC_BIT(14)
 #define SBE_HOST_RESPONSE_MASK		(PPC_BITMASK(0, 4) | SBE_HOST_TIMER_EXPIRY)
 
+/* SBE Control Register */
+#define SBE_CONTROL_REG_RW		0x00050008
+
+/* SBE interrupt s0/s1 bits */
+#define SBE_CONTROL_REG_S0		PPC_BIT(14)
+#define SBE_CONTROL_REG_S1		PPC_BIT(15)
+
 /* SBE Target Type */
 #define SBE_TARGET_TYPE_PROC		0x00
 #define SBE_TARGET_TYPE_EX		0x01
@@ -229,5 +236,8 @@ extern void p9_sbe_update_timer_expiry(uint64_t new_target);
 
 /* Send skiboot relocated base address to SBE */
 extern void p9_sbe_send_relocated_base(uint64_t reloc_base);
+
+/* Terminate and trigger MPIPL */
+extern void p9_sbe_terminate(void);
 
 #endif	/* __SBE_P9_H */

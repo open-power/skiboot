@@ -10,6 +10,7 @@
 #include <pel.h>
 #include <platform.h>
 #include <processor.h>
+#include <sbe-p9.h>
 #include <skiboot.h>
 #include <stack.h>
 #include <timebase.h>
@@ -56,15 +57,22 @@ static void ipmi_log_terminate_event(const char *msg)
 
 void __attribute__((noreturn)) ipmi_terminate(const char *msg)
 {
+	/* Log eSEL event */
+	if (ipmi_present())
+		ipmi_log_terminate_event(msg);
+
+	/*
+	 * If mpipl is supported then trigger SBE interrupt
+	 * to initiate mpipl
+	 */
+	p9_sbe_terminate();
+
 	/* Terminate called before initializing IPMI (early abort) */
 	if (!ipmi_present()) {
 		if (platform.cec_reboot)
 			platform.cec_reboot();
 		goto out;
 	}
-
-	/* Log eSEL event */
-	ipmi_log_terminate_event(msg);
 
 	/* Reboot call */
 	if (platform.cec_reboot)

@@ -938,3 +938,66 @@ void p9_sbe_init(void)
 	/* Initiate SBE timeout poller */
 	opal_add_poller(p9_sbe_timeout_poll, NULL);
 }
+
+/* Terminate and initiate MPIPL */
+void p9_sbe_terminate(void)
+{
+	uint32_t primary_chip = -1;
+	int rc;
+	u64 wait_tb;
+	struct proc_chip *chip;
+
+	/* Return if MPIPL is not supported */
+	if (!dt_find_by_path(opal_node, "dump"))
+		return;
+
+	/*
+	 * Send S0 interrupt to all SBE. Sequence:
+	 *   - S0 interrupt on secondary chip SBE
+	 *   - S0 interrupt on Primary chip SBE
+	 */
+	for_each_chip(chip) {
+		if (dt_has_node_property(chip->devnode, "primary", NULL)) {
+			primary_chip = chip->id;
+			continue;
+		}
+
+		rc = xscom_write(chip->id,
+				 SBE_CONTROL_REG_RW, SBE_CONTROL_REG_S0);
+		/* Initiate normal reboot */
+		if (rc) {
+			prlog(PR_ERR, "Failed to write S0 interrupt [chip id = %x]\n",
+			      chip->id);
+			return;
+		}
+	}
+
+	/* Initiate normal reboot */
+	if (primary_chip == -1) {
+		prlog(PR_ERR, "Primary chip ID not found.\n");
+		return;
+	}
+
+	rc = xscom_write(primary_chip,
+			 SBE_CONTROL_REG_RW, SBE_CONTROL_REG_S0);
+	if (rc) {
+		prlog(PR_ERR, "Failed to write S0 interrupt [chip id = %x]\n",
+		      primary_chip);
+		return;
+	}
+
+	/* XXX We expect SBE to act on interrupt, quiesce the system and start
+	 *     MPIPL flow. Currently we do not have a way to detect SBE state.
+	 *     Hence wait for max time SBE takes to respond and then trigger
+	 *     normal reboot.
+	 */
+	prlog(PR_NOTICE, "Initiated MPIPL, waiting for SBE to respond...\n");
+	wait_tb = mftb() + msecs_to_tb(SBE_CMD_TIMEOUT_MAX);
+	while (mftb() < wait_tb) {
+		cpu_relax();
+	}
+
+	prlog(PR_ERR, "SBE did not respond within timeout period (%d secs).\n",
+	      SBE_CMD_TIMEOUT_MAX / 1000);
+	prlog(PR_ERR, "Falling back to normal reboot\n");
+}
