@@ -952,6 +952,12 @@ void p9_sbe_terminate(void)
 	if (!dt_find_by_path(opal_node, "dump"))
 		return;
 
+	/* Unregister flash. It will request BMC MBOX reset */
+	if (!flash_unregister()) {
+		prlog(PR_DEBUG, "Failed to reset BMC MBOX\n");
+		return;
+	}
+
 	/* Save crashing CPU details */
 	opal_mpipl_save_crashing_pir();
 

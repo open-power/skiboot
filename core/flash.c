@@ -15,6 +15,7 @@
 #include <device.h>
 #include <libflash/libflash.h>
 #include <libflash/libffs.h>
+#include <libflash/ipmi-hiomap.h>
 #include <libflash/blocklevel.h>
 #include <libflash/ecc.h>
 #include <libstb/secureboot.h>
@@ -77,6 +78,17 @@ void flash_release(void)
 	lock(&flash_lock);
 	system_flash->busy = false;
 	unlock(&flash_lock);
+}
+
+bool flash_unregister(void)
+{
+	struct blocklevel_device *bl = system_flash->bl;
+
+	if (bl->exit)
+		return bl->exit(bl);
+
+	prlog(PR_NOTICE, "FLASH: Unregister flash device is not supported\n");
+	return true;
 }
 
 static int flash_nvram_info(uint32_t *total_size)

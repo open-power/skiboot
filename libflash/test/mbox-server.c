@@ -273,6 +273,7 @@ int bmc_mbox_enqueue(struct bmc_mbox_msg *msg,
 	switch (msg->command) {
 		case MBOX_C_RESET_STATE:
 			prlog(PR_INFO, "RESET_STATE\n");
+			server_state.win_type = WIN_CLOSED;
 			rc = open_window(msg, false, 0, LPC_BLOCKS);
 			memset(msg->args, 0, sizeof(msg->args));
 			break;

@@ -35,6 +35,7 @@ struct blocklevel_device {
 	int (*erase)(struct blocklevel_device *bl, uint64_t pos, uint64_t len);
 	int (*get_info)(struct blocklevel_device *bl, const char **name, uint64_t *total_size,
 			uint32_t *erase_granule);
+	bool (*exit)(struct blocklevel_device *bl);
 
 	/*
 	 * Keep the erase mask so that blocklevel_erase() can do sanity checking

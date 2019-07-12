@@ -210,6 +210,7 @@ static void ipmi_hiomap_cmd_cb(struct ipmi_msg *msg)
 	case HIOMAP_C_FLUSH:
 	case HIOMAP_C_ACK:
 	case HIOMAP_C_ERASE:
+	case HIOMAP_C_RESET:
 		if (msg->resp_size != 2) {
 			prerror("%u: Unexpected response size: %u\n", msg->data[0],
 				msg->resp_size);
@@ -514,6 +515,29 @@ static int hiomap_erase(struct ipmi_hiomap *ctx, uint64_t offset,
 	      offset, size);
 
 	return 0;
+}
+
+static bool hiomap_reset(struct ipmi_hiomap *ctx)
+{
+	RESULT_INIT(res, ctx);
+	unsigned char req[2];
+	struct ipmi_msg *msg;
+
+	prlog(PR_NOTICE, "Reset\n");
+
+	req[0] = HIOMAP_C_RESET;
+	req[1] = ++ctx->seq;
+	msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
+		         bmc_platform->sw->ipmi_oem_hiomap_cmd,
+			 ipmi_hiomap_cmd_cb, &res, req, sizeof(req), 2);
+	ipmi_queue_msg_sync(msg);
+
+	if (res.cc != IPMI_CC_NO_ERROR) {
+		prlog(PR_ERR, "%s failed: %d\n", __func__, res.cc);
+		return false;
+	}
+
+	return true;
 }
 
 static void hiomap_event(uint8_t events, void *context)
@@ -906,6 +930,7 @@ int ipmi_hiomap_init(struct blocklevel_device **bl)
 	ctx->bl.write = &ipmi_hiomap_write;
 	ctx->bl.erase = &ipmi_hiomap_erase;
 	ctx->bl.get_info = &ipmi_hiomap_get_flash_info;
+	ctx->bl.exit = &ipmi_hiomap_exit;
 
 	hiomap_init(ctx);
 
@@ -955,11 +980,16 @@ err:
 	return rc;
 }
 
-void ipmi_hiomap_exit(struct blocklevel_device *bl)
+bool ipmi_hiomap_exit(struct blocklevel_device *bl)
 {
+	bool status = true;
+
 	struct ipmi_hiomap *ctx;
 	if (bl) {
 		ctx = container_of(bl, struct ipmi_hiomap, bl);
+		status = hiomap_reset(ctx);
 		free(ctx);
 	}
+
+	return status;
 }

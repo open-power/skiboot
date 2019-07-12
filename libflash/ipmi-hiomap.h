@@ -40,6 +40,6 @@ struct ipmi_hiomap {
 };
 
 int ipmi_hiomap_init(struct blocklevel_device **bl);
-void ipmi_hiomap_exit(struct blocklevel_device *bl);
+bool ipmi_hiomap_exit(struct blocklevel_device *bl);
 
 #endif /* __LIBFLASH_IPMI_HIOMAP_H */

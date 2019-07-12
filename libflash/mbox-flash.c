@@ -803,6 +803,28 @@ static int mbox_flash_read(struct blocklevel_device *bl, uint64_t pos,
 	return rc;
 }
 
+static bool mbox_flash_reset(struct blocklevel_device *bl)
+{
+	int rc;
+	struct mbox_flash_data *mbox_flash;
+	struct bmc_mbox_msg msg = MSG_CREATE(MBOX_C_RESET_STATE);
+
+	prlog(PR_NOTICE, "MBOX reset\n");
+	mbox_flash = container_of(bl, struct mbox_flash_data, bl);
+
+	rc = msg_send(mbox_flash, &msg, mbox_flash->timeout);
+	if (rc) {
+		prlog(PR_ERR, "Failed to enqueue/send BMC MBOX RESET msg\n");
+		return false;
+	}
+	if (wait_for_bmc(mbox_flash, mbox_flash->timeout)) {
+		prlog(PR_ERR, "Error waiting for BMC\n");
+		return false;
+	}
+
+	return true;
+}
+
 static int mbox_flash_get_info(struct blocklevel_device *bl, const char **name,
 		uint64_t *total_size, uint32_t *erase_granule)
 {
@@ -1138,6 +1160,7 @@ int mbox_flash_init(struct blocklevel_device **bl)
 	mbox_flash->bl.write = &mbox_flash_write;
 	mbox_flash->bl.erase = &mbox_flash_erase_v2;
 	mbox_flash->bl.get_info = &mbox_flash_get_info;
+	mbox_flash->bl.exit = &mbox_flash_exit;
 
 	if (bmc_mbox_get_attn_reg() & MBOX_ATTN_BMC_REBOOT)
 		rc = handle_reboot(mbox_flash);
@@ -1154,11 +1177,15 @@ int mbox_flash_init(struct blocklevel_device **bl)
 	return 0;
 }
 
-void mbox_flash_exit(struct blocklevel_device *bl)
+bool mbox_flash_exit(struct blocklevel_device *bl)
 {
+	bool status = true;
 	struct mbox_flash_data *mbox_flash;
 	if (bl) {
+		status = mbox_flash_reset(bl);
 		mbox_flash = container_of(bl, struct mbox_flash_data, bl);
 		free(mbox_flash);
 	}
+
+	return status;
 }
