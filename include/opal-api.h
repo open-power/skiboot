@@ -220,7 +220,8 @@
 #define OPAL_NPU_MEM_ALLOC			171
 #define OPAL_NPU_MEM_RELEASE			172
 #define OPAL_MPIPL_UPDATE			173
-#define OPAL_LAST				173
+#define OPAL_MPIPL_REGISTER_TAG			174
+#define OPAL_LAST				174
 
 #define QUIESCE_HOLD			1 /* Spin all calls at entry */
 #define QUIESCE_REJECT			2 /* Fail all calls with OPAL_BUSY */
@@ -1209,6 +1210,16 @@ enum opal_mpipl_ops {
 	OPAL_MPIPL_REMOVE_RANGE		= 1,
 	OPAL_MPIPL_REMOVE_ALL		= 2,
 	OPAL_MPIPL_FREE_PRESERVED_MEMORY= 3,
+};
+
+/* Tag will point to various metadata area. Kernel will
+ * use tag to get metadata value.
+ */
+enum opal_mpipl_tags {
+	OPAL_MPIPL_TAG_CPU	= 0,
+	OPAL_MPIPL_TAG_OPAL	= 1,
+	OPAL_MPIPL_TAG_KERNEL	= 2,
+	OPAL_MPIPL_TAG_BOOT_MEM	= 3,
 };
 
 #endif /* __ASSEMBLY__ */

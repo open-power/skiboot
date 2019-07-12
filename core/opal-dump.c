@@ -299,6 +299,34 @@ static int64_t opal_mpipl_update(enum opal_mpipl_ops ops,
 	return rc;
 }
 
+static int64_t opal_mpipl_register_tag(enum opal_mpipl_tags tag,
+				       uint64_t tag_val)
+{
+	int rc = OPAL_SUCCESS;
+
+	switch (tag) {
+	case OPAL_MPIPL_TAG_BOOT_MEM:
+		if (tag_val <= 0 || tag_val > top_of_ram) {
+			prlog(PR_DEBUG, "Payload sent invalid boot mem size"
+			      " :  0x%llx\n", tag_val);
+			rc = OPAL_PARAMETER;
+		} else {
+			mpipl_metadata->boot_mem_size = tag_val;
+			prlog(PR_NOTICE, "Boot mem size : 0x%llx\n", tag_val);
+		}
+		break;
+	case OPAL_MPIPL_TAG_KERNEL:
+		mpipl_metadata->kernel_tag = tag_val;
+		prlog(PR_NOTICE, "Payload sent metadata tag : 0x%llx\n", tag_val);
+		break;
+	default:
+		prlog(PR_DEBUG, "Payload sent unsupported tag : 0x%x\n", tag);
+		rc = OPAL_PARAMETER;
+		break;
+	}
+	return rc;
+}
+
 void opal_mpipl_init(void)
 {
 	void *mdst_base = (void *)MDST_TABLE_BASE;
@@ -335,4 +363,5 @@ void opal_mpipl_init(void)
 
 	/* OPAL API for MPIPL update */
 	opal_register(OPAL_MPIPL_UPDATE, opal_mpipl_update, 4);
+	opal_register(OPAL_MPIPL_REGISTER_TAG, opal_mpipl_register_tag, 2);
 }
