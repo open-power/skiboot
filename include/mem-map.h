@@ -89,11 +89,17 @@
 #define PSI_TCE_TABLE_BASE	(SKIBOOT_BASE + 0x01a00000)
 #define PSI_TCE_TABLE_SIZE_P8	0x00200000UL
 
+/* This is our dump result table after MPIPL. Hostboot will write to this
+ * memory after moving memory content from source to destination memory.
+ */
+#define MDRT_TABLE_BASE		(SKIBOOT_BASE + 0x01c00000)
+#define MDRT_TABLE_SIZE		0x00010000
+
 /* Total size of the above area
  *
  * (Ensure this has at least a 64k alignment)
  */
-#define SKIBOOT_SIZE		0x01c00000
+#define SKIBOOT_SIZE		0x01c10000
 
 /* We start laying out the CPU stacks from here, indexed by PIR
  * each stack is STACK_SIZE in size (naturally aligned power of
