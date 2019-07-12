@@ -301,6 +301,12 @@ static int64_t opal_mpipl_update(enum opal_mpipl_ops ops,
 			prlog(PR_NOTICE, "Payload unregistered for MPIPL\n");
 		break;
 	case OPAL_MPIPL_FREE_PRESERVED_MEMORY:
+		/* Clear tags */
+		memset(&opal_mpipl_tags, 0, (sizeof(u64) * MAX_OPAL_MPIPL_TAGS));
+		opal_mpipl_max_tags = 0;
+		/* Release memory */
+		free(opal_mpipl_data);
+		opal_mpipl_data = NULL;
 		/* Clear MDRT table */
 		memset((void *)MDRT_TABLE_BASE, 0, MDRT_TABLE_SIZE);
 		/* Set MDRT count to max allocated count */
