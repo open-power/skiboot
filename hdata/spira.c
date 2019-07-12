@@ -928,6 +928,46 @@ static void dt_init_secureboot_node(const struct iplparams_sysparams *sysparams)
 	dt_add_property_cells(node, "hw-key-hash-size", hw_key_hash_size);
 }
 
+static void opal_dump_add_mpipl_boot(const struct iplparams_iplparams *p)
+{
+	u32 mdrt_cnt = spira.ntuples.mdump_res.act_cnt;
+	u32 mdrt_max_cnt = MDRT_TABLE_SIZE / sizeof(struct mdrt_table);
+	struct dt_node *dump_node;
+
+	dump_node = dt_find_by_path(opal_node, "dump");
+	if (!dump_node)
+		return;
+
+	/* Check boot params to detect MPIPL boot or not */
+	if (p->cec_ipl_maj_type != IPLPARAMS_MAJ_TYPE_REIPL)
+		return;
+
+	/*
+	 * On FSP system we get minor type as post dump IPL and on BMC system
+	 * we get platform reboot. Hence lets check for both values.
+	 */
+	if (p->cec_ipl_min_type != IPLPARAMS_MIN_TYPE_POST_DUMP &&
+	    p->cec_ipl_min_type != IPLPARAMS_MIN_TYPE_PLAT_REBOOT) {
+		prlog(PR_NOTICE, "DUMP: Non MPIPL reboot "
+		      "[minor type = 0x%x]\n", p->cec_ipl_min_type);
+		return;
+	}
+
+	if (p->cec_ipl_attrib != IPLPARAMS_ATTRIB_MEM_PRESERVE) {
+		prlog(PR_DEBUG, "DUMP: Memory not preserved\n");
+		return;
+	}
+
+	if (mdrt_cnt == 0 || mdrt_cnt >= mdrt_max_cnt) {
+		prlog(PR_DEBUG, "DUMP: Invalid MDRT count : %x\n", mdrt_cnt);
+		return;
+	}
+
+	prlog(PR_NOTICE, "DUMP: Dump found, MDRT count = 0x%x\n", mdrt_cnt);
+
+	dt_add_property(dump_node, "mpipl-boot", NULL, 0);
+}
+
 static void add_opal_dump_node(void)
 {
 	u64 fw_load_area[4];
@@ -1088,6 +1128,9 @@ static void add_iplparams_ipl_params(const void *iplp, struct dt_node *node)
 	else
 		dt_add_property_strings(led_node, DT_PROPERTY_LED_MODE,
 					LED_MODE_GUIDING_LIGHT);
+
+	/* Populate opal dump result table */
+	opal_dump_add_mpipl_boot(p);
 }
 
 static void add_iplparams_serials(const void *iplp, struct dt_node *node)

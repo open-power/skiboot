@@ -388,8 +388,12 @@ struct iplparams_iplparams {
 #define IPLPARAMS_FSP_FW_IPL_SIDE_TEMP	0x01
 	uint8_t		ipl_speed;
 	__be16		cec_ipl_attrib;
+#define IPLPARAMS_ATTRIB_MEM_PRESERVE	PPC_BIT16(2)
 	uint8_t		cec_ipl_maj_type;
+#define IPLPARAMS_MAJ_TYPE_REIPL	0x1
 	uint8_t		cec_ipl_min_type;
+#define IPLPARAMS_MIN_TYPE_POST_DUMP	0xc
+#define IPLPARAMS_MIN_TYPE_PLAT_REBOOT	0xd
 	uint8_t		os_ipl_mode;
 	uint8_t		keylock_pos;
 	uint8_t		lmb_size;
