@@ -20,6 +20,7 @@
 #define DUMP_REGION_CONSOLE	0x01
 #define DUMP_REGION_HBRT_LOG	0x02
 #define DUMP_REGION_OPAL_MEMORY	0x03
+#define DUMP_REGION_KERNEL	0x80
 
 /* Mainstore memory to be captured by FSP SYSDUMP */
 #define DUMP_TYPE_SYSDUMP		0xF5

@@ -96,6 +96,102 @@ static int opal_mpipl_add_entry(u8 region, u64 src, u64 dest, u64 size)
 	return OPAL_SUCCESS;
 }
 
+/* Remove entry from source (MDST) table */
+static int opal_mpipl_remove_entry_mdst(bool remove_all, u8 region, u64 src)
+{
+	bool found = false;
+	int i, j;
+	struct mdst_table *tmp_mdst;
+	struct mdst_table *mdst = (void *)(MDST_TABLE_BASE);
+
+	for (i = 0; i < ntuple_mdst->act_cnt;) {
+		if (mdst->data_region != region) {
+			mdst++;
+			i++;
+			continue;
+		}
+
+		if (remove_all != true && mdst->addr != (src | HRMOR_BIT)) {
+			mdst++;
+			i++;
+			continue;
+		}
+
+		tmp_mdst = mdst;
+		memset(tmp_mdst, 0, sizeof(struct mdst_table));
+
+		for (j = i; j < ntuple_mdst->act_cnt - 1; j++) {
+			memcpy((void *)tmp_mdst,
+			       (void *)(tmp_mdst + 1), sizeof(struct mdst_table));
+			tmp_mdst++;
+			memset(tmp_mdst, 0, sizeof(struct mdst_table));
+		}
+
+		ntuple_mdst->act_cnt--;
+
+		if (remove_all == false) {
+			found = true;
+			break;
+		}
+	}  /* end - for loop */
+
+	if (remove_all == false && found == false) {
+		prlog(PR_DEBUG,
+		      "Source address [0x%llx] not found in MDST table\n", src);
+		return OPAL_PARAMETER;
+	}
+
+	return OPAL_SUCCESS;
+}
+
+/* Remove entry from destination (MDDT) table */
+static int opal_mpipl_remove_entry_mddt(bool remove_all, u8 region, u64 dest)
+{
+	bool found = false;
+	int i, j;
+	struct mddt_table *tmp_mddt;
+	struct mddt_table *mddt = (void *)(MDDT_TABLE_BASE);
+
+	for (i = 0; i < ntuple_mddt->act_cnt;) {
+		if (mddt->data_region != region) {
+			mddt++;
+			i++;
+			continue;
+		}
+
+		if (remove_all != true && mddt->addr != (dest | HRMOR_BIT)) {
+			mddt++;
+			i++;
+			continue;
+		}
+
+		tmp_mddt = mddt;
+		memset(tmp_mddt, 0, sizeof(struct mddt_table));
+
+		for (j = i; j < ntuple_mddt->act_cnt - 1; j++) {
+			memcpy((void *)tmp_mddt,
+			       (void *)(tmp_mddt + 1), sizeof(struct mddt_table));
+			tmp_mddt++;
+			memset(tmp_mddt, 0, sizeof(struct mddt_table));
+		}
+
+		ntuple_mddt->act_cnt--;
+
+		if (remove_all == false) {
+			found = true;
+			break;
+		}
+	}  /* end - for loop */
+
+	if (remove_all == false && found == false) {
+		prlog(PR_DEBUG,
+		      "Dest address [0x%llx] not found in MDDT table\n", dest);
+		return OPAL_PARAMETER;
+	}
+
+	return OPAL_SUCCESS;
+}
+
 /* Register for OPAL dump.  */
 static void opal_mpipl_register(void)
 {
@@ -119,6 +215,88 @@ static void opal_mpipl_register(void)
 	/* Add OPAL reservation detail to MDST/MDDT table */
 	opal_mpipl_add_entry(DUMP_REGION_OPAL_MEMORY,
 			     SKIBOOT_BASE, opal_dest, opal_size);
+}
+
+static int payload_mpipl_register(u64 src, u64 dest, u64 size)
+{
+	if (!opal_addr_valid((void *)src)) {
+		prlog(PR_DEBUG, "Invalid source address [0x%llx]\n", src);
+		return OPAL_PARAMETER;
+	}
+
+	if (!opal_addr_valid((void *)dest)) {
+		prlog(PR_DEBUG, "Invalid dest address [0x%llx]\n", dest);
+		return OPAL_PARAMETER;
+	}
+
+	if (size <= 0) {
+		prlog(PR_DEBUG, "Invalid size [0x%llx]\n", size);
+		return OPAL_PARAMETER;
+	}
+
+	return opal_mpipl_add_entry(DUMP_REGION_KERNEL, src, dest, size);
+}
+
+static int payload_mpipl_unregister(u64 src, u64 dest)
+{
+	int rc;
+
+	/* Remove src from MDST table */
+	rc = opal_mpipl_remove_entry_mdst(false, DUMP_REGION_KERNEL, src);
+	if (rc)
+		return rc;
+
+	/* Remove dest from MDDT table */
+	rc = opal_mpipl_remove_entry_mddt(false, DUMP_REGION_KERNEL, dest);
+	return rc;
+}
+
+static int payload_mpipl_unregister_all(void)
+{
+	opal_mpipl_remove_entry_mdst(true, DUMP_REGION_KERNEL, 0);
+	opal_mpipl_remove_entry_mddt(true, DUMP_REGION_KERNEL, 0);
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t opal_mpipl_update(enum opal_mpipl_ops ops,
+				 u64 src, u64 dest, u64 size)
+{
+	int rc;
+
+	switch (ops) {
+	case OPAL_MPIPL_ADD_RANGE:
+		rc = payload_mpipl_register(src, dest, size);
+		if (!rc)
+			prlog(PR_NOTICE, "Payload registered for MPIPL\n");
+		break;
+	case OPAL_MPIPL_REMOVE_RANGE:
+		rc = payload_mpipl_unregister(src, dest);
+		if (!rc) {
+			prlog(PR_NOTICE, "Payload removed entry from MPIPL."
+			      "[src : 0x%llx, dest : 0x%llx]\n", src, dest);
+		}
+		break;
+	case OPAL_MPIPL_REMOVE_ALL:
+		rc = payload_mpipl_unregister_all();
+		if (!rc)
+			prlog(PR_NOTICE, "Payload unregistered for MPIPL\n");
+		break;
+	case OPAL_MPIPL_FREE_PRESERVED_MEMORY:
+		/* Clear MDRT table */
+		memset((void *)MDRT_TABLE_BASE, 0, MDRT_TABLE_SIZE);
+		/* Set MDRT count to max allocated count */
+		ntuple_mdrt->act_cnt = MDRT_TABLE_SIZE / sizeof(struct mdrt_table);
+		rc = OPAL_SUCCESS;
+		prlog(PR_NOTICE, "Payload Invalidated MPIPL\n");
+		break;
+	default:
+		prlog(PR_DEBUG, "Unsupported MPIPL update operation : 0x%x\n", ops);
+		rc = OPAL_PARAMETER;
+		break;
+	}
+
+	return rc;
 }
 
 void opal_mpipl_init(void)
@@ -154,4 +332,7 @@ void opal_mpipl_init(void)
 	ntuple_mddt->act_cnt = 0;
 
 	opal_mpipl_register();
+
+	/* OPAL API for MPIPL update */
+	opal_register(OPAL_MPIPL_UPDATE, opal_mpipl_update, 4);
 }

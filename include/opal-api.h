@@ -219,7 +219,8 @@
 #define OPAL_XIVE_GET_VP_STATE			170 /* Get NVT state */
 #define OPAL_NPU_MEM_ALLOC			171
 #define OPAL_NPU_MEM_RELEASE			172
-#define OPAL_LAST				172
+#define OPAL_MPIPL_UPDATE			173
+#define OPAL_LAST				173
 
 #define QUIESCE_HOLD			1 /* Spin all calls at entry */
 #define QUIESCE_REJECT			2 /* Fail all calls with OPAL_BUSY */
@@ -1200,6 +1201,14 @@ enum {
 enum {
 	OPAL_PCI_P2P_INITIATOR	= 0,
 	OPAL_PCI_P2P_TARGET	= 1,
+};
+
+/* MPIPL update operations */
+enum opal_mpipl_ops {
+	OPAL_MPIPL_ADD_RANGE		= 0,
+	OPAL_MPIPL_REMOVE_RANGE		= 1,
+	OPAL_MPIPL_REMOVE_ALL		= 2,
+	OPAL_MPIPL_FREE_PRESERVED_MEMORY= 3,
 };
 
 #endif /* __ASSEMBLY__ */
