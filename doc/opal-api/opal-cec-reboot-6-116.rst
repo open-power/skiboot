@@ -1,3 +1,5 @@
+.. _opal-api-cec-reboot:
+
 OPAL_CEC_REBOOT and OPAL_CEC_REBOOT2
 ====================================
 

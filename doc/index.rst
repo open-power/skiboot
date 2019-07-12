@@ -47,6 +47,7 @@ Developer Guide and Internals
    xive
    imc
    power-management
+   mpipl
 
 
 OPAL ABI
