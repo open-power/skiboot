@@ -40,6 +40,7 @@
 #include <errorlog.h>
 #include <lock.h>
 #include <opal.h>
+#include <opal-dump.h>
 #include <sbe-p9.h>
 #include <skiboot.h>
 #include <timebase.h>
@@ -950,6 +951,9 @@ void p9_sbe_terminate(void)
 	/* Return if MPIPL is not supported */
 	if (!dt_find_by_path(opal_node, "dump"))
 		return;
+
+	/* Save crashing CPU details */
+	opal_mpipl_save_crashing_pir();
 
 	/*
 	 * Send S0 interrupt to all SBE. Sequence:

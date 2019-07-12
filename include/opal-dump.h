@@ -121,4 +121,7 @@ struct mpipl_metadata {
 /* init opal dump */
 extern void opal_mpipl_init(void);
 
+/* Save metadata before triggering MPIPL */
+void opal_mpipl_save_crashing_pir(void);
+
 #endif	/* __OPAL_DUMP_H */

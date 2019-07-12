@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	"DUMP: " fmt
 
+#include <cpu.h>
 #include <device.h>
 #include <mem-map.h>
 #include <mem_region.h>
@@ -326,6 +327,12 @@ static int64_t opal_mpipl_register_tag(enum opal_mpipl_tags tag,
 		break;
 	}
 	return rc;
+}
+
+void opal_mpipl_save_crashing_pir(void)
+{
+	mpipl_metadata->crashing_pir = this_cpu()->pir;
+	prlog(PR_NOTICE, "Crashing PIR = 0x%x\n", this_cpu()->pir);
 }
 
 void opal_mpipl_init(void)
