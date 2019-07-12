@@ -1602,6 +1602,27 @@ static void fixup_spira(void)
 	spira.ntuples.node_stb_data = spiras->ntuples.node_stb_data;
 }
 
+/*
+ * All the data structure addresses are relative to payload base. Hence adjust
+ * structures that are needed to capture OPAL dump during MPIPL.
+ */
+static void update_spirah_addr(void)
+{
+#if !defined(TEST)
+	extern uint32_t naca;
+	uint64_t *spirah_offset = (uint64_t *)&naca;
+	uint64_t *spira_offset = (uint64_t *)((u64)(&naca) + 0x30);
+
+	if (proc_gen < proc_gen_p9)
+		return;
+
+	*spirah_offset = SPIRAH_OFF;
+	*spira_offset = SPIRA_OFF;
+	spirah.ntuples.hs_data_area.addr = CPU_TO_BE64(SPIRA_HEAP_BASE - SKIBOOT_BASE);
+	spirah.ntuples.mdump_res.addr = CPU_TO_BE64(MDRT_TABLE_BASE - SKIBOOT_BASE);
+#endif
+}
+
 int parse_hdat(bool is_opal)
 {
 	cpu_type = PVR_TYPE(mfspr(SPR_PVR));
@@ -1609,6 +1630,8 @@ int parse_hdat(bool is_opal)
 	prlog(PR_DEBUG, "Parsing HDAT...\n");
 
 	fixup_spira();
+
+	update_spirah_addr();
 
 	/*
 	 * Basic DT root stuff
