@@ -23,6 +23,7 @@
 #include <opal.h>
 #include <opal-dump.h>
 #include <opal-internal.h>
+#include <sbe-p9.h>
 #include <skiboot.h>
 
 #include <ccan/endian/endian.h>
@@ -360,6 +361,9 @@ void opal_mpipl_init(void)
 	ntuple_mddt->act_cnt = 0;
 
 	opal_mpipl_register();
+
+	/* Send OPAL relocated base address to SBE */
+	p9_sbe_send_relocated_base(SKIBOOT_BASE);
 
 	/* OPAL API for MPIPL update */
 	opal_register(OPAL_MPIPL_UPDATE, opal_mpipl_update, 4);

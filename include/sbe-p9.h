@@ -146,6 +146,9 @@
 #define CONTROL_TIMER_START		0x0001
 #define CONTROL_TIMER_STOP		0x0002
 
+/* Stash MPIPL config */
+#define SBE_STASH_KEY_SKIBOOT_BASE	0x03
+
 /* SBE message state */
 enum p9_sbe_msg_state {
 	sbe_msg_unused = 0,	/* Free */
@@ -223,5 +226,8 @@ extern bool p9_sbe_timer_ok(void);
 
 /* Update SBE timer expiry */
 extern void p9_sbe_update_timer_expiry(uint64_t new_target);
+
+/* Send skiboot relocated base address to SBE */
+extern void p9_sbe_send_relocated_base(uint64_t reloc_base);
 
 #endif	/* __SBE_P9_H */

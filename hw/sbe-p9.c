@@ -851,6 +851,54 @@ bool p9_sbe_timer_ok(void)
 	return sbe_has_timer;
 }
 
+static void p9_sbe_stash_chipop_resp(struct p9_sbe_msg *msg)
+{
+	int rc = p9_sbe_get_primary_rc(msg->resp);
+	struct p9_sbe *sbe = (void *)msg->user_data;
+
+	if (rc == SBE_STATUS_PRI_SUCCESS) {
+		prlog(PR_DEBUG, "Sent stash MPIPL config [chip id =0x%x]\n",
+		      sbe->chip_id);
+	} else {
+		prlog(PR_ERR, "Failed to send stash MPIPL config "
+		      "[chip id = 0x%x, rc = %d]\n", sbe->chip_id, rc);
+	}
+
+	p9_sbe_freemsg(msg);
+}
+
+static void p9_sbe_send_relocated_base_single(struct p9_sbe *sbe, u64 reloc_base)
+{
+	u8 key = SBE_STASH_KEY_SKIBOOT_BASE;
+	u16 cmd = SBE_CMD_STASH_MPIPL_CONFIG;
+	u16 flag = SBE_CMD_CTRL_RESP_REQ;
+	struct p9_sbe_msg *msg;
+
+	msg = p9_sbe_mkmsg(cmd, flag, key, reloc_base, 0);
+	if (!msg) {
+		prlog(PR_ERR, "Message allocation failed\n");
+		return;
+	}
+
+	msg->user_data = (void *)sbe;
+	if (p9_sbe_queue_msg(sbe->chip_id, msg, p9_sbe_stash_chipop_resp)) {
+		prlog(PR_ERR, "Failed to queue stash MPIPL config message\n");
+	}
+}
+
+/* Send relocated skiboot base address to all SBE */
+void p9_sbe_send_relocated_base(uint64_t reloc_base)
+{
+	struct proc_chip *chip;
+
+	for_each_chip(chip) {
+		if (chip->sbe == NULL)
+			continue;
+
+		p9_sbe_send_relocated_base_single(chip->sbe, reloc_base);
+	}
+}
+
 void p9_sbe_init(void)
 {
 	struct dt_node *xn;
