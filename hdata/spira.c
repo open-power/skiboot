@@ -9,7 +9,7 @@
 #include <interrupts.h>
 #include <ccan/str/str.h>
 #include <chip.h>
-#include <fsp-mdst-table.h>
+#include <opal-dump.h>
 #include <fsp-attn.h>
 #include <fsp-leds.h>
 
@@ -81,9 +81,9 @@ __section(".cpuctrl.data") struct cpu_ctl_init_data cpu_ctl_init_data = {
  * addresses, we set the top bit to 1 on physical addresses
  */
 
-extern struct dump_mdst_table init_mdst_table[];
+extern struct mdst_table init_mdst_table[];
 
-__section(".mdst.data") struct dump_mdst_table init_mdst_table[2] = {
+__section(".mdst.data") struct mdst_table init_mdst_table[2] = {
 	{
 		.addr = CPU_TO_BE64(INMEM_CON_START | HRMOR_BIT),
 		.type = CPU_TO_BE32(DUMP_REGION_CONSOLE),
