@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 /*
- * Skiboot linker script
- *
  * Copyright 2013-2019 IBM Corp.
  */
 
@@ -79,6 +77,11 @@ SECTIONS
 	. = MDST_TABLE_OFF;
 	.mdst : {
 		KEEP(*(.mdst.data))
+	}
+
+	. = MDDT_TABLE_OFF;
+	.mddt : {
+		KEEP(*(.mddt.data))
 	}
 
 	. = CPU_CTL_OFF;

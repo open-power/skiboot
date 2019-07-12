@@ -36,12 +36,16 @@
  */
 #define PROCIN_OFF		(SPIRA_OFF + 0x800)
 
-/* Initial MDST table like PROCIN, we need fixed addresses,
+/* Initial MDST and MDDT tables like PROCIN, we need fixed addresses,
  * we leave a 2k gap for PROCIN
  */
 #define MDST_TABLE_OFF		(SPIRA_OFF + 0x1000)
+#define MDST_TABLE_SIZE		0x400
 
-/* Like MDST, we need fixed address for CPU control header.
+#define MDDT_TABLE_OFF		(SPIRA_OFF + 0x1400)
+#define MDDT_TABLE_SIZE		0x400
+
+/* Like MDST and MDDT, we need fixed address for CPU control header.
  * We leave a 2k gap for MDST. CPU_CTL table is of size ~4k
  */
 #define CPU_CTL_OFF             (SPIRA_OFF + 0x1800)
