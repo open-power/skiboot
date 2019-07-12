@@ -1573,6 +1573,7 @@ static void fixup_spira(void)
 	spira.ntuples.mdump_src = spirah.ntuples.mdump_src;
 	spira.ntuples.mdump_dst = spirah.ntuples.mdump_dst;
 	spira.ntuples.mdump_res  = spirah.ntuples.mdump_res;
+	spira.ntuples.proc_dump_area = spirah.ntuples.proc_dump_area;
 	spira.ntuples.pcia = spiras->ntuples.pcia;
 	spira.ntuples.proc_chip = spiras->ntuples.proc_chip;
 	spira.ntuples.hs_data = spiras->ntuples.hs_data;

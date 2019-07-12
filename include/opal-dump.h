@@ -39,4 +39,71 @@ struct mdst_table {
 	__be32	size;
 } __packed;
 
+/* Memory dump destination table (MDDT) */
+struct mddt_table {
+	__be64	addr;
+	uint8_t	data_region;
+	uint8_t dump_type;
+	__be16	reserved;
+	__be32	size;
+} __packed;
+
+/*
+ * Memory dump result table (MDRT)
+ *
+ * List of the memory ranges that have been included in the dump. This table is
+ * filled by hostboot and passed to OPAL on second boot. OPAL/payload will use
+ * this table to extract the dump.
+ */
+struct mdrt_table {
+	__be64	src_addr;
+	__be64	dest_addr;
+	uint8_t	data_region;
+	uint8_t dump_type;
+	__be16	reserved;
+	__be32	size;
+	__be64	padding;
+} __packed;
+
+/*
+ * Processor Dump Area
+ *
+ * This contains the information needed for having processor
+ * state captured during a platform dump.
+ */
+struct proc_dump_area {
+	__be32	thread_size;	/* Size of each thread register entry */
+#define PROC_DUMP_AREA_FORMAT_P9	0x1	/* P9 format */
+	uint8_t	version;	/* P9 - 0x1 */
+	uint8_t	reserved[11];
+	__be64	alloc_addr;	/* Destination memory to place register data */
+	__be32	reserved2;
+	__be32	alloc_size;	/* Allocated size */
+	__be64	dest_addr;	/* Destination address */
+	__be32	reserved3;
+	__be32	act_size;	/* Actual data size */
+} __packed;
+
+struct proc_reg_data_hdr {
+	/* PIR value of the thread */
+	__be32	pir;
+	/* 0x00 - 0x0F - The corresponding stop state of the core */
+	uint8_t	core_state;
+	uint8_t	reserved[3];
+
+	uint32_t offset;	/* Offset to Register Entries array */
+	uint32_t ecnt;		/* Number of entries */
+	uint32_t esize;		/* Alloc size of each array entry in bytes */
+	uint32_t eactsz;	/* Actual size of each array entry in bytes */
+} __packed;
+
+/* Architected register data content */
+#define ARCH_REG_TYPE_GPR	0x01
+#define ARCH_REG_TYPE_SPR	0x02
+struct proc_reg_data {
+	uint32_t reg_type;	/* ARCH_REG_TYPE_* */
+	uint32_t reg_num;
+	uint64_t reg_val;
+} __packed;
+
 #endif	/* __OPAL_DUMP_H */

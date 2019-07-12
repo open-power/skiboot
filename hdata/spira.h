@@ -63,6 +63,7 @@ struct spira_ntuples {
 	struct spira_ntuple	hs_data;		/* 0x320 */
 	struct spira_ntuple	ipmi_sensor;		/* 0x360 */
 	struct spira_ntuple	node_stb_data;		/* 0x380 */
+	struct spira_ntuple	proc_dump_area;		/* 0x400 */
 };
 
 struct spira {
@@ -76,7 +77,7 @@ struct spira {
 	 *
 	 * According to FSP engineers, this is an okay thing to do.
 	 */
-	u8			reserved[0x80];
+	u8			reserved[0x60];
 } __packed __align(0x100);
 
 extern struct spira spira;
