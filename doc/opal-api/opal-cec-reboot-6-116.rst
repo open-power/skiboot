@@ -127,6 +127,13 @@ OPAL_REBOOT_FULL_IPL = 2
 	On platforms that don't support fast reboot, this is equivalent to a
 	normal reboot.
 
+OPAL_REBOOT_MPIPL = 3
+	Request for MPIPL reboot. Firmware will reboot the system and collect
+	dump.
+
+	On platforms that don't support MPIPL, this is equivalent to a
+	normal assert.
+
 Unsupported Reboot type
 	For unsupported reboot type, this function will return with
 	OPAL_UNSUPPORTED and no reboot will be triggered.
