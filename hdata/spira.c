@@ -928,6 +928,23 @@ static void dt_init_secureboot_node(const struct iplparams_sysparams *sysparams)
 	dt_add_property_cells(node, "hw-key-hash-size", hw_key_hash_size);
 }
 
+static void add_opal_dump_node(void)
+{
+	u64 fw_load_area[4];
+	struct dt_node *node;
+
+	opal_node = dt_new_check(dt_root, "ibm,opal");
+	node = dt_new(opal_node, "dump");
+	assert(node);
+	dt_add_property_string(node, "compatible", "ibm,opal-dump");
+
+	fw_load_area[0] = cpu_to_be64((u64)KERNEL_LOAD_BASE);
+	fw_load_area[1] = cpu_to_be64(KERNEL_LOAD_SIZE);
+	fw_load_area[2] = cpu_to_be64((u64)INITRAMFS_LOAD_BASE);
+	fw_load_area[3] = cpu_to_be64(INITRAMFS_LOAD_SIZE);
+	dt_add_property(node, "fw-load-area", fw_load_area, sizeof(fw_load_area));
+}
+
 static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 {
 	const struct iplparams_sysparams *p;
@@ -1014,6 +1031,10 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 	sys_attributes = be32_to_cpu(p->sys_attributes);
 	if (sys_attributes & SYS_ATTR_RISK_LEVEL)
 		dt_add_property(node, "elevated-risk-level", NULL, 0);
+
+	/* Populate OPAL dump node */
+	if (sys_attributes & SYS_ATTR_MPIPL_SUPPORTED)
+		add_opal_dump_node();
 
 	if (version >= 0x60 && proc_gen >= proc_gen_p9)
 		dt_init_secureboot_node(p);
