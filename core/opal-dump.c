@@ -44,6 +44,18 @@ static struct mpipl_metadata    *mpipl_metadata;
 /* Dump metadata area */
 static struct opal_mpipl_fadump *opal_mpipl_data;
 
+/*
+ * Number of tags passed by OPAL to kernel after MPIPL boot.
+ * Currently it supports below tags:
+ *   - CPU register data area
+ *   - OPAL metadata area address
+ *   - Kernel passed tag during MPIPL registration
+ *   - Post MPIPL boot memory size
+ */
+#define MAX_OPAL_MPIPL_TAGS	0x04
+static u64 opal_mpipl_tags[MAX_OPAL_MPIPL_TAGS];
+static int opal_mpipl_max_tags = MAX_OPAL_MPIPL_TAGS;
+
 
 static int opal_mpipl_add_entry(u8 region, u64 src, u64 dest, u64 size)
 {
@@ -333,6 +345,29 @@ static int64_t opal_mpipl_register_tag(enum opal_mpipl_tags tag,
 	return rc;
 }
 
+static uint64_t opal_mpipl_query_tag(enum opal_mpipl_tags tag,
+				     uint64_t *tag_val)
+{
+	if (!opal_addr_valid(tag_val)) {
+		prlog(PR_DEBUG, "Invalid tag address\n");
+		return OPAL_PARAMETER;
+	}
+
+	if (tag >= opal_mpipl_max_tags)
+		return OPAL_PARAMETER;
+
+	*tag_val = opal_mpipl_tags[tag];
+	return OPAL_SUCCESS;
+}
+
+static inline void post_mpipl_get_preserved_tags(void)
+{
+	if (mpipl_metadata->kernel_tag)
+		opal_mpipl_tags[OPAL_MPIPL_TAG_KERNEL] = mpipl_metadata->kernel_tag;
+	if (mpipl_metadata->boot_mem_size)
+		opal_mpipl_tags[OPAL_MPIPL_TAG_BOOT_MEM] = mpipl_metadata->boot_mem_size;
+}
+
 static void post_mpipl_get_opal_data(void)
 {
 	struct mdrt_table *mdrt = (void *)(MDRT_TABLE_BASE);
@@ -385,6 +420,8 @@ static void post_mpipl_get_opal_data(void)
 		if (j == count)
 			break;
 	}
+
+	opal_mpipl_tags[OPAL_MPIPL_TAG_OPAL] = (u64)opal_mpipl_data;
 }
 
 void opal_mpipl_save_crashing_pir(void)
@@ -411,8 +448,10 @@ void opal_mpipl_init(void)
 	/* Get metadata area pointer */
 	mpipl_metadata = (void *)(DUMP_METADATA_AREA_BASE);
 
-	if (dt_find_property(dump_node, "mpipl-boot"))
+	if (dt_find_property(dump_node, "mpipl-boot")) {
+		post_mpipl_get_preserved_tags();
 		post_mpipl_get_opal_data();
+	}
 
 	/* Clear OPAL metadata area */
 	if (sizeof(struct mpipl_metadata) > DUMP_METADATA_AREA_SIZE) {
@@ -436,4 +475,5 @@ void opal_mpipl_init(void)
 	/* OPAL API for MPIPL update */
 	opal_register(OPAL_MPIPL_UPDATE, opal_mpipl_update, 4);
 	opal_register(OPAL_MPIPL_REGISTER_TAG, opal_mpipl_register_tag, 2);
+	opal_register(OPAL_MPIPL_QUERY_TAG, opal_mpipl_query_tag, 2);
 }
