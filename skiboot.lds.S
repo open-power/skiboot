@@ -69,6 +69,11 @@ SECTIONS
 		KEEP(*(.spirah.data))
 	}
 
+	. = PROC_DUMP_AREA_OFF;
+	.procdump : {
+		KEEP(*(.procdump.data))
+	}
+
 	. = PROCIN_OFF;
 	.procin.data : {
 		KEEP(*(.procin.data))

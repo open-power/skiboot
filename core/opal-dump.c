@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	"DUMP: " fmt
 
+#include <chip.h>
 #include <cpu.h>
 #include <device.h>
 #include <mem-map.h>
@@ -31,9 +32,16 @@
 
 #include "hdata/spira.h"
 
+/* XXX Ideally we should use HDAT provided data (proc_dump_area->thread_size).
+ *     But we are not getting this data durig boot. Hence lets reserve fixed
+ *     memory for architected registers data collection.
+ */
+#define ARCH_REGS_DATA_SIZE_PER_CHIP	(512 * 1024)
+
 /* Actual address of MDST and MDDT table */
 #define MDST_TABLE_BASE		(SKIBOOT_BASE + MDST_TABLE_OFF)
 #define MDDT_TABLE_BASE		(SKIBOOT_BASE + MDDT_TABLE_OFF)
+#define PROC_DUMP_AREA_BASE	(SKIBOOT_BASE + PROC_DUMP_AREA_OFF)
 
 static struct spira_ntuple *ntuple_mdst;
 static struct spira_ntuple *ntuple_mddt;
@@ -214,6 +222,8 @@ static int opal_mpipl_remove_entry_mddt(bool remove_all, u8 region, u64 dest)
 static void opal_mpipl_register(void)
 {
 	u64 opal_dest, opal_size;
+	u64 arch_regs_dest, arch_regs_size;
+	struct proc_dump_area *proc_dump = (void *)(PROC_DUMP_AREA_BASE);
 
 	/* Get OPAL runtime size */
 	if (!dt_find_property(opal_node, "opal-runtime-size")) {
@@ -233,6 +243,24 @@ static void opal_mpipl_register(void)
 	/* Add OPAL reservation detail to MDST/MDDT table */
 	opal_mpipl_add_entry(DUMP_REGION_OPAL_MEMORY,
 			     SKIBOOT_BASE, opal_dest, opal_size);
+
+	/* Thread size check */
+	if (proc_dump->thread_size != 0) {
+		prlog(PR_INFO, "Thread register entry size is available, "
+		      "but not supported.\n");
+	}
+
+	/* Calculate memory to capture CPU register data */
+	arch_regs_dest = opal_dest + opal_size;
+	arch_regs_size = nr_chips() * ARCH_REGS_DATA_SIZE_PER_CHIP;
+
+	/* Reserve memory used to capture architected register state */
+	mem_reserve_fw("ibm,firmware-arch-registers",
+		       arch_regs_dest, arch_regs_size);
+	proc_dump->alloc_addr = arch_regs_dest | HRMOR_BIT;
+	proc_dump->alloc_size = arch_regs_size;
+	prlog(PR_NOTICE, "Architected register dest addr : 0x%llx, "
+	      "size : 0x%llx\n", arch_regs_dest, arch_regs_size);
 }
 
 static int payload_mpipl_register(u64 src, u64 dest, u64 size)

@@ -207,6 +207,13 @@ __section(".spirah.data") struct spirah spirah = {
 			.alloc_len      = CPU_TO_BE32(sizeof(struct mdrt_table)),
 			.act_len        = CPU_TO_BE32(sizeof(struct mdrt_table)),
 		},
+		.proc_dump_area = {
+			.addr		= CPU_TO_BE64(PROC_DUMP_AREA_OFF),
+			.alloc_cnt	= CPU_TO_BE16(1),
+			.act_cnt	= CPU_TO_BE16(1),
+			.alloc_len	= CPU_TO_BE32(sizeof(struct proc_dump_area)),
+			.act_len	= CPU_TO_BE32(sizeof(struct proc_dump_area)),
+		},
 	},
 };
 

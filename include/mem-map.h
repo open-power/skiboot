@@ -25,10 +25,22 @@
  * give it 64k before placing the SPIRA and related data.
  */
 #define SPIRA_OFF		0x00010000
+#define SPIRA_SIZE		0x400
 #define SPIRAH_OFF		0x00010400
+#define SPIRAH_SIZE		0x300
+
+#define PROC_DUMP_AREA_OFF	(SPIRAH_OFF + SPIRAH_SIZE)
+#define PROC_DUMP_AREA_SIZE	0x100
 
 /* Actual SPIRA size is lesser than 1K (presently 0x340 bytes).
- * Use 1K for legacy SPIRA and 1K for SPIRA-H.
+ * Use 1K for legacy SPIRA.
+ *
+ * SPIRA-H is lesser than 768 bytes (presently we use 288 bytes)
+ * Use 768 bytes for SPIRAH.
+ *
+ * Use 256 bytes for processor dump area. (presently we use
+ * sizeof(proc_dump_area) = 0x30 bytes).
+ *
  * Then follow with for proc_init_data (aka PROCIN).
  * These need to be at fixed addresses in case we're ever little
  * endian: linker can't endian reverse a pointer for us.  Text, data
