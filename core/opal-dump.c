@@ -51,6 +51,7 @@ static struct mpipl_metadata    *mpipl_metadata;
 
 /* Dump metadata area */
 static struct opal_mpipl_fadump *opal_mpipl_data;
+static struct opal_mpipl_fadump *opal_mpipl_cpu_data;
 
 /*
  * Number of tags passed by OPAL to kernel after MPIPL boot.
@@ -402,6 +403,41 @@ static inline void post_mpipl_get_preserved_tags(void)
 		opal_mpipl_tags[OPAL_MPIPL_TAG_BOOT_MEM] = mpipl_metadata->boot_mem_size;
 }
 
+static void post_mpipl_arch_regs_data(void)
+{
+	struct proc_dump_area *proc_dump = (void *)(PROC_DUMP_AREA_BASE);
+
+	if (proc_dump->dest_addr == 0) {
+		prlog(PR_DEBUG, "Invalid CPU registers destination address\n");
+		return;
+	}
+
+	if (proc_dump->act_size == 0) {
+		prlog(PR_DEBUG, "Invalid CPU registers destination size\n");
+		return;
+	}
+
+	opal_mpipl_cpu_data = zalloc(sizeof(struct opal_mpipl_fadump) +
+				sizeof(struct opal_mpipl_region));
+	if (!opal_mpipl_cpu_data) {
+		prlog(PR_ERR, "Failed to allocate memory\n");
+		return;
+	}
+
+	/* Fill CPU register details */
+	opal_mpipl_cpu_data->version = OPAL_MPIPL_VERSION;
+	opal_mpipl_cpu_data->cpu_data_version = proc_dump->version;
+	opal_mpipl_cpu_data->cpu_data_size = proc_dump->thread_size;
+	opal_mpipl_cpu_data->region_cnt = cpu_to_be32(1);
+
+	opal_mpipl_cpu_data->region[0].src  = proc_dump->dest_addr & ~(HRMOR_BIT);
+	opal_mpipl_cpu_data->region[0].dest = proc_dump->dest_addr & ~(HRMOR_BIT);
+	opal_mpipl_cpu_data->region[0].size = proc_dump->act_size;
+
+	/* Update tag */
+	opal_mpipl_tags[OPAL_MPIPL_TAG_CPU] = (u64)opal_mpipl_cpu_data;
+}
+
 static void post_mpipl_get_opal_data(void)
 {
 	struct mdrt_table *mdrt = (void *)(MDRT_TABLE_BASE);
@@ -485,6 +521,7 @@ void opal_mpipl_init(void)
 	if (dt_find_property(dump_node, "mpipl-boot")) {
 		post_mpipl_get_preserved_tags();
 		post_mpipl_get_opal_data();
+		post_mpipl_arch_regs_data();
 	}
 
 	/* Clear OPAL metadata area */
