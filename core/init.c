@@ -44,6 +44,7 @@
 #include <sbe-p9.h>
 #include <debug_descriptor.h>
 #include <occ.h>
+#include <opal-dump.h>
 
 enum proc_gen proc_gen;
 unsigned int pcie_max_link_speed;
@@ -1254,6 +1255,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* Create the LPC bus interrupt-map on P9 */
 	lpc_finalize_interrupts();
+
+	/* init opal dump */
+	opal_mpipl_init();
 
 	/* Add the list of interrupts going to OPAL */
 	add_opal_interrupts();

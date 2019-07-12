@@ -19,6 +19,7 @@
 
 #define DUMP_REGION_CONSOLE	0x01
 #define DUMP_REGION_HBRT_LOG	0x02
+#define DUMP_REGION_OPAL_MEMORY	0x03
 
 /* Mainstore memory to be captured by FSP SYSDUMP */
 #define DUMP_TYPE_SYSDUMP		0xF5
@@ -105,5 +106,8 @@ struct proc_reg_data {
 	uint32_t reg_num;
 	uint64_t reg_val;
 } __packed;
+
+/* init opal dump */
+extern void opal_mpipl_init(void);
 
 #endif	/* __OPAL_DUMP_H */
