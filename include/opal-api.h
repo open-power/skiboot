@@ -1223,6 +1223,26 @@ enum opal_mpipl_tags {
 	OPAL_MPIPL_TAG_BOOT_MEM	= 3,
 };
 
+/* Preserved memory details */
+struct opal_mpipl_region {
+	u64	src;
+	u64	dest;
+	u64	size;
+};
+
+/* Structure version */
+#define OPAL_MPIPL_VERSION		0x01
+
+struct opal_mpipl_fadump {
+	u8	version;
+	u8	reserved[7];
+	u32	crashing_pir;	/* OPAL crashing CPU PIR */
+	u32	cpu_data_version;
+	u32	cpu_data_size;
+	u32	region_cnt;
+	struct	opal_mpipl_region region[];
+} __packed;
+
 #endif /* __ASSEMBLY__ */
 
 #endif /* __OPAL_API_H */

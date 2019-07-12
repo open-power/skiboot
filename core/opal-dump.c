@@ -41,6 +41,10 @@ static struct spira_ntuple *ntuple_mdrt;
 
 static struct mpipl_metadata    *mpipl_metadata;
 
+/* Dump metadata area */
+static struct opal_mpipl_fadump *opal_mpipl_data;
+
+
 static int opal_mpipl_add_entry(u8 region, u64 src, u64 dest, u64 size)
 {
 	int i, max_cnt;
@@ -329,6 +333,60 @@ static int64_t opal_mpipl_register_tag(enum opal_mpipl_tags tag,
 	return rc;
 }
 
+static void post_mpipl_get_opal_data(void)
+{
+	struct mdrt_table *mdrt = (void *)(MDRT_TABLE_BASE);
+	int i, j = 0, count = 0;
+	u32 mdrt_cnt = ntuple_mdrt->act_cnt;
+	struct opal_mpipl_region *region;
+
+	/* Count OPAL dump regions */
+	for (i = 0; i < mdrt_cnt; i++) {
+		if (mdrt->data_region == DUMP_REGION_OPAL_MEMORY)
+			count++;
+		mdrt++;
+	}
+
+	if (count == 0) {
+		prlog(PR_INFO, "OPAL dump is not available\n");
+		return;
+	}
+
+	opal_mpipl_data = zalloc(sizeof(struct opal_mpipl_fadump) +
+				 count * sizeof(struct opal_mpipl_region));
+	if (!opal_mpipl_data) {
+		prlog(PR_ERR, "Failed to allocate memory\n");
+		return;
+	}
+
+	/* Fill OPAL dump details */
+	opal_mpipl_data->version = OPAL_MPIPL_VERSION;
+	opal_mpipl_data->crashing_pir = mpipl_metadata->crashing_pir;
+	opal_mpipl_data->region_cnt = count;
+	region = opal_mpipl_data->region;
+
+	mdrt = (void *)(MDRT_TABLE_BASE);
+	for (i = 0; i < mdrt_cnt; i++) {
+		if (mdrt->data_region != DUMP_REGION_OPAL_MEMORY) {
+			mdrt++;
+			continue;
+		}
+
+		region[j].src  = mdrt->src_addr  & ~(HRMOR_BIT);
+		region[j].dest = mdrt->dest_addr & ~(HRMOR_BIT);
+		region[j].size = mdrt->size;
+
+		prlog(PR_NOTICE, "OPAL reserved region %d - src : 0x%llx, "
+		      "dest : 0x%llx, size : 0x%llx\n", j, region[j].src,
+		      region[j].dest, region[j].size);
+
+		mdrt++;
+		j++;
+		if (j == count)
+			break;
+	}
+}
+
 void opal_mpipl_save_crashing_pir(void)
 {
 	mpipl_metadata->crashing_pir = this_cpu()->pir;
@@ -352,6 +410,9 @@ void opal_mpipl_init(void)
 
 	/* Get metadata area pointer */
 	mpipl_metadata = (void *)(DUMP_METADATA_AREA_BASE);
+
+	if (dt_find_property(dump_node, "mpipl-boot"))
+		post_mpipl_get_opal_data();
 
 	/* Clear OPAL metadata area */
 	if (sizeof(struct mpipl_metadata) > DUMP_METADATA_AREA_SIZE) {
