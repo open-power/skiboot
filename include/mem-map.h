@@ -93,7 +93,13 @@
  * memory after moving memory content from source to destination memory.
  */
 #define MDRT_TABLE_BASE		(SKIBOOT_BASE + 0x01c00000)
-#define MDRT_TABLE_SIZE		0x00010000
+#define MDRT_TABLE_SIZE		0x00008000
+
+/* This is our dump metadata area. We will use this memory to save metadata
+ * (like crashing CPU details, payload tags) before triggering MPIPL.
+ */
+#define DUMP_METADATA_AREA_BASE	(SKIBOOT_BASE + 0x01c08000)
+#define DUMP_METADATA_AREA_SIZE	0x8000
 
 /* Total size of the above area
  *

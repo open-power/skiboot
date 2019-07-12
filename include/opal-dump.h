@@ -107,6 +107,16 @@ struct proc_reg_data {
 	uint64_t reg_val;
 } __packed;
 
+/* Metadata to capture before triggering MPIPL */
+struct mpipl_metadata {
+	/* Crashing PIR is required to create OPAL dump */
+	uint32_t	crashing_pir;
+	/* Kernel expects OPAL to presrve tag and pass it back via OPAL API */
+	uint64_t	kernel_tag;
+	/* Post MPIPL kernel boot memory size */
+	uint64_t	boot_mem_size;
+} __packed;
+
 /* init opal dump */
 extern void opal_mpipl_init(void);
 

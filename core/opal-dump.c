@@ -37,6 +37,8 @@ static struct spira_ntuple *ntuple_mdst;
 static struct spira_ntuple *ntuple_mddt;
 static struct spira_ntuple *ntuple_mdrt;
 
+static struct mpipl_metadata    *mpipl_metadata;
+
 static int opal_mpipl_add_entry(u8 region, u64 src, u64 dest, u64 size)
 {
 	int i, max_cnt;
@@ -133,6 +135,17 @@ void opal_mpipl_init(void)
 	ntuple_mdst = &(spirah.ntuples.mdump_src);
 	ntuple_mddt = &(spirah.ntuples.mdump_dst);
 	ntuple_mdrt = &(spirah.ntuples.mdump_res);
+
+	/* Get metadata area pointer */
+	mpipl_metadata = (void *)(DUMP_METADATA_AREA_BASE);
+
+	/* Clear OPAL metadata area */
+	if (sizeof(struct mpipl_metadata) > DUMP_METADATA_AREA_SIZE) {
+		prlog(PR_ERR, "INSUFFICIENT OPAL METADATA AREA\n");
+		prlog(PR_ERR, "INCREASE OPAL MEDTADATA AREA SIZE\n");
+		assert(false);
+	}
+	memset(mpipl_metadata, 0, sizeof(struct mpipl_metadata));
 
 	/* Clear MDST and MDDT table */
 	memset(mdst_base, 0, MDST_TABLE_SIZE);
