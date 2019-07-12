@@ -181,10 +181,31 @@ __section(".spirah.data") struct spirah spirah = {
 #endif
 		.mdump_src = {
 			.addr		= CPU_TO_BE64(MDST_TABLE_OFF),
-			.alloc_cnt	= CPU_TO_BE16(ARRAY_SIZE(init_mdst_table)),
+			.alloc_cnt	= CPU_TO_BE16(MDST_TABLE_SIZE / sizeof(struct mdst_table)),
 			.act_cnt	= CPU_TO_BE16(ARRAY_SIZE(init_mdst_table)),
-			.alloc_len	=
-				CPU_TO_BE32(sizeof(init_mdst_table)),
+			.alloc_len	= CPU_TO_BE32(sizeof(struct mdst_table)),
+			.act_len	= CPU_TO_BE32(sizeof(struct mdst_table)),
+		},
+		.mdump_dst = {
+			.addr		= CPU_TO_BE64(MDDT_TABLE_OFF),
+			.alloc_cnt	= CPU_TO_BE16(MDDT_TABLE_SIZE / sizeof(struct mddt_table)),
+			.act_cnt	= CPU_TO_BE16(0),
+			.alloc_len	= CPU_TO_BE32(sizeof(struct mddt_table)),
+			.act_len	= CPU_TO_BE32(sizeof(struct mddt_table)),
+		},
+		.mdump_res = {
+			.addr		= CPU_TO_BE64(MDRT_TABLE_BASE),
+			.alloc_cnt	= CPU_TO_BE16(MDRT_TABLE_SIZE / sizeof(struct mdrt_table)),
+			/*
+			 * XXX: Ideally hostboot should use allocated count and
+			 *      length. But looks like hostboot uses actual count
+			 *      and length to get MDRT table size. And post dump
+			 *      hostboot will update act_cnt. Hence update both
+			 *      alloc_cnt and act_cnt.
+			 */
+			.act_cnt        = CPU_TO_BE16(MDRT_TABLE_SIZE / sizeof(struct mdrt_table)),
+			.alloc_len      = CPU_TO_BE32(sizeof(struct mdrt_table)),
+			.act_len        = CPU_TO_BE32(sizeof(struct mdrt_table)),
 		},
 	},
 };
