@@ -100,7 +100,7 @@ static int dump_region_tce_map(void)
 		fsp_tce_map(PSI_DMA_HYP_DUMP + t_size, (void *)addr, size);
 
 		/* Add entry to MDST table */
-		mdst_table[i].type = dump_mem_region[i].type;
+		mdst_table[i].data_region = dump_mem_region[i].data_region;
 		mdst_table[i].size = dump_mem_region[i].size;
 		mdst_table[i].addr = cpu_to_be64(PSI_DMA_HYP_DUMP + t_size);
 
@@ -180,7 +180,7 @@ static int dump_region_del_entry(uint32_t id)
 	lock(&mdst_lock);
 
 	for (i = 0; i < cur_mdst_entry; i++) {
-		if (be32_to_cpu(dump_mem_region[i].type) != id)
+		if (dump_mem_region[i].data_region != id)
 			continue;
 
 		found = true;
@@ -200,7 +200,7 @@ static int dump_region_del_entry(uint32_t id)
 	for ( ; i < cur_mdst_entry - 1; i++)
 		dump_mem_region[i] = dump_mem_region[i + 1];
 
-	dump_mem_region[i].type = 0;
+	dump_mem_region[i].data_region = 0;
 	cur_mdst_entry--;
 
 del_out:
@@ -237,7 +237,7 @@ static int __dump_region_add_entry(uint32_t id, uint64_t addr, uint32_t size)
 	}
 
 	/* Add entry to dump memory region table */
-	dump_mem_region[cur_mdst_entry].type = cpu_to_be32(id);
+	dump_mem_region[cur_mdst_entry].data_region = (u8)cpu_to_be32(id);
 	dump_mem_region[cur_mdst_entry].addr = cpu_to_be64(addr);
 	dump_mem_region[cur_mdst_entry].size = cpu_to_be32(size);
 

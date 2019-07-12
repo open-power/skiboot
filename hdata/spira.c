@@ -86,12 +86,14 @@ extern struct mdst_table init_mdst_table[];
 __section(".mdst.data") struct mdst_table init_mdst_table[2] = {
 	{
 		.addr = CPU_TO_BE64(INMEM_CON_START | HRMOR_BIT),
-		.type = CPU_TO_BE32(DUMP_REGION_CONSOLE),
+		.data_region = DUMP_REGION_CONSOLE,
+		.dump_type = DUMP_TYPE_SYSDUMP,
 		.size = CPU_TO_BE32(INMEM_CON_LEN),
 	},
 	{
 		.addr = CPU_TO_BE64(HBRT_CON_START | HRMOR_BIT),
-		.type = CPU_TO_BE32(DUMP_REGION_HBRT_LOG),
+		.data_region = DUMP_REGION_HBRT_LOG,
+		.dump_type = DUMP_TYPE_SYSDUMP,
 		.size = CPU_TO_BE32(HBRT_CON_LEN),
 	},
 };
