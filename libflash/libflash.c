@@ -500,11 +500,11 @@ static int flash_smart_write(struct blocklevel_device *bl, uint64_t dst, const v
 		/* Figure out which erase page we are in and read it */
 		page = dst & ~c->min_erase_mask;
 		off = dst & c->min_erase_mask;
-		FL_DBG("LIBFLASH:   reading page 0x%08x..0x%08x...",
+		FL_DBG("LIBFLASH:   reading page 0x%08x..0x%08x...\n",
 		       page, page + er_size);
 		rc = flash_read(bl, page, c->smart_buf, er_size);
 		if (rc) {
-			FL_DBG(" error %d!\n", rc);
+			FL_DBG("LIBFLASH:    ...error %d!\n", rc);
 			return rc;
 		}
 
@@ -518,11 +518,11 @@ static int flash_smart_write(struct blocklevel_device *bl, uint64_t dst, const v
 		switch(sr) {
 		case sm_no_change:
 			/* Identical, skip it */
-			FL_DBG(" same !\n");
+			FL_DBG("LIBFLASH:    ...same !\n");
 			break;
 		case sm_need_write:
 			/* Just needs writing over */
-			FL_DBG(" need write !\n");
+			FL_DBG("LIBFLASH:    ...need write !\n");
 			rc = flash_write(bl, dst, src, chunk, true);
 			if (rc) {
 				FL_DBG("LIBFLASH: Write error %d !\n", rc);
@@ -530,7 +530,7 @@ static int flash_smart_write(struct blocklevel_device *bl, uint64_t dst, const v
 			}
 			break;
 		case sm_need_erase:
-			FL_DBG(" need erase !\n");
+			FL_DBG("LIBFLASH:    ...need erase !\n");
 			rc = flash_erase(bl, page, er_size);
 			if (rc) {
 				FL_DBG("LIBFLASH: erase error %d !\n", rc);
