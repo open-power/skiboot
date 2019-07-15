@@ -25,8 +25,8 @@
 #include <libflash/libffs.h>
 #include <libflash/blocklevel.h>
 #include <sfc-ctrl.h>
-#include <ec/config.h>
-#include <ec/gpio.h>
+#include "ec/config.h"
+#include "ec/gpio.h"
 
 /*
  * EC GPIO mapping

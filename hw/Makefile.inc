@@ -13,7 +13,6 @@ HW_OBJS += lpc-port80h.o
 HW=hw/built-in.a
 
 include $(SRC)/hw/fsp/Makefile.inc
-include $(SRC)/hw/ec/Makefile.inc
 include $(SRC)/hw/ast-bmc/Makefile.inc
 include $(SRC)/hw/ipmi/Makefile.inc
 
