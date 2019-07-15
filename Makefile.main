@@ -313,10 +313,10 @@ ALL_OBJS = $(OBJS) version.o
 ALL_OBJS_1 = $(TARGET).tmp.a asm/dummy_map.o
 ALL_OBJS_2 = $(TARGET).tmp.a asm/real_map.o
 
-$(TARGET).lid.xz: $(TARGET).lid
+%.lid.xz: %.lid
 	$(call Q,XZ, cat $^ | xz -9 -C crc32 > $@, $@)
 
-$(TARGET).lid: $(TARGET).elf
+%.lid: %.elf
 	$(call Q,OBJCOPY, $(OBJCOPY) -O binary -S $^ $@, $@)
 
 $(TARGET).lid.stb: $(TARGET).lid libstb/create-container
