@@ -7,7 +7,7 @@ HW_OBJS += phb3.o sfc-ctrl.o fake-rtc.o bt.o p8-i2c.o prd.o
 HW_OBJS += dts.o lpc-rtc.o npu.o npu-hw-procedures.o xive.o phb4.o
 HW_OBJS += fake-nvram.o lpc-mbox.o npu2.o npu2-hw-procedures.o
 HW_OBJS += npu2-common.o npu2-opencapi.o phys-map.o sbe-p9.o capp.o
-HW_OBJS += occ-sensor.o vas.o sbe-p8.o dio-p9.o lpc-port80h.o
+HW_OBJS += occ-sensor.o vas.o sbe-p8.o dio-p9.o lpc-port80h.o cache-p9.o
 HW=hw/built-in.a
 
 include $(SRC)/hw/fsp/Makefile.inc
