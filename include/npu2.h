@@ -243,4 +243,12 @@ int64_t npu2_freeze_status(struct phb *phb __unused,
 			   uint16_t *pci_error_type __unused,
 			   uint16_t *severity __unused);
 void npu2_dump_scoms(int chip_id);
+
+int64_t npu2_init_context(struct phb *phb, uint64_t msr, uint64_t bdf);
+int64_t npu2_destroy_context(struct phb *phb, uint64_t bdf);
+int64_t npu2_map_lpar(struct phb *phb, uint64_t bdf, uint64_t lparid,
+		      uint64_t lpcr);
+int64_t npu2_set_relaxed_order(struct phb *phb, uint32_t gcid, int pec,
+			       bool enable);
+
 #endif /* __NPU2_H */

@@ -1930,16 +1930,11 @@ static int npu_table_search(struct npu2 *p, uint64_t table_addr, int stride,
  * allocated.
  */
 #define NPU2_VALID_ATS_MSR_BITS (MSR_DR | MSR_HV | MSR_PR | MSR_SF)
-static int64_t opal_npu_init_context(uint64_t phb_id, int pasid __unused,
-				     uint64_t msr, uint64_t bdf)
+int64_t npu2_init_context(struct phb *phb, uint64_t msr, uint64_t bdf)
 {
-	struct phb *phb = pci_get_phb(phb_id);
 	struct npu2 *p;
 	uint64_t xts_bdf, old_xts_bdf_pid, xts_bdf_pid;
 	int id;
-
-	if (!phb || phb->phb_type != phb_type_npu_v2)
-		return OPAL_PARAMETER;
 
 	/*
 	 * MSR bits should be masked by the caller to allow for future
@@ -2018,18 +2013,12 @@ out:
 	unlock(&p->lock);
 	return id;
 }
-opal_call(OPAL_NPU_INIT_CONTEXT, opal_npu_init_context, 4);
 
-static int opal_npu_destroy_context(uint64_t phb_id, uint64_t pid __unused,
-				    uint64_t bdf)
+int64_t npu2_destroy_context(struct phb *phb, uint64_t bdf)
 {
-	struct phb *phb = pci_get_phb(phb_id);
 	struct npu2 *p;
 	uint64_t xts_bdf;
 	int rc = OPAL_PARAMETER, id;
-
-	if (!phb || phb->phb_type != phb_type_npu_v2)
-		return OPAL_PARAMETER;
 
 	p = phb_to_npu2_nvlink(phb);
 	lock(&p->lock);
@@ -2059,15 +2048,13 @@ static int opal_npu_destroy_context(uint64_t phb_id, uint64_t pid __unused,
 	unlock(&p->lock);
 	return rc;
 }
-opal_call(OPAL_NPU_DESTROY_CONTEXT, opal_npu_destroy_context, 3);
 
 /*
  * Map the given virtual bdf to lparid with given lpcr.
  */
-static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
-			     uint64_t lpcr)
+int64_t npu2_map_lpar(struct phb *phb, uint64_t bdf, uint64_t lparid,
+		      uint64_t lpcr)
 {
-	struct phb *phb = pci_get_phb(phb_id);
 	struct npu2 *p;
 	struct npu2_dev *ndev = NULL;
 	uint64_t xts_bdf_lpar, atsd_lpar, rc = OPAL_SUCCESS;
@@ -2079,9 +2066,6 @@ static int opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 		NPU2_XTS_MMIO_ATSD4_LPARID, NPU2_XTS_MMIO_ATSD5_LPARID,
 		NPU2_XTS_MMIO_ATSD6_LPARID, NPU2_XTS_MMIO_ATSD7_LPARID
 	};
-
-	if (!phb || phb->phb_type != phb_type_npu_v2)
-		return OPAL_PARAMETER;
 
 	if (lpcr)
 		/* The LPCR bits are only required for hash based ATS,
@@ -2165,7 +2149,6 @@ out:
 	unlock(&p->lock);
 	return rc;
 }
-opal_call(OPAL_NPU_MAP_LPAR, opal_npu_map_lpar, 4);
 
 static inline uint32_t npu2_relaxed_ordering_source_grpchp(uint32_t gcid)
 {
@@ -2311,123 +2294,25 @@ static void npu2_disable_relaxed_ordering(struct npu2_dev *ndev, uint32_t gcid,
  * relaxed ordering partially enabled if there are insufficient HW resources to
  * enable it on all links.
  */
-static int npu2_set_relaxed_ordering(uint32_t gcid, int pec, bool enable)
+int64_t npu2_set_relaxed_order(struct phb *phb, uint32_t gcid, int pec,
+			       bool enable)
 {
-	int rc = OPAL_SUCCESS;
-	struct phb *phb;
-	struct npu2 *npu;
+	struct npu2 *npu = phb_to_npu2_nvlink(phb);
 	struct npu2_dev *ndev;
+	int64_t rc = OPAL_SUCCESS;
 
-	for_each_phb(phb) {
-		if (phb->phb_type != phb_type_npu_v2)
-			continue;
+	for (int i = 0; i < npu->total_devices; i++) {
+		ndev = &npu->devices[i];
+		if (enable)
+			rc = npu2_enable_relaxed_ordering(ndev, gcid, pec);
+		else
+			npu2_disable_relaxed_ordering(ndev, gcid, pec);
 
-		npu = phb_to_npu2_nvlink(phb);
-		for (int i = 0; i < npu->total_devices; i++) {
-			ndev = &npu->devices[i];
-			if (enable)
-				rc = npu2_enable_relaxed_ordering(ndev, gcid, pec);
-			else
-				npu2_disable_relaxed_ordering(ndev, gcid, pec);
-
-			if (rc != OPAL_SUCCESS) {
-				NPU2DEVINF(ndev, "Insufficient resources to activate relaxed ordering mode\n");
-				return OPAL_RESOURCE;
-			}
+		if (rc != OPAL_SUCCESS) {
+			NPU2DEVINF(ndev, "Insufficient resources to activate relaxed ordering mode\n");
+			return OPAL_RESOURCE;
 		}
 	}
 
 	return OPAL_SUCCESS;
 }
-
-static int npu2_check_relaxed_ordering(struct phb *phb __unused,
-				       struct pci_device *pd, void *enable)
-{
-	/*
-	 * IBM PCIe bridge devices (ie. the root ports) can always allow relaxed
-	 * ordering
-	 */
-	if (pd->vdid == 0x04c11014)
-		pd->allow_relaxed_ordering = true;
-
-	PCIDBG(phb, pd->bdfn, "Checking relaxed ordering config\n");
-	if (pd->allow_relaxed_ordering)
-		return 0;
-
-	PCIDBG(phb, pd->bdfn, "Relaxed ordering not allowed\n");
-	*(bool *) enable = false;
-
-	return 1;
-}
-
-static int64_t opal_npu_set_relaxed_order(uint64_t phb_id, uint16_t bdfn,
-					  bool request_enabled)
-{
-	struct phb *phb = pci_get_phb(phb_id);
-	struct phb4 *phb4;
-	uint32_t chip_id, pec;
-	struct pci_device *pd;
-	bool enable = true;
-
-	if (!phb || phb->phb_type != phb_type_pcie_v4)
-		return OPAL_PARAMETER;
-
-	phb4 = phb_to_phb4(phb);
-	pec = phb4->pec;
-	chip_id = phb4->chip_id;
-
-	if (npu2_relaxed_ordering_source_grpchp(chip_id) == OPAL_PARAMETER)
-		return OPAL_PARAMETER;
-
-	pd = pci_find_dev(phb, bdfn);
-	if (!pd)
-		return OPAL_PARAMETER;
-
-	/*
-	 * Not changing state, so no need to rescan PHB devices to determine if
-	 * we need to enable/disable it
-	 */
-	if (pd->allow_relaxed_ordering == request_enabled)
-		return OPAL_SUCCESS;
-
-	pd->allow_relaxed_ordering = request_enabled;
-
-	/*
-	 * Walk all devices on this PHB to ensure they all support relaxed
-	 * ordering
-	 */
-	pci_walk_dev(phb, NULL, npu2_check_relaxed_ordering, &enable);
-
-	if (request_enabled && !enable) {
-		/*
-		 * Not all devices on this PHB support relaxed-ordering
-		 * mode so we can't enable it as requested
-		 */
-		prlog(PR_INFO, "Cannot set relaxed ordering for PEC %d on chip %d\n",
-		      pec, chip_id);
-		return OPAL_CONSTRAINED;
-	}
-
-	if (npu2_set_relaxed_ordering(chip_id, pec, request_enabled) != OPAL_SUCCESS) {
-		npu2_set_relaxed_ordering(chip_id, pec, false);
-		return OPAL_RESOURCE;
-	}
-
-	phb4->ro_state = request_enabled;
-	return OPAL_SUCCESS;
-}
-opal_call(OPAL_NPU_SET_RELAXED_ORDER, opal_npu_set_relaxed_order, 3);
-
-static int64_t opal_npu_get_relaxed_order(uint64_t phb_id,
-					  uint16_t bdfn __unused)
-{
-	struct phb *phb = pci_get_phb(phb_id);
-	struct phb4 *phb4;
-
-	if (!phb || phb->phb_type != phb_type_pcie_v4)
-		return OPAL_PARAMETER;
-
-	phb4 = phb_to_phb4(phb);
-	return phb4->ro_state;
-}
-opal_call(OPAL_NPU_GET_RELAXED_ORDER, opal_npu_get_relaxed_order, 2);
