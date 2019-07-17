@@ -982,7 +982,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	opal_table_init();
 
 	/* Init the physical map table so we can start mapping things */
-	phys_map_init();
+	phys_map_init(mfspr(SPR_PVR));
 
 	/*
 	 * If we are coming in with a flat device-tree, we expand it

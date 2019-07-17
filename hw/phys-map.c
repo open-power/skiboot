@@ -191,7 +191,7 @@ error:
 	assert(0);
 }
 
-void phys_map_init(void)
+void phys_map_init(unsigned long pvr __unused)
 {
 	const char *name = "unused";
 

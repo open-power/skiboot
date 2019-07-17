@@ -344,7 +344,7 @@ int main(int argc, char *argv[])
 		     "Pipe to 'dtc -I dtb -O dts' for human readable output\n");
 	}
 
-	phys_map_init();
+	phys_map_init(fake_pvr);
 
 	/* Copy in spira dump (assumes little has changed!). */
 	if (new_spira) {

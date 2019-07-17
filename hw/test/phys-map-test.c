@@ -163,15 +163,23 @@ static void check_map_call(void)
 	free(tbl);
 }
 
+/* Fake PVR definitions. See include/processor.h */
+unsigned long fake_pvr[] = {
+	0x004e0200,	/* PVR_P9 */
+};
+
 int main(void)
 {
 	/* Fake we are POWER9 */
 	proc_gen = proc_gen_p9;
-	phys_map_init();
 
-	/* Run tests */
-	check_table_directly();
-	check_map_call();
+	for (int i = 0; i < ARRAY_SIZE(fake_pvr); i++) {
+		phys_map_init(fake_pvr[i]);
+
+		/* Run tests */
+		check_table_directly();
+		check_map_call();
+	}
 
 	return(0);
 }
