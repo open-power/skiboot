@@ -39,6 +39,8 @@ enum phys_map_type {
 	PSIHB_ESB,
 	NX_RNG,
 	CENTAUR_SCOM,
+	MC_OCMB_CFG,
+	MC_OCMB_MMIO,
 	XSCOM,
 	RESV
 };

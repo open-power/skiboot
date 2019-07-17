@@ -166,6 +166,7 @@ static void check_map_call(void)
 /* Fake PVR definitions. See include/processor.h */
 unsigned long fake_pvr[] = {
 	0x004e0200,	/* PVR_P9 */
+	0x004f0100,	/* PVR_P9P */
 };
 
 int main(void)
