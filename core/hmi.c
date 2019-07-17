@@ -627,6 +627,10 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 	int total_errors = 0;
 	const char *loc;
 
+	/* NPU2 only */
+	if (PVR_TYPE(mfspr(SPR_PVR)) != PVR_TYPE_P9)
+		return;
+
 	/* Find the NPU on the chip associated with the HMI. */
 	for_each_phb(phb) {
 		/* NOTE: if a chip ever has >1 NPU this will need adjusting */

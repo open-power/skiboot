@@ -641,6 +641,10 @@ void probe_npu2(void)
 	struct dt_node *np;
 	const char *zcal;
 
+	/* npu2 only */
+	if (!dt_find_compatible_node(dt_root, NULL, "ibm,power9-npu"))
+		return;
+
 	/* Abort if we're running on POWER9C DD1 (P9N DD1 is not supported) */
 	if (chip &&
 	    chip->type == PROC_CHIP_P9_CUMULUS &&

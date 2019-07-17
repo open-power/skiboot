@@ -1507,7 +1507,8 @@ static void add_npus(void)
 	int phb_index = 7; /* Start counting from 7, for no reason */
 	int npu_index = 0;
 
-	if (proc_gen < proc_gen_p9)
+	/* Only consult HDAT for npu2 */
+	if (cpu_type != PVR_TYPE_P9)
 		return;
 
 	dt_for_each_compatible(dt_root, xscom, "ibm,xscom") {
@@ -1634,8 +1635,7 @@ int parse_hdat(bool is_opal)
 	io_parse();
 
 	/* Add NPU nodes */
-	if (proc_gen >= proc_gen_p9)
-		add_npus();
+	add_npus();
 
 	/* Parse VPD */
 	vpd_parse();
