@@ -21,7 +21,7 @@ endif
 
 all: getscom putscom getsram
 
-getscom: getscom.c xscom.o version.o
+getscom: getscom.o xscom.o version.o
 	$(Q_LINK)$(LINK.o) -o $@ $^
 
 getsram: getsram.o xscom.o sram.o version.o
