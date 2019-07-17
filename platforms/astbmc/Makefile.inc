@@ -6,7 +6,7 @@ ASTBMC_OBJS = pnor.o common.o slots.o \
 	      garrison.o barreleye.o \
 	      witherspoon.o zaius.o romulus.o p9dsu.o \
 	      vesnin.o nicole.o mihawk.o\
-	      talos.o
+	      talos.o swift.o
 
 ASTBMC = $(PLATDIR)/astbmc/built-in.a
 $(ASTBMC): $(ASTBMC_OBJS:%=$(PLATDIR)/astbmc/%)
