@@ -10,6 +10,7 @@ struct pci_device;
 struct pci_slot;
 struct errorlog;
 struct npu2;
+struct npu3;
 
 enum resource_id {
 	RESOURCE_ID_KERNEL,
@@ -115,8 +116,9 @@ struct platform {
 	/* OpenCAPI platform-specific I2C information */
 	const struct platform_ocapi *ocapi;
 
-	/* NPU2 device detection */
+	/* NPU device detection */
 	void		(*npu2_device_detect)(struct npu2 *npu);
+	void		(*npu3_device_detect)(struct npu3 *npu);
 
 	/*
 	 * Probe platform, return true on a match, called before

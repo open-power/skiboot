@@ -18,16 +18,23 @@
 #include <pci.h>
 #include <phb4.h>
 #include <npu2.h>
+#include <npu3.h>
 
 static int64_t opal_npu_init_context(uint64_t phb_id, int pid __unused,
 				     uint64_t msr, uint64_t bdf)
 {
 	struct phb *phb = pci_get_phb(phb_id);
 
-	if (!phb || phb->phb_type != phb_type_npu_v2)
+	if (!phb)
 		return OPAL_PARAMETER;
 
-	return npu2_init_context(phb, msr, bdf);
+	if (phb->phb_type == phb_type_npu_v2)
+		return npu2_init_context(phb, msr, bdf);
+
+	if (phb->phb_type == phb_type_npu_v3)
+		return npu3_init_context(phb, msr, bdf);
+
+	return OPAL_PARAMETER;
 }
 opal_call(OPAL_NPU_INIT_CONTEXT, opal_npu_init_context, 4);
 
@@ -36,10 +43,16 @@ static int64_t opal_npu_destroy_context(uint64_t phb_id, uint64_t pid __unused,
 {
 	struct phb *phb = pci_get_phb(phb_id);
 
-	if (!phb || phb->phb_type != phb_type_npu_v2)
+	if (!phb)
 		return OPAL_PARAMETER;
 
-	return npu2_destroy_context(phb, bdf);
+	if (phb->phb_type == phb_type_npu_v2)
+		return npu2_destroy_context(phb, bdf);
+
+	if (phb->phb_type == phb_type_npu_v3)
+		return npu3_destroy_context(phb, bdf);
+
+	return OPAL_PARAMETER;
 }
 opal_call(OPAL_NPU_DESTROY_CONTEXT, opal_npu_destroy_context, 3);
 
@@ -48,10 +61,16 @@ static int64_t opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
 {
 	struct phb *phb = pci_get_phb(phb_id);
 
-	if (!phb || phb->phb_type != phb_type_npu_v2)
+	if (!phb)
 		return OPAL_PARAMETER;
 
-	return npu2_map_lpar(phb, bdf, lparid, lpcr);
+	if (phb->phb_type == phb_type_npu_v2)
+		return npu2_map_lpar(phb, bdf, lparid, lpcr);
+
+	if (phb->phb_type == phb_type_npu_v3)
+		return npu3_map_lpar(phb, bdf, lparid, lpcr);
+
+	return OPAL_PARAMETER;
 }
 opal_call(OPAL_NPU_MAP_LPAR, opal_npu_map_lpar, 4);
 
@@ -81,10 +100,13 @@ static int64_t npu_set_relaxed_order(uint32_t gcid, int pec, bool enable)
 	int64_t rc;
 
 	for_each_phb(phb) {
-		if (phb->phb_type != phb_type_npu_v2)
+		if (phb->phb_type == phb_type_npu_v2)
+			rc = npu2_set_relaxed_order(phb, gcid, pec, enable);
+		else if (phb->phb_type == phb_type_npu_v3)
+			rc = npu3_set_relaxed_order(phb, gcid, pec, enable);
+		else
 			continue;
 
-		rc = npu2_set_relaxed_order(phb, gcid, pec, enable);
 		if (rc)
 			return rc;
 	}

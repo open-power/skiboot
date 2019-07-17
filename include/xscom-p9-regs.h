@@ -87,4 +87,23 @@
 #define EC_PPM_SPECIAL_WKUP_OCC		0x010C
 #define EC_PPM_SPECIAL_WKUP_HYP		0x010D
 
+#define OB_BASE(ob)				(((ob) + 9) << 24)
+#define OB_CPLT_CONF1(ob)			(OB_BASE(ob) + 0x9)
+#define   OB_CPLT_CONF1_NV_IOVALID(brk)		PPC_BIT(6 + (brk))
+#define OB_INDIRECT(ob)				((OB_BASE(ob) + 0x10c3f) | PPC_BIT(0))
+
+/* PPE SRAM: Indirect address/data port */
+#define OB_PPE_CSAR(ob)				(OB_BASE(ob) + 0x1104d)
+#define   OB_PPE_CSAR_SRAM_ADDR			PPC_BITMASK(16, 28)
+#define OB_PPE_CSDR(ob)				(OB_BASE(ob) + 0x1104e)
+
+/* PPE SRAM: Indirect registers */
+#define OB_PPE_SALT_CMD				0x1fe6
+#define   OB_PPE_SALT_CMD_READY			PPC_BIT(0)
+#define   OB_PPE_SALT_CMD_RW			PPC_BIT(1)
+#define   OB_PPE_SALT_CMD_ERR			PPC_BIT(2)
+#define   OB_PPE_SALT_CMD_LINKNUM		PPC_BITMASK(15, 18)
+#define   OB_PPE_SALT_CMD_REG			PPC_BITMASK(19, 31)
+#define   OB_PPE_SALT_CMD_DATA			PPC_BITMASK(32, 63)
+
 #endif /* __XSCOM_P9_REGS_H__ */
