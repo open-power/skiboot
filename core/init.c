@@ -918,7 +918,7 @@ bool verify_romem(void)
 }
 
 /* Called from head.S, thus no prototype. */
-void main_cpu_entry(const void *fdt);
+void __noreturn __nomcount  main_cpu_entry(const void *fdt);
 
 void __noreturn __nomcount main_cpu_entry(const void *fdt)
 {
@@ -1309,7 +1309,7 @@ void __noreturn __secondary_cpu_entry(void)
 }
 
 /* Called from head.S, thus no prototype. */
-void secondary_cpu_entry(void);
+void __noreturn __nomcount secondary_cpu_entry(void);
 
 void __noreturn __nomcount secondary_cpu_entry(void)
 {
