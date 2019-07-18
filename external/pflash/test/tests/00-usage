@@ -1,4 +1,5 @@
 #! /bin/sh
+# SPDX-License-Identifier: Apache-2.0
 
 run_binary "./pflash" "-h"
 if [ "$?" -ne 0 ] ; then

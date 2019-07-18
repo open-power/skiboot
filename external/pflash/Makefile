@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 include rules.mk
 GET_ARCH := ../../external/common/get_arch.sh
 include ../../external/common/rules.mk

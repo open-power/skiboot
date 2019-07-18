@@ -1,9 +1,9 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
 #
 # Script to build all pflash backends
 #
 # Copyright 2015 IBM Corp.
-# Licensed under the Apache License, Version 2.0
 #
 # pflash has three different backends that are used on powerpc, arm (BMC) and
 # x86 (file-backed). In order to test for regressions when touching shared code

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+/* Copyright 2017 IBM Corp. */
+
 #include <stdint.h>
 
 uint32_t mbox_server_total_size(void);

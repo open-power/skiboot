@@ -1,3 +1,14 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * run something, but later.
+ *
+ * Timers are run when the SBE timer interrupt triggers (based on us setting
+ * it) or when the regular heartbeat call from the OS occurs and there's a
+ * timer that's expired.
+ *
+ * Copyright 2014-2019 IBM Corp.
+ */
+
 #include <timer.h>
 #include <timebase.h>
 #include <lock.h>

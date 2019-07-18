@@ -1,4 +1,9 @@
-/* For CCAN */
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * For CCAN
+ *
+ * Copyright 2016 IBM Corp.
+ */
 
 #include <endian.h>
 #include <byteswap.h>

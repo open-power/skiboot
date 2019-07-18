@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# scripts to run skiboot (and a payload) with Mambo (otherwise known as the
+# POWER[89] Functional Simulator)
+#
+# Copyright 2014-2019 IBM Corp.
+
 # need to get images path defined early
 source $env(LIB_DIR)/ppc/util.tcl
 if { [file exists qtrace_utils.tcl] } then {

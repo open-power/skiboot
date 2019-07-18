@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 all: memboot
 
 CFLAGS=-O2 -Wall

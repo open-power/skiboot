@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * Copyright 2013-2019 IBM Corp.
+ */
+
 #ifndef __XSCOM_P8_REGS_H__
 #define __XSCOM_P8_REGS_H__
 

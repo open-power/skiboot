@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 if { [file exists $env(LIB_DIR)/perf/qtrace.tcl] == 1} {
     if { [catch {source $env(LIB_DIR)/perf/qtrace.tcl} issue ] } {
         puts "QTrace not available: $issue"

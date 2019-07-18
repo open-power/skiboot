@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Copyright 2019 IBM Corp.
+
 DTC=dtc
 OUT=p9-simics.dtb
 

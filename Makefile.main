@@ -1,6 +1,8 @@
-# -*-Makefile-*-
+# SPDX-License-Identifier: Apache-2.0
 #
 # This is the main Makefile
+#
+# Copyright 2013-2019 IBM Corp
 
 # Target tools
 CC=$(CROSS)gcc$(POSTFIX)

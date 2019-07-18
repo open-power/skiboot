@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 SUBDIRS += hw/ast-bmc
 
 AST_BMC_OBJS  = ast-io.o ast-sf-ctrl.o

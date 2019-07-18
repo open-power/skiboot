@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+/* Copyright 2018-2019 IBM Corp. */
+
 #include <assert.h>
 #include <ccan/container_of/container_of.h>
 #include <libflash/blocklevel.h>

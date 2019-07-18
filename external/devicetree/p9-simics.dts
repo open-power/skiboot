@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * POWER9 Simics Device Tree
+ */
+
 /include/ "p9.dts"
 
 / {

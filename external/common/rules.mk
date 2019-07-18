@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 CC ?= $(CROSS_COMPILE)gcc
 LD ?= $(CROSS_COMPILE)ld
 ARCH := $(shell $(GET_ARCH) "$(CROSS_COMPILE)")

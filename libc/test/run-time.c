@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * Copyright 2014-2015 IBM Corp.
+ */
 #include "/usr/include/assert.h"
 #include <stdio.h>
 #include <libc/include/time.h>

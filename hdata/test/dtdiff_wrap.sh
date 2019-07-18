@@ -1,8 +1,11 @@
 #!/bin/bash
-
+# SPDX-License-Identifier: Apache-2.0
+#
 # Takes /dev/stdin as dtb, saves to file, does dtdiff
 # Also runs parameter through a dts->dtb->dts conversion
 # in order to work around dtc bugs.
+#
+# Copyright 2018 IBM Corp.
 
 T=$(mktemp)
 cp /dev/stdin $T.dtb

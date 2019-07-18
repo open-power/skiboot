@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 CFLAGS=-O2 -m64 -pthread -Werror -Wall
 
 CC=$(CROSS)gcc

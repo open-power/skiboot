@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * Copyright 2014-2017 IBM Corp.
+ */
+
 #ifndef __PROGRESS_H
 #define __PROGRESS_H
 

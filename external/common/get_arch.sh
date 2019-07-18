@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+
 echo "#if defined(__powerpc__)
 echo -n ARCH_POWERPC
 #elif defined(__x86_64__) || defined(__i386__)

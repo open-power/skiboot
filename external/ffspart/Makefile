@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 # Use make V=1 for a verbose build.
 include rules.mk
 GET_ARCH = ../../external/common/get_arch.sh

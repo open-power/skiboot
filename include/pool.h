@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+/* Copyright 2014 IBM Corp. */
+
 #ifndef __POOL_H
 #define __POOL_H
 

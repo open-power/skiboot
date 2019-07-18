@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * Platform Error Log (PEL) generation
+ *
+ * Copyright 2014-2016 IBM Corp
+ */
+
 #include <string.h>
 #include <errorlog.h>
 #include <device.h>

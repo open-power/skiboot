@@ -1,5 +1,4 @@
-#include "gard.h"
-
+// SPDX-License-Identifier: Apache-2.0
 /*
  * Each chip has a set of "units" that are detailed by the System MRW. Granted
  * they're pretty much fixed for a given chip generation so hardcoding them here
@@ -8,8 +7,11 @@
  * These tables we generated from obj/genfiles/errl/errludtarget.H. Which is
  * generated as a part of the hostboot build process. Yeah that's about as
  * dumb as it sounds, but whatever.
+ *
+ * Copyright 2017 IBM Corp
  */
 
+#include "gard.h"
 
 /*
  * Notes:

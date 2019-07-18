@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 # This tool is a linux userland tool and should be completely stand alone
 include rules.mk
 GET_ARCH = ../../external/common/get_arch.sh

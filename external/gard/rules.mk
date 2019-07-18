@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 .DEFAULT_GOAL := all
 
 override CFLAGS += -O2 -Wall -Werror -Wno-stringop-truncation -I.
