@@ -720,7 +720,7 @@ static void io_parse_slots(const struct HDIF_common_hdr *sp_iohubs, int hub_id)
 	const struct slot_map_entry *entry;
 	unsigned int i, count;
 
-	if (sp_iohubs->child_count <= CECHUB_CHILD_IOSLOTS)
+	if (be16_to_cpu(sp_iohubs->child_count) <= CECHUB_CHILD_IOSLOTS)
 		return;
 
 	ioslot_arr = HDIF_child_arr(sp_iohubs, CECHUB_CHILD_IOSLOTS);
