@@ -269,7 +269,7 @@ static void add_uart(const struct spss_iopath *iopath, struct dt_node *lpc)
 	dt_add_property_cells(serial, "clock-frequency",
 		be32_to_cpu(iopath->lpc.uart_clk));
 	dt_add_property_cells(serial, "interrupts",
-		be32_to_cpu(iopath->lpc.uart_int_number));
+			      iopath->lpc.uart_int_number);
 	dt_add_property_string(serial, "device_type", "serial");
 
 
