@@ -39,6 +39,8 @@
 
 static int cpu_type;
 
+extern struct proc_init_data proc_init_data;
+
 __section(".procin.data") struct proc_init_data proc_init_data = {
 	.hdr = HDIF_SIMPLE_HDR("PROCIN", 1, struct proc_init_data),
 	.regs_ptr = HDIF_IDATA_PTR(offsetof(struct proc_init_data, regs), 0x10),
@@ -48,11 +50,14 @@ __section(".procin.data") struct proc_init_data proc_init_data = {
 	},
 };
 
+extern struct sp_addr_table cpu_ctl_spat_area;
 __section(".cpuctrl.data") struct sp_addr_table cpu_ctl_spat_area;
 __section(".cpuctrl.data") struct sp_attn_area cpu_ctl_sp_attn_area1;
 __section(".cpuctrl.data") struct sp_attn_area cpu_ctl_sp_attn_area2;
+extern struct hsr_data_area cpu_ctl_hsr_area;
 __section(".cpuctrl.data") struct hsr_data_area cpu_ctl_hsr_area;
 
+extern struct cpu_ctl_init_data cpu_ctl_init_data;
 __section(".cpuctrl.data") struct cpu_ctl_init_data cpu_ctl_init_data = {
 	.hdr = HDIF_SIMPLE_HDR(CPU_CTL_HDIF_SIG, 2, struct cpu_ctl_init_data),
 	.cpu_ctl = HDIF_IDATA_PTR(offsetof(struct cpu_ctl_init_data, cpu_ctl_lt), sizeof(struct cpu_ctl_legacy_table)),
@@ -88,6 +93,8 @@ __section(".cpuctrl.data") struct cpu_ctl_init_data cpu_ctl_init_data = {
  * To help the FSP distinguishing between TCE tokens and actual physical
  * addresses, we set the top bit to 1 on physical addresses
  */
+
+extern struct dump_mdst_table init_mdst_table[];
 
 __section(".mdst.data") struct dump_mdst_table init_mdst_table[2] = {
 	{
