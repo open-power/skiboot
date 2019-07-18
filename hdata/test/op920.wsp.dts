@@ -8,7 +8,7 @@
 	ibm,io-base-loc-code = "UOPWR.7887E6A-Node0";
 	nest-frequency = <0x0 0x77359400>;
 	vendor = "IBM";
-	ibm,sw-checkstop-fir = <0x5012000 0x1f000000>;
+	ibm,sw-checkstop-fir = <0x5012000 0x1f>;
 	model = "8335-GTH";
 	system-id = "7887E6A";
 	model-name = "ibm,witherspoon";

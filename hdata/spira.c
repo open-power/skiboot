@@ -619,13 +619,13 @@ static bool add_xscom_sppcrd(uint64_t xscom_base)
 		if ((csize >= (offsetof(struct sppcrd_chip_info,
 					sw_xstop_fir_bitpos) + 1)) &&
 						cinfo->sw_xstop_fir_scom) {
-			__be32 fir_bit = cinfo->sw_xstop_fir_bitpos;
+			uint8_t fir_bit = cinfo->sw_xstop_fir_bitpos;
 
 			if (!dt_find_property(dt_root, "ibm,sw-checkstop-fir"))
 				dt_add_property_cells(dt_root,
 					"ibm,sw-checkstop-fir",
 					be32_to_cpu(cinfo->sw_xstop_fir_scom),
-					be32_to_cpu(fir_bit));
+					fir_bit);
 		}
 	}
 
