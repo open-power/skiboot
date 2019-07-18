@@ -35,7 +35,7 @@ uint32_t stb_payload_magic(const void *buf, size_t size)
 	if (!stb_is_container(buf, size))
 		return 0;
 	p = (uint8_t*) buf;
-	return be32_to_cpu(*(uint32_t*)(p+SECURE_BOOT_HEADERS_SIZE));
+	return be32_to_cpu(*(be32*)(p+SECURE_BOOT_HEADERS_SIZE));
 }
 
 uint64_t stb_sw_payload_size(const void *buf, size_t size)
