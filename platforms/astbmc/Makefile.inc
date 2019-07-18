@@ -5,7 +5,7 @@ ASTBMC_OBJS = pnor.o common.o slots.o \
 	      p8dtu.o p8dnu.o \
 	      garrison.o barreleye.o \
 	      witherspoon.o zaius.o romulus.o p9dsu.o \
-	      vesnin.o nicole.o \
+	      vesnin.o nicole.o mihawk.o\
 	      talos.o
 
 ASTBMC = $(PLATDIR)/astbmc/built-in.a
