@@ -303,6 +303,7 @@ version.c: $(SRC)/make_version.sh $(OBJS_NO_VER) .version
 	@(if [ "a$(VERSION)" = "a" ]; then \
 		echo "#error You need to set SKIBOOT_VERSION environment variable" > $@ ;\
         else \
+		echo "extern const char version[];"; \
                 echo "const char version[] = \"$(VERSION)\";" ;\
         fi) > $@
 

@@ -57,6 +57,7 @@
 enum proc_gen proc_gen;
 unsigned int pcie_max_link_speed;
 bool verbose_eeh;
+extern const char version[];
 
 static uint64_t kernel_entry;
 static size_t kernel_size;
