@@ -617,7 +617,7 @@ void uart_init(void)
 	const struct dt_property *prop;
 	struct dt_node *n;
 	char *path __unused;
-	const uint32_t *irqp;
+	const be32 *irqp;
 
 	/* Clean up after early_uart_init() */
 	mmio_uart_base = NULL;
