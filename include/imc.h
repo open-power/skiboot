@@ -97,12 +97,12 @@
  */
 struct imc_chip_cb
 {
-	u64 imc_chip_run_status;
-	u64 imc_chip_command;
-	u64 imc_chip_collection_speed;
-	u64 imc_chip_avl_vector;
-	u64 imc_chip_run_mode;
-};
+	be64 imc_chip_run_status;
+	be64 imc_chip_command;
+	be64 imc_chip_collection_speed;
+	be64 imc_chip_avl_vector;
+	be64 imc_chip_run_mode;
+} __packed;
 
 /* Size of IMC dtb LID (256KBytes) */
 #define MAX_DECOMPRESSED_IMC_DTB_SIZE		0x40000
