@@ -12,5 +12,5 @@ proc console_trigger {response args} {
 mysim trigger set console "Welcome to Petitboot" { console_trigger "x" }
 mysim trigger set console "# "  { console_trigger "halt\n" }
 mysim go
-mysim memory fwrite 0x30000000 0x300000 $env(SKIBOOT_MEM_DUMP)
+mysim memory fwrite 0x30000000 0x500000 $env(SKIBOOT_MEM_DUMP)
 exit
