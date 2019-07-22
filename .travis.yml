@@ -27,8 +27,6 @@ matrix:
   allow_failures:
     - env: RUN_ON_CONTAINER=fedora-rawhide
     - env: RUN_ON_CONTAINER=debian-unstable
-    - os: linux-ppc64le
-      env: RUN_ON_CONTAINER=fedora30
   exclude:
     - os: linux-ppc64le
       env: RUN_ON_CONTAINER=centos7
