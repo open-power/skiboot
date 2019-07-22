@@ -12,7 +12,6 @@ env:
     - RUN_ON_CONTAINER=ubuntu-18.04
     - RUN_ON_CONTAINER=ubuntu-latest
     - RUN_ON_CONTAINER=centos7
-    - RUN_ON_CONTAINER=fedora29
     - RUN_ON_CONTAINER=fedora30
     - RUN_ON_CONTAINER=fedora-rawhide
     - RUN_ON_CONTAINER=debian-stretch

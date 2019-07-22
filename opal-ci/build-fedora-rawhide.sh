@@ -1,1 +1,1 @@
-build-fedora29.sh
+build-fedora30.sh
