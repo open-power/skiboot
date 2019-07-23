@@ -106,7 +106,7 @@ struct __attribute__((__packed__))elog_user_data_section {
  * needs to populate this structure using pre-defined interfaces
  * only
  */
-struct __attribute__((__packed__)) errorlog {
+struct __attribute__((__packed__)) __attribute__ ((aligned (8))) errorlog {
 
 	uint16_t component_id;
 	uint8_t error_event_type;
