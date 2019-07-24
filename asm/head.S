@@ -226,10 +226,12 @@ _exception:
 	stw	%r4,STACK_XER(%r1)
 	std	%r5,STACK_CTR(%r1)
 	std	%r6,STACK_LR(%r1)
-	mr	%r3,%r1
 	LOAD_IMM64(%r4, SKIBOOT_BASE)
-	LOAD_IMM32(%r5, exception_entry_foo - __head)
-	add	%r4,%r4,%r5
+	LOAD_IMM32(%r5,__toc_start - __head)
+	LOAD_IMM32(%r6, exception_entry_foo - __head)
+	add	%r2,%r4,%r5
+	mr	%r3,%r1
+	add	%r4,%r4,%r6
 	mtctr	%r4
 	bctr
 exception_entry_foo:
