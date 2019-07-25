@@ -32,7 +32,6 @@ CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 	  -Wmissing-prototypes -Wmissing-declarations \
 	  -Wwrite-strings -Wcast-align \
 	  -Winit-self \
-	  $(call try-cflag,$(CC),--Wno-stringop-truncation) \
 	  -Werror
 
 # Host tools and options
