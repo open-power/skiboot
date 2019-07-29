@@ -127,6 +127,7 @@ static void cvc_service_register(uint32_t id, uint32_t offset, uint32_t version)
 static int cvc_reserved_mem_init(struct dt_node *parent) {
 	struct dt_node *node, *service;
 	struct dt_node *reserved_mem;
+	struct dt_node *exports;
 	uint32_t phandle;
 	uint64_t addr, size;
 
@@ -156,6 +157,13 @@ static int cvc_reserved_mem_init(struct dt_node *parent) {
 	addr = dt_get_address(cvc_resv_mem, 0, &size);
 	cvc_register(addr, addr + size-1);
 
+	exports = dt_find_by_path(dt_root, "/ibm,opal/firmware/exports");
+	if (!exports) {
+		prerror("OCC: dt node /ibm,opal/firmware/exports not found\n");
+		return false;
+	}
+	dt_add_property_u64s(exports, "cvc", addr, size - 1);
+
 	/*
 	 *  Each child of the CVC node describes a CVC service
 	 */
@@ -184,8 +192,9 @@ static int cvc_reserved_mem_init(struct dt_node *parent) {
 
 static int cvc_secure_rom_init(void) {
 	const uint32_t reg_addr = SECURE_ROM_XSCOM_ADDRESS;
-	uint64_t reg_data;
+	struct dt_node *exports;
 	struct proc_chip *chip;
+	uint64_t reg_data;
 
 	if (!secure_rom_mem) {
 		secure_rom_mem = malloc(SECURE_ROM_MEMORY_SIZE);
@@ -203,6 +212,16 @@ static int cvc_secure_rom_init(void) {
 		       SECURE_ROM_MEMORY_SIZE);
 	cvc_register((uint64_t)secure_rom_mem,
 		     (uint64_t)secure_rom_mem + SECURE_ROM_MEMORY_SIZE-1);
+
+	exports = dt_find_by_path(dt_root, "/ibm,opal/firmware/exports");
+	if (!exports) {
+		prerror("OCC: dt node /ibm,opal/firmware/exports not found\n");
+		return false;
+	}
+
+	dt_add_property_u64s(exports, "securerom", (uint64_t)secure_rom_mem,
+			     SECURE_ROM_MEMORY_SIZE-1);
+
 	cvc_service_register(CVC_SHA512_SERVICE, SECURE_ROM_SHA512_OFFSET, 1);
 	cvc_service_register(CVC_VERIFY_SERVICE, SECURE_ROM_VERIFY_OFFSET, 1);
 	return 0;
