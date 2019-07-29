@@ -25,6 +25,7 @@ fi
 
 if [ -n "$SKIBOOT_ENABLE_MAMBO_STB" ]; then
     export SKIBOOT_ZIMAGE=$(pwd)/test/hello_world/hello_kernel/hello_kernel.stb
+    export SKIBOOT_CVC_CODE=$(pwd)/external/mambo/cvc.bin
 else
     export SKIBOOT_ZIMAGE=$(pwd)/test/hello_world/hello_kernel/hello_kernel
 fi

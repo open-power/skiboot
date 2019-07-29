@@ -53,6 +53,17 @@ export SKIBOOT=$HOME/src/skiboot/skiboot.lid
 export SKIBOOT_AUTORUN=1
 ```
 
+### Using Real Container Verification Code for Secure Boot
+
+The CVC code dump is from a real machine, and the code is from the Hostboot
+project (see src/securerom). We just include the dump here for testing
+purposes.
+
+```
+export SKIBOOT_CVC_CODE=$HOME/src/skiboot/external/mambo/cvc.bin
+export SKIBOOT_ENABLE_MAMBO_STB=1
+```
+
 ### Run the simulator
 ```
 /opt/ibm/systemsim-p8/run/pegasus/power8 -f $HOME/src/skiboot/external/mambo/skiboot.tcl

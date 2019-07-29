@@ -25,6 +25,7 @@ fi
 
 if [ -n "$SKIBOOT_ENABLE_MAMBO_STB" ]; then
     export SKIBOOT_ZIMAGE=$(pwd)/test/sreset_world/sreset_kernel/sreset_kernel.stb
+    export SKIBOOT_CVC_CODE=$(pwd)/external/mambo/cvc.bin
 else
     export SKIBOOT_ZIMAGE=$(pwd)/test/sreset_world/sreset_kernel/sreset_kernel
 fi
