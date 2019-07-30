@@ -2,6 +2,7 @@
 /*
  * Copyright 2013-2019 IBM Corp.
  */
+
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /*
- * Copyright 2018 IBM Corp.
+ * Copyright 2018-2019 IBM Corp.
  */
 
 #include <stdlib.h>

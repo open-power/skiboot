@@ -1,5 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2012-2019 IBM Corp
+
+#
 # If you want to build in another directory copy this file there and
 # fill in the following values
+#
 
 #
 # Prefix of cross toolchain, if anything

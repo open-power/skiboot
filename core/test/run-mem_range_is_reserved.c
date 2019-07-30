@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /*
- * Copyright 2015 IBM Corp.
+ * Copyright 2015-2019 IBM Corp.
  */
 
 #include <config.h>

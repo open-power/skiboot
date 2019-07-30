@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2012-2019 IBM Corp
 # -*-Makefile-*-
 
 SUBDIRS += core

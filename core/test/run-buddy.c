@@ -2,6 +2,7 @@
 /*
  * Copyright 2016-2017 IBM Corp.
  */
+
 #include <buddy.h>
 #include <assert.h>
 #include <stdlib.h>

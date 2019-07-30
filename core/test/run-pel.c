@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 /*
- * Copyright 2013-2014 IBM Corp.
- *
  * Test for our PEL record generation. Currently this doesn't actually
  * test that the records we generate are correct, but it at least lets
  * us run valgrind over the generation routines to check for buffer
  * overflows, etc.
+ *
+ * Copyright 2013-2016 IBM Corp.
  */
 
 #include <skiboot.h>

@@ -4,6 +4,8 @@
  *
  * For now it just validates that addresses passed are sane and test the
  * wrapper that validates addresses
+ *
+ * Copyright 2016 IBM Corp.
  */
 
 #include <config.h>

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /*
- * Copyright 2013-2014 IBM Corp.
+ * Copyright 2012-2018 IBM Corp.
  */
 
 #include <skiboot.h>

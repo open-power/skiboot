@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * Copyright 2014 IBM Corp
+ */
+
 #include <pool.h>
 
 #include "../pool.c"
