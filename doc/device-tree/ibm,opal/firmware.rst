@@ -22,8 +22,12 @@ The 'firmware' node under 'ibm,opal' lists system and OPAL firmware version.
   property describes OPAL symbol start address and size.
 
 ``version``
-  property describes OPAL version. Replaces 'git-id', so may
-  not be present. On POWER9 and above, it is always present.
+  property describes OPAL version. It replaced a property named 'git-id' early
+  in the POWER8 lifecycle, so may not always be present. It will be absent on
+  IBM FSP based systems running firmware prior to FW840. The 'version' property
+  is present on all GA POWER8 BMC systems.
+
+  On POWER9 and above, it is always present.
 
 ``mi-version``
   property describes Microcode Image. Only on IBM FSP systems.
