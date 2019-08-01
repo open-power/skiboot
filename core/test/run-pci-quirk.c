@@ -42,8 +42,8 @@ static void test_fixup(struct phb *phb __unused, struct pci_device *pd __unused)
 /* Quirks are: {fixup function, vendor ID, (device ID or PCI_ANY_ID)} */
 static const struct pci_quirk test_quirk_table[] = {
 	/* ASPEED 2400 VGA device */
-	{ &test_fixup, 0x1a03, 0x2000 },
-	{ NULL, 0, 0 }
+	{ 0x1a03, 0x2000, &test_fixup },
+	{ 0, 0, NULL }
 };
 
 #define PCI_COMPOSE_VDID(vendor, device) (((device) << 16) | (vendor))

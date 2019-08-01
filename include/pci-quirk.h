@@ -9,9 +9,9 @@
 #define PCI_ANY_ID 0xFFFF
 
 struct pci_quirk {
-	void (*fixup)(struct phb *, struct pci_device *);
 	uint16_t vendor_id;
 	uint16_t device_id;
+	void (*fixup)(struct phb *, struct pci_device *);
 };
 
 void pci_handle_quirk(struct phb *phb, struct pci_device *pd);
