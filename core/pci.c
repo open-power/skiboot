@@ -307,10 +307,12 @@ static struct pci_device *pci_scan_one(struct phb *phb, struct pci_device *paren
  *                          everything (default state of our backend) so
  *                          we just check and clear the state of PE#0
  *
+ *                          returns true if a freeze was detected
+ *
  * NOTE: We currently only handle simple PE freeze, not PHB fencing
  *       (or rather our backend does)
  */
-static void pci_check_clear_freeze(struct phb *phb)
+bool pci_check_clear_freeze(struct phb *phb)
 {
 	uint8_t freeze_state;
 	uint16_t pci_error_type, sev;
@@ -321,23 +323,26 @@ static void pci_check_clear_freeze(struct phb *phb)
 	if (phb->ops->get_reserved_pe_number)
 		pe_number = phb->ops->get_reserved_pe_number(phb);
 	if (pe_number < 0)
-		return;
+		return false;
 
 	/* Retrieve the frozen state */
 	rc = phb->ops->eeh_freeze_status(phb, pe_number, &freeze_state,
 					 &pci_error_type, &sev);
 	if (rc)
-		return;
+		return true; /* phb fence? */
+
 	if (freeze_state == OPAL_EEH_STOPPED_NOT_FROZEN)
-		return;
+		return false;
 	/* We can't handle anything worse than an ER here */
 	if (sev > OPAL_EEH_SEV_NO_ERROR &&
 	    sev < OPAL_EEH_SEV_PE_ER) {
 		PCIERR(phb, 0, "Fatal probe in %s error !\n", __func__);
-		return;
+		return true;
 	}
+
 	phb->ops->eeh_freeze_clear(phb, pe_number,
 				   OPAL_EEH_ACTION_CLEAR_FREEZE_ALL);
+	return true;
 }
 
 /*

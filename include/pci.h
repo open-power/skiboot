@@ -392,6 +392,8 @@ static inline void phb_unlock(struct phb *phb)
 	unlock(&phb->lock);
 }
 
+bool pci_check_clear_freeze(struct phb *phb);
+
 /* Config space ops wrappers */
 static inline int64_t pci_cfg_read8(struct phb *phb, uint32_t bdfn,
 				    uint32_t offset, uint8_t *data)
