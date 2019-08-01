@@ -97,3 +97,4 @@ STUB(dt_next);
 STUB(dt_has_node_property);
 STUB(dt_get_address);
 STUB(add_chip_dev_associativity);
+STUB(pci_check_clear_freeze);

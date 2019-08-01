@@ -9,9 +9,78 @@
 
 #include <skiboot.h>
 #include <pci.h>
+#include <pci-cfg.h>
 #include <pci-quirk.h>
 #include <platform.h>
 #include <ast.h>
+
+static int64_t cfg_block_filter(void *dev __unused,
+				struct pci_cfg_reg_filter *pcrf __unused,
+				uint32_t offset __unused, uint32_t len,
+				uint32_t *data, bool write)
+{
+	if (write)
+		return OPAL_SUCCESS;
+
+	switch (len) {
+	case 4:
+		*data = 0x0;
+		return OPAL_SUCCESS;
+	case 2:
+		*((uint16_t *)data) = 0x0;
+		return OPAL_SUCCESS;
+	case 1:
+		*((uint8_t *)data) = 0x0;
+		return OPAL_SUCCESS;
+	}
+
+	return OPAL_PARAMETER; /* should never happen */
+}
+
+/* blocks config accesses to registers in the range: [start, end] */
+#define BLOCK_CFG_RANGE(pd, start, end) \
+	pci_add_cfg_reg_filter(pd, start, end - start + 1, \
+		PCI_REG_FLAG_WRITE | PCI_REG_FLAG_READ, \
+		cfg_block_filter);
+
+static void quirk_microsemi_gen4_sw(struct phb *phb, struct pci_device *pd)
+{
+	uint8_t data;
+	bool frozen;
+	int offset;
+	int start;
+
+	pci_check_clear_freeze(phb);
+
+	/*
+	 * Reading from 0xff should trigger a UR on the affected switches.
+	 * If we don't get a freeze then we don't need the workaround
+	 */
+	pci_cfg_read8(phb, pd->bdfn, 0xff, &data);
+	frozen = pci_check_clear_freeze(phb);
+	if (!frozen)
+		return;
+
+	for (start = -1, offset = 0; offset < 4096; offset++) {
+		pci_cfg_read8(phb, pd->bdfn, offset, &data);
+		frozen = pci_check_clear_freeze(phb);
+
+		if (start < 0 && frozen) { /* new UR range */
+			start = offset;
+		} else if (start >= 0 && !frozen) { /* end of range */
+			BLOCK_CFG_RANGE(pd, start, offset - 1);
+			PCINOTICE(phb, pd->bdfn, "Applied UR workaround to [%03x..%03x]\n", start, offset - 1);
+
+			start = -1;
+		}
+	}
+
+	/* range lasted until the end of config space */
+	if (start >= 0) {
+		BLOCK_CFG_RANGE(pd, start, 0xfff);
+		PCINOTICE(phb, pd->bdfn, "Applied UR workaround to [%03x..fff]\n", start);
+	}
+}
 
 static void quirk_astbmc_vga(struct phb *phb __unused,
 			     struct pci_device *pd)
@@ -44,6 +113,7 @@ static void quirk_astbmc_vga(struct phb *phb __unused,
 static const struct pci_quirk quirk_table[] = {
 	/* ASPEED 2400 VGA device */
 	{ 0x1a03, 0x2000, &quirk_astbmc_vga },
+	{ 0x11f8, 0x4052, &quirk_microsemi_gen4_sw },
 	{ 0, 0, NULL }
 };
 

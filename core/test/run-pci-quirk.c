@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <compiler.h>
+#include <stdbool.h>
 
 /* Stubs for quirk_astbmc_vga() */
 
@@ -25,6 +26,24 @@ static struct dt_property *__dt_add_property_cells(
 		int count __unused, ...)
 {
 	return (void *)0;
+}
+
+struct pci_device;
+struct pci_cfg_reg_filter;
+typedef int64_t (*pci_cfg_reg_func)(void *dev,
+				    struct pci_cfg_reg_filter *pcrf,
+				    uint32_t offset, uint32_t len,
+				    uint32_t *data, bool write);
+
+
+static struct pci_cfg_reg_filter *pci_add_cfg_reg_filter(
+	struct pci_device *pd __unused,
+	uint32_t start __unused,
+	uint32_t len __unused,
+	uint32_t flags __unused,
+	pci_cfg_reg_func func __unused)
+{
+	return NULL;
 }
 
 #include "../pci-quirk.c"
