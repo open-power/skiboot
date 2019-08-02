@@ -151,6 +151,7 @@ struct phb4_err {
 #define PHB4_CFG_BLOCKED	0x00000004
 #define PHB4_CAPP_RECOVERY	0x00000008
 #define PHB4_CAPP_DISABLE	0x00000010
+#define PHB4_ETU_IN_RESET	0x00000020
 
 struct phb4 {
 	unsigned int		index;	    /* 0..5 index inside p9 */

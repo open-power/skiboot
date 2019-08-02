@@ -214,6 +214,10 @@ static inline void phb4_write_reg_asb(struct phb4 *p,
 
 static uint64_t phb4_read_reg(struct phb4 *p, uint32_t offset)
 {
+	/* No register accesses are permitted while in reset */
+	if (p->flags & PHB4_ETU_IN_RESET)
+		return -1ull;
+
 	if (p->flags & PHB4_CFG_USE_ASB)
 		return phb4_read_reg_asb(p, offset);
 	else
@@ -222,6 +226,10 @@ static uint64_t phb4_read_reg(struct phb4 *p, uint32_t offset)
 
 static void phb4_write_reg(struct phb4 *p, uint32_t offset, uint64_t val)
 {
+	/* No register accesses are permitted while in reset */
+	if (p->flags & PHB4_ETU_IN_RESET)
+		return;
+
 	if (p->flags & PHB4_CFG_USE_ASB)
 		phb4_write_reg_asb(p, offset, val);
 	else
@@ -3282,6 +3290,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		phb4_err_clear(p);
 
 		/* Actual reset */
+		p->flags |= PHB4_ETU_IN_RESET;
 		xscom_write(p->chip_id, p->pci_stk_xscom + XPEC_PCI_STK_ETU_RESET,
 			    0x8000000000000000UL);
 
@@ -3335,6 +3344,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 			/* Clear PHB from reset */
 			xscom_write(p->chip_id,
 				    p->pci_stk_xscom + XPEC_PCI_STK_ETU_RESET, 0x0);
+			p->flags &= ~PHB4_ETU_IN_RESET;
 
 			pci_slot_set_state(slot, PHB4_SLOT_CRESET_REINIT);
 			/* After lifting PHB reset, wait while logic settles */
