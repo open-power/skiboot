@@ -301,12 +301,12 @@ static void npu3_misc_config(struct npu3 *npu)
 	npu3_for_each_nvlink_dev(dev, npu)
 		typemap |= 0x10 >> dev->index;
 
-	reg = NPU3_SM_MISC_CFG0;
+	reg = NPU3_MCP_MISC_CFG0;
 	val = npu3_read(npu, reg);
-	val |= NPU3_SM_MISC_CFG0_ENABLE_PBUS;
-	val &= ~NPU3_SM_MISC_CFG0_ENABLE_SNARF_CPM;
-	val = SETFIELD(NPU3_SM_MISC_CFG0_NVLINK_MODE, val, typemap);
-	val = SETFIELD(NPU3_SM_MISC_CFG0_OCAPI_MODE, val, ~typemap);
+	val |= NPU3_MCP_MISC_CFG0_ENABLE_PBUS;
+	val &= ~NPU3_MCP_MISC_CFG0_ENABLE_SNARF_CPM;
+	val = SETFIELD(NPU3_MCP_MISC_CFG0_NVLINK_MODE, val, typemap);
+	val = SETFIELD(NPU3_MCP_MISC_CFG0_OCAPI_MODE, val, ~typemap);
 	npu3_write(npu, reg, val);
 
 	reg = NPU3_CTL_MISC_CFG2;
