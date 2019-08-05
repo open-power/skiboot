@@ -309,6 +309,13 @@ static void npu3_misc_config(struct npu3 *npu)
 	val = SETFIELD(NPU3_MCP_MISC_CFG0_OCAPI_MODE, val, ~typemap);
 	npu3_write(npu, reg, val);
 
+	reg = NPU3_SNP_MISC_CFG0;
+	val = npu3_read(npu, reg);
+	val |= NPU3_SNP_MISC_CFG0_ENABLE_PBUS;
+	val = SETFIELD(NPU3_SNP_MISC_CFG0_NVLINK_MODE, val, typemap);
+	val = SETFIELD(NPU3_SNP_MISC_CFG0_OCAPI_MODE, val, ~typemap);
+	npu3_write(npu, reg, val);
+
 	reg = NPU3_CTL_MISC_CFG2;
 	val = npu3_read(npu, reg);
 	val = SETFIELD(NPU3_CTL_MISC_CFG2_NVLINK_MODE, val, typemap);
