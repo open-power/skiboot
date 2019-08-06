@@ -205,7 +205,7 @@ struct p9_sbe_msg {
 
 	/* Internal queuing */
 	struct list_node	link;
-} __packed;
+};
 
 
 /* Allocate and populate p9_sbe_msg structure */
