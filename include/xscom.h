@@ -112,17 +112,21 @@
  * Additional useful definitions for P9
  */
 
-/* An EQ is a quad (also named an EP) */
-#define XSCOM_ADDR_P9_EP(core, addr) \
+/*
+ * An EQ is a quad. The Pervasive spec also uses the term "EP"
+ * to refer to an EQ and it's two child EX chiplets, but
+ * nothing else does
+ */
+#define XSCOM_ADDR_P9_EQ(core, addr) \
 	(((((core) & 0x1c) + 0x40) << 22) | (addr))
-#define XSCOM_ADDR_P9_EP_SLAVE(core, addr) \
-	XSCOM_ADDR_P9_EP(core, (addr) | 0xf0000)
+#define XSCOM_ADDR_P9_EQ_SLAVE(core, addr) \
+	XSCOM_ADDR_P9_EQ(core, (addr) | 0xf0000)
 
 /* An EX is a pair of cores. They are accessed via their corresponding EQs
  * with bit 0x400 indicating which of the 2 EX to address
  */
 #define XSCOM_ADDR_P9_EX(core, addr) \
-	(XSCOM_ADDR_P9_EP(core, addr | (((core) & 2) << 9)))
+	(XSCOM_ADDR_P9_EQ(core, addr | (((core) & 2) << 9)))
 
 /* An EC is an individual core and has its own XSCOM addressing */
 #define XSCOM_ADDR_P9_EC(core, addr) \

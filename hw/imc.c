@@ -699,7 +699,7 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 
 
 		 if (xscom_write(c->chip_id,
-				XSCOM_ADDR_P9_EP(phys_core_id,
+				XSCOM_ADDR_P9_EQ(phys_core_id,
 						pdbar_scom_index[port_id]),
 				(u64)(CORE_IMC_PDBAR_MASK & addr))) {
 			prerror("error in xscom_write for pdbar\n");
@@ -710,7 +710,7 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 			if (wakeup_engine_state == WAKEUP_ENGINE_PRESENT) {
 				struct proc_chip *chip = get_chip(c->chip_id);
 
-				scoms = XSCOM_ADDR_P9_EP(phys_core_id,
+				scoms = XSCOM_ADDR_P9_EQ(phys_core_id,
 						pdbar_scom_index[port_id]);
 				ret = stop_api_init(chip, phys_core_id, scoms,
 						(u64)(CORE_IMC_PDBAR_MASK & addr),
@@ -743,7 +743,7 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 		}
 
 		if (xscom_write(c->chip_id,
-				XSCOM_ADDR_P9_EP(phys_core_id,
+				XSCOM_ADDR_P9_EQ(phys_core_id,
 						htm_scom_index[port_id]),
 				(u64)CORE_IMC_HTM_MODE_DISABLE)) {
 			prerror("error in xscom_write for htm mode\n");
@@ -779,7 +779,7 @@ static int64_t opal_imc_counters_init(uint32_t type, uint64_t addr, uint64_t cpu
 			}
 		}
 		if (xscom_write(c->chip_id,
-			XSCOM_ADDR_P9_EP(phys_core_id, htm_scom_index[port_id]),
+			XSCOM_ADDR_P9_EQ(phys_core_id, htm_scom_index[port_id]),
 					(u64)CORE_IMC_HTM_MODE_DISABLE)) {
 				prerror("IMC-trace: error in xscom_write for htm mode\n");
 				return OPAL_HARDWARE;
@@ -845,7 +845,7 @@ static int64_t opal_imc_counters_start(uint32_t type, uint64_t cpu_pir)
 		 * to count with the previous initialization.
 		 */
 		if (xscom_write(c->chip_id,
-				XSCOM_ADDR_P9_EP(phys_core_id,
+				XSCOM_ADDR_P9_EQ(phys_core_id,
 						htm_scom_index[port_id]),
 				(u64)CORE_IMC_HTM_MODE_ENABLE)) {
 			prerror("IMC OPAL_start: error in xscom_write for htm_mode\n");
@@ -905,7 +905,7 @@ static int64_t opal_imc_counters_stop(uint32_t type, uint64_t cpu_pir)
 		 * bits 4-9 of the HTM_MODE scom port.
 		 */
 		if (xscom_write(c->chip_id,
-				XSCOM_ADDR_P9_EP(phys_core_id,
+				XSCOM_ADDR_P9_EQ(phys_core_id,
 						htm_scom_index[port_id]),
 				(u64) CORE_IMC_HTM_MODE_DISABLE)) {
 			prerror("error in xscom_write for htm_mode\n");
