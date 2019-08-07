@@ -1383,6 +1383,17 @@ static void npu3_dev_create_pvd(struct npu3_dev *dev)
 	npu3_cfg_populate(dev);
 }
 
+static void npu3_dt_add_mmio_atsd(struct npu3 *npu)
+{
+	struct dt_node *dn = npu->nvlink.phb.dt_node;
+	uint64_t mmio_atsd[NPU3_XTS_ATSD_MAX];
+
+	for (uint32_t i = 0; i < NPU3_XTS_ATSD_MAX; i++)
+		mmio_atsd[i] = npu->regs[0] + NPU3_XTS_ATSD_LAUNCH(i);
+
+	dt_add_property(dn, "ibm,mmio-atsd", mmio_atsd, sizeof(mmio_atsd));
+}
+
 static void npu3_dt_add_mmio_window(struct npu3 *npu)
 {
 	struct dt_node *dn = npu->nvlink.phb.dt_node;
@@ -1478,16 +1489,8 @@ static void npu3_dt_add_props(struct npu3 *npu)
 	dt_add_property_cells(dn, "ibm,links", NPU3_LINKS_PER_NPU);
 
 	dt_add_property(dn, "reg", npu->regs, sizeof(npu->regs));
-	dt_add_property_u64s(dn, "ibm,mmio-atsd",
-			     npu->regs[0] + NPU3_XTS_ATSD_LAUNCH(0),
-			     npu->regs[0] + NPU3_XTS_ATSD_LAUNCH(1),
-			     npu->regs[0] + NPU3_XTS_ATSD_LAUNCH(2),
-			     npu->regs[0] + NPU3_XTS_ATSD_LAUNCH(3),
-			     npu->regs[0] + NPU3_XTS_ATSD_LAUNCH(4),
-			     npu->regs[0] + NPU3_XTS_ATSD_LAUNCH(5),
-			     npu->regs[0] + NPU3_XTS_ATSD_LAUNCH(6),
-			     npu->regs[0] + NPU3_XTS_ATSD_LAUNCH(7));
 
+	npu3_dt_add_mmio_atsd(npu);
 	npu3_dt_add_mmio_window(npu);
 	npu3_dt_add_interrupts(npu);
 }

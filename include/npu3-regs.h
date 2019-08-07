@@ -248,5 +248,6 @@
 
 /* NPU_XTS_ATSD block registers */
 #define NPU3_XTS_ATSD_LAUNCH(n)			(NPU3_BLOCK_NPU_XTS_ATSD(n) + 0x000)
+#define NPU3_XTS_ATSD_MAX			16
 
 #endif /* __NPU3_REGS_H */
