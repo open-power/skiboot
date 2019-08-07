@@ -136,46 +136,6 @@
 #define EC_PPM_SPECIAL_WKUP_OCC		0x010C
 #define EC_PPM_SPECIAL_WKUP_HYP		0x010D
 
-/************* XXXX Move these P8 only registers elswhere !!! ****************/
-
-/* Per core power mgt registers */
-#define PM_OHA_MODE_REG		0x1002000D
-#define L2_FIR_ACTION1		0x10012807
-
-/* EX slave per-core power mgt slave regisers */
-#define EX_PM_GP0			0x0100
-#define EX_PM_GP1			0x0103
-#define EX_PM_CLEAR_GP1			0x0104 /* AND SCOM */
-#define EX_PM_SET_GP1			0x0105 /* OR SCOM */
-#define EX_PM_SPECIAL_WAKEUP_FSP	0x010B
-#define EX_PM_SPECIAL_WAKEUP_OCC	0x010C
-#define EX_PM_SPECIAL_WAKEUP_PHYP	0x010D
-#define EX_PM_IDLE_STATE_HISTORY_PHYP	0x0110
-#define EX_PM_IDLE_STATE_HISTORY_FSP	0x0111
-#define EX_PM_IDLE_STATE_HISTORY_OCC	0x0112
-#define EX_PM_IDLE_STATE_HISTORY_PERF	0x0113
-#define EX_PM_CORE_PFET_VRET		0x0130
-#define EX_PM_CORE_ECO_VRET		0x0150
-#define EX_PM_PPMSR			0x0153
-#define EX_PM_PPMCR			0x0159
-
-/* Power mgt bits in GP0 */
-#define EX_PM_GP0_SPECIAL_WAKEUP_DONE		PPC_BIT(31)
-
-/* Power mgt settings in GP1 */
-#define EX_PM_SETUP_GP1_FAST_SLEEP		0xD800000000000000ULL
-#define EX_PM_SETUP_GP1_DEEP_SLEEP		0x2400000000000000ULL
-#define EX_PM_SETUP_GP1_FAST_SLEEP_DEEP_WINKLE	0xC400000000000000ULL
-#define EX_PM_GP1_SLEEP_WINKLE_MASK		0xFC00000000000000ULL
-#define EX_PM_SETUP_GP1_PM_SPR_OVERRIDE_EN	0x0010000000000000ULL
-#define EX_PM_SETUP_GP1_DPLL_FREQ_OVERRIDE_EN	0x0020000000000000ULL
-
-/* Fields in history regs */
-#define EX_PM_IDLE_ST_HIST_PM_STATE_MASK	PPC_BITMASK(0, 2)
-#define EX_PM_IDLE_ST_HIST_PM_STATE_LSH		PPC_BITLSHIFT(2)
-
-/***************************************************************************/
-
 /* Definitions relating to indirect XSCOMs shared with centaur */
 #define XSCOM_ADDR_IND_FLAG		PPC_BIT(0)
 #define XSCOM_ADDR_IND_ADDR		PPC_BITMASK(12,31)
