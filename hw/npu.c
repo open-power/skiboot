@@ -385,8 +385,12 @@ static void npu_dev_bind_pci_dev(struct npu_dev *dev)
 		}
 	}
 
-	prlog(PR_INFO, "%s: No PCI device for NPU device %04x:00:%02x.0 to bind to. If you expect a GPU to be there, this is a problem.\n",
-	      __func__, dev->npu->phb.opal_id, dev->index);
+	prlog(PR_INFO, "%s: No PCI device for NPU device %04x:%02x:%02x.%x to bind to. If you expect a GPU to be there, this is a problem.\n",
+	      __func__, dev->npu->phb.opal_id,
+	      dev->pvd->bdfn >> 8 & 0xff,
+	      dev->pvd->bdfn >> 3 & 0x1f,
+	      dev->pvd->bdfn & 0x7);
+
 }
 
 static struct lock pci_npu_phandle_lock = LOCK_UNLOCKED;
