@@ -2576,9 +2576,6 @@ static void phb4_lane_eq_change(struct phb4 *p, uint32_t vdid)
 	p->lane_eq_en = !phb4_lane_eq_retry_whitelist(vdid);
 }
 
-#define min(x,y) ((x) < (y) ? x : y)
-#define max(x,y) ((x) < (y) ? x : y)
-
 static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
 {
 	struct phb4 *p = phb_to_phb4(slot->phb);
@@ -2605,9 +2602,9 @@ static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
 	phb4_get_info(slot->phb, bdfn, &dev_speed, &dev_width);
 
 	/* Work out if we are optimally trained */
-	target_speed = min(phb_speed, dev_speed);
+	target_speed = MIN(phb_speed, dev_speed);
 	optimal_speed = (trained_speed >= target_speed);
-	target_width = min(phb_width, dev_width);
+	target_width = MIN(phb_width, dev_width);
 	optimal_width = (trained_width >= target_width);
 	optimal = optimal_width && optimal_speed;
 	retry_enabled = (phb4_chip_retry_workaround() &&
@@ -3355,7 +3352,7 @@ static int64_t phb4_creset(struct pci_slot *slot)
 		 */
 		creset_time = tb_to_msecs(mftb() - p->creset_start_time);
 		if (creset_time < 250)
-			wait_time = max(100, 250 - creset_time);
+			wait_time = MAX(100, 250 - creset_time);
 		else
 			wait_time = 100;
 		PHBDBG(p, "CRESET: wait_time = %lld\n", wait_time);
