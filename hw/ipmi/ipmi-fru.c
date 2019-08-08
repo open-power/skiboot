@@ -33,8 +33,6 @@ struct common_header {
 	u8 checksum;
 } __packed;
 
-#define min(x,y) ((x) < (y) ? x : y)
-
 /* The maximum amount of FRU data we can store. */
 #define FRU_DATA_SIZE 256
 
@@ -220,7 +218,7 @@ static int fru_write(void)
 	/* Three bytes for the actual FRU Data Command */
 	msg->data[WRITE_INDEX] = 0;
 	msg->data[REMAINING] = len;
-	msg->req_size = min(len + 3, IPMI_MAX_REQ_SIZE);
+	msg->req_size = MIN(len + 3, IPMI_MAX_REQ_SIZE);
 	return ipmi_queue_msg(msg);
 }
 
