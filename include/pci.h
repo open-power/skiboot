@@ -13,22 +13,22 @@
 #define PCITRACE(_p, _bdfn, fmt, a...) \
 	prlog(PR_TRACE, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
-	      ((_bdfn) >> 8) & 0xff,			\
+	      PCI_BUS_NUM(_bdfn),			\
 	      ((_bdfn) >> 3) & 0x1f, (_bdfn) & 0x7, ## a)
 #define PCIDBG(_p, _bdfn, fmt, a...) \
 	prlog(PR_DEBUG, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
-	      ((_bdfn) >> 8) & 0xff,			\
+	      PCI_BUS_NUM(_bdfn),			\
 	      ((_bdfn) >> 3) & 0x1f, (_bdfn) & 0x7, ## a)
 #define PCINOTICE(_p, _bdfn, fmt, a...) \
 	prlog(PR_NOTICE, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
-	      ((_bdfn) >> 8) & 0xff,			\
+	      PCI_BUS_NUM(_bdfn),			\
 	      ((_bdfn) >> 3) & 0x1f, (_bdfn) & 0x7, ## a)
 #define PCIERR(_p, _bdfn, fmt, a...) \
 	prlog(PR_ERR, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
-	      ((_bdfn) >> 8) & 0xff,			\
+	      PCI_BUS_NUM(_bdfn),			\
 	      ((_bdfn) >> 3) & 0x1f, (_bdfn) & 0x7, ## a)
 
 struct pci_device;

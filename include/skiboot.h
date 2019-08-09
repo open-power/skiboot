@@ -137,6 +137,9 @@ static inline bool is_pow2(unsigned long val)
 #define MIN(a, b)	((a) < (b) ? (a) : (b))
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 
+/* PCI Geographical Addressing */
+#define PCI_BUS_NUM(bdfn)	(((bdfn) >> 8) & 0xff)
+
 /* Clean the stray high bit which the FSP inserts: we only have 52 bits real */
 static inline u64 cleanup_addr(u64 addr)
 {

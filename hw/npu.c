@@ -784,7 +784,7 @@ static int64_t npu_set_pe(struct phb *phb,
 	 * bus number is zero.
 	 */
 	dev = bdfn_to_npu_dev(p, bdfn);
-	if ((bdfn >> 8) || !dev)
+	if (PCI_BUS_NUM(bdfn) || !dev)
 		return OPAL_PARAMETER;
 
 	link_idx = dev->index;

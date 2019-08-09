@@ -258,7 +258,7 @@ static int64_t phb4_pcicfg_check(struct phb4 *p, uint32_t bdfn,
 	 * error state if we try to probe beyond that, so let's
 	 * avoid that and just return an error to Linux
 	 */
-	if ((bdfn >> 8) == 0 && (bdfn & 0xff))
+	if (PCI_BUS_NUM(bdfn) == 0 && (bdfn & 0xff))
 		return OPAL_HARDWARE;
 
 	/* Check PHB state */
@@ -3815,7 +3815,7 @@ static int64_t phb4_err_inject_cfg(struct phb4 *phb, uint64_t pe_number,
 		if (prefer == 0xffffull) {
 			if (is_bus_pe) {
 				m = PHB_PAPR_ERR_INJ_MASK_CFG;
-				prefer = SETFIELD(m, 0x0ull, (bdfn >> 8));
+				prefer = SETFIELD(m, 0x0ull, PCI_BUS_NUM(bdfn));
 			} else {
 				m = PHB_PAPR_ERR_INJ_MASK_CFG_ALL;
 				prefer = SETFIELD(m, 0x0ull, bdfn);
@@ -3830,7 +3830,7 @@ static int64_t phb4_err_inject_cfg(struct phb4 *phb, uint64_t pe_number,
 		}
 
 		if (is_bus_pe &&
-		    GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, addr) == (bdfn >> 8)) {
+		    GETFIELD(PHB_PAPR_ERR_INJ_MASK_CFG, addr) == PCI_BUS_NUM(bdfn)) {
 			a = addr;
 			break;
 		}
