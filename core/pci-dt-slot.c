@@ -53,7 +53,7 @@ static struct dt_node *map_phb_to_slot(struct phb *phb)
 
 static struct dt_node *find_devfn(struct dt_node *bus, uint32_t bdfn)
 {
-	uint32_t port_dev_id = (bdfn >> 3) & 0x1f;
+	uint32_t port_dev_id = PCI_DEV(bdfn);
 	struct dt_node *child;
 
 	dt_for_each_child(bus, child)

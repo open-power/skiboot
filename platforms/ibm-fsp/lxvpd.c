@@ -66,7 +66,7 @@ void *lxvpd_get_slot(struct pci_slot *slot)
 	struct pci_device *pd = slot->pd;
 	struct lxvpd_pci_slot_data *sdata = phb->platform_data;
 	struct lxvpd_pci_slot *s = NULL;
-	uint8_t slot_num = pd ? ((pd->bdfn >> 3) & 0x1f) : 0xff;
+	uint8_t slot_num = pd ? PCI_DEV(pd->bdfn) : 0xff;
 	bool is_phb = (pd && pd->parent) ? false : true;
 	uint8_t index;
 

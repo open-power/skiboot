@@ -548,7 +548,7 @@ static void npu2_get_gpu_base(struct npu2_dev *ndev, uint64_t *addr, uint64_t *s
 	struct npu2 *p = ndev->npu;
 	int group;
 
-	group = (ndev->bdfn >> 3) & 0x1f;
+	group = PCI_DEV(ndev->bdfn);
 	phys_map_get(ndev->npu->chip_id, p->gpu_map_type, group, addr, size);
 }
 

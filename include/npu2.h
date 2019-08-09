@@ -19,7 +19,7 @@
 #define NPU2DEVLOG(l, p, fmt, a...)	prlog(l, "NPU%d:%d:%d.%d " fmt, \
 					      (p)->npu->phb_nvlink.opal_id, \
 					      PCI_BUS_NUM((p)->bdfn), \
-					      ((p)->bdfn >> 3) & 0x1f, \
+					      PCI_DEV((p)->bdfn), \
 					      (p)->bdfn & 0x7, ##a)
 #define NPU2DEVDBG(p, fmt, a...)	NPU2DEVLOG(PR_DEBUG, p, fmt, ##a)
 #define NPU2DEVINF(p, fmt, a...)	NPU2DEVLOG(PR_INFO, p, fmt, ##a)

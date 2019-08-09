@@ -1576,10 +1576,10 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 
 	if (pd->bdfn & 0x7)
 		snprintf(name, MAX_NAME - 1, "%s@%x,%x",
-			 cname, (pd->bdfn >> 3) & 0x1f, pd->bdfn & 0x7);
+			 cname, PCI_DEV(pd->bdfn), pd->bdfn & 0x7);
 	else
 		snprintf(name, MAX_NAME - 1, "%s@%x",
-			 cname, (pd->bdfn >> 3) & 0x1f);
+			 cname, PCI_DEV(pd->bdfn));
 	pd->dn = np = dt_new(parent_node, name);
 
 	/*
@@ -1657,7 +1657,7 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 	/* Update the current interrupt swizzling level based on our own
 	 * device number
 	 */
-	swizzle = (swizzle + ((pd->bdfn >> 3) & 0x1f)) & 3;
+	swizzle = (swizzle + PCI_DEV(pd->bdfn)) & 3;
 
 	/* We generate a standard-swizzling interrupt map. This is pretty
 	 * big, we *could* try to be smarter for things that aren't hotplug
