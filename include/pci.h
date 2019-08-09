@@ -14,22 +14,22 @@
 	prlog(PR_TRACE, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
 	      PCI_BUS_NUM(_bdfn),			\
-	      PCI_DEV(_bdfn), (_bdfn) & 0x7, ## a)
+	      PCI_DEV(_bdfn), PCI_FUNC(_bdfn), ## a)
 #define PCIDBG(_p, _bdfn, fmt, a...) \
 	prlog(PR_DEBUG, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
 	      PCI_BUS_NUM(_bdfn),			\
-	      PCI_DEV(_bdfn), (_bdfn) & 0x7, ## a)
+	      PCI_DEV(_bdfn), PCI_FUNC(_bdfn), ## a)
 #define PCINOTICE(_p, _bdfn, fmt, a...) \
 	prlog(PR_NOTICE, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
 	      PCI_BUS_NUM(_bdfn),			\
-	      PCI_DEV(_bdfn), (_bdfn) & 0x7, ## a)
+	      PCI_DEV(_bdfn), PCI_FUNC(_bdfn), ## a)
 #define PCIERR(_p, _bdfn, fmt, a...) \
 	prlog(PR_ERR, "PHB#%04x:%02x:%02x.%x " fmt,	\
 	      (_p)->opal_id,				\
 	      PCI_BUS_NUM(_bdfn),			\
-	      PCI_DEV(_bdfn), (_bdfn) & 0x7, ## a)
+	      PCI_DEV(_bdfn), PCI_FUNC(_bdfn), ## a)
 
 struct pci_device;
 struct pci_cfg_reg_filter;

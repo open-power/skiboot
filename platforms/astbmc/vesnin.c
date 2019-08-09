@@ -269,7 +269,7 @@ static int pciinv_walk(struct phb *phb, struct pci_device *pd, void *data)
 	pack->device.domain_num = cpu_to_be16(phb->opal_id & 0xffff);
 	pack->device.bus_num = PCI_BUS_NUM(pd->bdfn);
 	pack->device.device_num = PCI_DEV(pd->bdfn);
-	pack->device.func_num = pd->bdfn & 0x7;
+	pack->device.func_num = PCI_FUNC(pd->bdfn);
 	pack->device.vendor_id = cpu_to_be16(PCI_VENDOR_ID(pd->vdid));
 	pack->device.device_id = cpu_to_be16(PCI_DEVICE_ID(pd->vdid));
 	pack->device.class_code = cpu_to_be32(pd->class & 0xffffff);

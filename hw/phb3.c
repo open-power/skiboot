@@ -2146,7 +2146,7 @@ static int64_t phb3_set_pe(struct phb *phb,
 		all = (all << 1) | 0x1;
 	else {
 		mask |= 0x7;
-		val  |= (bdfn & 0x7);
+		val  |= PCI_FUNC(bdfn);
 	}
 
 	/* Map or unmap the RTT range */

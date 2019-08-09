@@ -140,6 +140,7 @@ static inline bool is_pow2(unsigned long val)
 /* PCI Geographical Addressing */
 #define PCI_BUS_NUM(bdfn)	(((bdfn) >> 8) & 0xff)
 #define PCI_DEV(bdfn)		(((bdfn) >> 3) & 0x1f)
+#define PCI_FUNC(bdfn)		((bdfn) & 0x07)
 
 /* Clean the stray high bit which the FSP inserts: we only have 52 bits real */
 static inline u64 cleanup_addr(u64 addr)

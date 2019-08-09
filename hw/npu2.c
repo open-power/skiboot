@@ -584,10 +584,10 @@ static int npu2_assign_gmb(struct npu2_dev *ndev)
 	 * the highest bdfn (fn = 6) and count back until we find a
 	 * npu2_dev. */
 	for (bdfn = (ndev->bdfn & ~0x7) | NPU2_LINKS_PER_CHIP;
-	     (bdfn & 0x7) != 0x7; bdfn = (bdfn & ~0x7) | ((bdfn & 0x7) - 1))
+	     PCI_FUNC(bdfn) != 0x7; bdfn = (bdfn & ~0x7) | (PCI_FUNC(bdfn) - 1))
 		if (npu2_bdf_to_dev(p, bdfn))
 			break;
-	peers = bdfn & 0x7;
+	peers = PCI_FUNC(bdfn);
 
 	npu2_get_gpu_base(ndev, &base, &size);
 
@@ -625,7 +625,7 @@ static int npu2_assign_gmb(struct npu2_dev *ndev)
 		assert(0);
 	}
 
-	mode += ndev->bdfn & 0x7;
+	mode += PCI_FUNC(ndev->bdfn);
 	val = SETFIELD(NPU2_MEM_BAR_MODE, val, mode);
 
 	gmb = NPU2_GPU0_MEM_BAR;

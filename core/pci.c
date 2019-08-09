@@ -1470,7 +1470,7 @@ static void pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
 		}
 		lcode[pos++] = '-';
 		lcode[pos++] = 'T';
-		lcode[pos++] = (char)(pd->bdfn & 0x7) + '1';
+		lcode[pos++] = (char)PCI_FUNC(pd->bdfn) + '1';
 		lcode[pos++] = '\0';
 		dt_add_property_string(np, "ibm,loc-code", lcode);
 		free(lcode);
@@ -1574,9 +1574,9 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 		rev_class = (rev_class & 0xff) | 0x6040000;
 	cname = pci_class_name(rev_class >> 8);
 
-	if (pd->bdfn & 0x7)
+	if (PCI_FUNC(pd->bdfn))
 		snprintf(name, MAX_NAME - 1, "%s@%x,%x",
-			 cname, PCI_DEV(pd->bdfn), pd->bdfn & 0x7);
+			 cname, PCI_DEV(pd->bdfn), PCI_FUNC(pd->bdfn));
 	else
 		snprintf(name, MAX_NAME - 1, "%s@%x",
 			 cname, PCI_DEV(pd->bdfn));

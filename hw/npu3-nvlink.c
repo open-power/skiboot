@@ -30,7 +30,7 @@
 	      (dev)->npu->nvlink.phb.opal_id,		\
 	      PCI_BUS_NUM((dev)->nvlink.pvd->bdfn),	\
 	      PCI_DEV((dev)->nvlink.pvd->bdfn),	\
-	      (dev)->nvlink.pvd->bdfn & 0x7, ##a)
+	      PCI_FUNC((dev)->nvlink.pvd->bdfn), ##a)
 #define NPU3DEVDBG(dev, fmt, a...) NPU3DEVLOG(PR_DEBUG, dev, fmt, ##a)
 #define NPU3DEVINF(dev, fmt, a...) NPU3DEVLOG(PR_INFO, dev, fmt, ##a)
 #define NPU3DEVERR(dev, fmt, a...) NPU3DEVLOG(PR_ERR, dev, fmt, ##a)
@@ -614,7 +614,7 @@ static void npu3_dev_assign_gmb(struct npu3_dev *dev, uint64_t addr,
 		assert(0);
 	}
 
-	mode += dev->nvlink.pvd->bdfn & 0x7;
+	mode += PCI_FUNC(dev->nvlink.pvd->bdfn);
 
 	val = NPU3_GPU_MEM_BAR_ENABLE |
 	      NPU3_GPU_MEM_BAR_POISON;
@@ -1594,7 +1594,7 @@ int64_t npu3_init_context(struct phb *phb, uint64_t msr, uint64_t bdf)
 
 	lparshort = GETFIELD(NPU3_XTS_BDF_MAP_LPARSHORT, map);
 	NPU3DBG(npu, "Found LPARSHORT 0x%x for bdf %02llx:%02llx.%llx\n",
-		lparshort, PCI_BUS_NUM(bdf), PCI_DEV(bdf), bdf & 0x7);
+		lparshort, PCI_BUS_NUM(bdf), PCI_DEV(bdf), PCI_FUNC(bdf));
 
 	rc = npu3_init_context_pid(npu, lparshort, msr);
 	if (rc)
@@ -1711,7 +1711,7 @@ int64_t npu3_map_lpar(struct phb *phb, uint64_t bdf, uint64_t lparid,
 
 	if (!dev || dev->nvlink.gpu->bdfn != bdf) {
 		NPU3ERR(npu, "Can't find a link for bdf %02llx:%02llx.%llx\n",
-			PCI_BUS_NUM(bdf), PCI_DEV(bdf), bdf & 0x7);
+			PCI_BUS_NUM(bdf), PCI_DEV(bdf), PCI_FUNC(bdf));
 		rc = OPAL_PARAMETER;
 		goto out;
 	}
