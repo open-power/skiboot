@@ -20,12 +20,6 @@
 #undef pr_fmt
 #define pr_fmt(fmt) "DT-SLOT: " fmt
 
-#define PCIDBG(_p, _bdfn, fmt, a...) \
-        prlog(PR_DEBUG, "PHB#%04x:%02x:%02x.%x " fmt,   \
-              (_p)->opal_id,                            \
-              ((_bdfn) >> 8) & 0xff,                    \
-              ((_bdfn) >> 3) & 0x1f, (_bdfn) & 0x7, ## a)
-
 struct dt_node *dt_slots;
 
 static struct dt_node *map_phb_to_slot(struct phb *phb)
