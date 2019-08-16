@@ -631,6 +631,10 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 	prlog(PR_DEBUG,"FLASH: %s partition %s ECC\n",
 	      name, ecc  ? "has" : "doesn't have");
 
+	/*
+	 * FIXME: Make the fact we don't support partitions smaller than 4K
+	 *  	  more explicit.
+	 */
 	if (ffs_part_size < SECURE_BOOT_HEADERS_SIZE) {
 		prerror("FLASH: secboot headers bigger than "
 			"partition size 0x%x\n", ffs_part_size);
@@ -664,6 +668,13 @@ static int flash_load_resource(enum resource_id id, uint32_t subid,
 
 		if (content_size > bufsz) {
 			prerror("FLASH: content size > buffer size\n");
+			rc = OPAL_PARAMETER;
+			goto out_free_ffs;
+		}
+
+		if (*len > ffs_part_size) {
+			prerror("FLASH: Cannot load %s. Content is larger than the partition\n",
+					name);
 			rc = OPAL_PARAMETER;
 			goto out_free_ffs;
 		}
