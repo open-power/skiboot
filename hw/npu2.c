@@ -1257,12 +1257,19 @@ static int64_t npu2_tce_kill(struct phb *phb, uint32_t kill_type,
 			return OPAL_PARAMETER;
 		}
 
-		while (npages--) {
-			val = SETFIELD(NPU2_ATS_TCE_KILL_PENUM, dma_addr, pe_number);
-			npu2_write(npu, NPU2_ATS_TCE_KILL, NPU2_ATS_TCE_KILL_ONE | val);
-			dma_addr += tce_size;
+		if (npages < 128) {
+			while (npages--) {
+				val = SETFIELD(NPU2_ATS_TCE_KILL_PENUM, dma_addr, pe_number);
+				npu2_write(npu, NPU2_ATS_TCE_KILL, NPU2_ATS_TCE_KILL_ONE | val);
+				dma_addr += tce_size;
+			}
+			break;
 		}
-		break;
+		/*
+		 * For too many TCEs do not bother with the loop above and simply
+		 * flush everything, going to be lot faster.
+		 */
+		/* Fall through */
 	case OPAL_PCI_TCE_KILL_PE:
 		/*
 		 * NPU2 doesn't support killing a PE so fall through
