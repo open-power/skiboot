@@ -356,8 +356,11 @@ enum phb_type {
 	phb_type_npu_v3,
 };
 
-
+/* Generic PCI NVRAM flags */
 extern bool verbose_eeh;
+extern bool pci_tracing;
+
+void pci_nvram_init(void);
 
 struct phb {
 	struct dt_node		*dt_node;

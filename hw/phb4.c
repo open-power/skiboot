@@ -138,7 +138,6 @@ static void phb4_init_hw(struct phb4 *p);
 
 #define PHB4_CAN_STORE_EOI(p) XIVE_STORE_EOI_ENABLED
 
-static bool pci_tracing;
 static bool pci_eeh_mmio;
 static bool pci_retry_all;
 static int rx_err_max = PHB4_RX_ERR_MAX;
@@ -5946,7 +5945,6 @@ void probe_phb4(void)
 	struct dt_node *np;
 	const char *s;
 
-	pci_tracing = nvram_query_eq_safe("pci-tracing", "true");
 	pci_eeh_mmio = !nvram_query_eq_dangerous("pci-eeh-mmio", "disabled");
 	pci_retry_all = nvram_query_eq_dangerous("pci-retry-all", "true");
 	s = nvram_query_dangerous("phb-rx-err-max");

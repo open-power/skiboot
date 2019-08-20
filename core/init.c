@@ -48,6 +48,7 @@
 
 enum proc_gen proc_gen;
 unsigned int pcie_max_link_speed;
+bool pci_tracing;
 bool verbose_eeh;
 extern const char version[];
 
@@ -844,7 +845,7 @@ static void per_thread_sanity_checks(void)
 	assert(cpu->state != cpu_state_no_cpu);
 }
 
-static void pci_nvram_init(void)
+void pci_nvram_init(void)
 {
 	const char *nvram_speed;
 
@@ -860,6 +861,8 @@ static void pci_nvram_init(void)
 		prlog(PR_NOTICE, "PHB: NVRAM set max link speed to GEN%i\n",
 		      pcie_max_link_speed);
 	}
+
+	pci_tracing = nvram_query_eq_safe("pci-tracing", "true");
 }
 
 static uint32_t mem_csum(void *_p, void *_e)

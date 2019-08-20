@@ -433,6 +433,9 @@ void __noreturn fast_reboot_entry(void)
 		psi_irq_reset();
 	}
 
+	/* update pci nvram settings */
+	pci_nvram_init();
+
 	/* Remove all PCI devices */
 	if (pci_reset()) {
 		prlog(PR_NOTICE, "RESET: Fast reboot failed to reset PCI\n");
