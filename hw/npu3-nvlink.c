@@ -928,8 +928,6 @@ static void npu3_dev_init_hw(struct npu3_dev *dev)
 	reg = NPU3_NTL_MISC_CFG2(dev->index);
 	val = npu3_read(npu, reg);
 	val |= NPU3_NTL_MISC_CFG2_BRICK_ENABLE |
-	       NPU3_NTL_MISC_CFG2_NDL_TX_PARITY_ENA |
-	       NPU3_NTL_MISC_CFG2_NDL_PRI_PARITY_ENA |
 	       NPU3_NTL_MISC_CFG2_RCV_CREDIT_OVERFLOW_ENA;
 	npu3_write(npu, reg, val);
 }

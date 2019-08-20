@@ -557,9 +557,11 @@ static uint32_t reset_ntl(struct npu3_dev *dev)
 	val = SETFIELD(NPU3_NTL_PRI_CFG_NDL, 0ull, dev->index);
 	npu3_write(npu, NPU3_NTL_PRI_CFG(dev->index), val);
 
-	/* Disable RX parity checking */
+	/* Disable parity checking */
 	val = npu3_read(npu, NPU3_NTL_MISC_CFG2(dev->index));
-	val &= ~NPU3_NTL_MISC_CFG2_NDL_RX_PARITY_ENA;
+	val &= ~(NPU3_NTL_MISC_CFG2_NDL_RX_PARITY_ENA |
+		 NPU3_NTL_MISC_CFG2_NDL_TX_PARITY_ENA |
+		 NPU3_NTL_MISC_CFG2_NDL_PRI_PARITY_ENA);
 	npu3_write(npu, NPU3_NTL_MISC_CFG2(dev->index), val);
 
 	if (dev->type == NPU3_DEV_TYPE_NVLINK)
@@ -636,9 +638,11 @@ static uint32_t reset_ntl_finish(struct npu3_dev *dev) {
 	if (npu3_dev_fence_get(dev) != NPU3_NTL_CQ_FENCE_STATUS_NONE)
 		return NPU3_PROC_INPROGRESS;
 
-	/* Enable RX parity checking */
+	/* Enable parity checking */
 	val = npu3_read(npu, NPU3_NTL_MISC_CFG2(dev->index));
-	val |= NPU3_NTL_MISC_CFG2_NDL_RX_PARITY_ENA;
+	val |= NPU3_NTL_MISC_CFG2_NDL_RX_PARITY_ENA |
+	       NPU3_NTL_MISC_CFG2_NDL_TX_PARITY_ENA |
+	       NPU3_NTL_MISC_CFG2_NDL_PRI_PARITY_ENA;
 	npu3_write(npu, NPU3_NTL_MISC_CFG2(dev->index), val);
 
 	if (dev->type == NPU3_DEV_TYPE_NVLINK)
