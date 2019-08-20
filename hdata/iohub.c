@@ -809,6 +809,10 @@ static void io_parse_fru(const void *sp_iohubs)
 			prlog(PR_INFO, "CEC:     Cumulus !\n");
 			io_add_p9(hub, sp_iohubs);
 			break;
+		case CECHUB_HUB_AXONE_HOPPER:
+			prlog(PR_INFO, "CEC:     Axone !\n");
+			io_add_p9(hub, sp_iohubs);
+			break;
 		default:
 			prlog(PR_ERR, "CEC:     Hub ID 0x%04x unsupported !\n",
 			      hub_id);

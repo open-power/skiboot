@@ -650,6 +650,7 @@ struct cechub_io_hub {
 #define CECHUB_HUB_NIMBUS_MONZA		0x0021	/* Nimbus+monza from spec */
 #define CECHUB_HUB_NIMBUS_LAGRANGE	0x0022	/* Nimbus+lagrange from spec */
 #define CECHUB_HUB_CUMULUS_DUOMO	0x0030	/* cumulus+duomo from spec */
+#define CECHUB_HUB_AXONE_HOPPER		0x0040	/* axone+hopper */
 	__be32		ec_level;
 	__be32		aff_dom2;	/* HDAT < v9.x only */
 	__be32		aff_dom3;	/* HDAT < v9.x only */
