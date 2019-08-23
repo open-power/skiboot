@@ -12,12 +12,8 @@ ifeq ($(ARCH),ARCH_POWERPC)
 arch := powerpc
 ARCH_FILES := arch_flash_common.c arch_flash_powerpc.c
 else
-ifeq ($(ARCH),ARCH_X86)
-arch := x86
-ARCH_FILES := arch_flash_common.c arch_flash_x86.c
-else
-$(error Unsupported architecture $(ARCH))
-endif
+arch := unknown
+ARCH_FILES := arch_flash_common.c arch_flash_unknown.c
 endif
 endif
 
