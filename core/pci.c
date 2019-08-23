@@ -1570,7 +1570,7 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 	 * uses prefers to read the class code from the DT rather than
 	 * re-reading config space we can hack around it here.
 	 */
-	if (is_pcie && parent_node == phb->dt_node)
+	if (is_pcie && pd->dev_type == PCIE_TYPE_ROOT_PORT)
 		rev_class = (rev_class & 0xff) | 0x6040000;
 	cname = pci_class_name(rev_class >> 8);
 
