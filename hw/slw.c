@@ -771,7 +771,8 @@ void add_cpu_idle_state_properties(void)
 	chip = next_chip(NULL);
 	assert(chip);
 	if (chip->type == PROC_CHIP_P9_NIMBUS ||
-	    chip->type == PROC_CHIP_P9_CUMULUS) {
+	    chip->type == PROC_CHIP_P9_CUMULUS ||
+	    chip->type == PROC_CHIP_P9P) {
 		if (proc_chip_quirks & QUIRK_MAMBO_CALLOUTS) {
 			states = power9_mambo_cpu_idle_states;
 			nr_states = ARRAY_SIZE(power9_mambo_cpu_idle_states);
