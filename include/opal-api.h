@@ -1242,7 +1242,7 @@ struct opal_mpipl_fadump {
 	u32	cpu_data_size;
 	u32	region_cnt;
 	struct	opal_mpipl_region region[];
-} __packed;
+};
 
 #endif /* __ASSEMBLY__ */
 
