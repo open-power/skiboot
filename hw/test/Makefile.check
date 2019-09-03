@@ -26,4 +26,4 @@ $(HW_TEST:%=%-gcov): %-gcov : %.c %
 clean: hw-clean
 
 hw-clean:
-	$(RM) -f hw/test/*.[od] $(HW_TEST)
+	$(RM) -f hw/test/*.[od] $(HW_TEST) $(HW_TEST:%=%-gcov)
