@@ -140,7 +140,7 @@
 			compatible = "ibm,power9-xive-x";
 		};
 
-		PSI_X0: psihb@5012900 {
+		psihb@5012900 {
 			reg = <0x5012900 0x100>;
 			compatible = "ibm,power9-psihb-x", "ibm,psihb-x";
 
@@ -191,20 +191,6 @@
 			ranges = <0x3 0x0 0xf0000000 0x10000000 /* FW space */
 				  0x0 0x0 0xe0000000 0x10000000 /* MEM space */
 				  0x1 0x0 0xd0010000 0x00010000 /* IO space */ >;
-
-			/*
-			 * We currently only support level interrupts on the LPC,
-			 * we use 1 cell.
-			 */
-			#interrupt-cells = <0x1>;
-
-			/*
-			 * Route the LPC interrupts to one of the 4 supported
-			 * PSI interrupt inputs [7...10].
-			 */
-			interrupt-map = <0x0 0x0 0x4 &PSI_X0 0x8
-					 0x0 0x0 0xa &PSI_X0 0x9>;
-			interrupt-map-mask = <0x0 0x0 0xff>;
 
 			/* Devices on the LPC bus go here */
 
