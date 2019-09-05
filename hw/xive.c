@@ -5059,7 +5059,7 @@ static int64_t xive_try_allocate_irq(struct xive *x)
 	idx = bitmap_find_zero_bit(*x->ipi_alloc_map, base_idx, max_count);
 	if (idx < 0) {
 		unlock(&x->lock);
-		return XIVE_ALLOC_NO_SPACE;
+		return OPAL_RESOURCE;
 	}
 	bitmap_set_bit(*x->ipi_alloc_map, idx);
 	girq = x->int_base + idx;
