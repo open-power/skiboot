@@ -531,6 +531,30 @@ static const char *psi_p9_irq_names[P9_PSI_NUM_IRQS] = {
 	"psu"
 };
 
+static void psi_p9_mask_unhandled_irq(struct irq_source *is, uint32_t isn)
+{
+	struct psi *psi = is->data;
+	int idx = isn - psi->interrupt;
+	const char *name;
+
+	if (idx < ARRAY_SIZE(psi_p9_irq_names))
+		name = psi_p9_irq_names[idx];
+	else
+		name = "unknown!";
+
+	prerror("PSI[0x%03x]: Masking unhandled LSI %d (%s)\n",
+			psi->chip_id, idx, name);
+
+	/*
+	 * All the PSI interrupts are LSIs and will be constantly re-fired
+	 * unless the underlying interrupt condition is cleared. If we don't
+	 * have a handler for the interrupt then it needs to be masked to
+	 * prevent the IRQ from locking up the thread which handles it.
+	 */
+	xive_source_mask(is, isn);
+
+}
+
 static void psihb_p9_interrupt(struct irq_source *is, uint32_t isn)
 {
 	struct psi *psi = is->data;
@@ -543,21 +567,17 @@ static void psihb_p9_interrupt(struct irq_source *is, uint32_t isn)
 	case P9_PSI_IRQ_OCC:
 		occ_p9_interrupt(psi->chip_id);
 		break;
-	case P9_PSI_IRQ_FSI:
-		printf("PSI: FSI irq received\n");
-		break;
 	case P9_PSI_IRQ_LPCHC:
 		lpc_interrupt(psi->chip_id);
 		break;
 	case P9_PSI_IRQ_LOCAL_ERR:
 		prd_psi_interrupt(psi->chip_id);
 		break;
-	case P9_PSI_IRQ_GLOBAL_ERR:
-		printf("PSI: Global error irq received\n");
-		break;
 	case P9_PSI_IRQ_EXTERNAL:
 		if (platform.external_irq)
 			platform.external_irq(psi->chip_id);
+		else
+			psi_p9_mask_unhandled_irq(is, isn);
 		break;
 	case P9_PSI_IRQ_LPC_SIRQ0:
 	case P9_PSI_IRQ_LPC_SIRQ1:
@@ -575,6 +595,9 @@ static void psihb_p9_interrupt(struct irq_source *is, uint32_t isn)
 	case P9_PSI_IRQ_PSU:
 		p9_sbe_interrupt(psi->chip_id);
 		break;
+
+	default:
+		psi_p9_mask_unhandled_irq(is, isn);
 	}
 }
 

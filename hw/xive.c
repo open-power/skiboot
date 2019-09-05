@@ -2732,6 +2732,13 @@ static char *xive_source_name(struct irq_source *is, uint32_t isn)
 	return s->orig_ops->name(is, isn);
 }
 
+void xive_source_mask(struct irq_source *is, uint32_t isn)
+{
+	struct xive_src *s = container_of(is, struct xive_src, is);
+
+	xive_update_irq_mask(s, isn - s->esb_base, true);
+}
+
 static const struct irq_source_ops xive_irq_source_ops = {
 	.get_xive = xive_source_get_xive,
 	.set_xive = xive_source_set_xive,

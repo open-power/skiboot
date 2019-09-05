@@ -512,4 +512,6 @@ void *xive_get_trigger_port(uint32_t girq);
 struct irq_source;
 void __xive_source_eoi(struct irq_source *is, uint32_t isn);
 
+void xive_source_mask(struct irq_source *is, uint32_t isn);
+
 #endif /* __XIVE_H__ */
