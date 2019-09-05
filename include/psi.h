@@ -247,18 +247,6 @@ extern void psi_irq_reset(void);
 extern void psi_enable_fsp_interrupt(struct psi *psi);
 extern void psi_fsp_link_in_use(struct psi *psi);
 
-/*
- * Must be called by the platform probe() function as the policy
- * is established before platform.init
- *
- * This defines whether the external interrupt should be passed to
- * the OS or handled locally in skiboot. Return true for skiboot
- * handling. Default if not called is Linux.
- */
-#define EXTERNAL_IRQ_POLICY_LINUX	false
-#define EXTERNAL_IRQ_POLICY_SKIBOOT	true
-extern void psi_set_external_irq_policy(bool policy);
-
 extern struct lock psi_lock;
 
 #endif /* __PSI_H */

@@ -29,7 +29,6 @@ static LIST_HEAD(psis);
 static u64 psi_link_timer;
 static u64 psi_link_timeout;
 static bool psi_link_poll_active;
-static bool psi_ext_irq_policy = EXTERNAL_IRQ_POLICY_LINUX;
 
 static void psi_activate_phb(struct psi *psi);
 
@@ -471,8 +470,8 @@ static uint64_t psi_p8_irq_attributes(struct irq_source *is, uint32_t isn)
 	if (psi->no_lpc_irqs && idx == P8_IRQ_PSI_LPC)
 		return IRQ_ATTR_TARGET_LINUX;
 
-	if (idx == P8_IRQ_PSI_EXTERNAL &&
-	    psi_ext_irq_policy == EXTERNAL_IRQ_POLICY_LINUX)
+	/* Only direct external interrupts to OPAL if we have a handler */
+	if (idx == P8_IRQ_PSI_EXTERNAL && !platform.external_irq)
 		return IRQ_ATTR_TARGET_LINUX;
 
 	attr = IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TYPE_LSI;
@@ -625,6 +624,10 @@ static uint64_t psi_p9_irq_attributes(struct irq_source *is __unused,
 	 if (is_lpc_serirq)
 		 return lpc_get_irq_policy(psi->chip_id, idx - P9_PSI_IRQ_LPC_SIRQ0);
 
+	/* Only direct external interrupts to OPAL if we have a handler */
+	if (idx == P9_PSI_IRQ_EXTERNAL && !platform.external_irq)
+		return IRQ_ATTR_TARGET_LINUX | IRQ_ATTR_TYPE_LSI;
+
 	return IRQ_ATTR_TARGET_OPAL | IRQ_ATTR_TYPE_LSI;
 }
 
@@ -648,11 +651,6 @@ static const struct irq_source_ops psi_p9_irq_ops = {
 	.attributes = psi_p9_irq_attributes,
 	.name = psi_p9_irq_name,
 };
-
-void psi_set_external_irq_policy(bool policy)
-{
-	psi_ext_irq_policy = policy;
-}
 
 static void psi_init_p8_interrupts(struct psi *psi)
 {

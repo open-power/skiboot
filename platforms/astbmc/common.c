@@ -465,9 +465,6 @@ void astbmc_early_init(void)
 	/* Hostboot forgets to populate the PSI BAR */
 	astbmc_fixup_psi_bar();
 
-	/* Send external interrupts to me */
-	psi_set_external_irq_policy(EXTERNAL_IRQ_POLICY_SKIBOOT);
-
 	if (ast_sio_init()) {
 		if (ast_io_init()) {
 			astbmc_fixup_uart();

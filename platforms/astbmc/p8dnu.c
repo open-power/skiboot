@@ -307,17 +307,6 @@ static bool p8dnu_probe(void)
 	/* Lot of common early inits here */
 	astbmc_early_init();
 
-	/*
-	 * Override external interrupt policy -> send to Linux
-	 *
-	 * On Naples, we get LPC interrupts via the built-in LPC
-	 * controller demuxer, not an external CPLD. The external
-	 * interrupt is for other uses, such as the TPM chip, we
-	 * currently route it to Linux, but we might change that
-	 * later if we decide we need it.
-	 */
-	psi_set_external_irq_policy(EXTERNAL_IRQ_POLICY_LINUX);
-
 	/* Fixups until HB get the NPU bindings */
 	dt_create_npu();
 
