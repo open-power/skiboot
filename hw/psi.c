@@ -486,19 +486,24 @@ static char *psi_p8_irq_name(struct irq_source *is, uint32_t isn)
 {
 	struct psi *psi = is->data;
 	uint32_t idx = isn - psi->interrupt;
+	char tmp[30];
 
 	static const char *names[P8_IRQ_PSI_IRQ_COUNT] = {
-		"psi:fsp",
-		"psi:occ",
-		"psi:fsi",
-		"psi:lpchc",
-		"psi:local_err",
-		"psi:external",
+		"fsp",
+		"occ",
+		"fsi",
+		"lpchc",
+		"local_err",
+		"external",
 	};
 
 	if (idx >= P8_IRQ_PSI_IRQ_COUNT)
 		return NULL;
-	return strdup(names[idx]);
+
+	snprintf(tmp, sizeof(tmp), "psi#%x:%s",
+		 psi->chip_id, names[idx]);
+
+	return strdup(tmp);
 }
 
 static const struct irq_source_ops psi_p8_irq_ops = {
@@ -587,27 +592,32 @@ static char *psi_p9_irq_name(struct irq_source *is, uint32_t isn)
 {
 	struct psi *psi = is->data;
 	uint32_t idx = isn - psi->interrupt;
+	char tmp[30];
 
 	static const char *names[P9_PSI_NUM_IRQS] = {
-		"psi:fsp",
-		"psi:occ",
-		"psi:fsi",
-		"psi:lpchc",
-		"psi:local_err",
-		"psi:global_err",
-		"psi:external",
-		"psi:lpc_serirq_mux0", /* Have a callback to get name ? */
-		"psi:lpc_serirq_mux1", /* Have a callback to get name ? */
-		"psi:lpc_serirq_mux2", /* Have a callback to get name ? */
-		"psi:lpc_serirq_mux3", /* Have a callback to get name ? */
-		"psi:i2c",
-		"psi:dio",
-		"psi:psu"
+		"fsp",
+		"occ",
+		"fsi",
+		"lpchc",
+		"local_err",
+		"global_err",
+		"external",
+		"lpc_serirq_mux0", /* Have a callback to get name ? */
+		"lpc_serirq_mux1", /* Have a callback to get name ? */
+		"lpc_serirq_mux2", /* Have a callback to get name ? */
+		"lpc_serirq_mux3", /* Have a callback to get name ? */
+		"i2c",
+		"dio",
+		"psu"
 	};
 
-	if (idx >= P9_PSI_NUM_IRQS)
+	if (idx >= ARRAY_SIZE(names))
 		return NULL;
-	return strdup(names[idx]);
+
+	snprintf(tmp, sizeof(tmp), "psi#%x:%s",
+		 psi->chip_id, names[idx]);
+
+	return strdup(tmp);
 }
 
 static const struct irq_source_ops psi_p9_irq_ops = {
