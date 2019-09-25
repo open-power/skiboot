@@ -43,7 +43,7 @@ static bool sreset_enabled;
 static bool ipi_enabled;
 static bool pm_enabled;
 static bool current_hile_mode;
-static bool current_radix_mode;
+static bool current_radix_mode = true;
 static bool tm_suspend_enabled;
 
 unsigned long cpu_secondary_start __force_data = 0;
