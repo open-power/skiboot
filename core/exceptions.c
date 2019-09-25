@@ -69,9 +69,10 @@ void exception_entry(struct stack_frame *stack)
 	if (!(msr & MSR_RI))
 		fatal = true;
 
-	prerror("***********************************************\n");
 	l = 0;
-	if (stack->type == 0x100) {
+	switch (stack->type) {
+	case 0x100:
+		prerror("***********************************************\n");
 		if (fatal) {
 			l += snprintf(buf + l, EXCEPTION_MAX_STR - l,
 				"Fatal System Reset at "REG"   ", nip);
@@ -79,14 +80,21 @@ void exception_entry(struct stack_frame *stack)
 			l += snprintf(buf + l, EXCEPTION_MAX_STR - l,
 				"System Reset at "REG"   ", nip);
 		}
-	} else if (stack->type == 0x200) {
+		break;
+
+	case 0x200:
 		fatal = true;
+		prerror("***********************************************\n");
 		l += snprintf(buf + l, EXCEPTION_MAX_STR - l,
 			"Fatal MCE at "REG"   ", nip);
-	} else {
+		break;
+
+	default:
 		fatal = true;
+		prerror("***********************************************\n");
 		l += snprintf(buf + l, EXCEPTION_MAX_STR - l,
 			"Fatal Exception 0x%llx at "REG"  ", stack->type, nip);
+		break;
 	}
 	l += snprintf_symbol(buf + l, EXCEPTION_MAX_STR - l, nip);
 	l += snprintf(buf + l, EXCEPTION_MAX_STR - l, "  MSR "REG, msr);
