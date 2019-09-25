@@ -192,6 +192,7 @@ extern bool start_preload_kernel(void);
 extern void copy_exception_vectors(void);
 extern void copy_sreset_vector(void);
 extern void copy_sreset_vector_fast_reboot(void);
+extern void patch_traps(bool enable);
 
 /* Various probe routines, to replace with an initcall system */
 extern void probe_phb3(void);

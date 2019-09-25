@@ -89,6 +89,35 @@ void exception_entry(struct stack_frame *stack)
 			"Fatal MCE at "REG"   ", nip);
 		break;
 
+	case 0x700: {
+		struct trap_table_entry *tte;
+
+		fatal = true;
+		prerror("***********************************************\n");
+		for (tte = __trap_table_start; tte < __trap_table_end; tte++) {
+			if (tte->address == nip) {
+				prerror("< %s >\n", tte->message);
+				prerror("    .\n");
+				prerror("     .\n");
+				prerror("      .\n");
+				prerror("        OO__)\n");
+				prerror("       <\"__/\n");
+				prerror("        ^ ^\n");
+				break;
+			}
+		}
+		l += snprintf(buf + l, EXCEPTION_MAX_STR - l,
+			"Fatal TRAP at "REG"   ", nip);
+		l += snprintf_symbol(buf + l, EXCEPTION_MAX_STR - l, nip);
+		l += snprintf(buf + l, EXCEPTION_MAX_STR - l, "  MSR "REG, msr);
+		prerror("%s\n", buf);
+		dump_regs(stack);
+		backtrace();
+		if (platform.terminate)
+			platform.terminate(buf);
+		for (;;) ;
+		break; }
+
 	default:
 		fatal = true;
 		prerror("***********************************************\n");
@@ -100,11 +129,12 @@ void exception_entry(struct stack_frame *stack)
 	l += snprintf(buf + l, EXCEPTION_MAX_STR - l, "  MSR "REG, msr);
 	prerror("%s\n", buf);
 	dump_regs(stack);
-
-	if (fatal)
-		abort();
-	else
-		backtrace();
+	backtrace();
+	if (fatal) {
+		if (platform.terminate)
+			platform.terminate(buf);
+		for (;;) ;
+	}
 
 	if (hv) {
 		/* Set up for SRR return */

@@ -618,6 +618,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	/* Disable machine checks on all */
 	cpu_disable_ME_RI_all();
 
+	patch_traps(false);
+
 	debug_descriptor.state_flags |= OPAL_BOOT_COMPLETE;
 
 	cpu_give_self_os();
@@ -758,7 +760,7 @@ static void __nomcount do_ctors(void)
 #ifndef PPC64_ELF_ABI_v2
 static void branch_null(void)
 {
-	assert_fail("Branch to NULL !");
+	assert(0);
 }
 
 
@@ -818,6 +820,28 @@ void copy_exception_vectors(void)
 			EXCEPTION_VECTORS_END - 0x100);
 	memcpy((void *)0x100, (void *)(SKIBOOT_BASE + 0x100),
 			EXCEPTION_VECTORS_END - 0x100);
+	sync_icache();
+}
+
+/*
+ * When skiboot owns the exception vectors, patch in 'trap' for assert fails.
+ * Otherwise use assert_fail()
+ */
+void patch_traps(bool enable)
+{
+	struct trap_table_entry *tte;
+
+	for (tte = __trap_table_start; tte < __trap_table_end; tte++) {
+		uint32_t *insn;
+
+		insn = (uint32_t *)tte->address;
+		if (enable) {
+			*insn = PPC_INST_TRAP;
+		} else {
+			*insn = PPC_INST_NOP;
+		}
+	}
+
 	sync_icache();
 }
 
@@ -949,6 +973,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* Copy all vectors down to 0 */
 	copy_exception_vectors();
+
+	/* Enable trap based asserts */
+	patch_traps(true);
 
 	/*
 	 * Enable MSR[ME] bit so we can take MCEs. We don't currently

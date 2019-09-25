@@ -206,6 +206,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define PPC_INST_NOP	0x60000000UL
+#define PPC_INST_TRAP	0x7fe00008UL
+
 #define RB(b)		(((b) & 0x1f) << 11)
 #define MSGSND(b)	stringify(.long 0x7c00019c | RB(b))
 #define MSGCLR(b)	stringify(.long 0x7c0001dc | RB(b))

@@ -109,6 +109,13 @@ SECTIONS
 	}
 
 	. = ALIGN(0x10);
+	.trap_table : {
+		__trap_table_start = .;
+		KEEP(*(.trap_table))
+		__trap_table_end = .;
+	}
+
+	. = ALIGN(0x10);
 	.init : {
 		__ctors_start = .;
 		KEEP(*(.ctors*))

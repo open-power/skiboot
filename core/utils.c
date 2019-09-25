@@ -13,28 +13,24 @@
 #include <cpu.h>
 #include <stack.h>
 
-void __noreturn assert_fail(const char *msg)
+void __noreturn assert_fail(const char *msg, const char *file,
+				unsigned int line, const char *function)
 {
+	static bool in_abort = false;
+
+	(void)function;
+	if (in_abort)
+		for (;;) ;
+	in_abort = true;
+
 	/**
-	 * @fwts-label FailedAssert
+	 * @fwts-label FailedAssert2
 	 * @fwts-advice OPAL hit an assert(). During normal usage (even
 	 * testing) we should never hit an assert. There are other code
 	 * paths for controlled shutdown/panic in the event of catastrophic
 	 * errors.
 	 */
-	prlog(PR_EMERG, "Assert fail: %s\n", msg);
-	_abort(msg);
-}
-
-void __noreturn _abort(const char *msg)
-{
-	static bool in_abort = false;
-
-	if (in_abort)
-		for (;;) ;
-	in_abort = true;
-
-	prlog(PR_EMERG, "Aborting!\n");
+	prlog(PR_EMERG, "assert failed at %s:%u: %s\n", file, line, msg);
 	backtrace();
 
 	if (platform.terminate)

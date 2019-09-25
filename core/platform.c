@@ -110,7 +110,11 @@ static int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
 	case OPAL_REBOOT_MPIPL:
 		prlog(PR_NOTICE, "Reboot: OS reported error. Performing MPIPL\n");
 		console_complete_flush();
-		_abort("Reboot: OS reported error. Performing MPIPL\n");
+		if (platform.terminate)
+			platform.terminate("OS reported error. Performing MPIPL\n");
+		else
+			opal_cec_reboot();
+		for (;;);
 		break;
 	default:
 		prlog(PR_NOTICE, "OPAL: Unsupported reboot request %d\n", reboot_type);

@@ -183,6 +183,7 @@ void fast_reboot(void)
 
 	/* Restore skiboot vectors  */
 	copy_exception_vectors();
+	patch_traps(true);
 
 	/*
 	 * Secondaries may still have an issue with machine checks if they have
