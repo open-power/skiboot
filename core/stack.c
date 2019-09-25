@@ -17,13 +17,13 @@
 static struct bt_entry bt_buf[STACK_BUF_ENTRIES];
 
 /* Dumps backtrace to buffer */
-void __nomcount backtrace_create(struct bt_entry *entries,
+static void __nomcount __backtrace_create(struct bt_entry *entries,
 				 unsigned int max_ents,
-				 struct bt_metadata *metadata)
+				 struct bt_metadata *metadata,
+				 struct stack_frame *eframe)
 {
-	unsigned long *fp = __builtin_frame_address(0);
+	unsigned long *fp = (unsigned long *)eframe;
 	unsigned long top_adj = top_of_ram;
-	struct stack_frame *eframe = (struct stack_frame *)fp;
 
 	/* Assume one stack for early backtraces */
 	if (top_of_ram == SKIBOOT_BASE + SKIBOOT_SIZE)
@@ -50,6 +50,16 @@ void __nomcount backtrace_create(struct bt_entry *entries,
 		metadata->token = -1UL;
 
 	metadata->pir = mfspr(SPR_PIR);
+}
+
+void __nomcount backtrace_create(struct bt_entry *entries,
+				 unsigned int max_ents,
+				 struct bt_metadata *metadata)
+{
+	unsigned long *fp = __builtin_frame_address(0);
+	struct stack_frame *eframe = (struct stack_frame *)fp;
+
+	__backtrace_create(entries, max_ents, metadata, eframe);
 }
 
 void backtrace_print(struct bt_entry *entries, struct bt_metadata *metadata,
@@ -119,6 +129,18 @@ void backtrace(void)
 	lock(&bt_lock);
 
 	backtrace_create(bt_buf, STACK_BUF_ENTRIES, &metadata);
+	backtrace_print(bt_buf, &metadata, NULL, NULL, true);
+
+	unlock(&bt_lock);
+}
+
+void backtrace_r1(uint64_t r1)
+{
+	struct bt_metadata metadata;
+
+	lock(&bt_lock);
+
+	__backtrace_create(bt_buf, STACK_BUF_ENTRIES, &metadata, (struct stack_frame *)r1);
 	backtrace_print(bt_buf, &metadata, NULL, NULL, true);
 
 	unlock(&bt_lock);

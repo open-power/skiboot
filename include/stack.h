@@ -123,6 +123,9 @@ extern void backtrace_print(struct bt_entry *entries,
 /* For use by debug code, create and print backtrace, uses a static buffer */
 extern void backtrace(void);
 
+/* For use by exception debug code, supply an r1 */
+extern void backtrace_r1(uint64_t r1);
+
 #ifdef STACK_CHECK_ENABLED
 extern void check_stacks(void);
 #else

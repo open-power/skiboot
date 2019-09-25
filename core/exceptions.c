@@ -112,7 +112,7 @@ void exception_entry(struct stack_frame *stack)
 		l += snprintf(buf + l, EXCEPTION_MAX_STR - l, "  MSR "REG, msr);
 		prerror("%s\n", buf);
 		dump_regs(stack);
-		backtrace();
+		backtrace_r1((uint64_t)stack);
 		if (platform.terminate)
 			platform.terminate(buf);
 		for (;;) ;
@@ -129,7 +129,7 @@ void exception_entry(struct stack_frame *stack)
 	l += snprintf(buf + l, EXCEPTION_MAX_STR - l, "  MSR "REG, msr);
 	prerror("%s\n", buf);
 	dump_regs(stack);
-	backtrace();
+	backtrace_r1((uint64_t)stack);
 	if (fatal) {
 		if (platform.terminate)
 			platform.terminate(buf);
