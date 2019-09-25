@@ -35,6 +35,8 @@
 	. = 0
 .global __head
 __head:
+	trap
+
 	/* This entry point is used when booting with a flat device-tree
 	 * pointer in r3
 	 */

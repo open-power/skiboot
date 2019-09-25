@@ -15,6 +15,7 @@
 #include <opal.h>
 #include <opal-msg.h>
 #include <elf.h>
+#include <elf-abi.h>
 #include <io.h>
 #include <cec.h>
 #include <device.h>
@@ -757,12 +758,24 @@ static void __nomcount do_ctors(void)
 		(*call)();
 }
 
-#ifndef PPC64_ELF_ABI_v2
+#ifdef ELF_ABI_v2
+static void setup_branch_null_catcher(void)
+{
+	asm volatile(							\
+		".section .rodata"				"\n\t"	\
+		"3:	.string	\"branch to NULL\""		"\n\t"	\
+		".previous"					"\n\t"	\
+		".section .trap_table,\"aw\""			"\n\t"	\
+		".llong	0"					"\n\t"	\
+		".llong	3b"					"\n\t"	\
+		".previous"					"\n\t"	\
+		);
+}
+#else
 static void branch_null(void)
 {
 	assert(0);
 }
-
 
 static void setup_branch_null_catcher(void)
 {
@@ -774,10 +787,6 @@ static void setup_branch_null_catcher(void)
         * move to ABI v2 (ie little endian)
         */
        memcpy_null(0, bn, 16);
-}
-#else
-static void setup_branch_null_catcher(void)
-{
 }
 #endif
 
