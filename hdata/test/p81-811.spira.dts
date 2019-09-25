@@ -1655,7 +1655,9 @@
 			phandle = <0x7c>;
 			#address-cells = <0x0>;
 			#size-cells = <0x0>;
+			abc-bus-freq-mhz = < 0x00 0x1900 >;
 			ibm,sys-model = " 22L";
+			wxyz-bus-freq-mhz = < 0x00 0xfa0 >;
 		};
 	};
 

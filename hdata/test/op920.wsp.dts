@@ -3221,8 +3221,10 @@
 			phandle = <0xb2>;
 			#address-cells = <0x0>;
 			#size-cells = <0x0>;
+			abc-bus-freq-mhz = < 0x00 0x1250 >;
 			ibm,sys-model = " GTH";
 			elevated-risk-level;
+			wxyz-bus-freq-mhz = < 0x00 0x7d0 >;
 		};
 	};
 

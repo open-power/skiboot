@@ -563,7 +563,10 @@
 			phandle = <0x3c>;
 			#address-cells = <0x0>;
 			#size-cells = <0x0>;
+			abc-bus-freq-mhz = < 0x00 0x1900 >;
 			ibm,sys-model = " 41A";
+			wxyz-bus-freq-mhz = < 0x00 0xfa0 >;
+
 		};
 	};
 

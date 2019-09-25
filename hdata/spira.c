@@ -999,6 +999,7 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 	u16 version = be16_to_cpu(hdif->version);
 	const char *vendor = NULL;
 	u32 sys_attributes;
+	u64 bus_speed;
 
 	p = HDIF_get_idata(iplp, IPLPARAMS_SYSPARAMS, NULL);
 	if (!CHECK_SPPTR(p)) {
@@ -1065,6 +1066,16 @@ static void add_iplparams_sys_params(const void *iplp, struct dt_node *node)
 		freq *= 1000000;
 		dt_add_property_u64(dt_root, "nest-frequency", freq);
 	}
+
+	/* Grab ABC bus speed */
+	bus_speed = be32_to_cpu(p->abc_bus_speed);
+	if (bus_speed)
+		dt_add_property_u64(node, "abc-bus-freq-mhz", bus_speed);
+
+	/* Grab WXYZ bus speed */
+	bus_speed = be32_to_cpu(p->wxyz_bus_speed);
+	if (bus_speed)
+		dt_add_property_u64(node, "wxyz-bus-freq-mhz", bus_speed);
 
 	if (version >= 0x5f)
 		vendor = p->sys_vendor;
