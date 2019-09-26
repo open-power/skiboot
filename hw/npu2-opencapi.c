@@ -2135,7 +2135,7 @@ static int64_t alloc_mem_bar(struct npu2_dev *dev, uint64_t size, uint64_t *bar)
 	}
 
 	if (!is_pow2(size)) {
-		size = 1 << (ilog2(size) + 1);
+		size = 1ull << (ilog2(size) + 1);
 	}
 
 	set_mem_bar(dev, phys_map_base, size);
