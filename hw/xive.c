@@ -20,9 +20,6 @@
 #include <phys-map.h>
 #include <p9_stop_api.H>
 
-/* Use Block group mode to move chip_id into block .... */
-#define USE_BLOCK_GROUP_MODE
-
 /* Always notify from EQ to VP (no EOI on EQs). Will speed up
  * EOIs at the expense of potentially higher powerbus traffic.
  */
@@ -198,21 +195,11 @@
 #define VP_PER_PAGE		(0x10000 / 64) // Use sizeof ?
 #define IND_VP_TABLE_SIZE	((MAX_VP_COUNT / VP_PER_PAGE) * 8)
 
-#ifdef USE_BLOCK_GROUP_MODE
-
 /* Initial number of VPs (XXX Make it a variable ?). Round things
  * up to a max of 32 cores per chip
  */
 #define INITIAL_VP_BASE		0x80
 #define INITIAL_VP_COUNT	0x80
-
-#else
-
-/* Initial number of VPs on block 0 only */
-#define INITIAL_BLK0_VP_BASE	0x800
-#define INITIAL_BLK0_VP_COUNT  	0x800
-
-#endif
 
 /* The xive operation mode indicates the active "API" and corresponds
  * to the "mode" parameter of the opal_xive_reset() call
@@ -408,11 +395,6 @@ struct xive {
 	uint64_t	*vp_ind_base;
 	uint32_t	vp_ind_count;
 
-#ifndef USE_BLOCK_GROUP_MODE
-	/* VP allocation buddy when not using block group mode */
-	struct buddy	*vp_buddy;
-#endif
-
 	/* Pool of donated pages for provisioning indirect EQ and VP pages */
 	struct list_head donated_pages;
 
@@ -476,7 +458,6 @@ static struct dt_node *xive_dt_node;
 static uint32_t xive_block_to_chip[XIVE_MAX_CHIPS];
 static uint32_t xive_block_count;
 
-#ifdef USE_BLOCK_GROUP_MODE
 static uint32_t xive_chip_to_block(uint32_t chip_id)
 {
 	struct proc_chip *c = get_chip(chip_id);
@@ -485,7 +466,6 @@ static uint32_t xive_chip_to_block(uint32_t chip_id)
 	assert(c->xive);
 	return c->xive->block_id;
 }
-#endif
 
 /* Conversion between GIRQ and block/index.
  *
@@ -515,15 +495,9 @@ static uint32_t xive_chip_to_block(uint32_t chip_id)
 #define GIRQ_TO_CHIP(__isn)	(VC_BLK_TO_CHIP(GIRQ_TO_BLK(__isn)))
 
 /* Routing of physical processors to VPs */
-#ifdef USE_BLOCK_GROUP_MODE
 #define PIR2VP_IDX(__pir)	(0x80 | P9_PIR2LOCALCPU(__pir))
 #define PIR2VP_BLK(__pir)	(xive_chip_to_block(P9_PIR2GCID(__pir)))
 #define VP2PIR(__blk, __idx)	(P9_PIRFROMLOCALCPU(VC_BLK_TO_CHIP(__blk), (__idx) & 0x7f))
-#else
-#define PIR2VP_IDX(__pir)	(0x800 | (P9_PIR2GCID(__pir) << 7) | P9_PIR2LOCALCPU(__pir))
-#define PIR2VP_BLK(__pir)	(0)
-#define VP2PIR(__blk, __idx)	(P9_PIRFROMLOCALCPU(((__idx) >> 7) & 0xf, (__idx) & 0x7f))
-#endif
 
 /* Decoding of OPAL API VP IDs. The VP IDs are encoded as follow
  *
@@ -558,7 +532,6 @@ static uint32_t xive_chip_to_block(uint32_t chip_id)
  * on the left of the index (the entire VP block is in a single
  * block ID)
  */
-#ifdef USE_BLOCK_GROUP_MODE
 
 /* VP allocation */
 static uint32_t xive_chips_alloc_bits = 0;
@@ -620,58 +593,6 @@ static uint32_t xive_encode_vp(uint32_t blk, uint32_t idx, uint32_t order)
 	vp |= idx & imask;
 	return  vp;
 }
-
-#else /* USE_BLOCK_GROUP_MODE */
-
-/* VP# decoding/encoding */
-static bool xive_decode_vp(uint32_t vp, uint32_t *blk, uint32_t *idx,
-			   uint8_t *order, bool *group)
-{
-	uint32_t o = (vp >> 24) & 0x1f;
-	uint32_t index = vp & 0x00ffffff;
-	uint32_t imask = (1 << o) - 1;
-
-	/* Groups not supported yet */
-	if ((vp >> 31) & 1)
-		return false;
-	if (group)
-		*group = false;
-
-	/* PIR case */
-	if (((vp >> 30) & 1) == 0) {
-		if (find_cpu_by_pir(index) == NULL)
-			return false;
-		if (blk)
-			*blk = PIR2VP_BLK(index);
-		if (idx)
-			*idx = PIR2VP_IDX(index);
-		return true;
-	}
-
-	/* Ensure o > 0, we have *at least* 2 VPs per block */
-	if (o == 0)
-		return false;
-
-	/* Extract index */
-	if (idx)
-		*idx = index & imask;
-	/* Extract block ID */
-	if (blk)
-		*blk = index >> o;
-
-	/* Return order as well if asked for */
-	if (order)
-		*order = o;
-
-	return true;
-}
-
-static uint32_t xive_encode_vp(uint32_t blk, uint32_t idx, uint32_t order)
-{
-	return 0x40000000 | (order << 24) | (blk << order) | idx;
-}
-
-#endif /* !USE_BLOCK_GROUP_MODE */
 
 #define xive_regw(__x, __r, __v) \
 	__xive_regw(__x, __r, X_##__r, __v, #__r)
@@ -1010,8 +931,6 @@ static bool xive_provision_vp_ind(struct xive *x, uint32_t vp_idx, uint32_t orde
 	return true;
 }
 
-#ifdef USE_BLOCK_GROUP_MODE
-
 static void xive_init_vp_allocator(void)
 {
 	/* Initialize chip alloc bits */
@@ -1096,90 +1015,6 @@ static void xive_free_vps(uint32_t vp)
 	unlock(&xive_buddy_lock);
 }
 
-#else /* USE_BLOCK_GROUP_MODE */
-
-static void xive_init_vp_allocator(void)
-{
-	struct proc_chip *chip;
-
-	for_each_chip(chip) {
-		struct xive *x = chip->xive;
-		if (!x)
-			continue;
-		/* Each chip has a MAX_VP_ORDER buddy */
-		x->vp_buddy = buddy_create(MAX_VP_ORDER);
-		assert(x->vp_buddy);
-
-		/* We reserve the whole range of VPs representing HW chips.
-		 *
-		 * These are 0x800..0xfff on block 0 only, so order 11
-		 * starting at 0x800.
-		 */
-		if (x->block_id == 0)
-			assert(buddy_reserve(x->vp_buddy, 0x800, 11));
-	}
-}
-
-static uint32_t xive_alloc_vps(uint32_t order)
-{
-	struct proc_chip *chip;
-	struct xive *x = NULL;
-	int vp = -1;
-
-	/* Minimum order is 1 */
-	if (order < 1)
-		order = 1;
-
-	/* Try on every chip */
-	for_each_chip(chip) {
-		x = chip->xive;
-		if (!x)
-			continue;
-		assert(x->vp_buddy);
-		lock(&x->lock);
-		vp = buddy_alloc(x->vp_buddy, order);
-		unlock(&x->lock);
-		if (vp >= 0)
-			break;
-	}
-	if (vp < 0)
-		return XIVE_ALLOC_NO_SPACE;
-
-	/* We have VPs, make sure we have backing for the
-	 * NVTs on that block
-	 */
-	if (!xive_provision_vp_ind(x, vp, order)) {
-		lock(&x->lock);
-		buddy_free(x->vp_buddy, vp, order);
-		unlock(&x->lock);
-		return XIVE_ALLOC_NO_IND;
-	}
-
-	/* Encode the VP number */
-	return xive_encode_vp(x->block_id, vp, order);
-}
-
-static void xive_free_vps(uint32_t vp)
-{
-	uint32_t idx, blk;
-	uint8_t order;
-	struct xive *x;
-
-	assert(xive_decode_vp(vp, &blk, &idx, &order, NULL));
-
-	/* Grab appropriate xive */
-	x = xive_from_pc_blk(blk);
-	/* XXX Return error instead ? */
-	assert(x);
-
-	/* Free that in the buddy */
-	lock(&x->lock);
-	buddy_free(x->vp_buddy, idx, order);
-	unlock(&x->lock);
-}
-
-#endif /* ndef USE_BLOCK_GROUP_MODE */
-
 enum xive_cache_type {
 	xive_cache_ivc,
 	xive_cache_sbc,
@@ -1211,17 +1046,8 @@ static void xive_scrub_workaround_vp(struct xive *x, uint32_t block, uint32_t id
 	 * Note: This means the workaround only works for block group
 	 * mode.
 	 */
-#ifdef USE_BLOCK_GROUP_MODE
 	__xive_cache_watch(x, xive_cache_vpc, block, INITIAL_VP_BASE, 0,
 			   0, NULL, true, false);
-#else
-	/* WARNING: Some workarounds related to cache scrubs require us to
-	 * have at least one firmware owned (permanent) indirect entry for
-	 * each XIVE instance. This currently only happens in block group
-	 * mode
-	 */
-#warning Block group mode should not be disabled
-#endif
 }
 
 static void xive_scrub_workaround_eq(struct xive *x, uint32_t block __unused, uint32_t idx)
@@ -1654,9 +1480,7 @@ static bool xive_config_init(struct xive *x)
 	xive_dbg(x, "PC_GLOBAL_CONFIG=%016llx\n", val);
 
 	val = xive_regr(x, PC_TCTXT_CFG);
-#ifdef USE_BLOCK_GROUP_MODE
 	val |= PC_TCTXT_CFG_BLKGRP_EN | PC_TCTXT_CFG_HARD_CHIPID_BLK;
-#endif
 	val |= PC_TCTXT_CHIPID_OVERRIDE;
 	val |= PC_TCTXT_CFG_TARGET_EN;
 	val = SETFIELD(PC_TCTXT_CHIPID, val, x->block_id);
@@ -1820,13 +1644,8 @@ static bool xive_prealloc_tables(struct xive *x)
 	memset(x->vp_ind_base, 0, al);
 
 	/* Populate/initialize VP/EQs indirect backing */
-#ifdef USE_BLOCK_GROUP_MODE
 	vp_init_count = INITIAL_VP_COUNT;
 	vp_init_base = INITIAL_VP_BASE;
-#else
-	vp_init_count = x->block_id == 0 ? INITIAL_BLK0_VP_COUNT : 0;
-	vp_init_base = INITIAL_BLK0_VP_BASE;
-#endif
 
 	/* Allocate pages for some VPs in indirect mode */
 	pbase = vp_init_base / VP_PER_PAGE;
@@ -1871,11 +1690,7 @@ static void xive_add_provisioning_properties(void)
 	dt_add_property_cells(xive_dt_node,
 			      "ibm,xive-provision-page-size", 0x10000);
 
-#ifdef USE_BLOCK_GROUP_MODE
 	count = 1 << xive_chips_alloc_bits;
-#else
-	count = xive_block_count;
-#endif
 	for (i = 0; i < count; i++)
 		chips[i] = xive_block_to_chip[i];
 	dt_add_property(xive_dt_node, "ibm,xive-provision-chips",
@@ -4640,16 +4455,10 @@ static void xive_reset_one(struct xive *x)
 		struct xive_vp vp0 = {0};
 
 		/* Ignore the physical CPU VPs */
-#ifdef USE_BLOCK_GROUP_MODE
 		if (i >= INITIAL_VP_BASE &&
 		    i < (INITIAL_VP_BASE + INITIAL_VP_COUNT))
 			continue;
-#else
-		if (x->block_id == 0 &&
-		    i >= INITIAL_BLK0_VP_BASE &&
-		    i < (INITIAL_BLK0_VP_BASE + INITIAL_BLK0_VP_BASE))
-			continue;
-#endif
+
 		/* Is the VP valid ? */
 		vp = xive_get_vp(x, i);
 		if (!vp || !(vp->w0 & VP_W0_VALID))
@@ -4660,13 +4469,6 @@ static void xive_reset_one(struct xive *x)
 		xive_vpc_cache_update(x, x->block_id,
 				      i, 0, 8, &vp0, false, true);
 	}
-
-#ifndef USE_BLOCK_GROUP_MODE
-	/* If block group mode isn't enabled, reset VP alloc buddy */
-	buddy_reset(x->vp_buddy);
-	if (x->block_id == 0)
-		assert(buddy_reserve(x->vp_buddy, 0x800, 11));
-#endif
 
 	/* Forget about remaining donated pages */
 	list_head_init(&x->donated_pages);
@@ -4754,7 +4556,6 @@ static int64_t __xive_reset(uint64_t version)
 		xive_reset_one(chip->xive);
 	}
 
-#ifdef USE_BLOCK_GROUP_MODE
 	/* Cleanup global VP allocator */
 	buddy_reset(xive_vp_buddy);
 
@@ -4764,7 +4565,6 @@ static int64_t __xive_reset(uint64_t version)
 	 * reserve that range on each chip.
 	 */
 	assert(buddy_reserve(xive_vp_buddy, 0x80, 7));
-#endif /* USE_BLOCK_GROUP_MODE */
 
 	return OPAL_SUCCESS;
 }
@@ -4800,19 +4600,12 @@ static int64_t opal_xive_free_vp_block(uint64_t vp_base)
 		return OPAL_PARAMETER;
 	if (group)
 		return OPAL_PARAMETER;
-#ifdef USE_BLOCK_GROUP_MODE
 	if (blk)
 		return OPAL_PARAMETER;
 	if (order < (xive_chips_alloc_bits + 1))
 		return OPAL_PARAMETER;
 	if (idx & ((1 << (order - xive_chips_alloc_bits)) - 1))
 		return OPAL_PARAMETER;
-#else
-	if (order < 1)
-		return OPAL_PARAMETER;
-	if (idx & ((1 << order) - 1))
-		return OPAL_PARAMETER;
-#endif
 
 	count = 1 << order;
 	for (i = 0; i < count; i++) {
