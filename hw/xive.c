@@ -3761,7 +3761,7 @@ static int64_t opal_xive_get_queue_info(uint64_t vp, uint32_t prio,
 	if (out_qpage) {
 		if (eq->w0 & EQ_W0_ENQUEUE)
 			*out_qpage =
-				(((uint64_t)(eq->w2 & 0x0fffffff)) << 32) | eq->w3;
+				(((uint64_t)(eq->w2 & EQ_W2_OP_DESC_HI)) << 32) | eq->w3;
 		else
 			*out_qpage = 0;
 	}
@@ -3846,8 +3846,8 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 		case 16:
 		case 21:
 		case 24:
-			eq.w3 = ((uint64_t)qpage) & 0xffffffff;
-			eq.w2 = (((uint64_t)qpage)) >> 32 & 0x0fffffff;
+			eq.w3 = ((uint64_t)qpage) & EQ_W3_OP_DESC_LO;
+			eq.w2 = (((uint64_t)qpage) >> 32) & EQ_W2_OP_DESC_HI;
 			eq.w0 |= EQ_W0_ENQUEUE;
 			eq.w0 = SETFIELD(EQ_W0_QSIZE, eq.w0, qsize - 12);
 			break;
