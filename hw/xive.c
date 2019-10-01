@@ -2530,7 +2530,7 @@ static int64_t xive_sync(struct xive *x)
 
 	/* XXX Add timeout */
 	for (;;) {
-		r = xive_regrx(x, VC_EQC_CONFIG);
+		r = xive_regr(x, VC_EQC_CONFIG);
 		if ((r & SYNC_MASK) == SYNC_MASK)
 			break;
 		cpu_relax();
