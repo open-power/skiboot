@@ -172,8 +172,14 @@
 /* Number of priorities (and thus EQDs) we allocate for each VP */
 #define NUM_INT_PRIORITIES	8
 
+/* Max priority number */
+#define XIVE_MAX_PRIO		7
+
 /* Priority used for the one queue in XICS emulation */
 #define XIVE_EMULATION_PRIO	7
+
+/* Priority used for gather/silent escalation (KVM) */
+#define XIVE_ESCALATION_PRIO	7
 
 /* Max number of VPs. We allocate an indirect table big enough so
  * that when fully populated we can have that many VPs.
@@ -847,7 +853,8 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect)
 
 	eq_base_idx = idx << 3;
 
-	xive_vdbg(x, "Got EQs 0x%x..0x%x\n", eq_base_idx, eq_base_idx + 7);
+	xive_vdbg(x, "Got EQs 0x%x..0x%x\n", eq_base_idx,
+		  eq_base_idx + XIVE_MAX_PRIO);
 
 	/* Calculate the indirect page where the EQs reside */
 	ind_idx = eq_base_idx / EQ_PER_PAGE;
@@ -893,7 +900,7 @@ static void xive_free_eq_set(struct xive *x, uint32_t eqs)
 {
 	uint32_t idx;
 
-	xive_vdbg(x, "Freeing EQ 0x%x..0x%x\n", eqs, eqs + 7);
+	xive_vdbg(x, "Freeing EQ 0x%x..0x%x\n", eqs, eqs + XIVE_MAX_PRIO);
 
 	assert((eqs & 7) == 0);
 	assert(x->eq_map);
@@ -2064,7 +2071,7 @@ static inline bool xive_eq_for_target(uint32_t target, uint8_t prio,
 	uint32_t vp_blk, vp_idx;
 	uint32_t eq_blk, eq_idx;
 
-	if (prio > 7)
+	if (prio > XIVE_MAX_PRIO)
 		return false;
 
 	/* Get the VP block/index from the target word */
@@ -2141,7 +2148,7 @@ static int64_t xive_set_irq_targetting(uint32_t isn, uint32_t target,
 		xive_vdbg(x, "ISN %x masked !\n", isn);
 
 		/* Put prio 7 in the EQ */
-		prio = 7;
+		prio = XIVE_MAX_PRIO;
 	} else {
 		/* Unmasking */
 		new_ive = ive->w & ~IVE_MASKED;
@@ -3724,7 +3731,7 @@ static int64_t opal_xive_get_queue_info(uint64_t vp, uint32_t prio,
 		 * the escalation interrupt number here.
 		 */
 		if (eq->w0 & EQ_W0_UNCOND_ESCALATE)
-			esc_idx |= 7;
+			esc_idx |= XIVE_ESCALATION_PRIO;
 		*out_escalate_irq =
 			MAKE_ESCALATION_GIRQ(blk, esc_idx);
 	}
@@ -4024,7 +4031,8 @@ static int64_t opal_xive_get_vp_info(uint64_t vp_id,
 		 * look at EQ 7 instead.
 		 */
 		/* Grab EQ for prio 7 to check for silent escalation */
-		if (!xive_eq_for_target(vp_id, 7, &eq_blk, &eq_idx))
+		if (!xive_eq_for_target(vp_id, XIVE_ESCALATION_PRIO,
+					&eq_blk, &eq_idx))
 			return OPAL_PARAMETER;
 
 		eq_x = xive_from_vc_blk(eq_blk);
@@ -4070,7 +4078,7 @@ static int64_t xive_setup_silent_gather(uint64_t vp_id, bool enable)
 		return OPAL_PARAMETER;
 
 	/* Grab prio 7 */
-	eq_orig = xive_get_eq(x, idx + 7);
+	eq_orig = xive_get_eq(x, idx + XIVE_ESCALATION_PRIO);
 	if (!eq_orig)
 		return OPAL_PARAMETER;
 
@@ -4125,7 +4133,7 @@ static int64_t xive_setup_silent_gather(uint64_t vp_id, bool enable)
 			eq.w4 = SETFIELD(EQ_W4_ESC_EQ_BLOCK,
 					 eq.w4, blk);
 			eq.w4 = SETFIELD(EQ_W4_ESC_EQ_INDEX,
-					 eq.w4, idx + 7);
+					 eq.w4, idx + XIVE_ESCALATION_PRIO);
 		} else if (eq.w0 & EQ_W0_UNCOND_ESCALATE) {
 			/* Clear the "u" bit, disable escalations if it was set */
 			eq.w0 &= ~EQ_W0_UNCOND_ESCALATE;
