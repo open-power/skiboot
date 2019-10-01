@@ -22,6 +22,7 @@
 #include <opal-api.h>
 #include <nvram.h>
 #include <sbe-p8.h>
+#include <xive.h>
 
 #include <p9_stop_api.H>
 #include <p8_pore_table_gen_api.H>

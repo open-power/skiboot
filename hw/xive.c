@@ -2637,7 +2637,7 @@ static int64_t xive_source_set_xive(struct irq_source *is,
 	return __xive_set_irq_config(is, isn, server, prio, isn, true, true);
 }
 
-void __xive_source_eoi(struct irq_source *is, uint32_t isn)
+static void __xive_source_eoi(struct irq_source *is, uint32_t isn)
 {
 	struct xive_src *s = container_of(is, struct xive_src, is);
 	uint32_t idx = isn - s->esb_base;
@@ -4819,7 +4819,7 @@ static void xive_reset_mask_source_cb(struct irq_source *is,
 	}
 }
 
-void reset_cpu_xive(void)
+void xive_cpu_reset(void)
 {
 	struct cpu_thread *c = this_cpu();
 	struct xive_cpu_state *xs = c->xstate;
