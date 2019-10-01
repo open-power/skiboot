@@ -23,9 +23,6 @@
 /* Use Block group mode to move chip_id into block .... */
 #define USE_BLOCK_GROUP_MODE
 
-/* Indirect mode */
-#define USE_INDIRECT
-
 /* Always notify from EQ to VP (no EOI on EQs). Will speed up
  * EOIs at the expense of potentially higher powerbus traffic.
  */
@@ -171,14 +168,9 @@
  *
  * XXX Adjust that based on BAR value ?
  */
-#ifdef USE_INDIRECT
 #define MAX_EQ_COUNT		(1 * 1024 * 1024)
 #define EQ_PER_PAGE		(0x10000 / 32) // Use sizeof ?
 #define IND_EQ_TABLE_SIZE	((MAX_EQ_COUNT / EQ_PER_PAGE) * 8)
-#else
-#define MAX_EQ_COUNT		(4 * 1024 * 64)
-#define EQT_SIZE		(MAX_EQ_COUNT * 32)
-#endif
 
 /* Number of priorities (and thus EQDs) we allocate for each VP */
 #define NUM_INT_PRIORITIES	8
@@ -201,16 +193,10 @@
  *
  * XXX Adjust that based on BAR value ?
  */
-#ifdef USE_INDIRECT
 #define MAX_VP_ORDER		19	/* 512k */
 #define MAX_VP_COUNT		(1ul << MAX_VP_ORDER)
 #define VP_PER_PAGE		(0x10000 / 64) // Use sizeof ?
 #define IND_VP_TABLE_SIZE	((MAX_VP_COUNT / VP_PER_PAGE) * 8)
-#else
-#define MAX_VP_ORDER		13	/* 8k */
-#define MAX_VP_COUNT		(1ul << MAX_VP_ORDER)
-#define VPT_SIZE		(MAX_VP_COUNT * 64)
-#endif
 
 #ifdef USE_BLOCK_GROUP_MODE
 
@@ -407,37 +393,28 @@ struct xive {
 	void		*sbe_base;
 	void		*ivt_base;
 
-#ifdef USE_INDIRECT
 	/* Indirect END/EQ table. NULL entries are unallocated, count is
 	 * the numbre of pointers (ie, sub page placeholders).
 	 */
 	uint64_t	*eq_ind_base;
 	uint32_t	eq_ind_count;
-#else
-	void		*eq_base;
-#endif
+
 	/* EQ allocation bitmap. Each bit represent 8 EQs */
 	bitmap_t	*eq_map;
 
-#ifdef USE_INDIRECT
 	/* Indirect NVT/VP table. NULL entries are unallocated, count is
 	 * the numbre of pointers (ie, sub page placeholders).
 	 */
 	uint64_t	*vp_ind_base;
 	uint32_t	vp_ind_count;
-#else
-	void		*vp_base;
-#endif
 
 #ifndef USE_BLOCK_GROUP_MODE
 	/* VP allocation buddy when not using block group mode */
 	struct buddy	*vp_buddy;
 #endif
 
-#ifdef USE_INDIRECT
 	/* Pool of donated pages for provisioning indirect EQ and VP pages */
 	struct list_head donated_pages;
-#endif
 
 	/* To ease a possible change to supporting more than one block of
 	 * interrupts per chip, we store here the "base" global number
@@ -804,7 +781,6 @@ static struct xive_eq *xive_get_eq(struct xive *x, unsigned int idx)
 {
 	struct xive_eq *p;
 
-#ifdef USE_INDIRECT
 	if (idx >= (x->eq_ind_count * EQ_PER_PAGE))
 		return NULL;
 	p = (struct xive_eq *)(x->eq_ind_base[idx / EQ_PER_PAGE] &
@@ -813,14 +789,6 @@ static struct xive_eq *xive_get_eq(struct xive *x, unsigned int idx)
 		return NULL;
 
 	return &p[idx % EQ_PER_PAGE];
-#else
-	if (idx >= MAX_EQ_COUNT)
-		return NULL;
-	if (!x->eq_base)
-		return NULL;
-	p = x->eq_base;
-	return p + idx;
-#endif
 }
 
 static struct xive_ive *xive_get_ive(struct xive *x, unsigned int isn)
@@ -874,7 +842,6 @@ static struct xive_vp *xive_get_vp(struct xive *x, unsigned int idx)
 {
 	struct xive_vp *p;
 
-#ifdef USE_INDIRECT
 	assert(idx < (x->vp_ind_count * VP_PER_PAGE));
 	p = (struct xive_vp *)(x->vp_ind_base[idx / VP_PER_PAGE] &
 			       VSD_ADDRESS_MASK);
@@ -882,11 +849,6 @@ static struct xive_vp *xive_get_vp(struct xive *x, unsigned int idx)
 		return NULL;
 
 	return &p[idx % VP_PER_PAGE];
-#else
-	assert(idx < MAX_VP_COUNT);
-	p = x->vp_base;
-	return p + idx;
-#endif
 }
 
 static void xive_init_default_vp(struct xive_vp *vp,
@@ -934,12 +896,10 @@ static uint32_t *xive_get_eq_buf(uint32_t eq_blk, uint32_t eq_idx)
 	return (uint32_t *)addr;
 }
 
-#ifdef USE_INDIRECT
-static void *xive_get_donated_page(struct xive *x __unused)
+static void *xive_get_donated_page(struct xive *x)
 {
 	return (void *)list_pop_(&x->donated_pages, 0);
 }
-#endif
 
 #define XIVE_ALLOC_IS_ERR(_idx)	((_idx) >= 0xfffffff0)
 
@@ -947,9 +907,9 @@ static void *xive_get_donated_page(struct xive *x __unused)
 #define XIVE_ALLOC_NO_IND	0xfffffffe /* Indirect need provisioning */
 #define XIVE_ALLOC_NO_MEM	0xfffffffd /* Local allocation failed */
 
-static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect __unused)
+static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect)
 {
-	uint32_t ind_idx __unused;
+	uint32_t ind_idx;
 	int idx;
 
 	xive_vdbg(x, "Allocating EQ set...\n");
@@ -968,7 +928,6 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect __unused)
 
 	xive_vdbg(x, "Got EQs 0x%x..0x%x\n", idx, idx + 7);
 
-#ifdef USE_INDIRECT
 	/* Calculate the indirect page where the EQs reside */
 	ind_idx = idx / EQ_PER_PAGE;
 
@@ -1004,7 +963,6 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect __unused)
 			(((uint64_t)page) & VSD_ADDRESS_MASK);
 		/* Any cache scrub needed ? */
 	}
-#endif /* USE_INDIRECT */
 
 	return idx;
 }
@@ -1022,7 +980,6 @@ static void xive_free_eq_set(struct xive *x, uint32_t eqs)
 	bitmap_clr_bit(*x->eq_map, idx);
 }
 
-#ifdef USE_INDIRECT
 static bool xive_provision_vp_ind(struct xive *x, uint32_t vp_idx, uint32_t order)
 {
 	uint32_t pbase, pend, i;
@@ -1052,14 +1009,6 @@ static bool xive_provision_vp_ind(struct xive *x, uint32_t vp_idx, uint32_t orde
 	}
 	return true;
 }
-#else
-static inline bool xive_provision_vp_ind(struct xive *x __unused,
-					 uint32_t vp_idx __unused,
-					 uint32_t order __unused)
-{
-	return true;
-}
-#endif /* USE_INDIRECT */
 
 #ifdef USE_BLOCK_GROUP_MODE
 
@@ -1562,7 +1511,6 @@ static bool xive_set_local_tables(struct xive *x)
 			  SETFIELD(VSD_TSIZE, 0ull, ilog2(SBE_SIZE) - 12)))
 		return false;
 
-#ifdef USE_INDIRECT
 	/* Set EQDT as indirect mode with 64K subpages */
 	if (!xive_set_vsd(x, VST_TSEL_EQDT, x->block_id, base |
 			  (((uint64_t)x->eq_ind_base) & VSD_ADDRESS_MASK) |
@@ -1574,19 +1522,6 @@ static bool xive_set_local_tables(struct xive *x)
 			  (((uint64_t)x->vp_ind_base) & VSD_ADDRESS_MASK) |
 			  VSD_INDIRECT | SETFIELD(VSD_TSIZE, 0ull, 4)))
 		return false;
-#else
-	/* Set EQDT as direct mode */
-	if (!xive_set_vsd(x, VST_TSEL_EQDT, x->block_id, base |
-			  (((uint64_t)x->eq_base) & VSD_ADDRESS_MASK) |
-			  SETFIELD(VSD_TSIZE, 0ull, ilog2(EQT_SIZE) - 12)))
-		return false;
-
-	/* Set VPDT as direct mode */
-	if (!xive_set_vsd(x, VST_TSEL_VPDT, x->block_id, base |
-			  (((uint64_t)x->vp_base) & VSD_ADDRESS_MASK) |
-			  SETFIELD(VSD_TSIZE, 0ull, ilog2(VPT_SIZE) - 12)))
-		return false;
-#endif
 
 	/* Setup quue overflows */
 	for (i = 0; i < VC_QUEUE_OVF_COUNT; i++) {
@@ -1696,7 +1631,7 @@ static void xive_dump_mmio(struct xive *x)
 
 static bool xive_config_init(struct xive *x)
 {
-	uint64_t val __unused;
+	uint64_t val;
 
 	/* Configure PC and VC page sizes and disable Linux trigger mode */
 	xive_regwx(x, CQ_PBI_CTL, CQ_PBI_PC_64K | CQ_PBI_VC_64K | CQ_PBI_FORCE_TM_LOCAL);
@@ -1705,18 +1640,14 @@ static bool xive_config_init(struct xive *x)
 
 	/*** The rest can use MMIO ***/
 
-#ifdef USE_INDIRECT
 	/* Enable indirect mode in VC config */
 	val = xive_regr(x, VC_GLOBAL_CONFIG);
 	val |= VC_GCONF_INDIRECT;
 	xive_regw(x, VC_GLOBAL_CONFIG, val);
-#endif
 
 	/* Enable indirect mode in PC config */
 	val = xive_regr(x, PC_GLOBAL_CONFIG);
-#ifdef USE_INDIRECT
 	val |= PC_GCONF_INDIRECT;
-#endif
 	val |= PC_GCONF_CHIPID_OVR;
 	val = SETFIELD(PC_GCONF_CHIPID, val, x->block_id);
 	xive_regw(x, PC_GLOBAL_CONFIG, val);
@@ -1836,9 +1767,9 @@ static bool xive_setup_set_xlate(struct xive *x)
 
 static bool xive_prealloc_tables(struct xive *x)
 {
-	uint32_t i __unused, vp_init_count __unused, vp_init_base __unused;
-	uint32_t pbase __unused, pend __unused;
-	uint64_t al __unused;
+	uint32_t i, vp_init_count, vp_init_base;
+	uint32_t pbase, pend;
+	uint64_t al;
 
 	/* ESB/SBE has 4 entries per byte */
 	x->sbe_base = local_alloc(x->chip_id, SBE_SIZE, SBE_SIZE);
@@ -1862,7 +1793,6 @@ static bool xive_prealloc_tables(struct xive *x)
 	memset(x->ivt_base, 0, IVT_SIZE);
 	xive_dbg(x, "IVT at %p size 0x%x\n", x->ivt_base, IVT_SIZE);
 
-#ifdef USE_INDIRECT
 	/* Indirect EQ table. (XXX Align to 64K until I figure out the
 	 * HW requirements)
 	 */
@@ -1924,26 +1854,6 @@ static bool xive_prealloc_tables(struct xive *x)
 		x->vp_ind_base[i] = vsd;
 	}
 
-#else /* USE_INDIRECT */
-
-	/* Allocate direct EQ and VP tables */
-	x->eq_base = local_alloc(x->chip_id, EQT_SIZE, EQT_SIZE);
-	if (!x->eq_base) {
-		xive_err(x, "Failed to allocate EQ table\n");
-		return false;
-	}
-	memset(x->eq_base, 0, EQT_SIZE);
-	x->vp_base = local_alloc(x->chip_id, VPT_SIZE, VPT_SIZE);
-	if (!x->vp_base) {
-		xive_err(x, "Failed to allocate VP table\n");
-		return false;
-	}
-	/* We clear the entries (non-valid). They will be initialized
-	 * when actually used
-	 */
-	memset(x->vp_base, 0, VPT_SIZE);
-#endif /* USE_INDIRECT */
-
 	/* Allocate the queue overflow pages */
 	x->q_ovf = local_alloc(x->chip_id, VC_QUEUE_OVF_COUNT * 0x10000, 0x10000);
 	if (!x->q_ovf) {
@@ -1953,7 +1863,6 @@ static bool xive_prealloc_tables(struct xive *x)
 	return true;
 }
 
-#ifdef USE_INDIRECT
 static void xive_add_provisioning_properties(void)
 {
 	uint32_t chips[XIVE_MAX_CHIPS];
@@ -1972,9 +1881,6 @@ static void xive_add_provisioning_properties(void)
 	dt_add_property(xive_dt_node, "ibm,xive-provision-chips",
 			chips, 4 * count);
 }
-#else
-static inline void xive_add_provisioning_properties(void) { }
-#endif
 
 static void xive_create_mmio_dt_node(struct xive *x)
 {
@@ -2849,9 +2755,8 @@ static struct xive *init_one_xive(struct dt_node *np)
 	xive_dbg(x, "Initializing block ID %d...\n", x->block_id);
 	chip->xive = x;
 
-#ifdef USE_INDIRECT
 	list_head_init(&x->donated_pages);
-#endif
+
 	/* Base interrupt numbers and allocator init */
 	/* XXX Consider allocating half as many ESBs than MMIO space
 	 * so that HW sources land outside of ESB space...
@@ -4271,7 +4176,7 @@ static int64_t opal_xive_set_queue_state(uint64_t vp, uint32_t prio,
 static int64_t opal_xive_donate_page(uint32_t chip_id, uint64_t addr)
 {
 	struct proc_chip *c = get_chip(chip_id);
-	struct list_node *n __unused;
+	struct list_node *n;
 
 	if (xive_mode != XIVE_MODE_EXPL)
 		return OPAL_WRONG_STATE;
@@ -4281,12 +4186,12 @@ static int64_t opal_xive_donate_page(uint32_t chip_id, uint64_t addr)
 		return OPAL_PARAMETER;
 	if (addr & 0xffff)
 		return OPAL_PARAMETER;
-#ifdef USE_INDIRECT
+
 	n = (struct list_node *)addr;
 	lock(&c->xive->lock);
 	list_add(&c->xive->donated_pages, n);
 	unlock(&c->xive->lock);
-#endif
+
 	return OPAL_SUCCESS;
 }
 
@@ -4579,7 +4484,6 @@ static void xive_cleanup_cpu_tima(struct cpu_thread *c)
 	xive_regw(x, PC_TCTXT_INDIR0, 0);
 }
 
-#ifdef USE_INDIRECT
 static int64_t xive_vc_ind_cache_kill(struct xive *x, uint64_t type)
 {
 	uint64_t val;
@@ -4658,7 +4562,6 @@ static void xive_cleanup_eq_ind(struct xive *x)
 	}
 	xive_vc_ind_cache_kill(x, VC_KILL_EQD);
 }
-#endif /* USE_INDIRECT */
 
 static void xive_reset_one(struct xive *x)
 {
@@ -4765,14 +4668,12 @@ static void xive_reset_one(struct xive *x)
 		assert(buddy_reserve(x->vp_buddy, 0x800, 11));
 #endif
 
-#ifdef USE_INDIRECT
 	/* Forget about remaining donated pages */
 	list_head_init(&x->donated_pages);
 
 	/* And cleanup donated indirect VP and EQ pages */
 	xive_cleanup_vp_ind(x);
 	xive_cleanup_eq_ind(x);
-#endif
 
 	/* The rest must not be called with the lock held */
 	unlock(&x->lock);
