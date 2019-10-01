@@ -2601,10 +2601,6 @@ static struct xive *init_one_xive(struct dt_node *np)
 	xive_dbg(x, "Handling interrupts [%08x..%08x]\n",
 		 x->int_base, x->int_max - 1);
 
-	/* System dependant values that must be set before BARs */
-	//xive_regwx(x, CQ_CFG_PB_GEN, xx);
-	//xive_regwx(x, CQ_MSGSND, xx);
-
 	/* Setup the BARs */
 	if (!xive_configure_bars(x))
 		goto fail;
