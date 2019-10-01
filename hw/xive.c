@@ -4118,7 +4118,9 @@ static int64_t xive_setup_silent_gather(uint64_t vp_id, bool enable)
 	/* Mark/unmark all other prios with the new "u" bit and update
 	 * escalation
 	 */
-	for (i = 0; i < 6; i++) {
+	for (i = 0; i < NUM_INT_PRIORITIES; i++) {
+		if (i == XIVE_ESCALATION_PRIO)
+			continue;
 		eq_orig = xive_get_eq(x, idx + i);
 		if (!eq_orig)
 			continue;
