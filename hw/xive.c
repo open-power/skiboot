@@ -4728,7 +4728,6 @@ static int64_t opal_xive_alloc_vp_block(uint32_t alloc_order)
 		 */
 		memset(vp, 0, sizeof(*vp));
 		vp->w1 = (blk << 28) | eqs;
-		vp->w5 = 0xff000000;
 	}
 	return vp_base;
  fail:
