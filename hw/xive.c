@@ -196,7 +196,10 @@
  *
  * XXX Adjust that based on BAR value ?
  */
-#define MAX_VP_ORDER		19	/* 512k */
+
+#define NVT_SHIFT		19	/* in sync with EQ_W6_NVT_INDEX */
+
+#define MAX_VP_ORDER		NVT_SHIFT /* 512k */
 #define MAX_VP_COUNT		(1ul << MAX_VP_ORDER)
 #define VP_PER_PAGE		(0x10000 / 64) // Use sizeof ?
 #define IND_VP_TABLE_SIZE	((MAX_VP_COUNT / VP_PER_PAGE) * 8)
@@ -4049,7 +4052,7 @@ static int64_t opal_xive_get_vp_info(uint64_t vp_id,
 	}
 
 	if (out_cam_value)
-		*out_cam_value = (blk << 19) | idx;
+		*out_cam_value = (blk << NVT_SHIFT) | idx;
 
 	if (out_report_cl_pair) {
 		*out_report_cl_pair = ((uint64_t)(vp->w6 & 0x0fffffff)) << 32;
