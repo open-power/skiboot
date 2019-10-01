@@ -86,4 +86,23 @@
 #define TM_QW3_NSR_I		PPC_BIT8(2)
 #define TM_QW3_NSR_GRP_LVL	PPC_BIT8(3,7)
 
+/*
+ * "magic" Event State Buffer (ESB) MMIO offsets.
+ *
+ * The following offsets into the ESB MMIO allow to read or manipulate
+ * the PQ bits. They must be used with an 8-byte load instruction.
+ * They all return the previous state of the interrupt (atomically).
+ *
+ * Additionally, some ESB pages support doing an EOI via a store and
+ * some ESBs support doing a trigger via a separate trigger page.
+ */
+#define XIVE_ESB_STORE_TRIGGER  0x000 /* Store in range 0x000-0x3FF */
+#define XIVE_ESB_STORE_EOI      0x400 /* Store */
+#define XIVE_ESB_LOAD_EOI       0x000 /* Load */
+#define XIVE_ESB_GET            0x800 /* Load */
+#define XIVE_ESB_SET_PQ_00      0xc00 /* Load */
+#define XIVE_ESB_SET_PQ_01      0xd00 /* Load */
+#define XIVE_ESB_SET_PQ_10      0xe00 /* Load */
+#define XIVE_ESB_SET_PQ_11      0xf00 /* Load */
+
 #endif /* XIVE_REGS_H__ */

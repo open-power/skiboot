@@ -1077,7 +1077,7 @@ static void xive_scrub_workaround_eq(struct xive *x, uint32_t block __unused, ui
 	/* Ensure the above has returned before we do anything else
 	 * the XIVE store queue is completely empty
 	 */
-	load_wait(in_be64(mmio + 0x800));
+	load_wait(in_be64(mmio + XIVE_ESB_GET));
 }
 
 static int64_t __xive_cache_scrub(struct xive *x, enum xive_cache_type ctype,
@@ -2230,9 +2230,9 @@ static void xive_update_irq_mask(struct xive_src *s, uint32_t idx, bool masked)
 	if (s->flags & XIVE_SRC_EOI_PAGE1)
 		mmio_base += 1ull << (s->esb_shift - 1);
 	if (masked)
-		offset = 0xd00; /* PQ = 01 */
+		offset = XIVE_ESB_SET_PQ_01;
 	else
-		offset = 0xc00; /* PQ = 00 */
+		offset = XIVE_ESB_SET_PQ_00;
 
 	in_be64(mmio_base + offset);
 }
@@ -2398,7 +2398,7 @@ static void __xive_source_eoi(struct irq_source *is, uint32_t isn)
 
 	/* If the XIVE supports the new "store EOI facility, use it */
 	if (s->flags & XIVE_SRC_STORE_EOI)
-		out_be64(mmio_base + 0x400, 0);
+		out_be64(mmio_base + XIVE_ESB_STORE_EOI, 0);
 	else {
 		uint64_t offset;
 
@@ -2415,7 +2415,7 @@ static void __xive_source_eoi(struct irq_source *is, uint32_t isn)
 		if (s->flags & XIVE_SRC_LSI)
 			in_be64(mmio_base);
 		else {
-			offset = 0xc00;
+			offset = XIVE_ESB_SET_PQ_00;
 			eoi_val = in_be64(mmio_base + offset);
 			xive_vdbg(s->xive, "ISN: %08x EOI=%llx\n",
 				  isn, eoi_val);
@@ -2423,7 +2423,7 @@ static void __xive_source_eoi(struct irq_source *is, uint32_t isn)
 				return;
 
 			/* Re-trigger always on page0 or page1 ? */
-			out_be64(mmio_base, 0);
+			out_be64(mmio_base + XIVE_ESB_STORE_TRIGGER, 0);
 		}
 	}
 }
@@ -2686,9 +2686,9 @@ static void xive_ipi_eoi(struct xive *x, uint32_t idx)
 	 * This allows us to then do a re-trigger if Q was set rather
 	 * than synthetizing an interrupt in software
 	 */
-	eoi_val = in_8(mm + 0x10c00);
+	eoi_val = in_8(mm + 0x10000 + XIVE_ESB_SET_PQ_00);
 	if (eoi_val & 1) {
-		out_8(mm, 0);
+		out_8(mm + XIVE_ESB_STORE_TRIGGER, 0);
 	}
 }
 
@@ -2698,7 +2698,7 @@ static void xive_ipi_trigger(struct xive *x, uint32_t idx)
 
 	xive_vdbg(x, "Trigger IPI 0x%x\n", idx);
 
-	out_8(mm, 0);
+	out_8(mm + XIVE_ESB_STORE_TRIGGER, 0);
 }
 
 
@@ -3258,7 +3258,7 @@ static int64_t opal_xive_eoi(uint32_t xirr)
 		 * Note: We aren't doing an actual EOI. Instead we are clearing
 		 * both P and Q and will re-check the queue if Q was set.
 		 */
-		eoi_val = in_8(xs->eqmmio + 0xc00);
+		eoi_val = in_8(xs->eqmmio + XIVE_ESB_SET_PQ_00);
 		xive_cpu_vdbg(c, "  isn %08x, eoi_val=%02x\n", xirr, eoi_val);
 
 		/* Q was set ? Check EQ again after doing a sync to ensure
