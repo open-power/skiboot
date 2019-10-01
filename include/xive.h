@@ -41,7 +41,7 @@ uint32_t xive_get_notify_base(uint32_t girq);
 #define XIVE_SRC_EOI_PAGE1	0x02 /* EOI on the second page */
 #define XIVE_SRC_STORE_EOI	0x04 /* EOI using stores supported */
 #define XIVE_SRC_LSI		0x08 /* Interrupt is an LSI */
-#define XIVE_SRC_SHIFT_BUG	0x10 /* ESB update offset << 4 */
+#define XIVE_SRC_SHIFT_BUG	0x10 /* ESB update offset << 4 (PHB4 LSI DD1) */
 
 struct irq_source_ops;
 void xive_register_hw_source(uint32_t base, uint32_t count, uint32_t shift,

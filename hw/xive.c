@@ -2219,9 +2219,6 @@ static void xive_update_irq_mask(struct xive_src *s, uint32_t idx, bool masked)
 	else
 		offset = 0xc00; /* PQ = 00 */
 
-	if (s->flags & XIVE_SRC_SHIFT_BUG)
-		offset <<= 4;
-
 	in_be64(mmio_base + offset);
 }
 
@@ -2404,8 +2401,6 @@ static void __xive_source_eoi(struct irq_source *is, uint32_t isn)
 			in_be64(mmio_base);
 		else {
 			offset = 0xc00;
-			if (s->flags & XIVE_SRC_SHIFT_BUG)
-				offset <<= 4;
 			eoi_val = in_be64(mmio_base + offset);
 			xive_vdbg(s->xive, "ISN: %08x EOI=%llx\n",
 				  isn, eoi_val);
@@ -3602,8 +3597,6 @@ static uint64_t xive_convert_irq_flags(uint64_t iflags)
 
 	if (iflags & XIVE_SRC_LSI)
 		oflags |= OPAL_XIVE_IRQ_LSI;
-	if (iflags & XIVE_SRC_SHIFT_BUG)
-		oflags |= OPAL_XIVE_IRQ_SHIFT_BUG;
 	return oflags;
 }
 
