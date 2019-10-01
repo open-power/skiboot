@@ -4635,7 +4635,7 @@ static int64_t opal_xive_free_vp_block(uint64_t vp_base)
 		/* Ensure EQs are disabled and cleaned up. Ideally the caller
 		 * should have done it but we double check it here
 		 */
-		for (j = 0; j < 7; j++) {
+		for (j = 0; j < NUM_INT_PRIORITIES; j++) {
 			struct xive *eq_x = xive_from_vc_blk(eq_blk);
 			struct xive_eq eq, *orig_eq = xive_get_eq(eq_x, eq_idx + j);
 
