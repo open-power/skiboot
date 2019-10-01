@@ -832,6 +832,7 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect)
 {
 	uint32_t ind_idx;
 	int idx;
+	int eq_base_idx;
 
 	xive_vdbg(x, "Allocating EQ set...\n");
 
@@ -843,14 +844,13 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect)
 		xive_dbg(x, "Allocation from EQ bitmap failed !\n");
 		return XIVE_ALLOC_NO_SPACE;
 	}
-	bitmap_set_bit(*x->eq_map, idx);
 
-	idx <<= 3;
+	eq_base_idx = idx << 3;
 
-	xive_vdbg(x, "Got EQs 0x%x..0x%x\n", idx, idx + 7);
+	xive_vdbg(x, "Got EQs 0x%x..0x%x\n", eq_base_idx, eq_base_idx + 7);
 
 	/* Calculate the indirect page where the EQs reside */
-	ind_idx = idx / EQ_PER_PAGE;
+	ind_idx = eq_base_idx / EQ_PER_PAGE;
 
 	/* Is there an indirect page ? If not, check if we can provision it */
 	if (!x->eq_ind_base[ind_idx]) {
@@ -885,14 +885,15 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect)
 		/* Any cache scrub needed ? */
 	}
 
-	return idx;
+	bitmap_set_bit(*x->eq_map, idx);
+	return eq_base_idx;
 }
 
 static void xive_free_eq_set(struct xive *x, uint32_t eqs)
 {
 	uint32_t idx;
 
-	xive_vdbg(x, "Freeing EQ set...\n");
+	xive_vdbg(x, "Freeing EQ 0x%x..0x%x\n", eqs, eqs + 7);
 
 	assert((eqs & 7) == 0);
 	assert(x->eq_map);
