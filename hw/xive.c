@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 /*
- * XIVE - P9 interrupt controller
+ * XIVE: eXternal Interrupt Virtualization Engine. POWER9 interrupt
+ * controller
  *
- * Copyright 2016-2019 IBM Corp.
+ * Copyright (c) 2016-2019, IBM Corporation.
  */
 
 #include <skiboot.h>
@@ -10,6 +11,7 @@
 #include <chip.h>
 #include <io.h>
 #include <xive.h>
+#include <xive-p9-regs.h>
 #include <xscom-p9-regs.h>
 #include <interrupts.h>
 #include <timebase.h>
