@@ -508,6 +508,8 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 {
 	uint32_t erase_size;
 	const void *write_buf = buf;
+	uint64_t write_len;
+	uint64_t write_pos;
 	void *ecc_buf = NULL;
 	uint64_t ecc_start;
 	void *erase_buf;
@@ -556,6 +558,9 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 		write_buf = ecc_buf;
 	}
 
+	write_pos = pos;
+	write_len = len;
+
 	erase_buf = malloc(erase_size);
 	if (!erase_buf) {
 		errno = ENOMEM;
@@ -567,10 +572,11 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 	if (rc)
 		goto out_free;
 
-	while (len > 0) {
-		uint32_t erase_block = pos & ~(erase_size - 1);
-		uint32_t block_offset = pos & (erase_size - 1);
-		uint32_t chunk_size = erase_size > len ? len : erase_size;
+	while (write_len > 0) {
+		uint32_t erase_block = write_pos & ~(erase_size - 1);
+		uint32_t block_offset = write_pos & (erase_size - 1);
+		uint32_t chunk_size = erase_size > write_len ?
+					write_len : erase_size;
 		int cmp;
 
 		/* Write crosses an erase boundary, shrink the write to the boundary */
@@ -600,8 +606,9 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 		} else {
 			FL_DBG("clean\n");
 		}
-		len -= chunk_size;
-		pos += chunk_size;
+
+		write_len -= chunk_size;
+		write_pos += chunk_size;
 		write_buf += chunk_size;
 	}
 
