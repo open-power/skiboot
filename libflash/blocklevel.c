@@ -506,15 +506,18 @@ out:
 
 int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const void *buf, uint64_t len)
 {
+	void *ecc_buf = NULL;
+	uint64_t ecc_start;
+	int ecc_protection;
+
+	void *erase_buf = NULL;
 	uint32_t erase_size;
+
 	const void *write_buf = buf;
 	uint64_t write_len;
 	uint64_t write_pos;
-	void *ecc_buf = NULL;
-	uint64_t ecc_start;
-	void *erase_buf;
+
 	int rc = 0;
-	int ecc_protection;
 
 	if (!buf || !bl) {
 		errno = EINVAL;
