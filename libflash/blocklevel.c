@@ -512,6 +512,7 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 	uint64_t ecc_start;
 	void *erase_buf;
 	int rc = 0;
+	int ecc_protection;
 
 	if (!buf || !bl) {
 		errno = EINVAL;
@@ -529,7 +530,14 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 	if (rc)
 		return rc;
 
-	if (ecc_protected(bl, pos, len, &ecc_start)) {
+	ecc_protection = ecc_protected(bl, pos, len, &ecc_start);
+	if (ecc_protection == -1) {
+		FL_ERR("%s: Can't cope with partial ecc\n", __func__);
+		errno = EINVAL;
+		return FLASH_ERR_PARM_ERROR;
+	}
+
+	if (ecc_protection) {
 		FL_DBG("%s: region has ECC\n", __func__);
 
 		len = ecc_buffer_size(len);
