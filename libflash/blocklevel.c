@@ -508,7 +508,7 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 {
 	uint32_t erase_size;
 	const void *write_buf = buf;
-	void *write_buf_start = NULL;
+	void *ecc_buf = NULL;
 	uint64_t ecc_start;
 	void *erase_buf;
 	int rc = 0;
@@ -534,18 +534,18 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 
 		len = ecc_buffer_size(len);
 
-		write_buf_start = malloc(len);
-		if (!write_buf_start) {
+		ecc_buf = malloc(len);
+		if (!ecc_buf) {
 			errno = ENOMEM;
 			return FLASH_ERR_MALLOC_FAILED;
 		}
 
-		if (memcpy_to_ecc(write_buf_start, buf, ecc_buffer_size_minus_ecc(len))) {
-			free(write_buf_start);
+		if (memcpy_to_ecc(ecc_buf, buf, ecc_buffer_size_minus_ecc(len))) {
+			free(ecc_buf);
 			errno = EBADF;
 			return FLASH_ERR_ECC_INVALID;
 		}
-		write_buf = write_buf_start;
+		write_buf = ecc_buf;
 	}
 
 	erase_buf = malloc(erase_size);
@@ -599,7 +599,7 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 out:
 	release(bl);
 out_free:
-	free(write_buf_start);
+	free(ecc_buf);
 	free(erase_buf);
 	return rc;
 }
