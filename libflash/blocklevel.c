@@ -562,19 +562,20 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 	while (len > 0) {
 		uint32_t erase_block = pos & ~(erase_size - 1);
 		uint32_t block_offset = pos & (erase_size - 1);
-		uint32_t size = erase_size > len ? len : erase_size;
+		uint32_t chunk_size = erase_size > len ? len : erase_size;
 		int cmp;
 
 		/* Write crosses an erase boundary, shrink the write to the boundary */
-		if (erase_size < block_offset + size) {
-			size = erase_size - block_offset;
+		if (erase_size < block_offset + chunk_size) {
+			chunk_size = erase_size - block_offset;
 		}
 
 		rc = bl->read(bl, erase_block, erase_buf, erase_size);
 		if (rc)
 			goto out;
 
-		cmp = blocklevel_flashcmp(erase_buf + block_offset, write_buf, size);
+		cmp = blocklevel_flashcmp(erase_buf + block_offset, write_buf,
+					  chunk_size);
 		FL_DBG("%s: region 0x%08x..0x%08x ", __func__,
 				erase_block, erase_size);
 		if (cmp != 0) {
@@ -584,16 +585,16 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 				bl->erase(bl, erase_block, erase_size);
 			}
 			FL_DBG("write\n");
-			memcpy(erase_buf + block_offset, write_buf, size);
+			memcpy(erase_buf + block_offset, write_buf, chunk_size);
 			rc = bl->write(bl, erase_block, erase_buf, erase_size);
 			if (rc)
 				goto out;
 		} else {
 			FL_DBG("clean\n");
 		}
-		len -= size;
-		pos += size;
-		write_buf += size;
+		len -= chunk_size;
+		pos += chunk_size;
+		write_buf += chunk_size;
 	}
 
 out:
