@@ -513,7 +513,7 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 	void *erase_buf;
 	int rc = 0;
 
-	if (!write_buf || !bl) {
+	if (!buf || !bl) {
 		errno = EINVAL;
 		return FLASH_ERR_PARM_ERROR;
 	}
