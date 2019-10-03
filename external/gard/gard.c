@@ -570,7 +570,7 @@ static int do_clear_i(struct gard_ctx *ctx, int pos, struct gard_record *gard, v
 			return rc;
 		}
 
-		rc = blocklevel_smart_write(ctx->bl, buf_pos - sizeof(gard), buf, buf_len);
+		rc = blocklevel_smart_write(ctx->bl, buf_pos - sizeof(*gard), buf, buf_len);
 		free(buf);
 		if (rc) {
 			fprintf(stderr, "Couldn't write to flash at 0x%08x for len 0x%08x\n",
