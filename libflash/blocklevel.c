@@ -513,7 +513,7 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 	void *erase_buf = NULL;
 	uint32_t erase_size;
 
-	const void *write_buf = buf;
+	const void *write_buf;
 	uint64_t write_len;
 	uint64_t write_pos;
 
@@ -543,26 +543,45 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 	}
 
 	if (ecc_protection) {
+		uint64_t ecc_pos, ecc_align, ecc_diff, ecc_len;
+
 		FL_DBG("%s: region has ECC\n", __func__);
 
-		len = ecc_buffer_size(len);
+		ecc_pos = with_ecc_pos(ecc_start, pos);
+		ecc_align = ecc_buffer_align(ecc_start, ecc_pos);
+		ecc_diff = ecc_pos - ecc_align;
+		ecc_len = ecc_buffer_size(len + ecc_diff);
 
-		ecc_buf = malloc(len);
+		ecc_buf = malloc(ecc_len);
 		if (!ecc_buf) {
 			errno = ENOMEM;
 			return FLASH_ERR_MALLOC_FAILED;
 		}
 
-		if (memcpy_to_ecc(ecc_buf, buf, ecc_buffer_size_minus_ecc(len))) {
+		if (ecc_diff) {
+			rc = blocklevel_read(bl, ecc_align, ecc_buf, ecc_diff);
+			if (rc) {
+				errno = EBADF;
+				rc = FLASH_ERR_ECC_INVALID;
+				goto out;
+			}
+		}
+
+		rc = memcpy_to_ecc_unaligned(ecc_buf, buf, len, ecc_diff);
+		if (rc) {
 			free(ecc_buf);
 			errno = EBADF;
 			return FLASH_ERR_ECC_INVALID;
 		}
-		write_buf = ecc_buf;
-	}
 
-	write_pos = pos;
-	write_len = len;
+		write_buf = ecc_buf;
+		write_len = ecc_len;
+		write_pos = ecc_pos;
+	} else {
+		write_buf = buf;
+		write_len = len;
+		write_pos = pos;
+	}
 
 	erase_buf = malloc(erase_size);
 	if (!erase_buf) {
