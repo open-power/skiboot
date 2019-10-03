@@ -588,6 +588,8 @@ int blocklevel_smart_write(struct blocklevel_device *bl, uint64_t pos, const voi
 			rc = bl->write(bl, erase_block, erase_buf, erase_size);
 			if (rc)
 				goto out;
+		} else {
+			FL_DBG("clean\n");
 		}
 		len -= size;
 		pos += size;
