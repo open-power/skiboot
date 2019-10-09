@@ -663,7 +663,10 @@ static void rescan_slot_devices(struct pci_slot *slot)
 	struct phb *phb = slot->phb;
 	struct pci_device *pd = slot->pd;
 
-	slot->ops.prepare_link_change(slot, true);
+	/*
+	 * prepare_link_change() is called (if needed) by the state
+	 * machine during the slot reset or link polling
+	 */
 	pci_scan_bus(phb, pd->secondary_bus,
 		     pd->subordinate_bus, &pd->children, pd, true);
 	pci_add_device_nodes(phb, &pd->children, pd->dn,
@@ -678,11 +681,85 @@ static void remove_slot_devices(struct pci_slot *slot)
 	pci_remove_bus(phb, &pd->children);
 }
 
+static void link_up_timer(struct timer *t, void *data,
+			  uint64_t now __unused)
+{
+	struct pci_slot *slot = data;
+	struct phb *phb = slot->phb;
+	uint8_t link;
+	int64_t rc = 0;
+
+	if (!phb_try_lock(phb)) {
+		schedule_timer(&slot->timer, msecs_to_tb(10));
+		return;
+	}
+
+	rc = slot->ops.run_sm(slot);
+	if (rc < 0)
+		goto out;
+	if (rc > 0) {
+		schedule_timer(t, rc);
+		phb_unlock(phb);
+		return;
+	}
+
+	if (slot->ops.get_link_state(slot, &link) != OPAL_SUCCESS)
+		link = 0;
+	if (!link) {
+		rc = OPAL_HARDWARE;
+		goto out;
+	}
+
+	rescan_slot_devices(slot);
+out:
+	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+		       slot->async_token, get_slot_phandle(slot),
+		       slot->power_state, rc <= 0 ? rc : OPAL_BUSY);
+	phb_unlock(phb);
+}
+
+static bool training_needed(struct pci_slot *slot)
+{
+	struct phb *phb = slot->phb;
+	struct pci_device *pd = slot->pd;
+
+	/* only for opencapi slots for now */
+	if (!pd && phb->phb_type == phb_type_npu_v2_opencapi)
+		return true;
+	return false;
+}
+
+static void wait_for_link_up_and_rescan(struct pci_slot *slot)
+{
+	int64_t rc = 1;
+
+	/*
+	 * Links for PHB slots need to be retrained by triggering a
+	 * fundamental reset. Other slots also need to be tested for
+	 * readiness
+	 */
+	if (training_needed(slot)) {
+		pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
+		rc = slot->ops.freset(slot);
+		if (rc < 0) {
+			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+				       slot->async_token,
+				       get_slot_phandle(slot),
+				       slot->power_state, rc);
+			return;
+		}
+	} else {
+		pci_slot_set_state(slot, PCI_SLOT_STATE_LINK_START_POLL);
+		rc = msecs_to_tb(20);
+	}
+	init_timer(&slot->timer, link_up_timer, slot);
+	schedule_timer(&slot->timer, rc);
+}
+
 static void set_power_timer(struct timer *t __unused, void *data,
 			    uint64_t now __unused)
 {
 	struct pci_slot *slot = data;
-	uint8_t link;
 	struct phb *phb = slot->phb;
 
 	if (!phb_try_lock(phb)) {
@@ -713,23 +790,7 @@ static void set_power_timer(struct timer *t __unused, void *data,
 		}
 
 		/* Power on */
-		if (slot->ops.get_link_state(slot, &link) != OPAL_SUCCESS)
-			link = 0;
-		if (link) {
-			rescan_slot_devices(slot);
-			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
-			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-				       slot->async_token, get_slot_phandle(slot),
-				       OPAL_PCI_SLOT_POWER_ON, OPAL_SUCCESS);
-		} else if (slot->retries-- == 0) {
-			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
-			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-				       slot->async_token, get_slot_phandle(slot),
-				       OPAL_PCI_SLOT_POWER_ON, OPAL_BUSY);
-		} else {
-			schedule_timer(&slot->timer, msecs_to_tb(10));
-		}
-
+		wait_for_link_up_and_rescan(slot);
 		break;
 	default:
 		prlog(PR_ERR, "PCI SLOT %016llx: Unexpected state 0x%08x\n",
@@ -812,10 +873,12 @@ static int64_t opal_pci_set_power_state(uint64_t async_token,
 		init_timer(&slot->timer, set_power_timer, slot);
 		schedule_timer(&slot->timer, msecs_to_tb(10));
 	} else if (rc == OPAL_SUCCESS) {
-		if (*state == OPAL_PCI_SLOT_POWER_OFF)
+		if (*state == OPAL_PCI_SLOT_POWER_OFF) {
 			remove_slot_devices(slot);
-		else
-			rescan_slot_devices(slot);
+		} else {
+			wait_for_link_up_and_rescan(slot);
+			rc = OPAL_ASYNC_COMPLETION;
+		}
 	}
 
 	phb_unlock(phb);
