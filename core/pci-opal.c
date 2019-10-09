@@ -667,10 +667,17 @@ static void rescan_slot_devices(struct pci_slot *slot)
 	 * prepare_link_change() is called (if needed) by the state
 	 * machine during the slot reset or link polling
 	 */
-	pci_scan_bus(phb, pd->secondary_bus,
-		     pd->subordinate_bus, &pd->children, pd, true);
-	pci_add_device_nodes(phb, &pd->children, pd->dn,
-			     &phb->lstate, 0);
+	if (phb->phb_type != phb_type_npu_v2_opencapi) {
+		pci_scan_bus(phb, pd->secondary_bus,
+			     pd->subordinate_bus, &pd->children, pd, true);
+		pci_add_device_nodes(phb, &pd->children, pd->dn,
+				     &phb->lstate, 0);
+	} else {
+		pci_scan_bus(phb, 0, 0xff, &phb->devices, NULL, true);
+		pci_add_device_nodes(phb, &phb->devices,
+				     phb->dt_node, &phb->lstate, 0);
+		phb->ops->phb_final_fixup(phb);
+	}
 }
 
 static void remove_slot_devices(struct pci_slot *slot)
@@ -678,7 +685,10 @@ static void remove_slot_devices(struct pci_slot *slot)
 	struct phb *phb = slot->phb;
 	struct pci_device *pd = slot->pd;
 
-	pci_remove_bus(phb, &pd->children);
+	if (phb->phb_type != phb_type_npu_v2_opencapi)
+		pci_remove_bus(phb, &pd->children);
+	else
+		pci_remove_bus(phb, &phb->devices);
 }
 
 static void link_up_timer(struct timer *t, void *data,
