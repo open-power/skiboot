@@ -1127,13 +1127,13 @@ static int64_t npu2_opencapi_poll_link(struct pci_slot *slot)
 		reg = get_odl_status(chip_id, dev->brick_index);
 		if (GETFIELD(OB_ODL_STATUS_TRAINING_STATE_MACHINE, reg) ==
 			OCAPI_LINK_STATE_TRAINED) {
-			OCAPIINF(dev, "link trained in %lld ms\n",
-				OCAPI_LINK_TRAINING_TIMEOUT - slot->retries);
+			OCAPIINF(dev, "link trained in %ld ms\n",
+				 tb_to_msecs(mftb() - dev->train_start));
 			check_trained_link(dev, reg);
 			pci_slot_set_state(slot, OCAPI_SLOT_LINK_TRAINED);
 			return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
 		}
-		if (slot->retries-- == 0)
+		if (tb_compare(mftb(), dev->train_timeout) == TB_AAFTERB)
 			return npu2_opencapi_retry_state(slot, reg);
 
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
@@ -1239,7 +1239,8 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 		/* Bump lanes - this improves training reliability */
 		npu2_opencapi_bump_ui_lane(dev);
 		start_training(chip_id, dev);
-		slot->retries = OCAPI_LINK_TRAINING_TIMEOUT;
+		dev->train_start = mftb();
+		dev->train_timeout = dev->train_start + msecs_to_tb(OCAPI_LINK_TRAINING_TIMEOUT);
 		pci_slot_set_state(slot, OCAPI_SLOT_LINK_START);
 		return slot->ops.poll_link(slot);
 
