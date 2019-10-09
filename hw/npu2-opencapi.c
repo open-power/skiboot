@@ -1187,6 +1187,7 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
 	uint32_t chip_id = dev->npu->chip_id;
 	uint8_t presence = 1;
+	int rc;
 
 	switch (slot->state) {
 	case OCAPI_SLOT_NORMAL:
@@ -1216,7 +1217,11 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
 
 	case OCAPI_SLOT_FRESET_ASSERT_DELAY:
-		npu2_opencapi_phy_reset(dev);
+		rc = npu2_opencapi_phy_reset(dev);
+		if (rc) {
+			OCAPIERR(dev, "FRESET: couldn't reset PHY state\n");
+			return OPAL_HARDWARE;
+		}
 		deassert_odl_reset(chip_id, dev->brick_index);
 		deassert_adapter_reset(dev);
 		pci_slot_set_state(slot,

@@ -234,7 +234,7 @@ void npu2_clear_link_flag(struct npu2_dev *ndev, uint8_t flag);
 uint32_t reset_ntl(struct npu2_dev *ndev);
 extern int nv_zcal_nominal;
 void npu2_opencapi_phy_init(struct npu2_dev *dev);
-void npu2_opencapi_phy_reset(struct npu2_dev *dev);
+int npu2_opencapi_phy_reset(struct npu2_dev *dev);
 void npu2_opencapi_phy_prbs31(struct npu2_dev *dev);
 void npu2_opencapi_bump_ui_lane(struct npu2_dev *dev);
 int64_t npu2_freeze_status(struct phb *phb __unused,

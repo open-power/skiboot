@@ -1041,10 +1041,17 @@ void npu2_opencapi_phy_init(struct npu2_dev *dev)
 	}
 }
 
-void npu2_opencapi_phy_reset(struct npu2_dev *dev)
+int npu2_opencapi_phy_reset(struct npu2_dev *dev)
 {
-	run_procedure(dev, 4); /* procedure_phy_reset */
-	run_procedure(dev, 6); /* procedure_phy_rx_dccal */
+	int rc;
+
+	rc = run_procedure(dev, 4); /* procedure_phy_reset */
+	if (rc != PROCEDURE_COMPLETE)
+		return -1;
+	rc = run_procedure(dev, 6); /* procedure_phy_rx_dccal */
+	if (rc != PROCEDURE_COMPLETE)
+		return -1;
+	return 0;
 }
 
 void npu2_opencapi_phy_prbs31(struct npu2_dev *dev)
