@@ -406,6 +406,13 @@ static void npu2_err_interrupt(struct irq_source *is, uint32_t isn)
 			p->chip_id, irq_name);
 		free(irq_name);
 		show_all_regs(p, brick);
+		/*
+		 * P9 NPU doesn't support recovering a link going down
+		 * unexpectedly. So we mark the device as broken and
+		 * report it to the OS, so that the error is logged
+		 * and the drivers notified.
+		 */
+		npu2_opencapi_set_broken(p, brick);
 		opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
 					OPAL_EVENT_PCI_ERROR);
 		break;

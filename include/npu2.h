@@ -118,6 +118,8 @@ struct npu2_dev_nvlink {
 	const char		*slot_label;
 };
 
+#define NPU2_DEV_BROKEN		0x1
+
 struct npu2_dev {
 	enum npu2_dev_type	type;
 	uint32_t		link_index;
@@ -126,6 +128,7 @@ struct npu2_dev {
 	struct dt_node		*dt_node;
 	struct npu2_pcie_bar	bars[2];
 	struct npu2		*npu;
+	long			flags;
 
 	uint32_t		bdfn;
 
@@ -250,5 +253,7 @@ int64_t npu2_map_lpar(struct phb *phb, uint64_t bdf, uint64_t lparid,
 		      uint64_t lpcr);
 int64_t npu2_set_relaxed_order(struct phb *phb, uint32_t gcid, int pec,
 			       bool enable);
+
+void npu2_opencapi_set_broken(struct npu2 *npu, int brick);
 
 #endif /* __NPU2_H */
