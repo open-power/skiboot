@@ -1704,6 +1704,8 @@ static void setup_device(struct npu2_dev *dev)
 
 	set_fence_control(dev->npu->chip_id, dev->npu->xscom_base, dev->brick_index, 0b00);
 
+	pci_register_phb(&dev->phb_ocapi, OPAL_DYNAMIC_PHB_ID);
+
 	if (npu2_ocapi_training_state != NPU2_TRAIN_DEFAULT) {
 		setup_debug_training_state(dev);
 	} else {
@@ -1717,7 +1719,6 @@ static void setup_device(struct npu2_dev *dev)
 			prlog(PR_ERR, "OCAPI: Cannot create PHB slot\n");
 		}
 	}
-	pci_register_phb(&dev->phb_ocapi, OPAL_DYNAMIC_PHB_ID);
 	return;
 }
 
