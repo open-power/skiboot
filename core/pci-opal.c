@@ -647,11 +647,30 @@ static int64_t opal_pci_get_power_state(uint64_t id, uint64_t data)
 }
 opal_call(OPAL_PCI_GET_POWER_STATE, opal_pci_get_power_state, 2);
 
+static void rescan_slot_devices(struct pci_slot *slot)
+{
+	struct phb *phb = slot->phb;
+	struct pci_device *pd = slot->pd;
+
+	slot->ops.prepare_link_change(slot, true);
+	pci_scan_bus(phb, pd->secondary_bus,
+		     pd->subordinate_bus, &pd->children, pd, true);
+	pci_add_device_nodes(phb, &pd->children, pd->dn,
+			     &phb->lstate, 0);
+}
+
+static void remove_slot_devices(struct pci_slot *slot)
+{
+	struct phb *phb = slot->phb;
+	struct pci_device *pd = slot->pd;
+
+	pci_remove_bus(phb, &pd->children);
+}
+
 static void set_power_timer(struct timer *t __unused, void *data,
 			    uint64_t now __unused)
 {
 	struct pci_slot *slot = data;
-	struct phb *phb = slot->phb;
 	struct pci_device *pd = slot->pd;
 	struct dt_node *dn = pd->dn;
 	uint8_t link;
@@ -670,7 +689,7 @@ static void set_power_timer(struct timer *t __unused, void *data,
 		break;
 	case PCI_SLOT_STATE_SPOWER_DONE:
 		if (slot->power_state == OPAL_PCI_SLOT_POWER_OFF) {
-			pci_remove_bus(phb, &pd->children);
+			remove_slot_devices(slot);
 			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
 			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
 				       slot->async_token, dn->phandle,
@@ -682,12 +701,7 @@ static void set_power_timer(struct timer *t __unused, void *data,
 		if (slot->ops.get_link_state(slot, &link) != OPAL_SUCCESS)
 			link = 0;
 		if (link) {
-			slot->ops.prepare_link_change(slot, true);
-			pci_scan_bus(phb, pd->secondary_bus,
-				     pd->subordinate_bus,
-				     &pd->children, pd, true);
-			pci_add_device_nodes(phb, &pd->children, dn,
-					     &phb->lstate, 0);
+			rescan_slot_devices(slot);
 			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
 			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
 				       slot->async_token, dn->phandle,
@@ -782,15 +796,10 @@ static int64_t opal_pci_set_power_state(uint64_t async_token,
 		init_timer(&slot->timer, set_power_timer, slot);
 		schedule_timer(&slot->timer, msecs_to_tb(10));
 	} else if (rc == OPAL_SUCCESS) {
-		if (*state == OPAL_PCI_SLOT_POWER_OFF) {
-			pci_remove_bus(phb, &pd->children);
-		} else {
-			slot->ops.prepare_link_change(slot, true);
-			pci_scan_bus(phb, pd->secondary_bus,
-				pd->subordinate_bus, &pd->children, pd, true);
-			pci_add_device_nodes(phb, &pd->children, pd->dn,
-				&phb->lstate, 0);
-		}
+		if (*state == OPAL_PCI_SLOT_POWER_OFF)
+			remove_slot_devices(slot);
+		else
+			rescan_slot_devices(slot);
 	}
 
 	phb_unlock(phb);
