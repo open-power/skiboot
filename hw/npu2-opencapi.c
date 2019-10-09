@@ -1039,6 +1039,28 @@ static int64_t npu2_opencapi_get_presence_state(struct pci_slot __unused *slot,
 	return OPAL_SUCCESS;
 }
 
+static void fence_brick(struct npu2_dev *dev)
+{
+	OCAPIDBG(dev, "Fencing brick\n");
+	set_fence_control(dev->npu->chip_id, dev->npu->xscom_base,
+			  dev->brick_index, 0b11);
+	/* from 13.2.1, Quiesce Fence State */
+	npu2_write(dev->npu, NPU2_MISC_FENCE_STATE,
+		   PPC_BIT(dev->brick_index + 6));
+}
+
+static void unfence_brick(struct npu2_dev *dev)
+{
+	OCAPIDBG(dev, "Unfencing brick\n");
+	npu2_write(dev->npu, NPU2_MISC_FENCE_STATE,
+		   PPC_BIT(dev->brick_index));
+
+	set_fence_control(dev->npu->chip_id, dev->npu->xscom_base,
+			  dev->brick_index, 0b10);
+	set_fence_control(dev->npu->chip_id, dev->npu->xscom_base,
+			  dev->brick_index, 0b00);
+}
+
 static enum OpalShpcLinkState get_link_width(uint64_t odl_status)
 {
 	uint64_t tx_lanes, rx_lanes, state;
@@ -1153,7 +1175,7 @@ static int64_t npu2_opencapi_poll_link(struct pci_slot *slot)
 	return OPAL_HARDWARE;
 }
 
-static int64_t npu2_opencapi_creset(struct pci_slot *slot __unused)
+static int64_t npu2_opencapi_creset(struct pci_slot *slot)
 {
 	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
 
@@ -1183,19 +1205,10 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 			OCAPIINF(dev, "no card detected\n");
 			return OPAL_SUCCESS;
 		}
-		if (dev->train_need_fence) {
-			OCAPIDBG(dev, "Fencing OTL during reset\n");
-			set_fence_control(chip_id, dev->npu->xscom_base,
-					dev->brick_index, 0b11);
-			npu2_write(dev->npu, NPU2_MISC_FENCE_STATE,
-				PPC_BIT(dev->brick_index + 6));
-			dev->train_fenced = true;
-		}
-		dev->train_need_fence = true;
 		slot->link_retries = OCAPI_LINK_TRAINING_RETRIES;
-		npu2_opencapi_phy_reset(dev);
 		/* fall-through */
 	case OCAPI_SLOT_FRESET_INIT:
+		fence_brick(dev);
 		assert_odl_reset(chip_id, dev->brick_index);
 		assert_adapter_reset(dev);
 		pci_slot_set_state(slot,
@@ -1204,6 +1217,7 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(5));
 
 	case OCAPI_SLOT_FRESET_ASSERT_DELAY:
+		npu2_opencapi_phy_reset(dev);
 		deassert_odl_reset(chip_id, dev->brick_index);
 		pci_slot_set_state(slot,
 				OCAPI_SLOT_FRESET_DEASSERT_DELAY);
@@ -1221,15 +1235,7 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(250));
 
 	case OCAPI_SLOT_FRESET_DEASSERT_DELAY2:
-		if (dev->train_fenced) {
-			OCAPIDBG(dev, "Unfencing OTL after reset\n");
-			npu2_write(dev->npu, NPU2_MISC_FENCE_STATE,
-				   PPC_BIT(dev->brick_index));
-			set_fence_control(chip_id, dev->npu->xscom_base,
-					  dev->brick_index, 0b00);
-			dev->train_fenced = false;
-		}
-
+		unfence_brick(dev);
 		set_init_pattern(chip_id, dev);
 		pci_slot_set_state(slot,
 				OCAPI_SLOT_FRESET_INIT_DELAY);
@@ -1692,8 +1698,6 @@ static void setup_device(struct npu2_dev *dev)
 
 	dev->bdfn = 0;
 	dev->linux_pe = -1;
-	dev->train_need_fence = false;
-	dev->train_fenced = false;
 
 	/* TODO: Procedure 13.1.3.7 - AFU Memory Range BARs */
 	/* Procedure 13.1.3.8 - AFU MMIO Range BARs */
