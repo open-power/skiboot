@@ -145,8 +145,6 @@ struct npu2_dev {
 	/* OpenCAPI */
 	struct phb		phb_ocapi;
 	uint64_t		linux_pe;
-	bool			train_need_fence;
-	bool			train_fenced;
 	unsigned long		train_start;
 	unsigned long		train_timeout;
 };
