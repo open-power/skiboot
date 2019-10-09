@@ -387,6 +387,11 @@ static inline void phb_lock(struct phb *phb)
 	lock(&phb->lock);
 }
 
+static inline bool phb_try_lock(struct phb *phb)
+{
+	return try_lock(&phb->lock);
+}
+
 static inline void phb_unlock(struct phb *phb)
 {
 	unlock(&phb->lock);

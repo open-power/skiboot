@@ -674,6 +674,12 @@ static void set_power_timer(struct timer *t __unused, void *data,
 	struct pci_device *pd = slot->pd;
 	struct dt_node *dn = pd->dn;
 	uint8_t link;
+	struct phb *phb = slot->phb;
+
+	if (!phb_try_lock(phb)) {
+		schedule_timer(&slot->timer, msecs_to_tb(10));
+		return;
+	}
 
 	switch (slot->state) {
 	case PCI_SLOT_STATE_SPOWER_START:
@@ -720,6 +726,7 @@ static void set_power_timer(struct timer *t __unused, void *data,
 		prlog(PR_ERR, "PCI SLOT %016llx: Unexpected state 0x%08x\n",
 		      slot->id, slot->state);
 	}
+	phb_unlock(phb);
 }
 
 static int64_t opal_pci_set_power_state(uint64_t async_token,
