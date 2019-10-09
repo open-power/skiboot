@@ -1465,14 +1465,12 @@ static int64_t npu2_opencapi_eeh_next_error(struct phb *phb,
 				   uint16_t *severity)
 {
 	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(phb);
-	uint64_t reg;
 
 	if (!first_frozen_pe || !pci_error_type || !severity)
 		return OPAL_PARAMETER;
 
-	reg = npu2_read(dev->npu, NPU2_MISC_FENCE_STATE);
-	if (reg & PPC_BIT(dev->brick_index)) {
-		OCAPIERR(dev, "Brick %d fenced!\n", dev->brick_index);
+	if (dev->flags & NPU2_DEV_BROKEN) {
+		OCAPIDBG(dev, "Reporting device as broken\n");
 		*first_frozen_pe = dev->linux_pe;
 		*pci_error_type = OPAL_EEH_PHB_ERROR;
 		*severity = OPAL_EEH_SEV_PHB_DEAD;
@@ -1821,6 +1819,21 @@ static const struct phb_ops npu2_opencapi_ops = {
 	.set_capp_recovery	= NULL,
 	.tce_kill		= NULL,
 };
+
+void npu2_opencapi_set_broken(struct npu2 *npu, int brick)
+{
+	struct phb *phb;
+	struct npu2_dev *dev;
+
+	for_each_phb(phb) {
+		if (phb->phb_type == phb_type_npu_v2_opencapi) {
+			dev = phb_to_npu2_dev_ocapi(phb);
+			if (dev->npu == npu &&
+			    dev->brick_index == brick)
+				dev->flags |= NPU2_DEV_BROKEN;
+		}
+	}
+}
 
 static int64_t opal_npu_spa_setup(uint64_t phb_id, uint32_t __unused bdfn,
 				uint64_t addr, uint64_t PE_mask)
