@@ -1203,6 +1203,10 @@ static int64_t npu2_opencapi_poll_link(struct pci_slot *slot)
 	case OCAPI_SLOT_LINK_TRAINED:
 		otl_enabletx(chip_id, dev->npu->xscom_base, dev);
 		pci_slot_set_state(slot, OCAPI_SLOT_NORMAL);
+		if (dev->flags & NPU2_DEV_BROKEN) {
+			OCAPIERR(dev, "Resetting a device which hit a previous error. Device recovery is not supported, so future behavior is undefined\n");
+			dev->flags &= ~NPU2_DEV_BROKEN;
+		}
 		check_perf_counters(dev);
 		dev->phb_ocapi.scan_map = 1;
 		return OPAL_SUCCESS;
