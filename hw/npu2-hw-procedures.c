@@ -418,25 +418,6 @@ static uint32_t phy_reset_complete(struct npu2_dev *ndev)
 {
 	int lane;
 
-	if (ndev->type == NPU2_DEV_TYPE_OPENCAPI) {
-		phy_write(ndev, &NPU2_PHY_RX_AC_COUPLED, 1);
-
-		switch (ndev->link_speed) {
-		case 20000000000UL:
-			prlog(PR_INFO, "OCAPI: Link speed set at 20Gb/s\n");
-			phy_write(ndev, &NPU2_PHY_RX_SPEED_SELECT, 1);
-			break;
-		case 25000000000UL:
-		case 25781250000UL:
-			prlog(PR_INFO, "OCAPI: Link speed set at 25.xGb/s\n");
-			phy_write(ndev, &NPU2_PHY_RX_SPEED_SELECT, 0);
-			break;
-		default:
-			prlog(PR_CRIT, "OCAPI: Invalid link speed!\n");
-			assert(false);
-		}
-	}
-
 	FOR_EACH_LANE(ndev, lane) {
 		phy_write_lane(ndev, &NPU2_PHY_RX_LANE_ANA_PDWN, lane, 0);
 		phy_write_lane(ndev, &NPU2_PHY_RX_LANE_DIG_PDWN, lane, 0);
@@ -1026,6 +1007,22 @@ void npu2_opencapi_phy_init(struct npu2_dev *dev)
 	 * Witherspoon it needs to be done in skiboot after device detection.
 	 */
 	phy_write(dev, &NPU2_PHY_RX_RC_ENABLE_AUTO_RECAL, 0x1);
+	phy_write(dev, &NPU2_PHY_RX_AC_COUPLED, 1);
+
+	switch (dev->link_speed) {
+	case 20000000000UL:
+		OCAPIINF(dev, "Link speed set at 20Gb/s\n");
+		phy_write(dev, &NPU2_PHY_RX_SPEED_SELECT, 1);
+		break;
+	case 25000000000UL:
+	case 25781250000UL:
+		OCAPIINF(dev, "Link speed set at 25.xGb/s\n");
+		phy_write(dev, &NPU2_PHY_RX_SPEED_SELECT, 0);
+		break;
+	default:
+		OCAPIERR(dev, "Invalid link speed!\n");
+		assert(false);
+	}
 }
 
 void npu2_opencapi_phy_reset(struct npu2_dev *dev)
