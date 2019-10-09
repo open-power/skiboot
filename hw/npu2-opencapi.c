@@ -1032,9 +1032,10 @@ static int64_t npu2_opencapi_get_presence_state(struct pci_slot __unused *slot,
 	 * As such we will never be asked to get the presence of a slot that's
 	 * empty.
 	 *
-	 * This may change if we ever support hotplug down the track.
+	 * This may change if we ever support surprise hotplug down
+	 * the track.
 	 */
-	*val = true;
+	*val = OPAL_PCI_SLOT_PRESENT;
 	return OPAL_SUCCESS;
 }
 
@@ -1092,6 +1093,38 @@ static int64_t npu2_opencapi_get_link_state(struct pci_slot *slot, uint8_t *val)
 	return OPAL_SUCCESS;
 }
 
+static int64_t npu2_opencapi_get_power_state(struct pci_slot *slot,
+					     uint8_t *val)
+{
+	*val = slot->power_state;
+	return OPAL_SUCCESS;
+}
+
+static int64_t npu2_opencapi_set_power_state(struct pci_slot *slot, uint8_t val)
+{
+	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(slot->phb);
+
+	switch (val) {
+	case PCI_SLOT_POWER_OFF:
+		OCAPIDBG(dev, "Fake power off\n");
+		fence_brick(dev);
+		assert_adapter_reset(dev);
+		slot->power_state = PCI_SLOT_POWER_OFF;
+		return OPAL_SUCCESS;
+
+	case PCI_SLOT_POWER_ON:
+		if (slot->power_state != PCI_SLOT_POWER_OFF)
+			return OPAL_SUCCESS;
+		OCAPIDBG(dev, "Fake power on\n");
+		slot->power_state = PCI_SLOT_POWER_ON;
+		slot->state = OCAPI_SLOT_NORMAL;
+		return OPAL_SUCCESS;
+
+	default:
+		return OPAL_UNSUPPORTED;
+	}
+}
+
 static void check_trained_link(struct npu2_dev *dev, uint64_t odl_status)
 {
 	if (get_link_width(odl_status) != OPAL_SHPC_LINK_UP_x8) {
@@ -1130,6 +1163,14 @@ static int64_t npu2_opencapi_retry_state(struct pci_slot *slot,
 
 	pci_slot_set_state(slot, OCAPI_SLOT_FRESET_INIT);
 	return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
+}
+
+static void npu2_opencapi_prepare_link_change(struct pci_slot *slot __unused,
+					      bool up __unused)
+{
+	/*
+	 * PCI hotplug wants it defined, but we don't need to do anything
+	 */
 }
 
 static int64_t npu2_opencapi_poll_link(struct pci_slot *slot)
@@ -1261,6 +1302,24 @@ static int64_t npu2_opencapi_hreset(struct pci_slot *slot __unused)
 	return OPAL_UNSUPPORTED;
 }
 
+static void make_slot_hotpluggable(struct pci_slot *slot, struct phb *phb)
+{
+	char label[40];
+
+	/*
+	 * Add a few definitions to the DT so that the linux PCI
+	 * hotplug framework can find the slot and identify it as
+	 * hot-pluggable.
+	 *
+	 * The "ibm,slot-label" property is used by linux as the slot name
+	 */
+	slot->pluggable = 1;
+	pci_slot_add_dt_properties(slot, phb->dt_node);
+	snprintf(label, sizeof(label), "OPENCAPI-%04x",
+		 (int)PCI_SLOT_PHB_INDEX(slot->id));
+	dt_add_property_string(phb->dt_node, "ibm,slot-label", label);
+}
+
 static struct pci_slot *npu2_opencapi_slot_create(struct phb *phb)
 {
 	struct pci_slot *slot;
@@ -1272,12 +1331,13 @@ static struct pci_slot *npu2_opencapi_slot_create(struct phb *phb)
 	/* TODO: Figure out other slot functions */
 	slot->ops.get_presence_state  = npu2_opencapi_get_presence_state;
 	slot->ops.get_link_state      = npu2_opencapi_get_link_state;
-	slot->ops.get_power_state     = NULL;
+	slot->ops.get_power_state     = npu2_opencapi_get_power_state;
 	slot->ops.get_attention_state = NULL;
 	slot->ops.get_latch_state     = NULL;
-	slot->ops.set_power_state     = NULL;
+	slot->ops.set_power_state     = npu2_opencapi_set_power_state;
 	slot->ops.set_attention_state = NULL;
 
+	slot->ops.prepare_link_change = npu2_opencapi_prepare_link_change;
 	slot->ops.poll_link           = npu2_opencapi_poll_link;
 	slot->ops.creset              = npu2_opencapi_creset;
 	slot->ops.freset              = npu2_opencapi_freset;
@@ -1716,6 +1776,7 @@ static void setup_device(struct npu2_dev *dev)
 			 */
 			prlog(PR_ERR, "OCAPI: Cannot create PHB slot\n");
 		}
+		make_slot_hotpluggable(slot, &dev->phb_ocapi);
 	}
 	return;
 }
