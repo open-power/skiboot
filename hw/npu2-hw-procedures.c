@@ -60,8 +60,14 @@ static struct npu2_phy_reg NPU2_PHY_RX_PR_FW_OFF	   = {0x08a, 56, 1};
 static struct npu2_phy_reg NPU2_PHY_RX_PR_FW_INERTIA_AMT   = {0x08a, 57, 3};
 static struct npu2_phy_reg NPU2_PHY_RX_CFG_LTE_MC	   = {0x000, 60, 4};
 static struct npu2_phy_reg NPU2_PHY_RX_A_INTEG_COARSE_GAIN = {0x00a, 48, 4};
+static struct npu2_phy_reg NPU2_PHY_RX_A_CTLE_COARSE	   = {0x00c, 48, 5};
+static struct npu2_phy_reg NPU2_PHY_RX_A_CTLE_GAIN	   = {0x00c, 53, 4};
 static struct npu2_phy_reg NPU2_PHY_RX_B_INTEG_COARSE_GAIN = {0x026, 48, 4};
+static struct npu2_phy_reg NPU2_PHY_RX_B_CTLE_COARSE	   = {0x028, 48, 5};
+static struct npu2_phy_reg NPU2_PHY_RX_B_CTLE_GAIN	   = {0x028, 53, 4};
 static struct npu2_phy_reg NPU2_PHY_RX_E_INTEG_COARSE_GAIN = {0x030, 48, 4};
+static struct npu2_phy_reg NPU2_PHY_RX_E_CTLE_COARSE	   = {0x032, 48, 5};
+static struct npu2_phy_reg NPU2_PHY_RX_E_CTLE_GAIN	   = {0x032, 53, 4};
 
 /* These registers are per-PHY, not per lane */
 static struct npu2_phy_reg NPU2_PHY_RX_SPEED_SELECT	       = {0x262, 51, 2};
@@ -429,6 +435,16 @@ static uint32_t phy_reset_complete(struct npu2_dev *ndev)
 		phy_write_lane(ndev, &NPU2_PHY_RX_A_INTEG_COARSE_GAIN, lane, 11);
 		phy_write_lane(ndev, &NPU2_PHY_RX_B_INTEG_COARSE_GAIN, lane, 11);
 		phy_write_lane(ndev, &NPU2_PHY_RX_E_INTEG_COARSE_GAIN, lane, 11);
+
+		if (ndev->type == NPU2_DEV_TYPE_OPENCAPI) {
+			phy_write_lane(ndev, &NPU2_PHY_RX_A_CTLE_GAIN, lane, 0);
+			phy_write_lane(ndev, &NPU2_PHY_RX_B_CTLE_GAIN, lane, 0);
+			phy_write_lane(ndev, &NPU2_PHY_RX_E_CTLE_GAIN, lane, 0);
+
+			phy_write_lane(ndev, &NPU2_PHY_RX_A_CTLE_COARSE, lane, 20);
+			phy_write_lane(ndev, &NPU2_PHY_RX_B_CTLE_COARSE, lane, 20);
+			phy_write_lane(ndev, &NPU2_PHY_RX_E_CTLE_COARSE, lane, 20);
+		}
 	}
 
 	set_iovalid(ndev, true);
