@@ -53,8 +53,7 @@
 #define   OCAPI_SLOT_FRESET_INIT            (OCAPI_SLOT_FRESET + 2)
 #define   OCAPI_SLOT_FRESET_ASSERT_DELAY    (OCAPI_SLOT_FRESET + 3)
 #define   OCAPI_SLOT_FRESET_DEASSERT_DELAY  (OCAPI_SLOT_FRESET + 4)
-#define   OCAPI_SLOT_FRESET_DEASSERT_DELAY2 (OCAPI_SLOT_FRESET + 5)
-#define   OCAPI_SLOT_FRESET_INIT_DELAY      (OCAPI_SLOT_FRESET + 6)
+#define   OCAPI_SLOT_FRESET_INIT_DELAY      (OCAPI_SLOT_FRESET + 5)
 
 #define OCAPI_LINK_TRAINING_RETRIES	2
 #define OCAPI_LINK_TRAINING_TIMEOUT	3000 /* ms */
@@ -1219,22 +1218,13 @@ static int64_t npu2_opencapi_freset(struct pci_slot *slot)
 	case OCAPI_SLOT_FRESET_ASSERT_DELAY:
 		npu2_opencapi_phy_reset(dev);
 		deassert_odl_reset(chip_id, dev->brick_index);
-		pci_slot_set_state(slot,
-				OCAPI_SLOT_FRESET_DEASSERT_DELAY);
-		/*
-		 * Minimal delay before taking adapter out of
-		 * reset. Could be useless, but doesn't hurt
-		 */
-		return pci_slot_set_sm_timeout(slot, msecs_to_tb(1));
-
-	case OCAPI_SLOT_FRESET_DEASSERT_DELAY:
 		deassert_adapter_reset(dev);
 		pci_slot_set_state(slot,
-				OCAPI_SLOT_FRESET_DEASSERT_DELAY2);
+				OCAPI_SLOT_FRESET_DEASSERT_DELAY);
 		/* give 250ms to device to be ready */
 		return pci_slot_set_sm_timeout(slot, msecs_to_tb(250));
 
-	case OCAPI_SLOT_FRESET_DEASSERT_DELAY2:
+	case OCAPI_SLOT_FRESET_DEASSERT_DELAY:
 		unfence_brick(dev);
 		set_init_pattern(chip_id, dev);
 		pci_slot_set_state(slot,
