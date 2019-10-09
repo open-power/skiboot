@@ -647,6 +647,17 @@ static int64_t opal_pci_get_power_state(uint64_t id, uint64_t data)
 }
 opal_call(OPAL_PCI_GET_POWER_STATE, opal_pci_get_power_state, 2);
 
+static u32 get_slot_phandle(struct pci_slot *slot)
+{
+	struct phb *phb = slot->phb;
+	struct pci_device *pd = slot->pd;
+
+	if (pd)
+		return pd->dn->phandle;
+	else
+		return phb->dt_node->phandle;
+}
+
 static void rescan_slot_devices(struct pci_slot *slot)
 {
 	struct phb *phb = slot->phb;
@@ -671,8 +682,6 @@ static void set_power_timer(struct timer *t __unused, void *data,
 			    uint64_t now __unused)
 {
 	struct pci_slot *slot = data;
-	struct pci_device *pd = slot->pd;
-	struct dt_node *dn = pd->dn;
 	uint8_t link;
 	struct phb *phb = slot->phb;
 
@@ -686,7 +695,7 @@ static void set_power_timer(struct timer *t __unused, void *data,
 		if (slot->retries-- == 0) {
 			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
 			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-				       slot->async_token, dn->phandle,
+				       slot->async_token, get_slot_phandle(slot),
 				       slot->power_state, OPAL_BUSY);
 		} else {
 			schedule_timer(&slot->timer, msecs_to_tb(10));
@@ -698,7 +707,7 @@ static void set_power_timer(struct timer *t __unused, void *data,
 			remove_slot_devices(slot);
 			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
 			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-				       slot->async_token, dn->phandle,
+				       slot->async_token, get_slot_phandle(slot),
 				       OPAL_PCI_SLOT_POWER_OFF, OPAL_SUCCESS);
 			break;
 		}
@@ -710,12 +719,12 @@ static void set_power_timer(struct timer *t __unused, void *data,
 			rescan_slot_devices(slot);
 			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
 			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-				       slot->async_token, dn->phandle,
+				       slot->async_token, get_slot_phandle(slot),
 				       OPAL_PCI_SLOT_POWER_ON, OPAL_SUCCESS);
 		} else if (slot->retries-- == 0) {
 			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
 			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-				       slot->async_token, dn->phandle,
+				       slot->async_token, get_slot_phandle(slot),
 				       OPAL_PCI_SLOT_POWER_ON, OPAL_BUSY);
 		} else {
 			schedule_timer(&slot->timer, msecs_to_tb(10));
