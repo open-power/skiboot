@@ -1489,7 +1489,7 @@ static int64_t npu2_opencapi_set_pe(struct phb *phb,
 				    uint8_t __unused bcompare,
 				    uint8_t __unused dcompare,
 				    uint8_t __unused fcompare,
-				    uint8_t __unused action)
+				    uint8_t action)
 {
 	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(phb);
 	/*
@@ -1501,6 +1501,11 @@ static int64_t npu2_opencapi_set_pe(struct phb *phb,
 	 * functions on the device, the OS can define many PEs, we
 	 * only keep one, the OS will handle it.
 	 */
+	if (action != OPAL_MAP_PE && action != OPAL_UNMAP_PE)
+		return OPAL_PARAMETER;
+
+	if (action == OPAL_UNMAP_PE)
+		pe_num = -1;
 	dev->linux_pe = pe_num;
 	return OPAL_SUCCESS;
 }
