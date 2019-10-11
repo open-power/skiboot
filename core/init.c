@@ -927,8 +927,12 @@ static void checksum_romem(void)
 	if (chip_quirk(QUIRK_SLOW_SIM))
 		return;
 
-	csum = mem_csum(_start, _romem_end);
+	csum = mem_csum(_start, _head_end);
 	romem_csum ^= csum;
+
+	csum = mem_csum(_stext, _romem_end);
+	romem_csum ^= csum;
+
 	csum = mem_csum(__builtin_kernel_start, __builtin_kernel_end);
 	romem_csum ^= csum;
 }

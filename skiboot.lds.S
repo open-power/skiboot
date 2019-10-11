@@ -69,6 +69,13 @@ SECTIONS
 		KEEP(*(.spirah.data))
 	}
 
+	_head_end = .;
+
+	/*
+	 * The following sections are read-write at runtime. We need
+	 * to skip over them when checksumming the skiboot images
+	 * before a fast-reboot.
+	 */
 	. = PROC_DUMP_AREA_OFF;
 	.procdump : {
 		KEEP(*(.procdump.data))
@@ -93,6 +100,8 @@ SECTIONS
 	.cpuctrl : {
 		KEEP(*(.cpuctrl.data))
 	}
+
+	/* ...and back to RO */
 
 	. = ALIGN(0x10);
 	_stext = .;

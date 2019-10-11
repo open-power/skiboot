@@ -37,6 +37,7 @@ extern struct mem_region *mem_region_next(struct mem_region *region);
 
 /* Misc linker script symbols */
 extern char _start[];
+extern char _head_end[];
 extern char _stext[];
 extern char _etext[];
 extern char __sym_map_end[];
