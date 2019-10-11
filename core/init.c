@@ -85,6 +85,8 @@ struct debug_descriptor debug_descriptor = {
 #endif
 };
 
+static void checksum_romem(void);
+
 static bool try_load_elf64_le(struct elf_hdr *header)
 {
 	struct elf64_hdr *kh = (struct elf64_hdr *)header;
@@ -620,6 +622,8 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	cpu_disable_ME_RI_all();
 
 	patch_traps(false);
+
+	checksum_romem();
 
 	debug_descriptor.state_flags |= OPAL_BOOT_COMPLETE;
 
@@ -1319,8 +1323,6 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	cvc_update_reserved_memory_phandle();
 
 	prd_register_reserved_memory();
-
-	checksum_romem();
 
 	load_and_boot_kernel(false);
 }
