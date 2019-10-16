@@ -133,9 +133,9 @@ void init_chips(void)
 	if (dt_node_is_compatible(dt_root, "qemu,powernv") ||
 	    dt_node_is_compatible(dt_root, "qemu,powernv8") ||
 	    dt_node_is_compatible(dt_root, "qemu,powernv9")) {
-		proc_chip_quirks |= QUIRK_NO_CHIPTOD | QUIRK_NO_PBA
+		proc_chip_quirks |= QUIRK_QEMU | QUIRK_NO_CHIPTOD
 			| QUIRK_NO_DIRECT_CTL | QUIRK_NO_RNG;
-		prlog(PR_NOTICE, "CHIP: Detected Qemu simulator\n");
+		prlog(PR_NOTICE, "CHIP: Detected QEMU simulator\n");
 	}
 
 	/* We walk the chips based on xscom nodes in the tree */
