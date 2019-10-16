@@ -587,6 +587,10 @@ bool occ_sensors_init(void)
 		free(phandles);
 		free(ptype);
 	}
+	/* clear the device tree property if no sensors */
+	if (list_empty(&sg->children)) {
+               dt_free(sg);
+	}
 
 	if (!occ_num)
 		return false;
