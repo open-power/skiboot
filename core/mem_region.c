@@ -1068,7 +1068,8 @@ void mem_region_init(void)
 	 * done by add_chip_dev_associativity()
 	 */
 	dt_for_each_node(dt_root, i) {
-		if (!dt_has_node_property(i, "device_type", "memory"))
+		if (!dt_has_node_property(i, "device_type", "memory") &&
+		    !dt_has_node_property(i, "compatible", "pmem-region"))
 			continue;
 
 		/* Add associativity properties */
