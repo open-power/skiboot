@@ -10,20 +10,25 @@
 #include <stdint.h>
 #include <assert.h>
 
+#define __unused __attribute__((unused))
+
 #define __LPC_H
 
 uint8_t port80;
 uint16_t port8x;
 
-static inline void lpc_outb(uint8_t data, uint32_t addr)
+static int64_t lpc_probe_write(int addr_type __unused, uint32_t addr,
+                        uint32_t data, uint32_t sz)
 {
 	assert((addr - 0x80) <= 2);
+	assert(sz == 1);
 	if (addr == 0x80)
 		port80 = data;
 	if (addr == 0x81)
 		port8x = data << 8 | (port8x & 0xff);
 	if (addr == 0x82)
 		port8x = (port8x & 0xff00) | data;
+	return 0;
 }
 
 #include "op-panel.h"

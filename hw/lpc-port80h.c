@@ -164,9 +164,10 @@ void op_display_lpc(enum op_severity s, enum op_module m, uint16_t c)
 		return;
 
 	port80_val = op_display_to_port80(port80_val, s, m, c);
-	lpc_outb(port80_val, 0x80);
 	port8x_val = op_display_to_port8x(port8x_val, s, m, c);
-	lpc_outb(port8x_val >> 8, 0x81);
-	lpc_outb(port8x_val & 0xFF, 0x82);
+
+	lpc_probe_write(OPAL_LPC_IO, 0x80, port80_val,        1);
+	lpc_probe_write(OPAL_LPC_IO, 0x81, port8x_val >> 8,   1);
+	lpc_probe_write(OPAL_LPC_IO, 0x82, port8x_val & 0xff, 1);
 }
 
