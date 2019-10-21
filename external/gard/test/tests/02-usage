@@ -1,5 +1,10 @@
 #! /bin/sh
 
+# This test fails on FSP based system. Hence skip this test.
+if [ -d "/proc/device-tree/fsps" ] ; then
+	return 0
+fi
+
 run_binary "./opal-gard"
 if [ "$?" -ne 1 ] ; then
 	fail_test

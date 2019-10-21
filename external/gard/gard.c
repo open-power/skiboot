@@ -821,12 +821,6 @@ int main(int argc, char **argv)
 	memset(ctx, 0, sizeof(*ctx));
 	memset(&blank_record, 0xff, sizeof(blank_record));
 
-	if (is_fsp()) {
-		fprintf(stderr, "This is the OpenPower gard tool which does "
-				"not support FSP systems\n");
-		return EXIT_FAILURE;
-	}
-
 	/* process global options */
 	for (;;) {
 		int c;
@@ -865,6 +859,12 @@ int main(int argc, char **argv)
 		}
 	}
 
+
+	if (is_fsp() && !filename) {
+		fprintf(stderr, "This is the OpenPower gard tool which does "
+				"not support FSP systems\n");
+		return EXIT_FAILURE;
+	}
 
 
 	/*
