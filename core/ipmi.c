@@ -126,8 +126,6 @@ int ipmi_dequeue_msg(struct ipmi_msg *msg)
 
 void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 {
-	bool clr_sync_msg = false;
-
 	msg->cc = cc;
 	if (msg->cmd != cmd) {
 		prerror("IPMI: Incorrect cmd 0x%02x in response\n", cmd);
@@ -139,10 +137,6 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 		cc = IPMI_ERR_UNSPECIFIED;
 	}
 	msg->netfn = netfn;
-
-	if (msg == sync_msg)
-		clr_sync_msg = true;
-
 
 	if (cc != IPMI_CC_NO_ERROR) {
 		prlog(PR_DEBUG, "IPMI: Got error response. cmd=0x%x, netfn=0x%x,"
@@ -157,8 +151,10 @@ void ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc, struct ipmi_msg *msg)
 	   completion functions. */
 
 	/* If this is a synchronous message flag that we are done */
-	if (clr_sync_msg)
+	if (msg == sync_msg) {
 		sync_msg = NULL;
+		barrier();
+	}
 }
 
 void ipmi_queue_msg_sync(struct ipmi_msg *msg)
