@@ -149,6 +149,22 @@ static void prd_msg_consumed(void *data, int status)
 	unlock(&events_lock);
 }
 
+/*
+ * OPAL_MSG_PRD interface can handle message size <= OPAL_MSG_FIXED_PARAMS_SIZE.
+ * But kernel prd driver had a bug where it will not copy partial data to user
+ * space. Use OPAL_MSG_PRD interface only if size is <= sizeof(opal_prg_msg).
+ */
+static inline int opal_queue_prd_msg(struct opal_prd_msg *msg)
+{
+	enum opal_msg_type msg_type = OPAL_MSG_PRD2;
+
+	if (be16_to_cpu(msg->hdr.size) <= 0x20)
+		msg_type = OPAL_MSG_PRD;
+
+	return _opal_queue_msg(msg_type, msg, prd_msg_consumed,
+			       be16_to_cpu(msg->hdr.size), msg);
+}
+
 static int populate_ipoll_msg(struct opal_prd_msg *msg, uint32_t proc)
 {
 	uint64_t ipoll_mask;
@@ -224,8 +240,7 @@ static void send_next_pending_event(void)
 	 * disabled then we shouldn't propagate PRD events to the host.
 	 */
 	if (prd_enabled) {
-		rc = _opal_queue_msg(OPAL_MSG_PRD, prd_msg, prd_msg_consumed,
-				     prd_msg->hdr.size, prd_msg);
+		rc = opal_queue_prd_msg(prd_msg);
 		if (!rc)
 			prd_msg_inuse = true;
 	}
@@ -327,7 +342,6 @@ void prd_fw_resp_fsp_response(int status)
 	uint64_t fw_resp_len_old;
 	int rc;
 	uint16_t hdr_size;
-	enum opal_msg_type msg_type = OPAL_MSG_PRD2;
 
 	lock(&events_lock);
 
@@ -348,16 +362,7 @@ void prd_fw_resp_fsp_response(int status)
 		prd_msg_fsp_req->hdr.size = cpu_to_be16(hdr_size);
 	}
 
-	/*
-	 * If prd message size is <= OPAL_MSG_FIXED_PARAMS_SIZE then use
-	 * OPAL_MSG_PRD to pass data to kernel. So that it works fine on
-	 * older kernel (which does not support OPAL_MSG_PRD2).
-	 */
-	if (prd_msg_fsp_req->hdr.size < OPAL_MSG_FIXED_PARAMS_SIZE)
-		msg_type = OPAL_MSG_PRD;
-
-	rc = _opal_queue_msg(msg_type, prd_msg_fsp_req, prd_msg_consumed,
-			     prd_msg_fsp_req->hdr.size, prd_msg_fsp_req);
+	rc = opal_queue_prd_msg(prd_msg_fsp_req);
 	if (!rc)
 		prd_msg_inuse = true;
 	unlock(&events_lock);
@@ -367,7 +372,6 @@ int prd_hbrt_fsp_msg_notify(void *data, u32 dsize)
 {
 	int size;
 	int rc = FSP_STATUS_GENERIC_FAILURE;
-	enum opal_msg_type msg_type = OPAL_MSG_PRD2;
 
 	if (!prd_enabled || !prd_active) {
 		prlog(PR_NOTICE, "PRD: %s: PRD daemon is not ready\n",
@@ -407,16 +411,7 @@ int prd_hbrt_fsp_msg_notify(void *data, u32 dsize)
 	prd_msg_fsp_notify->fw_notify.len = cpu_to_be64(dsize);
 	memcpy(&(prd_msg_fsp_notify->fw_notify.data), data, dsize);
 
-	/*
-	 * If prd message size is <= OPAL_MSG_FIXED_PARAMS_SIZE then use
-	 * OPAL_MSG_PRD to pass data to kernel. So that it works fine on
-	 * older kernel (which does not support OPAL_MSG_PRD2).
-	 */
-	if (prd_msg_fsp_notify->hdr.size < OPAL_MSG_FIXED_PARAMS_SIZE)
-		msg_type = OPAL_MSG_PRD;
-
-	rc = _opal_queue_msg(msg_type, prd_msg_fsp_notify,
-			     prd_msg_consumed, size, prd_msg_fsp_notify);
+	rc = opal_queue_prd_msg(prd_msg_fsp_notify);
 	if (!rc)
 		prd_msg_inuse = true;
 
@@ -625,8 +620,7 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 	}
 
 	if (!rc) {
-		rc = _opal_queue_msg(OPAL_MSG_PRD, prd_msg, prd_msg_consumed,
-				     prd_msg->hdr.size, prd_msg);
+		rc = opal_queue_prd_msg(prd_msg);
 		if (rc)
 			prd_msg_inuse = false;
 	} else {
