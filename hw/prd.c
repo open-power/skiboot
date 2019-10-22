@@ -370,7 +370,8 @@ int prd_hbrt_fsp_msg_notify(void *data, u32 dsize)
 	enum opal_msg_type msg_type = OPAL_MSG_PRD2;
 
 	if (!prd_enabled || !prd_active) {
-		prlog(PR_NOTICE, "PRD: PRD daemon is not ready\n");
+		prlog(PR_NOTICE, "PRD: %s: PRD daemon is not ready\n",
+		      __func__);
 		return rc;
 	}
 
