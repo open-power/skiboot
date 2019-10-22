@@ -1464,10 +1464,15 @@ static void npu3_dt_add_props(struct npu3 *npu)
 	dt_add_property_cells(dn, "clock-frequency", 0x200, 0);
 
 	dt_add_property_strings(dn, "device_type", "pciex");
-	/* To the OS, npu2 and npu3 are both ibm,ioda2-npu2-phb */
+
+	/*
+	 * To the OS, npu2 and npu3 are both ibm,ioda2-npu2-phb. The added
+	 * ibm,ioda3-npu3-phb allows for possible quirks.
+	 */
 	dt_add_property_strings(dn, "compatible",
 				"ibm,power9-npu-pciex",
-				"ibm,ioda2-npu2-phb");
+				"ibm,ioda2-npu2-phb",
+				"ibm,ioda2-npu3-phb");
 
 	dt_add_property_cells(dn, "ibm,phb-index",
 			      dt_prop_get_u32(npu->dt_node, "ibm,phb-index"));
