@@ -1218,8 +1218,9 @@ static int64_t npu3_dev_salt(void *pvd, struct pci_cfg_reg_filter *pcrf,
 		return OPAL_PARAMETER;
 
 	/* The config register before this one holds CMD_REG */
-	pci_virt_cfg_read_raw(pvd, PCI_VIRT_CFG_NORMAL, pcrf->start - 4,
-			      4, &cmd_reg);
+	PCI_VIRT_CFG_NORMAL_RD(pvd, pcrf->start - 4, 4, &cmd_reg);
+	if (cmd_reg == 0xffffffff)
+		return OPAL_PARAMETER;
 
 	/* Check for another command in progress */
 	val = npu3_dev_ppe_sram_read(dev, OB_PPE_SALT_CMD);
@@ -1290,7 +1291,7 @@ static uint32_t npu3_cfg_populate_vendor_cap(struct npu3_dev *dev,
 	PCI_VIRT_CFG_INIT_RO(pvd, start + 0xc, 1, npu3_chip_dev_index(dev));
 
 	/* SALT registers */
-	PCI_VIRT_CFG_INIT_RO(pvd, start + 0x10, 4, 0);
+	PCI_VIRT_CFG_INIT(pvd, start + 0x10, 4, 0xffffffff, 0, 0);
 	PCI_VIRT_CFG_INIT_RO(pvd, start + 0x14, 4, 0);
 
 	pci_virt_add_filter(pvd, start + 0x14, 4,
