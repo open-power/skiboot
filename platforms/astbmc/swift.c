@@ -63,11 +63,6 @@ static void swift_finalise_dt(bool is_reboot)
 	if (is_reboot)
 		return;
 
-	if (npu3_chip_possible_gpus() != 2) {
-		prlog(PR_ERR, "NPU: Unknown link topology detected\n");
-		return;
-	}
-
 	/* Collect the first link we find for each GPU */
 	npu3_for_each_nvlink_npu(npu) {
 		npu3_for_each_nvlink_dev(dev, npu) {
