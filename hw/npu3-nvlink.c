@@ -1223,8 +1223,10 @@ static int64_t npu3_dev_salt(void *pvd, struct pci_cfg_reg_filter *pcrf,
 
 	/* Check for another command in progress */
 	val = npu3_dev_ppe_sram_read(dev, OB_PPE_SALT_CMD);
-	if (GETFIELD(OB_PPE_SALT_CMD_READY, val))
+	if (GETFIELD(OB_PPE_SALT_CMD_READY, val)) {
+		NPU3DEVINF(dev, "SALT_CMD 0x%x: Not ready\n", cmd_reg);
 		return OPAL_BUSY;
+	}
 
 	val = OB_PPE_SALT_CMD_READY;
 	val = SETFIELD(OB_PPE_SALT_CMD_RW, val, write);
@@ -1240,7 +1242,7 @@ static int64_t npu3_dev_salt(void *pvd, struct pci_cfg_reg_filter *pcrf,
 
 	while (GETFIELD(OB_PPE_SALT_CMD_READY, val)) {
 		if (tb_compare(mftb(), timeout) == TB_AAFTERB) {
-			NPU3DEVINF(dev, "SALT_CMD 0x%x: timeout\n", cmd_reg);
+			NPU3DEVINF(dev, "SALT_CMD 0x%x: Timeout\n", cmd_reg);
 			return OPAL_BUSY;
 		}
 
@@ -1248,7 +1250,7 @@ static int64_t npu3_dev_salt(void *pvd, struct pci_cfg_reg_filter *pcrf,
 	}
 
 	if (GETFIELD(OB_PPE_SALT_CMD_ERR, val))
-		NPU3DEVINF(dev, "SALT_CMD 0x%x: error\n", cmd_reg);
+		NPU3DEVINF(dev, "SALT_CMD 0x%x: Error\n", cmd_reg);
 
 	if (!write)
 		*data = GETFIELD(OB_PPE_SALT_CMD_DATA, val);
