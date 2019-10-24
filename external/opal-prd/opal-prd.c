@@ -122,7 +122,8 @@ static struct opal_prd_ctx *ctx;
 
 static const char *opal_prd_devnode = "/dev/opal-prd";
 static const char *opal_prd_socket = "/run/opal-prd-control";
-static const char *hbrt_code_region_name = "ibm,hbrt-code-image";
+static const char *hbrt_code_region_name = "hbrt-code-image";
+static const char *hbrt_code_region_name_ibm = "ibm,hbrt-code-image";
 static const int opal_prd_version = 1;
 static uint64_t opal_prd_ipoll = 0xf000000000000000;
 
@@ -2193,9 +2194,13 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 	} else {
 		rc = map_hbrt_physmem(ctx, hbrt_code_region_name);
 		if (rc) {
-			pr_log(LOG_ERR, "IMAGE: Can't access hbrt "
-					"physical memory");
-			goto out_close;
+			/* Fallback to old style ibm,prd-label */
+			rc = map_hbrt_physmem(ctx, hbrt_code_region_name_ibm);
+			if (rc) {
+				pr_log(LOG_ERR, "IMAGE: Can't access hbrt "
+						"physical memory");
+				goto out_close;
+			}
 		}
 		dump_hbrt_map(ctx);
 	}

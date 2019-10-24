@@ -153,10 +153,14 @@ static void tpmrel_cvc_init(struct HDIF_common_hdr *hdif_hdr)
 	if (!node)
 		return;
 
-	cvc_reserved_mem = get_hb_reserved_memory("ibm,secure-crypt-algo-code");
+	cvc_reserved_mem = get_hb_reserved_memory("secure-crypt-algo-code");
 	if (!cvc_reserved_mem) {
-		prlog(PR_ERR, "CVC reserved memory not found\n");
-		return;
+		/* Fallback to old style ibm,prd-label */
+		cvc_reserved_mem = get_hb_reserved_memory("ibm,secure-crypt-algo-code");
+		if (!cvc_reserved_mem) {
+			prlog(PR_ERR, "CVC reserved memory not found\n");
+			return;
+		}
 	}
 
 	parent = dt_new(node, "ibm,cvc");
