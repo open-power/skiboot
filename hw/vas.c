@@ -6,6 +6,9 @@
 #include <phys-map.h>
 #include <xscom.h>
 #include <io.h>
+#include <xive.h>
+#include <interrupts.h>
+#include <nvram.h>
 #include <vas.h>
 
 #define vas_err(__fmt,...)	prlog(PR_ERR,"VAS: " __fmt, ##__VA_ARGS__)
@@ -24,6 +27,7 @@ struct vas {
 	uint64_t	xscom_base;
 	uint64_t	wcbs;
 	uint32_t	vas_irq;
+	uint64_t	vas_port;
 };
 
 static inline void get_hvwc_mmio_bar(int chipid, uint64_t *start, uint64_t *len)
@@ -402,6 +406,12 @@ static void create_mm_dt_node(struct proc_chip *chip)
 
 	dt_add_property(dn, "ibm,vas-id", &vas->vas_id, sizeof(vas->vas_id));
 	dt_add_property(dn, "ibm,chip-id", &gcid, sizeof(gcid));
+	if (vas->vas_irq) {
+		dt_add_property_cells(dn, "interrupts", vas->vas_irq, 0);
+		dt_add_property_cells(dn, "interrupt-parent",
+					get_ics_phandle());
+		dt_add_property_u64(dn, "ibm,vas-port", vas->vas_port);
+	}
 }
 
 /*
@@ -421,6 +431,26 @@ static void disable_vas_inst(struct dt_node *np)
 	free_wcbs(chip);
 
 	reset_north_ctl(chip);
+}
+
+static void vas_setup_irq(struct proc_chip *chip)
+{
+	uint64_t port;
+	uint32_t irq;
+
+	irq = xive_alloc_ipi_irqs(chip->id, 1, 64);
+	if (irq == XIVE_IRQ_ERROR) {
+		vas_err("Failed to allocate interrupt sources for chipID %d\n",
+				chip->id);
+		return;
+	}
+
+	vas_vdbg("trigger port: 0x%p\n", xive_get_trigger_port(irq));
+
+	port = (uint64_t)xive_get_trigger_port(irq);
+
+	chip->vas->vas_irq = irq;
+	chip->vas->vas_port = port;
 }
 
 /*
@@ -451,6 +481,13 @@ static int init_vas_inst(struct dt_node *np, bool enable)
 	if (init_wcm(chip) || init_uwcm(chip) || init_north_ctl(chip) ||
 	    			init_rma(chip))
 		return -1;
+
+	/*
+	 * Use NVRAM 'vas-user-space' config for backward compatibility
+	 * to older kernels. Remove this option in future if not needed.
+	 */
+	if (nvram_query_eq_dangerous("vas-user-space", "enable"))
+		vas_setup_irq(chip);
 
 	create_mm_dt_node(chip);
 

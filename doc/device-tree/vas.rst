@@ -18,6 +18,12 @@ Each VAS node contains: ::
 
   ibm,vas-id: unique identifier for each instance of VAS in the system.
 
+  ibm,vas-port: Port address for the interrupt.
+
+  interrupts: <IRQ# level> for this VAS instance.
+
+  interrupt-parent: Interrupt controller phandle.
+
   reg: contains 8 64-bit fields.
 
         Fields [0] and [1] represent the Hypervisor window context BAR
