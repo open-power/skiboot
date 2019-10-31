@@ -561,7 +561,7 @@ int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 		cpu = find_cpu_by_pir(i_core);
 		if (!cpu)
 			return OPAL_PARAMETER;
-		prlog(PR_DEBUG, "HBRT: Special wakeup assert for core 0x%x,"
+		prlog(PR_TRACE, "HBRT: Special wakeup assert for core 0x%x,"
 		      " count=%d\n", i_core, cpu->hbrt_spec_wakeup);
 		if (cpu->hbrt_spec_wakeup == 0)
 			rc = dctl_set_special_wakeup(cpu);
@@ -572,7 +572,7 @@ int hservice_wakeup(uint32_t i_core, uint32_t i_mode)
 		cpu = find_cpu_by_pir(i_core);
 		if (!cpu)
 			return OPAL_PARAMETER;
-		prlog(PR_DEBUG, "HBRT: Special wakeup release for core"
+		prlog(PR_TRACE, "HBRT: Special wakeup release for core"
 		      " 0x%x, count=%d\n", i_core, cpu->hbrt_spec_wakeup);
 		if (cpu->hbrt_spec_wakeup == 0) {
 			prerror("HBRT: Special wakeup clear"
