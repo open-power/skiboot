@@ -157,6 +157,7 @@ void trace_add(union trace *trace, u8 type, u16 len)
 
 static void trace_add_dt_props(void)
 {
+	uint64_t boot_buf_phys = (uint64_t) &boot_tracebuf.trace_info;
 	struct dt_node *exports, *traces;
 	unsigned int i;
 	u64 *prop, tmask;
@@ -173,14 +174,19 @@ static void trace_add_dt_props(void)
 	prop = malloc(sizeof(u64) * 2 * debug_descriptor.num_traces);
 
 	for (i = 0; i < debug_descriptor.num_traces; i++) {
-		prop[i * 2] = cpu_to_fdt64(debug_descriptor.trace_phys[i]);
-		prop[i * 2 + 1] = cpu_to_fdt64(debug_descriptor.trace_size[i]);
+		uint64_t addr = debug_descriptor.trace_phys[i];
+		uint64_t size = debug_descriptor.trace_size[i];
+		uint32_t pir = debug_descriptor.trace_pir[i];
 
-		snprintf(tname, sizeof(tname), "trace-%x-%"PRIx64,
-			 debug_descriptor.trace_pir[i],
-			 debug_descriptor.trace_phys[i]);
-		dt_add_property_u64s(traces, tname, debug_descriptor.trace_phys[i],
-				     debug_descriptor.trace_size[i]);
+		prop[i * 2]     = cpu_to_fdt64(addr);
+		prop[i * 2 + 1] = cpu_to_fdt64(size);
+
+		if (addr == boot_buf_phys)
+			snprintf(tname, sizeof(tname), "boot-%x", pir);
+		else
+			snprintf(tname, sizeof(tname), "trace-%x", pir);
+
+		dt_add_property_u64s(traces, tname, addr, size);
 	}
 
 	dt_add_property(opal_node, "ibm,opal-traces",
