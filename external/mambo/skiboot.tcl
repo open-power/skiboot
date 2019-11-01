@@ -89,6 +89,21 @@ mconfig net_tapdev MAMBO_NET_TAPDEV "tap0"
 # set to 0 to disable. When enabled it causes Linux's RFI flush to be enabled.
 mconfig speculation_policy_favor_security MAMBO_SPECULATION_POLICY_FAVOR_SECURITY 1
 
+# These values ~= P9N DD2.3, except for fw_count_cache_flush_assist=0 because it
+# exercises more kernel code.
+# See https://github.com/open-power/hostboot/blob/7ce2a9daac0ccf759376929b2ec40bbbc7ca3398/src/usr/hdat/hdatiplparms.H#L520
+mconfig needs_l1d_flush_msr_hv		MAMBO_NEEDS_L1D_FLUSH_MSR_HV	1
+mconfig needs_l1d_flush_msr_pr		MAMBO_NEEDS_L1D_FLUSH_MSR_PR	1
+mconfig fw_l1d_thread_split		MAMBO_FW_L1D_THREAD_SPLIT	1
+mconfig needs_spec_barrier		MAMBO_NEEDS_SPEC_BARRIER	1
+mconfig fw_bcctrl_serialized		MAMBO_FW_BCCTRL_SERIALIZED	0
+mconfig fw_count_cache_disabled		MAMBO_FW_COUNT_CACHE_DISABLED	0
+mconfig needs_count_cache_flush		MAMBO_NEEDS_COUNT_CACHE_FLUSH	1
+mconfig fw_count_cache_flush_assist	MAMBO_COUNT_CACHE_FLUSH_ASSIST	0
+mconfig inst_spec_barrier_ori31		MAMBO_INST_SPEC_BARRIER_ORI31	1
+mconfig inst_l1d_flush_trig2		MAMBO_INST_L1D_FLUSH_TRIG2	1
+mconfig inst_l1d_flush_ori30		MAMBO_INST_L1D_FLUSH_ORI30	0
+
 #
 # Create machine config
 #
@@ -351,9 +366,17 @@ proc add_feature_node { parent name { value 1 } } {
 
 set np [mysim of addchild $opal_node "fw-features" ""]
 add_feature_node $np "speculation-policy-favor-security" $mconf(speculation_policy_favor_security)
-add_feature_node $np "needs-l1d-flush-msr-hv-1-to-0"
-add_feature_node $np "needs-l1d-flush-msr-pr-0-to-1"
-add_feature_node $np "needs-spec-barrier-for-bound-checks"
+add_feature_node $np "needs-l1d-flush-msr-hv-1-to-0" $mconf(needs_l1d_flush_msr_hv)
+add_feature_node $np "needs-l1d-flush-msr-pr-0-to-1" $mconf(needs_l1d_flush_msr_pr)
+add_feature_node $np "fw-l1d-thread-split" $mconf(fw_l1d_thread_split)
+add_feature_node $np "needs-spec-barrier-for-bound-checks" $mconf(needs_spec_barrier)
+add_feature_node $np "fw-bcctrl-serialized" $mconf(fw_bcctrl_serialized)
+add_feature_node $np "fw-count-cache-disabled" $mconf(fw_count_cache_disabled)
+add_feature_node $np "needs-count-cache-flush-on-context-switch" $mconf(needs_count_cache_flush)
+add_feature_node $np "fw-count-cache-flush-bcctr2,0,0" $mconf(fw_count_cache_flush_assist)
+add_feature_node $np "inst-spec-barrier-ori31,31,0" $mconf(inst_spec_barrier_ori31)
+add_feature_node $np "inst-l1d-flush-trig2" $mconf(inst_l1d_flush_trig2)
+add_feature_node $np "inst-l1d-flush-ori30,30,0" $mconf(inst_l1d_flush_ori30)
 
 
 # Init CPUs
