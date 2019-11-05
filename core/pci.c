@@ -91,6 +91,11 @@ int64_t pci_find_ecap(struct phb *phb, uint16_t bdfn, uint16_t want,
 		rc = pci_cfg_read32(phb, bdfn, off, &cap);
 		if (rc)
 			return rc;
+
+		/* no ecaps supported */
+		if (cap == 0 || (cap & 0xffff) == 0xffff)
+			return OPAL_UNSUPPORTED;
+
 		if ((cap & 0xffff) == want) {
 			if (version)
 				*version = (cap >> 16) & 0xf;
