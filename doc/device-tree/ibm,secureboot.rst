@@ -33,6 +33,11 @@ Required properties
 
     hw-key-hash-size:   hw-key-hash size
 
+    os-secureboot-enforcing:
+                        this property is created by the secure variable backend
+                        if it detects a desire by the owner to requre any
+                        images (e.g. kernels) to be signed by an appropriate
+                        key stored in secure variables.
 
 Obsolete properties
 -------------------
