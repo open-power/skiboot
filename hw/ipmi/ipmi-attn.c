@@ -14,6 +14,7 @@
 #include <skiboot.h>
 #include <stack.h>
 #include <timebase.h>
+#include <xscom.h>
 
 /* Use same attention SRC for BMC based machine */
 DEFINE_LOG_ENTRY(OPAL_RC_ATTN, OPAL_PLATFORM_ERR_EVT,
@@ -67,18 +68,33 @@ void __attribute__((noreturn)) ipmi_terminate(const char *msg)
 	 */
 	p9_sbe_terminate();
 
-	/* Terminate called before initializing IPMI (early abort) */
-	if (!ipmi_present()) {
-		if (platform.cec_reboot)
-			platform.cec_reboot();
-		goto out;
-	}
+	/*
+	 * Trigger software xstop (OPAL TI). It will stop all the CPU threads
+	 * moving them into quiesced state. OCC will collect all FIR data.
+	 * Upon checkstop signal, BMC will then decide whether to reboot/IPL or
+	 * not depending on AutoReboot policy, if any. This helps in cases
+	 * where OPAL is crashing/terminating before host reaches to runtime.
+	 * With OpenBMC AutoReboot policy, in such cases, it will make sure
+	 * that system is moved to Quiesced state after 3 or so attempts to
+	 * IPL.  Without OPAL TI, OpenBMC will never know that OPAL is
+	 * terminating and system would go into never ending IPL'ing loop.
+	 *
+	 * Once the system reaches to runtime, OpenBMC resets the boot counter.
+	 * Hence next time when BMC receieves the OPAL TI, it will IPL the
+	 * system if AutoReboot is enabled. We don't need to worry about self
+	 * rebooting.
+	 */
+
+	xscom_trigger_xstop();
+	/*
+	 * Control will not reach here if software xstop has been supported and
+	 * enabled. If not supported then fallback to cec reboot path below.
+	 */
 
 	/* Reboot call */
 	if (platform.cec_reboot)
 		platform.cec_reboot();
 
-out:
 	while (1)
 		time_wait_ms(100);
 }
