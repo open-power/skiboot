@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: Apache-2.0
+# -*-Makefile-*-
+SECVAR_TEST_DIR = libstb/secvar/test
+#SUBDIRS = $(SECVAR_TEST_DIR)
+
+SECVAR_TEST = $(patsubst %.c, %, $(wildcard $(SECVAR_TEST_DIR)/secvar-test-*.c))
+
+HOSTCFLAGS+=-I . -I include
+
+.PHONY : secvar-check
+secvar-check: $(SECVAR_TEST:%=%-check) $(SECVAR_TEST:%=%-gcov-run)
+secvar-check: $(SECVAR_TEST_NOSTUB:%=%-check) $(SECVAR_TEST_NOSTUB:%=%-gcov-run)
+
+.PHONY : secvar-coverage
+secvar-coverage: $(SECVAR_TEST:%=%-gcov-run)
+secvar-coverage: $(SECVAR_TEST_NOSTUB:%=%-gcov-run)
+
+check: secvar-check
+coverage: secvar-coverage
+
+# TODO: create pnor image for only tests that need it
+$(SECVAR_TEST:%=%-gcov-run) : %-run: %
+	@dd if=/dev/zero of=secboot.img bs=128k count=1 2> /dev/null
+	$(call QTEST, TEST-COVERAGE ,$< , $<)
+	@$(RM) -f secboot.img
+
+$(SECVAR_TEST:%=%-check) : %-check: %
+	@dd if=/dev/zero of=secboot.img bs=128k count=1 2> /dev/null
+	$(call QTEST, RUN-TEST ,$(VALGRIND) $<, $<)
+	@$(RM) -f secboot.img
+
+$(SECVAR_TEST) : core/test/stubs.o
+
+$(SECVAR_TEST) : % : %.c
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -o $@ $< core/test/stubs.o, $<)
+
+$(SECVAR_TEST:%=%-gcov): %-gcov : %.c %
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I include -I . -I libfdt -lgcov -o $@ $< core/test/stubs.o, $<)
+
+-include $(wildcard libstb/secvar/test/*.d)
+
+clean: secvar-test-clean
+
+secvar-test-clean:
+	$(RM) -f libstb/secvar/test/*.[od] $(SECVAR_TEST) $(SECVAR_TEST:%=%-gcov)
+	$(RM) -f libstb/secvar/test/*.gcda libstb/secvar/test/*.gcno
+	$(RM) -f secboot.img
