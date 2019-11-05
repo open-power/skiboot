@@ -12,7 +12,16 @@ static bool bt_device_present;
 
 ST_PLUGGABLE(qemu_slot0, "pcie.0");
 ST_PLUGGABLE(qemu_slot1, "pcie.1");
-ST_PLUGGABLE(qemu_slot2, "pcie.2");
+
+static const struct slot_table_entry qemu_sw_down[] = {
+	SW_PLUGGABLE("sw0_down0", 0x0),
+	SW_BUILTIN  ("sw0_down1", 0x1),
+	SW_PLUGGABLE("sw0_down2", 0x2),
+	{ .etype = st_end },
+};
+ST_BUILTIN_DEV(qemu_sw_up,   "sw0_up", .children = qemu_sw_down);
+ST_BUILTIN_DEV(qemu_sw_root, "pcie.2", .children = qemu_sw_up);
+
 ST_PLUGGABLE(qemu_slot3, "pcie.3");
 ST_PLUGGABLE(qemu_slot4, "pcie.4");
 ST_PLUGGABLE(qemu_slot5, "pcie.5");
@@ -20,7 +29,7 @@ ST_PLUGGABLE(qemu_slot5, "pcie.5");
 static const struct slot_table_entry qemu_phb_table[] = {
 	ST_PHB_ENTRY(0, 0, qemu_slot0),
 	ST_PHB_ENTRY(0, 1, qemu_slot1),
-	ST_PHB_ENTRY(0, 2, qemu_slot2),
+	ST_PHB_ENTRY(0, 2, qemu_sw_root),
 	ST_PHB_ENTRY(0, 3, qemu_slot3),
 	ST_PHB_ENTRY(0, 4, qemu_slot4),
 	ST_PHB_ENTRY(0, 5, qemu_slot5),
