@@ -1,5 +1,5 @@
 #!/bin/bash
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 #
 # Takes /dev/stdin as dtb, saves to file, does dtdiff
 # Also runs parameter through a dts->dtb->dts conversion

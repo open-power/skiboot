@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 # -*-Makefile-*-
 
 HDATA_TEST := hdata/test/hdata_to_dt

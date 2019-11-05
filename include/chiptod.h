@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * The ChipTOD is the HW facility that maintains a synchronized
  * time base across the fabric.

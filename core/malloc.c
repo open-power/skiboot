@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * Implement malloc()/free() etc on top of our memory region allocator,
  * which provides mem_alloc()/mem_free().

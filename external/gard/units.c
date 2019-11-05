@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * Each chip has a set of "units" that are detailed by the System MRW. Granted
  * they're pretty much fixed for a given chip generation so hardcoding them here

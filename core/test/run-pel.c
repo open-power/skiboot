@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * Test for our PEL record generation. Currently this doesn't actually
  * test that the records we generate are correct, but it at least lets

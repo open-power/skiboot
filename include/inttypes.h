@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /* This file exists because a bunch of files are built as part of
  * unit tests as well as skiboot and inttypes.h is part of libc rather
  * than gcc, so to get the magic to work when we don't have libc sitting

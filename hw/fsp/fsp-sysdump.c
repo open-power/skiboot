@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * Sapphire dump design:
  *   - During initialization we setup Memory Dump Source Table (MDST) table

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 #include <compiler.h>
 #include <mem-map.h>
 #include <types.h>

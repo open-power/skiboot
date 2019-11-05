@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * Code for handling FSP_MCLASS_DIAG messages (cmd 0xee)
  * Receiving a high level ack timeout is likely indicative of a firmware bug

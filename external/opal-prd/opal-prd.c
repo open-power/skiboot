@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * OPAL Processor Runtime Diagnostics (PRD)
  * Runs Hostboot RunTime (HBRT) code in a userspace wrapper

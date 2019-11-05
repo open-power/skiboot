@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * There's some system level parameters that aren't over IPMI or NVRAM
  * but that the FSP exposes through this interface.

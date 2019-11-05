@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * This file provides some functions to manage a pool of pre-allocated
  * objects. It also provides a method to reserve a pre-defined number

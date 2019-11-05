@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * Everything to do with deep power saving (stop) states
  * SLeep/Winkle, Handle ChipTOD chip & configure core timebases

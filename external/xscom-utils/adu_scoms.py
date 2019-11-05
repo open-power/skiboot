@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 #
 # Python library for in-band SCom access
 # (based on xscom-utils from OPAL firmware)

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * Compile with:
  *   gcc -static -O2 mambo-socket-proxy.c -o mambo-socket-proxy -pthread

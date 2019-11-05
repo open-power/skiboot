@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /* This file contains the front end for OPAL error logging. It is used
  * to construct a struct errorlog representing the event/error to be
  * logged which is then passed to the platform specific backend to log

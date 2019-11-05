@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * Converts an OPAL formatted datetime into a struct tm. We ignore microseconds
  * as Linux doesn't use them anyway.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 /*
  * In-Memory Counters (IMC)
  * Sometimes called IMA, but that's also a different thing.

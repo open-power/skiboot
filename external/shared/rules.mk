@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 # NOTE: shared lib versioning has *NOTHING* to do with software package version
 #
 # If source code has changed, revision++

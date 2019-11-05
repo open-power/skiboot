@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 #
 # scripts to run skiboot (and a payload) with Mambo (otherwise known as the
 # POWER[89] Functional Simulator)
