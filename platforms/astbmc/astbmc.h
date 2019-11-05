@@ -47,22 +47,24 @@ struct slot_table_entry {
  * table for each slot (e.g. power limit, devfn != 0) then you need to
  * define the actual structure.
  */
-#define ST_BUILTIN_DEV(st_name, slot_name) \
+#define ST_BUILTIN_DEV(st_name, slot_name, ...) \
 static struct slot_table_entry st_name[] = \
 { \
 	{ \
 		.etype = st_pluggable_slot, \
 		.name = slot_name, \
+		##__VA_ARGS__ \
 	}, \
 	{ .etype = st_end }, \
 }
 
-#define ST_PLUGGABLE(st_name, slot_name) \
+#define ST_PLUGGABLE(st_name, slot_name, ...) \
 static struct slot_table_entry st_name[] = \
 { \
 	{ \
 		.etype = st_pluggable_slot, \
 		.name = slot_name, \
+		##__VA_ARGS__ \
 	}, \
 	{ .etype = st_end }, \
 }
@@ -70,6 +72,14 @@ static struct slot_table_entry st_name[] = \
 #define SW_PLUGGABLE(slot_name, port, ...) \
 { \
 	.etype = st_pluggable_slot, \
+	.name = slot_name, \
+	.location = ST_LOC_DEVFN(port, 0), \
+	##__VA_ARGS__ \
+}
+
+#define SW_BUILTIN(slot_name, port, ...) \
+{ \
+	.etype = st_builtin_dev, \
 	.name = slot_name, \
 	.location = ST_LOC_DEVFN(port, 0), \
 	##__VA_ARGS__ \
