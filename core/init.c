@@ -1211,6 +1211,10 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	secureboot_init();
 	trustedboot_init();
 
+	/* Secure variables init, handled by platform */
+	if (platform.secvar_init)
+		platform.secvar_init();
+
 	/*
 	 * BMC platforms load version information from flash after
 	 * secure/trustedboot init.

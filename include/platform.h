@@ -210,6 +210,8 @@ struct platform {
 					    uint32_t len);
 	int		(*nvram_write)(uint32_t dst, void *src, uint32_t len);
 
+	int (*secvar_init)(void);
+
 	/*
 	 * OCC timeout. This return how long we should wait for the OCC
 	 * before timing out. This lets us use a high value on larger FSP
