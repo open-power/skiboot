@@ -10,6 +10,23 @@
 
 static bool bt_device_present;
 
+ST_PLUGGABLE(qemu_slot0, "pcie.0");
+ST_PLUGGABLE(qemu_slot1, "pcie.1");
+ST_PLUGGABLE(qemu_slot2, "pcie.2");
+ST_PLUGGABLE(qemu_slot3, "pcie.3");
+ST_PLUGGABLE(qemu_slot4, "pcie.4");
+ST_PLUGGABLE(qemu_slot5, "pcie.5");
+
+static const struct slot_table_entry qemu_phb_table[] = {
+	ST_PHB_ENTRY(0, 0, qemu_slot0),
+	ST_PHB_ENTRY(0, 1, qemu_slot1),
+	ST_PHB_ENTRY(0, 2, qemu_slot2),
+	ST_PHB_ENTRY(0, 3, qemu_slot3),
+	ST_PHB_ENTRY(0, 4, qemu_slot4),
+	ST_PHB_ENTRY(0, 5, qemu_slot5),
+	{ .etype = st_end },
+};
+
 static bool qemu_probe_common(const char *compat)
 {
 	struct dt_node *n;
@@ -23,6 +40,8 @@ static bool qemu_probe_common(const char *compat)
 	dt_for_each_compatible(dt_root, n, "bt") {
 		bt_device_present = true;
 	}
+
+	slot_table_init(qemu_phb_table);
 
 	return true;
 }
@@ -58,6 +77,7 @@ DECLARE_PLATFORM(qemu) = {
 	.external_irq   = astbmc_ext_irq_serirq_cpld,
 	.cec_power_down = astbmc_ipmi_power_down,
 	.cec_reboot     = astbmc_ipmi_reboot,
+	.pci_get_slot_info = slot_table_get_slot_info,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
 	.terminate	= ipmi_terminate,
@@ -74,6 +94,7 @@ DECLARE_PLATFORM(qemu_powernv8) = {
 	.external_irq   = astbmc_ext_irq_serirq_cpld,
 	.cec_power_down = astbmc_ipmi_power_down,
 	.cec_reboot     = astbmc_ipmi_reboot,
+	.pci_get_slot_info = slot_table_get_slot_info,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
 	.exit			= astbmc_exit,
@@ -91,6 +112,7 @@ DECLARE_PLATFORM(qemu_powernv9) = {
 	.external_irq   = astbmc_ext_irq_serirq_cpld,
 	.cec_power_down = astbmc_ipmi_power_down,
 	.cec_reboot     = astbmc_ipmi_reboot,
+	.pci_get_slot_info = slot_table_get_slot_info,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
 	.exit			= astbmc_exit,
