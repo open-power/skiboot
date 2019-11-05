@@ -3170,7 +3170,7 @@
 
 	ibm,secureboot {
 		phandle = <0xb3>;
-		compatible = "ibm,secureboot-v2";
+		compatible = "ibm,secureboot", "ibm,secureboot-v2";
 		trusted-enabled;
 		hw-key-hash = <0x40d487ff 0x7380ed6a 0xd54775d5 0x795fea0d 0xe2f541fe 0xa9db06b8 0x466a42a3 0x20e65f75 0xb4866546 0x17d907 0x515dc2a5 0xf9fc5095 0x4d6ee0c9 0xb67d219d 0xfb708535 0x1d01d6d1>;
 		hw-key-hash-size = <0x40>;

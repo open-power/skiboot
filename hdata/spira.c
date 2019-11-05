@@ -908,7 +908,8 @@ static void dt_init_secureboot_node(const struct iplparams_sysparams *sysparams)
 	node = dt_new(dt_root, "ibm,secureboot");
 	assert(node);
 
-	dt_add_property_string(node, "compatible", "ibm,secureboot-v2");
+	dt_add_property_strings(node, "compatible",
+				"ibm,secureboot", "ibm,secureboot-v2");
 
 	sys_sec_setting = be16_to_cpu(sysparams->sys_sec_setting);
 	if (sys_sec_setting & SEC_CONTAINER_SIG_CHECKING)
