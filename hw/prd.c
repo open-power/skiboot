@@ -370,7 +370,8 @@ void prd_fw_resp_fsp_response(int status)
 
 int prd_hbrt_fsp_msg_notify(void *data, u32 dsize)
 {
-	int size;
+	struct prd_fw_msg *fw_notify;
+	int size, fw_notify_size;
 	int rc = FSP_STATUS_GENERIC_FAILURE;
 
 	if (!prd_enabled || !prd_active) {
@@ -380,8 +381,9 @@ int prd_hbrt_fsp_msg_notify(void *data, u32 dsize)
 	}
 
 	/* Calculate prd message size */
+	fw_notify_size = PRD_FW_MSG_BASE_SIZE + dsize;
 	size =  sizeof(prd_msg->hdr) + sizeof(prd_msg->token) +
-		sizeof(prd_msg->fw_notify) + dsize;
+		sizeof(prd_msg->fw_notify) + fw_notify_size;
 
 	if (size > OPAL_PRD_MSG_SIZE_MAX) {
 		prlog(PR_DEBUG, "PRD: FSP - HBRT notify message size (0x%x)"
@@ -408,8 +410,10 @@ int prd_hbrt_fsp_msg_notify(void *data, u32 dsize)
 	prd_msg_fsp_notify->hdr.type = OPAL_PRD_MSG_TYPE_FIRMWARE_NOTIFY;
 	prd_msg_fsp_notify->hdr.size = cpu_to_be16(size);
 	prd_msg_fsp_notify->token = 0;
-	prd_msg_fsp_notify->fw_notify.len = cpu_to_be64(dsize);
-	memcpy(&(prd_msg_fsp_notify->fw_notify.data), data, dsize);
+	prd_msg_fsp_notify->fw_notify.len = cpu_to_be64(fw_notify_size);
+	fw_notify = (void *)prd_msg_fsp_notify->fw_notify.data;
+	fw_notify->type = cpu_to_be64(PRD_FW_MSG_TYPE_HBRT_FSP);
+	memcpy(&(fw_notify->mbox_msg), data, dsize);
 
 	rc = opal_queue_prd_msg(prd_msg_fsp_notify);
 	if (!rc)
