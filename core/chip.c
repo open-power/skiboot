@@ -132,7 +132,8 @@ void init_chips(void)
 	/* Detect Qemu */
 	if (dt_node_is_compatible(dt_root, "qemu,powernv") ||
 	    dt_node_is_compatible(dt_root, "qemu,powernv8") ||
-	    dt_node_is_compatible(dt_root, "qemu,powernv9")) {
+	    dt_node_is_compatible(dt_root, "qemu,powernv9") ||
+	    dt_find_by_path(dt_root, "/qemu")) {
 		proc_chip_quirks |= QUIRK_QEMU | QUIRK_NO_CHIPTOD
 			| QUIRK_NO_DIRECT_CTL | QUIRK_NO_RNG;
 		prlog(PR_NOTICE, "CHIP: Detected QEMU simulator\n");
