@@ -47,11 +47,8 @@ void secvar_set_status(const char *status)
 	if (!secvar_node)
 		return; // Fail boot?
 
-	if (dt_find_property(secvar_node, "status"))
-		return;
-
+	/* This function should only be called once */
 	dt_add_property_string(secvar_node, "status", status);
-	// Fail boot if not successful?
 }
 
 
