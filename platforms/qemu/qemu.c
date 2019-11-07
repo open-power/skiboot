@@ -70,6 +70,11 @@ static bool qemu_probe_powernv9(void)
 	return qemu_probe_common("qemu,powernv9");
 }
 
+static bool qemu_probe_powernv10(void)
+{
+	return qemu_probe_common("qemu,powernv10");
+}
+
 static void qemu_init(void)
 {
 	if (!bt_device_present) {
@@ -116,6 +121,24 @@ DECLARE_PLATFORM(qemu_powernv8) = {
 DECLARE_PLATFORM(qemu_powernv9) = {
 	.name		= "QEMU POWER9",
 	.probe		= qemu_probe_powernv9,
+	.bmc		= &bmc_plat_ast2500_openbmc,
+	.init		= qemu_init,
+	.external_irq   = astbmc_ext_irq_serirq_cpld,
+	.cec_power_down = astbmc_ipmi_power_down,
+	.pci_get_slot_info = slot_table_get_slot_info,
+	.cec_reboot     = astbmc_ipmi_reboot,
+	.start_preload_resource	= flash_start_preload_resource,
+	.resource_loaded	= flash_resource_loaded,
+	.exit			= astbmc_exit,
+	.terminate	= ipmi_terminate,
+};
+
+/*
+ * For a QEMU PowerNV machine using POWER10 CPUs (Rainier)
+ */
+DECLARE_PLATFORM(qemu_powernv10) = {
+	.name		= "QEMU POWER10",
+	.probe		= qemu_probe_powernv10,
 	.bmc		= &bmc_plat_ast2500_openbmc,
 	.init		= qemu_init,
 	.external_irq   = astbmc_ext_irq_serirq_cpld,
