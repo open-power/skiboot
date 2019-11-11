@@ -802,8 +802,9 @@ static void xive_init_emu_eq(uint32_t vp_blk, uint32_t vp_idx,
 	memset(eq, 0, sizeof(struct xive_eq));
 
 	eq->w1 = EQ_W1_GENERATION;
-	eq->w3 = ((uint64_t)backing_page) & 0xffffffff;
-	eq->w2 = (((uint64_t)backing_page)) >> 32 & 0x0fffffff;
+	eq->w3 = ((uint64_t)backing_page) & EQ_W3_OP_DESC_LO;
+	eq->w2 = (((uint64_t)backing_page) >> 32) & EQ_W2_OP_DESC_HI;
+
 	eq->w6 = SETFIELD(EQ_W6_NVT_BLOCK, 0ul, vp_blk) |
 		SETFIELD(EQ_W6_NVT_INDEX, 0ul, vp_idx);
 	eq->w7 = SETFIELD(EQ_W7_F0_PRIORITY, 0ul, prio);
