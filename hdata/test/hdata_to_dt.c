@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
 			blobs = true;
 			opt_count++;
 		} else if (strcmp(argv[i], "-8E") == 0) {
-			fake_pvr = PVR_P8;
+			fake_pvr = PVR_P8E;
 			proc_gen = proc_gen_p8;
 			opt_count++;
 		} else if (strcmp(argv[i], "-8") == 0) {

@@ -32,7 +32,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x28>;
-			cpu-version = <0x4d0200>;
+			cpu-version = <0x4b0201>;
 			64-bit;
 			32-64-bridge;
 			graphics;
@@ -75,7 +75,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x60>;
-			cpu-version = <0x4d0200>;
+			cpu-version = <0x4b0201>;
 			64-bit;
 			32-64-bridge;
 			graphics;
@@ -118,7 +118,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0x68>;
-			cpu-version = <0x4d0200>;
+			cpu-version = <0x4b0201>;
 			64-bit;
 			32-64-bridge;
 			graphics;
@@ -161,7 +161,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0xb0>;
-			cpu-version = <0x4d0200>;
+			cpu-version = <0x4b0201>;
 			64-bit;
 			32-64-bridge;
 			graphics;
@@ -204,7 +204,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0xe8>;
-			cpu-version = <0x4d0200>;
+			cpu-version = <0x4b0201>;
 			64-bit;
 			32-64-bridge;
 			graphics;
@@ -247,7 +247,7 @@
 			device_type = "cpu";
 			status = "okay";
 			reg = <0xf0>;
-			cpu-version = <0x4d0200>;
+			cpu-version = <0x4b0201>;
 			64-bit;
 			32-64-bridge;
 			graphics;
