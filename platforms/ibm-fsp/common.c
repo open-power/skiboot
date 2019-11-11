@@ -30,12 +30,6 @@ static void map_debug_areas(void)
 	t = memcons.ibuf_phys - INMEM_CON_START + PSI_DMA_LOG_BUF;
 	debug_descriptor.memcons_ibuf_tce = t;
 
-	/* We only have space in the TCE table for the trace
-	 * areas on P8
-	 */
-	if (proc_gen != proc_gen_p8)
-		return;
-
 	t = PSI_DMA_TRACE_BASE;
 	for (i = 0; i < debug_descriptor.num_traces; i++) {
 		/*

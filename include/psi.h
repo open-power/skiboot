@@ -142,8 +142,8 @@
 /*
  * Layout of the PSI DMA address space
  *
- * On P8, we use a larger mapping of 256K TCEs which provides
- * us with a 1G window in order to fit the trace buffers
+ * We use a larger mapping of 256K TCEs which provides us with a 1G window in
+ * order to fit the trace buffers
  *
  * Currently we have:
  *
@@ -215,7 +215,6 @@
 #define PSI_DMA_HBRT_FSP_MSG		0x03302000
 #define PSI_DMA_HBRT_FSP_MSG_SIZE	0x00011000
 
-/* P8 only mappings */
 #define PSI_DMA_TRACE_BASE		0x04000000
 
 struct psi {
