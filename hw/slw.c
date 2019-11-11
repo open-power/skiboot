@@ -27,7 +27,7 @@
 #include <p8_pore_table_gen_api.H>
 #include <sbe_xip_image.h>
 
-#define MAX_RESET_PATCH_SIZE	64
+#define MAX_RESET_PATCH_SIZE	0x100
 
 static uint32_t slw_saved_reset[MAX_RESET_PATCH_SIZE];
 
