@@ -1040,7 +1040,7 @@ enum xive_cache_type {
 static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 				  uint64_t block, uint64_t idx,
 				  uint32_t start_dword, uint32_t dword_count,
-				  void *new_data, bool light_watch,
+				  uint64_t *new_data, bool light_watch,
 				  bool synchronous);
 
 static void xive_scrub_workaround_vp(struct xive *x, uint32_t block, uint32_t idx __unused)
@@ -1195,7 +1195,7 @@ static int64_t xive_eqc_scrub(struct xive *x, uint64_t block, uint64_t idx)
 static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 				  uint64_t block, uint64_t idx,
 				  uint32_t start_dword, uint32_t dword_count,
-				  void *new_data, bool light_watch,
+				  uint64_t *new_data, bool light_watch,
 				  bool synchronous)
 {
 	uint64_t sreg, sregx, dreg0, dreg0x;
@@ -1248,7 +1248,7 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 		 * one written.
 		 */
 		for (i = start_dword + dword_count - 1; i >= start_dword ;i--) {
-			uint64_t dw = ((uint64_t *)new_data)[i - start_dword];
+			uint64_t dw = new_data[i - start_dword];
 			__xive_regw(x, dreg0 + i * 8, dreg0x + i, dw, NULL);
 		}
 
@@ -1282,24 +1282,28 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 	return __xive_cache_scrub(x, ctype, block, idx, false, false);
 }
 
-static int64_t xive_eqc_cache_update(struct xive *x, uint64_t block,
-				     uint64_t idx, uint32_t start_dword,
-				     uint32_t dword_count, void *new_data,
-				     bool light_watch, bool synchronous)
+static int64_t xive_escalation_ive_cache_update(struct xive *x, uint64_t block,
+				     uint64_t idx, struct xive_ive *ive,
+				     bool synchronous)
 {
 	return __xive_cache_watch(x, xive_cache_eqc, block, idx,
-				  start_dword, dword_count,
-				  new_data, light_watch, synchronous);
+				  2, 1, &ive->w, true, synchronous);
+}
+
+static int64_t xive_eqc_cache_update(struct xive *x, uint64_t block,
+				     uint64_t idx, struct xive_eq *eq,
+				     bool synchronous)
+{
+	return __xive_cache_watch(x, xive_cache_eqc, block, idx,
+				  0, 4, (uint64_t *)eq, false, synchronous);
 }
 
 static int64_t xive_vpc_cache_update(struct xive *x, uint64_t block,
-				     uint64_t idx, uint32_t start_dword,
-				     uint32_t dword_count, void *new_data,
-				     bool light_watch, bool synchronous)
+				     uint64_t idx, struct xive_vp *vp,
+				     bool synchronous)
 {
 	return __xive_cache_watch(x, xive_cache_vpc, block, idx,
-				  start_dword, dword_count,
-				  new_data, light_watch, synchronous);
+				  0, 8, (uint64_t *)vp, false, synchronous);
 }
 
 static bool xive_set_vsd(struct xive *x, uint32_t tbl, uint32_t idx, uint64_t v)
@@ -2121,10 +2125,9 @@ static int64_t xive_set_irq_targetting(uint32_t isn, uint32_t target,
 				       bool synchronous)
 {
 	struct xive *x;
-	struct xive_ive *ive;
+	struct xive_ive *ive, new_ive;
 	uint32_t eq_blk, eq_idx;
 	bool is_escalation = GIRQ_IS_ESCALATION(isn);
-	uint64_t new_ive;
 	int64_t rc;
 
 	/* Find XIVE on which the IVE resides */
@@ -2147,18 +2150,18 @@ static int64_t xive_set_irq_targetting(uint32_t isn, uint32_t target,
 		prio = XIVE_EMULATION_PRIO;
 
 	/* Read existing IVE */
-	new_ive = ive->w;
+	new_ive = *ive;
 
 	/* Are we masking ? */
 	if (prio == 0xff && !is_escalation) {
-		new_ive |= IVE_MASKED;
+		new_ive.w |= IVE_MASKED;
 		xive_vdbg(x, "ISN %x masked !\n", isn);
 
 		/* Put prio 7 in the EQ */
 		prio = XIVE_MAX_PRIO;
 	} else {
 		/* Unmasking */
-		new_ive = ive->w & ~IVE_MASKED;
+		new_ive.w &= ~IVE_MASKED;
 		xive_vdbg(x, "ISN %x unmasked !\n", isn);
 
 		/* For normal interrupt sources, keep track of which ones
@@ -2182,23 +2185,23 @@ static int64_t xive_set_irq_targetting(uint32_t isn, uint32_t target,
 		/* Try to update it atomically to avoid an intermediary
 		 * stale state
 		 */
-		new_ive = SETFIELD(IVE_EQ_BLOCK, new_ive, eq_blk);
-		new_ive = SETFIELD(IVE_EQ_INDEX, new_ive, eq_idx);
+		new_ive.w = SETFIELD(IVE_EQ_BLOCK, new_ive.w, eq_blk);
+		new_ive.w = SETFIELD(IVE_EQ_INDEX, new_ive.w, eq_idx);
 	}
-	new_ive = SETFIELD(IVE_EQ_DATA, new_ive, lirq);
+	new_ive.w = SETFIELD(IVE_EQ_DATA, new_ive.w, lirq);
 
 	xive_vdbg(x,"ISN %x routed to eq %x/%x lirq=%08x IVE=%016llx !\n",
-		  isn, eq_blk, eq_idx, lirq, new_ive);
+		  isn, eq_blk, eq_idx, lirq, new_ive.w);
 
 	/* Updating the cache differs between real IVEs and escalation
 	 * IVEs inside an EQ
 	 */
 	if (is_escalation) {
-		rc = xive_eqc_cache_update(x, x->block_id, GIRQ_TO_IDX(isn),
-					   2, 1, &new_ive, true, synchronous);
+		rc = xive_escalation_ive_cache_update(x, x->block_id,
+				GIRQ_TO_IDX(isn), &new_ive, synchronous);
 	} else {
 		sync();
-		ive->w = new_ive;
+		*ive = new_ive;
 		rc = xive_ivc_scrub(x, x->block_id, GIRQ_TO_IDX(isn));
 	}
 
@@ -2818,8 +2821,7 @@ static void xive_special_cache_check(struct xive *x, uint32_t blk, uint32_t idx)
 		memset(vp_m, (~i) & 0xff, sizeof(*vp_m));
 		sync();
 		vp.w1 = (i << 16) | i;
-		xive_vpc_cache_update(x, blk, idx,
-				      0, 8, &vp, false, true);
+		xive_vpc_cache_update(x, blk, idx, &vp, true);
 		if (!xive_check_vpc_update(x, idx, &vp)) {
 			xive_dbg(x, "Test failed at %d iterations\n", i);
 			return;
@@ -2860,9 +2862,7 @@ static void xive_setup_hw_for_emu(struct xive_cpu_state *xs)
 
 	/* Use the cache watch to write it out */
 	lock(&x_eq->lock);
-	xive_eqc_cache_update(x_eq, xs->eq_blk,
-			      xs->eq_idx + XIVE_EMULATION_PRIO,
-			      0, 4, &eq, false, true);
+	xive_eqc_cache_update(x_eq, xs->eq_blk, xs->eq_idx + XIVE_EMULATION_PRIO, &eq, true);
 	xive_check_eq_update(x_eq, xs->eq_idx + XIVE_EMULATION_PRIO, &eq);
 
 	/* Extra testing of cache watch & scrub facilities */
@@ -2874,8 +2874,7 @@ static void xive_setup_hw_for_emu(struct xive_cpu_state *xs)
 
 	/* Use the cache watch to write it out */
 	lock(&x_vp->lock);
-	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx,
-			      0, 8, &vp, false, true);
+	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx, &vp, true);
 	xive_check_vpc_update(x_vp, xs->vp_idx, &vp);
 	unlock(&x_vp->lock);
 }
@@ -2923,8 +2922,7 @@ static void xive_init_cpu_exploitation(struct xive_cpu_state *xs)
 
 	/* Use the cache watch to write it out */
 	lock(&x_vp->lock);
-	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx,
-			      0, 8, &vp, false, true);
+	xive_vpc_cache_update(x_vp, xs->vp_blk, xs->vp_idx, &vp, true);
 	unlock(&x_vp->lock);
 
 	/* Clenaup remaining state */
@@ -3895,7 +3893,7 @@ static int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
 
 	/* Update EQ, non-synchronous */
 	lock(&x->lock);
-	rc = xive_eqc_cache_update(x, blk, idx, 0, 4, &eq, false, false);
+	rc = xive_eqc_cache_update(x, blk, idx, &eq, false);
 	unlock(&x->lock);
 
 	return rc;
@@ -3974,7 +3972,7 @@ static int64_t opal_xive_set_queue_state(uint64_t vp, uint32_t prio,
 	new_eq.w1 = SETFIELD(EQ_W1_PAGE_OFF, new_eq.w1, qindex);
 
 	lock(&x->lock);
-	rc = xive_eqc_cache_update(x, blk, idx, 0, 4, &new_eq, false, false);
+	rc = xive_eqc_cache_update(x, blk, idx, &new_eq, false);
 	unlock(&x->lock);
 
 	return rc;
@@ -4117,8 +4115,7 @@ static int64_t xive_setup_silent_gather(uint64_t vp_id, bool enable)
 	if (!memcmp(eq_orig, &eq, sizeof(eq)))
 		rc = 0;
 	else
-		rc = xive_eqc_cache_update(x, blk, idx + 7, 0, 4, &eq,
-					   false, false);
+		rc = xive_eqc_cache_update(x, blk, idx + 7, &eq, false);
 	if (rc)
 		return rc;
 
@@ -4150,8 +4147,7 @@ static int64_t xive_setup_silent_gather(uint64_t vp_id, bool enable)
 		}
 		if (!memcmp(eq_orig, &eq, sizeof(eq)))
 			continue;
-		rc = xive_eqc_cache_update(x, blk, idx + i, 0, 4, &eq,
-					   false, false);
+		rc = xive_eqc_cache_update(x, blk, idx + i, &eq, false);
 		if (rc)
 			break;
 	}
@@ -4206,7 +4202,7 @@ static int64_t opal_xive_set_vp_info(uint64_t vp_id,
 		goto bail;
 	}
 
-	rc = xive_vpc_cache_update(x, blk, idx, 0, 8, &vp_new, false, false);
+	rc = xive_vpc_cache_update(x, blk, idx, &vp_new, false);
 	if (rc)
 		goto bail;
 
@@ -4422,8 +4418,7 @@ static void xive_reset_one(struct xive *x)
 						 x->block_id, idx, eq->w0, eq->w1);
 				eq0 = *eq;
 				xive_cleanup_eq(&eq0);
-				xive_eqc_cache_update(x, x->block_id,
-						      idx, 0, 4, &eq0, false, true);
+				xive_eqc_cache_update(x, x->block_id, idx, &eq0, true);
 			}
 			if (eq->w0 & EQ_W0_FIRMWARE)
 				eq_firmware = true;
@@ -4461,8 +4456,7 @@ static void xive_reset_one(struct xive *x)
 
 		/* Clear it */
 		xive_dbg(x, "VP 0x%x:0x%x is valid at reset\n", x->block_id, i);
-		xive_vpc_cache_update(x, x->block_id,
-				      i, 0, 8, &vp0, false, true);
+		xive_vpc_cache_update(x, x->block_id, i, &vp0, true);
 	}
 
 	/* Forget about remaining donated pages */
@@ -4653,7 +4647,7 @@ static int64_t opal_xive_free_vp_block(uint64_t vp_base)
 			      vp_id, j);
 			eq = *orig_eq;
 			xive_cleanup_eq(&eq);
-			xive_eqc_cache_update(x, eq_blk, eq_idx + j, 0, 4, &eq, false, true);
+			xive_eqc_cache_update(x, eq_blk, eq_idx + j, &eq, true);
 		}
 
 		/* Mark it not populated so we don't try to free it again */
