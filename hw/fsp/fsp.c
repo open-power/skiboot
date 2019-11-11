@@ -1844,10 +1844,7 @@ static void fsp_init_tce_table(void)
 {
 	fsp_tce_table = (u64 *)PSI_TCE_TABLE_BASE;
 
-	/* Memset the larger table even if we only use the smaller
-	 * one on P7
-	 */
-	memset(fsp_tce_table, 0, PSI_TCE_TABLE_SIZE_P8);
+	memset(fsp_tce_table, 0, PSI_TCE_TABLE_SIZE);
 }
 
 void fsp_tce_map(u32 offset, void *addr, u32 size)

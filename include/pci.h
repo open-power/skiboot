@@ -218,12 +218,6 @@ struct phb_ops {
 	int64_t (*cfg_write32)(struct phb *phb, uint32_t bdfn,
 			       uint32_t offset, uint32_t data);
 
-	/*
-	 * Bus number selection. See pci_scan() for a description
-	 */
-	uint8_t (*choose_bus)(struct phb *phb, struct pci_device *bridge,
-			      uint8_t candidate, uint8_t *max_bus,
-			      bool *use_max);
 	int64_t (*get_reserved_pe_number)(struct phb *phb);
 
 	/*

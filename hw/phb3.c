@@ -336,16 +336,6 @@ PHB3_PCI_CFG_WRITE(8, u8)
 PHB3_PCI_CFG_WRITE(16, u16)
 PHB3_PCI_CFG_WRITE(32, u32)
 
-static uint8_t phb3_choose_bus(struct phb *phb __unused,
-			       struct pci_device *bridge __unused,
-			       uint8_t candidate, uint8_t *max_bus __unused,
-			       bool *use_max)
-{
-	/* Use standard bus number selection */
-	*use_max = false;
-	return candidate;
-}
-
 static int64_t phb3_get_reserved_pe_number(struct phb *phb __unused)
 {
 	return PHB3_RESERVED_PE_NUM;
@@ -3857,7 +3847,6 @@ static const struct phb_ops phb3_ops = {
 	.cfg_write8		= phb3_pcicfg_write8,
 	.cfg_write16		= phb3_pcicfg_write16,
 	.cfg_write32		= phb3_pcicfg_write32,
-	.choose_bus		= phb3_choose_bus,
 	.get_reserved_pe_number	= phb3_get_reserved_pe_number,
 	.device_init		= phb3_device_init,
 	.device_remove		= phb3_device_remove,

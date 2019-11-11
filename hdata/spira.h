@@ -73,7 +73,7 @@ struct spira {
 	struct spira_ntuples	ntuples;
 	/*
 	 * We reserve 0xc0 rather than 0x4c0 so we fit SPIRAH/SPIRAS here
-	 * while preserving compatibility with existing P7/P8 systems.
+	 * while preserving compatibility with existing P8 systems.
 	 *
 	 * According to FSP engineers, this is an okay thing to do.
 	 */
@@ -180,10 +180,7 @@ extern struct HDIF_common_hdr *__get_hdif(struct spira_ntuple *n,
 			be32_to_cpu((_ntuples)->alloc_len));		\
 	     _p = (void *)_p + be32_to_cpu((_ntuples)->alloc_len))
 
-#define for_each_paca(p) for_each_ntuple(&spira.ntuples.paca, p, PACA_HDIF_SIG)
-
 #define for_each_pcia(p) for_each_ntuple(&spira.ntuples.pcia, p, SPPCIA_HDIF_SIG)
-
 
 /* We override these for testing. */
 #ifndef ntuple_addr
@@ -930,98 +927,6 @@ struct slca_entry {
 
 
 /*
- * SPPACA structure. The SPIRA contain an array of these, one
- * per processor thread
- */
-#define PACA_HDIF_SIG	"SPPACA"
-
-/* Idata index 0 : FRU ID Data */
-#define SPPACA_IDATA_FRU_ID	0
-
-/* Idata index 1 : Keyword VPD */
-#define SPPACA_IDATA_KW_VPD	1
-
-/* Idata index 2 : CPU ID data area */
-#define SPPACA_IDATA_CPU_ID	2
-
-struct sppaca_cpu_id {
-	__be32 pir;
-	__be32 fru_id;
-	__be32 hardware_proc_id;
-#define CPU_ID_VERIFY_MASK			0xC0000000
-#define CPU_ID_VERIFY_SHIFT			30
-#define CPU_ID_VERIFY_USABLE_NO_FAILURES	0
-#define CPU_ID_VERIFY_USABLE_FAILURES		1
-#define CPU_ID_VERIFY_NOT_INSTALLED		2
-#define CPU_ID_VERIFY_UNUSABLE			3
-#define CPU_ID_SECONDARY_THREAD			0x20000000
-#define CPU_ID_PACA_RESERVED			0x10000000
-#define CPU_ID_NUM_SECONDARY_THREAD_MASK	0x00FF0000
-#define CPU_ID_NUM_SECONDARY_THREAD_SHIFT	16
-	__be32 verify_exists_flags;
-	__be32 chip_ec_level;
-	__be32 processor_chip_id;
-	__be32 logical_processor_id;
-	/* This is the resource number, too. */
-	__be32 process_interrupt_line;
-	__be32 reserved1;
-	__be32 hardware_module_id;
-	__be64 ibase;
-	__be32 deprecated1;
-	__be32 physical_thread_id;
-	__be32 deprecated2;
-	__be32 ccm_node_id;
-	/* This fields are not always present, check struct size */
-#define SPIRA_CPU_ID_MIN_SIZE	0x40
-	__be32 hw_card_id;
-	__be32 internal_drawer_node_id;
-	__be32 drawer_book_octant_blade_id;
-	__be32 memory_interleaving_scope;
-	__be32 lco_target;
-} __packed;
-
-/* Idata index 3 : Timebase data */
-#define SPPACA_IDATA_TIMEBASE	3
-
-struct sppaca_cpu_timebase {
-	__be32 cycle_time;
-	__be32 time_base;
-	__be32 actual_clock_speed;
-	__be32 memory_bus_frequency;
-} __packed;
-
-/* Idata index 4 : Cache size structure */
-#define SPPACA_IDATA_CACHE_SIZE	4
-
-struct sppaca_cpu_cache {
-	__be32 icache_size_kb;
-	__be32 icache_line_size;
-	__be32 l1_dcache_size_kb;
-	__be32 l1_dcache_line_size;
-	__be32 l2_dcache_size_kb;
-	__be32 l2_line_size;
-	__be32 l3_dcache_size_kb;
-	__be32 l3_line_size;
-	__be32 dcache_block_size;
-	__be32 icache_block_size;
-	__be32 dcache_assoc_sets;
-	__be32 icache_assoc_sets;
-	__be32 dtlb_entries;
-	__be32 dtlb_assoc_sets;
-	__be32 itlb_entries;
-	__be32 itlb_assoc_sets;
-	__be32 reservation_size;
-	__be32 l2_cache_assoc_sets;
-	__be32 l35_dcache_size_kb;
-	__be32 l35_cache_line_size;
-} __packed;
-
-/* Idata index 6 : CPU Attributes */
-#define SPPACA_IDATA_CPU_ATTR	6
-
-#define sppaca_cpu_attr sppcia_cpu_attr
-
-/*
  * SPPCIA structure. The SPIRA contain an array of these, one
  * per processor core
  */
@@ -1030,15 +935,21 @@ struct sppaca_cpu_cache {
 /* Idata index 0 : Core unique data */
 #define SPPCIA_IDATA_CORE_UNIQUE	0
 
-/* NOTE: This is the same layout as "struct sppaca_cpu_id",
- *       with essentially some fields removed and a reserved
- *       field added
- */
 struct sppcia_core_unique {
 	__be32 reserved;
 	__be32 proc_fru_id;
 	__be32 hw_proc_id;
-	__be32 verif_exist_flags;	/* Same as PACA */
+#define CPU_ID_VERIFY_MASK			0xC0000000
+#define CPU_ID_VERIFY_SHIFT			30
+#define CPU_ID_VERIFY_USABLE_NO_FAILURES	0
+#define CPU_ID_VERIFY_USABLE_FAILURES		1
+#define CPU_ID_VERIFY_NOT_INSTALLED		2
+#define CPU_ID_VERIFY_UNUSABLE			3
+#define CPU_ID_SECONDARY_THREAD			0x20000000
+#define CPU_ID_PCIA_RESERVED			0x10000000
+#define CPU_ID_NUM_SECONDARY_THREAD_MASK	0x00FF0000
+#define CPU_ID_NUM_SECONDARY_THREAD_SHIFT	16
+	__be32 verif_exist_flags;
 	__be32 chip_ec_level;
 	__be32 proc_chip_id;
 	__be32 reserved2;
@@ -1061,12 +972,39 @@ struct sppcia_core_unique {
 /* Idata index 1 : CPU Time base structure */
 #define SPPCIA_IDATA_TIMEBASE		1
 
-#define sppcia_cpu_timebase sppaca_cpu_timebase
+struct sppcia_cpu_timebase {
+	__be32 cycle_time;
+	__be32 time_base;
+	__be32 actual_clock_speed;
+	__be32 memory_bus_frequency;
+} __packed;
 
 /* Idata index 2 : CPU Cache Size Structure */
 #define SPPCIA_IDATA_CPU_CACHE		2
 
-#define sppcia_cpu_cache sppaca_cpu_cache
+struct sppcia_cpu_cache {
+	__be32 icache_size_kb;
+	__be32 icache_line_size;
+	__be32 l1_dcache_size_kb;
+	__be32 l1_dcache_line_size;
+	__be32 l2_dcache_size_kb;
+	__be32 l2_line_size;
+	__be32 l3_dcache_size_kb;
+	__be32 l3_line_size;
+	__be32 dcache_block_size;
+	__be32 icache_block_size;
+	__be32 dcache_assoc_sets;
+	__be32 icache_assoc_sets;
+	__be32 dtlb_entries;
+	__be32 dtlb_assoc_sets;
+	__be32 itlb_entries;
+	__be32 itlb_assoc_sets;
+	__be32 reservation_size;
+	__be32 l2_cache_assoc_sets;
+	__be32 l35_dcache_size_kb;
+	__be32 l35_cache_line_size;
+} __packed;
+
 
 /* Idata index 3 : Thread Array Data
  *

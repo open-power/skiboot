@@ -47,7 +47,7 @@ static uint32_t get_chip_node_id(struct proc_chip *chip)
 
 	/*
 	 * Else use the 3 top bits of the chip ID which should be
-	 * the node on both P7 and P8
+	 * the node on P8
 	 */
 	return chip->id >> 3;
 }

@@ -847,7 +847,7 @@ static void add_nx_node(u32 gcid)
 					"ibm,power8-nx");
 		break;
 	case proc_gen_p9:
-		/* POWER9 NX is not software compatible with P7/P8 NX */
+		/* POWER9 NX is not software compatible with P8 NX */
 		dt_add_property_strings(nx, "compatible", "ibm,power9-nx");
 		break;
 	default:
@@ -1295,10 +1295,6 @@ static void add_iplparams(void)
  * numbering used by HDAT to reference chips, which doesn't correspond
  * to the HW IDs. We want to use the HW IDs everywhere in the DT so
  * we convert using this.
- *
- * Note: On P7, the HW ID is the XSCOM "GCID" including the T bit which
- * is *different* from the chip ID portion of the interrupt server#
- * (or PIR). See the explanations in chip.h
  */
 uint32_t pcid_to_chip_id(uint32_t proc_chip_id)
 {
@@ -1734,10 +1730,9 @@ int parse_hdat(bool is_opal)
 	/* Create /ibm,opal/led node */
 	dt_init_led_node();
 
-	/* Parse SPPACA and/or PCIA */
+	/* Parse PCIA */
 	if (!pcia_parse())
-		if (paca_parse() < 0)
-			return -1;
+		return -1;
 
 	/* IPL params */
 	add_iplparams();

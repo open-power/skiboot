@@ -103,12 +103,6 @@ void fast_reboot(void)
 {
 	static int fast_reboot_count = 0;
 
-	if (!chip_quirk(QUIRK_MAMBO_CALLOUTS) &&
-			(proc_gen != proc_gen_p8 && proc_gen != proc_gen_p9)) {
-		prlog(PR_DEBUG,
-		      "RESET: Fast reboot not available on this CPU\n");
-		return;
-	}
 	if (chip_quirk(QUIRK_NO_DIRECT_CTL)) {
 		prlog(PR_DEBUG,
 		      "RESET: Fast reboot disabled by quirk\n");

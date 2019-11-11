@@ -136,7 +136,6 @@ static bool spira_check_ptr(const void *ptr, const char *file, unsigned int line
 #include "../hdif.c"
 #include "../iohub.c"
 #include "../memory.c"
-#include "../paca.c"
 #include "../pcia.c"
 #include "../spira.c"
 #include "../vpd.c"
@@ -339,7 +338,7 @@ int main(int argc, char *argv[])
 		     "  -8E Force PVR to POWER8E\n"
 		     "  -9 Force PVR to POWER9 (nimbus)\n"
 		     "\n"
-		     "When no PVR is specified -7 is assumed"
+		     "When no PVR is specified -8 is assumed"
 		     "\n"
 		     "Pipe to 'dtc -I dtb -O dts' for human readable output\n");
 	}

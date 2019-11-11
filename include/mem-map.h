@@ -99,7 +99,7 @@
 
 /* This is our PSI TCE table. It's 256K entries on P8 */
 #define PSI_TCE_TABLE_BASE	(SKIBOOT_BASE + 0x01a00000)
-#define PSI_TCE_TABLE_SIZE_P8	0x00200000UL
+#define PSI_TCE_TABLE_SIZE	0x00200000UL
 
 /* This is our dump result table after MPIPL. Hostboot will write to this
  * memory after moving memory content from source to destination memory.

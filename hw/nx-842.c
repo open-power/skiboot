@@ -118,13 +118,10 @@ static int nx_cfg_842_dma(u32 gcid, u64 xcfg)
                 return rc;
 	}
 
-	if (proc_gen >= proc_gen_p8) {
-		cfg = SETFIELD(NX_DMA_CFG_842_COMPRESS_PREFETCH, cfg,
-			       DMA_COMPRESS_PREFETCH);
-		cfg = SETFIELD(NX_DMA_CFG_842_DECOMPRESS_PREFETCH, cfg,
-			       DMA_DECOMPRESS_PREFETCH);
-	}
-
+	cfg = SETFIELD(NX_DMA_CFG_842_COMPRESS_PREFETCH, cfg,
+		       DMA_COMPRESS_PREFETCH);
+	cfg = SETFIELD(NX_DMA_CFG_842_DECOMPRESS_PREFETCH, cfg,
+		       DMA_DECOMPRESS_PREFETCH);
 	cfg = SETFIELD(NX_DMA_CFG_842_COMPRESS_MAX_RR, cfg,
 		       DMA_COMPRESS_MAX_RR);
 	cfg = SETFIELD(NX_DMA_CFG_842_DECOMPRESS_MAX_RR, cfg,

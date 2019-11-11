@@ -9,7 +9,6 @@
 struct dt_node;
 
 extern void memory_parse(void);
-extern int paca_parse(void);
 extern bool pcia_parse(void);
 extern void fsp_parse(void);
 extern void bmc_parse(void);
@@ -25,8 +24,8 @@ extern struct dt_node *find_xscom_for_chip(uint32_t chip_id);
 extern uint32_t pcid_to_chip_id(uint32_t proc_chip_id);
 
 extern struct dt_node *add_core_common(struct dt_node *cpus,
-				       const struct sppaca_cpu_cache *cache,
-				       const struct sppaca_cpu_timebase *tb,
+				       const struct sppcia_cpu_cache *cache,
+				       const struct sppcia_cpu_timebase *tb,
 				       uint32_t int_server, bool okay);
 extern void add_core_attr(struct dt_node *cpu, uint32_t attr);
 extern uint32_t add_core_cache_info(struct dt_node *cpus,

@@ -818,7 +818,8 @@ static void psi_create_mm_dtnode(struct psi *psi)
 		psi_create_p9_int_map(psi, np);
 		break;
 	default:
-		dt_add_property_strings(np, "compatible", "ibm,psi");
+		assert(0);
+		break;
 	}
 	dt_add_property_cells(np, "interrupt-parent", get_ics_phandle());
 	dt_add_property_cells(np, "interrupts", psi->interrupt, 1);

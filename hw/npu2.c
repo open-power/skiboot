@@ -1292,7 +1292,6 @@ static const struct phb_ops npu_ops = {
 	.cfg_write8		= npu2_cfg_write8,
 	.cfg_write16		= npu2_cfg_write16,
 	.cfg_write32		= npu2_cfg_write32,
-	.choose_bus		= NULL,
 	.device_init		= NULL,
 	.phb_final_fixup	= npu2_phb_final_fixup,
 	.ioda_reset		= npu2_ioda_reset,

@@ -114,7 +114,7 @@ static struct dt_node *add_core_node(struct dt_node *cpus,
 
 	prlog(PR_INFO, "CORE[%i]: PIR=%.8x %s %s(%u threads)\n",
 	      pcia_index(pcia), be32_to_cpu(t->pir),
-	      ve_flags & CPU_ID_PACA_RESERVED
+	      ve_flags & CPU_ID_PCIA_RESERVED
 	      ? "**RESERVED**" : cpu_state(ve_flags),
 	      be32_to_cpu(t->pir) == boot_cpu->pir ? "[boot] " : "", threads);
 
@@ -168,7 +168,7 @@ static struct dt_node *add_core_node(struct dt_node *cpus,
 	dt_add_property(cpu, "ibm,ppc-interrupt-server#s", iserv, 4 * threads);
 
 	/* Add the ICP node for this CPU for P8 */
-	if (proc_gen <= proc_gen_p8)
+	if (proc_gen == proc_gen_p8)
 		add_xics_icp(pcia, threads, icp_compat);
 
 	return cpu;
@@ -179,7 +179,6 @@ bool pcia_parse(void)
 	const void *pcia;
 	struct dt_node *cpus;
 
-	/* Check PCIA exists... if not, maybe we are getting a PACA ? */
 	pcia = get_hdif(&spira.ntuples.pcia, "SPPCIA");
 	if (!pcia)
 		return false;

@@ -410,10 +410,6 @@ static struct fsp_client fsp_occ_client = {
 
 void occ_fsp_init(void)
 {
-	/* OCC is  supported in P8 and P9 */
-	if (proc_gen < proc_gen_p8)
-		return;
-
 	/* If we have an FSP, register for notifications */
 	if (fsp_present())
 		fsp_register_client(&fsp_occ_client, FSP_MCLASS_OCC);

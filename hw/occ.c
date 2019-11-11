@@ -1719,10 +1719,6 @@ void occ_pstates_init(void)
 	u8 domain_runs_at;
 	static bool occ_pstates_initialized;
 
-	/* OCC is supported in P8 and P9 */
-	if (proc_gen < proc_gen_p8)
-		return;
-
 	power_mgt = dt_find_by_path(dt_root, "/ibm,opal/power-mgt");
 	if (!power_mgt) {
 		/**
@@ -1969,8 +1965,8 @@ void occ_send_dummy_interrupt(void)
 	struct psi *psi;
 	struct proc_chip *chip = get_chip(this_cpu()->chip_id);
 
-	/* Emulators and P7 doesn't do this */
-	if (proc_gen < proc_gen_p8 || chip_quirk(QUIRK_NO_OCC_IRQ))
+	/* Emulators don't do this */
+	if (chip_quirk(QUIRK_NO_OCC_IRQ))
 		return;
 
 	/* Find a functional PSI. This ensures an interrupt even if

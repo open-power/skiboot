@@ -86,7 +86,7 @@
 #define   NX_EE_CFG_CH7			PPC_BIT(53) /* AMF */
 #define   NX_EE_CFG_CH6			PPC_BIT(54) /* AMF */
 #define   NX_EE_CFG_CH5			PPC_BIT(55) /* AMF */
-#define   NX_EE_CFG_CH4			PPC_BIT(56) /* P7: SYM, P8: AMF */
+#define   NX_EE_CFG_CH4			PPC_BIT(56) /* AMF */
 #define   NX_EE_CFG_CH3			PPC_BIT(57) /* SYM */
 #define   NX_EE_CFG_CH2			PPC_BIT(58) /* SYM */
 #define   NX_P9_EE_CFG_CH4		PPC_BIT(61) /* gzip */

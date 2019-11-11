@@ -702,7 +702,6 @@ static void iohub_vpd_parse(void)
 			continue;
 		}
 
-		/* On P7, the keyword VPD will not be NULL */
 		if (HDIF_get_idata(iohub_hdr,
 				   CECHUB_ASCII_KEYWORD_VPD, &vpd_sz))
 			dt_add_vpd_node(iohub_hdr, CECHUB_FRU_ID_DATA,

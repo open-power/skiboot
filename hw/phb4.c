@@ -601,16 +601,6 @@ PHB4_PCI_CFG_WRITE(8, u8)
 PHB4_PCI_CFG_WRITE(16, u16)
 PHB4_PCI_CFG_WRITE(32, u32)
 
-static uint8_t phb4_choose_bus(struct phb *phb __unused,
-			       struct pci_device *bridge __unused,
-			       uint8_t candidate, uint8_t *max_bus __unused,
-			       bool *use_max)
-{
-	/* Use standard bus number selection */
-	*use_max = false;
-	return candidate;
-}
-
 static int64_t phb4_get_reserved_pe_number(struct phb *phb)
 {
 	struct phb4 *p = phb_to_phb4(phb);
@@ -4795,7 +4785,6 @@ static const struct phb_ops phb4_ops = {
 	.cfg_write8		= phb4_pcicfg_write8,
 	.cfg_write16		= phb4_pcicfg_write16,
 	.cfg_write32		= phb4_pcicfg_write32,
-	.choose_bus		= phb4_choose_bus,
 	.get_reserved_pe_number	= phb4_get_reserved_pe_number,
 	.device_init		= phb4_device_init,
 	.device_remove		= NULL,

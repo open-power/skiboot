@@ -1015,53 +1015,31 @@ void fsp_console_add_nodes(void)
 void fsp_console_select_stdout(void)
 {
 	bool use_serial = false;
+	int rc;
+	u8 param;
 
 	if (!fsp_present())
 		return;
 
-	/* On P8, we have a sysparam ! yay ! */
-	if (proc_gen >= proc_gen_p8) {
-		int rc;
-		u8 param;
-
-		rc = fsp_get_sys_param(SYS_PARAM_CONSOLE_SELECT,
-				       &param, 1, NULL, NULL);
-		if (rc != 1)
-			prerror("FSPCON: Failed to get console"
-				" sysparam rc %d\n", rc);
-		else {
-			switch(param) {
-			case 0:
-				use_serial = false;
-				break;
-			case 1:
-				use_serial = true;
-				break;
-			default:
-				prerror("FSPCON: Unknown console"
-					" sysparam %d\n", param);
-			}
-		}
+	rc = fsp_get_sys_param(SYS_PARAM_CONSOLE_SELECT,
+			       &param, 1, NULL, NULL);
+	if (rc != 1) {
+		prerror("FSPCON: Failed to get console"
+			" sysparam rc %d\n", rc);
 	} else {
-		struct dt_node *iplp;
-		u32 ipl_mode = 0;
-
-		/*
-		 * We hijack the "os-ipl-mode" setting in iplparams to select
-		 * out output console. This is the "i5/OS partition mode boot"
-		 * setting in ASMI converted to an integer: 0=A, 1=B.
-		 */
-		iplp = dt_find_by_path(dt_root, "ipl-params/ipl-params");
-		if (iplp) {
-			ipl_mode = dt_prop_get_u32_def(iplp, "os-ipl-mode", 0);
-			use_serial = ipl_mode > 0;
-
-			/*
-			 * Now, if ipl_mode is > 0, we use serial port A else
-			 * we use IPMI/SOL/DVS
-			 */
+		switch(param) {
+		case 0:
+			use_serial = false;
+			break;
+		case 1:
+			use_serial = true;
+			break;
+		default:
+			prerror("FSPCON: Unknown console"
+				" sysparam %d\n", param);
 		}
 	}
+
 	dt_check_del_prop(dt_chosen, "linux,stdout-path");
 
 	if (fsp_serials[1].open && use_serial) {

@@ -861,16 +861,6 @@ hv_lid_load_table:
 	.long	0
 
 
-	/* The FSP seems to ignore our primary/secondary entry
-	 * points and instead copy that bit down to 0x180 and
-	 * patch the first instruction to get our expected
-	 * boot CPU number. We ignore that patching for now and
-	 * got to the same entry we use for pHyp and FDT HB.
-	 */
-opal_boot_trampoline:
-	li	%r27,-1
-	ba	boot_entry - __head
-
 /*
  *
  * OPAL entry point from operating system

@@ -64,12 +64,6 @@ static int max_dump_size = MIN(MAX_SAPPHIRE_DUMP_SIZE, PSI_DMA_HYP_DUMP_SIZE);
 /* Protect MDST table entries */
 static struct lock mdst_lock = LOCK_UNLOCKED;
 
-/* Not supported on P7 */
-static inline bool fsp_mdst_supported(void)
-{
-	return proc_gen >= proc_gen_p8;
-}
-
 static inline uint32_t get_dump_region_map_size(uint64_t addr, uint32_t size)
 {
 	uint64_t start, end;
@@ -280,11 +274,6 @@ static int64_t fsp_opal_register_dump_region(uint32_t id,
 	if (!fsp_present())
 		return OPAL_UNSUPPORTED;
 
-	if (!fsp_mdst_supported()) {
-		printf("MDST: Not supported\n");
-		return OPAL_UNSUPPORTED;
-	}
-
 	/* Validate memory region id */
 	if (id < DUMP_REGION_HOST_START || id > DUMP_REGION_HOST_END) {
 		log_simple_error(&e_info(OPAL_RC_DUMP_MDST_ADD),
@@ -314,11 +303,6 @@ static int64_t fsp_opal_unregister_dump_region(uint32_t id)
 
 	if (!fsp_present())
 		return OPAL_UNSUPPORTED;
-
-	if (!fsp_mdst_supported()) {
-		printf("MDST: Not supported\n");
-		return OPAL_UNSUPPORTED;
-	}
 
 	/* Validate memory region id */
 	if (id < DUMP_REGION_HOST_START || id > DUMP_REGION_HOST_END) {
@@ -406,9 +390,6 @@ void fsp_mdst_table_init(void)
 		      fsp_opal_register_dump_region, 3);
 	opal_register(OPAL_UNREGISTER_DUMP_REGION,
 		      fsp_opal_unregister_dump_region, 1);
-
-	if (!fsp_mdst_supported())
-		return;
 
 	/* Initiate MDST */
 	if (mdst_table_init() != OPAL_SUCCESS)

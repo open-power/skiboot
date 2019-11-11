@@ -736,9 +736,8 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 		     bool scan_downstream)
 {
 	struct pci_device *pd = NULL, *rc = NULL;
-	uint8_t dev, fn, next_bus, max_sub, save_max;
+	uint8_t dev, fn, next_bus, max_sub;
 	uint32_t scan_map;
-	bool use_max;
 
 	/* Decide what to scan  */
 	scan_map = parent ? parent->scan_map : phb->scan_map;
@@ -772,8 +771,7 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 	 * if PCI hotplug is supported.
 	 */
 	if (rc && rc->slot && rc->slot->pluggable) {
-		next_bus = phb->ops->choose_bus(phb, rc, bus + 1,
-						&max_bus, &use_max);
+		next_bus = bus + 1;
 		rc->secondary_bus = next_bus;
 		rc->subordinate_bus = max_bus;
 		pci_cfg_write8(phb, rc->bdfn, PCI_CFG_SECONDARY_BUS,
@@ -803,7 +801,6 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 
 	next_bus = bus + 1;
 	max_sub = bus;
-	save_max = max_bus;
 
 	/* Scan down bridges */
 	list_for_each(list, pd, link) {
@@ -811,33 +808,6 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 
 		if (!pd->is_bridge)
 			continue;
-
-		/* We need to figure out a new bus number to start from.
-		 *
-		 * This can be tricky due to our HW constraints which differ
-		 * from bridge to bridge so we are going to let the phb
-		 * driver decide what to do. This can return us a maximum
-		 * bus number to assign as well
-		 *
-		 * This function will:
-		 *
-		 *  - Return the bus number to use as secondary for the
-		 *    bridge or 0 for a failure
-		 *
-		 *  - "max_bus" will be adjusted to represent the max
-		 *    subordinate that can be associated with the downstream
-		 *    device
-		 *
-		 *  - "use_max" will be set to true if the returned max_bus
-		 *    *must* be used as the subordinate bus number of that
-		 *    bridge (when we need to give aligned powers of two's
-		 *    on P7IOC). If is is set to false, we just adjust the
-		 *    subordinate bus number based on what we probed.
-		 *
-		 */
-		max_bus = save_max;
-		next_bus = phb->ops->choose_bus(phb, pd, next_bus,
-						&max_bus, &use_max);
 
 		/* Configure the bridge with the returned values */
 		if (next_bus <= bus) {
@@ -852,8 +822,8 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 		if (!next_bus)
 			break;
 
-		PCIDBG(phb, pd->bdfn, "Bus %02x..%02x %s scanning...\n",
-		       next_bus, max_bus, use_max ? "[use max]" : "");
+		PCIDBG(phb, pd->bdfn, "Bus %02x..%02x scanning...\n",
+		       next_bus, max_bus);
 
 		/* Clear up bridge resources */
 		pci_cleanup_bridge(phb, pd);
@@ -869,7 +839,7 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 		if (do_scan) {
 			max_sub = pci_scan_bus(phb, next_bus, max_bus,
 					       &pd->children, pd, true);
-		} else if (!use_max) {
+		} else {
 			/* Empty bridge. We leave room for hotplug
 			 * slots if the downstream port is pluggable.
 			 */
@@ -882,9 +852,6 @@ uint8_t pci_scan_bus(struct phb *phb, uint8_t bus, uint8_t max_bus,
 			}
 		}
 
-		/* Update the max subordinate as described previously */
-		if (use_max)
-			max_sub = max_bus;
 		pd->subordinate_bus = max_sub;
 		pci_cfg_write8(phb, pd->bdfn, PCI_CFG_SUBORDINATE_BUS, max_sub);
 		next_bus = max_sub + 1;

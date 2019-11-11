@@ -1061,9 +1061,6 @@ int64_t slw_reinit(uint64_t flags)
 	bool has_waker = false;
 	bool target_le = slw_current_le;
 
-	if (proc_gen < proc_gen_p8)
-		return OPAL_UNSUPPORTED;
-
 	if (flags & OPAL_REINIT_CPUS_HILE_BE)
 		target_le = false;
 	if (flags & OPAL_REINIT_CPUS_HILE_LE)

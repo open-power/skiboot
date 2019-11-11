@@ -61,7 +61,7 @@ static inline void *xscom_addr(uint32_t gcid, uint32_t pcb_addr)
 
 	assert(chip);
 	addr  = chip->xscom_base;
-	if (proc_gen <= proc_gen_p8) {
+	if (proc_gen == proc_gen_p8) {
 		addr |= ((uint64_t)pcb_addr << 4) & ~0xfful;
 		addr |= (pcb_addr << 3) & 0x78;
 	} else
@@ -432,11 +432,6 @@ static int xscom_indirect_read_form0(uint32_t gcid, uint64_t pcb_addr,
 	uint64_t data;
 	int rc, retries;
 
-	if (proc_gen < proc_gen_p8) {
-		*val = (uint64_t)-1;
-		return OPAL_UNSUPPORTED;
-	}
-
 	/* Write indirect address */
 	addr = pcb_addr & 0x7fffffff;
 	data = XSCOM_DATA_IND_READ |
@@ -490,9 +485,6 @@ static int xscom_indirect_write_form0(uint32_t gcid, uint64_t pcb_addr,
 	uint32_t addr;
 	uint64_t data;
 	int rc, retries;
-
-	if (proc_gen < proc_gen_p8)
-		return OPAL_UNSUPPORTED;
 
 	/* Only 16 bit data with indirect */
 	if (val & ~(XSCOM_ADDR_IND_DATA))

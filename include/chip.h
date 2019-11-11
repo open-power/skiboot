@@ -34,9 +34,7 @@
  * |           |           |
  * |___|___|___|___|___|___|
  *
- * The difference with P7 is the absence of T bit, the ChipID
- * is 3 bits long. The GCID is thus the same as the high bits
- * if the PIR
+ * The the ChipID is 3 bits long, the GCID is the same as the high bits of PIR
  */
 #define P8_PIR2GCID(pir) (((pir) >> 7) & 0x3f)
 

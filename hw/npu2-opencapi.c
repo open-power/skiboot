@@ -1862,7 +1862,6 @@ static const struct phb_ops npu2_opencapi_ops = {
 	.cfg_write8		= npu2_opencapi_pcicfg_write8,
 	.cfg_write16		= npu2_opencapi_pcicfg_write16,
 	.cfg_write32		= npu2_opencapi_pcicfg_write32,
-	.choose_bus		= NULL,
 	.device_init		= NULL,
 	.phb_final_fixup	= npu2_opencapi_final_fixup,
 	.ioda_reset		= npu2_opencapi_ioda_reset,

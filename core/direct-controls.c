@@ -522,7 +522,7 @@ int dctl_set_special_wakeup(struct cpu_thread *t)
 	struct cpu_thread *c = t->primary;
 	int rc = OPAL_SUCCESS;
 
-	if (proc_gen != proc_gen_p9 && proc_gen != proc_gen_p8)
+	if (proc_gen == proc_gen_unknown)
 		return OPAL_UNSUPPORTED;
 
 	lock(&c->dctl_lock);
@@ -544,7 +544,7 @@ int dctl_clear_special_wakeup(struct cpu_thread *t)
 	struct cpu_thread *c = t->primary;
 	int rc = OPAL_SUCCESS;
 
-	if (proc_gen != proc_gen_p9 && proc_gen != proc_gen_p8)
+	if (proc_gen == proc_gen_unknown)
 		return OPAL_UNSUPPORTED;
 
 	lock(&c->dctl_lock);
@@ -591,9 +591,6 @@ static int dctl_stop(struct cpu_thread *t)
 {
 	struct cpu_thread *c = t->primary;
 	int rc;
-
-	if (proc_gen != proc_gen_p9 && proc_gen != proc_gen_p8)
-		return OPAL_UNSUPPORTED;
 
 	lock(&c->dctl_lock);
 	if (t->dctl_stopped) {
@@ -643,9 +640,6 @@ static int dctl_sreset(struct cpu_thread *t)
 	struct cpu_thread *c = t->primary;
 	int rc;
 
-	if (proc_gen != proc_gen_p9 && proc_gen != proc_gen_p8)
-		return OPAL_UNSUPPORTED;
-
 	lock(&c->dctl_lock);
 	if (!t->dctl_stopped) {
 		unlock(&c->dctl_lock);
@@ -668,6 +662,9 @@ static int dctl_sreset(struct cpu_thread *t)
 int sreset_all_prepare(void)
 {
 	struct cpu_thread *cpu;
+
+	if (proc_gen == proc_gen_unknown)
+		return OPAL_UNSUPPORTED;
 
 	prlog(PR_DEBUG, "RESET: Resetting from cpu: 0x%x (core 0x%x)\n",
 	      this_cpu()->pir, pir_to_core_id(this_cpu()->pir));
