@@ -32,15 +32,10 @@
 #define  PSIHB_TAR_256K_ENTRIES		2 /* P8 only */
 #define  PSIHB_TAR_512K_ENTRIES		4 /* P8 only */
 
-/* PSI Host Bridge Control Register
- *
- * note: TCE_ENABLE moved to the new PSIHB_PHBSCR on P8 but is
- * the same bit position
- */
+/* PSI Host Bridge Control Register */
 #define PSIHB_CR			0x20
 #define   PSIHB_CR_FSP_CMD_ENABLE	PPC_BIT(0)
 #define   PSIHB_CR_FSP_MMIO_ENABLE	PPC_BIT(1)
-#define   PSIHB_CR_TCE_ENABLE		PPC_BIT(2)
 #define   PSIHB_CR_FSP_IRQ_ENABLE	PPC_BIT(3)
 #define   PSIHB_CR_FSP_ERR_RSP_ENABLE	PPC_BIT(4)
 #define   PSIHB_CR_PSI_LINK_ENABLE	PPC_BIT(5)
@@ -91,6 +86,7 @@
 
 /* Secure version of CR for P8 and P9 (TCE enable bit) */
 #define PSIHB_PHBSCR			0x90
+#define   PSIHB_PHBSCR_TCE_ENABLE	PPC_BIT(2)
 
 /* P9 registers */
 

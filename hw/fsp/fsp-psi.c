@@ -8,24 +8,14 @@
 
 static void psi_tce_enable(struct psi *psi, bool enable)
 {
-	void *addr;
+	void *addr = psi->regs + PSIHB_PHBSCR;
 	u64 val;
-
-	switch (proc_gen) {
-	case proc_gen_p8:
-	case proc_gen_p9:
-		addr = psi->regs + PSIHB_PHBSCR;
-		break;
-	default:
-		prerror("%s: Unknown CPU type\n", __func__);
-		return;
-	}
 
 	val = in_be64(addr);
 	if (enable)
-		val |=  PSIHB_CR_TCE_ENABLE;
+		val |=  PSIHB_PHBSCR_TCE_ENABLE;
 	else
-		val &= ~PSIHB_CR_TCE_ENABLE;
+		val &= ~PSIHB_PHBSCR_TCE_ENABLE;
 	out_be64(addr, val);
 }
 
