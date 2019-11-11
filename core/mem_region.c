@@ -1058,10 +1058,6 @@ void mem_region_init(void)
 	struct dt_node *i;
 	bool rc;
 
-	/* Ensure we have no collision between skiboot core and our heap */
-	extern char _end[];
-	BUILD_ASSERT(HEAP_BASE >= (uint64_t)_end);
-
 	/*
 	 * Add associativity properties outside of the lock
 	 * to avoid recursive locking caused by allocations

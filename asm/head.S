@@ -575,6 +575,10 @@ reset_patch_start:
 .global reset_patch_end
 reset_patch_end:
 
+.if reset_patch_end - reset_patch_start > 0x100
+	.error "Reset patch overflow"
+.endif
+
 /* Wakeup vector in r3 */
 .global reset_wakeup
 reset_wakeup:

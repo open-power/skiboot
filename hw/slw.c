@@ -28,9 +28,7 @@
 #include <p8_pore_table_gen_api.H>
 #include <sbe_xip_image.h>
 
-#define MAX_RESET_PATCH_SIZE	0x100
-
-static uint32_t slw_saved_reset[MAX_RESET_PATCH_SIZE];
+static uint32_t slw_saved_reset[0x100];
 
 static bool slw_current_le = false;
 
@@ -145,9 +143,6 @@ static void slw_do_rvwinkle(void *data)
 static void slw_patch_reset(void)
 {
 	uint32_t *src, *dst, *sav;
-
-	BUILD_ASSERT((&reset_patch_end - &reset_patch_start) <=
-		     MAX_RESET_PATCH_SIZE);
 
 	src = &reset_patch_start;
 	dst = (uint32_t *)0x100;

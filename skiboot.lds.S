@@ -228,6 +228,8 @@ SECTIONS
 	_ebss = .;
 	_end = .;
 
+	ASSERT(HEAP_BASE >= _end, "Heap collision with image")
+
 	DEBUG_SECTIONS
 
 	/* Optional kernel image */
