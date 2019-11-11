@@ -1623,7 +1623,7 @@ static bool xive_prealloc_tables(struct xive *x)
 	}
 	/* SBEs are initialized to 0b01 which corresponds to "ints off" */
 	memset(x->sbe_base, 0x55, SBE_SIZE);
-	xive_dbg(x, "SBE at %p size 0x%x\n", x->sbe_base, IVT_SIZE);
+	xive_dbg(x, "SBE at %p size 0x%x\n", x->sbe_base, SBE_SIZE);
 
 	/* EAS/IVT entries are 8 bytes */
 	x->ivt_base = local_alloc(x->chip_id, IVT_SIZE, IVT_SIZE);
