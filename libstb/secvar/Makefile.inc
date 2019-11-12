@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # -*-Makefile-*-
 
-SECVAR_DIR = libstb/secvar
+SECVAR_DIR = $(SRC)/libstb/secvar
 
 SUBDIRS += $(SECVAR_DIR)
 
