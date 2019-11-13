@@ -30,7 +30,6 @@ else
 fi
 
 # Currently getting some core dumps from mambo, so disable them!
-OLD_ULIMIT_C=$(ulimit -c)
 ulimit -c 0
 
 t=$(mktemp) || exit 1
@@ -69,8 +68,6 @@ if [ $r != 0 ]; then
     cat $t
     exit $r
 fi
-
-ulimit -c $OLD_ULIMIT_C
 
 rm -f -- "$t"
 trap - EXIT
