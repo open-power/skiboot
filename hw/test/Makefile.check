@@ -15,13 +15,13 @@ $(HW_TEST:%=%-gcov-run) : %-run: %
 	$(call QTEST, TEST-COVERAGE ,$< , $<)
 
 $(HW_TEST:%=%-check) : %-check: %
-	$(call Q, RUN-TEST ,$(VALGRIND) $<, $<)
+	$(call QTEST, RUN-TEST ,$(VALGRIND) $<, $<)
 
 $(HW_TEST) : % : %.c hw/phys-map.o
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -o $@ $<, $<)
 
 $(HW_TEST:%=%-gcov): %-gcov : %.c %
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I include -I . -lgcov -o $@ $<, $<)
+	$(call QTEST, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I include -I . -lgcov -o $@ $<, $<)
 
 clean: hw-clean
 
