@@ -42,7 +42,9 @@ HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-std=gnu11)
 HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-m64)
 HOSTCFLAGS += $(call try-cflag,$(HOSTCC),-Wjump-misses-init) \
 	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=const) \
-	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=noreturn)
+	  $(call try-cflag,$(HOSTCC),-Wsuggest-attribute=noreturn) \
+	  $(call try-cflag,$(HOSTCC),-Wno-error=suggest-attribute=const) \
+	  $(call try-cflag,$(HOSTCC),-Wno-error=suggest-attribute=noreturn)
 HOSTCFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
 
 # We want small stack usage for skiboot
@@ -126,6 +128,8 @@ endif
 CFLAGS += $(call try-cflag,$(CC),-Wjump-misses-init) \
 	  $(call try-cflag,$(CC),-Wsuggest-attribute=const) \
 	  $(call try-cflag,$(CC),-Wsuggest-attribute=noreturn) \
+	  $(call try-cflag,$(CC),-Wno-error=suggest-attribute=const) \
+	  $(call try-cflag,$(CC),-Wno-error=suggest-attribute=noreturn) \
 	  $(call try-cflag,$(CC),-Wstack-usage=1024) \
 	  $(call try-cflag,$(CC),-Wno-error=address-of-packed-member)
 
