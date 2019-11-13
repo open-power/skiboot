@@ -12,5 +12,5 @@ cp /dev/stdin $T.dtb
 dtc -I dts -O dtb $1 > $T.orig.dtb
 dtdiff $T.orig.dtb $T.dtb
 R=$?
-if [ $R == 0 ]; then rm -f $T.dtb; fi
+if [ $R == 0 ]; then rm -f $T $T.orig.dtb $T.dtb; fi
 exit $R
