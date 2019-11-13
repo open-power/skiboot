@@ -67,14 +67,14 @@ struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 	return NULL;
 }
 
-void __attrconst cpu_wait_job(struct cpu_job *job, bool free_it)
+void cpu_wait_job(struct cpu_job *job, bool free_it)
 {
 	(void)job;
 	(void)free_it;
 	return;
 }
 
-void __attrconst cpu_process_local_jobs(void)
+void cpu_process_local_jobs(void)
 {
 }
 
