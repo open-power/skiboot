@@ -634,6 +634,31 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	start_kernel(kernel_entry, fdt, mem_top);
 }
 
+static void storage_keys_fixup(void)
+{
+	struct dt_node *cpus, *n;
+
+	cpus = dt_find_by_path(dt_root, "/cpus");
+	assert(cpus);
+
+	if (proc_gen == proc_gen_unknown)
+		return;
+
+	dt_for_each_child(cpus, n) {
+		/* There may be cache nodes in /cpus. */
+		if (!dt_has_node_property(n, "device_type", "cpu") ||
+		    dt_has_node_property(n, "ibm,processor-storage-keys", NULL))
+			continue;
+
+		/*
+		 * skiboot supports p8 & p9, both of which support the IAMR, and
+		 * both of which support 32 keys. So advertise 32 keys for data
+		 * accesses and 32 for instruction accesses.
+		 */
+		dt_add_property_cells(n, "ibm,processor-storage-keys", 32, 32);
+	}
+}
+
 static void dt_fixups(void)
 {
 	struct dt_node *n;
@@ -661,6 +686,8 @@ static void dt_fixups(void)
 		if (!dt_has_node_property(n, "scom-controller", NULL))
 			dt_add_property(n, "scom-controller", NULL, 0);
 	}
+
+	storage_keys_fixup();
 }
 
 static void add_arch_vector(void)
