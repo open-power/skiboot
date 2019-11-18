@@ -231,7 +231,8 @@ static void mihawk_create_ocapi_i2c_bus(void)
 
 static bool mihawk_probe(void)
 {
-	if (!dt_node_is_compatible(dt_root, "ibm,mihawk"))
+	if (!dt_node_is_compatible(dt_root, "ibm,mihawk") &&
+	    !dt_node_is_compatible(dt_root, "wistron,mihawk"))
 		return false;
 
 	/* Lot of common early inits here */
