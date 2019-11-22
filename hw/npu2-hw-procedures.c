@@ -239,8 +239,8 @@ static bool poll_fence_status(struct npu2_dev *ndev, uint64_t val)
 /* Procedure 1.2.1 - Reset NPU/NDL */
 uint32_t reset_ntl(struct npu2_dev *ndev)
 {
-	uint64_t val;
-	int lane;
+	uint64_t val, check;
+	int lane, i;
 
 	set_iovalid(ndev, true);
 
@@ -258,10 +258,17 @@ uint32_t reset_ntl(struct npu2_dev *ndev)
 
 	/* Clear fence state for the brick */
 	val = npu2_read(ndev->npu, NPU2_MISC_FENCE_STATE);
-	if (val & PPC_BIT(ndev->brick_index)) {
-		NPU2DEVINF(ndev, "Clearing brick fence\n");
-		val = PPC_BIT(ndev->brick_index);
+	if (val) {
+		NPU2DEVINF(ndev, "Clearing all bricks fence\n");
 		npu2_write(ndev->npu, NPU2_MISC_FENCE_STATE, val);
+		for (i = 0, check = 0; i < 4096; i++) {
+			check = npu2_read(ndev->npu, NPU2_NTL_CQ_FENCE_STATUS(ndev));
+			if (!check)
+				break;
+		}
+		if (check)
+			NPU2DEVERR(ndev, "Clearing NPU2_MISC_FENCE_STATE=0x%llx timeout, current=0x%llx\n",
+					val, check);
 	}
 
 	/* Write PRI */
