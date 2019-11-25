@@ -70,6 +70,10 @@ static void fsp_ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc)
 	struct fsp_ipmi_msg *fsp_ipmi_msg = fsp_ipmi.cur_msg;
 
 	lock(&fsp_ipmi.lock);
+	if (fsp_ipmi.cur_msg == NULL) {
+		unlock(&fsp_ipmi.lock);
+		return;
+	}
 	list_del(&fsp_ipmi_msg->link);
 	fsp_ipmi.cur_msg = NULL;
 	unlock(&fsp_ipmi.lock);
@@ -249,6 +253,35 @@ static struct ipmi_backend fsp_ipmi_backend = {
 	.poll           = NULL,
 };
 
+static bool fsp_ipmi_rr_notify(uint32_t cmd_sub_mod,
+			       struct fsp_msg *msg __unused)
+{
+	struct ipmi_msg *ipmi_msg;
+
+	switch (cmd_sub_mod) {
+	case FSP_RESET_START:
+		return true;
+	case FSP_RELOAD_COMPLETE:
+		/*
+		 * We will not get response for outstanding request. Send error
+		 * message to caller and start sending new ipmi messages.
+		 */
+		if (fsp_ipmi.cur_msg) {
+			ipmi_msg = &fsp_ipmi.cur_msg->ipmi_msg;
+			fsp_ipmi_cmd_done(ipmi_msg->cmd,
+					  IPMI_NETFN_RETURN_CODE(ipmi_msg->netfn),
+					  IPMI_ERR_UNSPECIFIED);
+		}
+		fsp_ipmi_send_request();
+		return true;
+	}
+	return false;
+}
+
+static struct fsp_client fsp_ipmi_client_rr = {
+	.message = fsp_ipmi_rr_notify,
+};
+
 static bool fsp_ipmi_send_response(uint32_t cmd)
 {
 	struct fsp_msg *resp;
@@ -362,5 +395,6 @@ void fsp_ipmi_init(void)
 	init_lock(&fsp_ipmi.lock);
 
 	fsp_register_client(&fsp_ipmi_client, FSP_MCLASS_FETCH_SPDATA);
+	fsp_register_client(&fsp_ipmi_client_rr, FSP_MCLASS_RR_EVENT);
 	ipmi_register_backend(&fsp_ipmi_backend);
 }
