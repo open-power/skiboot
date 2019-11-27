@@ -55,6 +55,7 @@ if [ $E -eq 3 ]; then
     exit 0;
 fi
 
+if [ -n "$V" ] ; then cat "$t" ; fi
 if [ $E -eq 0 ]; then
     rm $T
 else

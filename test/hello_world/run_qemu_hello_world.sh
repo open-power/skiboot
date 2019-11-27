@@ -50,6 +50,7 @@ if [ $r != 0 ]; then
     exit $r
 fi
 
+if [ -n "$V" ] ; then cat "$t" ; fi
 rm -f -- "$t"
 trap - EXIT
 
