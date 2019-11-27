@@ -465,6 +465,7 @@ static void npu2_phb_nvlink_dt(struct phb *npuphb)
 static void witherspoon_finalise_dt(bool is_reboot)
 {
 	struct dt_node *np;
+	struct proc_chip *c;
 
 	if (is_reboot)
 		return;
@@ -478,6 +479,30 @@ static void witherspoon_finalise_dt(bool is_reboot)
 		if (npphb->phb_type != phb_type_npu_v2)
 			continue;
 		npu2_phb_nvlink_dt(npphb);
+	}
+
+	/*
+	 * The I2C bus on used to talk to the GPUs has a 750K pullup
+	 * which is way too big. If there's no GPUs connected to the
+	 * chip all I2C transactions fail with an Arb loss error since
+	 * SCL/SDA don't return to the idle state fast enough. Disable
+	 * the port to squash the errors.
+	 */
+	for (c = next_chip(0); c; c = next_chip(c)) {
+		bool detected = false;
+		int i;
+
+		np = dt_find_by_path(c->devnode, "i2cm@a1000/i2c-bus@4");
+		if (!np)
+			continue;
+
+		for (i = 0; i < 3; i++)
+			detected |= occ_get_gpu_presence(c, i);
+
+		if (!detected) {
+			dt_check_del_prop(np, "status");
+			dt_add_property_string(np, "status", "disabled");
+		}
 	}
 }
 
