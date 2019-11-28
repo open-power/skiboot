@@ -810,6 +810,15 @@ static int ipmi_hiomap_write(struct blocklevel_device *bl, uint64_t pos,
 		if (rc)
 			return rc;
 
+		/*
+		 * Unlike ipmi_hiomap_read() we don't explicitly test if the
+		 * window is still valid after completing the LPC accesses as
+		 * the following hiomap_mark_dirty() will implicitly check for
+		 * us. In the case of a read operation there's no requirement
+		 * that a command that validates window state follows, so the
+		 * read implementation explicitly performs a check.
+		 */
+
 		rc = hiomap_mark_dirty(ctx, pos, size);
 		if (rc)
 			return rc;
