@@ -142,7 +142,7 @@ struct spiras_ntuples {
 	struct spira_ntuple	proc_chip;		/* 0x1e0 */
 	struct spira_ntuple	hs_data;		/* 0x200 */
 	struct spira_ntuple	ipmi_sensor;		/* 0x220 */
-} __packed __align(0x100);
+};
 
 struct spiras {
 	struct HDIF_common_hdr	hdr;
