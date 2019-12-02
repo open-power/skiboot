@@ -1534,6 +1534,63 @@ static int64_t phb4_map_pe_dma_window_real(struct phb *phb,
 	return OPAL_SUCCESS;
 }
 
+static int64_t phb4_set_option(struct phb *phb, enum OpalPhbOption opt,
+			       uint64_t setting)
+{
+	struct phb4 *p = phb_to_phb4(phb);
+	uint64_t data64;
+
+	data64 = phb4_read_reg(p, PHB_CTRLR);
+	switch (opt) {
+	case OPAL_PHB_OPTION_TVE1_4GB:
+		if (setting > 1)
+			return OPAL_PARAMETER;
+
+		PHBDBG(p, "4GB bypass mode = %lld\n", setting);
+		if (setting)
+			data64 |= PPC_BIT(24);
+		else
+			data64 &= ~PPC_BIT(24);
+		break;
+	case OPAL_PHB_OPTION_MMIO_EEH_DISABLE:
+		if (setting > 1)
+			return OPAL_PARAMETER;
+
+		PHBDBG(p, "MMIO EEH Disable = %lld\n", setting);
+		if (setting)
+			data64 |= PPC_BIT(14);
+		else
+			data64 &= ~PPC_BIT(14);
+		break;
+	default:
+		return OPAL_UNSUPPORTED;
+	}
+	phb4_write_reg(p, PHB_CTRLR, data64);
+
+	return OPAL_SUCCESS;
+}
+
+static int64_t phb4_get_option(struct phb *phb, enum OpalPhbOption opt,
+			       uint64_t *setting)
+{
+	struct phb4 *p = phb_to_phb4(phb);
+	uint64_t data64;
+
+	data64 = phb4_read_reg(p, PHB_CTRLR);
+	switch (opt) {
+	case OPAL_PHB_OPTION_TVE1_4GB:
+		*setting = (data64 & PPC_BIT(24)) ? 1 : 0;
+		break;
+	case OPAL_PHB_OPTION_MMIO_EEH_DISABLE:
+		*setting = (data64 & PPC_BIT(14)) ? 1 : 0;
+		break;
+	default:
+		return OPAL_UNSUPPORTED;
+	}
+
+	return OPAL_SUCCESS;
+}
+
 static int64_t phb4_set_ive_pe(struct phb *phb,
 			       uint64_t pe_number,
 			       uint32_t ive_num)
@@ -4796,6 +4853,8 @@ static const struct phb_ops phb4_ops = {
 	.map_pe_mmio_window	= phb4_map_pe_mmio_window,
 	.map_pe_dma_window	= phb4_map_pe_dma_window,
 	.map_pe_dma_window_real = phb4_map_pe_dma_window_real,
+	.set_option		= phb4_set_option,
+	.get_option		= phb4_get_option,
 	.set_xive_pe		= phb4_set_ive_pe,
 	.get_msi_32		= phb4_get_msi_32,
 	.get_msi_64		= phb4_get_msi_64,

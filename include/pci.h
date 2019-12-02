@@ -291,6 +291,11 @@ struct phb_ops {
 					  uint64_t pci_start_addr,
 					  uint64_t pci_mem_size);
 
+	int64_t (*set_option)(struct phb *phb, enum OpalPhbOption opt,
+			      uint64_t setting);
+	int64_t (*get_option)(struct phb *phb, enum OpalPhbOption opt,
+			      uint64_t *setting);
+
 	int64_t (*set_mve)(struct phb *phb, uint32_t mve_number,
 			   uint64_t pe_number);
 

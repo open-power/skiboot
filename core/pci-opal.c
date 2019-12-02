@@ -461,6 +461,46 @@ static int64_t opal_pci_map_pe_dma_window_real(uint64_t phb_id,
 }
 opal_call(OPAL_PCI_MAP_PE_DMA_WINDOW_REAL, opal_pci_map_pe_dma_window_real, 5);
 
+static int64_t opal_phb_set_option(uint64_t phb_id, uint64_t opt,
+				   uint64_t setting)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+	int64_t rc;
+
+	if (!phb)
+		return OPAL_PARAMETER;
+
+	if (!phb->ops->set_option)
+		return OPAL_UNSUPPORTED;
+
+	phb_lock(phb);
+	rc = phb->ops->set_option(phb, opt, setting);
+	phb_unlock(phb);
+
+	return rc;
+}
+opal_call(OPAL_PHB_SET_OPTION, opal_phb_set_option, 3);
+
+static int64_t opal_phb_get_option(uint64_t phb_id, uint64_t opt,
+				   uint64_t *setting)
+{
+	struct phb *phb = pci_get_phb(phb_id);
+	int64_t rc;
+
+	if (!phb || !setting)
+		return OPAL_PARAMETER;
+
+	if (!phb->ops->get_option)
+		return OPAL_UNSUPPORTED;
+
+	phb_lock(phb);
+	rc = phb->ops->get_option(phb, opt, setting);
+	phb_unlock(phb);
+
+	return rc;
+}
+opal_call(OPAL_PHB_GET_OPTION, opal_phb_get_option, 3);
+
 static int64_t opal_pci_reset(uint64_t id, uint8_t reset_scope,
                               uint8_t assert_state)
 {
