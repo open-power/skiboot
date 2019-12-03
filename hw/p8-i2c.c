@@ -92,10 +92,23 @@ DEFINE_LOG_ENTRY(OPAL_RC_I2C_RESET, OPAL_INPUT_OUTPUT_ERR_EVT, OPAL_I2C,
 #define I2C_WATERMARK_HIGH		PPC_BITMASK(16, 19)
 #define I2C_WATERMARK_LOW		PPC_BITMASK(24, 27)
 
-/* I2C interrupt mask, condition and interrupt registers */
+/*
+ * I2C interrupt mask and condition registers
+ *
+ * NB: The function of 0x9 and 0xa changes depending on whether you're reading
+ *     or writing to them. When read they return the interrupt condition bits
+ *     and on writes they update the interrupt mask register.
+ *
+ *  The bit definitions are the same for all the interrupt registers.
+ */
 #define I2C_INTR_MASK_REG		0x8
-#define I2C_INTR_COND_REG		0x9
-#define I2C_INTR_REG			0xa
+
+#define I2C_INTR_RAW_COND_REG 		0x9 /* read */
+#define I2C_INTR_MASK_OR_REG		0x9 /* write*/
+
+#define I2C_INTR_COND_REG 		0xa /* read */
+#define I2C_INTR_MASK_AND_REG		0xa /* write */
+
 #define I2C_INTR_ALL			PPC_BITMASK(16, 31)
 #define I2C_INTR_INVALID_CMD		PPC_BIT(16)
 #define I2C_INTR_LBUS_PARITY_ERR	PPC_BIT(17)
@@ -139,6 +152,10 @@ DEFINE_LOG_ENTRY(OPAL_RC_I2C_RESET, OPAL_INPUT_OUTPUT_ERR_EVT, OPAL_I2C,
 			  I2C_STAT_BKEND_OVERRUN_ERR | \
 			  I2C_STAT_BKEND_ACCESS_ERR | I2C_STAT_ARBT_LOST_ERR | \
 			  I2C_STAT_NACK_RCVD_ERR | I2C_STAT_STOP_ERR)
+
+
+#define I2C_INTR_ACTIVE \
+	((I2C_STAT_ANY_ERR >> 16) | I2C_INTR_CMD_COMP | I2C_INTR_DATA_REQ)
 
 /* Pseudo-status used for timeouts */
 #define I2C_STAT_PSEUDO_TIMEOUT		PPC_BIT(63)
@@ -264,7 +281,7 @@ static void p8_i2c_print_debug_info(struct p8_i2c_master_port *port,
 	i2cm_read_reg(master, I2C_STAT_REG, &stat);
 	i2cm_read_reg(master, I2C_EXTD_STAT_REG, &estat);
 	i2cm_read_reg(master, I2C_INTR_MASK_REG, &intm);
-	i2cm_read_reg(master, I2C_INTR_COND_REG, &intc);
+	i2cm_read_reg(master, I2C_INTR_RAW_COND_REG, &intc);
 
 	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Register dump--\n"
 			 "    cmd:0x%016llx\tmode:0x%016llx\tstat:0x%016llx\n"
@@ -317,10 +334,8 @@ static int p8_i2c_enable_irqs(struct p8_i2c_master *master)
 {
 	int rc;
 
-	/* Enable the interrupts */
-	rc = xscom_write(master->chip_id, master->xscom_base +
-			 I2C_INTR_COND_REG, I2C_STAT_ANY_ERR >> 16 |
-			 I2C_INTR_CMD_COMP | I2C_INTR_DATA_REQ);
+	/* enable interrupts we're interested in */
+	rc = i2cm_write_reg(master, I2C_INTR_MASK_OR_REG, I2C_INTR_ACTIVE);
 	if (rc)
 		prlog(PR_ERR, "I2C: Failed to enable the interrupts\n");
 
@@ -802,8 +817,8 @@ static void p8_i2c_check_status(struct p8_i2c_master *master)
 		return;
 	}
 
-	/* Mask the interrupts for this engine */
-	rc = i2cm_write_reg(master, I2C_INTR_REG, ~I2C_INTR_ALL);
+	/* mask interrupts while we're mucking with the master */
+	rc = i2cm_write_reg(master, I2C_INTR_MASK_AND_REG, ~I2C_INTR_ALL);
 	if (rc) {
 		log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
 			"I2C: Failed to disable the interrupts\n");
