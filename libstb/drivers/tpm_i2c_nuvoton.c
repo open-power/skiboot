@@ -493,12 +493,46 @@ static struct tpm_driver tpm_i2c_nuvoton_driver = {
 static int nuvoton_tpm_quirk(void *data, struct i2c_request *req, int *rc)
 {
 	struct tpm_dev *tpm_device = data;
+	struct dt_node *dev;
+	uint16_t addr;
+	bool found;
 
-	/* If we're doing i2cdetect on the TPM, pretent we just NACKed
-	 * it due to errata in nuvoton firmware where if we let this
-	 * request go through, it would steal the bus and you'd end up
-	 * in a nice world of pain.
+	/*
+	 * The nuvoton TPM firmware has a problem where a single byte read or
+	 * zero byte write to one of its I2C addresses causes the TPM to lock
+	 * up the bus. Once locked up the bus can only be recovered by power
+	 * cycling the TPM. Unfortunately, we don't have the ability to
+	 * power cycle the TPM because allowing it to be reset at runtime
+	 * would undermine the TPM's security model (we can reset it and
+	 * send it whatever measurements we like to unlock it's secrets).
+	 * So the best we can do here is try avoid triggering the problem
+	 * in the first place.
+	 *
+	 * For a bit of added fun the TPM also appears to check for traffic
+	 * on a few different I2C bus addresses. It does this even when not
+	 * configured to respond on those addresses so you can trigger the
+	 * bug by sending traffic... somwhere. To work around this we block
+	 * sending I2C requests on the TPM's bus unless the DT explicitly
+	 * tells us there is a device there.
 	 */
+
+	/* first, check if this a known address */
+	addr = req->dev_addr;
+	found = false;
+
+	dt_for_each_child(req->bus->dt_node, dev) {
+		if (dt_prop_get_u32(dev, "reg") == addr) {
+			found = true;
+			break;
+		}
+	}
+
+	if (!found) {
+		*rc = OPAL_I2C_TIMEOUT;
+		return 1;
+	}
+
+	/* second, check if it's a bad transaction to the TPM */
 	if (tpm_device->bus_id == req->bus->opal_id &&
 	    tpm_device->i2c_addr == req->dev_addr &&
 	    ((req->op == I2C_READ && req->rw_len == 1) ||
@@ -517,6 +551,7 @@ void tpm_i2c_nuvoton_probe(void)
 	struct tpm_dev *tpm_device = NULL;
 	struct dt_node *node = NULL;
 	struct i2c_bus *bus;
+	const char *name;
 
 	dt_for_each_compatible(dt_root, node, "nuvoton,npct650") {
 		if (!dt_node_is_enabled(node))
@@ -562,6 +597,10 @@ void tpm_i2c_nuvoton_probe(void)
 		assert(bus->check_quirk == NULL);
 		bus->check_quirk = nuvoton_tpm_quirk;
 		bus->check_quirk_data = tpm_device;
+		name = dt_prop_get(node->parent, "ibm,port-name");
+
+		prlog(PR_NOTICE, "NUVOTON: TPM I2C workaround applied to %s\n",
+				  name);
 
 		/*
 		 * Tweak for linux. It doesn't have a driver compatible
