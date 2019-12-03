@@ -237,7 +237,6 @@ static void p8_i2c_print_debug_info(struct p8_i2c_master_port *port,
 {
 	struct p8_i2c_master *master = port->master;
 	uint64_t cmd, mode, stat, estat, intm, intc;
-	int rc;
 
 	/* Print master and request structure bits */
 	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER),
@@ -255,48 +254,17 @@ static void p8_i2c_print_debug_info(struct p8_i2c_master_port *port,
 			 " start_time=%016llx end_time=%016llx (duration=%016llx)\n",
 			 master->start_time, end_time, end_time - master->start_time);
 
+	/* initialise to some fake value in case of read errors */
+	cmd = mode = stat = estat = intm = intc = 0xDEAD;
+
 	/* Dump the current state of i2c registers */
-	rc = xscom_read(master->chip_id, master->xscom_base + I2C_CMD_REG,
-			&cmd);
-	if (rc) {
-		prlog(PR_DEBUG, "I2C: Failed to read CMD_REG\n");
-		cmd = 0ull;
-	}
-
-	rc = xscom_read(master->chip_id, master->xscom_base + I2C_MODE_REG,
-			&mode);
-	if (rc) {
-		prlog(PR_DEBUG, "I2C: Failed to read MODE_REG\n");
-		mode = 0ull;
-	}
-
-	rc = xscom_read(master->chip_id, master->xscom_base + I2C_STAT_REG,
-			&stat);
-	if (rc) {
-		prlog(PR_DEBUG, "I2C: Failed to read STAT_REG\n");
-		stat = 0ull;
-	}
-
-	rc = xscom_read(master->chip_id, master->xscom_base + I2C_EXTD_STAT_REG,
-			&estat);
-	if (rc) {
-		prlog(PR_DEBUG, "I2C: Failed to read EXTD_STAT_REG\n");
-		estat = 0ull;
-	}
-
-	rc = xscom_read(master->chip_id, master->xscom_base + I2C_INTR_MASK_REG,
-			&intm);
-	if (rc) {
-		prlog(PR_DEBUG, "I2C: Failed to read INTR_MASK_REG\n");
-		intm = 0ull;
-	}
-
-	rc = xscom_read(master->chip_id, master->xscom_base + I2C_INTR_COND_REG,
-			&intc);
-	if (rc) {
-		prlog(PR_DEBUG, "I2C: Failed to read INTR_COND_REG\n");
-		intc = 0ull;
-	}
+	i2cm_read_reg(master, I2C_CMD_REG, &cmd);
+	i2cm_read_reg(master, I2C_MODE_REG, &mode);
+	i2cm_read_reg(master, I2C_MODE_REG, &mode);
+	i2cm_read_reg(master, I2C_STAT_REG, &stat);
+	i2cm_read_reg(master, I2C_EXTD_STAT_REG, &estat);
+	i2cm_read_reg(master, I2C_INTR_MASK_REG, &intm);
+	i2cm_read_reg(master, I2C_INTR_COND_REG, &intc);
 
 	log_simple_error(&e_info(OPAL_RC_I2C_TRANSFER), "I2C: Register dump--\n"
 			 "    cmd:0x%016llx\tmode:0x%016llx\tstat:0x%016llx\n"
