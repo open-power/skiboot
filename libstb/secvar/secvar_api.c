@@ -151,8 +151,9 @@ static int64_t opal_secvar_enqueue_update(const char *key, uint64_t key_len, voi
 	list_add_tail(&update_bank, &node->link);
 
 out:
-	secvar_storage.write_bank(&update_bank, SECVAR_UPDATE_BANK);
-
-	return OPAL_SUCCESS;
+	if (secvar_storage.write_bank(&update_bank, SECVAR_UPDATE_BANK))
+		return OPAL_HARDWARE;
+	else
+		return OPAL_SUCCESS;
 }
 opal_call(OPAL_SECVAR_ENQUEUE_UPDATE, opal_secvar_enqueue_update, 4);
