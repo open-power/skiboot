@@ -37,7 +37,8 @@ void secvar_init_devnode(const char *compatible)
 
 	secvar_node = dt_new(sb_root, "secvar");
 
-	dt_add_property_string(secvar_node, "compatible", compatible);
+	dt_add_property_strings(secvar_node, "compatible", "ibm,secvar-backend", compatible);
+	dt_add_property_string(secvar_node, "format", compatible);
 	dt_add_property_u64(secvar_node, "max-var-size", secvar_storage.max_var_size);
 	dt_add_property_u64(secvar_node, "max-var-key-len", SECVAR_MAX_KEY_LEN);
 }

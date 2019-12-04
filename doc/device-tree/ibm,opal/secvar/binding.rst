@@ -42,6 +42,25 @@ Properties:
   all further images to require signature validations. See the
   "On Enforcing Secure Mode" section below.
 
+  This property also contains a generic "ibm,secvar-backend" compatible,
+  which defines the basic-level compatibility of the secvar implementation.
+  This includes the basic behavior of the API (excluding the data format),
+  and the expected device tree properties contained in this node.
+
+- format
+
+  Usage:
+    required
+  Value type:
+    string
+
+  This property defines the format of data passed in and out of the secvar
+  API. In most cases, this should be the same string as the backend-specific
+  string in compatible.
+
+  The format defined by this string should be documented by the corresponding
+  backend.
+
 - status
 
   Usage:
@@ -119,7 +138,7 @@ Example
 .. code-block:: dts
 
 	/ibm,opal/secvar {
-		compatible = "ibm,edk2-compat-v1";
+		compatible = "ibm,secvar-backend" "ibm,edk2-compat-v1";
 
                 status = "okay";
                 max-var-size = <0x1000>;
