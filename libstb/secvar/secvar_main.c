@@ -27,6 +27,8 @@ int secvar_main(struct secvar_storage_driver storage_driver,
 {
 	int rc = OPAL_UNSUPPORTED;
 
+	prlog(PR_INFO, "Secure variables are supported, initializing secvar\n");
+
 	secvar_storage = storage_driver;
 	secvar_backend = backend_driver;
 
@@ -78,10 +80,12 @@ int secvar_main(struct secvar_storage_driver storage_driver,
 	if (rc)
 		goto out;
 
+	prlog(PR_INFO, "secvar initialized successfully\n");
+
 	return OPAL_SUCCESS;
 fail:
 	secvar_set_status("fail");
 out:
-	printf("Secure Variables Status %04x\n", rc);
+	prerror("secvar failed to initialize, rc = %04x\n", rc);
 	return rc;
 }
