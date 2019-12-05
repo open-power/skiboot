@@ -189,6 +189,9 @@ int64_t opal_exit_check(int64_t retval, struct stack_frame *eframe)
 		      "Spent %llu msecs in OPAL call %llu!\n",
 		      call_time, token);
 	}
+
+	cpu->current_token = 0;
+
 	return retval;
 }
 
