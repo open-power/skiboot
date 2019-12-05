@@ -272,10 +272,17 @@ static int64_t xscom_handle_error(uint64_t hmer, uint32_t gcid, uint32_t pcb_add
 		break;
 	}
 
-	/* XXX: Create error log entry ? */
-	log_simple_error(&e_info(OPAL_RC_XSCOM_RW),
-		"XSCOM: %s error gcid=0x%x pcb_addr=0x%x stat=0x%x\n",
-		is_write ? "write" : "read", gcid, pcb_addr, stat);
+	/*
+	 * If we're in an XSCOM opal call then squash the error
+	 * we assume that the caller (probably opal-prd) will
+	 * handle logging it
+	 */
+	if (this_cpu()->current_token != OPAL_XSCOM_READ &&
+	    this_cpu()->current_token != OPAL_XSCOM_WRITE) {
+		log_simple_error(&e_info(OPAL_RC_XSCOM_RW),
+			"XSCOM: %s error gcid=0x%x pcb_addr=0x%x stat=0x%x\n",
+			is_write ? "write" : "read", gcid, pcb_addr, stat);
+	}
 
 	/* We need to reset the XSCOM or we'll hang on the next access */
 	xscom_reset(gcid, false);
