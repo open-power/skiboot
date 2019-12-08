@@ -16,12 +16,12 @@ struct ecc64 {
 	uint8_t ecc;
 } __attribute__((__packed__));
 
-extern int memcpy_from_ecc(uint64_t *dst, struct ecc64 *src, uint64_t len);
-extern int memcpy_from_ecc_unaligned(uint64_t *dst, struct ecc64 *src, uint64_t len,
+extern int memcpy_from_ecc(beint64_t *dst, struct ecc64 *src, uint64_t len);
+extern int memcpy_from_ecc_unaligned(beint64_t *dst, struct ecc64 *src, uint64_t len,
 		uint8_t alignment);
 
-extern int memcpy_to_ecc(struct ecc64 *dst, const uint64_t *src, uint64_t len);
-extern int memcpy_to_ecc_unaligned(struct ecc64 *dst, const uint64_t *src, uint64_t len,
+extern int memcpy_to_ecc(struct ecc64 *dst, const beint64_t *src, uint64_t len);
+extern int memcpy_to_ecc_unaligned(struct ecc64 *dst, const beint64_t *src, uint64_t len,
 		uint8_t alignment);
 
 /*
