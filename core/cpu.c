@@ -42,7 +42,7 @@ static unsigned long hid0_attn;
 static bool sreset_enabled;
 static bool ipi_enabled;
 static bool pm_enabled;
-static bool current_hile_mode;
+static bool current_hile_mode = HAVE_LITTLE_ENDIAN;
 static bool current_radix_mode = true;
 static bool tm_suspend_enabled;
 
@@ -1415,6 +1415,24 @@ static int64_t cpu_change_all_hid0(struct hid0_change_req *req)
 	return OPAL_SUCCESS;
 }
 
+void cpu_set_hile_mode(bool hile)
+{
+	struct hid0_change_req req;
+
+	if (hile == current_hile_mode)
+		return;
+
+	if (hile) {
+		req.clr_bits = 0;
+		req.set_bits = hid0_hile;
+	} else {
+		req.clr_bits = hid0_hile;
+		req.set_bits = 0;
+	}
+	cpu_change_all_hid0(&req);
+	current_hile_mode = hile;
+}
+
 static void cpu_cleanup_one(void *param __unused)
 {
 	mtspr(SPR_AMR, 0);
@@ -1453,8 +1471,8 @@ static int64_t cpu_cleanup_all(void)
 
 void cpu_fast_reboot_complete(void)
 {
-	/* Fast reboot will have cleared HID0:HILE */
-	current_hile_mode = false;
+	/* Fast reboot will have set HID0:HILE to skiboot endian */
+	current_hile_mode = HAVE_LITTLE_ENDIAN;
 
 	/* and set HID0:RADIX */
 	current_radix_mode = true;

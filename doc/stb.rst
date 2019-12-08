@@ -92,7 +92,7 @@ CVC-verify Service
 .. code-block:: c
 
         int call_cvc_verify(void *buf, size_t size, const void *hw_key_hash,
-                            size_t hw_key_hash_size, uint64_t *log)
+                            size_t hw_key_hash_size, __be64 *log)
 
 This function wrapper calls into the *CVC-verify*, which verifies if the
 firmware code provided in ``@buf`` is properly signed with the keys trusted by

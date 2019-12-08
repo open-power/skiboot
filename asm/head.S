@@ -43,6 +43,7 @@ __head:
 	. = 0x10
 .global fdt_entry
 fdt_entry:
+	FIXUP_ENDIAN
 	mr	%r27,%r3
 	b	boot_entry
 
@@ -89,6 +90,7 @@ hir_trigger:
 	. = 0x100
 sreset_vector:
 	/* BML entry, load up r3 with device tree location */
+	FIXUP_ENDIAN
 	li	%r3, 0
 	oris	%r3, %r3, 0xa
 	b	fdt_entry /* hack for lab boot */
@@ -96,6 +98,7 @@ sreset_vector:
 	/* Entry point set by the FSP */
 	.= 0x180
 hdat_entry:
+	FIXUP_ENDIAN
 	li	%r27,0
 	b	boot_entry
 
@@ -364,7 +367,11 @@ boot_entry:
 	add	%r2,%r2,%r29
 
 	/* Fixup our MSR (remove TA) */
+#if HAVE_BIG_ENDIAN
 	LOAD_IMM64(%r3, (MSR_HV | MSR_SF))
+#else
+	LOAD_IMM64(%r3, (MSR_HV | MSR_SF | MSR_LE))
+#endif
 	mtmsrd	%r3,0
 
 	/* Check our PIR, avoid threads */
@@ -702,14 +709,18 @@ init_shared_sprs:
 	mtspr	SPR_TSCR, %r3
 
 	/* HID0: Clear bit 13 (enable core recovery)
-	 *       Clear bit 19 (HILE)
+	 *       Set/clear bit 19 (HILE) depending on skiboot endian
 	 */
 	mfspr	%r3,SPR_HID0
 	li	%r0,1
 	sldi	%r4,%r0,(63-13)
-	sldi	%r5,%r0,(63-19)
-	or	%r0,%r4,%r5
-	andc	%r3,%r3,%r0
+	andc	%r3,%r3,%r4
+	sldi	%r4,%r0,(63-19)
+#if HAVE_BIG_ENDIAN
+	andc	%r3,%r3,%r4
+#else
+	or	%r3,%r3,%r4
+#endif
 	sync
 	mtspr	SPR_HID0,%r3
 	mfspr	%r3,SPR_HID0
@@ -736,17 +747,21 @@ init_shared_sprs:
 	LOAD_IMM32(%r3,0x80287880)
 	mtspr	SPR_TSCR, %r3
 	/* HID0: Clear bit 5 (enable core recovery)
-	 *       Clear bit 4 (HILE)
+	 *       Set/clear bit 4 (HILE) depending on skiboot endian
 	 *       Set bit 8 (radix)
 	 */
 	mfspr	%r3,SPR_HID0
 	li	%r0,1
+	sldi	%r4,%r0,(63-4)
+#if HAVE_BIG_ENDIAN
+	andc	%r3,%r3,%r4
+#else
+	or	%r3,%r3,%r4
+#endif
+	sldi	%r4,%r0,(63-5)
+	andc	%r3,%r3,%r4
 	sldi	%r4,%r0,(63-8)
 	or	%r3,%r3,%r4
-	sldi	%r4,%r0,(63-5)
-	sldi	%r5,%r0,(63-4)
-	or	%r0,%r4,%r5
-	andc	%r3,%r3,%r0
 	sync
 	mtspr	SPR_HID0,%r3
 	isync
@@ -826,6 +841,8 @@ enter_nap:
 	.balign	0x10
 .global opal_entry
 opal_entry:
+	OPAL_ENTRY_TO_SKIBOOT_ENDIAN
+
 	/* Get our per CPU pointer in r12 to check for quiesce */
 	mfspr	%r12,SPR_PIR
 	GET_STACK(%r12,%r12)
@@ -971,20 +988,33 @@ opal_entry:
 	lwz	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
 	subi	%r11,%r11,1
 	stw	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
+#if HAVE_BIG_ENDIAN
 	/*
 	 * blr with BH=01b means it's not a function return, OPAL was entered
 	 * via (h)rfid not bl, so we don't have a corresponding link stack
 	 * prediction to return to here.
 	 */
 	bclr	20,0,1
+#else
+	mflr	%r12
+	mtspr	SPR_HSRR0,%r12
+	mfmsr	%r11
+	li	%r12,MSR_LE
+	andc	%r11,%r11,%r12
+	mtspr	SPR_HSRR1,%r11
+	hrfid
+#endif
 
 .global start_kernel
 start_kernel:
+	LOAD_IMM64(%r10,MSR_HV|MSR_SF)
+__start_kernel:
 	sync
 	icbi	0,%r3
 	sync
 	isync
-	mtctr	%r3
+	mtspr	SPR_HSRR0,%r3
+	mtspr	SPR_HSRR1,%r10
 	mr	%r3,%r4
 	LOAD_IMM64(%r8,SKIBOOT_BASE);
 	LOAD_IMM32(%r10, opal_entry - __head)
@@ -993,21 +1023,19 @@ start_kernel:
 	addi	%r7,%r5,1
 	li	%r4,0
 	li	%r5,0
-	bctr
+	hrfid
 
 	.global start_kernel32
 start_kernel32:
-	mfmsr	%r10
-	clrldi	%r10,%r10,1
-	mtmsrd	%r10,0
-	sync
-	isync
-	b	start_kernel
+	LOAD_IMM64(%r10,MSR_HV)
+	b	__start_kernel
 
 .global start_kernel_secondary
 start_kernel_secondary:
 	sync
 	isync
-	mtctr	%r3
+	LOAD_IMM64(%r10,MSR_HV|MSR_SF)
+	mtspr	SPR_HSRR0,%r3
+	mtspr	SPR_HSRR1,%r10
 	mfspr	%r3,SPR_PIR
-	bctr
+	hrfid

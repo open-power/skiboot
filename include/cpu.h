@@ -282,6 +282,9 @@ extern void cpu_process_local_jobs(void);
 /* Check if there's any job pending */
 bool cpu_check_jobs(struct cpu_thread *cpu);
 
+/* Set/clear HILE on all CPUs */
+void cpu_set_hile_mode(bool hile);
+
 /* OPAL sreset vector in place at 0x100 */
 void cpu_set_sreset_enable(bool sreset_enabled);
 

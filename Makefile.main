@@ -67,21 +67,35 @@ CPPFLAGS += -I$(SRC)/libfdt -I$(SRC)/libflash -I$(SRC)/libxz -I$(SRC)/libc/inclu
 CPPFLAGS += -I$(SRC)/libpore
 CPPFLAGS += -D__SKIBOOT__ -nostdinc
 CPPFLAGS += -isystem $(shell $(CC) -print-file-name=include)
-CPPFLAGS += -DBITS_PER_LONG=64 -DHAVE_BIG_ENDIAN
+CPPFLAGS += -DBITS_PER_LONG=64
+
 # We might want to remove our copy of stdint.h
 # but that means uint64_t becomes an ulong instead of an ullong
 # causing all our printf's to warn
 CPPFLAGS += -ffreestanding
 
+ifeq ($(LITTLE_ENDIAN),1)
+CPPFLAGS += -DHAVE_LITTLE_ENDIAN
+else
+CPPFLAGS += -DHAVE_BIG_ENDIAN
+endif
+
 ifeq ($(DEBUG),1)
 CPPFLAGS += -DDEBUG -DCCAN_LIST_DEBUG
 endif
 
-CFLAGS := -fno-strict-aliasing -pie -fpie -fno-pic -mbig-endian -m64 -fno-asynchronous-unwind-tables
+CFLAGS := -fno-strict-aliasing -pie -fpie -fno-pic -m64 -fno-asynchronous-unwind-tables
 CFLAGS += -mcpu=power8
 CFLAGS += -Wl,--oformat,elf64-powerpc -ggdb
 CFLAGS += $(call try-cflag,$(CC),-ffixed-r13)
 CFLAGS += $(call try-cflag,$(CC),-std=gnu11)
+
+ifeq ($(LITTLE_ENDIAN),1)
+CFLAGS += -mlittle-endian
+else
+CFLAGS += -mbig-endian
+endif
+
 ifeq ($(ELF_ABI_v2),1)
 CFLAGS += $(call try-cflag,$(CC),-mabi=elfv2)
 else
@@ -139,8 +153,8 @@ LDFLAGS := -m64 -static -nostdlib -pie
 LDFLAGS += -Wl,-pie
 LDFLAGS += -Wl,-Ttext-segment,$(LD_TEXT) -Wl,-N -Wl,--build-id=none
 LDFLAGS += -Wl,--no-multi-toc
-LDFLAGS += -mcpu=power8 -mbig-endian -Wl,--oformat,elf64-powerpc
-LDFLAGS_FINAL = -EB -m elf64ppc --no-multi-toc -N --build-id=none --whole-archive
+LDFLAGS += -mcpu=power8 -Wl,--oformat,elf64-powerpc
+LDFLAGS_FINAL = -m elf64lppc --no-multi-toc -N --build-id=none --whole-archive
 LDFLAGS_FINAL += -static -nostdlib -pie -Ttext-segment=$(LD_TEXT) --oformat=elf64-powerpc
 LDFLAGS_FINAL += --orphan-handling=warn
 
@@ -148,11 +162,25 @@ LDRFLAGS=-melf64ppc
 # Debug stuff
 #LDFLAGS += -Wl,-v -Wl,-Map,foomap 
 
+ifeq ($(LITTLE_ENDIAN),1)
+LDFLAGS += -mlittle-endian
+LDFLAGS_FINAL += -EL
+else
+LDFLAGS += -mbig-endian
+LDFLAGS_FINAL += -EB
+endif
+
 ifeq ($(DEAD_CODE_ELIMINATION),1)
 LDFLAGS += -Wl,--gc-sections
 endif
 
-AFLAGS := -D__ASSEMBLY__ -mbig-endian -m64
+AFLAGS := -D__ASSEMBLY__ -m64
+ifeq ($(LITTLE_ENDIAN),1)
+AFLAGS += -mlittle-endian
+else
+AFLAGS += -mbig-endian
+endif
+
 ifeq ($(ELF_ABI_v2),1)
 AFLAGS += $(call try-cflag,$(CC),-mabi=elfv2)
 else

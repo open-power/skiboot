@@ -632,6 +632,7 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	cpu_disable_ME_RI_all();
 
 	patch_traps(false);
+	cpu_set_hile_mode(false); /* Clear HILE on all CPUs */
 
 	checksum_romem();
 
