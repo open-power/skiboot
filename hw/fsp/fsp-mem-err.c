@@ -345,13 +345,13 @@ static bool fsp_mem_err_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 		 * correctable/Uncorrectable/scrub UE errors with real
 		 * address of 4K memory page in which the error occurred.
 		 */
-		paddr_start = be64_to_cpu(*((__be64 *)&msg->data.words[0]));
+		paddr_start = be64_to_cpu(*((__be64 *)&msg->data.bytes[0]));
 		printf("Got memory resilience error message for "
 		       "paddr=0x%016llux\n", paddr_start);
 		return handle_memory_resilience(cmd_sub_mod, paddr_start);
 	case FSP_CMD_MEM_DYN_DEALLOC:
-		paddr_start = be64_to_cpu(*((__be64 *)&msg->data.words[0]));
-		paddr_end = be64_to_cpu(*((__be64 *)&msg->data.words[2]));
+		paddr_start = be64_to_cpu(*((__be64 *)&msg->data.bytes[0]));
+		paddr_end = be64_to_cpu(*((__be64 *)&msg->data.bytes[8]));
 		printf("Got dynamic memory deallocation message: "
 		       "paddr_start=0x%016llux, paddr_end=0x%016llux\n",
 		       paddr_start, paddr_end);

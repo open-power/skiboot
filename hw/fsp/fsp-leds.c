@@ -308,7 +308,7 @@ static void fsp_get_sai_complete(struct fsp_msg *msg)
 		prlog(PR_ERR, "Read real SAI cmd failed [rc = 0x%x].\n", rc);
 	} else { /* Update SAI state */
 		lock(&sai_lock);
-		sai_data.state = msg->resp->data.words[0] & 0xff;
+		sai_data.state = fsp_msg_get_data_word(msg->resp, 0) & 0xff;
 		unlock(&sai_lock);
 
 		prlog(PR_TRACE, "SAI initial state = 0x%x\n", sai_data.state);
@@ -346,25 +346,25 @@ static void fsp_get_sai(void)
 
 static bool sai_update_notification(struct fsp_msg *msg)
 {
-	uint32_t *state = &msg->data.words[2];
-	uint32_t param_id = msg->data.words[0];
-	int len = msg->data.words[1] & 0xffff;
+	uint32_t state = fsp_msg_get_data_word(msg, 2);
+	uint32_t param_id = fsp_msg_get_data_word(msg, 0);
+	int len = fsp_msg_get_data_word(msg, 1) & 0xffff;
 
 	if (param_id != SYS_PARAM_REAL_SAI && param_id != SYS_PARAM_PLAT_SAI)
 		return false;
 
-	if ( len != 4)
+	if (len != 4)
 		return false;
 
-	if (*state != LED_STATE_ON && *state != LED_STATE_OFF)
+	if (state != LED_STATE_ON && state != LED_STATE_OFF)
 		return false;
 
 	/* Update SAI state */
 	lock(&sai_lock);
-	sai_data.state = *state;
+	sai_data.state = state;
 	unlock(&sai_lock);
 
-	prlog(PR_TRACE, "SAI updated. New SAI state = 0x%x\n", *state);
+	prlog(PR_TRACE, "SAI updated. New SAI state = 0x%x\n", state);
 	return true;
 }
 
@@ -559,7 +559,7 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	 */
 	spcn_cmd->ckpt_status = led->status;
 	spcn_cmd->ckpt_excl_bit = led->excl_bit;
-	sled.state = led->status;
+	sled.state = cpu_to_be16(led->status);
 
 	/* Update the exclussive LED bits  */
 	if (is_enclosure_led(spcn_cmd->loc_code)) {
@@ -581,24 +581,24 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	/* LED FAULT commad */
 	if (spcn_cmd->command == LED_COMMAND_FAULT) {
 		if (spcn_cmd->state == LED_STATE_ON)
-			sled.state |= SPCN_LED_FAULT_MASK;
+			sled.state |= cpu_to_be16(SPCN_LED_FAULT_MASK);
 		if (spcn_cmd->state == LED_STATE_OFF)
-			sled.state &= ~SPCN_LED_FAULT_MASK;
+			sled.state &= cpu_to_be16(~SPCN_LED_FAULT_MASK);
 	}
 
 	/* LED IDENTIFY command */
 	if (spcn_cmd->command == LED_COMMAND_IDENTIFY) {
 		if (spcn_cmd->state == LED_STATE_ON)
-			sled.state |= SPCN_LED_IDENTIFY_MASK;
+			sled.state |= cpu_to_be16(SPCN_LED_IDENTIFY_MASK);
 		if (spcn_cmd->state == LED_STATE_OFF)
-			sled.state &= ~SPCN_LED_IDENTIFY_MASK;
+			sled.state &= cpu_to_be16(~SPCN_LED_IDENTIFY_MASK);
 	}
 
 	/* Write into SPCN TCE buffer */
 	buf_write(buf, u8, sled.lc_len);	/* Location code length */
 	memcpy(buf, sled.lc_code, sled.lc_len);	/* Location code */
 	buf += sled.lc_len;
-	buf_write(buf, u16, sled.state);	/* LED state */
+	buf_write(buf, __be16, sled.state);	/* LED state */
 
 	msg = fsp_mkmsg(FSP_CMD_SPCN_PASSTHRU, 4,
 			SPCN_ADDR_MODE_CEC_NODE, cmd_hdr, 0, PSI_DMA_LED_BUF);
@@ -612,7 +612,7 @@ static int fsp_msg_set_led_state(struct led_set_cmd *spcn_cmd)
 	 * Update the local lists based on the attempted SPCN command to
 	 * set/reset an individual led (CEC or ENCL).
 	 */
-	update_led_list(spcn_cmd->loc_code, sled.state, led->excl_bit);
+	update_led_list(spcn_cmd->loc_code, be16_to_cpu(sled.state), led->excl_bit);
 	msg->user_data = spcn_cmd;
 
 	rc = fsp_queue_msg(msg, fsp_spcn_set_led_completion);
@@ -775,20 +775,20 @@ static u32 fsp_push_data_to_tce(struct fsp_led_data *led, u8 *out_data,
 	lcode.fld_sz = sizeof(lcode.loc_code);
 
 	/* Rest of the structure */
-	lcode.size = sizeof(lcode);
+	lcode.size = cpu_to_be16(sizeof(lcode));
 	lcode.status &= 0x0f;
 
 	/*
 	 * Check for outbound buffer overflow. If there are still
 	 * more LEDs to be sent across to FSP, don't send, ignore.
 	 */
-	if ((total_size + lcode.size) > PSI_DMA_LOC_COD_BUF_SZ)
+	if ((total_size + be16_to_cpu(lcode.size)) > PSI_DMA_LOC_COD_BUF_SZ)
 		return 0;
 
 	/* Copy over to the buffer */
 	memcpy(out_data, &lcode, sizeof(lcode));
 
-	return lcode.size;
+	return be16_to_cpu(lcode.size);
 }
 
 /*
@@ -904,7 +904,7 @@ static void fsp_ret_loc_code_list(u16 req_type, char *loc_code)
 static void fsp_get_led_list(struct fsp_msg *msg)
 {
 	struct fsp_loc_code_req req;
-	u32 tce_token = msg->data.words[1];
+	u32 tce_token = fsp_msg_get_data_word(msg, 1);
 	void *buf;
 
 	/* Parse inbound buffer */
@@ -929,9 +929,9 @@ static void fsp_get_led_list(struct fsp_msg *msg)
 	memcpy(&req, buf, sizeof(req));
 
 	prlog(PR_TRACE, "Request for loc code list type 0x%04x LC=%s\n",
-	       req.req_type, req.loc_code);
+	       be16_to_cpu(req.req_type), req.loc_code);
 
-	fsp_ret_loc_code_list(req.req_type, req.loc_code);
+	fsp_ret_loc_code_list(be16_to_cpu(req.req_type), req.loc_code);
 }
 
 /*
@@ -944,7 +944,7 @@ static void fsp_get_led_list(struct fsp_msg *msg)
  */
 static void fsp_free_led_list_buf(struct fsp_msg *msg)
 {
-	u32 tce_token = msg->data.words[1];
+	u32 tce_token = fsp_msg_get_data_word(msg, 1);
 	u32 cmd = FSP_RSP_RET_LED_BUFFER;
 	struct fsp_msg *resp;
 
@@ -1039,7 +1039,7 @@ static void fsp_ret_led_state(char *loc_code)
 static void fsp_get_led_state(struct fsp_msg *msg)
 {
 	struct fsp_get_ind_state_req req;
-	u32 tce_token = msg->data.words[1];
+	u32 tce_token = fsp_msg_get_data_word(msg, 1);
 	void *buf;
 
 	/* Parse the inbound buffer */
@@ -1091,7 +1091,7 @@ static void fsp_set_led_state(struct fsp_msg *msg)
 {
 	struct fsp_set_ind_state_req req;
 	struct fsp_led_data *led, *next;
-	u32 tce_token = msg->data.words[1];
+	u32 tce_token = fsp_msg_get_data_word(msg, 1);
 	bool command, state;
 	void *buf;
 	int rc;
@@ -1107,8 +1107,8 @@ static void fsp_set_led_state(struct fsp_msg *msg)
 
 	prlog(PR_TRACE, "%s: tce=0x%08x buf=%p rq.sz=%d rq.typ=0x%04x"
 	      " rq.lc_len=%d rq.fld_sz=%d LC: %02x %02x %02x %02x....\n",
-	      __func__, tce_token, buf, req.size, req.lc_len, req.fld_sz,
-	      req.req_type,
+	      __func__, tce_token, buf, be16_to_cpu(req.size), req.lc_len, req.fld_sz,
+	      be16_to_cpu(req.req_type),
 	      req.loc_code[0], req.loc_code[1],
 	      req.loc_code[2], req.loc_code[3]);
 
@@ -1129,7 +1129,7 @@ static void fsp_set_led_state(struct fsp_msg *msg)
 		LED_STATE_ON : LED_STATE_OFF;
 
 	/* Handle requests */
-	switch (req.req_type) {
+	switch (be16_to_cpu(req.req_type)) {
 	case SET_IND_ENCLOSURE:
 		list_for_each_safe(&cec_ledq, led, next, link) {
 			/* Only descendants of the same enclosure */
@@ -1261,12 +1261,11 @@ static struct fsp_client fsp_indicator_client = {
 };
 
 
-static int fsp_opal_get_sai(u64 *led_mask, u64 *led_value)
+static int fsp_opal_get_sai(__be64 *led_mask, __be64 *led_value)
 {
-	*led_mask |= OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ATTN;
+	*led_mask |= cpu_to_be64(OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ATTN);
 	if (sai_data.state & OPAL_SLOT_LED_STATE_ON)
-		*led_value |=
-			OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ATTN;
+		*led_value |= cpu_to_be64(OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ATTN);
 
 	return OPAL_SUCCESS;
 }
@@ -1309,8 +1308,8 @@ static int fsp_opal_set_sai(uint64_t async_token, char *loc_code,
  * number of LED type it understands and updates 'led_mask', 'led_value'
  * based on that maximum value of LED types.
  */
-static int64_t fsp_opal_leds_get_ind(char *loc_code, u64 *led_mask,
-				     u64 *led_value, u64 *max_led_type)
+static int64_t fsp_opal_leds_get_ind(char *loc_code, __be64 *led_mask,
+				     __be64 *led_value, __be64 *max_led_type)
 {
 	bool supported = true;
 	int64_t max;
@@ -1325,14 +1324,16 @@ static int64_t fsp_opal_leds_get_ind(char *loc_code, u64 *led_mask,
 	if (led_support != LED_STATE_PRESENT)
 		return OPAL_HARDWARE;
 
+	max = be64_to_cpu(*max_led_type);
+
 	/* Adjust max LED type */
-	if (*max_led_type > OPAL_SLOT_LED_TYPE_MAX) {
+	if (max > OPAL_SLOT_LED_TYPE_MAX) {
 		supported = false;
-		*max_led_type = OPAL_SLOT_LED_TYPE_MAX;
+		max = OPAL_SLOT_LED_TYPE_MAX;
+		*max_led_type = cpu_to_be64(max);
 	}
 
 	/* Invalid parameter */
-	max = *max_led_type;
 	if (max <= 0)
 		return OPAL_PARAMETER;
 
@@ -1352,20 +1353,18 @@ static int64_t fsp_opal_leds_get_ind(char *loc_code, u64 *led_mask,
 
 	/* Identify LED */
 	--max;
-	*led_mask |= OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ID;
+	*led_mask |= cpu_to_be64(OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ID);
 	if (led->status & SPCN_LED_IDENTIFY_MASK)
-		*led_value |=
-			OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ID;
+		*led_value |= cpu_to_be64(OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_ID);
 
 	/* Fault LED */
 	if (!max)
 		return OPAL_SUCCESS;
 
 	--max;
-	*led_mask |= OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_FAULT;
+	*led_mask |= cpu_to_be64(OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_FAULT);
 	if (led->status & SPCN_LED_FAULT_MASK)
-		*led_value |=
-			OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_FAULT;
+		*led_value |= cpu_to_be64(OPAL_SLOT_LED_STATE_ON << OPAL_SLOT_LED_TYPE_FAULT);
 
 	/* OPAL doesn't support all the LED type requested by payload */
 	if (!supported)
@@ -1401,7 +1400,7 @@ static int64_t fsp_opal_leds_get_ind(char *loc_code, u64 *led_mask,
  */
 static int64_t fsp_opal_leds_set_ind(uint64_t async_token,
 				     char *loc_code, const u64 led_mask,
-				     const u64 led_value, u64 *max_led_type)
+				     const u64 led_value, __be64 *max_led_type)
 {
 	bool supported = true;
 	int command, state, rc = OPAL_SUCCESS;
@@ -1416,13 +1415,15 @@ static int64_t fsp_opal_leds_set_ind(uint64_t async_token,
 	if (led_support != LED_STATE_PRESENT)
 		return OPAL_HARDWARE;
 
+	max = be64_to_cpu(*max_led_type);
+
 	/* Adjust max LED type */
-	if (*max_led_type > OPAL_SLOT_LED_TYPE_MAX) {
+	if (max > OPAL_SLOT_LED_TYPE_MAX) {
 		supported = false;
-		*max_led_type = OPAL_SLOT_LED_TYPE_MAX;
+		max = OPAL_SLOT_LED_TYPE_MAX;
+		*max_led_type = cpu_to_be64(max);
 	}
 
-	max = *max_led_type;
 	/* Invalid parameter */
 	if (max <= 0)
 		return OPAL_PARAMETER;
@@ -1623,13 +1624,15 @@ static void fsp_process_leds_data(u16 len)
 	buf = led_buffer;
 	while (len) {
 		size_t lc_len;
+		__be16 tmp;
 
 		/* Prepare */
 		led_data = zalloc(sizeof(struct fsp_led_data));
 		assert(led_data);
 
 		/* Resource ID */
-		buf_read(buf, u16, &led_data->rid);
+		buf_read(buf, __be16, &tmp);
+		led_data->rid = be16_to_cpu(tmp);
 		len -= sizeof(led_data->rid);
 
 		/* Location code length */
@@ -1653,11 +1656,13 @@ static void fsp_process_leds_data(u16 len)
 		len -= led_data->lc_len;
 
 		/* Parameters */
-		buf_read(buf, u16, &led_data->parms);
+		buf_read(buf, __be16, &tmp);
+		led_data->parms = be16_to_cpu(tmp);
 		len -=  sizeof(led_data->parms);
 
 		/* Status */
-		buf_read(buf, u16, &led_data->status);
+		buf_read(buf, __be16, &tmp);
+		led_data->status = be16_to_cpu(tmp);
 		len -=  sizeof(led_data->status);
 
 		/*
@@ -1744,8 +1749,8 @@ static void fsp_read_leds_data_complete(struct fsp_msg *msg)
 	int rc = 0;
 
 	u32 msg_status = resp->word1 & 0xff00;
-	u32 led_status = (resp->data.words[1] >> 24) & 0xff;
-	u16 data_len = (u16)(resp->data.words[1] & 0xffff);
+	u32 led_status = (fsp_msg_get_data_word(resp, 1) >> 24) & 0xff;
+	u16 data_len = (u16)(fsp_msg_get_data_word(resp, 1) & 0xffff);
 
 	if (msg_status != FSP_STATUS_SUCCESS) {
 		log_simple_error(&e_info(OPAL_RC_LED_SUPPORT),

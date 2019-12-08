@@ -356,8 +356,8 @@ static int64_t fsp_opal_dump_init(uint8_t dump_type)
 /*
  * OPAL interface to send dump information to Linux.
  */
-static int64_t fsp_opal_dump_info2(uint32_t *dump_id, uint32_t *dump_size,
-				   uint32_t *dump_type)
+static int64_t fsp_opal_dump_info2(__be32 *dump_id, __be32 *dump_size,
+				   __be32 *dump_type)
 {
 	struct dump_record *record;
 	int rc = OPAL_SUCCESS;
@@ -373,18 +373,18 @@ static int64_t fsp_opal_dump_info2(uint32_t *dump_id, uint32_t *dump_size,
 		rc = OPAL_INTERNAL_ERROR;
 		goto out;
 	}
-	*dump_id = record->id;
-	*dump_size = record->size;
-	*dump_type = record->type;
+	*dump_id = cpu_to_be32(record->id);
+	*dump_size = cpu_to_be32(record->size);
+	*dump_type = cpu_to_be32(record->type);
 
 out:
 	unlock(&dump_lock);
 	return rc;
 }
 
-static int64_t fsp_opal_dump_info(uint32_t *dump_id, uint32_t *dump_size)
+static int64_t fsp_opal_dump_info(__be32 *dump_id, __be32 *dump_size)
 {
-	uint32_t dump_type;
+	__be32 dump_type;
 	return fsp_opal_dump_info2(dump_id, dump_size, &dump_type);
 }
 
@@ -505,11 +505,11 @@ static void dump_read_complete(struct fsp_msg *msg)
 	bool compl = false;
 
 	status = (msg->resp->word1 >> 8) & 0xff;
-	flags = (msg->data.words[0] >> 16) & 0xff;
-	id = msg->data.words[0] & 0xffff;
-	dump_id = msg->data.words[1];
-	offset = msg->resp->data.words[1];
-	length = msg->resp->data.words[2];
+	flags = (fsp_msg_get_data_word(msg, 0) >> 16) & 0xff;
+	id = fsp_msg_get_data_word(msg, 0) & 0xffff;
+	dump_id = fsp_msg_get_data_word(msg, 1);
+	offset = fsp_msg_get_data_word(msg->resp, 1);
+	length = fsp_msg_get_data_word(msg->resp, 2);
 
 	fsp_freemsg(msg);
 
@@ -654,9 +654,9 @@ static void dump_ack_complete(struct fsp_msg *msg)
 	if (status)
 		log_simple_error(&e_info(OPAL_RC_DUMP_ACK),
 				 "DUMP: ACK failed for ID: 0x%x\n",
-				 msg->data.words[0]);
+				 fsp_msg_get_data_word(msg, 0));
 	else
-		printf("DUMP: ACKed dump ID: 0x%x\n", msg->data.words[0]);
+		printf("DUMP: ACKed dump ID: 0x%x\n", fsp_msg_get_data_word(msg, 0));
 
 	fsp_freemsg(msg);
 }
@@ -807,10 +807,11 @@ static bool fsp_sys_dump_notify(uint32_t cmd_sub_mod, struct fsp_msg *msg)
 		return false;
 
 	printf("DUMP: Platform dump available. ID = 0x%x [size: %d bytes]\n",
-	       msg->data.words[0], msg->data.words[1]);
+	       fsp_msg_get_data_word(msg, 0), fsp_msg_get_data_word(msg, 1));
 
 	add_dump_id_to_list(DUMP_TYPE_SYS,
-			    msg->data.words[0], msg->data.words[1]);
+			    fsp_msg_get_data_word(msg, 0),
+			    fsp_msg_get_data_word(msg, 1));
 	return true;
 }
 

@@ -69,18 +69,18 @@ static int fsp_sysparam_process(struct sysparam_req *r)
 
 	if (r->msg.state != fsp_msg_done) {
 		prerror("FSP: Request for sysparam 0x%x got FSP failure!\n",
-			r->msg.data.words[0]);
+			fsp_msg_get_data_word(&r->msg, 0));
 		stlen = -1; /* XXX Find saner error codes */
 		goto complete;
 	}
 
-	param_id = r->resp.data.words[0];
-	len = r->resp.data.words[1] & 0xffff;
+	param_id = fsp_msg_get_data_word(&r->resp, 0);
+	len = fsp_msg_get_data_word(&r->resp, 1) & 0xffff;
 
 	/* Check params validity */
-	if (param_id != r->msg.data.words[0]) {
+	if (param_id != fsp_msg_get_data_word(&r->msg, 0)) {
 		prerror("FSP: Request for sysparam 0x%x got resp. for 0x%x!\n",
-			r->msg.data.words[0], param_id);
+			fsp_msg_get_data_word(&r->msg, 0), param_id);
 		stlen = -2; /* XXX Sane error codes */
 		goto complete;
 	}
@@ -95,7 +95,7 @@ static int fsp_sysparam_process(struct sysparam_req *r)
 	switch(fstat) {
 	case 0x00: /* XXX Is that even possible ? */
 	case 0x11: /* Data in request */
-		memcpy(r->ubuf, &r->resp.data.words[2], len);
+		memcpy(r->ubuf, &r->resp.data.bytes[8], len);
 		/* fallthrough */
 	case 0x12: /* Data in TCE */
 		stlen = len;
@@ -106,7 +106,7 @@ static int fsp_sysparam_process(struct sysparam_req *r)
  complete:
 	/* Call completion if any */
 	if (comp)
-		comp(r->msg.data.words[0], stlen, cdata);
+		comp(fsp_msg_get_data_word(&r->msg, 0), stlen, cdata);
 	
 	free(r);
 
@@ -208,15 +208,15 @@ static void fsp_opal_setparam_complete(struct fsp_msg *msg)
 
 	if (msg->state != fsp_msg_done) {
 		prerror("FSP: Request for set sysparam 0x%x got FSP failure!\n",
-				msg->data.words[0]);
+				fsp_msg_get_data_word(msg, 0));
 		rc = OPAL_INTERNAL_ERROR;
 		goto out;
 	}
 
-	param_id = msg->resp->data.words[0];
-	if (param_id != msg->data.words[0]) {
+	param_id = fsp_msg_get_data_word(msg->resp, 0);
+	if (param_id != fsp_msg_get_data_word(msg, 0)) {
 		prerror("FSP: Request for set sysparam 0x%x got resp. for 0x%x!"
-				"\n", msg->data.words[0], param_id);
+				"\n", fsp_msg_get_data_word(msg, 0), param_id);
 		rc = OPAL_INTERNAL_ERROR;
 		goto out;
 	}
@@ -399,7 +399,7 @@ static bool fsp_sysparam_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 	case FSP_CMD_SP_SPARM_UPD_0:
 	case FSP_CMD_SP_SPARM_UPD_1:
 		printf("FSP: Got sysparam update, param ID 0x%x\n",
-		       msg->data.words[0]);
+		       fsp_msg_get_data_word(msg, 0));
 
 		sysparam_run_update_notifier(msg);
 
@@ -424,7 +424,7 @@ static void add_opal_sysparam_node(void)
 {
 	struct dt_node *sysparams;
 	char *names, *s;
-	uint32_t *ids, *lens;
+	__be32 *ids, *lens;
 	uint8_t *perms;
 	unsigned int i, count, size = 0;
 

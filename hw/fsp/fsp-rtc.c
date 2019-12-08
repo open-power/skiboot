@@ -81,8 +81,8 @@ static bool rtc_tod_cache_dirty = false;
 
 struct opal_tpo_data {
 	uint64_t tpo_async_token;
-	uint32_t *year_month_day;
-	uint32_t *hour_min;
+	__be32 *year_month_day;
+	__be32 *hour_min;
 };
 
 /* Timebase value when we last initiated a RTC read request */
@@ -125,10 +125,9 @@ static void fsp_tpo_req_complete(struct fsp_msg *read_resp)
 	case FSP_STATUS_SUCCESS:
 		/* Save the read TPO value in our cache */
 		if (attr->year_month_day)
-			*(attr->year_month_day) =
-				read_resp->resp->data.words[0];
+			*attr->year_month_day = cpu_to_be32(fsp_msg_get_data_word(read_resp->resp, 0));
 		if (attr->hour_min)
-			*(attr->hour_min) = read_resp->resp->data.words[1];
+			*attr->hour_min = cpu_to_be32(fsp_msg_get_data_word(read_resp->resp, 1));
 		rc = OPAL_SUCCESS;
 		break;
 
@@ -170,8 +169,8 @@ static void fsp_rtc_process_read(struct fsp_msg *read_resp)
 	case FSP_STATUS_SUCCESS:
 		/* Save the read RTC value in our cache */
 		rtc_tod_state = RTC_TOD_VALID;
-		datetime_to_tm(read_resp->data.words[0],
-			       (u64) read_resp->data.words[1] << 32, &tm);
+		datetime_to_tm(fsp_msg_get_data_word(read_resp, 0),
+			       (u64)fsp_msg_get_data_word(read_resp, 1) << 32, &tm);
 		rtc_cache_update(&tm);
 		prlog(PR_TRACE, "FSP-RTC Got time: %d-%d-%d %d:%d:%d\n",
 		      tm.tm_year, tm.tm_mon, tm.tm_mday,
@@ -442,8 +441,8 @@ static int64_t fsp_opal_tpo_write(uint64_t async_token, uint32_t y_m_d,
 }
 
 /* Read Timed power on (TPO) from FSP */
-static int64_t fsp_opal_tpo_read(uint64_t async_token, uint32_t *y_m_d,
-			uint32_t *hr_min)
+static int64_t fsp_opal_tpo_read(uint64_t async_token, __be32 *y_m_d,
+			__be32 *hr_min)
 {
 	static struct opal_tpo_data *attr;
 	struct fsp_msg *msg;

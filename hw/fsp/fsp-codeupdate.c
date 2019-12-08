@@ -148,9 +148,11 @@ static void got_code_update_policy(uint32_t param_id __unused, int err_len,
 	if (err_len != 4) {
 		log_simple_error(&e_info(OPAL_RC_CU_INIT), "CUPD: Error "
 			"retrieving code update policy: %d\n", err_len);
-	} else
+	} else {
+		update_policy = be32_to_cpu((__be32)update_policy);
 		prlog(PR_NOTICE, "CUPD: Code update policy from FSP: %d\n",
 		      update_policy);
+	}
 
 	dec_in_flight_param();
 }
@@ -175,9 +177,11 @@ static void got_platform_hmc_managed(uint32_t param_id __unused, int err_len,
 	if (err_len != 4) {
 		log_simple_error(&e_info(OPAL_RC_CU_INIT), "CUPD: Error "
 			"retrieving hmc managed status: %d\n", err_len);
-	} else
+	} else {
+		hmc_managed = be32_to_cpu((__be32)hmc_managed);
 		prlog(PR_NOTICE, "CUPD: HMC managed status from FSP: %d\n",
 		      hmc_managed);
+	}
 
 	dec_in_flight_param();
 }
@@ -198,9 +202,9 @@ static void get_platform_hmc_managed(void)
 
 static bool fw_ipl_side_update_notify(struct fsp_msg *msg)
 {
-	u32 param_id = msg->data.words[0];
-	int dlen = msg->data.words[1] & 0xffff;
-	uint32_t state = msg->data.words[2];
+	u32 param_id = fsp_msg_get_data_word(msg, 0);
+	int dlen = fsp_msg_get_data_word(msg, 1) & 0xffff;
+	uint32_t state = fsp_msg_get_data_word(msg, 2);
 
 	if (param_id != SYS_PARAM_FW_IPL_SIDE)
 		return false;
@@ -322,15 +326,15 @@ static void fetch_lid_data_complete(struct fsp_msg *msg)
 	int rc;
 
 	status = (msg->resp->word1 >> 8) & 0xff;
-	flags = (msg->data.words[0] >> 16) & 0xff;
-	id = msg->data.words[0] & 0xffff;
-	lid_id = msg->data.words[1];
-	offset = msg->resp->data.words[1];
-	length = msg->resp->data.words[2];
+	flags = (fsp_msg_get_data_word(msg, 0) >> 16) & 0xff;
+	id = fsp_msg_get_data_word(msg, 0) & 0xffff;
+	lid_id = fsp_msg_get_data_word(msg, 1);
+	offset = fsp_msg_get_data_word(msg->resp, 1);
+	length = fsp_msg_get_data_word(msg->resp, 2);
 
 	prlog(PR_NOTICE, "CUPD: Marker LID id : size : status = "
 	      "0x%x : 0x%x : 0x%x\n",
-	      msg->data.words[1], msg->resp->data.words[2], status);
+	      fsp_msg_get_data_word(msg, 1), fsp_msg_get_data_word(msg->resp, 2), status);
 
 	fsp_freemsg(msg);
 
@@ -783,7 +787,7 @@ static int validate_candidate_image(uint64_t buffer,
 	memcpy(validate_buf, (void *)buffer, VALIDATE_BUF_SIZE);
 	header = (struct update_image_header *)validate_buf;
 
-	if (validate_magic_num(be32_to_cpu(header->magic)) != 0) {
+	if (validate_magic_num(be16_to_cpu(header->magic)) != 0) {
 		*result = VALIDATE_INVALID_IMG;
 		rc = OPAL_SUCCESS;
 		goto out;
@@ -936,14 +940,15 @@ static int validate_ipl_side(void)
 }
 
 static int64_t fsp_opal_validate_flash(uint64_t buffer,
-				       uint32_t *size, uint32_t *result)
+				       __be32 *size, __be32 *result)
 {
 	int64_t rc = 0;
 	int offset;
+	uint32_t r;
 
 	lock(&flash_lock);
 
-	rc = validate_candidate_image(buffer, *size, result);
+	rc = validate_candidate_image(buffer, be32_to_cpu(*size), &r);
 	/* Fill output buffer
 	 *
 	 * Format:
@@ -952,16 +957,15 @@ static int64_t fsp_opal_validate_flash(uint64_t buffer,
 	 *   ML<sp>current-T-image<sp>current-P-image<0x0A>
 	 *   ML<sp>new-T-image<sp>new-P-image<0x0A>
 	 */
-	if (!rc && (*result != VALIDATE_FLASH_AUTH &&
-		   *result != VALIDATE_INVALID_IMG)) {
+	if (!rc && (r != VALIDATE_FLASH_AUTH && r != VALIDATE_INVALID_IMG)) {
 		/* Clear output buffer */
 		memset((void *)buffer, 0, VALIDATE_BUF_SIZE);
 
-		offset = validate_out_buf_mi_data((void *)buffer, 0, *result);
-		offset += validate_out_buf_ml_data((void *)buffer,
-						   offset, *result);
-		*size = offset;
+		offset = validate_out_buf_mi_data((void *)buffer, 0, r);
+		offset += validate_out_buf_ml_data((void *)buffer, offset, r);
+		*size = cpu_to_be32(offset);
 	}
+	*result = cpu_to_be32(r);
 
 	unlock(&flash_lock);
 	return rc;
@@ -1125,7 +1129,7 @@ static int64_t validate_sglist(struct opal_sg_list *list)
 				return OPAL_PARAMETER;
 
 			/* All non-terminal entries size must be aligned */
-			if (prev_entry && (prev_entry->length & 0xfff))
+			if (prev_entry && (be64_to_cpu(prev_entry->length) & 0xfff))
 				return OPAL_PARAMETER;
 
 			prev_entry = entry;
@@ -1200,7 +1204,7 @@ static bool code_update_notify(uint32_t cmd_sub_mod, struct fsp_msg *msg)
 	case FSP_CMD_FLASH_CACHE:
 		cmd = FSP_CMD_FLASH_CACHE_RSP;
 		prlog(PR_NOTICE, "CUPD: Update LID cache event [data = 0x%x]\n",
-		      msg->data.words[0]);
+		      fsp_msg_get_data_word(msg, 0));
 		break;
 	case FSP_CMD_FLASH_OUTC:
 	case FSP_CMD_FLASH_OUTR:

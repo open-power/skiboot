@@ -873,8 +873,8 @@ static bool hservice_hbrt_msg_notify(uint32_t cmd_sub_mod, struct fsp_msg *msg)
 
 	prlog(PR_TRACE, "HBRT: FSP - HBRT message generated\n");
 
-	tce_token = msg->data.words[1];
-	len = msg->data.words[2];
+	tce_token = fsp_msg_get_data_word(msg, 1);
+	len = fsp_msg_get_data_word(msg, 2);
 	buf = fsp_inbound_buf_from_tce(tce_token);
 	if (!buf) {
 		prlog(PR_DEBUG, "HBRT: Invalid inbound data\n");

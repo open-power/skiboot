@@ -238,7 +238,7 @@ int64_t ibm_fsp_cec_power_down(uint64_t request)
 }
 
 int64_t ibm_fsp_sensor_read(uint32_t sensor_hndl, int token,
-				uint64_t *sensor_data)
+				__be64 *sensor_data)
 {
 	return fsp_opal_read_sensor(sensor_hndl, token, sensor_data);
 }

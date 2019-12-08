@@ -275,7 +275,7 @@ void lxvpd_process_slot_entries(struct phb *phb,
 	const void *lxvpd;
 	const uint8_t *pr_rec, *pr_end, *sm;
 	size_t lxvpd_size, pr_size;
-	const uint16_t *mf = NULL;
+	const beint16_t *mf = NULL;
 	char record[5] = "PR00";
 	uint8_t mf_sz, sm_sz;
 	bool found = false;
@@ -317,8 +317,8 @@ void lxvpd_process_slot_entries(struct phb *phb,
 			return;
 		}
 
-		prlog(PR_DEBUG, "Found 0x%04x map...\n", *mf);
-		switch (*mf) {
+		prlog(PR_DEBUG, "Found 0x%04x map...\n", be16_to_cpu(*mf));
+		switch (be16_to_cpu(*mf)) {
 		case 0x1004:
 			lxvpd_parse_1004_map(phb, sm + 1, sm_sz - 1, slot_size);
 			found = true;

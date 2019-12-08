@@ -85,7 +85,7 @@ static void fsp_ipmi_cmd_done(uint8_t cmd, uint8_t netfn, uint8_t cc)
 static void fsp_ipmi_req_complete(struct fsp_msg *msg)
 {
 	uint8_t status = (msg->resp->word1 >> 8) & 0xff;
-	uint32_t length = msg->resp->data.words[0];
+	uint32_t length = fsp_msg_get_data_word(msg->resp, 0);
 	struct fsp_ipmi_msg *fsp_ipmi_msg = msg->user_data;
 	struct ipmi_msg *ipmi_msg;
 
@@ -308,8 +308,8 @@ static bool fsp_ipmi_send_response(uint32_t cmd)
 static bool fsp_ipmi_read_response(struct fsp_msg *msg)
 {
 	uint8_t *resp_buf = fsp_ipmi.ipmi_resp_buf;
-	uint32_t status = msg->data.words[3];
-	uint32_t length = msg->data.words[2];
+	uint32_t status = fsp_msg_get_data_word(msg, 3);
+	uint32_t length = fsp_msg_get_data_word(msg, 2);
 	struct ipmi_msg *ipmi_msg;
 	uint8_t netfn, cmd, cc;
 
@@ -317,7 +317,7 @@ static bool fsp_ipmi_read_response(struct fsp_msg *msg)
 	ipmi_msg = &fsp_ipmi.cur_msg->ipmi_msg;
 
 	/* Response TCE token */
-	assert(msg->data.words[1] == PSI_DMA_PLAT_RESP_BUF);
+	assert(fsp_msg_get_data_word(msg, 1) == PSI_DMA_PLAT_RESP_BUF);
 
 	if (status != FSP_STATUS_SUCCESS) {
 		if(status == FSP_STATUS_DMA_ERROR)

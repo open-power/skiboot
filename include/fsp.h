@@ -604,7 +604,7 @@ struct fsp_msg {
 	u32			word0;	/* seq << 16 | cmd */
 	u32			word1;	/* mod << 8 | sub */
 	union {
-		u32		words[14];
+		__be32		words[14];
 		u8		bytes[56];
 	} data;
 
@@ -628,6 +628,16 @@ struct fsp_msg {
 	/* Internal queuing */
 	struct list_node	link;
 };
+
+static inline u32 fsp_msg_get_data_word(struct fsp_msg *msg, unsigned long i)
+{
+	return be32_to_cpu(msg->data.words[i]);
+}
+
+static inline void fsp_msg_set_data_word(struct fsp_msg *msg, unsigned long i, u32 w)
+{
+	msg->data.words[i] = cpu_to_be32(w);
+}
 
 /* This checks if a message is still "in progress" in the FSP driver */
 static inline bool fsp_msg_busy(struct fsp_msg *msg)

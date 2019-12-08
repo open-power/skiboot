@@ -265,13 +265,13 @@ static void fsp_elog_queue_fetch(void)
 }
 
 /* OPAL interface for PowerNV to read log size and log ID from Sapphire. */
-static int64_t fsp_opal_elog_info(uint64_t *opal_elog_id,
-				  uint64_t *opal_elog_size, uint64_t *elog_type)
+static int64_t fsp_opal_elog_info(__be64 *opal_elog_id,
+				  __be64 *opal_elog_size, __be64 *elog_type)
 {
 	struct fsp_log_entry *log_data;
 
 	/* Copy type of the error log */
-	*elog_type = ELOG_TYPE_PEL;
+	*elog_type = cpu_to_be64(ELOG_TYPE_PEL);
 
 	/* Check if any OPAL log needs to be reported to the host */
 	if (opal_elog_info(opal_elog_id, opal_elog_size))
@@ -298,15 +298,15 @@ static int64_t fsp_opal_elog_info(uint64_t *opal_elog_id,
 		return OPAL_WRONG_STATE;
 	}
 
-	*opal_elog_id = log_data->log_id;
-	*opal_elog_size = log_data->log_size;
+	*opal_elog_id = cpu_to_be64(log_data->log_id);
+	*opal_elog_size = cpu_to_be64(log_data->log_size);
 	fsp_elog_set_head_state(ELOG_STATE_HOST_INFO);
 	unlock(&elog_read_lock);
 	return OPAL_SUCCESS;
 }
 
 /* OPAL interface for PowerNV to read log from Sapphire. */
-static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
+static int64_t fsp_opal_elog_read(void *buffer, uint64_t opal_elog_size,
 				  uint64_t opal_elog_id)
 {
 	int size = opal_elog_size;
@@ -350,8 +350,8 @@ static int64_t fsp_opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
 	if (opal_elog_size > log_data->log_size)
 		size = log_data->log_size;
 
-	memset((void *)buffer, 0, opal_elog_size);
-	memcpy((void *)buffer, elog_read_buffer, size);
+	memset(buffer, 0, opal_elog_size);
+	memcpy(buffer, elog_read_buffer, size);
 
 	/*
 	 * Once log is read from linux move record from pending
@@ -483,8 +483,8 @@ static bool fsp_elog_msg(uint32_t cmd_sub_mod, struct fsp_msg *msg)
 	if (cmd_sub_mod != FSP_CMD_ERRLOG_NOTIFICATION)
 		return false;
 
-	log_id = msg->data.words[0];
-	log_size = msg->data.words[1];
+	log_id = fsp_msg_get_data_word(msg, 0);
+	log_size = fsp_msg_get_data_word(msg, 1);
 
 	prlog(PR_TRACE, "ELOG: Notified of log 0x%08x (size: %d)\n",
 	       log_id, log_size);

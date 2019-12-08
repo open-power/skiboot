@@ -29,7 +29,7 @@ static bool fsp_diag_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 	}
 
 	printf("BUG: High Level ACK timeout (FSP_MCLASS_DIAG) for 0x%x\n",
-	       msg->data.words[0] & 0xffff0000);
+	       fsp_msg_get_data_word(msg, 0) & 0xffff0000);
 
 	return true;
 }

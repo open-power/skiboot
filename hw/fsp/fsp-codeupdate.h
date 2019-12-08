@@ -76,17 +76,17 @@ struct fw_image_vpd {
 struct master_lid_header {
 	char		key[3];		/* "MLH" */
 	uint8_t		version;	/* 0x02 */
-	uint16_t	header_size;
-	uint16_t	entry_size;
+	__be16		header_size;
+	__be16		entry_size;
 	uint8_t		reserved[56];
 };
 
 /* LID index entry */
 struct lid_index_entry {
-	uint32_t	id;
-	uint32_t	size;
-	uint32_t	offset;
-	uint32_t	crc;
+	__be32		id;
+	__be32		size;
+	__be32		offset;
+	__be32		crc;
 };
 
 /* SP flags */
@@ -99,7 +99,7 @@ struct lid_index_entry {
  * sp_flag addr = header->data + header->ext_fw_id_size
  */
 struct update_image_ga_date {
-	uint32_t	sp_flag;
+	__be32		sp_flag;
 	char		sp_ga_date[8];	/* YYYYMMDD */
 };
 
@@ -108,39 +108,39 @@ struct update_image_ga_date {
 
 /* Image header structure */
 struct update_image_header {
-	uint16_t	magic;
-	uint16_t	version;
-	uint32_t	package_size;
-	uint32_t	crc;
-	uint16_t	lid_index_offset;
-	uint16_t	number_lids;
-	uint16_t	package_flags;
-	uint16_t	mi_keyword_size;
+	__be16		magic;
+	__be16		version;
+	__be32		package_size;
+	__be32		crc;
+	__be16		lid_index_offset;
+	__be16		number_lids;
+	__be16		package_flags;
+	__be16		mi_keyword_size;
 	char		mi_keyword_data[40];
-	uint16_t	ext_fw_id_size;
+	__be16	ext_fw_id_size;
 	/* Rest of the image data including ext fw id, sp flags */
 	char		data[];
 };
 
 /* FipS header */
 struct fips_header {
-	uint16_t	magic;
-	uint16_t	version;
-	uint32_t	lid_id;
-	uint32_t	lid_date;	/* YYYYMMDD */
-	uint16_t	lid_time;	/* HHMM */
-	uint16_t	lid_class;
-	uint32_t	crc;
-	uint32_t	lid_size;	/* Number of bytes below header */
-	uint32_t	header_size;
+	__be16		magic;
+	__be16		version;
+	__be32		lid_id;
+	__be32		lid_date;	/* YYYYMMDD */
+	__be16		lid_time;	/* HHMM */
+	__be16		lid_class;
+	__be32		crc;
+	__be32		lid_size;	/* Number of bytes below header */
+	__be32		header_size;
 	uint8_t		mtd_number;
 	uint8_t		valid;		/* 1 = valid, 0 = invalid */
 	uint8_t		reserved;
 	uint8_t		lid_info_size;
 	char		lid_info[64];	/* code level */
-	uint32_t	update_date;	/* YYYYMMDD */
-	uint16_t	update_time;	/* HHMM */
-	uint16_t	phylum_len;
+	__be32		update_date;	/* YYYYMMDD */
+	__be16		update_time;	/* HHMM */
+	__be16		phylum_len;
 	uint8_t		lid_phylum[];
 };
 
@@ -165,30 +165,30 @@ struct fips_header {
  * not all ADF sections in common marker LID.
  */
 struct com_marker_header {
-	uint32_t	version;
-	uint32_t	MI_offset;	/* Offset to MI section */
-	uint32_t	iseries_offset;
+	__be32		version;
+	__be32		MI_offset;	/* Offset to MI section */
+	__be32		iseries_offset;
 };
 
 /* MI Keyword section */
 struct com_marker_mi_section {
-	uint32_t	MI_size;
+	__be32		MI_size;
 	char		mi_keyword[40];	/* MI Keyword */
 	char		lst_disrupt_fix_lvl[3];
 	char		skip[21];	/* Skip not interested fields */
-	uint32_t	adf_offset;	/* Offset to ADF section */
+	__be32		adf_offset;	/* Offset to ADF section */
 };
 
 /* Additional Data Fields */
 struct com_marker_adf_sec {
-	uint32_t	adf_cnt;	/* ADF count */
+	__be32		adf_cnt;	/* ADF count */
 	char		adf_data[];	/* ADF data */
 };
 
 /* ADF common header */
 struct com_marker_adf_header {
-	uint32_t	size;	/* Section size */
-	uint32_t	name;	/* Section name */
+	__be32		size;	/* Section size */
+	__be32		name;	/* Section name */
 };
 
 /*
@@ -200,9 +200,9 @@ struct com_marker_adf_header {
 struct com_marker_adf_sp
 {
 	struct com_marker_adf_header header;
-	uint32_t	sp_name_offset;	/* Offset from start of ADF */
-	uint32_t	sp_name_size;
-	uint32_t	skip[4];	/* Skip rest of fields */
+	__be32		sp_name_offset;	/* Offset from start of ADF */
+	__be32		sp_name_size;
+	__be32		skip[4];	/* Skip rest of fields */
 };
 
 /*
@@ -213,10 +213,10 @@ struct com_marker_adf_sp
 #define ADF_NAME_FW_IP	0x46495050	/* FIPP */
 struct com_marker_fw_ip {
 	struct com_marker_adf_header header;
-	uint32_t	sp_flag_offset;	/* Offset from start of ADF */
-	uint32_t	sp_flag_size;
-	uint32_t	sp_ga_offset;	/* Offset from start of ADF*/
-	uint32_t	sp_ga_size;
+	__be32		sp_flag_offset;	/* Offset from start of ADF */
+	__be32		sp_flag_size;
+	__be32		sp_ga_offset;	/* Offset from start of ADF*/
+	__be32		sp_ga_size;
 };
 
 #endif /* __CODEUPDATE_H */

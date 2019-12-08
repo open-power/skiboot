@@ -94,22 +94,22 @@ struct firenze_pci_slot_fixup_info {
 };
 
 struct firenze_pci_inv {
-	uint32_t	hw_proc_id;
-	uint16_t	slot_idx;
-	uint16_t	reserved;
-	uint16_t	vendor_id;
-	uint16_t	device_id;
-	uint16_t	subsys_vendor_id;
-	uint16_t	subsys_device_id;
-};
+	__be32		hw_proc_id;
+	__be16		slot_idx;
+	__be16		reserved;
+	__be16		vendor_id;
+	__be16		device_id;
+	__be16		subsys_vendor_id;
+	__be16		subsys_device_id;
+} __packed;
 
 struct firenze_pci_inv_data {
-	uint32_t                version;	/* currently 1 */
-	uint32_t                num_entries;
-	uint32_t                entry_size;
-	uint32_t                entry_offset;
+	__be32			version;	/* currently 1 */
+	__be32			num_entries;
+	__be32			entry_size;
+	__be32			entry_offset;
 	struct firenze_pci_inv	entries[];
-};
+} __packed;
 
 /*
  * Note: According to Tuleta system workbook, I didn't figure
@@ -159,6 +159,8 @@ static void firenze_pci_add_inventory(struct phb *phb,
 	struct proc_chip *chip;
 	size_t size;
 	bool need_init = false;
+	u32 num_entries;
+	u16 tmp16;
 
 	/*
 	 * Do we need to add that to the FSP inventory for power
@@ -191,7 +193,7 @@ static void firenze_pci_add_inventory(struct phb *phb,
 
 	/* Check if we need to do some (Re)allocation */
 	if (!firenze_inv_data ||
-            firenze_inv_data->num_entries == firenze_inv_cnt) {
+            be32_to_cpu(firenze_inv_data->num_entries) == firenze_inv_cnt) {
 		need_init = !firenze_inv_data;
 
 		/* (Re)allocate the block to the new size */
@@ -203,16 +205,18 @@ static void firenze_pci_add_inventory(struct phb *phb,
 
 	/* Initialize the header for a new inventory */
 	if (need_init) {
-		firenze_inv_data->version = 1;
+		firenze_inv_data->version = cpu_to_be32(1);
 		firenze_inv_data->num_entries = 0;
 		firenze_inv_data->entry_size =
-			sizeof(struct firenze_pci_inv);
+			cpu_to_be32(sizeof(struct firenze_pci_inv));
 		firenze_inv_data->entry_offset =
-			offsetof(struct firenze_pci_inv_data, entries);
+			cpu_to_be32(offsetof(struct firenze_pci_inv_data, entries));
 	}
 
 	/* Append slot entry */
-	entry = &firenze_inv_data->entries[firenze_inv_data->num_entries++];
+	num_entries = be32_to_cpu(firenze_inv_data->num_entries);
+	firenze_inv_data->num_entries = cpu_to_be32(num_entries + 1);
+	entry = &firenze_inv_data->entries[num_entries];
 	chip = get_chip(dt_get_chip_id(phb->dt_node));
 	if (!chip) {
 		/**
@@ -227,36 +231,38 @@ static void firenze_pci_add_inventory(struct phb *phb,
                 return;
 	}
 
-	entry->hw_proc_id = chip->pcid;
+	entry->hw_proc_id = cpu_to_be32(chip->pcid);
 	entry->reserved = 0;
 	if (pd->parent &&
 	    pd->parent->slot &&
 	    pd->parent->slot->data) {
 		lxvpd_slot = pd->parent->slot->data;
-		entry->slot_idx = lxvpd_slot->slot_index;
+		entry->slot_idx = cpu_to_be16(lxvpd_slot->slot_index);
 	}
 
-	pci_cfg_read16(phb, pd->bdfn, PCI_CFG_VENDOR_ID, &entry->vendor_id);
-	pci_cfg_read16(phb, pd->bdfn, PCI_CFG_DEVICE_ID, &entry->device_id);
+	pci_cfg_read16(phb, pd->bdfn, PCI_CFG_VENDOR_ID, &tmp16);
+	entry->vendor_id = cpu_to_be16(tmp16);
+	pci_cfg_read16(phb, pd->bdfn, PCI_CFG_DEVICE_ID, &tmp16);
+	entry->device_id = cpu_to_be16(tmp16);
         if (pd->is_bridge) {
                 int64_t ssvc = pci_find_cap(phb, pd->bdfn,
 					    PCI_CFG_CAP_ID_SUBSYS_VID);
 		if (ssvc <= 0) {
-			entry->subsys_vendor_id = 0xffff;
-			entry->subsys_device_id = 0xffff;
+			entry->subsys_vendor_id = cpu_to_be16(0xffff);
+			entry->subsys_device_id = cpu_to_be16(0xffff);
 		} else {
 			pci_cfg_read16(phb, pd->bdfn,
-				       ssvc + PCICAP_SUBSYS_VID_VENDOR,
-				       &entry->subsys_vendor_id);
+				       ssvc + PCICAP_SUBSYS_VID_VENDOR, &tmp16);
+			entry->subsys_vendor_id = cpu_to_be16(tmp16);
 			pci_cfg_read16(phb, pd->bdfn,
-				       ssvc + PCICAP_SUBSYS_VID_DEVICE,
-				       &entry->subsys_device_id);
+				       ssvc + PCICAP_SUBSYS_VID_DEVICE, &tmp16);
+			entry->subsys_device_id = cpu_to_be16(tmp16);
 		}
         } else {
-		pci_cfg_read16(phb, pd->bdfn, PCI_CFG_SUBSYS_VENDOR_ID,
-			       &entry->subsys_vendor_id);
-		pci_cfg_read16(phb, pd->bdfn, PCI_CFG_SUBSYS_ID,
-			       &entry->subsys_device_id);
+		pci_cfg_read16(phb, pd->bdfn, PCI_CFG_SUBSYS_VENDOR_ID, &tmp16);
+		entry->subsys_vendor_id = cpu_to_be16(tmp16);
+		pci_cfg_read16(phb, pd->bdfn, PCI_CFG_SUBSYS_ID, &tmp16);
+		entry->subsys_device_id = cpu_to_be16(tmp16);
 	}
 }
 
@@ -272,13 +278,16 @@ static void firenze_dump_pci_inventory(void)
 	prlog(PR_INFO, "Dumping Firenze PCI inventory\n");
 	prlog(PR_INFO, "HWP SLT VDID DVID SVID SDID\n");
 	prlog(PR_INFO, "---------------------------\n");
-	for (i = 0; i < firenze_inv_data->num_entries; i++) {
+	for (i = 0; i < be32_to_cpu(firenze_inv_data->num_entries); i++) {
 		e = &firenze_inv_data->entries[i];
 
 		prlog(PR_INFO, "%03d %03d %04x %04x %04x %04x\n",
-				 e->hw_proc_id, e->slot_idx,
-				 e->vendor_id, e->device_id,
-				 e->subsys_vendor_id, e->subsys_device_id);
+				 be32_to_cpu(e->hw_proc_id),
+				 be16_to_cpu(e->slot_idx),
+				 be16_to_cpu(e->vendor_id),
+				 be16_to_cpu(e->device_id),
+				 be16_to_cpu(e->subsys_vendor_id),
+				 be16_to_cpu(e->subsys_device_id));
 	}
 #endif /* FIRENZE_PCI_INVENTORY_DUMP */
 }
@@ -293,14 +302,14 @@ void firenze_pci_send_inventory(void)
 
 	/* Dump the inventory */
 	prlog(PR_INFO, "Sending %d inventory to FSP\n",
-	      firenze_inv_data->num_entries);
+	      be32_to_cpu(firenze_inv_data->num_entries));
 	firenze_dump_pci_inventory();
 
 	/* Memory location for inventory */
         base = (uint64_t)firenze_inv_data;
-        end = base +
-	      sizeof(struct firenze_pci_inv_data) +
-	      firenze_inv_data->num_entries * firenze_inv_data->entry_size;
+        end = base + sizeof(struct firenze_pci_inv_data) +
+			be32_to_cpu(firenze_inv_data->num_entries) *
+			be32_to_cpu(firenze_inv_data->entry_size);
 	abase = base & ~0xffful;
 	aend = (end + 0xffful) & ~0xffful;
 	offset = PSI_DMA_PCIE_INVENTORY + (base & 0xfff);

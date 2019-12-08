@@ -231,7 +231,7 @@ static int __dump_region_add_entry(uint32_t id, uint64_t addr, uint32_t size)
 	}
 
 	/* Add entry to dump memory region table */
-	dump_mem_region[cur_mdst_entry].data_region = (u8)cpu_to_be32(id);
+	dump_mem_region[cur_mdst_entry].data_region = (u8)id;
 	dump_mem_region[cur_mdst_entry].addr = cpu_to_be64(addr);
 	dump_mem_region[cur_mdst_entry].size = cpu_to_be32(size);
 

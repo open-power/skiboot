@@ -381,8 +381,8 @@ static bool fsp_occ_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 		 * be nice and respond to OCC.
 		 */
 		scope = msg->data.bytes[3];
-		dbob_id = msg->data.words[1];
-		seq_id = msg->data.words[2];
+		dbob_id = fsp_msg_get_data_word(msg, 1);
+		seq_id = fsp_msg_get_data_word(msg, 2);
 		prlog(PR_INFO, "OCC: Got OCC Load message, scope=0x%x"
 		      " dbob=0x%x seq=0x%x\n", scope, dbob_id, seq_id);
 		occ_do_load(scope, dbob_id, seq_id);
@@ -394,8 +394,8 @@ static bool fsp_occ_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
 		 * to reply something sensible or the FSP will get upset
 		 */
 		scope = msg->data.bytes[3];
-		dbob_id = msg->data.words[1];
-		seq_id = msg->data.words[2];
+		dbob_id = fsp_msg_get_data_word(msg, 1);
+		seq_id = fsp_msg_get_data_word(msg, 2);
 		prlog(PR_INFO, "OCC: Got OCC Reset message, scope=0x%x"
 		      " dbob=0x%x seq=0x%x\n", scope, dbob_id, seq_id);
 		occ_do_reset(scope, dbob_id, seq_id);

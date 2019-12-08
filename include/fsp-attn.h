@@ -84,7 +84,7 @@ struct ti_attn {
 	__be32		src_word[SRC_WORD_COUNT];
 	/* ASCII data */
 	char		src[SRC_LEN];
-	uint32_t	msg_len;
+	__be32		msg_len;
 	/* User data: Debug details */
 	struct user_data msg;
 } __packed __align(ATTN_AREA_SZ);

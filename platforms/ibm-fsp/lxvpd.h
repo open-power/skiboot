@@ -14,32 +14,54 @@ struct slot_p0 {
 	union {
 		uint8_t     byte;
 		struct {
+#if HAVE_BIG_ENDIAN
 			uint8_t     pluggable:1;
 			uint8_t     pluggable_location:3;
 			uint8_t     power_ctl:1;
 			uint8_t     rsvd_5:1;
 			uint8_t     upstream_port:1;
 			uint8_t     alt_load_source:1;
+#else
+			uint8_t     alt_load_source:1;
+			uint8_t     upstream_port:1;
+			uint8_t     rsvd_5:1;
+			uint8_t     power_ctl:1;
+			uint8_t     pluggable_location:3;
+			uint8_t     pluggable:1;
+#endif
 		};
 	};
 };
 
 struct slot_p1 {
+#if HAVE_BIG_ENDIAN
 	uint8_t     rsvd_0:1;
 	uint8_t     wired_lanes:3;
 	uint8_t     rsvd_4:4;
+#else
+	uint8_t     rsvd_4:4;
+	uint8_t     wired_lanes:3;
+	uint8_t     rsvd_0:1;
+#endif
 };
 
 struct slot_p2 {
+#if HAVE_BIG_ENDIAN
 	uint8_t     rsvd_0:1;
 	uint8_t     bus_clock:3;
 	uint8_t     connector_type:4;
+#else
+	uint8_t     connector_type:4;
+	uint8_t     bus_clock:3;
+	uint8_t     rsvd_0:1;
+#endif
 };
 
 struct slot_p3 {
 	union {
 		uint8_t     byte;
 		struct {
+#if HAVE_BIG_ENDIAN
 			uint8_t    height:1;
 			uint8_t    length:1;
 			uint8_t    left_mech:1;
@@ -48,6 +70,16 @@ struct slot_p3 {
 			uint8_t    pow_led_fsp:1;
 			uint8_t    attn_led_kvm:1;
 			uint8_t    attn_led_fsp:1;
+#else
+			uint8_t    attn_led_fsp:1;
+			uint8_t    attn_led_kvm:1;
+			uint8_t    pow_led_fsp:1;
+			uint8_t    pow_led_kvm:1;
+			uint8_t    right_mech:1;
+			uint8_t    left_mech:1;
+			uint8_t    length:1;
+			uint8_t    height:1;
+#endif
 		};
 	};
 };
@@ -57,7 +89,7 @@ struct pci_slot_entry_1004 {
 	uint8_t               sba;
 	uint8_t               phb_or_slot_type;
 	char                  label[3];
-	uint16_t              bis;
+	__be16                bis;
 	struct slot_p0        p0;
 	struct slot_p1        p1;
 	struct slot_p2        p2;
@@ -73,13 +105,23 @@ struct pci_slot_entry_1005 {
 	union {
 		uint8_t    pba;
 		struct {
+#if HAVE_BIG_ENDIAN
 			uint8_t    switch_id:4;
 			uint8_t    vswitch_id:4;
+#else
+			uint8_t    vswitch_id:4;
+			uint8_t    switch_id:4;
+#endif
 		};
 	};
 	uint8_t               switch_device_id;
+#if HAVE_BIG_ENDIAN
 	uint8_t               slot_type:4;
 	uint8_t               phb_id:4;
+#else
+	uint8_t               phb_id:4;
+	uint8_t               slot_type:4;
+#endif
 	char                  label[8];
 	uint8_t               rsvd_11[4];
 	struct slot_p0        p0;

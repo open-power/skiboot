@@ -29,9 +29,9 @@ enum elog_head_state {
 
 int elog_fsp_commit(struct errorlog *buf) __warn_unused_result;
 
-bool opal_elog_info(uint64_t *opal_elog_id, uint64_t *opal_elog_size) __warn_unused_result;
+bool opal_elog_info(__be64 *opal_elog_id, __be64 *opal_elog_size) __warn_unused_result;
 
-bool opal_elog_read(uint64_t *buffer, uint64_t opal_elog_size,
+bool opal_elog_read(void *buffer, uint64_t opal_elog_size,
 						uint64_t opal_elog_id) __warn_unused_result;
 
 bool opal_elog_ack(uint64_t ack_id) __warn_unused_result;

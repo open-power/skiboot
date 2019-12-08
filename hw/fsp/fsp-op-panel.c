@@ -119,16 +119,16 @@ struct op_src {
 	uint8_t	flags;
 	uint8_t reserved;
 	uint8_t	hex_word_cnt;
-	uint16_t reserved2;
-	uint16_t total_size;
-	uint32_t word2; /* SRC format in low byte */
-	uint32_t word3;
-	uint32_t word4;
-	uint32_t word5;
-	uint32_t word6;
-	uint32_t word7;
-	uint32_t word8;
-	uint32_t word9;
+	__be16	reserved2;
+	__be16	total_size;
+	__be32	word2; /* SRC format in low byte */
+	__be32	word3;
+	__be32	word4;
+	__be32	word5;
+	__be32	word6;
+	__be32	word7;
+	__be32	word8;
+	__be32	word9;
 	uint8_t	ascii[OP_PANEL_NUM_LINES * OP_PANEL_LINE_LEN]; /* Word 11 */
 } __packed __align(4);
 
@@ -195,7 +195,7 @@ static int64_t __opal_write_oppanel(oppanel_line_t *lines, uint64_t num_lines,
 	op_src.reserved = 0;
 	op_src.hex_word_cnt = 1; /* header word only */
 	op_src.reserved2 = 0;
-	op_src.total_size = sizeof(op_src);
+	op_src.total_size = cpu_to_be16(sizeof(op_src));
 	op_src.word2 = 0; /* should be unneeded */
 
 	for (i = 0; i < num_lines; i++) {

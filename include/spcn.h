@@ -78,8 +78,8 @@ enum {
  * Common to all PRS modifiers (subcommands)
  */
 struct sensor_header {
-	uint16_t frc;	/* Frame resource class */
-	uint16_t rid;	/* Resource ID */
+	__be16 frc;	/* Frame resource class */
+	__be16 rid;	/* Resource ID */
 } __packed;
 
 /*
@@ -87,8 +87,8 @@ struct sensor_header {
  */
 struct sensor_prs {
 	struct sensor_header header;
-	uint16_t src;	/* unused */
-	uint16_t status;
+	__be16 src;	/* unused */
+	__be16 status;
 } __packed;
 
 #define PRS_STATUS_ON_SUPPORTED	0x0010
@@ -104,8 +104,8 @@ struct sensor_param {
 	struct sensor_header header;
 	char location[4];
 	char __reserved[4];
-	uint16_t threshold;
-	uint16_t status;
+	__be16 threshold;
+	__be16 status;
 } __packed;
 
 /*
@@ -113,8 +113,8 @@ struct sensor_param {
  */
 struct sensor_data {
 	struct sensor_header header;
-	uint16_t data;
-	uint16_t status;
+	__be16 data;
+	__be16 status;
 } __packed;
 
 #define SENSOR_STATUS_EM_ALERT	0x0004
@@ -156,7 +156,7 @@ struct sensor_data {
 
 struct sensor_power_supply {
 	uint8_t	rid;		/* Power supply ID */
-	uint32_t milliwatts;
+	__be32 milliwatts;
 } __packed;
 
 struct sensor_power {

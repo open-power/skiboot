@@ -120,11 +120,11 @@ static void fsp_process_epow(struct fsp_msg *msg, int epow_type)
  * and then updates the length variable back to reflect the
  * number of EPOW sub classes it has updated the buffer with.
  */
-static int64_t fsp_opal_get_epow_status(int16_t *out_epow,
-						int16_t *length)
+static int64_t fsp_opal_get_epow_status(__be16 *out_epow, __be16 *length)
 {
 	int i;
 	int n_epow_class;
+	int l = be16_to_cpu(*length);
 
 	/*
 	 * There can be situations where the host and the Sapphire versions
@@ -144,16 +144,16 @@ static int64_t fsp_opal_get_epow_status(int16_t *out_epow,
 	 * Sapphire sends out EPOW status for sub classes host knows about
 	 * and can interpret correctly.
 	 */
-	if (*length >= OPAL_SYSEPOW_MAX) {
+	if (l >= OPAL_SYSEPOW_MAX) {
 		n_epow_class = OPAL_SYSEPOW_MAX;
-		*length = OPAL_SYSEPOW_MAX;
+		*length = cpu_to_be16(OPAL_SYSEPOW_MAX);
 	} else {
-		n_epow_class = *length;
+		n_epow_class = l;
 	}
 
 	/* Transfer EPOW Status */
 	for (i = 0; i < n_epow_class; i++)
-		out_epow[i] = epow_status[i];
+		out_epow[i] = cpu_to_be16(epow_status[i]);
 
 	return OPAL_SUCCESS;
 }

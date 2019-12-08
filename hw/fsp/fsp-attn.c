@@ -106,8 +106,8 @@ static void update_sp_attn_area(const char *msg)
 	backtrace_print(bt_buf, &metadata, ti_attn->msg.bt_buf, &len, false);
 	snprintf(ti_attn->msg.file_info, FILE_INFO_LEN, "%s", msg);
 
-	ti_attn->msg_len = VERSION_LEN + BT_FRAME_LEN +
-                                   strlen(ti_attn->msg.file_info);
+	ti_attn->msg_len = cpu_to_be32(VERSION_LEN + BT_FRAME_LEN +
+                                   strlen(ti_attn->msg.file_info));
 }
 
 void __attribute__((noreturn)) ibm_fsp_terminate(const char *msg)

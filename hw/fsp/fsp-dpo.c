@@ -28,14 +28,14 @@ static unsigned long fsp_dpo_init_tb;
  * of seconds remaining for a forced system shutdown. This will enable
  * the host to schedule for shutdown voluntarily before timeout occurs.
  */
-static int64_t fsp_opal_get_dpo_status(int64_t *dpo_timeout)
+static int64_t fsp_opal_get_dpo_status(__be64 *dpo_timeout)
 {
 	if (!fsp_dpo_pending) {
 		*dpo_timeout = 0;
 		return OPAL_WRONG_STATE;
 	}
 
-	*dpo_timeout = DPO_TIMEOUT - tb_to_secs(mftb() - fsp_dpo_init_tb);
+	*dpo_timeout = cpu_to_be64(DPO_TIMEOUT - tb_to_secs(mftb() - fsp_dpo_init_tb));
 	return OPAL_SUCCESS;
 }
 

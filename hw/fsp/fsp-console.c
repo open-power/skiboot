@@ -22,16 +22,16 @@ DEFINE_LOG_ENTRY(OPAL_RC_CONSOLE_HANG, OPAL_PLATFORM_ERR_EVT, OPAL_CONSOLE,
 		 OPAL_PREDICTIVE_ERR_GENERAL, OPAL_NA);
 
 struct fsp_serbuf_hdr {
-	u16	partition_id;
+	__be16	partition_id;
 	u8	session_id;
 	u8	hmc_id;
-	u16	data_offset;
-	u16	last_valid;
-	u16	ovf_count;
-	u16	next_in;
+	__be16	data_offset;
+	__be16	last_valid;
+	__be16	ovf_count;
+	__be16	next_in;
 	u8	flags;
 	u8	reserved;
-	u16	next_out;
+	__be16	next_out;
 	u8	data[];
 };
 #define SER_BUF_DATA_SIZE	(0x10000 - sizeof(struct fsp_serbuf_hdr))
@@ -158,13 +158,13 @@ static size_t fsp_write_vserial(struct fsp_serial *fs, const char *buf,
 				size_t len)
 {
 	struct fsp_serbuf_hdr *sb = fs->out_buf;
-	u16 old_nin = sb->next_in;
+	u16 old_nin = be16_to_cpu(sb->next_in);
 	u16 space, chunk;
 
 	if (!fs->open)
 		return 0;
 
-	space = (sb->next_out + SER_BUF_DATA_SIZE - old_nin - 1)
+	space = (be16_to_cpu(sb->next_out) + SER_BUF_DATA_SIZE - old_nin - 1)
 		% SER_BUF_DATA_SIZE;
 	if (space < len)
 		len = space;
@@ -178,10 +178,10 @@ static size_t fsp_write_vserial(struct fsp_serial *fs, const char *buf,
 	if (chunk < len)
 		memcpy(&sb->data[0], buf + chunk, len - chunk);
 	lwsync();
-	sb->next_in = (old_nin + len) % SER_BUF_DATA_SIZE;
+	sb->next_in = cpu_to_be16((old_nin + len) % SER_BUF_DATA_SIZE);
 	sync();
 
-	if (sb->next_out == old_nin && fs->poke_msg) {
+	if (be16_to_cpu(sb->next_out) == old_nin && fs->poke_msg) {
 		if (fs->poke_msg->state == fsp_msg_unused) {
 			if (fsp_queue_msg(fs->poke_msg, fsp_pokemsg_reclaim))
 				prerror("FSPCON: poke msg queuing failed\n");
@@ -229,8 +229,8 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 {
 	struct fsp_msg *resp;
 
-	u16 part_id = msg->data.words[0] & 0xffff;
-	u16 sess_id = msg->data.words[1] & 0xffff;
+	u16 part_id = fsp_msg_get_data_word(msg, 0) & 0xffff;
+	u16 sess_id = fsp_msg_get_data_word(msg, 1) & 0xffff;
 	u8 hmc_sess = msg->data.bytes[0];	
 	u8 hmc_indx = msg->data.bytes[1];
 	u8 authority = msg->data.bytes[4];
@@ -285,8 +285,8 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 	}
 
 	fs->poke_msg = fsp_mkmsg(FSP_CMD_VSERIAL_OUT, 2,
-				 msg->data.words[0],
-				 msg->data.words[1] & 0xffff);
+				 fsp_msg_get_data_word(msg, 0),
+				 fsp_msg_get_data_word(msg, 1) & 0xffff);
 	if (fs->poke_msg == NULL) {
 		prerror("FSPCON: Failed to allocate poke_msg\n");
 		unlock(&fsp_con_lock);
@@ -296,13 +296,13 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 	fs->open = true;
 	fs->poke_msg->user_data = fs;
 
-	fs->in_buf->partition_id = fs->out_buf->partition_id = part_id;
+	fs->in_buf->partition_id = fs->out_buf->partition_id = cpu_to_be16(part_id);
 	fs->in_buf->session_id	 = fs->out_buf->session_id   = sess_id;
 	fs->in_buf->hmc_id       = fs->out_buf->hmc_id       = hmc_indx;
 	fs->in_buf->data_offset  = fs->out_buf->data_offset  =
-		sizeof(struct fsp_serbuf_hdr);
+		cpu_to_be16(sizeof(struct fsp_serbuf_hdr));
 	fs->in_buf->last_valid   = fs->out_buf->last_valid   =
-		SER_BUF_DATA_SIZE - 1;
+		cpu_to_be16(SER_BUF_DATA_SIZE - 1);
 	fs->in_buf->ovf_count    = fs->out_buf->ovf_count    = 0;
 	fs->in_buf->next_in      = fs->out_buf->next_in      = 0;
 	fs->in_buf->flags        = fs->out_buf->flags        = 0;
@@ -313,8 +313,8 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 	unlock(&fsp_con_lock);
 
  already_open:
-	resp = fsp_mkmsg(FSP_RSP_OPEN_VSERIAL, 6, msg->data.words[0],
-			msg->data.words[1] & 0xffff, 0, tce_in, 0, tce_out);
+	resp = fsp_mkmsg(FSP_RSP_OPEN_VSERIAL, 6, fsp_msg_get_data_word(msg, 0),
+			fsp_msg_get_data_word(msg, 1) & 0xffff, 0, tce_in, 0, tce_out);
 	if (!resp) {
 		prerror("FSPCON: Failed to allocate open msg response\n");
 		return;
@@ -347,8 +347,8 @@ static void fsp_open_vserial(struct fsp_msg *msg)
 
 static void fsp_close_vserial(struct fsp_msg *msg)
 {
-	u16 part_id = msg->data.words[0] & 0xffff;
-	u16 sess_id = msg->data.words[1] & 0xffff;
+	u16 part_id = fsp_msg_get_data_word(msg, 0) & 0xffff;
+	u16 sess_id = fsp_msg_get_data_word(msg, 1) & 0xffff;
 	u8 hmc_sess = msg->data.bytes[0];	
 	u8 hmc_indx = msg->data.bytes[1];
 	u8 authority = msg->data.bytes[4];
@@ -399,8 +399,8 @@ static void fsp_close_vserial(struct fsp_msg *msg)
 	}
 	unlock(&fsp_con_lock);
  skip_close:
-	resp = fsp_mkmsg(FSP_RSP_CLOSE_VSERIAL, 2, msg->data.words[0],
-			msg->data.words[1] & 0xffff);
+	resp = fsp_mkmsg(FSP_RSP_CLOSE_VSERIAL, 2, fsp_msg_get_data_word(msg, 0),
+			fsp_msg_get_data_word(msg, 1) & 0xffff);
 	if (!resp) {
 		prerror("FSPCON: Failed to allocate close msg response\n");
 		return;
@@ -437,7 +437,7 @@ static bool fsp_con_msg_hmc(u32 cmd_sub_mod, struct fsp_msg *msg)
 		prlog(PR_DEBUG, "FSPCON: Got HMC interface query\n");
 		got_intf_query = true;
 		resp = fsp_mkmsg(FSP_RSP_HMC_INTF_QUERY, 1,
-				msg->data.words[0] & 0x00ffffff);
+				fsp_msg_get_data_word(msg, 0) & 0x00ffffff);
 		if (!resp) {
 			prerror("FSPCON: Failed to allocate hmc intf response\n");
 			return true;
@@ -453,7 +453,7 @@ static bool fsp_con_msg_hmc(u32 cmd_sub_mod, struct fsp_msg *msg)
 
 static bool fsp_con_msg_vt(u32 cmd_sub_mod, struct fsp_msg *msg)
 {
-	u16 sess_id = msg->data.words[1] & 0xffff;
+	u16 sess_id = fsp_msg_get_data_word(msg, 1) & 0xffff;
 
 	if (cmd_sub_mod == FSP_CMD_VSERIAL_IN && sess_id < MAX_SERIAL) {
 		struct fsp_serial *fs = &fsp_serials[sess_id];
@@ -610,7 +610,8 @@ static int64_t fsp_console_write(int64_t term_number, __be64 *__length,
 #ifdef OPAL_DEBUG_CONSOLE_IO
 	prlog(PR_TRACE, "OPAL: console write req=%ld written=%ld"
 	      " ni=%d no=%d\n",
-	      requested, written, fs->out_buf->next_in, fs->out_buf->next_out);
+	      requested, written, be16_to_cpu(fs->out_buf->next_in),
+	      be16_to_cpu(fs->out_buf->next_out));
 	prlog(PR_TRACE, "      %02x %02x %02x %02x "
 	      "%02x \'%c\' %02x \'%c\' %02x \'%c\'.%02x \'%c\'..\n",
 	      buffer[0], buffer[1], buffer[2], buffer[3],
@@ -646,7 +647,8 @@ static int64_t fsp_console_write_buffer_space(int64_t term_number,
 		return OPAL_CLOSED;
 	}
 	sb = fs->out_buf;
-	length = (sb->next_out + SER_BUF_DATA_SIZE - sb->next_in - 1)
+	length = (be16_to_cpu(sb->next_out) + SER_BUF_DATA_SIZE
+			- be16_to_cpu(sb->next_in) - 1)
 		% SER_BUF_DATA_SIZE;
 	unlock(&fsp_con_lock);
 
@@ -712,9 +714,9 @@ static int64_t fsp_console_read(int64_t term_number, __be64 *__length,
 	if (fs->waiting)
 		fs->waiting = 0;
 	sb = fs->in_buf;
-	old_nin = sb->next_in;
+	old_nin = be16_to_cpu(sb->next_in);
 	lwsync();
-	n = (old_nin + SER_BUF_DATA_SIZE - sb->next_out)
+	n = (old_nin + SER_BUF_DATA_SIZE - be16_to_cpu(sb->next_out))
 		% SER_BUF_DATA_SIZE;
 	if (n > req) {
 		pending = true;
@@ -722,17 +724,17 @@ static int64_t fsp_console_read(int64_t term_number, __be64 *__length,
 	}
 	*__length = cpu_to_be64(n);
 
-	chunk = SER_BUF_DATA_SIZE - sb->next_out;
+	chunk = SER_BUF_DATA_SIZE - be16_to_cpu(sb->next_out);
 	if (chunk > n)
 		chunk = n;
-	memcpy(buffer, &sb->data[sb->next_out], chunk);
+	memcpy(buffer, &sb->data[be16_to_cpu(sb->next_out)], chunk);
 	if (chunk < n)
 		memcpy(buffer + chunk, &sb->data[0], n - chunk);
-	sb->next_out = (sb->next_out + n) % SER_BUF_DATA_SIZE;
+	sb->next_out = cpu_to_be16(((be16_to_cpu(sb->next_out)) + n) % SER_BUF_DATA_SIZE);
 
 #ifdef OPAL_DEBUG_CONSOLE_IO
 	prlog(PR_TRACE, "OPAL: console read req=%d read=%d ni=%d no=%d\n",
-	      req, n, sb->next_in, sb->next_out);
+	      req, n, be16_to_cpu(sb->next_in), be16_to_cpu(sb->next_out));
 	prlog(PR_TRACE, "      %02x %02x %02x %02x %02x %02x %02x %02x ...\n",
 	       buffer[0], buffer[1], buffer[2], buffer[3],
 	       buffer[4], buffer[5], buffer[6], buffer[7]);
@@ -809,7 +811,8 @@ void fsp_console_poll(void *data __unused)
 				if (debug < 5) {
 					prlog(PR_DEBUG,"OPAL: %d still pending"
 					      " ni=%d no=%d\n",
-					      i, sb->next_in, sb->next_out);
+					      i, be16_to_cpu(sb->next_in),
+					      be16_to_cpu(sb->next_out));
 					debug++;
 				}
 #endif /* OPAL_DEBUG_CONSOLE_POLL */
@@ -918,8 +921,8 @@ static bool send_all_hvsi_close(void)
 
 		/* Do we have room ? Wait a bit if not */
 		while(timeout--) {
-			space = (sb->next_out + SER_BUF_DATA_SIZE -
-				 sb->next_in - 1) % SER_BUF_DATA_SIZE;
+			space = (be16_to_cpu(sb->next_out) + SER_BUF_DATA_SIZE -
+				 be16_to_cpu(sb->next_in) - 1) % SER_BUF_DATA_SIZE;
 			if (space >= 6)
 				break;
 			time_wait_ms(500);

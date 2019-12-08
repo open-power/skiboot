@@ -145,6 +145,7 @@ static void fsp_surv_got_param(uint32_t param_id __unused, int err_len,
 		return;
 	}
 
+	surv_state_param = be32_to_cpu((__be32)surv_state_param);
 	if (!(surv_state_param & 0x01)) {
 		prlog(PR_NOTICE, "SURV: Status from FSP: disabled\n");
 		return;
