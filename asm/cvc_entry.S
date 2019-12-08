@@ -1,28 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-# IBM_PROLOG_BEGIN_TAG
-# This is an automatically generated prolog.
-#
-# $Source: src/usr/secureboot/base/rom_entry.S $
-#
-# OpenPOWER HostBoot Project
-#
-# COPYRIGHT International Business Machines Corp. 2013,2016
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-# implied. See the License for the specific language governing
-# permissions and limitations under the License.
-#
-# IBM_PROLOG_END_TAG
 
-#.include "kernel/ppcconsts.S"
+# Derived from automatically generated HostBoot rom_entry.S
+
+#include <asm-utils.h>
+#include <processor.h>
 
 # Updated hostboot location is src/securerom/rom_entry.S.
 # This also has a fix for TOC save frame pointer.
@@ -49,7 +30,20 @@ call_rom_entry:
     mr %r5, %r6
     mr %r6, %r7
     mr %r7, %r8
+#if HAVE_BIG_ENDIAN
     bctrl
+#else
+    bl $+4
+1:  mflr %r9
+    addi %r9,%r9,2f - 1b
+    mtspr SPR_HSRR0, %r9
+    mfmsr %r9
+    xori %r9,%r9,MSR_LE
+    mtspr SPR_HSRR1, %r9
+    hrfid
+2:  .long 0x2104804e /* bctrl */
+    FIXUP_ENDIAN
+#endif
     ld %r2, STACK_TOC_OFFSET(%r1)
     addi %r1, %r1, 128
     ld %r0, 16(%r1)

@@ -324,16 +324,19 @@ int call_cvc_sha512(const uint8_t *data, size_t data_len, uint8_t *digest,
 	if (!service)
 		return OPAL_UNSUPPORTED;
 
-	if (service->version == 1)
+	if (service->version == 1) {
+		unsigned long msr = mfmsr();
 		__cvc_sha512_v1((void*) service->addr, data, data_len, digest);
-	else
+		assert(msr == mfmsr());
+	} else {
 		return OPAL_UNSUPPORTED;
+	}
 
 	return OPAL_SUCCESS;
 }
 
 int call_cvc_verify(void *container, size_t len, const void *hw_key_hash,
-		    size_t hw_key_hash_size, uint64_t *log)
+		    size_t hw_key_hash_size, __be64 *log)
 {
 	ROM_hw_params hw_params;
 	ROM_response rc;
@@ -354,12 +357,15 @@ int call_cvc_verify(void *container, size_t len, const void *hw_key_hash,
 	memset(&hw_params, 0, sizeof(ROM_hw_params));
 	memcpy(&hw_params.hw_key_hash, hw_key_hash, hw_key_hash_size);
 
-	if (service->version == 1)
+	if (service->version == 1) {
+		unsigned long msr = mfmsr();
 		rc = __cvc_verify_v1((void*) service->addr,
 				   (ROM_container_raw*) container,
 				   &hw_params);
-	else
+		assert(msr == mfmsr());
+	} else {
 		return OPAL_UNSUPPORTED;
+	}
 
 	if (log)
 		*log = hw_params.log;
