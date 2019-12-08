@@ -168,7 +168,7 @@ int64_t capp_load_ucode(unsigned int chip_id, uint32_t opal_id,
 
 	/* 'CAPPULID' in ASCII */
 	if ((be64_to_cpu(ucode->eyecatcher) != 0x43415050554C4944UL) ||
-	    (be64_to_cpu(ucode->version != 1))) {
+	    (be64_to_cpu(ucode->version) != 1)) {
 		PHBERR(opal_id, chip_id, index,
 		       "CAPP: ucode header invalid\n");
 		return OPAL_HARDWARE;
