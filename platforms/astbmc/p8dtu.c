@@ -223,7 +223,7 @@ static const struct bmc_sw_config bmc_sw_smc = {
 };
 
 /* Provided by Eric Chen (SMC) */
-const struct bmc_hw_config p8dtu_bmc_hw = {
+static const struct bmc_hw_config p8dtu_bmc_hw = {
 	.scu_revision_id = 0x02010303,
 	.mcr_configuration = 0x00000577,
 	.mcr_scu_mpll = 0x000050c0,

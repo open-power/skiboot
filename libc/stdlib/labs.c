@@ -19,7 +19,7 @@
  * Returns the absolute value of the long integer argument
  */
 
-long int labs(long int n)
+long int __attribute__((const)) labs(long int n)
 {
 	return  (n > 0) ? n : -n;
 }

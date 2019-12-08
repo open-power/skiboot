@@ -118,7 +118,8 @@ struct dt_property *__dt_add_property_u64s(struct dt_node *node,
 static inline struct dt_property *dt_add_property_u64(struct dt_node *node,
 						      const char *name, u64 val)
 {
-	return dt_add_property_cells(node, name, (u32)(val >> 32), (u32)val);
+	return dt_add_property_cells(node, name, (u32)(val >> 32),
+						(u32)(val & 0xffffffffUL));
 }
 
 void dt_del_property(struct dt_node *node, struct dt_property *prop);

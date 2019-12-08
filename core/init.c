@@ -531,7 +531,7 @@ static int64_t cpu_disable_ME_RI_all(void)
 	return OPAL_SUCCESS;
 }
 
-void *fdt;
+static void *fdt;
 
 void __noreturn load_and_boot_kernel(bool is_reboot)
 {
@@ -828,7 +828,7 @@ static void setup_branch_null_catcher(void)
         * ABI v1 (ie. big endian).  This will be broken if we ever
         * move to ABI v2 (ie little endian)
         */
-       memcpy_null(0, bn, 16);
+       memcpy_null((void *)0, bn, 16);
 }
 #endif
 

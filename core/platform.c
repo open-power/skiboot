@@ -184,7 +184,7 @@ static int generic_start_preload_resource(enum resource_id id, uint32_t subid,
 }
 
 /* These values will work for a ZZ booted using BML */
-const struct platform_ocapi generic_ocapi = {
+static const struct platform_ocapi generic_ocapi = {
 	.i2c_engine          = 1,
 	.i2c_port            = 4,
 	.i2c_reset_addr      = 0x20,

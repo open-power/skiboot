@@ -118,7 +118,7 @@ static struct dt_node *get_hb_reserved_memory(const char *label)
 	return NULL;
 }
 
-struct {
+static struct {
 	uint32_t type;
 	const char *compat;
 } cvc_services[] = {

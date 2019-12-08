@@ -325,7 +325,7 @@ i2c_failed:
 	return;
 }
 
-const struct platform_ocapi witherspoon_ocapi = {
+static const struct platform_ocapi witherspoon_ocapi = {
        .i2c_engine          = 1,
        .i2c_port            = 4,
        .odl_phy_swap        = false,
@@ -370,8 +370,8 @@ static int gpu_slot_to_num(const char *slot)
 
 static void npu2_phb_nvlink_dt(struct phb *npuphb)
 {
-	struct dt_node *g[3] = { 0 }; /* Current maximum is 3 GPUs per 1 NPU */
-	struct dt_node *n[6] = { 0 };
+	struct dt_node *g[3] = { NULL }; /* Current maximum 3 GPUs per 1 NPU */
+	struct dt_node *n[6] = { NULL };
 	int max_gpus, i, gpuid, first, last;
 	struct npu2 *npu2_phb = phb_to_npu2_nvlink(npuphb);
 	struct pci_device *npd;

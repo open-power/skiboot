@@ -695,7 +695,7 @@ static const struct bmc_sw_config bmc_sw_smc = {
 };
 
 /* Provided by Eric Chen (SMC) */
-const struct bmc_hw_config p9dsu_bmc_hw = {
+static const struct bmc_hw_config p9dsu_bmc_hw = {
 	.scu_revision_id = 0x04030303,
 	.mcr_configuration = 0x11000756,
 	.mcr_scu_mpll = 0x000071c1,

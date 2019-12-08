@@ -494,7 +494,7 @@ static int init_vas_inst(struct dt_node *np, bool enable)
 
 }
 
-void vas_init()
+void vas_init(void)
 {
 	bool enabled;
 	struct dt_node *np;

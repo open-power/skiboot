@@ -1349,7 +1349,7 @@ void pci_std_swizzle_irq_map(struct dt_node *np,
 		dt_add_property_cells(np, "interrupt-map-mask",
 				      0xf800, 0, 0, 7);
 	}
-	map_size = esize * edevcount * 4 * sizeof(uint32_t);
+	map_size = esize * edevcount * 4 * sizeof(u32);
 	map = p = zalloc(map_size);
 	if (!map) {
 		prerror("Failed to allocate interrupt-map-mask !\n");
