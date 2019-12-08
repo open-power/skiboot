@@ -5544,11 +5544,11 @@ static bool phb4_calculate_windows(struct phb4 *p)
 				   "ibm,mmio-windows", -1);
 	assert(prop->len >= (2 * sizeof(uint64_t)));
 
-	p->mm0_base = be64_to_cpu(((__be64 *)prop->prop)[0]);
-	p->mm0_size = be64_to_cpu(((__be64 *)prop->prop)[1]);
+	p->mm0_base = dt_property_get_u64(prop, 0);
+	p->mm0_size = dt_property_get_u64(prop, 1);
 	if (prop->len > 16) {
-		p->mm1_base = be64_to_cpu(((__be64 *)prop->prop)[2]);
-		p->mm1_size = be64_to_cpu(((__be64 *)prop->prop)[3]);
+		p->mm1_base = dt_property_get_u64(prop, 2);
+		p->mm1_size = dt_property_get_u64(prop, 3);
 	}
 
 	/* Sort them so that 0 is big and 1 is small */
@@ -5660,11 +5660,11 @@ static void phb4_create(struct dt_node *np)
 
 	/* Get the various XSCOM register bases from the device-tree */
 	prop = dt_require_property(np, "ibm,xscom-bases", 5 * sizeof(uint32_t));
-	p->pe_xscom = be32_to_cpu(((__be32 *)prop->prop)[0]);
-	p->pe_stk_xscom = be32_to_cpu(((__be32 *)prop->prop)[1]);
-	p->pci_xscom = be32_to_cpu(((__be32 *)prop->prop)[2]);
-	p->pci_stk_xscom = be32_to_cpu(((__be32 *)prop->prop)[3]);
-	p->etu_xscom = be32_to_cpu(((__be32 *)prop->prop)[4]);
+	p->pe_xscom = dt_property_get_cell(prop, 0);
+	p->pe_stk_xscom = dt_property_get_cell(prop, 1);
+	p->pci_xscom = dt_property_get_cell(prop, 2);
+	p->pci_stk_xscom = dt_property_get_cell(prop, 3);
+	p->etu_xscom = dt_property_get_cell(prop, 4);
 
 	/*
 	 * We skip the initial PERST assertion requested by the generic code
@@ -5825,7 +5825,6 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	uint64_t val, phb_bar = 0, irq_bar = 0, bar_en;
 	uint64_t mmio0_bar = 0, mmio0_bmask, mmio0_sz;
 	uint64_t mmio1_bar = 0, mmio1_bmask, mmio1_sz;
-	uint64_t reg[4];
 	void *foo;
 	__be64 mmio_win[4];
 	unsigned int mmio_win_sz;
@@ -5923,18 +5922,15 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	prlog_once(PR_DEBUG, "Version reg: 0x%016llx\n", in_be64(foo));
 
 	/* Create PHB node */
-	reg[0] = cpu_to_be64(phb_bar);
-	reg[1] = cpu_to_be64(0x1000);
-	reg[2] = cpu_to_be64(irq_bar);
-	reg[3] = cpu_to_be64(0x10000000);
-
 	np = dt_new_addr(dt_root, "pciex", phb_bar);
 	if (!np)
 		return;
 
 	dt_add_property_strings(np, "compatible", "ibm,power9-pciex", "ibm,ioda3-phb");
 	dt_add_property_strings(np, "device_type", "pciex");
-	dt_add_property(np, "reg", reg, sizeof(reg));
+	dt_add_property_u64s(np, "reg",
+				phb_bar, 0x1000,
+				irq_bar, 0x10000000);
 
 	/* Everything else is handled later by skiboot, we just
 	 * stick a few hints here

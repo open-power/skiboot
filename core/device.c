@@ -593,11 +593,18 @@ u32 dt_property_get_cell(const struct dt_property *prop, u32 index)
 	return fdt32_to_cpu(((const u32 *)prop->prop)[index]);
 }
 
+u64 dt_property_get_u64(const struct dt_property *prop, u32 index)
+{
+	assert(prop->len >= (index+1)*sizeof(u64));
+	/* Always aligned, so this works. */
+	return fdt64_to_cpu(((const fdt64_t *)prop->prop)[index]);
+}
+
 void dt_property_set_cell(struct dt_property *prop, u32 index, u32 val)
 {
 	assert(prop->len >= (index+1)*sizeof(u32));
 	/* Always aligned, so this works. */
-	((u32 *)prop->prop)[index] = cpu_to_fdt32(val);
+	((fdt32_t *)prop->prop)[index] = cpu_to_fdt32(val);
 }
 
 /* First child of this node. */

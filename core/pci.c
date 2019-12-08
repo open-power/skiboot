@@ -1524,16 +1524,8 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 	char name[MAX_NAME];
 	char compat[MAX_NAME];
 	uint32_t rev_class;
-	__be32 reg[5];
 	uint8_t intpin;
 	bool is_pcie;
-	const __be32 ranges_direct[] = {
-				/* 64-bit direct mapping. We know the bridges
-				 * don't cover the entire address space so
-				 * use 0xf00... as a good compromise. */
-				cpu_to_be32(0x02000000), 0x0, 0x0,
-				cpu_to_be32(0x02000000), 0x0, 0x0,
-				cpu_to_be32(0xf0000000), 0x0};
 
 	pci_cfg_read32(phb, pd->bdfn, PCI_CFG_REV_ID, &rev_class);
 	pci_cfg_read8(phb, pd->bdfn, PCI_CFG_INT_PIN, &intpin);
@@ -1609,9 +1601,7 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 	 * entry in the "reg" property. That's enough for Linux and we might
 	 * even want to make this legit in future ePAPR
 	 */
-	reg[0] = cpu_to_be32(pd->bdfn << 8);
-	reg[1] = reg[2] = reg[3] = reg[4] = 0;
-	dt_add_property(np, "reg", reg, sizeof(reg));
+	dt_add_property_cells(np, "reg", pd->bdfn << 8, 0, 0, 0, 0);
 
 	/* Print summary info about the device */
 	pci_print_summary_line(phb, pd, np, rev_class, cname);
@@ -1646,7 +1636,13 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 	 * (ie. an empty ranges property).
 	 * Instead add a ranges property that explicitly translates 1:1.
 	 */
-	dt_add_property(np, "ranges", ranges_direct, sizeof(ranges_direct));
+	dt_add_property_cells(np, "ranges",
+				/* 64-bit direct mapping. We know the bridges
+				 * don't cover the entire address space so
+				 * use 0xf00... as a good compromise. */
+				0x02000000, 0x0, 0x0,
+				0x02000000, 0x0, 0x0,
+				0xf0000000, 0x0);
 }
 
 void __noinline pci_add_device_nodes(struct phb *phb,

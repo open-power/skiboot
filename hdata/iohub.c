@@ -95,7 +95,6 @@ static struct dt_node *io_add_phb3(const struct cechub_io_hub *hub,
 				   unsigned int spci_xscom)
 {
 	struct dt_node *pbcq;
-	uint32_t reg[6];
 	unsigned int hdif_vers;
 
 	/* Get HDIF version */
@@ -109,13 +108,10 @@ static struct dt_node *io_add_phb3(const struct cechub_io_hub *hub,
 	/* "reg" property contains in order the PE, PCI and SPCI XSCOM
 	 * addresses
 	 */
-	reg[0] = cpu_to_be32(pe_xscom);
-	reg[1] = cpu_to_be32(0x20);
-	reg[2] = cpu_to_be32(pci_xscom);
-	reg[3] = cpu_to_be32(0x05);
-	reg[4] = cpu_to_be32(spci_xscom);
-	reg[5] = cpu_to_be32(0x15);
-	dt_add_property(pbcq, "reg", reg, sizeof(reg));
+	dt_add_property_cells(pbcq, "reg",
+				pe_xscom, 0x20,
+				pci_xscom, 0x05,
+				spci_xscom, 0x15);
 
 	/* A couple more things ... */
 	dt_add_property_strings(pbcq, "compatible", "ibm,power8-pbcq");
@@ -202,7 +198,6 @@ static struct dt_node *io_add_phb4(const struct cechub_io_hub *hub,
 				   int phb_base)
 {
 	struct dt_node *pbcq;
-	uint32_t reg[4];
 	uint8_t active_phb_mask = hub->fab_br0_pdt;
 	uint32_t pe_xscom  = 0x4010c00 + (pec_index * 0x0000400);
 	uint32_t pci_xscom = 0xd010800 + (pec_index * 0x1000000);
@@ -214,11 +209,9 @@ static struct dt_node *io_add_phb4(const struct cechub_io_hub *hub,
 		return NULL;
 
 	/* "reg" property contains (in order) the PE and PCI XSCOM addresses */
-	reg[0] = cpu_to_be32(pe_xscom);
-	reg[1] = cpu_to_be32(0x100);
-	reg[2] = cpu_to_be32(pci_xscom);
-	reg[3] = cpu_to_be32(0x200);
-	dt_add_property(pbcq, "reg", reg, sizeof(reg));
+	dt_add_property_cells(pbcq, "reg",
+				pe_xscom, 0x100,
+				pci_xscom, 0x200);
 
 	/* The hubs themselves go under the stacks */
 	dt_add_property_strings(pbcq, "compatible", "ibm,power9-pbcq");

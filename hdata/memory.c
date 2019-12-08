@@ -77,24 +77,21 @@ static void append_chip_id(struct dt_node *mem, u32 id)
 {
 	struct dt_property *prop;
 	size_t len, i;
-	be32 *p;
 
 	prop = __dt_find_property(mem, "ibm,chip-id");
 	if (!prop)
 		return;
 	len = prop->len >> 2;
-	p = (be32*)prop->prop;
 
 	/* Check if it exists already */
 	for (i = 0; i < len; i++) {
-		if (be32_to_cpu(p[i]) == id)
+		if (dt_property_get_cell(prop, i) == id)
 			return;
 	}
 
 	/* Add it to the list */
 	dt_resize_property(&prop, (len + 1) << 2);
-	p = (be32 *)prop->prop;
-	p[len] = cpu_to_be32(id);
+	dt_property_set_cell(prop, len, id);
 }
 
 static void update_status(struct dt_node *mem, uint32_t status)
