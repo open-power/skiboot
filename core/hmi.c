@@ -399,7 +399,7 @@ static bool decode_core_fir(struct cpu_thread *cpu,
 		if (core_fir & PPC_BIT(xstop_bits[i].bit)) {
 			found = true;
 			hmi_evt->u.xstop_error.xstop_reason
-						|= xstop_bits[i].reason;
+					|= cpu_to_be32(xstop_bits[i].reason);
 		}
 	}
 	return found;
@@ -430,7 +430,7 @@ static void find_core_checkstop_reason(struct OpalHMIEvent *hmi_evt,
 
 		/* Initialize xstop_error fields. */
 		hmi_evt->u.xstop_error.xstop_reason = 0;
-		hmi_evt->u.xstop_error.u.pir = cpu->pir;
+		hmi_evt->u.xstop_error.u.pir = cpu_to_be32(cpu->pir);
 
 		if (decode_core_fir(cpu, hmi_evt))
 			queue_hmi_event(hmi_evt, 0, out_flags);
@@ -521,7 +521,7 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	hmi_evt->severity = OpalHMI_SEV_FATAL;
 	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
 	hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_NX;
-	hmi_evt->u.xstop_error.u.chip_id = flat_chip_id;
+	hmi_evt->u.xstop_error.u.chip_id = cpu_to_be32(flat_chip_id);
 
 	/* Get DMA & Engine FIR data register value. */
 	if (xscom_read(flat_chip_id, nx_dma_engine_fir, &nx_dma_fir) != 0) {
@@ -539,12 +539,12 @@ static void find_nx_checkstop_reason(int flat_chip_id,
 	for (i = 0; i < ARRAY_SIZE(nx_dma_xstop_bits); i++)
 		if (nx_dma_fir & PPC_BIT(nx_dma_xstop_bits[i].bit))
 			hmi_evt->u.xstop_error.xstop_reason
-						|= nx_dma_xstop_bits[i].reason;
+				|= cpu_to_be32(nx_dma_xstop_bits[i].reason);
 
 	for (i = 0; i < ARRAY_SIZE(nx_pbi_xstop_bits); i++)
 		if (nx_pbi_fir_val & PPC_BIT(nx_pbi_xstop_bits[i].bit))
 			hmi_evt->u.xstop_error.xstop_reason
-						|= nx_pbi_xstop_bits[i].reason;
+				|= cpu_to_be32(nx_pbi_xstop_bits[i].reason);
 
 	/*
 	 * Set NXDMAENGFIR[38] to signal PRD that service action is required.
@@ -705,8 +705,8 @@ static void find_npu2_checkstop_reason(int flat_chip_id,
 	hmi_evt->severity = OpalHMI_SEV_WARNING;
 	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
 	hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_NPU;
-	hmi_evt->u.xstop_error.xstop_reason = xstop_reason;
-	hmi_evt->u.xstop_error.u.chip_id = flat_chip_id;
+	hmi_evt->u.xstop_error.xstop_reason = cpu_to_be32(xstop_reason);
+	hmi_evt->u.xstop_error.u.chip_id = cpu_to_be32(flat_chip_id);
 
 	/* Marking the event as recoverable so that we don't crash */
 	queue_hmi_event(hmi_evt, 1, out_flags);
@@ -774,7 +774,7 @@ static void find_npu_checkstop_reason(int flat_chip_id,
 	hmi_evt->severity = OpalHMI_SEV_WARNING;
 	hmi_evt->type = OpalHMI_ERROR_MALFUNC_ALERT;
 	hmi_evt->u.xstop_error.xstop_type = CHECKSTOP_TYPE_NPU;
-	hmi_evt->u.xstop_error.u.chip_id = flat_chip_id;
+	hmi_evt->u.xstop_error.u.chip_id = cpu_to_be32(flat_chip_id);
 
 	/* The HMI is "recoverable" because it shouldn't crash the system */
 	queue_hmi_event(hmi_evt, 1, out_flags);
@@ -1116,7 +1116,7 @@ static int handle_tfac_errors(struct OpalHMIEvent *hmi_evt, uint64_t *out_flags)
 	uint64_t tfmr = mfspr(SPR_TFMR);
 
 	/* Initialize the hmi event with old value of TFMR */
-	hmi_evt->tfmr = tfmr;
+	hmi_evt->tfmr = cpu_to_be64(tfmr);
 
 	/* A TFMR parity/corrupt error makes us ignore all the local stuff.*/
 	if (tfmr & SPR_TFMR_TFMR_CORRUPT) {
@@ -1204,7 +1204,7 @@ static int handle_hmi_exception(uint64_t hmer, struct OpalHMIEvent *hmi_evt,
 	prlog(PR_DEBUG, "Received HMI interrupt: HMER = 0x%016llx\n", hmer);
 	/* Initialize the hmi event with old value of HMER */
 	if (hmi_evt)
-		hmi_evt->hmer = hmer;
+		hmi_evt->hmer = cpu_to_be64(hmer);
 
 	/* Handle Timer/TOD errors separately */
 	if (hmer & (SPR_HMER_TFAC_ERROR | SPR_HMER_TFMR_PARITY_ERROR)) {
