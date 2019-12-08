@@ -21,6 +21,8 @@
  */
 #define EXCEPTION_VECTORS_END	0x2000
 
+#define NACA_OFF		0x4000
+
 /* The NACA and other stuff in head.S need to be at the start: we
  * give it 64k before placing the SPIRA and related data.
  */

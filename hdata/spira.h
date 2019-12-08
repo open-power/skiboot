@@ -66,6 +66,8 @@ struct spira_ntuples {
 	struct spira_ntuple	proc_dump_area;		/* 0x400 */
 };
 
+#define SPIRA_RESERVED_BYTES	0x60
+
 struct spira {
 	struct HDIF_common_hdr	hdr;
 	struct HDIF_idata_ptr	ntuples_ptr;
@@ -77,8 +79,10 @@ struct spira {
 	 *
 	 * According to FSP engineers, this is an okay thing to do.
 	 */
-	u8			reserved[0x60];
+	u8			reserved[SPIRA_RESERVED_BYTES];
 } __packed __align(0x100);
+
+#define SPIRA_ACTUAL_SIZE (sizeof(struct spira) - SPIRA_RESERVED_BYTES)
 
 extern struct spira spira;
 

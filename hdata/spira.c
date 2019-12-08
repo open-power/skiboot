@@ -3,7 +3,6 @@
 
 #include <inttypes.h>
 #include <device.h>
-#include "spira.h"
 #include <cpu.h>
 #include <vpd.h>
 #include <interrupts.h>
@@ -15,6 +14,8 @@
 
 #include "hdata.h"
 #include "hostservices.h"
+#include "naca.h"
+#include "spira.h"
 
 /* Processor Initialization structure, contains
  * the initial NIA and MSR values for the entry
@@ -1703,15 +1704,11 @@ static void fixup_spira(void)
 static void update_spirah_addr(void)
 {
 #if !defined(TEST)
-	extern uint32_t naca;
-	uint64_t *spirah_offset = (uint64_t *)&naca;
-	uint64_t *spira_offset = (uint64_t *)((u64)(&naca) + 0x30);
-
 	if (proc_gen < proc_gen_p9)
 		return;
 
-	*spirah_offset = CPU_TO_BE64(SPIRAH_OFF);
-	*spira_offset = CPU_TO_BE64(SPIRA_OFF);
+	naca.spirah_addr = CPU_TO_BE64(SPIRAH_OFF);
+	naca.spira_addr = CPU_TO_BE64(SPIRA_OFF);
 	spirah.ntuples.hs_data_area.addr = CPU_TO_BE64(SPIRA_HEAP_BASE - SKIBOOT_BASE);
 	spirah.ntuples.mdump_res.addr = CPU_TO_BE64(MDRT_TABLE_BASE - SKIBOOT_BASE);
 #endif

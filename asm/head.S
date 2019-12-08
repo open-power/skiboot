@@ -810,56 +810,6 @@ enter_nap:
 	bne	1b
 	nap
 	b	.
-/*
- *
- * NACA structure, accessed by the FPS to find the SPIRA
- *
- */
-	. = 0x4000
-.global naca
-naca:
-	.llong	spirah			/* 0x0000 : SPIRA-H  */
-	.llong	0			/* 0x0008 : Reserved */
-	.llong	0			/* 0x0010 : Reserved */
-	.llong	hv_release_data		/* 0x0018 : HV release data */
-	.llong	0			/* 0x0020 : Reserved */
-	.llong	0			/* 0x0028 : Reserved */
-	.llong	spira			/* 0x0030 : SP Interface Root */
-	.llong	hv_lid_load_table	/* 0x0038 : LID load table */
-	.llong	0			/* 0x0040 : Reserved */
-	.space	68
-	.long	0			/* 0x008c : Reserved */
-	.space	16
-	.long	SPIRA_ACTUAL_SIZE	/* 0x00a0 : Actual size of SPIRA */
-	.space	28
-	.llong	0			/* 0x00c0 : resident module loadmap */
-	.space	136
-	.llong	0			/* 0x0150 : reserved */
-	.space	40
-	.llong	0			/* 0x0180 : reserved */
-	.space	36
-	.long	0			/* 0x01ac : control flags */
-	.byte	0			/* 0x01b0 : reserved */
-	.space	4
-	.byte	0			/* 0x01b5 : default state for SW attn */
-	.space	1
-	.byte	0x01			/* 0x01b7 : PCIA format */
-	.llong	hdat_entry		/* 0x01b8 : Primary thread entry */
-	.llong	hdat_entry		/* 0x01c0 : Secondary thread entry */
-	.space	0xe38
-
-	.balign	0x10
-hv_release_data:
-	.space	58
-	.llong	0x666			/* VRM ? */
-
-	.balign	0x10
-hv_lid_load_table:
-	.long	0x10
-	.long	0x10
-	.long	0
-	.long	0
-
 
 /*
  *

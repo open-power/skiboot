@@ -25,8 +25,6 @@ int main(void);
 
 int main(void)
 {
-	OFFSET(SPIRA_ACTUAL_SIZE, spira, reserved);
-
 	OFFSET(CPUTHREAD_PIR, cpu_thread, pir);
 	OFFSET(CPUTHREAD_SAVE_R1, cpu_thread, save_r1);
 	OFFSET(CPUTHREAD_STATE, cpu_thread, state);

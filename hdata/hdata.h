@@ -5,6 +5,8 @@
 #define __HDATA_H
 
 #include <processor.h>
+#include "hdif.h"
+#include "spira.h"
 
 struct dt_node;
 
