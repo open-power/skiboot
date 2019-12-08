@@ -310,7 +310,7 @@ struct xive_ive {
 	/* Use a single 64-bit definition to make it easier to
 	 * perform atomic updates
 	 */
-	uint64_t	w;
+	__be64		w;
 #define IVE_VALID	PPC_BIT(0)
 #define IVE_EQ_BLOCK	PPC_BITMASK(4,7)	/* Destination EQ block# */
 #define IVE_EQ_INDEX	PPC_BITMASK(8,31)	/* Destination EQ index */
@@ -320,7 +320,7 @@ struct xive_ive {
 
 /* EQ */
 struct xive_eq {
-	uint32_t	w0;
+	__be32		w0;
 #define EQ_W0_VALID		PPC_BIT32(0) /* "v" bit */
 #define EQ_W0_ENQUEUE		PPC_BIT32(1) /* "q" bit */
 #define EQ_W0_UCOND_NOTIFY	PPC_BIT32(2) /* "n" bit */
@@ -335,30 +335,31 @@ struct xive_eq {
 #define EQ_QSIZE_4K		0
 #define EQ_QSIZE_64K		4
 #define EQ_W0_HWDEP		PPC_BITMASK32(24,31)
-	uint32_t	w1;
+	__be32		w1;
 #define EQ_W1_ESn		PPC_BITMASK32(0,1)
 #define EQ_W1_ESn_P		PPC_BIT32(0)
 #define EQ_W1_ESn_Q		PPC_BIT32(1)
 #define EQ_W1_ESe		PPC_BITMASK32(2,3)
 #define EQ_W1_ESe_P		PPC_BIT32(2)
 #define EQ_W1_ESe_Q		PPC_BIT32(3)
+#define EQ_W1_ES		PPC_BITMASK32(0,3)
 #define EQ_W1_GENERATION	PPC_BIT32(9)
 #define EQ_W1_PAGE_OFF		PPC_BITMASK32(10,31)
-	uint32_t	w2;
+	__be32		w2;
 #define EQ_W2_MIGRATION_REG	PPC_BITMASK32(0,3)
 #define EQ_W2_OP_DESC_HI	PPC_BITMASK32(4,31)
-	uint32_t	w3;
+	__be32		w3;
 #define EQ_W3_OP_DESC_LO	PPC_BITMASK32(0,31)
-	uint32_t	w4;
+	__be32		w4;
 #define EQ_W4_ESC_EQ_BLOCK	PPC_BITMASK32(4,7)
 #define EQ_W4_ESC_EQ_INDEX	PPC_BITMASK32(8,31)
-	uint32_t	w5;
+	__be32		w5;
 #define EQ_W5_ESC_EQ_DATA	PPC_BITMASK32(1,31)
-	uint32_t	w6;
+	__be32		w6;
 #define EQ_W6_FORMAT_BIT	PPC_BIT32(8)
 #define EQ_W6_NVT_BLOCK		PPC_BITMASK32(9,12)
 #define EQ_W6_NVT_INDEX		PPC_BITMASK32(13,31)
-	uint32_t	w7;
+	__be32		w7;
 #define EQ_W7_F0_IGNORE		PPC_BIT32(0)
 #define EQ_W7_F0_BLK_GROUPING	PPC_BIT32(1)
 #define EQ_W7_F0_PRIORITY	PPC_BITMASK32(8,15)
@@ -368,24 +369,24 @@ struct xive_eq {
 
 /* VP */
 struct xive_vp {
-	uint32_t	w0;
+	__be32		w0;
 #define VP_W0_VALID		PPC_BIT32(0)
-	uint32_t	w1;
-	uint32_t	w2;
-	uint32_t	w3;
-	uint32_t	w4;
-	uint32_t	w5;
-	uint32_t	w6;
-	uint32_t	w7;
-	uint32_t	w8;
+	__be32		w1;
+	__be32		w2;
+	__be32		w3;
+	__be32		w4;
+	__be32		w5;
+	__be32		w6;
+	__be32		w7;
+	__be32		w8;
 #define VP_W8_GRP_VALID		PPC_BIT32(0)
-	uint32_t	w9;
-	uint32_t	wa;
-	uint32_t	wb;
-	uint32_t	wc;
-	uint32_t	wd;
-	uint32_t	we;
-	uint32_t	wf;
+	__be32		w9;
+	__be32		wa;
+	__be32		wb;
+	__be32		wc;
+	__be32		wd;
+	__be32		we;
+	__be32		wf;
 };
 
 #endif /* XIVE_P9_REGS_H */

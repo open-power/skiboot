@@ -8,6 +8,32 @@
 #ifndef XIVE_REGS_H
 #define XIVE_REGS_H
 
+static inline uint64_t xive_get_field64(uint64_t mask, beint64_t word)
+{
+	return (be64_to_cpu(word) & mask) >> MASK_TO_LSH(mask);
+}
+
+static inline beint64_t xive_set_field64(uint64_t mask, beint64_t word,
+                                        uint64_t value)
+{
+	uint64_t tmp = (be64_to_cpu(word) & ~mask) |
+			((value << MASK_TO_LSH(mask)) & mask);
+	return cpu_to_be64(tmp);
+}
+
+static inline uint32_t xive_get_field32(uint32_t mask, beint32_t word)
+{
+	return (be32_to_cpu(word) & mask) >> MASK_TO_LSH(mask);
+}
+
+static inline beint32_t xive_set_field32(uint32_t mask, beint32_t word,
+                                        uint32_t value)
+{
+	uint32_t tmp = (be32_to_cpu(word) & ~mask) |
+			((value << MASK_TO_LSH(mask)) & mask);
+	return cpu_to_be32(tmp);
+}
+
 /*
  * TM registers are special, see below
  */
