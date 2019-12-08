@@ -25,9 +25,9 @@ static void map_debug_areas(void)
 	fsp_tce_map(PSI_DMA_LOG_BUF, (void*)INMEM_CON_START, INMEM_CON_LEN);
 
 	debug_descriptor.memcons_tce = PSI_DMA_MEMCONS;
-	t = memcons.obuf_phys - INMEM_CON_START + PSI_DMA_LOG_BUF;
+	t = be64_to_cpu(memcons.obuf_phys) - INMEM_CON_START + PSI_DMA_LOG_BUF;
 	debug_descriptor.memcons_obuf_tce = t;
-	t = memcons.ibuf_phys - INMEM_CON_START + PSI_DMA_LOG_BUF;
+	t = be64_to_cpu(memcons.ibuf_phys) - INMEM_CON_START + PSI_DMA_LOG_BUF;
 	debug_descriptor.memcons_ibuf_tce = t;
 
 	t = PSI_DMA_TRACE_BASE;

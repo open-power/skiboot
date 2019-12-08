@@ -14,17 +14,17 @@
  * (This is v3 of the format, the previous one sucked)
  */
 struct memcons {
-	uint64_t magic;
+	__be64 magic;
 #define MEMCONS_MAGIC	0x6630696567726173LL
-	uint64_t obuf_phys;
-	uint64_t ibuf_phys;
-	uint32_t obuf_size;
-	uint32_t ibuf_size;
-	uint32_t out_pos;
+	__be64 obuf_phys;
+	__be64 ibuf_phys;
+	__be32 obuf_size;
+	__be32 ibuf_size;
+	__be32 out_pos;
 #define MEMCONS_OUT_POS_WRAP	0x80000000u
 #define MEMCONS_OUT_POS_MASK	0x00ffffffu
-	uint32_t in_prod;
-	uint32_t in_cons;
+	__be32 in_prod;
+	__be32 in_cons;
 };
 
 extern struct memcons memcons;

@@ -178,11 +178,11 @@ static bool hbrt_con_wrapped;
 #define HBRT_CON_OUT_LEN	(HBRT_CON_LEN - HBRT_CON_IN_LEN)
 
 static struct memcons hbrt_memcons __section(".data.memcons") = {
-	.magic		= MEMCONS_MAGIC,
-	.obuf_phys	= HBRT_CON_START,
-	.ibuf_phys	= HBRT_CON_START + HBRT_CON_OUT_LEN,
-	.obuf_size	= HBRT_CON_OUT_LEN,
-	.ibuf_size	= HBRT_CON_IN_LEN,
+	.magic		= CPU_TO_BE64(MEMCONS_MAGIC),
+	.obuf_phys	= CPU_TO_BE64(HBRT_CON_START),
+	.ibuf_phys	= CPU_TO_BE64(HBRT_CON_START + HBRT_CON_OUT_LEN),
+	.obuf_size	= CPU_TO_BE32(HBRT_CON_OUT_LEN),
+	.ibuf_size	= CPU_TO_BE32(HBRT_CON_IN_LEN),
 };
 
 static void hservice_putc(char c)
@@ -206,7 +206,7 @@ static void hservice_putc(char c)
 	if (hbrt_con_wrapped)
 		opos |= MEMCONS_OUT_POS_WRAP;
 	lwsync();
-	hbrt_memcons.out_pos = opos;
+	hbrt_memcons.out_pos = cpu_to_be32(opos);
 }
 
 static void hservice_puts(const char *str)

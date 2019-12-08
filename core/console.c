@@ -30,11 +30,11 @@ static struct lock con_lock = LOCK_UNLOCKED;
 
 /* This is mapped via TCEs so we keep it alone in a page */
 struct memcons memcons __section(".data.memcons") = {
-	.magic		= MEMCONS_MAGIC,
-	.obuf_phys	= INMEM_CON_START,
-	.ibuf_phys	= INMEM_CON_START + INMEM_CON_OUT_LEN,
-	.obuf_size	= INMEM_CON_OUT_LEN,
-	.ibuf_size	= INMEM_CON_IN_LEN,
+	.magic		= CPU_TO_BE64(MEMCONS_MAGIC),
+	.obuf_phys	= CPU_TO_BE64(INMEM_CON_START),
+	.ibuf_phys	= CPU_TO_BE64(INMEM_CON_START + INMEM_CON_OUT_LEN),
+	.obuf_size	= CPU_TO_BE32(INMEM_CON_OUT_LEN),
+	.ibuf_size	= CPU_TO_BE32(INMEM_CON_IN_LEN),
 };
 
 static bool dummy_console_enabled(void)
@@ -197,7 +197,7 @@ static void inmem_write(char c)
 	if (con_wrapped)
 		opos |= MEMCONS_OUT_POS_WRAP;
 	lwsync();
-	memcons.out_pos = opos;
+	memcons.out_pos = cpu_to_be32(opos);
 
 	/* If head reaches tail, push tail around & drop chars */
 	if (con_in == con_out)
@@ -207,12 +207,12 @@ static void inmem_write(char c)
 static size_t inmem_read(char *buf, size_t req)
 {
 	size_t read = 0;
-	char *ibuf = (char *)memcons.ibuf_phys;
+	char *ibuf = (char *)be64_to_cpu(memcons.ibuf_phys);
 
-	while (req && memcons.in_prod != memcons.in_cons) {
-		*(buf++) = ibuf[memcons.in_cons];
+	while (req && be32_to_cpu(memcons.in_prod) != be32_to_cpu(memcons.in_cons)) {
+		*(buf++) = ibuf[be32_to_cpu(memcons.in_cons)];
 		lwsync();
-		memcons.in_cons = (memcons.in_cons + 1) % INMEM_CON_IN_LEN;
+		memcons.in_cons = cpu_to_be32((be32_to_cpu(memcons.in_cons) + 1) % INMEM_CON_IN_LEN);
 		req--;
 		read++;
 	}
@@ -428,7 +428,7 @@ void dummy_console_add_nodes(void)
 {
 	struct dt_property *p;
 
-	add_opal_console_node(0, "raw", memcons.obuf_size);
+	add_opal_console_node(0, "raw", be32_to_cpu(memcons.obuf_size));
 
 	/* Mambo might have left a crap one, clear it */
 	p = __dt_find_property(dt_chosen, "linux,stdout-path");
