@@ -33,41 +33,61 @@ __section(".procin.data") struct proc_init_data proc_init_data = {
 	.regs_ptr = HDIF_IDATA_PTR(offsetof(struct proc_init_data, regs), 0x10),
 	.regs = {
 		.nia = CPU_TO_BE64(0x180),
-		.msr = CPU_TO_BE64(0x9000000000000000ULL), /* SF | HV */
+		.msr = CPU_TO_BE64(MSR_SF | MSR_HV),
 	},
 };
 
-extern struct sp_addr_table cpu_ctl_spat_area;
-__section(".cpuctrl.data") struct sp_addr_table cpu_ctl_spat_area;
-__section(".cpuctrl.data") struct sp_attn_area cpu_ctl_sp_attn_area1;
-__section(".cpuctrl.data") struct sp_attn_area cpu_ctl_sp_attn_area2;
-extern struct hsr_data_area cpu_ctl_hsr_area;
-__section(".cpuctrl.data") struct hsr_data_area cpu_ctl_hsr_area;
-
 extern struct cpu_ctl_init_data cpu_ctl_init_data;
+extern struct sp_addr_table cpu_ctl_spat_area;
+extern struct sp_attn_area cpu_ctl_sp_attn_area1;
+extern struct sp_attn_area cpu_ctl_sp_attn_area2;
+extern struct hsr_data_area cpu_ctl_hsr_area;
+
+/*
+ * cpuctrl.data begins at CPU_CTL_OFF	- cpu_ctl_init_data is located there.
+ * + sizeof(struct cpu_ctl_init_data)	- cpu_ctl_spat_area
+ * + sizeof(struct sp_addr_table)	- cpu_ctl_sp_attn_area1
+ * + sizeof(struct sp_attn_area)	- cpu_ctl_sp_attn_area2
+ * + sizeof(struct sp_attn_area)	- cpu_ctl_hsr_area
+ *
+ * Can't use CPU_TO_BE64 directly on the labels as a constant initialiser.
+ *
+ * CPU_CTL_INIT_DATA_OFF is offset from 0, the others are addressed from the
+ * relocated address (+SKIBOOT_BASE)
+ */
+#define CPU_CTL_INIT_DATA_OFF		(CPU_CTL_OFF)
+#define CPU_CTL_SPAT_AREA_OFF		(CPU_CTL_INIT_DATA_OFF + sizeof(struct cpu_ctl_init_data) + SKIBOOT_BASE)
+#define CPU_CTL_SP_ATTN_AREA1_OFF	(CPU_CTL_SPAT_AREA_OFF + sizeof(struct sp_addr_table))
+#define CPU_CTL_SP_ATTN_AREA2_OFF	(CPU_CTL_SP_ATTN_AREA1_OFF + sizeof(struct sp_attn_area))
+#define CPU_CTL_HSR_AREA_OFF		(CPU_CTL_SP_ATTN_AREA2_OFF + sizeof(struct sp_attn_area))
+
+__section(".cpuctrl.data") struct hsr_data_area cpu_ctl_hsr_area;
+__section(".cpuctrl.data") struct sp_attn_area cpu_ctl_sp_attn_area2;
+__section(".cpuctrl.data") struct sp_attn_area cpu_ctl_sp_attn_area1;
+__section(".cpuctrl.data") struct sp_addr_table cpu_ctl_spat_area;
+
 __section(".cpuctrl.data") struct cpu_ctl_init_data cpu_ctl_init_data = {
 	.hdr = HDIF_SIMPLE_HDR(CPU_CTL_HDIF_SIG, 2, struct cpu_ctl_init_data),
-	.cpu_ctl = HDIF_IDATA_PTR(offsetof(struct cpu_ctl_init_data, cpu_ctl_lt), sizeof(struct cpu_ctl_legacy_table)),
-#if !defined(TEST)
+	.cpu_ctl = HDIF_IDATA_PTR(offsetof(struct cpu_ctl_init_data, cpu_ctl_lt),
+					sizeof(struct cpu_ctl_legacy_table)),
 	.cpu_ctl_lt = {
 		.spat = {
-			.addr = CPU_TO_BE64((unsigned long)&(cpu_ctl_spat_area) + SKIBOOT_BASE),
+			.addr = CPU_TO_BE64(CPU_CTL_SPAT_AREA_OFF),
 			.size = CPU_TO_BE64(sizeof(struct sp_addr_table)),
 		},
 		.sp_attn_area1 = {
-			.addr = CPU_TO_BE64((unsigned long)&(cpu_ctl_sp_attn_area1) + SKIBOOT_BASE),
+			.addr = CPU_TO_BE64(CPU_CTL_SP_ATTN_AREA1_OFF),
 			.size = CPU_TO_BE64(sizeof(struct sp_attn_area)),
 		},
 		.sp_attn_area2 = {
-			.addr = CPU_TO_BE64((unsigned long)&(cpu_ctl_sp_attn_area2) + SKIBOOT_BASE),
+			.addr = CPU_TO_BE64(CPU_CTL_SP_ATTN_AREA2_OFF),
 			.size = CPU_TO_BE64(sizeof(struct sp_attn_area)),
 		},
 		.hsr_area = {
-			.addr = CPU_TO_BE64((unsigned long)&(cpu_ctl_hsr_area) + SKIBOOT_BASE),
+			.addr = CPU_TO_BE64(CPU_CTL_HSR_AREA_OFF),
 			.size = CPU_TO_BE64(sizeof(struct hsr_data_area)),
 		},
 	},
-#endif
 };
 
 /* Populate MDST table
@@ -131,15 +151,12 @@ __section(".spira.data") struct spira spira = {
 			.alloc_len	=
 				CPU_TO_BE32(sizeof(init_mdst_table)),
 		},
-#if !defined(TEST)
 		.cpu_ctrl = {
-			.addr		= CPU_TO_BE64((unsigned long)&cpu_ctl_init_data),
+			.addr		= CPU_TO_BE64(CPU_CTL_INIT_DATA_OFF),
 			.alloc_cnt	= CPU_TO_BE16(1),
 			.act_cnt	= CPU_TO_BE16(1),
-			.alloc_len	=
-					CPU_TO_BE32(sizeof(cpu_ctl_init_data)),
+			.alloc_len	= CPU_TO_BE32(sizeof(cpu_ctl_init_data)),
 		},
-#endif
 	},
 };
 
@@ -170,15 +187,13 @@ __section(".spirah.data") struct spirah spirah = {
 			.alloc_len
 			= CPU_TO_BE32(sizeof(struct proc_init_data)),
 		},
-#if !defined(TEST)
 		.cpu_ctrl = {
-			.addr		= CPU_TO_BE64((unsigned long)&cpu_ctl_init_data),
+			.addr		= CPU_TO_BE64(CPU_CTL_INIT_DATA_OFF),
 			.alloc_cnt	= CPU_TO_BE16(1),
 			.act_cnt	= CPU_TO_BE16(1),
 			.alloc_len	=
 					CPU_TO_BE32(sizeof(cpu_ctl_init_data)),
 		},
-#endif
 		.mdump_src = {
 			.addr		= CPU_TO_BE64(MDST_TABLE_OFF),
 			.alloc_cnt	= CPU_TO_BE16(MDST_TABLE_SIZE / sizeof(struct mdst_table)),
@@ -1695,8 +1710,8 @@ static void update_spirah_addr(void)
 	if (proc_gen < proc_gen_p9)
 		return;
 
-	*spirah_offset = SPIRAH_OFF;
-	*spira_offset = SPIRA_OFF;
+	*spirah_offset = CPU_TO_BE64(SPIRAH_OFF);
+	*spira_offset = CPU_TO_BE64(SPIRA_OFF);
 	spirah.ntuples.hs_data_area.addr = CPU_TO_BE64(SPIRA_HEAP_BASE - SKIBOOT_BASE);
 	spirah.ntuples.mdump_res.addr = CPU_TO_BE64(MDRT_TABLE_BASE - SKIBOOT_BASE);
 #endif

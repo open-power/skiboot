@@ -67,6 +67,9 @@ unsigned long tb_hz = 512000000;
 
 #define SPR_PVR		0x11f	/* RO: Processor version register */
 
+#define MSR_SF		0x8000000000000000ULL
+#define MSR_HV		0x1000000000000000ULL
+
 #define __CPU_H
 struct cpu_thread {
 	uint32_t			pir;
