@@ -160,7 +160,8 @@ static void trace_add_dt_props(void)
 	uint64_t boot_buf_phys = (uint64_t) &boot_tracebuf.trace_info;
 	struct dt_node *exports, *traces;
 	unsigned int i;
-	u64 *prop, tmask;
+	fdt64_t *prop;
+	u64 tmask;
 	char tname[256];
 
 	exports = dt_find_by_path(opal_node, "firmware/exports");

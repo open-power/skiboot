@@ -994,7 +994,7 @@ static void opal_dump_add_mpipl_boot(const struct iplparams_iplparams *p)
 
 static void add_opal_dump_node(void)
 {
-	u64 fw_load_area[4];
+	__be64 fw_load_area[4];
 	struct dt_node *node;
 
 	opal_node = dt_new_check(dt_root, "ibm,opal");

@@ -1310,7 +1310,7 @@ void pci_std_swizzle_irq_map(struct dt_node *np,
 			     struct pci_lsi_state *lstate,
 			     uint8_t swizzle)
 {
-	uint32_t *map, *p;
+	__be32 *p, *map;
 	int dev, irq, esize, edevcount;
 	size_t map_size;
 

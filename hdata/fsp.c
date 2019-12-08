@@ -174,7 +174,7 @@ static uint32_t fsp_create_link(const struct spss_iopath *iopath, int index,
 static void fsp_create_links(const void *spss, int index,
 			     struct dt_node *fsp_node)
 {
-	uint32_t *links = NULL;
+	__be32 *links = NULL;
 	unsigned int i, lp, lcount = 0;
 	int count;
 

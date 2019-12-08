@@ -169,12 +169,13 @@ static void ast_sf_end_cmd(struct ast_sf_ctrl *ct)
 static int ast_sf_send_addr(struct ast_sf_ctrl *ct, uint32_t addr)
 {
 	const void *ap;
+	beint32_t tmp;
 
 	/* Layout address MSB first in memory */
-	addr = cpu_to_be32(addr);
+	tmp = cpu_to_be32(addr);
 
 	/* Send the right amount of bytes */
-	ap = (char *)&addr;
+	ap = (char *)&tmp;
 
 	if (ct->mode_4b)
 		return ast_copy_to_ahb(ct->flash, ap, 4);

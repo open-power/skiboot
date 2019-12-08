@@ -448,8 +448,8 @@ void imc_catalog_preload(void)
 static void imc_dt_update_nest_node(struct dt_node *dev)
 {
 	struct proc_chip *chip;
-	uint64_t *base_addr = NULL;
-	uint32_t *chipids = NULL;
+	__be64 *base_addr = NULL;
+	__be32 *chipids = NULL;
 	int i=0, nr_chip = nr_chips();
 	struct dt_node *node;
 	const struct dt_property *type;

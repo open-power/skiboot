@@ -194,7 +194,8 @@ void add_opal_interrupts(void)
 {
 	struct irq_source *is;
 	unsigned int i, ns, tns = 0, count = 0;
-	uint32_t *irqs = NULL, isn;
+	uint32_t isn;
+	__be32 *irqs = NULL;
 	char *names = NULL;
 
 	lock(&irq_lock);

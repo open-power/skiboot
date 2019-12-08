@@ -38,13 +38,13 @@
  * All fields have Big Endian byte order.
  */
 struct pciinv_device {
-	uint16_t	domain_num;
+	beint16_t	domain_num;
 	uint8_t		bus_num;
 	uint8_t		device_num;
 	uint8_t		func_num;
-	uint16_t	vendor_id;
-	uint16_t	device_id;
-	uint32_t	class_code;
+	beint16_t	vendor_id;
+	beint16_t	device_id;
+	beint32_t	class_code;
 	uint8_t		revision;
 } __packed;
 

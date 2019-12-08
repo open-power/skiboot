@@ -163,7 +163,7 @@ void secureboot_init(void)
 int secureboot_verify(enum resource_id id, void *buf, size_t len)
 {
 	const char *name;
-	uint64_t log;
+	__be64 log;
 	int rc = -1;
 
 	name = flash_map_resource_name(id);

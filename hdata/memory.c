@@ -329,8 +329,8 @@ static void vpd_add_ram_area(const struct HDIF_common_hdr *msarea)
 
 static void vpd_parse_spd(struct dt_node *dimm, const char *spd, u32 size)
 {
-	u16 *vendor;
-	u32 *sn;
+	__be16 *vendor;
+	__be32 *sn;
 
 	/* SPD is too small */
 	if (size < 512) {
@@ -355,14 +355,14 @@ static void vpd_parse_spd(struct dt_node *dimm, const char *spd, u32 size)
 	dt_add_property_cells(dimm, "product-version", spd[0x15d]);
 
 	/* Serial number */
-	sn = (u32 *)&spd[0x145];
+	sn = (__be32 *)&spd[0x145];
 	dt_add_property_cells(dimm, "serial-number", be32_to_cpu(*sn));
 
 	/* Part number */
 	dt_add_property_nstr(dimm, "part-number", &spd[0x149], 20);
 
 	/* Module manufacturer ID */
-	vendor = (u16 *)&spd[0x140];
+	vendor = (__be16 *)&spd[0x140];
 	dt_add_property_cells(dimm, "manufacturer-id", be16_to_cpu(*vendor));
 }
 

@@ -514,12 +514,12 @@ struct dt_property *__dt_add_property_cells(struct dt_node *node,
 					    int count, ...)
 {
 	struct dt_property *p;
-	u32 *val;
+	fdt32_t *val;
 	unsigned int i;
 	va_list args;
 
 	p = new_property(node, name, count * sizeof(u32));
-	val = (u32 *)p->prop;
+	val = (fdt32_t *)p->prop;
 	va_start(args, count);
 	for (i = 0; i < count; i++)
 		val[i] = cpu_to_fdt32(va_arg(args, u32));
@@ -532,12 +532,12 @@ struct dt_property *__dt_add_property_u64s(struct dt_node *node,
 					   int count, ...)
 {
 	struct dt_property *p;
-	u64 *val;
+	fdt64_t *val;
 	unsigned int i;
 	va_list args;
 
 	p = new_property(node, name, count * sizeof(u64));
-	val = (u64 *)p->prop;
+	val = (fdt64_t *)p->prop;
 	va_start(args, count);
 	for (i = 0; i < count; i++)
 		val[i] = cpu_to_fdt64(va_arg(args, u64));
@@ -590,7 +590,7 @@ u32 dt_property_get_cell(const struct dt_property *prop, u32 index)
 {
 	assert(prop->len >= (index+1)*sizeof(u32));
 	/* Always aligned, so this works. */
-	return fdt32_to_cpu(((const u32 *)prop->prop)[index]);
+	return fdt32_to_cpu(((const fdt32_t *)prop->prop)[index]);
 }
 
 u64 dt_property_get_u64(const struct dt_property *prop, u32 index)
@@ -918,7 +918,7 @@ void dt_expand(const void *fdt)
 
 u64 dt_get_number(const void *pdata, unsigned int cells)
 {
-	const u32 *p = pdata;
+	const __be32 *p = pdata;
 	u64 ret = 0;
 
 	while(cells--)
@@ -1095,6 +1095,7 @@ void dt_adjust_subtree_phandle(struct dt_node *dev,
 	struct dt_node *node;
 	struct dt_property *prop;
 	u32 phandle, max_phandle = 0, import_phandle = new_phandle();
+	__be32 p;
 	const char **name;
 
 	dt_for_each_node(dev, node) {
@@ -1117,8 +1118,8 @@ void dt_adjust_subtree_phandle(struct dt_node *dev,
 				continue;
 			phandle = dt_prop_get_u32(node, *name);
 			phandle += import_phandle;
-			phandle = cpu_to_be32(phandle);
-			memcpy((char *)&prop->prop, &phandle, prop->len);
+			p = cpu_to_be32(phandle);
+			memcpy((char *)&prop->prop, &p, prop->len);
 		}
        }
 

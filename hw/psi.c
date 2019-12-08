@@ -782,7 +782,7 @@ static void psi_activate_phb(struct psi *psi)
 
 static void psi_create_p9_int_map(struct psi *psi, struct dt_node *np)
 {
-	uint32_t map[P9_PSI_NUM_IRQS][4];
+	__be32 map[P9_PSI_NUM_IRQS][4];
 	int i;
 
 	for (i = 0; i < P9_PSI_NUM_IRQS; i++) {

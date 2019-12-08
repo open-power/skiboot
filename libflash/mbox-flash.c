@@ -239,23 +239,23 @@ static void msg_put_u8(struct bmc_mbox_msg *msg, int i, uint8_t val)
 
 static uint16_t msg_get_u16(struct bmc_mbox_msg *msg, int i)
 {
-	return le16_to_cpu(*(uint16_t *)(&msg->args[i]));
+	return le16_to_cpu(*(__le16 *)(&msg->args[i]));
 }
 
 static void msg_put_u16(struct bmc_mbox_msg *msg, int i, uint16_t val)
 {
-	uint16_t tmp = cpu_to_le16(val);
+	__le16 tmp = cpu_to_le16(val);
 	memcpy(&msg->args[i], &tmp, sizeof(val));
 }
 
 static uint32_t msg_get_u32(struct bmc_mbox_msg *msg, int i)
 {
-	return le32_to_cpu(*(uint32_t *)(&msg->args[i]));
+	return le32_to_cpu(*(__le32 *)(&msg->args[i]));
 }
 
 static void msg_put_u32(struct bmc_mbox_msg *msg, int i, uint32_t val)
 {
-	uint32_t tmp = cpu_to_le32(val);
+	__le32 tmp = cpu_to_le32(val);
 	memcpy(&msg->args[i], &tmp, sizeof(val));
 }
 

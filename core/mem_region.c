@@ -1444,7 +1444,7 @@ void mem_region_add_dt_reserved(void)
 	struct mem_region *region;
 	void *names, *ranges;
 	struct dt_node *node;
-	uint64_t *range;
+	fdt64_t *range;
 	char *name;
 
 	names_len = 0;

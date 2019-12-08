@@ -725,8 +725,8 @@ void add_cpu_idle_state_properties(void)
 	bool has_stop_inst = false;
 	u8 i;
 
-	u64 *pm_ctrl_reg_val_buf;
-	u64 *pm_ctrl_reg_mask_buf;
+	fdt64_t *pm_ctrl_reg_val_buf;
+	fdt64_t *pm_ctrl_reg_mask_buf;
 	u32 supported_states_mask;
 	u32 opal_disabled_states_mask = ~0xEC000000; /* all but stop11 */
 	const char* nvram_disable_str;
@@ -739,9 +739,9 @@ void add_cpu_idle_state_properties(void)
 
 	/* Buffers to hold idle state properties */
 	char *name_buf, *alloced_name_buf;
-	u32 *latency_ns_buf;
-	u32 *residency_ns_buf;
-	u32 *flags_buf;
+	fdt32_t *latency_ns_buf;
+	fdt32_t *residency_ns_buf;
+	fdt32_t *flags_buf;
 
 	prlog(PR_DEBUG, "CPU idle state device tree init\n");
 

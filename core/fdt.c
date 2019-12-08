@@ -136,7 +136,7 @@ static void flatten_dt_node(void *fdt, const struct dt_node *root,
 static void create_dtb_reservemap(void *fdt, const struct dt_node *root)
 {
 	uint64_t base, size;
-	const uint64_t *ranges;
+	const __be64 *ranges;
 	const struct dt_property *prop;
 	int i;
 

@@ -164,7 +164,7 @@ struct ipmi_msg {
 };
 
 struct ipmi_backend {
-	__be64 opal_event_ipmi_recv;
+	uint64_t opal_event_ipmi_recv;
 	struct ipmi_msg *(*alloc_msg)(size_t, size_t);
 	void (*free_msg)(struct ipmi_msg *);
 	int (*queue_msg)(struct ipmi_msg *);
