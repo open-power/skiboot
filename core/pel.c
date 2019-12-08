@@ -21,11 +21,11 @@ static void create_mtms_section(struct errorlog *elog_data,
 	struct opal_mtms_section *mtms = (struct opal_mtms_section *)
 				(pel_buffer + *pel_offset);
 
-	mtms->v6header.id = ELOG_SID_MACHINE_TYPE;
-	mtms->v6header.length = MTMS_SECTION_SIZE;
+	mtms->v6header.id = cpu_to_be16(ELOG_SID_MACHINE_TYPE);
+	mtms->v6header.length = cpu_to_be16(MTMS_SECTION_SIZE);
 	mtms->v6header.version = OPAL_EXT_HRD_VER;
 	mtms->v6header.subtype = 0;
-	mtms->v6header.component_id = elog_data->component_id;
+	mtms->v6header.component_id = cpu_to_be16(elog_data->component_id);
 
 	memset(mtms->model, 0x00, sizeof(mtms->model));
 	memcpy(mtms->model, dt_prop_get(dt_root, "model"), OPAL_SYS_MODEL_LEN);
@@ -47,16 +47,17 @@ static void create_extended_header_section(struct errorlog *elog_data,
 	const char  *opalmodel = NULL;
 	const struct dt_property *p;
 	uint64_t extd_time;
+	uint32_t extd_date;
 
 	struct opal_extended_header_section *extdhdr =
 			(struct opal_extended_header_section *)
 					(pel_buffer + *pel_offset);
 
-	extdhdr->v6header.id = ELOG_SID_EXTENDED_HEADER;
-	extdhdr->v6header.length = EXTENDED_HEADER_SECTION_SIZE;
+	extdhdr->v6header.id = cpu_to_be16(ELOG_SID_EXTENDED_HEADER);
+	extdhdr->v6header.length = cpu_to_be16(EXTENDED_HEADER_SECTION_SIZE);
 	extdhdr->v6header.version = OPAL_EXT_HRD_VER;
 	extdhdr->v6header.subtype = 0;
-	extdhdr->v6header.component_id = elog_data->component_id;
+	extdhdr->v6header.component_id = cpu_to_be16(elog_data->component_id);
 
 	memset(extdhdr->model, 0x00, sizeof(extdhdr->model));
 	opalmodel = dt_prop_get(dt_root, "model");
@@ -74,8 +75,9 @@ static void create_extended_header_section(struct errorlog *elog_data,
 	memset(extdhdr->opal_subsys_version, 0x00,
 				sizeof(extdhdr->opal_subsys_version));
 
-	rtc_cache_get_datetime(&extdhdr->extended_header_date, &extd_time);
-	extdhdr->extended_header_time = extd_time >> 32;
+	rtc_cache_get_datetime(&extd_date, &extd_time);
+	extdhdr->extended_header_date = cpu_to_be32(extd_date);
+	extdhdr->extended_header_time = cpu_to_be32(extd_time >> 32);
 	extdhdr->opal_symid_len = 0;
 
 	*pel_offset += EXTENDED_HEADER_SECTION_SIZE;
@@ -112,25 +114,25 @@ static void create_src_section(struct errorlog *elog_data,
 	struct opal_src_section *src = (struct opal_src_section *)
 						(pel_buffer + *pel_offset);
 
-	src->v6header.id = ELOG_SID_PRIMARY_SRC;
-	src->v6header.length = SRC_SECTION_SIZE;
+	src->v6header.id = cpu_to_be16(ELOG_SID_PRIMARY_SRC);
+	src->v6header.length = cpu_to_be16(SRC_SECTION_SIZE);
 	src->v6header.version = OPAL_ELOG_VERSION;
 	src->v6header.subtype = OPAL_ELOG_SST;
-	src->v6header.component_id = elog_data->component_id;
+	src->v6header.component_id = cpu_to_be16(elog_data->component_id);
 
 	src->version = OPAL_SRC_SEC_VER;
 	src->flags = 0;
 	src->wordcount = OPAL_SRC_MAX_WORD_COUNT;
-	src->srclength = SRC_LENGTH;
+	src->srclength = cpu_to_be16(SRC_LENGTH);
 	settype(src, OPAL_SRC_TYPE_ERROR);
 	setsubsys(src, OPAL_FAILING_SUBSYSTEM);
 	setrefcode(src, elog_data->reason_code);
 	memset(src->hexwords, 0 , (8 * 4));
-	src->hexwords[0] = OPAL_SRC_FORMAT;
-	src->hexwords[4] = elog_data->additional_info[0];
-	src->hexwords[5] = elog_data->additional_info[1];
-	src->hexwords[6] = elog_data->additional_info[2];
-	src->hexwords[7] = elog_data->additional_info[3];
+	src->hexwords[0] = cpu_to_be32(OPAL_SRC_FORMAT);
+	src->hexwords[4] = cpu_to_be32(elog_data->additional_info[0]);
+	src->hexwords[5] = cpu_to_be32(elog_data->additional_info[1]);
+	src->hexwords[6] = cpu_to_be32(elog_data->additional_info[2]);
+	src->hexwords[7] = cpu_to_be32(elog_data->additional_info[3]);
 	*pel_offset += SRC_SECTION_SIZE;
 }
 
@@ -142,11 +144,11 @@ static void create_user_header_section(struct errorlog *elog_data,
 				(struct opal_user_header_section *)
 						(pel_buffer + *pel_offset);
 
-	usrhdr->v6header.id = ELOG_SID_USER_HEADER;
-	usrhdr->v6header.length = USER_HEADER_SECTION_SIZE;
+	usrhdr->v6header.id = cpu_to_be16(ELOG_SID_USER_HEADER);
+	usrhdr->v6header.length = cpu_to_be16(USER_HEADER_SECTION_SIZE);
 	usrhdr->v6header.version = OPAL_ELOG_VERSION;
 	usrhdr->v6header.subtype = OPAL_ELOG_SST;
-	usrhdr->v6header.component_id = elog_data->component_id;
+	usrhdr->v6header.component_id = cpu_to_be16(elog_data->component_id);
 
 	usrhdr->subsystem_id = elog_data->subsystem_id;
 	usrhdr->event_scope = 0;
@@ -154,9 +156,9 @@ static void create_user_header_section(struct errorlog *elog_data,
 	usrhdr->event_type = elog_data->event_subtype;
 
 	if (elog_data->elog_origin == ORG_SAPPHIRE)
-		usrhdr->action_flags = ERRL_ACTION_REPORT;
+		usrhdr->action_flags = cpu_to_be16(ERRL_ACTION_REPORT);
 	else
-		usrhdr->action_flags = ERRL_ACTION_NONE;
+		usrhdr->action_flags = cpu_to_be16(ERRL_ACTION_NONE);
 
 	*pel_offset += USER_HEADER_SECTION_SIZE;
 }
@@ -166,19 +168,21 @@ static void create_private_header_section(struct errorlog *elog_data,
 					char *pel_buffer, int *pel_offset)
 {
 	uint64_t ctime;
+	uint32_t cdate;
 	struct opal_private_header_section *privhdr =
 				(struct opal_private_header_section *)
 								pel_buffer;
 
-	privhdr->v6header.id = ELOG_SID_PRIVATE_HEADER;
-	privhdr->v6header.length = PRIVATE_HEADER_SECTION_SIZE;
+	privhdr->v6header.id = cpu_to_be16(ELOG_SID_PRIVATE_HEADER);
+	privhdr->v6header.length = cpu_to_be16(PRIVATE_HEADER_SECTION_SIZE);
 	privhdr->v6header.version = OPAL_ELOG_VERSION;
 	privhdr->v6header.subtype = OPAL_ELOG_SST;
-	privhdr->v6header.component_id = elog_data->component_id;
-	privhdr->plid = elog_data->plid;
+	privhdr->v6header.component_id = cpu_to_be16(elog_data->component_id);
+	privhdr->plid = cpu_to_be32(elog_data->plid);
 
-	rtc_cache_get_datetime(&privhdr->create_date, &ctime);
-	privhdr->create_time = ctime >> 32;
+	rtc_cache_get_datetime(&cdate, &ctime);
+	privhdr->create_date = cpu_to_be32(cdate);
+	privhdr->create_time = cpu_to_be32(ctime >> 32);
 	privhdr->section_count = 5;
 
 	privhdr->creator_subid_hi = 0x00;
@@ -189,7 +193,7 @@ static void create_private_header_section(struct errorlog *elog_data,
 	else
 		privhdr->creator_id = OPAL_CID_POWERNV;
 
-	privhdr->log_entry_id = elog_data->plid; /*entry id is updated by FSP*/
+	privhdr->log_entry_id = cpu_to_be32(elog_data->plid); /*entry id is updated by FSP*/
 
 	*pel_offset += PRIVATE_HEADER_SECTION_SIZE;
 }
@@ -210,19 +214,17 @@ static void create_user_defined_section(struct errorlog *elog_data,
 		usrhdr = (struct opal_user_section *)dump;
 		opal_usr_data = (struct elog_user_data_section *)opal_buf;
 
-		usrhdr->v6header.id = ELOG_SID_USER_DEFINED;
+		usrhdr->v6header.id = cpu_to_be16(ELOG_SID_USER_DEFINED);
 		usrhdr->v6header.length = cpu_to_be16(
 					sizeof(struct opal_v6_header) +
 					be16_to_cpu(opal_usr_data->size));
 		usrhdr->v6header.version = OPAL_ELOG_VERSION;
-		usrhdr->v6header.length = sizeof(struct opal_v6_header) +
-							opal_usr_data->size;
 		usrhdr->v6header.subtype = OPAL_ELOG_SST;
-		usrhdr->v6header.component_id = elog_data->component_id;
+		usrhdr->v6header.component_id = cpu_to_be16(elog_data->component_id);
 
 		memcpy(usrhdr->dump, opal_buf, be16_to_cpu(opal_usr_data->size));
-		*pel_offset += usrhdr->v6header.length;
-		dump += usrhdr->v6header.length;
+		*pel_offset += be16_to_cpu(usrhdr->v6header.length);
+		dump += be16_to_cpu(usrhdr->v6header.length);
 		opal_buf += be16_to_cpu(opal_usr_data->size);
 		privhdr->section_count++;
 	}

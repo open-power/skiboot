@@ -61,12 +61,12 @@ enum elogSectionId {
 
 
 struct opal_v6_header {
-	enum elogSectionId id:16;	/* section id */
-	uint16_t    length;		/* section length */
-	uint8_t    version;		/* section version */
-	uint8_t    subtype;		/* section sub-type id */
-	uint16_t   component_id;	/* component id of section creator */
-};
+	__be16	id;	/* section id */
+	__be16	length;		/* section length */
+	uint8_t	version;		/* section version */
+	uint8_t	subtype;		/* section sub-type id */
+	__be16	component_id;	/* component id of section creator */
+} __packed;
 
 /* opal_srctype */
 #define OPAL_SRC_TYPE_ERROR 0xBB
@@ -85,20 +85,20 @@ struct opal_v6_header {
 struct opal_private_header_section {
 
 	struct opal_v6_header v6header;
-	uint32_t create_date;
-	uint32_t create_time;
-	uint32_t commit_date;
-	uint32_t commit_time;
+	__be32 create_date;
+	__be32 create_time;
+	__be32 commit_date;
+	__be32 commit_time;
 
-	uint32_t creator_id:8;		/* subsystem component id */
-	uint32_t reserved_0:16;
-	uint32_t section_count:8;	/* number of sections in log */
-	uint32_t reserved_1;
-	uint32_t creator_subid_hi;
-	uint32_t creator_subid_lo;
-	uint32_t plid;			/* platform log id */
-	uint32_t log_entry_id;		/* Unique log entry id */
-};
+	uint8_t creator_id;		/* subsystem component id */
+	__be16 reserved_0;
+	uint8_t section_count;		/* number of sections in log */
+	__be32 reserved_1;
+	__be32 creator_subid_hi;
+	__be32 creator_subid_lo;
+	__be32 plid;			/* platform log id */
+	__be32 log_entry_id;		/* Unique log entry id */
+} __packed;
 
 /* opal user header section */
 struct opal_user_header_section {
@@ -110,11 +110,11 @@ struct opal_user_header_section {
 	uint8_t event_severity;
 	uint8_t event_type;	/* error/event severity */
 
-	uint32_t reserved_0;
-	uint16_t reserved_1;
-	uint16_t action_flags;	/* error action code */
-	uint32_t reserved_2;
-};
+	__be32 reserved_0;
+	__be16 reserved_1;
+	__be16 action_flags;	/* error action code */
+	__be32 reserved_2;
+} __packed;
 
 struct opal_src_section {
 	struct opal_v6_header v6header;
@@ -122,11 +122,11 @@ struct opal_src_section {
 	uint8_t		flags;
 	uint8_t		reserved_0;
 	uint8_t		wordcount;
-	uint16_t	reserved_1;
-	uint16_t	srclength;
-	uint32_t	hexwords[OPAL_SRC_MAX_WORD_COUNT];
+	__be16		reserved_1;
+	__be16		srclength;
+	__be32		hexwords[OPAL_SRC_MAX_WORD_COUNT];
 	char		srcstring[OPAL_MAX_SRC_BYTES];
-};
+} __packed;
 
 struct opal_extended_header_section {
 	struct	opal_v6_header v6header;
@@ -134,27 +134,27 @@ struct opal_extended_header_section {
 	char	serial_no[OPAL_SYS_SERIAL_LEN];
 	char	opal_release_version[OPAL_VER_LEN];
 	char	opal_subsys_version[OPAL_VER_LEN];
-	uint16_t reserved_0;
-	uint32_t extended_header_date;
-	uint32_t extended_header_time;
-	uint16_t reserved_1;
-	uint8_t reserved_2;
-	uint8_t opal_symid_len;
+	__be16	reserved_0;
+	__be32	extended_header_date;
+	__be32	extended_header_time;
+	__be16	reserved_1;
+	uint8_t	reserved_2;
+	uint8_t	opal_symid_len;
 	char	opalsymid[OPAL_SYMPID_LEN];
-};
+} __packed;
 
 /* opal MTMS section */
 struct opal_mtms_section {
 	struct opal_v6_header v6header;
 	char        model[OPAL_SYS_MODEL_LEN];
 	char        serial_no[OPAL_SYS_SERIAL_LEN];
-};
+} __packed;
 
 /* User defined section */
 struct opal_user_section {
 	struct opal_v6_header v6header;
 	char dump[1];
-};
+} __packed;
 
 /* The minimum size of a PEL record */
 #define PEL_MIN_SIZE (PRIVATE_HEADER_SECTION_SIZE + USER_HEADER_SECTION_SIZE \
