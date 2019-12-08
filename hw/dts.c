@@ -183,7 +183,9 @@ static void dts_async_read_temp(struct timer *t __unused, void *data,
 		dctl_clear_special_wakeup(cpu);
 
 	check_sensor_read(cpu->token);
-	rc = opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL, cpu->token, rc);
+	rc = opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+			cpu_to_be64(cpu->token),
+			cpu_to_be64(rc));
 	if (rc)
 		prerror("Failed to queue async message\n");
 

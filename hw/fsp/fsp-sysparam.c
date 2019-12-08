@@ -194,7 +194,8 @@ static void fsp_opal_getparam_complete(uint32_t param_id __unused, int err_len,
 		rc = OPAL_INTERNAL_ERROR;
 
 	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-			comp_data->async_token, rc);
+			cpu_to_be64(comp_data->async_token),
+			cpu_to_be64(rc));
 	free(comp_data);
 }
 
@@ -242,7 +243,8 @@ static void fsp_opal_setparam_complete(struct fsp_msg *msg)
 
 out:
 	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-			comp_data->async_token, rc);
+			cpu_to_be64(comp_data->async_token),
+			cpu_to_be64(rc));
 	free(comp_data);
 	fsp_freemsg(msg);
 }

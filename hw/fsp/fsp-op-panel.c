@@ -155,7 +155,9 @@ static void op_panel_write_complete(struct fsp_msg *msg)
 
 	__op_panel_write_complete(msg);
 
-	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL, 1, op_async_token);
+	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+			cpu_to_be64(1),
+			cpu_to_be64(op_async_token));
 }
 
 static int64_t __opal_write_oppanel(oppanel_line_t *lines, uint64_t num_lines,

@@ -143,7 +143,7 @@ static int64_t opal_check_completion(uint64_t *buffer, uint64_t size,
 
 	lock(&opal_msg_lock);
 	list_for_each_safe(&msg_pending_list, entry, next_entry, link) {
-		if (entry->msg.msg_type == OPAL_MSG_ASYNC_COMP &&
+		if (be32_to_cpu(entry->msg.msg_type) == OPAL_MSG_ASYNC_COMP &&
 		    be64_to_cpu(entry->msg.params[0]) == token) {
 			list_del(&entry->link);
 			callback = entry->consumed;

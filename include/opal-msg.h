@@ -27,8 +27,8 @@ int _opal_queue_msg(enum opal_msg_type msg_type, void *data,
 
 #define opal_queue_msg(msg_type, data, cb, ...) \
 	_opal_queue_msg(msg_type, data, cb, \
-			sizeof((u64[]) {__VA_ARGS__}), \
-			(u64[]) {__VA_ARGS__});
+			sizeof((__be64[]) {__VA_ARGS__}), \
+			(__be64[]) {__VA_ARGS__});
 
 void opal_init_msg(void);
 

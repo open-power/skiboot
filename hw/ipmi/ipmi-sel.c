@@ -496,7 +496,8 @@ static void sel_power(uint8_t power, void *context __unused)
 			prlog(PR_NOTICE, "Host not up, shutting down now\n");
 			platform.cec_power_down(IPMI_CHASSIS_PWR_DOWN);
 		} else {
-			opal_queue_msg(OPAL_MSG_SHUTDOWN, NULL, NULL, SOFT_OFF);
+			opal_queue_msg(OPAL_MSG_SHUTDOWN, NULL, NULL,
+					cpu_to_be64(SOFT_OFF));
 		}
 
 		break;
@@ -506,7 +507,8 @@ static void sel_power(uint8_t power, void *context __unused)
 			prlog(PR_NOTICE, "Host not up, rebooting now\n");
 			platform.cec_reboot();
 		} else {
-			opal_queue_msg(OPAL_MSG_SHUTDOWN, NULL, NULL, SOFT_REBOOT);
+			opal_queue_msg(OPAL_MSG_SHUTDOWN, NULL, NULL,
+					cpu_to_be64(SOFT_REBOOT));
 		}
 
 		break;

@@ -42,7 +42,9 @@ static void opal_i2c_request_complete(int rc, struct i2c_request *req)
 {
 	uint64_t token = (uint64_t)(unsigned long)req->user_data;
 
-	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL, token, rc);
+	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+			cpu_to_be64(token),
+			cpu_to_be64(rc));
 	free(req);
 }
 

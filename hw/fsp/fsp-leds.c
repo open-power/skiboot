@@ -186,7 +186,9 @@ static bool is_enclosure_led(char *loc_code)
 
 static inline void opal_led_update_complete(u64 async_token, u64 result)
 {
-	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL, async_token, result);
+	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+			cpu_to_be64(async_token),
+			cpu_to_be64(result));
 }
 
 static inline bool is_sai_loc_code(const char *loc_code)

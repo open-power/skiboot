@@ -804,8 +804,10 @@ static void link_up_timer(struct timer *t, void *data,
 	rescan_slot_devices(slot);
 out:
 	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-		       slot->async_token, get_slot_phandle(slot),
-		       slot->power_state, rc <= 0 ? rc : OPAL_BUSY);
+		       cpu_to_be64(slot->async_token),
+		       cpu_to_be64(get_slot_phandle(slot)),
+		       cpu_to_be64(slot->power_state),
+		       rc <= 0 ? cpu_to_be64(rc) : cpu_to_be64(OPAL_BUSY));
 	phb_unlock(phb);
 }
 
@@ -834,9 +836,10 @@ static void wait_for_link_up_and_rescan(struct pci_slot *slot)
 		rc = slot->ops.freset(slot);
 		if (rc < 0) {
 			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-				       slot->async_token,
-				       get_slot_phandle(slot),
-				       slot->power_state, rc);
+				       cpu_to_be64(slot->async_token),
+				       cpu_to_be64(get_slot_phandle(slot)),
+				       cpu_to_be64(slot->power_state),
+				       cpu_to_be64(rc))
 			return;
 		}
 	} else {
@@ -863,8 +866,10 @@ static void set_power_timer(struct timer *t __unused, void *data,
 		if (slot->retries-- == 0) {
 			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
 			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-				       slot->async_token, get_slot_phandle(slot),
-				       slot->power_state, OPAL_BUSY);
+				       cpu_to_be64(slot->async_token),
+				       cpu_to_be64(get_slot_phandle(slot)),
+				       cpu_to_be64(slot->power_state),
+				       cpu_to_be64(OPAL_BUSY));
 		} else {
 			schedule_timer(&slot->timer, msecs_to_tb(10));
 		}
@@ -875,8 +880,10 @@ static void set_power_timer(struct timer *t __unused, void *data,
 			remove_slot_devices(slot);
 			pci_slot_set_state(slot, PCI_SLOT_STATE_NORMAL);
 			opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-				       slot->async_token, get_slot_phandle(slot),
-				       OPAL_PCI_SLOT_POWER_OFF, OPAL_SUCCESS);
+				       cpu_to_be64(slot->async_token),
+				       cpu_to_be64(get_slot_phandle(slot)),
+				       cpu_to_be64(OPAL_PCI_SLOT_POWER_OFF),
+				       cpu_to_be64(OPAL_SUCCESS));
 			break;
 		}
 

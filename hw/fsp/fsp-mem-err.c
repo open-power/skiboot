@@ -96,10 +96,11 @@ static void queue_event_for_delivery(void *data __unused, int staus __unused)
 	merr_data = (uint64_t *)&entry->data;
 
 	/* queue up for delivery */
-	rc = opal_queue_msg(OPAL_MSG_MEM_ERR, NULL,
-			    queue_event_for_delivery,
-			    merr_data[0], merr_data[1],
-			    merr_data[2], merr_data[3]);
+	rc = opal_queue_msg(OPAL_MSG_MEM_ERR, NULL, queue_event_for_delivery,
+			    cpu_to_be64(merr_data[0]),
+			    cpu_to_be64(merr_data[1]),
+			    cpu_to_be64(merr_data[2]),
+			    cpu_to_be64(merr_data[3]));
 	lock(&mem_err_lock);
 	if (rc) {
 		/*

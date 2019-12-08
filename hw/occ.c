@@ -1126,7 +1126,9 @@ static inline void queue_occ_rsp_msg(int token, int rc)
 {
 	int ret;
 
-	ret = opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL, token, rc);
+	ret = opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+			cpu_to_be64(token),
+			cpu_to_be64(rc));
 	if (ret)
 		prerror("OCC: Failed to queue OCC response status message\n");
 }
@@ -1877,7 +1879,7 @@ int find_master_and_slave_occ(uint64_t **master, uint64_t **slave,
 
 int occ_msg_queue_occ_reset(void)
 {
-	struct opal_occ_msg occ_msg = { OCC_RESET, 0, 0 };
+	struct opal_occ_msg occ_msg = { CPU_TO_BE64(OCC_RESET), 0, 0 };
 	struct proc_chip *chip;
 	int rc;
 

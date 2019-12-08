@@ -470,7 +470,10 @@ static int64_t opal_flash_op(enum flash_op op, uint64_t id, uint64_t offset,
 
 	unlock(&flash_lock);
 
-	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL, token, rc);
+	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
+			cpu_to_be64(token),
+			cpu_to_be64(rc));
+
 	return OPAL_ASYNC_COMPLETION;
 
 err:

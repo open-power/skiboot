@@ -139,7 +139,8 @@ static void fsp_tpo_req_complete(struct fsp_msg *read_resp)
 		break;
 	}
 	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-		       attr->tpo_async_token, rc);
+		       cpu_to_be64(attr->tpo_async_token),
+		       cpu_to_be64(rc));
 	free(attr);
 	fsp_freemsg(read_resp);
 }

@@ -293,7 +293,8 @@ static void queue_msg_for_delivery(int rc, struct opal_sensor_data *attr)
 	      __func__, rc, *(attr->sensor_data));
 	check_sensor_read(attr->async_token);
 	opal_queue_msg(OPAL_MSG_ASYNC_COMP, NULL, NULL,
-			attr->async_token, rc);
+			cpu_to_be64(attr->async_token),
+			cpu_to_be64(rc));
 	spcn_mod_data[attr->mod_index].entry_count = 0;
 	free(attr);
 	prev_msg_consumed = true;
