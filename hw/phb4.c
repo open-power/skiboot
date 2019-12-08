@@ -273,7 +273,7 @@ static int64_t phb4_pcicfg_check(struct phb4 *p, uint32_t bdfn,
 		return OPAL_HARDWARE;
 
 	/* Fetch the PE# from cache */
-	*pe = p->tbl_rtt[bdfn];
+	*pe = be16_to_cpu(p->tbl_rtt[bdfn]);
 
 	return OPAL_SUCCESS;
 }
@@ -913,7 +913,7 @@ static void phb4_init_ioda_cache(struct phb4 *p)
 	 * and this occurs before PEs have been assigned.
 	 */
 	for (i = 0; i < RTT_TABLE_ENTRIES; i++)
-		p->tbl_rtt[i] = PHB4_RESERVED_PE_NUM(p);
+		p->tbl_rtt[i] = cpu_to_be16(PHB4_RESERVED_PE_NUM(p));
 	memset(p->tbl_peltv, 0x0, p->tbl_peltv_size);
 	memset(p->tve_cache, 0x0, sizeof(p->tve_cache));
 
@@ -1795,126 +1795,139 @@ static void phb4_err_clear(struct phb4 *p)
 static void phb4_read_phb_status(struct phb4 *p,
 				 struct OpalIoPhb4ErrorData *stat)
 {
-	uint16_t val = 0;
 	uint32_t i;
-	uint64_t *pPEST;
+	__be64 *pPEST;
+	uint16_t __16;
+	uint32_t __32;
+	uint64_t __64;
 
 	memset(stat, 0, sizeof(struct OpalIoPhb4ErrorData));
 
 	/* Error data common part */
-	stat->common.version = OPAL_PHB_ERROR_DATA_VERSION_1;
-	stat->common.ioType  = OPAL_PHB_ERROR_DATA_TYPE_PHB4;
-	stat->common.len     = sizeof(struct OpalIoPhb4ErrorData);
+	stat->common.version = cpu_to_be32(OPAL_PHB_ERROR_DATA_VERSION_1);
+	stat->common.ioType  = cpu_to_be32(OPAL_PHB_ERROR_DATA_TYPE_PHB4);
+	stat->common.len     = cpu_to_be32(sizeof(struct OpalIoPhb4ErrorData));
 
 	/* Use ASB for config space if the PHB is fenced */
 	if (p->flags & PHB4_AIB_FENCED)
 		p->flags |= PHB4_CFG_USE_ASB;
 
 	/* Grab RC bridge control, make it 32-bit */
-	phb4_pcicfg_read16(&p->phb, 0, PCI_CFG_BRCTL, &val);
-	stat->brdgCtl = val;
+	phb4_pcicfg_read16(&p->phb, 0, PCI_CFG_BRCTL, &__16);
+	stat->brdgCtl = cpu_to_be32(__16);
 
 	/*
 	 * Grab various RC PCIe capability registers. All device, slot
 	 * and link status are 16-bit, so we grab the pair control+status
 	 * for each of them
 	 */
-	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_DEVCTL,
-			   &stat->deviceStatus);
-	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_SLOTCTL,
-			   &stat->slotStatus);
-	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL,
-			   &stat->linkStatus);
+	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_DEVCTL, &__32);
+	stat->deviceStatus = cpu_to_be32(__32);
+	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_SLOTCTL, &__32);
+	stat->slotStatus = cpu_to_be32(__32);
+	phb4_pcicfg_read32(&p->phb, 0, p->ecap + PCICAP_EXP_LCTL, &__32);
+	stat->linkStatus = cpu_to_be32(__32);
 
 	 /*
 	 * I assume those are the standard config space header, cmd & status
 	 * together makes 32-bit. Secondary status is 16-bit so I'll clear
 	 * the top on that one
 	 */
-	phb4_pcicfg_read32(&p->phb, 0, PCI_CFG_CMD, &stat->devCmdStatus);
-	phb4_pcicfg_read16(&p->phb, 0, PCI_CFG_SECONDARY_STATUS, &val);
-	stat->devSecStatus = val;
+	phb4_pcicfg_read32(&p->phb, 0, PCI_CFG_CMD, &__32);
+	stat->devCmdStatus = cpu_to_be32(__32);
+	phb4_pcicfg_read16(&p->phb, 0, PCI_CFG_SECONDARY_STATUS, &__16);
+	stat->devSecStatus = cpu_to_be32(__32);
 
 	/* Grab a bunch of AER regs */
-	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_RERR_STA,
-			   &stat->rootErrorStatus);
-	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_UE_STATUS,
-			   &stat->uncorrErrorStatus);
-	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_CE_STATUS,
-			   &stat->corrErrorStatus);
-	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG0,
-			   &stat->tlpHdr1);
-	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG1,
-			   &stat->tlpHdr2);
-	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG2,
-			   &stat->tlpHdr3);
-	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG3,
-			   &stat->tlpHdr4);
-	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_SRCID,
-			   &stat->sourceId);
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_RERR_STA, &__32);
+	stat->rootErrorStatus = cpu_to_be32(__32);
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_UE_STATUS, &__32);
+	stat->uncorrErrorStatus = cpu_to_be32(__32);
+
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_CE_STATUS, &__32);
+	stat->corrErrorStatus = cpu_to_be32(__32);
+
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG0, &__32);
+	stat->tlpHdr1 = cpu_to_be32(__32);
+
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG1, &__32);
+	stat->tlpHdr2 = cpu_to_be32(__32);
+
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG2, &__32);
+	stat->tlpHdr3 = cpu_to_be32(__32);
+
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_HDR_LOG3, &__32);
+	stat->tlpHdr4 = cpu_to_be32(__32);
+
+	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_SRCID, &__32);
+	stat->sourceId = cpu_to_be32(__32);
+
 
 	/* PEC NFIR, same as P8/PHB3 */
-	xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &stat->nFir);
-	xscom_read(p->chip_id, p->pe_stk_xscom + 0x3, &stat->nFirMask);
-	xscom_read(p->chip_id, p->pe_stk_xscom + 0x8, &stat->nFirWOF);
+	xscom_read(p->chip_id, p->pe_stk_xscom + 0x0, &__64);
+	stat->nFir = cpu_to_be64(__64);
+	xscom_read(p->chip_id, p->pe_stk_xscom + 0x3, &__64);
+	stat->nFirMask = cpu_to_be64(__64);
+	xscom_read(p->chip_id, p->pe_stk_xscom + 0x8, &__64);
+	stat->nFirWOF = cpu_to_be64(__64);
 
 	/* PHB4 inbound and outbound error Regs */
-	stat->phbPlssr = phb4_read_reg_asb(p, PHB_CPU_LOADSTORE_STATUS);
-	stat->phbCsr = phb4_read_reg_asb(p, PHB_DMA_CHAN_STATUS);
-	stat->lemFir = phb4_read_reg_asb(p, PHB_LEM_FIR_ACCUM);
-	stat->lemErrorMask = phb4_read_reg_asb(p, PHB_LEM_ERROR_MASK);
-	stat->lemWOF = phb4_read_reg_asb(p, PHB_LEM_WOF);
-	stat->phbErrorStatus = phb4_read_reg_asb(p, PHB_ERR_STATUS);
-	stat->phbFirstErrorStatus = phb4_read_reg_asb(p, PHB_ERR1_STATUS);
-	stat->phbErrorLog0 = phb4_read_reg_asb(p, PHB_ERR_LOG_0);
-	stat->phbErrorLog1 = phb4_read_reg_asb(p, PHB_ERR_LOG_1);
-	stat->phbTxeErrorStatus = phb4_read_reg_asb(p, PHB_TXE_ERR_STATUS);
-	stat->phbTxeFirstErrorStatus = phb4_read_reg_asb(p, PHB_TXE_ERR1_STATUS);
-	stat->phbTxeErrorLog0 = phb4_read_reg_asb(p, PHB_TXE_ERR_LOG_0);
-	stat->phbTxeErrorLog1 = phb4_read_reg_asb(p, PHB_TXE_ERR_LOG_1);
-	stat->phbRxeArbErrorStatus = phb4_read_reg_asb(p, PHB_RXE_ARB_ERR_STATUS);
-	stat->phbRxeArbFirstErrorStatus = phb4_read_reg_asb(p, PHB_RXE_ARB_ERR1_STATUS);
-	stat->phbRxeArbErrorLog0 = phb4_read_reg_asb(p, PHB_RXE_ARB_ERR_LOG_0);
-	stat->phbRxeArbErrorLog1 = phb4_read_reg_asb(p, PHB_RXE_ARB_ERR_LOG_1);
-	stat->phbRxeMrgErrorStatus = phb4_read_reg_asb(p, PHB_RXE_MRG_ERR_STATUS);
-	stat->phbRxeMrgFirstErrorStatus = phb4_read_reg_asb(p, PHB_RXE_MRG_ERR1_STATUS);
-	stat->phbRxeMrgErrorLog0 = phb4_read_reg_asb(p, PHB_RXE_MRG_ERR_LOG_0);
-	stat->phbRxeMrgErrorLog1 = phb4_read_reg_asb(p, PHB_RXE_MRG_ERR_LOG_1);
-	stat->phbRxeTceErrorStatus = phb4_read_reg_asb(p, PHB_RXE_TCE_ERR_STATUS);
-	stat->phbRxeTceFirstErrorStatus = phb4_read_reg_asb(p, PHB_RXE_TCE_ERR1_STATUS);
-	stat->phbRxeTceErrorLog0 = phb4_read_reg_asb(p, PHB_RXE_TCE_ERR_LOG_0);
-	stat->phbRxeTceErrorLog1 = phb4_read_reg_asb(p, PHB_RXE_TCE_ERR_LOG_1);
+	stat->phbPlssr = cpu_to_be64(phb4_read_reg_asb(p, PHB_CPU_LOADSTORE_STATUS));
+	stat->phbCsr = cpu_to_be64(phb4_read_reg_asb(p, PHB_DMA_CHAN_STATUS));
+	stat->lemFir = cpu_to_be64(phb4_read_reg_asb(p, PHB_LEM_FIR_ACCUM));
+	stat->lemErrorMask = cpu_to_be64(phb4_read_reg_asb(p, PHB_LEM_ERROR_MASK));
+	stat->lemWOF = cpu_to_be64(phb4_read_reg_asb(p, PHB_LEM_WOF));
+	stat->phbErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_ERR_STATUS));
+	stat->phbFirstErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_ERR1_STATUS));
+	stat->phbErrorLog0 = cpu_to_be64(phb4_read_reg_asb(p, PHB_ERR_LOG_0));
+	stat->phbErrorLog1 = cpu_to_be64(phb4_read_reg_asb(p, PHB_ERR_LOG_1));
+	stat->phbTxeErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_TXE_ERR_STATUS));
+	stat->phbTxeFirstErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_TXE_ERR1_STATUS));
+	stat->phbTxeErrorLog0 = cpu_to_be64(phb4_read_reg_asb(p, PHB_TXE_ERR_LOG_0));
+	stat->phbTxeErrorLog1 = cpu_to_be64(phb4_read_reg_asb(p, PHB_TXE_ERR_LOG_1));
+	stat->phbRxeArbErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_ARB_ERR_STATUS));
+	stat->phbRxeArbFirstErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_ARB_ERR1_STATUS));
+	stat->phbRxeArbErrorLog0 = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_ARB_ERR_LOG_0));
+	stat->phbRxeArbErrorLog1 = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_ARB_ERR_LOG_1));
+	stat->phbRxeMrgErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_MRG_ERR_STATUS));
+	stat->phbRxeMrgFirstErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_MRG_ERR1_STATUS));
+	stat->phbRxeMrgErrorLog0 = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_MRG_ERR_LOG_0));
+	stat->phbRxeMrgErrorLog1 = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_MRG_ERR_LOG_1));
+	stat->phbRxeTceErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_TCE_ERR_STATUS));
+	stat->phbRxeTceFirstErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_TCE_ERR1_STATUS));
+	stat->phbRxeTceErrorLog0 = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_TCE_ERR_LOG_0));
+	stat->phbRxeTceErrorLog1 = cpu_to_be64(phb4_read_reg_asb(p, PHB_RXE_TCE_ERR_LOG_1));
 
 	/* PHB4 REGB error registers */
-	stat->phbPblErrorStatus = phb4_read_reg_asb(p, PHB_PBL_ERR_STATUS);
-	stat->phbPblFirstErrorStatus = phb4_read_reg_asb(p, PHB_PBL_ERR1_STATUS);
-	stat->phbPblErrorLog0 = phb4_read_reg_asb(p, PHB_PBL_ERR_LOG_0);
-	stat->phbPblErrorLog1 = phb4_read_reg_asb(p, PHB_PBL_ERR_LOG_1);
+	stat->phbPblErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_PBL_ERR_STATUS));
+	stat->phbPblFirstErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_PBL_ERR1_STATUS));
+	stat->phbPblErrorLog0 = cpu_to_be64(phb4_read_reg_asb(p, PHB_PBL_ERR_LOG_0));
+	stat->phbPblErrorLog1 = cpu_to_be64(phb4_read_reg_asb(p, PHB_PBL_ERR_LOG_1));
 
-	stat->phbPcieDlpErrorStatus = phb4_read_reg_asb(p, PHB_PCIE_DLP_ERR_STATUS);
-	stat->phbPcieDlpErrorLog1 = phb4_read_reg_asb(p, PHB_PCIE_DLP_ERRLOG1);
-	stat->phbPcieDlpErrorLog2 = phb4_read_reg_asb(p, PHB_PCIE_DLP_ERRLOG2);
+	stat->phbPcieDlpErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_PCIE_DLP_ERR_STATUS));
+	stat->phbPcieDlpErrorLog1 = cpu_to_be64(phb4_read_reg_asb(p, PHB_PCIE_DLP_ERRLOG1));
+	stat->phbPcieDlpErrorLog2 = cpu_to_be64(phb4_read_reg_asb(p, PHB_PCIE_DLP_ERRLOG2));
 
-	stat->phbRegbErrorStatus = phb4_read_reg_asb(p, PHB_REGB_ERR_STATUS);
-	stat->phbRegbFirstErrorStatus = phb4_read_reg_asb(p, PHB_REGB_ERR1_STATUS);
-	stat->phbRegbErrorLog0 = phb4_read_reg_asb(p, PHB_REGB_ERR_LOG_0);
-	stat->phbRegbErrorLog1 = phb4_read_reg_asb(p, PHB_REGB_ERR_LOG_1);
+	stat->phbRegbErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_REGB_ERR_STATUS));
+	stat->phbRegbFirstErrorStatus = cpu_to_be64(phb4_read_reg_asb(p, PHB_REGB_ERR1_STATUS));
+	stat->phbRegbErrorLog0 = cpu_to_be64(phb4_read_reg_asb(p, PHB_REGB_ERR_LOG_0));
+	stat->phbRegbErrorLog1 = cpu_to_be64(phb4_read_reg_asb(p, PHB_REGB_ERR_LOG_1));
 
 	/*
 	 * Grab PESTA & B content. The error bit (bit#0) should
 	 * be fetched from IODA and the left content from memory
 	 * resident tables.
 	 */
-	 pPEST = (uint64_t *)p->tbl_pest;
+	 pPEST = (__be64 *)p->tbl_pest;
 	 phb4_ioda_sel(p, IODA3_TBL_PESTA, 0, true);
 	 for (i = 0; i < p->max_num_pes; i++) {
-		 stat->pestA[i] = phb4_read_reg_asb(p, PHB_IODA_DATA0);
+		 stat->pestA[i] = cpu_to_be64(phb4_read_reg_asb(p, PHB_IODA_DATA0));
 		 stat->pestA[i] |= pPEST[2 * i];
 	 }
 
 	 phb4_ioda_sel(p, IODA3_TBL_PESTB, 0, true);
 	 for (i = 0; i < p->max_num_pes; i++) {
-		 stat->pestB[i] = phb4_read_reg_asb(p, PHB_IODA_DATA0);
+		 stat->pestB[i] = cpu_to_be64(phb4_read_reg_asb(p, PHB_IODA_DATA0));
 		 stat->pestB[i] |= pPEST[2 * i + 1];
 	 }
 }
@@ -2064,17 +2077,17 @@ static void phb4_eeh_dump_regs(struct phb4 *p)
 	}
 	phb4_read_phb_status(p, s);
 
-	PHBERR(p, "                 brdgCtl = %08x\n", s->brdgCtl);
+	PHBERR(p, "                 brdgCtl = %08x\n", be32_to_cpu(s->brdgCtl));
 
 	/* PHB4 cfg regs */
-	PHBERR(p, "            deviceStatus = %08x\n", s->deviceStatus);
-	PHBERR(p, "              slotStatus = %08x\n", s->slotStatus);
-	PHBERR(p, "              linkStatus = %08x\n", s->linkStatus);
-	PHBERR(p, "            devCmdStatus = %08x\n", s->devCmdStatus);
-	PHBERR(p, "            devSecStatus = %08x\n", s->devSecStatus);
-	PHBERR(p, "         rootErrorStatus = %08x\n", s->rootErrorStatus);
-	PHBERR(p, "         corrErrorStatus = %08x\n", s->corrErrorStatus);
-	PHBERR(p, "       uncorrErrorStatus = %08x\n", s->uncorrErrorStatus);
+	PHBERR(p, "            deviceStatus = %08x\n", be32_to_cpu(s->deviceStatus));
+	PHBERR(p, "              slotStatus = %08x\n", be32_to_cpu(s->slotStatus));
+	PHBERR(p, "              linkStatus = %08x\n", be32_to_cpu(s->linkStatus));
+	PHBERR(p, "            devCmdStatus = %08x\n", be32_to_cpu(s->devCmdStatus));
+	PHBERR(p, "            devSecStatus = %08x\n", be32_to_cpu(s->devSecStatus));
+	PHBERR(p, "         rootErrorStatus = %08x\n", be32_to_cpu(s->rootErrorStatus));
+	PHBERR(p, "         corrErrorStatus = %08x\n", be32_to_cpu(s->corrErrorStatus));
+	PHBERR(p, "       uncorrErrorStatus = %08x\n", be32_to_cpu(s->uncorrErrorStatus));
 
 	/* Two non OPAL API registers that are useful */
 	phb4_pcicfg_read16(&p->phb, 0, p->ecap + PCICAP_EXP_DEVCTL, &reg);
@@ -2084,57 +2097,57 @@ static void phb4_eeh_dump_regs(struct phb4 *p)
 	PHBERR(p, "                 devStat = %08x\n", reg);
 
 	/* Byte swap TLP headers so they are the same as the PCIe spec */
-	PHBERR(p, "                 tlpHdr1 = %08x\n", bswap_32(s->tlpHdr1));
-	PHBERR(p, "                 tlpHdr2 = %08x\n", bswap_32(s->tlpHdr2));
-	PHBERR(p, "                 tlpHdr3 = %08x\n", bswap_32(s->tlpHdr3));
-	PHBERR(p, "                 tlpHdr4 = %08x\n", bswap_32(s->tlpHdr4));
-	PHBERR(p, "                sourceId = %08x\n", s->sourceId);
-	PHBERR(p, "                    nFir = %016llx\n", s->nFir);
-	PHBERR(p, "                nFirMask = %016llx\n", s->nFirMask);
-	PHBERR(p, "                 nFirWOF = %016llx\n", s->nFirWOF);
-	PHBERR(p, "                phbPlssr = %016llx\n", s->phbPlssr);
-	PHBERR(p, "                  phbCsr = %016llx\n", s->phbCsr);
-	PHBERR(p, "                  lemFir = %016llx\n", s->lemFir);
-	PHBERR(p, "            lemErrorMask = %016llx\n", s->lemErrorMask);
-	PHBERR(p, "                  lemWOF = %016llx\n", s->lemWOF);
-	PHBERR(p, "          phbErrorStatus = %016llx\n", s->phbErrorStatus);
-	PHBERR(p, "     phbFirstErrorStatus = %016llx\n", s->phbFirstErrorStatus);
-	PHBERR(p, "            phbErrorLog0 = %016llx\n", s->phbErrorLog0);
-	PHBERR(p, "            phbErrorLog1 = %016llx\n", s->phbErrorLog1);
-	PHBERR(p, "       phbTxeErrorStatus = %016llx\n", s->phbTxeErrorStatus);
-	PHBERR(p, "  phbTxeFirstErrorStatus = %016llx\n", s->phbTxeFirstErrorStatus);
-	PHBERR(p, "         phbTxeErrorLog0 = %016llx\n", s->phbTxeErrorLog0);
-	PHBERR(p, "         phbTxeErrorLog1 = %016llx\n", s->phbTxeErrorLog1);
-	PHBERR(p, "    phbRxeArbErrorStatus = %016llx\n", s->phbRxeArbErrorStatus);
-	PHBERR(p, "phbRxeArbFrstErrorStatus = %016llx\n", s->phbRxeArbFirstErrorStatus);
-	PHBERR(p, "      phbRxeArbErrorLog0 = %016llx\n", s->phbRxeArbErrorLog0);
-	PHBERR(p, "      phbRxeArbErrorLog1 = %016llx\n", s->phbRxeArbErrorLog1);
-	PHBERR(p, "    phbRxeMrgErrorStatus = %016llx\n", s->phbRxeMrgErrorStatus);
-	PHBERR(p, "phbRxeMrgFrstErrorStatus = %016llx\n", s->phbRxeMrgFirstErrorStatus);
-	PHBERR(p, "      phbRxeMrgErrorLog0 = %016llx\n", s->phbRxeMrgErrorLog0);
-	PHBERR(p, "      phbRxeMrgErrorLog1 = %016llx\n", s->phbRxeMrgErrorLog1);
-	PHBERR(p, "    phbRxeTceErrorStatus = %016llx\n", s->phbRxeTceErrorStatus);
-	PHBERR(p, "phbRxeTceFrstErrorStatus = %016llx\n", s->phbRxeTceFirstErrorStatus);
-	PHBERR(p, "      phbRxeTceErrorLog0 = %016llx\n", s->phbRxeTceErrorLog0);
-	PHBERR(p, "      phbRxeTceErrorLog1 = %016llx\n", s->phbRxeTceErrorLog1);
-	PHBERR(p, "       phbPblErrorStatus = %016llx\n", s->phbPblErrorStatus);
-	PHBERR(p, "  phbPblFirstErrorStatus = %016llx\n", s->phbPblFirstErrorStatus);
-	PHBERR(p, "         phbPblErrorLog0 = %016llx\n", s->phbPblErrorLog0);
-	PHBERR(p, "         phbPblErrorLog1 = %016llx\n", s->phbPblErrorLog1);
-	PHBERR(p, "     phbPcieDlpErrorLog1 = %016llx\n", s->phbPcieDlpErrorLog1);
-	PHBERR(p, "     phbPcieDlpErrorLog2 = %016llx\n", s->phbPcieDlpErrorLog2);
-	PHBERR(p, "   phbPcieDlpErrorStatus = %016llx\n", s->phbPcieDlpErrorStatus);
+	PHBERR(p, "                 tlpHdr1 = %08x\n", cpu_to_le32(be32_to_cpu(s->tlpHdr1)));
+	PHBERR(p, "                 tlpHdr2 = %08x\n", cpu_to_le32(be32_to_cpu(s->tlpHdr2)));
+	PHBERR(p, "                 tlpHdr3 = %08x\n", cpu_to_le32(be32_to_cpu(s->tlpHdr3)));
+	PHBERR(p, "                 tlpHdr4 = %08x\n", cpu_to_le32(be32_to_cpu(s->tlpHdr4)));
+	PHBERR(p, "                sourceId = %08x\n", be32_to_cpu(s->sourceId));
+	PHBERR(p, "                    nFir = %016llx\n", be64_to_cpu(s->nFir));
+	PHBERR(p, "                nFirMask = %016llx\n", be64_to_cpu(s->nFirMask));
+	PHBERR(p, "                 nFirWOF = %016llx\n", be64_to_cpu(s->nFirWOF));
+	PHBERR(p, "                phbPlssr = %016llx\n", be64_to_cpu(s->phbPlssr));
+	PHBERR(p, "                  phbCsr = %016llx\n", be64_to_cpu(s->phbCsr));
+	PHBERR(p, "                  lemFir = %016llx\n", be64_to_cpu(s->lemFir));
+	PHBERR(p, "            lemErrorMask = %016llx\n", be64_to_cpu(s->lemErrorMask));
+	PHBERR(p, "                  lemWOF = %016llx\n", be64_to_cpu(s->lemWOF));
+	PHBERR(p, "          phbErrorStatus = %016llx\n", be64_to_cpu(s->phbErrorStatus));
+	PHBERR(p, "     phbFirstErrorStatus = %016llx\n", be64_to_cpu(s->phbFirstErrorStatus));
+	PHBERR(p, "            phbErrorLog0 = %016llx\n", be64_to_cpu(s->phbErrorLog0));
+	PHBERR(p, "            phbErrorLog1 = %016llx\n", be64_to_cpu(s->phbErrorLog1));
+	PHBERR(p, "       phbTxeErrorStatus = %016llx\n", be64_to_cpu(s->phbTxeErrorStatus));
+	PHBERR(p, "  phbTxeFirstErrorStatus = %016llx\n", be64_to_cpu(s->phbTxeFirstErrorStatus));
+	PHBERR(p, "         phbTxeErrorLog0 = %016llx\n", be64_to_cpu(s->phbTxeErrorLog0));
+	PHBERR(p, "         phbTxeErrorLog1 = %016llx\n", be64_to_cpu(s->phbTxeErrorLog1));
+	PHBERR(p, "    phbRxeArbErrorStatus = %016llx\n", be64_to_cpu(s->phbRxeArbErrorStatus));
+	PHBERR(p, "phbRxeArbFrstErrorStatus = %016llx\n", be64_to_cpu(s->phbRxeArbFirstErrorStatus));
+	PHBERR(p, "      phbRxeArbErrorLog0 = %016llx\n", be64_to_cpu(s->phbRxeArbErrorLog0));
+	PHBERR(p, "      phbRxeArbErrorLog1 = %016llx\n", be64_to_cpu(s->phbRxeArbErrorLog1));
+	PHBERR(p, "    phbRxeMrgErrorStatus = %016llx\n", be64_to_cpu(s->phbRxeMrgErrorStatus));
+	PHBERR(p, "phbRxeMrgFrstErrorStatus = %016llx\n", be64_to_cpu(s->phbRxeMrgFirstErrorStatus));
+	PHBERR(p, "      phbRxeMrgErrorLog0 = %016llx\n", be64_to_cpu(s->phbRxeMrgErrorLog0));
+	PHBERR(p, "      phbRxeMrgErrorLog1 = %016llx\n", be64_to_cpu(s->phbRxeMrgErrorLog1));
+	PHBERR(p, "    phbRxeTceErrorStatus = %016llx\n", be64_to_cpu(s->phbRxeTceErrorStatus));
+	PHBERR(p, "phbRxeTceFrstErrorStatus = %016llx\n", be64_to_cpu(s->phbRxeTceFirstErrorStatus));
+	PHBERR(p, "      phbRxeTceErrorLog0 = %016llx\n", be64_to_cpu(s->phbRxeTceErrorLog0));
+	PHBERR(p, "      phbRxeTceErrorLog1 = %016llx\n", be64_to_cpu(s->phbRxeTceErrorLog1));
+	PHBERR(p, "       phbPblErrorStatus = %016llx\n", be64_to_cpu(s->phbPblErrorStatus));
+	PHBERR(p, "  phbPblFirstErrorStatus = %016llx\n", be64_to_cpu(s->phbPblFirstErrorStatus));
+	PHBERR(p, "         phbPblErrorLog0 = %016llx\n", be64_to_cpu(s->phbPblErrorLog0));
+	PHBERR(p, "         phbPblErrorLog1 = %016llx\n", be64_to_cpu(s->phbPblErrorLog1));
+	PHBERR(p, "     phbPcieDlpErrorLog1 = %016llx\n", be64_to_cpu(s->phbPcieDlpErrorLog1));
+	PHBERR(p, "     phbPcieDlpErrorLog2 = %016llx\n", be64_to_cpu(s->phbPcieDlpErrorLog2));
+	PHBERR(p, "   phbPcieDlpErrorStatus = %016llx\n", be64_to_cpu(s->phbPcieDlpErrorStatus));
 
-	PHBERR(p, "      phbRegbErrorStatus = %016llx\n", s->phbRegbErrorStatus);
-	PHBERR(p, " phbRegbFirstErrorStatus = %016llx\n", s->phbRegbFirstErrorStatus);
-	PHBERR(p, "        phbRegbErrorLog0 = %016llx\n", s->phbRegbErrorLog0);
-	PHBERR(p, "        phbRegbErrorLog1 = %016llx\n", s->phbRegbErrorLog1);
+	PHBERR(p, "      phbRegbErrorStatus = %016llx\n", be64_to_cpu(s->phbRegbErrorStatus));
+	PHBERR(p, " phbRegbFirstErrorStatus = %016llx\n", be64_to_cpu(s->phbRegbFirstErrorStatus));
+	PHBERR(p, "        phbRegbErrorLog0 = %016llx\n", be64_to_cpu(s->phbRegbErrorLog0));
+	PHBERR(p, "        phbRegbErrorLog1 = %016llx\n", be64_to_cpu(s->phbRegbErrorLog1));
 
 	for (i = 0; i < p->max_num_pes; i++) {
 		if (!s->pestA[i] && !s->pestB[i])
 			continue;
 		PHBERR(p, "               PEST[%03x] = %016llx %016llx\n",
-		       i, s->pestA[i], s->pestB[i]);
+		       i, be64_to_cpu(s->pestA[i]), be64_to_cpu(s->pestB[i]));
 	}
 	free(s);
 }
@@ -2178,7 +2191,7 @@ static int64_t phb4_set_pe(struct phb *phb,
 	/* Map or unmap the RTT range */
 	for (idx = 0; idx < RTT_TABLE_ENTRIES; idx++)
 		if ((idx & mask) == (bdfn & mask))
-			p->tbl_rtt[idx] = pe_number;
+			p->tbl_rtt[idx] = cpu_to_be16(pe_number);
 
 	/* Invalidate the RID Translation Cache (RTC) inside the PHB */
 	out_be64(p->regs + PHB_RTC_INVALIDATE, PHB_RTC_INVALIDATE_ALL);
@@ -3490,14 +3503,15 @@ static struct pci_slot *phb4_slot_create(struct phb *phb)
 
 static uint64_t phb4_get_pesta(struct phb4 *p, uint64_t pe_number)
 {
-	uint64_t pesta, *pPEST;
+	uint64_t pesta;
+	__be64 *pPEST;
 
-	pPEST = (uint64_t *)p->tbl_pest;
+	pPEST = (__be64 *)p->tbl_pest;
 
 	phb4_ioda_sel(p, IODA3_TBL_PESTA, pe_number, false);
 	pesta = phb4_read_reg(p, PHB_IODA_DATA0);
 	if (pesta & IODA3_PESTA_MMIO_FROZEN)
-		pesta |= pPEST[2*pe_number];
+		pesta |= be64_to_cpu(pPEST[2*pe_number]);
 
 	return pesta;
 }
@@ -3855,13 +3869,13 @@ static int64_t phb4_err_inject_cfg(struct phb4 *phb, uint64_t pe_number,
 	ctrl = PHB_PAPR_ERR_INJ_CTL_CFG;
 
 	for (bdfn = 0; bdfn < RTT_TABLE_ENTRIES; bdfn++) {
-		if (phb->tbl_rtt[bdfn] != pe_number)
+		if (be16_to_cpu(phb->tbl_rtt[bdfn]) != pe_number)
 			continue;
 
 		/* The PE can be associated with PCI bus or device */
 		is_bus_pe = false;
 		if ((bdfn + 8) < RTT_TABLE_ENTRIES &&
-		    phb->tbl_rtt[bdfn + 8] == pe_number)
+		    be16_to_cpu(phb->tbl_rtt[bdfn + 8]) == pe_number)
 			is_bus_pe = true;
 
 		/* Figure out the PCI config address */
@@ -5392,7 +5406,7 @@ static void phb4_allocate_tables(struct phb4 *p)
 	p->tbl_rtt = local_alloc(p->chip_id, RTT_TABLE_SIZE, RTT_TABLE_SIZE);
 	assert(p->tbl_rtt);
 	for (i = 0; i < RTT_TABLE_ENTRIES; i++)
-		p->tbl_rtt[i] = PHB4_RESERVED_PE_NUM(p);
+		p->tbl_rtt[i] = cpu_to_be16(PHB4_RESERVED_PE_NUM(p));
 
 	p->tbl_peltv = local_alloc(p->chip_id, p->tbl_peltv_size, p->tbl_peltv_size);
 	assert(p->tbl_peltv);
@@ -5530,11 +5544,11 @@ static bool phb4_calculate_windows(struct phb4 *p)
 				   "ibm,mmio-windows", -1);
 	assert(prop->len >= (2 * sizeof(uint64_t)));
 
-	p->mm0_base = ((const uint64_t *)prop->prop)[0];
-	p->mm0_size = ((const uint64_t *)prop->prop)[1];
+	p->mm0_base = be64_to_cpu(((__be64 *)prop->prop)[0]);
+	p->mm0_size = be64_to_cpu(((__be64 *)prop->prop)[1]);
 	if (prop->len > 16) {
-		p->mm1_base = ((const uint64_t *)prop->prop)[2];
-		p->mm1_size = ((const uint64_t *)prop->prop)[3];
+		p->mm1_base = be64_to_cpu(((__be64 *)prop->prop)[2]);
+		p->mm1_size = be64_to_cpu(((__be64 *)prop->prop)[3]);
 	}
 
 	/* Sort them so that 0 is big and 1 is small */
@@ -5606,16 +5620,12 @@ static const struct irq_source_ops phb4_lsi_ops = {
 	.attributes = phb4_lsi_attributes,
 };
 
-#ifdef HAVE_BIG_ENDIAN
-static u64 lane_eq_default[8] = {
-	0x5454545454545454UL, 0x5454545454545454UL,
-	0x5454545454545454UL, 0x5454545454545454UL,
-	0x7777777777777777UL, 0x7777777777777777UL,
-	0x7777777777777777UL, 0x7777777777777777UL
+static __be64 lane_eq_default[8] = {
+	CPU_TO_BE64(0x5454545454545454UL), CPU_TO_BE64(0x5454545454545454UL),
+	CPU_TO_BE64(0x5454545454545454UL), CPU_TO_BE64(0x5454545454545454UL),
+	CPU_TO_BE64(0x7777777777777777UL), CPU_TO_BE64(0x7777777777777777UL),
+	CPU_TO_BE64(0x7777777777777777UL), CPU_TO_BE64(0x7777777777777777UL),
 };
-#else
-#error lane_eq_default needs to be big endian (device tree property)
-#endif
 
 static void phb4_create(struct dt_node *np)
 {
@@ -5650,11 +5660,11 @@ static void phb4_create(struct dt_node *np)
 
 	/* Get the various XSCOM register bases from the device-tree */
 	prop = dt_require_property(np, "ibm,xscom-bases", 5 * sizeof(uint32_t));
-	p->pe_xscom = ((const uint32_t *)prop->prop)[0];
-	p->pe_stk_xscom = ((const uint32_t *)prop->prop)[1];
-	p->pci_xscom = ((const uint32_t *)prop->prop)[2];
-	p->pci_stk_xscom = ((const uint32_t *)prop->prop)[3];
-	p->etu_xscom = ((const uint32_t *)prop->prop)[4];
+	p->pe_xscom = be32_to_cpu(((__be32 *)prop->prop)[0]);
+	p->pe_stk_xscom = be32_to_cpu(((__be32 *)prop->prop)[1]);
+	p->pci_xscom = be32_to_cpu(((__be32 *)prop->prop)[2]);
+	p->pci_stk_xscom = be32_to_cpu(((__be32 *)prop->prop)[3]);
+	p->etu_xscom = be32_to_cpu(((__be32 *)prop->prop)[4]);
 
 	/*
 	 * We skip the initial PERST assertion requested by the generic code
@@ -5817,7 +5827,7 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	uint64_t mmio1_bar = 0, mmio1_bmask, mmio1_sz;
 	uint64_t reg[4];
 	void *foo;
-	uint64_t mmio_win[4];
+	__be64 mmio_win[4];
 	unsigned int mmio_win_sz;
 	struct dt_node *np;
 	char *path;
@@ -5877,13 +5887,13 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	/* Build MMIO windows list */
 	mmio_win_sz = 0;
 	if (mmio0_bar) {
-		mmio_win[mmio_win_sz++] = mmio0_bar;
-		mmio_win[mmio_win_sz++] = mmio0_sz;
+		mmio_win[mmio_win_sz++] = cpu_to_be64(mmio0_bar);
+		mmio_win[mmio_win_sz++] = cpu_to_be64(mmio0_sz);
 		bar_en |= XPEC_NEST_STK_BAR_EN_MMIO0;
 	}
 	if (mmio1_bar) {
-		mmio_win[mmio_win_sz++] = mmio1_bar;
-		mmio_win[mmio_win_sz++] = mmio1_sz;
+		mmio_win[mmio_win_sz++] = cpu_to_be64(mmio1_bar);
+		mmio_win[mmio_win_sz++] = cpu_to_be64(mmio1_sz);
 		bar_en |= XPEC_NEST_STK_BAR_EN_MMIO1;
 	}
 
@@ -5913,12 +5923,12 @@ static void phb4_probe_stack(struct dt_node *stk_node, uint32_t pec_index,
 	prlog_once(PR_DEBUG, "Version reg: 0x%016llx\n", in_be64(foo));
 
 	/* Create PHB node */
-	reg[0] = phb_bar;
-	reg[1] = 0x1000;
-	reg[2] = irq_bar;
-	reg[3] = 0x10000000;
+	reg[0] = cpu_to_be64(phb_bar);
+	reg[1] = cpu_to_be64(0x1000);
+	reg[2] = cpu_to_be64(irq_bar);
+	reg[3] = cpu_to_be64(0x10000000);
 
-	np = dt_new_addr(dt_root, "pciex", reg[0]);
+	np = dt_new_addr(dt_root, "pciex", phb_bar);
 	if (!np)
 		return;
 

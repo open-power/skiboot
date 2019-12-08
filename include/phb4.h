@@ -183,7 +183,7 @@ struct phb4 {
 	uint64_t		creset_start_time;
 
 	/* SkiBoot owned in-memory tables */
-	uint16_t		*tbl_rtt;
+	__be16			*tbl_rtt;
 	uint8_t			*tbl_peltv;
 	uint64_t		tbl_peltv_size;
 	uint64_t		tbl_pest;
