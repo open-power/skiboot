@@ -138,6 +138,8 @@ int64_t i2c_request_sync(struct i2c_request *req)
 	uint64_t timer_period = msecs_to_tb(5), timer_count;
 	uint64_t time_to_wait = 0;
 	int64_t rc, waited, retries;
+	size_t i, count;
+	char buf[17]; /* 8 bytes in hex + NUL */
 
 	for (retries = 0; retries <= MAX_NACK_RETRIES; retries++) {
 		waited = 0;
@@ -175,10 +177,16 @@ int64_t i2c_request_sync(struct i2c_request *req)
 		req->req_state = i2c_req_new;
 	}
 
-	prlog(PR_DEBUG, "I2C: %s req op=%x offset=%x buf=%016llx buflen=%d "
+	count = 0;
+	for (i = 0; i < req->rw_len && count < sizeof(buf); i++) {
+		count += snprintf(buf+count, sizeof(buf)-count, "%02x",
+				*(unsigned char *)(req->rw_buf+i));
+	}
+
+	prlog(PR_DEBUG, "I2C: %s req op=%x offset=%x buf=%s buflen=%d "
 	      "delay=%lu/%lld rc=%lld\n",
 	      (rc) ? "!!!!" : "----", req->op, req->offset,
-	      *(uint64_t*) req->rw_buf, req->rw_len, tb_to_msecs(waited), req->timeout, rc);
+	      buf, req->rw_len, tb_to_msecs(waited), req->timeout, rc);
 
 	return rc;
 }
