@@ -192,7 +192,7 @@ static void ipmi_init_esel_record(void)
 {
 	memset(&sel_record, 0, sizeof(struct sel_record));
 	sel_record.record_type = SEL_REC_TYPE_AMI_ESEL;
-	sel_record.generator_id = SEL_GENERATOR_ID_AMI;
+	sel_record.generator_id = cpu_to_le16(SEL_GENERATOR_ID_AMI);
 	sel_record.evm_ver = SEL_EVM_VER_2;
 	sel_record.sensor_type	= SENSOR_TYPE_SYS_EVENT;
 	sel_record.sensor_number =
