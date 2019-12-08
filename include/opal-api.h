@@ -1236,9 +1236,9 @@ enum opal_mpipl_tags {
 
 /* Preserved memory details */
 struct opal_mpipl_region {
-	u64	src;
-	u64	dest;
-	u64	size;
+	__be64	src;
+	__be64	dest;
+	__be64	size;
 };
 
 /* Structure version */
@@ -1247,10 +1247,10 @@ struct opal_mpipl_region {
 struct opal_mpipl_fadump {
 	u8	version;
 	u8	reserved[7];
-	u32	crashing_pir;	/* OPAL crashing CPU PIR */
-	u32	cpu_data_version;
-	u32	cpu_data_size;
-	u32	region_cnt;
+	__be32	crashing_pir;	/* OPAL crashing CPU PIR */
+	__be32	cpu_data_version;
+	__be32	cpu_data_size;
+	__be32	region_cnt;
 	struct	opal_mpipl_region region[];
 };
 

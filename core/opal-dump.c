@@ -68,18 +68,18 @@ static int opal_mpipl_max_tags = MAX_OPAL_MPIPL_TAGS;
 
 static int opal_mpipl_add_entry(u8 region, u64 src, u64 dest, u64 size)
 {
-	int i, max_cnt;
+	int i;
+	int mdst_cnt = be16_to_cpu(ntuple_mdst->act_cnt);
+	int mddt_cnt = be16_to_cpu(ntuple_mddt->act_cnt);
 	struct mdst_table *mdst;
 	struct mddt_table *mddt;
 
-	max_cnt = MDST_TABLE_SIZE / sizeof(struct mdst_table);
-	if (ntuple_mdst->act_cnt >= max_cnt) {
+	if (mdst_cnt >= MDST_TABLE_SIZE / sizeof(struct mdst_table)) {
 		prlog(PR_DEBUG, "MDST table is full\n");
 		return OPAL_RESOURCE;
 	}
 
-	max_cnt = MDDT_TABLE_SIZE / sizeof(struct mddt_table);
-	if (ntuple_mdst->act_cnt >= max_cnt) {
+	if (mddt_cnt >= MDDT_TABLE_SIZE / sizeof(struct mddt_table)) {
 		prlog(PR_DEBUG, "MDDT table is full\n");
 		return OPAL_RESOURCE;
 	}
@@ -89,16 +89,16 @@ static int opal_mpipl_add_entry(u8 region, u64 src, u64 dest, u64 size)
 	mddt = (void *)(MDDT_TABLE_BASE);
 
 	/* Check for duplicate entry */
-	for (i = 0; i < ntuple_mdst->act_cnt; i++) {
-		if (mdst->addr == (src | HRMOR_BIT)) {
+	for (i = 0; i < mdst_cnt; i++) {
+		if (be64_to_cpu(mdst->addr) == (src | HRMOR_BIT)) {
 			prlog(PR_DEBUG,
 			      "Duplicate source address : 0x%llx", src);
 			return OPAL_PARAMETER;
 		}
 		mdst++;
 	}
-	for (i = 0; i < ntuple_mddt->act_cnt; i++) {
-		if (mddt->addr == (dest | HRMOR_BIT)) {
+	for (i = 0; i < mddt_cnt; i++) {
+		if (be64_to_cpu(mddt->addr) == (dest | HRMOR_BIT)) {
 			prlog(PR_DEBUG,
 			      "Duplicate destination address : 0x%llx", dest);
 			return OPAL_PARAMETER;
@@ -107,16 +107,16 @@ static int opal_mpipl_add_entry(u8 region, u64 src, u64 dest, u64 size)
 	}
 
 	/* Add OPAL source address to MDST entry */
-	mdst->addr = src | HRMOR_BIT;
+	mdst->addr = cpu_to_be64(src | HRMOR_BIT);
 	mdst->data_region = region;
-	mdst->size = size;
-	ntuple_mdst->act_cnt++;
+	mdst->size = cpu_to_be32(size);
+	ntuple_mdst->act_cnt = cpu_to_be16(mdst_cnt + 1);
 
 	/* Add OPAL destination address to MDDT entry */
-	mddt->addr = dest | HRMOR_BIT;
+	mddt->addr = cpu_to_be64(dest | HRMOR_BIT);
 	mddt->data_region = region;
-	mddt->size = size;
-	ntuple_mddt->act_cnt++;
+	mddt->size = cpu_to_be32(size);
+	ntuple_mddt->act_cnt = cpu_to_be16(mddt_cnt + 1);
 
 	prlog(PR_TRACE, "Added new entry. src : 0x%llx, dest : 0x%llx,"
 	      " size : 0x%llx\n", src, dest, size);
@@ -128,17 +128,19 @@ static int opal_mpipl_remove_entry_mdst(bool remove_all, u8 region, u64 src)
 {
 	bool found = false;
 	int i, j;
+	int mdst_cnt = be16_to_cpu(ntuple_mdst->act_cnt);
 	struct mdst_table *tmp_mdst;
 	struct mdst_table *mdst = (void *)(MDST_TABLE_BASE);
 
-	for (i = 0; i < ntuple_mdst->act_cnt;) {
+	for (i = 0; i < mdst_cnt;) {
 		if (mdst->data_region != region) {
 			mdst++;
 			i++;
 			continue;
 		}
 
-		if (remove_all != true && mdst->addr != (src | HRMOR_BIT)) {
+		if (remove_all != true &&
+				be64_to_cpu(mdst->addr) != (src | HRMOR_BIT)) {
 			mdst++;
 			i++;
 			continue;
@@ -147,20 +149,22 @@ static int opal_mpipl_remove_entry_mdst(bool remove_all, u8 region, u64 src)
 		tmp_mdst = mdst;
 		memset(tmp_mdst, 0, sizeof(struct mdst_table));
 
-		for (j = i; j < ntuple_mdst->act_cnt - 1; j++) {
+		for (j = i; j < mdst_cnt - 1; j++) {
 			memcpy((void *)tmp_mdst,
 			       (void *)(tmp_mdst + 1), sizeof(struct mdst_table));
 			tmp_mdst++;
 			memset(tmp_mdst, 0, sizeof(struct mdst_table));
 		}
 
-		ntuple_mdst->act_cnt--;
+		mdst_cnt--;
 
 		if (remove_all == false) {
 			found = true;
 			break;
 		}
 	}  /* end - for loop */
+
+	ntuple_mdst->act_cnt = cpu_to_be16((u16)mdst_cnt);
 
 	if (remove_all == false && found == false) {
 		prlog(PR_DEBUG,
@@ -176,17 +180,19 @@ static int opal_mpipl_remove_entry_mddt(bool remove_all, u8 region, u64 dest)
 {
 	bool found = false;
 	int i, j;
+	int mddt_cnt = be16_to_cpu(ntuple_mddt->act_cnt);
 	struct mddt_table *tmp_mddt;
 	struct mddt_table *mddt = (void *)(MDDT_TABLE_BASE);
 
-	for (i = 0; i < ntuple_mddt->act_cnt;) {
+	for (i = 0; i < mddt_cnt;) {
 		if (mddt->data_region != region) {
 			mddt++;
 			i++;
 			continue;
 		}
 
-		if (remove_all != true && mddt->addr != (dest | HRMOR_BIT)) {
+		if (remove_all != true &&
+				be64_to_cpu(mddt->addr) != (dest | HRMOR_BIT)) {
 			mddt++;
 			i++;
 			continue;
@@ -195,20 +201,22 @@ static int opal_mpipl_remove_entry_mddt(bool remove_all, u8 region, u64 dest)
 		tmp_mddt = mddt;
 		memset(tmp_mddt, 0, sizeof(struct mddt_table));
 
-		for (j = i; j < ntuple_mddt->act_cnt - 1; j++) {
+		for (j = i; j < mddt_cnt - 1; j++) {
 			memcpy((void *)tmp_mddt,
 			       (void *)(tmp_mddt + 1), sizeof(struct mddt_table));
 			tmp_mddt++;
 			memset(tmp_mddt, 0, sizeof(struct mddt_table));
 		}
 
-		ntuple_mddt->act_cnt--;
+		mddt_cnt--;
 
 		if (remove_all == false) {
 			found = true;
 			break;
 		}
 	}  /* end - for loop */
+
+	ntuple_mddt->act_cnt = cpu_to_be16((u16)mddt_cnt);
 
 	if (remove_all == false && found == false) {
 		prlog(PR_DEBUG,
@@ -258,8 +266,8 @@ static void opal_mpipl_register(void)
 	/* Reserve memory used to capture architected register state */
 	mem_reserve_fw("ibm,firmware-arch-registers",
 		       arch_regs_dest, arch_regs_size);
-	proc_dump->alloc_addr = arch_regs_dest | HRMOR_BIT;
-	proc_dump->alloc_size = arch_regs_size;
+	proc_dump->alloc_addr = cpu_to_be64(arch_regs_dest | HRMOR_BIT);
+	proc_dump->alloc_size = cpu_to_be32(arch_regs_size);
 	prlog(PR_NOTICE, "Architected register dest addr : 0x%llx, "
 	      "size : 0x%llx\n", arch_regs_dest, arch_regs_size);
 }
@@ -339,7 +347,7 @@ static int64_t opal_mpipl_update(enum opal_mpipl_ops ops,
 		/* Clear MDRT table */
 		memset((void *)MDRT_TABLE_BASE, 0, MDRT_TABLE_SIZE);
 		/* Set MDRT count to max allocated count */
-		ntuple_mdrt->act_cnt = MDRT_TABLE_SIZE / sizeof(struct mdrt_table);
+		ntuple_mdrt->act_cnt = cpu_to_be16(MDRT_TABLE_SIZE / sizeof(struct mdrt_table));
 		rc = OPAL_SUCCESS;
 		prlog(PR_NOTICE, "Payload Invalidated MPIPL\n");
 		break;
@@ -380,8 +388,7 @@ static int64_t opal_mpipl_register_tag(enum opal_mpipl_tags tag,
 	return rc;
 }
 
-static uint64_t opal_mpipl_query_tag(enum opal_mpipl_tags tag,
-				     uint64_t *tag_val)
+static uint64_t opal_mpipl_query_tag(enum opal_mpipl_tags tag, __be64 *tag_val)
 {
 	if (!opal_addr_valid(tag_val)) {
 		prlog(PR_DEBUG, "Invalid tag address\n");
@@ -391,7 +398,7 @@ static uint64_t opal_mpipl_query_tag(enum opal_mpipl_tags tag,
 	if (tag >= opal_mpipl_max_tags)
 		return OPAL_PARAMETER;
 
-	*tag_val = opal_mpipl_tags[tag];
+	*tag_val = cpu_to_be64(opal_mpipl_tags[tag]);
 	return OPAL_SUCCESS;
 }
 
@@ -426,13 +433,13 @@ static void post_mpipl_arch_regs_data(void)
 
 	/* Fill CPU register details */
 	opal_mpipl_cpu_data->version = OPAL_MPIPL_VERSION;
-	opal_mpipl_cpu_data->cpu_data_version = proc_dump->version;
+	opal_mpipl_cpu_data->cpu_data_version = cpu_to_be32((u32)proc_dump->version);
 	opal_mpipl_cpu_data->cpu_data_size = proc_dump->thread_size;
 	opal_mpipl_cpu_data->region_cnt = cpu_to_be32(1);
 
-	opal_mpipl_cpu_data->region[0].src  = proc_dump->dest_addr & ~(HRMOR_BIT);
-	opal_mpipl_cpu_data->region[0].dest = proc_dump->dest_addr & ~(HRMOR_BIT);
-	opal_mpipl_cpu_data->region[0].size = proc_dump->act_size;
+	opal_mpipl_cpu_data->region[0].src  = proc_dump->dest_addr & ~(cpu_to_be64(HRMOR_BIT));
+	opal_mpipl_cpu_data->region[0].dest = proc_dump->dest_addr & ~(cpu_to_be64(HRMOR_BIT));
+	opal_mpipl_cpu_data->region[0].size = cpu_to_be64(be32_to_cpu(proc_dump->act_size));
 
 	/* Update tag */
 	opal_mpipl_tags[OPAL_MPIPL_TAG_CPU] = (u64)opal_mpipl_cpu_data;
@@ -442,7 +449,7 @@ static void post_mpipl_get_opal_data(void)
 {
 	struct mdrt_table *mdrt = (void *)(MDRT_TABLE_BASE);
 	int i, j = 0, count = 0;
-	u32 mdrt_cnt = ntuple_mdrt->act_cnt;
+	int mdrt_cnt = be16_to_cpu(ntuple_mdrt->act_cnt);
 	struct opal_mpipl_region *region;
 
 	/* Count OPAL dump regions */
@@ -466,8 +473,8 @@ static void post_mpipl_get_opal_data(void)
 
 	/* Fill OPAL dump details */
 	opal_mpipl_data->version = OPAL_MPIPL_VERSION;
-	opal_mpipl_data->crashing_pir = mpipl_metadata->crashing_pir;
-	opal_mpipl_data->region_cnt = count;
+	opal_mpipl_data->crashing_pir = cpu_to_be32(mpipl_metadata->crashing_pir);
+	opal_mpipl_data->region_cnt = cpu_to_be32(count);
 	region = opal_mpipl_data->region;
 
 	mdrt = (void *)(MDRT_TABLE_BASE);
@@ -477,13 +484,14 @@ static void post_mpipl_get_opal_data(void)
 			continue;
 		}
 
-		region[j].src  = mdrt->src_addr  & ~(HRMOR_BIT);
-		region[j].dest = mdrt->dest_addr & ~(HRMOR_BIT);
-		region[j].size = mdrt->size;
+		region[j].src  = mdrt->src_addr  & ~(cpu_to_be64(HRMOR_BIT));
+		region[j].dest = mdrt->dest_addr & ~(cpu_to_be64(HRMOR_BIT));
+		region[j].size = cpu_to_be64(be32_to_cpu(mdrt->size));
 
 		prlog(PR_NOTICE, "OPAL reserved region %d - src : 0x%llx, "
-		      "dest : 0x%llx, size : 0x%llx\n", j, region[j].src,
-		      region[j].dest, region[j].size);
+		      "dest : 0x%llx, size : 0x%llx\n", j,
+		      be64_to_cpu(region[j].src), be64_to_cpu(region[j].dest),
+		      be64_to_cpu(region[j].size));
 
 		mdrt++;
 		j++;
