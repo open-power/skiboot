@@ -174,9 +174,9 @@ static void dts_async_read_temp(struct timer *t __unused, void *data,
 	rc = dts_read_core_temp_p9(cpu->pir, &dts);
 	if (!rc) {
 		if (cpu->sensor_attr == SENSOR_DTS_ATTR_TEMP_MAX)
-			*cpu->sensor_data = dts.temp;
+			*cpu->sensor_data = cpu_to_be64(dts.temp);
 		else if (cpu->sensor_attr == SENSOR_DTS_ATTR_TEMP_TRIP)
-			*cpu->sensor_data = dts.trip;
+			*cpu->sensor_data = cpu_to_be64(dts.trip);
 	}
 
 	if (!swkup_rc)
@@ -191,7 +191,7 @@ static void dts_async_read_temp(struct timer *t __unused, void *data,
 }
 
 static int dts_read_core_temp(u32 pir, struct dts *dts, u8 attr,
-			      int token, u64 *sensor_data)
+			      int token, __be64 *sensor_data)
 {
 	struct cpu_thread *cpu;
 	int rc;
@@ -286,7 +286,7 @@ enum sensor_dts_class {
  */
 #define centaur_get_id(rid) (0x80000000 | ((rid) & 0x3ff))
 
-int64_t dts_sensor_read(u32 sensor_hndl, int token, u64 *sensor_data)
+int64_t dts_sensor_read(u32 sensor_hndl, int token, __be64 *sensor_data)
 {
 	uint8_t	attr = sensor_get_attr(sensor_hndl);
 	uint32_t rid = sensor_get_rid(sensor_hndl);
@@ -313,9 +313,9 @@ int64_t dts_sensor_read(u32 sensor_hndl, int token, u64 *sensor_data)
 		return rc;
 
 	if (attr == SENSOR_DTS_ATTR_TEMP_MAX)
-		*sensor_data = dts.temp;
+		*sensor_data = cpu_to_be64(dts.temp);
 	else if (attr == SENSOR_DTS_ATTR_TEMP_TRIP)
-		*sensor_data = dts.trip;
+		*sensor_data = cpu_to_be64(dts.trip);
 
 	return 0;
 }

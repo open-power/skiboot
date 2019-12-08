@@ -57,7 +57,7 @@ static int64_t opal_ipmi_send(uint64_t interface,
 }
 
 static int64_t opal_ipmi_recv(uint64_t interface,
-			      struct opal_ipmi_msg *opal_ipmi_msg, uint64_t *msg_len)
+			      struct opal_ipmi_msg *opal_ipmi_msg, __be64 *msg_len)
 {
 	struct ipmi_msg *msg;
 	int64_t rc;
@@ -82,7 +82,7 @@ static int64_t opal_ipmi_recv(uint64_t interface,
 		goto out_del_msg;
 	}
 
-	if (*msg_len - sizeof(struct opal_ipmi_msg) < msg->resp_size + 1) {
+	if (be64_to_cpu(*msg_len) - sizeof(struct opal_ipmi_msg) < msg->resp_size + 1) {
 		rc = OPAL_RESOURCE;
 		goto out_del_msg;
 	}
@@ -101,7 +101,7 @@ static int64_t opal_ipmi_recv(uint64_t interface,
 	      msg->cmd, msg->netfn >> 2, msg->resp_size);
 
 	/* Add one as the completion code is returned in the message data */
-	*msg_len = msg->resp_size + sizeof(struct opal_ipmi_msg) + 1;
+	*msg_len = cpu_to_be64(msg->resp_size + sizeof(struct opal_ipmi_msg) + 1);
 	ipmi_free_msg(msg);
 
 	return OPAL_SUCCESS;

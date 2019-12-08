@@ -673,27 +673,36 @@ int64_t lpc_probe_read(enum OpalLPCAddressType addr_type, uint32_t addr,
  * existing Linux expectations
  */
 static int64_t opal_lpc_read(uint32_t chip_id, enum OpalLPCAddressType addr_type,
-			     uint32_t addr, uint32_t *data, uint32_t sz)
+			     uint32_t addr, __be32 *data, uint32_t sz)
 {
 	struct proc_chip *chip;
 	int64_t rc;
+	uint32_t tmp;
 
 	chip = get_chip(chip_id);
 	if (!chip || !chip->lpc)
 		return OPAL_PARAMETER;
 
-	if (addr_type == OPAL_LPC_FW || sz == 1)
-		return __lpc_read(chip->lpc, addr_type, addr, data, sz, false);
-	*data = 0;
-	while(sz--) {
-		uint32_t byte;
-
-		rc = __lpc_read(chip->lpc, addr_type, addr, &byte, 1, false);
+	if (addr_type == OPAL_LPC_FW) {
+		rc = __lpc_read(chip->lpc, addr_type, addr, &tmp, sz, false);
 		if (rc)
 			return rc;
-		*data = *data | (byte << (8 * sz));
-		addr++;
+
+	} else {
+		tmp = 0;
+		while (sz--) {
+			uint32_t byte;
+
+			rc = __lpc_read(chip->lpc, addr_type, addr, &byte, 1, false);
+			if (rc)
+				return rc;
+			tmp = tmp | (byte << (8 * sz));
+			addr++;
+		}
 	}
+
+	*data = cpu_to_be32(tmp);
+
 	return OPAL_SUCCESS;
 }
 

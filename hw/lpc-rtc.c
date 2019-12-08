@@ -139,14 +139,15 @@ static void lpc_init_hw(void)
 	unlock(&rtc_lock);
 }
 
-static int64_t lpc_opal_rtc_read(uint32_t *y_m_d,
-				 uint64_t *h_m_s_m)
+static int64_t lpc_opal_rtc_read(__be32 *__ymd, __be64 *__hmsm)
 {
 	uint8_t val;
 	int64_t rc = OPAL_SUCCESS;
 	struct tm tm;
+	uint32_t ymd;
+	uint64_t hmsm;
 
-	if (!y_m_d || !h_m_s_m)
+	if (!__ymd || !__hmsm)
 		return OPAL_PARAMETER;
 
 	/* Return busy if updating. This is somewhat racy, but will
@@ -172,7 +173,9 @@ static int64_t lpc_opal_rtc_read(uint32_t *y_m_d,
 		rtc_cache_update(&tm);
 
 		/* Convert to OPAL time */
-		tm_to_datetime(&tm, y_m_d, h_m_s_m);
+		tm_to_datetime(&tm, &ymd, &hmsm);
+		*__ymd = cpu_to_be32(ymd);
+		*__hmsm = cpu_to_be64(hmsm);
 	}
 
 	return rc;

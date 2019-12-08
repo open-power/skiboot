@@ -62,12 +62,13 @@ static int64_t ipmi_set_sel_time(uint32_t _tv)
 	return ipmi_queue_msg(msg);
 }
 
-static int64_t ipmi_opal_rtc_read(uint32_t *y_m_d,
-				 uint64_t *h_m_s_m)
+static int64_t ipmi_opal_rtc_read(__be32 *__ymd, __be64 *__hmsm)
 {
 	int ret = 0;
+	uint32_t ymd;
+	uint64_t hmsm;
 
-	if (!y_m_d || !h_m_s_m)
+	if (!__ymd || !__hmsm)
 		return OPAL_PARAMETER;
 
 	switch(time_status) {
@@ -83,7 +84,9 @@ static int64_t ipmi_opal_rtc_read(uint32_t *y_m_d,
 		break;
 
 	case updated:
-		rtc_cache_get_datetime(y_m_d, h_m_s_m);
+		rtc_cache_get_datetime(&ymd, &hmsm);
+		*__ymd = cpu_to_be32(ymd);
+		*__hmsm = cpu_to_be64(hmsm);
 		time_status = idle;
 		ret = OPAL_SUCCESS;
 		break;

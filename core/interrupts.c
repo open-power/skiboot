@@ -439,9 +439,11 @@ static int64_t opal_set_xive(uint32_t isn, uint16_t server, uint8_t priority)
 }
 opal_call(OPAL_SET_XIVE, opal_set_xive, 3);
 
-static int64_t opal_get_xive(uint32_t isn, uint16_t *server, uint8_t *priority)
+static int64_t opal_get_xive(uint32_t isn, __be16 *server, uint8_t *priority)
 {
 	struct irq_source *is = irq_find_source(isn);
+	uint16_t s;
+	int64_t ret;
 
 	if (!opal_addr_valid(server))
 		return OPAL_PARAMETER;
@@ -449,7 +451,9 @@ static int64_t opal_get_xive(uint32_t isn, uint16_t *server, uint8_t *priority)
 	if (!is || !is->ops->get_xive)
 		return OPAL_PARAMETER;
 
-	return is->ops->get_xive(is, isn, server, priority);
+	ret = is->ops->get_xive(is, isn, &s, priority);
+	*server = cpu_to_be16(s);
+	return ret;
 }
 opal_call(OPAL_GET_XIVE, opal_get_xive, 3);
 

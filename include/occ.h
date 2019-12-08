@@ -32,7 +32,7 @@ bool occ_get_gpu_presence(struct proc_chip *chip, int gpu_num);
 
 /* OCC Inband Sensors */
 extern bool occ_sensors_init(void);
-extern int occ_sensor_read(u32 handle, u64 *data);
+extern int occ_sensor_read(u32 handle, __be64 *data);
 extern int occ_sensor_group_clear(u32 group_hndl, int token);
 extern void occ_add_sensor_groups(struct dt_node *sg, u32  *phandles,
 				  u32 *ptype, int nr_phandles, int chipid);

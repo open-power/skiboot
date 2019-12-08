@@ -351,22 +351,25 @@ void memcons_add_properties(void)
  * complicated since they can come from the in-memory console (BML) or from the
  * internal skiboot console driver.
  */
-static int64_t dummy_console_write(int64_t term_number, int64_t *length,
+static int64_t dummy_console_write(int64_t term_number, __be64 *length,
 				   const uint8_t *buffer)
 {
+	uint64_t l;
+
 	if (term_number != 0)
 		return OPAL_PARAMETER;
 
 	if (!opal_addr_valid(length) || !opal_addr_valid(buffer))
 		return OPAL_PARAMETER;
 
-	write(0, buffer, *length);
+	l = be64_to_cpu(*length);
+	write(0, buffer, l);
 
 	return OPAL_SUCCESS;
 }
 
 static int64_t dummy_console_write_buffer_space(int64_t term_number,
-						int64_t *length)
+						__be64 *length)
 {
 	if (term_number != 0)
 		return OPAL_PARAMETER;
@@ -375,21 +378,25 @@ static int64_t dummy_console_write_buffer_space(int64_t term_number,
 		return OPAL_PARAMETER;
 
 	if (length)
-		*length = INMEM_CON_OUT_LEN;
+		*length = cpu_to_be64(INMEM_CON_OUT_LEN);
 
 	return OPAL_SUCCESS;
 }
 
-static int64_t dummy_console_read(int64_t term_number, int64_t *length,
+static int64_t dummy_console_read(int64_t term_number, __be64 *length,
 				  uint8_t *buffer)
 {
+	uint64_t l;
+
 	if (term_number != 0)
 		return OPAL_PARAMETER;
 
 	if (!opal_addr_valid(length) || !opal_addr_valid(buffer))
 		return OPAL_PARAMETER;
 
-	*length = read(0, buffer, *length);
+	l = be64_to_cpu(*length);
+	l = read(0, buffer, l);
+	*length = cpu_to_be64(l);
 	opal_update_pending_evt(OPAL_EVENT_CONSOLE_INPUT, 0);
 
 	return OPAL_SUCCESS;

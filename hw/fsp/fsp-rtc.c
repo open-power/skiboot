@@ -249,12 +249,13 @@ static int64_t fsp_rtc_send_read_request(void)
 	return OPAL_BUSY_EVENT;
 }
 
-static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
-				 uint64_t *hour_minute_second_millisecond)
+static int64_t fsp_opal_rtc_read(__be32 *__ymd, __be64 *__hmsm)
 {
 	int64_t rc;
+	uint32_t ymd;
+	uint64_t hmsm;
 
-	if (!year_month_day || !hour_minute_second_millisecond)
+	if (!__ymd || !__hmsm)
 		return OPAL_PARAMETER;
 
 	lock(&rtc_lock);
@@ -267,8 +268,7 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 	/* During R/R of FSP, read cached TOD */
 	if (fsp_in_rr()) {
 		if (rtc_tod_state == RTC_TOD_VALID) {
-			rtc_cache_get_datetime(year_month_day,
-					       hour_minute_second_millisecond);
+			rtc_cache_get_datetime(&ymd, &hmsm);
 			rc = OPAL_SUCCESS;
 		} else {
 			rc = OPAL_INTERNAL_ERROR;
@@ -290,11 +290,9 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
                 opal_rtc_eval_events(true);
 
                 if (rtc_tod_state == RTC_TOD_VALID) {
-                        rtc_cache_get_datetime(year_month_day,
-					       hour_minute_second_millisecond);
+                        rtc_cache_get_datetime(&ymd, &hmsm);
                         prlog(PR_TRACE,"FSP-RTC Cached datetime: %x %llx\n",
-                              *year_month_day,
-                              *hour_minute_second_millisecond);
+                              ymd, hmsm);
                         rc = OPAL_SUCCESS;
                 } else {
                         rc = OPAL_INTERNAL_ERROR;
@@ -306,8 +304,7 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 		prlog(PR_TRACE, "RTC read timed out\n");
 
 		if (rtc_tod_state == RTC_TOD_VALID) {
-			rtc_cache_get_datetime(year_month_day,
-					       hour_minute_second_millisecond);
+			rtc_cache_get_datetime(&ymd, &hmsm);
 			rc = OPAL_SUCCESS;
 		} else {
                         rc = OPAL_INTERNAL_ERROR;
@@ -319,6 +316,12 @@ static int64_t fsp_opal_rtc_read(uint32_t *year_month_day,
 	}
 out:
 	unlock(&rtc_lock);
+
+	if (rc == OPAL_SUCCESS) {
+		*__ymd = cpu_to_be32(ymd);
+		*__hmsm = cpu_to_be64(hmsm);
+	}
+
 	return rc;
 }
 

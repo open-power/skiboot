@@ -638,7 +638,17 @@ int _xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val, bool take_loc
 	return rc;
 }
 
-opal_call(OPAL_XSCOM_READ, xscom_read, 3);
+static int64_t opal_xscom_read(uint32_t partid, uint64_t pcb_addr, __be64 *__val)
+{
+	uint64_t val;
+	int64_t rc;
+
+	rc = xscom_read(partid, pcb_addr, &val);
+	*__val = cpu_to_be64(val);
+
+	return rc;
+}
+opal_call(OPAL_XSCOM_READ, opal_xscom_read, 3);
 
 int _xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val, bool take_lock)
 {
@@ -682,7 +692,12 @@ int _xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val, bool take_loc
 		unlock(&xscom_lock);
 	return rc;
 }
-opal_call(OPAL_XSCOM_WRITE, xscom_write, 3);
+
+static int64_t opal_xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val)
+{
+	return xscom_write(partid, pcb_addr, val);
+}
+opal_call(OPAL_XSCOM_WRITE, opal_xscom_write, 3);
 
 /*
  * Perform a xscom read-modify-write.

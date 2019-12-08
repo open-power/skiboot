@@ -1571,7 +1571,7 @@ static int64_t phb4_set_option(struct phb *phb, enum OpalPhbOption opt,
 }
 
 static int64_t phb4_get_option(struct phb *phb, enum OpalPhbOption opt,
-			       uint64_t *setting)
+			       __be64 *setting)
 {
 	struct phb4 *p = phb_to_phb4(phb);
 	uint64_t data64;
@@ -1579,10 +1579,10 @@ static int64_t phb4_get_option(struct phb *phb, enum OpalPhbOption opt,
 	data64 = phb4_read_reg(p, PHB_CTRLR);
 	switch (opt) {
 	case OPAL_PHB_OPTION_TVE1_4GB:
-		*setting = (data64 & PPC_BIT(24)) ? 1 : 0;
+		*setting = cpu_to_be64((data64 & PPC_BIT(24)) ? 1 : 0);
 		break;
 	case OPAL_PHB_OPTION_MMIO_EEH_DISABLE:
-		*setting = (data64 & PPC_BIT(14)) ? 1 : 0;
+		*setting = cpu_to_be64((data64 & PPC_BIT(14)) ? 1 : 0);
 		break;
 	default:
 		return OPAL_UNSUPPORTED;

@@ -103,7 +103,7 @@ struct cpu_thread {
 	 */
 	struct lock			dts_lock;
 	struct timer			dts_timer;
-	u64				*sensor_data;
+	__be64				*sensor_data;
 	u32				sensor_attr;
 	u32				token;
 	bool				dts_read_in_progress;

@@ -7,13 +7,19 @@
 
 #include <powercap.h>
 
-static int opal_get_powercap(u32 handle, int token __unused, u32 *pcap)
+static int opal_get_powercap(u32 handle, int token __unused, __be32 *__pcap)
 {
-	if (!pcap || !opal_addr_valid(pcap))
+	if (!__pcap || !opal_addr_valid(__pcap))
 		return OPAL_PARAMETER;
 
-	if (powercap_get_class(handle) == POWERCAP_CLASS_OCC)
-		return occ_get_powercap(handle, pcap);
+	if (powercap_get_class(handle) == POWERCAP_CLASS_OCC) {
+		u32 pcap;
+		int rc;
+
+		rc = occ_get_powercap(handle, &pcap);
+		*__pcap = cpu_to_be32(pcap);
+		return rc;
+	}
 
 	return OPAL_UNSUPPORTED;
 };

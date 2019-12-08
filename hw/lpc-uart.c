@@ -255,10 +255,10 @@ static uint32_t uart_tx_buf_space(void)
 		(out_buf_prod + OUT_BUF_SIZE - out_buf_cons) % OUT_BUF_SIZE;
 }
 
-static int64_t uart_opal_write(int64_t term_number, int64_t *length,
+static int64_t uart_opal_write(int64_t term_number, __be64 *__length,
 			       const uint8_t *buffer)
 {
-	size_t written = 0, len = *length;
+	size_t written = 0, len = be64_to_cpu(*__length);
 
 	if (term_number != 0)
 		return OPAL_PARAMETER;
@@ -277,19 +277,19 @@ static int64_t uart_opal_write(int64_t term_number, int64_t *length,
 
 	unlock(&uart_lock);
 
-	*length = written;
+	*__length = cpu_to_be64(written);
 
 	return OPAL_SUCCESS;
 }
 
 static int64_t uart_opal_write_buffer_space(int64_t term_number,
-					    int64_t *length)
+					    __be64 *__length)
 {
 	if (term_number != 0)
 		return OPAL_PARAMETER;
 
 	lock(&uart_lock);
-	*length = uart_tx_buf_space();
+	*__length = cpu_to_be64(uart_tx_buf_space());
 	unlock(&uart_lock);
 
 	return OPAL_SUCCESS;
@@ -326,10 +326,10 @@ static void uart_adjust_opal_event(void)
 }
 
 /* This is called with the console lock held */
-static int64_t uart_opal_read(int64_t term_number, int64_t *length,
+static int64_t uart_opal_read(int64_t term_number, __be64 *__length,
 			      uint8_t *buffer)
 {
-	size_t req_count = *length, read_cnt = 0;
+	size_t req_count = be64_to_cpu(*__length), read_cnt = 0;
 	uint8_t lsr = 0;
 
 	if (term_number != 0)
@@ -373,7 +373,7 @@ static int64_t uart_opal_read(int64_t term_number, int64_t *length,
 	/* Adjust the OPAL event */
 	uart_adjust_opal_event();
 
-	*length = read_cnt;
+	*__length = cpu_to_be64(read_cnt);
 	return OPAL_SUCCESS;
 }
 

@@ -579,7 +579,7 @@ void fsp_console_preinit(void)
 
 }
 
-static int64_t fsp_console_write(int64_t term_number, int64_t *length,
+static int64_t fsp_console_write(int64_t term_number, __be64 *__length,
 				 const uint8_t *buffer)
 {
 	struct fsp_serial *fs;
@@ -596,7 +596,7 @@ static int64_t fsp_console_write(int64_t term_number, int64_t *length,
 		return OPAL_CLOSED;
 	}
 	/* Clamp to a reasonable size */
-	requested = *length;
+	requested = be64_to_cpu(*__length);
 	if (requested > 0x1000)
 		requested = 0x1000;
 	written = fsp_write_vserial(fs, buffer, requested);
@@ -618,7 +618,7 @@ static int64_t fsp_console_write(int64_t term_number, int64_t *length,
 	      buffer[6], buffer[6], buffer[7], buffer[7]);
 #endif /* OPAL_DEBUG_CONSOLE_IO */
 
-	*length = written;
+	*__length = cpu_to_be64(written);
 	unlock(&fsp_con_lock);
 
 	if (written)
@@ -628,11 +628,12 @@ static int64_t fsp_console_write(int64_t term_number, int64_t *length,
 }
 
 static int64_t fsp_console_write_buffer_space(int64_t term_number,
-					      int64_t *length)
+					      __be64 *__length)
 {
 	static bool elog_generated = false;
 	struct fsp_serial *fs;
 	struct fsp_serbuf_hdr *sb;
+	int64_t length;
 
 	if (term_number < 0 || term_number >= MAX_SERIAL)
 		return OPAL_PARAMETER;
@@ -645,15 +646,16 @@ static int64_t fsp_console_write_buffer_space(int64_t term_number,
 		return OPAL_CLOSED;
 	}
 	sb = fs->out_buf;
-	*length = (sb->next_out + SER_BUF_DATA_SIZE - sb->next_in - 1)
+	length = (sb->next_out + SER_BUF_DATA_SIZE - sb->next_in - 1)
 		% SER_BUF_DATA_SIZE;
 	unlock(&fsp_con_lock);
 
 	/* Console buffer has enough space to write incoming data */
-	if (*length != fs->out_buf_prev_len) {
-		fs->out_buf_prev_len = *length;
+	if (length != fs->out_buf_prev_len) {
+		fs->out_buf_prev_len = length;
 		fs->out_buf_timeout = 0;
 
+		*__length = cpu_to_be64(length);
 		return OPAL_SUCCESS;
 	}
 
@@ -667,8 +669,10 @@ static int64_t fsp_console_write_buffer_space(int64_t term_number,
 			secs_to_tb(SER_BUFFER_OUT_TIMEOUT);
 	}
 
-	if (tb_compare(mftb(), fs->out_buf_timeout) != TB_AAFTERB)
+	if (tb_compare(mftb(), fs->out_buf_timeout) != TB_AAFTERB) {
+		*__length = cpu_to_be64(length);
 		return OPAL_SUCCESS;
+	}
 
 	/*
 	 * FSP is still active but not reading console data. Hence
@@ -686,13 +690,13 @@ static int64_t fsp_console_write_buffer_space(int64_t term_number,
 	return OPAL_RESOURCE;
 }
 
-static int64_t fsp_console_read(int64_t term_number, int64_t *length,
+static int64_t fsp_console_read(int64_t term_number, __be64 *__length,
 				uint8_t *buffer)
 {
 	struct fsp_serial *fs;
 	struct fsp_serbuf_hdr *sb;
 	bool pending = false;
-	uint32_t old_nin, n, i, chunk, req = *length;
+	uint32_t old_nin, n, i, chunk, req = be64_to_cpu(*__length);
 	int rc = OPAL_SUCCESS;
 
 	if (term_number < 0 || term_number >= MAX_SERIAL)
@@ -716,7 +720,7 @@ static int64_t fsp_console_read(int64_t term_number, int64_t *length,
 		pending = true;
 		n = req;
 	}
-	*length = n;
+	*__length = cpu_to_be64(n);
 
 	chunk = SER_BUF_DATA_SIZE - sb->next_out;
 	if (chunk > n)

@@ -173,11 +173,13 @@ static void bogus_disk_flash_init(void)
 	}
 }
 
-static int64_t mambo_rtc_read(uint32_t *ymd, uint64_t *hmsm)
+static int64_t mambo_rtc_read(__be32 *ymd, __be64 *hmsm)
 {
 	int64_t mambo_time;
 	struct tm t;
 	time_t mt;
+	uint32_t __ymd;
+	uint64_t __hmsm;
 
 	if (!ymd || !hmsm)
 		return OPAL_PARAMETER;
@@ -185,7 +187,10 @@ static int64_t mambo_rtc_read(uint32_t *ymd, uint64_t *hmsm)
 	mambo_time = callthru0(SIM_GET_TIME_CODE);
 	mt = mambo_time >> 32;
 	gmtime_r(&mt, &t);
-	tm_to_datetime(&t, ymd, hmsm);
+	tm_to_datetime(&t, &__ymd, &__hmsm);
+
+	*ymd = cpu_to_be32(__ymd);
+	*hmsm = cpu_to_be64(__hmsm);
 
 	return OPAL_SUCCESS;
 }

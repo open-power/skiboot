@@ -10,13 +10,19 @@
 #include <psr.h>
 
 static int opal_get_power_shift_ratio(u32 handle, int token __unused,
-				      u32 *ratio)
+				      __be32 *__ratio)
 {
-	if (!ratio || !opal_addr_valid(ratio))
+	if (!__ratio || !opal_addr_valid(__ratio))
 		return OPAL_PARAMETER;
 
-	if (psr_get_class(handle) == PSR_CLASS_OCC)
-		return occ_get_psr(handle, ratio);
+	if (psr_get_class(handle) == PSR_CLASS_OCC) {
+		u32 ratio;
+		int rc;
+
+		rc = occ_get_psr(handle, &ratio);
+		*__ratio = cpu_to_be32(ratio);
+		return rc;
+	}
 
 	return OPAL_UNSUPPORTED;
 };

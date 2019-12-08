@@ -258,7 +258,7 @@ struct platform {
 	 * Read a sensor value
 	 */
 	int64_t		(*sensor_read)(uint32_t sensor_hndl, int token,
-				       uint64_t *sensor_data);
+				       __be64 *sensor_data);
 	/*
 	 * Return the heartbeat time
 	 */

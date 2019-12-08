@@ -20,12 +20,12 @@ static LIST_HEAD(async_read_list);
 
 struct sensor_async_read {
 	struct list_node link;
-	u64 *sensor_data64;
-	u32 *sensor_data32;
+	__be64 *val;
+	__be32 *opal_data;
 	int token;
 };
 
-static int add_to_async_read_list(int token, u32 *data32, u64 *data64)
+static int add_to_async_read_list(int token, __be32 *opal_data, __be64 *val)
 {
 	struct sensor_async_read *req;
 
@@ -34,8 +34,8 @@ static int add_to_async_read_list(int token, u32 *data32, u64 *data64)
 		return OPAL_NO_MEM;
 
 	req->token = token;
-	req->sensor_data64 = data64;
-	req->sensor_data32 = data32;
+	req->val = val;
+	req->opal_data = opal_data;
 
 	lock(&async_read_list_lock);
 	list_add_tail(&async_read_list, &req->link);
@@ -59,50 +59,58 @@ void check_sensor_read(int token)
 	if (!req)
 		goto out;
 
-	*req->sensor_data32 = *req->sensor_data64;
-	free(req->sensor_data64);
+	*req->opal_data = cpu_to_be32(be64_to_cpu(*req->val));
+	free(req->val);
 	list_del(&req->link);
 	free(req);
 out:
 	unlock(&async_read_list_lock);
 }
 
-static s64 opal_sensor_read_u64(u32 sensor_hndl, int token, u64 *sensor_data)
+static s64 opal_sensor_read_64(u32 sensor_hndl, int token, __be64 *data)
 {
+	s64 rc;
+
 	switch (sensor_get_family(sensor_hndl)) {
 	case SENSOR_DTS:
-		return dts_sensor_read(sensor_hndl, token, sensor_data);
+		rc = dts_sensor_read(sensor_hndl, token, data);
+		return rc;
+
 	case SENSOR_OCC:
-		return occ_sensor_read(sensor_hndl, sensor_data);
+		rc = occ_sensor_read(sensor_hndl, data);
+		return rc;
+
 	default:
 		break;
 	}
 
-	if (platform.sensor_read)
-		return platform.sensor_read(sensor_hndl, token, sensor_data);
+	if (platform.sensor_read) {
+		rc = platform.sensor_read(sensor_hndl, token, data);
+		return rc;
+	}
 
 	return OPAL_UNSUPPORTED;
 }
 
 static int64_t opal_sensor_read(uint32_t sensor_hndl, int token,
-				uint32_t *sensor_data)
+				__be32 *data)
 {
-	u64 *val;
-	s64 ret;
+	__be64 *val;
+	s64 rc;
 
 	val = zalloc(sizeof(*val));
 	if (!val)
 		return OPAL_NO_MEM;
 
-	ret = opal_sensor_read_u64(sensor_hndl, token, val);
-	if (!ret) {
-		*sensor_data = *val;
+	rc = opal_sensor_read_64(sensor_hndl, token, val);
+	if (rc == OPAL_SUCCESS) {
+		*data = cpu_to_be32(be64_to_cpu(*val));
 		free(val);
-	} else if (ret == OPAL_ASYNC_COMPLETION) {
-		ret = add_to_async_read_list(token, sensor_data, val);
+	} else if (rc == OPAL_ASYNC_COMPLETION) {
+		rc = add_to_async_read_list(token, data, val);
 	}
 
-	return ret;
+	return rc;
 }
 
 static int opal_sensor_group_clear(u32 group_hndl, int token)
@@ -139,6 +147,6 @@ void sensor_init(void)
 	/* Register OPAL interface */
 	opal_register(OPAL_SENSOR_READ, opal_sensor_read, 3);
 	opal_register(OPAL_SENSOR_GROUP_CLEAR, opal_sensor_group_clear, 2);
-	opal_register(OPAL_SENSOR_READ_U64, opal_sensor_read_u64, 3);
+	opal_register(OPAL_SENSOR_READ_U64, opal_sensor_read_64, 3);
 	opal_register(OPAL_SENSOR_GROUP_ENABLE, opal_sensor_group_enable, 3);
 }

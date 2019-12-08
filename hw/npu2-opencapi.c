@@ -2250,10 +2250,12 @@ out:
 }
 
 static int64_t opal_npu_mem_alloc(uint64_t phb_id, uint32_t __unused bdfn,
-				  uint64_t size, uint64_t *bar)
+				  uint64_t size, __be64 *__bar)
 {
 	struct phb *phb = pci_get_phb(phb_id);
 	struct npu2_dev *dev;
+	uint64_t bar;
+	int64_t rc;
 
 
 	if (!phb || phb->phb_type != phb_type_npu_v2_opencapi)
@@ -2263,10 +2265,14 @@ static int64_t opal_npu_mem_alloc(uint64_t phb_id, uint32_t __unused bdfn,
 	if (!dev)
 		return OPAL_PARAMETER;
 
-	if (!opal_addr_valid(bar))
+	if (!opal_addr_valid(__bar))
 		return OPAL_PARAMETER;
 
-	return alloc_mem_bar(dev, size, bar);
+	rc = alloc_mem_bar(dev, size, &bar);
+	if (rc == OPAL_SUCCESS)
+		*__bar = cpu_to_be64(bar);
+
+	return rc;
 }
 opal_call(OPAL_NPU_MEM_ALLOC, opal_npu_mem_alloc, 4);
 

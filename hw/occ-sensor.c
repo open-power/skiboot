@@ -241,13 +241,14 @@ static void *select_sensor_buffer(struct occ_sensor_data_header *hb, int id)
 	return buffer;
 }
 
-int occ_sensor_read(u32 handle, u64 *data)
+int occ_sensor_read(u32 handle, __be64 *data)
 {
 	struct occ_sensor_data_header *hb;
 	struct occ_sensor_name *md;
 	u16 id = sensor_get_rid(handle);
 	u8 occ_num = sensor_get_frc(handle);
 	u8 attr = sensor_get_attr(handle);
+	u64 d;
 	void *buff;
 
 	if (occ_num > MAX_OCCS)
@@ -271,15 +272,17 @@ int occ_sensor_read(u32 handle, u64 *data)
 	if (!buff)
 		return OPAL_HARDWARE;
 
-	*data = read_sensor(buff, attr);
-	if (!*data)
+	d = read_sensor(buff, attr);
+	if (!d)
 		return OPAL_SUCCESS;
 
 	md = get_names_block(hb);
 	if (md[id].type == OCC_SENSOR_TYPE_POWER && attr == SENSOR_ACCUMULATOR)
-		scale_energy(&md[id], data);
+		scale_energy(&md[id], &d);
 	else
-		scale_sensor(&md[id], data);
+		scale_sensor(&md[id], &d);
+
+	*data = cpu_to_be64(d);
 
 	return OPAL_SUCCESS;
 }

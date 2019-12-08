@@ -70,7 +70,7 @@ enum spcn_attr {
 /* Parsed sensor attributes, passed through OPAL */
 struct opal_sensor_data {
 	uint64_t	async_token;	/* Asynchronous token */
-	uint64_t	*sensor_data;	/* Kernel pointer to copy data */
+	__be64		*sensor_data;	/* Kernel pointer to copy data */
 	enum spcn_attr	spcn_attr;	/* Modifier attribute */
 	uint16_t	rid;		/* Sensor RID */
 	uint8_t		frc;		/* Sensor resource class */
@@ -243,7 +243,7 @@ static void fsp_sensor_process_data(struct opal_sensor_data *attr)
 		sensor_buf_ptr += spcn_mod_data[attr->mod_index].entry_size;
 	}
 
-	*(attr->sensor_data) = sensor_data;
+	*attr->sensor_data = cpu_to_be64(sensor_data);
 	if (sensor_data == INVALID_DATA)
 		queue_msg_for_delivery(OPAL_PARTIAL, attr);
 	else
@@ -345,7 +345,7 @@ static void fsp_sensor_read_complete(struct fsp_msg *msg)
 	unlock(&sensor_lock);
 	return;
 err:
-	*(attr->sensor_data) = INVALID_DATA;
+	*attr->sensor_data = cpu_to_be64(INVALID_DATA);
 	queue_msg_for_delivery(rc, attr);
 	unlock(&sensor_lock);
 	log_simple_error(&e_info(OPAL_RC_SENSOR_ASYNC_COMPLETE),
@@ -496,7 +496,7 @@ static int64_t parse_sensor_id(uint32_t handler, struct opal_sensor_data *attr)
 
 
 int64_t fsp_opal_read_sensor(uint32_t sensor_hndl, int token,
-		uint64_t *sensor_data)
+				__be64 *sensor_data)
 {
 	struct opal_sensor_data *attr;
 	int64_t rc;

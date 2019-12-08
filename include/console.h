@@ -47,13 +47,13 @@ struct opal_con_ops {
 	 */
 	void (*init)(void);
 
-	int64_t (*write)(int64_t term, int64_t *len, const uint8_t *buf);
-	int64_t (*read)(int64_t term, int64_t *len, uint8_t *buf);
+	int64_t (*write)(int64_t term, __be64 *__len, const uint8_t *buf);
+	int64_t (*read)(int64_t term, __be64 *__len, uint8_t *buf);
 
 	/*
 	 * returns the amount of space available in the console write buffer
 	 */
-	int64_t (*space)(int64_t term_number, int64_t *length);
+	int64_t (*space)(int64_t term_number, __be64 *__length);
 
 	/*
 	 * Forces the write buffer to be flushed by the driver
