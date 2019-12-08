@@ -953,7 +953,7 @@ static void dt_init_secureboot_node(const struct iplparams_sysparams *sysparams)
 
 static void opal_dump_add_mpipl_boot(const struct iplparams_iplparams *p)
 {
-	u32 mdrt_cnt = spira.ntuples.mdump_res.act_cnt;
+	u32 mdrt_cnt = be16_to_cpu(spira.ntuples.mdump_res.act_cnt);
 	u32 mdrt_max_cnt = MDRT_TABLE_SIZE / sizeof(struct mdrt_table);
 	struct dt_node *dump_node;
 
@@ -976,7 +976,7 @@ static void opal_dump_add_mpipl_boot(const struct iplparams_iplparams *p)
 		return;
 	}
 
-	if (p->cec_ipl_attrib != IPLPARAMS_ATTRIB_MEM_PRESERVE) {
+	if (be16_to_cpu(p->cec_ipl_attrib) != IPLPARAMS_ATTRIB_MEM_PRESERVE) {
 		prlog(PR_DEBUG, "DUMP: Memory not preserved\n");
 		return;
 	}
@@ -1660,7 +1660,7 @@ static void add_npus(void)
 static void fixup_spira(void)
 {
 #if !defined(TEST)
-	spiras = (struct spiras *)CPU_TO_BE64(SPIRA_HEAP_BASE);
+	spiras = (struct spiras *)SPIRA_HEAP_BASE;
 #endif
 
 	/* Validate SPIRA-S signature */

@@ -135,7 +135,8 @@ static bool add_address_range(struct dt_node *root,
 	      "on Chip 0x%x mattr: 0x%x pattr: 0x%x status:0x%x\n",
 	      (long long)be64_to_cpu(arange->start),
 	      (long long)be64_to_cpu(arange->end),
-	      chip_id, arange->mirror_attr, mem_type, mem_status);
+	      chip_id, be32_to_cpu(arange->mirror_attr),
+	      mem_type, mem_status);
 
 	/* reg contains start and length */
 	reg[0] = cleanup_addr(be64_to_cpu(arange->start));
