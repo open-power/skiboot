@@ -93,10 +93,10 @@ void log_add_section(struct errorlog *buf, uint32_t tag)
 	tmp = (struct elog_user_data_section *)(buf->user_data_dump +
 						buf->user_section_size);
 	/* Use DESC if no other tag provided */
-	tmp->tag = tag ? tag : 0x44455343;
-	tmp->size = size;
+	tmp->tag = tag ? cpu_to_be32(tag) : cpu_to_be32(0x44455343);
+	tmp->size = cpu_to_be16(size);
 
-	buf->user_section_size += tmp->size;
+	buf->user_section_size += size;
 	buf->user_section_count++;
 }
 
@@ -133,6 +133,7 @@ void log_append_data(struct errorlog *buf, unsigned char *data, uint16_t size)
 	struct elog_user_data_section *section;
 	uint8_t n_sections;
 	char *buffer;
+	uint16_t ssize;
 
 	if (!buf) {
 		prerror("ELOG: Cannot update user data. Buffer is invalid\n");
@@ -154,13 +155,14 @@ void log_append_data(struct errorlog *buf, unsigned char *data, uint16_t size)
 
 	while (--n_sections) {
 		section = (struct elog_user_data_section *)buffer;
-		buffer += section->size;
+		buffer += be16_to_cpu(section->size);
 	}
 
 	section = (struct elog_user_data_section *)buffer;
-	buffer += section->size;
+	ssize = be16_to_cpu(section->size);
+	buffer += ssize;
 	memcpy(buffer, data, size);
-	section->size += size;
+	section->size = cpu_to_be16(ssize + size);
 	buf->user_section_size += size;
 }
 

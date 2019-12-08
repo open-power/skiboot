@@ -94,19 +94,19 @@
 #define ORG_POWERNV	2
 
 /* Multiple user data sections */
-struct __attribute__((__packed__))elog_user_data_section {
-	uint32_t tag;
-	uint16_t size;
-	uint16_t component_id;
+struct elog_user_data_section {
+	__be32 tag;
+	__be16 size;
+	__be16 component_id;
 	char data_dump[1];
-};
+} __packed;
 
 /*
  * All the information regarding an error/event to be reported
  * needs to populate this structure using pre-defined interfaces
  * only
  */
-struct __attribute__((__packed__)) __attribute__ ((aligned (8))) errorlog {
+struct errorlog {
 
 	uint16_t component_id;
 	uint8_t error_event_type;
