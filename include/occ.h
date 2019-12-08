@@ -34,7 +34,7 @@ bool occ_get_gpu_presence(struct proc_chip *chip, int gpu_num);
 extern bool occ_sensors_init(void);
 extern int occ_sensor_read(u32 handle, __be64 *data);
 extern int occ_sensor_group_clear(u32 group_hndl, int token);
-extern void occ_add_sensor_groups(struct dt_node *sg, u32  *phandles,
+extern void occ_add_sensor_groups(struct dt_node *sg, __be32 *phandles,
 				  u32 *ptype, int nr_phandles, int chipid);
 
 extern int occ_sensor_group_enable(u32 group_hndl, int token, bool enable);
@@ -186,15 +186,15 @@ enum sensor_struct_type {
 struct occ_sensor_data_header {
 	u8 valid;
 	u8 version;
-	u16 nr_sensors;
+	__be16 nr_sensors;
 	u8 reading_version;
 	u8 pad[3];
-	u32 names_offset;
+	__be32 names_offset;
 	u8 names_version;
 	u8 name_length;
 	u16 reserved;
-	u32 reading_ping_offset;
-	u32 reading_pong_offset;
+	__be32 reading_ping_offset;
+	__be32 reading_pong_offset;
 } __attribute__((__packed__));
 
 /**
@@ -220,13 +220,13 @@ struct occ_sensor_data_header {
 struct occ_sensor_name {
 	char name[MAX_CHARS_SENSOR_NAME];
 	char units[MAX_CHARS_SENSOR_UNIT];
-	u16 gsid;
-	u32 freq;
-	u32 scale_factor;
-	u16 type;
-	u16 location;
+	__be16 gsid;
+	__be32 freq;
+	__be32 scale_factor;
+	__be16 type;
+	__be16 location;
 	u8 structure_type;
-	u32 reading_offset;
+	__be32 reading_offset;
 	u8 sensor_data;
 	u8 pad[8];
 } __attribute__((__packed__));
@@ -258,18 +258,18 @@ struct occ_sensor_name {
  */
 struct occ_sensor_record {
 	u16 gsid;
-	u64 timestamp;
-	u16 sample;
-	u16 sample_min;
-	u16 sample_max;
-	u16 csm_min;
-	u16 csm_max;
-	u16 profiler_min;
-	u16 profiler_max;
-	u16 job_scheduler_min;
-	u16 job_scheduler_max;
-	u64 accumulator;
-	u32 update_tag;
+	__be64 timestamp;
+	__be16 sample;
+	__be16 sample_min;
+	__be16 sample_max;
+	__be16 csm_min;
+	__be16 csm_max;
+	__be16 profiler_min;
+	__be16 profiler_max;
+	__be16 job_scheduler_min;
+	__be16 job_scheduler_max;
+	__be64 accumulator;
+	__be32 update_tag;
 	u8 pad[8];
 } __attribute__((__packed__));
 
@@ -284,8 +284,8 @@ struct occ_sensor_record {
  */
 struct occ_sensor_counter {
 	u16 gsid;
-	u64 timestamp;
-	u64 accumulator;
+	__be64 timestamp;
+	__be64 accumulator;
 	u8 sample;
 	u8 pad[5];
 } __attribute__((__packed__));

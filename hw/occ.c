@@ -97,7 +97,7 @@ struct occ_pstate_table {
 				u8 flags;
 				u8 vdd;
 				u8 vcs;
-				u32 freq_khz;
+				__be32 freq_khz;
 			} pstates[MAX_PSTATES];
 			s8 core_max[MAX_P8_CORES];
 			u8 pad[100];
@@ -115,7 +115,7 @@ struct occ_pstate_table {
 				u8 id;
 				u8 flags;
 				u16 reserved;
-				u32 freq_khz;
+				__be32 freq_khz;
 			} pstates[MAX_PSTATES];
 			u8 core_max[MAX_P9_CORES];
 			u8 pad[56];
@@ -375,7 +375,7 @@ static bool wait_for_all_occ_init(void)
 			chip->occ_functional = true;
 
 		prlog(PR_DEBUG, "OCC: Chip %02x Data (%016llx) = %016llx\n",
-		      chip->id, (uint64_t)occ_data, *(uint64_t *)occ_data);
+		      chip->id, (uint64_t)occ_data, be64_to_cpu(*(__be64 *)occ_data));
 	}
 	end_time = mftb();
 	prlog(PR_NOTICE, "OCC: All Chip Rdy after %lu ms\n",
@@ -398,8 +398,8 @@ static bool wait_for_all_occ_init(void)
  * the list and break from the loop as this is the last valid
  * element in the pstate table.
  */
-static void parse_pstates_v2(struct occ_pstate_table *data, u32 *dt_id,
-			     u32 *dt_freq, int nr_pstates, int pmax, int pmin)
+static void parse_pstates_v2(struct occ_pstate_table *data, __be32 *dt_id,
+			     __be32 *dt_freq, int nr_pstates, int pmax, int pmin)
 {
 	int i, j;
 
@@ -407,8 +407,8 @@ static void parse_pstates_v2(struct occ_pstate_table *data, u32 *dt_id,
 		if (cmp_pstates(data->v2.pstates[i].id, pmax) > 0)
 			continue;
 
-		dt_id[j] = data->v2.pstates[i].id;
-		dt_freq[j] = data->v2.pstates[i].freq_khz / 1000;
+		dt_id[j] = cpu_to_be32(data->v2.pstates[i].id);
+		dt_freq[j] = cpu_to_be32(be32_to_cpu(data->v2.pstates[i].freq_khz) / 1000);
 		j++;
 
 		if (data->v2.pstates[i].id == pmin)
@@ -420,8 +420,8 @@ static void parse_pstates_v2(struct occ_pstate_table *data, u32 *dt_id,
 			nr_pstates, j);
 }
 
-static void parse_pstates_v9(struct occ_pstate_table *data, u32 *dt_id,
-			     u32 *dt_freq, int nr_pstates, int pmax, int pmin)
+static void parse_pstates_v9(struct occ_pstate_table *data, __be32 *dt_id,
+			     __be32 *dt_freq, int nr_pstates, int pmax, int pmin)
 {
 	int i, j;
 
@@ -429,8 +429,8 @@ static void parse_pstates_v9(struct occ_pstate_table *data, u32 *dt_id,
 		if (cmp_pstates(data->v9.pstates[i].id, pmax) > 0)
 			continue;
 
-		dt_id[j] = data->v9.pstates[i].id;
-		dt_freq[j] = data->v9.pstates[i].freq_khz / 1000;
+		dt_id[j] = cpu_to_be32(data->v9.pstates[i].id);
+		dt_freq[j] = cpu_to_be32(be32_to_cpu(data->v9.pstates[i].freq_khz) / 1000);
 		j++;
 
 		if (data->v9.pstates[i].id == pmin)
@@ -482,7 +482,7 @@ static bool add_cpu_pstate_properties(struct dt_node *power_mgt,
 	uint64_t occ_data_area;
 	struct occ_pstate_table *occ_data;
 	/* Arrays for device tree */
-	u32 *dt_id, *dt_freq;
+	__be32 *dt_id, *dt_freq;
 	int pmax, pmin, pnom;
 	u8 nr_pstates;
 	bool ultra_turbo_supported;
@@ -500,8 +500,8 @@ static bool add_cpu_pstate_properties(struct dt_node *power_mgt,
 	occ_data_area = (uint64_t)occ_data;
 	prlog(PR_DEBUG, "OCC: Data (%16llx) = %16llx %16llx\n",
 	      occ_data_area,
-	      *(uint64_t *)occ_data_area,
-	      *(uint64_t *)(occ_data_area + 8));
+	      be64_to_cpu(*(__be64 *)occ_data_area),
+	      be64_to_cpu(*(__be64 *)(occ_data_area + 8)));
 
 	if (!occ_data->valid) {
 		/**
@@ -629,9 +629,9 @@ static bool add_cpu_pstate_properties(struct dt_node *power_mgt,
 		return false;
 	}
 
-	dt_id = malloc(nr_pstates * sizeof(u32));
+	dt_id = malloc(nr_pstates * sizeof(__be32));
 	assert(dt_id);
-	dt_freq = malloc(nr_pstates * sizeof(u32));
+	dt_freq = malloc(nr_pstates * sizeof(__be32));
 	assert(dt_freq);
 
 	switch (major) {
@@ -649,9 +649,9 @@ static bool add_cpu_pstate_properties(struct dt_node *power_mgt,
 
 	/* Add the device-tree entries */
 	dt_add_property(power_mgt, "ibm,pstate-ids", dt_id,
-			nr_pstates * sizeof(u32));
+			nr_pstates * sizeof(__be32));
 	dt_add_property(power_mgt, "ibm,pstate-frequencies-mhz", dt_freq,
-			nr_pstates * sizeof(u32));
+			nr_pstates * sizeof(__be32));
 	dt_add_property_cells(power_mgt, "ibm,pstate-min", pmin);
 	dt_add_property_cells(power_mgt, "ibm,pstate-nominal", pnom);
 	dt_add_property_cells(power_mgt, "ibm,pstate-max", pmax);
@@ -667,7 +667,7 @@ static bool add_cpu_pstate_properties(struct dt_node *power_mgt,
 	if (ultra_turbo_supported) {
 		int pturbo, pultra_turbo;
 		u8 nr_cores = get_available_nr_cores_in_chip(chip->id);
-		u32 *dt_cmax;
+		__be32 *dt_cmax;
 
 		dt_cmax = malloc(nr_cores * sizeof(u32));
 		assert(dt_cmax);
@@ -676,13 +676,13 @@ static bool add_cpu_pstate_properties(struct dt_node *power_mgt,
 			pturbo = occ_data->v2.pstate_turbo;
 			pultra_turbo = occ_data->v2.pstate_ultra_turbo;
 			for (i = 0; i < nr_cores; i++)
-				dt_cmax[i] = occ_data->v2.core_max[i];
+				dt_cmax[i] = cpu_to_be32(occ_data->v2.core_max[i]);
 			break;
 		case 0x9:
 			pturbo = occ_data->v9.pstate_turbo;
 			pultra_turbo = occ_data->v9.pstate_ultra_turbo;
 			for (i = 0; i < nr_cores; i++)
-				dt_cmax[i] = occ_data->v9.core_max[i];
+				dt_cmax[i] = cpu_to_be32(occ_data->v9.core_max[i]);
 			break;
 		default:
 			return false;
@@ -1602,7 +1602,7 @@ int occ_sensor_group_enable(u32 group_hndl, int token, bool enable)
 	return opal_occ_command(&chips[i], token, &sensor_mask_data);
 }
 
-void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, u32 *ptype,
+void occ_add_sensor_groups(struct dt_node *sg, __be32 *phandles, u32 *ptype,
 			   int nr_phandles, int chipid)
 {
 	struct group_info {
@@ -1689,7 +1689,7 @@ void occ_add_sensor_groups(struct dt_node *sg, u32 *phandles, u32 *ptype,
 		dt_add_property_cells(node, "ibm,chip-id", chipid);
 		dt_add_property_cells(node, "reg", handle);
 		if (groups[j].ops == OPAL_SENSOR_GROUP_ENABLE) {
-			u32 *_phandles;
+			__be32 *_phandles;
 			int k, pcount = 0;
 
 			_phandles = malloc(sizeof(u32) * nr_phandles);
