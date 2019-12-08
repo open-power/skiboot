@@ -159,8 +159,13 @@ static int lpc_window_read(struct mbox_flash_data *mbox_flash, uint32_t pos,
 		/* XXX: make this read until it's aligned */
 		if (len > 3 && !(off & 3)) {
 			rc = lpc_read(OPAL_LPC_FW, off, &dat, 4);
-			if (!rc)
-				*(uint32_t *)buf = dat;
+			if (!rc) {
+				/*
+				 * lpc_read swaps to CPU endian but it's not
+				 * really a 32-bit value, so convert back.
+				 */
+				*(__be32 *)buf = cpu_to_be32(dat);
+			}
 			chunk = 4;
 		} else {
 			rc = lpc_read(OPAL_LPC_FW, off, &dat, 1);
@@ -194,12 +199,15 @@ static int lpc_window_write(struct mbox_flash_data *mbox_flash, uint32_t pos,
 		uint32_t chunk;
 
 		if (len > 3 && !(off & 3)) {
-			rc = lpc_write(OPAL_LPC_FW, off,
-				       *(uint32_t *)buf, 4);
+			/* endian swap: see lpc_window_write */
+			uint32_t dat = be32_to_cpu(*(__be32 *)buf);
+
+			rc = lpc_write(OPAL_LPC_FW, off, dat, 4);
 			chunk = 4;
 		} else {
-			rc = lpc_write(OPAL_LPC_FW, off,
-				       *(uint8_t *)buf, 1);
+			uint8_t dat = *(uint8_t *)buf;
+
+			rc = lpc_write(OPAL_LPC_FW, off, dat, 1);
 			chunk = 1;
 		}
 		if (rc) {

@@ -9,6 +9,7 @@
 #include <compiler.h>
 #include <stdint.h>
 #include <processor.h>
+#include <types.h>
 #include <ccan/endian/endian.h>
 
 /*
@@ -35,10 +36,10 @@ static inline uint8_t in_8(const volatile uint8_t *addr)
 
 static inline uint16_t __in_be16(const volatile uint16_t *addr)
 {
-	uint16_t val;
+	__be16 val;
 	asm volatile("lhzcix %0,0,%1" :
 		     "=r"(val) : "r"(addr), "m"(*addr) : "memory");
-	return val;
+	return be16_to_cpu(val);
 }
 
 static inline uint16_t in_be16(const volatile uint16_t *addr)
@@ -47,17 +48,26 @@ static inline uint16_t in_be16(const volatile uint16_t *addr)
 	return __in_be16(addr);
 }
 
+static inline uint16_t __in_le16(const volatile uint16_t *addr)
+{
+	__le16 val;
+	asm volatile("lhzcix %0,0,%1" :
+		     "=r"(val) : "r"(addr), "m"(*addr) : "memory");
+	return le16_to_cpu(val);
+}
+
 static inline uint16_t in_le16(const volatile uint16_t *addr)
 {
-	return bswap_16(in_be16(addr));
+	sync();
+	return __in_le16(addr);
 }
 
 static inline uint32_t __in_be32(const volatile uint32_t *addr)
 {
-	uint32_t val;
+	__be32 val;
 	asm volatile("lwzcix %0,0,%1" :
 		     "=r"(val) : "r"(addr), "m"(*addr) : "memory");
-	return val;
+	return be32_to_cpu(val);
 }
 
 static inline uint32_t in_be32(const volatile uint32_t *addr)
@@ -66,17 +76,26 @@ static inline uint32_t in_be32(const volatile uint32_t *addr)
 	return __in_be32(addr);
 }
 
+static inline uint32_t __in_le32(const volatile uint32_t *addr)
+{
+	__le32 val;
+	asm volatile("lwzcix %0,0,%1" :
+		     "=r"(val) : "r"(addr), "m"(*addr) : "memory");
+	return le32_to_cpu(val);
+}
+
 static inline uint32_t in_le32(const volatile uint32_t *addr)
 {
-	return bswap_32(in_be32(addr));
+	sync();
+	return __in_le32(addr);
 }
 
 static inline uint64_t __in_be64(const volatile uint64_t *addr)
 {
-	uint64_t val;
+	__be64 val;
 	asm volatile("ldcix %0,0,%1" :
 		     "=r"(val) : "r"(addr), "m"(*addr) : "memory");
-	return val;
+	return be64_to_cpu(val);
 }
 
 static inline uint64_t in_be64(const volatile uint64_t *addr)
@@ -85,9 +104,18 @@ static inline uint64_t in_be64(const volatile uint64_t *addr)
 	return __in_be64(addr);
 }
 
+static inline uint64_t __in_le64(const volatile uint64_t *addr)
+{
+	__le64 val;
+	asm volatile("ldcix %0,0,%1" :
+		     "=r"(val) : "r"(addr), "m"(*addr) : "memory");
+	return le64_to_cpu(val);
+}
+
 static inline uint64_t in_le64(const volatile uint64_t *addr)
 {
-	return bswap_64(in_be64(addr));
+	sync();
+	return __in_le64(addr);
 }
 
 static inline void __out_8(volatile uint8_t *addr, uint8_t val)
@@ -105,7 +133,7 @@ static inline void out_8(volatile uint8_t *addr, uint8_t val)
 static inline void __out_be16(volatile uint16_t *addr, uint16_t val)
 {
 	asm volatile("sthcix %0,0,%1"
-		     : : "r"(val), "r"(addr), "m"(*addr) : "memory");
+		     : : "r"(cpu_to_be16(val)), "r"(addr), "m"(*addr) : "memory");
 }
 
 static inline void out_be16(volatile uint16_t *addr, uint16_t val)
@@ -114,15 +142,22 @@ static inline void out_be16(volatile uint16_t *addr, uint16_t val)
 	return __out_be16(addr, val);
 }
 
+static inline void __out_le16(volatile uint16_t *addr, uint16_t val)
+{
+	asm volatile("sthcix %0,0,%1"
+		     : : "r"(cpu_to_le16(val)), "r"(addr), "m"(*addr) : "memory");
+}
+
 static inline void out_le16(volatile uint16_t *addr, uint16_t val)
 {
-	out_be16(addr, bswap_16(val));
+	sync();
+	return __out_le16(addr, val);
 }
 
 static inline void __out_be32(volatile uint32_t *addr, uint32_t val)
 {
 	asm volatile("stwcix %0,0,%1"
-		     : : "r"(val), "r"(addr), "m"(*addr) : "memory");
+		     : : "r"(cpu_to_be32(val)), "r"(addr), "m"(*addr) : "memory");
 }
 
 static inline void out_be32(volatile uint32_t *addr, uint32_t val)
@@ -131,15 +166,22 @@ static inline void out_be32(volatile uint32_t *addr, uint32_t val)
 	return __out_be32(addr, val);
 }
 
+static inline void __out_le32(volatile uint32_t *addr, uint32_t val)
+{
+	asm volatile("stwcix %0,0,%1"
+		     : : "r"(cpu_to_le32(val)), "r"(addr), "m"(*addr) : "memory");
+}
+
 static inline void out_le32(volatile uint32_t *addr, uint32_t val)
 {
-	out_be32(addr, bswap_32(val));
+	sync();
+	return __out_le32(addr, val);
 }
 
 static inline void __out_be64(volatile uint64_t *addr, uint64_t val)
 {
 	asm volatile("stdcix %0,0,%1"
-		     : : "r"(val), "r"(addr), "m"(*addr) : "memory");
+		     : : "r"(cpu_to_be64(val)), "r"(addr), "m"(*addr) : "memory");
 }
 
 static inline void out_be64(volatile uint64_t *addr, uint64_t val)
@@ -148,9 +190,16 @@ static inline void out_be64(volatile uint64_t *addr, uint64_t val)
 	return __out_be64(addr, val);
 }
 
+static inline void __out_le64(volatile uint64_t *addr, uint64_t val)
+{
+	asm volatile("stdcix %0,0,%1"
+		     : : "r"(cpu_to_le64(val)), "r"(addr), "m"(*addr) : "memory");
+}
+
 static inline void out_le64(volatile uint64_t *addr, uint64_t val)
 {
-	out_be64(addr, bswap_64(val));
+	sync();
+	return __out_le64(addr, val);
 }
 
 /* Assistant to macros used to access PCI config space */
