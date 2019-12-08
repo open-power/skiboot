@@ -72,9 +72,9 @@ void skiboot_gcov_done(void);
 
 struct debug_descriptor debug_descriptor = {
 	.eye_catcher	= "OPALdbug",
-	.version	= DEBUG_DESC_VERSION,
+	.version	= CPU_TO_BE32(DEBUG_DESC_VERSION),
 	.state_flags	= 0,
-	.memcons_phys	= (uint64_t)&memcons,
+	.memcons_phys	= 0, /* cpu_to_be64(&memcons) can't init constant */
 	.trace_mask	= 0, /* All traces disabled by default */
 	/* console log level:
 	 *   high 4 bits in memory, low 4 bits driver (e.g. uart). */
@@ -1007,6 +1007,11 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 * printf an locks are going to play funny games with "con_suspend"
 	 */
 	pre_init_boot_cpu();
+
+	/*
+	 * Point to our mem console
+	 */
+	debug_descriptor.memcons_phys = cpu_to_be64((uint64_t)&memcons);
 
 	/*
 	 * Before first printk, ensure console buffer is clear or

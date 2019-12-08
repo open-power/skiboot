@@ -11,27 +11,27 @@
 struct debug_descriptor {
 	u8	eye_catcher[8];	/* "OPALdbug" */
 #define DEBUG_DESC_VERSION	1
-	u32	version;
+	__be32	version;
 	u8	console_log_levels;	/* high 4 bits in memory,
 					 * low 4 bits driver (e.g. uart). */
 	u8	state_flags; /* various state flags - OPAL_BOOT_COMPLETE etc */
-	u16	reserved2;
-	u32	reserved[2];
+	__be16	reserved2;
+	__be32	reserved[2];
 
 	/* Memory console */
-	u64	memcons_phys;
-	u32	memcons_tce;
-	u32	memcons_obuf_tce;
-	u32	memcons_ibuf_tce;
+	__be64	memcons_phys;
+	__be32	memcons_tce;
+	__be32	memcons_obuf_tce;
+	__be32	memcons_ibuf_tce;
 
 	/* Traces */
-	u64	trace_mask;
-	u32	num_traces;
+	__be64	trace_mask;
+	__be32	num_traces;
 #define DEBUG_DESC_MAX_TRACES	256
-	u64	trace_phys[DEBUG_DESC_MAX_TRACES];
-	u32	trace_size[DEBUG_DESC_MAX_TRACES];
-	u32	trace_tce[DEBUG_DESC_MAX_TRACES];
-	u16	trace_pir[DEBUG_DESC_MAX_TRACES];
+	__be64	trace_phys[DEBUG_DESC_MAX_TRACES];
+	__be32	trace_size[DEBUG_DESC_MAX_TRACES];
+	__be32	trace_tce[DEBUG_DESC_MAX_TRACES];
+	__be16	trace_pir[DEBUG_DESC_MAX_TRACES];
 };
 extern struct debug_descriptor debug_descriptor;
 

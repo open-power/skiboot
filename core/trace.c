@@ -121,7 +121,7 @@ void trace_add(union trace *trace, u8 type, u16 len)
 #endif
 	/* Skip traces not enabled in the debug descriptor */
 	if (trace->hdr.type < (8 * sizeof(debug_descriptor.trace_mask)) &&
-	    !((1ul << trace->hdr.type) & debug_descriptor.trace_mask))
+	    !((1ul << trace->hdr.type) & be64_to_cpu(debug_descriptor.trace_mask)))
 		return;
 
 	trace->hdr.timestamp = cpu_to_be64(mftb());
@@ -171,12 +171,12 @@ static void trace_add_dt_props(void)
 	if (!exports)
 		return;
 
-	prop = malloc(sizeof(u64) * 2 * debug_descriptor.num_traces);
+	prop = malloc(sizeof(u64) * 2 * be32_to_cpu(debug_descriptor.num_traces));
 
-	for (i = 0; i < debug_descriptor.num_traces; i++) {
-		uint64_t addr = debug_descriptor.trace_phys[i];
-		uint64_t size = debug_descriptor.trace_size[i];
-		uint32_t pir = debug_descriptor.trace_pir[i];
+	for (i = 0; i < be32_to_cpu(debug_descriptor.num_traces); i++) {
+		uint64_t addr = be64_to_cpu(debug_descriptor.trace_phys[i]);
+		uint64_t size = be32_to_cpu(debug_descriptor.trace_size[i]);
+		uint32_t pir = be16_to_cpu(debug_descriptor.trace_pir[i]);
 
 		prop[i * 2]     = cpu_to_fdt64(addr);
 		prop[i * 2 + 1] = cpu_to_fdt64(size);
@@ -199,18 +199,18 @@ static void trace_add_dt_props(void)
 
 static void trace_add_desc(struct trace_info *t, uint64_t size, uint16_t pir)
 {
-	unsigned int i = debug_descriptor.num_traces;
+	unsigned int i = be32_to_cpu(debug_descriptor.num_traces);
 
 	if (i >= DEBUG_DESC_MAX_TRACES) {
 		prerror("TRACE: Debug descriptor trace list full !\n");
 		return;
 	}
-	debug_descriptor.num_traces++;
 
-	debug_descriptor.trace_phys[i] = (uint64_t)t;
+	debug_descriptor.num_traces = cpu_to_be32(i + 1);
+	debug_descriptor.trace_phys[i] = cpu_to_be64((uint64_t)t);
 	debug_descriptor.trace_tce[i] = 0; /* populated later */
-	debug_descriptor.trace_size[i] = size;
-	debug_descriptor.trace_pir[i] = pir;
+	debug_descriptor.trace_size[i] = cpu_to_be32(size);
+	debug_descriptor.trace_pir[i] = cpu_to_be16(pir);
 }
 
 /* Allocate trace buffers once we know memory topology */

@@ -24,14 +24,14 @@ static void map_debug_areas(void)
 	fsp_tce_map(PSI_DMA_MEMCONS, &memcons, 0x1000);
 	fsp_tce_map(PSI_DMA_LOG_BUF, (void*)INMEM_CON_START, INMEM_CON_LEN);
 
-	debug_descriptor.memcons_tce = PSI_DMA_MEMCONS;
+	debug_descriptor.memcons_tce = cpu_to_be32(PSI_DMA_MEMCONS);
 	t = be64_to_cpu(memcons.obuf_phys) - INMEM_CON_START + PSI_DMA_LOG_BUF;
-	debug_descriptor.memcons_obuf_tce = t;
+	debug_descriptor.memcons_obuf_tce = cpu_to_be32(t);
 	t = be64_to_cpu(memcons.ibuf_phys) - INMEM_CON_START + PSI_DMA_LOG_BUF;
-	debug_descriptor.memcons_ibuf_tce = t;
+	debug_descriptor.memcons_ibuf_tce = cpu_to_be32(t);
 
 	t = PSI_DMA_TRACE_BASE;
-	for (i = 0; i < debug_descriptor.num_traces; i++) {
+	for (i = 0; i < be32_to_cpu(debug_descriptor.num_traces); i++) {
 		/*
 		 * Trace buffers are misaligned by 0x10 due to the lock
 		 * in the trace structure, and their size is also not
@@ -46,15 +46,16 @@ static void map_debug_areas(void)
 		 * Note: Maybe we should map them read-only...
 		 */
 		uint64_t tstart, tend, toff, tsize;
+		uint64_t trace_phys = be64_to_cpu(debug_descriptor.trace_phys[i]);
+		uint32_t trace_size = be32_to_cpu(debug_descriptor.trace_size[i]);
 
-		tstart = ALIGN_DOWN(debug_descriptor.trace_phys[i], 0x1000);
-		tend = ALIGN_UP(debug_descriptor.trace_phys[i] +
-				debug_descriptor.trace_size[i], 0x1000);
-		toff = debug_descriptor.trace_phys[i] - tstart;
+		tstart = ALIGN_DOWN(trace_phys, 0x1000);
+		tend = ALIGN_UP(trace_phys + trace_size, 0x1000);
+		toff = trace_phys - tstart;
 		tsize = tend - tstart;
 
 		fsp_tce_map(t, (void *)tstart, tsize);
-		debug_descriptor.trace_tce[i] = t + toff;
+		debug_descriptor.trace_tce[i] = cpu_to_be32(t + toff);
 		t += tsize;
 	}
 }
