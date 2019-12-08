@@ -84,7 +84,7 @@ static void prd_msg_consumed(void *data, int status)
 	lock(&events_lock);
 	switch (msg->hdr.type) {
 	case OPAL_PRD_MSG_TYPE_ATTN:
-		proc = msg->attn.proc;
+		proc = be64_to_cpu(msg->attn.proc);
 
 		/* If other ipoll events have been received in the time
 		 * between prd_msg creation and consumption, we'll need to
@@ -92,17 +92,17 @@ static void prd_msg_consumed(void *data, int status)
 		 * clear the event if we don't have any further ipoll_status
 		 * bits.
 		 */
-		ipoll_status[proc] &= ~msg->attn.ipoll_status;
+		ipoll_status[proc] &= ~be64_to_cpu(msg->attn.ipoll_status);
 		if (!ipoll_status[proc])
 			event = EVENT_ATTN;
 
 		break;
 	case OPAL_PRD_MSG_TYPE_OCC_ERROR:
-		proc = msg->occ_error.chip;
+		proc = be64_to_cpu(msg->occ_error.chip);
 		event = EVENT_OCC_ERROR;
 		break;
 	case OPAL_PRD_MSG_TYPE_OCC_RESET:
-		proc = msg->occ_reset.chip;
+		proc = be64_to_cpu(msg->occ_reset.chip);
 		event = EVENT_OCC_RESET;
 		break;
 	case OPAL_PRD_MSG_TYPE_FIRMWARE_RESPONSE:
@@ -126,15 +126,15 @@ static void prd_msg_consumed(void *data, int status)
 		platform.prd->msg_response(notify_status);
 		break;
 	case OPAL_PRD_MSG_TYPE_SBE_PASSTHROUGH:
-		proc = msg->sbe_passthrough.chip;
+		proc = be64_to_cpu(msg->sbe_passthrough.chip);
 		event = EVENT_SBE_PASSTHROUGH;
 		break;
 	case OPAL_PRD_MSG_TYPE_FSP_OCC_RESET:
-		proc = msg->occ_reset.chip;
+		proc = be64_to_cpu(msg->occ_reset.chip);
 		event = EVENT_FSP_OCC_RESET;
 		break;
 	case OPAL_PRD_MSG_TYPE_FSP_OCC_LOAD_START:
-		proc = msg->occ_reset.chip;
+		proc = be64_to_cpu(msg->occ_reset.chip);
 		event = EVENT_FSP_OCC_LOAD_START;
 		break;
 	default:
@@ -180,9 +180,9 @@ static int populate_ipoll_msg(struct opal_prd_msg *msg, uint32_t proc)
 		return -1;
 	}
 
-	msg->attn.proc = proc;
-	msg->attn.ipoll_status = ipoll_status[proc];
-	msg->attn.ipoll_mask = ipoll_mask;
+	msg->attn.proc = cpu_to_be64(proc);
+	msg->attn.ipoll_status = cpu_to_be64(ipoll_status[proc]);
+	msg->attn.ipoll_mask = cpu_to_be64(ipoll_mask);
 	return 0;
 }
 
@@ -212,27 +212,27 @@ static void send_next_pending_event(void)
 		return;
 
 	prd_msg->token = 0;
-	prd_msg->hdr.size = sizeof(*prd_msg);
+	prd_msg->hdr.size = cpu_to_be16(sizeof(*prd_msg));
 
 	if (event & EVENT_ATTN) {
 		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_ATTN;
 		populate_ipoll_msg(prd_msg, proc);
 	} else if (event & EVENT_OCC_ERROR) {
 		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_OCC_ERROR;
-		prd_msg->occ_error.chip = proc;
+		prd_msg->occ_error.chip = cpu_to_be64(proc);
 	} else if (event & EVENT_OCC_RESET) {
 		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_OCC_RESET;
-		prd_msg->occ_reset.chip = proc;
+		prd_msg->occ_reset.chip = cpu_to_be64(proc);
 		occ_msg_queue_occ_reset();
 	} else if (event & EVENT_SBE_PASSTHROUGH) {
 		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_SBE_PASSTHROUGH;
-		prd_msg->sbe_passthrough.chip = proc;
+		prd_msg->sbe_passthrough.chip = cpu_to_be64(proc);
 	} else if (event & EVENT_FSP_OCC_RESET) {
 		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_FSP_OCC_RESET;
-		prd_msg->occ_reset.chip = proc;
+		prd_msg->occ_reset.chip = cpu_to_be64(proc);
 	} else if (event & EVENT_FSP_OCC_LOAD_START) {
 		prd_msg->hdr.type = OPAL_PRD_MSG_TYPE_FSP_OCC_LOAD_START;
-		prd_msg->occ_reset.chip = proc;
+		prd_msg->occ_reset.chip = cpu_to_be64(proc);
 	}
 
 	/*
@@ -351,7 +351,7 @@ void prd_fw_resp_fsp_response(int status)
 		fw_resp->type = cpu_to_be64(PRD_FW_MSG_TYPE_RESP_GENERIC);
 		fw_resp->generic_resp.status = cpu_to_be64(status);
 
-		fw_resp_len_old = prd_msg_fsp_req->fw_resp.len;
+		fw_resp_len_old = be64_to_cpu(prd_msg_fsp_req->fw_resp.len);
 		prd_msg_fsp_req->fw_resp.len = cpu_to_be64(PRD_FW_MSG_BASE_SIZE +
 						 sizeof(fw_resp->generic_resp));
 
@@ -430,8 +430,8 @@ static int prd_msg_handle_attn_ack(struct opal_prd_msg *msg)
 	int rc;
 
 	lock(&ipoll_lock);
-	rc = __ipoll_update_mask(msg->attn_ack.proc, false,
-			msg->attn_ack.ipoll_ack & prd_ipoll_mask);
+	rc = __ipoll_update_mask(be64_to_cpu(msg->attn_ack.proc), false,
+			be64_to_cpu(msg->attn_ack.ipoll_ack) & prd_ipoll_mask);
 	unlock(&ipoll_lock);
 
 	if (rc)
@@ -447,7 +447,7 @@ static int prd_msg_handle_init(struct opal_prd_msg *msg)
 	lock(&ipoll_lock);
 	for_each_chip(chip) {
 		__ipoll_update_mask(chip->id, false,
-			msg->init.ipoll & prd_ipoll_mask);
+			be64_to_cpu(msg->init.ipoll) & prd_ipoll_mask);
 	}
 	unlock(&ipoll_lock);
 
@@ -497,7 +497,7 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 	/* does the total (outer) PRD message len provide enough data for the
 	 * claimed (inner) FW message?
 	 */
-	if (msg->hdr.size < fw_req_len +
+	if (be16_to_cpu(msg->hdr.size) < fw_req_len +
 			offsetof(struct opal_prd_msg, fw_req.data))
 		return -EINVAL;
 
@@ -524,8 +524,8 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 	case PRD_FW_MSG_TYPE_ERROR_LOG:
 		assert(platform.prd);
 		assert(platform.prd->send_error_log);
-		rc = platform.prd->send_error_log(fw_req->errorlog.plid,
-						  fw_req->errorlog.size,
+		rc = platform.prd->send_error_log(be32_to_cpu(fw_req->errorlog.plid),
+						  be32_to_cpu(fw_req->errorlog.size),
 						  fw_req->errorlog.data);
 		/* Return generic response to HBRT */
 		fw_resp->type = cpu_to_be64(PRD_FW_MSG_TYPE_RESP_GENERIC);
@@ -581,7 +581,7 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 		prd_msg_fsp_req->hdr.type = OPAL_PRD_MSG_TYPE_FIRMWARE_RESPONSE;
 		prd_msg_fsp_req->hdr.size = cpu_to_be16(resp_msg_size);
 		prd_msg_fsp_req->token = 0;
-		prd_msg_fsp_req->fw_resp.len = fw_req_len;
+		prd_msg_fsp_req->fw_resp.len = cpu_to_be64(fw_req_len);
 
 		/* copy HBRT data to local memory */
 		fw_resp = (struct prd_fw_msg *)prd_msg_fsp_req->fw_resp.data;
@@ -644,11 +644,11 @@ static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 	/* fini is a little special: the kernel (which may not have the entire
 	 * opal_prd_msg definition) can send a FINI message, so we don't check
 	 * the full size */
-	if (msg->hdr.size >= sizeof(struct opal_prd_msg_header) &&
+	if (be16_to_cpu(msg->hdr.size) >= sizeof(struct opal_prd_msg_header) &&
 			msg->hdr.type == OPAL_PRD_MSG_TYPE_FINI)
 		return prd_msg_handle_fini();
 
-	if (msg->hdr.size < sizeof(*msg))
+	if (be16_to_cpu(msg->hdr.size) < sizeof(*msg))
 		return OPAL_PARAMETER;
 
 	switch (msg->hdr.type) {
@@ -668,21 +668,21 @@ static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 		assert(platform.prd);
 		assert(platform.prd->fsp_occ_reset_status);
 		rc = platform.prd->fsp_occ_reset_status(
-			msg->fsp_occ_reset_status.chip,
-			msg->fsp_occ_reset_status.status);
+			be64_to_cpu(msg->fsp_occ_reset_status.chip),
+			be64_to_cpu(msg->fsp_occ_reset_status.status));
 		break;
 	case OPAL_PRD_MSG_TYPE_CORE_SPECIAL_WAKEUP:
 		assert(platform.prd);
 		assert(platform.prd->wakeup);
-		rc = platform.prd->wakeup(msg->spl_wakeup.core,
-					  msg->spl_wakeup.mode);
+		rc = platform.prd->wakeup(be32_to_cpu(msg->spl_wakeup.core),
+					  be32_to_cpu(msg->spl_wakeup.mode));
 		break;
 	case OPAL_PRD_MSG_TYPE_FSP_OCC_LOAD_START_STATUS:
 		assert(platform.prd);
 		assert(platform.prd->fsp_occ_load_start_status);
 		rc = platform.prd->fsp_occ_load_start_status(
-			msg->fsp_occ_reset_status.chip,
-			msg->fsp_occ_reset_status.status);
+			be64_to_cpu(msg->fsp_occ_reset_status.chip),
+			be64_to_cpu(msg->fsp_occ_reset_status.status));
 		break;
 	default:
 		prlog(PR_DEBUG, "PRD: Unsupported prd message type : 0x%x\n",
