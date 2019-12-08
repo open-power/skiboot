@@ -123,7 +123,7 @@ static u64 p9_sbe_rreg(u32 chip_id, u64 reg)
 		return 0xffffffff;
 	}
 
-	return be64_to_cpu(data);
+	return data;
 }
 
 static void p9_sbe_reg_dump(u32 chip_id)
