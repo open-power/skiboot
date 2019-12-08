@@ -458,8 +458,8 @@ static void imc_dt_update_nest_node(struct dt_node *dev)
 	base_addr = malloc(sizeof(uint64_t) * nr_chip);
 	chipids = malloc(sizeof(uint32_t) * nr_chip);
 	for_each_chip(chip) {
-		base_addr[i] = chip->homer_base;
-		chipids[i] = chip->id;
+		base_addr[i] = cpu_to_be64(chip->homer_base);
+		chipids[i] = cpu_to_be32(chip->id);
 		i++;
 	}
 

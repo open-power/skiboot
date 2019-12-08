@@ -20,7 +20,7 @@ static bool io_get_lx_info(const void *kwvpd, unsigned int kwvpd_sz,
 {
 	const void *lxr;
 	char recname[5];
-	uint32_t lxrbuf[2] = { 0, 0 };
+	beint32_t lxrbuf[2] = { 0, 0 };
 
 	/* Find LXRn, where n is the index passed in*/
 	strcpy(recname, "LXR0");
@@ -38,17 +38,17 @@ static bool io_get_lx_info(const void *kwvpd, unsigned int kwvpd_sz,
 		return false;
 	}
 
-	memcpy(lxrbuf, lxr, sizeof(uint32_t)*2);
+	memcpy(lxrbuf, lxr, sizeof(beint32_t)*2);
 
-	prlog(PR_DEBUG, "CEC:     LXRn=%d LXR=%08x%08x\n", lx_idx, lxrbuf[0], lxrbuf[1]);
+	prlog(PR_DEBUG, "CEC:     LXRn=%d LXR=%08x%08x\n", lx_idx, be32_to_cpu(lxrbuf[0]), be32_to_cpu(lxrbuf[1]));
 	prlog(PR_DEBUG, "CEC:     LX Info added to %llx\n", (long long)hn);
 
 	/* Add the LX info */
 	if (!dt_has_node_property(hn, "ibm,vpd-lx-info", NULL)) {
 		dt_add_property_cells(hn, "ibm,vpd-lx-info",
 				      lx_idx,
-				      lxrbuf[0],
-				      lxrbuf[1]);
+				      be32_to_cpu(lxrbuf[0]),
+				      be32_to_cpu(lxrbuf[1]));
 	}
 
 	return true;
@@ -109,12 +109,12 @@ static struct dt_node *io_add_phb3(const struct cechub_io_hub *hub,
 	/* "reg" property contains in order the PE, PCI and SPCI XSCOM
 	 * addresses
 	 */
-	reg[0] = pe_xscom;
-	reg[1] = 0x20;
-	reg[2] = pci_xscom;
-	reg[3] = 0x05;
-	reg[4] = spci_xscom;
-	reg[5] = 0x15;
+	reg[0] = cpu_to_be32(pe_xscom);
+	reg[1] = cpu_to_be32(0x20);
+	reg[2] = cpu_to_be32(pci_xscom);
+	reg[3] = cpu_to_be32(0x05);
+	reg[4] = cpu_to_be32(spci_xscom);
+	reg[5] = cpu_to_be32(0x15);
 	dt_add_property(pbcq, "reg", reg, sizeof(reg));
 
 	/* A couple more things ... */
@@ -214,10 +214,10 @@ static struct dt_node *io_add_phb4(const struct cechub_io_hub *hub,
 		return NULL;
 
 	/* "reg" property contains (in order) the PE and PCI XSCOM addresses */
-	reg[0] = pe_xscom;
-	reg[1] = 0x100;
-	reg[2] = pci_xscom;
-	reg[3] = 0x200;
+	reg[0] = cpu_to_be32(pe_xscom);
+	reg[1] = cpu_to_be32(0x100);
+	reg[2] = cpu_to_be32(pci_xscom);
+	reg[3] = cpu_to_be32(0x200);
 	dt_add_property(pbcq, "reg", reg, sizeof(reg));
 
 	/* The hubs themselves go under the stacks */
@@ -322,7 +322,7 @@ static void io_add_p8_cec_vpd(const struct HDIF_common_hdr *sp_iohubs)
 	}
 	if (be32_to_cpu(iokids->count) > 1) {
 		prlog(PR_WARNING, "CEC:     WARNING ! More than 1 IO KID !!! (%d)\n",
-		      iokids->count);
+		      be32_to_cpu(iokids->count));
 		/* Ignoring the additional ones */
 	}
 

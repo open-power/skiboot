@@ -1312,16 +1312,13 @@ void pci_std_swizzle_irq_map(struct dt_node *np,
 {
 	uint32_t *map, *p;
 	int dev, irq, esize, edevcount;
-	size_t map_size, isize;
+	size_t map_size;
 
 	/* Some emulated setups don't use standard interrupts
 	 * representation
 	 */
 	if (lstate->int_size == 0)
 		return;
-
-	/* Size in bytes of a target interrupt */
-	isize = lstate->int_size * sizeof(uint32_t);
 
 	/* Calculate the size of a map entry:
 	 *
@@ -1362,22 +1359,23 @@ void pci_std_swizzle_irq_map(struct dt_node *np,
 	for (dev = 0; dev < edevcount; dev++) {
 		for (irq = 0; irq < 4; irq++) {
 			/* Calculate pin */
+			size_t i;
 			uint32_t new_irq = (irq + dev + swizzle) % 4;
 
 			/* PCI address portion */
-			*(p++) = dev << (8 + 3);
+			*(p++) = cpu_to_be32(dev << (8 + 3));
 			*(p++) = 0;
 			*(p++) = 0;
 
 			/* PCI interrupt portion */
-			*(p++) = irq + 1;
+			*(p++) = cpu_to_be32(irq + 1);
 
 			/* Parent phandle */
-			*(p++) = lstate->int_parent[new_irq];
+			*(p++) = cpu_to_be32(lstate->int_parent[new_irq]);
 
 			/* Parent desc */
-			memcpy(p, lstate->int_val[new_irq], isize);
-			p += lstate->int_size;
+			for (i = 0; i < lstate->int_size; i++)
+				*(p++) = cpu_to_be32(lstate->int_val[new_irq][i]);
 		}
 	}
 
@@ -1526,16 +1524,16 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 	char name[MAX_NAME];
 	char compat[MAX_NAME];
 	uint32_t rev_class;
-	uint32_t reg[5];
+	__be32 reg[5];
 	uint8_t intpin;
 	bool is_pcie;
-	const uint32_t ranges_direct[] = {
+	const __be32 ranges_direct[] = {
 				/* 64-bit direct mapping. We know the bridges
 				 * don't cover the entire address space so
 				 * use 0xf00... as a good compromise. */
-				0x02000000, 0x0, 0x0,
-				0x02000000, 0x0, 0x0,
-				0xf0000000, 0x0};
+				cpu_to_be32(0x02000000), 0x0, 0x0,
+				cpu_to_be32(0x02000000), 0x0, 0x0,
+				cpu_to_be32(0xf0000000), 0x0};
 
 	pci_cfg_read32(phb, pd->bdfn, PCI_CFG_REV_ID, &rev_class);
 	pci_cfg_read8(phb, pd->bdfn, PCI_CFG_INT_PIN, &intpin);
@@ -1611,7 +1609,7 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 	 * entry in the "reg" property. That's enough for Linux and we might
 	 * even want to make this legit in future ePAPR
 	 */
-	reg[0] = pd->bdfn << 8;
+	reg[0] = cpu_to_be32(pd->bdfn << 8);
 	reg[1] = reg[2] = reg[3] = reg[4] = 0;
 	dt_add_property(np, "reg", reg, sizeof(reg));
 

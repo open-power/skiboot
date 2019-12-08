@@ -146,8 +146,8 @@ static void create_dtb_reservemap(void *fdt, const struct dt_node *root)
 		ranges = (const void *)prop->prop;
 
 		for (i = 0; i < prop->len / (sizeof(uint64_t) * 2); i++) {
-			base = *(ranges++);
-			size = *(ranges++);
+			base = be64_to_cpu(*(ranges++));
+			size = be64_to_cpu(*(ranges++));
 			save_err(fdt_add_reservemap_entry(fdt, base, size));
 		}
 	}

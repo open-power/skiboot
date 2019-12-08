@@ -786,10 +786,10 @@ static void psi_create_p9_int_map(struct psi *psi, struct dt_node *np)
 	int i;
 
 	for (i = 0; i < P9_PSI_NUM_IRQS; i++) {
-		map[i][0] = i;
-		map[i][1] = get_ics_phandle();
-		map[i][2] = psi->interrupt + i;
-		map[i][3] = 1;
+		map[i][0] = cpu_to_be32(i);
+		map[i][1] = cpu_to_be32(get_ics_phandle());
+		map[i][2] = cpu_to_be32(psi->interrupt + i);
+		map[i][3] = cpu_to_be32(1);
 	}
 	dt_add_property(np, "interrupt-map", map, sizeof(map));
 	dt_add_property_cells(np, "#address-cells", 0);

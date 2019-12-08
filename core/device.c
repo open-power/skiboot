@@ -1110,6 +1110,7 @@ void dt_adjust_subtree_phandle(struct dt_node *dev,
 				continue;
 			phandle = dt_prop_get_u32(node, *name);
 			phandle += import_phandle;
+			phandle = cpu_to_be32(phandle);
 			memcpy((char *)&prop->prop, &phandle, prop->len);
 		}
        }

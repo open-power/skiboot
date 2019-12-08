@@ -873,7 +873,7 @@ unsigned int lpc_get_irq_policy(uint32_t chip_id, uint32_t psi_idx)
 
 static void lpc_create_int_map(struct lpcm *lpc, struct dt_node *psi_node)
 {
-	uint32_t map[LPC_NUM_SERIRQ * 5], *pmap;
+	__be32 map[LPC_NUM_SERIRQ * 5], *pmap;
 	uint32_t i;
 
 	if (!psi_node)
@@ -884,9 +884,9 @@ static void lpc_create_int_map(struct lpcm *lpc, struct dt_node *psi_node)
 			continue;
 		*(pmap++) = 0;
 		*(pmap++) = 0;
-		*(pmap++) = i;
-		*(pmap++) = psi_node->phandle;
-		*(pmap++) = lpc->sirq_routes[i] + P9_PSI_IRQ_LPC_SIRQ0;
+		*(pmap++) = cpu_to_be32(i);
+		*(pmap++) = cpu_to_be32(psi_node->phandle);
+		*(pmap++) = cpu_to_be32(lpc->sirq_routes[i] + P9_PSI_IRQ_LPC_SIRQ0);
 	}
 	if (pmap == map)
 		return;

@@ -206,7 +206,7 @@ static void fsp_create_links(const void *spss, int index,
 		chip = fsp_create_link(iopath, i, index);
 		lp = lcount++;
 		links = realloc(links, 4 * lcount);
-		links[lp] = chip;
+		links[lp] = cpu_to_be32(chip);
 	}
 	if (links)
 		dt_add_property(fsp_node, "ibm,psi-links", links, lcount * 4);
@@ -268,7 +268,7 @@ static void add_uart(const struct spss_iopath *iopath, struct dt_node *lpc)
 		be32_to_cpu(iopath->lpc.uart_baud));
 }
 
-static void add_chip_id_to_sensors(struct dt_node *sensor_node, __be32 slca_index)
+static void add_chip_id_to_sensors(struct dt_node *sensor_node, uint32_t slca_index)
 {
 	unsigned int i;
 	const void *hdif;
@@ -347,7 +347,8 @@ static void add_ipmi_sensors(struct dt_node *bmc_node)
 		dt_add_property_cells(sensor_node, "ipmi-sensor-type",
 				      ipmi_sensors->data[i].type);
 
-		add_chip_id_to_sensors(sensor_node, ipmi_sensors->data[i].slca_index);
+		add_chip_id_to_sensors(sensor_node,
+				be32_to_cpu(ipmi_sensors->data[i].slca_index));
 	}
 }
 

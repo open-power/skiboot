@@ -231,8 +231,8 @@ void add_opal_interrupts(void)
 				names[tns++] = 0;
 			i = count++;
 			irqs = realloc(irqs, 8 * count);
-			irqs[i*2] = isn;
-			irqs[i*2+1] = iflags;
+			irqs[i*2] = cpu_to_be32(isn);
+			irqs[i*2+1] = cpu_to_be32(iflags);
 		}
 	}
 	unlock(&irq_lock);

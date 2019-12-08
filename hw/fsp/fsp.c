@@ -1912,7 +1912,7 @@ static void fsp_init_links(struct dt_node *fsp_node)
 		u64 reg;
 		u32 link;
 
-		link = ((const u32 *)linksprop->prop)[i];
+		link = be32_to_cpu(((const __be32 *)linksprop->prop)[i]);
 		fiop = &fsp->iopath[i];
 		fiop->psi = psi_find_link(link);
 		if (fiop->psi == NULL) {

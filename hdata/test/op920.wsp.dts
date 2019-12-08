@@ -76,6 +76,7 @@
 			sensor@8 {
 				phandle = <0x2b>;
 				compatible = "ibm,ipmi-sensor";
+				ibm,chip-id = <0x00>;
 				reg = <0x8>;
 				ipmi-sensor-type = <0x7>;
 			};
@@ -83,6 +84,7 @@
 			sensor@9 {
 				phandle = <0x3f>;
 				compatible = "ibm,ipmi-sensor";
+				ibm,chip-id = <0x08>;
 				reg = <0x9>;
 				ipmi-sensor-type = <0x7>;
 			};
@@ -139,6 +141,7 @@
 			sensor@59 {
 				phandle = <0x18>;
 				compatible = "ibm,ipmi-sensor";
+				ibm,chip-id = <0x00>;
 				reg = <0x59>;
 				ipmi-sensor-type = <0x1>;
 			};
@@ -146,6 +149,7 @@
 			sensor@5a {
 				phandle = <0x1a>;
 				compatible = "ibm,ipmi-sensor";
+				ibm,chip-id = <0x00>;
 				reg = <0x5a>;
 				ipmi-sensor-type = <0x7>;
 			};
@@ -153,6 +157,7 @@
 			sensor@a3 {
 				phandle = <0x2c>;
 				compatible = "ibm,ipmi-sensor";
+				ibm,chip-id = <0x08>;
 				reg = <0xa3>;
 				ipmi-sensor-type = <0x1>;
 			};
@@ -160,6 +165,7 @@
 			sensor@a4 {
 				phandle = <0x2e>;
 				compatible = "ibm,ipmi-sensor";
+				ibm,chip-id = <0x08>;
 				reg = <0xa4>;
 				ipmi-sensor-type = <0x7>;
 			};
@@ -433,6 +439,7 @@
 			sensor@e0 {
 				phandle = <0x19>;
 				compatible = "ibm,ipmi-sensor";
+				ibm,chip-id = <0x00>;
 				reg = <0xe0>;
 				ipmi-sensor-type = <0x1>;
 			};
@@ -440,6 +447,7 @@
 			sensor@e1 {
 				phandle = <0x2d>;
 				compatible = "ibm,ipmi-sensor";
+				ibm,chip-id = <0x08>;
 				reg = <0xe1>;
 				ipmi-sensor-type = <0x1>;
 			};
@@ -4166,7 +4174,7 @@
 
 		pbcq@4010c00 {
 			phandle = <0x140>;
-			reg = <0xc0104 0x10000 0x8010d 0x20000>;
+			reg = <0x4010c00 0x100 0xd010800 0x200>;
 			compatible = "ibm,power9-pbcq";
 			ibm,pec-index = <0x0>;
 			#address-cells = <0x1>;
@@ -4186,7 +4194,7 @@
 
 		pbcq@4011000 {
 			phandle = <0x142>;
-			reg = <0x100104 0x10000 0x8010e 0x20000>;
+			reg = <0x4011000 0x100 0xe010800 0x200>;
 			compatible = "ibm,power9-pbcq";
 			ibm,pec-index = <0x1>;
 			#address-cells = <0x1>;
@@ -4215,7 +4223,7 @@
 
 		pbcq@4011400 {
 			phandle = <0x145>;
-			reg = <0x140104 0x10000 0x8010f 0x20000>;
+			reg = <0x4011400 0x100 0xf010800 0x200>;
 			compatible = "ibm,power9-pbcq";
 			ibm,pec-index = <0x2>;
 			#address-cells = <0x1>;
@@ -4796,7 +4804,7 @@
 
 		pbcq@4010c00 {
 			phandle = <0x15c>;
-			reg = <0xc0104 0x10000 0x8010d 0x20000>;
+			reg = <0x4010c00 0x100 0xd010800 0x200>;
 			compatible = "ibm,power9-pbcq";
 			ibm,pec-index = <0x0>;
 			#address-cells = <0x1>;
@@ -4816,7 +4824,7 @@
 
 		pbcq@4011000 {
 			phandle = <0x15e>;
-			reg = <0x100104 0x10000 0x8010e 0x20000>;
+			reg = <0x4011000 0x100 0xe010800 0x200>;
 			compatible = "ibm,power9-pbcq";
 			ibm,pec-index = <0x1>;
 			#address-cells = <0x1>;
@@ -4845,7 +4853,7 @@
 
 		pbcq@4011400 {
 			phandle = <0x161>;
-			reg = <0x140104 0x10000 0x8010f 0x20000>;
+			reg = <0x4011400 0x100 0xf010800 0x200>;
 			compatible = "ibm,power9-pbcq";
 			ibm,pec-index = <0x2>;
 			#address-cells = <0x1>;

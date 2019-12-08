@@ -469,8 +469,8 @@ static void add_opal_sysparam_node(void)
 		strcpy(s, sysparam_attrs[i].name);
 		s = s + strlen(sysparam_attrs[i].name) + 1;
 
-		ids[i] = sysparam_attrs[i].id;
-		lens[i] = sysparam_attrs[i].length;
+		ids[i] = cpu_to_be32(sysparam_attrs[i].id);
+		lens[i] = cpu_to_be32(sysparam_attrs[i].length);
 		perms[i] = sysparam_attrs[i].perm;
 	}
 

@@ -1214,7 +1214,7 @@ void init_all_cpus(void)
 			t = &cpu_stacks[pir + thread].cpu;
 			init_cpu_thread(t, state, pir + thread);
 			t->trace = boot_cpu->trace;
-			t->server_no = ((const u32 *)p->prop)[thread];
+			t->server_no = dt_property_get_cell(p, thread);
 			t->is_secondary = true;
 			t->primary = pt;
 			t->node = cpu;
