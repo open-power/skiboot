@@ -89,9 +89,9 @@ static void checksum_romem(void);
 
 static bool try_load_elf64_le(struct elf_hdr *header)
 {
-	struct elf64_hdr *kh = (struct elf64_hdr *)header;
+	struct elf64le_hdr *kh = (struct elf64le_hdr *)header;
 	uint64_t load_base = (uint64_t)kh;
-	struct elf64_phdr *ph;
+	struct elf64le_phdr *ph;
 	unsigned int i;
 
 	printf("INIT: 64-bit LE kernel discovered\n");
@@ -103,7 +103,7 @@ static bool try_load_elf64_le(struct elf_hdr *header)
 	 * to work for the Linux Kernel because it's a fairly dumb ELF
 	 * but it will not work for any ELF binary.
 	 */
-	ph = (struct elf64_phdr *)(load_base + le64_to_cpu(kh->e_phoff));
+	ph = (struct elf64le_phdr *)(load_base + le64_to_cpu(kh->e_phoff));
 	for (i = 0; i < le16_to_cpu(kh->e_phnum); i++, ph++) {
 		if (le32_to_cpu(ph->p_type) != ELF_PTYPE_LOAD)
 			continue;
@@ -137,23 +137,24 @@ static bool try_load_elf64_le(struct elf_hdr *header)
 
 static bool try_load_elf64(struct elf_hdr *header)
 {
-	struct elf64_hdr *kh = (struct elf64_hdr *)header;
+	struct elf64be_hdr *kh = (struct elf64be_hdr *)header;
+	struct elf64le_hdr *khle = (struct elf64le_hdr *)header;
 	uint64_t load_base = (uint64_t)kh;
-	struct elf64_phdr *ph;
-	struct elf64_shdr *sh;
+	struct elf64be_phdr *ph;
+	struct elf64be_shdr *sh;
 	unsigned int i;
 
 	/* Check it's a ppc64 LE ELF */
-	if (kh->ei_ident == ELF_IDENT		&&
-	    kh->ei_data == ELF_DATA_LSB		&&
-	    kh->e_machine == le16_to_cpu(ELF_MACH_PPC64)) {
+	if (khle->ei_ident == ELF_IDENT		&&
+	    khle->ei_data == ELF_DATA_LSB	&&
+	    le16_to_cpu(khle->e_machine) == ELF_MACH_PPC64) {
 		return try_load_elf64_le(header);
 	}
 
 	/* Check it's a ppc64 ELF */
 	if (kh->ei_ident != ELF_IDENT		||
 	    kh->ei_data != ELF_DATA_MSB		||
-	    kh->e_machine != ELF_MACH_PPC64) {
+	    be16_to_cpu(kh->e_machine) != ELF_MACH_PPC64) {
 		prerror("INIT: Kernel doesn't look like an ppc64 ELF\n");
 		return false;
 	}
@@ -165,16 +166,18 @@ static bool try_load_elf64(struct elf_hdr *header)
 	 * to work for the Linux Kernel because it's a fairly dumb ELF
 	 * but it will not work for any ELF binary.
 	 */
-	ph = (struct elf64_phdr *)(load_base + kh->e_phoff);
-	for (i = 0; i < kh->e_phnum; i++, ph++) {
-		if (ph->p_type != ELF_PTYPE_LOAD)
+	ph = (struct elf64be_phdr *)(load_base + be64_to_cpu(kh->e_phoff));
+	for (i = 0; i < be16_to_cpu(kh->e_phnum); i++, ph++) {
+		if (be32_to_cpu(ph->p_type) != ELF_PTYPE_LOAD)
 			continue;
-		if (ph->p_vaddr > kh->e_entry ||
-		    (ph->p_vaddr + ph->p_memsz) < kh->e_entry)
+		if (be64_to_cpu(ph->p_vaddr) > be64_to_cpu(kh->e_entry) ||
+		    (be64_to_cpu(ph->p_vaddr) + be64_to_cpu(ph->p_memsz)) <
+		    be64_to_cpu(kh->e_entry))
 			continue;
 
 		/* Get our entry */
-		kernel_entry = kh->e_entry - ph->p_vaddr + ph->p_offset;
+		kernel_entry = be64_to_cpu(kh->e_entry) -
+			be64_to_cpu(ph->p_vaddr) + be64_to_cpu(ph->p_offset);
 		break;
 	}
 
@@ -189,23 +192,27 @@ static bool try_load_elf64(struct elf_hdr *header)
 	 * into an executable section or not to figure this out. Default
 	 * to assuming it obeys the ABI.
 	 */
-	sh = (struct elf64_shdr *)(load_base + kh->e_shoff);
-	for (i = 0; i < kh->e_shnum; i++, sh++) {
-		if (sh->sh_addr <= kh->e_entry &&
-		      (sh->sh_addr + sh->sh_size) > kh->e_entry)
+	sh = (struct elf64be_shdr *)(load_base + be64_to_cpu(kh->e_shoff));
+	for (i = 0; i < be16_to_cpu(kh->e_shnum); i++, sh++) {
+		if (be64_to_cpu(sh->sh_addr) <= be64_to_cpu(kh->e_entry) &&
+		    (be64_to_cpu(sh->sh_addr) + be64_to_cpu(sh->sh_size)) >
+		    be64_to_cpu(kh->e_entry))
 			break;
 	}
 
-	if (i == kh->e_shnum || !(sh->sh_flags & ELF_SFLAGS_X)) {
+	if (i == be16_to_cpu(kh->e_shnum) ||
+			!(be64_to_cpu(sh->sh_flags) & ELF_SFLAGS_X)) {
 		kernel_entry = *(uint64_t *)(kernel_entry + load_base);
-		kernel_entry = kernel_entry - ph->p_vaddr + ph->p_offset;
+		kernel_entry = kernel_entry -
+			be64_to_cpu(ph->p_vaddr) + be64_to_cpu(ph->p_offset);
 	}
 
 	kernel_entry += load_base;
 	kernel_32bit = false;
 
-	kernel_size = kh->e_shoff +
-		((uint32_t)kh->e_shentsize * (uint32_t)kh->e_shnum);
+	kernel_size = be64_to_cpu(kh->e_shoff) +
+		((uint32_t)be16_to_cpu(kh->e_shentsize) *
+		 (uint32_t)be16_to_cpu(kh->e_shnum));
 
 	printf("INIT: 64-bit kernel entry at 0x%llx, size 0x%lx\n",
 	       kernel_entry, kernel_size);
@@ -215,9 +222,9 @@ static bool try_load_elf64(struct elf_hdr *header)
 
 static bool try_load_elf32_le(struct elf_hdr *header)
 {
-	struct elf32_hdr *kh = (struct elf32_hdr *)header;
+	struct elf32le_hdr *kh = (struct elf32le_hdr *)header;
 	uint64_t load_base = (uint64_t)kh;
-	struct elf32_phdr *ph;
+	struct elf32le_phdr *ph;
 	unsigned int i;
 
 	printf("INIT: 32-bit LE kernel discovered\n");
@@ -229,7 +236,7 @@ static bool try_load_elf32_le(struct elf_hdr *header)
 	 * to work for the Linux Kernel because it's a fairly dumb ELF
 	 * but it will not work for any ELF binary.
 	 */
-	ph = (struct elf32_phdr *)(load_base + le32_to_cpu(kh->e_phoff));
+	ph = (struct elf32le_phdr *)(load_base + le32_to_cpu(kh->e_phoff));
 	for (i = 0; i < le16_to_cpu(kh->e_phnum); i++, ph++) {
 		if (le32_to_cpu(ph->p_type) != ELF_PTYPE_LOAD)
 			continue;
@@ -259,22 +266,23 @@ static bool try_load_elf32_le(struct elf_hdr *header)
 
 static bool try_load_elf32(struct elf_hdr *header)
 {
-	struct elf32_hdr *kh = (struct elf32_hdr *)header;
+	struct elf32be_hdr *kh = (struct elf32be_hdr *)header;
+	struct elf32le_hdr *khle = (struct elf32le_hdr *)header;
 	uint64_t load_base = (uint64_t)kh;
-	struct elf32_phdr *ph;
+	struct elf32be_phdr *ph;
 	unsigned int i;
 
 	/* Check it's a ppc32 LE ELF */
-	if (header->ei_ident == ELF_IDENT		&&
-	    header->ei_data == ELF_DATA_LSB		&&
-	    header->e_machine == le16_to_cpu(ELF_MACH_PPC32)) {
+	if (khle->ei_ident == ELF_IDENT		&&
+	    khle->ei_data == ELF_DATA_LSB	&&
+	    le16_to_cpu(khle->e_machine) == ELF_MACH_PPC32) {
 		return try_load_elf32_le(header);
 	}
 
 	/* Check it's a ppc32 ELF */
-	if (header->ei_ident != ELF_IDENT		||
-	    header->ei_data != ELF_DATA_MSB		||
-	    header->e_machine != ELF_MACH_PPC32) {
+	if (kh->ei_ident != ELF_IDENT		||
+	    kh->ei_data != ELF_DATA_MSB		||
+	    be16_to_cpu(kh->e_machine) != ELF_MACH_PPC32) {
 		prerror("INIT: Kernel doesn't look like an ppc32 ELF\n");
 		return false;
 	}
@@ -286,16 +294,18 @@ static bool try_load_elf32(struct elf_hdr *header)
 	 * to work for the Linux Kernel because it's a fairly dumb ELF
 	 * but it will not work for any ELF binary.
 	 */
-	ph = (struct elf32_phdr *)(load_base + kh->e_phoff);
-	for (i = 0; i < kh->e_phnum; i++, ph++) {
-		if (ph->p_type != ELF_PTYPE_LOAD)
+	ph = (struct elf32be_phdr *)(load_base + be32_to_cpu(kh->e_phoff));
+	for (i = 0; i < be16_to_cpu(kh->e_phnum); i++, ph++) {
+		if (be32_to_cpu(ph->p_type) != ELF_PTYPE_LOAD)
 			continue;
-		if (ph->p_vaddr > kh->e_entry ||
-		    (ph->p_vaddr + ph->p_memsz) < kh->e_entry)
+		if (be32_to_cpu(ph->p_vaddr) > be32_to_cpu(kh->e_entry) ||
+		    (be32_to_cpu(ph->p_vaddr) + be32_to_cpu(ph->p_memsz)) <
+		    be32_to_cpu(kh->e_entry))
 			continue;
 
 		/* Get our entry */
-		kernel_entry = kh->e_entry - ph->p_vaddr + ph->p_offset;
+		kernel_entry = be32_to_cpu(kh->e_entry) -
+			be32_to_cpu(ph->p_vaddr) + be32_to_cpu(ph->p_offset);
 		break;
 	}
 

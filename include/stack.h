@@ -11,7 +11,11 @@
 #define STACK_ENTRY_RESET	0x0100	/* System reset */
 #define STACK_ENTRY_SOFTPATCH	0x1500	/* Soft patch (denorm emulation) */
 
+#if HAVE_BIG_ENDIAN
 #define STACK_TOC_OFFSET	40
+#else
+#define STACK_TOC_OFFSET	24
+#endif
 
 /* Safety/ABI gap at top of stack */
 #define STACK_TOP_GAP		0x100

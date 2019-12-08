@@ -523,24 +523,38 @@ const char *flash_map_resource_name(enum resource_id id)
 
 static size_t sizeof_elf_from_hdr(void *buf)
 {
-	struct elf_hdr *elf = (struct elf_hdr*) buf;
+	struct elf_hdr *elf = (struct elf_hdr *)buf;
 	size_t sz = 0;
 
 	BUILD_ASSERT(SECURE_BOOT_HEADERS_SIZE > sizeof(struct elf_hdr));
-	BUILD_ASSERT(SECURE_BOOT_HEADERS_SIZE > sizeof(struct elf64_hdr));
-	BUILD_ASSERT(SECURE_BOOT_HEADERS_SIZE > sizeof(struct elf32_hdr));
+	BUILD_ASSERT(SECURE_BOOT_HEADERS_SIZE > sizeof(struct elf64be_hdr));
+	BUILD_ASSERT(SECURE_BOOT_HEADERS_SIZE > sizeof(struct elf32be_hdr));
 
 	if (elf->ei_ident == ELF_IDENT) {
 		if (elf->ei_class == ELF_CLASS_64) {
-			struct elf64_hdr *elf64 = (struct elf64_hdr*) buf;
-			sz = le64_to_cpu(elf64->e_shoff) +
-				((uint32_t)le16_to_cpu(elf64->e_shentsize) *
-				 (uint32_t)le16_to_cpu(elf64->e_shnum));
+			if (elf->ei_data == ELF_DATA_LSB) {
+				struct elf64le_hdr *kh = (struct elf64le_hdr *)buf;
+				sz = le64_to_cpu(kh->e_shoff) +
+					((uint32_t)le16_to_cpu(kh->e_shentsize) *
+					 (uint32_t)le16_to_cpu(kh->e_shnum));
+			} else {
+				struct elf64be_hdr *kh = (struct elf64be_hdr *)buf;
+				sz = be64_to_cpu(kh->e_shoff) +
+					((uint32_t)be16_to_cpu(kh->e_shentsize) *
+					 (uint32_t)be16_to_cpu(kh->e_shnum));
+			}
 		} else if (elf->ei_class == ELF_CLASS_32) {
-			struct elf32_hdr *elf32 = (struct elf32_hdr*) buf;
-			sz = le32_to_cpu(elf32->e_shoff) +
-				(le16_to_cpu(elf32->e_shentsize) *
-				 le16_to_cpu(elf32->e_shnum));
+			if (elf->ei_data == ELF_DATA_LSB) {
+				struct elf32le_hdr *kh = (struct elf32le_hdr *)buf;
+				sz = le32_to_cpu(kh->e_shoff) +
+					(le16_to_cpu(kh->e_shentsize) *
+					 le16_to_cpu(kh->e_shnum));
+			} else {
+				struct elf32be_hdr *kh = (struct elf32be_hdr *)buf;
+				sz = be32_to_cpu(kh->e_shoff) +
+					(be16_to_cpu(kh->e_shentsize) *
+					 be16_to_cpu(kh->e_shnum));
+			}
 		}
 	}
 

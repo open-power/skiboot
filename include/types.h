@@ -11,5 +11,9 @@ typedef beint16_t __be16;
 typedef beint32_t __be32;
 typedef beint64_t __be64;
 
+typedef leint16_t __le16;
+typedef leint32_t __le32;
+typedef leint64_t __le64;
+
 #endif /* __TYPES_H */
 
