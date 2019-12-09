@@ -34,7 +34,6 @@ Developer Guide and Internals
 .. toctree::
    :maxdepth: 2
 
-   CONTRIBUTING.md
    console-log
    error-logging
    bmc
