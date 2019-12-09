@@ -47,7 +47,7 @@ addons:
     project:
       name: "open-power/skiboot"
       description: "Build submitted via Travis CI"
-    notification_email: stewart@linux.vnet.ibm.com
+    notification_email: oohall@gmail.com
     branch_pattern: coverity_scan
 
 deploy:
