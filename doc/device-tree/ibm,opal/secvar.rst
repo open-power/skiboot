@@ -1,4 +1,6 @@
-secvar Binding
+.. _device-tree/ibm,opal/secvar:
+
+Secvar Binding
 ==============
 
 This device tree binding describes the status of secure variable support,
