@@ -114,7 +114,9 @@ IMC-trace mode. Following is the trace-scom layout.
 determines the event to count. *BUFFRSIZE* indicates the memory range.
 
 *BUFFERSIZE* can be
-::
+
+.. code-block:: text
+
    b’000’ - 4K entries * 64 per entry = 256K
    b’001’ - 8K entries * 64 per entry = 512K
    b’010’ - 16K entries * 64 per entry = 1M
