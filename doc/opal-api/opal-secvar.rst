@@ -37,19 +37,19 @@ Parameters
 
 ``key``
    a buffer used to associate with the variable data. May
-be any encoding, but must not be all zeroes
+   be any encoding, but must not be all zeroes
 
 ``key_len``
    size of the key buffer in bytes
 
 ``data``
    return buffer to store the data blob of the requested variable if
-a match was found. May be set to NULL to only query the size into
-``data_size``
+   a match was found. May be set to NULL to only query the size into
+   ``data_size``
 
 ``data_size``
    reference to the size of the ``data`` buffer. OPAL sets this to
-the size of the requested variable if found.
+   the size of the requested variable if found.
 
 
 Return Values
@@ -57,7 +57,7 @@ Return Values
 
 ``OPAL_SUCCESS``
    the requested data blob was copied successfully. ``data`` was NULL,
-and the ``data_size`` value was set successfully
+   and the ``data_size`` value was set successfully
 
 ``OPAL_PARAMETER``
    ``key`` is NULL.
@@ -69,7 +69,7 @@ and the ``data_size`` value was set successfully
 
 ``OPAL_PARTIAL``
    the buffer size provided in ``data_size`` was insufficient.
-``data_size`` is set to the minimum required size.
+   ``data_size`` is set to the minimum required size.
 
 ``OPAL_UNSUPPORTED``
    secure variables are not supported by the platform
@@ -97,16 +97,16 @@ Parameters
 
 ``key``
    name of the previous variable or empty. The key of the next
-variable in sequence will be copied to ``key``. If passed as empty,
-returns the first variable in the bank
+   variable in sequence will be copied to ``key``. If passed as empty,
+   returns the first variable in the bank
 
 ``key_len``
    length in bytes of the key in the  ``key`` buffer. OPAL sets
-this to the length in bytes of the next variable in sequence
+   this to the length in bytes of the next variable in sequence
 
 ``key_buf_size``
    maximum size of the ``key`` buffer. The next key will not be
-copied if this value is less than the length of the next key
+   copied if this value is less than the length of the next key
 
 
 Return Values
@@ -114,21 +114,21 @@ Return Values
 
 ``OPAL_SUCCESS``
    the key and length of the next variable in sequence was copied
-successfully
+   successfully
 
 ``OPAL_PARAMETER``
    ``key`` or ``key_length`` is NULL.
    ``key_size`` is zero.
    ``key_length`` is impossibly large. No variable with the associated
-``key`` was found
+   ``key`` was found
 
 ``OPAL_EMPTY``
    end of list reached
 
 ``OPAL_PARTIAL``
    the size specified in ``key_size`` is insufficient for the next
-variable's key length. ``key_length`` is set to the next variable's
-length, but ``key`` is untouched
+   variable's key length. ``key_length`` is set to the next variable's
+   length, but ``key`` is untouched
 
 ``OPAL_UNSUPPORTED``
    secure variables are not supported by the platform
@@ -156,7 +156,7 @@ Parameters
 
 ``key``
    a buffer used to associate with the variable data. May
-be any encoding, but must not be all zeroes
+   be any encoding, but must not be all zeroes
 
 ``key_len``
    size of the key buffer in bytes
