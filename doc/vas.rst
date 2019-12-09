@@ -1,4 +1,5 @@
 Virtual Accelerator Switchboard (VAS)
+=====================================
 
 This document provides information about using VAS from user space.
 Applications send NX requests using COPY/PASTE instructions. NX raises

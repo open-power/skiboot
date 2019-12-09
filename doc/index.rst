@@ -48,6 +48,7 @@ Developer Guide and Internals
    imc
    power-management
    mpipl
+   vas
 
 
 OPAL ABI

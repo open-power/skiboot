@@ -1,3 +1,6 @@
+.. _device-tree/vas:
+
+
 Virtual Accelerator Switchboard (VAS)
 =====================================
 
