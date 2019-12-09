@@ -120,7 +120,7 @@ LED status for all the LED types mentioned in the mask with their
 value mentioned. OPAL checks the 'max_led_type' to understand
 whether the host is newer or older compared to itself. In case where
 the OPAL is newer compared to the host (OPAL's max_led_type >
- host's max_led_type), it updates LED status based on max_led_type
+host's max_led_type), it updates LED status based on max_led_type
 requested from the host. When the host is newer compared to the OPAL
 (host's max_led_type > OPAL's max_led_type), OPAL updates
 'max_led_type' to the maximum number of LED type it understands and
