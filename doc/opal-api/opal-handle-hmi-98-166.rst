@@ -117,7 +117,7 @@ event was generated. This information will help OS to take respective
 actions.
 
 In case where opal hmi handler is unable to recover from TOD or TB errors,
-it would flag :ref:`OPAL_HMI_FLAGS_TOD_TB_FAIL` to indicate OS that TB is
+it would flag ``OPAL_HMI_FLAGS_TOD_TB_FAIL`` to indicate OS that TB is
 dead. This information then can be used by OS to make sure that the
 functions relying on TB value (e.g. udelay()) are aware of TB not ticking.
 This will avoid OS getting stuck or hang during its way to panic path.
