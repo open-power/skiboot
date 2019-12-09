@@ -17,7 +17,8 @@ Bug fixes included in this release are:
   Only the reg member is sent anywhere (via xscom_write), so the structure
   does not need to be packed.
 
-::
+.. code-block:: text
+
   Fixes GCC9 build problem:
   hw/sbe-p9.c: In function ‘p9_sbe_msg_send’:
   hw/sbe-p9.c:270:9: error: taking address of packed member of ‘struct p9_sbe_msg’ may result in an unaligned p
@@ -28,7 +29,8 @@ Bug fixes included in this release are:
 - hdata/vpd: fix printing (char*)0x00
   GCC9 now catches this bug:
 
-::
+.. code-block:: text
+
   In file included from hdata/vpd.c:17:
   In function ‘vpd_vini_parse’,
       inlined from ‘vpd_data_parse’ at hdata/vpd.c:416:3:
@@ -46,7 +48,8 @@ Bug fixes included in this release are:
 
 - errorlog: Prevent alignment error building with gcc9.
 
-::
+.. code-block:: text
+
   Fixes this build error:
   [ 52s] hw/fsp/fsp-elog-write.c: In function 'opal_elog_read':
   [ 52s] hw/fsp/fsp-elog-write.c:213:12: error: taking address of packed member of 'struct errorlog' may result
