@@ -41,28 +41,28 @@ ops :
   OPAL_MPIPL_ADD_RANGE
     Add new entry to MPIPL table. Kernel will send src, dest and size.
     During MPIPL content from source address is moved to destination address.
-      src  = Source start address
-      dest = Destination start address
-      size = size
+    src  = Source start address
+    dest = Destination start address
+    size = size
 
   OPAL_MPIPL_REMOVE_RANGE
     Remove kernel requested entry from MPIPL table.
-      src  = Source start address
-      dest = Destination start address
-      size = ignore
+    src  = Source start address
+    dest = Destination start address
+    size = ignore
 
   OPAL_MPIPL_REMOVE_ALL
     Remove all kernel passed entry from MPIPL table.
-      src  = ignore
-      dest = ignore
-      size = ignore
+    src  = ignore
+    dest = ignore
+    size = ignore
 
   OPAL_MPIPL_FREE_PRESERVED_MEMORY
     Post MPIPL, kernel will indicate OPAL that it has processed dump and
     it can clear/release metadata area.
-      src  = ignore
-      dest = ignore
-      size = ignore
+    src  = ignore
+    dest = ignore
+    size = ignore
 
 Return Values
 -------------
@@ -89,6 +89,7 @@ It expects OPAL to preserve these tags across MPIPL. Post MPIPL Linux
 kernel will use `opal_mpipl_query_tag` call to retrieve these tags.
 
 .. code-block:: c
+
   opal_mpipl_register_tag(enum opal_mpipl_tags tag, uint64_t tag_val)
 
   tag:
