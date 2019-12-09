@@ -11,7 +11,7 @@ Name            PVR             Other names
 =============== =============== =====================
 Power8E         0x004bxxxx      Murano
 Power8          0x004dxxxx      Venice
-Power8NVL       0x004cxxxx      Naples
+Power8NVL       0x004cxxxx      Naples (P8 with NVLink)
 Power9N         0x004e0xxx      Nimbus 12 small core
 Power9N         0x004e1xxx      Nimbus 24 small core
 Power9C         0x004e2xxx      Cumulus 12 small core
@@ -27,23 +27,37 @@ Platform Sub platform Host CPU(s) Manufacturer       compatible                 
 ======== ============ =========== ================== ========================== ============================= =======
 astbmc   barreleye    Power8      Ingrasys (Foxconn) "ingrasys,barreleye"       Barreleye, Rackspace machine
 astbmc   firestone    Power8      Wistron, IBM       "ibm,firestone"            Firestone, S822LC             [#]_
-astbmc   garrison     Power8      IBM                "ibm,garrison"             Minsky, "S822LC for HPC"      [#]_
+astbmc   garrison     Power8NVL   IBM                "ibm,garrison"             Minsky, "S822LC for HPC"      [#]_
 astbmc   habanero     Power8      Tyan               "tyan,habanero"            Habanero, TN71-BP012
 astbmc   p8dtu        Power8      Supermicro         "supermicro,p8dtu1u"       Briggs, "S822LC for Big Data" [#]_ [#]_
 astbmc   p8dtu        Power8      Supermicro         "supermicro,p8dtu2u"       Stratton, S821LC              [#]_ [#]_
-astbmc   p8dnu        Power8      Supermicro         "supermicro,p8dnu(1u|2u)?"
-astbmc   p9sdu        Power9      Supermicro         "supermicro,p9dsu"         Boston, LC921/LC922           [#]_
+astbmc   p8dnu        Power8NVL   Supermicro         "supermicro,p8dnu(1u|2u)?"
 astbmc   palmetto     Power8      Tyan               "tyan,palmetto"            Palmetto, GN70-BP010
-astbmc   romulus      Power9                         "ibm,romulus"              Romulus
-astbmc   vesnin       Power9      Yadro              "YADRO,vesnin"             VESNIN
-astbmc   witherspoon  Power9                         "ibm,witherspoon"          Witherspoon, Newell, AC922    [#]_
-astbmc   zaius        Power9      Ingrasys (Foxconn) "ingrasys,zaius"           Zaius, Google Machine
-ibm-fsp  apollo       Power8                         "ibm,apollo"
+astbmc   vesnin       Power8      Yadro              "YADRO,vesnin"             VESNIN
 ibm-fsp  firenze      Power8E     IBM                "ibm,firenze"              Tuleta, S812L, S822L          [#]_
-ibm-fsp  zz           Power9                         "ibm,zz-(1|2)s(2|4)u"
 rhesus   n/a          Power8E                        "ibm,powernv"              Rhesus, Google machine
 ======== ============ =========== ================== ========================== ============================= =======
 
+======== ============ =========== ================== ========================== ============================= =======
+Platform Sub platform Host CPU(s) Manufacturer       compatible                 Other names/Notes             Link(s)
+======== ============ =========== ================== ========================== ============================= =======
+astbmc   p9sdu        Power9      Supermicro         "supermicro,p9dsu"         Boston, LC921/LC922           [#]_
+astbmc   romulus      Power9                         "ibm,romulus"              Romulus
+astbmc   talos        Power9      Raptor             "rcs,talos"                Similar to Romulus
+astbmc   witherspoon  Power9                         "ibm,witherspoon"          Witherspoon, Newell, AC922    [#]_
+astbmc   zaius        Power9      Ingrasys (Foxconn) "ingrasys,zaius"           Zaius, Barreleye Gen2
+ibm-fsp  zz           Power9                         "ibm,zz-(1|2)s(2|4)u"
+======== ============ =========== ================== ========================== ============================= =======
+
+
+Dropped Platforms
+-----------------
+
+Support for Power7 based systems was removed in `v6.3-191-g16b7ae641037`.
+Power7 hardware was supported largely because it was the initial bringup
+platform for Skiboot. Once P8 hardware became available almost all
+development (and testing) on P7 ceased. Anyone interested in using OPAL on
+a P7 should look at one of the early `v5.x` releases.
 
 .. rubric:: Footnotes
 
