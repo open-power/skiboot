@@ -165,12 +165,11 @@ Bug fixes included in this release are:
   below error. And caller is not reallocating sufficient buffer. Also its
   hard to guess the size.
 
-  sample log:::
-  -----------
-  Mar 28 03:31:43 zz24p1 opal-prd: FW: error reading from firmware: alloc 32 rc -1: Invalid argument
-  Mar 28 03:31:43 zz24p1 opal-prd: FW: error reading from firmware: alloc 32 rc -1: Invalid argument
-  Mar 28 03:31:43 zz24p1 opal-prd: FW: error reading from firmware: alloc 32 rc -1: Invalid argument
-  ....
+  sample log::
+
+    Mar 28 03:31:43 zz24p1 opal-prd: FW: error reading from firmware: alloc 32 rc -1: Invalid argument
+    Mar 28 03:31:43 zz24p1 opal-prd: FW: error reading from firmware: alloc 32 rc -1: Invalid argument
+    Mar 28 03:31:43 zz24p1 opal-prd: FW: error reading from firmware: alloc 32 rc -1: Invalid argument
 
   Lets use opal-msg-size device tree property to allocate memory
   for prd message.
