@@ -20,8 +20,6 @@ There are five OPAL calls from host to OPAL on error log:
 	#define OPAL_ELOG_RESEND       74
 	#define OPAL_ELOG_SIZE         75
 
-.. _OPAL_ELOG_WRITE:
-
 Note: :ref:`OPAL_ELOG_WRITE` (72) Unused for now, might be supported in the
 future.
 
