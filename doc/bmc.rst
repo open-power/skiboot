@@ -71,9 +71,11 @@ setting an IPMI System Boot Option with OEM parameter 0x62. When this flag is
 set Skiboot will pause and wait for the validation to complete and the flag to
 be cleared. This ensures the validation completes before the execution is passed
 to Petitboot and the host operating system and any conflicts could occur. During
-this process Skiboot will print
-      SBE validation required, waiting for completion
-      System will be powered off if validation fails
+this process Skiboot will print::
+
+    SBE validation required, waiting for completion
+    System will be powered off if validation fails
+
 to the console with an update every minute until complete.
 
 Unfortunately the validation performed by the BMC leaves the SBE in a bad
