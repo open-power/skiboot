@@ -31,8 +31,17 @@ CWARNS := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 	  -Wno-pointer-sign -Wextra -Wno-sign-compare \
 	  -Wmissing-prototypes -Wmissing-declarations \
 	  -Wwrite-strings -Wcast-align \
-	  -Winit-self \
-	  -Werror
+	  -Winit-self
+
+# Do not convert warnings to error on tagged/released version
+GIT_DIR ?= $(shell test -e $(SRC)/.git && echo 1 || echo 0)
+ifeq ($(GIT_DIR),1)	# Building from git tree
+GIT_SHA ?= $(shell cd $(SRC); git describe --tags 2>/dev/null)
+GIT_TAG ?= $(shell cd $(SRC); git tag -l 2>/dev/null | grep -x ${GIT_SHA} >/dev/null 2>&1 && echo 1 || echo 0)
+ifneq ($(GIT_TAG),1)	# Development branch
+CWARNS += -Werror
+endif
+endif
 
 # Host tools and options
 HOSTCC=gcc
