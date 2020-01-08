@@ -1649,7 +1649,7 @@ static int enable_interrupts(struct npu2 *p)
 	 *   the systems, since we can just fence the brick and keep
 	 *   the system alive.
 	 * - the exception to the above is 2 FIRs for XSL errors
-	 *   resulting of bad AFU behavior, for which we don't want to
+	 *   resulting from bad AFU behavior, for which we don't want to
 	 *   checkstop but can't configure to send an error interrupt
 	 *   either, as the XSL errors are reported on 2 links (the
 	 *   XSL is shared between 2 links). Instead, we mask
@@ -1661,7 +1661,8 @@ static int enable_interrupts(struct npu2 *p)
 	 */
 	xsl_fault = PPC_BIT(0) | PPC_BIT(1) | PPC_BIT(2) | PPC_BIT(3);
 	xstop_override = 0x0FFFEFC00F91B000;
-	xsl_mask = PPC_BIT(41) | PPC_BIT(42);
+	xsl_mask = NPU2_CHECKSTOP_REG2_XSL_XLAT_REQ_WHILE_SPAP_INVALID |
+		   NPU2_CHECKSTOP_REG2_XSL_INVALID_PEE;
 
 	xscom_read(p->chip_id, p->xscom_base + NPU2_MISC_FIR2_MASK, &reg);
 	reg |= xsl_fault | xstop_override | xsl_mask;
@@ -1677,10 +1678,16 @@ static int enable_interrupts(struct npu2 *p)
 	 * Make sure the brick is fenced on those errors.
 	 * Fencing is incompatible with freezing, but there's no
 	 * freeze defined for FIR2, so we don't have to worry about it
+	 *
+	 * For the 2 XSL bits we ignore, we need to make sure they
+	 * don't fence the link, as the NPU logic could allow it even
+	 * when masked.
 	 */
 	reg = npu2_scom_read(p->chip_id, p->xscom_base, NPU2_MISC_FENCE_ENABLE2,
 			     NPU2_MISC_DA_LEN_8B);
 	reg |= xstop_override;
+	reg &= ~NPU2_CHECKSTOP_REG2_XSL_XLAT_REQ_WHILE_SPAP_INVALID;
+	reg &= ~NPU2_CHECKSTOP_REG2_XSL_INVALID_PEE;
 	npu2_scom_write(p->chip_id, p->xscom_base, NPU2_MISC_FENCE_ENABLE2,
 			NPU2_MISC_DA_LEN_8B, reg);
 
