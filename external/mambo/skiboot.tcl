@@ -288,6 +288,7 @@ proc pmem_node_add { root start size } {
     mysim of addprop $node array "reg" reg
     mysim of addprop $node string "compatible" "pmem-region"
     mysim of addprop $node empty "volatile" "1"
+    mysim of addprop $node int "ibm,chip-id" 0
     return [expr $start + $size]
 }
 
