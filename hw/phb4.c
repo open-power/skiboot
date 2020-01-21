@@ -5618,9 +5618,26 @@ static uint64_t phb4_lsi_attributes(struct irq_source *is __unused,
 	return IRQ_ATTR_TARGET_LINUX;
 }
 
+static char *phb4_lsi_name(struct irq_source *is, uint32_t isn)
+{
+	struct phb4 *p = is->data;
+	uint32_t idx = isn - p->base_lsi;
+	char buf[32];
+
+	if (idx == PHB4_LSI_PCIE_INF)
+		snprintf(buf, 32, "phb#%04x-inf", p->phb.opal_id);
+	else if (idx == PHB4_LSI_PCIE_ER)
+		snprintf(buf, 32, "phb#%04x-err", p->phb.opal_id);
+	else
+		assert(0); /* PCIe LSIs should never be directed to OPAL */
+
+	return strdup(buf);
+}
+
 static const struct irq_source_ops phb4_lsi_ops = {
 	.interrupt = phb4_err_interrupt,
 	.attributes = phb4_lsi_attributes,
+	.name = phb4_lsi_name,
 };
 
 static __be64 lane_eq_default[8] = {
