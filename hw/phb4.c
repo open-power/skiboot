@@ -114,7 +114,7 @@
 #include <nvram.h>
 
 /* Enable this to disable error interrupts for debug purposes */
-#define DISABLE_ERR_INTS
+#undef DISABLE_ERR_INTS
 
 static void phb4_init_hw(struct phb4 *p);
 
@@ -3538,6 +3538,33 @@ static void phb4_int_unmask_all(struct phb4 *p)
 	out_be64(p->regs + PHB_RXE_TCE_ERR_IRQ_ENABLE, 0x60510050c0000000ull);
 }
 
+/*
+ * Mask the IRQ for any currently set error bits. This prevents the PHB's ERR
+ * and INF interrupts from being re-fired before the kernel can handle the
+ * underlying condition.
+ */
+static void phb4_int_mask_active(struct phb4 *p)
+{
+	const uint64_t error_regs[] = {
+		PHB_ERR_STATUS,
+		PHB_TXE_ERR_STATUS,
+		PHB_RXE_ARB_ERR_STATUS,
+		PHB_RXE_MRG_ERR_STATUS,
+		PHB_RXE_TCE_ERR_STATUS
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(error_regs); i++) {
+		uint64_t stat, mask;
+
+		/* The IRQ mask reg is always offset 0x20 from the status reg */
+		stat = phb4_read_reg(p, error_regs[i]);
+		mask = phb4_read_reg(p, error_regs[i] + 0x20);
+
+		phb4_write_reg(p, error_regs[i] + 0x20, mask & ~stat);
+	}
+}
+
 static uint64_t phb4_get_pesta(struct phb4 *p, uint64_t pe_number)
 {
 	uint64_t pesta;
@@ -3855,6 +3882,14 @@ static int64_t phb4_eeh_next_error(struct phb *phb,
 		*severity = OPAL_EEH_SEV_NO_ERROR;
 		phb4_set_err_pending(p, false);
 	}
+
+	/*
+	 * Unmask all our error interrupts once all pending errors
+	 * have been handled.
+	 */
+	if (!phb4_err_pending(p))
+		phb4_int_unmask_all(p);
+
 	return OPAL_SUCCESS;
 }
 
@@ -5592,6 +5627,9 @@ static void phb4_err_interrupt(struct irq_source *is, uint32_t isn)
 	struct phb4 *p = is->data;
 
 	PHBDBG(p, "Got interrupt 0x%08x\n", isn);
+
+	/* mask the interrupt conditions to prevent it from re-firing */
+	phb4_int_mask_active(p);
 
 	/* Update pending event */
 	opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
