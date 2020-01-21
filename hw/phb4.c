@@ -5308,10 +5308,7 @@ static void phb4_init_hw(struct phb4 *p)
 
 	/* Init_126..130 - Re-enable error interrupts */
 	out_be64(p->regs + PHB_ERR_IRQ_ENABLE,			0xca8880cc00000000ull);
-	if (phb4_is_dd20(p))
-		out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE,		0x2000400e08200000ull);
-	else
-		out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE,		0x2008400e08200000ull);
+	out_be64(p->regs + PHB_TXE_ERR_IRQ_ENABLE,		0x2008400e08200000ull);
 	out_be64(p->regs + PHB_RXE_ARB_ERR_IRQ_ENABLE,		0xc40038fc01804070ull);
 	out_be64(p->regs + PHB_RXE_MRG_ERR_IRQ_ENABLE,		0x00006100008000a8ull);
 	out_be64(p->regs + PHB_RXE_TCE_ERR_IRQ_ENABLE,	0x60510050c0000000ull);
