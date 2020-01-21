@@ -5590,7 +5590,6 @@ static void phb4_err_interrupt(struct irq_source *is, uint32_t isn)
 
 	PHBDBG(p, "Got interrupt 0x%08x\n", isn);
 
-#if 0
 	/* Update pending event */
 	opal_update_pending_evt(OPAL_EVENT_PCI_ERROR,
 				OPAL_EVENT_PCI_ERROR);
@@ -5603,8 +5602,7 @@ static void phb4_err_interrupt(struct irq_source *is, uint32_t isn)
 	 * Mark the PHB has pending error so that the OS
 	 * can handle it at late point.
 	 */
-	phb3_set_err_pending(p, true);
-#endif
+	phb4_set_err_pending(p, true);
 }
 
 static uint64_t phb4_lsi_attributes(struct irq_source *is __unused,
