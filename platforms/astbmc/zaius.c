@@ -157,7 +157,6 @@ static void zaius_create_npu(void)
 {
 	struct dt_node *xscom, *npu;
 	int npu_index = 0;
-	int phb_index = 7;
 	char namebuf[32];
 
 	/* Abort if there's already an NPU in the device tree */
@@ -171,7 +170,6 @@ static void zaius_create_npu(void)
 		dt_add_property_cells(npu, "reg", NPU_BASE, NPU_SIZE);
 		dt_add_property_strings(npu, "compatible", "ibm,power9-npu");
 		dt_add_property_cells(npu, "ibm,npu-index", npu_index++);
-		dt_add_property_cells(npu, "ibm,phb-index", phb_index++);
 		dt_add_property_cells(npu, "ibm,npu-links", 2);
 		create_link(npu, 1, 2);
 		create_link(npu, 2, 3);
