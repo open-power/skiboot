@@ -1472,7 +1472,7 @@ static void npu3_dt_add_props(struct npu3 *npu)
 				"ibm,ioda2-npu2-phb");
 
 	dt_add_property_cells(dn, "ibm,phb-index",
-			      dt_prop_get_u32(npu->dt_node, "ibm,phb-index"));
+			      npu3_get_phb_index(npu->index));
 	dt_add_property_cells(dn, "ibm,phb-diag-data-size", 0);
 	dt_add_property_cells(dn, "ibm,opal-num-pes", NPU3_MAX_PE_NUM);
 	dt_add_property_cells(dn, "ibm,opal-reserved-pe", NPU3_RESERVED_PE_NUM);
