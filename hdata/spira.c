@@ -1427,7 +1427,7 @@ static void add_stop_levels(void)
 #define NPU_INDIRECT1	0x800000000c010c3fULL
 
 static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
-			int npu_index, int phb_index)
+			int npu_index)
 {
 	const struct sppcrd_smp_link *link;
 	struct dt_node *npu;
@@ -1448,7 +1448,6 @@ static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 	dt_add_property_cells(npu, "#address-cells", 1);
 
 	dt_add_property_strings(npu, "compatible", "ibm,power9-npu");
-	dt_add_property_cells(npu, "ibm,phb-index", phb_index);
 	dt_add_property_cells(npu, "ibm,npu-index", npu_index);
 
 	HDIF_iarray_for_each(links, i, link) {
@@ -1598,7 +1597,6 @@ static void add_npu(struct dt_node *xscom, const struct HDIF_array_hdr *links,
 static void add_npus(void)
 {
 	struct dt_node *xscom;
-	int phb_index = 7; /* Start counting from 7, for no reason */
 	int npu_index = 0;
 
 	/* Only consult HDAT for npu2 */
@@ -1623,7 +1621,7 @@ static void add_npus(void)
 
 		/* some hostboots will give us an empty array */
 		if (be32_to_cpu(links->ecnt))
-			add_npu(xscom, links, npu_index++, phb_index++);
+			add_npu(xscom, links, npu_index++);
 	}
 }
 

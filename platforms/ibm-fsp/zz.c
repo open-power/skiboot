@@ -65,7 +65,6 @@ static void add_opencapi_dt_nodes(void)
 {
 	struct dt_node *npu, *xscom;
 	int npu_index = 0;
-	int phb_index = 7;
 
 	/*
 	 * In an ideal world, we should get all the NPU links
@@ -115,7 +114,6 @@ static void add_opencapi_dt_nodes(void)
 		dt_add_property_cells(npu, "reg", NPU_BASE, NPU_SIZE);
 		dt_add_property_strings(npu, "compatible", "ibm,power9-npu");
 		dt_add_property_cells(npu, "ibm,npu-index", npu_index++);
-		dt_add_property_cells(npu, "ibm,phb-index", phb_index++);
 		dt_add_property_cells(npu, "ibm,npu-links", 2);
 
 		create_link(npu, 1, 2);

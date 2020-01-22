@@ -19,7 +19,6 @@ NVLink links are currently unsupported.
     npu@5011000 {
       compatible = "ibm,power9-npu";
       phandle = <0xe6>;
-      ibm,phb-index = <0x7>;
       reg = <0x5011000 0x2c>;
       ibm,npu-index = <0x0>;
       ibm,npu-links = <0x2>; /* Number of links wired up to this npu. */

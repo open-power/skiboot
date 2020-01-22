@@ -4055,7 +4055,6 @@
 			#size-cells = <0x0>;
 			#address-cells = <0x1>;
 			compatible = "ibm,power9-npu";
-			ibm,phb-index = <0x7>;
 			ibm,npu-index = <0x0>;
 			ibm,npu-links = <0x6>;
 
@@ -4685,7 +4684,6 @@
 			#size-cells = <0x0>;
 			#address-cells = <0x1>;
 			compatible = "ibm,power9-npu";
-			ibm,phb-index = <0x8>;
 			ibm,npu-index = <0x1>;
 			ibm,npu-links = <0x6>;
 

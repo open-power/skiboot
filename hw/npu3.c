@@ -101,7 +101,6 @@ static void npu3_dt_create_npu(struct dt_node *xscom, uint32_t npu_index)
 	dt_add_property_cells(npu, "reg", npu_base[npu_index], 0x2c);
 	dt_add_property_string(npu, "compatible", "ibm,power9-npu3");
 	dt_add_property_cells(npu, "ibm,npu-index", npu_index);
-	dt_add_property_cells(npu, "ibm,phb-index", 7 + npu_index);
 
 	for (uint32_t i = 0; i < NPU3_LINKS_PER_NPU; i++)
 		npu3_dt_create_link(npu, npu_index, i);
