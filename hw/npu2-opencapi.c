@@ -1734,6 +1734,8 @@ static void setup_device(struct npu2_dev *dev)
 	dt_add_property_strings(dn_phb, "device_type", "pciex");
 	dt_add_property(dn_phb, "reg", mm_win, sizeof(mm_win));
 	dt_add_property_cells(dn_phb, "ibm,npu-index", dev->npu->index);
+	dt_add_property_cells(dn_phb, "ibm,phb-index",
+			      npu2_get_phb_index(dev->brick_index));
 	dt_add_property_cells(dn_phb, "ibm,chip-id", dev->npu->chip_id);
 	dt_add_property_cells(dn_phb, "ibm,xscom-base", dev->npu->xscom_base);
 	dt_add_property_cells(dn_phb, "ibm,npcq", dev->npu->dt_node->phandle);

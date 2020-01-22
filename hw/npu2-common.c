@@ -537,7 +537,6 @@ static struct npu2 *setup_npu(struct dt_node *dn)
 	npu->index = dt_prop_get_u32(dn, "ibm,npu-index");
 	npu->chip_id = gcid;
 	npu->xscom_base = dt_get_address(dn, 0, NULL);
-	npu->phb_index = dt_prop_get_u32(dn, "ibm,phb-index");
 
 	init_lock(&npu->i2c_lock);
 	npu->i2c_pin_mode = ~0; // input mode by default

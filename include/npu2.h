@@ -178,7 +178,6 @@ struct npu2 {
 
 	/* NVLink */
 	struct phb	phb_nvlink;
-	uint32_t	phb_index;
 
 	/* OCAPI */
 	uint64_t	i2c_port_id_ocapi;
@@ -255,5 +254,24 @@ int64_t npu2_set_relaxed_order(struct phb *phb, uint32_t gcid, int pec,
 			       bool enable);
 
 void npu2_opencapi_set_broken(struct npu2 *npu, int brick);
+
+#define NPU2_PHB_INDEX_BASE 7
+/* to avoid conflicts with PCI and for historical reasons */
+
+static inline int npu2_get_phb_index(unsigned int brick_index)
+{
+	/*
+	 * There's one virtual PHB per brick with opencapi, so we no
+	 * longer have a 1-to-1 mapping between a NPU and a virtual
+	 * PHB. And we want a static phb-index, as it is needed to use
+	 * a slot table on some platforms. So we associate a per-chip
+	 * phb-index based on the brick index.
+	 *
+	 * nvlink only creates one virtual PHB per chip, so it is
+	 * treated as if using brick 0, which is never used by
+	 * opencapi.
+	 */
+	return NPU2_PHB_INDEX_BASE + brick_index;
+}
 
 #endif /* __NPU2_H */
