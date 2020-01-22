@@ -177,4 +177,10 @@ int64_t npu3_map_lpar(struct phb *phb, uint64_t bdf, uint64_t lparid,
 int64_t npu3_set_relaxed_order(struct phb *phb, uint32_t gcid, int pec,
 			       bool enable);
 
+#define NPU3_PHB_INDEX_BASE     6 /* immediately after real PHBs */
+static inline int npu3_get_phb_index(unsigned int npu_index)
+{
+	return NPU3_PHB_INDEX_BASE + npu_index;
+}
+
 #endif /* __NPU3_H */
