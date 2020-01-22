@@ -1478,7 +1478,7 @@ int npu2_nvlink_init_npu(struct npu2 *npu)
 				"ibm,ioda2-npu2-phb");
 	dt_add_property_strings(np, "device_type", "pciex");
 	dt_add_property(np, "reg", reg, sizeof(reg));
-	dt_add_property_cells(np, "ibm,phb-index", npu->phb_index);
+	dt_add_property_cells(np, "ibm,phb-index", npu2_get_phb_index(0));
 	dt_add_property_cells(np, "ibm,npu-index", npu->index);
 	dt_add_property_cells(np, "ibm,chip-id", npu->chip_id);
 	dt_add_property_cells(np, "ibm,xscom-base", npu->xscom_base);
