@@ -20,6 +20,7 @@
 #include <phys-map.h>
 #include <pci.h>
 #include <npu3-regs.h>
+#include <phb4.h>
 
 enum npu3_dev_type {
 	NPU3_DEV_TYPE_UNKNOWN = 0,
@@ -181,6 +182,11 @@ int64_t npu3_set_relaxed_order(struct phb *phb, uint32_t gcid, int pec,
 static inline int npu3_get_phb_index(unsigned int npu_index)
 {
 	return NPU3_PHB_INDEX_BASE + npu_index;
+}
+
+static inline int npu3_get_opal_id(unsigned int chip_id, unsigned int index)
+{
+	return phb4_get_opal_id(chip_id, index);
 }
 
 #endif /* __NPU3_H */

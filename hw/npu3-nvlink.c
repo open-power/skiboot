@@ -904,7 +904,8 @@ static void npu3_create_phb(struct npu3 *npu)
 	assert(phb->dt_node);
 
 	list_head_init(&phb->virt_devices);
-	pci_register_phb(phb, OPAL_DYNAMIC_PHB_ID);
+	pci_register_phb(phb, npu3_get_opal_id(npu->chip_id,
+					       npu3_get_phb_index(npu->index)));
 	npu3_create_phb_slot(npu);
 	npu3_ioda_reset(phb, true);
 }
