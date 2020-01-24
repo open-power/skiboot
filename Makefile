@@ -16,7 +16,15 @@ ifdef CROSS_COMPILE
 endif
 ifneq ("$(ARCH)", "ppc64")
 ifneq ("$(ARCH)", "ppc64le")
+ifneq ($(shell which powerpc64-linux-gcc 2> /dev/null),)
 	CROSS ?= powerpc64-linux-
+else ifneq ($(shell which powerpc64le-linux-gcc 2> /dev/null),)
+	CROSS ?= powerpc64le-linux-
+else ifneq ($(shell which powerpc64-linux-gnu-gcc 2> /dev/null),)
+	CROSS ?= powerpc64-linux-gnu-
+else ifneq ($(shell which powerpc64le-linux-gnu-gcc 2> /dev/null),)
+	CROSS ?= powerpc64le-linux-gnu-
+endif
 endif
 endif
 
