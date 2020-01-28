@@ -150,6 +150,8 @@ struct npu2_dev {
 	uint64_t		linux_pe;
 	unsigned long		train_start;
 	unsigned long		train_timeout;
+	uint64_t		lpc_mem_base;
+	uint64_t		lpc_mem_size;
 };
 
 struct npu2 {
@@ -184,11 +186,6 @@ struct npu2 {
 	struct lock	i2c_lock;
 	uint8_t		i2c_pin_mode;
 	uint8_t		i2c_pin_wr_state;
-	/*
-	 * Which device currently has an LPC allocation.
-	 * Temporary as long as we only support 1 LPC alloc per chip.
-	 */
-	struct npu2_dev	*lpc_mem_allocated;
 };
 
 static inline struct npu2 *phb_to_npu2_nvlink(struct phb *phb)

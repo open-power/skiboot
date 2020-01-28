@@ -2181,25 +2181,46 @@ static void set_mem_bar(struct npu2_dev *dev, uint64_t base, uint64_t size)
 
 static int64_t alloc_mem_bar(struct npu2_dev *dev, uint64_t size, uint64_t *bar)
 {
-	uint64_t phys_map_base, phys_map_size;
+	uint64_t phys_map_base, phys_map_size, val;
 	int rc = OPAL_SUCCESS;
 
 	lock(&dev->npu->lock);
 
-	/*
-	 * Right now, we support 1 allocation per chip, of up to 4TB.
-	 *
-	 * In future, we will use chip address extension to support
-	 * >4TB ranges, and we will implement a more sophisticated
-	 * allocator to allow an allocation for every link on a chip.
-	 */
-
-	if (dev->npu->lpc_mem_allocated) {
+	if (dev->lpc_mem_base) {
+		OCAPIERR(dev, "LPC allocation failed - BAR already in use\n");
 		rc = OPAL_RESOURCE;
 		goto out;
 	}
 
-	phys_map_get(dev->npu->chip_id, OCAPI_MEM, 0, &phys_map_base, &phys_map_size);
+	/*
+	 * The supported chip address extension mask is 1100 100 (mask
+	 * off 2 bits from group ID and 1 bit from chip ID).
+	 *
+	 * Fall back to only permitting a single allocation if we
+	 * don't see this mask value.
+	 */
+	xscom_read(dev->npu->chip_id, PB_CENT_MODE, &val);
+	if (GETFIELD(PB_CFG_CHIP_ADDR_EXTENSION_MASK_CENT, val) == 0b1100100) {
+		phys_map_get(dev->npu->chip_id, OCAPI_MEM,
+			     dev->brick_index - 2, &phys_map_base,
+			     &phys_map_size);
+	} else {
+		bool in_use = false;
+
+		for (int i = 0; i < dev->npu->total_devices; i++) {
+			if (dev->npu->devices[i].lpc_mem_base)
+				in_use = true;
+		}
+
+		if (in_use) {
+			OCAPIERR(dev, "LPC allocation failed - single device per chip limit, FW upgrade required (pb_cent_mode=0x%016llx)\n", val);
+			rc = OPAL_RESOURCE;
+			goto out;
+		}
+
+		phys_map_get(dev->npu->chip_id, OCAPI_MEM, 0, &phys_map_base,
+			     &phys_map_size);
+	}
 
 	if (size > phys_map_size) {
 		/**
@@ -2225,7 +2246,8 @@ static int64_t alloc_mem_bar(struct npu2_dev *dev, uint64_t size, uint64_t *bar)
 
 	set_mem_bar(dev, phys_map_base, size);
 	*bar = phys_map_base;
-	dev->npu->lpc_mem_allocated = dev;
+	dev->lpc_mem_base = phys_map_base;
+	dev->lpc_mem_size = size;
 
 out:
 	unlock(&dev->npu->lock);
@@ -2238,13 +2260,14 @@ static int64_t release_mem_bar(struct npu2_dev *dev)
 
 	lock(&dev->npu->lock);
 
-	if (dev->npu->lpc_mem_allocated != dev) {
+	if (!dev->lpc_mem_base) {
 		rc = OPAL_PARAMETER;
 		goto out;
 	}
 
 	set_mem_bar(dev, 0, 0);
-	dev->npu->lpc_mem_allocated = NULL;
+	dev->lpc_mem_base = 0;
+	dev->lpc_mem_size = 0;
 
 out:
 	unlock(&dev->npu->lock);

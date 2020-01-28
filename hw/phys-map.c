@@ -44,15 +44,18 @@ static const struct phys_map_entry phys_map_table_nimbus[] = {
 	{ GPU_MEM_4T_UP,   3, 0x0000046000000000ull, 0x0000002000000000ull },
 
 	/*
-	 * OpenCAPI LPC Memory - single 4TB range per chip, fills
-	 * whole second non-mirrored region.
+	 * OpenCAPI LPC Memory
 	 *
-	 * Longer term, we're going to use chip address extension to
-	 * enable >4TB to be allocated per chip.  At that point, we
-	 * may have to find another way of assigning these ranges
-	 * outside of phys-map.
+	 * With chip address extension enabled, we allocate 4TB ranges
+	 * (in the second non-mirrored region) for each OpenCAPI link
+	 * by varying the upper 2 bits of the group ID.
+	 *
+	 * We don't currently support >4TB ranges.
 	 */
 	{ OCAPI_MEM,	   0, 0x0002000000000000ull, 0x0000040000000000ull },
+	{ OCAPI_MEM,	   1, 0x0002200000000000ull, 0x0000040000000000ull },
+	{ OCAPI_MEM,	   2, 0x0002400000000000ull, 0x0000040000000000ull },
+	{ OCAPI_MEM,	   3, 0x0002600000000000ull, 0x0000040000000000ull },
 
 	/* 0 TB offset @ MMIO 0x0006000000000000ull */
 	{ PHB4_64BIT_MMIO, 0, 0x0006000000000000ull, 0x0000004000000000ull },
