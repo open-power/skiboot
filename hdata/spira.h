@@ -351,7 +351,7 @@ struct iplparams_sysparams {
 	__be32		sys_eco_mode;
 #define SYS_ATTR_MULTIPLE_TPM PPC_BIT32(0)
 #define SYS_ATTR_RISK_LEVEL PPC_BIT32(3)
-#define SYS_ATTR_MPIPL_SUPPORTED PPC_BIT32(4)
+#define SYS_ATTR_MPIPL_SUPPORTED PPC_BIT32(5)
 	__be32		sys_attributes;
 	__be32		mem_scrubbing;
 	__be16		cur_spl_value;
