@@ -519,6 +519,8 @@ void opal_mpipl_init(void)
 	mpipl_metadata = (void *)(DUMP_METADATA_AREA_BASE);
 
 	if (dt_find_property(dump_node, "mpipl-boot")) {
+		disable_fast_reboot("MPIPL Boot");
+
 		post_mpipl_get_preserved_tags();
 		post_mpipl_get_opal_data();
 		post_mpipl_arch_regs_data();
