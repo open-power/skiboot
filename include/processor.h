@@ -11,6 +11,7 @@
 #define MSR_HV		PPC_BIT(3)	/* Hypervisor mode */
 #define MSR_VEC		PPC_BIT(38)	/* VMX enable */
 #define MSR_VSX		PPC_BIT(40)	/* VSX enable */
+#define MSR_S		PPC_BIT(41)	/* Secure mode */
 #define MSR_EE		PPC_BIT(48)	/* External Int. Enable */
 #define MSR_PR		PPC_BIT(49)       	/* Problem state */
 #define MSR_FP		PPC_BIT(50)	/* Floating Point Enable */
@@ -65,6 +66,9 @@
 #define SPR_HMEER	0x151	/* HMER interrupt enable mask */
 #define SPR_PCR		0x152
 #define SPR_AMOR	0x15d
+#define SPR_USRR0	0x1fa   /* RW: Ultravisor Save/Restore Register 0 */
+#define SPR_USRR1	0x1fb   /* RW: Ultravisor Save/Restore Register 1 */
+#define SPR_SMFCTRL	0x1ff   /* RW: Secure Memory Facility Control */
 #define SPR_PSSCR	0x357   /* RW: Stop status and control (ISA 3) */
 #define SPR_TSCR	0x399
 #define SPR_HID0	0x3f0

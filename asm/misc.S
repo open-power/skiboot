@@ -154,6 +154,7 @@ cleanup_global_tlb:
 #define PPC_INST_RVWINKLE	.long 0x4c0003e4
 
 #define PPC_INST_STOP		.long 0x4c0002e4
+#define PPC_INST_URFID		.long 0x4c000264
 
 #define SAVE_GPR(reg,sp)	std %r##reg,STACK_GPR##reg(sp)
 #define REST_GPR(reg,sp)	ld %r##reg,STACK_GPR##reg(sp)
@@ -255,3 +256,43 @@ enter_p9_pm_state:
 	mtspr	SPR_PSSCR,%r3
 	PPC_INST_STOP
 	b	.
+
+/*
+ * Exit UV mode and disable Protected Execution Facility.
+ *
+ * For each core, this should be run on all secondary threads first to bring
+ * them out of UV mode.  Then, it is called by the primary thread to disable
+ * PEF and bring it out of UV mode. All threads will then be running in HV
+ * mode and the only way to re-enable UV mode is with a reboot.
+ *
+ * r3 = 1 if primary thread
+ *      0 if secondary thread
+ */
+.global exit_uv_mode
+exit_uv_mode:
+	mfmsr	%r4
+	LOAD_IMM64(%r5, ~MSR_S)
+	and	%r4,%r4,%r5
+	mtspr	SPR_USRR1,%r4
+
+	mfspr   %r4,SPR_HSRR1
+	and     %r4,%r4,%r5
+	mtspr   SPR_HSRR1,%r3
+
+	mfspr   %r4,SPR_SRR1
+	and     %r4,%r4,%r5
+	mtspr   SPR_SRR1,%r4
+
+	cmpdi	%r3,1
+	bne	1f
+	mfspr   %r4, SPR_SMFCTRL
+	LOAD_IMM64(%r5, ~PPC_BIT(0))
+	and     %r4,%r4,%r5
+	mtspr   SPR_SMFCTRL,%r4
+1:
+	isync
+
+	mflr	%r4
+	mtspr	SPR_USRR0,%r4
+
+	PPC_INST_URFID

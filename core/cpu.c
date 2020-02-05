@@ -1646,3 +1646,62 @@ static int64_t opal_nmmu_set_ptcr(uint64_t chip_id, uint64_t ptcr)
 	return rc;
 }
 opal_call(OPAL_NMMU_SET_PTCR, opal_nmmu_set_ptcr, 2);
+
+static void _exit_uv_mode(void *data __unused)
+{
+	prlog(PR_DEBUG, "Exit uv mode on cpu pir 0x%04x\n", this_cpu()->pir);
+	/* HW has smfctrl shared between threads but on Mambo it is per-thread */
+	if (chip_quirk(QUIRK_MAMBO_CALLOUTS))
+		exit_uv_mode(1);
+	else
+		exit_uv_mode(cpu_is_thread0(this_cpu()));
+}
+
+void cpu_disable_pef(void)
+{
+	struct cpu_thread *cpu;
+	struct cpu_job **jobs;
+
+	if (!(mfmsr() & MSR_S)) {
+		prlog(PR_DEBUG, "UV mode off on cpu pir 0x%04x\n", this_cpu()->pir);
+		return;
+	}
+
+	jobs = zalloc(sizeof(struct cpu_job *) * (cpu_max_pir + 1));
+	assert(jobs);
+
+	/* Exit uv mode on all secondary threads before touching
+	 * smfctrl on thread 0 */
+	for_each_available_cpu(cpu) {
+		if (cpu == this_cpu())
+			continue;
+
+		if (!cpu_is_thread0(cpu))
+			jobs[cpu->pir] = cpu_queue_job(cpu, "exit_uv_mode",
+					_exit_uv_mode, NULL);
+	}
+
+	for_each_available_cpu(cpu)
+		if (jobs[cpu->pir]) {
+			cpu_wait_job(jobs[cpu->pir], true);
+			jobs[cpu->pir] = NULL;
+		}
+
+	/* Exit uv mode and disable smfctrl on primary threads */
+	for_each_available_cpu(cpu) {
+		if (cpu == this_cpu())
+			continue;
+
+		if (cpu_is_thread0(cpu))
+			jobs[cpu->pir] = cpu_queue_job(cpu, "exit_uv_mode",
+					_exit_uv_mode, NULL);
+	}
+
+	for_each_available_cpu(cpu)
+		if (jobs[cpu->pir])
+			cpu_wait_job(jobs[cpu->pir], true);
+
+	free(jobs);
+
+	_exit_uv_mode(NULL);
+}

@@ -309,4 +309,7 @@ int dctl_set_special_wakeup(struct cpu_thread *t);
 int dctl_clear_special_wakeup(struct cpu_thread *t);
 int dctl_core_is_gated(struct cpu_thread *t);
 
+extern void exit_uv_mode(int);
+void cpu_disable_pef(void);
+
 #endif /* __CPU_H */

@@ -1369,6 +1369,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Add the list of interrupts going to OPAL */
 	add_opal_interrupts();
 
+	/* Disable protected execution facility in BML */
+	cpu_disable_pef();
+
 	/* Now release parts of memory nodes we haven't used ourselves... */
 	mem_region_release_unused();
 
