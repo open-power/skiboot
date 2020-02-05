@@ -11,6 +11,7 @@
 #include <opal-dump.h>
 #include <fsp-attn.h>
 #include <fsp-leds.h>
+#include <skiboot.h>
 
 #include "hdata.h"
 #include "hostservices.h"
@@ -58,7 +59,7 @@ extern struct hsr_data_area cpu_ctl_hsr_area;
  */
 #define CPU_CTL_INIT_DATA_OFF		(CPU_CTL_OFF)
 #define CPU_CTL_SPAT_AREA_OFF		(CPU_CTL_INIT_DATA_OFF + sizeof(struct cpu_ctl_init_data) + SKIBOOT_BASE)
-#define CPU_CTL_SP_ATTN_AREA1_OFF	(CPU_CTL_SPAT_AREA_OFF + sizeof(struct sp_addr_table))
+#define CPU_CTL_SP_ATTN_AREA1_OFF	(ALIGN_UP((CPU_CTL_SPAT_AREA_OFF + sizeof(struct sp_addr_table)), ATTN_AREA_SZ))
 #define CPU_CTL_SP_ATTN_AREA2_OFF	(CPU_CTL_SP_ATTN_AREA1_OFF + sizeof(struct sp_attn_area))
 #define CPU_CTL_HSR_AREA_OFF		(CPU_CTL_SP_ATTN_AREA2_OFF + sizeof(struct sp_attn_area))
 
