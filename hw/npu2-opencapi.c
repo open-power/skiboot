@@ -918,19 +918,53 @@ err:
 static void deassert_adapter_reset(struct npu2_dev *dev)
 {
 	uint8_t pin, data;
-	int rc;
+	int rc, rc2;
 
 	pin = get_reset_pin(dev);
 
+	/*
+	 * All we need to do here is deassert the reset signal by
+	 * setting the reset pin to high. However, we cannot leave the
+	 * pin in output mode, as it can cause troubles with the
+	 * opencapi adapter: when the slot is powered off (on a reboot
+	 * for example), if the i2c controller is actively setting the
+	 * reset signal to high, it maintains voltage on part of the
+	 * fpga and can leak current. It can lead the fpga to be in an
+	 * unspecified state and potentially cause damage.
+	 *
+	 * The circumvention is to set the pin back to input
+	 * mode. There are pullup resistors on the planar on all
+	 * platforms to make sure the signal will "naturally" be high,
+	 * without the i2c controller actively setting it, so we won't
+	 * have problems when the slot is powered off. And it takes
+	 * the adapter out of reset.
+	 *
+	 * To summarize:
+	 * 1. set the pin to input mode. That is enough to raise the
+	 *    signal
+	 * 2. set the value of the pin to high. The pin is input mode,
+	 *    so it won't really do anything. But it's more coherent
+	 *    and avoids bad surprises on the next call to
+	 *    assert_adapter_reset()
+	 */
 	lock(&dev->npu->i2c_lock);
-	dev->npu->i2c_pin_wr_state |= pin;
-	data = dev->npu->i2c_pin_wr_state;
+	dev->npu->i2c_pin_mode |= pin;
+	data = dev->npu->i2c_pin_mode;
 
 	rc = i2c_request_send(dev->npu->i2c_port_id_ocapi,
-			platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
-			0x1, 1,
-			&data, sizeof(data), 120);
+			      platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
+			      0x3, 1,
+			      &data, sizeof(data), 120);
+
+	dev->npu->i2c_pin_wr_state |= pin;
+	data = dev->npu->i2c_pin_wr_state;
+	rc2 = i2c_request_send(dev->npu->i2c_port_id_ocapi,
+			       platform.ocapi->i2c_reset_addr, SMBUS_WRITE,
+			       0x1, 1,
+			       &data, sizeof(data), 120);
 	unlock(&dev->npu->i2c_lock);
+	if (!rc)
+		rc = rc2;
 	if (rc) {
 		/**
 		 * @fwts-label OCAPIDeviceResetFailed
