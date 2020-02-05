@@ -344,6 +344,8 @@ static int64_t opal_mpipl_update(enum opal_mpipl_ops ops,
 		/* Release memory */
 		free(opal_mpipl_data);
 		opal_mpipl_data = NULL;
+		free(opal_mpipl_cpu_data);
+		opal_mpipl_cpu_data = NULL;
 		/* Clear MDRT table */
 		memset((void *)MDRT_TABLE_BASE, 0, MDRT_TABLE_SIZE);
 		/* Set MDRT count to max allocated count */
