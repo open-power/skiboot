@@ -325,6 +325,25 @@ i2c_failed:
 	return;
 }
 
+static const char *witherspoon_ocapi_slot_label(uint32_t chip_id,
+						uint32_t brick_index)
+{
+	const char *name = NULL;
+
+	if (chip_id == 0) {
+		if (brick_index == 3)
+			name = "OPENCAPI-GPU0";
+		else if (brick_index == 4)
+			name = "OPENCAPI-GPU1";
+	} else {
+		if (brick_index == 3)
+			name = "OPENCAPI-GPU3";
+		else if (brick_index == 4)
+			name = "OPENCAPI-GPU4";
+	}
+	return name;
+}
+
 const struct platform_ocapi witherspoon_ocapi = {
        .i2c_engine          = 1,
        .i2c_port            = 4,
@@ -348,6 +367,7 @@ const struct platform_ocapi witherspoon_ocapi = {
        .i2c_presence_brick3 = 0,
        .i2c_presence_brick4 = 0,
        .i2c_presence_brick5 = 0,
+       .ocapi_slot_label    = witherspoon_ocapi_slot_label,
 };
 
 static int gpu_slot_to_num(const char *slot)

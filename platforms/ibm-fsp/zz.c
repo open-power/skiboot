@@ -15,6 +15,25 @@
 #include "ibm-fsp.h"
 #include "lxvpd.h"
 
+static const char *zz_ocapi_slot_label(uint32_t chip_id,
+				       uint32_t brick_index)
+{
+	const char *name = NULL;
+
+	if (chip_id == 0) {
+		if (brick_index == 2)
+			name = "P1-T5";
+		else
+			name = "P1-T6";
+	} else {
+		if (brick_index == 2)
+			name = "P1-T7";
+		else
+			name = "P1-T8";
+	}
+	return name;
+}
+
 /* We don't yet create NPU device nodes on ZZ, but these values are correct */
 static const struct platform_ocapi zz_ocapi = {
 	.i2c_engine          = 1,
@@ -30,6 +49,7 @@ static const struct platform_ocapi zz_ocapi = {
 	.i2c_presence_brick4 = 0, /* unused */
 	.i2c_presence_brick5 = 0, /* unused */
 	.odl_phy_swap        = true,
+	.ocapi_slot_label    = zz_ocapi_slot_label,
 };
 
 #define NPU_BASE 0x5011000
