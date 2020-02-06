@@ -63,6 +63,7 @@ struct platform_ocapi {
 	uint8_t i2c_presence_brick5;	/* I2C pin to read for presence on brick 5 */
 	bool odl_phy_swap;		/* Swap ODL1 to use brick 2 rather than
 					 * brick 1 lanes */
+	const char *(*ocapi_slot_label)(uint32_t chip_id, uint32_t brick_index);
 };
 
 struct dt_node;

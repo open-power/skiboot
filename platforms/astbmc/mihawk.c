@@ -55,6 +55,25 @@ static void mihawk_get_slot_info(struct phb *phb, struct pci_device *pd)
 		slot_table_get_slot_info(phb, pd);
 }
 
+static const char *mihawk_ocapi_slot_label(uint32_t chip_id,
+					   uint32_t brick_index)
+{
+	const char *name = NULL;
+
+	if (chip_id == 0) {
+		if (brick_index == 2)
+			name = "JP90NVB1";
+		else
+			name = "JP90NVT1";
+	} else {
+		if (brick_index == 2)
+			name = "JP91NVB1";
+		else
+			name = "JP91NVT1";
+	}
+	return name;
+}
+
 static const struct platform_ocapi mihawk_ocapi = {
         .i2c_engine          = 1,
         .i2c_port            = 4,
@@ -69,6 +88,7 @@ static const struct platform_ocapi mihawk_ocapi = {
         .i2c_presence_brick4 = 0, /* unused */
         .i2c_presence_brick5 = 0, /* unused */
         .odl_phy_swap        = true,
+	.ocapi_slot_label    = mihawk_ocapi_slot_label,
 };
 
 static const struct slot_table_entry P1E1A_x8_PLX8748_down[] = {

@@ -1342,7 +1342,9 @@ static int64_t npu2_opencapi_hreset(struct pci_slot *slot __unused)
 
 static void make_slot_hotpluggable(struct pci_slot *slot, struct phb *phb)
 {
-	char label[40];
+	struct npu2_dev *dev = phb_to_npu2_dev_ocapi(phb);
+	char name[40];
+	const char *label = NULL;
 
 	/*
 	 * Add a few definitions to the DT so that the linux PCI
@@ -1353,8 +1355,16 @@ static void make_slot_hotpluggable(struct pci_slot *slot, struct phb *phb)
 	 */
 	slot->pluggable = 1;
 	pci_slot_add_dt_properties(slot, phb->dt_node);
-	snprintf(label, sizeof(label), "OPENCAPI-%04x",
-		 (int)PCI_SLOT_PHB_INDEX(slot->id));
+
+	if (platform.ocapi->ocapi_slot_label)
+		label = platform.ocapi->ocapi_slot_label(dev->npu->chip_id,
+							 dev->brick_index);
+
+	if (!label) {
+		snprintf(name, sizeof(name), "OPENCAPI-%04x",
+			 (int)PCI_SLOT_PHB_INDEX(slot->id));
+		label = name;
+	}
 	dt_add_property_string(phb->dt_node, "ibm,slot-label", label);
 }
 
