@@ -200,6 +200,9 @@ int64_t ibm_fsp_cec_reboot(void)
 	    fsp_flash_term_hook() == OPAL_SUCCESS)
 		cmd = FSP_CMD_DEEP_REBOOT;
 
+	/* Clear flash hook */
+	fsp_flash_term_hook = NULL;
+
 	printf("FSP: Sending 0x%02x reboot command to FSP...\n", cmd);
 
 	/* If that failed, talk to the FSP */
@@ -227,6 +230,9 @@ int64_t ibm_fsp_cec_power_down(uint64_t request)
 	/* Flash new firmware */
 	if (fsp_flash_term_hook)
 		fsp_flash_term_hook();
+
+	/* Clear flash hook */
+	fsp_flash_term_hook = NULL;
 
 	printf("FSP: Sending shutdown command to FSP...\n");
 
