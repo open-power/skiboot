@@ -153,6 +153,7 @@ static void guess_chip_gen(void)
 		return;
 
 	case 0x004e: /* nimbus */
+	case 0x004f: /* axone */
 		set_chip_gen(p9_chip_units);
 		return;
 
