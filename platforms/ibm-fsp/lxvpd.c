@@ -111,8 +111,9 @@ void *lxvpd_get_slot(struct pci_slot *slot)
 			return s;
 		}
 
-		/* Match switch port with switch_id != 0 */
-		if (!is_phb && s->switch_id != 0 && s->dev_id == slot_num) {
+		/* Match downstream switch port with switch_id != 0 */
+		if (!is_phb && s->switch_id != 0 && !s->upstream_port &&
+		    s->dev_id == slot_num) {
 			slot->data = s;
 			s->pci_slot = slot;
 			prlog(PR_DEBUG, "Found [%s] for slot %016llx\n",
@@ -251,6 +252,7 @@ static void lxvpd_parse_1005_map(struct phb *phb,
 		s->dev_id         = entry->switch_device_id;
 		s->pluggable      = (entry->p0.pluggable == 0);
 		s->power_ctl      = entry->p0.power_ctl;
+		s->upstream_port  = entry->p0.upstream_port;
 		s->bus_clock      = entry->p2.bus_clock;
 		s->connector_type = entry->p2.connector_type;
 		s->card_desc      = entry->p3.byte >> 6;
@@ -261,8 +263,10 @@ static void lxvpd_parse_1005_map(struct phb *phb,
 		if (s->wired_lanes > PCI_SLOT_WIRED_LANES_PCIE_X32)
 			s->wired_lanes = PCI_SLOT_WIRED_LANES_UNKNOWN;
 
-		prlog(PR_DEBUG, "1005 Platform data [%s] %02x %02x on PHB%04x\n",
-			  s->label, s->switch_id, s->dev_id, phb->opal_id);
+		prlog(PR_DEBUG, "1005 Platform data [%s] %02x %02x %s on PHB%04x\n",
+			  s->label, s->switch_id, s->dev_id,
+			  s->upstream_port ? "upstream" : "downstream",
+			  phb->opal_id);
 	}
 }
 

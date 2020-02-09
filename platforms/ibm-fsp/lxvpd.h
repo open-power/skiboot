@@ -142,6 +142,7 @@ struct lxvpd_pci_slot {
 	char		label[9];
 	bool		pluggable;
 	bool		power_ctl;
+	bool		upstream_port;
 	uint8_t		wired_lanes;
 	uint8_t		bus_clock;
 	uint8_t		connector_type;
