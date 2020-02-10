@@ -65,6 +65,7 @@ static struct opal_mpipl_fadump *opal_mpipl_cpu_data;
 static u64 opal_mpipl_tags[MAX_OPAL_MPIPL_TAGS];
 static int opal_mpipl_max_tags = MAX_OPAL_MPIPL_TAGS;
 
+static u64 opal_dump_addr, opal_dump_size;
 
 static int opal_mpipl_add_entry(u8 region, u64 src, u64 dest, u64 size)
 {
@@ -230,28 +231,12 @@ static int opal_mpipl_remove_entry_mddt(bool remove_all, u8 region, u64 dest)
 /* Register for OPAL dump.  */
 static void opal_mpipl_register(void)
 {
-	u64 opal_dest, opal_size;
 	u64 arch_regs_dest, arch_regs_size;
 	struct proc_dump_area *proc_dump = (void *)(PROC_DUMP_AREA_BASE);
 
-	/* Get OPAL runtime size */
-	if (!dt_find_property(opal_node, "opal-runtime-size")) {
-		prlog(PR_DEBUG, "Could not get OPAL runtime size\n");
-		return;
-	}
-	opal_size = dt_prop_get_u64(opal_node, "opal-runtime-size");
-	if (!opal_size) {
-		prlog(PR_DEBUG, "OPAL runtime size is zero\n");
-		return;
-	}
-
-	/* Calculate and reserve OPAL dump destination memory */
-	opal_dest = SKIBOOT_BASE + opal_size;
-	mem_reserve_fw("ibm,firmware-dump", opal_dest, opal_size);
-
 	/* Add OPAL reservation detail to MDST/MDDT table */
 	opal_mpipl_add_entry(DUMP_REGION_OPAL_MEMORY,
-			     SKIBOOT_BASE, opal_dest, opal_size);
+			     SKIBOOT_BASE, opal_dump_addr, opal_dump_size);
 
 	/* Thread size check */
 	if (proc_dump->thread_size != 0) {
@@ -259,13 +244,9 @@ static void opal_mpipl_register(void)
 		      "but not supported.\n");
 	}
 
-	/* Calculate memory to capture CPU register data */
-	arch_regs_dest = opal_dest + opal_size;
-	arch_regs_size = nr_chips() * ARCH_REGS_DATA_SIZE_PER_CHIP;
-
 	/* Reserve memory used to capture architected register state */
-	mem_reserve_fw("ibm,firmware-arch-registers",
-		       arch_regs_dest, arch_regs_size);
+	arch_regs_dest = opal_dump_addr + opal_dump_size;
+	arch_regs_size = nr_chips() * ARCH_REGS_DATA_SIZE_PER_CHIP;
 	proc_dump->alloc_addr = cpu_to_be64(arch_regs_dest | HRMOR_BIT);
 	proc_dump->alloc_size = cpu_to_be32(arch_regs_size);
 	prlog(PR_NOTICE, "Architected register dest addr : 0x%llx, "
@@ -508,6 +489,32 @@ void opal_mpipl_save_crashing_pir(void)
 {
 	mpipl_metadata->crashing_pir = this_cpu()->pir;
 	prlog(PR_NOTICE, "Crashing PIR = 0x%x\n", this_cpu()->pir);
+}
+
+void opal_mpipl_reserve_mem(void)
+{
+	struct dt_node *opal_node, *dump_node;
+	u64 arch_regs_dest, arch_regs_size;
+
+	opal_node = dt_find_by_path(dt_root, "ibm,opal");
+	if (!opal_node)
+		return;
+
+	dump_node = dt_find_by_path(opal_node, "dump");
+	if (!dump_node)
+		return;
+
+	/* Calculcate and Reserve OPAL dump destination memory */
+	opal_dump_size = SKIBOOT_SIZE + (cpu_max_pir + 1) * STACK_SIZE;
+	opal_dump_addr = SKIBOOT_BASE + opal_dump_size;
+	mem_reserve_fw("ibm,firmware-dump",
+		       opal_dump_addr, opal_dump_size);
+
+	/* Reserve memory to capture CPU register data */
+	arch_regs_dest = opal_dump_addr + opal_dump_size;
+	arch_regs_size = nr_chips() * ARCH_REGS_DATA_SIZE_PER_CHIP;
+	mem_reserve_fw("ibm,firmware-arch-registers",
+		       arch_regs_dest, arch_regs_size);
 }
 
 void opal_mpipl_init(void)
