@@ -1062,6 +1062,13 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 */
 	mem_region_init();
 
+	/*
+	 * Reserve memory required to capture OPAL dump. This should be done
+	 * immediately after mem_region_init to avoid any clash with local
+	 * memory allocation.
+	 */
+	opal_mpipl_reserve_mem();
+
 	/* Reserve HOMER and OCC area */
 	homer_init();
 
