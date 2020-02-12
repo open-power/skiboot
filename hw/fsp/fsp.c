@@ -2362,6 +2362,7 @@ int fsp_fetch_data_queue(uint8_t flags, uint16_t id, uint32_t sub_id,
 #define CAPP_IDX_NIMBUS_DD20 0x200d1
 #define CAPP_IDX_NIMBUS_DD21 0x201d1
 #define CAPP_IDX_NIMBUS_DD22 0x202d1
+#define CAPP_IDX_NIMBUS_DD23 0x203d1
 
 #define IMA_CATALOG_NIMBUS	0x4e0200
 
@@ -2382,6 +2383,7 @@ static struct {
 	{ RESOURCE_ID_CAPP,	CAPP_IDX_NIMBUS_DD20,	0x80a02007 },
 	{ RESOURCE_ID_CAPP,	CAPP_IDX_NIMBUS_DD21,	0x80a02007 },
 	{ RESOURCE_ID_CAPP,	CAPP_IDX_NIMBUS_DD22,	0x80a02007 },
+	{ RESOURCE_ID_CAPP,	CAPP_IDX_NIMBUS_DD23,	0x80a02007 },
 };
 
 static void fsp_start_fetching_next_lid(void);
