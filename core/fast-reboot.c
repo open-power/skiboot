@@ -118,7 +118,7 @@ void fast_reboot(void)
 	}
 
 	if (fast_reboot_disabled &&
-	    nvram_query_eq_dangerous("fast-reset", "im-feeling-lucky")) {
+	    nvram_query_eq_dangerous("force-fast-reset", "1")) {
 		/* Do fast reboot even if it's been disabled */
 		prlog(PR_NOTICE, "RESET: Ignoring fast reboot disabled: %s\n",
 				fast_reboot_disabled);

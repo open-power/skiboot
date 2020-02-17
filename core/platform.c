@@ -48,24 +48,9 @@ static int64_t opal_cec_power_down(uint64_t request)
 }
 opal_call(OPAL_CEC_POWER_DOWN, opal_cec_power_down, 1);
 
-static int64_t opal_cec_reboot(void)
+static int64_t full_reboot(void)
 {
 	prlog(PR_NOTICE, "OPAL: Reboot request...\n");
-
-	opal_quiesce(QUIESCE_HOLD, -1);
-
-	if (proc_gen == proc_gen_p8) {
-		/*
-		 * Bugs in P8 mean fast reboot isn't 100% reliable when cores
-		 * are busy, so only attempt if explicitly *enabled*.
-		 */
-		if (nvram_query_eq_safe("fast-reset", "1"))
-			fast_reboot();
-
-	} else if (!nvram_query_eq_safe("fast-reset", "0")) {
-		/* Try fast-reset unless explicitly disabled */
-		fast_reboot();
-	}
 
 	console_complete_flush();
 
@@ -73,6 +58,26 @@ static int64_t opal_cec_reboot(void)
 		return platform.cec_reboot();
 
 	return OPAL_SUCCESS;
+}
+
+static int64_t opal_cec_reboot(void)
+{
+	opal_quiesce(QUIESCE_HOLD, -1);
+
+	/*
+	 * Fast-reset was enabled by default for a long time in an attempt to
+	 * make it more stable by exercising it more frequently. This resulted
+	 * in a fair amount of pain due to mis-behaving hardware and confusion
+	 * about what a "reset" is supposed to do exactly. Additionally,
+	 * secure variables require a full reboot to work at all.
+	 *
+	 * Due to all that fast-reset should only be used if it's explicitly
+	 * enabled. It started life as a debug hack and should remain one.
+	 */
+	if (nvram_query_eq_safe("fast-reset", "1"))
+		fast_reboot();
+
+	return full_reboot();
 }
 opal_call(OPAL_CEC_REBOOT, opal_cec_reboot, 0);
 
@@ -105,15 +110,15 @@ static int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
 		console_complete_flush();
 		return xscom_trigger_xstop();
 	case OPAL_REBOOT_FULL_IPL:
-		disable_fast_reboot("full IPL reboot requested");
-		return opal_cec_reboot();
+		prlog(PR_NOTICE, "Reboot: Full reboot requested");
+		return full_reboot();
 	case OPAL_REBOOT_MPIPL:
 		prlog(PR_NOTICE, "Reboot: OS reported error. Performing MPIPL\n");
 		console_complete_flush();
 		if (platform.terminate)
 			platform.terminate("OS reported error. Performing MPIPL\n");
 		else
-			opal_cec_reboot();
+			full_reboot();
 		for (;;);
 		break;
 	case OPAL_REBOOT_FAST:
