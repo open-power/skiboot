@@ -29,6 +29,8 @@ extern void firenze_pci_setup_phb(struct phb *phb,
 				  unsigned int index);
 extern void firenze_pci_get_slot_info(struct phb *phb,
 				      struct pci_device *pd);
+extern void firenze_pci_add_loc_code(struct dt_node *np,
+				      struct pci_device *pd);
 
 /* VPD support */
 void vpd_iohub_load(struct dt_node *hub_node);

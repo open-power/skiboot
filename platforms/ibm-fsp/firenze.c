@@ -206,6 +206,7 @@ DECLARE_PLATFORM(firenze) = {
 	.cec_reboot		= ibm_fsp_cec_reboot,
 	.pci_setup_phb		= firenze_pci_setup_phb,
 	.pci_get_slot_info	= firenze_pci_get_slot_info,
+	.pci_add_loc_code	= firenze_pci_add_loc_code,
 	.pci_probe_complete	= firenze_pci_send_inventory,
 	.nvram_info		= fsp_nvram_info,
 	.nvram_start_read	= fsp_nvram_start_read,

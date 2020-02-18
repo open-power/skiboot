@@ -186,6 +186,14 @@ struct platform {
 					     struct pci_device *pd);
 
 	/*
+	 * Called for each device during pci_add_device_nodes() descend
+	 * to create the device tree, in order to get the correct per-platform
+	 * preference for the ibm,loc-code property
+	 */
+	void		(*pci_add_loc_code)(struct dt_node *np,
+					     struct pci_device *pd);
+
+	/*
 	 * Called after PCI probe is complete and before inventory is
 	 * displayed in console. This can either run platform fixups or
 	 * can be used to send the inventory to a service processor.

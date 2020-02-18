@@ -972,3 +972,73 @@ void firenze_pci_get_slot_info(struct phb *phb, struct pci_device *pd)
 		firenze_pci_slot_init(slot);
 	}
 }
+
+void firenze_pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
+{
+	struct dt_node *p;
+	const char *blcode = NULL;
+	char *lcode;
+	uint32_t class_code;
+	uint8_t class,sub;
+	uint8_t pos, len;
+
+
+	/*
+	 * prefer fully-qualified slot-location-code, walk-up parent tree
+	 * to find one
+	 */
+	for (p = np->parent; p; p = np->parent) {
+		blcode = dt_prop_get_def(p, "ibm,slot-location-code", NULL);
+		if (blcode)
+			break;
+	}
+
+	/* try the node itself if none is found */
+	if (!blcode)
+		blcode = dt_prop_get_def(np, "ibm,slot-location-code", NULL);
+
+	if (!blcode) {
+		/* still not found, fall back to ibm,loc-code */
+
+		for (p = np->parent; p; p = p->parent) {
+			blcode = dt_prop_get_def(p, "ibm,loc-code", NULL);
+			if (blcode)
+				break;
+		}
+	}
+
+	if (!blcode) {
+		prlog(PR_ERR,
+			"No suitable location code to add for device PHB#%04x:%02x:%02x.%x\n",
+			pd->phb->opal_id, PCI_BUS_NUM(pd->bdfn),
+			PCI_DEV(pd->bdfn), PCI_FUNC(pd->bdfn));
+		return;
+	}
+
+	/* ethernet devices get port codes */
+	class_code = dt_prop_get_u32(np, "class-code");
+	class = class_code >> 16;
+	sub = (class_code >> 8) & 0xff;
+
+	if (class == 0x02 && sub == 0x00) {
+		/* There's usually several spaces at the end of the property.
+		   Test for, but don't rely on, that being the case */
+		len = strlen(blcode);
+		for (pos = 0; pos < len; pos++)
+			if (blcode[pos] == ' ') break;
+		if (pos + 3 < len)
+			lcode = strdup(blcode);
+		else {
+			lcode = malloc(pos + 3);
+			memcpy(lcode, blcode, len);
+		}
+		lcode[pos++] = '-';
+		lcode[pos++] = 'T';
+		lcode[pos++] = (char)PCI_FUNC(pd->bdfn) + '1';
+		lcode[pos++] = '\0';
+		dt_add_property_string(np, "ibm,loc-code", lcode);
+		free(lcode);
+	} else {
+		dt_add_property_string(np, "ibm,loc-code", blcode);
+	}
+}

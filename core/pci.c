@@ -1383,17 +1383,13 @@ void pci_std_swizzle_irq_map(struct dt_node *np,
 	free(map);
 }
 
-static void pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
+static void pci_add_loc_code(struct dt_node *np)
 {
 	struct dt_node *p = np->parent;
 	const char *blcode = NULL;
-	char *lcode;
-	uint32_t class_code;
-	uint8_t class, sub;
-	uint8_t pos, len;
 
 	while (p) {
-		/* if we have a slot label (i.e. openpower) use that */
+		/* prefer slot-label by default */
 		blcode = dt_prop_get_def(p, "ibm,slot-label", NULL);
 		if (blcode)
 			break;
@@ -1424,34 +1420,7 @@ static void pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
 	if (!blcode)
 		return;
 
-	/* ethernet devices get port codes */
-	class_code = dt_prop_get_u32(np, "class-code");
-	class = class_code >> 16;
-	sub = (class_code >> 8) & 0xff;
-
-	/* XXX Don't do that on openpower for now, we will need to sort things
-	 * out later, otherwise the mezzanine slot on Habanero gets weird results
-	 */
-	if (class == 0x02 && sub == 0x00 && !platform.bmc) {
-		/* There's usually several spaces at the end of the property.
-		   Test for, but don't rely on, that being the case */
-		len = strlen(blcode);
-		for (pos = 0; pos < len; pos++)
-			if (blcode[pos] == ' ') break;
-		if (pos + 3 < len)
-			lcode = strdup(blcode);
-		else {
-			lcode = malloc(pos + 3);
-			memcpy(lcode, blcode, len);
-		}
-		lcode[pos++] = '-';
-		lcode[pos++] = 'T';
-		lcode[pos++] = (char)PCI_FUNC(pd->bdfn) + '1';
-		lcode[pos++] = '\0';
-		dt_add_property_string(np, "ibm,loc-code", lcode);
-		free(lcode);
-	} else
-		dt_add_property_string(np, "ibm,loc-code", blcode);
+	dt_add_property_string(np, "ibm,loc-code", blcode);
 }
 
 static void pci_print_summary_line(struct phb *phb, struct pci_device *pd,
@@ -1595,7 +1564,10 @@ static void __noinline pci_add_one_device_node(struct phb *phb,
 				       phb->base_loc_code);
 
 	/* Make up location code */
-	pci_add_loc_code(np, pd);
+	if (platform.pci_add_loc_code)
+		platform.pci_add_loc_code(np, pd);
+	else
+		pci_add_loc_code(np);
 
 	/* XXX FIXME: We don't look for BARs, we only put the config space
 	 * entry in the "reg" property. That's enough for Linux and we might
