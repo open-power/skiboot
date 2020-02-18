@@ -300,20 +300,31 @@ set pmem_sizes ""
 if { [info exists env(PMEM_VOLATILE)] } {
     set pmem_sizes [split $env(PMEM_VOLATILE) ","]
 }
+set pmem_modes ""
+if { [info exists env(PMEM_MODES)] } {
+    set pmem_modes [split $env(PMEM_MODES) ","]
+}
 set pmem_root [mysim of addchild $root_node "pmem" ""]
 mysim of addprop $pmem_root int "#address-cells" 2
 mysim of addprop $pmem_root int "#size-cells" 2
 mysim of addprop $pmem_root empty "ranges" ""
 # Start above where XICS normally is at 0x1A0000000000
 set pmem_start [expr 0x20000000000]
+set pmem_file_ix 0
 foreach pmem_file $pmem_files { # PMEM_DISK
     set pmem_file [string trim $pmem_file]
     set pmem_size [file size $pmem_file]
-    if {[catch {mysim memory mmap $pmem_start $pmem_size $pmem_file rw}]} {
+    if { [expr [llength $pmem_modes] > $pmem_file_ix] } {
+	set pmem_mode [lindex $pmem_modes $pmem_file_ix]
+    } else {
+	set pmem_mode "rw"
+    }
+    if {[catch {mysim memory mmap $pmem_start $pmem_size $pmem_file $pmem_mode}]} {
 	puts "ERROR: pmem: 'mysim mmap' command needs newer mambo"
 	exit
     }
     set pmem_start [pmem_node_add $pmem_root $pmem_start $pmem_size]
+    set pmem_file_ix [expr $pmem_file_ix + 1]
 }
 foreach pmem_size $pmem_sizes { # PMEM_VOLATILE
     set pmem_start [pmem_node_add $pmem_root $pmem_start $pmem_size]
