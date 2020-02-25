@@ -147,8 +147,8 @@ int main(void)
 			 * only in test and only for valgrind
 			 */
 			free((void*)r->name);
+			last = r->name;
 		}
-		last = r->name;
 	}
 
 	dt_free(dt_root);

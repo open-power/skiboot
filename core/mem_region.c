@@ -734,7 +734,7 @@ static bool maybe_split(struct mem_region *r, uint64_t split_at)
 		return false;
 
 	/* Tail add is important: we may need to split again! */
-	list_add_tail(&regions, &tail->list);
+	list_add_after(&regions, &tail->list, &r->list);
 	return true;
 }
 
@@ -761,6 +761,20 @@ static struct mem_region *get_overlap(const struct mem_region *region)
 			return i;
 	}
 	return NULL;
+}
+
+static void add_region_to_regions(struct mem_region *region)
+{
+	struct mem_region *r;
+
+	list_for_each(&regions, r, list) {
+		if (r->start < region->start)
+			continue;
+
+		list_add_before(&regions, &region->list, &r->list);
+		return;
+	}
+	list_add_tail(&regions, &region->list);
 }
 
 static bool add_region(struct mem_region *region)
@@ -807,7 +821,7 @@ static bool add_region(struct mem_region *region)
 	}
 
 	/* Finally, add in our own region. */
-	list_add(&regions, &region->list);
+	add_region_to_regions(region);
 	return true;
 }
 
@@ -1091,7 +1105,7 @@ void mem_region_init(void)
 			prerror("MEM: Could not add mem region %s!\n", i->name);
 			abort();
 		}
-		list_add(&regions, &region->list);
+		add_region_to_regions(region);
 		if ((start + len) > top_of_ram)
 			top_of_ram = start + len;
 		unlock(&mem_region_lock);

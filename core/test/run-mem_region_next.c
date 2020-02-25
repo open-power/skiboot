@@ -85,13 +85,13 @@ int main(void)
 
 	r = mem_region_next(NULL);
 	assert(r);
-	assert(r->start == 0x2000);
+	assert(r->start == 0x1000);
 	assert(r->len == 0x1000);
 	assert(r->type == REGION_RESERVED);
 
 	r = mem_region_next(r);
 	assert(r);
-	assert(r->start == 0x1000);
+	assert(r->start == 0x2000);
 	assert(r->len == 0x1000);
 	assert(r->type == REGION_RESERVED);
 
