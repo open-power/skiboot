@@ -99,7 +99,7 @@ static int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
 			  "OPAL: Reboot requested due to Platform error.");
 			if (diag) {
 				/* Add user section "DESC" */
-				log_add_section(buf, 0x44455343);
+				log_add_section(buf, OPAL_ELOG_SEC_DESC);
 				log_append_data(buf, diag, strlen(diag));
 			}
 			log_commit(buf);

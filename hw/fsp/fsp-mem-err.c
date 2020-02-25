@@ -233,7 +233,7 @@ send_response:
 		log_append_msg(buf,
 			"OPAL_MEM_ERR: Cannot queue up memory "
 			"resilience error event to the OS");
-		log_add_section(buf, 0x44455350);
+		log_add_section(buf, OPAL_ELOG_SEC_DESC);
 		log_append_data(buf, (char *) &mem_err_evt,
 					   sizeof(struct OpalMemoryErrorData));
 		log_commit(buf);
@@ -322,7 +322,7 @@ send_response:
 		log_append_msg(buf,
 			"OPAL_MEM_ERR: Cannot queue up memory "
 			"deallocation error event to the OS");
-		log_add_section(buf, 0x44455350);
+		log_add_section(buf, OPAL_ELOG_SEC_DESC);
 		log_append_data(buf, (char *)&mem_err_evt,
 					   sizeof(struct OpalMemoryErrorData));
 		log_commit(buf);

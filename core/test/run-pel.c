@@ -101,7 +101,7 @@ int main(void)
 
 	buffer = elog->user_data_dump + elog->user_section_size;
 	tmp = (struct elog_user_data_section *)buffer;
-	tmp->tag = 0x44455343;  /* ASCII of DESC */
+	tmp->tag = OPAL_ELOG_SEC_DESC;  /* ASCII of DESC */
 	tmp->size = size + sizeof(struct elog_user_data_section) - 1;
 	strcpy(tmp->data_dump, "Hello World!");
 	elog->user_section_size += tmp->size;

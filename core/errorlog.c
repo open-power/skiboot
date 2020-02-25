@@ -93,7 +93,7 @@ void log_add_section(struct errorlog *buf, uint32_t tag)
 	tmp = (struct elog_user_data_section *)(buf->user_data_dump +
 						buf->user_section_size);
 	/* Use DESC if no other tag provided */
-	tmp->tag = tag ? cpu_to_be32(tag) : cpu_to_be32(0x44455343);
+	tmp->tag = tag ? cpu_to_be32(tag) : cpu_to_be32(OPAL_ELOG_SEC_DESC);
 	tmp->size = cpu_to_be16(size);
 
 	buf->user_section_size += size;

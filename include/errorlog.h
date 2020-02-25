@@ -324,6 +324,8 @@ enum opal_reasoncode {
 	OPAL_RC_CONSOLE_HANG	    = OPAL_SRC_COMPONENT_CONSOLE | 0x10,
 };
 
+#define OPAL_ELOG_SEC_DESC	0x44455343
+
 #define DEFINE_LOG_ENTRY(reason, type, id, subsys,			\
 severity, subtype) static struct opal_err_info err_##reason =		\
 { .reason_code = reason, .err_type = type, .cmp_id = id,		\
