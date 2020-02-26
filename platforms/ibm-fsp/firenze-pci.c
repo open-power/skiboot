@@ -987,7 +987,7 @@ void firenze_pci_add_loc_code(struct dt_node *np, struct pci_device *pd)
 	 * prefer fully-qualified slot-location-code, walk-up parent tree
 	 * to find one
 	 */
-	for (p = np->parent; p; p = np->parent) {
+	for (p = np->parent; p; p = p->parent) {
 		blcode = dt_prop_get_def(p, "ibm,slot-location-code", NULL);
 		if (blcode)
 			break;
