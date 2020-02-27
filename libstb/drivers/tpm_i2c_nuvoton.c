@@ -383,6 +383,7 @@ static int tpm_read_fifo(uint8_t* buf, size_t* buflen)
 			prlog(PR_ERR, "NUVOTON: overflow on fifo read, c=%zd, "
 			      "bc=%d, bl=%zd\n", count, burst_count, *buflen);
 			rc = STB_TPM_OVERFLOW;
+			goto error;
 		}
 		rc = tpm_i2c_request_send(tpm_device,
 					  SMBUS_READ,
