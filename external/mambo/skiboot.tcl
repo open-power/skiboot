@@ -301,8 +301,8 @@ if { [info exists env(PMEM_VOLATILE)] } {
     set pmem_sizes [split $env(PMEM_VOLATILE) ","]
 }
 set pmem_modes ""
-if { [info exists env(PMEM_MODES)] } {
-    set pmem_modes [split $env(PMEM_MODES) ","]
+if { [info exists env(PMEM_MODE)] } {
+    set pmem_modes [split $env(PMEM_MODE) ","]
 }
 set pmem_root [mysim of addchild $root_node "pmem" ""]
 mysim of addprop $pmem_root int "#address-cells" 2
