@@ -181,6 +181,7 @@ endif
 
 ifeq ($(DEAD_CODE_ELIMINATION),1)
 LDFLAGS += -Wl,--gc-sections
+LDFLAGS_FINAL += --gc-sections
 endif
 
 AFLAGS := -D__ASSEMBLY__ -m64
