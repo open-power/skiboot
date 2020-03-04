@@ -324,6 +324,7 @@ static void ipmi_elog_poll(struct ipmi_msg *msg)
 
 	if (bmc_platform->sw->ipmi_oem_partial_add_esel == 0) {
 		prlog(PR_WARNING, "Dropped eSEL: BMC code is buggy/missing\n");
+		ipmi_sel_free_msg(msg);
 		return;
 	}
 
