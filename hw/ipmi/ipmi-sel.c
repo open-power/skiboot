@@ -18,6 +18,7 @@
 #include <opal-msg.h>
 #include <debug_descriptor.h>
 #include <occ.h>
+#include <timebase.h>
 
 /* OEM SEL fields */
 #define SEL_OEM_ID_0		0x55
@@ -434,10 +435,22 @@ int ipmi_elog_commit(struct errorlog *elog_buf)
 
 	msg->error = ipmi_elog_error;
 	msg->req_size = 0;
-	if (elog_buf->event_severity == OPAL_ERROR_PANIC)
+	if (elog_buf->event_severity == OPAL_ERROR_PANIC) {
 		ipmi_queue_msg_sync(msg);
-	else
+
+		/*
+		 * eSEL logs are split into multiple smaller chunks and sent
+		 * to BMC. Lets wait until we finish sending all the chunks
+		 * to BMC.
+		 */
+		while (ipmi_sel_panic_msg.busy != false) {
+			if (msg->backend->poll)
+				msg->backend->poll();
+			time_wait_ms(10);
+		}
+	} else {
 		ipmi_queue_msg(msg);
+	}
 
 	return 0;
 }
