@@ -48,7 +48,7 @@
 #define SEL_REC_TYPE_AMI_ESEL	0xDF
 
 /* OEM SEL generator ID for AMI */
-#define SEL_GENERATOR_ID_AMI	0x2000
+#define SEL_GENERATOR_ID_AMI	0x0020
 
 /* IPMI SEL version */
 #define SEL_EVM_VER_1		0x03
