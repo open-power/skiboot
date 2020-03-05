@@ -883,7 +883,7 @@ static bool hservice_hbrt_msg_notify(uint32_t cmd_sub_mod, struct fsp_msg *msg)
 	}
 
 	if (prd_hbrt_fsp_msg_notify(buf, len)) {
-		hservice_hbrt_msg_response(FSP_STATUS_GENERIC_FAILURE);
+		hservice_hbrt_msg_response(FSP_STATUS_GENERIC_ERROR);
 		prlog(PR_NOTICE, "Unable to send FSP - HBRT message\n");
 	}
 

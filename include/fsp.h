@@ -46,7 +46,6 @@
 #define FSP_STATUS_FLASH_INPROGRESS	0x61
 #define FSP_STATUS_FLASH_NOPROGRESS	0x62
 #define FSP_STATUS_FLASH_INVALID_SIDE	0x63
-#define FSP_STATUS_GENERIC_ERROR	0xfe
 #define FSP_STATUS_EOF_ERROR		0x02
 #define FSP_STATUS_DMA_ERROR		0x24
 #define FSP_STATUS_BUSY			0x3e
@@ -61,7 +60,7 @@
 #define FSP_STATUS_TOD_PERMANENT_ERROR	0xAF	/* Permanent error in TOD */
 #define FSP_STATUS_I2C_TRANS_ERROR	0xE4	/* I2C device / transmission error */
 #define FSP_STATUS_IND_PARTIAL_SUCCESS	0xE5	/* Indicator partial success */
-#define FSP_STATUS_GENERIC_FAILURE	0xEF	/* Generic Failure in execution */
+#define FSP_STATUS_GENERIC_ERROR	0xFE    /* Generic Failure in execution */
 
 /*
  * FSP registers

@@ -119,7 +119,7 @@ static void prd_msg_consumed(void *data, int status)
 		if (status != 0) {
 			prlog(PR_DEBUG,
 			      "PRD: Failed to send FSP -> HBRT message\n");
-			notify_status = FSP_STATUS_GENERIC_FAILURE;
+			notify_status = FSP_STATUS_GENERIC_ERROR;
 		}
 		assert(platform.prd);
 		assert(platform.prd->msg_response);
@@ -372,7 +372,7 @@ int prd_hbrt_fsp_msg_notify(void *data, u32 dsize)
 {
 	struct prd_fw_msg *fw_notify;
 	int size, fw_notify_size;
-	int rc = FSP_STATUS_GENERIC_FAILURE;
+	int rc = FSP_STATUS_GENERIC_ERROR;
 
 	if (!prd_enabled || !prd_active) {
 		prlog(PR_NOTICE, "PRD: %s: PRD daemon is not ready\n",
