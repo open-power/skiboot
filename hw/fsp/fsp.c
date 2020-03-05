@@ -995,7 +995,6 @@ static void __fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod,
 
 	for (i = 0; i < add_words; i++)
 		fsp_msg_set_data_word(msg, i, va_arg(list, unsigned int));
-	va_end(list);
 }
 
 void fsp_fillmsg(struct fsp_msg *msg, u32 cmd_sub_mod, u32 add_words, ...)
