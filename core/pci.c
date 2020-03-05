@@ -1385,42 +1385,37 @@ void pci_std_swizzle_irq_map(struct dt_node *np,
 
 static void pci_add_loc_code(struct dt_node *np)
 {
-	struct dt_node *p = np->parent;
-	const char *blcode = NULL;
+	struct dt_node *p;
+	const char *lcode = NULL;
 
-	while (p) {
+	for (p = np->parent; p; p = p->parent) {
 		/* prefer slot-label by default */
-		blcode = dt_prop_get_def(p, "ibm,slot-label", NULL);
-		if (blcode)
+		lcode = dt_prop_get_def(p, "ibm,slot-label", NULL);
+		if (lcode)
 			break;
 
 		/* otherwise use the fully qualified location code */
-		blcode = dt_prop_get_def(p, "ibm,slot-location-code", NULL);
-		if (blcode)
+		lcode = dt_prop_get_def(p, "ibm,slot-location-code", NULL);
+		if (lcode)
 			break;
-
-		p = p->parent;
 	}
 
-	if (!blcode)
-		blcode = dt_prop_get_def(np, "ibm,slot-location-code", NULL);
+	if (!lcode)
+		lcode = dt_prop_get_def(np, "ibm,slot-location-code", NULL);
 
-	if (!blcode) {
+	if (!lcode) {
 		/* Fall back to finding a ibm,loc-code */
-		p = np->parent;
-
-		while (p) {
-			blcode = dt_prop_get_def(p, "ibm,loc-code", NULL);
-			if (blcode)
+		for (p = np->parent; p; p = p->parent) {
+			lcode = dt_prop_get_def(p, "ibm,loc-code", NULL);
+			if (lcode)
 				break;
-			p = p->parent;
 		}
 	}
 
-	if (!blcode)
+	if (!lcode)
 		return;
 
-	dt_add_property_string(np, "ibm,loc-code", blcode);
+	dt_add_property_string(np, "ibm,loc-code", lcode);
 }
 
 static void pci_print_summary_line(struct phb *phb, struct pci_device *pd,
