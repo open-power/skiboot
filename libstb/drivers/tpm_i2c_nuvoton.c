@@ -30,6 +30,7 @@
 #define TPM_BURST_COUNT		0x01
 #define TPM_DATA_FIFO_W		0x20
 #define TPM_DATA_FIFO_R		0x40
+#define TPM_VID_DID		0x60
 
 /* Bit masks for the TPM STATUS register */
 #define TPM_STS_VALID		0x80
@@ -42,6 +43,8 @@
 /* TPM Driver values */
 #define MAX_STSVALID_POLLS 	5
 #define TPM_TIMEOUT_INTERVAL	10
+#define TPM_NUVOTON_VID		0x5010FE00
+#define TPM_VENDOR_ID_MASK	0xFFFFFF00
 
 static struct tpm_dev *tpm_device = NULL;
 
@@ -553,6 +556,7 @@ void tpm_i2c_nuvoton_probe(void)
 	struct dt_node *node = NULL;
 	struct i2c_bus *bus;
 	const char *name;
+	uint32_t vendor = 0;
 
 	dt_for_each_compatible(dt_root, node, "nuvoton,npct650") {
 		if (!dt_node_is_enabled(node))
@@ -587,6 +591,16 @@ void tpm_i2c_nuvoton_probe(void)
 			 */
 			prlog(PR_ERR, "NUVOTON: ibm,opal-id property not "
 			      "found, tpm node parent %p\n", node->parent);
+			goto disable;
+		}
+		/* ensure there's really the TPM we expect at that address */
+		if (tpm_i2c_request_send(tpm_device, SMBUS_READ, TPM_VID_DID,
+					 1, &vendor, sizeof(vendor))) {
+			prlog(PR_ERR, "NUVOTON: i2c device inaccessible\n");
+			goto disable;
+		}
+		if ((vendor & TPM_VENDOR_ID_MASK) != TPM_NUVOTON_VID) {
+			prlog(PR_ERR, "NUVOTON: expected vendor id mismatch\n");
 			goto disable;
 		}
 		if (tpm_register_chip(node, tpm_device,
