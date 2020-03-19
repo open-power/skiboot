@@ -544,8 +544,10 @@ void imc_init(void)
 		return;
 
 	wait_xz_decompress(imc_xz);
-	if (imc_xz->status != OPAL_SUCCESS)
+	if (imc_xz->status != OPAL_SUCCESS) {
+		prerror("IMC: xz_decompress failed\n");
 		goto err;
+	}
 
 	/*
 	 * Flow of the data from PNOR to main device tree:
@@ -559,8 +561,10 @@ void imc_init(void)
 
 	/* Create a device tree entry for imc counters */
 	dev = dt_new_root("imc-counters");
-	if (!dev)
+	if (!dev) {
+		prerror("IMC: Failed to add an imc-counters root node\n");
 		goto err;
+	}
 
 	/*
 	 * Attach the new decompress_buf to the imc-counters node.
@@ -568,6 +572,7 @@ void imc_init(void)
 	 */
 	if (dt_expand_node(dev, imc_xz->dst, 0) < 0) {
 		dt_free(dev);
+		prerror("IMC: dt_expand_node failed\n");
 		goto err;
 	}
 
@@ -600,8 +605,10 @@ imc_mambo:
 	 * then out to band tools will race with ucode and end up getting
 	 * undesirable values. Hence pause the ucode if it is already running.
 	 */
-	if (pause_microcode_at_boot())
+	if (pause_microcode_at_boot()) {
+		prerror("IMC: Pausing ucode failed\n");
 		goto err;
+	}
 
 	/*
 	 * If the dt_attach_root() fails, "imc-counters" node will not be
@@ -610,6 +617,7 @@ imc_mambo:
 	 */
 	if (!dt_attach_root(dt_root, dev)) {
 		dt_free(dev);
+		prerror("IMC: Failed to attach imc-counter node to dt root\n");
 		goto err;
 	}
 
