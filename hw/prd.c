@@ -374,7 +374,7 @@ int prd_hbrt_fsp_msg_notify(void *data, u32 dsize)
 	int size, fw_notify_size;
 	int rc = FSP_STATUS_GENERIC_ERROR;
 
-	if (!prd_enabled || !prd_active) {
+	if (!prd_enabled) {
 		prlog(PR_NOTICE, "PRD: %s: PRD daemon is not ready\n",
 		      __func__);
 		return rc;
@@ -414,6 +414,12 @@ int prd_hbrt_fsp_msg_notify(void *data, u32 dsize)
 	fw_notify = (void *)prd_msg_fsp_notify->fw_notify.data;
 	fw_notify->type = cpu_to_be64(PRD_FW_MSG_TYPE_HBRT_FSP);
 	memcpy(&(fw_notify->mbox_msg), data, dsize);
+
+	if (!prd_active) {
+		// save the message, we'll deliver it when prd starts
+		rc = FSP_STATUS_BUSY;
+		goto unlock_events;
+	}
 
 	rc = opal_queue_prd_msg(prd_msg_fsp_notify);
 	if (!rc)
@@ -455,6 +461,11 @@ static int prd_msg_handle_init(struct opal_prd_msg *msg)
 	 * interrupts */
 	lock(&events_lock);
 	prd_active = true;
+
+	if (prd_msg_fsp_notify) {
+		if (!opal_queue_prd_msg(prd_msg_fsp_notify))
+			prd_msg_inuse = true;
+	}
 	if (!prd_msg_inuse)
 		send_next_pending_event();
 	unlock(&events_lock);
