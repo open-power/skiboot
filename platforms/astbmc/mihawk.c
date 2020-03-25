@@ -17,16 +17,52 @@
 
 #include "astbmc.h"
 
+#define OPAL_ID_SLOT2	0x01
+#define OPAL_ID_SLOT4	0x03
+#define OPAL_ID_SLOT7	0x31
+#define OPAL_ID_SLOT9	0x33
+
 /* nvme backplane slots */
-static const struct slot_table_entry hdd_bay_slots[] = {
-        SW_PLUGGABLE("hdd0", 0x0),
-        SW_PLUGGABLE("hdd1", 0x1),
-        SW_PLUGGABLE("hdd2", 0x2),
-        SW_PLUGGABLE("hdd3", 0x3),
-        SW_PLUGGABLE("hdd4", 0x4),
-        SW_PLUGGABLE("hdd5", 0x5),
-        SW_PLUGGABLE("hdd6", 0x6),
-        SW_PLUGGABLE("hdd7", 0x7),
+static const struct slot_table_entry hdd_bay_s2_slots[] = {
+        SW_PLUGGABLE("nvme13", 0x0),
+        SW_PLUGGABLE("nvme14", 0x1),
+        SW_PLUGGABLE("nvme15", 0x2),
+        SW_PLUGGABLE("nvme16", 0x3),
+
+        { .etype = st_end },
+};
+
+static const struct slot_table_entry hdd_bay_s4_slots[] = {
+        SW_PLUGGABLE("nvme17", 0x0),
+        SW_PLUGGABLE("nvme18", 0x1),
+        SW_PLUGGABLE("nvme19", 0x2),
+        SW_PLUGGABLE("nvme20", 0x3),
+        SW_PLUGGABLE("nvme21", 0x4),
+        SW_PLUGGABLE("nvme22", 0x5),
+        SW_PLUGGABLE("nvme23", 0x6),
+        SW_PLUGGABLE("nvme24", 0x7),
+
+        { .etype = st_end },
+};
+
+static const struct slot_table_entry hdd_bay_s7_slots[] = {
+        SW_PLUGGABLE("nvme9", 0x0),
+        SW_PLUGGABLE("nvme10", 0x1),
+        SW_PLUGGABLE("nvme11", 0x2),
+        SW_PLUGGABLE("nvme12", 0x3),
+
+        { .etype = st_end },
+};
+
+static const struct slot_table_entry hdd_bay_s9_slots[] = {
+        SW_PLUGGABLE("nvme1", 0x0),
+        SW_PLUGGABLE("nvme2", 0x1),
+        SW_PLUGGABLE("nvme3", 0x2),
+        SW_PLUGGABLE("nvme4", 0x3),
+        SW_PLUGGABLE("nvme5", 0x4),
+        SW_PLUGGABLE("nvme6", 0x5),
+        SW_PLUGGABLE("nvme7", 0x6),
+        SW_PLUGGABLE("nvme8", 0x7),
 
         { .etype = st_end },
 };
@@ -39,15 +75,39 @@ static void mihawk_get_slot_info(struct phb *phb, struct pci_device *pd)
 		return;
 
 	/*
-	 * If we find a 8533 switch then assume it's the HDD Rack. This might
-	 * break if we have another 8533 in the system for some reason. This is
-	 * a really dumb hack, but until we get query the BMC about wether we
-	 * have a HDD rack or not we don't have much of a choice.
+	 * If we find a 8533 or c012 switch then assume it's the NVMe Rack.
+	 * This might break if we have another switch with the same vdid in
+	 * the system for some reason. This is a really dumb hack, but until
+	 * we get query the BMC about wether we have a HDD rack or not we
+	 * don't have much of a choice.
 	 */
-	if (pd->dev_type == PCIE_TYPE_SWITCH_DNPORT && pd->vdid == 0x853311f8)
-		for (ent = hdd_bay_slots; ent->etype != st_end; ent++)
-			if (ent->location == (pd->bdfn & 0xff))
+	if (pd->dev_type == PCIE_TYPE_SWITCH_DNPORT) {
+		if (pd->vdid == 0x853311f8) { // for microsemi controller
+			for (ent = hdd_bay_s9_slots; ent->etype != st_end; ent++)
+				if (ent->location == (pd->bdfn & 0xff))
+					break;
+		} else if (pd->vdid == 0xc0121000) { // for broadcom nvme hba
+			switch (phb->opal_id) {
+			case OPAL_ID_SLOT2:
+				ent = hdd_bay_s2_slots;
 				break;
+			case OPAL_ID_SLOT4:
+				ent = hdd_bay_s4_slots;
+				break;
+			case OPAL_ID_SLOT7:
+				ent = hdd_bay_s7_slots;
+				break;
+			case OPAL_ID_SLOT9:
+			default:
+				ent = hdd_bay_s9_slots;
+				break;
+			}
+
+			for (; ent->etype != st_end; ent++)
+				if (ent->location == (pd->bdfn & 0xff))
+					break;
+		}
+	}
 
 	if (ent)
 		slot_table_add_slot_info(pd, ent);
