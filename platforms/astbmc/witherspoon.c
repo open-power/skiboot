@@ -192,6 +192,52 @@ static void witherspoon_shared_slot_fixup(void)
 	}
 }
 
+static int check_mlx_cards(struct phb *phb __unused, struct pci_device *dev,
+			   void *userdata __unused)
+{
+	uint16_t mlx_cards[] = {
+		0x1017, /* ConnectX-5 */
+		0x1019, /* ConnectX-5 Ex */
+		0x101b, /* ConnectX-6 */
+		0x101d, /* ConnectX-6 Dx */
+		0x101f, /* ConnectX-6 Lx */
+		0x1021, /* ConnectX-7 */
+	};
+
+	if (PCI_VENDOR_ID(dev->vdid) == 0x15b3) { /* Mellanox */
+		for (int i = 0; i < ARRAY_SIZE(mlx_cards); i++) {
+			if (mlx_cards[i] == PCI_DEVICE_ID(dev->vdid))
+				return 1;
+		}
+	}
+	return 0;
+}
+
+static void witherspoon_pci_probe_complete(void)
+{
+	struct pci_device *dev;
+	struct phb *phb;
+	struct phb4 *p;
+
+	/*
+	 * Reallocate dma engines between stacks in PEC2 if a Mellanox
+	 * card is found on the shared slot, as it is required to get
+	 * good GPU direct performance.
+	 */
+	for_each_phb(phb) {
+		/* skip the virtual PHBs */
+		if (phb->phb_type != phb_type_pcie_v4)
+			continue;
+		p = phb_to_phb4(phb);
+		/* Keep only the first PHB on PEC2 */
+		if (p->index != 3)
+			continue;
+		dev = pci_walk_dev(phb, NULL, check_mlx_cards, NULL);
+		if (dev)
+			phb4_pec2_dma_engine_realloc(p);
+	}
+}
+
 static void set_link_details(struct npu2 *npu, uint32_t link_index,
 			     uint32_t brick_index, enum npu2_dev_type type)
 {
@@ -533,6 +579,7 @@ DECLARE_PLATFORM(witherspoon) = {
 	.probe			= witherspoon_probe,
 	.init			= astbmc_init,
 	.pre_pci_fixup		= witherspoon_shared_slot_fixup,
+	.pci_probe_complete	= witherspoon_pci_probe_complete,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
 	.bmc			= &bmc_plat_ast2500_openbmc,

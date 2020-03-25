@@ -809,6 +809,33 @@ static int64_t phb4_pcicfg_no_dstate(void *dev __unused,
 	return OPAL_PARTIAL;
 }
 
+void phb4_pec2_dma_engine_realloc(struct phb4 *p)
+{
+	uint64_t reg;
+
+	/*
+	 * Allocate 16 extra dma read engines to stack 0, to boost dma
+	 * performance for devices on stack 0 of PEC2, i.e PHB3.
+	 * It comes at a price of reduced read engine allocation for
+	 * devices on stack 1 and 2. The engine allocation becomes
+	 * 48/8/8 instead of the default 32/16/16.
+	 *
+	 * The reallocation magic value should be 0xffff0000ff008000,
+	 * but per the PCI designers, dma engine 32 (bit 0) has a
+	 * quirk, and 0x7fff80007F008000 has the same effect (engine
+	 * 32 goes to PHB4).
+	 */
+	if (p->index != 3) /* shared slot on PEC2 */
+		return;
+
+	PHBINF(p, "Allocating an extra 16 dma read engines on PEC2 stack0\n");
+	reg = 0x7fff80007F008000ULL;
+	xscom_write(p->chip_id,
+		    p->pci_xscom + XPEC_PCI_PRDSTKOVR, reg);
+	xscom_write(p->chip_id,
+		    p->pe_xscom  + XPEC_NEST_READ_STACK_OVERRIDE, reg);
+}
+
 static void phb4_check_device_quirks(struct pci_device *dev)
 {
 	/* Some special adapter tweaks for devices directly under the PHB */
@@ -4415,30 +4442,8 @@ static int64_t enable_capi_mode(struct phb4 *p, uint64_t pe_number,
 	 * dma-read engines allocations to maximize the DMA read performance
 	 */
 	if ((p->index == CAPP1_PHB_INDEX) &&
-	    (capp_eng & CAPP_MAX_DMA_READ_ENGINES)) {
-
-		/*
-		 * Allocate Additional 16/8 dma read engines to stack0/stack1
-		 * respectively. Read engines 0:31 are anyways always assigned
-		 * to stack0. Also skip allocating DMA Read Engine-32 by
-		 * enabling Bit[0] in XPEC_NEST_READ_STACK_OVERRIDE register.
-		 * Enabling this bit seems cause a parity error reported in
-		 * NFIR[1]-nonbar_pe.
-		 */
-		reg = 0x7fff80007F008000ULL;
-
-		xscom_write(p->chip_id, p->pci_xscom + XPEC_PCI_PRDSTKOVR, reg);
-		xscom_write(p->chip_id, p->pe_xscom +
-			    XPEC_NEST_READ_STACK_OVERRIDE, reg);
-
-		/* Log this reallocation as it may impact dma performance of
-		 * other slots connected to PEC2
-		 */
-		PHBINF(p, "CAPP: Set %d dma-read engines for PEC2/stack-0\n",
-		      32 + __builtin_popcountll(reg & PPC_BITMASK(0, 31)));
-		PHBDBG(p, "CAPP: XPEC_NEST_READ_STACK_OVERRIDE: %016llx\n",
-		       reg);
-	}
+	    (capp_eng & CAPP_MAX_DMA_READ_ENGINES))
+		phb4_pec2_dma_engine_realloc(p);
 
 	/* PCI to PB data movement ignores the PB init signal. */
 	xscom_write_mask(p->chip_id, p->pe_xscom + XPEC_NEST_PBCQ_HW_CONFIG,
