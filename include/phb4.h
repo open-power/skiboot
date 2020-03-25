@@ -252,4 +252,6 @@ static inline int phb4_get_opal_id(unsigned int chip_id, unsigned int index)
 	return chip_id * PHB4_PER_CHIP + index;
 }
 
+void phb4_pec2_dma_engine_realloc(struct phb4 *p);
+
 #endif /* __PHB4_H */
