@@ -15,7 +15,15 @@
 #include <pci.h>
 #include <pci-cfg.h>
 
+#include <timebase.h>
+
 #include "astbmc.h"
+
+/* IPMI message code for Riser-F query (OEM). */
+#define IPMI_RISERF_QUERY	IPMI_CODE(0x32, 0x01)
+
+static bool mihawk_riserF_found = false;
+static bool bmc_query_waiting = false;
 
 #define OPAL_ID_SLOT2	0x01
 #define OPAL_ID_SLOT4	0x03
@@ -151,7 +159,7 @@ static const struct platform_ocapi mihawk_ocapi = {
 	.ocapi_slot_label    = mihawk_ocapi_slot_label,
 };
 
-static const struct slot_table_entry P1E1A_x8_PLX8748_down[] = {
+static const struct slot_table_entry P1E1A_x8_PLX8748_RiserA_down[] = {
         SW_PLUGGABLE("Slot7", 0x10),
         SW_PLUGGABLE("Slot8", 0x8),
         SW_PLUGGABLE("Slot10", 0x9),
@@ -159,25 +167,25 @@ static const struct slot_table_entry P1E1A_x8_PLX8748_down[] = {
         { .etype = st_end }
 };
 
-static const struct slot_table_entry P1E1A_x8_PLX8748_up[] = {
+static const struct slot_table_entry P1E1A_x8_PLX8748_RiserA_up[] = {
         {
                 .etype = st_builtin_dev,
                 .location = ST_LOC_DEVFN(0,0),
-                .children = P1E1A_x8_PLX8748_down,
+                .children = P1E1A_x8_PLX8748_RiserA_down,
         },
         { .etype = st_end }
 };
 
-static const struct slot_table_entry p1phb1_slot[] = {
+static const struct slot_table_entry p1phb1_rA_slot[] = {
         {
                 .etype = st_builtin_dev,
                 .location = ST_LOC_DEVFN(0,0),
-                .children = P1E1A_x8_PLX8748_up,
+                .children = P1E1A_x8_PLX8748_RiserA_up,
         },
         { .etype = st_end },
 };
 
-static const struct slot_table_entry P0E1A_x8_PLX8748_down[] = {
+static const struct slot_table_entry P0E1A_x8_PLX8748_RiserA_down[] = {
         SW_PLUGGABLE("Slot2", 0x10),
         SW_PLUGGABLE("Slot3", 0x8),
         SW_PLUGGABLE("Slot5", 0x9),
@@ -185,20 +193,120 @@ static const struct slot_table_entry P0E1A_x8_PLX8748_down[] = {
         { .etype = st_end }
 };
 
-static const struct slot_table_entry P0E1A_x8_PLX8748_up[] = {
+static const struct slot_table_entry P0E1A_x8_PLX8748_RiserA_up[] = {
         {
                 .etype = st_builtin_dev,
                 .location = ST_LOC_DEVFN(0,0),
-                .children = P0E1A_x8_PLX8748_down,
+                .children = P0E1A_x8_PLX8748_RiserA_down,
         },
         { .etype = st_end }
 };
 
-static const struct slot_table_entry p0phb1_slot[] = {
+static const struct slot_table_entry p0phb1_rA_slot[] = {
         {
                 .etype = st_builtin_dev,
                 .location = ST_LOC_DEVFN(0,0),
-                .children = P0E1A_x8_PLX8748_up,
+                .children = P0E1A_x8_PLX8748_RiserA_up,
+        },
+        { .etype = st_end },
+};
+
+static const struct slot_table_entry P1E1A_x8_PLX8748_RiserF_down[] = {
+        SW_PLUGGABLE("Slot7", 0x10),
+        SW_PLUGGABLE("Slot10", 0x9),
+
+        { .etype = st_end }
+};
+
+static const struct slot_table_entry P1E1A_x8_PLX8748_RiserF_up[] = {
+        {
+                .etype = st_builtin_dev,
+                .location = ST_LOC_DEVFN(0,0),
+                .children = P1E1A_x8_PLX8748_RiserF_down,
+        },
+        { .etype = st_end }
+};
+
+static const struct slot_table_entry p1phb1_rF_slot[] = {
+        {
+                .etype = st_builtin_dev,
+                .location = ST_LOC_DEVFN(0,0),
+                .children = P1E1A_x8_PLX8748_RiserF_up,
+        },
+        { .etype = st_end },
+};
+
+static const struct slot_table_entry P0E1A_x8_PLX8748_RiserF_down[] = {
+        SW_PLUGGABLE("Slot2", 0x10),
+        SW_PLUGGABLE("Slot5", 0x9),
+
+        { .etype = st_end }
+};
+
+static const struct slot_table_entry P0E1A_x8_PLX8748_RiserF_up[] = {
+        {
+                .etype = st_builtin_dev,
+                .location = ST_LOC_DEVFN(0,0),
+                .children = P0E1A_x8_PLX8748_RiserF_down,
+        },
+        { .etype = st_end }
+};
+
+static const struct slot_table_entry p0phb1_rF_slot[] = {
+        {
+                .etype = st_builtin_dev,
+                .location = ST_LOC_DEVFN(0,0),
+                .children = P0E1A_x8_PLX8748_RiserF_up,
+        },
+        { .etype = st_end },
+};
+
+static const struct slot_table_entry P1E2_x16_Switch_down[] = {
+        SW_PLUGGABLE("Slot8", 0x1),
+        SW_PLUGGABLE("Slot9", 0x0),
+
+        { .etype = st_end }
+};
+
+static const struct slot_table_entry P1E2_x16_Switch_up[] = {
+        {
+                .etype = st_builtin_dev,
+                .location = ST_LOC_DEVFN(0,0),
+                .children = P1E2_x16_Switch_down,
+        },
+        { .etype = st_end }
+};
+
+static const struct slot_table_entry p1phb3_switch_slot[] = {
+        {
+                .etype = st_builtin_dev,
+                .location = ST_LOC_DEVFN(0,0),
+                .children = P1E2_x16_Switch_up,
+        },
+        { .etype = st_end },
+};
+
+static const struct slot_table_entry P0E2_x16_Switch_down[] = {
+        SW_PLUGGABLE("Slot3", 0x1),
+        SW_PLUGGABLE("Slot4", 0x0),
+
+        { .etype = st_end }
+};
+
+static const struct slot_table_entry P0E2_x16_Switch_up[] = {
+        {
+                .etype = st_builtin_dev,
+                .location = ST_LOC_DEVFN(0,0),
+                .children = P0E2_x16_Switch_down,
+        },
+        { .etype = st_end }
+};
+
+static const struct slot_table_entry p0phb3_switch_slot[] = {
+        {
+                .etype = st_builtin_dev,
+                .location = ST_LOC_DEVFN(0,0),
+                .children = P0E2_x16_Switch_up,
         },
         { .etype = st_end },
 };
@@ -208,18 +316,34 @@ ST_PLUGGABLE(p0phb3_slot, "Slot4");
 ST_PLUGGABLE(p1phb0_slot, "Slot6");
 ST_PLUGGABLE(p1phb3_slot, "Slot9");
 
-static const struct slot_table_entry mihawk_phb_table[] = {
+static const struct slot_table_entry mihawk_riserA_phb_table[] = {
         /* ==== CPU0 ==== */
         ST_PHB_ENTRY(0, 0, p0phb0_slot),    /* P0E0_x16_Slot1 */
-        ST_PHB_ENTRY(0, 1, p0phb1_slot),    /* P0E1A_x8_PLX8748-1_Slot2-3-5 */
+        ST_PHB_ENTRY(0, 1, p0phb1_rA_slot), /* P0E1A_x8_PLX8748-1_Slot2-3-5 */
         //ST_PHB_ENTRY(0, 2, p0phb2_slot),  /* P0E1B_x8_USBTI7340 */
         ST_PHB_ENTRY(0, 3, p0phb3_slot),    /* P0E2_x16_Slot4 */
 
         /* ==== CPU1 ==== */
         ST_PHB_ENTRY(8, 0, p1phb0_slot),    /* P1E0_x16_Slot6 */
-        ST_PHB_ENTRY(8, 1, p1phb1_slot),    /* P1E1A_x8_PLX8748-2_Slot7-8-10 */
+        ST_PHB_ENTRY(8, 1, p1phb1_rA_slot), /* P1E1A_x8_PLX8748-2_Slot7-8-10 */
         //ST_PHB_ENTRY(8, 2, p1phb2_slot),  /* P1E1B_x8_NA */
         ST_PHB_ENTRY(8, 3, p1phb3_slot),    /* P1E2_x16_Slot9 */
+
+        { .etype = st_end },
+};
+
+static const struct slot_table_entry mihawk_riserF_phb_table[] = {
+        /* ==== CPU0 ==== */
+        ST_PHB_ENTRY(0, 0, p0phb0_slot),       /* P0E0_x16_Slot1 */
+        ST_PHB_ENTRY(0, 1, p0phb1_rF_slot),    /* P0E1A_x8_PLX8748-1_Slot2-5 */
+        //ST_PHB_ENTRY(0, 2, p0phb2_slot),     /* P0E1B_x8_USBTI7340 */
+        ST_PHB_ENTRY(0, 3, p0phb3_switch_slot),/* P0E2_x16_SWITCH_Slot3-4 */
+
+        /* ==== CPU1 ==== */
+        ST_PHB_ENTRY(8, 0, p1phb0_slot),       /* P1E0_x16_Slot6 */
+        ST_PHB_ENTRY(8, 1, p1phb1_rF_slot),    /* P1E1A_x8_PLX8748-2_Slot7-10 */
+        //ST_PHB_ENTRY(8, 2, p1phb2_slot),     /* P1E1B_x8_NA */
+        ST_PHB_ENTRY(8, 3, p1phb3_switch_slot),/* P1E2_x16_SWITCH_Slot8-9 */
 
         { .etype = st_end },
 };
@@ -342,15 +466,87 @@ static bool mihawk_probe(void)
 	mihawk_create_npu();
 	mihawk_create_ocapi_i2c_bus();
 
-	slot_table_init(mihawk_phb_table);
-
 	return true;
+}
+
+static void mihawk_riser_query_complete(struct ipmi_msg *msg)
+{
+	uint8_t *riser_state;
+
+	if (msg->cc != IPMI_CC_NO_ERROR) {
+		prlog(PR_ERR, "Mihawk: IPMI riser query returned error. cmd=0x%02x,"
+			" netfn=0x%02x, rc=0x%x\n", msg->cmd, msg->netfn, msg->cc);
+		bmc_query_waiting = false;
+		ipmi_free_msg(msg);
+		return;
+	}
+
+	prlog(PR_DEBUG, "Mihawk: IPMI Got riser query result. p0:%02x, p1:%02x\n"
+		, msg->data[0], msg->data[1]);
+
+	riser_state = (uint8_t*)msg->user_data;
+	lwsync();
+	*riser_state = msg->data[0] << 4 | msg->data[1];
+
+	bmc_query_waiting = false;
+	ipmi_free_msg(msg);
+}
+
+static void mihawk_init(void)
+{
+	struct ipmi_msg *ipmi_msg;
+	uint8_t riser_state = 0;
+	int timeout_ms = 3000;
+
+	astbmc_init();
+
+	/*
+	 * We use IPMI to ask BMC if Riser-F is installed and set up the
+	 * corresponding slot table.
+	 */
+	ipmi_msg = ipmi_mkmsg(IPMI_DEFAULT_INTERFACE,
+				  IPMI_RISERF_QUERY,
+				  mihawk_riser_query_complete,
+				  &riser_state, NULL, 0, 2);
+
+	if (!ipmi_msg) {
+		prlog(PR_ERR, "Mihawk: Couldn't create ipmi msg.");
+	} else {
+		ipmi_msg->error = mihawk_riser_query_complete;
+		ipmi_queue_msg(ipmi_msg);
+		bmc_query_waiting = true;
+
+		prlog(PR_DEBUG, "Mihawk: Requesting IPMI_RISERF_QUERY (netfn "
+			"%02x, cmd %02x)\n", ipmi_msg->netfn, ipmi_msg->cmd);
+
+		while (bmc_query_waiting) {
+			time_wait_ms(10);
+			timeout_ms -= 10;
+
+			if (timeout_ms == 0)
+				break;
+		}
+
+		ipmi_free_msg(ipmi_msg);
+	}
+
+	prlog(PR_DEBUG, "Mihawk: IPMI_RISERF_QUERY finish. riser_state: %02x"
+		", waiting: %d\n", riser_state, bmc_query_waiting);
+
+	if (riser_state != 0) {
+		mihawk_riserF_found = true;
+		slot_table_init(mihawk_riserF_phb_table);
+		prlog(PR_DEBUG, "Mihawk: Detect Riser-F via IPMI\n");
+	} else {
+		slot_table_init(mihawk_riserA_phb_table);
+		prlog(PR_DEBUG, "Mihawk: No Riser-F found, use Riser-A table\n");
+	}
 }
 
 DECLARE_PLATFORM(mihawk) = {
 	.name			= "Mihawk",
 	.probe			= mihawk_probe,
-	.init			= astbmc_init,
+	.init			= mihawk_init,
 	.start_preload_resource	= flash_start_preload_resource,
 	.resource_loaded	= flash_resource_loaded,
 	.bmc			= &bmc_plat_ast2500_openbmc,
