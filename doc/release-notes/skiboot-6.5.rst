@@ -5,7 +5,7 @@ skiboot-6.5
 
 skiboot v6.5 was released on Friday August 16th 2019. It is the first
 release of skiboot 6.5, which becomes the new stable release
-of skiboot following the 6.4 release, first released May 3rd 2019.
+of skiboot following the :ref:`skiboot-6.4` release, first released May 3rd 2019.
 
 .. _skiboot-6.5-new-features:
 
