@@ -197,4 +197,16 @@ extern bool xscom_ok(void);
 extern int64_t xscom_read_cfam_chipid(uint32_t partid, uint32_t *chip_id);
 extern int64_t xscom_trigger_xstop(void);
 
+
+struct scom_controller {
+	uint32_t part_id;
+	void *private;
+	int64_t (*read)(struct scom_controller *, uint32_t chip, uint64_t reg, uint64_t *val);
+	int64_t (*write)(struct scom_controller *, uint32_t chip, uint64_t reg, uint64_t val);
+
+	struct list_node link;
+};
+
+int64_t scom_register(struct scom_controller *new);
+
 #endif /* __XSCOM_H */

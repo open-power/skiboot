@@ -580,11 +580,75 @@ void _xscom_unlock(void)
 	unlock(&xscom_lock);
 }
 
+/* sorted by the scom controller's partid */
+static LIST_HEAD(scom_list);
+
+int64_t scom_register(struct scom_controller *new)
+{
+	struct scom_controller *cur;
+
+	list_for_each(&scom_list, cur, link) {
+		if (cur->part_id == new->part_id) {
+			prerror("Attempted to add duplicate scom, partid %x\n",
+				new->part_id);
+			return OPAL_BUSY;
+		}
+
+		if (cur->part_id > new->part_id) {
+			list_add_before(&scom_list, &new->link, &cur->link);
+			return 0;
+		}
+	}
+
+	/* if we never find a larger partid then this is the largest */
+	list_add_tail(&scom_list, &new->link);
+
+	return 0;
+}
+
+static struct scom_controller *scom_find(uint32_t partid)
+{
+	struct scom_controller *cur;
+
+	list_for_each(&scom_list, cur, link)
+		if (partid == cur->part_id)
+			return cur;
+
+	return NULL;
+}
+
+static int64_t scom_read(struct scom_controller *scom, uint32_t partid,
+			 uint64_t pcbaddr, uint64_t *val)
+{
+	int64_t rc = scom->read(scom, partid, pcbaddr, val);
+
+	if (rc) {
+		prerror("%s: to %x off: %llx rc = %lld\n",
+			__func__, partid, pcbaddr, rc);
+	}
+
+	return rc;
+}
+
+static int64_t scom_write(struct scom_controller *scom, uint32_t partid,
+			  uint64_t pcbaddr, uint64_t val)
+{
+	int64_t rc = scom->write(scom, partid, pcbaddr, val);
+
+	if (rc) {
+		prerror("%s: to %x off: %llx rc = %lld\n",
+			__func__, partid, pcbaddr, rc);
+	}
+
+	return rc;
+}
+
 /*
  * External API
  */
 int _xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val, bool take_lock)
 {
+	struct scom_controller *scom;
 	uint32_t gcid;
 	int rc;
 
@@ -611,6 +675,11 @@ int _xscom_read(uint32_t partid, uint64_t pcb_addr, uint64_t *val, bool take_loc
 			return OPAL_UNSUPPORTED;
 		break;
 	default:
+		/* is it one of our hacks? */
+		scom = scom_find(partid);
+		if (scom)
+			return scom_read(scom, partid, pcb_addr, val);
+
 		/**
 		 * @fwts-label XSCOMReadInvalidPartID
 		 * @fwts-advice xscom_read was called with an invalid partid.
@@ -652,6 +721,7 @@ opal_call(OPAL_XSCOM_READ, opal_xscom_read, 3);
 
 int _xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val, bool take_lock)
 {
+	struct scom_controller *scom;
 	uint32_t gcid;
 	int rc;
 
@@ -666,6 +736,11 @@ int _xscom_write(uint32_t partid, uint64_t pcb_addr, uint64_t val, bool take_loc
 		gcid = xscom_decode_chiplet(partid, &pcb_addr);
 		break;
 	default:
+		/* is it one of our hacks? */
+		scom = scom_find(partid);
+		if (scom)
+			return scom_write(scom, partid, pcb_addr, val);
+
 		/**
 		 * @fwts-label XSCOMWriteInvalidPartID
 		 * @fwts-advice xscom_write was called with an invalid partid.
