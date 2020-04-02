@@ -11,7 +11,6 @@ LIBSTB_OBJS = $(LIBSTB_SRCS:%.c=%.o)
 LIBSTB = $(LIBSTB_DIR)/built-in.a
 
 include $(SRC)/$(LIBSTB_DIR)/secvar/Makefile.inc
-include $(SRC)/$(LIBSTB_DIR)/mbedtls/Makefile.inc
 include $(SRC)/$(LIBSTB_DIR)/drivers/Makefile.inc
 include $(SRC)/$(LIBSTB_DIR)/tss/Makefile.inc
 include $(SRC)/$(LIBSTB_DIR)/crypto/Makefile.inc
