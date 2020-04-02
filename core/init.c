@@ -29,6 +29,7 @@
 #include <console.h>
 #include <fsi-master.h>
 #include <centaur.h>
+#include <ocmb.h>
 #include <libfdt/libfdt.h>
 #include <timer.h>
 #include <ipmi.h>
@@ -1189,6 +1190,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* Grab centaurs from device-tree if present (only on FSP-less) */
 	centaur_init();
+
+	/* initialize ocmb scom-controller */
+	ocmb_init();
 
 	/* Initialize PSI (depends on probe_platform being called) */
 	psi_init();
