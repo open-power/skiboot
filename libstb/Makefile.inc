@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2012-2020 IBM Corp
 # -*-Makefile-*-
 
 LIBSTB_DIR = libstb
@@ -12,8 +14,11 @@ include $(SRC)/$(LIBSTB_DIR)/secvar/Makefile.inc
 include $(SRC)/$(LIBSTB_DIR)/mbedtls/Makefile.inc
 include $(SRC)/$(LIBSTB_DIR)/drivers/Makefile.inc
 include $(SRC)/$(LIBSTB_DIR)/tss/Makefile.inc
+include $(SRC)/$(LIBSTB_DIR)/crypto/Makefile.inc
 
-$(LIBSTB): $(LIBSTB_OBJS:%=$(LIBSTB_DIR)/%) $(DRIVERS) $(TSS) $(SECVAR) $(MBEDTLS)
+CPPFLAGS += -I$(SRC)/$(LIBSTB_DIR)/crypto/mbedtls/include
+
+$(LIBSTB): $(LIBSTB_OBJS:%=$(LIBSTB_DIR)/%) $(DRIVERS) $(TSS) $(SECVAR) $(CRYPTO)
 
 libstb/create-container: libstb/create-container.c libstb/container-utils.c
 	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) \
