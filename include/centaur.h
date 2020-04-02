@@ -22,6 +22,8 @@ struct centaur_chip {
 	uint32_t		error_count;
 	struct lock		lock;
 
+	struct scom_controller	scom;
+
 	/* Used by hw/p8-i2c.c */
 	struct list_head	i2cms;
 };
@@ -29,8 +31,6 @@ struct centaur_chip {
 extern int64_t centaur_disable_sensor_cache(uint32_t part_id);
 extern int64_t centaur_enable_sensor_cache(uint32_t part_id);
 
-extern int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val) __warn_unused_result;
-extern int64_t centaur_xscom_write(uint32_t id, uint64_t pcb_addr, uint64_t val) __warn_unused_result;
 extern void centaur_init(void);
 
 extern struct centaur_chip *get_centaur(uint32_t part_id);

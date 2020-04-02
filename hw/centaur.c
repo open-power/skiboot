@@ -307,9 +307,11 @@ static int centaur_xscom_ind_write(struct centaur_chip *centaur,
 	return rc;
 }
 
-int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val)
+static int64_t centaur_xscom_read(struct scom_controller *scom,
+				  uint32_t id __unused, uint64_t pcb_addr,
+				  uint64_t *val)
 {
-	struct centaur_chip *centaur = get_centaur(id);
+	struct centaur_chip *centaur = scom->private;
 	int64_t rc;
 
 	if (!centaur)
@@ -349,9 +351,11 @@ int64_t centaur_xscom_read(uint32_t id, uint64_t pcb_addr, uint64_t *val)
 	return rc;
 }
 
-int64_t centaur_xscom_write(uint32_t id, uint64_t pcb_addr, uint64_t val)
+static int64_t centaur_xscom_write(struct scom_controller *scom,
+				   uint32_t id __unused, uint64_t pcb_addr,
+				   uint64_t val)
 {
-	struct centaur_chip *centaur = get_centaur(id);
+	struct centaur_chip *centaur = scom->private;
 	int64_t rc;
 
 	if (!centaur)
@@ -462,6 +466,12 @@ static bool centaur_add(uint32_t part_id, uint32_t mchip, uint32_t meng,
 
 	if (!centaur_check_id(centaur))
 		return false;
+
+	centaur->scom.part_id = part_id;
+	centaur->scom.private = centaur;
+	centaur->scom.read = centaur_xscom_read;
+	centaur->scom.write = centaur_xscom_write;
+	scom_register(&centaur->scom);
 
 	cent_log(PR_INFO, centaur, "Found DD%x.%x chip\n",
 		       centaur->ec_level >> 4,
