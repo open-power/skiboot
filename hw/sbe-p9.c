@@ -958,9 +958,6 @@ void p9_sbe_terminate(void)
 		return;
 	}
 
-	/* Save crashing CPU details */
-	opal_mpipl_save_crashing_pir();
-
 	/*
 	 * Send S0 interrupt to all SBE. Sequence:
 	 *   - S0 interrupt on secondary chip SBE
