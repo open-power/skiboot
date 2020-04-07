@@ -825,6 +825,9 @@ static void check_ipl_sys_dump(void)
 	struct dt_node *dump_node;
 	uint32_t dump_id, dump_size;
 
+	if (proc_gen >= proc_gen_p9)
+		return;
+
 	dump_node = dt_find_by_path(dt_root, "ipl-params/platform-dump");
 	if (!dump_node)
 		return;
