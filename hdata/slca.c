@@ -87,6 +87,7 @@ static const struct slca_entry *slca_get_sai_entry(void)
 	int count;
 	unsigned int i;
 	struct HDIF_common_hdr *slca_hdr;
+	uint16_t sai_fru_id = SLCA_SAI_INDICATOR_ID;
 
 	slca_hdr = get_hdif(&spira.ntuples.slca, SLCA_HDIF_SIG);
 	if (!slca_hdr) {
@@ -100,6 +101,9 @@ static const struct slca_entry *slca_get_sai_entry(void)
 		return NULL;
 	}
 
+	if (proc_gen >= proc_gen_p9 && dt_find_by_path(dt_root, "fsps"))
+		sai_fru_id = SLCA_SYSTEM_VPD_ID;
+
 	for (i = 0; i < count; i++) {
 		const struct slca_entry *s_entry;
 		unsigned int entry_sz;
@@ -108,7 +112,7 @@ static const struct slca_entry *slca_get_sai_entry(void)
 					       i, &entry_sz);
 		if (s_entry &&
 		    VPD_ID(s_entry->fru_id[0],
-			   s_entry->fru_id[1]) == SLCA_SAI_INDICATOR_ID) {
+			   s_entry->fru_id[1]) == sai_fru_id) {
 			prlog(PR_TRACE, "SLCA: SAI index: 0x%x\n",
 			      s_entry->my_index);
 			prlog(PR_TRACE, "SLCA: SAI location code: %s\n",
