@@ -78,6 +78,7 @@ static struct npu2_phy_reg NPU2_PHY_TX_ZCAL_DONE	       = {0x3c1, 50, 1};
 static struct npu2_phy_reg NPU2_PHY_TX_ZCAL_ERROR	       = {0x3c1, 51, 1};
 static struct npu2_phy_reg NPU2_PHY_TX_ZCAL_N		       = {0x3c3, 48, 9};
 static struct npu2_phy_reg NPU2_PHY_TX_ZCAL_P		       = {0x3c5, 48, 9};
+static struct npu2_phy_reg NPU2_PHY_TX_FFE_BOOST_EN	       = {0x34b, 59, 1};
 static struct npu2_phy_reg NPU2_PHY_TX_PSEG_PRE_EN	       = {0x34d, 51, 5};
 static struct npu2_phy_reg NPU2_PHY_TX_PSEG_PRE_SELECT	       = {0x34d, 56, 5};
 static struct npu2_phy_reg NPU2_PHY_TX_NSEG_PRE_EN	       = {0x34f, 51, 5};
@@ -533,6 +534,8 @@ static uint32_t therm_with_half(uint32_t dec, uint8_t width)
 static uint32_t phy_tx_zcal_calculate(struct npu2_dev *ndev)
 {
 	int p_value, n_value;
+	int ffe_pre_coeff = FFE_PRE_COEFF;
+	int ffe_post_coeff = FFE_POST_COEFF;
 	uint32_t zcal_n;
 	uint32_t zcal_p;
 	uint32_t p_main_enable = MAIN_X2_MAX;
@@ -564,9 +567,15 @@ static uint32_t phy_tx_zcal_calculate(struct npu2_dev *ndev)
 	    (zcal_p < ZCAL_MIN) || (zcal_p > ZCAL_MAX))
 		return PROCEDURE_COMPLETE | PROCEDURE_FAILED;
 
+	if (ndev->type == NPU2_DEV_TYPE_OPENCAPI &&
+	    platform.ocapi->phy_setup) {
+		ffe_pre_coeff = platform.ocapi->phy_setup->tx_ffe_pre_coeff;
+		ffe_post_coeff = platform.ocapi->phy_setup->tx_ffe_post_coeff;
+	}
+
 	p_value = zcal_p - TOTAL_X2_MAX;
-	p_precursor_select = (p_value * FFE_PRE_COEFF)/128;
-	p_postcursor_select = (p_value * FFE_POST_COEFF)/128;
+	p_precursor_select = (p_value * ffe_pre_coeff)/128;
+	p_postcursor_select = (p_value * ffe_post_coeff)/128;
 	margin_pu_select = (p_value * MARGIN_RATIO)/256;
 
 	if (p_value % 2) {
@@ -587,8 +596,8 @@ static uint32_t phy_tx_zcal_calculate(struct npu2_dev *ndev)
 	}
 
 	n_value = zcal_n - TOTAL_X2_MAX;
-	n_precursor_select = (n_value * FFE_PRE_COEFF)/128;
-	n_postcursor_select = (n_value * FFE_POST_COEFF)/128;
+	n_precursor_select = (n_value * ffe_pre_coeff)/128;
+	n_postcursor_select = (n_value * ffe_post_coeff)/128;
 	margin_pd_select = (p_value * MARGIN_RATIO)/256;
 
 	if (n_value % 2) {
@@ -1020,6 +1029,12 @@ void npu2_opencapi_bump_ui_lane(struct npu2_dev *dev)
 
 void npu2_opencapi_phy_init(struct npu2_dev *dev)
 {
+	if (platform.ocapi->phy_setup) {
+		OCAPIINF(dev, "Enabling platform-specific PHY setup\n");
+		phy_write(dev, &NPU2_PHY_TX_FFE_BOOST_EN,
+			  platform.ocapi->phy_setup->tx_ffe_boost_en);
+	}
+
 	run_procedure(dev, 5); /* procedure_phy_tx_zcal */
 	/*
 	 * This is only required for OpenCAPI - Hostboot tries to set this

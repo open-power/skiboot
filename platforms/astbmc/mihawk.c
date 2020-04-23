@@ -142,6 +142,12 @@ static const char *mihawk_ocapi_slot_label(uint32_t chip_id,
 	return name;
 }
 
+static const struct ocapi_phy_setup mihawk_phy = {
+	.tx_ffe_pre_coeff = 0x3,
+	.tx_ffe_post_coeff = 0x14,
+	.tx_ffe_boost_en = 0,
+};
+
 static const struct platform_ocapi mihawk_ocapi = {
         .i2c_engine          = 1,
         .i2c_port            = 4,
@@ -157,6 +163,7 @@ static const struct platform_ocapi mihawk_ocapi = {
         .i2c_presence_brick5 = 0, /* unused */
         .odl_phy_swap        = true,
 	.ocapi_slot_label    = mihawk_ocapi_slot_label,
+	.phy_setup           = &mihawk_phy,
 };
 
 static const struct slot_table_entry P1E1A_x8_PLX8748_RiserA_down[] = {
