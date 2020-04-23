@@ -47,6 +47,12 @@ struct bmc_platform {
 	const struct bmc_sw_config *sw;
 };
 
+struct ocapi_phy_setup {
+	int tx_ffe_pre_coeff;
+	int tx_ffe_post_coeff;
+	int tx_ffe_boost_en;
+};
+
 /* OpenCAPI platform-specific I2C information */
 struct platform_ocapi {
 	uint8_t i2c_engine;		/* I2C engine number */
@@ -64,6 +70,7 @@ struct platform_ocapi {
 	bool odl_phy_swap;		/* Swap ODL1 to use brick 2 rather than
 					 * brick 1 lanes */
 	const char *(*ocapi_slot_label)(uint32_t chip_id, uint32_t brick_index);
+	const struct ocapi_phy_setup *phy_setup;
 };
 
 struct dt_node;
