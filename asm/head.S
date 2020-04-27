@@ -881,7 +881,7 @@ opal_entry:
 	cmpwi	%cr0,%r11,QUIESCE_REJECT
 	bne	2f
 	li	%r3,OPAL_BUSY
-	b	.Lreturn /* reject */
+	b	.Lreject
 2:	/* hold */
 	lwz	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
 	subi	%r11,%r11,1
@@ -984,6 +984,7 @@ opal_entry:
 	mr	%r12,%r13
 	ld	%r13,STACK_GPR13(%r1)
 	ld	%r1,STACK_GPR1(%r1)
+.Lreject:
 	sync 	/* release barrier vs quiescing */
 	lwz	%r11,CPUTHREAD_IN_OPAL_CALL(%r12)
 	subi	%r11,%r11,1
