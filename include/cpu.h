@@ -21,6 +21,7 @@ enum cpu_thread_state {
 	cpu_state_no_cpu	= 0,	/* Nothing there */
 	cpu_state_unknown,		/* In PACA, not called in yet */
 	cpu_state_unavailable,		/* Not available */
+	cpu_state_fast_reboot_entry,	/* Called back into OPAL, real mode */
 	cpu_state_present,		/* Assumed to spin in asm entry */
 	cpu_state_active,		/* Secondary called in */
 	cpu_state_os,			/* Under OS control */

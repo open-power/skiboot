@@ -26,6 +26,20 @@
 
 /* Flag tested by the OPAL entry code */
 static volatile bool fast_boot_release;
+static volatile bool spr_set_release;
+static volatile bool nmi_mce_release;
+
+static void wait_on(volatile bool *cond)
+{
+	sync();
+	if (!*cond) {
+		smt_lowest();
+		while (!*cond)
+			barrier();
+		smt_medium();
+	}
+	sync();
+}
 
 static bool cpu_state_wait_all_others(enum cpu_thread_state state,
 					unsigned long timeout_tb)
@@ -131,6 +145,8 @@ void fast_reboot(void)
 
 	prlog(PR_NOTICE, "RESET: Initiating fast reboot %d...\n", ++fast_reboot_count);
 	fast_boot_release = false;
+	spr_set_release = false;
+	nmi_mce_release = false;
 	sync();
 
 	/* Put everybody in stop except myself */
@@ -150,50 +166,16 @@ void fast_reboot(void)
 	cpu_set_ipi_enable(false);
 
 	/*
+	 * The fast reboot sreset vector has FIXUP_ENDIAN, so secondaries can
+	 * cope with a wrong HILE setting.
+	 */
+	copy_sreset_vector_fast_reboot();
+
+	/*
 	 * There is no point clearing special wakeup or un-quiesce due to
 	 * failure after this point, because we will be going to full IPL.
 	 * Less cleanup work means less opportunity to fail.
 	 */
-
-	/*
-	 * Move SPRs and exception vectors back to OPAL-mode while all
-	 * others are quiesced. MSR[ME] is disabled while these are switched,
-	 * but system reset can not be blocked -- in theory an sreset coming
-	 * from the BMC or SPE could crash here.
-	 */
-	disable_machine_check();
-
-	/*
-	 * Primarily we want to fix up the HID bits here to allow the OPAL
-	 * exception handlers to work. Machine check would be the important
-	 * one.
-	 *
-	 * This is one case where a thread other than thread0 of the core
-	 * may update the shared SPRs. All other threads are stopped, so
-	 * there should be no races.
-	 */
-	init_shared_sprs();
-	init_replicated_sprs();
-
-	/* Restore skiboot vectors  */
-	copy_exception_vectors();
-	patch_traps(true);
-
-	/*
-	 * Secondaries may still have an issue with machine checks if they have
-	 * HILE set because the machine check exception does not FIXUP_ENDIAN.
-	 * Adding that would trash CFAR however. So we have a window where
-	 * if a secondary takes an interrupt before the HILE is fixed, it will
-	 * crash.
-	 */
-	enable_machine_check();
-	mtmsrd(MSR_RI, 1);
-
-	/*
-	 * sreset vector has a FIXUP_ENDIAN sequence at the start, so
-	 * secondaries can cope.
-	 */
-	copy_sreset_vector_fast_reboot();
 
 	/* Send everyone else to 0x100 */
 	if (sreset_all_others() != OPAL_SUCCESS) {
@@ -203,7 +185,7 @@ void fast_reboot(void)
 	}
 
 	/* Ensure all the sresets get through */
-	if (!cpu_state_wait_all_others(cpu_state_present, msecs_to_tb(1000))) {
+	if (!cpu_state_wait_all_others(cpu_state_fast_reboot_entry, msecs_to_tb(1000))) {
 		prlog(PR_NOTICE, "RESET: Fast reboot timed out waiting for "
 				"secondaries to call in\n");
 		return;
@@ -217,46 +199,10 @@ void fast_reboot(void)
 
 	console_complete_flush();
 
+	mtmsrd(0, 1); /* Clear MSR[RI] for 0x100 reset */
 	asm volatile("ba	0x100\n\t" : : : "memory");
 	for (;;)
 		;
-}
-
-static void cleanup_cpu_state(void)
-{
-	struct cpu_thread *cpu = this_cpu();
-
-	/* Per core cleanup */
-	if (cpu_is_thread0(cpu)) {
-		/* Shared SPRs whacked back to normal */
-
-		/* XXX Update the SLW copies ! Also dbl check HIDs etc... */
-		init_shared_sprs();
-
-		if (proc_gen == proc_gen_p8) {
-			/* If somebody was in fast_sleep, we may have a
-			 * workaround to undo
-			 */
-			if (cpu->in_fast_sleep) {
-				prlog(PR_DEBUG, "RESET: CPU 0x%04x in fast sleep"
-				      " undoing workarounds...\n", cpu->pir);
-				fast_sleep_exit();
-			}
-
-			/* The TLB surely contains garbage.
-			 * P9 clears TLBs in cpu_fast_reboot_complete
-			 */
-			cleanup_local_tlb();
-		}
-
-		/* And we might have lost TB sync */
-		chiptod_wakeup_resync();
-	}
-
-	/* Per-thread additional cleanup */
-	init_replicated_sprs();
-
-	// XXX Cleanup SLW, check HIDs ...
 }
 
 void __noreturn enter_nap(void);
@@ -310,17 +256,46 @@ static void check_split_core(void)
 	}
 }
 
+static void cleanup_cpu_state(void)
+{
+	struct cpu_thread *cpu = this_cpu();
+
+	if (proc_gen == proc_gen_p9)
+		xive_cpu_reset();
+
+	/* Per core cleanup */
+	if (cpu_is_thread0(cpu)) {
+		/* XXX should reset the SLW SPR restore values*/
+
+		if (proc_gen == proc_gen_p8) {
+			/* If somebody was in fast_sleep, we may have a
+			 * workaround to undo
+			 */
+			if (cpu->in_fast_sleep) {
+				prlog(PR_DEBUG, "RESET: CPU 0x%04x in fast sleep"
+				      " undoing workarounds...\n", cpu->pir);
+				fast_sleep_exit();
+			}
+
+			/* The TLB surely contains garbage.
+			 * P9 clears TLBs in cpu_fast_reboot_complete
+			 */
+			cleanup_local_tlb();
+		}
+
+		/* And we might have lost TB sync */
+		chiptod_wakeup_resync();
+	}
+}
 
 /* Entry from asm after a fast reset */
 void __noreturn fast_reboot_entry(void);
 
 void __noreturn fast_reboot_entry(void)
 {
-	prlog(PR_DEBUG, "RESET: CPU 0x%04x reset in\n", this_cpu()->pir);
+	struct cpu_thread *cpu = this_cpu();
 
-	if (proc_gen == proc_gen_p9) {
-		xive_cpu_reset();
-	} else if (proc_gen == proc_gen_p8) {
+	if (proc_gen == proc_gen_p8) {
 		/* We reset our ICP first ! Otherwise we might get stray
 		 * interrupts when unsplitting
 		 */
@@ -332,51 +307,87 @@ void __noreturn fast_reboot_entry(void)
 		check_split_core();
 	}
 
-	sync();
-	this_cpu()->state = cpu_state_present;
-	sync();
-
-	/* Are we the original boot CPU ? If not, we spin waiting
-	 * for a relase signal from CPU 1, then we clean ourselves
-	 * up and go processing jobs.
+	/* Until SPRs (notably HID[HILE]) are set and new exception vectors
+	 * installed, nobody should take machine checks. Try to do minimal
+	 * work between these points.
 	 */
-	if (this_cpu() != boot_cpu) {
-		if (!fast_boot_release) {
-			smt_lowest();
-			while (!fast_boot_release)
-				barrier();
-			smt_medium();
-		}
-		sync();
-		cleanup_cpu_state();
-		enable_machine_check();
-		mtmsrd(MSR_RI, 1);
+	disable_machine_check();
+	mtmsrd(0, 1); /* Clear RI */
+
+	sync();
+	cpu->state = cpu_state_fast_reboot_entry;
+	sync();
+	if (cpu == boot_cpu) {
+		cpu_state_wait_all_others(cpu_state_fast_reboot_entry, 0);
+		spr_set_release = true;
+	} else {
+		wait_on(&spr_set_release);
+	}
+
+
+	/* Reset SPRs */
+	if (cpu_is_thread0(cpu))
+		init_shared_sprs();
+	init_replicated_sprs();
+
+	if (cpu == boot_cpu) {
+		/* Restore skiboot vectors */
+		copy_exception_vectors();
+		copy_sreset_vector();
+		patch_traps(true);
+	}
+
+	/* Must wait for others to because shared SPRs like HID0 are only set
+	 * by thread0, so can't enable machine checks until those have been
+	 * set.
+	 */
+	sync();
+	cpu->state = cpu_state_present;
+	sync();
+	if (cpu == boot_cpu) {
+		cpu_state_wait_all_others(cpu_state_present, 0);
+		nmi_mce_release = true;
+	} else {
+		wait_on(&nmi_mce_release);
+	}
+
+	/* At this point skiboot exception vectors are in place and all
+	 * cores/threads have SPRs set for running skiboot.
+	 */
+	enable_machine_check();
+	mtmsrd(MSR_RI, 1);
+
+	cleanup_cpu_state();
+
+	prlog(PR_DEBUG, "RESET: CPU 0x%04x reset in\n", cpu->pir);
+
+	/* The original boot CPU (not the fast reboot initiator) takes
+	 * command. Secondaries wait for the signal then go to their secondary
+	 * entry point.
+	 */
+	if (cpu != boot_cpu) {
+		wait_on(&fast_boot_release);
 
 		__secondary_cpu_entry();
 	}
 
-	prlog(PR_INFO, "RESET: Boot CPU waiting for everybody...\n");
-
-	/* We are the original boot CPU, wait for secondaries to
-	 * be captured.
-	 */
-	cpu_state_wait_all_others(cpu_state_present, 0);
-
 	if (proc_gen == proc_gen_p9)
 		xive_reset();
+
+	/* Let the CPU layer do some last minute global cleanups */
+	cpu_fast_reboot_complete();
+
+	/* We can now do NAP mode */
+	cpu_set_sreset_enable(true);
+	cpu_set_ipi_enable(true);
 
 	prlog(PR_INFO, "RESET: Releasing secondaries...\n");
 
 	/* Release everybody */
 	sync();
 	fast_boot_release = true;
-
-	/* Cleanup ourselves */
-	cleanup_cpu_state();
-
-	/* Set our state to active */
 	sync();
-	this_cpu()->state = cpu_state_active;
+	cpu->state = cpu_state_active;
 	sync();
 
 	/* Wait for them to respond */
@@ -388,16 +399,6 @@ void __noreturn fast_reboot_entry(void)
 
 	/* Clear release flag for next time */
 	fast_boot_release = false;
-
-	/* Let the CPU layer do some last minute global cleanups */
-	cpu_fast_reboot_complete();
-
-	/* Restore OPAL's sreset vector now that all CPUs have HILE clear */
-	copy_sreset_vector();
-
-	/* We can now do NAP mode */
-	cpu_set_sreset_enable(true);
-	cpu_set_ipi_enable(true);
 
 	if (!chip_quirk(QUIRK_MAMBO_CALLOUTS)) {
 		/*
