@@ -75,6 +75,7 @@ SECTIONS
 	}
 
 	_head_end = .;
+	. = ALIGN(PAGE_SIZE);
 
 	/*
 	 * The following sections are read-write at runtime. We need
@@ -107,14 +108,14 @@ SECTIONS
 	}
 
 	/* ...and back to RO */
-
-	. = ALIGN(0x10);
+	. = ALIGN(PAGE_SIZE);
 	_stext = .;
  	.text : {
 		*(.text*)
 		*(.sfpr .glink)
 	}
 	_etext = .;
+	. = ALIGN(PAGE_SIZE);
 
 	.rodata : {
 		__rodata_start = .;
@@ -177,6 +178,7 @@ SECTIONS
 		*(.rela*)
 		__rela_dyn_end = .;
 	}
+
 	.hash          : { *(.hash)   }
 	.gnu.hash      : { *(.gnu.hash) }
 	.gnu.version   : { *(.gnu.version) }
@@ -196,22 +198,26 @@ SECTIONS
 	 */
 	_romem_end = .;
 
+	. = ALIGN(PAGE_SIZE);
+
+	_sdata = .;
 	.data : {
 		/*
 		 * A couple of things that need to be 4K aligned and
 		 * to reside in their own pages for the sake of TCE
-		 * mappings
+		 * mappings, so use PAGE_SIZE alignment.
 		 */
-		. = ALIGN(0x1000);
+		. = ALIGN(PAGE_SIZE);
 		*(.data.memcons);
-		. = ALIGN(0x10000);
+		. = ALIGN(PAGE_SIZE);
 		*(.data.boot_trace);
-		. = ALIGN(0x10000);
+		. = ALIGN(PAGE_SIZE);
 		*(.data*)
 		*(.force.data)
 		*(.toc1)
 		*(.branch_lt)
 	}
+	_edata = .;
 
 	/* We locate the BSS at 4M to leave room for the symbol map */
 	. = 0x400000;
@@ -221,7 +227,7 @@ SECTIONS
 		*(.dynbss)
 		*(.bss*)
 	}
-	. = ALIGN(0x10000);
+	. = ALIGN(PAGE_SIZE);
 	_ebss = .;
 	_end = .;
 
@@ -230,7 +236,7 @@ SECTIONS
 	DEBUG_SECTIONS
 
 	/* Optional kernel image */
-       . = ALIGN(0x10000);
+       . = ALIGN(PAGE_SIZE);
        .builtin_kernel : {
 		__builtin_kernel_start = .;
 		KEEP(*(.builtin_kernel))

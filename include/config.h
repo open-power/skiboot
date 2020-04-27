@@ -4,6 +4,9 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+/* Alignment to which skiboot lays out memory. */
+#define PAGE_SIZE	0x10000
+
 #define HAVE_TYPEOF			1
 #define HAVE_BUILTIN_TYPES_COMPATIBLE_P	1
 
