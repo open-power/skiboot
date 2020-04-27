@@ -276,7 +276,7 @@ int occ_sensor_read(u32 handle, __be64 *data)
 
 	d = read_sensor(buff, attr);
 	if (!d)
-		return OPAL_SUCCESS;
+		goto out_success;
 
 	md = get_names_block(hb);
 	if (be16_to_cpu(md[id].type) == OCC_SENSOR_TYPE_POWER && attr == SENSOR_ACCUMULATOR)
@@ -284,6 +284,7 @@ int occ_sensor_read(u32 handle, __be64 *data)
 	else
 		scale_sensor(&md[id], &d);
 
+out_success:
 	*data = cpu_to_be64(d);
 
 	return OPAL_SUCCESS;
