@@ -512,14 +512,14 @@ static void add_memory_buffer_mmio(const struct HDIF_common_hdr *msarea)
 	const struct HDIF_array_hdr *array;
 	unsigned int i, count, ranges = 0;
 	struct dt_node *membuf;
-	uint64_t *reg, *flags;
+	beint64_t *reg, *flags;
 
 	if (PVR_TYPE(mfspr(SPR_PVR)) != PVR_TYPE_P9P)
 		return;
 
-	if (be32_to_cpu(msarea->version) < 0x50) {
+	if (be16_to_cpu(msarea->version) < 0x50) {
 		prlog(PR_WARNING, "MS AREA: Inconsistent MSAREA version %x for P9P system",
-			be32_to_cpu(msarea->version));
+			be16_to_cpu(msarea->version));
 		return;
 	}
 
