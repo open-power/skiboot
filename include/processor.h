@@ -250,6 +250,12 @@ static inline bool is_fused_core(uint32_t version)
 
 #ifndef __TEST__
 
+/* POWER9 and above only */
+static inline void flush_erat(void)
+{
+	asm volatile("slbia	7");
+}
+
 /*
  * SMT priority
  */
