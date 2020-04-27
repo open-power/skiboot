@@ -28,10 +28,10 @@
 uint64_t opal_pending_events;
 
 /* OPAL dispatch table defined in head.S */
-extern uint64_t opal_branch_table[];
+extern const uint64_t opal_branch_table[];
 
 /* Number of args expected for each call. */
-static u8 opal_num_args[OPAL_LAST+1];
+static const u8 opal_num_args[OPAL_LAST+1];
 
 /* OPAL anchor node */
 struct dt_node *opal_node;
@@ -53,8 +53,8 @@ void opal_table_init(void)
 	prlog(PR_DEBUG, "OPAL table: %p .. %p, branch table: %p\n",
 	      s, e, opal_branch_table);
 	while(s < e) {
-		opal_branch_table[s->token] = function_entry_address(s->func);
-		opal_num_args[s->token] = s->nargs;
+		((uint64_t *)opal_branch_table)[s->token] = function_entry_address(s->func);
+		((u8 *)opal_num_args)[s->token] = s->nargs;
 		s++;
 	}
 }
@@ -321,8 +321,8 @@ void __opal_register(uint64_t token, void *func, unsigned int nargs)
 {
 	assert(token <= OPAL_LAST);
 
-	opal_branch_table[token] = function_entry_address(func);
-	opal_num_args[token] = nargs;
+	((uint64_t *)opal_branch_table)[token] = function_entry_address(func);
+	((u8 *)opal_num_args)[token] = nargs;
 }
 
 /*

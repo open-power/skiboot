@@ -9,8 +9,18 @@
 #include <asm-offsets.h>
 #include <processor.h>
 #include <stack.h>
+#include <opal-api.h>
 
 #define OLD_BINUTILS 1
+
+	.section ".rodata"
+	/* This is the OPAL branch table. It's populated at boot time
+	 * with function pointers to the various OPAL functions from
+	 * the content of the .opal_table section, indexed by Token.
+	 */
+.global opal_branch_table
+opal_branch_table:
+	.space	8 * (OPAL_LAST + 1)
 
 	.section ".text","ax"
 	.balign	0x10

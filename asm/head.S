@@ -299,13 +299,6 @@ exception_entry_foo:
 	b	.
 
 	.= EXCEPTION_VECTORS_END
-	/* This is the OPAL branch table. It's populated at boot time
-	 * with function pointers to the various OPAL functions from
-	 * the content of the .opal_table section, indexed by Token.
-	 */
-.global opal_branch_table
-opal_branch_table:
-	.space	8 * (OPAL_LAST + 1)
 
 /* Stores the offset we were started from.  Used later on if we want to
  * read any unrelocated code/data such as the built-in kernel image
