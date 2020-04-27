@@ -163,10 +163,6 @@ SECTIONS
 		__platforms_end = .;
 	}
 
-	/* Do I need to keep these ? */
-	.dynsym : { *(.dynsym)	}
-	.dynstr : { *(.dynstr)	}
-
 	/* Relocations */
 	. = ALIGN(0x10);
 	.dynamic : {
@@ -181,12 +177,8 @@ SECTIONS
 		*(.rela*)
 		__rela_dyn_end = .;
 	}
-	.plt    : { *(.plt) *(.iplt) }
-
 	.hash          : { *(.hash)   }
 	.gnu.hash      : { *(.gnu.hash) }
-	.dynsym        : { *(.dynsym) }
-	.dynstr        : { *(.dynstr) }
 	.gnu.version   : { *(.gnu.version) }
 	.gnu.version_d : { *(.gnu.version_d) }
 	.gnu.version_r : { *(.gnu.version_r) }
@@ -252,5 +244,9 @@ SECTIONS
 		*(.eh_frame)
 		*(.interp)
 		*(.fini_array.*)
+		*(.dynsym)
+		*(.dynstr)
+		*(.plt)
+		*(.iplt)
 	}
 }
