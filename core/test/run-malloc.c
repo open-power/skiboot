@@ -36,7 +36,7 @@ static inline void real_free(void *p)
 
 #include "mem_region-malloc.h"
 
-#define TEST_HEAP_ORDER 12
+#define TEST_HEAP_ORDER 16
 #define TEST_HEAP_SIZE (1ULL << TEST_HEAP_ORDER)
 
 struct dt_node *dt_root;

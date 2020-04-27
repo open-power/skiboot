@@ -45,6 +45,7 @@
 #define STACK_WARNING_GAP	2048
 
 #define STACK_CHECK_GUARD_BASE	0xdeadf00dbaad300
+#define STACK_INT_MAGIC		0xb1ab1af00ba1234ULL
 
 #ifndef __ASSEMBLY__
 
@@ -71,6 +72,9 @@ struct stack_frame {
 	/* Space for stack-local vars used by asm. At present we only use
 	 * one doubleword. */
 	uint64_t	locals[1];
+
+	/* Interrupt entry magic value */
+	uint64_t	magic;
 
 	/* Entry type */
 	uint64_t	type;
@@ -104,6 +108,8 @@ struct stack_frame {
 struct bt_entry {
 	unsigned long	sp;
 	unsigned long	pc;
+	unsigned long	exception_type;
+	unsigned long	exception_pc;
 };
 
 /* Backtrace metadata */

@@ -62,7 +62,7 @@ bool lock_held_by_me(struct lock *l)
 	return l->lock_val;
 }
 
-#define TEST_HEAP_ORDER 14
+#define TEST_HEAP_ORDER 16
 #define TEST_HEAP_SIZE (1ULL << TEST_HEAP_ORDER)
 
 static void add_mem_node(uint64_t start, uint64_t len)

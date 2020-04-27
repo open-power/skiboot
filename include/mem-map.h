@@ -19,7 +19,7 @@
 /* End of the exception region we copy from 0x0. 0x0-0x100 will have
  * IPL data and is not actually for exception vectors.
  */
-#define EXCEPTION_VECTORS_END	0x2000
+#define EXCEPTION_VECTORS_END	0x3000
 
 #define NACA_OFF		0x4000
 

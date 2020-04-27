@@ -35,6 +35,12 @@ static void __nomcount __backtrace_create(struct bt_entry *entries,
 		if (!fp || (unsigned long)fp > top_adj)
 			break;
 		eframe = (struct stack_frame *)fp;
+		if (eframe->magic == STACK_INT_MAGIC) {
+			entries->exception_type = eframe->type;
+			entries->exception_pc = eframe->pc;
+		} else {
+			entries->exception_type = 0;
+		}
 		entries->sp = (unsigned long)fp;
 		entries->pc = fp[2];
 		entries++;
@@ -99,6 +105,11 @@ void backtrace_print(struct bt_entry *entries, struct bt_metadata *metadata,
 		if (symbols)
 			l += snprintf_symbol(buf + l, max - l, entries->pc);
 		l += snprintf(buf + l, max - l, "\n");
+		if (entries->exception_type) {
+			l += snprintf(buf + l, max - l,
+				      " --- Interrupt 0x%lx at %016lx ---\n",
+				      entries->exception_type, entries->exception_pc);
+		}
 		entries++;
 	}
 	if (metadata->token <= OPAL_LAST)

@@ -176,6 +176,7 @@ _exception:
 	mfspr	%r3,SPR_SRR0
 	mfspr	%r4,SPR_SRR1
 	std	%r3,STACK_SRR0(%r1)
+	std	%r3,16(%r1)
 	std	%r4,STACK_SRR1(%r1)
 	mfspr	%r3,SPR_DSISR
 	mfspr	%r4,SPR_DAR
@@ -231,6 +232,8 @@ _exception:
 	stw	%r4,STACK_XER(%r1)
 	std	%r5,STACK_CTR(%r1)
 	std	%r6,STACK_LR(%r1)
+	LOAD_IMM64(%r3,STACK_INT_MAGIC)
+	std	%r3,STACK_MAGIC(%r1)
 	LOAD_IMM64(%r4, SKIBOOT_BASE)
 	LOAD_IMM32(%r5,__toc_start - __head)
 	LOAD_IMM32(%r6, exception_entry_foo - __head)
@@ -928,6 +931,8 @@ opal_entry:
 	/* Store token in CPU thread */
 	std	%r0,CPUTHREAD_CUR_TOKEN(%r16)
 
+	LOAD_IMM64(%r12,STACK_INT_MAGIC)
+	std	%r12,STACK_MAGIC(%r1)
 	/* Mark the stack frame */
 	li	%r12,STACK_ENTRY_OPAL_API
 	std	%r12,STACK_TYPE(%r1)

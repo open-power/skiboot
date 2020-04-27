@@ -38,6 +38,7 @@ int main(void)
 	OFFSET(CPUTHREAD_STACK_BOT_TOK, cpu_thread, stack_bot_tok);
 #endif
 	OFFSET(STACK_TYPE,	stack_frame, type);
+	OFFSET(STACK_MAGIC,	stack_frame, magic);
 	OFFSET(STACK_LOCALS,	stack_frame, locals);
 	OFFSET(STACK_GPR0,	stack_frame, gpr[0]);
 	OFFSET(STACK_GPR1,	stack_frame, gpr[1]);

@@ -65,6 +65,8 @@ void exception_entry(struct stack_frame *stack)
 		nip = stack->srr0;
 		msr = stack->srr1;
 	}
+	stack->msr = msr;
+	stack->pc = nip;
 
 	if (!(msr & MSR_RI))
 		fatal = true;
