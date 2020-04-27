@@ -859,11 +859,6 @@ void copy_sreset_vector_fast_reboot(void)
 
 void copy_exception_vectors(void)
 {
-	/* Backup previous vectors as this could contain a kernel
-	 * image.
-	 */
-	memcpy_null(old_vectors, NULL, EXCEPTION_VECTORS_END);
-
 	/* Copy from 0x100 to EXCEPTION_VECTORS_END, avoid below 0x100 as
 	 * this is the boot flag used by CPUs still potentially entering
 	 * skiboot.
@@ -1020,6 +1015,11 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	 * reading tools might think it has wrapped
 	 */
 	clear_console();
+
+	/* Backup previous vectors as this could contain a kernel
+	 * image.
+	 */
+	memcpy_null(old_vectors, NULL, EXCEPTION_VECTORS_END);
 
 	/*
 	 * Some boot firmwares enter OPAL with MSR[ME]=1, as they presumably
