@@ -521,8 +521,26 @@ bool occ_sensors_init(void)
 	dt_add_property_cells(sg, "#address-cells", 1);
 	dt_add_property_cells(sg, "#size-cells", 0);
 
-	if (dt_find_compatible_node(dt_root, NULL, "ibm,power9-npu"))
-		has_gpu = true;
+	/*
+	 * On POWER9, ibm,ioda2-npu2-phb indicates the presence of a
+	 * GPU NVlink.
+	 */
+	if (dt_find_compatible_node(dt_root, NULL, "ibm,ioda2-npu2-phb")) {
+
+		for_each_chip(chip) {
+			int max_gpus_per_chip = 3, i;
+
+			for(i = 0; i < max_gpus_per_chip; i++) {
+				has_gpu = occ_get_gpu_presence(chip, i);
+
+				if (has_gpu)
+					break;
+			}
+
+			if (has_gpu)
+				break;
+		}
+	}
 
 	for_each_chip(chip) {
 		struct occ_sensor_data_header *hb;
