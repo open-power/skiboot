@@ -1427,7 +1427,7 @@ static int64_t npu2_opencapi_pcicfg_read(struct phb *phb, uint32_t bdfn,
 	cfg_addr = SETFIELD(NPU2_CQ_CTL_CONFIG_ADDR_REGISTER_NUMBER,
 			    cfg_addr, offset & ~3u);
 
-	out_be64((uint64_t *)genid_base, cfg_addr);
+	out_be64((beint64_t *)genid_base, cfg_addr);
 	sync();
 
 	switch (size) {
@@ -1437,10 +1437,10 @@ static int64_t npu2_opencapi_pcicfg_read(struct phb *phb, uint32_t bdfn,
 		break;
 	case 2:
 		*((uint16_t *)data) =
-			in_le16((volatile uint16_t *)(genid_base + 128 + (offset & 2)));
+			in_le16((volatile leint16_t *)(genid_base + 128 + (offset & 2)));
 		break;
 	case 4:
-		*((uint32_t *)data) = in_le32((volatile uint32_t *)(genid_base + 128));
+		*((uint32_t *)data) = in_le32((volatile leint32_t *)(genid_base + 128));
 		break;
 	default:
 		return OPAL_PARAMETER;
@@ -1485,7 +1485,7 @@ static int64_t npu2_opencapi_pcicfg_write(struct phb *phb, uint32_t bdfn,
 	cfg_addr = SETFIELD(NPU2_CQ_CTL_CONFIG_ADDR_REGISTER_NUMBER,
 			    cfg_addr, offset & ~3u);
 
-	out_be64((uint64_t *)genid_base, cfg_addr);
+	out_be64((beint64_t *)genid_base, cfg_addr);
 	sync();
 
 	switch (size) {
@@ -1494,11 +1494,11 @@ static int64_t npu2_opencapi_pcicfg_write(struct phb *phb, uint32_t bdfn,
 		      data);
 		break;
 	case 2:
-		out_le16((volatile uint16_t *)(genid_base + 128 + (offset & 2)),
+		out_le16((volatile leint16_t *)(genid_base + 128 + (offset & 2)),
 					       data);
 		break;
 	case 4:
-		out_le32((volatile uint32_t *)(genid_base + 128), data);
+		out_le32((volatile leint32_t *)(genid_base + 128), data);
 		break;
 	default:
 		return OPAL_PARAMETER;

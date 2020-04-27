@@ -16,7 +16,12 @@ void *memcpy_from_ci(void *destpp, const void *srcpp, size_t len)
 	/* Copy as many blocks as possible if srcp is block aligned */
 	if ((srcp % block) == 0) {
 		while ((len - block) > -1) {
-			*((uint64_t*) destp) = in_be64((uint64_t*)srcp);
+			uint64_t v;
+			if (HAVE_BIG_ENDIAN)
+				v = in_be64((beint64_t*)srcp);
+			else
+				v = in_le64((leint64_t*)srcp);
+			*((uint64_t *) destp) = v;
 			srcp += block;
 			destp += block;
 			len -= block;
