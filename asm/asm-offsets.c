@@ -11,7 +11,7 @@
 #include <stack.h>
 
 #define DEFINE(sym, val) \
-        asm volatile("\n#define " #sym " %0 /* " #val " */" : : "i" (val))
+        asm volatile("\n#define " #sym " %0 /* " #val " */\n" : : "i" (val))
 
 #define OFFSET(sym, str, mem) \
 	DEFINE(sym, offsetof(struct str, mem))
