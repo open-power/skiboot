@@ -25,7 +25,7 @@
 	addi	stack_reg,stack_reg,EMERGENCY_CPU_STACKS_OFFSET@l;
 
 #define GET_CPU()							\
-	clrrdi	%r13,%r1,STACK_SHIFT
+	clrrdi	%r16,%r1,STACK_SHIFT
 
 #define SAVE_GPR(reg,sp)	std %r##reg,STACK_GPR##reg(sp)
 #define REST_GPR(reg,sp)	ld %r##reg,STACK_GPR##reg(sp)
@@ -403,7 +403,7 @@ boot_entry:
 	 * before relocation so we need to keep track of its location to wake
 	 * them up.
 	 */
-	mr	%r15,%r30
+	mr	%r18,%r30
 
 	/* Check if we need to copy ourselves up and update %r30 to
 	 * be our new offset
@@ -449,7 +449,7 @@ boot_entry:
 
 	/* Tell secondaries to move to second stage (relocated) spin loop */
 	LOAD_IMM32(%r3, boot_flag - __head)
-	add	%r3,%r3,%r15
+	add	%r3,%r3,%r18
 	li	%r0,1
 	stw	%r0,0(%r3)
 
@@ -464,18 +464,18 @@ boot_entry:
 	addi	%r3,%r3,8
 	bdnz	1b
 
-	/* Get our per-cpu pointer into r13 */
+	/* Get our per-cpu pointer into r16 */
 	GET_CPU()
 
 #ifdef STACK_CHECK_ENABLED
 	/* Initialize stack bottom mark to 0, it will be updated in C code */
 	li	%r0,0
-	std	%r0,CPUTHREAD_STACK_BOT_MARK(%r13)
+	std	%r0,CPUTHREAD_STACK_BOT_MARK(%r16)
 #endif
 	/* Initialize the stack guard */
 	LOAD_IMM64(%r3,STACK_CHECK_GUARD_BASE);
 	xor	%r3,%r3,%r31
-	std	%r3,0(%r13)
+	std	%r3,0(%r16)
 
 	/* Jump to C */
 	mr	%r3,%r27
@@ -536,7 +536,7 @@ secondary_not_found:
 	b	.
 
 call_relocate:
-	mflr	%r14
+	mflr	%r17
 	LOAD_IMM32(%r4,__dynamic_start - __head)
 	LOAD_IMM32(%r5,__rela_dyn_start - __head)
 	add	%r4,%r4,%r30
@@ -545,7 +545,7 @@ call_relocate:
 	bl	relocate
 	cmpwi	%r3,0
 	bne	1f
-	mtlr	%r14
+	mtlr	%r17
 	blr
 1:	/* Fatal relocate failure */
 	attn
@@ -592,12 +592,12 @@ reset_wakeup:
 	/* Get PIR */
 	mfspr	%r31,SPR_PIR
 
-	/* Get that CPU stack base and use it to restore r13 */
+	/* Get that CPU stack base and use it to restore r16 */
 	GET_STACK(%r1,%r31)
 	GET_CPU()
 
 	/* Restore original stack pointer */
-	ld	%r1,CPUTHREAD_SAVE_R1(%r13)
+	ld	%r1,CPUTHREAD_SAVE_R1(%r16)
 
 	/* Restore more stuff */
 	lwz	%r4,STACK_CR(%r1)
@@ -655,7 +655,7 @@ reset_fast_reboot_wakeup:
 	/* Get PIR */
 	mfspr	%r31,SPR_PIR
 
-	/* Get that CPU stack base and use it to restore r13 */
+	/* Get that CPU stack base and use it to restore r16 */
 	GET_STACK(%r1,%r31)
 	GET_CPU()
 
@@ -923,17 +923,17 @@ opal_entry:
 	std	%r9,STACK_GPR9(%r1)
 	std	%r10,STACK_GPR10(%r1)
 
-	/* Save Token (r0), LR and r13 */
+	/* Save Token (r0), LR and r16 */
 	mflr	%r12
 	std	%r0,STACK_GPR0(%r1)
-	std	%r13,STACK_GPR13(%r1)
+	std	%r16,STACK_GPR16(%r1)
 	std	%r12,STACK_LR(%r1)
 
 	/* Get the CPU thread */
 	GET_CPU()
 
 	/* Store token in CPU thread */
-	std	%r0,CPUTHREAD_CUR_TOKEN(%r13)
+	std	%r0,CPUTHREAD_CUR_TOKEN(%r16)
 
 	/* Mark the stack frame */
 	li	%r12,STACK_ENTRY_OPAL_API
@@ -975,14 +975,14 @@ opal_entry:
 	bl	opal_exit_check /* r3 is preserved */
 
 	/*
-	 * Restore r1 and r13 before decrementing in_opal_call.
-	 * Move per-cpu pointer to volatile r12, restore lr, r1, r13.
+	 * Restore r1 and r16 before decrementing in_opal_call.
+	 * Move per-cpu pointer to volatile r12, restore lr, r1, r16.
 	 */
 .Lreturn:
 	ld	%r12,STACK_LR(%r1)
 	mtlr	%r12
-	mr	%r12,%r13
-	ld	%r13,STACK_GPR13(%r1)
+	mr	%r12,%r16
+	ld	%r16,STACK_GPR16(%r1)
 	ld	%r1,STACK_GPR1(%r1)
 .Lreject:
 	sync 	/* release barrier vs quiescing */

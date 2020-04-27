@@ -96,7 +96,14 @@ endif
 CFLAGS := -fno-strict-aliasing -pie -fpie -fno-pic -m64 -fno-asynchronous-unwind-tables
 CFLAGS += -mcpu=power8
 CFLAGS += -Wl,--oformat,elf64-powerpc -ggdb
-CFLAGS += $(call try-cflag,$(CC),-ffixed-r13)
+# r13,r14,r15 are preserved for OS to use as fixed registers.
+# These could be saved and restored in and out of skiboot, but it's more
+# robust to avoid touching them.
+CFLAGS += -ffixed-r13
+CFLAGS += -ffixed-r14
+CFLAGS += -ffixed-r15
+# r16 is skiboot's per-CPU data pointer.
+CFLAGS += -ffixed-r16
 CFLAGS += $(call try-cflag,$(CC),-std=gnu11)
 
 ifeq ($(LITTLE_ENDIAN),1)
@@ -127,7 +134,7 @@ endif
 
 # Check if the new parametrized stack protector option is supported
 # by gcc, otherwise disable stack protector
-STACK_PROT_CFLAGS := -mstack-protector-guard=tls -mstack-protector-guard-reg=r13
+STACK_PROT_CFLAGS := -mstack-protector-guard=tls -mstack-protector-guard-reg=r16
 STACK_PROT_CFLAGS += -mstack-protector-guard-offset=0
 HAS_STACK_PROT := $(call test_cflag,$(CC),$(STACK_PROT_CFLAGS))
 

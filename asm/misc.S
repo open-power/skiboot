@@ -214,7 +214,7 @@ enter_p8_pm_state:
 	bl	pm_save_regs
 
 	/* Save stack pointer in struct cpu_thread */
-	std	%r1,CPUTHREAD_SAVE_R1(%r13)
+	std	%r1,CPUTHREAD_SAVE_R1(%r16)
 
 	/* Winkle or nap ? */
 	cmpli	%cr0,0,%r3,0
@@ -222,7 +222,7 @@ enter_p8_pm_state:
 
 	/* nap sequence */
 	ptesync
-0:	ld	%r0,CPUTHREAD_SAVE_R1(%r13)
+0:	ld	%r0,CPUTHREAD_SAVE_R1(%r16)
 	cmpd	cr0,%r0,%r0
 	bne	0b
 	PPC_INST_NAP
@@ -230,7 +230,7 @@ enter_p8_pm_state:
 
 	/* rvwinkle sequence */
 1:	ptesync
-0:	ld	%r0,CPUTHREAD_SAVE_R1(%r13)
+0:	ld	%r0,CPUTHREAD_SAVE_R1(%r16)
 	cmpd	cr0,%r0,%r0
 	bne	0b
 	PPC_INST_RVWINKLE
@@ -251,7 +251,7 @@ enter_p9_pm_state:
 	bl	pm_save_regs
 
 	/* Save stack pointer in struct cpu_thread */
-	std	%r1,CPUTHREAD_SAVE_R1(%r13)
+	std	%r1,CPUTHREAD_SAVE_R1(%r16)
 
 	mtspr	SPR_PSSCR,%r3
 	PPC_INST_STOP
