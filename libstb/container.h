@@ -5,7 +5,9 @@
 #define __STB_CONTAINER_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdlib.h>
+#include <ccan/short_types/short_types.h>
 #include <ccan/endian/endian.h>
 
 #define SECURE_BOOT_HEADERS_SIZE	4096
