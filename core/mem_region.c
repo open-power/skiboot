@@ -1379,8 +1379,14 @@ void start_mem_region_clear_unused(void)
 		free(path);
 		jobs[i] = cpu_queue_job_on_node(chip_id,
 						job_args[i].job_name,
-					mem_region_clear_job,
-					&job_args[i]);
+						mem_region_clear_job,
+						&job_args[i]);
+		if (!jobs[i])
+			jobs[i] = cpu_queue_job(NULL,
+						job_args[i].job_name,
+						mem_region_clear_job,
+						&job_args[i]);
+		assert(jobs[i]);
 		i++;
 	}
 	unlock(&mem_region_lock);
