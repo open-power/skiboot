@@ -61,7 +61,7 @@ static int64_t blackbird_write_oppanel_async(uint64_t async_token __unused,
 		return OPAL_PARAMETER;
 
 	line = (void *) be64_to_cpu(lines[0].line);
-	len = lines[0].line_len;
+	len = be64_to_cpu(lines[0].line_len);
 
 	if (len > 0)
 		lpc_probe_write(OPAL_LPC_IO, 0x80, line[0], 1);
