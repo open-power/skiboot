@@ -28,16 +28,17 @@
 /* Load an address via the TOC */
 #define LOAD_ADDR_FROM_TOC(r, e)	ld r,e@got(%r2)
 
-/* This must preserve LR, so can't use Linux kernel's FIXUP_ENDIAN */
+/* This must preserve LR, may only clobber r11-r12, so can't use Linux kernel's
+ * FIXUP_ENDIAN */
 #define SWITCH_ENDIAN						   \
 	.long 0xa600607d; /* mfmsr r11				*/ \
 	.long 0x01006b69; /* xori r11,r11,1			*/ \
 	.long 0xa64b7b7d; /* mthsrr1 r11			*/ \
 	.long 0xa602687d; /* mflr r11				*/ \
 	.long 0x05009f42; /* bcl 20,31,$+4			*/ \
-	.long 0xa602487d; /* mflr r10				*/ \
-	.long 0x14004a39; /* addi r10,r10,20			*/ \
-	.long 0xa64b5a7d; /* mthsrr0 r10			*/ \
+	.long 0xa602887d; /* mflr r12				*/ \
+	.long 0x14008c39; /* addi r12,r12,20			*/ \
+	.long 0xa64b9a7d; /* mthsrr0 r12			*/ \
 	.long 0xa603687d; /* mtlr r11				*/ \
 	.long 0x2402004c  /* hrfid				*/
 

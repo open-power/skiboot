@@ -841,7 +841,7 @@ enter_nap:
 	.balign	0x10
 .global opal_entry
 opal_entry:
-	OPAL_ENTRY_TO_SKIBOOT_ENDIAN
+	OPAL_ENTRY_TO_SKIBOOT_ENDIAN /* This clobbers r11, r12 */
 
 	/* Get our per CPU pointer in r12 to check for quiesce */
 	mfspr	%r12,SPR_PIR
