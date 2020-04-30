@@ -116,6 +116,7 @@ void trustedboot_init(void)
 	tpm_init();
 
 	trusted_init = true;
+	boot_services_exited = false;
 }
 
 int trustedboot_exit_boot_services(void)
@@ -124,11 +125,15 @@ int trustedboot_exit_boot_services(void)
 	int rc = 0;
 	bool failed = false;
 
-	boot_services_exited = true;
-
 	if (!trusted_mode)
 		goto out_free;
 
+	if (boot_services_exited) {
+		prlog(PR_WARNING, "Trusted boot services exited before.\n");
+		goto out_free;
+	}
+
+	boot_services_exited = true;
 #ifdef STB_DEBUG
 	prlog(PR_NOTICE, "ev_separator.event: %s\n", ev_separator.event);
 	prlog(PR_NOTICE, "ev_separator.sha1:\n");
