@@ -1280,6 +1280,10 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* Install the OPAL Console handlers */
 	init_opal_console();
 
+	if(is_fused_core(mfspr(SPR_PVR))) {
+		prerror("CPU: Detected unsupported fused core mode\n");
+		abort();
+	}
 	/*
 	 * Some platforms set a flag to wait for SBE validation to be
 	 * performed by the BMC. If this occurs it leaves the SBE in a
