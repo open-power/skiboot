@@ -173,10 +173,12 @@
 
 /* PVR bits */
 #define SPR_PVR_TYPE			0xffff0000
+#define SPR_PVR_CHIP_TYPE		0x0000f000
 #define SPR_PVR_VERS_MAJ		0x00000f00
 #define SPR_PVR_VERS_MIN		0x000000ff
 
 #define PVR_TYPE(_pvr)		GETFIELD(SPR_PVR_TYPE, _pvr)
+#define PVR_CHIP_TYPE(_pvr)	GETFIELD(SPR_PVR_CHIP_TYPE, _pvr)
 #define PVR_VERS_MAJ(_pvr)	GETFIELD(SPR_PVR_VERS_MAJ, _pvr)
 #define PVR_VERS_MIN(_pvr)	GETFIELD(SPR_PVR_VERS_MIN, _pvr)
 
@@ -226,6 +228,20 @@ static inline bool is_power9n(uint32_t version)
 	if ((version >> 13) & 1)
 		return false;
 	return true;
+}
+
+static inline bool is_fused_core(uint32_t version)
+{
+	if (PVR_TYPE(version) != PVR_TYPE_P9)
+		return false;
+
+	switch(PVR_CHIP_TYPE(version)) {
+		case 0:
+		case 2:
+			return true;
+		default:
+			return false;
+	}
 }
 
 #ifndef __TEST__
