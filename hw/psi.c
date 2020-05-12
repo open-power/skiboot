@@ -264,7 +264,7 @@ static void psi_spurious_fsp_irq(struct psi *psi)
 {
 	u64 reg, bit;
 
-	prerror("PSI: Spurious interrupt, attempting clear\n");
+	prlog(PR_NOTICE, "PSI: Spurious interrupt, attempting clear\n");
 
 	if (proc_gen == proc_gen_p9) {
 		reg = PSIHB_XSCOM_P9_HBCSR_CLR;
