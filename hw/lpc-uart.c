@@ -65,6 +65,7 @@ DEFINE_LOG_ENTRY(OPAL_RC_UART_INIT, OPAL_PLATFORM_ERR_EVT, OPAL_UART,
 static struct lock uart_lock = LOCK_UNLOCKED;
 static struct dt_node *uart_node;
 static uint32_t uart_base;
+static uint64_t uart_tx_full_time;
 static bool has_irq = false, irq_ok, rx_full, tx_full;
 static uint8_t tx_room;
 static uint8_t cached_ier;
@@ -104,28 +105,59 @@ static inline void uart_write(unsigned int reg, uint8_t val)
 		lpc_outb(val, uart_base + reg);
 }
 
-static void uart_check_tx_room(void)
+static bool uart_check_tx_room(void)
 {
+	if (tx_room)
+		return true;
+
 	if (uart_read(REG_LSR) & LSR_THRE) {
 		/* FIFO is 16 entries */
 		tx_room = 16;
 		tx_full = false;
+		return true;
+	}
+
+	return false;
+}
+
+/* Must be called with UART lock held */
+static void uart_write_thr(uint8_t val)
+{
+	uart_write(REG_THR, val);
+
+	tx_room--;
+	if (tx_room == 0) {
+		if (!uart_check_tx_room())
+			uart_tx_full_time = mftb();
 	}
 }
 
-static void uart_wait_tx_room(void)
+static bool uart_timed_out(unsigned long msecs)
 {
-	while (!tx_room) {
-		uart_check_tx_room();
-		if (!tx_room) {
-			smt_lowest();
-			do {
-				barrier();
-				uart_check_tx_room();
-			} while (!tx_room);
+	if (uart_check_tx_room())
+		return false;
+
+	if (tb_compare(mftb(), uart_tx_full_time + msecs_to_tb(msecs)) == TB_AAFTERB)
+		return true;
+
+	return false;
+}
+
+static bool uart_wait_tx_room(void)
+{
+	if (uart_check_tx_room())
+		return true;
+
+	smt_lowest();
+	while (!uart_check_tx_room()) {
+		if (uart_timed_out(100)) {
 			smt_medium();
+			return false;
 		}
 	}
+	smt_medium();
+
+	return true;
 }
 
 static void uart_update_ier(void)
@@ -169,18 +201,20 @@ static size_t uart_con_write(const char *buf, size_t len)
 		return written;
 
 	lock(&uart_lock);
-	while(written < len) {
-		if (tx_room == 0) {
-			uart_wait_tx_room();
-			if (tx_room == 0)
-				goto bail;
-		} else {
-			uart_write(REG_THR, buf[written++]);
-			tx_room--;
-		}
+	while (written < len) {
+		if (!uart_wait_tx_room())
+			break;
+
+		uart_write_thr(buf[written++]);
 	}
- bail:
+
+	if (!written && uart_timed_out(1000)) {
+		unlock(&uart_lock);
+		return len; /* swallow data */
+	}
+
 	unlock(&uart_lock);
+
 	return written;
 }
 
@@ -241,16 +275,19 @@ static int64_t uart_con_flush(void)
 			tx_full = true;
 			break;
 		}
-		uart_write(REG_THR, out_buf[out_buf_cons++]);
+
+		uart_write_thr(out_buf[out_buf_cons++]);
 		out_buf_cons %= OUT_BUF_SIZE;
-		tx_room--;
 	}
 	if (tx_full != tx_was_full)
 		uart_update_ier();
 	if (out_buf_prod != out_buf_cons) {
 		/* Return busy if nothing was flushed this call */
-		if (out_buf_cons == out_buf_cons_initial)
+		if (out_buf_cons == out_buf_cons_initial) {
+			if (uart_timed_out(1000))
+				return OPAL_TIMEOUT;
 			return OPAL_BUSY;
+		}
 		/* Return partial if there's more to flush */
 		return OPAL_PARTIAL;
 	}
@@ -268,6 +305,7 @@ static int64_t uart_opal_write(int64_t term_number, int64_t *length,
 			       const uint8_t *buffer)
 {
 	size_t written = 0, len = *length;
+	int64_t ret = OPAL_SUCCESS;
 
 	if (term_number != 0)
 		return OPAL_PARAMETER;
@@ -284,24 +322,34 @@ static int64_t uart_opal_write(int64_t term_number, int64_t *length,
 	/* Flush out buffer again */
 	uart_con_flush();
 
+	if (!written && uart_timed_out(1000))
+		ret = OPAL_TIMEOUT;
 	unlock(&uart_lock);
 
 	*length = written;
 
-	return OPAL_SUCCESS;
+	return ret;
 }
 
 static int64_t uart_opal_write_buffer_space(int64_t term_number,
 					    int64_t *length)
 {
+	int64_t ret = OPAL_SUCCESS;
+	int64_t tx_buf_len;
+
 	if (term_number != 0)
 		return OPAL_PARAMETER;
 
 	lock(&uart_lock);
-	*length = uart_tx_buf_space();
+	tx_buf_len = uart_tx_buf_space();
+
+	if ((tx_buf_len < be64_to_cpu(*length)) && uart_timed_out(1000))
+		ret = OPAL_TIMEOUT;
+
+	*length = cpu_to_be64(tx_buf_len);
 	unlock(&uart_lock);
 
-	return OPAL_SUCCESS;
+	return ret;
 }
 
 /* Must be called with UART lock held */
