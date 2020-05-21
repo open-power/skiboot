@@ -70,8 +70,8 @@ static void buddy_check_alloc_down(struct buddy *b, unsigned int node)
 	}
 }
 #else
-static inline void buddy_check_alloc(struct buddy *b, unsigned int node) {}
-static inline void buddy_check_alloc_down(struct buddy *b, unsigned int node) {}
+static inline void buddy_check_alloc(struct buddy *b __unused, unsigned int node __unused) {}
+static inline void buddy_check_alloc_down(struct buddy *b __unused, unsigned int node __unused) {}
 #endif
 
 int buddy_alloc(struct buddy *b, unsigned int order)
