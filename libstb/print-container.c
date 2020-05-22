@@ -470,7 +470,7 @@ static bool getPayloadHash(int fdin, unsigned char *md)
 
 	payload = mmap(NULL, payload_st.st_size - SECURE_BOOT_HEADERS_SIZE,
 			PROT_READ, MAP_PRIVATE, fdin, SECURE_BOOT_HEADERS_SIZE);
-	if (!payload)
+	if (payload == MAP_FAILED)
 		die(EX_OSERR, "Cannot mmap file at descriptor: %d (%s)", fdin,
 				strerror(errno));
 
