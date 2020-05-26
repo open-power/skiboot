@@ -140,6 +140,14 @@ const struct chip_unit_desc p9_chip_units[] = {
 	{0x44, "MC"},
 	{0x45, "TEST_FAIL"},
 	{0x46, "MFREFCLK"},
-	{0x47, "LAST_IN_RANGE"},
+	{0x47, "SMPGROUP"},
+	{0x48, "OMI"},
+	{0x49, "MCC"},
+	{0x4A, "OMIC"},
+	{0x4B, "OCMB_CHIP"},
+	{0x4C, "MEM_PORT"},
+	{0x4D, "I2C_MUX"},
+	{0x4E, "PMIC"},
+	{0x4F, "LAST_IN_RANGE"},
 };
 
