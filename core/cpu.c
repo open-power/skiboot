@@ -1171,10 +1171,12 @@ void init_all_cpus(void)
 		chip_id = dt_get_chip_id(cpu);
 
 		/* Only use operational CPUs */
-		if (!strcmp(dt_prop_get(cpu, "status"), "okay"))
+		if (!strcmp(dt_prop_get(cpu, "status"), "okay")) {
 			state = cpu_state_present;
-		else
+			get_chip(chip_id)->ex_present = true;
+		} else {
 			state = cpu_state_unavailable;
+		}
 
 		prlog(PR_INFO, "CPU: CPU from DT PIR=0x%04x Server#=0x%x"
 		      " State=%d\n", pir, server_no, state);
