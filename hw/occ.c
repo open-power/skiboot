@@ -312,12 +312,17 @@ struct occ_dynamic_data *get_occ_dynamic_data(struct proc_chip *chip)
 		OPAL_DYNAMIC_DATA_OFFSET);
 }
 
-/* Check each chip's HOMER/Sapphire area for PState valid bit */
+/*
+ * On Chips which have at least one active EX unit, check the
+ * HOMER area for pstate-table valid bit on versions 0x1 and 0x2, or
+ * HOMER dynamic area occ_state on version 0x90.
+ */
 static bool wait_for_all_occ_init(void)
 {
 	struct proc_chip *chip;
 	struct dt_node *xn;
 	struct occ_pstate_table *occ_data;
+	struct occ_dynamic_data *occ_dyn_data;
 	int tries;
 	uint64_t start_time, end_time;
 	uint32_t timeout = 0;
@@ -327,6 +332,19 @@ static bool wait_for_all_occ_init(void)
 
 	start_time = mftb();
 	for_each_chip(chip) {
+		u8 version;
+
+		/*
+		 * If the chip doesn't any EX unit present, then OCC
+		 * will not update the pstate-table. So, skip the
+		 * check.
+		 */
+		if (!chip->ex_present) {
+			prlog(PR_DEBUG, "OCC: Chip %02x has no active EX units. Skipping check\n",
+			      chip->id);
+			continue;
+		}
+
 		/* Check for valid homer address */
 		if (!chip->homer_base) {
 			/**
@@ -347,27 +365,108 @@ static bool wait_for_all_occ_init(void)
 		occ_data = get_occ_pstate_table(chip);
 
 		/*
-		 * Checking for occ_data->valid == 1 is ok because we clear all
-		 * homer_base+size before passing memory to host services.
-		 * This ensures occ_data->valid == 0 before OCC load
+		 * Wait for the OCC to set an appropriate version bit.
+		 * The wait is needed since on some platforms (such P8
+		 * Tuletta), OCC is not loaded before OPAL boot. Hence
+		 * initialization can take a while.
+		 *
+		 * Note: Checking for occ_data->version == (0x01/0x02/0x90)
+		 * is ok because we clear all of
+		 * homer_base+size before passing memory to host
+		 * services.  This ensures occ_data->version == 0x0
+		 * before OCC load.
 		 */
 		tries = timeout * 10;
-		while((occ_data->valid != 1) && tries--) {
+		while (tries--) {
+			version = occ_data->version;
+
+			if (version == 0x01 || version == 0x02 ||
+			    version == 0x90)
+				break;
+
 			time_wait_ms(100);
 		}
-		if (occ_data->valid != 1) {
-			/**
-			 * @fwts-label OCCInvalidPStateTable
-			 * @fwts-advice The pstate table for a chip
-			 * was not valid. This means that OCC (On Chip
-			 * Controller) will be non-functional and CPU
-			 * frequency scaling will not be functional. CPU may
-			 * be set to a low, safe frequency. This means
-			 * that CPU idle states and CPU frequency scaling
-			 * may not be functional.
+
+		version = occ_data->version;
+		switch (version) {
+		case 0x1:
+		case 0x2:
+		/*
+		 * OCC-OPAL interface version 0x1 and 0x2 do not have
+		 * the dynamic data.  Hence the the only way to figure out
+		 * if the OCC is up or not is to check the valid-bit
+		 * in the pstate table.
+		 */
+			if (occ_data->valid != 1) {
+				/**
+				 * @fwts-label OCCInvalidPStateTable
+				 * @fwts-advice The pstate table for a chip
+				 * was not valid. This means that OCC (On Chip
+				 * Controller) will be non-functional and CPU
+				 * frequency scaling will not be functional. CPU may
+				 * be set to a low, safe frequency. This means
+				 * that CPU idle states and CPU frequency scaling
+				 * may not be functional.
+				 */
+				prlog(PR_ERR, "OCC: Chip: %x PState table is not valid\n",
+				      chip->id);
+				return false;
+			}
+			break;
+
+		case 0x90:
+			/*
+			 * OCC-OPAL interface version 0x90 has a
+			 * dynamic data section.  This has an
+			 * occ_state field whose values inform about
+			 * the state of the OCC.
+			 *
+			 * 0x00 = OCC not running. No communication
+			 *        allowed.
+			 *
+			 * 0x01 = Standby. No communication allowed.
+			 *
+			 * 0x02 = Observation State. Communication
+			 *        allowed and is command dependent.
+			 *
+			 * 0x03 = Active State. Communication allowed
+			 *        and is command dependent.
+			 *
+			 * 0x04 = Safe State. No communication
+			 *        allowed. Just like CPU throttle
+			 *        status, some failures will not allow
+			 *        for OCC to update state to safe.
+			 *
+			 * 0x05 = Characterization State.
+			 *        Communication allowed and is command
+			 *        dependent.
+			 *
+			 * We will error out if OCC is not in the
+			 * Active State.
+			 *
+			 * XXX : Should we error out only if no
+			 *       communication is allowed with the
+			 *       OCC ?
 			 */
-			prlog(PR_ERR, "OCC: Chip: %x PState table is not valid\n",
-				chip->id);
+			occ_dyn_data = get_occ_dynamic_data(chip);
+			if (occ_dyn_data->occ_state != 0x3) {
+				/**
+				 * @fwts-label OCCInactive
+				 * @fwts-advice The OCC for a chip was not active.
+				 * This means that CPU frequency scaling will
+				 * not be functional. CPU may be set to a low,
+				 * safe frequency. This means that CPU idle
+				 * states and CPU frequency scaling may not be
+				 * functional.
+				 */
+				prlog(PR_ERR, "OCC: Chip: %x: OCC not active\n",
+				      chip->id);
+				return false;
+			}
+			break;
+
+		default:
+			prlog(PR_ERR, "OCC: Unknown OCC-OPAL interface version.\n");
 			return false;
 		}
 
@@ -376,7 +475,15 @@ static bool wait_for_all_occ_init(void)
 
 		prlog(PR_DEBUG, "OCC: Chip %02x Data (%016llx) = %016llx\n",
 		      chip->id, (uint64_t)occ_data, be64_to_cpu(*(__be64 *)occ_data));
+
+		if (version == 0x90) {
+			occ_dyn_data = get_occ_dynamic_data(chip);
+			prlog(PR_DEBUG, "OCC: Chip %02x Dynamic Data (%016llx) = %016llx\n",
+			      chip->id, (uint64_t)occ_dyn_data,
+			      be64_to_cpu(*(__be64 *)occ_dyn_data));
+		}
 	}
+
 	end_time = mftb();
 	prlog(PR_NOTICE, "OCC: All Chip Rdy after %lu ms\n",
 	      tb_to_msecs(end_time - start_time));
@@ -480,7 +587,7 @@ static bool add_cpu_pstate_properties(struct dt_node *power_mgt,
 {
 	struct proc_chip *chip;
 	uint64_t occ_data_area;
-	struct occ_pstate_table *occ_data;
+	struct occ_pstate_table *occ_data = NULL;
 	/* Arrays for device tree */
 	__be32 *dt_id, *dt_freq;
 	int pmax, pmin, pnom;
@@ -490,24 +597,34 @@ static bool add_cpu_pstate_properties(struct dt_node *power_mgt,
 
 	prlog(PR_DEBUG, "OCC: CPU pstate state device tree init\n");
 
-	/* Find first chip */
-	chip = next_chip(NULL);
+	/*
+	 * Find first chip with an OCC which has as a valid
+	 * pstate-table
+	 */
+	for_each_chip(chip) {
+		occ_data = get_occ_pstate_table(chip);
 
-	/* Extract PState information from OCC */
-	occ_data = get_occ_pstate_table(chip);
+		/* Dump first 16 bytes of PState table */
+		occ_data_area = (uint64_t)occ_data;
+		prlog(PR_DEBUG, "OCC: Chip %02d :Data (%16llx) = %16llx %16llx\n",
+			chip->id, occ_data_area,
+			be64_to_cpu(*(__be64 *)occ_data_area),
+			be64_to_cpu(*(__be64 *)(occ_data_area + 8)));
 
-	/* Dump first 16 bytes of PState table */
-	occ_data_area = (uint64_t)occ_data;
-	prlog(PR_DEBUG, "OCC: Data (%16llx) = %16llx %16llx\n",
-	      occ_data_area,
-	      be64_to_cpu(*(__be64 *)occ_data_area),
-	      be64_to_cpu(*(__be64 *)(occ_data_area + 8)));
+		if (occ_data->valid)
+			break;
+		/*
+		 * XXX : Error out if !occ_data->valid but Chip has at
+		 * least one EX Unit?
+		 */
+	}
 
+	assert(occ_data);
 	if (!occ_data->valid) {
 		/**
 		 * @fwts-label OCCInvalidPStateTableDT
-		 * @fwts-advice The pstate table for the first chip
-		 * was not valid. This means that OCC (On Chip
+		 * @fwts-advice The pstate tables for none of the chips
+		 * are valid. This means that OCC (On Chip
 		 * Controller) will be non-functional. This means
 		 * that CPU idle states and CPU frequency scaling
 		 * will not be functional as OPAL doesn't populate

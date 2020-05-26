@@ -192,6 +192,9 @@ struct proc_chip {
 
 	/* Used by hw/dio-p9.c */
 	struct p9_dio		*dio;
+
+	/* Used during OCC init */
+	bool			ex_present;
 };
 
 extern uint32_t pir_to_chip_id(uint32_t pir);
