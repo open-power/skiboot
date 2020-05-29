@@ -80,7 +80,7 @@
  * with one EQ and one IPI. There is also enought EATs to cover all the PHBs.
  *
  * Similarily, for MMIO access, the BARs support what is called "set
- * translation" which allows tyhe BAR to be devided into a certain
+ * translation" which allows the BAR to be divided into a certain
  * number of sets. The VC BAR (ESBs, ENDs, ...) supports 64 sets and
  * the PC BAT supports 16. Each "set" can be routed to a specific
  * block and offset within a block.
