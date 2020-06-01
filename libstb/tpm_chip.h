@@ -54,6 +54,11 @@ struct tpm_chip {
 /* TSS tweak */
 typedef struct tpm_chip TpmTarget;
 
+void tss_tpm_register(struct tpm_dev *dev, struct tpm_driver *driver);
+void tss_tpm_unregister(void);
+struct tpm_dev* tpm_get_device(void);
+struct tpm_driver* tpm_get_driver(void);
+
 /*
  * Register a tpm chip by binding the driver to dev.
  * Event log is also registered by this function.

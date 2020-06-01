@@ -18,6 +18,31 @@
 
 static struct list_head tpm_list = LIST_HEAD_INIT(tpm_list);
 
+static struct tpm_dev *tpm_device = NULL;
+static struct tpm_driver *tpm_driver = NULL;
+
+void tss_tpm_register(struct tpm_dev *dev, struct tpm_driver *driver)
+{
+	tpm_device = dev;
+	tpm_driver = driver;
+}
+
+void tss_tpm_unregister(void)
+{
+	tpm_device = NULL;
+	tpm_driver = NULL;
+}
+
+struct tpm_dev* tpm_get_device(void)
+{
+	return tpm_device;
+}
+
+struct tpm_driver* tpm_get_driver(void)
+{
+	return tpm_driver;
+}
+
 #ifdef STB_DEBUG
 static void tpm_print_pcr(struct tpm_chip *tpm, TPM_Pcr pcr, TPM_Alg_Id alg,
 			  size_t size)
