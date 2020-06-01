@@ -14,8 +14,10 @@ CPPFLAGS += -I$(SRC)/$(IBMTSS_DIR)
 
 TSS2LIB_SRCS = tssprint.c tssprintcmd.c tssmarshal.c Unmarshal.c Commands.c
 TSS2LIB_SRCS += CommandAttributeData.c tssresponsecode.c tssccattributes.c
+TSS2LIB_SRCS += tss.c tss20.c tssauth.c tssauth20.c tssproperties.c tssutils.c
+TSS2LIB_SRCS += tsstransmit.c tssdevskiboot.c eventlib.c
 
-TSS2_SRCS = $(addprefix ibmtpm20tss/utils/,$(TSS2LIB_SRCS))
+TSS2_SRCS = $(addprefix ibmtpm20tss/utils/,$(TSS2LIB_SRCS)) tssskiboot.c eventlog.c
 
 TSS2_OBJS = $(TSS2_SRCS:%.c=%.o)
 

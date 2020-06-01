@@ -12,7 +12,7 @@
 #include "secureboot.h"
 #include "trustedboot.h"
 #include "tpm_chip.h"
-#include "tss/trustedTypes.H"
+#include "ibmtss/TPM_Types.h"
 
 /* For debugging only */
 //#define STB_DEBUG
@@ -39,7 +39,7 @@ static bool boot_services_exited = false;
  */
 static struct {
 	enum resource_id id;
-	TPM_Pcr pcr;
+	TPMI_DH_PCR pcr;
 } resources[] = {
 	{ RESOURCE_ID_IMA_CATALOG,	PCR_4},
 	{ RESOURCE_ID_KERNEL,		PCR_4},
@@ -137,21 +137,20 @@ int trustedboot_exit_boot_services(void)
 #ifdef STB_DEBUG
 	prlog(PR_NOTICE, "ev_separator.event: %s\n", ev_separator.event);
 	prlog(PR_NOTICE, "ev_separator.sha1:\n");
-	stb_print_data((uint8_t*) ev_separator.sha1, TPM_ALG_SHA1_SIZE);
+	stb_print_data((uint8_t*) ev_separator.sha1, SHA1_DIGEST_SIZE);
 	prlog(PR_NOTICE, "ev_separator.sha256:\n");
-	stb_print_data((uint8_t*) ev_separator.sha256, TPM_ALG_SHA256_SIZE);
+	stb_print_data((uint8_t*) ev_separator.sha256, SHA256_DIGEST_SIZE);
 #endif
 	/*
 	 * Extend the digest of 0xFFFFFFFF to PCR[0-7] and record it as
 	 * EV_SEPARATOR
 	 */
 	for (pcr = 0; pcr < 8; pcr++) {
-		rc = tpm_extendl(pcr, TPM_ALG_SHA256,
-				(uint8_t*) ev_separator.sha256,
-				TPM_ALG_SHA256_SIZE, TPM_ALG_SHA1,
-				(uint8_t*) ev_separator.sha1,
-				TPM_ALG_SHA1_SIZE, EV_SEPARATOR,
-				ev_separator.event);
+		rc = tpm_extendl(pcr,
+				TPM_ALG_SHA256, (uint8_t*) ev_separator.sha256,
+				TPM_ALG_SHA1, (uint8_t*) ev_separator.sha1,
+				EV_SEPARATOR, ev_separator.event,
+				strlen(ev_separator.event));
 		if (rc)
 			failed = true;
 	}
@@ -169,7 +168,7 @@ int trustedboot_measure(enum resource_id id, void *buf, size_t len)
 	void *buf_aux;
 	size_t len_aux;
 	const char *name;
-	TPM_Pcr pcr;
+	TPMI_DH_PCR pcr;
 	int rc = -1;
 
 	if (!trusted_mode)
@@ -244,15 +243,15 @@ int trustedboot_measure(enum resource_id id, void *buf, size_t len)
 	}
 
 #ifdef STB_DEBUG
-	stb_print_data(digest, TPM_ALG_SHA256_SIZE);
+	stb_print_data(digest, SHA256_DIGEST_SIZE);
+
 #endif
 	/*
 	 * Extend the given PCR number in both sha256 and sha1 banks with the
 	 * sha512 hash calculated. The hash is truncated accordingly to fit the
 	 * PCR.
 	 */
-	return tpm_extendl(pcr,
-			   TPM_ALG_SHA256, digest, TPM_ALG_SHA256_SIZE,
-			   TPM_ALG_SHA1,   digest, TPM_ALG_SHA1_SIZE,
-			   EV_COMPACT_HASH, name);
+	return tpm_extendl(pcr,	TPM_ALG_SHA256, (uint8_t*) digest,
+			   TPM_ALG_SHA1, (uint8_t*) digest,
+			   EV_COMPACT_HASH, name, strlen(name));
 }

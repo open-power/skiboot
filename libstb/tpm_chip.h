@@ -6,8 +6,9 @@
 
 #include <device.h>
 
-#include "tss/tpmLogMgr.H"
-#include "tss/trustedTypes.H"
+#include <eventlib.h>
+#include <tss2/eventlog.h>
+#include <tss2/tssskiboot.h>
 
 struct tpm_dev {
 
@@ -51,9 +52,6 @@ struct tpm_chip {
 	struct list_node link;
 };
 
-/* TSS tweak */
-typedef struct tpm_chip TpmTarget;
-
 void tss_tpm_register(struct tpm_dev *dev, struct tpm_driver *driver);
 void tss_tpm_unregister(void);
 struct tpm_dev* tpm_get_device(void);
@@ -72,24 +70,12 @@ extern int tpm_register_chip(struct dt_node *node, struct tpm_dev *dev,
  * in the event log
  * This calls a TSS extend function that supports multibank. Both sha1 and
  * sha256 digests are extended in a single operation sent to the TPM device.
- *
- * @pcr: PCR number to be extended and recorded in the event log. The same PCR
- * number is extende for both sha1 and sha256 banks.
- * @alg1: SHA algorithm of digest1. Either TPM_ALG_SHA1 or TPM_ALG_SHA256
- * @digest1: digest1 buffer
- * @size1: size of digest1. Either TPM_ALG_SHA1_SIZE or TPM_ALG_SHA256_SIZE
- * @alg2: SHA algorithm of digest2. Either TPM_ALG_SHA1 or TPM_ALG_SHA256
- * @digest2: digest2 buffer
- * @size2: size of digest2. Either TPM_ALG_SHA1_SIZE or TPM_ALG_SHA256_SIZE
- * @event_type: event type log. In skiboot, either EV_ACTION or EV_SEPARATOR.
- * @event_msg: event log message that describes the event
- *
- * Returns O for success or a negative number if it fails.
  */
-extern int tpm_extendl(TPM_Pcr pcr,
-		       TPM_Alg_Id alg1, uint8_t* digest1, size_t size1,
-		       TPM_Alg_Id alg2, uint8_t* digest2, size_t size2,
-		       uint32_t event_type, const char* event_msg);
+int tpm_extendl(TPMI_DH_PCR pcr,
+		TPMI_ALG_HASH alg1, uint8_t *digest1,
+		TPMI_ALG_HASH alg2, uint8_t *digest2,
+		uint32_t event_type, const char *event_msg,
+		uint32_t event_msg_len);
 
 /* Add status property to the TPM devices */
 extern void tpm_add_status_property(void);

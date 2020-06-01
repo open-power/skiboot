@@ -16,15 +16,6 @@
 
 #define DRIVER_NAME "i2c_tpm_nuvoton"
 
-/*
- * Timings between various states or transitions within the interface protocol
- * as defined in the TCG PC Client Platform TPM Profile specification, Revision
- * 00.43.
- */
-#define TPM_TIMEOUT_A	750
-#define TPM_TIMEOUT_B	2000
-#define TPM_TIMEOUT_D	30
-
 /* I2C interface offsets */
 #define TPM_STS			0x00
 #define TPM_BURST_COUNT		0x01
