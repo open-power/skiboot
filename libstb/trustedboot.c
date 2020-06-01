@@ -155,6 +155,7 @@ int trustedboot_exit_boot_services(void)
 			failed = true;
 	}
 	tpm_add_status_property();
+	tss_set_platform_auth();
 
 out_free:
 	tpm_cleanup();
