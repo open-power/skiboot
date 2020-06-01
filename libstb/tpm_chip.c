@@ -213,6 +213,7 @@ void tpm_cleanup(void)
 		tpm = list_pop(&tpm_list, struct tpm_chip, link);
 	}
 
+	tss_tpm_unregister();
 	list_head_init(&tpm_list);
 }
 

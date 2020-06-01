@@ -608,6 +608,7 @@ void tpm_i2c_nuvoton_probe(void)
 			free(tpm_device);
 			continue;
 		}
+		tss_tpm_register(tpm_device, &tpm_i2c_nuvoton_driver);
 		bus = i2c_find_bus_by_id(tpm_device->bus_id);
 		assert(bus->check_quirk == NULL);
 		bus->check_quirk = nuvoton_tpm_quirk;
