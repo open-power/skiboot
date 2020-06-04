@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 #
 # Copyright 2016 Jeremy Kerr <jk@ozlabs.org>
@@ -31,7 +31,7 @@ def create_parser():
     # Match the following prlog() call
     log_call = (((Literal("prerror") + Literal('(').suppress()) |
                  (Literal("prlog")   + Literal('(').suppress() +
-                  Word(string.letters + string.digits + '_') +
+                  Word(string.ascii_letters + string.digits + '_') +
                   Literal(',').suppress())) +
                 Combine(OneOrMore(QuotedString('"')), adjacent=False) +
                 (Literal(')') | Literal(',')).suppress()
@@ -63,11 +63,9 @@ def find_sources(dirname):
     def is_source(fname):
         return fname.endswith('.c')
 
-    def add_fn(s, dname, fnames):
-        s.extend([ os.path.join(dname, fname)
-                         for fname in fnames if is_source(fname) ])
-
-    os.path.walk(dirname, add_fn, sources)
+    for directory, dirnames, filenames in os.walk(dirname):
+        sources.extend([ os.path.join(directory, fname)
+                         for fname in filenames if is_source(fname) ])
     return sources
 
 def cleanup_content(content):
@@ -212,7 +210,7 @@ if __name__ == '__main__':
     sources = []
     for directory in args.directories:
         try:
-            git_tag = subprocess.check_output(["git","-C", directory, "describe", "--abbrev=0" ])
+            git_tag = subprocess.check_output(["git","-C", directory, "describe", "--abbrev=0" ], text=True)
         except:
             git_tag = "???"
         git_tag = git_tag.replace("\n", "")
