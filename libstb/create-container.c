@@ -110,7 +110,7 @@ void getPublicKeyRaw(ecc_key_t *pubkeyraw, char *filename)
 
 		close(fdin);
 
-		if (!infile || (*(unsigned char*) infile != 0x04)) {
+		if (infile == MAP_FAILED || (*(unsigned char*) infile != 0x04)) {
 			die(EX_DATAERR,
 					"File \"%s\" is not in expected format (private or public key in PEM, or public key RAW)",
 					filename);
@@ -148,7 +148,7 @@ void getSigRaw(ecc_signature_t *sigraw, char *filename)
 		die(EX_NOINPUT, "Cannot stat sig file: %s", filename);
 
 	infile = mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, fdin, 0);
-	if (!infile)
+	if (infile == MAP_FAILED)
 		die(EX_OSERR, "%s", "Cannot mmap file");
 
 	close(fdin);
@@ -464,7 +464,7 @@ int main(int argc, char* argv[])
 		die(EX_NOINPUT, "Cannot stat payload file: %s", params.payloadfn);
 
 	infile = mmap(NULL, payload_st.st_size, PROT_READ, MAP_PRIVATE, fdin, 0);
-	if (!infile)
+	if (infile == MAP_FAILED)
 		die(EX_OSERR, "%s", "Cannot mmap file");
 
 	fdout = open(params.imagefn, O_WRONLY | O_CREAT | O_TRUNC,

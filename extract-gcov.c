@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
 	}
 
 	addr = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	assert(addr != NULL);
+	assert(addr != MAP_FAILED);
 	skiboot_dump_size = sb.st_size;
 
 	printf("Skiboot memory dump %p - %p\n",
