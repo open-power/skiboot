@@ -280,7 +280,7 @@ static int parse_entry(struct blocklevel_device *bl,
 		}
 
 		data_ptr = mmap(NULL, pactual, PROT_READ, MAP_SHARED, data_fd, 0);
-		if (!data_ptr) {
+		if (data_ptr == MAP_FAILED) {
 			fprintf(stderr, "Couldn't mmap file '%s' for '%s' partition "
 				"(%m)\n", filename, name);
 			close(data_fd);

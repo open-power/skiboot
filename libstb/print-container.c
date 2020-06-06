@@ -655,7 +655,7 @@ int main(int argc, char* argv[])
 				strerror(errno));
 
 	container = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fdin, 0);
-	if (!container)
+	if (container == MAP_FAILED)
 		die(EX_OSERR, "Cannot mmap file: %s (%s)", params.imagefn,
 				strerror(errno));
 
