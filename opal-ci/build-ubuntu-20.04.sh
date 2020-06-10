@@ -9,8 +9,6 @@ MAKE_J=$(grep -c processor /proc/cpuinfo)
 export CROSS="ccache powerpc64le-linux-gnu-"
 
 make -j${MAKE_J} all
-(cd opal-ci; ./build-qemu-powernv.sh)
-export QEMU_BIN=$(pwd)/opal-ci/qemu/ppc64-softmmu/qemu-system-ppc64
 make -j${MAKE_J} check
 (make clean; cd external/gard && CROSS= make -j${MAKE_J})
 # because some ppc64le versions don't have arm cross compiler
