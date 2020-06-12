@@ -100,7 +100,6 @@
 /* Use 64K for everything by default */
 #define IC_PAGE_SIZE	0x10000
 #define TM_PAGE_SIZE	0x10000
-#define IPI_ESB_SHIFT	(16 + 1)
 #define EQ_ESB_SHIFT	(16 + 1)
 
 /* VC BAR contains set translations for the ESBs and the EQs.
@@ -164,6 +163,9 @@
 #define SBE_PER_BYTE	        4 /* PQ bits couples */
 #define SBE_SIZE	        (XIVE_INT_COUNT / SBE_PER_BYTE)
 #define IVT_SIZE	        (XIVE_INT_COUNT * sizeof(struct xive_ive))
+
+/* Use 64K for everything by default */
+#define XIVE_ESB_SHIFT		(16 + 1) /* trigger + mgmt pages */
 
 /* Max number of EQs. We allocate an indirect table big enough so
  * that when fully populated we can have that many EQs.
@@ -2559,8 +2561,8 @@ void xive_register_ipi_source(uint32_t base, uint32_t count, void *data,
 	/* Callbacks assume the MMIO base corresponds to the first
 	 * interrupt of that source structure so adjust it
 	 */
-	mmio_base = x->esb_mmio + (1ul << IPI_ESB_SHIFT) * base_idx;
-	__xive_register_source(x, s, base, count, IPI_ESB_SHIFT, mmio_base,
+	mmio_base = x->esb_mmio + (1ul << XIVE_ESB_SHIFT) * base_idx;
+	__xive_register_source(x, s, base, count, XIVE_ESB_SHIFT, mmio_base,
 			       flags, false, data, ops);
 }
 
@@ -2662,7 +2664,7 @@ static struct xive *init_one_xive(struct dt_node *np)
 	if (XIVE_CAN_STORE_EOI(x))
 		flags |= XIVE_SRC_STORE_EOI;
 	__xive_register_source(x, &x->ipis, x->int_base,
-			       x->int_hw_bot - x->int_base, IPI_ESB_SHIFT,
+			       x->int_hw_bot - x->int_base, XIVE_ESB_SHIFT,
 			       x->esb_mmio, flags, true, NULL, NULL);
 
 	/* Register escalation sources */
