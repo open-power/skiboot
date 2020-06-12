@@ -498,13 +498,20 @@ static uint32_t xive_chip_to_block(uint32_t chip_id)
  * corresponding escalation descriptor.
  *
  * Global interrupt numbers for non-escalation interrupts are thus
- * limited to 24 bits which is necessary for our XICS emulation since
- * the top 8 bits are reserved for the CPPR value.
- *
+ * limited to 24 bits because the XICS emulation encodes the CPPR
+ * value in the top (MSB) 8 bits. Hence, 4 bits are left for the XIVE
+ * block number and the remaining 20 bits for the interrupt index
+ * number.
  */
-#define GIRQ_TO_BLK(__g)	(((__g) >> 20) & 0xf)
-#define GIRQ_TO_IDX(__g)	((__g) & 0x000fffff)
-#define BLKIDX_TO_GIRQ(__b,__i)	(((uint32_t)(__b)) << 20 | (__i))
+#define INT_SHIFT		20
+
+#if XIVE_INT_ORDER > INT_SHIFT
+#error "Too many ESBs for IRQ encoding"
+#endif
+
+#define GIRQ_TO_BLK(__g)	(((__g) >> INT_SHIFT) & 0xf)
+#define GIRQ_TO_IDX(__g)	((__g) & ((1 << INT_SHIFT) - 1))
+#define BLKIDX_TO_GIRQ(__b,__i)	(((uint32_t)(__b)) << INT_SHIFT | (__i))
 #define GIRQ_IS_ESCALATION(__g)	((__g) & 0x01000000)
 #define MAKE_ESCALATION_GIRQ(__b,__i)(BLKIDX_TO_GIRQ(__b,__i) | 0x01000000)
 
