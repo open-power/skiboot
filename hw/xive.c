@@ -215,11 +215,18 @@
 #define XIVE_VP_COUNT		(1ul << XIVE_VP_ORDER)
 #define XIVE_VP_TABLE_SIZE	((XIVE_VP_COUNT / VP_PER_PAGE) * XIVE_VSD_SIZE)
 
-/* Initial number of VPs (XXX Make it a variable ?). Round things
- * up to a max of 32 cores per chip
+/*
+ * VP ids for HW threads.
+ *
+ * These values are hardcoded in the CAM line of the HW context and
+ * they depend on the thread id bits of the chip, 7bit for p9.
+ *
+ *     HW CAM Line      |chip|000000000001|thrdid |
+ *     23bits              4      12          7
  */
-#define INITIAL_VP_BASE		0x80
-#define INITIAL_VP_COUNT	0x80
+#define XIVE_THREADID_SHIFT	7
+#define XIVE_HW_VP_BASE		(1 << XIVE_THREADID_SHIFT)
+#define XIVE_HW_VP_COUNT	(1 << XIVE_THREADID_SHIFT)
 
 /* The xive operation mode indicates the active "API" and corresponds
  * to the "mode" parameter of the opal_xive_reset() call
@@ -391,7 +398,7 @@ struct xive {
 	 *
 	 * The size of the indirect tables are driven by XIVE_VP_COUNT and
 	 * XIVE_EQ_COUNT. The number of pre-allocated ones are driven by
-	 * INITIAL_VP_COUNT (number of EQ depends on number of VP) in block
+	 * XIVE_HW_VP_COUNT (number of EQ depends on number of VP) in block
 	 * mode, otherwise we only preallocate INITIAL_BLK0_VP_COUNT on
 	 * block 0.
 	 */
@@ -527,7 +534,7 @@ static uint32_t xive_chip_to_block(uint32_t chip_id)
 #define GIRQ_TO_CHIP(__isn)	(VC_BLK_TO_CHIP(GIRQ_TO_BLK(__isn)))
 
 /* Routing of physical processors to VPs */
-#define PIR2VP_IDX(__pir)	(0x80 | P9_PIR2LOCALCPU(__pir))
+#define PIR2VP_IDX(__pir)	(XIVE_HW_VP_BASE | P9_PIR2LOCALCPU(__pir))
 #define PIR2VP_BLK(__pir)	(xive_chip_to_block(P9_PIR2GCID(__pir)))
 #define VP2PIR(__blk, __idx)	(P9_PIRFROMLOCALCPU(VC_BLK_TO_CHIP(__blk), (__idx) & 0x7f))
 
@@ -988,7 +995,8 @@ static void xive_init_vp_allocator(void)
 	 * These are 0x80..0xff, so order 7 starting at 0x80. This will
 	 * reserve that range on each chip.
 	 */
-	assert(buddy_reserve(xive_vp_buddy, 0x80, 7));
+	assert(buddy_reserve(xive_vp_buddy, XIVE_HW_VP_BASE,
+			     XIVE_THREADID_SHIFT));
 }
 
 static uint32_t xive_alloc_vps(uint32_t order)
@@ -1082,7 +1090,7 @@ static void xive_scrub_workaround_vp(struct xive *x, uint32_t block, uint32_t id
 	 * Note: This means the workaround only works for block group
 	 * mode.
 	 */
-	__xive_cache_watch(x, xive_cache_vpc, block, INITIAL_VP_BASE, 0,
+	__xive_cache_watch(x, xive_cache_vpc, block, XIVE_HW_VP_BASE, 0,
 			   0, NULL, true, false);
 }
 
@@ -1682,8 +1690,8 @@ static bool xive_prealloc_tables(struct xive *x)
 	memset(x->vp_ind_base, 0, al);
 
 	/* Populate/initialize VP/EQs indirect backing */
-	vp_init_count = INITIAL_VP_COUNT;
-	vp_init_base = INITIAL_VP_BASE;
+	vp_init_count = XIVE_HW_VP_COUNT;
+	vp_init_base = XIVE_HW_VP_BASE;
 
 	/* Allocate pages for some VPs in indirect mode */
 	pbase = vp_init_base / VP_PER_PAGE;
@@ -4479,8 +4487,8 @@ static void xive_reset_one(struct xive *x)
 		struct xive_vp vp0 = {0};
 
 		/* Ignore the physical CPU VPs */
-		if (i >= INITIAL_VP_BASE &&
-		    i < (INITIAL_VP_BASE + INITIAL_VP_COUNT))
+		if (i >= XIVE_HW_VP_BASE &&
+		    i < (XIVE_HW_VP_BASE + XIVE_HW_VP_COUNT))
 			continue;
 
 		/* Is the VP valid ? */
@@ -4587,7 +4595,8 @@ static int64_t __xive_reset(uint64_t version)
 	 * These are 0x80..0xff, so order 7 starting at 0x80. This will
 	 * reserve that range on each chip.
 	 */
-	assert(buddy_reserve(xive_vp_buddy, 0x80, 7));
+	assert(buddy_reserve(xive_vp_buddy, XIVE_HW_VP_BASE,
+			     XIVE_THREADID_SHIFT));
 
 	return OPAL_SUCCESS;
 }
