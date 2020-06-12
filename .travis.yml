@@ -26,11 +26,14 @@ jobs:
     - env: RUN_ON_CONTAINER=fedora-rawhide
     - env: RUN_ON_CONTAINER=debian-unstable
     - env: RUN_ON_CONTAINER=ubuntu-latest
+    - env: RUN_ON_CONTAINER=clang
   exclude:
     - os: linux-ppc64le
       env: RUN_ON_CONTAINER=centos7
     - os: linux-ppc64le
       env: RUN_ON_CONTAINER=docs
+    - os: linux-ppc64le
+      env: RUN_ON_CONTAINER=clang
 
 install:
     - docker build --pull -t ${RUN_ON_CONTAINER} -f opal-ci/Dockerfile-${RUN_ON_CONTAINER} .
