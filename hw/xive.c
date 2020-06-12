@@ -100,7 +100,6 @@
 /* Use 64K for everything by default */
 #define IC_PAGE_SIZE	0x10000
 #define TM_PAGE_SIZE	0x10000
-#define EQ_ESB_SHIFT	(16 + 1)
 
 /* VC BAR contains set translations for the ESBs and the EQs.
  *
@@ -181,6 +180,8 @@
 #define XIVE_EQ_COUNT		(1ul << XIVE_EQ_ORDER)
 #define EQ_PER_PAGE		(0x10000 / 32) // Use sizeof ?
 #define IND_EQ_TABLE_SIZE	((XIVE_EQ_COUNT / EQ_PER_PAGE) * 8)
+
+#define XIVE_EQ_SHIFT		(16 + 1) /* ESn + ESe pages */
 
 /* Number of priorities (and thus EQDs) we allocate for each VP */
 #define NUM_INT_PRIORITIES	8
@@ -2676,7 +2677,7 @@ static struct xive *init_one_xive(struct dt_node *np)
 	/* Register escalation sources */
 	__xive_register_source(x, &x->esc_irqs,
 			       MAKE_ESCALATION_GIRQ(x->block_id, 0),
-			       XIVE_EQ_COUNT, EQ_ESB_SHIFT,
+			       XIVE_EQ_COUNT, XIVE_EQ_SHIFT,
 			       x->eq_mmio, XIVE_SRC_EOI_PAGE1,
 			       false, NULL, NULL);
 
