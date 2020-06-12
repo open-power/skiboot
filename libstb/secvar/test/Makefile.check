@@ -8,12 +8,10 @@ SECVAR_TEST = $(patsubst %.c, %, $(wildcard $(SECVAR_TEST_DIR)/secvar-test-*.c))
 HOSTCFLAGS+=-I . -I include
 
 .PHONY : secvar-check
-secvar-check: $(SECVAR_TEST:%=%-check) $(SECVAR_TEST:%=%-gcov-run)
-secvar-check: $(SECVAR_TEST_NOSTUB:%=%-check) $(SECVAR_TEST_NOSTUB:%=%-gcov-run)
+secvar-check: $(SECVAR_TEST:%=%-check) $(SECVAR_TEST_NOSTUB:%=%-check)
 
 .PHONY : secvar-coverage
-secvar-coverage: $(SECVAR_TEST:%=%-gcov-run)
-secvar-coverage: $(SECVAR_TEST_NOSTUB:%=%-gcov-run)
+secvar-coverage: $(SECVAR_TEST:%=%-gcov-run) $(SECVAR_TEST_NOSTUB:%=%-gcov-run)
 
 check: secvar-check
 coverage: secvar-coverage

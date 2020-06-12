@@ -4,7 +4,7 @@ IPMI_TEST := hw/ipmi/test/run-fru
 LCOV_EXCLUDE += $(IPMI_TEST:%=%.c)
 
 .PHONY : hw-ipmi-check hw-ipmi-coverage
-hw-ipmi-check: $(IPMI_TEST:%=%-check) $(IPMI_TEST:%=%-gcov-run)
+hw-ipmi-check: $(IPMI_TEST:%=%-check)
 hw-ipmi-coverage: $(IPMI_TEST:%=%-gcov-run)
 
 check: hw-ipmi-check

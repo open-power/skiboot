@@ -4,12 +4,11 @@ LCOV_EXCLUDE += $(CCAN_TEST_SRC) ccan/list/test/helper.c
 
 CCAN_TEST := $(CCAN_TEST_SRC:%.c=%)
 
-
-.PHONY: $(CCAN_TEST:%=%-gcov-run) ccan-check
+.PHONY: ccan-check
 
 ccan-check: $(CCAN_TEST:%=%-check)
 
-check: ccan-check $(CCAN_TEST:%=%-gcov-run)
+check: ccan-check
 
 .PHONY: ccan-coverage
 

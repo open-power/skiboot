@@ -35,8 +35,7 @@ LCOV_EXCLUDE += $(CORE_TEST:%=%.c) core/test/stubs.c
 LCOV_EXCLUDE += $(CORE_TEST_NOSTUB:%=%.c) /usr/include/*
 
 .PHONY : core-check
-core-check: $(CORE_TEST:%=%-check) $(CORE_TEST:%=%-gcov-run)
-core-check: $(CORE_TEST_NOSTUB:%=%-check) $(CORE_TEST_NOSTUB:%=%-gcov-run)
+core-check: $(CORE_TEST:%=%-check) $(CORE_TEST_NOSTUB:%=%-check)
 
 .PHONY : core-coverage
 core-coverage: $(CORE_TEST:%=%-gcov-run)

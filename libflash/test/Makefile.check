@@ -33,7 +33,7 @@ check_PROGRAMS = \
 TEST_FLAGS = -D__TEST__ -MMD -MP
 
 .PHONY: libflash-check libflash-coverage
-libflash-check: $(check_PROGRAMS:%=%-check) $(CORE_TEST:%=%-gcov-run)
+libflash-check: $(check_PROGRAMS:%=%-check)
 libflash-coverage: $(check_PROGRAMS:%=%-gcov-run)
 clean: libflash-test-clean
 check: libflash-check
