@@ -91,6 +91,7 @@
  * local block of that chip
  */
 
+#define XIVE_VSD_SIZE		sizeof(u64)
 
 /* BAR default values (should be initialized by HostBoot but for
  * now we do it). Based on the memory map document by Dave Larson
@@ -180,7 +181,7 @@
 
 #define XIVE_EQ_ORDER		20 /* 1M ENDs */
 #define XIVE_EQ_COUNT		(1ul << XIVE_EQ_ORDER)
-#define IND_EQ_TABLE_SIZE	((XIVE_EQ_COUNT / EQ_PER_PAGE) * 8)
+#define XIVE_EQ_TABLE_SIZE	((XIVE_EQ_COUNT / EQ_PER_PAGE) * XIVE_VSD_SIZE)
 
 #define XIVE_EQ_SHIFT		(16 + 1) /* ESn + ESe pages */
 
@@ -217,7 +218,7 @@
 
 #define MAX_VP_ORDER		NVT_SHIFT /* 512k */
 #define MAX_VP_COUNT		(1ul << MAX_VP_ORDER)
-#define IND_VP_TABLE_SIZE	((MAX_VP_COUNT / VP_PER_PAGE) * 8)
+#define XIVE_VP_TABLE_SIZE	((MAX_VP_COUNT / VP_PER_PAGE) * XIVE_VSD_SIZE)
 
 /* Initial number of VPs (XXX Make it a variable ?). Round things
  * up to a max of 32 cores per chip
@@ -1661,10 +1662,12 @@ static bool xive_prealloc_tables(struct xive *x)
 	memset(x->ivt_base, 0, IVT_SIZE);
 	xive_dbg(x, "IVT at %p size 0x%lx\n", x->ivt_base, IVT_SIZE);
 
-	/* Indirect EQ table. (XXX Align to 64K until I figure out the
-	 * HW requirements)
-	 */
-	al = (IND_EQ_TABLE_SIZE + 0xffff) & ~0xffffull;
+	/* Indirect EQ table.  Limited to one top page. */
+	al = ALIGN_UP(XIVE_EQ_TABLE_SIZE, 0x10000);
+	if (al > 0x10000) {
+		xive_err(x, "EQ indirect table is too big !\n");
+		return false;
+	}
 	x->eq_ind_base = local_alloc(x->chip_id, al, al);
 	if (!x->eq_ind_base) {
 		xive_err(x, "Failed to allocate EQ indirect table\n");
@@ -1672,19 +1675,21 @@ static bool xive_prealloc_tables(struct xive *x)
 	}
 	memset(x->eq_ind_base, 0, al);
 	xive_dbg(x, "EQi at %p size 0x%llx\n", x->eq_ind_base, al);
-	x->eq_ind_count = IND_EQ_TABLE_SIZE / 8;
+	x->eq_ind_count = XIVE_EQ_TABLE_SIZE / 8;
 
-	/* Indirect VP table. (XXX Align to 64K until I figure out the
-	 * HW requirements)
-	 */
-	al = (IND_VP_TABLE_SIZE + 0xffff) & ~0xffffull;
+	/* Indirect VP table.  Limited to one top page. */
+	al = ALIGN_UP(XIVE_VP_TABLE_SIZE, 0x10000);
+	if (al > 0x10000) {
+		xive_err(x, "VP indirect table is too big !\n");
+		return false;
+	}
 	x->vp_ind_base = local_alloc(x->chip_id, al, al);
 	if (!x->vp_ind_base) {
 		xive_err(x, "Failed to allocate VP indirect table\n");
 		return false;
 	}
 	xive_dbg(x, "VPi at %p size 0x%llx\n", x->vp_ind_base, al);
-	x->vp_ind_count = IND_VP_TABLE_SIZE / 8;
+	x->vp_ind_count = XIVE_VP_TABLE_SIZE / 8;
 	memset(x->vp_ind_base, 0, al);
 
 	/* Populate/initialize VP/EQs indirect backing */
