@@ -93,15 +93,6 @@
 
 #define XIVE_VSD_SIZE		sizeof(u64)
 
-/* BAR default values (should be initialized by HostBoot but for
- * now we do it). Based on the memory map document by Dave Larson
- *
- * Fixed IC and TM BARs first.
- */
-/* Use 64K for everything by default */
-#define IC_PAGE_SIZE	0x10000
-#define TM_PAGE_SIZE	0x10000
-
 /* VC BAR contains set translations for the ESBs and the EQs.
  *
  * It's divided in 64 sets, each of which can be either ESB pages or EQ pages.
@@ -1421,12 +1412,9 @@ static bool xive_configure_bars(struct xive *x)
 
 	/* IC BAR */
 	phys_map_get(chip_id, XIVE_IC, 0, (uint64_t *)&x->ic_base, &x->ic_size);
-	val = (uint64_t)x->ic_base | CQ_IC_BAR_VALID;
-	if (IC_PAGE_SIZE == 0x10000) {
-		val |= CQ_IC_BAR_64K;
-		x->ic_shift = 16;
-	} else
-		x->ic_shift = 12;
+	val = (uint64_t)x->ic_base | CQ_IC_BAR_VALID | CQ_IC_BAR_64K;
+	x->ic_shift = 16;
+
 	xive_regwx(x, CQ_IC_BAR, val);
 	if (x->last_reg_error)
 		return false;
@@ -1436,12 +1424,9 @@ static bool xive_configure_bars(struct xive *x)
 	 * all phys_map_get(XIVE_TM) calls.
 	 */
 	phys_map_get(0, XIVE_TM, 0, (uint64_t *)&x->tm_base, &x->tm_size);
-	val = (uint64_t)x->tm_base | CQ_TM_BAR_VALID;
-	if (TM_PAGE_SIZE == 0x10000) {
-		x->tm_shift = 16;
-		val |= CQ_TM_BAR_64K;
-	} else
-		x->tm_shift = 12;
+	val = (uint64_t)x->tm_base | CQ_TM_BAR_VALID | CQ_TM_BAR_64K;
+	x->tm_shift = 16;
+
 	xive_regwx(x, CQ_TM1_BAR, val);
 	if (x->last_reg_error)
 		return false;
