@@ -497,8 +497,8 @@ static uint32_t xive_chip_to_block(uint32_t chip_id)
  *      8      4           20
  *
  * the E bit indicates that this is an escalation interrupt, in
- * that case, the BLOC/INDEX represents the EQ containig the
- * corresponding escalation descriptor.
+ * that case, the BLOCK/INDEX points to the EQ descriptor associated
+ * with the escalation.
  *
  * Global interrupt numbers for non-escalation interrupts are thus
  * limited to 24 bits because the XICS emulation encodes the CPPR
@@ -507,16 +507,21 @@ static uint32_t xive_chip_to_block(uint32_t chip_id)
  * number.
  */
 #define INT_SHIFT		20
+#define INT_ESC_SHIFT		(INT_SHIFT + 4) /* 4bits block id */
 
 #if XIVE_INT_ORDER > INT_SHIFT
 #error "Too many ESBs for IRQ encoding"
 #endif
 
+#if XIVE_EQ_ORDER > INT_SHIFT
+#error "Too many EQs for escalation IRQ number encoding"
+#endif
+
 #define GIRQ_TO_BLK(__g)	(((__g) >> INT_SHIFT) & 0xf)
 #define GIRQ_TO_IDX(__g)	((__g) & ((1 << INT_SHIFT) - 1))
 #define BLKIDX_TO_GIRQ(__b,__i)	(((uint32_t)(__b)) << INT_SHIFT | (__i))
-#define GIRQ_IS_ESCALATION(__g)	((__g) & 0x01000000)
-#define MAKE_ESCALATION_GIRQ(__b,__i)(BLKIDX_TO_GIRQ(__b,__i) | 0x01000000)
+#define GIRQ_IS_ESCALATION(__g)	((__g) & (1 << INT_ESC_SHIFT))
+#define MAKE_ESCALATION_GIRQ(__b,__i)(BLKIDX_TO_GIRQ(__b,__i) | (1 << INT_ESC_SHIFT))
 
 /* Block/IRQ to chip# conversions */
 #define PC_BLK_TO_CHIP(__b)	(xive_block_to_chip[__b])
