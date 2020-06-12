@@ -176,9 +176,10 @@
  *
  * TODO: adjust the VC BAR range for END ESBs on this value
  */
+#define EQ_PER_PAGE		(0x10000 / sizeof(struct xive_eq))
+
 #define XIVE_EQ_ORDER		20 /* 1M ENDs */
 #define XIVE_EQ_COUNT		(1ul << XIVE_EQ_ORDER)
-#define EQ_PER_PAGE		(0x10000 / 32) // Use sizeof ?
 #define IND_EQ_TABLE_SIZE	((XIVE_EQ_COUNT / EQ_PER_PAGE) * 8)
 
 #define XIVE_EQ_SHIFT		(16 + 1) /* ESn + ESe pages */
@@ -210,12 +211,12 @@
  *
  * XXX Adjust that based on BAR value ?
  */
+#define VP_PER_PAGE		(0x10000 / sizeof(struct xive_vp))
 
 #define NVT_SHIFT		19	/* in sync with EQ_W6_NVT_INDEX */
 
 #define MAX_VP_ORDER		NVT_SHIFT /* 512k */
 #define MAX_VP_COUNT		(1ul << MAX_VP_ORDER)
-#define VP_PER_PAGE		(0x10000 / 64) // Use sizeof ?
 #define IND_VP_TABLE_SIZE	((MAX_VP_COUNT / VP_PER_PAGE) * 8)
 
 /* Initial number of VPs (XXX Make it a variable ?). Round things
