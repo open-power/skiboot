@@ -1,6 +1,7 @@
 #!/bin/bash
 
-QEMU_ARGS="-M powernv -m 3G -nographic -device ipmi-bmc-sim,id=bmc0 -device isa-ipmi-bt,bmc=bmc0,irq=10"
+QEMU_ARGS="-M powernv -nodefaults -device ipmi-bmc-sim,id=bmc0 -serial none"
+QEMU_ARGS+=" -device isa-serial,chardev=s1 -chardev stdio,id=s1,signal=off"
 
 if [ -z "$QEMU_BIN" ]; then
     QEMU_BIN="qemu-system-ppc64"
