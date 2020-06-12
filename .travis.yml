@@ -18,7 +18,6 @@ env:
       - RUN_ON_CONTAINER=centos7
       - RUN_ON_CONTAINER=fedora32
       - RUN_ON_CONTAINER=fedora-rawhide
-      - RUN_ON_CONTAINER=debian-stretch
       - RUN_ON_CONTAINER=debian-unstable
       - RUN_ON_CONTAINER=docs
 
