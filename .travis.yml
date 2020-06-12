@@ -17,10 +17,6 @@ env:
     - RUN_ON_CONTAINER=debian-stretch
     - RUN_ON_CONTAINER=debian-unstable
     - RUN_ON_CONTAINER=docs
-    global:
-        # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-        #   via the "travis encrypt" command using the project repo's public key
-        secure: "MpNEGFa1VrF/vsQq24n5UgfRbz1wVC6B8mubFnyK4gX0IuQ9xhWuTzMLUQF9UJxe5jnC2DTmVUvYTYN/hggw+PpYwbOOAE0QGR5pmPHA4PSRmc5pxt1q18/sv7EPFw66GFyWJq94nWjpigyKQ8KGtA67j1xFqrDoS43OA76WZgo="
 
 matrix:
   allow_failures:
@@ -42,6 +38,9 @@ script:
     - docker build --pull -t ${RUN_ON_CONTAINER} -f opal-ci/Dockerfile-${RUN_ON_CONTAINER} . &&
       docker run --volume $HOME/.ccache:/root/.ccache --volume `pwd`:/build --rm -t $RUN_ON_CONTAINER bash -c "./opal-ci/build-${RUN_ON_CONTAINER}.sh";
 
+
+# apparently this needs to be in the master branch in order for it to work on
+# other branches too.
 addons:
   coverity_scan:
     project:
