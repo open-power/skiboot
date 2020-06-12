@@ -39,6 +39,7 @@ install:
 script:
     - >
       docker run
+      --security-opt seccomp=unconfined
       --volume $HOME/.ccache:/root/.ccache
       --volume `pwd`:/build
       --volume `pwd`/ci_build_cache/${RUN_ON_CONTAINER}:/root/ci_build_cache/
