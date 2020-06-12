@@ -146,18 +146,24 @@
  * so we could potentially make the IVT size twice as big, but for now
  * we will simply share it and ensure we don't hand out IPIs that
  * overlap the HW interrupts.
+ *
+ * TODO: adjust the VC BAR range for IPI ESBs on this value
  */
-#define MAX_INT_ENTRIES		(1 * 1024 * 1024)
+
+#define XIVE_INT_ORDER		20 /* 1M interrupts */
+#define XIVE_INT_COUNT		(1ul << XIVE_INT_ORDER)
 
 /*
  * First interrupt number, also the first logical interrupt number
- * allocated by Linux
+ * allocated by Linux (the first numbers are reserved for ISA)
  */
 #define XIVE_INT_FIRST		0x10
 
 /* Corresponding direct table sizes */
-#define SBE_SIZE	(MAX_INT_ENTRIES / 4)
-#define IVT_SIZE	(MAX_INT_ENTRIES * 8)
+
+#define SBE_PER_BYTE	        4 /* PQ bits couples */
+#define SBE_SIZE	        (XIVE_INT_COUNT / SBE_PER_BYTE)
+#define IVT_SIZE	        (XIVE_INT_COUNT * sizeof(struct xive_ive))
 
 /* Max number of EQs. We allocate an indirect table big enough so
  * that when fully populated we can have that many EQs.
@@ -376,7 +382,7 @@ struct xive {
 	 * and partially populated.
 	 *
 	 * Currently, the ESB/SBE and the EAS/IVT tables are direct and
-	 * fully pre-allocated based on MAX_INT_ENTRIES.
+	 * fully pre-allocated based on XIVE_INT_COUNT.
 	 *
 	 * The other tables are indirect, we thus pre-allocate the indirect
 	 * table (ie, pages of pointers) and populate enough of the pages
@@ -760,7 +766,7 @@ static struct xive_ive *xive_get_ive(struct xive *x, unsigned int isn)
 			xive_err(x, "xive_get_ive, ISN 0x%x not on right chip\n", isn);
 			return NULL;
 		}
-		assert (idx < MAX_INT_ENTRIES);
+		assert (idx < XIVE_INT_COUNT);
 
 		/* If we support >1 block per chip, this should still work as
 		 * we are likely to make the table contiguous anyway
@@ -1624,7 +1630,7 @@ static bool xive_prealloc_tables(struct xive *x)
 	}
 	/* SBEs are initialized to 0b01 which corresponds to "ints off" */
 	memset(x->sbe_base, 0x55, SBE_SIZE);
-	xive_dbg(x, "SBE at %p size 0x%x\n", x->sbe_base, SBE_SIZE);
+	xive_dbg(x, "SBE at %p size 0x%lx\n", x->sbe_base, SBE_SIZE);
 
 	/* EAS/IVT entries are 8 bytes */
 	x->ivt_base = local_alloc(x->chip_id, IVT_SIZE, IVT_SIZE);
@@ -1636,7 +1642,7 @@ static bool xive_prealloc_tables(struct xive *x)
 	 * when actually used
 	 */
 	memset(x->ivt_base, 0, IVT_SIZE);
-	xive_dbg(x, "IVT at %p size 0x%x\n", x->ivt_base, IVT_SIZE);
+	xive_dbg(x, "IVT at %p size 0x%lx\n", x->ivt_base, IVT_SIZE);
 
 	/* Indirect EQ table. (XXX Align to 64K until I figure out the
 	 * HW requirements)
@@ -2595,7 +2601,7 @@ static struct xive *init_one_xive(struct dt_node *np)
 	 * so that HW sources land outside of ESB space...
 	 */
 	x->int_base	= BLKIDX_TO_GIRQ(x->block_id, 0);
-	x->int_max	= x->int_base + MAX_INT_ENTRIES;
+	x->int_max	= x->int_base + XIVE_INT_COUNT;
 	x->int_hw_bot	= x->int_max;
 	x->int_ipi_top	= x->int_base;
 
@@ -2611,9 +2617,9 @@ static struct xive *init_one_xive(struct dt_node *np)
 	/* Make sure we don't hand out 0 */
 	bitmap_set_bit(*x->eq_map, 0);
 
-	x->int_enabled_map = zalloc(BITMAP_BYTES(MAX_INT_ENTRIES));
+	x->int_enabled_map = zalloc(BITMAP_BYTES(XIVE_INT_COUNT));
 	assert(x->int_enabled_map);
-	x->ipi_alloc_map = zalloc(BITMAP_BYTES(MAX_INT_ENTRIES));
+	x->ipi_alloc_map = zalloc(BITMAP_BYTES(XIVE_INT_COUNT));
 	assert(x->ipi_alloc_map);
 
 	xive_dbg(x, "Handling interrupts [%08x..%08x]\n",
@@ -3382,7 +3388,7 @@ static bool check_misrouted_ipi(struct cpu_thread *me, uint32_t irq)
 				if (!x)
 					continue;
 				ive = x->ivt_base;
-				for (i = 0; i < MAX_INT_ENTRIES; i++) {
+				for (i = 0; i < XIVE_INT_COUNT; i++) {
 					if (xive_get_field64(IVE_EQ_DATA, ive[i].w) == irq) {
 						eq_blk = xive_get_field64(IVE_EQ_BLOCK, ive[i].w);
 						eq_idx = xive_get_field64(IVE_EQ_INDEX, ive[i].w);
@@ -4397,7 +4403,7 @@ static void xive_reset_one(struct xive *x)
 	lock(&x->lock);
 
 	/* Check all interrupts are disabled */
-	i = bitmap_find_one_bit(*x->int_enabled_map, 0, MAX_INT_ENTRIES);
+	i = bitmap_find_one_bit(*x->int_enabled_map, 0, XIVE_INT_COUNT);
 	if (i >= 0)
 		xive_warn(x, "Interrupt %d (and maybe more) not disabled"
 			  " at reset !\n", i);
@@ -4405,7 +4411,7 @@ static void xive_reset_one(struct xive *x)
 	/* Reset IPI allocation */
 	xive_dbg(x, "freeing alloc map %p/%p\n",
 		 x->ipi_alloc_map, *x->ipi_alloc_map);
-	memset(x->ipi_alloc_map, 0, BITMAP_BYTES(MAX_INT_ENTRIES));
+	memset(x->ipi_alloc_map, 0, BITMAP_BYTES(XIVE_INT_COUNT));
 
 	xive_dbg(x, "Resetting EQs...\n");
 
