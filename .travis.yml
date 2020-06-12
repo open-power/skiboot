@@ -31,9 +31,18 @@ jobs:
     - os: linux-ppc64le
       env: RUN_ON_CONTAINER=docs
 
+install:
+    - docker build --pull -t ${RUN_ON_CONTAINER} -f opal-ci/Dockerfile-${RUN_ON_CONTAINER} .
+    - mkdir -p ci_build_cache/${RUN_ON_CONTAINER}
+
 script:
-    - docker build --pull -t ${RUN_ON_CONTAINER} -f opal-ci/Dockerfile-${RUN_ON_CONTAINER} . &&
-      docker run --volume $HOME/.ccache:/root/.ccache --volume `pwd`:/build --rm -t $RUN_ON_CONTAINER bash -c "./opal-ci/build-${RUN_ON_CONTAINER}.sh";
+    - >
+      docker run
+      --volume $HOME/.ccache:/root/.ccache
+      --volume `pwd`:/build
+      --volume `pwd`/ci_build_cache/${RUN_ON_CONTAINER}:/root/ci_build_cache/
+      --rm -t $RUN_ON_CONTAINER
+      bash -c "./opal-ci/build-${RUN_ON_CONTAINER}.sh"
 
 
 # apparently this needs to be in the master branch in order for it to work on
