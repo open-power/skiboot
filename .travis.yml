@@ -25,6 +25,7 @@ jobs:
   allow_failures:
     - env: RUN_ON_CONTAINER=fedora-rawhide
     - env: RUN_ON_CONTAINER=debian-unstable
+    - env: RUN_ON_CONTAINER=ubuntu-latest
   exclude:
     - os: linux-ppc64le
       env: RUN_ON_CONTAINER=centos7
