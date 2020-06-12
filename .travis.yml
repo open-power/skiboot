@@ -42,6 +42,7 @@ script:
       --volume $HOME/.ccache:/root/.ccache
       --volume `pwd`:/build
       --volume `pwd`/ci_build_cache/${RUN_ON_CONTAINER}:/root/ci_build_cache/
+      --tmpfs /tmp/
       --rm -t $RUN_ON_CONTAINER
       bash -c "./opal-ci/build-${RUN_ON_CONTAINER}.sh"
 
