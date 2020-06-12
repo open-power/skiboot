@@ -175,11 +175,12 @@
  * 2K EQs. We need 512 pointers, ie, 4K of memory for the indirect
  * table.
  *
- * XXX Adjust that based on BAR value ?
+ * TODO: adjust the VC BAR range for END ESBs on this value
  */
-#define MAX_EQ_COUNT		(1 * 1024 * 1024)
+#define XIVE_EQ_ORDER		20 /* 1M ENDs */
+#define XIVE_EQ_COUNT		(1ul << XIVE_EQ_ORDER)
 #define EQ_PER_PAGE		(0x10000 / 32) // Use sizeof ?
-#define IND_EQ_TABLE_SIZE	((MAX_EQ_COUNT / EQ_PER_PAGE) * 8)
+#define IND_EQ_TABLE_SIZE	((XIVE_EQ_COUNT / EQ_PER_PAGE) * 8)
 
 /* Number of priorities (and thus EQDs) we allocate for each VP */
 #define NUM_INT_PRIORITIES	8
@@ -391,7 +392,7 @@ struct xive {
 	 * for our basic setup using 64K pages.
 	 *
 	 * The size of the indirect tables are driven by MAX_VP_COUNT and
-	 * MAX_EQ_COUNT. The number of pre-allocated ones are driven by
+	 * XIVE_EQ_COUNT. The number of pre-allocated ones are driven by
 	 * INITIAL_VP_COUNT (number of EQ depends on number of VP) in block
 	 * mode, otherwise we only preallocate INITIAL_BLK0_VP_COUNT on
 	 * block 0.
@@ -869,7 +870,7 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect)
 	assert(x->eq_map);
 
 	/* Allocate from the EQ bitmap. Each bit is 8 EQs */
-	idx = bitmap_find_zero_bit(*x->eq_map, 0, MAX_EQ_COUNT >> 3);
+	idx = bitmap_find_zero_bit(*x->eq_map, 0, XIVE_EQ_COUNT >> 3);
 	if (idx < 0) {
 		xive_dbg(x, "Allocation from EQ bitmap failed !\n");
 		return XIVE_ALLOC_NO_SPACE;
@@ -2621,7 +2622,7 @@ static struct xive *init_one_xive(struct dt_node *np)
 		x->int_ipi_top = XIVE_INT_FIRST;
 
 	/* Allocate a few bitmaps */
-	x->eq_map = zalloc(BITMAP_BYTES(MAX_EQ_COUNT >> 3));
+	x->eq_map = zalloc(BITMAP_BYTES(XIVE_EQ_COUNT >> 3));
 	assert(x->eq_map);
 	/* Make sure we don't hand out 0 */
 	bitmap_set_bit(*x->eq_map, 0);
@@ -2670,7 +2671,7 @@ static struct xive *init_one_xive(struct dt_node *np)
 	/* Register escalation sources */
 	__xive_register_source(x, &x->esc_irqs,
 			       MAKE_ESCALATION_GIRQ(x->block_id, 0),
-			       MAX_EQ_COUNT, EQ_ESB_SHIFT,
+			       XIVE_EQ_COUNT, EQ_ESB_SHIFT,
 			       x->eq_mmio, XIVE_SRC_EOI_PAGE1,
 			       false, NULL, NULL);
 
@@ -4425,7 +4426,7 @@ static void xive_reset_one(struct xive *x)
 	xive_dbg(x, "Resetting EQs...\n");
 
 	/* Reset all allocated EQs and free the user ones */
-	bitmap_for_each_one(*x->eq_map, MAX_EQ_COUNT >> 3, i) {
+	bitmap_for_each_one(*x->eq_map, XIVE_EQ_COUNT >> 3, i) {
 		struct xive_eq eq0;
 		struct xive_eq *eq;
 		int j;
