@@ -43,6 +43,11 @@ CWARNS += -Werror
 endif
 endif
 
+# clang tends to emit more warnings so stop those breaking the build for now
+ifeq ($(cc-name),clang)
+CWARNS += -Wno-error
+endif
+
 # Host tools and options
 HOSTCC=gcc
 HOSTEND=$(shell uname -m | sed -e 's/^i.*86$$/LITTLE/' -e 's/^x86.*/LITTLE/' -e 's/^ppc64le/LITTLE/' -e 's/^ppc.*/BIG/')
