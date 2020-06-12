@@ -201,15 +201,19 @@
  * we will allocate half of the above. We might add support for
  * 2 blocks per chip later if necessary.
  *
- * XXX Adjust that based on BAR value ?
+ * TODO: adjust the PC BAR range
  */
 #define VP_PER_PAGE		(0x10000 / sizeof(struct xive_vp))
 
 #define NVT_SHIFT		19	/* in sync with EQ_W6_NVT_INDEX */
 
-#define MAX_VP_ORDER		NVT_SHIFT /* 512k */
-#define MAX_VP_COUNT		(1ul << MAX_VP_ORDER)
-#define XIVE_VP_TABLE_SIZE	((MAX_VP_COUNT / VP_PER_PAGE) * XIVE_VSD_SIZE)
+/*
+ * We use 8 priorities per VP and the number of EQs is configured to
+ * 1M. Therefore, our VP space is limited to 128k.
+ */
+#define XIVE_VP_ORDER		(XIVE_EQ_ORDER - 3) /* 128k */
+#define XIVE_VP_COUNT		(1ul << XIVE_VP_ORDER)
+#define XIVE_VP_TABLE_SIZE	((XIVE_VP_COUNT / VP_PER_PAGE) * XIVE_VSD_SIZE)
 
 /* Initial number of VPs (XXX Make it a variable ?). Round things
  * up to a max of 32 cores per chip
@@ -385,7 +389,7 @@ struct xive {
 	 * table (ie, pages of pointers) and populate enough of the pages
 	 * for our basic setup using 64K pages.
 	 *
-	 * The size of the indirect tables are driven by MAX_VP_COUNT and
+	 * The size of the indirect tables are driven by XIVE_VP_COUNT and
 	 * XIVE_EQ_COUNT. The number of pre-allocated ones are driven by
 	 * INITIAL_VP_COUNT (number of EQ depends on number of VP) in block
 	 * mode, otherwise we only preallocate INITIAL_BLK0_VP_COUNT on
@@ -971,12 +975,12 @@ static void xive_init_vp_allocator(void)
 	prlog(PR_INFO, "XIVE: %d chips considered for VP allocations\n",
 	      1 << xive_chips_alloc_bits);
 
-	/* Allocate a buddy big enough for MAX_VP_ORDER allocations.
+	/* Allocate a buddy big enough for XIVE_VP_ORDER allocations.
 	 *
 	 * each bit in the buddy represents 1 << xive_chips_alloc_bits
 	 * VPs.
 	 */
-	xive_vp_buddy = buddy_create(MAX_VP_ORDER);
+	xive_vp_buddy = buddy_create(XIVE_VP_ORDER);
 	assert(xive_vp_buddy);
 
 	/* We reserve the whole range of VPs representing HW chips.
@@ -4470,7 +4474,7 @@ static void xive_reset_one(struct xive *x)
 	 * either keep a bitmap of allocated VPs or add an iterator to
 	 * the buddy which is trickier but doable.
 	 */
-	for (i = 0; i < MAX_VP_COUNT; i++) {
+	for (i = 0; i < XIVE_VP_COUNT; i++) {
 		struct xive_vp *vp;
 		struct xive_vp vp0 = {0};
 
