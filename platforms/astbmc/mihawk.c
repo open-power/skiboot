@@ -533,8 +533,6 @@ static void mihawk_init(void)
 			if (timeout_ms == 0)
 				break;
 		}
-
-		ipmi_free_msg(ipmi_msg);
 	}
 
 	prlog(PR_DEBUG, "Mihawk: IPMI_RISERF_QUERY finish. riser_state: %02x"
