@@ -121,9 +121,8 @@ static void prd_msg_consumed(void *data, int status)
 			      "PRD: Failed to send FSP -> HBRT message\n");
 			notify_status = FSP_STATUS_GENERIC_ERROR;
 		}
-		assert(platform.prd);
-		assert(platform.prd->msg_response);
-		platform.prd->msg_response(notify_status);
+		if (platform.prd && platform.prd->msg_response)
+			platform.prd->msg_response(notify_status);
 		break;
 	case OPAL_PRD_MSG_TYPE_SBE_PASSTHROUGH:
 		proc = be64_to_cpu(msg->sbe_passthrough.chip);
@@ -533,8 +532,12 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 		rc = 0;
 		break;
 	case PRD_FW_MSG_TYPE_ERROR_LOG:
-		assert(platform.prd);
-		assert(platform.prd->send_error_log);
+		if (platform.prd == NULL ||
+		    platform.prd->send_error_log == NULL) {
+			rc = OPAL_UNSUPPORTED;
+			break;
+		}
+
 		rc = platform.prd->send_error_log(be32_to_cpu(fw_req->errorlog.plid),
 						  be32_to_cpu(fw_req->errorlog.size),
 						  fw_req->errorlog.data);
@@ -547,6 +550,12 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 		rc = 0;
 		break;
 	case PRD_FW_MSG_TYPE_HBRT_FSP:
+		if (platform.prd == NULL ||
+		    platform.prd->send_hbrt_msg == NULL) {
+			rc = OPAL_UNSUPPORTED;
+			break;
+		}
+
 		/*
 		 * HBRT -> FSP messages are serialized. Just to be sure check
 		 * whether fsp_req message is free or not.
@@ -610,8 +619,6 @@ static int prd_msg_handle_firmware_req(struct opal_prd_msg *msg)
 		unlock(&events_lock);
 
 		/* Send message to FSP */
-		assert(platform.prd);
-		assert(platform.prd->send_hbrt_msg);
 		rc = platform.prd->send_hbrt_msg(&(fw_resp->mbox_msg), data_len);
 
 		/*
@@ -676,21 +683,30 @@ static int64_t opal_prd_msg(struct opal_prd_msg *msg)
 		rc = prd_msg_handle_firmware_req(msg);
 		break;
 	case OPAL_PRD_MSG_TYPE_FSP_OCC_RESET_STATUS:
-		assert(platform.prd);
-		assert(platform.prd->fsp_occ_reset_status);
+		if (platform.prd == NULL ||
+		    platform.prd->fsp_occ_reset_status == NULL) {
+			rc = OPAL_UNSUPPORTED;
+			break;
+		}
 		rc = platform.prd->fsp_occ_reset_status(
 			be64_to_cpu(msg->fsp_occ_reset_status.chip),
 			be64_to_cpu(msg->fsp_occ_reset_status.status));
 		break;
 	case OPAL_PRD_MSG_TYPE_CORE_SPECIAL_WAKEUP:
-		assert(platform.prd);
-		assert(platform.prd->wakeup);
+		if (platform.prd == NULL ||
+		    platform.prd->wakeup == NULL) {
+			rc = OPAL_UNSUPPORTED;
+			break;
+		}
 		rc = platform.prd->wakeup(be32_to_cpu(msg->spl_wakeup.core),
 					  be32_to_cpu(msg->spl_wakeup.mode));
 		break;
 	case OPAL_PRD_MSG_TYPE_FSP_OCC_LOAD_START_STATUS:
-		assert(platform.prd);
-		assert(platform.prd->fsp_occ_load_start_status);
+		if (platform.prd == NULL ||
+		    platform.prd->fsp_occ_load_start_status == NULL) {
+			rc = OPAL_UNSUPPORTED;
+			break;
+		}
 		rc = platform.prd->fsp_occ_load_start_status(
 			be64_to_cpu(msg->fsp_occ_reset_status.chip),
 			be64_to_cpu(msg->fsp_occ_reset_status.status));
