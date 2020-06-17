@@ -952,6 +952,9 @@ void p9_sbe_terminate(void)
 	if (!is_mpipl_enabled())
 		return;
 
+	/* Save crashing CPU details */
+	opal_mpipl_save_crashing_pir();
+
 	/* Unregister flash. It will request BMC MBOX reset */
 	if (!flash_unregister()) {
 		prlog(PR_DEBUG, "Failed to reset BMC MBOX\n");

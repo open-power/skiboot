@@ -489,13 +489,7 @@ static void post_mpipl_get_opal_data(void)
 
 void opal_mpipl_save_crashing_pir(void)
 {
-	struct dt_node *opal_node;
-
-	opal_node = dt_find_by_path(dt_root, "ibm,opal");
-	if (!opal_node)
-		return;
-
-	if (!dt_find_by_path(opal_node, "dump"))
+	if (!is_mpipl_enabled())
 		return;
 
 	mpipl_metadata->crashing_pir = this_cpu()->pir;

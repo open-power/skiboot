@@ -12,7 +12,6 @@
 #include <processor.h>
 #include <cpu.h>
 #include <stack.h>
-#include <opal-dump.h>
 
 void __noreturn assert_fail(const char *msg, const char *file,
 				unsigned int line, const char *function)
@@ -33,9 +32,6 @@ void __noreturn assert_fail(const char *msg, const char *file,
 	 */
 	prlog(PR_EMERG, "assert failed at %s:%u: %s\n", file, line, msg);
 	backtrace();
-
-	/* Save crashing CPU details */
-	opal_mpipl_save_crashing_pir();
 
 	if (platform.terminate)
 		platform.terminate(msg);

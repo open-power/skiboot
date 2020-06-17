@@ -14,6 +14,7 @@
 #include <hdata/spira.h>
 #include <stack.h>
 #include <processor.h>
+#include <opal-dump.h>
 
 #define TI_CMD_VALID	0x1	/* Command valid */
 #define TI_CMD		0xA1	/* Terminate Immediate command */
@@ -117,6 +118,9 @@ void __attribute__((noreturn)) ibm_fsp_terminate(const char *msg)
 
 	/* Update op panel op_display */
 	op_display(OP_FATAL, OP_MOD_CORE, 0x6666);
+
+	/* Save crashing CPU details */
+	opal_mpipl_save_crashing_pir();
 
 	/* XXX FIXME: We should fsp_poll for a while to ensure any pending
 	 * console writes have made it out, but until we have decent PSI
