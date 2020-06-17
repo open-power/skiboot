@@ -67,6 +67,8 @@ static int opal_mpipl_max_tags = MAX_OPAL_MPIPL_TAGS;
 
 static u64 opal_dump_addr, opal_dump_size;
 
+static bool mpipl_enabled;
+
 static int opal_mpipl_add_entry(u8 region, u64 src, u64 dest, u64 size)
 {
 	int i;
@@ -526,6 +528,11 @@ void opal_mpipl_reserve_mem(void)
 		       arch_regs_dest, arch_regs_size);
 }
 
+bool is_mpipl_enabled(void)
+{
+	return mpipl_enabled;
+}
+
 void opal_mpipl_init(void)
 {
 	void *mdst_base = (void *)MDST_TABLE_BASE;
@@ -575,4 +582,7 @@ void opal_mpipl_init(void)
 	opal_register(OPAL_MPIPL_UPDATE, opal_mpipl_update, 4);
 	opal_register(OPAL_MPIPL_REGISTER_TAG, opal_mpipl_register_tag, 2);
 	opal_register(OPAL_MPIPL_QUERY_TAG, opal_mpipl_query_tag, 2);
+
+	/* Enable MPIPL */
+	mpipl_enabled = true;
 }

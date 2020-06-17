@@ -127,4 +127,7 @@ void opal_mpipl_save_crashing_pir(void);
 /* Reserve memory to capture OPAL dump */
 extern void opal_mpipl_reserve_mem(void);
 
+/* Check MPIPL enabled or not */
+extern bool is_mpipl_enabled(void);
+
 #endif	/* __OPAL_DUMP_H */

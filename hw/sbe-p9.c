@@ -949,7 +949,7 @@ void p9_sbe_terminate(void)
 	struct proc_chip *chip;
 
 	/* Return if MPIPL is not supported */
-	if (!dt_find_by_path(opal_node, "dump"))
+	if (!is_mpipl_enabled())
 		return;
 
 	/* Unregister flash. It will request BMC MBOX reset */

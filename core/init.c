@@ -635,6 +635,10 @@ void __noreturn load_and_boot_kernel(bool is_reboot)
 	patch_traps(false);
 	cpu_set_hile_mode(false); /* Clear HILE on all CPUs */
 
+	/* init MPIPL */
+	if (!is_reboot)
+		opal_mpipl_init();
+
 	checksum_romem();
 
 	debug_descriptor.state_flags |= OPAL_BOOT_COMPLETE;
@@ -1362,9 +1366,6 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* Create the LPC bus interrupt-map on P9 */
 	lpc_finalize_interrupts();
-
-	/* init opal dump */
-	opal_mpipl_init();
 
 	/* Add the list of interrupts going to OPAL */
 	add_opal_interrupts();
