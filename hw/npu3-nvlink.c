@@ -350,7 +350,6 @@ static void npu3_append_phandle(struct dt_node *dn, const char *name,
 	/* Need to append to the property */
 	len = prop->len + sizeof(*phandles);
 	dt_resize_property(&prop, len);
-	prop->len = len;
 
 	phandles = (uint32_t *)prop->prop;
 	phandles[len / sizeof(*phandles) - 1] = phandle;

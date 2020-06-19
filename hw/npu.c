@@ -416,7 +416,6 @@ static void npu_append_pci_phandle(struct dt_node *dn, u32 phandle)
 	prop_len = pci_npu_phandle_prop->len;
 	prop_len += sizeof(*npu_phandles);
 	dt_resize_property(&pci_npu_phandle_prop, prop_len);
-	pci_npu_phandle_prop->len = prop_len;
 
 	npu_phandles = (uint32_t *) pci_npu_phandle_prop->prop;
 	npu_phandles[prop_len/sizeof(*npu_phandles) - 1] = phandle;

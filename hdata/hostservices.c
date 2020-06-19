@@ -36,7 +36,6 @@ static void merge_property(const struct dt_node *src_root,
 	/* Append src to dst. */
 	dt_resize_property(&dst, dst->len + src->len);
 	memcpy(dst->prop + dst->len, src->prop, src->len);
-	dst->len += src->len;
 }
 
 static void hservice_parse_dt_tree(const struct dt_node *src)

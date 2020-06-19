@@ -476,6 +476,7 @@ void dt_resize_property(struct dt_property **prop, size_t len)
 	size_t new_len = sizeof(**prop) + len;
 
 	*prop = realloc(*prop, new_len);
+	(*prop)->len = len;
 
 	/* Fix up linked lists in case we moved. (note: not an empty list). */
 	(*prop)->list.next->prev = &(*prop)->list;

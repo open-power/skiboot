@@ -827,7 +827,6 @@ static void add_cpufeatures_dependencies(struct dt_node *features)
 		deps_names = f->dependencies_names;
 		nr_deps = strcount(deps_names, " ") + 1;
 		dt_resize_property(&deps, nr_deps * sizeof(u32));
-		deps->len = nr_deps * sizeof(u32);
 
 		DBG("feature %s has %d dependencies (%s)\n", f->name, nr_deps, deps_names);
 		/*

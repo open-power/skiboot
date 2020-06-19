@@ -510,7 +510,6 @@ static void npu2_append_phandle(struct dt_node *dn,
 	/* Need to append to the properties */
 	len = prop->len + sizeof(*npu_phandles);
 	dt_resize_property(&prop, len);
-	prop->len = len;
 
 	npu_phandles = (uint32_t *)prop->prop;
 	npu_phandles[len / sizeof(*npu_phandles) - 1] = phandle;
