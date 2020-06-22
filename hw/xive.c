@@ -758,7 +758,7 @@ static struct xive_ive *xive_get_ive(struct xive *x, unsigned int isn)
 	uint32_t idx = GIRQ_TO_IDX(isn);
 
 	if (GIRQ_IS_ESCALATION(isn)) {
-		/* Allright, an escalation IVE is buried inside an EQ, let's
+		/* All right, an escalation IVE is buried inside an EQ, let's
 		 * try to find it
 		 */
 		struct xive_eq *eq;
@@ -774,7 +774,7 @@ static struct xive_ive *xive_get_ive(struct xive *x, unsigned int isn)
 		}
 
 		/* If using single-escalation, don't let anybody get to the individual
-		 * esclation interrupts
+		 * escalation interrupts
 		 */
 		if (xive_get_field32(EQ_W0_UNCOND_ESCALATE, eq->w0))
 			return NULL;
