@@ -157,6 +157,7 @@
 
 /* Use 64K for everything by default */
 #define XIVE_ESB_SHIFT		(16 + 1) /* trigger + mgmt pages */
+#define XIVE_ESB_SIZE		(1ul << XIVE_ESB_SHIFT) /* 2 pages */
 
 /* Max number of EQs. We allocate an indirect table big enough so
  * that when fully populated we can have that many EQs.
@@ -1101,7 +1102,7 @@ static void xive_scrub_workaround_eq(struct xive *x, uint32_t block __unused, ui
 	/* EQ variant of the workaround described in __xive_cache_scrub(),
 	 * a simple non-side effect load from ESn will do
 	 */
-	mmio = x->eq_mmio + idx * 0x20000;
+	mmio = x->eq_mmio + idx * XIVE_ESB_SIZE;
 
 	/* Ensure the above has returned before we do anything else
 	 * the XIVE store queue is completely empty
@@ -1939,7 +1940,7 @@ void *xive_get_trigger_port(uint32_t girq)
 		    girq >= x->int_ipi_top)
 			return NULL;
 
-		return x->esb_mmio + idx * 0x20000;
+		return x->esb_mmio + idx * XIVE_ESB_SIZE;
 	}
 }
 
@@ -2710,7 +2711,7 @@ static void xive_ipi_init(struct xive *x, struct cpu_thread *cpu)
 
 static void xive_ipi_eoi(struct xive *x, uint32_t idx)
 {
-	uint8_t *mm = x->esb_mmio + idx * 0x20000;
+	uint8_t *mm = x->esb_mmio + idx * XIVE_ESB_SIZE;
 	uint8_t eoi_val;
 
 	/* For EOI, we use the special MMIO that does a clear of both
@@ -2727,7 +2728,7 @@ static void xive_ipi_eoi(struct xive *x, uint32_t idx)
 
 static void xive_ipi_trigger(struct xive *x, uint32_t idx)
 {
-	uint8_t *mm = x->esb_mmio + idx * 0x20000;
+	uint8_t *mm = x->esb_mmio + idx * XIVE_ESB_SIZE;
 
 	xive_vdbg(x, "Trigger IPI 0x%x\n", idx);
 
@@ -2941,7 +2942,7 @@ static void xive_init_cpu_emulation(struct xive_cpu_state *xs,
 	xs->eqgen = 0;
 	x = xive_from_vc_blk(xs->eq_blk);
 	assert(x);
-	xs->eqmmio = x->eq_mmio + (xs->eq_idx + XIVE_EMULATION_PRIO) * 0x20000;
+	xs->eqmmio = x->eq_mmio + (xs->eq_idx + XIVE_EMULATION_PRIO) * XIVE_ESB_SIZE;
 }
 
 static void xive_init_cpu_exploitation(struct xive_cpu_state *xs)
@@ -3813,7 +3814,7 @@ static int64_t opal_xive_get_queue_info(uint64_t vp, uint32_t prio,
 	}
 	if (out_qeoi_page) {
 		*out_qeoi_page =
-			cpu_to_be64((uint64_t)x->eq_mmio + idx * 0x20000);
+			cpu_to_be64((uint64_t)x->eq_mmio + idx * XIVE_ESB_SIZE);
 	}
 	if (out_qflags) {
 		*out_qflags = 0;
@@ -5004,7 +5005,7 @@ static int64_t __opal_xive_dump_emu(struct xive_cpu_state *xs, uint32_t pir)
 	      xs->eqbuf[(xs->eqptr + 2) & xs->eqmsk],
 	      xs->eqbuf[(xs->eqptr + 3) & xs->eqmsk]);
 
-	mm = xs->xive->esb_mmio + GIRQ_TO_IDX(xs->ipi_irq) * 0x20000;
+	mm = xs->xive->esb_mmio + GIRQ_TO_IDX(xs->ipi_irq) * XIVE_ESB_SIZE;
 	pq = in_8(mm + 0x10800);
 	if (xive_get_irq_targetting(xs->ipi_irq, &ipi_target, NULL, NULL))
 		prlog(PR_INFO, "CPU[%04x]: IPI #%08x PQ=%x target=%08x\n",
