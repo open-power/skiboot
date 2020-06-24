@@ -168,7 +168,7 @@
  *
  * TODO: adjust the VC BAR range for END ESBs on this value
  */
-#define EQ_PER_PAGE		(0x10000 / sizeof(struct xive_eq))
+#define EQ_PER_PAGE		(PAGE_SIZE / sizeof(struct xive_eq))
 
 #define XIVE_EQ_ORDER		20 /* 1M ENDs */
 #define XIVE_EQ_COUNT		(1ul << XIVE_EQ_ORDER)
@@ -203,7 +203,7 @@
  *
  * TODO: adjust the PC BAR range
  */
-#define VP_PER_PAGE		(0x10000 / sizeof(struct xive_vp))
+#define VP_PER_PAGE		(PAGE_SIZE / sizeof(struct xive_vp))
 
 #define NVT_SHIFT		19	/* in sync with EQ_W6_NVT_INDEX */
 
@@ -907,7 +907,7 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect)
 		if (alloc_indirect) {
 			/* Allocate/provision indirect page during boot only */
 			xive_vdbg(x, "Indirect empty, provisioning from local pool\n");
-			page = local_alloc(x->chip_id, 0x10000, 0x10000);
+			page = local_alloc(x->chip_id, PAGE_SIZE, PAGE_SIZE);
 			if (!page) {
 				xive_dbg(x, "provisioning failed !\n");
 				return XIVE_ALLOC_NO_MEM;
@@ -921,7 +921,7 @@ static uint32_t xive_alloc_eq_set(struct xive *x, bool alloc_indirect)
 				return XIVE_ALLOC_NO_IND;
 			}
 		}
-		memset(page, 0, 0x10000);
+		memset(page, 0, PAGE_SIZE);
 		x->eq_ind_base[ind_idx] = cpu_to_be64(vsd_flags |
 			(((uint64_t)page) & VSD_ADDRESS_MASK));
 		/* Any cache scrub needed ? */
@@ -965,7 +965,7 @@ static bool xive_provision_vp_ind(struct xive *x, uint32_t vp_idx, uint32_t orde
 			return false;
 
 		/* Install the page */
-		memset(page, 0, 0x10000);
+		memset(page, 0, PAGE_SIZE);
 		vsd = ((uint64_t)page) & VSD_ADDRESS_MASK;
 		vsd |= SETFIELD(VSD_TSIZE, 0ull, 4);
 		vsd |= SETFIELD(VSD_MODE, 0ull, VSD_MODE_EXCLUSIVE);
@@ -1399,7 +1399,7 @@ static bool xive_set_local_tables(struct xive *x)
 
 	/* Setup quue overflows */
 	for (i = 0; i < VC_QUEUE_OVF_COUNT; i++) {
-		u64 addr = ((uint64_t)x->q_ovf) + i * 0x10000;
+		u64 addr = ((uint64_t)x->q_ovf) + i * PAGE_SIZE;
 		u64 cfg, sreg, sregx;
 
 		if (!xive_set_vsd(x, VST_TSEL_IRQ, i, base |
@@ -1660,8 +1660,8 @@ static bool xive_prealloc_tables(struct xive *x)
 	xive_dbg(x, "IVT at %p size 0x%lx\n", x->ivt_base, IVT_SIZE);
 
 	/* Indirect EQ table.  Limited to one top page. */
-	al = ALIGN_UP(XIVE_EQ_TABLE_SIZE, 0x10000);
-	if (al > 0x10000) {
+	al = ALIGN_UP(XIVE_EQ_TABLE_SIZE, PAGE_SIZE);
+	if (al > PAGE_SIZE) {
 		xive_err(x, "EQ indirect table is too big !\n");
 		return false;
 	}
@@ -1675,8 +1675,8 @@ static bool xive_prealloc_tables(struct xive *x)
 	x->eq_ind_count = XIVE_EQ_TABLE_SIZE / XIVE_VSD_SIZE;
 
 	/* Indirect VP table.  Limited to one top page. */
-	al = ALIGN_UP(XIVE_VP_TABLE_SIZE, 0x10000);
-	if (al > 0x10000) {
+	al = ALIGN_UP(XIVE_VP_TABLE_SIZE, PAGE_SIZE);
+	if (al > PAGE_SIZE) {
 		xive_err(x, "VP indirect table is too big !\n");
 		return false;
 	}
@@ -1704,13 +1704,13 @@ static bool xive_prealloc_tables(struct xive *x)
 		u64 vsd;
 
 		/* Indirect entries have a VSD format */
-		page = local_alloc(x->chip_id, 0x10000, 0x10000);
+		page = local_alloc(x->chip_id, PAGE_SIZE, PAGE_SIZE);
 		if (!page) {
 			xive_err(x, "Failed to allocate VP page\n");
 			return false;
 		}
-		xive_dbg(x, "VP%d at %p size 0x%x\n", i, page, 0x10000);
-		memset(page, 0, 0x10000);
+		xive_dbg(x, "VP%d at %p size 0x%x\n", i, page, PAGE_SIZE);
+		memset(page, 0, PAGE_SIZE);
 		vsd = ((uint64_t)page) & VSD_ADDRESS_MASK;
 
 		vsd |= SETFIELD(VSD_TSIZE, 0ull, 4);
@@ -1720,7 +1720,7 @@ static bool xive_prealloc_tables(struct xive *x)
 	}
 
 	/* Allocate the queue overflow pages */
-	x->q_ovf = local_alloc(x->chip_id, VC_QUEUE_OVF_COUNT * 0x10000, 0x10000);
+	x->q_ovf = local_alloc(x->chip_id, VC_QUEUE_OVF_COUNT * PAGE_SIZE, PAGE_SIZE);
 	if (!x->q_ovf) {
 		xive_err(x, "Failed to allocate queue overflow\n");
 		return false;
@@ -1734,7 +1734,7 @@ static void xive_add_provisioning_properties(void)
 	uint32_t i, count;
 
 	dt_add_property_cells(xive_dt_node,
-			      "ibm,xive-provision-page-size", 0x10000);
+			      "ibm,xive-provision-page-size", PAGE_SIZE);
 
 	count = 1 << xive_chips_alloc_bits;
 	for (i = 0; i < count; i++)
@@ -2719,7 +2719,7 @@ static void xive_ipi_eoi(struct xive *x, uint32_t idx)
 	 * This allows us to then do a re-trigger if Q was set rather
 	 * than synthetizing an interrupt in software
 	 */
-	eoi_val = in_8(mm + 0x10000 + XIVE_ESB_SET_PQ_00);
+	eoi_val = in_8(mm + PAGE_SIZE + XIVE_ESB_SET_PQ_00);
 	if (eoi_val & 1) {
 		out_8(mm + XIVE_ESB_STORE_TRIGGER, 0);
 	}
@@ -2934,10 +2934,10 @@ static void xive_init_cpu_emulation(struct xive_cpu_state *xs,
 	xs->eqbuf = xive_get_eq_buf(xs->vp_blk,
 				    xs->eq_idx + XIVE_EMULATION_PRIO);
 	assert(xs->eqbuf);
-	memset(xs->eqbuf, 0, 0x10000);
+	memset(xs->eqbuf, 0, PAGE_SIZE);
 
 	xs->eqptr = 0;
-	xs->eqmsk = (0x10000/4) - 1;
+	xs->eqmsk = (PAGE_SIZE / 4) - 1;
 	xs->eqgen = 0;
 	x = xive_from_vc_blk(xs->eq_blk);
 	assert(x);
@@ -3047,7 +3047,7 @@ static void xive_provision_cpu(struct xive_cpu_state *xs, struct cpu_thread *c)
 	/* Provision one of the queues. Allocate the memory on the
 	 * chip where the CPU resides
 	 */
-	p = local_alloc(c->chip_id, 0x10000, 0x10000);
+	p = local_alloc(c->chip_id, PAGE_SIZE, PAGE_SIZE);
 	if (!p) {
 		xive_err(x, "Failed to allocate EQ backing store\n");
 		assert(false);
