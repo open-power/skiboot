@@ -4444,7 +4444,7 @@ static void xive_reset_one(struct xive *x)
 		if (i == 0)
 			continue;
 		eq_firmware = false;
-		for (j = 0; j < 8; j++) {
+		for (j = 0; j < NUM_INT_PRIORITIES; j++) {
 			uint32_t idx = (i << 3) | j;
 
 			eq = xive_get_eq(x, idx);
