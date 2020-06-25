@@ -122,6 +122,7 @@ myconf config processor/timebase_frequency 1/1
 myconf config enable_pseries_nvram false
 myconf config machine_option/NO_RAM TRUE
 myconf config machine_option/NO_ROM TRUE
+myconf config machine_option/MEMORY_OVERFLOW FALSE
 
 if { $default_config == "PEGASUS" } {
     # We need to be DD2 or greater on p8 for the HILE HID bit.
