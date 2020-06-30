@@ -1672,7 +1672,7 @@ static bool xive_prealloc_tables(struct xive *x)
 	}
 	memset(x->eq_ind_base, 0, al);
 	xive_dbg(x, "EQi at %p size 0x%llx\n", x->eq_ind_base, al);
-	x->eq_ind_count = XIVE_EQ_TABLE_SIZE / 8;
+	x->eq_ind_count = XIVE_EQ_TABLE_SIZE / XIVE_VSD_SIZE;
 
 	/* Indirect VP table.  Limited to one top page. */
 	al = ALIGN_UP(XIVE_VP_TABLE_SIZE, 0x10000);
@@ -1686,7 +1686,7 @@ static bool xive_prealloc_tables(struct xive *x)
 		return false;
 	}
 	xive_dbg(x, "VPi at %p size 0x%llx\n", x->vp_ind_base, al);
-	x->vp_ind_count = XIVE_VP_TABLE_SIZE / 8;
+	x->vp_ind_count = XIVE_VP_TABLE_SIZE / XIVE_VSD_SIZE;
 	memset(x->vp_ind_base, 0, al);
 
 	/* Populate/initialize VP/EQs indirect backing */
