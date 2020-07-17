@@ -822,6 +822,15 @@ static void get_hb_reserved_mem(struct HDIF_common_hdr *ms_vpd)
 		dt_add_property_cells(node, "ibm,prd-instance",
 			(be32_to_cpu(hb_resv_mem->type_instance) & 0xffffff));
 
+		/*
+		 * Most reservations are used by HBRT itself so we should leave
+		 * the label as-is. The exception is hbrt-code-image which is
+		 * used by opal-prd to locate the HBRT image. Older versions
+		 * of opal-prd expect this to be "ibm,hbrt-code-image" so make
+		 * sure the prefix is there.
+		 */
+		if (!strcmp(label, "hbrt-code-image"))
+			strcpy(label, "ibm,hbrt-code-image");
 		dt_add_property_string(node, "ibm,prd-label", label);
 	}
 }
