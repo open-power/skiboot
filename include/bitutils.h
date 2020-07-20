@@ -30,11 +30,11 @@
 /* Find left shift from first set bit in mask */
 #define MASK_TO_LSH(m)		(__builtin_ffsl(m) - 1)
 
-/* Extract field fname from val */
+/* Extract field from 'v' according to mask 'm' */
 #define GETFIELD(m, v)		(((v) & (m)) >> MASK_TO_LSH(m))
 
-/* Set field fname of oval to fval
- * NOTE: oval isn't modified, the combined result is returned
+/* Set field specified by mask 'm' of 'v' to value 'val'
+ * NOTE: 'v' isn't modified, the combined result is returned
  */
 #define SETFIELD(m, v, val)				\
 	(((v) & ~(m)) |	((((typeof(v))(val)) << MASK_TO_LSH(m)) & (m)))
