@@ -701,16 +701,6 @@ static void psi_init_p9_interrupts(struct psi *psi)
 	prlog(PR_DEBUG, "PSI[0x%03x]: ESB MMIO at @%p\n",
 	       psi->chip_id, psi->esb_mmio);
 
-	/* Grab and configure the notification port */
-	val = xive_get_notify_port(psi->chip_id, XIVE_HW_SRC_PSI);
-	val |= PSIHB_ESB_NOTIF_VALID;
-	out_be64(psi->regs + PSIHB_ESB_NOTIF_ADDR, val);
-
-	/* Setup interrupt offset */
-	val = xive_get_notify_base(psi->interrupt);
-	val <<= 32;
-	out_be64(psi->regs + PSIHB_IVT_OFFSET, val);
-
 	/* Register sources */
 	prlog(PR_DEBUG,
 	      "PSI[0x%03x]: Interrupts sources registered for P9 DD2.x\n",
@@ -718,6 +708,16 @@ static void psi_init_p9_interrupts(struct psi *psi)
 	xive_register_hw_source(psi->interrupt, P9_PSI_NUM_IRQS,
 				12, psi->esb_mmio, XIVE_SRC_LSI,
 				psi, &psi_p9_irq_ops);
+
+	/* Setup interrupt offset */
+	val = xive_get_notify_base(psi->interrupt);
+	val <<= 32;
+	out_be64(psi->regs + PSIHB_IVT_OFFSET, val);
+
+	/* Grab and configure the notification port */
+	val = xive_get_notify_port(psi->chip_id, XIVE_HW_SRC_PSI);
+	val |= PSIHB_ESB_NOTIF_VALID;
+	out_be64(psi->regs + PSIHB_ESB_NOTIF_ADDR, val);
 
 	/* Reset irq handling and switch to ESB mode */
 	out_be64(psi->regs + PSIHB_INTERRUPT_CONTROL, PSIHB_IRQ_RESET);
