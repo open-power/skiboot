@@ -82,7 +82,7 @@
  * Similarily, for MMIO access, the BARs support what is called "set
  * translation" which allows the BAR to be divided into a certain
  * number of sets. The VC BAR (ESBs, ENDs, ...) supports 64 sets and
- * the PC BAT supports 16. Each "set" can be routed to a specific
+ * the PC BAR supports 16. Each "set" can be routed to a specific
  * block and offset within a block.
  *
  * For now, we will not use much of that functionality. We will use a
@@ -1398,7 +1398,7 @@ static bool xive_set_local_tables(struct xive *x)
 			  VSD_INDIRECT | SETFIELD(VSD_TSIZE, 0ull, 4)))
 		return false;
 
-	/* Setup quue overflows */
+	/* Setup queue overflows */
 	for (i = 0; i < VC_QUEUE_OVF_COUNT; i++) {
 		u64 addr = ((uint64_t)x->q_ovf) + i * PAGE_SIZE;
 		u64 cfg, sreg, sregx;
