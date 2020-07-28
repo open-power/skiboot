@@ -252,10 +252,10 @@ struct platform {
 	/*
 	 * Returns true when resource is loaded.
 	 * Only has to return true once, for the
-	 * preivous start_preload_resource call for this resource.
+	 * previous start_preload_resource call for this resource.
 	 * If not implemented, will return true and start_preload_resource
 	 * *must* have synchronously done the load.
-	 * Retruns OPAL_SUCCESS, OPAL_BUSY or an error code
+	 * Returns OPAL_SUCCESS, OPAL_BUSY or an error code
 	 */
 	int		(*resource_loaded)(enum resource_id id, uint32_t idx);
 
