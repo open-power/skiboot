@@ -167,6 +167,7 @@ static const struct vpd_key_map vpd_key_table[] = {
 	{"SD", "sas-connector"},
 	{"SI", "scsi-ide-converter"},
 	{"SL", "phb-slot"},
+	{"SN", "smp-cable-connector"},
 	{"SP", "service-processor"},
 	{"SR", "service-card"},
 	{"SS", "soft-switch"},
