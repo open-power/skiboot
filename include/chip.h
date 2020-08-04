@@ -239,6 +239,11 @@ extern uint32_t pir_to_chip_id(uint32_t pir);
 extern uint32_t pir_to_core_id(uint32_t pir);
 extern uint32_t pir_to_thread_id(uint32_t pir);
 
+/* In P9 fused core mode, this is the "fused" core ID, in
+ * normal core mode or P8, this is the same as pir_to_core_id
+ */
+extern uint32_t pir_to_fused_core_id(uint32_t pir);
+
 extern struct proc_chip *next_chip(struct proc_chip *chip);
 
 #define for_each_chip(__c) for (__c=next_chip(NULL); __c; __c=next_chip(__c))

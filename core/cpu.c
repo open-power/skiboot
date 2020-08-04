@@ -866,7 +866,7 @@ struct cpu_thread *first_available_core_in_chip(u32 chip_id)
 
 uint32_t cpu_get_core_index(struct cpu_thread *cpu)
 {
-	return pir_to_core_id(cpu->pir);
+	return pir_to_fused_core_id(cpu->pir);
 }
 
 void cpu_remove_node(const struct cpu_thread *t)

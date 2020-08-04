@@ -226,6 +226,12 @@ static inline __nomcount struct cpu_thread *this_cpu(void)
 	return __this_cpu;
 }
 
+/*
+ * Note: On POWER9 fused core, cpu_get_thread_index() and cpu_get_core_index()
+ * return respectively the thread number within a fused core (0..7) and
+ * the fused core number. If you want the EC (small core) number, you have
+ * to use the low level pir_to_core_id() and pir_to_thread_id().
+ */
 /* Get the thread # of a cpu within the core */
 static inline uint32_t cpu_get_thread_index(struct cpu_thread *cpu)
 {

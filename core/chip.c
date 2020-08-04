@@ -34,6 +34,19 @@ uint32_t pir_to_core_id(uint32_t pir)
 		assert(false);
 }
 
+uint32_t pir_to_fused_core_id(uint32_t pir)
+{
+	if (proc_gen == proc_gen_p9) {
+		if (this_cpu()->is_fused_core)
+			return P9_PIR2FUSEDCOREID(pir);
+		else
+			return P9_PIR2COREID(pir);
+	} else if (proc_gen == proc_gen_p8)
+		return P8_PIR2COREID(pir);
+	else
+		assert(false);
+}
+
 uint32_t pir_to_thread_id(uint32_t pir)
 {
 	if (proc_gen == proc_gen_p9) {
