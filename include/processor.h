@@ -248,6 +248,21 @@ static inline bool is_fused_core(uint32_t version)
 	}
 }
 
+static inline bool is_power9c(uint32_t version) 
+{
+
+	if (PVR_TYPE(version) != PVR_TYPE_P9)
+		return false;
+	/*
+	 * Bit 13 tells us:
+	 *   0 = Scale out (aka Nimbus)
+	 *   1 = Scale up  (aka Cumulus)
+	 */
+	if (!((version >> 13) & 1))
+		return false;
+	return true;
+}
+
 #ifndef __TEST__
 
 /* POWER9 and above only */

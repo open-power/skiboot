@@ -942,6 +942,25 @@ void dt_add_cpufeatures(struct dt_node *root)
 			default:
 				assert(0);
 			}
+		} else if (is_power9c(version) &&
+                            (PVR_VERS_MAJ(version) == 1)) {
+                          /* P9C DD1.x */
+			switch (PVR_VERS_MIN(version)) {
+                        case 1:
+				/* Cumulus DD1.1 => Nimbus DD2.1 */
+				cpu_feature_cpu = CPU_P9_DD2_0_1;
+				break;
+			case 2:
+				/* Cumulus DD1.2 */
+				cpu_feature_cpu = CPU_P9_DD2_2;
+				break;
+			case 3:
+				/* Cumulus DD1.3 */
+				cpu_feature_cpu = CPU_P9_DD2_3;
+				break;
+			default:
+				assert(0);
+			}
 		} else {
 			assert(0);
 		}
