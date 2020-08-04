@@ -43,9 +43,12 @@ Platform Sub platform Host CPU(s) Manufacturer       compatible                 
 ======== ============ =========== ================== ========================== ============================= =======
 astbmc   p9sdu        Power9      Supermicro         "supermicro,p9dsu"         Boston, LC921/LC922           [#]_
 astbmc   romulus      Power9                         "ibm,romulus"              Romulus
-astbmc   talos        Power9      Raptor             "rcs,talos"                Similar to Romulus
+astbmc   talos        Power9      Raptor             "rcs,talos"                Talos II, similar to Romulus
+astbmc   blackbird    Power9      Raptor             "rcs,blackbird"            Blackbrid
 astbmc   witherspoon  Power9                         "ibm,witherspoon"          Witherspoon, Newell, AC922    [#]_
 astbmc   zaius        Power9      Ingrasys (Foxconn) "ingrasys,zaius"           Zaius, Barreleye Gen2
+astbmc   mihawk       Power9                         "{wistron,ibm},mihawk"     Mihawk, IC922
+astbmc   nicole       Power9      Yadro              "YADRO,nicole"             Nicole
 ibm-fsp  zz           Power9                         "ibm,zz-(1|2)s(2|4)u"
 ======== ============ =========== ================== ========================== ============================= =======
 
