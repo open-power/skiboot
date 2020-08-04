@@ -156,6 +156,10 @@ static bool zz_probe(void)
 		return true;
 	}
 
+	/* Add Fleetwood FSP platform and map it to ZZ */
+	if (dt_node_is_compatible(dt_root, "ibm,fleetwood-m9s")) {
+		return true;
+        }
 	return false;
 }
 
