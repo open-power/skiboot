@@ -932,6 +932,7 @@ static void init_cpu_thread(struct cpu_thread *t,
 #ifdef STACK_CHECK_ENABLED
 	t->stack_bot_mark = LONG_MAX;
 #endif
+	t->is_fused_core = is_fused_core(mfspr(SPR_PVR));
 	assert(pir == container_of(t, struct cpu_stack, cpu) - cpu_stacks);
 }
 
@@ -1016,14 +1017,16 @@ void init_boot_cpu(void)
 		      " (max %d threads/core)\n", cpu_thread_count);
 		break;
 	case proc_gen_p9:
-		cpu_thread_count = 4;
+		if (is_fused_core(pvr))
+			cpu_thread_count = 8;
+		else
+			cpu_thread_count = 4;
 		prlog(PR_INFO, "CPU: P9 generation processor"
 		      " (max %d threads/core)\n", cpu_thread_count);
 		break;
 	default:
 		prerror("CPU: Unknown PVR, assuming 1 thread\n");
 		cpu_thread_count = 1;
-		cpu_max_pir = mfspr(SPR_PIR);
 	}
 
 	if (is_power9n(pvr) && (PVR_VERS_MAJ(pvr) == 1)) {
@@ -1151,7 +1154,7 @@ void init_all_cpus(void)
 
 	/* Iterate all CPUs in the device-tree */
 	dt_for_each_child(cpus, cpu) {
-		unsigned int pir, server_no, chip_id;
+		unsigned int pir, server_no, chip_id, threads;
 		enum cpu_thread_state state;
 		const struct dt_property *p;
 		struct cpu_thread *t, *pt;
@@ -1181,6 +1184,14 @@ void init_all_cpus(void)
 		prlog(PR_INFO, "CPU: CPU from DT PIR=0x%04x Server#=0x%x"
 		      " State=%d\n", pir, server_no, state);
 
+		/* Check max PIR */
+		if (cpu_max_pir < (pir + cpu_thread_count - 1)) {
+			prlog(PR_WARNING, "CPU: CPU potentially out of range"
+			      "PIR=0x%04x MAX=0x%04x !\n",
+			      pir, cpu_max_pir);
+			continue;
+		}
+
 		/* Setup thread 0 */
 		assert(pir <= cpu_max_pir);
 		t = pt = &cpu_stacks[pir].cpu;
@@ -1206,11 +1217,21 @@ void init_all_cpus(void)
 		/* Add the decrementer width property */
 		dt_add_property_cells(cpu, "ibm,dec-bits", dec_bits);
 
+		if (t->is_fused_core)
+			dt_add_property(t->node, "ibm,fused-core", NULL, 0);
+
 		/* Iterate threads */
 		p = dt_find_property(cpu, "ibm,ppc-interrupt-server#s");
 		if (!p)
 			continue;
-		for (thread = 1; thread < (p->len / 4); thread++) {
+		threads = p->len / 4;
+		if (threads > cpu_thread_count) {
+			prlog(PR_WARNING, "CPU: Threads out of range for PIR 0x%04x"
+			      " threads=%d max=%d\n",
+			      pir, threads, cpu_thread_count);
+			threads = cpu_thread_count;
+		}
+		for (thread = 1; thread < threads; thread++) {
 			prlog(PR_TRACE, "CPU:   secondary thread %d found\n",
 			      thread);
 			t = &cpu_stacks[pir + thread].cpu;
@@ -1396,7 +1417,7 @@ static int64_t cpu_change_all_hid0(struct hid0_change_req *req)
 	assert(jobs);
 
 	for_each_available_cpu(cpu) {
-		if (!cpu_is_thread0(cpu))
+		if (!cpu_is_thread0(cpu) && !cpu_is_core_chiplet_primary(cpu))
 			continue;
 		if (cpu == this_cpu())
 			continue;

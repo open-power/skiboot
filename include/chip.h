@@ -56,6 +56,26 @@
  * thus we have a 6-bit core number.
  *
  * Note: XIVE Only supports 4-bit chip numbers ...
+ *
+ * Upper PIR Bits
+ * --------------
+ *
+ * Normal-Core Mode:
+ * 57:61 CoreID
+ * 62:63 ThreadID
+ *
+ * Fused-Core Mode:
+ * 57:59 FusedQuadID
+ * 60    FusedCoreID
+ * 61:63 FusedThreadID
+ *
+ * FusedCoreID 0 contains normal-core chiplet 0 and 1
+ * FusedCoreID 1 contains normal-core chiplet 2 and 3
+ *
+ * Fused cores have interleaved threads:
+ * core chiplet 0/2 = t0, t2, t4, t6
+ * core chiplet 1/3 = t1, t3, t5, t7
+ *
  */
 #define P9_PIR2GCID(pir) (((pir) >> 8) & 0x7f)
 
@@ -66,6 +86,17 @@
 #define P9_GCID2NODEID(gcid)	(((gcid) >> 3) & 0xf)
 
 #define P9_GCID2CHIPID(gcid) ((gcid) & 0x7)
+
+#define P9_PIR2FUSEDQUADID(pir) (((pir) >> 4) & 0x7)
+
+#define P9_PIR2FUSEDCOREID(pir) (((pir) >> 3) & 0x1)
+
+#define P9_PIR2FUSEDTHREADID(pir) ((pir) & 0x7)
+
+#define P9_PIRFUSED2NORMALCOREID(pir) \
+	(P9_PIR2FUSEDQUADID(pir) << 2) | \
+	(P9_PIR2FUSEDCOREID(pir) << 1) | \
+	(P9_PIR2FUSEDTHREADID(pir) & 1)
 
 /* P9 specific ones mostly used by XIVE */
 #define P9_PIR2LOCALCPU(pir) ((pir) & 0xff)

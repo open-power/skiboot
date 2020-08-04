@@ -6,6 +6,7 @@
 #include <console.h>
 #include <device.h>
 #include <timebase.h>
+#include <cpu.h>
 
 static struct proc_chip *chips[MAX_CHIPS];
 enum proc_chip_quirks proc_chip_quirks;
@@ -22,9 +23,12 @@ uint32_t pir_to_chip_id(uint32_t pir)
 
 uint32_t pir_to_core_id(uint32_t pir)
 {
-	if (proc_gen == proc_gen_p9)
-		return P9_PIR2COREID(pir);
-	else if (proc_gen == proc_gen_p8)
+	if (proc_gen == proc_gen_p9) {
+		if (this_cpu()->is_fused_core)
+			return P9_PIRFUSED2NORMALCOREID(pir);
+		else
+			return P9_PIR2COREID(pir);
+	} else if (proc_gen == proc_gen_p8)
 		return P8_PIR2COREID(pir);
 	else
 		assert(false);
@@ -32,9 +36,12 @@ uint32_t pir_to_core_id(uint32_t pir)
 
 uint32_t pir_to_thread_id(uint32_t pir)
 {
-	if (proc_gen == proc_gen_p9)
-		return P9_PIR2THREADID(pir);
-	else if (proc_gen == proc_gen_p8)
+	if (proc_gen == proc_gen_p9) {
+		if (this_cpu()->is_fused_core)
+			return P9_PIR2FUSEDTHREADID(pir);
+		else
+			return P9_PIR2THREADID(pir);
+	} else if (proc_gen == proc_gen_p8)
 		return P8_PIR2THREADID(pir);
 	else
 		assert(false);

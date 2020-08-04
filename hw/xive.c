@@ -3089,7 +3089,7 @@ static void xive_init_cpu(struct cpu_thread *c)
 	 * of a pair is present we just do the setup for each of them, which
 	 * is harmless.
 	 */
-	if (cpu_is_thread0(c))
+	if (cpu_is_thread0(c) || cpu_is_core_chiplet_primary(c))
 		xive_configure_ex_special_bar(x, c);
 
 	/* Initialize the state structure */

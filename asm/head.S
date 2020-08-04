@@ -324,6 +324,7 @@ boot_offset:
  *   r28 :  PVR
  *   r27 :  DTB pointer (or NULL)
  *   r26 :  PIR thread mask
+ *   r25 :  P9 fused core flag
  */
 .global boot_entry
 boot_entry:
@@ -338,13 +339,22 @@ boot_entry:
 	cmpwi	cr0,%r3,PVR_TYPE_P8NVL
 	beq	2f
 	cmpwi	cr0,%r3,PVR_TYPE_P9
-	beq 	1f
+	beq 	3f
 	cmpwi	cr0,%r3,PVR_TYPE_P9P
-	beq 	1f
+	beq 	3f
 	attn		/* Unsupported CPU type... what do we do ? */
 	b 	.	/* loop here, just in case attn is disabled */
 
-	/* P8 -> 8 threads */
+	/* Check for fused core and set flag */
+3:
+	li	%r3, 0x1e0
+	mtspr   SPR_SPRC, %r3
+	mfspr	%r3, SPR_SPRD
+	andi.	%r25, %r3, 1
+	beq 1f
+
+	/* P8 or P9 fused -> 8 threads */
+
 2:	li	%r26,7
 
 	/* Get our reloc offset into r30 */
@@ -370,6 +380,15 @@ boot_entry:
 #endif
 	mtmsrd	%r3,0
 
+	/* If fused, t1 is primary chiplet and must init shared sprs */
+	andi.	%r3,%r25,1
+	beq	not_fused
+
+	mfspr	%r31,SPR_PIR
+	andi.	%r3,%r31,1
+	bnel	init_shared_sprs
+
+not_fused:
 	/* Check our PIR, avoid threads */
 	mfspr	%r31,SPR_PIR
 	and.	%r0,%r31,%r26

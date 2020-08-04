@@ -110,6 +110,9 @@
 
 /*
  * Additional useful definitions for P9
+ *
+ * Note: In all of these, the core numbering is the
+ * *normal* (small) core number.
  */
 
 /*

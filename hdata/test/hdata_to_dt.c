@@ -38,7 +38,11 @@ struct spira_ntuple;
 static void *ntuple_addr(const struct spira_ntuple *n);
 
 /* Stuff which core expects. */
-#define __this_cpu ((struct cpu_thread *)NULL)
+struct cpu_thread *my_fake_cpu;
+static struct cpu_thread *this_cpu(void)
+{
+	return my_fake_cpu;
+}
 
 unsigned long tb_hz = 512000000;
 
@@ -74,6 +78,7 @@ unsigned long tb_hz = 512000000;
 struct cpu_thread {
 	uint32_t			pir;
 	uint32_t			chip_id;
+	bool				is_fused_core;
 };
 struct cpu_job *__cpu_queue_job(struct cpu_thread *cpu,
 				const char *name,
@@ -94,6 +99,8 @@ static inline struct cpu_job *cpu_queue_job(struct cpu_thread *cpu,
 
 struct cpu_thread __boot_cpu, *boot_cpu = &__boot_cpu;
 static unsigned long fake_pvr = PVR_P8;
+
+unsigned int cpu_thread_count = 8;
 
 static inline unsigned long mfspr(unsigned int spr)
 {

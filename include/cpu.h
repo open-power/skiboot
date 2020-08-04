@@ -42,6 +42,7 @@ struct cpu_thread {
 	uint32_t			server_no;
 	uint32_t			chip_id;
 	bool				is_secondary;
+	bool				is_fused_core;
 	struct cpu_thread		*primary;
 	enum cpu_thread_state		state;
 	struct dt_node			*node;
@@ -242,6 +243,11 @@ static inline uint32_t cpu_get_thread0(struct cpu_thread *cpu)
 static inline bool cpu_is_thread0(struct cpu_thread *cpu)
 {
 	return cpu->primary == cpu;
+}
+
+static inline bool cpu_is_core_chiplet_primary(struct cpu_thread *cpu)
+{
+	return cpu->is_fused_core & (cpu_get_thread_index(cpu) == 1);
 }
 
 static inline bool cpu_is_sibling(struct cpu_thread *cpu1,
