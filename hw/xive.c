@@ -1531,6 +1531,10 @@ static bool xive_config_init(struct xive *x)
 	val |= PC_TCTXT_CFG_LGS_EN;
 	/* Disable pressure relief as we hijack the field in the VPs */
 	val &= ~PC_TCTXT_CFG_STORE_ACK;
+	if (this_cpu()->is_fused_core)
+		val |= PC_TCTXT_CFG_FUSE_CORE_EN;
+	else
+		val &= ~PC_TCTXT_CFG_FUSE_CORE_EN;
 	xive_regw(x, PC_TCTXT_CFG, val);
 	xive_dbg(x, "PC_TCTXT_CFG=%016llx\n", val);
 
