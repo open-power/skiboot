@@ -2741,6 +2741,7 @@ static void xive_reset_enable_thread(struct cpu_thread *c)
 	struct proc_chip *chip = get_chip(c->chip_id);
 	struct xive *x = chip->xive;
 	uint32_t fc, bit;
+	uint64_t enable;
 
 	/* Get fused core number */
 	fc = (c->pir >> 3) & 0xf;
@@ -2752,9 +2753,23 @@ static void xive_reset_enable_thread(struct cpu_thread *c)
 	if (fc < 8) {
 		xive_regw(x, PC_THREAD_EN_REG0_CLR, PPC_BIT(bit));
 		xive_regw(x, PC_THREAD_EN_REG0_SET, PPC_BIT(bit));
+
+		/*
+		 * To guarantee that the TIMA accesses will see the
+		 * latest state of the enable register, add an extra
+		 * load on PC_THREAD_EN_REG.
+		 */
+		enable = xive_regr(x, PC_THREAD_EN_REG0);
+		if (!(enable & PPC_BIT(bit)))
+			xive_cpu_err(c, "Failed to enable thread\n");
 	} else {
 		xive_regw(x, PC_THREAD_EN_REG1_CLR, PPC_BIT(bit));
 		xive_regw(x, PC_THREAD_EN_REG1_SET, PPC_BIT(bit));
+
+		/* Same as above */
+		enable = xive_regr(x, PC_THREAD_EN_REG1);
+		if (!(enable & PPC_BIT(bit)))
+			xive_cpu_err(c, "Failed to enable thread\n");
 	}
 }
 
