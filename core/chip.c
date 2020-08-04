@@ -38,7 +38,7 @@ uint32_t pir_to_thread_id(uint32_t pir)
 {
 	if (proc_gen == proc_gen_p9) {
 		if (this_cpu()->is_fused_core)
-			return P9_PIR2FUSEDTHREADID(pir);
+			return P9_PIRFUSED2NORMALTHREADID(pir);
 		else
 			return P9_PIR2THREADID(pir);
 	} else if (proc_gen == proc_gen_p8)

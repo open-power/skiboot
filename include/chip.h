@@ -98,6 +98,8 @@
 	(P9_PIR2FUSEDCOREID(pir) << 1) | \
 	(P9_PIR2FUSEDTHREADID(pir) & 1)
 
+#define P9_PIRFUSED2NORMALTHREADID(pir) (((pir) >> 1) & 0x3)
+
 /* P9 specific ones mostly used by XIVE */
 #define P9_PIR2LOCALCPU(pir) ((pir) & 0xff)
 #define P9_PIRFROMLOCALCPU(chip, cpu)	(((chip) << 8) | (cpu))
@@ -229,6 +231,11 @@ struct proc_chip {
 };
 
 extern uint32_t pir_to_chip_id(uint32_t pir);
+
+/*
+ * Note: In P9 fused-core mode, these will return the "normal"
+ * core ID and thread ID (ie, thread ID 0..3)
+ */
 extern uint32_t pir_to_core_id(uint32_t pir);
 extern uint32_t pir_to_thread_id(uint32_t pir);
 
