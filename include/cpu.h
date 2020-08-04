@@ -44,6 +44,7 @@ struct cpu_thread {
 	bool				is_secondary;
 	bool				is_fused_core;
 	struct cpu_thread		*primary;
+	struct cpu_thread		*ec_primary;
 	enum cpu_thread_state		state;
 	struct dt_node			*node;
 	struct trace_info		*trace;

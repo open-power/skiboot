@@ -823,9 +823,11 @@ struct cpu_thread *first_ungarded_cpu(void)
 
 struct cpu_thread *next_ungarded_primary(struct cpu_thread *cpu)
 {
+	bool is_primary;
 	do {
 		cpu = next_cpu(cpu);
-	} while(cpu && (cpu->state == cpu_state_unavailable || cpu->primary != cpu));
+		is_primary = cpu == cpu->primary || cpu == cpu->ec_primary;
+	} while(cpu && (cpu->state == cpu_state_unavailable || !is_primary));
 
 	return cpu;
 }
@@ -1157,7 +1159,7 @@ void init_all_cpus(void)
 		unsigned int pir, server_no, chip_id, threads;
 		enum cpu_thread_state state;
 		const struct dt_property *p;
-		struct cpu_thread *t, *pt;
+		struct cpu_thread *t, *pt0, *pt1;
 
 		/* Skip cache nodes */
 		if (strcmp(dt_prop_get(cpu, "device_type"), "cpu"))
@@ -1194,14 +1196,18 @@ void init_all_cpus(void)
 
 		/* Setup thread 0 */
 		assert(pir <= cpu_max_pir);
-		t = pt = &cpu_stacks[pir].cpu;
+		t = pt0 = &cpu_stacks[pir].cpu;
 		if (t != boot_cpu) {
 			init_cpu_thread(t, state, pir);
 			/* Each cpu gets its own later in init_trace_buffers */
 			t->trace = boot_cpu->trace;
 		}
+		if (t->is_fused_core)
+			pt1 = &cpu_stacks[pir + 1].cpu;
+		else
+			pt1 = pt0;
 		t->server_no = server_no;
-		t->primary = t;
+		t->primary = t->ec_primary = t;
 		t->node = cpu;
 		t->chip_id = chip_id;
 		t->icp_regs = NULL; /* Will be set later */
@@ -1239,10 +1245,12 @@ void init_all_cpus(void)
 			t->trace = boot_cpu->trace;
 			t->server_no = dt_property_get_cell(p, thread);
 			t->is_secondary = true;
-			t->primary = pt;
+			t->is_fused_core = pt0->is_fused_core;
+			t->primary = pt0;
+			t->ec_primary = (thread & 1) ? pt1 : pt0;
 			t->node = cpu;
 			t->chip_id = chip_id;
-			t->core_hmi_state_ptr = &pt->core_hmi_state;
+			t->core_hmi_state_ptr = &pt0->core_hmi_state;
 		}
 		prlog(PR_INFO, "CPU:  %d secondary threads\n", thread);
 	}
