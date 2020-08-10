@@ -10,6 +10,9 @@ LIBFLASH_SRC := $(addprefix libflash/,$(LIBFLASH_FILES))
 OBJS	+= $(LIBFLASH_OBJS)
 OBJS	+= common-arch_flash.o
 
+prefix = /usr/local/
+sbindir = $(prefix)/sbin
+
 CC	= $(CROSS_COMPILE)gcc
 
 FFSPART_VERSION ?= $(shell ./make_version.sh $(EXE))
