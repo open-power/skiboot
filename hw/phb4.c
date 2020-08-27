@@ -785,6 +785,7 @@ static void phb4_endpoint_init(struct phb *phb,
 	val16 |= (PCICAP_EXP_DEVCTL_NFE_REPORT |
 		  PCICAP_EXP_DEVCTL_FE_REPORT |
 		  PCICAP_EXP_DEVCTL_UR_REPORT);
+	pci_cfg_write16(phb, bdfn, ecap + PCICAP_EXP_DEVCTL, val16);
 
 	/* Enable ECRC generation and check */
 	pci_cfg_read32(phb, bdfn, aercap + PCIECAP_AER_CAPCTL, &val32);
