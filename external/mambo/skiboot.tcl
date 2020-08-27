@@ -481,7 +481,7 @@ for { set c 0 } { $c < $mconf(cpus) } { incr c } {
 	# bytes 14-21
 	lappend reg 0x0000800080008000
 	# bytes 22-29 22/23=TM
-	lappend reg 0x8000800080008000
+	lappend reg 0x0000800080008000
 	# bytes 30-37
 	lappend reg 0x80008000C0008000
 	# bytes 38-45 40/41=radix
