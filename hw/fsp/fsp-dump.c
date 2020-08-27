@@ -830,10 +830,10 @@ static void check_ipl_sys_dump(void)
 		if (!opal_node)
 			return;
 		dump_node = dt_find_by_path(opal_node, "dump");
-		if (!dump_node)
-			return;
-		if (dt_find_property(dump_node, "mpipl-boot"))
-			return;
+		if (dump_node) {
+			if (dt_find_property(dump_node, "mpipl-boot"))
+				return;
+		}
 	}
 
 	dump_node = dt_find_by_path(dt_root, "ipl-params/platform-dump");
