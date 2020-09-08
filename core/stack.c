@@ -206,16 +206,16 @@ void __nomcount __mcount_stack_check(uint64_t sp, uint64_t lr)
 		backtrace_create(c->stack_bot_bt, CPU_BACKTRACE_SIZE,
 				 &c->stack_bot_bt_metadata);
 		unlock(&stack_check_lock);
-	}
 
-	/* Stack is within bounds ? check for warning and bail */
-	if (sp >= (bot + STACK_SAFETY_GAP) && sp < top) {
 		if (mark < STACK_WARNING_GAP) {
 			prlog(PR_EMERG, "CPU %04x Stack usage danger !"
 			      " pc=%08llx sp=%08llx (gap=%lld) token=%lld\n",
 			      c->pir, lr, sp, mark, c->current_token);
-			backtrace();
 		}
+	}
+
+	/* Stack is within bounds? */
+	if (sp >= (bot + STACK_SAFETY_GAP) && sp < top) {
 		c->in_mcount = false;
 		return;
 	}
