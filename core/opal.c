@@ -415,7 +415,7 @@ void add_opal_node(void)
 	opal_event = dt_new(opal_node, "event");
 	dt_add_property_strings(opal_event, "compatible", "ibm,opal-event");
 	dt_add_property_cells(opal_event, "#interrupt-cells", 0x1);
-	dt_add_property(opal_event, "interrupt-controller", 0, 0);
+	dt_add_property(opal_event, "interrupt-controller", NULL, 0);
 
 	add_opal_firmware_node();
 	add_associativity_ref_point();
