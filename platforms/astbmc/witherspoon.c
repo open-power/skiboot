@@ -555,7 +555,7 @@ static void witherspoon_finalise_dt(bool is_reboot)
 	 * SCL/SDA don't return to the idle state fast enough. Disable
 	 * the port to squash the errors.
 	 */
-	for (c = next_chip(0); c; c = next_chip(c)) {
+	for (c = next_chip(NULL); c; c = next_chip(c)) {
 		bool detected = false;
 		int i;
 
