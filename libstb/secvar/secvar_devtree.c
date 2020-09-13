@@ -22,7 +22,7 @@ int secvar_set_secure_mode(void)
 	if (prop)
 		return 0;
 
-	prop = dt_add_property(sb_root, "os-secureboot-enforcing", 0, 0);
+	prop = dt_add_property(sb_root, "os-secureboot-enforcing", NULL, 0);
 	if (!prop)
 		return -2;
 
