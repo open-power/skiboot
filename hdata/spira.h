@@ -364,10 +364,15 @@ struct iplparams_sysparams {
 	__be16		hv_disp_wheel;		/* >= 0x58 */
 	__be32		nest_freq_mhz;		/* >= 0x5b */
 	uint8_t		split_core_mode;	/* >= 0x5c */
-	uint8_t		reserved[3];
+	uint8_t		reserved[1];
+#define KEY_CLEAR_ALL     PPC_BIT16(0)
+#define KEY_CLEAR_OS_KEYS PPC_BIT16(1)
+#define KEY_CLEAR_MFG     PPC_BIT16(7)
+	__be16          host_fw_key_clear;
 	uint8_t		sys_vendor[64];		/* >= 0x5f */
 #define SEC_CONTAINER_SIG_CHECKING PPC_BIT16(0)
 #define SEC_HASHES_EXTENDED_TO_TPM PPC_BIT16(1)
+#define PHYSICAL_PRESENCE_ASSERTED PPC_BIT16(3)
 	__be16		sys_sec_setting;	/* >= 0x60 */
 	__be16		tpm_config_bit;		/* >= 0x60 */
 	__be16		tpm_drawer;		/* >= 0x60 */

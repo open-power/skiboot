@@ -921,6 +921,7 @@ static void dt_init_secureboot_node(const struct iplparams_sysparams *sysparams)
 	struct dt_node *node;
 	u16 sys_sec_setting;
 	u16 hw_key_hash_size;
+	u16 host_fw_key_clear;
 
 	node = dt_new(dt_root, "ibm,secureboot");
 	assert(node);
@@ -933,6 +934,16 @@ static void dt_init_secureboot_node(const struct iplparams_sysparams *sysparams)
 		dt_add_property(node, "secure-enabled", NULL, 0);
 	if (sys_sec_setting & SEC_HASHES_EXTENDED_TO_TPM)
 		dt_add_property(node, "trusted-enabled", NULL, 0);
+	if (sys_sec_setting & PHYSICAL_PRESENCE_ASSERTED)
+		dt_add_property(node, "physical-presence-asserted", NULL, 0);
+
+	host_fw_key_clear = be16_to_cpu(sysparams->host_fw_key_clear);
+	if (host_fw_key_clear & KEY_CLEAR_OS_KEYS)
+		dt_add_property(node, "clear-os-keys", NULL, 0);
+	if (host_fw_key_clear & KEY_CLEAR_MFG)
+		dt_add_property(node, "clear-mfg-keys", NULL, 0);
+	if (host_fw_key_clear & KEY_CLEAR_ALL)
+		dt_add_property(node, "clear-all-keys", NULL, 0);
 
 	hw_key_hash_size = be16_to_cpu(sysparams->hw_key_hash_size);
 

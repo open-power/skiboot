@@ -39,6 +39,23 @@ Required properties
                         images (e.g. kernels) to be signed by an appropriate
                         key stored in secure variables.
 
+    physical-presence-asserted:
+                        this property exists to indicate the physical presence
+                        of user to request key clearance.
+
+    clear-os-keys:      this property exists when the firmware indicates that
+                        physical presence is asserted to clear only Host OS
+                        secure boot keys.
+
+    clear-all-keys:     this property exists when the firmware indicates that
+                        physical presence is asserted to clear all sensistive
+                        data controlled by platform firmware.
+
+    clear-mfg-keys:     this property exists only during manufacturing process
+                        when the firmware indicates to clear all senstive data
+                        during manufacturing. It is only valid on development
+                        drivers.
+
 Obsolete properties
 -------------------
 
