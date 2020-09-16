@@ -20,11 +20,31 @@ void clear_bank_list(struct list_head *bank)
 
 	list_for_each_safe(bank, node, next, link) {
 		list_del(&node->link);
-
-		if (node->var)
-			free(node->var);
-		free(node);
+		dealloc_secvar(node);
 	}
+}
+
+int copy_bank_list(struct list_head *dst, struct list_head *src)
+{
+	struct secvar_node *node, *tmp;
+
+	list_for_each(src, node, link) {
+		/* Allocate new secvar using actual data size */
+		tmp = alloc_secvar(node->var->data_size);
+		if (!tmp)
+			return OPAL_NO_MEM;
+
+		/* Copy over flags metadata */
+		tmp->flags = node->flags;
+
+		/* Full-clone over the secvar struct */
+		memcpy(tmp->var, node->var, tmp->size + sizeof(struct secvar));
+
+		/* Append to new list */
+		list_add_tail(dst, &tmp->link);
+	}
+
+	return OPAL_SUCCESS;
 }
 
 struct secvar_node *alloc_secvar(uint64_t size)
@@ -46,6 +66,34 @@ struct secvar_node *alloc_secvar(uint64_t size)
 	return ret;
 }
 
+struct secvar_node *new_secvar(const char *key, uint64_t key_len,
+			       const char *data, uint64_t data_size,
+			       uint64_t flags)
+{
+	struct secvar_node *ret;
+
+	if (!key)
+		return NULL;
+	if ((!key_len) || (key_len > SECVAR_MAX_KEY_LEN))
+		return NULL;
+	if ((!data) && (data_size))
+		return NULL;
+
+	ret = alloc_secvar(data_size);
+	if (!ret)
+		return NULL;
+
+	ret->var->key_len = key_len;
+	ret->var->data_size = data_size;
+	memcpy(ret->var->key, key, key_len);
+	ret->flags = flags;
+
+	if (data)
+		memcpy(ret->var->data, data, data_size);
+
+	return ret;
+}
+
 int realloc_secvar(struct secvar_node *node, uint64_t size)
 {
 	void *tmp;
@@ -62,6 +110,15 @@ int realloc_secvar(struct secvar_node *node, uint64_t size)
 	node->var = tmp;
 
 	return 0;
+}
+
+void dealloc_secvar(struct secvar_node *node)
+{
+	if (!node)
+		return;
+
+	free(node->var);
+	free(node);
 }
 
 struct secvar_node *find_secvar(const char *key, uint64_t key_len, struct list_head *bank)
