@@ -5,7 +5,9 @@ SECVAR_TEST_DIR = libstb/secvar/test
 
 SECVAR_TEST = $(patsubst %.c, %, $(wildcard $(SECVAR_TEST_DIR)/secvar-test-*.c))
 
-HOSTCFLAGS+=-I . -I include
+HOSTCFLAGS+=-I . -I include -I libstb/tss2 -I libstb/tss2/ibmtpm20tss/utils
+# Needed because x86 and POWER disagree on the type for uint64_t, causes printf issues
+HOSTCFLAGS+= -Wno-format
 
 .PHONY : secvar-check
 secvar-check: $(SECVAR_TEST:%=%-check) $(SECVAR_TEST_NOSTUB:%=%-check)
