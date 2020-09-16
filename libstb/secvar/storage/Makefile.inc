@@ -14,3 +14,6 @@ SECVAR_STORAGE_OBJS = $(SECVAR_STORAGE_SRCS:%.c=%.o)
 SECVAR_STORAGE = $(SECVAR_STORAGE_DIR)/built-in.a
 
 $(SECVAR_STORAGE): $(SECVAR_STORAGE_OBJS:%=$(SECVAR_STORAGE_DIR)/%)
+
+gen_tpmnv_public_name: $@
+	gcc -o $@ $(SECVAR_STORAGE_DIR)/$@.c -I $(SRC)/libstb/tss2/ibmtpm20tss/utils/ -lmbedcrypto
