@@ -4,6 +4,8 @@
 #define SECBOOT_FILE "secboot.img"
 #define SECBOOT_SIZE 128000
 
+#define HAVE_LITTLE_ENDIAN 1
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>

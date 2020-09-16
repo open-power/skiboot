@@ -6,6 +6,7 @@ SECVAR_TEST_DIR = libstb/secvar/test
 SECVAR_TEST = $(patsubst %.c, %, $(wildcard $(SECVAR_TEST_DIR)/secvar-test-*.c))
 
 HOSTCFLAGS+=-I . -I include -I libstb/tss2 -I libstb/tss2/ibmtpm20tss/utils
+HOSTCFLAGS += -I$(SRC)/$(LIBSTB_DIR)/crypto/mbedtls/include
 # Needed because x86 and POWER disagree on the type for uint64_t, causes printf issues
 HOSTCFLAGS+= -Wno-format
 
@@ -29,13 +30,15 @@ $(SECVAR_TEST:%=%-check) : %-check: %
 	$(call QTEST, RUN-TEST ,$(VALGRIND) $<, $<)
 	@$(RM) -f secboot.img
 
+HOSTMBEDFLAGS += -lmbedcrypto -lmbedx509
+
 $(SECVAR_TEST) : core/test/stubs.o
 
 $(SECVAR_TEST) : % : %.c
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -o $@ $< core/test/stubs.o, $<)
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTMBEDFLAGS) -O0 -g -I include -I . -I libfdt -o $@ $< core/test/stubs.o, $<)
 
 $(SECVAR_TEST:%=%-gcov): %-gcov : %.c %
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I include -I . -I libfdt -lgcov -o $@ $< core/test/stubs.o, $<)
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) $(HOSTMBEDFLAGS) -I include -I . -I libfdt -lgcov -o $@ $< core/test/stubs.o, $<)
 
 -include $(wildcard libstb/secvar/test/*.d)
 
