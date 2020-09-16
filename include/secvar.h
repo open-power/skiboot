@@ -37,6 +37,7 @@ struct secvar_backend_driver {
 };
 
 extern struct secvar_storage_driver secboot_tpm_driver;
+extern struct secvar_backend_driver edk2_compatible_v1;
 
 int secvar_main(struct secvar_storage_driver, struct secvar_backend_driver);
 
