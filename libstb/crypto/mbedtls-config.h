@@ -72,6 +72,7 @@
 //#define MBEDTLS_PEM_PARSE_C
 #define MBEDTLS_PK_C
 #define MBEDTLS_PK_PARSE_C
+#define MBEDTLS_PKCS7_C
 //#define MBEDTLS_PK_WRITE_C
 #define MBEDTLS_PLATFORM_C
 #define MBEDTLS_RSA_C

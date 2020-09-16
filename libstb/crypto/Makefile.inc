@@ -42,6 +42,8 @@ MBEDTLS_SRCS = $(addprefix mbedtls/library/,$(MBED_CRYPTO_SRCS) $(MBED_X509_SRCS
 
 MBEDTLS_OBJS = $(MBEDTLS_SRCS:%.c=%.o)
 
+include $(CRYPTO_DIR)/pkcs7/Makefile.inc
+
 CRYPTO = $(CRYPTO_DIR)/built-in.a
 
-$(CRYPTO): $(MBEDTLS_OBJS:%=$(CRYPTO_DIR)/%)
+$(CRYPTO): $(MBEDTLS_OBJS:%=$(CRYPTO_DIR)/%) $(PKCS7)
