@@ -229,6 +229,9 @@ extern int flash_subpart_info(void *part_header, uint32_t header_len,
 extern void flash_fw_version_preload(void);
 extern void flash_dt_add_fw_version(void);
 extern const char *flash_map_resource_name(enum resource_id id);
+extern int flash_secboot_info(uint32_t *total_size);
+extern int flash_secboot_read(void *dst, uint32_t src, uint32_t len);
+extern int flash_secboot_write(uint32_t dst, void *src, uint32_t len);
 
 /*
  * Decompression routines

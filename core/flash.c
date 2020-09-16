@@ -59,6 +59,10 @@ static struct lock flash_lock;
 static struct flash *nvram_flash;
 static u32 nvram_offset, nvram_size;
 
+/* secboot-on-flash support */
+static struct flash *secboot_flash;
+static u32 secboot_offset, secboot_size;
+
 bool flash_reserve(void)
 {
 	bool rc = false;
@@ -91,6 +95,91 @@ bool flash_unregister(void)
 
 	prlog(PR_NOTICE, "Unregister flash device is not supported\n");
 	return true;
+}
+
+int flash_secboot_info(uint32_t *total_size)
+{
+	int rc;
+
+	lock(&flash_lock);
+	if (!secboot_flash) {
+		rc = OPAL_HARDWARE;
+	} else if (secboot_flash->busy) {
+		rc = OPAL_BUSY;
+	} else {
+		*total_size = secboot_size;
+		rc = OPAL_SUCCESS;
+	}
+	unlock(&flash_lock);
+
+	return rc;
+}
+
+int flash_secboot_read(void *dst, uint32_t src, uint32_t len)
+{
+	int rc;
+
+	if (!try_lock(&flash_lock))
+		return OPAL_BUSY;
+
+	if (!secboot_flash) {
+		rc = OPAL_HARDWARE;
+		goto out;
+	}
+
+	if (secboot_flash->busy) {
+		rc = OPAL_BUSY;
+		goto out;
+	}
+
+	if ((src + len) > secboot_size) {
+		prerror("FLASH_SECBOOT: read out of bound (0x%x,0x%x)\n",
+			src, len);
+		rc = OPAL_PARAMETER;
+		goto out;
+	}
+
+	secboot_flash->busy = true;
+	unlock(&flash_lock);
+
+	rc = blocklevel_read(secboot_flash->bl, secboot_offset + src, dst, len);
+
+	lock(&flash_lock);
+	secboot_flash->busy = false;
+out:
+	unlock(&flash_lock);
+	return rc;
+}
+
+int flash_secboot_write(uint32_t dst, void *src, uint32_t len)
+{
+	int rc;
+
+	if (!try_lock(&flash_lock))
+		return OPAL_BUSY;
+
+	if (secboot_flash->busy) {
+		rc = OPAL_BUSY;
+		goto out;
+	}
+
+	if ((dst + len) > secboot_size) {
+		prerror("FLASH_SECBOOT: write out of bound (0x%x,0x%x)\n",
+			dst, len);
+		rc = OPAL_PARAMETER;
+		goto out;
+	}
+
+	secboot_flash->busy = true;
+	unlock(&flash_lock);
+
+	rc = blocklevel_write(secboot_flash->bl, secboot_offset + dst, src, len);
+
+	lock(&flash_lock);
+	secboot_flash->busy = false;
+out:
+	unlock(&flash_lock);
+	return rc;
 }
 
 static int flash_nvram_info(uint32_t *total_size)
@@ -180,6 +269,42 @@ static int flash_nvram_write(uint32_t dst, void *src, uint32_t len)
 out:
 	unlock(&flash_lock);
 	return rc;
+}
+
+
+static int flash_secboot_probe(struct flash *flash, struct ffs_handle *ffs)
+{
+	uint32_t start, size, part;
+	bool ecc;
+	int rc;
+
+	prlog(PR_DEBUG, "FLASH: probing for SECBOOT\n");
+
+	rc = ffs_lookup_part(ffs, "SECBOOT", &part);
+	if (rc) {
+		prlog(PR_WARNING, "FLASH: no SECBOOT partition found\n");
+		return OPAL_HARDWARE;
+	}
+
+	rc = ffs_part_info(ffs, part, NULL,
+			   &start, &size, NULL, &ecc);
+	if (rc) {
+		/**
+		 * @fwts-label SECBOOTNoPartition
+		 * @fwts-advice OPAL could not find an SECBOOT partition
+		 *     on the system flash. Check that the system flash
+		 *     has a valid partition table, and that the firmware
+		 *     build process has added a SECBOOT partition.
+		 */
+		prlog(PR_ERR, "FLASH: Can't parse ffs info for SECBOOT\n");
+		return OPAL_HARDWARE;
+	}
+
+	secboot_flash = flash;
+	secboot_offset = start;
+	secboot_size = ecc ? ecc_buffer_size_minus_ecc(size) : size;
+
+	return 0;
 }
 
 static int flash_nvram_probe(struct flash *flash, struct ffs_handle *ffs)
@@ -332,6 +457,7 @@ static void setup_system_flash(struct flash *flash, struct dt_node *node,
 	prlog(PR_INFO, "registered system flash device %s\n", name);
 
 	flash_nvram_probe(flash, ffs);
+	flash_secboot_probe(flash, ffs);
 }
 
 static int num_flashes(void)
