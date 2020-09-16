@@ -17,11 +17,23 @@ struct secvar_storage_driver {
 };
 
 struct secvar_backend_driver {
-        int (*pre_process)(void);               // Perform any pre-processing stuff (e.g. determine secure boot state)
-        int (*process)(void);                   // Process all updates
-        int (*post_process)(void);              // Perform any post-processing stuff (e.g. derive/update variables)
-        int (*validate)(struct secvar *var);    // Validate a single variable, return boolean
-        const char *compatible;			// String to use for compatible in secvar node
+	/* Perform any pre-processing stuff (e.g. determine secure boot state) */
+	int (*pre_process)(struct list_head *variable_bank,
+			   struct list_head *update_bank);
+
+	/* Process all updates */
+	int (*process)(struct list_head *variable_bank,
+		       struct list_head *update_bank);
+
+	/* Perform any post-processing stuff (e.g. derive/update variables)*/
+	int (*post_process)(struct list_head *variable_bank,
+			    struct list_head *update_bank);
+
+	/* Validate a single variable, return boolean */
+	int (*validate)(struct secvar *var);
+
+	/* String to use for compatible in secvar node */
+	const char *compatible;
 };
 
 

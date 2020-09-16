@@ -65,7 +65,7 @@ int secvar_main(struct secvar_storage_driver storage_driver,
 	secvar_set_status("okay");
 
 	if (secvar_backend.pre_process) {
-		rc = secvar_backend.pre_process();
+		rc = secvar_backend.pre_process(&variable_bank, &update_bank);
 		if (rc) {
 			prlog(PR_ERR, "Error in backend pre_process = %d\n", rc);
 			/* Early failure state, lock the storage */
@@ -79,7 +79,7 @@ int secvar_main(struct secvar_storage_driver storage_driver,
 		goto soft_fail;
 
 	/* Process variable updates from the update bank. */
-	rc = secvar_backend.process();
+	rc = secvar_backend.process(&variable_bank, &update_bank);
 
 	/* Create and set the update-status device tree property */
 	secvar_set_update_status(rc);
@@ -109,7 +109,7 @@ int secvar_main(struct secvar_storage_driver storage_driver,
 	secvar_storage.lockdown();
 
 	if (secvar_backend.post_process) {
-		rc = secvar_backend.post_process();
+		rc = secvar_backend.post_process(&variable_bank, &update_bank);
 		if (rc) {
 			prlog(PR_ERR, "Error in backend post_process = %d\n", rc);
 			goto soft_fail;
