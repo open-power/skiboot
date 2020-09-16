@@ -14,32 +14,25 @@ int run_test(void)
 {
 	int64_t rc;
 
-	uint64_t size = 4;
+	uint64_t size;
 	char *temp = zalloc(100);
 	char key[1024] = {0};
 
-	struct secvar_node *node = zalloc(sizeof(struct secvar_node));
-	struct secvar *var = zalloc(sizeof(struct secvar) + 1024); // over-allocate for now, this should be rewritten
+	struct secvar *var;
 	size_t data_size = sizeof("foobar");
 	char *data = zalloc(data_size);
 	uint64_t key_len = 4;
 	memcpy(data, "foobar", data_size);
-
 	memcpy(key, "test", 4);
 
 	// List should be empty at start
-	rc = secvar_get(key, key_len, data, &data_size);
+	rc = secvar_get(key, key_len, temp, &size);
 	ASSERT(rc == OPAL_EMPTY);
 	ASSERT(list_length(&variable_bank) == 0);
 
 	// Manually add variables, and check get_variable call
-	var->key_len = key_len;
-	memcpy(var->key, key, key_len);
-	var->data_size = data_size;
-	memcpy(var->data, data, data_size);
-
-	node->var = var;
-	list_add_tail(&variable_bank, &node->link);
+	var = new_secvar(key, key_len, data, data_size, 0);
+	list_add_tail(&variable_bank, &var->link);
 
 	ASSERT(list_length(&variable_bank) == 1);
 
@@ -88,10 +81,6 @@ int run_test(void)
 	ASSERT(rc == OPAL_RESOURCE);
 	secvar_ready = 1;
 
-	list_del(&node->link);
-
-	free(var);
-	free(node);
 	free(data);
 	free(temp);
 

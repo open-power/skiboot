@@ -16,7 +16,7 @@ int run_test(void)
 {
 	int64_t rc;
 
-	struct secvar_node *node;
+	struct secvar *var;
 	char key[1024] = {0};
 
 	uint64_t data_size = 128;
@@ -106,8 +106,8 @@ int run_test(void)
 	rc = secvar_enqueue(key, 4, data, data_size);
 	ASSERT(rc == OPAL_SUCCESS);
 	ASSERT(list_length(&update_bank) == 3); // should not increase
-	node = list_tail(&update_bank, struct secvar_node, link);
-	ASSERT(!memcmp(node->var->key, key, 4))	// should be at end
+	var = list_tail(&update_bank, struct secvar, link);
+	ASSERT(!memcmp(var->key, key, 4))	// should be at end
 
 	// Unstage the variable update
 	rc = secvar_enqueue(key, 4, NULL, 0);

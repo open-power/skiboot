@@ -10,37 +10,23 @@ int run_test(void)
 	int64_t rc;
 
 	struct secvar *tmpvar;
-	struct secvar_node *tmpnode;
 
 	char key[1024] = {0};
 	uint64_t key_len = 16;
 
-
 	// Load up the bank with some variables.
 	// If these fail, we have bigger issues.
 	ASSERT(list_length(&variable_bank) == 0);
-	tmpvar = zalloc(sizeof(struct secvar) + 6);
-	tmpnode = zalloc(sizeof(struct secvar_node));
-	memcpy(tmpvar->key, "test1", 6); // ascii w/ null
-	tmpvar->key_len = 6;
-	tmpnode->var = tmpvar;
-	list_add_tail(&variable_bank, &tmpnode->link);
+	tmpvar = new_secvar("test1", 6, NULL, 0, 0);
+	list_add_tail(&variable_bank, &tmpvar->link);
 	ASSERT(list_length(&variable_bank) == 1);
 
-	tmpvar = zalloc(sizeof(struct secvar) + 5);
-	tmpnode = zalloc(sizeof(struct secvar_node));
-	memcpy(tmpvar->key, "test2", 5); // ascii w/o null
-	tmpvar->key_len = 5;
-	tmpnode->var = tmpvar;
-	list_add_tail(&variable_bank, &tmpnode->link);
+	tmpvar = new_secvar("test2", 5, NULL, 0, 0);  // ascii w/o null
+	list_add_tail(&variable_bank, &tmpvar->link);
 	ASSERT(list_length(&variable_bank) == 2);
 
-	tmpvar = zalloc(sizeof(struct secvar) + 5*2);
-	tmpnode = zalloc(sizeof(struct secvar_node));
-	memcpy(tmpvar->key, L"test3", 5*2); // wide char "unicode"
-	tmpvar->key_len = 10;
-	tmpnode->var = tmpvar;
-	list_add_tail(&variable_bank, &tmpnode->link);
+	tmpvar = new_secvar((const char*) L"test3", 5*2, NULL, 0, 0); // wide char "unicode"
+	list_add_tail(&variable_bank, &tmpvar->link);
 	ASSERT(list_length(&variable_bank) == 3);
 
 	// Test sequential nexts
