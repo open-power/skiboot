@@ -27,7 +27,7 @@ static struct {
 	{ IBM_SECUREBOOT_V2, "ibm,secureboot-v2" },
 };
 
-static void secureboot_enforce(void)
+void secureboot_enforce(void)
 {
 	/* Sanity check */
 	if (!secure_mode)

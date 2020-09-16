@@ -15,6 +15,7 @@ enum secureboot_version {
 	IBM_SECUREBOOT_V2,
 };
 
+void secureboot_enforce(void);
 bool secureboot_is_compatible(struct dt_node *node, int *version, const char **compat);
 void secureboot_init(void);
 
