@@ -62,6 +62,11 @@ bool secureboot_is_compatible(struct dt_node *node, int *version, const char **c
 	return false;
 }
 
+bool is_fw_secureboot(void)
+{
+	return secure_mode;
+}
+
 void secureboot_init(void)
 {
 	struct dt_node *node;

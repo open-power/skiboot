@@ -1268,7 +1268,7 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	trustedboot_init();
 
 	/* Secure variables init, handled by platform */
-	if (platform.secvar_init)
+	if (platform.secvar_init && is_fw_secureboot())
 		platform.secvar_init();
 
 	/*
