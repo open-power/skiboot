@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <skiboot.h>
 #include <opal.h>
+#include <libstb/secureboot.h>
 #include "secvar.h"
 #include "secvar_devtree.h"
 
@@ -39,11 +40,14 @@ int secvar_main(struct secvar_storage_driver storage_driver,
 	list_head_init(&variable_bank);
 	list_head_init(&update_bank);
 
+	/*
+	 * Failures here should indicate some kind of hardware problem,
+	 * therefore we don't even attempt to continue
+	 */
 	rc = secvar_storage.store_init();
 	if (rc)
-		goto fail;
+		secureboot_enforce();
 
-	// Failures here should indicate some kind of hardware problem
 	rc = secvar_storage.load_bank(&variable_bank, SECVAR_VARIABLE_BANK);
 	if (rc)
 		goto fail;
@@ -52,40 +56,89 @@ int secvar_main(struct secvar_storage_driver storage_driver,
 	if (rc)
 		goto fail;
 
-	// At this point, base secvar is functional. Rest is up to the backend
+	/*
+	 * At this point, base secvar is functional.
+	 * In the event of some error, boot up to Petitboot in secure mode
+	 * with an empty keyring, for an admin to attempt to debug.
+	 */
 	secvar_ready = 1;
 	secvar_set_status("okay");
 
-	if (secvar_backend.pre_process)
+	if (secvar_backend.pre_process) {
 		rc = secvar_backend.pre_process();
+		if (rc) {
+			prlog(PR_ERR, "Error in backend pre_process = %d\n", rc);
+			/* Early failure state, lock the storage */
+			secvar_storage.lockdown();
+			goto soft_fail;
+		}
+	}
 
 	// Process is required, error if it doesn't exist
 	if (!secvar_backend.process)
-		goto out;
+		goto soft_fail;
 
+	/* Process variable updates from the update bank. */
 	rc = secvar_backend.process();
-		secvar_set_update_status(rc);
+
+	/* Create and set the update-status device tree property */
+	secvar_set_update_status(rc);
+
+	/*
+	 * Only write to the storage if we actually processed updates
+	 * OPAL_EMPTY implies no updates were processed
+	 * Refer to full table in doc/device-tree/ibm,opal/secvar.rst
+	 */
 	if (rc == OPAL_SUCCESS) {
 		rc = secvar_storage.write_bank(&variable_bank, SECVAR_VARIABLE_BANK);
 		if (rc)
-			goto out;
-
-		rc = secvar_storage.write_bank(&update_bank, SECVAR_UPDATE_BANK);
-		if (rc)
-			goto out;
+			goto soft_fail;
 	}
+	/*
+	 * Write (and probably clear) the update bank if .process() actually detected
+	 * and handled updates in the update bank. Unlike above, this includes error
+	 * cases, where the backend should probably be clearing the bank.
+	 */
+	if (rc != OPAL_EMPTY) {
+		rc = secvar_storage.write_bank(&update_bank,
+					       SECVAR_UPDATE_BANK);
+		if (rc)
+			goto soft_fail;
+	}
+	/* Unconditionally lock the storage at this point */
+	secvar_storage.lockdown();
 
-	if (secvar_backend.post_process)
+	if (secvar_backend.post_process) {
 		rc = secvar_backend.post_process();
-	if (rc)
-		goto out;
+		if (rc) {
+			prlog(PR_ERR, "Error in backend post_process = %d\n", rc);
+			goto soft_fail;
+		}
+	}
 
 	prlog(PR_INFO, "secvar initialized successfully\n");
 
 	return OPAL_SUCCESS;
+
 fail:
+	/* Early failure, base secvar support failed to initialize */
 	secvar_set_status("fail");
-out:
+	secvar_storage.lockdown();
+	secvar_set_secure_mode();
+
+	prerror("secvar failed to initialize, rc = %04x\n", rc);
+	return rc;
+
+soft_fail:
+	/*
+	 * Soft-failure, enforce secure boot with an empty keyring in
+	 * bootloader for debug/recovery
+	 */
+	clear_bank_list(&variable_bank);
+	clear_bank_list(&update_bank);
+	secvar_storage.lockdown();
+	secvar_set_secure_mode();
+
 	prerror("secvar failed to initialize, rc = %04x\n", rc);
 	return rc;
 }
