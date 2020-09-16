@@ -64,3 +64,18 @@ void secvar_set_update_status(uint64_t val)
 	dt_add_property_u64(secvar_node, "update-status", val);
 }
 
+bool secvar_check_physical_presence(void)
+{
+	struct dt_node *secureboot;
+
+	secureboot = dt_find_by_path(dt_root, "ibm,secureboot");
+	if (!secureboot)
+		return false;
+
+	if (dt_find_property(secureboot, "clear-os-keys")
+			|| dt_find_property(secureboot, "clear-all-keys")
+			|| dt_find_property(secureboot, "clear-mfg-keys"))
+		return true;
+
+	return false;
+}

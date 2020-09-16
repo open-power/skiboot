@@ -10,4 +10,6 @@ void secvar_init_devnode(const char *compatible);
 void secvar_set_status(const char *status);
 void secvar_set_update_status(uint64_t val);
 
+bool secvar_check_physical_presence(void);
+
 #endif
