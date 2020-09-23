@@ -27,6 +27,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <poll.h>
+#include <signal.h>
 #include <dirent.h>
 
 #include <endian.h>
@@ -696,13 +697,42 @@ out:
 	return rc;
 }
 
+static int memory_error_worker(const char *sysfsfile, const char *type,
+			       uint64_t i_start_addr, uint64_t i_endAddr)
+{
+	int memfd, rc, n, ret = 0;
+	char buf[ADDR_STRING_SZ];
+	uint64_t addr;
+
+	memfd = open(sysfsfile, O_WRONLY);
+	if (memfd < 0) {
+		pr_log(LOG_CRIT, "MEM: Failed to offline memory! "
+				"Unable to open sysfs node %s: %m", sysfsfile);
+		return -1;
+	}
+
+	for (addr = i_start_addr; addr <= i_endAddr; addr += ctx->page_size) {
+		n = snprintf(buf, ADDR_STRING_SZ, "0x%lx", addr);
+		rc = write(memfd, buf, n);
+		if (rc != n) {
+			pr_log(LOG_CRIT, "MEM: Failed to offline memory! "
+					"page addr: %016lx type: %s: %m",
+				addr, type);
+			ret = 1;
+		}
+	}
+	pr_log(LOG_CRIT, "MEM: Offlined %016lx,%016lx, type %s: %m\n",
+			i_start_addr, addr, type);
+
+	close(memfd);
+	return ret;
+}
+
 int hservice_memory_error(uint64_t i_start_addr, uint64_t i_endAddr,
 		enum MemoryError_t i_errorType)
 {
 	const char *sysfsfile, *typestr;
-	char buf[ADDR_STRING_SZ];
-	int memfd, rc, n, ret = 0;
-	uint64_t addr;
+	pid_t pid;
 
 	switch(i_errorType) {
 	case MEMORY_ERROR_CE:
@@ -722,26 +752,21 @@ int hservice_memory_error(uint64_t i_start_addr, uint64_t i_endAddr,
 	pr_log(LOG_ERR, "MEM: Memory error: range %016lx-%016lx, type: %s",
 			i_start_addr, i_endAddr, typestr);
 
+	/*
+	 * HBRT expects the memory offlining process to happen in the background
+	 * after the notification is delivered.
+	 */
+	pid = fork();
+	if (pid > 0)
+		exit(memory_error_worker(sysfsfile, typestr, i_start_addr, i_endAddr));
 
-	memfd = open(sysfsfile, O_WRONLY);
-	if (memfd < 0) {
-		pr_log(LOG_CRIT, "MEM: Failed to offline memory! "
-				"Unable to open sysfs node %s: %m", sysfsfile);
+	if (pid < 0) {
+		perror("MEM: unable to fork worker to offline memory!\n");
 		return -1;
 	}
 
-	for (addr = i_start_addr; addr <= i_endAddr; addr += ctx->page_size) {
-		n = snprintf(buf, ADDR_STRING_SZ, "0x%lx", addr);
-		rc = write(memfd, buf, n);
-		if (rc != n) {
-			pr_log(LOG_CRIT, "MEM: Failed to offline memory! "
-					"page addr: %016lx type: %d: %m",
-				addr, i_errorType);
-			ret = rc;
-		}
-	}
-
-	return ret;
+	pr_log(LOG_INFO, "MEM: forked off %d to handle mem error\n", pid);
+	return 0;
 }
 
 uint64_t hservice_get_interface_capabilities(uint64_t set)
@@ -2112,6 +2137,10 @@ static int init_control_socket(struct opal_prd_ctx *ctx)
 	return 0;
 }
 
+static struct sigaction sigchild_action = {
+	.sa_flags = SA_NOCLDWAIT | SA_RESTART,
+	.sa_handler = SIG_DFL,
+};
 
 static int run_prd_daemon(struct opal_prd_ctx *ctx)
 {
@@ -2241,6 +2270,22 @@ static int run_prd_daemon(struct opal_prd_ctx *ctx)
 		fflush(stdout);
 		hservice_scom_read(0x00, 0xf000f, &val);
 		pr_debug("SCOM:  f00f: %lx", be64toh(val));
+	}
+
+	/*
+	 * Setup the SIGCHLD handler to automatically reap the worker threads
+	 * we use for memory offlining. We can't do this earlier since the
+	 * modprobe helper spawns workers and wants to check their exit status
+	 * with waitpid(). Auto-reaping breaks that so enable it just before
+	 * entering the attn loop.
+	 *
+	 * We also setup system call restarting on SIGCHLD since opal-prd
+	 * doesn't make any real attempt to handle blocking functions exiting
+	 * due to EINTR.
+	 */
+	if (sigaction(SIGCHLD, &sigchild_action, NULL)) {
+		pr_log(LOG_ERR, "CTRL: Failed to register signal handler %m\n");
+		return -1;
 	}
 
 	run_attn_loop(ctx);
