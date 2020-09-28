@@ -112,7 +112,7 @@ static int edk2_compat_process(struct list_head *variable_bank,
 	if (!setup_mode) {
 		rc = verify_hw_key_hash();
 		if (rc != OPAL_SUCCESS) {
-			prlog(PR_ERR, "Hardware key hash verification mismatch\n");
+			prlog(PR_ERR, "Hardware key hash verification mismatch. Keystore and update queue is reset.\n");
 			rc = reset_keystore(variable_bank);
 			if (rc)
 				goto cleanup;
@@ -217,13 +217,27 @@ static int edk2_compat_process(struct list_head *variable_bank,
 		copy_bank_list(variable_bank, &staging_bank);
 	}
 
+	free(newesl);
+	clear_bank_list(&staging_bank);
+
+	/* Set the global variable setup_mode as per final contents in variable_bank */
+	var = find_secvar("PK", 3, variable_bank);
+	if (!var) {
+		/* This should not happen */
+		rc = OPAL_INTERNAL_ERROR;
+		goto cleanup;
+	}
+
+	if (var->data_size == 0)
+		setup_mode = true;
+	else
+		setup_mode = false;
+
 cleanup:
 	/*
 	 * For any failure in processing update queue, we clear the update bank
 	 * and return failure
 	 */
-	free(newesl);
-	clear_bank_list(&staging_bank);
 	clear_bank_list(update_bank);
 
 	return rc;

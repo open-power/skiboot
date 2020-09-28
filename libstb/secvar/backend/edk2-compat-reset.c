@@ -77,14 +77,15 @@ int add_hw_key_hash(struct list_head *bank)
 int delete_hw_key_hash(struct list_head *bank)
 {
 	struct secvar *var;
-	int rc;
 
 	var = find_secvar("HWKH", 5, bank);
 	if (!var)
 		return OPAL_SUCCESS;
 
-	rc = update_variable_in_bank(var, NULL, 0, bank);
-	return rc;
+	list_del(&var->link);
+	dealloc_secvar(var);
+
+	return OPAL_SUCCESS;
 }
 
 int verify_hw_key_hash(void)

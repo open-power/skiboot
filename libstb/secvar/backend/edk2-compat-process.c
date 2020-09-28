@@ -297,12 +297,14 @@ int validate_esl_list(const char *key, const char *esl, const size_t size)
 
 		if (key_equals(key, "dbx")) {
 			if (!validate_hash(list->SignatureType, dsize)) {
+				prlog(PR_ERR, "No valid hash is found\n");
 				rc = OPAL_PARAMETER;
 				break;
 			}
 		} else {
 		       if (!uuid_equals(&list->SignatureType, &EFI_CERT_X509_GUID)
 			   || !validate_cert(data, dsize)) {
+				prlog(PR_ERR, "No valid cert is found\n");
 				rc = OPAL_PARAMETER;
 				break;
 		       }
@@ -326,6 +328,8 @@ int validate_esl_list(const char *key, const char *esl, const size_t size)
 			rc = count;
 		}
 	}
+
+	free(data);
 
 	prlog(PR_INFO, "Total ESLs are %d\n", rc);
 	return rc;
@@ -513,7 +517,7 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 
 		/* This should not happen, unless something corrupted in PNOR */
 		if(rc) {
-			prlog(PR_INFO, "X509 certificate parsing failed %04x\n", rc);
+			prlog(PR_ERR, "X509 certificate parsing failed %04x\n", rc);
 			rc = OPAL_INTERNAL_ERROR;
 			break;
 		}
@@ -542,13 +546,15 @@ static int verify_signature(const struct efi_variable_authentication_2 *auth,
 			prlog(PR_INFO, "Signature Verification passed\n");
 			mbedtls_x509_crt_free(&x509);
 			break;
+		} else {
+			errbuf = zalloc(MBEDTLS_ERR_BUFFER_SIZE);
+			mbedtls_strerror(rc, errbuf, MBEDTLS_ERR_BUFFER_SIZE);
+			prlog(PR_ERR, "Signature Verification failed %02x %s\n",
+					rc, errbuf);
+			free(errbuf);
+			rc = OPAL_PERMISSION;
 		}
 
-		errbuf = zalloc(MBEDTLS_ERR_BUFFER_SIZE);
-		mbedtls_strerror(rc, errbuf, MBEDTLS_ERR_BUFFER_SIZE);
-		prlog(PR_INFO, "Signature Verification failed %02x %s\n",
-				rc, errbuf);
-		free(errbuf);
 
 		/* Look for the next ESL */
 		offset = offset + eslsize;
@@ -690,7 +696,7 @@ int process_update(const struct secvar *update, char **newesl,
 	rc = check_timestamp(update->key, timestamp, last_timestamp);
 	/* Failure implies probably an older command being resubmitted */
 	if (rc != OPAL_SUCCESS) {
-		prlog(PR_INFO, "Timestamp verification failed for key %s\n", update->key);
+		prlog(PR_ERR, "Timestamp verification failed for key %s\n", update->key);
 		goto out;
 	}
 
@@ -750,8 +756,10 @@ int process_update(const struct secvar *update, char **newesl,
 				      avar);
 
 		/* Break if signature verification is successful */
-		if (rc == OPAL_SUCCESS)
+		if (rc == OPAL_SUCCESS) {
+			prlog(PR_INFO, "Key %s successfully verified by authority %s\n", update->key, key_authority[i]);
 			break;
+		}
 	}
 
 out:
