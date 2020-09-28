@@ -21,7 +21,7 @@ int verbose;
 TPMS_NV_PUBLIC vars = {
 	.nvIndex = 0x01c10190,
 	.nameAlg = TPM_ALG_SHA256,
-	.dataSize = 1024,
+	.dataSize = 2048,
 	.attributes.val = TPMA_NVA_PPWRITE		|
 			  TPMA_NVA_ORDINARY             |
 			  TPMA_NVA_WRITE_STCLEAR        |

@@ -9,7 +9,7 @@ static size_t fakenv_offset = sizeof(struct secboot);
 struct fake_tpmnv {
 	struct {
 		struct secboot_header header;
-		char vars[1024]; // Hardcode the size to 1024 for now
+		char vars[2048]; // Hardcode the size to 2048 for now
 	} vars;
 	struct tpmnv_control control;
 	int defined[2];
