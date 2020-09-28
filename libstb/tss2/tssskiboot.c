@@ -13,6 +13,8 @@
 #include <ibmtss/tssmarshal.h>
 #include <ibmtss/tssresponsecode.h>
 
+#define TSS_MAX_NV_BUFFER_SIZE 1024
+
 /*
  * Helper to string-fy TSS error response codes.
  */
@@ -98,6 +100,7 @@ int tss_nv_read(TPMI_RH_NV_INDEX nv_index, void *buffer,
 	NV_Read_Out *out = NULL;
 	NV_Read_In *in = NULL;
 	TPM_RC rc = OPAL_SUCCESS;
+	int64_t buffer_remaining;
 
 	if (!buffer) {
 		rc = OPAL_PARAMETER;
@@ -125,21 +128,30 @@ int tss_nv_read(TPMI_RH_NV_INDEX nv_index, void *buffer,
 
 	in->nvIndex = nv_index;
 	in->authHandle = nv_index;
-	in->offset = offset;
-	in->size = buffer_size;
 
-	rc = TSS_Execute(context,
-			 (RESPONSE_PARAMETERS *) out,
-			 (COMMAND_PARAMETERS *) in,
-			 NULL,
-			 TPM_CC_NV_Read,
-			 TPM_RS_PW, NULL, 0,
-			 TPM_RH_NULL, NULL, 0);
+	buffer_remaining = buffer_size;
+	while (buffer_remaining > 0) {
+		in->offset = offset;
+		in->size = MIN(TSS_MAX_NV_BUFFER_SIZE, buffer_remaining);
 
-	if (!rc)
-		memcpy(buffer, out->data.b.buffer, buffer_size);
-	else
-		tss_error_trace("tss_nv_read", rc);
+		rc = TSS_Execute(context,
+				 (RESPONSE_PARAMETERS *) out,
+				 (COMMAND_PARAMETERS *) in,
+				 NULL,
+				 TPM_CC_NV_Read,
+				 TPM_RS_PW, NULL, 0,
+				 TPM_RH_NULL, NULL, 0);
+
+		if (rc) {
+			tss_error_trace("tss_nv_read", rc);
+			goto cleanup;
+		}
+
+		memcpy(buffer, out->data.b.buffer, in->size);
+		buffer += TSS_MAX_NV_BUFFER_SIZE;
+		buffer_remaining -= TSS_MAX_NV_BUFFER_SIZE;
+		offset += TSS_MAX_NV_BUFFER_SIZE;
+	}
 
 cleanup:
 	TSS_Delete(context);
@@ -161,6 +173,7 @@ int tss_nv_write(TPMI_RH_NV_INDEX nv_index, void *buffer,
 	TSS_CONTEXT *context = NULL;
 	NV_Write_In *in = NULL;
 	TPM_RC rc = OPAL_SUCCESS;
+	int64_t buffer_remaining;
 
 	if (!buffer) {
 		rc = OPAL_PARAMETER;
@@ -182,23 +195,36 @@ int tss_nv_write(TPMI_RH_NV_INDEX nv_index, void *buffer,
 
 	in->nvIndex = nv_index;
 	in->authHandle = TPM_RH_PLATFORM;
-	in->offset = offset;
-	rc = TSS_TPM2B_Create(&in->data.b, buffer, buffer_size,
-			      sizeof(in->data.t.buffer));
-	if (rc) {
-		tss_error_trace("tss_nv_write", rc);
-		goto cleanup;
+
+	buffer_remaining = buffer_size;
+	while (buffer_remaining > 0) {
+		in->offset = offset;
+		rc = TSS_TPM2B_Create(&in->data.b, buffer,
+				      MIN(TSS_MAX_NV_BUFFER_SIZE, buffer_remaining),
+				      sizeof(in->data.t.buffer));
+
+		if (rc) {
+			tss_error_trace("tss_nv_write", rc);
+			goto cleanup;
+		}
+
+		rc = TSS_Execute(context,
+				 NULL,
+				 (COMMAND_PARAMETERS *) in,
+				 NULL,
+				 TPM_CC_NV_Write,
+				 TPM_RS_PW, NULL, 0,
+				 TPM_RH_NULL, NULL, 0);
+		if (rc) {
+			tss_error_trace("tss_nv_write", rc);
+			goto cleanup;
+		}
+
+		buffer += TSS_MAX_NV_BUFFER_SIZE;
+		buffer_remaining -= TSS_MAX_NV_BUFFER_SIZE;
+		offset += TSS_MAX_NV_BUFFER_SIZE;
 	}
 
-	rc = TSS_Execute(context,
-			 NULL,
-			 (COMMAND_PARAMETERS *) in,
-			 NULL,
-			 TPM_CC_NV_Write,
-			 TPM_RS_PW, NULL, 0,
-			 TPM_RH_NULL, NULL, 0);
-	if (rc)
-		tss_error_trace("tss_nv_write", rc);
 cleanup:
 	TSS_Delete(context);
 	free(in);
