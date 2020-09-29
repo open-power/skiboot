@@ -411,6 +411,20 @@ static void disable_unavailable_units(struct dt_node *dev)
 	return;
 }
 
+static void disable_imc_type_from_dt(struct dt_node *dev, int imc_type)
+{
+	struct dt_node *node;
+
+	dt_for_each_compatible(dev, node, "ibm,imc-counters") {
+		if (get_imc_device_type(node) == imc_type) {
+			dt_free(node);
+			node = NULL;
+		}
+	}
+
+	return;
+}
+
 /*
  * Function to queue the loading of imc catalog data
  * from the IMC pnor partition.
@@ -606,8 +620,8 @@ imc_mambo:
 	 * undesirable values. Hence pause the ucode if it is already running.
 	 */
 	if (pause_microcode_at_boot()) {
-		prerror("IMC: Pausing ucode failed\n");
-		goto err;
+		prerror("IMC: Pausing ucode failed, disabling nest imc\n");
+		disable_imc_type_from_dt(dev, IMC_COUNTER_CHIP);
 	}
 
 	/*
