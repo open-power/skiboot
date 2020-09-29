@@ -5882,12 +5882,9 @@ static void phb4_create(struct dt_node *np)
 	xive_register_hw_source(p->base_msi, p->num_irqs - 8, 16,
 				p->int_mmio, irq_flags, NULL, NULL);
 
-	/* XIVE_SRC_SHIFT_BUG is a DD1 workaround */
 	xive_register_hw_source(p->base_lsi, 8, 16,
 				p->int_mmio + ((p->num_irqs - 8) << 16),
-				XIVE_SRC_LSI | XIVE_SRC_SHIFT_BUG,
-				p,
-				&phb4_lsi_ops);
+				XIVE_SRC_LSI, p, &phb4_lsi_ops);
 
 	/* Platform additional setup */
 	if (platform.pci_setup_phb)
