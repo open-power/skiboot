@@ -1322,9 +1322,6 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 	/* NX init */
 	nx_init();
 
-	/* Init In-Memory Collection related stuff (load the IMC dtb into memory) */
-	imc_init();
-
 	/* Probe PHB3 on P8 */
 	probe_phb3();
 
@@ -1365,6 +1362,9 @@ void __noreturn __nomcount main_cpu_entry(const void *fdt)
 
 	/* Add the list of interrupts going to OPAL */
 	add_opal_interrupts();
+
+	/* Init In-Memory Collection related stuff (load the IMC dtb into memory) */
+	imc_init();
 
 	/* Disable protected execution facility in BML */
 	cpu_disable_pef();
