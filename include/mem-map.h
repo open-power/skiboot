@@ -84,8 +84,8 @@
  *
  * As of mid-2019, a 2 socket Romulus uses ~4MB heap.
  */
-#define HEAP_BASE		(SKIBOOT_BASE + 0x00500000)
-#define HEAP_SIZE		0x00b00000
+#define HEAP_BASE		(SKIBOOT_BASE + 0x00600000)
+#define HEAP_SIZE		0x00a00000
 
 /* This is the location of our console buffer at base + 16M */
 #define INMEM_CON_START		(SKIBOOT_BASE + 0x01000000)

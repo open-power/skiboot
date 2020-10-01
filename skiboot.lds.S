@@ -219,8 +219,8 @@ SECTIONS
 	}
 	_edata = .;
 
-	/* We locate the BSS at 4M to leave room for the symbol map */
-	. = 0x400000;
+	/* We locate the BSS at 5M to leave room for the symbol map */
+	. = 0x500000;
 
 	_sbss = .;
 	.bss : {
@@ -231,7 +231,7 @@ SECTIONS
 	_ebss = .;
 	_end = .;
 
-	ASSERT(HEAP_BASE >= _end, "Heap collision with image")
+	ASSERT((HEAP_BASE - SKIBOOT_BASE) >= _end, "Heap collision with image")
 
 	DEBUG_SECTIONS
 
