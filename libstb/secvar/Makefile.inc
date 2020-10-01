@@ -1,16 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
 # -*-Makefile-*-
 
-SECVAR_DIR = $(SRC)/libstb/secvar
+SUBDIRS += libstb/secvar
 
-SUBDIRS += $(SECVAR_DIR)
+SECVAR_OBJS = secvar_main.o secvar_util.o secvar_devtree.o secvar_api.o
+SECVAR = libstb/secvar/built-in.a
 
-include $(SECVAR_DIR)/storage/Makefile.inc
-include $(SECVAR_DIR)/backend/Makefile.inc
+include $(SRC)/libstb/secvar/storage/Makefile.inc
+include $(SRC)/libstb/secvar/backend/Makefile.inc
 
-SECVAR_SRCS = secvar_main.c secvar_util.c secvar_devtree.c
-SECVAR_SRCS = secvar_main.c secvar_util.c secvar_devtree.c secvar_api.c
-SECVAR_OBJS = $(SECVAR_SRCS:%.c=%.o)
-SECVAR = $(SECVAR_DIR)/built-in.a
-
-$(SECVAR): $(SECVAR_OBJS:%=$(SECVAR_DIR)/%) $(SECVAR_STORAGE) $(SECVAR_BACKEND)
+$(SECVAR): $(SECVAR_OBJS:%=libstb/secvar/%) $(SECVAR_STORAGE) $(SECVAR_BACKEND)
