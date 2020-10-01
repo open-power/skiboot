@@ -4,8 +4,6 @@
 #include "secvar_common_test.c"
 #include "../storage/secboot_tpm.c"
 #include "../storage/fakenv_ops.c"
-#include "../../crypto/mbedtls/library/sha256.c"
-#include "../../crypto/mbedtls/library/platform_util.c"
 #include "../secvar_util.c"
 
 char *secboot_buffer;
