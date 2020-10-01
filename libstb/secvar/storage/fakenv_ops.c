@@ -15,8 +15,8 @@ struct fake_tpmnv {
 	int defined[2];
 } __attribute__((packed));
 
-static struct fake_tpmnv fakenv = {0};
-static int tpm_ready = 0;
+static struct fake_tpmnv fakenv;
+static int tpm_ready;
 
 
 static inline void *nv_index_address(int index)
