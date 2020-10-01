@@ -56,14 +56,15 @@ To build on Ubuntu:
 ```
 apt-get install gcc-powerpc64le-linux-gnu gcc valgrind \
 	expect libssl-dev device-tree-compiler make \
-	xz-utils
+	xz-utils libmbedtls-dev
 CROSS=powerpc64le-linux-gnu- make -j`nproc`
 ```
 
 To build on Fedora:
 ```
 dnf install gcc-powerpc64le-linux-gnu binutils-powerpc64-linux-gnu gcc make \
-    diffutils findutils expect valgrind-devel dtc openssl-devel xz
+    diffutils findutils expect valgrind-devel dtc openssl-devel xz \
+    mbedtls-devel
 CROSS=powerpc64le-linux-gnu- make -j`nproc`
 ```
 
