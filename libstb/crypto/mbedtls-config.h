@@ -86,7 +86,9 @@
 /* Settings to reduce/remove warnings */
 #define MBEDTLS_MPI_WINDOW_SIZE	3	// (max/default is 6) Increase for speed, may introduce warnings
 #define MBEDTLS_MPI_MAX_SIZE	512	// (default is 1024) increase for more bits in user-MPIs
+#ifndef SIZE_MAX
 #define SIZE_MAX		65535	// this might need to be in libc?
+#endif
 
 /* Disableable to mitigate warnings */
 //#define MBEDTLS_ASN1_WRITE_C  // Expects SIZE_MAX

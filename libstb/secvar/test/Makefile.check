@@ -40,10 +40,10 @@ HOST_MBEDTLS_CFLAGS+= -Wno-unused-function -Wno-suggest-attribute=const
 $(SECVAR_TEST) : core/test/stubs.o
 
 $(SECVAR_TEST) : % : %.c $(HOST_MBEDTLS_OBJS)
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) -O0 -g -I include -I . -I libfdt -o $@ $< $(HOST_MBEDTLS_OBJS) core/test/stubs.o, $<)
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOST_MBEDTLS_CFLAGS) -O0 -g -I include -I . -I libfdt -o $@ $< $(HOST_MBEDTLS_OBJS) core/test/stubs.o, $<)
 
 $(SECVAR_TEST:%=%-gcov): %-gcov : %.c % $(HOST_MBEDTLS_OBJS)
-	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) -I include -I . -I libfdt -lgcov -o $@ $< $(HOST_MBEDTLS_OBJS) core/test/stubs.o, $<)
+	$(call Q, HOSTCC ,$(HOSTCC) $(HOSTCFLAGS) $(HOSTGCOVCFLAGS) $(HOST_MBEDTLS_CFLAGS) -I include -I . -I libfdt -lgcov -o $@ $< $(HOST_MBEDTLS_OBJS) core/test/stubs.o, $<)
 
 -include $(wildcard libstb/secvar/test/*.d)
 
