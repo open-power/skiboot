@@ -39,6 +39,7 @@ spawn $QEMU_BIN $QEMU_ARGS -bios skiboot.lid -kernel $SKIBOOT_ZIMAGE
 expect {
 timeout { send_user "\nTimeout waiting for petitboot\n"; exit 1 }
 eof { send_user "\nUnexpected EOF\n;" exit 1 }
+"Could not load OPAL firmware" { send_user "\nSkiboot is too large for this Qemu, skipping\n"; exit 4; }
 "Machine Check Stop" { exit 1; }
 "Trying to write privileged spr 338" { send_user "\nUpgrade Qemu: needs PCR register\n"; exit 3 }
 "Welcome to Petitboot"
@@ -49,6 +50,12 @@ exit 0
 EOF
 ) 2>&1 > $T
 E=$?
+
+if [ $E -eq 4 ]; then
+    echo "Qemu is too old and can't load a skiboot.lid this big"
+    rm $T
+    exit 0
+fi
 
 if [ $E -eq 3 ]; then
     echo "WARNING: Qemu test not run; upgrade QEMU to one that supports PCR register";
