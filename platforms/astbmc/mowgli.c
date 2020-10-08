@@ -11,6 +11,7 @@
 #include <ipmi.h>
 #include <psi.h>
 #include <npu-regs.h>
+#include <secvar.h>
 
 #include "astbmc.h"
 
@@ -45,6 +46,10 @@ static bool mowgli_probe(void)
 
 	return true;
 }
+static int mowgli_secvar_init(void)
+{
+	return secvar_main(secboot_tpm_driver, edk2_compatible_v1);
+}
 
 DECLARE_PLATFORM(mowgli) = {
 	.name			= "Mowgli",
@@ -61,4 +66,5 @@ DECLARE_PLATFORM(mowgli) = {
 	.exit			= astbmc_exit,
 	.terminate		= ipmi_terminate,
 	.op_display		= op_display_lpc,
+	.secvar_init		= mowgli_secvar_init,
 };
