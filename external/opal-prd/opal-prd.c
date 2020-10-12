@@ -973,7 +973,9 @@ static int map_hbrt_file(struct opal_prd_ctx *ctx, const char *name)
 static int map_hbrt_physmem(struct opal_prd_ctx *ctx, const char *name)
 {
 	struct prd_range *range;
+	int rc;
 	void *buf;
+	void *ro_buf;
 
 	range = find_range(name, 0);
 	if (!range) {
@@ -981,12 +983,42 @@ static int map_hbrt_physmem(struct opal_prd_ctx *ctx, const char *name)
 		return -1;
 	}
 
-	buf = mmap(NULL, range->size, PROT_READ | PROT_WRITE | PROT_EXEC,
+	ro_buf = mmap(NULL, range->size, PROT_READ,
 			MAP_PRIVATE, ctx->fd, range->physaddr);
-	if (buf == MAP_FAILED) {
+	if (ro_buf == MAP_FAILED) {
 		pr_log(LOG_ERR, "IMAGE: mmap(range:%s, "
 				"phys:0x%016lx, size:0x%016lx) failed: %m",
 				name, range->physaddr, range->size);
+		return -1;
+	}
+
+	buf = mmap(NULL, range->size, PROT_READ | PROT_WRITE,
+			MAP_SHARED | MAP_ANONYMOUS, -1 , 0);
+	if (buf == MAP_FAILED) {
+		pr_log(LOG_ERR, "IMAGE: anon mmap(size:0x%016lx) failed: %m",
+				range->size);
+		return -1;
+	}
+
+	memcpy(buf, ro_buf, range->size);
+
+	rc = munmap(ro_buf, range->size);
+	if (rc < 0) {
+		pr_log(LOG_ERR, "IMAGE: munmap("
+				"phys:0x%016lx, size:0x%016lx) failed: %m",
+				range->physaddr, range->size);
+		return -1;
+	}
+
+	/*
+	 * FIXME: We shouldn't be mapping the memory as RWX, but HBRT appears to
+	 * require the ability to write into the image at runtime.
+	 */
+	rc = mprotect(buf, range->size, PROT_READ | PROT_WRITE | PROT_EXEC);
+	if (rc < 0) {
+		pr_log(LOG_ERR, "IMAGE: mprotect(phys:%p, "
+			"size:0x%016lx, rwx) failed: %m",
+			buf, range->size);
 		return -1;
 	}
 
