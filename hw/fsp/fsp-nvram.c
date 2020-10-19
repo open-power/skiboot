@@ -310,12 +310,11 @@ static struct fsp_client fsp_nvram_client_rr = {
 	.message = fsp_nvram_msg_rr,
 };
 
-static bool fsp_vnvram_msg(u32 cmd_sub_mod, struct fsp_msg *msg)
+static bool fsp_vnvram_msg(u32 cmd_sub_mod, struct fsp_msg *msg __unused)
 {
 	u32 cmd;
 	struct fsp_msg *resp;
 
-	assert(msg == NULL);
 	switch (cmd_sub_mod) {
 	case FSP_CMD_GET_VNV_STATS:
 		prlog(PR_DEBUG,
