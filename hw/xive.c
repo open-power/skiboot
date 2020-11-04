@@ -2636,15 +2636,19 @@ static struct xive *init_one_xive(struct dt_node *np)
 		x->int_ipi_top = XIVE_INT_FIRST;
 
 	/* Allocate a few bitmaps */
-	x->eq_map = zalloc(BITMAP_BYTES(XIVE_EQ_COUNT >> 3));
+	x->eq_map = local_alloc(x->chip_id, BITMAP_BYTES(XIVE_EQ_COUNT >> 3), PAGE_SIZE);
 	assert(x->eq_map);
+	memset(x->eq_map, 0, BITMAP_BYTES(XIVE_EQ_COUNT >> 3));
+
 	/* Make sure we don't hand out 0 */
 	bitmap_set_bit(*x->eq_map, 0);
 
-	x->int_enabled_map = zalloc(BITMAP_BYTES(XIVE_INT_COUNT));
+	x->int_enabled_map = local_alloc(x->chip_id, BITMAP_BYTES(XIVE_INT_COUNT), PAGE_SIZE);
 	assert(x->int_enabled_map);
-	x->ipi_alloc_map = zalloc(BITMAP_BYTES(XIVE_INT_COUNT));
+	memset(x->int_enabled_map, 0, BITMAP_BYTES(XIVE_INT_COUNT));
+	x->ipi_alloc_map = local_alloc(x->chip_id, BITMAP_BYTES(XIVE_INT_COUNT), PAGE_SIZE);
 	assert(x->ipi_alloc_map);
+	memset(x->ipi_alloc_map, 0, BITMAP_BYTES(XIVE_INT_COUNT));
 
 	xive_dbg(x, "Handling interrupts [%08x..%08x]\n",
 		 x->int_base, x->int_max - 1);
