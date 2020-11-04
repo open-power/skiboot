@@ -530,6 +530,17 @@ static const char *psi_p9_irq_names[P9_PSI_NUM_IRQS] = {
 	"psu"
 };
 
+static void psi_p9_mask_all(struct psi *psi)
+{
+	struct irq_source *is;
+	int isn;
+
+	/* Mask all sources */
+	is = irq_find_source(psi->interrupt);
+	for (isn = is->start; isn < is->end; isn++)
+		xive_source_mask(is, isn);
+}
+
 static void psi_p9_mask_unhandled_irq(struct irq_source *is, uint32_t isn)
 {
 	struct psi *psi = is->data;
@@ -708,6 +719,8 @@ static void psi_init_p9_interrupts(struct psi *psi)
 	xive_register_hw_source(psi->interrupt, P9_PSI_NUM_IRQS,
 				12, psi->esb_mmio, XIVE_SRC_LSI,
 				psi, &psi_p9_irq_ops);
+
+	psi_p9_mask_all(psi);
 
 	/* Setup interrupt offset */
 	val = xive_get_notify_base(psi->interrupt);
