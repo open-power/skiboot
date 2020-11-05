@@ -1222,6 +1222,8 @@ static int64_t xive_eqc_scrub(struct xive *x, uint64_t block, uint64_t idx)
 	return __xive_cache_scrub(x, xive_cache_eqc, block, idx, false, false);
 }
 
+#define XIVE_CACHE_WATCH_MAX_RETRIES 10
+
 static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 				  uint64_t block, uint64_t idx,
 				  uint32_t start_dword, uint32_t dword_count,
@@ -1231,6 +1233,7 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 	uint64_t sreg, sregx, dreg0, dreg0x;
 	uint64_t dval0, sval, status;
 	int64_t i;
+	int retries = 0;
 
 #ifdef XIVE_CHECK_LOCKS
 	assert(lock_held_by_me(&x->lock));
@@ -1303,7 +1306,12 @@ static int64_t __xive_cache_watch(struct xive *x, enum xive_cache_type ctype,
 		if (!synchronous)
 			return OPAL_BUSY;
 
-		/* XXX Add timeout ? */
+		if (++retries == XIVE_CACHE_WATCH_MAX_RETRIES) {
+			xive_err(x, "Reached maximum retries %d when doing "
+				 "a %s cache update\n", retries,
+				 ctype == xive_cache_eqc ? "EQC" : "VPC");
+			return OPAL_BUSY;
+		}
 	}
 
 	/* Perform a scrub with "want_invalidate" set to false to push the
