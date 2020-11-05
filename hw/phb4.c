@@ -5327,6 +5327,9 @@ static void phb4_init_hw(struct phb4 *p)
 	if (PHB4_CAN_STORE_EOI(p))
 		val |= PHB_CTRLR_IRQ_STORE_EOI;
 
+	PHBDBG(p, "store EOI is %sabled\n",
+	       PHB4_CAN_STORE_EOI(x) ? "en" : "dis");
+
 	if (!pci_eeh_mmio)
 		val |= PHB_CTRLR_MMIO_EEH_DISABLE;
 
