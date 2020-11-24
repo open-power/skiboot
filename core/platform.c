@@ -124,7 +124,8 @@ static int64_t opal_cec_reboot2(uint32_t reboot_type, char *diag)
 	case OPAL_REBOOT_FAST:
 		prlog(PR_NOTICE, "Reboot: Fast reboot requested by OS\n");
 		fast_reboot();
-		break;
+		prlog(PR_NOTICE, "Reboot: Fast reboot failed\n");
+		return OPAL_UNSUPPORTED;
 	default:
 		prlog(PR_NOTICE, "OPAL: Unsupported reboot request %d\n", reboot_type);
 		return OPAL_UNSUPPORTED;
