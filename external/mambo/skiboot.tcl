@@ -274,12 +274,13 @@ if { [info exists env(SKIBOOT_INITRD)] } {
 	    set cpio_size [file size $cpio_file]
 	    mysim mcm 0 memory fread $cpio_end $cpio_size $cpio_file
 	    set cpio_end [expr $cpio_end + $cpio_size]
+	    # Linux requires cpios are 4 byte aligned
+	    set cpio_end [expr $cpio_end + 3 & 0xfffffffffffffffc]
     }
 
     mysim of addprop $chosen_node int "linux,initrd-start" $cpio_start
     mysim of addprop $chosen_node int "linux,initrd-end"   $cpio_end
 }
-
 
 # Map persistent memory disks
 proc pmem_node_add { root start size } {
