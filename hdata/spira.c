@@ -315,8 +315,7 @@ static struct dt_node *add_xscom_node(uint64_t base, uint32_t hw_id,
 	       hw_id, proc_chip_id, (long long)addr);
 
 	node = dt_new_addr(dt_root, "xscom", addr);
-	if (!node)
-		return NULL;
+	assert(node);
 
 	dt_add_property_cells(node, "ibm,chip-id", hw_id);
 	dt_add_property_cells(node, "ibm,proc-chip-id", proc_chip_id);
