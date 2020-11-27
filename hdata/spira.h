@@ -1168,7 +1168,8 @@ struct ipmi_sensors_data {
 	__be32	slca_index;
 	uint8_t	type;
 	uint8_t	id;
-	__be16	reserved;
+	uint8_t entity_id;
+	uint8_t reserved;
 } __packed;
 
 struct ipmi_sensors {
