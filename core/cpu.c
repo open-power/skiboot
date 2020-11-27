@@ -823,11 +823,9 @@ struct cpu_thread *first_ungarded_cpu(void)
 
 struct cpu_thread *next_ungarded_primary(struct cpu_thread *cpu)
 {
-	bool is_primary;
 	do {
-		cpu = next_cpu(cpu);
-		is_primary = cpu == cpu->primary || cpu == cpu->ec_primary;
-	} while(cpu && (cpu->state == cpu_state_unavailable || !is_primary));
+		cpu = next_ungarded_cpu(cpu);
+	} while (cpu && !(cpu == cpu->primary || cpu == cpu->ec_primary));
 
 	return cpu;
 }
