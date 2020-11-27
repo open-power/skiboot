@@ -2114,7 +2114,7 @@ static inline bool xive_eq_for_target(uint32_t target, uint8_t prio,
 	if (eq_blk != vp_blk) {
 		xive_err(x, "eq_blk != vp_blk (%d vs. %d) for target 0x%08x/%d\n",
 			 eq_blk, vp_blk, target, prio);
-		assert(false);
+		return false;
 	}
 
 	if (out_eq_blk)
