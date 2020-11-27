@@ -35,12 +35,13 @@ struct ocmb {
 static const struct ocmb_range *find_range(const struct ocmb *o, uint64_t offset)
 {
 	int i;
+	uint64_t addr = offset & ~(HRMOR_BIT);
 
 	for (i = 0; i < o->range_count; i++) {
 		uint64_t start = o->ranges[i].start;
 		uint64_t end = o->ranges[i].end;
 
-		if (offset >= start && offset <= end)
+		if (addr >= start && addr <= end)
 			return &o->ranges[i];
 	}
 
