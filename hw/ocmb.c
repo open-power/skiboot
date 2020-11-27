@@ -150,11 +150,10 @@ static bool ocmb_probe_one(struct dt_node *ocmb_node)
 	}
 
 	if (scom_register(&ocmb->scom))
-		prerror("error registienr fake socm\n");
+		prerror("Error registering fake scom\n");
 
 	dt_add_property(ocmb_node, "scom-controller", NULL, 0);
-
-	prerror("XXX: Added scom controller for %s\n", ocmb_node->name);
+	prlog(PR_NOTICE, "Added scom controller for %s\n", ocmb_node->name);
 
 	return true;
 }
