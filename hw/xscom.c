@@ -373,7 +373,16 @@ static int __xscom_read(uint32_t gcid, uint32_t pcb_addr, uint64_t *val)
 	if (proc_gen == proc_gen_p9 && ret == OPAL_XSCOM_CHIPLET_OFF)
 		return ret;
 
-	prerror("XSCOM: Read failed, ret =  %lld\n", ret);
+	/*
+	 * If an OPAL call XSCOM read fails, then the OPAL-PRD will
+	 * handle logging the error.  Hence just print an
+	 * informational message here.
+	 */
+	if (this_cpu()->current_token == OPAL_XSCOM_READ)
+		prlog(PR_INFO, "XSCOM: Read failed, ret =  %lld\n", ret);
+	else
+		prerror("XSCOM: Read failed, ret =  %lld\n", ret);
+
 	return ret;
 }
 
@@ -424,8 +433,16 @@ static int __xscom_write(uint32_t gcid, uint32_t pcb_addr, uint64_t val)
 	 */
 	if (proc_gen == proc_gen_p9 && ret == OPAL_XSCOM_CHIPLET_OFF)
 		return ret;
+	/*
+	 * If an OPAL call XSCOM write fails, then the OPAL-PRD will
+	 * handle logging the error.  Hence just print an
+	 * informational message here.
+	 */
+	if (this_cpu()->current_token == OPAL_XSCOM_WRITE)
+		prlog(PR_INFO, "XSCOM: Write failed, ret =  %lld\n", ret);
+	else
+		prerror("XSCOM: Write failed, ret =  %lld\n", ret);
 
-	prerror("XSCOM: Write failed, ret =  %lld\n", ret);
 	return ret;
 }
 
