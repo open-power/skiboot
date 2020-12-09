@@ -49,6 +49,21 @@ static void vpd_dt_fixup(void)
 	}
 }
 
+static void phb0_fixup(void)
+{
+	struct dt_node *stk;
+	u32 phb_index;
+
+	/* Limit PHB0/(pec0) to gen3 speed */
+	dt_for_each_compatible(dt_root, stk, "ibm,power9-phb-stack") {
+		phb_index = dt_prop_get_u32_def(stk, "ibm,phb-index", -1);
+		if (phb_index == 0) {
+			dt_check_del_prop(stk, "ibm,max-link-speed");
+			dt_add_property_cells(stk, "ibm,max-link-speed", 3);
+		}
+	}
+}
+
 static bool mowgli_probe(void)
 {
 	if (!dt_node_is_compatible(dt_root, "ibm,mowgli"))
@@ -63,6 +78,7 @@ static bool mowgli_probe(void)
 	vpd_dt_fixup();
 
 	slot_table_init(mowgli_phb_table);
+	phb0_fixup();
 
 	return true;
 }
