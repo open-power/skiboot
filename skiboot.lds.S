@@ -233,8 +233,6 @@ SECTIONS
 
 	ASSERT((HEAP_BASE - SKIBOOT_BASE) >= _end, "Heap collision with image")
 
-	DEBUG_SECTIONS
-
 	/* Optional kernel image */
        . = ALIGN(PAGE_SIZE);
        .builtin_kernel : {
@@ -242,6 +240,8 @@ SECTIONS
 		KEEP(*(.builtin_kernel))
 		__builtin_kernel_end = .;
 	}
+
+	DEBUG_SECTIONS
 
 	/* Discards */
 	/DISCARD/ : {
