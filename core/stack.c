@@ -250,7 +250,7 @@ void check_stacks(void)
 		unlock(&stack_check_lock);
 	}
 	if (lowest) {
-		lock(&stack_check_lock);
+		lock(&bt_lock);
 		prlog(PR_NOTICE, "CPU %04x lowest stack mark %lld bytes left"
 		      " pc=%08llx token=%lld\n",
 		      lowest->pir, lowest->stack_bot_mark, lowest->stack_bot_pc,
@@ -258,7 +258,7 @@ void check_stacks(void)
 		backtrace_print(lowest->stack_bot_bt,
 				&lowest->stack_bot_bt_metadata,
 				NULL, NULL, true);
-		unlock(&stack_check_lock);
+		unlock(&bt_lock);
 	}
 
 	this_cpu()->in_mcount = false;
