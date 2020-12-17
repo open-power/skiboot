@@ -768,8 +768,10 @@ static void p9_sbe_timer_resp(struct p9_sbe_msg *msg)
 
 	lock(&sbe_timer_lock);
 	if (has_new_target) {
-		has_new_target = false;
-		p9_sbe_timer_schedule();
+		if (!p9_sbe_msg_busy(timer_ctrl_msg)) {
+			has_new_target = false;
+			p9_sbe_timer_schedule();
+		}
 	}
 	unlock(&sbe_timer_lock);
 }
