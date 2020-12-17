@@ -100,6 +100,14 @@ struct lock sbe_timer_lock;
 #define SBE_TIMER_DEFAULT_US	500
 static uint64_t sbe_timer_def_tb;
 
+/*
+ * Rate limit continuous timer update.
+ * We can update inflight timer if new timer request is lesser than inflight
+ * one. Limit such updates so that SBE gets time to handle FIFO side requests.
+ */
+#define SBE_TIMER_UPDATE_MAX	2
+static uint32_t timer_update_cnt = 0;
+
 /* Timer control message */
 static struct p9_sbe_msg *timer_ctrl_msg;
 
@@ -539,6 +547,15 @@ static void p9_sbe_timer_response(struct p9_sbe *sbe)
 	sbe_timer_in_progress = false;
 	/* Drop lock and call timers */
 	unlock(&sbe->lock);
+
+	lock(&sbe_timer_lock);
+	/*
+	 * Once we get timer expiry interrupt (even if its suprious interrupt)
+	 * we can schedule next timer request.
+	 */
+	timer_update_cnt = 0;
+	unlock(&sbe_timer_lock);
+
 	check_timers(true);
 	lock(&sbe->lock);
 }
@@ -799,6 +816,11 @@ static void p9_sbe_timer_schedule(void)
 		if ((sbe_last_gen_stamp - now) <= sbe_timer_def_tb)
 			return;
 	}
+
+	/* Stop sending timer update chipop until inflight timer expires */
+	if (timer_update_cnt > SBE_TIMER_UPDATE_MAX)
+		return;
+	timer_update_cnt++;
 
 	if (now < sbe_timer_target) {
 		/* Calculate how many microseconds from now, rounded up */
