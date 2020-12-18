@@ -800,6 +800,9 @@ static void p9_sbe_timer_schedule(void)
 	u64 tb_cnt, now = mftb();
 
 	if (sbe_timer_in_progress) {
+		if (sbe_timer_target >= sbe_last_gen_stamp)
+			return;
+
 		if (now >= sbe_last_gen_stamp)
 			return;
 
