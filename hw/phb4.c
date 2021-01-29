@@ -5257,6 +5257,7 @@ static void phb4_init_hw(struct phb4 *p)
 
 	/* Init_17 - PHB Control */
 	val = PHB_CTRLR_IRQ_PGSZ_64K;
+	val |= PHB_CTRLR_TCE_CLB_DISABLE; // HW557787 circumvention
 	val |= SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_2_PER_PE);
 	if (PHB4_CAN_STORE_EOI(p))
 		val |= PHB_CTRLR_IRQ_STORE_EOI;

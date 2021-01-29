@@ -110,6 +110,7 @@
 #define     TVT_4_PER_PE		1
 #define     TVT_8_PER_PE		2
 #define     TVT_16_PER_PE		3
+#define   PHB_CTRLR_TCE_CLB_DISABLE	PPC_BIT(21)
 #define   PHB_CTRLR_DMA_RD_SPACING	PPC_BITMASK(28,31)
 #define PHB_AIB_FENCE_CTRL		0x860
 #define PHB_TCE_TAG_ENABLE		0x868
