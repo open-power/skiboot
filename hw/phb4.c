@@ -4822,6 +4822,7 @@ static void phb4_init_hw(struct phb4 *p, bool first_init)
 
 	/* Init_17 - PHB Control */
 	val = PHB_CTRLR_IRQ_PGSZ_64K;
+	val |= PHB_CTRLR_TCE_CLB_DISABLE; // HW557787 circumvention
 	if (p->rev == PHB4_REV_NIMBUS_DD10) {
 		val |= SETFIELD(PHB_CTRLR_TVT_ADDR_SEL, 0ull, TVT_DD1_2_PER_PE);
 	} else {
