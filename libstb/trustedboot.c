@@ -27,7 +27,7 @@ static bool boot_services_exited = false;
  * the boot security, and the event log to inspect what measurements were
  * extended to the PCRs.
  *
- * The whitelist below should map every skiboot event (or resource) to a PCR
+ * The list below should map every skiboot event (or resource) to a PCR
  * following the TCG PC Client Platform Firmware Profile specification,
  * Family 2.0, Level 00, Revision 1.03 v51.
  *
