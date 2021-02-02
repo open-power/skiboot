@@ -118,7 +118,7 @@ static struct hdat_i2c_type hdat_i2c_devs[] = {
 
 struct hdat_i2c_info {
 	uint32_t id;
-	bool whitelist; /* true if the host may use the device */
+	bool allowed; /* true if the host may use the device */
 	const char *label;
 };
 
@@ -162,7 +162,7 @@ static struct hdat_i2c_type *map_type(uint32_t type)
 static struct hdat_i2c_info *get_info(uint32_t type)
 {
 	static struct hdat_i2c_info no_info =
-		{ .id = 0x0, .whitelist = false, .label = "" };
+		{ .id = 0x0, .allowed = false, .label = "" };
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(hdat_i2c_extra_info); i++)
@@ -340,7 +340,7 @@ int parse_i2c_devs(const struct HDIF_common_hdr *hdr, int idata_index,
 			dt_add_property_string(node, "compatible", compat);
 		if (info->label)
 			dt_add_property_string(node, "label", info->label);
-		if (!info->whitelist)
+		if (!info->allowed)
 			dt_add_property_string(node, "status", "reserved");
 
 		/*
