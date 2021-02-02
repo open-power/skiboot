@@ -72,7 +72,7 @@
  * Step 9:
  * - Check for optimised link for directly attached devices:
  *   o Wait for CRS (so we can read device config space)
- *   o Check chip and device are in whitelist. if not, Goto Step 10
+ *   o Check chip and device are in allowlist. if not, Goto Step 10
  *   o If trained link speed is degraded, retry ->  Goto Step 2
  *   o If trained link width is degraded, retry -> Goto Step 2
  *   o If still degraded after 3 retries. Give up, Goto Step 10.
@@ -2617,7 +2617,7 @@ struct pci_card_id {
 	uint16_t device;
 };
 
-static struct pci_card_id retry_whitelist[] = {
+static struct pci_card_id retry_allowlist[] = {
 	{ 0x1000, 0x005d }, /* LSI Logic MegaRAID SAS-3 3108 */
 	{ 0x1000, 0x00c9 }, /* LSI MPT SAS-3 */
 	{ 0x104c, 0x8241 }, /* TI xHCI USB */
@@ -2636,16 +2636,16 @@ static struct pci_card_id retry_whitelist[] = {
 #define VENDOR(vdid) ((vdid) & 0xffff)
 #define DEVICE(vdid) (((vdid) >> 16) & 0xffff)
 
-static bool phb4_adapter_in_whitelist(uint32_t vdid)
+static bool phb4_adapter_in_allowlist(uint32_t vdid)
 {
 	int i;
 
 	if (pci_retry_all)
 		return true;
 
-	for (i = 0; i < ARRAY_SIZE(retry_whitelist); i++)
-		if ((retry_whitelist[i].vendor == VENDOR(vdid)) &&
-		    (retry_whitelist[i].device == DEVICE(vdid)))
+	for (i = 0; i < ARRAY_SIZE(retry_allowlist); i++)
+		if ((retry_allowlist[i].vendor == VENDOR(vdid)) &&
+		    (retry_allowlist[i].device == DEVICE(vdid)))
 			return true;
 
 	return false;
@@ -2656,7 +2656,7 @@ static struct pci_card_id lane_eq_disable[] = {
 	{ 0x10de, 0x1db4 }, /* Nvidia GV100 */
 };
 
-static bool phb4_lane_eq_retry_whitelist(uint32_t vdid)
+static bool phb4_lane_eq_retry_allowlist(uint32_t vdid)
 {
 	int i;
 
@@ -2669,7 +2669,7 @@ static bool phb4_lane_eq_retry_whitelist(uint32_t vdid)
 
 static void phb4_lane_eq_change(struct phb4 *p, uint32_t vdid)
 {
-	p->lane_eq_en = !phb4_lane_eq_retry_whitelist(vdid);
+	p->lane_eq_en = !phb4_lane_eq_retry_allowlist(vdid);
 }
 
 static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
@@ -2704,8 +2704,8 @@ static bool phb4_link_optimal(struct pci_slot *slot, uint32_t *vdid)
 	optimal_width = (trained_width >= target_width);
 	optimal = optimal_width && optimal_speed;
 	retry_enabled = (phb4_chip_retry_workaround() &&
-			 phb4_adapter_in_whitelist(id)) ||
-		phb4_lane_eq_retry_whitelist(id);
+			 phb4_adapter_in_allowlist(id)) ||
+		phb4_lane_eq_retry_allowlist(id);
 	reg = in_be64(p->regs + PHB_PCIE_DLP_ERR_COUNTERS);
 	rx_errs =  GETFIELD(PHB_PCIE_DLP_RX_ERR_CNT, reg);
 	rx_err_ok = (rx_errs < rx_err_max);
