@@ -1867,7 +1867,7 @@ static void phb4_read_phb_status(struct phb4 *p,
 	phb4_pcicfg_read32(&p->phb, 0, PCI_CFG_CMD, &__32);
 	stat->devCmdStatus = cpu_to_be32(__32);
 	phb4_pcicfg_read16(&p->phb, 0, PCI_CFG_SECONDARY_STATUS, &__16);
-	stat->devSecStatus = cpu_to_be32(__32);
+	stat->devSecStatus = cpu_to_be32(__16);
 
 	/* Grab a bunch of AER regs */
 	phb4_pcicfg_read32(&p->phb, 0, p->aercap + PCIECAP_AER_RERR_STA, &__32);
