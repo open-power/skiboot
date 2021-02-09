@@ -3590,6 +3590,10 @@ static bool phb4_escalation_required(void)
 {
 	uint64_t pvr = mfspr(SPR_PVR);
 
+	/* Only on Power9 */
+	if (proc_gen != proc_gen_p9)
+		return false;
+
 	/*
 	 * Escalation is required on the following chip versions:
 	 * - Cumulus DD1.0
@@ -3850,7 +3854,7 @@ static int64_t phb4_eeh_next_error(struct phb *phb,
 
 	if (*first_frozen_pe != (uint64_t)(-1)) {
 		pesta = phb4_get_pesta(p, *first_frozen_pe);
-		if (phb4_freeze_escalate(pesta)) {
+		if (phb4_escalation_required() && phb4_freeze_escalate(pesta)) {
 			PHBINF(p, "Escalating freeze to fence. PESTA[%lli]=%016llx\n",
 			       *first_frozen_pe, pesta);
 			p->err.err_class = PHB4_ERR_CLASS_FENCED;
