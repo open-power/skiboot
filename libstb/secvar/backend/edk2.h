@@ -42,6 +42,8 @@
 #ifndef __EDK2_H__
 #define __EDK2_H__
 
+#include <compiler.h>
+
 #define UUID_SIZE 16
 
 typedef struct {
@@ -138,9 +140,8 @@ struct efi_time {
 ///
 /// The format of a signature database.
 ///
-#pragma pack(1)
 
-typedef struct {
+typedef struct __packed {
   ///
   /// An identifier which identifies the agent which added the signature to the list.
   ///
@@ -151,7 +152,7 @@ typedef struct {
   unsigned char SignatureData[0];
 } EFI_SIGNATURE_DATA;
 
-typedef struct {
+typedef struct __packed {
   ///
   /// Type of the signature. GUID signature types are defined in below.
   ///
@@ -204,7 +205,7 @@ struct win_certificate {
 	 * the certificate depends on wCertificateType.
 	 */
 	/// UINT8 bCertificate[ANYSIZE_ARRAY];
-};
+} __packed;
 
 /*
  * Certificate which encapsulates a GUID-specific digital signature
@@ -226,7 +227,8 @@ struct win_certificate_uefi_guid {
 	 * EFI_CERT_BLOCK_RSA_2048_SHA256 structure.
 	 */
 	u8 cert_data[];
-};
+} __packed;
+
 /*
  * When the attribute EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS is set,
  * then the Data buffer shall begin with an instance of a complete (and
@@ -246,6 +248,6 @@ struct efi_variable_authentication_2 {
 	 * Only a CertType of  EFI_CERT_TYPE_PKCS7_GUID is accepted.
 	 */
 	struct win_certificate_uefi_guid auth_info;
-};
+} __packed;
 
 #endif
