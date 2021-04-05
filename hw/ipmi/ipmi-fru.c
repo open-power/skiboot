@@ -77,7 +77,7 @@ static u8 fru_checksum(u8 *buf, int len)
 
 #define FRU_INSERT_STRING(x, y)						\
 	({ rc = fru_insert_string(x, y);				\
-		if (rc < 1) return OPAL_PARAMETER; rc; })
+	 { if (rc < 1) return OPAL_PARAMETER; } rc; })
 
 static int fru_fill_product_info(u8 *buf, struct product_info *info, size_t size)
 {
