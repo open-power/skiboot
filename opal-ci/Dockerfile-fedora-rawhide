@@ -1,5 +1,5 @@
 FROM fedora:rawhide
-RUN dnf -y install wget curl xterm gcc git xz make diffutils findutils expect valgrind valgrind-devel ccache dtc openssl-devel
+RUN dnf -y install wget curl xterm gcc git xz make diffutils findutils expect valgrind valgrind-devel ccache dtc openssl openssl-devel
 RUN dnf -y install gcc-powerpc64-linux-gnu mbedtls-devel
 # below packages are for building dtc
 RUN dnf -y install flex bison
