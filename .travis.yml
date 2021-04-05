@@ -16,7 +16,7 @@ env:
       - RUN_ON_CONTAINER=ubuntu-20.04
       - RUN_ON_CONTAINER=ubuntu-latest
       - RUN_ON_CONTAINER=centos7
-      - RUN_ON_CONTAINER=fedora32
+      - RUN_ON_CONTAINER=fedora33
       - RUN_ON_CONTAINER=fedora-rawhide
       - RUN_ON_CONTAINER=debian-unstable
       - RUN_ON_CONTAINER=docs
