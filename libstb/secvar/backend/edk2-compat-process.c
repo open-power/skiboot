@@ -105,9 +105,6 @@ static int32_t get_esl_signature_list_size(const char *buf, const size_t buflen)
 	if (!list)
 		return OPAL_PARAMETER;
 
-	prlog(PR_DEBUG, "size of signature list size is %u\n",
-			le32_to_cpu(list->SignatureListSize));
-
 	return le32_to_cpu(list->SignatureListSize);
 }
 
@@ -275,15 +272,13 @@ int validate_esl_list(const char *key, const char *esl, const size_t size)
 		if (!list)
 			return OPAL_PARAMETER;
 
-		prlog(PR_DEBUG, "size of signature list size is %u\n",
-				le32_to_cpu(list->SignatureListSize));
-
 		/* Calculate the size of the ESL */
 		eslsize = le32_to_cpu(list->SignatureListSize);
 
 		/* If could not extract the size */
 		if (eslsize <= 0) {
-			prlog(PR_ERR, "Invalid size of the ESL\n");
+			prlog(PR_ERR, "Invalid size of the ESL: %u\n",
+					le32_to_cpu(list->SignatureListSize));
 			rc = OPAL_PARAMETER;
 			break;
 		}
