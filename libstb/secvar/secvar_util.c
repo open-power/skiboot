@@ -49,7 +49,7 @@ struct secvar *alloc_secvar(uint64_t key_len, uint64_t data_size)
 
 	ret->key = zalloc(key_len);
 	if (!ret->key) {
-		free(ret->key);
+		free(ret);
 		return NULL;
 	}
 
