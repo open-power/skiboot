@@ -43,6 +43,7 @@
 #define __EDK2_H__
 
 #include <compiler.h>
+#include <ccan/short_types/short_types.h>
 
 #define UUID_SIZE 16
 
